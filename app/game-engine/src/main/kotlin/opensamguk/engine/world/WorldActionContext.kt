@@ -3,27 +3,39 @@ package opensamguk.engine.world
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.rng.LiteHashDrbg
+import opensamguk.common.rng.PhpMt19937
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.engine.config.StatisticInsertColumns
 import opensamguk.engine.turn.City as EngineCity
 import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.GeneralTurnSeed
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation as EngineNation
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
+import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.toTurnGeneral
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.read.ArchiveHistoryReader
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.infra.read.BettingRepository
+import opensamguk.infra.read.GameKvRepository
+import opensamguk.infra.read.InheritanceRepository
 import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.logic.auction.AuctionInfo
 import opensamguk.logic.auction.AuctionType
 import opensamguk.logic.auction.ResourceType
+import opensamguk.logic.betting.BettingInfo
+import opensamguk.logic.betting.BettingItem
+import opensamguk.logic.betting.BettingWorldView
+import opensamguk.logic.betting.GeneralForBetting
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.Diplomacy as LogicDiplomacy
 import opensamguk.logic.domain.General as LogicGeneral
@@ -37,7 +49,10 @@ import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventTarget
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventStore
+import opensamguk.logic.event.FinishNationBettingContext
 import opensamguk.logic.event.LightActionWorld
+import opensamguk.logic.event.NationBettingCandidate
+import opensamguk.logic.event.OpenNationBettingContext
 import opensamguk.logic.inheritance.GeneralProxy
 import opensamguk.logic.inheritance.InheritancePointStore
 import opensamguk.logic.inheritance.applyInheritanceUser
@@ -45,10 +60,14 @@ import opensamguk.logic.inheritance.mergeTotalInheritancePoint
 import opensamguk.logic.message.MessageTarget
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.CheckStatisticCalculator
+import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.traits.NationTypeRegistry
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.phpRoundDecimal
+import opensamguk.logic.util.jsonDecode
+import opensamguk.logic.util.jsonDecodeAny
 import java.text.NumberFormat
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -73,6 +92,7 @@ import opensamguk.logic.world.MergeGeneral
 import opensamguk.logic.world.MergeInheritPointRank
 import opensamguk.logic.world.MergeInheritResult
 import opensamguk.logic.world.MergeInheritWorld
+import opensamguk.logic.world.GeneralBuilder
 import opensamguk.logic.world.ProcessIncomeContext
 import opensamguk.logic.world.ProcessIncomeResult
 import opensamguk.logic.world.ProcessSemiAnnualContext
@@ -80,8 +100,12 @@ import opensamguk.logic.world.ProcessSemiAnnualResult
 import opensamguk.logic.world.ProcessWarIncomeContext
 import opensamguk.logic.world.ProcessWarIncomeResult
 import opensamguk.logic.world.ProvideNPCTroopLeaderContext
+import opensamguk.logic.world.ProvideNPCTroopLeader
 import opensamguk.logic.world.RandomizeCityTradeRateContext
 import opensamguk.logic.world.RaiseDisasterResult
+import opensamguk.logic.world.RaiseInvaderAction
+import opensamguk.logic.world.RaiseInvaderContext
+import opensamguk.logic.world.RaiseInvaderSpec
 import opensamguk.logic.world.RaiseNPCNationAction
 import opensamguk.logic.world.ScenarioStartEventContext
 import opensamguk.logic.world.SpecialityHelper
@@ -112,6 +136,12 @@ class WorldActionContext(
     private val auctionBidRepository: AuctionBidRepository? = null,
     private val archiveHistoryReader: ArchiveHistoryReader? = null,
     private val statisticSnapshotReader: StatisticSnapshotReader? = null,
+    private val gameKvRepository: GameKvRepository? = null,
+    private val bettingRepository: BettingRepository? = null,
+    private val inheritanceRepository: InheritanceRepository? = null,
+    private val ambientPhpRandom: PhpMt19937 = PhpMt19937.ambient(),
+    private val lockGame: () -> Boolean = { false },
+    private val unlockGame: () -> Unit = {},
 ) : EventActionContext,
     ProcessIncomeContext,
     ProcessWarIncomeContext,
@@ -125,7 +155,10 @@ class WorldActionContext(
     SpecialityWorldView,
     BlockScoutWorld,
     UnblockScoutWorldView,
+    RaiseInvaderContext,
     InvaderEndingContext,
+    OpenNationBettingContext,
+    FinishNationBettingContext,
     CheckEmperiorContext,
     ScenarioStartEventContext,
     LightActionWorld {
@@ -135,11 +168,13 @@ class WorldActionContext(
     companion object {
         const val ENV_EVENT_DISPATCHER = "eventDispatcher"
         private const val INTERNAL_FLUSH_BEFORE_ARCHIVE = "_flushBeforeArchive"
+        private const val MAX_GENERALS_PER_MINUTE = 1000
+        private val INVADER_TURNTERM_CANDIDATES = listOf(1, 2, 5, 10, 20, 30, 60, 120)
         private val SEOUL_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
         private val PHP_DATETIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     }
 
-    private var bufferedUnificationHistoryDraft: LogEntryDraft? = null
+    private var bufferedUnificationHistoryLogIndex: Int? = null
 
     private fun resolveHiddenSeed(): String = world.getState().meta["hiddenSeed"] as? String ?: ""
     private fun resolveYear(): Int = (env["year"] as? Number)?.toInt() ?: world.getState().currentYear
@@ -313,7 +348,7 @@ class WorldActionContext(
                 nationType = NationTypeRegistry.resolve(n.typeCode),
                 cities = world.listCities().filter { it.nationId == n.id }.sortedBy { it.id }
                     .map { PerTurnOverlay.toLogicCity(it) },
-                generals = world.listGenerals().filter { it.nationId == n.id }.sortedBy { it.id }
+                generals = world.listGenerals().filter { it.nationId == n.id && it.npcState != 5 }.sortedBy { it.id }
                     .map { IncomeGeneral(it.id, it.dedication.toDouble(), it.officerLevel) },
                 officerCntByCity = officerCntByCity(n.id),
             )
@@ -585,16 +620,235 @@ class WorldActionContext(
 
     // ── ProvideNPCTroopLeaderContext ───────────────────────────────────────────────────────────
 
-    override fun lastNpcTroopLeaderId(): Int =
-        (env["last_npc_troop_leader_id"] as? Number)?.toInt() ?: 0
-
-    override fun setLastNpcTroopLeaderId(id: Int) {
-        recorder.recordKv("game_env", "", "last_npc_troop_leader_id", id)
-        env["last_npc_troop_leader_id"] = id
+    override fun lastNpcTroopLeaderId(): Int {
+        val key = "lastNPCTroopLeaderID"
+        val pending = recorder.kvDirty()[KvKey("game_env", "game_env", key)] as? Number
+        if (pending != null) return pending.toInt()
+        val persisted = gameKvRepository?.findByTable("game_env")?.firstNotNullOfOrNull { row ->
+            if (row.namespace == "game_env" && row.key == key) {
+                runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number
+            } else {
+                null
+            }
+        }
+        return persisted?.toInt() ?: 0
     }
 
-    override fun mintTroopLeader(nationId: Int, leader: opensamguk.logic.world.ProvideNPCTroopLeader.NewLeader, seed: String) {
-        // P6 seam — GeneralBuilder mint + troop-row insert + 집합 reservation.
+    override fun setLastNpcTroopLeaderId(id: Int) {
+        recorder.recordKv("game_env", "game_env", "lastNPCTroopLeaderID", id)
+        env["lastNPCTroopLeaderID"] = id
+    }
+
+    override fun mintTroopLeaders(
+        nationId: Int,
+        leaders: List<ProvideNPCTroopLeader.NewLeader>,
+        seed: String,
+    ) {
+        val rng = RandUtil(LiteHashDrbg(seed))
+        val cityPool = world.listCities().sortedBy { it.id }
+            .map { GeneralBuilder.CityChoice(it.id, it.nationId) }
+        val initialTurns = List(GameConst.maxTurn) {
+            GeneralTurnSeed(actionCode = "che_집합", argJson = "{}", brief = "집합")
+        }
+        for (leader in leaders) {
+            val built = GeneralBuilder(rng, leader.name, nationId)
+                .setAffinity(999)
+                .setStat(10, 10, 10)
+                .setSpecialSingle(null)
+                .setEgo("che_은둔")
+                .setSpecYear(999, 999)
+                .setKillturn(70)
+                .setMoney(0, 0)
+                .setNPCType(5)
+                .fillRemainSpecAsZero(resolveYear(), resolveStartYear())
+                .build(
+                    year = resolveYear(),
+                    month = resolveMonth(),
+                    turnterm = resolveTurnterm(),
+                    cityPool = cityPool,
+                )
+                ?: continue
+            val generalId = world.allocateGeneralId()
+            val general = built.toTurnGeneral(generalId, world.getState()).copy(troopId = generalId)
+            recorder.recordGeneralCreate(world, general, initialTurns)
+            world.createTroop(Troop(id = generalId, nationId = nationId, name = general.name))
+        }
+    }
+
+    override fun nationBettingCandidates(): List<NationBettingCandidate> =
+        world.listNations().map { nation ->
+            val generalCount = world.listGenerals().count { it.nationId == nation.id }
+            val cityCount = world.listCities().count { it.nationId == nation.id }
+            NationBettingCandidate(
+                nationId = nation.id,
+                name = nation.name,
+                power = nation.power,
+                generalCount = generalCount,
+                cityCount = cityCount,
+                aux = linkedMapOf(
+                    "nation" to nation.id,
+                    "name" to nation.name,
+                    "color" to nation.color,
+                    "level" to nation.level,
+                    "type" to nation.typeCode,
+                    "capital" to (nation.capitalCityId ?: 0),
+                    "gennum" to generalCount,
+                    "power" to nation.power,
+                    "city_cnt" to cityCount,
+                ),
+            )
+        }
+
+    override fun nextBettingId(): Int {
+        val pending = (recorder.kvDirty()[KvKey("game_env", "game_env", "last_betting_id")] as? Number)?.toInt()
+        val persisted = gameKvRepository?.findByTable("game_env")?.firstNotNullOfOrNull { row ->
+            if (row.namespace == "game_env" && row.key == "last_betting_id") {
+                (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number)?.toInt()
+            } else {
+                null
+            }
+        }
+        val next = maxOf(pending ?: 0, persisted ?: 0) + 1
+        recorder.recordKv("game_env", "game_env", "last_betting_id", next)
+        return next
+    }
+
+    override fun saveBettingInfo(info: BettingInfo) {
+        recorder.recordKv("betting", "betting", "id_${info.id}", info.toKvMap())
+    }
+
+    override fun scheduleNationBettingFinish(bettingId: Int, nationCnt: Int) {
+        val store = env[DeleteEventContext.ENV_KEY] as? EventStore
+            ?: error("OpenNationBetting requires the live EventStore")
+        store.insertRaw(
+            targetCode = "destroy_nation",
+            priority = 1000,
+            conditionJson = kotlinx.serialization.json.Json.parseToJsonElement(
+                """["RemainNation","<=",$nationCnt]""",
+            ),
+            actionJson = kotlinx.serialization.json.Json.parseToJsonElement(
+                """[["FinishNationBetting",$bettingId],["DeleteEvent"]]""",
+            ),
+        )
+    }
+
+    override fun placeNationBettingBonus(bettingId: Int, amount: Int) {
+        recorder.recordBettingInsert(
+            linkedMapOf(
+                "betting_id" to bettingId,
+                "general_id" to 0,
+                "user_id" to null,
+                "betting_type" to "[-1]",
+                "amount" to amount,
+            ),
+        )
+    }
+
+    override fun notifyNationBettingOpened(name: String) {
+        val text = "새로운 $name 내기가 열렸습니다. 천통국 베팅란을 확인해주세요."
+        world.listGenerals()
+            .filter { it.npcState <= 1 }
+            .forEach { general ->
+                markNewMessage(general)
+                val nation = world.getNationById(general.nationId)
+                val dest = MessageTarget(
+                    generalId = general.id,
+                    generalName = general.name,
+                    nationId = general.nationId,
+                    nationName = nation?.name ?: "재야",
+                    color = nation?.color ?: "#000000",
+                    icon = general.meta["picture"]?.toString() ?: "",
+                )
+                val body = MetaJson.encode(
+                    linkedMapOf(
+                        "src" to MessageTarget.buildSystemTarget().toArray(),
+                        "dest" to dest.toArray(),
+                        "text" to text,
+                        "option" to linkedMapOf<String, Any?>(),
+                    ),
+                )
+                recorder.recordMessageInsert(
+                    mailbox = general.id,
+                    type = "private",
+                    srcId = 0,
+                    destId = general.id,
+                    time = world.getState().lastTurnTime.atZone(SEOUL_ZONE).format(PHP_DATETIME_FORMAT),
+                    validUntil = "9999-12-31 00:00:00",
+                    bodyJson = body,
+                )
+            }
+    }
+
+    override fun loadBettingInfo(bettingId: Int): BettingInfo? {
+        val pending = recorder.kvDirty()[KvKey("betting", "betting", "id_$bettingId")] as? Map<*, *>
+        if (pending != null) {
+            @Suppress("UNCHECKED_CAST")
+            return BettingInfo.fromKvMap(pending as Map<String, Any?>)
+        }
+        return gameKvRepository?.findByTable("betting")?.firstNotNullOfOrNull { row ->
+            runCatching { jsonDecode(row.value) }.getOrNull()
+                ?.let(BettingInfo::fromKvMap)
+                ?.takeIf { it.id == bettingId }
+        }
+    }
+
+    override fun aliveNationIds(): List<Int> =
+        world.listNations().filter { it.level > 0 }.map { it.id }
+
+    override fun loadBettingItems(bettingId: Int): List<BettingItem> =
+        bettingRepository?.findByBettingId(bettingId).orEmpty().map { row ->
+            BettingItem(
+                rowId = row.id,
+                bettingId = row.bettingId,
+                generalId = row.generalId,
+                userId = row.userId,
+                bettingType = row.bettingType,
+                amount = row.amount,
+            )
+        }
+
+    override fun generalsById(ids: List<Int>): Map<Int, GeneralForBetting> =
+        ids.mapNotNull { id ->
+            world.getGeneralById(id)?.let { general ->
+                id to GeneralForBetting(id, general.npcState, general.name)
+            }
+        }.toMap()
+
+    override fun addGeneralGold(generalId: Int, amount: Int) {
+        val before = world.getGeneralById(generalId) ?: return
+        val after = before.copy(gold = before.gold + amount)
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
+        world.updateGeneral(after)
+    }
+
+    override fun increaseRankData(generalId: Int, type: String, amount: Double) {
+        val column = RankColumn.byColumn(type) ?: return
+        recorder.recordRankIncrease(generalId, column, phpRound(amount))
+    }
+
+    override fun getRankVar(generalId: Int, type: String, default: Int): Int =
+        world.getGeneralById(generalId)?.let { effectiveRankValue(it, type) } ?: default
+
+    override fun increaseInheritancePointRaw(userId: Int, amount: Double): Double {
+        val pending = recorder.effectiveInheritancePoint(userId, "previous")?.first
+        val persisted = inheritanceRepository
+            ?.findByTableAndNamespaceAndKey("inheritance", "inheritance_$userId", "previous")
+            ?.let { row ->
+                ((runCatching { jsonDecodeAny(row.value) }.getOrNull() as? List<*>)?.getOrNull(0) as? Number)
+                    ?.toDouble()
+            }
+        val next = (pending ?: persisted ?: 0.0) + amount
+        recorder.recordInheritancePointSet(userId, "previous", next, null)
+        return next
+    }
+
+    override fun pushUserLogs(userId: Int, lines: List<String>, type: String) {
+        lines.forEach { recorder.recordInheritanceLog(userId, it, type) }
+    }
+
+    override fun pushGeneralActionLog(generalId: Int, msg: String) {
+        val nationId = world.getGeneralById(generalId)?.nationId
+        world.pushLog(logDraft("general", "action", msg, generalId = generalId, nationId = nationId))
     }
 
     // ── DisasterWorldView ──────────────────────────────────────────────────────────────────────
@@ -739,6 +993,234 @@ class WorldActionContext(
         setBlockChangeScout(value)
     }
 
+    override fun raiseInvader(spec: RaiseInvaderSpec): Int {
+        val invaderCities = activeCityConst().all().values.filter { it.level == 4 }
+        if (invaderCities.isEmpty()) return 0
+
+        setIsunited(1)
+        val preInvaderGenerals = world.listGenerals()
+        val ordinaryGenerals = preInvaderGenerals.filter { it.npcState < 4 }
+        val npcEachCount = if (spec.npcEachCount < 0) {
+            ordinaryGenerals.size.toDouble() / invaderCities.size * -spec.npcEachCount
+        } else {
+            spec.npcEachCount
+        }.toInt().coerceAtLeast(10)
+        val totalGenerals = npcEachCount * invaderCities.size + preInvaderGenerals.size
+        val actionTurnterm = resolveTurnterm()
+        if (totalGenerals > MAX_GENERALS_PER_MINUTE * actionTurnterm) {
+            val nextTurnterm = INVADER_TURNTERM_CANDIDATES.firstOrNull {
+                totalGenerals <= MAX_GENERALS_PER_MINUTE * it
+            }
+            if (nextTurnterm != null) {
+                changeInvaderTurnterm(actionTurnterm, nextTurnterm)
+            }
+        }
+        val specAverage = if (spec.specAvg < 0) {
+            ordinaryGenerals
+                .map { it.stats.leadership + it.stats.strength + it.stats.intelligence }
+                .averageIntOrZero() * -spec.specAvg
+        } else {
+            spec.specAvg
+        }.div(3.0).toInt()
+        val activeNations = world.listNations().filter { it.level > 0 }
+        val tech = (if (spec.tech < 0) {
+            activeNations.map { it.tech }.averageDoubleOrZero() * -spec.tech
+        } else {
+            spec.tech
+        }).toInt()
+        val dex = if (spec.dex < 0) {
+            ordinaryGenerals.map { general ->
+                (1..5).sumOf { index -> (general.meta["dex$index"] as? Number)?.toDouble() ?: 0.0 } / 5.0
+            }.averageDoubleOrZero() * -spec.dex
+        } else {
+            spec.dex
+        }.toInt()
+        val averageExperience = preInvaderGenerals
+            .filter { it.npcState < 6 }
+            .map { it.experience.toDouble() }
+            .averageDoubleOrZero()
+            .toInt()
+        val rng = RandUtil(
+            LiteHashDrbg(serializeSeed(resolveHiddenSeed(), RaiseInvaderAction.NAME, resolveYear(), resolveMonth())),
+        )
+
+        for (nation in world.listNations().sortedBy { it.id }) {
+            val meta = LinkedHashMap(nation.meta).apply {
+                this["war"] = 0
+                this["scout"] = 0
+            }
+            updateNationForInvader(nation, nation.copy(meta = meta))
+        }
+
+        val invaderCityIds = invaderCities.map { it.id }.toSet()
+        val disabledCities = LinkedHashSet<Int>()
+        for (nation in world.listNations().sortedBy { it.id }) {
+            val oldCapital = nation.capitalCityId ?: continue
+            if (oldCapital !in invaderCityIds) continue
+            val candidates = world.listCities()
+                .filter { it.nationId == nation.id && it.id != oldCapital && it.id !in invaderCityIds }
+                .sortedBy { it.id }
+            if (candidates.isEmpty()) {
+                disabledCities += oldCapital
+                continue
+            }
+            val newCapital = rng.choice(candidates).id
+            updateNationForInvader(nation, nation.copy(capitalCityId = newCapital))
+            world.listGenerals()
+                .filter { it.nationId == nation.id && it.cityId == oldCapital }
+                .forEach { general -> updateGeneralForInvader(general, general.copy(cityId = newCapital)) }
+        }
+        world.listGenerals()
+            .filter { ((it.meta["officer_city"] as? Number)?.toInt() ?: 0) in invaderCityIds }
+            .forEach { general ->
+                updateGeneralForInvader(
+                    general,
+                    general.copy(
+                        officerLevel = 1,
+                        meta = LinkedHashMap(general.meta).apply { this["officer_city"] = 0 },
+                    ),
+                )
+            }
+        for (cityId in invaderCityIds) {
+            val city = world.getCityById(cityId) ?: continue
+            updateCityForInvader(city, city.copy(nationId = 0, frontState = 0, supplyState = 1))
+        }
+        world.listGenerals().sortedBy { it.id }.forEach { general ->
+            updateGeneralForInvader(general, general.copy(gold = 999_999, rice = 999_999))
+        }
+
+        val existingNationIds = world.listNations().map { it.id }.toList()
+        val createdNationIds = ArrayList<Int>()
+        val cityPool = world.listCities().map { GeneralBuilder.CityChoice(it.id, it.nationId) }
+        for (cityConst in invaderCities) {
+            if (cityConst.id in disabledCities) continue
+            val nationId = world.allocateNationId()
+            val nationName = "ⓞ${cityConst.name}족"
+            val nationMeta = linkedMapOf<String, Any?>(
+                "gennum" to npcEachCount + 1,
+                "bill" to 100,
+                "rate" to 15,
+                "scout" to 0,
+                "war" to 0,
+                "strategic_cmd_limit" to 24,
+                "surlimit" to 72,
+                "scout_msg" to "중원의 부패를 물리쳐라! 이민족 침범!",
+                "aux" to linkedMapOf("can_국기변경" to 1),
+            )
+            world.createNation(
+                EngineNation(
+                    id = nationId,
+                    name = nationName,
+                    color = "#800080",
+                    capitalCityId = cityConst.id,
+                    gold = 9_999_999,
+                    rice = 9_999_999,
+                    tech = tech.toDouble(),
+                    level = 2,
+                    typeCode = "che_병가",
+                    meta = nationMeta,
+                ),
+            )
+            updateCityForInvader(
+                checkNotNull(world.getCityById(cityConst.id)),
+                checkNotNull(world.getCityById(cityConst.id)).copy(nationId = nationId),
+            )
+
+            val rulerBuilt = GeneralBuilder(rng, "${cityConst.name}대왕", nationId)
+                .setEgo("che_패권")
+                .setSpecial("che_인덕", "che_척사")
+                .setLifeSpan(resolveYear() - 20, resolveYear() + 20)
+                .setCityID(cityConst.id)
+                .setNPCType(9)
+                .setStat((specAverage * 1.8).toInt(), (specAverage * 1.8).toInt(), (specAverage * 1.2).toInt())
+                .setAffinity(999)
+                .setExpDed((averageExperience * 1.2).toInt(), null)
+                .setMoney(99_999, 99_999)
+                .setSpecYear(0, 0)
+                .build(resolveYear(), resolveMonth(), actionTurnterm, cityPool)
+                ?: error("RaiseInvader ruler was not created")
+            val rulerId = world.allocateGeneralId()
+            recorder.recordGeneralCreate(
+                world,
+                rulerBuilt.toInvaderTurnGeneral(rulerId).copy(officerLevel = 12),
+            )
+
+            for (index in 1..npcEachCount) {
+                val leadership = rng.nextRangeInt((specAverage * 1.2).toInt(), (specAverage * 1.4).toInt())
+                val mainStat = rng.nextRangeInt((specAverage * 1.2).toInt(), (specAverage * 1.4).toInt())
+                val subStat = specAverage * 3 - leadership - mainStat
+                val builder = GeneralBuilder(rng, "${cityConst.name}장수$index", nationId)
+                    .setEgo("che_패권")
+                    .setSpecial("che_인덕", "che_척사")
+                    .setLifeSpan(resolveYear() - 20, resolveYear() + 20)
+                    .setCityID(cityConst.id)
+                    .setNPCType(9)
+                    .setAffinity(999)
+                    .setExpDed(averageExperience, null)
+                    .setMoney(99_999, 99_999)
+                if (rng.nextBit()) {
+                    val dexTable = phpShuffle(listOf(dex * 2, dex, dex))
+                    builder.setStat(leadership, mainStat, subStat)
+                        .setDex(dexTable[0], dexTable[1], dexTable[2], dex, 0)
+                } else {
+                    builder.setStat(leadership, subStat, mainStat)
+                        .setDex(dex, dex, dex, dex * 2, 0)
+                }
+                val built = builder
+                    .setSpecYear(0, 0)
+                    .build(resolveYear(), resolveMonth(), actionTurnterm, cityPool)
+                    ?: continue
+                recorder.recordGeneralCreate(world, built.toInvaderTurnGeneral(world.allocateGeneralId()))
+            }
+            for (chiefLevel in 12 downTo GameConst.getNationChiefLevel(2)) {
+                for (turnIndex in 0 until GameConst.maxChiefTurn) {
+                    world.createNationTurn(
+                        NationTurn(nationId, chiefLevel, turnIndex, "휴식", null, "휴식"),
+                    )
+                }
+            }
+            createdNationIds += nationId
+            scheduleInvaderEvent("""[["AutoDeleteInvader",$nationId]]""")
+        }
+        scheduleInvaderEvent("""[["InvaderEnding"]]""")
+
+        val allNationIds = existingNationIds + createdNationIds
+        for (from in allNationIds) {
+            for (to in allNationIds) {
+                if (from == to) continue
+                val desired = when {
+                    from in createdNationIds && to in createdNationIds -> 7 to 480
+                    (from in existingNationIds && to in createdNationIds) ||
+                        (from in createdNationIds && to in existingNationIds) -> 1 to 24
+                    else -> continue
+                }
+                upsertDiplomacyForInvader(from, to, desired.first, desired.second)
+            }
+        }
+
+        val cityMaxPopulation = specAverage * npcEachCount * 100 * 4
+        for (city in world.listCities().sortedBy { it.id }) {
+            val invaderOwned = city.nationId in createdNationIds
+            val after = city.copy(
+                populationMax = if (invaderOwned) cityMaxPopulation else city.populationMax,
+                defenceMax = if (invaderOwned) 100_000 else city.defenceMax,
+                wallMax = if (invaderOwned) 10_000 else city.wallMax,
+                population = if (invaderOwned) cityMaxPopulation else city.populationMax,
+                agriculture = city.agricultureMax,
+                commerce = city.commerceMax,
+                security = city.securityMax,
+            )
+            updateCityForInvader(city, after)
+        }
+        pushGlobalHistoryLog("<L><b>【이벤트】</b></>각지의 이민족들이 <M>궐기</>합니다!")
+        pushGlobalHistoryLog("<L><b>【이벤트】</b></>중원의 전 국가에 <M>선전포고</> 합니다!")
+        pushGlobalHistoryLog("<L><b>【이벤트】</b></>이민족의 기세는 그 누구도 막을 수 없을듯 합니다!")
+        recorder.recordKv("game_env", "game_env", "block_change_scout", false)
+        world.setGameEnvValue("block_change_scout", false)
+        unlockGame()
+        return createdNationIds.size
+    }
+
     // ── InvaderEndingContext ───────────────────────────────────────────────────────────────────
     /** `$gameStor->isunited`(php:22) — game_env isunited(0=평시,1=침략자 진행,2=천하통일,3=엔딩). */
     override fun isunited(): Int = (world.getState().meta["isunited"] as? Number)?.toInt() ?: 0
@@ -787,7 +1269,7 @@ class WorldActionContext(
 
     override fun pushNationalHistoryLog(nationId: Int, msg: String) {
         val draft = logDraft("nation", "history", actionLogText(msg, LightActionWorld.YEAR_MONTH), nationId = nationId)
-        bufferedUnificationHistoryDraft = draft
+        bufferedUnificationHistoryLogIndex = world.peekLogs().size
         world.pushLog(draft)
     }
 
@@ -1375,15 +1857,16 @@ class WorldActionContext(
                     .orEmpty()
                     .mapNotNull { it?.toString() }
             }
-        val buffered = bufferedUnificationHistoryDraft
+        val bufferedIndex = bufferedUnificationHistoryLogIndex
         val pending = world.peekLogs()
-            .filter {
-                it !== buffered &&
-                    it.scope == "nation" &&
-                    it.category == "history" &&
-                    it.nationId == nationId
+            .withIndex()
+            .filter { (index, entry) ->
+                index != bufferedIndex &&
+                    entry.scope == "nation" &&
+                    entry.category == "history" &&
+                    entry.nationId == nationId
             }
-            .map { it.text }
+            .map { it.value.text }
             .asReversed()
         return pending + persisted
     }
@@ -1655,4 +2138,127 @@ class WorldActionContext(
     override fun pushGeneralHistoryLog(msg: String, type: Int) {
         world.pushLog(logDraft("general", "history", actionLogText(msg, type), subType = type.toString()))
     }
+
+    private fun updateGeneralForInvader(before: TurnGeneral, after: TurnGeneral) {
+        if (before == after) return
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
+        world.applyGeneralDirtyFree(after)
+    }
+
+    private fun BuiltGeneral.toInvaderTurnGeneral(id: Int): TurnGeneral {
+        val general = toTurnGeneral(id, world.getState())
+        return general.copy(
+            meta = LinkedHashMap(general.meta).apply {
+                remove("specage")
+                remove("specage2")
+            },
+        )
+    }
+
+    private fun updateNationForInvader(before: EngineNation, after: EngineNation) {
+        if (before == after) return
+        recorder.diffNation(PerTurnOverlay.toLogicNation(before), PerTurnOverlay.toLogicNation(after))
+        world.applyNationDirtyFree(after)
+    }
+
+    private fun updateCityForInvader(before: EngineCity, after: EngineCity) {
+        if (before == after) return
+        recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
+        world.applyCityDirtyFree(after)
+    }
+
+    private fun upsertDiplomacyForInvader(from: Int, to: Int, state: Int, term: Int) {
+        val before = world.getDiplomacy(from, to)
+        if (before == null) {
+            world.createDiplomacy(TurnDiplomacy(from, to, state, term))
+            return
+        }
+        val after = before.copy(state = state, term = term)
+        recorder.diffDiplomacy(before, after)
+        world.updateDiplomacy(from, to, state, term)
+    }
+
+    private fun scheduleInvaderEvent(actionsJson: String) {
+        val store = env[DeleteEventContext.ENV_KEY] as? EventStore
+            ?: error("RaiseInvader requires the live EventStore")
+        store.insertRaw(
+            targetCode = "month",
+            priority = 1000,
+            conditionJson = kotlinx.serialization.json.Json.parseToJsonElement("true"),
+            actionJson = kotlinx.serialization.json.Json.parseToJsonElement(actionsJson),
+        )
+    }
+
+    private fun changeInvaderTurnterm(oldTurnterm: Int, nextTurnterm: Int) {
+        val locked = lockGame()
+        if (oldTurnterm == nextTurnterm) {
+            if (locked) unlockGame()
+            return
+        }
+        val serverTurnTime = world.getState().lastTurnTime
+        val unitRatio = nextTurnterm.toDouble() / oldTurnterm
+        for (general in world.listGenerals().sortedBy { it.id }) {
+            val distanceNanos = kotlin.math.abs(Duration.between(general.turnTime, serverTurnTime).toNanos())
+            val nextTurnTime = serverTurnTime.plusNanos((distanceNanos * unitRatio).toLong())
+            updateGeneralForInvader(general, general.copy(turnTime = nextTurnTime))
+        }
+        val elapsedMonths =
+            (resolveYear() - resolveStartYear()).toLong() * 12L + resolveMonth() - 1L
+        val rawStartTime = serverTurnTime.minusSeconds(elapsedMonths * nextTurnterm * 60L)
+        val startTime = ServerClock.cutTurn(rawStartTime, nextTurnterm)
+            .atZone(SEOUL_ZONE)
+            .format(PHP_DATETIME_FORMAT)
+        world.applyAdminWorldSettings(
+            status = null,
+            configPatch = mapOf(
+                "turnterm" to nextTurnterm,
+                "starttime" to startTime,
+                "startTime" to startTime,
+            ),
+            tickSeconds = nextTurnterm * 60,
+        )
+        recorder.recordKv("game_env", "game_env", "turnterm", nextTurnterm)
+        recorder.recordKv("game_env", "game_env", "starttime", startTime)
+        pushPreformattedGlobalHistoryLog("<R>★</>턴시간이 <C>${nextTurnterm}분</>으로 변경됩니다.")
+        if (locked) unlockGame()
+    }
+
+    private fun phpShuffle(values: List<Int>): List<Int> {
+        val shuffled = values.toMutableList()
+        synchronized(ambientPhpRandom) {
+            for (index in shuffled.lastIndex downTo 1) {
+                val other = ambientPhpRandom.range(0, index)
+                val previous = shuffled[index]
+                shuffled[index] = shuffled[other]
+                shuffled[other] = previous
+            }
+        }
+        return shuffled
+    }
 }
+
+private fun List<Int>.averageIntOrZero(): Double = if (isEmpty()) 0.0 else average()
+
+private fun List<Double>.averageDoubleOrZero(): Double = if (isEmpty()) 0.0 else average()
+
+private fun BettingInfo.toKvMap(): Map<String, Any?> =
+    linkedMapOf(
+        "id" to id,
+        "type" to type,
+        "name" to name,
+        "finished" to finished,
+        "selectCnt" to selectCnt,
+        "isExclusive" to isExclusive,
+        "reqInheritancePoint" to reqInheritancePoint,
+        "openYearMonth" to openYearMonth,
+        "closeYearMonth" to closeYearMonth,
+        "candidates" to candidates.mapKeys { it.key.toString() }.mapValues { (_, item) ->
+            linkedMapOf(
+                "title" to item.title,
+                "info" to item.info,
+                "isHtml" to item.isHtml,
+                "aux" to item.aux,
+            )
+        },
+        "winner" to winner,
+    )

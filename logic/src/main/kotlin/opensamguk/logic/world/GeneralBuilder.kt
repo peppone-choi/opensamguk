@@ -307,7 +307,7 @@ class GeneralBuilder(
             dex1 = dex1, dex2 = dex2, dex3 = dex3, dex4 = dex4, dex5 = dex5,
             turntimeSecond = turntimeSecond,
             turntimeFraction = turntimeFraction,
-            npcText = text ?: "",
+            npcText = text,
         )
     }
 
@@ -344,5 +344,5 @@ data class BuiltGeneral(
     val turntimeSecond: Int,
     val turntimeFraction: Int,
     val picture: String = "default.jpg",
-    val npcText: String = "",
+    val npcText: String? = null,
 )

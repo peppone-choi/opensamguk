@@ -123,6 +123,32 @@ data class GeneralBoolResult(
 ) : TurnDaemonCommandResult()
 
 @Serializable
+data class MySettingResult(
+    override val type: String = "setMySetting",
+    override val ok: Boolean,
+    val generalId: Int,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class VacationResult(
+    override val type: String = "vacation",
+    override val ok: Boolean,
+    val generalId: Int,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class ReadLatestMessageResult(
+    override val type: String = "readLatestMessage",
+    override val ok: Boolean,
+    val generalId: Int,
+    val messageType: String,
+    val latestRead: Int,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+@Serializable
 data class CommandLifecycleResult(
     override val type: String,
     override val ok: Boolean,
@@ -344,6 +370,22 @@ data class AcceptDiplomaticMessageFail(
 ) : TurnDaemonCommandResult()
 
 @Serializable
+data class AcceptRaiseInvaderMessageOk(
+    override val type: String = "acceptRaiseInvaderMessage",
+    override val ok: Boolean = true,
+    val messageId: Int,
+    val invaderNationCount: Int,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class AcceptRaiseInvaderMessageFail(
+    override val type: String = "acceptRaiseInvaderMessage",
+    override val ok: Boolean = false,
+    val messageId: Int,
+    val reason: String,
+) : TurnDaemonCommandResult()
+
+@Serializable
 data class DeclineDiplomaticMessageOk(
     override val type: String = "declineDiplomaticMessage",
     override val ok: Boolean = true,
@@ -550,8 +592,8 @@ private val NATION_SETTING_TYPES = setOf(
 )
 
 private val BOOLEAN_OK_TYPES = setOf(
-    "dieOnPrestart", "buildNationCandidate", "instantRetreat", "vacation",
-    "setMySetting", "dropItem", "checkOwner", "changePermission", "kick", "appoint",
+    "dieOnPrestart", "buildNationCandidate", "instantRetreat",
+    "dropItem", "checkOwner", "changePermission", "kick", "appoint",
     "claimNpc", "tournamentStart", "tournamentReset",
     "adminGeneralModeration", "adminWorldSettings",
 )
@@ -561,6 +603,7 @@ private val COMMAND_LIFECYCLE_TYPES = setOf(
     "queueMutation",
     "executionApplied",
     "executionRejected",
+    "profileIconSync",
 )
 
 /** The troop-intake ops sharing the collapsed [TroopActionResult] shape (slice B). */
@@ -625,6 +668,9 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             // W6a 메시지 — 단일-타입 (콜랩스 셋이 아니라 직접 매핑).
             "sendMessage" -> SendMessageResult.serializer()
             "deleteMessage" -> DeleteMessageResult.serializer()
+            "setMySetting" -> MySettingResult.serializer()
+            "vacation" -> VacationResult.serializer()
+            "readLatestMessage" -> ReadLatestMessageResult.serializer()
             "inheritResetTurnTime" -> if (ok) InheritResetTurnTimeOk.serializer() else InheritResetTurnTimeFail.serializer()
             "inheritResetSpecialWar" -> if (ok) InheritResetSpecialWarOk.serializer() else InheritResetSpecialWarFail.serializer()
             "inheritSetNextSpecialWar" -> if (ok) InheritSetNextSpecialWarOk.serializer() else InheritSetNextSpecialWarFail.serializer()
@@ -646,6 +692,7 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "auctionBid" -> if (ok) AuctionBidOk.serializer() else AuctionBidFail.serializer()
             "placeBet" -> if (ok) PlaceBetOk.serializer() else PlaceBetFail.serializer()
             "acceptDiplomaticMessage" -> if (ok) AcceptDiplomaticMessageOk.serializer() else AcceptDiplomaticMessageFail.serializer()
+            "acceptRaiseInvaderMessage" -> if (ok) AcceptRaiseInvaderMessageOk.serializer() else AcceptRaiseInvaderMessageFail.serializer()
             "declineDiplomaticMessage" -> if (ok) DeclineDiplomaticMessageOk.serializer() else DeclineDiplomaticMessageFail.serializer()
             "makeGeneral" -> if (ok) MakeGeneralOk.serializer() else MakeGeneralFail.serializer()
             else -> throw IllegalArgumentException("unknown result type=$type")

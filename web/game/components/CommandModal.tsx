@@ -9,15 +9,23 @@
 // Submission contract (matches game-api CommandController.kt): POST /api/command/{code}?generalId&turnIdx
 // with the collected args as the JSON body. generalId is the caller's OWN id (front-info.general.
 // generalId); turnIdx is the target reservation slot. Responses:
-//   - 202 {status:"AVAILABLE", requestId, turnIdx}  → success toast, close.
-//   - 200 {status:"BLOCKED"|"UNKNOWN", reason}       → render the PHP-faithful reason as INFO (not error).
+//   - intake `AVAILABLE` means queued only; wait for the terminal command result before showing success.
+//   - terminal deny / pending renders the PHP-faithful reason or 처리 지연 as INFO and keeps the modal open.
 //
 // No-arg commands reserve instantly on click; reqArg commands open the relevant field sub-form first.
 // If availableCommands() is absent/empty, surface the failure instead of fabricating a local command list.
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
-import { inferArgType, argFieldName } from '../lib/command-arg-types';
+import {
+    inferArgType,
+    argFieldName,
+    commandForm,
+    type CommandFieldSpec,
+    type CommandFormSpec,
+} from '../lib/command-arg-types';
+import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
+import type { GameConstResponse } from '../lib/types';
 import type {
     AvailableCommand,
     AvailableCommandCategory,
@@ -65,6 +73,7 @@ interface CommandModalProps {
 }
 
 type CommandArgBody = Record<string, unknown> | null;
+type CommandFormValues = Record<string, unknown>;
 
 function normalize(res: AvailableCommandsResponse | null): AvailableCommandCategory[] {
     if (!res) return [];
@@ -79,6 +88,277 @@ function normalize(res: AvailableCommandsResponse | null): AvailableCommandCateg
 function resolveArgType(cmd: AvailableCommand): CommandArgType | null {
     if (!cmd.reqArg) return null;
     return cmd.argType ?? inferArgType(cmd.value);
+}
+
+const FIELD_LABELS: Record<string, string> = {
+    amount: '금액',
+    amountList: '금 / 쌀',
+    buyRice: '군량 구입',
+    colorType: '국가 색상',
+    commandType: '전략 명령',
+    destArmType: '전환 대상 병과',
+    destCityID: '도시',
+    destGeneralID: '장수',
+    destNationID: '국가',
+    isGold: '금 사용',
+    itemCode: '장비',
+    itemType: '장비 종류',
+    month: '월',
+    nationName: '국명',
+    nationType: '국가 성향',
+    srcArmType: '감소 대상 병과',
+    year: '년',
+};
+
+function initialFieldValue(field: CommandFieldSpec): unknown {
+    if (field.control === 'toggle') return true;
+    if (field.control === 'amountList') return [field.min ?? 0, field.min ?? 0];
+    if (field.control === 'amount') return field.min ?? 0;
+    if (field.control === 'number') return field.min ?? null;
+    if (field.control === 'text') return '';
+    return null;
+}
+
+function initialFormValues(spec: CommandFormSpec): CommandFormValues {
+    return Object.fromEntries(spec.fields.map((field) => [field.name, initialFieldValue(field)]));
+}
+
+function fieldComplete(field: CommandFieldSpec, value: unknown): boolean {
+    if (!field.required) return true;
+    if (field.control === 'amountList') {
+        return Array.isArray(value) && value.length === 2 && value.every((item) =>
+            typeof item === 'number'
+            && Number.isFinite(item)
+            && (field.min == null || item >= field.min)
+            && (field.max == null || item <= field.max),
+        );
+    }
+    if (field.valueType === 'string') {
+        return typeof value === 'string'
+            && value.trim().length > 0
+            && (field.min == null || value.length >= field.min)
+            && (field.max == null || value.length <= field.max);
+    }
+    if (field.valueType === 'bool') return typeof value === 'boolean';
+    return typeof value === 'number'
+        && Number.isFinite(value)
+        && (field.min == null || value >= field.min)
+        && (field.max == null || value <= field.max);
+}
+
+interface StructuredCommandFormProps {
+    spec: CommandFormSpec;
+    values: CommandFormValues;
+    onChange: (name: string, value: unknown) => void;
+    command: AvailableCommand;
+    generalId: number;
+    nationId?: number;
+}
+
+function StructuredCommandForm({
+    spec,
+    values,
+    onChange,
+    command,
+    generalId,
+    nationId,
+}: StructuredCommandFormProps) {
+    const [constants, setConstants] = useState<GameConstResponse | null>(null);
+
+    useEffect(() => {
+        if (!spec.fields.some((field) => field.control === 'select')) return;
+        let active = true;
+        api.gameConst()
+            .then((result) => {
+                if (active) setConstants(result);
+            })
+            .catch(() => {
+                if (active) setConstants(null);
+            });
+        return () => {
+            active = false;
+        };
+    }, [spec]);
+
+    function selectOptions(field: CommandFieldSpec): Array<{ value: string | number; label: string }> {
+        if (field.optionSource === 'armTypes') {
+            return Array.from(new Set(constants?.gameUnitConst?.map((unit) => unit.armType) ?? []))
+                .map((value) => ({ value, label: String(value) }));
+        }
+        if (field.optionSource === 'crewTypes') {
+            return (constants?.gameUnitConst ?? []).map((unit) => ({ value: unit.id, label: unit.name }));
+        }
+        if (field.optionSource === 'nationColors') {
+            const colors = constants?.gameConst?.nationColors ?? [];
+            return colors.map((color, value) => ({ value, label: color }));
+        }
+        if (field.optionSource === 'nationTypes') {
+            return (constants?.iAction?.nationType ?? []).map((item) => ({
+                value: item.value,
+                label: item.name ?? item.value,
+            }));
+        }
+        if (field.optionSource === 'items') {
+            return (constants?.iAction?.item ?? []).map((item) => ({
+                value: item.value,
+                label: item.name ?? item.value,
+            }));
+        }
+        if (field.optionSource === 'itemTypes') {
+            return [
+                { value: 'horse', label: '명마' },
+                { value: 'weapon', label: '무기' },
+                { value: 'book', label: '서적' },
+                { value: 'item', label: '도구' },
+            ];
+        }
+        if (field.optionSource === 'strategyCommands') {
+            const table = constants?.gameConst?.availableChiefCommand;
+            if (!table || typeof table !== 'object' || Array.isArray(table)) return [];
+            const strategy = (table as Record<string, unknown>)['전략'];
+            if (!Array.isArray(strategy)) return [];
+            return strategy.filter((value): value is string => typeof value === 'string')
+                .map((value) => ({ value, label: value.replace(/^che_/, '') }));
+        }
+        return [];
+    }
+
+    return (
+        <>
+            {spec.fields.map((field) => {
+                const value = values[field.name];
+                const label = FIELD_LABELS[field.name] ?? field.name;
+                if (field.optionSource === 'cities') {
+                    return (
+                        <label key={field.name}>
+                            <span>{label}</span>
+                            <SelectCityField
+                                commandKey={command.value}
+                                commandName={command.simpleName}
+                                value={typeof value === 'number' ? value : null}
+                                onChange={(next) => onChange(field.name, next)}
+                            />
+                        </label>
+                    );
+                }
+                if (field.optionSource === 'generals') {
+                    return (
+                        <label key={field.name}>
+                            <span>{label}</span>
+                            <SelectGeneralField
+                                value={typeof value === 'number' ? value : null}
+                                onChange={(next) => onChange(field.name, next)}
+                                ownGeneralId={generalId}
+                            />
+                        </label>
+                    );
+                }
+                if (field.optionSource === 'nations') {
+                    return (
+                        <label key={field.name}>
+                            <span>{label}</span>
+                            <SelectNationField
+                                value={typeof value === 'number' ? value : null}
+                                onChange={(next) => onChange(field.name, next)}
+                                ownNationId={nationId}
+                            />
+                        </label>
+                    );
+                }
+                if (field.control === 'amount') {
+                    return (
+                        <label key={field.name}>
+                            <span>{label}</span>
+                            <SelectAmountField
+                                value={typeof value === 'number' ? value : null}
+                                onChange={(next) => onChange(field.name, next)}
+                                min={field.min ?? undefined}
+                                max={field.max ?? undefined}
+                            />
+                        </label>
+                    );
+                }
+                if (field.control === 'amountList') {
+                    const amounts = Array.isArray(value) ? value : [field.min ?? 0, field.min ?? 0];
+                    return (
+                        <fieldset key={field.name}>
+                            <legend>{label}</legend>
+                            {['금', '쌀'].map((resource, index) => (
+                                <label key={resource}>
+                                    <span>{resource}</span>
+                                    <input
+                                        type="number"
+                                        value={typeof amounts[index] === 'number' ? amounts[index] : 0}
+                                        min={field.min ?? undefined}
+                                        max={field.max ?? undefined}
+                                        onChange={(event) => {
+                                            const next = [...amounts];
+                                            next[index] = Number(event.target.value);
+                                            onChange(field.name, next);
+                                        }}
+                                    />
+                                </label>
+                            ))}
+                        </fieldset>
+                    );
+                }
+                if (field.control === 'toggle') {
+                    return (
+                        <label key={field.name}>
+                            <input
+                                type="checkbox"
+                                checked={value === true}
+                                onChange={(event) => onChange(field.name, event.target.checked)}
+                            />
+                            <span>{label}</span>
+                        </label>
+                    );
+                }
+                if (field.control === 'select') {
+                    const options = selectOptions(field);
+                    return (
+                        <label key={field.name}>
+                            <span>{label}</span>
+                            <select
+                                value={value == null ? '' : String(value)}
+                                onChange={(event) => {
+                                    const next = field.valueType === 'int'
+                                        ? Number(event.target.value)
+                                        : event.target.value;
+                                    onChange(field.name, next);
+                                }}
+                            >
+                                <option value="">선택</option>
+                                {options.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                        </label>
+                    );
+                }
+                return (
+                    <label key={field.name}>
+                        <span>{label}</span>
+                        <input
+                            type={field.control === 'number' ? 'number' : 'text'}
+                            value={typeof value === 'string' || typeof value === 'number' ? value : ''}
+                            min={field.min ?? undefined}
+                            max={field.max ?? undefined}
+                            minLength={field.control === 'text' ? field.min ?? undefined : undefined}
+                            maxLength={field.control === 'text' ? field.max ?? undefined : undefined}
+                            required={field.required}
+                            onChange={(event) => {
+                                const next = field.valueType === 'int'
+                                    ? Number(event.target.value)
+                                    : event.target.value;
+                                onChange(field.name, next);
+                            }}
+                        />
+                    </label>
+                );
+            })}
+        </>
+    );
 }
 
 export default function CommandModal({
@@ -117,6 +397,7 @@ export default function CommandModal({
     const [selected, setSelected] = useState<AvailableCommand | null>(pinned);
     const [argValue, setArgValue] = useState<number | null>(null);
     const [argBody, setArgBody] = useState<CommandArgBody>(null);
+    const [formValues, setFormValues] = useState<CommandFormValues>({});
     const [loading, setLoading] = useState(false);
     const [blockedReason, setBlockedReason] = useState<string | null>(null);
 
@@ -152,6 +433,7 @@ export default function CommandModal({
     const categories = useMemo(() => catalog.map((c) => c.category), [catalog]);
     const filtered = useMemo(() => catalog.find((c) => c.category === cat)?.values ?? [], [catalog, cat]);
     const argType = selected ? resolveArgType(selected) : null;
+    const formSpec = selected ? commandForm(selected) : null;
 
     function pick(cmd: AvailableCommand) {
         setBlockedReason(null);
@@ -163,6 +445,7 @@ export default function CommandModal({
         setSelected(cmd);
         setArgValue(null);
         setArgBody(null);
+        setFormValues(commandForm(cmd) ? initialFormValues(commandForm(cmd)!) : {});
     }
 
     async function submit(cmd: AvailableCommand, body: Record<string, unknown>) {
@@ -172,26 +455,20 @@ export default function CommandModal({
             // Page-fixed args (auctionId/bettingId/nationId/isUnique …) merge BENEATH the picked arg
             // so an explicit user pick wins on a key collision.
             const fullBody = { ...(extraArgs ?? {}), ...body };
-            let res: { status: string; reason?: string };
-            if (isNationCommand) {
-                res = await api.commandQueue.nationBulk(generalId, [
-                    { action: cmd.value, turnList: [turnIdx], arg: fullBody },
-                ]);
-            } else {
-                res = await api.command<{ status: string; reason?: string }>(
-                    cmd.value,
-                    fullBody,
-                    generalId,
-                    turnIdx,
-                );
-            }
-            if (res.status === 'AVAILABLE') {
+            const terminalResult = await submitCommandAndAwaitResult(() => {
+                if (isNationCommand) {
+                    return api.commandQueue.nationBulk(generalId, [
+                        { action: cmd.value, turnList: [turnIdx], arg: fullBody },
+                    ]);
+                }
+                return api.command(cmd.value, fullBody, generalId, turnIdx);
+            });
+            if (terminalResult.status === 'applied') {
                 onToast(`${cmd.simpleName} 명령이 예약되었습니다.`, 'success');
                 onReserved?.();
                 onClose();
             } else {
-                // BLOCKED / UNKNOWN → render the PHP-faithful reason as info (NOT an error).
-                setBlockedReason(res.reason ?? '명령을 예약할 수 없습니다.');
+                setBlockedReason(terminalResult.reason ?? '명령을 예약할 수 없습니다.');
             }
         } catch (e) {
             onToast(e instanceof Error ? e.message : '명령 실패', 'error');
@@ -201,11 +478,20 @@ export default function CommandModal({
     }
 
     function submitWithArg() {
-        if (!selected || !argType) return;
+        if (!selected) return;
         if (argBody != null) {
             void submit(selected, argBody);
             return;
         }
+        if (formSpec) {
+            if (formSpec.fields.some((field) => !fieldComplete(field, formValues[field.name]))) {
+                setBlockedReason('필수 값을 입력해 주세요.');
+                return;
+            }
+            void submit(selected, formValues);
+            return;
+        }
+        if (!argType) return;
         if (argValue == null) {
             setBlockedReason('대상을 선택해 주세요.');
             return;
@@ -284,6 +570,7 @@ export default function CommandModal({
                                     setSelected(null);
                                     setArgValue(null);
                                     setArgBody(null);
+                                    setFormValues({});
                                 }
                             }}
                         >
@@ -294,7 +581,20 @@ export default function CommandModal({
                             <p className="cmd-item-sub">{selected.title}</p>
                         )}
                         <div className="cmd-form">
-                            {argType === 'city' && (
+                            {formSpec && argType !== 'founding' && argType !== 'recruit' && (
+                                <StructuredCommandForm
+                                    spec={formSpec}
+                                    values={formValues}
+                                    onChange={(name, value) => {
+                                        setFormValues((current) => ({ ...current, [name]: value }));
+                                        setBlockedReason(null);
+                                    }}
+                                    command={selected}
+                                    generalId={generalId}
+                                    nationId={nationId}
+                                />
+                            )}
+                            {!formSpec && argType === 'city' && (
                                 <SelectCityField
                                     commandKey={selected.value}
                                     commandName={selected.simpleName}
@@ -302,13 +602,13 @@ export default function CommandModal({
                                     onChange={setArgValue}
                                 />
                             )}
-                            {argType === 'general' && (
+                            {!formSpec && argType === 'general' && (
                                 <SelectGeneralField value={argValue} onChange={setArgValue} ownGeneralId={generalId} />
                             )}
-                            {argType === 'nation' && (
+                            {!formSpec && argType === 'nation' && (
                                 <SelectNationField value={argValue} onChange={setArgValue} ownNationId={nationId} />
                             )}
-                            {argType === 'amount' && (
+                            {!formSpec && argType === 'amount' && (
                                 <SelectAmountField
                                     value={argValue}
                                     onChange={setArgValue}
@@ -320,7 +620,7 @@ export default function CommandModal({
                             {argType === 'founding' && <SelectFoundingField onChange={setArgBody} />}
                             {argType === 'recruit' && <SelectRecruitField onChange={setArgBody} />}
                             {/* reqArg but unknown argType → free numeric target input (never crash). */}
-                            {selected.reqArg && !argType && (
+                            {selected.reqArg && !argType && !formSpec && (
                                 <label>
                                     <span>대상</span>
                                     <input

@@ -88,13 +88,14 @@ class RatesPromoBodiesTest {
     private fun candidate(
         id: Int,
         officerLevel: Int = 1,
+        leadership: Double = 100.0,
         strength: Double = 100.0,
         intel: Double = 100.0,
         npcType: Int = 2,
         killturn: Int = 1000,
         belong: Int = 5,
     ) = RatesPromoFamily.PromotionCandidate(
-        generalId = id, officerLevel = officerLevel, strength = strength, intel = intel,
+        generalId = id, officerLevel = officerLevel, leadership = leadership, strength = strength, intel = intel,
         npcType = npcType, killturn = killturn, belong = belong, hasNoChief = false, hasNoAmbassador = false,
     )
 
@@ -262,6 +263,61 @@ class RatesPromoBodiesTest {
         assertTrue(rng.draws.isEmpty(), "empty chief slot → newChiefProb=1, NO nextBool draw (PHP :4097)")
     }
 
+    @Test
+    fun `choosePromotion ranks candidates by double leadership plus strength and intel`() {
+        val rng = RecordingRng("promo-stat-order")
+        val deltas = ArrayList<Delta>()
+        val ctx = RatesPromoFamily.RatesPromoContext(
+            rng = rng,
+            nationId = 7,
+            nationLevel = 1,
+            chiefSet = emptySet(),
+            chiefGeneralLevels = emptySet(),
+            selfOfficerLevel = 12,
+            chiefStatMin = 65.0,
+            killturnEnv = 100,
+            turnTerm = 120,
+            nationGenerals = listOf(
+                candidate(101, leadership = 65.0, strength = 65.0, intel = 65.0),
+                candidate(202, leadership = 100.0, strength = 100.0, intel = 100.0),
+            ),
+            deltaSink = recorder(deltas),
+        )
+
+        RatesPromoFamily.bodies(ctx).choosePromotion()
+
+        assertEquals(
+            listOf(Delta("general", 202, "officer_level", 11)),
+            deltas.filter { it.kind == "general" && it.key == "officer_level" },
+        )
+    }
+
+    @Test
+    fun `choosePromotion cannot reuse a newly promoted general in a later slot of the same pass`() {
+        val rng = RecordingRng("promo-single-pass")
+        val deltas = ArrayList<Delta>()
+        val ctx = RatesPromoFamily.RatesPromoContext(
+            rng = rng,
+            nationId = 7,
+            nationLevel = 7,
+            chiefSet = emptySet(),
+            chiefGeneralLevels = emptySet(),
+            selfOfficerLevel = 12,
+            chiefStatMin = 65.0,
+            killturnEnv = 100,
+            turnTerm = 120,
+            nationGenerals = listOf(candidate(101)),
+            deltaSink = recorder(deltas),
+        )
+
+        RatesPromoFamily.bodies(ctx).choosePromotion()
+
+        assertEquals(
+            listOf(Delta("general", 101, "officer_level", 11)),
+            deltas.filter { it.kind == "general" && it.key == "officer_level" },
+        )
+    }
+
     // ==================================================================================================
     // (C) chooseTexRate (:4172-4199) — ZERO draws; the avg→rate ladder; queues war=0 + rate deltas.
     // ==================================================================================================
@@ -319,7 +375,7 @@ class RatesPromoBodiesTest {
             rng = rng, nationId = 7, nationLevel = 1,
             chiefStatMin = 65.0, killturnEnv = 0, turnTerm = 120,
             supplyCities = emptyList(),
-            goldIncome = 99999, riceIncome = 0,
+            goldIncome = 99999.0, riceIncome = 0.0,
             deltaSink = recorder(deltas),
         )
 
@@ -343,8 +399,8 @@ class RatesPromoBodiesTest {
             chiefStatMin = 65.0, killturnEnv = 0, turnTerm = 120,
             supplyCities = listOf(develCity(1.0)),
             nationGold = 0, nationRice = 0,
-            goldIncome = 100, riceIncome = 0,
-            warGoldIncome = 0, wallRiceIncome = 0,
+            goldIncome = 100.0, riceIncome = 0.0,
+            warGoldIncome = 0.0, wallRiceIncome = 0.0,
             nationGenerals = emptyList(),
             reqNationGold = 10000, reqNationRice = 12000,
             deltaSink = recorder(deltas),
@@ -368,7 +424,7 @@ class RatesPromoBodiesTest {
             chiefStatMin = 65.0, killturnEnv = 0, turnTerm = 120,
             supplyCities = listOf(develCity(1.0)),
             nationGold = 0, nationRice = 0,
-            riceIncome = 50, wallRiceIncome = 50,
+            riceIncome = 50.0, wallRiceIncome = 50.0,
             nationGenerals = emptyList(),
             reqNationGold = 10000, reqNationRice = 12000,
             deltaSink = recorder(deltas),

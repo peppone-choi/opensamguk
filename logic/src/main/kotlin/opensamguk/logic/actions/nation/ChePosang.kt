@@ -3,6 +3,8 @@ package opensamguk.logic.actions.nation
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.beChief
@@ -36,6 +38,13 @@ fun chePosang(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipeline): Na
     override val name: String get() = "포상"
     override val argsSchema: Map<String, Any?> get() =
         mapOf("isGold" to "bool", "amount" to "int", "destGeneralID" to "int")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("isGold", "bool", "toggle", "resourceKinds"),
+            CommandFieldSpec("amount", "int", "amount", min = 100, max = GameConst.maxResourceActionAmount),
+            CommandFieldSpec("destGeneralID", "int", "select", "generals"),
+        ),
+    )
 
     override fun getPreReqTurn(): Int = 0
 

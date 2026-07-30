@@ -80,7 +80,7 @@ class TurnDaemonCommandResultWireTest {
     }
 
     @Test
-    fun `command lifecycle result round-trips for durable reservation and queue terminals`() {
+    fun `command lifecycle result round-trips for durable reservation queue and immediate terminals`() {
         val reservation = CommandLifecycleResult(
             type = "reservationAccepted",
             ok = true,
@@ -113,6 +113,13 @@ class TurnDaemonCommandResultWireTest {
             turnIdx = 0,
             reason = "조건 불충족",
         )
+        val profileIconSync = CommandLifecycleResult(
+            type = "profileIconSync",
+            ok = true,
+            commandKind = "IMMEDIATE",
+            actionCode = "ProfileIconSync",
+            turnIdx = 0,
+        )
 
         assertEquals(
             reservation,
@@ -142,5 +149,32 @@ class TurnDaemonCommandResultWireTest {
                 WireJson.encodeToString(TurnDaemonCommandResult.serializer(), executionRejected),
             ),
         )
+        assertEquals(
+            profileIconSync,
+            WireJson.decodeFromString(
+                TurnDaemonCommandResult.serializer(),
+                WireJson.encodeToString(TurnDaemonCommandResult.serializer(), profileIconSync),
+            ),
+        )
+    }
+
+    @Test
+    fun `account mailbox and invader terminal results round trip as dedicated types`() {
+        val results = listOf<TurnDaemonCommandResult>(
+            MySettingResult(ok = true, generalId = 10),
+            VacationResult(ok = false, generalId = 10, reason = "거부"),
+            ReadLatestMessageResult(ok = true, generalId = 10, messageType = "private", latestRead = 42),
+            AcceptRaiseInvaderMessageOk(messageId = 7, invaderNationCount = 3),
+            AcceptRaiseInvaderMessageFail(messageId = 8, reason = "거부"),
+        )
+        results.forEach { result ->
+            assertEquals(
+                result,
+                WireJson.decodeFromString(
+                    TurnDaemonCommandResult.serializer(),
+                    WireJson.encodeToString(TurnDaemonCommandResult.serializer(), result),
+                ),
+            )
+        }
     }
 }

@@ -59,14 +59,16 @@ local process skill is available. Its seam is:
 
 ```text
 PHP path + line range → real golden capture (when RNG-bearing) → logic/replay gate
-  → game-api reserve + CommandWireMapper intakeCodes/toCommand
-  → TurnDaemonCommand → engine dispatcher/handler
-  → ChangeRecorder created/dirty/deleted → JdbcFlushExecutor
+  → immediate daemon: CommandWireMapper intakeCodes/toCommand
+  → TurnDaemonCommand → engine dispatcher/handler → ChangeRecorder → JdbcFlushExecutor
+  → turn-reserved che_*: reserved-ring admission/read → due ring
+  → ReservedTurnHandler → CommandRegistry → ChangeRecorder → JdbcFlushExecutor
   → web/game submit route → independent review
 ```
 
-An action absent from `intakeCodes` can precheck as available and still be denied by the engine;
-that is an open parity gap. Keep comments in Korean. Identifiers remain conventional English,
+A missing `intakeCodes` entry is an open gap only for an immediate daemon command. Turn-reserved
+`che_*` commands instead require the reserved-ring and `ReservedTurnHandler`/`CommandRegistry`
+path. Use English code comments. Identifiers remain conventional English,
 while game content and PHP-parity log strings retain their required Korean and markup exactly.
 
 Non-negotiable checks:

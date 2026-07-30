@@ -2,7 +2,11 @@ package opensamguk.engine.turn
 
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.ai.families.RatesPromoFamily
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.domestic.getGoldIncome
+import opensamguk.logic.domestic.getRiceIncome
+import opensamguk.logic.domestic.getWallIncome
 import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
 import kotlin.test.Test
@@ -90,11 +94,25 @@ class AiTurnAdapterMaterializeTest {
         meta = linkedMapOf("trust" to 50, "pop" to 50_000, "pop_max" to 50_000),
     )
 
-    private fun nation(id: Int = 1, capital: Int = CAP, rice: Int = 100_000, gold: Int = 100_000) =
-        Nation(id = id, name = "n$id", color = "#000", level = 7, capitalCityId = capital, gold = gold, rice = rice)
+    private fun nation(
+        id: Int = 1,
+        capital: Int = CAP,
+        rice: Int = 100_000,
+        gold: Int = 100_000,
+        meta: Map<String, Any?> = emptyMap(),
+    ) = Nation(
+        id = id,
+        name = "n$id",
+        color = "#000",
+        level = 7,
+        capitalCityId = capital,
+        gold = gold,
+        rice = rice,
+        meta = meta,
+    )
 
-    private fun baseState() = TurnWorldState(
-        id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+    private fun baseState(meta: Map<String, Any?> = emptyMap()) = TurnWorldState(
+        id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0, meta = meta,
     )
 
     /** A war world: nation 1 (front capital + backup) vs enemy nation 2, with an active war diplomacy row. */
@@ -111,6 +129,29 @@ class AiTurnAdapterMaterializeTest {
 
     private fun adapter(world: InMemoryTurnWorld) =
         AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+
+    @Test
+    fun `clearing a missing moving target preserves PHP empty aux storage`() {
+        val ai = adapter(warWorld(listOf(general(id = 75))))
+
+        assertEquals(
+            linkedMapOf("aux" to "[]"),
+            ai.withAuxValue(linkedMapOf("aux" to "[]"), "movingTargetCityID", null),
+        )
+        assertEquals(
+            linkedMapOf("aux" to emptyList<Any?>()),
+            ai.withAuxValue(linkedMapOf("aux" to emptyList<Any?>()), "movingTargetCityID", null),
+        )
+        assertEquals(
+            linkedMapOf("aux" to emptyList<Any?>()),
+            ai.withAuxValue(
+                linkedMapOf("aux" to linkedMapOf("movingTargetCityID" to 56)),
+                "movingTargetCityID",
+                null,
+            ),
+            "PHP unsets the final aux key and Json::encode materializes the empty PHP array as []",
+        )
+    }
 
     // ── (gendom) a 통솔장 in a war nation at a low-trust front city fires a real develop 내정 command ──
 
@@ -228,6 +269,198 @@ class AiTurnAdapterMaterializeTest {
         assertTrue(
             recorder.dirtyGeneralIds().any { it in 30..36 },
             "choosePromotion materialised the nationGenerals bucket and persisted a promoted chief",
+        )
+    }
+
+    @Test
+    fun `production adapter assembles server nation and human-option policy layers`() {
+        val stateMeta = linkedMapOf<String, Any?>(
+            "autorun_user" to linkedMapOf("options" to linkedMapOf("develop" to true)),
+            "npc_general_policy" to linkedMapOf("priority" to listOf("출병")),
+            "npc_nation_policy" to linkedMapOf(
+                "priority" to listOf("선전포고"),
+                "values" to linkedMapOf("cureThreshold" to 20),
+            ),
+        )
+        val nationEnv = linkedMapOf<String, Any?>(
+            "npc_general_policy" to linkedMapOf("priority" to listOf("일반내정")),
+            "npc_nation_policy" to linkedMapOf(
+                "priority" to listOf("천도"),
+                "values" to linkedMapOf("cureThreshold" to 40),
+            ),
+        )
+        val human = general(id = 1, officerLevel = 12, npcState = 0)
+        val state = baseState(stateMeta)
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(human),
+                listOf(frontCapital()),
+                listOf(nation(meta = linkedMapOf("nation_env" to nationEnv))),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+
+        val policies = adapter(world).assemblePolicies(human, nationTech = 0, develCost = 100)
+
+        assertEquals(listOf("일반내정"), policies.general.priority, "nation general policy overrides server priority")
+        assertTrue(policies.general.can일반내정, "human autorun develop option enables the domestic gate")
+        assertEquals(listOf("천도"), policies.nation.priority, "nation nation-policy overrides server priority")
+        assertEquals(40, policies.nation.cureThreshold, "nation values override the server value")
+    }
+
+    @Test
+    fun `month twelve bill uses the newly selected tax rate and preserves double income`() {
+        val chief = general(id = 1, officerLevel = 12, leadership = 90)
+        val subordinate = general(id = 2, officerLevel = 1)
+        val developed = City(
+            id = CAP,
+            name = "낙양",
+            nationId = 1,
+            level = 8,
+            agriculture = 100,
+            agricultureMax = 100,
+            commerce = 100,
+            commerceMax = 100,
+            security = 100,
+            securityMax = 100,
+            defence = 100,
+            defenceMax = 100,
+            wall = 100,
+            wallMax = 100,
+            population = 10_010,
+            populationMax = 10_010,
+            supplyState = 1,
+            meta = linkedMapOf("trust" to 100),
+        )
+        val state = TurnWorldState(1, YEAR, 12, 3600, t0)
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(chief, subordinate),
+                listOf(developed),
+                listOf(nation(gold = 0, meta = linkedMapOf("rate" to 10))),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+        val ai = adapter(world)
+
+        ai.chooseNationTurn(1, ReservedTurn("휴식", ""), LastTurn())
+        ai.drainNationPassDeltas(ChangeRecorder())
+
+        val updated = world.getNationById(1)!!
+        val chosenRate = (updated.meta["rate"] as Number).toInt()
+        val chosenBill = (updated.meta["bill"] as Number).toInt()
+        val logicCity = PerTurnOverlay.toLogicCity(developed)
+        val expectedIncome = getGoldIncome(
+            listOf(logicCity), CAP, updated.level, chosenRate.toDouble(), null, pipeline, emptyMap(),
+        )
+        val expectedBill = RatesPromoFamily.billRate(
+            income = expectedIncome,
+            outcome = 400,
+            currentRes = updated.gold,
+            reqNationRes = 10_000,
+            hasSupplyCities = true,
+            rng = opensamguk.logic.ai.AiSeed.rng(FIXTURE_HIDDEN_SEED, YEAR, 12, chief.id),
+        )
+        val staleRateBill = RatesPromoFamily.billRate(
+            income = getGoldIncome(listOf(logicCity), CAP, updated.level, 10.0, null, pipeline, emptyMap()),
+            outcome = 400,
+            currentRes = updated.gold,
+            reqNationRes = 10_000,
+            hasSupplyCities = true,
+            rng = opensamguk.logic.ai.AiSeed.rng(FIXTURE_HIDDEN_SEED, YEAR, 12, chief.id),
+        )
+
+        assertEquals(25, chosenRate)
+        assertEquals(expectedBill, chosenBill)
+        assertNotEquals(staleRateBill, chosenBill, "the bill must not reuse the pre-choice rate")
+        assertTrue(expectedIncome % 1.0 != 0.0, "the production income remains a Double through the bill formula")
+    }
+
+    @Test
+    fun `month six rice bill uses the newly selected tax rate and real income streams`() {
+        val chief = general(id = 1, officerLevel = 12, leadership = 90)
+        val subordinate = general(id = 2, officerLevel = 1)
+        val developed = City(
+            id = CAP,
+            name = "낙양",
+            nationId = 1,
+            level = 8,
+            agriculture = 100,
+            agricultureMax = 100,
+            commerce = 100,
+            commerceMax = 100,
+            security = 100,
+            securityMax = 100,
+            defence = 100,
+            defenceMax = 100,
+            wall = 100,
+            wallMax = 100,
+            population = 10_010,
+            populationMax = 10_010,
+            supplyState = 1,
+            meta = linkedMapOf("trust" to 100),
+        )
+        val state = TurnWorldState(1, YEAR, 6, 3600, t0)
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(chief, subordinate),
+                listOf(developed),
+                listOf(nation(rice = 0, meta = linkedMapOf("rate" to 10))),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+        val ai = adapter(world)
+
+        ai.chooseNationTurn(1, ReservedTurn("휴식", ""), LastTurn())
+        ai.drainNationPassDeltas(ChangeRecorder())
+
+        val updated = world.getNationById(1)!!
+        val chosenRate = (updated.meta["rate"] as Number).toInt()
+        val chosenBill = (updated.meta["bill"] as Number).toInt()
+        val logicCity = PerTurnOverlay.toLogicCity(developed)
+        val expectedIncome =
+            getRiceIncome(listOf(logicCity), CAP, updated.level, chosenRate.toDouble(), null, pipeline, emptyMap()) +
+                getWallIncome(listOf(logicCity), CAP, updated.level, chosenRate.toDouble(), null, pipeline, emptyMap())
+        val expectedBill = RatesPromoFamily.billRate(
+            income = expectedIncome,
+            outcome = 400,
+            currentRes = updated.rice,
+            reqNationRes = 12_000,
+            hasSupplyCities = true,
+            rng = opensamguk.logic.ai.AiSeed.rng(FIXTURE_HIDDEN_SEED, YEAR, 6, chief.id),
+        )
+
+        assertEquals(25, chosenRate)
+        assertEquals(expectedBill, chosenBill)
+        assertTrue(expectedIncome % 1.0 != 0.0, "rice and wall income stay Double through the bill formula")
+    }
+
+    @Test
+    fun `denied nation reservation writes the exact PHP G12 action log`() {
+        val ruler = general(id = 1, officerLevel = 12)
+        val state = baseState()
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(ruler),
+                listOf(frontCapital()),
+                listOf(nation()),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+
+        adapter(world).chooseNationTurn(
+            1,
+            ReservedTurn("che_발령", """{"destGeneralID":1,"destCityID":3}"""),
+            LastTurn(),
+        )
+
+        assertEquals(
+            "<C>●</>1월:본인입니다 <Y>g1</> 발령 실패. <1>12:34</>",
+            world.peekLogs().single().text,
         )
     }
 

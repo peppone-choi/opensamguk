@@ -43,6 +43,12 @@ data class GeneralAccessLog(
     val refreshScoreTotal: Int = 0,
 )
 
+data class GeneralTurnSeed(
+    val actionCode: String,
+    val argJson: String = "{}",
+    val brief: String = actionCode,
+)
+
 data class TurnGeneral(
     val id: Int,
     val userId: String? = null,
@@ -67,6 +73,7 @@ data class TurnGeneral(
     val turnTime: Instant,
     val recentWarTime: Instant? = null,
     val meta: Map<String, Any?> = emptyMap(),
+    val initialTurns: List<GeneralTurnSeed> = emptyList(),
 )
 
 data class City(

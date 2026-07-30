@@ -18,6 +18,7 @@ import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
+import opensamguk.gameapi.web.CommandCatalogRowFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -190,48 +191,20 @@ class ChiefCenterController(
                 category = category,
                 values = codes.map { code ->
                     val def = defByCode.getValue(code)
-                    val reqArg = def.argsSchema.isNotEmpty()
-                    // AvailableCommandsController.toRow와 동일한 (possible, reason) 산출 로직.
-                    val (possible, reason) = when (val result = results?.get(code)) {
-                        null -> true to null // 액터 없음(또는 카탈로그 폴백) → 레지스트리-only, deny reason 없음
-                        PrecheckResult.Available -> true to null
-                        is PrecheckResult.Blocked -> false to result.reason
-                        is PrecheckResult.Unknown ->
-                            // precheck가 부재 요건에 막힘: 인자 명령은 대상만 고르면 됨(possible),
-                            // 인자 없는 명령은 여기서 판정 불가 → UNKNOWN_REASON.
-                            if (reqArg) true to null else false to UNKNOWN_REASON
-                    }
+                    val row = CommandCatalogRowFactory.create(def, results?.get(code), category)
                     ChiefCommand(
-                        value = def.key,
-                        simpleName = def.name,
-                        // 레지스트리에 별도 title 문자열이 없어 name을 표시명으로 사용
-                        // (AvailableCommandsController와 동일 — PHP getCommandDetailTitle 미포팅 flag).
-                        title = def.name,
-                        compensation = 0,
-                        possible = possible,
-                        reqArg = reqArg,
-                        // 인자 폼 타입을 argsSchema 키에서 파생 — AvailableCommandsController와 동일 규칙(날조 아님).
-                        argType = argTypeOf(def.argsSchema.keys),
-                        reason = reason,
+                        value = row.value,
+                        simpleName = row.simpleName,
+                        title = row.title,
+                        compensation = row.compensation,
+                        possible = row.possible,
+                        reqArg = row.reqArg,
+                        argType = row.argType,
+                        form = row.form,
+                        reason = row.reason,
                     )
                 },
             )
         }
-    }
-
-    /** 명령의 `argsSchema` 키에서 모달 필드 타입을 파생(AvailableCommandsController.argTypeOf 정본 미러). */
-    private fun argTypeOf(keys: Set<String>): String? = when {
-        "nationName" in keys && "nationType" in keys && "colorType" in keys -> "founding"
-        "crewType" in keys && "amount" in keys -> "recruit"
-        "destCityID" in keys -> "city"
-        "destNationID" in keys -> "nation"
-        "destGeneralID" in keys -> "general"
-        "amount" in keys -> "amount"
-        else -> null
-    }
-
-    companion object {
-        // AvailableCommandsController.UNKNOWN_REASON과 동일 상수("정보 부족").
-        private const val UNKNOWN_REASON = "정보 부족"
     }
 }

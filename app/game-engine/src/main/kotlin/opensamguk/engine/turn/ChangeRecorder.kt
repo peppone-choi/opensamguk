@@ -5,6 +5,7 @@ import opensamguk.engine.flush.DeltaGenerationSession
 import java.time.Instant
 import opensamguk.infra.persistence.EventInsertRow
 import opensamguk.infra.persistence.GeneralTurnPullRow
+import opensamguk.infra.persistence.GeneralTurnSlotWriteRow
 import opensamguk.infra.persistence.KvWrite
 import opensamguk.infra.persistence.NationTurnPullRow
 import opensamguk.infra.persistence.SelectPoolMutation
@@ -179,6 +180,7 @@ class ChangeRecorder(
 
     /** 투표 채널 (F4 Wave 투표) — vote INSERT (투표 던지기, INSERT 전용; UNIQUE는 DB가 무시). */
     private val voteInserts = mutableListOf<VoteInsert>()
+    private val pendingVoteKeys = LinkedHashSet<Pair<Int, Int>>()
 
     /** 투표 채널 (F4 Wave 투표) — vote_comment INSERT (설문조사 댓글, INSERT 전용). */
     private val voteCommentInserts = mutableListOf<VoteCommentInsert>()
@@ -216,6 +218,7 @@ class ChangeRecorder(
     private val nationSnapshots = mutableListOf<DeletedNationSnapshot>()
     private val nationArchiveSnapshots = mutableListOf<Map<String, Any?>>()
     private val reservedGeneralTurnPulls = mutableListOf<GeneralTurnPullRow>()
+    private val generalTurnSlotWrites = mutableListOf<GeneralTurnSlotWriteRow>()
     private val reservedNationTurnPulls = mutableListOf<NationTurnPullRow>()
 
     val isDirty: Boolean
@@ -241,7 +244,8 @@ class ChangeRecorder(
             nationArchiveSnapshots.isNotEmpty() ||
             gameWinnerUpdates.isNotEmpty() || emperiorInserts.isNotEmpty() || hallUpserts.isNotEmpty() ||
             selectPoolMutations.isNotEmpty() || eventInserts.isNotEmpty() || eventDeletes.isNotEmpty() ||
-            reservedGeneralTurnPulls.isNotEmpty() || reservedNationTurnPulls.isNotEmpty()
+            reservedGeneralTurnPulls.isNotEmpty() || generalTurnSlotWrites.isNotEmpty() ||
+            reservedNationTurnPulls.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -688,6 +692,9 @@ class ChangeRecorder(
         voteInserts.add(VoteInsert(columns))
     }
 
+    fun tryRecordVoteInsert(pollId: Int, generalId: Int): Boolean =
+        pendingVoteKeys.add(pollId to generalId)
+
     /** `vote_comment` INSERT 기록 (F4 Wave 투표, 설문조사 댓글). INSERT 전용. */
     fun recordVoteCommentInsert(columns: Map<String, Any?>) {
         voteCommentInserts.add(VoteCommentInsert(columns))
@@ -761,11 +768,17 @@ class ChangeRecorder(
     fun hallUpserts(): List<HallUpsert> = hallUpserts.toList()
     fun nationArchiveSnapshots(): List<Map<String, Any?>> = nationArchiveSnapshots.toList()
     fun reservedGeneralTurnPulls(): List<GeneralTurnPullRow> = reservedGeneralTurnPulls.toList()
+    fun generalTurnSlotWrites(): List<GeneralTurnSlotWriteRow> = generalTurnSlotWrites.toList()
     fun reservedNationTurnPulls(): List<NationTurnPullRow> = reservedNationTurnPulls.toList()
 
     fun recordGeneralTurnPull(generalId: Int, turnCnt: Int = 1) {
         gateMutation("recordGeneralTurnPull")
         reservedGeneralTurnPulls.add(GeneralTurnPullRow(generalId, turnCnt))
+    }
+
+    fun recordGeneralTurnSlotWrite(row: GeneralTurnSlotWriteRow) {
+        gateMutation("recordGeneralTurnSlotWrite")
+        generalTurnSlotWrites.add(row)
     }
 
     fun recordNationTurnPull(nationId: Int, officerLevel: Int, turnCnt: Int = 1) {
@@ -811,6 +824,7 @@ class ChangeRecorder(
         boardCommentInserts.clear()
         votePollInserts.clear()
         voteInserts.clear()
+        pendingVoteKeys.clear()
         voteCommentInserts.clear()
         inheritanceKvWrites.clear()
         inheritanceLogInserts.clear()
@@ -827,6 +841,7 @@ class ChangeRecorder(
         oldGeneralSnapshots.clear()
         nationSnapshots.clear()
         reservedGeneralTurnPulls.clear()
+        generalTurnSlotWrites.clear()
         reservedNationTurnPulls.clear()
     }
 
@@ -858,6 +873,22 @@ class ChangeRecorder(
         inheritanceKvWrites.add(
             KvWrite("inheritance", namespace, key, listOf(nextValue, aux)),
         )
+    }
+
+    fun pendingInheritanceKv(ownerID: Int, key: String): KvWrite? {
+        val namespace = "inheritance_$ownerID"
+        return inheritanceKvWrites.asReversed().firstOrNull {
+            it.table == "inheritance" && it.namespace == namespace && it.key == key
+        }
+    }
+
+    fun effectiveInheritancePoint(ownerID: Int, key: String): Pair<Double, Any?>? {
+        val pending = pendingInheritanceKv(ownerID, key)?.value as? List<*>
+        if (pending != null) {
+            val value = (pending.getOrNull(0) as? Number)?.toDouble() ?: return null
+            return value to pending.getOrNull(1)
+        }
+        return inheritancePointBase[ownerID to key]
     }
 
     fun preloadInheritancePoints(points: Map<*, *>) {
@@ -915,8 +946,16 @@ class ChangeRecorder(
      *
      * 반환: 생성되어 world에 staged된 [TurnGeneral].
      */
-    fun recordGeneralCreate(world: InMemoryTurnWorld, general: TurnGeneral): TurnGeneral =
-        world.createGeneral(general)
+    fun recordGeneralCreate(
+        world: InMemoryTurnWorld,
+        general: TurnGeneral,
+        initialTurns: List<GeneralTurnSeed> = emptyList(),
+    ): TurnGeneral {
+        require(initialTurns.isEmpty() || initialTurns.size == 30) {
+            "created general initial turn ring must be empty (canonical rest) or exactly 30 slots"
+        }
+        return world.createGeneral(general.copy(initialTurns = initialTurns.toList()))
+    }
 
     /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE

@@ -13,6 +13,8 @@ import opensamguk.engine.run.MonthlyPreUpdateHook
 import opensamguk.engine.run.MonthlyPostUpdateHook
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.run.LiveRemainNationEnv
+import opensamguk.engine.status.DaemonPauseGate
+import opensamguk.engine.status.DurableGameLock
 import opensamguk.engine.tournament.ProductionTournamentBettingPort
 import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.AiTurnAdapter
@@ -72,6 +74,16 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
 
+internal fun v1MonthlyClock(
+    world: InMemoryTurnWorld,
+    startYear: Int,
+    turnTerm: Int,
+): MonthlyClock = MonthlyClock { nextTurn, startTime ->
+    ServerClock.turnDate(nextTurn, startYear, startTime, turnTerm).also { date ->
+        world.setCurrentDate(date.year, date.month, date.phase)
+    }
+}
+
 /**
  * F-LOOP — the production assembly seam: the `@Bean TurnRunService` that finally wires the daemon's
  * run orchestrator with ALL its real collaborators in the RUNNING engine, plus the supporting beans
@@ -119,27 +131,6 @@ class DaemonLoopConfig {
     @Bean
     fun commandResultRepository(jdbc: NamedParameterJdbcTemplate): CommandResultRepository =
         CommandResultRepository(jdbc)
-
-    /**
-     * vote_poll/vote 설문 상태 read seam (F4 Wave 투표). VoteCast/closeOldVote 설문 cast 가드의 read 경로.
-     * JDBC read 전용 — write 경로는 [JdbcFlushExecutor] step-8e 뿐(one-daemon-write 규칙).
-     */
-    @Bean
-    fun votePollRepository(jdbc: NamedParameterJdbcTemplate): VotePollRepository =
-        VotePollRepository(jdbc)
-
-    /**
-     * diplomacy_letter 조회용 JDBC read seam (W5d 외교 서신). send의 prev 체인 / rollback / destroy 가드의
-     * read 경로(findLetter / countNewerLetters). JDBC read 전용 — write 경로는 [JdbcFlushExecutor]
-     * step-8f 뿐(one-daemon-write 규칙).
-     */
-    @Bean
-    fun diplomacyLetterRepository(jdbc: NamedParameterJdbcTemplate): DiplomacyLetterRepository =
-        DiplomacyLetterRepository(jdbc)
-
-    @Bean
-    fun selectPoolRepository(jdbc: NamedParameterJdbcTemplate): SelectPoolRepository =
-        SelectPoolRepository(jdbc)
 
     @Bean
     fun archiveHistoryReader(jdbc: NamedParameterJdbcTemplate): ArchiveHistoryReader =
@@ -217,6 +208,7 @@ class DaemonLoopConfig {
         recoveryGateProvider: FlushRecoveryGateProvider,
         commandInboxRepository: CommandInboxRepository,
         commandOutboxRelay: CommandOutboxRelay,
+        daemonPauseGate: DaemonPauseGate,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 
@@ -250,7 +242,7 @@ class DaemonLoopConfig {
             ?: 0
 
         var nextMessageId = messageRepository.findMaxId()
-        var nextAuctionId = auctionRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0
+        var nextAuctionId = auctionRepository.findMaxId()
 
         // ONE recorder shared by the handler + the ruler-succession hook (single dirty source, P2 Risk #4).
         // Built here (not inside RTH) so the succession handler diffs into the SAME recorder the reserved
@@ -264,6 +256,7 @@ class DaemonLoopConfig {
         )
         eventStore.bindMutationSink(recorder::recordEventMutation)
         val rulerSuccession = RulerSuccessionHandler(world, recorder, hiddenSeed)
+        val durableGameLock = DurableGameLock(daemonPauseGate, recorder, state.meta["plock"])
 
         val mapName = state.meta["map"] as? String ?: "che"
         val worldContextFactory = WorldEventContextFactory.create(
@@ -276,6 +269,11 @@ class DaemonLoopConfig {
             eventStore = eventStore,
             archiveHistoryReader = archiveHistoryReader,
             statisticSnapshotReader = statisticSnapshotReader,
+            gameKvRepository = gameKvRepository,
+            bettingRepository = bettingRepository,
+            inheritanceRepository = inheritanceRepository,
+            lockGame = durableGameLock::tryLock,
+            unlockGame = durableGameLock::unlock,
         )
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
@@ -339,9 +337,9 @@ class DaemonLoopConfig {
         val startTime = Instant.parse(state.meta["startTime"] as? String ?: state.lastTurnTime.toString())
         val monthlyPipeline = MonthlyPipeline(
             monthlyRngFactory = { year, month -> MonthScopedRng.forMonth(hiddenSeed, year, month) },
-            clock = MonthlyClock { nextTurn, st -> ServerClock.turnDate(nextTurn, startYear, st, turnTerm) },
+            clock = v1MonthlyClock(world, startYear, turnTerm),
             preUpdateMonthly = MonthlyPreUpdateHook(world, handler.recorder, profile, archiveHistoryReader),
-            checkStatistic = CheckStatistic {
+            checkStatistic = CheckStatistic { date ->
                 val generals = world.listGenerals().map { g ->
                     val statisticMeta = g.meta +
                         mapOf(
@@ -355,8 +353,8 @@ class DaemonLoopConfig {
                 val nations = world.listNations().map { PerTurnOverlay.toLogicNation(it) }
                 val cities = world.listCities().map { PerTurnOverlay.toLogicCity(it) }
                 val row = CheckStatisticCalculator.compute(
-                    year = state.currentYear,
-                    month = state.currentMonth,
+                    year = date.year,
+                    month = date.month,
                     generals = generals,
                     nations = nations,
                     cities = cities,

@@ -78,6 +78,13 @@ class DiplomacyUpdateFlushIT {
         return intOf(r["state_code"]) to intOf(r["term"])
     }
 
+    private fun casualtiesOf(src: Int, dest: Int): Int = intOf(
+        jdbc.queryForMap(
+            "SELECT casualties FROM diplomacy WHERE world_id = 1 AND src_nation_id = :s AND dest_nation_id = :d",
+            MapSqlParameterSource().addValue("s", src).addValue("d", dest),
+        )["casualties"],
+    )
+
     @Test
     fun `per-command diplomacy UPDATE writes both directions then the tick bulk-SQL runs after`() {
         // --- the per-command flush (선전포고: state 2 -> 1, term -> 24 BOTH rows) -----------------
@@ -101,5 +108,19 @@ class DiplomacyUpdateFlushIT {
         )
         assertEquals(1 to 23, stateOf(1, 2))
         assertEquals(1 to 23, stateOf(2, 1))
+    }
+
+    @Test
+    fun `battle casualty update persists an integer instead of a boolean flag`() {
+        executor.flush(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
+                updatedDiplomacy = listOf(DiplomacyUpdate(1, 2, state = 2, term = 0, dead = 12_345)),
+            ),
+        )
+
+        assertEquals(12_345, casualtiesOf(1, 2))
+        assertEquals(0, casualtiesOf(2, 1))
     }
 }

@@ -8,6 +8,7 @@ import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.Nation
+import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
@@ -25,6 +26,10 @@ import opensamguk.logic.event.LightActionWorld
 import opensamguk.logic.event.RawAction
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.jsonDecode
+import opensamguk.logic.world.PostNationPowerInput
+import opensamguk.logic.world.PowerCity
+import opensamguk.logic.world.PowerGeneral
+import opensamguk.logic.world.postUpdateMonthlyPower
 import java.lang.reflect.Proxy
 import java.time.Instant
 import kotlin.test.Test
@@ -217,6 +222,82 @@ class MonthlyPostUpdateHookTailWiringTest {
         assertEquals(50, maxPower["maxCrew"])
         assertEquals(listOf("이전1", "이전2"), maxPower["maxCities"])
         assertEquals(10, kv.getValue(KvKey("nation_env", "1", "available_war_setting_cnt")))
+    }
+
+    @Test
+    fun `Q4 omits maxCities when the PHP value has never been created`() {
+        val world = world(
+            nations = listOf(nation(1, "신생국", level = 0, meta = linkedMapOf("gennum" to 1))),
+            generals = listOf(general(10, nationId = 1, officerLevel = 12, npc = 2)),
+            cities = emptyList(),
+        )
+        val recorder = ChangeRecorder()
+
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
+            .run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+
+        @Suppress("UNCHECKED_CAST")
+        val maxPower = recorder.kvDirty()
+            .getValue(KvKey("nation_env", "1", "max_power")) as Map<String, Any?>
+        assertEquals(setOf("maxPower", "maxCrew"), maxPower.keys)
+    }
+
+    @Test
+    fun `Q3 power uses loaded rank baseline plus same tick rank overlay`() {
+        val loaded = general(10, nationId = 1, officerLevel = 12, npc = 0).copy(
+            meta = linkedMapOf(
+                "tournament" to 0,
+                "killcrew_person" to 100,
+                "deathcrew_person" to 200,
+            ),
+        )
+        val world = world(
+            nations = listOf(nation(1, "후한", level = 1, meta = mapOf("gennum" to 1))),
+            generals = listOf(loaded),
+            cities = listOf(city(1, "낙양", nationId = 1)),
+        )
+        val recorder = ChangeRecorder()
+        recorder.recordRankIncrease(10, RankColumn.KILLCREW_PERSON, 50)
+        recorder.recordRankIncrease(10, RankColumn.DEATHCREW_PERSON, -40)
+
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
+            .run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+
+        val expected = postUpdateMonthlyPower(
+            nations = listOf(
+                PostNationPowerInput(
+                    nationId = 1,
+                    gennum = 1,
+                    gold = 10_000,
+                    rice = 10_000,
+                    tech = 100,
+                    level = 1,
+                    generals = listOf(
+                        PowerGeneral(
+                            id = 10,
+                            gold = 1_000,
+                            rice = 1_000,
+                            leadership = 80,
+                            strength = 70,
+                            intel = 60,
+                            npc = 0,
+                            dexSum = 0,
+                            experience = 0,
+                            dedication = 0,
+                            crew = 0,
+                            killcrewPersonRankValue = 150,
+                            deathcrewPersonRankValue = 160,
+                        ),
+                    ),
+                    cities = listOf(PowerCity(pop = 0, sumStat = 0, sumMax = 0, supply = true)),
+                    cityNames = listOf("낙양"),
+                ),
+            ),
+            maxPower = emptyMap(),
+            rng = ScriptedRng(),
+        ).nations.single().power
+
+        assertEquals(expected, world.getNationById(1)!!.power)
     }
 
     @Test

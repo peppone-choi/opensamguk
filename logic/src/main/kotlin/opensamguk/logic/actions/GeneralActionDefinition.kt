@@ -35,6 +35,8 @@ interface GeneralActionDefinition {
     /** The declared arg shape (key → type tag). Empty = no args. Drives parseArgs / the UI form. */
     val argsSchema: Map<String, Any?> get() = emptyMap()
 
+    val formSpec: CommandFormSpec get() = CommandFormSpec.fromArgsSchema(argsSchema)
+
     /**
      * The 6th `serializeSeed` token = PHP `getRawClassName(true)` = the short class name WITH the
      * `che_`/`cr_` prefix. Carried explicitly; defaults to [key] (most classes: che_+de-spaced-name).

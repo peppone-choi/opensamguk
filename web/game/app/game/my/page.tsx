@@ -48,6 +48,7 @@ export default function MyPage() {
     const [selectedItemType, setSelectedItemType] = useState('');
     const [submittingAction, setSubmittingAction] = useState<InstantActionCode | ''>('');
     const [actionMessage, setActionMessage] = useState('');
+    const [settings, setSettings] = useState<MyPageResponse['settings'] | null>(null);
 
     const fetchData = () => {
         setLoading(true);
@@ -56,6 +57,7 @@ export default function MyPage() {
             .then(([front, mine]) => {
                 setFrontInfo(front);
                 setMyPage(mine);
+                setSettings(mine.settings);
                 setSelectedItemType((current) => {
                     const droppable = mine.items.filter((item) => item.droppable);
                     if (droppable.some((item) => item.type === current)) return current;
@@ -108,13 +110,15 @@ export default function MyPage() {
         ['훈련/사기', `${myPage.train} / ${myPage.atmos}`],
     ];
 
+    const updateSetting = (key: keyof MyPageResponse['settings'], value: number) =>
+        setSettings((current) => current == null ? current : { ...current, [key]: value });
     const settingsRows: [string, React.ReactNode][] = [
-        ['토너먼트', '-'],
-        ['환약 사용', '-'],
-        ['자동 사령턴 허용', '-'],
-        ['수비', currentDefenceTrain(frontInfo)],
-        ['500px/1000px 모드', '-'],
-        ['개인용 CSS', '-'],
+        ['토너먼트', <select key="tnmt" value={settings?.tnmt ?? 1} onChange={(e) => updateSetting('tnmt', Number(e.target.value))}><option value={1}>사용</option><option value={0}>사용 안 함</option></select>],
+        ['환약 사용', <input key="treatment" type="number" min={10} max={100} value={settings?.useTreatment ?? 10} onChange={(e) => updateSetting('useTreatment', Number(e.target.value))} />],
+        ['자동 사령턴 허용', <select key="auto" value={settings?.useAutoNationTurn ?? 1} onChange={(e) => updateSetting('useAutoNationTurn', Number(e.target.value))}><option value={1}>허용</option><option value={0}>허용 안 함</option></select>],
+        ['수비', <span key="defence" style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center' }}><span>{currentDefenceTrain(frontInfo)}</span><input type="number" min={40} value={settings?.defenceTrain ?? 80} onChange={(e) => updateSetting('defenceTrain', Number(e.target.value))} /></span>],
+        ['500px/1000px 모드', <select key="width" defaultValue={typeof window === 'undefined' ? '1000' : localStorage.getItem('game-width') ?? '1000'} onChange={(e) => localStorage.setItem('game-width', e.target.value)}><option value="500">500px</option><option value="1000">1000px</option></select>],
+        ['개인용 CSS', <input key="css" defaultValue={typeof window === 'undefined' ? '' : localStorage.getItem('game-css') ?? ''} onBlur={(e) => localStorage.setItem('game-css', e.target.value)} />],
     ];
 
     const droppableItems = myPage.items.filter((item) => item.droppable);
@@ -152,6 +156,24 @@ export default function MyPage() {
         );
     };
 
+    const saveSettings = async () => {
+        if (settings == null) return;
+        const out = await submitCommandAndAwaitResult(() => api.commands.setMySetting({
+            tnmt: settings.tnmt,
+            defence_train: settings.defenceTrain,
+            use_treatment: settings.useTreatment,
+            use_auto_nation_turn: settings.useAutoNationTurn,
+        }, myPage.generalId));
+        setActionMessage(out.status === 'applied' ? '설정을 저장했습니다.' : out.reason ?? '설정을 저장할 수 없습니다.');
+        if (out.status === 'applied') fetchData();
+    };
+
+    const takeVacation = async () => {
+        if (!window.confirm('휴가를 실행하시겠습니까?')) return;
+        const out = await submitCommandAndAwaitResult(() => api.commands.vacation(myPage.generalId));
+        setActionMessage(out.status === 'applied' ? '휴가를 설정했습니다.' : out.reason ?? '휴가를 설정할 수 없습니다.');
+    };
+
     return (
         <Shell>
             <div className="page-content">
@@ -173,6 +195,10 @@ export default function MyPage() {
                     <GameCard>
                         <div className="basic-card-name">설정</div>
                         <InfoGrid rows={settingsRows} />
+                        <div style={{ display: 'flex', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}>
+                            <button type="button" onClick={() => void saveSettings()}>설정 저장</button>
+                            <button type="button" onClick={() => void takeVacation()}>휴가</button>
+                        </div>
                     </GameCard>
                     {anyInstantAction ? (
                         <GameCard>

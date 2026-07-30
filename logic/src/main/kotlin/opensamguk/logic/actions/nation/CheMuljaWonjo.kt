@@ -3,6 +3,8 @@ package opensamguk.logic.actions.nation
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.beChief
@@ -55,6 +57,12 @@ class CheMuljaWonjo(private val pipeline: GeneralActionPipeline) : NationCommand
     override val lotteryActionName: String get() = "원조"
     override val argsSchema: Map<String, Any?> get() =
         linkedMapOf("destNationID" to "int", "amountList" to "intList")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("destNationID", "int", "select", "nations"),
+            CommandFieldSpec("amountList", "intList", "amountList", "nationResources", min = 0),
+        ),
+    )
 
     override fun getPreReqTurn(): Int = 0
 

@@ -4,6 +4,8 @@ import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.RequirementKey
@@ -60,6 +62,12 @@ class CheSukryeonJeonhwan(
     override val name: String = "숙련전환"
     override val category: String = "군사"
     override val argsSchema: Map<String, Any?> get() = mapOf("srcArmType" to "int", "destArmType" to "int")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("srcArmType", "int", "select", "armTypes"),
+            CommandFieldSpec("destArmType", "int", "select", "armTypes"),
+        ),
+    )
 
     override fun bindArgs(parsed: Map<String, Any?>): CheSukryeonJeonhwan =
         CheSukryeonJeonhwan(pipeline, parsed)

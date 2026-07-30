@@ -1,5 +1,6 @@
 package opensamguk.gameapi.web
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
@@ -7,6 +8,8 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyInt
@@ -99,10 +102,10 @@ class AvailableCommandsControllerTest {
     }
 
     @Test
-    fun `reqArg and argType are derived from the command argsSchema`() {
+    fun `catalog emits ordered forms and legacy scalar arg types`() {
         `when`(precheck.precheckAll(anyInt(), anyList<GeneralActionDefinition>())).thenReturn(null)
 
-        mockMvc().perform(get("/api/commands/available").param("generalId", "10"))
+        val response = mockMvc().perform(get("/api/commands/available").param("generalId", "10"))
             .andExpect(status().isOk)
             // che_출병 declares argsSchema {destCityID} → reqArg true, argType city.
             .andExpect(
@@ -115,6 +118,15 @@ class AvailableCommandsControllerTest {
             .andExpect(
                 jsonPath("$.commandTable[*].values[?(@.value == 'che_상업투자')].reqArg").value(false),
             )
+            .andReturn()
+            .response
+            .contentAsString
+
+        val tribute = ObjectMapper().readTree(response)["commandTable"]
+            .flatMap { category -> category["values"].toList() }
+            .single { command -> command["value"].asText() == "che_헌납" }
+        assertEquals(listOf("isGold", "amount"), tribute["form"]["fields"].map { it["name"].asText() })
+        assertTrue(tribute.get("argType") == null || tribute["argType"].isNull)
     }
 
     @Test

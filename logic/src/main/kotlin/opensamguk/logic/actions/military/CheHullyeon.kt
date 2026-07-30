@@ -7,6 +7,10 @@ import opensamguk.logic.constraints.*
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.clamp
@@ -60,12 +64,20 @@ class CheHullyeon(
             atmos = sideEffect,         // setVar
         )
         g = addDexForCrewType(pipeline, g, g.crewTypeId, score)
+        val expRes = addExperience(g, 100.0, pipeline)
+        g = expRes.general
+        expRes.plainLog?.let { context.addPlainLog(it) }
+        val dedRes = addDedication(g, 70.0, pipeline)
+        g = dedRes.general
+        dedRes.plainLog?.let { context.addPlainLog(it) }
         g = g.copy(
-            experience = g.experience + 100.0,
-            dedication = g.dedication + 70.0,
-            meta = withMeta(g.meta, "leadership_exp" to metaDouble(g.meta, "leadership_exp") + 1),
+            meta = withMeta(g.meta, "leadership_exp" to metaDouble(g.meta, "leadership_exp") + 1.0),
             lastTurn = LastTurn(name),
         )
+        val statRes = checkStatChange(g)
+        g = statRes.general
+        statRes.plainLogs.forEach { context.addPlainLog(it) }
         d.general = g
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 }

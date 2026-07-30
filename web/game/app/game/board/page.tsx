@@ -30,7 +30,8 @@
 //
 // EMPTY-SAFE: articles [] → '게시물이 없습니다.' (그대로의 legacy empty 상태).
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
@@ -162,9 +163,10 @@ function ArticleCard({
     );
 }
 
-export default function BoardPage() {
+function BoardContent() {
+    const searchParams = useSearchParams();
     // false = 회의실, true = 기밀실 (legacy isSecretBoard). 페이지 내 토글이 api.board(secret)를 구동한다.
-    const [secret, setSecret] = useState(false);
+    const [secret, setSecret] = useState(() => searchParams.get('secret') === '1');
     const [data, setData] = useState<BoardResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
@@ -223,7 +225,7 @@ export default function BoardPage() {
     const canWrite = !loading && !error && !blockedReason && myGeneralId !== 0;
 
     return (
-        <Shell>
+        <>
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>{title}</h1>
 
             {/* 회의실 / 기밀실 토글 */}
@@ -362,6 +364,16 @@ export default function BoardPage() {
                     {toast}
                 </div>
             )}
+        </>
+    );
+}
+
+export default function BoardPage() {
+    return (
+        <Shell>
+            <Suspense fallback={<p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}>
+                <BoardContent />
+            </Suspense>
         </Shell>
     );
 }

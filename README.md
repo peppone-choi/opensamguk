@@ -48,7 +48,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 | 백엔드 프레임워크 | Spring Boot 3.4 |
 | 게임 엔진 | 메모리 내 턴 데몬 (CQRS) |
 | 영속화 | PostgreSQL 16 (JDBC 배치 flush) |
-| 캐시 / 메시지 버스 | Redis 7 (XADD 명령 스트림, SSE 릴레이) |
+| 캐시 / wake 버스 | Redis 7 (best-effort 명령 wake, SSE 릴레이) |
 | 프론트엔드 | Next.js 15 (App Router) / React 19 / TypeScript 5.7 |
 | 스타일 | Tailwind CSS + Pretendard |
 | 빌드 | Gradle 8.12 (Kotlin DSL) |
@@ -61,21 +61,36 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 
 ## 현재 패러티 상태
 
-2026-07-25 기준 이 프로젝트는 **알파**입니다. 이 README는 온보딩용 범위 요약이며, 완료 주장은 하지 않습니다. 현재의 구현·활성화 경계는 [`docs/agent/project-overview.md`](docs/agent/project-overview.md), 실제 PHP/브라우저 패러티 루프와 백로그는 [`docs/loops/page-parity/LEDGER.md`](docs/loops/page-parity/LEDGER.md)가 정본입니다.
+2026-07-30 기준 v1은 **2026-07-26 레거시 감사의 비운영 범위**를 완료했습니다.
+이는 "프로덕션 활성화 완료"가 아닙니다. PHP `devsam/core`를 정본으로 한
+명령·월간/이벤트·전투/점령·AI·부가 시스템·world scope/restart·프런트·저장
+로그의 감사 차단 항목을 PHP capture, Kotlin replay, 백엔드/프런트 게이트와
+**로컬 Docker**로 재측정한 bounded 판정입니다. 최종 reviewer가 처음 발견한
+`SelectPool`·`VotePoll`·`DiplomacyLetter` unscoped read도 V32 복합 key와
+local-ID-only read의 경계 결함으로 보정했으며, 최종 parity review는
+**`CLEARED`**입니다.
 
-요약하면 **메인 화면·로비·서버 경로·SSE·맵·주요 read 페이지는 실서버 `s1`에서 반복 측정하며 상당 부분 수렴**했고, **mutation/월드 이벤트/관리자 legacy 화면/일부 스키마 갭은 아직 진행 중**입니다. "완전 패러티"가 아니라, 실제 PHP 근거와 브라우저 관측으로 닫힌 바퀴만 닫힌 것으로 봅니다.
+- 최종 감사: [`v1 레거시 동등성 감사`](docs/superpowers/research/2026-07-26-v1-legacy-equivalence-audit.md)
+- 종결 검토: [`v1 비운영 완료 review`](docs/superpowers/reviews/2026-07-27-v1-nonoperational-completion-review.md)
+- 측정 원장: [`v1 비운영 폐쇄 LEDGER`](docs/loops/v1-nonoperational-completion-2026-07-27/LEDGER.md)
+- 제품 날짜 규칙: **상순·중순·하순, 월 3순, 연 36순**(ADR-LITE-024).
 
-| 영역 | 현재 수준 | 근거 / 남은 일 |
-|------|-----------|----------------|
-| 코어 규칙(RNG·반올림·로그·델타 flush) | 높음 | `common`/`logic`/`engine` 테스트와 `tools/parity/gate.sh backend`가 표준 게이트. 단, PHP 캡처 불가능한 `mt_rand()` 계열은 격리 백로그로 둡니다. |
-| 메인/맵/경로/SSE UI | 높음 | `/game/s1` path-server 링크, SSE 첫 바이트, 맵 크기, 도시 링크, 현재 위치, 제목 툴팁, 상태 아이콘, hover tooltip을 바퀴 51-72에서 수렴. |
-| read API와 read 페이지 | 중상 | 랭킹, 내정보, 도시/국가/외교/메시지/경매/베팅/유산 등 주요 read 표면을 렌더. `cityConst` id→name 공유 로더, 재난 맵 state 등은 백로그. |
-| 명령 예약과 일부 mutation | 중간 | 개인/수뇌 예약, 서신 발송, 베팅, 경매, 유산 `ResetStat`, 건국/징병/도시 대상 명령 인자 폼 등은 배선·테스트된 경로가 있음. 아직 미등록 intake와 페이지별 write 흐름이 남아 있습니다. |
-| 관리자/운영 표면 | 중간 이하 | 현 운영 모델은 deployer/서버 레지스트리 기반으로 전환 중입니다. legacy 서버관리 화면의 상태·명령·회원관리·공지 일부는 아직 gap 또는 의도 divergence입니다. |
-| 시나리오 시드 | 플레이 가능 시드 | `scenario_1010` JSON 기반 quick seed로 로컬/신규 서버 기동은 가능. PHP `Scenario::build` draw-for-draw 시드는 별도 후속 작업입니다. |
-| 프로덕션 반영 | 분리 승격 모델 | shared deployer는 자동 갱신되지만, 실행 중인 game server는 시즌 중 desync 방지를 위해 고정 태그를 유지합니다. 새 코드의 `s1` 적용은 관리자 승격/재시드/새 기수 생성 시 명시적으로 수행합니다. |
+| 범위 | 상태 | 확인 근거 |
+|------|------|-----------|
+| v1 비운영 감사 §6.1–§6.8 | ✅ 완료 | PHP schema 4 12개월·36순 exact replay, 92-command matrix, battle/event/AI/side-system capture, scoped read/restart 검증; final parity review `CLEARED` |
+| backend | ✅ 완료 | canonical `tools/parity/gate.sh backend`: 552 suites / 4,758 tests / failure·error 0, known `LongSim` skip 1; fresh 영향 범위 237 suites / 1,366 tests green. Golden은 current green이나 logic은 `UP-TO-DATE`여서 fresh rerun으로 과장하지 않음 |
+| frontend | ✅ 완료 | `web/game` typecheck + 46 files / 227 tests, `git diff --check` green |
+| local Docker | ✅ 완료 | five images sequential green, 8 health green, Playwright 1 passed (`241634ms`); join `RESOLVED`/`ok=true`/general `1230`, 정확히 14 DOM, restart 뒤 general/result/repository `200`, auth `false|false` 복원, project containers 0 |
+| CQRS S6 / production activation | ⬜ 미수행 | canary·expand/backfill·capacity/admission·실제 운영 월드 cutover는 별도 인간 승인과 운영 게이트 대상 |
+| v2 | 🔄 별도 트랙 | v1을 오리지널로 보존하고 v2 뉴버전 구현/운영을 준비하는 별도 범위 |
 
-현재 알려진 큰 갭은 `docs/loops/page-parity/LEDGER.md`의 백로그가 정본입니다. 특히 재난-맵 `city.state` 스키마, `cityConst` id→name 로더, 일부 미등록 intake(`DieOnPrestart`, `DropItem`, `InstantRetreat`, `CheckOwner`, `UploadImage`), legacy 관리자 서버관리 화면, PHP 비결정 난수 계열은 아직 닫히지 않았습니다.
+동결된 문서 감사 입력은 388개였고, 동결 뒤 작성된 이 종결 문서와 실행
+증거는 그 수에 소급 포함하지 않습니다. 더 이른 병렬 image build OOM과 port
+3000 collision 뒤 120초 timeout은 제품 실패가 아니라 하니스/환경 실패였고,
+최종 상태는 순차 corrected gate만 따른다(기본 timeout `420000`, override test
+green). 자세한 경계와 원래의 발견 사항은 감사 보고서의 2026-07-30 사후 검토
+부록을 따릅니다. 이 표는 git action 전 release-candidate 증거이며 commit,
+push, merge, deploy를 승인하거나 실행한 기록이 아닙니다.
 
 ---
 
@@ -107,7 +122,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
    └────────────────┘     └───────────┬─────────────┘
                                        │
                           ┌────────────┴────────────┐
-                          │   Redis (XADD 명령 큐 +   │
+                          │ Redis (best-effort wake + │
                           │   SSE turnCompleted)     │
                           └────────────┬────────────┘
                                        ▼
@@ -139,7 +154,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 ### 책임 분리
 
 - **`app/gateway-api` (:8080)** — 인증/프로필. 자체 JWT/BCrypt 로컬 인증(원작 Kakao OAuth에서 의도적 divergence), 회원가입, 세션, 관리자 시드.
-- **`app/game-api` (:8081)** — 읽기(read) + 사전검증(precheck) + 명령 인입(intake) + SSE 릴레이. JPA는 read/precheck 전용. 명령은 Redis 스트림으로 XADD.
+- **`app/game-api` (:8081)** — 읽기(read) + 사전검증(precheck) + 명령 인입(intake) + SSE 릴레이. JPA는 read/precheck 전용. 명령은 durable inbox를 DB에 먼저 커밋하고 Redis에는 best-effort wake만 보냅니다.
 - **`app/game-engine` (:8082)** — 턴 데몬. `InMemoryTurnWorld`(진실의 원천) + `ChangeRecorder`(델타) + `MonthlyPipeline` + `TurnRunService`.
 
 ### The ONE 데몬-write 규칙
@@ -148,18 +163,16 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 
 ### 명령 흐름
 
-1. 플레이어가 game-api로 명령 제출 (`POST /api/command/{code}`)
-2. game-api가 사전검증(JPA read-only) 후 Redis 스트림에 XADD
-3. game-engine 데몬이 큐를 비워 `InMemoryTurnWorld`에 실행
-4. 변경을 `ChangeRecorder`에 델타로 기록
-5. 턴 종료 시 `JdbcFlushExecutor`가 델타를 단일 JDBC 배치로 flush
-6. 연결된 클라이언트에 `turnCompleted` SSE 브로드캐스트
-7. 프론트가 game-api read 엔드포인트로 상태 갱신
+1. **즉시 데몬 명령**: game-api가 `202` 이전 durable inbox를 DB에 커밋하고, best-effort Redis wake를 보냅니다.
+2. 엔진이 inbox를 claim/apply하고, 상태 효과·result·outbox·inbox terminal 전이를 하나의 DB 트랜잭션으로 flush합니다.
+3. 그 DB 커밋 뒤에만 XACK와 결과 publication을 수행하고, 프론트는 result/read 경로로 상태를 갱신합니다.
+4. **턴 예약 `che_*` 명령**: game-api가 reserved ring과 admission lifecycle을 write/read합니다.
+5. due ring에서 `ReservedTurnHandler`가 `CommandRegistry`를 통해 실행하고, `ChangeRecorder` 델타를 `JdbcFlushExecutor`가 flush합니다.
 
 ### 턴 박자 (turn cadence)
 
 - **현실 1시간 = 게임 1턴(상순/중순/하순)** · **36턴 = 게임 1년**
-- 명령 큐 + 알림 패턴. 메모리=진실의 원천, DB=영속화.
+- durable inbox + wake 알림 패턴. 메모리=진실의 원천, DB=영속화.
 
 ### CQRS 정합성 하드닝 (ARCH-S1–S6)
 
@@ -167,7 +180,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 
 - **월드 스코프** — 로더·쿼리·예약·Redis 키·flush를 `world_id`로 스코프하고, 동일 local-ID 2월드 격리 게이트 통과. (OPENSAM-127~129)
 - **flush 무결성** — 불변 `DeltaGenerationSession`(prepare/commit/abort), `world_version` CAS + `writer_epoch` 펜스, `FlushRecoveryGate`(FLUSH_RETRY/RELOAD 안전). (OPENSAM-130~132)
-- **S4 durable 명령 경로** — `command_inbox` 선기록(202 이전), 같은 flush 트랜잭션의 durable `command_result`/`command_outbox` + Redis consumer-group wake·post-commit ACK + 크래시/리플레이 매트릭스. PR #312 머지, 독립 리뷰 cleared. (OPENSAM-133~136)
+- **S4 durable 명령 경로** — `command_inbox`를 DB에 먼저 커밋한 뒤 best-effort Redis wake, 엔진 claim/apply, 상태 효과·`command_result`·`command_outbox`·inbox terminal 전이를 **하나의 DB 트랜잭션**으로 flush, 커밋 후 XACK와 결과 publication 순으로 처리합니다. PR #312 머지, 독립 리뷰 cleared. (OPENSAM-133~136)
 - **S5 읽기·부팅 경계** — hot/cold 카탈로그 + 아키텍처 가드, 부팅 아카이브 읽기 bounded/on-demand화, game-api `minVersion` read barrier(stale read → 409 `VERSION_NOT_VISIBLE`). PR #314/#315 머지. (OPENSAM-137~139)
 - **S6 롤아웃** — canary/expand-backfill/replica ADR는 **잔여**(S2–S5 완료 후 착수).
 
@@ -214,26 +227,26 @@ docker compose up -d --build
 | 서비스 | 이미지/빌드 | 포트 | 역할 |
 |--------|-------------|------|------|
 | `postgres` | `postgres:16-alpine` | 5432 | 영속 저장소 (DB `sammo`) |
-| `redis` | `redis:7-alpine` | 6379 | 명령 스트림(XADD) + SSE pub/sub |
+| `redis` | `redis:7-alpine` | 6379 | best-effort 명령 wake + SSE pub/sub |
 | `gateway-api` | `docker/gateway-api.Dockerfile` | 8080 | 인증(JWT/BCrypt)·프로필·어드민 |
 | `game-api` | `docker/game-api.Dockerfile` | 8081 | read · precheck · intake · SSE |
 | `game-engine` | `docker/game-engine.Dockerfile` | 8082 | 턴 데몬 (`InMemoryTurnWorld`) |
 | `web-gateway` | `docker/web-gateway.Dockerfile` | 3000 | Next.js 게이트웨이(로그인/로비) |
 | `web-game` | `docker/web-game.Dockerfile` | 3001 | Next.js 게임 프론트 |
-| `nginx` | `nginx:1.27-alpine` | 80 | 리버스 프록시 (`./nginx/nginx.conf`) |
+| `nginx` | `nginx:1.27-alpine` | 80 | 리버스 프록시 (`infra/nginx/nginx.conf`) |
 
 nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gateway-api · `/api/game/` → web-gateway Next 프록시(httpOnly 쿠키 → Bearer, 서버 선택) · `/api/game/realtime/` → game-api(SSE, 버퍼링 off) · `/game/` → web-game · `/` → web-gateway · `/health` 헬스 체크.
 
 ### 환경변수 (`.env.example`)
 
-`.env.example`을 복사한 뒤 값은 로컬의 git-ignore된 `.env`에만 넣습니다. 빠른 시작에서 반드시 설정할 이름은 다음과 같습니다. 값·토큰·비밀번호를 문서나 커밋에 넣지 마세요.
+`.env.example`을 복사한 뒤 값은 로컬의 git-ignore된 `.env`에만 넣습니다. Compose가 명시적으로 요구하는 이름은 다음 두 개입니다. 값·토큰·비밀번호를 문서나 커밋에 넣지 마세요.
 
 - `JWT_SECRET` — gateway-api 발급자와 game-api 검증자가 **같이 쓰는** HS256 비밀값입니다.
 - `OPENSAMGUK_WORLD_ID` — game-api와 game-engine이 같은 월드를 선택하는 식별자입니다.
-- `POSTGRES_PASSWORD` — 로컬 PostgreSQL 비밀번호입니다.
-- `ADMIN_PASSWORD` — 관리자 시드를 만들 때만 필요합니다.
 
-나머지 데이터베이스·포트·프로필·시나리오 변수의 이름과 기본 동작은 `.env.example` 및 `docker-compose.yml`을 기준으로 확인합니다.
+`POSTGRES_PASSWORD`는 로컬 기본값을 바꿀 때, `ADMIN_PASSWORD`는 관리자 시드를 만들 때
+설정합니다. 나머지 데이터베이스·포트·프로필·시나리오 변수의 이름과 기본 동작은
+`.env.example` 및 `docker-compose.yml`을 기준으로 확인합니다.
 
 프론트는 각자 `.env.example`을 둡니다(브라우저 비노출 변수는 `NEXT_PUBLIC_` 접두사 없음):
 
@@ -259,13 +272,13 @@ nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gatew
 게임 루프는 부팅된 **DB 스냅샷만 읽습니다**. 다만 fresh/빈 DB에서는 `ScenarioSeedRunner`가 외부 시나리오 디렉터리를 먼저 확인하고, 없으면 classpath 시나리오로 폴백해 한 번 시드합니다.
 
 - **시드 주체**: `app/game-engine`의 `ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) — `ApplicationRunner`로 부팅 시 실행.
-- **멱등**: `world_state` 행이 이미 있으면(`count(*) > 0`) 로그 남기고 건너뜁니다. 두 번째 호출은 no-op이라 시드→로드 순서가 빈 라이프사이클에 무관하게 보장됩니다.
-- **임포터**: `infra`의 `ScenarioImporter`(+`ScenarioJson`)가 선택된 `scenario_*.json`과 대응 `cities_*.json`을 opensamguk 스키마 행으로 매핑해 **JDBC INSERT**(`world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games`).
+- **configured-world admission / 멱등**: 빈 DB에는 설정된 `OPENSAMGUK_WORLD_ID`만 admission합니다. 같은 구성 월드의 재호출은 no-op이지만, 다른 월드 또는 혼합된 world identity 집합은 조용히 건너뛰지 않고 거부합니다.
+- **임포터**: `infra`의 `ScenarioImporter`(+`ScenarioJson`)가 선택된 `scenario_*.json`과 대응 `map/<mapName>.json`을 opensamguk 스키마 행으로 매핑해 **JDBC INSERT**(`world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games`).
 - **부팅 배선**: `WorldSnapshotLoader`가 DB → `InMemoryTurnWorld` 스냅샷을 구성(시드 직전 방어적으로 `ensureSeeded` 재호출).
 - **JDBC-only — one-daemon-write 규칙 비위반**: `JdbcTemplate`만 사용(Flyway/AdminSeeder와 동일 범주). JPA `EntityManager`나 `ChangeRecorder`를 쓰지 않으며, 아키텍처 테스트 write-path scan(`opensamguk.engine.{flush,turn,run}`) 밖인 `opensamguk.engine.boot` 패키지에 위치합니다.
 - **env fence**: `SCENARIO_SEED_ENABLED`(로컬 `.env.example` 기본 `true`, production compose 기본 `false`) · `SCENARIO_CODE`(기본 `scenario_1010`) · `SCENARIO_DIR`(외부 JSON 우선 디렉터리).
 
-> `scenario_1010` = 2국 · 24도시 · 678장수. 24도시는 시나리오 JSON에 없고 `cities_1010.json`로 채웁니다. 게이트: `general`/`city`/`nation` 행 > 0 + 엔진 부팅·턴 진행. (이는 빠른 플레이를 위한 최소 시드(A)이며, PHP `Scenario::build` draw-for-draw 패러티 보정(B)은 후속 작업입니다.)
+> `scenario_1010`은 시나리오 JSON과 `map/<mapName>.json`을 함께 읽어 **94도시** 결과를 구성합니다. 게이트: configured-world admission, `general`/`city`/`nation` 행 > 0, 엔진 부팅·턴 진행. (이는 빠른 플레이를 위한 최소 시드(A)이며, PHP `Scenario::build` draw-for-draw 패러티 보정(B)은 후속 작업입니다.)
 
 ### RTK14 정치·매력
 
@@ -316,6 +329,25 @@ cd web/game    && corepack pnpm dev   # :3001 (인게임)
 ```bash
 ./tools/smoke.sh   # 이미지 빌드 + 전체 스택 부팅 + health 단언
 ```
+
+### v1 로컬 Docker 수용 게이트
+
+로컬 값만 사용해 격리 Compose 프로젝트를 만들고, 인증 가입/로그인, 장수 생성,
+daemon terminal 결과, route 렌더, 엔진 재기동 뒤 영속성을 확인합니다. 실제
+운영 데이터·기존 Compose 프로젝트를 재사용하거나 삭제하지 않으며, 완료 후
+인증 fixture와 컨테이너를 복원/정리합니다.
+
+```bash
+# JWT_SECRET와 OPENSAMGUK_WORLD_ID에는 로컬 .env의 값을 직접 넣습니다.
+# 값 자체를 셸 기록이나 문서에 남기지 마세요.
+OPENSAMGUK_WORLD_ID=<local-world-id> JWT_SECRET=<local-jwt-secret> \
+  E2E_ENABLE_AUTH=true \
+  E2E_ARTIFACT_DIR="$PWD/.omo/evidence/local-v1-manual" \
+  ./tools/e2e/local_v1_gate.sh
+```
+
+이미지를 미리 빌드한 경우에만 `E2E_SKIP_BUILD=true`를 추가합니다. 이 경우
+gate는 기존 이미지를 덮어쓰지 않고 격리 이름으로 tag합니다.
 
 ---
 
@@ -376,8 +408,8 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 | **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner` → 외부 `SCENARIO_DIR` 우선, classpath 폴백으로 모든 시나리오를 시드. 로컬 fresh DB 자동 시드 가능, production은 관리자 서버 생성 전 기본 비활성. | ✅ |
 | **F2 메인화면 + 메뉴 척추** | `web/game` 메인 화면(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar + 메인 보드). path-server, SSE, 맵 크기/링크/현재 위치/툴팁은 실서버 루프로 지속 수렴 중. | ✅ |
 | **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. game-api read 데이터 렌더가 기본 완성선. | ✅ |
-| **F4 액션 페이지 + mutation** | 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결. 최근 배선: 메일함 서신 삭제, 외교 서신 승인/거부, 인사부(장수 임면), 내정보 즉시액션, 엔진 deny 결과 표면화. 라이브 감사와 PHP 골든으로 남은 명령을 계속 폐쇄 중. | 🔄 |
-| **F5 turnkey + docs** | 로컬 compose + app repo 문서 + production 앱 이미지. 실제 운영 오케스트레이션 정본은 `opensamguk-docker`의 shared/server/deployer 분리 모델과 맞춰갑니다. | 🔄 |
+| **F4 액션 페이지 + mutation** | 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로로 닫고, 202 접수와 terminal 결과를 구분한다. PHP matrix·local Docker E2E로 v1 비운영 감사 범위를 확인했다. | ✅ (v1 비운영 범위) |
+| **F5 turnkey + docs** | 로컬 compose·이미지·문서·인증 브라우저/재시작 gate까지는 완료했다. 실제 운영 오케스트레이션은 `opensamguk-docker`의 shared/server/deployer 모델이며 S6/cutover는 별도 미수행이다. | ✅ 로컬 / ⬜ 운영 |
 
 > **상태 표기 주의**: F0–F3는 기본 동선 사용 가능, F4는 실제 mutation을 포함합니다. 모든 명령의 완전 동형 여부는 `opensamguk-php-oracle` → `webapp-testing` → `systematic-debugging` → `loop-engineering` 순서의 라이브 루프로 계속 검증합니다.
 
@@ -407,4 +439,4 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 
 ---
 
-*최종 갱신: 2026-07-25 · CQRS 하드닝 S5까지 main 머지 · F4 FE 배선(메일함 삭제·외교 서신 승인/거부·인사부·즉시액션·deny 표면화) 반영.*
+*최종 갱신: 2026-07-30 · final parity review `CLEARED`, 연 36순 유지, corrected local Docker 수용 게이트 반영. S6/프로덕션 cutover는 미수행이며, git action은 이 문서 시점 미실행입니다. `main` 머지는 배포 경고 뒤 별도 재확인 대상입니다.*

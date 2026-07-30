@@ -174,7 +174,8 @@ fun mustBeTroopLeader() = object : Constraint {
  */
 fun reqTroopMembers(hasMember: (ConstraintContext, StateView) -> Boolean) = object : Constraint {
     override val name = "ReqTroopMembers"
-    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.General(ctx.actorId))
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.GeneralList)
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
         gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
         return if (hasMember(ctx, view)) ConstraintResult.Allow else ConstraintResult.Deny("집합 가능한 부대원이 없습니다.")

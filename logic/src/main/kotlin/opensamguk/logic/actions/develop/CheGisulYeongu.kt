@@ -16,16 +16,21 @@ import opensamguk.logic.constraints.reqGeneralGold
 import opensamguk.logic.constraints.reqGeneralRice
 import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
 import opensamguk.logic.domestic.DEFAULT_TRUST
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.domestic.criticalRatioDomestic
 import opensamguk.logic.domestic.criticalScoreEx
 import opensamguk.logic.domestic.getDomesticExpLevelBonus
 import opensamguk.logic.domestic.techLimit
 import opensamguk.logic.domestic.updateMaxDomesticCritical
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.clamp
@@ -101,13 +106,10 @@ class CheGisulYeongu(
         val ded = roundedScore * 1.0
 
         val expKey = "${statKey}_exp"
-        val nextMeta = if (pick == "success") {
-            val nextAux = updateMaxDomesticCritical(metaDouble(d.general.meta, "max_domestic_critical"), roundedScore)
-            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
-                     "max_domestic_critical" to nextAux)
+        val nextMaxDomesticCritical = if (pick == "success") {
+            updateMaxDomesticCritical(metaDouble(d.general.meta, "max_domestic_critical"), roundedScore)
         } else {
-            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
-                     "max_domestic_critical" to 0)
+            0
         }
 
         // LOG — scoreText is the PRE-/4 rounded score (PHP line 104, before TechLimit /4 at line 117).
@@ -129,12 +131,27 @@ class CheGisulYeongu(
         val nextTech = (d.nation?.tech ?: 0.0) + techScore / genCount
 
         d.nation = d.nation?.copy(tech = nextTech)
-        d.general = d.general.copy(
+        var nextGeneral = d.general.copy(
             gold = maxOf(0, d.general.gold - reqGold),
-            experience = d.general.experience + exp,
-            dedication = d.general.dedication + ded,
-            meta = nextMeta,
+            meta = withMeta(d.general.meta, "max_domestic_critical" to nextMaxDomesticCritical),
         )
+
+        val experienceResult = addExperience(nextGeneral, exp, pipeline)
+        nextGeneral = experienceResult.general
+        experienceResult.plainLog?.let(context::addPlainLog)
+
+        val dedicationResult = addDedication(nextGeneral, ded, pipeline)
+        nextGeneral = dedicationResult.general
+        dedicationResult.plainLog?.let(context::addPlainLog)
+
+        d.general = nextGeneral.copy(
+            meta = withMeta(nextGeneral.meta, expKey to metaInt(nextGeneral.meta, expKey) + 1),
+            lastTurn = LastTurn(name),
+        )
+        val statChangeResult = checkStatChange(d.general)
+        d.general = statChangeResult.general
+        statChangeResult.plainLogs.forEach(context::addPlainLog)
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 
     private fun envOf(c: ConstraintContext) = WorldEnv(

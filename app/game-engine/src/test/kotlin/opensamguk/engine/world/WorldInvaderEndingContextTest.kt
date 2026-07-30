@@ -31,8 +31,8 @@ import kotlin.test.assertTrue
  *
  * 로그는 ActionLogger::pushGlobalHistoryLog 기본 YEAR_MONTH 포맷까지 저장 byte 전체를 검사한다.
  *
- * 도달성 정직성: live 에서 InvaderEnding 은 RaiseInvader(침략자 START, isunited=1) 가 켜져야 발화하는데
- * 그 start-event 배선은 엔진에 아직 없다 → live LATENT. 본 wheel 은 dispatched-no-op 시임만 닫는다.
+ * RaiseInvader 수락 경로가 isunited=1과 월별 InvaderEnding 행을 함께 기록하므로 이 종료 leaf는
+ * 재기동 뒤에도 live EventStore에서 도달 가능하다.
  */
 class WorldInvaderEndingContextTest {
 

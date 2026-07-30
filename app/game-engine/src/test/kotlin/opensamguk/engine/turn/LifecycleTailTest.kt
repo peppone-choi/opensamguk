@@ -194,6 +194,7 @@ class LifecycleTailTest {
         h.updateTurnTime(1, env = env())
 
         val g = w.getGeneralById(1)!!
+        assertEquals(9, (g.meta["myset"] as Number).toInt(), "myset +3 capped at 9")
         assertEquals(101, (g.meta["lived_month"] as Number).toInt(), "lived_month +1")
         assertEquals(ServerClock.addTurn(t0, turnTerm, 1), g.turnTime, "turntime advanced by addTurn")
         assertEquals(setOf(1), h.recorder.dirtyGeneralIds(), "turntime 후처리도 general UPDATE를 flush해야 한다")

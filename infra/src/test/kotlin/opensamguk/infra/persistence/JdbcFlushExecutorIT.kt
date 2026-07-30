@@ -446,6 +446,7 @@ class JdbcFlushExecutorIT {
                     "status" to "PRE_OPEN",
                     "tick_seconds" to 1_800,
                     "config" to linkedMapOf("npcmode" to 2, "turnterm" to 30),
+                    "start_time" to "2026-07-27T09:30:00Z",
                 ),
             ),
         )
@@ -456,6 +457,14 @@ class JdbcFlushExecutorIT {
         val config = row["config"].toString()
         assertEquals(true, config.contains("\"npcmode\": 2") || config.contains("\"npcmode\":2"))
         assertEquals(true, config.contains("\"turnterm\": 30") || config.contains("\"turnterm\":30"))
+        assertEquals(
+            Instant.parse("2026-07-27T09:30:00Z").epochSecond,
+            jdbc.queryForObject(
+                "SELECT EXTRACT(EPOCH FROM start_time)::bigint FROM world_state WHERE id = 1",
+                MapSqlParameterSource(),
+                Long::class.java,
+            ),
+        )
 
         jdbc.update(
             "UPDATE world_state SET status = 'OPEN', tick_seconds = 3600, config = CAST('{}' AS jsonb) WHERE id = 1",

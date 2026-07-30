@@ -485,6 +485,9 @@ export const api = {
     mailbox: <T>(mailbox?: number) =>
         get<T>(mailbox == null ? '/api/mailbox' : `/api/mailbox/${mailbox}`),
     mailboxUnread: <T>(mailbox: number) => get<T>(`/api/mailbox/${mailbox}/unread`),
+    mailboxRecent: <T>(sequence = 0) => get<T>(`/api/mailbox/recent?sequence=${sequence}`),
+    mailboxOld: <T>(to: number, type: string) => get<T>(`/api/mailbox/old?to=${to}&type=${encodeURIComponent(type)}`),
+    contacts: <T>() => get<T>('/api/contacts'),
     message: <T>(id: number) => get<T>(`/api/messages/${id}`),
     // Message accept/decline (game-api takes ?generalId= — pass the caller's own id).
     messageAccept: (id: number, generalId: number) =>
@@ -754,6 +757,21 @@ export const api = {
             generalId: number,
             turnIdx = 0,
         ) => post<IntakeOutcome & T>(`/api/command/deleteMessage?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        readLatestMessage: <T = unknown>(
+            args: { type: 'private' | 'diplomacy'; msgID: number },
+            generalId: number,
+        ) => post<IntakeOutcome & T>(`/api/command/readLatestMessage?generalId=${generalId}`, args),
+        setMySetting: <T = unknown>(
+            args: {
+                tnmt: number;
+                defence_train: number;
+                use_treatment: number;
+                use_auto_nation_turn: number;
+            },
+            generalId: number,
+        ) => post<IntakeOutcome & T>(`/api/command/setMySetting?generalId=${generalId}`, args),
+        vacation: <T = unknown>(generalId: number) =>
+            post<IntakeOutcome & T>(`/api/command/vacation?generalId=${generalId}`, {}),
     },
 
     // Simulator

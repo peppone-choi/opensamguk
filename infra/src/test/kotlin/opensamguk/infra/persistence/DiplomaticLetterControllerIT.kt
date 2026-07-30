@@ -56,7 +56,7 @@ class DiplomaticLetterControllerIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = NamedParameterJdbcTemplate(ds)
         executor = JdbcFlushExecutor(jdbc, TransactionTemplate(DataSourceTransactionManager(ds)))
-        letterRepo = DiplomacyLetterRepository(jdbc)
+        letterRepo = DiplomacyLetterRepository(jdbc, opensamguk.common.world.WorldId(1))
         jdbc.update(
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'sc', 200, 1, 3600)",
             MapSqlParameterSource(),

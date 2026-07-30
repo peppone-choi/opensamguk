@@ -1,5 +1,6 @@
 package opensamguk.infra.read
 
+import opensamguk.common.world.WorldId
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.time.Instant
@@ -28,6 +29,7 @@ import java.time.Instant
  */
 class VotePollRepository(
     private val jdbc: NamedParameterJdbcTemplate,
+    private val worldId: WorldId,
 ) {
 
     /**
@@ -56,13 +58,16 @@ class VotePollRepository(
                    (closed_at IS NOT NULL)                AS has_closed,
                    EXISTS (
                        SELECT 1 FROM vote
-                        WHERE vote.vote_id = vote_poll.id
+                        WHERE vote.world_id = :world_id
+                          AND vote.vote_id = vote_poll.id
                           AND vote.general_id = :general_id
                    ) AS already_voted
               FROM vote_poll
-             WHERE id = :vote_id
+             WHERE world_id = :world_id
+               AND id = :vote_id
             """.trimIndent(),
             MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
                 .addValue("vote_id", voteId)
                 .addValue("general_id", generalId)
                 .addValue("now", java.sql.Timestamp.from(now)),

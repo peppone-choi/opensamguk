@@ -13,9 +13,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  *  - `unlock()` = `UPDATE plock SET plock=0 WHERE type='GAME'` → 무조건 0으로(`_119_b.php:113-115`).
  *  - 표시(`_119.php:36`) = `plock>0 ? "동결중" : "가동중"`.
  *
- * opensamguk은 게임당 단일 게임엔진 데몬이므로 plock 행 = 이 인메모리 플래그(AtomicBoolean) 하나로 충분하다.
- * [paused]가 true면 [opensamguk.engine.run.TurnDaemonRunner] 루프가 틱을 건너뛴다(드레인·flush 없음 →
- * InMemoryTurnWorld 동결). one-daemon-write-rule 무위반: 쓰기 경로(EntityManager/JDBC)와 무관한 제어 플래그.
+ * 단일 데몬의 즉시 CAS는 이 인메모리 플래그가 담당하고, durable mirror는 [DurableGameLock]이
+ * ChangeRecorder KV delta로 기록한다. [paused]가 true면 [opensamguk.engine.run.TurnDaemonRunner]가
+ * scheduled tick을 건너뛴다. one-daemon-write-rule을 지키기 위해 이 클래스는 직접 DB를 쓰지 않는다.
  *
  * 락걸기/락풀기는 데몬 lifecycle 제어이므로 게임엔진에 둔다(어드민 read는 game-api JPA, 여긴 제어 평면).
  */
@@ -29,6 +29,10 @@ class DaemonPauseGate {
 
     /** PHP `plock>0` — 현재 동결 여부. */
     fun isPaused(): Boolean = paused.get()
+
+    fun restore(locked: Boolean) {
+        paused.set(locked)
+    }
 
     /**
      * PHP `tryLock()` = CAS 0→1. 직전이 false(가동중)였을 때만 true를 반환(락 획득). 이미 동결중이면 false.

@@ -81,6 +81,10 @@ object CommandWireMapper {
         // W6a 메시지 — 발송/삭제 인테이크.
         "sendMessage",
         "deleteMessage",
+        "readLatestMessage",
+        "setMySetting",
+        "vacation",
+        "acceptRaiseInvaderMessage",
         // W6c 경매 개설 — 쌀 매수/매도/유니크.
         "auctionOpenBuyRice",
         "auctionOpenSellRice",
@@ -307,6 +311,31 @@ object CommandWireMapper {
             "deleteMessage" -> TurnDaemonCommand.DeleteMessage(
                 requestId = requestId, generalId = generalId,
                 msgID = args.int("msgID") ?: args.int("msgId") ?: 0,
+            )
+            "readLatestMessage" -> TurnDaemonCommand.ReadLatestMessage(
+                requestId = requestId,
+                generalId = generalId,
+                messageType = args.str("messageType") ?: args.str("type") ?: "",
+                msgID = args.int("msgID") ?: args.int("msgId") ?: 0,
+            )
+            "setMySetting" -> TurnDaemonCommand.SetMySetting(
+                requestId = requestId,
+                generalId = generalId,
+                settings = opensamguk.common.wire.MySettings(
+                    tnmt = args.int("tnmt"),
+                    defenceTrain = args.int("defence_train") ?: args.int("defenceTrain"),
+                    useTreatment = args.int("use_treatment") ?: args.int("useTreatment"),
+                    useAutoNationTurn = args.int("use_auto_nation_turn") ?: args.int("useAutoNationTurn"),
+                ),
+            )
+            "vacation" -> TurnDaemonCommand.Vacation(
+                requestId = requestId,
+                generalId = generalId,
+            )
+            "acceptRaiseInvaderMessage" -> TurnDaemonCommand.AcceptRaiseInvaderMessage(
+                requestId = requestId,
+                messageId = args.int("messageId") ?: args.int("msgID") ?: 0,
+                generalId = generalId,
             )
             // ── W6c 경매 개설 — 쌀 매수/매도/유니크. 검증 순서(3개월→턴수→거래량→입찰가)는 엔진이 적용. ──
             "auctionOpenBuyRice" -> TurnDaemonCommand.AuctionOpenBuyRice(

@@ -2,6 +2,7 @@ package opensamguk.logic.war
 
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
+import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.City
@@ -58,11 +59,31 @@ object ConquerCity {
         )
 
         // The 공략 성공 / 점령 / 지배 logs (process_war.php:566-577) — NO rng.
-        val logs = mutableListOf<String>()
+        val logs = mutableListOf<ConquerLog>()
+        val scoutInvites = mutableListOf<ScoutInviteIntent>()
+        val turnSlotWrites = mutableListOf<GeneralTurnSlotIntent>()
         val attackerNationName = input.attackerNationName
         val cityName = input.cityName
-        logs.add("<G><b>$cityName</b></> 공략에 <S>성공</>했습니다.")
-        logs.add(BattleLogTokens.conquerHistory(attackerNationName, cityName))
+        val cityUl = JosaUtil.pick(cityName, "을")
+        val cityYi = JosaUtil.pick(cityName, "이")
+        val nationYi = JosaUtil.pick(attackerNationName, "이")
+        val generalYi = JosaUtil.pick(input.attackerGeneralName, "이")
+        val defenderDecoration =
+            if (input.isNeutralCapture) "공백지인" else "<D><b>${input.defenderNationName}</b></>의"
+        logs += ConquerLog.generalAction(attacker.id, attacker.nationId, "<G><b>$cityName</b></> 공략에 <S>성공</>했습니다.")
+        logs += ConquerLog.generalHistory(attacker.id, attacker.nationId, "<G><b>$cityName</b></>$cityUl <S>점령</>")
+        logs += ConquerLog.globalAction("<Y>${input.attackerGeneralName}</>$generalYi <G><b>$cityName</b></> 공략에 <S>성공</>했습니다.")
+        logs += ConquerLog.globalHistory(
+            "<S><b>【지배】</b></><D><b>$attackerNationName</b></>$nationYi <G><b>$cityName</b></>$cityUl 지배했습니다.",
+        )
+        logs += ConquerLog.nationHistory(
+            attacker.nationId,
+            "<Y>${input.attackerGeneralName}</>$generalYi $defenderDecoration <G><b>$cityName</b></> $cityUl <S>점령</>",
+        )
+        logs += ConquerLog.nationHistory(
+            city.nationId,
+            "<D><b>$attackerNationName</b></>의 <Y>${input.attackerGeneralName}</>에 의해 <G><b>$cityName</b></>$cityYi <O>함락</>",
+        )
 
         // OccupyCity EventTarget SLOT (process_war.php:586-588) — runs on SEED #1; its draws are discarded.
         occupyCityHandler.handle(seed1Rng)
@@ -89,7 +110,16 @@ object ConquerCity {
 
         val isCollapse = !input.isNeutralCapture && input.defenderNationCityCount == 1
         if (isCollapse) {
-            resolveCollapse(input, rng, logs, generalDeltas, nationDeltas, collapseGeneralOrder)
+            resolveCollapse(
+                input,
+                rng,
+                logs,
+                generalDeltas,
+                nationDeltas,
+                collapseGeneralOrder,
+                scoutInvites,
+                turnSlotWrites,
+            )
             deletedNationId = input.defenderNation!!.id
         } else if (!input.isNeutralCapture) {
             resolveSurvive(input, logs, generalDeltas, nationDeltas, cityDeltas)
@@ -114,6 +144,9 @@ object ConquerCity {
             frontResults = frontResults,
             deletedGeneralIds = emptyList(), // generals SURVIVE as 재야 — markGeneralDeleted is NEVER used.
             collapseGeneralOrder = collapseGeneralOrder,
+            scoutInvites = scoutInvites,
+            turnSlotWrites = turnSlotWrites,
+            destroyNationEvent = isCollapse,
         )
     }
 
@@ -125,18 +158,25 @@ object ConquerCity {
     private fun resolveCollapse(
         input: ConquerCityInput,
         rng: RandUtil,
-        logs: MutableList<String>,
+        logs: MutableList<ConquerLog>,
         generalDeltas: MutableList<GeneralDelta>,
         nationDeltas: MutableList<NationDelta>,
         collapseGeneralOrder: MutableList<Int>,
+        scoutInvites: MutableList<ScoutInviteIntent>,
+        turnSlotWrites: MutableList<GeneralTurnSlotIntent>,
     ) {
         val admin = input.admin
         val loseNation = input.defenderNation!!
         // deleteNation order: other generals (no != lord) ascending PK + the lord LAST (func.php:1735).
-        val lord = input.defenderNationGenerals.maxByOrNull { it.officerLevel }
+        val lord = input.defenderNationGenerals.firstOrNull { it.officerLevel == 12 }
             ?: error("ConquerCity collapse: no lord (officer_level 12) in the defender nation")
         val others = input.defenderNationGenerals.filter { it.id != lord.id }.sortedBy { it.id }
         val oldNationGenerals = others + lord
+        val defenderNationUl = JosaUtil.pick(input.defenderNationName, "을")
+        logs += ConquerLog.nationHistory(
+            input.attacker.nationId,
+            "<D><b>${input.defenderNationName}</b></>$defenderNationUl 정복",
+        )
 
         var loseGeneralGold = 0
         var loseGeneralRice = 0
@@ -166,11 +206,15 @@ object ConquerCity {
                 nationId = 0,
             )
             generalDeltas.add(GeneralDelta(oldGeneral, post))
-            logs.add("도주하며 금<C>$loseGold</> 쌀<C>$loseRice</>을 분실했습니다.")
+            logs += ConquerLog.generalAction(
+                oldGeneral.id,
+                0,
+                "도주하며 금<C>$loseGold</> 쌀<C>$loseRice</>을 분실했습니다.",
+            )
 
             // (5) scout (process_war.php:644) — CONDITIONAL, short-circuit AND on join_mode != 'onlyRandom'.
             if (admin.joinMode != "onlyRandom" && rng.nextBool(0.5)) {
-                // ScoutMessage::buildScoutMessage — a P6 messaging seam; no rng, no delta in P4.
+                scoutInvites += ScoutInviteIntent(input.attacker.id, oldGeneral.id)
             }
 
             // (6) NPC join (process_war.php:653-661) — CONDITIONAL.
@@ -178,8 +222,17 @@ object ConquerCity {
             if (admin.joinMode != "onlyRandom" && npcType in 2..8 && npcType != 5 &&
                 rng.nextBool(GameConst.joinRuinedNPCProp)
             ) {
-                @Suppress("UNUSED_VARIABLE")
-                val joinTurn = rng.nextRangeInt(0, 12) // _setGeneralCommand 임관/견문 — a P6 command-queue seam.
+                val joinTurn = rng.nextRangeInt(0, 12)
+                for (turnIdx in 0 until joinTurn) {
+                    turnSlotWrites += GeneralTurnSlotIntent(oldGeneral.id, turnIdx, "che_견문", "{}", "견문")
+                }
+                turnSlotWrites += GeneralTurnSlotIntent(
+                    oldGeneral.id,
+                    joinTurn,
+                    "che_임관",
+                    """{"destNationID":${input.attacker.nationId}}""",
+                    "임관",
+                )
             }
         }
 
@@ -200,6 +253,12 @@ object ConquerCity {
             )
             nationDeltas.add(NationDelta(attackerNation, post))
         }
+        val resourceLog =
+            "<D><b>${input.defenderNationName}</b></> 정복으로 금<C>${formatInteger(loseNationGold)}</> " +
+                "쌀<C>${formatInteger(loseNationRice)}</>을 획득했습니다."
+        for (chiefId in input.attackerNationChiefIds) {
+            logs += ConquerLog.generalAction(chiefId, input.attacker.nationId, resourceLog)
+        }
 
         // DestroyNation EventTarget SLOT (process_war.php:700) — a no-op in P4 (the OpenNationBetting handler
         // is P6). The slot + its position AFTER the winner reward are preserved so P6 betting attaches
@@ -214,7 +273,7 @@ object ConquerCity {
      */
     private fun resolveSurvive(
         input: ConquerCityInput,
-        logs: MutableList<String>,
+        logs: MutableList<ConquerLog>,
         generalDeltas: MutableList<GeneralDelta>,
         nationDeltas: MutableList<NationDelta>,
         cityDeltas: MutableList<CityDelta>,
@@ -237,7 +296,25 @@ object ConquerCity {
             .associate { it.id to it.population }
         val minCity = findNextCapital(cityId, ownedPop)
 
-        logs.add(BattleLogTokens.emergencyCapitalMoveHistory(input.defenderNationName, input.minCityNameOf(minCity)))
+        logs += ConquerLog.globalHistory(
+            BattleLogTokens.emergencyCapitalMoveHistory(input.defenderNationName, input.minCityNameOf(minCity)),
+        )
+        val minCityName = input.minCityNameOf(minCity)
+        val minCityRo = JosaUtil.pick(minCityName, "로")
+        for (g in input.defenderNationGenerals) {
+            logs += ConquerLog.generalAction(
+                g.id,
+                g.nationId,
+                "수도가 함락되어 <G><b>$minCityName</b></>$minCityRo <M>긴급천도</>합니다.",
+            )
+            if (g.officerLevel >= 5) {
+                logs += ConquerLog.generalAction(
+                    g.id,
+                    g.nationId,
+                    "수뇌는 <G><b>$minCityName</b></>$minCityRo 집합되었습니다.",
+                )
+            }
+        }
 
         // 천도: nation capital=minCity, gold×0.5, rice×0.5 (process_war.php:734-738).
         val movedNation = defNation.copy(
@@ -268,7 +345,7 @@ object ConquerCity {
      */
     private fun resolveWinnerAndReset(
         input: ConquerCityInput,
-        logs: MutableList<String>,
+        logs: MutableList<ConquerLog>,
         generalDeltas: MutableList<GeneralDelta>,
         cityDeltas: MutableList<CityDelta>,
         frontResults: MutableList<NationFrontDelta>,
@@ -286,8 +363,17 @@ object ConquerCity {
             mergeGeneralDelta(generalDeltas, attacker, attacker.copy(cityId = city.id))
         } else {
             // 분쟁협상 / 양도 logs only (process_war.php:764-774) — no general move.
-            logs.add(BattleLogTokens.conflictNegotiationHistory(input.conquerNationNameOf(conquerNation), input.cityName))
-            logs.add("<G><b>${input.cityName}</b></>을 <D><b>${input.conquerNationNameOf(conquerNation)}</b></>에 <Y>양도</>")
+            val conquerNationName = input.conquerNationNameOf(conquerNation)
+            val cityUl = JosaUtil.pick(input.cityName, "을")
+            logs += ConquerLog.globalHistory(BattleLogTokens.conflictNegotiationHistory(conquerNationName, input.cityName))
+            logs += ConquerLog.nationHistory(
+                conquerNation,
+                "<D><b>${input.attackerNationName}</b></>에서 <G><b>${input.cityName}</b></>$cityUl <S>양도</> 받음",
+            )
+            logs += ConquerLog.nationHistory(
+                attacker.nationId,
+                "<G><b>${input.cityName}</b></>$cityUl <D><b>$conquerNationName</b></>에 <Y>양도</>",
+            )
         }
 
         // city reset (process_war.php:777-795). agri/comm/secu ×0.7 (int-cast); supply/term/conflict/
@@ -333,6 +419,8 @@ object ConquerCity {
         if (idx >= 0) deltas[idx] = GeneralDelta(deltas[idx].pre, post)
         else deltas.add(GeneralDelta(pre, post))
     }
+
+    private fun formatInteger(value: Int): String = "%,d".format(value)
 
     /**
      * findNextCapital (`process_war.php:810-845`): BFS distance-rings over [CalcCityDistance] outward; in the
@@ -416,6 +504,8 @@ data class ConquerCityInput(
     val cityConstVariant: CityConstVariant = CityConstRegistry.of("che"),
     /** Display name of the attacker's nation (`$attackerNationName`). */
     val attackerNationName: String = "",
+    val attackerGeneralName: String = "",
+    val attackerNationChiefIds: List<Int> = emptyList(),
     /** Display name of the defender's nation (`$defenderNationName`) — the 긴급천도 / 멸망 logs. */
     val defenderNationName: String = "",
     /** Display name of the conquered city (`$cityName`). */
@@ -438,7 +528,7 @@ data class ConquerCityInput(
  */
 data class ConquerCityResult(
     /** The 공략 성공 / 지배 / (later) 정복·긴급천도·양도 logs, in emission order. */
-    val conquerLogs: List<String>,
+    val conquerLogs: List<ConquerLog>,
     /** The total rng draws made off the SEED #2 reset stream (defender loop + collapse sub-stream). */
     val collapseLoopDraws: Int,
     /** The FIRST nextBool draw off the RESET (SEED #2) stream — proves the double-seed reset to idx 0. */
@@ -459,6 +549,57 @@ data class ConquerCityResult(
     val deletedGeneralIds: List<Int> = emptyList(),
     /** The collapse oldNationGenerals iteration order (others asc PK + lord LAST) — the draw-stream pin. */
     val collapseGeneralOrder: List<Int> = emptyList(),
+    val scoutInvites: List<ScoutInviteIntent> = emptyList(),
+    val turnSlotWrites: List<GeneralTurnSlotIntent> = emptyList(),
+    val destroyNationEvent: Boolean = false,
+)
+
+enum class ConquerLogScope(val wireValue: String) {
+    GENERAL("general"),
+    NATION("nation"),
+    GLOBAL("global"),
+}
+
+enum class ConquerLogCategory(val wireValue: String) {
+    ACTION("action"),
+    HISTORY("history"),
+}
+
+data class ConquerLog(
+    val scope: ConquerLogScope,
+    val category: ConquerLogCategory,
+    val text: String,
+    val generalId: Int? = null,
+    val nationId: Int? = null,
+) {
+    operator fun contains(value: CharSequence): Boolean = text.contains(value)
+
+    companion object {
+        fun generalAction(generalId: Int, nationId: Int, text: String) =
+            ConquerLog(ConquerLogScope.GENERAL, ConquerLogCategory.ACTION, text, generalId, nationId)
+
+        fun generalHistory(generalId: Int, nationId: Int, text: String) =
+            ConquerLog(ConquerLogScope.GENERAL, ConquerLogCategory.HISTORY, text, generalId, nationId)
+
+        fun nationHistory(nationId: Int, text: String) =
+            ConquerLog(ConquerLogScope.NATION, ConquerLogCategory.HISTORY, text, nationId = nationId)
+
+        fun globalAction(text: String) =
+            ConquerLog(ConquerLogScope.GLOBAL, ConquerLogCategory.ACTION, text)
+
+        fun globalHistory(text: String) =
+            ConquerLog(ConquerLogScope.GLOBAL, ConquerLogCategory.HISTORY, text)
+    }
+}
+
+data class ScoutInviteIntent(val sourceGeneralId: Int, val destinationGeneralId: Int)
+
+data class GeneralTurnSlotIntent(
+    val generalId: Int,
+    val turnIdx: Int,
+    val actionCode: String,
+    val argJson: String,
+    val brief: String,
 )
 
 /** A per-nation front recompute result (`SetNationFront`) — the engine folds each city front as a diffCity. */

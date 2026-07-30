@@ -1,15 +1,16 @@
 package opensamguk.gameapi.controller
 
+import jakarta.servlet.http.HttpServletRequest
+import opensamguk.common.auth.GatewayProfileClaims
+import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.infra.read.SelectPoolReadRow
 import opensamguk.infra.read.SelectPoolRepository
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -26,26 +27,47 @@ class SelectPoolController(
     private val reserve: CommandReserveService? = null,
 ) {
     @GetMapping
-    fun candidates(@AuthenticationPrincipal userId: Long?): ResponseEntity<SelectPoolResponse> {
-        if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
+    fun candidates(
+        @AuthenticationPrincipal userId: Long?,
+        request: HttpServletRequest,
+    ): ResponseEntity<SelectPoolResponse> {
+        val profile = verifiedProfile(userId, request)
+        if (profile == null || userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
         val now = clock.instant()
         val rows = repository.listForUser(userId.toInt(), now)
         val cards = rows.map(::toCard).sortedBy { it.dex.sum() }
+        val options = repository.allowedCustomOptions()
+        val showImageLevel = repository.showImageLevel() ?: DEFAULT_SHOW_IMAGE_LEVEL
         return ResponseEntity.ok(
             SelectPoolResponse(
                 result = true,
                 generalId = resolver.resolveGeneralId(userId),
                 validUntil = rows.mapNotNull { it.reservedUntil }.minOrNull()?.toString(),
                 pick = cards,
+                customOptions = SelectPoolCustomOptions(
+                    stat = "stat" in options,
+                    personality = "ego" in options,
+                    picture = "picture" in options,
+                    personalities = GameConst.availablePersonality.map {
+                        SelectPoolPersonalityOption(it, GameConst.personalityNameOf(it))
+                    },
+                ),
+                member = SelectPoolMember(
+                    name = profile.nickname?.takeIf { it.isNotBlank() } ?: profile.username,
+                    canUsePicture = showImageLevel >= 1 && profile.grade >= 1 && !profile.picture.isNullOrBlank(),
+                ),
             ),
         )
     }
 
     @PostMapping("/refresh")
-    fun refresh(@AuthenticationPrincipal userId: Long?): ResponseEntity<SelectPoolRefreshResponse> {
-        if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
+    fun refresh(
+        @AuthenticationPrincipal userId: Long?,
+        request: HttpServletRequest,
+    ): ResponseEntity<SelectPoolRefreshResponse> {
+        if (verifiedProfile(userId, request) == null || userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
         val service = reserve ?: return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()
@@ -98,6 +120,15 @@ class SelectPoolController(
         }
         return List(size) { values.getOrElse(it) { 0 } }
     }
+
+    private fun verifiedProfile(userId: Long?, request: HttpServletRequest): GatewayProfileClaims? =
+        userId
+            ?.takeIf { it in 1..Int.MAX_VALUE.toLong() }
+            ?.let { JwtVerifyFilter.profile(request)?.takeIf { profile -> profile.userId == it } }
+
+    private companion object {
+        const val DEFAULT_SHOW_IMAGE_LEVEL = 3
+    }
 }
 
 data class SelectPoolResponse(
@@ -105,6 +136,25 @@ data class SelectPoolResponse(
     val generalId: Int?,
     val validUntil: String?,
     val pick: List<SelectPoolCard>,
+    val customOptions: SelectPoolCustomOptions,
+    val member: SelectPoolMember,
+)
+
+data class SelectPoolCustomOptions(
+    val stat: Boolean,
+    val personality: Boolean,
+    val picture: Boolean,
+    val personalities: List<SelectPoolPersonalityOption>,
+)
+
+data class SelectPoolPersonalityOption(
+    val code: String,
+    val name: String,
+)
+
+data class SelectPoolMember(
+    val name: String,
+    val canUsePicture: Boolean,
 )
 
 data class SelectPoolRefreshResponse(
@@ -128,9 +178,3 @@ data class SelectPoolCard(
     val specialWar: String?,
     val statEditable: Boolean,
 )
-
-@Configuration
-class SelectPoolBeans {
-    @Bean
-    fun selectPoolRepository(jdbc: NamedParameterJdbcTemplate): SelectPoolRepository = SelectPoolRepository(jdbc)
-}

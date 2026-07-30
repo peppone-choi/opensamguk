@@ -174,10 +174,15 @@ class MailboxController(
                 sequence = nextSequence,
                 nationID = nationID,
                 generalName = generalName,
-                latestRead = LatestRead(), // BLOCKED — general_stor 미구현
+                latestRead = latestRead(me),
             ),
         )
     }
+
+    private fun latestRead(general: GeneralReadEntity): LatestRead = LatestRead(
+        diplomacy = (general.meta["latestReadDiplomacyMsg"] as? Number)?.toInt() ?: 0,
+        private = (general.meta["latestReadPrivateMsg"] as? Number)?.toInt() ?: 0,
+    )
 
     /**
      * D8 GetOldMessage — `GET /api/mailbox/old`.

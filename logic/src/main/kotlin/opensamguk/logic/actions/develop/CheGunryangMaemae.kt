@@ -5,6 +5,8 @@ import opensamguk.common.rng.RandUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.RequirementKey
@@ -17,6 +19,8 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
@@ -55,6 +59,18 @@ class CheGunryangMaemae(
     override val key: String = "che_군량매매"
     override val name: String = "군량매매"
     override val argsSchema: Map<String, Any?> get() = mapOf("buyRice" to "bool", "amount" to "int")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("buyRice", "bool", "toggle", "riceTradeDirection"),
+            CommandFieldSpec(
+                "amount",
+                "int",
+                "amount",
+                min = 100,
+                max = GameConst.maxResourceActionAmount,
+            ),
+        ),
+    )
 
     var lastUniqueLotteryIntent: GeneralUniqueLotteryIntent? = null
         private set
@@ -144,10 +160,10 @@ class CheGunryangMaemae(
             val buy = sell / tradeRate
             sell += t
             tax = t; buyAmount = buy; sellAmount = sell
-            // general: rice += buy ; gold = max(gold - sell, 0). Int columns → truncate the combined value.
+            // MariaDB materializes the final float expression into INT columns by rounding the combined value.
             tradedGeneral = d.general.copy(
-                rice = truncate(d.general.rice + buyAmount).toInt(),
-                gold = truncate(maxOf(d.general.gold - sellAmount, 0.0)).toInt(),
+                rice = phpRound(d.general.rice + buyAmount),
+                gold = phpRound(maxOf(d.general.gold - sellAmount, 0.0)),
             )
         } else {
             // rice → gold
@@ -157,8 +173,8 @@ class CheGunryangMaemae(
             buy -= t
             tax = t; buyAmount = buy; sellAmount = sell
             tradedGeneral = d.general.copy(
-                gold = truncate(d.general.gold + buyAmount).toInt(),
-                rice = truncate(maxOf(d.general.rice - sellAmount, 0.0)).toInt(),
+                gold = phpRound(d.general.gold + buyAmount),
+                rice = phpRound(maxOf(d.general.rice - sellAmount, 0.0)),
             )
         }
 
@@ -181,13 +197,21 @@ class CheGunryangMaemae(
             "leadership_exp" to rawStat(d, "leadership"),
             "strength_exp" to rawStat(d, "strength"),
             "intel_exp" to rawStat(d, "intelligence")))
-        d.general = d.general.copy(
-            experience = d.general.experience + 30.0,
-            dedication = d.general.dedication + 50.0,
-            meta = withMeta(d.general.meta, incStat to metaInt(d.general.meta, incStat) + 1),
+
+        var nextGeneral = d.general
+        val experienceResult = addExperience(nextGeneral, 30.0, pipeline)
+        nextGeneral = experienceResult.general
+        experienceResult.plainLog?.let(context::addPlainLog)
+
+        val dedicationResult = addDedication(nextGeneral, 50.0, pipeline)
+        nextGeneral = dedicationResult.general
+        dedicationResult.plainLog?.let(context::addPlainLog)
+
+        nextGeneral = nextGeneral.copy(
+            meta = withMeta(nextGeneral.meta, incStat to metaInt(nextGeneral.meta, incStat) + 1),
             lastTurn = LastTurn(command = name, arg = parsed),
         )
-        val statResult = checkStatChange(d.general)
+        val statResult = checkStatChange(nextGeneral)
         d.general = statResult.general
         statResult.plainLogs.forEach { context.addPlainLog(it) }
         StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), parsed)

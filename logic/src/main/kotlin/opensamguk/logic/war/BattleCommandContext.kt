@@ -3,6 +3,7 @@ package opensamguk.logic.war
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
+import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
  * BO2 — the battle-command carrier the `che_출병` resolver (BO3) reads. Mirrors the core2026
@@ -36,6 +37,8 @@ data class BattleCommandContext(
     val cityById: Map<Int, City>,
     /** nation id → the raw [Nation] row (attacker + defender nation, `process_war.php:30`). */
     val nationById: Map<Int, Nation>,
+    val pipelinesByGeneralId: Map<Int, GeneralActionPipeline> = emptyMap(),
+    val effectiveGeneralCountByNationId: Map<Int, Int> = emptyMap(),
     /** The install-scoped hidden seed (`UniqueConst::$hiddenSeed`, war-seed component 0). */
     val hiddenSeed: String,
     /** The actor logger's year (war-seed component 2, `che_출병.php:248`). */

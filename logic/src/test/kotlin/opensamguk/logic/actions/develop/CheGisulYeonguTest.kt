@@ -12,8 +12,12 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.domestic.UPGRADE_LIMIT
 import opensamguk.logic.domestic.techLimit
+import opensamguk.logic.event.StaticEventHandler
+import opensamguk.logic.stats.GeneralActionModule
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -65,6 +69,9 @@ class CheGisulYeonguTest {
     private val env = WorldEnv(year = 190, startYear = 184, develCost = 120)   // relYear=6
 
     private fun action() = cheGisulYeongu(pipeline)
+
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
 
     // ---- TechLimit helper (func_converter.php:684-697 + getTechLevel:676) ----
     @Test
@@ -129,6 +136,78 @@ class CheGisulYeonguTest {
         // exp/ded identical across the two (computed BEFORE the /4)
         assertEquals(noLimit.general.experience, limited.general.experience, 1e-12, "exp unaffected by /4")
         assertEquals(noLimit.general.dedication, limited.general.dedication, 1e-12, "ded unaffected by /4")
+    }
+
+    @Test
+    fun `exp and dedication fold through a non identity pipeline with ordered PLAIN promotions`() {
+        val boostedPipeline = GeneralActionPipeline(listOf(object : GeneralActionModule {
+            override fun onCalcStat(general: General, statName: String, value: Double, aux: Map<String, Any?>): Double =
+                when (statName) {
+                    "experience" -> value * 2.0
+                    "dedication" -> value * 3.0
+                    else -> value
+                }
+        }))
+        val actor = general().copy(
+            experience = 99.0,
+            dedication = 0.0,
+            meta = linkedMapOf(
+                "explevel" to 0,
+                "dedlevel" to 0,
+                "intel_exp" to 3,
+                "max_domestic_critical" to 0.0,
+            ),
+        )
+
+        val identityDraft = GeneralActionDraft(actor, city(), nation())
+        cheGisulYeongu(GeneralActionPipeline()).resolve(
+            GeneralActionResolveContext(identityDraft, freshRng(), env, MONTH, date),
+        )
+
+        val boostedDraft = GeneralActionDraft(actor, city(), nation())
+        val boostedContext = GeneralActionResolveContext(boostedDraft, freshRng(), env, MONTH, date)
+        cheGisulYeongu(boostedPipeline).resolve(boostedContext)
+
+        val rawExp = identityDraft.general.experience - actor.experience
+        val rawDed = identityDraft.general.dedication - actor.dedication
+        assertEquals(actor.experience + rawExp * 2.0, boostedDraft.general.experience, 1e-9)
+        assertEquals(actor.dedication + rawDed * 3.0, boostedDraft.general.dedication, 1e-9)
+        assertEquals(2, boostedContext.plainLogs().size, "addExperience then addDedication each emit once")
+        assertTrue(boostedContext.plainLogs()[0].contains("레벨업"), "experience promotion is first")
+        assertTrue(boostedContext.plainLogs()[1].contains("승급"), "dedication promotion is second")
+        assertEquals(
+            listOf(boostedContext.logs().single()) + boostedContext.plainLogs(),
+            boostedContext.orderedLogEvents().map { it.text },
+            "the existing action log stays before PHP helper PLAIN logs",
+        )
+    }
+
+    @Test
+    fun `tail sets LastTurn and applies checkStatChange before StaticEventHandler`() {
+        val actor = general().copy(
+            meta = linkedMapOf(
+                "explevel" to 0,
+                "dedlevel" to 0,
+                "intel_exp" to UPGRADE_LIMIT - 1,
+                "max_domestic_critical" to 0.0,
+            ),
+        )
+        val draft = GeneralActionDraft(actor, city(), nation())
+        val context = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
+        val observedTurns = mutableListOf<String>()
+        val observedIntel = mutableListOf<Int>()
+        val observedPlainLogs = mutableListOf<List<String>>()
+        StaticEventHandler.register("che_기술연구") { eventGeneral, _, _, _ ->
+            observedTurns += eventGeneral.lastTurn.command
+            observedIntel += eventGeneral.intel
+            observedPlainLogs += context.plainLogs()
+        }
+
+        action().resolve(context)
+
+        assertEquals(listOf("기술 연구"), observedTurns)
+        assertEquals(listOf(actor.intel + 1), observedIntel)
+        assertTrue(observedPlainLogs.single().any { it.contains("<S>지력</>이 <C>1</> 올랐습니다!") })
     }
 
     @Test

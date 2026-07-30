@@ -61,6 +61,113 @@
 
 ---
 
+# SESSION HANDOFF — 2026-07-29 (v1 비운영 감사 종결)
+
+## 결론
+
+v1의 2026-07-26 감사 §6.1–§6.8 중 **비운영** 차단은 PHP 정본·Kotlin
+replay·local Docker로 종결됐다. v1은 **연 36순**(상순/중순/하순)이며,
+production/S6 rollout은 여전히 미수행이다.
+
+- 감사/원래 source map:
+  `docs/superpowers/research/2026-07-26-v1-legacy-equivalence-audit.md`
+- 동결 docs manifest: `docs/loops/v1-legacy-equivalence-audit-2026-07-26/DOCS_MANIFEST.md`
+  (388 files; 동결 뒤 문서는 소급 산입 금지)
+- final ledger/review:
+  `docs/loops/v1-nonoperational-completion-2026-07-27/LEDGER.md`,
+  `docs/superpowers/reviews/2026-07-27-v1-nonoperational-completion-review.md`
+- evidence: schema 4 12개월·36순 A/B byte-identical + Kotlin replay 1/0/0/0;
+  backend 550/4,753 failure·error 0; web/game 46/227 + typecheck; local Docker
+  runtime9 Playwright 1 passed/0 unexpected; independent review CLEAR/APPROVE.
+
+## 2026-07-29 검증과 금지선 (historical snapshot)
+
+1. **최종 Agent OS 검증:** checker의 cleared/quarantined disjoint Scope union 수정
+   뒤 `scripts/agent/verify-changes.sh --run`을 정확히 한 번 실행했다. Gradle 5개
+   모듈은 `BUILD SUCCESSFUL in 13m 27s` / 29 tasks, `web/game` typecheck + 46/227,
+   Agent OS contract와 diff/whitespace는 PASS다. cross-agent finding은
+   [독립 scope-union review](reviews/2026-07-29-cross-agent-scope-union-review.md)의
+   `cleared`로 제거됐다.
+2. **strict 기준선 분리:** strict checker는 error 1 / warning 0이며 exit 1의
+   유일한 원인은 untouched user-owned `.codex/config.toml` 최상위 personal model
+   pin이다. 이는 당시 비운영 v1 기능 종결과 다른 whole-worktree baseline이며,
+   current strict 상태나 git action readiness를 뜻하지 않는다. 증거:
+   [verify-changes.log](../../.omo/evidence/v1-final/verify-changes-final2/verify-changes.log),
+   [exit-code.txt](../../.omo/evidence/v1-final/verify-changes-final2/exit-code.txt).
+3. **운영 제외:** S6/canary/expand-backfill/capacity/live EC2 cutover는 이 종결의
+   일부가 아니다. 인간 승인 없이 deploy하지 않는다.
+4. **수행하지 않음:** commit, push, merge, production deploy, data delete,
+   secret access, legacy/golden write 또는 test weakening.
+
+## 2026-07-30 사후 parity 검토 정정
+
+7월 29일 종결 뒤 final reviewer가 `SelectPool`·`VotePoll`·
+`DiplomacyLetter`의 unscoped side read를 발견했다. V32 복합 world key는 row
+identity만 보장하므로 local-ID-only outer/nested read는 다른 world의 같은 ID를
+잡을 수 있었다. 모든 outer/nested query에 `WorldId`/`world_id`를 강제하고
+중앙 scoped beans로만 process world를 제공하며, same-local-ID 두 world
+regression으로 보정했다. 최종 parity review는 **`CLEARED`**다.
+
+- `origin/main`의 `OPENSAM-149 (OP149) Rehydrate` 표기는 superseded·not-wired
+  historical quarantine이다. 현재 종료/rehydrate 증거나 활성 blocker로 재연결하지
+  않는다.
+- 최신 canonical backend gate: 552 suites / 4,758 tests / failure·error 0,
+  known `LongSim` skip 1. fresh 영향 범위는 237 suites / 1,366 tests green이다.
+  Golden은 current green이지만 logic은 `UP-TO-DATE`라 fresh logic rerun 주장이
+  아니다. frontend typecheck + 46/227 + diff-check도 green이다.
+- corrected local Docker: five images sequential green, 8 health green,
+  Playwright 1 passed (`241634ms`); join `RESOLVED`/`ok=true`/general `1230`,
+  정확히 14 DOM, engine restart 뒤 general/result/repository `200`, auth
+  `false|false` 복원, final project containers 0.
+- 더 이른 parallel image-build OOM 및 port 3000 collision/120초 timeout은
+  하니스/환경 실패다. root timeout 기본값은 `420000`으로 수정됐고 override
+  test는 green이다. 무관한 `eager_cray`는 OOMKilled였지만 volume을 보존한 채
+  restart하지 않았고 final project 결과에 포함하지 않았다.
+- 7월 29일 `.codex/config.toml` strict error는 historical whole-worktree
+  hygiene baseline일 뿐, 현재 v1 parity evidence의 blocker도 current strict
+  green 주장도 아니다. v1은 계속 연 36순이며 S6/cutover는 제외다.
+
+이 사후 검토는 git action 전 release-candidate 증거다. commit, push, merge,
+deploy를 실행하거나 승인하지 않았다.
+
+---
+
+# SESSION HANDOFF — 2026-07-26 (v1 레거시 동등성 감사, historical snapshot)
+
+## 결론
+
+버전 1은 **레거시 동등 완료가 아니며 release-blocked**다. `docs/` 동결 입력
+388개를 전수 참조하고 PHP `legacy/devsam-core` commit
+`4de7ebec17a722d516608dbb987467f1a451dada` 및 `hwe/ts`와 현 실경로를
+대조했다.
+
+- 감사 보고서:
+  `docs/superpowers/research/2026-07-26-v1-legacy-equivalence-audit.md`
+- 문서 manifest:
+  `docs/loops/v1-legacy-equivalence-audit-2026-07-26/DOCS_MANIFEST.md`
+- 루프 원장:
+  `docs/loops/v1-legacy-equivalence-audit-2026-07-26/LEDGER.md`
+- 독립 리뷰:
+  `docs/superpowers/reviews/2026-07-26-v1-legacy-equivalence-fixes-review.md`
+  (`Verdict: cleared`)
+
+## 이번에 수정한 것
+
+1. world-scoped cold boot와 troop 재적재
+2. `ProfileIconSync` durable inbox terminal result
+3. `che_천도` 거리·비용·준비 턴·trial·유산·5개 로그·static-event 순서
+4. AI 요양 기본 임계값 30→10
+5. event cold-load world scope
+6. 기밀실/유니크 경매 deep link
+
+최종 backend gate는 521 suites / 4,585 tests / 실패 0 / skip 205,
+`web/game`은 typecheck + 42 files / 216 tests다. Docker daemon, PHP CLI,
+로컬 게임 서버 부재로 2-world PostgreSQL IT, PHP 재캡처, live browser는
+`채점대기`다. 다음 작업은 감사 보고서 §6 차단 항목을 foundation-first
+슬라이스로 닫아야 하며, v1 완료 표기·ship/merge/deploy는 금지한다.
+
+---
+
 # SESSION HANDOFF — 2026-07-25 (v2 버전분리 + 오픈 경로 확정 + 도시·인맥 루프 round-3)
 
 > 이 세션은 코드 변경 0. 산출물은 전부 **결정과 문서**다. 정본 원장: `docs/loops/v2-planning-2026-07-12/LEDGER.md`.

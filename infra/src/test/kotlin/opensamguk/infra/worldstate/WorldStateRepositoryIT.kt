@@ -1,36 +1,39 @@
 package opensamguk.infra.worldstate
+import opensamguk.infra.read.SideReadRepositoryConfiguration
+import opensamguk.infra.read.WorldOneScopeConfiguration
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.context.annotation.Import
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import java.time.OffsetDateTime
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 @Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(SideReadRepositoryConfiguration::class, WorldOneScopeConfiguration::class)
 class WorldStateRepositoryIT {
     @Autowired
     lateinit var repository: WorldStateRepository
+    @Autowired
+    lateinit var jdbc: JdbcTemplate
+
     @Test
     fun `flyway baseline applied and world_state round-trips`() {
-        val saved = repository.save(
-            WorldStateEntity(
-                scenarioCode = "scenario_2",
-                currentYear = 190,
-                currentMonth = 1,
-                tickSeconds = 3600,
-            )
+        jdbc.update(
+            """
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
+            VALUES (1, 'scenario_2', 190, 1, 3600)
+            """.trimIndent(),
         )
-        assertNotNull(saved.id)
-        val found = repository.findById(saved.id!!).orElseThrow()
+        val found = repository.findProcessWorld()!!
         assertEquals("scenario_2", found.scenarioCode)
         assertEquals(190, found.currentYear)
         assertEquals(3600, found.tickSeconds)
@@ -41,22 +44,21 @@ class WorldStateRepositoryIT {
     }
     @Test
     fun `FC1 -- world-state read exposes the calendar columns + hidden_seed for ServerClock`() {
-        val saved = repository.save(
-            WorldStateEntity(
-                scenarioCode = "scenario_1010",
-                currentYear = 181,
-                currentMonth = 1,
-                tickSeconds = 3600,
-                startYear = 181,
-                startTime = OffsetDateTime.parse("2026-05-30T01:00:00Z"),
-                turnTerm = 60,
-                isunited = 0,
-                hiddenSeed = "8ebfeb6fa932a181ec9ef43b7473f4c9",
+        jdbc.update(
+            """
+            INSERT INTO world_state (
+                id, scenario_code, current_year, current_month, tick_seconds,
+                start_year, start_time, turn_term, isunited, hidden_seed
+            ) VALUES (
+                1, 'scenario_1010', 181, 1, 3600,
+                181, TIMESTAMPTZ '2026-05-30 01:00:00+00', 60, 0,
+                '8ebfeb6fa932a181ec9ef43b7473f4c9'
             )
+            """.trimIndent(),
         )
-        val found = repository.findById(saved.id!!).orElseThrow()
+        val found = repository.findById(1).orElseThrow()
         assertEquals(181, found.startYear)
-        assertEquals(OffsetDateTime.parse("2026-05-30T01:00:00Z").toInstant(), found.startTime!!.toInstant())
+        assertEquals("2026-05-30T01:00Z", found.startTime.toString())
         assertEquals(60, found.turnTerm)
         assertEquals(0, found.isunited)
         // The config-sourced live hidden_seed is a 32-char lowercase hex (bin2hex(random_bytes(16))).

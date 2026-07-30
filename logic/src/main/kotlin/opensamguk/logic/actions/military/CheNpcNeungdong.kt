@@ -54,6 +54,9 @@ class CheNpcNeungdong(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
         val cityName = CityConst.byId(destCityId)?.name ?: return
         val josaRo = JosaUtil.pick(cityName, "로")
         context.addLog("NPC 전용 명령을 이용해 $cityName$josaRo 이동했습니다.")
-        context.draft.general = context.draft.general.copy(cityId = destCityId, lastTurn = LastTurn(name))
+        context.draft.general = context.draft.general.copy(
+            cityId = destCityId,
+            lastTurn = LastTurn(command = name, arg = context.args),
+        )
     }
 }

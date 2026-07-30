@@ -42,7 +42,7 @@ fun interface PostUpdateMonthly<R> {
 
 /** `checkStatistic` hook: fires once per game-year (when the NEW month is January). */
 fun interface CheckStatistic {
-    fun run()
+    fun run(date: MonthlyEnv)
 }
 
 /** Recomputes `(year, month, phase)` from the advanced `nextTurn` (F1's [ServerClock.turnDate]). */
@@ -61,7 +61,7 @@ fun interface MonthlyClock {
  *   L5  dispatcher.run(PRE_MONTH, env(OLD year/month))     // PreMonth events see the OLD date
  *   L6  if (!preUpdateMonthly.run()) return                // false aborts the tick (after unlock)
  *   L7  date = clock.turnDate(nextTurn)                    // advance the calendar BETWEEN batches
- *   L8  if (month == 1 && phase == 1) checkStatistic.run() // year-boundary statistics
+ *   L8  if (month == 1 && phase == 1) checkStatistic.run(env(NEW date)) // year-boundary statistics
  *   L9  dispatcher.run(MONTH, env(NEW date))               // Month events see the NEW date
  *   L10 postUpdateMonthly.run(monthlyRng)                  // the ONLY consumer of monthlyRng
  * ```
@@ -115,7 +115,9 @@ open class MonthlyPipeline<R>(
         val newDate = clock.turnDate(nextTurn, startTime)
 
         // L8 — year-boundary statistics (only when the NEW date is January 상순).
-        if (newDate.month == 1 && newDate.phase == 1) checkStatistic.run()
+        if (newDate.month == 1 && newDate.phase == 1) {
+            checkStatistic.run(MonthlyEnv(newDate.year, newDate.month, newDate.phase))
+        }
 
         // L9 — Month events fire with the NEW date.
         dispatcher.run(EventTarget.MONTH, MonthlyEnv(newDate.year, newDate.month, newDate.phase))

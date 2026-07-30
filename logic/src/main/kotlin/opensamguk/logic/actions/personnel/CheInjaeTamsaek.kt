@@ -15,6 +15,7 @@ import opensamguk.logic.domain.withMeta
 import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.world.GeneralBuilder
@@ -73,8 +74,8 @@ class CheInjaeTamsaek(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
                 "strength_exp" to g.strength.toDouble(),
                 "intel_exp" to g.intel.toDouble(),
             ))
-            g = applyActorDelta(g, incStat, 100.0, 70.0, reqGoldFrom(input.develCost))
-            d.general = finalize(g)
+            g = applyActorDelta(context, g, incStat, 100.0, 70.0, reqGoldFrom(input.develCost))
+            d.general = finalize(context, g)
             return
         }
 
@@ -108,6 +109,7 @@ class CheInjaeTamsaek(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
         val actorName = (g.meta["name"] as? String) ?: ""
         val josaRa = JosaUtil.pick(resolvedName, "라")
         val josaYi = JosaUtil.pick(actorName, "이")
+        context.addGeneralHistoryLog("<Y>$resolvedName</>${josaRa}는 <C>인재</>를 발견")
         context.addLog("<Y>$resolvedName</>${josaRa}는 <C>인재</>를 발견하였습니다! <1>${context.date}</>")
         context.addGlobalActionLog("<Y>$actorName</>$josaYi <Y>$resolvedName</>${josaRa}는 <C>인재</>를 발견하였습니다!")
         val incStat = context.rng.choiceUsingWeight(linkedMapOf(
@@ -115,25 +117,41 @@ class CheInjaeTamsaek(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
             "strength_exp" to g.strength.toDouble(),
             "intel_exp" to g.intel.toDouble(),
         ))
-        g = applyActorDelta(g, incStat, 200.0, 300.0, reqGoldFrom(input.develCost))
-        d.general = finalize(g)
+        g = applyActorDelta(context, g, incStat, 200.0, 300.0, reqGoldFrom(input.develCost))
+        d.general = finalize(context, g)
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, key, emptyMap(), context.args)
     }
 
     private fun reqGoldFrom(develCost: Int): Int = develCost
 
-    private fun applyActorDelta(general: opensamguk.logic.domain.General, incStat: String, exp: Double, ded: Double, goldCost: Int): opensamguk.logic.domain.General {
-        var g = addExperience(general, exp, pipeline).general
-        g = addDedication(g, ded, pipeline).general
+    private fun applyActorDelta(
+        context: GeneralActionResolveContext,
+        general: opensamguk.logic.domain.General,
+        incStat: String,
+        exp: Double,
+        ded: Double,
+        goldCost: Int,
+    ): opensamguk.logic.domain.General {
+        var g = general.copy(gold = maxOf(0, general.gold - goldCost))
+        val experience = addExperience(g, exp, pipeline)
+        g = experience.general
+        experience.plainLog?.let(context::addPlainLog)
+        val dedication = addDedication(g, ded, pipeline)
+        g = dedication.general
+        dedication.plainLog?.let(context::addPlainLog)
         g = g.copy(
-            gold = maxOf(0, g.gold - goldCost),
             meta = withMeta(g.meta, incStat to metaDouble(g.meta, incStat) + if (exp == 100.0) 1.0 else 3.0),
             lastTurn = LastTurn(name),
         )
         return g
     }
 
-    private fun finalize(general: opensamguk.logic.domain.General): opensamguk.logic.domain.General {
+    private fun finalize(
+        context: GeneralActionResolveContext,
+        general: opensamguk.logic.domain.General,
+    ): opensamguk.logic.domain.General {
         val result = checkStatChange(general)
+        result.plainLogs.forEach(context::addPlainLog)
         return result.general
     }
 

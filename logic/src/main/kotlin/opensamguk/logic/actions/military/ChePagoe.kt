@@ -20,6 +20,10 @@ import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.actions.GeneralRankIncrement
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.numberFormat
@@ -162,14 +166,23 @@ class ChePagoe(
 
             val (reqGold, reqRice) = getCost(env)
 
-            d.general = g.copy(
+            var resolvedGeneral = g.copy(
                 gold = maxOf(0, g.gold - reqGold),
                 rice = maxOf(0, g.rice - reqRice),
-                experience = g.experience + exp,
-                dedication = g.dedication + ded,
-                meta = withMeta(g.meta, "${statType}_exp" to metaInt(g.meta, "${statType}_exp") + 1),
+            )
+            val experience = addExperience(resolvedGeneral, exp.toDouble(), pipeline)
+            resolvedGeneral = experience.general
+            experience.plainLog?.let { context.addPlainLog(it) }
+            val dedication = addDedication(resolvedGeneral, ded.toDouble(), pipeline)
+            resolvedGeneral = dedication.general
+            dedication.plainLog?.let { context.addPlainLog(it) }
+            resolvedGeneral = resolvedGeneral.copy(
+                meta = withMeta(resolvedGeneral.meta, "${statType}_exp" to metaInt(resolvedGeneral.meta, "${statType}_exp") + 1),
                 lastTurn = LastTurn(name, arg = linkedMapOf("destCityID" to destCityId)),
             )
+            val statChange = checkStatChange(resolvedGeneral)
+            d.general = statChange.general
+            statChange.plainLogs.forEach { context.addPlainLog(it) }
             return
         }
 
@@ -211,15 +224,32 @@ class ChePagoe(
         val ded = rng.nextRangeInt(141, 210)
 
         val (reqGold, reqRice) = getCost(env)
-        val postItemGeneral = d.general
-        d.general = postItemGeneral.copy(
+        var postItemGeneral = d.general
+        postItemGeneral = postItemGeneral.copy(
             gold = maxOf(0, postItemGeneral.gold - reqGold),
             rice = maxOf(0, postItemGeneral.rice - reqRice),
-            experience = postItemGeneral.experience + exp,
-            dedication = postItemGeneral.dedication + ded,
+        )
+        val experience = addExperience(postItemGeneral, exp.toDouble(), pipeline)
+        postItemGeneral = experience.general
+        experience.plainLog?.let { context.addPlainLog(it) }
+        val dedication = addDedication(postItemGeneral, ded.toDouble(), pipeline)
+        postItemGeneral = dedication.general
+        dedication.plainLog?.let { context.addPlainLog(it) }
+        postItemGeneral = postItemGeneral.copy(
             meta = withMeta(postItemGeneral.meta, "${statType}_exp" to metaInt(postItemGeneral.meta, "${statType}_exp") + 1),
             lastTurn = LastTurn(name, arg = linkedMapOf("destCityID" to destCityId)),
         )
+        d.general = postItemGeneral
         d.rankIncrements.add(GeneralRankIncrement(g.id, "firenum", 1))
+        StaticEventHandler.handleEvent(
+            d.general,
+            null,
+            key,
+            mapOf("year" to env.year, "startYear" to env.startYear, "develCost" to env.develCost),
+            context.args,
+        )
+        val statChange = checkStatChange(d.general)
+        d.general = statChange.general
+        statChange.plainLogs.forEach { context.addPlainLog(it) }
     }
 }

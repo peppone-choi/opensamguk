@@ -114,6 +114,7 @@ class CommerceInvestmentGeneralizeTest {
         cheChianGanghwa(pipeline).resolve(ctx)
         assertTrue(draft.city.security > 1000, "security increased: ${draft.city.security}")
         assertEquals(1000, draft.city.defense, "defense untouched")
+        assertEquals("치안 강화", draft.general.lastTurn.command)
     }
 
     @Test
@@ -153,5 +154,68 @@ class CommerceInvestmentGeneralizeTest {
         assertEquals(a.general.gold, b.general.gold)
         assertEquals(a.general.experience, b.general.experience)
         assertEquals(metaInt(a.general.meta, "strength_exp"), metaInt(b.general.meta, "strength_exp"))
+    }
+
+    @Test
+    fun `성벽보수 recomputes stale experience level before the next identical turn`() {
+        val actor35 = General(
+            id = 35,
+            nationId = 1,
+            cityId = 77,
+            leadership = 75,
+            strength = 66,
+            intel = 65,
+            injury = 0,
+            experience = 2700.0,
+            dedication = 2700.0,
+            officerLevel = 1,
+            gold = 1000,
+            rice = 1000,
+            meta = linkedMapOf(
+                "explevel" to 0,
+                "dedlevel" to 1,
+                "strength_exp" to 0,
+                "max_domestic_critical" to 0.0,
+            ),
+        )
+        val actor35City = City(
+            id = 77,
+            nationId = 1,
+            level = 2,
+            commerce = 1330,
+            commerceMax = 1900,
+            agriculture = 1260,
+            agricultureMax = 1800,
+            wall = 2870,
+            wallMax = 4100,
+            supplyState = 1,
+            frontState = 2,
+            trust = 80.0,
+        )
+        fun actor35Rng() = RandUtil(
+            LiteHashDrbg(
+                serializeSeed(
+                    "8ebfeb6fa932a181ec9ef43b7473f4c9",
+                    "generalCommand",
+                    181,
+                    1,
+                    35,
+                    "che_성벽보수",
+                ),
+            ),
+        )
+
+        val first = GeneralActionDraft(actor35, actor35City, Nation(id = 1, level = 7, capitalCityId = 3))
+        cheSeongbyeokBosu(pipeline).resolve(
+            GeneralActionResolveContext(first, actor35Rng(), WorldEnv(181, 181, 20), 1, "00:27"),
+        )
+        assertEquals(3053, first.city.wall, "PHP phase-1 wall: 2870 + 183")
+        assertEquals(16, metaInt(first.general.meta, "explevel"), "addExperience recomputes stale level")
+
+        val second = GeneralActionDraft(first.general, first.city, Nation(id = 1, level = 7, capitalCityId = 3))
+        cheSeongbyeokBosu(pipeline).resolve(
+            GeneralActionResolveContext(second, actor35Rng(), WorldEnv(181, 181, 20), 1, "02:27"),
+        )
+        assertEquals(3242, second.city.wall, "PHP phase-2 wall: 3053 + 189")
     }
 }

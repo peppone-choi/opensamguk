@@ -16,9 +16,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito.clearInvocations
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -28,6 +30,7 @@ import org.springframework.security.web.method.annotation.AuthenticationPrincipa
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.RequestPostProcessor
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -132,19 +135,50 @@ class CommandControllerSecurityTest {
     }
 
     @Test
-    fun `select pool pick uses the authenticated account without requiring an existing general`() {
-        `when`(reserve.reserveForOwner(0, "selectPoolPick", 0, null, 7)).thenReturn(ReserveResult("req-pick", 0))
+    fun `unknown command is rejected before precheck and reservation`() {
+        assertRejectedBeforePrecheckAndReservation("notACommand")
+    }
 
+    @Test
+    fun `internal command is rejected before precheck and reservation`() {
+        assertRejectedBeforePrecheckAndReservation("cr_건국")
+    }
+
+    @Test
+    fun `chief only command is rejected before precheck and reservation`() {
+        assertRejectedBeforePrecheckAndReservation("che_천도")
+    }
+
+    @Test
+    fun `select pool pick reproduces the PHP fatal without reserving a command`() {
         mockMvc().perform(
             post("/api/command/{code}", "selectPoolPick")
                 .param("generalId", "999")
                 .with(principal(7L)),
         )
-            .andExpect(status().isAccepted)
-            .andExpect(jsonPath("$.requestId").value("req-pick"))
+            .andExpect(status().isInternalServerError)
+            .andExpect(content().string(""))
 
-        verify(precheck, never()).precheck(anyInt(), anyString())
-        verify(reserve).reserveForOwner(0, "selectPoolPick", 0, null, 7)
+        verifyNoInteractions(precheck, reserve)
+    }
+
+    @Test
+    fun `select pool update remains reservable for the authenticated owner`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        `when`(precheck.precheck(10, "selectPoolUpdate")).thenReturn(PrecheckResult.Available)
+        `when`(reserve.reserveForOwner(10, "selectPoolUpdate", 0, null, 7)).thenReturn(ReserveResult("req-update", 0))
+
+        mockMvc().perform(
+            post("/api/command/{code}", "selectPoolUpdate")
+                .param("generalId", "10")
+                .with(principal(7L)),
+        )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("AVAILABLE"))
+            .andExpect(jsonPath("$.requestId").value("req-update"))
+
+        verify(precheck).precheck(10, "selectPoolUpdate")
+        verify(reserve).reserveForOwner(10, "selectPoolUpdate", 0, null, 7)
     }
 
     @Test
@@ -155,5 +189,20 @@ class CommandControllerSecurityTest {
             .andExpect(status().isUnauthorized)
 
         verify(precheck, never()).precheck(anyInt(), anyString())
+    }
+
+    private fun assertRejectedBeforePrecheckAndReservation(code: String) {
+        `when`(precheck.precheck(10, code)).thenReturn(PrecheckResult.Available)
+        `when`(reserve.reserve(10, code, 0, null)).thenReturn(ReserveResult("req-$code", 0))
+        clearInvocations(precheck, reserve)
+
+        mockMvc().perform(
+            post("/api/command/{code}", code).param("generalId", "10"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("BLOCKED"))
+            .andExpect(jsonPath("$.reason").value("사용할 수 없는 커맨드입니다."))
+
+        verifyNoInteractions(precheck, reserve)
     }
 }

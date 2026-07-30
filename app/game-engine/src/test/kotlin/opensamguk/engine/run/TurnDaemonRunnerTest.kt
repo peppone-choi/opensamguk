@@ -147,6 +147,30 @@ class TurnDaemonRunnerTest {
     }
 
     @Test
+    fun `paused runner drains immediate intake without executing the due reserved tick`() {
+        val ticks = AtomicInteger()
+        val intakeDrains = AtomicInteger()
+        val intakeLatch = CountDownLatch(1)
+        val gate = DaemonPauseGate()
+        assertTrue(gate.lock(), "락걸기(첫 CAS) 성공")
+        val svc = StubService(
+            ticks = ticks,
+            intakeDrains = intakeDrains,
+            intakeLatch = intakeLatch,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, gate, daemonEnabled = true, idlePollMs = 10)
+
+        runner.start()
+        try {
+            assertTrue(intakeLatch.await(3, TimeUnit.SECONDS), "동결 중에도 즉시 인테이크는 드레인된다")
+            assertEquals(1, intakeDrains.get(), "대기 중 즉시 인테이크를 한 번 처리한다")
+            assertEquals(0, ticks.get(), "동결 중 due reserved tick은 실행하지 않는다")
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
     fun `empty world keeps daemon alive without materializing turn service`() {
         val provided = AtomicInteger()
         val provider = countingProvider(StubService(ticks = AtomicInteger()), provided)

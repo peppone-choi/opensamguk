@@ -22,6 +22,7 @@ import opensamguk.infra.persistence.DiplomacyLetterInsertRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.GeneralCreateRow
+import opensamguk.infra.persistence.InitialGeneralTurnRow
 import opensamguk.infra.persistence.GeneralTurnPullRow
 import opensamguk.infra.persistence.ProfileIconUpdateRow
 import opensamguk.infra.persistence.GeneralAccessLogWriteRow
@@ -230,6 +231,7 @@ object DatabaseHooks {
                 "status" to state.status,
                 "tick_seconds" to state.tickSeconds,
                 "config" to state.config,
+                "start_time" to state.meta["startTime"]?.toString(),
                 // 매 틱 lastTurnTime 영속화 — 부재 시 재기동마다 start_time 폴백으로 월드 시작부터
                 // 전 월 재생(이중 적용) 사고가 난다. WorldSnapshotLoader meta['lastTurnTime'] 의 쓰기 짝.
                 "last_turn_time" to state.lastTurnTime.toString(),
@@ -552,6 +554,9 @@ object DatabaseHooks {
                 "meta" to MetaJson.encode(meta),
                 "penalty" to MetaJson.encode((meta["penalty"] as? Map<*, *>) ?: emptyMap<String, Any?>()),
             ),
+            initialTurns = g.initialTurns.map {
+                InitialGeneralTurnRow(it.actionCode, it.argJson, it.brief)
+            },
         )
     }
 
@@ -610,6 +615,7 @@ object DatabaseHooks {
                 "status" to state.status,
                 "tick_seconds" to state.tickSeconds,
                 "config" to state.config,
+                "start_time" to state.meta["startTime"]?.toString(),
                 // 매 틱 lastTurnTime 영속화 — 부재 시 재기동마다 start_time 폴백으로 월드 시작부터
                 // 전 월 재생(이중 적용) 사고가 난다. WorldSnapshotLoader meta['lastTurnTime'] 의 쓰기 짝.
                 "last_turn_time" to state.lastTurnTime.toString(),
@@ -713,6 +719,7 @@ object DatabaseHooks {
             reservedGeneralTurnPulls = recorder.reservedGeneralTurnPulls().map {
                 GeneralTurnPullRow(it.generalId, it.turnCnt)
             },
+            generalTurnSlotWrites = recorder.generalTurnSlotWrites(),
             reservedNationTurnPulls = recorder.reservedNationTurnPulls().map {
                 NationTurnPullRow(it.nationId, it.officerLevel, it.turnCnt)
             },

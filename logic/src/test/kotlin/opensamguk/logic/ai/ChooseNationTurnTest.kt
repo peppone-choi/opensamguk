@@ -337,6 +337,25 @@ class ChooseNationTurnTest {
         assertEquals("che_휴식", chosen.actionCode)
     }
 
+    @Test fun `the production neutral builder emits the literal nation rest command`() {
+        val policy = AutorunNationPolicy(
+            npcType = 2,
+            tech = 0,
+            develcost = 100,
+            serverPolicy = mapOf("priority" to emptyList<String>()),
+        )
+        val ai = GeneralAiFactory.build(
+            generalPolicy = AutorunGeneralPolicy(npcType = 2, nationId = 1),
+            bodies = GeneralAiDoBodies(),
+            nationPolicy = policy,
+        )
+
+        val chosen = ai.chooseNationTurn(restNation, lastTurn, input(npcType = 2, officerLevel = 12))
+
+        assertEquals("휴식", chosen.actionCode)
+        assertEquals("neutral", chosen.reason)
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // (6) updateInstance / categorize order (prologue).
     // ─────────────────────────────────────────────────────────────────────────────────────────────

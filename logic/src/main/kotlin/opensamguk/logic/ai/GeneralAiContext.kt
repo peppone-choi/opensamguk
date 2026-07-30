@@ -3,6 +3,21 @@ package opensamguk.logic.ai
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.City
 
+enum class ExternalSqlRandBranch {
+    SEONYANG_DEST_GENERAL,
+    ORANKAE_RULER_NATION,
+}
+
+fun interface ExternalSqlRandSelector {
+    fun select(
+        branch: ExternalSqlRandBranch,
+        actorGeneralId: Int,
+        year: Int,
+        month: Int,
+        candidateIds: List<Int>,
+    ): Int?
+}
+
 /**
  * F-DISPATCH consumer seam — `GeneralAiContext`, the per-general AI INPUT bundle every world-driven
  * `do<한글>` body reads to assemble its candidate set, pull its draws, gate its emit, and route its
@@ -137,6 +152,7 @@ data class GeneralAiContext(
     val turnTerm: Int,
     val selfGeneralId: Int,
     val selfCityId: Int,
+    val selfOfficerLevel: Int = 12,
     val candidateAllowed: (actionCode: String, rawArgs: Map<String, Any?>) -> Boolean = { _, _ -> true },
     val recordGeneralKv: (generalId: Int, key: String, value: Any?) -> Unit = { _, _, _ -> },
     val chiefTurnTime: String = "",
@@ -222,6 +238,7 @@ data class GeneralAiContext(
      * (with [nationCount]) aborts with NO draw. Default 0.
      */
     val notFullNationCount: Int = 0,
+    val externalSqlRandSelector: ExternalSqlRandSelector? = null,
     /**
      * The do선양 `ORDER BY RAND()` candidate pool (PHP `:3324` `SELECT no FROM general WHERE nation=%i AND npc!=5`)
      * — the deterministic `min(no)` substitute ([GenFoundFamily.seonyangDestGeneralId]) runs over this set.

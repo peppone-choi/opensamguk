@@ -36,6 +36,7 @@ class MonthlyPipelineOrderTest {
         rngHolder: Array<Any?> = arrayOfNulls(1),
         rngSeenByPost: Array<Any?> = arrayOfNulls(1),
         rngBuildCount: IntArray = IntArray(1),
+        statisticDates: MutableList<MonthlyEnv> = mutableListOf(),
         newDate: GameDate = GameDate(181, 1, 1),
     ): MonthlyPipeline<Any?> {
         val marker = Marker(1)
@@ -43,7 +44,10 @@ class MonthlyPipelineOrderTest {
             monthlyRngFactory = { _, _ -> rngBuildCount[0]++; marker.also { rngHolder[0] = it } },
             clock = { _, _ -> newDate },
             preUpdateMonthly = { log.add("preUpdateMonthly"); preResult },
-            checkStatistic = { log.add("checkStatistic") },
+            checkStatistic = { date ->
+                statisticDates += date
+                log.add("checkStatistic")
+            },
             postUpdateMonthly = { rng -> rngSeenByPost[0] = rng; log.add("postUpdateMonthly") },
         )
     }
@@ -82,6 +86,18 @@ class MonthlyPipelineOrderTest {
             oldYear = 180, oldMonth = 6, oldPhase = 3, dispatcher = RecordingDispatcher(log))
         assertFalse(log.contains("checkStatistic"))
         assertTrue(log.indexOf("dispatch:MONTH:180-7-1") > log.indexOf("preUpdateMonthly"))
+    }
+
+    @Test
+    fun `checkStatistic receives the advanced calendar date`() {
+        val log = mutableListOf<String>()
+        val statisticDates = mutableListOf<MonthlyEnv>()
+        val p = pipeline(log, statisticDates = statisticDates, newDate = GameDate(181, 1, 1))
+
+        p.runMonth(java.time.Instant.EPOCH, 0, java.time.Instant.EPOCH, 120,
+            oldYear = 180, oldMonth = 12, oldPhase = 3, dispatcher = RecordingDispatcher(log))
+
+        assertEquals(listOf(MonthlyEnv(181, 1, 1)), statisticDates)
     }
 
     @Test

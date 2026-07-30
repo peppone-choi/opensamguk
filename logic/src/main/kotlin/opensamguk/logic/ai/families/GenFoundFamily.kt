@@ -4,6 +4,7 @@ import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.ai.ExternalSqlRandBranch
 import opensamguk.logic.ai.GeneralAiContext
 import opensamguk.logic.ai.bfs.AiDistance
 import opensamguk.logic.domain.General
@@ -456,7 +457,19 @@ object GenFoundFamily {
 
     private fun do선양Body(ctx: GeneralAiContext): ChosenCommand? {
         // PHP `:3324` — ORDER BY RAND() destGeneralID; the deterministic min(no) substitute (F-QUAR, 0 draws).
-        val destGeneralID = seonyangDestGeneralId(ctx.instance.nation.nation, ctx.seonyangCandidates, ctx.rng)
+        val eligibleCandidates = ctx.seonyangCandidates
+            .filter { it.nationId == ctx.instance.nation.nation && it.npcType != 5 }
+        val destGeneralID = if (ctx.externalSqlRandSelector != null) {
+            ctx.externalSqlRandSelector.select(
+                ExternalSqlRandBranch.SEONYANG_DEST_GENERAL,
+                ctx.selfGeneralId,
+                ctx.env.year,
+                ctx.env.month,
+                eligibleCandidates.map { it.id },
+            )
+        } else {
+            seonyangDestGeneralId(ctx.instance.nation.nation, eligibleCandidates, ctx.rng)
+        }
         val args = linkedMapOf<String, Any?>("destGeneralID" to destGeneralID)
         if (!ctx.candidateAllowed(ABDICATE_ACTION, args)) return null // :3327 hasFullConditionMet
         return ChosenCommand(ABDICATE_ACTION, args) // :3331
@@ -468,7 +481,19 @@ object GenFoundFamily {
         val rng = ctx.rng
         // PHP `:3343-3356` — npc==9 오랑캐 → ORDER BY RAND ruler substitute (0-draw) → che_임관.
         if (ctx.selfNpcType == 9) {
-            val rulerNation = orankaeRulerNation(ctx.orankaeRulerCandidates, rng) // :3345 (0-draw F-QUAR)
+            val eligibleCandidates = ctx.orankaeRulerCandidates
+                .filter { it.officerLevel == 12 && it.npcType == 9 && it.nationId != 0 }
+            val rulerNation = if (ctx.externalSqlRandSelector != null) {
+                ctx.externalSqlRandSelector.select(
+                    ExternalSqlRandBranch.ORANKAE_RULER_NATION,
+                    ctx.selfGeneralId,
+                    ctx.env.year,
+                    ctx.env.month,
+                    eligibleCandidates.map { it.nationId },
+                )
+            } else {
+                orankaeRulerNation(eligibleCandidates, rng)
+            }
             if (rulerNation != null && rulerNation != 0) { // :3348 `if ($rulerNation)`
                 val args = linkedMapOf<String, Any?>("destNationID" to rulerNation)
                 if (!ctx.candidateAllowed(JOIN_NATION_ACTION, args)) return null // :3350

@@ -263,3 +263,34 @@ data class EmperorRecord(
     val generalCount: Int,
     val cityCount: Int,
 )
+
+data class EmperorDetail(
+    val id: Int,
+    val name: String,
+    val nation: String,
+    val nationColor: String,
+    val unifiedAt: String,
+    val turn: Int,
+    val year: Int,
+    val month: Int,
+    val generalCount: Int,
+    val cityCount: Int,
+    val totalGold: Int,
+    val totalRice: Int,
+    val totalPop: Long,
+    val generals: List<EmperorDetailGeneral>,
+    val cities: List<EmperorDetailCity>,
+)
+
+data class EmperorDetailGeneral(
+    val name: String,
+    val leadership: Int,
+    val strength: Int,
+    val intel: Int,
+)
+
+data class EmperorDetailCity(
+    val name: String,
+    val level: Int,
+    val pop: Int,
+)

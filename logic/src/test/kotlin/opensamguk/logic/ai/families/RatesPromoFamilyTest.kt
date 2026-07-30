@@ -193,7 +193,7 @@ class RatesPromoFamilyTest {
     fun `bill rate returns 20 with no supply cities (PHP 4211 4258) and 0 draws`() {
         val rng = RecordingRng("rates-seed")
         // PHP :4211 `if (!$cityList) return 20;` — the no-supply early-return.
-        assertEquals(20, RatesPromoFamily.billRate(income = 99999, outcome = 1, currentRes = 0,
+        assertEquals(20, RatesPromoFamily.billRate(income = 99999.0, outcome = 1, currentRes = 0,
             reqNationRes = 100, hasSupplyCities = false, rng = rng))
         assertEquals(0, rng.nextBoolCalls + rng.choiceCalls + rng.nextFloat1Calls + rng.nextBitCalls)
     }
@@ -205,7 +205,7 @@ class RatesPromoFamilyTest {
         // intval(100/90*90)=intval(99.99..)=99... but keep simple: income=100, outcome=10 → intval(100/10*90)=900
         // → clamped to 200 (PHP :4239 valueFit(bill,20,200)). The moreBill branch is skipped (res below 2× req).
         val bill = RatesPromoFamily.billRate(
-            income = 100, outcome = 10, currentRes = 0, reqNationRes = 100000,
+            income = 100.0, outcome = 10, currentRes = 0, reqNationRes = 100000,
             hasSupplyCities = true, rng = rng,
         )
         assertEquals(200, bill, "intval(100/10*90)=900 → valueFit(.,20,200)=200 (PHP :4231/:4239)")
@@ -218,10 +218,22 @@ class RatesPromoFamilyTest {
         val rng = RecordingRng("rates-seed")
         // income=10, outcome=100 → intval(10/100*90)=intval(9.0)=9 → valueFit(9,20,200)=20.
         val bill = RatesPromoFamily.billRate(
-            income = 10, outcome = 100, currentRes = 0, reqNationRes = 100000,
+            income = 10.0, outcome = 100, currentRes = 0, reqNationRes = 100000,
             hasSupplyCities = true, rng = rng,
         )
         assertEquals(20, bill)
+    }
+
+    @Test
+    fun `bill rate preserves fractional PHP income until the final intval`() {
+        val rng = RecordingRng("rates-seed")
+
+        val bill = RatesPromoFamily.billRate(
+            income = 1.9, outcome = 1, currentRes = 0, reqNationRes = 100000,
+            hasSupplyCities = true, rng = rng,
+        )
+
+        assertEquals(171, bill, "intval(1.9/1*90)=171; truncating income first would incorrectly yield 90")
     }
 
     @Test
@@ -234,7 +246,7 @@ class RatesPromoFamilyTest {
         //   moreBill(86400) > bill0(9000) ⇒ bill = intval((86400+9000)/2)=intval(47700)=47700.
         //   valueFit(47700,20,200)=200.
         val bill = RatesPromoFamily.billRate(
-            income = 1000, outcome = 10, currentRes = 10000, reqNationRes = 100,
+            income = 1000.0, outcome = 10, currentRes = 10000, reqNationRes = 100,
             hasSupplyCities = true, rng = rng,
         )
         assertEquals(200, bill)

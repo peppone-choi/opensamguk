@@ -82,7 +82,7 @@ class InstantActionHandler(
         val me = world.getGeneralById(c.generalId) ?: return fail("checkOwner", c.generalId, "장수가 없습니다.")
         val target = world.getGeneralById(c.destGeneralId)
         val ownerId = (me.meta["owner"] as? Number)?.toInt() ?: me.id
-        val previous = (ownerScoped(world.getState().meta["inheritancePrevious"], ownerId) as? Number)?.toDouble() ?: 0.0
+        val previous = previousPoint(ownerId)
         val targetOwner = (target?.meta?.get("owner") as? Number)?.toInt() ?: 0
         val out = CheckOwner.resolve(
             actingGeneralId = me.id,
@@ -137,6 +137,10 @@ class InstantActionHandler(
     private fun targetFor(g: TurnGeneral) = opensamguk.logic.messaging.MessageTarget(g.id, g.name, g.nationId, world.getNationById(g.nationId)?.name ?: "", world.getNationById(g.nationId)?.color ?: "#000000", "")
     private fun targetArray(t: opensamguk.logic.messaging.MessageTarget) = linkedMapOf<String, Any?>("id" to t.generalId, "name" to t.generalName, "nation_id" to t.nationId, "nation" to t.nationName, "color" to t.color, "icon" to t.icon)
     private fun parseDate(value: Any?): LocalDateTime? = value?.toString()?.let { runCatching { LocalDateTime.parse(it.take(19), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) }.getOrNull() }
+    private fun previousPoint(ownerId: Int): Double =
+        recorder.effectiveInheritancePoint(ownerId, "previous")?.first
+            ?: (ownerScoped(world.getState().meta["inheritancePrevious"], ownerId) as? Number)?.toDouble()
+            ?: 0.0
     private fun ownerScoped(value: Any?, owner: Int): Any? = (value as? Map<*, *>)?.get(owner) ?: (value as? Map<*, *>)?.get(owner.toString())
     private fun Map<String, Any?>.string(key: String): String? = this[key]?.toString()
 }

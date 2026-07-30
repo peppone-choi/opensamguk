@@ -103,7 +103,7 @@ class PostUpdateMonthlyDiplomacyTest {
     fun `Q9 bulk reset then state transitions`() {
         val rows = listOf(
             dip(me = 1, you = 2, state = 5, term = 3, dead = 999),  // state!=0 → dead→0, term→2, no transition
-            dip(me = 2, you = 1, state = 0, term = 4, dead = 100),  // state=0 → dead kept, term→3
+            dip(me = 2, you = 1, state = 0, term = 4, dead = 50),   // state=0 → dead kept, term→3
             dip(me = 3, you = 4, state = 7, term = 1, dead = 0),    // term→0 → 7 becomes 2 (불가침→통상)
             dip(me = 4, you = 3, state = 1, term = 1, dead = 0),    // term→0 → 1 becomes 0 term=6 (선포→교전)
         )
@@ -111,8 +111,7 @@ class PostUpdateMonthlyDiplomacyTest {
         val q9 = out.q9Updates.associateBy { it.me to it.you }
         // state!=0 → dead reset to 0; term greatest(0,3-1)=2; state unchanged.
         q9.getValue(1 to 2).let { assertEquals(0, it.newDead); assertEquals(2, it.newTerm); assertEquals(5, it.newState) }
-        // state=0 → dead kept (100); term 4-1=3.
-        q9.getValue(2 to 1).let { assertEquals(100, it.newDead); assertEquals(3, it.newTerm); assertEquals(0, it.newState) }
+        q9.getValue(2 to 1).let { assertEquals(50, it.newDead); assertEquals(3, it.newTerm); assertEquals(0, it.newState) }
         // state=7, term 1-1=0 → state→2 (term stays 0).
         q9.getValue(3 to 4).let { assertEquals(0, it.newTerm); assertEquals(2, it.newState) }
         // state=1, term 1-1=0 → state→0, term→6.
@@ -126,6 +125,44 @@ class PostUpdateMonthlyDiplomacyTest {
         val u = out.q9Updates.single()
         assertEquals(2, u.newTerm)   // 3-1
         assertEquals(7, u.newState)  // still 불가침
+    }
+
+    @Test
+    fun `Q9 consumes the Q5 carryover row rather than the original row`() {
+        val out = postUpdateMonthlyDiplomacy(
+            rows = listOf(dip(me = 1, you = 2, state = 0, term = 1, dead = 350)),
+            genNum = mapOf(1 to 1),
+            nationNames = nameMap(),
+            maxPower = emptyMap(),
+            nations = emptyList(),
+        )
+
+        assertEquals(
+            DiplomacyFinalUpdate(me = 1, you = 2, newState = 0, newTerm = 3, newDead = 50),
+            out.q9Updates.single(),
+        )
+    }
+
+    @Test
+    fun `Q9 consumes the Q7 ceasefire rows in original insertion order`() {
+        val out = postUpdateMonthlyDiplomacy(
+            rows = listOf(
+                dip(me = 1, you = 2, state = 0, term = 0, dead = 0),
+                dip(me = 2, you = 1, state = 0, term = 0, dead = 0),
+            ),
+            genNum = mapOf(1 to 1, 2 to 1),
+            nationNames = nameMap(),
+            maxPower = emptyMap(),
+            nations = emptyList(),
+        )
+
+        assertEquals(
+            listOf(
+                DiplomacyFinalUpdate(me = 1, you = 2, newState = 2, newTerm = 0, newDead = 0),
+                DiplomacyFinalUpdate(me = 2, you = 1, newState = 2, newTerm = 0, newDead = 0),
+            ),
+            out.q9Updates,
+        )
     }
 
     // ── Q10: available_war_setting_cnt KV clamp ──

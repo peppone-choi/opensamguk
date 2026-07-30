@@ -196,25 +196,33 @@ class EventStore {
                 "month", 9000, cond("""["Date","==",null,10]"""),
                 actions(a("ResetOfficerLock"), a("RaiseDisaster")),
             ),
-            // month / 2000 (DateRelative == 0,1) → 1년 뒤 출병 제한 해제 notice + DeleteEvent
+            // month / 2000 (DateRelative == 1,1) → 2년 뒤 출병 제한 해제 notice + DeleteEvent
             SeedRow(
-                "month", 2000, cond("""["DateRelative","==",0,1]"""),
+                "month", 2000, cond("""["DateRelative","==",1,1]"""),
+                actions(
+                    a("NoticeToHistoryLog", "<S>2년 뒤 출병 제한이 풀립니다.</>", "EVENT_YEAR_MONTH"),
+                    a("DeleteEvent"),
+                ),
+            ),
+            // month / 2000 (DateRelative == 2,1) → 1년 뒤 notice + DeleteEvent
+            SeedRow(
+                "month", 2000, cond("""["DateRelative","==",2,1]"""),
                 actions(
                     a("NoticeToHistoryLog", "<S>1년 뒤 출병 제한이 풀립니다.</>", "EVENT_YEAR_MONTH"),
                     a("DeleteEvent"),
                 ),
             ),
-            // month / 2000 (DateRelative == 0,7) → 6개월 뒤 notice + DeleteEvent
+            // month / 2000 (DateRelative == 2,7) → 6개월 뒤 notice + DeleteEvent
             SeedRow(
-                "month", 2000, cond("""["DateRelative","==",0,7]"""),
+                "month", 2000, cond("""["DateRelative","==",2,7]"""),
                 actions(
                     a("NoticeToHistoryLog", "<S>6개월 뒤 출병 제한이 풀립니다. 병력을 준비해주세요.</>", "EVENT_YEAR_MONTH"),
                     a("DeleteEvent"),
                 ),
             ),
-            // month / 2000 (DateRelative == 1,1) → 출병 제한 해제 notice + DeleteEvent
+            // month / 2000 (DateRelative == 3,1) → 출병 제한 해제 notice + DeleteEvent
             SeedRow(
-                "month", 2000, cond("""["DateRelative","==",1,1]"""),
+                "month", 2000, cond("""["DateRelative","==",3,1]"""),
                 actions(
                     a("NoticeToHistoryLog", "<S>출병 제한이 풀렸습니다.</>", "EVENT_YEAR_MONTH"),
                     a("DeleteEvent"),
@@ -239,11 +247,6 @@ class EventStore {
             SeedRow(
                 "united", 5000, cond("true"),
                 actions(a("MergeInheritPointRank")),
-            ),
-            // month / 3000 (DateRelative == 1,1) → [OpenNationBetting, DeleteEvent]
-            SeedRow(
-                "month", 3000, cond("""["DateRelative","==",1,1]"""),
-                actions(a("OpenNationBetting"), a("DeleteEvent")),
             ),
         )
     }

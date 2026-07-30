@@ -185,7 +185,7 @@ class AiTurnAdapterE2ETest {
             id = 43,
             nationId = 2,
             cityId = 31,
-            officerLevel = 1,
+            officerLevel = 12,
             npcState = 2,
         ).copy(
             crew = 3_000,

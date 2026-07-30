@@ -10,7 +10,13 @@ import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.notCapital
 import opensamguk.logic.constraints.notWanderingNation
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -29,7 +35,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  * move + exp 70 / ded 100 / leadership_exp +1 + the trailing unique-item lottery (a SEPARATE 'unique'
  * rng — a downstream seam, not drawn here).
  */
-class CheGwihwan(@Suppress("UNUSED_PARAMETER") private val pipeline: GeneralActionPipeline) : GeneralActionDefinition {
+class CheGwihwan(private val pipeline: GeneralActionPipeline) : GeneralActionDefinition {
     override val key: String get() = "che_귀환"
     override val name: String get() = "귀환"
     override val category: String get() = "군사"
@@ -52,13 +58,22 @@ class CheGwihwan(@Suppress("UNUSED_PARAMETER") private val pipeline: GeneralActi
         val destCityName = CityConst.byId(destCityId)?.name ?: ""
         val josaRo = JosaUtil.pick(destCityName, "로")
         context.addLog("<G><b>$destCityName</b></>$josaRo 귀환했습니다. <1>${context.date}</>")
-        d.general = g0.copy(
-            cityId = destCityId,
-            experience = g0.experience + 70.0,
-            dedication = g0.dedication + 100.0,
+        var g = g0.copy(cityId = destCityId)
+        val expRes = addExperience(g, 70.0, pipeline)
+        g = expRes.general
+        expRes.plainLog?.let { context.addPlainLog(it) }
+        val dedRes = addDedication(g, 100.0, pipeline)
+        g = dedRes.general
+        dedRes.plainLog?.let { context.addPlainLog(it) }
+        g = g.copy(
+            meta = withMeta(g.meta, "leadership_exp" to metaDouble(g.meta, "leadership_exp") + 1.0),
             lastTurn = LastTurn(name),
-            // leadership_exp +1 — the raw exp-pool increment (no per-add round; truncated at flush).
         )
+        val statRes = checkStatChange(g)
+        g = statRes.general
+        statRes.plainLogs.forEach { context.addPlainLog(it) }
+        d.general = g
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
         // tryUniqueItemLottery on the SEPARATE 'unique' rng (che_귀환.php:100) — a downstream seam.
     }
 }

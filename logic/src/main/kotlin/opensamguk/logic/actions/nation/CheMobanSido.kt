@@ -12,6 +12,9 @@ import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.notLord
 import opensamguk.logic.constraints.occupiedCity
 import opensamguk.logic.constraints.suppliedCity
+import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -103,7 +106,10 @@ fun cheMobanSido(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipeline):
         //   "<D><b>${generalName}</b></>의 모반으로 인해 <D><b>${nationName}</b></>의 군주자리를 박탈당함"
 
         // (:99) increaseInheritancePoint(active_action, 1) — P6 유산포인트 seam(이 레이어 무변, 쓰기 없음).
-        // (:100) checkStatChange() / (:101) StaticEventHandler — actor 스코프 미노출(골든 미캡처).
+        val statChange = checkStatChange(d.general.copy(lastTurn = LastTurn(command = name, arg = null)))
+        d.general = statChange.general
+        statChange.plainLogs.forEach(context::addPlainLog)
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, key, emptyMap(), context.args)
     }
 }
 

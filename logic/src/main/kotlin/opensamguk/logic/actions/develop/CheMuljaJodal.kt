@@ -10,12 +10,17 @@ import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.notWanderingNation
 import opensamguk.logic.constraints.occupiedCity
 import opensamguk.logic.constraints.suppliedCity
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
 import opensamguk.logic.domestic.DEFAULT_FRONT_DEBUFF
 import opensamguk.logic.domestic.FRONT_STATES
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.domestic.criticalScoreEx
 import opensamguk.logic.domestic.getDomesticExpLevelBonus
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.clamp
@@ -111,10 +116,17 @@ class CheMuljaJodal(
             "strength_exp" to rawStat(d, "strength"),
             "intel_exp" to rawStat(d, "intelligence")))
 
-        d.general = d.general.copy(
-            experience = d.general.experience + exp,
-            dedication = d.general.dedication + ded,
-            meta = withMeta(d.general.meta, incStat to metaInt(d.general.meta, incStat) + 1),
+        var nextGeneral = d.general
+        val experienceResult = addExperience(nextGeneral, exp, pipeline)
+        nextGeneral = experienceResult.general
+        experienceResult.plainLog?.let(context::addPlainLog)
+
+        val dedicationResult = addDedication(nextGeneral, ded, pipeline)
+        nextGeneral = dedicationResult.general
+        dedicationResult.plainLog?.let(context::addPlainLog)
+
+        d.general = nextGeneral.copy(
+            meta = withMeta(nextGeneral.meta, incStat to metaInt(nextGeneral.meta, incStat) + 1),
         )
 
         // nation credit = (int)score (TRUNCATE via the meekrodb %i cast) of the POST-debuff score.
@@ -123,6 +135,11 @@ class CheMuljaJodal(
             "gold" -> d.nation?.copy(gold = (d.nation?.gold ?: 0) + credit)
             else   -> d.nation?.copy(rice = (d.nation?.rice ?: 0) + credit)
         }
+        d.general = d.general.copy(lastTurn = LastTurn(name))
+        val statChangeResult = checkStatChange(d.general)
+        d.general = statChangeResult.general
+        statChangeResult.plainLogs.forEach(context::addPlainLog)
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 
     private fun rawStat(d: GeneralActionDraft, statName: String): Double =

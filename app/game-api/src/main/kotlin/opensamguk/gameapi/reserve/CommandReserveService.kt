@@ -13,8 +13,6 @@ import opensamguk.infra.persistence.CommandInboxRepository.AcceptedCommand
 import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
-import opensamguk.infra.read.MessageRawRepository
-import opensamguk.infra.read.MessageRepository
 import opensamguk.logic.actions.CommandRegistry
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -306,10 +304,6 @@ class ReserveBeans {
     @Bean
     fun commandResultRepository(jdbc: NamedParameterJdbcTemplate): CommandResultRepository =
         CommandResultRepository(jdbc)
-
-    @Bean
-    fun messageRepository(raw: MessageRawRepository, processWorld: GameApiProcessWorld): MessageRepository =
-        MessageRepository(raw, processWorld.worldId.value, 0)
 
     @Bean
     fun gameApiTransactionOperations(transactionManager: PlatformTransactionManager): TransactionOperations =

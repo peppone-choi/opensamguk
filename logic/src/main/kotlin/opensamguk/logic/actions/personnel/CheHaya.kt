@@ -8,11 +8,14 @@ import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.notLord
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.NpcType
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -62,9 +65,13 @@ class CheHaya(private val pipeline: GeneralActionPipeline) : GeneralActionDefini
 
         // betray-scaled decay; addExperience/addDedication with 0 delta + affectTrigger=false recomputes level.
         g = g.copy(experience = g.experience * factor)
-        g = addExperience(g, 0.0, pipeline, affectTrigger = false).general
+        val experienceResult = addExperience(g, 0.0, pipeline, affectTrigger = false)
+        g = experienceResult.general
+        experienceResult.plainLog?.let(context::addPlainLog)
         g = g.copy(dedication = g.dedication * factor)
-        g = addDedication(g, 0.0, pipeline, affectTrigger = false).general
+        val dedicationResult = addDedication(g, 0.0, pipeline, affectTrigger = false)
+        g = dedicationResult.general
+        dedicationResult.plainLog?.let(context::addPlainLog)
 
         // betray + 1 cap 9 (increaseVarWithLimit('betray', 1, null, maxBetrayCnt)).
         val nextBetray = minOf(betray + 1, GameConst.maxBetrayCnt)
@@ -104,6 +111,9 @@ class CheHaya(private val pipeline: GeneralActionPipeline) : GeneralActionDefini
         }
 
         // increaseInheritancePoint(active_action, 1) — succession seam; no write here.
-        d.general = g
+        val statChange = checkStatChange(g.copy(lastTurn = LastTurn(command = name, arg = null)))
+        d.general = statChange.general
+        statChange.plainLogs.forEach(context::addPlainLog)
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, key, emptyMap(), context.args)
     }
 }

@@ -13,13 +13,20 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.UPGRADE_LIMIT
 import opensamguk.logic.domestic.criticalRatioDomestic
 import opensamguk.logic.domestic.criticalScoreEx
+import opensamguk.logic.domestic.getDedLevel
 import opensamguk.logic.domestic.getDomesticExpLevelBonus
+import opensamguk.logic.domestic.getExpLevel
+import opensamguk.logic.event.StaticEventHandler
+import opensamguk.logic.stats.GeneralActionModule
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.clamp
 import opensamguk.logic.util.valueFit
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -65,6 +72,9 @@ class CheJuminSeonjeongTest {
     )
 
     private fun action() = cheJuminSeonjeong(pipeline)
+
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
 
     @Test
     fun `key name and RemainCityTrust constraint + RICE cost`() {
@@ -150,5 +160,71 @@ class CheJuminSeonjeongTest {
         assertEquals(a.city.trust, b.city.trust)
         assertEquals(a.general.rice, b.general.rice)
         assertEquals(a.general.experience, b.general.experience)
+    }
+
+    @Test
+    fun `two consecutive turns fold and accumulate experience dedication through PHP helpers`() {
+        val experienceInputs = mutableListOf<Double>()
+        val dedicationInputs = mutableListOf<Double>()
+        val module = object : GeneralActionModule {
+            override fun onCalcStat(
+                general: General,
+                statName: String,
+                value: Double,
+                aux: Map<String, Any?>,
+            ): Double = when (statName) {
+                "experience" -> value.also(experienceInputs::add) * 1.1
+                "dedication" -> value.also(dedicationInputs::add) * 1.2
+                else -> value
+            }
+        }
+        val foldedAction = cheJuminSeonjeong(GeneralActionPipeline(listOf(module)))
+        val initial = general().copy(
+            experience = 0.0,
+            dedication = 0.0,
+            meta = withMeta(general().meta, "explevel" to 0, "dedlevel" to 0),
+        )
+        val draft = GeneralActionDraft(initial, city(40.0), nation)
+
+        repeat(2) {
+            foldedAction.resolve(GeneralActionResolveContext(draft, freshRng(), env, MONTH, date))
+        }
+
+        assertEquals(2, experienceInputs.size, "General::addExperience must fold every turn")
+        assertEquals(2, dedicationInputs.size, "General::addDedication must fold every turn")
+        val expectedExperience = initial.experience + experienceInputs.sumOf { it * 1.1 }
+        val expectedDedication = initial.dedication + dedicationInputs.sumOf { it * 1.2 }
+        assertEquals(expectedExperience, draft.general.experience, 1e-9, "folded experience accumulates")
+        assertEquals(expectedDedication, draft.general.dedication, 1e-9, "folded dedication accumulates")
+        assertEquals(getExpLevel(expectedExperience), metaInt(draft.general.meta, "explevel"))
+        assertEquals(getDedLevel(expectedDedication), metaInt(draft.general.meta, "dedlevel"))
+    }
+
+    @Test
+    fun `tail sets LastTurn and checks leadership before StaticEventHandler`() {
+        val actor = general().copy(
+            meta = linkedMapOf(
+                "explevel" to 0,
+                "dedlevel" to 0,
+                "leadership_exp" to UPGRADE_LIMIT - 1,
+                "max_domestic_critical" to 0.0,
+            ),
+        )
+        val draft = GeneralActionDraft(actor, city(40.0), nation)
+        val context = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
+        val observedTurns = mutableListOf<String>()
+        val observedLeadership = mutableListOf<Int>()
+        val observedPlainLogs = mutableListOf<List<String>>()
+        StaticEventHandler.register("che_주민선정") { eventGeneral, _, _, _ ->
+            observedTurns += eventGeneral.lastTurn.command
+            observedLeadership += eventGeneral.leadership
+            observedPlainLogs += context.plainLogs()
+        }
+
+        action().resolve(context)
+
+        assertEquals(listOf("주민 선정"), observedTurns)
+        assertEquals(listOf(actor.leadership + 1), observedLeadership)
+        assertTrue(observedPlainLogs.single().any { it.contains("<S>통솔</>이 <C>1</> 올랐습니다!") })
     }
 }

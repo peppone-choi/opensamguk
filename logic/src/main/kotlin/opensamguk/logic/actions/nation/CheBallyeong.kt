@@ -3,6 +3,8 @@ package opensamguk.logic.actions.nation
 import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.beChief
@@ -37,6 +39,12 @@ fun cheBallyeong(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipeline):
     override val name: String get() = "발령"
     override val reservable: Boolean get() = true
     override val argsSchema: Map<String, Any?> get() = mapOf("destGeneralID" to "int", "destCityID" to "int")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("destGeneralID", "int", "select", "generals"),
+            CommandFieldSpec("destCityID", "int", "select", "cities"),
+        ),
+    )
 
     override fun getPreReqTurn(): Int = 0
 

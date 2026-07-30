@@ -10,7 +10,9 @@ import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -28,6 +30,9 @@ class CheondoTest {
     private val pipeline = GeneralActionPipeline()
     private val MONTH = 4
     private val date = "10:10"
+
+    @AfterTest
+    fun clearStaticEventHandlers() = StaticEventHandler.clear()
 
     private fun cheondoRng() =
         RandUtil(LiteHashDrbg(serializeSeed("0".repeat(32), "nationCommand", 198, MONTH, 1, "che_천도")))
@@ -76,22 +81,68 @@ class CheondoTest {
         assertEquals(4035.0, d.general.dedication, "ded += 35")
 
         // logs (계양 josa-로: 양 ends in ㅇ → '으로')
-        assertEquals("<C>●</>4월:<G><b>계양</b></>으로 천도했습니다. <1>10:10</>", c.logs()[0])
-        assertEquals(1, c.globalActionLogs().size)
-        assertEquals("<C>●</>4월:<Y>조조</>가 <G><b>계양</b></>으로 <M>천도</>를 명령하였습니다.", c.globalActionLogs()[0])
+        assertEquals(
+            listOf(
+                "general:action:<C>●</>4월:<G><b>계양</b></>으로 천도했습니다. <1>10:10</>",
+                "general:history:<C>●</>198년 4월:<G><b>계양</b></>으로 <M>천도</>명령",
+                "nation:history:<C>●</>198년 4월:<Y>조조</>가 <G><b>계양</b></>으로 <M>천도</> 명령",
+                "global:action:<C>●</>4월:<Y>조조</>가 <G><b>계양</b></>으로 <M>천도</>를 명령하였습니다.",
+                "global:history:<C>●</>198년 4월:<S><b>【천도】</b></><D><b>위</b></>가 <G><b>계양</b></>으로 <M>천도</>하였습니다.",
+            ),
+            c.orderedLogEvents().map { "${it.scope}:${it.category}:${it.text}" },
+        )
     }
 
     @Test
     fun `cheondo cost and preReqTurn track distance`() {
         val cmd = cheCheondo(pipeline)
         // cost = develcost*5 * 2^dist
-        assertEquals(100 * 5 * 1, cmd.getCost(env.develCost, 0), "dist 0 → cost 500")
-        assertEquals(100 * 5 * 8, cmd.getCost(env.develCost, 3), "dist 3 → cost 4000")
+        assertEquals(500L, cmd.getCost(env.develCost, 0), "dist 0 → cost 500")
+        assertEquals(4000L, cmd.getCost(env.develCost, 3), "dist 3 → cost 4000")
         // preReqTurn = dist*2
         assertEquals(0, cmd.getPreReqTurnForDistance(0))
         assertEquals(6, cmd.getPreReqTurnForDistance(3))
         // distance fallback ?? 50
         assertEquals(505, cmd.expDedForDistance(null), "null dist → 50*2 preReqTurn → 5*(100+1)=505")
+    }
+
+    @Test
+    fun `cheondo cost keeps PHP powers of two above the Int shift width`() {
+        val cmd = cheCheondo(pipeline)
+
+        assertEquals(167_772_160L, cmd.getCost(1, 25))
+        assertEquals(10_737_418_240L, cmd.getCost(1, 31))
+        assertEquals(21_474_836_480L, cmd.getCost(1, 32))
+        assertEquals(5_629_499_534_213_120L, cmd.getCost(1, 50))
+        assertEquals(Long.MAX_VALUE, cmd.getCost(Int.MAX_VALUE, Int.MAX_VALUE))
+    }
+
+    @Test
+    fun `cheondo resolve defers the static event to the daemon post drain`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_천도") { general, destGeneral, env, params ->
+            val month = env["month"]
+            val destCity = params["destCityID"]
+            observed += "${general.id}:${destGeneral == null}:$month:$destCity"
+        }
+        val destCityId = 30
+        val draft = GeneralActionDraft(actor(), city(), nation()).also {
+            it.destCity = City(destCityId, 2, 6, 0, 0, 0, 0, 1, 0, 50.0)
+        }
+        val context = GeneralActionResolveContext(
+            draft,
+            cheondoRng(),
+            env,
+            MONTH,
+            date,
+            generalName = "조조",
+            args = mapOf("destCityID" to destCityId),
+            cityDistance = 3,
+        )
+
+        cheCheondo(pipeline).resolve(context)
+
+        assertEquals(emptyList(), observed)
     }
 
     @Test

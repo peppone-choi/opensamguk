@@ -9,6 +9,7 @@ import opensamguk.engine.auction.AuctionFinalizeHandler
 import opensamguk.engine.auction.AuctionOpenHandler
 import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.intake.BoardHandler
+import opensamguk.engine.intake.AccountCommandHandler
 import opensamguk.engine.intake.AdminGeneralModerationHandler
 import opensamguk.engine.intake.AdminWorldSettingsHandler
 import opensamguk.engine.intake.BuildNationCandidateHandler
@@ -24,6 +25,7 @@ import opensamguk.engine.intake.NationFinanceSetterHandler
 import opensamguk.engine.intake.NpcPolicyHandler
 import opensamguk.engine.intake.PersonnelHandler
 import opensamguk.engine.intake.ProfileIconSyncHandler
+import opensamguk.engine.intake.RaiseInvaderMessageHandler
 import opensamguk.engine.intake.SelectPoolHandler
 import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
@@ -44,9 +46,12 @@ import opensamguk.infra.read.GameKvRepository
 import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.InheritanceRepository
+import opensamguk.engine.turn.KvKey
 import opensamguk.logic.betting.BettingInfo
 import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
+import opensamguk.logic.world.RaiseInvaderSpec
+import java.time.Instant
 
 /**
  * Routes drained [TurnDaemonCommand]s to their engine handlers.
@@ -112,13 +117,14 @@ class TurnDaemonCommandDispatcher(
      */
     inheritanceRepository: InheritanceRepository? = null,
     processNationCommand: ProcessNationCommand? = null,
+    raiseInvader: (RaiseInvaderSpec) -> Int = { 0 },
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
      * (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
      * [PlaceBetHandler]와 [AuctionBidHandler]가 동일 seam 을 공유한다(바퀴 20 정본).
      */
-    private val previousPointReader: (Int) -> Double = inheritanceRepository?.let { repo ->
+    private val persistedPreviousPointReader: (Int) -> Double = inheritanceRepository?.let { repo ->
         { ownerId: Int ->
             repo.findByTableAndNamespaceAndKey("inheritance", "inheritance_$ownerId", "previous")
                 ?.let { row ->
@@ -130,6 +136,10 @@ class TurnDaemonCommandDispatcher(
         (ownerScopedMetaValue(world.getState().meta["inheritancePrevious"] as? Map<*, *>, ownerId) as? Number)
             ?.toDouble()
             ?: 0.0
+    }
+    private val previousPointReader: (Int) -> Double = { ownerId ->
+        recorder.effectiveInheritancePoint(ownerId, "previous")?.first
+            ?: persistedPreviousPointReader(ownerId)
     }
 
     private val geniusRemainingReader: () -> Int = gameKvRepository?.let { repo ->
@@ -144,7 +154,7 @@ class TurnDaemonCommandDispatcher(
         }
     } ?: { GameConst.defaultMaxGenius }
 
-    private val lastStatResetReader: (Int) -> List<Int> = gameKvRepository?.let { repo ->
+    private val persistedLastStatResetReader: (Int) -> List<Int> = gameKvRepository?.let { repo ->
         { ownerId: Int ->
             repo.findByTable("user")
                 .firstOrNull { it.namespace == "user_$ownerId" && it.key == "last_stat_reset" }
@@ -158,6 +168,11 @@ class TurnDaemonCommandDispatcher(
         (ownerScopedMetaValue(world.getState().meta["lastStatReset"] as? Map<*, *>, ownerId) as? List<*>)
             ?.mapNotNull { (it as? Number)?.toInt() }
             ?: emptyList()
+    }
+    private val lastStatResetReader: (Int) -> List<Int> = { ownerId ->
+        (recorder.kvDirty()[KvKey("user", "user_$ownerId", "last_stat_reset")] as? List<*>)
+            ?.mapNotNull { (it as? Number)?.toInt() }
+            ?: persistedLastStatResetReader(ownerId)
     }
 
     private val auctionBid = AuctionBidHandler(
@@ -219,6 +234,7 @@ class TurnDaemonCommandDispatcher(
         lastStatResetReader = lastStatResetReader,
     )
     private val instantAction = InstantActionHandler(world, recorder)
+    private val account = AccountCommandHandler(world, recorder)
 
     // ── F4 Wave C2 (slice B) — troop intake handler ──
     private val troop = TroopHandler(world, recorder)
@@ -287,6 +303,12 @@ class TurnDaemonCommandDispatcher(
         processNationCommand = processNationCommand,
         messageReader = scopedMessageReader,
     )
+    private val raiseInvaderMessage = RaiseInvaderMessageHandler(
+        world = world,
+        recorder = recorder,
+        messageReader = scopedMessageReader,
+        raiseInvader = raiseInvader,
+    )
 
     // ── W6c 경매 개설 핸들러 (AuctionBidHandler와 동일 read repo 주입) ──
     private val auctionOpen = AuctionOpenHandler(world, recorder, auctionRepository, auctionBidRepository)
@@ -323,7 +345,10 @@ class TurnDaemonCommandDispatcher(
      * @return the handler's [TurnDaemonCommandResult], or `null` when no engine handler is wired for
      *   this command type yet (control commands + not-yet-built handlers).
      */
-    fun dispatch(command: TurnDaemonCommand): TurnDaemonCommandResult? = when (command) {
+    fun dispatch(command: TurnDaemonCommand): TurnDaemonCommandResult? =
+        dispatch(command, Instant.now())
+
+    private fun dispatch(command: TurnDaemonCommand, sentAt: Instant): TurnDaemonCommandResult? = when (command) {
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
@@ -350,6 +375,9 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.DropItem -> instantAction.handleDropItem(command)
         is TurnDaemonCommand.InstantRetreat -> instantAction.handleInstantRetreat(command)
         is TurnDaemonCommand.CheckOwner -> instantAction.handleCheckOwner(command)
+        is TurnDaemonCommand.SetMySetting -> account.handleSetting(command)
+        is TurnDaemonCommand.Vacation -> account.handleVacation(command)
+        is TurnDaemonCommand.ReadLatestMessage -> account.handleReadLatest(command)
         // ── F4 Wave C2 (slice B) troop intake bindings ──
         is TurnDaemonCommand.TroopNew -> troop.handleNew(command)
         is TurnDaemonCommand.TroopJoin -> troop.handleJoin(command)
@@ -365,10 +393,11 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.VoteComment -> vote.handleVoteComment(command)
         is TurnDaemonCommand.VoteClose -> vote.handleVoteClose(command)
         // ── W6a 메시지 인테이크 바인딩 ──
-        is TurnDaemonCommand.SendMessage -> message.handleSend(command)
-        is TurnDaemonCommand.DeleteMessage -> message.handleDelete(command)
+        is TurnDaemonCommand.SendMessage -> message.handleSend(command, sentAt)
+        is TurnDaemonCommand.DeleteMessage -> message.handleDelete(command, sentAt)
         is TurnDaemonCommand.AcceptDiplomaticMessage -> diplomaticMessage.handleAccept(command)
         is TurnDaemonCommand.DeclineDiplomaticMessage -> diplomaticMessage.handleDecline(command)
+        is TurnDaemonCommand.AcceptRaiseInvaderMessage -> raiseInvaderMessage.handle(command)
         // ── W6c 경매 개설 바인딩 ──
         is TurnDaemonCommand.AuctionOpenBuyRice -> auctionOpen.handleBuyRice(command)
         is TurnDaemonCommand.AuctionOpenSellRice -> auctionOpen.handleSellRice(command)
@@ -390,7 +419,7 @@ class TurnDaemonCommandDispatcher(
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
         is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
-        // ── OPENSAM-94 프로필 아이콘 typed sync 바인딩 (fanout, fire-and-forget → null 반환) ──
+        // ── OPENSAM-94 프로필 아이콘 typed sync 바인딩 (fanout, durable IMMEDIATE terminal 결과) ──
         is TurnDaemonCommand.ProfileIconSync -> profileIconSync.handle(command)
         is TurnDaemonCommand.AdminGeneralModeration -> adminGeneralModeration.handle(command)
         is TurnDaemonCommand.AdminWorldSettings -> adminWorldSettings.handle(command)
@@ -410,7 +439,9 @@ class TurnDaemonCommandDispatcher(
     fun dispatchEnvelopes(
         envelopes: List<TurnDaemonCommandEnvelope>,
     ): List<Pair<String, TurnDaemonCommandResult>> =
-        envelopes.mapNotNull { env -> dispatch(env.command)?.let { env.requestId to it } }
+        envelopes.mapNotNull { env ->
+            dispatch(env.command, Instant.parse(env.sentAt))?.let { env.requestId to it }
+        }
 }
 
 private fun ownerScopedMetaValue(map: Map<*, *>?, ownerId: Int): Any? =

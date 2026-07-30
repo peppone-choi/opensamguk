@@ -1,96 +1,133 @@
 package opensamguk.logic.event
 
 import opensamguk.logic.betting.BettingInfo
+import opensamguk.logic.betting.BettingItem
+import opensamguk.logic.betting.GeneralForBetting
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * [OpenNationBettingAction] 의 PHP grand-truth 패러티 핀.
- *
- * 오라클: `legacy/devsam-core/hwe/sammo/Event/Action/OpenNationBetting.php` (run())
- * + `legacy/devsam-core/src/sammo/Util.php` (`joinYearMonth`).
- *
- * loop 27 에서 측정된 4개 misport 결함을 모두 고정한다:
- *  1. reqInheritancePoint — PHP `true` (OpenNationBetting.php:90)  ← 이전 fabricate: false
- *  2. openYearMonth      — PHP `joinYearMonth = year*12 + month - 1` (Util.php:710) ← 이전: `-1` 누락
- *  3. closeYearMonth     — PHP `openYearMonth + 24` (OpenNationBetting.php:48)   ← 이전 fabricate: +120
- *  4. candidates 키       — PHP `$candidates[] = …` 0-기준 정수 인덱스 append
- *                           (OpenNationBetting.php:56,74) ← 국가 id 가 아니라 삽입순 인덱스
- *
- * 모든 기대값은 인용된 PHP 라인에서만 도출한다(fabricate 금지).
- */
 class OpenNationBettingActionTest {
 
-    /** [OpenNationBettingAction.run] 이 읽는 env 를 담은 최소 컨텍스트. */
-    private fun ctx(env: Map<String, Any?>): EventActionContext =
-        object : EventActionContext {
-            override val env = env
+    @Test
+    fun `open matches PHP candidate ordering master row trigger bonus and notifications`() {
+        val world = BettingWorld()
+
+        OpenNationBettingAction(nationCnt = 1, bonusPoint = 2_000).run(world)
+
+        val info = world.saved.getValue(1)
+        assertEquals("천통국 예상", info.name)
+        assertEquals(true, info.reqInheritancePoint)
+        assertEquals(2_402, info.openYearMonth)
+        assertEquals(2_426, info.closeYearMonth)
+        assertEquals(listOf(22, 11, 33), info.candidates.values.map { it.aux?.get("nation") })
+        assertEquals(listOf(1 to 1), world.scheduled)
+        assertEquals(listOf(1 to 2_000), world.bonuses)
+        assertEquals(
+            listOf(
+                "<B><b>【내기】</b></>천하통일 후보를 점치는 <C>내기</>가 진행중입니다! 호사가의 참여를 기다립니다!",
+            ),
+            world.history,
+        )
+        assertEquals(listOf("천통국"), world.notifications)
+    }
+
+    @Test
+    fun `scheduled finish closes the open betting and records the surviving nation`() {
+        val world = BettingWorld()
+        OpenNationBettingAction(nationCnt = 1).run(world)
+        world.alive = listOf(22)
+
+        FinishNationBettingAction(1).run(world)
+
+        val info = world.saved.getValue(1)
+        assertTrue(info.finished)
+        assertEquals(listOf(0), info.winner)
+        assertEquals(
+            "<B><b>【내기】</b></> 200년 3월에 열렸던 천통국 예상 내기의 결과가 나왔습니다!",
+            world.history.last(),
+        )
+    }
+
+    @Test
+    fun `invalid constructor arguments keep the PHP failure boundary`() {
+        assertFalse(runCatching { OpenNationBettingAction(nationCnt = 0) }.isSuccess)
+        assertFalse(runCatching { OpenNationBettingAction(bonusPoint = -1) }.isSuccess)
+    }
+
+    private class BettingWorld :
+        OpenNationBettingContext,
+        FinishNationBettingContext {
+
+        override val env: Map<String, Any?> = emptyMap()
+        val saved = linkedMapOf<Int, BettingInfo>()
+        val scheduled = mutableListOf<Pair<Int, Int>>()
+        val bonuses = mutableListOf<Pair<Int, Int>>()
+        val history = mutableListOf<String>()
+        val notifications = mutableListOf<String>()
+        var alive = listOf(11, 22, 33)
+
+        override fun year(): Int = 200
+        override fun month(): Int = 3
+
+        override fun nationBettingCandidates(): List<NationBettingCandidate> =
+            listOf(
+                candidate(11, "촉", 500),
+                candidate(22, "위", 900),
+                candidate(33, "오", 300),
+            )
+
+        override fun nextBettingId(): Int = 1
+
+        override fun saveBettingInfo(info: BettingInfo) {
+            saved[info.id] = info
         }
 
-    /** run() 을 돌리고 kvStorage 에 저장된 [BettingInfo] 를 꺼낸다. */
-    private fun openAndLoad(
-        year: Int,
-        month: Int,
-        nationIds: List<Int>,
-    ): BettingInfo {
-        val kvStorage = HashMap<String, Any>()
-        val env = mapOf(
-            "year" to year,
-            "month" to month,
-            "nationIds" to nationIds,
-            "kvStorage" to kvStorage,
-        )
-        OpenNationBettingAction().run(ctx(env))
-        // generateBettingId: last_betting_id(0) + 1 = 1 → key = "betting:1"
-        val stored = kvStorage[BettingInfo.KV_KEY_PREFIX + 1]
-        assertNotNull(stored, "BettingInfo must be stored under 'betting:1'")
-        assertTrue(stored is BettingInfo)
-        return stored
-    }
+        override fun scheduleNationBettingFinish(bettingId: Int, nationCnt: Int) {
+            scheduled += bettingId to nationCnt
+        }
 
-    @Test
-    fun `reqInheritancePoint is true per PHP grand truth`() {
-        val info = openAndLoad(year = 200, month = 3, nationIds = listOf(11, 22, 33))
-        // PHP Event/Action/OpenNationBetting.php:90 — `reqInheritancePoint: true`
-        // (국가 강약 베팅 = 유산포인트 베팅). 이전 Kotlin 은 false 로 misport.
-        assertEquals(true, info.reqInheritancePoint, "PHP OpenNationBetting.php:90 sets reqInheritancePoint: true")
-    }
+        override fun placeNationBettingBonus(bettingId: Int, amount: Int) {
+            bonuses += bettingId to amount
+        }
 
-    @Test
-    fun `openYearMonth equals joinYearMonth year times 12 plus month minus 1`() {
-        val year = 200
-        val month = 3
-        val info = openAndLoad(year = year, month = month, nationIds = listOf(11, 22, 33))
-        // PHP src/sammo/Util.php:710 — `joinYearMonth = $year * 12 + $month - 1`,
-        // OpenNationBetting.php:47 — `$openYearMonth = Util::joinYearMonth($year, $month)`.
-        // 200*12 + 3 - 1 = 2402. 이전 Kotlin(`year*12+month` = 2403)은 1개월 off-by-one.
-        assertEquals(year * 12 + month - 1, info.openYearMonth, "PHP Util.php:710 joinYearMonth = year*12+month-1")
-        assertEquals(2402, info.openYearMonth, "200년 3월 → joinYearMonth = 2402 (Util.php:710)")
-    }
+        override fun pushGlobalHistoryLog(msg: String, type: Int) {
+            history += msg
+        }
 
-    @Test
-    fun `closeYearMonth equals openYearMonth plus 24 not plus 120`() {
-        val year = 200
-        val month = 3
-        val info = openAndLoad(year = year, month = month, nationIds = listOf(11, 22, 33))
-        // PHP Event/Action/OpenNationBetting.php:48 — `$closeYearMonth = $openYearMonth + 24;`
-        // 이전 Kotlin(+120)은 fabricate. 2402 + 24 = 2426.
-        assertEquals(info.openYearMonth + 24, info.closeYearMonth, "PHP OpenNationBetting.php:48 closeYearMonth = open + 24")
-        assertEquals(2426, info.closeYearMonth, "open(2402) + 24 = 2426 (OpenNationBetting.php:48)")
-    }
+        override fun notifyNationBettingOpened(name: String) {
+            notifications += name
+        }
 
-    @Test
-    fun `candidates are keyed by zero based insertion index not nation id`() {
-        val nationIds = listOf(11, 22, 33)
-        val info = openAndLoad(year = 200, month = 3, nationIds = nationIds)
-        // PHP Event/Action/OpenNationBetting.php:56,74 — `$candidates = []; … $candidates[] = new SelectItem(…)`
-        // → 0-기준 정수 인덱스 키(국가 id 가 아니다). 삽입순(LinkedHashMap) 보존.
-        assertEquals(listOf(0, 1, 2), info.candidates.keys.toList(), "candidates keyed by 0-based insertion index (OpenNationBetting.php:56,74)")
-        // 키는 후보 인덱스, aux.nation 에 국가 id 가 담긴다(FinishNationBetting 의 nationIDMap 역매핑 대상).
-        assertEquals(11, info.candidates[0]?.aux?.get("nation"))
-        assertEquals(22, info.candidates[1]?.aux?.get("nation"))
-        assertEquals(33, info.candidates[2]?.aux?.get("nation"))
+        override fun loadBettingInfo(bettingId: Int): BettingInfo? = saved[bettingId]
+
+        override fun aliveNationIds(): List<Int> = alive
+
+        override fun loadBettingItems(bettingId: Int): List<BettingItem> = emptyList()
+
+        override fun generalsById(ids: List<Int>): Map<Int, GeneralForBetting> = emptyMap()
+
+        override fun addGeneralGold(generalId: Int, amount: Int) = Unit
+
+        override fun increaseRankData(generalId: Int, type: String, amount: Double) = Unit
+
+        override fun getRankVar(generalId: Int, type: String, default: Int): Int = default
+
+        override fun increaseInheritancePointRaw(userId: Int, amount: Double): Double = amount
+
+        override fun pushUserLogs(userId: Int, lines: List<String>, type: String) = Unit
+
+        override fun pushGeneralActionLog(generalId: Int, msg: String) = Unit
+
+        private fun candidate(id: Int, name: String, power: Int) =
+            NationBettingCandidate(
+                nationId = id,
+                name = name,
+                power = power,
+                generalCount = id,
+                cityCount = 1,
+                aux = linkedMapOf("nation" to id),
+            )
     }
 }

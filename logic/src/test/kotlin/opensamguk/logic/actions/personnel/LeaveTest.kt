@@ -13,8 +13,10 @@ import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -44,6 +46,9 @@ class LeaveTest {
         LiteHashDrbg(serializeSeed(FIXTURE_HIDDEN_SEED, "generalCommand", 200, MONTH, 42, cls)))
     private val env = WorldEnv(year = 200, startYear = 184, develCost = 120)
     private val date = "09:30"
+
+    @AfterTest
+    fun clearStaticEventHandlers() = StaticEventHandler.clear()
 
     // -------- che_하야 --------
 
@@ -152,6 +157,40 @@ class LeaveTest {
         CheHaya(pipeline).resolve(ctx)
 
         assertTrue(draft.cascadeGenerals.all { it.troop == 0 }, "all troop members reset to 0")
+    }
+
+    @Test
+    fun `che_하야 routes raw-decay level logs then finalizes stat before static event`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_하야") { general, destGeneral, _, params ->
+            observed += "${general.lastTurn.command}:${general.leadership}:${metaInt(general.meta, "leadership_exp")}:${destGeneral == null}:${params.isEmpty()}"
+        }
+        val actor = retiree().copy(
+            meta = linkedMapOf(
+                "name" to "조조",
+                "explevel" to 10,
+                "dedlevel" to 5,
+                "betray" to 2,
+                "belong" to 1,
+                "leadership_exp" to 30,
+            ),
+        )
+        val draft = GeneralActionDraft(actor, homeCity(), homeNation())
+        val ctx = GeneralActionResolveContext(draft, freshRng("che_하야"), env, MONTH, date)
+
+        CheHaya(pipeline).resolve(ctx)
+
+        assertEquals(
+            listOf(
+                "general:action:<C>●</>5월:<D><b>위</b></>에서 하야했습니다. <1>09:30</>",
+                "global:action:<C>●</>5월:<Y>조조</>가 <D><b>위</b></>에서 <R>하야</>했습니다.",
+                "general:action:<C>●</><C>Lv 8</>로 <R>레벨다운</>!",
+                "general:action:<C>●</><Y>27품관</>으로 <R>강등</>되어 봉록이 <C>1,200</>으로 <R>하락</>했습니다!",
+                "general:action:<C>●</><S>통솔</>이 <C>1</> 올랐습니다!",
+            ),
+            ctx.orderedLogEvents().map { "${it.scope}:${it.category}:${it.text}" },
+        )
+        assertEquals(listOf("하야:71:0:true:true"), observed)
     }
 
     // -------- che_방랑 --------
