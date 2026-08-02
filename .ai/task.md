@@ -1,5 +1,27 @@
 # Current Task
 
+## 2026-08-02 — canonical alphanumeric game-server ID release closeout
+
+- Status: source review cleared at exact SHA
+  `8d1a64fee0651b2977f13af27eb6b91b43577342`; this closeout records the
+  contract and evidence only. It does **not** record a merge, deployment, or
+  live-production verification.
+- Canonical public contract: accept raw `[A-Za-z0-9]+`, canonicalize to
+  lowercase `[a-z0-9]+`, and derive the internal Compose/container identity as
+  `s` + public ID. Examples: `pep` → `pep` / `spep`; `s1` → `s1` / `ss1`;
+  `A1` → `a1` / `sa1`.
+- `all`, `main`, and current top-level game route names are reserved to avoid
+  control and URL collisions. `current` remains a valid public ID.
+- Source-review evidence: gateway 64 tests; game 220 tests; FrontInfo XML
+  `27/0/0`; Admin XML `26/0/0`; workflow and Compose contract checks.
+- Approved external actions remain those of the governing OPENSAM-34 task:
+  GCP changes/configuration, commit, push, PR creation, three mention-triggered
+  reviews, merge, deployment, and live verification. They are authorized scope,
+  not completed actions; secrets stay redacted and data deletion is out of
+  scope.
+- Remaining release gates: Docker repository review/fix, three `@codex` PR
+  review rounds, merge, deploy, and live-production verification.
+
 ## 2026-08-02 OPENSAM-34 — GCP production migration and launch
 
 - Status: in progress; GCP VM/runtime/network/DNS are provisioned, and PR
