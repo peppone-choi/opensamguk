@@ -156,7 +156,7 @@ cd web/game    && corepack pnpm dev   # :3001
 | **F2 메인화면 + 메뉴 척추** | `web/game` 메인(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼 + 게이팅). | ✅ |
 | **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지, **read-only 렌더**. | ✅ |
 | **F4 액션 페이지 + mutation** | 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결. 잔여 명령은 라이브 루프로 폐쇄 중. | 🔄 |
-| **F5 turnkey + docs** | 정본 `docker-compose.yml`(로컬) + `docker-compose.production.yml`(EC2/GHCR) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드. | 🔄 |
+| **F5 turnkey + docs** | 정본 `docker-compose.yml`(로컬) + 호환용 `docker-compose.production.yml`(GCP Compute Engine e2-standard-2/GHCR) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드. | 🔄 |
 
 > 프론트는 read-only 단계를 지났습니다. 버튼이 보이면 실제 API/daemon 결과까지 검증해야 하며, 하드 스텁·상수 빈 응답·disabled dead control은 완료로 세지 않습니다.
 
@@ -168,13 +168,13 @@ cd web/game    && corepack pnpm dev   # :3001
 # 로컬 전체 스택 (8서비스: postgres·redis·gateway-api·game-api·game-engine·web-gateway·web-game·nginx)
 docker compose up -d --build
 
-# 프로덕션 (EC2 t3.large, GHCR 이미지 풀, POSTGRES_PASSWORD 필수)
+# 프로덕션 호환 표면 (GCP Compute Engine e2-standard-2, GHCR 이미지 풀, POSTGRES_PASSWORD 필수)
 docker compose -f docker-compose.production.yml up -d
 ```
 
 - 백엔드 이미지 멀티스테이지: `gradle:8.12-jdk21` 빌드 → `eclipse-temurin:21-jre` 런타임. 프론트: `node:22-alpine` 빌드(`next build`) → `node:22-alpine` standalone 런타임.
 - nginx(`infra/nginx/nginx.conf`) 라우팅: `/api/gateway/`→gateway-api · `/api/game/`→web-gateway Next 프록시(httpOnly 쿠키→Bearer, 서버 선택) · `/api/game/realtime/`→game-api(SSE, 버퍼링 off) · `/game/`→web-game · `/`→web-gateway · `/health`.
-- CI/CD: `.github/workflows/deploy.yml`(빌드 → GHCR push → SSH → 롤링 재시작), 수동 `scripts/deploy.sh`(헬스 체크 루프). 런타임 외부 API 의존 0, LLM-free.
+- CI/CD: `.github/workflows/deploy.yml`(빌드 → GHCR push → GCP VM의 `gcp-prod` self-hosted runner에서 공유 스택 동기화), 수동 `scripts/deploy.sh`(헬스 체크 루프). 런타임 외부 API 의존 0, LLM-free.
 
 ---
 
@@ -182,7 +182,7 @@ docker compose -f docker-compose.production.yml up -d
 
 - 저장소 비공개 — 노출/자격증명 커밋 금지. `.env*`는 git-ignore, `.env.example`을 템플릿으로 사용.
 - 관리자 비밀번호는 env(`ADMIN_PASSWORD`)로만 — 코드/리포 하드코딩 금지.
-- 런타임 외부 API 의존 0, 완전 자체 호스팅(LLM-free). 배포 타깃 EC2 t3.large(클라우드 시크릿 매니저 비전제).
+- 런타임 외부 API 의존 0, 완전 자체 호스팅(LLM-free). 배포 타깃 GCP Compute Engine e2-standard-2(클라우드 시크릿 매니저 비전제).
 
 ---
 

@@ -183,10 +183,12 @@ Server lists are admin-created runtime data. If no servers exist, the gateway mu
 
 ## Production policy
 
-Production is live EC2 and must be treated as a real deployment target:
+Production is the shared stack on GCP Compute Engine `e2-standard-2` and must be treated as a real deployment target. `.github/workflows/deploy.yml` builds and pushes GHCR images on GitHub-hosted runners; its VM-local `gcp-prod` self-hosted runner synchronizes the `opensamguk-docker` control repository before updating the shared stack.
 
 - Back up before destructive DB operations.
 - Do not seed or re-seed unless explicitly intended.
-- `game-engine` starts last because it owns memory state.
+- Refresh the deployer, then shared dependencies and upstreams from `opensamguk-docker`; recreate nginx last so it resolves current upstream container addresses.
+- A shared-stack refresh must preserve every `servers/<id>.env` `IMAGE_TAG` and `WEB_GAME_TAG`. Game-server promotion is a separately approved control-repository operation, not an implicit `main` deployment effect.
+- This repository's `docker-compose.production.yml` and `scripts/deploy.sh` are compatibility-only; use the current `opensamguk-docker` shared-stack flow.
 - Verify nginx routes, API health, and either world-clock advancement or the intentional empty-server invariant.
 - For the current admin-created-server target, an empty world is valid: `world_state=0`, `general=0`, `nation=0`, no server list rendered.
