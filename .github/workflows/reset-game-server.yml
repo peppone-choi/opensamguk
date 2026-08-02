@@ -58,6 +58,11 @@ jobs:
           RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
         run: |
           set -euo pipefail
+          exec 9>/tmp/opensamguk-production.lock
+          if ! flock -w 1800 9; then
+            echo "ERROR: timed out after 1800 seconds waiting for /tmp/opensamguk-production.lock" >&2
+            exit 1
+          fi
 
           STACK="$HOME/opensamguk-docker"
           SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"

@@ -128,12 +128,26 @@ jobs:
           GHCR_USER: ${{ github.actor }}
         run: |
           set -euo pipefail
+          exec 9>/tmp/opensamguk-production.lock
+          if ! flock -w 1800 9; then
+            echo "ERROR: timed out after 1800 seconds waiting for /tmp/opensamguk-production.lock" >&2
+            exit 1
+          fi
           STACK="$HOME/opensamguk-docker"
           cd "$STACK"
 
           echo "=== Syncing opensamguk-docker main ==="
+          if [ -n "$(git status --porcelain --untracked-files=normal)" ]; then
+            echo "ERROR: refusing to sync a dirty tracked or non-ignored untracked opensamguk-docker tree; ignored runtime env files are untouched" >&2
+            git status --short --untracked-files=normal >&2
+            exit 1
+          fi
           git fetch origin main
-          git reset --hard origin/main
+          git merge --ff-only origin/main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "ERROR: opensamguk-docker HEAD does not match origin/main after fast-forward sync" >&2
+            exit 1
+          fi
 
           echo "=== GHCR login ==="   # 매 배포 재login → 박스 토큰 만료 무관.
           echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
