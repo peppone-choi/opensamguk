@@ -1,7 +1,7 @@
 # GCP production lock review
 
 Date: 2026-08-02
-Scope: Cross-repository production mutation serialization in `.github/workflows/deploy.yml`, `.github/workflows/promote-game-server.yml`, `.github/workflows/reset-game-server.yml`, and `scripts/deploy.sh`; base `c4a83c1492103abbe996202fc80d30b78808244c`.
+Scope: Cross-repository production mutation serialization in `.github/workflows/deploy.yml`, `.github/workflows/promote-game-server.yml`, `.github/workflows/reset-game-server.yml`, and `scripts/deploy.sh`, plus the PR review model pin in `.github/workflows/claude_review.yml`; base `c4a83c1492103abbe996202fc80d30b78808244c`.
 Reviewer: Independent Fable deep architecture and operations review.
 Verdict: cleared
 
@@ -26,6 +26,12 @@ The independent re-review confirmed that all three findings were resolved and
 returned `cleared`. It found no regression to credential bindings, action pins,
 shared image selection, or per-server image-pin preservation.
 
+The first live Claude review run resolved the convenience `sonnet` alias to
+`claude-sonnet-5` and failed before producing a review. A separate read-only
+review confirmed the fallback to Anthropic's official pinned
+`claude-sonnet-4-6` API model ID, with no change to allowed tools or credentials,
+and returned `cleared`.
+
 ## Evidence
 
 - All three changed workflow files parse as YAML.
@@ -36,6 +42,8 @@ shared image selection, or per-server image-pin preservation.
 - Mutation-order checks confirm that the lock precedes remote directory and
   archive writes, Compose pull/restart operations, and image pruning.
 - `git diff --check origin/main` passes.
+- `.github/workflows/claude_review.yml` parses as YAML and preserves its
+  existing tool allowlist while selecting the pinned Sonnet 4.6 generation.
 
 ## Residual risks
 
