@@ -1,7 +1,8 @@
 # Canonical Alphanumeric Game-Server ID Review
 
 - Date: 2026-08-02
-Scope: PR #354 canonical public server-ID normalization, internal
+Scope: `.github/workflows/`, `app/`, `infra/`, and `web/`.
+- Review focus: PR #354 canonical public server-ID normalization, internal
   Compose/container derivation, Nginx compatibility routing, and deployment
   workflow reserved-ID parity.
 - PR: `https://github.com/peppone-choi/opensamguk/pull/354`
