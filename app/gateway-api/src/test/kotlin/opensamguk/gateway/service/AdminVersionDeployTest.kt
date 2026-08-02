@@ -26,6 +26,11 @@ class AdminVersionDeployTest {
         project: String = "opensamguk",
     ) = ServerRegistry(json, gameApi, gameEngine, project, "통일 서버", mapper)
 
+    private fun canonicalServerJson(id: String, name: String = "통일 서버"): String {
+        val canonicalId = id.lowercase()
+        return """{"id":"$id","name":"$name","gameApiUrl":"http://s$canonicalId-game-api:8081","gameEngineUrl":"http://s$canonicalId-game-engine:8082","deployProject":"opensamguk-s$canonicalId"}"""
+    }
+
     @Test
     fun `빈 JSON이면 서버 목록을 비운다`() {
         val reg = registry(json = "")
@@ -74,22 +79,31 @@ class AdminVersionDeployTest {
 
     @Test
     fun `알 수 없는 서버는 deploy 거부`() {
-        val svc = DeployService("http://deployer:9000", "tok", registry(), mapper)
-        val result = svc.deploy("does-not-exist", "v1.0.0", "admin")
-        assertFalse(result.ok)
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(200, "[]")
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.deploy("does-not-exist", "v1.0.0", "admin")
+
+            assertFalse(result.ok)
+            assertEquals(listOf("/servers"), deployer.requests.map { it.path })
+        }
     }
 
     @Test
-    fun `잘못된 태그는 deploy 거부(네트워크 이전)`() {
-        val svc = DeployService(
-            "http://deployer:9000",
-            "tok",
-            registry(json = """[{"id":"main","name":"통일 서버"}]"""),
-            mapper,
-        )
-        val result = svc.deploy("main", "bad tag!", "admin")
-        assertFalse(result.ok)
-        assertEquals("올바르지 않은 버전 태그입니다.", result.message)
+    fun `잘못된 태그는 deploy action 전에 거부한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(200, "[${canonicalServerJson("s1")}]")
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.deploy("s1", "bad tag!", "admin")
+
+            assertFalse(result.ok)
+            assertEquals("올바르지 않은 버전 태그입니다.", result.message)
+            assertEquals(listOf("/servers"), deployer.requests.map { it.path })
+        }
     }
 
     @Test
@@ -140,6 +154,7 @@ class AdminVersionDeployTest {
     fun `server env 변경은 레지스트리 서버 id로 deployer에 PATCH한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
+            deployer.enqueue(200, "[${canonicalServerJson("s1")}]")
             deployer.enqueue(
                 200,
                 """{"ok":true,"scope":"server","id":"s1","fields":{"SCENARIO_SEED_ENABLED":{"key":"SCENARIO_SEED_ENABLED","value":"false","configured":true,"writeOnly":false,"masked":false}}}""",
@@ -155,8 +170,9 @@ class AdminVersionDeployTest {
             val body = """{"values":{"SCENARIO_SEED_ENABLED":"false","SERVER_GENERATION":"2","WEB_GAME_TAG":"$webGameTag"}}"""
             val result = svc.patchServerEnv("s1", body)
 
-            val request = deployer.requests.single()
+            val request = deployer.requests.last()
             assertEquals(200, result.status)
+            assertEquals(listOf("/servers", "/env/server?id=s1"), deployer.requests.map { it.path })
             assertEquals("/env/server?id=s1", request.path)
             assertEquals("PATCH", request.method)
             assertEquals(body, request.body)
@@ -179,6 +195,7 @@ class AdminVersionDeployTest {
     fun `서버 생성은 deployer create endpoint로 POST한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
+            deployer.enqueue(200, "[${canonicalServerJson("s1")}]")
             deployer.enqueue(
                 200,
                 """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
@@ -308,6 +325,7 @@ class AdminVersionDeployTest {
     fun `서버 삭제는 deployer close endpoint로 POST한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
+            deployer.enqueue(200, "[${canonicalServerJson("s1")}]")
             deployer.enqueue(
                 200,
                 """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
@@ -321,8 +339,9 @@ class AdminVersionDeployTest {
 
             val result = svc.deleteServer("s1")
 
-            val request = deployer.requests.single()
+            val request = deployer.requests.last()
             assertEquals(200, result.status)
+            assertEquals(listOf("/servers", "/servers/close"), deployer.requests.map { it.path })
             assertEquals("/servers/close", request.path)
             assertEquals("POST", request.method)
             assertEquals("Bearer tok", request.authorization)
@@ -334,6 +353,7 @@ class AdminVersionDeployTest {
     fun `서버 리셋은 deployer reset endpoint로 POST한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
+            deployer.enqueue(200, "[${canonicalServerJson("s1")}]")
             deployer.enqueue(
                 200,
                 """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
@@ -347,8 +367,9 @@ class AdminVersionDeployTest {
 
             val result = svc.resetServer("s1", """{"confirm":"RESET s1","generation":"2","scenarioCode":"scenario_1002","turnTerm":"30","sync":"1","fiction":"0","extend":"1","blockGeneralCreate":"2","npcMode":"2","showImgLevel":"3","autorunUserOptions":["develop","battle"],"autorunUserMinutes":"1440","joinMode":"onlyRandom","tournamentTrig":"1","reserveOpen":"2026-06-10 20:00","preReserveOpen":"2026-06-10 19:00"}""")
 
-            val request = deployer.requests.single()
+            val request = deployer.requests.last()
             assertEquals(200, result.status)
+            assertEquals(listOf("/servers", "/servers/reset"), deployer.requests.map { it.path })
             assertEquals("/servers/reset", request.path)
             assertEquals("POST", request.method)
             assertEquals("Bearer tok", request.authorization)
@@ -364,6 +385,7 @@ class AdminVersionDeployTest {
     fun `알파 서버 리셋은 0기를 허용한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
+            deployer.enqueue(200, "[${canonicalServerJson("s1")}]")
             deployer.enqueue(
                 200,
                 """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
@@ -377,8 +399,9 @@ class AdminVersionDeployTest {
 
             val result = svc.resetServer("s1", """{"confirm":"RESET s1","generation":"0","scenarioCode":"scenario_1010"}""")
 
-            val request = deployer.requests.single()
+            val request = deployer.requests.last()
             assertEquals(200, result.status)
+            assertEquals(listOf("/servers", "/servers/reset"), deployer.requests.map { it.path })
             assertEquals("/servers/reset", request.path)
             assertTrue(request.body.contains(""""generation":"0""""))
         }
@@ -431,9 +454,112 @@ class AdminVersionDeployTest {
     }
 
     @Test
-    fun `서버 리셋 검증 실패는 deployer 호출 전에 거부한다`() {
+    fun `fallback registry는 canonical ID collision과 invalid entry를 collection 단위로 거부한다`() {
+        val longId = "a".repeat(49)
+        val invalidCollections = listOf(
+            """
+                [
+                  {"id":"A1","name":"알파","gameApiUrl":"http://sa1-game-api:8081","gameEngineUrl":"http://sa1-game-engine:8082","deployProject":"opensamguk-sa1"},
+                  {"id":"a1","name":"알파","gameApiUrl":"http://sa1-game-api:8081","gameEngineUrl":"http://sa1-game-engine:8082","deployProject":"opensamguk-sa1"}
+                ]
+            """.trimIndent(),
+            """
+                [
+                  {"id":"s1","name":"통일","gameApiUrl":"http://ss1-game-api:8081","gameEngineUrl":"http://ss1-game-engine:8082","deployProject":"opensamguk-ss1"},
+                  {"id":"all","name":"예약","gameApiUrl":"http://sall-game-api:8081","gameEngineUrl":"http://sall-game-engine:8082","deployProject":"opensamguk-sall"}
+                ]
+            """.trimIndent(),
+            """[{"id":"s1","name":"통일","gameApiUrl":"http://ss1-game-api:8081","gameEngineUrl":"http://ss1-game-engine:8082","deployProject":"opensamguk-ss1"},{"id":"a1","gameApiUrl":"http://sA1-game-api:8081","gameEngineUrl":"http://sa1-game-engine:8082","deployProject":"opensamguk-sa1"}]""",
+            """[{"id":"s1","name":"통일","gameApiUrl":"http://ss1-game-api:8081","gameEngineUrl":"http://ss1-game-engine:8082","deployProject":"opensamguk-ss1"},{"id":"bad-id"}]""",
+            """[{"id":"s1","name":"통일","gameApiUrl":"http://ss1-game-api:8081","gameEngineUrl":"http://ss1-game-engine:8082","deployProject":"opensamguk-ss1"},{"id":"$longId"}]""",
+        )
+
+        invalidCollections.forEach { json ->
+            val svc = DeployService("", "", registry(json = json), mapper)
+
+            assertTrue(svc.registeredServers().isEmpty(), "registry=$json")
+        }
+    }
+
+    @Test
+    fun `canonical fallback registry keeps canonical public and internal IDs`() {
+        val svc = DeployService("", "", registry(json = "[${canonicalServerJson("A1", "알파")}]"), mapper)
+
+        val server = svc.registeredServers().single()
+
+        assertEquals("a1", server.id)
+        assertEquals("opensamguk-sa1", server.deployProject)
+        assertEquals("http://sa1-game-api:8081", server.gameApiUrl)
+        assertEquals("http://sa1-game-engine:8082", server.gameEngineUrl)
+    }
+
+    @Test
+    fun `deployer registry rejects the whole collection for collisions reserved IDs and noncanonical coordinates`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
+            val canonicalS1 = """{"id":"s1","name":"통일","gameApiUrl":"http://ss1-game-api:8081","gameEngineUrl":"http://ss1-game-engine:8082","deployProject":"opensamguk-ss1"}"""
+            val longId = "a".repeat(49)
+            val invalidCollections = listOf(
+                """[$canonicalS1,{"id":"A1"},{"id":"a1"}]""",
+                """[$canonicalS1,{"id":"main","gameApiUrl":"http://smain-game-api:8081","gameEngineUrl":"http://smain-game-engine:8082","deployProject":"opensamguk-smain"}]""",
+                """[$canonicalS1,{"id":"bad-id"}]""",
+                """[$canonicalS1,{"id":"$longId"}]""",
+                """[$canonicalS1,{"id":"a1","gameApiUrl":"http://sa1-game-api:8081","gameEngineUrl":"http://sa1-game-engine:8082","deployProject":"opensamguk-sA1"}]""",
+                """[$canonicalS1,{"id":"a1","gameApiUrl":"http://sA1-game-api:8081","gameEngineUrl":"http://sa1-game-engine:8082","deployProject":"opensamguk-sa1"}]""",
+                """[$canonicalS1,{"id":"a1","gameApiUrl":"http://sa1-game-api:8081","gameEngineUrl":"http://sA1-game-engine:8082","project":"opensamguk-sa1"}]""",
+            )
+
+            invalidCollections.forEach { body ->
+                deployer.enqueue(200, body)
+                val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+                assertTrue(svc.registeredServers().isEmpty(), "deployer registry=$body")
+            }
+
+            assertEquals(invalidCollections.size, deployer.requests.size)
+            assertTrue(deployer.requests.all { it.path == "/servers" })
+        }
+    }
+
+    @Test
+    fun `canonical deployer coordinates are accepted and uppercase public ID has canonical internal names`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """[{"id":"A1","name":"알파","gameApiUrl":"http://sa1-game-api:8081","gameEngineUrl":"http://sa1-game-engine:8082","deployProject":"opensamguk-sa1"}]""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val server = svc.registeredServers().single()
+
+            assertEquals("a1", server.id)
+            assertEquals("opensamguk-sa1", server.deployProject)
+            assertEquals("http://sa1-game-api:8081", server.gameApiUrl)
+            assertEquals("http://sa1-game-engine:8082", server.gameEngineUrl)
+        }
+    }
+
+    @Test
+    fun `invalid deployer registry fails closed through the existing unknown server response`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(200, """[{"id":"A1"},{"id":"a1"}]""")
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val status = svc.status("a1")
+
+            assertFalse(status.configured)
+            assertEquals("a1", status.serverId)
+            assertEquals(listOf("/servers"), deployer.requests.map { it.path })
+        }
+    }
+
+    @Test
+    fun `서버 리셋 검증 실패는 deployer reset action 전에 거부한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(200, "[${canonicalServerJson("s1")}]")
             val svc = DeployService(
                 deployer.url(),
                 "tok",
@@ -444,7 +570,7 @@ class AdminVersionDeployTest {
             val result = svc.resetServer("s1", """{"confirm":"RESET s1","turnTerm":"999","autorunUserOptions":["bad"]}""")
 
             assertEquals(400, result.status)
-            assertEquals(0, deployer.requests.size)
+            assertEquals(listOf("/servers"), deployer.requests.map { it.path })
         }
     }
 
@@ -484,7 +610,7 @@ class AdminVersionDeployTest {
     }
 
     @Test
-    fun `fallback registry는 ID를 정규화하고 invalid 또는 49자 ID를 fail closed한다`() {
+    fun `fallback registry는 invalid 또는 49자 ID가 섞이면 전체를 fail closed한다`() {
         val longId = "a".repeat(49)
         val svc = DeployService(
             "",
@@ -493,7 +619,7 @@ class AdminVersionDeployTest {
             mapper,
         )
 
-        assertEquals(listOf("a1"), svc.registeredServers().map { it.id })
+        assertTrue(svc.registeredServers().isEmpty())
     }
 
     @Test

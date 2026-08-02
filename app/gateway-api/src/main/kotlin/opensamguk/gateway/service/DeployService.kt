@@ -121,11 +121,31 @@ class DeployService(
         "world-log",
     )
 
+    private sealed interface DeployerServerList {
+        data class Available(val servers: List<ServerDef>) : DeployerServerList
+
+        data object Invalid : DeployerServerList
+
+        data object Unavailable : DeployerServerList
+    }
+
     private fun configured() = deployerUrl.isNotBlank() && deployerToken.isNotBlank()
     private fun deployerBase() = deployerUrl.trimEnd('/')
 
-    fun registeredServers(): List<ServerDef> =
-        canonicalServerDefs(fetchDeployerServers() ?: registry.all())
+    fun registeredServers(): List<ServerDef> {
+        val registryServers = canonicalServerDefs(registry.all())
+        return when (val deployerServers = fetchDeployerServers(registryServers.orEmpty())) {
+            is DeployerServerList.Available -> deployerServers.servers
+            DeployerServerList.Invalid -> {
+                log.warn("deployer 서버 목록이 canonical server contract를 위반해 전체를 거부합니다.")
+                emptyList()
+            }
+            DeployerServerList.Unavailable -> registryServers ?: run {
+                log.warn("부팅 서버 레지스트리가 canonical server contract를 위반해 전체를 거부합니다.")
+                emptyList()
+            }
+        }
+    }
 
     /** deployer 상태: 대상 서버의 현재 IMAGE_TAG + 배포 가능한 태그 목록. serverId 미지정 시 기본 서버. */
     fun status(serverId: String?): DeployStatus {
@@ -284,10 +304,10 @@ class DeployService(
 
     /** serverId 미지정이면 기본 서버, 아니면 레지스트리 조회. */
     private fun resolve(serverId: String?): ServerDef? {
-        if (serverId.isNullOrBlank()) return registeredServers().firstOrNull()
+        val servers = registeredServers()
+        if (serverId.isNullOrBlank()) return servers.firstOrNull()
         val canonicalId = canonicalServerId(serverId) ?: return null
-        return canonicalServerDefs(registry.all()).firstOrNull { it.id == canonicalId }
-            ?: registeredServers().firstOrNull { it.id == canonicalId }
+        return servers.firstOrNull { it.id == canonicalId }
     }
 
     private fun proxyEnvGet(scope: String, serverId: String? = null, path: String): EnvProxyResponse {
@@ -521,42 +541,88 @@ class DeployService(
         }
     }
 
-    private fun fetchDeployerServers(): List<ServerDef>? {
-        if (!configured()) return null
+    private fun fetchDeployerServers(fallbackServers: List<ServerDef>): DeployerServerList {
+        if (!configured()) return DeployerServerList.Unavailable
         return try {
             val raw = rest.get()
                 .uri("${deployerBase()}/servers")
                 .header("Authorization", "Bearer $deployerToken")
                 .retrieve()
                 .body(String::class.java)
-            parseServerDefs(raw)
+            parseServerDefs(raw, fallbackServers)
+                ?.let(DeployerServerList::Available)
+                ?: DeployerServerList.Invalid
         } catch (e: Exception) {
             log.warn("deployer 서버 목록 조회 실패 — 부팅 레지스트리로 fallback합니다.", e)
+            DeployerServerList.Unavailable
+        }
+    }
+
+    private fun parseServerDefs(raw: String?, fallbackServers: List<ServerDef>): List<ServerDef>? {
+        return try {
+            val root = objectMapper.readTree(raw ?: "[]")
+            if (!root.isArray) return null
+
+            val parsed = ArrayList<ServerDef>(root.size())
+            for (node in root) {
+                if (!node.isObject) return null
+                val rawId = node.path("id").takeIf { it.isTextual }?.asText() ?: return null
+                val id = canonicalServerId(rawId) ?: return null
+                val expectedProject = defaultDeployProject(id)
+                val expectedGameApiUrl = defaultGameApiUrl(id)
+                val expectedGameEngineUrl = defaultGameEngineUrl(id)
+                if (!hasExpectedCoordinate(node, expectedProject, "deployProject", "project") ||
+                    !hasExpectedCoordinate(node, expectedGameApiUrl, "gameApiUrl") ||
+                    !hasExpectedCoordinate(node, expectedGameEngineUrl, "gameEngineUrl")
+                ) {
+                    return null
+                }
+                val fallback = fallbackServers.firstOrNull { it.id == id }
+                parsed += ServerDef(
+                    id = id,
+                    name = text(node, "name") ?: fallback?.name ?: id,
+                    gameApiUrl = expectedGameApiUrl,
+                    gameEngineUrl = expectedGameEngineUrl,
+                    deployProject = expectedProject,
+                    generation = int(node, "generation") ?: fallback?.generation,
+                    scenarioCode = text(node, "scenarioCode", "scenario") ?: fallback?.scenarioCode,
+                )
+            }
+            canonicalServerDefs(parsed)
+        } catch (e: Exception) {
             null
         }
     }
 
-    private fun parseServerDefs(raw: String?): List<ServerDef>? {
-        val root = objectMapper.readTree(raw ?: "[]")
-        if (!root.isArray) return null
-        return root.mapNotNull { node ->
-            val id = canonicalServerId(text(node, "id") ?: return@mapNotNull null) ?: return@mapNotNull null
-            val fallback = canonicalServerDefs(registry.all()).firstOrNull { it.id == id }
-            ServerDef(
+    private fun canonicalServerDefs(servers: List<ServerDef>): List<ServerDef>? {
+        val canonical = ArrayList<ServerDef>(servers.size)
+        val seenIds = HashSet<String>(servers.size)
+        for (server in servers) {
+            val id = canonicalServerId(server.id) ?: return null
+            if (id in reservedPublicServerIds || id in reservedGameRouteIds || !seenIds.add(id)) return null
+
+            val expectedProject = defaultDeployProject(id)
+            val expectedGameApiUrl = defaultGameApiUrl(id)
+            val expectedGameEngineUrl = defaultGameEngineUrl(id)
+            if (server.deployProject != expectedProject ||
+                server.gameApiUrl != expectedGameApiUrl ||
+                server.gameEngineUrl != expectedGameEngineUrl
+            ) {
+                return null
+            }
+            canonical += server.copy(
                 id = id,
-                name = text(node, "name") ?: fallback?.name ?: id,
-                gameApiUrl = text(node, "gameApiUrl") ?: fallback?.gameApiUrl ?: defaultGameApiUrl(id),
-                gameEngineUrl = text(node, "gameEngineUrl") ?: fallback?.gameEngineUrl ?: defaultGameEngineUrl(id),
-                deployProject = text(node, "deployProject", "project") ?: fallback?.deployProject ?: defaultDeployProject(id),
-                generation = int(node, "generation") ?: fallback?.generation,
-                scenarioCode = text(node, "scenarioCode", "scenario") ?: fallback?.scenarioCode,
+                gameApiUrl = expectedGameApiUrl,
+                gameEngineUrl = expectedGameEngineUrl,
+                deployProject = expectedProject,
             )
         }
+        return canonical
     }
 
-    private fun canonicalServerDefs(servers: List<ServerDef>): List<ServerDef> =
-        servers.mapNotNull { server ->
-            canonicalServerId(server.id)?.let { id -> server.copy(id = id) }
+    private fun hasExpectedCoordinate(node: JsonNode, expected: String, vararg fields: String): Boolean =
+        fields.all { field ->
+            !node.has(field) || (node.path(field).isTextual && node.path(field).asText() == expected)
         }
 
     private fun canonicalServerId(rawId: String): String? =

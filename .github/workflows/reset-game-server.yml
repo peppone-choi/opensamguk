@@ -84,7 +84,7 @@ jobs:
             [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
           }
 
-          if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]+$ ]]; then
+          if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]{1,48}$ ]]; then
             echo "Invalid server id: $RAW_SERVER" >&2
             exit 2
           fi

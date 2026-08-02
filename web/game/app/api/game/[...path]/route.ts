@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { resolveGameApiUrl } from '@/lib/serverRegistry';
 import { ACCESS_COOKIE } from '@/lib/cookies';
 
-// 멀티서버 선택 쿠키 — middleware가 입장 URL `?server=<id>`에서 심는다. 미설정/main → 기본 game-api.
+// 멀티서버 선택 쿠키 — middleware가 입장 URL `?server=<id>`에서 심는다.
 const SERVER_COOKIE = 'sam_server';
 
 /**
@@ -94,9 +94,14 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
     const store = await cookies();
     const access = store.get(ACCESS_COOKIE)?.value;
 
-    // 선택 서버(sam_server 쿠키) → 해당 game-api. 미선택/main → 기본. 멀티서버 인게임 라우팅.
-    const base = resolveGameApiUrl(store.get(SERVER_COOKIE)?.value);
-    const target = `${base}/${path.join('/')}${req.nextUrl.search}`;
+    const serverId = req.nextUrl.searchParams.get('server') ?? store.get(SERVER_COOKIE)?.value;
+    const base = resolveGameApiUrl(serverId)?.replace(/\/+$/, '');
+    if (!base) return NextResponse.json({ error: '게임 서버를 찾을 수 없습니다.' }, { status: 503 });
+
+    const searchParams = new URLSearchParams(req.nextUrl.searchParams);
+    searchParams.delete('server');
+    const search = searchParams.toString();
+    const target = `${base}/${path.join('/')}${search ? `?${search}` : ''}`;
 
     const headers: Record<string, string> = {};
     if (access) headers.Authorization = `Bearer ${access}`;

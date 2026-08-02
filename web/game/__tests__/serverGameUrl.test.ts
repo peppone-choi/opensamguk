@@ -8,6 +8,49 @@ import {
   resolveServerGamePath,
 } from '@/lib/serverGameUrl';
 
+const RESERVED_PUBLIC_SERVER_IDS = [
+  'all',
+  'main',
+  'admin1',
+  'admin2',
+  'admin5',
+  'admin7',
+  'admin8',
+  'auction',
+  'battle-center',
+  'betting',
+  'board',
+  'chief-center',
+  'city',
+  'coming-soon',
+  'diplomacy',
+  'generals',
+  'global-diplomacy',
+  'history',
+  'inherit',
+  'join',
+  'mailbox',
+  'map',
+  'my',
+  'my-boss',
+  'my-cities',
+  'my-generals',
+  'my-nation',
+  'nation',
+  'nation-betting',
+  'nation-finance',
+  'npc-control',
+  'rankings',
+  'register',
+  'select-pool',
+  'simulator',
+  'tournament',
+  'tournament-admin',
+  'troop',
+  'vote',
+  'world-log',
+];
+
 describe('serverGameUrl', () => {
     it('normalizes legacy PHP menu URLs to app routes', () => {
         expect(normalizeLegacyGamePath('v_history.php')).toBe('/game/history');
@@ -25,12 +68,12 @@ describe('serverGameUrl', () => {
     });
 
   it('accepts only canonical lowercase public server IDs', () => {
-    for (const serverId of ['pep', 'a1', 's1']) {
+    for (const serverId of ['pep', 'a1', 's1', 'current', 'backup', 'example', 'a'.repeat(48)]) {
       expect(isPathServerId(serverId)).toBe(true);
       expect(resolveServerGamePath(undefined, serverId, '/game', 'join')).toBe(`/game/${serverId}/join`);
     }
 
-    for (const serverId of ['', 'A1', 'Pep', 'pep-id', 'pep_id', 'pep/id', '한글', ' pep ']) {
+    for (const serverId of ['', 'A1', 'Pep', 'pep-id', 'pep_id', 'pep/id', '한글', ' pep ', 'a'.repeat(49), ...RESERVED_PUBLIC_SERVER_IDS]) {
       expect(isPathServerId(serverId)).toBe(false);
     }
   });
@@ -39,6 +82,7 @@ describe('serverGameUrl', () => {
     expect(fallbackGameUrlForServer('pep-id')).toBe('/game?server=pep-id');
     expect(fallbackGameUrlForServer('A1')).toBe('/game?server=A1');
     expect(fallbackGameUrlForServer('pep/id')).toBe('/game?server=pep%2Fid');
+    expect(fallbackGameUrlForServer('join')).toBe('/game?server=join');
     expect(resolveServerGamePath(undefined, 'A1', '/game', 'join')).toBe('/game/join?server=A1');
     expect(resolveServerGamePath(undefined, 'pep-id', '/game', 'join')).toBe('/game/join?server=pep-id');
   });

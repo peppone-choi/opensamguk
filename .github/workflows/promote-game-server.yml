@@ -66,7 +66,7 @@ jobs:
             *) echo "Invalid include_engine: $INCLUDE_ENGINE" >&2; exit 2 ;;
           esac
 
-          if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]+$ ]]; then
+          if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]{1,48}$ ]]; then
             echo "Invalid public server id: $RAW_SERVER" >&2
             exit 2
           fi
@@ -82,7 +82,7 @@ jobs:
             PUBLIC_SERVERS=()
             for internal_server in "${INTERNAL_SERVERS[@]}"; do
               public_server="${internal_server#s}"
-              if [[ ! "$public_server" =~ ^[a-z0-9]+$ ]]; then
+              if [[ ! "$public_server" =~ ^[a-z0-9]{1,48}$ ]]; then
                 echo "Invalid or noncanonical game server env file: servers/${internal_server}.env" >&2
                 exit 2
               fi

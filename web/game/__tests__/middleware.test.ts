@@ -134,23 +134,24 @@ describe('game middleware server path selection', () => {
     expect(nextResponse.cookies.set).not.toHaveBeenCalled();
   });
 
-  it('does not select a query server when the configured ID is absent or invalid', () => {
+  it('does not select a query server when the configured ID is absent, reserved, or invalid', () => {
     delete process.env.SERVER_ID;
     middleware(makeRequest('/game/join?server=pep'));
     expect(nextServerMocks.next).toHaveBeenCalledTimes(1);
     expect(nextResponse.cookies.set).not.toHaveBeenCalled();
 
-    nextServerMocks.next.mockClear();
-    process.env.SERVER_ID = 'a'.repeat(49);
-    middleware(makeRequest(`/game/${process.env.SERVER_ID}/join`));
-    expect(nextServerMocks.next).toHaveBeenCalledTimes(1);
-    expect(nextServerMocks.rewrite).not.toHaveBeenCalled();
-    expect(nextResponse.cookies.set).not.toHaveBeenCalled();
+    for (const serverId of ['all', 'main', 'join', 'a'.repeat(49)]) {
+      nextServerMocks.next.mockClear();
+      nextServerMocks.rewrite.mockClear();
+      nextResponse.cookies.set.mockClear();
+      process.env.SERVER_ID = serverId;
 
-    nextServerMocks.next.mockClear();
-    middleware(makeRequest(`/game/join?server=${process.env.SERVER_ID}`));
-    expect(nextServerMocks.next).toHaveBeenCalledTimes(1);
-    expect(nextResponse.cookies.set).not.toHaveBeenCalled();
+      middleware(makeRequest(`/game/${serverId}/join?server=${serverId}`));
+
+      expect(nextServerMocks.next).toHaveBeenCalledTimes(1);
+      expect(nextServerMocks.rewrite).not.toHaveBeenCalled();
+      expect(nextResponse.cookies.set).not.toHaveBeenCalled();
+    }
   });
 
   it('ignores uppercase paths and invalid configured IDs', () => {

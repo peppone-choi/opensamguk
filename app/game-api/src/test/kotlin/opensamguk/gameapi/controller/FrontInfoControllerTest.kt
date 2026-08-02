@@ -216,13 +216,15 @@ class FrontInfoControllerTest {
     }
 
     @Test
-    fun `global omits noncanonical server ID configuration`() {
+    fun `global omits reserved and noncanonical server ID configuration`() {
         seedWorld()
 
-        mockMvc(serverId = "Pep")
-            .perform(get("/api/front-info"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.global.serverId").doesNotExist())
+        listOf("Pep", "all", "main", "join", "a".repeat(49)).forEach { serverId ->
+            mockMvc(serverId = serverId)
+                .perform(get("/api/front-info"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.global.serverId").doesNotExist())
+        }
     }
 
     @Test
@@ -678,7 +680,7 @@ class FrontInfoControllerTest {
     fun `global omits cookie serverId when configured ID is absent or invalid`() {
         seedWorld()
 
-        listOf("", "PEP", "a".repeat(49)).forEach { configuredServerId ->
+        listOf("", "PEP", "all", "main", "join", "a".repeat(49)).forEach { configuredServerId ->
             mockMvc(serverId = configuredServerId).perform(get("/api/front-info").cookie(Cookie("sam_server", "pep")))
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.global.serverId").doesNotExist())
