@@ -1,5 +1,5 @@
 import serversData from '@/config/servers.json';
-import { fallbackGameUrlForServer, resolveServerGameBase } from '@/lib/serverGameUrl';
+import { fallbackGameUrlForServer, isPathServerId, resolveServerGameBase } from '@/lib/serverGameUrl';
 
 export interface ServerEntry {
     id: string;
@@ -11,7 +11,7 @@ export interface ServerEntry {
 
 const BAKED = ((serversData.servers as unknown[]) ?? [])
     .map((entry) => normalizeServerEntry(entry as Record<string, unknown>))
-    .filter((s) => s.id);
+    .filter((s) => isPathServerId(s.id));
 
 function runtimeEntries(): ServerEntry[] {
     const raw = process.env.SERVER_REGISTRY_JSON;
@@ -34,14 +34,14 @@ function runtimeEntries(): ServerEntry[] {
                 }
             }
         }
-        return out.filter((s) => s.id);
+        return out.filter((s) => isPathServerId(s.id));
     } catch {
         return [];
     }
 }
 
 function normalizeServerEntry(entry: Record<string, unknown>): ServerEntry {
-    const id = typeof entry.id === 'string' ? entry.id.trim() : '';
+    const id = typeof entry.id === 'string' ? entry.id : '';
     const name = typeof entry.name === 'string' && entry.name.trim() ? entry.name.trim() : id;
     const generation = parseGeneration(entry.generation);
     const fallbackGameUrl = fallbackGameUrlForServer(id);

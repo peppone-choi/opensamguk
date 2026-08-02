@@ -193,16 +193,36 @@ class FrontInfoControllerTest {
     }
 
     @Test
-    fun `global exposes server display metadata for game main`() {
+    fun `global preserves canonical public server ID s1 from environment`() {
         seedWorld()
 
-        mockMvc(serverName = "통일 서버", serverGeneration = "7", serverId = "1")
+        mockMvc(serverName = "통일 서버", serverGeneration = "7", serverId = "s1")
             .perform(get("/api/front-info"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.global.serverName").value("통일 서버"))
             .andExpect(jsonPath("$.global.generation").value(7))
             .andExpect(jsonPath("$.global.serverCnt").value(7))
             .andExpect(jsonPath("$.global.serverId").value("s1"))
+    }
+
+    @Test
+    fun `global preserves canonical public server ID pep from environment`() {
+        seedWorld()
+
+        mockMvc(serverId = "pep")
+            .perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.serverId").value("pep"))
+    }
+
+    @Test
+    fun `global omits noncanonical server ID configuration`() {
+        seedWorld()
+
+        mockMvc(serverId = "Pep")
+            .perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.serverId").doesNotExist())
     }
 
     @Test

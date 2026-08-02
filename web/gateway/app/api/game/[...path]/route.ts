@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { ACCESS_COOKIE } from '@/lib/cookies';
 import { getServers, resolveGameApiOrigin } from '@/lib/serverRegistry';
+import { isPathServerId } from '@/lib/serverGameUrl';
 
 const SERVER_COOKIE = 'sam_server';
 
@@ -18,16 +19,15 @@ function isTurnSsePath(path: string[]): boolean {
     return path.join('/') === 'sse/turn';
 }
 
-function selectedServerId(raw: string | undefined | null): string | undefined {
-    const value = raw?.trim();
-    if (value) return value;
-    return getServers()[0]?.id;
+function defaultGameApiOrigin(): string | undefined {
+    const defaultServerId = getServers()[0]?.id;
+    return defaultServerId ? resolveGameApiOrigin(defaultServerId) ?? process.env.GAME_API_ORIGIN : process.env.GAME_API_ORIGIN;
 }
 
-function resolveSelectedGameApiOrigin(serverId: string | undefined | null): string | undefined {
-    const selected = selectedServerId(serverId);
-    if (selected) return resolveGameApiOrigin(selected) ?? process.env.GAME_API_ORIGIN;
-    return process.env.GAME_API_ORIGIN;
+function resolveSelectedGameApiOrigin(serverId: string | undefined): string | undefined {
+    if (serverId === undefined) return defaultGameApiOrigin();
+    if (!isPathServerId(serverId)) return undefined;
+    return resolveGameApiOrigin(serverId);
 }
 
 function sseHeaders(contentType = 'text/event-stream;charset=UTF-8'): HeadersInit {

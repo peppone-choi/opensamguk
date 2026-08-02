@@ -367,6 +367,26 @@ class AdminVersionDeployTest {
     }
 
     @Test
+    fun `deployer registry fallback은 public s1에 내부 s를 한 번 더 붙인다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """[{"id":"s1","name":"통일 서버"}]""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(json = ""), mapper)
+
+            val server = svc.registeredServers().single()
+
+            assertEquals("s1", server.id)
+            assertEquals("opensamguk-ss1", server.deployProject)
+            assertEquals("http://ss1-game-api:8081", server.gameApiUrl)
+            assertEquals("http://ss1-game-engine:8082", server.gameEngineUrl)
+            assertEquals("/servers", deployer.requests.single().path)
+        }
+    }
+
+    @Test
     fun `서버 리셋 검증 실패는 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
@@ -397,6 +417,84 @@ class AdminVersionDeployTest {
 
                 assertEquals(400, result.status, "id=$id")
                 assertTrue(result.body.contains("서버 id가 올바르지 않습니다."), "id=$id")
+            }
+            assertEquals(0, deployer.requests.size)
+        }
+    }
+
+    @Test
+    fun `deployer 예약 public 서버 ID는 raw와 canonical 대소문자 모두 deployer 호출 전에 거부한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val reservedPublicIds = listOf(
+                "all",
+                "main",
+                "admin1",
+                "admin2",
+                "admin5",
+                "admin7",
+                "admin8",
+                "auction",
+                "battle-center",
+                "betting",
+                "board",
+                "chief-center",
+                "city",
+                "coming-soon",
+                "diplomacy",
+                "generals",
+                "global-diplomacy",
+                "history",
+                "inherit",
+                "join",
+                "mailbox",
+                "map",
+                "my",
+                "my-boss",
+                "my-cities",
+                "my-generals",
+                "my-nation",
+                "nation",
+                "nation-betting",
+                "nation-finance",
+                "npc-control",
+                "rankings",
+                "register",
+                "select-pool",
+                "simulator",
+                "tournament",
+                "tournament-admin",
+                "troop",
+                "vote",
+                "world-log",
+            )
+
+            reservedPublicIds.flatMap { canonicalId ->
+                listOf(canonicalId, canonicalId.uppercase())
+            }.forEach { id ->
+                val result = svc.createServer(
+                    """{"id":${mapper.writeValueAsString(id)},"name":"bad","gameApiPort":"8101","webGamePort":"3101"}""",
+                )
+
+                assertEquals(400, result.status, "id=$id")
+            }
+            listOf("all", "ALL", "aLl").forEach { id ->
+                val result = svc.createServer(
+                    """{"id":${mapper.writeValueAsString(id)},"name":"bad","gameApiPort":"8101","webGamePort":"3101"}""",
+                )
+
+                val canonicalId = id.lowercase()
+                assertTrue(result.body.contains("서버 id ${canonicalId}은 예약되어 사용할 수 없습니다."), "id=$id")
+            }
+            listOf("main", "MAIN", "mAiN", "join", "JOIN", "jOiN").forEach { id ->
+                val result = svc.createServer(
+                    """{"id":${mapper.writeValueAsString(id)},"name":"bad","gameApiPort":"8101","webGamePort":"3101"}""",
+                )
+
+                val canonicalId = id.lowercase()
+                assertTrue(result.body.contains("서버 id ${canonicalId}은 게임 경로와 충돌해 사용할 수 없습니다."), "id=$id")
             }
             assertEquals(0, deployer.requests.size)
         }

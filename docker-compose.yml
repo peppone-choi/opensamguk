@@ -237,6 +237,7 @@ services:
       TZ: ${TZ:-Asia/Seoul}
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
+      SERVER_ID: ${SERVER_ID:-s1}
       # Server-only (route handlers proxy to game-api/gateway-api; never exposed to the browser).
       GAME_API_URL: ${GAME_API_URL:-http://game-api:8081}
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}

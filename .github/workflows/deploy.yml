@@ -165,9 +165,14 @@ jobs:
           shopt -s nullglob
           for envf in servers/s*.env; do
             case "$envf" in *.bak*|*.example) continue;; esac
-            sid="$(basename "$envf" .env)"
+            internal_server="$(basename "$envf" .env)"
+            public_server="${internal_server#s}"
+            if [[ "$internal_server" != "s${public_server}" || ! "$public_server" =~ ^[a-z0-9]+$ || "$public_server" == "all" ]]; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              exit 1
+            fi
             docker exec -e DEPLOYER_TOKEN="$DEPLOYER_TOKEN" opensamguk-deployer \
-              sh -c "wget -qO- --header=\"Authorization: Bearer \$DEPLOYER_TOKEN\" \"http://localhost:9000/env/server?id=${sid}\"" \
+              sh -c "wget -qO- --header=\"Authorization: Bearer \$DEPLOYER_TOKEN\" \"http://localhost:9000/env/server?id=${public_server}\"" \
               | grep -q '"ok":true'
           done
 

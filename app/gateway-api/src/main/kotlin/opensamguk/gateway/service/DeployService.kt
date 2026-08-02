@@ -75,6 +75,50 @@ class DeployService(
     )
     private val serverIdRegex = Regex("^[A-Za-z0-9]+$")
     private val portRegex = Regex("^[0-9]{1,5}$")
+    private val reservedPublicServerIds = setOf(
+        "all",
+    )
+    private val reservedGameRouteIds = setOf(
+        "admin1",
+        "admin2",
+        "admin5",
+        "admin7",
+        "admin8",
+        "auction",
+        "battle-center",
+        "betting",
+        "board",
+        "chief-center",
+        "city",
+        "coming-soon",
+        "diplomacy",
+        "generals",
+        "global-diplomacy",
+        "history",
+        "inherit",
+        "join",
+        "mailbox",
+        "main",
+        "map",
+        "my",
+        "my-boss",
+        "my-cities",
+        "my-generals",
+        "my-nation",
+        "nation",
+        "nation-betting",
+        "nation-finance",
+        "npc-control",
+        "rankings",
+        "register",
+        "select-pool",
+        "simulator",
+        "tournament",
+        "tournament-admin",
+        "troop",
+        "vote",
+        "world-log",
+    )
 
     private fun configured() = deployerUrl.isNotBlank() && deployerToken.isNotBlank()
     private fun deployerBase() = deployerUrl.trimEnd('/')
@@ -372,9 +416,14 @@ class DeployService(
             val imageTag = node.path("imageTag").asText("")
             val scenarioCode = node.path("scenarioCode").asText("")
             val jwtSecret = node.path("jwtSecret").asText("")
+            val canonicalId = id.lowercase()
             when {
                 id.isBlank() || !serverIdRegex.matches(id) ->
                     json(400, """{"ok":false,"message":"서버 id가 올바르지 않습니다."}""")
+                canonicalId in reservedGameRouteIds ->
+                    json(400, """{"ok":false,"message":"서버 id ${canonicalId}은 게임 경로와 충돌해 사용할 수 없습니다."}""")
+                canonicalId in reservedPublicServerIds ->
+                    json(400, """{"ok":false,"message":"서버 id ${canonicalId}은 예약되어 사용할 수 없습니다."}""")
                 name.isBlank() || name.contains('\n') || name.contains('\r') ->
                     json(400, """{"ok":false,"message":"서버 이름이 올바르지 않습니다."}""")
                 generation.isNotBlank() && !validGeneration(generation) ->
@@ -529,13 +578,13 @@ class DeployService(
     }
 
     private fun defaultDeployProject(id: String): String =
-        "opensamguk-${if (id.startsWith("s")) id else "s$id"}"
+        "opensamguk-s$id"
 
     private fun defaultGameApiUrl(id: String): String =
-        "http://${if (id.startsWith("s")) id else "s$id"}-game-api:8081"
+        "http://s$id-game-api:8081"
 
     private fun defaultGameEngineUrl(id: String): String =
-        "http://${if (id.startsWith("s")) id else "s$id"}-game-engine:8082"
+        "http://s$id-game-engine:8082"
 
     private fun validPort(value: String): Boolean {
         if (!portRegex.matches(value)) return false

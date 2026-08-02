@@ -53,6 +53,13 @@ jobs:
         shell: bash
         env:
           RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
+          INPUT_SERVER: ${{ inputs.server }}
+          INPUT_CONFIRM: ${{ inputs.confirm }}
+          INPUT_SCENARIO_CODE: ${{ inputs.scenario_code }}
+          INPUT_GENERATION: ${{ inputs.generation }}
+          INPUT_TURN_TERM: ${{ inputs.turn_term }}
+          INPUT_EXPECTED_CITY_COUNT: ${{ inputs.expected_city_count }}
+          INPUT_EXPECTED_FIRST_CITY: ${{ inputs.expected_first_city }}
         run: |
           set -euo pipefail
           exec 9>/tmp/opensamguk-production.lock
@@ -63,25 +70,33 @@ jobs:
 
           STACK="$HOME/opensamguk-docker"
           SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"
-          RAW_SERVER="${{ inputs.server }}"
-          CONFIRM="${{ inputs.confirm }}"
-          SCENARIO_CODE="${{ inputs.scenario_code }}"
-          GENERATION_INPUT="${{ inputs.generation }}"
-          TURN_TERM_INPUT="${{ inputs.turn_term }}"
-          EXPECTED_CITY_COUNT="${{ inputs.expected_city_count }}"
-          EXPECTED_FIRST_CITY="${{ inputs.expected_first_city }}"
+          RAW_SERVER="$INPUT_SERVER"
+          CONFIRM="$INPUT_CONFIRM"
+          SCENARIO_CODE="$INPUT_SCENARIO_CODE"
+          GENERATION_INPUT="$INPUT_GENERATION"
+          TURN_TERM_INPUT="$INPUT_TURN_TERM"
+          EXPECTED_CITY_COUNT="$INPUT_EXPECTED_CITY_COUNT"
+          EXPECTED_FIRST_CITY="$INPUT_EXPECTED_FIRST_CITY"
 
           if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]+$ ]]; then
             echo "Invalid server id: $RAW_SERVER" >&2
             exit 2
           fi
           PUBLIC_SERVER="${RAW_SERVER,,}"
+          if [[ "$PUBLIC_SERVER" == "all" ]]; then
+            echo "Reserved public server id: all" >&2
+            exit 2
+          fi
           if [[ "$CONFIRM" != "RESET $PUBLIC_SERVER" ]]; then
             echo "Confirmation must be exactly: RESET $PUBLIC_SERVER (canonical lowercase server id)" >&2
             exit 2
           fi
           if [[ ! "$SCENARIO_CODE" =~ ^[A-Za-z0-9_.:-]+$ ]]; then
             echo "Invalid scenario code: $SCENARIO_CODE" >&2
+            exit 2
+          fi
+          if [[ -n "$EXPECTED_CITY_COUNT" && ! "$EXPECTED_CITY_COUNT" =~ ^[0-9]+$ ]]; then
+            echo "Invalid expected city count: $EXPECTED_CITY_COUNT" >&2
             exit 2
           fi
 

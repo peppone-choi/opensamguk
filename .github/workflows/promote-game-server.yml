@@ -34,6 +34,9 @@ jobs:
         shell: bash
         env:
           RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
+          INPUT_SERVER: ${{ inputs.server }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_INCLUDE_ENGINE: ${{ inputs.include_engine }}
         run: |
           set -euo pipefail
           exec 9>/tmp/opensamguk-production.lock
@@ -44,14 +47,18 @@ jobs:
 
           STACK="$HOME/opensamguk-docker"
           SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"
-          RAW_SERVER="${{ inputs.server }}"
-          TAG="${{ inputs.tag }}"
-          INCLUDE_ENGINE="${{ inputs.include_engine }}"
+          RAW_SERVER="$INPUT_SERVER"
+          TAG="$INPUT_TAG"
+          INCLUDE_ENGINE="$INPUT_INCLUDE_ENGINE"
 
           if [[ ! "$TAG" =~ ^[A-Za-z0-9._-]+$ ]]; then
             echo "Invalid tag: $TAG" >&2
             exit 2
           fi
+          case "$INCLUDE_ENGINE" in
+            true|false) ;;
+            *) echo "Invalid include_engine: $INCLUDE_ENGINE" >&2; exit 2 ;;
+          esac
 
           if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]+$ ]]; then
             echo "Invalid public server id: $RAW_SERVER" >&2
@@ -63,12 +70,15 @@ jobs:
           if [[ "$PUBLIC_SERVER" == "all" ]]; then
             mapfile -t INTERNAL_SERVERS < <(
               find servers -maxdepth 1 -type f -name 's*.env' \
-                ! -name '*example*' ! -name '*backup*' ! -name '*.bak*' \
                 -exec basename {} .env \; | sort
             )
             PUBLIC_SERVERS=()
             for internal_server in "${INTERNAL_SERVERS[@]}"; do
               public_server="${internal_server#s}"
+              if [[ "$public_server" == "all" ]]; then
+                echo "Reserved public server id in env file: servers/${internal_server}.env" >&2
+                exit 2
+              fi
               if [[ ! "$public_server" =~ ^[a-z0-9]+$ ]]; then
                 echo "Invalid or noncanonical game server env file: servers/${internal_server}.env" >&2
                 exit 2

@@ -170,6 +170,48 @@ interface TurnDaemonControlResult {
 // 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
 const SKEW_WARNING = '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
 const PUBLIC_SERVER_ID_PATTERN = /^[A-Za-z0-9]+$/;
+const RESERVED_PUBLIC_SERVER_IDS = new Set([
+    'all',
+    'main',
+    'admin1',
+    'admin2',
+    'admin5',
+    'admin7',
+    'admin8',
+    'auction',
+    'battle-center',
+    'betting',
+    'board',
+    'chief-center',
+    'city',
+    'coming-soon',
+    'diplomacy',
+    'generals',
+    'global-diplomacy',
+    'history',
+    'inherit',
+    'join',
+    'mailbox',
+    'map',
+    'my',
+    'my-boss',
+    'my-cities',
+    'my-generals',
+    'my-nation',
+    'nation',
+    'nation-betting',
+    'nation-finance',
+    'npc-control',
+    'rankings',
+    'register',
+    'select-pool',
+    'simulator',
+    'tournament',
+    'tournament-admin',
+    'troop',
+    'vote',
+    'world-log',
+]);
 const AUTORUN_OPTIONS = [
     ['develop', '내정'],
     ['warp', '순간이동'],
@@ -881,6 +923,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const generationNumber = Number.parseInt(generation, 10);
     const valid =
         PUBLIC_SERVER_ID_PATTERN.test(id) &&
+        !RESERVED_PUBLIC_SERVER_IDS.has(id.toLowerCase()) &&
         name.trim() !== '' &&
         Number.isInteger(generationNumber) &&
         generationNumber >= 0 &&
@@ -904,7 +947,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                         placeholder="pep"
                     />
                     <small id="server-id-hint" className="field-hint">
-                        영문과 숫자만 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장됩니다.
+                        영문과 숫자만 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장되며 all과 게임 경로 예약어는 사용할 수 없습니다.
                     </small>
                 </label>
                 <label className="field">
