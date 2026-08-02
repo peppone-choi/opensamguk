@@ -220,6 +220,27 @@ class AdminVersionDeployTest {
     }
 
     @Test
+    fun `current public ID는 예약하지 않고 deployer에 전달한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"current","name":"현재 서버","project":"opensamguk-scurrent"}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer(
+                """{"id":"current","name":"현재 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""",
+            )
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/servers/create", request.path)
+            assertTrue(request.body.contains(""""id":"current""""))
+        }
+    }
+
+    @Test
     fun `서버 생성은 대문자 public ID를 소문자로 표준화해 deployer에 전달한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->

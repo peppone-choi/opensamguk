@@ -109,7 +109,7 @@ describe('admin server ID validation', () => {
             }
         }
 
-        for (const validId of ['pep', 'A1', 's1']) {
+        for (const validId of ['pep', 'A1', 's1', 'current']) {
             fireEvent.change(id, { target: { value: validId } });
             expect(create).toBeEnabled();
         }
