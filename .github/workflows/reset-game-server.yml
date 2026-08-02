@@ -48,7 +48,7 @@ concurrency:
 
 jobs:
   reset:
-    runs-on: [self-hosted, Linux, X64, ec2-prod]
+    runs-on: [self-hosted, Linux, X64, gcp-prod]
     steps:
       - uses: actions/checkout@v4
 

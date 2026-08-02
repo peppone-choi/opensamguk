@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE** — `.github/workflows/deploy.yml`(main push 자동 배포), `scripts/deploy.sh`, `docker-compose.production.yml`, health check, 스모크(`tools/smoke.sh`)가 실동작. **Sentry는 프론트 2앱(`@sentry/nextjs`) + 백엔드 3앱(`sentry-spring-boot-starter-jakarta`, 에러 캡처 전용 — traces-sample-rate 0 고정)에 SDK 배선 + DSN 주입·적재 실증 완료**(org tekken-75, 서비스명 프로젝트 5개, 스모크 5/5 전송→회수 CONFIRMED, 2026-07-16 — ADR-LITE-008; prod 컨테이너 반영은 EC2 `.env` 갱신 필요). Terraform/CloudWatch는 NOT_CONFIGURED — 백엔드 관측은 docker logs + prod DB + health 엔드포인트(+DSN 배선 후 Sentry).
+**ACTIVE** — `.github/workflows/deploy.yml`(main push 자동 배포), `scripts/deploy.sh`, `docker-compose.production.yml`, health check, 스모크(`tools/smoke.sh`)가 실동작. **Sentry는 프론트 2앱(`@sentry/nextjs`) + 백엔드 3앱(`sentry-spring-boot-starter-jakarta`, 에러 캡처 전용 — traces-sample-rate 0 고정)에 SDK 배선 + DSN 주입·적재 실증 완료**(org tekken-75, 서비스명 프로젝트 5개, 스모크 5/5 전송→회수 CONFIRMED, 2026-07-16 — ADR-LITE-008; prod 컨테이너 반영은 GCP VM `.env` 갱신 필요). Terraform/CloudWatch는 NOT_CONFIGURED — 백엔드 관측은 docker logs + prod DB + health 엔드포인트(+DSN 배선 후 Sentry).
 
 ## Read This When
 
@@ -24,7 +24,7 @@
 
 1. 사전: `tools/parity/gate.sh backend` green + 변경 앱 typecheck/build + critique `cleared`.
 2. **사람 승인** 획득(명시적 go).
-3. main push → `deploy.yml` 자동: 이미지 빌드→GHCR→EC2 SSH→pull→업스트림 up→`sleep`→**game-engine 마지막**→prune→health. (수동 경로: `scripts/deploy.sh 3.37.232.176 ubuntu`.)
+3. main push → `deploy.yml` 자동: 이미지 빌드→GHCR→GCP VM의 `gcp-prod` self-hosted runner→공유 스택 동기화→health. (수동 호환 경로: `scripts/deploy.sh 34.158.223.96 peppone_choi`.)
 4. **nginx는 항상 최후** 재시작(정적 upstream — stale-DNS 502 예방, OPS LESSON A).
 5. 검증(아래) 통과까지 "배포 완료" 선언 금지.
 
@@ -60,7 +60,7 @@
 
 ## Tools / Commands
 
-`gh run list/view`(Actions 상태), `docker compose -f docker-compose.production.yml ...`(EC2), `scripts/deploy.sh`, prod DB 쿼리(승인 하 read).
+`gh run list/view`(Actions 상태), `docker compose -f docker-compose.production.yml ...`(GCP VM), `scripts/deploy.sh`, prod DB 쿼리(승인 하 read).
 
 ## Completion Criteria
 
