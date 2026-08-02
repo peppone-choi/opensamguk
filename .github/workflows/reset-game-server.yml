@@ -4,17 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       server:
-        description: "Game server id to reset"
+        description: "Public game server id to reset (canonicalized to lowercase)"
         required: true
-        default: "s2"
-        type: choice
-        options:
-          - s1
-          - s2
+        default: "pep"
+        type: string
       confirm:
-        description: "Type RESET <server>, for example RESET s2"
+        description: "Type RESET <canonical lowercase server>, for example RESET pep"
         required: true
-        default: "RESET s2"
+        default: "RESET pep"
         type: string
       scenario_code:
         description: "Scenario code to seed after reset"
@@ -56,6 +53,13 @@ jobs:
         shell: bash
         env:
           RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
+          INPUT_SERVER: ${{ inputs.server }}
+          INPUT_CONFIRM: ${{ inputs.confirm }}
+          INPUT_SCENARIO_CODE: ${{ inputs.scenario_code }}
+          INPUT_GENERATION: ${{ inputs.generation }}
+          INPUT_TURN_TERM: ${{ inputs.turn_term }}
+          INPUT_EXPECTED_CITY_COUNT: ${{ inputs.expected_city_count }}
+          INPUT_EXPECTED_FIRST_CITY: ${{ inputs.expected_first_city }}
         run: |
           set -euo pipefail
           exec 9>/tmp/opensamguk-production.lock
@@ -66,36 +70,52 @@ jobs:
 
           STACK="$HOME/opensamguk-docker"
           SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"
-          SERVER="${{ inputs.server }}"
-          CONFIRM="${{ inputs.confirm }}"
-          SCENARIO_CODE="${{ inputs.scenario_code }}"
-          GENERATION_INPUT="${{ inputs.generation }}"
-          TURN_TERM_INPUT="${{ inputs.turn_term }}"
-          EXPECTED_CITY_COUNT="${{ inputs.expected_city_count }}"
-          EXPECTED_FIRST_CITY="${{ inputs.expected_first_city }}"
+          RAW_SERVER="$INPUT_SERVER"
+          CONFIRM="$INPUT_CONFIRM"
+          SCENARIO_CODE="$INPUT_SCENARIO_CODE"
+          GENERATION_INPUT="$INPUT_GENERATION"
+          TURN_TERM_INPUT="$INPUT_TURN_TERM"
+          EXPECTED_CITY_COUNT="$INPUT_EXPECTED_CITY_COUNT"
+          EXPECTED_FIRST_CITY="$INPUT_EXPECTED_FIRST_CITY"
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
 
-          if [[ ! "$SERVER" =~ ^s[0-9][A-Za-z0-9_-]*$ ]]; then
-            echo "Invalid server id: $SERVER" >&2
+          is_reserved_public_server_id() {
+            local server_id="$1"
+            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
+          }
+
+          if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]{1,48}$ ]]; then
+            echo "Invalid server id: $RAW_SERVER" >&2
             exit 2
           fi
-          if [[ "$CONFIRM" != "RESET $SERVER" ]]; then
-            echo "Confirmation must be exactly: RESET $SERVER" >&2
+          PUBLIC_SERVER="${RAW_SERVER,,}"
+          if is_reserved_public_server_id "$PUBLIC_SERVER"; then
+            echo "Reserved public server id: $PUBLIC_SERVER" >&2
+            exit 2
+          fi
+          if [[ "$CONFIRM" != "RESET $PUBLIC_SERVER" ]]; then
+            echo "Confirmation must be exactly: RESET $PUBLIC_SERVER (canonical lowercase server id)" >&2
             exit 2
           fi
           if [[ ! "$SCENARIO_CODE" =~ ^[A-Za-z0-9_.:-]+$ ]]; then
             echo "Invalid scenario code: $SCENARIO_CODE" >&2
             exit 2
           fi
+          if [[ -n "$EXPECTED_CITY_COUNT" && ! "$EXPECTED_CITY_COUNT" =~ ^[0-9]+$ ]]; then
+            echo "Invalid expected city count: $EXPECTED_CITY_COUNT" >&2
+            exit 2
+          fi
 
+          INTERNAL_SERVER="s${PUBLIC_SERVER}"
           cd "$STACK"
-          ENV_FILE="servers/${SERVER}.env"
-          PROJECT="opensamguk-${SERVER}"
+          ENV_FILE="servers/${INTERNAL_SERVER}.env"
+          PROJECT="opensamguk-${INTERNAL_SERVER}"
           if [[ ! -f "$ENV_FILE" ]]; then
             echo "Missing env file: $ENV_FILE" >&2
             exit 3
           fi
-          OLD_API_ID="$(docker inspect -f '{{.Id}}' "${SERVER}-game-api" 2>/dev/null || true)"
-          OLD_ENGINE_ID="$(docker inspect -f '{{.Id}}' "${SERVER}-game-engine" 2>/dev/null || true)"
+          OLD_API_ID="$(docker inspect -f '{{.Id}}' "${INTERNAL_SERVER}-game-api" 2>/dev/null || true)"
+          OLD_ENGINE_ID="$(docker inspect -f '{{.Id}}' "${INTERNAL_SERVER}-game-engine" 2>/dev/null || true)"
 
           read_env() {
             local key="$1"
@@ -139,9 +159,9 @@ jobs:
           esac
 
           TS="$(date -u +%Y%m%dT%H%M%SZ)"
-          BACKUP_DIR="$HOME/opensamguk-backups/${SERVER}/${TS}"
+          BACKUP_DIR="$HOME/opensamguk-backups/${PUBLIC_SERVER}/${TS}"
           mkdir -p "$BACKUP_DIR"
-          sudo cp "$ENV_FILE" "$BACKUP_DIR/${SERVER}.env"
+          sudo cp "$ENV_FILE" "$BACKUP_DIR/${PUBLIC_SERVER}.env"
 
           if [[ -n "${RTK14_STATS_JSON_B64:-}" ]]; then
             rm -rf "$SCENARIO_OUTPUT_DIR"
@@ -165,7 +185,7 @@ jobs:
             else
               printf 'SCENARIO_DIR=/data/scenarios\n' | sudo tee -a "$ENV_FILE" >/dev/null
             fi
-            echo "RTK14 local scenario directory materialized for ${SERVER}: ${SCENARIO_OUTPUT_DIR}"
+            echo "RTK14 local scenario directory materialized for ${PUBLIC_SERVER}: ${SCENARIO_OUTPUT_DIR}"
           else
             if compgen -G "$SCENARIO_OUTPUT_DIR/scenario_*.json" >/dev/null; then
               if sudo grep -q '^SCENARIO_HOST_DIR=' "$ENV_FILE"; then
@@ -185,18 +205,18 @@ jobs:
           fi
 
           echo "=== Backup destination: $BACKUP_DIR ==="
-          PG_CONTAINER="${SERVER}-game-postgres"
-          REDIS_CONTAINER="${SERVER}-game-redis"
+          PG_CONTAINER="${INTERNAL_SERVER}-game-postgres"
+          REDIS_CONTAINER="${INTERNAL_SERVER}-game-redis"
           if docker ps -a --format '{{.Names}}' | grep -qx "$PG_CONTAINER"; then
             echo "=== Backing up PostgreSQL with pg_dump ==="
             docker exec "$PG_CONTAINER" sh -c 'pg_dump -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}"' \
-              | gzip > "$BACKUP_DIR/${SERVER}-postgres.sql.gz"
+              | gzip > "$BACKUP_DIR/${PUBLIC_SERVER}-postgres.sql.gz"
             docker exec "$PG_CONTAINER" sh -c 'psql -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}" -tAc "
               select concat('\''world_state='\'', count(*)) from world_state
               union all select concat('\''city='\'', count(*)) from city
               union all select concat('\''nation='\'', count(*)) from nation
               union all select concat('\''general='\'', count(*)) from general;
-            "' | tee "$BACKUP_DIR/${SERVER}-row-counts.txt"
+            "' | tee "$BACKUP_DIR/${PUBLIC_SERVER}-row-counts.txt"
           else
             echo "PostgreSQL container not found; skipping pg_dump"
           fi
@@ -227,7 +247,7 @@ jobs:
           RESET_RESERVE_OPEN="$(env_or_default RESET_RESERVE_OPEN '')"
           RESET_PRE_RESERVE_OPEN="$(env_or_default RESET_PRE_RESERVE_OPEN '')"
 
-          export SERVER CONFIRM SCENARIO_CODE GENERATION TURN_TERM
+          export PUBLIC_SERVER CONFIRM SCENARIO_CODE GENERATION TURN_TERM
           export RESET_SYNC RESET_FICTION RESET_EXTEND RESET_BLOCK_GENERAL_CREATE RESET_NPCMODE RESET_SHOW_IMG_LEVEL
           export RESET_AUTORUN_USER_OPTIONS RESET_AUTORUN_USER_MINUTES RESET_JOIN_MODE RESET_TOURNAMENT_TRIG
           export RESET_RESERVE_OPEN RESET_PRE_RESERVE_OPEN
@@ -242,7 +262,7 @@ jobs:
               if item.strip()
           ]
           print(json.dumps({
-              "id": os.environ["SERVER"],
+              "id": os.environ["PUBLIC_SERVER"],
               "confirm": os.environ["CONFIRM"],
               "generation": os.environ["GENERATION"],
               "scenarioCode": os.environ["SCENARIO_CODE"],
@@ -264,7 +284,7 @@ jobs:
           PY
           )"
 
-          echo "=== Triggering deployer reset for $SERVER ($PROJECT, $SCENARIO_CODE) ==="
+          echo "=== Triggering deployer reset for $PUBLIC_SERVER ($PROJECT, $SCENARIO_CODE) ==="
           docker run --rm --network opensamguk-net curlimages/curl:8.10.1 \
             -fsS -X POST \
             -H "Authorization: Bearer ${DEPLOYER_TOKEN}" \
@@ -311,22 +331,22 @@ jobs:
 
           wait_public_route() {
             for i in $(seq 1 36); do
-              if curl -fsSI "http://localhost/game/${SERVER}" >/dev/null; then
-                echo "${SERVER} public route: OK"
+              if curl -fsSI "http://localhost/game/${PUBLIC_SERVER}" >/dev/null; then
+                echo "${PUBLIC_SERVER} public route: OK"
                 return 0
               fi
-              echo "${SERVER} public route pending (${i}/36)"
+              echo "${PUBLIC_SERVER} public route pending (${i}/36)"
               sleep 5
             done
-            echo "${SERVER} public route: FAILED" >&2
+            echo "${PUBLIC_SERVER} public route: FAILED" >&2
             docker logs --tail 120 opensamguk-nginx || true
             return 1
           }
 
-          wait_container_recreated "${SERVER}-game-api" "$OLD_API_ID"
-          wait_container_recreated "${SERVER}-game-engine" "$OLD_ENGINE_ID"
-          wait_container_health "${SERVER}-game-api" 8081
-          wait_container_health "${SERVER}-game-engine" 8082
+          wait_container_recreated "${INTERNAL_SERVER}-game-api" "$OLD_API_ID"
+          wait_container_recreated "${INTERNAL_SERVER}-game-engine" "$OLD_ENGINE_ID"
+          wait_container_health "${INTERNAL_SERVER}-game-api" 8081
+          wait_container_health "${INTERNAL_SERVER}-game-engine" 8082
           wait_public_route
 
           echo "=== Verifying public game API ==="
@@ -337,7 +357,7 @@ jobs:
           import sys
           from urllib.request import Request, urlopen
 
-          server = os.environ["SERVER"]
+          server = os.environ["PUBLIC_SERVER"]
           expected_count = os.environ.get("EXPECTED_CITY_COUNT", "").strip()
           expected_first = os.environ.get("EXPECTED_FIRST_CITY", "").strip()
           headers = {

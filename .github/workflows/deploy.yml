@@ -162,12 +162,29 @@ jobs:
           docker exec -e DEPLOYER_TOKEN="$DEPLOYER_TOKEN" opensamguk-deployer \
             sh -c 'wget -qO- --header="Authorization: Bearer $DEPLOYER_TOKEN" "http://localhost:9000/env/shared"' \
             | grep -q '"ok":true'
+          readonly PUBLIC_SERVER_ID_PATTERN='^[a-z0-9]{1,48}$'
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+
+          is_reserved_public_server_id() {
+            local server_id="$1"
+            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
+          }
+
           shopt -s nullglob
           for envf in servers/s*.env; do
             case "$envf" in *.bak*|*.example) continue;; esac
-            sid="$(basename "$envf" .env)"
+            internal_server="$(basename "$envf" .env)"
+            public_server="${internal_server#s}"
+            if [[ "$internal_server" != "s${public_server}" || ! "$public_server" =~ $PUBLIC_SERVER_ID_PATTERN ]]; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              exit 1
+            fi
+            if is_reserved_public_server_id "$public_server"; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              exit 1
+            fi
             docker exec -e DEPLOYER_TOKEN="$DEPLOYER_TOKEN" opensamguk-deployer \
-              sh -c "wget -qO- --header=\"Authorization: Bearer \$DEPLOYER_TOKEN\" \"http://localhost:9000/env/server?id=${sid}\"" \
+              sh -c "wget -qO- --header=\"Authorization: Bearer \$DEPLOYER_TOKEN\" \"http://localhost:9000/env/server?id=${public_server}\"" \
               | grep -q '"ok":true'
           done
 
@@ -199,11 +216,28 @@ jobs:
           STACK="$HOME/opensamguk-docker"
           cd "$STACK"
           shopt -s nullglob
+          readonly PUBLIC_SERVER_ID_PATTERN='^[a-z0-9]{1,48}$'
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+
+          is_reserved_public_server_id() {
+            local server_id="$1"
+            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
+          }
+
           found=0
           for envf in servers/s*.env; do
             case "$envf" in *.bak*|*.example) continue;; esac
-            found=$((found + 1))
             sid="$(basename "$envf" .env)"
+            public_server="${sid#s}"
+            if [[ "$sid" != "s${public_server}" || ! "$public_server" =~ $PUBLIC_SERVER_ID_PATTERN ]]; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              exit 1
+            fi
+            if is_reserved_public_server_id "$public_server"; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              exit 1
+            fi
+            found=$((found + 1))
             current="$(sudo grep -E '^IMAGE_TAG=' "$envf" | cut -d= -f2- || true)"
             web="$(sudo grep -E '^WEB_GAME_TAG=' "$envf" | cut -d= -f2- || true)"
             echo "${sid}: IMAGE_TAG=${current:-unset} WEB_GAME_TAG=${web:-unset}"
@@ -214,7 +248,7 @@ jobs:
             echo "game server pins preserved; promote explicitly outside this workflow"
           fi
 
-      - name: Verify (health + s1 turn-advance)
+      - name: Verify (health + registered game servers)
         run: |
           set -euo pipefail
           dump_shared_diagnostics() {
@@ -264,15 +298,201 @@ jobs:
             fi
             sleep 5
           done
-          if docker ps --format '{{.Names}}' | grep -q '^s1-game-api$'; then
-            docker exec s1-game-api wget -qO- http://localhost:8081/actuator/health | grep -q '"status":"UP"'
-            docker exec s1-game-engine wget -qO- http://localhost:8082/actuator/health | grep -q '"status":"UP"'
-            C1=$(docker exec s1-game-postgres psql -U sammo -d sammo -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')
-            sleep 75
-            C2=$(docker exec s1-game-postgres psql -U sammo -d sammo -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')
-            echo "s1 world clock: $C1 -> $C2"
-            if [ -n "$C1" ] && [ "$C1" != "$C2" ]; then echo "turn-advance: OK"; else echo "INFO: clock unchanged in 75s ($C1 -> $C2) — 턴 주기상 정상 가능, 동결 의심 시 엔진 로그 확인"; fi
+          STACK="$HOME/opensamguk-docker"
+          cd "$STACK"
+          shopt -s nullglob
+          readonly PUBLIC_SERVER_ID_PATTERN='^[a-z0-9]{1,48}$'
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+
+          is_reserved_public_server_id() {
+            local server_id="$1"
+            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
+          }
+
+          read_world_clock() {
+            local postgres_container="$1"
+            docker exec "$postgres_container" sh -c \
+              'exec psql -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}" -tA -F "$1" -c "$2"' \
+              sh '|' "WITH clock_state AS (
+                SELECT current_year * 100 + current_month AS visible_clock,
+                       EXTRACT(EPOCH FROM COALESCE(NULLIF(meta ->> 'lastTurnTime', '')::timestamptz, start_time, now()))::bigint AS last_turn_epoch,
+                       tick_seconds
+                FROM world_state
+              )
+              SELECT visible_clock,
+                     last_turn_epoch,
+                     last_turn_epoch + tick_seconds,
+                     EXTRACT(EPOCH FROM now())::bigint
+              FROM clock_state;" 2>/dev/null
+          }
+
+          read_daemon_gate_state() {
+            local engine_container="$1"
+            local daemon_status paused recovery_ready
+
+            if ! daemon_status="$(docker exec "$engine_container" wget -qO- http://localhost:8082/admin/turn-daemon/status 2>/dev/null)"; then
+              echo "ERROR: ${engine_container} daemon status query failed" >&2
+              return 1
+            fi
+            if [[ "$daemon_status" =~ \"paused\"[[:space:]]*:[[:space:]]*(true|false) ]]; then
+              paused="${BASH_REMATCH[1]}"
+            else
+              echo "ERROR: ${engine_container} daemon status omitted paused" >&2
+              return 1
+            fi
+            if [[ "$daemon_status" =~ \"recoveryReady\"[[:space:]]*:[[:space:]]*(true|false) ]]; then
+              recovery_ready="${BASH_REMATCH[1]}"
+            else
+              echo "ERROR: ${engine_container} daemon status omitted recoveryReady" >&2
+              return 1
+            fi
+            # Do not print daemon_status: it includes diagnostics that are not needed for this gate.
+            printf '%s|%s\n' "$paused" "$recovery_ready"
+          }
+
+          validate_world_clock_sample() {
+            local public_server="$1"
+            local state="$2"
+            local clock last_turn due observed
+
+            if [[ "$state" == *$'\n'* ]]; then
+              echo "ERROR: ${public_server} returned multiple world clock rows" >&2
+              return 1
+            fi
+            IFS='|' read -r clock last_turn due observed <<< "$state"
+            for value in "$clock" "$last_turn" "$due" "$observed"; do
+              if [[ ! "$value" =~ ^[0-9]+$ ]]; then
+                echo "ERROR: ${public_server} returned an invalid world clock sample" >&2
+                return 1
+              fi
+            done
+          }
+
+          verify_world_clock_advance() {
+            local public_server="$1"
+            local postgres_container="$2"
+            local engine_container="$3"
+            local state gate_state paused recovery_ready
+            local clock_before last_turn_before due_before observed_before
+            local clock_after last_turn_after due_after observed_after
+            local deadline now seconds_until_due
+
+            state="$(read_world_clock "$postgres_container")"
+            if [[ -z "$state" ]]; then
+              echo "${public_server} has no world_state yet; turn-advance verification skipped"
+              return 0
+            fi
+            validate_world_clock_sample "$public_server" "$state"
+            IFS='|' read -r clock_before last_turn_before due_before observed_before <<< "$state"
+
+            gate_state="$(read_daemon_gate_state "$engine_container")"
+            IFS='|' read -r paused recovery_ready <<< "$gate_state"
+            if [[ "$paused" == true ]]; then
+              echo "${public_server} daemon paused; turn-advance verification skipped"
+              return 0
+            fi
+            if [[ "$recovery_ready" != true ]]; then
+              echo "${public_server} daemon recovery-gated; turn-advance verification skipped"
+              return 0
+            fi
+            if (( observed_before < due_before )); then
+              seconds_until_due=$((due_before - observed_before))
+              echo "${public_server} next turn due in ${seconds_until_due}s; turn-advance verification deferred"
+              return 0
+            fi
+
+            deadline=$(( $(date +%s) + 90 ))
+            echo "${public_server} turn is due; polling for lastTurnTime advance"
+            while true; do
+              gate_state="$(read_daemon_gate_state "$engine_container")"
+              IFS='|' read -r paused recovery_ready <<< "$gate_state"
+              if [[ "$paused" == true ]]; then
+                echo "${public_server} daemon paused while polling; turn-advance verification skipped"
+                return 0
+              fi
+              if [[ "$recovery_ready" != true ]]; then
+                echo "${public_server} daemon recovery-gated while polling; turn-advance verification skipped"
+                return 0
+              fi
+
+              state="$(read_world_clock "$postgres_container")"
+              if [[ -z "$state" ]]; then
+                echo "${public_server} world_state became empty; turn-advance verification skipped"
+                return 0
+              fi
+              validate_world_clock_sample "$public_server" "$state"
+              IFS='|' read -r clock_after last_turn_after due_after observed_after <<< "$state"
+              if [[ "$last_turn_before" != "$last_turn_after" ]]; then
+                echo "${public_server} world clock: $clock_before -> $clock_after; turn-advance: OK"
+                return 0
+              fi
+
+              now="$(date +%s)"
+              if (( now >= deadline )); then
+                echo "ERROR: ${public_server} was due and active, but lastTurnTime did not advance within 90s" >&2
+                return 1
+              fi
+              sleep 5
+            done
+          }
+
+          declare -a RUNNING_INTERNAL_SERVERS=()
+          registered_servers=0
+          for envf in servers/s*.env; do
+            case "$envf" in *.bak*|*.example) continue;; esac
+            internal_server="$(basename "$envf" .env)"
+            public_server="${internal_server#s}"
+            if [[ "$internal_server" != "s${public_server}" || ! "$public_server" =~ $PUBLIC_SERVER_ID_PATTERN ]]; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              false
+            fi
+            if is_reserved_public_server_id "$public_server"; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              false
+            fi
+            registered_servers=$((registered_servers + 1))
+
+            api_container="${internal_server}-game-api"
+            engine_container="${internal_server}-game-engine"
+            web_container="${internal_server}-web-game"
+            known_containers=0
+            running_containers=0
+            for container in "$api_container" "$engine_container" "$web_container"; do
+              if docker ps -a --format '{{.Names}}' | grep -qx "$container"; then
+                known_containers=$((known_containers + 1))
+              fi
+              if docker ps --format '{{.Names}}' | grep -qx "$container"; then
+                running_containers=$((running_containers + 1))
+              fi
+            done
+            if [[ "$running_containers" -eq 0 ]]; then
+              if [[ "$known_containers" -eq 0 ]]; then
+                echo "${public_server} (${internal_server}) not running; game-server verification skipped"
+                continue
+              fi
+              echo "${public_server} (${internal_server}) has stopped game containers" >&2
+              false
+            fi
+            if [[ "$known_containers" -ne 3 || "$running_containers" -ne 3 ]]; then
+              echo "${public_server} (${internal_server}) has incomplete game containers" >&2
+              false
+            fi
+
+            docker exec "$api_container" wget -qO- http://localhost:8081/actuator/health | grep -q '"status":"UP"'
+            docker exec "$engine_container" wget -qO- http://localhost:8082/actuator/health | grep -q '"status":"UP"'
+            curl -fsSI "http://localhost/game/${public_server}" >/dev/null
+            echo "${public_server} (${internal_server}) API, engine, web route: OK"
+            RUNNING_INTERNAL_SERVERS+=("$internal_server")
+          done
+
+          if [[ "$registered_servers" -eq 0 ]]; then
+            echo "no game servers registered yet; game-server verification skipped"
+          elif [[ "${#RUNNING_INTERNAL_SERVERS[@]}" -eq 0 ]]; then
+            echo "no registered game servers running; game-server verification skipped"
           else
-            echo "s1 not running; game-server verification skipped"
+            for internal_server in "${RUNNING_INTERNAL_SERVERS[@]}"; do
+              public_server="${internal_server#s}"
+              verify_world_clock_advance "$public_server" "${internal_server}-game-postgres" "${internal_server}-game-engine"
+            done
           fi
           echo "=== Verify done ==="

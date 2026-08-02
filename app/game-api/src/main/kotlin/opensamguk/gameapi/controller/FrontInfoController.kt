@@ -112,8 +112,54 @@ class FrontInfoController(
     @Value("\${SERVER_ID:}") private val serverIdProperty: String = "",
     private val accessLogs: GeneralAccessLogReadRepository? = null,
 ) {
+    private val canonicalPublicServerIdPattern = Regex("^[a-z0-9]{1,48}$")
+    private val reservedPublicServerIds = setOf(
+        "all",
+        "main",
+        "admin1",
+        "admin2",
+        "admin5",
+        "admin7",
+        "admin8",
+        "auction",
+        "battle-center",
+        "betting",
+        "board",
+        "chief-center",
+        "city",
+        "coming-soon",
+        "diplomacy",
+        "generals",
+        "global-diplomacy",
+        "history",
+        "inherit",
+        "join",
+        "mailbox",
+        "map",
+        "my",
+        "my-boss",
+        "my-cities",
+        "my-generals",
+        "my-nation",
+        "nation",
+        "nation-betting",
+        "nation-finance",
+        "npc-control",
+        "rankings",
+        "register",
+        "select-pool",
+        "simulator",
+        "tournament",
+        "tournament-admin",
+        "troop",
+        "vote",
+        "world-log",
+    )
     private val recentRecordRowLimit = 15
     private val recentRecordFetchLimit = recentRecordRowLimit + 1
+
+    private fun isPublicServerId(serverId: String): Boolean =
+        canonicalPublicServerIdPattern.matches(serverId) && serverId !in reservedPublicServerIds
 
     /** nation_env(namespace = nationId, key) jsonb 디코드 — 부재/파싱실패 시 null(loop49 NationFinanceController 동일 패턴; loop51 빼기에서 공유 reader로 수렴 예정). */
     private fun nationEnvNode(nid: Int, key: String): JsonNode? =
@@ -584,8 +630,8 @@ class FrontInfoController(
         val generation = intOrNull(config["server_generation"])
             ?: intOrNull(config["server_cnt"])
             ?: serverGenerationProperty.toIntOrNull()
-        val resolvedServerId = serverId
-            ?: serverIdProperty.takeIf { it.isNotBlank() }?.let { if (it.startsWith("s")) it else "s$it" }
+        val configuredServerId = serverIdProperty.takeIf(::isPublicServerId)
+        val resolvedServerId = serverId?.takeIf { it == configuredServerId } ?: configuredServerId
         val serverName = (config["server_name"]?.toString() ?: serverNameProperty).takeIf { it.isNotBlank() }
 
         val latestPoll = votePolls.findFirstByOrderByIdDesc()

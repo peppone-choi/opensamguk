@@ -73,14 +73,79 @@ class DeployService(
         "RESET_RESERVE_OPEN",
         "RESET_PRE_RESERVE_OPEN",
     )
-    private val serverIdRegex = Regex("^s?[A-Za-z0-9_-]+$")
+    private val serverIdRegex = Regex("^[A-Za-z0-9]+$")
+    private val maxPublicServerIdLength = 48
     private val portRegex = Regex("^[0-9]{1,5}$")
+    private val reservedPublicServerIds = setOf(
+        "all",
+    )
+    private val reservedGameRouteIds = setOf(
+        "admin1",
+        "admin2",
+        "admin5",
+        "admin7",
+        "admin8",
+        "auction",
+        "battle-center",
+        "betting",
+        "board",
+        "chief-center",
+        "city",
+        "coming-soon",
+        "diplomacy",
+        "generals",
+        "global-diplomacy",
+        "history",
+        "inherit",
+        "join",
+        "mailbox",
+        "main",
+        "map",
+        "my",
+        "my-boss",
+        "my-cities",
+        "my-generals",
+        "my-nation",
+        "nation",
+        "nation-betting",
+        "nation-finance",
+        "npc-control",
+        "rankings",
+        "register",
+        "select-pool",
+        "simulator",
+        "tournament",
+        "tournament-admin",
+        "troop",
+        "vote",
+        "world-log",
+    )
+
+    private sealed interface DeployerServerList {
+        data class Available(val servers: List<ServerDef>) : DeployerServerList
+
+        data object Invalid : DeployerServerList
+
+        data object Unavailable : DeployerServerList
+    }
 
     private fun configured() = deployerUrl.isNotBlank() && deployerToken.isNotBlank()
     private fun deployerBase() = deployerUrl.trimEnd('/')
 
-    fun registeredServers(): List<ServerDef> =
-        fetchDeployerServers() ?: registry.all()
+    fun registeredServers(): List<ServerDef> {
+        val registryServers = canonicalServerDefs(registry.all())
+        return when (val deployerServers = fetchDeployerServers(registryServers.orEmpty())) {
+            is DeployerServerList.Available -> deployerServers.servers
+            DeployerServerList.Invalid -> {
+                log.warn("deployer 서버 목록이 canonical server contract를 위반해 전체를 거부합니다.")
+                emptyList()
+            }
+            DeployerServerList.Unavailable -> registryServers ?: run {
+                log.warn("부팅 서버 레지스트리가 canonical server contract를 위반해 전체를 거부합니다.")
+                emptyList()
+            }
+        }
+    }
 
     /** deployer 상태: 대상 서버의 현재 IMAGE_TAG + 배포 가능한 태그 목록. serverId 미지정 시 기본 서버. */
     fun status(serverId: String?): DeployStatus {
@@ -239,8 +304,10 @@ class DeployService(
 
     /** serverId 미지정이면 기본 서버, 아니면 레지스트리 조회. */
     private fun resolve(serverId: String?): ServerDef? {
-        if (serverId.isNullOrBlank()) return registeredServers().firstOrNull()
-        return registry.find(serverId) ?: registeredServers().firstOrNull { it.id == serverId }
+        val servers = registeredServers()
+        if (serverId.isNullOrBlank()) return servers.firstOrNull()
+        val canonicalId = canonicalServerId(serverId) ?: return null
+        return servers.firstOrNull { it.id == canonicalId }
     }
 
     private fun proxyEnvGet(scope: String, serverId: String? = null, path: String): EnvProxyResponse {
@@ -372,9 +439,16 @@ class DeployService(
             val imageTag = node.path("imageTag").asText("")
             val scenarioCode = node.path("scenarioCode").asText("")
             val jwtSecret = node.path("jwtSecret").asText("")
+            val canonicalId = id.lowercase()
             when {
                 id.isBlank() || !serverIdRegex.matches(id) ->
                     json(400, """{"ok":false,"message":"서버 id가 올바르지 않습니다."}""")
+                id.length > maxPublicServerIdLength ->
+                    json(400, """{"ok":false,"message":"서버 id는 최대 48자여야 합니다."}""")
+                canonicalId in reservedGameRouteIds ->
+                    json(400, """{"ok":false,"message":"서버 id ${canonicalId}은 게임 경로와 충돌해 사용할 수 없습니다."}""")
+                canonicalId in reservedPublicServerIds ->
+                    json(400, """{"ok":false,"message":"서버 id ${canonicalId}은 예약되어 사용할 수 없습니다."}""")
                 name.isBlank() || name.contains('\n') || name.contains('\r') ->
                     json(400, """{"ok":false,"message":"서버 이름이 올바르지 않습니다."}""")
                 generation.isNotBlank() && !validGeneration(generation) ->
@@ -467,38 +541,93 @@ class DeployService(
         }
     }
 
-    private fun fetchDeployerServers(): List<ServerDef>? {
-        if (!configured()) return null
+    private fun fetchDeployerServers(fallbackServers: List<ServerDef>): DeployerServerList {
+        if (!configured()) return DeployerServerList.Unavailable
         return try {
             val raw = rest.get()
                 .uri("${deployerBase()}/servers")
                 .header("Authorization", "Bearer $deployerToken")
                 .retrieve()
                 .body(String::class.java)
-            parseServerDefs(raw)
+            parseServerDefs(raw, fallbackServers)
+                ?.let(DeployerServerList::Available)
+                ?: DeployerServerList.Invalid
         } catch (e: Exception) {
             log.warn("deployer 서버 목록 조회 실패 — 부팅 레지스트리로 fallback합니다.", e)
+            DeployerServerList.Unavailable
+        }
+    }
+
+    private fun parseServerDefs(raw: String?, fallbackServers: List<ServerDef>): List<ServerDef>? {
+        return try {
+            val root = objectMapper.readTree(raw ?: "[]")
+            if (!root.isArray) return null
+
+            val parsed = ArrayList<ServerDef>(root.size())
+            for (node in root) {
+                if (!node.isObject) return null
+                val rawId = node.path("id").takeIf { it.isTextual }?.asText() ?: return null
+                val id = canonicalServerId(rawId) ?: return null
+                val expectedProject = defaultDeployProject(id)
+                val expectedGameApiUrl = defaultGameApiUrl(id)
+                val expectedGameEngineUrl = defaultGameEngineUrl(id)
+                if (!hasExpectedCoordinate(node, expectedProject, "deployProject", "project") ||
+                    !hasExpectedCoordinate(node, expectedGameApiUrl, "gameApiUrl") ||
+                    !hasExpectedCoordinate(node, expectedGameEngineUrl, "gameEngineUrl")
+                ) {
+                    return null
+                }
+                val fallback = fallbackServers.firstOrNull { it.id == id }
+                parsed += ServerDef(
+                    id = id,
+                    name = text(node, "name") ?: fallback?.name ?: id,
+                    gameApiUrl = expectedGameApiUrl,
+                    gameEngineUrl = expectedGameEngineUrl,
+                    deployProject = expectedProject,
+                    generation = int(node, "generation") ?: fallback?.generation,
+                    scenarioCode = text(node, "scenarioCode", "scenario") ?: fallback?.scenarioCode,
+                )
+            }
+            canonicalServerDefs(parsed)
+        } catch (e: Exception) {
             null
         }
     }
 
-    private fun parseServerDefs(raw: String?): List<ServerDef>? {
-        val root = objectMapper.readTree(raw ?: "[]")
-        if (!root.isArray) return null
-        return root.mapNotNull { node ->
-            val id = text(node, "id") ?: return@mapNotNull null
-            val fallback = registry.find(id)
-            ServerDef(
+    private fun canonicalServerDefs(servers: List<ServerDef>): List<ServerDef>? {
+        val canonical = ArrayList<ServerDef>(servers.size)
+        val seenIds = HashSet<String>(servers.size)
+        for (server in servers) {
+            val id = canonicalServerId(server.id) ?: return null
+            if (id in reservedPublicServerIds || id in reservedGameRouteIds || !seenIds.add(id)) return null
+
+            val expectedProject = defaultDeployProject(id)
+            val expectedGameApiUrl = defaultGameApiUrl(id)
+            val expectedGameEngineUrl = defaultGameEngineUrl(id)
+            if (server.deployProject != expectedProject ||
+                server.gameApiUrl != expectedGameApiUrl ||
+                server.gameEngineUrl != expectedGameEngineUrl
+            ) {
+                return null
+            }
+            canonical += server.copy(
                 id = id,
-                name = text(node, "name") ?: fallback?.name ?: id,
-                gameApiUrl = text(node, "gameApiUrl") ?: fallback?.gameApiUrl ?: defaultGameApiUrl(id),
-                gameEngineUrl = text(node, "gameEngineUrl") ?: fallback?.gameEngineUrl ?: defaultGameEngineUrl(id),
-                deployProject = text(node, "deployProject", "project") ?: fallback?.deployProject ?: defaultDeployProject(id),
-                generation = int(node, "generation") ?: fallback?.generation,
-                scenarioCode = text(node, "scenarioCode", "scenario") ?: fallback?.scenarioCode,
+                gameApiUrl = expectedGameApiUrl,
+                gameEngineUrl = expectedGameEngineUrl,
+                deployProject = expectedProject,
             )
         }
+        return canonical
     }
+
+    private fun hasExpectedCoordinate(node: JsonNode, expected: String, vararg fields: String): Boolean =
+        fields.all { field ->
+            !node.has(field) || (node.path(field).isTextual && node.path(field).asText() == expected)
+        }
+
+    private fun canonicalServerId(rawId: String): String? =
+        rawId.takeIf { serverIdRegex.matches(it) && it.length <= maxPublicServerIdLength }
+            ?.lowercase()
 
     private fun text(node: JsonNode, vararg fields: String): String? =
         fields.asSequence()
@@ -524,21 +653,18 @@ class DeployService(
     private fun createServerBodyForDeployer(body: String): String {
         val node = objectMapper.readTree(body)
         val objectNode = if (node is ObjectNode) node.deepCopy() as ObjectNode else objectMapper.createObjectNode()
-        val id = objectNode.path("id").asText("")
-        if (id.matches(Regex("^s[0-9][A-Za-z0-9_-]*$"))) {
-            objectNode.put("id", id.removePrefix("s"))
-        }
+        objectNode.put("id", objectNode.path("id").asText("").lowercase())
         return objectMapper.writeValueAsString(objectNode)
     }
 
-    private fun defaultDeployProject(id: String): String =
-        "opensamguk-${if (id.startsWith("s")) id else "s$id"}"
+    private fun defaultDeployProject(canonicalId: String): String =
+        "opensamguk-s$canonicalId"
 
-    private fun defaultGameApiUrl(id: String): String =
-        "http://${if (id.startsWith("s")) id else "s$id"}-game-api:8081"
+    private fun defaultGameApiUrl(canonicalId: String): String =
+        "http://s$canonicalId-game-api:8081"
 
-    private fun defaultGameEngineUrl(id: String): String =
-        "http://${if (id.startsWith("s")) id else "s$id"}-game-engine:8082"
+    private fun defaultGameEngineUrl(canonicalId: String): String =
+        "http://s$canonicalId-game-engine:8082"
 
     private fun validPort(value: String): Boolean {
         if (!portRegex.matches(value)) return false

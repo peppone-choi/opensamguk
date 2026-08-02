@@ -7,7 +7,7 @@ import { normalizeGamePathname, resolveServerGamePath, useServerId } from '../li
 export default function BottomNav() {
     const pathname = usePathname();
     const serverId = useServerId();
-    const normalizedPathname = normalizeGamePathname(pathname ?? '');
+  const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
 
     return (
         <nav className="game-bottom-nav" aria-label="Mobile">

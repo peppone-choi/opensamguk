@@ -1,4 +1,6 @@
 package opensamguk.engine
+
+import opensamguk.infra.read.MessageRepository
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -9,7 +11,9 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -35,6 +39,9 @@ class GameEngineApplicationTests {
     var port: Int = 0
     @Autowired
     lateinit var rest: TestRestTemplate
+    @Autowired
+    lateinit var messageRepository: MessageRepository
+
     @Test
     fun `status endpoint reports the configured profile and idle state`() {
         val body = rest.getForObject(
@@ -42,6 +49,7 @@ class GameEngineApplicationTests {
         )
         assertTrue(body!!.contains("\"state\":\"idle\""), "status body: $body")
         assertTrue(body.contains("che:scenario_2"), "status body: $body")
+        assertEquals(0, messageRepository.findMaxId())
     }
     companion object {
         @Container

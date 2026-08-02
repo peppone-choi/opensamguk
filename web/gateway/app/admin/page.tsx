@@ -169,6 +169,50 @@ interface TurnDaemonControlResult {
 
 // 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
 const SKEW_WARNING = '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
+const PUBLIC_SERVER_ID_PATTERN = /^[A-Za-z0-9]+$/;
+const MAX_PUBLIC_SERVER_ID_LENGTH = 48;
+const RESERVED_PUBLIC_SERVER_IDS = new Set([
+    'all',
+    'main',
+    'admin1',
+    'admin2',
+    'admin5',
+    'admin7',
+    'admin8',
+    'auction',
+    'battle-center',
+    'betting',
+    'board',
+    'chief-center',
+    'city',
+    'coming-soon',
+    'diplomacy',
+    'generals',
+    'global-diplomacy',
+    'history',
+    'inherit',
+    'join',
+    'mailbox',
+    'map',
+    'my',
+    'my-boss',
+    'my-cities',
+    'my-generals',
+    'my-nation',
+    'nation',
+    'nation-betting',
+    'nation-finance',
+    'npc-control',
+    'rankings',
+    'register',
+    'select-pool',
+    'simulator',
+    'tournament',
+    'tournament-admin',
+    'troop',
+    'vote',
+    'world-log',
+]);
 const AUTORUN_OPTIONS = [
     ['develop', '내정'],
     ['warp', '순간이동'],
@@ -813,7 +857,7 @@ function ServerLifecycleControl({
 }
 
 function CreateServerControl({ onCreated }: { onCreated: () => void }) {
-    const [id, setId] = useState('s1');
+    const [id, setId] = useState('pep');
     const [name, setName] = useState('통일 서버');
     const [generation, setGeneration] = useState('1');
     const [gameApiPort, setGameApiPort] = useState('8101');
@@ -879,7 +923,9 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
 
     const generationNumber = Number.parseInt(generation, 10);
     const valid =
-        id.trim() !== '' &&
+        PUBLIC_SERVER_ID_PATTERN.test(id) &&
+        id.length <= MAX_PUBLIC_SERVER_ID_LENGTH &&
+        !RESERVED_PUBLIC_SERVER_IDS.has(id.toLowerCase()) &&
         name.trim() !== '' &&
         Number.isInteger(generationNumber) &&
         generationNumber >= 0 &&
@@ -891,9 +937,21 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
         <div className="deploy-server">
             <div className="deploy-server-head">새 서버 생성</div>
             <div className="server-create-grid">
-                <label className="field">
+                <label className="field" htmlFor="server-id">
                     <span>서버 ID</span>
-                    <input value={id} disabled={busy} onChange={(e) => setId(e.target.value)} placeholder="s1" />
+                    <input
+                        id="server-id"
+                        aria-describedby="server-id-hint"
+                        pattern="[A-Za-z0-9]+"
+                        maxLength={MAX_PUBLIC_SERVER_ID_LENGTH}
+                        value={id}
+                        disabled={busy}
+                        onChange={(e) => setId(e.target.value)}
+                        placeholder="pep"
+                    />
+                    <small id="server-id-hint" className="field-hint">
+                        영문과 숫자 48자 이내로 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장되며 all과 게임 경로 예약어는 사용할 수 없습니다.
+                    </small>
                 </label>
                 <label className="field">
                     <span>서버 이름</span>
