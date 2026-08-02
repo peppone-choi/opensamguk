@@ -74,15 +74,13 @@ describe('serverRegistry canonical IDs', () => {
     expect(registry.getServers()).toEqual([]);
   });
 
-  it('uses the same validated contract for object-form registries', async () => {
-    process.env.SERVER_REGISTRY_JSON = JSON.stringify({
-      pep: 'http://spep-game-api:8081',
-      current: { gameApiUrl: 'http://scurrent-game-api:8081' },
-    });
+  it('fails closed for object-form registry duplicate keys', async () => {
+    process.env.SERVER_REGISTRY_JSON =
+      '{"pep":"http://wrong-game-api:8081","pep":"http://spep-game-api:8081"}';
 
     const registry = await import('@/lib/serverRegistry');
 
-    expect(registry.getServers().map((server) => server.id)).toEqual(['pep', 'current']);
-    expect(registry.resolveGameApiOrigin('current')).toBe('http://scurrent-game-api:8081');
+    expect(registry.getServers()).toEqual([]);
+    expect(registry.resolveGameApiOrigin('pep')).toBeUndefined();
   });
 });

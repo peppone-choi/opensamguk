@@ -24,6 +24,7 @@ function expectedGameApiUrl(id: string): string {
 }
 
 function parseEntries(value: unknown): ServerEntry[] | undefined {
+    if (!Array.isArray(value)) return undefined;
     const entries: ServerEntry[] = [];
     const seenIds = new Set<string>();
     const append = (id: string, entry: unknown): boolean => {
@@ -34,15 +35,8 @@ function parseEntries(value: unknown): ServerEntry[] | undefined {
         return true;
     };
 
-    if (Array.isArray(value)) {
-        for (const entry of value) {
-            if (!isRecord(entry) || typeof entry.id !== 'string' || !append(entry.id, entry)) return undefined;
-        }
-        return entries;
-    }
-    if (!isRecord(value)) return undefined;
-    for (const [id, entry] of Object.entries(value)) {
-        if (!append(id, entry)) return undefined;
+    for (const entry of value) {
+        if (!isRecord(entry) || typeof entry.id !== 'string' || !append(entry.id, entry)) return undefined;
     }
     return entries;
 }
@@ -60,7 +54,7 @@ function runtimeEntries(): RuntimeEntries {
 
 function normalizeServerEntry(id: string, value: unknown): ServerEntry | undefined {
     if (!isPathServerId(id)) return undefined;
-    const entry = typeof value === 'string' ? { gameApiUrl: value } : value;
+    const entry = value;
     if (!isRecord(entry)) return undefined;
     if ('id' in entry && (typeof entry.id !== 'string' || entry.id !== id)) return undefined;
 

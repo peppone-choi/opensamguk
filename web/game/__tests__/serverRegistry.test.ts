@@ -69,16 +69,13 @@ describe('game server registry canonical IDs', () => {
     expect(registry.resolveGameApiUrl('pep')).toBeUndefined();
   });
 
-  it('uses the same atomic contract for object-form runtime registries', async () => {
-    process.env.SERVER_REGISTRY_JSON = JSON.stringify({
-      pep: 'http://spep-game-api:8081',
-      a1: { gameApiUrl: 'http://sa1-game-api:8081' },
-    });
+  it('fails closed for object-form runtime registry duplicate keys', async () => {
+    process.env.SERVER_REGISTRY_JSON =
+      '{"pep":"http://wrong-game-api:8081","pep":"http://spep-game-api:8081"}';
 
     const registry = await import('@/lib/serverRegistry');
 
-    expect(registry.resolveGameApiUrl('pep')).toBe('http://spep-game-api:8081');
-    expect(registry.resolveGameApiUrl('a1')).toBe('http://sa1-game-api:8081');
+    expect(registry.resolveGameApiUrl('pep')).toBeUndefined();
   });
 
   it('uses the default only for an absent selector', async () => {

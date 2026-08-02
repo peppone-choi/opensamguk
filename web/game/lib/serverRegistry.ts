@@ -64,7 +64,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function originForEntry(serverId: string, entry: unknown): string | undefined {
     if (!isPublicServerId(serverId)) return undefined;
     const expected = expectedGameApiUrl(serverId);
-    if (typeof entry === 'string') return entry === expected ? expected : undefined;
     if (!isRecord(entry)) return undefined;
     if ('id' in entry && (typeof entry.id !== 'string' || entry.id !== serverId)) return undefined;
     if (
@@ -77,21 +76,13 @@ function originForEntry(serverId: string, entry: unknown): string | undefined {
 }
 
 function parseOrigins(value: unknown): Map<string, string> | undefined {
+    if (!Array.isArray(value)) return undefined;
     const origins = new Map<string, string>();
-    if (Array.isArray(value)) {
-        for (const entry of value) {
-            if (!isRecord(entry) || typeof entry.id !== 'string') return undefined;
-            const origin = originForEntry(entry.id, entry);
-            if (!origin || origins.has(entry.id)) return undefined;
-            origins.set(entry.id, origin);
-        }
-        return origins;
-    }
-    if (!isRecord(value)) return undefined;
-    for (const [serverId, entry] of Object.entries(value)) {
-        const origin = originForEntry(serverId, entry);
-        if (!origin || origins.has(serverId)) return undefined;
-        origins.set(serverId, origin);
+    for (const entry of value) {
+        if (!isRecord(entry) || typeof entry.id !== 'string') return undefined;
+        const origin = originForEntry(entry.id, entry);
+        if (!origin || origins.has(entry.id)) return undefined;
+        origins.set(entry.id, origin);
     }
     return origins;
 }

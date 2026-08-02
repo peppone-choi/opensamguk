@@ -65,16 +65,11 @@ class ServerRegistryTest {
     }
 
     @Test
-    fun `object-form registry follows the same atomic coordinate contract`() {
-        val valid = registry(
-            """{"pep":"http://spep-game-api:8081","current":{"name":"현재"}}""",
-        )
-        val invalid = registry(
-            """{"pep":"http://spep-game-api:8081","a1":"http://wrong-game-api:8081"}""",
+    fun `object-form registry including duplicate keys rejects the complete collection`() {
+        val parsed = registry(
+            """{"pep":"http://wrong-game-api:8081","pep":"http://spep-game-api:8081"}""",
         )
 
-        assertEquals(listOf("pep", "current"), valid.all().map { it.id })
-        assertEquals("http://spep-game-api:8081", valid.find("pep")?.gameApiUrl)
-        assertTrue(invalid.all().isEmpty())
+        assertTrue(parsed.all().isEmpty())
     }
 }

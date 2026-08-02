@@ -56,11 +56,7 @@ class ServerRegistry(
     }
 
     private fun parseCollection(root: JsonNode): List<ServerDef>? =
-        when {
-            root.isArray -> parseArray(root)
-            root.isObject -> parseObject(root)
-            else -> null
-        }
+        if (root.isArray) parseArray(root) else null
 
     private fun parseArray(root: JsonNode): List<ServerDef>? {
         val parsed = ArrayList<ServerDef>(root.size())
@@ -70,25 +66,6 @@ class ServerRegistry(
             val id = text(node, "id") ?: return null
             if (!isPublicServerId(id) || !seenIds.add(id)) return null
             parsed += parseObjectEntry(id, node) ?: return null
-        }
-        return parsed
-    }
-
-    private fun parseObject(root: JsonNode): List<ServerDef>? {
-        val parsed = ArrayList<ServerDef>(root.size())
-        val seenIds = HashSet<String>(root.size())
-        val fields = root.fields()
-        while (fields.hasNext()) {
-            val (id, node) = fields.next()
-            if (!isPublicServerId(id) || !seenIds.add(id)) return null
-            val server = when {
-                node.isTextual -> defaultServer(id).takeIf { node.asText() == defaultGameApiUrl(id) }
-                node.isObject -> {
-                    if (node.has("id") && text(node, "id") != id) null else parseObjectEntry(id, node)
-                }
-                else -> null
-            } ?: return null
-            parsed += server
         }
         return parsed
     }
