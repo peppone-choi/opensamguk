@@ -17,24 +17,20 @@ fi
 
 echo "=== Deploying opensamguk to ${DEPLOY_USER}@${DEPLOY_HOST} ==="
 
-# Ensure remote directory exists and has compose file
-ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-    "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p ~/opensamguk"
-
-# Sync compose + nginx config + env template
-rsync -avz -e "ssh -i ${SSH_KEY} -o StrictHostKeyChecking=accept-new" \
-    --exclude='.git' \
-    "${COMPOSE_FILE}" \
-    "infra/nginx/nginx.conf" \
-    "${DEPLOY_USER}@${DEPLOY_HOST}:~/opensamguk/"
-
-# Pull latest images and restart
-ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-    "${DEPLOY_USER}@${DEPLOY_HOST}" << 'REMOTE'
+tar -cf - "$COMPOSE_FILE" infra/nginx/nginx.conf | \
+    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
+    "${DEPLOY_USER}@${DEPLOY_HOST}" '
     set -euo pipefail
+    exec 9>/tmp/opensamguk-production.lock
+    if ! flock -w 1800 9; then
+        echo "ERROR: timed out after 1800 seconds waiting for /tmp/opensamguk-production.lock" >&2
+        exit 1
+    fi
+    mkdir -p ~/opensamguk/infra/nginx
+    tar -xf - -C ~/opensamguk
     cd ~/opensamguk
+    COMPOSE_FILE="docker-compose.production.yml"
 
-    # Load env if present
     if [[ -f .env ]]; then
         set -a
         source .env
@@ -42,24 +38,20 @@ ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
     fi
 
     echo "=== Pulling images ==="
-    docker compose -f docker-compose.production.yml pull
+    docker compose -f "$COMPOSE_FILE" pull
 
     echo "=== Restarting services ==="
-    # Restart non-engine services first
-    docker compose -f docker-compose.production.yml up -d --no-deps \
+    docker compose -f "$COMPOSE_FILE" up -d --no-deps \
         gateway-api game-api web-gateway web-game nginx
 
-    # Brief pause for DB/redis readiness
     sleep 5
 
-    # Restart engine last (it owns the in-memory turn state)
-    docker compose -f docker-compose.production.yml up -d --no-deps game-engine
+    docker compose -f "$COMPOSE_FILE" up -d --no-deps game-engine
 
-    # Prune old images (keep 7 days)
     docker image prune -af --filter "until=168h" || true
 
     echo "=== Deploy complete ==="
-REMOTE
+'
 
 # --- Health check loop ---
 echo "=== Health checks ==="
