@@ -112,7 +112,7 @@ class FrontInfoController(
     @Value("\${SERVER_ID:}") private val serverIdProperty: String = "",
     private val accessLogs: GeneralAccessLogReadRepository? = null,
 ) {
-    private val canonicalPublicServerIdPattern = Regex("^[a-z0-9]+$")
+    private val canonicalPublicServerIdPattern = Regex("^[a-z0-9]{1,48}$")
     private val recentRecordRowLimit = 15
     private val recentRecordFetchLimit = recentRecordRowLimit + 1
 
@@ -585,8 +585,8 @@ class FrontInfoController(
         val generation = intOrNull(config["server_generation"])
             ?: intOrNull(config["server_cnt"])
             ?: serverGenerationProperty.toIntOrNull()
-        val resolvedServerId = serverId
-            ?: serverIdProperty.takeIf { canonicalPublicServerIdPattern.matches(it) }
+        val configuredServerId = serverIdProperty.takeIf { canonicalPublicServerIdPattern.matches(it) }
+        val resolvedServerId = serverId?.takeIf { it == configuredServerId } ?: configuredServerId
         val serverName = (config["server_name"]?.toString() ?: serverNameProperty).takeIf { it.isNotBlank() }
 
         val latestPoll = votePolls.findFirstByOrderByIdDesc()

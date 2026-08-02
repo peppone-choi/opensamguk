@@ -170,6 +170,7 @@ interface TurnDaemonControlResult {
 // 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
 const SKEW_WARNING = '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
 const PUBLIC_SERVER_ID_PATTERN = /^[A-Za-z0-9]+$/;
+const MAX_PUBLIC_SERVER_ID_LENGTH = 48;
 const RESERVED_PUBLIC_SERVER_IDS = new Set([
     'all',
     'main',
@@ -923,6 +924,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const generationNumber = Number.parseInt(generation, 10);
     const valid =
         PUBLIC_SERVER_ID_PATTERN.test(id) &&
+        id.length <= MAX_PUBLIC_SERVER_ID_LENGTH &&
         !RESERVED_PUBLIC_SERVER_IDS.has(id.toLowerCase()) &&
         name.trim() !== '' &&
         Number.isInteger(generationNumber) &&
@@ -941,13 +943,14 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                         id="server-id"
                         aria-describedby="server-id-hint"
                         pattern="[A-Za-z0-9]+"
+                        maxLength={MAX_PUBLIC_SERVER_ID_LENGTH}
                         value={id}
                         disabled={busy}
                         onChange={(e) => setId(e.target.value)}
                         placeholder="pep"
                     />
                     <small id="server-id-hint" className="field-hint">
-                        영문과 숫자만 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장되며 all과 게임 경로 예약어는 사용할 수 없습니다.
+                        영문과 숫자 48자 이내로 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장되며 all과 게임 경로 예약어는 사용할 수 없습니다.
                     </small>
                 </label>
                 <label className="field">

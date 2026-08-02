@@ -644,20 +644,44 @@ class FrontInfoControllerTest {
     }
 
     @Test
-    fun `global exposes serverId from sam_server cookie`() {
+    fun `global exposes matching configured serverId from sam_server cookie`() {
         seedWorld()
 
-        mockMvc().perform(get("/api/front-info").cookie(Cookie("sam_server", "smain")))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.global.serverId").value("smain"))
+        listOf("current", "a".repeat(48)).forEach { serverId ->
+            mockMvc(serverId = serverId).perform(get("/api/front-info").cookie(Cookie("sam_server", serverId)))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.global.serverId").value(serverId))
+        }
     }
 
     @Test
-    fun `global serverId is absent without sam_server cookie`() {
+    fun `global falls back to configured serverId for mismatched and uppercase cookies`() {
         seedWorld()
 
-        mockMvc().perform(get("/api/front-info"))
+        listOf("s1", "PEP").forEach { cookieServerId ->
+            mockMvc(serverId = "pep").perform(get("/api/front-info").cookie(Cookie("sam_server", cookieServerId)))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.global.serverId").value("pep"))
+        }
+    }
+
+    @Test
+    fun `global falls back to configured serverId without sam_server cookie`() {
+        seedWorld()
+
+        mockMvc(serverId = "pep").perform(get("/api/front-info"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.global.serverId").doesNotExist())
+            .andExpect(jsonPath("$.global.serverId").value("pep"))
+    }
+
+    @Test
+    fun `global omits cookie serverId when configured ID is absent or invalid`() {
+        seedWorld()
+
+        listOf("", "PEP", "a".repeat(49)).forEach { configuredServerId ->
+            mockMvc(serverId = configuredServerId).perform(get("/api/front-info").cookie(Cookie("sam_server", "pep")))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.global.serverId").doesNotExist())
+        }
     }
 }

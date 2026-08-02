@@ -263,6 +263,29 @@ class AdminVersionDeployTest {
     }
 
     @Test
+    fun `48자 mixed-case public ID는 deployer에 소문자로 표준화해 전달한다`() {
+        val rawId = "Ab".repeat(24)
+        val canonicalId = rawId.lowercase()
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"$canonicalId","name":"긴 ID 서버","project":"opensamguk-s$canonicalId"}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer(
+                """{"id":"$rawId","name":"긴 ID 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""",
+            )
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertTrue(request.body.contains(""""id":"$canonicalId""""))
+            assertFalse(request.body.contains(""""id":"$rawId""""))
+        }
+    }
+
+    @Test
     fun `알파 서버 생성은 0기를 허용한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
@@ -362,12 +385,12 @@ class AdminVersionDeployTest {
     }
 
     @Test
-    fun `deployer registry can resolve runtime-created servers without gateway restart`() {
+    fun `deployer registry canonicalizes runtime-created mixed-case IDs before default Docker names`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
             deployer.enqueue(
                 200,
-                """[{"id":"s9","name":"런타임 서버","generation":9,"gameApiUrl":"http://s9-api:8081","gameEngineUrl":"http://s9-engine:8082","deployProject":"opensamguk-s9"}]""",
+                """[{"id":"A1","name":"런타임 서버","generation":9}]""",
             )
             deployer.enqueue(
                 200,
@@ -375,15 +398,15 @@ class AdminVersionDeployTest {
             )
             val svc = DeployService(deployer.url(), "tok", registry(json = ""), mapper)
 
-            val status = svc.status("s9")
+            val status = svc.status("A1")
 
             assertTrue(status.configured)
-            assertEquals("s9", status.serverId)
+            assertEquals("a1", status.serverId)
             assertEquals("v8", status.currentTag)
             assertEquals("v9", status.latestTag)
             assertTrue(status.promotionAvailable)
             assertEquals("/servers", deployer.requests[0].path)
-            assertEquals("/status?project=opensamguk-s9", deployer.requests[1].path)
+            assertEquals("/status?project=opensamguk-sa1", deployer.requests[1].path)
         }
     }
 
@@ -441,6 +464,36 @@ class AdminVersionDeployTest {
             }
             assertEquals(0, deployer.requests.size)
         }
+    }
+
+    @Test
+    fun `49자 public 서버 ID는 deployer 호출 전에 명확히 거부한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val id = "a".repeat(49)
+
+            val result = svc.createServer(
+                """{"id":"$id","name":"too long","gameApiPort":"8101","webGamePort":"3101"}""",
+            )
+
+            assertEquals(400, result.status)
+            assertTrue(result.body.contains("서버 id는 최대 48자여야 합니다."))
+            assertEquals(0, deployer.requests.size)
+        }
+    }
+
+    @Test
+    fun `fallback registry는 ID를 정규화하고 invalid 또는 49자 ID를 fail closed한다`() {
+        val longId = "a".repeat(49)
+        val svc = DeployService(
+            "",
+            "",
+            registry(json = """[{"id":"A1","name":"알파"},{"id":"bad-id"},{"id":"$longId"}]"""),
+            mapper,
+        )
+
+        assertEquals(listOf("a1"), svc.registeredServers().map { it.id })
     }
 
     @Test

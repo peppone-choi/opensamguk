@@ -290,9 +290,60 @@ jobs:
             [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
           }
 
+          read_world_clock() {
+            local postgres_container="$1"
+            docker exec "$postgres_container" sh -c \
+              'exec psql -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}" -tA -F "$1" -c "$2"' \
+              sh '|' "WITH clock_state AS (
+                SELECT current_year * 100 + current_month AS visible_clock,
+                       EXTRACT(EPOCH FROM COALESCE(NULLIF(meta ->> 'lastTurnTime', '')::timestamptz, start_time, now()))::bigint AS last_turn_epoch,
+                       tick_seconds
+                FROM world_state
+              )
+              SELECT visible_clock,
+                     last_turn_epoch,
+                     last_turn_epoch + tick_seconds,
+                     EXTRACT(EPOCH FROM now())::bigint
+              FROM clock_state;" 2>/dev/null
+          }
+
+          verify_world_clock_advance() {
+            local public_server="$1"
+            local state_before="$2"
+            local state_after="$3"
+            local clock_before last_turn_before due_before observed_before
+            local clock_after last_turn_after due_after observed_after
+
+            if [[ -z "$state_before" && -z "$state_after" ]]; then
+              echo "${public_server} has no world_state yet; turn-advance verification skipped"
+              return 0
+            fi
+            IFS='|' read -r clock_before last_turn_before due_before observed_before <<< "$state_before"
+            IFS='|' read -r clock_after last_turn_after due_after observed_after <<< "$state_after"
+            for value in "$clock_before" "$last_turn_before" "$due_before" "$observed_before" "$clock_after" "$last_turn_after" "$due_after" "$observed_after"; do
+              if [[ ! "$value" =~ ^[0-9]+$ ]]; then
+                echo "ERROR: ${public_server} returned an invalid world clock sample" >&2
+                return 1
+              fi
+            done
+
+            echo "${public_server} world clock: $clock_before -> $clock_after"
+            if [[ "$last_turn_before" != "$last_turn_after" ]]; then
+              echo "${public_server} turn-advance: OK"
+              return 0
+            fi
+            if (( observed_after >= due_after )); then
+              echo "ERROR: ${public_server} next turn was due but lastTurnTime did not advance in 75s" >&2
+              return 1
+            fi
+            echo "${public_server} turn-advance not observed within 75s; next turn is not due yet"
+            return 0
+          }
+
           declare -a RUNNING_INTERNAL_SERVERS=()
           registered_servers=0
           for envf in servers/s*.env; do
+            case "$envf" in *.bak*|*.example) continue;; esac
             internal_server="$(basename "$envf" .env)"
             public_server="${internal_server#s}"
             if [[ "$internal_server" != "s${public_server}" || ! "$public_server" =~ ^[a-z0-9]+$ ]]; then
@@ -345,19 +396,14 @@ jobs:
           else
             declare -A CLOCK_BEFORE=()
             for internal_server in "${RUNNING_INTERNAL_SERVERS[@]}"; do
-              CLOCK_BEFORE["$internal_server"]="$(docker exec "${internal_server}-game-postgres" psql -U sammo -d sammo -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')"
+              CLOCK_BEFORE["$internal_server"]="$(read_world_clock "${internal_server}-game-postgres")"
             done
             sleep 75
             for internal_server in "${RUNNING_INTERNAL_SERVERS[@]}"; do
               public_server="${internal_server#s}"
-              clock_after="$(docker exec "${internal_server}-game-postgres" psql -U sammo -d sammo -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')"
+              clock_after="$(read_world_clock "${internal_server}-game-postgres")"
               clock_before="${CLOCK_BEFORE[$internal_server]}"
-              echo "${public_server} world clock: $clock_before -> $clock_after"
-              if [[ -n "$clock_before" && "$clock_before" != "$clock_after" ]]; then
-                echo "${public_server} turn-advance: OK"
-              else
-                echo "INFO: ${public_server} clock unchanged in 75s ($clock_before -> $clock_after) — 턴 주기상 정상 가능, 동결 의심 시 엔진 로그 확인"
-              fi
+              verify_world_clock_advance "$public_server" "$clock_before" "$clock_after"
             done
           fi
           echo "=== Verify done ==="

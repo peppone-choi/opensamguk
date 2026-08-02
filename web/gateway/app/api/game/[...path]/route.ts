@@ -20,14 +20,14 @@ function isTurnSsePath(path: string[]): boolean {
 }
 
 function defaultGameApiOrigin(): string | undefined {
-    const defaultServerId = getServers()[0]?.id;
-    return defaultServerId ? resolveGameApiOrigin(defaultServerId) ?? process.env.GAME_API_ORIGIN : process.env.GAME_API_ORIGIN;
+  const defaultServerId = getServers()[0]?.id;
+  return defaultServerId ? resolveGameApiOrigin(defaultServerId) ?? process.env.GAME_API_ORIGIN : process.env.GAME_API_ORIGIN;
 }
 
 function resolveSelectedGameApiOrigin(serverId: string | undefined): string | undefined {
-    if (serverId === undefined) return defaultGameApiOrigin();
-    if (!isPathServerId(serverId)) return undefined;
-    return resolveGameApiOrigin(serverId);
+  if (serverId === undefined) return defaultGameApiOrigin();
+  if (!isPathServerId(serverId)) return undefined;
+  return resolveGameApiOrigin(serverId);
 }
 
 function sseHeaders(contentType = 'text/event-stream;charset=UTF-8'): HeadersInit {

@@ -10,11 +10,11 @@ import { normalizeGamePathname, useServerId } from '../lib/serverGameUrl';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const serverId = useServerId();
+  const serverId = useServerId();
     const refresh = useCallback(() => {
         window.location.reload();
     }, []);
-    const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
+  const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
     const isMainPage = normalizedPathname === '/game';
 
     useSSE(refresh);

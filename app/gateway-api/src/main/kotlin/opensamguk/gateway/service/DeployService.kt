@@ -74,6 +74,7 @@ class DeployService(
         "RESET_PRE_RESERVE_OPEN",
     )
     private val serverIdRegex = Regex("^[A-Za-z0-9]+$")
+    private val maxPublicServerIdLength = 48
     private val portRegex = Regex("^[0-9]{1,5}$")
     private val reservedPublicServerIds = setOf(
         "all",
@@ -124,7 +125,7 @@ class DeployService(
     private fun deployerBase() = deployerUrl.trimEnd('/')
 
     fun registeredServers(): List<ServerDef> =
-        fetchDeployerServers() ?: registry.all()
+        canonicalServerDefs(fetchDeployerServers() ?: registry.all())
 
     /** deployer 상태: 대상 서버의 현재 IMAGE_TAG + 배포 가능한 태그 목록. serverId 미지정 시 기본 서버. */
     fun status(serverId: String?): DeployStatus {
@@ -284,7 +285,9 @@ class DeployService(
     /** serverId 미지정이면 기본 서버, 아니면 레지스트리 조회. */
     private fun resolve(serverId: String?): ServerDef? {
         if (serverId.isNullOrBlank()) return registeredServers().firstOrNull()
-        return registry.find(serverId) ?: registeredServers().firstOrNull { it.id == serverId }
+        val canonicalId = canonicalServerId(serverId) ?: return null
+        return canonicalServerDefs(registry.all()).firstOrNull { it.id == canonicalId }
+            ?: registeredServers().firstOrNull { it.id == canonicalId }
     }
 
     private fun proxyEnvGet(scope: String, serverId: String? = null, path: String): EnvProxyResponse {
@@ -420,6 +423,8 @@ class DeployService(
             when {
                 id.isBlank() || !serverIdRegex.matches(id) ->
                     json(400, """{"ok":false,"message":"서버 id가 올바르지 않습니다."}""")
+                id.length > maxPublicServerIdLength ->
+                    json(400, """{"ok":false,"message":"서버 id는 최대 48자여야 합니다."}""")
                 canonicalId in reservedGameRouteIds ->
                     json(400, """{"ok":false,"message":"서버 id ${canonicalId}은 게임 경로와 충돌해 사용할 수 없습니다."}""")
                 canonicalId in reservedPublicServerIds ->
@@ -535,8 +540,8 @@ class DeployService(
         val root = objectMapper.readTree(raw ?: "[]")
         if (!root.isArray) return null
         return root.mapNotNull { node ->
-            val id = text(node, "id") ?: return@mapNotNull null
-            val fallback = registry.find(id)
+            val id = canonicalServerId(text(node, "id") ?: return@mapNotNull null) ?: return@mapNotNull null
+            val fallback = canonicalServerDefs(registry.all()).firstOrNull { it.id == id }
             ServerDef(
                 id = id,
                 name = text(node, "name") ?: fallback?.name ?: id,
@@ -548,6 +553,15 @@ class DeployService(
             )
         }
     }
+
+    private fun canonicalServerDefs(servers: List<ServerDef>): List<ServerDef> =
+        servers.mapNotNull { server ->
+            canonicalServerId(server.id)?.let { id -> server.copy(id = id) }
+        }
+
+    private fun canonicalServerId(rawId: String): String? =
+        rawId.takeIf { serverIdRegex.matches(it) && it.length <= maxPublicServerIdLength }
+            ?.lowercase()
 
     private fun text(node: JsonNode, vararg fields: String): String? =
         fields.asSequence()
@@ -577,14 +591,14 @@ class DeployService(
         return objectMapper.writeValueAsString(objectNode)
     }
 
-    private fun defaultDeployProject(id: String): String =
-        "opensamguk-s$id"
+    private fun defaultDeployProject(canonicalId: String): String =
+        "opensamguk-s$canonicalId"
 
-    private fun defaultGameApiUrl(id: String): String =
-        "http://s$id-game-api:8081"
+    private fun defaultGameApiUrl(canonicalId: String): String =
+        "http://s$canonicalId-game-api:8081"
 
-    private fun defaultGameEngineUrl(id: String): String =
-        "http://s$id-game-engine:8082"
+    private fun defaultGameEngineUrl(canonicalId: String): String =
+        "http://s$canonicalId-game-engine:8082"
 
     private fun validPort(value: String): Boolean {
         if (!portRegex.matches(value)) return false

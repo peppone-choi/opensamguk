@@ -20,12 +20,12 @@ function ensureGameBase(value: string): string {
 }
 
 export function isPathServerId(serverId: string): boolean {
-    return PATH_SERVER_ID.test(serverId);
+  return PATH_SERVER_ID.test(serverId);
 }
 
 export function fallbackGameUrlForServer(serverId: string): string {
-    const id = serverId;
-    return isPathServerId(id) ? `/game/${encodeURIComponent(id)}` : `/game?server=${encodeURIComponent(id)}`;
+  const id = serverId;
+  return isPathServerId(id) ? `/game/${encodeURIComponent(id)}` : `/game?server=${encodeURIComponent(id)}`;
 }
 
 export function resolveServerGameBase(
@@ -33,7 +33,7 @@ export function resolveServerGameBase(
     serverId: string,
     fallback = '/game',
 ): string {
-    const id = serverId;
+  const id = serverId;
     const raw = gameUrl?.trim() || fallbackGameUrlForServer(id) || fallback;
     const gameBase = ensureGameBase(raw || fallback);
     if (!isPathServerId(id)) return gameBase;

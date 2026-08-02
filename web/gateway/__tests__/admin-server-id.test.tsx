@@ -52,9 +52,12 @@ describe('admin server ID validation', () => {
 
         expect(id).toHaveAttribute('placeholder', 'pep');
         expect(id).toHaveAttribute('pattern', '[A-Za-z0-9]+');
-        expect(screen.getByText('영문과 숫자만 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장되며 all과 게임 경로 예약어는 사용할 수 없습니다.')).toBeInTheDocument();
+        expect(id).toHaveAttribute('maxLength', '48');
+        expect(screen.getByText('영문과 숫자 48자 이내로 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장되며 all과 게임 경로 예약어는 사용할 수 없습니다.')).toBeInTheDocument();
 
-        for (const invalidId of ['', 'pep-1', 'pep_1', 'pep/1', '한글']) {
+        const tooLongId = `${'Ab'.repeat(24)}a`;
+
+        for (const invalidId of ['', 'pep-1', 'pep_1', 'pep/1', '한글', tooLongId]) {
             fireEvent.change(id, { target: { value: invalidId } });
             expect(create).toBeDisabled();
         }
@@ -109,7 +112,7 @@ describe('admin server ID validation', () => {
             }
         }
 
-        for (const validId of ['pep', 'A1', 's1', 'current']) {
+        for (const validId of ['pep', 'A1', 's1', 'current', 'Ab'.repeat(24)]) {
             fireEvent.change(id, { target: { value: validId } });
             expect(create).toBeEnabled();
         }

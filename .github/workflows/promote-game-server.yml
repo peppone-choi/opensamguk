@@ -76,6 +76,7 @@ jobs:
           if [[ "$PUBLIC_SERVER" == "all" ]]; then
             mapfile -t INTERNAL_SERVERS < <(
               find servers -maxdepth 1 -type f -name 's*.env' \
+                ! -name '*.bak*' ! -name '*.example' \
                 -exec basename {} .env \; | sort
             )
             PUBLIC_SERVERS=()

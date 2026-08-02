@@ -8,7 +8,7 @@ import { normalizeGamePathname, resolveServerGamePath, useServerId } from '../li
 export default function Sidebar() {
     const pathname = usePathname();
     const serverId = useServerId();
-    const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
+  const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
 
     return (
         <nav className="game-sidebar" aria-label="Main">
