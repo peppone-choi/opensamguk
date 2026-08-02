@@ -77,14 +77,20 @@ jobs:
           TURN_TERM_INPUT="$INPUT_TURN_TERM"
           EXPECTED_CITY_COUNT="$INPUT_EXPECTED_CITY_COUNT"
           EXPECTED_FIRST_CITY="$INPUT_EXPECTED_FIRST_CITY"
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+
+          is_reserved_public_server_id() {
+            local server_id="$1"
+            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
+          }
 
           if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]+$ ]]; then
             echo "Invalid server id: $RAW_SERVER" >&2
             exit 2
           fi
           PUBLIC_SERVER="${RAW_SERVER,,}"
-          if [[ "$PUBLIC_SERVER" == "all" ]]; then
-            echo "Reserved public server id: all" >&2
+          if is_reserved_public_server_id "$PUBLIC_SERVER"; then
+            echo "Reserved public server id: $PUBLIC_SERVER" >&2
             exit 2
           fi
           if [[ "$CONFIRM" != "RESET $PUBLIC_SERVER" ]]; then

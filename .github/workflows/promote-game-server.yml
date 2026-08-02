@@ -50,6 +50,12 @@ jobs:
           RAW_SERVER="$INPUT_SERVER"
           TAG="$INPUT_TAG"
           INCLUDE_ENGINE="$INPUT_INCLUDE_ENGINE"
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+
+          is_reserved_public_server_id() {
+            local server_id="$1"
+            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
+          }
 
           if [[ ! "$TAG" =~ ^[A-Za-z0-9._-]+$ ]]; then
             echo "Invalid tag: $TAG" >&2
@@ -75,16 +81,19 @@ jobs:
             PUBLIC_SERVERS=()
             for internal_server in "${INTERNAL_SERVERS[@]}"; do
               public_server="${internal_server#s}"
-              if [[ "$public_server" == "all" ]]; then
-                echo "Reserved public server id in env file: servers/${internal_server}.env" >&2
-                exit 2
-              fi
               if [[ ! "$public_server" =~ ^[a-z0-9]+$ ]]; then
                 echo "Invalid or noncanonical game server env file: servers/${internal_server}.env" >&2
                 exit 2
               fi
+              if is_reserved_public_server_id "$public_server"; then
+                echo "Reserved public server id in env file: servers/${internal_server}.env" >&2
+                exit 2
+              fi
               PUBLIC_SERVERS+=("$public_server")
             done
+          elif is_reserved_public_server_id "$PUBLIC_SERVER"; then
+            echo "Reserved public server id: $PUBLIC_SERVER" >&2
+            exit 2
           else
             PUBLIC_SERVERS=("$PUBLIC_SERVER")
           fi

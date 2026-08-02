@@ -162,12 +162,23 @@ jobs:
           docker exec -e DEPLOYER_TOKEN="$DEPLOYER_TOKEN" opensamguk-deployer \
             sh -c 'wget -qO- --header="Authorization: Bearer $DEPLOYER_TOKEN" "http://localhost:9000/env/shared"' \
             | grep -q '"ok":true'
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+
+          is_reserved_public_server_id() {
+            local server_id="$1"
+            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
+          }
+
           shopt -s nullglob
           for envf in servers/s*.env; do
             case "$envf" in *.bak*|*.example) continue;; esac
             internal_server="$(basename "$envf" .env)"
             public_server="${internal_server#s}"
-            if [[ "$internal_server" != "s${public_server}" || ! "$public_server" =~ ^[a-z0-9]+$ || "$public_server" == "all" ]]; then
+            if [[ "$internal_server" != "s${public_server}" || ! "$public_server" =~ ^[a-z0-9]+$ ]]; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              exit 1
+            fi
+            if is_reserved_public_server_id "$public_server"; then
               echo "Invalid or reserved game server env file: $envf" >&2
               exit 1
             fi
@@ -272,12 +283,23 @@ jobs:
           STACK="$HOME/opensamguk-docker"
           cd "$STACK"
           shopt -s nullglob
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+
+          is_reserved_public_server_id() {
+            local server_id="$1"
+            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
+          }
+
           declare -a RUNNING_INTERNAL_SERVERS=()
           registered_servers=0
           for envf in servers/s*.env; do
             internal_server="$(basename "$envf" .env)"
             public_server="${internal_server#s}"
-            if [[ "$internal_server" != "s${public_server}" || ! "$public_server" =~ ^[a-z0-9]+$ || "$public_server" == "all" ]]; then
+            if [[ "$internal_server" != "s${public_server}" || ! "$public_server" =~ ^[a-z0-9]+$ ]]; then
+              echo "Invalid or reserved game server env file: $envf" >&2
+              false
+            fi
+            if is_reserved_public_server_id "$public_server"; then
               echo "Invalid or reserved game server env file: $envf" >&2
               false
             fi
