@@ -100,7 +100,7 @@ services:
       REDIS_PORT: 6379
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-che:scenario_2}
-      SERVER_ID: ${SERVER_ID:-s1}
+      SERVER_ID: ${SERVER_ID:-pep}
       SERVER_NAME: ${SERVER_NAME:-통일 서버}
       SERVER_GENERATION: ${SERVER_GENERATION:-1}
       # JWT — game-api VERIFIES tokens issued by gateway-api. SAME secret, verify-only.
@@ -179,7 +179,7 @@ services:
       # Server-only proxy target (NEXT_PUBLIC_GAME_URL is baked into the image at build).
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
       GAME_API_ORIGIN: ${GAME_API_ORIGIN:-http://game-api:8081}
-      SERVER_ID: ${SERVER_ID:-s1}
+      SERVER_ID: ${SERVER_ID:-pep}
       SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-[]}
     depends_on:
       - gateway-api
@@ -200,7 +200,7 @@ services:
       TZ: ${TZ:-Asia/Seoul}
       NODE_ENV: production
       PORT: 3001
-      SERVER_ID: ${SERVER_ID:-s1}
+      SERVER_ID: ${SERVER_ID:-pep}
       GAME_API_URL: ${GAME_API_URL:-http://game-api:8081}
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
     depends_on:

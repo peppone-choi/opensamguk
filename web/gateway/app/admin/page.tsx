@@ -857,7 +857,7 @@ function ServerLifecycleControl({
 }
 
 function CreateServerControl({ onCreated }: { onCreated: () => void }) {
-    const [id, setId] = useState('s1');
+    const [id, setId] = useState('pep');
     const [name, setName] = useState('통일 서버');
     const [generation, setGeneration] = useState('1');
     const [gameApiPort, setGameApiPort] = useState('8101');
