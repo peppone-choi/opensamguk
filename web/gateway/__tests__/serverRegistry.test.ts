@@ -17,38 +17,72 @@ afterAll(() => {
 });
 
 describe('serverRegistry canonical IDs', () => {
-  it('exposes only lowercase alphanumeric runtime registry entries', async () => {
+  it('resolves a fully validated lowercase alphanumeric runtime registry', async () => {
     process.env.SERVER_REGISTRY_JSON = JSON.stringify([
-      { id: 'pep', gameApiUrl: 'http://pep-game-api' },
-      { id: 'a1', gameApiUrl: 'http://a1-game-api' },
-      { id: 'A1', gameApiUrl: 'http://uppercase-game-api' },
-      { id: 'pep-id', gameApiUrl: 'http://hyphen-game-api' },
-      { id: 'pep_id', gameApiUrl: 'http://underscore-game-api' },
-      { id: ' pep ', gameApiUrl: 'http://spaced-game-api' },
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+      { id: 'a1', gameApiUrl: 'http://sa1-game-api:8081' },
     ]);
 
     const registry = await import('@/lib/serverRegistry');
 
     expect(registry.getServers().map((server) => server.id)).toEqual(['pep', 'a1']);
-    expect(registry.resolveGameApiOrigin('pep')).toBe('http://pep-game-api');
+    expect(registry.resolveGameApiOrigin('pep')).toBe('http://spep-game-api:8081');
     expect(registry.resolveGameApiOrigin('A1')).toBeUndefined();
   });
 
-  it('filters noncanonical baked registry entries too', async () => {
+  it('fails closed when any runtime entry is invalid instead of falling back to a valid prefix', async () => {
+    process.env.SERVER_REGISTRY_JSON = JSON.stringify([
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+      { id: 'main', gameApiUrl: 'http://smain-game-api:8081' },
+    ]);
+
+    const registry = await import('@/lib/serverRegistry');
+
+    expect(registry.getServers()).toEqual([]);
+    expect(registry.resolveGameApiOrigin('pep')).toBeUndefined();
+  });
+
+  it('fails closed on canonical collisions and bad origins', async () => {
+    process.env.SERVER_REGISTRY_JSON = JSON.stringify([
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+    ]);
+
+    let registry = await import('@/lib/serverRegistry');
+    expect(registry.getServers()).toEqual([]);
+
+    vi.resetModules();
+    process.env.SERVER_REGISTRY_JSON = JSON.stringify([
+      { id: 'pep', gameApiUrl: 'http://wrong-game-api:8081' },
+    ]);
+    registry = await import('@/lib/serverRegistry');
+    expect(registry.getServers()).toEqual([]);
+  });
+
+  it('fails closed for invalid baked data too', async () => {
     vi.doMock('@/config/servers.json', () => ({
       default: {
         servers: [
-          { id: 'pep' },
-          { id: 'a1' },
-          { id: 'A1' },
-          { id: 'pep-id' },
-          { id: 'pep_id' },
+          { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+          { id: 'main', gameApiUrl: 'http://smain-game-api:8081' },
         ],
       },
     }));
 
     const registry = await import('@/lib/serverRegistry');
 
-    expect(registry.getServers().map((server) => server.id)).toEqual(['pep', 'a1']);
+    expect(registry.getServers()).toEqual([]);
+  });
+
+  it('uses the same validated contract for object-form registries', async () => {
+    process.env.SERVER_REGISTRY_JSON = JSON.stringify({
+      pep: 'http://spep-game-api:8081',
+      current: { gameApiUrl: 'http://scurrent-game-api:8081' },
+    });
+
+    const registry = await import('@/lib/serverRegistry');
+
+    expect(registry.getServers().map((server) => server.id)).toEqual(['pep', 'current']);
+    expect(registry.resolveGameApiOrigin('current')).toBe('http://scurrent-game-api:8081');
   });
 });

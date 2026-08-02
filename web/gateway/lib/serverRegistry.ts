@@ -9,47 +9,85 @@ export interface ServerEntry {
     gameApiUrl?: string;
 }
 
-const BAKED = ((serversData.servers as unknown[]) ?? [])
-  .map((entry) => normalizeServerEntry(entry as Record<string, unknown>))
-  .filter((s) => isPathServerId(s.id));
+type RuntimeEntries =
+    | { configured: false; entries: ServerEntry[] }
+    | { configured: true; entries: ServerEntry[] };
 
-function runtimeEntries(): ServerEntry[] {
-    const raw = process.env.SERVER_REGISTRY_JSON;
-    if (!raw) return [];
-    try {
-        const parsed = JSON.parse(raw);
-        const out: ServerEntry[] = [];
-        if (Array.isArray(parsed)) {
-            for (const e of parsed) {
-                if (e && typeof e.id === 'string') {
-                    out.push(normalizeServerEntry(e as Record<string, unknown>));
-                }
-            }
-        } else if (parsed && typeof parsed === 'object') {
-            for (const [id, v] of Object.entries(parsed)) {
-                if (typeof v === 'string') {
-                    out.push(normalizeServerEntry({ id, gameApiUrl: v }));
-                } else if (v && typeof v === 'object') {
-                    out.push(normalizeServerEntry({ id, ...(v as Record<string, unknown>) }));
-                }
-            }
+const BAKED = parseEntries(serversData.servers) ?? [];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function expectedGameApiUrl(id: string): string {
+    return `http://s${id}-game-api:8081`;
+}
+
+function parseEntries(value: unknown): ServerEntry[] | undefined {
+    const entries: ServerEntry[] = [];
+    const seenIds = new Set<string>();
+    const append = (id: string, entry: unknown): boolean => {
+        const normalized = normalizeServerEntry(id, entry);
+        if (!normalized || seenIds.has(id)) return false;
+        seenIds.add(id);
+        entries.push(normalized);
+        return true;
+    };
+
+    if (Array.isArray(value)) {
+        for (const entry of value) {
+            if (!isRecord(entry) || typeof entry.id !== 'string' || !append(entry.id, entry)) return undefined;
         }
-    return out.filter((s) => isPathServerId(s.id));
+        return entries;
+    }
+    if (!isRecord(value)) return undefined;
+    for (const [id, entry] of Object.entries(value)) {
+        if (!append(id, entry)) return undefined;
+    }
+    return entries;
+}
+
+function runtimeEntries(): RuntimeEntries {
+    const raw = process.env.SERVER_REGISTRY_JSON;
+    if (!raw || raw.trim() === '') return { configured: false, entries: [] };
+    try {
+        const parsed: unknown = JSON.parse(raw);
+        return { configured: true, entries: parseEntries(parsed) ?? [] };
     } catch {
-        return [];
+        return { configured: true, entries: [] };
     }
 }
 
-function normalizeServerEntry(entry: Record<string, unknown>): ServerEntry {
-  const id = typeof entry.id === 'string' ? entry.id : '';
-    const name = typeof entry.name === 'string' && entry.name.trim() ? entry.name.trim() : id;
+function normalizeServerEntry(id: string, value: unknown): ServerEntry | undefined {
+    if (!isPathServerId(id)) return undefined;
+    const entry = typeof value === 'string' ? { gameApiUrl: value } : value;
+    if (!isRecord(entry)) return undefined;
+    if ('id' in entry && (typeof entry.id !== 'string' || entry.id !== id)) return undefined;
+
+    const expectedApiUrl = expectedGameApiUrl(id);
+    if (
+        'gameApiUrl' in entry &&
+        (typeof entry.gameApiUrl !== 'string' || entry.gameApiUrl !== expectedApiUrl)
+    ) {
+        return undefined;
+    }
+    const rawName = entry.name;
+    const rawGameUrl = entry.gameUrl;
+    if (rawName !== undefined && typeof rawName !== 'string') return undefined;
+    if (rawGameUrl !== undefined && typeof rawGameUrl !== 'string') return undefined;
+
+    const name = typeof rawName === 'string' ? rawName.trim() || id : id;
+    const gameUrl = typeof rawGameUrl === 'string' ? rawGameUrl.trim() || undefined : undefined;
     const generation = parseGeneration(entry.generation);
-    const fallbackGameUrl = fallbackGameUrlForServer(id);
-    const rawGameUrl = typeof entry.gameUrl === 'string' && entry.gameUrl.trim() ? entry.gameUrl.trim() : undefined;
-    const gameUrl = resolveServerGameBase(rawGameUrl, id, fallbackGameUrl);
-    const gameApiUrl =
-        typeof entry.gameApiUrl === 'string' && entry.gameApiUrl.trim() ? entry.gameApiUrl.trim() : undefined;
-    return { id, name, generation, gameUrl, gameApiUrl };
+    if ('generation' in entry && generation === undefined) return undefined;
+
+    return {
+        id,
+        name,
+        generation,
+        gameUrl: resolveServerGameBase(gameUrl, id, fallbackGameUrlForServer(id)),
+        gameApiUrl: expectedApiUrl,
+    };
 }
 
 function parseGeneration(value: unknown): number | undefined {
@@ -63,17 +101,13 @@ function parseGeneration(value: unknown): number | undefined {
 
 export function getServers(): ServerEntry[] {
     const runtime = runtimeEntries();
-    return runtime.length > 0 ? runtime : BAKED;
+    return runtime.configured ? runtime.entries : BAKED;
 }
 
 export function getServer(id: string): ServerEntry | undefined {
-    return getServers().find((s) => s.id === id);
+    return getServers().find((server) => server.id === id);
 }
 
 export function resolveGameApiOrigin(id: string): string | undefined {
-    const server = getServer(id);
-    if (server?.gameApiUrl) return server.gameApiUrl;
-    const defaultID = getServers()[0]?.id;
-    if (id === defaultID && process.env.GAME_API_ORIGIN) return process.env.GAME_API_ORIGIN;
-    return undefined;
+    return getServer(id)?.gameApiUrl;
 }

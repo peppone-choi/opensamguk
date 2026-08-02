@@ -3,11 +3,13 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 const originalGameApiUrl = process.env.GAME_API_URL;
 const originalGameApiOrigin = process.env.GAME_API_ORIGIN;
 const originalRegistry = process.env.SERVER_REGISTRY_JSON;
+const originalServerId = process.env.SERVER_ID;
 
 beforeEach(() => {
   process.env.GAME_API_URL = 'http://default-game-api';
   delete process.env.GAME_API_ORIGIN;
   delete process.env.SERVER_REGISTRY_JSON;
+  delete process.env.SERVER_ID;
 });
 
 afterEach(() => {
@@ -21,52 +23,67 @@ afterAll(() => {
   else process.env.GAME_API_ORIGIN = originalGameApiOrigin;
   if (originalRegistry === undefined) delete process.env.SERVER_REGISTRY_JSON;
   else process.env.SERVER_REGISTRY_JSON = originalRegistry;
+  if (originalServerId === undefined) delete process.env.SERVER_ID;
+  else process.env.SERVER_ID = originalServerId;
 });
 
 describe('game server registry canonical IDs', () => {
-  it('exposes only lowercase alphanumeric runtime entries up to 48 characters', async () => {
+  it('resolves a fully validated lowercase alphanumeric runtime registry', async () => {
     const maxLengthId = 'a'.repeat(48);
-    const tooLongId = 'a'.repeat(49);
     process.env.SERVER_REGISTRY_JSON = JSON.stringify([
-      { id: 'pep', gameApiUrl: 'http://pep-game-api' },
-      { id: maxLengthId, gameApiUrl: 'http://max-game-api' },
-      { id: 'A1', gameApiUrl: 'http://uppercase-game-api' },
-      { id: tooLongId, gameApiUrl: 'http://too-long-game-api' },
-      { id: 'pep-id', gameApiUrl: 'http://hyphen-game-api' },
-      { id: 'pep_id', gameApiUrl: 'http://underscore-game-api' },
-      { id: ' pep ', gameApiUrl: 'http://spaced-game-api' },
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+      { id: maxLengthId, gameApiUrl: `http://s${maxLengthId}-game-api:8081` },
     ]);
 
     const registry = await import('@/lib/serverRegistry');
 
-    expect(registry.resolveGameApiUrl('pep')).toBe('http://pep-game-api');
-    expect(registry.resolveGameApiUrl(maxLengthId)).toBe('http://max-game-api');
-    for (const invalidId of ['A1', tooLongId, 'pep-id', 'pep_id', ' pep ', 'stale']) {
-      expect(registry.resolveGameApiUrl(invalidId)).toBeUndefined();
-    }
+    expect(registry.resolveGameApiUrl('pep')).toBe('http://spep-game-api:8081');
+    expect(registry.resolveGameApiUrl(maxLengthId)).toBe(`http://s${maxLengthId}-game-api:8081`);
   });
 
-  it('filters noncanonical IDs from object-form runtime registries too', async () => {
+  it('fails closed when a mixed registry contains an invalid public ID', async () => {
+    process.env.SERVER_REGISTRY_JSON = JSON.stringify([
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+      { id: 'main', gameApiUrl: 'http://smain-game-api:8081' },
+    ]);
+
+    const registry = await import('@/lib/serverRegistry');
+
+    expect(registry.resolveGameApiUrl('pep')).toBeUndefined();
+  });
+
+  it('fails closed on canonical collisions and bad origins', async () => {
+    process.env.SERVER_REGISTRY_JSON = JSON.stringify([
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+    ]);
+
+    let registry = await import('@/lib/serverRegistry');
+    expect(registry.resolveGameApiUrl('pep')).toBeUndefined();
+
+    vi.resetModules();
+    process.env.SERVER_REGISTRY_JSON = JSON.stringify([
+      { id: 'pep', gameApiUrl: 'http://wrong-game-api:8081' },
+    ]);
+    registry = await import('@/lib/serverRegistry');
+    expect(registry.resolveGameApiUrl('pep')).toBeUndefined();
+  });
+
+  it('uses the same atomic contract for object-form runtime registries', async () => {
     process.env.SERVER_REGISTRY_JSON = JSON.stringify({
-      pep: 'http://pep-game-api',
-      a1: { gameApiUrl: 'http://a1-game-api' },
-      A1: 'http://uppercase-game-api',
-      'pep-id': 'http://hyphen-game-api',
-      pep_id: 'http://underscore-game-api',
+      pep: 'http://spep-game-api:8081',
+      a1: { gameApiUrl: 'http://sa1-game-api:8081' },
     });
 
     const registry = await import('@/lib/serverRegistry');
 
-    expect(registry.resolveGameApiUrl('pep')).toBe('http://pep-game-api');
-    expect(registry.resolveGameApiUrl('a1')).toBe('http://a1-game-api');
-    expect(registry.resolveGameApiUrl('A1')).toBeUndefined();
-    expect(registry.resolveGameApiUrl('pep-id')).toBeUndefined();
-    expect(registry.resolveGameApiUrl('pep_id')).toBeUndefined();
+    expect(registry.resolveGameApiUrl('pep')).toBe('http://spep-game-api:8081');
+    expect(registry.resolveGameApiUrl('a1')).toBe('http://sa1-game-api:8081');
   });
 
   it('uses the default only for an absent selector', async () => {
     process.env.SERVER_REGISTRY_JSON = JSON.stringify([
-      { id: 'pep', gameApiUrl: 'http://pep-game-api' },
+      { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
     ]);
 
     const registry = await import('@/lib/serverRegistry');
@@ -76,5 +93,23 @@ describe('game server registry canonical IDs', () => {
     expect(registry.resolveGameApiUrl('main')).toBeUndefined();
     expect(registry.resolveGameApiUrl('current')).toBeUndefined();
     expect(registry.resolveGameApiUrl('stale')).toBeUndefined();
+  });
+
+  it('uses GAME_API_URL for this canonical default-compose server without a registry', async () => {
+    process.env.GAME_API_URL = 'http://game-api:8081';
+    process.env.SERVER_ID = 's1';
+
+    const registry = await import('@/lib/serverRegistry');
+
+    expect(registry.resolveGameApiUrl('s1')).toBe('http://game-api:8081');
+    expect(registry.resolveGameApiUrl('s2')).toBeUndefined();
+  });
+
+  it('permits current as the configured public server ID', async () => {
+    process.env.SERVER_ID = 'current';
+
+    const registry = await import('@/lib/serverRegistry');
+
+    expect(registry.resolveGameApiUrl('current')).toBe('http://default-game-api');
   });
 });

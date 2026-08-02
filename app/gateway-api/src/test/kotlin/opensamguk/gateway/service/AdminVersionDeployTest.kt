@@ -39,28 +39,27 @@ class AdminVersionDeployTest {
     }
 
     @Test
-    fun `유효 JSON 배열은 삽입 순서대로 파싱된다`() {
+    fun `유효 JSON 배열은 canonical coordinates로 삽입 순서대로 파싱된다`() {
         val json = """
             [
-              {"id":"s1","name":"통일 서버","generation":1,"gameApiUrl":"http://s1-game-api:8081","gameEngineUrl":"http://s1-game-engine:8082","deployProject":"opensamguk-s1"},
-              {"id":"s2","name":"군웅 서버","generation":7,"scenarioCode":"scenario_1021","gameApiUrl":"http://s2-game-api:8081","gameEngineUrl":"http://s2-game-engine:8082","deployProject":"opensamguk-s2"}
+              {"id":"s1","name":"통일 서버","generation":1,"gameApiUrl":"http://ss1-game-api:8081","gameEngineUrl":"http://ss1-game-engine:8082","deployProject":"opensamguk-ss1"},
+              {"id":"s2","name":"군웅 서버","generation":7,"scenarioCode":"scenario_1021","gameApiUrl":"http://ss2-game-api:8081","gameEngineUrl":"http://ss2-game-engine:8082","deployProject":"opensamguk-ss2"}
             ]
         """.trimIndent()
         val reg = registry(json = json)
         assertEquals(listOf("s1", "s2"), reg.all().map { it.id })
-        assertEquals("opensamguk-s2", reg.find("s2")?.deployProject)
+        assertEquals("opensamguk-ss2", reg.find("s2")?.deployProject)
         assertEquals(7, reg.find("s2")?.generation)
         assertEquals("scenario_1021", reg.find("s2")?.scenarioCode)
-        assertEquals("http://s1-game-engine:8082", reg.find("s1")?.gameEngineUrl)
+        assertEquals("http://ss1-game-engine:8082", reg.find("s1")?.gameEngineUrl)
         assertEquals("s1", reg.default()?.id) // 첫 서버가 기본값
     }
 
     @Test
-    fun `id 없는 항목은 걸러지고 deployProject 누락은 기본값으로 채워진다`() {
+    fun `id 없는 항목은 전체 레지스트리를 거부한다`() {
         val json = """[{"name":"빈ID"},{"id":"s9","name":"부분","gameApiUrl":"http://x:8081"}]"""
         val reg = registry(json = json, project = "opensamguk")
-        assertEquals(listOf("s9"), reg.all().map { it.id })
-        assertEquals("opensamguk", reg.find("s9")?.deployProject)
+        assertEquals(emptyList<ServerDef>(), reg.all())
     }
 
     @Test
@@ -483,7 +482,7 @@ class AdminVersionDeployTest {
 
     @Test
     fun `canonical fallback registry keeps canonical public and internal IDs`() {
-        val svc = DeployService("", "", registry(json = "[${canonicalServerJson("A1", "알파")}]"), mapper)
+        val svc = DeployService("", "", registry(json = "[${canonicalServerJson("a1", "알파")}]"), mapper)
 
         val server = svc.registeredServers().single()
 
