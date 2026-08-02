@@ -1,5 +1,31 @@
 # Current Task
 
+## 2026-08-02 OPENSAM-34 — GCP production migration and launch
+
+- Status: in progress; GCP VM/runtime/network/DNS are provisioned, and PR
+  review findings are being remediated before the approved merge and deploy.
+- User-approved scope:
+  - migrate active production GitHub Actions runner selectors and operator
+    guidance from the retired EC2 target to GCP Compute Engine
+    `e2-standard-2` / `gcp-prod`;
+  - configure the GCP production control repository and generated runtime
+    secrets without printing their values;
+  - request three PR mention-triggered reviews, fix valid findings, then merge
+    and deploy;
+  - verify `sam.peppone.dev` through Cloudflare and live health routes.
+- Approved external actions: GCP resource changes, production configuration,
+  commit, push, PR creation, merge, and deployment. Secret values remain
+  redacted and data deletion remains out of scope.
+- Allowed repository files: production workflows, active deployment/operator
+  documentation, the compatibility deploy script/compose header, and this task
+  contract. No game logic, golden fixture, legacy source, image pin, or runtime
+  secret may enter the diff.
+- Completion evidence: matching online `gcp-prod` runners, three successful PR
+  review rounds with no unresolved `fix-required`, green targeted syntax/diff
+  checks, an observed deployment run, and live domain health.
+
+---
+
 - Status: approved, in progress.
 - Updated: 2026-07-25
 - Goal: refresh the current documentation and agent harness, with `README.md` as the primary onboarding surface.

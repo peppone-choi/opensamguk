@@ -41,9 +41,11 @@ web/game ─▶ game-api(:8081) ──Redis XADD──▶ game-engine(:8082) ─
 - 게이트 테스트: `logic`의 `*GoldenTest` / `*ReplayGateTest`(골든: `logic/src/test/resources/golden/<area>/`)
 - 아키텍처 테스트: `DaemonNoEntityManagerTest` · precheck 합의: `PrecheckFullCrossCallSiteTest`
 
-## 배포 토폴로지 (Observed — `.claude/HARNESS.md` §6)
+## 배포 토폴로지 (Observed — `.github/workflows/deploy.yml`)
 
-main push → `.github/workflows/deploy.yml` → GHCR → EC2 SSH → `docker-compose.production.yml` pull → 업스트림 선기동 → **game-engine 마지막** 재시작(메모리 상태 소유) → **nginx 최후 재시작**(정적 upstream, stale-DNS 502 예방). 헬스는 `/actuator/health` green + **`world_state.current_year/month` 전진 확인**까지.
+`main` push → GitHub-hosted build/test → GHCR image push → GCP Compute Engine `e2-standard-2`에 로컬 등록된 `gcp-prod` self-hosted runner → `opensamguk-docker` main 동기화 + GHCR login → `deployer` 재생성/호환성 확인 → shared 의존성(`gateway-postgres`, `gateway-redis`) → shared upstream(`gateway-api`, `web-gateway`, 선택적 `game-frontend`) pull/recreate → **nginx 최후 재시작**(정적 upstream, stale-DNS 502 예방).
+
+이 deploy는 **shared stack만** 갱신하며, 각 게임 서버 `servers/<id>.env`의 `IMAGE_TAG`/`WEB_GAME_TAG` 핀은 바꾸지 않는다. 서버 승격은 별도 명시 승인 운영이다. 헬스는 nginx·gateway API를 확인하고, `s1`이 실행 중일 때에만 game API/engine health와 **`world_state.current_year/month` 전진**까지 확인한다.
 
 ## Needs Confirmation
 

@@ -277,19 +277,19 @@ game-api intake에 POST → daemon 처리 → 결과 반영을 Playwright로 실
 ## Prompt: 인프라 배포
 
 ### Persona
-opensamguk EC2 prod 스택 운영자. ops lesson 2건(stale-DNS 502, frozen-turn-daemon)을 안다.
+GCP Compute Engine `e2-standard-2`의 `gcp-prod` self-hosted runner와 `opensamguk-docker` shared-stack 제어 경로를 아는 opensamguk 운영자. ops lesson 2건(stale-DNS 502, frozen-turn-daemon)을 안다.
 
 ### Goal
 {변경}을 prod에 배포하고 **검증까지**(health green ≠ 정상 — 실 서비스 경로 확인) 완료한다.
 
 ### Required Context
-`scripts/deploy.sh`·`.github/workflows/deploy.yml`·`docker-compose.production.yml`, `docs/agent/lifecycle-ops.md`, 이전 배포 이슈 기록.
+`.github/workflows/deploy.yml`, GCP Compute Engine `e2-standard-2`의 VM-local `gcp-prod` self-hosted runner, `opensamguk-docker` 제어 저장소의 `docker-compose.shared.yml`·비밀값 없는 환경 계약·게임 서버 이미지 핀 정책, `docs/agent/lifecycle-ops.md`, 이전 배포 이슈 기록. 이 저장소의 `scripts/deploy.sh`·`docker-compose.production.yml`은 호환 전용이며 현재 shared-stack 정본 경로가 아니다. `.env`나 `servers/*.env`의 비밀값은 읽거나 출력하지 않는다.
 
 ### Output Format
-배포 방식(CI/수동) / 실행 명령과 출력 / 검증 3종(health + 실 페이지 렌더 + turn daemon 진행 확인) / 롤백 계획.
+배포 경로(GHCR build/push → `gcp-prod` → `opensamguk-docker`) / 실행 명령과 출력 / 검증 3종(shared health + 실 페이지 렌더 + 실행 중인 게임 서버의 turn daemon 진행 확인) / 게임 서버 핀 보존 여부 / 롤백 계획.
 
 ### Constraints
-**push/merge/deploy는 인간 승인 필수** (하드 룰). main 푸시 = 라이브 배포임을 인지. 인덱스 등 DDL은 CONCURRENTLY + 비트랜잭션 마이그레이션(turn daemon freeze 방지).
+**push/merge/deploy는 인간 승인 필수** (하드 룰). main 푸시 = shared-stack 라이브 배포임을 인지. shared refresh는 `servers/<id>.env`의 `IMAGE_TAG`/`WEB_GAME_TAG`를 바꾸지 않으며, 게임 서버 승격은 별도 명시 승인이 필요하다. 인덱스 등 DDL은 CONCURRENTLY + 비트랜잭션 마이그레이션(turn daemon freeze 방지).
 
 ### 발동조건
 배포·릴리스·prod 검증·롤백 요청. **deployer 에이전트가 이 팩의 실행자** — 승인 게이트 선행.
@@ -299,8 +299,9 @@ opensamguk EC2 prod 스택 운영자. ops lesson 2건(stale-DNS 502, frozen-turn
 
 ### Template
 ```md
-{변경}을 배포 준비하라. 승인 전에는 브랜치 푸시와 PR까지만.
-승인 후 배포하고, health + 실 페이지 + turn daemon 진행의 3종 검증을 출력으로 증명하라.
+{변경}을 GCP shared stack에 배포 준비하라. 승인 전에는 브랜치 푸시와 PR까지만.
+승인 후 GHCR build/push → `gcp-prod` runner → `opensamguk-docker` shared dependencies/upstreams 갱신 → nginx 최후 재시작 순서를 확인하라.
+게임 서버 핀이 보존됐음을 보고하고, health + 실 페이지 + 실행 중인 게임 서버의 turn daemon 진행을 출력으로 증명하라.
 stale-DNS 502와 frozen-turn-daemon 증상을 명시적으로 점검하라.
 ```
 
