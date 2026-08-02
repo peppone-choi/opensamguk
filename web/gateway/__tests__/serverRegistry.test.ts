@@ -40,6 +40,35 @@ describe('serverRegistry canonical IDs', () => {
 
     expect(registry.getServers()).toEqual([]);
     expect(registry.resolveGameApiOrigin('pep')).toBeUndefined();
+    expect(registry.isValidEmptyServerRegistry()).toBe(false);
+  });
+
+  it.each([
+    ['malformed JSON', '{'],
+    ['a non-array JSON value', '{}'],
+    [
+      'a mixed-validity collection',
+      JSON.stringify([
+        { id: 'pep', gameApiUrl: 'http://spep-game-api:8081' },
+        { id: 'main', gameApiUrl: 'http://smain-game-api:8081' },
+      ]),
+    ],
+  ])('does not classify %s as an empty valid runtime registry', async (_description, raw) => {
+    process.env.SERVER_REGISTRY_JSON = raw;
+
+    const registry = await import('@/lib/serverRegistry');
+
+    expect(registry.getServers()).toEqual([]);
+    expect(registry.isValidEmptyServerRegistry()).toBe(false);
+  });
+
+  it('classifies an explicit empty runtime registry as valid and empty', async () => {
+    process.env.SERVER_REGISTRY_JSON = '[]';
+
+    const registry = await import('@/lib/serverRegistry');
+
+    expect(registry.getServers()).toEqual([]);
+    expect(registry.isValidEmptyServerRegistry()).toBe(true);
   });
 
   it('fails closed on canonical collisions and bad origins', async () => {
@@ -72,6 +101,18 @@ describe('serverRegistry canonical IDs', () => {
     const registry = await import('@/lib/serverRegistry');
 
     expect(registry.getServers()).toEqual([]);
+    expect(registry.isValidEmptyServerRegistry()).toBe(false);
+  });
+
+  it('classifies a valid empty baked registry as valid and empty', async () => {
+    vi.doMock('@/config/servers.json', () => ({
+      default: { servers: [] },
+    }));
+
+    const registry = await import('@/lib/serverRegistry');
+
+    expect(registry.getServers()).toEqual([]);
+    expect(registry.isValidEmptyServerRegistry()).toBe(true);
   });
 
   it('fails closed for object-form registry duplicate keys', async () => {

@@ -9,11 +9,16 @@ export interface ServerEntry {
     gameApiUrl?: string;
 }
 
-type RuntimeEntries =
-    | { configured: false; entries: ServerEntry[] }
-    | { configured: true; entries: ServerEntry[] };
+type RegistryEntries = {
+    valid: boolean;
+    entries: ServerEntry[];
+};
 
-const BAKED = parseEntries(serversData.servers) ?? [];
+type RuntimeEntries = RegistryEntries & {
+    configured: boolean;
+};
+
+const BAKED = parseEntries(serversData.servers);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -43,13 +48,20 @@ function parseEntries(value: unknown): ServerEntry[] | undefined {
 
 function runtimeEntries(): RuntimeEntries {
     const raw = process.env.SERVER_REGISTRY_JSON;
-    if (!raw || raw.trim() === '') return { configured: false, entries: [] };
+    if (!raw || raw.trim() === '') return { configured: false, valid: true, entries: [] };
     try {
         const parsed: unknown = JSON.parse(raw);
-        return { configured: true, entries: parseEntries(parsed) ?? [] };
+        const entries = parseEntries(parsed);
+        return { configured: true, valid: entries !== undefined, entries: entries ?? [] };
     } catch {
-        return { configured: true, entries: [] };
+        return { configured: true, valid: false, entries: [] };
     }
+}
+
+function effectiveEntries(): RegistryEntries {
+    const runtime = runtimeEntries();
+    if (runtime.configured) return runtime;
+    return { valid: BAKED !== undefined, entries: BAKED ?? [] };
 }
 
 function normalizeServerEntry(id: string, value: unknown): ServerEntry | undefined {
@@ -94,8 +106,12 @@ function parseGeneration(value: unknown): number | undefined {
 }
 
 export function getServers(): ServerEntry[] {
-    const runtime = runtimeEntries();
-    return runtime.configured ? runtime.entries : BAKED;
+    return effectiveEntries().entries;
+}
+
+export function isValidEmptyServerRegistry(): boolean {
+    const registry = effectiveEntries();
+    return registry.valid && registry.entries.length === 0;
 }
 
 export function getServer(id: string): ServerEntry | undefined {

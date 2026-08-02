@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { ACCESS_COOKIE } from '@/lib/cookies';
-import { getServers, resolveGameApiOrigin } from '@/lib/serverRegistry';
+import { getServers, isValidEmptyServerRegistry, resolveGameApiOrigin } from '@/lib/serverRegistry';
 import { isPathServerId } from '@/lib/serverGameUrl';
 
 const SERVER_COOKIE = 'sam_server';
@@ -20,14 +20,25 @@ function isTurnSsePath(path: string[]): boolean {
 }
 
 function defaultGameApiOrigin(): string | undefined {
-  const defaultServerId = getServers()[0]?.id;
-  return defaultServerId ? resolveGameApiOrigin(defaultServerId) ?? process.env.GAME_API_ORIGIN : process.env.GAME_API_ORIGIN;
+    const defaultServerId = getServers()[0]?.id;
+    return defaultServerId ? resolveGameApiOrigin(defaultServerId) : compatibilityGameApiOrigin();
+}
+
+function compatibilityGameApiOrigin(): string | undefined {
+    return isValidEmptyServerRegistry() ? process.env.GAME_API_ORIGIN : undefined;
+}
+
+function configuredServerId(): string | undefined {
+    const serverId = process.env.SERVER_ID;
+    return serverId && isPathServerId(serverId) ? serverId : undefined;
 }
 
 function resolveSelectedGameApiOrigin(serverId: string | undefined): string | undefined {
-  if (serverId === undefined) return defaultGameApiOrigin();
-  if (!isPathServerId(serverId)) return undefined;
-  return resolveGameApiOrigin(serverId);
+    if (serverId === undefined) return defaultGameApiOrigin();
+    if (!isPathServerId(serverId)) return undefined;
+    const registryOrigin = resolveGameApiOrigin(serverId);
+    if (registryOrigin) return registryOrigin;
+    return serverId === configuredServerId() ? compatibilityGameApiOrigin() : undefined;
 }
 
 function sseHeaders(contentType = 'text/event-stream;charset=UTF-8'): HeadersInit {

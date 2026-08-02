@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 
 const registryMocks = vi.hoisted(() => ({
   getServers: vi.fn(),
+  isValidEmptyServerRegistry: vi.fn(),
   resolveGameApiOrigin: vi.fn(),
 }));
 
@@ -23,6 +24,7 @@ vi.mock('@/lib/serverRegistry', () => registryMocks);
 import { GET } from '@/app/api/game/[...path]/route';
 
 const originalGameApiOrigin = process.env.GAME_API_ORIGIN;
+const originalServerId = process.env.SERVER_ID;
 
 function request(path: string): NextRequest {
   return new NextRequest(`http://gateway.example.test${path}`);
@@ -36,7 +38,9 @@ describe('game API proxy server selection', () => {
   beforeEach(() => {
     cookieValues = {};
     process.env.GAME_API_ORIGIN = 'http://default-game-api';
+    delete process.env.SERVER_ID;
     registryMocks.getServers.mockReturnValue([{ id: 'pep', name: 'Pep', gameApiUrl: 'http://pep-game-api' }]);
+    registryMocks.isValidEmptyServerRegistry.mockReturnValue(false);
     registryMocks.resolveGameApiOrigin.mockImplementation((id: string) =>
       id === 'pep' ? 'http://pep-game-api' : undefined,
     );
@@ -51,6 +55,8 @@ describe('game API proxy server selection', () => {
   afterAll(() => {
     if (originalGameApiOrigin === undefined) delete process.env.GAME_API_ORIGIN;
     else process.env.GAME_API_ORIGIN = originalGameApiOrigin;
+    if (originalServerId === undefined) delete process.env.SERVER_ID;
+    else process.env.SERVER_ID = originalServerId;
   });
 
   it.each([
@@ -69,6 +75,7 @@ describe('game API proxy server selection', () => {
 
   it('uses the explicitly selected canonical server and preserves the httpOnly Bearer bridge', async () => {
     cookieValues = { sam_access: 'access-token' };
+    process.env.SERVER_ID = 'pep';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -84,8 +91,71 @@ describe('game API proxy server selection', () => {
     });
   });
 
+  it('uses the compatibility origin for an explicit configured single-server selection', async () => {
+    process.env.SERVER_ID = 's1';
+    registryMocks.getServers.mockReturnValue([]);
+    registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
+    registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })));
+
+    const response = await GET(request('/api/game/front-info?server=s1'), context(['front-info']));
+
+    expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenCalledWith('http://default-game-api/front-info', {
+      method: 'GET',
+      headers: {},
+      cache: 'no-store',
+    });
+  });
+
+  it.each([
+    ['s2', 's1'],
+    ['s1', 'S1'],
+  ])('fails closed when %s does not exactly match a validated configured server ID %s', async (selectedId, configuredId) => {
+    process.env.SERVER_ID = configuredId;
+    registryMocks.getServers.mockReturnValue([]);
+    registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
+    registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
+
+    const response = await GET(request(`/api/game/front-info?server=${selectedId}`), context(['front-info']));
+
+    expect(response.status).toBe(503);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not use the compatibility origin when the registry is not valid and empty', async () => {
+    process.env.SERVER_ID = 's1';
+    registryMocks.getServers.mockReturnValue([]);
+    registryMocks.isValidEmptyServerRegistry.mockReturnValue(false);
+    registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })));
+
+    const response = await GET(request('/api/game/front-info?server=s1'), context(['front-info']));
+
+    expect(response.status).toBe(503);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not use the default compatibility origin when the registry is not valid and empty', async () => {
+    registryMocks.getServers.mockReturnValue([]);
+    registryMocks.isValidEmptyServerRegistry.mockReturnValue(false);
+    registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
+
+    const response = await GET(request('/api/game/front-info'), context(['front-info']));
+
+    expect(response.status).toBe(503);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('uses the default origin only when there is no explicit selection', async () => {
     registryMocks.getServers.mockReturnValue([]);
+    registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

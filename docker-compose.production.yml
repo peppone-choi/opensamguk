@@ -141,7 +141,7 @@ services:
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
       DEPLOYER_URL: ${DEPLOYER_URL:-http://deployer:9000}
       DEPLOYER_TOKEN: ${DEPLOYER_TOKEN:?DEPLOYER_TOKEN required for admin deployer controls}
-      SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-"[]"}
+      SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-[]}
       # Admin seed (idempotent on empty users table).
       ADMIN_USERNAME: ${ADMIN_USERNAME:-peppone}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD required}
@@ -179,7 +179,8 @@ services:
       # Server-only proxy target (NEXT_PUBLIC_GAME_URL is baked into the image at build).
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
       GAME_API_ORIGIN: ${GAME_API_ORIGIN:-http://game-api:8081}
-      SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-"[]"}
+      SERVER_ID: ${SERVER_ID:-s1}
+      SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-[]}
     depends_on:
       - gateway-api
     expose:
