@@ -4,14 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       server:
-        description: "Game server id to promote"
+        description: "Public game server id to promote (canonicalized to lowercase)"
         required: true
         default: "all"
-        type: choice
-        options:
-          - all
-          - s1
-          - s2
+        type: string
       tag:
         description: "Git ref that is also the immutable GHCR image tag (normally commit SHA)"
         required: true
@@ -48,7 +44,7 @@ jobs:
 
           STACK="$HOME/opensamguk-docker"
           SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"
-          SERVER="${{ inputs.server }}"
+          RAW_SERVER="${{ inputs.server }}"
           TAG="${{ inputs.tag }}"
           INCLUDE_ENGINE="${{ inputs.include_engine }}"
 
@@ -57,21 +53,33 @@ jobs:
             exit 2
           fi
 
-          cd "$STACK"
-          if [[ "$SERVER" == "all" ]]; then
-            mapfile -t SERVERS < <(
-              find servers -maxdepth 1 -type f -name 's*.env' \
-                ! -name '*.bak*' ! -name '*.example' \
-                -exec basename {} .env \; | sort
-            )
-          elif [[ "$SERVER" =~ ^s[A-Za-z0-9_-]+$ ]]; then
-            SERVERS=("$SERVER")
-          else
-            echo "Invalid server id: $SERVER" >&2
+          if [[ ! "$RAW_SERVER" =~ ^[A-Za-z0-9]+$ ]]; then
+            echo "Invalid public server id: $RAW_SERVER" >&2
             exit 2
           fi
+          PUBLIC_SERVER="${RAW_SERVER,,}"
 
-          if [[ "${#SERVERS[@]}" -eq 0 ]]; then
+          cd "$STACK"
+          if [[ "$PUBLIC_SERVER" == "all" ]]; then
+            mapfile -t INTERNAL_SERVERS < <(
+              find servers -maxdepth 1 -type f -name 's*.env' \
+                ! -name '*example*' ! -name '*backup*' ! -name '*.bak*' \
+                -exec basename {} .env \; | sort
+            )
+            PUBLIC_SERVERS=()
+            for internal_server in "${INTERNAL_SERVERS[@]}"; do
+              public_server="${internal_server#s}"
+              if [[ ! "$public_server" =~ ^[a-z0-9]+$ ]]; then
+                echo "Invalid or noncanonical game server env file: servers/${internal_server}.env" >&2
+                exit 2
+              fi
+              PUBLIC_SERVERS+=("$public_server")
+            done
+          else
+            PUBLIC_SERVERS=("$PUBLIC_SERVER")
+          fi
+
+          if [[ "${#PUBLIC_SERVERS[@]}" -eq 0 ]]; then
             echo "No game servers found"
             exit 0
           fi
@@ -147,15 +155,16 @@ jobs:
             return 1
           }
 
-          for sid in "${SERVERS[@]}"; do
-            envf="servers/${sid}.env"
-            project="opensamguk-${sid}"
+          for public_server in "${PUBLIC_SERVERS[@]}"; do
+            internal_server="s${public_server}"
+            envf="servers/${internal_server}.env"
+            project="opensamguk-${internal_server}"
             if [[ ! -f "$envf" ]]; then
               echo "Missing env file: $envf" >&2
               exit 3
             fi
 
-            echo "=== ${sid}: pin IMAGE_TAG/WEB_GAME_TAG -> ${TAG} ==="
+            echo "=== ${public_server} (${internal_server}): pin IMAGE_TAG/WEB_GAME_TAG -> ${TAG} ==="
             sudo sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${TAG}/" "$envf"
             if sudo grep -q '^WEB_GAME_TAG=' "$envf"; then
               sudo sed -i "s/^WEB_GAME_TAG=.*/WEB_GAME_TAG=${TAG}/" "$envf"
@@ -165,22 +174,22 @@ jobs:
 
             ensure_scenario_env "$envf"
 
-            echo "=== ${sid}: pull selected images ==="
+            echo "=== ${public_server}: pull selected images ==="
             if [[ "$INCLUDE_ENGINE" == "true" ]]; then
               docker compose -p "$project" -f docker-compose.server.yml --env-file "$envf" pull game-engine game-api web-game
-              echo "=== ${sid}: restart full server stack including game-engine ==="
+              echo "=== ${public_server}: restart full server stack including game-engine ==="
               docker compose -p "$project" -f docker-compose.server.yml --env-file "$envf" up -d
             else
               docker compose -p "$project" -f docker-compose.server.yml --env-file "$envf" pull game-api web-game
-              echo "=== ${sid}: restart stateless services only ==="
+              echo "=== ${public_server}: restart stateless services only ==="
               docker compose -p "$project" -f docker-compose.server.yml --env-file "$envf" up -d --force-recreate --no-deps game-api web-game
             fi
 
-            echo "=== ${sid}: verify containers ==="
-            wait_container_health "${sid}-game-api" 8081
-            wait_container_health "${sid}-game-engine" 8082
-            wait_public_route "$sid"
+            echo "=== ${public_server}: verify containers ==="
+            wait_container_health "${internal_server}-game-api" 8081
+            wait_container_health "${internal_server}-game-engine" 8082
+            wait_public_route "$public_server"
 
-            docker inspect "${sid}-game-api" "${sid}-game-engine" "${sid}-web-game" \
+            docker inspect "${internal_server}-game-api" "${internal_server}-game-engine" "${internal_server}-web-game" \
               --format '{{.Name}} {{.Config.Image}}'
           done

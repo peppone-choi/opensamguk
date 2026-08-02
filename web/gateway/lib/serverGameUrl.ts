@@ -1,4 +1,4 @@
-const PATH_SERVER_ID = /^s[A-Za-z0-9_-]*$/;
+const PATH_SERVER_ID = /^[a-z0-9]+$/;
 
 function splitSuffix(value: string): { base: string; suffix: string } {
     const queryIdx = value.indexOf('?');
@@ -20,11 +20,11 @@ function ensureGameBase(value: string): string {
 }
 
 export function isPathServerId(serverId: string): boolean {
-    return PATH_SERVER_ID.test(serverId.trim());
+    return PATH_SERVER_ID.test(serverId);
 }
 
 export function fallbackGameUrlForServer(serverId: string): string {
-    const id = serverId.trim();
+    const id = serverId;
     return isPathServerId(id) ? `/game/${encodeURIComponent(id)}` : `/game?server=${encodeURIComponent(id)}`;
 }
 
@@ -33,7 +33,7 @@ export function resolveServerGameBase(
     serverId: string,
     fallback = '/game',
 ): string {
-    const id = serverId.trim();
+    const id = serverId;
     const raw = gameUrl?.trim() || fallbackGameUrlForServer(id) || fallback;
     const gameBase = ensureGameBase(raw || fallback);
     if (!isPathServerId(id)) return gameBase;

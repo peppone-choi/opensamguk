@@ -192,9 +192,52 @@ class AdminVersionDeployTest {
             assertEquals("/servers/create", request.path)
             assertEquals("POST", request.method)
             assertEquals("Bearer tok", request.authorization)
-            assertTrue(request.body.contains(""""id":"1""""))
+            assertTrue(request.body.contains(""""id":"s1""""))
             assertTrue(request.body.contains(""""generation":"3""""))
             assertFalse(result.body.contains("tok"))
+        }
+    }
+
+    @Test
+    fun `서버 생성은 public ID pep을 deployer에 그대로 전달한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"pep","name":"페포네 서버","project":"opensamguk-pep"}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer(
+                """{"id":"pep","name":"페포네 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""",
+            )
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/servers/create", request.path)
+            assertTrue(request.body.contains(""""id":"pep""""))
+        }
+    }
+
+    @Test
+    fun `서버 생성은 대문자 public ID를 소문자로 표준화해 deployer에 전달한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"a1","name":"알파 서버","project":"opensamguk-a1"}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer(
+                """{"id":"A1","name":"알파 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""",
+            )
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/servers/create", request.path)
+            assertTrue(request.body.contains(""""id":"a1""""))
+            assertFalse(request.body.contains(""""id":"A1""""))
         }
     }
 
@@ -342,14 +385,19 @@ class AdminVersionDeployTest {
     }
 
     @Test
-    fun `서버 생성 검증 실패는 deployer 호출 전에 거부한다`() {
+    fun `영숫자가 아닌 public 서버 ID는 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
             val svc = DeployService(deployer.url(), "tok", registry(), mapper)
 
-            val result = svc.createServer("""{"id":"../s1","name":"bad","gameApiPort":"8101","webGamePort":"3101"}""")
+            listOf("", "pep-1", "pep_1", "pep/1", "한글", "../s1").forEach { id ->
+                val result = svc.createServer(
+                    """{"id":${mapper.writeValueAsString(id)},"name":"bad","gameApiPort":"8101","webGamePort":"3101"}""",
+                )
 
-            assertEquals(400, result.status)
+                assertEquals(400, result.status, "id=$id")
+                assertTrue(result.body.contains("서버 id가 올바르지 않습니다."), "id=$id")
+            }
             assertEquals(0, deployer.requests.size)
         }
     }

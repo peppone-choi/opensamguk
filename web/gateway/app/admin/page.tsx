@@ -169,6 +169,7 @@ interface TurnDaemonControlResult {
 
 // 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
 const SKEW_WARNING = '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
+const PUBLIC_SERVER_ID_PATTERN = /^[A-Za-z0-9]+$/;
 const AUTORUN_OPTIONS = [
     ['develop', '내정'],
     ['warp', '순간이동'],
@@ -879,7 +880,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
 
     const generationNumber = Number.parseInt(generation, 10);
     const valid =
-        id.trim() !== '' &&
+        PUBLIC_SERVER_ID_PATTERN.test(id) &&
         name.trim() !== '' &&
         Number.isInteger(generationNumber) &&
         generationNumber >= 0 &&
@@ -891,9 +892,20 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
         <div className="deploy-server">
             <div className="deploy-server-head">새 서버 생성</div>
             <div className="server-create-grid">
-                <label className="field">
+                <label className="field" htmlFor="server-id">
                     <span>서버 ID</span>
-                    <input value={id} disabled={busy} onChange={(e) => setId(e.target.value)} placeholder="s1" />
+                    <input
+                        id="server-id"
+                        aria-describedby="server-id-hint"
+                        pattern="[A-Za-z0-9]+"
+                        value={id}
+                        disabled={busy}
+                        onChange={(e) => setId(e.target.value)}
+                        placeholder="pep"
+                    />
+                    <small id="server-id-hint" className="field-hint">
+                        영문과 숫자만 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장됩니다.
+                    </small>
                 </label>
                 <label className="field">
                     <span>서버 이름</span>

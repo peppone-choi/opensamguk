@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const PATH_SERVER_ID = /^s[A-Za-z0-9_-]*$/;
+const PATH_SERVER_ID = /^[a-z0-9]+$/;
 const SERVER_COOKIE = 'sam_server';
 
 const LEGACY_GAME_ROUTE_MAP: Record<string, string> = {
@@ -52,11 +52,11 @@ function ensureGameBase(value: string): string {
 }
 
 export function isPathServerId(serverId: string): boolean {
-    return PATH_SERVER_ID.test(serverId.trim());
+    return PATH_SERVER_ID.test(serverId);
 }
 
 export function fallbackGameUrlForServer(serverId: string): string {
-    const id = serverId.trim();
+    const id = serverId;
     return isPathServerId(id) ? `/game/${encodeURIComponent(id)}` : `/game?server=${encodeURIComponent(id)}`;
 }
 
@@ -65,7 +65,7 @@ export function resolveServerGameBase(
     serverId: string,
     fallback = '/game',
 ): string {
-    const id = serverId.trim();
+    const id = serverId;
     const raw = gameUrl?.trim() || fallbackGameUrlForServer(id) || fallback;
     const gameBase = ensureGameBase(raw || fallback);
     if (!isPathServerId(id)) return gameBase;
@@ -109,7 +109,8 @@ export function resolveServerGamePath(
 function readServerCookie(): string | undefined {
     if (typeof document === 'undefined') return undefined;
     const match = document.cookie.split('; ').find((row) => row.startsWith(`${SERVER_COOKIE}=`));
-    return match?.split('=')[1]?.trim() || undefined;
+    const serverId = match?.split('=')[1];
+    return serverId && isPathServerId(serverId) ? serverId : undefined;
 }
 
 /** 현재 `sam_server` 쿠키 값을 클라이언트에서 읽는다(SSR 시점에는 undefined). */
@@ -137,7 +138,10 @@ export function gameChildPath(href: string): string {
     return trimmed;
 }
 
-/** path serverId URL(`/game/smain/...`)을 정규 `/game/...`로 변환해 active 매칭에 사용. */
-export function normalizeGamePathname(pathname: string): string {
-    return pathname.replace(/^\/game\/s[A-Za-z0-9_-]+(?=\/|$)/, '/game');
+export function normalizeGamePathname(pathname: string, serverId?: string): string {
+    if (!serverId || !isPathServerId(serverId)) return pathname;
+
+    const serverPath = `/game/${serverId}`;
+    if (pathname !== serverPath && !pathname.startsWith(`${serverPath}/`)) return pathname;
+    return `/game${pathname.slice(serverPath.length)}`;
 }

@@ -6,14 +6,15 @@ import Header from './Header';
 import BackBar from './BackBar';
 import BottomNav from './BottomNav';
 import { useSSE } from '../hooks/useSSE';
-import { normalizeGamePathname } from '../lib/serverGameUrl';
+import { normalizeGamePathname, useServerId } from '../lib/serverGameUrl';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const serverId = useServerId();
     const refresh = useCallback(() => {
         window.location.reload();
     }, []);
-    const normalizedPathname = normalizeGamePathname(pathname ?? '');
+    const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
     const isMainPage = normalizedPathname === '/game';
 
     useSSE(refresh);

@@ -73,7 +73,7 @@ class DeployService(
         "RESET_RESERVE_OPEN",
         "RESET_PRE_RESERVE_OPEN",
     )
-    private val serverIdRegex = Regex("^s?[A-Za-z0-9_-]+$")
+    private val serverIdRegex = Regex("^[A-Za-z0-9]+$")
     private val portRegex = Regex("^[0-9]{1,5}$")
 
     private fun configured() = deployerUrl.isNotBlank() && deployerToken.isNotBlank()
@@ -524,10 +524,7 @@ class DeployService(
     private fun createServerBodyForDeployer(body: String): String {
         val node = objectMapper.readTree(body)
         val objectNode = if (node is ObjectNode) node.deepCopy() as ObjectNode else objectMapper.createObjectNode()
-        val id = objectNode.path("id").asText("")
-        if (id.matches(Regex("^s[0-9][A-Za-z0-9_-]*$"))) {
-            objectNode.put("id", id.removePrefix("s"))
-        }
+        objectNode.put("id", objectNode.path("id").asText("").lowercase())
         return objectMapper.writeValueAsString(objectNode)
     }
 
