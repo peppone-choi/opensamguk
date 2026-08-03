@@ -26,6 +26,7 @@ import kotlin.math.pow
 class SelectNpcTokenService(
     private val tokens: SelectNpcTokenRepository,
     private val owners: GeneralOwnerRepository,
+    private val possession: GeneralPossessionService,
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val worldStates: WorldStateReadRepository,
@@ -42,6 +43,7 @@ class SelectNpcTokenService(
                 reason = NPC_MODE_BLOCKED_REASON,
             )
         }
+        val terminalDenyReason = possession.reconcileTerminalDenialForClaimable(userId)
         val owner = owners.findByUserId(userId)
         if (owner != null) {
             val general = generals.findById(owner.generalId.toInt()).orElse(null)
@@ -61,10 +63,10 @@ class SelectNpcTokenService(
 
         val now = Instant.now(clock)
         val active = tokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(userId, now)
-        if (active != null) return active.toResponse(hasGeneral = false)
+        if (active != null) return active.toResponse(hasGeneral = false, reason = terminalDenyReason)
 
         val token = issueToken(userId, now)
-        return token.toResponse(hasGeneral = false)
+        return token.toResponse(hasGeneral = false, reason = terminalDenyReason)
     }
 
     private fun issueToken(userId: Long, now: Instant): SelectNpcTokenEntity {
@@ -118,7 +120,7 @@ class SelectNpcTokenService(
         return entity
     }
 
-    private fun SelectNpcTokenEntity.toResponse(hasGeneral: Boolean): ClaimableResponse {
+    private fun SelectNpcTokenEntity.toResponse(hasGeneral: Boolean, reason: String? = null): ClaimableResponse {
         val metadata = pickResult
         val pickMoreSeconds = intOf(metadata[PICK_MORE_SECONDS_KEY]) ?: 0
         return ClaimableResponse(
@@ -131,6 +133,7 @@ class SelectNpcTokenService(
             validUntil = validUntil.toString(),
             pickMoreFrom = pickMoreFrom.toString(),
             pickMoreSeconds = pickMoreSeconds,
+            reason = reason,
         )
     }
 

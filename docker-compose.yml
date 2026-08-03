@@ -73,6 +73,7 @@ services:
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:-sammo}
+      SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       GATEWAY_API_PORT: 8080
@@ -102,6 +103,7 @@ services:
       - "${GATEWAY_API_PORT:-8080}:8080"
     volumes:
       - profile-icons:/var/lib/opensamguk/profile-icons
+      - ${SCENARIO_HOST_DIR:-./data/scenarios}:${SCENARIO_DIR:-/data/scenarios}:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/actuator/health"]
       interval: 10s
@@ -121,6 +123,7 @@ services:
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:-sammo}
+      SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       GAME_API_PORT: 8081
@@ -143,6 +146,8 @@ services:
         condition: service_healthy
     ports:
       - "${GAME_API_PORT:-8081}:8081"
+    volumes:
+      - ${SCENARIO_HOST_DIR:-./data/scenarios}:${SCENARIO_DIR:-/data/scenarios}:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8081/actuator/health"]
       interval: 10s
@@ -167,7 +172,7 @@ services:
       GAME_ENGINE_PORT: 8082
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
-      # Scenario seed (ScenarioSeedRunner: configured-world admission; exact configured id is idempotent).
+      # Scenario seed and Flyway migrations use the same read-only effective scenario directory.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
       SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}

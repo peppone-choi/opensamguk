@@ -553,6 +553,67 @@ class ScenarioImporterIT {
     }
 
     @Test
+    fun `general_ex provenance and extension quadrants preserve downstream neutral RNG order`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        fun importAndSnapshot(sourceProvenanced: Boolean, extendedGeneral: Boolean): Map<String, Map<String, Any?>> {
+            ScenarioImporter(
+                scenario = scenarioForGeneralExProvenanceRng(sourceProvenanced),
+                cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+                scenarioCode = "scenario_general_ex_provenance_rng",
+                scenarioNumber = 9008,
+                extendedGeneral = extendedGeneral,
+                installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+            ).importAll(jdbc, canonicalWorldId)
+            return jdbc.queryForList(
+                """
+                SELECT name, affinity, city_id, personal_code, turn_time::text AS turn_time,
+                       meta ->> 'killturn' AS killturn
+                  FROM general
+                 ORDER BY id
+                """.trimIndent(),
+            ).associateBy { it.getValue("name") as String }
+        }
+
+        val legacyEnabled = importAndSnapshot(sourceProvenanced = false, extendedGeneral = true)
+        cleanRows()
+        val legacyDisabled = importAndSnapshot(sourceProvenanced = false, extendedGeneral = false)
+        cleanRows()
+        val sourceEnabled = importAndSnapshot(sourceProvenanced = true, extendedGeneral = true)
+        cleanRows()
+        val sourceDisabled = importAndSnapshot(sourceProvenanced = true, extendedGeneral = false)
+
+        val extensionName = "ⓝGeneralExCandidate"
+        val baseName = "ⓝBaseLegacyCandidate"
+        val neutralName = "ⓤNeutralLegacyCandidate"
+
+        assertTrue(extensionName in legacyEnabled)
+        assertTrue(extensionName !in legacyDisabled, "ordinary legacy extensions remain disabled")
+        assertTrue(extensionName in sourceEnabled)
+        assertTrue(extensionName in sourceDisabled, "source provenance retains the RTK14-enriched extension")
+        assertEquals(
+            legacyEnabled.getValue(neutralName),
+            sourceEnabled.getValue(neutralName),
+            "when extensions are enabled, source-provenanced and legacy general_ex rows keep PHP build order",
+        )
+        assertEquals(
+            legacyDisabled.getValue(baseName),
+            sourceDisabled.getValue(baseName),
+            "the retained source row must not change preceding legacy build fields",
+        )
+        assertEquals(
+            legacyDisabled.getValue(neutralName),
+            sourceDisabled.getValue(neutralName),
+            "a source-only retained general_ex row must not advance InitScenario before later neutral rows",
+        )
+        assertEquals(
+            sourceEnabled.getValue(extensionName).filterKeys { it == "affinity" || it == "personal_code" },
+            sourceDisabled.getValue(extensionName).filterKeys { it == "affinity" || it == "personal_code" },
+            "the source-admitted row keeps its legacy InitScenario affinity and ego draws",
+        )
+    }
+
+    @Test
     fun `appended RTK14 rows do not shift legacy InitScenario replay rows`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
@@ -1012,6 +1073,29 @@ class ScenarioImporterIT {
             }
             """.trimIndent(),
         )
+
+    private fun scenarioForGeneralExProvenanceRng(sourceProvenanced: Boolean): Scenario {
+        val extension = if (sourceProvenanced) {
+            "[0,\"GeneralExCandidate\",null,0,null,20,21,22,0,180,260,null,null,null,50,50,200,9201,\"남\",70,50,300,\"유가\",false,true]"
+        } else {
+            "[0,\"GeneralExCandidate\",null,0,null,20,21,22,0,180,260,null,null,null]"
+        }
+        return ScenarioJson.loadScenario(
+            """
+            {
+              "title": "general_ex provenance rng",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [[0,"BaseLegacyCandidate",null,0,null,10,11,12,0,180,260,null,null]],
+              "general_ex": [$extension],
+              "general_neutral": [[0,"NeutralLegacyCandidate",null,0,null,30,31,32,0,180,260,null,null]],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+    }
 
     private fun scenarioForRtk14RngIsolation(includeRtk14Addition: Boolean): Scenario =
         ScenarioJson.loadScenario(

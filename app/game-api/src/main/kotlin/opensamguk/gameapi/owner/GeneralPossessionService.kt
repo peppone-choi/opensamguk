@@ -109,6 +109,22 @@ class GeneralPossessionService(
         return ClaimResult.Claimed(generalId, requestId)
     }
 
+    @Transactional
+    fun reconcileTerminalDenialForClaimable(userId: Long): String? {
+        val reservation = owners.findByUserId(userId) ?: return null
+        val generalId = reservation.generalId.toInt()
+        val general = generals.findById(generalId).orElse(null)
+        if (general?.isActivatedFor(userId) == true) return null
+
+        val requestId = reservation.claimRequestId ?: return null
+        val terminal = terminalClaimResult(requestId, generalId)
+        if (terminal !is StoredClaimResult.Rejected) return null
+
+        return terminal.reason.takeIf {
+            owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, reservation.generalId, requestId) == 1
+        }
+    }
+
     private fun reconcileExistingClaim(
         userId: Long,
         generalId: Int,

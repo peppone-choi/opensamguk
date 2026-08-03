@@ -604,7 +604,10 @@ class ScenarioImporter(
         // active. Keep those initial draws on InitScenario even when RTK14 changes the lifecycle.
         replayScenarioBuildRng(
             rng = legacyRng,
-            seededRows = seedGenerals().filterNot { it.rtk14Added },
+            seededRows = seedGenerals().filterNot { general ->
+                general.rtk14Added ||
+                    (!extendedGeneral && scenario.isSourceProvenancedGeneralEx(general))
+            },
             shouldConsumeBuildRng = { general -> wasLegacyActiveAtStart(general, startYear) },
             activeRows = activeRows,
         )
@@ -623,7 +626,11 @@ class ScenarioImporter(
             seededRows = seedGenerals(),
             shouldConsumeBuildRng = { general ->
                 isActiveAtStart(general, startYear) &&
-                    (general.rtk14Added || !wasLegacyActiveAtStart(general, startYear))
+                    (
+                        general.rtk14Added ||
+                            !wasLegacyActiveAtStart(general, startYear) ||
+                            (!extendedGeneral && scenario.isSourceProvenancedGeneralEx(general))
+                    )
             },
             activeRows = activeRows,
         )

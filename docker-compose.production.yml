@@ -96,6 +96,7 @@ services:
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
@@ -117,6 +118,8 @@ services:
         condition: service_healthy
     expose:
       - "8081"
+    volumes:
+      - ${SCENARIO_HOST_DIR:-./data/scenarios}:${SCENARIO_DIR:-/data/scenarios}:ro
     networks:
       - opensamguk
     deploy:
@@ -133,6 +136,7 @@ services:
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       # JWT — gateway-api ISSUES tokens with this secret (SAME value as game-api).
@@ -161,6 +165,7 @@ services:
       - "8080"
     volumes:
       - profile-icons:/var/lib/opensamguk/profile-icons
+      - ${SCENARIO_HOST_DIR:-./data/scenarios}:${SCENARIO_DIR:-/data/scenarios}:ro
     networks:
       - opensamguk
     deploy:

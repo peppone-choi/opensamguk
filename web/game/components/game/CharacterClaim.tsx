@@ -27,6 +27,7 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
     try {
       const res = await api.claimable();
       setCandidates(res.candidates ?? []);
+      setError(res.reason ?? null);
     } catch {
       setError('빙의 가능한 장수 목록을 불러올 수 없습니다.');
     } finally {
@@ -62,17 +63,8 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
         }
         if (!terminal.ok) {
           const terminalReason = terminal.reason ?? '빙의에 실패했습니다.';
-          try {
-            const reconciled = await api.claim(generalId);
-            if (!reconciled.result) {
-              void load();
-              setError(reconciled.reason ?? terminalReason);
-            } else {
-              setError(terminalReason);
-            }
-          } catch {
-            setError(terminalReason);
-          }
+          await load();
+          setError(terminalReason);
           return;
         }
 

@@ -1,15 +1,22 @@
 package opensamguk.infra.persistence
 
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.FlywayException
 import org.flywaydb.core.api.MigrationVersion
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.io.TempDir
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.testcontainers.containers.PostgreSQLContainer
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -17,7 +24,6 @@ import kotlin.test.assertTrue
 class V26NpcLifecycleMigrationTest {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
-    private lateinit var flyway: Flyway
 
     @BeforeAll
     fun setUp() {
@@ -29,21 +35,13 @@ class V26NpcLifecycleMigrationTest {
         postgres.start()
         val dataSource = DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password)
         jdbc = JdbcTemplate(dataSource)
-        flyway = Flyway.configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .locations("classpath:db/migration")
-            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
-            .target(MigrationVersion.fromVersion("25"))
-            .load()
-        flyway.migrate()
-        seedLegacyWorld()
-        Flyway.configure()
-            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .locations("classpath:db/migration")
-            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
-            .target(MigrationVersion.fromVersion("26"))
-            .load()
-            .migrate()
+    }
+
+    @BeforeEach
+    fun resetDatabase() {
+        jdbc.execute("DROP SCHEMA public CASCADE")
+        jdbc.execute("CREATE SCHEMA public")
+        migrateTo25()
     }
 
     @AfterAll
@@ -53,6 +51,8 @@ class V26NpcLifecycleMigrationTest {
 
     @Test
     fun `V26 converts killturn and restores underage rows as deferred scenario events`() {
+        seedLegacyWorld()
+        migrateTo26()
         val adult = jdbc.queryForMap(
             "SELECT (meta ->> 'killturn')::integer AS killturn, meta ->> 'killturn_unit' AS killturn_unit FROM general WHERE id = 1001",
         )
@@ -134,6 +134,139 @@ class V26NpcLifecycleMigrationTest {
         assertEquals("17002", formerAdultDeferred["source_officer_number"])
         assertEquals("true", formerAdultDeferred["source_legacy_active_at_start"])
         assertTrue(jdbc.queryForObject("SELECT (meta ->> 'gennum')::integer = 3 FROM nation WHERE id = 1", Boolean::class.java) == true)
+    }
+
+    @Test
+    fun `V26 migrates an external-only effective scenario`(@TempDir scenarioDir: Path) {
+        Files.writeString(
+            scenarioDir.resolve("scenario_v26_external_only.json"),
+            scenarioJson("외부전용", bornYear = 168),
+            StandardCharsets.UTF_8,
+        )
+        seedSingleLegacyWorld("scenario_v26_external_only", "외부전용", bornYear = 168)
+
+        migrateTo26(scenarioDir)
+
+        assertFalse(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM general WHERE id = 2001)", Boolean::class.java) == true)
+        assertEquals(182, deferredYear("외부전용"))
+    }
+
+    @Test
+    fun `V26 gives a same-name external scenario precedence over the bundled scenario`(@TempDir scenarioDir: Path) {
+        Files.writeString(
+            scenarioDir.resolve("scenario_v26_npc_lifecycle.json"),
+            scenarioJson("소제1", bornYear = 168, appearanceYear = 205),
+            StandardCharsets.UTF_8,
+        )
+        seedSingleLegacyWorld("scenario_v26_npc_lifecycle", "소제1", bornYear = 168)
+
+        migrateTo26(scenarioDir)
+
+        assertEquals(205, deferredYear("소제1"))
+    }
+
+    @Test
+    fun `V26 fails closed for an NPC world without an effective scenario`() {
+        seedSingleLegacyWorld("scenario_v26_missing", "누락시나리오", bornYear = 160)
+
+        assertFailsWith<FlywayException> { migrateTo26() }
+
+        assertEquals(72, killturn(2001))
+        assertTrue(killturnUnitIsAbsent(2001))
+        assertEquals(0, v26HistoryCount())
+        assertEquals(0, eventCount())
+    }
+
+    @Test
+    fun `V26 rolls back when a selected external override is malformed`(@TempDir scenarioDir: Path) {
+        Files.writeString(scenarioDir.resolve("scenario_v26_npc_lifecycle.json"), "{ malformed", StandardCharsets.UTF_8)
+        seedSingleLegacyWorld("scenario_v26_npc_lifecycle", "소제1", bornYear = 168)
+
+        assertFailsWith<FlywayException> { migrateTo26(scenarioDir) }
+
+        assertEquals(72, killturn(2001))
+        assertTrue(killturnUnitIsAbsent(2001))
+        assertEquals(0, v26HistoryCount())
+        assertEquals(0, eventCount())
+    }
+
+    private fun migrateTo25() {
+        migrateTo("25")
+    }
+
+    private fun migrateTo26(scenarioDir: Path? = null) {
+        migrateTo("26", scenarioDir?.toString().orEmpty())
+    }
+
+    private fun migrateTo(target: String, scenarioDir: String = "") {
+        Flyway.configure()
+            .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
+            .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
+            .placeholders(mapOf("scenario_dir" to scenarioDir))
+            .target(MigrationVersion.fromVersion(target))
+            .load()
+            .migrate()
+    }
+
+    private fun seedSingleLegacyWorld(scenarioCode: String, name: String, bornYear: Int) {
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, ?, 181, 1, 3600)",
+            scenarioCode,
+        )
+        jdbc.update("INSERT INTO nation (id, name, color, meta) VALUES (1, '한', '#fff', '{\"gennum\":1}')")
+        jdbc.update(
+            """
+            INSERT INTO general
+                (id, name, nation_id, city_id, npc_state, affinity, born_year, dead_year, picture,
+                 leadership, strength, intel, officer_level, turn_time, age, personal_code,
+                 special_code, special2_code, meta)
+            VALUES
+                (2001, ?, 1, 3, 2, 1, ?, 240, 'external.png',
+                 20, 11, 48, 0, now(), 21, 'che_유지', 'None', 'None', '{"killturn":72}')
+            """.trimIndent(),
+            name,
+            bornYear,
+        )
+    }
+
+    private fun deferredYear(name: String): Int = jdbc.queryForObject(
+        """
+        SELECT (e.condition ->> 2)::integer
+          FROM event e
+         CROSS JOIN LATERAL jsonb_array_elements(e.action) action_row
+         WHERE action_row ->> 2 = ?
+        """.trimIndent(),
+        Int::class.java,
+        name,
+    )!!
+
+    private fun killturn(generalId: Int): Int = jdbc.queryForObject(
+        "SELECT (meta ->> 'killturn')::integer FROM general WHERE id = ?",
+        Int::class.java,
+        generalId,
+    )!!
+
+    private fun killturnUnitIsAbsent(generalId: Int): Boolean = jdbc.queryForObject(
+        "SELECT NOT jsonb_exists(meta, 'killturn_unit') FROM general WHERE id = ?",
+        Boolean::class.java,
+        generalId,
+    ) == true
+
+    private fun v26HistoryCount(): Int = jdbc.queryForObject(
+        "SELECT count(*) FROM flyway_schema_history WHERE version = '26'",
+        Int::class.java,
+    )!!
+
+    private fun eventCount(): Int = jdbc.queryForObject("SELECT count(*) FROM event", Int::class.java)!!
+
+    private fun scenarioJson(name: String, bornYear: Int, appearanceYear: Int? = null): String {
+        val tuple = if (appearanceYear == null) {
+            "[1,\"$name\",null,1,null,20,11,48,0,$bornYear,240,\"유지\",null,null]"
+        } else {
+            "[1,\"$name\",null,1,null,20,11,48,0,$bornYear,240,\"유지\",null,null,77,88,$appearanceYear,17001,\"female\",50,30,300,\"왕도\",false,true]"
+        }
+        return """{"title":"V26 external","startYear":181,"map":{},"const":{},"nation":[],"general":[$tuple],"general_ex":[],"general_neutral":[],"diplomacy":[]}"""
     }
 
     private fun seedLegacyWorld() {

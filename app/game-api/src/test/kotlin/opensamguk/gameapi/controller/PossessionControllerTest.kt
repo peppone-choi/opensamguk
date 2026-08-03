@@ -72,7 +72,7 @@ class PossessionControllerTest {
         fixedClock,
     )
     private val selectNpcTokens =
-        SelectNpcTokenService(npcTokens, owners, generals, nations, worldStates, fixedClock)
+        SelectNpcTokenService(npcTokens, owners, possession, generals, nations, worldStates, fixedClock)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(PossessionController(possession, selectNpcTokens, reserve, jwtVerifier))
@@ -345,6 +345,39 @@ class PossessionControllerTest {
             .andExpect(jsonPath("$.hasGeneral").value(false))
             .andExpect(jsonPath("$.candidates.length()").value(1))
             .andExpect(jsonPath("$.candidates[0].generalId").value(10))
+    }
+
+    @Test
+    fun `claimable clears its exact terminal denial on reload and returns a retry token without publishing a command`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH, claimRequestId = "req-claim-10"),
+            null,
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포", npcState = 0)))
+        `when`(commandResults.findResultPayload(WorldId(1), "req-claim-10")).thenReturn(
+            claimResultPayload(
+                "req-claim-10",
+                GeneralBoolResult("claimNpc", false, 10, "빙의 가능한 장수가 아닙니다."),
+            ),
+        )
+        `when`(owners.deleteByUserIdAndGeneralIdAndClaimRequestId(7L, 10L, "req-claim-10")).thenReturn(1)
+        `when`(
+            npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(
+                7L,
+                Instant.parse("2026-06-02T00:00:00Z"),
+            ),
+        ).thenReturn(activeToken(11))
+
+        mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.hasGeneral").value(false))
+            .andExpect(jsonPath("$.reason").value("빙의 가능한 장수가 아닙니다."))
+            .andExpect(jsonPath("$.candidates.length()").value(1))
+            .andExpect(jsonPath("$.candidates[0].generalId").value(11))
+
+        assertEquals(0, mockingDetails(reserve).invocations.count { it.method.name == "publishImmediate" })
     }
 
     @Test

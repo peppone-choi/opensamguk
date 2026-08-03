@@ -332,6 +332,9 @@ data class Scenario(
 
     fun initGenerals(): List<ScenarioGeneral> = seedGenerals(extendedGeneral = true)
 
+    fun isSourceProvenancedGeneralEx(general: ScenarioGeneral): Boolean =
+        general.officerNumber != null && generalEx.any { it === general }
+
     private fun validateRtk14AddedPlacement() {
         require(generalEx.none { it.rtk14Added }) {
             "RTK14-added rows in general_ex are unsupported because they would alter InitScenario ordering"

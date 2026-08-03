@@ -126,8 +126,55 @@ describe('CharacterClaim', () => {
     expect(apiMocks.pollCommandResult).not.toHaveBeenCalled();
   });
 
-  it('surfaces a terminal daemon denial without claiming the character', async () => {
+  it('reloads a terminal daemon denial into a retry candidate without resubmitting the claim', async () => {
     const onClaimed = vi.fn();
+    apiMocks.claimable
+      .mockReset()
+      .mockResolvedValueOnce({
+        result: true,
+        hasGeneral: false,
+        candidates: [
+          {
+            generalId: 9,
+            name: '조조',
+            nationId: 1,
+            nationName: '위',
+            leadership: 80,
+            strength: 70,
+            intel: 90,
+            politics: 95,
+            charm: 85,
+            picture: null,
+            imageServer: 0,
+            special: null,
+            special2: null,
+            personal: null,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        result: true,
+        hasGeneral: false,
+        reason: '빙의 가능한 장수가 아닙니다.',
+        candidates: [
+          {
+            generalId: 11,
+            name: '장료',
+            nationId: 1,
+            nationName: '위',
+            leadership: 70,
+            strength: 80,
+            intel: 75,
+            politics: 60,
+            charm: 70,
+            picture: null,
+            imageServer: 0,
+            special: null,
+            special2: null,
+            personal: null,
+          },
+        ],
+      });
     apiMocks.claim
       .mockResolvedValueOnce({ result: true, generalId: 9, reason: null, requestId: 'claim-9' })
       .mockResolvedValueOnce({ result: false, generalId: 9, reason: '빙의 가능한 장수가 아닙니다.', requestId: null });
@@ -144,8 +191,9 @@ describe('CharacterClaim', () => {
     fireEvent.click(await screen.findByRole('button', { name: '빙의' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('빙의 가능한 장수가 아닙니다.');
+    expect(await screen.findByText('장료')).toBeInTheDocument();
     expect(onClaimed).not.toHaveBeenCalled();
-    await waitFor(() => expect(apiMocks.claim).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(apiMocks.claim).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(apiMocks.claimable).toHaveBeenCalledTimes(2));
   });
 

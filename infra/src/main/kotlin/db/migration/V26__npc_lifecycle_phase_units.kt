@@ -2,17 +2,21 @@ package db.migration
 
 import opensamguk.common.constants.GameConst
 import opensamguk.infra.persistence.MetaJson
+import opensamguk.infra.seed.EffectiveScenarioResolver
 import opensamguk.infra.seed.ScenarioGeneral
-import opensamguk.infra.seed.ScenarioJson
 import org.flywaydb.core.api.FlywayException
 import org.flywaydb.core.api.migration.BaseJavaMigration
 import org.flywaydb.core.api.migration.Context
-import java.nio.charset.StandardCharsets
 import java.sql.Connection
 
 class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
     override fun migrate(context: Context) {
         val connection = context.connection
+        val world = loadWorld(connection)
+        val scenario = world
+            ?.takeIf { hasNpcStateRows(connection) }
+            ?.let { resolveEffectiveScenario(context, it) }
+
         connection.createStatement().use { statement ->
             statement.executeUpdate(
                 """
@@ -29,17 +33,12 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
             )
         }
 
-        val world = loadWorld(connection) ?: return
-        val underage = loadUnderageRows(connection, world.currentYear)
-        val scenario = loadScenario(world.scenarioCode) ?: run {
-            if (underage.isNotEmpty()) {
-                throw FlywayException(
-                    "V26 found underage NPC rows but bundled scenario/${world.scenarioCode}.json is unavailable; refusing data loss",
-                )
-            }
+        world ?: return
+        scenario ?: run {
             refreshNationGeneralCounts(connection)
             return
         }
+        val underage = loadUnderageRows(connection, world.currentYear)
         val seedGenerals = scenario.seedGenerals(world.extendedGeneral)
         val candidates = seedGenerals
             .groupBy { ScenarioIdentity(it.name, it.nationId) }
@@ -120,6 +119,29 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
             )
         }
     }
+
+    private fun hasNpcStateRows(connection: Connection): Boolean = connection.prepareStatement(
+        "SELECT EXISTS(SELECT 1 FROM general WHERE npc_state >= 2)",
+    ).use { statement ->
+        statement.executeQuery().use { rs ->
+            rs.next()
+            rs.getBoolean(1)
+        }
+    }
+
+    private fun resolveEffectiveScenario(context: Context, world: WorldRow) =
+        try {
+            EffectiveScenarioResolver(
+                scenarioDir = context.configuration.placeholders[SCENARIO_DIR_PLACEHOLDER].orEmpty(),
+                classLoader = context.configuration.classLoader,
+            ).resolve(world.scenarioCode)
+        } catch (failure: Exception) {
+            throw FlywayException(
+                "V26 found npc_state >= 2 rows but effective scenario/${world.scenarioCode}.json " +
+                    "cannot be resolved; refusing data loss",
+                failure,
+            )
+        }
 
     private fun loadUnderageRows(connection: Connection, currentYear: Int): List<LegacyGeneralRow> =
         connection.prepareStatement(
@@ -205,11 +227,6 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
             identityMatches.takeIf { it.size == 1 && it.single().officerNumber != null }.orEmpty()
         }
     }
-
-    private fun loadScenario(scenarioCode: String) =
-        javaClass.classLoader.getResourceAsStream("scenario/$scenarioCode.json")?.use { stream ->
-            ScenarioJson.loadScenario(stream.readBytes().toString(StandardCharsets.UTF_8))
-        }
 
     private fun loadDeferredGeneralNames(connection: Connection): Set<String> = connection.prepareStatement(
         """
@@ -321,5 +338,6 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
 
     companion object {
         private const val DEFAULT_BIRTH_YEAR = 180
+        private const val SCENARIO_DIR_PLACEHOLDER = "scenario_dir"
     }
 }

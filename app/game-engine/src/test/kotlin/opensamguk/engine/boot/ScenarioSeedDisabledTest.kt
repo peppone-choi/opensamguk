@@ -1,12 +1,12 @@
 package opensamguk.engine.boot
 
-import opensamguk.infra.seed.ScenarioJson
 import org.mockito.Mockito
 import org.springframework.jdbc.core.JdbcTemplate
 import java.io.File
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFalse
 
 class ScenarioSeedDisabledTest {
@@ -25,7 +25,7 @@ class ScenarioSeedDisabledTest {
     }
 
     @Test
-    fun `scenario directory overrides classpath scenario json`() {
+    fun `seed bootstrap resolves a same-name external scenario before the bundled scenario`() {
         val dir = Files.createTempDirectory("scenario-dir").toFile()
         try {
             val scenario = File(dir, "scenario_1010.json")
@@ -37,7 +37,24 @@ class ScenarioSeedDisabledTest {
                 worldId = opensamguk.common.world.WorldId(1),
             )
 
-            assertEquals("external", ScenarioJson.loadScenario(bootstrap.readScenarioJson()).title)
+            assertEquals("external", bootstrap.loadScenario().title)
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `seed bootstrap does not fall back after a selected external scenario fails to parse`() {
+        val dir = Files.createTempDirectory("scenario-dir").toFile()
+        try {
+            File(dir, "scenario_1010.json").writeText("{ malformed")
+            val bootstrap = SeedBootstrap(
+                scenarioCode = "scenario_1010",
+                scenarioDir = dir.absolutePath,
+                worldId = opensamguk.common.world.WorldId(1),
+            )
+
+            assertFails { bootstrap.loadScenario() }
         } finally {
             dir.deleteRecursively()
         }

@@ -1,10 +1,11 @@
 package opensamguk.engine.boot
 
-import opensamguk.infra.seed.ScenarioImporter
+import opensamguk.common.world.WorldId
+import opensamguk.infra.seed.EffectiveScenarioResolver
 import opensamguk.infra.seed.Scenario
+import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.infra.seed.ScenarioSeedCoordinator
-import opensamguk.common.world.WorldId
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -61,6 +62,7 @@ class SeedBootstrap(
     private val worldId: WorldId,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
+    private val scenarioResolver = EffectiveScenarioResolver(scenarioDir)
 
     /**
      * Seed through configured-world admission. Returns true when it imports, false only when exactly
@@ -74,7 +76,7 @@ class SeedBootstrap(
 
         val admission = ScenarioSeedCoordinator(jdbc).ensureSeeded(worldId) {
             val scenarioNumber = scenarioNumber()
-            val scenario = ScenarioJson.loadScenario(readScenarioJson())
+            val scenario = loadScenario()
             val mapName = scenarioMapName(scenario)
             val cities = ScenarioJson.loadMapCities(readResource("map/$mapName.json"))
             log.info(
@@ -118,13 +120,9 @@ class SeedBootstrap(
         return stream.use { it.readBytes().toString(StandardCharsets.UTF_8) }
     }
 
-    internal fun readScenarioJson(): String {
-        if (scenarioDir.isNotBlank()) {
-            val file = java.io.File(scenarioDir, "$scenarioCode.json")
-            if (file.isFile) return file.readText(StandardCharsets.UTF_8)
-        }
-        return readResource("scenario/$scenarioCode.json")
-    }
+    internal fun readScenarioJson(): String = scenarioResolver.readScenarioJson(scenarioCode)
+
+    internal fun loadScenario(): Scenario = scenarioResolver.resolve(scenarioCode)
 
     private fun scenarioMapName(scenario: Scenario): String {
         val merged = LinkedHashMap<String, Any?>()

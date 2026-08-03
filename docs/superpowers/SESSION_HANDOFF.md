@@ -14,10 +14,11 @@
 
 - private workbook 1,000행·15열 전체를 source contract로 검증하고 populated 런타임 시나리오 15개에 각 officer number 1–1000을 정확히 한 번씩 표현했다. settings-only 15개는 유지한다.
 - 기존 장수의 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신하고 workbook-only 343행을 base `general`에 추가했다. runtime-only 351행의 정치/매력은 reviewed override이며 미검토 fallback은 fail-closed다.
-- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity·explicit appearance scheduling·stored-adult/future-appearance cohort, source `general_ex` filtering, 빙의 terminal/request correlation, typed RNG marker/placement, source-test-before-materialization 순서, archive filtering, secret tracing)을 수정했다.
-- V36이 임시 `general_owner`에 `claim_request_id`를 저장한다. 재시도는 동일 요청만 조회하고 terminal deny가 일치할 때만 예약을 해제하며, 재접속은 원래 NPC 하나만 재개 후보로 노출한다. 기존 null-id 확정 행은 `npc_state != 2`에서만 호환 유지한다.
-- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, 마지막 완전 green `$os-verify` backend `BUILD SUCCESSFUL in 14m 59s`와 XML 4,379건(실패/오류 0, 스킵 1), 최신 ScenarioJson 15/15·game-api 441/441·V36 PostgreSQL IT 3/3·game 251/251·양쪽 typecheck·Agent OS/strict 0/0. 최신 broad의 유일한 V5 Testcontainers socket timeout은 독립 3/3 재실행으로 비재현·격리했다.
-- Docker PR #24는 3회 mention review 후 merge·배포 성공. Source PR #356은 새 fix commit을 push한 뒤 정확한 SHA 기준 3회 mention review를 다시 받아야 한다.
+- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity·explicit appearance·stored-adult/future-appearance·effective source, source `general_ex` filtering/RNG, 빙의 terminal/request correlation/reload cleanup, typed RNG marker/placement, source-test-before-materialization, archive filtering, secret tracing)을 수정했다.
+- V36이 임시 `general_owner`에 `claim_request_id`를 저장한다. 재시도는 동일 요청만 조회하고 claimable GET도 exact terminal deny만 예약 해제해 새 후보를 돌려준다. 기존 null-id 확정 행은 `npc_state != 2`에서만 호환 유지한다.
+- `EffectiveScenarioResolver`가 external-over-classpath 우선순위를 시드/V26에 공유하고 세 Flyway 앱에 `scenario_dir` placeholder를 배선한다. source Compose와 Docker PR #25가 Flyway를 먼저 잡을 수 있는 game-api/engine에 동일 read-only mount를 제공한다.
+- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, backend `BUILD SUCCESSFUL in 15m 59s`와 XML 4,404건(실패/오류 0, 스킵 1), importer 20/20·ScenarioJson 15/15·resolver 4/4·V26 5/5·SeedBootstrap 3/3·빙의 21/21·V36 IT 3/3·game 251/251·양쪽 typecheck·Agent OS/strict 0/0. 로컬 stack start는 미제공 `JWT_SECRET`로 중단했고, 비밀을 읽지 않은 Compose config 검증은 통과했다.
+- Docker PR #24는 3회 mention review 후 merge·배포 성공. Source PR #356과 Docker PR #25는 새 exact SHA 기준 3회 mention review가 필요하다. 수정된 V26은 이미 적용된 DB에서 재실행되지 않으므로 `pep` 재시드는 해소하지만 다른 기존 월드는 별도 forward repair 대상이다.
 
 ## 다음 순서
 
