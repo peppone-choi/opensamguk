@@ -292,7 +292,10 @@ class MyControllerTest {
         )
         `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
             listOf(
-                gen(1, "조조", nationId = 1, cityId = 5, officerLevel = 12),
+                gen(1, "조조", nationId = 1, cityId = 5, officerLevel = 12).apply {
+                    politics = 93
+                    charm = 86
+                },
                 gen(20, "허저", nationId = 1, cityId = 5, officerLevel = 10),
                 gen(10, "순욱", nationId = 1, cityId = 5, officerLevel = 5),
                 gen(3, "하후돈", nationId = 1, cityId = 5, officerLevel = 4, npcState = 1)
@@ -312,6 +315,8 @@ class MyControllerTest {
             .andExpect(jsonPath("$.canManagePersonnel").value(true))
             .andExpect(jsonPath("$.roster.length()").value(4))
             .andExpect(jsonPath("$.roster[0].officerLevelText").value("황제"))
+            .andExpect(jsonPath("$.roster[0].politics").value(93))
+            .andExpect(jsonPath("$.roster[0].charm").value(86))
             .andExpect(jsonPath("$.roster[2].canBeAppointed").value(false))
             .andExpect(jsonPath("$.roster[3].permissionRole").value("ambassador"))
             .andExpect(jsonPath("$.roster[3].canBeKicked").value(false))

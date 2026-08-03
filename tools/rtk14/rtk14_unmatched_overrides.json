@@ -1,0 +1,393 @@
+{
+  "schemaVersion": 2,
+  "provenance": "Manual, role-informed divergence values for legacy runtime identities absent from or intentionally not reusing the supplied RTK14 workbook. These are not copied from Koei data.",
+  "overrides": {
+    "강경": {
+      "politics": 55,
+      "charm": 56,
+      "rationale": "Manual balanced-profile estimate: moderate political skill and appeal."
+    },
+    "건석": {
+      "politics": 55,
+      "charm": 39,
+      "rationale": "Manual palace-power estimate: some institutional leverage, without treating it as broad popularity."
+    },
+    "곽씨": {
+      "politics": 58,
+      "charm": 70,
+      "rationale": "Manual court-family estimate: social presence exceeds direct political skill."
+    },
+    "관로": {
+      "politics": 65,
+      "charm": 48,
+      "rationale": "Manual diviner-intellectual estimate: judgment exceeds broad social appeal."
+    },
+    "교국로": {
+      "politics": 48,
+      "charm": 65,
+      "rationale": "Manual elder-family estimate: social standing exceeds direct administrative aptitude."
+    },
+    "교현": {
+      "politics": 74,
+      "charm": 64,
+      "rationale": "Manual senior-civil estimate: strong administration with substantial, not exceptional, appeal."
+    },
+    "길평": {
+      "politics": 57,
+      "charm": 48,
+      "rationale": "Manual physician-court estimate: practical judgment with restrained social reach."
+    },
+    "낙준": {
+      "politics": 68,
+      "charm": 55,
+      "rationale": "Manual local-administrator estimate: reliable political ability and modest appeal."
+    },
+    "남두": {
+      "politics": 60,
+      "charm": 62,
+      "rationale": "Manual special-character estimate kept moderate to respect the scenario profile."
+    },
+    "단경": {
+      "politics": 68,
+      "charm": 60,
+      "rationale": "Manual balanced-officer estimate: capable civil skill with moderate appeal."
+    },
+    "독발수기능": {
+      "politics": 68,
+      "charm": 82,
+      "rationale": "Manual tribal-leader estimate: strong leadership profile supports high coalition appeal and solid politics."
+    },
+    "루반": {
+      "politics": 62,
+      "charm": 76,
+      "rationale": "Manual Sun Luban court-family estimate: social influence exceeds direct political skill."
+    },
+    "반임": {
+      "politics": 43,
+      "charm": 48,
+      "rationale": "Manual martial-profile estimate: restrained civil skill with modest personal appeal."
+    },
+    "변장": {
+      "politics": 48,
+      "charm": 46,
+      "rationale": "Manual rebel-leader estimate: limited administration and modest recruitment appeal."
+    },
+    "부동": {
+      "politics": 62,
+      "charm": 54,
+      "rationale": "Manual balanced-profile estimate: civil skill reflects its solid intelligence without overstatement."
+    },
+    "북궁백옥": {
+      "politics": 47,
+      "charm": 58,
+      "rationale": "Manual uprising-leader estimate: local appeal moderately exceeds political skill."
+    },
+    "사마준": {
+      "politics": 78,
+      "charm": 70,
+      "rationale": "Manual high all-round profile estimate: strong administration and above-neutral social standing."
+    },
+    "사마휘": {
+      "politics": 80,
+      "charm": 80,
+      "rationale": "Manual scholar-mentor estimate: exceptional discernment and social influence."
+    },
+    "사의관": {
+      "politics": 64,
+      "charm": 45,
+      "rationale": "Manual specialist estimate: dependable practical judgment without broad charisma."
+    },
+    "송건": {
+      "politics": 49,
+      "charm": 45,
+      "rationale": "Manual revolt-leader estimate: below-neutral administration and modest appeal."
+    },
+    "아들노숙": {
+      "politics": 70,
+      "charm": 64,
+      "rationale": "Manual scenario-only relation estimate: capable civil profile with moderate social appeal."
+    },
+    "악신": {
+      "politics": 42,
+      "charm": 44,
+      "rationale": "Manual modest-profile estimate: explicit low-mid values rather than an elevated special-character assumption."
+    },
+    "예형": {
+      "politics": 42,
+      "charm": 33,
+      "rationale": "Manual brilliant-but-confrontational estimate: exceptional intelligence does not translate directly to administration or appeal."
+    },
+    "우길": {
+      "politics": 65,
+      "charm": 77,
+      "rationale": "Manual religious-specialist estimate: influence and appeal exceed ordinary minor-official values."
+    },
+    "원사": {
+      "politics": 72,
+      "charm": 60,
+      "rationale": "Manual intelligence-led civil estimate: strong administration and moderate social reach."
+    },
+    "원혁": {
+      "politics": 22,
+      "charm": 28,
+      "rationale": "Manual very-low-profile estimate: explicit low values follow the scenario's minimal core profile."
+    },
+    "유약": {
+      "politics": 66,
+      "charm": 57,
+      "rationale": "Manual civil-adviser estimate: above-neutral political skill and moderate social presence."
+    },
+    "유총": {
+      "politics": 52,
+      "charm": 68,
+      "rationale": "Manual young-ruler estimate: personal standing exceeds independent administration."
+    },
+    "이리": {
+      "politics": 39,
+      "charm": 42,
+      "rationale": "Manual minor-combatant estimate: intentionally low civil and social values."
+    },
+    "장량": {
+      "politics": 44,
+      "charm": 68,
+      "rationale": "Manual Yellow Turban leader estimate: leader-scale appeal without confusing this roster entry with the Han strategist."
+    },
+    "주한": {
+      "politics": 35,
+      "charm": 43,
+      "rationale": "Manual low-intelligence minor-profile estimate: restrained politics and appeal."
+    },
+    "지양군": {
+      "politics": 55,
+      "charm": 58,
+      "rationale": "Manual special-title estimate: moderate, explicitly non-default civil and social values."
+    },
+    "진복": {
+      "politics": 65,
+      "charm": 48,
+      "rationale": "Manual intelligence-led civil estimate: useful judgment with limited social reach."
+    },
+    "진온": {
+      "politics": 54,
+      "charm": 52,
+      "rationale": "Manual balanced minor-profile estimate: modest politics and appeal."
+    },
+    "허소": {
+      "politics": 70,
+      "charm": 72,
+      "rationale": "Manual talent-judge estimate: high discernment and strong social influence."
+    },
+    "헌제": {
+      "politics": 60,
+      "charm": 75,
+      "rationale": "Manual ceremonial-ruler estimate: formal status raises appeal more than autonomous administration."
+    },
+    "화타": {
+      "politics": 52,
+      "charm": 82,
+      "rationale": "Manual master-physician estimate: medical ability does not map directly to politics, while reputation supports appeal."
+    },
+    "황승언": {
+      "politics": 76,
+      "charm": 62,
+      "rationale": "Manual scholar-inventor estimate: high civil skill with moderate social reach."
+    },
+    "휴고": {
+      "politics": 43,
+      "charm": 46,
+      "rationale": "Manual martial minor-profile estimate: modest explicit values rather than a neutral fallback."
+    }
+  },
+  "collisionOverrides": {
+    "scenario_1010.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1010.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1020.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1020.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1030.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1030.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1040.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1040.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1050.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1050.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1060.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1060.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1070.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1070.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1080.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1080.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1090.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1090.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1100.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1100.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1110.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1110.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1120.json::general::0::소제1::20::11::48::168::190": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed collision-only imperial identity: ceremonial standing supports appeal while direct administration stays moderate; the workbook source ID remains allocated to its sibling runtime tuple."
+    },
+    "scenario_1120.json::general::354::전위2::74::69::62::230::274": {
+      "politics": 54,
+      "charm": 59,
+      "rationale": "Reviewed collision-only later-era namesake: balanced political and social values are assigned manually after the single workbook ID remains with its sibling runtime tuple."
+    },
+    "scenario_1021.json::general::373::양부2::62::68::68::167::212": {
+      "politics": 70,
+      "charm": 64,
+      "rationale": "Reviewed collision-only Yang Fu namesake: capable civil and social values are explicitly assigned without reusing the workbook source ID."
+    },
+    "scenario_1031.json::general::373::양부2::62::68::68::167::212": {
+      "politics": 70,
+      "charm": 64,
+      "rationale": "Reviewed collision-only Yang Fu namesake: capable civil and social values are explicitly assigned without reusing the workbook source ID."
+    },
+    "scenario_1041.json::general::373::양부2::62::68::68::167::212": {
+      "politics": 70,
+      "charm": 64,
+      "rationale": "Reviewed collision-only Yang Fu namesake: capable civil and social values are explicitly assigned without reusing the workbook source ID."
+    },
+    "scenario_1021.json::general::608::고담륭::35::24::76::190::251": {
+      "politics": 74,
+      "charm": 55,
+      "rationale": "Reviewed collision-only Gao Tanglong spelling identity: an intelligence-led civil profile is manually reviewed while the alias source ID remains one-to-one."
+    },
+    "scenario_1041.json::general::608::고담륭::35::24::76::190::251": {
+      "politics": 74,
+      "charm": 55,
+      "rationale": "Reviewed collision-only Gao Tanglong spelling identity: an intelligence-led civil profile is manually reviewed while the alias source ID remains one-to-one."
+    },
+    "scenario_1021.json::general::627::유대연주::53::32::55::148::192": {
+      "politics": 58,
+      "charm": 51,
+      "rationale": "Reviewed collision-only Yan governor identity: moderate administration and appeal are manually assigned after the shared-name source ID is exhausted."
+    },
+    "scenario_1021.json::general::643::이이자::32::18::48::157::199": {
+      "politics": 38,
+      "charm": 43,
+      "rationale": "Reviewed collision-only Li Yizi identity: low civil and modest appeal values are manually reviewed instead of reusing the exhausted source ID."
+    },
+    "scenario_1031.json::general::627::유대연주::53::32::55::148::192": {
+      "politics": 58,
+      "charm": 51,
+      "rationale": "Reviewed collision-only Yan governor identity: moderate administration and appeal are manually assigned after the shared-name source ID is exhausted."
+    },
+    "scenario_1031.json::general::643::이이자::32::18::48::157::199": {
+      "politics": 38,
+      "charm": 43,
+      "rationale": "Reviewed collision-only Li Yizi identity: low civil and modest appeal values are manually reviewed instead of reusing the exhausted source ID."
+    },
+    "scenario_1041.json::general::627::유대연주::53::32::55::148::192": {
+      "politics": 58,
+      "charm": 51,
+      "rationale": "Reviewed collision-only Yan governor identity: moderate administration and appeal are manually assigned after the shared-name source ID is exhausted."
+    },
+    "scenario_1041.json::general::643::이이자::32::18::48::157::199": {
+      "politics": 38,
+      "charm": 43,
+      "rationale": "Reviewed collision-only Li Yizi identity: low civil and modest appeal values are manually reviewed instead of reusing the exhausted source ID."
+    },
+    "scenario_1021.json::general::676::유위대::53::44::62::152::199": {
+      "politics": 62,
+      "charm": 54,
+      "rationale": "Reviewed collision-only alternate Liu Dai identity: solid civil judgment and moderate appeal are manually assigned after the shared-name source ID is exhausted."
+    },
+    "scenario_1031.json::general::675::유위대::53::44::62::152::199": {
+      "politics": 62,
+      "charm": 54,
+      "rationale": "Reviewed collision-only alternate Liu Dai identity: solid civil judgment and moderate appeal are manually assigned after the shared-name source ID is exhausted."
+    },
+    "scenario_1041.json::general::675::유위대::53::44::62::152::199": {
+      "politics": 62,
+      "charm": 54,
+      "rationale": "Reviewed collision-only alternate Liu Dai identity: solid civil judgment and moderate appeal are manually assigned after the shared-name source ID is exhausted."
+    }
+  }
+}

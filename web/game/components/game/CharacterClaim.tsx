@@ -1,11 +1,5 @@
 'use client';
 
-// CharacterClaim — 장수 선택 / 빙의 screen (spec §6 entrance char states).
-// Shown when front-info general.hasGeneral === false. Lists api.claimable().candidates
-// (name · nation · 통/무/지) → api.claim(generalId) → on success calls onClaimed() so the caller
-// bumps the front-info refreshKey and enters the game. 409/blocked reasons are surfaced (ClaimResponse
-// carries result:false + reason; the proxy returns 409 as a thrown Error, also handled).
-
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { formatNumber } from '@/lib/format';
@@ -165,7 +159,7 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
                 </div>
             )}
 
-            <p className="text-muted claim-hint">선택한 장수의 능력치: 통솔 / 무력 / 지력</p>
+            <p className="text-muted claim-hint">선택한 장수의 능력치: 통솔 / 무력 / 지력 / 정치 / 매력</p>
             <p className="text-muted claim-hint">
                 {canSelectNpc ? `${formatNumber(candidates.length)}명의 장수가 빙의를 기다리고 있습니다.` : '빙의 목록은 NPC 빙의 모드에서만 표시됩니다.'}
             </p>

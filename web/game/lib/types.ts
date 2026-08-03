@@ -539,6 +539,8 @@ export interface MyGeneralSummary {
     leadership: number;
     strength: number;
     intel: number;
+    politics?: number;
+    charm?: number;
     crew: number;
     npcState: number;
     mine: boolean;

@@ -71,9 +71,10 @@ class PossessionControllerTest {
     private fun npc(
         id: Int, name: String, nationId: Int = 0, npcState: Int = 2,
         specialCode: String = "None", special2Code: String = "None", personalCode: String = "None",
+        politics: Int = 50, charm: Int = 50,
     ) = GeneralReadEntity(
         id = id, name = name, nationId = nationId, npcState = npcState,
-        leadership = 50, strength = 50, intel = 50,
+        leadership = 50, strength = 50, intel = 50, politics = politics, charm = charm,
         specialCode = specialCode, special2Code = special2Code, personalCode = personalCode,
     )
 
@@ -109,7 +110,16 @@ class PossessionControllerTest {
         )
         `when`(generals.findByNpcStateOrderByIdAsc(2)).thenReturn(
             listOf(
-                npc(10, "여포", nationId = 1, specialCode = "che_경작", special2Code = "che_돌격", personalCode = "che_정복"),
+                npc(
+                    10,
+                    "여포",
+                    nationId = 1,
+                    specialCode = "che_경작",
+                    special2Code = "che_돌격",
+                    personalCode = "che_정복",
+                    politics = 84,
+                    charm = 67,
+                ),
                 npc(11, "장료", nationId = 1), // 11 already claimed → dropped
             ),
         )
@@ -123,9 +133,60 @@ class PossessionControllerTest {
             .andExpect(jsonPath("$.candidates[0].generalId").value(10))
             .andExpect(jsonPath("$.candidates[0].name").value("여포"))
             .andExpect(jsonPath("$.candidates[0].nationName").value("동탁"))
+            .andExpect(jsonPath("$.candidates[0].politics").value(84))
+            .andExpect(jsonPath("$.candidates[0].charm").value(67))
             .andExpect(jsonPath("$.candidates[0].special").value("경작"))
             .andExpect(jsonPath("$.candidates[0].special2").value("돌격"))
             .andExpect(jsonPath("$.candidates[0].personal").value("정복"))
+    }
+
+    @Test
+    fun `claimable rehydrates politics and charm from an active token snapshot`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(null)
+        `when`(
+            npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(
+                7L,
+                Instant.parse("2026-06-02T00:00:00Z"),
+            ),
+        ).thenReturn(
+            SelectNpcTokenEntity(
+                ownerId = 7L,
+                validUntil = Instant.parse("2026-06-02T00:01:00Z"),
+                pickMoreFrom = Instant.parse("2000-01-01T01:00:00Z"),
+                pickResult = linkedMapOf(
+                    "10" to linkedMapOf(
+                        "generalId" to 10,
+                        "name" to "여포",
+                        "nationId" to 1,
+                        "nationName" to "동탁",
+                        "leadership" to 90,
+                        "strength" to 99,
+                        "intel" to 72,
+                        "politics" to 84,
+                        "charm" to 67,
+                        "picture" to "yeopo.png",
+                        "imageServer" to 2,
+                        "special" to "경작",
+                        "special2" to "돌격",
+                        "personal" to "정복",
+                        "keepCnt" to 3,
+                    ),
+                    "__pickMoreSeconds" to 10,
+                ),
+                nonce = 1,
+                createdAt = Instant.parse("2026-06-02T00:00:00Z"),
+                updatedAt = Instant.parse("2026-06-02T00:00:00Z"),
+            ),
+        )
+
+        mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.candidates[0].leadership").value(90))
+            .andExpect(jsonPath("$.candidates[0].strength").value(99))
+            .andExpect(jsonPath("$.candidates[0].intel").value(72))
+            .andExpect(jsonPath("$.candidates[0].politics").value(84))
+            .andExpect(jsonPath("$.candidates[0].charm").value(67))
     }
 
     @Test

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import GameChrome from '@/components/game/GameChrome';
 
@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
     showToast: vi.fn(),
     removeToast: vi.fn(),
     routerReplace: vi.fn(),
+    claimable: vi.fn(),
+    claim: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -22,6 +24,13 @@ vi.mock('@/hooks/useFrontInfo', () => ({
 
 vi.mock('@/hooks/useToast', () => ({
     useToast: () => ({ toasts: [], show: mocks.showToast, remove: mocks.removeToast }),
+}));
+
+vi.mock('@/lib/api', () => ({
+    api: {
+        claimable: mocks.claimable,
+        claim: mocks.claim,
+    },
 }));
 
 vi.mock('@/components/game/MapViewer', () => ({
@@ -76,6 +85,29 @@ describe('GameChrome main map', () => {
     beforeEach(() => {
         mocks.mapViewer.mockClear();
         mocks.routerReplace.mockClear();
+        mocks.claimable.mockReset().mockResolvedValue({
+            result: true,
+            hasGeneral: false,
+            candidates: [
+                {
+                    generalId: 9,
+                    name: '조조',
+                    nationId: 1,
+                    nationName: '위',
+                    leadership: 80,
+                    strength: 70,
+                    intel: 90,
+                    politics: 95,
+                    charm: 85,
+                    picture: null,
+                    imageServer: 0,
+                    special: null,
+                    special2: null,
+                    personal: null,
+                },
+            ],
+        });
+        mocks.claim.mockReset().mockResolvedValue({ result: true, generalId: 9, reason: null });
         mocks.useFrontInfo.mockReturnValue({
             frontInfo,
             constData: { maxTurn: 10 },
@@ -206,5 +238,83 @@ describe('GameChrome main map', () => {
         expect(screen.getByText('장수 생성 화면으로 이동 중입니다.')).toBeInTheDocument();
         expect(screen.queryByText('장수 등록')).not.toBeInTheDocument();
         expect(mocks.mapViewer).not.toHaveBeenCalled();
+    });
+
+    it('renders the real possession claim screen only when the entry is explicitly requested', async () => {
+        mocks.useFrontInfo.mockReturnValueOnce({
+            frontInfo: {
+                ...frontInfo,
+                global: { ...frontInfo.global, serverId: 'pep', npcMode: 1, blockGeneralCreate: 1 },
+                general: {
+                    ...frontInfo.general,
+                    hasGeneral: false,
+                    generalId: null,
+                },
+            },
+            constData: { maxTurn: 10 },
+            menu: [],
+            loading: false,
+            error: null,
+            refreshKey: 7,
+            refresh: vi.fn(),
+        });
+
+        render(<GameChrome entryMode="possession" />);
+
+        expect(await screen.findByRole('heading', { name: '장수 등록' })).toBeInTheDocument();
+        expect(mocks.routerReplace).not.toHaveBeenCalled();
+        expect(mocks.mapViewer).not.toHaveBeenCalled();
+    });
+
+    it('returns a successful explicit possession claim to the selected server base after refreshed front-info confirms it', async () => {
+        mocks.useFrontInfo.mockReturnValueOnce({
+            frontInfo: {
+                ...frontInfo,
+                global: { ...frontInfo.global, serverId: 'pep', npcMode: 1, blockGeneralCreate: 1 },
+                general: {
+                    ...frontInfo.general,
+                    hasGeneral: false,
+                    generalId: null,
+                },
+            },
+            constData: { maxTurn: 10 },
+            menu: [],
+            loading: false,
+            error: null,
+            refreshKey: 7,
+            refresh: vi.fn(),
+        });
+
+        const { rerender } = render(<GameChrome entryMode="possession" />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '빙의' }));
+
+        await waitFor(() => {
+            expect(mocks.claim).toHaveBeenCalledWith(9);
+        });
+        expect(mocks.routerReplace).not.toHaveBeenCalled();
+
+        mocks.useFrontInfo.mockReturnValue({
+            frontInfo: {
+                ...frontInfo,
+                global: { ...frontInfo.global, serverId: 'pep', npcMode: 1, blockGeneralCreate: 1 },
+                general: {
+                    ...frontInfo.general,
+                    hasGeneral: true,
+                    generalId: 9,
+                },
+            },
+            constData: { maxTurn: 10 },
+            menu: [],
+            loading: false,
+            error: null,
+            refreshKey: 8,
+            refresh: vi.fn(),
+        });
+        rerender(<GameChrome entryMode="possession" />);
+
+        await waitFor(() => {
+            expect(mocks.routerReplace).toHaveBeenCalledWith('/game/pep');
+        });
     });
 });

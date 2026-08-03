@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFrontInfo } from '@/hooks/useFrontInfo';
 import { useToast } from '@/hooks/useToast';
@@ -14,6 +14,7 @@ import PartialReservedCommand from './PartialReservedCommand';
 import GeneralBasicCard from './GeneralBasicCard';
 import NationBasicCard from './NationBasicCard';
 import CityBasicCard from './CityBasicCard';
+import CharacterClaim from './CharacterClaim';
 import MessagePanel from './MessagePanel';
 import Toast from '../Toast';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
@@ -21,14 +22,22 @@ import type { MenuFlagSource } from '@/lib/menu-types';
 import type { FrontInfoResponse } from '@/lib/types';
 
 type GameChromeChildren = React.ReactNode | ((frontInfo: FrontInfoResponse) => React.ReactNode);
+type GameChromeEntryMode = 'possession';
 
 const gatewayPublicUrl = process.env.NEXT_PUBLIC_GATEWAY_URL ?? process.env.NEXT_PUBLIC_GATEWAY_ORIGIN;
 const lobbyHref = gatewayPublicUrl ? `${gatewayPublicUrl.replace(/\/$/, '')}/lobby` : '/lobby';
 
-export default function GameChrome({ children }: { children?: GameChromeChildren }) {
+export default function GameChrome({
+    children,
+    entryMode,
+}: {
+    children?: GameChromeChildren;
+    entryMode?: GameChromeEntryMode;
+}) {
     const router = useRouter();
     const { frontInfo, constData, menu, loading, error, refresh, refreshKey } = useFrontInfo();
     const { toasts, show, remove } = useToast();
+    const [possessionClaimed, setPossessionClaimed] = useState(false);
 
     const gating: ControlGating | null = useMemo(() => {
         if (!frontInfo) return null;
@@ -48,12 +57,26 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
         const serverId = frontInfo?.global.serverId;
         return serverId ? resolveServerGamePath(undefined, serverId, '/game', 'join') : '/game/join';
     }, [frontInfo?.global.serverId]);
+    const gameHref = useMemo(() => {
+        const serverId = frontInfo?.global.serverId;
+        return serverId ? resolveServerGamePath(undefined, serverId, '/game') : '/game';
+    }, [frontInfo?.global.serverId]);
+    const onPossessionClaimed = useCallback(() => {
+        setPossessionClaimed(true);
+        refresh();
+    }, [refresh]);
 
     useEffect(() => {
-        if (!loading && hasGeneral === false) {
+        if (!loading && possessionClaimed && hasGeneral === true) {
+            router.replace(gameHref);
+        }
+    }, [gameHref, hasGeneral, loading, possessionClaimed, router]);
+
+    useEffect(() => {
+        if (!loading && hasGeneral === false && entryMode !== 'possession') {
             router.replace(joinHref);
         }
-    }, [hasGeneral, joinHref, loading, router]);
+    }, [entryMode, hasGeneral, joinHref, loading, router]);
 
     // asyncReady gate (spec §1.1): suppress everything until the first front-info + const resolve.
     if (loading) {
@@ -77,6 +100,10 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
     }
 
     if (!frontInfo.general.hasGeneral) {
+        if (entryMode === 'possession') {
+            return <CharacterClaim global={frontInfo.global} onClaimed={onPossessionClaimed} />;
+        }
+
         return (
             <div className="center-screen">
                 <div className="spinner" />

@@ -680,6 +680,8 @@ export interface MyBossGeneralSummary {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   permissionRole: string;
   canBeAppointed: boolean;
   canBeKicked: boolean;

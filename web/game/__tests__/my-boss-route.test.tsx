@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import MyBossPage from '@/app/game/my-boss/page';
@@ -64,6 +64,8 @@ const baseBoss = {
             leadership: 95,
             strength: 80,
             intel: 90,
+            politics: 91,
+            charm: 76,
             permissionRole: 'normal',
             canBeAppointed: false,
             canBeKicked: false,
@@ -82,7 +84,7 @@ const baseBoss = {
             leadership: 70,
             strength: 40,
             intel: 96,
-            permissionRole: 'normal',
+            permissionRole: 'ambassador',
             canBeAppointed: false,
             canBeKicked: false,
             canBeAmbassador: true,
@@ -180,6 +182,20 @@ describe('MyBossPage personnel commands', () => {
         confirmSpy.mockRestore();
     });
 
+    it('shows politics and charm in the nation roster', async () => {
+        render(<MyBossPage />);
+
+        await waitFor(() => expect(screen.getByRole('heading', { name: '세력 장수' })).toBeInTheDocument());
+
+        expect(screen.getByRole('columnheader', { name: '정치' })).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: '매력' })).toBeInTheDocument();
+
+        const row = screen.getByRole('cell', { name: '조조' }).closest('tr');
+        expect(row).not.toBeNull();
+        expect(within(row!).getByRole('cell', { name: '91' })).toBeInTheDocument();
+        expect(within(row!).getByRole('cell', { name: '76' })).toBeInTheDocument();
+    });
+
     it('hides personnel submit controls for non-chief callers', async () => {
         mocks.myBoss.mockResolvedValue({ ...baseBoss, myOfficerLevel: 1, myPermission: 0, canManagePersonnel: false });
 
@@ -224,11 +240,13 @@ describe('MyBossPage personnel commands', () => {
         render(<MyBossPage />);
 
         await waitFor(() => expect(screen.getByRole('button', { name: '외교권자 저장' })).toBeInTheDocument());
-        fireEvent.click(screen.getAllByLabelText('허저')[0]);
+        const ambassadorPicker = screen.getByRole('group', { name: '외교권자' });
+        await waitFor(() => expect(within(ambassadorPicker).getByLabelText('순욱')).toBeChecked());
+        fireEvent.click(within(ambassadorPicker).getByLabelText('허저'));
         fireEvent.click(screen.getByRole('button', { name: '외교권자 저장' }));
 
         await waitFor(() => {
-            expect(mocks.changePermission).toHaveBeenCalledWith({ isAmbassador: true, genlist: [42] }, 10);
+            expect(mocks.changePermission).toHaveBeenCalledWith({ isAmbassador: true, genlist: [10, 42] }, 10);
         });
         expect(mocks.submitCommandAndAwaitResult).toHaveBeenCalledTimes(1);
     });

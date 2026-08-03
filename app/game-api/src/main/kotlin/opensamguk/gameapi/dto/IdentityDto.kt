@@ -19,6 +19,8 @@ data class ClaimableGeneral(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int = 50,
+    val charm: Int = 50,
     val picture: String?,
     val imageServer: Int,
     val special: String?,       // 내정특기명
@@ -663,6 +665,8 @@ data class MyBossGeneralSummary(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int,
+    val charm: Int,
     val permissionRole: String,
     val canBeAppointed: Boolean,
     val canBeKicked: Boolean,

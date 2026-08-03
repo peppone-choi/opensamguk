@@ -22,6 +22,8 @@ class GeneralListColumnsTest {
         assertTrue("no" in cols)
         assertTrue("specialDomestic" in cols)
         assertTrue("age" in cols)
+        assertTrue("politics" in cols)
+        assertTrue("charm" in cols)
         // P0 customViewColumns
         assertTrue("officerLevelText" in cols)
         assertTrue("bill" in cols)
@@ -111,6 +113,8 @@ class GeneralListColumnsTest {
         val row = sampleRow()
         assertEquals(10, GeneralListColumns.cell(row, "no", 2))
         assertEquals("관우", GeneralListColumns.cell(row, "name", 2))
+        assertEquals(81, GeneralListColumns.cell(row, "politics", 2))
+        assertEquals(72, GeneralListColumns.cell(row, "charm", 2))
         assertEquals("급습", GeneralListColumns.cell(row, "specialDomestic", 2))
         assertEquals("보병", GeneralListColumns.cell(row, "specialWar", 2))
         assertEquals(120, GeneralListColumns.cell(row, "refreshScoreTotal", 2))
@@ -181,7 +185,7 @@ class GeneralListColumnsTest {
 
     private fun sampleRow() = GeneralListRow(
         no = 10, name = "관우", nation = 1, npc = 0, injury = 0,
-        leadership = 90, strength = 97, intel = 75, explevel = 5, dedlevel = 3,
+        leadership = 90, strength = 97, intel = 75, politics = 81, charm = 72, explevel = 5, dedlevel = 3,
         gold = 1000, rice = 1000, killturn = null, picture = "guanyu.jpg", imgsvr = 0,
         age = 30, specialDomestic = "급습", specialWar = "보병", personal = "의리",
         belong = 2, troop = 0, city = 5, specage = 20, specage2 = 25,

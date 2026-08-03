@@ -1,5 +1,26 @@
 # Current Task
 
+## 2026-08-03 — RTK14 full-roster scenario and five-stat surfaces
+
+- Status: implementation and independent review cleared; commit/PR, three mention reviews, merge, reseed, and live verification pending.
+- Goal: use every officer row from `/Users/apple/Desktop/삼국지14 무장정보.xlsx` in every populated runtime scenario, preserving one-to-one duplicate identities, replacing the five stats, and applying birth/appearance/death lifecycle dates. Existing runtime-only officers remain with reviewed politics/charm overrides.
+- In scope:
+  - the local RTK14 source-data builder, validation/reporting, and private generated scenario artifacts;
+  - runtime scenario tuple decoding and active/deferred appearance scheduling;
+  - deferred NPC creation carrying politics/charm;
+  - possession routing plus all affected API/UI five-stat surfaces;
+  - source and orchestration deployment wiring for private generated scenarios;
+  - tests, three sequential mention-triggered PR reviews with fixes, merge, deployment, and live verification.
+- Non-goals: tracked generated Koei data, `legacy/**` or golden writes, unrelated archive universes under `data/extracted/scenario`, and secret disclosure.
+- Allowed files: `tools/rtk14/**`, relevant scenario seed/import and deferred-NPC logic/tests in `infra/**`, `logic/**`, `app/game-engine/**`, affected `app/game-api/**` DTO/controller/tests, affected `web/game/**` and `web/gateway/**`, `.github/workflows/deploy.yml`, `tools/agent-system/check.py`, `.ai/{task,current-state,ownership,handoff}.md`, and one review artifact. The sibling Docker worktree may change only scenario mount Compose/deployer contract files.
+- Acceptance evidence:
+  - exactly 1,000 workbook rows are represented once per populated runtime scenario, including all duplicate-name rows; settings-only scenarios remain byte-identical;
+  - five stats and birth/appearance/death lifecycle values round-trip through source JSON and generated tuples; no unresolved workbook row remains;
+  - future appearances retain politics/charm and occur on the validated effective appearance year;
+  - focused Python, logic, infra, engine, API, frontend, typecheck, static workflow, and diff gates pass with XML/tail evidence;
+  - three fresh PR review rounds per PR have no unresolved `fix-required`; deployment and live DB/UI observations confirm the result.
+- Approved external actions: create/update the private RTK14 GitHub Actions secret without printing it, commit, push, PR, three mention reviews, merge, deploy, and overwrite/reseed the target scenario as requested. Any broader data deletion remains prohibited.
+
 ## 2026-08-02 — canonical alphanumeric game-server ID release closeout
 
 - PR: #354 — `https://github.com/peppone-choi/opensamguk/pull/354`.

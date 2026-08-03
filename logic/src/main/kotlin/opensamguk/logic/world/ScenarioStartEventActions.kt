@@ -84,6 +84,10 @@ class RegNpcAction(
     private val ego: String?,
     private val special: String?,
     private val npcText: String?,
+    private val politics: Int = 50,
+    private val charm: Int = 50,
+    private val appearanceYear: Int? = null,
+    private val rtkMetadata: Map<String, Any?> = emptyMap(),
 ) : EventAction {
     override fun run(ctx: EventActionContext) {
         val world = ctx as? ScenarioStartEventContext
@@ -102,6 +106,9 @@ class RegNpcAction(
             .setNPCText(npcText ?: "")
             .setAffinity(affinity)
             .setLifeSpan(birth, death)
+            .setPoliticsCharm(politics, charm)
+            .setAppearanceYear(appearanceYear)
+            .setRtkMetadata(rtkMetadata)
         resolveCityId(world, locatedCity)?.let(builder::setCityID)
         val built = builder
             .fillRemainSpecAsZero(world.year(), world.startYear())
@@ -122,6 +129,9 @@ class RegNpcAction(
         const val NAME = "RegNPC"
 
         fun register(factory: EventActionFactory): EventActionFactory = factory.register(NAME) { args ->
+            val birth = intArg(args, 9, 160)
+            val death = intArg(args, 10, 300)
+            val appearanceYear = nullableIntArg(args, 16)
             RegNpcAction(
                 affinity = intArg(args, 0, 0),
                 name = requiredStringArg(args, 1, NAME),
@@ -132,11 +142,15 @@ class RegNpcAction(
                 strength = requiredIntArg(args, 6, NAME),
                 intel = requiredIntArg(args, 7, NAME),
                 officerLevel = requiredIntArg(args, 8, NAME),
-                birth = intArg(args, 9, 160),
-                death = intArg(args, 10, 300),
+                birth = birth,
+                death = death,
                 ego = nullableStringArg(args, 11),
                 special = nullableStringArg(args, 12),
                 npcText = nullableStringArg(args, 13),
+                politics = intArg(args, 14, 50),
+                charm = intArg(args, 15, 50),
+                appearanceYear = appearanceYear,
+                rtkMetadata = rtk14Metadata(args, birth, death, appearanceYear),
             )
         }
 
@@ -161,6 +175,10 @@ class RegNeutralNpcAction(
     private val ego: String?,
     private val special: String?,
     private val npcText: String?,
+    private val politics: Int = 50,
+    private val charm: Int = 50,
+    private val appearanceYear: Int? = null,
+    private val rtkMetadata: Map<String, Any?> = emptyMap(),
 ) : EventAction {
     override fun run(ctx: EventActionContext) {
         val world = ctx as? ScenarioStartEventContext
@@ -179,6 +197,9 @@ class RegNeutralNpcAction(
             .setAffinity(affinity)
             .setLifeSpan(birth, death)
             .setNPCType(6)
+            .setPoliticsCharm(politics, charm)
+            .setAppearanceYear(appearanceYear)
+            .setRtkMetadata(rtkMetadata)
         RegNpcAction.resolveCityId(world, locatedCity)?.let(builder::setCityID)
         val built = builder
             .fillRemainSpecAsZero(world.year(), world.startYear())
@@ -199,6 +220,9 @@ class RegNeutralNpcAction(
         const val NAME = "RegNeutralNPC"
 
         fun register(factory: EventActionFactory): EventActionFactory = factory.register(NAME) { args ->
+            val birth = intArg(args, 8, 160)
+            val death = intArg(args, 9, 300)
+            val appearanceYear = nullableIntArg(args, 16)
             RegNeutralNpcAction(
                 affinity = intArg(args, 0, 0),
                 name = requiredStringArg(args, 1, NAME),
@@ -208,11 +232,15 @@ class RegNeutralNpcAction(
                 leadership = requiredIntArg(args, 5, NAME),
                 strength = requiredIntArg(args, 6, NAME),
                 intel = requiredIntArg(args, 7, NAME),
-                birth = intArg(args, 8, 160),
-                death = intArg(args, 9, 300),
+                birth = birth,
+                death = death,
                 ego = nullableStringArg(args, 10),
                 special = nullableStringArg(args, 11),
                 npcText = nullableStringArg(args, 12),
+                politics = intArg(args, 14, 50),
+                charm = intArg(args, 15, 50),
+                appearanceYear = appearanceYear,
+                rtkMetadata = rtk14Metadata(args, birth, death, appearanceYear),
             )
         }
     }
@@ -603,6 +631,12 @@ class RaiseNPCNationAction : EventAction {
 private fun intArg(args: List<JsonElement>, index: Int, default: Int): Int =
     (args.getOrNull(index) as? JsonPrimitive)?.content?.toIntOrNull() ?: default
 
+private fun nullableIntArg(args: List<JsonElement>, index: Int): Int? = when (val arg = args.getOrNull(index)) {
+    null, JsonNull -> null
+    is JsonPrimitive -> arg.content.toIntOrNull()
+    else -> error("argument $index must be an integer or null")
+}
+
 private fun requiredIntArg(args: List<JsonElement>, index: Int, action: String): Int =
     (args.getOrNull(index) as? JsonPrimitive)?.content?.toIntOrNull()
         ?: error("$action argument $index must be an integer")
@@ -614,6 +648,32 @@ private fun requiredStringArg(args: List<JsonElement>, index: Int, action: Strin
 private fun nullableStringArg(args: List<JsonElement>, index: Int): String? = when (val arg = args.getOrNull(index)) {
     null, JsonNull -> null
     is JsonPrimitive -> arg.content
+    else -> error("argument $index must be scalar or null")
+}
+
+private fun rtk14Metadata(
+    args: List<JsonElement>,
+    birth: Int,
+    death: Int,
+    appearanceYear: Int?,
+): Map<String, Any?> {
+    if (appearanceYear == null) return emptyMap()
+    return linkedMapOf(
+        "rtk14_officer_number" to scalarArg(args, 17),
+        "rtk14_gender" to scalarArg(args, 18),
+        "rtk14_birth_year" to birth,
+        "rtk14_appearance_year" to appearanceYear,
+        "rtk14_death_year" to death,
+        "rtk14_lifespan" to scalarArg(args, 19),
+        "rtk14_activity_years" to scalarArg(args, 20),
+        "rtk14_total" to scalarArg(args, 21),
+        "rtk14_ideology" to scalarArg(args, 22),
+    )
+}
+
+private fun scalarArg(args: List<JsonElement>, index: Int): Any? = when (val arg = args.getOrNull(index)) {
+    null, JsonNull -> null
+    is JsonPrimitive -> arg.content.toIntOrNull() ?: arg.content
     else -> error("argument $index must be scalar or null")
 }
 

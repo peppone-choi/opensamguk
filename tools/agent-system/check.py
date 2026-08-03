@@ -411,6 +411,61 @@ def check_no_baked_secondary_servers() -> list[Finding]:
     return findings
 
 
+def check_rtk14_deploy_enrichment() -> list[Finding]:
+    deploy_path = ROOT / ".github/workflows/deploy.yml"
+    if not deploy_path.exists():
+        return [Finding("error", "rtk14-enrichment", "Production deploy workflow is missing.")]
+
+    text = deploy_path.read_text(encoding="utf-8")
+    required = {
+        "main-build secret binding": "RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}",
+        "fail-closed missing-secret check": "RTK14_STATS_JSON_B64 is required for main production image builds.",
+        "temporary-material cleanup": "trap cleanup EXIT",
+        "temporary source cleanup": 'rm -f -- "$source_json" "$diagnostics"',
+        "temporary staging cleanup": 'rm -rf -- "$staging_dir"',
+        "gzip-base64 source reconstruction": 'printf \'%s\' "$RTK14_STATS_JSON_B64" | base64 -d | gzip -dc',
+        "silent decode diagnostics": '2>"$diagnostics"',
+        "RTK14 builder source input": '--rtk-source-json "$source_json"',
+        "runtime scenario input directory": '--scenario-dir "$SCENARIO_DIR"',
+        "staged RTK14 output directory": '--out-dir "$staging_dir"',
+        "silent builder diagnostics": '> "$diagnostics" 2>&1',
+        "all-scenario count check": 'if (( ${#staged_files[@]} != scenario_count )); then',
+        "per-file staged output check": 'if [[ ! -f "$staged_file" ]]; then',
+        "all-scenario replacement": 'cp "$staged_file" "$scenario_file"',
+        "non-secret completion summary": "RTK14 scenario enrichment completed for ${scenario_count} scenario file(s).",
+    }
+    missing = [name for name, snippet in required.items() if snippet not in text]
+    if missing:
+        return [
+            Finding(
+                "error",
+                "rtk14-enrichment",
+                "Production deploy workflow must fail closed while materializing RTK14 scenario stats; missing "
+                + ", ".join(missing)
+                + ".",
+            )
+        ]
+
+    unsafe_output = (
+        'echo "$RTK14_STATS_JSON_B64"',
+        'echo "${RTK14_STATS_JSON_B64',
+        'cat "$source_json"',
+        'cat "${source_json',
+        'cat "$diagnostics"',
+        'cat "${diagnostics',
+    )
+    exposed = [snippet for snippet in unsafe_output if snippet in text]
+    if exposed:
+        return [
+            Finding(
+                "error",
+                "rtk14-enrichment",
+                "Production deploy workflow must not print RTK14 source material or builder diagnostics.",
+            )
+        ]
+    return []
+
+
 def check_required_docs() -> list[Finding]:
     findings: list[Finding] = []
     required_phrases = {
@@ -581,6 +636,7 @@ def main() -> int:
     findings += check_gateway_server_registry()
     findings += check_production_seed_default()
     findings += check_no_baked_secondary_servers()
+    findings += check_rtk14_deploy_enrichment()
 
     if args.format == "json":
         print(

@@ -14,9 +14,9 @@ vi.mock('@/components/Shell', () => ({
 }));
 
 vi.mock('@/components/game/GeneralBasicCard', () => ({
-    default: ({ general, nation }: { general: { name: string | null }; nation: { name: string } | null }) => (
+    default: ({ general, nation }: { general: { name: string | null; politics?: number; charm?: number }; nation: { name: string } | null }) => (
         <section data-testid="general-basic-card">
-            {general.name} / {nation?.name ?? '재야'}
+            {general.name} / {nation?.name ?? '재야'} / 정치 {general.politics} / 매력 {general.charm}
         </section>
     ),
 }));
@@ -38,6 +38,8 @@ const columns = [
     'leadership',
     'strength',
     'intel',
+    'politics',
+    'charm',
     'explevel',
     'dedlevel',
     'gold',
@@ -94,6 +96,8 @@ function row(
         leadership: 70 + no,
         strength: 60 + no,
         intel: 50 + no,
+        politics: 40 + no,
+        charm: 30 + no,
         explevel: 1,
         dedlevel: 1,
         gold: 1000,
@@ -179,7 +183,7 @@ describe('BattleCenter route', () => {
 
         expect(screen.queryByText('전투 시뮬레이터')).not.toBeInTheDocument();
         expect(apiMocks.nationGeneralList).toHaveBeenCalledTimes(1);
-        expect(screen.getByTestId('general-basic-card')).toHaveTextContent('장료 / 후한왕조');
+        expect(screen.getByTestId('general-basic-card')).toHaveTextContent('장료 / 후한왕조 / 정치 41 / 매력 31');
         expect(screen.getByRole('option', { name: '장료(08:00)' })).toBeInTheDocument();
 
         for (const type of ['generalHistory', 'battleDetail', 'battleResult', 'generalAction']) {

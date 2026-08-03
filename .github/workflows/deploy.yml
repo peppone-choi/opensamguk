@@ -34,6 +34,68 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Materialize RTK14 scenario stats for image build
+        shell: bash
+        env:
+          RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
+        run: |
+          set -euo pipefail
+          umask 077
+
+          readonly SCENARIO_DIR="$GITHUB_WORKSPACE/infra/src/main/resources/scenario"
+          source_json="$(mktemp)"
+          diagnostics="$(mktemp)"
+          staging_dir="$(mktemp -d)"
+          cleanup() {
+            rm -f -- "$source_json" "$diagnostics"
+            rm -rf -- "$staging_dir"
+          }
+          trap cleanup EXIT
+          trap 'exit 1' HUP INT TERM
+
+          if [[ -z "${RTK14_STATS_JSON_B64:-}" ]]; then
+            echo "ERROR: RTK14_STATS_JSON_B64 is required for main production image builds." >&2
+            exit 1
+          fi
+
+          shopt -s nullglob
+          scenario_files=("$SCENARIO_DIR"/scenario_*.json)
+          scenario_count="${#scenario_files[@]}"
+          if (( scenario_count == 0 )); then
+            echo "ERROR: no runtime scenario JSON files were found for RTK14 enrichment." >&2
+            exit 1
+          fi
+
+          if ! (printf '%s' "$RTK14_STATS_JSON_B64" | base64 -d | gzip -dc) > "$source_json" 2>"$diagnostics"; then
+            echo "ERROR: RTK14_STATS_JSON_B64 could not be decoded." >&2
+            exit 1
+          fi
+
+          if ! python3 tools/rtk14/build_rtk14_stats.py \
+            --rtk-source-json "$source_json" \
+            --scenario-dir "$SCENARIO_DIR" \
+            --out-dir "$staging_dir" \
+            > "$diagnostics" 2>&1; then
+            echo "ERROR: RTK14 scenario enrichment failed." >&2
+            exit 1
+          fi
+
+          staged_files=("$staging_dir"/scenario_*.json)
+          if (( ${#staged_files[@]} != scenario_count )); then
+            echo "ERROR: RTK14 scenario enrichment did not produce every runtime scenario file." >&2
+            exit 1
+          fi
+          for scenario_file in "${scenario_files[@]}"; do
+            staged_file="$staging_dir/$(basename "$scenario_file")"
+            if [[ ! -f "$staged_file" ]]; then
+              echo "ERROR: RTK14 scenario enrichment missed a runtime scenario file." >&2
+              exit 1
+            fi
+            cp "$staged_file" "$scenario_file"
+          done
+
+          echo "RTK14 scenario enrichment completed for ${scenario_count} scenario file(s)."
+
       - name: Build + test JVM
         run: ./gradlew build --no-daemon
 

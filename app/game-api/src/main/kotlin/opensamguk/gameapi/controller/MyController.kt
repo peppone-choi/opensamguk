@@ -272,6 +272,8 @@ class MyController(
                 leadership = g.leadership,
                 strength = g.strength,
                 intel = g.intel,
+                politics = g.politics,
+                charm = g.charm,
                 permissionRole = role,
                 canBeAppointed = g.id != resolved.general.id && g.officerLevel != 12,
                 canBeKicked = g.id != resolved.general.id && secretPermission(g) != 4,

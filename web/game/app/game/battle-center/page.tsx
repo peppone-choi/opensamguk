@@ -116,6 +116,8 @@ function rowToGeneral(row: GeneralRow): BattleCenterGeneral {
         leadership: numberValue(row, ['leadership']),
         strength: numberValue(row, ['strength']),
         intel: numberValue(row, ['intel']),
+        politics: numberValue(row, ['politics']),
+        charm: numberValue(row, ['charm']),
         injury: numberValue(row, ['injury']),
         gold: numberValue(row, ['gold']),
         rice: numberValue(row, ['rice']),

@@ -422,6 +422,8 @@ export default function MyBossPage() {
                                     <th style={thStyle}>통솔</th>
                                     <th style={thStyle}>무력</th>
                                     <th style={thStyle}>지력</th>
+                                    <th style={thStyle}>정치</th>
+                                    <th style={thStyle}>매력</th>
                                     <th style={thStyle}>권한</th>
                                 </tr>
                             </thead>
@@ -434,6 +436,8 @@ export default function MyBossPage() {
                                         <td style={tdStyle}>{g.leadership}</td>
                                         <td style={tdStyle}>{g.strength}</td>
                                         <td style={tdStyle}>{g.intel}</td>
+                                        <td style={tdStyle}>{g.politics ?? '-'}</td>
+                                        <td style={tdStyle}>{g.charm ?? '-'}</td>
                                         <td style={tdStyle}>{roleText(g.permissionRole)}</td>
                                     </tr>
                                 ))}

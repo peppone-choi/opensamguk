@@ -3,6 +3,7 @@ package opensamguk.infra.seed
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class ScenarioJsonTest {
 
@@ -83,6 +84,86 @@ class ScenarioJsonTest {
         assertEquals(62, scenario.generals[0].charm)
         assertEquals(71, scenario.generals[1].politics)
         assertEquals(72, scenario.generals[1].charm)
+    }
+
+    @Test
+    fun `RTK14 lifecycle slots decode while legacy tuples keep null lifecycle metadata`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14",
+              "startYear": 200,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [
+                [1,"Legacy",null,0,null,51,52,53,0,180,240,null,null,null,61,62],
+                [2,"RTK14",null,0,null,41,42,43,0,181,241,null,null,null,71,72,205,1001,"남",60,37,333,"유가",true]
+              ],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val legacy = scenario.baseGenerals[0]
+        assertNull(legacy.appearanceYear)
+        assertNull(legacy.officerNumber)
+        assertNull(legacy.gender)
+        assertNull(legacy.lifespan)
+        assertNull(legacy.activityYears)
+        assertNull(legacy.total)
+        assertNull(legacy.ideology)
+        assertEquals(false, legacy.rtk14Added)
+
+        val rtk14 = scenario.baseGenerals[1]
+        assertEquals(205, rtk14.appearanceYear)
+        assertEquals(1001, rtk14.officerNumber)
+        assertEquals("남", rtk14.gender)
+        assertEquals(60, rtk14.lifespan)
+        assertEquals(37, rtk14.activityYears)
+        assertEquals(333, rtk14.total)
+        assertEquals("유가", rtk14.ideology)
+        assertEquals(true, rtk14.rtk14Added)
+        assertEquals(24, rtk14.rawTuple.size)
+        assertEquals(205, rtk14.rawTuple[16])
+        assertEquals("유가", rtk14.rawTuple[22])
+        assertEquals(true, rtk14.rawTuple[23])
+    }
+
+    @Test
+    fun `RTK14 appended rows follow all existing sections in seed and init order`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14 order",
+              "startYear": 200,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [
+                [1,"BaseLegacy",null,0,null,1,1,1,0,180,240,null,null],
+                [1,"AppendedRtk14",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,1,"남",60,40,300,"유가",true]
+              ],
+              "general_ex": [[1,"ExtendedLegacy",null,0,null,1,1,1,0,180,240,null,null]],
+              "general_neutral": [[1,"NeutralLegacy",null,0,null,1,1,1,0,180,240,null,null]],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(
+            listOf("BaseLegacy", "ExtendedLegacy", "NeutralLegacy", "AppendedRtk14"),
+            scenario.initGenerals().map { it.name },
+        )
+        assertEquals(
+            listOf("BaseLegacy", "ExtendedLegacy", "NeutralLegacy", "AppendedRtk14"),
+            scenario.seedGenerals(extendedGeneral = true).map { it.name },
+        )
+        assertEquals(
+            listOf("BaseLegacy", "NeutralLegacy", "AppendedRtk14"),
+            scenario.seedGenerals(extendedGeneral = false).map { it.name },
+        )
     }
 
     @Test

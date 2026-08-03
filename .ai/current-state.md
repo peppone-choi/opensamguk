@@ -1,5 +1,15 @@
 # Current State
 
+## RTK14 전체 장수·5능력치 배포 준비 — 2026-08-03
+
+- 엑셀 1,000행의 15개 열을 비공개 source JSON으로 round-trip하고, 15개 populated 런타임 시나리오마다 장수 번호 1–1000을 정확히 한 번씩 표현한다. 생성물과 원본은 gitignored이며 GitHub Actions secret만 등록됐다.
+- 기존 장수는 소속·도시·관직·대사를 유지하면서 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신한다. 엑셀에만 있는 343명은 빙의 가능한 기본 장수로 추가한다.
+- 시나리오 전용 legacy-only 351행은 모두 근거가 있는 정치·매력 override를 사용한다. 동명이인 source 후보 소진 충돌 38건은 exact runtime identity override로 처리하고, 미검토 fallback은 fail-closed다.
+- RTK14 행은 등장년 이상·몰년 이하에서 활성화된다. tuple index 24의 pre-enrichment activity marker와 분리된 `InitScenarioRtk14` stream으로 기존 장수 RNG를 유지한다.
+- 빙의 진입은 명시적 possession entry에서만 장수 선택으로 이동하며, 빙의·NPC 선택·감찰부·인사부·시뮬레이터·관련 API가 다섯 능력치를 운반/표시한다.
+- 검증: Python 14/14, real-workbook 2회 byte-identical, infra full `BUILD SUCCESSFUL`, importer IT 19/0/0, JVM 4모듈 전체 `BUILD SUCCESSFUL`, game 245/245 + gateway 78/78 + 양쪽 typecheck, strict checker 0/0, Docker mount focused test green, 독립 최종 리뷰 `CLEARED`.
+- 잔여: source/docker 커밋·PR → 각 PR `@codex review` 3회와 수정 → merge → GCP `pep` 재시드 → live DB/API/UI/clock 검증.
+
 ## 현재 상태 요약 — 2026-07-25
 
 CQRS 정합성 하드닝 트랙과 F4 프론트 액션 배선이 함께 main에 반영됐다. 아래는 정본 최신 상태이며, 그 뒤 히스토리 절은 압축된 기록(증거는 PR/리뷰 아티팩트가 정본)이다.

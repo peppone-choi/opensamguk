@@ -45,7 +45,46 @@ class BuiltGeneralMapperTest {
         assertEquals(1, mapped.meta["dedlevel"])
     }
 
-    private fun builtGeneral(turntimeSecond: Int = 0, turntimeFraction: Int = 0) =
+    @Test
+    fun `RTK built general persists five stats and appends stable source metadata`() {
+        val state = TurnWorldState(
+            id = 1,
+            currentYear = 200,
+            currentMonth = 1,
+            tickSeconds = 3600,
+            lastTurnTime = Instant.EPOCH,
+        )
+        val rtkMetadata = linkedMapOf<String, Any?>(
+            "rtk14_officer_number" to 17001,
+            "rtk14_gender" to "female",
+            "rtk14_birth_year" to 173,
+            "rtk14_appearance_year" to 190,
+            "rtk14_death_year" to 220,
+            "rtk14_lifespan" to 47,
+            "rtk14_activity_years" to 27,
+            "rtk14_total" to 345,
+            "rtk14_ideology" to "왕도",
+        )
+
+        val mapped = builtGeneral(politics = 77, charm = 88, rtkMetadata = rtkMetadata).toTurnGeneral(1, state)
+
+        assertEquals(77, mapped.stats.politics)
+        assertEquals(88, mapped.stats.charm)
+        assertEquals(rtkMetadata, mapped.meta.filterKeys { it.startsWith("rtk14_") })
+        assertEquals(
+            rtkMetadata.keys.toList(),
+            mapped.meta.keys.toList().takeLast(rtkMetadata.size),
+            message = "RTK keys are appended after PHP legacy metadata in deterministic source order",
+        )
+    }
+
+    private fun builtGeneral(
+        turntimeSecond: Int = 0,
+        turntimeFraction: Int = 0,
+        politics: Int = 50,
+        charm: Int = 50,
+        rtkMetadata: Map<String, Any?> = emptyMap(),
+    ) =
         BuiltGeneral(
             name = "NPC", npc = 3, nation = 0, cityId = 1,
             leadership = 50, strength = 50, intel = 50, affinity = 50,
@@ -56,5 +95,8 @@ class BuiltGeneralMapperTest {
             dex1 = 0, dex2 = 0, dex3 = 0, dex4 = 0, dex5 = 0,
             turntimeSecond = turntimeSecond, turntimeFraction = turntimeFraction,
             picture = "npc.png",
+            politics = politics,
+            charm = charm,
+            rtkMetadata = rtkMetadata,
         )
 }

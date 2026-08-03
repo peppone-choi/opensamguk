@@ -134,6 +134,8 @@ class CityDetailController(
         val leadership: Int,
         val strength: Int,
         val intel: Int,
+        val politics: Int,
+        val charm: Int,
         val officerLevel: Int,
         val officerLevelText: String,
         val leadershipBonus: Int,   // calcLeadershipBonus(officerLevel, 해당 장수 국가 level)
@@ -238,6 +240,8 @@ class CityDetailController(
                 leadership = g.leadership,
                 strength = g.strength,
                 intel = g.intel,
+                politics = g.politics,
+                charm = g.charm,
                 officerLevel = g.officerLevel,
                 officerLevelText = GeneralListText.officerLevelText(g.officerLevel, nationLevelOf(g.nationId)),
                 leadershipBonus = calcLeadershipBonus(g.officerLevel, nationLevelOf(g.nationId)),

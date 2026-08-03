@@ -66,6 +66,18 @@ function nCountryLabel(game: ServerGameInfo): string {
 
 type RowState = { loading: boolean; info: ServerBasicInfo | null };
 
+function possessionEntryHref(href: string): string {
+    const hashIndex = href.indexOf('#');
+    const base = hashIndex === -1 ? href : href.slice(0, hashIndex);
+    const hash = hashIndex === -1 ? '' : href.slice(hashIndex);
+    const queryIndex = base.indexOf('?');
+    const path = queryIndex === -1 ? base : base.slice(0, queryIndex);
+    const params = new URLSearchParams(queryIndex === -1 ? '' : base.slice(queryIndex + 1));
+
+    params.set('entry', 'possession');
+    return `${path}?${params.toString()}${hash}`;
+}
+
 /**
  * 한 서버 행 — 자기 basic-info 를 fan-out 호출해 진입 상태머신(entrance.ts)을 그린다. 실패해도 그 행만
  * '폐쇄 중'으로 graceful degrade(다른 행/페이지 영향 없음). 게이트:
@@ -157,11 +169,6 @@ function ServerRow({ server }: { server: ServerEntry }) {
         characterCell = <span className="text-muted">-</span>;
         selectCell = LOBBY_LABELS.registerClosed;
     } else {
-        // 미등록 — 여석 있음. devsam entrance.ts:51-58,274-276 의 3-버튼 게이팅을 패러티로 복원한다:
-        //   canCreate    = !(block_general_create & 1) → 장수생성 → /game/join
-        //   canSelectNPC = npcMode == '가능'(1)         → 장수빙의 → /game (CharacterClaim 빙의 후보 목록)
-        //   canSelectPool= npcMode == '선택 생성'(2)     → 장수선택 → /game/select-pool
-        // (ServerBasicInfoDto.npcMode: 0 불가 / 1 가능 / 2 선택 생성.)
         const canCreate = (game.blockGeneralCreate & 1) === 0;
         const canSelectNpc = game.npcMode === 1;
         const canSelectPool = game.npcMode === 2;
@@ -178,7 +185,7 @@ function ServerRow({ server }: { server: ServerEntry }) {
                     </a>
                 )}
                 {canSelectNpc && (
-                    <a href={gameUrl} target="_self" className="btn-enter">
+                    <a href={possessionEntryHref(gameUrl)} target="_self" className="btn-enter">
                         {LOBBY_LABELS.possessGeneral}
                     </a>
                 )}

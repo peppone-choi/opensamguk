@@ -27,6 +27,10 @@ interface SimResult {
     conquerCity: boolean;
 }
 
+function generalOptionLabel(general: PublicGeneral): string {
+    return `${general.name} (통${general.leadership} 무${general.strength} 지${general.intel} 정치${general.politics ?? '-'} 매력${general.charm ?? '-'})`;
+}
+
 export default function SimulatorPage() {
     const [generals, setGenerals] = useState<PublicGeneral[]>([]);
     const [attackerId, setAttackerId] = useState<number | ''>('');
@@ -113,7 +117,7 @@ export default function SimulatorPage() {
                         >
                             <option value="">선택...</option>
                             {generals.map(g => (
-                                <option key={g.generalId} value={g.generalId}>{g.name} (무{g.strength} 지{g.intel})</option>
+                                <option key={g.generalId} value={g.generalId}>{generalOptionLabel(g)}</option>
                             ))}
                         </select>
                     </label>
@@ -144,7 +148,7 @@ export default function SimulatorPage() {
                         >
                             <option value="">선택...</option>
                             {generals.map(g => (
-                                <option key={g.generalId} value={g.generalId}>{g.name} (무{g.strength} 지{g.intel})</option>
+                                <option key={g.generalId} value={g.generalId}>{generalOptionLabel(g)}</option>
                             ))}
                         </select>
                     </label>

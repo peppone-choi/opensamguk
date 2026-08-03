@@ -469,7 +469,7 @@ class ScenarioImporter(
                 GameUnitConst.DEFAULT_CREWTYPE,
                 turnTime, age, personal, special.domestic, special.war,
                 // killturn은 장수별 사망년도 파생값(startMonth=1 = world_state 시드 current_month).
-                jsonb(initialGeneralMeta(g.npcType, born, dead, startYear, rngRow.killturnJitter, g.text, special)),
+                jsonb(initialGeneralMeta(g, born, dead, startYear, rngRow.killturnJitter, special)),
                 g.politics, g.charm,
             )
             n++
@@ -534,15 +534,14 @@ class ScenarioImporter(
     }
 
     private fun initialGeneralMeta(
-        npcType: Int,
+        general: ScenarioGeneral,
         bornYear: Int,
         deadYear: Int,
         startYear: Int,
         legacyMonthJitter: Int,
-        npcText: String?,
         special: ScenarioSpecial,
     ): Map<String, Any?> {
-        val meta = linkedMapOf(
+        val meta = linkedMapOf<String, Any?>(
             "killturn" to ScenarioLifecycleMeta.killturnFor(
                 deadYear,
                 startYear,
@@ -550,7 +549,7 @@ class ScenarioImporter(
                 legacyMonthJitter,
             ),
             "killturn_unit" to ScenarioLifecycleMeta.KILLTURN_UNIT_PHASE,
-            "npc_org" to npcType,
+            "npc_org" to general.npcType,
             "deadyear" to deadYear,
             "dedlevel" to 1,
             "start_age" to DEFAULT_START_AGE,
@@ -561,7 +560,18 @@ class ScenarioImporter(
             "special2_code" to special.war,
             "specage2" to computeSpecialityAge(startYear, startYear, bornYear, 6),
         )
-        if (npcText != null) meta["npcmsg"] = npcText
+        if (general.officerNumber != null && general.rawTuple.size >= RTK14_SOURCE_TUPLE_SIZE) {
+            meta["rtk14_officer_number"] = general.officerNumber
+            meta["rtk14_gender"] = general.gender
+            meta["rtk14_birth_year"] = general.bornYear
+            meta["rtk14_appearance_year"] = general.appearanceYear
+            meta["rtk14_death_year"] = general.deadYear
+            meta["rtk14_lifespan"] = general.lifespan
+            meta["rtk14_activity_years"] = general.activityYears
+            meta["rtk14_total"] = general.total
+            meta["rtk14_ideology"] = general.ideology
+        }
+        if (general.text != null) meta["npcmsg"] = general.text
         return meta
     }
 
@@ -582,10 +592,50 @@ class ScenarioImporter(
     )
 
     private fun replayInitScenarioGeneralRng(startYear: Int): Map<ScenarioGeneral, ScenarioGeneralRngRow> {
-        val rng = RandUtil(LiteHashDrbg(serializeSeed(hiddenSeed, "InitScenario")))
         val activeRows = IdentityHashMap<ScenarioGeneral, ScenarioGeneralRngRow>()
+        val legacyRng = RandUtil(LiteHashDrbg(serializeSeed(hiddenSeed, "InitScenario")))
+        replayScenarioInitialRng(
+            rng = legacyRng,
+            initRows = scenario.initGenerals().filterNot { it.rtk14Added },
+            activeRows = activeRows,
+        )
 
-        for (g in scenario.initGenerals()) {
+        // PHP initFull consumes affinity/ego for every existing row before build() decides if it is
+        // active. Keep those initial draws on InitScenario even when RTK14 changes the lifecycle.
+        replayScenarioBuildRng(
+            rng = legacyRng,
+            seededRows = seedGenerals().filterNot { it.rtk14Added },
+            shouldConsumeBuildRng = { general -> wasLegacyActiveAtStart(general, startYear) },
+            activeRows = activeRows,
+        )
+
+        val rtk14Rng = RandUtil(LiteHashDrbg(serializeSeed(hiddenSeed, "InitScenarioRtk14")))
+        replayScenarioInitialRng(
+            rng = rtk14Rng,
+            initRows = scenario.initGenerals().filter { it.rtk14Added },
+            activeRows = activeRows,
+        )
+
+        // An old-active row that RTK14 makes future phantom-consumes the legacy build draws above.
+        // Appended rows and old-inactive rows newly activated by RTK14 consume only this isolated stream.
+        replayScenarioBuildRng(
+            rng = rtk14Rng,
+            seededRows = seedGenerals(),
+            shouldConsumeBuildRng = { general ->
+                isActiveAtStart(general, startYear) &&
+                    (general.rtk14Added || !wasLegacyActiveAtStart(general, startYear))
+            },
+            activeRows = activeRows,
+        )
+        return activeRows
+    }
+
+    private fun replayScenarioInitialRng(
+        rng: RandUtil,
+        initRows: List<ScenarioGeneral>,
+        activeRows: IdentityHashMap<ScenarioGeneral, ScenarioGeneralRngRow>,
+    ) {
+        for (g in initRows) {
             val affinity = normalizeScenarioAffinity(g, rng)
             val ego = g.ego ?: rng.choice(GameConst.availablePersonality)
             activeRows[g] = ScenarioGeneralRngRow(
@@ -597,17 +647,21 @@ class ScenarioImporter(
                 killturnJitter = 0,
             )
         }
+    }
 
+    private fun replayScenarioBuildRng(
+        rng: RandUtil,
+        seededRows: List<ScenarioGeneral>,
+        shouldConsumeBuildRng: (ScenarioGeneral) -> Boolean,
+        activeRows: IdentityHashMap<ScenarioGeneral, ScenarioGeneralRngRow>,
+    ) {
         val allCityIds = cities.map { it.id }
         val cityIdsByNation = scenario.nations.associate { nation ->
             nation.id to nation.cities.mapNotNull { cityName -> cities.firstOrNull { it.name == cityName }?.id }
         }
         val cityIdByName = cities.associate { it.name to it.id }
-        for (g in seedGenerals()) {
-            val birth = g.bornYear ?: DEFAULT_BIRTH_YEAR
-            val death = g.deadYear ?: DEFAULT_DEATH_YEAR
-            val age = startYear - birth
-            if (death <= startYear || age < GameConst.adultAge.toInt()) continue
+        for (g in seededRows) {
+            if (!shouldConsumeBuildRng(g)) continue
 
             val locatedCityId = resolveLocatedCityId(g.locatedCity, cityIdByName)
             val cityId = if (locatedCityId != null) {
@@ -624,8 +678,14 @@ class ScenarioImporter(
                 killturnJitter = rng.nextRangeInt(0, 11),
             )
         }
-        return activeRows
     }
+
+    private fun wasLegacyActiveAtStart(general: ScenarioGeneral, startYear: Int): Boolean =
+        when (val marker = general.rawTuple.getOrNull(RTK14_LEGACY_ACTIVE_AT_START_INDEX)) {
+            null -> isLegacyActiveAtStart(general, startYear)
+            is Boolean -> marker
+            else -> throw IllegalArgumentException("invalid legacyActiveAtStart for ${general.name}")
+        }
 
     private fun normalizeScenarioAffinity(general: ScenarioGeneral, rng: RandUtil): Int {
         val affinity = general.affinity ?: 0
@@ -838,24 +898,31 @@ class ScenarioImporter(
     }
 
     private fun deferredGeneralRows(startYear: Int): List<EventRowToInsert> {
-        val byBirth = LinkedHashMap<Int, MutableList<List<Any?>>>()
+        val byAppearance = LinkedHashMap<Int, MutableList<List<Any?>>>()
         val rngRows = replayInitScenarioGeneralRng(startYear)
         for (general in seedGenerals()) {
             val birth = general.bornYear ?: DEFAULT_BIRTH_YEAR
             val death = general.deadYear ?: DEFAULT_DEATH_YEAR
-            if (death <= startYear || birth + GameConst.adultAge.toInt() <= startYear) continue
-            byBirth.getOrPut(birth) { mutableListOf() }.add(
+            val appearanceYear = general.appearanceYear
+            val scheduleYear = if (appearanceYear != null) {
+                if (startYear >= appearanceYear || appearanceYear > death) continue
+                appearanceYear
+            } else {
+                if (death <= startYear || birth + GameConst.adultAge.toInt() <= startYear) continue
+                birth + GameConst.adultAge.toInt()
+            }
+            byAppearance.getOrPut(scheduleYear) { mutableListOf() }.add(
                 listOf(
                     general.deferredActionName(),
                 ) + general.rawTuple,
             )
         }
-        return byBirth.map { (birth, actions) ->
+        return byAppearance.map { (appearanceYear, actions) ->
             EventRowToInsert(
                 target = "Month",
                 priority = 1000,
                 condition = opensamguk.infra.persistence.MetaJson.encode(
-                    listOf("Date", ">=", birth + GameConst.adultAge.toInt(), "1"),
+                    listOf("Date", ">=", appearanceYear, "1"),
                 ),
                 action = opensamguk.infra.persistence.MetaJson.encode(actions + listOf(listOf("DeleteEvent"))),
             )
@@ -863,6 +930,16 @@ class ScenarioImporter(
     }
 
     private fun isActiveAtStart(general: ScenarioGeneral, startYear: Int): Boolean {
+        val death = general.deadYear ?: DEFAULT_DEATH_YEAR
+        val appearanceYear = general.appearanceYear
+        return if (appearanceYear != null) {
+            appearanceYear <= startYear && startYear <= death
+        } else {
+            isLegacyActiveAtStart(general, startYear)
+        }
+    }
+
+    private fun isLegacyActiveAtStart(general: ScenarioGeneral, startYear: Int): Boolean {
         val birth = general.bornYear ?: DEFAULT_BIRTH_YEAR
         val death = general.deadYear ?: DEFAULT_DEATH_YEAR
         return death > startYear && birth + GameConst.adultAge.toInt() <= startYear
@@ -905,6 +982,8 @@ class ScenarioImporter(
         private const val DEFAULT_BIRTH_YEAR = 180
         private const val DEFAULT_DEATH_YEAR = 300
         private const val DEFAULT_START_AGE = 20
+        private const val RTK14_SOURCE_TUPLE_SIZE = 23
+        private const val RTK14_LEGACY_ACTIVE_AT_START_INDEX = 24
 
         private val NPC_PREFIX_BY_TYPE = mapOf(
             0 to "",
