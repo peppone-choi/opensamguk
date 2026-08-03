@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.test.assertFailsWith
 
 class RegNpcActionTest {
     @Test
@@ -223,7 +224,7 @@ class RegNpcActionTest {
     }
 
     @Test
-    fun `RegNeutralNPC preserves PHP raw tuple positions and uses its own seed scope`() {
+    fun `RegNeutralNPC accepts the shared scenario tuple layout and uses its own seed scope`() {
         val factory = WorldActions.register(EventActionFactory())
         val neutralContext = FakeContext(year = 182, month = 1)
         val rawTuple = listOf(
@@ -235,12 +236,12 @@ class RegNpcActionTest {
             JsonPrimitive(70),
             JsonPrimitive(60),
             JsonPrimitive(50),
+            JsonPrimitive(0),
             JsonPrimitive(168),
             JsonPrimitive(220),
             JsonPrimitive("유지"),
             JsonPrimitive("무쌍"),
             JsonPrimitive("중립 문구"),
-            JsonPrimitive("ignored raw tail"),
         )
 
         factory.create(RawAction("RegNeutralNPC", rawTuple)).run(neutralContext)
@@ -365,6 +366,20 @@ class RegNpcActionTest {
             listOf("<Y>ⓤRTK중립</>이 성인이 되어 <S>등장</>했습니다."),
             context.actionLogs,
         )
+    }
+
+    @Test
+    fun `RTK appearance requires an integer or null scalar`() {
+        val factory = WorldActions.register(EventActionFactory())
+        val invalidAppearanceTuple = rtkRegNpcTuple(appearanceYear = 192).mapIndexed { index, value ->
+            if (index == 16) JsonPrimitive("not-a-year") else value
+        }
+
+        val error = assertFailsWith<IllegalStateException> {
+            factory.create(RawAction("RegNPC", invalidAppearanceTuple))
+        }
+
+        assertEquals("argument 16 must be an integer or null", error.message)
     }
 
     @Test
@@ -641,10 +656,10 @@ class RegNpcActionTest {
         appearanceYear: Int,
     ): List<JsonPrimitive> = listOf(
         JsonPrimitive(42), JsonPrimitive("RTK중립"), JsonPrimitive("rtk-neutral.png"), JsonPrimitive(1), JsonPrimitive("낙양"),
-        JsonPrimitive(70), JsonPrimitive(60), JsonPrimitive(50), JsonPrimitive(birth), JsonPrimitive(death),
-        JsonPrimitive("유지"), JsonPrimitive("무쌍"), JsonPrimitive("RTK 중립 문구"), JsonPrimitive("legacy-neutral-tail"),
+        JsonPrimitive(70), JsonPrimitive(60), JsonPrimitive(50), JsonPrimitive(0), JsonPrimitive(birth), JsonPrimitive(death),
+        JsonPrimitive("유지"), JsonPrimitive("무쌍"), JsonPrimitive("RTK 중립 문구"),
         JsonPrimitive(77), JsonPrimitive(88), JsonPrimitive(appearanceYear), JsonPrimitive(17001), JsonPrimitive("female"),
-        JsonPrimitive(52), JsonPrimitive(27), JsonPrimitive(345), JsonPrimitive("왕도"),
+        JsonPrimitive(52), JsonPrimitive(27), JsonPrimitive(345), JsonPrimitive("왕도"), JsonPrimitive(false), JsonPrimitive(false),
     )
 
     private class ZeroRangeRandUtil : RandUtil(LiteHashDrbg("rtk-zero-jitter")) {

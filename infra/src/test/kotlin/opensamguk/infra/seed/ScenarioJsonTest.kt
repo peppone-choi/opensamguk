@@ -3,7 +3,9 @@ package opensamguk.infra.seed
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ScenarioJsonTest {
 
@@ -98,7 +100,7 @@ class ScenarioJsonTest {
               "nation": [],
               "general": [
                 [1,"Legacy",null,0,null,51,52,53,0,180,240,null,null,null,61,62],
-                [2,"RTK14",null,0,null,41,42,43,0,181,241,null,null,null,71,72,205,1001,"남",60,37,333,"유가",true]
+                [2,"RTK14",null,0,null,41,42,43,0,181,241,null,null,null,71,72,205,1001,"남",60,37,333,"유가",true,true]
               ],
               "general_ex": [],
               "diplomacy": []
@@ -114,6 +116,7 @@ class ScenarioJsonTest {
         assertNull(legacy.activityYears)
         assertNull(legacy.total)
         assertNull(legacy.ideology)
+        assertNull(legacy.legacyActiveAtStart)
         assertEquals(false, legacy.rtk14Added)
 
         val rtk14 = scenario.baseGenerals[1]
@@ -125,10 +128,34 @@ class ScenarioJsonTest {
         assertEquals(333, rtk14.total)
         assertEquals("유가", rtk14.ideology)
         assertEquals(true, rtk14.rtk14Added)
-        assertEquals(24, rtk14.rawTuple.size)
+        assertEquals(true, rtk14.legacyActiveAtStart)
+        assertEquals(25, rtk14.rawTuple.size)
         assertEquals(205, rtk14.rawTuple[16])
         assertEquals("유가", rtk14.rawTuple[22])
         assertEquals(true, rtk14.rawTuple[23])
+        assertEquals(true, rtk14.rawTuple[24])
+    }
+
+    @Test
+    fun `24-slot RTK14 source tuples remain valid without a legacy activity override`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14 source tuple",
+              "startYear": 200,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [[1,"RTK14",null,0,null,41,42,43,0,181,241,null,null,null,71,72,205,1001,"남",60,37,333,"유가",true]],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val rtk14 = scenario.baseGenerals.single()
+        assertEquals(24, rtk14.rawTuple.size)
+        assertNull(rtk14.legacyActiveAtStart)
     }
 
     @Test
@@ -164,6 +191,31 @@ class ScenarioJsonTest {
             listOf("BaseLegacy", "NeutralLegacy", "AppendedRtk14"),
             scenario.seedGenerals(extendedGeneral = false).map { it.name },
         )
+    }
+
+    @Test
+    fun `RTK14 additions outside general fail closed instead of being silently dropped`() {
+        for (section in listOf("general_ex", "general_neutral")) {
+            val scenario = ScenarioJson.loadScenario(
+                """
+                {
+                  "title": "invalid RTK14 placement",
+                  "startYear": 200,
+                  "map": {"mapName": "che"},
+                  "const": {},
+                  "nation": [],
+                  "general": [[1,"Legacy",null,0,null,1,1,1,0,180,240,null,null]],
+                  "$section": [[1,"InvalidRtk14Placement",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,1,"남",60,40,300,"유가",true,false]],
+                  "diplomacy": []
+                }
+                """.trimIndent(),
+            )
+
+            val error = assertFailsWith<IllegalArgumentException> {
+                scenario.initGenerals()
+            }
+            assertTrue(error.message.orEmpty().contains(section))
+        }
     }
 
     @Test

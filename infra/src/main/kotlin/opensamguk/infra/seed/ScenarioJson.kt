@@ -50,6 +50,7 @@ object ScenarioJson {
     private const val G_TOTAL = 21
     private const val G_IDEOLOGY = 22
     private const val G_RTK14_ADDED = 23
+    private const val G_LEGACY_ACTIVE_AT_START = 24
 
     // ── nation[] 9-tuple positional index (PHP) ──
     // [0]name [1]color [2]gold [3]rice [4]desc [5]tech [6]ideology [7]scale(level) [8]cities[]
@@ -180,6 +181,7 @@ object ScenarioJson {
             total = intOrNull(t.getOrNull(G_TOTAL)),
             ideology = strOrNull(t.getOrNull(G_IDEOLOGY)),
             rtk14Added = boolOf(t.getOrNull(G_RTK14_ADDED), false),
+            legacyActiveAtStart = boolOrNull(t.getOrNull(G_LEGACY_ACTIVE_AT_START), "legacyActiveAtStart"),
             npcType = npcType,
             rawTuple = rawTuple,
         )
@@ -294,6 +296,12 @@ object ScenarioJson {
         is String -> v.toBooleanStrictOrNull() ?: default
         else -> default
     }
+
+    private fun boolOrNull(v: Any?, label: String): Boolean? = when (v) {
+        null -> null
+        is Boolean -> v
+        else -> error("$label must be a boolean: $v")
+    }
 }
 
 /** Position-resolved scenario header + rosters. */
@@ -315,17 +323,23 @@ data class Scenario(
     val ignoreDefaultEvents: Boolean = false,
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
+        validateRtk14AddedPlacement()
         val legacyBase = baseGenerals.filterNot { it.rtk14Added }
         val legacyExtended = if (extendedGeneral) generalEx.filterNot { it.rtk14Added } else emptyList()
         val legacyNeutral = generalNeutral.filterNot { it.rtk14Added }
         return legacyBase + legacyExtended + legacyNeutral + baseGenerals.filter { it.rtk14Added }
     }
 
-    fun initGenerals(): List<ScenarioGeneral> =
-        baseGenerals.filterNot { it.rtk14Added } +
-            generalEx.filterNot { it.rtk14Added } +
-            generalNeutral.filterNot { it.rtk14Added } +
-            baseGenerals.filter { it.rtk14Added }
+    fun initGenerals(): List<ScenarioGeneral> = seedGenerals(extendedGeneral = true)
+
+    private fun validateRtk14AddedPlacement() {
+        require(generalEx.none { it.rtk14Added }) {
+            "RTK14-added rows in general_ex are unsupported because they would alter InitScenario ordering"
+        }
+        require(generalNeutral.none { it.rtk14Added }) {
+            "RTK14-added rows in general_neutral are unsupported because they would alter InitScenario ordering"
+        }
+    }
 }
 
 data class ScenarioEvent(
@@ -385,6 +399,7 @@ data class ScenarioGeneral(
     val total: Int? = null,
     val ideology: String? = null,
     val rtk14Added: Boolean = false,
+    val legacyActiveAtStart: Boolean? = null,
     val npcType: Int = 2,
     val rawTuple: List<Any?> = emptyList(),
 )

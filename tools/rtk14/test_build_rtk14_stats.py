@@ -10,7 +10,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_rtk14_stats as b
 
 
-REAL_WORKBOOK = Path(os.environ.get("RTK14_WORKBOOK_PATH", "/Users/apple/Desktop/삼국지14 무장정보.xlsx"))
+REAL_WORKBOOK_PATH = os.environ.get("RTK14_WORKBOOK_PATH")
+REAL_WORKBOOK = Path(REAL_WORKBOOK_PATH) if REAL_WORKBOOK_PATH else None
 
 
 def source_row(number, name=None, **changes):
@@ -219,6 +220,34 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         self.assertTrue(row[24])
         self.assertEqual([], audit["existingSourceIdDuplicates"])
 
+    def test_injected_unmatched_overrides_do_not_read_the_module_registry(self):
+        rtk = b._source_rows_to_rtk(source_rows())
+        scenario = {
+            "startYear": 220,
+            "general": [legacy_tuple("검토전용", leadership=67, strength=63, intel=61, birth=206, death=260)],
+            "general_ex": [],
+        }
+        overrides = {
+            "검토전용": {"politics": 71, "charm": 44, "rationale": "Injected fixture override."},
+        }
+
+        enriched, audit = b.enrich_scenario(scenario, rtk, unmatched_overrides=overrides)
+
+        self.assertEqual([71, 44], enriched["general"][0][14:16])
+        self.assertEqual("workbook_missing", audit["legacyOnlyDetails"][0]["overrideKind"])
+
+    def test_added_name_allocator_reuses_precomputed_base_names(self):
+        names = {"동명1"}
+        base_names = {"동명"}
+
+        first, first_collision = b._allocate_added_name("동명", names, base_names)
+        second, second_collision = b._allocate_added_name("동명", names, base_names)
+
+        self.assertEqual("동명2", first)
+        self.assertEqual("동명3", second)
+        self.assertEqual("동명2", first_collision["assignedName"])
+        self.assertEqual("동명3", second_collision["assignedName"])
+
     def test_manual_override_registry_covers_every_known_runtime_name_and_uses_workbook_range(self):
         expected_names = {
             "강경", "건석", "곽씨", "관로", "교국로", "교현", "길평", "낙준", "남두", "단경", "독발수기능", "루반", "반임",
@@ -286,6 +315,21 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             self.assertEqual([], report["unresolvedMissingNames"])
             self.assertEqual(1000, next(item for item in report["files"] if item["file"] == "scenario_1000.json")["representedSourceRows"])
 
+    def test_build_one_accepts_a_path_without_a_scenario_root(self):
+        rtk = b._source_rows_to_rtk(source_rows())
+        with TemporaryDirectory() as td:
+            source = Path(td) / "scenario_1000.json"
+            out_dir = Path(td) / "out"
+            source.write_text(
+                json.dumps({"startYear": 180, "general": [legacy_tuple("장수1", 31, 32, 33, 101, 169)], "general_ex": []}, ensure_ascii=False),
+                encoding="utf-8",
+            )
+
+            output, _, _, _, detail = b.build_one(source, out_dir, rtk, dry_run=True)
+
+        self.assertEqual(str(out_dir / "scenario_1000.json"), output)
+        self.assertEqual("dry_run_would_update", detail["status"])
+
     def test_rtk_source_json_requires_full_valid_contract_rows(self):
         with TemporaryDirectory() as td:
             source = Path(td) / "rtk-source.json"
@@ -296,7 +340,10 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             self.assertEqual(1000, len(b.source_rows(rtk)))
             self.assertEqual(source_rows(), b.rtk_to_source_rows(rtk))
 
-    @unittest.skipUnless(REAL_WORKBOOK.is_file(), "private RTK14 workbook is unavailable")
+    @unittest.skipUnless(
+        REAL_WORKBOOK is not None and REAL_WORKBOOK.is_file(),
+        "RTK14_WORKBOOK_PATH is not set to a readable private workbook",
+    )
     def test_real_runtime_scenarios_have_reviewed_overrides_for_every_legacy_only_row(self):
         rtk = b.read_rtk14(REAL_WORKBOOK)
         scenario_dir = Path(__file__).resolve().parents[2] / "infra" / "src" / "main" / "resources" / "scenario"
@@ -307,6 +354,8 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         self.assertEqual(1000, report["sourceRows"])
         self.assertEqual(30, report["totals"]["files"])
         self.assertEqual(15, report["totals"]["updatedFiles"])
+        self.assertEqual(0, report["totals"]["excludedFiles"])
+        self.assertEqual(15, report["totals"]["untouchedFiles"])
         self.assertEqual([], report["unresolvedMissingNames"])
         self.assertEqual(38, report["totals"]["collision"])
         self.assertEqual(report["totals"]["collision"], report["totals"]["collisionOverride"])

@@ -38,9 +38,17 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
 
         val scenario = loadScenario(world.scenarioCode)
         val candidates = scenario.seedGenerals(world.extendedGeneral)
-            .groupBy { ScenarioKey(it.name, it.nationId, it.bornYear ?: DEFAULT_BIRTH_YEAR) }
+            .groupBy { ScenarioIdentity(it.name, it.nationId) }
         val matched = underage.map { row ->
-            val matches = candidates[ScenarioKey(row.name, row.nationId, row.bornYear)].orEmpty()
+            val identityMatches = candidates[ScenarioIdentity(row.name, row.nationId)].orEmpty()
+            val exactMatches = identityMatches.filter { (it.bornYear ?: DEFAULT_BIRTH_YEAR) == row.bornYear }
+            // RTK14 source enrichment rewrites tuple birth years. A pre-V26 row has no RTK metadata,
+            // so only accept the identity fallback when one source-provenanced RTK candidate exists.
+            val matches = if (exactMatches.isNotEmpty()) {
+                exactMatches
+            } else {
+                identityMatches.takeIf { it.size == 1 && it.single().officerNumber != null }.orEmpty()
+            }
             if (matches.size != 1) {
                 throw FlywayException(
                     "V26 cannot safely defer general id=${row.id} name=${row.name}: " +
@@ -227,7 +235,7 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
         val bornYear: Int,
     )
 
-    private data class ScenarioKey(val name: String, val nationId: Int, val bornYear: Int)
+    private data class ScenarioIdentity(val name: String, val nationId: Int)
 
     companion object {
         private const val DEFAULT_BIRTH_YEAR = 180

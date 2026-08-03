@@ -60,6 +60,7 @@ class V26NpcLifecycleMigrationTest {
 
         assertFalse(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM general WHERE id = 1002)", Boolean::class.java) == true)
         assertFalse(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM general WHERE id = 1003)", Boolean::class.java) == true)
+        assertFalse(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM general WHERE id = 1004)", Boolean::class.java) == true)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE general_id = 1002", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM rank_data WHERE general_id = 1002", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE general_id = 1003", Int::class.java))
@@ -71,7 +72,7 @@ class V26NpcLifecycleMigrationTest {
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_owner WHERE general_id = 1002", Int::class.java))
         assertEquals(null, jdbc.queryForObject("SELECT general_id FROM select_pool WHERE unique_name = '미성년'", Int::class.java))
         assertEquals(
-            2,
+            3,
             jdbc.queryForObject(
                 """
                 SELECT count(*)
@@ -94,13 +95,26 @@ class V26NpcLifecycleMigrationTest {
             """.trimIndent(),
             String::class.java,
         )
-        assertEquals(listOf("소제1", "헌제").sorted(), deferredNames.sorted())
+        assertEquals(listOf("소제1", "헌제", "RTK출생변경").sorted(), deferredNames.sorted())
+        val rtkDeferred = jdbc.queryForMap(
+            """
+            SELECT e.condition ->> 2 AS scheduled_year,
+                   action_row ->> 10 AS source_birth_year,
+                   action_row ->> 18 AS source_officer_number
+              FROM event e
+             CROSS JOIN LATERAL jsonb_array_elements(e.action) action_row
+             WHERE action_row ->> 2 = 'RTK출생변경'
+            """.trimIndent(),
+        )
+        assertEquals("204", rtkDeferred["scheduled_year"])
+        assertEquals("190", rtkDeferred["source_birth_year"])
+        assertEquals("17001", rtkDeferred["source_officer_number"])
         assertTrue(jdbc.queryForObject("SELECT (meta ->> 'gennum')::integer = 1 FROM nation WHERE id = 1", Boolean::class.java) == true)
     }
 
     private fun seedLegacyWorld() {
         jdbc.update(
-            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'scenario_1010', 181, 1, 3600)",
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'scenario_v26_npc_lifecycle', 181, 1, 3600)",
         )
         jdbc.update("INSERT INTO nation (id, name, color, meta) VALUES (1, '한', '#fff', '{\"gennum\":2}')")
         jdbc.update(
@@ -115,7 +129,9 @@ class V26NpcLifecycleMigrationTest {
                 (1002, '소제1', 1, 3, 2, 1, 168, 190, '1001',
                  20, 11, 48, 0, now(), 13, 'che_유지', 'None', 'None', '{"killturn":108}'),
                 (1003, '헌제', 1, 3, 2, 1, 170, 250, '1002',
-                 17, 13, 61, 0, now(), 11, 'che_안전', 'None', 'None', '{"killturn":828,"npcmsg":"한 왕실을 구해줄 이는 진정 없는 것인가..."}')
+                 17, 13, 61, 0, now(), 11, 'che_안전', 'None', 'None', '{"killturn":828,"npcmsg":"한 왕실을 구해줄 이는 진정 없는 것인가..."}'),
+                (1004, 'RTK출생변경', 1, 3, 2, 1, 168, 240, '1003',
+                 40, 41, 42, 0, now(), 13, 'che_유지', 'None', 'None', '{"killturn":708}')
             """.trimIndent(),
         )
         jdbc.update("INSERT INTO troop (troop_leader, nation, name) VALUES (1002, 1, '미성년부대')")

@@ -8,14 +8,18 @@ Verdict: cleared
 - The first review found exhausted duplicate-name candidates falling back to implicit politics/charm 50/50. The builder now requires exact runtime-identity collision overrides and fails closed when any legacy-only row lacks reviewed values.
 - The first review found matched lifecycle changes could shift later legacy `InitScenario` draws. Tuple index 24 now records pre-enrichment activity, old-active rows phantom-consume legacy build draws, and newly active or appended rows use `InitScenarioRtk14`.
 - The second review found 25-slot legacy-only rows were incorrectly receiving null `rtk14_*` provenance. Metadata now requires a non-null RTK14 officer number, with an end-to-end negative regression.
-- Final independent re-review found no remaining fix-required item.
+- PR review found the shared `general_neutral` tuple was decoded with direct-action offsets. Neutral deferred officers now use the importer layout, including birth/death at indices 9/10, and malformed nullable year scalars fail closed.
+- PR review found V26 could lose an underage officer after RTK14 enrichment rewrote the tuple birth year. The migration keeps exact birth matching first and uses a unique source-provenanced identity fallback only for the pending pre-V26 upgrade case.
+- PR review found NPC possession redirected after intake acknowledgement instead of daemon completion. The UI now waits for the terminal command result and preserves the selection screen on denial, timeout, or missing request ID.
+- PR review found the tuple-24 RNG marker was decoded ad hoc and RTK14 additions outside `general` could be silently dropped. The marker is now typed, and `general_ex`/`general_neutral` additions fail closed to preserve initialization order.
+- PR review also hardened archive-only scenario exclusion and secret-step tracing checks. Claims that legacy politics/charm defaults should be removed and that the mocked `GameChrome` test leaked API calls were rejected after verifying the persisted V16 defaults and complete API-child mocks.
 
 ## Evidence
 
 - Real workbook: 1,000 source rows represented exactly once in each of 15 populated runtime scenarios; 15 settings-only scenarios preserved.
 - Reviewed runtime-only data: 351/351 legacy-only rows covered, 38/38 exact collision overrides exercised, zero unresolved or unused overrides.
 - Lifecycle/RNG: old-inactive to active, old-active to inactive, inactive to inactive, and active to active quadrants audited; focused importer integration suite passed 19 tests with zero failures/errors.
-- Builder: 14 Python tests passed; two consecutive real-workbook builds were byte-identical.
-- UI/API: game 245 tests and gateway 78 tests passed with both TypeScript type checks; backend logic, infra, game-engine, and game-api module tests completed with `BUILD SUCCESSFUL`.
+- Builder: 17 Python tests passed against the private workbook; two consecutive real-workbook builds produced 30/30 byte-identical JSON files with zero unresolved names.
+- UI/API: game 248 tests and TypeScript typecheck passed; the unchanged gateway baseline remains 78 tests plus typecheck. The clean backend gate `:logic:test :infra:test :app:game-engine:test :app:game-api:test --rerun-tasks` completed with `BUILD SUCCESSFUL in 11m 34s`.
 - Deployment: workflow parses, secret materialization is fail-closed and non-logging, Docker scenario mount is read-only, focused deployer contract test and both worktree diff checks passed.
 - No workbook, generated scenario, decoded source JSON, credential, or secret is tracked.

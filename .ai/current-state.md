@@ -6,9 +6,11 @@
 - 기존 장수는 소속·도시·관직·대사를 유지하면서 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신한다. 엑셀에만 있는 343명은 빙의 가능한 기본 장수로 추가한다.
 - 시나리오 전용 legacy-only 351행은 모두 근거가 있는 정치·매력 override를 사용한다. 동명이인 source 후보 소진 충돌 38건은 exact runtime identity override로 처리하고, 미검토 fallback은 fail-closed다.
 - RTK14 행은 등장년 이상·몰년 이하에서 활성화된다. tuple index 24의 pre-enrichment activity marker와 분리된 `InitScenarioRtk14` stream으로 기존 장수 RNG를 유지한다.
-- 빙의 진입은 명시적 possession entry에서만 장수 선택으로 이동하며, 빙의·NPC 선택·감찰부·인사부·시뮬레이터·관련 API가 다섯 능력치를 운반/표시한다.
-- 검증: Python 14/14, real-workbook 2회 byte-identical, infra full `BUILD SUCCESSFUL`, importer IT 19/0/0, JVM 4모듈 전체 `BUILD SUCCESSFUL`, game 245/245 + gateway 78/78 + 양쪽 typecheck, strict checker 0/0, Docker mount focused test green, 독립 최종 리뷰 `CLEARED`.
-- 잔여: source/docker 커밋·PR → 각 PR `@codex review` 3회와 수정 → merge → GCP `pep` 재시드 → live DB/API/UI/clock 검증.
+- 빙의 진입은 명시적 possession entry에서만 장수 선택으로 이동하며, 빙의·NPC 선택·감찰부·인사부·시뮬레이터·관련 API가 다섯 능력치를 운반/표시한다. 빙의 POST 뒤에는 request id의 데몬 terminal result가 성공할 때만 이동한다.
+- PR 리뷰에서 발견된 중립 NPC 공통 tuple offset, V26의 RTK 출생년 재매칭, tuple-24 typed marker, RTK 추가 장수의 base-section 배치, normalized archive 제외, secret-step xtrace 차단을 수정했다. V16의 정치/매력 기본값 제거 및 mocked GameChrome API leak 주장은 증거상 기각했다.
+- 검증: private workbook Python 17/17, real-workbook 2회 생성 30/30 byte-identical, populated 15개 각각 source 1,000행·미해결 0, clean JVM 4모듈 `BUILD SUCCESSFUL in 11m 34s`, `$os-verify` JVM `BUILD SUCCESSFUL in 13m`, game 248/248 + gateway/game typecheck, strict checker 0/0, Docker mount focused test green.
+- Docker PR #24는 3회 `@codex review` clean 후 merge·배포 성공. Source PR #356은 최신 fix commit/push 뒤 정확한 SHA 기준 3회 리뷰를 새로 시작해야 한다.
+- 잔여: source fix commit/push → PR #356 `@codex review` 3회와 수정 → merge → GCP `pep` 재시드 → live DB/API/UI/clock 검증.
 
 ## 현재 상태 요약 — 2026-07-25
 

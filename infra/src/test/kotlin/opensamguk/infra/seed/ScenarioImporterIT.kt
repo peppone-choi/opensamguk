@@ -754,11 +754,11 @@ class ScenarioImporterIT {
               "general": [
                 [1,"LegacyActive",null,0,null,10,11,12,0,186,240,"유지",null],
                 [1,"LegacyFuture",null,0,null,10,11,12,0,190,240,"유지",null],
-                [1,"Under14AtAppearance",null,0,null,10,11,12,0,199,240,"유지",null,null,50,50,200,101,"남",60,41,321,"유가"],
-                [1,"AtDeathAppearance",null,0,null,10,11,12,0,100,200,"유지",null,null,50,50,200,102,"여",70,55,322,"법가"],
-                [1,"LaterAppearance",null,0,null,10,11,12,0,100,240,"유지",null,null,50,50,205,103,"남",80,65,323,"도교"],
-                [1,"DeathEqualsLaterAppearance",null,0,null,10,11,12,0,100,205,"유지",null,null,50,50,205,104,"여",75,50,324,"유가"],
-                [1,"AlreadyDeceased",null,0,null,10,11,12,0,100,199,"유지",null,null,50,50,190,105,"남",90,70,325,"묵가"]
+                [1,"Under14AtAppearance",null,0,null,10,11,12,0,199,240,"유지",null,null,50,50,200,101,"남",60,41,321,"유가",false,false],
+                [1,"AtDeathAppearance",null,0,null,10,11,12,0,100,200,"유지",null,null,50,50,200,102,"여",70,55,322,"법가",false,false],
+                [1,"LaterAppearance",null,0,null,10,11,12,0,100,240,"유지",null,null,50,50,205,103,"남",80,65,323,"도교",false,true],
+                [1,"DeathEqualsLaterAppearance",null,0,null,10,11,12,0,100,205,"유지",null,null,50,50,205,104,"여",75,50,324,"유가",false,true],
+                [1,"AlreadyDeceased",null,0,null,10,11,12,0,100,199,"유지",null,null,50,50,190,105,"남",90,70,325,"묵가",false,false]
               ],
               "general_ex": [],
               "diplomacy": []

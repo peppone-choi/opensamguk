@@ -220,8 +220,8 @@ class RegNeutralNpcAction(
         const val NAME = "RegNeutralNPC"
 
         fun register(factory: EventActionFactory): EventActionFactory = factory.register(NAME) { args ->
-            val birth = intArg(args, 8, 160)
-            val death = intArg(args, 9, 300)
+            val birth = intArg(args, 9, 160)
+            val death = intArg(args, 10, 300)
             val appearanceYear = nullableIntArg(args, 16)
             RegNeutralNpcAction(
                 affinity = intArg(args, 0, 0),
@@ -234,9 +234,9 @@ class RegNeutralNpcAction(
                 intel = requiredIntArg(args, 7, NAME),
                 birth = birth,
                 death = death,
-                ego = nullableStringArg(args, 10),
-                special = nullableStringArg(args, 11),
-                npcText = nullableStringArg(args, 12),
+                ego = nullableStringArg(args, 11),
+                special = nullableStringArg(args, 12),
+                npcText = nullableStringArg(args, 13),
                 politics = intArg(args, 14, 50),
                 charm = intArg(args, 15, 50),
                 appearanceYear = appearanceYear,
@@ -633,7 +633,7 @@ private fun intArg(args: List<JsonElement>, index: Int, default: Int): Int =
 
 private fun nullableIntArg(args: List<JsonElement>, index: Int): Int? = when (val arg = args.getOrNull(index)) {
     null, JsonNull -> null
-    is JsonPrimitive -> arg.content.toIntOrNull()
+    is JsonPrimitive -> arg.content.toIntOrNull() ?: error("argument $index must be an integer or null")
     else -> error("argument $index must be an integer or null")
 }
 

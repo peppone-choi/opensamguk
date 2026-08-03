@@ -681,11 +681,7 @@ class ScenarioImporter(
     }
 
     private fun wasLegacyActiveAtStart(general: ScenarioGeneral, startYear: Int): Boolean =
-        when (val marker = general.rawTuple.getOrNull(RTK14_LEGACY_ACTIVE_AT_START_INDEX)) {
-            null -> isLegacyActiveAtStart(general, startYear)
-            is Boolean -> marker
-            else -> throw IllegalArgumentException("invalid legacyActiveAtStart for ${general.name}")
-        }
+        general.legacyActiveAtStart ?: isLegacyActiveAtStart(general, startYear)
 
     private fun normalizeScenarioAffinity(general: ScenarioGeneral, rng: RandUtil): Int {
         val affinity = general.affinity ?: 0
@@ -899,7 +895,6 @@ class ScenarioImporter(
 
     private fun deferredGeneralRows(startYear: Int): List<EventRowToInsert> {
         val byAppearance = LinkedHashMap<Int, MutableList<List<Any?>>>()
-        val rngRows = replayInitScenarioGeneralRng(startYear)
         for (general in seedGenerals()) {
             val birth = general.bornYear ?: DEFAULT_BIRTH_YEAR
             val death = general.deadYear ?: DEFAULT_DEATH_YEAR
@@ -982,8 +977,7 @@ class ScenarioImporter(
         private const val DEFAULT_BIRTH_YEAR = 180
         private const val DEFAULT_DEATH_YEAR = 300
         private const val DEFAULT_START_AGE = 20
-        private const val RTK14_SOURCE_TUPLE_SIZE = 23
-        private const val RTK14_LEGACY_ACTIVE_AT_START_INDEX = 24
+        private const val RTK14_SOURCE_TUPLE_SIZE = 24
 
         private val NPC_PREFIX_BY_TYPE = mapOf(
             0 to "",

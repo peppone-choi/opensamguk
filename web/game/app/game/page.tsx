@@ -7,21 +7,19 @@ import GameChrome from '../../components/game/GameChrome';
 import MainRecordZone from '../../components/game/MainRecordZone';
 
 function GameMainContent() {
-    const entryMode = useSearchParams().get('entry') === 'possession' ? 'possession' : undefined;
+  const entryMode = useSearchParams().get('entry') === 'possession' ? 'possession' : undefined;
 
-    return (
-        <Shell>
-            <GameChrome entryMode={entryMode}>
-                {(frontInfo) => <MainRecordZone recentRecord={frontInfo.recentRecord} />}
-            </GameChrome>
-        </Shell>
-    );
+  return (
+    <Shell>
+      <GameChrome entryMode={entryMode}>{(frontInfo) => <MainRecordZone recentRecord={frontInfo.recentRecord} />}</GameChrome>
+    </Shell>
+  );
 }
 
 export default function GameMainPage() {
-    return (
-        <Suspense fallback={null}>
-            <GameMainContent />
-        </Suspense>
-    );
+  return (
+    <Suspense fallback={null}>
+      <GameMainContent />
+    </Suspense>
+  );
 }

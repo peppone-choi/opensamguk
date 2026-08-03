@@ -59,7 +59,39 @@ jobs:
           fi
 
           shopt -s nullglob
-          scenario_files=("$SCENARIO_DIR"/scenario_*.json)
+          candidate_scenario_files=("$SCENARIO_DIR"/scenario_*.json)
+          scenario_files=()
+          for candidate in "${candidate_scenario_files[@]}"; do
+            scenario_schema="$(
+              python3 - "$candidate" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              scenario = json.load(handle)
+          if not isinstance(scenario, dict):
+              raise ValueError("scenario JSON root must be an object")
+
+          runtime_sections = ("general", "general_ex", "general_neutral")
+          archive_sections = ("generals", "generalsEx")
+          if not any(section in scenario for section in runtime_sections) and any(section in scenario for section in archive_sections):
+              print("normalized_archive")
+          else:
+              print("runtime_or_settings")
+          PY
+            )"
+            case "$scenario_schema" in
+              normalized_archive)
+                ;;
+              runtime_or_settings)
+                scenario_files+=("$candidate")
+                ;;
+              *)
+                echo "ERROR: unable to classify a scenario JSON file for RTK14 enrichment." >&2
+                exit 1
+                ;;
+            esac
+          done
           scenario_count="${#scenario_files[@]}"
           if (( scenario_count == 0 )); then
             echo "ERROR: no runtime scenario JSON files were found for RTK14 enrichment." >&2

@@ -459,8 +459,18 @@ def _entry_runtime_identity(scenario_identity, entry):
     )
 
 
-def _assign_pending(entries, rtk, used_numbers, stats, report, scenario_identity="external", collision_overrides=None):
+def _assign_pending(
+    entries,
+    rtk,
+    used_numbers,
+    stats,
+    report,
+    scenario_identity="external",
+    collision_overrides=None,
+    unmatched_overrides=None,
+):
     collision_overrides = COLLISION_OVERRIDES if collision_overrides is None else collision_overrides
+    unmatched_overrides = UNMATCHED_OVERRIDES if unmatched_overrides is None else unmatched_overrides
     candidates_by_key = {}
     pairs = []
     for entry_order, entry in enumerate(entries):
@@ -527,7 +537,7 @@ def _assign_pending(entries, rtk, used_numbers, stats, report, scenario_identity
             continue
         stats["workbook_missing"] += 1
         report["workbookMissing"].append(detail)
-        override = UNMATCHED_OVERRIDES.get(base)
+        override = unmatched_overrides.get(base)
         if override is None:
             stats["missing"] += 1
             report["missing"].append(detail)
@@ -549,54 +559,6 @@ def _assign_pending(entries, rtk, used_numbers, stats, report, scenario_identity
             "identity": identity,
         }
     return choices
-
-
-def assign(devsam, rtk):
-    entries = []
-    for index, entry in enumerate(devsam):
-        copied = dict(entry)
-        copied.setdefault("key", ("external", index))
-        copied.setdefault("section", "external")
-        copied.setdefault("index", index)
-        copied.setdefault("birth", copied.get("born", 0))
-        copied.setdefault("death", copied.get("dead", 0))
-        copied.setdefault("arr", [])
-        entries.append(copied)
-    source_by_id = {row["number"]: row for row in source_rows(rtk)}
-    stats = _empty_assignment_stats()
-    report = _new_assignment_report()
-    choices = _assign_pending(entries, rtk, set(), stats, report)
-    assigned = {}
-    for entry in entries:
-        choice = choices[entry["key"]]
-        if choice["kind"] == "source":
-            assigned[entry["name"]] = _matched_stats(choice["source"])
-        elif choice["kind"] == "override":
-            assigned[entry["name"]] = {
-                "politics": choice["override"]["politics"],
-                "charm": choice["override"]["charm"],
-            }
-    return assigned, stats, report
-
-
-def inject_scenario(scenario, assigned):
-    for section in RUNTIME_SECTIONS:
-        entries = scenario.get(section, [])
-        if not isinstance(entries, list):
-            continue
-        for arr in entries:
-            if not isinstance(arr, list) or len(arr) < 8:
-                continue
-            stats = assigned.get(str(arr[1]))
-            if stats is None:
-                continue
-            slots = [slot for field, _, slot in MATCHED_STAT_FIELDS if field in stats]
-            while len(arr) <= max(slots):
-                arr.append(None)
-            for field, _, slot in MATCHED_STAT_FIELDS:
-                if field in stats:
-                    arr[slot] = stats[field]
-    return scenario
 
 
 def _scenario_start_year(scenario):
@@ -678,6 +640,7 @@ def _new_general(source, name):
 
 def _runtime_names(scenario):
     names = set()
+    base_names = set()
     counts = defaultdict(int)
     for section in RUNTIME_SECTIONS:
         entries = scenario.get(section, [])
@@ -688,22 +651,24 @@ def _runtime_names(scenario):
                 continue
             name = str(arr[1])
             names.add(name)
+            base_names.add(base_name(name))
             counts[name] += 1
     duplicates = [{"name": name, "count": count} for name, count in sorted(counts.items()) if count > 1]
-    return names, duplicates
+    return names, base_names, duplicates
 
 
-def _allocate_added_name(source_name, names):
+def _allocate_added_name(source_name, names, base_names):
     base = base_name(source_name)
-    base_already_used = any(base_name(name) == base for name in names)
-    if source_name not in names and not base_already_used:
+    if source_name not in names and base not in base_names:
         names.add(source_name)
+        base_names.add(base)
         return source_name, None
     suffix = 1
     while f"{base}{suffix}" in names:
         suffix += 1
     assigned_name = f"{base}{suffix}"
     names.add(assigned_name)
+    base_names.add(base)
     return assigned_name, {
         "sourceName": source_name,
         "assignedName": assigned_name,
@@ -776,7 +741,7 @@ def _verify_roster(
     }
 
 
-def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_overrides=None):
+def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_overrides=None, unmatched_overrides=None):
     enriched = copy.deepcopy(scenario)
     sources = source_rows(rtk)
     source_by_id = {row["number"]: row for row in sources}
@@ -818,6 +783,7 @@ def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_over
         report,
         scenario_identity=scenario_identity,
         collision_overrides=collision_overrides,
+        unmatched_overrides=unmatched_overrides,
     ))
     unreviewed = [entry for entry in entries if choices[entry["key"]]["kind"] == "unreviewed"]
     if unreviewed:
@@ -848,7 +814,7 @@ def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_over
                 "rationale": choice["override"]["rationale"],
             }
 
-    existing_names, runtime_name_duplicates = _runtime_names(enriched)
+    existing_names, existing_base_names, runtime_name_duplicates = _runtime_names(enriched)
     general = enriched.get("general")
     if not isinstance(general, list):
         general = []
@@ -858,7 +824,7 @@ def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_over
     for source in sources:
         if source["number"] in used_numbers:
             continue
-        assigned_name, collision = _allocate_added_name(source["name"], existing_names)
+        assigned_name, collision = _allocate_added_name(source["name"], existing_names, existing_base_names)
         if collision is not None:
             collision["sourceNumber"] = source["number"]
             name_collisions.append(collision)
@@ -921,7 +887,7 @@ def _inactive_detail(schema, status):
 
 
 def build_one(path, out_dir, rtk, scenario_root=None, dry_run=False):
-    relative_path = Path(path).relative_to(scenario_root) if scenario_root else Path(path).name
+    relative_path = Path(path).relative_to(scenario_root) if scenario_root else Path(Path(path).name)
     scenario = read_scenario(path)
     schema = _scenario_schema(scenario)
     if schema == "normalized_archive":

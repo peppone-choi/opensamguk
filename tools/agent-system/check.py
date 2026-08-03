@@ -417,6 +417,11 @@ def check_rtk14_deploy_enrichment() -> list[Finding]:
         return [Finding("error", "rtk14-enrichment", "Production deploy workflow is missing.")]
 
     text = deploy_path.read_text(encoding="utf-8")
+    secret_step_match = re.search(
+        r"(?ms)^      - name: Materialize RTK14 scenario stats for image build\n(?P<body>.*?)(?=^      - name:|\Z)",
+        text,
+    )
+    secret_step = secret_step_match.group("body") if secret_step_match else text
     required = {
         "main-build secret binding": "RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}",
         "fail-closed missing-secret check": "RTK14_STATS_JSON_B64 is required for main production image builds.",
@@ -429,6 +434,10 @@ def check_rtk14_deploy_enrichment() -> list[Finding]:
         "runtime scenario input directory": '--scenario-dir "$SCENARIO_DIR"',
         "staged RTK14 output directory": '--out-dir "$staging_dir"',
         "silent builder diagnostics": '> "$diagnostics" 2>&1',
+        "runtime scenario candidates": 'candidate_scenario_files=("$SCENARIO_DIR"/scenario_*.json)',
+        "normalized archive schema filter": 'archive_sections = ("generals", "generalsEx")',
+        "normalized archive exclusion": "normalized_archive)",
+        "runtime scenario retention": 'scenario_files+=("$candidate")',
         "all-scenario count check": 'if (( ${#staged_files[@]} != scenario_count )); then',
         "per-file staged output check": 'if [[ ! -f "$staged_file" ]]; then',
         "all-scenario replacement": 'cp "$staged_file" "$scenario_file"',
@@ -449,18 +458,35 @@ def check_rtk14_deploy_enrichment() -> list[Finding]:
     unsafe_output = (
         'echo "$RTK14_STATS_JSON_B64"',
         'echo "${RTK14_STATS_JSON_B64',
+        "echo $RTK14_STATS_JSON_B64",
+        "echo ${RTK14_STATS_JSON_B64",
         'cat "$source_json"',
         'cat "${source_json',
+        "cat $source_json",
+        "cat ${source_json",
         'cat "$diagnostics"',
         'cat "${diagnostics',
+        "cat $diagnostics",
+        "cat ${diagnostics",
     )
-    exposed = [snippet for snippet in unsafe_output if snippet in text]
+    exposed = [snippet for snippet in unsafe_output if snippet in secret_step]
+    safe_source_reconstruction = 'printf \'%s\' "$RTK14_STATS_JSON_B64" | base64 -d | gzip -dc'
+    for line in secret_step.splitlines():
+        if "printf" in line and "RTK14_STATS_JSON_B64" in line and safe_source_reconstruction not in line:
+            exposed.append("unsafe printf expansion")
+    tracing_patterns = (
+        r"(?m)^[ \t]*set[ \t]+-[A-Za-z]*x[A-Za-z]*\b",
+        r"(?m)^[ \t]*set[ \t]+-o[ \t]+xtrace\b",
+        r"(?m)^[ \t]*(?:bash|sh)[ \t]+-[A-Za-z]*x[A-Za-z]*\b",
+    )
+    if any(re.search(pattern, secret_step) for pattern in tracing_patterns):
+        exposed.append("shell tracing")
     if exposed:
         return [
             Finding(
                 "error",
                 "rtk14-enrichment",
-                "Production deploy workflow must not print RTK14 source material or builder diagnostics.",
+                "Production deploy workflow must not print RTK14 source material or builder diagnostics, or enable shell tracing.",
             )
         ]
     return []
