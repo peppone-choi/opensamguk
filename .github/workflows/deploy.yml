@@ -158,8 +158,7 @@ jobs:
           $COMPOSE up -d --build --force-recreate --no-deps deployer
 
           echo "=== Verifying deployer compatibility ==="
-          DEPLOYER_TOKEN="$(grep '^DEPLOYER_TOKEN=' .env | cut -d= -f2-)"
-          docker exec -e DEPLOYER_TOKEN="$DEPLOYER_TOKEN" opensamguk-deployer \
+          docker exec opensamguk-deployer \
             sh -c 'wget -qO- --header="Authorization: Bearer $DEPLOYER_TOKEN" "http://localhost:9000/env/shared"' \
             | grep -q '"ok":true'
           readonly PUBLIC_SERVER_ID_PATTERN='^[a-z0-9]{1,48}$'
@@ -183,8 +182,8 @@ jobs:
               echo "Invalid or reserved game server env file: $envf" >&2
               exit 1
             fi
-            docker exec -e DEPLOYER_TOKEN="$DEPLOYER_TOKEN" opensamguk-deployer \
-              sh -c "wget -qO- --header=\"Authorization: Bearer \$DEPLOYER_TOKEN\" \"http://localhost:9000/env/server?id=${public_server}\"" \
+            docker exec opensamguk-deployer \
+              sh -c 'wget -qO- --header="Authorization: Bearer $DEPLOYER_TOKEN" "http://localhost:9000/env/server?id=$1"' sh "$public_server" \
               | grep -q '"ok":true'
           done
 
