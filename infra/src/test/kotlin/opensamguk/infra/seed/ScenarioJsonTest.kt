@@ -25,10 +25,34 @@ class ScenarioJsonTest {
     }
 
     @Test
-    fun `scenario_1010 loads general and general_ex as 678 generals`() {
+    fun `source scenario_1010 preserves its pre-materialization 678-general baseline`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
 
         assertEquals(678, scenario.generals.size)
+    }
+
+    @Test
+    fun `enriched roster preserves every RTK14 source officer number exactly once`() {
+        val generals = (1..1000).joinToString(",") { officerNumber ->
+            "[0,\"RTK$officerNumber\",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,$officerNumber,\"남\",60,41,5,\"유가\",false,false]"
+        }
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "enriched roster",
+              "startYear": 180,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [$generals],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(1000, scenario.baseGenerals.size)
+        assertEquals((1..1000).toList(), scenario.baseGenerals.mapNotNull(ScenarioGeneral::officerNumber))
     }
 
     @Test

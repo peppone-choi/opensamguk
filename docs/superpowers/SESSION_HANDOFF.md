@@ -1,3 +1,32 @@
+# SESSION HANDOFF — 2026-08-03 (RTK14 전체 로스터·5능력치·생몰/등장 수명주기)
+
+## 사용자 지시 원문
+
+1. “그리고 통솔, 무력, 지력, 정치, 매력이 다 반영되어야지? 모든 선택 단추나 NPC 스탯이나 전부?”
+2. “지금 정치랑 매력이 50이잖아 모두 그거 수정해야지.”
+3. “만약 여기에 없는 사람의 정치와 매력은 나름대로 판단해.”
+4. “정치, 매력 붙여서 새로운 시나리오로 만들어서 덮어 써.”
+5. “기존 통무지도 엑셀 값으로 수정해. 그리고 등장하지 않는 장수들도 파악해서.... 확인하고.”
+6. “모든 json의 값을 수정 해야 할거야.”
+7. “엑셀에 있는 모든 데이터를 다 사용해. 만약 엑셀에 있는데 빠졌던 사람이라면 추가하고. 생몰년, 등장년 확인해서 적절하게 넣어.”
+
+## 구현·검증 상태
+
+- private workbook 1,000행·15열 전체를 source contract로 검증하고 populated 런타임 시나리오 15개에 각 officer number 1–1000을 정확히 한 번씩 표현했다. settings-only 15개는 유지한다.
+- 기존 장수의 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신하고 workbook-only 343행을 base `general`에 추가했다. runtime-only 351행의 정치/매력은 reviewed override이며 미검토 fallback은 fail-closed다.
+- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity와 explicit appearance scheduling, 빙의 terminal/idempotent result, typed RNG marker/placement, source-test-before-materialization 순서, archive filtering, secret tracing)을 수정했다.
+- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, 최종 `$os-verify` backend `BUILD SUCCESSFUL in 12m 47s`, V26/ScenarioJson 16/16, game 250/250와 gateway/game typecheck, Agent OS contract 및 strict checker 0/0.
+- Docker PR #24는 3회 mention review 후 merge·배포 성공. Source PR #356은 새 fix commit을 push한 뒤 정확한 SHA 기준 3회 mention review를 다시 받아야 한다.
+
+## 다음 순서
+
+1. source fix commit/push 및 PR #356 CI.
+2. 최신 exact SHA에 `@codex review`를 3회 순차 요청하고 각 완료/지적을 확인한다. 새 commit이 생기면 카운트를 다시 시작한다.
+3. source merge·GCP 배포 완료 후 `pep`만 승인된 control-plane 경로로 재시드한다.
+4. `sam.peppone.dev` health/login/game, 엔진 clock, DB의 5능력치 분포와 RTK metadata, 연도별 활성 roster, 빙의 terminal-result UI를 실서비스에서 확인한다.
+
+---
+
 # SESSION HANDOFF — 2026-07-25 (v2 버전분리 + 오픈 경로 확정 + 도시·인맥 루프 round-3)
 
 > 이 세션은 코드 변경 0. 산출물은 전부 **결정과 문서**다. 정본 원장: `docs/loops/v2-planning-2026-07-12/LEDGER.md`.
@@ -307,31 +336,3 @@
 
 # SESSION HANDOFF — 2026-06-06 (세션3: 9 event_연구 + K1/K2 + 메인 크래시 근본수정)
 [아카이브 — K1/K2/event_연구/메인재디자인 모두 커밋 완료]
-# SESSION HANDOFF — 2026-08-03 (RTK14 전체 로스터·5능력치·생몰/등장 수명주기)
-
-## 사용자 지시 원문
-
-1. “그리고 통솔, 무력, 지력, 정치, 매력이 다 반영되어야지? 모든 선택 단추나 NPC 스탯이나 전부?”
-2. “지금 정치랑 매력이 50이잖아 모두 그거 수정해야지.”
-3. “만약 여기에 없는 사람의 정치와 매력은 나름대로 판단해.”
-4. “정치, 매력 붙여서 새로운 시나리오로 만들어서 덮어 써.”
-5. “기존 통무지도 엑셀 값으로 수정해. 그리고 등장하지 않는 장수들도 파악해서.... 확인하고.”
-6. “모든 json의 값을 수정 해야 할거야.”
-7. “엑셀에 있는 모든 데이터를 다 사용해. 만약 엑셀에 있는데 빠졌던 사람이라면 추가하고. 생몰년, 등장년 확인해서 적절하게 넣어.”
-
-## 구현·검증 상태
-
-- private workbook 1,000행·15열 전체를 source contract로 검증하고 populated 런타임 시나리오 15개에 각 officer number 1–1000을 정확히 한 번씩 표현했다. settings-only 15개는 유지한다.
-- 기존 장수의 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신하고 workbook-only 343행을 base `general`에 추가했다. runtime-only 351행의 정치/매력은 reviewed override이며 미검토 fallback은 fail-closed다.
-- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity, 빙의 terminal result, typed RNG marker/placement, archive filtering, secret tracing)을 수정했다.
-- 증거: Python 17/17, real-workbook 30/30 two-pass byte-identical, clean backend four-module `BUILD SUCCESSFUL in 11m 34s`, `$os-verify` backend `BUILD SUCCESSFUL in 13m`, game 248/248와 gateway/game typecheck, Agent OS contract 및 strict checker 0/0.
-- Docker PR #24는 3회 mention review 후 merge·배포 성공. Source PR #356은 새 fix commit을 push한 뒤 정확한 SHA 기준 3회 mention review를 다시 받아야 한다.
-
-## 다음 순서
-
-1. source fix commit/push 및 PR #356 CI.
-2. 최신 exact SHA에 `@codex review`를 3회 순차 요청하고 각 완료/지적을 확인한다. 새 commit이 생기면 카운트를 다시 시작한다.
-3. source merge·GCP 배포 완료 후 `pep`만 승인된 control-plane 경로로 재시드한다.
-4. `sam.peppone.dev` health/login/game, 엔진 clock, DB의 5능력치 분포와 RTK metadata, 연도별 활성 roster, 빙의 terminal-result UI를 실서비스에서 확인한다.
-
----

@@ -100,14 +100,16 @@ class V26NpcLifecycleMigrationTest {
             """
             SELECT e.condition ->> 2 AS scheduled_year,
                    action_row ->> 10 AS source_birth_year,
+                   action_row ->> 17 AS source_appearance_year,
                    action_row ->> 18 AS source_officer_number
               FROM event e
              CROSS JOIN LATERAL jsonb_array_elements(e.action) action_row
              WHERE action_row ->> 2 = 'RTK출생변경'
             """.trimIndent(),
         )
-        assertEquals("204", rtkDeferred["scheduled_year"])
+        assertEquals("200", rtkDeferred["scheduled_year"])
         assertEquals("190", rtkDeferred["source_birth_year"])
+        assertEquals("200", rtkDeferred["source_appearance_year"])
         assertEquals("17001", rtkDeferred["source_officer_number"])
         assertTrue(jdbc.queryForObject("SELECT (meta ->> 'gennum')::integer = 1 FROM nation WHERE id = 1", Boolean::class.java) == true)
     }

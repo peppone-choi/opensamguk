@@ -61,10 +61,13 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
         val existingNames = loadDeferredGeneralNames(connection)
         matched
             .filterNot { (_, general) -> general.name in existingNames }
-            .groupBy { (_, general) -> general.bornYear ?: DEFAULT_BIRTH_YEAR }
+            .groupBy { (_, general) ->
+                general.appearanceYear
+                    ?: (general.bornYear ?: DEFAULT_BIRTH_YEAR) + GameConst.adultAge.toInt()
+            }
             .toSortedMap()
-            .forEach { (birthYear, rows) ->
-                insertDeferredEvent(connection, birthYear, rows.map { it.second })
+            .forEach { (appearanceYear, rows) ->
+                insertDeferredEvent(connection, appearanceYear, rows.map { it.second })
             }
 
         removeVerifiedLegacyRows(connection, matched.map { it.first.id })
@@ -144,11 +147,11 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
         }
     }
 
-    private fun insertDeferredEvent(connection: Connection, birthYear: Int, generals: List<ScenarioGeneral>) {
+    private fun insertDeferredEvent(connection: Connection, appearanceYear: Int, generals: List<ScenarioGeneral>) {
         val actions = generals.map { general ->
             listOf(if (general.npcType == 6) "RegNeutralNPC" else "RegNPC") + general.rawTuple
         } + listOf(listOf("DeleteEvent"))
-        val condition = listOf("Date", ">=", birthYear + GameConst.adultAge.toInt(), "1")
+        val condition = listOf("Date", ">=", appearanceYear, "1")
         connection.prepareStatement(
             """
             INSERT INTO event (target_code, priority, condition, action)

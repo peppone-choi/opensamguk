@@ -4,11 +4,11 @@
 
 - Source worktree: `/tmp/opensamguk-possession-five-stats`, branch `codex/fix-possession-five-stats`.
 - Docker worktree: `/tmp/opensamguk-docker-scenario-five-stats`, branch `codex/scenario-five-stats`.
-- Implementation, PR-finding remediation, and final local verification are green. Review artifact: `docs/superpowers/reviews/2026-08-03-rtk14-full-roster-five-stats-review.md`.
+- Implementation, all known PR-finding remediation, and the final broad verification are green. Review artifact: `docs/superpowers/reviews/2026-08-03-rtk14-full-roster-five-stats-review.md`.
 - Private GitHub Actions input `RTK14_STATS_JSON_B64` is registered; never print or commit decoded data.
-- Docker PR #24 merged after three clean mention reviews and its deployment workflow succeeded. Source PR #356 is open at initial commit `c5b38b617bff75f30af7b0f7bd7664cc4ce43a99`; valid PR findings are fixed locally but not yet committed.
+- Docker PR #24 merged after three clean mention reviews and its deployment workflow succeeded. Source PR #356 is open; commit `a2554031f9d407b576922860809c1e9843afa7e7` fixed the first review batch, and the exact-HEAD review then found explicit V26 appearance scheduling plus idempotent no-request-id possession handling. Those fixes and the previously omitted deploy-order finding are local and not yet committed.
 - Next exact sequence: commit/push the source fixes, restart three sequential `@codex review` rounds on the new exact SHA and fix findings, merge source, reset/reseed only target `pep`, verify domain health, engine clock, DB stat diversity/source metadata, lifecycle activation, and five-stat possession UI.
-- After material PR fixes, `scripts/agent/verify-changes.sh --run` completed: backend four-module gate `BUILD SUCCESSFUL in 13m`, gateway/game typechecks passed, game 248/248, Agent OS contract passed, strict checker 0 errors/warnings. A separate clean backend run also completed in 11m 34s. The initial two-pass verification command was misused in dump-only mode and produced no report; the corrected source-JSON two-pass run produced 30/30 byte-identical files and is the valid evidence.
+- After the latest material PR fixes, `scripts/agent/verify-changes.sh --run` completed: backend four-module gate `BUILD SUCCESSFUL in 12m 47s`, gateway/game typechecks passed, game 250/250, Agent OS contract passed, strict checker 0 errors/warnings. A separate clean backend run also completed in 11m 34s. The initial two-pass verification command was misused in dump-only mode and produced no report; the corrected source-JSON two-pass run produced 30/30 byte-identical files and is the valid evidence.
 
 - Updated at: 2026-07-21
 - State: CQRS B1 complete on main (127+residual reads, 128, 129)

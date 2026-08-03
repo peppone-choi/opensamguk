@@ -49,6 +49,16 @@ def legacy_tuple(name, leadership=1, strength=2, intel=3, birth=150, death=220):
 
 
 class Rtk14StatsBuilderTest(unittest.TestCase):
+    def test_deploy_tests_classpath_baseline_before_materializing_image_rosters(self):
+        workflow = (
+            Path(__file__).resolve().parents[2] / ".github" / "workflows" / "deploy.yml"
+        ).read_text(encoding="utf-8")
+
+        self.assertLess(
+            workflow.index("- name: Build + test JVM"),
+            workflow.index("- name: Materialize RTK14 scenario stats for image build"),
+        )
+
     def test_source_rows_round_trip_all_contract_columns(self):
         rows = source_rows()
 

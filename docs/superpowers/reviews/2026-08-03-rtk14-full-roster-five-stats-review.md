@@ -13,13 +13,15 @@ Verdict: cleared
 - PR review found NPC possession redirected after intake acknowledgement instead of daemon completion. The UI now waits for the terminal command result and preserves the selection screen on denial, timeout, or missing request ID.
 - PR review found the tuple-24 RNG marker was decoded ad hoc and RTK14 additions outside `general` could be silently dropped. The marker is now typed, and `general_ex`/`general_neutral` additions fail closed to preserve initialization order.
 - PR review also hardened archive-only scenario exclusion and secret-step tracing checks. Claims that legacy politics/charm defaults should be removed and that the mocked `GameChrome` test leaked API calls were rejected after verifying the persisted V16 defaults and complete API-child mocks.
+- A later exact-HEAD review found V26 still scheduled source-enriched rows at `birth + 14` and the possession retry path mishandled an idempotent success without a request id. V26 now uses `appearanceYear ?: birth + adultAge`; `CharacterClaim` completes the documented `AlreadyOwnedBySelf` success without polling while preserving every `result:false` denial.
+- The complete historical review feed also exposed a deploy-only conflict between the source roster's fixed 678-row test and pre-build RTK14 materialization. The workflow now runs the source JVM gate first, then materializes the 1,000-row roster for image builds; static ordering and source-number exact-once contracts cover both phases.
 
 ## Evidence
 
 - Real workbook: 1,000 source rows represented exactly once in each of 15 populated runtime scenarios; 15 settings-only scenarios preserved.
 - Reviewed runtime-only data: 351/351 legacy-only rows covered, 38/38 exact collision overrides exercised, zero unresolved or unused overrides.
 - Lifecycle/RNG: old-inactive to active, old-active to inactive, inactive to inactive, and active to active quadrants audited; focused importer integration suite passed 19 tests with zero failures/errors.
-- Builder: 17 Python tests passed against the private workbook; two consecutive real-workbook builds produced 30/30 byte-identical JSON files with zero unresolved names.
-- UI/API: game 248 tests and TypeScript typecheck passed; the unchanged gateway baseline remains 78 tests plus typecheck. The clean backend gate `:logic:test :infra:test :app:game-engine:test :app:game-api:test --rerun-tasks` completed with `BUILD SUCCESSFUL in 11m 34s`.
+- Builder: 18 Python tests passed against the private workbook; two consecutive real-workbook builds produced 30/30 byte-identical JSON files with zero unresolved names.
+- UI/API: game 250 tests and TypeScript typecheck passed; the unchanged gateway baseline remains 78 tests plus typecheck. The final `$os-verify` backend gate `:logic:test :infra:test :app:game-engine:test :app:game-api:test --rerun-tasks` completed with `BUILD SUCCESSFUL in 12m 47s`; the V26/ScenarioJson focused rerun completed with 16/16 tests and zero failures/errors.
 - Deployment: workflow parses, secret materialization is fail-closed and non-logging, Docker scenario mount is read-only, focused deployer contract test and both worktree diff checks passed.
 - No workbook, generated scenario, decoded source JSON, credential, or secret is tracked.

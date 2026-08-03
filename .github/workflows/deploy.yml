@@ -34,6 +34,15 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Build + test JVM
+        run: ./gradlew build --no-daemon
+
+      - name: Surface test results
+        if: always()
+        run: |
+          echo "== test summary =="
+          find . -path '*/build/test-results/*/*.xml' -print | head -50
+
       - name: Materialize RTK14 scenario stats for image build
         shell: bash
         env:
@@ -127,15 +136,6 @@ jobs:
           done
 
           echo "RTK14 scenario enrichment completed for ${scenario_count} scenario file(s)."
-
-      - name: Build + test JVM
-        run: ./gradlew build --no-daemon
-
-      - name: Surface test results
-        if: always()
-        run: |
-          echo "== test summary =="
-          find . -path '*/build/test-results/*/*.xml' -print | head -50
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

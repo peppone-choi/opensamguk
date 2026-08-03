@@ -92,6 +92,40 @@ describe('CharacterClaim', () => {
     await waitFor(() => expect(onClaimed).toHaveBeenCalledTimes(1));
   });
 
+  it('accepts an idempotent self-owned success without polling for a request ID', async () => {
+    const onClaimed = vi.fn();
+    apiMocks.claim.mockResolvedValue({
+      result: true,
+      generalId: 9,
+      reason: '이미 점유한 장수입니다.',
+      requestId: null,
+    });
+
+    render(<CharacterClaim global={global} onClaimed={onClaimed} />);
+    fireEvent.click(await screen.findByRole('button', { name: '빙의' }));
+
+    await waitFor(() => expect(onClaimed).toHaveBeenCalledTimes(1));
+    expect(apiMocks.pollCommandResult).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('keeps an immediate failed response as a failure when it has no request ID', async () => {
+    const onClaimed = vi.fn();
+    apiMocks.claim.mockResolvedValue({
+      result: false,
+      generalId: null,
+      reason: '이미 점유된 장수입니다.',
+      requestId: null,
+    });
+
+    render(<CharacterClaim global={global} onClaimed={onClaimed} />);
+    fireEvent.click(await screen.findByRole('button', { name: '빙의' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('이미 점유된 장수입니다.');
+    expect(onClaimed).not.toHaveBeenCalled();
+    expect(apiMocks.pollCommandResult).not.toHaveBeenCalled();
+  });
+
   it('surfaces a terminal daemon denial without claiming the character', async () => {
     const onClaimed = vi.fn();
     apiMocks.claim.mockResolvedValue({ result: true, generalId: 9, reason: null, requestId: 'claim-9' });

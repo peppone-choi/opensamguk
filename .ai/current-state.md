@@ -7,8 +7,9 @@
 - 시나리오 전용 legacy-only 351행은 모두 근거가 있는 정치·매력 override를 사용한다. 동명이인 source 후보 소진 충돌 38건은 exact runtime identity override로 처리하고, 미검토 fallback은 fail-closed다.
 - RTK14 행은 등장년 이상·몰년 이하에서 활성화된다. tuple index 24의 pre-enrichment activity marker와 분리된 `InitScenarioRtk14` stream으로 기존 장수 RNG를 유지한다.
 - 빙의 진입은 명시적 possession entry에서만 장수 선택으로 이동하며, 빙의·NPC 선택·감찰부·인사부·시뮬레이터·관련 API가 다섯 능력치를 운반/표시한다. 빙의 POST 뒤에는 request id의 데몬 terminal result가 성공할 때만 이동한다.
-- PR 리뷰에서 발견된 중립 NPC 공통 tuple offset, V26의 RTK 출생년 재매칭, tuple-24 typed marker, RTK 추가 장수의 base-section 배치, normalized archive 제외, secret-step xtrace 차단을 수정했다. V16의 정치/매력 기본값 제거 및 mocked GameChrome API leak 주장은 증거상 기각했다.
-- 검증: private workbook Python 17/17, real-workbook 2회 생성 30/30 byte-identical, populated 15개 각각 source 1,000행·미해결 0, clean JVM 4모듈 `BUILD SUCCESSFUL in 11m 34s`, `$os-verify` JVM `BUILD SUCCESSFUL in 13m`, game 248/248 + gateway/game typecheck, strict checker 0/0, Docker mount focused test green.
+- PR 리뷰에서 발견된 중립 NPC 공통 tuple offset, V26의 RTK 출생년 재매칭과 명시적 등장년 scheduling, tuple-24 typed marker, RTK 추가 장수의 base-section 배치, source-test-before-image-materialization 순서, normalized archive 제외, secret-step xtrace 차단을 수정했다. V16의 정치/매력 기본값 제거 및 mocked GameChrome API leak 주장은 증거상 기각했다.
+- 빙의는 intake 성공 뒤 terminal result를 기다리되, 이미 같은 사용자가 점유한 장수를 재시도해 `result=true/requestId=null`이 반환되는 멱등 성공은 즉시 완료한다. 모든 `result=false` 응답은 그대로 거부한다.
+- 검증: private workbook Python 18/18, real-workbook 2회 생성 30/30 byte-identical, populated 15개 각각 source 1,000행·미해결 0, clean JVM 4모듈 `BUILD SUCCESSFUL in 11m 34s`, 최신 `$os-verify` JVM `BUILD SUCCESSFUL in 12m 47s`, V26/ScenarioJson 16/16, game 250/250 + gateway/game typecheck, Agent OS contract 및 strict checker 0/0, Docker mount focused test green.
 - Docker PR #24는 3회 `@codex review` clean 후 merge·배포 성공. Source PR #356은 최신 fix commit/push 뒤 정확한 SHA 기준 3회 리뷰를 새로 시작해야 한다.
 - 잔여: source fix commit/push → PR #356 `@codex review` 3회와 수정 → merge → GCP `pep` 재시드 → live DB/API/UI/clock 검증.
 

@@ -51,7 +51,7 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
         }
 
         if (res.requestId == null) {
-          setError('빙의 요청 ID를 받지 못했습니다. 잠시 후 다시 시도하세요.');
+          onClaimed();
           return;
         }
 
