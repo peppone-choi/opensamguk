@@ -14,8 +14,8 @@
 
 - private workbook 1,000행·15열 전체를 source contract로 검증하고 populated 런타임 시나리오 15개에 각 officer number 1–1000을 정확히 한 번씩 표현했다. settings-only 15개는 유지한다.
 - 기존 장수의 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신하고 workbook-only 343행을 base `general`에 추가했다. runtime-only 351행의 정치/매력은 reviewed override이며 미검토 fallback은 fail-closed다.
-- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity와 explicit appearance scheduling, 빙의 terminal/idempotent result, typed RNG marker/placement, source-test-before-materialization 순서, archive filtering, secret tracing)을 수정했다.
-- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, 최종 `$os-verify` backend `BUILD SUCCESSFUL in 12m 47s`, V26/ScenarioJson 16/16, game 250/250와 gateway/game typecheck, Agent OS contract 및 strict checker 0/0.
+- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity·explicit appearance scheduling·stored-adult/future-appearance cohort, 빙의 terminal/idempotent result, typed RNG marker/placement, source-test-before-materialization 순서, archive filtering, secret tracing)을 수정했다.
+- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, 최종 `$os-verify` backend `BUILD SUCCESSFUL in 14m 59s`와 XML 4,379건(실패/오류 0, 스킵 1), V26/ScenarioJson 집중 검증 green, game 250/250와 gateway/game typecheck, Agent OS contract 및 strict checker 0/0.
 - Docker PR #24는 3회 mention review 후 merge·배포 성공. Source PR #356은 새 fix commit을 push한 뒤 정확한 SHA 기준 3회 mention review를 다시 받아야 한다.
 
 ## 다음 순서

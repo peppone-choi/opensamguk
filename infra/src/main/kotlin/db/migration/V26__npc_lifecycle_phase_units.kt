@@ -31,24 +31,20 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
 
         val world = loadWorld(connection) ?: return
         val underage = loadUnderageRows(connection, world.currentYear)
-        if (underage.isEmpty()) {
+        val scenario = loadScenario(world.scenarioCode) ?: run {
+            if (underage.isNotEmpty()) {
+                throw FlywayException(
+                    "V26 found underage NPC rows but bundled scenario/${world.scenarioCode}.json is unavailable; refusing data loss",
+                )
+            }
             refreshNationGeneralCounts(connection)
             return
         }
-
-        val scenario = loadScenario(world.scenarioCode)
-        val candidates = scenario.seedGenerals(world.extendedGeneral)
+        val seedGenerals = scenario.seedGenerals(world.extendedGeneral)
+        val candidates = seedGenerals
             .groupBy { ScenarioIdentity(it.name, it.nationId) }
-        val matched = underage.map { row ->
-            val identityMatches = candidates[ScenarioIdentity(row.name, row.nationId)].orEmpty()
-            val exactMatches = identityMatches.filter { (it.bornYear ?: DEFAULT_BIRTH_YEAR) == row.bornYear }
-            // RTK14 source enrichment rewrites tuple birth years. A pre-V26 row has no RTK metadata,
-            // so only accept the identity fallback when one source-provenanced RTK candidate exists.
-            val matches = if (exactMatches.isNotEmpty()) {
-                exactMatches
-            } else {
-                identityMatches.takeIf { it.size == 1 && it.single().officerNumber != null }.orEmpty()
-            }
+        val underageMatched = underage.map { row ->
+            val matches = scenarioMatches(row, candidates[ScenarioIdentity(row.name, row.nationId)].orEmpty())
             if (matches.size != 1) {
                 throw FlywayException(
                     "V26 cannot safely defer general id=${row.id} name=${row.name}: " +
@@ -56,6 +52,34 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
                 )
             }
             row to matches.single()
+        }
+        // tuple[24] proves that this source row was active in the legacy start world before RTK14
+        // enrichment moved its explicit appearance into the future. Without that marker, an adult
+        // database row is not a safe migration candidate.
+        val futureAppearanceCandidates = seedGenerals
+            .filter { it.appearanceYear?.let { year -> year > world.currentYear } == true }
+            .filter { it.legacyActiveAtStart == true }
+            .groupBy { ScenarioIdentity(it.name, it.nationId) }
+        val futureAdultMatched = loadFutureAppearanceRows(
+            connection,
+            world.currentYear,
+            futureAppearanceCandidates.keys.toList(),
+        )
+            .groupBy { ScenarioIdentity(it.name, it.nationId) }
+            .flatMap { (identity, rows) ->
+                rows.singleOrNull()?.let { row ->
+                    scenarioMatches(row, futureAppearanceCandidates[identity].orEmpty())
+                        .singleOrNull()
+                        ?.let { general -> listOf(row to general) }
+                        .orEmpty()
+                }.orEmpty()
+            }
+        val matched = (underageMatched + futureAdultMatched)
+            .distinctBy { (row, _) -> row.id }
+            .sortedBy { (row, _) -> row.id }
+        if (matched.isEmpty()) {
+            refreshNationGeneralCounts(connection)
+            return
         }
 
         val existingNames = loadDeferredGeneralNames(connection)
@@ -125,12 +149,67 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
             }
         }
 
+    private fun loadFutureAppearanceRows(
+        connection: Connection,
+        currentYear: Int,
+        identities: List<ScenarioIdentity>,
+    ): List<LegacyGeneralRow> {
+        if (identities.isEmpty()) return emptyList()
+        val values = identities.joinToString(", ") { "(?, ?)" }
+        return connection.prepareStatement(
+            """
+            SELECT g.id, g.name, g.nation_id, g.born_year
+              FROM general g
+              JOIN (VALUES $values) AS scenario_identity(name, nation_id)
+                ON g.name = scenario_identity.name
+               AND g.nation_id = scenario_identity.nation_id
+             WHERE g.npc_state >= 2
+               AND ? - g.born_year >= ?
+             ORDER BY g.id
+            """.trimIndent(),
+        ).use { statement ->
+            var parameterIndex = 1
+            identities.forEach { identity ->
+                statement.setString(parameterIndex++, identity.name)
+                statement.setInt(parameterIndex++, identity.nationId)
+            }
+            statement.setInt(parameterIndex++, currentYear)
+            statement.setInt(parameterIndex, GameConst.adultAge.toInt())
+            statement.executeQuery().use { rs ->
+                buildList {
+                    while (rs.next()) {
+                        add(
+                            LegacyGeneralRow(
+                                id = rs.getInt("id"),
+                                name = rs.getString("name"),
+                                nationId = rs.getInt("nation_id"),
+                                bornYear = rs.getInt("born_year"),
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun scenarioMatches(
+        row: LegacyGeneralRow,
+        identityMatches: List<ScenarioGeneral>,
+    ): List<ScenarioGeneral> {
+        val exactMatches = identityMatches.filter { (it.bornYear ?: DEFAULT_BIRTH_YEAR) == row.bornYear }
+        // RTK14 source enrichment rewrites tuple birth years. A pre-V26 row has no RTK metadata,
+        // so only accept the identity fallback when one source-provenanced RTK candidate exists.
+        return if (exactMatches.isNotEmpty()) {
+            exactMatches
+        } else {
+            identityMatches.takeIf { it.size == 1 && it.single().officerNumber != null }.orEmpty()
+        }
+    }
+
     private fun loadScenario(scenarioCode: String) =
         javaClass.classLoader.getResourceAsStream("scenario/$scenarioCode.json")?.use { stream ->
             ScenarioJson.loadScenario(stream.readBytes().toString(StandardCharsets.UTF_8))
-        } ?: throw FlywayException(
-            "V26 found underage NPC rows but bundled scenario/$scenarioCode.json is unavailable; refusing data loss",
-        )
+        }
 
     private fun loadDeferredGeneralNames(connection: Connection): Set<String> = connection.prepareStatement(
         """
