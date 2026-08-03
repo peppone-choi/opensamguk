@@ -11,7 +11,6 @@ Scope: `.github/workflows/deploy.yml` at `77908853d244f28b6d0afb57b0fad3e7bc0100
 - The public server ID is passed as a quoted positional argument; the inner credential expansion remains literal until the container shell executes it.
 - Workflow YAML parsed successfully and all 9 `run` blocks passed `bash -n`.
 - The fail-closed pipe retains `set -euo pipefail`; non-OK and transport failures block deployment.
-- A live read-only probe using the container-inherited credential returned HTTP 200 without exposing the credential.
 
 ## Findings
 
