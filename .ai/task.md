@@ -2,7 +2,7 @@
 
 ## 2026-08-03 — RTK14 full-roster scenario and five-stat surfaces
 
-- Status: implementation, PR-finding remediation, real-workbook regeneration checks, and final local verification are green. Source PR #356 needs a new fix commit followed by three fresh mention reviews on that exact SHA, merge, reseed, and live verification. Docker PR #24 is merged and its deploy workflow succeeded.
+- Status: implementation, real-workbook checks, and all known PR-finding remediation are green, including source `general_ex` preservation and V36 possession request correlation. Source PR #356 needs a new fix commit followed by three fresh mention reviews on that exact SHA, merge, reseed, and live verification. Docker PR #24 is merged and its deploy workflow succeeded.
 - Goal: use every officer row from `/Users/apple/Desktop/삼국지14 무장정보.xlsx` in every populated runtime scenario, preserving one-to-one duplicate identities, replacing the five stats, and applying birth/appearance/death lifecycle dates. Existing runtime-only officers remain with reviewed politics/charm overrides.
 - In scope:
   - the local RTK14 source-data builder, validation/reporting, and private generated scenario artifacts;

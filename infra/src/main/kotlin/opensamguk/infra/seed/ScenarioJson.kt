@@ -325,9 +325,9 @@ data class Scenario(
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
         validateRtk14AddedPlacement()
         val legacyBase = baseGenerals.filterNot { it.rtk14Added }
-        val legacyExtended = if (extendedGeneral) generalEx.filterNot { it.rtk14Added } else emptyList()
+        val selectedExtended = generalEx.filter { extendedGeneral || it.officerNumber != null }
         val legacyNeutral = generalNeutral.filterNot { it.rtk14Added }
-        return legacyBase + legacyExtended + legacyNeutral + baseGenerals.filter { it.rtk14Added }
+        return legacyBase + selectedExtended + legacyNeutral + baseGenerals.filter { it.rtk14Added }
     }
 
     fun initGenerals(): List<ScenarioGeneral> = seedGenerals(extendedGeneral = true)

@@ -14,8 +14,9 @@
 
 - private workbook 1,000행·15열 전체를 source contract로 검증하고 populated 런타임 시나리오 15개에 각 officer number 1–1000을 정확히 한 번씩 표현했다. settings-only 15개는 유지한다.
 - 기존 장수의 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신하고 workbook-only 343행을 base `general`에 추가했다. runtime-only 351행의 정치/매력은 reviewed override이며 미검토 fallback은 fail-closed다.
-- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity·explicit appearance scheduling·stored-adult/future-appearance cohort, 빙의 terminal/idempotent result, typed RNG marker/placement, source-test-before-materialization 순서, archive filtering, secret tracing)을 수정했다.
-- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, 최종 `$os-verify` backend `BUILD SUCCESSFUL in 14m 59s`와 XML 4,379건(실패/오류 0, 스킵 1), V26/ScenarioJson 집중 검증 green, game 250/250와 gateway/game typecheck, Agent OS contract 및 strict checker 0/0.
+- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity·explicit appearance scheduling·stored-adult/future-appearance cohort, source `general_ex` filtering, 빙의 terminal/request correlation, typed RNG marker/placement, source-test-before-materialization 순서, archive filtering, secret tracing)을 수정했다.
+- V36이 임시 `general_owner`에 `claim_request_id`를 저장한다. 재시도는 동일 요청만 조회하고 terminal deny가 일치할 때만 예약을 해제하며, 재접속은 원래 NPC 하나만 재개 후보로 노출한다. 기존 null-id 확정 행은 `npc_state != 2`에서만 호환 유지한다.
+- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, 마지막 완전 green `$os-verify` backend `BUILD SUCCESSFUL in 14m 59s`와 XML 4,379건(실패/오류 0, 스킵 1), 최신 ScenarioJson 15/15·game-api 441/441·V36 PostgreSQL IT 3/3·game 251/251·양쪽 typecheck·Agent OS/strict 0/0. 최신 broad의 유일한 V5 Testcontainers socket timeout은 독립 3/3 재실행으로 비재현·격리했다.
 - Docker PR #24는 3회 mention review 후 merge·배포 성공. Source PR #356은 새 fix commit을 push한 뒤 정확한 SHA 기준 3회 mention review를 다시 받아야 한다.
 
 ## 다음 순서

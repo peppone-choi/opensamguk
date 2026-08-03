@@ -42,8 +42,21 @@ class SelectNpcTokenService(
                 reason = NPC_MODE_BLOCKED_REASON,
             )
         }
-        if (owners.findByUserId(userId) != null) {
-            return ClaimableResponse(result = true, hasGeneral = true, candidates = emptyList())
+        val owner = owners.findByUserId(userId)
+        if (owner != null) {
+            val general = generals.findById(owner.generalId.toInt()).orElse(null)
+            if (general != null && owner.isFinalizedFor(general, userId)) {
+                return ClaimableResponse(result = true, hasGeneral = true, candidates = emptyList())
+            }
+            if (owner.claimRequestId != null && general?.isResumableReservation() == true) {
+                val nationName = nations.findById(general.nationId).map { it.name }.orElse(null)
+                return ClaimableResponse(
+                    result = true,
+                    hasGeneral = false,
+                    candidates = listOf(general.toClaimableGeneral(nationName)),
+                )
+            }
+            return ClaimableResponse(result = true, hasGeneral = false, candidates = emptyList())
         }
 
         val now = Instant.now(clock)
@@ -138,6 +151,12 @@ class SelectNpcTokenService(
         "personal" to GameConst.personalityNameOf(personalCode),
         "keepCnt" to 3,
     )
+
+    private fun GeneralReadEntity.toClaimableGeneral(nationName: String?): ClaimableGeneral =
+        toPickMap(nationName).toClaimableGeneral()
+
+    private fun GeneralReadEntity.isResumableReservation(): Boolean =
+        npcState == GeneralPossessionService.CLAIMABLE_NPC_STATE && (userId?.toLongOrNull() ?: 0L) <= 0L
 
     private fun Map<*, *>.toClaimableGeneral(): ClaimableGeneral = ClaimableGeneral(
         generalId = intOf(this["generalId"]) ?: 0,

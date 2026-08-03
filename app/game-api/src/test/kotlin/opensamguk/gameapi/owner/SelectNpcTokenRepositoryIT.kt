@@ -122,6 +122,25 @@ class SelectNpcTokenRepositoryIT {
         )
     }
 
+    @Test
+    fun `owner claim request id round trips and scopes terminal cleanup`() {
+        val now = Instant.parse("2026-06-02T00:00:00Z")
+        owners.save(
+            GeneralOwnerEntity(
+                generalId = 12L,
+                userId = 8L,
+                claimedAt = now,
+                claimRequestId = "req-claim-12",
+            ),
+        )
+
+        assertEquals("req-claim-12", owners.findByUserId(8L)?.claimRequestId)
+        assertEquals(0, owners.deleteByUserIdAndGeneralIdAndClaimRequestId(8L, 12L, "other-request"))
+        assertEquals("req-claim-12", owners.findByUserId(8L)?.claimRequestId)
+        assertEquals(1, owners.deleteByUserIdAndGeneralIdAndClaimRequestId(8L, 12L, "req-claim-12"))
+        assertEquals(null, owners.findByUserId(8L))
+    }
+
     private fun seedWorld(id: Int) {
         jdbc.update(
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (?, ?, 1, 1, 60) ON CONFLICT (id) DO NOTHING",

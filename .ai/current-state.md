@@ -7,11 +7,11 @@
 - 시나리오 전용 legacy-only 351행은 모두 근거가 있는 정치·매력 override를 사용한다. 동명이인 source 후보 소진 충돌 38건은 exact runtime identity override로 처리하고, 미검토 fallback은 fail-closed다.
 - RTK14 행은 등장년 이상·몰년 이하에서 활성화된다. tuple index 24의 pre-enrichment activity marker와 분리된 `InitScenarioRtk14` stream으로 기존 장수 RNG를 유지한다.
 - 빙의 진입은 명시적 possession entry에서만 장수 선택으로 이동하며, 빙의·NPC 선택·감찰부·인사부·시뮬레이터·관련 API가 다섯 능력치를 운반/표시한다. 빙의 POST 뒤에는 request id의 데몬 terminal result가 성공할 때만 이동한다.
-- PR 리뷰에서 발견된 중립 NPC 공통 tuple offset, V26의 RTK 출생년 재매칭·명시적 등장년 scheduling·stored-adult/future-appearance cohort, tuple-24 typed marker, RTK 추가 장수의 base-section 배치, source-test-before-image-materialization 순서, normalized archive 제외, secret-step xtrace 차단을 수정했다. V16의 정치/매력 기본값 제거 및 mocked GameChrome API leak 주장은 증거상 기각했다.
-- 빙의는 intake 성공 뒤 terminal result를 기다리되, 이미 같은 사용자가 점유한 장수를 재시도해 `result=true/requestId=null`이 반환되는 멱등 성공은 즉시 완료한다. 모든 `result=false` 응답은 그대로 거부한다.
-- 검증: private workbook Python 18/18, real-workbook 2회 생성 30/30 byte-identical, populated 15개 각각 source 1,000행·미해결 0, 최종 `$os-verify` JVM `BUILD SUCCESSFUL in 14m 59s`와 XML 4,379건(실패/오류 0, 스킵 1), 최신 v25→v26 Testcontainers 1/1, game 250/250 + gateway/game typecheck, Agent OS contract 및 strict checker 0/0, Docker mount focused test green.
+- PR 리뷰에서 발견된 중립 NPC 공통 tuple offset, V26의 RTK 출생년 재매칭·명시적 등장년 scheduling·stored-adult/future-appearance cohort, tuple-24 typed marker, RTK 추가 장수의 base-section 배치, `extended_general=false`에서 source-provenanced `general_ex` 누락, source-test-before-image-materialization 순서, normalized archive 제외, secret-step xtrace 차단을 수정했다. V16의 정치/매력 기본값 제거 및 mocked GameChrome API leak 주장은 증거상 기각했다.
+- 빙의 임시 소유권은 V36 `claim_request_id`로 원래 데몬 요청과 상관시킨다. 재시도·재접속은 같은 request id만 재조회하고 새 명령을 발행하지 않으며, 일치하는 terminal deny만 조건부로 예약을 해제한다. 상관된 소유권은 `npc_state=1`과 동일 `general.user_id`가 확인돼야 확정되고, pre-V36 null-id 행은 비후보 상태에서만 기존 확정 소유권으로 유지한다.
+- 검증: private workbook Python 18/18, real-workbook 2회 생성 30/30 byte-identical, populated 15개 각각 source 1,000행·미해결 0, 마지막 완전 green `$os-verify` JVM `BUILD SUCCESSFUL in 14m 59s`와 XML 4,379건(실패/오류 0, 스킵 1). 최신 수정은 ScenarioJson 15/15, game-api 전체 441/441, V36 PostgreSQL IT 3/3, game 251/251 + gateway/game typecheck, Agent OS contract 및 strict checker 0/0이다. 최신 broad 재실행의 유일한 실패는 기존 V5 Testcontainers PostgreSQL socket timeout이었고 독립 재실행 3/3으로 비재현·격리했다.
 - Docker PR #24는 3회 `@codex review` clean 후 merge·배포 성공. Source PR #356은 최신 fix commit/push 뒤 정확한 SHA 기준 3회 리뷰를 새로 시작해야 한다.
-- 잔여: source fix commit/push → PR #356 `@codex review` 3회와 수정 → merge → GCP `pep` 재시드 → live DB/API/UI/clock 검증.
+- 잔여: source fix commit/push → PR #356 새 exact SHA에서 `@codex review` 3회와 수정 → merge → GCP `pep` 재시드 → live DB/API/UI/clock 검증.
 
 ## 현재 상태 요약 — 2026-07-25
 

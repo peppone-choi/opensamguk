@@ -32,10 +32,11 @@ class ScenarioJsonTest {
     }
 
     @Test
-    fun `enriched roster preserves every RTK14 source officer number exactly once`() {
-        val generals = (1..1000).joinToString(",") { officerNumber ->
+    fun `enriched roster retains every RTK14 source officer when legacy extensions are disabled`() {
+        fun sourceTuple(officerNumber: Int) =
             "[0,\"RTK$officerNumber\",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,$officerNumber,\"남\",60,41,5,\"유가\",false,false]"
-        }
+        val baseGenerals = (1..500).joinToString(",", transform = ::sourceTuple)
+        val sourceExtendedGenerals = (501..1000).joinToString(",", transform = ::sourceTuple)
         val scenario = ScenarioJson.loadScenario(
             """
             {
@@ -44,15 +45,16 @@ class ScenarioJsonTest {
               "map": {"mapName": "che"},
               "const": {},
               "nation": [],
-              "general": [$generals],
-              "general_ex": [],
+              "general": [$baseGenerals],
+              "general_ex": [$sourceExtendedGenerals],
               "diplomacy": []
             }
             """.trimIndent(),
         )
 
-        assertEquals(1000, scenario.baseGenerals.size)
-        assertEquals((1..1000).toList(), scenario.baseGenerals.mapNotNull(ScenarioGeneral::officerNumber))
+        val seeded = scenario.seedGenerals(extendedGeneral = false)
+        assertEquals(1000, seeded.size)
+        assertEquals((1..1000).toList(), seeded.mapNotNull(ScenarioGeneral::officerNumber))
     }
 
     @Test

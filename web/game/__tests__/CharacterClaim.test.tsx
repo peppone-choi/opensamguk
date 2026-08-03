@@ -128,7 +128,9 @@ describe('CharacterClaim', () => {
 
   it('surfaces a terminal daemon denial without claiming the character', async () => {
     const onClaimed = vi.fn();
-    apiMocks.claim.mockResolvedValue({ result: true, generalId: 9, reason: null, requestId: 'claim-9' });
+    apiMocks.claim
+      .mockResolvedValueOnce({ result: true, generalId: 9, reason: null, requestId: 'claim-9' })
+      .mockResolvedValueOnce({ result: false, generalId: 9, reason: '빙의 가능한 장수가 아닙니다.', requestId: null });
     apiMocks.pollCommandResult.mockResolvedValue({
       status: 'RESOLVED',
       requestId: 'claim-9',
@@ -143,6 +145,32 @@ describe('CharacterClaim', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('빙의 가능한 장수가 아닙니다.');
     expect(onClaimed).not.toHaveBeenCalled();
+    await waitFor(() => expect(apiMocks.claim).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(apiMocks.claimable).toHaveBeenCalledTimes(2));
+  });
+
+  it('retries a timed-out request through its original request id instead of entering early', async () => {
+    const onClaimed = vi.fn();
+    apiMocks.claim
+      .mockResolvedValueOnce({ result: true, generalId: 9, reason: null, requestId: 'claim-9' })
+      .mockResolvedValueOnce({ result: true, generalId: 9, reason: null, requestId: 'claim-9' });
+    apiMocks.pollCommandResult
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ status: 'RESOLVED', requestId: 'claim-9', ok: true, type: 'claimNpc', result: {} });
+
+    render(<CharacterClaim global={global} onClaimed={onClaimed} />);
+    const button = await screen.findByRole('button', { name: '빙의' });
+    fireEvent.click(button);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('빙의 처리가 지연되고 있습니다. 잠시 후 다시 시도하세요.');
+    expect(onClaimed).not.toHaveBeenCalled();
+
+    fireEvent.click(button);
+
+    await waitFor(() => expect(onClaimed).toHaveBeenCalledTimes(1));
+    expect(apiMocks.claim).toHaveBeenCalledTimes(2);
+    expect(apiMocks.pollCommandResult).toHaveBeenNthCalledWith(1, 'claim-9');
+    expect(apiMocks.pollCommandResult).toHaveBeenNthCalledWith(2, 'claim-9');
   });
 
   it('does not claim the character when the terminal result stays pending', async () => {

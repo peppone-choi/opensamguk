@@ -61,7 +61,18 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
           return;
         }
         if (!terminal.ok) {
-          setError(terminal.reason ?? '빙의에 실패했습니다.');
+          const terminalReason = terminal.reason ?? '빙의에 실패했습니다.';
+          try {
+            const reconciled = await api.claim(generalId);
+            if (!reconciled.result) {
+              void load();
+              setError(reconciled.reason ?? terminalReason);
+            } else {
+              setError(terminalReason);
+            }
+          } catch {
+            setError(terminalReason);
+          }
           return;
         }
 
@@ -74,7 +85,7 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
         setClaiming(null);
       }
     },
-    [onClaimed],
+    [load, onClaimed],
   );
 
   return (
