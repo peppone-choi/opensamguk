@@ -285,6 +285,30 @@
 
 ---
 
+## ADR-LITE-027 이미 릴리스된 마이그레이션을 확장하지 않고 새 전진 마이그레이션으로 수리한다
+
+- Date: 2026-08-04
+- Status: approved
+- Decision: 이미 배포되어 `flyway_schema_history`에 기록된 마이그레이션(V26)은 확장하지 않는다. 수리가 필요하면 아직 어떤 월드도 기록하지 않은 **새 전진 마이그레이션**에 수리 로직 전체를 넣는다. `codex/fix-possession-five-stats`에서 V26과 그 테스트는 `origin/main` 기준으로 바이트 단위 원복했고, RTK14 NPC 수명주기 수리는 world-scoped `V38__rtk14_npc_lifecycle_repair.kt` 하나로 통합했다. 또한 `origin/main`이 이미 `V36__diplomacy_casualties.sql`을 싣고 있으므로 이 PR의 claim-request 마이그레이션은 `V37__general_owner_claim_request.sql`로 리넘버했다(같은 버전 2개 = Flyway duplicate version 실패).
+- Context: 리뷰가 P1으로 지적한 대로, V26을 이미 기록한 DB는 확장된 V26 로직을 절대 재실행하지 않아 업그레이드된 월드가 조기 활성화·오유예 장수를 그대로 안고 간다. 부팅 순서를 추적해 확인한 추가 사실: Flyway는 `ScenarioSeedRunner`(ApplicationRunner)보다 먼저 실행되고 `JdbcOperations` 빈이 `flywayInitializer`에 의존하므로, 신규 DB에서는 V26 실행 시점에 `world_state`가 비어 있어 V26이 즉시 반환한다. 즉 V26 확장은 기존 월드에는 정의상 도달 불가, 신규 월드에는 목적상 도달 불가였다.
+- Alternatives: 확장된 V26 유지 + 보완용 신규 마이그레이션 추가(기각 — 수리 로직이 두 곳으로 갈라져 신규 마이그레이션이 확장 V26의 정확한 여집합이어야만 수렴하고, 총 diff도 더 크다), V26 확장만 유지(기각 — 리뷰 P1 그대로), Flyway repeatable/baseline 재설정(기각 — 운영 DB 이력 조작).
+- Consequences: 수리 로직이 한 곳에만 존재하고 모든 월드가 V38을 정확히 한 번 실행하므로, 이미 마이그레이션된 월드와 새로 시드된 월드가 구조적으로 같은 최종 상태로 수렴한다. V26 원복으로 사라진 테스트 커버리지(external-only 해석, external-over-classpath 우선순위, nation별 deferred identity, 중복 future-appearance fail-closed, 시나리오 누락 fail-closed)는 `V38Rtk14NpcLifecycleRepairMigrationTest`로 옮겼고 malformed external override 롤백 케이스를 추가했다. 대가: V25 이하에서 처음 올라오는 아주 오래된 DB는 원복된 V26의 엄격한 `(name, nationId, bornYear)` 매칭을 그대로 만나며, 이는 `origin/main`의 기존 동작이다.
+- Approved by: 리뷰 지적(P1, chatgpt-codex-connector) 및 팀 지시. 사용자 merge 승인은 별도이며 이 ADR은 merge·배포를 승인하지 않는다.
+
+---
+
+## ADR-LITE-028 origin/main 머지 충돌은 골든이 이긴 쪽으로 해소한다
+
+- Date: 2026-08-04
+- Status: approved
+- Decision: `codex/fix-possession-five-stats` ← `origin/main` 머지의 코드 충돌 5건은 "양쪽 의도 보존, 단 골든/패러티가 이긴다" 원칙으로 해소했다. (1) `GeneralBuilder.npcText`는 이 PR의 `String = ""` 대신 main의 `String? = null`을 채택하고 PR의 RTK14 필드(`politics`/`charm`/`appearanceYear`/`rtkMetadata`)는 유지한다. (2) `BuiltGeneralMapper`는 PR의 meta 맵 호이스팅 구조를 유지하되 main이 추가한 11개 키를 main의 삽입 순서 그대로 병합해 43개 항목을 만든다. (3) `ScenarioSeedRunner`는 PR의 `scenarioResolver`와 main의 `turnTerm`을 모두 선언한다. (4) `web/game/lib/types.ts`는 main의 `settings` 블록을 PR의 2-space 인덴트로 흡수한다. (5) `my-boss-route.test.tsx`는 main의 신규 테스트를 모두 살리고 `genlist` 기대값은 `[10, 42]`로 둔다.
+- Context: `npcText`는 스타일이 아니라 의미 차이다. `GeneralBuilderGoldenTest`가 "명시적 빈 문자열(`""`)"과 "미설정(`null`)"을 구분하고 `GeneralAI`가 npcmsg truthiness로 RNG draw 하나를 게이팅하므로, `text ?: ""`는 골든을 깨뜨린다. meta 키 삽입 순서는 CLAUDE.md 규칙 6의 패러티 대상이다. `genlist`는 컴포넌트 차이가 아니라 픽스처 차이였다 — 이 PR의 픽스처가 순욱(id 10)을 `ambassador`로 표시해 피커가 미리 선택하고, 허저(42) 클릭은 `toggleSelection`이 append하므로 `[10, 42]`가 맞다.
+- Alternatives: 각 충돌에서 한쪽을 통째로 채택(기각 — 양쪽 모두 실제 작업이라 한쪽을 버리면 기능이나 골든이 사라진다), `npcText`를 PR 쪽 비-null로 되돌리기(기각 — 골든 게이트 위반).
+- Consequences: 병합 결과는 양쪽 기능을 모두 보존하며 골든/패러티 계약을 깨지 않는다. 미해소 리스크로 기록: `BuiltGeneralMapper`는 `"npcmsg": null` 키를 항상 쓰지만 `ScenarioImporter`는 미설정 시 키를 생략하므로 두 경로의 jsonb 형태가 다르다. 둘 다 이 머지 이전부터 존재했고 현재 게이트되지 않는다 — 두 경로를 함께 바이트 비교하는 게이트가 생기면 충돌한다.
+- Approved by: 팀 지시(충돌 해소 시 한쪽을 통째로 버리지 말 것). 사용자 merge 승인은 별도다.
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 

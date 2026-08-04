@@ -1,6 +1,6 @@
 # Review: RTK14 full roster, lifecycle, and five-stat surfaces
 
-Scope: RTK14 source lifecycle-repair (V38), claim-request (V37), importer, and possession remediation, plus the Docker PR #25 Compose contract
+Scope: .github/workflows/ app/ infra/ logic/ tools/ web/ — RTK14 source lifecycle-repair (V38), claim-request (V37), importer, and possession remediation, plus the Docker PR #25 Compose contract
 Verdict: cleared
 
 This cleared review covers the deep repair-migration remediation review only. It is not a final full gate, PR-review sequence, merge, deployment, reseed, or live verification.
