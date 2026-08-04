@@ -68,7 +68,7 @@ class DiplomacyLetterHandlerTest {
     private class FakeRepo(
         private val letters: Map<Int, DiplomacyLetterReadRow> = emptyMap(),
         private val newerCounts: Map<Int, Int> = emptyMap(),
-    ) : DiplomacyLetterRepository(noopNamedJdbc()) {
+    ) : DiplomacyLetterRepository(noopNamedJdbc(), opensamguk.common.world.WorldId(1)) {
         override fun findLetter(letterNo: Int): DiplomacyLetterReadRow? = letters[letterNo]
         override fun countNewerLetters(prevNo: Int): Int = newerCounts[prevNo] ?: 0
 

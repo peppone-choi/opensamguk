@@ -1,5 +1,6 @@
 package opensamguk.infra.read
 
+import opensamguk.common.world.WorldId
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.sql.Timestamp
@@ -15,6 +16,7 @@ import java.time.OffsetDateTime
  */
 open class SelectPoolRepository(
     private val jdbc: NamedParameterJdbcTemplate,
+    private val worldId: WorldId,
 ) {
 
     /**
@@ -29,16 +31,18 @@ open class SelectPoolRepository(
             SELECT unique_name, owner, reserved_until, info, general_id,
                    COALESCE(
                        (SELECT config -> 'map' -> 'generalPoolAllowOption'
-                          FROM world_state WHERE id = 1) @> '["stat"]'::jsonb,
+                          FROM world_state WHERE id = :world_id) @> '["stat"]'::jsonb,
                        TRUE
                    ) AS stat_editable
-              FROM select_pool
-             WHERE unique_name = :unique_name
+             FROM select_pool
+             WHERE world_id = :world_id
+               AND unique_name = :unique_name
                AND owner = :owner
                AND reserved_until >= :now
              LIMIT 1
             """.trimIndent(),
             MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
                 .addValue("unique_name", uniqueName)
                 .addValue("owner", ownerUserId)
                 .addValue("now", Timestamp.from(now)),
@@ -65,15 +69,17 @@ open class SelectPoolRepository(
             SELECT unique_name, owner, reserved_until, info, general_id,
                    COALESCE(
                        (SELECT config -> 'map' -> 'generalPoolAllowOption'
-                          FROM world_state WHERE id = 1) @> '["stat"]'::jsonb,
+                          FROM world_state WHERE id = :world_id) @> '["stat"]'::jsonb,
                        TRUE
                    ) AS stat_editable
-              FROM select_pool
-             WHERE owner = :owner
+             FROM select_pool
+             WHERE world_id = :world_id
+               AND owner = :owner
                AND reserved_until >= :now
              ORDER BY unique_name ASC
             """.trimIndent(),
             MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
                 .addValue("owner", ownerUserId)
                 .addValue("now", Timestamp.from(now)),
         ) { rs, _ ->
@@ -88,14 +94,63 @@ open class SelectPoolRepository(
         }
 
     open fun listUniqueNames(): Set<String> =
-        jdbc.queryForList("SELECT unique_name FROM select_pool", emptyMap<String, Any?>(), String::class.java).toSet()
+        jdbc.queryForList(
+            "SELECT unique_name FROM select_pool WHERE world_id = :world_id",
+            mapOf("world_id" to worldId.value),
+            String::class.java,
+        ).toSet()
 
     open fun targetGeneralPool(): String =
         jdbc.queryForObject(
-            "SELECT COALESCE(config -> 'map' ->> 'targetGeneralPool', 'RandomNameGeneral') FROM world_state WHERE id = 1",
-            emptyMap<String, Any?>(),
+            "SELECT COALESCE(config -> 'map' ->> 'targetGeneralPool', 'RandomNameGeneral') FROM world_state WHERE id = :world_id",
+            mapOf("world_id" to worldId.value),
             String::class.java,
         ) ?: "RandomNameGeneral"
+
+    open fun allowedCustomOptions(): Set<String> =
+        jdbc.query(
+            """
+            SELECT option_row.option_name
+              FROM world_state
+             CROSS JOIN LATERAL jsonb_array_elements_text(
+                 COALESCE(
+                     config -> 'map' -> 'generalPoolAllowOption',
+                     '["stat","ego","picture"]'::jsonb
+                 )
+             ) AS option_row(option_name)
+             WHERE id = :world_id
+            """.trimIndent(),
+            mapOf("world_id" to worldId.value),
+        ) { rs, _ -> rs.getString("option_name") }.toSet()
+
+    open fun showImageLevel(): Int? =
+        jdbc.query(
+            "SELECT config ->> 'show_img_level' AS show_img_level FROM world_state WHERE id = :world_id",
+            mapOf("world_id" to worldId.value),
+        ) { rs, _ -> rs.getString("show_img_level")?.toIntOrNull() }
+            .firstOrNull()
+
+    open fun findOwnerProfile(ownerUserId: Int): SelectPoolOwnerProfile? =
+        jdbc.query(
+            """
+            SELECT username,
+                   nickname,
+                   COALESCE(grade, CASE WHEN role = 'ADMIN' THEN 6 ELSE 1 END) AS grade,
+                   picture,
+                   imgsvr
+              FROM users
+             WHERE id = :owner_id
+             LIMIT 1
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("owner_id", ownerUserId),
+        ) { rs, _ ->
+            SelectPoolOwnerProfile(
+                name = rs.getString("nickname")?.takeIf { it.isNotBlank() } ?: rs.getString("username"),
+                picture = rs.getString("picture"),
+                imageServer = if (rs.getBoolean("imgsvr")) 1 else 0,
+                grade = rs.getInt("grade"),
+            )
+        }.firstOrNull()
 }
 
 /**
@@ -114,4 +169,11 @@ data class SelectPoolReadRow(
     val generalId: Int? = null,
     val reservedUntil: Instant? = null,
     val info: Map<String, Any?> = emptyMap(),
+)
+
+data class SelectPoolOwnerProfile(
+    val name: String,
+    val picture: String?,
+    val imageServer: Int,
+    val grade: Int,
 )

@@ -184,6 +184,32 @@ class OneRngPerGeneralTurnTest {
     }
 
     @Test
+    fun `the shared AI instance calculates genType before nation pass draws and does not recalculate it`() {
+        val gid = 42
+        val world = worldWith(listOf(general(id = gid, officerLevel = 5, npcState = 2)))
+        val w = wireDaemon(world)
+
+        w.lifecycle.runTick(t0.plusSeconds(1))
+
+        val stream = w.recorders[gid]?.drawStream() ?: error("no recorder captured for the officer")
+        assertEquals(
+            "nextBool",
+            stream.firstOrNull()?.method,
+            "PHP GeneralAI constructor calculates genType before chooseNationTurn can draw",
+        )
+        assertEquals(
+            0.45918367346938777,
+            stream.first().args["prob"],
+            "the actor's pipeline-adjusted strength / intel / 2 is the constructor-time genType probability",
+        )
+        assertEquals(
+            1,
+            stream.count { it.method == "nextBool" && it.args["prob"] == 0.45918367346938777 },
+            "the same GeneralAI instance must not recalculate genType in the sibling general pass",
+        )
+    }
+
+    @Test
     fun `a non-lord AI general runs only the general pass on its one rng`() {
         // officer_level<5 → no nation pass (hasNationTurn false). The general pass still opens its window and
         // pulls draws on its sole "GeneralAI" rng built once — the factory fires exactly once.

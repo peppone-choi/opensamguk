@@ -93,8 +93,7 @@ data class IncomeGeneralPayout(
 data class ProcessIncomeResult(
     val resource: String,
     val nationUpdates: List<IncomeNationUpdate>,
-    /** `prev_income_{gold,rice}` per nation (GROSS, phpRound of the float income). */
-    val prevIncome: Map<Int, Int>,
+    val prevIncome: Map<Int, Double>,
     val generalPayouts: List<IncomeGeneralPayout>,
     val globalHistory: String,
 )
@@ -118,7 +117,7 @@ fun processIncome(
     val ordered = nations.sortedBy { it.id }
 
     val nationUpdates = ArrayList<IncomeNationUpdate>(ordered.size)
-    val prevIncome = LinkedHashMap<Int, Int>()
+    val prevIncome = LinkedHashMap<Int, Double>()
     val generalPayouts = ArrayList<IncomeGeneralPayout>()
 
     for (nation in ordered) {
@@ -153,7 +152,7 @@ fun processIncome(
         res = valueFit(res, base.toDouble())
 
         val grossIncome = phpRound(income)
-        prevIncome[nation.id] = grossIncome
+        prevIncome[nation.id] = income
         nationUpdates.add(IncomeNationUpdate(nation.id, phpRound(res), phpRound(realOutcome), ratio))
 
         val incomeLine = if (isGold) HistoryTokens.goldIncomeLine(grossIncome) else HistoryTokens.riceIncomeLine(grossIncome)

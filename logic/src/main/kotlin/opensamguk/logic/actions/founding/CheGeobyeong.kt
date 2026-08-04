@@ -32,7 +32,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  *   2. secretlimit = (scenario >= 1000) ? 1 : 3.
  *   3. INSERT nation (color #330000, gold 0, rice baserice=2000, rate 20, bill 100,
  *      strategic_cmd_limit 12, surlimit 72, secretlimit, type che_중립, gennum 1) → [GeneralActionDraft.createdNations].
- *   4. For EACH other nation (getAllNationStaticInfo — nation-id ascending): two diplomacy rows
+ *   4. For EACH other nation (getAllNationStaticInfo insertion order): two diplomacy rows
  *      `{me:dest, you:new}` then `{me:new, you:dest}`, state 2, term 0 → [GeneralActionDraft.createdDiplomacy].
  *   5. 24 nation_turn rows: outer officer_level [12, 11], inner turn_idx 0..maxChiefTurn-1, action 휴식,
  *      arg null, brief 휴식 → [GeneralActionDraft.createdNationTurns].
@@ -116,8 +116,8 @@ class CheGeobyeong(private val pipeline: GeneralActionPipeline) : GeneralActionD
         )
         d.createdNations.add(newNation)
 
-        // 4. diplomacy pair per OTHER nation, nation-id ASCENDING (che_거병.php:114-138).
-        for (destNationId in existingNationIds.sorted()) {
+        // 4. diplomacy pair per OTHER nation, PHP query insertion order (che_거병.php:114-138).
+        for (destNationId in existingNationIds) {
             if (destNationId == newNationId) continue
             d.createdDiplomacy.add(Diplomacy(me = destNationId, you = newNationId, state = 2, term = 0))
             d.createdDiplomacy.add(Diplomacy(me = newNationId, you = destNationId, state = 2, term = 0))
@@ -139,10 +139,13 @@ class CheGeobyeong(private val pipeline: GeneralActionPipeline) : GeneralActionD
             }
         }
 
-        // 6. logs (che_거병.php:160-161). The history logs (162-165) are GATE-RUNTIME seams.
+        // 6. logs (che_거병.php:160-165).
         val josaYi = JosaUtil.pick(generalName, "이")
         context.addLog("거병에 성공하였습니다. <1>${context.date}</>")
         context.addGlobalActionLog("<Y>$generalName</>$josaYi <G><b>$cityName</b></>에 거병하였습니다.")
+        context.addGlobalHistoryLog("<Y><b>【거병】</b></><D><b>$generalName</b></>$josaYi 세력을 결성하였습니다.")
+        context.addGeneralHistoryLog("<G><b>$cityName</b></>에서 거병")
+        context.addNationalHistoryLog("<Y>$generalName</>$josaYi <G><b>$cityName</b></>에서 거병")
 
         // 7. exp/ded +100 + JOIN transition (che_거병.php:167-176). active_action+1 is a P6 seam (no write).
         val expRes = addExperience(d.general, EXP_DED_GRANT, pipeline)

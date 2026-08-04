@@ -16,6 +16,8 @@ import opensamguk.logic.constraints.reqGeneralTrainMargin
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.numberFormat
@@ -36,7 +38,7 @@ import opensamguk.logic.util.phpRound
  *   - addDex(crewTypeObj, score, false)
  *   - exp = crew / 400 (raw float; addExperience does onCalcStat fold + level check)
  *   - gold -= develcost, rice -= develcost (increaseVarWithLimit(..., 0))
- *   - experience += exp
+ *   - addExperience(exp)
  *   - incStat += 1
  *   - setResultTurn(LastTurn)
  *   - checkStatChange (no visible effect when exp < UPGRADE_LIMIT)
@@ -136,7 +138,13 @@ class CheDanryeon(
         g = g.copy(
             gold = maxOf(0, g.gold - reqGold),    // increaseVarWithLimit('gold', -reqGold, 0)
             rice = maxOf(0, g.rice - reqRice),    // increaseVarWithLimit('rice', -reqRice, 0)
-            experience = g.experience + exp,       // addExperience(exp) — raw float add
+        )
+
+        val experienceResult = addExperience(g, exp, pipeline)
+        g = experienceResult.general
+        experienceResult.plainLog?.let(context::addPlainLog)
+
+        g = g.copy(
             meta = withMeta(g.meta, incStat to metaDouble(g.meta, incStat) + 1),
             lastTurn = LastTurn(name),
         )
@@ -148,10 +156,10 @@ class CheDanryeon(
             context.addPlainLog(plainLog)
         }
 
-        // TODO(백로그): StaticEventHandler::handleEvent — zero PHP callers in 1010, no visible golden effect.
         // TODO(백로그): tryUniqueItemLottery — no visible golden effect captured.
 
         d.general = g
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 }
 

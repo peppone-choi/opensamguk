@@ -20,6 +20,8 @@ import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.HistoryReadRepository
+import opensamguk.gameapi.read.HistoryJsonValue
+import opensamguk.gameapi.read.YearbookHistoryReadEntity
 import opensamguk.gameapi.read.InheritanceLogReadEntity
 import opensamguk.gameapi.read.InheritanceLogReadRepository
 import opensamguk.gameapi.read.NationReadEntity
@@ -1000,15 +1002,13 @@ class F4ReadControllersTest {
     @Test
     fun `history anchors empty yearbook range to previous live month`() {
         `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(emptyList())
-        `when`(world.findAll()).thenReturn(
-            listOf(
-                WorldStateReadEntity(
-                    id = 1,
-                    scenarioCode = "scenario_1021",
-                    currentYear = 190,
-                    currentMonth = 7,
-                    tickSeconds = 3600,
-                ),
+        `when`(world.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(
+                id = 1,
+                scenarioCode = "scenario_1021",
+                currentYear = 190,
+                currentMonth = 7,
+                tickSeconds = 3600,
             ),
         )
 
@@ -1026,7 +1026,7 @@ class F4ReadControllersTest {
     @Test
     fun `history returns zero range only when yearbook and world state are both empty`() {
         `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(emptyList())
-        `when`(world.findAll()).thenReturn(emptyList())
+        `when`(world.findProcessWorld()).thenReturn(null)
 
         mvc(HistoryController(history, world)).perform(get("/api/history"))
             .andExpect(status().isOk)
@@ -1034,6 +1034,71 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.firstYearMonth").value(0))
             .andExpect(jsonPath("$.lastYearMonth").value(0))
             .andExpect(jsonPath("$.currentYearMonth").value(0))
+            .andExpect(jsonPath("$.record").value(org.hamcrest.Matchers.nullValue()))
+    }
+
+    @Test
+    fun `history projects stored global logs with its archived map snapshot`() {
+        `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(
+            listOf(
+                YearbookHistoryReadEntity(
+                    id = 7,
+                    year = 190,
+                    month = 6,
+                    map = linkedMapOf("year" to 190, "month" to 6, "cityList" to emptyList<Any?>()),
+                    nations = HistoryJsonValue(
+                        listOf(
+                            linkedMapOf(
+                                "nation" to 1,
+                                "name" to "촉",
+                                "color" to "#2e7d32",
+                                "power" to 500,
+                                "gennum" to 2,
+                                "cities" to listOf("성도"),
+                            ),
+                        ),
+                    ),
+                    globalHistory = listOf("<C>●</>190년 6월: 중원 정세"),
+                    globalAction = listOf("<Y>관우</>의 동향"),
+                    hash = "archive-hash",
+                ),
+            ),
+        )
+        `when`(world.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(id = 1, scenarioCode = "scenario_1010", currentYear = 190, currentMonth = 6),
+        )
+
+        mvc(HistoryController(history, world)).perform(get("/api/history").param("yearMonth", "2285"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.record.map.year").value(190))
+            .andExpect(jsonPath("$.record.nations[0].name").value("촉"))
+            .andExpect(jsonPath("$.record.globalHistory[0]").value("<C>●</>190년 6월: 중원 정세"))
+            .andExpect(jsonPath("$.record.globalAction[0]").value("<Y>관우</>의 동향"))
+    }
+
+    @Test
+    fun `history never relabels the latest archive as an unrecorded current month`() {
+        `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(
+            listOf(
+                YearbookHistoryReadEntity(
+                    id = 8,
+                    year = 190,
+                    month = 6,
+                    map = linkedMapOf("year" to 190),
+                    nations = HistoryJsonValue(),
+                    globalHistory = emptyList(),
+                    globalAction = emptyList(),
+                    hash = "archive-only",
+                ),
+            ),
+        )
+        `when`(world.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(id = 1, scenarioCode = "scenario_1010", currentYear = 190, currentMonth = 7),
+        )
+
+        mvc(HistoryController(history, world)).perform(get("/api/history").param("yearMonth", "2286"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.currentYearMonth").value(2286))
             .andExpect(jsonPath("$.record").value(org.hamcrest.Matchers.nullValue()))
     }
 }

@@ -135,6 +135,35 @@ class ProcessWarWrapperTest {
     }
 
     @Test
+    fun `wrapper forwards the sortie source city level into attacker bonuses`() {
+        var observedAtmos = 0.0
+        val inner = FakeInner(conquerCity = false, log = mutableListOf(), onRun = { _, attacker, _, _ ->
+            observedAtmos = attacker.getComputedAtmos()
+        })
+
+        processWar(
+            warSeed = WarSeed.build("0".repeat(32), 200, 6, 1, 200),
+            attackerGeneral = general(id = 1),
+            attackerNation = nationStub(),
+            defenderCity = city(id = 200, nationId = 2),
+            defenderCandidates = emptyList(),
+            attackerCrewType = footman,
+            attackerTech = 0,
+            defenderCrewType = footman,
+            defenderTech = 0,
+            pipeline = pipeline,
+            year = 200,
+            startYear = 180,
+            env = warEnv(),
+            attackerCityLevel = 2,
+            attackerIsCapital = false,
+            runInner = { rng, attacker, gnd, c -> inner.run(rng, attacker, gnd, c) },
+        )
+
+        assertEquals(105.0, observedAtmos)
+    }
+
+    @Test
     fun `supply-rice decrement applied as a delta when supply and phase greater than zero`() {
         val log = mutableListOf<String>()
         val defNationTech = 1000.0

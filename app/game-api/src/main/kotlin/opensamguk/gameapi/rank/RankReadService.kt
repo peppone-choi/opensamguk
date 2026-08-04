@@ -2,6 +2,9 @@ package opensamguk.gameapi.rank
 
 import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.dto.BestGeneral
+import opensamguk.gameapi.dto.EmperorDetail
+import opensamguk.gameapi.dto.EmperorDetailCity
+import opensamguk.gameapi.dto.EmperorDetailGeneral
 import opensamguk.gameapi.dto.EmperorRecord
 import opensamguk.gameapi.dto.GeneralRank
 import opensamguk.gameapi.dto.HallRecord
@@ -32,6 +35,7 @@ import opensamguk.gameapi.read.StatisticReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.actions.intake.SecretPermission
 import opensamguk.logic.domestic.getExpLevel
 import opensamguk.logic.util.jsonDecodeAny
 import opensamguk.logic.world.SpecialityHelper
@@ -77,6 +81,11 @@ class RankReadService(
     }
 
     private data class HallType(val label: String, val percent: Boolean)
+
+    private data class UnifiedEmperorSnapshot(
+        val record: EmperorRecord,
+        val winner: NationReadEntity,
+    )
 
     private val hallTypes = linkedMapOf(
         "experience" to HallType("명 성", false),
@@ -267,10 +276,12 @@ class RankReadService(
      *  - 속령 일람: level>0이면 도시 목록(수도=capitalCityId로 FE가 cyan 강조), level==0이면 PHP는
      *    "현재 위치 = chiefs[12] 도시"를 보이지만 opensamguk은 cities 목록+capitalCityId만 노출하고 FE가 분기.
      *
-     * BLOCKED(원천 부재 → quarantine, 날조 금지):
-     *  - 외교권자(ambassadors)/조언자(auditorCount): `checkSecretPermission`==4/3 판정에 필요한
-     *    `general.permission` 컬럼이 opensamguk 스키마에 없다 → 빈 배열/0 고정.
-     *  - 성향(typeCode 한글명): nation type → 한글명 헬퍼 미이식(이 번들 disjoint 범위 밖) → raw type_code 노출.
+     * 외교권자/조언자는 PHP `checkSecretPermission(general, false)`와 같은 shared
+     * [SecretPermission]으로 계산한다. permission은 별도 컬럼이 아니라 general.meta에, penalty는
+     * general.penalty에 보관되므로 둘을 모두 전달해야 한다.
+     *
+     * BLOCKED(원천 부재 → quarantine, 날조 금지): 성향(typeCode 한글명)은 nation type → 한글명 헬퍼가
+     * 이 번들 disjoint 범위 밖이라 raw type_code를 노출한다.
      */
     fun kingdomRoster(): KingdomRoster {
         val allGenerals = generals.findAll().sortedByDescending { it.dedication } // PHP ORDER BY dedication DESC
@@ -285,6 +296,16 @@ class RankReadService(
             .map { n ->
                 val gens = generalsByNation[n.id].orEmpty()
                 val cityList = citiesByNation[n.id].orEmpty()
+
+                val secretPermissionByGeneral = gens.associateWith { g ->
+                    SecretPermission.check(
+                        nationId = g.nationId,
+                        officerLevel = g.officerLevel,
+                        meta = g.meta,
+                        penalty = g.penalty,
+                        checkSecretLimit = false,
+                    )
+                }
 
                 // 수뇌 직책 버킷: officer_level >= 5만, dedication DESC 순회 중 overwrite(PHP 동치).
                 val chiefByLevel = HashMap<Int, GeneralReadEntity>()
@@ -311,8 +332,8 @@ class RankReadService(
                     genNum = gens.size,
                     cityCount = cityList.size,
                     chiefs = chiefs,
-                    ambassadors = emptyList(), // BLOCKED — permission 컬럼 부재
-                    auditorCount = 0,           // BLOCKED — permission 컬럼 부재
+                    ambassadors = gens.filter { secretPermissionByGeneral.getValue(it) == 4 }.map { it.name },
+                    auditorCount = gens.count { secretPermissionByGeneral.getValue(it) == 3 },
                     cities = cityList.map { KingdomRosterCity(it.id, it.name) },
                     capitalCityId = n.capitalCityId,
                     generals = gens.map { KingdomRosterGeneral(it.name, it.npcState) },
@@ -406,20 +427,66 @@ class RankReadService(
             )
         }
 
-    fun emperor(): List<EmperorRecord> {
-        val world = currentWorld() ?: return emptyList()
-        if (world.isunited !in setOf(2, 3)) return emptyList()
+    fun emperor(): List<EmperorRecord> =
+        unifiedEmperorSnapshot()?.let { listOf(it.record) }.orEmpty()
+
+    fun emperorDetail(id: Int): EmperorDetail? {
+        val snapshot = unifiedEmperorSnapshot() ?: return null
+        if (id != snapshot.record.id) return null
+
+        val winnerGenerals = generals.findAll()
+            .asSequence()
+            .filter { it.nationId == snapshot.winner.id }
+            .sortedBy { it.id }
+            .map {
+                EmperorDetailGeneral(
+                    name = it.name,
+                    leadership = it.leadership,
+                    strength = it.strength,
+                    intel = it.intel,
+                )
+            }
+            .toList()
+        val winnerCities = cities.findAll()
+            .asSequence()
+            .filter { it.nationId == snapshot.winner.id }
+            .sortedBy { it.id }
+            .toList()
+        val record = snapshot.record
+
+        return EmperorDetail(
+            id = record.id,
+            name = record.name,
+            nation = record.nation,
+            nationColor = record.nationColor,
+            unifiedAt = record.unifiedAt,
+            turn = record.turn,
+            year = record.year,
+            month = record.month,
+            generalCount = record.generalCount,
+            cityCount = record.cityCount,
+            totalGold = snapshot.winner.gold,
+            totalRice = snapshot.winner.rice,
+            totalPop = winnerCities.sumOf { it.population.toLong() },
+            generals = winnerGenerals,
+            cities = winnerCities.map { EmperorDetailCity(name = it.name, level = it.level, pop = it.population) },
+        )
+    }
+
+    private fun unifiedEmperorSnapshot(): UnifiedEmperorSnapshot? {
+        val world = currentWorld() ?: return null
+        if (world.isunited !in setOf(2, 3)) return null
 
         val activeNations = nations.findAll().filter { it.level > 0 }
-        if (activeNations.size != 1) return emptyList()
+        if (activeNations.size != 1) return null
 
         val winner = activeNations.single()
         val cityCount = cities.countByNationId(winner.id).toInt()
-        if (cityCount == 0 || cityCount != cities.count().toInt()) return emptyList()
+        if (cityCount == 0 || cityCount != cities.count().toInt()) return null
 
         val latestStatistic = statistics.findFirstByOrderByIdDesc()
-        return listOf(
-            EmperorRecord(
+        return UnifiedEmperorSnapshot(
+            record = EmperorRecord(
                 id = 1,
                 name = winner.name,
                 nation = winner.name,
@@ -431,6 +498,7 @@ class RankReadService(
                 generalCount = liveGeneralCount(winner.id, latestStatistic),
                 cityCount = cityCount,
             ),
+            winner = winner,
         )
     }
 
@@ -440,7 +508,7 @@ class RankReadService(
             ?: 0
 
     private fun currentWorld(): WorldStateReadEntity? =
-        worldStates.findById(1).orElse(null)
+        worldStates.findProcessWorld()
 
     private fun Map<*, *>.stringValue(key: String): String =
         when (val value = this[key]) {

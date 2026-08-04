@@ -1,5 +1,6 @@
 package opensamguk.logic.war
 
+import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitDetail
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.getTechCost
@@ -9,6 +10,8 @@ import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.domestic.techLimit
+import opensamguk.logic.traits.NationTypeRegistry
 import opensamguk.logic.util.phpRound
 
 /**
@@ -40,6 +43,11 @@ data class ProcessWarEnv(
     val defenderNationCapitalCityId: Int,
     val attackerCityId: Int,
     val defenderCityId: Int,
+    val attackerEffectiveGeneralCount: Int = GameConst.initialNationGenLimit,
+    val defenderEffectiveGeneralCount: Int = GameConst.initialNationGenLimit,
+    val defenderNationId: Int = 0,
+    val defenderNationTypeCode: String = "che_중립",
+    val defenderNationGeneralCount: Int = GameConst.initialNationGenLimit,
 )
 
 /** The wrapper's computed post-loop deltas (recorded by BO3 — never written inline here). */
@@ -58,7 +66,29 @@ data class ProcessWarResult(
     val defenders: List<WarUnitGeneral>,
     /** Exposed for the wrapper test's supply-rice oracle (the city train/atmos used in the rice formula). */
     val defenderCityTrainAtmosForTest: Int,
+    val rankIncrements: Map<Int, Map<BattleRankColumn, Int>> = emptyMap(),
+    val attackerNationTech: Double? = null,
+    val defenderNationTech: Double? = null,
+    val attackerDiplomacyCasualtyDelta: Int = 0,
+    val defenderDiplomacyCasualtyDelta: Int = 0,
 )
+
+enum class BattleRankColumn(val column: String) {
+    WARNUM("warnum"),
+    KILLNUM("killnum"),
+    DEATHNUM("deathnum"),
+    KILLCREW("killcrew"),
+    DEATHCREW("deathcrew"),
+    KILLCREW_PERSON("killcrew_person"),
+    DEATHCREW_PERSON("deathcrew_person"),
+    OCCUPIED("occupied"),
+    ;
+
+    companion object {
+        fun fromColumn(column: String): BattleRankColumn =
+            entries.first { it.column == column }
+    }
+}
 
 /** The inner-machine seam (defaults to the real [processWarNG]); the wrapper test injects a recording fake. */
 typealias ProcessWarInner = (
@@ -79,6 +109,7 @@ fun processWar(
     defenderCrewType: GameUnitDetail,
     defenderTech: Int,
     pipeline: GeneralActionPipeline,
+    pipelinesByGeneralId: Map<Int, GeneralActionPipeline> = emptyMap(),
     year: Int,
     startYear: Int,
     env: ProcessWarEnv,
@@ -91,7 +122,8 @@ fun processWar(
     val rng = RandUtil(LiteHashDrbg(warSeed))
 
     val attacker = WarUnitGeneral(
-        rng = rng, state = WarUnitGeneralState(attackerGeneral), pipeline = pipeline,
+        rng = rng, state = WarUnitGeneralState(attackerGeneral),
+        pipeline = pipelinesByGeneralId[attackerGeneral.id] ?: pipeline,
         crewType = attackerCrewType, tech = attackerTech, isAttacker = true,
         cityLevel = attackerCityLevel, isCapital = attackerIsCapital,
     )
@@ -106,7 +138,7 @@ fun processWar(
             g.crewTypeId.takeIf { it >= GameUnitConst.CREWTYPE_CASTLE } ?: GameUnitConst.DEFAULT_CREWTYPE,
         ) ?: defenderCrewType
         WarUnitGeneral(
-            rng = rng, state = WarUnitGeneralState(g), pipeline = pipeline,
+            rng = rng, state = WarUnitGeneralState(g), pipeline = pipelinesByGeneralId[g.id] ?: pipeline,
             crewType = crewType, tech = defenderTech, isAttacker = false,
             cityLevel = defenderCity.level, isCapital = false,
         )
@@ -154,6 +186,35 @@ fun processWar(
     val totalDead = attacker.getKilled() + attacker.getDead()
     val attackerCityDeadDelta = (totalDead * 0.4).toInt()
     val defenderCityDeadDelta = (totalDead * 0.6).toInt()
+    val attackerTechDelta = warTechDelta(
+        nation = attackerNation,
+        effectiveGeneralCount = env.attackerEffectiveGeneralCount,
+        casualtyScore = attacker.getDead() * 0.012,
+        actor = attackerGeneral,
+        startYear = startYear,
+        year = year,
+    )
+    val defenderNation = Nation(
+        id = env.defenderNationId,
+        level = 0,
+        capitalCityId = env.defenderNationCapitalCityId,
+        name = "",
+        color = "",
+        typeCode = env.defenderNationTypeCode,
+        gold = 0,
+        rice = env.defenderNationRice,
+        tech = env.defenderNationTech,
+        gennum = env.defenderNationGeneralCount,
+        capset = 0,
+    )
+    val defenderTechDelta = warTechDelta(
+        nation = defenderNation,
+        effectiveGeneralCount = env.defenderEffectiveGeneralCount,
+        casualtyScore = attacker.getKilled() * 0.009,
+        actor = defenderCandidates.firstOrNull() ?: attackerGeneral,
+        startYear = startYear,
+        year = year,
+    )
 
     return ProcessWarResult(
         conquerCity = conquerCity,
@@ -164,5 +225,39 @@ fun processWar(
         city = city,
         defenders = candidateUnits,
         defenderCityTrainAtmosForTest = cta,
+        rankIncrements = (listOf(attacker) + candidateUnits)
+            .associate { unit ->
+                unit.getGeneral().id to unit.state.rankIncrements()
+                    .mapKeys { (column, _) -> BattleRankColumn.fromColumn(column) }
+            }
+            .filterValues { it.isNotEmpty() },
+        attackerNationTech = attackerNation.tech + attackerTechDelta,
+        defenderNationTech = if (env.defenderNationId == 0) null else env.defenderNationTech + defenderTechDelta,
+        attackerDiplomacyCasualtyDelta = attacker.getDead(),
+        defenderDiplomacyCasualtyDelta = attacker.getKilled(),
     )
+}
+
+private fun warTechDelta(
+    nation: Nation,
+    effectiveGeneralCount: Int,
+    casualtyScore: Double,
+    actor: General,
+    startYear: Int,
+    year: Int,
+): Double {
+    var increment = NationTypeRegistry.resolve(nation.typeCode)
+        ?.onCalcDomestic(actor, "기술", "score", casualtyScore)
+        ?: casualtyScore
+    var rawCount = nation.gennum
+    var effectiveCount = effectiveGeneralCount
+    if (effectiveCount < GameConst.initialNationGenLimit) {
+        rawCount = GameConst.initialNationGenLimit
+        effectiveCount = GameConst.initialNationGenLimit
+    }
+    if (rawCount != effectiveCount) {
+        increment *= rawCount.toDouble() / effectiveCount
+    }
+    if (techLimit(startYear, year, nation.tech)) increment /= 4
+    return increment / maxOf(GameConst.initialNationGenLimit, nation.gennum)
 }

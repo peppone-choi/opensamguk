@@ -101,7 +101,7 @@ class CheBulgachimPagijeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralAction
             generalName = "",
             nationId = destNationID,
             nationName = destNationName,
-            color = "#000000",
+            color = draft.destNation?.color ?: "#000000",
             icon = "",
         )
 

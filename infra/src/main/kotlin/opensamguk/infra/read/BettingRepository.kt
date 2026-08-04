@@ -1,10 +1,10 @@
 package opensamguk.infra.read
 
+import opensamguk.common.world.WorldId
 import opensamguk.infra.entity.NgBettingEntity
-import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-import org.springframework.stereotype.Repository
+import org.springframework.data.repository.Repository as SpringDataRepository
 
 /**
  * JPA read repository for `ng_betting` table.
@@ -15,17 +15,38 @@ import org.springframework.stereotype.Repository
  * Note: the "active" betting concept is a logic-layer filter (KV `BettingInfo.status == OPEN`).
  * This repository returns raw bet rows; the caller joins with the KV betting master.
  */
-@Repository
-interface BettingRepository : JpaRepository<NgBettingEntity, Int> {
-
-    /** All bets placed by a general. */
+interface BettingRepository {
     fun findByGeneralId(generalId: Int): List<NgBettingEntity>
-
-    /** All bets for a specific betting master id. */
     fun findByBettingId(bettingId: Int): List<NgBettingEntity>
-
-    /** All bets for a specific betting master + general. */
     fun findByBettingIdAndGeneralId(bettingId: Int, generalId: Int): List<NgBettingEntity>
+    fun aggregateAmountByType(bettingId: Int): List<BettingTypeAggregate>
+    fun aggregateAmountByTypeForUser(bettingId: Int, userId: Int): List<BettingTypeAggregate>
+    fun sumAmountByBettingIdAndUserId(bettingId: Int, userId: Int): Long
+    fun aggregateTotalAmountByBetting(): List<BettingTotalAggregate>
+}
+
+internal interface BettingRawRepository : SpringDataRepository<NgBettingEntity, Int> {
+    @Query(value = "SELECT * FROM ng_betting WHERE world_id = :worldId AND general_id = :generalId", nativeQuery = true)
+    fun findByWorldIdAndGeneralId(
+        @Param("worldId") worldId: Int,
+        @Param("generalId") generalId: Int,
+    ): List<NgBettingEntity>
+
+    @Query(value = "SELECT * FROM ng_betting WHERE world_id = :worldId AND betting_id = :bettingId", nativeQuery = true)
+    fun findByWorldIdAndBettingId(
+        @Param("worldId") worldId: Int,
+        @Param("bettingId") bettingId: Int,
+    ): List<NgBettingEntity>
+
+    @Query(
+        value = "SELECT * FROM ng_betting WHERE world_id = :worldId AND betting_id = :bettingId AND general_id = :generalId",
+        nativeQuery = true,
+    )
+    fun findByWorldIdAndBettingIdAndGeneralId(
+        @Param("worldId") worldId: Int,
+        @Param("bettingId") bettingId: Int,
+        @Param("generalId") generalId: Int,
+    ): List<NgBettingEntity>
 
     /**
      * W3 — `bettingDetail` 집계. PHP `GetBettingDetail.php:61-64`:
@@ -33,10 +54,18 @@ interface BettingRepository : JpaRepository<NgBettingEntity, Int> {
      * betting_type별 누적 베팅액(SUM). 베팅이 없으면 빈 목록(NPE/500 아님).
      */
     @Query(
-        "select b.bettingType as bettingType, coalesce(sum(b.amount), 0) as sumAmount " +
-            "from NgBettingEntity b where b.bettingId = :bettingId group by b.bettingType",
+        value = """
+            SELECT betting_type AS "bettingType", COALESCE(SUM(amount), 0) AS "sumAmount"
+            FROM ng_betting
+            WHERE world_id = :worldId AND betting_id = :bettingId
+            GROUP BY betting_type
+        """,
+        nativeQuery = true,
     )
-    fun aggregateAmountByType(@Param("bettingId") bettingId: Int): List<BettingTypeAggregate>
+    fun aggregateAmountByType(
+        @Param("worldId") worldId: Int,
+        @Param("bettingId") bettingId: Int,
+    ): List<BettingTypeAggregate>
 
     /**
      * W3 — per-user `myBetting` 집계. PHP `GetBettingDetail.php:71-76`:
@@ -44,11 +73,16 @@ interface BettingRepository : JpaRepository<NgBettingEntity, Int> {
      * 특정 사용자의 betting_type별 누적 베팅액.
      */
     @Query(
-        "select b.bettingType as bettingType, coalesce(sum(b.amount), 0) as sumAmount " +
-            "from NgBettingEntity b where b.bettingId = :bettingId and b.userId = :userId " +
-            "group by b.bettingType",
+        value = """
+            SELECT betting_type AS "bettingType", COALESCE(SUM(amount), 0) AS "sumAmount"
+            FROM ng_betting
+            WHERE world_id = :worldId AND betting_id = :bettingId AND user_id = :userId
+            GROUP BY betting_type
+        """,
+        nativeQuery = true,
     )
     fun aggregateAmountByTypeForUser(
+        @Param("worldId") worldId: Int,
         @Param("bettingId") bettingId: Int,
         @Param("userId") userId: Int,
     ): List<BettingTypeAggregate>
@@ -59,10 +93,14 @@ interface BettingRepository : JpaRepository<NgBettingEntity, Int> {
      * 행이 없으면 0 (PHP `?? 0`).
      */
     @Query(
-        "select coalesce(sum(b.amount), 0) from NgBettingEntity b " +
-            "where b.bettingId = :bettingId and b.userId = :userId",
+        value = """
+            SELECT COALESCE(SUM(amount), 0) FROM ng_betting
+            WHERE world_id = :worldId AND betting_id = :bettingId AND user_id = :userId
+        """,
+        nativeQuery = true,
     )
     fun sumAmountByBettingIdAndUserId(
+        @Param("worldId") worldId: Int,
         @Param("bettingId") bettingId: Int,
         @Param("userId") userId: Int,
     ): Long
@@ -72,10 +110,41 @@ interface BettingRepository : JpaRepository<NgBettingEntity, Int> {
      * `SELECT betting_id, sum(amount) FROM ng_betting GROUP BY betting_id`.
      */
     @Query(
-        "select b.bettingId as bettingId, coalesce(sum(b.amount), 0) as sumAmount " +
-            "from NgBettingEntity b group by b.bettingId",
+        value = """
+            SELECT betting_id AS "bettingId", COALESCE(SUM(amount), 0) AS "sumAmount"
+            FROM ng_betting
+            WHERE world_id = :worldId
+            GROUP BY betting_id
+        """,
+        nativeQuery = true,
     )
-    fun aggregateTotalAmountByBetting(): List<BettingTotalAggregate>
+    fun aggregateTotalAmountByBetting(@Param("worldId") worldId: Int): List<BettingTotalAggregate>
+}
+
+internal class WorldScopedBettingRepository(
+    private val raw: BettingRawRepository,
+    private val worldId: WorldId,
+) : BettingRepository {
+    override fun findByGeneralId(generalId: Int): List<NgBettingEntity> =
+        raw.findByWorldIdAndGeneralId(worldId.value, generalId)
+
+    override fun findByBettingId(bettingId: Int): List<NgBettingEntity> =
+        raw.findByWorldIdAndBettingId(worldId.value, bettingId)
+
+    override fun findByBettingIdAndGeneralId(bettingId: Int, generalId: Int): List<NgBettingEntity> =
+        raw.findByWorldIdAndBettingIdAndGeneralId(worldId.value, bettingId, generalId)
+
+    override fun aggregateAmountByType(bettingId: Int): List<BettingTypeAggregate> =
+        raw.aggregateAmountByType(worldId.value, bettingId)
+
+    override fun aggregateAmountByTypeForUser(bettingId: Int, userId: Int): List<BettingTypeAggregate> =
+        raw.aggregateAmountByTypeForUser(worldId.value, bettingId, userId)
+
+    override fun sumAmountByBettingIdAndUserId(bettingId: Int, userId: Int): Long =
+        raw.sumAmountByBettingIdAndUserId(worldId.value, bettingId, userId)
+
+    override fun aggregateTotalAmountByBetting(): List<BettingTotalAggregate> =
+        raw.aggregateTotalAmountByBetting(worldId.value)
 }
 
 /**

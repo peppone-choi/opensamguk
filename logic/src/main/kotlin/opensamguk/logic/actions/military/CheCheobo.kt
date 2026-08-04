@@ -14,6 +14,10 @@ import opensamguk.logic.constraints.reqGeneralRice
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.numberFormat
 import opensamguk.logic.world.CalcCityDistance
@@ -171,20 +175,35 @@ class CheCheobo(
         val (reqGold, reqRice) = getCost(env)
 
         // cost 차감 + exp/ded + leadership_exp += 1 + lastTurn (che_첩보.php:208-215)
-        d.general = g0.copy(
+        var g = g0.copy(
             gold = maxOf(0, g0.gold - reqGold),
             rice = maxOf(0, g0.rice - reqRice),
-            experience = g0.experience + exp,
-            dedication = g0.dedication + ded,
-            meta = withMeta(g0.meta, "leadership_exp" to metaDouble(g0.meta, "leadership_exp") + 1),
+        )
+        val experience = addExperience(g, exp.toDouble(), pipeline)
+        g = experience.general
+        experience.plainLog?.let { context.addPlainLog(it) }
+        val dedication = addDedication(g, ded.toDouble(), pipeline)
+        g = dedication.general
+        dedication.plainLog?.let { context.addPlainLog(it) }
+        g = g.copy(
+            meta = withMeta(g.meta, "leadership_exp" to metaDouble(g.meta, "leadership_exp") + 1),
             lastTurn = LastTurn(name, linkedMapOf("destCityID" to destCityId)),
         )
+        d.general = g
 
         // PHP che_첩보.php:209 increaseInheritancePoint(active_action, 0.5) — P6 유산포인트 seam.
         // 골든 미캡처, 이 레이어에서 물리적 변화 없음. draw 추가 금지.
 
-        // PHP che_첩보.php:216-217 StaticEventHandler / checkStatChange는 하류 seam.
-        // 현재 P2 레벨에서는 추가 draw 없이 skip.
+        StaticEventHandler.handleEvent(
+            d.general,
+            d.destGeneral,
+            key,
+            mapOf("year" to env.year, "startYear" to env.startYear, "develCost" to env.develCost),
+            context.args,
+        )
+        val statChange = checkStatChange(d.general)
+        d.general = statChange.general
+        statChange.plainLogs.forEach { context.addPlainLog(it) }
     }
 }
 

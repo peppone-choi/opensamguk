@@ -49,10 +49,7 @@ class ServerClockTest {
 
     @Test
     fun `turnDate computes year month and ten-day phase via intdiv floor`() {
-        // startYear=180, startTime anchor, turnTerm=120.
-        val startTime = at(180, 1, 1, 0, 0) // not used directly except as the epoch reference below
-        // Build curtime so that num lands on a known value. Pick startTime on the grid.
-        // Use a startTime already cut to grid to avoid double-cut surprises.
+        val startTime = at(180, 1, 1, 0, 0)
         val start = ServerClock.cutTurn(startTime, 120)
         assertEquals(GameDate(180, 1, 1), ServerClock.turnDate(start, 180, start, 120))
         assertEquals(GameDate(180, 1, 2), ServerClock.turnDate(ServerClock.addTurn(start, 120, 1), 180, start, 120))
@@ -65,7 +62,6 @@ class ServerClockTest {
     @Test
     fun `turnDate intdiv floors a partial turn down`() {
         val start = ServerClock.cutTurn(at(180, 1, 1, 0, 0), 120)
-        // 1.5 turns = +180 minutes; cutTurn floors back to 1 turn => 1월 중순.
         val cur = ServerClock.addTurn(start, 120, 1).plusSeconds(60 * 60) // +1 turn then +1h (half a 120-min turn)
         assertEquals(GameDate(180, 1, 2), ServerClock.turnDate(cur, 180, start, 120))
     }

@@ -2,6 +2,7 @@ package opensamguk.logic.domain
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class GeneralMetaTest {
 
@@ -19,6 +20,12 @@ class GeneralMetaTest {
     fun `metaDouble reads a present Number key, missing returns default`() {
         assertEquals(2.5, metaDouble(linkedMapOf("dedication" to 2.5), "dedication"))
         assertEquals(0.0, metaDouble(linkedMapOf<String, Any?>(), "dedication"))
+    }
+
+    @Test
+    fun `autorunLimit reads the flattened autorun deadline`() {
+        assertEquals(2401, linkedMapOf<String, Any?>("autorun_limit" to 2401).autorunLimit())
+        assertNull(linkedMapOf<String, Any?>().autorunLimit())
     }
 
     @Test

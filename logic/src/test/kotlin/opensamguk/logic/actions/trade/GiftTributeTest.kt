@@ -205,7 +205,10 @@ class GiftTributeTest {
             .copy(lastTurn = LastTurn(command = "헌납", arg = mapOf("isGold" to true, "amount" to 1500)))
         val n = nation(gold = 1000)
         val draft = GeneralActionDraft(a, city(), n)
-        val ctx = GeneralActionResolveContext(draft, rngTribute(), env, MONTH, date)
+        val ctx = GeneralActionResolveContext(
+            draft, rngTribute(), env, MONTH, date,
+            args = mapOf("isGold" to true, "amount" to 1500),
+        )
         CheHeonnap(pipeline).resolve(ctx)
 
         assertEquals(3500, draft.general.gold, "actor gold -1500")
@@ -225,11 +228,60 @@ class GiftTributeTest {
             .copy(lastTurn = LastTurn(command = "헌납", arg = mapOf("isGold" to false, "amount" to 2000)))
         val n = nation(rice = 1000)
         val draft = GeneralActionDraft(a, city(), n)
-        val ctx = GeneralActionResolveContext(draft, rngTribute(), env, MONTH, date)
+        val ctx = GeneralActionResolveContext(
+            draft, rngTribute(), env, MONTH, date,
+            args = mapOf("isGold" to false, "amount" to 2000),
+        )
         CheHeonnap(pipeline).resolve(ctx)
 
         // 헌납 re-clamps amount to valueFit(amount, 0, actor.rice) — NO minimum floor (unlike 증여)
         assertEquals(3000, draft.general.rice, "actor rice -2000")
         assertEquals(3000, draft.nation!!.rice, "nation rice +2000")
+    }
+
+    @Test
+    fun `tribute resolves the live reserved args before persisting LastTurn and reward tail`() {
+        val liveArgs = linkedMapOf<String, Any?>("isGold" to false, "amount" to 1100)
+        val staleLastTurn = LastTurn(command = "농지 개간", arg = emptyMap())
+        val a = actor(rice = 1600).copy(
+            experience = 990.0,
+            dedication = 1550.0,
+            lastTurn = staleLastTurn,
+            meta = linkedMapOf(
+                "name" to "호거아",
+                "explevel" to 9,
+                "dedlevel" to 4,
+                "leadership_exp" to 29,
+            ),
+        )
+        val draft = GeneralActionDraft(a, city(), nation(rice = 2000))
+        val ctx = GeneralActionResolveContext(
+            draft = draft,
+            rng = rngTribute(),
+            env = env,
+            month = 3,
+            date = "12:20",
+            args = liveArgs,
+        )
+
+        CheHeonnap(pipeline).resolve(ctx)
+
+        assertEquals(500, draft.general.rice, "PHP actor 167 rice 1600 - 1100")
+        assertEquals(3100, draft.nation!!.rice, "PHP nation 3 rice 2000 + 1100")
+        assertEquals(1060.0, draft.general.experience, 1e-9)
+        assertEquals(1650.0, draft.general.dedication, 1e-9)
+        assertEquals(71, draft.general.leadership)
+        assertEquals(0, metaInt(draft.general.meta, "leadership_exp"))
+        assertEquals(LastTurn(command = "헌납", arg = liveArgs), draft.general.lastTurn)
+        assertEquals(
+            listOf(
+                "<C>●</>3월:쌀 <C>1,100</>을 헌납했습니다. <1>12:20</>",
+                "<C>●</><C>Lv 10</>으로 <C>레벨업</>!",
+                "<C>●</><Y>26품관</>으로 <C>승급</>하여 봉록이 <C>1,400</>으로 <C>상승</>했습니다!",
+                "<C>●</><S>통솔</>이 <C>1</> 올랐습니다!",
+            ),
+            ctx.orderedLogEvents().map { it.text },
+            "PHP tail order is action log, exp, dedication, LastTurn, then checkStatChange",
+        )
     }
 }

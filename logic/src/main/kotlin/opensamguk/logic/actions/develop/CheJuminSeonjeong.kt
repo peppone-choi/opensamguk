@@ -16,13 +16,18 @@ import opensamguk.logic.constraints.reqGeneralGold
 import opensamguk.logic.constraints.reqGeneralRice
 import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.domestic.criticalRatioDomestic
 import opensamguk.logic.domestic.criticalScoreEx
 import opensamguk.logic.domestic.getDomesticExpLevelBonus
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.clamp
@@ -97,11 +102,9 @@ class CheJuminSeonjeong(
         val nextMeta = if (pick == "success") {
             // PHP updateMaxDomesticCritical($general, $score) with the UN-rounded fractional score → +score/2.
             val nextAux = metaDouble(d.general.meta, "max_domestic_critical") + score / 2.0
-            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
-                     "max_domestic_critical" to nextAux)
+            withMeta(d.general.meta, "max_domestic_critical" to nextAux)
         } else {
-            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
-                     "max_domestic_critical" to 0)
+            withMeta(d.general.meta, "max_domestic_critical" to 0)
         }
 
         // score /= 10 (AFTER exp/ded + maxCrit).
@@ -119,12 +122,26 @@ class CheJuminSeonjeong(
         // city.trust = valueFit(trust + score, 0, 100) — fractional FLOAT trust.
         val nextTrust = valueFit(d.city.trust + trustScore, 0.0, 100.0)
         d.city = d.city.copy(trust = nextTrust)
-        d.general = d.general.copy(
+        var nextGeneral = d.general.copy(
             rice = maxOf(0, d.general.rice - reqRice),
-            experience = d.general.experience + exp,
-            dedication = d.general.dedication + ded,
             meta = nextMeta,
         )
+        val experienceResult = addExperience(nextGeneral, exp, pipeline)
+        nextGeneral = experienceResult.general
+        experienceResult.plainLog?.let(context::addPlainLog)
+
+        val dedicationResult = addDedication(nextGeneral, ded, pipeline)
+        nextGeneral = dedicationResult.general
+        dedicationResult.plainLog?.let(context::addPlainLog)
+
+        nextGeneral = nextGeneral.copy(
+            meta = withMeta(nextGeneral.meta, expKey to metaInt(nextGeneral.meta, expKey) + 1),
+            lastTurn = LastTurn(name),
+        )
+        val statChangeResult = checkStatChange(nextGeneral)
+        d.general = statChangeResult.general
+        statChangeResult.plainLogs.forEach(context::addPlainLog)
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 
     private fun envOf(c: ConstraintContext) = WorldEnv(

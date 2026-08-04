@@ -6,11 +6,13 @@ import opensamguk.engine.config.EngineEventConfig
 import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ReservedTurnHandler
+import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.GeneralTurnSlotWriteRow
 import opensamguk.logic.event.EventCondition
 import opensamguk.logic.event.EventTarget
 import opensamguk.logic.actions.CommandRegistry
@@ -477,6 +479,62 @@ class ScenarioBootIT {
             )
             jdbc.update("DELETE FROM ng_games WHERE world_id = 1 AND server_id = 'newest-wrong-server'")
         }
+    }
+
+    @Test
+    @Order(9)
+    fun `battle rank casualty and npc slot survive recorder flush and reload`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
+        bootstrap.ensureSeeded(jdbc)
+        val world = InMemoryTurnWorld(loader.buildSnapshot())
+        val recorder = ChangeRecorder()
+        val general = world.listGenerals().first()
+        val rankBefore = (general.meta["warnum"] as? Number)?.toInt() ?: 0
+        val diplomacyBefore = world.listDiplomacy().first()
+
+        recorder.recordRankIncrease(general.id, RankColumn.WARNUM, 3)
+        world.updateDiplomacy(
+            diplomacyBefore.fromNationId,
+            diplomacyBefore.toNationId,
+            diplomacyBefore.state,
+            diplomacyBefore.term,
+            diplomacyBefore.dead + 7,
+        )
+        recorder.diffDiplomacy(
+            diplomacyBefore,
+            world.getDiplomacy(diplomacyBefore.fromNationId, diplomacyBefore.toNationId)!!,
+        )
+        recorder.recordGeneralTurnSlotWrite(
+            GeneralTurnSlotWriteRow(
+                generalId = general.id,
+                turnIdx = 2,
+                actionCode = "che_임관",
+                argJson = """{"destNationID":${diplomacyBefore.toNationId}}""",
+                brief = "임관",
+            ),
+        )
+
+        val dataSource = DriverManagerDataSource().apply {
+            setDriverClassName("org.postgresql.Driver")
+            url = postgres.jdbcUrl
+            username = postgres.username
+            password = postgres.password
+        }
+        JdbcFlushExecutor(
+            NamedParameterJdbcTemplate(dataSource),
+            TransactionTemplate(DataSourceTransactionManager(dataSource)),
+        ).flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+
+        val restarted = loader.buildSnapshot()
+        val restartedGeneral = restarted.generals.first { it.id == general.id }
+        val restartedDiplomacy = restarted.diplomacy.first {
+            it.fromNationId == diplomacyBefore.fromNationId && it.toNationId == diplomacyBefore.toNationId
+        }
+        assertEquals(rankBefore + 3, restartedGeneral.meta["warnum"])
+        assertEquals(diplomacyBefore.dead + 7, restartedDiplomacy.dead)
+        assertEquals("che_임관", restartedGeneral.initialTurns[2].actionCode)
+        assertTrue(restartedGeneral.initialTurns[2].argJson.contains("destNationID"))
+        assertEquals("임관", restartedGeneral.initialTurns[2].brief)
     }
 
     private fun count(table: String): Int =

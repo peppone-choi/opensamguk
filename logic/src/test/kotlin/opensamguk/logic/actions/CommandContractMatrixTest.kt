@@ -230,6 +230,7 @@ class CommandContractMatrixTest {
         StateFixture.STRATEGIC_DECLARATION_SUCCESS -> defaultSuccessView(diplomacyState = 1, strategicCmdLimit = 0, profile = profile)
         StateFixture.OFFICER_SUCCESS -> defaultSuccessView(actorOfficerLevel = 5, profile = profile)
         StateFixture.AWAY_FROM_CAPITAL_SUCCESS -> defaultSuccessView(capitalCityId = OWN_DEST_CITY_ID, profile = profile)
+        StateFixture.TROOP_MEMBER_SUCCESS -> defaultSuccessView(includeTroopMember = true, profile = profile)
         StateFixture.NO_CREW_SUCCESS -> defaultSuccessView(actorCrew = 0, profile = profile)
         StateFixture.DEFAULT_FAILURE -> defaultFailureView(profile)
         StateFixture.NO_CREW_FAILURE -> defaultSuccessView(actorCrew = 0, profile = profile)
@@ -244,6 +245,7 @@ class CommandContractMatrixTest {
         actorOfficerLevel: Int = 12,
         capitalCityId: Int? = CITY_ID,
         strategicCmdLimit: Int = 99,
+        includeTroopMember: Boolean = false,
         profile: CommandCoverageProfile? = null,
     ): MemoryStateView = MemoryStateView(
         generals = linkedMapOf(
@@ -258,7 +260,20 @@ class CommandContractMatrixTest {
             ),
             DEST_GENERAL_ID to general(DEST_GENERAL_ID, nationId = NATION_ID, cityId = CITY_ID, officerLevel = 1),
             3 to general(3, nationId = DEST_NATION_ID, cityId = DEST_CITY_ID, officerLevel = 12),
-        ),
+        ).apply {
+            if (includeTroopMember) {
+                put(
+                    TROOP_MEMBER_ID,
+                    general(
+                        TROOP_MEMBER_ID,
+                        nationId = NATION_ID,
+                        cityId = OWN_DEST_CITY_ID,
+                        officerLevel = 1,
+                        troop = ACTOR_ID,
+                    ),
+                )
+            }
+        },
         cities = linkedMapOf(
             CITY_ID to city(CITY_ID, nationId = NATION_ID, level = 6, frontState = 1, trade = cityTrade),
             DEST_CITY_ID to city(DEST_CITY_ID, nationId = DEST_NATION_ID, level = 6, frontState = 1),
@@ -479,6 +494,7 @@ class CommandContractMatrixTest {
         STRATEGIC_DECLARATION_SUCCESS,
         OFFICER_SUCCESS,
         AWAY_FROM_CAPITAL_SUCCESS,
+        TROOP_MEMBER_SUCCESS,
         NO_CREW_SUCCESS,
         DEFAULT_FAILURE,
         NO_CREW_FAILURE,
@@ -497,6 +513,7 @@ class CommandContractMatrixTest {
         private const val ACTOR_ID = 1
         private const val DEST_GENERAL_ID = 2
         private const val FOREIGN_GENERAL_ID = 3
+        private const val TROOP_MEMBER_ID = 4
         private const val CITY_ID = 1
         private const val DEST_CITY_ID = 18
         private const val OWN_DEST_CITY_ID = 36
@@ -551,7 +568,7 @@ class CommandContractMatrixTest {
             "che_사기진작" to CommandContract(),
             "che_소집해제" to CommandContract(failureFixture = StateFixture.NO_CREW_FAILURE),
             "che_이동" to CommandContract(COMMON_DEST_CITY),
-            "che_집합" to CommandContract(COMMON_DEST_CITY),
+            "che_집합" to CommandContract(COMMON_DEST_CITY, successFixture = StateFixture.TROOP_MEMBER_SUCCESS),
             "che_임관" to CommandContract(COMMON_DEST_NATION + COMMON_LATE_REL_YEAR, successFixture = StateFixture.NEUTRAL_SUCCESS),
             "che_장수대상임관" to CommandContract(COMMON_FOREIGN_GENERAL + COMMON_DEST_NATION + COMMON_LATE_REL_YEAR, successFixture = StateFixture.NEUTRAL_SUCCESS),
             "che_하야" to CommandContract(successFixture = StateFixture.OFFICER_SUCCESS),
@@ -584,7 +601,10 @@ class CommandContractMatrixTest {
             "che_포상" to CommandContract(COMMON_DEST_GENERAL + mapOf("isGold" to true, "amount" to 1_000)),
             "che_국호변경" to CommandContract(mapOf("nationName" to "새국호")),
             "che_국기변경" to CommandContract(mapOf("colorType" to 1)),
-            "che_천도" to CommandContract(COMMON_OWN_DEST_CITY),
+            "che_천도" to CommandContract(
+                COMMON_OWN_DEST_CITY,
+                envOverride = mapOf("__distance" to 1),
+            ),
             "che_무작위수도이전" to CommandContract(envOverride = mapOf("year" to START_YEAR, "startYear" to START_YEAR)),
             "che_급습" to CommandContract(
                 COMMON_DEST_NATION,

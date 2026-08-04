@@ -3,6 +3,8 @@ package opensamguk.logic.actions.trade
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.notBeNeutral
@@ -34,6 +36,12 @@ class CheHeonnap(private val pipeline: GeneralActionPipeline) : GeneralActionDef
     override val category: String get() = "자원교역"
 
     override val argsSchema: Map<String, Any?> get() = mapOf("isGold" to "bool", "amount" to "int")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("isGold", "bool", "toggle", "resourceKinds"),
+            CommandFieldSpec("amount", "int", "amount", min = 100, max = GameConst.maxResourceActionAmount),
+        ),
+    )
 
     fun getCommandDetailTitle(): String = "$name(통솔경험)"
 
@@ -64,8 +72,7 @@ class CheHeonnap(private val pipeline: GeneralActionPipeline) : GeneralActionDef
 
     override fun resolve(context: GeneralActionResolveContext) {
         val d = context.draft
-        @Suppress("UNCHECKED_CAST")
-        val arg = (d.general.lastTurn.arg ?: emptyMap()) as Map<String, Any?>
+        val arg = context.args
         val isGold = arg["isGold"] == true
         val amountArg = (arg["amount"] as? Number)?.toInt() ?: 0
         val resName = if (isGold) "금" else "쌀"

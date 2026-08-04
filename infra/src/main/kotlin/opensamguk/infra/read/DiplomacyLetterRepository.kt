@@ -1,5 +1,6 @@
 package opensamguk.infra.read
 
+import opensamguk.common.world.WorldId
 import opensamguk.logic.util.jsonDecode
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -26,6 +27,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
  */
 open class DiplomacyLetterRepository(
     private val jdbc: NamedParameterJdbcTemplate,
+    private val worldId: WorldId,
 ) {
 
     /**
@@ -42,9 +44,12 @@ open class DiplomacyLetterRepository(
             """
             SELECT id, src_nation_id, dest_nation_id, prev_id, state, src_signer, aux::text AS aux_text
               FROM diplomacy_letter
-             WHERE id = :id
+             WHERE world_id = :world_id
+               AND id = :id
             """.trimIndent(),
-            MapSqlParameterSource().addValue("id", letterNo),
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", letterNo),
         ) { rs, _ ->
             val auxText = rs.getString("aux_text") ?: "{}"
             DiplomacyLetterReadRow(
@@ -73,9 +78,13 @@ open class DiplomacyLetterRepository(
         val cnt = jdbc.queryForObject(
             """
             SELECT count(id) FROM diplomacy_letter
-             WHERE prev_id = :prev_no AND state != 'CANCELLED'
+             WHERE world_id = :world_id
+               AND prev_id = :prev_no
+               AND state != 'CANCELLED'
             """.trimIndent(),
-            MapSqlParameterSource().addValue("prev_no", prevNo),
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("prev_no", prevNo),
             Int::class.java,
         )
         return cnt ?: 0

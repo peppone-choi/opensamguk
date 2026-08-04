@@ -7,9 +7,11 @@ import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
+import opensamguk.infra.persistence.GeneralTurnSlotWriteRow
 import opensamguk.engine.war.BattleCommandContextBuilder
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
+import opensamguk.logic.actions.develop.SightseeingExternalSelector
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.founding.CheGeonguk
@@ -23,6 +25,7 @@ import opensamguk.logic.actions.personnel.CheInjaeTamsaek
 import opensamguk.logic.actions.personnel.CheRandomImgwan
 import opensamguk.logic.actions.personnel.JoinCommand
 import opensamguk.logic.actions.personnel.RandomImgwanNpcCandidate
+import opensamguk.logic.actions.personnel.RandomImgwanPermutationReplay
 import opensamguk.logic.actions.personnel.RandomImgwanWeightedCandidate
 import opensamguk.logic.actions.trade.CheJangbiMaemae
 import opensamguk.logic.actions.vote.deriveItemPool
@@ -37,6 +40,7 @@ import opensamguk.logic.constraints.ConstraintResult
 import opensamguk.logic.constraints.evaluateConstraints
 import opensamguk.logic.diplomacy.DiplomacyCascadeTerm
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.domain.autorunLimit
 import opensamguk.logic.event.EventTarget
 import opensamguk.logic.statview.WorldEnvBuilder
 import opensamguk.logic.tick.ServerClock
@@ -56,6 +60,8 @@ import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import kotlin.math.sqrt
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
@@ -144,7 +150,7 @@ class ReservedTurnHandler(
     /**
      * P5 FM1 — the GENERAL-pass AI interpose (R-SEAM §2 `TurnExecutionHelper.php:332-336`).
      *
-     * For an AI-controlled general ([isAiControlled]: `npc >= 2`, PHP `$general->isNPC()`), this hook
+     * For an autorun-eligible general ([isAutorunEligible]: `npc >= 2` or an active human window), this hook
      * REPLACES the reserved `(actionCode, argJson)` with the AI's `chooseGeneralTurn(...)` result
      * BEFORE the constraint/resolve runs; when the chosen command differs from the reserved one,
      * `autorunMode` is set true (the PHP `if ($cmd !== $newCmd) { $autorunMode = true; … }` branch).
@@ -159,6 +165,9 @@ class ReservedTurnHandler(
     private val aiHook: ((generalId: Int, reserved: ReservedTurn) -> ChosenCommand)? = null,
     private val pipelineBuilder: EngineGeneralActionPipelineBuilder? = null,
     private val dynamicEventHandler: (EventTarget) -> Unit = { },
+    private val randomImgwanPermutationReplay: RandomImgwanPermutationReplay? = null,
+    private val sightseeingExternalSelector: SightseeingExternalSelector? = null,
+    private val actionRngFactory: (String) -> RandUtil = { seed -> RandUtil(LiteHashDrbg(seed)) },
     /**
      * The lone dirty source — exposed so the flush (F4)/tests/nation-pass read its patches. A
      * constructor param (default = fresh) so the live config can share ONE recorder with the ruler-
@@ -190,7 +199,7 @@ class ReservedTurnHandler(
         /**
          * PHP `$autorunMode` (`TurnExecutionHelper.php:333-336`) — true ONLY when the [aiHook] replaced
          * the reserved command with a DIFFERENT one. Threads into [applyKillturnDecrement]'s autorun
-         * branch. False on a human turn and on an AI turn that honored the reserved command verbatim.
+         * branch. False when the reserved command is honored verbatim.
          */
         val autorunMode: Boolean = false,
         val requestId: String? = null,
@@ -207,7 +216,7 @@ class ReservedTurnHandler(
     /**
      * Handle ONE reserved turn for [generalId] (R-SEAM §1 — the widened seam carrying `argJson`).
      *
-     * The flow (R-SEAM §2 `TurnExecutionHelper.php:326-348`): for an AI-controlled general the [aiHook]
+     * The flow (R-SEAM §2 `TurnExecutionHelper.php:326-348`): for an autorun-eligible general the [aiHook]
      * REPLACES the reserved command BEFORE constraints/resolve (`autorunMode` set on change); then the
      * stored `arg` jsonb is decoded ONCE and threaded into the resolver draft ctx. **The seed's 6th
      * component is `definition.key` — NEVER the arg — so this widening is behavior-additive on the
@@ -223,16 +232,14 @@ class ReservedTurnHandler(
             ?: error("ReservedTurnHandler: general $generalId not in world")
         val cityId = general.cityId
         val nationId = general.nationId
-        val runtimeRegistry = pipelineBuilder?.registryFor(general) ?: registry
+        val baseRegistry = pipelineBuilder?.registryFor(general) ?: registry
+        val runtimeRegistry = sightseeingExternalSelector?.let(baseRegistry::withSightseeingExternalSelector) ?: baseRegistry
 
         // --- the GENERAL-pass AI interpose (R-SEAM §2 :332-336) ---
-        // For an AI-controlled general the hook replaces the reserved command BEFORE resolve; the AI is
-        // read-only over GAME ENTITIES (it returns (actionCode, RAW args)) — its meta-KV deltas route
-        // through the AiTurnAdapter's recorder seam, never inline here.
         var actionCode = reserved.actionCode
         var args: Map<String, Any?> = decodeArgs(reserved.argJson)
         var autorunMode = false
-        if (aiHook != null && isAiControlled(general)) {
+        if (aiHook != null && isAutorunEligible(general, year, month)) {
             val chosen: ChosenCommand = aiHook.invoke(generalId, reserved)
             if (chosen.actionCode != reserved.actionCode) {
                 // PHP `if ($cmd !== $newCmd) { $autorunMode = true; $cmd = $newCmd; }` (:333-336).
@@ -313,8 +320,8 @@ class ReservedTurnHandler(
         }
 
         // --- seed the per-action RNG (six-component PHP construction) ---
-        val rng = RandUtil(
-            LiteHashDrbg(serializeSeed(hiddenSeed, "generalCommand", year, month, generalId, definition.key)),
+        val rng = actionRngFactory(
+            serializeSeed(hiddenSeed, "generalCommand", year, month, generalId, definition.key),
         )
 
         val currentCity = world.getCityById(cityId)
@@ -369,6 +376,7 @@ class ReservedTurnHandler(
                 hiddenSeed = hiddenSeed,
                 loggerYear = year,
                 loggerMonth = month,
+                pipelineFor = pipelineBuilder?.let { builder -> { g -> builder.pipelineFor(g) } },
             )
         } else {
             null
@@ -383,7 +391,7 @@ class ReservedTurnHandler(
             turnterm = turnTerm,
             // 무작위건국: rng.choice가 소모하는 도시 id 목록. PHP `SELECT city FROM city WHERE level>=5 AND level<=6 AND nation=0`
             // 의 기본 정렬(= id 오름차순)이므로 id-ascending으로 정렬해 draw-for-draw 패러티를 유지한다.
-            candidateGenerals = if (actionCode == MUJAKWI_GEONGUK) {
+            candidateGenerals = if (actionCode == MUJAKWI_GEONGUK || actionCode == IDONG) {
                 world.listGenerals()
                     .filter { it.nationId == nationId && it.id != generalId }
                     .map { PerTurnOverlay.toLogicGeneral(it) }
@@ -500,16 +508,18 @@ class ReservedTurnHandler(
 
         // nation UPDATE (건국/cr_건국/무작위건국 level 0→1 + name/color/type/capital). A non-founding command
         // never reassigns draft.nation, so it stays the pre-state reference (referential no-op → skipped).
-        val postNation = draft.nation
-        if (nation != null && postNation != null && postNation !== nation) {
+        val resolvedNation = draft.nation
+        if (nation != null && resolvedNation != null && resolvedNation !== nation) {
+            val postNation = resolvedNation.copy(tech = materializeMariaDbFloat(resolvedNation.tech))
             recorder.diffNation(nation, postNation)
             world.getNationById(nationId)?.let { world.applyNationDirtyFree(applyNationPatch(it, postNation)) }
         }
         draft.destNation?.takeIf { it.id != nationId }?.let { destNation ->
             val pre = world.getNationById(destNation.id)
                 ?: error("ReservedTurnHandler: dest nation ${destNation.id} not in world")
-            recorder.diffNation(PerTurnOverlay.toLogicNation(pre), destNation)
-            world.applyNationDirtyFree(applyNationPatch(pre, destNation))
+            val postNation = destNation.copy(tech = materializeMariaDbFloat(destNation.tech))
+            recorder.diffNation(PerTurnOverlay.toLogicNation(pre), postNation)
+            world.applyNationDirtyFree(applyNationPatch(pre, postNation))
         }
         // cascade generals (무작위건국 follower moves; 이동 roaming-leader / 집합 troop members — these were
         // previously DROPPED: the handler only drained cascadeDiplomacy). The actor itself is NOT here (it is
@@ -544,7 +554,7 @@ class ReservedTurnHandler(
 
         // --- logs ---
         for (ctx in resolveContexts) {
-            for (event in ctx.orderedLogEvents()) {
+            for (event in ctx.orderedLogEvents().sortedBy(::phpActionLoggerFlushRank)) {
                 world.pushLog(logEvent(general, event))
                 if (rareSaleHistory != null && isRareSaleGlobalAction(event)) {
                     world.pushLog(globalHistoryLog(general, rareSaleHistory))
@@ -573,9 +583,27 @@ class ReservedTurnHandler(
         )
     }
 
+    private fun phpActionLoggerFlushRank(event: GeneralActionResolveContext.BufferedLog): Int = when {
+        event.scope == "general" && event.category == "history" -> 0
+        event.scope == "general" && event.category == "action" -> 1
+        event.scope == "nation" && event.category == "history" -> 4
+        event.scope == "global" && event.category == "history" -> 5
+        event.scope == "global" && event.category == "action" -> 6
+        else -> 7
+    }
+
     private fun drainWarBattleResult(result: ProcessWarResult?, draft: GeneralActionDraft) {
         if (result == null) return
+        for ((generalId, increments) in result.rankIncrements) {
+            for ((battleColumn, value) in increments) {
+                val column = RankColumn.byColumn(battleColumn.column) ?: continue
+                recorder.recordRankIncrease(generalId, column, value)
+            }
+        }
         draft.general = result.attacker.state.snapshot()
+        result.attackerNationTech?.let { tech ->
+            draft.nation = draft.nation?.copy(tech = tech)
+        }
 
         if (result.attackerCityDeadDelta != 0) {
             draft.city = draft.city.copy(dead = draft.city.dead + result.attackerCityDeadDelta)
@@ -602,9 +630,42 @@ class ReservedTurnHandler(
         if (defenderNationId > 0 && rice != null) {
             val pre = world.getNationById(defenderNationId)?.let { PerTurnOverlay.toLogicNation(it) }
             if (pre != null) {
-                draft.destNation = pre.copy(rice = rice)
+                draft.destNation = pre.copy(
+                    rice = rice,
+                    tech = result.defenderNationTech ?: pre.tech,
+                )
+            }
+        } else if (defenderNationId > 0) {
+            val defenderNationTech = result.defenderNationTech
+            if (defenderNationTech != null) {
+                val pre = world.getNationById(defenderNationId)?.let { PerTurnOverlay.toLogicNation(it) }
+                if (pre != null) draft.destNation = pre.copy(tech = defenderNationTech)
             }
         }
+
+        applyBattleDiplomacyCasualty(
+            fromNationId = draft.general.nationId,
+            toNationId = defenderNationId,
+            delta = result.attackerDiplomacyCasualtyDelta,
+        )
+        applyBattleDiplomacyCasualty(
+            fromNationId = defenderNationId,
+            toNationId = draft.general.nationId,
+            delta = result.defenderDiplomacyCasualtyDelta,
+        )
+    }
+
+    private fun applyBattleDiplomacyCasualty(fromNationId: Int, toNationId: Int, delta: Int) {
+        if (delta == 0) return
+        val pre = world.getDiplomacy(fromNationId, toNationId) ?: return
+        world.updateDiplomacy(
+            fromNationId,
+            toNationId,
+            pre.state,
+            pre.term,
+            pre.dead + delta,
+        )
+        world.getDiplomacy(fromNationId, toNationId)?.let { recorder.diffDiplomacy(pre, it) }
     }
 
     private fun drainConquerCity(result: ProcessWarResult?, attacker: TurnGeneral, year: Int, month: Int) {
@@ -629,7 +690,12 @@ class ReservedTurnHandler(
         val attackerNation = logicNations[attacker.nationId]
         val conquer = ConquerCity.resolve(
             ConquerCityInput(
-                admin = ConquerAdmin(hiddenSeed = hiddenSeed, year = year, month = month, joinMode = ""),
+                admin = ConquerAdmin(
+                    hiddenSeed = hiddenSeed,
+                    year = year,
+                    month = month,
+                    joinMode = world.getState().meta["join_mode"]?.toString() ?: "",
+                ),
                 attacker = PerTurnOverlay.toLogicGeneral(world.getGeneralById(attacker.id) ?: attacker),
                 defenderCity = PerTurnOverlay.toLogicCity(defenderCity),
                 defenderNation = defenderNation?.let { PerTurnOverlay.toLogicNation(it) },
@@ -640,10 +706,15 @@ class ReservedTurnHandler(
                 allCitiesForBfs = logicCities,
                 diplomacyForFront = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) },
                 attackerNationName = world.getNationById(attacker.nationId)?.name ?: "",
+                attackerGeneralName = attacker.name,
+                attackerNationChiefIds = world.listGenerals()
+                    .filter { it.nationId == attacker.nationId && it.officerLevel >= 5 }
+                    .map { it.id },
                 defenderNationName = defenderNation?.name ?: "",
                 cityName = defenderCity.name,
                 nationNames = world.listNations().associate { it.id to it.name },
             ),
+            occupyCityHandler = { dynamicEventHandler(EventTarget.OCCUPY_CITY) },
         )
 
         conquer.deletedNationId?.let { recorder.markNationDeleted(world, it) }
@@ -656,8 +727,62 @@ class ReservedTurnHandler(
                 applyWarCityDelta(PerTurnOverlay.toLogicCity(pre).copy(frontState = frontState))
             }
         }
+        if (conquer.destroyNationEvent) {
+            dynamicEventHandler(EventTarget.DESTROY_NATION)
+        }
+        for (invite in conquer.scoutInvites) {
+            val source = world.getGeneralById(invite.sourceGeneralId) ?: continue
+            val destination = world.getGeneralById(invite.destinationGeneralId) ?: continue
+            val sourceNation = world.getNationById(source.nationId) ?: continue
+            val sourceTarget = opensamguk.logic.message.MessageTarget(
+                source.id,
+                source.name,
+                source.nationId,
+                sourceNation.name,
+                sourceNation.color,
+            )
+            val destinationTarget = opensamguk.logic.message.MessageTarget(
+                destination.id,
+                destination.name,
+                destination.nationId,
+                "재야",
+                "#000000",
+            )
+            routeMessage(
+                opensamguk.logic.message.Message(
+                    opensamguk.logic.message.MessageType.PRIVATE,
+                    sourceTarget,
+                    destinationTarget,
+                    "${sourceNation.name}${JosaUtil.pick(sourceNation.name, "로")} 망명 권유 서신",
+                    CONQUER_MESSAGE_TIME_FORMAT.format(world.getState().lastTurnTime),
+                    "9999-12-31 12:59:59",
+                    linkedMapOf("action" to "scout"),
+                ),
+                year,
+                month,
+            )
+        }
         for (line in conquer.conquerLogs) {
-            world.pushLog(actionLog(attacker, line))
+            world.pushLog(
+                LogEntryDraft(
+                    scope = line.scope.wireValue,
+                    category = line.category.wireValue,
+                    text = line.text,
+                    generalId = line.generalId,
+                    nationId = line.nationId,
+                ),
+            )
+        }
+        for (slot in conquer.turnSlotWrites) {
+            recorder.recordGeneralTurnSlotWrite(
+                GeneralTurnSlotWriteRow(
+                    generalId = slot.generalId,
+                    turnIdx = slot.turnIdx,
+                    actionCode = slot.actionCode,
+                    argJson = slot.argJson,
+                    brief = slot.brief,
+                ),
+            )
         }
     }
 
@@ -692,6 +817,62 @@ class ReservedTurnHandler(
     private fun applyLifecycleGeneral(pre: TurnGeneral, post: TurnGeneral) {
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), PerTurnOverlay.toLogicGeneral(post))
         world.applyGeneralDirtyFree(post)
+    }
+
+    internal fun setAutorunLimit(generalId: Int, limit: Int) {
+        val general = world.getGeneralById(generalId)
+            ?: error("ReservedTurnHandler.setAutorunLimit: general $generalId not in world")
+        applyLifecycleGeneral(general, general.copy(meta = withMeta(general.meta, "autorun_limit" to limit)))
+    }
+
+    fun preprocessGeneral(generalId: Int, year: Int, month: Int) {
+        val general = world.getGeneralById(generalId)
+            ?: error("ReservedTurnHandler.preprocessGeneral: general $generalId not in world")
+        val hasMedicalSpecialty =
+            general.role.specialDomestic == "che_event_의술" ||
+                general.role.specialWar == "che_의술"
+        if (!hasMedicalSpecialty) {
+            if (general.injury == 0) return
+            applyLifecycleGeneral(general, general.copy(injury = maxOf(0, general.injury - 10)))
+            return
+        }
+
+        if (general.injury > 0) {
+            applyLifecycleGeneral(general, general.copy(injury = 0))
+            world.pushLog(actionLog(general, "<C>●</><C>의술</>을 펼쳐 스스로 치료합니다!"))
+        }
+        val rng = RandUtil(
+            LiteHashDrbg(serializeSeed(hiddenSeed, "preprocess", year, month, generalId)),
+        )
+        val curedPatients = world.listGenerals()
+            .asSequence()
+            .filter { patient ->
+                patient.id != generalId &&
+                    patient.cityId == general.cityId &&
+                    patient.injury > 10 &&
+                    (general.nationId != 0 || patient.nationId == 0)
+            }
+            .sortedBy { it.id }
+            .filter { rng.nextBool(0.5) }
+            .toList()
+        for (patient in curedPatients) {
+            applyLifecycleGeneral(patient, patient.copy(injury = 0))
+            val josaYi = JosaUtil.pick(general.name, "이")
+            world.pushLog(
+                actionLog(patient, "<C>●</><Y>${general.name}</>$josaYi <C>의술</>로써 치료해줍니다!"),
+            )
+        }
+        if (curedPatients.isNotEmpty()) {
+            val lastPatient = curedPatients.last()
+            val text = if (curedPatients.size == 1) {
+                val josaUl = JosaUtil.pick(lastPatient.name, "을")
+                "<C>●</><C>의술</>을 펼쳐 도시의 장수 <Y>${lastPatient.name}</>$josaUl 치료합니다!"
+            } else {
+                "<C>●</><C>의술</>을 펼쳐 도시의 장수들 <Y>${lastPatient.name}</> 외 " +
+                    "<C>${curedPatients.size - 1}</>명을 치료합니다!"
+            }
+            world.pushLog(actionLog(general, text))
+        }
     }
 
     /**
@@ -758,10 +939,14 @@ class ReservedTurnHandler(
             recorder.recordAccessLogUpsert(world, it.copy(refreshScore = 0))
         }
 
+        val myset = minOf(
+            GameConst.maxDefSettingChange,
+            metaInt(general, "myset", 6) + GameConst.incDefSettingChange,
+        )
         // +1 lived_month inheritance (`:278` increaseInheritancePoint(lived_month, 1) is in the drain;
         // the inheritance accumulator rides meta in the slice).
         val livedMonth = metaInt(general, "lived_month", 0) + 1
-        var current = general.copy(meta = withMeta(general.meta, "lived_month" to livedMonth))
+        var current = general.copy(meta = withMeta(general.meta, "myset" to myset, "lived_month" to livedMonth))
         applyLifecycleGeneral(general, current)
 
         // 삭턴장수 삭제처리 — killturn<=0 (LC2: kill() / possession-release).
@@ -952,6 +1137,7 @@ class ReservedTurnHandler(
             npcCandidates = if (useNpcForeignBranch) randomImgwanNpcCandidates(genLimit) else emptyList(),
             weightedCandidates = if (useNpcForeignBranch) emptyList() else randomImgwanWeightedCandidates(genLimit),
             useNpcForeignBranch = useNpcForeignBranch,
+            permutationReplay = randomImgwanPermutationReplay,
         )
     }
 
@@ -1196,7 +1382,7 @@ class ReservedTurnHandler(
                 nationId = nation.id,
                 name = nation.name,
                 gennum = gennum,
-                affinity = metaInt(nation.meta, "affinity"),
+                affinity = metaInt(lord.meta, "affinity"),
                 lordCityId = lord.cityId,
             )
         }
@@ -1432,6 +1618,8 @@ class ReservedTurnHandler(
     }
 
     companion object {
+        private val CONQUER_MESSAGE_TIME_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC)
         /** Deny reason when the full-mode evaluator can't resolve a requirement (shouldn't occur in FULL). */
         const val UNKNOWN_DENY_REASON = "처리할 수 없습니다."
         const val INVALID_ARGS_DENY_REASON = "인자가 올바르지 않습니다."
@@ -1504,9 +1692,13 @@ class ReservedTurnHandler(
 
         /**
          * Whether [general] is AI-controlled — PHP `$general->isNPC()` (`npc >= 2`; the same threshold
-         * the killturn-decrement / npcType branches already use). Humans (npc 0/1) never hit the hook.
+         * the killturn-decrement / npcType branches already use). Human-window eligibility is separate.
          */
         internal fun isAiControlled(general: TurnGeneral): Boolean = general.npcState >= 2
+
+        internal fun isAutorunEligible(general: TurnGeneral, year: Int, month: Int): Boolean =
+            isAiControlled(general) ||
+                (general.meta.autorunLimit()?.let { year * 12 + month - 1 < it } ?: false)
 
         /**
          * Decode the stored `arg` jsonb (PHP `Json::decode($rawTurn['arg'])`) into the parsed arg map
@@ -1563,6 +1755,9 @@ class ReservedTurnHandler(
             for ((k, v) in pairs) out[k] = v
             return out
         }
+
+        internal fun materializeMariaDbFloat(value: Double): Double =
+            String.format(java.util.Locale.ROOT, "%.6g", value.toFloat()).toDouble()
 
         /**
          * Map the resolver's post-state logic [General] back onto the engine [TurnGeneral] (slice
@@ -1635,8 +1830,9 @@ class ReservedTurnHandler(
          * no `trust` column — `trust` lives in `meta["trust"]` (the inverse of [PerTurnOverlay.toLogicCity]).
          */
         private fun applyCityPatch(engine: City, post: LogicCity): City {
-            val nextMeta = if (post.trust != (engine.meta["trust"] as? Number)?.toDouble()) {
-                val m = LinkedHashMap(engine.meta); m["trust"] = post.trust; m
+            val materializedTrust = materializeMariaDbFloat(post.trust)
+            val nextMeta = if (materializedTrust != (engine.meta["trust"] as? Number)?.toDouble()) {
+                val m = LinkedHashMap(engine.meta); m["trust"] = materializedTrust; m
             } else {
                 engine.meta
             }

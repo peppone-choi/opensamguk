@@ -147,6 +147,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             you = d.toNationId,
             state = d.state,
             term = d.term,
+            dead = d.dead,
         )
 
         /** Engine [Nation] -> logic [Nation] (slice subset + gold/rice/tech/power/type/name/color). */
@@ -170,9 +171,11 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
         /**
          * Logic [Nation] -> engine [Nation] (the inverse of [toLogicNation]) for the founding created-set:
          * the 거병 resolver produces a logic Nation that the handler writes into the world via
-         * [InMemoryTurnWorld.createNation]. Engine [Nation]에는 `gennum`/`capset` 전용 컬럼이 없어 `meta`로
-         * round-trip 하지만(resolver가 `meta["gennum"]`를 찍음), `tech`는 power와 마찬가지로 전용 필드로
-         * 보존한다. A logic `capitalCityId == 0` (거병 wandering) maps to the engine `Int?` field as 0.
+         * [InMemoryTurnWorld.createNation]. Engine [Nation]에는 legacy nation의 folded scalar 전용 컬럼이
+         * 없으므로 PHP schema defaults를 `meta`에 먼저 materialize하고 resolver의 explicit values로
+         * 덮는다. Logic typed `gennum`/`capset`은 마지막에 다시 써서 typed/meta가 발산하지 않게 한다.
+         * `tech`는 power와 마찬가지로 전용 필드로 보존한다. A logic `capitalCityId == 0`
+         * (거병 wandering) maps to the engine `Int?` field as 0.
          */
         fun toEngineNation(n: LogicNation): Nation = Nation(
             id = n.id,
@@ -185,15 +188,33 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             tech = n.tech,
             level = n.level,
             typeCode = n.typeCode,
-            meta = n.meta,
+            meta = linkedMapOf<String, Any?>(
+                "capset" to 0,
+                "gennum" to 1,
+                "bill" to 0,
+                "rate" to 0,
+                "rate_tmp" to 0,
+                "secretlimit" to 3,
+                "chief_set" to 0,
+                "scout" to 0,
+                "war" to 0,
+                "strategic_cmd_limit" to 36,
+                "surlimit" to 72,
+                "spy" to "{}",
+                "aux" to "{}",
+            ).apply {
+                putAll(n.meta)
+                this["gennum"] = n.gennum
+                this["capset"] = n.capset
+            },
         )
 
-        /** Logic [Diplomacy] -> engine [TurnDiplomacy] (the inverse of [toLogicDiplomacy]; `dead` defaults 0). */
         fun toEngineDiplomacy(d: LogicDiplomacy): TurnDiplomacy = TurnDiplomacy(
             fromNationId = d.me,
             toNationId = d.you,
             state = d.state,
             term = d.term,
+            dead = d.dead,
         )
     }
 }

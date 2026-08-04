@@ -1,5 +1,6 @@
 package opensamguk.infra.read
 
+import opensamguk.common.world.WorldId
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
@@ -55,7 +56,7 @@ class SelectPoolRepositoryIT {
             .load()
             .migrate()
         jdbc = NamedParameterJdbcTemplate(dataSource)
-        repo = SelectPoolRepository(jdbc)
+        repo = SelectPoolRepository(jdbc, WorldId(1))
         executor = JdbcFlushExecutor(jdbc, TransactionTemplate(DataSourceTransactionManager(dataSource)))
         jdbc.update(
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'fixture', 200, 1, 3600)",
@@ -72,6 +73,8 @@ class SelectPoolRepositoryIT {
     fun clearPool() {
         if (this::jdbc.isInitialized) {
             jdbc.update("DELETE FROM select_pool", MapSqlParameterSource())
+            jdbc.update("DELETE FROM world_state WHERE id = 2", MapSqlParameterSource())
+            jdbc.update("UPDATE world_state SET config = '{}'::jsonb WHERE id = 1", MapSqlParameterSource())
         }
     }
 
@@ -141,13 +144,67 @@ class SelectPoolRepositoryIT {
         assertEquals(listOf("가람", "강현"), repo.listForUser(88, now).map { it.uniqueName })
     }
 
-    private fun insertPool(uniqueName: String, owner: Int?, generalId: Int?, reservedUntil: Instant?, info: String) {
+    @Test
+    fun `world one scope excludes duplicate select pool rows from another world`() {
+        val now = Instant.parse("2026-07-10T03:00:00Z")
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (2, 'fixture-two', 200, 1, 3600)",
+            MapSqlParameterSource(),
+        )
+        updateWorldConfig(
+            worldId = 1,
+            config = """{"map":{"generalPoolAllowOption":["stat"],"targetGeneralPool":"WorldOnePool"},"show_img_level":1}""",
+        )
+        updateWorldConfig(
+            worldId = 2,
+            config = """{"map":{"generalPoolAllowOption":["picture"],"targetGeneralPool":"WorldTwoPool"},"show_img_level":9}""",
+        )
+        insertPool("shared-name", owner = 101, generalId = 42, reservedUntil = now, info = "{}", worldId = 1)
+        insertPool("shared-name", owner = 202, generalId = 42, reservedUntil = now, info = "{}", worldId = 2)
+        insertPool("world-two-only", owner = 202, generalId = null, reservedUntil = now, info = "{}", worldId = 2)
+
+        assertEquals(listOf("shared-name"), repo.listForUser(ownerUserId = 101, now = now).map { it.uniqueName })
+        assertTrue(repo.listForUser(ownerUserId = 202, now = now).isEmpty())
+        assertNull(repo.findPoolEntry("shared-name", ownerUserId = 202, now = now))
+        assertEquals(setOf("shared-name"), repo.listUniqueNames())
+        assertEquals("WorldOnePool", repo.targetGeneralPool())
+        assertEquals(setOf("stat"), repo.allowedCustomOptions())
+        assertEquals(1, repo.showImageLevel())
+
+        val worldTwoRepository = SelectPoolRepository(jdbc, WorldId(2))
+        val worldTwoEntry = assertNotNull(worldTwoRepository.findPoolEntry("shared-name", ownerUserId = 202, now = now))
+        assertEquals(202, worldTwoEntry.ownerUserId)
+        assertEquals(listOf("shared-name", "world-two-only"), worldTwoRepository.listForUser(202, now).map { it.uniqueName })
+        assertEquals(setOf("shared-name", "world-two-only"), worldTwoRepository.listUniqueNames())
+        assertEquals("WorldTwoPool", worldTwoRepository.targetGeneralPool())
+        assertEquals(setOf("picture"), worldTwoRepository.allowedCustomOptions())
+        assertEquals(9, worldTwoRepository.showImageLevel())
+    }
+
+    private fun updateWorldConfig(worldId: Int, config: String) {
+        jdbc.update(
+            "UPDATE world_state SET config = CAST(:config AS jsonb) WHERE id = :world_id",
+            MapSqlParameterSource()
+                .addValue("world_id", worldId)
+                .addValue("config", config),
+        )
+    }
+
+    private fun insertPool(
+        uniqueName: String,
+        owner: Int?,
+        generalId: Int?,
+        reservedUntil: Instant?,
+        info: String,
+        worldId: Int = 1,
+    ) {
         jdbc.update(
             """
             INSERT INTO select_pool (world_id, unique_name, owner, general_id, reserved_until, info)
-            VALUES (1, :unique_name, :owner, :general_id, :reserved_until, :info)
+            VALUES (:world_id, :unique_name, :owner, :general_id, :reserved_until, :info)
             """.trimIndent(),
             MapSqlParameterSource()
+                .addValue("world_id", worldId)
                 .addValue("unique_name", uniqueName)
                 .addValue("owner", owner)
                 .addValue("general_id", generalId)

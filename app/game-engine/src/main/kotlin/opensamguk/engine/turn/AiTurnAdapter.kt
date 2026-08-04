@@ -5,6 +5,7 @@ import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.GameUnitDetail
 import opensamguk.common.constants.UnitConstraint
+import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
@@ -21,14 +22,16 @@ import opensamguk.logic.ai.AiUtils
 import opensamguk.logic.ai.AiWorldView
 import opensamguk.logic.ai.AutorunGeneralPolicy
 import opensamguk.logic.ai.AutorunNationPolicy
+import opensamguk.logic.ai.CandidateVerdict
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.ai.GeneralAiContext
 import opensamguk.logic.ai.GeneralAiDoBodies
 import opensamguk.logic.ai.GeneralAiFactory
 import opensamguk.logic.ai.GeneralAiInput
+import opensamguk.logic.ai.ExternalSqlRandSelector
 import opensamguk.logic.ai.NationAiInput
 import opensamguk.logic.ai.NationPassHooks
-import opensamguk.logic.ai.candidateAllowed
+import opensamguk.logic.ai.candidateVerdict
 import opensamguk.logic.ai.families.GenDomesticFamily
 import opensamguk.logic.ai.families.NationDiploFamily
 import opensamguk.logic.ai.families.RatesPromoFamily
@@ -39,6 +42,7 @@ import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domestic.getGoldIncome
 import opensamguk.logic.domestic.getRiceIncome
 import opensamguk.logic.domestic.getWallIncome
+import opensamguk.logic.domestic.calcCityWarGoldIncome
 import opensamguk.logic.domestic.techLimit
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.StatCalc
@@ -64,6 +68,11 @@ private sealed interface AiStateDelta {
         val value: Any?,
     ) : AiStateDelta
 }
+
+internal data class AiPolicyAssembly(
+    val general: AutorunGeneralPolicy,
+    val nation: AutorunNationPolicy,
+)
 
 private enum class AiGeneralField(val wireKey: String) {
     DEFENCE_TRAIN("defence_train"),
@@ -155,6 +164,7 @@ class AiTurnAdapter(
      */
     private val rngFactory: (hidden: String, year: Int, month: Int, generalId: Int) -> opensamguk.common.rng.RandUtil =
         { hidden, year, month, gid -> AiSeed.rng(hidden, year, month, gid) },
+    private val externalSqlRandSelector: ExternalSqlRandSelector? = null,
 ) {
 
     private val stateDeltas = ArrayList<AiStateDelta>()
@@ -250,14 +260,30 @@ class AiTurnAdapter(
             if (value == null) remove(key) else put(key, value)
         }
 
-    private fun withAuxValue(meta: Map<String, Any?>, key: String, value: Any?): Map<String, Any?> {
+    internal fun withAuxValue(meta: Map<String, Any?>, key: String, value: Any?): Map<String, Any?> {
         val nextMeta = LinkedHashMap(meta)
         val nextAux = LinkedHashMap<String, Any?>()
-        (meta["aux"] as? Map<*, *>)?.forEach { (auxKey, auxValue) ->
+        val rawAux = meta["aux"]
+        val auxMap = when (rawAux) {
+            is Map<*, *> -> rawAux
+            is String -> runCatching { MetaJson.decode(rawAux) }.getOrNull()
+            else -> null
+        }
+        auxMap?.forEach { (auxKey, auxValue) ->
             nextAux[auxKey.toString()] = auxValue
         }
         if (value == null) nextAux.remove(key) else nextAux[key] = value
-        if (nextAux.isEmpty()) nextMeta.remove("aux") else nextMeta["aux"] = nextAux
+        if (nextAux.isEmpty()) {
+            if (value == null && (rawAux is List<*> || rawAux == "[]")) {
+                nextMeta["aux"] = rawAux
+            } else if (value == null && rawAux is Map<*, *>) {
+                nextMeta["aux"] = emptyList<Any?>()
+            } else {
+                nextMeta.remove("aux")
+            }
+        } else {
+            nextMeta["aux"] = nextAux
+        }
         return nextMeta
     }
 
@@ -272,9 +298,49 @@ class AiTurnAdapter(
      * off. [resetRngFor] / [beginGeneralTurn] let the turn loop / gate bound a general's decision window.
      */
     private val rngCache = LinkedHashMap<Triple<Int, Int, Int>, opensamguk.common.rng.RandUtil>()
+    private data class DecisionState(
+        val instance: AiInstanceState,
+        val statCalc: StatCalc,
+    )
+
+    private val decisionStateCache = LinkedHashMap<Triple<Int, Int, Int>, DecisionState>()
 
     private fun sharedRng(generalId: Int, year: Int, month: Int): opensamguk.common.rng.RandUtil =
         rngCache.getOrPut(Triple(generalId, year, month)) { rngFactory(hiddenSeed, year, month, generalId) }
+
+    private fun sharedDecisionState(
+        general: TurnGeneral,
+        year: Int,
+        month: Int,
+        aiEnv: AiEnv,
+        nationPolicy: AutorunNationPolicy,
+    ): DecisionState = decisionStateCache.getOrPut(Triple(general.id, year, month)) {
+        DecisionState(
+            instance = AiInstanceState(
+                generalNationId = general.nationId,
+                env = aiEnv,
+                nationPolicy = nationPolicy,
+                nationRowLookup = {
+                    world.getNationById(general.nationId)?.let { toAiNationRow(it) }
+                },
+                nationStor = nationEnvSnapshot(general.nationId),
+                diplomacyOf = { diplomacyRowsFor(general.nationId) },
+                frontMaxOf = { frontMaxFor(general.nationId) },
+                kvRecorder = nationEnvRecorder(),
+            ),
+            statCalc = statCalcFor(general),
+        )
+    }
+
+    private fun refreshDecisionState(
+        instance: AiInstanceState,
+        statCalc: StatCalc,
+        rng: opensamguk.common.rng.RandUtil,
+    ) {
+        if (instance.updateInstance()) {
+            instance.calcGenType(rng, statCalc)
+        }
+    }
 
     /**
      * Drop the cached `"GeneralAI"` rng for [generalId] (call when a general's decision window ends, so a
@@ -283,6 +349,7 @@ class AiTurnAdapter(
      */
     fun resetRngFor(generalId: Int) {
         rngCache.keys.removeAll { it.first == generalId }
+        decisionStateCache.keys.removeAll { it.first == generalId }
     }
 
     /**
@@ -322,38 +389,28 @@ class AiTurnAdapter(
         val rng = sharedRng(generalId, year, month)
 
         val nationTech = nationTechOf(nationId)
-        val generalPolicy = AutorunGeneralPolicy(npcType = npcType, nationId = nationId)
         val develCost = WorldEnvBuilder.envMap(year, startYear)["develCost"] as Int
-        val nationPolicy = AutorunNationPolicy(npcType = npcType, tech = nationTech, develcost = develCost)
+        val policies = assemblePolicies(general, nationTech, develCost)
+        val generalPolicy = policies.general
+        val nationPolicy = policies.nation
 
         // (2) the read-only instance + world view over the live world (READ-ONLY over GAME ENTITIES).
         val aiEnv = AiEnv(year = year, month = month, startYear = startYear, develCost = develCost)
-        val kvRecorder = nationEnvRecorder()
-        val instance = AiInstanceState(
-            generalNationId = nationId,
-            env = aiEnv,
-            nationPolicy = nationPolicy,
-            nationRowLookup = { world.getNationById(nationId)?.let { toAiNationRow(it) } },
-            nationStor = nationEnvSnapshot(nationId),
-            diplomacyOf = { diplomacyRowsFor(nationId) },
-            frontMaxOf = { frontMaxFor(nationId) },
-            kvRecorder = kvRecorder,
-        )
+        val decisionState = sharedDecisionState(general, year, month, aiEnv, nationPolicy)
+        val instance = decisionState.instance
+        val statCalc = decisionState.statCalc
 
         // (3) the F-BRIDGE candidate gate over the FULL-mode WorldStateViewAdapter.
         val envMap = WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)
-        val candidateAllowedHook = candidateAllowedHook(generalId, general.cityId, nationId, envMap)
+        val verdictHook = candidateVerdictHook(generalId, general.cityId, nationId, envMap)
+        val candidateAllowedHook: (String, Map<String, Any?>) -> Boolean =
+            { code, args -> verdictHook(code, args) is CandidateVerdict.Allow }
 
         val recordGeneralKv: (Int, String, Any?) -> Unit = ::recordGeneralDelta
 
-        // Eagerly run updateInstance() (NO draws) so instance.dipState is available below; the guard makes
-        // the hook's second updateInstance() a no-op so calcGenType still fires exactly once on the rng.
-        instance.updateInstance()
-
-        val statCalc = statCalcFor(general)
+        refreshDecisionState(instance, statCalc, rng)
         val updateInstanceHook: (opensamguk.common.rng.RandUtil) -> Unit = { r ->
-            instance.updateInstance()
-            instance.calcGenType(r, statCalc)
+            refreshDecisionState(instance, statCalc, r)
         }
 
         // F-FACADE — fed the REAL self-excluded PK-ascending nation generals + the FULL PK-ascending city table.
@@ -385,7 +442,7 @@ class AiTurnAdapter(
             updateInstance = updateInstanceHook,
         )
 
-        val input = buildGeneralAiInput(general, generalPolicy, year, month, rng)
+        val input = buildGeneralAiInput(general, generalPolicy, nationPolicy, year, month, rng)
         return ai.chooseGeneralTurn(
             reservedCommand = ChosenCommand(reserved.actionCode, ReservedTurnHandler.decodeArgs(reserved.argJson)),
             input = input,
@@ -409,29 +466,24 @@ class AiTurnAdapter(
         // single-GeneralAI semantics): the nation pass draws are the stream PREFIX, the general pass continues.
         val rng = sharedRng(generalId, year, month)
         val nationTech = nationTechOf(nationId)
-        val generalPolicy = AutorunGeneralPolicy(npcType = npcType, nationId = nationId)
         val develCost = WorldEnvBuilder.envMap(year, startYear)["develCost"] as Int
-        val nationPolicy = AutorunNationPolicy(npcType = npcType, tech = nationTech, develcost = develCost)
+        val policies = assemblePolicies(general, nationTech, develCost)
+        val generalPolicy = policies.general
+        val nationPolicy = policies.nation
 
         val aiEnv = AiEnv(year = year, month = month, startYear = startYear, develCost = develCost)
         val kvRecorder = nationEnvRecorder()
-        val instance = AiInstanceState(
-            generalNationId = nationId,
-            env = aiEnv,
-            nationPolicy = nationPolicy,
-            nationRowLookup = { world.getNationById(nationId)?.let { toAiNationRow(it) } },
-            nationStor = nationEnvSnapshot(nationId),
-            diplomacyOf = { diplomacyRowsFor(nationId) },
-            frontMaxOf = { frontMaxFor(nationId) },
-            kvRecorder = kvRecorder,
-        )
-        instance.updateInstance()
+        val decisionState = sharedDecisionState(general, year, month, aiEnv, nationPolicy)
+        val instance = decisionState.instance
+        val statCalc = decisionState.statCalc
+        refreshDecisionState(instance, statCalc, rng)
 
         val envMap = WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)
-        val candidateAllowedHook = candidateAllowedHook(generalId, general.cityId, nationId, envMap)
+        val verdictHook = candidateVerdictHook(generalId, general.cityId, nationId, envMap)
+        val candidateAllowedHook: (String, Map<String, Any?>) -> Boolean =
+            { code, args -> verdictHook(code, args) is CandidateVerdict.Allow }
         val recordGeneralKv: (Int, String, Any?) -> Unit = ::recordGeneralDelta
 
-        val statCalc = statCalcFor(general)
         val worldView = buildWorldView(nationId, generalId, instance, nationPolicy)
 
         val logicCity = world.getCityById(general.cityId)?.let { PerTurnOverlay.toLogicCity(it) }
@@ -459,10 +511,22 @@ class AiTurnAdapter(
         val warInput = buildWarInput(nationId, worldView, instance, nationTech, nationPolicy, year)
         val relocInput = buildRelocateInput(general, nationId, worldView, kvRecorder, year, month)
 
+        var reservedVerdict: Pair<ChosenCommand, CandidateVerdict>? = null
         val bodies = GeneralAiDoBodies.fromFamilies(
             ctx, diplo = diploInput, war = warInput, reloc = relocInput,
         ).copy(
-            hasFullConditionMet = { cmd -> candidateAllowedHook(cmd.actionCode, cmd.args) },
+            hasFullConditionMet = { cmd ->
+                val verdict = verdictHook(cmd.actionCode, cmd.args)
+                reservedVerdict = cmd to verdict
+                verdict is CandidateVerdict.Allow
+            },
+            getFailString = { cmd ->
+                val verdict = reservedVerdict
+                    ?.takeIf { (cached, _) -> cached.actionCode == cmd.actionCode && cached.args == cmd.args }
+                    ?.second
+                    ?: verdictHook(cmd.actionCode, cmd.args)
+                formatFailString(cmd.actionCode, verdict)
+            },
         )
 
         // S18 — the nation-pass hooks over the live world (categorize + the rate/promotion side-effects).
@@ -479,6 +543,17 @@ class AiTurnAdapter(
             kvRecorder = kvRecorder,
             year = year,
             month = month,
+            logFailString = { body ->
+                world.pushLog(
+                    LogEntryDraft(
+                        scope = "general",
+                        category = "action",
+                        text = "<C>●</>${month}월:$body",
+                        generalId = general.id,
+                        nationId = nationId,
+                    ),
+                )
+            },
         )
 
         val ai = GeneralAiFactory.build(
@@ -509,12 +584,12 @@ class AiTurnAdapter(
      * fields, so the adapter DERIVES them from the emitted args (the bridge's `ctx.copy(args=canonical)`
      * only carries the arg map). This is the adapter's canonicalization — the bridge stays unchanged.
      */
-    private fun candidateAllowedHook(
+    private fun candidateVerdictHook(
         generalId: Int,
         cityId: Int,
         nationId: Int,
         envMap: Map<String, Any?>,
-    ): (String, Map<String, Any?>) -> Boolean {
+    ): (String, Map<String, Any?>) -> CandidateVerdict {
         val overlay = PerTurnOverlay(world)
         return { actionCode, rawArgs ->
             // STAGE the FULL-gate inputs the AI bridge must supply over the live world (PHP `hasFullConditionMet`
@@ -535,8 +610,18 @@ class AiTurnAdapter(
                 env = stagedEnv,
                 mode = ConstraintMode.FULL,
             )
-            candidateAllowed(actionCode, rawArgs, ctx, view) { code -> resolveDef(code) }
+            candidateVerdict(actionCode, rawArgs, ctx, view) { code -> resolveDef(code) }
         }
+    }
+
+    private fun candidateAllowedHook(
+        generalId: Int,
+        cityId: Int,
+        nationId: Int,
+        envMap: Map<String, Any?>,
+    ): (String, Map<String, Any?>) -> Boolean {
+        val verdict = candidateVerdictHook(generalId, cityId, nationId, envMap)
+        return { code, args -> verdict(code, args) is CandidateVerdict.Allow }
     }
 
     /**
@@ -676,6 +761,7 @@ class AiTurnAdapter(
             turnTerm = turnTerm,
             selfGeneralId = general.id,
             selfCityId = general.cityId,
+            selfOfficerLevel = general.officerLevel,
             candidateAllowed = candidateAllowedHook,
             recordGeneralKv = recordGeneralKv,
             // S17 — cutTurn one-deploy-per-turn lambdas (engine wall-clock; the turn loop owns the formatted stamp).
@@ -721,7 +807,7 @@ class AiTurnAdapter(
                 attackableCitiesOf(nearCityIds, attackableNations)
             },
             cityDevelRateOf = { cityId -> cityDevelRateTriples(cityId) }, // S3
-            cityGeneralCountOf = { cityId -> world.listGenerals().count { it.cityId == cityId } }, // S7
+            cityGeneralCountOf = { cityId -> worldView.nationCities[cityId]?.generals?.size ?: 0 }, // S7
             wanderOccupiedCities = occupiedCities, // S8
             movingTargetCityId = (auxVar(general, "movingTargetCityID") as? Number)?.toInt(), // S9
             dupLordAtSelfCity = world.listGenerals().count { it.officerLevel == 12 && it.cityId == general.cityId }, // S9
@@ -736,6 +822,7 @@ class AiTurnAdapter(
             foundDeadlineMore = foundDeadlineMore(nationId, year), // PHP :3277
             nationCount = world.listNations().size, // S11
             notFullNationCount = notFullNationCount(), // S11
+            externalSqlRandSelector = externalSqlRandSelector,
             seonyangCandidates = world.listGenerals() // S12
                 .filter { it.nationId == nationId }
                 .sortedBy { it.id }
@@ -764,8 +851,10 @@ class AiTurnAdapter(
         kvRecorder: AiKvRecorder,
         year: Int,
         month: Int,
+        logFailString: (String) -> Unit,
     ): NationPassHooks {
         val nationRow = world.getNationById(nationId)
+        var effectiveTaxRate = (nationRow?.meta?.get("rate") as? Number)?.toDouble() ?: 15.0
         val deltaSink = object : RatesPromoFamily.RatesPromoDeltaSink {
             override fun recordGeneralKv(generalId: Int, key: String, value: Any?) {
                 recordGeneralDelta(generalId, key, value)
@@ -789,18 +878,24 @@ class AiTurnAdapter(
                 nationRow = nationRow,
                 deltaSink = deltaSink,
                 year = year,
+                taxRate = effectiveTaxRate,
             )
         }
 
         return NationPassHooks(
-            updateNationInstance = { instance.updateInstance() },
+            updateNationInstance = { refreshDecisionState(instance, statCalc, rng) },
             categorizeNationGeneral = { worldView.categorizeNationGeneral() },
             categorizeNationCities = { worldView.categorizeNationCities() },
             choosePromotion = { RatesPromoFamily.bodies(ratesCtx()).choosePromotion() },
             chooseNonLordPromotion = { RatesPromoFamily.bodies(ratesCtx()).chooseNonLordPromotion() },
-            chooseTexRate = { RatesPromoFamily.bodies(ratesCtx()).chooseTexRate() },
+            chooseTexRate = {
+                RatesPromoFamily.bodies(ratesCtx()).chooseTexRate().also {
+                    effectiveTaxRate = it.toDouble()
+                }
+            },
             chooseGoldBillRate = { RatesPromoFamily.bodies(ratesCtx()).chooseGoldBillRate() },
             chooseRiceBillRate = { RatesPromoFamily.bodies(ratesCtx()).chooseRiceBillRate() },
+            logFailString = logFailString,
             nationGeneralId = general.id,
             useAutoNationTurn = (general.meta["use_auto_nation_turn"] as? Number)?.toInt()?.let { it != 0 } ?: true,
             nationTurnTimeHm = turnTimeHm(general.turnTime),
@@ -824,11 +919,46 @@ class AiTurnAdapter(
         nationRow: Nation?,
         deltaSink: RatesPromoFamily.RatesPromoDeltaSink,
         year: Int,
+        taxRate: Double,
     ): RatesPromoFamily.RatesPromoContext {
         val nationLevel = nationRow?.level ?: 0
         val chiefSet = decodeChiefSet(nationRow) // PHP nation['chief_set'] bitfield → occupied chief levels.
         val chiefGenerals = worldView.chiefGenerals // keyed by officer_level (PK-asc overwrite-last).
         val chiefGeneralLevels = chiefGenerals.keys.toSet()
+        val supplyCities = worldView.supplyCities.values.map { it.city }
+        val capitalId = nationRow?.capitalCityId ?: 0
+        val nationType = opensamguk.logic.traits.NationTypeRegistry.resolve(nationRow?.typeCode)
+        val officers = officerCntByCity(nationId)
+        val goldIncome = getGoldIncome(
+            supplyCities,
+            capitalId,
+            nationLevel,
+            taxRate,
+            nationType,
+            pipeline,
+            officers,
+        )
+        val warGoldIncome = supplyCities.sumOf {
+            calcCityWarGoldIncome(it, nationType, pipeline).toDouble()
+        }
+        val riceIncome = getRiceIncome(
+            supplyCities,
+            capitalId,
+            nationLevel,
+            taxRate,
+            nationType,
+            pipeline,
+            officers,
+        )
+        val wallRiceIncome = getWallIncome(
+            supplyCities,
+            capitalId,
+            nationLevel,
+            taxRate,
+            nationType,
+            pipeline,
+            officers,
+        )
         return RatesPromoFamily.RatesPromoContext(
             rng = rng,
             nationId = nationId,
@@ -846,9 +976,13 @@ class AiTurnAdapter(
             userCivilGenerals = worldView.userCivilGenerals.values.map { toPromotionCandidate(it, nationTech) },
             userGenerals = worldView.userGenerals.values.map { toPromotionCandidate(it, nationTech) },
             nationGenerals = worldView.nationGenerals.map { toPromotionCandidate(it, nationTech) },
-            supplyCities = worldView.supplyCities.values.map { cityDevelInput(it.city) },
+            supplyCities = supplyCities.map(::cityDevelInput),
             nationGold = nationRow?.gold ?: 0,
             nationRice = nationRow?.rice ?: 0,
+            goldIncome = goldIncome,
+            warGoldIncome = warGoldIncome,
+            riceIncome = riceIncome,
+            wallRiceIncome = wallRiceIncome,
             reqNationGold = nationPolicy.reqNationGold,
             reqNationRice = nationPolicy.reqNationRice,
             deltaSink = deltaSink,
@@ -1147,6 +1281,7 @@ class AiTurnAdapter(
         return RatesPromoFamily.PromotionCandidate(
             generalId = gv.general.id,
             officerLevel = gv.general.officerLevel,
+            leadership = AiSeed.promotionStat(statCalc, "leadership"),
             strength = AiSeed.promotionStat(statCalc, "strength"),
             intel = AiSeed.promotionStat(statCalc, "intel"),
             npcType = gv.general.npcType,
@@ -1662,6 +1797,7 @@ class AiTurnAdapter(
     private fun buildGeneralAiInput(
         general: TurnGeneral,
         generalPolicy: AutorunGeneralPolicy,
+        nationPolicy: AutorunNationPolicy,
         year: Int,
         month: Int,
         rng: opensamguk.common.rng.RandUtil,
@@ -1683,11 +1819,62 @@ class AiTurnAdapter(
             relYearMonth = relYearMonth,
             can선양 = generalPolicy.can선양,
             can국가선택 = generalPolicy.can국가선택,
-            cureThreshold = CURE_THRESHOLD,
+            cureThreshold = nationPolicy.cureThreshold,
             npcMessageProb = npcMessageProb,
             rng = rng,
         )
     }
+
+    internal fun assemblePolicies(
+        general: TurnGeneral,
+        nationTech: Int,
+        develCost: Int,
+    ): AiPolicyAssembly {
+        val gameEnv = world.getState().meta
+        val nationEnv = nationEnvSnapshot(general.nationId)
+        val aiOptions = gameEnv.mapValue("autorun_user")?.mapValue("options")
+        val serverGeneralPolicy = gameEnv.mapValue("npc_general_policy")
+        val serverNationPolicy = gameEnv.mapValue("npc_nation_policy")
+        val nationGeneralPolicy = nationEnv.mapValue("npc_general_policy")
+        val nationNationPolicy = nationEnv.mapValue("npc_nation_policy")
+
+        return AiPolicyAssembly(
+            general = AutorunGeneralPolicy(
+                npcType = general.npcState,
+                nationId = general.nationId,
+                aiOptions = aiOptions,
+                nationPolicy = nationGeneralPolicy,
+                serverPolicy = serverGeneralPolicy,
+            ),
+            nation = AutorunNationPolicy(
+                npcType = general.npcState,
+                tech = nationTech,
+                develcost = develCost,
+                aiOptions = aiOptions,
+                nationPolicy = nationNationPolicy,
+                serverPolicy = serverNationPolicy,
+            ),
+        )
+    }
+
+    private fun formatFailString(actionCode: String, verdict: CandidateVerdict): String {
+        val deny = verdict as? CandidateVerdict.Deny
+            ?: error("Cannot format an allowed AI candidate as a failure: $actionCode")
+        val commandName = resolveDef(actionCode).name
+        if (actionCode == "che_발령") {
+            val destGeneralId = (deny.canonicalArgs["destGeneralID"] as? Number)?.toInt()
+            val destGeneral = destGeneralId?.let(world::getGeneralById)
+            if (destGeneral != null) {
+                return "${deny.reason} <Y>${destGeneral.name}</> $commandName 실패."
+            }
+        }
+        return "${deny.reason} $commandName 실패."
+    }
+
+    private fun Map<String, Any?>.mapValue(key: String): Map<String, Any?>? =
+        (this[key] as? Map<*, *>)?.entries?.associateTo(LinkedHashMap()) { (k, v) ->
+            k.toString() to v
+        }
 
     private fun resolveDef(code: String): GeneralActionDefinition = registry.resolve(code)
 
@@ -1721,9 +1908,6 @@ class AiTurnAdapter(
             .maxOfOrNull { it.frontState } ?: 0
 
     companion object {
-        /** The 요양 injury threshold (PHP `$this->nationPolicy->cureThreshold`, `GeneralAI.php:3772`). */
-        private const val CURE_THRESHOLD: Int = 30
-
         /** PHP `GameConst::$chiefStatMin` (d_setting/GameConst.php:11) — the chief strength/intel gate. */
         private const val CHIEF_STAT_MIN: Int = 65
 

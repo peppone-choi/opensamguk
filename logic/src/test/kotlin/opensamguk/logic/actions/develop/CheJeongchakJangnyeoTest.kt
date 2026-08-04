@@ -90,6 +90,7 @@ class CheJeongchakJangnyeoTest {
         assertEquals(100000 - env.develCost * 2, draft.general.rice, "rice -= develCost*2")
         assertEquals(100000, draft.general.gold, "gold untouched")
         assertEquals(metaInt(general().meta, "leadership_exp") + 1, metaInt(draft.general.meta, "leadership_exp"))
+        assertEquals("정착 장려", draft.general.lastTurn.command)
         assertEquals(1, ctx.logs().size)
         val log = ctx.logs()[0]
         assertTrue(log.startsWith("<C>●</>${MONTH}월:정착 장려"), "log prefix: $log")
@@ -130,5 +131,31 @@ class CheJeongchakJangnyeoTest {
         assertEquals(a.general.rice, b.general.rice)
         assertEquals(a.general.experience, b.general.experience)
         assertEquals(a.general.dedication, b.general.dedication)
+    }
+
+    @Test
+    fun `resolve refreshes stale levels before a later settlement turn`() {
+        val stale = general().copy(
+            experience = 2500.0,
+            dedication = 2500.0,
+            meta = linkedMapOf(
+                "explevel" to 0,
+                "dedlevel" to 1,
+                "leadership_exp" to 0,
+                "max_domestic_critical" to 0.0,
+            ),
+        )
+        val first = GeneralActionDraft(stale, city(), nation)
+        action().resolve(GeneralActionResolveContext(first, freshRng(), env, MONTH, date))
+
+        assertEquals(15, metaInt(first.general.meta, "explevel"))
+        assertEquals(6, metaInt(first.general.meta, "dedlevel"))
+
+        val second = GeneralActionDraft(first.general, first.city, nation)
+        action().resolve(GeneralActionResolveContext(second, freshRng(), env, MONTH, date))
+        assertTrue(
+            second.city.population - first.city.population > first.city.population - city().population,
+            "the second identical turn consumes the refreshed experience-level bonus",
+        )
     }
 }

@@ -174,7 +174,7 @@ class LightActionsTest {
     }
 
     @Test
-    fun `the default sortie-limit notices follow the one-year opensamguk schedule`() {
+    fun `the default sortie-limit notices match the PHP schedule`() {
         val store = EventStore.withDefaults()
         val notices = store.rowsFor(EventTarget.MONTH)
             .filter { it.priority == 2000 && it.actions.firstOrNull()?.name == "NoticeToHistoryLog" }
@@ -185,10 +185,9 @@ class LightActionsTest {
             }
             .toMap()
 
-        assertEquals("<S>1년 뒤 출병 제한이 풀립니다.</>", notices[0 to 1])
-        assertEquals("<S>6개월 뒤 출병 제한이 풀립니다. 병력을 준비해주세요.</>", notices[0 to 7])
-        assertEquals("<S>출병 제한이 풀렸습니다.</>", notices[1 to 1])
-        assertTrue((2 to 1) !in notices)
-        assertTrue((3 to 1) !in notices)
+        assertEquals("<S>2년 뒤 출병 제한이 풀립니다.</>", notices[1 to 1])
+        assertEquals("<S>1년 뒤 출병 제한이 풀립니다.</>", notices[2 to 1])
+        assertEquals("<S>6개월 뒤 출병 제한이 풀립니다. 병력을 준비해주세요.</>", notices[2 to 7])
+        assertEquals("<S>출병 제한이 풀렸습니다.</>", notices[3 to 1])
     }
 }

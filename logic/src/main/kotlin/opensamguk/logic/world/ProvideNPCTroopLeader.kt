@@ -110,7 +110,11 @@ interface ProvideNPCTroopLeaderContext : EventActionContext {
     fun month(): Int
     fun lastNpcTroopLeaderId(): Int
     fun setLastNpcTroopLeaderId(id: Int)
-    fun mintTroopLeader(nationId: Int, leader: ProvideNPCTroopLeader.NewLeader, seed: String)
+    fun mintTroopLeaders(
+        nationId: Int,
+        leaders: List<ProvideNPCTroopLeader.NewLeader>,
+        seed: String,
+    )
 }
 
 /** The `ProvideNPCTroopLeader` leaf: binds the GREEN pure planner to the live world. */
@@ -118,6 +122,7 @@ class ProvideNPCTroopLeaderAction : EventAction {
     override fun run(ctx: EventActionContext) {
         val context = ctx as ProvideNPCTroopLeaderContext
         var lastId = context.lastNpcTroopLeaderId()
+        val initialLastId = lastId
         val nations = context.nations()
         val generals = context.generals()
         for (nation in nations) {
@@ -135,10 +140,12 @@ class ProvideNPCTroopLeaderAction : EventAction {
                 lastId,
             )
             lastId = plan.nextLastNpcId
-            for (leader in plan.newLeaders) {
-                context.mintTroopLeader(nation.id, leader, plan.seed)
+            if (plan.newLeaders.isNotEmpty()) {
+                context.mintTroopLeaders(nation.id, plan.newLeaders, plan.seed)
             }
         }
-        context.setLastNpcTroopLeaderId(lastId)
+        if (lastId != initialLastId) {
+            context.setLastNpcTroopLeaderId(lastId)
+        }
     }
 }

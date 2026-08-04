@@ -178,13 +178,10 @@ class VoteHandler(
         // PHP: $nationID = SELECT nation FROM general WHERE no = generalID.
         val nationId = me.nationId
 
-        // PHP: $db->insertIgnore('vote', [...]); — UNIQUE(vote_id,general_id) 중복은 DB가 무시
-        // (executor ON CONFLICT DO NOTHING). PHP는 affectedRows==0이면 '이미 설문조사를 완료하였습니다.'
-        // deny하지만, 데몬 경로는 flush 시점까지 affectedRows를 알 수 없다 — 중복은 DB가 멱등 무시하고,
-        // 보상/추첨은 게이트웨이 precheck 단계의 dedup이 막는다(아래 alreadyVotedReader가 stub null이면
-        // 항상 신규로 처리). faithful: 중복 INSERT는 무해(무시)하고, 보상은 신규 투표에만 줘야 하므로
-        // poll.alreadyVoted == true면 INSERT/보상/추첨을 모두 건너뛰고 '이미 …' deny.
         if (poll.alreadyVoted) {
+            return result("voteCast", ok = false, generalId = c.generalId, reason = "이미 설문조사를 완료하였습니다.")
+        }
+        if (!recorder.tryRecordVoteInsert(poll.id, me.id)) {
             return result("voteCast", ok = false, generalId = c.generalId, reason = "이미 설문조사를 완료하였습니다.")
         }
 

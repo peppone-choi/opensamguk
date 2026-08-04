@@ -5,7 +5,9 @@ import opensamguk.common.constants.GameUnitDetail
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.General
+import opensamguk.logic.stats.GeneralActionModule
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.stats.StatCalc
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -124,6 +126,54 @@ class WarUnitGeneralTest {
         d1.setOppose(a); d3.setOppose(a); a.setOppose(d1)
         assertEquals(105.0, d1.getComputedTrain(), 1e-9)
         assertEquals(105.0, d3.getComputedTrain(), 1e-9)
+    }
+
+    @Test
+    fun `opponent stat fold uses opponent pipeline and current general as target`() {
+        val attackerPipeline = GeneralActionPipeline()
+        val defenderPipeline = GeneralActionPipeline(
+            listOf(
+                object : GeneralActionModule {
+                    override fun onCalcOpposeStat(
+                        general: General,
+                        statName: String,
+                        value: Double,
+                        aux: Map<String, Any?>,
+                    ): Double = if (general.id == 1 && statName == "warCriticalRatio") value - 0.2 else value
+                },
+            ),
+        )
+        val rng = RandUtil(LiteHashDrbg(seed))
+        val attacker = WarUnitGeneral(
+            rng,
+            WarUnitGeneralState(general(id = 1)),
+            attackerPipeline,
+            footman,
+            0,
+            true,
+            9,
+            false,
+        )
+        val defender = WarUnitGeneral(
+            rng,
+            WarUnitGeneralState(general(id = 2)),
+            defenderPipeline,
+            footman,
+            0,
+            false,
+            9,
+            false,
+        )
+        attacker.setOppose(defender)
+        defender.setOppose(attacker)
+
+        val statCalc = StatCalc(general(id = 1), attackerPipeline)
+        val withoutOppose = footman.getCriticalRatio(
+            statCalc.getStatValue("strength", false, true, true, false),
+            statCalc.getStatValue("intel", false, true, true, false),
+            statCalc.getStatValue("leadership", false, true, true, false),
+        )
+        assertEquals(withoutOppose - 0.2, attacker.getComputedCriticalRatio(), 1e-9)
     }
 
     @Test

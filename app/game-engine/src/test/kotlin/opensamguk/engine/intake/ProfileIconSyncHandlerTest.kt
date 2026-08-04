@@ -1,5 +1,6 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ChangeRecorder
@@ -13,6 +14,7 @@ import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -69,6 +71,15 @@ class ProfileIconSyncHandlerTest {
 
     private fun profileRows(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
         DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()).profileIconUpdates
+
+    private fun assertImmediateTerminal(result: Any?) {
+        val terminal = assertIs<CommandLifecycleResult>(result)
+        assertEquals("profileIconSync", terminal.type)
+        assertTrue(terminal.ok)
+        assertEquals("IMMEDIATE", terminal.commandKind)
+        assertEquals("ProfileIconSync", terminal.actionCode)
+        assertEquals(0, terminal.turnIdx)
+    }
 
     @Test
     fun `eligible owner-npc0 general is mutated in memory and recorded for typed-column flush`() {
@@ -177,5 +188,24 @@ class ProfileIconSyncHandlerTest {
         assertEquals(1, rows.size)
         assertEquals("default.jpg", rows.single().columns["picture"])
         assertEquals(0, rows.single().columns["image_server"])
+    }
+
+    @Test
+    fun `all profile icon paths return an immediate successful terminal result`() {
+        assertImmediateTerminal(
+            ProfileIconSyncHandler(world(general()), ChangeRecorder()).handle(sync()),
+        )
+        assertImmediateTerminal(
+            ProfileIconSyncHandler(world(general()), ChangeRecorder()).handle(sync(grade = 0)),
+        )
+        assertImmediateTerminal(
+            ProfileIconSyncHandler(world(general(userId = null)), ChangeRecorder()).handle(sync()),
+        )
+        assertImmediateTerminal(
+            ProfileIconSyncHandler(
+                world(general(picture = "abcd1234.jpg", imageServer = 1)),
+                ChangeRecorder(),
+            ).handle(sync(picture = "abcd1234.jpg", imgsvr = 1)),
+        )
     }
 }

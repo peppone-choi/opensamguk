@@ -62,7 +62,9 @@ class CheBulgachimJeuiGoldenTest {
             supplyState = 1, frontState = 0, trust = 50.0,
         )
         val nation = Nation(id = 1, level = 5, capitalCityId = 1, name = nationName, color = "#00ff00")
-        val draft = GeneralActionDraft(general = general, city = city, nation = nation)
+        val draft = GeneralActionDraft(general = general, city = city, nation = nation).apply {
+            destNation = Nation(id = 5, level = 5, capitalCityId = 5, name = destGeneralName, color = "#1a2b3c")
+        }
         val env = WorldEnv(year = 200, startYear = 190, develCost = 100)
         return GeneralActionResolveContext(
             draft = draft, rng = rng, env = env, month = 3, date = "12:34",
@@ -106,6 +108,8 @@ class CheBulgachimJeuiGoldenTest {
         assertEquals(0, msg.dest.generalId)
         assertEquals(5, msg.dest.nationId)
         assertEquals("위국", msg.dest.nationName)
+        // PHP che_불가침제의.php:190-196 copies $destNation['color'] into the message target.
+        assertEquals("#1a2b3c", msg.dest.color)
     }
 
     @Test

@@ -18,6 +18,7 @@ import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
 import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -237,5 +238,6 @@ class CheDeungyongSurak(private val pipeline: GeneralActionPipeline) : GeneralAc
         }
 
         d.general = g
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, key, emptyMap(), context.args)
     }
 }

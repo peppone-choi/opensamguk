@@ -18,6 +18,10 @@ import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.numberFormat
@@ -153,14 +157,23 @@ class CheSeondong(
             val ded = rng.nextRangeInt(1, 70)                                // DRAW3
 
             val (reqGold, reqRice) = getCost(env)
-            d.general = g0.copy(
+            var g = g0.copy(
                 gold = maxOf(0, g0.gold - reqGold),
                 rice = maxOf(0, g0.rice - reqRice),
-                experience = g0.experience + exp,
-                dedication = g0.dedication + ded,
-                meta = withMeta(g0.meta, "${statType}_exp" to metaInt(g0.meta, "${statType}_exp") + 1),
+            )
+            val experience = addExperience(g, exp.toDouble(), pipeline)
+            g = experience.general
+            experience.plainLog?.let { context.addPlainLog(it) }
+            val dedication = addDedication(g, ded.toDouble(), pipeline)
+            g = dedication.general
+            dedication.plainLog?.let { context.addPlainLog(it) }
+            g = g.copy(
+                meta = withMeta(g.meta, "${statType}_exp" to metaInt(g.meta, "${statType}_exp") + 1),
                 lastTurn = LastTurn(name, linkedMapOf("destCityID" to destCityId)),
             )
+            val statChange = checkStatChange(g)
+            d.general = statChange.general
+            statChange.plainLogs.forEach { context.addPlainLog(it) }
             return
         }
 
@@ -169,6 +182,7 @@ class CheSeondong(
         val injuryCount = sabotageInjury(rng, destCityGeneralList, commandName, context, pipeline)
 
         affectDestCity(context, rng, destCity, destCityName, destCityId, injuryCount)
+        consumeSabotageItemIfNeeded(context)
 
         val exp = rng.nextRangeInt(201, 300)                                 // DRAWn
         val ded = rng.nextRangeInt(141, 210)                                 // DRAWn
@@ -178,12 +192,29 @@ class CheSeondong(
         g = g.copy(
             gold = maxOf(0, g.gold - reqGold),
             rice = maxOf(0, g.rice - reqRice),
-            experience = g.experience + exp,
-            dedication = g.dedication + ded,
+        )
+        val experience = addExperience(g, exp.toDouble(), pipeline)
+        g = experience.general
+        experience.plainLog?.let { context.addPlainLog(it) }
+        val dedication = addDedication(g, ded.toDouble(), pipeline)
+        g = dedication.general
+        dedication.plainLog?.let { context.addPlainLog(it) }
+        g = g.copy(
             meta = withMeta(g.meta, "${statType}_exp" to metaInt(g.meta, "${statType}_exp") + 1),
             lastTurn = LastTurn(name, linkedMapOf("destCityID" to destCityId)),
         )
         d.general = g
+        d.rankIncrements.add(opensamguk.logic.actions.GeneralRankIncrement(g0.id, "firenum", 1))
+        StaticEventHandler.handleEvent(
+            d.general,
+            null,
+            key,
+            mapOf("year" to env.year, "startYear" to env.startYear, "develCost" to env.develCost),
+            context.args,
+        )
+        val statChange = checkStatChange(d.general)
+        d.general = statChange.general
+        statChange.plainLogs.forEach { context.addPlainLog(it) }
     }
 
     /**

@@ -12,6 +12,8 @@ import opensamguk.logic.ai.AiWorldView
 import opensamguk.logic.ai.AutorunGeneralPolicy
 import opensamguk.logic.ai.AutorunNationPolicy
 import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.ai.ExternalSqlRandBranch
+import opensamguk.logic.ai.ExternalSqlRandSelector
 import opensamguk.logic.ai.GeneralAiContext
 import opensamguk.logic.ai.KvDelta
 import opensamguk.logic.domain.General
@@ -147,6 +149,7 @@ class GenFoundBodiesTest {
         notFullNationCount: Int = 0,
         seonyangCandidates: List<General> = emptyList(),
         orankaeRulerCandidates: List<General> = emptyList(),
+        externalSqlRandSelector: ExternalSqlRandSelector? = null,
         generalPolicy: AutorunGeneralPolicy = AutorunGeneralPolicy(npcType = 6, nationId = nationId),
         nationPolicy: AutorunNationPolicy = AutorunNationPolicy(npcType = 2, tech = 0, develcost = 10),
     ): GeneralAiContext {
@@ -189,6 +192,7 @@ class GenFoundBodiesTest {
             foundDeadlineMore = foundDeadlineMore,
             nationCount = nationCount,
             notFullNationCount = notFullNationCount,
+            externalSqlRandSelector = externalSqlRandSelector,
             seonyangCandidates = seonyangCandidates,
             orankaeRulerCandidates = orankaeRulerCandidates,
         )
@@ -289,6 +293,35 @@ class GenFoundBodiesTest {
         assertTrue(rng.draws.isEmpty())
     }
 
+    @Test
+    fun `do선양 replays a recorded SQL RAND selection without a DRBG draw`() {
+        val pool = listOf(
+            gen(id = 9, nationId = 3, npcType = 6),
+            gen(id = 7, nationId = 3, npcType = 6),
+            gen(id = 5, nationId = 3, npcType = 5),
+        )
+        val rng = RecordingRng("abdicate-recorded")
+        val selector = ExternalSqlRandSelector { branch, actor, year, month, candidates ->
+            assertEquals(ExternalSqlRandBranch.SEONYANG_DEST_GENERAL, branch)
+            assertEquals(1, actor)
+            assertEquals(200, year)
+            assertEquals(1, month)
+            assertEquals(listOf(9, 7), candidates)
+            9
+        }
+        val ctx = ctxOf(
+            rng,
+            instance(nationId = 3),
+            nationId = 3,
+            seonyangCandidates = pool,
+            externalSqlRandSelector = selector,
+        )
+
+        val chosen = GenFoundFamily.do선양(ctx)(null)!!
+        assertEquals(9, chosen.args["destGeneralID"])
+        assertTrue(rng.draws.isEmpty())
+    }
+
     // ==================================================================================================
     // do거병 (PHP :3217-3288) — up to 4 draws; BFS dist-3 scan; che_거병.
     // ==================================================================================================
@@ -370,6 +403,34 @@ class GenFoundBodiesTest {
         assertEquals("che_임관", chosen.actionCode)
         assertEquals(4, chosen.args["destNationID"], "nation of min(no): general 8 → nation 4 (F-QUAR substitute)")
         assertTrue(rng.draws.isEmpty(), "the ORDER BY RAND ruler substitute consumes ZERO DRBG draws")
+    }
+
+    @Test
+    fun `do국가선택 replays a recorded SQL RAND nation without a DRBG draw`() {
+        val rulers = listOf(
+            gen(id = 11, nationId = 5, npcType = 9, officerLevel = 12),
+            gen(id = 8, nationId = 4, npcType = 9, officerLevel = 12),
+        )
+        val rng = RecordingRng("join-orankae-recorded")
+        val selector = ExternalSqlRandSelector { branch, actor, year, month, candidates ->
+            assertEquals(ExternalSqlRandBranch.ORANKAE_RULER_NATION, branch)
+            assertEquals(1, actor)
+            assertEquals(200, year)
+            assertEquals(1, month)
+            assertEquals(listOf(5, 4), candidates)
+            5
+        }
+        val ctx = ctxOf(
+            rng,
+            instance(nationId = 0),
+            selfNpcType = 9,
+            orankaeRulerCandidates = rulers,
+            externalSqlRandSelector = selector,
+        )
+
+        val chosen = GenFoundFamily.do국가선택(ctx)(null)!!
+        assertEquals(5, chosen.args["destNationID"])
+        assertTrue(rng.draws.isEmpty())
     }
 
     @Test

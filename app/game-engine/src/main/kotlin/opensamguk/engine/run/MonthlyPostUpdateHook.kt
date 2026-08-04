@@ -8,6 +8,8 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.turn.RankColumn
+import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.world.WorldActionContext
 import opensamguk.engine.tournament.TournamentAdminService
@@ -94,8 +96,8 @@ class MonthlyPostUpdateHook(
                         experience = g.experience,
                         dedication = g.dedication,
                         crew = g.crew,
-                        killcrewPersonRankValue = 0, // rank_data not loaded in-memory; defaults to 0 (PHP LEFT JOIN parity)
-                        deathcrewPersonRankValue = 0,
+                        killcrewPersonRankValue = effectiveRankValue(g, RankColumn.KILLCREW_PERSON),
+                        deathcrewPersonRankValue = effectiveRankValue(g, RankColumn.DEATHCREW_PERSON),
                     )
                 },
                 cities = nationCities.map { c ->
@@ -124,11 +126,12 @@ class MonthlyPostUpdateHook(
             recorder.recordNationEnvKv(
                 result.nationId,
                 "max_power",
-                linkedMapOf(
+                linkedMapOf<String, Any?>(
                     "maxPower" to result.maxPowerKv.maxPower,
                     "maxCrew" to result.maxPowerKv.maxCrew,
-                    "maxCities" to result.maxPowerKv.maxCities,
-                ),
+                ).apply {
+                    result.maxPowerKv.maxCities?.let { put("maxCities", it) }
+                },
             )
         }
 
@@ -446,9 +449,18 @@ class MonthlyPostUpdateHook(
     private fun nationEnv(nation: Nation): Map<String, Any?> =
         (nation.meta["nation_env"] as? Map<*, *>)?.entries?.associate { (k, v) -> k.toString() to v } ?: emptyMap()
 
+    private fun effectiveRankValue(general: TurnGeneral, column: RankColumn): Int {
+        val baseValue = (general.meta[column.column] as? Number)?.toInt() ?: 0
+        return when (val delta = recorder.rankDeltas(general.id)[column]) {
+            is RankDelta.Increment -> baseValue + delta.value
+            is RankDelta.Set -> delta.value
+            null -> baseValue
+        }
+    }
+
     private fun powerKvFrom(raw: Any?): PowerKv? {
         val map = raw as? Map<*, *> ?: return null
-        val maxCities = (map["maxCities"] as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+        val maxCities = (map["maxCities"] as? List<*>)?.mapNotNull { it?.toString() }
         return PowerKv(
             maxPower = (map["maxPower"] as? Number)?.toInt() ?: 0,
             maxCrew = (map["maxCrew"] as? Number)?.toInt() ?: 0,

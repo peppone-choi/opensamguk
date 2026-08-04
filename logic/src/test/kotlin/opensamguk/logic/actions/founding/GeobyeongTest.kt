@@ -23,7 +23,7 @@ import kotlin.test.assertTrue
  *   - one `nation` row (color #330000, gold 0, rice 2000, rate 20, bill 100, strategic_cmd_limit 12,
  *     surlimit 72, secretlimit 3|1, type che_중립, gennum 1, level 0 wandering),
  *   - a `diplomacy` PAIR per OTHER nation (`{me:dest,you:new}` THEN `{me:new,you:dest}`, state 2 term 0,
- *     in nation-id ASCENDING order),
+ *     in the insertion order returned by PHP's unordered nation query),
  *   - 24 `nation_turn` rows (outer officer_level [12,11], inner turn_idx 0..11), action 휴식 / brief 휴식,
  * plus the actor's JOIN transition (belong 1, officer_level 12, officer_city 0, nation new), exp/ded +100,
  * and a TRAILING unique-item lottery (reason 거병) on the SEPARATE unique rng AFTER all writes.
@@ -151,16 +151,15 @@ class GeobyeongTest {
     }
 
     @Test
-    fun `creates a diplomacy pair per other nation in ascending order`() {
+    fun `creates a diplomacy pair per other nation in PHP query insertion order`() {
         val dip = resolveOnce(existingNationIds = listOf(3, 1, 2)).draft.createdDiplomacy
-        // 2 rows per existing nation; the OUTER iteration is nation-id ASCENDING (getAllNationStaticInfo)
         assertEquals(6, dip.size)
         // per nation: {me:dest, you:new} then {me:new, you:dest}, state 2 term 0
         assertEquals(
             listOf(
+                3 to NEW_NATION_ID, NEW_NATION_ID to 3,
                 1 to NEW_NATION_ID, NEW_NATION_ID to 1,
                 2 to NEW_NATION_ID, NEW_NATION_ID to 2,
-                3 to NEW_NATION_ID, NEW_NATION_ID to 3,
             ),
             dip.map { it.me to it.you },
         )
@@ -217,6 +216,29 @@ class GeobyeongTest {
         assertEquals(
             listOf("<C>●</>${MONTH}월:<Y>유비</>가 <G><b>성도</b></>에 거병하였습니다."),
             context.globalActionLogs(),
+        )
+    }
+
+    @Test
+    fun `emits the three PHP history logs before the reward tail`() {
+        val context = resolveOnce()
+
+        assertEquals(
+            listOf("<C>●</>${env.year}년 ${MONTH}월:<Y><b>【거병】</b></><D><b>유비</b></>가 세력을 결성하였습니다."),
+            context.globalHistoryLogs(),
+        )
+        assertEquals(
+            listOf("<C>●</>${env.year}년 ${MONTH}월:<G><b>성도</b></>에서 거병"),
+            context.generalHistoryLogs(),
+        )
+        assertEquals(
+            listOf("<C>●</>${env.year}년 ${MONTH}월:<Y>유비</>가 <G><b>성도</b></>에서 거병"),
+            context.nationalHistoryLogs(),
+        )
+        assertEquals(
+            listOf("action", "action", "history", "history", "history"),
+            context.orderedLogEvents().map { it.category },
+            "PHP order is general action, global action, then global/general/national history before exp/ded",
         )
     }
 

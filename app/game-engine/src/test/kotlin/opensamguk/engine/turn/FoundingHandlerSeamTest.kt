@@ -144,6 +144,47 @@ class FoundingHandlerSeamTest {
         assertEquals("che_중립", n.typeCode)
         assertEquals(2000, n.rice)
         assertEquals(1, (n.meta["secretlimit"] as Number).toInt(), "secretlimit 1 because scenario 1010 ≥ 1000")
+        assertEquals(
+            listOf(
+                "capset",
+                "gennum",
+                "bill",
+                "rate",
+                "rate_tmp",
+                "secretlimit",
+                "chief_set",
+                "scout",
+                "war",
+                "strategic_cmd_limit",
+                "surlimit",
+                "spy",
+                "aux",
+            ),
+            n.meta.keys.toList(),
+            "created nation folded meta follows the PHP nation schema order",
+        )
+        assertEquals(
+            linkedMapOf<String, Any?>(
+                "capset" to 0,
+                "gennum" to 1,
+                "bill" to 100,
+                "rate" to 20,
+                "rate_tmp" to 0,
+                "secretlimit" to 1,
+                "chief_set" to 0,
+                "scout" to 0,
+                "war" to 0,
+                "strategic_cmd_limit" to 12,
+                "surlimit" to 72,
+                "spy" to "{}",
+                "aux" to "{}",
+            ),
+            n.meta,
+            "explicit INSERT values override schema defaults while omitted columns materialize their defaults",
+        )
+        val logicNation = PerTurnOverlay.toLogicNation(n)
+        assertEquals(1, logicNation.gennum, "typed gennum round-trips through folded meta")
+        assertEquals(0, logicNation.capset, "typed capset round-trips through folded meta")
 
         // 24 nation_turn rows (outer [12,11] × inner 0..11), all keyed to the new nation.
         assertEquals(24, dirty.nationTurnDirty.size, "24 reserved nation_turn rows drained")
@@ -169,17 +210,16 @@ class FoundingHandlerSeamTest {
         assertEquals(12, joinedActor.officerLevel, "actor becomes the lord (officer_level 12)")
         assertTrue(handler.recorder.dirtyGeneralIds().contains(42), "the actor UPDATE rides the recorder")
 
-        // the broadcast headline survives the general-pass handler (che_거병.php:161; was dropped pre-fix).
-        // 성도 + 유비 (josa 가) → "<Y>유비</>가 <G><b>성도</b></>에 거병하였습니다." under the MONTH-prefix render.
-        val broadcast = dirty.logs.filter { it.scope == "global" }.map { it.text }
+        val globalLogs = dirty.logs.filter { it.scope == "global" }.map { it.text }
         assertEquals(
             listOf(
+                "<C>●</>${YEAR}년 ${MONTH}월:<Y><b>【거병】</b></><D><b>유비</b></>가 세력을 결성하였습니다.",
+                "<C>●</>${YEAR}년 ${MONTH}월:<C><b>【아이템】</b></><D><b>재야</b></>의 <Y>유비</>가 <C>흉노마(+8)</>를 습득했습니다!",
                 "<C>●</>${MONTH}월:<Y>유비</>가 <G><b>성도</b></>에 거병하였습니다.",
                 "<C>●</>${MONTH}월:<Y>유비</>가 <C>흉노마(+8)</>를 습득했습니다!",
-                "<C>●</>${YEAR}년 ${MONTH}월:<C><b>【아이템】</b></><D><b>재야</b></>의 <Y>유비</>가 <C>흉노마(+8)</>를 습득했습니다!",
             ),
-            broadcast,
-            "거병 broadcast precedes the PHP-tail lottery logs and neutral winners are 재야",
+            globalLogs,
+            "거병과 아이템 로그는 PHP ActionLogger의 global history/action 버킷 순서를 따른다",
         )
     }
 
@@ -196,6 +236,17 @@ class FoundingHandlerSeamTest {
         assertEquals(1, payload.createdNations.size, "createdNations carried to the flush")
         assertEquals(24, payload.createdNationTurns.size, "createdNationTurns carried to the flush")
         assertEquals(4, payload.createdDiplomacy.size, "createdDiplomacy carried to the flush")
+        assertEquals(
+            listOf(
+                "HISTORY" to "<C>●</>${YEAR}년 ${MONTH}월:<G><b>성도</b></>에서 거병",
+                "ACTION" to "<C>●</>${MONTH}월:거병에 성공하였습니다. <1>08:30</>",
+            ),
+            payload.logEntries
+                .filter { it.scope == "GENERAL" && it.generalId == 42 }
+                .filter { it.text.endsWith("에서 거병") || it.text.contains("거병에 성공하였습니다.") }
+                .map { it.category to it.text },
+            "Kotlin flush payload follows PHP ActionLogger general-history then general-action bucket order",
+        )
 
         // the actor is an UPDATE (NOT a create) with the new nation id — the §2 reconciliation + FK ordering
         // (nation INSERT step-3 before the actor's nation_id UPDATE step-7).
@@ -225,6 +276,32 @@ class FoundingHandlerSeamTest {
             (wLegacy.consumeDirtyState().createdNations.single().meta["secretlimit"] as Number).toInt(),
             "scenario 999 < 1000 ⇒ secretlimit 3",
         )
+    }
+
+    @Test
+    fun `created nation explicit meta overrides defaults while typed counters remain canonical`() {
+        val logic = opensamguk.logic.domain.Nation(
+            id = 3,
+            level = 0,
+            capitalCityId = 0,
+            gennum = 7,
+            capset = 9,
+            meta = linkedMapOf(
+                "rate_tmp" to 17,
+                "gennum" to 99,
+                "capset" to 98,
+                "custom" to "kept",
+            ),
+        )
+
+        val engine = PerTurnOverlay.toEngineNation(logic)
+
+        assertEquals(17, engine.meta["rate_tmp"], "explicit folded value overrides the PHP schema default")
+        assertEquals("kept", engine.meta["custom"], "non-schema explicit meta survives the conversion")
+        assertEquals(7, engine.meta["gennum"], "typed gennum is canonical over conflicting explicit meta")
+        assertEquals(9, engine.meta["capset"], "typed capset is canonical over conflicting explicit meta")
+        assertEquals(7, PerTurnOverlay.toLogicNation(engine).gennum)
+        assertEquals(9, PerTurnOverlay.toLogicNation(engine).capset)
     }
 
     @Test

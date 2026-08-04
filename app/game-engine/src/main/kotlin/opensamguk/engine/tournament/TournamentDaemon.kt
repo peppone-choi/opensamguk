@@ -1,10 +1,13 @@
 package opensamguk.engine.tournament
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.common.rng.PhpMt19937
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.turn.RankColumn
+import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.infra.entity.GameKvEntity
 import opensamguk.infra.read.GameKvRepository
@@ -22,6 +25,7 @@ class TournamentDaemon(
     private val gameKvRepository: GameKvRepository,
     private val objectMapper: ObjectMapper = ObjectMapper(),
     private val bettingFactory: (InMemoryTurnWorld, ChangeRecorder) -> TournamentBettingPort,
+    private val randomFactory: () -> PhpMt19937 = { PhpMt19937.ambient() },
 ) {
     fun processTournament(world: InMemoryTurnWorld, recorder: ChangeRecorder, now: Instant): TournamentProcessResult {
         val kv = TournamentKv(gameKvRepository.findByTable("game_env"), objectMapper)
@@ -39,12 +43,42 @@ class TournamentDaemon(
             kv
         }
         val store = InMemoryTournamentStore(latestKv.entries().associateBy { it.id })
-        val result = TournamentProcessor(store, bettingFactory(world, recorder)).process(state, now)
+        val result = TournamentProcessor(
+            store = store,
+            betting = bettingFactory(world, recorder),
+            random = randomFactory(),
+            rankValue = { generalId, type -> effectiveRankValue(world, recorder, generalId, type) },
+        ).process(state, now)
         if (!result.changed) return result
 
         recorder.recordTournamentState(result.state)
         recorder.recordTournamentEntries(store.entries())
+        if (result.fightLogs.isNotEmpty()) {
+            val logs = LinkedHashMap(kv.logs())
+            logs.putAll(result.fightLogs)
+            recorder.recordTournamentLogs(logs)
+        }
+        result.rankDeltas.forEach { delta ->
+            RankColumn.byColumn(delta.type)?.let { column ->
+                recorder.recordRankIncrease(delta.generalId, column, delta.amount)
+            }
+        }
         return result
+    }
+
+    private fun effectiveRankValue(
+        world: InMemoryTurnWorld,
+        recorder: ChangeRecorder,
+        generalId: Int,
+        type: String,
+    ): Int {
+        val base = (world.getGeneralById(generalId)?.meta?.get(type) as? Number)?.toInt() ?: 0
+        val column = RankColumn.byColumn(type) ?: return base
+        return when (val pending = recorder.rankDeltas(generalId)[column]) {
+            is RankDelta.Increment -> base + pending.value
+            is RankDelta.Set -> pending.value
+            null -> base
+        }
     }
 
     private fun seedEntries(world: InMemoryTurnWorld): List<TournamentEntry> {
@@ -182,6 +216,18 @@ private class TournamentKv(
                 }
             }.getOrDefault(emptyList())
         } ?: emptyList()
+
+    fun logs(): Map<Int, List<String>> =
+        row("tournament_logs")?.value?.let {
+            runCatching {
+                val root = objectMapper.readTree(it)
+                linkedMapOf<Int, List<String>>().also { logs ->
+                    root.fields().forEachRemaining { (key, value) ->
+                        logs[key.toInt()] = value.map { line -> line.asText() }
+                    }
+                }
+            }.getOrDefault(emptyMap())
+        } ?: emptyMap()
 
     fun withEntries(entries: List<TournamentEntry>): TournamentKv {
         val merged = rows.filterNot { it.namespace == "game_env" && it.key == "tournament_entries" }.toMutableList()

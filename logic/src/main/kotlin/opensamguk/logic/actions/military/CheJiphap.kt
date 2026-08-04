@@ -5,9 +5,14 @@ import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.*
+import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -32,8 +37,12 @@ class CheJiphap(
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
         notBeNeutral(), occupiedCity(), suppliedCity(),
         mustBeTroopLeader(),
-        // ReqTroopMembers — the member existence is preloaded by the caller (DB must NOT be touched in test()).
-        reqTroopMembers { _, _ -> true },
+        reqTroopMembers { ctx, view ->
+            val actor = view.get(RequirementKey.General(ctx.actorId)) as? General
+            val generals = view.get(RequirementKey.GeneralList) as? Collection<*>
+            actor != null && generals.orEmpty().filterIsInstance<General>()
+                .any { it.id != actor.id && it.troop == actor.id }
+        },
     )
 
     override fun resolve(context: GeneralActionResolveContext) {
@@ -58,11 +67,21 @@ class CheJiphap(
                 "<C>●</>${context.troopName} 부대원들은 <G><b>$cityName</b></>$josaRo 집합되었습니다.")
         }
 
-        d.general = g0.copy(
-            experience = g0.experience + 70.0,
-            dedication = g0.dedication + 100.0,
-            meta = withMeta(g0.meta, "leadership_exp" to metaDouble(g0.meta, "leadership_exp") + 1),
+        var g = g0
+        val expRes = addExperience(g, 70.0, pipeline)
+        g = expRes.general
+        expRes.plainLog?.let { context.addPlainLog(it) }
+        val dedRes = addDedication(g, 100.0, pipeline)
+        g = dedRes.general
+        dedRes.plainLog?.let { context.addPlainLog(it) }
+        g = g.copy(
+            meta = withMeta(g.meta, "leadership_exp" to metaDouble(g.meta, "leadership_exp") + 1.0),
             lastTurn = LastTurn(name),
         )
+        val statRes = checkStatChange(g)
+        g = statRes.general
+        statRes.plainLogs.forEach { context.addPlainLog(it) }
+        d.general = g
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 }

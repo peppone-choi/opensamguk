@@ -15,22 +15,24 @@ The denominator this skill chips away at: **93 turn-reservable command classes**
 Classify the PHP action and an existing Kotlin sibling first:
 
 ```text
-Turn-reserved ring command
+Immediate daemon command
 POST /api/command/{code}
-  → CommandReserveService.reserve
   → CommandWireMapper (intakeCodes + toCommand)  ← required for this seam
-  → TurnDaemonCommand → engine dispatcher → ReservedTurnHandler
+  → TurnDaemonCommand → engine dispatcher → immediate handler
   → ChangeRecorder → JdbcFlushExecutor
 
-Immediate-intake mutation
-web/game route → its designated game-api controller/service → documented immediate admission,
-execution, and result boundary
+Turn-reserved `che_*` command
+game-api writes/reads the reserved ring + admission lifecycle
+  → due ring executes through ReservedTurnHandler → CommandRegistry
+  → ChangeRecorder → JdbcFlushExecutor
 ```
 
-A turn-reserved code absent from `intakeCodes` can precheck as AVAILABLE yet be silently denied by
-the engine. An immediate-intake mutation must instead be wired and tested through its own
-controller/service path; do not force it through the reserved ring merely to satisfy this skill.
-Arg-bearing UI actions use `web/game` `CommandModal` where that page contract requires it.
+An immediate daemon command must be classified explicitly in `intakeCodes` and `toCommand`.
+Otherwise `CommandReserveService` treats it as a turn-reserved candidate and attempts registry
+resolution/ring admission instead of reaching the immediate handler. Turn-reserved `che_*`
+commands are intentionally not `intakeCodes` entries: their reserved-ring lifecycle and later
+`ReservedTurnHandler`/`CommandRegistry` execution must be wired and tested instead. Arg-bearing UI
+actions use `web/game` `CommandModal` where that page contract requires it.
 
 ## SAFETY GATES (non-negotiable — read before every step)
 
@@ -42,7 +44,7 @@ Arg-bearing UI actions use `web/game` `CommandModal` where that page contract re
    ```
    Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
    ```
-6. **Daemon writes go only through ChangeRecorder → JdbcFlushExecutor** (architecture-test-enforced). No JPA `EntityManager` writes in game-engine. `CommandReserveService.reserve` (general_turn JDBC + Redis poke) is **sanctioned intake**, not a forbidden write.
+6. **Daemon writes go only through ChangeRecorder → JdbcFlushExecutor** (architecture-test-enforced). No JPA `EntityManager` writes in game-engine. `CommandReserveService.reserve` is sanctioned intake: both classified branches commit the durable `command_inbox` DB transaction before a best-effort Redis wake; later daemon state effects still follow the one-daemon-write rule.
 
 ## Ordered steps
 
@@ -56,7 +58,7 @@ Run sequentially. Each step delegates to its agent; do not skip ahead. Use CodeG
 - Output: fixture JSON under `logic/src/test/resources/golden/<area>/`, retained with the final logical unit. Do **not** make an intermediate fixture commit. Any commit requires separate explicit human approval.
 
 ### 2. Port logic + write GoldenTest — agent: `parity-porter`
-- Port the PHP behavior into `logic/` (`actions/*`, register in `CommandRegistry`; war paths via `war/*`). Use Korean code comments; identifiers stay English, while log-parity strings retain the exact Korean/markup used by PHP.
+- Port the PHP behavior into `logic/` (`actions/*`, register in `CommandRegistry`; war paths via `war/*`). Use English code comments; identifiers stay English, while game-content and log-parity strings retain the exact Korean/markup used by PHP.
 - Honor: `PhpRound` half-away-from-zero (`phpRound(v,-2)`, NEVER `phpRound(v/100)*100`, NEVER `Math.round`/`kotlin.math.round`); `Util::toInt`/`intdiv` = truncate-toward-zero; damage clamp = `ceil()`. `Josa` 조사 + color/tag markup for logs. Insertion order preserved (`LinkedHashMap`), PHP 8.0+ stable sorts (no non-stable secondary comparator).
 - Write the `*GoldenTest`/`*ReplayGateTest` that loads the step-1 fixture and asserts draw-for-draw (RNG) or log/delta byte-parity (RNG-free). Build the `RandUtil(LiteHashDrbg(SeedSerializer.serialize(...)))` exactly as PHP seeds it; for battle, ONE `RandUtil(warSeed)` threaded by reference, never re-seeded.
 
@@ -66,8 +68,8 @@ Run sequentially. Each step delegates to its agent; do not skip ahead. Use CodeG
 - If after honest investigation a value is **genuinely uncapturable** (e.g. unreachable in scenario_1010, or a path with zero live PHP callers): **quarantine WITH PROOF** — document the sibling-code-path byte-match that establishes correctness, mark the test, and log to the phase backlog. This is the ONLY sanctioned exit other than green. **RNG-bearing commands cannot pass this step un-gated** (gate-rule 2).
 
 ### 4. Wire the classified backend seam + IT — agent: `intake-wirer`
-- **Turn-reserved ring:** add the code to `intakeCodes` + `toCommand` in `app/game-api/.../reserve/CommandWireMapper.kt`; add/extend the `TurnDaemonCommand` variant; route it through the dispatcher/`ReservedTurnHandler`, including the required actor and target context.
-- **Immediate intake:** wire the documented game-api controller/service and result path for that mutation. Do not add an unrelated mapper entry or reserved-turn variant.
+- **Immediate daemon command:** add the code to `intakeCodes` + `toCommand` in `app/game-api/.../reserve/CommandWireMapper.kt`; add/extend the `TurnDaemonCommand` variant and route it through the engine dispatcher to its immediate handler.
+- **Turn-reserved `che_*` command:** wire the reserved-ring admission/read lifecycle and later due-ring execution through `ReservedTurnHandler`/`CommandRegistry`, including the required actor and target context. Do not add it as an unrelated `intakeCodes` entry.
 - For either seam, preserve the daemon write invariant: mutations executed by the daemon use `ChangeRecorder` channels and the matching `JdbcFlushExecutor` flush step (created/dirty/deleted; never inline/JPA writes).
 - Add an integration test for the actual admission-to-result path. Testcontainers on macOS: `api.version=1.44` + `DOCKER_CONTEXT=default` + Ryuk disabled (wired in `tasks.test`); Docker-unavailable ⇒ IT **skipped**, not failed.
 
@@ -76,7 +78,7 @@ Run sequentially. Each step delegates to its agent; do not skip ahead. Use CodeG
 - Match the precheck/gating so the UI only offers the command when reservable.
 
 ### 6. Adversarial review — agent: `parity-reviewer`
-- Adversarial pass over the whole change: RNG draw order/count/args, rounding mode, log byte-parity (Josa + markup + order = execution order), flush-delta-not-inline, correct immediate-vs-reserved seam classification, `intakeCodes` presence **when reserved**, and insertion order. Use CodeGraph `codegraph_explore` for affected-flow context.
+- Adversarial pass over the whole change: RNG draw order/count/args, rounding mode, log byte-parity (Josa + markup + order = execution order), flush-delta-not-inline, correct immediate-daemon vs turn-reserved `che_*` classification, `intakeCodes` presence **when immediate** and absence **when reserved**, and insertion order. Use CodeGraph `codegraph_explore` for affected-flow context.
 - Any **blocker** → fix it (or bounce to the owning agent) and re-run the relevant gate (step 3) / IT (step 4). Do not proceed with an open blocker.
 
 ### 7. Prepare one logical unit
@@ -84,4 +86,4 @@ Run sequentially. Each step delegates to its agent; do not skip ahead. Use CodeG
 - If explicit human approval to commit is received, make one logical commit with the `Co-Authored-By: Claude Opus 4.8 (1M context)` trailer. Otherwise stop at the verified working tree; do not commit or push.
 
 ## Done means
-Draw-for-draw GREEN gate (or quarantine-with-proof + backlog entry) · correct immediate or reserved seam wired · daemon flush-delta invariant preserved · IT round-trips · FE submits · reviewer blockers cleared · approved one-unit commit when authorized. Anything short of this is an open gap, not a closed one.
+Draw-for-draw GREEN gate (or quarantine-with-proof + backlog entry) · immediate daemon mapping/dispatch or reserved `che_*` ring/handler seam correctly wired · daemon flush-delta invariant preserved · IT round-trips · FE submits · reviewer blockers cleared · approved one-unit commit when authorized. Anything short of this is an open gap, not a closed one.

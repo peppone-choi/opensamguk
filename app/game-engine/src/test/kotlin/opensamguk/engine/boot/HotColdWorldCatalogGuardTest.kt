@@ -291,7 +291,7 @@ class HotColdWorldCatalogGuardTest {
     }
 
     private fun runtimeReadCalls(path: String, text: String): List<String> {
-        val normalized = stripComments(text).replace(Regex("""\n\s*\."""), ".")
+        val normalized = stripComments(text).replace(Regex("""\n\s*\??\."""), ".")
         val receivers = repositoryReceivers(normalized).toMutableSet()
         var changed = true
         while (changed) {
@@ -342,7 +342,7 @@ class HotColdWorldCatalogGuardTest {
     }
 
     private fun directSqlCalls(path: String, text: String): List<String> {
-        val normalized = stripComments(text).replace(Regex("""\n\s*\."""), ".")
+        val normalized = stripComments(text).replace(Regex("""\n\s*\??\."""), ".")
         val receivers = sqlReceivers(normalized)
         if (receivers.isEmpty()) return emptyList()
         val receiverPattern = receivers.joinToString("|") { Pattern.quote(it) }

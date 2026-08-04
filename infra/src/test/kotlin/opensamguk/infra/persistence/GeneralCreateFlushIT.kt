@@ -204,6 +204,79 @@ class GeneralCreateFlushIT {
     }
 
     @Test
+    fun `created general preserves thirty typed initial turn slots in order`() {
+        val base = linkedMapOf<String, Any?>(
+            "id" to 9002,
+            "user_id" to null,
+            "name" to "부대장",
+            "nation_id" to 1,
+            "city_id" to 5,
+            "troop_id" to 9002,
+            "npc_state" to 2,
+            "affinity" to 75,
+            "born_year" to 180,
+            "dead_year" to 300,
+            "picture" to "default.jpg",
+            "image_server" to 0,
+            "leadership" to 70,
+            "strength" to 65,
+            "intel" to 60,
+            "politics" to 50,
+            "charm" to 50,
+            "injury" to 0,
+            "experience" to 0,
+            "dedication" to 0,
+            "officer_level" to 1,
+            "gold" to 1_000,
+            "rice" to 1_000,
+            "crew" to 0,
+            "crew_type_id" to 1_100,
+            "train" to 0,
+            "atmos" to 0,
+            "weapon_code" to "None",
+            "book_code" to "None",
+            "horse_code" to "None",
+            "item_code" to "None",
+            "turn_time" to "2026-06-07T12:00:00Z",
+            "age" to 20,
+            "start_age" to 20,
+            "personal_code" to "None",
+            "special_code" to "None",
+            "special2_code" to "None",
+            "officer_city" to 0,
+            "last_turn" to "{}",
+            "meta" to "{}",
+            "penalty" to "{}",
+        )
+        val turns = List(ScenarioImporter.MAX_GENERAL_TURNS) { idx ->
+            InitialGeneralTurnRow("che_집합", """{"slot":$idx}""", "집합")
+        }
+
+        executor.flush(
+            FlushPayload(
+                worldId = WorldId(1),
+                worldStateUpdate = ws(),
+                createdGenerals = listOf(GeneralCreateRow(base, turns)),
+            ),
+        )
+
+        val rows = jdbc.queryForList(
+            """
+            SELECT turn_idx, action_code, arg::text AS arg, brief
+              FROM general_turn
+             WHERE world_id = 1 AND general_id = 9002
+             ORDER BY turn_idx
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+        assertEquals((0 until ScenarioImporter.MAX_GENERAL_TURNS).toList(), rows.map { (it["turn_idx"] as Number).toInt() })
+        assertEquals(List(ScenarioImporter.MAX_GENERAL_TURNS) { "che_집합" }, rows.map { it["action_code"] })
+        assertEquals("""{"slot": 0}""", rows.first()["arg"])
+        assertEquals("""{"slot": 29}""", rows.last()["arg"])
+        assertEquals(List(ScenarioImporter.MAX_GENERAL_TURNS) { "집합" }, rows.map { it["brief"] })
+    }
+
+    @Test
     fun `world one root mutations reject a world two general and roll back`() {
         jdbc.update(
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (2, 'sc2', 200, 1, 3600)",

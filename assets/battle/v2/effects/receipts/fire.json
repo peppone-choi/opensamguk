@@ -1,0 +1,416 @@
+{
+  "schema": "opensamguk.v2.battle-effects-extraction-receipt.v1",
+  "setId": "fire",
+  "noFallbackVerified": true,
+  "engine": "component-row",
+  "engineRevision": "9d4ecaf5ab56",
+  "extraction": {
+    "segmentation": "projection",
+    "allowSlotFallback": false,
+    "repalette": true,
+    "minUsedPixels": 17
+  },
+  "compiler": {
+    "script": {
+      "path": "tools/assets/compile-v2-battle-effects.mjs",
+      "sha256": "aa441bc50ff389b8faf21eeee338bc12c5ec18e814b7bff866195fa307c6a0f5",
+      "bytes": 42333
+    },
+    "toolchain": {
+      "root": "sprite-gen",
+      "prepare": {
+        "path": "scripts/prepare_sprite_run.py",
+        "sha256": "c16e4140310b09090cca1f51b2b5054a8b65631b5bc12ae06a97abab4e97bf5a",
+        "bytes": 453
+      },
+      "extract": {
+        "path": "scripts/extract_sprite_row_frames.py",
+        "sha256": "a17d099b44b58dce4e7179df549c50cec83d73c3402f94c72616aff4735ce748",
+        "bytes": 453
+      },
+      "compose": {
+        "path": "scripts/compose_sprite_atlas.py",
+        "sha256": "c30fc8b2913b32a31fd83c4b4697114f9bcc1228a10ddd9f7da5816976ab77bd",
+        "bytes": 465
+      }
+    }
+  },
+  "styleAnchor": {
+    "path": "assets/battle/v2/effects/source/fire-style-anchor.png",
+    "sha256": "dff8b4eb6a9810867d6749b2fe42cba2f80fa7532edbbdb6e4c3881cdf5c069e",
+    "bytes": 1060158
+  },
+  "atlas": {
+    "path": "assets/battle/v2/effects/atlases/fire.png",
+    "sha256": "4ddb362dcfce59887bbc36d7969fe09589ed1f97a7354d3f38229315819c051a",
+    "bytes": 43474,
+    "width": 1536,
+    "height": 768
+  },
+  "rows": [
+    {
+      "state": "fire_arrow_flight",
+      "source": {
+        "path": "assets/battle/v2/effects/source/fire_arrow_flight.png",
+        "sha256": "41407d354e96f2881745f92d411afce0b2812ba5c2e029ea0c57044ec53dbff0",
+        "bytes": 1022424
+      },
+      "frames": 4,
+      "method": "components",
+      "engineRevision": "9d4ecaf5ab56",
+      "frameRecords": [
+        {
+          "index": 0,
+          "nontransparentPixels": 1948,
+          "bbox": [
+            54,
+            118,
+            144,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparentPixels": 1124,
+          "bbox": [
+            64,
+            138,
+            146,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 2,
+          "nontransparentPixels": 704,
+          "bbox": [
+            76,
+            140,
+            148,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 3,
+          "nontransparentPixels": 2104,
+          "bbox": [
+            38,
+            100,
+            128,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        }
+      ]
+    },
+    {
+      "state": "small_fire",
+      "source": {
+        "path": "assets/battle/v2/effects/source/small_fire.png",
+        "sha256": "fecfbaa24a4e96d514a85e2fc40eb09562e481136df74c5a15784a00231c38bd",
+        "bytes": 1147007
+      },
+      "frames": 8,
+      "method": "components",
+      "engineRevision": "9d4ecaf5ab56",
+      "frameRecords": [
+        {
+          "index": 0,
+          "nontransparentPixels": 1100,
+          "bbox": [
+            76,
+            108,
+            136,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparentPixels": 2008,
+          "bbox": [
+            70,
+            92,
+            138,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 2,
+          "nontransparentPixels": 2780,
+          "bbox": [
+            68,
+            78,
+            144,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 3,
+          "nontransparentPixels": 3804,
+          "bbox": [
+            56,
+            52,
+            134,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 4,
+          "nontransparentPixels": 5132,
+          "bbox": [
+            48,
+            44,
+            134,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 5,
+          "nontransparentPixels": 2964,
+          "bbox": [
+            64,
+            74,
+            140,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 6,
+          "nontransparentPixels": 2148,
+          "bbox": [
+            66,
+            92,
+            136,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 7,
+          "nontransparentPixels": 1020,
+          "bbox": [
+            74,
+            112,
+            132,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        }
+      ]
+    },
+    {
+      "state": "smoke_plume",
+      "source": {
+        "path": "assets/battle/v2/effects/source/smoke_plume.png",
+        "sha256": "60070d386c7bc60728da56794c300b8325b75a7be622bb1f62040a4e035becb8",
+        "bytes": 1053461
+      },
+      "frames": 8,
+      "method": "components",
+      "engineRevision": "9d4ecaf5ab56",
+      "frameRecords": [
+        {
+          "index": 0,
+          "nontransparentPixels": 1360,
+          "bbox": [
+            78,
+            82,
+            114,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparentPixels": 788,
+          "bbox": [
+            90,
+            112,
+            122,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 2,
+          "nontransparentPixels": 188,
+          "bbox": [
+            72,
+            144,
+            86,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 3,
+          "nontransparentPixels": 636,
+          "bbox": [
+            84,
+            96,
+            118,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 4,
+          "nontransparentPixels": 236,
+          "bbox": [
+            66,
+            142,
+            94,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 5,
+          "nontransparentPixels": 208,
+          "bbox": [
+            66,
+            150,
+            92,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 6,
+          "nontransparentPixels": 964,
+          "bbox": [
+            84,
+            86,
+            114,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 7,
+          "nontransparentPixels": 1128,
+          "bbox": [
+            80,
+            80,
+            112,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        }
+      ]
+    },
+    {
+      "state": "ember_burst",
+      "source": {
+        "path": "assets/battle/v2/effects/source/ember_burst.png",
+        "sha256": "1eb92fac7289424cd792f54a1ec7b3d6641fb21d2a9c76bdc734fcd36369529f",
+        "bytes": 1136677
+      },
+      "frames": 6,
+      "method": "components",
+      "engineRevision": "9d4ecaf5ab56",
+      "frameRecords": [
+        {
+          "index": 0,
+          "nontransparentPixels": 5392,
+          "bbox": [
+            40,
+            50,
+            148,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparentPixels": 2736,
+          "bbox": [
+            62,
+            50,
+            128,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 2,
+          "nontransparentPixels": 884,
+          "bbox": [
+            56,
+            126,
+            100,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 3,
+          "nontransparentPixels": 424,
+          "bbox": [
+            86,
+            90,
+            106,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 4,
+          "nontransparentPixels": 628,
+          "bbox": [
+            56,
+            128,
+            98,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        },
+        {
+          "index": 5,
+          "nontransparentPixels": 436,
+          "bbox": [
+            56,
+            148,
+            98,
+            174
+          ],
+          "edgePixels": 0,
+          "chromaAdjacentPixels": 0
+        }
+      ]
+    }
+  ]
+}

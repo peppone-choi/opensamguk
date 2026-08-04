@@ -1,7 +1,6 @@
 package opensamguk.gameapi.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommandResultSerializer
 import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
@@ -91,12 +90,15 @@ class CommandController(
             null
         }
         if (code == SELECT_POOL_PICK) {
-            return reserveAccepted(0, code, turnIdx, argJson, ownerUserId)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         }
 
         // Task 4 — when authenticated, the passed generalId MUST be the caller's own general.
         if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        if (!isForecastReservable(code)) {
+            return blocked("사용할 수 없는 커맨드입니다.")
         }
         return when (val result = precheck.precheck(generalId = generalId, actionCode = code)) {
             PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, argJson, ownerUserId)
@@ -400,7 +402,7 @@ class CommandController(
         private const val SELECT_POOL_PICK = "selectPoolPick"
         private val SELECT_POOL_COMMANDS = setOf(SELECT_POOL_PICK, "selectPoolUpdate")
         private val FORECAST_RESERVABLE_COMMANDS: Set<String> =
-            GameConst.availableGeneralCommand.values.flatten().toSet()
+            CommandQueueService.GENERAL_COMMAND_CODES
 
         private fun isForecastReservable(code: String): Boolean =
             code in FORECAST_RESERVABLE_COMMANDS || CommandWireMapper.isIntakeCommand(code)

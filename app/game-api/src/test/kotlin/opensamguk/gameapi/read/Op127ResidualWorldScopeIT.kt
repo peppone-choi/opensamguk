@@ -50,9 +50,11 @@ class Op127ResidualWorldScopeIT {
         seedWorld(1)
         seedWorld(2)
         jdbc.update(
-            "INSERT INTO yearbook_history (id, world_id, server_id, profile_name, year, month, map, nations, hash) " +
-                "VALUES (1, 1, 's1', 'p', 200, 1, '{}'::jsonb, '{}'::jsonb, 'h1'), " +
-                "(2, 2, 's2', 'p', 200, 1, '{}'::jsonb, '{}'::jsonb, 'h2')",
+            "INSERT INTO yearbook_history (id, world_id, server_id, profile_name, year, month, map, nations, global_history, global_action, hash) " +
+                "VALUES (1, 1, 's1', 'p', 200, 1, '{\"year\":200}'::jsonb, '[{\"name\":\"w1\"}]'::jsonb, " +
+                "'[\"history-w1\"]'::jsonb, '[\"action-w1\"]'::jsonb, 'h1'), " +
+                "(2, 2, 's2', 'p', 200, 1, '{\"year\":201}'::jsonb, '[{\"name\":\"w2\"}]'::jsonb, " +
+                "'[\"history-w2\"]'::jsonb, '[\"action-w2\"]'::jsonb, 'h2')",
         )
         jdbc.update(
             "INSERT INTO troop (world_id, troop_leader, nation, name) VALUES (1, 10, 1, 'tA'), (2, 10, 1, 'tB')",
@@ -83,7 +85,15 @@ class Op127ResidualWorldScopeIT {
                 "VALUES (1, 21, 'NATION', 'HISTORY', 200, 1, 'n1', 3), (2, 22, 'NATION', 'HISTORY', 200, 1, 'n2', 3)",
         )
 
-        assertEquals(listOf("h1"), history.findAllByOrderByYearAscMonthAsc().map { it.hash })
+        val yearbook = history.findAllByOrderByYearAscMonthAsc().single()
+        assertEquals("h1", yearbook.hash)
+        assertEquals(200, yearbook.map["year"])
+        assertEquals(listOf("history-w1"), yearbook.globalHistory)
+        assertEquals(listOf("action-w1"), yearbook.globalAction)
+        assertEquals(
+            listOf("w1"),
+            (yearbook.nations.value as List<*>).map { (it as Map<*, *>)["name"] },
+        )
         assertEquals(listOf("tA"), troops.findByNationOrderByTroopLeaderAsc(1).map { it.name })
         assertEquals(listOf(1.0), halls.findAllByOrderByTypeAscValueDescIdAsc().map { it.value })
         assertEquals(listOf("a"), polls.findAllByOrderByIdDesc().map { it.title })

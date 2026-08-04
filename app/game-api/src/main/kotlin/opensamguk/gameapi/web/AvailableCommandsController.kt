@@ -50,21 +50,8 @@ class AvailableCommandsController(
     private val registry: CommandRegistry,
 ) {
 
-    /** One catalog row (matches web/game `AvailableCommand`). */
-    data class AvailableCommand(
-        val value: String,
-        val simpleName: String,
-        val title: String,
-        val category: String,
-        val compensation: Int,
-        val possible: Boolean,
-        val reqArg: Boolean,
-        val argType: String? = null,
-        val reason: String? = null,
-    )
-
     /** A category bucket (matches web/game `AvailableCommandCategory`). */
-    data class CommandCategory(val category: String, val values: List<AvailableCommand>)
+    data class CommandCategory(val category: String, val values: List<CommandCatalogRow>)
 
     /** The envelope (matches web/game `AvailableCommandsResponse`). */
     data class AvailableCommandsResponse(
@@ -95,49 +82,11 @@ class AvailableCommandsController(
             effectiveId?.let { precheck.precheckAll(it, definitions) }
 
         val table = catalog
-            .groupBy({ it.first }, { (category, def) -> toRow(def, results?.get(def.key), category) })
+            .groupBy(
+                { it.first },
+                { (category, def) -> CommandCatalogRowFactory.create(def, results?.get(def.key), category) },
+            )
             .map { (category, values) -> CommandCategory(category, values) }
         return ResponseEntity.ok(AvailableCommandsResponse(result = true, commandTable = table))
-    }
-
-    private fun toRow(def: GeneralActionDefinition, result: PrecheckResult?, legacyCategory: String): AvailableCommand {
-        val reqArg = def.argsSchema.isNotEmpty()
-        val (possible, reason) = when (result) {
-            null -> true to null // no actor → registry-only catalog (possible defaults true, no deny reason)
-            PrecheckResult.Available -> true to null
-            is PrecheckResult.Blocked -> false to result.reason
-            is PrecheckResult.Unknown -> {
-                // PRECHECK hit an absent requirement (e.g. a target row not loaded): reqArg commands
-                // simply need a target chosen (possible — the modal opens the picker); a non-arg
-                // command with missing inputs is genuinely undeterminable here.
-                if (reqArg) true to null else false to UNKNOWN_REASON
-            }
-        }
-        return AvailableCommand(
-            value = def.key,
-            simpleName = def.name,
-            title = def.name,
-            category = legacyCategory,
-            compensation = 0,
-            possible = possible,
-            reqArg = reqArg,
-            argType = argTypeOf(def.argsSchema.keys),
-            reason = reason,
-        )
-    }
-
-    /** Derive the modal field-type from the command's declared `argsSchema` keys (faithful, not guessed). */
-    private fun argTypeOf(keys: Set<String>): String? = when {
-        "nationName" in keys && "nationType" in keys && "colorType" in keys -> "founding"
-        "crewType" in keys && "amount" in keys -> "recruit"
-        "destCityID" in keys -> "city"
-        "destNationID" in keys -> "nation"
-        "destGeneralID" in keys -> "general"
-        "amount" in keys -> "amount"
-        else -> null
-    }
-
-    companion object {
-        private const val UNKNOWN_REASON = "정보 부족"
     }
 }

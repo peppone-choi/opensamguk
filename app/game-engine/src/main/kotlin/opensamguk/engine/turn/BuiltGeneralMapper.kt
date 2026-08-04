@@ -12,6 +12,7 @@ internal fun BuiltGeneral.toTurnGeneral(id: Int, state: TurnWorldState): TurnGen
         .plusNanos(turntimeMicros * 1000L)
     val meta = linkedMapOf<String, Any?>(
         "owner" to 0,
+        "owner_name" to null,
         "npc_org" to npc,
         "affinity" to affinity,
         "born_year" to birth,
@@ -21,8 +22,15 @@ internal fun BuiltGeneral.toTurnGeneral(id: Int, state: TurnWorldState): TurnGen
         "picture" to picture,
         "npcmsg" to npcText,
         "image_server" to 0,
+        "imgsvr" to 0,
+        "leadership_exp" to 0,
+        "strength_exp" to 0,
+        "intel_exp" to 0,
         "dedlevel" to 1,
+        "explevel" to 0,
+        "makelimit" to 0,
         "start_age" to 20,
+        "startage" to 20,
         "specage" to specAge,
         "specage2" to specAge2,
         "dex1" to dex1,
@@ -43,6 +51,9 @@ internal fun BuiltGeneral.toTurnGeneral(id: Int, state: TurnWorldState): TurnGen
         "myset" to 6,
         "tournament" to 0,
         "newvote" to 0,
+        "newmsg" to 0,
+        "last_turn" to emptyMap<String, Any?>(),
+        "aux" to emptyList<Any?>(),
         "penalty" to emptyMap<String, Any?>(),
     )
     meta.putAll(rtkMetadata)

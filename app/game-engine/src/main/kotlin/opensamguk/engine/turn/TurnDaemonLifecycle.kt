@@ -16,7 +16,7 @@ import java.time.Instant
  * (no partial checkpoint) so the golden compares at a clean turn boundary. The caller flushes the
  * recorder's accumulated patches ONCE after the drain (Task F4/F5), never mid-pass.
  *
- * A "due" general is one whose [TurnGeneral.turnTime] is at/after the resolved run time of the
+ * A "due" general is one whose [TurnGeneral.turnTime] is strictly before the resolved run time of the
  * current tick. Generals are processed in ascending `turnTime`, then ascending id (a stable,
  * deterministic order so a parity replay visits them in the same sequence every run).
  */
@@ -36,11 +36,10 @@ class TurnDaemonLifecycle(
      */
     private val reservedNationActionOf: (nationId: Int, officerLevel: Int) -> ReservedTurn = { _, _ -> ReservedTurn("휴식", "") },
     /**
-     * P5 FM2 — the NATION-pass AI interpose (R-SEAM §2 `:305-308`). For an AI-controlled chief
-     * (`npc >= 2`) with `use_auto_nation_turn` truthy, this REPLACES the reserved nation command with the
+     * P5 FM2 — the NATION-pass AI interpose (R-SEAM §2 `:305-308`). For an autorun-eligible chief
+     * (`npc >= 2` or an active human window) with `use_auto_nation_turn` truthy, this REPLACES the reserved nation command with the
      * AI's `chooseNationTurn(...)` result BEFORE [ProcessNationCommand.process]. **Only `chooseNationTurn`
-     * is wired — `chooseInstantNationTurn` is NOT (decision #3 / B3 / R-SEAM §3).** Null = a human chief
-     * runs the reserved nation command verbatim (no AI).
+     * is wired — `chooseInstantNationTurn` is NOT (decision #3 / B3 / R-SEAM §3).** Null = no AI selection.
      */
     private val chooseNationTurn: ((generalId: Int, reserved: ReservedTurn) -> ChosenCommand)? = null,
     /**
@@ -72,6 +71,8 @@ class TurnDaemonLifecycle(
      */
     private val pullNationTurnOf: (nationId: Int, officerLevel: Int) -> Unit = { _, _ -> },
     private val pullGeneralTurnOf: (generalId: Int) -> Unit = { _ -> },
+    private val observeGeneralTurnStart: (generalId: Int) -> Unit = { },
+    private val observeHandledTurn: (ReservedTurnHandler.HandledTurn) -> Unit = { },
     /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
@@ -102,18 +103,69 @@ class TurnDaemonLifecycle(
             .filter { it.turnTime.isBefore(runTime) }
             .sortedWith(compareBy({ it.turnTime }, { it.id }))
 
+    class GeneralDrainCohort internal constructor(
+        internal val identityTokens: Map<Int, Long>,
+    )
+
+    fun snapshotGeneralDrainCohort(): GeneralDrainCohort =
+        GeneralDrainCohort(
+            world.listGenerals().associate { general ->
+                general.id to checkNotNull(world.getGeneralIdentityToken(general.id))
+            },
+        )
+
+    /**
+     * The PHP query at `TurnExecutionHelper.php:236-239` materializes the whole ordered due result
+     * before it executes its first row. Preserve that boundary for the in-memory world as an immutable
+     * identity-and-payload cohort: a general row created or replaced while the cohort drains cannot
+     * borrow a pre-existing id, and a later ring mutation cannot replace the payload selected at entry.
+     */
+    private data class DueGeneralTurn(
+        val generalId: Int,
+        val turnTime: Instant,
+        val reserved: ReservedTurn,
+    )
+
+    private fun snapshotDueGeneralTurns(
+        runTime: Instant,
+        cohort: GeneralDrainCohort,
+    ): List<DueGeneralTurn> =
+        dueGenerals(runTime)
+            .filter { general ->
+                cohort.identityTokens[general.id] == world.getGeneralIdentityToken(general.id)
+            }
+            .map { general ->
+            DueGeneralTurn(
+                generalId = general.id,
+                turnTime = general.turnTime,
+                reserved = reservedActionOf(general.id),
+            )
+        }
+
     /**
      * Drain ALL generals due at [runTime] through the handler, in one pass (no mid-pass flush).
-     * Returns the per-general outcomes in processed order. The `year`/`month`/`date` come from the
-     * world state (the turn the tick resolves).
+     * Returns the per-general outcomes in processed order. [runTime] selects the due set, while each
+     * command's action date comes from its general's pre-update `turnTime`.
      */
-    fun runTick(runTime: Instant = nextRunTime()): List<ReservedTurnHandler.HandledTurn> {
+    fun runTick(
+        runTime: Instant = nextRunTime(),
+        cohort: GeneralDrainCohort = snapshotGeneralDrainCohort(),
+    ): List<ReservedTurnHandler.HandledTurn> {
         val state = world.getState()
-        val date = formatTurnTime(runTime)
-        val due = dueGenerals(runTime)
-        val env = lifecycleEnvOf(state, date)
+        val due = snapshotDueGeneralTurns(runTime, cohort)
         val handled = ArrayList<ReservedTurnHandler.HandledTurn>(due.size)
-        for (g in due) {
+        for (dueGeneral in due) {
+            val g = world.getGeneralById(dueGeneral.generalId)
+                ?.takeIf {
+                    it.turnTime == dueGeneral.turnTime &&
+                        cohort.identityTokens[it.id] == world.getGeneralIdentityToken(it.id)
+                }
+                ?: continue
+            val date = formatTurnTime(dueGeneral.turnTime)
+            val env = lifecycleEnvOf(state, date)
+            var hasReservedTurn = false
+            observeGeneralTurnStart(g.id)
+            handler.preprocessGeneral(g.id, state.currentYear, state.currentMonth)
             // The SINGLE processBlocked() gate (PHP `:299`): `block>=2` skips the WHOLE command block —
             // BOTH the nation pass AND the general pass (R-SEAM §2). The handler's processBlocked pushes
             // the block log + decrements killturn, then only the COMMAND block is skipped. PHP still pulls
@@ -131,11 +183,16 @@ class TurnDaemonLifecycle(
                 // --- NATION PASS FIRST (R-SEAM §2 `:301-324`), under the same processBlocked() gate ---
                 // hasNationTurn ⇐ nation!=0 && officer_level>=5 (PHP `:260`). Only when a nation processor is
                 // wired. The AI hook (chooseNationTurn ONLY — chooseInstantNationTurn is NOT wired, decision #3)
-                // replaces the reserved nation command BEFORE the resolve; a human chief runs it verbatim.
                 if (nationProcessor != null && hasNationTurn(g)) {
                     val reservedNation = reservedNationActionOf(g.nationId, g.officerLevel)
+                    if (reservedNation.actionCode != ReservedTurnHandler.REST_COMMAND) {
+                        hasReservedTurn = true
+                    }
                     var nationCmd = ChosenCommand(reservedNation.actionCode, ReservedTurnHandler.decodeArgs(reservedNation.argJson))
-                    if (chooseNationTurn != null && ReservedTurnHandler.isAiControlled(g) && useAutoNationTurn(g)) {
+                    if (chooseNationTurn != null &&
+                        ReservedTurnHandler.isAutorunEligible(g, state.currentYear, state.currentMonth) &&
+                        useAutoNationTurn(g)
+                    ) {
                         nationCmd = chooseNationTurn.invoke(g.id, reservedNation)
                     }
                     val lastTurn = lastNationTurnOf(g.nationId, g.officerLevel)
@@ -151,7 +208,10 @@ class TurnDaemonLifecycle(
                 }
 
                 // --- GENERAL PASS SECOND (R-SEAM §2 `:326-348`) — the existing handler interpose ---
-                val reserved = reservedActionOf(g.id)
+                val reserved = dueGeneral.reserved
+                if (reserved.actionCode != ReservedTurnHandler.REST_COMMAND) {
+                    hasReservedTurn = true
+                }
                 val result = handler.handle(
                     generalId = g.id,
                     reserved = reserved,
@@ -159,12 +219,12 @@ class TurnDaemonLifecycle(
                     month = state.currentMonth,
                     date = date,
                 )
-                handled.add(
-                    result.copy(
-                        requestId = reserved.requestId,
-                        reservedActionCode = reserved.actionCode,
-                    ),
+                val observedResult = result.copy(
+                    requestId = reserved.requestId,
+                    reservedActionCode = reserved.actionCode,
                 )
+                handled.add(observedResult)
+                observeHandledTurn(observedResult)
 
                 // ── 1) killturn 감소/리셋 (PHP processCommand 꼬리, `TurnExecutionHelper.php:153-165`) ──
                 // PHP는 processCommand 안에서 command.run() 직후 killturn을 처리한다(:348→:153). Kotlin handle()는
@@ -193,6 +253,13 @@ class TurnDaemonLifecycle(
             pullNationTurnOf(g.nationId, g.officerLevel)
             pullGeneralTurnOf(g.id)
 
+            if (hasReservedTurn && !ReservedTurnHandler.isAiControlled(g)) {
+                autorunLimitMinutes(state)?.let { limitMinutes ->
+                    val currentYearMonth = state.currentYear * 12 + state.currentMonth - 1
+                    handler.setAutorunLimit(g.id, currentYearMonth + limitMinutes / env.turnTerm)
+                }
+            }
+
             // ── 2) updateTurnTime (PHP `:170-230`, 호출부 `:363`) ──
             // lived_month+1 → killturn<=0 kill/유체이탈 게이트 → age>=retirementYear 환생 게이트 →
             // `turntime = addTurn(turntime, turnterm)`. KILLED면 updateTurnTime 내부에서 turntime을 advance하지
@@ -208,6 +275,19 @@ class TurnDaemonLifecycle(
     /** PHP `:305` — `$general->getAuxVar('use_auto_nation_turn') ?? 1` (the pre-turn snapshot; truthy default). */
     private fun useAutoNationTurn(g: TurnGeneral): Boolean =
         (g.meta["use_auto_nation_turn"] as? Number)?.toInt()?.let { it != 0 } ?: true
+
+    private fun autorunLimitMinutes(state: TurnWorldState): Int? {
+        val limitMinutes = (worldValue(state, "autorun_user") as? Map<*, *>)?.get("limit_minutes")
+        if (!phpTruthy(limitMinutes)) return null
+        return (limitMinutes as? Number)?.toInt()
+    }
+
+    private fun worldValue(state: TurnWorldState, key: String): Any? = state.config[key] ?: state.meta[key]
+
+    private fun phpTruthy(value: Any?): Boolean = when (value) {
+        null, false, 0, 0L, 0.0, "", "0" -> false
+        else -> true
+    }
 
     /** PHP `:271` — `LastTurn::fromRaw($nationStor->getValue("turn_last_{officer_level}"))` (the chief ring slot). */
     private fun lastNationTurnOf(nationId: Int, officerLevel: Int): LastTurn {
@@ -257,6 +337,7 @@ class TurnDaemonLifecycle(
         /** `MonthlyPipeline.runMonth` for the month whose boundary is the given `nextTurn`. */
         private val runMonth: (nextTurn: Instant) -> Unit,
         private val runMonthWhen: (nextTurn: Instant) -> Boolean = { true },
+        private val advanceNonMonthlyBoundary: (nextTurn: Instant) -> Unit = {},
     ) {
         fun run(turntime: Instant, now: Instant, turnTerm: Int, isUnitedState: Int): Int {
             if (now.isBefore(turntime)) return 0           // next turn not yet arrived
@@ -270,12 +351,15 @@ class TurnDaemonLifecycle(
                 if (runMonthWhen(nextTurn)) {
                     runMonth(nextTurn) // L2 — the monthly 6-step pipeline
                     crossed++
+                } else {
+                    advanceNonMonthlyBoundary(nextTurn)
                 }
                 prevTurn = nextTurn    // L11 — advance the boundary
                 nextTurn = ServerClock.addTurn(prevTurn, turnTerm)
             }
-            // Final sub-month drain of the partial month since the last crossed boundary.
-            drain(now)
+            if (now.isAfter(prevTurn)) {
+                drain(now)
+            }
             return crossed
         }
     }

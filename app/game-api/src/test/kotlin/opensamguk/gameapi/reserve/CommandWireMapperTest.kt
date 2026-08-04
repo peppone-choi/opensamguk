@@ -320,4 +320,35 @@ class CommandWireMapperTest {
         assertEquals(0, bet.amount)
         assertTrue(bet.bettingType.isEmpty())
     }
+
+    @Test
+    fun `account and mailbox commands map to typed immediate commands`() {
+        val setting = CommandWireMapper.toCommand(
+            "setMySetting",
+            10,
+            "r",
+            """{"tnmt":0,"defence_train":85,"use_treatment":40,"use_auto_nation_turn":0}""",
+        ) as TurnDaemonCommand.SetMySetting
+        assertEquals(85, setting.settings.defenceTrain)
+        assertEquals(40, setting.settings.useTreatment)
+
+        val read = CommandWireMapper.toCommand(
+            "readLatestMessage",
+            10,
+            "r",
+            """{"type":"private","msgID":42}""",
+        ) as TurnDaemonCommand.ReadLatestMessage
+        assertEquals("private", read.messageType)
+        assertEquals(42, read.msgID)
+
+        assertTrue(CommandWireMapper.toCommand("vacation", 10, "r", "{}") is TurnDaemonCommand.Vacation)
+
+        val invader = CommandWireMapper.toCommand(
+            "acceptRaiseInvaderMessage",
+            10,
+            "r",
+            """{"messageId":77}""",
+        ) as TurnDaemonCommand.AcceptRaiseInvaderMessage
+        assertEquals(77, invader.messageId)
+    }
 }

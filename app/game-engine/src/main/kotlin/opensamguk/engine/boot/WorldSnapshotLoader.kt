@@ -8,6 +8,7 @@ import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.GeneralItems
 import opensamguk.engine.turn.GeneralRole
 import opensamguk.engine.turn.GeneralStats
+import opensamguk.engine.turn.GeneralTurnSeed
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnDiplomacy
@@ -19,7 +20,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.ResultSet
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /**
  * F1b — DB→[WorldSnapshot] loader. Reads the seeded relational rows from PostgreSQL via
@@ -123,7 +127,12 @@ class WorldSnapshotLoader(
         val troops = loadTroops()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops={}",
-            generals.size, cities.size, nations.size, archivedNationIds.size, diplomacy.size, accessLogs.size,
+            generals.size,
+            cities.size,
+            nations.size,
+            archivedNationIds.size,
+            diplomacy.size,
+            accessLogs.size,
             troops.size,
         )
         return WorldSnapshot(
@@ -145,7 +154,13 @@ class WorldSnapshotLoader(
             "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time, world_version, writer_epoch FROM world_state WHERE id = ?",
             { rs, _ ->
                 val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
-                val config = MetaJson.decode(rs.getString("config"))
+                val config = LinkedHashMap(MetaJson.decode(rs.getString("config")))
+                val persistedStartTime = rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()
+                    ?: parseStartTime(config["startTime"] ?: meta["startTime"])
+                persistedStartTime?.toString()?.let { startTime ->
+                    config["startTime"] = startTime
+                    meta["startTime"] = startTime
+                }
                 for ((key, value) in config) {
                     if (!meta.containsKey(key)) meta[key] = value
                 }
@@ -153,7 +168,7 @@ class WorldSnapshotLoader(
                 meta["isunited"] = rs.getInt("isunited")
                 // lastTurnTime: prefer the persisted clock; fall back to start_time, then now.
                 val lastTurn = (meta["lastTurnTime"] as? String)?.let { Instant.parse(it) }
-                    ?: rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()
+                    ?: persistedStartTime
                     ?: Instant.now()
                 TurnWorldState(
                     id = rs.getInt("id"),
@@ -173,6 +188,16 @@ class WorldSnapshotLoader(
         )
         return rows.firstOrNull()
             ?: error("configured world_state.id=${worldId.value} is missing — scenario seed did not run (cannot build WorldSnapshot)")
+    }
+
+    private fun parseStartTime(value: Any?): Instant? {
+        val raw = value?.toString()?.takeIf { it.isNotBlank() } ?: return null
+        return runCatching { Instant.parse(raw) }.getOrNull()
+            ?: runCatching {
+                LocalDateTime.parse(raw, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                    .atZone(ZoneId.of("Asia/Seoul"))
+                    .toInstant()
+            }.getOrNull()
     }
 
     private fun loadNations(): List<Nation> = jdbc.query(
@@ -205,9 +230,10 @@ class WorldSnapshotLoader(
                 """
                 SELECT id, server_id, season, scenario, scenario_name, map, CAST(env AS VARCHAR) AS env
                   FROM ng_games
-                 WHERE server_id = ?
+                 WHERE world_id = ? AND server_id = ?
                 """.trimIndent(),
                 { rs, _ -> activeGame(rs) },
+                worldId.value,
                 configured,
             ).singleOrNull()
                 ?: error("world_state.meta serverId '$configured' does not exist in ng_games")
@@ -217,9 +243,12 @@ class WorldSnapshotLoader(
             """
             SELECT id, server_id, season, scenario, scenario_name, map, CAST(env AS VARCHAR) AS env
               FROM ng_games
+             WHERE world_id = ?
              ORDER BY id ASC
             """.trimIndent(),
-        ) { rs, _ -> activeGame(rs) }
+            { rs, _ -> activeGame(rs) },
+            worldId.value,
+        )
         return when (rows.size) {
             0 -> null
             1 -> rows.single()
@@ -230,43 +259,84 @@ class WorldSnapshotLoader(
     private fun loadArchivedNationIds(serverId: String?): List<Int> {
         if (serverId == null) return emptyList()
         return jdbc.query(
-            "SELECT nation FROM ng_old_nations WHERE server_id = ? ORDER BY nation ASC",
+            "SELECT nation FROM ng_old_nations WHERE world_id = ? AND server_id = ? ORDER BY nation ASC",
             { rs, _ -> rs.getInt("nation") },
+            worldId.value,
             serverId,
         )
     }
 
-    private fun loadServerCount(): Int =
-        jdbc.queryForObject("SELECT count(*) FROM ng_games", Int::class.java) ?: 0
+    private fun loadServerCount(): Int = jdbc.queryForObject(
+        "SELECT count(*) FROM ng_games WHERE world_id = ?",
+        Int::class.java,
+        worldId.value,
+    ) ?: 0
 
     private fun loadActiveUniqueAuctionItems(): List<String> = jdbc.query(
-        "SELECT target FROM ng_auction WHERE type = 'uniqueItem' AND finished = false ORDER BY id ASC",
-    ) { rs, _ -> rs.getString("target") }
+        """
+        SELECT target
+          FROM ng_auction
+         WHERE world_id = ?
+           AND type = 'uniqueItem'
+           AND finished = false
+         ORDER BY id ASC
+        """.trimIndent(),
+        { rs, _ -> rs.getString("target") },
+        worldId.value,
+    )
 
     private fun loadStoredUniqueItemCounts(): Map<String, Int> {
         val counts = LinkedHashMap<String, Int>()
         jdbc.query(
-            "SELECT namespace, count(*) AS cnt FROM game_kv WHERE left(namespace, 3) = 'ut_' GROUP BY namespace ORDER BY namespace ASC",
-        ) { rs ->
-            counts[rs.getString("namespace").removePrefix("ut_")] = rs.getInt("cnt")
-        }
+            """
+            SELECT namespace, count(*) AS cnt
+              FROM game_kv
+             WHERE world_id = ?
+               AND "table" <> 'inheritance'
+               AND left(namespace, 3) = 'ut_'
+             GROUP BY namespace
+             ORDER BY namespace ASC
+            """.trimIndent(),
+            { rs ->
+                counts[rs.getString("namespace").removePrefix("ut_")] = rs.getInt("cnt")
+            },
+            worldId.value,
+        )
         return counts
     }
 
     private fun loadGameEnv(): Map<String, Any?> = linkedMapOf<String, Any?>().apply {
         jdbc.query(
-            """SELECT key, CAST(value AS VARCHAR) AS value_json FROM game_kv WHERE "table" = 'game_env' AND namespace IN ('', 'game_env') ORDER BY id ASC""",
-        ) { rs ->
-            this[rs.getString("key")] = decodeKvValue(rs.getString("value_json"))
-        }
+            """
+            SELECT key, CAST(value AS VARCHAR) AS value_json
+              FROM game_kv
+             WHERE world_id = ?
+               AND "table" = 'game_env'
+               AND namespace IN ('', 'game_env')
+             ORDER BY id ASC
+            """.trimIndent(),
+            { rs ->
+                this[rs.getString("key")] = decodeKvValue(rs.getString("value_json"))
+            },
+            worldId.value,
+        )
     }
 
     private fun loadNationEnv(): Map<Int, Map<String, Any?>> {
         val result = LinkedHashMap<Int, LinkedHashMap<String, Any?>>()
-        jdbc.query("SELECT namespace, key, CAST(value AS VARCHAR) AS value_json FROM nation_env ORDER BY id ASC") { rs ->
-            result.getOrPut(rs.getInt("namespace")) { LinkedHashMap() }[rs.getString("key")] =
-                decodeKvValue(rs.getString("value_json"))
-        }
+        jdbc.query(
+            """
+            SELECT namespace, key, CAST(value AS VARCHAR) AS value_json
+              FROM nation_env
+             WHERE world_id = ?
+             ORDER BY id ASC
+            """.trimIndent(),
+            { rs ->
+                result.getOrPut(rs.getInt("namespace")) { LinkedHashMap() }[rs.getString("key")] =
+                    decodeKvValue(rs.getString("value_json"))
+            },
+            worldId.value,
+        )
         return result
     }
 
@@ -364,6 +434,7 @@ class WorldSnapshotLoader(
         val seedStartYear = (state.meta["startYear"] as? Number)?.toInt() ?: state.currentYear
         val seedStartMonth = 1
         val rankValues = loadRankValues()
+        val generalTurns = loadGeneralTurns()
         return jdbc.query(
         """
         SELECT id, name, nation_id, city_id, troop_id, npc_state, affinity,
@@ -443,6 +514,7 @@ class WorldSnapshotLoader(
                 // user_id(소유 유저) — 미적재 시 rehydrate 후 PlaceBet 누적한도/유산 분기가 무음 발산(P0-07 채점 F1).
                 userId = rs.getString("user_id"),
                 meta = generalMeta,
+                initialTurns = generalTurns[rs.getInt("id")].orEmpty(),
             )
         }, worldId.value)
     }
@@ -459,35 +531,67 @@ class WorldSnapshotLoader(
         return result
     }
 
-    private fun loadDiplomacy(): List<TurnDiplomacy> = jdbc.query(
-        "SELECT src_nation_id, dest_nation_id, state_code, term, is_dead, meta FROM diplomacy ORDER BY id ASC",
-    ) { rs, _ ->
-        TurnDiplomacy(
-            fromNationId = rs.getInt("src_nation_id"),
-            toNationId = rs.getInt("dest_nation_id"),
-            state = rs.getInt("state_code"),
-            term = rs.getInt("term"),
-            dead = if (rs.getBoolean("is_dead")) 1 else 0,
-            meta = MetaJson.decode(rs.getString("meta")),
+    private fun loadGeneralTurns(): Map<Int, List<GeneralTurnSeed>> {
+        val result = LinkedHashMap<Int, MutableList<GeneralTurnSeed>>()
+        jdbc.query(
+            """
+            SELECT general_id, action_code, arg::text AS arg_json, brief
+              FROM general_turn
+             WHERE world_id = ?
+             ORDER BY general_id, turn_idx
+            """.trimIndent(),
+            { rs ->
+                result.getOrPut(rs.getInt("general_id")) { mutableListOf() }.add(
+                    GeneralTurnSeed(
+                        actionCode = rs.getString("action_code"),
+                        argJson = rs.getString("arg_json"),
+                        brief = rs.getString("brief"),
+                    ),
+                )
+            },
+            worldId.value,
         )
+        return result
     }
+
+    private fun loadDiplomacy(): List<TurnDiplomacy> = jdbc.query(
+        """
+        SELECT src_nation_id, dest_nation_id, state_code, term, casualties, meta
+          FROM diplomacy
+         WHERE world_id = ?
+         ORDER BY id ASC
+        """.trimIndent(),
+        { rs, _ ->
+            TurnDiplomacy(
+                fromNationId = rs.getInt("src_nation_id"),
+                toNationId = rs.getInt("dest_nation_id"),
+                state = rs.getInt("state_code"),
+                term = rs.getInt("term"),
+                dead = rs.getInt("casualties"),
+                meta = MetaJson.decode(rs.getString("meta")),
+            )
+        },
+        worldId.value,
+    )
 
     private fun loadAccessLogs(): List<GeneralAccessLog> = jdbc.query(
         """
         SELECT general_id, user_id, last_refresh, refresh, refresh_total, refresh_score, refresh_score_total
-          FROM general_access_log ORDER BY general_id ASC
+          FROM general_access_log WHERE world_id = ? ORDER BY general_id ASC
         """.trimIndent(),
-    ) { rs, _ ->
-        GeneralAccessLog(
-            generalId = rs.getInt("general_id"),
-            userId = rs.getLong("user_id").let { if (rs.wasNull()) null else it },
-            lastRefresh = rs.getObject("last_refresh", OffsetDateTime::class.java)?.toInstant(),
-            refresh = rs.getInt("refresh"),
-            refreshTotal = rs.getInt("refresh_total"),
-            refreshScore = rs.getInt("refresh_score"),
-            refreshScoreTotal = rs.getInt("refresh_score_total"),
-        )
-    }
+        { rs, _ ->
+            GeneralAccessLog(
+                generalId = rs.getInt("general_id"),
+                userId = rs.getLong("user_id").let { if (rs.wasNull()) null else it },
+                lastRefresh = rs.getObject("last_refresh", OffsetDateTime::class.java)?.toInstant(),
+                refresh = rs.getInt("refresh"),
+                refreshTotal = rs.getInt("refresh_total"),
+                refreshScore = rs.getInt("refresh_score"),
+                refreshScoreTotal = rs.getInt("refresh_score_total"),
+            )
+        },
+        worldId.value,
+    )
 
     private fun nullableInt(rs: ResultSet, col: String): Int? {
         val v = rs.getInt(col)

@@ -14,7 +14,9 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -42,6 +44,9 @@ class CheDeungyongSurakGoldenTest {
     private val env = WorldEnv(year = 200, startYear = 190, develCost = 100)
     private val date = "12:34"
     private val MONTH = 3
+
+    @AfterTest
+    fun clearStaticEventHandlers() = StaticEventHandler.clear()
 
     /** 망명 대상국 '오' (id=5, capital=30, gennum=4). */
     private fun destNation() = Nation(id = 5, level = 3, capitalCityId = 30, name = "오", gennum = 4)
@@ -248,6 +253,19 @@ class CheDeungyongSurakGoldenTest {
             "<C>●</>3월:<Y>조운</>이 <D><b>오</b></>로 <S>망명</>하였습니다.",
             globals[0],
         )
+    }
+
+    @Test
+    fun `tail dispatches static event after the final nation transfer`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_등용수락") { general, destGeneral, _, params ->
+            observed += "${general.nationId}:${general.officerLevel}:${general.cityId}:${general.troop}:${destGeneral?.experience}:${params["destNationID"]}"
+        }
+        val ctx = context(memberActor(), Nation(id = 1, level = 3, capitalCityId = 1, name = "촉", gennum = 6))
+
+        CheDeungyongSurak(pipeline()).resolve(ctx)
+
+        assertEquals(listOf("5:1:30:0:100.0:5"), observed)
     }
 
     // ── registry / metadata ─────────────────────────────────────────────────────────────────────

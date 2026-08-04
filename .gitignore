@@ -85,6 +85,10 @@ web/*/.omc/
 parity-shots/
 tmp/
 
+# superpowers brainstorm 런타임 상태(pid/token) + Playwright 실행 산출물
+.superpowers/
+web/*/test-results/
+
 # 감사 raw 스크래치(대용량, working dir 보존)
 docs/superpowers/gap/_*.raw.json
 

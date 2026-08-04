@@ -134,8 +134,6 @@ data class FrontGlobalInfo(
     // ng_auction.finished = 0 진행중 경매 수(아래 AuctionCountReadRepository).
     val auctionCount: Int? = null,
 
-    // [§2 BLOCKED — plock 테이블 부재] PHP `SELECT plock FROM plock WHERE type='GAME'`.
-    // 모든 마이그레이션(V1~V10)에 plock 테이블이 없다. interim으로 false 고정(W3_FrontGlobalInfo §2).
     val serverLocked: Boolean? = null,
 )
 
@@ -491,6 +489,16 @@ data class MyPageResponse(
     val imageServer: Int,
     val items: List<MyPageItem>,
     val instantActions: MyPageInstantActionFlags,
+    val settings: MyPageSettings = MyPageSettings(),
+)
+
+data class MyPageSettings(
+    val tnmt: Int = 1,
+    val defenceTrain: Int = 80,
+    val useTreatment: Int = 10,
+    val useAutoNationTurn: Int = 1,
+    val myset: Int = 0,
+    val penalty: Map<String, Any?> = emptyMap(),
 )
 
 data class MyPageItem(

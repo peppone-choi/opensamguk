@@ -1,8 +1,10 @@
 package opensamguk.infra.read
 
+import opensamguk.common.world.WorldId
 import opensamguk.infra.entity.BoardPostEntity
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.stereotype.Repository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.data.repository.Repository as SpringDataRepository
 
 /**
  * `board_post` 테이블용 JPA read 리포지토리.
@@ -12,9 +14,29 @@ import org.springframework.stereotype.Repository
  * 댓글 권한을 게이팅한다. write 경로(게시판 게시물/댓글 INSERT)는
  * [opensamguk.infra.persistence.JdbcFlushExecutor]를 거치며 — 엔진에서 `save()`/`delete()`를 하지 않는다.
  */
-@Repository
-interface BoardPostRepository : JpaRepository<BoardPostEntity, Int> {
-
-    /** 소속 국가로 스코프된 게시물 (PHP `WHERE no = %i AND nation_no = %i`); null = 없음. */
+interface BoardPostRepository {
     fun findByIdAndNationId(id: Int, nationId: Int): BoardPostEntity?
+}
+
+internal interface BoardPostRawRepository : SpringDataRepository<BoardPostEntity, Int> {
+    @Query(
+        value = """
+            SELECT * FROM board_post
+            WHERE world_id = :worldId AND id = :id AND nation_id = :nationId
+        """,
+        nativeQuery = true,
+    )
+    fun findByWorldIdAndIdAndNationId(
+        @Param("worldId") worldId: Int,
+        @Param("id") id: Int,
+        @Param("nationId") nationId: Int,
+    ): BoardPostEntity?
+}
+
+internal class WorldScopedBoardPostRepository(
+    private val raw: BoardPostRawRepository,
+    private val worldId: WorldId,
+) : BoardPostRepository {
+    override fun findByIdAndNationId(id: Int, nationId: Int): BoardPostEntity? =
+        raw.findByWorldIdAndIdAndNationId(worldId.value, id, nationId)
 }

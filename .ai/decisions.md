@@ -249,6 +249,42 @@
 
 ---
 
+## ADR-LITE-024 v1 날짜도 상순·중순·하순의 36순을 사용한다
+
+- Date: 2026-07-27
+- Status: approved
+- Decision: 오리지널(v1)의 게임 날짜도 월마다 상순·중순·하순을 두며 **1년 36순**을 사용한다. `GameConst.phasesPerMonth=3`·`turnsPerYear=36`과 v1 기본 `ServerClock`은 유지한다. PHP의 월별 12회 장기 캡처를 Kotlin v1에서 재생할 때는 한 PHP 월을 Kotlin 3순으로 확장해 비교하며, v1을 12턴/년으로 되돌리지 않는다.
+- Context: 12개월 exact 재생 디버깅 중 PHP가 1경계=1개월이라는 정적 근거만으로 v1 프로덕션을 12턴/년으로 바꾸는 안이 제시됐으나, 사용자가 v1의 제품 정본을 직접 확정했다. 실제 잔여 결함은 36순 자체가 아니라 여러 순을 한 번에 catch-up할 때 메모리 날짜를 마지막에 한 번만 갱신해 중간 AI가 오래된 날짜를 읽을 수 있는 경계 처리다.
+- Alternatives: PHP와 동일한 12턴/년으로 회귀(기각 — 사용자 정본과 현재 v1 제품 규칙 위반), 36순은 유지하되 월간 파이프라인을 매 순 실행(기각 — 월간 처리는 phase 1에서만 실행), 36순 유지 + 각 순 경계의 live date 전진 + phase 1 월간 실행(채택).
+- Consequences: 12턴/년을 전제로 한 실험 패치는 원복한다. long-sim materializer는 PHP 월별 상태를 v1의 3순 cadence로 변환해야 한다. catch-up 회귀 테스트는 모든 phase 경계에서 live date가 전진하는지와 월간 파이프라인이 phase 1에서만 실행되는지를 동시에 증명해야 한다.
+- Approved by: 사용자 (2026-07-27, "v1도 36순을 써.")
+
+---
+
+## ADR-LITE-025 V2 출시에 전용 battle-engine 기반 야전·공성·수전을 필수화한다
+
+- Date: 2026-07-30
+- Status: approved
+- Decision: V2 출시에 실시간+제한 전술 정지 방식의 야전·공성·수전을 모두 포함한다. 런타임은 battle별 authoritative fixed-tick session actor를 가진 전용 `battle-engine`으로 분리한다. 총지휘관은 본대 편제 1개와 전역 권한을 가지고 장교는 배정 편제 1개를 맡으며, 권한 변경·명령·조작 모드 전환은 지휘망 지연을 거친다. 출시 기준은 진영당 16편제(총 32), 기본 12분·최대 15분이다. 실시간 성능·동기화·재접속·렌더 게이트가 실패하되 세 전장 어댑터의 headless G6가 통과하면 같은 BattleTicket/명령/replay 계약의 사전 전술+자동전투로 fallback한다.
+- Context: 사용자 요청은 기존 일괄 전투를 전략·전술이 있는 2D/2.5D 전투로 바꾸는 것이었고, 2026-07-29~30 `superpowers:brainstorming` 인터뷰에서 세션 아키텍처, 지휘권, WebSocket·저장, 복구·보안, 출시 게이트를 순서대로 승인했다. 정본 스펙은 `docs/superpowers/specs/2026-07-30-v2-realtime-battle-session-command-replay-design.md`이며 독립 재검토 최종 판정은 `CLEAR — blockers none`이다.
+- Alternatives: V2 오픈 후 추가(기각 — 사용자 직접 선택), 기존 game-engine scheduler+HTTP/SSE 내장(기각 — 장기 세션·재접속·epoch fence·부하 격리가 약함), client lockstep(기각 — 안개·권한·부정 명령·결과 정본을 클라이언트에 분산), full 3D 우선(기각 — 초기 자산·렌더 비용이 전술 기반을 압도).
+- Consequences: ADR-LITE-019/021의 “V2-4A/4B 오픈 후”와 “오픈 경로 20 단일값”은 이 결정으로 해당 부분만 supersede된다. 기존 20은 전투 프로그램 추가 전 부분합이다. `V2-G0`·`C-track`·관계망의 오픈 후 분류, 도시·인맥 설계, v1 격리는 계속 유효하다. 이전 2.5D 문서의 game-engine scheduler·HTTP/SSE·8편제·오픈 후 rollout은 역사 초안으로 강등하고, Three.js 정사영 2.5D·formation 판정·에셋 계약은 유지한다. `battle-engine`은 한 WorldId/DB에만 바인딩하고 `battle_*`만 쓰며, game-engine만 캠페인 결과를 `ChangeRecorder -> JdbcFlushExecutor`로 반영한다.
+- Approved by: 사용자 (2026-07-29~30 설계 보드 섹션별 승인, 2026-07-30 작성 스펙 최종 승인 “승인.”)
+
+---
+
+## ADR-LITE-026 PR에서 리뷰 에이전트를 3회 멘션하고 수정·재검증 후에만 머지한다
+
+- Date: 2026-07-31
+- Status: approved
+- Decision: 앞으로 모든 PR은 원격에 올린 뒤 **PR 대화에서 리뷰 에이전트를 멘션해 리뷰를 3회 요청**한다. 각 라운드의 지적을 코드·테스트·문서에 반영하고 관련 검증을 다시 통과한 뒤에만 머지 후보로 인정한다. 세 PR 리뷰의 판정과 수정 근거는 PR 대화와 리포지토리 리뷰 산출물에 남긴다. 실제 merge는 기존 안전 규칙대로 사용자의 명시적 승인 후에만 수행한다.
+- Context: 사용자가 말한 "자체 리뷰"는 로컬 서브에이전트 검토가 아니라 PR에서 멘션해 호출하는 리뷰 기능이다. 구현자 1회의 자기 확인이나 PR 전 리뷰만으로는 원격 PR 상태에서 드러나는 통합·문서·운영 결함을 충분히 막지 못한다.
+- Alternatives: 리뷰 1회(기각 — 사용자 지정 횟수 미달), 3회 리뷰만 받고 수정 없이 머지(기각 — 지적 반영 의무가 없음), merge 후 사후 리뷰(기각 — 결함이 main에 먼저 들어감).
+- Consequences: PR마다 최소 세 개의 독립 리뷰 기록, 지적별 수정 추적, 수정 후 관련 검증이 필요하다. 열린 `fix-required`가 하나라도 있으면 merge 금지다. 리뷰 3회 완료는 merge 권한을 자동 부여하지 않으며 사용자 승인 절차를 대체하지 않는다.
+- Approved by: 사용자 (2026-07-31, "그리고 앞으론 PR 올린 후에 자체 리뷰를 3번 받고 수정 한 다음에 머지하도록 해." / "PR에서 멘션하면 리뷰 가능하잖아. 그걸 이야기 하는거야.")
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 

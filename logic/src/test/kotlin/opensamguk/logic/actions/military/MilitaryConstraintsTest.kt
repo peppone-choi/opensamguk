@@ -178,6 +178,17 @@ class MilitaryConstraintsTest {
     }
 
     @Test
+    fun `gather command denies when the preloaded general list has no fellow troop member`() {
+        val command = CheJiphap(opensamguk.logic.stats.GeneralActionPipeline())
+        val r = evaluateConstraints(
+            command.buildConstraints(ctx()),
+            ctx(),
+            view(g = general(id = 1, troop = 1)),
+        )
+        assertEquals(ConstraintResult.Deny("집합 가능한 부대원이 없습니다.", "ReqTroopMembers"), r)
+    }
+
+    @Test
     fun `gather denies an isolated city — SuppliedCity`() {
         val r = evaluateConstraints(gatherConstraints(hasMember = true), ctx(), view(c = city(supplyState = 0)))
         assertEquals(ConstraintResult.Deny("고립된 도시입니다.", "SuppliedCity"), r)

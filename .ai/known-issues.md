@@ -9,6 +9,15 @@
 - **대회 전투 심 파리티 갭** → **OPENSAM-10**: `ProcessTournament.kt` `resolveMatch()` 결정론 vs PHP `fight()` 에너지 기반 RNG 심. `fight()` 풀 포트 + PHP 골든 캡처 필요. (바퀴 8에서 접수)
 - **G12 nation reserved-fail deny-log 미배출** → **OPENSAM-11** (P5 백로그)
 - **P5 long-sim multi-turn (gate dim c)** → **OPENSAM-12** (`LongSimReplayGateTest` skip 1건)
+- **외교 수락 production resolver의 PHP 다중 로그/event 미포팅**(2026-07-30,
+  OPENSAM-32 독립 리뷰): `ProcessNationCommand`는 등록 resolver를 logic
+  command보다 우선하고, 종전·불가침 파기 수락의 production resolver는
+  Jira D4-09/13의 양방향 상태/term만 기록한다. PHP 수락 command의
+  general/nation/global history/action 로그와 StaticEvent 전체 byte parity는
+  OPENSAM-32의 명시된 상태 전이 범위를 넘어 아직 미증명이다. Message 시간과
+  icon은 기존 격리지만 이 로그/event 항목은 별도 후속 티켓이 필요하다.
+  현재 작업 계약이 Jira mutation을 금지하므로 외부 티켓 생성은 수행하지
+  않았고, 완료 문구는 상태 전이로만 제한해야 한다.
 - **RTK14 `scenario_3200` 군주 공석 격리** (2026-07-19, Batch 4): 손책은 `200.1` 원자료에서 `君主`이지만 `death=200`이라 PHP/Kotlin 시작-수명 필터에서 제외된다. PHP `Scenario/Nation.php::postBuild`(강한 장수 자동 승격)는 후계를 만들지만 Kotlin `ScenarioImporter` 에는 해당 패리티가 없다. Batch 4 보고서는 국가 6을 `seed_ready=false` / `pending v2 PHP postBuild promotion parity`로 기계적 격리하며, 생몰년·관직·importer를 임의 수정하지 않는다. 관직 체계 변경은 사용자 결정에 따라 v2 범위. Jira 등록은 이 세션에서 외부 연결 403 + 변경 미승인으로 미수행.
 - **RTK14 전체 정제 스키마 ↔ Batch 4 v1 시드 투영 정합** (2026-07-19): 정식 시나리오 스펙 §2.1/§4의 전체 레코드(정책·특성·전법·초상 및 portrait 기반 registry)와 달리 OPENSAM-143 파일럿 도구는 기존 importer에 필요한 7스탯·소속·소재·v1 관직만 담은 ignored projection을 생성한다. 캐시된 전체 정제본과 projection의 1,000 ID/중복 이름 그룹은 일치해 현재 churn은 없지만, T6 잔여 시나리오·라이브 컷오버 전에 두 스키마와 registry header를 병합하거나 명시 승인해야 한다. Batch 4는 전체 정제본을 대체하지 않으며 이 v2 정합 작업을 조용히 완료로 간주하지 않는다.
 
@@ -27,6 +36,21 @@
 
 - **EC2 prod 요금 미납 정지**(2026-07-16 사용자 확인): prod 관련 작업 전부 **보류** — 배포, EC2 `.env` DSN 반영, prod DB 재확인. 납부·정지 해제 후 재개. 정지 기간 main push의 `deploy.yml` 런은 성공 불가 — 2026-07-16 미완료 런 2건(6h queued 포함) 취소 처리; 해제 후 최신 main으로 `gh run rerun` 또는 새 push로 배포.
 - s1 181|1~7 이중 적용 잔흔(국가 74→92 증식) — 깨끗하게 하려면 s1 재시드. **사용자 결정 대기**였음; 이후 처리 여부는 prod DB로 재확인 필요 (UNKNOWN, EC2 정지로 보류).
+- **Redis wake marker의 outer-transaction 경계 미검증**(2026-07-31,
+  OPENSAM-33): 직접 command HTTP 경로의 raw `Instant` JDBC bind 결함은
+  `Timestamp.from`과 live Redis marker/ACK gate로 해소됐다. 다만
+  `GeneralPossessionService.claim`처럼 외부 `@Transactional` 안에서
+  `publishImmediate`를 호출하는 경로는 Spring `afterCommit` 시 기존 JDBC
+  자원이 계속 bound된 상태라 marker UPDATE가 별도 commit 없이 끝날 위험이
+  있다. 이 경로는 이번 live fixture 대상이 아니며 outer-TX IT +
+  marker-only `REQUIRES_NEW` 검토가 후속이다. `REQUIRES_NEW`는 XADD 전체가
+  아니라 marker UPDATE에만 적용해야 DB-before-Redis/best-effort 순서를
+  보존한다.
+- **operational smoke의 중복 SSE 구독 관측**(2026-07-31, OPENSAM-33):
+  한 live run에서 고유 tick 수보다 많은 EventSource open/`turnCompleted`가
+  기록됐다. 실제 재연결인지 중복 subscription인지 원인은 UNKNOWN이다.
+  stale-UI 수용 기준(SSE 뒤 front-info fetch와 DOM 갱신)은 통과했지만,
+  운영 부하 관점의 중복 구독 원인 분석은 별도 후속이다.
 
 ## Agent OS 백로그 (정본: `.omc/plans/2026-07-16-agent-os-activation-plan.md` Follow-ups)
 
@@ -38,7 +62,15 @@
 
 ## 도구/환경 주의
 
+- **OPENSAM-33 discovery의 `.env.example` read 범위 위반**(2026-07-30):
+  cadence/compose mapping을 찾는 focused `rg`가 committed template
+  `.env.example`까지 포함했다. 같은 파일은 safe-local placeholder만 담지만
+  Agent OS의 `.env*` read 금지보다 넓게 읽은 절차 위반이다. 실제 `.env`,
+  user secret, production credential은 읽거나 출력하지 않았고 파일 변경도
+  없었다. 이후 OPENSAM-33 명령은 `.env*`를 명시 제외하며, local smoke
+  credential은 실행 시 임시 생성하고 값은 artifact/log에 남기지 않는다.
 - **Agent OS 기준선 실패 — 사용자 소유 `.codex/config.toml`**(2026-07-18): 현재 작업 전부터 존재한 개인 모델 고정(`model = "gpt-5.6-sol"`) 때문에 `tools/agent-system/check.py --strict --base origin/main`의 `codex-surface`가 1건 실패한다. `max_threads` 누락은 `scripts/agent/test-codex-agent-os.sh`에서 `max_depth` fallback로 처리되어 더 이상 `KeyError`로는 막지 않는다. 이 문제는 사용자 변경 보존 차원에서 별도 완화 없이 운영 보류로 유지한다.
+- **Agent OS historical review anchor 기준선**(2026-07-30): branch diff에 포함된 `docs/superpowers/reviews/2026-07-27-v1-nonoperational-completion-review.md`의 유일한 anchored verdict가 `Verdict: CLEARED`(대문자)다. 현재 `tools/agent-system/check.py --strict --base origin/main`은 `cleared|fix-required|quarantined-with-proof` 소문자만 허용하므로 `cross-agent-critique` 1건이 추가 실패한다. 파일은 현재 worktree에서 수정되지 않은 과거 종결 아티팩트라 OPENSAM-31 범위에서 고치지 않고 baseline으로 격리한다.
 - **Fablize 보조 래퍼 경고 기준선**(2026-07-19): exit 0인 read/status/test 명령에도 generic `tool failure` notice가 반복된다. 실제 실패는 직접 종료코드, Gradle tail, 테스트 XML, artifact SHA로 분리 판정하며 동일 broad 명령은 반복하지 않는다.
 - gradle 호스트 래퍼: `task-notification` exit 0 부정확 → 출력 tail + 테스트 XML로만 판정 (정본: `AGENTS.md` §gradle context-mode).
 - Testcontainers flake: `BettingUpsertFlushIT` init 1건은 접속 flake로 판정된 이력 있음(단독 재실행 green) — 실패 시 단독 재실행으로 먼저 분별. `GameApiApplicationTests`도 postgres 컨테이너 기동 flake 1회(2026-07-16, 3스위트 동시 실행 중 발생 — 단독 재실행 green).

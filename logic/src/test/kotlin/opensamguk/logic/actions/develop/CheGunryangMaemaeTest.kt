@@ -17,6 +17,7 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.stats.GeneralActionModule
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.clamp
 import kotlin.math.truncate
@@ -194,6 +195,23 @@ class CheGunryangMaemaeTest {
     }
 
     @Test
+    fun `fractional trades round the final MariaDB INT value`() {
+        val sellDraft = GeneralActionDraft(general(gold = 2255, rice = 6000), city(105), nation())
+        val sellContext = GeneralActionResolveContext(sellDraft, freshRng(), env, MONTH, date)
+        ctx_run(sellDraft, sellContext, buyRice = false, amount = 5000)
+
+        assertEquals(7453, sellDraft.general.gold, "2255 + 5197.5 materializes as MariaDB INT 7453")
+        assertTrue(sellContext.logs().first().contains("자금 <C>5,198</>"))
+
+        val buyDraft = GeneralActionDraft(general(gold = 7453, rice = 3000), city(105), nation())
+        val buyContext = GeneralActionResolveContext(buyDraft, freshRng(), env, MONTH, date)
+        ctx_run(buyDraft, buyContext, buyRice = true, amount = 2200)
+
+        assertEquals(5120, buyDraft.general.gold, "7453 - 2333.1 materializes as MariaDB INT 5120")
+        assertTrue(buyContext.logs().first().contains("자금 <C>2,333</>"))
+    }
+
+    @Test
     fun `fixed exp 30 ded 50 and weighted incStat bump`() {
         val draft = GeneralActionDraft(general(), city(100), nation())
         val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
@@ -208,6 +226,51 @@ class CheGunryangMaemaeTest {
             metaInt(draft.general.meta, it) == metaInt(before.meta, it) + 1
         }
         assertEquals(1, bumped, "exactly one weighted incStat bumped by 1")
+    }
+
+    @Test
+    fun `exp and dedication fold through the non identity pipeline before the unchanged PHP tail`() {
+        val boostedPipeline = GeneralActionPipeline(listOf(object : GeneralActionModule {
+            override fun onCalcStat(general: General, statName: String, value: Double, aux: Map<String, Any?>): Double =
+                when (statName) {
+                    "experience" -> value * 2.0
+                    "dedication" -> value * 3.0
+                    else -> value
+                }
+        }))
+        val actor = general().copy(
+            experience = 50.0,
+            dedication = 0.0,
+            meta = linkedMapOf(
+                "explevel" to 0,
+                "dedlevel" to 0,
+                "leadership_exp" to 1,
+                "strength_exp" to 2,
+                "intel_exp" to 3,
+            ),
+        )
+        val observedExperience = mutableListOf<Double>()
+        StaticEventHandler.register("che_군량매매") { eventGeneral, _, _, _ ->
+            observedExperience += eventGeneral.experience
+        }
+
+        val command = cheGunryangMaemae(boostedPipeline)
+        val draft = GeneralActionDraft(actor, city(100), nation())
+        val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
+        command.resolveWith(ctx, command.parseArgs(mapOf("buyRice" to false, "amount" to 1000)))
+
+        assertEquals(110.0, draft.general.experience, 1e-12, "PHP addExperience folds fixed 30 through the pipeline")
+        assertEquals(150.0, draft.general.dedication, 1e-12, "PHP addDedication folds fixed 50 through the pipeline")
+        assertEquals(
+            listOf(
+                "<C>●</><C>Lv 1</>로 <C>레벨업</>!",
+                "<C>●</><Y>29품관</>으로 <C>승급</>하여 봉록이 <C>800</>으로 <C>상승</>했습니다!",
+            ),
+            ctx.plainLogs(),
+            "helper PLAIN logs are emitted once in PHP addExperience then addDedication order",
+        )
+        assertEquals(listOf(110.0), observedExperience, "StaticEventHandler remains after the unchanged tail")
+        assertEquals("setResultTurn>checkStatChange>StaticEventHandler", command.lastUniqueLotteryIntent?.afterTail)
     }
 
     @Test

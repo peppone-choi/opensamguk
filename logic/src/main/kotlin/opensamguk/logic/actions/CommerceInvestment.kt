@@ -102,19 +102,13 @@ open class CommerceInvestment(
         // are unaffected); a personality like che_왕좌 multiplies experience ×1.1. The level-change PLAIN
         // logs (레벨업/승급) live in StatChange.addExperience/addDedication; the develop goldens are pinned
         // no-level-cross so they are not emitted here — the GATE-TRAIT non-identity golden proves this fold.
-        val exp = pipeline.onCalcStat(d.general, "experience", roundedScore * 0.7)
-        val ded = pipeline.onCalcStat(d.general, "dedication", roundedScore * 1.0)
-
         // max_domestic_critical (success: aux += score/2; else reset to 0) — meta/aux ONLY (no inheritance write; OQ7/P6 seam)
-        // PHP increaseVar(static::$statKey.'_exp', 1) — the exp key follows statKey (intel_exp / strength_exp).
         val expKey = "${statKey}_exp"
         val nextMeta = if (pick == "success") {
             val nextAux = updateMaxDomesticCritical(metaDouble(d.general.meta, "max_domestic_critical"), roundedScore)
-            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
-                     "max_domestic_critical" to nextAux)
+            withMeta(d.general.meta, "max_domestic_critical" to nextAux)
         } else {
-            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
-                     "max_domestic_critical" to 0)
+            withMeta(d.general.meta, "max_domestic_critical" to 0)
         }
 
         // LOG (scoreText from PRE-front-debuff roundedScore; name WITH space; <1>date</> suffix — PHP)
@@ -148,14 +142,26 @@ open class CommerceInvestment(
             "wall" -> d.city.copy(wall = nextCityVal)
             else -> error("unknown cityKey $cityKey")
         }
-        d.general = d.general.copy(
+        var nextGeneral = d.general.copy(
             gold = maxOf(0, d.general.gold - reqGold),
-            // PHP increaseVar (LazyVarUpdater.php:68) = raw + delta with NO per-add rounding.
-            // experience/dedication are Double in-memory; truncate-toward-zero → Int happens ONLY in the D1 row mapper at flush.
-            experience = d.general.experience + exp,
-            dedication = d.general.dedication + ded,
             meta = nextMeta,
         )
+        val experienceResult = addExperience(nextGeneral, roundedScore * 0.7, pipeline)
+        nextGeneral = experienceResult.general
+        experienceResult.plainLog?.let(context::addPlainLog)
+
+        val dedicationResult = addDedication(nextGeneral, roundedScore.toDouble(), pipeline)
+        nextGeneral = dedicationResult.general.copy(
+            meta = withMeta(
+                dedicationResult.general.meta,
+                expKey to metaInt(dedicationResult.general.meta, expKey) + 1,
+            ),
+        )
+        dedicationResult.plainLog?.let(context::addPlainLog)
+
+        val statChangeResult = checkStatChange(nextGeneral.copy(lastTurn = LastTurn(name)))
+        d.general = statChangeResult.general
+        statChangeResult.plainLogs.forEach(context::addPlainLog)
     }
 
     private fun envOf(c: ConstraintContext) = WorldEnv(

@@ -7,6 +7,10 @@ import opensamguk.logic.constraints.*
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.numberFormat
@@ -54,13 +58,21 @@ class CrMaenghullyeon(
 
         var g = g0.copy(train = nextTrain, atmos = nextAtmos)
         g = addDexForCrewType(pipeline, g, g.crewTypeId, score * 2)   // addDex score*2
+        val expRes = addExperience(g, 150.0, pipeline)
+        g = expRes.general
+        expRes.plainLog?.let { context.addPlainLog(it) }
+        val dedRes = addDedication(g, 100.0, pipeline)
+        g = dedRes.general
+        dedRes.plainLog?.let { context.addPlainLog(it) }
         g = g.copy(
-            experience = g.experience + 150.0,
-            dedication = g.dedication + 100.0,
-            meta = withMeta(g.meta, "leadership_exp" to metaDouble(g.meta, "leadership_exp") + 1),
+            meta = withMeta(g.meta, "leadership_exp" to metaDouble(g.meta, "leadership_exp") + 1.0),
             lastTurn = LastTurn(name),
         )
+        val statRes = checkStatChange(g)
+        g = statRes.general
+        statRes.plainLogs.forEach { context.addPlainLog(it) }
         d.general = g
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 
     /** PHP increaseVarWithLimit clamp: lower-bound min first, then upper-bound max (sequential, no inversion guard). */

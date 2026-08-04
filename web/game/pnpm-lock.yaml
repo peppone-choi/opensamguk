@@ -15,10 +15,10 @@ importers:
     dependencies:
       '@sentry/nextjs':
         specifier: ^10.66.0
-        version: 10.66.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(webpack@5.108.4(postcss@8.5.15))
+        version: 10.66.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.52.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(webpack@5.108.4(postcss@8.5.15))
       next:
         specifier: 15.5.20
-        version: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.52.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react:
         specifier: 19.0.0
         version: 19.0.0
@@ -26,6 +26,9 @@ importers:
         specifier: 19.0.0
         version: 19.0.0(react@19.0.0)
     devDependencies:
+      '@playwright/test':
+        specifier: 1.52.0
+        version: 1.52.0
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -719,6 +722,11 @@ packages:
   '@opentelemetry/semantic-conventions@1.43.0':
     resolution: {integrity: sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg==}
     engines: {node: '>=14'}
+
+  '@playwright/test@1.52.0':
+    resolution: {integrity: sha512-uh6W7sb55hl7D6vsAeA+V2p5JnlAqzhqFyF0VcJkKZXkgnFcVG9PziERRHQfPLfNGx1C292a4JqbWzhR8L4R1g==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@rolldown/pluginutils@1.0.0-beta.27':
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
@@ -1982,6 +1990,11 @@ packages:
     resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
     engines: {node: '>= 6'}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -2593,6 +2606,16 @@ packages:
   picomatch@4.0.5:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
+
+  playwright-core@1.52.0:
+    resolution: {integrity: sha512-l2osTgLXSMeuLZOML9qYODUQoPPnUsKsb5/P6LJ2e6uPKXUdPK5WYhN4z03G+YNbWmGDY4YENauNu4ZKczreHg==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.52.0:
+    resolution: {integrity: sha512-JAwMNMBlxJ2oD1kce4KPtMkDeKGHQstdpFPcPH3maElAXon/QZeTvtsfXmTMRyO9TslfoYOXkSsvao2nE1ilTw==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -3708,6 +3731,10 @@ snapshots:
 
   '@opentelemetry/semantic-conventions@1.43.0': {}
 
+  '@playwright/test@1.52.0':
+    dependencies:
+      playwright: 1.52.0
+
   '@rolldown/pluginutils@1.0.0-beta.27': {}
 
   '@rollup/plugin-commonjs@28.0.1(rollup@4.61.0)':
@@ -3908,7 +3935,7 @@ snapshots:
     dependencies:
       '@sentry/core': 10.66.0
 
-  '@sentry/nextjs@10.66.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(webpack@5.108.4(postcss@8.5.15))':
+  '@sentry/nextjs@10.66.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.52.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)(webpack@5.108.4(postcss@8.5.15))':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@rollup/plugin-commonjs': 28.0.1(rollup@4.61.0)
@@ -3922,7 +3949,7 @@ snapshots:
       '@sentry/server-utils': 10.66.0
       '@sentry/vercel-edge': 10.66.0
       '@sentry/webpack-plugin': 5.4.0(rollup@4.61.0)(webpack@5.108.4(postcss@8.5.15))
-      next: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      next: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.52.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       rollup: 4.61.0
       stacktrace-parser: 0.1.11
     transitivePeerDependencies:
@@ -4890,7 +4917,7 @@ snapshots:
       '@typescript-eslint/parser': 8.64.0(eslint@9.39.4)(typescript@5.7.2)
       eslint: 9.39.4
       eslint-import-resolver-node: 0.3.10
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint@9.39.4))(eslint@9.39.4)
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4)
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.4)
       eslint-plugin-react: 7.37.5(eslint@9.39.4)
@@ -4910,7 +4937,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint@9.39.4))(eslint@9.39.4):
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3
@@ -4925,14 +4952,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.14.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint@9.39.4))(eslint@9.39.4))(eslint@9.39.4):
+  eslint-module-utils@2.14.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.64.0(eslint@9.39.4)(typescript@5.7.2)
       eslint: 9.39.4
       eslint-import-resolver-node: 0.3.10
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint@9.39.4))(eslint@9.39.4)
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4)
     transitivePeerDependencies:
       - supports-color
 
@@ -4947,7 +4974,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.39.4
       eslint-import-resolver-node: 0.3.10
-      eslint-module-utils: 2.14.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint@9.39.4))(eslint@9.39.4))(eslint@9.39.4)
+      eslint-module-utils: 2.14.0(@typescript-eslint/parser@8.64.0(eslint@9.39.4)(typescript@5.7.2))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4)
       hasown: 2.0.4
       is-core-module: 2.16.2
       is-glob: 4.0.3
@@ -5154,6 +5181,9 @@ snapshots:
       es-set-tostringtag: 2.1.0
       hasown: 2.0.4
       mime-types: 2.1.35
+
+  fsevents@2.3.2:
+    optional: true
 
   fsevents@2.3.3:
     optional: true
@@ -5607,7 +5637,7 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
+  next@15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.52.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
       '@next/env': 15.5.20
       '@swc/helpers': 0.5.15
@@ -5626,6 +5656,7 @@ snapshots:
       '@next/swc-win32-arm64-msvc': 15.5.20
       '@next/swc-win32-x64-msvc': 15.5.20
       '@opentelemetry/api': 1.9.1
+      '@playwright/test': 1.52.0
       sharp: 0.34.5
     transitivePeerDependencies:
       - '@babel/core'
@@ -5741,6 +5772,14 @@ snapshots:
   picomatch@4.0.4: {}
 
   picomatch@4.0.5: {}
+
+  playwright-core@1.52.0: {}
+
+  playwright@1.52.0:
+    dependencies:
+      playwright-core: 1.52.0
+    optionalDependencies:
+      fsevents: 2.3.2
 
   possible-typed-array-names@1.1.0: {}
 

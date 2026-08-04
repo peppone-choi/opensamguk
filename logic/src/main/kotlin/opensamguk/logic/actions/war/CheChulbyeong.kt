@@ -1,6 +1,7 @@
 package opensamguk.logic.actions.war
 
 import opensamguk.common.constants.CityConst
+import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.RandUtil
@@ -274,8 +275,18 @@ class CheChulbyeong(
                 defenderNationCapitalCityId = defenderNation?.capitalCityId ?: 0,
                 attackerCityId = bctx.attackerCityId,
                 defenderCityId = chosenCityId,
+                attackerEffectiveGeneralCount = bctx.effectiveGeneralCountByNationId[attackerNation.id]
+                    ?: attackerNation.gennum,
+                defenderEffectiveGeneralCount = bctx.effectiveGeneralCountByNationId[destCity.nationId]
+                    ?: (defenderNation?.gennum ?: GameConst.initialNationGenLimit),
+                defenderNationId = destCity.nationId,
+                defenderNationTypeCode = defenderNation?.typeCode ?: "che_중립",
+                defenderNationGeneralCount = defenderNation?.gennum ?: GameConst.initialNationGenLimit,
             ),
             hooks = hooks,
+            pipelinesByGeneralId = bctx.pipelinesByGeneralId,
+            attackerCityLevel = bctx.cityById[bctx.attackerCityId]?.level ?: 0,
+            attackerIsCapital = attackerNation.capitalCityId == bctx.attackerCityId,
         )
     }
 

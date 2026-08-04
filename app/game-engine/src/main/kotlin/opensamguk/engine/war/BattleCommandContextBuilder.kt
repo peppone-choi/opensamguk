@@ -4,6 +4,8 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.war.BattleCommandContext
 import opensamguk.logic.war.searchDistanceListToDest
+import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.domain.General
 
 /**
  * BO2 — the engine-side builder that stages a [BattleCommandContext] for the `che_출병` resolver (BO3),
@@ -29,6 +31,7 @@ object BattleCommandContextBuilder {
         hiddenSeed: String,
         loggerYear: Int,
         loggerMonth: Int,
+        pipelineFor: ((General) -> GeneralActionPipeline)? = null,
     ): BattleCommandContext {
         val attacker = world.getGeneralById(attackerGeneralId)
             ?: error("BattleCommandContextBuilder: general $attackerGeneralId not in world")
@@ -65,6 +68,7 @@ object BattleCommandContextBuilder {
 
         val cityById = world.listCities().associate { it.id to PerTurnOverlay.toLogicCity(it) }
         val nationById = world.listNations().associate { it.id to PerTurnOverlay.toLogicNation(it) }
+        val logicGenerals = world.listGenerals().map { PerTurnOverlay.toLogicGeneral(it) }
 
         return BattleCommandContext(
             attackerCityId = attackerCityId,
@@ -74,6 +78,15 @@ object BattleCommandContextBuilder {
             defenderGeneralsByCity = defenderByCity,
             cityById = cityById,
             nationById = nationById,
+            pipelinesByGeneralId = if (pipelineFor == null) {
+                emptyMap()
+            } else {
+                logicGenerals.associate { it.id to pipelineFor(it) }
+            },
+            effectiveGeneralCountByNationId = world.listGenerals()
+                .filter { it.npcState != 5 }
+                .groupingBy { it.nationId }
+                .eachCount(),
             hiddenSeed = hiddenSeed,
             loggerYear = loggerYear,
             loggerMonth = loggerMonth,

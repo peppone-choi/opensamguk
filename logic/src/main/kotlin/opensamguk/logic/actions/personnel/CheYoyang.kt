@@ -5,6 +5,10 @@ import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -21,7 +25,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  *
  * run() (che_요양.php:48-77): injury → 0, exp 10, ded 7, the action log.
  */
-class CheYoyang(@Suppress("UNUSED_PARAMETER") private val pipeline: GeneralActionPipeline) : GeneralActionDefinition {
+class CheYoyang(private val pipeline: GeneralActionPipeline) : GeneralActionDefinition {
     override val key: String get() = "che_요양"
     override val name: String get() = "요양"
     override val category: String get() = "인사"
@@ -40,13 +44,18 @@ class CheYoyang(@Suppress("UNUSED_PARAMETER") private val pipeline: GeneralActio
 
     override fun resolve(context: GeneralActionResolveContext) {
         val d = context.draft
-        val g0 = d.general
         context.addLog("건강 회복을 위해 요양합니다. <1>${context.date}</>")
-        d.general = g0.copy(
-            injury = 0,
-            experience = g0.experience + 10.0,
-            dedication = g0.dedication + 7.0,
-            lastTurn = LastTurn(name),
-        )
+        var general = d.general.copy(injury = 0)
+        val experience = addExperience(general, 10.0, pipeline)
+        general = experience.general
+        experience.plainLog?.let(context::addPlainLog)
+        val dedication = addDedication(general, 7.0, pipeline)
+        general = dedication.general
+        dedication.plainLog?.let(context::addPlainLog)
+        general = general.copy(lastTurn = LastTurn(name))
+        val statChange = checkStatChange(general)
+        d.general = statChange.general
+        statChange.plainLogs.forEach(context::addPlainLog)
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, key, emptyMap(), context.args)
     }
 }

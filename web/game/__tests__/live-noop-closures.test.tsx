@@ -17,6 +17,7 @@ const apiMocks = vi.hoisted(() => ({
     selectPoolPick: vi.fn(),
     selectPoolUpdate: vi.fn(),
     selectPool: vi.fn(),
+    pollCommandResult: vi.fn(),
     redirect: vi.fn(),
 }));
 
@@ -72,6 +73,7 @@ vi.mock('@/lib/api', () => ({
             selectPoolUpdate: apiMocks.selectPoolUpdate,
         },
     },
+    pollCommandResult: apiMocks.pollCommandResult,
     isIntakeDenied: (out: { status: string }) => out.status === 'BLOCKED' || out.status === 'UNKNOWN',
     isIntakeQueued: (out: { status: string }) => out.status === 'AVAILABLE',
 }));
@@ -94,6 +96,7 @@ describe('production-reachable frontend no-op closures', () => {
         apiMocks.selectPoolPick.mockReset();
         apiMocks.selectPoolUpdate.mockReset();
         apiMocks.selectPool.mockReset();
+        apiMocks.pollCommandResult.mockReset();
         apiMocks.frontInfo.mockResolvedValue(frontInfo);
         apiMocks.tournament.mockResolvedValue({ entries: [], matches: [] });
     });
@@ -221,7 +224,7 @@ describe('production-reachable frontend no-op closures', () => {
         await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('토너먼트 상태를 초기화할 수 없습니다.'));
     });
 
-    it('select-pool renders authenticated candidate cards and submits the selected candidate', async () => {
+    it('select-pool surfaces the PHP-fatal pick without reloading', async () => {
         apiMocks.selectPool.mockResolvedValue({
             result: true,
             generalId: null,
@@ -243,14 +246,14 @@ describe('production-reachable frontend no-op closures', () => {
                 statEditable: false,
             }],
         });
-        apiMocks.selectPoolPick.mockResolvedValue({ status: 'AVAILABLE', requestId: 'pick-1' });
-        apiMocks.selectPoolUpdate.mockResolvedValue({ status: 'BLOCKED', reason: '미구현' });
+        apiMocks.selectPoolPick.mockRejectedValue(new Error('500: Internal Server Error'));
 
         render(<SelectPoolPage />);
 
         await waitFor(() => expect(screen.getByRole('heading', { name: '마초' })).toBeInTheDocument());
         expect(screen.getByText('91 / 97 / 74 / 44 / 88')).toBeInTheDocument();
         expect(screen.queryByLabelText('고유 이름')).not.toBeInTheDocument();
+        const poolCallsBeforePick = apiMocks.selectPool.mock.calls.length;
         fireEvent.click(screen.getByRole('button', { name: '마초 선택' }));
 
         await waitFor(() =>
@@ -266,11 +269,13 @@ describe('production-reachable frontend no-op closures', () => {
                 0,
             ),
         );
-        expect(screen.getByRole('status')).toHaveTextContent('선택 요청이 접수되었습니다.');
-
+        await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('500: Internal Server Error'));
+        expect(apiMocks.pollCommandResult).not.toHaveBeenCalled();
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        expect(apiMocks.selectPool.mock.calls.length).toBe(poolCallsBeforePick);
     });
 
-    it('select-pool updates an existing owned general from the candidate card', async () => {
+    it('select-pool update reloads only after an applied terminal result', async () => {
         apiMocks.selectPool.mockResolvedValue({
             result: true,
             generalId: 77,
@@ -293,10 +298,18 @@ describe('production-reachable frontend no-op closures', () => {
             }],
         });
         apiMocks.selectPoolUpdate.mockResolvedValue({ status: 'AVAILABLE', requestId: 'update-1' });
+        apiMocks.pollCommandResult.mockResolvedValue({
+            status: 'RESOLVED',
+            requestId: 'update-1',
+            ok: true,
+            type: 'selectPoolUpdate',
+            result: {},
+        });
 
         render(<SelectPoolPage />);
 
         await waitFor(() => expect(screen.getByRole('button', { name: '마초로 변경' })).toBeInTheDocument());
+        const poolCallsBeforeUpdate = apiMocks.selectPool.mock.calls.length;
         fireEvent.click(screen.getByRole('button', { name: '마초로 변경' }));
 
         await waitFor(() => expect(apiMocks.selectPoolUpdate).toHaveBeenCalledWith(
@@ -310,6 +323,8 @@ describe('production-reachable frontend no-op closures', () => {
             },
             77,
         ));
-        expect(screen.getByRole('status')).toHaveTextContent('변경 요청이 접수되었습니다.');
+        await waitFor(() => expect(apiMocks.pollCommandResult).toHaveBeenCalledWith('update-1'));
+        await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('변경이 처리되었습니다.'));
+        await waitFor(() => expect(apiMocks.selectPool.mock.calls.length).toBeGreaterThan(poolCallsBeforeUpdate));
     });
 });

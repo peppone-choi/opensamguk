@@ -7,6 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
+import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.RealtimeEvent
 import opensamguk.common.wire.TurnDaemonStreamKeys
 import opensamguk.common.wire.WireJson
@@ -343,11 +344,13 @@ class VerticalSliceE2EIT {
         val storedMeta = MetaJson.decode(stringOf(row["meta"]))
         assertEquals(
             linkedMapOf<String, Any?>(
+                "myset" to golden.myset,
+                "dedlevel" to golden.dedlevel,
                 "explevel" to g.explevel,
+                "killturn" to 105,
                 "intel_exp" to g.intelExp,
-                "max_domestic_critical" to g.maxDomesticCritical,
-                "killturn" to 105, // 골든 DB che-golden-db.json: "killturn":105 (BEFORE 106 - NPC 1감소).
                 "lived_month" to 1, // updateTurnTime lived_month+1 (PHP :278), BEFORE 미설정(0) → 1.
+                "max_domestic_critical" to g.maxDomesticCritical,
             ) as Map<String, Any?>,
             storedMeta as Map<String, Any?>,
             "general.meta content byte-match golden (액션 aux 3키 + 꼬리 killturn/lived_month — PHP 캡처 일치)",
@@ -357,13 +360,13 @@ class VerticalSliceE2EIT {
         // 규율6=비결정 reorder 금지). 실제 결정적 순서 = 로직 액션 meta 재구성(explevel→killturn→intel_exp) +
         // 꼬리(updateTurnTime lived_month 추가) → max_domestic_critical 말미. 매 실행 동일(LinkedHashMap 연산 결정적).
         assertEquals(
-            listOf("explevel", "killturn", "intel_exp", "lived_month", "max_domestic_critical"),
+            listOf("myset", "dedlevel", "explevel", "killturn", "intel_exp", "lived_month", "max_domestic_critical"),
             storedMeta.keys.toList(),
             "general.meta KEY ORDER 결정적 (PHP는 컬럼/aux라 jsonb 순서 무관 — opensamguk slice-meta 내부 직렬화 결정성)",
         )
         // opensamguk slice-meta jsonb 정확 byte 문자열(결정적 순서, 51.5 not 51, killturn 105, lived_month 1).
         assertEquals(
-            """{"explevel":${g.explevel},"killturn":105,"intel_exp":${g.intelExp},"lived_month":1,"max_domestic_critical":${fmt(g.maxDomesticCritical)}}""",
+            """{"myset":${golden.myset},"dedlevel":${golden.dedlevel},"explevel":${g.explevel},"killturn":105,"intel_exp":${g.intelExp},"lived_month":1,"max_domestic_critical":${fmt(g.maxDomesticCritical)}}""",
             MetaJson.encode(storedMeta),
             "general.meta jsonb byte-string (compact, 결정적 key order, killturn 105, lived_month 1)",
         )
@@ -504,7 +507,7 @@ class VerticalSliceE2EIT {
                 .addValue("id", generalId).addValue("nation", nationId).addValue("city", cityId)
                 .addValue("exp", b.experience).addValue("ded", b.dedication).addValue("gold", b.gold)
                 .addValue("tt", java.sql.Timestamp.from(t0))
-                .addValue("meta", """{"explevel":${b.explevel},"intel_exp":${b.intelExp},"max_domestic_critical":${fmt(b.maxDomesticCritical)}}"""),
+                .addValue("meta", """{"myset":${golden.myset - GameConst.incDefSettingChange},"explevel":${b.explevel},"dedlevel":${golden.dedlevel},"intel_exp":${b.intelExp},"max_domestic_critical":${fmt(b.maxDomesticCritical)}}"""),
         )
         // city 1 BEFORE state (golden DB: level 8, nation 2, supply 1, front 0, trust 80).
         jdbc.update(
@@ -545,7 +548,9 @@ class VerticalSliceE2EIT {
                         // killturn 미설정(0)이면 tail의 killturn<=0 kill 게이트(:185)가 장수를 삭제해 flush가 비어진다.
                         gold = b.gold, rice = 1000, injury = 0, turnTime = t0, npcState = 2,
                         meta = linkedMapOf(
+                            "myset" to golden.myset - GameConst.incDefSettingChange,
                             "explevel" to b.explevel,
+                            "dedlevel" to golden.dedlevel,
                             "intel_exp" to b.intelExp,
                             "max_domestic_critical" to b.maxDomesticCritical,
                             "killturn" to 106,
@@ -689,7 +694,15 @@ class VerticalSliceE2EIT {
         require(dbCity["agri"]!!.jsonPrimitive.int == after.agri) { "golden DB agri disagrees" }
         require(dbLog["text"]!!.jsonPrimitive.content == logText) { "golden DB log text disagrees with fixtures" }
 
-        return Golden(hiddenSeed = hiddenSeed, before = before, general = after, city = after, logText = logText)
+        return Golden(
+            hiddenSeed = hiddenSeed,
+            before = before,
+            general = after,
+            city = after,
+            logText = logText,
+            dedlevel = dbGeneral["dedlevel"]!!.jsonPrimitive.int,
+            myset = dbGeneral["myset"]!!.jsonPrimitive.int,
+        )
     }
 
     private fun parseState(o: kotlinx.serialization.json.JsonObject): State {
@@ -722,6 +735,8 @@ class VerticalSliceE2EIT {
         val general: State,
         val city: State,
         val logText: String,
+        val dedlevel: Int,
+        val myset: Int,
     )
 
     private data class State(

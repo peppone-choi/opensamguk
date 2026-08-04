@@ -40,6 +40,8 @@ data class TournamentState(
 data class TournamentProcessResult(
     val state: TournamentState,
     val changed: Boolean,
+    val fightLogs: Map<Int, List<String>> = emptyMap(),
+    val rankDeltas: List<TournamentRankDelta> = emptyList(),
 )
 
 interface TournamentStore {

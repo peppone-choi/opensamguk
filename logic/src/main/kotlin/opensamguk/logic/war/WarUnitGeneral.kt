@@ -167,7 +167,12 @@ class WarUnitGeneral(
         var train = state.train
         train = pipeline.onCalcStat(state.general, "bonusTrain", train, mapOf("isAttacker" to isAttacker()))
         if (oppose is WarUnitGeneral) {
-            train = pipeline.onCalcOpposeStat(oppose.state.general, "bonusTrain", train, mapOf("isAttacker" to isAttacker()))
+            train = oppose.pipeline.onCalcOpposeStat(
+                state.general,
+                "bonusTrain",
+                train,
+                mapOf("isAttacker" to isAttacker()),
+            )
         }
         train += trainBonus
         return train
@@ -178,7 +183,12 @@ class WarUnitGeneral(
         var atmos = state.atmos
         atmos = pipeline.onCalcStat(state.general, "bonusAtmos", atmos, mapOf("isAttacker" to isAttacker()))
         if (oppose is WarUnitGeneral) {
-            atmos = pipeline.onCalcOpposeStat(oppose.state.general, "bonusAtmos", atmos, mapOf("isAttacker" to isAttacker()))
+            atmos = oppose.pipeline.onCalcOpposeStat(
+                state.general,
+                "bonusAtmos",
+                atmos,
+                mapOf("isAttacker" to isAttacker()),
+            )
         }
         atmos += atmosBonus
         return atmos
@@ -190,7 +200,7 @@ class WarUnitGeneral(
         val aux = mapOf("isAttacker" to isAttacker(), "opposeType" to (oppose?.getCrewType()))
         dex = pipeline.onCalcStat(state.general, "dex${crewType.armType}", dex, aux)
         if (oppose is WarUnitGeneral) {
-            dex = pipeline.onCalcOpposeStat(oppose.state.general, "dex${crewType.armType}", dex, aux)
+            dex = oppose.pipeline.onCalcOpposeStat(state.general, "dex${crewType.armType}", dex, aux)
         }
         return dex
     }
@@ -204,7 +214,12 @@ class WarUnitGeneral(
         var ratio = crewType.getCriticalRatio(str, intel, lead)
         ratio = pipeline.onCalcStat(state.general, "warCriticalRatio", ratio, mapOf("isAttacker" to isAttacker()))
         if (oppose is WarUnitGeneral) {
-            ratio = pipeline.onCalcOpposeStat(oppose.state.general, "warCriticalRatio", ratio, mapOf("isAttacker" to isAttacker()))
+            ratio = oppose.pipeline.onCalcOpposeStat(
+                state.general,
+                "warCriticalRatio",
+                ratio,
+                mapOf("isAttacker" to isAttacker()),
+            )
         }
         return ratio
     }
@@ -215,7 +230,12 @@ class WarUnitGeneral(
         avoid *= getComputedTrain() / 100.0
         avoid = pipeline.onCalcStat(state.general, "warAvoidRatio", avoid, mapOf("isAttacker" to isAttacker()))
         if (oppose is WarUnitGeneral) {
-            avoid = pipeline.onCalcOpposeStat(oppose.state.general, "warAvoidRatio", avoid, mapOf("isAttacker" to isAttacker()))
+            avoid = oppose.pipeline.onCalcOpposeStat(
+                state.general,
+                "warAvoidRatio",
+                avoid,
+                mapOf("isAttacker" to isAttacker()),
+            )
         }
         if (oppose != null && oppose.getCrewType().armType == GameUnitConst.T_FOOTMAN) {
             avoid *= 0.75
@@ -374,7 +394,7 @@ class WarUnitGeneral(
         prob *= crewType.magicCoef
         prob = pipeline.onCalcStat(state.general, "warMagicTrialProb", prob)
         if (oppose is WarUnitGeneral) {
-            prob = pipeline.onCalcOpposeStat(oppose.state.general, "warMagicTrialProb", prob)
+            prob = oppose.pipeline.onCalcOpposeStat(state.general, "warMagicTrialProb", prob)
         }
         if (prob <= 0) return prob
         val rawIntel = resolveStat("intel", false, false, false, false)
@@ -388,7 +408,7 @@ class WarUnitGeneral(
         var prob = 0.7
         prob = pipeline.onCalcStat(state.general, "warMagicSuccessProb", prob)
         if (oppose is WarUnitGeneral) {
-            prob = pipeline.onCalcOpposeStat(oppose.state.general, "warMagicSuccessProb", prob)
+            prob = oppose.pipeline.onCalcOpposeStat(state.general, "warMagicSuccessProb", prob)
         }
         return prob
     }
@@ -396,7 +416,12 @@ class WarUnitGeneral(
     override fun foldMagicSuccessDamage(oppose: WarUnitContract, magic: String, raw: Double): Double {
         var dmg = pipeline.onCalcStat(state.general, "warMagicSuccessDamage", raw, mapOf("magic" to magic))
         if (oppose is WarUnitGeneral) {
-            dmg = pipeline.onCalcOpposeStat(oppose.state.general, "warMagicSuccessDamage", dmg, mapOf("magic" to magic))
+            dmg = oppose.pipeline.onCalcOpposeStat(
+                state.general,
+                "warMagicSuccessDamage",
+                dmg,
+                mapOf("magic" to magic),
+            )
         }
         return dmg
     }
@@ -404,7 +429,12 @@ class WarUnitGeneral(
     override fun foldMagicFailDamage(oppose: WarUnitContract, magic: String, raw: Double): Double {
         var dmg = pipeline.onCalcStat(state.general, "warMagicFailDamage", raw, mapOf("magic" to magic))
         if (oppose is WarUnitGeneral) {
-            dmg = pipeline.onCalcOpposeStat(oppose.state.general, "warMagicFailDamage", dmg, mapOf("magic" to magic))
+            dmg = oppose.pipeline.onCalcOpposeStat(
+                state.general,
+                "warMagicFailDamage",
+                dmg,
+                mapOf("magic" to magic),
+            )
         }
         return dmg
     }

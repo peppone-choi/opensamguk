@@ -18,10 +18,14 @@ import opensamguk.logic.constraints.reqGeneralRice
 import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.domestic.criticalRatioDomestic
 import opensamguk.logic.domestic.criticalScoreEx
 import opensamguk.logic.domestic.getDomesticExpLevelBonus
@@ -105,17 +109,12 @@ class CheJeongchakJangnyeo(
         val scoreD = score * criticalScoreEx(rng, pick)                           // DRAW 3
         val roundedScore = phpRound(scoreD)
 
-        val exp = roundedScore * 0.7
-        val ded = roundedScore * 1.0
-
         val expKey = "${statKey}_exp"
         val nextMeta = if (pick == "success") {
             val nextAux = updateMaxDomesticCritical(metaDouble(d.general.meta, "max_domestic_critical"), roundedScore)
-            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
-                     "max_domestic_critical" to nextAux)
+            withMeta(d.general.meta, "max_domestic_critical" to nextAux)
         } else {
-            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
-                     "max_domestic_critical" to 0)
+            withMeta(d.general.meta, "max_domestic_critical" to 0)
         }
 
         // score *= 10 (AFTER exp/ded + maxCrit).
@@ -132,12 +131,26 @@ class CheJeongchakJangnyeo(
 
         val nextPop = valueFit((d.city.population + popScore).toDouble(), 0.0, d.city.populationMax.toDouble()).toInt()
         d.city = d.city.copy(population = nextPop)
-        d.general = d.general.copy(
+        var nextGeneral = d.general.copy(
             rice = maxOf(0, d.general.rice - reqRice),
-            experience = d.general.experience + exp,
-            dedication = d.general.dedication + ded,
             meta = nextMeta,
         )
+        val experienceResult = addExperience(nextGeneral, roundedScore * 0.7, pipeline)
+        nextGeneral = experienceResult.general
+        experienceResult.plainLog?.let(context::addPlainLog)
+
+        val dedicationResult = addDedication(nextGeneral, roundedScore.toDouble(), pipeline)
+        nextGeneral = dedicationResult.general.copy(
+            meta = withMeta(
+                dedicationResult.general.meta,
+                expKey to metaInt(dedicationResult.general.meta, expKey) + 1,
+            ),
+        )
+        dedicationResult.plainLog?.let(context::addPlainLog)
+
+        val statChangeResult = checkStatChange(nextGeneral.copy(lastTurn = LastTurn(name)))
+        d.general = statChangeResult.general
+        statChangeResult.plainLogs.forEach(context::addPlainLog)
     }
 
     private fun envOf(c: ConstraintContext) = WorldEnv(

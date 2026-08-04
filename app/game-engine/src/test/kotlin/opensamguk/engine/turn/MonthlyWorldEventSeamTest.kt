@@ -8,6 +8,7 @@ import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.EventTarget
 import opensamguk.logic.event.WorldActions
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.ProcessIncomeContext
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -113,6 +114,22 @@ class MonthlyWorldEventSeamTest {
         factoryFor(world())(env)
         assertEquals(startYear, (env["startyear"] as Number).toInt(), "소문자 startyear (PHP 정본)")
         assertEquals(startYear, (env["startYear"] as Number).toInt(), "camelCase startYear (관행)")
+    }
+
+    @Test
+    fun `income projection excludes npc five generals`() {
+        val w = world()
+        w.createGeneral(
+            w.getGeneralById(42)!!.copy(
+                id = 43,
+                name = "excluded",
+                npcState = 5,
+                dedication = 999_999,
+            ),
+        )
+        val ctx = factoryFor(w)(mutableMapOf("year" to 190, "month" to 1)) as ProcessIncomeContext
+
+        assertEquals(listOf(42), ctx.incomeNations().single().generals.map { it.id })
     }
 
     @Test

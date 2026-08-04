@@ -96,6 +96,14 @@ class MyController(
                 imageServer = g.imageServer,
                 items = myPageItems(g),
                 instantActions = myPageInstantActions(g),
+                settings = opensamguk.gameapi.dto.MyPageSettings(
+                    tnmt = metaInt(g.meta, "tnmt", 1),
+                    defenceTrain = metaInt(g.meta, "defence_train", 80),
+                    useTreatment = metaInt(g.meta, "use_treatment", 10),
+                    useAutoNationTurn = metaInt(g.meta, "use_auto_nation_turn", 1),
+                    myset = metaInt(g.meta, "myset"),
+                    penalty = g.penalty,
+                ),
             ),
         )
     }

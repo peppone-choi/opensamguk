@@ -1,6 +1,7 @@
 package opensamguk.engine
 
 import opensamguk.engine.run.TurnDaemonRunner
+import opensamguk.infra.read.MessageRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -40,6 +41,8 @@ class EmptyWorldBootIT {
 
     @Autowired
     lateinit var daemonRunner: TurnDaemonRunner
+    @Autowired
+    lateinit var messageRepository: MessageRepository
 
     @AfterEach
     fun stopDaemonBeforeContainerShutdown() {
@@ -51,6 +54,7 @@ class EmptyWorldBootIT {
     fun `daemon starts and idles when admin has not created a world yet`() {
         val worldCount = jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java) ?: -1
         assertEquals(0, worldCount, "test starts with the intentional empty-server invariant")
+        assertEquals(0, messageRepository.findMaxId(), "engine context resolves the empty world 17 message repository")
         val body = rest.getForObject(
             "http://localhost:$port/admin/turn-daemon/status", String::class.java,
         )
@@ -68,7 +72,7 @@ class EmptyWorldBootIT {
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
             registry.add("management.health.redis.enabled") { "false" }
-            registry.add("OPENSAMGUK_WORLD_ID") { "1" }
+            registry.add("OPENSAMGUK_WORLD_ID") { "17" }
             registry.add("SCENARIO_SEED_ENABLED") { "false" }
             registry.add("opensamguk.daemon.enabled") { "true" }
             registry.add("opensamguk.daemon.idle-poll-ms") { "25" }

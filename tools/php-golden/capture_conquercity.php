@@ -44,7 +44,7 @@
  * onArbitraryAction defender loop + the full side-effect order + both seed strings.
  *
  * Invocation (inside the php container, repo mounted at /work):
- *   php tools/php-golden/capture_conquercity.php [--out-dir=logic/src/test/resources/golden/p4]
+ *   php tools/php-golden/capture_conquercity.php [--out-dir=build/v1-evidence/conquest]
  *   NOTE: re-installs scenario_1010 itself (per branch) — pass nothing else.
  */
 
@@ -56,11 +56,15 @@ require __DIR__ . '/RandUtilDrawRecorder.php';
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_WARNING & ~E_USER_DEPRECATED & ~E_STRICT);
 
 // PIN the hiddenSeed (the plan's fixed live config value) BEFORE any seed derivation.
-$PINNED_HIDDEN_SEED = '8ebfeb6fa932a181ec9ef43b7473f4c9';
+$PINNED_HIDDEN_SEED = getenv('SAMMO_EVIDENCE_HIDDEN_SEED') ?: '8ebfeb6fa932a181ec9ef43b7473f4c9';
+hardAssert(
+    preg_match('/^[0-9a-f]{32}$/', $PINNED_HIDDEN_SEED) === 1,
+    'hidden seed input must be a captured 32-character lowercase hex value'
+);
 UniqueConst::$hiddenSeed = $PINNED_HIDDEN_SEED;
 
 $opts   = getopt('', ['out-dir:']);
-$outDir = $opts['out-dir'] ?? (__DIR__ . '/../../logic/src/test/resources/golden/p4');
+$outDir = $opts['out-dir'] ?? (__DIR__ . '/../../build/v1-evidence/conquest');
 if (!is_dir($outDir)) { mkdir($outDir, 0775, true); }
 
 $db = DB::db();
@@ -104,6 +108,14 @@ function snapTable(object $db, string $table, string $pk): array {
     return $out;
 }
 
+function snapQuery(object $db, string $sql, callable $key): array {
+    $out = [];
+    foreach (($db->query($sql) ?: []) as $row) {
+        $out[$key($row)] = $row;
+    }
+    return $out;
+}
+
 /** created/updated/deleted row delta between two PK-keyed snapshots. */
 function tableDelta(array $before, array $after): array {
     $created = []; $updated = []; $deleted = [];
@@ -133,16 +145,32 @@ function snapAll(object $db): array {
         'city'      => snapTable($db, 'city', 'city'),
         'general'   => snapTable($db, 'general', 'no'),
         'diplomacy' => snapTable($db, 'diplomacy', 'no'),
+        'rank_data' => snapQuery(
+            $db,
+            'SELECT * FROM rank_data ORDER BY general_id ASC, type ASC',
+            fn ($row) => "{$row['general_id']}:{$row['type']}"
+        ),
+        'general_turn' => snapQuery(
+            $db,
+            'SELECT * FROM general_turn ORDER BY general_id ASC, turn_idx ASC',
+            fn ($row) => "{$row['general_id']}:{$row['turn_idx']}"
+        ),
+        'event' => snapTable($db, 'event', 'id'),
+        'message' => snapQuery(
+            $db,
+            'SELECT id, mailbox, type, src, dest, valid_until, message FROM message ORDER BY id ASC',
+            fn ($row) => (string)$row['id']
+        ),
+        'world_history' => snapTable($db, 'world_history', 'id'),
     ];
 }
 
 function deltaAll(array $before, array $after): array {
-    return [
-        'nation'    => tableDelta($before['nation'], $after['nation']),
-        'city'      => tableDelta($before['city'], $after['city']),
-        'general'   => tableDelta($before['general'], $after['general']),
-        'diplomacy' => tableDelta($before['diplomacy'], $after['diplomacy']),
-    ];
+    $result = [];
+    foreach ($before as $table => $rows) {
+        $result[$table] = tableDelta($rows, $after[$table]);
+    }
+    return $result;
 }
 
 /** general_record rows added since a high-water mark (the conquest log oracle). */
@@ -173,7 +201,7 @@ function captureConquerBranch(
     freshInstall($db, $hidden);
 
     $gameStor = KVStorage::getStorage($db, 'game_env');
-    [$startYear, $year, $month] = $gameStor->getValuesAsArray(['startyear', 'year', 'month']);
+    [$startYear, $year, $month, $joinMode] = $gameStor->getValuesAsArray(['startyear', 'year', 'month', 'join_mode']);
     $startYear = (int)$startYear; $year = (int)$year; $month = (int)$month;
 
     // Deterministic setup (mobilize attacker + weaken target). Faithful legit game state.
@@ -222,6 +250,7 @@ function captureConquerBranch(
         'startYear'  => $startYear,
         'year'       => $year,
         'month'      => $month,
+        'joinMode'   => $joinMode,
         'attackerId' => $attackerId,
         'attackerNationId' => $attackerNationId,
         'defenderNationId' => $defenderNationId,
@@ -381,6 +410,45 @@ $setupSurvive = function (object $db, int $attackerId, int $atkCrew, int $cityId
     refreshNationStaticInfo();
 };
 
+$setupCollapse = function (string $joinMode) use (
+    $setupSurvive,
+    $PINNED_TURNTIME
+): callable {
+    return function (object $db, int $attackerId, int $atkCrew, int $cityId) use (
+        $setupSurvive,
+        $PINNED_TURNTIME,
+        $joinMode
+    ): void {
+        $setupSurvive($db, $attackerId, $atkCrew, $cityId);
+        $defenderNation = (int)$db->queryFirstField(
+            'SELECT nation FROM city WHERE city = %i',
+            $cityId
+        );
+        hardAssert($defenderNation > 0, 'collapse target has no defender nation');
+        $db->update(
+            'city',
+            ['nation' => 0, 'supply' => 0, 'conflict' => '{}'],
+            'nation = %i AND city != %i',
+            $defenderNation,
+            $cityId
+        );
+        $db->update('nation', ['capital' => $cityId], 'nation = %i', $defenderNation);
+        $db->update('general', [
+            'city' => $cityId,
+            'crew' => 0,
+            'gold' => 10000,
+            'rice' => 10000,
+            'experience' => 1000,
+            'dedication' => 1000,
+            'turntime' => $PINNED_TURNTIME,
+        ], 'nation = %i', $defenderNation);
+        $gameStor = KVStorage::getStorage($db, 'game_env');
+        $gameStor->setValue('join_mode', $joinMode);
+        $gameStor->resetCache();
+        refreshNationStaticInfo();
+    };
+};
+
 // ── RUN ──────────────────────────────────────────────────────────────────────────────
 
 // Survive branch: 조조(132, nation 1) takes 황건적 non-capital city 80(관도) → nation 2
@@ -389,6 +457,18 @@ captureConquerBranch(
     $db, $PINNED_HIDDEN_SEED,
     $outDir . '/conquercity-survive-01.json', 'survive_noncapital_fall',
     132, 80000, $setupSurvive, 80
+);
+
+captureConquerBranch(
+    $db, $PINNED_HIDDEN_SEED,
+    $outDir . '/conquercity-collapse-full-01.json', 'collapse_full_join_mode',
+    132, 80000, $setupCollapse('full'), 1
+);
+
+captureConquerBranch(
+    $db, $PINNED_HIDDEN_SEED,
+    $outDir . '/conquercity-collapse-only-random-01.json', 'collapse_only_random_join_mode',
+    132, 80000, $setupCollapse('onlyRandom'), 1
 );
 
 // Capital-fall branch: 조조 takes 황건적 CAPITAL city 1(업) → nation survives → 긴급천도

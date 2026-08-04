@@ -1,10 +1,13 @@
 package opensamguk.gameapi.read
+import opensamguk.gameapi.config.GameApiProcessWorldIdConfiguration
+import opensamguk.gameapi.config.SideReadWorldScopeConfiguration
 import opensamguk.infra.read.BettingRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -24,6 +27,7 @@ import kotlin.test.assertEquals
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(GameApiProcessWorldIdConfiguration::class, SideReadWorldScopeConfiguration::class)
 class BettingAggregateReadIT {
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var betting: BettingRepository
@@ -77,6 +81,7 @@ class BettingAggregateReadIT {
             registry.add("spring.datasource.url", postgres::getJdbcUrl)
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
+            registry.add("opensamguk.world-id") { 1 }
         }
     }
 }

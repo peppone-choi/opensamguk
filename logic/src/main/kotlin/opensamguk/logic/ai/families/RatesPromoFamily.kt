@@ -196,7 +196,7 @@ object RatesPromoFamily {
      */
     @Suppress("UNUSED_PARAMETER")
     fun billRate(
-        income: Int,
+        income: Double,
         outcome: Int,
         currentRes: Int,
         reqNationRes: Int,
@@ -204,7 +204,7 @@ object RatesPromoFamily {
         rng: RandUtil,
     ): Int {
         if (!hasSupplyCities) return 20 // PHP :4211/:4258 — `if (!$cityList) return 20;`.
-        var bill = phpToInt(income.toDouble() / outcome * 90) // PHP :4231/:4277 — intval(income/outcome*90).
+        var bill = phpToInt(income / outcome * 90) // PHP :4231/:4277 — intval(income/outcome*90).
         if (currentRes + income - outcome > reqNationRes * 2) { // PHP :4232/:4278 — surplus over 2× req.
             val moreBill = (currentRes + income - reqNationRes * 2).toDouble() / outcome * 80 // PHP :4233/:4279.
             if (moreBill > bill) {
@@ -339,6 +339,7 @@ object RatesPromoFamily {
     data class PromotionCandidate(
         val generalId: Int,
         val officerLevel: Int,
+        val leadership: Double,
         val strength: Double,
         val intel: Double,
         val npcType: Int,
@@ -420,10 +421,10 @@ object RatesPromoFamily {
         val supplyCities: List<CityDevelInput> = emptyList(),
         val nationGold: Int = 0,
         val nationRice: Int = 0,
-        val goldIncome: Int = 0,
-        val warGoldIncome: Int = 0,
-        val riceIncome: Int = 0,
-        val wallRiceIncome: Int = 0,
+        val goldIncome: Double = 0.0,
+        val warGoldIncome: Double = 0.0,
+        val riceIncome: Double = 0.0,
+        val wallRiceIncome: Double = 0.0,
         val reqNationGold: Int = 10000,
         val reqNationRice: Int = 12000,
         val deltaSink: RatesPromoDeltaSink,
@@ -496,6 +497,10 @@ object RatesPromoFamily {
 
     private fun choosePromotion(ctx: RatesPromoContext) {
         val minChiefLevel = GameConst.getNationChiefLevel(ctx.nationLevel) // PHP :3984.
+        val candidates = ctx.nationGenerals.sortedByDescending {
+            it.leadership * 2 + it.strength + it.intel
+        }
+        val promotedIds = HashSet<Int>()
 
         // PHP `:4081` — foreach (Util::range(11, minChiefLevel - 1, -1) as $chiefLevel). DESC demote/promote scan.
         var chiefLevel = 11
@@ -517,8 +522,9 @@ object RatesPromoFamily {
             if (newChiefProbGateSkips(newChiefProb, ctx.rng)) { chiefLevel -= 1; continue }
 
             // PHP `:4107-4135` — scan the stat-desc nationGenerals for the first eligible newChief (NO draw).
-            val newChief = findNewChief(ctx, chiefLevel, minChiefLevel)
+            val newChief = findNewChief(ctx, chiefLevel, minChiefLevel, candidates, promotedIds)
             if (newChief == null) { chiefLevel -= 1; continue } // PHP :4137-4139.
+            promotedIds.add(newChief.generalId)
 
             // PHP `:4148-4152` — promote the newChief; queue the deltas (the demote of the old chief is :4155-4161).
             if (oldChief != null) {
@@ -536,10 +542,17 @@ object RatesPromoFamily {
      * `choosePromotion`'s newChief scan (PHP `:4107-4135`): the FIRST nationGenerals entry (already stat-desc
      * `uasort`-ordered by the adapter, `:4068-4077`) passing the officer/killturn/penalty/stat gates. NO draw.
      */
-    private fun findNewChief(ctx: RatesPromoContext, chiefLevel: Int, minChiefLevel: Int): PromotionCandidate? {
+    private fun findNewChief(
+        ctx: RatesPromoContext,
+        chiefLevel: Int,
+        minChiefLevel: Int,
+        candidates: List<PromotionCandidate>,
+        promotedIds: Set<Int>,
+    ): PromotionCandidate? {
         val minUserKillturn = ctx.killturnEnv - phpToInt(240.0 / ctx.turnTerm) // PHP :3988.
         val minNpcKillturn = 36 // PHP :3989.
-        for (g in ctx.nationGenerals) {
+        for (g in candidates) {
+            if (g.generalId in promotedIds) continue
             if (g.officerLevel > 4) continue // PHP :4109-4111.
             if (g.npcType < 2 && g.killturn < minUserKillturn) continue // PHP :4112-4114.
             if (g.npcType >= 2 && g.killturn < minNpcKillturn) continue // PHP :4115-4117.

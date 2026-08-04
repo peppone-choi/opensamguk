@@ -39,6 +39,7 @@ import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.GameDate
 import opensamguk.logic.tick.ServerClock
+import opensamguk.logic.world.RaiseInvaderContext
 import java.time.Instant
 
 data class TurnClockSnapshot(
@@ -171,6 +172,15 @@ open class TurnRunService(
             inheritanceRepository = inheritanceRepository,
             selectPoolRepository = selectPoolRepository,
             processNationCommand = processNationCommand,
+            raiseInvader = { spec ->
+                val env = mutableMapOf<String, Any?>(
+                    "year" to world.getState().currentYear,
+                    "month" to world.getState().currentMonth,
+                )
+                val context = worldContextFactory?.invoke(env) as? RaiseInvaderContext
+                    ?: error("RaiseInvader context unavailable")
+                context.raiseInvader(spec)
+            },
         )
     } else {
         null
@@ -263,10 +273,20 @@ open class TurnRunService(
         // 2. month boundary interleave (if pipeline is wired)
         val handled: List<ReservedTurnHandler.HandledTurn>
         val crossed: Int
+        val generalDrainCohort = lifecycle.snapshotGeneralDrainCohort()
         if (pipeline != null && eventDispatcher != null) {
             val handledDuringBoundaries = ArrayList<ReservedTurnHandler.HandledTurn>()
+            fun boundaryDate(nextTurn: Instant): GameDate {
+                val state = world.getState()
+                val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
+                val startTime = Instant.parse(
+                    state.meta["startTime"] as? String ?: Instant.now().toString(),
+                )
+                val turnTerm = state.tickSeconds / 60
+                return ServerClock.turnDate(nextTurn, startYear, startTime, turnTerm)
+            }
             val driver = TurnDaemonLifecycle.MonthBoundaryDriver(
-                drain = { upto -> handledDuringBoundaries += lifecycle.runTick(upto) },
+                drain = { upto -> handledDuringBoundaries += lifecycle.runTick(upto, generalDrainCohort) },
                 runMonth = { nextTurn ->
                     val state = world.getState()
                     val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
@@ -310,14 +330,11 @@ open class TurnRunService(
                         },
                     )
                 },
-                runMonthWhen = { nextTurn ->
-                    val state = world.getState()
-                    val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
-                    val startTime = Instant.parse(
-                        state.meta["startTime"] as? String ?: Instant.now().toString()
-                    )
-                    val turnTerm = state.tickSeconds / 60
-                    ServerClock.turnDate(nextTurn, startYear, startTime, turnTerm).phase == 1
+                runMonthWhen = { nextTurn -> boundaryDate(nextTurn).phase == 1 },
+                advanceNonMonthlyBoundary = { nextTurn ->
+                    boundaryDate(nextTurn).let { date ->
+                        world.setCurrentDate(date.year, date.month, date.phase)
+                    }
                 },
             )
             val state = world.getState()
@@ -326,7 +343,7 @@ open class TurnRunService(
             handled = handledDuringBoundaries
         } else {
             // Fallback: original behaviour when pipeline is not wired
-            handled = lifecycle.runTick(runTime)
+            handled = lifecycle.runTick(runTime, generalDrainCohort)
             crossed = 0
         }
 
@@ -346,22 +363,22 @@ open class TurnRunService(
         val startTime = Instant.parse(preState.meta["startTime"] as? String ?: Instant.now().toString())
         val turnTerm = preState.tickSeconds / 60
         val newDate = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
-        val worldState = linkedMapOf<String, Any?>(
-            "id" to preState.id,
-            "current_year" to newDate.year,
-            "current_month" to newDate.month,
-            "current_phase" to newDate.phase,
-            "last_turn_time" to runTime.toString(),
-            "isunited" to ((preState.meta["isunited"] as? Number)?.toInt() ?: 0),
-            "max_nation_id" to ((preState.meta["maxNationId"] as? Number)?.toInt() ?: 0),
-            "max_general_id" to ((preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
-        )
+        val base = buildFlushPayload()
+        val worldState = base.worldStateUpdate.toMutableMap()
+        worldState["id"] = preState.id
+        worldState["current_year"] = newDate.year
+        worldState["current_month"] = newDate.month
+        worldState["current_phase"] = newDate.phase
+        worldState["last_turn_time"] = runTime.toString()
+        worldState["isunited"] = (preState.meta["isunited"] as? Number)?.toInt() ?: 0
+        worldState["max_nation_id"] = (preState.meta["maxNationId"] as? Number)?.toInt() ?: 0
+        worldState["max_general_id"] = (preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
         applyWriterFence(worldState, preState)
         val committedWorldVersion = preState.worldVersion + 1
         val commandResults =
             intakeResults.toCommandResultRows(committedWorldVersion) +
                 handled.toExecutionCommandResultRows(committedWorldVersion)
-        val payload = buildFlushPayload().copy(
+        val payload = base.copy(
             worldStateUpdate = worldState,
             commandResults = commandResults,
         )
