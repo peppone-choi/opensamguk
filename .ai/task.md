@@ -1,5 +1,34 @@
 # Current Task
 
+## 2026-08-03 — RTK14 full-roster scenario and five-stat surfaces
+
+- Status: the exact prior source HEAD `725195fea29b3434cc358e3d262c6c440830dab7` review found a P1 released-V26 forward-repair gap. The remediation is present only in the current working tree, and it no longer touches V26: `V26__npc_lifecycle_phase_units.kt` and `V26NpcLifecycleMigrationTest.kt` are reverted byte-for-byte to `origin/main`, and all RTK14 lifecycle repair now lives in one new world-scoped migration, `V38__rtk14_npc_lifecycle_repair.kt` (test: `V38Rtk14NpcLifecycleRepairMigrationTest.kt`), which runs on every world. It is not yet a final full gate, merged change, deployment, reseed, or live verification.
+- Migration numbering: the claim-request migration was renumbered `V36__general_owner_claim_request.sql` → `V37__general_owner_claim_request.sql`, because `origin/main` already ships `V36__diplomacy_casualties.sql` and two V36s make Flyway fail with a duplicate version.
+- Why V38 instead of extending V26: a database that already recorded V26 in `flyway_schema_history` never re-runs it, so the extension could not reach upgraded worlds; and on a fresh database Flyway runs before `ScenarioSeedRunner` (an `ApplicationRunner`), so `world_state` is empty and V26 returns immediately, making the extension unreachable on new worlds too. Putting the whole repair in V38, which no world has recorded yet, is what makes already-migrated and freshly seeded worlds converge on the same final state.
+- Current remediation: V38 resolves the effective scenario external-over-classpath, matches actual deferred action identity at `name[2]`/`nation[4]`, excludes `rtk14Added`, applies universal strict-shape checks, splits valid grouped events while preserving unrelated ones, and fails closed on ambiguity — including the ambiguous future-row case that an earlier draft had tried to close inside V26. The importer rejects `appearanceYear > deathYear`; possession uses an explicit conditional-delete branch rather than a `takeIf` side effect.
+- Docker PR #25 remediation replaces the indentation-only Compose scan with a rendered Compose JSON contract and gives the daemon-visible scenario mount a `COMPOSE_HOST_DIR` default. This is candidate-branch validation only.
+- Focused evidence: importer 21, possession 21, and the Docker focused contract test are green; the deep repair-migration re-review is CLEARED. The former V26 focused count no longer applies, since V26 and its test are reverted to `origin/main`; that coverage moved into `V38Rtk14NpcLifecycleRepairMigrationTest` (9 cases — external-only scenario resolution, external-over-classpath precedence, per-nation deferred identity, duplicate future-appearance fail-closed, missing-scenario fail-closed, plus a new malformed-external-override rollback case), which was not re-run in this documentation pass. These focused results do not replace a final full gate for the current working tree.
+- Remaining release gates: both source PR #356 and Docker PR #25 need three new sequential mention reviews on their new exact SHA, with any findings remediated; only then may they be merged, deployed, followed by `pep` reseed and live DB/API/UI/clock verification.
+- Goal: use every officer row from `/Users/apple/Desktop/삼국지14 무장정보.xlsx` in every populated runtime scenario, preserving one-to-one duplicate identities, replacing the five stats, and applying birth/appearance/death lifecycle dates. Existing runtime-only officers remain with reviewed politics/charm overrides.
+- In scope:
+  - the local RTK14 source-data builder, validation/reporting, and private generated scenario artifacts;
+  - runtime scenario tuple decoding and active/deferred appearance scheduling;
+  - deferred NPC creation carrying politics/charm;
+  - possession routing plus all affected API/UI five-stat surfaces;
+  - source and orchestration deployment wiring for private generated scenarios;
+  - tests, three sequential mention-triggered PR reviews with fixes, merge, deployment, and live verification.
+- Non-goals: tracked generated Koei data, `legacy/**` or golden writes, unrelated archive universes under `data/extracted/scenario`, and secret disclosure.
+- Allowed files: `tools/rtk14/**`, relevant scenario seed/import and deferred-NPC logic/tests in `infra/**`, `logic/**`, `app/game-engine/**`, affected `app/game-api/**` DTO/controller/tests, affected `web/game/**` and `web/gateway/**`, `.github/workflows/deploy.yml`, `tools/agent-system/check.py`, `.ai/{task,current-state,ownership,handoff}.md`, and one review artifact. The sibling Docker worktree may change only scenario mount Compose/deployer contract files.
+- Acceptance evidence:
+  - exactly 1,000 workbook rows are represented once per populated runtime scenario, including all duplicate-name rows; settings-only scenarios remain byte-identical;
+  - five stats and birth/appearance/death lifecycle values round-trip through source JSON and generated tuples; no unresolved workbook row remains;
+  - future appearances retain politics/charm and occur on the validated effective appearance year;
+  - focused Python, logic, infra, engine, API, frontend, typecheck, static workflow, and diff gates pass with XML/tail evidence;
+  - three fresh PR review rounds per PR have no unresolved `fix-required`; deployment and live DB/UI observations confirm the result.
+- Approved external actions: create/update the private RTK14 GitHub Actions secret without printing it, commit, push, PR, three mention reviews, merge, deploy, and overwrite/reseed the target scenario as requested. Any broader data deletion remains prohibited.
+
+---
+
 ## 2026-07-31 OPENSAM-34 — 배포 전 Go 조건 5종
 
 - Status: the local grader and closeout documentation are complete, and the

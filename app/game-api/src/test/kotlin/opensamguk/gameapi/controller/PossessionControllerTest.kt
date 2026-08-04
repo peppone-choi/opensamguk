@@ -1,6 +1,12 @@
 package opensamguk.gameapi.controller
 
 import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.common.wire.GeneralBoolResult
+import opensamguk.common.wire.TurnDaemonEvent
+import opensamguk.common.wire.TurnDaemonEventEnvelope
+import opensamguk.common.wire.WireJson
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralPossessionService
@@ -15,7 +21,9 @@ import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.security.GameApiJwtVerifier
+import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockingDetails
@@ -50,12 +58,21 @@ class PossessionControllerTest {
     private val nations = mock(NationReadRepository::class.java)
     private val npcTokens = mock(SelectNpcTokenRepository::class.java)
     private val worldStates = mock(WorldStateReadRepository::class.java)
+    private val commandResults = mock(CommandResultRepository::class.java)
     private val reserve = mock(CommandReserveService::class.java)
     private val jwtVerifier = mock(GameApiJwtVerifier::class.java)
     private val fixedClock = Clock.fixed(Instant.parse("2026-06-02T00:00:00Z"), ZoneOffset.UTC)
-    private val possession = GeneralPossessionService(owners, generals, npcTokens, worldStates, fixedClock)
+    private val possession = GeneralPossessionService(
+        owners,
+        generals,
+        npcTokens,
+        worldStates,
+        commandResults,
+        GameApiProcessWorld(1),
+        fixedClock,
+    )
     private val selectNpcTokens =
-        SelectNpcTokenService(npcTokens, owners, generals, nations, worldStates, fixedClock)
+        SelectNpcTokenService(npcTokens, owners, possession, generals, nations, worldStates, fixedClock)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(PossessionController(possession, selectNpcTokens, reserve, jwtVerifier))
@@ -69,11 +86,12 @@ class PossessionControllerTest {
     }
 
     private fun npc(
-        id: Int, name: String, nationId: Int = 0, npcState: Int = 2,
+        id: Int, name: String, nationId: Int = 0, npcState: Int = 2, userId: String? = null,
         specialCode: String = "None", special2Code: String = "None", personalCode: String = "None",
+        politics: Int = 50, charm: Int = 50,
     ) = GeneralReadEntity(
-        id = id, name = name, nationId = nationId, npcState = npcState,
-        leadership = 50, strength = 50, intel = 50,
+        id = id, name = name, nationId = nationId, npcState = npcState, userId = userId,
+        leadership = 50, strength = 50, intel = 50, politics = politics, charm = charm,
         specialCode = specialCode, special2Code = special2Code, personalCode = personalCode,
     )
 
@@ -86,6 +104,16 @@ class PossessionControllerTest {
         createdAt = Instant.parse("2026-06-02T00:00:00Z"),
         updatedAt = Instant.parse("2026-06-02T00:00:00Z"),
     )
+
+    private fun claimResultPayload(requestId: String, result: GeneralBoolResult): String =
+        WireJson.encodeToString(
+            TurnDaemonEventEnvelope.serializer(),
+            TurnDaemonEventEnvelope(
+                requestId = requestId,
+                sentAt = "2026-06-02T00:00:00Z",
+                event = TurnDaemonEvent.CommandResult(result),
+            ),
+        )
 
     private fun seedNpcMode(mode: Int = 1) {
         `when`(worldStates.findById(1)).thenReturn(
@@ -109,7 +137,16 @@ class PossessionControllerTest {
         )
         `when`(generals.findByNpcStateOrderByIdAsc(2)).thenReturn(
             listOf(
-                npc(10, "여포", nationId = 1, specialCode = "che_경작", special2Code = "che_돌격", personalCode = "che_정복"),
+                npc(
+                    10,
+                    "여포",
+                    nationId = 1,
+                    specialCode = "che_경작",
+                    special2Code = "che_돌격",
+                    personalCode = "che_정복",
+                    politics = 84,
+                    charm = 67,
+                ),
                 npc(11, "장료", nationId = 1), // 11 already claimed → dropped
             ),
         )
@@ -123,9 +160,60 @@ class PossessionControllerTest {
             .andExpect(jsonPath("$.candidates[0].generalId").value(10))
             .andExpect(jsonPath("$.candidates[0].name").value("여포"))
             .andExpect(jsonPath("$.candidates[0].nationName").value("동탁"))
+            .andExpect(jsonPath("$.candidates[0].politics").value(84))
+            .andExpect(jsonPath("$.candidates[0].charm").value(67))
             .andExpect(jsonPath("$.candidates[0].special").value("경작"))
             .andExpect(jsonPath("$.candidates[0].special2").value("돌격"))
             .andExpect(jsonPath("$.candidates[0].personal").value("정복"))
+    }
+
+    @Test
+    fun `claimable rehydrates politics and charm from an active token snapshot`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(null)
+        `when`(
+            npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(
+                7L,
+                Instant.parse("2026-06-02T00:00:00Z"),
+            ),
+        ).thenReturn(
+            SelectNpcTokenEntity(
+                ownerId = 7L,
+                validUntil = Instant.parse("2026-06-02T00:01:00Z"),
+                pickMoreFrom = Instant.parse("2000-01-01T01:00:00Z"),
+                pickResult = linkedMapOf(
+                    "10" to linkedMapOf(
+                        "generalId" to 10,
+                        "name" to "여포",
+                        "nationId" to 1,
+                        "nationName" to "동탁",
+                        "leadership" to 90,
+                        "strength" to 99,
+                        "intel" to 72,
+                        "politics" to 84,
+                        "charm" to 67,
+                        "picture" to "yeopo.png",
+                        "imageServer" to 2,
+                        "special" to "경작",
+                        "special2" to "돌격",
+                        "personal" to "정복",
+                        "keepCnt" to 3,
+                    ),
+                    "__pickMoreSeconds" to 10,
+                ),
+                nonce = 1,
+                createdAt = Instant.parse("2026-06-02T00:00:00Z"),
+                updatedAt = Instant.parse("2026-06-02T00:00:00Z"),
+            ),
+        )
+
+        mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.candidates[0].leadership").value(90))
+            .andExpect(jsonPath("$.candidates[0].strength").value(99))
+            .andExpect(jsonPath("$.candidates[0].intel").value(72))
+            .andExpect(jsonPath("$.candidates[0].politics").value(84))
+            .andExpect(jsonPath("$.candidates[0].charm").value(67))
     }
 
     @Test
@@ -159,6 +247,7 @@ class PossessionControllerTest {
     fun `claimable returns empty when the caller already owns a general`() {
         seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포", npcState = 0)))
 
         mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
             .andExpect(status().isOk)
@@ -196,6 +285,14 @@ class PossessionControllerTest {
         assertEquals(10, claim.generalId)
         assertEquals(7L, claim.userId)
         assertEquals("7", claim.userNick)
+        val owner = mockingDetails(owners).invocations
+            .single { it.method.name == "save" }
+            .arguments[0] as GeneralOwnerEntity
+        assertEquals("req-claim-10", owner.claimRequestId)
+        val admitted = mockingDetails(reserve).invocations.single { it.method.name == "publishImmediate" }
+        val consumed = mockingDetails(npcTokens).invocations.single { it.method.name == "deleteOwnerOrExpired" }
+        assertTrue(admitted.sequenceNumber < mockingDetails(owners).invocations.single { it.method.name == "save" }.sequenceNumber)
+        assertTrue(mockingDetails(owners).invocations.single { it.method.name == "save" }.sequenceNumber < consumed.sequenceNumber)
     }
 
     @Test
@@ -222,6 +319,7 @@ class PossessionControllerTest {
     fun `claim is idempotent when the caller already owns exactly that general`() {
         seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포", npcState = 1, userId = "7")))
 
         mockMvc().perform(
             post("/api/general/claim").with(principal(7L))
@@ -230,6 +328,191 @@ class PossessionControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.generalId").value(10))
+    }
+
+    @Test
+    fun `claimable exposes only the correlated provisional candidate for a reload resume`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH, claimRequestId = "req-claim-10"),
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포", nationId = 1)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "동탁", color = "#000")))
+
+        mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.hasGeneral").value(false))
+            .andExpect(jsonPath("$.candidates.length()").value(1))
+            .andExpect(jsonPath("$.candidates[0].generalId").value(10))
+    }
+
+    @Test
+    fun `claimable clears its exact terminal denial on reload and returns a retry token without publishing a command`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH, claimRequestId = "req-claim-10"),
+            null,
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포", npcState = 0)))
+        `when`(commandResults.findResultPayload(WorldId(1), "req-claim-10")).thenReturn(
+            claimResultPayload(
+                "req-claim-10",
+                GeneralBoolResult("claimNpc", false, 10, "빙의 가능한 장수가 아닙니다."),
+            ),
+        )
+        `when`(owners.deleteByUserIdAndGeneralIdAndClaimRequestId(7L, 10L, "req-claim-10")).thenReturn(1)
+        `when`(
+            npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(
+                7L,
+                Instant.parse("2026-06-02T00:00:00Z"),
+            ),
+        ).thenReturn(activeToken(11))
+
+        mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.hasGeneral").value(false))
+            .andExpect(jsonPath("$.reason").value("빙의 가능한 장수가 아닙니다."))
+            .andExpect(jsonPath("$.candidates.length()").value(1))
+            .andExpect(jsonPath("$.candidates[0].generalId").value(11))
+
+        assertEquals(0, mockingDetails(reserve).invocations.count { it.method.name == "publishImmediate" })
+    }
+
+    @Test
+    fun `claimable fails closed for an uncorrelated legacy reservation`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
+
+        mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.hasGeneral").value(false))
+            .andExpect(jsonPath("$.candidates.length()").value(0))
+    }
+
+    @Test
+    fun `claimable does not promote a correlated owner until exact daemon activation`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH, claimRequestId = "req-claim-10"),
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포", npcState = 0, userId = "7")))
+
+        mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.hasGeneral").value(false))
+            .andExpect(jsonPath("$.candidates.length()").value(0))
+    }
+
+    @Test
+    fun `claim reuses the correlated request while daemon completion is pending`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH, claimRequestId = "req-claim-10"),
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
+        `when`(commandResults.findResultPayload(WorldId(1), "req-claim-10")).thenReturn(null)
+
+        mockMvc().perform(
+            post("/api/general/claim").with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":10}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.requestId").value("req-claim-10"))
+
+        assertEquals(0, mockingDetails(reserve).invocations.count { it.method.name == "publishImmediate" })
+    }
+
+    @Test
+    fun `claim cleans up only its matching provisional reservation after terminal denial`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH, claimRequestId = "req-claim-10"),
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
+        `when`(commandResults.findResultPayload(WorldId(1), "req-claim-10")).thenReturn(
+            claimResultPayload(
+                "req-claim-10",
+                GeneralBoolResult("claimNpc", false, 10, "빙의 가능한 장수가 아닙니다."),
+            ),
+        )
+        `when`(owners.deleteByUserIdAndGeneralIdAndClaimRequestId(7L, 10L, "req-claim-10")).thenReturn(1)
+
+        mockMvc().perform(
+            post("/api/general/claim").with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":10}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(false))
+            .andExpect(jsonPath("$.reason").value("빙의 가능한 장수가 아닙니다."))
+
+        assertEquals(0, mockingDetails(reserve).invocations.count { it.method.name == "publishImmediate" })
+    }
+
+    @Test
+    fun `claim keeps the existing request after a matching terminal success until activation is visible`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH, claimRequestId = "req-claim-10"),
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
+        `when`(commandResults.findResultPayload(WorldId(1), "req-claim-10")).thenReturn(
+            claimResultPayload("req-claim-10", GeneralBoolResult("claimNpc", true, 10)),
+        )
+
+        mockMvc().perform(
+            post("/api/general/claim").with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":10}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.requestId").value("req-claim-10"))
+
+        assertEquals(0, mockingDetails(reserve).invocations.count { it.method.name == "publishImmediate" })
+    }
+
+    @Test
+    fun `claim fails closed for an uncorrelated legacy reservation`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
+
+        mockMvc().perform(
+            post("/api/general/claim").with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":10}"""),
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.result").value(false))
+            .andExpect(jsonPath("$.reason").value("빙의 요청 정보를 확인할 수 없습니다."))
+
+        assertEquals(0, mockingDetails(reserve).invocations.count { it.method.name == "publishImmediate" })
+    }
+
+    @Test
+    fun `claim rejects a terminal payload that names a different general without deleting the reservation`() {
+        seedNpcMode()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH, claimRequestId = "req-claim-10"),
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
+        `when`(commandResults.findResultPayload(WorldId(1), "req-claim-10")).thenReturn(
+            claimResultPayload("req-claim-10", GeneralBoolResult("claimNpc", false, 11, "빙의 가능한 장수가 아닙니다.")),
+        )
+
+        mockMvc().perform(
+            post("/api/general/claim").with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":10}"""),
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.result").value(false))
+            .andExpect(jsonPath("$.reason").value("빙의 요청 결과를 확인할 수 없습니다."))
+
+        assertEquals(0, mockingDetails(owners).invocations.count { it.method.name == "deleteByUserIdAndGeneralIdAndClaimRequestId" })
     }
 
     @Test

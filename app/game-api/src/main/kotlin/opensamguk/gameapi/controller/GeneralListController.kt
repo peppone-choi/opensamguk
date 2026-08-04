@@ -196,6 +196,8 @@ class GeneralListController(
             leadership = g.leadership,
             strength = g.strength,
             intel = g.intel,
+            politics = g.politics,
+            charm = g.charm,
             explevel = explevel,
             dedlevel = dedlevel,
             gold = g.gold,

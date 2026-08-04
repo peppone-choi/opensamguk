@@ -1,5 +1,20 @@
 # Current State
 
+## RTK14 전체 장수·5능력치 배포 준비 — 2026-08-04
+
+- 엑셀 1,000행의 15개 열을 비공개 source JSON으로 round-trip하고, 15개 populated 런타임 시나리오마다 장수 번호 1–1000을 정확히 한 번씩 표현한다. 생성물과 원본은 gitignored이며 private GitHub Actions secret만 등록됐다.
+- 기존 장수는 소속·도시·관직·대사를 유지하면서 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신한다. 엑셀에만 있는 343명은 빙의 가능한 기본 장수로 추가한다. 시나리오 전용 legacy-only 351행은 모두 근거가 있는 정치·매력 override를 사용하며, 동명이인 source 후보 소진 충돌 38건은 exact runtime identity override로 처리하고 미검토 fallback은 fail-closed다.
+- exact prior source HEAD `725195fea29b3434cc358e3d262c6c440830dab7`의 리뷰는 released-V26 forward-repair gap을 P1으로 판정했다. 현재 working tree는 **V26을 전혀 건드리지 않는다**: `V26__npc_lifecycle_phase_units.kt`와 `V26NpcLifecycleMigrationTest.kt`는 origin/main으로 byte-for-byte 되돌렸고, RTK14 lifecycle repair는 전부 새 world-scoped migration `V38__rtk14_npc_lifecycle_repair.kt`(test: `V38Rtk14NpcLifecycleRepairMigrationTest.kt`) 하나로 모았다. 따라서 이미 V26을 지난 월드에 별도 future repair가 필요하다는 이전 제한은 더 이상 유효하지 않다. 단, V38 자체의 실행·배포·live 결과는 아직 없다.
+- 마이그레이션 번호 정리: claim-request migration은 `V36__general_owner_claim_request.sql` → **`V37__general_owner_claim_request.sql`**로 renumber했다. origin/main이 이미 `V36__diplomacy_casualties.sql`을 싣고 있어 V36이 둘이면 Flyway가 duplicate version으로 실패하기 때문이다.
+- V26 확장이 아니라 V38인 이유: 이미 `flyway_schema_history`에 V26을 기록한 DB는 V26을 절대 재실행하지 않으므로 V26을 확장해도 업그레이드된 월드에는 닿지 않는다. 별개로 fresh DB에서는 Flyway가 `ScenarioSeedRunner`(`ApplicationRunner`)보다 먼저 돌아 `world_state`가 비어 있고 V26은 즉시 반환하므로 신규 월드에서도 그 확장은 도달 불가였다. 아직 어떤 월드도 기록하지 않은 V38에 repair 전체를 두는 것이 이미 마이그레이션된 월드와 새로 시드된 월드를 같은 최종 상태로 수렴시킨다.
+- V38은 world-scoped이며 모든 월드에서 실행된다. external-over-classpath effective scenario를 사용하고, `name[2]`/`nation[4]`의 실제 action identity로만 매칭하며, `rtk14Added`를 제외한다. universal strict-shape checks가 불완전한 legacy event를 보존하고, 검증된 grouped event는 appearance year별로 분할하며, ambiguous identity는 fail-closed한다.
+- CodeRabbit remediation: ambiguous future row 선택 문제는 V26 확장이 아니라 V38의 duplicate future-appearance fail-closed로 닫았고, importer는 `appearanceYear > deathYear`를 import 전에 거부하며, possession의 conditional reservation delete는 `takeIf` 부수효과 대신 명시적 branch로 수행한다. V37 request-id reconciliation, `general_ex` RNG isolation, typed tuple-24 marker, and shared effective-scenario resolution remain in scope.
+- Docker PR #25는 weak indentation scan을 rendered Compose JSON contract로 대체하고 daemon-host relative mount 문제를 `COMPOSE_HOST_DIR` default로 닫는다. 이는 candidate-branch validation이며, this remediation의 merge/deploy/live completion 주장이 아니다.
+- Focused evidence: importer 21, possession 21, and the Docker focused contract test are green; the deep repair-migration re-review is CLEARED. V26 evidence no longer applies to this branch because V26 and its test are reverted to origin/main. The repair coverage now lives in `V38Rtk14NpcLifecycleRepairMigrationTest` (9 cases: external-only scenario resolution, external-over-classpath precedence, per-nation deferred identity, duplicate future-appearance fail-closed, missing-scenario fail-closed, plus a new malformed-external-override rollback case); it has not been re-run in this documentation pass. Earlier backend-wide evidence predates these working-tree fixes and is not a final full-gate result for them.
+- Remaining: source fix commit/push → source PR #356 and Docker PR #25 each receive three new sequential exact-SHA mention reviews and any required fixes → merge → deploy → `pep` reseed → live DB/API/UI/clock verification. None of those release steps is complete.
+
+---
+
 ## OPENSAM-34 predeploy Go conditions — local grader ready; external observation blocked (2026-07-31)
 
 - D4-31~35 local grader, manual-only workflow, runbook, and final independent
@@ -157,6 +172,8 @@ v1은 **상순·중순·하순, 연 36순**을 유지한다(ADR-LITE-024).
 PHP 재캡처, live browser는 환경 부재로 `채점대기`다. 명령·월 틱·전투·AI
 정책·부가 시스템·JPA read·프런트·S6 운영의 잔여 차단 항목은 감사 보고서
 §6에 남아 있다. commit/push/merge/deploy는 수행하지 않았다.
+
+---
 
 ## 현재 상태 요약 — 2026-07-25
 

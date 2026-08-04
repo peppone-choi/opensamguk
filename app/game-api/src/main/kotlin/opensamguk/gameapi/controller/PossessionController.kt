@@ -64,8 +64,26 @@ class PossessionController(
                 ResponseEntity.ok(ClaimResponse(result = true, generalId = r.generalId, reason = null, requestId = r.requestId))
             }
 
+            is GeneralPossessionService.ClaimResult.AwaitingDaemon ->
+                ResponseEntity.ok(ClaimResponse(result = true, generalId = r.generalId, reason = null, requestId = r.requestId))
+
             is GeneralPossessionService.ClaimResult.AlreadyOwnedBySelf ->
                 ResponseEntity.ok(ClaimResponse(result = true, generalId = r.generalId, reason = "이미 점유한 장수입니다."))
+
+            is GeneralPossessionService.ClaimResult.TerminalDenied ->
+                ResponseEntity.ok(ClaimResponse(result = false, generalId = r.generalId, reason = r.reason))
+
+            is GeneralPossessionService.ClaimResult.UncorrelatedReservation ->
+                ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ClaimResponse(result = false, generalId = r.generalId, reason = "빙의 요청 정보를 확인할 수 없습니다."))
+
+            is GeneralPossessionService.ClaimResult.InvalidClaimResult ->
+                ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ClaimResponse(result = false, generalId = r.generalId, reason = "빙의 요청 결과를 확인할 수 없습니다."))
+
+            is GeneralPossessionService.ClaimResult.ReservationChanged ->
+                ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ClaimResponse(result = false, generalId = r.generalId, reason = "빙의 상태가 변경되었습니다. 다시 시도하세요."))
 
             is GeneralPossessionService.ClaimResult.UserAlreadyHasGeneral ->
                 ResponseEntity.status(HttpStatus.CONFLICT)

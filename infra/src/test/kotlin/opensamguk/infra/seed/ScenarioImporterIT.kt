@@ -553,6 +553,186 @@ class ScenarioImporterIT {
     }
 
     @Test
+    fun `general_ex provenance and extension quadrants preserve downstream neutral RNG order`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        fun importAndSnapshot(sourceProvenanced: Boolean, extendedGeneral: Boolean): Map<String, Map<String, Any?>> {
+            ScenarioImporter(
+                scenario = scenarioForGeneralExProvenanceRng(sourceProvenanced),
+                cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+                scenarioCode = "scenario_general_ex_provenance_rng",
+                scenarioNumber = 9008,
+                extendedGeneral = extendedGeneral,
+                installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+            ).importAll(jdbc, canonicalWorldId)
+            return jdbc.queryForList(
+                """
+                SELECT name, affinity, city_id, personal_code, turn_time::text AS turn_time,
+                       meta ->> 'killturn' AS killturn
+                  FROM general
+                 ORDER BY id
+                """.trimIndent(),
+            ).associateBy { it.getValue("name") as String }
+        }
+
+        val legacyEnabled = importAndSnapshot(sourceProvenanced = false, extendedGeneral = true)
+        cleanRows()
+        val legacyDisabled = importAndSnapshot(sourceProvenanced = false, extendedGeneral = false)
+        cleanRows()
+        val sourceEnabled = importAndSnapshot(sourceProvenanced = true, extendedGeneral = true)
+        cleanRows()
+        val sourceDisabled = importAndSnapshot(sourceProvenanced = true, extendedGeneral = false)
+
+        val extensionName = "ⓝGeneralExCandidate"
+        val baseName = "ⓝBaseLegacyCandidate"
+        val neutralName = "ⓤNeutralLegacyCandidate"
+
+        assertTrue(extensionName in legacyEnabled)
+        assertTrue(extensionName !in legacyDisabled, "ordinary legacy extensions remain disabled")
+        assertTrue(extensionName in sourceEnabled)
+        assertTrue(extensionName in sourceDisabled, "source provenance retains the RTK14-enriched extension")
+        assertEquals(
+            legacyEnabled.getValue(neutralName),
+            sourceEnabled.getValue(neutralName),
+            "when extensions are enabled, source-provenanced and legacy general_ex rows keep PHP build order",
+        )
+        assertEquals(
+            legacyDisabled.getValue(baseName),
+            sourceDisabled.getValue(baseName),
+            "the retained source row must not change preceding legacy build fields",
+        )
+        assertEquals(
+            legacyDisabled.getValue(neutralName),
+            sourceDisabled.getValue(neutralName),
+            "a source-only retained general_ex row must not advance InitScenario before later neutral rows",
+        )
+        assertEquals(
+            sourceEnabled.getValue(extensionName).filterKeys { it == "affinity" || it == "personal_code" },
+            sourceDisabled.getValue(extensionName).filterKeys { it == "affinity" || it == "personal_code" },
+            "the source-admitted row keeps its legacy InitScenario affinity and ego draws",
+        )
+    }
+
+    @Test
+    fun `appended RTK14 rows do not shift legacy InitScenario replay rows`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        fun importAndSnapshot(includeRtk14Addition: Boolean): List<Map<String, Any?>> {
+            ScenarioImporter(
+                scenario = scenarioForRtk14RngIsolation(includeRtk14Addition),
+                cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+                scenarioCode = "scenario_rtk14_rng_isolation",
+                scenarioNumber = 9005,
+                installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+            ).importAll(jdbc, canonicalWorldId)
+            return jdbc.queryForList(
+                """
+                SELECT id, name, affinity, city_id, personal_code, turn_time::text AS turn_time,
+                       meta ->> 'killturn' AS killturn
+                  FROM general
+                 WHERE name IN ('ⓝBaseLegacyRng', 'ⓝExtendedLegacyRng', 'ⓤNeutralLegacyRng')
+                 ORDER BY id
+                """.trimIndent(),
+            )
+        }
+
+        val baseline = importAndSnapshot(includeRtk14Addition = false)
+        cleanRows()
+        val withAddition = importAndSnapshot(includeRtk14Addition = true)
+
+        assertEquals(3, baseline.size)
+        assertEquals(baseline, withAddition, "added RTK14 draws use their own stream and leave legacy rows byte-stable")
+    }
+
+    @Test
+    fun `matched RTK14 row becoming future phantom-consumes legacy build RNG for later unchanged row`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        fun importAndSnapshot(enrichEarlyRow: Boolean): Map<String, Any?> {
+            ScenarioImporter(
+                scenario = scenarioForRtk14LegacyRngLifecycle(
+                    earlyRow = if (enrichEarlyRow) {
+                        rtk14LifecycleTuple(
+                            name = "MatchedBecomesFuture",
+                            birth = 180,
+                            death = 260,
+                            appearance = 205,
+                            officerNumber = 9101,
+                            legacyActiveAtStart = true,
+                        )
+                    } else {
+                        legacyLifecycleTuple("MatchedBecomesFuture", 180, 260)
+                    },
+                ),
+                cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+                scenarioCode = "scenario_rtk14_future_rng",
+                scenarioNumber = 9006,
+                installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+            ).importAll(jdbc, canonicalWorldId)
+            return laterLegacyRngSnapshot()
+        }
+
+        val baseline = importAndSnapshot(enrichEarlyRow = false)
+        cleanRows()
+        val enriched = importAndSnapshot(enrichEarlyRow = true)
+
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE name = 'ⓝMatchedBecomesFuture'", Int::class.java))
+        assertEquals(
+            "205",
+            jdbc.queryForObject(
+                "SELECT condition #>> '{2}' FROM event WHERE action #>> '{0,2}' = 'MatchedBecomesFuture'",
+                String::class.java,
+            ),
+            "the enriched lifecycle still defers the matched row at its explicit appearance year",
+        )
+        assertEquals(
+            baseline,
+            enriched,
+            "an old-active matched row must consume its legacy city, turn-time, and killturn draws before later legacy rows",
+        )
+    }
+
+    @Test
+    fun `matched RTK14 row newly active uses isolated build RNG without shifting later legacy row`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        fun importAndSnapshot(enrichEarlyRow: Boolean): Map<String, Any?> {
+            ScenarioImporter(
+                scenario = scenarioForRtk14LegacyRngLifecycle(
+                    earlyRow = if (enrichEarlyRow) {
+                        rtk14LifecycleTuple(
+                            name = "MatchedNewlyActive",
+                            birth = 190,
+                            death = 260,
+                            appearance = 200,
+                            officerNumber = 9102,
+                            legacyActiveAtStart = false,
+                        )
+                    } else {
+                        legacyLifecycleTuple("MatchedNewlyActive", 190, 260)
+                    },
+                ),
+                cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+                scenarioCode = "scenario_rtk14_newly_active_rng",
+                scenarioNumber = 9007,
+                installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+            ).importAll(jdbc, canonicalWorldId)
+            return laterLegacyRngSnapshot()
+        }
+
+        val baseline = importAndSnapshot(enrichEarlyRow = false)
+        cleanRows()
+        val enriched = importAndSnapshot(enrichEarlyRow = true)
+
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM general WHERE name = 'ⓝMatchedNewlyActive'", Int::class.java))
+        assertEquals(
+            baseline,
+            enriched,
+            "a newly active matched row must draw from InitScenarioRtk14 instead of advancing later legacy replay fields",
+        )
+    }
+
+    @Test
     fun `deferred NPC events preserve PHP raw tuples and neutral action names`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
@@ -617,6 +797,245 @@ class ScenarioImporterIT {
                 Int::class.java,
             ),
             "extended_general=false excludes general_ex from deferred event creation",
+        )
+    }
+
+    @Test
+    fun `RTK14 appearance lifecycle seeds active rows schedules exact appearances and preserves source metadata`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14 lifecycle",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [
+                [1,"LegacyActive",null,0,null,10,11,12,0,186,240,"유지",null],
+                [1,"LegacyFuture",null,0,null,10,11,12,0,190,240,"유지",null],
+                [1,"Under14AtAppearance",null,0,null,10,11,12,0,199,240,"유지",null,null,50,50,200,101,"남",60,41,321,"유가",false,false],
+                [1,"AtDeathAppearance",null,0,null,10,11,12,0,100,200,"유지",null,null,50,50,200,102,"여",70,55,322,"법가",false,false],
+                [1,"LaterAppearance",null,0,null,10,11,12,0,100,240,"유지",null,null,50,50,205,103,"남",80,65,323,"도교",false,true],
+                [1,"DeathEqualsLaterAppearance",null,0,null,10,11,12,0,100,205,"유지",null,null,50,50,205,104,"여",75,50,324,"유가",false,true],
+                [1,"AlreadyDeceased",null,0,null,10,11,12,0,100,199,"유지",null,null,50,50,190,105,"남",90,70,325,"묵가",false,false]
+              ],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+        ScenarioImporter(
+            scenario = scenario,
+            cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+            scenarioCode = "scenario_rtk14_lifecycle",
+            scenarioNumber = 9004,
+            installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+        ).importAll(jdbc, canonicalWorldId)
+
+        assertEquals(
+            3,
+            jdbc.queryForObject("SELECT count(*) FROM general", Int::class.java),
+            "legacy adult, under-14 explicit appearance, and death-equals-appearance start rows are active",
+        )
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM general WHERE name = 'ⓝUnder14AtAppearance'",
+                Int::class.java,
+            ),
+            "an explicit appearance overrides the legacy birth-plus-adult-age gate",
+        )
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM general WHERE name = 'ⓝAtDeathAppearance'",
+                Int::class.java,
+            ),
+            "an explicit appearance remains active when death equals the start appearance year",
+        )
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM general WHERE name = 'ⓝAlreadyDeceased'",
+                Int::class.java,
+            ),
+        )
+
+        val later = jdbc.queryForMap(
+            """
+            SELECT condition #>> '{2}' AS scheduled_year,
+                   action #>> '{0,17}' AS appearance_year,
+                   action #>> '{0,18}' AS officer_number,
+                   action #>> '{0,19}' AS gender,
+                   action #>> '{0,20}' AS lifespan,
+                   action #>> '{0,21}' AS activity_years,
+                   action #>> '{0,22}' AS total,
+                   action #>> '{0,23}' AS ideology
+              FROM event
+             WHERE action #>> '{0,2}' = 'LaterAppearance'
+            """.trimIndent(),
+        )
+        assertEquals("205", sso(later["scheduled_year"]))
+        assertEquals("205", sso(later["appearance_year"]))
+        assertEquals("103", sso(later["officer_number"]))
+        assertEquals("남", sso(later["gender"]))
+        assertEquals("80", sso(later["lifespan"]))
+        assertEquals("65", sso(later["activity_years"]))
+        assertEquals("323", sso(later["total"]))
+        assertEquals("도교", sso(later["ideology"]))
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                """
+                SELECT count(*)
+                  FROM event
+                  CROSS JOIN LATERAL jsonb_array_elements(action) action_row
+                 WHERE action_row #>> '{0}' = 'RegNPC'
+                   AND action_row #>> '{2}' = 'DeathEqualsLaterAppearance'
+                   AND condition #>> '{2}' = '205'
+                """.trimIndent(),
+                Int::class.java,
+            ),
+            "a future appearance at the death year is scheduled inclusively",
+        )
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM event WHERE action #>> '{0,2}' = 'LegacyFuture' AND condition #>> '{2}' = '204'",
+                Int::class.java,
+            ),
+            "legacy rows retain birth-plus-adult-age scheduling",
+        )
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM event WHERE action::text LIKE '%AlreadyDeceased%'",
+                Int::class.java,
+            ),
+        )
+
+        val meta = jdbc.queryForMap(
+            """
+            SELECT meta ->> 'rtk14_officer_number' AS officer_number,
+                   meta ->> 'rtk14_gender' AS gender,
+                   meta ->> 'rtk14_birth_year' AS birth_year,
+                   meta ->> 'rtk14_appearance_year' AS appearance_year,
+                   meta ->> 'rtk14_death_year' AS death_year,
+                   meta ->> 'rtk14_lifespan' AS lifespan,
+                   meta ->> 'rtk14_activity_years' AS activity_years,
+                   meta ->> 'rtk14_total' AS total,
+                   meta ->> 'rtk14_ideology' AS ideology
+              FROM general
+             WHERE name = 'ⓝUnder14AtAppearance'
+            """.trimIndent(),
+        )
+        assertEquals("101", sso(meta["officer_number"]))
+        assertEquals("남", sso(meta["gender"]))
+        assertEquals("199", sso(meta["birth_year"]))
+        assertEquals("200", sso(meta["appearance_year"]))
+        assertEquals("240", sso(meta["death_year"]))
+        assertEquals("60", sso(meta["lifespan"]))
+        assertEquals("41", sso(meta["activity_years"]))
+        assertEquals("321", sso(meta["total"]))
+        assertEquals("유가", sso(meta["ideology"]))
+        assertEquals(
+            false,
+            jdbc.queryForObject(
+                "SELECT meta ? 'rtk14_appearance_year' FROM general WHERE name = 'ⓝLegacyActive'",
+                Boolean::class.java,
+            ),
+            "legacy rows do not receive RTK14 source metadata",
+        )
+    }
+
+    @Test
+    fun `importAll rejects an RTK14 appearance after death instead of silently dropping the row`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "invalid rtk14 lifecycle",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [
+                [1,"InvalidLifecycle",null,0,null,10,11,12,0,100,200,"유지",null,null,50,50,201,101,"남",70,50,300,"유가",false,false]
+              ],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val error = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(
+                scenario = scenario,
+                cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+                scenarioCode = "scenario_invalid_rtk14_lifecycle",
+                scenarioNumber = 9009,
+                installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+            ).importAll(jdbc, canonicalWorldId)
+        }
+
+        assertEquals(
+            "scenario general InvalidLifecycle has appearanceYear=201 after deathYear=200",
+            error.message,
+        )
+        for (table in listOf(
+            "world_state", "game_kv", "nation", "city", "general", "general_turn", "nation_turn",
+            "diplomacy", "rank_data", "ng_games", "event",
+        )) {
+            assertEquals(0, count(table), "$table must remain empty after lifecycle validation fails")
+        }
+    }
+
+    @Test
+    fun `reviewed legacy-only tuple with a lifecycle marker omits RTK14 source metadata`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "reviewed legacy metadata",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [
+                [1,"ReviewedLegacyOnly",null,0,null,10,11,12,0,186,240,"유지",null,null,61,62,null,null,null,null,null,null,null,false,true]
+              ],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val counts = ScenarioImporter(
+            scenario = scenario,
+            cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+            scenarioCode = "scenario_reviewed_legacy_metadata",
+            scenarioNumber = 9008,
+            installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+        ).importAll(jdbc, canonicalWorldId)
+
+        assertEquals(1, counts.general)
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                """
+                SELECT count(*)
+                  FROM general
+                  CROSS JOIN LATERAL jsonb_object_keys(meta) AS meta_key
+                 WHERE name = 'ⓝReviewedLegacyOnly'
+                   AND meta_key LIKE 'rtk14_%'
+                """.trimIndent(),
+                Int::class.java,
+            ),
+            "a 25-slot reviewed legacy tuple is not an RTK14 source row when officer number is absent",
         )
     }
 
@@ -695,6 +1114,90 @@ class ScenarioImporterIT {
               "general_ex": [[$extendedAffinity, "ExtendedOnly", null, 0, null, 20, 21, 22, 0, 180, 260, ${extendedEgo?.let { "\"$it\"" } ?: "null"}, null]],
               "diplomacy": []
             }
+            """.trimIndent(),
+        )
+
+    private fun scenarioForGeneralExProvenanceRng(sourceProvenanced: Boolean): Scenario {
+        val extension = if (sourceProvenanced) {
+            "[0,\"GeneralExCandidate\",null,0,null,20,21,22,0,180,260,null,null,null,50,50,200,9201,\"남\",70,50,300,\"유가\",false,true]"
+        } else {
+            "[0,\"GeneralExCandidate\",null,0,null,20,21,22,0,180,260,null,null,null]"
+        }
+        return ScenarioJson.loadScenario(
+            """
+            {
+              "title": "general_ex provenance rng",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [[0,"BaseLegacyCandidate",null,0,null,10,11,12,0,180,260,null,null]],
+              "general_ex": [$extension],
+              "general_neutral": [[0,"NeutralLegacyCandidate",null,0,null,30,31,32,0,180,260,null,null]],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+    }
+
+    private fun scenarioForRtk14RngIsolation(includeRtk14Addition: Boolean): Scenario =
+        ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14 rng isolation",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [
+                [0,"BaseLegacyRng",null,0,null,10,11,12,0,180,260,null,null]${if (includeRtk14Addition) ",\n                [0,\"AppendedRtk14Rng\",null,0,null,20,21,22,0,180,260,null,null,null,50,50,200,9001,\"남\",70,50,300,\"유가\",true]" else ""}
+              ],
+              "general_ex": [[0,"ExtendedLegacyRng",null,0,null,30,31,32,0,180,260,null,null]],
+              "general_neutral": [[0,"NeutralLegacyRng",null,0,null,40,41,42,0,180,260,null,null]],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+    private fun scenarioForRtk14LegacyRngLifecycle(earlyRow: String): Scenario =
+        ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14 legacy rng lifecycle",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [
+                $earlyRow,
+                ${legacyLifecycleTuple("LaterUnchangedLegacyRng", 180, 260)}
+              ],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+    private fun legacyLifecycleTuple(name: String, birth: Int, death: Int): String =
+        "[0,\"$name\",null,0,null,10,11,12,0,$birth,$death,null,null,null]"
+
+    private fun rtk14LifecycleTuple(
+        name: String,
+        birth: Int,
+        death: Int,
+        appearance: Int,
+        officerNumber: Int,
+        legacyActiveAtStart: Boolean,
+    ): String =
+        "[0,\"$name\",null,0,null,10,11,12,0,$birth,$death,null,null,null,50,50,$appearance,$officerNumber,\"남\",70,50,300,\"유가\",false,$legacyActiveAtStart]"
+
+    private fun laterLegacyRngSnapshot(): Map<String, Any?> =
+        jdbc.queryForMap(
+            """
+            SELECT affinity, city_id, personal_code, turn_time::text AS turn_time,
+                   meta ->> 'killturn' AS killturn
+              FROM general
+             WHERE name = 'ⓝLaterUnchangedLegacyRng'
             """.trimIndent(),
         )
 

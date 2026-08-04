@@ -2,6 +2,7 @@ package opensamguk.logic.world
 
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
+import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.Diplomacy
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.test.assertFailsWith
 
 class RegNpcActionTest {
     @Test
@@ -222,7 +224,7 @@ class RegNpcActionTest {
     }
 
     @Test
-    fun `RegNeutralNPC preserves PHP raw tuple positions and uses its own seed scope`() {
+    fun `RegNeutralNPC accepts the shared scenario tuple layout and uses its own seed scope`() {
         val factory = WorldActions.register(EventActionFactory())
         val neutralContext = FakeContext(year = 182, month = 1)
         val rawTuple = listOf(
@@ -234,12 +236,12 @@ class RegNpcActionTest {
             JsonPrimitive(70),
             JsonPrimitive(60),
             JsonPrimitive(50),
+            JsonPrimitive(0),
             JsonPrimitive(168),
             JsonPrimitive(220),
             JsonPrimitive("유지"),
             JsonPrimitive("무쌍"),
             JsonPrimitive("중립 문구"),
-            JsonPrimitive("ignored raw tail"),
         )
 
         factory.create(RawAction("RegNeutralNPC", rawTuple)).run(neutralContext)
@@ -254,6 +256,10 @@ class RegNpcActionTest {
         assertEquals("che_유지", neutral.ego)
         assertEquals("che_무쌍", neutral.specialWar)
         assertEquals("중립 문구", neutral.npcText)
+        assertEquals(50, neutral.politics)
+        assertEquals(50, neutral.charm)
+        assertEquals(null, neutral.appearanceYear)
+        assertTrue(neutral.rtkMetadata.isEmpty())
         assertEquals(listOf("<Y>ⓤ중립</>이 성인이 되어 <S>등장</>했습니다."), neutralContext.actionLogs)
 
         val regNpcContext = FakeContext(year = 182, month = 1)
@@ -275,6 +281,173 @@ class RegNpcActionTest {
         ).run(regNpcContext)
 
         assertNotEquals(regNpcContext.staged.single().turntimeSecond, neutral.turntimeSecond)
+    }
+
+    @Test
+    fun `RTK tuple waits for its explicit appearance then carries five stats and source metadata`() {
+        val factory = WorldActions.register(EventActionFactory())
+        val tuple = rtkRegNpcTuple(appearanceYear = 190)
+        val beforeAppearance = FakeContext(year = 189, month = 1)
+
+        factory.create(RawAction("RegNPC", tuple)).run(beforeAppearance)
+
+        assertTrue(beforeAppearance.staged.isEmpty(), "RTK appearance overrides the legacy birth plus fourteen threshold")
+
+        val atAppearance = FakeContext(year = 190, month = 1)
+        factory.create(RawAction("RegNPC", tuple)).run(atAppearance)
+
+        val staged = atAppearance.staged.single()
+        assertEquals(77, staged.politics)
+        assertEquals(88, staged.charm)
+        assertEquals(22, staged.age, "the source birth year is still retained even when appearance is later")
+        assertEquals(190, staged.appearanceYear)
+        assertEquals(
+            linkedMapOf<String, Any?>(
+                "rtk14_officer_number" to 17001,
+                "rtk14_gender" to "female",
+                "rtk14_birth_year" to 168,
+                "rtk14_appearance_year" to 190,
+                "rtk14_death_year" to 220,
+                "rtk14_lifespan" to 52,
+                "rtk14_activity_years" to 27,
+                "rtk14_total" to 345,
+                "rtk14_ideology" to "왕도",
+            ),
+            staged.rtkMetadata,
+        )
+        assertEquals(
+            listOf(
+                "rtk14_officer_number",
+                "rtk14_gender",
+                "rtk14_birth_year",
+                "rtk14_appearance_year",
+                "rtk14_death_year",
+                "rtk14_lifespan",
+                "rtk14_activity_years",
+                "rtk14_total",
+                "rtk14_ideology",
+            ),
+            staged.rtkMetadata.keys.toList(),
+            "RTK metadata stays insertion ordered for the downstream JSON path",
+        )
+        assertEquals(
+            listOf("<Y>ⓝRTK등장</>이 성인이 되어 <S>등장</>했습니다."),
+            atAppearance.actionLogs,
+            "the explicit appearance year is the new-general callback boundary",
+        )
+
+        val afterAppearance = FakeContext(year = 191, month = 1)
+        factory.create(RawAction("RegNPC", tuple)).run(afterAppearance)
+
+        assertEquals(23, afterAppearance.staged.single().age)
+        assertTrue(afterAppearance.actionLogs.isEmpty(), "only the explicit appearance year is new-general")
+    }
+
+    @Test
+    fun `RTK neutral tuple appears at its explicit year even when younger than fourteen`() {
+        val factory = WorldActions.register(EventActionFactory())
+        val context = FakeContext(year = 192, month = 1)
+
+        factory.create(
+            RawAction(
+                "RegNeutralNPC",
+                rtkRegNeutralNpcTuple(birth = 190, death = 220, appearanceYear = 192),
+            ),
+        ).run(context)
+
+        val staged = context.staged.single()
+        assertEquals("ⓤRTK중립", staged.name)
+        assertEquals(6, staged.npc)
+        assertEquals(2, staged.age)
+        assertEquals(77, staged.politics)
+        assertEquals(88, staged.charm)
+        assertEquals(192, staged.appearanceYear)
+        assertEquals(
+            listOf("<Y>ⓤRTK중립</>이 성인이 되어 <S>등장</>했습니다."),
+            context.actionLogs,
+        )
+    }
+
+    @Test
+    fun `RTK appearance requires an integer or null scalar`() {
+        val factory = WorldActions.register(EventActionFactory())
+        val invalidAppearanceTuple = rtkRegNpcTuple(appearanceYear = 192).mapIndexed { index, value ->
+            if (index == 16) JsonPrimitive("not-a-year") else value
+        }
+
+        val error = assertFailsWith<IllegalStateException> {
+            factory.create(RawAction("RegNPC", invalidAppearanceTuple))
+        }
+
+        assertEquals("argument 16 must be an integer or null", error.message)
+    }
+
+    @Test
+    fun `RTK appearance allows death equality but rejects later years`() {
+        val factory = WorldActions.register(EventActionFactory())
+        val tuple = rtkRegNpcTuple(birth = 190, death = 195, appearanceYear = 195)
+        val deathYear = FakeContext(year = 195, month = 1)
+
+        factory.create(RawAction("RegNPC", tuple)).run(deathYear)
+
+        assertEquals(1, deathYear.staged.size, "RTK death is inclusive on the explicit appearance path")
+
+        val afterDeath = FakeContext(year = 196, month = 1)
+        factory.create(RawAction("RegNPC", tuple)).run(afterDeath)
+
+        assertTrue(afterDeath.staged.isEmpty(), "RTK rows do not reappear after their inclusive death year")
+    }
+
+    @Test
+    fun `RTK death-year appearance clamps a zero-jitter derived killturn after the legacy three draws`() {
+        val rng = ZeroRangeRandUtil()
+        val appearances = mutableListOf<String>()
+
+        val staged = GeneralBuilder(rng, "경계", 0)
+            .setCityID(3)
+            .setStat(70, 60, 50)
+            .setAffinity(42)
+            .setLifeSpan(195, 195)
+            .setEgo("che_유지")
+            .setSpecialSingle(null)
+            .setAppearanceYear(195)
+            .fillRemainSpecAsZero(year = 195, startYear = 181)
+            .build(
+                year = 195,
+                month = 1,
+                turnterm = 60,
+                cityPool = listOf(GeneralBuilder.CityChoice(id = 3, nationId = 0)),
+                onAdultGeneral = { appearances += it },
+            )!!
+
+        assertEquals(1, staged.killturn)
+        assertEquals(listOf("ⓝ경계"), appearances)
+        assertEquals(listOf(0 to 3599, 0 to 999999, 0 to 11), rng.rangeCalls)
+    }
+
+    @Test
+    fun `legacy RegNPC tuple keeps fifty defaults and original adult and death boundaries`() {
+        val factory = WorldActions.register(EventActionFactory())
+        val legacyTuple = listOf(
+            JsonPrimitive(42), JsonPrimitive("레거시"), JsonNull, JsonPrimitive(1), JsonNull,
+            JsonPrimitive(70), JsonPrimitive(60), JsonPrimitive(50), JsonPrimitive(0),
+            JsonPrimitive(168), JsonPrimitive(220), JsonPrimitive("유지"), JsonNull, JsonNull,
+        )
+        val adult = FakeContext(year = 182, month = 1)
+
+        factory.create(RawAction("RegNPC", legacyTuple)).run(adult)
+
+        val staged = adult.staged.single()
+        assertEquals(50, staged.politics)
+        assertEquals(50, staged.charm)
+        assertEquals(null, staged.appearanceYear)
+        assertTrue(staged.rtkMetadata.isEmpty())
+        assertEquals(14, staged.age)
+        assertEquals(listOf("<Y>ⓝ레거시</>가 성인이 되어 <S>등장</>했습니다."), adult.actionLogs)
+
+        val deathYear = FakeContext(year = 220, month = 1)
+        factory.create(RawAction("RegNPC", legacyTuple)).run(deathYear)
+        assertTrue(deathYear.staged.isEmpty(), "legacy death remains exclusive")
     }
 
     @Test
@@ -462,6 +635,39 @@ class RegNpcActionTest {
 
         override fun occupyGeneralName(generalId: Int) {
             occupied += name to generalId
+        }
+    }
+
+    private fun rtkRegNpcTuple(
+        birth: Int = 168,
+        death: Int = 220,
+        appearanceYear: Int,
+    ): List<JsonPrimitive> = listOf(
+        JsonPrimitive(42), JsonPrimitive("RTK등장"), JsonPrimitive("rtk.png"), JsonPrimitive(1), JsonPrimitive("낙양"),
+        JsonPrimitive(70), JsonPrimitive(60), JsonPrimitive(50), JsonPrimitive(3),
+        JsonPrimitive(birth), JsonPrimitive(death), JsonPrimitive("유지"), JsonPrimitive("무쌍"), JsonPrimitive("RTK 문구"),
+        JsonPrimitive(77), JsonPrimitive(88), JsonPrimitive(appearanceYear), JsonPrimitive(17001), JsonPrimitive("female"),
+        JsonPrimitive(52), JsonPrimitive(27), JsonPrimitive(345), JsonPrimitive("왕도"),
+    )
+
+    private fun rtkRegNeutralNpcTuple(
+        birth: Int,
+        death: Int,
+        appearanceYear: Int,
+    ): List<JsonPrimitive> = listOf(
+        JsonPrimitive(42), JsonPrimitive("RTK중립"), JsonPrimitive("rtk-neutral.png"), JsonPrimitive(1), JsonPrimitive("낙양"),
+        JsonPrimitive(70), JsonPrimitive(60), JsonPrimitive(50), JsonPrimitive(0), JsonPrimitive(birth), JsonPrimitive(death),
+        JsonPrimitive("유지"), JsonPrimitive("무쌍"), JsonPrimitive("RTK 중립 문구"),
+        JsonPrimitive(77), JsonPrimitive(88), JsonPrimitive(appearanceYear), JsonPrimitive(17001), JsonPrimitive("female"),
+        JsonPrimitive(52), JsonPrimitive(27), JsonPrimitive(345), JsonPrimitive("왕도"), JsonPrimitive(false), JsonPrimitive(false),
+    )
+
+    private class ZeroRangeRandUtil : RandUtil(LiteHashDrbg("rtk-zero-jitter")) {
+        val rangeCalls = mutableListOf<Pair<Int, Int>>()
+
+        override fun nextRangeInt(minInclusive: Int, maxInclusive: Int): Int {
+            rangeCalls += minInclusive to maxInclusive
+            return minInclusive
         }
     }
 }

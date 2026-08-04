@@ -26,6 +26,7 @@ local Docker runtime9, independent review가 그 상태를 대체한다. 어떤 
 
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
+| `codex-rtk14-roster-root` | RTK14 1,000-row scenario + five-stat integration | `codex/fix-possession-five-stats` / `/tmp/opensamguk-possession-five-stats` | source PR remediation, review/merge/deploy/reseed/live verification; implementation subagent ownership released | active — source fix commit and three fresh PR reviews pending; Docker PR merged/deployed | 2026-08-03 |
 | `batch2-contract-writer` | OPENSAM-92/93/94/97/103 execution contract | shared workspace (disjoint) | `docs/superpowers/plans/2026-07-17-opensam-92-93-94-97-103-execution-contract.md` | completed/released — planning-only PROPOSED contract reviewed/cleared; A0 pending, implementation/external writes blocked | 2026-07-17 |
 | `lane-90-web-gateway` | OPENSAM-90 frontend | shared workspace (disjoint) | `web/gateway/**`; `docs/loops/opensam-90-gateway-portrait/**` | completed/released — implementation/review PASS; A4/A5 blocked | 2026-07-17 |
 | `lane-91a-gateway-api` | OPENSAM-91a API/storage | shared workspace (disjoint) | `app/gateway-api/**`; `infra/src/main/resources/db/migration/**`; `infra/src/test/**`; `docs/loops/opensam-91-profile-icon/**` | completed/released — SPEC/SECURITY/TESTS PASS, fix-required=0; LICENSE/A4/A5 blocked | 2026-07-17 |

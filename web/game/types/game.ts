@@ -466,12 +466,12 @@ export interface EmperorDetail {
 // Legacy Nation/GeneralList emits a column-projected [column[], list[][]] form;
 // the F4 read endpoint flattens to objects for the public view.
 export interface GeneralListItem {
-  generalId: number;       // legacy `no`
+  generalId: number; // legacy `no`
   name: string;
-  nationId: number;        // legacy `nation`
+  nationId: number; // legacy `nation`
   nationName: string;
   nationColor: string;
-  npc: number;             // 0 user / 1 possessed-NPC / 2+ pure NPC
+  npc: number; // 0 user / 1 possessed-NPC / 2+ pure NPC
   officerLevel: number;
   officerLevelText: string;
   leadership: number;
@@ -485,15 +485,15 @@ export interface GeneralListItem {
   gold: number;
   rice: number;
   crew: number;
-  cityId: number;          // legacy `city`
-  troopId: number;         // legacy `troop`; 0 = no troop
+  cityId: number; // legacy `city`
+  troopId: number; // legacy `troop`; 0 = no troop
   picture: string | null;
-  imageServer: number;     // legacy `imgsvr`
+  imageServer: number; // legacy `imgsvr`
 }
 
 export interface GeneralListResponse {
   result: boolean;
-  permission: number;      // caller's secret-permission tier (0 for public/unauth)
+  permission: number; // caller's secret-permission tier (0 for public/unauth)
   generals: GeneralListItem[];
 }
 
@@ -503,10 +503,10 @@ export interface GeneralListResponse {
 export interface PublicGeneral {
   generalId: number;
   name: string;
-  nationId: number;        // 0 = 재야
+  nationId: number; // 0 = 재야
   nationName: string;
   nationColor: string;
-  npc: number;             // 0 user / 1 possessed-NPC / 2+ pure NPC
+  npc: number; // 0 user / 1 possessed-NPC / 2+ pure NPC
   officerLevel: number;
   officerLevelText: string;
   leadership: number;
@@ -514,23 +514,23 @@ export interface PublicGeneral {
   intel: number;
   politics?: number;
   charm?: number;
-  explevel: number;        // 명성 레벨 버킷(getExpLevel) — 명성 표시·정렬 키
-  honorText: string;       // 명성 칭호(getHonor)
-  dedlevel: number;        // 계급 레벨 버킷(getDedLevel) — 계급 정렬 키
-  dedLevelText: string;    // 계급 한글명(getDedLevelText)
-  bill: number;            // 봉록(getBillByLevel)
+  explevel: number; // 명성 레벨 버킷(getExpLevel) — 명성 표시·정렬 키
+  honorText: string; // 명성 칭호(getHonor)
+  dedlevel: number; // 계급 레벨 버킷(getDedLevel) — 계급 정렬 키
+  dedLevelText: string; // 계급 한글명(getDedLevelText)
+  bill: number; // 봉록(getBillByLevel)
   crew: number;
   cityName: string;
   // ── a_genList(장수일람) 15컬럼 보강(C3①) ─────────────────────────────────────
-  picture: string | null;       // 얼굴(초상 파일명) — FE가 CDN base 합성
-  imageServer: number;          // 초상 이미지 서버 번호
-  age: number;                  // 연령("{age}세")
-  personalText: string;         // 성격명(personalityNameOf)
-  specialDomesticText: string;  // 내정 특기명(None→"-")
-  specialWarText: string;       // 전투 특기명(None→"-")
-  injury: number;               // 부상률(0~100) — >0이면 통/무/지 감산·적색
-  lbonus: number;               // 통솔보너스(calcLeadershipBonus) — >0이면 통솔에 "+{lbonus}"(cyan)
-  killturn: number | null;      // 삭턴(meta.killturn) — 미기재 시 null
+  picture: string | null; // 얼굴(초상 파일명) — FE가 CDN base 합성
+  imageServer: number; // 초상 이미지 서버 번호
+  age: number; // 연령("{age}세")
+  personalText: string; // 성격명(personalityNameOf)
+  specialDomesticText: string; // 내정 특기명(None→"-")
+  specialWarText: string; // 전투 특기명(None→"-")
+  injury: number; // 부상률(0~100) — >0이면 통/무/지 감산·적색
+  lbonus: number; // 통솔보너스(calcLeadershipBonus) — >0이면 통솔에 "+{lbonus}"(cyan)
+  killturn: number | null; // 삭턴(meta.killturn) — 미기재 시 null
   refreshScoreTotal: number;
 }
 
@@ -548,22 +548,22 @@ export interface MyGeneralSummary {
   charm?: number;
   crew: number;
   npcState: number;
-  mine: boolean;               // 호출자 본인 장수 여부
+  mine: boolean; // 호출자 본인 장수 여부
   // ── b_myGenInfo 15컬럼 보강(C3①) ────────────────────────────────────────────
-  picture: string | null;       // 얼굴
+  picture: string | null; // 얼굴
   imageServer: number;
-  officerLevelText: string;     // 관직 한글명
-  dedLevelText: string;         // 계급 한글명
-  honorText: string;            // 명성 칭호
-  bill: number;                 // 봉록(getBill)
-  gold: number;                 // 자금
-  rice: number;                 // 군량
-  personalText: string;         // 성격명
-  specialDomesticText: string;  // 내정 특기명(None→"-")
-  specialWarText: string;       // 전투 특기명(None→"-")
-  belong: number;               // 사관(belong)
-  injury: number;               // 부상률
-  lbonus: number;               // 통솔보너스
+  officerLevelText: string; // 관직 한글명
+  dedLevelText: string; // 계급 한글명
+  honorText: string; // 명성 칭호
+  bill: number; // 봉록(getBill)
+  gold: number; // 자금
+  rice: number; // 군량
+  personalText: string; // 성격명
+  specialDomesticText: string; // 내정 특기명(None→"-")
+  specialWarText: string; // 전투 특기명(None→"-")
+  belong: number; // 사관(belong)
+  injury: number; // 부상률
+  lbonus: number; // 통솔보너스
   dedication: number;
   experience: number;
   personal: string | null;
@@ -594,21 +594,21 @@ export interface MyNationDetailResponse {
   nationId: number;
   name: string;
   color: string;
-  population: number;     // 총주민 현재(SUM city.pop)
-  populationMax: number;  // 총주민 최대(SUM city.pop_max)
-  crew: number;           // 총병사 현재(SUM general.crew, npc!=5)
-  crewMax: number;        // 총병사 최대(SUM general.leadership*100, npc!=5)
-  power: number;          // 국력(nation.power)
-  gold: number;           // 국고
-  rice: number;           // 병량
-  cityCount: number;      // 속령수
-  generalCount: number;   // 장수수(gennum)
-  tech: number;           // 기술력(floor)
-  levelText: string;      // 작위 한글명(getNationLevel)
-  level: number;          // raw level
+  population: number; // 총주민 현재(SUM city.pop)
+  populationMax: number; // 총주민 최대(SUM city.pop_max)
+  crew: number; // 총병사 현재(SUM general.crew, npc!=5)
+  crewMax: number; // 총병사 최대(SUM general.leadership*100, npc!=5)
+  power: number; // 국력(nation.power)
+  gold: number; // 국고
+  rice: number; // 병량
+  cityCount: number; // 속령수
+  generalCount: number; // 장수수(gennum)
+  tech: number; // 기술력(floor)
+  levelText: string; // 작위 한글명(getNationLevel)
+  level: number; // raw level
   cities: MyNationCityRef[]; // 속령일람(수도 cyan)
   taxRate: number | null; // 세율 % — §2 BLOCKED(meta UNVERIFIED) → null
-  bill: number | null;    // 지급률 % — §2 BLOCKED(meta UNVERIFIED) → null
+  bill: number | null; // 지급률 % — §2 BLOCKED(meta UNVERIFIED) → null
   goldIncome: number | null;
   warIncome: number | null;
   riceIncome: number | null;
@@ -632,10 +632,10 @@ export interface MyCitySummary {
   cityId: number;
   name: string;
   level: number;
-  levelText: string;   // 등급 한글명(수/진/관/이/소/중/대/특)
+  levelText: string; // 등급 한글명(수/진/관/이/소/중/대/특)
   region: number;
-  regionText: string;  // 지역 한글명(하북/중원/…/동이)
-  isCapital: boolean;  // 수도 → 도시명 cyan
+  regionText: string; // 지역 한글명(하북/중원/…/동이)
+  isCapital: boolean; // 수도 → 도시명 cyan
   population: number;
   populationMax: number;
   agriculture: number;
@@ -648,15 +648,15 @@ export interface MyCitySummary {
   defenseMax: number;
   wall: number;
   wallMax: number;
-  trust: number;       // 민심(소수1자리)
+  trust: number; // 민심(소수1자리)
   trade: number | null; // 시세(null → "- ")
-  governorName: string | null;   // 태수(공석 null → "-")
+  governorName: string | null; // 태수(공석 null → "-")
   governorNpc: number;
   strategistName: string | null; // 군사
   strategistNpc: number;
-  secretaryName: string | null;  // 종사
+  secretaryName: string | null; // 종사
   secretaryNpc: number;
-  generals: MyCityGeneralName[];  // 도시 소재 장수(없으면 [] → "-")
+  generals: MyCityGeneralName[]; // 도시 소재 장수(없으면 [] → "-")
   goldIncome: number | null;
   riceIncome: number | null;
   farmIncome: number | null;
@@ -680,6 +680,8 @@ export interface MyBossGeneralSummary {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   permissionRole: string;
   canBeAppointed: boolean;
   canBeKicked: boolean;
@@ -782,9 +784,9 @@ export interface TournamentResponse {
 // aux 스냅샷 그대로 = `{nationID, nationName, nationColor, generalName?, generalIcon?}`이며
 // nationID만 컬럼값으로 덮인다. 미서명 수신측은 generalName/generalIcon이 부재(null/undefined).
 export interface DiplomacyLetterParty {
-  nationID: number;            // legacy `nationID` (대문자 D — aux/MessageTarget 키)
-  nationName: string;          // legacy `nationName`
-  nationColor: string;         // legacy `nationColor`
+  nationID: number; // legacy `nationID` (대문자 D — aux/MessageTarget 키)
+  nationName: string; // legacy `nationName`
+  nationColor: string; // legacy `nationColor`
   generalName?: string | null; // legacy `generalName` — 서명 장수명(미서명 수신측이면 부재)
   generalIcon?: string | null; // legacy `generalIcon` — 서명 장수 초상 URL(미서명이면 부재)
 }
@@ -793,12 +795,12 @@ export interface DiplomacyLetter {
   no: number;
   src: DiplomacyLetterParty;
   dest: DiplomacyLetterParty;
-  prev_no: number | null;  // legacy `prev_no` (와이어 키 — game-api @JsonProperty("prev_no"))
-  state: string;           // proposed/activated/cancelled/replaced (rendered verbatim)
-  stateText: string;       // game-api 동봉 한글 라벨(제안됨/승인됨/거부됨/대체됨)
+  prev_no: number | null; // legacy `prev_no` (와이어 키 — game-api @JsonProperty("prev_no"))
+  state: string; // proposed/activated/cancelled/replaced (rendered verbatim)
+  stateText: string; // game-api 동봉 한글 라벨(제안됨/승인됨/거부됨/대체됨)
   state_opt: string | null; // legacy `state_opt` (와이어 키 — try_destroy_src/try_destroy_dest/null)
-  brief: string;           // legacy `text_brief`
-  detail: string;          // legacy `text_detail` (may be '(권한이 부족합니다)')
+  brief: string; // legacy `text_brief`
+  detail: string; // legacy `text_detail` (may be '(권한이 부족합니다)')
   date: string;
 }
 
@@ -815,8 +817,8 @@ export interface DiplomacyLettersResponse {
   result: boolean;
   // legacy `Record<number, NationStaticItem>` — id→nation 맵(자국 포함). FE가 키 순회로 후보국 도출.
   nations: Record<string, DiplomacyLetterNation>;
-  letters: DiplomacyLetter[];         // 오래된→최신(game-api date ASC); [] when none
-  myNationID: number;                 // legacy `myNationID`
+  letters: DiplomacyLetter[]; // 오래된→최신(game-api date ASC); [] when none
+  myNationID: number; // legacy `myNationID`
 }
 
 // ── page 2 · 중원정보 (GET /api/diplomacy/conflict) ───────────────────────────
@@ -828,14 +830,14 @@ export interface DiplomacyLettersResponse {
 // 직렬화한다(GetDiplomacy.php:98-104 그대로, F4ReadControllersTest로 증명). 이전 FE 타입이
 // `nationId`/`myNationId`로 발산해 페이지 전체가 silent 붕괴했었음 — 절대 다시 리네임 금지.
 export interface ConflictNation {
-  nation: number;          // 국가 id — PHP `nation` 컬럼명 verbatim
+  nation: number; // 국가 id — PHP `nation` 컬럼명 verbatim
   name: string;
   color: string;
-  type: string;            // 국가 성향 type_code (PHP `type`)
+  type: string; // 국가 성향 type_code (PHP `type`)
   level: number;
-  capital: number;         // 수도 도시 id (PHP `capital`, 없으면 0)
-  gennum: number;          // 장수 수 (PHP `gennum`) — P1-038 국가표 '장수' 컬럼 소비처
-  cities: string[];        // 보유 도시명 (insertion order preserved)
+  capital: number; // 수도 도시 id (PHP `capital`, 없으면 0)
+  gennum: number; // 장수 수 (PHP `gennum`) — P1-038 국가표 '장수' 컬럼 소비처
+  cities: string[]; // 보유 도시명 (insertion order preserved)
   power: number;
 }
 
@@ -844,10 +846,10 @@ export type ConflictCity = [number, Record<number, number>];
 
 export interface DiplomacyConflictResponse {
   result: boolean;
-  nations: ConflictNation[];               // active nations (level>0), power DESC
-  conflict: ConflictCity[];                // [] when no contested cities
+  nations: ConflictNation[]; // active nations (level>0), power DESC
+  conflict: ConflictCity[]; // [] when no contested cities
   diplomacyList: Record<number, Record<number, number>>; // {me:{you:stateCode}}
-  myNationID: number;                      // PHP `myNationID` verbatim (P0-19 — 대문자 ID)
+  myNationID: number; // PHP `myNationID` verbatim (P0-19 — 대문자 ID)
 }
 
 // ── page 3 · 내무부 (GET /api/nation/{id}/finance) ────────────────────────────
@@ -855,11 +857,11 @@ export interface DiplomacyConflictResponse {
 // editable = (officerLevel>=5 || permission==4). nationMsg/scoutMsg are plaintext
 // in F4 (TipTap rich editor deferred — spec OQ-3).
 export interface NationFinancePolicy {
-  rate: number;            // 세율 (5-30)
-  bill: number;            // 지급률
-  secretLimit: number;     // 기밀 사관 제한
-  blockScout: boolean;     // 등용 차단 (legacy `scout` != 0)
-  blockWar: boolean;       // 전쟁 차단 (legacy `war` != 0)
+  rate: number; // 세율 (5-30)
+  bill: number; // 지급률
+  secretLimit: number; // 기밀 사관 제한
+  blockScout: boolean; // 등용 차단 (legacy `scout` != 0)
+  blockWar: boolean; // 전쟁 차단 (legacy `war` != 0)
 }
 
 export interface NationFinanceIncome {
@@ -875,20 +877,20 @@ export interface NationFinanceWarSettingCnt {
 
 // 외교관계 표(legacy PageNationStratFinan.vue:4-46) 1행 — getAllNationStaticInfo + cityCnt + diplomacy.
 export interface NationFinanceDiplomacyState {
-  state: number;           // 0 교전 / 1 선포중 / 2 통상 / 7 불가침(자국). 그 외는 통상 폴백.
-  term: number | null;     // 잔여 개월(0 또는 자국이면 '-').
+  state: number; // 0 교전 / 1 선포중 / 2 통상 / 7 불가침(자국). 그 외는 통상 폴백.
+  term: number | null; // 잔여 개월(0 또는 자국이면 '-').
 }
 
 export interface NationFinanceNationItem {
-  nation: number;          // 국가 id(PHP `nation` 컬럼명)
+  nation: number; // 국가 id(PHP `nation` 컬럼명)
   name: string;
   color: string;
   type: string;
   level: number;
   capital: number;
-  gennum: number;          // 장수 수
-  power: number;           // 국력
-  cityCnt: number;         // 속령 수
+  gennum: number; // 장수 수
+  power: number; // 국력
+  cityCnt: number; // 속령 수
   diplomacy: NationFinanceDiplomacyState;
 }
 
@@ -899,12 +901,12 @@ export interface NationFinanceResponse {
   officerLevel: number;
   year: number;
   month: number;
-  nationMsg: string;       // 국가 공지 (plaintext)
-  scoutMsg: string;        // 등용 메시지 (plaintext)
+  nationMsg: string; // 국가 공지 (plaintext)
+  scoutMsg: string; // 등용 메시지 (plaintext)
   gold: number;
   rice: number;
   income: NationFinanceIncome;
-  outcome: number;         // 인건비 지출
+  outcome: number; // 인건비 지출
   policy: NationFinancePolicy;
   warSettingCnt: NationFinanceWarSettingCnt;
   // 외교관계 표(legacy 내무부 상단). game-api 가 미배출(구 이미지)이면 optional → 미렌더.
@@ -917,16 +919,16 @@ export interface NationFinanceResponse {
 // maxChiefTurn. `commandList` is the chief command palette (getChiefCommandTable).
 // officerLevel>=5(=myOfficerLevel) gate to edit. POST reserve rides nation_turn ring.
 export interface ChiefReservedTurn {
-  turnIdx: number;         // 예약 슬롯 인덱스
-  actionCode: string;      // command class key
-  brief: string;           // rendered verbatim (color/tag markup 포함)
+  turnIdx: number; // 예약 슬롯 인덱스
+  actionCode: string; // command class key
+  brief: string; // rendered verbatim (color/tag markup 포함)
   arg: Record<string, unknown> | null;
 }
 
 export interface ChiefPost {
-  officerLevel: number;    // 12/11/10/9/8/7/6/5
-  title: string;           // 정본 직책명(군주/참모/…)
-  name: string | null;     // occupant general name (null = vacant)
+  officerLevel: number; // 12/11/10/9/8/7/6/5
+  title: string; // 정본 직책명(군주/참모/…)
+  name: string | null; // occupant general name (null = vacant)
   turnTime: string | null;
   npcType: number | null;
   officerLevelText: string;
@@ -936,14 +938,14 @@ export interface ChiefPost {
 // 사령부 명령 팔레트의 1개 명령(getChiefCommandTable values[]). argType는 game-api가
 // argsSchema 키에서 파생(city/nation/general/amount); 인자 없으면 null.
 export interface ChiefCommand {
-  value: string;           // 예약 액션 코드(e.g. "che_급습")
+  value: string; // 예약 액션 코드(e.g. "che_급습")
   simpleName: string;
   title: string;
   compensation: number;
-  possible: boolean;       // 실제 precheck 결과(deny면 false) — AvailableCommand.possible와 동일
+  possible: boolean; // 실제 precheck 결과(deny면 false) — AvailableCommand.possible와 동일
   reqArg: boolean;
   argType: CommandArgType | null;
-  reason?: string | null;  // deny 사유(possible=false일 때) — 임파서블 명령 툴팁에 노출
+  reason?: string | null; // deny 사유(possible=false일 때) — 임파서블 명령 툴팁에 노출
 }
 
 // 1개 카테고리(휴식/인사/외교/특수/전략/기타).
@@ -954,8 +956,8 @@ export interface ChiefCommandCategory {
 
 export interface ChiefReservedResponse {
   result: boolean;
-  myGeneralId: number;     // 호출자(나)의 장수 id
-  myOfficerLevel: number;  // 호출자(나)의 officer_level
+  myGeneralId: number; // 호출자(나)의 장수 id
+  myOfficerLevel: number; // 호출자(나)의 officer_level
   nationId: number;
   nationName: string | null;
   nationLevel: number;
@@ -964,7 +966,7 @@ export interface ChiefReservedResponse {
   turnTerm: number;
   maxChiefTurn: number;
   posts: ChiefPost[];
-  troopList: Record<string, string>;        // troopLeaderId → troopName
+  troopList: Record<string, string>; // troopLeaderId → troopName
   commandList: ChiefCommandCategory[];
   isChief: boolean;
   autorunLimit: number | null;
@@ -1018,8 +1020,8 @@ export interface InheritUnique {
 }
 
 export interface InheritActionCost {
-  buff: number[];          // GameConst inheritBuffPoints (per-step)
-  resetTurnTime: number;   // Fibonacci(resetTurnTimeLevel)
+  buff: number[]; // GameConst inheritBuffPoints (per-step)
+  resetTurnTime: number; // Fibonacci(resetTurnTimeLevel)
   resetSpecialWar: number; // Fibonacci(resetSpecialWarLevel)
   randomUnique: number;
   nextSpecial: number;
@@ -1030,11 +1032,11 @@ export interface InheritActionCost {
 
 export interface InheritPointLog {
   id: number;
-  serverId: string;        // legacy `server_id`
+  serverId: string; // legacy `server_id`
   year: number;
   month: number;
   date: string;
-  text: string;            // rendered verbatim
+  text: string; // rendered verbatim
 }
 
 export interface InheritCurrentStat {
@@ -1049,16 +1051,16 @@ export interface InheritCurrentStat {
 
 export interface InheritPointResponse {
   result: boolean;
-  items: Record<string, number>;                 // InheritanceKey → point balance
-  currentInheritBuff: Record<string, number>;     // buffKey → level
+  items: Record<string, number>; // InheritanceKey → point balance
+  currentInheritBuff: Record<string, number>; // buffKey → level
   maxInheritBuff: number;
   resetTurnTimeLevel: number;
   resetSpecialWarLevel: number;
   inheritActionCost: InheritActionCost;
   availableSpecialWar: Record<string, InheritSpecialWar>;
   availableUnique: Record<string, InheritUnique>;
-  lastInheritPointLogs: InheritPointLog[];         // [] when none
-  availableTargetGeneral: Record<number, string>;  // generalId → name (npc<2)
+  lastInheritPointLogs: InheritPointLog[]; // [] when none
+  availableTargetGeneral: Record<number, string>; // generalId → name (npc<2)
   currentStat: InheritCurrentStat;
 }
 
@@ -1073,7 +1075,7 @@ export interface BoardComment {
   authorGeneralId: number;
   authorName: string;
   text: string;
-  date: string;            // ISO instant
+  date: string; // ISO instant
 }
 
 export interface BoardArticle {
@@ -1083,16 +1085,16 @@ export interface BoardArticle {
   authorName: string;
   title: string;
   contentHtml: string;
-  date: string;            // ISO instant
+  date: string; // ISO instant
   comments: BoardComment[]; // 시간순 오름차순
 }
 
 export interface BoardResponse {
   result: boolean;
-  secret: boolean;                   // true → 기밀실, false → 회의실
-  title: string;                     // 그대로 회의실 / 기밀실
-  articles: BoardArticle[];          // 최신순; 없으면 []
-  blockedReason: string | null;      // 권한 게이트가 기밀 방을 차단했을 때 설정 (INFO)
+  secret: boolean; // true → 기밀실, false → 회의실
+  title: string; // 그대로 회의실 / 기밀실
+  articles: BoardArticle[]; // 최신순; 없으면 []
+  blockedReason: string | null; // 권한 게이트가 기밀 방을 차단했을 때 설정 (INFO)
 }
 
 // ── page 5 · 설문 조사 (GET /api/votes, GET /api/votes/{id}) ──────────────────
@@ -1105,17 +1107,17 @@ export interface VoteInfo {
   opener: string | null;
   startDate: string;
   endDate: string | null;
-  options: string[];       // rendered verbatim
+  options: string[]; // rendered verbatim
 }
 
 export interface VoteListResponse {
   result: boolean;
-  votes: Record<number, VoteInfo>;   // keyed by voteId; {} when none
+  votes: Record<number, VoteInfo>; // keyed by voteId; {} when none
 }
 
 export interface VoteComment {
   id: number | null;
-  voteID: number;          // legacy RawName vote_id
+  voteID: number; // legacy RawName vote_id
   generalID: number;
   nationID: number;
   nationName: string;
@@ -1130,10 +1132,10 @@ export type VoteResultRow = [number[], number];
 export interface VoteDetailResponse {
   result: boolean;
   voteInfo: VoteInfo;
-  votes: VoteResultRow[];  // tallies grouped by selection; [] when none
+  votes: VoteResultRow[]; // tallies grouped by selection; [] when none
   comments: VoteComment[];
   myVote: number[] | null; // caller's selection (null if not voted / not logged in)
-  userCnt: number;         // total eligible voters (general npc<2)
+  userCnt: number; // total eligible voters (general npc<2)
 }
 
 // ── page 6 · 부대 편성 (GET /api/troops) ──────────────────────────────────────
@@ -1145,29 +1147,29 @@ export interface TroopMember {
   name: string;
   officerLevel: number;
   crew: number;
-  cityName: string;       // 멤버 소재 도시 한글명(빈 문자열이면 미배치)
-  npc: number;            // getNPCColor 색상 티어(0 유저/1 빙의/2+ 순수 NPC)
+  cityName: string; // 멤버 소재 도시 한글명(빈 문자열이면 미배치)
+  npc: number; // getNPCColor 색상 티어(0 유저/1 빙의/2+ 순수 NPC)
 }
 
 // BE TroopRow와 1:1. (기존 소비처 호환을 위해 이름은 TroopInfo 유지 — 필드만 실제 와이어로 정렬.)
 export interface TroopInfo {
-  troopLeader: number;    // = 부대장 generalId (부대 PK)
-  name: string;           // 부대명
+  troopLeader: number; // = 부대장 generalId (부대 PK)
+  name: string; // 부대명
   nation: number;
   leaderName: string;
   leaderCityName: string; // 카드 헤더 '【 <city> 】'
-  leaderNpc: number;      // 부대장 이름 색상 티어
-  turnTime: string;       // 'YYYY-MM-DD HH:MM:SS' (레거시 '【턴】' = turnTime.slice(14,19)), 없으면 ''
-  reservedCommandBrief: string[];  // 예약명령 브리핑(현재 BE 미배선 → 빈 목록)
+  leaderNpc: number; // 부대장 이름 색상 티어
+  turnTime: string; // 'YYYY-MM-DD HH:MM:SS' (레거시 '【턴】' = turnTime.slice(14,19)), 없으면 ''
+  reservedCommandBrief: string[]; // 예약명령 브리핑(현재 BE 미배선 → 빈 목록)
   members: TroopMember[];
-  memberCount: number;    // (N명) 헤더 카운트
+  memberCount: number; // (N명) 헤더 카운트
 }
 
 export interface TroopListResponse {
   result: boolean;
-  troops: TroopInfo[];     // [] when no troops formed
-  myGeneralId: number;     // 호출자 빙의 장수 id(레거시 myGeneralID). 미인증/무빙의=0
-  permission: number;      // 레거시 myPermission(0 일반/1 관직자/2 수뇌)
+  troops: TroopInfo[]; // [] when no troops formed
+  myGeneralId: number; // 호출자 빙의 장수 id(레거시 myGeneralID). 미인증/무빙의=0
+  permission: number; // 레거시 myPermission(0 일반/1 관직자/2 수뇌)
 }
 
 // ── page 16 · 연감 (GET /api/history?yearMonth=) ──────────────────────────────
@@ -1183,18 +1185,18 @@ export interface SimpleNationObj {
   name: string;
   color: string;
   power: number;
-  gennum: number;       // 장수 수
-  cities?: number[];    // 속령(툴팁용)
+  gennum: number; // 장수 수
+  cities?: number[]; // 속령(툴팁용)
 }
 
 export interface HistoryRecord {
-  serverId: string;        // legacy `server_id`
+  serverId: string; // legacy `server_id`
   year: number;
   month: number;
   globalHistory: string[]; // legacy `global_history` — BLOCKED(컬럼 부재) → 항상 []
-  globalAction: string[];  // legacy `global_action`  — BLOCKED(컬럼 부재) → 항상 []
+  globalAction: string[]; // legacy `global_action`  — BLOCKED(컬럼 부재) → 항상 []
   nations: SimpleNationObj[] | Record<string, SimpleNationObj> | null; // jsonb 원형(배열/맵)
-  map: unknown;            // legacy `map` snapshot (MapViewer 입력)
+  map: unknown; // legacy `map` snapshot (MapViewer 입력)
   hash: string;
 }
 
@@ -1205,7 +1207,7 @@ export interface HistoryResponse {
   currentYearMonth: number;
   serverId: string;
   mapName: string;
-  record: HistoryRecord | null;   // selected month; null when range empty
+  record: HistoryRecord | null; // selected month; null when range empty
 }
 
 // ── 서신함 (GET /api/mailbox/{mailbox} → MailboxMessage[] · GET /api/messages/{id}) ──
@@ -1224,12 +1226,12 @@ export type MailMsgType = 'private' | 'public' | 'national' | 'diplomacy';
  * BE(MessageDto.MsgTarget)가 camelCase(nationId)로 직렬화한다(프록시 pass-through).
  */
 export interface MailMsgTarget {
-  id: number;             // 장수 id (시스템 타깃은 0)
-  name: string;           // 장수 이름 (시스템 타깃은 "")
-  nationId: number;       // 소속 국가 id (재야/시스템 0) — legacy `nation_id`
-  nation: string;         // 소속 국가 이름 (재야 '재야')
-  color: string;          // 국가색 hex
-  icon: string | null;    // 아이콘 경로
+  id: number; // 장수 id (시스템 타깃은 0)
+  name: string; // 장수 이름 (시스템 타깃은 "")
+  nationId: number; // 소속 국가 id (재야/시스템 0) — legacy `nation_id`
+  nation: string; // 소속 국가 이름 (재야 '재야')
+  color: string; // 국가색 hex
+  icon: string | null; // 아이콘 경로
 }
 
 /** GET /api/mailbox/{mailbox} 응답 1행 — BE MessageResponse 그대로(bare 배열로 내려온다). */
@@ -1237,13 +1239,13 @@ export interface MailboxMessage {
   id: number | null;
   mailbox: number;
   type: MailMsgType;
-  src: number;            // 발신 장수 id(라우팅 키 int 컬럼)
-  dest: number;           // 수신 장수 id
-  time: string;           // ISO instant — 표시 시각은 여기서(legacy MsgItem.time)
-  validUntil: string;     // ISO instant — 유효기한
-  message: string;        // 원본 body jsonb 문자열(호환 보존)
-  text: string | null;    // body `text` — 표시 본문
-  srcTarget: MailMsgTarget | null;  // 발신 타깃 블록 — 발신자명은 srcTarget.name
+  src: number; // 발신 장수 id(라우팅 키 int 컬럼)
+  dest: number; // 수신 장수 id
+  time: string; // ISO instant — 표시 시각은 여기서(legacy MsgItem.time)
+  validUntil: string; // ISO instant — 유효기한
+  message: string; // 원본 body jsonb 문자열(호환 보존)
+  text: string | null; // body `text` — 표시 본문
+  srcTarget: MailMsgTarget | null; // 발신 타깃 블록 — 발신자명은 srcTarget.name
   destTarget: MailMsgTarget | null; // 수신 타깃 블록(공개 메시지면 null)
   option: Record<string, unknown> | null; // body `option`(action/deletable/receiverMessageID 등)
 }

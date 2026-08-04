@@ -3,6 +3,9 @@ package opensamguk.infra.seed
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ScenarioJsonTest {
 
@@ -22,10 +25,36 @@ class ScenarioJsonTest {
     }
 
     @Test
-    fun `scenario_1010 loads general and general_ex as 678 generals`() {
+    fun `source scenario_1010 preserves its pre-materialization 678-general baseline`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
 
         assertEquals(678, scenario.generals.size)
+    }
+
+    @Test
+    fun `enriched roster retains every RTK14 source officer when legacy extensions are disabled`() {
+        fun sourceTuple(officerNumber: Int) =
+            "[0,\"RTK$officerNumber\",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,$officerNumber,\"남\",60,41,5,\"유가\",false,false]"
+        val baseGenerals = (1..500).joinToString(",", transform = ::sourceTuple)
+        val sourceExtendedGenerals = (501..1000).joinToString(",", transform = ::sourceTuple)
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "enriched roster",
+              "startYear": 180,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [$baseGenerals],
+              "general_ex": [$sourceExtendedGenerals],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val seeded = scenario.seedGenerals(extendedGeneral = false)
+        assertEquals(1000, seeded.size)
+        assertEquals((1..1000).toList(), seeded.mapNotNull(ScenarioGeneral::officerNumber))
     }
 
     @Test
@@ -83,6 +112,136 @@ class ScenarioJsonTest {
         assertEquals(62, scenario.generals[0].charm)
         assertEquals(71, scenario.generals[1].politics)
         assertEquals(72, scenario.generals[1].charm)
+    }
+
+    @Test
+    fun `RTK14 lifecycle slots decode while legacy tuples keep null lifecycle metadata`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14",
+              "startYear": 200,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [
+                [1,"Legacy",null,0,null,51,52,53,0,180,240,null,null,null,61,62],
+                [2,"RTK14",null,0,null,41,42,43,0,181,241,null,null,null,71,72,205,1001,"남",60,37,333,"유가",true,true]
+              ],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val legacy = scenario.baseGenerals[0]
+        assertNull(legacy.appearanceYear)
+        assertNull(legacy.officerNumber)
+        assertNull(legacy.gender)
+        assertNull(legacy.lifespan)
+        assertNull(legacy.activityYears)
+        assertNull(legacy.total)
+        assertNull(legacy.ideology)
+        assertNull(legacy.legacyActiveAtStart)
+        assertEquals(false, legacy.rtk14Added)
+
+        val rtk14 = scenario.baseGenerals[1]
+        assertEquals(205, rtk14.appearanceYear)
+        assertEquals(1001, rtk14.officerNumber)
+        assertEquals("남", rtk14.gender)
+        assertEquals(60, rtk14.lifespan)
+        assertEquals(37, rtk14.activityYears)
+        assertEquals(333, rtk14.total)
+        assertEquals("유가", rtk14.ideology)
+        assertEquals(true, rtk14.rtk14Added)
+        assertEquals(true, rtk14.legacyActiveAtStart)
+        assertEquals(25, rtk14.rawTuple.size)
+        assertEquals(205, rtk14.rawTuple[16])
+        assertEquals("유가", rtk14.rawTuple[22])
+        assertEquals(true, rtk14.rawTuple[23])
+        assertEquals(true, rtk14.rawTuple[24])
+    }
+
+    @Test
+    fun `24-slot RTK14 source tuples remain valid without a legacy activity override`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14 source tuple",
+              "startYear": 200,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [[1,"RTK14",null,0,null,41,42,43,0,181,241,null,null,null,71,72,205,1001,"남",60,37,333,"유가",true]],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val rtk14 = scenario.baseGenerals.single()
+        assertEquals(24, rtk14.rawTuple.size)
+        assertNull(rtk14.legacyActiveAtStart)
+    }
+
+    @Test
+    fun `RTK14 appended rows follow all existing sections in seed and init order`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rtk14 order",
+              "startYear": 200,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [
+                [1,"BaseLegacy",null,0,null,1,1,1,0,180,240,null,null],
+                [1,"AppendedRtk14",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,1,"남",60,40,300,"유가",true]
+              ],
+              "general_ex": [[1,"ExtendedLegacy",null,0,null,1,1,1,0,180,240,null,null]],
+              "general_neutral": [[1,"NeutralLegacy",null,0,null,1,1,1,0,180,240,null,null]],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(
+            listOf("BaseLegacy", "ExtendedLegacy", "NeutralLegacy", "AppendedRtk14"),
+            scenario.initGenerals().map { it.name },
+        )
+        assertEquals(
+            listOf("BaseLegacy", "ExtendedLegacy", "NeutralLegacy", "AppendedRtk14"),
+            scenario.seedGenerals(extendedGeneral = true).map { it.name },
+        )
+        assertEquals(
+            listOf("BaseLegacy", "NeutralLegacy", "AppendedRtk14"),
+            scenario.seedGenerals(extendedGeneral = false).map { it.name },
+        )
+    }
+
+    @Test
+    fun `RTK14 additions outside general fail closed instead of being silently dropped`() {
+        for (section in listOf("general_ex", "general_neutral")) {
+            val scenario = ScenarioJson.loadScenario(
+                """
+                {
+                  "title": "invalid RTK14 placement",
+                  "startYear": 200,
+                  "map": {"mapName": "che"},
+                  "const": {},
+                  "nation": [],
+                  "general": [[1,"Legacy",null,0,null,1,1,1,0,180,240,null,null]],
+                  "$section": [[1,"InvalidRtk14Placement",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,1,"남",60,40,300,"유가",true,false]],
+                  "diplomacy": []
+                }
+                """.trimIndent(),
+            )
+
+            val error = assertFailsWith<IllegalArgumentException> {
+                scenario.initGenerals()
+            }
+            assertTrue(error.message.orEmpty().contains(section))
+        }
     }
 
     @Test

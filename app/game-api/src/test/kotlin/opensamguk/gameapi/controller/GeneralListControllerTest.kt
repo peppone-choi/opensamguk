@@ -102,7 +102,10 @@ class GeneralListControllerTest {
         val late = Instant.parse("2026-06-03T10:00:00Z")
         `when`(generals.findByNationIdOrderByTurnTimeAsc(1)).thenReturn(
             listOf(
-                gen(11, "하후돈", nationId = 1, officerLevel = 4, turnTime = early, special = "급습"),
+                gen(11, "하후돈", nationId = 1, officerLevel = 4, turnTime = early, special = "급습").apply {
+                    politics = 81
+                    charm = 72
+                },
                 gen(10, "조조", nationId = 1, officerLevel = 5, turnTime = late),
             ),
         )
@@ -124,9 +127,13 @@ class GeneralListControllerTest {
             // P1 컬럼이 column에 존재
             .andExpect(jsonPath("$.column[?(@ == 'warnum')]").exists())
             .andExpect(jsonPath("$.column[?(@ == 'reservedCommand')]").exists())
+            .andExpect(jsonPath("$.column[?(@ == 'politics')]").exists())
+            .andExpect(jsonPath("$.column[?(@ == 'charm')]").exists())
             .andExpect(jsonPath("$.column[?(@ == 'dex1')]").doesNotExist())
             .andExpect(jsonPath("$.column[?(@ == 'refreshScoreTotal')]").exists())
             .andExpect(jsonPath("$.column[?(@ == 'refreshScore')]").exists())
+            .andExpect(jsonPath("$.list[0][8]").value(81))
+            .andExpect(jsonPath("$.list[0][9]").value(72))
     }
 
     @Test

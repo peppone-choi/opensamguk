@@ -280,9 +280,11 @@ nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gatew
 
 > `scenario_1010`은 시나리오 JSON과 `map/<mapName>.json`을 함께 읽어 **94도시** 결과를 구성합니다. 게이트: configured-world admission, `general`/`city`/`nation` 행 > 0, 엔진 부팅·턴 진행. (이는 빠른 플레이를 위한 최소 시드(A)이며, PHP `Scenario::build` draw-for-draw 패러티 보정(B)은 후속 작업입니다.)
 
-### RTK14 정치·매력
+### RTK14 전체 장수 데이터
 
-`tools/rtk14/build_rtk14_stats.py`는 RTK14 원본의 정치·매력을 저장소의 모든 `scenario_*.json`에 주입합니다. 통솔·무력·지력 지문, 생몰년, 별칭, 자가 붙은 이름을 함께 사용해 동명이인을 1:1 배정하며, 원본에 없는 인물만 50/50으로 둡니다. 생성물은 각 장수 tuple의 인덱스 14/15에 원수치를 넣은 완성 시나리오 JSON이고, 원본과 생성물은 모두 gitignored입니다.
+`tools/rtk14/build_rtk14_stats.py`는 RTK14 원본의 모든 행과 열을 저장소의 모든 런타임 `scenario_*.json`에 반영합니다. 기존 장수는 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 원본 값으로 교체하면서 소속·도시·관직·전용 대사 같은 시나리오 고유 정보는 보존합니다. 동명이인은 장수 번호, 능력치 지문, 생몰년, 별칭·자를 함께 사용해 1:1 배정하고, 원본에만 있는 장수는 빙의 가능한 기본 장수 풀에 추가합니다. 원본에 없는 시나리오 전용 인물의 정치·매력은 검토된 로컬 override를 사용합니다.
+
+확장 tuple은 정치·매력(14/15), 등장년(16), 장수 번호·성별·수명·활동기간·5능력 합계·주의(17–22), RTK14 신규 추가 표식(23)을 보존합니다. 비공개 생성기는 기존 RNG 재현용 `legacyActiveAtStart` 표식(24)도 함께 기록합니다. RTK14 행은 `등장년 <= 현재년 <= 몰년`일 때만 활성화되며, 등장년이 시나리오 시작 뒤면 해당 연도 1월에 예약 등장합니다. 기존 PHP tuple은 원래의 `생년+14`·몰년 배타 규칙과 RNG 순서를 그대로 유지합니다. 원본과 생성물은 모두 gitignored이며 저장소에 커밋하지 않습니다.
 
 ```bash
 python3 tools/rtk14/build_rtk14_stats.py \
@@ -291,7 +293,7 @@ python3 tools/rtk14/build_rtk14_stats.py \
   --out-dir /data/scenarios
 ```
 
-프로덕션 workflow는 `RTK14_STATS_JSON_B64` secret의 gzip+base64 source JSON과 checkout된 시나리오를 결합해 동일한 외부 디렉터리를 재생성합니다. `SCENARIO_DIR`에 해당 파일이 없을 때만 classpath 기본 시나리오를 사용합니다.
+프로덕션 workflow는 `RTK14_STATS_JSON_B64` secret의 gzip+base64 source JSON과 checkout된 시나리오를 결합해 이미지의 classpath 시나리오를 재생성합니다. 멀티서버 compose는 `SCENARIO_HOST_DIR`을 game-engine의 읽기 전용 `SCENARIO_DIR`에 마운트할 수도 있으며, 외부 파일이 없을 때 classpath 시나리오를 사용합니다.
 
 ---
 

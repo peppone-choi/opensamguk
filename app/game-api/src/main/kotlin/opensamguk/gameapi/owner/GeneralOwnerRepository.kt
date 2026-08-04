@@ -6,7 +6,11 @@ import jakarta.persistence.Id
 import jakarta.persistence.IdClass
 import jakarta.persistence.Table
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.gameapi.read.GeneralReadEntity
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.io.Serializable
 import java.time.Instant
@@ -15,7 +19,15 @@ class GeneralOwnerEntity(
     var generalId: Long = 0,
     var userId: Long = 0,
     var claimedAt: Instant = Instant.EPOCH,
+    var claimRequestId: String? = null,
 )
+
+internal fun GeneralOwnerEntity.isFinalizedFor(general: GeneralReadEntity, userId: Long): Boolean =
+    if (claimRequestId == null) {
+        general.npcState != GeneralPossessionService.CLAIMABLE_NPC_STATE
+    } else {
+        general.npcState == GeneralPossessionService.POSSESSED_NPC_STATE && general.userId == userId.toString()
+    }
 
 interface GeneralOwnerRepository {
     fun findByUserId(userId: Long): GeneralOwnerEntity?
@@ -25,6 +37,8 @@ interface GeneralOwnerRepository {
     fun findAllByOrderByGeneralIdAsc(): List<GeneralOwnerEntity>
 
     fun save(entity: GeneralOwnerEntity): GeneralOwnerEntity
+
+    fun deleteByUserIdAndGeneralIdAndClaimRequestId(userId: Long, generalId: Long, claimRequestId: String): Int
 }
 
 internal data class GeneralOwnerRecordId(
@@ -49,6 +63,9 @@ internal class GeneralOwnerRecord(
 
     @Column(name = "claimed_at", nullable = false)
     var claimedAt: Instant,
+
+    @Column(name = "claim_request_id")
+    var claimRequestId: String? = null,
 )
 
 internal interface GeneralOwnerRecordRepository : JpaRepository<GeneralOwnerRecord, GeneralOwnerRecordId> {
@@ -57,6 +74,19 @@ internal interface GeneralOwnerRecordRepository : JpaRepository<GeneralOwnerReco
     fun existsByWorldIdAndGeneralId(worldId: Int, generalId: Long): Boolean
 
     fun findAllByWorldIdOrderByGeneralIdAsc(worldId: Int): List<GeneralOwnerRecord>
+
+    @Modifying
+    @Query(
+        "delete from GeneralOwnerRecord r " +
+            "where r.worldId = :worldId and r.userId = :userId and r.generalId = :generalId " +
+            "and r.claimRequestId = :claimRequestId",
+    )
+    fun deleteByWorldIdAndUserIdAndGeneralIdAndClaimRequestId(
+        @Param("worldId") worldId: Int,
+        @Param("userId") userId: Long,
+        @Param("generalId") generalId: Long,
+        @Param("claimRequestId") claimRequestId: String,
+    ): Int
 }
 
 @Repository
@@ -82,14 +112,27 @@ internal class WorldScopedGeneralOwnerRepository(
                 generalId = entity.generalId,
                 userId = entity.userId,
                 claimedAt = entity.claimedAt,
+                claimRequestId = entity.claimRequestId,
             ),
         )
         return entity
     }
 
+    override fun deleteByUserIdAndGeneralIdAndClaimRequestId(
+        userId: Long,
+        generalId: Long,
+        claimRequestId: String,
+    ): Int = raw.deleteByWorldIdAndUserIdAndGeneralIdAndClaimRequestId(
+        worldId = worldId.value,
+        userId = userId,
+        generalId = generalId,
+        claimRequestId = claimRequestId,
+    )
+
     private fun GeneralOwnerRecord.toValue(): GeneralOwnerEntity = GeneralOwnerEntity(
         generalId = generalId,
         userId = userId,
         claimedAt = claimedAt,
+        claimRequestId = claimRequestId,
     )
 }

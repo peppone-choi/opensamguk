@@ -32,7 +32,8 @@ object GeneralListColumns {
      * (컬럼 키, 필요 권한). PHP `$viewColumns`(remap 적용·BLOCKED 생략) + `$customViewColumns`를 한 줄로
      * 이어붙인 **선언 순서**. 호출부는 `reqPermission <= permission`만 추려 column 목록을 만든다.
      *
-     * 순서는 패러티 타깃 — PHP 선언 순서를 절대 재배열하지 않는다.
+     * PHP-backed columns keep their parity order. politics/charm are the additive five-stat transport
+     * extension immediately after intel.
      */
     private val COLUMN_ORDER: List<Pair<String, Int>> = listOf(
         // ── viewColumns (P0) ───────────────────────────────────────────────────
@@ -44,6 +45,8 @@ object GeneralListColumns {
         "leadership" to 0,
         "strength" to 0,
         "intel" to 0,
+        "politics" to 0,
+        "charm" to 0,
         "explevel" to 0,
         "dedlevel" to 0,
         "gold" to 0,
@@ -123,6 +126,8 @@ object GeneralListColumns {
         "leadership" -> row.leadership
         "strength" -> row.strength
         "intel" -> row.intel
+        "politics" -> row.politics
+        "charm" -> row.charm
         "explevel" -> row.explevel
         "dedlevel" -> row.dedlevel
         "gold" -> row.gold

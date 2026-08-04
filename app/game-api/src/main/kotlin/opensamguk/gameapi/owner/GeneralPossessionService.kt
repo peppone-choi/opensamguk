@@ -1,7 +1,13 @@
 package opensamguk.gameapi.owner
 
+import opensamguk.common.wire.GeneralBoolResult
+import opensamguk.common.wire.TurnDaemonEvent
+import opensamguk.common.wire.TurnDaemonEventEnvelope
+import opensamguk.common.wire.WireJson
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.infra.persistence.CommandResultRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -38,13 +44,22 @@ class GeneralPossessionService(
     private val generals: GeneralReadRepository,
     private val npcTokens: SelectNpcTokenRepository,
     private val worldStates: WorldStateReadRepository,
+    private val commandResults: CommandResultRepository,
+    processWorld: GameApiProcessWorld,
     private val clock: Clock = Clock.systemUTC(),
 ) {
+    private val worldId = processWorld.worldId
+
     /** Outcome of a claim attempt. */
     sealed interface ClaimResult {
         data class Claimed(val generalId: Int, val requestId: String) : ClaimResult
+        data class AwaitingDaemon(val generalId: Int, val requestId: String) : ClaimResult
         /** Idempotent: the caller already owns exactly this general. */
         data class AlreadyOwnedBySelf(val generalId: Int) : ClaimResult
+        data class TerminalDenied(val generalId: Int, val reason: String) : ClaimResult
+        data class UncorrelatedReservation(val generalId: Int) : ClaimResult
+        data class InvalidClaimResult(val generalId: Int) : ClaimResult
+        data class ReservationChanged(val generalId: Int) : ClaimResult
         /** The caller already owns a DIFFERENT general (one-per-user). */
         data class UserAlreadyHasGeneral(val ownedGeneralId: Int) : ClaimResult
         /** The target general is claimed by someone else. */
@@ -63,7 +78,7 @@ class GeneralPossessionService(
         val existingForUser = owners.findByUserId(userId)
         if (existingForUser != null) {
             return if (existingForUser.generalId.toInt() == generalId) {
-                ClaimResult.AlreadyOwnedBySelf(generalId)
+                reconcileExistingClaim(userId, generalId, existingForUser)
             } else {
                 ClaimResult.UserAlreadyHasGeneral(existingForUser.generalId.toInt())
             }
@@ -81,16 +96,83 @@ class GeneralPossessionService(
         // 3. target must be unowned (UNIQUE general_id; re-checked in-tx, DB UNIQUE is the backstop).
         if (owners.existsByGeneralId(generalId.toLong())) return ClaimResult.GeneralAlreadyClaimed
 
+        val requestId = admitClaim(generalId)
         owners.save(
             GeneralOwnerEntity(
                 generalId = generalId.toLong(),
                 userId = userId,
                 claimedAt = now,
+                claimRequestId = requestId,
             ),
         )
         npcTokens.deleteOwnerOrExpired(userId, now)
-        val requestId = admitClaim(generalId)
         return ClaimResult.Claimed(generalId, requestId)
+    }
+
+    @Transactional
+    fun reconcileTerminalDenialForClaimable(userId: Long): String? {
+        val reservation = owners.findByUserId(userId) ?: return null
+        val generalId = reservation.generalId.toInt()
+        val general = generals.findById(generalId).orElse(null)
+        if (general?.isActivatedFor(userId) == true) return null
+
+        val requestId = reservation.claimRequestId ?: return null
+        val terminal = terminalClaimResult(requestId, generalId)
+        if (terminal !is StoredClaimResult.Rejected) return null
+
+        val removed = owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, reservation.generalId, requestId)
+        if (removed != 1) return null
+        return terminal.reason
+    }
+
+    private fun reconcileExistingClaim(
+        userId: Long,
+        generalId: Int,
+        reservation: GeneralOwnerEntity,
+    ): ClaimResult {
+        val general = generals.findById(generalId).orElse(null)
+        if (general?.isActivatedFor(userId) == true) return ClaimResult.AlreadyOwnedBySelf(generalId)
+
+        val requestId = reservation.claimRequestId ?: return ClaimResult.UncorrelatedReservation(generalId)
+        return when (val terminal = terminalClaimResult(requestId, generalId)) {
+            StoredClaimResult.Pending,
+            StoredClaimResult.Applied,
+            -> ClaimResult.AwaitingDaemon(generalId, requestId)
+
+            is StoredClaimResult.Rejected -> {
+                if (owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, generalId.toLong(), requestId) == 1) {
+                    ClaimResult.TerminalDenied(generalId, terminal.reason)
+                } else {
+                    ClaimResult.ReservationChanged(generalId)
+                }
+            }
+
+            StoredClaimResult.Invalid -> ClaimResult.InvalidClaimResult(generalId)
+        }
+    }
+
+    private fun terminalClaimResult(requestId: String, generalId: Int): StoredClaimResult {
+        val payload = commandResults.findResultPayload(worldId, requestId) ?: return StoredClaimResult.Pending
+        val envelope = runCatching {
+            WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), payload)
+        }.getOrNull() ?: return StoredClaimResult.Invalid
+        if (envelope.requestId != requestId) return StoredClaimResult.Invalid
+        val result = (envelope.event as? TurnDaemonEvent.CommandResult)?.result as? GeneralBoolResult
+            ?: return StoredClaimResult.Invalid
+        if (result.type != CLAIM_NPC_RESULT_TYPE || result.generalId != generalId) return StoredClaimResult.Invalid
+        return if (result.ok) StoredClaimResult.Applied else StoredClaimResult.Rejected(
+            result.reason ?: CLAIM_FAILED_REASON,
+        )
+    }
+
+    private fun opensamguk.gameapi.read.GeneralReadEntity.isActivatedFor(userId: Long): Boolean =
+        npcState == POSSESSED_NPC_STATE && this.userId == userId.toString()
+
+    private sealed interface StoredClaimResult {
+        object Pending : StoredClaimResult
+        object Applied : StoredClaimResult
+        data class Rejected(val reason: String) : StoredClaimResult
+        object Invalid : StoredClaimResult
     }
 
     private fun npcMode(): Int =
@@ -102,6 +184,9 @@ class GeneralPossessionService(
          * `npc=1` (possessed-player-NPC) — that flip is the DEFERRED game-state side-effect (see class doc).
          */
         const val CLAIMABLE_NPC_STATE = 2
+        const val POSSESSED_NPC_STATE = 1
+        private const val CLAIM_NPC_RESULT_TYPE = "claimNpc"
+        private const val CLAIM_FAILED_REASON = "빙의에 실패했습니다."
 
         private fun intOf(value: Any?): Int? = when (value) {
             is Int -> value

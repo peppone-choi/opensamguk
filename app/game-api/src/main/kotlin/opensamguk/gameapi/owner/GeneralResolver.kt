@@ -46,8 +46,7 @@ class GeneralResolver(
 
     /** Resolve the caller's owned general, or null when they have no character. */
     fun resolve(userId: Long): ResolvedGeneral? {
-        val generalId = resolveGeneralId(userId) ?: return null
-        val general = generals.findById(generalId).orElse(null) ?: return null
+        val general = resolveGeneral(userId) ?: return null
         val nationLevel = if (general.nationId != 0) {
             nations.findById(general.nationId).map { it.level }.orElse(0)
         } else {
@@ -63,8 +62,14 @@ class GeneralResolver(
     }
 
     fun resolveGeneralId(userId: Long): Int? =
-        owners.findByUserId(userId)?.generalId?.toInt()
-            ?: generals.findByUserId(userId.toString())?.id
+        resolveGeneral(userId)?.id
+
+    private fun resolveGeneral(userId: Long): GeneralReadEntity? {
+        val owner = owners.findByUserId(userId)
+            ?: return generals.findByUserId(userId.toString())
+        val general = generals.findById(owner.generalId.toInt()).orElse(null)
+        return general?.takeIf { owner.isFinalizedFor(it, userId) }
+    }
 
     companion object {
         /**

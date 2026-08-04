@@ -56,6 +56,10 @@ class GeneralBuilder(
     private var dex3: Int = 0
     private var dex4: Int = 0
     private var dex5: Int = 0
+    private var politics: Int = 50
+    private var charm: Int = 50
+    private var appearanceYear: Int? = null
+    private var rtkMetadata: Map<String, Any?> = emptyMap()
 
     // npc 타입 → 이름 접두(GeneralBuilder.php:42-52).
     private val prefixList: Map<Int, String> = mapOf(
@@ -85,6 +89,15 @@ class GeneralBuilder(
     }
     fun setStat(leadership: Int, strength: Int, intel: Int): GeneralBuilder {
         this.leadership = leadership; this.strength = strength; this.intel = intel; return this
+    }
+    fun setPoliticsCharm(politics: Int, charm: Int): GeneralBuilder {
+        this.politics = politics; this.charm = charm; return this
+    }
+    fun setAppearanceYear(appearanceYear: Int?): GeneralBuilder {
+        this.appearanceYear = appearanceYear; return this
+    }
+    fun setRtkMetadata(rtkMetadata: Map<String, Any?>): GeneralBuilder {
+        this.rtkMetadata = LinkedHashMap(rtkMetadata); return this
     }
     fun setSpecYear(specAge: Int?, specAge2: Int?): GeneralBuilder {
         this.specAge = specAge; this.specAge2 = specAge2; return this
@@ -238,7 +251,7 @@ class GeneralBuilder(
     /**
      * build(GeneralBuilder.php:542-737) — 도시배치 choice + getRandTurn + killturn draw 후 [BuiltGeneral].
      * @param cityPool      cityID 미지정 시 choice 대상(getAllCities | getAllNationCities). id+nation 보유.
-     * @return null = 사망(death<=year) 또는 예약(age<adultAge)으로 행 미생성.
+     * @return null = legacy 사망(death<=year)/예약(age<adultAge), or explicit RTK 사망(year>death)/예약(year<appearance).
      */
     fun build(
         year: Int,
@@ -252,9 +265,18 @@ class GeneralBuilder(
 
         val finalName = (nameCustomPrefix ?: (prefixList[npc] ?: "ⓧ")) + name
 
-        if (death!! <= year) return null            // 사망 → 스킵
-        if (age < GameConst.adultAge) return null    // 미성년 → 예약
-        val isNewGeneral = age == GameConst.adultAge.toInt()
+        val explicitAppearanceYear = appearanceYear
+        val isNewGeneral = if (explicitAppearanceYear == null) {
+            if (death!! <= year) return null         // legacy: 사망 → 스킵
+            if (age < GameConst.adultAge) return null // legacy: 미성년 → 예약
+            age == GameConst.adultAge.toInt()
+        } else {
+            // RTK14 source rows are a sanctioned lifecycle divergence. Their appearance is explicit,
+            // including under-age rows, and the source death year remains inclusive.
+            if (year < explicitAppearanceYear) return null
+            if (year > death!!) return null
+            year == explicitAppearanceYear
+        }
 
         var nation = nationID
         if (isFictionMode && isNewGeneral) nation = 0
@@ -277,7 +299,10 @@ class GeneralBuilder(
 
         val kt = when {
             (killturn ?: 0) != 0 -> killturn!!
-            else -> (death!! - year) * 12 + rng.nextRangeInt(0, 11) + month - 1
+            else -> {
+                val derivedKillturn = (death!! - year) * 12 + rng.nextRangeInt(0, 11) + month - 1
+                if (explicitAppearanceYear == null) derivedKillturn else derivedKillturn.coerceAtLeast(1)
+            }
         }
 
         return BuiltGeneral(
@@ -308,6 +333,10 @@ class GeneralBuilder(
             turntimeSecond = turntimeSecond,
             turntimeFraction = turntimeFraction,
             npcText = text,
+            politics = politics,
+            charm = charm,
+            appearanceYear = appearanceYear,
+            rtkMetadata = LinkedHashMap(rtkMetadata),
         )
     }
 
@@ -345,4 +374,8 @@ data class BuiltGeneral(
     val turntimeFraction: Int,
     val picture: String = "default.jpg",
     val npcText: String? = null,
+    val politics: Int = 50,
+    val charm: Int = 50,
+    val appearanceYear: Int? = null,
+    val rtkMetadata: Map<String, Any?> = emptyMap(),
 )

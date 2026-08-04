@@ -93,6 +93,8 @@ data class GeneralListRow(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int,
+    val charm: Int,
     val explevel: Int,                 // getExpLevel(experience) (DomesticHelpers)
     val dedlevel: Int,                 // getDedLevel(dedication)  (DomesticHelpers)
     val gold: Int,

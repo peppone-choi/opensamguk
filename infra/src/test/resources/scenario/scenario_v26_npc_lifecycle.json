@@ -1,0 +1,17 @@
+{
+  "title": "V26 NPC lifecycle compatibility",
+  "startYear": 181,
+  "map": {"mapName": "che"},
+  "const": {},
+  "nation": [],
+  "general": [
+    [1, "소제1", null, 1, null, 20, 11, 48, 0, 168, 190, "유지", null, null],
+    [1, "헌제", null, 1, null, 17, 13, 61, 0, 170, 250, "안전", null, "한 왕실을 구해줄 이는 진정 없는 것인가..."],
+    [1, "RTK출생변경", null, 1, null, 40, 41, 42, 0, 190, 240, "유지", null, null, 77, 88, 200, 17001, "female", 50, 30, 300, "왕도", false, false],
+    [1, "RTK성인변경", null, 1, null, 40, 41, 42, 0, 190, 240, "유지", null, null, 77, 88, 200, 17002, "female", 50, 30, 300, "왕도", false, true],
+    [1, "RTK동명이인", null, 1, null, 40, 41, 42, 0, 190, 240, "유지", null, null, 77, 88, 200, 17003, "female", 50, 30, 300, "왕도", false, false]
+  ],
+  "general_ex": [],
+  "general_neutral": [],
+  "diplomacy": []
+}

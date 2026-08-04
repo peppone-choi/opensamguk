@@ -22,7 +22,7 @@ import opensamguk.infra.persistence.MetaJson
  */
 object ScenarioJson {
 
-    // ── general[] / general_ex[] 14-slot positional index (PHP Scenario.php generateGeneral list()) ──
+    // ── general[] / general_ex[] positional index (PHP 14 slots + local/RTK14 extensions) ──
     // [0]affinity [1]name [2]picturePath [3]nation_id(0/1/2) [4]locatedCity(null in 1010)
     // [5]leadership(통솔) [6]strength(무력) [7]intel(지력) [8]officerLevel [9]born [10]dead
     // [11]ego(성격) [12]char(특기) [13]text(NPC 대사)
@@ -42,6 +42,15 @@ object ScenarioJson {
     private const val G_TEXT = 13
     private const val G_POLITICS = 14
     private const val G_CHARM = 15
+    private const val G_APPEARANCE_YEAR = 16
+    private const val G_OFFICER_NUMBER = 17
+    private const val G_GENDER = 18
+    private const val G_LIFESPAN = 19
+    private const val G_ACTIVITY_YEARS = 20
+    private const val G_TOTAL = 21
+    private const val G_IDEOLOGY = 22
+    private const val G_RTK14_ADDED = 23
+    private const val G_LEGACY_ACTIVE_AT_START = 24
 
     // ── nation[] 9-tuple positional index (PHP) ──
     // [0]name [1]color [2]gold [3]rice [4]desc [5]tech [6]ideology [7]scale(level) [8]cities[]
@@ -164,6 +173,15 @@ object ScenarioJson {
             text = strOrNull(t.getOrNull(G_TEXT)),
             politics = intOf(t.getOrNull(G_POLITICS), 50),
             charm = intOf(t.getOrNull(G_CHARM), 50),
+            appearanceYear = intOrNull(t.getOrNull(G_APPEARANCE_YEAR)),
+            officerNumber = intOrNull(t.getOrNull(G_OFFICER_NUMBER)),
+            gender = strOrNull(t.getOrNull(G_GENDER)),
+            lifespan = intOrNull(t.getOrNull(G_LIFESPAN)),
+            activityYears = intOrNull(t.getOrNull(G_ACTIVITY_YEARS)),
+            total = intOrNull(t.getOrNull(G_TOTAL)),
+            ideology = strOrNull(t.getOrNull(G_IDEOLOGY)),
+            rtk14Added = boolOf(t.getOrNull(G_RTK14_ADDED), false),
+            legacyActiveAtStart = boolOrNull(t.getOrNull(G_LEGACY_ACTIVE_AT_START), "legacyActiveAtStart"),
             npcType = npcType,
             rawTuple = rawTuple,
         )
@@ -278,6 +296,12 @@ object ScenarioJson {
         is String -> v.toBooleanStrictOrNull() ?: default
         else -> default
     }
+
+    private fun boolOrNull(v: Any?, label: String): Boolean? = when (v) {
+        null -> null
+        is Boolean -> v
+        else -> error("$label must be a boolean: $v")
+    }
 }
 
 /** Position-resolved scenario header + rosters. */
@@ -298,10 +322,27 @@ data class Scenario(
     val initialEvents: List<ScenarioInitialEvent> = emptyList(),
     val ignoreDefaultEvents: Boolean = false,
 ) {
-    fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> =
-        if (extendedGeneral) baseGenerals + generalEx + generalNeutral else baseGenerals + generalNeutral
+    fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
+        validateRtk14AddedPlacement()
+        val legacyBase = baseGenerals.filterNot { it.rtk14Added }
+        val selectedExtended = generalEx.filter { extendedGeneral || it.officerNumber != null }
+        val legacyNeutral = generalNeutral.filterNot { it.rtk14Added }
+        return legacyBase + selectedExtended + legacyNeutral + baseGenerals.filter { it.rtk14Added }
+    }
 
-    fun initGenerals(): List<ScenarioGeneral> = baseGenerals + generalEx + generalNeutral
+    fun initGenerals(): List<ScenarioGeneral> = seedGenerals(extendedGeneral = true)
+
+    fun isSourceProvenancedGeneralEx(general: ScenarioGeneral): Boolean =
+        general.officerNumber != null && generalEx.any { it === general }
+
+    private fun validateRtk14AddedPlacement() {
+        require(generalEx.none { it.rtk14Added }) {
+            "RTK14-added rows in general_ex are unsupported because they would alter InitScenario ordering"
+        }
+        require(generalNeutral.none { it.rtk14Added }) {
+            "RTK14-added rows in general_neutral are unsupported because they would alter InitScenario ordering"
+        }
+    }
 }
 
 data class ScenarioEvent(
@@ -353,6 +394,15 @@ data class ScenarioGeneral(
     val text: String? = null,
     val politics: Int = 50,
     val charm: Int = 50,
+    val appearanceYear: Int? = null,
+    val officerNumber: Int? = null,
+    val gender: String? = null,
+    val lifespan: Int? = null,
+    val activityYears: Int? = null,
+    val total: Int? = null,
+    val ideology: String? = null,
+    val rtk14Added: Boolean = false,
+    val legacyActiveAtStart: Boolean? = null,
     val npcType: Int = 2,
     val rawTuple: List<Any?> = emptyList(),
 )

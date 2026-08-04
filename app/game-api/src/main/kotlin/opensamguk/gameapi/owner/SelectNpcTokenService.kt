@@ -26,6 +26,7 @@ import kotlin.math.pow
 class SelectNpcTokenService(
     private val tokens: SelectNpcTokenRepository,
     private val owners: GeneralOwnerRepository,
+    private val possession: GeneralPossessionService,
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val worldStates: WorldStateReadRepository,
@@ -42,16 +43,30 @@ class SelectNpcTokenService(
                 reason = NPC_MODE_BLOCKED_REASON,
             )
         }
-        if (owners.findByUserId(userId) != null) {
-            return ClaimableResponse(result = true, hasGeneral = true, candidates = emptyList())
+        val terminalDenyReason = possession.reconcileTerminalDenialForClaimable(userId)
+        val owner = owners.findByUserId(userId)
+        if (owner != null) {
+            val general = generals.findById(owner.generalId.toInt()).orElse(null)
+            if (general != null && owner.isFinalizedFor(general, userId)) {
+                return ClaimableResponse(result = true, hasGeneral = true, candidates = emptyList())
+            }
+            if (owner.claimRequestId != null && general?.isResumableReservation() == true) {
+                val nationName = nations.findById(general.nationId).map { it.name }.orElse(null)
+                return ClaimableResponse(
+                    result = true,
+                    hasGeneral = false,
+                    candidates = listOf(general.toClaimableGeneral(nationName)),
+                )
+            }
+            return ClaimableResponse(result = true, hasGeneral = false, candidates = emptyList())
         }
 
         val now = Instant.now(clock)
         val active = tokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(userId, now)
-        if (active != null) return active.toResponse(hasGeneral = false)
+        if (active != null) return active.toResponse(hasGeneral = false, reason = terminalDenyReason)
 
         val token = issueToken(userId, now)
-        return token.toResponse(hasGeneral = false)
+        return token.toResponse(hasGeneral = false, reason = terminalDenyReason)
     }
 
     private fun issueToken(userId: Long, now: Instant): SelectNpcTokenEntity {
@@ -105,7 +120,7 @@ class SelectNpcTokenService(
         return entity
     }
 
-    private fun SelectNpcTokenEntity.toResponse(hasGeneral: Boolean): ClaimableResponse {
+    private fun SelectNpcTokenEntity.toResponse(hasGeneral: Boolean, reason: String? = null): ClaimableResponse {
         val metadata = pickResult
         val pickMoreSeconds = intOf(metadata[PICK_MORE_SECONDS_KEY]) ?: 0
         return ClaimableResponse(
@@ -118,6 +133,7 @@ class SelectNpcTokenService(
             validUntil = validUntil.toString(),
             pickMoreFrom = pickMoreFrom.toString(),
             pickMoreSeconds = pickMoreSeconds,
+            reason = reason,
         )
     }
 
@@ -129,6 +145,8 @@ class SelectNpcTokenService(
         "leadership" to leadership,
         "strength" to strength,
         "intel" to intel,
+        "politics" to politics,
+        "charm" to charm,
         "picture" to picture,
         "imageServer" to imageServer,
         "special" to specialName(SpecialityHelper.domesticName(specialCode), specialCode),
@@ -136,6 +154,12 @@ class SelectNpcTokenService(
         "personal" to GameConst.personalityNameOf(personalCode),
         "keepCnt" to 3,
     )
+
+    private fun GeneralReadEntity.toClaimableGeneral(nationName: String?): ClaimableGeneral =
+        toPickMap(nationName).toClaimableGeneral()
+
+    private fun GeneralReadEntity.isResumableReservation(): Boolean =
+        npcState == GeneralPossessionService.CLAIMABLE_NPC_STATE && (userId?.toLongOrNull() ?: 0L) <= 0L
 
     private fun Map<*, *>.toClaimableGeneral(): ClaimableGeneral = ClaimableGeneral(
         generalId = intOf(this["generalId"]) ?: 0,
@@ -145,6 +169,8 @@ class SelectNpcTokenService(
         leadership = intOf(this["leadership"]) ?: 0,
         strength = intOf(this["strength"]) ?: 0,
         intel = intOf(this["intel"]) ?: 0,
+        politics = intOf(this["politics"]) ?: 50,
+        charm = intOf(this["charm"]) ?: 50,
         picture = this["picture"]?.toString(),
         imageServer = intOf(this["imageServer"]) ?: 0,
         special = this["special"]?.toString(),

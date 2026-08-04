@@ -130,7 +130,7 @@ class CityDetailControllerTest {
             listOf(
                 GeneralReadEntity(
                     id = 100, name = "조조", nationId = 1, cityId = 5, officerLevel = 4, npcState = 0,
-                    leadership = 90, strength = 80, intel = 95, crew = 1000, crewTypeId = 0,
+                    leadership = 90, strength = 80, intel = 95, politics = 77, charm = 68, crew = 1000, crewTypeId = 0,
                     train = 95, atmos = 95, picture = "cao.png",
                 ),
                 GeneralReadEntity(
@@ -164,6 +164,8 @@ class CityDetailControllerTest {
             .andExpect(jsonPath("$.generals[0].name").value("조조"))
             .andExpect(jsonPath("$.generals[0].ourGeneral").value(true))
             .andExpect(jsonPath("$.generals[0].officerLevelText").value("태수")) // lv4 공통명칭
+            .andExpect(jsonPath("$.generals[0].politics").value(77))
+            .andExpect(jsonPath("$.generals[0].charm").value(68))
             .andExpect(jsonPath("$.generals[1].name").value("관우"))
             .andExpect(jsonPath("$.generals[1].ourGeneral").value(false))
             .andExpect(jsonPath("$.generals[1].train").value(-1)) // 비아국 마스킹
