@@ -35,12 +35,17 @@ class BootstrapConfig {
         @Value("\${SCENARIO_SEED_ENABLED:true}") seedEnabled: Boolean,
         @Value("\${SCENARIO_DIR:}") scenarioDir: String,
         @Value("\${SCENARIO_QA_TURNTERM:}") qaTurnTerm: String,
+        // 어드민/워크플로 리셋이 고른 턴 주기. deployer가 servers/*.env에 RESET_TURNTERM으로
+        // 쓰는 이름을 그대로 읽어 중간 번역 계층을 두지 않는다. 이 값이 게임 엔진까지 오려면
+        // docker-compose.server.yml의 game-engine environment에도 전달돼야 한다(별도 저장소).
+        @Value("\${RESET_TURNTERM:}") resetTurnTerm: String,
         processWorld: EngineProcessWorld,
     ): SeedBootstrap = SeedBootstrap(
         scenarioCode = scenarioCode,
         seedEnabled = seedEnabled,
         scenarioDir = scenarioDir,
         qaTurnTerm = qaTurnTerm,
+        resetTurnTerm = resetTurnTerm,
         worldId = processWorld.worldId,
     )
 
