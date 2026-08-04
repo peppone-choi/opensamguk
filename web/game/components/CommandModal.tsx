@@ -62,6 +62,8 @@ interface CommandModalProps {
     pinnedLabel?: string;
     /** Force the arg sub-form for the pinned command (overrides suffix inference). null = no-arg. */
     pinnedArgType?: CommandArgType | null;
+    /** Resolve a pinned command's complete row from the server catalog before it can be submitted. */
+    resolvePinnedFromCatalog?: boolean;
     /** min/max/guide forwarded to the amount sub-form (legacy clamp/quick-adjust). */
     amountMin?: number;
     amountMax?: number;
@@ -371,14 +373,15 @@ export default function CommandModal({
     pinnedCommand,
     pinnedLabel,
     pinnedArgType,
+    resolvePinnedFromCatalog = false,
     amountMin,
     amountMax,
     amountGuide,
     extraArgs,
     isNationCommand,
 }: CommandModalProps) {
-    // Pinned command (F4 C1): synthesize a one-item AvailableCommand and pre-select it so the modal
-    // opens straight on the arg sub-form. `reqArg` follows whether an argType was supplied.
+    // Pinned command (F4 C1): synthesize a fallback one-item command so the modal opens straight on
+    // an arg sub-form. Opt-in catalog resolution replaces it with the authoritative server row.
     const pinned: AvailableCommand | null = pinnedCommand
         ? {
               value: pinnedCommand,
@@ -400,10 +403,46 @@ export default function CommandModal({
     const [formValues, setFormValues] = useState<CommandFormValues>({});
     const [loading, setLoading] = useState(false);
     const [blockedReason, setBlockedReason] = useState<string | null>(null);
+    const [resolvingPinnedCommand, setResolvingPinnedCommand] = useState(
+        pinnedCommand != null && resolvePinnedFromCatalog,
+    );
+    const [pinnedCatalogError, setPinnedCatalogError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Pinned mode skips the catalog fetch entirely — we already know the single command.
-        if (pinnedCommand) return;
+        if (pinnedCommand) {
+            if (!resolvePinnedFromCatalog) {
+                setResolvingPinnedCommand(false);
+                setPinnedCatalogError(null);
+                return;
+            }
+
+            let on = true;
+            setResolvingPinnedCommand(true);
+            setPinnedCatalogError(null);
+            api.availableCommands<AvailableCommandsResponse>(generalId)
+                .then((res) => {
+                    if (!on) return;
+                    const matched = normalize(res)
+                        .flatMap((category) => category.values)
+                        .find((command) => command.value === pinnedCommand);
+                    const matchedForm = matched ? commandForm(matched) : null;
+                    if (!matched || !matchedForm) {
+                        setPinnedCatalogError('명령 정보를 불러오지 못했습니다.');
+                        return;
+                    }
+                    setSelected(matched);
+                    setFormValues(initialFormValues(matchedForm));
+                })
+                .catch(() => {
+                    if (on) setPinnedCatalogError('명령 정보를 불러오지 못했습니다.');
+                })
+                .finally(() => {
+                    if (on) setResolvingPinnedCommand(false);
+                });
+            return () => {
+                on = false;
+            };
+        }
         let on = true;
         api.availableCommands<AvailableCommandsResponse>(generalId)
             .then((res) => {
@@ -428,7 +467,7 @@ export default function CommandModal({
         return () => {
             on = false;
         };
-    }, [generalId, pinnedCommand]);
+    }, [generalId, pinnedCommand, resolvePinnedFromCatalog]);
 
     const categories = useMemo(() => catalog.map((c) => c.category), [catalog]);
     const filtered = useMemo(() => catalog.find((c) => c.category === cat)?.values ?? [], [catalog, cat]);
@@ -580,7 +619,12 @@ export default function CommandModal({
                         {selected.title && selected.title !== selected.simpleName && (
                             <p className="cmd-item-sub">{selected.title}</p>
                         )}
-                        <div className="cmd-form">
+                        {resolvingPinnedCommand ? (
+                            <p className="cmd-empty">명령 정보를 불러오는 중...</p>
+                        ) : pinnedCatalogError ? (
+                            <p className="cmd-flag">{pinnedCatalogError}</p>
+                        ) : (
+                            <div className="cmd-form">
                             {formSpec && argType !== 'founding' && argType !== 'recruit' && (
                                 <StructuredCommandForm
                                     spec={formSpec}
@@ -637,7 +681,8 @@ export default function CommandModal({
                             >
                                 {loading ? '처리 중...' : '예약'}
                             </button>
-                        </div>
+                            </div>
+                        )}
                     </>
                 )}
 

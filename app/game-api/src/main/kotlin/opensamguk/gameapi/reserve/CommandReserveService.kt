@@ -14,6 +14,7 @@ import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -77,6 +78,7 @@ class CommandReserveService(
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
     private val transactions: TransactionOperations,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
     private val commandStreamKey: String = TurnDaemonStreamKeys.of(profile, worldId).commandStream
 
@@ -245,6 +247,12 @@ class CommandReserveService(
             publish(envelope)
             commandInbox.markRedisWakePublished(worldId, envelope.requestId, Instant.now(clock))
         } catch (_: Exception) {
+            log.warn(
+                "command Redis wake publish or marker failed; requestId={}, worldId={}, commandStreamKey={}",
+                envelope.requestId,
+                worldId.value,
+                commandStreamKey,
+            )
         }
     }
 

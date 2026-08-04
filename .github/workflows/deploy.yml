@@ -1,4 +1,4 @@
-name: Build + Deploy to EC2
+name: Build + Deploy to GCP VM
 
 on:
   push:
@@ -110,12 +110,11 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-latest
 
   # ------------------------------------------------------------------
-  # 3. Deploy to EC2 — self-hosted runner ON the box (GH-hosted 러너 IP가 EC2 SG:22에 차단돼
-  #    appleboy ssh/scp가 i/o timeout → 셀프호스티드 러너로 전환. deploy 잡이 박스에서 로컬 실행되어
-  #    SSH/SCP 불필요. build-jvm/build-web은 GH-hosted 유지(GHCR 푸시만 필요).
+  # 3. Deploy to GCP VM — self-hosted runner ON the VM (deploy job runs locally, so
+  #    SSH/SCP is unnecessary. build-jvm/build-web remain GH-hosted; only GHCR push is needed).
   # ------------------------------------------------------------------
   deploy:
-    runs-on: [self-hosted, ec2-prod]
+    runs-on: [self-hosted, gcp-prod]
     needs: [build-jvm, build-web]
     permissions:
       contents: read

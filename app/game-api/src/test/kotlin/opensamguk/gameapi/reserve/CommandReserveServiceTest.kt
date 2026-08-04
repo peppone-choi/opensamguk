@@ -55,6 +55,7 @@ class CommandReserveServiceTest {
     private class RecordingInbox :
         CommandInboxRepository(mock(NamedParameterJdbcTemplate::class.java)) {
         val accepted = mutableListOf<AcceptedCommand>()
+        val redisWakePublished = mutableListOf<Triple<WorldId, String, Instant>>()
         private val byRequestId = linkedMapOf<String, AcceptedCommand>()
 
         override fun insertAccepted(command: AcceptedCommand): InsertResult {
@@ -69,6 +70,10 @@ class CommandReserveServiceTest {
             accepted += command
             byRequestId[command.requestId] = command
             return InsertResult.Inserted
+        }
+
+        override fun markRedisWakePublished(worldId: WorldId, requestId: String, publishedAt: Instant) {
+            redisWakePublished += Triple(worldId, requestId, publishedAt)
         }
     }
 
@@ -159,6 +164,7 @@ class CommandReserveServiceTest {
         assertEquals("req-immediate", inbox.accepted.single().requestId)
         assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, inbox.accepted.single().commandKind)
         assertEquals(emptyList(), results.rows)
+        assertEquals(emptyList(), inbox.redisWakePublished)
     }
 
     @Test

@@ -1,3 +1,171 @@
+# SESSION HANDOFF — 2026-07-31 (OPENSAM-34 local grader closeout)
+
+## 사용자 지시 원문
+
+1. `권장 처리 순서대로 차례대로.`
+2. `계속.`
+
+## 처리 결과
+
+- OPENSAM-34 D4-31~35 local predeploy grader, manual-only workflow contract,
+  runbook, and final independent review are complete. The final re-review is
+  `cleared`; initial `fix-required` findings were remediated rather than waived.
+- Local evidence: both predeploy `bash -n` checks, hermetic contract, workflow
+  YAML parse, and scoped untracked-file whitespace checks passed. Fresh Gradle
+  migration evidence is V29 `2/0/0/0` and V32 `9/0/0/0`, `BUILD SUCCESSFUL in
+  2m 2s`.
+- This is not a production Go decision. Jira remains `할 일`; the actual
+  `ec2-prod` runner was observed offline in both this repository and sibling
+  `opensamguk-docker`, so D4-31~35 actual observations are blocked/incomplete.
+- `scripts/agent/verify-changes.sh` classification ran, but `--run` was not
+  rerun for OPENSAM-34. No EC2/prod access, workflow dispatch, `.env*`/secret
+  access, commit, push, PR, merge, deploy, Jira mutation, data deletion,
+  legacy/golden write, or test weakening occurred.
+- Repeated generic Fablize tool-failure notices during successful read-only
+  discovery are an isolated external tooling baseline; direct scoped evidence,
+  not those notices, determines this closeout.
+
+## 다음 순서
+
+1. Do not resume EC2 or dispatch the workflow without authorization. After EC2
+   is resumed and the user explicitly approves, dispatch manually with `server`,
+   immutable `expected_tag`, `expected_scenario_code`, positive `world_id`, and
+   operator-approved `min_free_gib`/`min_free_percent`.
+2. A future PR must follow ADR-LITE-026: three separate review-agent mentions
+   in the PR conversation, fix and reverify every finding, then obtain explicit
+   human merge approval.
+
+---
+
+# SESSION HANDOFF — 2026-07-31 (OPENSAM-33 로컬 종결)
+
+## 사용자 지시 원문
+
+1. `Jira 확인해서 현재 처리 해야 하는 티켓을 확인해.`
+2. `권장 처리 순서대로 차례대로.`
+3. `그리고 앞으론 PR 올린 후에 자체 리뷰를 3번 받고 수정 한 다음에 머지하도록 해.`
+4. `PR에서 멘션하면 리뷰 가능하잖아. 그걸 이야기 하는거야.`
+5. `계속.`
+
+## 처리 결과
+
+- 승인된 직렬 순서 `OPENSAM-31 → 32 → 33 → 34 → 149 → 35`에서
+  OPENSAM-33 D4-14~17을 locally complete/released로 종결했다. Jira는 외부
+  전이 권한이 없어 계속 `할 일`이다.
+- Final isolated artifact:
+  `/var/folders/34/jlnbkc0j6fj0nkcp7fj0f9h00000gn/T/opensamguk-op33-remediation.A4KNsK/live-gate-marker-fixed`.
+  `che_요양`의 intake `202`, same-ID reservation/execution `200`, durable marker,
+  exactly matching XRANGE/XINFO, same-entry XACK/XPENDING=0, 60-second three
+  ticks, authoritative `0/0/0 → 0/10/7`, and SSE → refresh → DOM were retained.
+- Initial `fix-required` findings were remediated: raw `Instant` JDBC marker
+  binding changed to `Timestamp.from`, exact run volumes and aliases are
+  removed, reservation/execution each assert HTTP status and original request
+  ID, and the operational timeout is `600000ms` with caller override preserved.
+- Final focused evidence: `ScenarioImporterIT` 14/0/0/0,
+  `RedisCommandStreamIT` 3/0/0/0, `IntakeResultChannelTest` 4/0/0/0,
+  `RealtimeRelayIT` 1/0/0/0; marker unit 4/4 + Testcontainers IT 1/1 skip 0;
+  web typecheck and shell contracts PASS. Fresh rerun: shell syntax+timeout
+  contract PASS, web typecheck PASS, `ScenarioMapSeedIT` 8/0/0/0 (`BUILD
+  SUCCESSFUL` in 2m), and `CommandReserveServiceTest` 4/0/0/0 plus IT 1/0/0/0
+  (`BUILD SUCCESSFUL` in 1m 22s). Final independent review is cleared.
+- Exact cleanup for `v1-e2e-20260731063246-68779` removed its `pgdata`,
+  `redisdata`, and `profile-icons` volumes and its five `:latest` run aliases;
+  prebuilt source image tags were preserved.
+- Residual QUESTION: artifact evidence has 9 EventSource opens and 8
+  `turnCompleted` events. Reconnect/remount versus duplicate subscription is
+  UNKNOWN; it is non-blocking for stale-refresh evidence only.
+- `scripts/agent/verify-changes.sh --run` executed once: five-module Gradle
+  `BUILD SUCCESSFUL in 12m 55s`, 552 suites / 4,763 tests / failures 0 / errors
+  0 / skipped 1; `web/game` typecheck PASS and Vitest 46 files / 232 tests PASS;
+  `git diff --check` PASS. Wrapper exit 1 is only the strict checker’s existing
+  whole-worktree baselines: user-owned `.codex/config.toml` personal model pin
+  and the historical 2026-07-27 review missing one anchored Scope/Verdict under
+  the current rule.
+- Explicitly unexecuted: `tools/parity/gate.sh backend`, production deploy or
+  EC2, commit/push/PR/merge, and Jira transition. Generic Fablize tool-failure
+  notices on successful read commands are an isolated external tooling baseline,
+  not runtime evidence.
+
+## 다음 순서
+
+1. OPENSAM-34 local grader closeout is recorded above; its actual production
+   observation remains blocked until EC2 resume and explicit user approval.
+2. ADR-LITE-026: after a PR is created, mention the review agent in the PR
+   conversation for three separate rounds; fix and reverify each round; merge
+   only with explicit human approval.
+
+---
+
+# SESSION HANDOFF — 2026-07-30 (OPENSAM-32 로컬 종결)
+
+## 사용자 지시 원문
+
+1. "Jira 확인해서 현재 처리 해야 하는 티켓을 확인해."
+2. "권장 처리 순서대로 차례대로."
+
+## 처리 결과
+
+- 승인 직렬 순서 `OPENSAM-31 → 32 → 33 → 34 → 149 → 35`에서
+  OPENSAM-32 D4-08~13을 완료했다.
+- 불가침 제의 shortcut의 구조화 `destNationID/year/month` form을 server
+  catalog에서 해석하고 lookup/row/form 누락을 fail-closed로 만들었다.
+- 종전·불가침·불가침파기 proposal의 destination target color를 preload된
+  상대국 실제 color와 일치시켰다.
+- 실제 lifecycle proposal → JDBC message → accept → 양방향 diplomacy
+  flush → 동일 월드 declaration을 Testcontainers IT로 연결했다.
+- 최종 focused gates: logic 72/72, game-engine 34/34, infra 2/2,
+  frontend 16/16, typecheck PASS; backend failure/error/skip 0.
+- 독립 리뷰의 3 MAJOR, 1 MINOR, 추가 form-missing edge가 모두 해소돼
+  `Verdict: cleared`다.
+- live browser는 필수 compose runtime 설정 부재로 `채점대기`다. accept
+  다중 로그/event 전체 PHP 패러티는 Jira 상태 전이 밖 후속 항목으로
+  명시했다.
+- Jira 상태는 외부 변경 권한이 없어 계속 `할 일`; commit/push/merge/
+  deploy/production 접근/data delete/secret/legacy/golden write는 없었다.
+
+## 다음 순서
+
+1. OPENSAM-33을 새 `$os-start-task` 계약으로 연다.
+2. 완료·검증·독립 검토 전 OPENSAM-34 write scope를 열지 않는다.
+
+---
+
+# SESSION HANDOFF — 2026-07-30 (OPENSAM-31 로컬 종결)
+
+## 사용자 지시 원문
+
+1. "Jira 확인해서 현재 처리 해야 하는 티켓을 확인해."
+2. "권장 처리 순서대로 차례대로."
+
+## 처리 결과
+
+- 승인된 직렬 순서 `OPENSAM-31 → 32 → 33 → 34 → 149 → 35` 중
+  OPENSAM-31만 write scope를 열어 완료했다.
+- active v1 안정화 계획에 seed/load/intake/flush/read/SSE relay
+  ingress/deploy의 정확한 repo-root 명령과 객관적 판정 기준을 추가했다.
+- 독립 검토에서 D4-03/05/06/07 assertion overclaim을 제거한 뒤
+  `Verdict: cleared`를 받았다.
+- `scripts/agent/verify-changes.sh --run` 1회: fresh backend XML
+  552 suites / 4,758 tests / failure·error 0 / skip 1. 임시 Gradle 로그가
+  삭제돼 literal `BUILD SUCCESSFUL` line은 보존되지 않았다.
+- `web/game` typecheck + 46 files / 227 tests, Agent OS contract,
+  `git diff --check`는 PASS다.
+- strict checker의 두 error는 현 티켓 밖 baseline이다: user-owned
+  `.codex/config.toml` model pin, historical review의 uppercase
+  `Verdict: CLEARED`와 현재 lowercase anchor 규칙의 불일치.
+- 열거한 7개 런타임 명령은 개별 재실행하지 않았고 browser-facing SSE는
+  `채점대기`로 남겼다. 문서화 티켓의 실행 증거로 과장하지 않는다.
+- Jira 전이, commit, push, merge, deploy, EC2/production 접근, 데이터 삭제,
+  secret 접근, legacy/golden write, test weakening은 수행하지 않았다.
+
+## 다음 순서
+
+1. OPENSAM-32를 새 `$os-start-task` 계약으로 연다.
+2. PHP oracle → browser observation → root-cause → measured loop 순서를 지킨다.
+3. OPENSAM-32 완료·검증·독립 검토 전 OPENSAM-33 write scope는 열지 않는다.
+
+---
+
 # SESSION HANDOFF — 2026-07-30 (V2 실시간 전투 설계 승인)
 
 ## 0. 사용자 지시 원문

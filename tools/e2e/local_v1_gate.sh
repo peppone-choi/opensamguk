@@ -13,6 +13,28 @@ if [[ -z "${JWT_SECRET:-}" ]]; then
   exit 2
 fi
 
+operational_smoke="${E2E_OPERATIONAL_SMOKE:-false}"
+qa_turnterm="${SCENARIO_QA_TURNTERM:-}"
+if [[ "$operational_smoke" == "true" && "$qa_turnterm" != "1" ]]; then
+  echo "E2E_OPERATIONAL_SMOKE=true requires SCENARIO_QA_TURNTERM=1 (60-second local QA cadence)" >&2
+  exit 2
+fi
+
+build_mode="${E2E_BUILD_MODE:-default}"
+case "$build_mode" in
+  default|sequential) ;;
+  *)
+    echo "E2E_BUILD_MODE must be default or sequential" >&2
+    exit 2
+    ;;
+esac
+
+prebuilt_image_prefix="${E2E_PREBUILT_IMAGE_PREFIX:-opensamguk}"
+if [[ "${E2E_SKIP_BUILD:-false}" == "true" && ! "$prebuilt_image_prefix" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
+  echo "E2E_PREBUILT_IMAGE_PREFIX must be a Docker-safe local image prefix" >&2
+  exit 2
+fi
+
 attempt_dir=""
 if command -v omo >/dev/null 2>&1; then
   ulw_status="$(omo ulw-loop status --json 2>/dev/null || true)"
@@ -44,35 +66,65 @@ if [[ ! "$compose_project_name" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
 fi
 printf '%s\n' "$compose_project_name" >"$artifact_dir/compose-project-name.txt"
 
+application_services=(gateway-api game-api game-engine web-gateway web-game)
+owned_image_aliases=()
+owned_volume_names=()
+cleanup_resources_file="$artifact_dir/cleanup-resources.txt"
+: >"$cleanup_resources_file"
+
 compose() {
   docker compose --project-name "$compose_project_name" --env-file /dev/null "$@"
 }
 
+reserve_isolated_cleanup_resources() {
+  local service
+  local image_alias
+  local volume
+
+  for service in "${application_services[@]}"; do
+    image_alias="${compose_project_name}-${service}:latest"
+    if docker image inspect "$image_alias" >/dev/null 2>&1; then
+      printf 'existing-target|%s\n' "$image_alias" >>"$cleanup_resources_file"
+      echo "refusing to overwrite existing isolated image alias $image_alias" >&2
+      return 1
+    fi
+  done
+  for volume in "${compose_project_name}_pgdata" "${compose_project_name}_redisdata" "${compose_project_name}_profile-icons"; do
+    if docker volume inspect "$volume" >/dev/null 2>&1; then
+      printf 'existing-volume|%s\n' "$volume" >>"$cleanup_resources_file"
+      echo "refusing to reuse existing isolated Compose volume $volume" >&2
+      return 1
+    fi
+  done
+  for service in "${application_services[@]}"; do
+    owned_image_aliases+=("${compose_project_name}-${service}:latest")
+  done
+  owned_volume_names=(
+    "${compose_project_name}_pgdata"
+    "${compose_project_name}_redisdata"
+    "${compose_project_name}_profile-icons"
+  )
+}
+
 prepare_no_build_images() {
-  local services=(gateway-api game-api game-engine web-gateway web-game)
   local source_image
   local target_image
   local service
   local mapping_file="$artifact_dir/docker-image-aliases.txt"
 
   : >"$mapping_file"
-  for service in "${services[@]}"; do
-    source_image="opensamguk-${service}:latest"
+  for service in "${application_services[@]}"; do
+    source_image="${prebuilt_image_prefix}-${service}:latest"
     target_image="${compose_project_name}-${service}:latest"
     if ! docker image inspect "$source_image" >/dev/null 2>&1; then
       printf 'missing-source|%s|%s\n' "$source_image" "$target_image" >>"$mapping_file"
       echo "E2E_SKIP_BUILD requires prebuilt image $source_image" >&2
       return 1
     fi
-    if docker image inspect "$target_image" >/dev/null 2>&1; then
-      printf 'existing-target|%s|%s\n' "$source_image" "$target_image" >>"$mapping_file"
-      echo "refusing to overwrite existing isolated image alias $target_image" >&2
-      return 1
-    fi
   done
 
-  for service in "${services[@]}"; do
-    source_image="opensamguk-${service}:latest"
+  for service in "${application_services[@]}"; do
+    source_image="${prebuilt_image_prefix}-${service}:latest"
     target_image="${compose_project_name}-${service}:latest"
     if ! docker image tag "$source_image" "$target_image"; then
       printf 'tag-failed|%s|%s\n' "$source_image" "$target_image" >>"$mapping_file"
@@ -83,13 +135,21 @@ prepare_no_build_images() {
   done
 }
 
+build_services_sequentially() {
+  local service
+
+  for service in "${application_services[@]}"; do
+    compose build "$service" >"$artifact_dir/docker-compose-build-${service}.log" 2>&1
+  done
+}
+
 existing_services="$(compose ps -q 2>/dev/null || true)"
 if [[ -n "$existing_services" ]]; then
   printf '%s\n' "$existing_services" >"$artifact_dir/compose-project-collision-services.txt"
   echo "refusing to reuse existing isolated Compose project $compose_project_name" >&2
   exit 2
 fi
-started_by_lane=1
+started_by_lane=0
 
 auth_restore_required=0
 auth_prior_allow_join=""
@@ -192,26 +252,74 @@ restore_auth_fixture() {
   auth_restore_required=0
 }
 
+record_cleanup() {
+  printf '%s\n' "$1" >>"$cleanup_resources_file"
+}
+
 cleanup() {
   local exit_code=$?
+  local image_alias
+  local service
+  local volume
   if ! restore_auth_fixture; then
+    record_cleanup 'auth-restore|failed'
     exit_code=1
   fi
   if [[ "$started_by_lane" == 1 ]]; then
-    compose down >"$artifact_dir/docker-compose-down.log" 2>&1 || {
-      echo "docker compose down failed; see $artifact_dir/docker-compose-down.log" >&2
+    if compose down --volumes >"$artifact_dir/docker-compose-down.log" 2>&1; then
+      record_cleanup 'compose-down-volumes|success'
+    else
+      record_cleanup 'compose-down-volumes|failed'
+      echo "docker compose down --volumes failed; see $artifact_dir/docker-compose-down.log" >&2
       exit_code=1
-    }
+    fi
+    for volume in "${owned_volume_names[@]}"; do
+      if docker volume inspect "$volume" >"$artifact_dir/cleanup-volume-${volume##*_}.log" 2>&1; then
+        record_cleanup "volume-still-present|$volume"
+        echo "project-owned Compose volume still exists after cleanup: $volume" >&2
+        exit_code=1
+      else
+        record_cleanup "volume-absent|$volume"
+      fi
+    done
+    for image_alias in "${owned_image_aliases[@]}"; do
+      service="${image_alias#${compose_project_name}-}"
+      service="${service%:latest}"
+      if docker image inspect "$image_alias" >/dev/null 2>&1; then
+        if docker image rm "$image_alias" >"$artifact_dir/cleanup-image-alias-${service}.log" 2>&1; then
+          record_cleanup "image-alias-removed|$image_alias"
+        else
+          record_cleanup "image-alias-remove-failed|$image_alias"
+          echo "could not remove project-owned image alias $image_alias" >&2
+          exit_code=1
+        fi
+      else
+        record_cleanup "image-alias-already-absent|$image_alias"
+      fi
+      if docker image inspect "$image_alias" >/dev/null 2>&1; then
+        record_cleanup "image-alias-still-present|$image_alias"
+        echo "project-owned image alias still exists after cleanup: $image_alias" >&2
+        exit_code=1
+      else
+        record_cleanup "image-alias-absent|$image_alias"
+      fi
+    done
   fi
   exit "$exit_code"
 }
 trap cleanup EXIT
+
+reserve_isolated_cleanup_resources
+started_by_lane=1
 
 compose config --quiet >"$artifact_dir/docker-compose-config.log" 2>&1
 compose_up_args=(-d --build)
 if [[ "${E2E_SKIP_BUILD:-false}" == "true" ]]; then
   compose_up_args=(-d --no-build)
   prepare_no_build_images
+elif [[ "$build_mode" == "sequential" ]]; then
+  build_services_sequentially
+  compose_up_args=(-d --no-build)
 fi
 compose up "${compose_up_args[@]}" >"$artifact_dir/docker-compose-up.log" 2>&1
 
@@ -271,15 +379,27 @@ fi
 pnpm --dir web/game install --frozen-lockfile >"$artifact_dir/pnpm-install.log" 2>&1
 pnpm --dir web/game exec playwright install chromium >"$artifact_dir/playwright-install.log" 2>&1
 
+if [[ -n "${E2E_TEST_TIMEOUT_MS:-}" ]]; then
+  playwright_timeout_ms="$E2E_TEST_TIMEOUT_MS"
+elif [[ "$operational_smoke" == "true" ]]; then
+  playwright_timeout_ms=600000
+else
+  playwright_timeout_ms=420000
+fi
+
 E2E_COMPOSE_PROJECT_NAME="$compose_project_name" \
 E2E_REPO_ROOT="$repo_root" \
 E2E_ARTIFACT_DIR="$artifact_dir" \
+E2E_OPENSAMGUK_WORLD_ID="$OPENSAMGUK_WORLD_ID" \
+E2E_TURN_PROFILE_NAME="${TURN_PROFILE_NAME:-che:scenario_2}" \
 E2E_GATEWAY_URL="http://localhost:${web_gateway_port}" \
 E2E_GAME_URL="http://localhost:${web_game_port}" \
 E2E_GAME_ENGINE_HEALTH_URL="http://localhost:${game_engine_port}/actuator/health" \
 E2E_PLAYWRIGHT_JSON="$artifact_dir/playwright-results.json" \
 E2E_PLAYWRIGHT_OUTPUT_DIR="$artifact_dir/playwright-output" \
-E2E_TEST_TIMEOUT_MS="${E2E_TEST_TIMEOUT_MS:-420000}" \
+E2E_TEST_TIMEOUT_MS="$playwright_timeout_ms" \
+E2E_OPERATIONAL_SMOKE="$operational_smoke" \
+SCENARIO_QA_TURNTERM="$qa_turnterm" \
 pnpm --dir web/game test:e2e >"$artifact_dir/playwright.log" 2>&1
 
 echo "local v1 gate passed; artifacts: $artifact_dir"

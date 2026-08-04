@@ -1,8 +1,10 @@
 # V2 전투 에셋 릴리스 리뷰
 
+Scope: assets/battle/v2/, tools/assets/, docs/superpowers/plans/2026-07-28-v2-2_5d-tactical-battle-and-sprite-design.md, docs/superpowers/plans/2026-07-29-v2-expanded-recruitable-unit-catalog.md, docs/superpowers/plans/2026-07-29-v2-unit-roster-revision-proposal.md, docs/superpowers/reviews/2026-07-29-v2-battle-asset-release-review.md
+
 ## 판정
 
-**PASS**
+Verdict: cleared
 
 이 리뷰는 V2 2D/2.5D 전투 설계, 105개 병종 원본·정적 런타임 스프라이트, 32개 지형 후보, 16개 전투 이펙트의 후보 릴리스 계약을 독립적으로 재검증했다. 현재 범위는 렌더러나 전투 시뮬레이션 통합이 아닌 추적 가능한 표현 에셋 후보다.
 

@@ -129,6 +129,24 @@ describe('DiplomacyPage command reservation', () => {
         });
     });
 
+    it('resolves the non-aggression proposal form from the server command catalog', async () => {
+        mocks.diplomacyLetters.mockResolvedValueOnce(diplomacyPayload());
+
+        render(<DiplomacyPage />);
+
+        await waitFor(() => expect(mocks.diplomacyLetters).toHaveBeenCalled());
+        fireEvent.click(screen.getByRole('button', { name: '불가침 제의' }));
+
+        expect(mocks.commandModalProps.at(-1)).toMatchObject({
+            generalId: 10,
+            nationId: 1,
+            pinnedCommand: 'che_불가침제의',
+            pinnedArgType: 'nation',
+            resolvePinnedFromCatalog: true,
+            isNationCommand: true,
+        });
+    });
+
     it('shows send success only after the command result is applied', async () => {
         mocks.diplomacyLetters.mockResolvedValue(diplomacyPayload());
         mocks.diploSendLetter.mockResolvedValue({ status: 'AVAILABLE', requestId: 'diplo-1' });

@@ -234,11 +234,39 @@ samnet/myosam 화면·자산 복제 / v1 goldens 변경 / 런타임 LLM 가신 �
 - [D4-10] che_불가침제의 · [D4-11] che_불가침수락(non-aggression 상태·term 기록).
 - [D4-12] che_불가침파기제의 · [D4-13] che_불가침파기수락(trade 복귀 후 선전포고 가능).
 
-### B2 운영 스모크
-- [D4-14] s1/QA 60초 cadence 축소 루프 구성.
-- [D4-15] Redis intake·daemon·read·SSE 관측 배선.
-- [D4-16] no-op/false-deny/stale frontend 탐지. [추가 분해 필요: 탐지 기준 미명시]
-- [D4-17] seed 중간 실패 후 world_state만 남아 재시도 skip 안 되는지 검증(importAll 원자성 오픈 리스크). [완료: 재시도 미skip]
+### B2 운영 스모크 (OPENSAM-33 — locally complete/released; Jira `할 일`)
+- [D4-14] QA-only isolated 60초 cadence: three snapshots `2 → 3 → 4`, each
+  `tickSeconds=60`, failures/consecutive failures `0`. production/default
+  cadence는 변경하지 않았다.
+- [D4-15] `che_요양` intake `202` → same-ID reservation/execution `200` →
+  authoritative read → SSE browser chain. Durable marker, exactly matching
+  XRANGE/XINFO, same-entry XACK, XPENDING `0`를 artifact로 남겼다.
+- [D4-16] valid intake no-false-deny, authoritative `0/0/0 → 0/10/7`,
+  `turnCompleted` → front-info refresh → rendered `명성=전무 (10)`,
+  `계급=30품관 (7)`를 executable smoke로 고정했다.
+- [D4-17] `ScenarioImporterIT` fresh XML 14 tests / failures·errors·skips 0:
+  mid-import rollback 뒤 retry seed success와 partial-state 부재를 증명한다.
+- Fresh rerun: shell syntax+timeout contract PASS, web typecheck PASS,
+  `ScenarioMapSeedIT` 8/0/0/0 (`BUILD SUCCESSFUL` in 2m), and
+  `CommandReserveServiceTest` 4/0/0/0 plus IT 1/0/0/0 (`BUILD SUCCESSFUL` in
+  1m 22s).
+- Final artifact:
+  `/var/folders/34/jlnbkc0j6fj0nkcp7fj0f9h00000gn/T/opensamguk-op33-remediation.A4KNsK/live-gate-marker-fixed`.
+  Initial `fix-required` remediation and final independent clearance are
+  recorded in the OPENSAM-33 review.
+- QUESTION (non-blocking for stale refresh only): 9 EventSource opens / 8
+  `turnCompleted`; reconnect/remount versus duplicate subscription is UNKNOWN.
+- `scripts/agent/verify-changes.sh --run` once: five-module Gradle `BUILD
+  SUCCESSFUL in 12m 55s`, 552 suites / 4,763 tests / failures 0 / errors 0 /
+  skipped 1; `web/game` typecheck PASS and Vitest 46 files / 232 tests PASS;
+  `git diff --check` PASS. Wrapper exit 1 is only strict checker baselines:
+  user-owned `.codex/config.toml` personal model pin and historical 2026-07-27
+  review missing one anchored Scope/Verdict under the current rule.
+- Unexecuted: `tools/parity/gate.sh backend`, production deploy/EC2,
+  commit/push/PR/merge, Jira transition. OPENSAM-34 local grader closeout is
+  recorded below; its production observation remains blocked. Future PRs follow
+  ADR-LITE-026's three PR-conversation review-agent rounds, fix+reverify each,
+  and explicit human merge approval.
 
 ### 실행순서 7 — V2-0A production 격리 게이트
 - [D4-18] v2 route 0 · [D4-19] v2 bean 0 · [D4-20] v2 migration 0 · [D4-21] v2 catalog loader 0 · [D4-22] v1 schema/seed/golden diff 0. (각 = 게이트 단언 1개)
@@ -252,8 +280,29 @@ samnet/myosam 화면·자산 복제 / v1 goldens 변경 / 런타임 LLM 가신 �
 ### 실행순서 10 — V2-1 첫 수직 slice
 - [D4-29] command result lifecycle 화면 관측 · [D4-30] 조작 대상 갱신 화면 관측(턴 완료 무관). [선행: D4-27]
 
-### 배포 전 체크리스트 (Go 조건)
-- [D4-31] image tag · [D4-32] seed code · [D4-33] runner health · [D4-34] disk headroom · [D4-35] DB migration 상태 — 각 확인 1개씩.
+### 배포 전 체크리스트 (OPENSAM-34 — local grader ready; production observation blocked)
+- [D4-31] immutable image tag · [D4-32] authoritative seed code · [D4-33]
+  self-hosted runner health · [D4-34] disk headroom · [D4-35] DB/Flyway state
+  including V29's concurrent index.
+- Local contract: manual-only `workflow_dispatch` on
+  `[self-hosted, Linux, X64, ec2-prod]`, using exactly `server`, immutable
+  `expected_tag`, `expected_scenario_code`, positive `world_id`, and
+  operator-approved `min_free_gib`/`min_free_percent`; no input has a default.
+- Local evidence: both shell syntax checks, hermetic contract, YAML parse, and
+  scoped untracked-file whitespace checks PASS. Fresh Gradle migration evidence
+  is V29 `2/0/0/0` and V32 `9/0/0/0`, `BUILD SUCCESSFUL in 2m 2s`. The final
+  independent re-review is `cleared`; its initial `fix-required` remediation is
+  recorded in the paired review artifact.
+- Actual D4-31~35 status is **blocked/incomplete**, not Go: the `ec2-prod`
+  runner was observed offline in this repository and sibling
+  `opensamguk-docker`, Jira remains `할 일`, and no production/workflow dispatch,
+  secret or `.env*` access, commit/push/PR/merge/deploy, or Jira mutation
+  occurred. `scripts/agent/verify-changes.sh` classification ran; `--run` was
+  not rerun for OPENSAM-34.
+- Execute only after the EC2 runner is resumed and the user explicitly approves
+  the exact dispatch and operator thresholds. The local contract cannot grant a
+  deployment, pin, migration, merge, or Jira transition. ADR-LITE-026 remains
+  mandatory for a future PR.
 
 ### 비범위 / 차단 (구현 원칙 · No-Go)
 구현 원칙: 억지 종착상태(직접 isunited/소유권 조작) 금지 / 국가 최소5·기본6 / 장수 기본60(국가당10) / 내정 캐릭터 치안·성벽·수비·기술 분화 / 자동외교=전략 입력 / 모든 역할군이 전체 공개 커맨드 선택 가능 / 모든 행동 실제 핸들러 통과(helper가 world row 직접 완성 금지) / **v2는 B0·B0.5 깨면 중단, B1은 오픈 전 hardening gate 승격**. No-Go 8종: flush 이전 성공 노출 / 건국·임관 false-deny / 외교 성공처럼 보이나 diplomacy row 불변 / 버튼이 daemon 결과 없이 완료처럼 / B1 반복 중단 원인 미기록 / XML에 예상외 tick failed·JDBC 오류·종료 역전 / seed 중간 실패 후 부분 world_state 멱등 skip / v2 migration이 s1 production 오염.

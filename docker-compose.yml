@@ -171,6 +171,7 @@ services:
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
       SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
+      SCENARIO_QA_TURNTERM: ${SCENARIO_QA_TURNTERM:-}
       # Sentry — 빈 값이면 SDK no-op (서비스별 DSN, .env.example 참조).
       SENTRY_DSN: ${SENTRY_DSN_GAME_ENGINE:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-local}

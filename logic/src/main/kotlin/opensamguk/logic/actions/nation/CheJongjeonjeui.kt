@@ -102,7 +102,7 @@ class CheJongjeonjeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipel
             generalName = "",
             nationId = destNationID,
             nationName = destNationName,
-            color = "#000000",
+            color = draft.destNation?.color ?: "#000000",
             icon = "",
         )
 

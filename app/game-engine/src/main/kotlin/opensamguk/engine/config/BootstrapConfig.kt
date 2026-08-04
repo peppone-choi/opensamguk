@@ -34,11 +34,13 @@ class BootstrapConfig {
         @Value("\${SCENARIO_CODE:scenario_1010}") scenarioCode: String,
         @Value("\${SCENARIO_SEED_ENABLED:true}") seedEnabled: Boolean,
         @Value("\${SCENARIO_DIR:}") scenarioDir: String,
+        @Value("\${SCENARIO_QA_TURNTERM:}") qaTurnTerm: String,
         processWorld: EngineProcessWorld,
     ): SeedBootstrap = SeedBootstrap(
         scenarioCode = scenarioCode,
         seedEnabled = seedEnabled,
         scenarioDir = scenarioDir,
+        qaTurnTerm = qaTurnTerm,
         worldId = processWorld.worldId,
     )
 
