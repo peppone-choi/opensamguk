@@ -120,9 +120,8 @@ class GeneralPossessionService(
         val terminal = terminalClaimResult(requestId, generalId)
         if (terminal !is StoredClaimResult.Rejected) return null
 
-        if (owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, reservation.generalId, requestId) != 1) {
-            return null
-        }
+        val removed = owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, reservation.generalId, requestId)
+        if (removed != 1) return null
         return terminal.reason
     }
 
