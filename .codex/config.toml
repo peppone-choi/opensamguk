@@ -1,5 +1,5 @@
-model = "gpt-5.6-sol"
-model_context_window = 372000
+# model/model_context_window은 개인 설정이다 — 프로젝트 config에 pin하지 않는다.
+# 모델 선택은 각자 ~/.codex/config.toml에서 한다(tools/agent-system/check.py codex-surface).
 model_reasoning_effort = "high"
 plan_mode_reasoning_effort = "xhigh"
 [features]
