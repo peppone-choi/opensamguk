@@ -105,6 +105,7 @@ class ScenarioImporter(
         expectedWorldId: WorldId,
     ): ImportCounts {
         val startYear = scenario.startYear
+        validateSeedGeneralLifecycles()
 
         val worldId = insertWorldState(jdbc, startYear, expectedWorldId)
 
@@ -396,6 +397,16 @@ class ScenarioImporter(
     private data class BuiltGeneral(val id: Int, val src: ScenarioGeneral)
 
     private fun seedGenerals(): List<ScenarioGeneral> = scenario.seedGenerals(extendedGeneral)
+
+    private fun validateSeedGeneralLifecycles() {
+        for (general in seedGenerals()) {
+            val appearanceYear = general.appearanceYear ?: continue
+            val deathYear = general.deadYear ?: DEFAULT_DEATH_YEAR
+            require(appearanceYear <= deathYear) {
+                "scenario general ${general.name} has appearanceYear=$appearanceYear after deathYear=$deathYear"
+            }
+        }
+    }
 
     /**
      * Assign general ids by build order (general[] then general_ex[]) starting at 1001 — the PHP icon-id

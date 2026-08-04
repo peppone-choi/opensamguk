@@ -951,6 +951,49 @@ class ScenarioImporterIT {
     }
 
     @Test
+    fun `importAll rejects an RTK14 appearance after death instead of silently dropping the row`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "invalid rtk14 lifecycle",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [
+                [1,"InvalidLifecycle",null,0,null,10,11,12,0,100,200,"유지",null,null,50,50,201,101,"남",70,50,300,"유가",false,false]
+              ],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val error = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(
+                scenario = scenario,
+                cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+                scenarioCode = "scenario_invalid_rtk14_lifecycle",
+                scenarioNumber = 9009,
+                installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+            ).importAll(jdbc, canonicalWorldId)
+        }
+
+        assertEquals(
+            "scenario general InvalidLifecycle has appearanceYear=201 after deathYear=200",
+            error.message,
+        )
+        for (table in listOf(
+            "world_state", "game_kv", "nation", "city", "general", "general_turn", "nation_turn",
+            "diplomacy", "rank_data", "ng_games", "event",
+        )) {
+            assertEquals(0, count(table), "$table must remain empty after lifecycle validation fails")
+        }
+    }
+
+    @Test
     fun `reviewed legacy-only tuple with a lifecycle marker omits RTK14 source metadata`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 

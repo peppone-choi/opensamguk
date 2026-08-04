@@ -120,9 +120,10 @@ class GeneralPossessionService(
         val terminal = terminalClaimResult(requestId, generalId)
         if (terminal !is StoredClaimResult.Rejected) return null
 
-        return terminal.reason.takeIf {
-            owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, reservation.generalId, requestId) == 1
+        if (owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, reservation.generalId, requestId) != 1) {
+            return null
         }
+        return terminal.reason
     }
 
     private fun reconcileExistingClaim(
