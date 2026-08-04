@@ -3,6 +3,8 @@ package opensamguk.logic.actions.trade
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.RequirementKey
@@ -73,6 +75,12 @@ class CheJangbiMaemae(
     override val name: String = "장비매매"
     override val category: String = "자원교역"
     override val argsSchema: Map<String, Any?> get() = mapOf("itemType" to "string", "itemCode" to "string")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("itemType", "string", "select", "itemTypes"),
+            CommandFieldSpec("itemCode", "string", "select", "items"),
+        ),
+    )
 
     override fun bindArgs(parsed: Map<String, Any?>): CheJangbiMaemae =
         CheJangbiMaemae(pipeline, maxLevel, parsed)

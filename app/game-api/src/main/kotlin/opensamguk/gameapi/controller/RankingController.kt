@@ -1,6 +1,7 @@
 package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.dto.BestGeneral
+import opensamguk.gameapi.dto.EmperorDetail
 import opensamguk.gameapi.dto.EmperorRecord
 import opensamguk.gameapi.dto.GeneralRank
 import opensamguk.gameapi.dto.HallRecord
@@ -71,6 +72,9 @@ class RankingController(
         ResponseEntity.ok(rankReadService.emperor())
 
     @GetMapping("/emperor/{id}")
-    fun emperorDetail(@PathVariable id: Int): Nothing =
-        throw ResponseStatusException(HttpStatus.NOT_FOUND, "no emperor record $id")
+    fun emperorDetail(@PathVariable id: Int): ResponseEntity<EmperorDetail> =
+        ResponseEntity.ok(
+            rankReadService.emperorDetail(id)
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "황제 기록을 찾을 수 없습니다."),
+        )
 }

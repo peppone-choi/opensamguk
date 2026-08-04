@@ -3,6 +3,7 @@ package opensamguk.logic.actions
 import opensamguk.logic.actions.develop.cheDanryeon
 import opensamguk.logic.actions.develop.cheGisulYeongu
 import opensamguk.logic.actions.develop.cheGyeonmun
+import opensamguk.logic.actions.develop.SightseeingExternalSelector
 import opensamguk.logic.actions.develop.cheJeongchakJangnyeo
 import opensamguk.logic.actions.develop.cheJuminSeonjeong
 import opensamguk.logic.actions.develop.cheGunryangMaemae
@@ -81,6 +82,7 @@ import opensamguk.logic.actions.personnel.CheJeontuTeukgiChogihwa
 import opensamguk.logic.actions.personnel.CheNaejeongTeukgiChogihwa
 import opensamguk.logic.actions.personnel.CheRandomImgwan
 import opensamguk.logic.actions.personnel.RandomImgwanNpcCandidate
+import opensamguk.logic.actions.personnel.RandomImgwanPermutationReplay
 import opensamguk.logic.actions.personnel.RandomImgwanWeightedCandidate
 import opensamguk.logic.actions.personnel.CheYoyang
 import opensamguk.logic.actions.trade.CheHeonnap
@@ -106,16 +108,25 @@ object RestAction : GeneralActionDefinition {
  * action-code → definition. Unknown / deny → the 휴식 fallback. The handler uses this to resolve the
  * reserved action-code and the fallback.
  */
-class CommandRegistry(private val pipeline: GeneralActionPipeline, private val maxLevel: Int = 255) {
+class CommandRegistry(
+    private val pipeline: GeneralActionPipeline,
+    private val maxLevel: Int = 255,
+    private val sightseeingExternalSelector: SightseeingExternalSelector? = null,
+) {
+    fun withSightseeingExternalSelector(selector: SightseeingExternalSelector): CommandRegistry =
+        CommandRegistry(pipeline, maxLevel, selector)
+
     fun resolveRandomImgwan(
         npcCandidates: List<RandomImgwanNpcCandidate>,
         weightedCandidates: List<RandomImgwanWeightedCandidate>,
         useNpcForeignBranch: Boolean,
+        permutationReplay: RandomImgwanPermutationReplay? = null,
     ): GeneralActionDefinition = CheRandomImgwan(
         pipeline = pipeline,
         npcCandidates = npcCandidates,
         weightedCandidates = weightedCandidates,
         useNpcForeignBranch = useNpcForeignBranch,
+        permutationReplay = permutationReplay,
     )
 
     fun resolve(actionCode: String): GeneralActionDefinition = when (actionCode) {
@@ -201,7 +212,7 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_NPC능동" -> CheNpcNeungdong(pipeline)
         "che_귀환" -> CheGwihwan(pipeline)
         "che_인재탐색" -> CheInjaeTamsaek(pipeline)
-        "che_견문" -> cheGyeonmun(pipeline)
+        "che_견문" -> cheGyeonmun(pipeline, sightseeingExternalSelector)
         "che_해산" -> CheHaesan(pipeline)
         "che_요양" -> CheYoyang(pipeline)        // dispatcher-direct, gate-exempt (G14) — def for execution
         "che_선양" -> CheSeonyang(pipeline)        // ORDER BY RAND quarantine (G4, decision #6)

@@ -15,7 +15,9 @@ const POLL_INTERVAL_MS = 300;
 
 const mocks = vi.hoisted(() => ({
     frontInfo: vi.fn(),
-    mailbox: vi.fn(),
+    mailboxRecent: vi.fn(),
+    contacts: vi.fn(),
+    readLatestMessage: vi.fn(),
     deleteMessage: vi.fn(),
     commandResult: vi.fn(),
     messageAccept: vi.fn(),
@@ -27,12 +29,14 @@ vi.mock('@/lib/api', async importOriginal => {
     const actual = await importOriginal<typeof import('@/lib/api')>();
     Object.assign(actual.api, {
         frontInfo: mocks.frontInfo,
-        mailbox: mocks.mailbox,
+        mailboxRecent: mocks.mailboxRecent,
+        contacts: mocks.contacts,
         commandResult: mocks.commandResult,
         messageAccept: mocks.messageAccept,
         messageDecline: mocks.messageDecline,
         commands: {
             deleteMessage: mocks.deleteMessage,
+            readLatestMessage: mocks.readLatestMessage,
         },
     });
     return actual;
@@ -81,6 +85,32 @@ const diplomacyMessage = (): MailboxMessage => ({
     option: { action: 'no_aggression' },
 });
 
+const recentEnvelope = (message: MailboxMessage) => {
+    const target = (value: MailboxMessage['srcTarget']) => value == null ? null : {
+        id: value.id,
+        name: value.name,
+        nation_id: value.nationId,
+        nation: value.nation,
+        color: value.color,
+        icon: value.icon,
+    };
+    const item = {
+        id: message.id,
+        msgType: message.type,
+        time: message.time,
+        text: message.text,
+        src: target(message.srcTarget),
+        dest: target(message.destTarget),
+        option: message.option,
+    };
+    return {
+        private: message.type === 'private' ? [item] : [],
+        national: [],
+        public: [],
+        diplomacy: message.type === 'diplomacy' ? [item] : [],
+    };
+};
+
 beforeEach(() => {
     // 폴링 간격(300ms) 타이머만 즉시 발화 → 20회 폴링 실대기 제거. vi.useFakeTimers/attempt 축소 주입 미사용.
     // waitFor(50/1000ms)·토스트(3000ms) 등 다른 지연은 실제 타이머로 위임 → 단언 타이밍 보존.
@@ -90,7 +120,9 @@ beforeEach(() => {
     );
 
     mocks.frontInfo.mockResolvedValue({ general: { generalId: 10, nationId: 1 } });
-    mocks.mailbox.mockResolvedValue([freshMessage()]);
+    mocks.mailboxRecent.mockResolvedValue(recentEnvelope(freshMessage()));
+    mocks.contacts.mockResolvedValue({ nation: [] });
+    mocks.readLatestMessage.mockResolvedValue({ status: 'AVAILABLE', requestId: 'read-latest' });
     mocks.deleteMessage.mockReset();
     mocks.commandResult.mockReset();
     mocks.messageAccept.mockReset();
@@ -122,13 +154,13 @@ describe('MailboxPage 서신 삭제', () => {
         render(<MailboxPage />);
 
         const delBtn = await screen.findByRole('button', { name: '삭제' }, { timeout: 8000 });
-        const mailboxCallsBefore = mocks.mailbox.mock.calls.length;
+        const mailboxCallsBefore = mocks.mailboxRecent.mock.calls.length;
         fireEvent.click(delBtn);
 
         await waitFor(() => expect(mocks.deleteMessage).toHaveBeenCalledWith({ msgID: 55 }, 10));
         await waitFor(() => expect(mocks.commandResult).toHaveBeenCalledWith('del-1'));
         // RESOLVED ok → 재조회(fetchMessages → api.mailbox 재호출) + 성공 토스트.
-        await waitFor(() => expect(mocks.mailbox.mock.calls.length).toBeGreaterThan(mailboxCallsBefore));
+        await waitFor(() => expect(mocks.mailboxRecent.mock.calls.length).toBeGreaterThan(mailboxCallsBefore));
         expect(screen.getByText('서신을 삭제했습니다.')).toBeInTheDocument();
     });
 
@@ -146,15 +178,15 @@ describe('MailboxPage 서신 삭제', () => {
         render(<MailboxPage />);
 
         const delBtn = await screen.findByRole('button', { name: '삭제' }, { timeout: 8000 });
-        await waitFor(() => expect(mocks.mailbox).toHaveBeenCalled());
-        const mailboxCallsBefore = mocks.mailbox.mock.calls.length;
+        await waitFor(() => expect(mocks.mailboxRecent).toHaveBeenCalled());
+        const mailboxCallsBefore = mocks.mailboxRecent.mock.calls.length;
         fireEvent.click(delBtn);
 
         await waitFor(() => expect(mocks.commandResult).toHaveBeenCalledWith('del-2'));
         // 엔진 deny 사유(PHP byte-parity) 그대로 노출.
         await waitFor(() => expect(screen.getByText('5분 이내의 메시지만 삭제할 수 있습니다.')).toBeInTheDocument());
         // deny 경로는 재조회하지 않는다(목록 유지).
-        expect(mocks.mailbox.mock.calls.length).toBe(mailboxCallsBefore);
+        expect(mocks.mailboxRecent.mock.calls.length).toBe(mailboxCallsBefore);
         expect(screen.getByText('테스트 메시지')).toBeInTheDocument();
     });
 
@@ -165,20 +197,20 @@ describe('MailboxPage 서신 삭제', () => {
         render(<MailboxPage />);
 
         const delBtn = await screen.findByRole('button', { name: '삭제' }, { timeout: 8000 });
-        const mailboxCallsBefore = mocks.mailbox.mock.calls.length;
+        const mailboxCallsBefore = mocks.mailboxRecent.mock.calls.length;
         fireEvent.click(delBtn);
 
         // 폴링 20회 소진(300ms 타이머 즉시 발화 스텁으로 실대기 없음) 후 접수 처리.
         await waitFor(() => expect(mocks.commandResult).toHaveBeenCalledTimes(20), { timeout: 8000 });
         await waitFor(() => expect(screen.getByText('서신 삭제 요청을 접수했습니다.')).toBeInTheDocument());
-        await waitFor(() => expect(mocks.mailbox.mock.calls.length).toBeGreaterThan(mailboxCallsBefore));
+        await waitFor(() => expect(mocks.mailboxRecent.mock.calls.length).toBeGreaterThan(mailboxCallsBefore));
     });
 });
 
 describe('MailboxPage 외교 서신', () => {
     it('수락은 RESOLVED ok 후에만 성공을 표시하고 재조회한다', async () => {
         // Given
-        mocks.mailbox.mockResolvedValue([diplomacyMessage()]);
+        mocks.mailboxRecent.mockResolvedValue(recentEnvelope(diplomacyMessage()));
         mocks.messageAccept.mockResolvedValue({ status: 'AVAILABLE', requestId: 'accept-page-1' });
         mocks.commandResult.mockResolvedValue({
             status: 'RESOLVED',
@@ -188,8 +220,9 @@ describe('MailboxPage 외교 서신', () => {
             result: {},
         });
         render(<MailboxPage />);
+        fireEvent.click(await screen.findByRole('button', { name: '외교' }));
         const acceptButton = await screen.findByRole('button', { name: '수락' }, { timeout: 8000 });
-        const mailboxCallsBefore = mocks.mailbox.mock.calls.length;
+        const mailboxCallsBefore = mocks.mailboxRecent.mock.calls.length;
 
         // When
         fireEvent.click(acceptButton);
@@ -197,12 +230,12 @@ describe('MailboxPage 외교 서신', () => {
         // Then
         await waitFor(() => expect(mocks.commandResult).toHaveBeenCalledWith('accept-page-1'));
         await waitFor(() => expect(screen.getByText('수락했습니다.')).toBeInTheDocument());
-        await waitFor(() => expect(mocks.mailbox.mock.calls.length).toBeGreaterThan(mailboxCallsBefore));
+        await waitFor(() => expect(mocks.mailboxRecent.mock.calls.length).toBeGreaterThan(mailboxCallsBefore));
     });
 
     it('거절 RESOLVED deny는 엔진 사유를 그대로 노출하고 재조회하지 않는다', async () => {
         // Given
-        mocks.mailbox.mockResolvedValue([diplomacyMessage()]);
+        mocks.mailboxRecent.mockResolvedValue(recentEnvelope(diplomacyMessage()));
         mocks.messageDecline.mockResolvedValue({ status: 'AVAILABLE', requestId: 'decline-page-1' });
         mocks.commandResult.mockResolvedValue({
             status: 'RESOLVED',
@@ -213,25 +246,27 @@ describe('MailboxPage 외교 서신', () => {
             result: {},
         });
         render(<MailboxPage />);
+        fireEvent.click(await screen.findByRole('button', { name: '외교' }));
         const declineButton = await screen.findByRole('button', { name: '거절' }, { timeout: 8000 });
-        const mailboxCallsBefore = mocks.mailbox.mock.calls.length;
+        const mailboxCallsBefore = mocks.mailboxRecent.mock.calls.length;
 
         // When
         fireEvent.click(declineButton);
 
         // Then
         await waitFor(() => expect(screen.getByText('이미 처리된 외교 서신입니다.')).toBeInTheDocument());
-        expect(mocks.mailbox.mock.calls.length).toBe(mailboxCallsBefore);
+        expect(mocks.mailboxRecent.mock.calls.length).toBe(mailboxCallsBefore);
     });
 
     it('수락 결과가 계속 PENDING이면 접수만 표시하고 재조회하지 않는다', async () => {
         // Given
-        mocks.mailbox.mockResolvedValue([diplomacyMessage()]);
+        mocks.mailboxRecent.mockResolvedValue(recentEnvelope(diplomacyMessage()));
         mocks.messageAccept.mockResolvedValue({ status: 'AVAILABLE', requestId: 'accept-page-pending' });
         mocks.commandResult.mockResolvedValue({ status: 'PENDING', requestId: 'accept-page-pending' });
         render(<MailboxPage />);
+        fireEvent.click(await screen.findByRole('button', { name: '외교' }));
         const acceptButton = await screen.findByRole('button', { name: '수락' }, { timeout: 8000 });
-        const mailboxCallsBefore = mocks.mailbox.mock.calls.length;
+        const mailboxCallsBefore = mocks.mailboxRecent.mock.calls.length;
 
         // When
         fireEvent.click(acceptButton);
@@ -240,6 +275,6 @@ describe('MailboxPage 외교 서신', () => {
         await waitFor(() => expect(mocks.commandResult).toHaveBeenCalledTimes(20), { timeout: 8000 });
         await waitFor(() => expect(screen.getByText('수락 요청을 접수했습니다.')).toBeInTheDocument());
         expect(screen.queryByText('수락했습니다.')).not.toBeInTheDocument();
-        expect(mocks.mailbox.mock.calls.length).toBe(mailboxCallsBefore);
+        expect(mocks.mailboxRecent.mock.calls.length).toBe(mailboxCallsBefore);
     });
 });

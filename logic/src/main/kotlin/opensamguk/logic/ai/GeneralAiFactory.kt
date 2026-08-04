@@ -145,7 +145,7 @@ data class GeneralAiDoBodies(
     val recordGeneralKv: (generalId: Int, key: String, value: Any?) -> Unit = { _, _, _ -> },
     val hasFullConditionMet: (reserved: ChosenCommand) -> Boolean = { true },
     val getFailString: (reserved: ChosenCommand) -> String = { "" },
-    val buildNeutralNationCommand: () -> ChosenCommand = { ChosenCommand("che_휴식", emptyMap()) },
+    val buildNeutralNationCommand: () -> ChosenCommand = { ChosenCommand("휴식", emptyMap()) },
 ) {
     companion object {
         /**

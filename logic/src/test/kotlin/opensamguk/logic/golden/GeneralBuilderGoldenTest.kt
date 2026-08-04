@@ -14,6 +14,7 @@ import opensamguk.logic.world.GeneralBuilder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -152,6 +153,11 @@ class GeneralBuilderGoldenTest {
             assertEquals(o["experience"]!!.jsonPrimitive.int, built.experience, "[$caseId] experience")
             assertEquals(o["dedication"]!!.jsonPrimitive.int, built.dedication, "[$caseId] dedication")
             assertEquals(o["name"]!!.jsonPrimitive.content, built.name, "[$caseId] name(prefix)")
+            if (caseId == "B") {
+                assertEquals("", built.npcText, "[$caseId] explicit npcmsg")
+            } else {
+                assertNull(built.npcText, "[$caseId] unset npcmsg")
+            }
             for (d in 1..5) {
                 assertEquals(o["dex$d"]!!.jsonPrimitive.int, dexOf(built, d), "[$caseId] dex$d")
             }

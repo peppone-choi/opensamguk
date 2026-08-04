@@ -6,6 +6,7 @@ import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.WorldActions
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.RaiseInvaderAction
 import kotlinx.serialization.json.Json
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.context.annotation.Bean
@@ -44,16 +45,18 @@ class EngineEventConfig {
             worldId.value,
         ).firstOrNull() ?: false
         val rows = jdbc.query(
-            "SELECT id, target_code, priority, condition::text AS condition_json, action::text AS action_json FROM event ORDER BY id ASC",
-        ) { rs, _ ->
-            PersistedEvent(
-                id = rs.getInt("id"),
-                target = rs.getString("target_code"),
-                priority = rs.getInt("priority"),
-                condition = rs.getString("condition_json"),
-                action = rs.getString("action_json"),
-            )
-        }
+            "SELECT id, target_code, priority, condition::text AS condition_json, action::text AS action_json FROM event WHERE world_id = ? ORDER BY id ASC",
+            { rs, _ ->
+                PersistedEvent(
+                    id = rs.getInt("id"),
+                    target = rs.getString("target_code"),
+                    priority = rs.getInt("priority"),
+                    condition = rs.getString("condition_json"),
+                    action = rs.getString("action_json"),
+                )
+            },
+            worldId.value,
+        )
         if (rows.isEmpty()) return EventStore.withDefaults(ignoreDefaults)
         return EventStore().also { store ->
             rows.forEach { row ->
@@ -78,7 +81,7 @@ class EngineEventConfig {
 
     @Bean
     fun eventActionFactory(): EventActionFactory =
-        WorldActions.register(EventActionFactory())
+        RaiseInvaderAction.register(WorldActions.register(EventActionFactory()))
 
     @Bean
     fun eventDispatcher(store: EventStore, factory: EventActionFactory): EventDispatcher =

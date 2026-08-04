@@ -42,7 +42,19 @@ class BuiltGeneralMapperTest {
         assertEquals(220, mapped.meta["deadyear"])
         assertEquals(220, mapped.meta["dead_year"])
         assertEquals(0, mapped.meta["image_server"])
+        assertEquals(0, mapped.meta["imgsvr"])
         assertEquals(1, mapped.meta["dedlevel"])
+        assertEquals(0, mapped.meta["newmsg"])
+        assertEquals(null, mapped.meta["owner_name"])
+        assertEquals(0, mapped.meta["leadership_exp"])
+        assertEquals(0, mapped.meta["strength_exp"])
+        assertEquals(0, mapped.meta["intel_exp"])
+        assertEquals(0, mapped.meta["makelimit"])
+        assertEquals(0, mapped.meta["explevel"])
+        assertEquals(20, mapped.meta["startage"])
+        assertEquals(emptyMap<String, Any?>(), mapped.meta["last_turn"])
+        assertEquals(emptyList<Any?>(), mapped.meta["aux"])
+        assertEquals(emptyMap<String, Any?>(), mapped.meta["penalty"])
     }
 
     private fun builtGeneral(turntimeSecond: Int = 0, turntimeFraction: Int = 0) =

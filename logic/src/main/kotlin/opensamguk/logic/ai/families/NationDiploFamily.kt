@@ -443,6 +443,7 @@ object NationDiploFamily {
 
     private fun do선전포고(ctx: GeneralAiContext, input: WarInput, lastTurn: LastTurn?): ChosenCommand? {
         val instance = ctx.instance
+        if (ctx.selfOfficerLevel < 12) return null
         // :1856 — dipState != d평화 → null (BEFORE any draw).
         if (instance.dipState != AiInstanceState.D_PEACE) return null
         // :1860 — attackable → null.
@@ -451,6 +452,7 @@ object NationDiploFamily {
         if (instance.nation.capital == 0) return null
         // :1868 — frontCities non-empty → null.
         if (ctx.world.frontCities.isNotEmpty()) return null
+        if (!ctx.techLimitedNextGrade) return null
 
         // :1923 (A) — nextBool(trialProp**6); false → null (the draw is consumed even on the abort path).
         if (!warTrialGate(input.trialPropPow6, ctx.rng)) return null

@@ -94,7 +94,7 @@ data class PostNationPowerInput(
 data class PowerKv(
     val maxPower: Int = 0,
     val maxCrew: Int = 0,
-    val maxCities: List<String> = emptyList(),
+    val maxCities: List<String>? = null,
 )
 
 /** Per-nation Q3/Q4 result: raw (pre-jitter) power, jittered power, totalCrew, gennum, updated KV. */
@@ -173,7 +173,7 @@ fun postUpdateMonthlyPower(
 
         val existing = maxPower[n.nationId] ?: PowerKv()
         val newMaxCities =
-            if (n.cityNames.size > existing.maxCities.size) n.cityNames else existing.maxCities
+            if (n.cityNames.size > existing.maxCities.orEmpty().size) n.cityNames else existing.maxCities
         val kv = PowerKv(
             maxPower = maxOf(existing.maxPower, power),
             maxCrew = maxOf(existing.maxCrew, totalCrew),
@@ -239,8 +239,8 @@ data class PostUpdateMonthlyDiplomacyResult(
  *       THEN state 1→0,term=6 where post-term==0.
  *   Q10 available_war_setting_cnt: ensure each active nation has an entry (default 0); cnt<max → cnt=valueFit(cnt+inc,0,max).
  *
- * **Q6/Q7 read the LIVE state (NOT the Q5 term update — Q5 only mutates state=0 rows' term in the
- * write-set; the PHP Q6/Q7 SELECTs re-read the table, but term on state=0 rows reflects Q5's UPDATE).**
+ * **Q6/Q7 read the LIVE state: this pure fold keeps one insertion-ordered row view whose Q5/Q7 mutations
+ * are consumed by later phases, matching the PHP SELECTs re-reading their prior UPDATEs.**
  * The Q7 종전 condition `term<=1` is evaluated against the post-Q5 term for state=0 rows.
  */
 fun postUpdateMonthlyDiplomacy(
@@ -253,10 +253,12 @@ fun postUpdateMonthlyDiplomacy(
     val maxCnt = opensamguk.common.constants.GameConst.maxAvailableWarSettingCnt
     val incCnt = opensamguk.common.constants.GameConst.incAvailableWarSettingCnt
 
-    // Q5 — war-term floor on state=0 rows. Produces an effective post-Q5 term per (me,you) for Q7.
+    val liveRows = LinkedHashMap<Pair<Int, Int>, DiplomacyRow>()
+    for (d in rows) liveRows[d.me to d.you] = d
+
+    // Q5 — war-term floor on state=0 rows.
     val q5Updates = mutableListOf<DiplomacyWarTermUpdate>()
-    val postQ5Term = HashMap<Pair<Int, Int>, Int>()
-    for (d in rows) {
+    for (d in liveRows.values.toList()) {
         if (d.state != 0) continue
         val genCount = genNum[d.me] ?: 1
         // PHP: floor($dead / 100 / $genCount) — FLOAT division throughout, then floor (faithful to :341).
@@ -264,20 +266,20 @@ fun postUpdateMonthlyDiplomacy(
         val newDead = d.dead - deltaTerm * 100 * genCount
         val newTerm = valueFit((d.term + deltaTerm).toDouble(), 0.0, DiplomacyConst.MAX_WAR_TERM.toDouble()).toInt()
         q5Updates += DiplomacyWarTermUpdate(d.me, d.you, newTerm, newDead)
-        postQ5Term[d.me to d.you] = newTerm
+        liveRows[d.me to d.you] = d.copy(term = newTerm, dead = newDead)
     }
 
     // Q6 — 개전 log: state=1 AND term<=1 AND me<you (input/query order).
-    val warStartLogs = rows
+    val warStartLogs = liveRows.values
         .filter { it.state == 1 && it.term <= 1 && it.me < it.you }
         .map { HistoryTokens.warStartGlobal(nationNames[it.me] ?: "", nationNames[it.you] ?: "") }
 
-    // Q7 — 종전: state=0 AND (post-Q5) term<=1 ORDER BY me desc,you desc; both directions present → 종전.
+    // Q7 — 종전: state=0 AND term<=1 ORDER BY me desc,you desc; both directions present → 종전.
     val warStopLogs = mutableListOf<String>()
     val q7StateUpdates = mutableListOf<DiplomacyStateUpdate>()
     val seen = HashSet<String>()
-    val q7Candidates = rows
-        .filter { it.state == 0 && (postQ5Term[it.me to it.you] ?: it.term) <= 1 }
+    val q7Candidates = liveRows.values
+        .filter { it.state == 0 && it.term <= 1 }
         .sortedWith(compareByDescending<DiplomacyRow> { it.me }.thenByDescending { it.you })
     for (d in q7Candidates) {
         val key = if (d.me < d.you) "${d.me}_${d.you}" else "${d.you}_${d.me}"
@@ -286,13 +288,16 @@ fun postUpdateMonthlyDiplomacy(
         warStopLogs += HistoryTokens.warStopGlobal(nationNames[d.me] ?: "", nationNames[d.you] ?: "")
         q7StateUpdates += DiplomacyStateUpdate(d.me, d.you, newState = 2, newTerm = 0)
         q7StateUpdates += DiplomacyStateUpdate(d.you, d.me, newState = 2, newTerm = 0)
+        for (pair in listOf(d.me to d.you, d.you to d.me)) {
+            liveRows[pair]?.let { liveRows[pair] = it.copy(state = 2, term = 0) }
+        }
     }
 
     // Q8 — globalLogger.flush() (the 개전/종전 logs are emitted here; recorded once).
     val globalLoggerFlushCount = 1
 
     // Q9 — bulk dead-reset + term-1, THEN state 7→2 (term=0), THEN state 1→0,term=6.
-    val q9Updates = rows.map { d ->
+    val q9Updates = liveRows.values.map { d ->
         val deadReset = if (d.state != 0) 0 else d.dead
         val termDec = maxOf(0, d.term - 1)
         var newState = d.state

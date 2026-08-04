@@ -80,6 +80,10 @@ class MessageHandlerTest {
     private fun handler(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
         MessageHandler(world, recorder)
 
+    private fun MessageHandler.handleSend(c: TurnDaemonCommand.SendMessage) = handleSend(c, t0)
+
+    private fun MessageHandler.handleDelete(c: TurnDaemonCommand.DeleteMessage) = handleDelete(c, t0)
+
     @Suppress("UNCHECKED_CAST")
     private fun bodyOf(json: String): Map<String, Any?> = jsonDecode(json)
 
@@ -105,9 +109,8 @@ class MessageHandlerTest {
         assertEquals(1, row.srcId)
         assertEquals(9999, row.destId)
         assertEquals(res.msgID, row.id)
-        // body: dest=null (public — toArray dest 미포함), text 보존.
         val body = bodyOf(row.bodyJson)
-        assertNull(body["dest"])
+        assertEquals(body["src"], body["dest"])
         assertEquals("전체 공지", body["text"])
         // newmsg 미발생.
         assertTrue(recorder.dirtyGeneralIds().isEmpty())
@@ -258,6 +261,59 @@ class MessageHandlerTest {
         assertEquals("개인메세지는 5초당 1건만 보낼 수 있습니다!", (res as SendMessageResult).reason)
     }
 
+    @Test
+    fun `private send uses envelope time and persists lastMsg before an invalid destination`() {
+        val sentAt = t0.plusSeconds(60)
+        val me = general(
+            1,
+            "유비",
+            1,
+            meta = mapOf(
+                "penalty" to mapOf("send_private_msg_delay" to 2),
+                "lastMsg" to sentAt.minusSeconds(3).epochSecond,
+            ),
+        )
+        val world = world(listOf(me))
+        val recorder = ChangeRecorder()
+
+        val res = handler(world, recorder).handleSend(
+            TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 99, text = "없는 장수에게"),
+            sentAt,
+        )
+
+        assertEquals("존재하지 않는 유저입니다.", (res as SendMessageResult).reason)
+        assertEquals(sentAt.epochSecond, world.getGeneralById(1)!!.meta["lastMsg"])
+        assertEquals(sentAt.epochSecond, recorder.generalPatches().single().meta["lastMsg"])
+        assertTrue(recorder.createdMessages().isEmpty())
+    }
+
+    @Test
+    fun `private send throttle denial does not replace lastMsg`() {
+        val sentAt = t0.plusSeconds(60)
+        val previousLastMsg = sentAt.minusSeconds(1).epochSecond
+        val me = general(
+            1,
+            "유비",
+            1,
+            meta = mapOf(
+                "penalty" to mapOf("send_private_msg_delay" to 5),
+                "lastMsg" to previousLastMsg,
+            ),
+        )
+        val dest = general(7, "관우", 1)
+        val world = world(listOf(me, dest))
+        val recorder = ChangeRecorder()
+
+        val res = handler(world, recorder).handleSend(
+            TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 7, text = "너무 빠른 서신"),
+            sentAt,
+        )
+
+        assertEquals("개인메세지는 5초당 1건만 보낼 수 있습니다!", (res as SendMessageResult).reason)
+        assertEquals(previousLastMsg, world.getGeneralById(1)!!.meta["lastMsg"])
+        assertTrue(recorder.generalPatches().isEmpty())
+    }
+
     // ── SEND: 공통 deny 게이트 ──────────────────────────────────────────────────────────────────────
 
     @Test
@@ -393,6 +449,20 @@ class MessageHandlerTest {
     }
 
     @Test
+    fun `delete age gate uses envelope time`() {
+        val sentAt = t0.plusSeconds(6 * 60)
+        val world = world(listOf(general(1, "유비", 1)))
+        val recorder = ChangeRecorder()
+        val res = deleteHandler(world, recorder) { snapshot(time = t0) }.handleDelete(
+            TurnDaemonCommand.DeleteMessage(generalId = 1, msgID = 100),
+            sentAt,
+        )
+
+        assertEquals("5분 이내의 메시지만 삭제할 수 있습니다.", (res as DeleteMessageResult).reason)
+        assertTrue(recorder.messageInvalidates().isEmpty())
+    }
+
+    @Test
     fun `delete denied when message not deletable`() {
         val world = world(listOf(general(1, "유비", 1)))
         val recorder = ChangeRecorder()
@@ -410,7 +480,6 @@ class MessageHandlerTest {
             TurnDaemonCommand.DeleteMessage(generalId = 1, msgID = 100),
         )
         assertTrue((res as DeleteMessageResult).ok)
-        // sender 사본 무효화 UPDATE 1건 + req_del_msg 마커 INSERT 1건.
         val inv = recorder.messageInvalidates()
         assertEquals(1, inv.size)
         assertEquals(100, inv.single().id)
@@ -419,9 +488,10 @@ class MessageHandlerTest {
         @Suppress("UNCHECKED_CAST")
         val opt = invBody["option"] as Map<String, Any?>
         assertEquals(true, opt["invalid"])
-        // 마커 INSERT.
-        assertEquals(1, recorder.createdMessages().size)
-        assertEquals("req_del_msg", bodyOf(recorder.createdMessages().single().bodyJson)["text"])
+        val markers = recorder.createdMessages()
+        assertEquals(2, markers.size)
+        assertEquals("req_del_msg", bodyOf(markers[0].bodyJson)["text"])
+        assertEquals("req_del_msg", bodyOf(markers[1].bodyJson)["text"])
     }
 
     @Test
@@ -441,5 +511,83 @@ class MessageHandlerTest {
         // 무효화 UPDATE 2건: sender(100) + receiver(200).
         val invIds = recorder.messageInvalidates().map { it.id }.toSet()
         assertEquals(setOf(100, 200), invIds)
+    }
+
+    @Test
+    fun `delete public marker preserves the stored source and destination participants`() {
+        val sentAt = t0.plusSeconds(90)
+        val world = world(listOf(general(1, "유비", 1)))
+        val recorder = ChangeRecorder()
+        val publicMessage = snapshot(type = "public").copy(
+            destGeneralId = 1,
+            destNationId = 1,
+            destArray = mapOf("id" to 1),
+        )
+
+        val res = deleteHandler(world, recorder) { publicMessage }.handleDelete(
+            TurnDaemonCommand.DeleteMessage(generalId = 1, msgID = 100),
+            sentAt,
+        )
+
+        assertTrue((res as DeleteMessageResult).ok)
+        val marker = recorder.createdMessages().single()
+        assertEquals(MessageHandler.MAILBOX_PUBLIC, marker.mailbox)
+        assertEquals("public", marker.type)
+        assertEquals(1, marker.srcId)
+        assertEquals(MessageHandler.MAILBOX_PUBLIC, marker.destId)
+        assertEquals(MessageHandler.formatPhpDate(sentAt), marker.time)
+        val body = bodyOf(marker.bodyJson)
+        assertEquals(body["src"], body["dest"])
+        assertEquals("req_del_msg", body["text"])
+    }
+
+    @Test
+    fun `delete writes private req_del_msg receiver then sender copy with original participants`() {
+        val sentAt = t0.plusSeconds(90)
+        val world = world(listOf(general(1, "유비", 1)))
+        val recorder = ChangeRecorder()
+        val res = deleteHandler(world, recorder) { id ->
+            when (id) {
+                100 -> snapshot(id = 100, receiverMessageId = 200)
+                200 -> snapshot(id = 200, srcGeneralId = 1)
+                else -> null
+            }
+        }.handleDelete(TurnDaemonCommand.DeleteMessage(generalId = 1, msgID = 100), sentAt)
+
+        assertTrue((res as DeleteMessageResult).ok)
+        assertEquals(listOf(200, 100), recorder.messageInvalidates().map { it.id })
+
+        val rows = recorder.createdMessages()
+        assertEquals(2, rows.size)
+        val receiver = rows[0]
+        val sender = rows[1]
+        assertEquals(7, receiver.mailbox)
+        assertEquals(1, sender.mailbox)
+        assertEquals("private", receiver.type)
+        assertEquals("private", sender.type)
+        assertEquals(1, receiver.srcId)
+        assertEquals(7, receiver.destId)
+        assertEquals(1, sender.srcId)
+        assertEquals(7, sender.destId)
+        assertEquals(MessageHandler.formatPhpDate(sentAt), receiver.time)
+        assertEquals(MessageHandler.formatPhpDate(sentAt.plusSeconds(60)), receiver.validUntil)
+
+        val receiverBody = bodyOf(receiver.bodyJson)
+        val senderBody = bodyOf(sender.bodyJson)
+        assertEquals(mapOf("id" to 1), receiverBody["src"])
+        assertEquals(mapOf("id" to 7), receiverBody["dest"])
+        assertEquals("req_del_msg", receiverBody["text"])
+        @Suppress("UNCHECKED_CAST")
+        val receiverOption = receiverBody["option"] as Map<String, Any?>
+        @Suppress("UNCHECKED_CAST")
+        val senderOption = senderBody["option"] as Map<String, Any?>
+        assertEquals(true, receiverOption["hide"])
+        assertEquals(true, receiverOption["silence"])
+        val overwrite = receiverOption["overwrite"] as List<*>
+        assertEquals(100, (overwrite[0] as Number).toInt())
+        assertEquals(200, ((overwrite[1] as List<*>).single() as Number).toInt())
+        assertNull(receiverOption["receiverMessageID"])
+        assertEquals(receiver.id, (senderOption["receiverMessageID"] as Number).toInt())
+        assertEquals(receiverOption["overwrite"], senderOption["overwrite"])
     }
 }

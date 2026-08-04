@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.time.Instant
-import java.util.Optional
 
 /**
  * F3 slice test for [RankingController] — MockMvc standalone over a real [RankReadService] backed by
@@ -96,8 +95,8 @@ class RankingControllerTest {
         capitalCityId = capitalCityId, power = power, typeCode = typeCode,
     )
 
-    private fun city(id: Int, name: String, nationId: Int = 0, level: Int = 0) =
-        CityReadEntity(id = id, name = name, nationId = nationId, level = level)
+    private fun city(id: Int, name: String, nationId: Int = 0, level: Int = 0, population: Int = 0) =
+        CityReadEntity(id = id, name = name, nationId = nationId, level = level, population = population)
 
     // ── 2.1 best-generals ──────────────────────────────────────────────────────────────────────────
     @Test
@@ -247,8 +246,8 @@ class RankingControllerTest {
             .andExpect(jsonPath("$.nations[1].chiefs[0].officerLevelText").value("황제"))
             .andExpect(jsonPath("$.nations[1].chiefs[0].name").value("조조"))
             .andExpect(jsonPath("$.nations[1].chiefs[7].name").value("-"))
-            // 외교권자/조언자 BLOCKED
-            .andExpect(jsonPath("$.nations[1].ambassadors.length()").value(0))
+            .andExpect(jsonPath("$.nations[1].ambassadors.length()").value(1))
+            .andExpect(jsonPath("$.nations[1].ambassadors[0]").value("조조"))
             .andExpect(jsonPath("$.nations[1].auditorCount").value(0))
             // 속령 일람 + 수도 강조 좌표
             .andExpect(jsonPath("$.nations[1].cities[0].name").value("허창"))
@@ -375,25 +374,23 @@ class RankingControllerTest {
                 GeneralAccessLogReadEntity(id = 2, generalId = 2, userId = 8, lastRefresh = Instant.parse("2026-01-01T00:01:00Z"), refresh = 5, refreshTotal = 10, refreshScore = 1, refreshScoreTotal = 10),
             ),
         )
-        `when`(worldStates.findById(1)).thenReturn(
-            Optional.of(
-                WorldStateReadEntity(
-                    id = 1,
-                    currentYear = 181,
-                    currentMonth = 7,
-                    config = linkedMapOf(
-                        "refresh" to 42,
-                        "maxrefresh" to 50,
-                        "maxonline" to 8,
-                        "online_user_cnt" to 3,
-                        "recentTraffic" to listOf(
-                            linkedMapOf(
-                                "year" to 181,
-                                "month" to 6,
-                                "refresh" to 30,
-                                "online" to 5,
-                                "date" to "2026-01-01T00:00:00Z",
-                            ),
+        `when`(worldStates.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(
+                id = 1,
+                currentYear = 181,
+                currentMonth = 7,
+                config = linkedMapOf(
+                    "refresh" to 42,
+                    "maxrefresh" to 50,
+                    "maxonline" to 8,
+                    "online_user_cnt" to 3,
+                    "recentTraffic" to listOf(
+                        linkedMapOf(
+                            "year" to 181,
+                            "month" to 6,
+                            "refresh" to 30,
+                            "online" to 5,
+                            "date" to "2026-01-01T00:00:00Z",
                         ),
                     ),
                 ),
@@ -422,16 +419,14 @@ class RankingControllerTest {
 
     @Test
     fun `emperor returns live unification record from world and ownership state`() {
-        `when`(worldStates.findById(1)).thenReturn(
-            Optional.of(
-                WorldStateReadEntity(
-                    id = 1,
-                    currentYear = 200,
-                    currentMonth = 12,
-                    currentPhase = 2,
-                    isunited = 2,
-                    updatedAt = Instant.parse("2026-01-03T00:00:00Z"),
-                ),
+        `when`(worldStates.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(
+                id = 1,
+                currentYear = 200,
+                currentMonth = 12,
+                currentPhase = 2,
+                isunited = 2,
+                updatedAt = Instant.parse("2026-01-03T00:00:00Z"),
             ),
         )
         `when`(nations.findAll()).thenReturn(listOf(nation(1, "촉", "#2e7d32", level = 7)))
@@ -455,10 +450,61 @@ class RankingControllerTest {
             .andExpect(jsonPath("$[0].cityCount").value(3))
     }
 
-    // ── 2.8 emperor detail (404) ─────────────────────────────────────────────────────────────────────
     @Test
-    fun `emperor detail returns 404 (no emperior table)`() {
+    fun `emperor detail returns the live unified winner projection`() {
+        `when`(worldStates.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(
+                id = 1,
+                currentYear = 200,
+                currentMonth = 12,
+                currentPhase = 2,
+                isunited = 2,
+                updatedAt = Instant.parse("2026-01-03T00:00:00Z"),
+            ),
+        )
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "촉", "#2e7d32", level = 7, gold = 9000, rice = 8000)))
+        `when`(cities.countByNationId(1)).thenReturn(2)
+        `when`(cities.count()).thenReturn(2)
+        `when`(cities.findAll()).thenReturn(
+            listOf(
+                city(9, "성도", nationId = 1, level = 6, population = 250000),
+                city(2, "한중", nationId = 1, level = 4, population = 180000),
+            ),
+        )
+        `when`(generals.countByNationId(1)).thenReturn(2)
+        `when`(generals.findAll()).thenReturn(
+            listOf(
+                gen(id = 9, name = "장비", nationId = 1, leadership = 90, strength = 96, intel = 45),
+                gen(id = 2, name = "관우", nationId = 1, leadership = 95, strength = 97, intel = 70),
+            ),
+        )
+        `when`(statistics.findFirstByOrderByIdDesc()).thenReturn(null)
+
         mockMvc().perform(get("/api/rankings/emperor/1"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.nation").value("촉"))
+            .andExpect(jsonPath("$.totalGold").value(9000))
+            .andExpect(jsonPath("$.totalRice").value(8000))
+            .andExpect(jsonPath("$.totalPop").value(430000))
+            .andExpect(jsonPath("$.generals[0].name").value("관우"))
+            .andExpect(jsonPath("$.generals[1].name").value("장비"))
+            .andExpect(jsonPath("$.cities[0].name").value("한중"))
+            .andExpect(jsonPath("$.cities[1].name").value("성도"))
+    }
+
+    @Test
+    fun `emperor detail returns 404 for an id absent from the live list`() {
+        `when`(worldStates.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(id = 1, currentYear = 200, currentMonth = 12, isunited = 2),
+        )
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "촉", "#2e7d32", level = 7)))
+        `when`(cities.countByNationId(1)).thenReturn(1)
+        `when`(cities.count()).thenReturn(1)
+        `when`(generals.countByNationId(1)).thenReturn(1)
+        `when`(statistics.findFirstByOrderByIdDesc()).thenReturn(null)
+
+        mockMvc().perform(get("/api/rankings/emperor/2"))
             .andExpect(status().isNotFound)
     }
 }

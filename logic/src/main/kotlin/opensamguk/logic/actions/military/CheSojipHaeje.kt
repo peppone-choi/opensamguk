@@ -4,6 +4,10 @@ import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.*
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -36,12 +40,23 @@ class CheSojipHaeje(
         val crewUp = pipeline.onCalcDomestic(g0, "징집인구", "score", g0.crew.toDouble()).toInt()
         d.city = d.city.copy(population = d.city.population + crewUp)
 
-        d.general = g0.copy(
+        var g = g0.copy(
             crew = 0,
-            experience = g0.experience + 70.0,
-            dedication = g0.dedication + 100.0,
+        )
+        val expRes = addExperience(g, 70.0, pipeline)
+        g = expRes.general
+        expRes.plainLog?.let { context.addPlainLog(it) }
+        val dedRes = addDedication(g, 100.0, pipeline)
+        g = dedRes.general
+        dedRes.plainLog?.let { context.addPlainLog(it) }
+        g = g.copy(
             lastTurn = LastTurn(name),
             // NO leadership_exp, NO addDex (per PHP run()).
         )
+        val statRes = checkStatChange(g)
+        g = statRes.general
+        statRes.plainLogs.forEach { context.addPlainLog(it) }
+        d.general = g
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 }

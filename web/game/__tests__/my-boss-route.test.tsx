@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import MyBossPage from '@/app/game/my-boss/page';
@@ -193,12 +194,13 @@ describe('MyBossPage personnel commands', () => {
     });
 
     it('submits appoint through submitCommandAndAwaitResult', async () => {
+        const user = userEvent.setup();
         render(<MyBossPage />);
 
         await waitFor(() => expect(screen.getByRole('button', { name: '임명' })).toBeInTheDocument());
-        fireEvent.change(screen.getByLabelText('임명 직책'), { target: { value: 'city:5:4' } });
-        fireEvent.change(screen.getByLabelText('임명 대상'), { target: { value: '42' } });
-        fireEvent.click(screen.getByRole('button', { name: '임명' }));
+        await user.selectOptions(screen.getByLabelText('임명 직책'), 'city:5:4');
+        await user.selectOptions(screen.getByLabelText('임명 대상'), '42');
+        await user.click(screen.getByRole('button', { name: '임명' }));
 
         await waitFor(() => {
             expect(mocks.appoint).toHaveBeenCalledWith({ officerLevel: 4, destGeneralID: 42, destCityID: 5 }, 10);
@@ -207,11 +209,12 @@ describe('MyBossPage personnel commands', () => {
     });
 
     it('submits kick through submitCommandAndAwaitResult', async () => {
+        const user = userEvent.setup();
         render(<MyBossPage />);
 
         await waitFor(() => expect(screen.getByRole('button', { name: '추방' })).toBeInTheDocument());
-        fireEvent.change(screen.getByLabelText('추방 대상'), { target: { value: '43' } });
-        fireEvent.click(screen.getByRole('button', { name: '추방' }));
+        await user.selectOptions(screen.getByLabelText('추방 대상'), '43');
+        await user.click(screen.getByRole('button', { name: '추방' }));
 
         await waitFor(() => {
             expect(mocks.kick).toHaveBeenCalledWith({ destGeneralID: 43 }, 10);
@@ -221,11 +224,12 @@ describe('MyBossPage personnel commands', () => {
     });
 
     it('submits changePermission through submitCommandAndAwaitResult', async () => {
+        const user = userEvent.setup();
         render(<MyBossPage />);
 
         await waitFor(() => expect(screen.getByRole('button', { name: '외교권자 저장' })).toBeInTheDocument());
-        fireEvent.click(screen.getAllByLabelText('허저')[0]);
-        fireEvent.click(screen.getByRole('button', { name: '외교권자 저장' }));
+        await user.click(screen.getAllByLabelText('허저')[0]);
+        await user.click(screen.getByRole('button', { name: '외교권자 저장' }));
 
         await waitFor(() => {
             expect(mocks.changePermission).toHaveBeenCalledWith({ isAmbassador: true, genlist: [42] }, 10);

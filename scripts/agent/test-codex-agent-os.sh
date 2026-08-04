@@ -130,22 +130,112 @@ with tempfile.TemporaryDirectory() as tmp:
     module.ROOT = Path(tmp)
     findings = module.check_codex_surface()
 assert any(finding.check == "codex-surface" for finding in findings)
+assert module.scope_covers_area("tools/assets/", "tools/")
+assert not module.scope_covers_area("docs/webapp/", "app/")
+assert not module.scope_covers_area("not-tools/", "tools/")
 
-with tempfile.TemporaryDirectory() as tmp:
-    module.ROOT = Path(tmp)
-    working = module.ROOT / "docs/superpowers/WORKING_SYSTEM.md"
-    review = module.ROOT / "docs/superpowers/reviews/codex-agent-os.md"
-    review.parent.mkdir(parents=True)
-    working.write_text(
-        "Cross-agent critique\nfix-required\nquarantined-with-proof\n",
-        encoding="utf-8",
-    )
-    review.write_text("Scope: scripts/agent/\nVerdict: fix-required\n", encoding="utf-8")
-    findings = module.check_cross_agent_critique(
-        ["scripts/agent/example.sh", "docs/superpowers/reviews/codex-agent-os.md"],
-        strict=True,
-    )
+def critique_findings(code_files: list[str], reviews: dict[str, str]):
+    with tempfile.TemporaryDirectory() as tmp:
+        module.ROOT = Path(tmp)
+        working = module.ROOT / "docs/superpowers/WORKING_SYSTEM.md"
+        working.parent.mkdir(parents=True)
+        working.write_text(
+            "Cross-agent critique\nfix-required\nquarantined-with-proof\n",
+            encoding="utf-8",
+        )
+        for rel, content in reviews.items():
+            review = module.ROOT / rel
+            review.parent.mkdir(parents=True, exist_ok=True)
+            review.write_text(content, encoding="utf-8")
+        return module.check_cross_agent_critique([*code_files, *reviews], strict=True)
+
+
+historical_review = "docs/superpowers/reviews/historical-narrow.md"
+disjoint_review = "docs/superpowers/reviews/disjoint-tools.md"
+findings = critique_findings(
+    ["scripts/agent/example.sh", "tools/example.py"],
+    {
+        historical_review: "Scope: scripts/agent/\nVerdict: cleared\n",
+        disjoint_review: "Scope: tools/\nVerdict: cleared\n",
+    },
+)
+assert not any(finding.check == "cross-agent-critique" for finding in findings)
+
+findings = critique_findings(
+    ["scripts/agent/example.sh", "tools/example.py"],
+    {
+        historical_review: "Scope: scripts/agent/\nVerdict: cleared\n",
+        disjoint_review: "Scope: docs/\nVerdict: cleared\n",
+    },
+)
+cross_agent_findings = [finding for finding in findings if finding.check == "cross-agent-critique"]
+assert len(cross_agent_findings) == 1
+assert "collectively cover changed areas: tools/" in cross_agent_findings[0].message
+
+single_review = "docs/superpowers/reviews/single-review.md"
+findings = critique_findings(
+    ["scripts/agent/example.sh", "tools/example.py"],
+    {single_review: "Scope: scripts/agent/\nVerdict: cleared\n"},
+)
+assert any(
+    finding.message == f"{single_review} does not cover changed areas: tools/"
+    for finding in findings
+)
+
+findings = critique_findings(
+    ["scripts/agent/example.sh", "tools/example.py"],
+    {single_review: "Scope: `scripts/agent/`; tools/, common/\nVerdict: cleared\n"},
+)
+assert not any(finding.check == "cross-agent-critique" for finding in findings)
+
+findings = critique_findings(
+    ["tools/example.py"],
+    {
+        single_review: (
+            "Scope: `tools/`\n"
+            "Verdict: quarantined-with-proof\n"
+            "Proof: fixture-evidence\n"
+        )
+    },
+)
+assert not any(finding.check == "cross-agent-critique" for finding in findings)
+
+findings = critique_findings(
+    ["app/example.py"],
+    {single_review: "Scope: docs/webapp/\nVerdict: cleared\n"},
+)
+assert any(
+    finding.message == f"{single_review} does not cover changed areas: app/"
+    for finding in findings
+)
+
+findings = critique_findings(
+    ["tools/example.py"],
+    {single_review: "Scope: not-tools/\nVerdict: cleared\n"},
+)
+assert any(
+    finding.message == f"{single_review} does not cover changed areas: tools/"
+    for finding in findings
+)
+
+findings = critique_findings(
+    ["scripts/agent/example.sh"],
+    {single_review: "Verdict: cleared\n"},
+)
+assert any("exactly one anchored Scope and Verdict" in finding.message for finding in findings)
+
+findings = critique_findings(
+    ["scripts/agent/example.sh"],
+    {single_review: "Scope: scripts/agent/\nVerdict: fix-required\n"},
+)
 assert any("fix-required blocks" in finding.message for finding in findings)
+
+findings = critique_findings(
+    ["scripts/agent/example.sh"],
+    {single_review: "Scope: scripts/agent/\nVerdict: quarantined-with-proof\n"},
+)
+assert any("without an anchored Proof line" in finding.message for finding in findings)
+module.ROOT = root
 PY
 
 set +e

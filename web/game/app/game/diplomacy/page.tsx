@@ -16,8 +16,8 @@ import type {
 } from '../../../lib/types';
 
 // 외교 빠른 명령 (quick-action) — verbatim Korean captions → P6-registered che_ command codes.
-// nation-target via the modal's SelectNationField (pinnedArgType 'nation'). All four confirmed in
-// CommandRegistry.kt: che_종전제의 / che_불가침제의 / che_불가침파기제의 / che_선전포고.
+// The non-aggression proposal resolves its required duration form from the command catalog; the other
+// actions retain their one-nation picker shortcut. All four are registered in CommandRegistry.kt.
 const DIPLO_QUICK_ACTIONS: { code: string; label: string }[] = [
     { code: 'che_종전제의', label: '종전 제의' },
     { code: 'che_불가침제의', label: '불가침 제의' },
@@ -401,8 +401,8 @@ export default function DiplomacyPage() {
                 </>
             )}
 
-            {/* 외교 명령 — CommandModal pinned to a che_ diplomacy code (nation-target SelectNationField).
-                The destination nation is picked in-modal; own nation excluded via nationId prop. */}
+            {/* 외교 명령 — CommandModal pinned to a che_ diplomacy code. The non-aggression proposal
+                resolves its server-owned compound form; the remaining actions pick one destination nation. */}
             {quickAction && generalId != null && (
                 <CommandModal
                     onClose={() => setQuickAction(null)}
@@ -412,6 +412,7 @@ export default function DiplomacyPage() {
                     pinnedCommand={quickAction.code}
                     pinnedLabel={quickAction.label}
                     pinnedArgType="nation"
+                    resolvePinnedFromCatalog={quickAction.code === 'che_불가침제의'}
                     onReserved={() => { refresh(); fetchData(); }}
                     isNationCommand
                 />

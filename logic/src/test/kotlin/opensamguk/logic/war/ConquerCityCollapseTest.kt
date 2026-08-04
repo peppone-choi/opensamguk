@@ -126,6 +126,27 @@ class ConquerCityCollapseTest {
             ),
             rng.trace,
         )
+        assertEquals(
+            listOf(ScoutInviteIntent(1, 5), ScoutInviteIntent(1, 9)),
+            res.scoutInvites,
+        )
+        assertEquals((0..6).toList(), res.turnSlotWrites.dropLast(1).map { it.turnIdx })
+        assertEquals(
+            GeneralTurnSlotIntent(5, 7, "che_임관", """{"destNationID":10}""", "임관"),
+            res.turnSlotWrites.last(),
+        )
+        assertTrue(res.destroyNationEvent)
+        assertEquals(
+            listOf(
+                ConquerLogScope.GENERAL,
+                ConquerLogScope.GENERAL,
+                ConquerLogScope.GLOBAL,
+                ConquerLogScope.GLOBAL,
+                ConquerLogScope.NATION,
+                ConquerLogScope.NATION,
+            ),
+            res.conquerLogs.take(6).map { it.scope },
+        )
     }
 
     @Test

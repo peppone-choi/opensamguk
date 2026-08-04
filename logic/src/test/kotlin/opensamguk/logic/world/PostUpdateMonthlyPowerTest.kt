@@ -225,6 +225,6 @@ class PostUpdateMonthlyPowerTest {
         val n = nation(1, gennum = 1, generals = listOf(general(1)),
             cityNames = listOf("성도", "강주", "재동"))
         val out = postUpdateMonthlyPower(listOf(n), emptyMap(), monthlyRng()).nations.single()
-        assertTrue(out.maxPowerKv.maxCities.containsAll(listOf("성도", "강주", "재동")))
+        assertTrue(out.maxPowerKv.maxCities.orEmpty().containsAll(listOf("성도", "강주", "재동")))
     }
 }

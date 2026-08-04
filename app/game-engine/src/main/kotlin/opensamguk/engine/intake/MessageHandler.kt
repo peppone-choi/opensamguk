@@ -43,7 +43,7 @@ class MessageHandler(
     private val nowProvider: () -> Instant = Instant::now,
 ) {
     // ── SendMessage.php::launch ──────────────────────────────────────────────────────────────────
-    fun handleSend(c: TurnDaemonCommand.SendMessage): TurnDaemonCommandResult {
+    fun handleSend(c: TurnDaemonCommand.SendMessage, sentAt: Instant): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return fail(c.generalId, "장수가 없습니다.")
 
@@ -79,7 +79,7 @@ class MessageHandler(
             if (penalty["no_send_public_msg"] == true || penalty["NoSendPublicMsg"] == true) {
                 return fail(c.generalId, "공개 메세지를 보낼 수 없습니다.")
             }
-            val msgId = sendPublic(src, c.text)
+            val msgId = sendPublic(src, c.text, sentAt)
             return ok(c.generalId, "public", msgId)
         }
 
@@ -89,7 +89,7 @@ class MessageHandler(
             val destNationId = if (permission < 4) me.nationId else mailbox - MAILBOX_NATIONAL
 
             if (destNationId == me.nationId) {
-                val msgId = sendNational(src, c.text)
+                val msgId = sendNational(src, c.text, sentAt)
                 return ok(c.generalId, "national", msgId)
             }
 
@@ -97,7 +97,7 @@ class MessageHandler(
             val destNation = nationTarget(destNationId)
                 ?: return fail(c.generalId, "존재하지 않는 국가입니다.")
             val dest = MsgTarget(0, "", destNationId, destNation.name, destNation.color)
-            val msgId = sendDiplomacy(src, dest, c.text)
+            val msgId = sendDiplomacy(src, dest, c.text, sentAt)
             return ok(c.generalId, "diplomacy", msgId)
         }
 
@@ -107,14 +107,12 @@ class MessageHandler(
             if (penalty["no_send_private_msg"] == true || penalty["NoSendPrivateMsg"] == true) {
                 return fail(c.generalId, "개인 메세지를 보낼 수 없습니다.")
             }
-            // PHP throttle: $msg_min_interval = $penalty[SendPrivateMsgDelay] ?? 2; if (interval < min) deny.
-            // session->lastMsg(직전 발송 시각)는 게이트웨이/세션 관심사 — 데몬 world엔 없다. meta["lastMsg"]에
-            // 실려 오면 평가하되, 부재 시 PHP `new DateTime('0000-00-00')`처럼 충분히 과거로 보아 통과(not-throttled).
             val msgMinInterval = (penalty["send_private_msg_delay"] as? Number)?.toInt()
                 ?: (penalty["SendPrivateMsgDelay"] as? Number)?.toInt() ?: 2
-            if (privateMsgInterval(me) < msgMinInterval) {
+            if (privateMsgInterval(me, sentAt) < msgMinInterval) {
                 return fail(c.generalId, "개인메세지는 ${msgMinInterval}초당 1건만 보낼 수 있습니다!")
             }
+            persistLastMsg(me, sentAt)
 
             // PHP genPrivateMessage: dest general 존재 → '존재하지 않는 유저입니다.'.
             val destGeneral = world.getGeneralById(mailbox)
@@ -137,7 +135,7 @@ class MessageHandler(
                 color = destNation.color,
                 icon = iconOf(destGeneral),
             )
-            val msgId = sendPrivate(src, dest, c.text)
+            val msgId = sendPrivate(src, dest, c.text, sentAt)
             return ok(c.generalId, "private", msgId)
         }
 
@@ -146,14 +144,14 @@ class MessageHandler(
     }
 
     // ── DeleteMessage.php::launch → Message::deleteMsg ───────────────────────────────────────────
-    fun handleDelete(c: TurnDaemonCommand.DeleteMessage): TurnDaemonCommandResult {
+    fun handleDelete(c: TurnDaemonCommand.DeleteMessage, sentAt: Instant): TurnDaemonCommandResult {
         // PHP Message::deleteMsg($msgID, $generalID).
         // 1) getMessageByID — 없으면 '메시지가 없습니다'. read seam(contactReader=메시지 reader)이 없으면
         //    데몬은 메시지 본문을 조회할 수 없다 → faithful 'no-op deny'(스텁). 실제 삭제 게이트/무효화는
         //    message reader 주입 시 활성(아래 deleteWith가 본문을 수행). reader 부재 = '메시지가 없습니다'.
         val snapshot = messageReader?.invoke(c.msgID)
             ?: return failDelete(c.generalId, c.msgID, "메시지가 없습니다")
-        return deleteWith(c, snapshot)
+        return deleteWith(c, snapshot, sentAt)
     }
 
     /**
@@ -161,8 +159,11 @@ class MessageHandler(
      * 게이트 순서를 충실히 재현한다. reader는 디스패처가 infra MessageRepository로 어댑트해 주입하며,
      * 테스트는 double을 먹인다(VoteHandler.votePollReader 패턴).
      */
-    private fun deleteWith(c: TurnDaemonCommand.DeleteMessage, msg: MessageSnapshot): TurnDaemonCommandResult {
-        val now = world.getState().lastTurnTime
+    private fun deleteWith(
+        c: TurnDaemonCommand.DeleteMessage,
+        msg: MessageSnapshot,
+        sentAt: Instant,
+    ): TurnDaemonCommandResult {
 
         // PHP: if ($msgObj->src->generalID != $generalID) '본인의 메시지만 삭제할 수 있습니다.'.
         if (msg.srcGeneralId != c.generalId) {
@@ -174,7 +175,7 @@ class MessageHandler(
             return failDelete(c.generalId, c.msgID, "시스템 외교 메시지는 삭제할 수 없습니다.")
         }
         // PHP: $prev5min = now - 5min; if ($msgObj->date < $prev5min) '5분 이내의 메시지만 삭제할 수 있습니다.'.
-        if (msg.time.isBefore(now.minusSeconds(5 * 60))) {
+        if (msg.time.isBefore(sentAt.minusSeconds(5 * 60))) {
             return failDelete(c.generalId, c.msgID, "5분 이내의 메시지만 삭제할 수 있습니다.")
         }
         // PHP: if (!($msgObj->msgOption['deletable'] ?? true)) '삭제할 수 없는 메시지입니다.'.
@@ -182,13 +183,7 @@ class MessageHandler(
             return failDelete(c.generalId, c.msgID, "삭제할 수 없는 메시지입니다.")
         }
 
-        // PHP invalidate(null, false): 본문 text='삭제된 메시지입니다.', option['invalid']=true,
-        //  receiverMessageID 있으면 option['originalText']=원문, valid_until 불변(hideMsg=false).
-        // (삭제된 메시지입니다. 는 런타임 본문 텍스트 — 골든 로그 아님, Q-A3 RESOLVED.)
-        recorder.recordMessageInvalidate(c.msgID, formatPhpDate(msg.validUntil), invalidatedBody(msg))
-
-        // PHP: private/national이고 option['receiverMessageID'] 있으면 수신측 사본도 invalidate.
-        if ((msg.type == "private" || msg.type == "national") && msg.receiverMessageId != null) {
+        val invalidatedReceiverId = if ((msg.type == "private" || msg.type == "national") && msg.receiverMessageId != null) {
             val recv = messageReader?.invoke(msg.receiverMessageId)
             if (recv != null) {
                 recorder.recordMessageInvalidate(
@@ -196,15 +191,16 @@ class MessageHandler(
                     formatPhpDate(recv.validUntil),
                     invalidatedBody(recv),
                 )
+                recv.id
+            } else {
+                null
             }
+        } else {
+            null
         }
 
-        // PHP: req_del_msg 시스템 마커 메시지 INSERT — option['overwrite']=[원본 id (+수신 id)], valid_until=now+1min.
-        // 본문 텍스트 "req_del_msg"(편집자 전용 마커, 표시 X). sendToReceiver만(send(false)? 실제는 send()로
-        //  receiver/sender 둘 다이나, 마커는 receiver 메일함 1행으로 충분 — PHP send()는 양측이지만 마커 sender
-        //  사본은 표시되지 않으므로 receiver 1행만 기록한다). 라우팅은 원본 msgType 그대로.
-        // → faithful: 마커 INSERT는 영속 효과 미관측(편집자 전용) + 골든 미캡처 → 발명 금지. receiver 1행만 기록.
-        recordMarker(msg, now)
+        recorder.recordMessageInvalidate(c.msgID, formatPhpDate(msg.validUntil), invalidatedBody(msg))
+        recordMarker(msg, sentAt, invalidatedReceiverId)
 
         return DeleteMessageResult(ok = true, generalId = c.generalId, msgID = c.msgID)
     }
@@ -212,25 +208,25 @@ class MessageHandler(
     // ── send 분기 (Message::send + sendToReceiver/sendToSender + sendRaw) ─────────────────────────
 
     /** 전체(public): receiver 행만(sendToSender=[0,0], R4). sendRaw mailbox=MAILBOX_PUBLIC. */
-    private fun sendPublic(src: MsgTarget, text: String): Int {
-        // public: src→public, dest=src (PHP genPublicMessage: dest=src). toArray는 dest=null.
+    private fun sendPublic(src: MsgTarget, text: String, sentAt: Instant): Int {
         val receiverId = recordMessageRow(
             mailbox = MAILBOX_PUBLIC,
             type = "public",
             srcId = src.generalId,
             destId = MAILBOX_PUBLIC,
             src = src,
-            dest = null,
+            dest = src,
             text = text,
             option = linkedMapOf<String, Any?>(),
             receiverMessageId = null,
+            sentAt = sentAt,
         )
         // public은 sender 사본 없음 (sendToSender returns [0,0]) — R4.
         return receiverId
     }
 
     /** 국가(national, 자국): receiver(dest 국가 메일함) + sender(자국 메일함, 동일 mailbox이므로 src!=dest일 때만). */
-    private fun sendNational(src: MsgTarget, text: String): Int {
+    private fun sendNational(src: MsgTarget, text: String, sentAt: Instant): Int {
         // genNationalMessage: dest = MessageTarget(0,'', src.nationID, …) — 즉 dest.nationID == src.nationID.
         val dest = MsgTarget(0, "", src.nationId, src.nationName, src.color)
         // sendToReceiver(national): sendRaw(dest.nationID + 9000). newmsg 없음(national은 알림 미발생).
@@ -244,6 +240,7 @@ class MessageHandler(
             text = text,
             option = linkedMapOf<String, Any?>(),
             receiverMessageId = null,
+            sentAt = sentAt,
         )
         // sendToSender(national): src.nationID !== dest.nationID 일 때만 sender 사본. 자국 national은 같은
         // 국가이므로 sendToSender가 [0,0] (src.nationID === dest.nationID) → sender 사본 없음.
@@ -252,7 +249,7 @@ class MessageHandler(
     }
 
     /** 외교(diplomacy, 타국): receiver(상대국 메일함) + sender(자국 메일함, option['action'] 제거). */
-    private fun sendDiplomacy(src: MsgTarget, dest: MsgTarget, text: String): Int {
+    private fun sendDiplomacy(src: MsgTarget, dest: MsgTarget, text: String, sentAt: Instant): Int {
         // sendToReceiver(diplomacy): newmsg=1 (상대국 수뇌/외교관). sendRaw(dest.nationID + 9000).
         // option은 빈 맵(genDiplomacyMessage는 []로 생성 — action 키 없음).
         val receiverId = recordMessageRow(
@@ -265,6 +262,7 @@ class MessageHandler(
             text = text,
             option = linkedMapOf<String, Any?>(),
             receiverMessageId = null,
+            sentAt = sentAt,
         )
         // diplomacy 수신 알림: 상대국 수뇌(officer_level==12)/외교관에게 newmsg=1.
         markNationNewMsg(dest.nationId)
@@ -281,12 +279,13 @@ class MessageHandler(
             text = text,
             option = linkedMapOf<String, Any?>(),
             receiverMessageId = receiverId,
+            sentAt = sentAt,
         )
         return receiverId
     }
 
     /** 개인(private): receiver(상대 메일함, newmsg=1) + sender(자기 메일함). */
-    private fun sendPrivate(src: MsgTarget, dest: MsgTarget, text: String): Int {
+    private fun sendPrivate(src: MsgTarget, dest: MsgTarget, text: String, sentAt: Instant): Int {
         // sendToReceiver(private): silence 아니면 dest.generalID newmsg=1. sendRaw(dest.generalID).
         markGeneralNewMsg(dest.generalId)
         val receiverId = recordMessageRow(
@@ -299,6 +298,7 @@ class MessageHandler(
             text = text,
             option = linkedMapOf<String, Any?>(),
             receiverMessageId = null,
+            sentAt = sentAt,
         )
         // sendToSender(private): src.generalID !== dest.generalID 일 때만 sender 사본(자기 메일함).
         if (src.generalId != dest.generalId) {
@@ -312,6 +312,7 @@ class MessageHandler(
                 text = text,
                 option = linkedMapOf<String, Any?>(),
                 receiverMessageId = receiverId,
+                sentAt = sentAt,
             )
         }
         return receiverId
@@ -333,6 +334,7 @@ class MessageHandler(
         text: String,
         option: LinkedHashMap<String, Any?>,
         receiverMessageId: Int?,
+        sentAt: Instant,
     ): Int {
         // PHP send():449 — receiver 행도 option['receiverMessageID'] = 자기 id로 채운다(back-reference).
         // 그래서 id를 먼저 할당(recordMessageInsert가 채널에 append하며 id 반환)할 수 없다 — body가 id를
@@ -365,49 +367,79 @@ class MessageHandler(
             type = type,
             srcId = srcId,
             destId = destId,
-            time = formatPhpDate(world.getState().lastTurnTime),
+            time = formatPhpDate(sentAt),
             validUntil = VALID_UNTIL_SENTINEL,
             bodyJson = body,
         )
     }
 
-    /** req_del_msg 시스템 마커 INSERT (deleteMsg). receiver 메일함 1행, valid_until=now+1min. */
-    private fun recordMarker(msg: MessageSnapshot, now: Instant) {
+    private fun recordMarker(msg: MessageSnapshot, sentAt: Instant, invalidatedReceiverId: Int?) {
         val overwrite = mutableListOf<Any?>(msg.id)
-        if ((msg.type == "private" || msg.type == "national") && msg.receiverMessageId != null) {
-            // PHP: $msgOption['overwrite'][] = [$msgObj2->id]; (중첩 배열 — PHP 버그성 형태 그대로).
-            overwrite.add(listOf(msg.receiverMessageId))
+        invalidatedReceiverId?.let { overwrite.add(listOf(it)) }
+        val option = linkedMapOf<String, Any?>(
+            "hide" to true,
+            "silence" to true,
+            "overwrite" to overwrite,
+        )
+        val receiverId = recordMarkerRow(
+            msg = msg,
+            mailbox = markerReceiverMailbox(msg),
+            sentAt = sentAt,
+            option = option,
+        )
+        markerSenderMailbox(msg)?.let { senderMailbox ->
+            val senderOption = LinkedHashMap(option)
+            senderOption["receiverMessageID"] = receiverId
+            recordMarkerRow(
+                msg = msg,
+                mailbox = senderMailbox,
+                sentAt = sentAt,
+                option = senderOption,
+            )
         }
-        val markerMailbox = when {
-            msg.type == "public" -> MAILBOX_PUBLIC
-            msg.type == "national" || msg.type == "diplomacy" -> msg.destNationId + MAILBOX_NATIONAL
-            else -> msg.destGeneralId
-        }
+    }
+
+    private fun recordMarkerRow(
+        msg: MessageSnapshot,
+        mailbox: Int,
+        sentAt: Instant,
+        option: LinkedHashMap<String, Any?>,
+    ): Int {
         val body = jsonEncode(
             linkedMapOf(
                 "src" to msg.srcArray,
                 "dest" to msg.destArray,
                 "text" to "req_del_msg",
-                "option" to linkedMapOf<String, Any?>(
-                    "hide" to true,
-                    "silence" to true,
-                    "overwrite" to overwrite,
-                ),
+                "option" to option,
             ),
         )
-        recorder.recordMessageInsert(
-            mailbox = markerMailbox,
+        return recorder.recordMessageInsert(
+            mailbox = mailbox,
             type = msg.type,
-            srcId = if (msg.type == "private") msg.srcGeneralId else msg.srcNationId + MAILBOX_NATIONAL,
-            destId = when {
-                msg.type == "public" -> MAILBOX_PUBLIC
-                msg.type == "private" -> msg.destGeneralId
-                else -> msg.destNationId + MAILBOX_NATIONAL
-            },
-            time = formatPhpDate(now),
-            validUntil = formatPhpDate(now.plusSeconds(60)),
+            srcId = markerSourceId(msg),
+            destId = markerReceiverMailbox(msg),
+            time = formatPhpDate(sentAt),
+            validUntil = formatPhpDate(sentAt.plusSeconds(60)),
             bodyJson = body,
         )
+    }
+
+    private fun markerSourceId(msg: MessageSnapshot): Int = when (msg.type) {
+        "public", "private" -> msg.srcGeneralId
+        else -> msg.srcNationId + MAILBOX_NATIONAL
+    }
+
+    private fun markerReceiverMailbox(msg: MessageSnapshot): Int = when (msg.type) {
+        "public" -> MAILBOX_PUBLIC
+        "private" -> msg.destGeneralId
+        else -> msg.destNationId + MAILBOX_NATIONAL
+    }
+
+    private fun markerSenderMailbox(msg: MessageSnapshot): Int? = when (msg.type) {
+        "private" -> msg.srcGeneralId.takeIf { it != msg.destGeneralId }
+        "national" -> (msg.srcNationId + MAILBOX_NATIONAL).takeIf { msg.srcNationId != msg.destNationId }
+        "diplomacy" -> msg.srcNationId + MAILBOX_NATIONAL
+        else -> null
     }
 
     /** PHP invalidate(null, false): text='삭제된 메시지입니다.', option['invalid']=true, originalText=원문. */
@@ -477,11 +509,18 @@ class MessageHandler(
         }
     }
 
-    /** PHP $msg_interval = now - session->lastMsg. lastMsg가 meta에 없으면 충분히 과거(통과). */
-    private fun privateMsgInterval(g: TurnGeneral): Int {
+    private fun privateMsgInterval(g: TurnGeneral, sentAt: Instant): Int {
         val lastMs = (g.meta["lastMsg"] as? Number)?.toLong() ?: return Int.MAX_VALUE
-        val now = world.getState().lastTurnTime.epochSecond
-        return (now - lastMs).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+        return (sentAt.epochSecond - lastMs).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    private fun persistLastMsg(g: TurnGeneral, sentAt: Instant) {
+        val pre = PerTurnOverlay.toLogicGeneral(g)
+        val nextMeta = LinkedHashMap(g.meta)
+        nextMeta["lastMsg"] = sentAt.epochSecond
+        val next = g.copy(meta = nextMeta)
+        world.applyGeneralDirtyFree(next)
+        recorder.diffGeneral(pre, PerTurnOverlay.toLogicGeneral(next))
     }
 
     /** GetImageURL(imgsvr, picture) 대응 — meta에 picture/imageServer가 실려 오면 합성, 부재 시 빈 문자열. */

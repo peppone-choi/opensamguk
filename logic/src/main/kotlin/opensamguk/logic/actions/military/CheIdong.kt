@@ -10,6 +10,9 @@ import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.CalcCityDistance
 
@@ -67,14 +70,23 @@ class CheIdong(
         }
 
         val reqGold = getCostGold(env)
-        d.general = g0.copy(
+        var g = g0.copy(
             cityId = destCityId,                                 // setVar('city', destCityID)
             gold = maxOf(0, g0.gold - reqGold),                  // increaseVarWithLimit('gold', -reqGold, 0)
             atmos = ivwlAtmos(g0.atmos - 5.0),                   // increaseVarWithLimit('atmos', -5, 20) → floor 20
-            experience = g0.experience + 50.0,
-            meta = withMeta(g0.meta, "leadership_exp" to metaDouble(g0.meta, "leadership_exp") + 1),
+        )
+        val expRes = addExperience(g, 50.0, pipeline)
+        g = expRes.general
+        expRes.plainLog?.let { context.addPlainLog(it) }
+        g = g.copy(
+            meta = withMeta(g.meta, "leadership_exp" to metaDouble(g.meta, "leadership_exp") + 1.0),
             lastTurn = LastTurn(name, arg = linkedMapOf<String, Any?>("destCityID" to destCityId)),
         )
+        val statRes = checkStatChange(g)
+        g = statRes.general
+        statRes.plainLogs.forEach { context.addPlainLog(it) }
+        d.general = g
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
     }
 
     /** increaseVarWithLimit('atmos', -5, min 20): clamp lower-bound 20 (no upper). */

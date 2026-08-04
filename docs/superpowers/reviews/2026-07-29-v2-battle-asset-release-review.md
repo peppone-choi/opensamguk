@@ -1,0 +1,28 @@
+# V2 전투 에셋 릴리스 리뷰
+
+Scope: assets/battle/v2/, tools/assets/, docs/superpowers/plans/2026-07-28-v2-2_5d-tactical-battle-and-sprite-design.md, docs/superpowers/plans/2026-07-29-v2-expanded-recruitable-unit-catalog.md, docs/superpowers/plans/2026-07-29-v2-unit-roster-revision-proposal.md, docs/superpowers/reviews/2026-07-29-v2-battle-asset-release-review.md
+
+## 판정
+
+Verdict: cleared
+
+이 리뷰는 V2 2D/2.5D 전투 설계, 105개 병종 원본·정적 런타임 스프라이트, 32개 지형 후보, 16개 전투 이펙트의 후보 릴리스 계약을 독립적으로 재검증했다. 현재 범위는 렌더러나 전투 시뮬레이션 통합이 아닌 추적 가능한 표현 에셋 후보다.
+
+## 검증 증거
+
+- `build/`가 없는 후보 전용 임시 트리에서 병종 원본 105개를 공급자 비활성 상태로 검증했다. 추적 원장은 24개 생성 출처와 81개 v1 이전 출처의 카탈로그 행, 프롬프트, 요청, 생성 이력, 원본 PNG를 결합하며, 두 일반 실행의 결과가 바이트 동일했다.
+- 병종 원본과 런타임 매니페스트는 모두 `simulationAuthority: false`를 선언한다. 105개 레코드의 원본 정체성과 64px 실루엣 QA가 전부 `PASS`이고 QA subject 바인딩도 일치한다.
+- 문서에 기록된 이펙트 전체 명령을 깨끗한 임시 트리에서 실행했다. 물리 12상태·68프레임과 화염 4상태·26프레임 모두 실제 발행 경로와 독립 사전 검사에서 `components` 추출을 사용했고 슬롯 폴백은 비활성화됐다.
+- 이펙트 추적 영수증은 컴파일러와 `sprite-gen` 도구, 원본, 스타일 앵커, 프레임 증거, 최종 아틀라스 해시를 결합한다. 아틀라스·영수증·매니페스트는 반복 발행에서 바이트 동일했다.
+- 지형 32개는 전부 `tileable: false`, `NOT_COMPOSABLE`, `rendererReady: false`다. 투명 외곽선의 단순 일치는 반복 배치 가능성으로 취급하지 않는다.
+- 전체 279개 에셋 파일의 참조 경로, 해시, 바이트 수, 크기를 확인했다. 타임스탬프 필드와 임시·빌드 경로 참조는 없다.
+- README는 지형의 최초 생성 출처를 알 수 없는 `adopted-existing`으로 기록하고, built-in imagegen은 향후 승인된 재생성 경로로만 설명한다.
+- CodeGraph 검색에서 `assets/battle/v2`를 소비하는 추적 런타임 코드는 발견되지 않았다.
+
+## 유지되는 후보 제한
+
+- 병종 런타임 스프라이트는 idle 단일 프레임 후보다. 방향·이동·공격·피격·사망 애니메이션은 포함하지 않는다.
+- 지형은 비조합형 미리보기 후보이며 연결 소켓, 전이, 충돌, 이동 비용, 엄폐, 시야 판정의 정본이 아니다.
+- 이펙트는 시각 전용이며 피해나 사기 등 전투 결과를 결정하지 않는다.
+- 렌더러 및 게임플레이 통합은 이번 릴리스에 포함하지 않는다.
+- 세 설계 문서의 상태는 계속 `PROPOSED`다.

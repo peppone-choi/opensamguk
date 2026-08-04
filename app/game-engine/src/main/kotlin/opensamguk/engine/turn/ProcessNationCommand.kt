@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.constants.CityConst
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.NoRng
 import opensamguk.common.rng.RandUtil
@@ -11,6 +12,7 @@ import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.RestAction
 import opensamguk.logic.actions.addTermStack
 import opensamguk.logic.actions.onTermStackSuccess
+import opensamguk.logic.actions.nation.CheCheondo
 import opensamguk.logic.actions.nation.InstantNationCommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolveContext
 import opensamguk.logic.actions.nation.NationActionResolver
@@ -23,8 +25,11 @@ import opensamguk.logic.constraints.ConstraintResult
 import opensamguk.logic.constraints.evaluateConstraints
 import opensamguk.logic.diplomacy.DiplomacyCascadeTerm
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.statview.WorldEnvBuilder
+import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.world.CalcCityDistance
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicCity
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicGeneral
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicNation
@@ -77,6 +82,7 @@ class ProcessNationCommand(
         val rawArgs: LinkedHashMap<String, Any?>,
         val normalizedArgs: LinkedHashMap<String, Any?>,
         val command: ChosenCommand,
+        val cityDistance: Int?,
     )
 
     /**
@@ -110,6 +116,7 @@ class ProcessNationCommand(
             return resultTurn
         }
 
+        var completedTermStack = false
         if (prepared.definition != null && prepared.definition !== RestAction) {
             val result = evaluateFullConstraints(prepared, year, month)
             if (result !is ConstraintResult.Allow) {
@@ -124,13 +131,28 @@ class ProcessNationCommand(
                 return finish(lastTurn)
             }
 
+            if (prepared.definition is CheCheondo) {
+                recorder.recordNationEnvKv(
+                    nationId,
+                    LAST_CHEONDO_TRIAL_KEY,
+                    listOf(officerLevel, general.turnTime.toString()),
+                )
+            }
+
             val nationDefinition = prepared.definition as? opensamguk.logic.actions.nation.NationCommand
             if (nationDefinition != null) {
+                val preReqTurn = when (nationDefinition) {
+                    is CheCheondo -> nationDefinition.getPreReqTurnForDistance(
+                        prepared.cityDistance ?: CHEONDO_FALLBACK_DISTANCE,
+                    )
+                    else -> nationDefinition.getPreReqTurn()
+                }
+                completedTermStack = preReqTurn > 0
                 val stack = addTermStack(
                     lastTurn = lastTurn,
                     command = nationDefinition.name,
                     arg = prepared.normalizedArgs,
-                    preReqTurn = nationDefinition.getPreReqTurn(),
+                    preReqTurn = preReqTurn,
                     capset = (world.getNationById(nationId)?.meta?.get("capset") as? Number)?.toInt() ?: 0,
                 )
                 if (!stack.ready) {
@@ -139,7 +161,7 @@ class ProcessNationCommand(
                             general,
                             "action",
                             "general",
-                            "${nationDefinition.name} 수행중... (${stack.resultTurn.term ?: 0}/${nationDefinition.getPreReqTurn() + 1}) <1>$date</>",
+                            "${nationDefinition.name} 수행중... (${stack.resultTurn.term ?: 0}/${preReqTurn + 1}) <1>$date</>",
                         ),
                     )
                     return finish(stack.resultTurn)
@@ -159,8 +181,8 @@ class ProcessNationCommand(
 
         val resultTurn = dispatchCommand(prepared, rng, officerLevel, lastTurn, year, month, date)
 
-        val completedTurn = if (prepared.definition is opensamguk.logic.actions.nation.NationCommand) {
-            onTermStackSuccess(prepared.definition.name, prepared.normalizedArgs)
+        val completedTurn = if (completedTermStack) {
+            onTermStackSuccess(checkNotNull(prepared.definition).name, prepared.normalizedArgs)
         } else {
             resultTurn
         }
@@ -208,6 +230,11 @@ class ProcessNationCommand(
         val definition = runtimeRegistry?.resolve(nationCommand.actionCode)
         val normalizedArgs = definition?.let { normalizeArgs(it, nationCommand.args) }
             ?: LinkedHashMap(nationCommand.args)
+        val cityDistance = if (nationCommand.actionCode == CHEONDO_COMMAND_CODE) {
+            cheondoDistance(general.nationId, normalizedArgs)
+        } else {
+            null
+        }
         return PreparedCommand(
             general = general,
             runtimeRegistry = runtimeRegistry,
@@ -215,7 +242,19 @@ class ProcessNationCommand(
             rawArgs = LinkedHashMap(nationCommand.args),
             normalizedArgs = normalizedArgs,
             command = nationCommand.copy(args = normalizedArgs),
+            cityDistance = cityDistance,
         )
+    }
+
+    private fun cheondoDistance(nationId: Int, args: Map<String, Any?>): Int {
+        val capitalCityId = world.getNationById(nationId)?.capitalCityId ?: return CHEONDO_FALLBACK_DISTANCE
+        val destCityId = ReservedTurnHandler.intArg(args, "destCityID") ?: return CHEONDO_FALLBACK_DISTANCE
+        val ownedCityIds = world.listCities().asSequence()
+            .filter { it.nationId == nationId }
+            .mapTo(LinkedHashSet()) { it.id }
+        val blockedCityIds = CityConst.all().keys.filterTo(HashSet()) { it !in ownedCityIds }
+        return CalcCityDistance.calcCityDistance(capitalCityId, destCityId, blockedCityIds)
+            ?: CHEONDO_FALLBACK_DISTANCE
     }
 
     private fun hasValidInstantArgs(prepared: PreparedCommand): Boolean {
@@ -302,7 +341,7 @@ class ProcessNationCommand(
         val general = prepared.general
         val args = prepared.normalizedArgs
         val nationId = general.nationId
-        val env = nationConstraintEnv(year, month, nationId, prepared.command.actionCode, args)
+        val env = nationConstraintEnv(year, month, nationId, prepared.command.actionCode, args, prepared.cityDistance)
         val destGeneralId = ReservedTurnHandler.intArg(args, "destGeneralID")
         val destCityId = ReservedTurnHandler.intArg(args, "destCityID")
         val destNationId = ReservedTurnHandler.intArg(args, "destNationID")
@@ -357,6 +396,7 @@ class ProcessNationCommand(
                 year,
                 month,
                 date,
+                prepared.cityDistance,
             )
             else -> nationCommandResolver.resolve(rng, prepared.command, lastTurn)
         }
@@ -376,6 +416,7 @@ class ProcessNationCommand(
         nationId: Int,
         actionCode: String,
         args: Map<String, Any?>,
+        cityDistance: Int?,
     ): Map<String, Any?> {
         val phase = world.getState().currentPhase.coerceIn(1, opensamguk.common.constants.GameConst.phasesPerMonth)
         val base = WorldEnvBuilder.commandEnvMap(year, startYear, month, phase)
@@ -385,6 +426,9 @@ class ProcessNationCommand(
         return LinkedHashMap(base).apply {
             put("__disallowDiplomacyHit", blockedState != null)
             put("__disallowDiplomacyHitState", blockedState)
+            if (actionCode == CHEONDO_COMMAND_CODE) {
+                put("__distance", cityDistance ?: CHEONDO_FALLBACK_DISTANCE)
+            }
             if (actionCode == "che_선전포고") {
                 val destNationId = (args["destNationID"] as? Number)?.toInt()
                 val cityRows = world.listCities().sortedBy { it.id }.map { toLogicCity(it) }
@@ -410,10 +454,11 @@ class ProcessNationCommand(
         year: Int,
         month: Int,
         date: String,
+        cityDistance: Int?,
     ): LastTurn {
         val definition = registry.resolve(nationCommand.actionCode)
         if (definition === RestAction || definition.key == "휴식") {
-            return nationCommandResolver.resolve(rng, nationCommand, lastTurn)
+            return LastTurn()
         }
 
         val nationId = general.nationId
@@ -440,7 +485,6 @@ class ProcessNationCommand(
 
         val candidateGenerals = stageCandidateGenerals(nationCommand.actionCode, general, resolveArgs)
         val candidateCityIds = stageCandidateCityIds(nationCommand.actionCode)
-
         val ctx = GeneralActionResolveContext(
             draft = draft,
             rng = rng,
@@ -452,7 +496,11 @@ class ProcessNationCommand(
             candidateCityIds = candidateCityIds,
             generalName = general.name,
             destGeneralName = destName,
+            destDifferentTurnBucket = draft.destGeneral?.turnTime?.let { destTurnTime ->
+                ServerClock.cutTurn(general.turnTime, turnTerm) != ServerClock.cutTurn(destTurnTime, turnTerm)
+            } ?: false,
             turnterm = turnTerm,
+            cityDistance = cityDistance,
         )
         definition.resolve(ctx)
 
@@ -517,20 +565,24 @@ class ProcessNationCommand(
             recorder.recordRankIncrease(rankIncrement.generalId, column, rankIncrement.value)
         }
 
-        for (line in ctx.logs()) world.pushLog(nationLog(general, "action", "general", line))
-        for (line in ctx.plainLogs()) world.pushLog(nationLog(general, "action", "general", line))
-        for (line in ctx.globalActionLogs()) world.pushLog(nationLog(general, "action", "global", line))
-        for (gid in ctx.targetLogIds()) {
-            for (line in ctx.logsTo(gid)) {
-                world.pushLog(
-                    LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
-                )
-            }
-            for (line in ctx.plainLogsTo(gid)) {
-                world.pushLog(
-                    LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
-                )
-            }
+        val cheondoSucceeded =
+            definition is CheCheondo &&
+            preNation != null &&
+            draft.nation?.capitalCityId != preNation.capitalCityId
+        if (cheondoSucceeded) {
+            recordCheondoInheritance(general)
+        }
+        for (event in ctx.orderedLogEvents().sortedBy(::phpActionLoggerFlushRank)) {
+            world.pushLog(nationLogEvent(general, event))
+        }
+        if (cheondoSucceeded) {
+            StaticEventHandler.handleEvent(
+                draft.general,
+                draft.destGeneral,
+                CHEONDO_COMMAND_CODE,
+                WorldEnvBuilder.envMap(ctx.env.year, ctx.env.startYear, ctx.month),
+                ctx.args,
+            )
         }
         for (message in ctx.messages()) routeMessage(message, year, month)
 
@@ -705,15 +757,14 @@ class ProcessNationCommand(
             recorder.diffDiplomacy(pre, post)
         }
 
-        // --- the ActionLogger scopes → world.pushLog ---
-        for (line in ctx.actionLogs()) world.pushLog(nationLog(general, "action", "general", line))
         for (line in ctx.generalHistoryLogs()) world.pushLog(nationLog(general, "history", "general", line))
+        for (line in ctx.actionLogs()) world.pushLog(nationLog(general, "action", "general", line))
         for (line in ctx.nationalHistoryLogs()) world.pushLog(nationLog(general, "history", "nation", line))
         for (line in ctx.destNationalHistoryLogs()) {
             world.pushLog(LogEntryDraft(scope = "nation", category = "history", text = line, nationId = destNationId))
         }
-        for (line in ctx.globalActionLogs()) world.pushLog(nationLog(general, "action", "global", line))
         for (line in ctx.globalHistoryLogs()) world.pushLog(nationLog(general, "history", "global", line))
+        for (line in ctx.globalActionLogs()) world.pushLog(nationLog(general, "action", "global", line))
 
         // --- buffered KV writes → recorder.recordKv ---
         for (kv in ctx.kvWrites()) recorder.recordKv(kv.table, kv.namespace, kv.key, kv.value)
@@ -724,6 +775,15 @@ class ProcessNationCommand(
         return ctx.resultTurn
     }
 
+    private fun phpActionLoggerFlushRank(event: GeneralActionResolveContext.BufferedLog): Int = when {
+        event.scope == "general" && event.category == "history" -> 0
+        event.scope == "general" && event.category == "action" -> 1
+        event.scope == "nation" && event.category == "history" -> 4
+        event.scope == "global" && event.category == "history" -> 5
+        event.scope == "global" && event.category == "action" -> 6
+        else -> 7
+    }
+
     /** Map a LogEntryDraft for a nation-command log scope. */
     private fun nationLog(general: TurnGeneral, category: String, scope: String, text: String): LogEntryDraft =
         when (scope) {
@@ -731,6 +791,39 @@ class ProcessNationCommand(
             "nation" -> LogEntryDraft(scope = "nation", category = category, text = text, nationId = general.nationId)
             else -> LogEntryDraft(scope = "global", category = category, text = text, generalId = general.id, nationId = general.nationId)
         }
+
+    private fun nationLogEvent(
+        actor: TurnGeneral,
+        event: GeneralActionResolveContext.BufferedLog,
+    ): LogEntryDraft {
+        val targetGeneralId = event.targetGeneralId
+        val targetId = targetGeneralId ?: actor.id
+        val targetNationId =
+            if (targetGeneralId == null) actor.nationId
+            else world.getGeneralById(targetGeneralId)?.nationId
+        return when (event.scope) {
+            "global" -> LogEntryDraft(
+                scope = "global",
+                category = event.category,
+                text = event.text,
+                generalId = actor.id,
+                nationId = actor.nationId,
+            )
+            "nation" -> LogEntryDraft(
+                scope = "nation",
+                category = event.category,
+                text = event.text,
+                nationId = actor.nationId,
+            )
+            else -> LogEntryDraft(
+                scope = "general",
+                category = event.category,
+                text = event.text,
+                generalId = targetId,
+                nationId = targetNationId,
+            )
+        }
+    }
 
     /**
      * Route a logic [opensamguk.logic.message.Message] through the mailbox channel: produce its send
@@ -780,17 +873,15 @@ class ProcessNationCommand(
         return opensamguk.infra.persistence.MetaJson.encode(body)
     }
 
-    /**
-     * Apply a logic Nation's mutated scalar/meta fields back onto the engine Nation row. (The engine
-     * Nation row carries name/color/gold/rice/level/typeCode/meta; `tech` rides meta in the engine
-     * slice, so it is not a separate engine column here.)
-     */
     private fun applyLogicToNation(engine: Nation, logic: opensamguk.logic.domain.Nation): Nation =
         engine.copy(
             name = logic.name,
             color = logic.color,
+            capitalCityId = logic.capitalCityId,
             gold = logic.gold,
             rice = logic.rice,
+            power = logic.power,
+            tech = logic.tech,
             level = logic.level,
             typeCode = logic.typeCode,
             meta = logic.meta,
@@ -887,10 +978,20 @@ class ProcessNationCommand(
         world.applyNationDirtyFree(nation.copy(meta = nextMeta))
     }
 
+    private fun recordCheondoInheritance(general: TurnGeneral) {
+        val owner = general.userId?.toIntOrNull() ?: return
+        if (owner <= 0 || general.npcState >= 2) return
+        if (((world.getState().meta["isunited"] as? Number)?.toInt() ?: 0) != 0) return
+        recorder.recordInheritancePointIncrease(owner, "active_action", 1.0, null)
+    }
+
     companion object {
         private val TURN_TIME_FMT: DateTimeFormatter =
             DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneOffset.UTC)
         private const val NO_AGGRESSION_ACCEPT = "che_불가침수락"
+        private const val CHEONDO_COMMAND_CODE = "che_천도"
+        private const val CHEONDO_FALLBACK_DISTANCE = 50
+        private const val LAST_CHEONDO_TRIAL_KEY = "last천도Trial"
         private const val DEST_NATION_VALUE_CONSTRAINT = "ReqDestNationValue"
         private const val EXISTS_DEST_NATION_CONSTRAINT = "ExistsDestNation"
         private const val EXISTS_DEST_GENERAL_CONSTRAINT = "ExistsDestGeneral"

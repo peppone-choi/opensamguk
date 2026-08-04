@@ -169,7 +169,7 @@ class VoteFlushIT {
 
     @Test
     fun `VotePollRepository findPollState reads cast-guard fields and already-voted EXISTS`() {
-        val repo = VotePollRepository(jdbc)
+        val repo = VotePollRepository(jdbc, opensamguk.common.world.WorldId(1))
         val now = Instant.parse("2026-06-03T06:00:00Z")
 
         // 진행 중인 설문 — end_at은 now 이후(미만료). general 30은 미투표, general 31은 투표 완료로 셋업.

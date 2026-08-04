@@ -100,7 +100,7 @@ class GeneralAI(
     private val chooseRiceBillRate: () -> Unit = {},
     private val hasFullConditionMet: (reserved: ChosenCommand) -> Boolean = { true },
     private val getFailString: (reserved: ChosenCommand) -> String = { "" },
-    private val buildNeutralNationCommand: () -> ChosenCommand = { ChosenCommand("che_휴식", emptyMap()) },
+    private val buildNeutralNationCommand: () -> ChosenCommand = { ChosenCommand("휴식", emptyMap()) },
     private val nationGeneralId: Int = 0,
     private val useAutoNationTurn: Boolean = true,
     private val nationTurnTimeHm: String = "",

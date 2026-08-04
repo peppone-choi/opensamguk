@@ -71,16 +71,16 @@ class ProcessIncomeTest {
 
     @Test
     fun `gold income only uses getGoldIncome (no wall) and rice sums rice plus wall`() {
-        val n = nation(id = 1, generals = emptyList())
+        val n = nation(id = 1, taxRate = 20.01, generals = emptyList())
         val goldExpected = opensamguk.logic.domestic.getGoldIncome(n.cities, n.capitalId, n.level, n.taxRate, n.nationType, pipeline)
         val riceExpected = opensamguk.logic.domestic.getRiceIncome(n.cities, n.capitalId, n.level, n.taxRate, n.nationType, pipeline) +
             opensamguk.logic.domestic.getWallIncome(n.cities, n.capitalId, n.level, n.taxRate, n.nationType, pipeline)
 
         val gResult = processIncome("gold", listOf(n), pipeline, year = 200, month = 1)
-        assertEquals(opensamguk.logic.util.phpRound(goldExpected), gResult.prevIncome[1])
+        assertEquals(goldExpected, gResult.prevIncome[1]!!.toDouble())
 
         val rResult = processIncome("rice", listOf(n), pipeline, year = 200, month = 7)
-        assertEquals(opensamguk.logic.util.phpRound(riceExpected), rResult.prevIncome[1])
+        assertEquals(riceExpected, rResult.prevIncome[1]!!.toDouble())
     }
 
     @Test
@@ -88,10 +88,9 @@ class ProcessIncomeTest {
         // income (gross) is what goes to prev_income — not realoutcome.
         val n = nation(id = 1, generals = listOf(gen(1, 1000.0, 5)))
         val result = processIncome("gold", listOf(n), pipeline, year = 200, month = 1)
-        val grossGold = opensamguk.logic.util.phpRound(
+        val grossGold =
             opensamguk.logic.domestic.getGoldIncome(n.cities, n.capitalId, n.level, n.taxRate, n.nationType, pipeline)
-        )
-        assertEquals(grossGold, result.prevIncome[1])
+        assertEquals(grossGold, result.prevIncome[1]!!.toDouble())
     }
 
     @Test
@@ -126,9 +125,9 @@ class ProcessIncomeTest {
         val g1 = result.generalPayouts.first { it.generalId == 1 } // officer_level 5 (>4)
         val g2 = result.generalPayouts.first { it.generalId == 2 } // officer_level 3 (<=4)
         assertTrue(g1.logLines.any { it == HistoryTokens.goldSalaryLine(g1.amount) })
-        assertTrue(g1.logLines.any { it == HistoryTokens.goldIncomeLine(result.prevIncome[1]!!) })
+        assertTrue(g1.logLines.any { it == HistoryTokens.goldIncomeLine(opensamguk.logic.util.phpRound(result.prevIncome[1]!!)) })
         assertTrue(g2.logLines.any { it == HistoryTokens.goldSalaryLine(g2.amount) })
-        assertTrue(g2.logLines.none { it == HistoryTokens.goldIncomeLine(result.prevIncome[1]!!) })
+        assertTrue(g2.logLines.none { it == HistoryTokens.goldIncomeLine(opensamguk.logic.util.phpRound(result.prevIncome[1]!!)) })
     }
 
     @Test

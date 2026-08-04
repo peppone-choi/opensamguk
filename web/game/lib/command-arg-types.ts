@@ -6,6 +6,24 @@
 
 import type { CommandArgType } from '@/types/game';
 
+export interface CommandFieldSpec {
+    name: string;
+    valueType: string;
+    control: 'text' | 'number' | 'amount' | 'amountList' | 'select' | 'toggle';
+    optionSource?: string | null;
+    required: boolean;
+    min?: number | null;
+    max?: number | null;
+}
+
+export interface CommandFormSpec {
+    fields: CommandFieldSpec[];
+}
+
+export interface FormAwareCommand {
+    form?: CommandFormSpec | null;
+}
+
 // suffix → argType. The first matching suffix wins (longest-first so 부대_탈퇴 beats 탈퇴).
 const ARG_TYPE_BY_SUFFIX: [string, CommandArgType][] = [
     ['건국', 'founding'],
@@ -60,4 +78,9 @@ export function inferArgType(commandKey: string): CommandArgType | null {
 /** The JSON body field name for a given argType (matches the spec §5.4 payload table). */
 export function argFieldName(type: CommandArgType): string | null {
     return ARG_FIELD[type] ?? null;
+}
+
+export function commandForm(command: object): CommandFormSpec | null {
+    const form = (command as FormAwareCommand).form;
+    return form?.fields.length ? form : null;
 }

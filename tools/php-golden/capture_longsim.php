@@ -6,9 +6,10 @@
  *
  * Drives a FULL NPC-only long simulation from a pristine scenario_1010 install,
  * capturing state snapshots every 12 months and at unification. This is a
- * structural/oracle gate — the state snapshot is the parity target, not the
- * per-general command sequence (AI choices are seed-dependent and may differ
- * between PHP and Kotlin).
+ * structural/oracle gate. The two SQL ORDER BY RAND() choices are external
+ * oracle inputs: a disposable-copy observer records their selected ids without
+ * changing either query or result, and Kotlin replays that recorded stream
+ * while keeping the LiteHashDRBG stream draw-for-draw exact.
  *
  * The loop mirrors TurnExecutionHelper::executeAllCommand's inner block:
  *   1. executeGeneralCommandUntil — drain per-general commands
@@ -24,6 +25,7 @@
  *   capture-00-baseline.json — install baseline + hiddenSeed + maxTurns
  *   capture-NN-year-YYY-month-M.json — per-capture-point state snapshot
  *   manifest_longsim.json — index of all capture points with metadata
+ *                           plus the ordered SQL RAND selection stream
  *
  * Invocation (inside the php capture container, repo mounted at /work):
  *   php tools/php-golden/capture_longsim.php [--months-max=360] [--out-dir=logic/src/test/resources/golden/longsim]
@@ -53,12 +55,421 @@ use sammo\Enums\EventTarget;
 // so the handler short-circuits. Zero deterministic game-state change.
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_WARNING & ~E_USER_DEPRECATED & ~E_STRICT);
 
-$opts      = getopt('', ['months-max:', 'out-dir:']);
+$opts      = getopt('', ['months-max:', 'out-dir:', 'expected-hidden-seed:', 'expected-turntime:']);
 $maxTurns  = (int)($opts['months-max'] ?? 360);
 $outDir    = $opts['out-dir'] ?? (__DIR__ . '/../../logic/src/test/resources/golden/longsim');
+$expectedHiddenSeed = $opts['expected-hidden-seed'] ?? null;
+$expectedTurntime = $opts['expected-turntime'] ?? null;
 if (!is_dir($outDir)) { mkdir($outDir, 0775, true); }
 
 $db = DB::db();
+$longsimSqlRandSelections = [];
+$longsimRandomImgwanPermutations = [];
+$longsimPhaseDrains = [];
+$longsimCompositePhase = 1;
+$longsimCompositeBoundary = '';
+$longsimHandledCommands = [];
+$longsimHandledCommandContext = null;
+$longsimHandledCommandSidecar = $outDir . '/handled-command-sidecar.jsonl';
+file_put_contents($longsimHandledCommandSidecar, '');
+$longsimActionStatus = 'blocked';
+$longsimActionSuccess = false;
+$longsimDomesticDecisionContext = null;
+$longsimDomesticDecisions = [];
+$longsimDomesticActorEnv = getenv('LONGSIM_DOMESTIC_ACTOR');
+$longsimDomesticPhaseEnv = getenv('LONGSIM_DOMESTIC_PHASE');
+$longsimDomesticActor = (int)($longsimDomesticActorEnv === false ? 36 : $longsimDomesticActorEnv);
+$longsimDomesticPhase = (int)($longsimDomesticPhaseEnv === false ? 2 : $longsimDomesticPhaseEnv);
+$longsimAmbientMtSeedEnv = getenv('LONGSIM_AMBIENT_MT_SEED');
+$longsimAmbientMtSeed =
+    ($longsimAmbientMtSeedEnv === false || $longsimAmbientMtSeedEnv === '')
+        ? null
+        : (int)$longsimAmbientMtSeedEnv;
+if ($longsimAmbientMtSeed !== null) {
+    mt_srand($longsimAmbientMtSeed);
+}
+$longsimKillturnTransitions = [];
+$longsimDiplomacyIdentitySidecar = $outDir . '/diplomacy-identity-sidecar.jsonl';
+file_put_contents($longsimDiplomacyIdentitySidecar, '');
+$longsimDiplomacyIdentityTransitionCount = 0;
+
+function readLongsimActorCitySnapshot(int $actorGeneralId): ?array {
+    $db = DB::db();
+    $cityId = $db->queryFirstField(
+        'SELECT city FROM general WHERE no=%i',
+        $actorGeneralId
+    );
+    if ($cityId === null) {
+        return null;
+    }
+    $row = $db->queryFirstRow(
+        'SELECT * FROM city WHERE city=%i',
+        (int)$cityId
+    );
+    return $row ?: null;
+}
+
+function beginLongsimHandledCommand(int $actorGeneralId): void {
+    global $longsimHandledCommandContext, $longsimActionStatus, $longsimActionSuccess;
+    hardAssert(
+        $longsimHandledCommandContext === null,
+        'handled-command context already active'
+    );
+    $db = DB::db();
+    $longsimHandledCommandContext = [
+        'actorGeneralId' => $actorGeneralId,
+        'cityBefore' => readLongsimActorCitySnapshot($actorGeneralId),
+        'recordHighWater' => (int)$db->queryFirstField(
+            'SELECT COALESCE(MAX(id),0) FROM general_record'
+        ),
+    ];
+    $longsimActionStatus = 'blocked';
+    $longsimActionSuccess = false;
+}
+
+function recordLongsimActionOutcome(bool $success, string $status): void {
+    global $longsimActionStatus, $longsimActionSuccess;
+    $longsimActionStatus = $status;
+    $longsimActionSuccess = $success;
+}
+
+function recordLongsimKillturnTransition(
+    int $generalId,
+    ?int $from,
+    int $to,
+    string $provenance,
+    string $family
+): void {
+    global $longsimKillturnTransitions;
+    if ($from !== null && $from === $to) {
+        return;
+    }
+    hardAssert(
+        in_array($family, ['month-derived', 'execution-constant'], true),
+        "unknown killturn transition family {$family} from {$provenance}"
+    );
+    $longsimKillturnTransitions[] = [
+        'ordinal' => count($longsimKillturnTransitions),
+        'generalId' => $generalId,
+        'from' => $from,
+        'to' => $to,
+        'provenance' => $provenance,
+        'family' => $family,
+    ];
+}
+
+/**
+ * The command drain owns a context until TurnExecutionHelper persists its next
+ * turn. Capture its ordinal before that final append so an instrumented
+ * founding/deletion transition stays associated with the exact phase action.
+ */
+function longsimDiplomacyIdentityContext(): array {
+    global $longsimCompositePhase, $longsimCompositeBoundary;
+    global $longsimHandledCommands, $longsimHandledCommandContext;
+    return [
+        'phase' => $longsimCompositePhase,
+        'phaseBoundary' => $longsimCompositeBoundary,
+        'handledCommandOrdinal' => $longsimHandledCommandContext === null
+            ? null
+            : count($longsimHandledCommands),
+        'actorGeneralId' => $longsimHandledCommandContext['actorGeneralId'] ?? null,
+    ];
+}
+
+/** Normalize actual MariaDB rows in the explicit query order (no ascending). */
+function normalizeLongsimDiplomacyIdentityRows(array $rows): array {
+    return array_values(array_map(
+        static fn(array $row): array => [
+            'no' => (int)$row['no'],
+            // src/dest deliberately mirror the legacy diplomacy me/you columns.
+            'src' => (int)$row['me'],
+            'dest' => (int)$row['you'],
+        ],
+        $rows
+    ));
+}
+
+/** Append one ordered JSONL event; the manifest records its byte hash and count. */
+function appendLongsimDiplomacyIdentityTransition(array $entry): void {
+    global $longsimDiplomacyIdentitySidecar, $longsimDiplomacyIdentityTransitionCount;
+    $entry['seq'] = $longsimDiplomacyIdentityTransitionCount;
+    $written = file_put_contents(
+        $longsimDiplomacyIdentitySidecar,
+        Json::encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n",
+        FILE_APPEND
+    );
+    hardAssert($written !== false, 'cannot append diplomacy identity sidecar');
+    $longsimDiplomacyIdentityTransitionCount++;
+}
+
+/**
+ * Disposable-copy che_거병 instrumentation calls this after its real bulk
+ * INSERT. `orderedExistingNationIds` comes from the original single
+ * getAllNationStaticInfo() result, and `created` comes back from the live
+ * diplomacy table with its MariaDB-assigned `no` values.
+ */
+function recordLongsimFoundNationDiplomacyIdentity(
+    int $actorGeneralId,
+    int $nationId,
+    string $nationName,
+    array $orderedExistingNationIds,
+    array $createdRows
+): void {
+    global $longsimHandledCommandContext;
+    hardAssert(
+        $longsimHandledCommandContext !== null
+            && $longsimHandledCommandContext['actorGeneralId'] === $actorGeneralId,
+        "found-nation diplomacy context mismatch for actor {$actorGeneralId}"
+    );
+    appendLongsimDiplomacyIdentityTransition(longsimDiplomacyIdentityContext() + [
+        'type' => 'create',
+        'source' => 'che_거병',
+        'provenance' => [
+            'derivation' => 'instrumented che_거병 bulk diplomacy INSERT',
+        ],
+        'commandCode' => 'che_거병',
+        'nation' => [
+            'id' => $nationId,
+            'name' => $nationName,
+            'lordGeneralId' => $actorGeneralId,
+            'applyDb' => false,
+        ],
+        'nationQueryOrder' => array_values(array_map('intval', $orderedExistingNationIds)),
+        'created' => normalizeLongsimDiplomacyIdentityRows($createdRows),
+    ]);
+}
+
+/**
+ * Disposable-copy deleteNation() instrumentation calls this immediately before
+ * its real diplomacy DELETE. The caller-derived provenance distinguishes
+ * che_해산, succession failure, and conquest without replacing their behavior.
+ */
+function recordLongsimNationDeletionDiplomacyIdentity(
+    int $lordGeneralId,
+    int $nationId,
+    string $nationName,
+    bool $applyDb,
+    array $provenance,
+    array $deletedRows
+): void {
+    appendLongsimDiplomacyIdentityTransition(longsimDiplomacyIdentityContext() + [
+        'type' => 'delete',
+        'source' => 'deleteNation',
+        'provenance' => $provenance,
+        'nation' => [
+            'id' => $nationId,
+            'name' => $nationName,
+            'lordGeneralId' => $lordGeneralId,
+            'applyDb' => $applyDb,
+        ],
+        'deleted' => normalizeLongsimDiplomacyIdentityRows($deletedRows),
+    ]);
+}
+
+function readLongsimDrbgCursor(RNG $rng): array {
+    $cursor = [];
+    foreach (['stateIdx', 'bufferIdx'] as $field) {
+        $rp = new \ReflectionProperty($rng, $field);
+        if (PHP_VERSION_ID < 80100) { $rp->setAccessible(true); }
+        $cursor[$field] = (int)$rp->getValue($rng);
+    }
+    return $cursor;
+}
+
+function beginLongsimDomesticDecision(
+    int $actorGeneralId,
+    int $year,
+    int $month,
+    string $seedString,
+    array $stats,
+    array $city,
+    array $rates,
+    array $candidates
+): void {
+    global $longsimCompositePhase, $longsimCompositeBoundary;
+    global $longsimDomesticDecisionContext, $longsimDomesticDecisions;
+    global $longsimDomesticActor, $longsimDomesticPhase;
+    if (
+        $actorGeneralId !== $longsimDomesticActor
+        || ($longsimDomesticPhase > 0 && $longsimCompositePhase !== $longsimDomesticPhase)
+        || $longsimDomesticDecisions
+        || $longsimDomesticDecisionContext !== null
+    ) {
+        return;
+    }
+    $db = DB::db();
+    $actorNationId = (int)$db->queryFirstField(
+        'SELECT nation FROM general WHERE no=%i',
+        $actorGeneralId
+    );
+    $liveNation = $db->queryFirstRow(
+        'SELECT nation,gold,rice,level,tech,chief_set FROM nation WHERE nation=%i',
+        $actorNationId
+    );
+    $liveNationGenerals = $db->query(
+        'SELECT no,nation,officer_level,npc,gold,rice,killturn FROM general WHERE nation=%i ORDER BY no',
+        $actorNationId
+    );
+    $longsimDomesticDecisionContext = [
+        'ordinal' => count($longsimDomesticDecisions),
+        'phase' => $longsimCompositePhase,
+        'phaseBoundary' => $longsimCompositeBoundary,
+        'actorGeneralId' => $actorGeneralId,
+        'year' => $year,
+        'month' => $month,
+        'seedString' => $seedString,
+        'stats' => $stats,
+        'city' => $city,
+        'rates' => $rates,
+        'candidates' => $candidates,
+        'liveNation' => $liveNation,
+        'liveNationGenerals' => $liveNationGenerals,
+    ];
+}
+
+function recordLongsimDomesticWeightedDraw(
+    array $cursorBefore,
+    array $cursorAfter,
+    float $drawValue,
+    float $sum,
+    array $items
+): void {
+    global $longsimDomesticDecisionContext, $longsimDomesticDecisions;
+    if ($longsimDomesticDecisionContext === null) {
+        return;
+    }
+    $remaining = $drawValue * $sum;
+    $picked = null;
+    foreach ($items as [$item, $weight]) {
+        $effectiveWeight = $weight > 0 ? $weight : 0;
+        if ($remaining <= $effectiveWeight) {
+            $picked = $item->getRawClassName();
+            break;
+        }
+        $remaining -= $effectiveWeight;
+    }
+    $longsimDomesticDecisions[] = $longsimDomesticDecisionContext + [
+        'cursorBefore' => $cursorBefore,
+        'cursorAfter' => $cursorAfter,
+        'drawValue' => $drawValue,
+        'weightSum' => $sum,
+        'scaledDraw' => $drawValue * $sum,
+        'pickedCommandCode' => $picked,
+    ];
+    $longsimDomesticDecisionContext = null;
+}
+
+function recordLongsimSqlRandSelection(
+    string $branch,
+    int $actorGeneralId,
+    int $year,
+    int $month,
+    int $sourceNationId,
+    ?int $selectedId
+): void {
+    global $longsimSqlRandSelections;
+    $longsimSqlRandSelections[] = [
+        'ordinal' => count($longsimSqlRandSelections),
+        'branch' => $branch,
+        'actorGeneralId' => $actorGeneralId,
+        'year' => $year,
+        'month' => $month,
+        'sourceNationId' => $sourceNationId,
+        'selectedId' => $selectedId,
+    ];
+}
+
+function recordLongsimRandomImgwanPermutation(
+    int $actorGeneralId,
+    int $year,
+    int $month,
+    array $orderedNationIds
+): void {
+    global $longsimRandomImgwanPermutations, $longsimCompositePhase;
+    $db = DB::db();
+    $eligibilityRows = $db->query(
+        'SELECT n.nation, n.scout, n.gennum, ' .
+        'EXISTS(SELECT 1 FROM general g WHERE g.nation=n.nation AND g.officer_level=12) AS has_lord, ' .
+        '(SELECT COUNT(*) FROM general g2 WHERE g2.nation=n.nation) AS actual_gennum ' .
+        'FROM nation n ORDER BY n.nation ASC'
+    ) ?: [];
+    $longsimRandomImgwanPermutations[] = [
+        'ordinal' => count($longsimRandomImgwanPermutations),
+        'actorGeneralId' => $actorGeneralId,
+        'year' => $year,
+        'month' => $month,
+        'phase' => $longsimCompositePhase,
+        'orderedNationIds' => array_map('intval', $orderedNationIds),
+        'eligibilityRows' => array_map(static fn(array $row): array => [
+            'nationId' => (int)$row['nation'],
+            'scout' => (int)$row['scout'],
+            'storedGennum' => (int)$row['gennum'],
+            'actualGennum' => (int)$row['actual_gennum'],
+            'hasLord' => (bool)$row['has_lord'],
+        ], $eligibilityRows),
+    ];
+}
+
+function recordLongsimHandledCommand(
+    int $actorGeneralId,
+    string $dueTimestamp,
+    string $commandCode,
+    ?string $nationCommandCode,
+    string $nextScheduledTimestamp
+): void {
+    global $longsimHandledCommands, $longsimCompositePhase, $longsimCompositeBoundary;
+    global $longsimHandledCommandContext, $longsimHandledCommandSidecar;
+    global $longsimActionStatus, $longsimActionSuccess;
+    hardAssert(
+        $longsimHandledCommandContext !== null
+            && $longsimHandledCommandContext['actorGeneralId'] === $actorGeneralId,
+        "handled-command context mismatch for actor {$actorGeneralId}"
+    );
+    $ordinal = count($longsimHandledCommands);
+    $entry = [
+        'ordinal' => $ordinal,
+        'phase' => $longsimCompositePhase,
+        'phaseBoundary' => $longsimCompositeBoundary,
+        'dueTimestamp' => $dueTimestamp,
+        'actorGeneralId' => $actorGeneralId,
+        'commandCode' => $commandCode,
+        'nationCommandCode' => $nationCommandCode,
+        'nextScheduledTimestamp' => $nextScheduledTimestamp,
+    ];
+    $longsimHandledCommands[] = $entry;
+
+    $db = DB::db();
+    $records = $db->query(
+        'SELECT id, general_id, log_type, year, month, text ' .
+        'FROM general_record WHERE id>%i AND general_id=%i ORDER BY id ASC',
+        $longsimHandledCommandContext['recordHighWater'],
+        $actorGeneralId
+    ) ?: [];
+    $sidecar = $entry + [
+        'cityBefore' => $longsimHandledCommandContext['cityBefore'],
+        'cityAfter' => readLongsimActorCitySnapshot($actorGeneralId),
+        'success' => $longsimActionSuccess,
+        'status' => $longsimActionStatus,
+        'actionLogs' => array_values(array_map(
+            static fn(array $row): array => [
+                'logType' => $row['log_type'],
+                'year' => (int)$row['year'],
+                'month' => (int)$row['month'],
+                'text' => $row['text'],
+            ],
+            $records
+        )),
+    ];
+    file_put_contents(
+        $longsimHandledCommandSidecar,
+        Json::encode(
+            $sidecar,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        ) . "\n",
+        FILE_APPEND
+    );
+    $longsimHandledCommandContext = null;
+}
 
 function hardAssert(bool $cond, string $msg): void {
     if (!$cond) { fwrite(STDERR, "LONGSIM HARD-ASSERT FAILED: {$msg}\n"); exit(2); }
@@ -83,6 +494,14 @@ function maxRecordId(object $db): int {
     return (int)($db->queryFirstField('SELECT COALESCE(MAX(id),0) FROM general_record'));
 }
 
+function dueGeneralActorOrder(object $db, string $boundary): array {
+    $rows = $db->query(
+        'SELECT no FROM general WHERE turntime < %s ORDER BY turntime ASC, `no` ASC',
+        $boundary
+    );
+    return array_map(static fn(array $row): int => (int)$row['no'], $rows ?: []);
+}
+
 /** Event dispatch execution-order sequence for ONE target. */
 function eventDispatchOrder(object $db, string $target): array {
     $rows = $db->query(
@@ -102,18 +521,9 @@ function snapshotState(object $db): array {
     $gs->resetCache();
     $env = $gs->getAll(false);
     return [
-        'game_env'   => [
-            'year'      => $env['year'] ?? null,
-            'month'     => $env['month'] ?? null,
-            'startyear' => $env['startyear'] ?? null,
-            'starttime' => $env['starttime'] ?? null,
-            'turnterm'  => $env['turnterm'] ?? null,
-            'develcost' => $env['develcost'] ?? null,
-            'isunited'  => $env['isunited'] ?? null,
-            'turntime'  => $env['turntime'] ?? null,
-            'scenario'  => $env['scenario'] ?? null,
-            'map'       => $env['map'] ?? null,
-        ],
+        // Preserve the complete production policy surface. GeneralAI consumes
+        // autorun_user.options and npc_*_policy directly from game_env.
+        'game_env'   => $env,
         'nation'     => dumpTable($db, 'nation', 'nation'),
         'city'       => dumpTable($db, 'city', 'city'),
         'general'    => dumpTable($db, 'general', 'no'),
@@ -168,6 +578,10 @@ function drbgDrawCount(LiteHashDRBG $drbg): ?int {
 $hiddenSeed = UniqueConst::$hiddenSeed;
 hardAssert(preg_match('/^[0-9a-f]{32}$/', $hiddenSeed) === 1,
     "hiddenSeed is not a 32-char lowercase hex: {$hiddenSeed}");
+if ($expectedHiddenSeed !== null) {
+    hardAssert($hiddenSeed === $expectedHiddenSeed,
+        "hiddenSeed {$hiddenSeed} != expected {$expectedHiddenSeed}");
+}
 
 $gameStor = KVStorage::getStorage($db, 'game_env');
 [$year0, $month0, $startYear, $turnterm, $isunited0] = $gameStor->getValuesAsArray(
@@ -175,6 +589,11 @@ $gameStor = KVStorage::getStorage($db, 'game_env');
 );
 $year0 = (int)$year0; $month0 = (int)$month0; $startYear = (int)$startYear;
 $turnterm = (int)$turnterm; $isunited0 = (int)$isunited0;
+if ($expectedTurntime !== null) {
+    $gameStor->resetCache();
+    hardAssert($gameStor->turntime === $expectedTurntime,
+        "turntime {$gameStor->turntime} != expected {$expectedTurntime}");
+}
 
 hardAssert($year0 === $startYear && $month0 === 1 && $isunited0 === 0,
     "install not pristine (year={$year0} month={$month0} startYear={$startYear} isunited={$isunited0})");
@@ -190,6 +609,7 @@ file_put_contents(
         'startYear'  => $startYear,
         'turnterm'   => $turnterm,
         'maxTurns'   => $maxTurns,
+        'installTurntime' => $gameStor->turntime,
         'state'      => $baselineState,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
 );
@@ -198,12 +618,15 @@ fwrite(STDERR, "wrote capture-00-baseline.json (hiddenSeed={$hiddenSeed} year={$
 // ── long-sim loop initialization ───────────────────────────────────────────
 $prevTurn = cutTurn($gameStor->turntime, $turnterm);
 $nextTurn = addTurn($prevTurn, $turnterm);
+$calendarPrevTurn = $prevTurn;
+$calendarNextTurn = addTurn($calendarPrevTurn, $turnterm);
 
 $captureIntervalMonths = 12;
 $nextCaptureMonth = 12;  // first capture at month 12 (1 game year)
 $totalMonths = 0;
 $captureIndex = 0;
 $manifestPoints = [];
+$sqlRandSelectionHW = 0;
 
 // ── OUTER LOOP: while isunited==0 && totalMonths < maxTurns ────────────────
 while (true) {
@@ -235,12 +658,28 @@ while (true) {
     $gameStor->resetCache();
     $tickStartTurntime = new \DateTimeImmutable($gameStor->turntime);
 
-    // 5a. Per-general command drain.
-    // Signature: executeGeneralCommandUntil(string $date, DateTimeInterface $limitActionTime, int $year, int $month)
-    // We pass the upcoming turn boundary as the date and a far-future limit so the headless
-    // harness never gives up due to wall-clock budget.
+    // 5a. Composite V1-36 cadence: three general+nation command drains while the DB game
+    // year/month remains fixed. The monthly pipeline runs only after phase 3.
     $farFuture = new \DateTimeImmutable('9999-12-31 23:59:59');
-    TurnExecutionHelper::executeGeneralCommandUntil($nextTurn, $farFuture, $oldYear, $oldMonth);
+    for ($phase = 1; $phase <= 3; $phase++) {
+        $longsimCompositePhase = $phase;
+        $longsimCompositeBoundary = $nextTurn;
+        $actorOrder = dueGeneralActorOrder($db, $nextTurn);
+        $longsimPhaseDrains[] = [
+            'ordinal' => count($longsimPhaseDrains),
+            'gameMonthIndex' => $totalMonths,
+            'phase' => $phase,
+            'year' => $oldYear,
+            'month' => $oldMonth,
+            'boundary' => $nextTurn,
+            'actorGeneralIds' => $actorOrder,
+        ];
+        TurnExecutionHelper::executeGeneralCommandUntil($nextTurn, $farFuture, $oldYear, $oldMonth);
+        $prevTurn = $nextTurn;
+        $nextTurn = addTurn($prevTurn, $turnterm);
+        $gameStor->turntime = $prevTurn;
+        $gameStor->resetCache();
+    }
 
     // 5c. Record high-water mark before month tick
     $recordHW = maxRecordId($db);
@@ -260,7 +699,7 @@ while (true) {
     hardAssert($preUpd === true, "month {$totalMonths}: preUpdateMonthly() returned false");
 
     // 5g. Advance calendar
-    turnDate($nextTurn);
+    turnDate($calendarNextTurn);
     $gameStor->resetCache();
     $newYear  = (int)$gameStor->year;
     $newMonth = (int)$gameStor->month;
@@ -284,10 +723,10 @@ while (true) {
     // 5k. Count monthly RNG draws
     $drawCount = drbgDrawCount($drbg);
 
-    // 5l. Advance turn time
-    $prevTurn = $nextTurn;
-    $nextTurn = addTurn($prevTurn, $turnterm);
-    $gameStor->turntime = $prevTurn;
+    // 5l. Advance the virtual legacy calendar by one month. The command schedule
+    // already advanced three turnterm boundaries above.
+    $calendarPrevTurn = $calendarNextTurn;
+    $calendarNextTurn = addTurn($calendarPrevTurn, $turnterm);
     $gameStor->resetCache();
 
     // Assertion: turntime strictly advanced from tick start.
@@ -306,6 +745,8 @@ while (true) {
         $afterState = snapshotState($db);
         $recordRows = recordRowsSince($db, $recordHW);
         $recordCount = count($recordRows);
+        $sqlRandSelections = array_slice($longsimSqlRandSelections, $sqlRandSelectionHW);
+        $sqlRandSelectionHW = count($longsimSqlRandSelections);
 
         $yy = str_pad((string)$newYear, 4, '0', STR_PAD_LEFT);
         $mm = str_pad((string)$newMonth, 2, '0', STR_PAD_LEFT);
@@ -324,6 +765,7 @@ while (true) {
                 'preMonthDispatchOrder' => $preMonthOrder,
                 'monthDispatchOrder'    => $monthOrder,
                 'recordRows'        => $recordRows,
+                'sqlRandSelections' => $sqlRandSelections,
                 'state'             => $afterState,
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
         );
@@ -368,6 +810,8 @@ if ($reachedMaxTurns) {
     $afterState = snapshotState($db);
     $recordRows = recordRowsSince($db, $recordHW);
     $recordCount = count($recordRows);
+    $sqlRandSelections = array_slice($longsimSqlRandSelections, $sqlRandSelectionHW);
+    $sqlRandSelectionHW = count($longsimSqlRandSelections);
 
     $yy = str_pad((string)$finalYear, 4, '0', STR_PAD_LEFT);
     $mm = str_pad((string)$finalMonth, 2, '0', STR_PAD_LEFT);
@@ -387,6 +831,7 @@ if ($reachedMaxTurns) {
             'preMonthDispatchOrder' => $preMonthOrder ?? [],
             'monthDispatchOrder'    => $monthOrder ?? [],
             'recordRows'        => $recordRows,
+            'sqlRandSelections' => $sqlRandSelections,
             'state'             => $afterState,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
     );
@@ -410,15 +855,39 @@ if ($reachedMaxTurns) {
 file_put_contents(
     $outDir . '/manifest_longsim.json',
     Json::encode([
+        'schemaVersion' => 4,
         'scenario'    => 1010,
         'startYear'   => $startYear,
         'turnterm'    => $turnterm,
         'maxTurns'    => $maxTurns,
         'hiddenSeed'  => $hiddenSeed,
+        'installTurntime' => $baselineState['game_env']['turntime'] ?? null,
         'reachedMaxTurns' => $reachedMaxTurns,
         'totalMonths' => $totalMonths,
         'baseline'    => 'capture-00-baseline.json',
         'points'      => $manifestPoints,
+        'sqlRandSelections' => $longsimSqlRandSelections,
+        'randomImgwanPermutations' => $longsimRandomImgwanPermutations,
+        'phaseDrains' => $longsimPhaseDrains,
+        'handledCommands' => $longsimHandledCommands,
+        'handledCommandSidecar' => [
+            'file' => basename($longsimHandledCommandSidecar),
+            'count' => count($longsimHandledCommands),
+            'sha256' => hash_file('sha256', $longsimHandledCommandSidecar),
+        ],
+        'domesticDecisions' => $longsimDomesticDecisions,
+        'domesticObserver' => [
+            'actorGeneralId' => $longsimDomesticActor,
+            'phase' => $longsimDomesticPhase,
+        ],
+        'ambientMtSeed' => $longsimAmbientMtSeed,
+        'killturnTransitions' => $longsimKillturnTransitions,
+        'diplomacyIdentitySidecar' => [
+            'file' => basename($longsimDiplomacyIdentitySidecar),
+            'count' => $longsimDiplomacyIdentityTransitionCount,
+            'sha256' => hash_file('sha256', $longsimDiplomacyIdentitySidecar),
+        ],
+        'cadence' => 'composite-v1-36',
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
 );
 

@@ -136,6 +136,8 @@ class NationDiploBodiesTest {
         instance: AiInstanceState,
         selfGeneralId: Int = 1,
         selfCityId: Int = 100,
+        selfOfficerLevel: Int = 12,
+        techLimitedNextGrade: Boolean = true,
         candidateAllowed: (String, Map<String, Any?>) -> Boolean = { _, _ -> true },
     ): GeneralAiContext {
         val world = AiWorldView(
@@ -159,6 +161,8 @@ class NationDiploBodiesTest {
             turnTerm = 120,
             selfGeneralId = selfGeneralId,
             selfCityId = selfCityId,
+            selfOfficerLevel = selfOfficerLevel,
+            techLimitedNextGrade = techLimitedNextGrade,
             candidateAllowed = candidateAllowed,
         )
     }
@@ -376,6 +380,30 @@ class NationDiploBodiesTest {
         val input = warInput(rng, allNations = listOf(Triple(2, 5, 3)))
         assertNull(NationDiploFamily.bodies(ctx, input).getValue("선전포고")(null), "dipState != d평화 → null (PHP :1856)")
         assertTrue(rng.draws.isEmpty(), "early guard before any draw")
+    }
+
+    @Test
+    fun `do선전포고 returns null below ruler level with zero draws`() {
+        val kv = RecordingKv()
+        val st = instance(kv)
+        val rng = RecordingRng("war-decl-non-ruler")
+        val ctx = ctxOf(rng, listOf(city(100)), st, selfOfficerLevel = 11)
+        val input = warInput(rng, allNations = listOf(Triple(2, 5, 3)), trialProp = 0.5)
+
+        assertNull(NationDiploFamily.bodies(ctx, input).getValue("선전포고")(null))
+        assertTrue(rng.draws.isEmpty(), "officer_level < 12 returns before trial draw (PHP :1852)")
+    }
+
+    @Test
+    fun `do선전포고 returns null below the tech limit with zero draws`() {
+        val kv = RecordingKv()
+        val st = instance(kv)
+        val rng = RecordingRng("war-decl-tech-limit")
+        val ctx = ctxOf(rng, listOf(city(100)), st, techLimitedNextGrade = false)
+        val input = warInput(rng, allNations = listOf(Triple(2, 5, 3)), trialProp = 0.5)
+
+        assertNull(NationDiploFamily.bodies(ctx, input).getValue("선전포고")(null))
+        assertTrue(rng.draws.isEmpty(), "unreached next tech grade returns before trial draw (PHP :1877)")
     }
 
     // ==================================================================================================

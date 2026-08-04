@@ -1,0 +1,80 @@
+name: Predeploy Go Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        description: Target multi-server identifier (for example, s1).
+        required: true
+        type: string
+      expected_tag:
+        description: Expected immutable full commit SHA or vX.Y.Z tag.
+        required: true
+        type: string
+      expected_scenario_code:
+        description: Expected canonical scenario_<number> code.
+        required: true
+        type: string
+      world_id:
+        description: Expected positive world_state ID for the target game world.
+        required: true
+        type: string
+      min_free_gib:
+        description: Operator-approved minimum free disk capacity in GiB.
+        required: true
+        type: string
+      min_free_percent:
+        description: Operator-approved minimum free disk capacity percentage.
+        required: true
+        type: string
+
+jobs:
+  predeploy-go:
+    runs-on: [self-hosted, Linux, X64, ec2-prod]
+    permissions:
+      contents: read
+    steps:
+      - id: validate-ref
+        name: Validate immutable checkout ref
+        shell: bash
+        env:
+          VALIDATE_EXPECTED_TAG: ${{ inputs.expected_tag }}
+        run: |
+          set -euo pipefail
+          tag="$VALIDATE_EXPECTED_TAG"
+          if [[ "$tag" == *$'\n'* || "$tag" == *$'\r'* ]]; then
+            printf 'invalid expected tag\n' >&2
+            exit 1
+          fi
+          if [[ "$tag" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            ref="$tag"
+          elif [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+            ref="refs/tags/$tag"
+          else
+            printf 'invalid expected tag\n' >&2
+            exit 1
+          fi
+          printf "ref=%s\n" "$ref" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ steps.validate-ref.outputs.ref }}
+          persist-credentials: false
+      - name: Validate predeploy grader contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n tools/ops/predeploy_go_check.sh
+          bash -n tools/ops/predeploy_go_check_contract_test.sh
+          bash tools/ops/predeploy_go_check_contract_test.sh
+      - name: Run read-only predeploy Go check
+        shell: bash
+        env:
+          PREDEPLOY_SERVER: ${{ inputs.server }}
+          PREDEPLOY_EXPECTED_TAG: ${{ inputs.expected_tag }}
+          PREDEPLOY_EXPECTED_SCENARIO_CODE: ${{ inputs.expected_scenario_code }}
+          PREDEPLOY_WORLD_ID: ${{ inputs.world_id }}
+          PREDEPLOY_MIN_FREE_GIB: ${{ inputs.min_free_gib }}
+          PREDEPLOY_MIN_FREE_PERCENT: ${{ inputs.min_free_percent }}
+        run: |
+          set -euo pipefail
+          bash tools/ops/predeploy_go_check.sh "$PREDEPLOY_SERVER" "$PREDEPLOY_EXPECTED_TAG" "$PREDEPLOY_EXPECTED_SCENARIO_CODE" "$PREDEPLOY_WORLD_ID" "$PREDEPLOY_MIN_FREE_GIB" "$PREDEPLOY_MIN_FREE_PERCENT"

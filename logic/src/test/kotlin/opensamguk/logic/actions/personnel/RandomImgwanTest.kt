@@ -9,6 +9,8 @@ import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.domain.metaInt
+import opensamguk.logic.stats.GeneralActionModule
 import opensamguk.logic.stats.GeneralActionPipeline
 import kotlin.math.abs
 import kotlin.math.ln
@@ -197,6 +199,34 @@ class RandomImgwanTest {
     }
 
     @Test
+    fun `random join folds experience before level bookkeeping then keeps the stat-finalize plain-log order`() {
+        val pipeline = GeneralActionPipeline(listOf(doubleExperience))
+        val actor = neutralGeneral().copy(
+            experience = 900.0,
+            meta = linkedMapOf("explevel" to 9, "strength_exp" to 30, "affinity" to 50, "name" to "방랑객"),
+        )
+        val candidates = listOf(
+            RandomImgwanNpcCandidate(nationId = 11, name = "위", gennum = 4, affinity = 10, lordCityId = 110),
+        )
+        val draft = GeneralActionDraft(actor, neutralCity(), null)
+        val context = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
+
+        CheRandomImgwan(pipeline, candidates, emptyList(), useNpcForeignBranch = true).resolve(context)
+
+        assertEquals(2300.0, draft.general.experience)
+        assertEquals(15, metaInt(draft.general.meta, "explevel"))
+        assertEquals(71, draft.general.strength)
+        assertEquals(0.0, draft.general.meta["strength_exp"])
+        assertEquals(
+            listOf(
+                "<C>●</><C>Lv 15</>로 <C>레벨업</>!",
+                "<C>●</><S>무력</>이 <C>1</> 올랐습니다!",
+            ),
+            context.plainLogs(),
+        )
+    }
+
+    @Test
     fun `no candidates yields the no-nation log and no transition`() {
         val draft = GeneralActionDraft(neutralGeneral(), City(
             id = 0, nationId = 0, level = 0, commerce = 0, commerceMax = 0,
@@ -235,10 +265,24 @@ class RandomImgwanTest {
         assertEquals("무작위 국가로 임관", a.lotteryActionName)
     }
 
+    private fun neutralCity() = City(
+        id = 0, nationId = 0, level = 0, commerce = 0, commerceMax = 0,
+        agriculture = 0, agricultureMax = 0, supplyState = 1, frontState = 0, trust = 0.0,
+    )
+
     companion object {
         val TALK_LIST = listOf(
             "어쩌다 보니", "인연이 닿아", "발길이 닿는 대로", "소문을 듣고", "점괘에 따라", "천거를 받아",
             "유명한", "뜻을 펼칠 곳을 찾아", "고향에 가까운", "천하의 균형을 맞추기 위해", "오랜 은거를 마치고",
         )
+
+        val doubleExperience = object : GeneralActionModule {
+            override fun onCalcStat(
+                general: General,
+                statName: String,
+                value: Double,
+                aux: Map<String, Any?>,
+            ): Double = if (statName == "experience") value * 2.0 else value
+        }
     }
 }

@@ -48,10 +48,13 @@ class WarUnitGeneralState(initial: General) {
         m
     }
 
-    /** rank_* battle counters keyed by RankColumn name, seeded from meta['rank_{name}']. */
+    private val initialRank: Map<String, Int> = RANK_KEYS.associateWith {
+        (initial.meta[it] as? Number)?.toInt() ?: 0
+    }
+
     private val rank: MutableMap<String, Int> = run {
         val m = LinkedHashMap<String, Int>()
-        for (k in RANK_KEYS) m[k] = ((initial.meta["rank_$k"] as? Number)?.toInt()) ?: 0
+        for (k in RANK_KEYS) m[k] = initialRank.getValue(k)
         m
     }
 
@@ -110,6 +113,8 @@ class WarUnitGeneralState(initial: General) {
 
     fun increaseRank(name: String, delta: Int) { rank[name] = (rank[name] ?: 0) + delta }
     fun getRank(name: String): Int = rank[name] ?: 0
+    fun rankIncrements(): Map<String, Int> = rank.mapValues { (key, value) -> value - initialRank.getValue(key) }
+        .filterValues { it != 0 }
 
     fun increaseMetaExp(key: String, delta: Int) {
         val cur = metaDouble(general.meta, key)
@@ -133,7 +138,6 @@ class WarUnitGeneralState(initial: General) {
     fun snapshot(): General {
         var meta = general.meta
         for ((armType, v) in dex) meta = withMetaLinked(meta, "dex$armType" to v)
-        for ((k, v) in rank) meta = withMetaLinked(meta, "rank_$k" to v)
         return general.copy(
             crew = crew,
             gold = phpRound(gold),

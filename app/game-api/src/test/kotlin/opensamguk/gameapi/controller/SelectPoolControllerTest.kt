@@ -1,11 +1,13 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.common.auth.GatewayProfileClaims
+import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.owner.GeneralResolver
-import opensamguk.infra.read.SelectPoolReadRow
-import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
-import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.gameapi.security.JwtVerifyFilter
+import opensamguk.infra.read.SelectPoolReadRow
+import opensamguk.infra.read.SelectPoolRepository
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -35,6 +37,8 @@ class SelectPoolControllerTest {
     @Test
     fun `authenticated owner receives candidate cards with uncapped raw five stats`() {
         `when`(resolver.resolveGeneralId(77L)).thenReturn(null)
+        `when`(repository.allowedCustomOptions()).thenReturn(setOf("stat", "ego", "picture"))
+        `when`(repository.showImageLevel()).thenReturn(3)
         `when`(repository.listForUser(77, now)).thenReturn(
             listOf(
                 SelectPoolReadRow(
@@ -64,7 +68,10 @@ class SelectPoolControllerTest {
             listOf(SimpleGrantedAuthority("ROLE_USER")),
         )
         try {
-            mvc.perform(get("/api/select-pool"))
+            mvc.perform(
+                get("/api/select-pool")
+                    .requestAttr(JwtVerifyFilter.PROFILE_ATTRIBUTE, profile()),
+            )
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.result").value(true))
                 .andExpect(jsonPath("$.generalId").doesNotExist())
@@ -77,6 +84,11 @@ class SelectPoolControllerTest {
                 .andExpect(jsonPath("$.pick[0].politics").value(44))
                 .andExpect(jsonPath("$.pick[0].charm").value(88))
                 .andExpect(jsonPath("$.pick[0].statEditable").value(false))
+                .andExpect(jsonPath("$.customOptions.stat").value(true))
+                .andExpect(jsonPath("$.customOptions.personality").value(true))
+                .andExpect(jsonPath("$.customOptions.picture").value(true))
+                .andExpect(jsonPath("$.member.name").value("테스터"))
+                .andExpect(jsonPath("$.member.canUsePicture").value(true))
         } finally {
             SecurityContextHolder.clearContext()
         }
@@ -88,6 +100,24 @@ class SelectPoolControllerTest {
 
         mvc.perform(get("/api/select-pool"))
             .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `candidate read rejects a forged principal that disagrees with verified JWT profile`() {
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            77L,
+            null,
+            listOf(SimpleGrantedAuthority("ROLE_USER")),
+        )
+        try {
+            mvc.perform(
+                get("/api/select-pool")
+                    .requestAttr(JwtVerifyFilter.PROFILE_ATTRIBUTE, profile(userId = 88)),
+            )
+                .andExpect(status().isUnauthorized)
+        } finally {
+            SecurityContextHolder.clearContext()
+        }
     }
 
     @Test
@@ -105,7 +135,10 @@ class SelectPoolControllerTest {
             listOf(SimpleGrantedAuthority("ROLE_USER")),
         )
         try {
-            refreshMvc.perform(post("/api/select-pool/refresh"))
+            refreshMvc.perform(
+                post("/api/select-pool/refresh")
+                    .requestAttr(JwtVerifyFilter.PROFILE_ATTRIBUTE, profile()),
+            )
                 .andExpect(status().isAccepted)
                 .andExpect(jsonPath("$.status").value("AVAILABLE"))
                 .andExpect(jsonPath("$.requestId").value("refresh-1"))
@@ -115,4 +148,14 @@ class SelectPoolControllerTest {
             SecurityContextHolder.clearContext()
         }
     }
+
+    private fun profile(userId: Long = 77L) = GatewayProfileClaims(
+        userId = userId,
+        username = "tester",
+        role = "USER",
+        nickname = "테스터",
+        grade = 1,
+        picture = "member.png",
+        imageServer = 1,
+    )
 }

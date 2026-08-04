@@ -3,6 +3,8 @@ package opensamguk.logic.actions.trade
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.existsDestGeneral
@@ -50,6 +52,13 @@ class CheJeungyeo(private val pipeline: GeneralActionPipeline) : GeneralActionDe
 
     override val argsSchema: Map<String, Any?> get() =
         mapOf("isGold" to "bool", "amount" to "int", "destGeneralID" to "int")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("isGold", "bool", "toggle", "resourceKinds"),
+            CommandFieldSpec("amount", "int", "amount", min = 100, max = GameConst.maxResourceActionAmount),
+            CommandFieldSpec("destGeneralID", "int", "select", "generals"),
+        ),
+    )
 
     fun getCommandDetailTitle(): String = "$name(통솔경험)"
 

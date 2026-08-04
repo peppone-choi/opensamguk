@@ -45,6 +45,7 @@ class AiDrawRecorder(private val inner: LiteHashDrbg) : RandUtil(inner) {
 
     fun drawStream(): List<Draw> = stream
     fun drawCount(): Int = stream.size
+    fun stateIdx(): Long = inner.peekStateIdx()
 
     private fun record(
         method: String,

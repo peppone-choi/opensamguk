@@ -12,7 +12,10 @@ import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.domain.metaInt
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -42,9 +45,13 @@ class CheMobanSidoGoldenTest {
     private val lordName = "원소"
     private val nationName = "후한"
 
+    @AfterTest
+    fun clearStaticEventHandlers() = StaticEventHandler.clear()
+
     private fun context(
         rng: RandUtil,
         withLord: Boolean = true,
+        actorMeta: Map<String, Any?> = emptyMap(),
     ): GeneralActionResolveContext {
         // actor — 수뇌(chief, officer_level 5), 자국(nation 1), city 1.
         val general = General(
@@ -52,6 +59,7 @@ class CheMobanSidoGoldenTest {
             leadership = 80, strength = 80, intel = 80, injury = 0,
             experience = 0.0, dedication = 0.0, officerLevel = 5, gold = 1000, rice = 1000,
             officerCity = 1,
+            meta = actorMeta,
         )
         val city = City(
             id = 1, nationId = 1, level = 5,
@@ -142,6 +150,23 @@ class CheMobanSidoGoldenTest {
         assertTrue(ctx.globalActionLogs().isEmpty(), "[모반] history 스코프는 globalAction 버퍼로 새지 않음")
         assertTrue(ctx.plainLogs().isEmpty())
         assertTrue(ctx.plainLogsTo(42).isEmpty())
+    }
+
+    @Test
+    fun `actor tail writes result turn finalizes stat and then dispatches static event`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_모반시도") { general, destGeneral, _, params ->
+            observed += "${general.lastTurn.command}:${general.leadership}:${metaInt(general.meta, "leadership_exp")}:${destGeneral?.id}:${params.isEmpty()}"
+        }
+        val ctx = context(
+            RandUtil(NoRng()),
+            actorMeta = linkedMapOf("leadership_exp" to 30),
+        )
+
+        cheMobanSido(pipeline).resolve(ctx)
+
+        assertEquals(listOf("모반시도:81:0:42:true"), observed)
+        assertEquals(listOf("<C>●</><S>통솔</>이 <C>1</> 올랐습니다!"), ctx.plainLogs())
     }
 
     // ── constraints (che_모반시도.php:35-42, PHP ORDER) ──────────────────────────────────────────────

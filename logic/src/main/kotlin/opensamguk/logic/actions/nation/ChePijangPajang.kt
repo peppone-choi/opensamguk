@@ -1,6 +1,8 @@
 package opensamguk.logic.actions.nation
 
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.allowDiplomacyBetweenStatus
@@ -38,6 +40,12 @@ class ChePijangPajang(private val pipeline: GeneralActionPipeline) : NationComma
     override val name: String get() = "피장파장"
     override val category: String get() = "전략"
     override val argsSchema: Map<String, Any?> get() = linkedMapOf("destNationID" to "int", "commandType" to "string")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("destNationID", "int", "select", "nations"),
+            CommandFieldSpec("commandType", "string", "select", "strategyCommands"),
+        ),
+    )
 
     /** che_피장파장.php:getPreReqTurn = 1 (reqTurn = 2). */
     override fun getPreReqTurn(): Int = 1

@@ -170,11 +170,10 @@ class TurnDaemonRunner(
                 val activeService = service
                     ?: error("TurnRunService unavailable after world_state availability check")
 
-                // B1b — 동결(pause) 게이트(PHP plock>0). 동결 중이면 틱을 건너뛴다: 드레인도 flush도 없이
-                // 한 폴 간격만 대기 → InMemoryTurnWorld가 그대로 멈춘다(턴 미진행). 락풀기(resume) 시 다음
-                // 폴에서 즉시 due 판정으로 재개. nextRunTime은 진행하지 않으므로 동결 중 누적 지연은 없다.
                 if (pauseGate.isPaused()) {
-                    Thread.sleep(idlePollMs)
+                    if (activeService.runIntakeCommands(blockMs = 1) == 0) {
+                        Thread.sleep(idlePollMs)
+                    }
                     continue
                 }
                 // OPENSAM-132: freeze intake/tick while FLUSH_RETRY / RELOAD_REQUIRED.

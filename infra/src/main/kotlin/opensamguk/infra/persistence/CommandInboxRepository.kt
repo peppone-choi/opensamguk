@@ -106,7 +106,7 @@ open class CommandInboxRepository(
     }
 
     open fun markRedisWakePublished(worldId: WorldId, requestId: String, publishedAt: Instant) {
-        jdbc.update(
+        val updated = jdbc.update(
             """
             UPDATE command_inbox
                SET redis_wake_published_at = :published_at,
@@ -116,8 +116,11 @@ open class CommandInboxRepository(
             MapSqlParameterSource()
                 .addValue("world_id", worldId.value)
                 .addValue("request_id", requestId)
-                .addValue("published_at", publishedAt),
+                .addValue("published_at", Timestamp.from(publishedAt)),
         )
+        require(updated == 1) {
+            "Expected exactly one command inbox row to be marked as Redis-wake published, but updated $updated"
+        }
     }
 
     open fun claimForExecution(

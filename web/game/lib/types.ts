@@ -516,6 +516,14 @@ export interface MyPageResponse {
     imageServer: number;
     items: MyPageItem[];
     instantActions: MyPageInstantActionFlags;
+    settings: {
+        tnmt: number;
+        defenceTrain: number;
+        useTreatment: number;
+        useAutoNationTurn: number;
+        myset: number;
+        penalty: Record<string, unknown>;
+    };
 }
 
 export interface MyPageItem {

@@ -20,11 +20,13 @@ import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralRole
 import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.LegacyDiplomacyIdentityOracle
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
+import opensamguk.logic.tick.ServerClock
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
@@ -48,6 +50,10 @@ object LongSimWorldMaterializer {
 
     fun loadBaseline(resourceName: String = "golden/longsim/capture-00-baseline.json"): Baseline {
         val json = Json.parseToJsonElement(loadResource(resourceName)).jsonObject
+        return parseBaseline(json)
+    }
+
+    fun parseBaseline(json: JsonObject): Baseline {
         return Baseline(
             hiddenSeed = json["hiddenSeed"]!!.jsonPrimitive.content,
             startYear = json["startYear"]!!.jsonPrimitive.int,
@@ -57,7 +63,10 @@ object LongSimWorldMaterializer {
         )
     }
 
-    fun materializeWorld(baseline: Baseline): InMemoryTurnWorld {
+    fun materializeWorld(
+        baseline: Baseline,
+        diplomacyIdentityOracle: LegacyDiplomacyIdentityOracle? = null,
+    ): InMemoryTurnWorld {
         val stateJson = baseline.state
         val gameEnv = stateJson["game_env"]!!.jsonObject
 
@@ -91,13 +100,9 @@ object LongSimWorldMaterializer {
         val maxNationId = nations.maxOfOrNull { it.id } ?: 0
         val maxGeneralId = generals.maxOfOrNull { it.id } ?: 0
 
-        val state = TurnWorldState(
-            id = 1,
-            currentYear = year,
-            currentMonth = month,
-            tickSeconds = turnterm * 60,
-            lastTurnTime = turntime,
-            meta = linkedMapOf(
+        val stateMeta = decodeObject(gameEnv).toMutableMap()
+        stateMeta.putAll(
+            linkedMapOf(
                 "hiddenSeed" to baseline.hiddenSeed,
                 "startYear" to startYear,
                 "startTime" to startTime.toString(),
@@ -111,7 +116,26 @@ object LongSimWorldMaterializer {
                 "maxGeneralId" to maxGeneralId,
             ),
         )
-        return InMemoryTurnWorld(WorldSnapshot(state, generals, cities, nations, emptyList(), diplomacy, worldId = opensamguk.common.world.WorldId((state).id)))
+        val state = TurnWorldState(
+            id = 1,
+            currentYear = year,
+            currentMonth = month,
+            tickSeconds = turnterm * 60,
+            lastTurnTime = turntime,
+            meta = stateMeta,
+        )
+        return InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                generals,
+                cities,
+                nations,
+                emptyList(),
+                diplomacy,
+                worldId = opensamguk.common.world.WorldId((state).id),
+            ),
+            legacyDiplomacyIdentityOracle = diplomacyIdentityOracle,
+        )
     }
 
     private fun loadNationEnv(rows: JsonArray): Map<Int, Map<String, Any?>> {
@@ -130,6 +154,15 @@ object LongSimWorldMaterializer {
 
     private fun toGeneral(o: JsonObject): TurnGeneral {
         val meta = decodeObject(o).toMutableMap()
+        val npc = o["npc"]?.jsonPrimitive?.intOrNull ?: 0
+        if (npc >= 2) {
+            val rawKillturn = (meta["killturn"] as? Number)?.toInt()
+            if (rawKillturn != null) {
+                meta["killturn"] = rawKillturn * 3
+                meta["killturn_unit"] = "phase"
+                meta[LongSimKillturnOracle.OFFSET_META_KEY] = rawKillturn * 2
+            }
+        }
         return TurnGeneral(
             id = o["no"]!!.jsonPrimitive.int,
             userId = o["owner"]?.jsonPrimitive?.contentOrNull?.takeIf { it != "0" },
@@ -164,7 +197,7 @@ object LongSimWorldMaterializer {
             train = o["train"]?.jsonPrimitive?.intOrNull ?: 0,
             atmos = o["atmos"]?.jsonPrimitive?.intOrNull ?: 0,
             age = o["age"]?.jsonPrimitive?.intOrNull ?: 0,
-            npcState = o["npc"]?.jsonPrimitive?.intOrNull ?: 0,
+            npcState = npc,
             turnTime = parseTurnTime(o["turntime"]?.jsonPrimitive?.contentOrNull),
             recentWarTime = o["recent_war"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.contentOrNull
                 ?.let { runCatching { parseTurnTime(it) }.getOrNull() },
@@ -246,7 +279,7 @@ object LongSimWorldMaterializer {
         if (raw.isNullOrBlank()) return Instant.parse("0181-01-01T00:00:00Z")
         return runCatching {
             val ldt = java.time.LocalDateTime.parse(raw.trim(), ISO_MICROS)
-            ldt.toInstant(java.time.ZoneOffset.UTC)
+            ldt.atZone(ServerClock.SERVER_ZONE).toInstant()
         }.getOrElse { Instant.parse(raw.trim().replace(' ', 'T') + "Z") }
     }
 

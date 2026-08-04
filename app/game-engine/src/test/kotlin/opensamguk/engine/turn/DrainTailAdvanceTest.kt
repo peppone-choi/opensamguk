@@ -97,6 +97,7 @@ class DrainTailAdvanceTest {
     private fun lifecycle(
         world: InMemoryTurnWorld,
         reservedActionOf: (Int) -> ReservedTurn = { ReservedTurn("휴식", "") },
+        beginGeneralTurn: (Int) -> Unit = { },
         pullNationTurn: (Int, Int) -> Unit = { _, _ -> },
         pullGeneralTurn: (Int) -> Unit = { },
     ): TurnDaemonLifecycle {
@@ -110,6 +111,7 @@ class DrainTailAdvanceTest {
             world = world,
             handler = handler,
             lifecycleEnvOf = ::lifecycleEnvOf,
+            beginGeneralTurn = beginGeneralTurn,
             pullNationTurnOf = pullNationTurn,
             pullGeneralTurnOf = pullGeneralTurn,
             reservedActionOf = reservedActionOf,
@@ -259,6 +261,31 @@ class DrainTailAdvanceTest {
     }
 
     @Test
+    fun `one boundary drain uses each due general pre-update turnTime for action logs and schedules each next turn from it`() {
+        val firstTurnTime = t0
+        val secondTurnTime = t0.plus(Duration.ofMinutes(17))
+        val w = world(
+            gen(id = 1, killturn = 5, turnTime = firstTurnTime),
+            gen(id = 2, killturn = 5, turnTime = secondTurnTime),
+        )
+        val lc = lifecycle(
+            world = w,
+            reservedActionOf = { ReservedTurn("che_건국", """{"nationName":"n","nationType":"che_중립","colorType":0}""") },
+        )
+
+        val handled = lc.runTick(t0.plus(Duration.ofHours(1)))
+
+        assertEquals(listOf(1, 2), handled.map { it.generalId }, "due selection keeps the boundary's turnTime/id order")
+        assertEquals(
+            listOf("23:00", "23:17"),
+            w.peekLogs().map { log -> log.text.substringAfter("<1>").substringBefore("</>") },
+            "PHP logs each command with that general's pre-update turntime, not the shared drain boundary",
+        )
+        assertEquals(ServerClock.addTurn(firstTurnTime, turnTerm), w.getGeneralById(1)!!.turnTime)
+        assertEquals(ServerClock.addTurn(secondTurnTime, turnTerm), w.getGeneralById(2)!!.turnTime)
+    }
+
+    @Test
     fun `a general is NOT re-selected by dueGenerals on the next tick after its turnTime advanced`() {
         // 이 테스트가 핵심 회귀 가드다: 꼬리가 없던 버그에서는 turnTime이 advance되지 않아 dueGenerals가
         // 매 틱 같은 장수를 재선택했다(예약 명령 매 틱 재실행). 꼬리가 돌면 advance된 turnTime이 다음
@@ -300,5 +327,107 @@ class DrainTailAdvanceTest {
         assertTrue(lc.dueGenerals(t0).isEmpty(), "turnTime == boundary는 STRICT `<`로 due 아님 (BUG #6 fix)")
         // 경계가 t0보다 STRICT 미래면 due다.
         assertTrue(lc.dueGenerals(t0.plusSeconds(1)).any { it.id == 1 }, "turnTime < boundary면 due")
+    }
+
+    @Test
+    fun `a lower reused general id created during a drain is excluded from that immutable cohort`() {
+        val w = world(
+            gen(id = 1, turnTime = t0, killturn = 5),
+            gen(id = 2, turnTime = t0.plusSeconds(1), killturn = 5),
+        )
+        val pulledGeneralIds = mutableListOf<Int>()
+        var replaced = false
+        val lifecycle = lifecycle(
+            world = w,
+            beginGeneralTurn = { generalId ->
+                if (generalId == 1 && !replaced) {
+                    replaced = true
+                    assertTrue(w.removeGeneral(2))
+                    w.createGeneral(gen(id = 2, turnTime = t0.plusSeconds(2), killturn = 5))
+                }
+            },
+            pullGeneralTurn = { pulledGeneralIds += it },
+        )
+        val boundary = t0.plus(Duration.ofHours(1))
+
+        val firstDrain = lifecycle.runTick(boundary)
+        assertEquals(listOf(1), firstDrain.map { it.generalId })
+        assertEquals(t0.plusSeconds(2), w.getGeneralById(2)!!.turnTime, "replacement was not executed through the old row identity")
+
+        val nextDrain = lifecycle.runTick(boundary)
+        assertEquals(listOf(2), nextDrain.map { it.generalId }, "the replacement joins only the next runTick cohort")
+        assertEquals(listOf(1, 2), pulledGeneralIds, "only executed identities consume durable general-turn rows")
+    }
+
+    @Test
+    fun `a newly created preallocated id waits until the next logical run cohort`() {
+        val w = world(gen(id = 10, turnTime = t0, killturn = 5))
+        var created = false
+        val lifecycle = lifecycle(
+            world = w,
+            beginGeneralTurn = {
+                if (!created) {
+                    created = true
+                    w.createGeneral(gen(id = 3, turnTime = t0.plusSeconds(1), killturn = 5))
+                }
+            },
+        )
+        val boundary = t0.plus(Duration.ofHours(1))
+        val logicalRunCohort = lifecycle.snapshotGeneralDrainCohort()
+
+        assertEquals(listOf(10), lifecycle.runTick(boundary, logicalRunCohort).map { it.generalId })
+        assertTrue(
+            lifecycle.runTick(boundary, logicalRunCohort).isEmpty(),
+            "a lower preallocated id created inside the logical run is absent from its original identity cohort",
+        )
+        assertEquals(listOf(3), lifecycle.runTick(boundary).map { it.generalId })
+    }
+
+    @Test
+    fun `a reserved payload repeated during a drain is deferred until the next runTick`() {
+        val w = world(gen(id = 1, turnTime = t0, killturn = 5))
+        var reserved = ReservedTurn("휴식", "")
+        var repeated = false
+        val lifecycle = lifecycle(
+            world = w,
+            reservedActionOf = { reserved },
+            beginGeneralTurn = {
+                if (!repeated) {
+                    repeated = true
+                    reserved = ReservedTurn("che_농지개간", "")
+                }
+            },
+        )
+
+        val first = lifecycle.runTick(t0.plus(Duration.ofHours(1)))
+        assertEquals("휴식", first.single().reservedActionCode)
+
+        val second = lifecycle.runTick(t0.plus(Duration.ofHours(2)))
+        assertEquals("che_농지개간", second.single().reservedActionCode)
+    }
+
+    @Test
+    fun `preexisting due order and next schedules survive world restart`() {
+        val firstTurnTime = t0
+        val secondTurnTime = t0.plusSeconds(17)
+        val beforeRestart = world(
+            gen(id = 2, turnTime = secondTurnTime, killturn = 5),
+            gen(id = 1, turnTime = firstTurnTime, killturn = 5),
+        )
+
+        val firstDrain = lifecycle(beforeRestart).runTick(t0.plus(Duration.ofHours(1)))
+        assertEquals(listOf(1, 2), firstDrain.map { it.generalId })
+
+        val restarted = world(*beforeRestart.listGenerals().toTypedArray())
+        val restartedLifecycle = lifecycle(restarted)
+        assertTrue(
+            restartedLifecycle.runTick(t0.plus(Duration.ofHours(1))).isEmpty(),
+            "persisted next schedules at the strict boundary are not replayed after restart",
+        )
+
+        val secondDrain = restartedLifecycle.runTick(t0.plus(Duration.ofHours(1)).plusSeconds(18))
+        assertEquals(listOf(1, 2), secondDrain.map { it.generalId })
+        assertEquals(ServerClock.addTurn(firstTurnTime, turnTerm, 2), restarted.getGeneralById(1)!!.turnTime)
+        assertEquals(ServerClock.addTurn(secondTurnTime, turnTerm, 2), restarted.getGeneralById(2)!!.turnTime)
     }
 }

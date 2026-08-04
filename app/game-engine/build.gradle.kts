@@ -152,6 +152,9 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
+    providers.systemProperty("LONGSIM_SCHEMA4_CANDIDATE_DIR").orNull?.let {
+        systemProperty("LONGSIM_SCHEMA4_CANDIDATE_DIR", it)
+    }
     environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
     environment("DOCKER_CONTEXT", "default")
     environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")

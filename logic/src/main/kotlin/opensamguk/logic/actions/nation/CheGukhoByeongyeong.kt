@@ -2,6 +2,8 @@ package opensamguk.logic.actions.nation
 
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.beChief
@@ -27,6 +29,9 @@ fun cheGukhoByeongyeong(pipeline: GeneralActionPipeline): NationCommand = object
     override val key: String get() = "che_국호변경"
     override val name: String get() = "국호변경"
     override val argsSchema: Map<String, Any?> get() = mapOf("nationName" to "string")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(CommandFieldSpec("nationName", "string", "text", required = true, min = 1, max = 18)),
+    )
 
     override fun getPreReqTurn(): Int = 0
 

@@ -84,6 +84,8 @@ class TurnRunServiceIT {
     private val t0: Instant = Instant.parse("0200-01-01T12:34:00Z")
     private val calendarStartTime: Instant = Instant.parse("0200-01-01T12:00:00Z")
     private val tickSeconds = 3600
+    private val fixtureExperience = 1_000
+    private val fixtureDedication = 1_000
 
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: NamedParameterJdbcTemplate
@@ -295,10 +297,16 @@ class TurnRunServiceIT {
                 (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, meta)
             VALUES
-                (:world, :id, 'g42', :nation, :city, 70, 70, 80, 0, 0, 0, 0, 100000, 1000, now(),
-                 CAST('{"explevel":10,"intel_exp":3,"max_domestic_critical":0}' AS jsonb))
+                (:world, :id, 'g42', :nation, :city, 70, 70, 80, 0, :experience, :dedication, 0, 100000, 1000, now(),
+                 CAST('{"explevel":10,"dedlevel":4,"intel_exp":3,"max_domestic_critical":0}' AS jsonb))
             """.trimIndent(),
-            MapSqlParameterSource().addValue("world", 1).addValue("id", generalId).addValue("nation", nationId).addValue("city", cityId),
+            MapSqlParameterSource()
+                .addValue("world", 1)
+                .addValue("id", generalId)
+                .addValue("nation", nationId)
+                .addValue("city", cityId)
+                .addValue("experience", fixtureExperience)
+                .addValue("dedication", fixtureDedication),
         )
         jdbc.update(
             """
@@ -328,11 +336,23 @@ class TurnRunServiceIT {
             TurnGeneral(
                 id = generalId, name = "g42", nationId = nationId, cityId = cityId, troopId = 0,
                 stats = GeneralStats(leadership = 70, strength = 70, intelligence = 80),
-                experience = 0, dedication = 0, officerLevel = 0, gold = 100_000, rice = 1000, injury = 0,
+                experience = fixtureExperience,
+                dedication = fixtureDedication,
+                officerLevel = 0,
+                gold = 100_000,
+                rice = 1000,
+                injury = 0,
                 // killturn>0: 살아있는 장수는 양수 killturn을 가진다(PHP는 $gameStor->killturn에서 시드). strict-<
                 // 교정 후 drain 꼬리(updateTurnTime, TurnExecutionHelper.php:185)의 killturn<=0 kill 게이트가
                 // 동작하므로, killturn 미설정(0) 장수는 tail에서 kill되어 flush 대상에서 사라진다 → 양수로 생존.
-                turnTime = t0, meta = linkedMapOf("explevel" to 10, "intel_exp" to 3, "max_domestic_critical" to 0.0, "killturn" to 80),
+                turnTime = t0,
+                meta = linkedMapOf(
+                    "explevel" to 10,
+                    "dedlevel" to 4,
+                    "intel_exp" to 3,
+                    "max_domestic_critical" to 0.0,
+                    "killturn" to 80,
+                ),
             ),
         ),
         cities = listOf(

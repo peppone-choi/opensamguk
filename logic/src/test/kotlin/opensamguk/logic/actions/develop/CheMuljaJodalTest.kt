@@ -12,11 +12,15 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.domestic.UPGRADE_LIMIT
 import opensamguk.logic.domestic.criticalScoreEx
 import opensamguk.logic.domestic.getDomesticExpLevelBonus
+import opensamguk.logic.event.StaticEventHandler
+import opensamguk.logic.stats.GeneralActionModule
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.phpRound
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -69,6 +73,9 @@ class CheMuljaJodalTest {
     )
 
     private fun action() = cheMuljaJodal(pipeline)
+
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
 
     /** Replay the PHP 5-draw algorithm with a parallel identically-seeded RNG (non-front city). */
     private data class Expected(
@@ -177,6 +184,87 @@ class CheMuljaJodalTest {
         // nation credit uses the POST-debuff score (halved vs the rounded score, so strictly less when score>1)
         val credited = if (expFront.resKey == "gold") draft.nation!!.gold - 10000 else draft.nation!!.rice - 8000
         assertTrue(credited < expFront.roundedScore, "post-debuff credit < pre-debuff score ($credited < ${expFront.roundedScore})")
+    }
+
+    @Test
+    fun `exp and dedication fold through a non identity pipeline with ordered PLAIN promotions`() {
+        val boostedPipeline = GeneralActionPipeline(listOf(object : GeneralActionModule {
+            override fun onCalcStat(general: General, statName: String, value: Double, aux: Map<String, Any?>): Double =
+                when (statName) {
+                    "experience" -> value * 2.0
+                    "dedication" -> value * 3.0
+                    else -> value
+                }
+        }))
+        val actor = general().copy(
+            experience = 99.0,
+            dedication = 0.0,
+            meta = linkedMapOf(
+                "explevel" to 0,
+                "dedlevel" to 0,
+                "leadership_exp" to 1,
+                "strength_exp" to 2,
+                "intel_exp" to 3,
+            ),
+        )
+
+        val identityDraft = GeneralActionDraft(actor, city(0), nation)
+        cheMuljaJodal(GeneralActionPipeline()).resolve(
+            GeneralActionResolveContext(identityDraft, freshRng(), env, MONTH, date),
+        )
+
+        val boostedDraft = GeneralActionDraft(actor, city(0), nation)
+        val boostedContext = GeneralActionResolveContext(boostedDraft, freshRng(), env, MONTH, date)
+        cheMuljaJodal(boostedPipeline).resolve(boostedContext)
+
+        val rawExp = identityDraft.general.experience - actor.experience
+        val rawDed = identityDraft.general.dedication - actor.dedication
+        assertEquals(actor.experience + rawExp * 2.0, boostedDraft.general.experience, 1e-9)
+        assertEquals(actor.dedication + rawDed * 3.0, boostedDraft.general.dedication, 1e-9)
+        assertEquals(2, boostedContext.plainLogs().size, "addExperience then addDedication each emit once")
+        assertTrue(boostedContext.plainLogs()[0].contains("레벨업"), "experience promotion is first")
+        assertTrue(boostedContext.plainLogs()[1].contains("승급"), "dedication promotion is second")
+        assertEquals(
+            listOf(boostedContext.logs().single()) + boostedContext.plainLogs(),
+            boostedContext.orderedLogEvents().map { it.text },
+            "the existing action log stays before PHP helper PLAIN logs",
+        )
+    }
+
+    @Test
+    fun `tail credits nation then sets LastTurn and checks stats before StaticEventHandler`() {
+        val actor = general().copy(
+            meta = linkedMapOf(
+                "explevel" to 0,
+                "dedlevel" to 0,
+                "leadership_exp" to UPGRADE_LIMIT - 1,
+                "strength_exp" to UPGRADE_LIMIT - 1,
+                "intel_exp" to UPGRADE_LIMIT - 1,
+            ),
+        )
+        val draft = GeneralActionDraft(actor, city(0), nation)
+        val context = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
+        val observedTurns = mutableListOf<String>()
+        val observedStatTotals = mutableListOf<Int>()
+        val observedNationGold = mutableListOf<Int>()
+        val observedNationRice = mutableListOf<Int>()
+        val observedPlainLogs = mutableListOf<List<String>>()
+        StaticEventHandler.register("che_물자조달") { eventGeneral, _, _, _ ->
+            observedTurns += eventGeneral.lastTurn.command
+            observedStatTotals += eventGeneral.leadership + eventGeneral.strength + eventGeneral.intel
+            observedNationGold += draft.nation!!.gold
+            observedNationRice += draft.nation!!.rice
+            observedPlainLogs += context.plainLogs()
+        }
+
+        action().resolve(context)
+
+        assertEquals(listOf("물자조달"), observedTurns)
+        assertEquals(listOf(actor.leadership + actor.strength + actor.intel + 1), observedStatTotals)
+        assertEquals(listOf(draft.nation!!.gold), observedNationGold)
+        assertEquals(listOf(draft.nation!!.rice), observedNationRice)
+        assertTrue(draft.nation!!.gold > nation.gold || draft.nation!!.rice > nation.rice)
+        assertTrue(observedPlainLogs.single().any { it.contains("올랐습니다!") })
     }
 
     @Test

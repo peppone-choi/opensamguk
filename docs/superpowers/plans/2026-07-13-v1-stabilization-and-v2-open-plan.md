@@ -30,6 +30,106 @@
 
 B1은 PHP long-sim byte parity 완료 선언이 아니다. `scenario_0` Kotlin 런타임의 시작→통일 행동 불변식을 닫은 게이트이고, 기존 `LongSimReplayGateTest`의 PHP 12개월 구조 divergence는 독립 과제로 유지한다.
 
+## v1 안정화 실행 체크리스트 (D4-01~07)
+
+아래 명령은 모두 저장소 루트에서 실행한다. Gradle 항목은 종료 코드만으로
+통과를 선언하지 않고 출력의 `BUILD SUCCESSFUL`과 해당
+`build/test-results/test/TEST-*.xml`의 `tests > 0`, `failures="0"`,
+`errors="0"`, `skipped="0"`을 함께 확인한다. Docker가 없어 Testcontainers
+테스트가 skip되면 코드 실패는 아니지만 이 체크리스트의 실측 통과도 아니다.
+해당 항목은 `채점대기`로 남긴다.
+
+| ID | 경계 | 실행 명령 | PASS 판정 | FAIL / 보류 판정 |
+|---|---|---|---|---|
+| D4-01 | seed | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test --tests 'opensamguk.engine.boot.ScenarioBootIT' --rerun-tasks` | `ScenarioBootIT` XML이 첫 시드의 general 229·city 94·nation 2, 스냅샷 수량, 1턴 전진, 두 번째 시드 no-op 단언을 `tests > 0`, failure/error/skip 0으로 마친다. | XML 부재·0 tests·skip, 기대 수량/턴 전진/idempotency 단언 실패, 또는 `BUILD SUCCESSFUL` 부재. |
+| D4-02 | load/restart | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test --tests 'opensamguk.engine.boot.ScenarioBootIT' --tests 'opensamguk.engine.boot.WorldSnapshotLoaderWorldScopeIT' --rerun-tasks` | 두 XML이 city state·정치/매력·game/nation KV·event mutation의 flush 후 rehydrate와, 동일 local ID를 가진 두 world의 격리를 failure/error/skip 0으로 증명한다. | restart 후 값 불일치, 다른 world 행 유입, XML 부재·0 tests·skip, 또는 빌드 실패. |
+| D4-03 | intake | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-api:test --tests 'opensamguk.gameapi.web.CommandControllerIT' --rerun-tasks` | HTTP 명령이 `202`와 비어 있지 않은 `requestId`를 반환하고 Redis command stream 크기가 1인 단언이 failure/error/skip 0이다. `202`는 실행 성공이 아니라 intake 접수 성공으로만 판정한다. | 202/requestId/stream 크기 단언 중 하나라도 실패, XML 부재·0 tests·skip, 또는 빌드 실패. 이 테스트는 반환된 requestId와 stream payload의 상관관계를 증명하지 않으므로 그 계약까지 완료로 승격하지 않는다. |
+| D4-04 | flush | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :infra:test --tests 'opensamguk.infra.persistence.JdbcFlushExecutorIT' --rerun-tasks` | 실제 PostgreSQL에서 general/city/log/world_state 델타가 `JdbcFlushExecutor` 한 트랜잭션으로 반영되고 post-state 단언이 failure/error/skip 0이다. | JPA/인라인 우회 여부와 무관하게 post-state 불일치, XML 부재·0 tests·skip, 또는 빌드 실패. |
+| D4-05 | read | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-api:test --tests 'opensamguk.gameapi.read.WorldScopedReadRepositoryIT' --rerun-tasks` | process world의 nation/city/general cohort만 반환하고 다른 world의 서로 다른 ID 행을 노출하지 않는 단언이 failure/error/skip 0이다. | cross-world 행 노출·own-world 행 누락, XML 부재·0 tests·skip, 또는 빌드 실패. 동일 local ID 충돌 격리는 이 테스트가 증명하지 않으므로 별도 2-world 게이트 근거가 없으면 완료로 승격하지 않는다. |
+| D4-06 | SSE relay ingress | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-api:test --tests 'opensamguk.gameapi.sse.RealtimeRelayIT' --rerun-tasks` | Redis의 world/profile별 채널에 발행한 `turnCompleted` 원문이 listener에 도착하고 수신 원문이 같은 이벤트로 decode되는 단언이 failure/error/skip 0이다. | 제한 시간 내 미수신, 수신 원문 불일치/디코드 실패, XML 부재·0 tests·skip, 또는 빌드 실패. 이 테스트는 연결된 `SseEmitter`의 browser-facing 출력까지 관측하지 않으므로 실제 SSE 전달은 브라우저/HTTP 증거 전까지 `채점대기`다. |
+| D4-07 | deploy (local gate) | `./tools/smoke.sh` | compose가 이미지를 빌드·기동하고 gateway-api, game-api, game-engine, web-gateway, web-game 및 nginx의 gateway-api 프록시 health 1경계를 통과해 `==> ALL SERVICES HEALTHY`를 출력한 뒤 exit 0이다. | `FAIL: <service> not healthy`, 열거한 health 중 하나라도 미통과, non-zero exit, 또는 최종 성공 문구 부재. |
+
+D4-07은 프로덕션 배포 승인이 아니다. production은 사람의 별도 승인 후
+`docs/agent/lifecycle-ops.md` 절차로 health, 실제 페이지, 데몬의
+`world_state.current_year/month` 전진을 모두 확인해야 한다. 정지된 EC2 접근,
+main push, deploy는 이 문서 체크리스트 실행만으로 허용되지 않는다.
+
+## B2 운영 스모크 종결 (OPENSAM-33, D4-14~17)
+
+Status: locally complete/released. Jira remains `할 일`; the OPENSAM-34 local
+grader closeout is recorded below, while its production observation remains
+separate and blocked. The final isolated artifact is
+`/var/folders/34/jlnbkc0j6fj0nkcp7fj0f9h00000gn/T/opensamguk-op33-remediation.A4KNsK/live-gate-marker-fixed`.
+
+| ID | final observed evidence |
+|---|---|
+| D4-14 | QA-only isolated cadence produced three snapshots at successful ticks `2 → 3 → 4`, each `tickSeconds=60`, `failedTicks=0`, and `consecutiveFailures=0`; production/default cadence was unchanged. |
+| D4-15 | One `che_요양` request is intake `202`, then same-ID reservation/execution `200`; one durable marker row, exactly matching XRANGE payload SHA, XINFO group/consumer, same-entry XACK, and XPENDING `0` prove the Redis wake/ACK path. |
+| D4-16 | Valid catalog admission did not false-deny; authoritative injury/experience/dedication changed `0/0/0 → 0/10/7`; `turnCompleted` led to front-info refresh and rendered `명성=전무 (10)`, `계급=30품관 (7)`. |
+| D4-17 | Fresh `ScenarioImporterIT` XML is 14 tests with failures/errors/skips `0`; the mid-import rollback then successful retry regression remains the atomic-seed proof. |
+
+The earlier independent `fix-required` findings were remediated: raw `Instant`
+marker binding uses `Timestamp.from`, cleanup removes all three run volumes and
+five run aliases while preserving source images, request phase HTTP/ID equality
+is asserted, and the operational timeout is `600000ms` with an override. The
+final independent review is cleared. Focused evidence also includes
+`RedisCommandStreamIT` 3/0/0/0, `IntakeResultChannelTest` 4/0/0/0,
+`RealtimeRelayIT` 1/0/0/0, marker unit 4/4 plus Testcontainers IT 1/1 skip 0,
+web typecheck, and shell contracts. Fresh rerun: shell syntax+timeout contract
+PASS, web typecheck PASS, `ScenarioMapSeedIT` 8/0/0/0 (`BUILD SUCCESSFUL` in
+2m), and `CommandReserveServiceTest` 4/0/0/0 plus IT 1/0/0/0 (`BUILD
+SUCCESSFUL` in 1m 22s).
+
+QUESTION: 9 EventSource opens / 8 `turnCompleted`; reconnect/remount versus
+duplicate subscription is UNKNOWN. This is non-blocking for stale-refresh
+acceptance only and is not an operational-load conclusion.
+
+`scripts/agent/verify-changes.sh --run` executed once: five-module Gradle
+`BUILD SUCCESSFUL in 12m 55s`, 552 suites / 4,763 tests / failures 0 / errors
+0 / skipped 1; `web/game` typecheck PASS and Vitest 46 files / 232 tests PASS;
+`git diff --check` PASS. Its exit 1 is only strict checker baselines: the
+user-owned `.codex/config.toml` personal model pin and historical 2026-07-27
+review missing one anchored Scope/Verdict under the current rule.
+
+Not executed: `tools/parity/gate.sh backend`, production deploy/EC2,
+commit/push/PR/merge, or Jira transition. A future PR follows ADR-LITE-026:
+mention the review agent in the PR conversation for three separate rounds, fix
+and reverify every round, then merge only with explicit human approval.
+
+## Predeploy Go conditions closeout (OPENSAM-34, D4-31~35)
+
+Status: the local manual-only grader, hermetic contract, runbook, and final
+independent review are complete/cleared. This is not an actual production
+observation. Jira remains `할 일`; the `ec2-prod` self-hosted runner was observed
+offline in both this and the sibling `opensamguk-docker` repository, so every
+D4-31~35 production result is blocked/incomplete.
+
+| ID | local executable contract | actual-production status |
+|---|---|---|
+| D4-31 | Safe server image pins and running component images must match an explicit immutable full SHA or canonical tag. | Blocked: no authorized runner observation. |
+| D4-32 | Safe and authoritative scenario codes must agree for one positive `world_id`, including `ng_games.env.scenario_code`. | Blocked: no authorized runner/DB observation. |
+| D4-33 | Manual `ec2-prod` runner metadata, five containers, and service health must pass. | Blocked: runner observed offline. |
+| D4-34 | Root and Docker-root `df -Pk` headroom must meet operator-approved GiB and percent thresholds. | Blocked: operator values and authorized runner observation absent. |
+| D4-35 | Read-only Flyway/current-version/V29/index validity and exact world-scoped index shape must pass. | Blocked: no authorized production DB read. |
+
+The workflow is `workflow_dispatch` only; it requires `server`, immutable
+`expected_tag`, `expected_scenario_code`, positive `world_id`, and
+operator-approved `min_free_gib`/`min_free_percent`, all without defaults. It
+may run only after EC2 is resumed and the user explicitly approves the exact
+dispatch. See
+`docs/superpowers/runbooks/2026-07-31-opensam-34-predeploy-go-checklist.md` for
+the exact validation, redaction, PASS/NO-GO rules, and post-run handling.
+
+Local evidence: both shell syntax checks and the hermetic contract passed; YAML
+parse and scoped untracked-file whitespace checks passed; fresh Gradle migration
+results are V29 `2/0/0/0` and V32 `9/0/0/0`, `BUILD SUCCESSFUL in 2m 2s`.
+`scripts/agent/verify-changes.sh` classification ran but `--run` was not rerun
+for OPENSAM-34. The first independent `fix-required` findings were remediated,
+and the final re-review is `cleared`; neither fact dispatches a workflow,
+changes Jira, or grants deployment/merge approval. ADR-LITE-026 still governs
+any future PR with three separate review-agent conversation rounds, remediation
+and revalidation, and explicit human merge approval.
+
 ## 평가 계획
 
 평가는 기능 목록 점검이 아니라 “게임이 시작되고, 유저가 여러 명 들어오고, 여러 국가가 생기고, 커맨드가 누적되어, 끝 상태까지 가는가”를 보는 방식으로 고정한다.

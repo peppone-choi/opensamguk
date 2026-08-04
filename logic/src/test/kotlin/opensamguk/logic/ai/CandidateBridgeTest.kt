@@ -115,6 +115,44 @@ class CandidateBridgeTest {
         )
     }
 
+    @Test fun `candidate verdict preserves the first deny reason and canonical args`() {
+        val raw = linkedMapOf<String, Any?>(
+            "destGeneralID" to 1L,
+            "destCityID" to 6L,
+            "ignored" to "drop",
+        )
+
+        val verdict = candidateVerdict("che_발령", raw, ctx(), view(), resolve)
+
+        assertEquals(
+            CandidateVerdict.Deny(
+                reason = "본인입니다",
+                canonicalArgs = linkedMapOf("destGeneralID" to 1, "destCityID" to 6),
+            ),
+            verdict,
+        )
+        assertEquals(1L, raw["destGeneralID"], "the raw emit remains untouched")
+        assertTrue(raw.containsKey("ignored"))
+    }
+
+    @Test fun `invalid arg verdict carries the PHP reason and partial canonical args`() {
+        val verdict = candidateVerdict(
+            "che_발령",
+            linkedMapOf("destGenaralID" to 3, "destCityID" to 6L),
+            ctx(),
+            view(),
+            resolve,
+        )
+
+        assertEquals(
+            CandidateVerdict.Deny(
+                reason = INVALID_ARG_REASON,
+                canonicalArgs = linkedMapOf("destGeneralID" to null, "destCityID" to 6),
+            ),
+            verdict,
+        )
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // (2) the argTest gate runs BEFORE constraints and rejects a missing required key
     //     — the CheBallyeong `destGenaralID` typo → always-null (R-BRIDGE §4, the PHP latent bug).

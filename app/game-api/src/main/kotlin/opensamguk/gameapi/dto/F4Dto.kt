@@ -1,6 +1,7 @@
 package opensamguk.gameapi.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import opensamguk.logic.actions.CommandFormSpec
 import java.time.Instant
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -479,6 +480,7 @@ data class ChiefCommand(
      * 인식 가능한 인자 키가 없으면 null(인자 없는 명령 또는 페이지-고정 인자 명령).
      */
     val argType: String? = null,
+    val form: CommandFormSpec? = null,
     /**
      * deny 사유(possible=false일 때). PHP-충실 reason 문자열.
      * AvailableCommandsController.AvailableCommand.reason 미러.

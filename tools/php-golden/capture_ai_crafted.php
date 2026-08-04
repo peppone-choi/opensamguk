@@ -77,9 +77,10 @@ require __DIR__ . '/RandUtilDrawRecorder.php';
 
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_WARNING & ~E_USER_DEPRECATED & ~E_STRICT);
 
-$opts   = getopt('', ['out-dir:', 'family:']);
+$opts   = getopt('', ['out-dir:', 'family:', 'expected-hidden-seed:']);
 $outDir = $opts['out-dir'] ?? (__DIR__ . '/../../logic/src/test/resources/golden/p5');
 $family = $opts['family'] ?? 'ALL';
+$expectedHiddenSeed = $opts['expected-hidden-seed'] ?? '71adaa4df4012a20c0883beba4810681';
 if (!is_dir($outDir)) { mkdir($outDir, 0775, true); }
 
 $db = DB::db();
@@ -92,8 +93,8 @@ function hardAssert(bool $cond, string $msg): void {
 $hiddenSeed = UniqueConst::$hiddenSeed;
 hardAssert(preg_match('/^[0-9a-f]{32}$/', $hiddenSeed) === 1,
     "hiddenSeed is not 32-char lowercase hex (install scenario_1010 first): {$hiddenSeed}");
-hardAssert($hiddenSeed === '71adaa4df4012a20c0883beba4810681',
-    "hiddenSeed {$hiddenSeed} != the manifest_ai.json GT1 install hex — re-install scenario_1010 + re-pin GT1 first; the crafted goldens are only valid for the SAME install");
+hardAssert($hiddenSeed === $expectedHiddenSeed,
+    "hiddenSeed {$hiddenSeed} != expected {$expectedHiddenSeed} — pass the current GT1 capture seed explicitly; never mix installs");
 
 $gameStor = KVStorage::getStorage($db, 'game_env');
 [$startYear, $baseYear, $baseMonth, $turnterm] = $gameStor->getValuesAsArray(
@@ -194,6 +195,8 @@ function dumpCraftedWorld($db, string $family, string $hiddenSeed, string $note,
  * ─────────────────────────────────────────────────────────────────────────────────────── */
 function captureGeneral($db, int $generalId, string $hiddenSeed, \ReflectionProperty $rpAiRng,
                         string $family, int $seq, string $outDir, array $opts = []): array {
+    $captureNationFailLog = (bool)($opts['_captureNationFailLog'] ?? false);
+    unset($opts['_captureNationFailLog']);
     $gameStor = KVStorage::getStorage($db, 'game_env');
     $env = $gameStor->getAll();
     [$year, $month] = $gameStor->getValuesAsArray(['year', 'month']);
@@ -218,6 +221,12 @@ function captureGeneral($db, int $generalId, string $hiddenSeed, \ReflectionProp
         $nationCommandObj = buildNationCommandClass($nationCommand, $general, $env, $lastNationTurn, $nationArg);
 
         $chosenNation = $ai->chooseNationTurn($nationCommandObj);
+        $nationFailLogs = null;
+        if ($captureNationFailLog) {
+            $rpLogs = new \ReflectionProperty(ActionLogger::class, 'generalActionLog');
+            if (PHP_VERSION_ID < 80100) { $rpLogs->setAccessible(true); }
+            $nationFailLogs = $rpLogs->getValue($general->getLogger());
+        }
         $nationTurnOut = [
             'reservedAction'       => $nationCommand,
             'chosenActionCode'     => $chosenNation->getRawClassName(true),
@@ -225,6 +234,9 @@ function captureGeneral($db, int $generalId, string $hiddenSeed, \ReflectionProp
             'reason'               => $chosenNation->reason,
             'drawCountAtNationEnd' => $recorder->getDrawCount(),
         ];
+        if ($captureNationFailLog) {
+            $nationTurnOut['failLogs'] = $nationFailLogs;
+        }
     }
 
     // ── general pass (continues the SAME shared rng stream) ──
@@ -304,6 +316,21 @@ function restoreCityFront($db, array $rows): void {
 }
 function snapshotGeneralRow($db, int $gid): array {
     return $db->queryFirstRow('SELECT * FROM general WHERE `no` = %i', $gid);
+}
+
+function snapshotNationTurn($db, int $nationID, int $officerLevel): array {
+    return $db->queryFirstRow(
+        'SELECT action, arg FROM nation_turn WHERE nation_id = %i AND officer_level = %i AND turn_idx = 0',
+        $nationID,
+        $officerLevel
+    );
+}
+
+function restoreNationTurn($db, int $nationID, int $officerLevel, array $row): void {
+    $db->update('nation_turn', [
+        'action' => $row['action'],
+        'arg' => $row['arg'],
+    ], 'nation_id = %i AND officer_level = %i AND turn_idx = 0', $nationID, $officerLevel);
 }
 
 $capturedFamilies = [];
@@ -515,6 +542,49 @@ function craft_nation_pass_month($db, string $hiddenSeed, \ReflectionProperty $r
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
+ * FAMILY: nation-deny-log — G12 exact reserved nation-command failure envelope.
+ *
+ * Faithful mutation: replace only the ruler's turn_idx=0 nation reservation with self-target 발령.
+ * che_발령::getFailString has the target-name override and the self-target constraint deterministically
+ * denies with `본인입니다`. The ActionLogger buffer is observed through reflection without flushing.
+ * The original reservation is restored verbatim before returning.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════ */
+function craft_nation_deny_log($db, string $hiddenSeed, \ReflectionProperty $rpAiRng, string $outDir): bool {
+    fwrite(STDERR, "[nation-deny-log]\n");
+    $lordGid = 152; $nationID = 1; $officerLevel = 12;
+    $savedTurn = snapshotNationTurn($db, $nationID, $officerLevel);
+    hardAssert((bool)$savedTurn, 'missing ruler nation_turn row for G12 capture');
+
+    try {
+        $db->update('nation_turn', [
+            'action' => '발령',
+            'arg' => Json::encode(['destGeneralID' => $lordGid, 'destCityID' => 3]),
+        ], 'nation_id = %i AND officer_level = %i AND turn_idx = 0', $nationID, $officerLevel);
+
+        dumpCraftedWorld($db, 'nation-deny-log', $hiddenSeed,
+            'Ruler 하진 reserves self-target 발령; the full gate denies with 본인입니다 and che_발령::getFailString appends the target name. Observe the ActionLogger buffer without flush, then restore the nation_turn row verbatim.',
+            $outDir);
+        $fx = captureGeneral($db, $lordGid, $hiddenSeed, $rpAiRng, 'nation-deny-log', 0, $outDir, [
+            '_captureNationFailLog' => true,
+        ]);
+    } finally {
+        // The legacy tables use non-transactional engines in the capture image.
+        // A finally restore is therefore the isolation boundary even when capture/assertion throws.
+        restoreNationTurn($db, $nationID, $officerLevel, $savedTurn);
+    }
+    $restoredTurn = snapshotNationTurn($db, $nationID, $officerLevel);
+    hardAssert(
+        $restoredTurn['action'] === $savedTurn['action'] && $restoredTurn['arg'] === $savedTurn['arg'],
+        'failed to restore the ruler nation_turn row byte-for-byte'
+    );
+
+    $logs = $fx['nationTurn']['failLogs'] ?? [];
+    $expected = '<C>●</>1월:본인입니다 <Y>ⓝ하진</> 발령 실패. <1>' .
+        General::createObjFromDB($lordGid)->getTurnTime(General::TURNTIME_HM) . '</>';
+    return count($logs) === 1 && $logs[0] === $expected;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
  * FAMILY: war-출병 — advance clock past startyear+2,5 AND set diplomacy to 교전 (state 0) so
  *   calcDiplomacyState yields d전쟁 + attackable; then a front-2 city + train/atmos/crew lets
  *   do출병 draw choice(attackableCities) (+ optional nextBool(0.7) rice gate).
@@ -674,6 +744,7 @@ $families = [
     'nation-pass-m3'   => fn() => craft_nation_pass_month($db, $hiddenSeed, $rpAiRng, $outDir, 3),
     'nation-pass-m6'   => fn() => craft_nation_pass_month($db, $hiddenSeed, $rpAiRng, $outDir, 6),
     'nation-pass-m12'  => fn() => craft_nation_pass_month($db, $hiddenSeed, $rpAiRng, $outDir, 12),
+    'nation-deny-log'  => fn() => craft_nation_deny_log($db, $hiddenSeed, $rpAiRng, $outDir),
     'war-출병'         => fn() => craft_war_출병($db, $hiddenSeed, $rpAiRng, $outDir),
     'genfound-방랑군'  => fn() => craft_genfound_방랑군($db, $hiddenSeed, $rpAiRng, $outDir),
     'genfound-선양'    => fn() => craft_genfound_선양($db, $hiddenSeed, $rpAiRng, $outDir),

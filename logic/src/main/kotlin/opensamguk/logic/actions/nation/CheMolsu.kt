@@ -3,6 +3,8 @@ package opensamguk.logic.actions.nation
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.beChief
@@ -48,6 +50,13 @@ class CheMolsu(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipeline) : 
     override val category: String get() = "인사"
     override val argsSchema: Map<String, Any?> get() =
         linkedMapOf("isGold" to "bool", "amount" to "int", "destGeneralID" to "int")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("isGold", "bool", "toggle", "resourceKinds"),
+            CommandFieldSpec("amount", "int", "amount", min = 100, max = GameConst.maxResourceActionAmount),
+            CommandFieldSpec("destGeneralID", "int", "select", "generals"),
+        ),
+    )
 
     override fun getPreReqTurn(): Int = 0
 

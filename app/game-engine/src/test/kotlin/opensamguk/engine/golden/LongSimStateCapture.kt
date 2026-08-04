@@ -20,6 +20,8 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.infra.persistence.MetaJson
+import opensamguk.logic.tick.ServerClock
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
@@ -34,10 +36,10 @@ object LongSimStateCapture {
         .appendPattern("yyyy-MM-dd HH:mm:ss")
         .appendFraction(ChronoField.MICRO_OF_SECOND, 6, 6, true)
         .toFormatter()
-        .withZone(java.time.ZoneOffset.UTC)
+        .withZone(ServerClock.SERVER_ZONE)
 
     fun captureState(world: InMemoryTurnWorld, baselineState: JsonObject): JsonObject {
-        val gameEnv = captureGameEnv(world)
+        val gameEnv = captureGameEnv(world, baselineState["game_env"]!!.jsonObject)
         return buildJsonObject {
             put("game_env", gameEnv)
             put("nation", captureTable(world.listNations().sortedBy { it.id }, baselineState["nation"]!!.jsonArray, ::nationValue))
@@ -48,20 +50,26 @@ object LongSimStateCapture {
         }
     }
 
-    private fun captureGameEnv(world: InMemoryTurnWorld): JsonObject {
+    private fun captureGameEnv(world: InMemoryTurnWorld, baselineGameEnv: JsonObject): JsonObject {
         val state = world.getState()
         val meta = state.meta
         return buildJsonObject {
-            put("year", encodeValue(state.currentYear))
-            put("month", encodeValue(state.currentMonth))
-            put("startyear", encodeValue(meta["startYear"] as? Number ?: state.currentYear))
-            put("starttime", encodeValue(formatPhpInstant(meta["startTime"]) ?: formatPhpInstant(state.lastTurnTime)))
-            put("turnterm", encodeValue(state.tickSeconds / 60))
-            put("develcost", encodeValue(meta["develcost"] as? Number ?: 0))
-            put("isunited", encodeValue(meta["isunited"] as? Number ?: 0))
-            put("turntime", encodeValue(formatPhpInstant(state.lastTurnTime)))
-            put("scenario", encodeValue(meta["scenario"] as? Number ?: 0))
-            put("map", encodeValue(meta["map"] as? String))
+            for (key in baselineGameEnv.keys) {
+                val value = when (key) {
+                    "year" -> state.currentYear
+                    "month" -> state.currentMonth
+                    "startyear" -> meta["startYear"] as? Number ?: state.currentYear
+                    "starttime" -> formatPhpInstant(meta["startTime"]) ?: formatPhpInstant(state.lastTurnTime)
+                    "turnterm" -> meta["turnterm"] as? Number ?: state.tickSeconds / 60
+                    "develcost" -> meta["develcost"] as? Number ?: 0
+                    "isunited" -> meta["isunited"] as? Number ?: 0
+                    "turntime" -> formatPhpInstant(state.lastTurnTime)
+                    "scenario" -> meta["scenario"] as? Number ?: 0
+                    "map" -> meta["map"] as? String
+                    else -> meta[key]
+                }
+                put(key, encodeValue(value))
+            }
         }
     }
 
@@ -126,8 +134,47 @@ object LongSimStateCapture {
             "book" -> (g.role.items.book ?: "None")
             "item" -> (g.role.items.item ?: "None")
             "owner" -> (meta["owner"] ?: 0)
+            "killturn" -> {
+                val internal = (meta["killturn"] as? Number)?.toInt()
+                val offset = (meta[LongSimKillturnOracle.OFFSET_META_KEY] as? Number)?.toInt() ?: 0
+                internal?.minus(offset)
+            }
+            "last_turn" -> when (val value = meta[column]) {
+                is String -> value
+                null -> null
+                else -> MetaJson.encode(value)
+            }
+            "aux" -> captureGeneralAux(meta)
+            "penalty" -> when (val value = meta[column]) {
+                is String -> value
+                null -> null
+                else -> MetaJson.encode(value)
+            }
             else -> meta[column]
         }
+    }
+
+    private fun captureGeneralAux(meta: Map<String, Any?>): Any? {
+        val maxDomesticCritical = meta["max_domestic_critical"]
+        val rawAux = meta["aux"]
+        if (maxDomesticCritical == null) {
+            return when (rawAux) {
+                is String -> rawAux
+                null -> null
+                else -> MetaJson.encode(rawAux)
+            }
+        }
+
+        val merged = linkedMapOf<String, Any?>("max_domestic_critical" to maxDomesticCritical)
+        val aux = when (rawAux) {
+            is Map<*, *> -> rawAux.entries.associateTo(LinkedHashMap()) { it.key.toString() to it.value }
+            is String -> runCatching { MetaJson.decode(rawAux) }.getOrDefault(linkedMapOf())
+            else -> linkedMapOf()
+        }
+        for ((key, value) in aux) {
+            if (key != "max_domestic_critical") merged[key] = value
+        }
+        return MetaJson.encode(merged)
     }
 
     private fun cityValue(entity: Any, column: String, meta: Map<String, Any?>): Any? {
@@ -154,6 +201,9 @@ object LongSimStateCapture {
             "state" -> c.state
             "region" -> c.region
             "trade" -> c.trade
+            "term" -> c.term
+            "officer_set" -> c.officerSet
+            "conflict" -> c.conflict
             else -> meta[column]
         }
     }
@@ -171,13 +221,22 @@ object LongSimStateCapture {
             "tech" -> n.tech
             "level" -> n.level
             "type" -> n.typeCode
+            "aux" -> when (val value = meta[column]) {
+                is String -> value
+                null -> null
+                else -> MetaJson.encode(value)
+            }
             else -> meta[column]
         }
     }
 
     private fun captureDiplomacy(world: InMemoryTurnWorld, baselineRows: JsonArray): JsonArray {
         val columns = if (baselineRows.isEmpty()) listOf("me", "you", "state", "term", "dead") else baselineRows.first().jsonObject.keys.toList()
-        val rows = world.listDiplomacy().sortedWith(compareBy({ it.fromNationId }, { it.toNationId }))
+        val rows = if ("no" in columns) {
+            world.listDiplomacy().sortedBy { (it.meta["no"] as? Number)?.toInt() ?: Int.MAX_VALUE }
+        } else {
+            world.listDiplomacy()
+        }
         return buildJsonArray {
             for (d in rows) {
                 add(buildJsonObject {
@@ -205,7 +264,7 @@ object LongSimStateCapture {
                 rows.add(buildJsonObject {
                     put("namespace", encodeValue(nation.id))
                     put("key", encodeValue(key.toString()))
-                    put("value", encodeValue(value))
+                    put("value", encodeValue(MetaJson.encode(value)))
                 })
             }
         }

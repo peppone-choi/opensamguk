@@ -1,5 +1,6 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.world.WorldId
 import opensamguk.common.wire.DiploLetterResult
 import opensamguk.common.wire.GeneralBoolResult
 import opensamguk.common.wire.SelectPoolActionResult
@@ -17,6 +18,7 @@ import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.read.DiplomacyLetterReadRow
 import opensamguk.infra.read.DiplomacyLetterRepository
+import opensamguk.infra.read.SelectPoolOwnerProfile
 import opensamguk.infra.read.SelectPoolReadRow
 import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.logic.util.jsonDecode
@@ -196,7 +198,7 @@ class LiveGapClosureHandlerTest {
     }
 
     @Test
-    fun `selectPoolPick creates a general from a reserved pool row`() {
+    fun `selectPoolPick is fail closed for a valid replay without mutations`() {
         val world = world(generals = emptyList())
         val recorder = ChangeRecorder()
         val repo = FakeSelectPoolRepo(
@@ -211,8 +213,6 @@ class LiveGapClosureHandlerTest {
                     "leadership" to 70,
                     "strength" to 80,
                     "intel" to 60,
-                    "politics" to 33,
-                    "charm" to 44,
                 ),
             ),
         )
@@ -226,25 +226,23 @@ class LiveGapClosureHandlerTest {
                     leadership = 70,
                     strength = 55,
                     intel = 40,
+                    personalityName = "che_의협",
+                    useOwnPicture = true,
                 ),
             ),
         )
 
-        assertEquals(true, result.ok)
-        val created = world.listGenerals().single()
-        assertEquals(result.generalId, created.id)
-        assertEquals("마초", created.name)
-        assertEquals(70, created.stats.leadership)
-        assertEquals(55, created.stats.strength)
-        assertEquals(40, created.stats.intelligence)
-        assertEquals(33, created.stats.politics)
-        assertEquals(44, created.stats.charm)
-        assertEquals(77.toString(), created.userId)
-        assertEquals("pool-a", recorder.selectPoolMutations().single().uniqueName)
+        assertEquals("selectPoolPick", result.type)
+        assertEquals(false, result.ok)
+        assertEquals(0, result.generalId)
+        assertEquals(null, result.reason)
+        assertTrue(world.listGenerals().isEmpty())
+        assertTrue(world.peekLogs().isEmpty())
+        assertTrue(recorder.selectPoolMutations().isEmpty())
         val payload = flush(world, recorder)
-        assertEquals(listOf(created.id), payload.createdGenerals.map { it.columns["id"] })
-        assertEquals(created.id, payload.generalAccessLogUpserts.single().generalId)
-        assertEquals(77L, payload.generalAccessLogUpserts.single().userId)
+        assertTrue(payload.createdGenerals.isEmpty())
+        assertTrue(payload.updatedGenerals.isEmpty())
+        assertTrue(payload.generalAccessLogUpserts.isEmpty())
     }
 
     @Test
@@ -268,32 +266,7 @@ class LiveGapClosureHandlerTest {
     }
 
     @Test
-    fun `selectPoolPick denies when owner user identity is absent`() {
-        val world = world(generals = emptyList())
-        val recorder = ChangeRecorder()
-        val repo = FakeSelectPoolRepo(
-            SelectPoolReadRow(
-                uniqueName = "pool-a",
-                ownerUserId = 77,
-                reservedUntil = t0,
-                statEditable = true,
-                info = linkedMapOf("generalName" to "마초", "cityId" to 5, "leadership" to 70, "strength" to 80, "intel" to 60),
-            ),
-        )
-
-        val result = assertIs<SelectPoolActionResult>(
-            dispatcher(world, recorder, selectPoolRepo = repo).dispatch(
-                TurnDaemonCommand.SelectPoolPick(generalId = 0, uniqueName = "pool-a"),
-            ),
-        )
-
-        assertEquals(false, result.ok)
-        assertEquals("멤버 정보를 가져오지 못했습니다.", result.reason)
-        assertTrue(world.listGenerals().isEmpty())
-    }
-
-    @Test
-    fun `selectPoolUpdate applies the selected pool info to an existing general`() {
+    fun `selectPoolUpdate applies pool fields while ignoring forged custom options`() {
         val world = world(listOf(general(30, "구명", userId = "77", officerLevel = 0, politics = 42, charm = 43, meta = linkedMapOf("permission" to "normal"))))
         val recorder = ChangeRecorder()
         val repo = FakeSelectPoolRepo(
@@ -303,12 +276,27 @@ class LiveGapClosureHandlerTest {
                 reservedUntil = t0,
                 statEditable = false,
                 generalId = 30,
-                info = linkedMapOf("generalName" to "신명", "leadership" to 77, "strength" to 66, "intel" to 55, "ego" to "che_패권"),
+                info = linkedMapOf(
+                    "generalName" to "신명",
+                    "leadership" to 77,
+                    "strength" to 66,
+                    "intel" to 55,
+                    "ego" to "che_패권",
+                    "ownerName" to "후보 위조 이름",
+                ),
             ),
+            ownerProfile = SelectPoolOwnerProfile("계정닉", "member.png", 1, 1),
         )
 
         val result = assertIs<SelectPoolActionResult>(
-            dispatcher(world, recorder, selectPoolRepo = repo).dispatch(TurnDaemonCommand.SelectPoolUpdate(generalId = 30, uniqueName = "pool-b")),
+            dispatcher(world, recorder, selectPoolRepo = repo).dispatch(
+                TurnDaemonCommand.SelectPoolUpdate(
+                    generalId = 30,
+                    uniqueName = "pool-b",
+                    personalityName = "che_왕좌",
+                    useOwnPicture = true,
+                ),
+            ),
         )
 
         assertEquals(true, result.ok)
@@ -318,7 +306,15 @@ class LiveGapClosureHandlerTest {
         assertEquals(42, updated.stats.politics)
         assertEquals(43, updated.stats.charm)
         assertEquals("che_패권", updated.role.personality)
+        assertEquals("계정닉", updated.meta["owner_name"])
         assertEquals("pool-b", recorder.selectPoolMutations().single().uniqueName)
+        assertEquals(
+            listOf(
+                "장수를 <Y>구명</>에서 <Y>신명</>으로 변경",
+                "<Y>계정닉</>이 장수를 <Y>구명</>에서 <Y>신명</>으로 변경합니다.",
+            ),
+            world.peekLogs().map { it.text },
+        )
         assertEquals(listOf(30), flush(world, recorder).updatedGenerals.map { it.id })
     }
 
@@ -355,7 +351,7 @@ class LiveGapClosureHandlerTest {
     }
 
     @Test
-    fun `selectPoolPick denies an expired reserved token`() {
+    fun `selectPoolPick fails closed before checking an expired reserved token`() {
         val world = world(generals = emptyList())
         val recorder = ChangeRecorder()
         val repo = FakeSelectPoolRepo(
@@ -375,8 +371,10 @@ class LiveGapClosureHandlerTest {
         )
 
         assertEquals(false, result.ok)
-        assertEquals("유효한 장수 목록이 없습니다.", result.reason)
+        assertEquals(null, result.reason)
         assertTrue(world.listGenerals().isEmpty())
+        assertTrue(world.peekLogs().isEmpty())
+        assertTrue(recorder.selectPoolMutations().isEmpty())
     }
 
     @Test
@@ -420,11 +418,15 @@ class LiveGapClosureHandlerTest {
         auxJson = "{\"src\":{\"nationName\":\"촉\"},\"dest\":{\"nationName\":\"위\"}}",
     )
 
-    private class FakeDiploRepo(private val letters: Map<Int, DiplomacyLetterReadRow>) : DiplomacyLetterRepository(noopNamedJdbc()) {
+    private class FakeDiploRepo(private val letters: Map<Int, DiplomacyLetterReadRow>) : DiplomacyLetterRepository(noopNamedJdbc(), WorldId(1)) {
         override fun findLetter(letterNo: Int): DiplomacyLetterReadRow? = letters[letterNo]
     }
 
-    private class FakeSelectPoolRepo(private var row: SelectPoolReadRow?) : SelectPoolRepository(noopNamedJdbc()) {
+    private class FakeSelectPoolRepo(
+        private var row: SelectPoolReadRow?,
+        private val ownerProfile: SelectPoolOwnerProfile? = SelectPoolOwnerProfile("테스터", "member.png", 1, 1),
+        private val options: Set<String> = setOf("stat", "ego", "picture"),
+    ) : SelectPoolRepository(noopNamedJdbc(), WorldId(1)) {
         override fun findPoolEntry(uniqueName: String, ownerUserId: Int, now: Instant): SelectPoolReadRow? =
             row?.takeIf { it.uniqueName == uniqueName && it.ownerUserId == ownerUserId }
 
@@ -434,6 +436,10 @@ class LiveGapClosureHandlerTest {
         override fun listUniqueNames(): Set<String> = setOfNotNull(row?.uniqueName)
 
         override fun targetGeneralPool(): String = "RandomNameGeneral"
+
+        override fun allowedCustomOptions(): Set<String> = options
+
+        override fun findOwnerProfile(ownerUserId: Int): SelectPoolOwnerProfile? = ownerProfile
 
     }
 

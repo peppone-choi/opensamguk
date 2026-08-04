@@ -56,6 +56,19 @@ val GATE_EXEMPT_REASONS: Set<String> = linkedSetOf("do집합", "do요양", "사�
 /** Whether the firing `do<한글>` reason bypasses [candidateAllowed] (G14). */
 fun isGateExempt(reason: String): Boolean = reason in GATE_EXEMPT_REASONS
 
+sealed interface CandidateVerdict {
+    val canonicalArgs: Map<String, Any?>
+
+    data class Allow(
+        override val canonicalArgs: Map<String, Any?>,
+    ) : CandidateVerdict
+
+    data class Deny(
+        val reason: String,
+        override val canonicalArgs: Map<String, Any?>,
+    ) : CandidateVerdict
+}
+
 /**
  * The AI candidate gate — IDENTICAL to `ReservedTurnHandler.handle`'s FULL-mode constraint call,
  * fronted by the `argTest` gate.
@@ -74,20 +87,41 @@ fun candidateAllowed(
     ctx: ConstraintContext,
     view: StateView,
     resolve: (String) -> GeneralActionDefinition,
-): Boolean {
+): Boolean = candidateVerdict(actionCode, rawArgs, ctx, view, resolve) is CandidateVerdict.Allow
+
+fun candidateVerdict(
+    actionCode: String,
+    rawArgs: Map<String, Any?>,
+    ctx: ConstraintContext,
+    view: StateView,
+    resolve: (String) -> GeneralActionDefinition,
+): CandidateVerdict {
     val def = resolve(actionCode)
 
     // (1) argTest / isArgValid FIRST — single canonicalization (M2). The RAW map is not mutated.
-    val canonical = def.parseArgs(rawArgs)
-    if (!argValid(def, canonical)) return false
+    val canonical = LinkedHashMap(def.parseArgs(rawArgs))
+    if (!argValid(def, canonical)) return CandidateVerdict.Deny(INVALID_ARG_REASON, canonical)
 
     // (2) Constraint::testAll(fullConditionConstraints) — FULL mode, fresh ctx, list order.
-    val fullCtx = ctx.copy(args = canonical, mode = ConstraintMode.FULL)
+    val fullCtx = ctx.copy(
+        args = canonical,
+        destGeneralId = canonical.intArg("destGeneralID") ?: ctx.destGeneralId,
+        destCityId = canonical.intArg("destCityID") ?: ctx.destCityId,
+        destNationId = canonical.intArg("destNationID") ?: ctx.destNationId,
+        mode = ConstraintMode.FULL,
+    )
     val result = evaluateConstraints(def.buildConstraints(fullCtx), fullCtx, view)
 
     // (3) testPostReqTurn tail — no-op for the P5 emitted set (every emitted code has postReqTurn==0).
-    return result is ConstraintResult.Allow
+    return when (result) {
+        ConstraintResult.Allow -> CandidateVerdict.Allow(canonical)
+        is ConstraintResult.Deny -> CandidateVerdict.Deny(result.reason, canonical)
+        is ConstraintResult.Unknown ->
+            error("FULL candidate gate returned Unknown for $actionCode: ${result.missing}")
+    }
 }
+
+private fun Map<String, Any?>.intArg(key: String): Int? = (this[key] as? Number)?.toInt()
 
 /**
  * PHP `isArgValid()` analogue: every key declared in [GeneralActionDefinition.argsSchema] must be

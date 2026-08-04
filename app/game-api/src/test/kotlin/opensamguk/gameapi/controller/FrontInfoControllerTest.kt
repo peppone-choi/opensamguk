@@ -66,6 +66,7 @@ class FrontInfoControllerTest {
         serverName: String = "",
         serverGeneration: String = "",
         serverId: String = "",
+        gameKv: opensamguk.infra.read.GameKvRepository? = null,
     ): MockMvc =
         MockMvcBuilders.standaloneSetup(
             FrontInfoController(
@@ -88,6 +89,7 @@ class FrontInfoControllerTest {
                 serverGeneration,
                 serverId,
                 accessLogs,
+                gameKv,
             ),
         )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
@@ -203,6 +205,19 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.global.generation").value(7))
             .andExpect(jsonPath("$.global.serverCnt").value(7))
             .andExpect(jsonPath("$.global.serverId").value("s1"))
+    }
+
+    @Test
+    fun `global exposes durable GAME plock as serverLocked`() {
+        seedWorld()
+        val gameKv = mock(opensamguk.infra.read.GameKvRepository::class.java)
+        `when`(gameKv.findByTable("game_env")).thenReturn(
+            listOf(opensamguk.infra.entity.GameKvEntity("game_env", "game_env", "plock", "1")),
+        )
+
+        mockMvc(gameKv = gameKv).perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.serverLocked").value(true))
     }
 
     @Test

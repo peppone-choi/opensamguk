@@ -1,0 +1,3775 @@
+{
+  "schema": "opensamguk.v2.terrain-core.v2",
+  "status": "STATIC_TERRAIN_CORE_CANDIDATE",
+  "sourceProvenance": {
+    "kind": "adopted-existing",
+    "origin": {
+      "kind": "adopted-existing",
+      "provider": null,
+      "model": null
+    },
+    "sourceSheets": [
+      {
+        "file": "ground-a.png",
+        "path": "assets/battle/v2/terrain/source/ground-a.png",
+        "grid": "2x2",
+        "artifact": {
+          "sha256": "18af89cb2c0fbcec1a31f9168ad134bce62fe5c49774b3fb25f6ca43a52e18f2",
+          "bytes": 2404042,
+          "ihdr": {
+            "width": 1254,
+            "height": 1254,
+            "bitDepth": 8,
+            "colorType": 2,
+            "compression": 0,
+            "filter": 0,
+            "interlace": 0
+          }
+        },
+        "chromaKey": null,
+        "origin": {
+          "kind": "adopted-existing",
+          "provider": null,
+          "model": null
+        }
+      },
+      {
+        "file": "ground-b.png",
+        "path": "assets/battle/v2/terrain/source/ground-b.png",
+        "grid": "2x2",
+        "artifact": {
+          "sha256": "0c82a86300e937ca1213fd1a8e14960e925b9cfbdc407668db1985941289c842",
+          "bytes": 2488929,
+          "ihdr": {
+            "width": 1254,
+            "height": 1254,
+            "bitDepth": 8,
+            "colorType": 2,
+            "compression": 0,
+            "filter": 0,
+            "interlace": 0
+          }
+        },
+        "chromaKey": null,
+        "origin": {
+          "kind": "adopted-existing",
+          "provider": null,
+          "model": null
+        }
+      },
+      {
+        "file": "route-hydro.png",
+        "path": "assets/battle/v2/terrain/source/route-hydro.png",
+        "grid": "2x2",
+        "artifact": {
+          "sha256": "07270d900bdeec12f792a8817bf38f4702992881aa94f5572c6f5b432faf1cbf",
+          "bytes": 3508364,
+          "ihdr": {
+            "width": 1254,
+            "height": 1254,
+            "bitDepth": 8,
+            "colorType": 2,
+            "compression": 0,
+            "filter": 0,
+            "interlace": 0
+          }
+        },
+        "chromaKey": null,
+        "origin": {
+          "kind": "adopted-existing",
+          "provider": null,
+          "model": null
+        }
+      },
+      {
+        "file": "hydro-crossing.png",
+        "path": "assets/battle/v2/terrain/source/hydro-crossing.png",
+        "grid": "2x2",
+        "artifact": {
+          "sha256": "3c0b49e7618f443c638b03d16c17e654115ca77148e17050cc6f2da0d3b19f99",
+          "bytes": 2637398,
+          "ihdr": {
+            "width": 1254,
+            "height": 1254,
+            "bitDepth": 8,
+            "colorType": 2,
+            "compression": 0,
+            "filter": 0,
+            "interlace": 0
+          }
+        },
+        "chromaKey": null,
+        "origin": {
+          "kind": "adopted-existing",
+          "provider": null,
+          "model": null
+        }
+      },
+      {
+        "file": "height-fort.png",
+        "path": "assets/battle/v2/terrain/source/height-fort.png",
+        "grid": "2x2",
+        "artifact": {
+          "sha256": "86cd8d6728f37abdfd9b9d02fd8432544b27707c2daef3548948d4c0bc030b04",
+          "bytes": 1993604,
+          "ihdr": {
+            "width": 1254,
+            "height": 1254,
+            "bitDepth": 8,
+            "colorType": 2,
+            "compression": 0,
+            "filter": 0,
+            "interlace": 0
+          }
+        },
+        "chromaKey": "#FF00FF",
+        "origin": {
+          "kind": "adopted-existing",
+          "provider": null,
+          "model": null
+        }
+      },
+      {
+        "file": "fort-crossing.png",
+        "path": "assets/battle/v2/terrain/source/fort-crossing.png",
+        "grid": "2x2",
+        "artifact": {
+          "sha256": "19770f63ae20676733444b4750c57fbf71d014d2d08a79c22df29790d1e26040",
+          "bytes": 1927010,
+          "ihdr": {
+            "width": 1254,
+            "height": 1254,
+            "bitDepth": 8,
+            "colorType": 2,
+            "compression": 0,
+            "filter": 0,
+            "interlace": 0
+          }
+        },
+        "chromaKey": "#FF00FF",
+        "origin": {
+          "kind": "adopted-existing",
+          "provider": null,
+          "model": null
+        }
+      },
+      {
+        "file": "vegetation.png",
+        "path": "assets/battle/v2/terrain/source/vegetation.png",
+        "grid": "2x2",
+        "artifact": {
+          "sha256": "76a9a5c24b9c66e2dc3db2519d067c70790fa7f646321294146ca6080cf9e46f",
+          "bytes": 2084408,
+          "ihdr": {
+            "width": 1254,
+            "height": 1254,
+            "bitDepth": 8,
+            "colorType": 2,
+            "compression": 0,
+            "filter": 0,
+            "interlace": 0
+          }
+        },
+        "chromaKey": "#FF00FF",
+        "origin": {
+          "kind": "adopted-existing",
+          "provider": null,
+          "model": null
+        }
+      },
+      {
+        "file": "props.png",
+        "path": "assets/battle/v2/terrain/source/props.png",
+        "grid": "2x2",
+        "artifact": {
+          "sha256": "02c98cb26be3a088a27e8afd5951d310b32c9c15dbfb89ee15a3fbb4b012c98c",
+          "bytes": 1700457,
+          "ihdr": {
+            "width": 1254,
+            "height": 1254,
+            "bitDepth": 8,
+            "colorType": 2,
+            "compression": 0,
+            "filter": 0,
+            "interlace": 0
+          }
+        },
+        "chromaKey": "#FF00FF",
+        "origin": {
+          "kind": "adopted-existing",
+          "provider": null,
+          "model": null
+        }
+      }
+    ]
+  },
+  "compiler": {
+    "script": {
+      "path": "tools/assets/compile-v2-terrain-core.mjs",
+      "fingerprint": "745ec5aa38c9307837c8b1b5796750b4d59ca2d53e84fb00391b021c891f7f68",
+      "artifact": {
+        "sha256": "745ec5aa38c9307837c8b1b5796750b4d59ca2d53e84fb00391b021c891f7f68",
+        "bytes": 33081
+      }
+    },
+    "cropProgram": {
+      "language": "python",
+      "fingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+      "artifact": {
+        "sha256": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+        "bytes": 750
+      }
+    },
+    "pythonInterpreter": {
+      "fingerprint": "291d07f4245d3496a8026d84e211c4084a85f5abaca0ad1871cba6e494620a19",
+      "artifact": {
+        "sha256": "291d07f4245d3496a8026d84e211c4084a85f5abaca0ad1871cba6e494620a19",
+        "bytes": 13592
+      }
+    },
+    "cutoutTool": {
+      "command": "sprite-gen cutout",
+      "fingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284",
+      "artifact": {
+        "sha256": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284",
+        "bytes": 203
+      }
+    },
+    "canonicalTransform": {
+      "schema": "opensamguk.v2.terrain-core.transform.v1",
+      "compiler": {
+        "scriptFingerprint": "745ec5aa38c9307837c8b1b5796750b4d59ca2d53e84fb00391b021c891f7f68",
+        "cropProgramFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+        "pythonInterpreterFingerprint": "291d07f4245d3496a8026d84e211c4084a85f5abaca0ad1871cba6e494620a19",
+        "cutoutToolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+      },
+      "output": {
+        "format": "PNG",
+        "cropOptimize": false
+      }
+    },
+    "canonicalTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114"
+  },
+  "artCellMeters": 4,
+  "sourceSheet": {
+    "width": 1254,
+    "height": 1254,
+    "columns": 2,
+    "rows": 2
+  },
+  "sourceCell": {
+    "width": 627,
+    "height": 627
+  },
+  "outputTile": {
+    "width": 627,
+    "height": 627
+  },
+  "layerOrder": [
+    "ground",
+    "route",
+    "water",
+    "water_bank",
+    "height",
+    "crossing",
+    "fortification",
+    "vegetation",
+    "prop"
+  ],
+  "simulationAuthority": false,
+  "placementContract": {
+    "composability": "NOT_COMPOSABLE",
+    "rendererReady": false
+  },
+  "count": 32,
+  "records": [
+    {
+      "logicalId": "bf2.grass",
+      "slug": "grass",
+      "category": "ground",
+      "sourceSheet": "ground-a.png",
+      "cell": {
+        "column": 0,
+        "row": 0,
+        "x": 0,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/grass.png",
+      "hash": "04bd0086502c594c0f9aa5555350c0e1b01e1a2ce6c2d9871e6b7422ac6a3956",
+      "bytes": 624295,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "ground-a.png",
+        "path": "assets/battle/v2/terrain/source/ground-a.png",
+        "sha256": "18af89cb2c0fbcec1a31f9168ad134bce62fe5c49774b3fb25f6ca43a52e18f2",
+        "bytes": 2404042,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 0,
+          "x": 0,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "d5a1831207fc85b81d1a8a28621ed3eb1cb3e66be5e96d1978755348d4084f72",
+        "canonicalTransformSha256": "d5a1831207fc85b81d1a8a28621ed3eb1cb3e66be5e96d1978755348d4084f72",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 0,
+              "x": 0,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/grass.png",
+        "sha256": "04bd0086502c594c0f9aa5555350c0e1b01e1a2ce6c2d9871e6b7422ac6a3956",
+        "bytes": 624295,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.packed_earth",
+      "slug": "packed_earth",
+      "category": "ground",
+      "sourceSheet": "ground-a.png",
+      "cell": {
+        "column": 1,
+        "row": 0,
+        "x": 627,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/packed_earth.png",
+      "hash": "c493127070ffbbe6d1b5f072e75a4eb0681cd6fb6750f263c39a3beae8beca95",
+      "bytes": 590616,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "ground-a.png",
+        "path": "assets/battle/v2/terrain/source/ground-a.png",
+        "sha256": "18af89cb2c0fbcec1a31f9168ad134bce62fe5c49774b3fb25f6ca43a52e18f2",
+        "bytes": 2404042,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 0,
+          "x": 627,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "9ced4fa7453a79e61dd541b5ae485b74482c6366922196b58c20d8c0f8622d7e",
+        "canonicalTransformSha256": "9ced4fa7453a79e61dd541b5ae485b74482c6366922196b58c20d8c0f8622d7e",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 0,
+              "x": 627,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/packed_earth.png",
+        "sha256": "c493127070ffbbe6d1b5f072e75a4eb0681cd6fb6750f263c39a3beae8beca95",
+        "bytes": 590616,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.sand",
+      "slug": "sand",
+      "category": "ground",
+      "sourceSheet": "ground-a.png",
+      "cell": {
+        "column": 0,
+        "row": 1,
+        "x": 0,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/sand.png",
+      "hash": "7e6d131e529cdd963a4dd1c8a0e13ddbec963c7279dcee496ab8b0874a7c89eb",
+      "bytes": 598609,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "ground-a.png",
+        "path": "assets/battle/v2/terrain/source/ground-a.png",
+        "sha256": "18af89cb2c0fbcec1a31f9168ad134bce62fe5c49774b3fb25f6ca43a52e18f2",
+        "bytes": 2404042,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 1,
+          "x": 0,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "833490d103ff36bd3ec01d12e31f2ca125bcf031df410184fe0a1f58cd7b6598",
+        "canonicalTransformSha256": "833490d103ff36bd3ec01d12e31f2ca125bcf031df410184fe0a1f58cd7b6598",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 1,
+              "x": 0,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/sand.png",
+        "sha256": "7e6d131e529cdd963a4dd1c8a0e13ddbec963c7279dcee496ab8b0874a7c89eb",
+        "bytes": 598609,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.mud",
+      "slug": "mud",
+      "category": "ground",
+      "sourceSheet": "ground-a.png",
+      "cell": {
+        "column": 1,
+        "row": 1,
+        "x": 627,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/mud.png",
+      "hash": "0acf9bad30b411b48b375e68a09f1693c5a4dd580fcc3dfdb76922dc9886033d",
+      "bytes": 618877,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "ground-a.png",
+        "path": "assets/battle/v2/terrain/source/ground-a.png",
+        "sha256": "18af89cb2c0fbcec1a31f9168ad134bce62fe5c49774b3fb25f6ca43a52e18f2",
+        "bytes": 2404042,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 1,
+          "x": 627,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "2ed78e5f1404c521e1b6924dad6e1c0819fb9df2ce4fa24af04c0ffe5226c2ab",
+        "canonicalTransformSha256": "2ed78e5f1404c521e1b6924dad6e1c0819fb9df2ce4fa24af04c0ffe5226c2ab",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 1,
+              "x": 627,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/mud.png",
+        "sha256": "0acf9bad30b411b48b375e68a09f1693c5a4dd580fcc3dfdb76922dc9886033d",
+        "bytes": 618877,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.marsh",
+      "slug": "marsh",
+      "category": "ground",
+      "sourceSheet": "ground-b.png",
+      "cell": {
+        "column": 0,
+        "row": 0,
+        "x": 0,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/marsh.png",
+      "hash": "2c7eaed152bff94bd991d33a5988d64bc9acfbe2dc8b18dfbfdcae0dc6b88554",
+      "bytes": 575708,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "ground-b.png",
+        "path": "assets/battle/v2/terrain/source/ground-b.png",
+        "sha256": "0c82a86300e937ca1213fd1a8e14960e925b9cfbdc407668db1985941289c842",
+        "bytes": 2488929,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 0,
+          "x": 0,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "d5a1831207fc85b81d1a8a28621ed3eb1cb3e66be5e96d1978755348d4084f72",
+        "canonicalTransformSha256": "d5a1831207fc85b81d1a8a28621ed3eb1cb3e66be5e96d1978755348d4084f72",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 0,
+              "x": 0,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/marsh.png",
+        "sha256": "2c7eaed152bff94bd991d33a5988d64bc9acfbe2dc8b18dfbfdcae0dc6b88554",
+        "bytes": 575708,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.forest_floor",
+      "slug": "forest_floor",
+      "category": "ground",
+      "sourceSheet": "ground-b.png",
+      "cell": {
+        "column": 1,
+        "row": 0,
+        "x": 627,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/forest_floor.png",
+      "hash": "e8eab65d488a8fca7dd8b8ed7f2ae314836c8d97fd896e58b26070bdd0f47248",
+      "bytes": 616068,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "ground-b.png",
+        "path": "assets/battle/v2/terrain/source/ground-b.png",
+        "sha256": "0c82a86300e937ca1213fd1a8e14960e925b9cfbdc407668db1985941289c842",
+        "bytes": 2488929,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 0,
+          "x": 627,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "9ced4fa7453a79e61dd541b5ae485b74482c6366922196b58c20d8c0f8622d7e",
+        "canonicalTransformSha256": "9ced4fa7453a79e61dd541b5ae485b74482c6366922196b58c20d8c0f8622d7e",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 0,
+              "x": 627,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/forest_floor.png",
+        "sha256": "e8eab65d488a8fca7dd8b8ed7f2ae314836c8d97fd896e58b26070bdd0f47248",
+        "bytes": 616068,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.rock_scree",
+      "slug": "rock_scree",
+      "category": "ground",
+      "sourceSheet": "ground-b.png",
+      "cell": {
+        "column": 0,
+        "row": 1,
+        "x": 0,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/rock_scree.png",
+      "hash": "46da6d75c615d8c458022d5d6161a7b87e55fa3a9e5fc99ead05f6e3ad57b954",
+      "bytes": 656202,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "ground-b.png",
+        "path": "assets/battle/v2/terrain/source/ground-b.png",
+        "sha256": "0c82a86300e937ca1213fd1a8e14960e925b9cfbdc407668db1985941289c842",
+        "bytes": 2488929,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 1,
+          "x": 0,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "833490d103ff36bd3ec01d12e31f2ca125bcf031df410184fe0a1f58cd7b6598",
+        "canonicalTransformSha256": "833490d103ff36bd3ec01d12e31f2ca125bcf031df410184fe0a1f58cd7b6598",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 1,
+              "x": 0,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/rock_scree.png",
+        "sha256": "46da6d75c615d8c458022d5d6161a7b87e55fa3a9e5fc99ead05f6e3ad57b954",
+        "bytes": 656202,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.field",
+      "slug": "field",
+      "category": "ground",
+      "sourceSheet": "ground-b.png",
+      "cell": {
+        "column": 1,
+        "row": 1,
+        "x": 627,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/field.png",
+      "hash": "bddad53be35dd031b5b876f2c4e157e223b507d0a9b1e69c7c253a77d339ee37",
+      "bytes": 680869,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "ground-b.png",
+        "path": "assets/battle/v2/terrain/source/ground-b.png",
+        "sha256": "0c82a86300e937ca1213fd1a8e14960e925b9cfbdc407668db1985941289c842",
+        "bytes": 2488929,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 1,
+          "x": 627,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "2ed78e5f1404c521e1b6924dad6e1c0819fb9df2ce4fa24af04c0ffe5226c2ab",
+        "canonicalTransformSha256": "2ed78e5f1404c521e1b6924dad6e1c0819fb9df2ce4fa24af04c0ffe5226c2ab",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 1,
+              "x": 627,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/field.png",
+        "sha256": "bddad53be35dd031b5b876f2c4e157e223b507d0a9b1e69c7c253a77d339ee37",
+        "bytes": 680869,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.footpath",
+      "slug": "footpath",
+      "category": "route",
+      "sourceSheet": "route-hydro.png",
+      "cell": {
+        "column": 0,
+        "row": 0,
+        "x": 0,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/footpath.png",
+      "hash": "ed1508249173d21bfe2e3cd443d09fa8cb11ed59dfe539f5e196987e896b48f1",
+      "bytes": 919720,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "route-hydro.png",
+        "path": "assets/battle/v2/terrain/source/route-hydro.png",
+        "sha256": "07270d900bdeec12f792a8817bf38f4702992881aa94f5572c6f5b432faf1cbf",
+        "bytes": 3508364,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 0,
+          "x": 0,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "d5a1831207fc85b81d1a8a28621ed3eb1cb3e66be5e96d1978755348d4084f72",
+        "canonicalTransformSha256": "d5a1831207fc85b81d1a8a28621ed3eb1cb3e66be5e96d1978755348d4084f72",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 0,
+              "x": 0,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/footpath.png",
+        "sha256": "ed1508249173d21bfe2e3cd443d09fa8cb11ed59dfe539f5e196987e896b48f1",
+        "bytes": 919720,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.packed_road",
+      "slug": "packed_road",
+      "category": "route",
+      "sourceSheet": "route-hydro.png",
+      "cell": {
+        "column": 1,
+        "row": 0,
+        "x": 627,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/packed_road.png",
+      "hash": "097b2ad2eaa4d2c22d94c114a44aefa9ba1f6b796613463f25bab0440b28e501",
+      "bytes": 878049,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "route-hydro.png",
+        "path": "assets/battle/v2/terrain/source/route-hydro.png",
+        "sha256": "07270d900bdeec12f792a8817bf38f4702992881aa94f5572c6f5b432faf1cbf",
+        "bytes": 3508364,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 0,
+          "x": 627,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "9ced4fa7453a79e61dd541b5ae485b74482c6366922196b58c20d8c0f8622d7e",
+        "canonicalTransformSha256": "9ced4fa7453a79e61dd541b5ae485b74482c6366922196b58c20d8c0f8622d7e",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 0,
+              "x": 627,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/packed_road.png",
+        "sha256": "097b2ad2eaa4d2c22d94c114a44aefa9ba1f6b796613463f25bab0440b28e501",
+        "bytes": 878049,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.shallow_water",
+      "slug": "shallow_water",
+      "category": "water",
+      "sourceSheet": "route-hydro.png",
+      "cell": {
+        "column": 0,
+        "row": 1,
+        "x": 0,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/shallow_water.png",
+      "hash": "4bb74a911710a4a96cb2ee395ce59b7160d4fd2d217afc55df53d3dbb74143fe",
+      "bytes": 846114,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "route-hydro.png",
+        "path": "assets/battle/v2/terrain/source/route-hydro.png",
+        "sha256": "07270d900bdeec12f792a8817bf38f4702992881aa94f5572c6f5b432faf1cbf",
+        "bytes": 3508364,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 1,
+          "x": 0,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "833490d103ff36bd3ec01d12e31f2ca125bcf031df410184fe0a1f58cd7b6598",
+        "canonicalTransformSha256": "833490d103ff36bd3ec01d12e31f2ca125bcf031df410184fe0a1f58cd7b6598",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 1,
+              "x": 0,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/shallow_water.png",
+        "sha256": "4bb74a911710a4a96cb2ee395ce59b7160d4fd2d217afc55df53d3dbb74143fe",
+        "bytes": 846114,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.river",
+      "slug": "river",
+      "category": "water",
+      "sourceSheet": "route-hydro.png",
+      "cell": {
+        "column": 1,
+        "row": 1,
+        "x": 627,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/river.png",
+      "hash": "c88e0c00a96912e6e88be75630578b97ca23f6588cb1d1571128cd51da11463f",
+      "bytes": 811838,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "route-hydro.png",
+        "path": "assets/battle/v2/terrain/source/route-hydro.png",
+        "sha256": "07270d900bdeec12f792a8817bf38f4702992881aa94f5572c6f5b432faf1cbf",
+        "bytes": 3508364,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 1,
+          "x": 627,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "2ed78e5f1404c521e1b6924dad6e1c0819fb9df2ce4fa24af04c0ffe5226c2ab",
+        "canonicalTransformSha256": "2ed78e5f1404c521e1b6924dad6e1c0819fb9df2ce4fa24af04c0ffe5226c2ab",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 1,
+              "x": 627,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/river.png",
+        "sha256": "c88e0c00a96912e6e88be75630578b97ca23f6588cb1d1571128cd51da11463f",
+        "bytes": 811838,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.deep_water",
+      "slug": "deep_water",
+      "category": "water",
+      "sourceSheet": "hydro-crossing.png",
+      "cell": {
+        "column": 0,
+        "row": 0,
+        "x": 0,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/deep_water.png",
+      "hash": "0a6eadad53aec9aaa1f65902efcde49b30724cc912e3837c10efbd468a2beddd",
+      "bytes": 507207,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "hydro-crossing.png",
+        "path": "assets/battle/v2/terrain/source/hydro-crossing.png",
+        "sha256": "3c0b49e7618f443c638b03d16c17e654115ca77148e17050cc6f2da0d3b19f99",
+        "bytes": 2637398,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 0,
+          "x": 0,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "d5a1831207fc85b81d1a8a28621ed3eb1cb3e66be5e96d1978755348d4084f72",
+        "canonicalTransformSha256": "d5a1831207fc85b81d1a8a28621ed3eb1cb3e66be5e96d1978755348d4084f72",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 0,
+              "x": 0,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/deep_water.png",
+        "sha256": "0a6eadad53aec9aaa1f65902efcde49b30724cc912e3837c10efbd468a2beddd",
+        "bytes": 507207,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.rapid_water",
+      "slug": "rapid_water",
+      "category": "water",
+      "sourceSheet": "hydro-crossing.png",
+      "cell": {
+        "column": 1,
+        "row": 0,
+        "x": 627,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/rapid_water.png",
+      "hash": "548b5e6f8152012f0a16d6c6ab079a71fb30a18375199ffc03810412a209ee65",
+      "bytes": 750429,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "hydro-crossing.png",
+        "path": "assets/battle/v2/terrain/source/hydro-crossing.png",
+        "sha256": "3c0b49e7618f443c638b03d16c17e654115ca77148e17050cc6f2da0d3b19f99",
+        "bytes": 2637398,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 0,
+          "x": 627,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "9ced4fa7453a79e61dd541b5ae485b74482c6366922196b58c20d8c0f8622d7e",
+        "canonicalTransformSha256": "9ced4fa7453a79e61dd541b5ae485b74482c6366922196b58c20d8c0f8622d7e",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 0,
+              "x": 627,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/rapid_water.png",
+        "sha256": "548b5e6f8152012f0a16d6c6ab079a71fb30a18375199ffc03810412a209ee65",
+        "bytes": 750429,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.ford",
+      "slug": "ford",
+      "category": "crossing",
+      "sourceSheet": "hydro-crossing.png",
+      "cell": {
+        "column": 0,
+        "row": 1,
+        "x": 0,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/ford.png",
+      "hash": "c0bda5c59773fae049d7281d02eb227c697081cccf7a7bc6ff0bf98db7754590",
+      "bytes": 695172,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "hydro-crossing.png",
+        "path": "assets/battle/v2/terrain/source/hydro-crossing.png",
+        "sha256": "3c0b49e7618f443c638b03d16c17e654115ca77148e17050cc6f2da0d3b19f99",
+        "bytes": 2637398,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 1,
+          "x": 0,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "833490d103ff36bd3ec01d12e31f2ca125bcf031df410184fe0a1f58cd7b6598",
+        "canonicalTransformSha256": "833490d103ff36bd3ec01d12e31f2ca125bcf031df410184fe0a1f58cd7b6598",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 1,
+              "x": 0,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/ford.png",
+        "sha256": "c0bda5c59773fae049d7281d02eb227c697081cccf7a7bc6ff0bf98db7754590",
+        "bytes": 695172,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.bank_reed",
+      "slug": "bank_reed",
+      "category": "water_bank",
+      "sourceSheet": "hydro-crossing.png",
+      "cell": {
+        "column": 1,
+        "row": 1,
+        "x": 627,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/bank_reed.png",
+      "hash": "04399504209a1ea3ddc2dfa8010b5e6ec34524833326e4b7ed8fc006652619e5",
+      "bytes": 650883,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "hydro-crossing.png",
+        "path": "assets/battle/v2/terrain/source/hydro-crossing.png",
+        "sha256": "3c0b49e7618f443c638b03d16c17e654115ca77148e17050cc6f2da0d3b19f99",
+        "bytes": 2637398,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 1,
+          "x": 627,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "2ed78e5f1404c521e1b6924dad6e1c0819fb9df2ce4fa24af04c0ffe5226c2ab",
+        "canonicalTransformSha256": "2ed78e5f1404c521e1b6924dad6e1c0819fb9df2ce4fa24af04c0ffe5226c2ab",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 1,
+              "x": 627,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "preserve-source-alpha",
+            "key": null,
+            "toolFingerprint": null
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/bank_reed.png",
+        "sha256": "04399504209a1ea3ddc2dfa8010b5e6ec34524833326e4b7ed8fc006652619e5",
+        "bytes": 650883,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "opaque",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 627,
+          "leftRightPixels": 627,
+          "totalPixels": 1254
+        },
+        "status": "MISMATCHES_PRESENT"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-raw-candidate-deterministic-crop"
+    },
+    {
+      "logicalId": "bf2.cliff_earth",
+      "slug": "cliff_earth",
+      "category": "height",
+      "sourceSheet": "height-fort.png",
+      "cell": {
+        "column": 0,
+        "row": 0,
+        "x": 0,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/cliff_earth.png",
+      "hash": "695d80e7f826ad120f45c8eda9308e3e7a2172d536ee7394137bca9bce6b2f35",
+      "bytes": 421195,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "height-fort.png",
+        "path": "assets/battle/v2/terrain/source/height-fort.png",
+        "sha256": "86cd8d6728f37abdfd9b9d02fd8432544b27707c2daef3548948d4c0bc030b04",
+        "bytes": 1993604,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 0,
+          "x": 0,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "6c055c40487e90f2e9d55f81edff8932e66e81b9e82b7e769815d3f63feb6935",
+        "canonicalTransformSha256": "6c055c40487e90f2e9d55f81edff8932e66e81b9e82b7e769815d3f63feb6935",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 0,
+              "x": 0,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/cliff_earth.png",
+        "sha256": "695d80e7f826ad120f45c8eda9308e3e7a2172d536ee7394137bca9bce6b2f35",
+        "bytes": 421195,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.cliff_rock",
+      "slug": "cliff_rock",
+      "category": "height",
+      "sourceSheet": "height-fort.png",
+      "cell": {
+        "column": 1,
+        "row": 0,
+        "x": 627,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/cliff_rock.png",
+      "hash": "4397fd0c0f5e6e845f2bc4ca1a9c6dacf4113656a64a503c4fbefd90879c1a89",
+      "bytes": 409112,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "height-fort.png",
+        "path": "assets/battle/v2/terrain/source/height-fort.png",
+        "sha256": "86cd8d6728f37abdfd9b9d02fd8432544b27707c2daef3548948d4c0bc030b04",
+        "bytes": 1993604,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 0,
+          "x": 627,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "7ebe27f392d5fb262417c25ce3bb023c5245db528edd589bd8c0cc0404600dfd",
+        "canonicalTransformSha256": "7ebe27f392d5fb262417c25ce3bb023c5245db528edd589bd8c0cc0404600dfd",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 0,
+              "x": 627,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/cliff_rock.png",
+        "sha256": "4397fd0c0f5e6e845f2bc4ca1a9c6dacf4113656a64a503c4fbefd90879c1a89",
+        "bytes": 409112,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.embankment_terrace",
+      "slug": "embankment_terrace",
+      "category": "height",
+      "sourceSheet": "height-fort.png",
+      "cell": {
+        "column": 0,
+        "row": 1,
+        "x": 0,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/embankment_terrace.png",
+      "hash": "c4c92487e2059c3cfaf6a24374111a8c6a4f4a6c9908941db868229a6ef67056",
+      "bytes": 432253,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "height-fort.png",
+        "path": "assets/battle/v2/terrain/source/height-fort.png",
+        "sha256": "86cd8d6728f37abdfd9b9d02fd8432544b27707c2daef3548948d4c0bc030b04",
+        "bytes": 1993604,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 1,
+          "x": 0,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "408a09646d324a0b72040e0bf35e6796b2c9e6774f5841227f1dd23bc11b64b0",
+        "canonicalTransformSha256": "408a09646d324a0b72040e0bf35e6796b2c9e6774f5841227f1dd23bc11b64b0",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 1,
+              "x": 0,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/embankment_terrace.png",
+        "sha256": "c4c92487e2059c3cfaf6a24374111a8c6a4f4a6c9908941db868229a6ef67056",
+        "bytes": 432253,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.wall_palisade",
+      "slug": "wall_palisade",
+      "category": "fortification",
+      "sourceSheet": "height-fort.png",
+      "cell": {
+        "column": 1,
+        "row": 1,
+        "x": 627,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/wall_palisade.png",
+      "hash": "8d876f6378a80184cce50a0dfcd330878a418a8239e193b383c83a5c5dff8964",
+      "bytes": 351021,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "height-fort.png",
+        "path": "assets/battle/v2/terrain/source/height-fort.png",
+        "sha256": "86cd8d6728f37abdfd9b9d02fd8432544b27707c2daef3548948d4c0bc030b04",
+        "bytes": 1993604,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 1,
+          "x": 627,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "91f193411c96882ad6e3132d7dcc9b1d7a4ee917e73e34834fea3d0e6c1c2a1c",
+        "canonicalTransformSha256": "91f193411c96882ad6e3132d7dcc9b1d7a4ee917e73e34834fea3d0e6c1c2a1c",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 1,
+              "x": 627,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/wall_palisade.png",
+        "sha256": "8d876f6378a80184cce50a0dfcd330878a418a8239e193b383c83a5c5dff8964",
+        "bytes": 351021,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.wall_earth",
+      "slug": "wall_earth",
+      "category": "fortification",
+      "sourceSheet": "fort-crossing.png",
+      "cell": {
+        "column": 0,
+        "row": 0,
+        "x": 0,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/wall_earth.png",
+      "hash": "5bde3fbcf701779e1636a4f4615e50134a9911578d5fad4d2bc4209b1ce5845a",
+      "bytes": 382496,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "fort-crossing.png",
+        "path": "assets/battle/v2/terrain/source/fort-crossing.png",
+        "sha256": "19770f63ae20676733444b4750c57fbf71d014d2d08a79c22df29790d1e26040",
+        "bytes": 1927010,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 0,
+          "x": 0,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "6c055c40487e90f2e9d55f81edff8932e66e81b9e82b7e769815d3f63feb6935",
+        "canonicalTransformSha256": "6c055c40487e90f2e9d55f81edff8932e66e81b9e82b7e769815d3f63feb6935",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 0,
+              "x": 0,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/wall_earth.png",
+        "sha256": "5bde3fbcf701779e1636a4f4615e50134a9911578d5fad4d2bc4209b1ce5845a",
+        "bytes": 382496,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.gate_camp",
+      "slug": "gate_camp",
+      "category": "fortification",
+      "sourceSheet": "fort-crossing.png",
+      "cell": {
+        "column": 1,
+        "row": 0,
+        "x": 627,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/gate_camp.png",
+      "hash": "8db5cbc4c3b96591e157148c61f973bfaca14964623bd489099f63be8373f646",
+      "bytes": 368381,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "fort-crossing.png",
+        "path": "assets/battle/v2/terrain/source/fort-crossing.png",
+        "sha256": "19770f63ae20676733444b4750c57fbf71d014d2d08a79c22df29790d1e26040",
+        "bytes": 1927010,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 0,
+          "x": 627,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "7ebe27f392d5fb262417c25ce3bb023c5245db528edd589bd8c0cc0404600dfd",
+        "canonicalTransformSha256": "7ebe27f392d5fb262417c25ce3bb023c5245db528edd589bd8c0cc0404600dfd",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 0,
+              "x": 627,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/gate_camp.png",
+        "sha256": "8db5cbc4c3b96591e157148c61f973bfaca14964623bd489099f63be8373f646",
+        "bytes": 368381,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.bridge_timber",
+      "slug": "bridge_timber",
+      "category": "crossing",
+      "sourceSheet": "fort-crossing.png",
+      "cell": {
+        "column": 0,
+        "row": 1,
+        "x": 0,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/bridge_timber.png",
+      "hash": "b73b88f7dcd7d6c52855e6dde83c3f9e6dac8078fdc9006c200384d6e544633e",
+      "bytes": 330770,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "fort-crossing.png",
+        "path": "assets/battle/v2/terrain/source/fort-crossing.png",
+        "sha256": "19770f63ae20676733444b4750c57fbf71d014d2d08a79c22df29790d1e26040",
+        "bytes": 1927010,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 1,
+          "x": 0,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "408a09646d324a0b72040e0bf35e6796b2c9e6774f5841227f1dd23bc11b64b0",
+        "canonicalTransformSha256": "408a09646d324a0b72040e0bf35e6796b2c9e6774f5841227f1dd23bc11b64b0",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 1,
+              "x": 0,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/bridge_timber.png",
+        "sha256": "b73b88f7dcd7d6c52855e6dde83c3f9e6dac8078fdc9006c200384d6e544633e",
+        "bytes": 330770,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.bridge_pontoon",
+      "slug": "bridge_pontoon",
+      "category": "crossing",
+      "sourceSheet": "fort-crossing.png",
+      "cell": {
+        "column": 1,
+        "row": 1,
+        "x": 627,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/bridge_pontoon.png",
+      "hash": "0c5cba74277c17b59a32bd8cdef6f7e96d007a69a5c05da09651fe46e51ec0f6",
+      "bytes": 302518,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "fort-crossing.png",
+        "path": "assets/battle/v2/terrain/source/fort-crossing.png",
+        "sha256": "19770f63ae20676733444b4750c57fbf71d014d2d08a79c22df29790d1e26040",
+        "bytes": 1927010,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 1,
+          "x": 627,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "91f193411c96882ad6e3132d7dcc9b1d7a4ee917e73e34834fea3d0e6c1c2a1c",
+        "canonicalTransformSha256": "91f193411c96882ad6e3132d7dcc9b1d7a4ee917e73e34834fea3d0e6c1c2a1c",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 1,
+              "x": 627,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/bridge_pontoon.png",
+        "sha256": "0c5cba74277c17b59a32bd8cdef6f7e96d007a69a5c05da09651fe46e51ec0f6",
+        "bytes": 302518,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "UNSPECIFIED",
+        "orientation": null,
+        "socketsStatus": "UNMAPPED",
+        "sockets": [],
+        "transitionsStatus": "MISSING",
+        "transitions": null
+      },
+      "placementMode": "authored-preview-only",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.tree_broadleaf",
+      "slug": "tree_broadleaf",
+      "category": "vegetation",
+      "sourceSheet": "vegetation.png",
+      "cell": {
+        "column": 0,
+        "row": 0,
+        "x": 0,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/tree_broadleaf.png",
+      "hash": "eeee689fcd65a66ea1ac30cfb51ce52cfd0727abec70d3a201146e3ee5b3ace9",
+      "bytes": 447834,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "vegetation.png",
+        "path": "assets/battle/v2/terrain/source/vegetation.png",
+        "sha256": "76a9a5c24b9c66e2dc3db2519d067c70790fa7f646321294146ca6080cf9e46f",
+        "bytes": 2084408,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 0,
+          "x": 0,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "6c055c40487e90f2e9d55f81edff8932e66e81b9e82b7e769815d3f63feb6935",
+        "canonicalTransformSha256": "6c055c40487e90f2e9d55f81edff8932e66e81b9e82b7e769815d3f63feb6935",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 0,
+              "x": 0,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/tree_broadleaf.png",
+        "sha256": "eeee689fcd65a66ea1ac30cfb51ce52cfd0727abec70d3a201146e3ee5b3ace9",
+        "bytes": 447834,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "single-module",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.tree_willow",
+      "slug": "tree_willow",
+      "category": "vegetation",
+      "sourceSheet": "vegetation.png",
+      "cell": {
+        "column": 1,
+        "row": 0,
+        "x": 627,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/tree_willow.png",
+      "hash": "278529dfbea284482763cf1f9f6b1d5f3fe3953f6850a552bdee4df2fc43c3b3",
+      "bytes": 426170,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "vegetation.png",
+        "path": "assets/battle/v2/terrain/source/vegetation.png",
+        "sha256": "76a9a5c24b9c66e2dc3db2519d067c70790fa7f646321294146ca6080cf9e46f",
+        "bytes": 2084408,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 0,
+          "x": 627,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "7ebe27f392d5fb262417c25ce3bb023c5245db528edd589bd8c0cc0404600dfd",
+        "canonicalTransformSha256": "7ebe27f392d5fb262417c25ce3bb023c5245db528edd589bd8c0cc0404600dfd",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 0,
+              "x": 627,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/tree_willow.png",
+        "sha256": "278529dfbea284482763cf1f9f6b1d5f3fe3953f6850a552bdee4df2fc43c3b3",
+        "bytes": 426170,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "single-module",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.bamboo",
+      "slug": "bamboo",
+      "category": "vegetation",
+      "sourceSheet": "vegetation.png",
+      "cell": {
+        "column": 0,
+        "row": 1,
+        "x": 0,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/bamboo.png",
+      "hash": "1d253d2dc64f773b71e57795d3b52c49f3e5c63f124cb31f9fdb7d8c55ddbe6b",
+      "bytes": 412990,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "vegetation.png",
+        "path": "assets/battle/v2/terrain/source/vegetation.png",
+        "sha256": "76a9a5c24b9c66e2dc3db2519d067c70790fa7f646321294146ca6080cf9e46f",
+        "bytes": 2084408,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 1,
+          "x": 0,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "408a09646d324a0b72040e0bf35e6796b2c9e6774f5841227f1dd23bc11b64b0",
+        "canonicalTransformSha256": "408a09646d324a0b72040e0bf35e6796b2c9e6774f5841227f1dd23bc11b64b0",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 1,
+              "x": 0,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/bamboo.png",
+        "sha256": "1d253d2dc64f773b71e57795d3b52c49f3e5c63f124cb31f9fdb7d8c55ddbe6b",
+        "bytes": 412990,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "single-module",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.reed_lotus",
+      "slug": "reed_lotus",
+      "category": "vegetation",
+      "sourceSheet": "vegetation.png",
+      "cell": {
+        "column": 1,
+        "row": 1,
+        "x": 627,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/reed_lotus.png",
+      "hash": "3aaacab3417a7fd20f50f281e523fd01e770f32e8c69d3dafe6b97f1d6b1c46a",
+      "bytes": 329571,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "vegetation.png",
+        "path": "assets/battle/v2/terrain/source/vegetation.png",
+        "sha256": "76a9a5c24b9c66e2dc3db2519d067c70790fa7f646321294146ca6080cf9e46f",
+        "bytes": 2084408,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 1,
+          "x": 627,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "91f193411c96882ad6e3132d7dcc9b1d7a4ee917e73e34834fea3d0e6c1c2a1c",
+        "canonicalTransformSha256": "91f193411c96882ad6e3132d7dcc9b1d7a4ee917e73e34834fea3d0e6c1c2a1c",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 1,
+              "x": 627,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/reed_lotus.png",
+        "sha256": "3aaacab3417a7fd20f50f281e523fd01e770f32e8c69d3dafe6b97f1d6b1c46a",
+        "bytes": 329571,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "single-module",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.cart_wagon",
+      "slug": "cart_wagon",
+      "category": "prop",
+      "sourceSheet": "props.png",
+      "cell": {
+        "column": 0,
+        "row": 0,
+        "x": 0,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/cart_wagon.png",
+      "hash": "d1d17d285e7d125db4bd51d4e93c9f1066fc130805d54af87f0ab8294f573998",
+      "bytes": 270793,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "props.png",
+        "path": "assets/battle/v2/terrain/source/props.png",
+        "sha256": "02c98cb26be3a088a27e8afd5951d310b32c9c15dbfb89ee15a3fbb4b012c98c",
+        "bytes": 1700457,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 0,
+          "x": 0,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "6c055c40487e90f2e9d55f81edff8932e66e81b9e82b7e769815d3f63feb6935",
+        "canonicalTransformSha256": "6c055c40487e90f2e9d55f81edff8932e66e81b9e82b7e769815d3f63feb6935",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 0,
+              "x": 0,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/cart_wagon.png",
+        "sha256": "d1d17d285e7d125db4bd51d4e93c9f1066fc130805d54af87f0ab8294f573998",
+        "bytes": 270793,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "single-module",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.cargo",
+      "slug": "cargo",
+      "category": "prop",
+      "sourceSheet": "props.png",
+      "cell": {
+        "column": 1,
+        "row": 0,
+        "x": 627,
+        "y": 0,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/cargo.png",
+      "hash": "4058e7abcedcca12e1899569f55848c6a215a15ac7bb39eb6baafc0a4e72f193",
+      "bytes": 343958,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "props.png",
+        "path": "assets/battle/v2/terrain/source/props.png",
+        "sha256": "02c98cb26be3a088a27e8afd5951d310b32c9c15dbfb89ee15a3fbb4b012c98c",
+        "bytes": 1700457,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 0,
+          "x": 627,
+          "y": 0,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "7ebe27f392d5fb262417c25ce3bb023c5245db528edd589bd8c0cc0404600dfd",
+        "canonicalTransformSha256": "7ebe27f392d5fb262417c25ce3bb023c5245db528edd589bd8c0cc0404600dfd",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 0,
+              "x": 627,
+              "y": 0,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/cargo.png",
+        "sha256": "4058e7abcedcca12e1899569f55848c6a215a15ac7bb39eb6baafc0a4e72f193",
+        "bytes": 343958,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "single-module",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.fence",
+      "slug": "fence",
+      "category": "prop",
+      "sourceSheet": "props.png",
+      "cell": {
+        "column": 0,
+        "row": 1,
+        "x": 0,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/fence.png",
+      "hash": "fbeee6b2a61e8257520127ce0e5165b2eff31459135aae090862744add9bcdc2",
+      "bytes": 170559,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "props.png",
+        "path": "assets/battle/v2/terrain/source/props.png",
+        "sha256": "02c98cb26be3a088a27e8afd5951d310b32c9c15dbfb89ee15a3fbb4b012c98c",
+        "bytes": 1700457,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 0,
+          "row": 1,
+          "x": 0,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "408a09646d324a0b72040e0bf35e6796b2c9e6774f5841227f1dd23bc11b64b0",
+        "canonicalTransformSha256": "408a09646d324a0b72040e0bf35e6796b2c9e6774f5841227f1dd23bc11b64b0",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 0,
+              "row": 1,
+              "x": 0,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/fence.png",
+        "sha256": "fbeee6b2a61e8257520127ce0e5165b2eff31459135aae090862744add9bcdc2",
+        "bytes": 170559,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "single-module",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    },
+    {
+      "logicalId": "bf2.camp_tent",
+      "slug": "camp_tent",
+      "category": "prop",
+      "sourceSheet": "props.png",
+      "cell": {
+        "column": 1,
+        "row": 1,
+        "x": 627,
+        "y": 627,
+        "width": 627,
+        "height": 627
+      },
+      "path": "assets/battle/v2/terrain/tiles/camp_tent.png",
+      "hash": "c9dac0cd977e268fd4050520150fc205869b34a1cd4b79a5d1fa3e9f20c88b35",
+      "bytes": 330435,
+      "width": 627,
+      "height": 627,
+      "source": {
+        "sheet": "props.png",
+        "path": "assets/battle/v2/terrain/source/props.png",
+        "sha256": "02c98cb26be3a088a27e8afd5951d310b32c9c15dbfb89ee15a3fbb4b012c98c",
+        "bytes": 1700457,
+        "ihdr": {
+          "width": 1254,
+          "height": 1254,
+          "bitDepth": 8,
+          "colorType": 2,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        },
+        "cell": {
+          "column": 1,
+          "row": 1,
+          "x": 627,
+          "y": 627,
+          "width": 627,
+          "height": 627
+        }
+      },
+      "transform": {
+        "fingerprint": "91f193411c96882ad6e3132d7dcc9b1d7a4ee917e73e34834fea3d0e6c1c2a1c",
+        "canonicalTransformSha256": "91f193411c96882ad6e3132d7dcc9b1d7a4ee917e73e34834fea3d0e6c1c2a1c",
+        "canonical": {
+          "schema": "opensamguk.v2.terrain-core.transform.v1",
+          "compilerTransformSha256": "b8c0ab2dea926f50947695807532dce91cf2aa6e7b625973e27cadc95b33f114",
+          "source": {
+            "grid": "2x2",
+            "sourceSize": 1254,
+            "cell": {
+              "column": 1,
+              "row": 1,
+              "x": 627,
+              "y": 627,
+              "width": 627,
+              "height": 627
+            }
+          },
+          "crop": {
+            "programFingerprint": "4bf951ebfa0f0f1201f47be8ce237fcc2dd10941f8a6eb5868e228c90bd42fd5",
+            "imageMode": "RGB_OR_RGBA",
+            "optimize": false
+          },
+          "alpha": {
+            "operation": "sprite-gen-cutout",
+            "key": "magenta",
+            "toolFingerprint": "8fd831171aab49289fcac647c1bea8934a53fd7f75705506247e52edc7a36284"
+          }
+        }
+      },
+      "output": {
+        "path": "assets/battle/v2/terrain/tiles/camp_tent.png",
+        "sha256": "c9dac0cd977e268fd4050520150fc205869b34a1cd4b79a5d1fa3e9f20c88b35",
+        "bytes": 330435,
+        "ihdr": {
+          "width": 627,
+          "height": 627,
+          "bitDepth": 8,
+          "colorType": 6,
+          "compression": 0,
+          "filter": 0,
+          "interlace": 0
+        }
+      },
+      "alpha": "cutout",
+      "edgeComparison": {
+        "method": "decoded-rgba-opposite-edges-exact-v1",
+        "decodedFormat": "RGBA",
+        "mismatchCounts": {
+          "topBottomPixels": 0,
+          "leftRightPixels": 0,
+          "totalPixels": 0
+        },
+        "status": "EXACT_MATCH"
+      },
+      "tileable": false,
+      "topology": {
+        "orientationStatus": "NOT_APPLICABLE",
+        "orientation": null,
+        "socketsStatus": "NOT_APPLICABLE",
+        "sockets": [],
+        "transitionsStatus": "NOT_APPLICABLE",
+        "transitions": null
+      },
+      "placementMode": "single-module",
+      "composability": "NOT_COMPOSABLE",
+      "evidenceClass": "adopted-existing-chroma-candidate-deterministic-cutout"
+    }
+  ]
+}

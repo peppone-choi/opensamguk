@@ -17,6 +17,7 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnGeneral
@@ -38,8 +39,8 @@ import opensamguk.logic.actions.intake.ResetStatOutcome
  *
  * Inputs read in-world (the env the PHP `launch` reads):
  *  - owner id: `general.meta["owner"]` (PHP `general.owner`; falls back to generalId when absent).
- *  - `previous` balance: [previousPointReader] (the inheritance_{owner} `previous[0]`; default reads
- *    the world-state `inheritancePrevious` snapshot map seeded at rehydrate).
+ *  - `previous` balance: the recorder overlay first, then [previousPointReader] (the inheritance_{owner}
+ *    `previous[0]`; default reads the world-state `inheritancePrevious` snapshot map seeded at rehydrate).
  *  - isunited / turnterm / hiddenSeed: `world.getState().meta`.
  *  - aux levels / special2: `general.meta["aux"]` / `general.meta["special2"]`.
  *  - special-war display name: [specialWarName] (default = the type key — the registry name lookup
@@ -78,7 +79,7 @@ class InheritResetHandler(
         val out = InheritResets.resetTurnTime(
             userId = ownerId,
             currentLevel = currentLevel,
-            previousPoint = previousPointReader(ownerId),
+            previousPoint = previousPoint(ownerId),
             isUnited = isUnited(),
             turnTerm = turnTerm(),
             hiddenSeed = hiddenSeed(),
@@ -103,7 +104,7 @@ class InheritResetHandler(
 
         val out = InheritResets.resetSpecialWar(
             currentLevel = currentLevel,
-            previousPoint = previousPointReader(ownerId),
+            previousPoint = previousPoint(ownerId),
             isUnited = isUnited(),
             currentSpecialWar = me.role.specialWar,
             prevTypesSpecial2 = prevTypes,
@@ -125,7 +126,7 @@ class InheritResetHandler(
 
         val out = InheritResets.setNextSpecialWar(
             type = c.specialWar,
-            previousPoint = previousPointReader(ownerId),
+            previousPoint = previousPoint(ownerId),
             isUnited = isUnited(),
             currentSpecialWar = me.role.specialWar,
             reservedSpecialWar = reserved,
@@ -150,10 +151,10 @@ class InheritResetHandler(
             strength = c.strength,
             intel = c.intel,
             inheritBonusStat = c.inheritBonusStat,
-            previousPoint = previousPointReader(ownerId),
+            previousPoint = previousPoint(ownerId),
             isUnited = isUnited(),
             season = season(),
-            lastStatReset = lastStatResetReader(ownerId),
+            lastStatReset = lastStatReset(ownerId),
             npcType = me.npcState,
             hiddenSeed = hiddenSeed(),
         )
@@ -185,7 +186,7 @@ class InheritResetHandler(
             type = c.buffKey,
             level = c.level,
             currentBuffMap = currentInheritBuff(me),
-            previousPoint = previousPointReader(ownerId),
+            previousPoint = previousPoint(ownerId),
             isUnited = isUnited(),
         )
         return when (out) {
@@ -207,7 +208,7 @@ class InheritResetHandler(
         val ownerId = ownerId(me)
         val out = InheritBuys.buyRandomUnique(
             alreadyOrdered = aux(me)["inheritRandomUnique"] != null,
-            previousPoint = previousPointReader(ownerId),
+            previousPoint = previousPoint(ownerId),
             isUnited = isUnited(),
             nowMarker = nowMarkerProvider(),
         )
@@ -280,6 +281,18 @@ class InheritResetHandler(
     // ── env readers ─────────────────────────────────────────────────────────────
 
     private fun ownerId(me: TurnGeneral): Int = (me.meta["owner"] as? Number)?.toInt() ?: me.id
+
+    private fun previousPoint(ownerId: Int): Double =
+        recorder.effectiveInheritancePoint(ownerId, "previous")?.first ?: previousPointReader(ownerId)
+
+    private fun lastStatReset(ownerId: Int): List<Int> {
+        val key = KvKey("user", "user_$ownerId", "last_stat_reset")
+        val pending = recorder.kvDirty()
+        if (key in pending) {
+            return (pending.getValue(key) as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()
+        }
+        return lastStatResetReader(ownerId)
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun aux(me: TurnGeneral): Map<String, Any?> = (me.meta["aux"] as? Map<String, Any?>) ?: emptyMap()

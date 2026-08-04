@@ -3,6 +3,12 @@ package opensamguk.engine.turn
 import opensamguk.common.world.WorldId
 import opensamguk.logic.domain.NationTurn
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+private val phpStartTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+private val seoulZone: ZoneId = ZoneId.of("Asia/Seoul")
 
 /**
  * Initial snapshot used to seed [InMemoryTurnWorld].
@@ -39,9 +45,20 @@ data class WorldSnapshot(
  *    so neither a created row nor a deleted row is emitted.
  *  - [removeNation] also prunes that nation's diplomacy entries from all dirty/created sets.
  */
-class InMemoryTurnWorld(snapshot: WorldSnapshot) {
+interface LegacyDiplomacyIdentityOracle {
+    fun assignCreatedNo(entry: TurnDiplomacy, proposedNo: Int?): Int?
+
+    fun observeDeleted(entry: TurnDiplomacy, nationId: Int)
+}
+
+class InMemoryTurnWorld(
+    snapshot: WorldSnapshot,
+    private val legacyDiplomacyIdentityOracle: LegacyDiplomacyIdentityOracle? = null,
+) {
     val worldId: WorldId = snapshot.worldId
     private val generals = LinkedHashMap<Int, TurnGeneral>()
+    private val generalIdentityTokens = LinkedHashMap<Int, Long>()
+    private var nextGeneralIdentityToken = 0L
     private val cities = LinkedHashMap<Int, City>()
     private val nations = LinkedHashMap<Int, Nation>()
     private val troops = LinkedHashMap<Int, Troop>()
@@ -81,11 +98,15 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
      */
     private var maxNationId: Int
     private var maxGeneralId: Int
+    private var maxLegacyDiplomacyNo: Int?
 
     init {
         serverId = snapshot.serverId ?: snapshot.state.serverId
         state = snapshot.state.copy(serverId = serverId)
-        for (general in snapshot.generals) generals[general.id] = general
+        for (general in snapshot.generals) {
+            generals[general.id] = general
+            generalIdentityTokens[general.id] = ++nextGeneralIdentityToken
+        }
         for (city in snapshot.cities) cities[city.id] = city
         for (nation in snapshot.nations) nations[nation.id] = nation
         for (troop in snapshot.troops) troops[troop.id] = troop
@@ -102,6 +123,9 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
             snapshot.generals.maxOfOrNull { it.id } ?: 0,
             (snapshot.state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0,
         )
+        maxLegacyDiplomacyNo = snapshot.diplomacy
+            .mapNotNull { (it.meta["no"] as? Number)?.toInt() }
+            .maxOrNull()
         // Persist the seeded high-water marks immediately so a world that never allocates a new id
         // still flushes the previous maximum back into world_state.meta (restart parity).
         recordMaxNationId()
@@ -131,6 +155,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     fun peekLogs(): List<LogEntryDraft> = logs.toList()
 
     fun getGeneralById(id: Int): TurnGeneral? = generals[id]
+    fun getGeneralIdentityToken(id: Int): Long? = generalIdentityTokens[id]
     fun getCityById(id: Int): City? = cities[id]
     fun getNationById(id: Int): Nation? = nations[id]
     fun getTroopById(id: Int): Troop? = troops[id]
@@ -143,7 +168,13 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     fun removeAccessLogDirtyFree(generalId: Int): Boolean = accessLogs.remove(generalId) != null
 
     fun pushLog(entry: LogEntryDraft) {
-        logs.add(entry)
+        logs.add(
+            entry.copy(
+                year = entry.year ?: state.currentYear,
+                month = entry.month ?: state.currentMonth,
+                phase = entry.phase ?: state.currentPhase,
+            ),
+        )
     }
 
     fun updateGeneral(next: TurnGeneral): TurnGeneral? {
@@ -155,6 +186,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
 
     fun createGeneral(general: TurnGeneral): TurnGeneral {
         generals[general.id] = general
+        generalIdentityTokens[general.id] = ++nextGeneralIdentityToken
         dirtyGeneralIds.add(general.id)
         createdGeneralIds.add(general.id)
         if (general.id > maxGeneralId) {
@@ -167,6 +199,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     fun removeGeneral(id: Int): Boolean {
         if (!generals.containsKey(id)) return false
         generals.remove(id)
+        generalIdentityTokens.remove(id)
         dirtyGeneralIds.remove(id)
         // create-then-delete in the same tick fully cancels: drop the pending create and
         // do NOT emit a delete for a row that was never persisted.
@@ -293,11 +326,26 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
      * helper is [buildDiplomacyKey] (same as the snapshot init / [updateDiplomacy] path).
      */
     fun createDiplomacy(entry: TurnDiplomacy): TurnDiplomacy {
-        val key = buildDiplomacyKey(entry.fromNationId, entry.toNationId)
-        diplomacy[key] = entry
+        var materialized = if (entry.meta["no"] == null && maxLegacyDiplomacyNo != null) {
+            entry.copy(meta = entry.meta + ("no" to maxLegacyDiplomacyNo!!.plus(1).also { maxLegacyDiplomacyNo = it }))
+        } else {
+            (entry.meta["no"] as? Number)?.toInt()?.let { no ->
+                maxLegacyDiplomacyNo = maxOf(maxLegacyDiplomacyNo ?: no, no)
+            }
+            entry
+        }
+        legacyDiplomacyIdentityOracle?.assignCreatedNo(
+            materialized,
+            (materialized.meta["no"] as? Number)?.toInt(),
+        )?.let { assignedNo ->
+            materialized = materialized.copy(meta = materialized.meta + ("no" to assignedNo))
+            maxLegacyDiplomacyNo = maxOf(maxLegacyDiplomacyNo ?: assignedNo, assignedNo)
+        }
+        val key = buildDiplomacyKey(materialized.fromNationId, materialized.toNationId)
+        diplomacy[key] = materialized
         dirtyDiplomacyKeys.add(key)
         createdDiplomacyKeys.add(key)
-        return entry
+        return materialized
     }
 
     /**
@@ -385,6 +433,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
             .filter { (_, entry) -> entry.fromNationId == id || entry.toNationId == id }
             .map { it.key }
         for (key in keysToRemove) {
+            diplomacy[key]?.let { legacyDiplomacyIdentityOracle?.observeDeleted(it, id) }
             diplomacy.remove(key)
             dirtyDiplomacyKeys.remove(key)
             createdDiplomacyKeys.remove(key)
@@ -424,6 +473,10 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         nextConfig.putAll(configPatch)
         val nextMeta = LinkedHashMap(state.meta)
         for ((key, value) in configPatch) nextMeta[key] = value
+        canonicalStartTime(configPatch["starttime"] ?: configPatch["startTime"])?.let { startTime ->
+            nextConfig["startTime"] = startTime
+            nextMeta["startTime"] = startTime
+        }
         state = state.copy(
             status = status ?: state.status,
             config = nextConfig,
@@ -434,6 +487,13 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
 
     fun setGameEnvValue(key: String, value: Any?) {
         state = state.copy(meta = state.meta + mapOf(key to value))
+    }
+
+    private fun canonicalStartTime(value: Any?): String? {
+        val raw = value?.toString()?.takeIf { it.isNotBlank() } ?: return null
+        val instant = runCatching { Instant.parse(raw) }.getOrNull()
+            ?: runCatching { LocalDateTime.parse(raw, phpStartTimeFormat).atZone(seoulZone).toInstant() }.getOrNull()
+        return instant?.toString()
     }
 
     /**

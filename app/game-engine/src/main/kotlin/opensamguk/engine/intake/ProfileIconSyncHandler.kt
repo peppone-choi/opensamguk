@@ -1,9 +1,10 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommand
-import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
 import org.slf4j.LoggerFactory
 
 /**
@@ -20,7 +21,8 @@ import org.slf4j.LoggerFactory
  * 전용 채널(picture/image_server 전용 컬럼) 기록 → JdbcFlushExecutor가 배치 flush한다. 동일 payload
  * 재적용은 no-op(idempotent). general을 새로 만들거나 Join gate를 우회하지 않는다.
  *
- * 반환은 null — gateway fanout은 fire-and-forget(요청측이 per-general 결과를 대기하지 않는다).
+ * 모든 경로는 durable `IMMEDIATE` inbox를 종결할 성공 결과를 반환한다. 이 fanout의 대상 수는 요청
+ * 수락 여부를 바꾸지 않으므로, 결과는 per-general 상세 대신 명령 lifecycle만 나타낸다.
  */
 class ProfileIconSyncHandler(
     private val world: InMemoryTurnWorld,
@@ -28,13 +30,13 @@ class ProfileIconSyncHandler(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun handle(command: TurnDaemonCommand.ProfileIconSync): TurnDaemonCommandResult? {
+    fun handle(command: TurnDaemonCommand.ProfileIconSync): CommandLifecycleResult {
         val showImageLevel = intFromMeta(world.getState().meta["show_img_level"]) ?: DEFAULT_SHOW_IMG_LEVEL
         val eligible = showImageLevel >= 1 && command.grade >= 1 && command.picture.isNotBlank()
         if (!eligible) {
             // 게이트 off / show_img_level=0 / grade=0 / 빈 picture — 변이 없음(criterion 4).
             log.debug("profile-icon.sync skipped eligible=false show_img_level={}", showImageLevel)
-            return null
+            return terminalResult(command)
         }
 
         val ownerKey = command.userId.toString()
@@ -65,8 +67,17 @@ class ProfileIconSyncHandler(
             applied += 1
         }
         log.debug("profile-icon.sync applied count={}", applied)
-        return null
+        return terminalResult(command)
     }
+
+    private fun terminalResult(command: TurnDaemonCommand.ProfileIconSync): CommandLifecycleResult =
+        CommandLifecycleResult(
+            type = "profileIconSync",
+            ok = true,
+            commandKind = CommandKind.IMMEDIATE.name,
+            actionCode = command::class.simpleName,
+            turnIdx = 0,
+        )
 
     private fun intFromMeta(value: Any?): Int? = when (value) {
         is Number -> value.toInt()

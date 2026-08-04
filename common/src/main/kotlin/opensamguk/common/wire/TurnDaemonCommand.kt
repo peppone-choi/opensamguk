@@ -505,6 +505,16 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
+    @SerialName("acceptRaiseInvaderMessage")
+    data class AcceptRaiseInvaderMessage(
+        val requestId: String? = null,
+        val messageId: Int,
+        val generalId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "acceptRaiseInvaderMessage"
+    }
+
+    @Serializable
     @SerialName("declineDiplomaticMessage")
     data class DeclineDiplomaticMessage(
         val requestId: String? = null,
@@ -760,6 +770,15 @@ sealed class TurnDaemonCommand {
         val generalId: Int,
         val msgID: Int,
     ) : TurnDaemonCommand() { override val type: String get() = "deleteMessage" }
+
+    @Serializable
+    @SerialName("readLatestMessage")
+    data class ReadLatestMessage(
+        val requestId: String? = null,
+        val generalId: Int,
+        val messageType: String,
+        val msgID: Int,
+    ) : TurnDaemonCommand() { override val type: String get() = "readLatestMessage" }
 
     // ── W6c 경매 개설 (BuyRice / SellRice / Unique) — OpenBuyRiceAuction.php 등 ──
     /** 쌀 매수 경매 개설 (OpenBuyRiceAuction.php → AuctionBasicResource::openResourceAuction). */

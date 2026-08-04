@@ -2,6 +2,8 @@ package opensamguk.logic.actions.nation
 
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.CommandFieldSpec
+import opensamguk.logic.actions.CommandFormSpec
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.beChief
@@ -48,6 +50,13 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
     override val name: String get() = "불가침 제의"
     override val category: String get() = "외교"
     override val argsSchema: Map<String, Any?> get() = linkedMapOf("destNationID" to "int", "year" to "int", "month" to "int")
+    override val formSpec: CommandFormSpec get() = CommandFormSpec(
+        listOf(
+            CommandFieldSpec("destNationID", "int", "select", "nations"),
+            CommandFieldSpec("year", "int", "number"),
+            CommandFieldSpec("month", "int", "number", min = 1, max = 12),
+        ),
+    )
 
     override fun getPreReqTurn(): Int = 0
 
@@ -153,7 +162,7 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
             generalName = "",
             nationId = destNationID,
             nationName = destNationName,
-            color = "#000000",
+            color = draft.destNation?.color ?: "#000000",
             icon = "",
         )
 

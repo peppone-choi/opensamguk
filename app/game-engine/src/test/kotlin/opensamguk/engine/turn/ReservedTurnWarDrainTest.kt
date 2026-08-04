@@ -47,12 +47,17 @@ class ReservedTurnWarDrainTest {
         assertTrue(handler.recorder.dirtyGeneralIds().any { it in listOf(201, 202) })
         assertTrue(handler.recorder.dirtyCityIds().containsAll(listOf(7, 31)))
         assertTrue(handler.recorder.dirtyNationIds().contains(2))
+        assertTrue(handler.recorder.rankPatches().isNotEmpty())
+        assertTrue(world.getNationById(1)!!.tech > 0.0)
+        assertTrue(world.getNationById(2)!!.tech > 0.0)
+        assertTrue(world.getDiplomacy(1, 2)!!.dead > 0)
+        assertTrue(world.getDiplomacy(2, 1)!!.dead > 0)
     }
 
     @Test
     fun `reserved sortie calls ConquerCity when battle succeeds`() {
         val world = warWorld(
-            defenders = listOf(defender(id = 201, crew = 1, crewTypeId = 1100)),
+            defenders = listOf(defender(id = 201, crew = 1, crewTypeId = 1100).copy(officerLevel = 12)),
             defenderCity = city(id = 31, nationId = 2, level = 1, defence = 1, wall = 1, defenceMax = 10, wallMax = 10),
             defenderNation = nation(id = 2, capital = 31, rice = 10_000),
         )
@@ -92,7 +97,10 @@ class ReservedTurnWarDrainTest {
             generals = listOf(attacker()) + defenders,
             cities = listOf(city(id = 7, nationId = 1), defenderCity),
             nations = listOf(nation(id = 1, capital = 7), defenderNation),
-            diplomacy = listOf(TurnDiplomacy(fromNationId = 1, toNationId = 2, state = 0, term = 0)),
+            diplomacy = listOf(
+                TurnDiplomacy(fromNationId = 1, toNationId = 2, state = 0, term = 0),
+                TurnDiplomacy(fromNationId = 2, toNationId = 1, state = 0, term = 0),
+            ),
             worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0)).id),
         ),
     )

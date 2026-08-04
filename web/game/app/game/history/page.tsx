@@ -8,14 +8,6 @@
 // currentYearMonth, serverId, mapName, record})를 emit하고, record로 4섹션을 렌더한다:
 //   1) 지도 스냅샷(MapViewer) 2) 국가표(SimpleNationList) 3) 중원 정세(globalHistory) 4) 장수 동향(globalAction).
 //
-// 색/태그 로그: globalHistory/globalAction 항목은 utilGame.formatLog()로 <R><B><1> 등 마크업을 HTML로
-// 변환해 렌더(레거시 v-html="formatLog(item)"와 동형). BLOCKED: yearbook_history에 global_history/
-// global_action 컬럼이 없어 두 배열은 항상 비어 있다(서버 BLOCKED, 날조 없음) → 빈 섹션 안내.
-//
-// 지도 스냅샷 주의: web/game MapViewer는 라이브 /api/map을 self-fetch하는 공유 컴포넌트라(두 맵뷰어 불변식)
-// record.map 월별 스냅샷을 props로 받지 못한다. 따라서 "지도" 섹션은 현재 라이브 지도를 보여준다(월별
-// 과거 스냅샷 렌더는 MapViewer 확장 필요 — 백로그). 데이터(record.map)는 BE가 전달하므로 향후 정합 가능.
-//
 // Single-server only in F4 (cross-server view dropped — spec OQ-8).
 // yearMonth = Util::joinYearMonth (year*12 + (month-1)); parseYearMonth = [ym/12, ym%12+1].
 //
@@ -29,7 +21,8 @@ import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
 import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
 import { formatLog } from '../../../lib/utilGame';
-import type { HistoryResponse, SimpleNationObj } from '../../../types/game';
+import type { MapPreviewResponse } from '../../../lib/types';
+import type { HistoryRecord, HistoryResponse, SimpleNationObj } from '../../../types/game';
 
 // Verbatim from legacy ts/util/parseYearMonth.ts: [(yearMonth/12)|0, yearMonth%12 + 1].
 function parseYearMonth(yearMonth: number): [number, number] {
@@ -56,6 +49,70 @@ function normalizeNations(
     if (nations == null) return [];
     if (Array.isArray(nations)) return nations;
     return Object.values(nations);
+}
+
+function recordOf(value: unknown): Record<string, unknown> | null {
+    if (value == null || typeof value !== 'object' || Array.isArray(value)) return null;
+    return value as Record<string, unknown>;
+}
+
+function numberOf(value: unknown): number | null {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function archivedMapPreview(record: HistoryRecord, template: MapPreviewResponse | null): MapPreviewResponse | null {
+    const snapshot = recordOf(record.map);
+    const cityList = snapshot?.cityList;
+    const nationList = snapshot?.nationList;
+    if (snapshot == null || template == null || !Array.isArray(cityList) || !Array.isArray(nationList)) return null;
+
+    const cityById = new Map<number, readonly unknown[]>();
+    for (const tuple of cityList) {
+        if (!Array.isArray(tuple)) continue;
+        const id = numberOf(tuple[0]);
+        if (id != null) cityById.set(id, tuple);
+    }
+
+    const capitalByNation = new Map<number, number>();
+    const nations = nationList.flatMap((tuple) => {
+        if (!Array.isArray(tuple)) return [];
+        const id = numberOf(tuple[0]);
+        const name = tuple[1];
+        const color = tuple[2];
+        const capital = numberOf(tuple[3]);
+        if (id == null || id === 0 || typeof name !== 'string' || typeof color !== 'string') return [];
+        if (capital != null) capitalByNation.set(id, capital);
+        return [{ id, name, color }];
+    });
+
+    const cities = template.cities.flatMap((city) => {
+        const tuple = cityById.get(city.id);
+        const level = numberOf(tuple?.[1]);
+        const state = numberOf(tuple?.[2]);
+        const nationId = numberOf(tuple?.[3]);
+        const supply = numberOf(tuple?.[5]);
+        if (level == null || state == null || nationId == null || supply == null) return [];
+        return [{
+            ...city,
+            level,
+            state,
+            nationId,
+            supply: supply !== 0,
+            isCapital: capitalByNation.get(nationId) === city.id,
+        }];
+    });
+
+    return {
+        ...template,
+        serverName: record.serverId || template.serverName,
+        startYear: numberOf(snapshot.startYear) ?? template.startYear,
+        year: record.year,
+        month: record.month,
+        turnPhase: null,
+        turnPhaseText: null,
+        cities,
+        nations,
+    };
 }
 
 const sectionBarStyle: React.CSSProperties = {
@@ -108,6 +165,7 @@ function SimpleNationList({ nations }: { nations: SimpleNationObj[] }) {
 
 export default function HistoryPage() {
     const [data, setData] = useState<HistoryResponse | null>(null);
+    const [mapTemplate, setMapTemplate] = useState<MapPreviewResponse | null>(null);
     // selected yearMonth (null = use server currentYearMonth on first load)
     const [queryYearMonth, setQueryYearMonth] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
@@ -133,12 +191,27 @@ export default function HistoryPage() {
         fetchData(null);
     }, [fetchData]);
 
+    useEffect(() => {
+        let active = true;
+        api.mapPreview()
+            .then((template) => {
+                if (active) setMapTemplate(template);
+            })
+            .catch(() => {
+                if (active) setMapTemplate(null);
+            });
+        return () => {
+            active = false;
+        };
+    }, []);
+
     const first = data?.firstYearMonth ?? 0;
     const last = data?.lastYearMonth ?? 0;
     const current = data?.currentYearMonth ?? 0;
     const selected = queryYearMonth ?? current;
     const record = data?.record ?? null;
     const nations = normalizeNations(record?.nations ?? null);
+    const mapSnapshot = record == null ? null : archivedMapPreview(record, mapTemplate);
 
     // Clamp + re-fetch when the user steps/selects a month (legacy watch(queryYearMonth)).
     const selectMonth = useCallback(
@@ -218,7 +291,11 @@ export default function HistoryPage() {
                     {/* ── 1) 지도 스냅샷(MapViewer) ─────────────────────────────────── */}
                     <div style={sectionBarStyle}>세계 지도</div>
                     <GameCard>
-                        <MapViewer />
+                        {mapSnapshot == null ? (
+                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>지도 스냅샷을 렌더할 수 없습니다.</p>
+                        ) : (
+                            <MapViewer mapData={mapSnapshot} isDetailMap disallowClick />
+                        )}
                     </GameCard>
 
                     {/* ── 2) 국가표(SimpleNationList) ───────────────────────────────── */}

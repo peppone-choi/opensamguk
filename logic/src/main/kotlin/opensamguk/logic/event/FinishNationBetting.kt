@@ -5,8 +5,6 @@ import opensamguk.logic.betting.BettingEngine
 import opensamguk.logic.betting.BettingInfo
 import opensamguk.logic.betting.BettingItem
 import opensamguk.logic.betting.BettingWorldView
-import opensamguk.logic.betting.GeneralForBetting
-import opensamguk.logic.util.jsonDecodeAny
 
 /**
  * 국가 강약 베팅 마감 이벤트 액션 — PHP `sammo\Event\Action\FinishNationBetting` 의 Kotlin 포팅.
@@ -38,9 +36,6 @@ class FinishNationBettingAction(
         val world = ctx as? FinishNationBettingContext
             ?: error("FinishNationBettingAction requires a FinishNationBettingContext")
 
-        val year = (ctx.env["year"] as? Number)?.toInt() ?: 0
-        val month = (ctx.env["month"] as? Number)?.toInt() ?: 0
-
         // 1. KV 스토리지에서 BettingInfo 조회
         val bettingInfo = world.loadBettingInfo(bettingId)
             ?: return  // NotFound — 조용히 반환
@@ -61,8 +56,7 @@ class FinishNationBettingAction(
         for ((idx, candidate) in bettingInfo.candidates) {
             val aux = candidate.aux
                 ?: return
-            val nationId = aux["nation"] as? Int
-                ?: return
+            val nationId = (aux["nation"] as? Number)?.toInt() ?: return
             nationIDMap[nationId] = idx
         }
 
@@ -88,7 +82,7 @@ class FinishNationBettingAction(
         // 6. 글로벌 히스토리 로그
         val (openYear, openMonth) = parseYearMonth(bettingInfo.openYearMonth)
         world.pushGlobalHistoryLog(
-            "<B><b>【내기】</b></> ${openYear}년 ${openMonth}월에 열린 ${bettingInfo.name} 내기의 결과가 나왔습니다!",
+            "<B><b>【내기】</b></> ${openYear}년 ${openMonth}월에 열렸던 ${bettingInfo.name} 내기의 결과가 나왔습니다!",
             LightActionWorld.EVENT_YEAR_MONTH,
         )
     }
@@ -99,11 +93,10 @@ class FinishNationBettingAction(
         /** BettingInfo KV 키 접두사 */
         const val KV_KEY_PREFIX = "betting:"
 
-        /** PHP `Util::parseYearMonth` parity: yearMonth = year*12 + month. */
         private fun parseYearMonth(yearMonth: Int): Pair<Int, Int> {
             val year = yearMonth / 12
-            val month = yearMonth % 12
-            return year to if (month == 0) 12 else month
+            val month = yearMonth % 12 + 1
+            return year to month
         }
 
         /**

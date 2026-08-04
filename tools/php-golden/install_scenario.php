@@ -13,13 +13,48 @@
 
 namespace sammo;
 
+/**
+ * Deterministic capture-only seam for ResetHelper::clearDB().
+ *
+ * ResetHelper calls the unqualified random_bytes() from this namespace when it
+ * creates UniqueConst::$hiddenSeed. Defining the namespace function before
+ * loading the legacy classes lets evidence captures pin that install input
+ * without modifying the disposable legacy source tree.
+ */
+function random_bytes(int $length): string {
+    $seed = getenv('SAMMO_CAPTURE_HIDDEN_SEED');
+    if ($seed === false || $seed === '') {
+        return \random_bytes($length);
+    }
+    if ($length !== 16 || preg_match('/^[0-9a-f]{32}$/', $seed) !== 1) {
+        throw new \RuntimeException('SAMMO_CAPTURE_HIDDEN_SEED must be 32 lowercase hex characters for a 16-byte install seed');
+    }
+    return hex2bin($seed);
+}
+
 // _boot.php binds d_setting/DB.php + ServConfig.php, then requires lib.php+func.php.
 require __DIR__ . '/_boot.php';
 
-$opts = getopt('', ['scenario:', 'turnterm:', 'sync:']);
+$opts = getopt('', ['scenario:', 'turnterm:', 'sync:', 'turntime:', 'hidden-seed:']);
 $scenario = (int)($opts['scenario'] ?? 0);
 $turnterm = (int)($opts['turnterm'] ?? 120);
 $sync     = (int)($opts['sync'] ?? 0);
+$turntime = $opts['turntime'] ?? TimeUtil::now();
+$hiddenSeed = $opts['hidden-seed'] ?? null;
+
+if ($hiddenSeed !== null) {
+    if (preg_match('/^[0-9a-f]{32}$/', $hiddenSeed) !== 1) {
+        fwrite(STDERR, "INSTALL FAILED: --hidden-seed must be 32 lowercase hex characters\n");
+        exit(64);
+    }
+    putenv("SAMMO_CAPTURE_HIDDEN_SEED={$hiddenSeed}");
+}
+
+$parsedTurntime = \DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $turntime);
+if (!$parsedTurntime || $parsedTurntime->format('Y-m-d H:i:s') !== $turntime) {
+    fwrite(STDERR, "INSTALL FAILED: --turntime must use YYYY-MM-DD HH:MM:SS\n");
+    exit(64);
+}
 
 // Generate d_setting/RootDB.php (account DB) — point at the same MySQL so the
 // admin-founder loop (SELECT FROM member WHERE grade>=6) can run. We create an
@@ -58,7 +93,7 @@ $result = ResetHelper::buildScenario(
     1,                         // show_img_level
     false,                     // tournament_trig
     'full',                    // join_mode
-    TimeUtil::now(),           // turntime
+    $turntime,                 // turntime
     null                       // autorun_user
 );
 
@@ -70,9 +105,18 @@ if (!($result['result'] ?? false)) {
 
 // Re-read game_env + report what the install actually produced.
 $gameStor = KVStorage::getStorage($db, 'game_env');
-[$year, $month, $startYear, $develCost, $turntermOut] = $gameStor->getValuesAsArray(
-    ['year', 'month', 'startyear', 'develcost', 'turnterm']
+[$year, $month, $startYear, $develCost, $turntermOut, $turntimeOut] = $gameStor->getValuesAsArray(
+    ['year', 'month', 'startyear', 'develcost', 'turnterm', 'turntime']
 );
+
+if ($hiddenSeed !== null && UniqueConst::$hiddenSeed !== $hiddenSeed) {
+    fwrite(STDERR, "INSTALL FAILED: hiddenSeed pin was not applied\n");
+    exit(2);
+}
+if ($turntimeOut !== $turntime) {
+    fwrite(STDERR, "INSTALL FAILED: turntime pin was not applied\n");
+    exit(2);
+}
 
 $genCount  = $db->queryFirstField('SELECT COUNT(*) FROM general');
 $cityCount = $db->queryFirstField('SELECT COUNT(*) FROM city');
@@ -80,7 +124,7 @@ $natCount  = $db->queryFirstField('SELECT COUNT(*) FROM nation');
 $ownedCities = $db->queryFirstField('SELECT COUNT(*) FROM city WHERE nation<>0');
 
 fwrite(STDERR, sprintf(
-    "INSTALL OK: hiddenSeed=%s year=%d month=%d startYear=%d develCost=%d turnterm=%d | generals=%d cities=%d nations=%d ownedCities=%d\n",
-    UniqueConst::$hiddenSeed, $year, $month, $startYear, $develCost, $turntermOut,
+    "INSTALL OK: hiddenSeed=%s turntime=%s year=%d month=%d startYear=%d develCost=%d turnterm=%d | generals=%d cities=%d nations=%d ownedCities=%d\n",
+    UniqueConst::$hiddenSeed, $turntimeOut, $year, $month, $startYear, $develCost, $turntermOut,
     $genCount, $cityCount, $natCount, $ownedCities
 ));

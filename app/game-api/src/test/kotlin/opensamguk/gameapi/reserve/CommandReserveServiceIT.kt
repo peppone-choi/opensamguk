@@ -28,6 +28,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.PostgreSQLContainer
+import java.sql.Timestamp
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -35,6 +36,7 @@ import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -77,6 +79,8 @@ class CommandReserveServiceIT {
         assertEquals("""{"amount": 100}""", reserved.argJson)
         assertEquals(result.requestId, reserved.requestId)
         assertEquals(1, inboxCount(result.requestId))
+        val redisWakePublishedAt = assertNotNull(readRedisWakePublishedAt(result.requestId))
+        assertEquals(Instant.parse("0200-01-01T00:00:00Z"), redisWakePublishedAt.toInstant())
 
         // --- Redis: exactly one message, decoding to Run(POKE) with the returned requestId ---
         val records = redisTemplate.opsForStream<Any, Any>()
@@ -215,6 +219,15 @@ class CommandReserveServiceIT {
                 .addValue("request_id", requestId),
             Int::class.java,
         ) ?: 0
+
+    private fun readRedisWakePublishedAt(requestId: String): Timestamp? =
+        jdbc.queryForObject(
+            "SELECT redis_wake_published_at FROM command_inbox WHERE world_id = :world_id AND request_id = :request_id",
+            org.springframework.jdbc.core.namedparam.MapSqlParameterSource()
+                .addValue("world_id", 1)
+                .addValue("request_id", requestId),
+            Timestamp::class.java,
+        )
 
     @AfterAll
     fun tearDown() {

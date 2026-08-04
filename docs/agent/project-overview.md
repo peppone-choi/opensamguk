@@ -8,16 +8,31 @@ PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모)를 **Kotlin/S
 
 - 라이브 게임 유저(sam.peppone.dev), 그리고 이 저장소에서 작업하는 사람+AI 에이전트 팀.
 
-## 현재 구현 범위 (2026-07-25 기준)
+## 현재 구현 범위 (2026-07-30 기준)
 
-이 문서는 온보딩을 위한 **bounded status**다. 티켓별 증거·활성화 잔여는 `.ai/current-state.md`, PHP/UI 갭은 해당 `docs/loops/*/LEDGER.md`를 따른다.
+이 문서는 온보딩용 **bounded status**다. v1 비운영 종결의 상세 근거는
+`docs/superpowers/research/2026-07-26-v1-legacy-equivalence-audit.md`의 최종 부록,
+`docs/loops/v1-nonoperational-completion-2026-07-27/LEDGER.md`와 review를 따른다.
 
-- ✅ P0–P6(+P7 read API): 패러티 커널·명령·월간 틱·전투 엔진·NPC AI·베팅/경매/외교/메시지.
-- ✅ F0–F3: 게이트웨이 인증, 시나리오 시드, 게임 메인/메뉴, 랭킹·내정보.
-- ✅ CQRS foundation S1–S5 (**build-only**, main 머지): `world_id` 스코프와 2월드 격리, `DeltaGenerationSession`·`world_version` CAS·`writer_epoch`·`FlushRecoveryGate`, durable inbox/result/outbox 경로, hot/cold 카탈로그·bounded/on-demand boot read, primary `minVersion` visibility barrier.
-- 🔄 F4–F5: 실제 mutation 페이지 배선과 로컬 turnkey 문서/compose를 계속 닫는 중. 메일함 삭제·외교 서신 응답·인사부 임면·내정보 즉시 액션·엔진 deny 표면화는 배선됐지만, 전체 명령/페이지 동형 주장이 아니다.
-- ⬜ S6/activation: canary·expand/backfill·replica ADR, capacity/admission policy, 프로덕션 cutover는 별도 승인·운영 게이트 전까지 미수행.
-- v2: 기획 수렴 완료(round-2 adopted), 구현 전. 상세: `CLAUDE.md` 로드맵 절.
+- ✅ v1 비운영 감사 §6.1–§6.8: 명령, 월간/이벤트, 전투/점령, AI, side system,
+  world scope/restart, 프런트, 저장 로그를 PHP capture·Kotlin replay·local Docker로
+  재측정해 종결. `SelectPool`·`VotePoll`·`DiplomacyLetter`의 V32 복합 key/local-ID
+  read 경계도 outer/nested `WorldId` query·중앙 scoped beans·same-local-ID 2-world
+  regression으로 보정했고 final parity review는 `CLEARED`다. v1 날짜는 **연 36순**이다(ADR-LITE-024).
+- ✅ F0–F5의 **로컬** 표면: 인증/시드/메뉴/read/mutation/turnkey compose와
+  인증 브라우저 restart gate까지 관측. corrected gate는 five images sequential,
+  8 health, Playwright 1 passed (`241634ms`), join `RESOLVED`/general `1230`, 14 DOM,
+  restart general/result/repository `200`, auth `false|false` 복원, project containers 0을 확인했다.
+- ✅ CQRS foundation S1–S5: `world_id` scope, generation/fence/recovery,
+  durable inbox/result/outbox, bounded boot/read barrier. 이 foundation은 S6
+  운영 활성화와 구분한다.
+- ⬜ S6/activation: canary·expand/backfill·replica ADR, capacity/admission,
+  production cutover는 **별도 인간 승인**과 운영 게이트 전까지 미수행이다.
+- 🔄 v2: v1 오리지널을 보존한 별도 제품/운영 트랙이며, v1 비운영 종결과
+  혼동하지 않는다.
+
+이 상태는 git action 전에도 유효한 release-candidate 관측 증거다. commit, push,
+merge, deploy가 실행되었거나 승인되었다는 뜻은 아니다.
 
 ## 주요 모듈 (정본: `settings.gradle.kts`, `AGENTS.md` §모듈 구조)
 

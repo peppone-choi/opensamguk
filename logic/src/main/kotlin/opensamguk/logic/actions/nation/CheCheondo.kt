@@ -7,15 +7,17 @@ import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.bumpCapset
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.ConstraintResult
+import opensamguk.logic.constraints.RequirementKey
+import opensamguk.logic.constraints.StateView
 import opensamguk.logic.constraints.beChief
 import opensamguk.logic.constraints.occupiedCity
 import opensamguk.logic.constraints.occupiedDestCity
-import opensamguk.logic.constraints.reqNationGold
-import opensamguk.logic.constraints.reqNationRice
 import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.constraints.suppliedDestCity
 import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.domain.Nation
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -41,7 +43,14 @@ class CheCheondo(private val pipeline: GeneralActionPipeline) : NationCommand() 
     override fun getPreReqTurn(): Int = 0  // distance-driven at resolve; base preReq computed via helpers
 
     /** che_천도.php:99-105 — develcost*5 * 2^distance. */
-    fun getCost(develCost: Int, distance: Int): Int = develCost * 5 * (1 shl distance)
+    fun getCost(develCost: Int, distance: Int): Long {
+        var amount = develCost.toLong() * 5L
+        repeat(distance) {
+            if (amount > Long.MAX_VALUE / 2L) return Long.MAX_VALUE
+            amount *= 2L
+        }
+        return amount
+    }
 
     /** che_천도.php:121-124 — preReqTurn = distance*2. */
     fun getPreReqTurnForDistance(distance: Int): Int = distance * 2
@@ -54,18 +63,24 @@ class CheCheondo(private val pipeline: GeneralActionPipeline) : NationCommand() 
     )
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
-        // The capital→dest BFS distance is preloaded by the caller (PHP `CalcCityDistance(...) ?? 50`): the AI
-        // bridge stages it as the env `__distance`; precheck has no staging seam yet → falls through to the
-        // default 50 (P7 read-side TODO). `ctx.args` is the canonical
-        // schema-only map (the `__distance` would be dropped by parseArgs), so it rides ctx.env. Default 50.
         val distance = (ctx.env["__distance"] as? Number)?.toInt()
             ?: (ctx.args["__distance"] as? Number)?.toInt() ?: 50
         val cost = getCost((ctx.env["develCost"] as Number).toInt(), distance)
         return listOf(
             occupiedCity(), occupiedDestCity(), beChief(), suppliedCity(), suppliedDestCity(),
             notAlreadyCapital(),  // ReqNationValue('capital','수도','!=',destCity,'이미 수도입니다.')
-            reqNationGold { _, _ -> GameConst.basegold + cost },
-            reqNationRice { _, _ -> GameConst.baserice + cost },
+            reqNationResource(
+                "ReqNationGold",
+                requiredAmount(GameConst.basegold, cost),
+                { it.gold },
+                "국고가 부족합니다.",
+            ),
+            reqNationResource(
+                "ReqNationRice",
+                requiredAmount(GameConst.baserice, cost),
+                { it.rice },
+                "병량이 부족합니다.",
+            ),
         )
     }
 
@@ -88,13 +103,44 @@ class CheCheondo(private val pipeline: GeneralActionPipeline) : NationCommand() 
         dedRes.plainLog?.let { context.addPlainLog(it) }
 
         // nation.capital → dest; capset+1. NO gold/rice debit (che_천도.php:218-221).
-        d.nation = nation.copy(capitalCityId = destCityId, capset = bumpCapset(nation.capset))
+        val capset = bumpCapset(nation.capset)
+        val meta = LinkedHashMap(nation.meta)
+        meta["capset"] = capset
+        d.nation = nation.copy(capitalCityId = destCityId, capset = capset, meta = meta)
 
         val josaRo = JosaUtil.pick(destCityName, "로")
         val josaYi = JosaUtil.pick(context.generalName, "이")
         context.addLog("<G><b>$destCityName</b></>$josaRo 천도했습니다. <1>${context.date}</>")
+        context.addGeneralHistoryLog("<G><b>$destCityName</b></>$josaRo <M>천도</>명령")
+        context.addNationalHistoryLog(
+            "<Y>${context.generalName}</>$josaYi <G><b>$destCityName</b></>$josaRo <M>천도</> 명령",
+        )
         context.addGlobalActionLog(
             "<Y>${context.generalName}</>$josaYi <G><b>$destCityName</b></>$josaRo <M>천도</>를 명령하였습니다.")
+        val josaYiNation = JosaUtil.pick(nation.name, "이")
+        context.addGlobalHistoryLog(
+            "<S><b>【천도】</b></><D><b>${nation.name}</b></>$josaYiNation <G><b>$destCityName</b></>$josaRo <M>천도</>하였습니다.",
+        )
+    }
+}
+
+private fun requiredAmount(base: Int, cost: Long): Long =
+    if (cost > Long.MAX_VALUE - base.toLong()) Long.MAX_VALUE else base.toLong() + cost
+
+private fun reqNationResource(
+    constraintName: String,
+    required: Long,
+    resource: (Nation) -> Int,
+    reason: String,
+): Constraint = object : Constraint {
+    override val name: String = constraintName
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.Nation(ctx.nationId ?: 0))
+
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val nation = view.get(RequirementKey.Nation(ctx.nationId ?: 0)) as? Nation
+            ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (resource(nation).toLong() >= required) ConstraintResult.Allow
+        else ConstraintResult.Deny(reason)
     }
 }
 

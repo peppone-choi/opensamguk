@@ -114,9 +114,9 @@ class AiInstanceState(
      * Faithful port of `updateInstance` (PHP `:86-145`). Guarded by [reqUpdateInstance]: runs the whole
      * block once, sets the flag false, and short-circuits on every subsequent call until [markDirty].
      */
-    fun updateInstance() {
+    fun updateInstance(): Boolean {
         if (!reqUpdateInstance) {
-            return
+            return false
         }
         reqUpdateInstance = false
 
@@ -160,6 +160,7 @@ class AiInstanceState(
         calcDiplomacyState()
 
         // PHP `:144` — genType = calcGenType($general) is Task FI2 (the FIRST draw); not in FI1.
+        return true
     }
 
     /**

@@ -14,6 +14,7 @@ import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -97,8 +98,9 @@ abstract class JoinCommand(
 
         // increaseInheritancePoint(active_action, 1) — succession rank-var seam (OQ7/P6); no write here.
 
-        // addExperience(exp) — raw increaseVar (no per-add round; truncated to int only at flush).
-        g = g.copy(experience = g.experience + exp)
+        val experience = addExperience(g, exp, pipeline)
+        g = experience.general
+        experience.plainLog?.let(context::addPlainLog)
         val statChange = checkStatChange(
             g.copy(lastTurn = LastTurn(command = name, arg = lastTurnArg(d, destNationId))),
         )

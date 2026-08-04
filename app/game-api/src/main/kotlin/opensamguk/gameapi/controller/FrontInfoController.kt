@@ -58,6 +58,7 @@ import opensamguk.logic.traits.PersonalityRegistry
 import opensamguk.logic.traits.SpecialDomesticRegistry
 import opensamguk.logic.war.specialty.SpecialWarRegistry
 import opensamguk.logic.world.SpecialityHelper
+import opensamguk.infra.read.GameKvRepository
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
@@ -111,6 +112,7 @@ class FrontInfoController(
     @Value("\${SERVER_GENERATION:}") private val serverGenerationProperty: String = "",
     @Value("\${SERVER_ID:}") private val serverIdProperty: String = "",
     private val accessLogs: GeneralAccessLogReadRepository? = null,
+    private val gameKv: GameKvRepository? = null,
 ) {
     private val canonicalPublicServerIdPattern = Regex("^[a-z0-9]{1,48}$")
     private val reservedPublicServerIds = setOf(
@@ -706,10 +708,20 @@ class FrontInfoController(
             // 선택 서버 식별자 — 프록시/middleware가 `sam_server` 쿠키로 고정한 값.
             serverId = resolvedServerId,
 
-            // [§2 BLOCKED — plock 테이블 부재] interim false(W3_FrontGlobalInfo §2). 마이그레이션 추가 시 교체.
-            serverLocked = false,
+            serverLocked = serverLocked(),
         )
     }
+
+    private fun serverLocked(): Boolean = gameKv
+        ?.findByTable("game_env")
+        ?.firstOrNull { it.namespace == "game_env" && it.key == "plock" }
+        ?.value
+        ?.let { value ->
+            runCatching { objectMapper.readTree(value) }.getOrNull()?.let { node ->
+                if (node.isBoolean) node.booleanValue() else node.asInt(0) != 0
+            }
+        }
+        ?: false
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // helpers

@@ -146,6 +146,10 @@ def is_prefix(path: str, prefixes: Iterable[str]) -> bool:
     return any(path == prefix.rstrip("/") or path.startswith(prefix) for prefix in prefixes)
 
 
+def scope_covers_area(scope: str, area: str) -> bool:
+    return bool(re.search(rf"(?<![A-Za-z0-9_./-]){re.escape(area)}", scope))
+
+
 def check_skills_lock(files: list[str]) -> list[Finding]:
     findings: list[Finding] = []
     lock_path = ROOT / "skills-lock.json"
@@ -483,25 +487,18 @@ def check_cross_agent_critique(files: list[str], strict: bool) -> list[Finding]:
         required_areas.update(prefix for prefix in area_prefixes if changed.startswith(prefix))
 
     valid_verdict = False
+    covered_areas: set[str] = set()
     for rel in review_files:
         review_text = (ROOT / rel).read_text(encoding="utf-8")
         verdicts = re.findall(r"^Verdict: (cleared|fix-required|quarantined-with-proof)\s*$", review_text, re.MULTILINE)
         scopes = re.findall(r"^Scope:\s*(.+?)\s*$", review_text, re.MULTILINE)
         if len(verdicts) != 1 or len(scopes) != 1:
             return [Finding("error", "cross-agent-critique", f"{rel} must contain exactly one anchored Scope and Verdict line.")]
-        missing_scope = sorted(area for area in required_areas if area not in scopes[0])
-        if missing_scope:
-            return [
-                Finding(
-                    "error",
-                    "cross-agent-critique",
-                    f"{rel} does not cover changed areas: " + ", ".join(missing_scope),
-                )
-            ]
         if verdicts[0] == "fix-required":
             return [Finding("error", "cross-agent-critique", f"Unresolved Verdict: fix-required blocks completion: {rel}")]
         if verdicts[0] == "quarantined-with-proof" and not re.search(r"^Proof:\s*\S", review_text, re.MULTILINE):
             return [Finding("error", "cross-agent-critique", f"{rel} quarantines work without an anchored Proof line.")]
+        covered_areas.update(area for area in required_areas if scope_covers_area(scopes[0], area))
         valid_verdict = True
     if not valid_verdict:
         return [
@@ -509,6 +506,23 @@ def check_cross_agent_critique(files: list[str], strict: bool) -> list[Finding]:
                 "error",
                 "cross-agent-critique",
                 "Critique artifact must contain Verdict: cleared or Verdict: quarantined-with-proof.",
+            )
+        ]
+    missing_scope = sorted(required_areas - covered_areas)
+    if missing_scope:
+        if len(review_files) == 1:
+            return [
+                Finding(
+                    "error",
+                    "cross-agent-critique",
+                    f"{review_files[0]} does not cover changed areas: " + ", ".join(missing_scope),
+                )
+            ]
+        return [
+            Finding(
+                "error",
+                "cross-agent-critique",
+                "Cleared/quarantined critique scopes do not collectively cover changed areas: " + ", ".join(missing_scope),
             )
         ]
     return []

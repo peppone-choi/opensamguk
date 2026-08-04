@@ -6,7 +6,7 @@ export const MAILBOX_NATIONAL_BASE = 9000;
 // 서신 삭제 버튼 노출 5분 창(밀리초) — legacy MessagePlate.vue testDeletable() addMinutes(time, 5).
 export const MESSAGE_DELETABLE_WINDOW_MS = 5 * 60 * 1000;
 
-export type MailboxScope = 'private' | 'national' | 'public';
+export type MailboxScope = 'private' | 'national' | 'public' | 'diplomacy';
 
 export interface MailboxIdentity {
     generalId: number | null;
@@ -15,7 +15,7 @@ export interface MailboxIdentity {
 
 export function mailboxIdForScope(scope: MailboxScope, identity: MailboxIdentity): number | null {
     if (scope === 'public') return MAILBOX_PUBLIC;
-    if (scope === 'national') {
+    if (scope === 'national' || scope === 'diplomacy') {
         return identity.nationId > 0 ? MAILBOX_NATIONAL_BASE + identity.nationId : null;
     }
     return identity.generalId != null && identity.generalId > 0 ? identity.generalId : null;

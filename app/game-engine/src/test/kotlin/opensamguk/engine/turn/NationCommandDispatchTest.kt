@@ -232,6 +232,35 @@ class NationCommandDispatchTest {
     }
 
     @Test
+    fun `literal nation rest replaces the previous turn result`() {
+        val previous = LastTurn(
+            command = "포상",
+            arg = linkedMapOf("destGeneralID" to 60, "isGold" to true, "amount" to 1000),
+            term = 0,
+        )
+        val world = world(nationMeta = linkedMapOf("turn_last_12" to previous.toRaw()))
+        val proc = ProcessNationCommand(
+            world = world,
+            recorder = ChangeRecorder(),
+            hiddenSeed = "seed",
+            registry = CommandRegistry(GeneralActionPipeline()),
+        )
+
+        val result = proc.process(
+            generalId = 10,
+            officerLevel = 12,
+            nationCommand = ChosenCommand("휴식", emptyMap()),
+            lastTurn = previous,
+            year = 200,
+            month = 3,
+            date = "12:00",
+        )
+
+        assertEquals(LastTurn(), result)
+        assertEquals(LastTurn().toRaw(), world.getNationById(1)!!.meta["turn_last_12"])
+    }
+
+    @Test
     fun `stale strategic nation command is denied before resolver and does not mutate state`() {
         installDaemonResolvers()
         val last = LastTurn()

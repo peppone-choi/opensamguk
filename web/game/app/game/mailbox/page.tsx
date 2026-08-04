@@ -30,6 +30,45 @@ const TYPE_VARIANT: Record<string, 'gold' | 'jade' | 'muted' | 'crimson'> = {
 const MESSAGE_RESULT_POLL_ATTEMPTS = 20;
 const MESSAGE_RESULT_POLL_INTERVAL_MS = 300;
 
+type MessageArrayItem = {
+    id: number | null;
+    msgType: MailboxScope;
+    src: { id: number; name: string; nation_id: number; nation: string; color: string; icon?: string | null } | null;
+    dest: { id: number; name: string; nation_id: number; nation: string; color: string; icon?: string | null } | null;
+    text: string;
+    option: Record<string, unknown> | null;
+    time: string;
+};
+
+type MailboxEnvelope = {
+    private: MessageArrayItem[];
+    public: MessageArrayItem[];
+    national: MessageArrayItem[];
+    diplomacy: MessageArrayItem[];
+    sequence: number;
+};
+
+function fromArrayItem(item: MessageArrayItem, mailbox: number): MailboxMessage {
+    const target = (value: MessageArrayItem['src']) => value == null ? null : {
+        id: value.id, name: value.name, nationId: value.nation_id, nation: value.nation,
+        color: value.color, icon: value.icon ?? null,
+    };
+    return {
+        id: item.id,
+        mailbox,
+        type: item.msgType,
+        src: item.src?.id ?? 0,
+        dest: item.dest?.id ?? 0,
+        time: item.time,
+        validUntil: INFINITE_DATE,
+        message: '',
+        text: item.text,
+        srcTarget: target(item.src),
+        destTarget: target(item.dest),
+        option: item.option,
+    };
+}
+
 export default function MailboxPage() {
     const [messages, setMessages] = useState<MailboxMessage[]>([]);
     const [scope, setScope] = useState<MailboxScope>('private');
@@ -44,6 +83,7 @@ export default function MailboxPage() {
     // 발송 대상 mailbox id: 9999=전체, 9000+nationId=국가, generalId=개인 (현재 scope 연동)
     const [sendMailbox, setSendMailbox] = useState<number>(MAILBOX_PUBLIC);
     const [sending, setSending] = useState(false);
+    const [contacts, setContacts] = useState<Array<{ mailbox: number; name: string; general: Array<[number, string, unknown]> }>>([]);
 
     const fetchMessages = useCallback(async () => {
         setLoading(true);
@@ -54,8 +94,13 @@ export default function MailboxPage() {
                 setError(scope === 'national' ? '소속 국가가 없습니다.' : '장수 정보가 없습니다.');
                 return;
             }
-            const data = await api.mailbox<MailboxMessage[]>(mailboxId);
-            setMessages(data);
+            const data = await api.mailboxRecent<MailboxEnvelope>();
+            const section = data[scope];
+            setMessages(section.map((item) => fromArrayItem(item, mailboxId)));
+            if ((scope === 'private' || scope === 'diplomacy') && identity.generalId != null) {
+                const latest = section.reduce((max, item) => Math.max(max, item.id ?? 0), 0);
+                if (latest > 0) void api.commands.readLatestMessage({ type: scope, msgID: latest }, identity.generalId);
+            }
             setError('');
         } catch {
             setError('메일함을 불러올 수 없습니다.');
@@ -63,6 +108,14 @@ export default function MailboxPage() {
             setLoading(false);
         }
     }, [identity, scope]);
+
+    const loadOlder = async () => {
+        const mailboxId = mailboxIdForScope(scope, identity);
+        const to = messages.reduce((min, message) => Math.min(min, message.id ?? min), Number.MAX_SAFE_INTEGER);
+        if (mailboxId == null || to === Number.MAX_SAFE_INTEGER) return;
+        const data = await api.mailboxOld<MailboxEnvelope>(to, scope);
+        setMessages((current) => [...current, ...data[scope].map((item) => fromArrayItem(item, mailboxId))]);
+    };
 
     useEffect(() => {
         let on = true;
@@ -80,6 +133,12 @@ export default function MailboxPage() {
         return () => {
             on = false;
         };
+    }, []);
+
+    useEffect(() => {
+        api.contacts<{ nation: Array<{ mailbox: number; name: string; general: Array<[number, string, unknown]> }> }>()
+            .then((result) => setContacts(result.nation))
+            .catch(() => setContacts([]));
     }, []);
 
     useEffect(() => {
@@ -284,6 +343,7 @@ export default function MailboxPage() {
                         ['private', '개인'],
                         ['national', '국가'],
                         ['public', '전체'],
+                        ['diplomacy', '외교'],
                     ] as const).map(([value, label]) => (
                         <button
                             key={value}
@@ -330,6 +390,12 @@ export default function MailboxPage() {
                             <option value={MAILBOX_NATIONAL_BASE + identity.nationId}>국가</option>
                         )}
                         <option value={MAILBOX_PUBLIC}>전체</option>
+                        {contacts.map((group) => (
+                            <optgroup key={group.mailbox} label={group.name}>
+                                <option value={group.mailbox}>{group.name} 서신함</option>
+                                {group.general.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                            </optgroup>
+                        ))}
                     </select>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
@@ -395,6 +461,7 @@ export default function MailboxPage() {
                         </GameCard>
                     );
                 })}
+                {messages.length > 0 ? <button type="button" onClick={() => void loadOlder()}>이전 메시지</button> : null}
             </div>
         </Shell>
     );

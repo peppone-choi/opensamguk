@@ -100,6 +100,56 @@ class ScenarioMapSeedIT {
     }
 
     @Test
+    fun `absent QA turnterm retains the 60-minute seed cadence`() {
+        assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
+
+        assertSeedCadence(qaTurnTerm = null, expectedTurnTerm = 60)
+        cleanRows()
+        assertSeedCadence(qaTurnTerm = "", expectedTurnTerm = 60)
+    }
+
+    @Test
+    fun `QA turnterm one is applied before seeded general jitter`() {
+        assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
+
+        assertSeedCadence(qaTurnTerm = "1", expectedTurnTerm = 1)
+    }
+
+    @Test
+    fun `QA turnterm one produces deterministic general jitter offsets`() {
+        assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
+
+        assertTrue(
+            SeedBootstrap(
+                qaTurnTerm = "1",
+                worldId = opensamguk.common.world.WorldId(1),
+            ).ensureSeeded(jdbc),
+        )
+        val firstOffsets = seededJitterOffsets()
+
+        cleanRows()
+        assertTrue(
+            SeedBootstrap(
+                qaTurnTerm = "1",
+                worldId = opensamguk.common.world.WorldId(1),
+            ).ensureSeeded(jdbc),
+        )
+        assertEquals(firstOffsets, seededJitterOffsets())
+    }
+
+    @Test
+    fun `QA turnterm rejects every value other than one`() {
+        for (invalid in listOf("0", "2", "60", "01", " 1", "1 ", "one")) {
+            assertFailsWith<IllegalArgumentException>(invalid) {
+                SeedBootstrap(
+                    qaTurnTerm = invalid,
+                    worldId = opensamguk.common.world.WorldId(1),
+                )
+            }
+        }
+    }
+
+    @Test
     fun `external scenario_3190 seed preserves numeric identity and is idempotent`(@TempDir tempDir: Path) {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
@@ -281,6 +331,70 @@ class ScenarioMapSeedIT {
         }
         assertEquals(0, count("world_state"), "malformed scenario codes make no writes")
     }
+
+    private fun assertSeedCadence(qaTurnTerm: String?, expectedTurnTerm: Int) {
+        assertTrue(
+            SeedBootstrap(
+                qaTurnTerm = qaTurnTerm,
+                worldId = opensamguk.common.world.WorldId(1),
+            ).ensureSeeded(jdbc),
+            "fresh world is seeded",
+        )
+
+        val world = jdbc.queryForMap(
+            """
+            SELECT tick_seconds, turn_term, config ->> 'turnterm' AS config_turnterm
+              FROM world_state
+             WHERE id = 1
+            """.trimIndent(),
+        )
+        assertEquals(expectedTurnTerm * 60, (world["tick_seconds"] as Number).toInt())
+        assertEquals(expectedTurnTerm, (world["turn_term"] as Number).toInt())
+        assertEquals(expectedTurnTerm.toString(), world["config_turnterm"])
+        assertEquals(
+            expectedTurnTerm.toString(),
+            jdbc.queryForObject(
+                """
+                SELECT value::text
+                  FROM game_kv
+                 WHERE "table" = 'game_env'
+                   AND namespace = 'game_env'
+                   AND key = 'turnterm'
+                """.trimIndent(),
+                String::class.java,
+            ),
+        )
+        assertEquals(
+            expectedTurnTerm.toString(),
+            jdbc.queryForObject("SELECT env ->> 'turnterm' FROM ng_games", String::class.java),
+        )
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                """
+                SELECT count(*)
+                  FROM general g
+                  JOIN world_state w ON w.id = g.world_id
+                 WHERE g.turn_time < w.start_time
+                    OR g.turn_time >= w.start_time + (? * INTERVAL '1 second')
+                """.trimIndent(),
+                Int::class.java,
+                expectedTurnTerm * 60,
+            ),
+            "every seeded general turn_time is within the configured cadence range",
+        )
+    }
+
+    private fun seededJitterOffsets(): List<Long> =
+        jdbc.queryForList(
+            """
+            SELECT (EXTRACT(EPOCH FROM g.turn_time - w.start_time) * 1000000)::bigint
+              FROM general g
+              JOIN world_state w ON w.id = g.world_id
+             ORDER BY g.id
+            """.trimIndent(),
+            Long::class.java,
+        )
 
     private fun copyScenario3190(target: Path): ActualPilotReport? =
         copyActualScenario3190(

@@ -14,6 +14,7 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.event.StaticEventHandler
+import opensamguk.logic.stats.GeneralActionModule
 import opensamguk.logic.stats.GeneralActionPipeline
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -103,6 +104,35 @@ class JoinTest {
         CheImgwan(pipeline).resolve(ctx)
 
         assertEquals(100.0, draft.general.experience, "exp +100 (gennum 10 >= 10)")
+    }
+
+    @Test
+    fun `che_임관 folds experience before level bookkeeping then keeps the stat-finalize plain-log order`() {
+        val foldedPipeline = GeneralActionPipeline(listOf(doubleExperience))
+        val actor = general().copy(
+            experience = 900.0,
+            meta = linkedMapOf("explevel" to 9, "strength_exp" to 30),
+        )
+        val destNation = Nation(id = 7, level = 3, capitalCityId = 500, name = "위", gennum = 5)
+        val draft = GeneralActionDraft(actor, destLordCity(), null).apply {
+            this.destNation = destNation
+            this.destCity = destLordCity()
+        }
+        val context = GeneralActionResolveContext(draft, freshRng("che_임관"), env, MONTH, date)
+
+        CheImgwan(foldedPipeline).resolve(context)
+
+        assertEquals(2300.0, draft.general.experience)
+        assertEquals(15, metaInt(draft.general.meta, "explevel"))
+        assertEquals(71, draft.general.strength)
+        assertEquals(0.0, draft.general.meta["strength_exp"])
+        assertEquals(
+            listOf(
+                "<C>●</><C>Lv 15</>로 <C>레벨업</>!",
+                "<C>●</><S>무력</>이 <C>1</> 올랐습니다!",
+            ),
+            context.plainLogs(),
+        )
     }
 
     @Test
@@ -274,5 +304,16 @@ class JoinTest {
         assertTrue("BeNeutral" in names, "BeNeutral; got $names")
         assertTrue("AllowJoinAction" in names, "AllowJoinAction; got $names")
         assertTrue("AllowJoinDestNation" in names, "AllowJoinDestNation; got $names")
+    }
+
+    private companion object {
+        val doubleExperience = object : GeneralActionModule {
+            override fun onCalcStat(
+                general: General,
+                statName: String,
+                value: Double,
+                aux: Map<String, Any?>,
+            ): Double = if (statName == "experience") value * 2.0 else value
+        }
     }
 }

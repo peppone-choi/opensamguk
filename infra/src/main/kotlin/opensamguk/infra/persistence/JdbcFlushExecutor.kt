@@ -303,6 +303,9 @@ open class JdbcFlushExecutor(
             if (payload.reservedGeneralTurnPulls.isNotEmpty()) {
                 generalTurnPullMany(payload.worldId, payload.reservedGeneralTurnPulls)
             }
+            if (payload.generalTurnSlotWrites.isNotEmpty()) {
+                generalTurnSlotWriteMany(payload.worldId, payload.generalTurnSlotWrites)
+            }
             if (isUnificationFlush) {
                 if (payload.hallUpserts.isNotEmpty()) hallUpsertMany(payload.worldId, payload.hallUpserts)
                 if (preArchiveLogs.isNotEmpty()) logEntryCreateMany(payload.worldId, preArchiveLogs)
@@ -350,6 +353,7 @@ open class JdbcFlushExecutor(
         params.addValue("status", worldState["status"] as? String)
         params.addValue("tick_seconds", (worldState["tick_seconds"] as? Number)?.toInt())
         params.addValue("config", (worldState["config"] as? Map<*, *>)?.let(MetaJson::encode))
+        params.addValue("start_time", worldState["start_time"]?.toString())
         // lastTurnTime 영속화 — WorldSnapshotLoader 가 부팅 시 meta['lastTurnTime'] 을 1순위로 읽는데
         // 이 키를 쓰는 경로가 없어서 매 엔진 재기동마다 start_time 폴백 → MonthBoundaryDriver 가
         // 월드 시작부터 전 월을 재생(월수입/AI 이중 적용 + 로그 중복 INSERT)했다 (2026-06-12 s1 실증:
@@ -378,6 +382,7 @@ open class JdbcFlushExecutor(
                    status = COALESCE(:status, status),
                    tick_seconds = COALESCE(:tick_seconds, tick_seconds),
                    config = COALESCE(CAST(:config AS jsonb), config),
+                   start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    world_version = world_version + 1,
                    meta = meta || jsonb_build_object(
@@ -399,6 +404,7 @@ open class JdbcFlushExecutor(
                    status = COALESCE(:status, status),
                    tick_seconds = COALESCE(:tick_seconds, tick_seconds),
                    config = COALESCE(CAST(:config AS jsonb), config),
+                   start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    meta = meta || jsonb_build_object(
                        'lastTurnTime', CAST(:last_turn_time AS text),
@@ -761,7 +767,7 @@ open class JdbcFlushExecutor(
 
     /**
      * Faithful to the per-command `diplomacy` UPDATE (`che_선전포고`/`수락`/`파기`/`종전`): toggle
-     * `state_code` + `term` (and `is_dead` when the patch carries it) for a single `(src, dest)` row.
+     * `state_code` + `term` (and `casualties` when the patch carries it) for a single `(src, dest)` row.
      * Bidirectional transitions arrive as TWO patches (both directions). Batched. This is the DELTA
      * path — the monthly TICK's diplomacy bulk-SQL update is a separate write (P3 PostUpdateMonthly).
      */
@@ -785,10 +791,10 @@ open class JdbcFlushExecutor(
                 )
                 check(affected == 1) { "diplomacy UPDATE affected $affected rows; expected exactly 1" }
             } else {
-                src.addValue("is_dead", u.dead != 0)
+                src.addValue("casualties", u.dead)
                 val affected = jdbc.update(
                     """
-                    UPDATE diplomacy SET state_code = :state_code, term = :term, is_dead = :is_dead
+                    UPDATE diplomacy SET state_code = :state_code, term = :term, casualties = :casualties
                      WHERE world_id = :world_id
                        AND src_nation_id = :src_nation_id
                        AND dest_nation_id = :dest_nation_id
@@ -895,19 +901,28 @@ open class JdbcFlushExecutor(
         val turnBatch = ArrayList<SqlParameterSource>(rows.size * ring)
         for (r in rows) {
             val id = r.columns["id"]
-            for (idx in 0 until ring) {
+            require(r.initialTurns.isEmpty() || r.initialTurns.size == ring) {
+                "created general $id initial turn ring must contain exactly $ring slots"
+            }
+            val slots = r.initialTurns.ifEmpty {
+                List(ring) { InitialGeneralTurnRow("휴식", "{}", "휴식") }
+            }
+            for ((idx, slot) in slots.withIndex()) {
                 turnBatch.add(
                     MapSqlParameterSource()
                         .addValue("world_id", worldId.value)
                         .addValue("general_id", id)
-                        .addValue("turn_idx", idx),
+                        .addValue("turn_idx", idx)
+                        .addValue("action_code", slot.actionCode)
+                        .addValue("arg", jsonb(slot.argJson))
+                        .addValue("brief", slot.brief),
                 )
             }
         }
         val generalTurnAffected = jdbc.batchUpdate(
             """
             INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg, brief)
-            VALUES (:world_id, :general_id, :turn_idx, '휴식', '{}'::jsonb, '휴식')
+            VALUES (:world_id, :general_id, :turn_idx, :action_code, :arg, :brief)
             """.trimIndent(),
             turnBatch.toTypedArray(),
         )
@@ -1034,8 +1049,8 @@ open class JdbcFlushExecutor(
         }.toTypedArray()
         val affected = jdbc.batchUpdate(
             """
-            INSERT INTO diplomacy (world_id, src_nation_id, dest_nation_id, state_code, term)
-            VALUES (:world_id, :src_nation_id, :dest_nation_id, :state_code, :term)
+            INSERT INTO diplomacy (world_id, src_nation_id, dest_nation_id, state_code, term, casualties)
+            VALUES (:world_id, :src_nation_id, :dest_nation_id, :state_code, :term, :casualties)
             """.trimIndent(),
             batch,
         )
@@ -2232,6 +2247,32 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("general_turn_pull", FlushVerb.UPDATE, executableRows.size))
     }
 
+    private fun generalTurnSlotWriteMany(worldId: WorldId, rows: List<GeneralTurnSlotWriteRow>) {
+        val params = rows.map {
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("general_id", it.generalId)
+                .addValue("turn_idx", it.turnIdx)
+                .addValue("action_code", it.actionCode)
+                .addValue("arg", it.argJson)
+                .addValue("brief", it.brief)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            UPDATE general_turn
+               SET action_code = :action_code,
+                   arg = CAST(:arg AS jsonb),
+                   brief = :brief,
+                   request_id = NULL
+             WHERE world_id = :world_id
+               AND general_id = :general_id
+               AND turn_idx = :turn_idx
+            """.trimIndent(),
+            params,
+        )
+        lastOps.add(FlushExecOp("general_turn_slot", FlushVerb.UPDATE, rows.size))
+    }
+
     private fun nationTurnPullMany(worldId: WorldId, rows: List<NationTurnPullRow>) {
         val executableRows = rows.filter {
             it.nationId != 0 &&
@@ -2350,6 +2391,7 @@ data class FlushPayload(
     val eventInserts: List<EventInsertRow> = emptyList(),
     val eventDeletes: List<Int> = emptyList(),
     val reservedGeneralTurnPulls: List<GeneralTurnPullRow> = emptyList(),
+    val generalTurnSlotWrites: List<GeneralTurnSlotWriteRow> = emptyList(),
     val reservedNationTurnPulls: List<NationTurnPullRow> = emptyList(),
     val commandResults: List<CommandResultRow> = emptyList(),
 )
@@ -2357,6 +2399,14 @@ data class FlushPayload(
 data class GeneralTurnPullRow(
     val generalId: Int,
     val turnCnt: Int = 1,
+)
+
+data class GeneralTurnSlotWriteRow(
+    val generalId: Int,
+    val turnIdx: Int,
+    val actionCode: String,
+    val argJson: String,
+    val brief: String,
 )
 
 data class NationTurnPullRow(
@@ -2464,7 +2514,16 @@ data class ProfileIconUpdateRow(val columns: Map<String, Any?>)
  * personal_code/special_code/special2_code/officer_city/last_turn/meta/penalty. INSERT 전용. 각 장수마다
  * 30개 general_turn(휴식) + 37개 rank_data(value 0)가 함께 INSERT된다(executor의 generalCreateMany).
  */
-data class GeneralCreateRow(val columns: Map<String, Any?>)
+data class GeneralCreateRow(
+    val columns: Map<String, Any?>,
+    val initialTurns: List<InitialGeneralTurnRow> = emptyList(),
+)
+
+data class InitialGeneralTurnRow(
+    val actionCode: String,
+    val argJson: String = "{}",
+    val brief: String = actionCode,
+)
 
 /**
  * `diplomacy_letter` INSERT 한 건 (W5d 외교 서신 발송, INSERT 전용). `id`는 recorder가 선할당한
@@ -2543,7 +2602,7 @@ sealed interface RankFlushOp {
 data class RankNationSync(val generalId: Int, val nationId: Int)
 
 /**
- * One per-command diplomacy UPDATE (T0.4): toggle `state_code`+`term` (and `is_dead` when [dead] is
+ * One per-command diplomacy UPDATE (T0.4): toggle `state_code`+`term` (and `casualties` when [dead] is
  * non-null) for a single `(src, dest)` row. Bidirectional transitions are TWO of these. Infra-local
  * mirror of the engine `DiplomacyRowPatch` (no engine dep cycle).
  */

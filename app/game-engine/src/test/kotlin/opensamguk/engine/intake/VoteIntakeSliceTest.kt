@@ -324,6 +324,33 @@ class VoteIntakeSliceTest {
         assertEquals(100, world.getGeneralById(1)!!.gold)
     }
 
+    @Test
+    fun `two vote casts in one recorder claim once before reward and lottery`() {
+        val world = world(general(id = 1, gold = 100))
+        val recorder = ChangeRecorder()
+        var lotteryInputReads = 0
+        val handler = VoteHandler(
+            world = world,
+            recorder = recorder,
+            votePollReader = { _, _ -> VotePollState(id = 2, multipleOptions = 1, optionsCount = 2) },
+            lotteryInputsProvider = {
+                lotteryInputReads += 1
+                pinnedInputs(2, 1)
+            },
+        )
+        val command = TurnDaemonCommand.VoteCast(generalId = 1, voteId = 2, selection = listOf(0))
+
+        val first = handler.handleVoteCast(command) as BoardActionResult
+        val duplicate = handler.handleVoteCast(command) as BoardActionResult
+
+        assertTrue(first.ok)
+        assertFalse(duplicate.ok)
+        assertEquals("이미 설문조사를 완료하였습니다.", duplicate.reason)
+        assertEquals(1, recorder.voteInserts().size)
+        assertEquals(1, lotteryInputReads)
+        assertEquals(100 + develCost * 5, world.getGeneralById(1)!!.gold)
+    }
+
     // ── VoteComment ─────────────────────────────────────────────────────────────────────────────
 
     @Test

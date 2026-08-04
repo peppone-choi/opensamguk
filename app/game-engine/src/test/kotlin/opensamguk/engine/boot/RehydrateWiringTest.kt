@@ -67,10 +67,10 @@ class RehydrateWiringTest {
                 "overwrite live rows on the next flush (OPENSAM-149 D1 / P6 gate item 4).",
         )
         assertTrue(
-            source.contains("auctionRepository.findAll()") && source.contains("maxOrNull()"),
+            source.contains("auctionRepository.findMaxId()"),
             "NOT SEEDED: DaemonLoopConfig.turnRunService no longer derives the auction id allocator from the persisted " +
-                "auction rows. A restarted daemon would reissue auction ids that are still active " +
-                "(OPENSAM-149 D1 / P6 gate item 4).",
+                "auction rows via `auctionRepository.findMaxId()`. A restarted daemon would reissue auction ids that " +
+                "are still active (OPENSAM-149 D1 / P6 gate item 4).",
         )
         assertTrue(
             source.contains("messageIdAllocator = { ++nextMessageId }") &&

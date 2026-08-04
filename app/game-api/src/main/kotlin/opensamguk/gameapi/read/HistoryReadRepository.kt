@@ -1,14 +1,42 @@
 package opensamguk.gameapi.read
 
+import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
+import jakarta.persistence.Converter
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.infra.persistence.MetaJson
 import org.springframework.stereotype.Repository
 import org.springframework.data.repository.Repository as SpringDataRepository
+
+data class HistoryJsonValue(val value: Any? = emptyList<Any?>())
+
+@Converter
+class HistoryJsonValueConverter : AttributeConverter<HistoryJsonValue, String> {
+    override fun convertToDatabaseColumn(attribute: HistoryJsonValue?): String =
+        MetaJson.encode(attribute?.value)
+
+    override fun convertToEntityAttribute(dbData: String?): HistoryJsonValue =
+        HistoryJsonValue(decodeHistoryJsonValue(dbData))
+}
+
+@Converter
+class HistoryJsonStringListConverter : AttributeConverter<List<String>, String> {
+    override fun convertToDatabaseColumn(attribute: List<String>?): String =
+        MetaJson.encode(attribute ?: emptyList<String>())
+
+    override fun convertToEntityAttribute(dbData: String?): List<String> =
+        (decodeHistoryJsonValue(dbData) as? List<*>)?.mapNotNull { it as? String }.orEmpty()
+}
+
+private fun decodeHistoryJsonValue(dbData: String?): Any? {
+    val json = dbData?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    return MetaJson.decode("""{"value":$json}""")["value"]
+}
 
 /**
  * yearbook_history READ — process-world scoped (OPENSAM-127 residual / GWT cold-history).
@@ -36,9 +64,17 @@ class YearbookHistoryReadEntity(
     @Column(name = "map", columnDefinition = "jsonb")
     var map: Map<String, Any?> = linkedMapOf(),
 
-    @Convert(converter = MetaJsonConverter::class)
+    @Convert(converter = HistoryJsonValueConverter::class)
     @Column(name = "nations", columnDefinition = "jsonb")
-    var nations: Map<String, Any?> = linkedMapOf(),
+    var nations: HistoryJsonValue = HistoryJsonValue(),
+
+    @Convert(converter = HistoryJsonStringListConverter::class)
+    @Column(name = "global_history", columnDefinition = "jsonb")
+    var globalHistory: List<String> = emptyList(),
+
+    @Convert(converter = HistoryJsonStringListConverter::class)
+    @Column(name = "global_action", columnDefinition = "jsonb")
+    var globalAction: List<String> = emptyList(),
 
     @Column(name = "hash")
     var hash: String = "",

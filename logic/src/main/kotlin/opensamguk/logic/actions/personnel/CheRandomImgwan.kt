@@ -12,6 +12,7 @@ import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -32,6 +33,15 @@ data class RandomImgwanNpcCandidate(
     val affinity: Int,
     val lordCityId: Int,
 )
+
+fun interface RandomImgwanPermutationReplay {
+    fun reorder(
+        actorGeneralId: Int,
+        year: Int,
+        month: Int,
+        candidateNationIds: List<Int>,
+    ): List<Int>
+}
 
 /**
  * A candidate nation for the ELSE (weighted-pair) branch (`che_랜덤임관.php:183-205` grouped query): the
@@ -78,6 +88,7 @@ class CheRandomImgwan(
     private val npcCandidates: List<RandomImgwanNpcCandidate> = emptyList(),
     private val weightedCandidates: List<RandomImgwanWeightedCandidate> = emptyList(),
     private val useNpcForeignBranch: Boolean = false,
+    private val permutationReplay: RandomImgwanPermutationReplay? = null,
 ) : GeneralActionDefinition {
 
     override val key: String get() = "che_랜덤임관"
@@ -148,7 +159,9 @@ class CheRandomImgwan(
             }
         }
 
-        g = g.copy(experience = g.experience + exp)
+        val experience = addExperience(g, exp, pipeline)
+        g = experience.general
+        experience.plainLog?.let(context::addPlainLog)
         val statChange = checkStatChange(
             g.copy(lastTurn = LastTurn(command = name, arg = null)),
         )
@@ -168,13 +181,29 @@ class CheRandomImgwan(
 
     /**
      * che_랜덤임관.php:150-173 uses an unrecoverable ambient PHP shuffle before this loop.
-     * Kotlin deliberately keeps the supplied insertion order as a sanctioned deterministic divergence;
-     * per-nation nextFloat1 and MIN-score semantics remain source-faithful after that boundary.
+     * Kotlin keeps the supplied insertion order as the production deterministic divergence. An oracle replay
+     * may supply the captured PHP permutation; it must contain exactly the same nation ids and consumes no RNG.
      */
     private fun pickNpcForeign(context: GeneralActionResolveContext): Chosen? {
         if (npcCandidates.isEmpty()) return null
         val rng = context.rng
-        val shuffled = npcCandidates
+        val candidateByNation = npcCandidates.associateBy { it.nationId }
+        val replayedNationIds = permutationReplay?.reorder(
+            context.draft.general.id,
+            context.env.year,
+            context.month,
+            npcCandidates.map { it.nationId },
+        )
+        val shuffled = if (replayedNationIds == null) {
+            npcCandidates
+        } else {
+            require(replayedNationIds.size == npcCandidates.size &&
+                replayedNationIds.toSet() == candidateByNation.keys
+            ) {
+                "captured random-imgwan permutation differs from live candidates"
+            }
+            replayedNationIds.map { candidateByNation.getValue(it) }
+        }
         val allGen = shuffled.sumOf { it.gennum }.toDouble()
         var maxScore = (1 shl 30).toDouble()
         var affinity = metaInt(context.draft.general.meta, "affinity")

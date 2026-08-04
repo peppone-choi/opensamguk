@@ -18,17 +18,13 @@ import org.springframework.web.bind.annotation.RestController
  * currentYearMonth/serverId/mapName)과 선택 월 레코드(`record`)를 담는다. FE는 `record`로 MapViewer(map)/
  * SimpleNationList(nations)/중원정세(globalHistory)/장수동향(globalAction)을 렌더한다.
  *
- * Backed by `yearbook_history`(월별 map/nations 스냅샷의 충실 포팅 — 이 스키마엔 `ng_history` 테이블이
- * 없다). 테이블은 존재하나 fresh seed에선 0행(월틱이 진행하며 매월 1행 기록). 레거시 현재 서버는 빈
+ * Backed by `yearbook_history`(월별 map/nations/global_history/global_action 스냅샷의 충실 포팅).
+ * 테이블은 존재하나 fresh seed에선 0행(월틱이 진행하며 매월 1행 기록). 레거시 현재 서버는 빈
  * `ng_history`에서도 `world_state` 현재 월 기준으로 이전 월 범위 + 현재 월 옵션을 만든다.
  * 교차 서버 뷰는 F4(단일서버)에서 드롭.
  *
- * **BLOCKED(§5)**: `yearbook_history`엔 `global_history`/`global_action` 컬럼이 없어(중원 정세/장수 동향
- * 월별 글로벌 로그) `record.globalHistory`/`globalAction`은 항상 빈 배열로 나간다. 월별 글로벌 로그가
- * 영속화되면 1줄로 채워진다(REPORT 기재).
- *
- * `yearMonth`(선택) = `Util::joinYearMonth` = `year*12 + (month-1)`. 부재 시 마지막 기록 월로 클램프,
- * 행이 없으면 `record=null`. parseYearMonth = [ym/12, ym%12+1]로 FE와 동형.
+ * `yearMonth`(선택) = `Util::joinYearMonth` = `year*12 + (month-1)`. 행이 없으면 `record=null`이며,
+ * 기록되지 않은 현재 월에 직전 archive를 재라벨하지 않는다. parseYearMonth = [ym/12, ym%12+1]로 FE와 동형.
  */
 @RestController
 @RequestMapping("/api/history")
@@ -40,7 +36,7 @@ class HistoryController(
     @GetMapping
     fun history(@RequestParam(name = "yearMonth", required = false) yearMonth: Int?): ResponseEntity<HistoryResponse> {
         val rows = history.findAllByOrderByYearAscMonthAsc()
-        val currentWorld = world.findAll().firstOrNull()
+        val currentWorld = world.findProcessWorld()
         val serverId = currentWorld?.scenarioCode ?: ""
         // mapName: opensamguk엔 별도 맵 테마명이 없다(시나리오 코드로 대체). MapViewer는 record.map으로 렌더.
         val mapName = serverId
@@ -71,8 +67,8 @@ class HistoryController(
         // 테스트/덤프에서는 기존 last+1 폴백을 보존한다.
         val currentYearMonth = liveYearMonth ?: (lastYearMonth + 1)
 
-        // 선택 월: yearMonth 미지정/범위 밖이면 마지막 기록 월로 클램프(빈 상태 회피).
-        val targetYearMonth = (yearMonth ?: lastYearMonth).coerceIn(firstYearMonth, lastYearMonth)
+        val selectionUpper = maxOf(lastYearMonth, currentYearMonth)
+        val targetYearMonth = (yearMonth ?: currentYearMonth).coerceIn(firstYearMonth, selectionUpper)
         val (tYear, tMonth) = parseYearMonth(targetYearMonth)
         val selected = rows.firstOrNull { it.year == tYear && it.month == tMonth }
 
@@ -81,10 +77,9 @@ class HistoryController(
                 serverId = serverId,
                 year = h.year,
                 month = h.month,
-                // BLOCKED: yearbook_history 미보유(§5) — 월별 글로벌 로그 컬럼 부재 → 빈 배열.
-                globalHistory = emptyList(),
-                globalAction = emptyList(),
-                nations = h.nations,
+                globalHistory = h.globalHistory,
+                globalAction = h.globalAction,
+                nations = h.nations.value,
                 map = h.map,
                 hash = h.hash,
             )

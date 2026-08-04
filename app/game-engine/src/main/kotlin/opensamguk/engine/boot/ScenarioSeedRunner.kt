@@ -34,6 +34,7 @@ import java.nio.charset.StandardCharsets
  *  - `SCENARIO_SEED_ENABLED` (default true) — set false to disable fresh-world seeding.
  *  - `SCENARIO_CODE` (default `scenario_1010`) — selects the committed resource set.
  *  - `SCENARIO_DIR` — optional external directory containing `${SCENARIO_CODE}.json`.
+ *  - `SCENARIO_QA_TURNTERM` — QA-only opt-in; only `1` reduces a fresh seed to one-minute cadence.
  */
 @Component
 class ScenarioSeedRunner(
@@ -58,9 +59,15 @@ class SeedBootstrap(
     private val scenarioCode: String = "scenario_1010",
     private val seedEnabled: Boolean = true,
     private val scenarioDir: String = "",
+    private val qaTurnTerm: String? = null,
     private val worldId: WorldId,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
+    private val turnTerm: Int = when (qaTurnTerm) {
+        null, "" -> DEFAULT_TURN_TERM
+        "1" -> 1
+        else -> throw IllegalArgumentException("SCENARIO_QA_TURNTERM must be exactly 1 when set: $qaTurnTerm")
+    }
 
     /**
      * Seed through configured-world admission. Returns true when it imports, false only when exactly
@@ -86,6 +93,7 @@ class SeedBootstrap(
                 cities = cities,
                 scenarioCode = scenarioCode,
                 scenarioNumber = scenarioNumber,
+                turnTerm = turnTerm,
             )
         }
         if (!admission.seeded) {
@@ -134,6 +142,7 @@ class SeedBootstrap(
     }
 
     private companion object {
+        const val DEFAULT_TURN_TERM = 60
         val SCENARIO_CODE_PATTERN = Regex("scenario_(0|[1-9]\\d*)")
     }
 }

@@ -18,14 +18,24 @@ If any fails, STOP and report — do not "fix" by editing a golden or relaxing a
 ## Ordered steps
 
 ### 1. Full gate suite — BLOCK on any red
-Run every backend module from the **repo root** with Java 21. The host can route Gradle through a context-mode wrapper, so the XML/output evidence below—not exit status alone—is authoritative:
+Run the canonical backend gate from the **repo root** with Java 21:
 
 ```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --rerun-tasks \
-  :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test 2>&1 | tail -60
+tools/parity/gate.sh backend
 ```
 
-**Verify by TEST XML, not exit code** (`task-notification` exit 0 is unreliable). Confirm `BUILD SUCCESSFUL` in the tail AND inspect `*/build/test-results/test/*.xml` for `failures="0" errors="0"`. Pay special attention to the **`*GoldenTest` / `*ReplayGateTest`** classes — those are the draw-for-draw parity gates; a single one red = NOT shippable. Testcontainers ITs that **skip** for Docker-unavailable are fine; **failed** ITs are not. Any red ⇒ STOP, hand the failure back, do not continue.
+The gate verifies test XML; pay special attention to the **`*GoldenTest` / `*ReplayGateTest`** classes — those are the draw-for-draw parity gates; a single one red = NOT shippable. Testcontainers ITs that **skip** for Docker-unavailable are fine; **failed** ITs are not. Any red ⇒ STOP, hand the failure back, do not continue.
+
+For a parity batch, run the game frontend proof as well:
+
+```bash
+cd web/game && pnpm typecheck && pnpm test
+```
+
+Run only the extra changed-scope checks that apply: `:app:gateway-api:test` for gateway API work,
+`cd web/gateway && pnpm typecheck` for web-gateway work, and `./tools/smoke.sh` for compose/nginx
+or full-stack changes. Any changed UI flow also requires browser observation with the routed
+`webapp-testing`/Playwright workflow; typecheck and unit tests alone are not UI behavior proof.
 
 ### 2. Adversarial parity review on the diff
 Spawn the **parity-reviewer** agent (or invoke the configured review workflow) against `git diff <parent>...HEAD`. It must clear, with focus on:
@@ -38,7 +48,7 @@ Spawn the **parity-reviewer** agent (or invoke the configured review workflow) a
 Unresolved HIGH findings ⇒ STOP.
 
 ### 3. Commit logical units
-One logical commit per task, with Korean code comments (identifiers stay English and parity-string literals retain PHP content). Commit only when separately authorized. **Every** commit message ends with the trailer — verbatim:
+One logical commit per task, with English code comments (identifiers stay English and game-content/parity-string literals retain PHP content). Commit only when separately authorized. **Every** commit message ends with the trailer — verbatim:
 
 ```
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>

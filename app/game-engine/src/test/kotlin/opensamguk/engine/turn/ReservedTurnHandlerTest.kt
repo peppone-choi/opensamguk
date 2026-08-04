@@ -141,6 +141,27 @@ class ReservedTurnHandlerTest {
     }
 
     @Test
+    fun `city trust materializes through the MariaDB FLOAT text boundary`() {
+        assertEquals(81.1021, ReservedTurnHandler.materializeMariaDbFloat(81.10215004199256))
+        assertEquals(83.0571, ReservedTurnHandler.materializeMariaDbFloat(83.05710274525107))
+        assertEquals(84.1945, ReservedTurnHandler.materializeMariaDbFloat(84.19451884333633))
+        assertEquals(86.2042, ReservedTurnHandler.materializeMariaDbFloat(86.20424282211812))
+    }
+
+    @Test
+    fun `nation tech materializes at every MariaDB FLOAT write`() {
+        val scores = listOf(18, 18, 18, 22, 22, 22)
+        val stored = scores.runningFold(500.0) { tech, score ->
+            ReservedTurnHandler.materializeMariaDbFloat(tech + score / 19.0)
+        }
+
+        assertEquals(
+            listOf(500.0, 500.947, 501.894, 502.841, 503.999, 505.157, 506.315),
+            stored,
+        )
+    }
+
+    @Test
     fun `cityless general can consume a reserved rest turn without resolving a city`() {
         val world = worldWith(
             generals = listOf(general(id = 1012, nationId = 8, cityId = 0)),
@@ -159,7 +180,18 @@ class ReservedTurnHandlerTest {
 
     @Test
     fun `available general che_농지개간 increases agriculture decreases gold pushes log and records dirty`() {
-        val world = worldWith()
+        val noLevelCrossGeneral = general().copy(
+            experience = 1_000,
+            dedication = 1_000,
+            meta = linkedMapOf(
+                "explevel" to 10,
+                "dedlevel" to 4,
+                "intel_exp" to 3,
+                "max_domestic_critical" to 0.0,
+                "killturn" to 80,
+            ),
+        )
+        val world = worldWith(generals = listOf(noLevelCrossGeneral))
         val handler = handlerFor(world)
 
         val outcome = handler.handle(42, "che_농지개간", YEAR, MONTH, "12:34")
@@ -468,11 +500,12 @@ class ReservedTurnHandlerTest {
 
     @Test
     fun `previously uncovered che_이동 consumes exactly one unique lottery after success`() {
-        val actor = withForcedLottery(general(nationId = 1, cityId = 1))
+        val actor = withForcedLottery(general(nationId = 1, cityId = 1)).copy(officerLevel = 12)
+        val follower = general(id = 43, nationId = 1, cityId = 1)
         val world = worldWith(
-            generals = listOf(actor),
+            generals = listOf(actor, follower),
             cities = listOf(city(id = 1, nationId = 1), city(id = 9, nationId = 1)),
-            nations = listOf(nation(id = 1)),
+            nations = listOf(nation(id = 1, level = 0)),
             meta = forcedLotteryMeta(),
         )
         val handler = handlerFor(world)
@@ -487,6 +520,7 @@ class ReservedTurnHandlerTest {
 
         assertFalse(outcome.fellBack)
         assertEquals(9, world.getGeneralById(42)!!.cityId)
+        assertEquals(9, world.getGeneralById(43)!!.cityId)
         assertEquals(1, uniqueItemCount(world.getGeneralById(42)!!))
     }
 

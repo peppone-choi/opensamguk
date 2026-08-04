@@ -14,6 +14,8 @@ import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
@@ -330,9 +332,14 @@ open class RecruitAlgorithm(
 
         val cost = getCost(g, reqCrewType, appliedCrew, tech)
 
+        val experience = addExperience(g, exp.toDouble(), pipeline)
+        g = experience.general
+        experience.plainLog?.let { context.addPlainLog(it) }
+        val dedication = addDedication(g, ded.toDouble(), pipeline)
+        g = dedication.general
+        dedication.plainLog?.let { context.addPlainLog(it) }
+
         g = g.copy(
-            experience = g.experience + exp,
-            dedication = g.dedication + ded,
             gold = maxOf(0, g.gold - cost.gold),
             rice = maxOf(0, g.rice - cost.rice),
             meta = withMeta(g.meta,

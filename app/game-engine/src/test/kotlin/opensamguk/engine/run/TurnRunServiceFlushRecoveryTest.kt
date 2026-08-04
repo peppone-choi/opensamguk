@@ -33,6 +33,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.SimpleDriverDataSource
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -110,6 +112,38 @@ class TurnRunServiceFlushRecoveryTest {
         assertEquals(runTime, world.getState().lastTurnTime, "lastTurnTime must advance to runTime after retry")
         assertEquals(runTime.plusSeconds(3600), service.nextRunTime(), "next due is runTime+tickSeconds")
         assertTrue(service.recoveryGate().allowsIntakeOrTick())
+    }
+
+    @Test
+    fun `due tick preserves durable status cadence config and start time from the base payload`() {
+        val payloads = mutableListOf<FlushPayload>()
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) {
+                payloads += payload
+            }
+        }
+        val (service, world) = newFixture(flush)
+        val startTime = Instant.parse("0200-01-01T00:00:00Z")
+        val phpStartTime = startTime
+            .atZone(ZoneId.of("Asia/Seoul"))
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        world.applyAdminWorldSettings(
+            status = "PRE_OPEN",
+            configPatch = linkedMapOf(
+                "turnterm" to 30,
+                "starttime" to phpStartTime,
+                "startTime" to startTime.toString(),
+            ),
+            tickSeconds = 1_800,
+        )
+
+        service.runTick(startTime.plusSeconds(1_800))
+
+        val worldState = payloads.single().worldStateUpdate
+        assertEquals("PRE_OPEN", worldState["status"])
+        assertEquals(1_800, worldState["tick_seconds"])
+        assertEquals(30, (worldState["config"] as Map<*, *>)["turnterm"])
+        assertEquals(startTime.toString(), worldState["start_time"])
     }
 
     @Test
