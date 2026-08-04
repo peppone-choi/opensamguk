@@ -25,7 +25,7 @@
 | 루프 | 차단 대상 | 기제 (전부 실배선) | 증거 형태 |
 |---|---|---|---|
 | **① 코드 결함 차단** | 버그·패러티 드리프트가 조용히 남는 것 | provider 공통 PostToolUse 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `verify-changes.sh`의 diff→최소 검증 행렬 안내) + 위 행렬 실행 + `tools/parity/gate.sh backend`(XML 판정) | `BUILD SUCCESSFUL` tail + 테스트 XML `failures="0"` |
-| **② 자기 승인 차단** | 작성자가 자기 작업을 스스로 승인·머지 | PR 이중 리뷰(`claude_review.yml` 파리티 한국어 프롬프트 + CodeRabbit `.coderabbit.yaml`; fallback 시 Claude GHA 단독) + `check.py --strict`의 cross-agent critique Verdict 검사(`docs/superpowers/reviews/*.md` 요구) | PR 리뷰 코멘트 + reviews 아티팩트의 `Verdict:` 라인 |
+| **② 자기 승인 차단** | 작성자가 자기 작업을 스스로 승인·머지 | PR 리뷰봇 CodeRabbit(`.coderabbit.yaml`) + `check.py --strict`의 cross-agent critique Verdict 검사(`docs/superpowers/reviews/*.md` 요구) + 사람/타 프로바이더 에이전트의 명시 비평 | PR 리뷰 코멘트 + reviews 아티팩트의 `Verdict:` 라인 |
 | **③ 규범 위반 차단** | 시크릿 접근·골든/legacy 수정·검증 없는 완료 선언 | provider 공통 PreToolUse 보호 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `protect-sensitive-files.sh` exit 2) + Claude 첨부 경계 `.claudeignore`(@멘션 구멍) + CI `check.py --strict --base origin/main`(ci.yml agent-system 잡) | BLOCKED stderr 캡처 + CI 그린 로그 |
 
 세 루프는 서로 대체재가 아니다: ①이 초록이어도 ②없이 머지하면 자기 승인이고, ②가 있어도 ③없이는 골든 수정으로 게이트를 "통과"시킬 수 있다. 완료 선언은 셋 다 해당 증거를 인용할 수 있을 때만.
