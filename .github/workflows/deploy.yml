@@ -263,6 +263,14 @@ jobs:
           docker exec opensamguk-deployer \
             sh -c 'wget -qO- --header="Authorization: Bearer $DEPLOYER_TOKEN" "http://localhost:9000/env/shared"' \
             | grep -q '"ok":true'
+
+          # 컨테이너 존재가 아니라 deployer -> socket-proxy -> Docker 도달성을 검증한다
+          # (socket-proxy에는 healthcheck가 없어 up -d는 crash-loop을 그대로 통과시킨다).
+          if ! docker exec opensamguk-deployer docker version >/dev/null; then
+            echo "ERROR: deployer cannot reach Docker through socket-proxy" >&2
+            exit 1
+          fi
+
           readonly PUBLIC_SERVER_ID_PATTERN='^[a-z0-9]{1,48}$'
           readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
 
