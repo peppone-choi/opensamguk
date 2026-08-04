@@ -248,6 +248,14 @@ jobs:
 
           COMPOSE="docker compose -p opensamguk-shared -f docker-compose.shared.yml --env-file .env"
 
+          # deployer는 docker.sock에 직접 붙지 않고 socket-proxy 경유로만 Docker에 접근한다
+          # (docker-compose.shared.yml: DOCKER_HOST=tcp://socket-proxy:2375 + depends_on).
+          # 아래 deployer 재생성은 --no-deps라 의존 서비스를 띄우지 않으므로 여기서 명시적으로
+          # 보장한다. 누락되면 deployer의 모든 docker compose 호출이 exit 1로 죽고, 서버
+          # 리셋이 down 단계에서 실패해 repair-required로 잠긴다(2026-08-04 장애).
+          echo "=== Ensuring deployer socket-proxy ==="
+          $COMPOSE up -d socket-proxy
+
           echo "=== Updating deployer from opensamguk-docker ==="
           $COMPOSE up -d --build --force-recreate --no-deps deployer
 
@@ -255,6 +263,14 @@ jobs:
           docker exec opensamguk-deployer \
             sh -c 'wget -qO- --header="Authorization: Bearer $DEPLOYER_TOKEN" "http://localhost:9000/env/shared"' \
             | grep -q '"ok":true'
+
+          # 컨테이너 존재가 아니라 deployer -> socket-proxy -> Docker 도달성을 검증한다
+          # (socket-proxy에는 healthcheck가 없어 up -d는 crash-loop을 그대로 통과시킨다).
+          if ! docker exec opensamguk-deployer docker version >/dev/null; then
+            echo "ERROR: deployer cannot reach Docker through socket-proxy" >&2
+            exit 1
+          fi
+
           readonly PUBLIC_SERVER_ID_PATTERN='^[a-z0-9]{1,48}$'
           readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
 

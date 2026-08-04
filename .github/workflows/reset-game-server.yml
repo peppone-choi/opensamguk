@@ -284,6 +284,22 @@ jobs:
           PY
           )"
 
+          # deployer는 docker.sock에 직접 붙지 않고 socket-proxy 경유로만 Docker에 접근한다
+          # (docker-compose.shared.yml: DOCKER_HOST=tcp://socket-proxy:2375). socket-proxy가
+          # 사라지면 아래 리셋이 deployer 안에서 downServerStack의 docker compose 호출부터
+          # exit 1로 죽고 서버가 repair-required로 잠긴다(2026-08-04 장애).
+          echo "=== Ensuring deployer socket-proxy ==="
+          if ! docker compose -p opensamguk-shared -f docker-compose.shared.yml --env-file .env up -d socket-proxy; then
+            echo "ERROR: failed to ensure deployer socket-proxy" >&2
+            exit 1
+          fi
+          # 컨테이너 존재가 아니라 deployer -> socket-proxy -> Docker 도달성을 검증한다
+          # (socket-proxy에는 healthcheck가 없어 up -d는 crash-loop을 그대로 통과시킨다).
+          if ! docker exec opensamguk-deployer docker version >/dev/null; then
+            echo "ERROR: deployer cannot reach Docker through socket-proxy" >&2
+            exit 1
+          fi
+
           echo "=== Triggering deployer reset for $PUBLIC_SERVER ($PROJECT, $SCENARIO_CODE) ==="
           docker run --rm --network opensamguk-net curlimages/curl:8.10.1 \
             -fsS -X POST \
