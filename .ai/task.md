@@ -411,6 +411,64 @@
 
 ---
 
+## 2026-08-02 — canonical alphanumeric game-server ID release closeout
+
+- PR: #354 — `https://github.com/peppone-choi/opensamguk/pull/354`.
+- Status: the first Codex review found two valid issues against
+  `8d1a64fee0651b2977f13af27eb6b91b43577342`. They were remediated in exact
+  code SHA `1683100447be91abc6eb2629969c9ee3c16bac5e`; an independent re-review
+  of that exact fixed code SHA is **CLEARED**. This source verdict does not
+  satisfy the separate fresh three-round PR review requirement.
+- Canonical public contract: accept raw `[A-Za-z0-9]+`, canonicalize to
+  lowercase `[a-z0-9]+`, and derive the internal Compose/container identity as
+  `s` + public ID. Examples: `pep` → `pep` / `spep`; `s1` → `s1` / `ss1`;
+  `A1` → `a1` / `sa1`.
+- `all`, `main`, and current top-level game route names are reserved to avoid
+  control and URL collisions. `current` remains a valid public ID.
+- First-review remediation:
+  - compatibility Nginx now accepts canonical public paths and derives the
+    internal `s<public>` upstream/container name only at that boundary;
+  - deploy, promote, and reset workflows now apply matching reserved-public-ID
+    guards instead of a one-off `all` check.
+- Independent re-review evidence for the fixed SHA: gateway 64 tests; game 220
+  tests; FrontInfo XML `27/0/0`; Admin XML `26/0/0`; and the fixed-SHA
+  workflow/Nginx/Compose contract review.
+- Approved external actions remain those of the governing OPENSAM-34 task:
+  GCP changes/configuration, commit, push, PR creation, three mention-triggered
+  reviews, merge, deployment, and live verification. They are authorized scope,
+  not completed actions; secrets stay redacted and data deletion is out of
+  scope.
+- Remaining release gates: Docker repository review/fix; a new three-round
+  `@codex` PR review sequence after the next documentation commit/current HEAD;
+  then merge, deploy, and live-production verification. No final PR review,
+  merge, deployment, or live result is claimed.
+
+## 2026-08-02 OPENSAM-34 — GCP production migration and launch
+
+- Status: in progress; GCP VM/runtime/network/DNS are provisioned, and PR
+  review findings are being remediated before the approved merge and deploy.
+- User-approved scope:
+  - migrate active production GitHub Actions runner selectors and operator
+    guidance from the retired EC2 target to GCP Compute Engine
+    `e2-standard-2` / `gcp-prod`;
+  - configure the GCP production control repository and generated runtime
+    secrets without printing their values;
+  - request three PR mention-triggered reviews, fix valid findings, then merge
+    and deploy;
+  - verify `sam.peppone.dev` through Cloudflare and live health routes.
+- Approved external actions: GCP resource changes, production configuration,
+  commit, push, PR creation, merge, and deployment. Secret values remain
+  redacted and data deletion remains out of scope.
+- Allowed repository files: production workflows, active deployment/operator
+  documentation, the compatibility deploy script/compose header, and this task
+  contract. No game logic, golden fixture, legacy source, image pin, or runtime
+  secret may enter the diff.
+- Completion evidence: matching online `gcp-prod` runners, three successful PR
+  review rounds with no unresolved `fix-required`, green targeted syntax/diff
+  checks, an observed deployment run, and live domain health.
+
+---
+
 ## Previous completed task — documentation and agent harness refresh
 
 - Status: completed — independent review cleared; docs-only verification passed except for the pre-existing `.codex/config.toml` personal-model baseline.

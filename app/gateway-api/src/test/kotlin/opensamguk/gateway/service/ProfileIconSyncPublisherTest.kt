@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -43,8 +45,13 @@ class ProfileIconSyncPublisherTest {
     }
 
     private fun registry(vararg urls: String): ServerRegistry {
-        val json = urls.mapIndexed { i, u -> """{"id":"srv$i","gameApiUrl":"$u"}""" }.joinToString(",", "[", "]")
-        return ServerRegistry(json, "http://x", "http://y", "opensamguk", "srv", mapper)
+        val registry = mock(ServerRegistry::class.java)
+        `when`(registry.all()).thenReturn(
+            urls.mapIndexed { i, url ->
+                ServerDef("srv$i", "srv$i", url, "http://engine", "project")
+            },
+        )
+        return registry
     }
 
     @Test
@@ -86,5 +93,20 @@ class ProfileIconSyncPublisherTest {
     fun `empty registry publishes to no target and does not throw`() {
         // 등록 서버 0개 — 조용한 no-op(초기 운영: 어드민이 서버 생성 전).
         ProfileIconSyncPublisher(registry(), "").publish(userId = 7L, picture = "x.jpg", imgsvr = 0, grade = 1)
+    }
+
+    @Test
+    fun `an invalid owner registry publishes to no target`() {
+        val invalidRegistry = ServerRegistry(
+            """[{"id":"pep","gameApiUrl":"http://spep-game-api:8081"},{"id":"main"}]""",
+            "http://game-api:8081",
+            "http://game-engine:8082",
+            "opensamguk",
+            "통일 서버",
+            mapper,
+        )
+
+        assertTrue(invalidRegistry.all().isEmpty())
+        ProfileIconSyncPublisher(invalidRegistry, "").publish(userId = 7L, picture = "x.jpg", imgsvr = 0, grade = 1)
     }
 }

@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE** — `.github/workflows/deploy.yml` builds GHCR images, then its EC2 self-hosted runner synchronizes the separate `opensamguk-docker` control repository and refreshes the shared stack. Running game-server `servers/<id>.env` image pins stay unchanged. This repository's `docker-compose.production.yml` and `scripts/deploy.sh` are compatibility-only, not the multi-server production control plane. **Sentry는 프론트 2앱(`@sentry/nextjs`) + 백엔드 3앱(`sentry-spring-boot-starter-jakarta`, 에러 캡처 전용 — traces-sample-rate 0 고정)에 SDK 배선 + DSN 주입·적재 실증 완료**(org tekken-75, 서비스명 프로젝트 5개, 스모크 5/5 전송→회수 CONFIRMED, 2026-07-16 — ADR-LITE-008; prod 컨테이너 반영은 approved shared-stack 설정 갱신이 필요). Terraform/CloudWatch는 NOT_CONFIGURED — 백엔드 관측은 docker logs + prod DB + health 엔드포인트(+DSN 배선 후 Sentry).
+**ACTIVE** — `.github/workflows/deploy.yml` builds GHCR images, then its GCP `gcp-prod` self-hosted runner synchronizes the separate `opensamguk-docker` control repository and refreshes the shared stack. Running game-server `servers/<id>.env` image pins stay unchanged. This repository's `docker-compose.production.yml` and `scripts/deploy.sh` are compatibility-only, not the multi-server production control plane. **Sentry는 프론트 2앱(`@sentry/nextjs`) + 백엔드 3앱(`sentry-spring-boot-starter-jakarta`, 에러 캡처 전용 — traces-sample-rate 0 고정)에 SDK 배선 + DSN 주입·적재 실증 완료**(org tekken-75, 서비스명 프로젝트 5개, 스모크 5/5 전송→회수 CONFIRMED, 2026-07-16 — ADR-LITE-008; prod 컨테이너 반영은 approved shared-stack 설정 갱신이 필요). Terraform/CloudWatch는 NOT_CONFIGURED — 백엔드 관측은 docker logs + prod DB + health 엔드포인트(+DSN 배선 후 Sentry).
 
 ## Read This When
 
@@ -24,7 +24,7 @@
 
 1. 사전: `tools/parity/gate.sh backend` green + 변경 앱 typecheck/build + critique `cleared`.
 2. **사람 승인** 획득(명시적 go).
-3. 승인된 main push → `deploy.yml`: 이미지 빌드·GHCR publish → EC2 self-hosted runner가 `opensamguk-docker` main을 동기화 → shared deployer/gateway/nginx stack 갱신. `servers/<id>.env`의 `IMAGE_TAG`/`WEB_GAME_TAG`는 유지하며, 서버 승격·재시드·새 기수는 별도 승인 작업이다.
+3. 승인된 main push → `deploy.yml`: 이미지 빌드·GHCR publish → GCP VM의 `gcp-prod` self-hosted runner가 `opensamguk-docker` main을 동기화 → shared deployer/gateway/nginx stack 갱신 → health. `servers/<id>.env`의 `IMAGE_TAG`/`WEB_GAME_TAG`는 유지하며, 서버 승격·재시드·새 기수는 별도 승인 작업이다. (수동 호환 경로: `scripts/deploy.sh 34.158.223.96 peppone_choi`.)
 4. **nginx는 항상 shared upstream 뒤에** 재생성/리로드(정적 upstream — stale-DNS 502 예방, OPS LESSON A).
 5. 검증(아래) 통과까지 "배포 완료" 선언 금지.
 

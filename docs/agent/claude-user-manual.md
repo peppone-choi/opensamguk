@@ -147,7 +147,7 @@ Jira 설명과 GitHub 미러(#232)를 확인하고, 목표·범위·비범위·�
 
 ### 4.6 6단계: 커밋·push·merge·배포 승인
 
-Claude가 준비를 마치면 **사람이 승인해야** 커밋이 나간다. 커밋 규약: 한 논리 작업 = 한 커밋, 트레일러 필수. PR을 올리면 CI 게이트가 자동으로 돈다 (§8). merge도 별도 승인 — "PR 올려"와 "머지해"는 다른 승인이다. 배포는 `deployer` 에이전트 + 명시적 go-ahead (EC2 청구 이슈 등 운영 상태 먼저 확인).
+Claude가 준비를 마치면 **사람이 승인해야** 커밋이 나간다. 커밋 규약: 한 논리 작업 = 한 커밋, 트레일러 필수. PR을 올리면 CI 게이트가 자동으로 돈다 (§8). merge도 별도 승인 — "PR 올려"와 "머지해"는 다른 승인이다. 배포는 `deployer` 에이전트 + 명시적 go-ahead 뒤에만 수행한다. 현재 경로는 GCP Compute Engine `e2-standard-2`에 로컬 등록된 `gcp-prod` self-hosted runner가 `opensamguk-docker` 제어 저장소를 동기화해 shared stack만 갱신하는 것이다. 게임 서버의 이미지 핀 승격은 이와 별도의 명시 운영 행위다.
 
 ## 5. 목적별 업무 명령
 
@@ -203,8 +203,8 @@ PR을 올리면 자동으로:
 - **CodeRabbit + claude-review** — 리뷰봇 2종. claude-review는 파리티-도메인 한국어 커스텀 프롬프트로 인라인 코멘트를 게시
 - 주의: **claude-review 워크플로 자체를 고친 PR에서는 스모크 판정 불가** — claude-code-action이 워크플로 수정 PR에서 실행을 스킵한다(보안 가드). 다음 PR이 판정한다.
 
-### 배포 (현재 보류 상태 주의)
-`main` push → `deploy.yml` → EC2. **배포는 항상 명시 승인 + 운영 상태(청구·서버 기동) 확인 후.** 운영 교훈 2건(stale-DNS 502, frozen-turn-daemon)은 `docs/agent/lifecycle-ops.md`.
+### 배포 (공유 스택 경로)
+`main` push → `deploy.yml`의 GitHub-hosted build/test·GHCR push → GCP Compute Engine `e2-standard-2`에 로컬 등록된 `gcp-prod` self-hosted runner → `opensamguk-docker` main 동기화 → deployer 호환성 확인·공유 의존성/업스트림 갱신 → **nginx 최후 재시작**. 이 경로는 shared stack만 갱신하고 게임 서버 이미지 핀은 보존한다. 서버 승격은 별도 명시 승인 운영이다. **배포는 항상 명시 승인 + GCP VM/runner·shared stack 상태 확인 후.** 운영 교훈 2건(stale-DNS 502, frozen-turn-daemon)은 `docs/agent/lifecycle-ops.md`.
 
 ## 9. 작업 상태 파일을 읽는 법 (`.ai/`)
 
@@ -298,7 +298,7 @@ Claude의 완료 보고에서 사용자가 체크할 것:
 | claude-review CI가 즉시 실패 | 워크플로 수정 PR이면 스킵이 정상. 그 외엔 실행 로그의 is_error·모델·비용으로 API 쪽 문제 판별 |
 | 훅을 고쳤는데 적용이 안 됨 | 훅은 세션 시작 시 스냅샷 — 새 세션에서 적용 |
 | 스킬이 안 보임 | `DISABLE_TELEMETRY=1 npx --yes skills experimental_install` |
-| EC2/prod 접근 실패 | 청구 상태부터 확인. prod 작업은 사용자 재개 신호까지 보류가 기본값 |
+| GCP/prod runner 또는 shared stack 접근 실패 | GCP Compute Engine `e2-standard-2`의 `gcp-prod` runner 상태와 `opensamguk-docker` checkout/health를 확인한다. 게임 서버 핀은 바꾸지 말고, 명시 승인 전 prod 조치는 보류가 기본값 |
 
 ## 14. 5분 빠른 시작 체크리스트
 
@@ -320,7 +320,7 @@ Claude의 완료 보고에서 사용자가 체크할 것:
 |---|---|---|
 | 1주차 — 코딩 비서에서 개발 파트너로 | 위임→협업→자동화, 페.목.형.제 프롬프트, 건초더미 3전략(요약·GPS·`/clear`), CLAUDE.md 헌법+Hooks 보완 | `.ai/` 작업 계약, `prompt-pack.md`, `/os-checkpoint`+`context-strategy.md`, `/CLAUDE.md`+`scripts/agent/` 훅 |
 | 2주차 — MCP로 손과 발을 | MCP=능력 설치, 등록≠인증≠실호출, 서브에이전트·worktree 병렬, "AI 에이전트 = LLM + 하네스" | atlassian·code-review-graph·playwright MCP (§7), 전용 에이전트 7종 + disjoint 병렬 (§10), `.claude/HARNESS.md` |
-| 3주차 — 24시간 시스템 엔지니어 | AI 코드 리뷰어(GHA+CodeRabbit), IaC, CI/CD, Sentry 'AI SRE' | PR 게이트 5종 (§8), `deploy.yml`+EC2, check.py 불변식 게이트, Sentry MCP + `/os-debug` |
+| 3주차 — 24시간 시스템 엔지니어 | AI 코드 리뷰어(GHA+CodeRabbit), IaC, CI/CD, Sentry 'AI SRE' | PR 게이트 5종 (§8), `deploy.yml` + GCP `e2-standard-2` `gcp-prod` runner + `opensamguk-docker`, check.py 불변식 게이트, Sentry MCP + `/os-debug` |
 | 4주차 — 아이디어에서 서비스까지 | PRD=북극성, 모든 작업은 티켓부터, 추적성 사슬, 질문의 질·검증 책임 | v2 정본 스펙 문서, Jira OPENSAM 3층 백로그 (§11), 리뷰 문서 Scope/Verdict 앵커, §12 보고 평가법 |
 
 핵심 두 문장으로 요약하면: **"AI는 질문의 질을 넘어설 수 없다"** (그래서 §3 요청 4요소), **"검증하고 책임지는 것은 인간"** (그래서 §4.4 XML 판정과 §4.6 승인 게이트).

@@ -123,8 +123,8 @@ class WorldSnapshotLoader(
         val generals = loadGenerals(state)
         val diplomacy = loadDiplomacy()
         val accessLogs = loadAccessLogs()
-        val troops = loadTroops()
         val archivedNationIds = loadArchivedNationIds(activeServerId)
+        val troops = loadTroops()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops={}",
             generals.size,
@@ -372,6 +372,21 @@ class WorldSnapshotLoader(
 
     private fun decodeKvValue(json: String): Any? = MetaJson.decode("{\"value\":$json}")["value"]
 
+    // OPENSAM-149 D2. flush는 troop을 created/dirty/deleted 세 경로로 다 쓰는데(JdbcFlushExecutor
+    // troopCreateMany/troopUpdate/troopDeleteMany/troopDeleteByNation) 여기서 읽지 않아 재기동한 데몬이
+    // 부대 0으로 출발했다. PK는 troop_leader(= Troop.id, 부대장 장수 id)다.
+    private fun loadTroops(): List<Troop> = jdbc.query(
+        "SELECT troop_leader, nation, name FROM troop WHERE world_id = ? ORDER BY troop_leader ASC",
+        { rs, _ ->
+            Troop(
+                id = rs.getInt("troop_leader"),
+                nationId = rs.getInt("nation"),
+                name = rs.getString("name"),
+            )
+        },
+        worldId.value,
+    )
+
     private fun loadCities(): List<City> = jdbc.query(
         // state(V14 재해/호황 코드)를 SELECT에 포함해야 한다. 누락 시 in-memory City.state가 기본 0으로
         // 떨어지고, 재기동 직후 flush가 UPDATE city SET state=0 으로 직전 달 재해 표시를 지운다(P0-36).
@@ -573,18 +588,6 @@ class WorldSnapshotLoader(
                 refreshTotal = rs.getInt("refresh_total"),
                 refreshScore = rs.getInt("refresh_score"),
                 refreshScoreTotal = rs.getInt("refresh_score_total"),
-            )
-        },
-        worldId.value,
-    )
-
-    private fun loadTroops(): List<Troop> = jdbc.query(
-        "SELECT troop_leader, nation, name FROM troop WHERE world_id = ? ORDER BY troop_leader ASC",
-        { rs, _ ->
-            Troop(
-                id = rs.getInt("troop_leader"),
-                nationId = rs.getInt("nation"),
-                name = rs.getString("name"),
             )
         },
         worldId.value,

@@ -49,7 +49,4 @@ jobs:
 
             게시: 라인 특정 지적은 mcp__github_inline_comment__create_inline_comment로 해당 라인에 인라인 코멘트로 달고, 전체 판정 요약은 mcp__github_comment__update_claude_comment로 PR 코멘트에 남겨라. 리뷰 결과를 게시하지 않고 종료하는 것은 실패다.
           # 게시 도구 2종 필수 — 없으면 리뷰가 수행되고도 PR에 게시되지 못한다 (PR #155 1차 실행에서 실증: permission_denials_count 1, "No buffered inline comments").
-          # 모델 명시 고정 — 미지정 시 CLI 기본값 claude-opus-4-8[1m](1M 베타)로 해석돼 API 키 권한에 따라
-          # 첫 호출이 즉사한다 (PR #156 실증: is_error:true, 318ms, $0). 워크플로 수정 PR에서는 스킵되므로
-          # 이 수정의 실판정은 머지 후 다음 PR에서 한다.
-          claude_args: "--model claude-sonnet-5 --allowedTools 'Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment'"
+          claude_args: "--model claude-sonnet-4-6 --allowedTools 'Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment'"

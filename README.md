@@ -55,7 +55,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 | 마이그레이션 | Flyway |
 | 테스트 | JUnit 5 + kotlin.test + Testcontainers |
 | 리버스 프록시 | nginx 1.27 |
-| 배포 | AWS EC2 t3.large · Docker Compose · GitHub Actions (GHCR) |
+| 배포 | GCP Compute Engine e2-standard-2 · Docker Compose · GitHub Actions (GHCR) |
 
 ---
 
@@ -255,9 +255,9 @@ nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gatew
 
 관리자 시드용 `ADMIN_USERNAME`/`ADMIN_PASSWORD`는 gateway-api에 주입합니다(코드/리포에 평문 비밀번호 하드코딩 금지).
 
-### 프로덕션 (EC2 t3.large)
+### 프로덕션 (GCP Compute Engine e2-standard-2)
 
-운영 오케스트레이션 정본은 별도 저장소 [`opensamguk-docker`](https://github.com/peppone-choi/opensamguk-docker)입니다. 이 앱 저장소는 GHCR 이미지를 빌드·푸시하고, EC2 self-hosted runner에서 docker repo main을 동기화한 뒤 **공유 스택**(`gateway-api`, `web-gateway`, `nginx`, `deployer`)만 자동 갱신합니다.
+운영 오케스트레이션 정본은 별도 저장소 [`opensamguk-docker`](https://github.com/peppone-choi/opensamguk-docker)입니다. 이 앱 저장소는 GHCR 이미지를 빌드·푸시하고, GCP VM의 `gcp-prod` self-hosted runner에서 docker repo main을 동기화한 뒤 **공유 스택**(`gateway-api`, `web-gateway`, `nginx`, `deployer`)만 자동 갱신합니다.
 
 - 첫 설치 직후에는 게임 서버가 0개여도 정상입니다. 공유 스택과 `SERVER_REGISTRY_JSON=[]`만 먼저 뜰 수 있어야 합니다.
 - 실행 중인 게임 서버의 `servers/<id>.env` 버전 핀(`IMAGE_TAG`, `WEB_GAME_TAG`)은 앱 CI가 수정하지 않습니다.

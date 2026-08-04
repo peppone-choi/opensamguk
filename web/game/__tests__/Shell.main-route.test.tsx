@@ -4,6 +4,7 @@ import Shell from '@/components/Shell';
 
 const mocks = vi.hoisted(() => ({
     pathname: vi.fn(),
+  serverId: vi.fn(),
     back: vi.fn(),
     push: vi.fn(),
 }));
@@ -17,12 +18,18 @@ vi.mock('@/hooks/useSSE', () => ({
     useSSE: vi.fn(),
 }));
 
+vi.mock('@/lib/serverGameUrl', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/serverGameUrl')>('@/lib/serverGameUrl');
+  return { ...actual, useServerId: mocks.serverId };
+});
+
 vi.mock('@/components/Header', () => ({ default: () => <header data-testid="header" /> }));
 vi.mock('@/components/BottomNav', () => ({ default: () => <nav data-testid="bottom-nav" /> }));
 
 describe('Shell main route chrome', () => {
     it('does not render the sub-page BackBar on the path-scoped main page', () => {
         mocks.pathname.mockReturnValue('/game/s1');
+    mocks.serverId.mockReturnValue('s1');
 
         render(
             <Shell>
@@ -36,6 +43,7 @@ describe('Shell main route chrome', () => {
 
     it('keeps the BackBar on sub pages', () => {
         mocks.pathname.mockReturnValue('/game/s1/city');
+    mocks.serverId.mockReturnValue('s1');
 
         render(
             <Shell>

@@ -1,4 +1,46 @@
-const PATH_SERVER_ID = /^s[A-Za-z0-9_-]*$/;
+const PATH_SERVER_ID = /^[a-z0-9]{1,48}$/;
+const RESERVED_PATH_SERVER_IDS = new Set([
+  'all',
+  'main',
+  'admin1',
+  'admin2',
+  'admin5',
+  'admin7',
+  'admin8',
+  'auction',
+  'battle-center',
+  'betting',
+  'board',
+  'chief-center',
+  'city',
+  'coming-soon',
+  'diplomacy',
+  'generals',
+  'global-diplomacy',
+  'history',
+  'inherit',
+  'join',
+  'mailbox',
+  'map',
+  'my',
+  'my-boss',
+  'my-cities',
+  'my-generals',
+  'my-nation',
+  'nation',
+  'nation-betting',
+  'nation-finance',
+  'npc-control',
+  'rankings',
+  'register',
+  'select-pool',
+  'simulator',
+  'tournament',
+  'tournament-admin',
+  'troop',
+  'vote',
+  'world-log',
+]);
 
 function splitSuffix(value: string): { base: string; suffix: string } {
     const queryIdx = value.indexOf('?');
@@ -20,12 +62,12 @@ function ensureGameBase(value: string): string {
 }
 
 export function isPathServerId(serverId: string): boolean {
-    return PATH_SERVER_ID.test(serverId.trim());
+  return PATH_SERVER_ID.test(serverId) && !RESERVED_PATH_SERVER_IDS.has(serverId);
 }
 
 export function fallbackGameUrlForServer(serverId: string): string {
-    const id = serverId.trim();
-    return isPathServerId(id) ? `/game/${encodeURIComponent(id)}` : `/game?server=${encodeURIComponent(id)}`;
+  const id = serverId;
+  return isPathServerId(id) ? `/game/${encodeURIComponent(id)}` : `/game?server=${encodeURIComponent(id)}`;
 }
 
 export function resolveServerGameBase(
@@ -33,7 +75,7 @@ export function resolveServerGameBase(
     serverId: string,
     fallback = '/game',
 ): string {
-    const id = serverId.trim();
+  const id = serverId;
     const raw = gameUrl?.trim() || fallbackGameUrlForServer(id) || fallback;
     const gameBase = ensureGameBase(raw || fallback);
     if (!isPathServerId(id)) return gameBase;
