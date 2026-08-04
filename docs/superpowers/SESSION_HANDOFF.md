@@ -14,11 +14,11 @@
 
 - private workbook 1,000행·15열 전체를 source contract로 검증하고 populated 런타임 시나리오 15개에 각 officer number 1–1000을 정확히 한 번씩 표현했다. settings-only 15개는 유지한다.
 - 기존 장수의 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신하고 workbook-only 343행을 base `general`에 추가했다. runtime-only 351행의 정치/매력은 reviewed override이며 미검토 fallback은 fail-closed다.
-- source PR #356의 실제 리뷰 결함(중립 tuple offset, V26 birth identity·explicit appearance·stored-adult/future-appearance·effective source, source `general_ex` filtering/RNG, 빙의 terminal/request correlation/reload cleanup, typed RNG marker/placement, source-test-before-materialization, archive filtering, secret tracing)을 수정했다.
-- V36이 임시 `general_owner`에 `claim_request_id`를 저장한다. 재시도는 동일 요청만 조회하고 claimable GET도 exact terminal deny만 예약 해제해 새 후보를 돌려준다. 기존 null-id 확정 행은 `npc_state != 2`에서만 호환 유지한다.
-- `EffectiveScenarioResolver`가 external-over-classpath 우선순위를 시드/V26에 공유하고 세 Flyway 앱에 `scenario_dir` placeholder를 배선한다. source Compose와 Docker PR #25가 Flyway를 먼저 잡을 수 있는 game-api/engine에 동일 read-only mount를 제공한다.
-- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, backend `BUILD SUCCESSFUL in 15m 59s`와 XML 4,404건(실패/오류 0, 스킵 1), importer 20/20·ScenarioJson 15/15·resolver 4/4·V26 5/5·SeedBootstrap 3/3·빙의 21/21·V36 IT 3/3·game 251/251·양쪽 typecheck·Agent OS/strict 0/0. 로컬 stack start는 미제공 `JWT_SECRET`로 중단했고, 비밀을 읽지 않은 Compose config 검증은 통과했다.
-- Docker PR #24는 3회 mention review 후 merge·배포 성공. Source PR #356과 Docker PR #25는 새 exact SHA 기준 3회 mention review가 필요하다. 수정된 V26은 이미 적용된 DB에서 재실행되지 않으므로 `pep` 재시드는 해소하지만 다른 기존 월드는 별도 forward repair 대상이다.
+- source PR #356의 실제 리뷰 결함(중립 tuple offset, lifecycle repair의 birth identity·explicit appearance·stored-adult/future-appearance·effective source — 초기 초안은 V26을 확장했으나 지금은 전부 `V38__rtk14_npc_lifecycle_repair.kt`에 있고 V26은 origin/main으로 되돌렸다, source `general_ex` filtering/RNG, 빙의 terminal/request correlation/reload cleanup, typed RNG marker/placement, source-test-before-materialization, archive filtering, secret tracing)을 수정했다.
+- claim-request migration이 임시 `general_owner`에 `claim_request_id`를 저장한다. 이 migration은 `V36__general_owner_claim_request.sql` → **`V37__general_owner_claim_request.sql`**로 renumber됐다. origin/main이 이미 `V36__diplomacy_casualties.sql`을 싣고 있어 V36이 둘이면 Flyway가 duplicate version으로 실패하기 때문이다. 재시도는 동일 요청만 조회하고 claimable GET도 exact terminal deny만 예약 해제해 새 후보를 돌려준다. 기존 null-id 확정 행은 `npc_state != 2`에서만 호환 유지한다.
+- `EffectiveScenarioResolver`가 external-over-classpath 우선순위를 시드/lifecycle repair에 공유하고 세 Flyway 앱에 `scenario_dir` placeholder를 배선한다. source Compose와 Docker PR #25가 Flyway를 먼저 잡을 수 있는 game-api/engine에 동일 read-only mount를 제공한다.
+- 증거: Python 18/18, real-workbook 30/30 two-pass byte-identical, backend `BUILD SUCCESSFUL in 15m 59s`와 XML 4,404건(실패/오류 0, 스킵 1), importer 20/20·ScenarioJson 15/15·resolver 4/4·V26 5/5(V26 확장 초안 시점의 값 — 그 확장은 되돌렸고 커버리지는 `V38Rtk14NpcLifecycleRepairMigrationTest`로 이동)·SeedBootstrap 3/3·빙의 21/21·claim-request(현 V37) IT 3/3·game 251/251·양쪽 typecheck·Agent OS/strict 0/0. 로컬 stack start는 미제공 `JWT_SECRET`로 중단했고, 비밀을 읽지 않은 Compose config 검증은 통과했다.
+- Docker PR #24는 3회 mention review 후 merge·배포 성공. Source PR #356과 Docker PR #25는 새 exact SHA 기준 3회 mention review가 필요하다. V26 확장은 폐기했다 — 이미 `flyway_schema_history`에 V26을 기록한 DB는 V26을 재실행하지 않아 업그레이드된 월드에 닿지 못하고, fresh DB에서도 Flyway가 `ScenarioSeedRunner`(`ApplicationRunner`)보다 먼저 돌아 `world_state`가 비어 있어 V26이 즉시 반환하므로 신규 월드에서도 도달 불가였다. repair 전체를 아직 어떤 월드도 기록하지 않은 world-scoped `V38__rtk14_npc_lifecycle_repair.kt` 하나에 두어 기존 월드와 새로 시드된 월드가 같은 최종 상태로 수렴한다. 실행·배포·live 결과는 아직 없다.
 
 ## 다음 순서
 
@@ -338,3 +338,27 @@
 
 # SESSION HANDOFF — 2026-06-06 (세션3: 9 event_연구 + K1/K2 + 메인 크래시 근본수정)
 [아카이브 — K1/K2/event_연구/메인재디자인 모두 커밋 완료]
+# SESSION HANDOFF — 2026-08-04 (RTK14 final-review remediation documentation)
+
+## 0. User direction recorded for this handoff
+
+- Update only durable RTK14 documentation for the final review remediation; do not change code or tests. Preserve pending status: both PRs still require new exact-SHA three-round reviews, then merge, deploy, `pep` reseed, and live verification. Do not expose secrets or workbook contents.
+
+## 1. Current source and Docker remediation
+
+- Exact prior source HEAD `725195fea29b3434cc358e3d262c6c440830dab7` received a P1 finding: already-released V26 lacked a forward repair for affected worlds. The current source working tree no longer modifies V26 at all — `V26__npc_lifecycle_phase_units.kt` and `V26NpcLifecycleMigrationTest.kt` are reverted byte-for-byte to `origin/main` — and puts every part of the repair in one new world-scoped migration, `V38__rtk14_npc_lifecycle_repair.kt` (test: `V38Rtk14NpcLifecycleRepairMigrationTest.kt`), which runs on every world. No final full gate, merge, deployment, reseed, or live verification is complete.
+- Why V38 and not an extended V26: a database that already recorded V26 in `flyway_schema_history` never re-runs it, so extending V26 could not reach upgraded worlds. Separately, on a fresh database Flyway runs before `ScenarioSeedRunner` (an `ApplicationRunner`), so `world_state` is empty and V26 returns immediately — the extension was unreachable on new worlds too. Putting the whole repair in V38, which no world has recorded yet, is what makes already-migrated worlds and freshly seeded worlds converge on the same final state.
+- The claim-request migration was renumbered `V36__general_owner_claim_request.sql` → `V37__general_owner_claim_request.sql`, because `origin/main` already ships `V36__diplomacy_casualties.sql` and two V36s make Flyway fail with a duplicate version.
+- V38 resolves its effective scenario external-over-classpath; uses `name[2]`/`nation[4]` action identity rather than name alone; excludes `rtk14Added`; requires universal strict event/action shape; splits verified grouped events by appearance year while preserving unrelated entries; and fails closed on ambiguity.
+- The associated CodeRabbit findings are remediated in the working tree: the ambiguous-future-row case is rejected inside V38 (duplicate future-appearance identities fail closed) rather than by extending V26, importer validation rejects `appearanceYear > deathYear`, and possession uses an explicit conditional-delete branch rather than a `takeIf` side effect.
+- Docker PR #25 replaces a weak indentation scan with a rendered Compose JSON contract and adds the daemon-host-relative `COMPOSE_HOST_DIR` default. This is candidate-branch validation, not a completed deployment.
+
+## 2. Evidence and next handoff
+
+- Focused tests are green: importer 21, possession 21, and Docker's Compose contract test. The deep repair-migration re-review is CLEARED. The earlier V26 focused count no longer applies, because V26 and its test are reverted to `origin/main`; the coverage it held moved into `V38Rtk14NpcLifecycleRepairMigrationTest` (9 cases — external-only scenario resolution, external-over-classpath precedence, per-nation deferred identity, duplicate future-appearance fail-closed, missing-scenario fail-closed, plus a new malformed-external-override rollback case), which was not re-run in this documentation pass. These focused results do not constitute a current final full gate.
+- The obsolete limitation that already-V26 worlds require another future repair is superseded by V38 coverage, subject to V38 being committed, reviewed, and executed through the normal migration/deployment path.
+- Next: commit/push source fixes; collect three new sequential mention reviews for the exact SHA of source PR #356 and Docker PR #25; fix any findings; merge; deploy; reseed `pep`; then observe live DB/API/UI/clock behavior.
+- The private GitHub Actions material is a secret, not an input. Do not print or decode it.
+- Documentation tooling note: a broad Docker-worktree keyword search was blocked by the repository secret-protection hook because its exclusion glob named a protected secret path. No secret was accessed; direct tracked Compose/test diff inspection succeeded. Treat this as an isolated documentation-tooling limitation, not product-test evidence.
+
+---
