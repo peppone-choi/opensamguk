@@ -200,8 +200,8 @@ PR을 올리면 자동으로:
 
 - **agent-system** — `check.py --strict`: 리뷰 문서 앵커(Scope/Verdict), 패러티 증거 매핑, 문서 드리프트, Codex 표면 무결성
 - **jvm / web(game) / web(gateway)** — 빌드+테스트
-- **CodeRabbit + claude-review** — 리뷰봇 2종. claude-review는 파리티-도메인 한국어 커스텀 프롬프트로 인라인 코멘트를 게시
-- 주의: **claude-review 워크플로 자체를 고친 PR에서는 스모크 판정 불가** — claude-code-action이 워크플로 수정 PR에서 실행을 스킵한다(보안 가드). 다음 PR이 판정한다.
+- **CodeRabbit** — 리뷰봇. 인라인 코멘트를 게시한다
+- 참고: 파리티-도메인 한국어 프롬프트를 쓰던 `claude_review.yml`은 **제거됐다**. `ANTHROPIC_API_KEY`가 API 레벨에서 거절돼(`is_error:true`, 306ms, 비용 0) 브랜치 내용과 무관하게 모든 PR에서 항상 red였고, 상시 red인 체크는 신호를 잃기 때문이다. 키를 복구해 되살릴 경우 이력은 `docs/superpowers/reviews/2026-08-04-remove-claude-review-workflow-review.md`에 있다. 자기 승인 차단은 CodeRabbit + `check.py --strict` cross-agent critique + 사람/타 프로바이더 비평이 담당한다(`docs/agent/verification.md` 루프 ②).
 
 ### 배포 (공유 스택 경로)
 `main` push → `deploy.yml`의 GitHub-hosted build/test·GHCR push → GCP Compute Engine `e2-standard-2`에 로컬 등록된 `gcp-prod` self-hosted runner → `opensamguk-docker` main 동기화 → deployer 호환성 확인·공유 의존성/업스트림 갱신 → **nginx 최후 재시작**. 이 경로는 shared stack만 갱신하고 게임 서버 이미지 핀은 보존한다. 서버 승격은 별도 명시 승인 운영이다. **배포는 항상 명시 승인 + GCP VM/runner·shared stack 상태 확인 후.** 운영 교훈 2건(stale-DNS 502, frozen-turn-daemon)은 `docs/agent/lifecycle-ops.md`.
@@ -295,7 +295,7 @@ Claude의 완료 보고에서 사용자가 체크할 것:
 | gradle이 exit 0인데 결과가 이상 | XML 정본 판정 요구: `**/build/test-results/test/*.xml` + `--rerun-tasks` |
 | Testcontainers 실패 (macOS) | Docker 기동 확인. Docker 없으면 IT는 **skipped**가 정상, fail이 아님 |
 | check.py가 리뷰 문서에서 ERROR | `Scope:`/`Verdict:` 앵커 라인이 정확히 1개씩인지, Scope에 변경 영역 프리픽스(`app/`, `infra/` 등) 포함됐는지 |
-| claude-review CI가 즉시 실패 | 워크플로 수정 PR이면 스킵이 정상. 그 외엔 실행 로그의 is_error·모델·비용으로 API 쪽 문제 판별 |
+| 리뷰봇 CI가 즉시 실패 | 실행 로그의 `is_error`·모델·비용으로 판별한다. 비용 0 + 수백 ms + 턴 1이면 리뷰 판정이 아니라 API 레벨 거절(키·모델 접근·크레딧)이다. `claude_review.yml`이 이 이유로 제거됐다 |
 | 훅을 고쳤는데 적용이 안 됨 | 훅은 세션 시작 시 스냅샷 — 새 세션에서 적용 |
 | 스킬이 안 보임 | `DISABLE_TELEMETRY=1 npx --yes skills experimental_install` |
 | GCP/prod runner 또는 shared stack 접근 실패 | GCP Compute Engine `e2-standard-2`의 `gcp-prod` runner 상태와 `opensamguk-docker` checkout/health를 확인한다. 게임 서버 핀은 바꾸지 말고, 명시 승인 전 prod 조치는 보류가 기본값 |
