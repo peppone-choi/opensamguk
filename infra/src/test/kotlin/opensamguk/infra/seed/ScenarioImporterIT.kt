@@ -160,8 +160,11 @@ class ScenarioImporterIT {
                 String::class.java,
             ),
         )
+        // game_env.fiction 은 설치 폼 값이 그대로 들어간다(`ResetHelper.php:297` `'fiction'=>$fiction`).
+        // PHP 폼 기본값은 1이다(`install.php:98` `fiction_1` checked). 시나리오 JSON 최상위
+        // "fiction" 키는 별개이며 PHP `Scenario.php` 도 우리 파서도 읽지 않는다.
         assertEquals(
-            "0",
+            "1",
             jdbc.queryForObject(
                 "SELECT value::text FROM game_kv WHERE \"table\" = 'game_env' AND namespace = 'game_env' AND key = 'fiction'",
                 String::class.java,
@@ -397,7 +400,8 @@ class ScenarioImporterIT {
             "30000",
             jdbc.queryForObject("SELECT env ->> 'refreshLimit' FROM ng_games", String::class.java),
         )
-        assertEquals("0", jdbc.queryForObject("SELECT env ->> 'fiction' FROM ng_games", String::class.java))
+        // ng_games.env 는 game_env 미러 — 위 162행과 같은 근거(install.php:98 / ResetHelper.php:297).
+        assertEquals("1", jdbc.queryForObject("SELECT env ->> 'fiction' FROM ng_games", String::class.java))
     }
 
     @Test
