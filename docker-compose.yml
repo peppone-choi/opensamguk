@@ -177,6 +177,14 @@ services:
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
       SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       SCENARIO_QA_TURNTERM: ${SCENARIO_QA_TURNTERM:-}
+      # 어드민/워크플로 리셋이 고른 시나리오 옵션. 값이 여기서 끊기면 옵션이 조용히 버려진다.
+      # 기본값은 넣지 않는다 — 미설정의 의미는 SeedBootstrap이 PHP install.php 기본값으로 단독 소유한다.
+      RESET_TURNTERM: ${RESET_TURNTERM:-}
+      RESET_FICTION: ${RESET_FICTION:-}
+      RESET_EXTEND: ${RESET_EXTEND:-}
+      RESET_BLOCK_GENERAL_CREATE: ${RESET_BLOCK_GENERAL_CREATE:-}
+      RESET_NPCMODE: ${RESET_NPCMODE:-}
+      RESET_SHOW_IMG_LEVEL: ${RESET_SHOW_IMG_LEVEL:-}
       # Sentry — 빈 값이면 SDK no-op (서비스별 DSN, .env.example 참조).
       SENTRY_DSN: ${SENTRY_DSN_GAME_ENGINE:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-local}

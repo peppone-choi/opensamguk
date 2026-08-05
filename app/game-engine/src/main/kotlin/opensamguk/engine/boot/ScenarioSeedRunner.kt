@@ -192,7 +192,7 @@ class SeedBootstrap(
          * 전부 일치한다. 한쪽만 바뀌면 워크플로 리셋과 어드민 UI 리셋이 갈라진다.
          */
         val FICTION_VALUES = listOf(0, 1)                 // install.php:97-98  연의/가상
-        val EXTEND_VALUES = listOf(1, 0)                  // install.php:106-107 포함/제외
+        val EXTEND_VALUES = listOf(1, 0)                  // install.php:107-108 포함/미포함
         val BLOCK_GENERAL_CREATE_VALUES = listOf(0, 2, 1) // install.php:117-119 가능/무작위명/불가
         val NPC_MODE_VALUES = listOf(1, 0, 2)             // install.php:128-130
         val SHOW_IMG_LEVEL_VALUES = listOf(0, 1, 2, 3)    // install.php:191-194
