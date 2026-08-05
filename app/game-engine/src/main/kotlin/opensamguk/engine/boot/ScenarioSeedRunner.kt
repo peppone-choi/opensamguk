@@ -39,6 +39,11 @@ import java.nio.charset.StandardCharsets
  *  - `RESET_TURNTERM` — 어드민/워크플로 리셋이 고른 턴 주기(분). 허용 집합은
  *    `.github/workflows/reset-game-server.yml:157`과 동일하며, 미설정 시 60이다.
  *    `SCENARIO_QA_TURNTERM`이 설정돼 있으면 그쪽이 이긴다.
+ *  - `RESET_FICTION` `RESET_EXTEND` `RESET_BLOCK_GENERAL_CREATE` `RESET_NPCMODE`
+ *    `RESET_SHOW_IMG_LEVEL` — 같은 리셋이 고른 나머지 시나리오 옵션. 허용 집합·기본값은 전부
+ *    `legacy/devsam-core/hwe/install.php`의 라디오에서 온다(대조표:
+ *    `docs/superpowers/research/2026-08-05-reset-options-php-oracle.md`). 미설정은 PHP 기본값,
+ *    허용 집합 밖은 조용한 폴백이 아니라 부팅 실패다.
  */
 @Component
 class ScenarioSeedRunner(
@@ -65,11 +70,26 @@ class SeedBootstrap(
     private val scenarioDir: String = "",
     private val qaTurnTerm: String? = null,
     private val resetTurnTerm: String? = null,
+    private val resetFiction: String? = null,
+    private val resetExtend: String? = null,
+    private val resetBlockGeneralCreate: String? = null,
+    private val resetNpcMode: String? = null,
+    private val resetShowImgLevel: String? = null,
     private val worldId: WorldId,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir)
     private val turnTerm: Int = resolveTurnTerm(qaTurnTerm, resetTurnTerm)
+    private val fiction: Int = resolveOption("RESET_FICTION", resetFiction, FICTION_VALUES, PHP_DEFAULT_FICTION)
+    private val extend: Int = resolveOption("RESET_EXTEND", resetExtend, EXTEND_VALUES, PHP_DEFAULT_EXTEND)
+    private val blockGeneralCreate: Int = resolveOption(
+        "RESET_BLOCK_GENERAL_CREATE", resetBlockGeneralCreate, BLOCK_GENERAL_CREATE_VALUES,
+        PHP_DEFAULT_BLOCK_GENERAL_CREATE,
+    )
+    private val npcMode: Int = resolveOption("RESET_NPCMODE", resetNpcMode, NPC_MODE_VALUES, PHP_DEFAULT_NPC_MODE)
+    private val showImgLevel: Int = resolveOption(
+        "RESET_SHOW_IMG_LEVEL", resetShowImgLevel, SHOW_IMG_LEVEL_VALUES, PHP_DEFAULT_SHOW_IMG_LEVEL,
+    )
 
     /**
      * Seed through configured-world admission. Returns true when it imports, false only when exactly
@@ -98,6 +118,14 @@ class SeedBootstrap(
                 scenarioCode = scenarioCode,
                 scenarioNumber = scenarioNumber,
                 turnTerm = turnTerm,
+                fiction = fiction,
+                // PHP `extend`는 int(0/1)로 오지만 importer는 Boolean을 받는다.
+                // `j_install.php:109`가 `(int)$_POST['extend']`로 받아 그대로 넘기고,
+                // `ResetHelper::buildScenario`의 `int $extend`가 0/1만 의미를 갖는다.
+                extendedGeneral = extend != 0,
+                blockGeneralCreate = blockGeneralCreate,
+                npcMode = npcMode,
+                showImageLevel = showImgLevel,
             )
         }
         if (!admission.seeded) {
@@ -154,6 +182,46 @@ class SeedBootstrap(
         val ALLOWED_TURN_TERMS = listOf(120, 60, 30, 20, 10, 5, 2, 1)
 
         private val ASCII_DIGITS = Regex("^[0-9]+$")
+
+        /**
+         * 나머지 리셋 옵션의 허용 집합과 기본값. 전부 `legacy/devsam-core/hwe/install.php`의
+         * 라디오 `value`(집합)와 `checked`(기본값)에서 그대로 읽은 것이다 — 지어낸 값이 없다.
+         * 근거표: `docs/superpowers/research/2026-08-05-reset-options-php-oracle.md` §1.
+         *
+         * 기본값은 `.github/workflows/reset-game-server.yml:236-241`의 `env_or_default`와도
+         * 전부 일치한다. 한쪽만 바뀌면 워크플로 리셋과 어드민 UI 리셋이 갈라진다.
+         */
+        val FICTION_VALUES = listOf(0, 1)                 // install.php:97-98  연의/가상
+        val EXTEND_VALUES = listOf(1, 0)                  // install.php:107-108 포함/미포함
+        val BLOCK_GENERAL_CREATE_VALUES = listOf(0, 2, 1) // install.php:117-119 가능/무작위명/불가
+        val NPC_MODE_VALUES = listOf(1, 0, 2)             // install.php:128-130
+        val SHOW_IMG_LEVEL_VALUES = listOf(0, 1, 2, 3)    // install.php:191-194
+
+        const val PHP_DEFAULT_FICTION = 1                 // install.php:98  fiction_1 checked
+        const val PHP_DEFAULT_EXTEND = 1                  // install.php:107 extend_1 checked
+        const val PHP_DEFAULT_BLOCK_GENERAL_CREATE = 0    // install.php:117 block_general_create_0 checked
+        const val PHP_DEFAULT_NPC_MODE = 0                // install.php:129 npcmode_0 checked
+        const val PHP_DEFAULT_SHOW_IMG_LEVEL = 3          // install.php:194 show_img_level_3 checked
+
+        /**
+         * 리셋 옵션 하나를 푼다. [resolveTurnTerm]의 `RESET_TURNTERM` 가지와 같은 규약이다 —
+         * 주변 공백은 관용(env 파일에서 오는 운영값), ASCII 자릿수만 허용, 미설정은 PHP 기본값,
+         * **허용 집합 밖이면 조용한 폴백이 아니라 부팅 실패**.
+         *
+         * 조용히 기본값으로 떨어지면 운영자가 고른 옵션이 말없이 버려지는데, 그게 바로
+         * 이 배선이 닫고 있는 결함이다. 같은 실패 양상을 새로 만들지 않는다.
+         */
+        internal fun resolveOption(name: String, raw: String?, allowed: List<Int>, default: Int): Int {
+            val trimmed = raw?.trim()
+            if (trimmed.isNullOrEmpty()) return default
+            val parsed = if (ASCII_DIGITS.matches(trimmed)) trimmed.toIntOrNull() else null
+            if (parsed == null || parsed !in allowed) {
+                throw IllegalArgumentException(
+                    "$name must be one of ${allowed.sorted().joinToString(",")}: $trimmed",
+                )
+            }
+            return parsed
+        }
 
         /**
          * 시드 턴 주기를 정한다.

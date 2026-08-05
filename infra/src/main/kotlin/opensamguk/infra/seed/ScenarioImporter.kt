@@ -63,7 +63,14 @@ class ScenarioImporter(
      * Legacy install.php 기본값 0 (`block_general_create_0` checked).
      */
     private val blockGeneralCreate: Int = 0,
-    private val fiction: Int = 0,
+    /**
+     * 연의/가상 모드 (PHP `fiction`). 0=연의 / 1=가상 (install.php:97-98 라디오 라벨).
+     * Legacy install.php:98 기본값 **1** (`fiction_1` checked) — 이웃 파라미터들과 달리 여기만
+     * 0이었고 근거 주석도 없었다. 의도된 divergence가 아니라 누락으로 판단해 PHP에 맞춘다.
+     * 이 값은 실제 게임 동작에 쓰인다 — `hwe/func.php:1820`
+     * `if (!$fiction && $general->getNPCType() > 0)`.
+     */
+    private val fiction: Int = 1,
     private val showImageLevel: Int = 3,
     private val extendedGeneral: Boolean = true,
     /**
