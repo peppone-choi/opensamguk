@@ -1,8 +1,20 @@
 # Current Task
 
-## 2026-08-03 — RTK14 full-roster scenario and five-stat surfaces
+## 2026-08-06 — OPENSAM-33 완료 전이 + OPENSAM-34 EC2→GCP 대체
 
-- Status: the exact prior source HEAD `725195fea29b3434cc358e3d262c6c440830dab7` review found a P1 released-V26 forward-repair gap. The remediation is present only in the current working tree, and it no longer touches V26: `V26__npc_lifecycle_phase_units.kt` and `V26NpcLifecycleMigrationTest.kt` are reverted byte-for-byte to `origin/main`, and all RTK14 lifecycle repair now lives in one new world-scoped migration, `V38__rtk14_npc_lifecycle_repair.kt` (test: `V38Rtk14NpcLifecycleRepairMigrationTest.kt`), which runs on every world. It is not yet a final full gate, merged change, deployment, reseed, or live verification.
+- OPENSAM-33 (D4-14~17 B2 운영 스모크): Jira `할 일` → **`완료`** 전이 완료. 2026-07-31 로컬 완료/released 상태에서 전이만 미실행이었고, D4-14~17 실측 증거와 5모듈 게이트(552 suites / 4,763 tests / 0 failures)를 증거 코멘트로 남겼다. 미해결 non-blocking 1건은 EventSource open 9 vs `turnCompleted` 8 (reconnect/remount 대 중복 구독 UNKNOWN) — D4-16 판정에는 영향 없으나 중복 구독이면 별건이다.
+- OPENSAM-34 (D4-31~35 배포 전 Go 조건): 종전 blocker였던 "`ec2-prod` 러너 offline"은 **오진**이었다. 레포 등록 프로덕션 러너 `gcp-prod-opensamguk`은 online이며 라벨은 `[self-hosted, Linux, X64, gcp-prod]`, `ec2-prod` 라벨은 존재하지 않는다. 실제 원인은 predeploy 워크플로만 없어진 라벨을 계속 선택한 drift였다(promote/reset/deploy는 이미 이관 완료).
+- 함께 발견한 별건 결함: grader의 `highest_checkout_migration()`이 `*.sql`만 스캔해 Kotlin 마이그레이션 `V38__rtk14_npc_lifecycle_repair.kt`를 놓친다. `.sql`만 37 / Kotlin 포함 38이라, 실제 러너에서 DB가 보고하는 38과 어긋나 **D4-35가 정상 상태를 NO-GO로 오판**했을 것이다. 라벨만 고쳤으면 첫 실행이 그대로 실패한다.
+- 브랜치 `ops-predeploy-gcp-retarget`, 커밋 `9da40167` (3파일). 검증: 양쪽 스크립트 `bash -n` PASS, 워크플로 YAML 파싱 PASS, hermetic 계약 테스트 `PASS` EXIT=0, 변경 전 baseline에서는 동일 테스트가 `NO-GO: D4-35 ...`로 실패함을 `git stash`로 확인.
+- Jira OPENSAM-34는 **`할 일` 유지**. 실제 D4-31~35 production 관측은 미실행이며 워크플로 dispatch에는 여전히 별도 명시 승인이 필요하다.
+- 다음: PR 생성/리뷰 → 머지 후에야 predeploy Go 체크 실행을 논의할 수 있다.
+
+---
+
+## 2026-08-03 — RTK14 full-roster scenario and five-stat surfaces (완료 — 2026-08-04 머지)
+
+- Status (2026-08-06 갱신): **PR #356이 2026-08-04T06:39:59Z에 머지됐다.** 아래 "working tree에만 존재" / "release step 미완" 서술은 당시 기록이며 더 이상 유효하지 않다. `origin/main`에 `V37__general_owner_claim_request.sql`과 `V38__rtk14_npc_lifecycle_repair.kt`가 모두 올라와 있고, 후속 수정 #362·#363까지 머지됐다. 이 절은 이력으로 보존한다.
+- 당시 기록: the exact prior source HEAD `725195fea29b3434cc358e3d262c6c440830dab7` review found a P1 released-V26 forward-repair gap. The remediation no longer touches V26: `V26__npc_lifecycle_phase_units.kt` and `V26NpcLifecycleMigrationTest.kt` are reverted byte-for-byte to `origin/main`, and all RTK14 lifecycle repair now lives in one new world-scoped migration, `V38__rtk14_npc_lifecycle_repair.kt` (test: `V38Rtk14NpcLifecycleRepairMigrationTest.kt`), which runs on every world. It is not yet a final full gate, merged change, deployment, reseed, or live verification.
 - Migration numbering: the claim-request migration was renumbered `V36__general_owner_claim_request.sql` → `V37__general_owner_claim_request.sql`, because `origin/main` already ships `V36__diplomacy_casualties.sql` and two V36s make Flyway fail with a duplicate version.
 - Why V38 instead of extending V26: a database that already recorded V26 in `flyway_schema_history` never re-runs it, so the extension could not reach upgraded worlds; and on a fresh database Flyway runs before `ScenarioSeedRunner` (an `ApplicationRunner`), so `world_state` is empty and V26 returns immediately, making the extension unreachable on new worlds too. Putting the whole repair in V38, which no world has recorded yet, is what makes already-migrated and freshly seeded worlds converge on the same final state.
 - Current remediation: V38 resolves the effective scenario external-over-classpath, matches actual deferred action identity at `name[2]`/`nation[4]`, excludes `rtk14Added`, applies universal strict-shape checks, splits valid grouped events while preserving unrelated ones, and fails closed on ambiguity — including the ambiguous future-row case that an earlier draft had tried to close inside V26. The importer rejects `appearanceYear > deathYear`; possession uses an explicit conditional-delete branch rather than a `takeIf` side effect.

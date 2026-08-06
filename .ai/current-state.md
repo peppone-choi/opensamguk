@@ -1,6 +1,20 @@
 # Current State
 
-## RTK14 전체 장수·5능력치 배포 준비 — 2026-08-04
+## OPENSAM-33 완료 · OPENSAM-34 GCP 대체 — 2026-08-06
+
+- **OPENSAM-33 = `완료`.** Jira 전이 실행됨(`할 일` → `완료`, 증거 코멘트 첨부). D4-14~17 로컬 증거는 2026-07-31자 아래 절이 정본이며, 이번 세션은 전이와 증거 기록만 수행했다.
+- **OPENSAM-34 blocker 해소 — 단, Go 아님.** "`ec2-prod` 러너 offline이라 관측 불가"라는 기존 판단은 오진이었다. GitHub runner API 실측 결과 프로덕션 러너는 `gcp-prod-opensamguk` 1대이며 **online / busy=false**, 라벨 `[self-hosted, Linux, X64, gcp-prod]`, `ec2-prod` 라벨 없음. 실제 원인은 `predeploy-go-check.yml`만 없어진 `ec2-prod` 라벨을 계속 선택한 것이고 `promote-game-server.yml`·`reset-game-server.yml`·`deploy.yml`은 이미 `gcp-prod`로 이관돼 있었다.
+- **별건 grader 결함 동시 수정.** `tools/ops/predeploy_go_check.sh`의 `highest_checkout_migration()`이 `infra/src/main/resources/db/migration/V*__*.sql`만 스캔해 Kotlin 마이그레이션 `infra/src/main/kotlin/db/migration/V38__rtk14_npc_lifecycle_repair.kt`를 보지 못했다. 실측 `.sql`만 **37**, Kotlin 포함 **38**. 실제 러너에서 DB는 `MAX(version)=38`을 보고하므로 D4-35가 정상 상태를 **NO-GO로 오판**한다. glob을 `.sql`+`.kt`로 확장하고, Kotlin 디렉터리 부재 시 fail-closed 처리했다(부재를 무시하면 낮은 버전을 기대해 false NO-GO가 아니라 **false GO**가 된다). 계약 테스트의 하드코딩 `36`/`35` 스텁도 checkout 파생값으로 교체해 마이그레이션 추가 시 재발하지 않게 했다.
+- 브랜치 `ops-predeploy-gcp-retarget`, 커밋 `9da40167`, 3파일. 증거: `bash -n` 양쪽 PASS · 워크플로 YAML 파싱 PASS(`runs-on` = `self-hosted/Linux/X64/gcp-prod`) · hermetic 계약 테스트 `PASS: predeploy-go-check hermetic contract` EXIT=0 · 변경 전 baseline(`git stash`)에서 동일 테스트가 `NO-GO: D4-35 latest successful Flyway version does not match the checkout`로 실패함 확인.
+- **미실행/미승인:** D4-31~35 실제 production 관측, 워크플로 dispatch, 배포. Jira OPENSAM-34는 `할 일` 유지. 아래 2026-07-31 OPENSAM-34 절의 "ec2-prod offline이라 blocked" 서술은 이 절이 대체한다.
+
+---
+
+## RTK14 전체 장수·5능력치 — **머지 완료** (PR #356, 2026-08-04)
+
+- 아래 2026-08-04 절은 머지 직전 후보 브랜치 기준 기록이다. **PR #356은 2026-08-04T06:39:59Z에 머지됐고**, `origin/main`이 `V37__general_owner_claim_request.sql`과 `V38__rtk14_npc_lifecycle_repair.kt`를 모두 싣고 있다. 후속 수정 #362(리셋 턴 주기 시드 반영)·#363(리셋 시나리오 옵션 5개 시드 반영)까지 머지됨. "미커밋" / "release step 미완" 서술은 이력으로만 읽을 것.
+
+## RTK14 전체 장수·5능력치 배포 준비 — 2026-08-04 (이력)
 
 - 엑셀 1,000행의 15개 열을 비공개 source JSON으로 round-trip하고, 15개 populated 런타임 시나리오마다 장수 번호 1–1000을 정확히 한 번씩 표현한다. 생성물과 원본은 gitignored이며 private GitHub Actions secret만 등록됐다.
 - 기존 장수는 소속·도시·관직·대사를 유지하면서 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신한다. 엑셀에만 있는 343명은 빙의 가능한 기본 장수로 추가한다. 시나리오 전용 legacy-only 351행은 모두 근거가 있는 정치·매력 override를 사용하며, 동명이인 source 후보 소진 충돌 38건은 exact runtime identity override로 처리하고 미검토 fallback은 fail-closed다.
