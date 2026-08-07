@@ -4,8 +4,11 @@
 
 - OPENSAM-33 (D4-14~17 B2 운영 스모크): Jira `할 일` → **`완료`** 전이 완료. 2026-07-31 로컬 완료/released 상태에서 전이만 미실행이었고, D4-14~17 실측 증거와 5모듈 게이트(552 suites / 4,763 tests / 0 failures)를 증거 코멘트로 남겼다. 미해결 non-blocking 1건은 EventSource open 9 vs `turnCompleted` 8 (reconnect/remount 대 중복 구독 UNKNOWN) — D4-16 판정에는 영향 없으나 중복 구독이면 별건이다.
 - OPENSAM-34 (D4-31~35 배포 전 Go 조건): 종전 blocker였던 "`ec2-prod` 러너 offline"은 **오진**이었다. 레포 등록 프로덕션 러너 `gcp-prod-opensamguk`은 online이며 라벨은 `[self-hosted, Linux, X64, gcp-prod]`, `ec2-prod` 라벨은 존재하지 않는다. 실제 원인은 predeploy 워크플로만 없어진 라벨을 계속 선택한 drift였다(promote/reset/deploy는 이미 이관 완료).
-- 함께 발견한 별건 결함: grader의 `highest_checkout_migration()`이 `*.sql`만 스캔해 Kotlin 마이그레이션 `V38__rtk14_npc_lifecycle_repair.kt`를 놓친다. `.sql`만 37 / Kotlin 포함 38이라, 실제 러너에서 DB가 보고하는 38과 어긋나 **D4-35가 정상 상태를 NO-GO로 오판**했을 것이다. 라벨만 고쳤으면 첫 실행이 그대로 실패한다.
-- 브랜치 `ops-predeploy-gcp-retarget`, 커밋 `9da40167` (3파일). 검증: 양쪽 스크립트 `bash -n` PASS, 워크플로 YAML 파싱 PASS, hermetic 계약 테스트 `PASS` EXIT=0, 변경 전 baseline에서는 동일 테스트가 `NO-GO: D4-35 ...`로 실패함을 `git stash`로 확인.
+- 함께 발견한 별건 결함: grader의 `highest_checkout_migration()`이 `*.sql`만 스캔해 Kotlin 마이그레이션 `V38__rtk14_npc_lifecycle_repair.kt`를 놓친다. `.sql`만 37 / Kotlin 포함 38. **양방향으로 틀린다** — V38 적용된 DB에서는 기대 37 vs 실제 38로 false NO-GO(라벨만 고쳤으면 첫 실행이 그대로 실패), V38 미적용 DB에서는 37==37이라 미적용 마이그레이션을 못 보고 false GO.
+- 부수 수정: zero-padded `V08`이 `(( ))` 좌항 8진수 오류로 조용히 skip되던 것 `10#` 강제로 수정. 계약 테스트 하드코딩 스텁 → checkout 파생. **정정:** 현 저장소에 `V0*` 마이그레이션은 없으므로 이는 활성 버그가 아니라 잠재 결함 방어다.
+- **철회했던 가드를 되돌렸다 (정정).** 이전 판의 철회 근거 — "디렉터리 부재 = Kotlin 마이그레이션 부재이므로 37 기대가 옳고, 이 가드는 영구 false NO-GO만 만든다" — 는 사실과 다르다. 해당 디렉터리는 git 추적 대상이라(`V26__npc_lifecycle_phase_units.kt`, `V38__rtk14_npc_lifecycle_repair.kt`) 정상 체크아웃에 항상 있고, `shopt -s nullglob` 때문에 경로가 stale하면 스캔이 조용히 `.sql`-only(37)로 퇴화해 미적용 V38을 안고 **false GO**가 난다. 격리 재현 38 vs 37 확인 후 `predeploy_go_check.sh:155-159`에 사유 주석과 함께 복원했다.
+- 브랜치 `ops-predeploy-gcp-retarget`. 검증: 양쪽 스크립트 `bash -n` PASS, 워크플로 YAML 파싱 PASS, hermetic 계약 테스트 `PASS` EXIT=0, 변경 전 baseline에서는 동일 테스트가 `NO-GO: D4-35 ...`로 실패함을 `git stash`로 확인.
+- **리뷰 상태 정정.** 이전 판의 "독립 적대적 리뷰 1회 — blocker/major 0"은 유효하지 않다. 후속 검토에서 위 major(가드 부재로 인한 false GO)를 찾았고, 그 리뷰는 **독립 에이전트가 수행하지 못했다** — `oh-my-claudecode:critic`·`deep-reasoner`가 각각 두 번씩 보고 없이 idle 처리됐다. 사용자 승인 아래 이 세션 자체 검증으로 아티팩트를 작성했다: `docs/superpowers/reviews/2026-08-06-opensam-34-predeploy-gcp-retarget-review.md` (`Verdict: quarantined-with-proof`). **머지 전 다른 프로바이더의 독립 재검토가 필수 잔여 항목이다.**
 - Jira OPENSAM-34는 **`할 일` 유지**. 실제 D4-31~35 production 관측은 미실행이며 워크플로 dispatch에는 여전히 별도 명시 승인이 필요하다.
 - 다음: PR 생성/리뷰 → 머지 후에야 predeploy Go 체크 실행을 논의할 수 있다.
 

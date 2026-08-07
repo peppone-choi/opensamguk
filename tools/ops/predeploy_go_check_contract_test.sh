@@ -17,15 +17,22 @@ SUDO_LOG="$TEST_ROOT/sudo.log"
 TAG="0123456789abcdef0123456789abcdef01234567"
 WORLD_ID=101
 # Mirrors highest_checkout_migration() in the grader: both .sql and Kotlin
-# migrations count, so the stub never drifts when a migration lands.
+# migrations count, so the stub never drifts when a migration lands. Matches on
+# the basename and forces base 10, exactly as the grader does — a derivation
+# that diverges from the grader turns a real mismatch into a false green.
+# `|| true` keeps an empty match from tripping pipefail, which would abort the
+# assignment before the guard below could report the cause.
 HIGHEST_MIGRATION="$(
   {
     ls "$REPO_ROOT/infra/src/main/resources/db/migration"/V*__*.sql \
        "$REPO_ROOT/infra/src/main/kotlin/db/migration"/V*__*.kt 2>/dev/null || true
-  } | sed -E 's#.*/V([0-9]+)__.*#\1#' | grep -E '^[0-9]+$' | sort -n | tail -1
+  } | while read -r path; do
+        basename "$path" | sed -nE 's/^V([0-9]+)__.*/\1/p'
+      done | sed -E 's/^0+([0-9])/\1/' | sort -n | tail -1 || true
 )"
 [[ "$HIGHEST_MIGRATION" =~ ^[0-9]+$ ]] || {
-  printf 'FAIL: could not derive highest checkout migration\n' >&2
+  printf 'FAIL: could not derive highest checkout migration from %s\n' \
+    "$REPO_ROOT/infra/src/main/{resources,kotlin}/db/migration" >&2
   exit 1
 }
 OVERFLOW_VALUE=9223372036854775808
