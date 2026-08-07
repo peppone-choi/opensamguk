@@ -1,6 +1,22 @@
 # Current State
 
-## RTK14 전체 장수·5능력치 배포 준비 — 2026-08-04
+## OPENSAM-33 완료 · OPENSAM-34 GCP 대체 — 2026-08-06
+
+- **OPENSAM-33 = `완료`.** Jira 전이 실행됨(`할 일` → `완료`, 증거 코멘트 첨부). D4-14~17 로컬 증거는 2026-07-31자 아래 절이 정본이며, 이번 세션은 전이와 증거 기록만 수행했다.
+- **OPENSAM-34 blocker 해소 — 단, Go 아님.** "`ec2-prod` 러너 offline이라 관측 불가"라는 기존 판단은 오진이었다. GitHub runner API 실측 결과 프로덕션 러너는 `gcp-prod-opensamguk` 1대이며 **online / busy=false**, 라벨 `[self-hosted, Linux, X64, gcp-prod]`, `ec2-prod` 라벨 없음. 실제 원인은 `predeploy-go-check.yml`만 없어진 `ec2-prod` 라벨을 계속 선택한 것이고 `promote-game-server.yml`·`reset-game-server.yml`·`deploy.yml`은 이미 `gcp-prod`로 이관돼 있었다.
+- **별건 grader 결함 동시 수정.** `tools/ops/predeploy_go_check.sh`의 `highest_checkout_migration()`이 `infra/src/main/resources/db/migration/V*__*.sql`만 스캔해 Kotlin 마이그레이션 `infra/src/main/kotlin/db/migration/V38__rtk14_npc_lifecycle_repair.kt`를 보지 못했다. 실측 `.sql`만 **37**, Kotlin 포함 **38**. V38은 `BaseJavaMigration` 서브클래스이고 `getVersion` 오버라이드가 없어 Flyway가 클래스명에서 버전 `38`을 유도해 `flyway_schema_history`에 기록한다. 양방향으로 틀린다 — V38이 적용된 DB에서는 기대 37 vs 실제 38로 **false NO-GO**, V38이 아직 미적용인 DB에서는 기대 37 == 실제 37이라 미적용 마이그레이션을 못 보고 **false GO**. glob을 `.sql`+`.kt`로 확장해 둘 다 닫았다.
+- 부수 수정 2건: 버전 파싱이 `(( ))` 좌항에 있어 zero-padded `V08`이 8진수 오류로 **조용히 skip**되던 것을 `10#` 강제로 수정, 계약 테스트의 하드코딩 `36`/`35` 스텁을 checkout 파생값으로 교체(마이그레이션 추가 때마다 계약이 깨지던 원인). **정정:** `10#`는 활성 버그 수정이 아니다 — 현 저장소에 zero-padded(`V0*`) 마이그레이션은 없고 잠재 결함만 방어한다. 이전 판의 "실측 확인" 서술은 과장이라 삭제했다.
+- **철회했던 가드를 되돌렸다 (정정).** 이전 판은 `[[ -d "$KOTLIN_MIGRATIONS_DIR" ]]` fail-closed 가드를 "디렉터리 부재 = Kotlin 마이그레이션 부재이므로 37 기대가 맞고, 이 가드는 정상 스택에 영구 false NO-GO를 만든다"는 이유로 제거했다고 기록했다. **그 근거는 사실과 다르다.** 해당 디렉터리는 git 추적 대상이다(`git ls-files infra/src/main/kotlin/db/migration` → `V26__npc_lifecycle_phase_units.kt`, `V38__rtk14_npc_lifecycle_repair.kt`). 정상 체크아웃에는 항상 존재하므로 영구 false NO-GO는 발생할 수 없고, 반대로 `shopt -s nullglob`(`:80`) 때문에 경로가 없거나 stale하면 스캔이 에러 없이 `.sql`-only 최댓값으로 퇴화한다. 격리 재현: 정상 경로 `38` vs stale 경로 `37`(에러 없음, NO-GO 없음) → 미적용 V38을 안고 **false GO**. 가드를 `:155-159`에 사유 주석과 함께 복원했다. 기존 `(( highest > 0 ))`는 "숫자 마이그레이션 0개"만 덮을 뿐 이 케이스를 덮지 못한다. 이 가드를 덮는 실행 테스트는 없다(계약 테스트가 실제 `REPO_ROOT`를 쓰고, 경로를 env로 열면 프로덕션 grader에 주입면이 생긴다) — 회귀 방어는 리뷰뿐이다.
+- 브랜치 `ops-predeploy-gcp-retarget`, 커밋 `9da40167`, 3파일. 증거: `bash -n` 양쪽 PASS · 워크플로 YAML 파싱 PASS(`runs-on` = `self-hosted/Linux/X64/gcp-prod`) · hermetic 계약 테스트 `PASS: predeploy-go-check hermetic contract` EXIT=0 · 변경 전 baseline(`git stash`)에서 동일 테스트가 `NO-GO: D4-35 latest successful Flyway version does not match the checkout`로 실패함 확인.
+- **미실행/미승인:** D4-31~35 실제 production 관측, 워크플로 dispatch, 배포. Jira OPENSAM-34는 `할 일` 유지. 아래 2026-07-31 OPENSAM-34 절의 "ec2-prod offline이라 blocked" 서술은 이 절이 대체한다.
+
+---
+
+## RTK14 전체 장수·5능력치 — **머지 완료** (PR #356, 2026-08-04)
+
+- 아래 2026-08-04 절은 머지 직전 후보 브랜치 기준 기록이다. **PR #356은 2026-08-04T06:39:59Z에 머지됐고**, `origin/main`이 `V37__general_owner_claim_request.sql`과 `V38__rtk14_npc_lifecycle_repair.kt`를 모두 싣고 있다. 후속 수정 #362(리셋 턴 주기 시드 반영)·#363(리셋 시나리오 옵션 5개 시드 반영)까지 머지됨. "미커밋" / "release step 미완" 서술은 이력으로만 읽을 것.
+
+## RTK14 전체 장수·5능력치 배포 준비 — 2026-08-04 (이력)
 
 - 엑셀 1,000행의 15개 열을 비공개 source JSON으로 round-trip하고, 15개 populated 런타임 시나리오마다 장수 번호 1–1000을 정확히 한 번씩 표현한다. 생성물과 원본은 gitignored이며 private GitHub Actions secret만 등록됐다.
 - 기존 장수는 소속·도시·관직·대사를 유지하면서 통솔·무력·지력·정치·매력과 생년·등장년·몰년을 갱신한다. 엑셀에만 있는 343명은 빙의 가능한 기본 장수로 추가한다. 시나리오 전용 legacy-only 351행은 모두 근거가 있는 정치·매력 override를 사용하며, 동명이인 source 후보 소진 충돌 38건은 exact runtime identity override로 처리하고 미검토 fallback은 fail-closed다.

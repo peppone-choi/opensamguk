@@ -30,7 +30,7 @@ on:
 
 jobs:
   predeploy-go:
-    runs-on: [self-hosted, Linux, X64, ec2-prod]
+    runs-on: [self-hosted, Linux, X64, gcp-prod]
     permissions:
       contents: read
     steps:

@@ -16,6 +16,25 @@ DF_LOG="$TEST_ROOT/df.log"
 SUDO_LOG="$TEST_ROOT/sudo.log"
 TAG="0123456789abcdef0123456789abcdef01234567"
 WORLD_ID=101
+# Mirrors highest_checkout_migration() in the grader: both .sql and Kotlin
+# migrations count, so the stub never drifts when a migration lands. Matches on
+# the basename and forces base 10, exactly as the grader does — a derivation
+# that diverges from the grader turns a real mismatch into a false green.
+# `|| true` keeps an empty match from tripping pipefail, which would abort the
+# assignment before the guard below could report the cause.
+HIGHEST_MIGRATION="$(
+  {
+    ls "$REPO_ROOT/infra/src/main/resources/db/migration"/V*__*.sql \
+       "$REPO_ROOT/infra/src/main/kotlin/db/migration"/V*__*.kt 2>/dev/null || true
+  } | while read -r path; do
+        basename "$path" | sed -nE 's/^V([0-9]+)__.*/\1/p'
+      done | sed -E 's/^0+([0-9])/\1/' | sort -n | tail -1 || true
+)"
+[[ "$HIGHEST_MIGRATION" =~ ^[0-9]+$ ]] || {
+  printf 'FAIL: could not derive highest checkout migration from %s\n' \
+    "$REPO_ROOT/infra/src/main/{resources,kotlin}/db/migration" >&2
+  exit 1
+}
 OVERFLOW_VALUE=9223372036854775808
 
 cleanup() {
@@ -137,7 +156,7 @@ prepare_stubs() {
     '          if [[ "$mode" == flyway_failed ]]; then printf "1\n"; else printf "0\n"; fi' \
     '          ;;' \
     '        *MAX\(version::integer\)*)' \
-    '          if [[ "$mode" == flyway_latest_mismatch ]]; then printf "35\n"; else printf "36\n"; fi' \
+    '          if [[ "$mode" == flyway_latest_mismatch ]]; then printf "'"$((HIGHEST_MIGRATION - 1))"'\n"; else printf "'"$HIGHEST_MIGRATION"'\n"; fi' \
     '          ;;' \
     '        *version\ =\ *29*)' \
     '          if [[ "$mode" == flyway_v29_missing ]]; then printf "0\n"; else printf "1\n"; fi' \
@@ -306,7 +325,7 @@ assert_workflow_contract() {
   if grep -Eq '^  (push|pull_request|schedule):' "$WORKFLOW"; then
     fail 'workflow has a non-manual trigger'
   fi
-  grep -Fq 'runs-on: [self-hosted, Linux, X64, ec2-prod]' "$WORKFLOW" || fail 'runner labels drifted'
+  grep -Fq 'runs-on: [self-hosted, Linux, X64, gcp-prod]' "$WORKFLOW" || fail 'runner labels drifted'
   for input in server expected_tag expected_scenario_code world_id min_free_gib min_free_percent; do
     grep -Fq "      $input:" "$WORKFLOW" || fail "workflow input missing: $input"
   done

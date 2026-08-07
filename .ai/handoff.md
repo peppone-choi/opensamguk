@@ -1,6 +1,17 @@
 # Agent Handoff
 
-## RTK14 full-roster handoff (2026-08-04)
+## Current handoff (2026-08-06) — OPENSAM-33 완료 / OPENSAM-34 GCP retarget
+
+- **이 절이 아래 두 절보다 우선한다.** 아래 RTK14 절(2026-08-04)과 OPENSAM-34 절(2026-07-31)의 미완/blocked 서술은 모두 대체됐다.
+- RTK14: PR #356 **머지 완료**(2026-08-04T06:39:59Z). `origin/main`에 V37·V38 존재, 후속 #362·#363도 머지. 아래 "remediation remains uncommitted" / "None of those release steps is complete"는 이력이다.
+- OPENSAM-33: Jira `완료` 전이 실행 + 증거 코멘트 기록.
+- OPENSAM-34: blocker가 "러너 부재"에서 "라벨 drift + grader 결함"으로 재규정됐고 둘 다 로컬에서 닫혔다. 프로덕션 러너 `gcp-prod-opensamguk`은 **online**(labels `[self-hosted, Linux, X64, gcp-prod]`, `ec2-prod` 라벨 없음).
+- 브랜치 `ops-predeploy-gcp-retarget` 커밋 `9da40167`: predeploy 워크플로 라벨 `gcp-prod`, grader glob에 Kotlin 마이그레이션 포함(`.sql`만 37 / 포함 38 → D4-35 false NO-GO 방지), Kotlin 디렉터리 부재 fail-closed(false GO 방지), 계약 테스트 스텁을 checkout 파생으로.
+- **다음 담당자가 할 일:** PR 생성 → 리뷰(ADR-LITE-026: 별도 3회 리뷰 라운드 + 명시적 인간 머지 승인) → 머지. 그 다음에야 predeploy Go 체크 실제 dispatch를 논의할 수 있다. D4-31~35 production 관측·배포·dispatch는 **미실행이며 별도 명시 승인 필요**.
+
+---
+
+## RTK14 full-roster handoff (2026-08-04) — 머지 완료, 이력
 
 - Source worktree: `/tmp/opensamguk-possession-five-stats`, branch `codex/fix-possession-five-stats`.
 - Docker worktree: `/tmp/opensamguk-docker-scenario-five-stats`, branch `codex/v26-effective-scenario-mount`, PR #25.

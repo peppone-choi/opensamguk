@@ -78,11 +78,14 @@ highest_checkout_migration() {
   local version
   local highest=0
   shopt -s nullglob
-  for migration in "$MIGRATIONS_DIR"/V*__*.sql; do
+  for migration in "$MIGRATIONS_DIR"/V*__*.sql "$KOTLIN_MIGRATIONS_DIR"/V*__*.kt; do
     name="$(basename "$migration")"
     version="$(printf '%s' "$name" | sed -E 's/^V([0-9]+)__.*/\1/')"
     [[ "$version" =~ ^[0-9]+$ ]] || continue
-    (( version > highest )) && highest="$version"
+    # 10# forces base 10: a zero-padded V08 would otherwise be read as invalid
+    # octal, and the arithmetic error is swallowed in this && position, silently
+    # skipping that migration.
+    (( 10#$version > highest )) && highest=$(( 10#$version ))
   done
   shopt -u nullglob
   (( highest > 0 )) || no_go 'D4-35 checkout has no numeric Flyway migrations'
@@ -139,6 +142,7 @@ positive_decimal_at_most "$MIN_FREE_PERCENT" 100 ||
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 MIGRATIONS_DIR="$REPO_ROOT/infra/src/main/resources/db/migration"
+KOTLIN_MIGRATIONS_DIR="$REPO_ROOT/infra/src/main/kotlin/db/migration"
 STACK_DIR="${OPENSAMGUK_STACK_DIR:-$HOME/opensamguk-docker}"
 ENV_FILE="$STACK_DIR/servers/$SERVER.env"
 API_CONTAINER="$SERVER-game-api"
@@ -148,6 +152,11 @@ POSTGRES_CONTAINER="$SERVER-game-postgres"
 REDIS_CONTAINER="$SERVER-game-redis"
 
 [[ -d "$MIGRATIONS_DIR" ]] || no_go 'D4-35 checkout migrations are unavailable'
+# Both directories are git-tracked, so an absent one means a stale path or a
+# partial checkout, never "this project has no Kotlin migrations". Without this
+# guard nullglob degrades the scan to the .sql-only maximum and a DB whose
+# Kotlin migration is still pending compares equal, yielding a false GO.
+[[ -d "$KOTLIN_MIGRATIONS_DIR" ]] || no_go 'D4-35 checkout Kotlin migrations are unavailable'
 [[ -f "$ENV_FILE" ]] || no_go 'safe server pin file is unavailable'
 [[ "${GITHUB_ACTIONS:-}" == true ]] || no_go 'D4-33 GitHub Actions runner metadata is unavailable'
 [[ "${RUNNER_OS:-}" == Linux ]] || no_go 'D4-33 runner OS is not Linux'
