@@ -120,6 +120,7 @@ $ pnpm typecheck
 > @opensamguk/web-game@0.0.1 typecheck /Users/apple/Desktop/개인프로젝트/opensamguk/web/game
 > tsc --noEmit
 ```
+
 (출력 없음 = 타입 오류 0)
 
 ```text

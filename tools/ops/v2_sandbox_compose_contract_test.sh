@@ -3,7 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 compose_file="$repo_root/docker-compose.v2-sandbox.yml"
-workflow_file="$repo_root/.github/workflows/ci.yml"
+workflow_file="${V2_SANDBOX_CI_WORKFLOW_FILE:-$repo_root/.github/workflows/ci.yml}"
 test_root="$(mktemp -d /tmp/opensamguk-v2-compose-contract.XXXXXX)"
 env_file="$test_root/v2-sandbox.env"
 rendered_file="$test_root/rendered.json"
@@ -55,8 +55,10 @@ agent_system_job = re.search(
 if agent_system_job is None:
     raise SystemExit("FAIL: ci.yml is missing the agent-system job")
 
-invocation = "run: bash tools/ops/v2_sandbox_compose_contract_test.sh"
-if invocation not in agent_system_job.group("body"):
+invocation = re.compile(
+    r"(?m)^        run:[ \t]+bash[ \t]+tools/ops/v2_sandbox_compose_contract_test\.sh[ \t]*(?:#[^\r\n]*)?$"
+)
+if invocation.search(agent_system_job.group("body")) is None:
     raise SystemExit("FAIL: agent-system job must run the v2 sandbox compose contract")
 
 print("PASS: rendered v2 web-game build passes ASSET_PREFIX=/game and CI invokes the contract")

@@ -9,19 +9,19 @@
   `a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1`.
 - 완료된 review/CI evidence는 구분해 보존한다: independent dirty-tree review는 no findings로
   `cleared`(fingerprint `3c1b357c…`), local immutable-SHA review는
-  `54ead4e70cf5fa7c822bc7fef11a8c42f09eded6`에서 완료됐고, last observed GitHub CI의 `agent-system`·`jvm`·
-  `web (gateway)`·`web (game)` jobs는 SUCCESS였다. 이는 새 contract CI step 전 evidence이며 remote exact-SHA
-  CI를 대체하지 않는다.
-- 현재 controlling review state는 Codex Round 3의 **two P2 resolved findings**다. 두 P2의 source remediation은
-  구현됐다: v2 Compose `web-game` build arg `ASSET_PREFIX=/game`, rendered Compose의 같은 값을 fail-closed로
-  검사하는 신규 `tools/ops/v2_sandbox_compose_contract_test.sh`, 그리고 existing `.github/workflows/ci.yml`
-  `agent-system` job의 `Verify v2 sandbox compose contract` invocation이다. 이 test는 red-before/green-after를
-  관측했고, `ASSET_PREFIX=/game pnpm build`는 green이며 생성물 62개가 `/game/_next/`를 포함한다. CI wiring은
-  locally validated됐지만 remote exact-SHA PR CI run은 아직 관측하지 않았다. 후속 independent Round 3 dirty-tree
-  re-review는 no blockers/fixes/questions/nits로 terminal `cleared`했고, 두 P2는 resolved다. 이 local review
-  clearance는 remote CI 또는 release authorization이 아니다. CodeRabbit Round 2는 rate-limited라
-  completed review result가 없으며, PR review mentions=3은 completed external reviews=3이라는 뜻이 아니다.
-  현재 실제 PR review results는 CodeRabbit Round 1과 Codex Round 3뿐이고, local exact-SHA/dirty-tree reviews는 별도다.
+  `54ead4e70cf5fa7c822bc7fef11a8c42f09eded6`에서 완료됐다. GitHub PR head `70492bcc`에서는
+  `agent-system`·`jvm`·`web (gateway)`·`web (game)` jobs가 SUCCESS였고, `agent-system`에는 original
+  `Verify v2 sandbox compose contract` step이 포함됐다. 이 green CI는 final-8 dirty remediation 전 evidence라
+  현재 permission/active-matcher/documentation changes의 remote CI를 대체하지 않는다.
+- Round 3의 두 P2는 prior dirty-tree re-review에서 `cleared`된 **historical** disposition이다. 현재 controlling
+  review state는 terminal independent final-8 dirty-tree re-review의 `cleared`(no findings)다: 문서 증거(A4
+  header/hash, manifest verifier, S1/S3b/U12, PHP disposition)와 source(CI permission + active-invocation check)의
+  eight dispositions가 모두 resolved됐다. Compose `ASSET_PREFIX=/game`, rendered-Compose contract red-before/green-after,
+  local production-mode build의 62개 `/game/_next/` output, 그리고 local CI wiring validation은 implementation evidence다.
+  Remote CI for an exact final-remediation commit is still unobserved. CodeRabbit Round 2는 rate-limited request로 review result가 없으며,
+  PR review mentions=3은 세 submitted results—CodeRabbit Round 1(23), Codex Round 3(2), final CodeRabbit
+  incremental(8)—을 뜻한다. local exact-SHA/dirty-tree reviews는 별도다. The terminal final-8 review clears the
+  reviewed dirty tree only; it does not stand in for remote exact-commit CI, merge, release, or deploy.
 - 브랜치는 `origin/main=b847c351`에서 OPENSAM-35 변경을 단일 커밋으로 재구성했으나, PR #370은
   open이고 merge/release/deploy는 미수행이다.
 
@@ -34,13 +34,40 @@
 | `a2-scenario-seed-sha256.txt` | `f42d3a4f935be3a63de1524f146819c7b9bc1160c0b3aa255f7eb57a32bbbb67` |
 | `a3-php-golden-inventory-sha256.txt` | `229ee5cdb3f2c4e612d4593bf57eb1af83983cbb51189dfe990eb1a8fe15f233` |
 | `a4-backend-gate.log` | `a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1` |
-| `a4-backend-gate-xml-summary.txt` | `e7811d93772d1c1b280eb47bddb30bafff514495c29d0bfe4087fef4587a0ac4` |
+| `a4-backend-gate-xml-summary.txt` | `7d497d7423bc861e41e1bbb8a6418d66585d3e69d0e53b908653449a1f845e82` |
 | `a4-web-gate.log` | `d803e60c5410b69409e98ed20c21a7b8661d313da8e17e91072252422fd3ca32` |
 
 재검증:
 
-```shell
-cd docs/loops/opensam-35-v2-0a-2026-08-08/baseline && shasum -a 256 * | sort -k2
+```bash
+set -euo pipefail
+baseline=docs/loops/opensam-35-v2-0a-2026-08-08/baseline
+(
+  cd "$baseline"
+  shasum -a 256 -c <(
+    awk -F'`' '/^\| `a[1-4]-/ { print $4 "  " $2 }' MANIFEST.md
+  )
+)
+```
+
+이 명령은 table의 7개 artifact checksum을 `shasum -c`에 전달하므로 한 파일이라도 달라지면 non-zero로
+실패한다. 단순 출력/정렬이 아니라 fail-closed verification이다.
+
+안전한 mutation proof(정본 artifact에는 write/delete 없음; fresh temp copy는 cleanup 명령 없이 남긴다):
+
+```bash
+set -euo pipefail
+baseline=docs/loops/opensam-35-v2-0a-2026-08-08/baseline
+proof_dir=$(mktemp -d "${TMPDIR:-/tmp}/op35-manifest-mutation.XXXXXX")
+probe="$proof_dir/a4-backend-gate-xml-summary.txt"
+cp "$baseline/a4-backend-gate-xml-summary.txt" "$probe"
+printf '\n# deliberate mutation proof\n' >> "$probe"
+expected=$(awk -F'`' '$2 == "a4-backend-gate-xml-summary.txt" { print $4 }' "$baseline/MANIFEST.md")
+if printf '%s  %s\n' "$expected" "$probe" | shasum -a 256 -c -; then
+  printf 'ERROR: mutation unexpectedly verified\n' >&2
+  exit 1
+fi
+printf 'PASS: copied-file mutation rejected; scratch retained at %s\n' "$proof_dir"
 ```
 
 전 파일 100KB 미만이므로 M3의 "대용량 덤프는 gitignore" 예외는 적용하지 않는다. 전부 커밋 대상.
@@ -118,7 +145,7 @@ isolation/build-only ticket은 T1/parity code를 바꾸지 않았으므로 그�
 그 verifier의 frontend dependency absence
 (`tsc: command not found`)는 historical failure다. Later direct-pnpm frontend typecheck is green and Vitest
 JSON reports 132 suites / 288 tests / 0 failures. Current backend evidence는 source remediation을 관측하는
-근거이나, independent dirty-tree re-review 또는 merge/release/deploy approval을 대체하지 않는다.
+근거이나, remote exact-commit CI 또는 merge/release/deploy approval을 대체하지 않는다.
 
 ---
 

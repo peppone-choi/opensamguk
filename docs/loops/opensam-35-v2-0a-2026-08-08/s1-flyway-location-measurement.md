@@ -342,15 +342,38 @@ Flyway는 이 방향으로는 게이트가 아니다.)
 current deletion authorization으로 해석하지 않는다. 리포에 남는 intended artifact는 이 문서와
 `infra/src/main/resources/db/migration_v2/README.md`다.
 
-## 재현 명령
+## 재현 명령 (프로브 상태 격리; destructive cleanup 없음)
+
+원래 측정의 scratch cleanup은 재사용 권한이 아니다. 새 재현에서는 **U1과 U2를 별도 fresh temp copy**로
+만들어 V901과 V10_5가 같은 jar/scan에 공존하지 않게 한다. 아래 명령은 `rm`·`git worktree remove`·container
+delete를 포함하지 않으며, 생성된 temp directory는 별도 exact-target 삭제 승인 전까지 그대로 둔다.
 
 ```bash
-S=<scratch>
-git worktree add $S/wt HEAD --detach
+set -euo pipefail
+J21=$(/usr/libexec/java_home -v 21)
+U1=$(mktemp -d "${TMPDIR:-/tmp}/op35-s1-u1.XXXXXX")
+U2=$(mktemp -d "${TMPDIR:-/tmp}/op35-s1-u2.XXXXXX")
+copy_head() {
+  mkdir -p "$1"
+  git archive --format=tar HEAD | tar -x -C "$1"
+}
+copy_head "$U1"
+copy_head "$U2"
 
-mkdir -p $S/wt/infra/src/main/resources/db/migration/v2 $S/wt/infra/src/main/resources/db/migration_v2
-printf 'CREATE TABLE s1_probe_nested(id int primary key);\n'  > $S/wt/infra/src/main/resources/db/migration/v2/V901__s1_probe_nested.sql
-printf 'CREATE TABLE s1_probe_sibling(id int primary key);\n' > $S/wt/infra/src/main/resources/db/migration_v2/V902__s1_probe_sibling.sql
+# U1 only: nested V901 proves recursive v1 scanning. V10_5 does not exist in this copy.
+mkdir -p "$U1/infra/src/main/resources/db/migration/v2" \
+  "$U1/infra/src/main/resources/db/migration_v2"
+printf 'CREATE TABLE s1_probe_nested(id int primary key);\n' \
+  > "$U1/infra/src/main/resources/db/migration/v2/V901__s1_probe_nested.sql"
+printf 'CREATE TABLE s1_probe_sibling(id int primary key);\n' \
+  > "$U1/infra/src/main/resources/db/migration_v2/V902__s1_probe_sibling.sql"
+
+# U2 only: sibling V902 + out-of-order V10_5. V901 is absent by construction.
+mkdir -p "$U2/infra/src/main/resources/db/migration_v2"
+printf 'CREATE TABLE s1_probe_sibling(id int primary key);\n' \
+  > "$U2/infra/src/main/resources/db/migration_v2/V902__s1_probe_sibling.sql"
+printf 'CREATE TABLE s1_probe_ooo(id int primary key);\n' \
+  > "$U2/infra/src/main/resources/db/migration_v2/V10_5__s1_probe_ooo.sql"
 
 docker run -d --name s1pg -e POSTGRES_DB=sammo_v1 -e POSTGRES_USER=sammo \
   -e POSTGRES_PASSWORD=sammo -p 55433:5432 postgres:16-alpine
@@ -358,33 +381,35 @@ docker run -d --name s1redis -p 56380:6379 redis:7-alpine
 docker exec s1pg psql -U sammo -d postgres -c "CREATE DATABASE sammo_v2"
 docker exec s1pg psql -U sammo -d postgres -c "CREATE DATABASE sammo_v1b"
 
-(cd $S/wt && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:bootJar)
+(cd "$U1" && JAVA_HOME="$J21" ./gradlew :app:game-engine:bootJar)
+(cd "$U2" && JAVA_HOME="$J21" ./gradlew :app:game-engine:bootJar)
 
-# U1 — v1 컨텍스트, 하위 경로 프로브가 딸려오는지
-env -i PATH=/usr/bin:/bin JAVA_HOME=$(/usr/libexec/java_home -v 21) \
+# U1 — v1 context: only the nested V901 can demonstrate recursive scanning.
+env -i PATH=/usr/bin:/bin JAVA_HOME="$J21" \
   GAME_DATABASE_URL="jdbc:postgresql://127.0.0.1:55433/sammo_v1" \
   GAME_DB_USER=sammo GAME_DB_PASSWORD=sammo REDIS_HOST=127.0.0.1 REDIS_PORT=56380 \
   OPENSAMGUK_WORLD_ID=1 SCENARIO_SEED_ENABLED=false GAME_ENGINE_PORT=58083 \
-  $(/usr/libexec/java_home -v 21)/bin/java -jar \
-  $S/wt/app/game-engine/build/libs/game-engine-0.0.1-SNAPSHOT.jar
+  "$J21/bin/java" -jar "$U1/app/game-engine/build/libs/game-engine-0.0.1-SNAPSHOT.jar"
 docker exec s1pg psql -U sammo -d sammo_v1 \
   -c "select installed_rank, version, description, type, success from flyway_schema_history order by installed_rank;"
 
-# U2 — destructive removal is BLOCKED unless separately approved for this exact scratch target.
-# Do not copy/run without that approval:
-# rm -rf $S/wt/infra/src/main/resources/db/migration/v2
-# After an approved scratch cleanup, rebuild and compare v1/v2 contexts.
-printf 'CREATE TABLE s1_probe_ooo(id int primary key);\n' > $S/wt/infra/src/main/resources/db/migration_v2/V10_5__s1_probe_ooo.sql
-(cd $S/wt && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:bootJar)
-#   → sammo_v1b 에 env 미설정으로 1회, sammo_v2 에
-#     SPRING_FLYWAY_LOCATIONS="classpath:db/migration,classpath:db/migration_v2" 로 1회
+# U2 — V10_5 result is isolated from V901. First v1 default, then the adopted v2 classpath pair.
+env -i PATH=/usr/bin:/bin JAVA_HOME="$J21" \
+  GAME_DATABASE_URL="jdbc:postgresql://127.0.0.1:55433/sammo_v1b" \
+  GAME_DB_USER=sammo GAME_DB_PASSWORD=sammo REDIS_HOST=127.0.0.1 REDIS_PORT=56380 \
+  OPENSAMGUK_WORLD_ID=1 SCENARIO_SEED_ENABLED=false GAME_ENGINE_PORT=58084 \
+  "$J21/bin/java" -jar "$U2/app/game-engine/build/libs/game-engine-0.0.1-SNAPSHOT.jar"
+env -i PATH=/usr/bin:/bin JAVA_HOME="$J21" \
+  GAME_DATABASE_URL="jdbc:postgresql://127.0.0.1:55433/sammo_v2" \
+  GAME_DB_USER=sammo GAME_DB_PASSWORD=sammo REDIS_HOST=127.0.0.1 REDIS_PORT=56380 \
+  OPENSAMGUK_WORLD_ID=1 SCENARIO_SEED_ENABLED=false GAME_ENGINE_PORT=58085 \
+  SPRING_FLYWAY_LOCATIONS="classpath:db/migration,classpath:db/migration_v2" \
+  "$J21/bin/java" -jar "$U2/app/game-engine/build/libs/game-engine-0.0.1-SNAPSHOT.jar"
 
-# U3
-unzip -p $S/wt/app/game-engine/build/libs/game-engine-0.0.1-SNAPSHOT.jar \
-  'BOOT-INF/lib/infra-0.0.1-SNAPSHOT.jar' > $S/infra.jar
-unzip -l $S/infra.jar | grep -E 'db/migration/v2|db/migration_v2'
-
-# U4 — sammo_v1b(V38 상태)에 v2 location 부착 / 고번호 단독 부착 / 그 뒤 v1 재부팅
+# U3/U4 use the U2 jar only; V901 is still absent.
+unzip -p "$U2/app/game-engine/build/libs/game-engine-0.0.1-SNAPSHOT.jar" \
+  'BOOT-INF/lib/infra-0.0.1-SNAPSHOT.jar' > "$U2/infra.jar"
+unzip -l "$U2/infra.jar" | grep -E 'db/migration_v2'
 ```
 
 ## 다음 단계에 주는 결론

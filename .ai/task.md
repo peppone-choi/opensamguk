@@ -3,13 +3,13 @@
 ## 2026-08-08 — OPENSAM-35 V2-0A production 격리 게이트 (활성 계약)
 
 - Status: 계획 채택됨(사용자 승인 2026-08-08), S0~S6 구현과 PR #370 Round 1 remediation은 완료됐다.
-  dirty-tree review는 no findings로 `cleared`(fingerprint `3c1b357c…`)이고 local immutable-SHA review는
-  `54ead4e7…`에서 완료됐으며 last observed GitHub CI jobs도 green이다. 그러나 그 CI는 새 contract step 전
-  evidence다. Codex Round 3의 P2 두 건은 implemented(Compose `ASSET_PREFIX=/game` + new rendered-Compose
-  contract test + `.github/workflows/ci.yml` `agent-system` contract step)되고 independent dirty-tree re-review에서
-  no blockers/fixes/questions/nits로 `cleared`됐다. CodeRabbit Round 2는 rate-limited라 result가 없고, PR review
-  mentions=3은 completed external reviews=3이 아니다. Remote exact-SHA CI와 merge/release/deploy/production 관측은
-  미수행이다. 계획 정본:
+  historical dirty-tree review는 no findings로 `cleared`(fingerprint `3c1b357c…`)이고 local immutable-SHA review는
+  `54ead4e7…`에서 완료됐다. GitHub PR head `70492bcc`의 네 CI jobs는 green이었고 `agent-system`에는 original
+  contract step이 포함됐다. 이는 final-8 dirty permission/active-matcher/docs remediation 전 evidence다. Codex Round 3
+  P2 clearance도 historical evidence다. Terminal independent final-8 dirty-tree re-review는 no findings로 `cleared`되어
+  final CodeRabbit 8 dispositions를 모두 resolved했다. CodeRabbit Round 2는 rate-limited request라 result가 없고,
+  PR review mentions=3은 세 submitted results—CodeRabbit Round 1(23), Codex Round 3(2), final CodeRabbit incremental(8)—이다.
+  Current remote CI for an exact final-remediation commit와 merge/release/deploy/production 관측은 미수행이다. 계획 정본:
   `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md`.
 - User request (verbatim): "OPENSAM-35" / "채택 + S6까지 연속 실행".
 - Goal: v2 코드가 production으로 새지 않음을 강제하는 격리 게이트 0A-a~g 7항목 +
@@ -53,13 +53,18 @@
     PHP capture 또는 draw-for-draw replay가 실행·통과했다는 주장이 아니다. 이 isolation/build-only
     티켓은 T1/parity code를 바꾸지 않으므로 PHP replay를 acceptance로 요구하지 않는다. 이후
     T1/parity 변경 티켓은 별도 capture/replay를 수행해야 하며, A3는 A4 backend gate를 대체하지 않는다.
+    final CodeRabbit의 반복 replay 요청은 **blocked가 아닌 inapplicable** disposition이다: ADR-LITE-021의
+    isolation DoD와 canonical merge-base T1 empty diff는 replay가 이 티켓의 acceptance event가 아님을 보이고,
+    어떤 replay pass/waiver도 주장하지 않는다.
   - PR #370의 23개 Round 1 disposition은 source remediation/full backend evidence와 함께 all
     resolved/dispositioned이며, **current dirty-tree** independent re-review는 `cleared`다
     (no findings; fingerprint `3c1b357c…`). local immutable-SHA review(`54ead4e7…`)와 last observed GitHub CI
     green은 historical completion evidence다. Codex Round 3 P2 source remediation은 Compose `ASSET_PREFIX=/game`, new
     `tools/ops/v2_sandbox_compose_contract_test.sh`, and `.github/workflows/ci.yml` `agent-system` invocation으로
-    implemented됐고 fresh independent dirty-tree re-review는 no blockers/fixes/questions/nits로 `cleared`다. 이는
-    remote exact-SHA CI run을 대체하지 않는다.
+    implemented됐고 prior independent dirty-tree re-review는 no blockers/fixes/questions/nits로 `cleared`다. GitHub
+    head `70492bcc`는 original contract step을 포함해 green이었지만 final-8 dirty permission/active-matcher/docs
+    remediation을 원격에서 검증하지 않는다. Terminal independent final-8 dirty-tree re-review는 all eight findings를
+    no findings로 `cleared`했고, exact final-remediation commit의 remote CI는 별도로 pending이다.
   - current backend evidence는 Java 21 `tools/parity/gate.sh backend`의 `--rerun-tasks` six-root
     **one run / no retry** 결과다: `BUILD SUCCESSFUL in 12m 35s`, 35 actionable tasks, XML 601 suites /
     5,050 tests / failures 0 / errors 0 / skipped 1; full-log SHA256

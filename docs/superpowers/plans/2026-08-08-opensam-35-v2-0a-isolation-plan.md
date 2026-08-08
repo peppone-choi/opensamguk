@@ -1,10 +1,10 @@
 # OPENSAM-35 — V2-0A production 격리 게이트 실행 계획
 
-- Status: **ADOPTED · S0~S6 구현 완료 · PR #370 Round 3 P2 source remediation reviewed `cleared` · remote exact-SHA CI pending**.
-  `ASSET_PREFIX=/game` Compose remediation, its contract test, and the `agent-system` CI invocation are implemented,
-  and terminal independent dirty-tree re-review found no blockers/fixes/questions/nits. Remote exact-SHA CI observation,
-  PR merge/release/deploy 및 OPENSAM-177 consumer
-  실행은 미수행이다.
+- Status: **ADOPTED · S0~S6 구현 완료 · final CodeRabbit 8 dispositions terminal dirty-tree review `cleared` · post-final-8 remote exact-commit CI pending**.
+  `ASSET_PREFIX=/game` Compose remediation, its contract test, and the `agent-system` CI invocation are implemented.
+  PR head `70492bcc` green CI included the original contract step, while the current final-8 permission/active-matcher/docs
+  remediation remains remote-unobserved. The Round 3 and terminal final-8 dirty-tree re-reviews are `cleared` evidence;
+  PR merge/release/deploy 및 OPENSAM-177 consumer 실행은 미수행이다.
 - 작성: 2026-08-08
 - 티켓: OPENSAM-35 (Highest, `할 일`), 부모 에픽 OPENSAM-16
 - 정본: `docs/loops/v2-planning-2026-07-12/round3-proposal-city-guanxi.md` §7.1·§7.1-2·§7.2·§11 ·
@@ -143,7 +143,7 @@ v2 스택을 `docker-compose.production.yml`에 추가하면서 `true`를 주면
   (b) v2 `@Configuration`이 자기 `Flyway` 빈 생성 + `migrate()`. **둘 다 T2 편집 0.**
 - 산출: `docs/loops/opensam-35-v2-0a-2026-08-08/u12-flyway-locations-measurement.md`
 
-#### S0 실측 결과 (2026-08-08) — **PASS**
+#### S0 실측 결과 (2026-08-08) — **historical PASS; S1 classpath pair로 대체됨**
 
 방법 A(진짜 OS 환경변수, `env -i`로 셸 격리 + `java -jar`)로 측정. 리포 추적 파일 변경 0
 (격리 worktree 사용 후 제거), 잔여 컨테이너 0.
@@ -159,9 +159,13 @@ v2 스택을 `docker-compose.production.yml`에 추가하면서 `true`를 주면
 
 → **0A-c는 env 오버라이드 경로로 확정.** `application.yml` 무수정, 게이트 ⑤ 유지.
 
-**미측정(정직하게 남김)**: ① game-api에서의 동작 ② 컨테이너 배포에서 `filesystem:` 경로 실재성
-③ v1 프로세스에서 v2 미적용(= S1 판정 항목) ④ 같은 DB 공유 시 히스토리 충돌 ⑤ v2 버전 번호 정책
-(V900은 충돌 회피용 임의 프로브값이지 정책 결정이 아니다).
+**Historical boundary:** S0의 `filesystem:<v2mig>`는 env 치환 semantics를 측정한 probe일 뿐이다. S1은
+이후 jar classpath sibling pair **`classpath:db/migration,classpath:db/migration_v2`**를 채택했고
+`filesystem:` 운영 경로를 abandoned했다. 따라서 container filesystem mount는 더 이상 이 티켓의 운영
+UNKNOWN이 아니다.
+
+**미측정(정직하게 남김)**: ① game-api에서의 동작 ② v1 프로세스에서 v2 미적용(= S1 판정 항목)
+③ 같은 DB 공유 시 히스토리 충돌 ④ v2 버전 번호 정책 (V900은 충돌 회피용 임의 프로브값이지 정책 결정이 아니다).
 
 ### S1. 0A-c v2 Flyway location 분리
 
@@ -328,9 +332,10 @@ The historical A4 value is not reused as current frontend acceptance. A later di
 green and Vitest JSON reports 132 suites / 288 tests / 0 failures. The current dirty-tree backend gate then ran
 once with Java 21 `--rerun-tasks` (601 suites / 5,050 tests / failures·errors 0). Round 3 P2 source remediation
 now adds the v2 Compose `ASSET_PREFIX=/game` contract, its red-before/green-after regression test, and the
-`agent-system` CI invocation of that test. The CI wiring is locally validated only; the independent Round 3 dirty-tree
-re-review is `cleared` with no blockers/fixes/questions/nits, while remote exact-SHA CI remains pending before any
-separately authorized release action.
+`agent-system` CI invocation of that test. The original contract step was observed in green CI at `70492bcc`; the
+current final-8 permission/active-matcher/docs remediation is locally validated only. The terminal independent final-8
+dirty-tree re-review is `cleared` with no findings. Post-final-8 remote CI for an exact commit remains pending before
+any separately authorized release action.
 
 **우회 구멍 폐쇄 실측.** 동일 빌드(`BUILD_ID=V75C2XFKp2JmjIY6b1Qt2`), 양 run `SERVER_ID=pep`:
 
@@ -502,8 +507,9 @@ nginx 없이 standalone 포트 직접 호출도 동일 ⇒ **nginx가 상태코�
 - `web/game` `pnpm typecheck && pnpm test`.
 - PR #370 Round 1의 23개 disposition 및 source remediation은 dirty-tree independent review에서
   `cleared`되었다(no findings; fingerprint `3c1b357c…`). Subsequent Round 3 P2 source remediation is implemented
-  across the approved three-file scope and its independent dirty-tree re-review is terminal `cleared` with no
-  blockers/fixes/questions/nits. The review verdict is `cleared`; remote exact-SHA CI remains separate and pending.
+  across the approved three-file scope and its independent dirty-tree re-review is historical terminal `cleared`
+  evidence. Terminal independent final-8 dirty-tree re-review cleared all eight CodeRabbit findings with no findings;
+  post-final-8 remote exact-commit CI remains separate and pending.
 
 ---
 
@@ -537,7 +543,8 @@ Round 3 P2 remediation에 승인된 source scope는 정확히 다음 세 항목�
    `web-game.build.args.ASSET_PREFIX == "/game"`임을 fail-closed로 검사한다.
 3. **Existing CI workflow:** `.github/workflows/ci.yml` — `agent-system` job의
    `Verify v2 sandbox compose contract` step이 `bash tools/ops/v2_sandbox_compose_contract_test.sh`를 실행한다.
-   Local wiring validation은 완료됐지만 이 새 step의 remote PR CI run은 아직 관측하지 않았다.
+   Original step은 `70492bcc` green CI에서 관측됐지만, final-8 permission/active-matcher/docs remediation의 remote
+   PR CI run은 아직 관측하지 않았다.
 
 세 항목 모두 T2(`app/*/src/main/kotlin/**`, `infra/src/main/kotlin/**`,
 `infra/src/main/resources/db/migration/**`) 밖이다. 그러므로 게이트 ③의 T2 empty result를 P2 전체
@@ -545,8 +552,8 @@ scope proof로 오용하지 않는다. 이 canonical existing/approved-file list
 판정하며, 이 세 항목 밖의 source 변경은 별도 ownership/approval 없이는 통과로 기록하지 않는다.
 
 따라서 원 구현의 게이트 ③ 기대값은 **빈 출력**이다. 명령 정본은 §4-1에 있다. Round 3 P2 source
-remediation은 위 explicit scope로만 추가됐고 independent dirty-tree re-review is `cleared`; remote exact-SHA CI
-observation만 아직 없다.
+remediation은 위 explicit scope로만 추가됐고 independent dirty-tree re-review is historical `cleared`; terminal
+final-8 CodeRabbit source/documentation re-review is `cleared`, while final-8 remote exact-commit CI observation은 아직 없다.
 
 이 목록이 비지 않으면 **초과 = 위반**이다. 어느 단계에서든 T2 기존 파일 수정이
 불가피해지면 **구현을 멈추고** 이 절을 개정해 사람 승인을 받은 뒤에만 진행한다.

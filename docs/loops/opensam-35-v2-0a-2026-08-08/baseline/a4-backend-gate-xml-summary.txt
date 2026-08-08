@@ -1,5 +1,6 @@
-tools/parity/gate.sh backend — Gradle test XML summary (2026-08-08 PR #370 Round 1,
-one Java 21 forced run; no retry; independent dirty-tree review still pending)
+tools/parity/gate.sh backend — Gradle test XML summary (2026-08-08 PR #370 Round 1 backend evidence,
+one Java 21 forced run; no retry; Round 1 independent dirty-tree review later cleared, fingerprint 3c1b357c…;
+historical A4 evidence only — it does not clear the current final CodeRabbit source/documentation re-review)
 module              suites   tests  fail   err  skip
 common                  38     225     0     0     0
 logic                  277    3173     0     0     0

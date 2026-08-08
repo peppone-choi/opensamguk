@@ -4,10 +4,12 @@
 - 측정일: 2026-08-08
 - 측정자: agent `op35-s0-u12`
 - 리포 상태: `main` @ `fb90eac1` (측정용 detached worktree에서 빌드)
+- 상태: **historical S0 measurement only.** S1이 이후 채택한 운영 location은
+  `classpath:db/migration,classpath:db/migration_v2`이며, 이 문서의 `filesystem:` probe는 abandoned다.
 
 ## 판정
 
-**PASS.** `SPRING_FLYWAY_LOCATIONS` 환경변수는 game-engine 부팅 시 `application.yml:14`의
+**Historical PASS (S0 only).** `SPRING_FLYWAY_LOCATIONS` 환경변수는 game-engine 부팅 시 `application.yml:14`의
 하드코딩 `locations: classpath:db/migration`을 오버라이드하며, 지정된 `filesystem:` location의
 마이그레이션이 실제로 적용되고 `flyway_schema_history`에 `success = t`로 기록된다.
 
@@ -180,10 +182,9 @@ ERROR ... Failed to initialize JPA EntityManagerFactory: [PersistenceUnit: defau
 **증명하지 못한다**
 1. **game-api**(`app/game-api/.../application.yml:14`)에서의 동작 — 측정 대상은 game-engine 뿐이다.
    동일 Spring Boot 메커니즘이므로 동일할 것으로 예상되나 실측하지 않았다.
-2. **compose/GHCR 이미지 경로**에서의 주입 — `docker compose` env 전달과 컨테이너 내부
-   filesystem location 마운트는 미검증. `filesystem:` 경로는 **컨테이너 안의 경로**여야 하므로
-   v2 마이그레이션 디렉터리를 이미지에 굽거나 볼륨 마운트하는 별도 결정이 남는다.
-   (컨테이너에서는 `classpath:db/migration,classpath:db/migration/v2` 형태가 더 단순할 수 있으나 미측정.)
+2. **compose/GHCR 이미지 경로**에서의 historical `filesystem:` probe — 컨테이너 내부 mount는 측정하지
+   않았다. 이것은 운영 UNKNOWN이 아니다: S1이 classpath sibling pair
+   `classpath:db/migration,classpath:db/migration_v2`를 채택했고 `filesystem:` 방식은 abandoned했다.
 3. **v1 프로세스에서 v2 마이그레이션이 적용되지 않음** — 이는 S1의 판정 항목이며 여기서는
    v1 전용 컨텍스트를 띄우지 않았다.
 4. 두 스택이 **같은 DB**를 공유할 때의 `flyway_schema_history` 충돌 거동 — 본 측정은 스택당 별도 DB.
@@ -229,10 +230,12 @@ separate explicit, target-specific deletion approval.
 ## 다음 단계에 주는 결론
 
 계획 §3 S0의 PASS 분기 그대로: **0A-c는 env 오버라이드 경로로 간다.** `application.yml` 무수정
-(게이트 ⑤ 유지). 단 §3 S1 설계에 아래 두 조건을 추가해야 한다.
+(게이트 ⑤ 유지). 이 문서는 historical measurement로 보존하며, 운영 지침은 S1의 채택으로 대체됐다.
 
-- v2 스택 env의 `SPRING_FLYWAY_LOCATIONS`는 **v1 location을 반드시 포함**한다(치환 semantics).
-- 컨테이너 배포에서 `filesystem:` 경로가 실재하는지(이미지 굽기/볼륨 마운트) 별도 확정 — 미측정 항목.
+- v2 스택 env는 정확히 **`SPRING_FLYWAY_LOCATIONS=classpath:db/migration,classpath:db/migration_v2`**를 쓴다.
+  v1 location을 반드시 포함해야 한다(치환 semantics).
+- `filesystem:`는 S0의 probe 경로일 뿐이며 S1의 sibling-classpath 채택 후 **abandoned**다. 운영자/Compose가
+  이를 선택하거나 mount 결정을 기다리는 경로가 아니다.
 
 ## PHP golden scope boundary
 
