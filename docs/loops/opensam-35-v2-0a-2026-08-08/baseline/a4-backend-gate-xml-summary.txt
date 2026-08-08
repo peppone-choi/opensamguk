@@ -1,0 +1,11 @@
+tools/parity/gate.sh backend — Gradle test XML summary (2026-08-08)
+module              suites   tests  fail   err  skip  newest-XML-mtime
+common                  38     225     0     0     0  2026-08-08T10:59:20.334385
+logic                  277    3173     0     0     0  2026-08-08T10:59:26.677614
+infra                   55     226     0     0     0  2026-08-08T11:22:07.474574
+app/game-engine        129     770     0     0     1  2026-08-08T11:09:31.503164
+app/game-api            72     468     0     0     0  2026-08-08T11:20:12.796159
+TOTAL                  571    4862     0     0     1
+
+suites with failures/errors: NONE
+skipped: [('opensamguk.engine.golden.LongSimReplayGateTest', '1')]

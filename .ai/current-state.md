@@ -1,5 +1,27 @@
 # Current State
 
+## OPENSAM-35 V2-0A 격리 게이트 — S0~S6 완료 · GATE-f 15건 처리 · GATE-f2 `fix-required` — 2026-08-08
+
+- 브랜치 `op-35-v2-0a`(main `fb90eac1`에서 분기). 계획 정본: `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md`. 사용자 결정: 계획 **채택 + S6까지 연속 실행**(커밋·푸시·PR·머지·배포는 각각 별도 승인).
+- **티켓 재해석 — "격리"가 아니라 "게이트 선설치".** 리포 전역 grep에서 v2 런타임 코드 **0건**. `V2_ENABLED`·`v2-lab`·`v2-sandbox`·`v2_city_ledger`는 전부 기획 문서에만 있다. 따라서 0A-e는 **뺄 대상이 없다**. 코드에서 잡히는 "V2"는 전부 무관(PHP 스키마 세대 표기, baseline 버전 문자열, devsam 버전 표기).
+- **티켓 본문 path:line 인용 11건 중 5건이 부정확**(행번호 오류뿐, 주장 자체는 유효). 계획서 §0.2에 대조표. 티켓이 경고한 "조용한 실패"는 실재한다 — v2가 `SCENARIO_CODE`/`SCENARIO_DIR`을 상속하면 `ignoreDefaultEvents=false` → `ScenarioImporter.kt:888` defaults 분기 → v1 기본 12행이 적재되고 v2 leaf는 0인데 부팅·시드·헬스체크는 전부 성공한다.
+- **사용자 결정 C1** — `SCENARIO_SEED_ENABLED` 충돌(`coding-rules.md:12`의 production `false` CI 강제 vs proposal §7.1 `true`)은 **별도 스택 파일 분리**로 해소. `docker-compose.production.yml`·`application.yml`·`tools/agent-system/check.py` **전부 무수정**, 신규 `docker-compose.v2-sandbox.yml`을 만든다.
+- **사용자 결정 C2** — 0A-e의 "s1 profile"은 이 리포에 정의체가 없다(compose 전체에 `profiles:` 키 0건; `s1`은 sibling `opensamguk-docker`의 `servers/<id>.env` 배포 인스턴스). 범위를 **이 리포로 한정**하고 sibling 리포는 후속 티켓으로 분리한다.
+- **S0(U12) 완료 — PASS, 단 치환 semantics.** `SPRING_FLYWAY_LOCATIONS` env 오버라이드는 동작하나 리스트를 **병합하지 않고 통째로 교체**한다. v1 location 포함 시 V1~V38+프로브 39행 전부 적용(V26·V38 `.kt` JDBC 포함), v1 location 누락 시 1행만 남고 JPA `ddl-auto: validate`가 `missing table [banned_member]`로 **fail-closed 부팅 실패**(조용히 통과하지 않는다). 증거: `docs/loops/opensam-35-v2-0a-2026-08-08/u12-flyway-locations-measurement.md`. → **0A-c는 env 오버라이드 경로로 확정, `application.yml` 무수정, 게이트 ⑤ 유지.**
+- **T2 사전선언 확정 = 공집합**(계획서 §4). S1~S6 산출물이 전부 신규 파일이므로 게이트 ③의 기대값은 빈 출력이다. T2 기존 파일 수정이 불가피해지면 우회하지 말고 멈추고 계획 개정 + 사람 승인.
+- **S1 완료 — Flyway는 location을 재귀 스캔한다(실측).** v1이 `classpath:db/migration`만 잡아도 `db/migration/v2/V901`이 `success=t`로 적용됐다 → v2는 **형제 경로** `classpath:db/migration_v2`로 확정. U4-d 침묵 경로 발견: v2 마이그레이션을 이미 실은 DB 위에서 v1 스택은 WARN만 내고 정상 부팅한다 → `GAME_DATABASE_URL` 분리가 권고가 아니라 **제1 방어선**. 버전 정책은 P1(DB 분리 + V900 대역) 잠정 확정. 증거: `s1-flyway-location-measurement.md`.
+- **S2 완료** — `V2SandboxGate`(상수 1곳) + `@Profile("v2-sandbox")` AND `@ConditionalOnProperty("v2.enabled"=true)` 이중 조건. 5행 조합표 + 변이 프로브. 증거: `s2-conditional-bean-gate.md`.
+- **S3 완료** — (a) `V2ContentCatalog` read-only 로더(`@Component` 없음, 러너 없음, `*.json` 비재귀). (b) `web/game/app/game/v2-lab/**` + **`middleware.ts` 수정**(이 티켓의 유일한 승인된 기존 파일 수정). `notFound()`만으로는 `/game/**` 레이아웃이 `AuthGate` 클라이언트 컴포넌트라 HTML 셸이 먼저 flush돼 **soft 404(HTTP 200)** + RSC 페이로드에 v2 내용 유출 → 렌더 선행 계층인 미들웨어로 닫음. serverId rewrite 분기(`/game/pep/v2-lab`) 우회도 실효 경로 기준 판정으로 봉쇄. 증거: `s3a-content-v2-loader.md`, `s3b-v2lab-route.md`.
+- **S4 완료** — game-engine/game-api 각각 production 컨텍스트 v2 빈 0 IT. 하드코딩 타입 대신 **패키지 기반 스캔**(`opensamguk.*.v2.*`) 8칸 매트릭스. 프로브 P-3(게이트 밖 `@Component`)이 3칸을 실패시켜 비공허성 입증. 증거: `s4-production-context-bean-gate.md`.
+- **S5 완료** — 신규 `docker-compose.v2-sandbox.yml`(C1 결정대로 분리). v2 전용 DB/Redis/포트, `V2_*` 접두 env, `SCENARIO_CODE`/`SCENARIO_DIR`/자격증명 `:?` fail-closed. 증거: `s5-v2-stack-env-separation.md`.
+- **S6 완료** — baseline artifact 5종(`a1-v1-flyway-migration-sha256.txt`·`a1-v1-schema-dump.sql`·`a2-scenario-seed-sha256.txt`·`a3-php-golden-inventory-sha256.txt`·`a4-backend-gate-xml-summary.txt`+로그) + `baseline/MANIFEST.md`가 `docs/loops/opensam-35-v2-0a-2026-08-08/`에 존재. 증거: `s6-gates-and-baseline.md`.
+- **GATE-f 적대적 리뷰: `fix-required`(cleared 아님)** — blocker 2 + fix-required 4 + question 8. blocker 2건(**게이트 ③⑤ pathspec 공허 + 기준선 드리프트**)은 계획서 §4-1로 수정·재측정 완료: `:(glob).../**` + merge-base 고정으로 ②③⑤ 전부 빈 출력, 전체 M/D = `.ai/*` 3 + `middleware.ts` 1. **제약은 실제로 지켜졌고 고장난 건 계측기였다.** 잔여 fix-required 3건도 코드에 반영 완료: `havingValue` 대소문자 비대칭 주석 정정, gateway-api 커버(`V2ProductionContextBeanGateIT` 4칸 + compose env), 이 문서 갱신. 증거: `gate-f-adversarial-review.md`.
+- **GATE-f2 재리뷰 판정: `fix-required`** — blocker **0** / fix-required 4 / question 8 / nit 3. 제약 8종은 리뷰어 재측정에서 **전부 견딤**. 증거: `gate-f2-adversarial-review.md`.
+- **GATE-f2 이번 턴 처리 3건.** (F1) 계획서 §4-2의 "이름 휴리스틱 탐지 테스트는 오탐만 늘리므로 만들지 않았다"는 **미측정 단정**이었고 실측하면 거짓 — main 소스의 `class|object|interface V2…` 선언 6건 중 5건은 이미 `opensamguk.*.v2.*`, 1건은 Flyway `V26__`(`V2` 뒤 숫자라 비대상) → **오탐 0**. 계획서 문장을 실측 결과로 교체하고 가드를 신규 추가: `app/game-engine/src/test/kotlin/opensamguk/engine/v2/V2NamingConventionGuardTest.kt`(천장 = 이름 규약 미준수 v2 코드는 여전히 미탐지). (F2) gateway IT의 컨텍스트 부팅 근거가 빈 **이름** 기반이라 좌항은 죽은 항, 우항은 프레임워크 빈 하나로 충족되던 것을 빈 **타입** 접두(`beansByTypePrefix("opensamguk.gateway")`) 판정으로 교체. (F3) 본 문서 갱신.
+- **미실행:** 게이트 ① 백엔드 재실행(팀 리드 진행 중 — **미판정**), `tools/parity/gate.sh:15`의 `:app:gateway-api:test` 부재(사람 판단 대기, 파일 무수정), 교차 프로바이더 리뷰, Jira 전이, 커밋·푸시·PR·머지·배포. sibling `opensamguk-docker` 후속 티켓(C2) 미생성.
+
+---
+
 ## OPENSAM-33 완료 · OPENSAM-34 GCP 대체 — 2026-08-06
 
 - **OPENSAM-33 = `완료`.** Jira 전이 실행됨(`할 일` → `완료`, 증거 코멘트 첨부). D4-14~17 로컬 증거는 2026-07-31자 아래 절이 정본이며, 이번 세션은 전이와 증거 기록만 수행했다.

@@ -1,0 +1,184 @@
+Running gate 'backend' with JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.12/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Reusing configuration cache.
+> Task :common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :common:processResources NO-SOURCE
+> Task :common:processTestResources UP-TO-DATE
+> Task :logic:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :logic:processResources NO-SOURCE
+> Task :logic:processTestResources UP-TO-DATE
+> Task :infra:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :infra:processResources UP-TO-DATE
+> Task :infra:processTestResources UP-TO-DATE
+> Task :app:game-engine:bootBuildInfo
+> Task :app:game-engine:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:game-engine:processResources UP-TO-DATE
+> Task :app:game-api:bootBuildInfo
+> Task :common:compileKotlin UP-TO-DATE
+> Task :app:game-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:game-api:processResources UP-TO-DATE
+> Task :common:compileJava NO-SOURCE
+> Task :common:classes UP-TO-DATE
+> Task :common:jar UP-TO-DATE
+> Task :app:game-engine:processTestResources UP-TO-DATE
+> Task :common:compileTestKotlin FROM-CACHE
+> Task :common:compileTestJava NO-SOURCE
+> Task :common:testClasses UP-TO-DATE
+> Task :logic:compileKotlin UP-TO-DATE
+> Task :logic:compileJava NO-SOURCE
+> Task :logic:classes UP-TO-DATE
+> Task :logic:jar UP-TO-DATE
+> Task :common:test FROM-CACHE
+> Task :infra:compileKotlin UP-TO-DATE
+> Task :infra:compileJava NO-SOURCE
+> Task :infra:classes UP-TO-DATE
+> Task :infra:jar UP-TO-DATE
+> Task :infra:compileTestKotlin UP-TO-DATE
+> Task :infra:compileTestJava NO-SOURCE
+> Task :infra:testClasses UP-TO-DATE
+> Task :logic:compileTestKotlin FROM-CACHE
+> Task :logic:compileTestJava NO-SOURCE
+> Task :logic:testClasses UP-TO-DATE
+> Task :logic:test FROM-CACHE
+> Task :app:game-engine:compileKotlin UP-TO-DATE
+> Task :app:game-engine:compileJava NO-SOURCE
+> Task :app:game-engine:classes
+> Task :app:game-engine:jar SKIPPED
+> Task :app:game-api:compileKotlin UP-TO-DATE
+> Task :app:game-api:compileJava NO-SOURCE
+> Task :app:game-api:classes
+> Task :app:game-api:mainJarForTest
+> Task :app:game-engine:compileTestKotlin UP-TO-DATE
+> Task :app:game-engine:compileTestJava NO-SOURCE
+> Task :app:game-engine:testClasses UP-TO-DATE
+> Task :infra:test
+> Task :app:game-engine:test
+
+2026-08-08T11:09:26.649+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-08-08T11:09:26.655+09:00  INFO 35215 --- [game-engine] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2026-08-08T11:09:26.668+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:09:26.670+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-08-08T11:09:26.675+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2026-08-08T11:09:26.695+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:09:26.696+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
+2026-08-08T11:09:26.700+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
+2026-08-08T11:09:26.714+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:09:26.715+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Shutdown initiated...
+2026-08-08T11:09:26.718+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Shutdown completed.
+2026-08-08T11:09:26.732+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:09:26.734+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown initiated...
+2026-08-08T11:09:26.745+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown completed.
+2026-08-08T11:09:26.759+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:09:26.760+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown initiated...
+2026-08-08T11:09:26.763+09:00  INFO 35215 --- [game-engine] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown completed.
+
+> Task :app:game-api:jar SKIPPED
+> Task :app:game-api:compileTestKotlin UP-TO-DATE
+> Task :app:game-api:compileTestJava NO-SOURCE
+> Task :app:game-api:processTestResources UP-TO-DATE
+> Task :app:game-api:testClasses UP-TO-DATE
+> Task :app:game-api:test
+
+2026-08-08T11:19:59.523+09:00  INFO 84164 --- [game-api] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-08-08T11:19:59.528+09:00  INFO 84164 --- [game-api] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2026-08-08T11:19:59.543+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown initiated...
+2026-08-08T11:19:59.544+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown completed.
+2026-08-08T11:19:59.546+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:19:59.548+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-08-08T11:20:00.551+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:00.554+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-08-08T11:20:00.583+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown initiated...
+2026-08-08T11:20:00.583+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown completed.
+2026-08-08T11:20:00.587+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:00.588+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-08-08T11:20:01.593+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:01.595+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2026-08-08T11:20:01.597+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:01.597+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
+2026-08-08T11:20:02.602+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:02.602+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
+2026-08-08T11:20:02.604+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:02.604+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Shutdown initiated...
+2026-08-08T11:20:03.605+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:03.605+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Shutdown completed.
+2026-08-08T11:20:03.606+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:03.607+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown initiated...
+2026-08-08T11:20:04.611+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:04.612+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown completed.
+2026-08-08T11:20:04.613+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:04.614+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown initiated...
+2026-08-08T11:20:05.616+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:05.616+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown completed.
+2026-08-08T11:20:05.617+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:05.618+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Shutdown initiated...
+2026-08-08T11:20:06.620+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:06.620+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Shutdown completed.
+2026-08-08T11:20:06.622+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:06.622+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-8 - Shutdown initiated...
+2026-08-08T11:20:07.627+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:07.627+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-8 - Shutdown completed.
+2026-08-08T11:20:07.628+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:07.629+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-9 - Shutdown initiated...
+2026-08-08T11:20:08.272+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-9 - Shutdown completed.
+2026-08-08T11:20:08.273+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:08.274+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Shutdown initiated...
+2026-08-08T11:20:08.675+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Shutdown completed.
+2026-08-08T11:20:08.676+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:08.677+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-11 - Shutdown initiated...
+2026-08-08T11:20:09.680+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:09.681+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-11 - Shutdown completed.
+2026-08-08T11:20:09.682+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:09.682+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-12 - Shutdown initiated...
+2026-08-08T11:20:10.592+09:00  INFO 84164 --- [game-api] [ecutorLoop-26-1] i.l.core.protocol.ConnectionWatchdog     : Reconnecting, last destination was localhost/<unresolved>:62863
+2026-08-08T11:20:10.592+09:00  INFO 84164 --- [game-api] [ecutorLoop-26-2] i.l.core.protocol.ConnectionWatchdog     : Reconnecting, last destination was localhost/<unresolved>:62863
+2026-08-08T11:20:10.594+09:00  WARN 84164 --- [game-api] [oEventLoop-28-4] i.l.core.protocol.ConnectionWatchdog     : Cannot reconnect to [localhost/<unresolved>:62863]: Connection refused: localhost/127.0.0.1:62863
+2026-08-08T11:20:10.594+09:00  WARN 84164 --- [game-api] [oEventLoop-28-3] i.l.core.protocol.ConnectionWatchdog     : Cannot reconnect to [localhost/<unresolved>:62863]: Connection refused: localhost/127.0.0.1:62863
+2026-08-08T11:20:10.683+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:10.684+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-12 - Shutdown completed.
+2026-08-08T11:20:10.691+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown initiated...
+2026-08-08T11:20:10.691+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown completed.
+2026-08-08T11:20:10.694+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:10.694+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-13 - Shutdown initiated...
+2026-08-08T11:20:11.697+09:00  WARN 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.pool.HikariPool        : Timed-out waiting for add connection executor to shutdown
+2026-08-08T11:20:11.699+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-13 - Shutdown completed.
+2026-08-08T11:20:11.707+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown initiated...
+2026-08-08T11:20:11.707+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown completed.
+2026-08-08T11:20:11.709+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:11.710+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-14 - Shutdown initiated...
+2026-08-08T11:20:11.714+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-14 - Shutdown completed.
+2026-08-08T11:20:11.721+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown initiated...
+2026-08-08T11:20:11.721+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown completed.
+2026-08-08T11:20:11.723+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:11.724+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-15 - Shutdown initiated...
+2026-08-08T11:20:11.727+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-15 - Shutdown completed.
+2026-08-08T11:20:11.734+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown initiated...
+2026-08-08T11:20:11.734+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown completed.
+2026-08-08T11:20:11.739+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:11.740+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-16 - Shutdown initiated...
+2026-08-08T11:20:11.743+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-16 - Shutdown completed.
+2026-08-08T11:20:11.751+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown initiated...
+2026-08-08T11:20:11.752+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : game-api-read-barrier - Shutdown completed.
+2026-08-08T11:20:11.753+09:00  INFO 84164 --- [game-api] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:20:11.753+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-17 - Shutdown initiated...
+2026-08-08T11:20:11.757+09:00  INFO 84164 --- [game-api] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-17 - Shutdown completed.
+2026-08-08T11:22:01.062+09:00  INFO 33773 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:22:01.064+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-08-08T11:22:05.814+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-08-08T11:22:05.816+09:00  INFO 33773 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:22:05.816+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-08-08T11:22:07.246+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2026-08-08T11:22:07.248+09:00  INFO 33773 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:22:07.249+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
+2026-08-08T11:22:07.250+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
+2026-08-08T11:22:07.252+09:00  INFO 33773 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:22:07.252+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Shutdown initiated...
+2026-08-08T11:22:07.254+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Shutdown completed.
+2026-08-08T11:22:07.255+09:00  INFO 33773 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-08T11:22:07.255+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown initiated...
+2026-08-08T11:22:07.257+09:00  INFO 33773 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown completed.
+
+BUILD SUCCESSFUL in 23m 9s
+29 actionable tasks: 6 executed, 4 from cache, 19 up-to-date
+Configuration cache entry reused.
+XML gate green: 571 suites, 4862 tests

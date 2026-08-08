@@ -2,6 +2,17 @@
 
 병렬 에이전트(Claude Code, Codex, Gemini 등)의 파일 소유권 등록부. 규칙은 `docs/agent/collaboration-protocol.md`가 정본.
 
+## OPENSAM-35 V2-0A 격리 게이트 lane — 2026-08-08 (활성)
+
+`ownership.md:117` fence("표에 없는 공유 파일(특히 compose/nginx, 공용 catalog/runtime schema,
+`.ai/*`)은 사전 조정 후 foundation owner 한 명을 정하기 전까지 read-only")에 따라
+foundation owner 1명을 등록한다. OPENSAM-35는 compose·Flyway location·조건부 빈 게이팅 등
+공유 확장점을 신설하므로 **병렬 소유 금지, foundation-first 순차**다.
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `claude-opensam-35-v2-0a` | OPENSAM-35 V2-0A production 격리 게이트 (0A-a~g + ADR-LITE-021 DoD 3항목) — foundation owner | `op-35-v2-0a` (main `fb90eac1`에서 분기) | `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md`; `docs/loops/opensam-35-v2-0a-2026-08-08/**`; `.ai/task.md`; `.ai/current-state.md`; `.ai/ownership.md`; **신규 파일 전용** — `docker-compose.v2-sandbox.yml`, v2 Flyway location 디렉터리, `content/v2/**`, `web/game/app/game/v2-lab/**`, v2 조건부 빈/아키텍처 테스트. **T2 사전선언 확정 = 공집합**(계획서 §4) | active — S0 PASS(치환 semantics), S1 진행 중. **T1 수정·삭제 0건 강제.** `docker-compose.production.yml`·`application.yml`·`tools/agent-system/check.py`는 사용자 결정 C1에 따라 **무수정**. 커밋/푸시/PR/머지/배포 미승인 | 2026-08-08 |
+
 ## v1 비운영 폐쇄 lane release — 2026-07-29
 
 2026-07-27에 시작한 `v1-nonoperational-root`와 그 하위 `v1-*` lane entries는

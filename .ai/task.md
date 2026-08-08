@@ -1,5 +1,47 @@
 # Current Task
 
+## 2026-08-08 — OPENSAM-35 V2-0A production 격리 게이트 (활성 계약)
+
+- Status: 계획 채택됨(사용자 승인 2026-08-08), S0~S6 연속 실행 중. 계획 정본:
+  `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md`.
+- User request (verbatim): "OPENSAM-35" / "채택 + S6까지 연속 실행".
+- Goal: v2 코드가 production으로 새지 않음을 강제하는 격리 게이트 0A-a~g 7항목 +
+  ADR-LITE-021이 귀속시킨 DoD 3항목을 닫는다. 이 티켓은 **확장점 개설이 아니라 격리**다
+  (`round3-proposal-city-guanxi.md:459` — "7항목 전부가 격리이고 확장점 개설은 하나도 없다").
+- 착수 전 확정 사실:
+  - **v2 런타임 코드는 리포에 0건**이다. 0A는 greenfield이며 0A-e는 뺄 대상이 없다.
+  - 티켓 본문의 path:line 인용 5건이 부정확하다(내용은 유효). 정정표는 계획서 §0.2.
+  - U12는 "선례 없음"이 확정됐다 — 양쪽 `application.yml:14`가 `classpath:db/migration`
+    하드코딩이고 리포 전역에 `SPRING_FLYWAY_LOCATIONS` 오버라이드 선례가 없다.
+  - 리포 최초 도입 3건: `@ConditionalOnProperty`(전역 0건), `getBeansOfType` assertion
+    (테스트 전역 0건), `content/` 루트(없음).
+- 사용자 결정 (2026-08-08):
+  - **C1** — v2 sandbox 스택은 `docker-compose.v2-sandbox.yml` **신규 파일**로 분리한다.
+    `docker-compose.production.yml`은 무수정이고 `SCENARIO_SEED_ENABLED=false` strict
+    불변식(`coding-rules.md:12`)을 유지하며 `tools/agent-system/check.py`는 수정하지 않는다.
+  - **C2** — 0A-e 범위는 **이 리포로 한정**한다. sibling `opensamguk-docker`의
+    `servers/<id>.env` 몫은 별도 티켓으로 분리한다.
+- 실행 단계: S0 U12 실측 → S1 0A-c Flyway location 분리 → S2 0A-b 조건부 빈 게이트 →
+  S3 0A-d catalog + 0A-a route → S4 0A-f 실측 아키텍처 테스트 → S5 v2 스택 env 분리 →
+  S6 0A-g artifact + 게이트 + 독립 리뷰. 상세 판정 기준은 계획서 §3.
+- Allowed files: 계획서 §3·§4가 단계별로 확정한다. **T1(`logic/src/main/kotlin/**`,
+  `common/src/main/kotlin/**`, `logic/src/test/resources/golden/**`, 기존 v1 테스트)은
+  수정·삭제 0건, 신규 파일 추가만 허용, 예외 없음.** T2 사전 선언 목록은 S0 결과 뒤
+  계획서 §4에 기입하며, 그 뒤 초과 편집은 게이트 ③ 위반이다.
+- Acceptance evidence:
+  - 게이트 ① `tools/parity/gate.sh backend` (출력 tail + XML, exit code 금지)
+  - 게이트 ② T1 diff 0 · 게이트 ③ T2 diff = 사전 선언과 정확히 일치 · 게이트 ⑤ 설정 리소스 diff 0
+  - 0A-f가 v1 프로세스 컨텍스트를 **실제로 띄워** v2 빈 0개를 실측(정적 스캔 대체 불가)
+  - v2 스택 부팅 후 v2 leaf 행 존재 + v1 기본 이벤트 12행 **미적재**를 DB로 실측
+  - `web/game` `pnpm typecheck && pnpm test`
+  - 외부 fresh reviewer 독립 적대적 리뷰 `cleared` (GATE-f)
+- Human approval checkpoints: 커밋·푸시·PR·머지·배포는 각각 별도 승인. 골든/테스트 약화,
+  legacy 쓰기, `.env*`·secret 접근, 데이터 삭제, production 접근은 금지.
+- Non-goals: v2 파이프라인 seam 개설(오픈 후 P0), OPENSAM-150 `v2_city_ledger` 스키마,
+  sibling 리포 변경, production 배포·cutover·서버 승격.
+
+---
+
 ## 2026-08-06 — OPENSAM-33 완료 전이 + OPENSAM-34 EC2→GCP 대체
 
 - OPENSAM-33 (D4-14~17 B2 운영 스모크): Jira `할 일` → **`완료`** 전이 완료. 2026-07-31 로컬 완료/released 상태에서 전이만 미실행이었고, D4-14~17 실측 증거와 5모듈 게이트(552 suites / 4,763 tests / 0 failures)를 증거 코멘트로 남겼다. 미해결 non-blocking 1건은 EventSource open 9 vs `turnCompleted` 8 (reconnect/remount 대 중복 구독 UNKNOWN) — D4-16 판정에는 영향 없으나 중복 구독이면 별건이다.

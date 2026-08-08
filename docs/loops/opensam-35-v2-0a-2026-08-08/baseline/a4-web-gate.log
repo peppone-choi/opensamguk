@@ -1,0 +1,298 @@
+=== pnpm typecheck ===
+
+> @opensamguk/web-game@0.0.1 typecheck /Users/apple/Desktop/개인프로젝트/opensamguk/web/game
+> tsc --noEmit
+
+typecheck exit=0
+
+=== pnpm test ===
+
+> @opensamguk/web-game@0.0.1 test /Users/apple/Desktop/개인프로젝트/opensamguk/web/game
+> vitest run
+
+
+ RUN  v3.2.6 /Users/apple/Desktop/개인프로젝트/opensamguk/web/game
+
+(node:63468) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63465) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63471) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63472) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63469) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63463) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:63466) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/access-score-routes.test.tsx (3 tests) 2400ms
+   ✓ general access score routes > sorts the legacy ranking page by rounded total score descending  1108ms
+   ✓ general access score routes > shows the rounded score on the searchable general list  1099ms
+ ✓ __tests__/my-page-route.test.tsx (6 tests) 3200ms
+   ✓ MyPage route > renders the legacy b_myPage read structure instead of a 404 route gap  1425ms
+   ✓ MyPage route > shows instant action controls from item list and read flags  761ms
+   ✓ MyPage route > submits DropItem through submitCommandAndAwaitResult with the selected item type  440ms
+   ✓ MyPage route > submits InstantRetreat and DieOnPrestart through submitCommandAndAwaitResult  331ms
+ ✓ __tests__/MapViewer.interaction.test.tsx (17 tests) 3673ms
+   ✓ MapViewer — 정적 렌더(로비 MapPreview와 동일) > 줌 컨트롤/줌 레이어가 없다(정적)  1809ms
+   ✓ MapViewer — 정적 렌더(로비 MapPreview와 동일) > 모든 도시명이 항상 표시된다(줌 조건 제거)  342ms
+ ✓ __tests__/npc-control-route.test.tsx (3 tests) 4739ms
+   ✓ NpcControlPage live editor > resets and reverts nation policy values without saving  3083ms
+   ✓ NpcControlPage live editor > saves only after the daemon result resolves ok  850ms
+   ✓ NpcControlPage live editor > surfaces backend deny instead of showing fake success  800ms
+ ✓ __tests__/MailboxPage.delete.test.tsx (7 tests) 4813ms
+   ✓ MailboxPage 서신 삭제 > confirm 취소 시 삭제 요청이 발생하지 않는다  2020ms
+   ✓ MailboxPage 서신 삭제 > confirm 확인 + RESOLVED ok면 result 폴링 후 삭제 확정하고 재조회한다  435ms
+   ✓ MailboxPage 서신 삭제 > RESOLVED !ok면 엔진 reason을 노출하고 재조회하지 않는다  677ms
+   ✓ MailboxPage 서신 삭제 > 20회 폴링 내 미해결(PENDING)이면 접수 토스트 + 재조회한다  336ms
+   ✓ MailboxPage 외교 서신 > 수락은 RESOLVED ok 후에만 성공을 표시하고 재조회한다  392ms
+   ✓ MailboxPage 외교 서신 > 거절 RESOLVED deny는 엔진 사유를 그대로 노출하고 재조회하지 않는다  458ms
+   ✓ MailboxPage 외교 서신 > 수락 결과가 계속 PENDING이면 접수만 표시하고 재조회하지 않는다  492ms
+ ✓ __tests__/my-boss-route.test.tsx (5 tests) 4654ms
+   ✓ MyBossPage personnel commands > shows politics and charm in the nation roster  2144ms
+   ✓ MyBossPage personnel commands > submits appoint through submitCommandAndAwaitResult  953ms
+   ✓ MyBossPage personnel commands > submits kick through submitCommandAndAwaitResult  687ms
+   ✓ MyBossPage personnel commands > submits changePermission through submitCommandAndAwaitResult  617ms
+ ✓ __tests__/join-route.test.tsx (6 tests) 5581ms
+   ✓ JoinPage route guard > 이미 등록된 장수가 있으면 장수 등록 폼에서 현재 서버 게임으로 바로 입장한다  1045ms
+   ✓ JoinPage route guard > 정치와 매력을 포함한 다섯 능력치를 합계 275로 제출한다  1698ms
+   ✓ JoinPage route guard > 전체 랜덤형은 다섯 능력치를 범위 내에서 합계 275로 재분배한다  372ms
+   ✓ JoinPage route guard > 장수 생성은 턴 완료가 아니라 엔진 command result 완료를 기다린다  583ms
+   ✓ JoinPage route guard > 유산과 계정 초상을 실제 선택해 join 요청에 전달한다  1592ms
+(node:64656) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64771) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64773) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64778) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64782) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | __tests__/AuctionUniqueItem.test.tsx > AuctionUniqueItem viewer context > renders the authenticated pseudonym, remaining points, and self bid state
+Received `true` for a non-boolean attribute `jsx`.
+
+If you want to write it to the DOM, pass a string instead: jsx="true" or jsx={value.toString()}.
+
+(node:64878) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:64944) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/AuctionUniqueItem.test.tsx (2 tests) 1580ms
+   ✓ AuctionUniqueItem viewer context > renders the authenticated pseudonym, remaining points, and self bid state  1291ms
+ ✓ __tests__/select-pool-terminal-result.test.tsx (4 tests) 2006ms
+   ✓ SelectPoolPage terminal command results > surfaces the PHP-fatal 500 without reloading after a pick attempt  1409ms
+ ✓ __tests__/CommandModal.form-spec.test.tsx (6 tests) 2477ms
+   ✓ CommandModal ordered form specs > submits every field from a pinned non-aggression proposal form  1156ms
+   ✓ CommandModal ordered form specs > submits every field from a compound resource form in server order  660ms
+   ✓ CommandModal ordered form specs > keeps a compound form open until all required select values are present  345ms
+ ✓ __tests__/DiplomacyPage.command.test.tsx (6 tests) 2420ms
+   ✓ DiplomacyPage command reservation > submits quick diplomacy commands through the nation reservation queue  925ms
+   ✓ DiplomacyPage command reservation > shows send success only after the command result is applied  474ms
+   ✓ DiplomacyPage command reservation > approves a received proposed letter through the awaited command result  398ms
+ ✓ __tests__/MapViewer.props.test.tsx (20 tests) 3649ms
+   ✓ MapViewer — 레거시 박스 구조(map_title + 700x500 map_body) > 연월 제목을 캔버스 위에 두고 하단 캡션을 만들지 않는다  1125ms
+   ✓ MapViewer — mapData 주입(P0-22) > mapData 주입 + disallowClick={false} 면 클릭이 살아있다(레거시 PageFront 패턴)  527ms
+ ✓ __tests__/battle-center-route.test.tsx (3 tests) 2335ms
+   ✓ BattleCenter route > renders 감찰부 from the nation general-list, not the simulator alias  1890ms
+   ✓ BattleCenter route > resorts target options with legacy sort keys  317ms
+ ✓ __tests__/CharacterClaim.test.tsx (7 tests) 2781ms
+   ✓ CharacterClaim > shows every five-stat value on possession cards and in the player hint  736ms
+   ✓ CharacterClaim > waits for a resolved successful daemon result before claiming the character  934ms
+   ✓ CharacterClaim > reloads a terminal daemon denial into a retry candidate without resubmitting the claim  324ms
+   ✓ CharacterClaim > retries a timed-out request through its original request id instead of entering early  381ms
+(node:65403) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65542) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65541) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65574) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65573) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65604) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/GameChrome.main-map.test.tsx (8 tests) 1751ms
+   ✓ GameChrome main map > groups the owned city nation and general cards in the subject panel  593ms
+   ✓ GameChrome main map > returns a successful explicit possession claim to the selected server base after refreshed front-info confirms it  391ms
+(node:65840) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/SelectRecruitField.test.tsx (1 test) 1750ms
+   ✓ SelectRecruitField > shows only recruitable units by default and marks blocked units in full view  1704ms
+ ✓ __tests__/history-page.test.tsx (1 test) 1577ms
+   ✓ HistoryPage > renders the selected current or archived snapshot instead of a live map  1571ms
+ ✓ __tests__/MessagePanel.test.tsx (4 tests) 1648ms
+   ✓ MessagePanel > defaults to the caller nation mailbox like legacy MessagePanel  1056ms
+ ✓ __tests__/PartialReservedCommand.test.tsx (2 tests) 2352ms
+   ✓ PartialReservedCommand > renders each reserved slot with progressive ten-day phases and turn times  1463ms
+   ✓ PartialReservedCommand > refetches slots when parent refreshKey changes after a turn completes  886ms
+ ✓ __tests__/live-noop-closures.test.tsx (8 tests) 2709ms
+   ✓ production-reachable frontend no-op closures > loads MyInfoLogPanel pages from the GeneralLog API and uses reqTo for more rows  1814ms
+   ✓ production-reachable frontend no-op closures > tournament admin calls real mutations, removes manual advance, and renders backend errors  559ms
+ ✓ __tests__/tournament-route.test.tsx (2 tests) 1943ms
+   ✓ Tournament route production contract > renders non-empty PHP standing columns and semantic bracket fields  1932ms
+(node:66645) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66732) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66731) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66743) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66741) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/MessagePlate.test.tsx (5 tests) 1544ms
+   ✓ MessagePlate > renders decoded message target names and text instead of raw json  574ms
+   ✓ MessagePlate > shows accept and decline only for actionable diplomacy messages  607ms
+(node:66747) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:66749) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/admin1-route.test.tsx (1 test) 1425ms
+   ✓ Admin1Page live settings editor > patches editable values and reloads server state  1422ms
+ ✓ __tests__/nation-inherit-costs.test.tsx (1 test) 1024ms
+   ✓ nation page inherit buff costs (D3-04 web) > renders buff costs from inheritActionCost.buff, not a local constant copy  1021ms
+ ✓ __tests__/GeneralBasicCard.test.tsx (1 test) 987ms
+   ✓ GeneralBasicCard > renders stat and level as six key-value pairs and keeps extra info collapsed  983ms
+ ✓ __tests__/CommandModal.terminal-result.test.tsx (4 tests) 1147ms
+   ✓ CommandModal terminal result handling > shows success only after a general command terminal result is applied  766ms
+ ✓ __tests__/board-auction-deep-links.test.tsx (4 tests) 1100ms
+   ✓ Board and auction deep links > loads the secret board on the first render for ?secret=1  757ms
+stderr | __tests__/admin2-route.test.tsx > Admin2Page access controls > submits every general for bulk access restriction without a selection
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | __tests__/admin2-route.test.tsx > Admin2Page access controls > submits every general for bulk access restriction without a selection
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | __tests__/admin2-route.test.tsx > Admin2Page access controls > submits every general for bulk access restriction without a selection
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `-`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ __tests__/admin2-route.test.tsx (1 test) 1377ms
+   ✓ Admin2Page access controls > submits every general for bulk access restriction without a selection  1369ms
+(node:67383) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67462) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67460) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67463) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:67461) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/rankings-lobby-route.test.tsx (1 test) 983ms
+   ✓ RankingsLobbyPage route hrefs > uses initial relative links that preserve a path server id  971ms
+(node:67475) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/v2-lab-route.test.tsx (16 tests) 570ms
+   ✓ /game/v2-lab 네임스페이스 게이트 > V2_ENABLED=true면 자식을 렌더하고 404를 내지 않는다  395ms
+ ✓ __tests__/MainRecordZone.test.tsx (2 tests) 667ms
+   ✓ MainRecordZone > renders the legacy PageFront three-feed record zone  612ms
+ ✓ __tests__/simulator-route.test.tsx (1 test) 805ms
+   ✓ SimulatorPage > shows all five stats in attacker and defender options  801ms
+ ✓ __tests__/finance-routes.test.tsx (2 tests) 571ms
+   ✓ finance read routes > renders national income, expense, and budget values  496ms
+(node:67476) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/portrait.test.tsx (22 tests) 692ms
+   ✓ game portrait helper > runs the guarded onError fallback exactly once  625ms
+ ✓ __tests__/Shell.main-route.test.tsx (2 tests) 591ms
+   ✓ Shell main route chrome > keeps the BackBar on sub pages  408ms
+(node:68151) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68152) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68153) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68174) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68173) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/auth-me-route.test.ts (3 tests) 385ms
+   ✓ web/game /api/auth/me route > refreshes expired access with sam_refresh and sets renewed cookies  313ms
+ ✓ __tests__/SelectGeneralField.test.tsx (1 test) 723ms
+   ✓ SelectGeneralField > shows all five stats for each eligible general  720ms
+(node:68280) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/MapViewer.asset.test.tsx (1 test) 414ms
+   ✓ MapViewer — miniche 계열 CDN 폴백 > miniche_b는 che 배경과 miniche_road.png를 쓴다  411ms
+ ✓ __tests__/GameInfo.test.tsx (4 tests) 552ms
+   ✓ GameInfo parity render > renders tournament term from front-info metadata  386ms
+ ✓ __tests__/WorldLogPage.test.tsx (1 test) 436ms
+   ✓ WorldLogPage > refetches world logs when a turn completes  433ms
+ ✓ __tests__/game-main-possession-entry.test.tsx (1 test) 292ms
+(node:68368) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/game-api-proxy-route.test.ts (8 tests) 205ms
+(node:68723) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68724) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68726) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:68727) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/middleware.test.ts (8 tests) 186ms
+ ✓ __tests__/useSSE.test.tsx (1 test) 177ms
+ ✓ __tests__/flagTint.test.ts (7 tests) 93ms
+(node:68731) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/utilGame.test.ts (17 tests) 153ms
+ ✓ __tests__/api-intake.test.ts (14 tests) 80ms
+(node:68761) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/serverGameUrl.test.ts (5 tests) 86ms
+(node:68777) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/serverRegistry.test.ts (7 tests) 98ms
+(node:69137) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:69136) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/mailbox.test.ts (13 tests) 66ms
+ ✓ __tests__/commandSubmit.test.ts (3 tests) 78ms
+(node:69138) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/format.test.ts (2 tests) 6ms
+(node:69139) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:69140) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ __tests__/command-arg-types.test.ts (2 tests) 37ms
+ ✓ __tests__/postFilterNationCommand.test.ts (5 tests) 8ms
+
+ Test Files  54 passed (54)
+      Tests  287 passed (287)
+   Start at  11:23:43
+   Duration  79.27s (transform 11.04s, setup 87.46s, collect 25.34s, tests 77.60s, environment 230.82s, prepare 41.19s)
+
+test exit=0
