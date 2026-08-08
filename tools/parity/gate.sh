@@ -12,8 +12,12 @@ fi
 
 case "$target" in
   backend)
-    tasks=( ":common:test" ":logic:test" ":infra:test" ":app:game-engine:test" ":app:game-api:test" )
-    xml_roots=( "common" "logic" "infra" "app/game-engine" "app/game-api" )
+    # gateway-api는 OPENSAM-35에서 합류했다. v2 격리 게이트(production 컨텍스트 v2 빈 0)가
+    # 세 JVM 서비스 전부에 있는데 backend 게이트가 둘만 돌면, gateway 쪽 게이트는 이 리포의
+    # acceptance 기준으로는 영원히 실행되지 않는다(CI `./gradlew build`만 덮음).
+    # tasks와 xml_roots는 반드시 함께 늘린다 — 태스크만 늘리면 돌기만 하고 채점되지 않는다.
+    tasks=( ":common:test" ":logic:test" ":infra:test" ":app:game-engine:test" ":app:game-api:test" ":app:gateway-api:test" )
+    xml_roots=( "common" "logic" "infra" "app/game-engine" "app/game-api" "app/gateway-api" )
     ;;
   common)
     tasks=( ":common:test" )
@@ -64,11 +68,16 @@ from pathlib import Path
 root = Path(sys.argv[1])
 module_roots = [root / rel for rel in sys.argv[2:]]
 files = []
+missing_roots = []
 for module_root in module_roots:
-    files.extend(module_root.glob("build/test-results/test/TEST-*.xml"))
+    module_files = sorted(module_root.glob("build/test-results/test/TEST-*.xml"))
+    if not module_files:
+        missing_roots.append(module_root.relative_to(root))
+    files.extend(module_files)
 files = sorted(files)
-if not files:
-    print("No Gradle test XML files found for selected modules", file=sys.stderr)
+if missing_roots:
+    missing = ", ".join(str(path) for path in missing_roots)
+    print(f"No Gradle test XML files found for selected module roots: {missing}", file=sys.stderr)
     sys.exit(1)
 
 bad = []

@@ -5,6 +5,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
 abstract class VerifyRuntimeBaselineJarIsolation : DefaultTask() {
@@ -87,6 +88,21 @@ sourceSets {
     }
 }
 
+val v2NamingConventionSources = rootProject.files(
+    listOf(
+        "app/game-engine/src/main/kotlin",
+        "app/game-api/src/main/kotlin",
+        "app/gateway-api/src/main/kotlin",
+        "infra/src/main/kotlin",
+        "common/src/main/kotlin",
+        "logic/src/main/kotlin",
+    ).map { sourceRoot ->
+        rootProject.fileTree(sourceRoot) {
+            include("**/*.kt")
+        }
+    },
+)
+
 val baseline by sourceSets.creating {
     compileClasspath += sourceSets.main.get().output
     runtimeClasspath += sourceSets.main.get().output
@@ -151,6 +167,9 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    inputs.files(v2NamingConventionSources)
+        .withPropertyName("v2NamingConventionSources")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
     providers.systemProperty("LONGSIM_SCHEMA4_CANDIDATE_DIR").orNull?.let {
         systemProperty("LONGSIM_SCHEMA4_CANDIDATE_DIR", it)

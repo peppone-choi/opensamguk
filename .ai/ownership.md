@@ -2,6 +2,17 @@
 
 병렬 에이전트(Claude Code, Codex, Gemini 등)의 파일 소유권 등록부. 규칙은 `docs/agent/collaboration-protocol.md`가 정본.
 
+## OPENSAM-35 V2-0A 격리 게이트 lane — 2026-08-08 (활성)
+
+`ownership.md:117` fence("표에 없는 공유 파일(특히 compose/nginx, 공용 catalog/runtime schema,
+`.ai/*`)은 사전 조정 후 foundation owner 한 명을 정하기 전까지 read-only")에 따라
+foundation owner 1명을 등록한다. OPENSAM-35는 compose·Flyway location·조건부 빈 게이팅 등
+공유 확장점을 신설하므로 **병렬 소유 금지, foundation-first 순차**다.
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `claude-opensam-35-v2-0a` | OPENSAM-35 V2-0A production 격리 게이트 (0A-a~g + ADR-LITE-021 DoD 3항목) — foundation owner | `codex/op-35-v2-0a-final` (`origin/main` `b847c351` 기반 재구성) | 계획·루프·review·`.ai/{task,current-state,decisions,ownership}.md`; 신규 v2 stack/Flyway/content/route/configuration/tests; 기존 파일 `web/game/middleware.ts`(하드 404)·`tools/parity/gate.sh`(root별 XML 채점)·`app/game-engine/build.gradle.kts`(cross-module naming source inputs). **T2 사전선언 = 공집합**(계획서 §4) | active — S0~S6 구현, false-green 3건 remediation targeted green, fresh broad gate green, independent final re-review `cleared`. latest-main 단일 커밋 재구성 완료; PR 리뷰 3라운드·머지 진행 중. 배포 미실행. **T1 수정·삭제 0건.** production compose·`application.yml`·`tools/agent-system/check.py` 무수정 | 2026-08-08 |
+
 ## v1 비운영 폐쇄 lane release — 2026-07-29
 
 2026-07-27에 시작한 `v1-nonoperational-root`와 그 하위 `v1-*` lane entries는

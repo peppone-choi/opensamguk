@@ -1,0 +1,301 @@
+# opensamguk — v2 SANDBOX stack (OPENSAM-35 / 0A-e).
+#
+#   docker compose -f docker-compose.v2-sandbox.yml up -d
+#
+# WHY A SEPARATE FILE (계획 §2 C1 — 2026-08-08 사용자 결정)
+#   `docker-compose.production.yml`은 `SCENARIO_SEED_ENABLED=false`가 `tools/agent-system/check.py`
+#   strict 불변식(`docs/agent/coding-rules.md:12`)이라 v2 시드 스택을 그 파일에 얹을 수 없다.
+#   그래서 v2는 **별도 스택 파일**로 분리하고 production compose와 check.py는 무수정으로 둔다.
+#
+# WHY WORLD-ISOLATION VALUES USE A `V2_`-PREFIXED SUBSTITUTION VARIABLE
+#   같은 호스트/같은 `.env`에서 v1 스택과 나란히 뜨는 것이 이 파일의 존재 이유다.
+#   `${OPENSAMGUK_WORLD_ID}`처럼 v1과 같은 이름을 쓰면 v2가 v1 값을 **조용히 상속**한다.
+#   특히 `SCENARIO_CODE`/`SCENARIO_DIR` 상속은 무증상이다 — `ignoreDefaultEvents=false`가 되어
+#   `ScenarioImporter.kt:888` defaults 분기가 v1 기본 이벤트 12행을 적재하는데
+#   부팅·시드·헬스체크는 전부 성공한다(계획 §0.2). 그래서 v2 전용 이름 + fail-closed `:?`를 쓴다.
+#
+#   ADR-LITE-023 예외: `shared-gateway-relay`만 필수 external `SHARED_GATEWAY_NETWORK`에 붙어 기존
+#   v1 gateway로 프록시한다. v2 network에서는 relay만 `gateway-api` alias를 가져 기존 URL을 보존한다.
+#   v2는 gateway 계정 DB·admin seed·profile writer를 만들지 않으며, JWT 신뢰만 `JWT_SECRET`으로 공유한다.
+#   world DB·world_id·시나리오만 계속 `V2_*`로 들어간다.
+#
+# 필수 env (미설정 시 compose가 뜨지 않는다 — 상속 대신 실패):
+#   V2_SCENARIO_CODE · V2_SCENARIO_HOST_DIR · V2_POSTGRES_PASSWORD ·
+#   SHARED_GATEWAY_NETWORK · SHARED_GATEWAY_UPSTREAM · SHARED_GATEWAY_PROFILE_ICONS_VOLUME · JWT_SECRET
+#   ⇒ 필수·선택 변수 전수와 각 한 줄 설명은 **`v2-sandbox.env.example`** (이 파일 옆)에 있다.
+#     (`.env.v2-sandbox.example`이 아닌 이유 = `scripts/agent/protect-sensitive-files.sh:103-105`가
+#      `.env.*` 기본이름을 allowlist 외 전부 차단한다. 가드를 고치는 대신 이름을 피했다.)
+#
+# `:?` FAIL-CLOSED의 한계 — 값의 **내용**은 검증하지 않는다 (GATE-f Q2)
+#   `:?`가 막는 것은 변수 미설정 하나뿐이다. `V2_SCENARIO_HOST_DIR`을 v1 시나리오 호스트
+#   디렉터리로 두고 `V2_SCENARIO_CODE`에 v1 시나리오 코드를 넣으면 **v1 콘텐츠가 v2 DB에 시드된다**
+#   — 그리고 부팅·시드·헬스체크는 전부 성공한다. 콘텐츠 방향(v1→v2)은 운영자 신뢰에 의존한다.
+#   game-api/game-engine의 반대 방향(v2 스키마 → v1 게임 월드 DB)은 막혀 있다: 별도 postgres
+#   컨테이너·별도 볼륨·별도 DB명이고 두 서비스는 이 파일의 `postgres`만 참조한다. gateway는
+#   ADR-LITE-023에 따라 relay를 통한 external shared 서비스만 쓰며, v2가 계정 DB에 직접 붙지 않는다.
+#   값 내용 검증은 이 티켓 범위 밖 — 한계로 명시만 한다.
+#
+# FLYWAY (S0/S1 실측): `SPRING_FLYWAY_LOCATIONS`는 병합이 아니라 **치환**이다. v1 location을
+# 빼면 V1~V38이 통째로 사라진다(fail-closed 부팅 실패). v2 location은 v1의 하위가 아니라
+# **형제 경로**여야 한다 — Flyway가 location을 재귀 탐색해 v1이 하위 v2를 삼킨다.
+#
+# DB 분리가 1차 방어선 (S1 U4-d): v2 마이그레이션이 적용된 DB에 v1 스택이 붙으면 Flyway는
+# WARN만 내고 **정상 부팅한다.** 즉 Flyway는 v2→v1 방향 게이트가 아니다. 별도 postgres 컨테이너 +
+# 별도 볼륨 + 별도 DB 이름이 v2 스키마가 production DB로 새지 않게 막는 유일한 층이다.
+name: opensamguk-v2-sandbox
+
+x-v2-flyway-locations: &v2-flyway-locations
+  # 치환 semantics — v1 location을 반드시 앞에 포함한다 (S0 Run B).
+  SPRING_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/migration_v2
+
+services:
+  # ------------------------------------------------------------------ data
+  postgres:
+    image: postgres:16-alpine
+    container_name: opensamguk-v2-postgres
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      POSTGRES_DB: ${V2_POSTGRES_DB:-sammo_v2}
+      POSTGRES_USER: ${V2_POSTGRES_USER:-sammo_v2}
+      POSTGRES_PASSWORD: ${V2_POSTGRES_PASSWORD:?V2_POSTGRES_PASSWORD required — v2 sandbox never shares v1 credentials}
+    ports:
+      - "${V2_POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - v2-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${V2_POSTGRES_USER:-sammo_v2} -d ${V2_POSTGRES_DB:-sammo_v2}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - opensamguk-v2
+
+  redis:
+    image: redis:7-alpine
+    container_name: opensamguk-v2-redis
+    command: redis-server --appendonly yes
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+    ports:
+      - "${V2_REDIS_PORT:-56379}:6379"
+    volumes:
+      - v2-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 3s
+    networks:
+      - opensamguk-v2
+
+  # ------------------------------------------------------------- jvm services
+  game-api:
+    build:
+      context: .
+      dockerfile: docker/game-api.Dockerfile
+    image: opensamguk-v2-sandbox/game-api:${V2_IMAGE_TAG:-dev}
+    container_name: opensamguk-v2-game-api
+    environment:
+      <<: *v2-flyway-locations
+      TZ: ${TZ:-Asia/Seoul}
+      # ① 별도 DB — v2 스키마가 v1 DB로 새지 않게 하는 유일한 1차 방어선 (S1 U4-d).
+      GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${V2_POSTGRES_DB:-sammo_v2}
+      GAME_DB_USER: ${V2_POSTGRES_USER:-sammo_v2}
+      GAME_DB_PASSWORD: ${V2_POSTGRES_PASSWORD:?V2_POSTGRES_PASSWORD required}
+      # ④ v2 시나리오 디렉터리 — 상속 금지 (계획 §0.2).
+      SCENARIO_DIR: ${V2_SCENARIO_DIR:-/data/scenarios-v2}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GAME_API_PORT: 8081
+      # ② v2 월드 식별자 — v1과 절대 같은 값을 쓰지 않는다.
+      OPENSAMGUK_WORLD_ID: ${V2_WORLD_ID:-9001}
+      OPENSAMGUK_PROFILE: ${V2_TURN_PROFILE_NAME:-che:scenario_2}
+      SERVER_ID: ${V2_SERVER_ID:-v2s}
+      SERVER_NAME: ${V2_SERVER_NAME:-v2 샌드박스}
+      SERVER_GENERATION: ${V2_SERVER_GENERATION:-1}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — same value as gateway-api and v1 gateway-api}
+      # ⑤⑥ 빈 게이트 두 조건 — 프로퍼티와 프로파일이 **둘 다** 참일 때만 v2 빈이 등록된다 (S2).
+      V2_ENABLED: "true"
+      SPRING_PROFILES_ACTIVE: v2-sandbox
+      SENTRY_DSN: ${V2_SENTRY_DSN_GAME_API:-}
+      SENTRY_ENVIRONMENT: ${V2_SENTRY_ENVIRONMENT:-v2-sandbox}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
+      JAVA_OPTS: ${GAME_API_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${V2_GAME_API_PORT:-58081}:8081"
+    volumes:
+      - ${V2_SCENARIO_HOST_DIR:?V2_SCENARIO_HOST_DIR required}:${V2_SCENARIO_DIR:-/data/scenarios-v2}:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    networks:
+      - opensamguk-v2
+
+  game-engine:
+    build:
+      context: .
+      dockerfile: docker/game-engine.Dockerfile
+    image: opensamguk-v2-sandbox/game-engine:${V2_IMAGE_TAG:-dev}
+    container_name: opensamguk-v2-game-engine
+    environment:
+      <<: *v2-flyway-locations
+      TZ: ${TZ:-Asia/Seoul}
+      # ① 별도 DB.
+      GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${V2_POSTGRES_DB:-sammo_v2}
+      GAME_DB_USER: ${V2_POSTGRES_USER:-sammo_v2}
+      GAME_DB_PASSWORD: ${V2_POSTGRES_PASSWORD:?V2_POSTGRES_PASSWORD required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GAME_ENGINE_PORT: 8082
+      # ② v2 월드 식별자.
+      OPENSAMGUK_WORLD_ID: ${V2_WORLD_ID:-9001}
+      TURN_PROFILE_NAME: ${V2_TURN_PROFILE_NAME:-che:scenario_2}
+      # C1: production compose의 `SCENARIO_SEED_ENABLED=false` 불변식은 그 파일에만 걸린다.
+      SCENARIO_SEED_ENABLED: ${V2_SCENARIO_SEED_ENABLED:-true}
+      # ③④ v2 시나리오 — 상속하면 v1 기본 이벤트 12행이 조용히 적재된다. 기본값을 주지 않는다.
+      SCENARIO_CODE: ${V2_SCENARIO_CODE:?V2_SCENARIO_CODE required — inheriting v1 SCENARIO_CODE silently seeds the 12 v1 default events}
+      SCENARIO_DIR: ${V2_SCENARIO_DIR:-/data/scenarios-v2}
+      SCENARIO_QA_TURNTERM: ${V2_SCENARIO_QA_TURNTERM:-}
+      # 리셋 옵션은 v1과 마찬가지로 기본값을 넣지 않는다 — 미설정의 의미는 SeedBootstrap 소유다.
+      RESET_TURNTERM: ${V2_RESET_TURNTERM:-}
+      RESET_FICTION: ${V2_RESET_FICTION:-}
+      RESET_EXTEND: ${V2_RESET_EXTEND:-}
+      RESET_BLOCK_GENERAL_CREATE: ${V2_RESET_BLOCK_GENERAL_CREATE:-}
+      RESET_NPCMODE: ${V2_RESET_NPCMODE:-}
+      RESET_SHOW_IMG_LEVEL: ${V2_RESET_SHOW_IMG_LEVEL:-}
+      # ⑤⑥ 빈 게이트 두 조건.
+      V2_ENABLED: "true"
+      SPRING_PROFILES_ACTIVE: v2-sandbox
+      SENTRY_DSN: ${V2_SENTRY_DSN_GAME_ENGINE:-}
+      SENTRY_ENVIRONMENT: ${V2_SENTRY_ENVIRONMENT:-v2-sandbox}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
+      JAVA_OPTS: ${GAME_ENGINE_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${V2_GAME_ENGINE_PORT:-58082}:8082"
+    volumes:
+      - ${V2_SCENARIO_HOST_DIR:?V2_SCENARIO_HOST_DIR required}:${V2_SCENARIO_DIR:-/data/scenarios-v2}:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+    networks:
+      - opensamguk-v2
+
+  shared-gateway-relay:
+    image: nginx:1.27-alpine
+    environment:
+      SHARED_GATEWAY_UPSTREAM: ${SHARED_GATEWAY_UPSTREAM:?SHARED_GATEWAY_UPSTREAM required — unique existing v1 gateway DNS host:port, never gateway-api:8080}
+    volumes:
+      - ./infra/nginx/shared-gateway-relay.conf.template:/etc/nginx/templates/default.conf.template:ro
+    networks:
+      opensamguk-v2:
+        aliases:
+          - gateway-api
+      shared-gateway: {}
+
+  # --------------------------------------------------------------- web fronts
+  web-gateway:
+    build:
+      context: .
+      dockerfile: docker/web-gateway.Dockerfile
+      args:
+        NEXT_PUBLIC_GAME_URL: ${V2_NEXT_PUBLIC_GAME_URL:-http://localhost:53001}
+    image: opensamguk-v2-sandbox/web-gateway:${V2_IMAGE_TAG:-dev}
+    container_name: opensamguk-v2-web-gateway
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      COOKIE_SECURE: ${V2_COOKIE_SECURE:-false}
+      GATEWAY_API_URL: http://gateway-api:8080
+      GAME_API_ORIGIN: http://game-api:8081
+      SERVER_ID: ${V2_SERVER_ID:-v2s}
+      SERVER_REGISTRY_JSON: ${V2_SERVER_REGISTRY_JSON:-[]}
+    depends_on:
+      shared-gateway-relay:
+        condition: service_started
+    ports:
+      - "${V2_WEB_GATEWAY_PORT:-53000}:3000"
+    networks:
+      - opensamguk-v2
+
+  web-game:
+    build:
+      context: .
+      dockerfile: docker/web-game.Dockerfile
+      args:
+        NEXT_PUBLIC_GATEWAY_URL: ${V2_NEXT_PUBLIC_GATEWAY_URL:-http://localhost:53000}
+    image: opensamguk-v2-sandbox/web-game:${V2_IMAGE_TAG:-dev}
+    container_name: opensamguk-v2-web-game
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3001
+      SERVER_ID: ${V2_SERVER_ID:-v2s}
+      GAME_API_URL: http://game-api:8081
+      GATEWAY_API_URL: http://gateway-api:8080
+      # ⑤ `/game/v2-lab` 라우트 게이트. middleware가 런타임에 읽으므로 v1과 같은 이미지를 쓴다
+      #    (S3-b §4.2 — 빌드 타임 인라인 아님). v1 스택에서는 이 값이 없어 404다.
+      V2_ENABLED: "true"
+    depends_on:
+      shared-gateway-relay:
+        condition: service_started
+      game-api:
+        condition: service_healthy
+      game-engine:
+        condition: service_healthy
+    ports:
+      - "${V2_WEB_GAME_PORT:-53001}:3001"
+    networks:
+      - opensamguk-v2
+
+  # ------------------------------------------------------------------- proxy
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: opensamguk-v2-nginx
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - shared-gateway-profile-icons:/var/lib/opensamguk/profile-icons:ro
+    depends_on:
+      - shared-gateway-relay
+      - game-api
+      - game-engine
+      - web-gateway
+      - web-game
+    ports:
+      - "${V2_NGINX_HTTP_PORT:-58090}:80"
+    networks:
+      - opensamguk-v2
+
+volumes:
+  v2-pgdata:
+    driver: local
+  v2-redisdata:
+    driver: local
+  shared-gateway-profile-icons:
+    name: ${SHARED_GATEWAY_PROFILE_ICONS_VOLUME:?SHARED_GATEWAY_PROFILE_ICONS_VOLUME required — must name the existing v1 gateway profile-icons volume}
+    external: true
+
+networks:
+  opensamguk-v2:
+    driver: bridge
+  shared-gateway:
+    name: ${SHARED_GATEWAY_NETWORK:?SHARED_GATEWAY_NETWORK required — must name the existing v1 gateway network}
+    external: true
