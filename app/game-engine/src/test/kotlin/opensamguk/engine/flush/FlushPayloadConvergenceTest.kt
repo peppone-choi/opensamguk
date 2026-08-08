@@ -8,6 +8,7 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.RankColumn
+import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
@@ -123,6 +124,43 @@ class FlushPayloadConvergenceTest {
         assertEquals(2, payload.updatedDiplomacy.size, "both diplomacy directions reach the payload")
         assertEquals(listOf(1 to 2, 2 to 1), payload.updatedDiplomacy.map { it.fromNationId to it.toNationId })
         assertTrue(payload.updatedDiplomacy.all { it.state == 1 && it.term == 24 })
+    }
+
+    @Test
+    fun `같은 tick에 멸망한 국가의 외교 패치는 payload에서 빠진다 (prod 턴 영구차단 회귀)`() {
+        // prod: step-6 nation cascade가 diplomacy 행을 DELETE 한 뒤 step-7d가 같은 행을 UPDATE →
+        // `diplomacy UPDATE affected 0 rows` → 틱 롤백 → RELOAD_REQUIRED 무한 반복.
+        // 패치는 `dead`를 실어 JdbcFlushExecutor:804 casualties 분기를 태운다 — prod 스택이 죽은 그 분기다
+        // (전투 applyBattleDiplomacyCasualty / 월간 Q5·Q9 둘 다 newDead를 싣고 그 뒤 국가가 멸망한다).
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(),
+                nations = listOf(engineNation(1, gold = 1000), engineNation(2, gold = 1000), engineNation(3, gold = 1000)),
+                diplomacy = listOf(
+                    TurnDiplomacy(1, 2, state = 2, term = 0),
+                    TurnDiplomacy(2, 1, state = 2, term = 0),
+                    TurnDiplomacy(1, 3, state = 2, term = 0),
+                ),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
+            ),
+        )
+        val recorder = ChangeRecorder()
+
+        listOf(1 to 2, 2 to 1, 1 to 3).forEach { (from, to) ->
+            val pre = world.getDiplomacy(from, to)!!
+            world.updateDiplomacy(from, to, state = 1, term = 24, dead = 15)
+            recorder.diffDiplomacy(pre, world.getDiplomacy(from, to)!!)
+        }
+        world.removeNation(2) // cascades diplomacy (1,2) and (2,1)
+
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+
+        assertEquals(
+            listOf(1 to 3),
+            payload.updatedDiplomacy.map { it.fromNationId to it.toNationId },
+            "멸망국가 쌍은 빠지고 살아있는 국가 쌍은 남아야 한다",
+        )
+        assertEquals(15, payload.updatedDiplomacy.single().dead, "생존 쌍은 casualties 분기로 flush 돼야 한다")
     }
 
     @Test
