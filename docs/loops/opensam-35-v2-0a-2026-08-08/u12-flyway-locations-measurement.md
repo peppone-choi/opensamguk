@@ -72,7 +72,7 @@ Run A와 동일하되 DB는 신선한 `sammo2`, `SPRING_FLYWAY_LOCATIONS="filesy
 
 ### Run A — 부팅 로그 발췌
 
-```
+```text
 o.f.core.internal.command.DbMigrate : Migrating schema "public" to version "1 - baseline"
 ...
 o.f.core.internal.command.DbMigrate : Migrating schema "public" to version "38 - rtk14 npc lifecycle repair"
@@ -83,7 +83,7 @@ o.engine.GameEngineApplicationKt     : Started GameEngineApplicationKt in 23.764
 
 ### Run A — `flyway_schema_history` 전문
 
-```
+```text
  installed_rank | version |            description             | type | success
 ----------------+---------+------------------------------------+------+---------
               1 | 1       | baseline                           | SQL  | t
@@ -130,7 +130,7 @@ o.engine.GameEngineApplicationKt     : Started GameEngineApplicationKt in 23.764
 
 프로브 테이블 실재 확인:
 
-```
+```text
              Table "public.u12_probe"
  Column |  Type   | Collation | Nullable | Default
 --------+---------+-----------+----------+---------
@@ -141,14 +141,14 @@ Indexes:
 
 ### Run B — `filesystem` 단독
 
-```
+```text
 o.f.core.internal.command.DbMigrate : Migrating schema "public" to version "900 - u12 probe"
 o.f.core.internal.command.DbMigrate : Successfully applied 1 migration to schema "public", now at version v900 (execution time 00:00.018s)
 ERROR ... Failed to initialize JPA EntityManagerFactory: [PersistenceUnit: default]
   ... SchemaManagementException: Schema-validation: missing table [banned_member]
 ```
 
-```
+```text
  installed_rank | version | description | success
 ----------------+---------+-------------+---------
               1 | 900     | u12 probe   | t
@@ -216,11 +216,15 @@ env -i PATH=/usr/bin:/bin JAVA_HOME=$(/usr/libexec/java_home -v 21) \
 docker exec u12pg psql -U sammo -d sammo \
   -c "select installed_rank, version, description, type, success from flyway_schema_history order by installed_rank;"
 
-# 정리
-pkill -f game-engine-0.0.1-SNAPSHOT.jar
-docker rm -f u12pg u12redis
-git worktree remove --force $S/wt
+# BLOCKED cleanup — this historical reproduction has no separately recorded deletion approval.
+# Do not run or repeat these commands until the user approves the exact targets:
+# pkill -f game-engine-0.0.1-SNAPSHOT.jar
+# docker rm -f u12pg u12redis
+# git worktree remove --force $S/wt
 ```
+
+The original measurement’s scratch cleanup is not reusable authorization. Any future cleanup requires a
+separate explicit, target-specific deletion approval.
 
 ## 다음 단계에 주는 결론
 
@@ -229,3 +233,9 @@ git worktree remove --force $S/wt
 
 - v2 스택 env의 `SPRING_FLYWAY_LOCATIONS`는 **v1 location을 반드시 포함**한다(치환 semantics).
 - 컨테이너 배포에서 `filesystem:` 경로가 실재하는지(이미지 굽기/볼륨 마운트) 별도 확정 — 미측정 항목.
+
+## PHP golden scope boundary
+
+U12 measures Spring/Flyway location replacement only. No PHP golden capture or draw-for-draw replay was run or
+claimed because OPENSAM-35 changes no T1/parity behavior. A3 is scope/inventory proof, not a replay result and
+not a substitute for a backend gate; a future T1/parity change must perform the appropriate PHP oracle replay.

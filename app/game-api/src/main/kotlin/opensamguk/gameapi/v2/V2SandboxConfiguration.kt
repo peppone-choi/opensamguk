@@ -8,17 +8,18 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
 /**
- * OPENSAM-35 0A-b — game-api 쪽 v2 빈 등록 게이트.
+ * OPENSAM-35 0A-b — v2 bean-registration gate for game-api.
  *
- * 조건·의미는 `opensamguk.engine.v2.V2SandboxConfiguration`과 동일하다(`@Profile` AND
- * `@ConditionalOnProperty`, 미설정 = 비활성). game-api에도 v2 read/intake 빈이 들어올 예정이라
- * (round3 proposal §7.1-2) 게이트를 양쪽에 함께 설치한다 — 한쪽만 설치하면 다른 앱의 v2 빈이
- * production 컨텍스트에 무조건 등록된다.
+ * Its conditions and semantics match `opensamguk.engine.v2.V2SandboxConfiguration` (`@Profile` AND
+ * `@ConditionalOnProperty`, unset is disabled). v2 read/intake beans will also belong to game-api (round-3
+ * proposal §7.1-2), so both applications need this gate; otherwise another application's v2 beans could be
+ * unconditionally registered in its production context.
  *
- * `opensamguk.gameapi.v2` 패키지 = `GameApiApplication`의 컴포넌트 스캔 루트(`opensamguk.gameapi`) 안.
- * v2는 JPA를 쓰지 않으므로 `@EntityScan`/`@EnableJpaRepositories` basePackages와 무관하다.
+ * Package `opensamguk.gameapi.v2` lies inside `GameApiApplication`'s component-scan root
+ * (`opensamguk.gameapi`). v2 does not use JPA, so `@EntityScan` and `@EnableJpaRepositories` base packages are
+ * irrelevant.
  *
- * 앞으로 v2 read/intake 컨트롤러 등 **실제 v2 빈은 전부 이 클래스 안의 `@Bean`으로** 들어온다.
+ * Future concrete v2 beans, including read/intake controllers, belong here as `@Bean` methods.
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(V2SandboxGate.PROFILE)

@@ -17,19 +17,19 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /**
- * OPENSAM-35 0A-f (S4) — game-engine의 **실제 부팅 컨텍스트**에서 v2 빈 수를 실측한다.
+ * OPENSAM-35 0A-f (S4) — measures v2 bean counts in game-engine's **actual booted context**.
  *
- * S2·S3-a의 `ApplicationContextRunner` 테스트는 조건 평가만 재는 층이다. ADR-LITE-021 (iii)이
- * 요구하는 것은 "선언이 아니라 실측" — 그래서 여기서는 `@SpringBootTest` + Testcontainers로
- * v1 프로세스와 같은 모양의 컨텍스트를 통째로 띄우고 [ApplicationContext.getBeansOfType]으로 센다.
- * 리포의 기존 아키텍처 테스트(`DaemonNoEntityManagerTest` 등)는 전부 정적 스캔이라 이 층을 대체하지 못한다.
+ * The S2 and S3-a `ApplicationContextRunner` tests measure only condition evaluation. ADR-LITE-021 (iii)
+ * requires measurement rather than declaration, so this uses `@SpringBootTest` and Testcontainers to boot a
+ * context shaped like the v1 process and count [ApplicationContext.getBeansOfType]. Existing repository
+ * architecture tests such as `DaemonNoEntityManagerTest` are static scans and cannot replace this layer.
  *
- * 4개 클래스 = 판정 매트릭스 4칸이다. 마지막 [V2BothConditionsBeanGateIT]가 **양성 대조군**으로,
- * "전부 0"이 컨텍스트가 실제로 떠서 나온 0임을 증명한다.
+ * The four classes are the four cells of the decision matrix. The final [V2BothConditionsBeanGateIT] is the
+ * **positive control**, proving that an all-zero result comes from a running context.
  */
 private const val SECURITY_EXCLUDES =
-    // GameEngineApplicationTests와 같은 이유: game-api(:mainClassesForTest)의 transitive security
-    // 스타터가 엔진 테스트 클래스패스에 올라와 런타임에 없는 보안 자동설정이 켜진다. 테스트 아티팩트다.
+    // As in GameEngineApplicationTests, game-api(:mainClassesForTest)'s transitive security starter reaches the
+    // engine test classpath and enables security auto-configuration absent from runtime. This is a test artifact.
     "spring.autoconfigure.exclude=" +
         "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration," +
         "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration," +
@@ -37,9 +37,9 @@ private const val SECURITY_EXCLUDES =
         "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"
 
 /**
- * 타입 이름 하드코딩에 기대지 않는 방어. 나중에 누가 새 v2 빈을 만들고 이 테스트의 타입 목록에
- * 추가하지 않아도 게이트가 조용히 뚫리지 않도록, 컨텍스트의 **모든 빈 정의**를 훑어 v2 패키지에서
- * 온 빈을 잡는다. `allowFactoryBeanInit = false`라 빈을 만들지 않고 타입만 해석한다.
+ * A defense that does not depend on hard-coded type names. It scans **all bean definitions** for types from a v2
+ * package, so a new v2 bean cannot silently bypass the gate merely because nobody added it to this test's type
+ * list. `allowFactoryBeanInit = false` resolves types without creating beans.
  */
 internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
     beanDefinitionNames.mapNotNull { name ->
@@ -60,11 +60,11 @@ private fun postgresProps(registry: DynamicPropertyRegistry, container: PostgreS
     registry.add("management.health.redis.enabled") { "false" }
     registry.add("OPENSAMGUK_WORLD_ID") { "1" }
     registry.add("SCENARIO_SEED_ENABLED") { "false" }
-    // 턴 루프를 띄우면 Redis 스트림을 실제로 소비한다. 빈은 그대로 만들어지고 시작만 막는다.
+    // Starting the turn loop would consume the Redis stream; construct the bean but prevent it from starting.
     registry.add("opensamguk.daemon.enabled") { "false" }
 }
 
-/** ① production shape — `V2_ENABLED` 미설정 + 프로파일 미활성. 기대: v2 빈 0개. */
+/** ① Production shape — `V2_ENABLED` unset and profile inactive. Expect zero v2 beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
 class V2ProductionShapeBeanGateIT {
@@ -82,7 +82,7 @@ class V2ProductionShapeBeanGateIT {
     }
 }
 
-/** ② `v2.enabled=true`만 — 프로파일 없음. 기대: 0개. */
+/** ② `v2.enabled=true` only — no profile. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = [SECURITY_EXCLUDES, "${V2SandboxGate.PROPERTY}=true"])
 class V2PropertyOnlyBeanGateIT {
@@ -100,7 +100,7 @@ class V2PropertyOnlyBeanGateIT {
     }
 }
 
-/** ③ 프로파일 `v2-sandbox`만 — 프로퍼티 없음. 기대: 0개. */
+/** ③ Profile `v2-sandbox` only — no property. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles(V2SandboxGate.PROFILE)
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
@@ -120,10 +120,10 @@ class V2ProfileOnlyBeanGateIT {
 }
 
 /**
- * ④ **양성 대조군** — 둘 다 참. 기대: 등록됨.
+ * ④ **Positive control** — both conditions are true. Expect registration.
  *
- * 이 칸이 없으면 컨텍스트가 아예 뜨지 않아도 ①~③이 통과할 수 있다. 여기서 실제 빈이 잡히는 것이
- * "위 3칸의 0은 컨텍스트가 떠 있는 상태에서 잰 0"이라는 증거다.
+ * Without this case, ①–③ could pass even if the context never starts. Finding the actual bean here proves that
+ * the three preceding zeros were measured in a live context.
  */
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles(V2SandboxGate.PROFILE)
@@ -136,8 +136,8 @@ class V2BothConditionsBeanGateIT {
         assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
         assertEquals(1, context.getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
         val byPackage = context.v2PackageBeans()
-        // 게이트 `@Configuration` 자신도 빈이라 패키지 스캔이 함께 잡는다 — 스캔이 타입 목록보다
-        // 넓게 본다는 증거이자, 새 v2 빈이 목록에 추가되지 않아도 잡힌다는 근거다.
+        // The gate `@Configuration` is itself a bean, so the package scan captures it. This proves the scan is
+        // broader than the listed types and catches a new v2 bean without an explicit list update.
         assertTrue(
             byPackage.values.containsAll(
                 listOf(

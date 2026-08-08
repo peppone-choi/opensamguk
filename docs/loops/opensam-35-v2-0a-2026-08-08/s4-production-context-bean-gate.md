@@ -124,8 +124,11 @@ internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
   `opensamguk.engine.ledger`에 두면 하드코딩 타입 목록(①②③)과 패키지 스캔(④)을 **둘 다** 빠져나가
   게이트가 초록으로 통과한다 — 실패하지 않고, 경고도 없다. 즉 이 테스트가 재는 것은
   "v2 코드가 `opensamguk.*.v2.*`에 있다는 전제 하에서의 누출"이지 "v2 누출 일반"이 아니다.
-  이름 휴리스틱 탐지(타입명이 `V2`로 시작하면 실패 등)는 오탐만 늘리므로 넣지 않았다.
-  대신 **패키지 규약을 계획 §4-2에 소비자 티켓(OPENSAM-150/151)의 준수 조건으로 명문화**했다.
+  이 historical finding 뒤 GATE-f2 F1에서 source naming guard를 추가했다: raw source root 전체의
+  `class|object|interface V2[A-Z]` declaration이 `opensamguk.*.v2.*` package 밖에 있으면 실패한다.
+  `V26__`처럼 `V2` 뒤가 숫자인 Flyway class는 제외된다. 이것은 package convention의 일부를 자동
+  검출할 뿐, `V2`로 시작하지 않는 future v2 code까지 일반적으로 찾는 완전한 guard는 아니다.
+  **패키지 규약을 계획 §4-2의 consumer ticket(OPENSAM-150/151) 준수 조건으로 유지한다.**
 
 ## 5. 비공허성 검증 — 뮤테이션 프로브 3회
 
@@ -150,14 +153,14 @@ P-1·P-2는 두 조건이 **각각 독립적으로** 게이트를 닫고 있음�
 
 명령:
 
-```
+```text
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test :app:game-api:test \
   --tests 'opensamguk.*.v2.*' --rerun-tasks
 ```
 
 `BUILD SUCCESSFUL in 4m 29s`.
 
-```
+```text
 <testsuite name="opensamguk.engine.v2.V2ProductionShapeBeanGateIT"  tests="1" skipped="0" failures="0" errors="0" time="1.085">
 <testsuite name="opensamguk.engine.v2.V2PropertyOnlyBeanGateIT"     tests="1" skipped="0" failures="0" errors="0" time="0.023">
 <testsuite name="opensamguk.engine.v2.V2ProfileOnlyBeanGateIT"      tests="1" skipped="0" failures="0" errors="0" time="0.044">
@@ -170,7 +173,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test :app:g
 
 gateway-api(S4 후속, 프로브 P-4 제거 후 재실행):
 
-```
+```text
 $ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:gateway-api:test --tests '*V2*' --rerun-tasks
 BUILD SUCCESSFUL in 2m 15s
 13 actionable tasks: 13 executed
@@ -181,9 +184,11 @@ BUILD SUCCESSFUL in 2m 15s
 <testsuite name="opensamguk.gateway.v2.V2BothConditionsBeanGateIT"  tests="1" skipped="0" failures="0" errors="0" time="0.048">
 ```
 
-compose 문법 점검: `docker compose -f docker-compose.v2-sandbox.yml config -q`는
-`required variable V2_JWT_SECRET is missing a value`로 중단한다 — 환경변수 미설정 시 **fail-closed**로
-설계한 `${...:?}` 가드가 의도대로 동작하는 것이며, 문법 오류가 아니다(파서가 보간 단계까지 진행했다).
+`docker compose -f docker-compose.v2-sandbox.yml config -q`가
+`required variable V2_JWT_SECRET is missing a value`로 중단한 것은 **required-input fail-closed failure**다.
+이 결과를 syntax/config pass라고 부르지 않는다. Complete non-secret placeholder input으로
+`docker compose … config --format json`이 exit 0인 render assertion은 S5 §1.5에 따로 있고, 그 결과만
+render/config-shape evidence다.
 
 (같은 실행에서 S2·S3-a 회귀도 함께 green: `V2SandboxConfigurationTest` engine `tests="6"` / api `tests="5"`,
 `V2ContentCatalogBeanTest tests="3"`, 전부 `skipped="0" failures="0" errors="0"`.)
@@ -199,9 +204,9 @@ compose 문법 점검: `docker compose -f docker-compose.v2-sandbox.yml config -
 - 이미지 `postgres:16-alpine`(기존 IT와 동일), 포트 고정 없음(Testcontainers 랜덤 매핑).
 - 실행 후 `docker ps` 출력 **없음** — 이 세션이 띄운 컨테이너 잔여 0. 병렬 세션 컨테이너에는 손대지 않았다.
 
-게이트 명령 출력(최종):
+Historical stage gate transcript (current PR evidence 아님):
 
-```
+```text
 $ git status --short
  M .ai/current-state.md
  M .ai/ownership.md
@@ -239,7 +244,7 @@ $ git diff --name-only --diff-filter=MD origin/main -- 'app/*/src/main/resources
 > 두 줄의 "(빈 출력)"은 **공허하게 참**이었다. 기준선 `origin/main`도 분기 후
 > 전진해 있어 이 티켓 귀속 판정에 쓸 수 없다. 원문은 결함 이력 보존을 위해
 > 지우지 않는다. 유효한 판정은 `:(glob).../**` + merge-base로 재측정한
-> `s6-gates-and-baseline.md` §12이며, 명령 정본은 계획서 §4-1이다.
+> `s6-gates-and-baseline.md` §15이며, 명령 정본은 계획서 §4-1이다.
 > `:214`(T1)는 와일드카드가 없어 이 결함에 해당하지 않는다.
 
 ## 8. UNKNOWN (측정하지 않은 것 — 추정 금지)
@@ -256,3 +261,10 @@ $ git diff --name-only --diff-filter=MD origin/main -- 'app/*/src/main/resources
    클래스 종료 시 stop 하도록 했으나, 데몬 부하로 인한 타이밍 영향은 재지 않았다.
 5. **security 자동설정 제외의 영향 범위.** engine 컨텍스트에서 4종을 제외한 것은 기존 IT 관례의 승계다.
    제외하지 않은 컨텍스트에서 v2 빈 수가 달라질 이유는 없으나 그 조합은 측정하지 않았다.
+
+## 9. PHP golden scope boundary
+
+S4 PASS rows mean the Spring production-context isolation matrix was exercised. They are not PHP golden
+capture/draw-for-draw replay evidence. OPENSAM-35 changes no T1/parity behavior; A3 therefore records only
+scope/inventory and does not claim a replay passed. Any future T1/parity change needs its own PHP oracle
+capture/replay; this local context gate does not replace A4 or the current exact-SHA PR gate.

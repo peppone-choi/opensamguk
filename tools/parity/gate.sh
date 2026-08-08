@@ -12,10 +12,8 @@ fi
 
 case "$target" in
   backend)
-    # gateway-api는 OPENSAM-35에서 합류했다. v2 격리 게이트(production 컨텍스트 v2 빈 0)가
-    # 세 JVM 서비스 전부에 있는데 backend 게이트가 둘만 돌면, gateway 쪽 게이트는 이 리포의
-    # acceptance 기준으로는 영원히 실행되지 않는다(CI `./gradlew build`만 덮음).
-    # tasks와 xml_roots는 반드시 함께 늘린다 — 태스크만 늘리면 돌기만 하고 채점되지 않는다.
+    # Every JVM service has a v2-isolation gate, including gateway-api.
+    # Keep tasks and xml_roots aligned so every executed task is also evaluated.
     tasks=( ":common:test" ":logic:test" ":infra:test" ":app:game-engine:test" ":app:game-api:test" ":app:gateway-api:test" )
     xml_roots=( "common" "logic" "infra" "app/game-engine" "app/game-api" "app/gateway-api" )
     ;;
@@ -46,14 +44,62 @@ case "$target" in
     ;;
 esac
 
-if [[ -x /usr/libexec/java_home ]]; then
-  export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 21)}"
+if [[ ${#tasks[@]} -ne ${#xml_roots[@]} ]]; then
+  echo "Gate task/XML root count mismatch: ${#tasks[@]} tasks, ${#xml_roots[@]} roots" >&2
+  exit 1
+fi
+
+for index in "${!tasks[@]}"; do
+  expected_root="${tasks[$index]#:}"
+  expected_root="${expected_root%:test}"
+  expected_root="${expected_root//:/\/}"
+  if [[ "${xml_roots[$index]}" != "$expected_root" ]]; then
+    echo "Gate task/XML root mismatch: ${tasks[$index]} expects $expected_root, got ${xml_roots[$index]}" >&2
+    exit 1
+  fi
+done
+
+if [[ -z "${JAVA_HOME:-}" && -x /usr/libexec/java_home ]]; then
+  if ! JAVA_HOME="$(/usr/libexec/java_home -v 21)"; then
+    echo "Gate requires Java 21, but macOS could not resolve it with /usr/libexec/java_home -v 21" >&2
+    exit 1
+  fi
+  export JAVA_HOME
+fi
+
+if [[ -n "${JAVA_HOME:-}" ]]; then
+  java_bin="$JAVA_HOME/bin/java"
+else
+  java_bin="$(command -v java || true)"
+fi
+
+if [[ ! -x "$java_bin" ]]; then
+  echo "Gate requires Java 21, but no executable Java was found at ${java_bin:-PATH}" >&2
+  exit 1
+fi
+
+if ! java_version="$("$java_bin" -version 2>&1)"; then
+  echo "Gate could not execute Java at $java_bin" >&2
+  exit 1
+fi
+
+if [[ ! "$java_version" =~ version[[:space:]]+\"([0-9]+) ]]; then
+  echo "Gate could not determine the Java major version from $java_bin:" >&2
+  echo "$java_version" >&2
+  exit 1
+fi
+
+java_major="${BASH_REMATCH[1]}"
+if [[ "$java_major" != "21" ]]; then
+  echo "Gate requires Java 21, but $java_bin reports Java $java_major:" >&2
+  echo "$java_version" >&2
+  exit 1
 fi
 
 log_file="${TMPDIR:-/tmp}/opensamguk-gradle-${target}-$(date +%Y%m%d%H%M%S).log"
 
-echo "Running gate '$target' with JAVA_HOME=${JAVA_HOME:-unset}"
-./gradlew --no-daemon --console=plain "${tasks[@]}" 2>&1 | tee "$log_file"
+echo "Running gate '$target' with Java $java_major at $java_bin (JAVA_HOME=${JAVA_HOME:-PATH})"
+./gradlew --no-daemon --console=plain --rerun-tasks "${tasks[@]}" 2>&1 | tee "$log_file"
 
 if ! grep -q "BUILD SUCCESSFUL" "$log_file"; then
   echo "Gradle output did not contain BUILD SUCCESSFUL: $log_file" >&2

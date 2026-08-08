@@ -1,6 +1,8 @@
 # OPENSAM-35 — V2-0A production 격리 게이트 실행 계획
 
-- Status: **ADOPTED · S0~S6 구현 완료 · release gate 진행 중** (사용자 승인 2026-08-08)
+- Status: **ADOPTED · S0~S6 구현 완료 · PR #370 Round 1 dirty-tree review `cleared`**
+  (no findings; fingerprint `3c1b357c…`; exact dirty-tree only). Post-commit exact-SHA review/CI와 PR
+  merge/release/deploy 및 OPENSAM-177 consumer 실행은 미수행이다.
 - 작성: 2026-08-08
 - 티켓: OPENSAM-35 (Highest, `할 일`), 부모 에픽 OPENSAM-16
 - 정본: `docs/loops/v2-planning-2026-07-12/round3-proposal-city-guanxi.md` §7.1·§7.1-2·§7.2·§11 ·
@@ -14,14 +16,16 @@
 
 ### 0.1 이 티켓은 "격리"가 아니라 "게이트 선설치"다
 
-리포 전역 grep 결과 **v2 런타임 코드가 0건**이다. `V2_ENABLED`·`v2-lab`·`v2-sandbox`·`v2_city_ledger`는
+**구현 착수 전** 리포 전역 grep 결과 v2 런타임 코드가 **0건**이었다. `V2_ENABLED`·`v2-lab`·`v2-sandbox`·`v2_city_ledger`는
 전부 `docs/loops/v2-planning-2026-07-12/**` 기획 문서에만 존재하고 `app/`·`common/`·`logic/`·`infra/`
 어디에도 실행 코드가 없다. 코드에서 잡히는 "V2"는 전부 무관하다 —
 PHP 원본 스키마 세대 표기(`GeneralTurnReadRepository.kt:22`, `NationTurnRowMapper.kt:9-10`),
 baseline 스키마 버전 문자열(`CqrsBaselineMain.kt:33`), devsam PHP 버전 표기(`GlobalMenuController.kt:15`).
 
-따라서 0A-a~g 7항목 중 **"제거"로 읽히는 0A-e는 뺄 대상이 없다.** 실질은
-"v2가 앞으로도 production으로 새지 않음을 강제하는 가드 + DoD 고정"이다. 이 해석을 계획의 전제로 삼는다.
+따라서 0A-a~g 7항목 중 **"제거"로 읽히는 0A-e는 baseline에 뺄 대상이 없었다.** 실질은
+"v2가 앞으로도 production으로 새지 않음을 강제하는 가드 + DoD 고정"이다. 현재 브랜치에는
+그 0A gate-only 구현(`V2SandboxGate`, 두 configuration, content catalog, `v2-lab` route/middleware)만
+있고 v2 product leaf·schema·persistence는 없다. 이 해석을 계획의 전제로 삼는다.
 
 ### 0.2 티켓 본문의 path:line 인용 5건이 부정확 (내용은 유효)
 
@@ -114,8 +118,9 @@ v2 스택을 `docker-compose.production.yml`에 추가하면서 `true`를 주면
 `servers/<id>.env` 서버 정의 몫은 **별도 티켓으로 분리**하며 이 티켓에서 손대지 않는다
 (sibling은 별도 ownership·별도 PR·별도 승인 체계).
 
-→ sibling 리포용 후속 티켓 [OPENSAM-177](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-177)을
-생성해 OPENSAM-35와 `Relates`로 연결했다. sibling 변경·배포는 이 티켓에서 수행하지 않는다.
+→ sibling 리포용 연결 consumer 티켓 [OPENSAM-177](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-177)로
+분리했다. shared account/JWT/profile live integration과 sibling 변경·release·deploy는 이 티켓에서
+수행하지 않았고 완료로 주장하지 않는다.
 
 ---
 
@@ -311,11 +316,17 @@ HTML 셸이 flush된 **뒤에** `notFound()`가 해소되기 때문이다. 바�
 관측할 것을 요구했다. 함께 요구: `process.env.V2_ENABLED`가 middleware에서 **런타임에 읽히는지**
 (빌드 타임 인라인이면 같은 이미지로 v1/v2 스택을 나눌 수 없어 S5 설계에 직접 영향).
 
-#### S3-b 최종 결과 (2026-08-08) — **프론트 층 충족, M2는 부분 충족**
+#### S3-b stage 결과 (2026-08-08) — **프론트 층 충족, M2는 부분 충족**
 
 증거: `docs/loops/opensam-35-v2-0a-2026-08-08/s3b-v2lab-route.md`.
-`pnpm typecheck` 오류 0 · `pnpm test` **54 files / 284 tests 전부 통과**(기존 274 + 신규 13,
-기존 `middleware.test.ts` 8종 무수정 통과 = 회귀 0).
+이 stage transcript는 `pnpm typecheck` 오류 0 · `pnpm test` **54 files / 284 tests**를 기록한다.
+이는 이후 테스트가 더 추가되기 전의 단계 기록이며 final record가 아니다. A4 XML/log의
+post-remediation historical 값은 `v2-lab route` 17 tests, `middleware` 8 tests, 합계 **54 files / 288 tests**다.
+The historical A4 value is not reused as current frontend acceptance. A later direct-pnpm frontend typecheck is
+green and Vitest JSON reports 132 suites / 288 tests / 0 failures. The current dirty-tree backend gate then ran
+once with Java 21 `--rerun-tasks` (601 suites / 5,050 tests / failures·errors 0); independent dirty-tree review
+is cleared (no findings; fingerprint `3c1b357c…`). Post-commit exact-SHA review/CI remain before any separately
+authorized release action.
 
 **우회 구멍 폐쇄 실측.** 동일 빌드(`BUILD_ID=V75C2XFKp2JmjIY6b1Qt2`), 양 run `SERVER_ID=pep`:
 
@@ -473,7 +484,11 @@ nginx 없이 standalone 포트 직접 호출도 동일 ⇒ **nginx가 상태코�
 
 ### S6. 0A-g 기준선 artifact + 게이트 + 리뷰
 
-- artifact 4종(v1 schema dump · seed hash · PHP golden · backend/web gate)을 M3 규약대로 저장.
+- artifact 4종(v1 schema dump · seed hash · PHP golden inventory · backend/web gate)을 M3 규약대로 저장.
+  A3은 T1/parity diff 및 golden inventory의 **scope/inventory proof**다. PHP capture 또는
+  draw-for-draw replay가 실행·통과했다는 claim이 아니며 A4 backend gate를 대체하지 않는다.
+  이 isolation/build-only ticket은 T1/parity code를 바꾸지 않았으므로 replay가 acceptance가 아니다.
+  후속 T1/parity 변경 ticket은 별도의 PHP capture/replay를 수행해야 한다.
 - 게이트 ①~③·⑤ 전량 실행. **diff 게이트는 아래 §4-1의 정본 명령만 쓴다** —
   wildcard pathspec과 기준선 두 가지 결함이 실제로 있었다(§4-1).
   - ① `tools/parity/gate.sh backend` — 출력 tail + XML로 판정(exit code 금지)
@@ -481,7 +496,9 @@ nginx 없이 standalone 포트 직접 호출도 동일 ⇒ **nginx가 상태코�
   - ③ T2 diff = 티켓 본문 사전 선언 목록(= 공집합)과 **정확히 일치**(초과 = 위반)
   - ⑤ 설정 리소스 무수정 — 빈 출력
 - `web/game` `pnpm typecheck && pnpm test`.
-- **외부 fresh reviewer** 독립 적대적 리뷰(GATE-f) → `cleared` 필요.
+- PR #370 Round 1의 23개 disposition 및 source remediation은 dirty-tree independent review에서
+  `cleared`되었다(no findings; fingerprint `3c1b357c…`). 이는 exact reviewer-inspected dirty tree에만
+  적용되며, post-commit **exact-SHA** 외부 fresh reviewer와 PR CI가 release condition으로 남는다.
 
 ---
 
@@ -503,7 +520,10 @@ S1~S6의 산출물은 전부 신규 파일이다:
 | S5 | `docker-compose.v2-sandbox.yml` · `v2-sandbox.env.example` · `infra/nginx/shared-gateway-relay.conf.template` | 신규(T2 아님) |
 | S6 | `docs/loops/**` artifact | 신규(T2 아님) + `tools/parity/gate.sh` 기존 파일 수정(gateway-api 실행·XML 채점 포함) |
 
-따라서 게이트 ③의 기대값은 **빈 출력**이다. 명령 정본은 §4-1에 있다.
+따라서 원 구현의 게이트 ③ 기대값은 **빈 출력**이다. 명령 정본은 §4-1에 있다. PR #370 Round 1의
+uncommitted source remediation은 이 historical inventory에 자동으로 들어가지 않는다. source owner가
+완료한 뒤 canonical command로 live diff를 다시 판정하고, 초과 변경은 ownership/approval 없이 통과로
+기록하지 않는다.
 
 이 목록이 비지 않으면 **초과 = 위반**이다. 어느 단계에서든 T2 기존 파일 수정이
 불가피해지면 **구현을 멈추고** 이 절을 개정해 사람 승인을 받은 뒤에만 진행한다.
@@ -532,8 +552,8 @@ GATE-f 적대적 리뷰가 잡고 실측으로 재현한 **blocker 2건**. 개�
 → 와일드카드가 든 pathspec은 **반드시 `:(glob)` 접두 + `/**` 접미**로 쓴다.
 wildcard 없는 `infra/...` 세그먼트와 게이트 ②는 영향 없었다.
 
-**결함 2 — 기준선 드리프트.** `origin/main`은 이 브랜치 분기 후 전진했다
-(`fb90eac1` → `ad0c8c53`). `origin/main` 기준으로 재면 이 브랜치가 건드린 적 없는
+**결함 2 — 기준선 드리프트.** `origin/main`은 이 브랜치 분기 후 전진했다.
+`origin/main` 기준으로 재면 이 브랜치가 건드린 적 없는
 타 세션 커밋(`DatabaseHooks.kt` M, `FlushPayloadConvergenceTest.kt` D)이 섞여
 **거짓 T1/T2 위반**이 뜬다. 기준선은 **merge-base 고정**이다.
 
@@ -558,13 +578,16 @@ git diff --name-only --diff-filter=MD "$MB" -- \
 git diff --name-only --diff-filter=MD "$MB" -- \
   docker-compose.production.yml docker-compose.yml tools/agent-system/check.py
 
-# 전체 M/D — 기대: .ai/* 4개 + game-engine build input + middleware + backend gate
+# 전체 M/D — live output은 PR Round 1 source/doc remediation 뒤 재검토한다
 git diff --name-only --diff-filter=MD "$MB"
 ```
 
-**개정 후 재측정 결과(2026-08-08, `MB=fb90eac1`): ②③⑤ 전부 빈 출력,
-전체 M/D = `.ai/current-state.md` · `.ai/decisions.md` · `.ai/ownership.md` · `.ai/task.md` ·
-`app/game-engine/build.gradle.kts` · `tools/parity/gate.sh` · `web/game/middleware.ts`.**
+**historical remeasurement result (2026-08-08, old `MB=fb90eac1`):** ②③⑤는 당시 빈 출력이었고,
+전체 M/D는 `.ai/current-state.md` · `.ai/decisions.md` · `.ai/ownership.md` · `.ai/task.md` ·
+`app/game-engine/build.gradle.kts` · `tools/parity/gate.sh` · `web/game/middleware.ts`였다.
+현재 canonical base는 `b847c351ff7f574c744e1f4f3da7c0410a1cbe38`이며, 이 문서의 current result는
+S6 §15.2의 merge-base glob remeasurement가 정본이다. historical result를 current exact-SHA pass로
+승격하지 않는다.
 `build.gradle.kts` 수정은 cross-module naming guard가 읽는 6개 raw source root를 Gradle test input으로
 등록해 UP-TO-DATE false-green을 막는다. `gate.sh` 수정은 S4 후속 gateway-api
 아키텍처 테스트가 표준 backend 게이트에서 실제 실행되고 XML 채점되도록 하는 게이트 자체의
@@ -590,7 +613,7 @@ git diff --name-only --diff-filter=MD "$MB"
    "오탐만 늘리므로 만들지 않았다"고 단정했는데 측정한 적이 없었고, 실측하면 거짓이다.
    2026-08-08 실측:
 
-   ```
+   ```text
    $ grep -rn "class V2\|object V2\|interface V2" app infra common logic --include="*.kt" | grep /src/main/
    app/game-api/src/main/kotlin/opensamguk/gameapi/v2/V2SandboxConfiguration.kt:26:class V2SandboxConfiguration {
    app/game-engine/src/main/kotlin/opensamguk/engine/v2/V2SandboxConfiguration.kt:29:class V2SandboxConfiguration {
@@ -625,7 +648,7 @@ git diff --name-only --diff-filter=MD "$MB"
 
 1. **`.ai/task.md` 계약 갱신** — 현재 계약은 OPENSAM-34다. OPENSAM-35 계약으로 교체 승인.
 2. **`.ai/ownership.md` foundation owner 1행 등록** — compose·공용 스키마는 fence 대상이라
-   (`ownership.md:117`) 소유자 등록 전 read-only다.
+   ([Shared-file ownership fence](../../../.ai/ownership.md#shared-file-ownership-fence)) 소유자 등록 전 read-only다.
 3. ~~C1·C2~~ — **2026-08-08 결정 완료** (§2 참조).
 4. **M1·M2·M3 확정** (문서 미명시 3건) — 계획 채택과 함께 승인 대상.
 5. 커밋·푸시·PR·머지·배포는 각각 별도 승인. 골든/테스트 약화, legacy 쓰기, `.env*` 접근 금지.

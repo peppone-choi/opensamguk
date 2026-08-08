@@ -2,14 +2,20 @@
 
 ## 2026-08-08 — OPENSAM-35 V2-0A production 격리 게이트 (활성 계약)
 
-- Status: 계획 채택됨(사용자 승인 2026-08-08), S0~S6 연속 실행 중. 계획 정본:
+- Status: 계획 채택됨(사용자 승인 2026-08-08), S0~S6 구현과 PR #370 Round 1 remediation은 완료됐다.
+  independent dirty-tree re-review는 no findings로 `cleared`(fingerprint `3c1b357c…`)지만, 이 결과는
+  exact reviewer-inspected dirty tree에만 적용된다. post-commit exact-SHA review·PR CI와
+  merge/release/deploy/production 관측은 미수행이다. 계획 정본:
   `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md`.
 - User request (verbatim): "OPENSAM-35" / "채택 + S6까지 연속 실행".
 - Goal: v2 코드가 production으로 새지 않음을 강제하는 격리 게이트 0A-a~g 7항목 +
   ADR-LITE-021이 귀속시킨 DoD 3항목을 닫는다. 이 티켓은 **확장점 개설이 아니라 격리**다
   (`round3-proposal-city-guanxi.md:459` — "7항목 전부가 격리이고 확장점 개설은 하나도 없다").
 - 착수 전 확정 사실:
-  - **v2 런타임 코드는 리포에 0건**이다. 0A는 greenfield이며 0A-e는 뺄 대상이 없다.
+  - **구현 전 baseline에서** v2 런타임 코드는 리포에 0건이었다. 현재는 이 계약이
+    의도한 isolation-only gate(`V2SandboxGate`, 두 configuration, content catalog,
+    `v2-lab` route/middleware)만 존재한다. v2 product leaf·schema·persistence는 이
+    티켓에 없고 OPENSAM-150로 남는다. 따라서 0A-e는 baseline에 뺄 대상이 없었다.
   - 티켓 본문의 path:line 인용 5건이 부정확하다(내용은 유효). 정정표는 계획서 §0.2.
   - U12는 "선례 없음"이 확정됐다 — 양쪽 `application.yml:14`가 `classpath:db/migration`
     하드코딩이고 리포 전역에 `SPRING_FLYWAY_LOCATIONS` 오버라이드 선례가 없다.
@@ -20,7 +26,9 @@
     `docker-compose.production.yml`은 무수정이고 `SCENARIO_SEED_ENABLED=false` strict
     불변식(`coding-rules.md:12`)을 유지하며 `tools/agent-system/check.py`는 수정하지 않는다.
   - **C2** — 0A-e 범위는 **이 리포로 한정**한다. sibling `opensamguk-docker`의
-    `servers/<id>.env` 몫은 별도 티켓으로 분리한다.
+    `servers/<id>.env` 및 shared account/JWT/profile live-integration 몫은 연결된
+    OPENSAM-177 consumer 티켓으로 분리한다. OPENSAM-35는 그 티켓을 실행·release·deploy하지
+    않으며, OPENSAM-177도 완료/배포로 주장하지 않는다.
 - 실행 단계: S0 U12 실측 → S1 0A-c Flyway location 분리 → S2 0A-b 조건부 빈 게이트 →
   S3 0A-d catalog + 0A-a route → S4 0A-f 실측 아키텍처 테스트 → S5 v2 스택 env 분리 →
   S6 0A-g artifact + 게이트 + 독립 리뷰. 상세 판정 기준은 계획서 §3.
@@ -30,12 +38,29 @@
   계획서 §4에 기입하며, 그 뒤 초과 편집은 게이트 ③ 위반이다.
 - Acceptance evidence:
   - 게이트 ① `tools/parity/gate.sh backend` (출력 tail + XML, exit code 금지)
-  - 게이트 ② T1 diff 0 · 게이트 ③ T2 diff = 사전 선언과 정확히 일치 · 게이트 ⑤ 설정 리소스 diff 0
+  - 게이트 ② T1 diff 0 · 게이트 ③ T2 diff = 사전 선언과 정확히 일치 · 게이트 ⑤ 설정 리소스 diff 0.
+    모든 diff evidence는 `MB=$(git merge-base HEAD origin/main)`와 `:(glob)…/**` pathspec으로
+    다시 측정한다. 이전 `git diff origin/main -- 'dir/'` transcript는 evidence가 아니다.
   - 0A-f가 v1 프로세스 컨텍스트를 **실제로 띄워** v2 빈 0개를 실측(정적 스캔 대체 불가)
   - v2 스택 부팅 후 v2 전용 probe 이벤트 행 존재 + v1 기본 이벤트 12행 **미적재**를 DB로 실측.
     실제 v2 leaf 행은 OPENSAM-150의 필수 수용 기준으로 이관(ADR-LITE-029)
   - `web/game` `pnpm typecheck && pnpm test`
-  - 외부 fresh reviewer 독립 적대적 리뷰 `cleared` (GATE-f)
+  - **A3의 의미 한정:** PHP golden inventory와 T1/parity diff 0은 scope/inventory proof일 뿐
+    PHP capture 또는 draw-for-draw replay가 실행·통과했다는 주장이 아니다. 이 isolation/build-only
+    티켓은 T1/parity code를 바꾸지 않으므로 PHP replay를 acceptance로 요구하지 않는다. 이후
+    T1/parity 변경 티켓은 별도 capture/replay를 수행해야 하며, A3는 A4 backend gate를 대체하지 않는다.
+  - PR #370의 23개 Round 1 disposition은 source remediation/full backend evidence와 함께 all
+    resolved/dispositioned이며, **current dirty-tree** independent re-review는 `cleared`다
+    (no findings; fingerprint `3c1b357c…`). 이는 post-commit exact-SHA review 또는 PR CI를 대체하지 않는다.
+  - current backend evidence는 Java 21 `tools/parity/gate.sh backend`의 `--rerun-tasks` six-root
+    **one run / no retry** 결과다: `BUILD SUCCESSFUL in 12m 35s`, 35 actionable tasks, XML 601 suites /
+    5,050 tests / failures 0 / errors 0 / skipped 1; full-log SHA256
+    `a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1`. historical A4 599/5,023과
+    2026-08-08 forced four-root subset 286/1,652는 더 이른 기록이며 full current backend evidence가 아니다.
+    같은 verifier의 frontend dependency absence(`tsc: command not found`)는 historical failure이고,
+    later direct-pnpm typecheck는 green이며 Vitest JSON은 132 suites / 288 tests / failures 0이다.
+    Compose required `JWT_SECRET` 오류는 fail-closed failure이고 syntax pass가 아니다. 현재 backend evidence는
+    post-commit exact-SHA review 또는 PR CI를 대체하지 않는다.
 - Human approval checkpoints: 커밋·푸시·PR·머지·배포는 각각 별도 승인. 골든/테스트 약화,
   legacy 쓰기, `.env*`·secret 접근, 데이터 삭제, production 접근은 금지.
 - Non-goals: v2 파이프라인 seam 개설(오픈 후 P0), OPENSAM-150 `v2_city_ledger` 스키마,

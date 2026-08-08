@@ -1,12 +1,13 @@
-tools/parity/gate.sh backend — Gradle test XML summary (2026-08-08, fresh post-remediation run)
+tools/parity/gate.sh backend — Gradle test XML summary (2026-08-08 PR #370 Round 1,
+one Java 21 forced run; no retry; independent dirty-tree review still pending)
 module              suites   tests  fail   err  skip
 common                  38     225     0     0     0
 logic                  277    3173     0     0     0
 infra                   55     226     0     0     0
-app/game-engine        130     772     0     0     1
+app/game-engine        132     799     0     0     1
 app/game-api            72     468     0     0     0
 app/gateway-api         27     159     0     0     0
-TOTAL                  599    5023     0     0     1
+TOTAL                  601    5050     0     0     1
 
 suites with failures/errors: NONE
 skipped: [('opensamguk.engine.golden.LongSimReplayGateTest', '1')]

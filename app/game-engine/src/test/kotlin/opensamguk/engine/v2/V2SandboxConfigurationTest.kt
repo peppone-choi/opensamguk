@@ -8,10 +8,10 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.core.env.SystemEnvironmentPropertySource
 
 /**
- * OPENSAM-35 0A-b — 게이트 4조합 실측.
+ * OPENSAM-35 0A-b — executable coverage of the four gate combinations.
  *
- * DB가 필요 없는 [ApplicationContextRunner]로 조건 평가만 잰다. Testcontainers 풀 컨텍스트에서
- * v1 프로세스의 v2 빈 0개를 실측하는 것은 S4(0A-f)의 몫이라 여기서 중복하지 않는다.
+ * It uses [ApplicationContextRunner] to measure condition evaluation without a database. S4 (0A-f) measures
+ * zero v2 beans in a full Testcontainers v1-process context, so that work is not duplicated here.
  */
 class V2SandboxConfigurationTest {
     private val runner = ApplicationContextRunner()
@@ -53,9 +53,9 @@ class V2SandboxConfigurationTest {
     }
 
     /**
-     * `@ConditionalOnProperty`의 값 비교가 대소문자 무시(`equalsIgnoreCase`)임을 실측으로 고정한다.
-     * 프론트 게이트(`web/game/middleware.ts`)는 `=== 'true'` strict라 이 비대칭은 의도된 것이다 —
-     * 근거는 `web/game/app/game/v2-lab/layout.tsx` 주석.
+     * Proves that `@ConditionalOnProperty` compares values case-insensitively (`equalsIgnoreCase`). The frontend
+     * gate (`web/game/middleware.ts`) uses strict `=== 'true'`; the asymmetry is intentional and documented in
+     * `web/game/app/game/v2-lab/layout.tsx`.
      */
     @Test
     fun `property value is matched case-insensitively`() {
@@ -68,9 +68,9 @@ class V2SandboxConfigurationTest {
     }
 
     /**
-     * env `V2_ENABLED` ↔ 프로퍼티 키 `v2.enabled` 대응을 기억이 아니라 실측으로 고정한다.
-     * Spring의 [SystemEnvironmentPropertySource]가 relaxed binding을 수행하므로 실제 OS 환경변수
-     * 없이도 같은 매핑을 잰다.
+     * Proves the mapping from env `V2_ENABLED` to property key `v2.enabled` rather than relying on memory.
+     * [SystemEnvironmentPropertySource] performs Spring relaxed binding, so the same mapping is measured without
+     * a real operating-system environment variable.
      */
     @Test
     fun `V2_ENABLED env var maps onto the gate property`() {

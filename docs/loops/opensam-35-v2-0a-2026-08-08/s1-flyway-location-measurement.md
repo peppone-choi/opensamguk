@@ -78,7 +78,7 @@ v1 location의 **하위**인 `db/migration/v2/`에 둔 V901이 그대로 적용�
 
 부팅 로그:
 
-```
+```text
 o.f.core.internal.command.DbMigrate : Migrating schema "public" to version "38 - rtk14 npc lifecycle repair"
 o.f.core.internal.command.DbMigrate : Migrating schema "public" to version "901 - s1 probe nested"
 o.f.core.internal.command.DbMigrate : Successfully applied 39 migrations to schema "public", now at version v901 (execution time 00:01.919s)
@@ -86,7 +86,7 @@ o.f.core.internal.command.DbMigrate : Successfully applied 39 migrations to sche
 
 `flyway_schema_history` (39행, 말미):
 
-```
+```text
              36 | 36      | diplomacy casualties               | SQL  | t
              37 | 37      | general owner claim request        | SQL  | t
              38 | 38      | rtk14 npc lifecycle repair         | JDBC | t
@@ -96,7 +96,7 @@ o.f.core.internal.command.DbMigrate : Successfully applied 39 migrations to sche
 
 프로브 테이블 실재:
 
-```
+```text
  Schema |      Name       | Type  | Owner
 --------+-----------------+-------+-------
  public | s1_probe_nested | table | sammo
@@ -115,12 +115,12 @@ V901(하위 프로브)을 제거하고 재빌드해 하위 경로 오염 없이 
 
 ### Run 2 — v1 컨텍스트 (`SPRING_FLYWAY_LOCATIONS` 미설정), fresh `sammo_v1b`
 
-```
+```text
 o.f.core.internal.command.DbMigrate : Successfully applied 38 migrations to schema "public", now at version v38 (execution time 00:02.721s)
 o.engine.GameEngineApplicationKt    : Started GameEngineApplicationKt in 36.556 seconds
 ```
 
-```
+```text
  count
 -------
     38
@@ -140,7 +140,7 @@ Did not find any relation named "s1_probe*".
 
 ### Run 3 — v2 컨텍스트 (`classpath:db/migration,classpath:db/migration_v2`), fresh `sammo_v2`
 
-```
+```text
 o.f.core.internal.command.DbMigrate : Migrating schema "public" to version "10.5 - s1 probe ooo"
 o.f.core.internal.command.DbMigrate : Migrating schema "public" to version "902 - s1 probe sibling"
 o.f.core.internal.command.DbMigrate : Successfully applied 40 migrations to schema "public", now at version v902 (execution time 00:05.481s)
@@ -148,7 +148,7 @@ o.f.core.internal.command.DbMigrate : Successfully applied 40 migrations to sche
 
 `flyway_schema_history` 전문 (40행):
 
-```
+```text
  installed_rank | version |            description             | type | success
 ----------------+---------+------------------------------------+------+---------
               1 | 1       | baseline                           | SQL  | t
@@ -216,7 +216,7 @@ unzip -l infra.jar | grep -E 'db/migration/v2|db/migration_v2'
 
 Run 1 빌드(하위+형제 둘 다):
 
-```
+```text
         0  08-08-2026 09:09   db/migration/v2/
        50  08-08-2026 09:09   db/migration/v2/V901__s1_probe_nested.sql
         0  08-08-2026 09:09   db/migration_v2/
@@ -225,7 +225,7 @@ Run 1 빌드(하위+형제 둘 다):
 
 Run 2·3 빌드(형제만):
 
-```
+```text
         0  08-08-2026 09:12   db/migration_v2/
        51  08-08-2026 09:12   db/migration_v2/V902__s1_probe_sibling.sql
        47  08-08-2026 09:12   db/migration_v2/V10_5__s1_probe_ooo.sql
@@ -252,7 +252,7 @@ Run 2·3 빌드(형제만):
 **(b) 같은 DB를 공유할 때 out-of-order 버전은 fail-closed로 부팅을 깨뜨린다.**
 Run 4 — 이미 V38까지 적용된 `sammo_v1b`에 v2 location(V10_5 포함)을 붙여 부팅:
 
-```
+```text
 Detected resolved migration not applied to database: 10.5.
 ERROR o.s.boot.SpringApplication : Application run failed
 ... BeanCreationException: Error creating bean with name 'flywayInitializer' ...:
@@ -260,7 +260,7 @@ ERROR o.s.boot.SpringApplication : Application run failed
 Caused by: org.flywaydb.core.api.exception.FlywayValidateException: Validate failed: Migrations have failed validation
 ```
 
-```
+```text
  count
 -------
     38
@@ -274,13 +274,13 @@ DB 무변경(38행 유지), 프로브 테이블 0개. **조용히 깨지지 않�
 **(c) 기존 최고 버전보다 큰 번호는 정상 append 된다.**
 같은 `sammo_v1b`에 V902만(`filesystem:`) 붙여 부팅:
 
-```
+```text
 o.f.core.internal.command.DbMigrate : Migrating schema "public" to version "902 - s1 probe sibling"
 o.f.core.internal.command.DbMigrate : Successfully applied 1 migration to schema "public", now at version v902 (execution time 00:00.021s)
 o.engine.GameEngineApplicationKt    : Started GameEngineApplicationKt in 16.3 seconds
 ```
 
-```
+```text
  installed_rank | version |         description
 ----------------+---------+-----------------------------
              39 | 902     | s1 probe sibling
@@ -290,7 +290,7 @@ o.engine.GameEngineApplicationKt    : Started GameEngineApplicationKt in 16.3 se
 **(d) ⚠️ 역방향은 조용히 통과한다 — 유일한 silent 경로.**
 V902가 기록된 `sammo_v1b`에 **v1 프로세스**(env 미설정)를 붙이면 경고만 남기고 정상 부팅한다:
 
-```
+```text
 WARN o.f.core.internal.command.DbMigrate : Schema "public" has a version (902) that is newer than the latest available migration (38) !
 INFO o.engine.GameEngineApplicationKt    : Started GameEngineApplicationKt in 16.844 seconds
 ```
@@ -325,16 +325,22 @@ Flyway는 이 방향으로는 게이트가 아니다.)
 5. **실제 v2 마이그레이션 내용.** 본 S1은 프로브만 썼다. `v2_city_ledger` 등 실제 스키마는
    OPENSAM-150 소관이며 지금 만들면 날조다.
 
-## 정리 (측정 후)
+## 정리 (측정 후) / deletion authorization boundary
 
-```bash
-pkill -f game-engine-0.0.1-SNAPSHOT.jar
-docker rm -f s1pg s1redis
-git worktree remove --force <scratch>/wt
+이전 measurement write-up은 scratch containers/worktree가 정리됐다고 기록하지만, 이 artifact에는
+별도의 target-specific deletion approval record가 없다. 따라서 아래 destructive cleanup은 **BLOCKED**다:
+명시적 별도 삭제 승인 없이는 실행·반복·재현 명령으로 사용하면 안 된다.
+
+```text
+# BLOCKED — do not run without separately approved exact targets
+# pkill -f game-engine-0.0.1-SNAPSHOT.jar
+# docker rm -f s1pg s1redis
+# git worktree remove --force <scratch>/wt
 ```
 
-프로브 마이그레이션 3종은 격리 worktree에만 존재했고 worktree와 함께 제거됐다.
-리포에 남는 것은 이 문서와 `infra/src/main/resources/db/migration_v2/README.md` 두 개뿐이다.
+프로브 마이그레이션이 당시 격리 worktree에만 있었다는 것은 historical inventory이며, 위 문장을
+current deletion authorization으로 해석하지 않는다. 리포에 남는 intended artifact는 이 문서와
+`infra/src/main/resources/db/migration_v2/README.md`다.
 
 ## 재현 명령
 
@@ -364,8 +370,10 @@ env -i PATH=/usr/bin:/bin JAVA_HOME=$(/usr/libexec/java_home -v 21) \
 docker exec s1pg psql -U sammo -d sammo_v1 \
   -c "select installed_rank, version, description, type, success from flyway_schema_history order by installed_rank;"
 
-# U2 — 하위 프로브 제거 후 재빌드, v1/v2 두 컨텍스트 비교
-rm -rf $S/wt/infra/src/main/resources/db/migration/v2
+# U2 — destructive removal is BLOCKED unless separately approved for this exact scratch target.
+# Do not copy/run without that approval:
+# rm -rf $S/wt/infra/src/main/resources/db/migration/v2
+# After an approved scratch cleanup, rebuild and compare v1/v2 contexts.
 printf 'CREATE TABLE s1_probe_ooo(id int primary key);\n' > $S/wt/infra/src/main/resources/db/migration_v2/V10_5__s1_probe_ooo.sql
 (cd $S/wt && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:bootJar)
 #   → sammo_v1b 에 env 미설정으로 1회, sammo_v2 에
@@ -389,3 +397,10 @@ unzip -l $S/infra.jar | grep -E 'db/migration/v2|db/migration_v2'
 - S5의 `GAME_DATABASE_URL` 분리는 U4 (d)의 silent 경로 때문에 **더 강한 요구사항이 된다** —
   Flyway는 v1 스택이 v2 스키마 DB에 붙는 것을 막아주지 않는다(WARN만).
 - 버전 번호 정책은 **미확정**. §U4의 P1/P2/P3 중 사람이 택한다.
+
+## PHP golden scope boundary
+
+This Flyway-location measurement is isolation/build-only evidence. It did not run and does not claim a PHP
+golden capture/draw-for-draw replay: T1/parity behavior is unchanged. A3 records only that scope/inventory;
+it is not a replay pass and does not replace the current backend gate. A future ticket that changes T1/parity
+must run the relevant PHP oracle capture/replay.

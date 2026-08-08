@@ -2,16 +2,21 @@
 
 병렬 에이전트(Claude Code, Codex, Gemini 등)의 파일 소유권 등록부. 규칙은 `docs/agent/collaboration-protocol.md`가 정본.
 
+## Shared-file ownership fence
+
+표에 없는 공유 파일(특히 compose/nginx, 공용 catalog/runtime schema, `.ai/*`)은 사전 조정 후
+foundation owner 한 명을 정하기 전까지 read-only다. 행 번호가 아니라 이 heading을 참조한다.
+
 ## OPENSAM-35 V2-0A 격리 게이트 lane — 2026-08-08 (활성)
 
-`ownership.md:117` fence("표에 없는 공유 파일(특히 compose/nginx, 공용 catalog/runtime schema,
-`.ai/*`)은 사전 조정 후 foundation owner 한 명을 정하기 전까지 read-only")에 따라
-foundation owner 1명을 등록한다. OPENSAM-35는 compose·Flyway location·조건부 빈 게이팅 등
+[`Shared-file ownership fence`](#shared-file-ownership-fence)에 따라 foundation owner 1명을
+등록한다. OPENSAM-35는 compose·Flyway location·조건부 빈 게이팅 등
 공유 확장점을 신설하므로 **병렬 소유 금지, foundation-first 순차**다.
 
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
-| `claude-opensam-35-v2-0a` | OPENSAM-35 V2-0A production 격리 게이트 (0A-a~g + ADR-LITE-021 DoD 3항목) — foundation owner | `codex/op-35-v2-0a-final` (`origin/main` `b847c351` 기반 재구성) | 계획·루프·review·`.ai/{task,current-state,decisions,ownership}.md`; 신규 v2 stack/Flyway/content/route/configuration/tests; 기존 파일 `web/game/middleware.ts`(하드 404)·`tools/parity/gate.sh`(root별 XML 채점)·`app/game-engine/build.gradle.kts`(cross-module naming source inputs). **T2 사전선언 = 공집합**(계획서 §4) | active — S0~S6 구현, false-green 3건 remediation targeted green, fresh broad gate green, independent final re-review `cleared`. latest-main 단일 커밋 재구성 완료; PR 리뷰 3라운드·머지 진행 중. 배포 미실행. **T1 수정·삭제 0건.** production compose·`application.yml`·`tools/agent-system/check.py` 무수정 | 2026-08-08 |
+| `claude-opensam-35-v2-0a` | OPENSAM-35 V2-0A production 격리 게이트 (0A-a~g + ADR-LITE-021 DoD 3항목) — foundation owner | `codex/op-35-v2-0a-final` (`origin/main` `b847c351` 기반 재구성) | 신규 v2 stack/Flyway/content/route/configuration/tests; 기존 파일 `web/game/middleware.ts`(하드 404)·`tools/parity/gate.sh`(root별 XML 채점)·`app/game-engine/build.gradle.kts`(cross-module naming source inputs). **T2 사전선언 = 공집합**(계획서 §4) | active — S0~S6 구현 및 PR #370 Round 1 source remediation은 observed resolved. Java 21 `--rerun-tasks` full backend one-run/no-retry is 601 suites / 5,050 tests / failures·errors 0 (A4 log SHA256 `a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1`). Independent dirty-tree re-review is `cleared`, no findings (fingerprint `3c1b357c…`), exact dirty-tree only; post-commit exact-SHA review/CI and release/merge/deploy와 sibling OPENSAM-177 실행은 미수행. **T1 수정·삭제 0건.** production compose·`application.yml`·`tools/agent-system/check.py` 무수정 | 2026-08-08 |
+| `codex-op35-round1-docs` | PR #370 Round 1 문서·증거·상태 remediation | `codex/op-35-v2-0a-final` | `.ai/{current-state,task,ownership}.md`; `docs/loops/opensam-35-v2-0a-2026-08-08/**`; OPENSAM-35 isolation plan and review artifact | active — 23-thread ledger all resolved/dispositioned; canonical diff evidence, baseline provenance, and release/deploy boundary recorded. Independent dirty-tree review is `cleared` (no findings; fingerprint `3c1b357c…`) for that exact worktree only; post-commit exact-SHA review/CI remains | 2026-08-08 |
 
 ## v1 비운영 폐쇄 lane release — 2026-07-29
 

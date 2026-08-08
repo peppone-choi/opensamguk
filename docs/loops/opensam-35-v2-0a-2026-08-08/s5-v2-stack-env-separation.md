@@ -153,7 +153,7 @@ S5가 측정한 것은 일회성 프로브 시나리오(§2.2)가 준 이벤트�
 동일 `game-engine` 이미지 1개(`docker/game-engine.Dockerfile` 빌드)를 두 스택이 공유한다 —
 차이는 **env뿐**이다(S3-b가 프론트에서 증명한 성질을 백엔드에서도 유지).
 
-```
+```text
 # v2:  docker compose -f docker-compose.v2-sandbox.yml up -d --no-build postgres redis game-engine
 # v1:  docker compose -p opensamguk-s5-v1 -f docker-compose.yml up -d --no-build postgres redis game-engine
 #      (v1은 SCENARIO_HOST_DIR을 빈 디렉터리로 두어 classpath scenario_1010으로 폴백)
@@ -161,7 +161,7 @@ S5가 측정한 것은 일회성 프로브 시나리오(§2.2)가 준 이벤트�
 
 부팅: v2 `health=healthy` (t=40s 이후 재실행에서 정상), v1 `health=healthy` (t=80s).
 
-```
+```text
 v2: Seeding fresh world 'scenario_9001' — map=che nations=2 generals=678 cities=94 turnTerm=60
     Scenario seed complete — world_state=1 … event=79
 v1: Seeding fresh world 'scenario_1010' — map=che nations=2 generals=678 cities=94 turnTerm=60
@@ -202,7 +202,7 @@ SELECT count(*) AS event_rows_total FROM event;
 
 `event` 분포 원문:
 
-```
+```text
 v1                                    v2
  target_code    | priority | count     target_code | priority | count
  Month          |     1000 |    77     Month       |     1000 |    77
@@ -235,7 +235,7 @@ S3-b가 남긴 구속 요구: `next start`가 아니라 **실제 배포 형태**
 
 ### 3.1 standalone임을 먼저 확인
 
-```
+```text
 $ docker inspect -f '{{.Config.Cmd}}' opensamguk-v2-web-game
 [node server.js]                    # docker/web-game.Dockerfile 최종 CMD = standalone 서버
 $ docker exec opensamguk-v2-web-game printenv V2_ENABLED SERVER_ID
@@ -274,7 +274,7 @@ nginx 없이 standalone 포트 직접(v1 `:53003`, v2 `:53001`)도 동일: `/gam
 
 ### 3.3 콘텐츠 유출 0건
 
-```
+```text
 v1 /game/v2-lab      leak_hits=0  body_bytes=0
 v1 /game/pep/v2-lab  leak_hits=0  body_bytes=0
 v2 /game/v2-lab      → "v2 실험 네임스페이스"
@@ -309,21 +309,27 @@ ADR-LITE-029가 실제 v2 leaf를 OPENSAM-150의 수용 기준으로 이관했�
 
 ---
 
-## 5. 정리(cleanup)
+## 5. 정리(cleanup) / deletion authorization boundary
 
-```
-$ docker compose -f docker-compose.v2-sandbox.yml down -v        # v2 리소스만; external shared network/volume은 보존
-$ docker compose -p opensamguk-s5-v1 -f docker-compose.yml down -v   # v1 스택 + 볼륨
-$ docker rmi (측정용 이미지 10 태그)
-$ docker ps -a --format '{{.Names}}\t{{.Status}}' | grep opensamguk   # 무출력
+The original S5 write-up recorded cleanup, but this artifact contains no separately approved target-specific
+deletion authorization. Therefore no destructive cleanup may be run or repeated from this document.
+
+```text
+# BLOCKED — do not run without separate explicit approval for exact targets
+# docker compose -f docker-compose.v2-sandbox.yml down -v
+# docker compose -p opensamguk-s5-v1 -f docker-compose.yml down -v
+# docker rmi <measurement-image-tags>
+# docker ps -a --format '{{.Names}}\t{{.Status}}' | grep opensamguk  # read-only inspection only
 ```
 
-- 위 원래 S5 측정의 컨테이너·볼륨·네트워크·측정용 이미지는 정리했다.
+- The historical statement that original measurement resources were cleaned is not approval provenance and
+  must not be interpreted as permission to delete current containers, volumes, networks, images, or worktrees.
 - 프로브 시나리오 `scenario_9001.json`은 스크래치패드에만 존재했고 리포에 **없다**
   (`git status --short`에 흔적 0건).
 - 비표준 v2 포트만 썼다(55432/55433/56379/56380/58081/58082/53000-53003/58090/58091) — 표준 포트 미점유.
-- ADR-LITE-023 보정은 `docker compose config`와 relay nginx template syntax check만 실행했다. 컨테이너·DB·볼륨을
-  새로 만들지 않았고, checkout·stash·커밋·푸시도 하지 않았다.
+- ADR-LITE-023 보정은 complete non-secret placeholder input의 `docker compose config --format json` render
+  assertion과 relay nginx template syntax check만 실행했다. Missing required variables는 fail-closed
+  failures이며 syntax-pass로 세지 않는다. 컨테이너·DB·볼륨을 새로 만들지 않았고, checkout·stash·커밋·푸시도 하지 않았다.
 
 ## 6. ADR-LITE-023 보정 게이트 출력
 
@@ -332,3 +338,9 @@ $ docker ps -a --format '{{.Names}}\t{{.Status}}' | grep opensamguk   # 무출�
 - temporary placeholder env의 render 및 필수 shared 입력 4종 unset mutation, relay alias/upstream assertion은 §1.5에 기록했다.
 - 이 보정에서는 스택을 기동하지 않았고 broad backend gate도 재실행하지 않았다. 이는 Compose interpolation과
   topology 계약만 바뀐 범위이며, one-account cross-world runtime gate와 full gate 재실행은 상위 작업의 책임이다.
+
+## 7. PHP golden scope boundary
+
+S5 validates Compose isolation/topology only. It neither ran nor claims a PHP golden capture/draw-for-draw replay;
+T1/parity behavior is unchanged. A3 is scope/inventory proof, not replay evidence or a replacement for A4/current
+backend verification. Any ticket that changes T1/parity must run PHP oracle capture/replay separately.

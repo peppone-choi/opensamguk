@@ -6,22 +6,22 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 
 /**
- * OPENSAM-35 GATE-f2 F1 — 계획서 §4-2 규약 1(**v2 런타임 코드는 `opensamguk.*.v2.*` 패키지에 둔다**)의
- * 이름 휴리스틱 층. `V2ProductionContextBeanGateIT`의 누출 탐지는 빈의 **타입 이름에 `.v2.`가 들어
- * 있을 때만** 동작하므로, `opensamguk.engine.ledger.V2CityLedgerStore` 같은 선언은 게이트를 조용히
- * 빠져나간다. 이 테스트가 그 구멍의 이름-규약 절반을 소스 스캔으로 막는다.
+ * OPENSAM-35 GATE-f2 F1 — naming-heuristic layer for plan §4-2 convention 1: **v2 runtime code belongs in an
+ * `opensamguk.*.v2.*` package**. `V2ProductionContextBeanGateIT` detects leakage only when a bean's **type name
+ * contains `.v2.`**, so a declaration such as `opensamguk.engine.ledger.V2CityLedgerStore` can silently evade the
+ * gate. This source scan closes the naming-convention half of that gap.
  *
- * 실측(2026-08-08): `class|object|interface V2…` 선언은 main 소스 전체에서 6건이고 그중 5건은 이미
- * `opensamguk.*.v2.*`, 나머지 1건은 Flyway `V26__npc_lifecycle_phase_units`(`V2` 뒤가 숫자라 비대상).
- * 즉 오탐 0.
+ * Measurement (2026-08-08): there are six `class|object|interface V2…` declarations across main sources. Five
+ * are already in `opensamguk.*.v2.*`; the other is Flyway's `V26__npc_lifecycle_phase_units`, which is excluded
+ * because a digit follows `V2`. There are therefore zero false positives.
  *
- * **천장(정직하게):** 이건 이름 규약만 강제한다. `V2`로 시작하지 **않는** 이름의 v2 코드
- * (`SandboxCityLedger`, `LedgerV2Store` 등)는 여전히 못 잡는다 — 그건 리뷰가 잡아야 한다.
- * 또한 소스 텍스트 스캔이라 문자열 리터럴/주석 안의 같은 패턴은 구분하지 않는다(현재 0건).
+ * **Limit (intentional):** this enforces only the naming convention. v2 code with names that do **not** start
+ * with `V2` (for example, `SandboxCityLedger` or `LedgerV2Store`) remains a review concern. As a source-text scan,
+ * it also cannot distinguish the same pattern in a string literal or comment; there are currently none.
  */
 class V2NamingConventionGuardTest {
 
-    /** `class V2X` / `object V2X` / `interface V2X` — `V2` 뒤가 대문자인 선언만. 숫자 접미(`V26__`)는 비대상. */
+    /** `class V2X` / `object V2X` / `interface V2X`: only declarations with an uppercase letter after `V2`; `V26__` is excluded. */
     private val declaration = Regex("""\b(class|object|interface)\s+(V2[A-Z]\w*)""")
 
     private val scannedRoots = listOf(
@@ -33,7 +33,7 @@ class V2NamingConventionGuardTest {
         "logic/src/main/kotlin",
     )
 
-    /** 테스트 작업 디렉터리는 러너에 따라 모듈 루트 또는 프로젝트 루트다 — `settings.gradle.kts`까지 올라간다. */
+    /** The test working directory may be a module or project root, so walk upward to `settings.gradle.kts`. */
     private fun repoRoot(): File {
         var dir: File? = File("").absoluteFile
         while (dir != null) {
@@ -71,7 +71,7 @@ class V2NamingConventionGuardTest {
 
         assertEquals(
             emptyList(), violations,
-            "V2-prefixed declarations must live in an opensamguk.*.v2.* package (계획서 §4-2 규약 1)",
+            "V2-prefixed declarations must live in an opensamguk.*.v2.* package (plan §4-2 convention 1)",
         )
     }
 }

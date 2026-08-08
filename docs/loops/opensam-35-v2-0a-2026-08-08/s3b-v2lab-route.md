@@ -22,9 +22,14 @@
 - game-api 왕복은 불필요하다. 게이트는 프론트 렌더 시점의 정적 판정이고, 물어볼 대상 API가 아직 없다(0A는 seam 개설 0건 — 계획 §5).
 - `NEXT_PUBLIC_V2_ENABLED`는 **쓰지 않는다.** 그 값은 클라이언트 번들에 인라인되어 브라우저에 노출되고, 게이트가 서버 판정이 아니라 공개 설정이 된다.
 
-**값 규약**은 백엔드 S2 게이트와 동일하게 `V2_ENABLED=true` **정확 일치**다
-(`@ConditionalOnProperty(name = ["v2.enabled"], havingValue = "true")` —
-`s2-conditional-bean-gate.md:143`). `'1'`·`'TRUE'`·`'false'`·`''`는 전부 미활성이며 테스트가 이를 고정한다.
+**값 규약은 frontend와 backend가 의도적으로 다르다.** frontend middleware/layout는 raw
+`V2_ENABLED === 'true'` **strict equality**만 허용하므로 `'1'`·`'TRUE'`·`'True'`·`'tRuE'`·`'false'`·`''`를
+모두 닫는다. backend Spring `@ConditionalOnProperty(..., havingValue = "true")`는
+case-insensitive 비교라 profile이 함께 있으면 `TRUE`/`True`/`tRuE`를 연다. backend에는 추가
+`@Profile("v2-sandbox")` 조건도 있지만 frontend에는 없으므로, frontend가 느슨해지면 exposure가 된다.
+Current source tests cover both sides, and later direct-pnpm typecheck is green with Vitest JSON 132 suites /
+288 tests / 0 failures. The current Java 21 `--rerun-tasks` backend gate then completed one run/no retry with
+601 suites / 5,050 tests / failures·errors 0; the remaining PR Round 1 closure is independent dirty-tree re-review.
 
 ---
 
@@ -81,8 +86,10 @@ App Router 정석이고, layout이므로 `/game/v2-lab/**` **모든 하위 라�
 **해결: 원시 pathname이 아니라 "렌더에 쓰일 실효 경로"로 판정한다.** `isV2LabPath()`가
 `segments[2] === configuredServerId()`면 그 세그먼트를 접어낸 뒤 첫 세그먼트가 `v2-lab`인지 본다.
 쿼리 기반 진입(`?server=pep`)은 pathname이 이미 실효 경로라 같은 판정에 걸린다.
-`RESERVED_PATH_SERVER_IDS`는 **손대지 않았다** — `v2-lab`은 하이픈 때문에 `PATH_SERVER_ID`
-(`^[a-z0-9]{1,48}$`)에 애초에 걸리지 않는다.
+`RESERVED_PATH_SERVER_IDS`에는 **`'v2-lab'`을 실제로 추가했다.** `PATH_SERVER_ID`
+(`^[a-z0-9]{1,48}$`)가 하이픈을 제외하므로 현재 `isPublicServerId()` behavior에는 도달하지 않는
+defensive/list-consistency entry다. 그래도 reserved namespace를 명시해 future regex 변경에서
+`v2-lab`이 server ID로 해석되지 않게 한다.
 
 세그먼트 단위 비교라 `v2-lab-x` 같은 접두 일치는 게이트 대상이 아니다(단위 테스트가 고정).
 
@@ -94,8 +101,8 @@ App Router 정석이고, layout이므로 `/game/v2-lab/**` **모든 하위 라�
 |---|---|---|
 | `web/game/app/game/v2-lab/layout.tsx` | 신규 | `V2_ENABLED !== 'true'` → `notFound()`. 하위 전 라우트 공통 게이트 |
 | `web/game/app/game/v2-lab/page.tsx` | 신규 | 최소 플레이스홀더. **v2 기능 페이지는 만들지 않았다**(계획 §5 — 0A는 확장점 개설 0건) |
-| `web/game/__tests__/v2-lab-route.test.tsx` | 신규 | 라우트 + middleware 게이트 테스트 13종 |
-| `web/game/middleware.ts` | **수정(승인됨)** | `isV2LabPath()` + early-return 404. §5 참조 |
+| `web/game/__tests__/v2-lab-route.test.tsx` | 신규 | initial stage 13종; final historical A4 log/source has 17 tests. CodeRabbit의 14라는 수치는 XML/source로 corroborate되지 않는다. |
+| `web/game/middleware.ts` | **수정(승인됨)** | `isV2LabPath()` + early-return 404 + `RESERVED_PATH_SERVER_IDS`에 `'v2-lab'` 추가. §5 참조 |
 
 테스트는 리포 기존 관례를 따랐다 — `__tests__/` 디렉터리(`vitest.config.ts`가 이 경로만 스캔),
 `@/` 별칭 import, `vi.mock`으로 외부 의존 격리(`admin1-route.test.tsx` 등과 동일 형태).
@@ -104,18 +111,18 @@ App Router 정석이고, layout이므로 `/game/v2-lab/**` **모든 하위 라�
 
 ---
 
-## 4. 검증 출력 tail (exit code 아님)
+## 4. initial stage 검증 출력 tail (historical; exit code 아님)
 
 `corepack`이 이 호스트에 없어 `pnpm`을 직접 호출했다(`/usr/local/bin/pnpm`).
 
-```
+```text
 $ pnpm typecheck
 > @opensamguk/web-game@0.0.1 typecheck /Users/apple/Desktop/개인프로젝트/opensamguk/web/game
 > tsc --noEmit
 ```
 (출력 없음 = 타입 오류 0)
 
-```
+```text
 $ pnpm test
  ✓ __tests__/v2-lab-route.test.tsx (13 tests) 362ms
  ✓ __tests__/middleware.test.ts (8 tests) 118ms
@@ -123,10 +130,12 @@ $ pnpm test
       Tests  284 passed (284)
 ```
 
-기존 테스트 회귀 0. 기존 `middleware.test.ts`(8 tests)는 **무수정**이며 그대로 통과한다 —
-v2 테스트는 신규 파일에만 넣었다. 284 = 게이트 도입 전 274 + 신규 13 (초기 3 → middleware 10 추가).
+위 284는 initial stage transcript다. final historical A4 XML/log는 `v2-lab-route.test.tsx` **17**,
+`middleware.test.ts` **8**, 전체 **54 files / 288 tests**다. The dependency absence was the earlier verifier's
+historical failure; later direct-pnpm typecheck is green and Vitest JSON reports 132 suites / 288 tests / 0 failures.
+That resolves frontend evidence without replacing independent dirty-tree re-review.
 
-```
+```text
 $ pnpm build   (발췌)
 ├ ƒ /game/v2-lab                           331 B         187 kB
 ƒ Middleware                              101 kB
@@ -180,7 +189,7 @@ RUN A·RUN B는 **동일 빌드 산출물**(`BUILD_ID=V75C2XFKp2JmjIY6b1Qt2`, `V
 
 | 파일 | 사유 | 범위 |
 |---|---|---|
-| `web/game/middleware.ts` | §2.3 — 렌더 레이어에서는 진짜 404가 구조적으로 불가능. 렌더 이전 층은 여기뿐 | `isV2LabPath()` 헬퍼 + `middleware()` 최상단 early-return. 기존 서버선택 쿠키·rewrite 로직 **무수정**, `RESERVED_PATH_SERVER_IDS` **무수정** |
+| `web/game/middleware.ts` | §2.3 — 렌더 레이어에서는 진짜 404가 구조적으로 불가능. 렌더 이전 층은 여기뿐 | `isV2LabPath()` 헬퍼 + `middleware()` 최상단 early-return. 기존 서버선택 쿠키·rewrite 로직은 무수정, `RESERVED_PATH_SERVER_IDS`에는 defensive `'v2-lab'`이 추가됨 |
 
 팀 리드 승인 2026-08-08 (범위: 이 파일 1개). `web/game/` 밖 변경 0건. 커밋하지 않았다.
 
@@ -209,7 +218,7 @@ RUN A·RUN B는 **동일 빌드 산출물**(`BUILD_ID=V75C2XFKp2JmjIY6b1Qt2`, `V
 
 ### 7.1 측정 조건
 
-```
+```text
 $ cd web/game && rm -rf .next && env -u V2_ENABLED pnpm run build
 $ env -u V2_ENABLED npx next start -p 3399
 ```
@@ -222,7 +231,7 @@ $ env -u V2_ENABLED npx next start -p 3399
 
 ### 7.2 청크는 생성된다 — 답 1: **YES**
 
-```
+```text
 $ find .next/static -path '*v2-lab*'
 .next/static/chunks/app/game/v2-lab
 .next/static/chunks/app/game/v2-lab/layout-de5db85afb63f890.js
@@ -233,7 +242,7 @@ $ find .next/static -path '*v2-lab*'
 
 ### 7.3 게이트 없이 받아진다 — 답 2: **YES**
 
-```
+```text
 $ curl -s -o /dev/null -w '%{http_code} %{size_download}B' http://localhost:3399<path>
 /game/v2-lab                                                    -> 404 0B
 /_next/static/chunks/app/game/v2-lab/page-b528149853812e2a.js   -> 200 556B
@@ -247,7 +256,7 @@ $ curl -s -o /dev/null -w '%{http_code} %{size_download}B' http://localhost:3399
 
 두 파일(각 556바이트)의 전문은 Sentry debug id + **빈 모듈 스텁**뿐이다:
 
-```
+```text
 ...(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[2772,3699,5063,5578,5783,8673,9860],
 {64941:()=>{}},e=>{e.O(0,[4004,3007,3089,7358],()=>e(e.s=64941)),_N_E=e.O()}]);
 ```
@@ -264,7 +273,7 @@ $ curl -s -o /dev/null -w '%{http_code} %{size_download}B' http://localhost:3399
 
 페이지 본문 문자열도 클라이언트 번들에 없다:
 
-```
+```text
 $ grep -rl "v2 실험 네임스페이스" .next/static
 (hits 없음)
 ```
@@ -278,7 +287,7 @@ $ grep -rl "v2 실험 네임스페이스" .next/static
 `grep -rl v2-lab .next/static`은 3개 파일을 잡는다 — `main-app-*.js`, `3089-*.js`, `main-*.js`.
 내용은 코드가 아니라 **Sentry가 클라이언트 init에 인라인하는 라우트 매니페스트**다:
 
-```
+```text
 $ curl -s .../main-app-298ed5ed150ca8f1.js | grep -o '.\{80\}v2-lab.\{80\}'
 ...{"path":"/game/troop"},{"path":"/game/v2-lab"},{"path":"/game/vote"},{"path":"/game/world-log"}],
 "isrRoutes":[]}',n.TsN({dsn
@@ -298,15 +307,17 @@ $ curl -s .../main-app-298ed5ed150ca8f1.js | grep -o '.\{80\}v2-lab.\{80\}'
 > 즉 격리는 "정적 경로도 404를 낸다"가 아니라 **"게이트 밖 경로에 보호할 내용이 애초에 없다"**로
 > 성립한다. 이 전제는 v2-lab이 서버 전용인 동안에만 참이다.
 
-### 7.7 회귀 위험과 최소 감지 장치 (제안 — 미구현)
+### 7.7 회귀 위험과 최소 감지 장치 (implemented source guard; final rerun pending)
 
 전제가 깨지는 조건은 하나다: **`/game/v2-lab/**`에 `'use client'` 컴포넌트가 들어오는 순간**.
 그때부터 §7.4의 빈 스텁 자리에 실제 v2 코드가 들어가고(대조군 join/inherit = 20 KB),
 그 청크는 §7.3대로 게이트 없이 200으로 서빙된다 — **404 뒤에 숨겼다고 믿은 코드가 정적 경로로 샌다.**
 
-제안하는 최소 장치(구현은 별도 판단): 기존 `web/game/__tests__/v2-lab-route.test.tsx`에 소스 레벨
-어서션 1개 추가 — `app/game/v2-lab/**`의 어느 파일에도 `'use client'`가 없을 것. 실패 메시지에
-§7.6을 가리켜서, 클라이언트 컴포넌트를 넣으려면 격리 전제를 먼저 다시 판정하게 만든다.
+최소 장치는 현재 `web/game/__tests__/v2-lab-route.test.tsx`에 구현됐다: `app/game/v2-lab/**`의 어느
+파일에도 `'use client'`가 없음을 source-level assertion으로 검사하고, 실패 메시지가 §7.6 판정을
+다시 하라고 안내한다. The later direct-pnpm frontend run observed typecheck green and Vitest JSON 132 suites /
+288 tests / 0 failures; the guard therefore has current frontend evidence. The current backend gate is also
+green (601 suites / 5,050 tests / failures·errors 0); independent dirty-tree re-review remains pending.
 
 **이 장치의 천장(정직하게):** 소스 레벨 grep이라 *직접* 붙은 `'use client'`만 잡는다. v2-lab이
 바깥의 클라이언트 컴포넌트를 import하면(예: `components/`의 기존 클라 컴포넌트) 통과한다.

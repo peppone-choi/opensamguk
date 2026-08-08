@@ -1,27 +1,30 @@
-# S6 — 0A-g 기준선 artifact + 게이트 전량 실행 결과 (2026-08-08)
+# S6 — 0A-g baseline artifact + gate history / PR Round 1 provenance (2026-08-08)
 
 계획: `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md` §3 S6.
-범위: **증거 수집·게이트 실행만.** 수정 0건. 커밋·푸시·PR·머지·배포 0건.
+원래 범위는 **증거 수집·게이트 실행만**이었다. 이 문서는 그 historical artifact를 보존하고
+PR #370 Round 1의 현재 provenance를 함께 기록한다. 커밋·푸시·merge·release·deploy·production
+관측은 수행하지 않았다.
 
 ## 0. 판정 요약
 
 | 게이트 | 판정 | 비고 |
 |---|---|---|
-| ① `tools/parity/gate.sh backend` | **PASS (fresh remediation 후 재실행)** | 599 suites / 5023 tests / fail 0 / err 0 / skip 1(기존 백로그), gateway-api 포함 |
-| ② T1 diff 0 | **PASS** | 빈 출력 (교정 명령 재측정 §12) |
-| ③ T2 diff = 사전 선언(공집합) | **1차 판정 무효(공허) → 교정 후 PASS** | §3에 결함 이력, §12에 교정 재측정 |
-| ⑤ 설정 리소스 무수정 | **1차 판정 무효(공허) → 교정 후 PASS** | 동상 |
-| C1 추가 확인 | **PASS** | 빈 출력 (§12) |
-| 프론트 `pnpm typecheck && pnpm test` | **PASS (fresh)** | typecheck 무출력, 54 files / 288 tests pass |
-| artifact 4종 | **3종 생성 + 1종 "해당 없음"(근거 명시)** | §7 |
+| ① `tools/parity/gate.sh backend` | **CURRENT Round 1 backend evidence** | Java 21 `--rerun-tasks` six-root one run / no retry: 601 suites / 5050 tests / fail 0 / err 0 / skip 1; independent dirty-tree review cleared (§17), post-commit review/CI는 별도 |
+| ② T1 diff 0 | **HISTORICAL scope result** | canonical merge-base glob remeasurement은 §15에서 current state로 기록 |
+| ③ T2 diff = 사전 선언(공집합) | **current scope result** | 원 pathspec은 vacuous였고, canonical current glob result는 §15; source remediation은 observed resolved |
+| ⑤ 설정 리소스 무수정 | **historical result only** | current canonical result는 §15 |
+| C1 추가 확인 | **historical result only** | current canonical result는 §15 |
+| 프론트 `pnpm typecheck && pnpm test` | **current direct-pnpm evidence + historical A4** | historical 54 files / 288 tests; historical dependency failure 뒤 current typecheck green, Vitest JSON 132 suites / 288 tests / 0 failures |
+| artifact 4종 | **A1/A2/A4 생성 · A3 scope/inventory proof** | A3은 PHP replay/pass claim이 아니다 (§8) |
 
-**초기 차단 이력(현재는 전부 해소, 결함 이력을 보존한다):** 아래 B1~B3는 최초 S6 실행
-시점의 사실이다. 현재 판정은 §14의 fresh 재측정이 대체한다.
+**초기 차단 이력:** 아래 B1~B3는 최초 S6 실행 시점의 사실이다. historical remediation이
+있었다는 것과 PR #370 Round 1을 clear할 수 있다는 것은 별개다. current controlling disposition은
+review artifact의 23-thread dirty-tree `cleared`이며 §15와 §17이 current evidence boundary다.
 
 - **B1 — 게이트 ③·⑤의 pathspec이 vacuous.** §3 참조. 지금 상태로는 위반을 절대 검출하지 못하는
   false-green 명령이다. **게이트 명령의 정본(계획서 §3 S6 / §4)을 반드시 고쳐야 한다** — S6는
   고치지 않는다(하드 제약). 병렬 GATE-f 리뷰어도 같은 건을 blocker로 잡았고, 팀 리드가 교정
-  명령을 지시했다. 교정 명령 재측정 결과는 §12. **결함 이력은 통과했다고 지우지 않는다.**
+  명령을 지시했다. canonical remeasurement 결과는 §15. **결함 이력은 통과했다고 지우지 않는다.**
 - **B2 — 브랜치가 `origin/main`보다 1커밋 뒤처져 있다.** §2 참조. 그 결과 `origin/main` 기준 diff에
   **이 티켓과 무관한 파일 3개**가 섞여 들어온다. 게이트 판정의 기준점(baseline) 선택이 필요하다.
 - **B3 — 게이트 ①의 커버리지 구멍 + 시점 stale (팀 리드 추가, 2026-08-08).**
@@ -46,22 +49,23 @@
 
 ## 1. 최초 게이트 ① — `tools/parity/gate.sh backend` (역사적 실행)
 
-### 실행 명령
+### 실행 명령 (historical raw transcript; current evidence 아님)
 
-```
+```text
 tools/parity/gate.sh backend > <scratchpad>/gate-backend.log 2>&1
 ```
 
 ### 출력 tail (원시)
 
-```
+```text
 BUILD SUCCESSFUL in 23m 9s
 29 actionable tasks: 6 executed, 4 from cache, 19 up-to-date
 Configuration cache entry reused.
 XML gate green: 571 suites, 4862 tests
 ```
 
-전체 로그: `baseline/a4-backend-gate.log` (sha256 `4d60d74…`, 줄 끝 공백 1개 정규화).
+이 historical full log는 current Round 1 artifact로 교체되면서 더 이상
+`baseline/a4-backend-gate.log`에 보존되지 않는다. 이 section의 raw tail만 historical record로 남긴다.
 
 ### 테스트 XML 독립 집계 (exit code 미사용)
 
@@ -82,9 +86,9 @@ gate.sh 내부 python 집계와 별개로, 5개 모듈의 `build/test-results/te
 `12 month structural replay matches PHP golden()`. CLAUDE.md P5 항목이 이미 백로그로 기록한
 "long-sim multi-turn (gate dim c)"이며 **이번 티켓이 만든 skip이 아니다.**
 
-### 이번 티켓의 v2 suite가 실제로 실행됐는지 확인 (XML 실재)
+### 이번 티켓의 v2 suite가 실제로 실행됐는지 확인 (historical XML snapshot)
 
-```
+```text
 app/game-api  : V2SandboxConfigurationTest, V2BothConditionsBeanGateIT,
                 V2ProductionShapeBeanGateIT, V2ProfileOnlyBeanGateIT, V2PropertyOnlyBeanGateIT
 app/game-engine: V2SandboxConfigurationTest, V2ContentCatalogBeanTest, V2BothConditionsBeanGateIT,
@@ -105,7 +109,7 @@ XML mtime이 전부 이번 실행 구간(10:59~11:22) 안이므로 **직전 세�
 
 ## 2. B2 — 브랜치가 `origin/main`보다 1커밋 뒤처져 있다
 
-```
+```text
 $ git rev-list --left-right --count origin/main...HEAD
 1	0
 $ git merge-base --is-ancestor origin/main HEAD  →  false
@@ -120,7 +124,7 @@ fb90eac1  (= HEAD)
 
 따라서 `git diff … origin/main`은 **우리가 하지 않은 변경 3건을 우리 것처럼 보고한다:**
 
-```
+```text
 $ git diff --name-status origin/main
 M	.ai/current-state.md
 M	.ai/ownership.md
@@ -133,7 +137,7 @@ M	web/game/middleware.ts
 
 `git diff --name-status <merge-base>`는 이 티켓의 진짜 변경만 남긴다:
 
-```
+```text
 M	.ai/current-state.md
 M	.ai/ownership.md
 M	.ai/task.md
@@ -145,11 +149,15 @@ M	web/game/middleware.ts
 
 ---
 
-## 3. 게이트 ③ — T2 diff **+ 명령 결함 B1**
+## 3. 게이트 ③ — T2 diff **+ historical 명령 결함 B1**
 
-### 계획서 그대로의 명령
+이 절의 raw `origin/main` transcript는 결함을 재현하기 위해 보존한다. wildcard pathspec은
+current diff evidence가 아니며, 이 절의 과거 빈 출력/PASS를 PR Round 1 판정에 쓰지 않는다.
+current canonical merge-base glob command와 observed output은 §15만 정본이다.
 
-```
+### 당시 계획서의 결함 명령 (재실행 금지; non-evidence)
+
+```text
 $ git diff --name-only --diff-filter=MD origin/main -- \
     'app/*/src/main/kotlin/' infra/src/main/kotlin/ infra/src/main/resources/db/migration/
 (빈 출력)
@@ -157,12 +165,12 @@ $ git diff --name-only --diff-filter=MD origin/main -- \
 
 빈 출력 = 형식상 PASS. **그러나 이 명령은 신뢰할 수 없다.**
 
-### 결함 실증
+### 결함 실증 (historical)
 
 `origin/main`에는 `app/game-engine/src/main/kotlin/…/DatabaseHooks.kt` 차이가 **실재한다**
 (§2 참조). 그런데 위 명령은 그것을 잡지 못했다:
 
-```
+```text
 $ git diff --name-only --diff-filter=MD origin/main -- app/
 app/game-engine/src/main/kotlin/opensamguk/engine/flush/DatabaseHooks.kt
 app/game-engine/src/test/kotlin/opensamguk/engine/flush/FlushPayloadConvergenceTest.kt
@@ -187,9 +195,9 @@ git version 2.50.1 (Apple Git-155)
 ⇒ **계획서 §3 S6 / §4의 게이트 ③ 명령은 어떤 T2 위반도 검출할 수 없는 vacuous 명령이다.**
 이것은 "PASS"가 아니라 "판정 불능"에 가깝다. 지시대로 **고치지 않고 보고만 한다.**
 
-### 교정 명령으로 재실행한 실제 판정
+### 당시의 교정 시도 (historical; `:(glob)` + merge-base 정본은 §15)
 
-```
+```text
 $ git diff --name-only --diff-filter=MD origin/main -- \
     'app/*/src/main/kotlin/**' infra/src/main/kotlin/ infra/src/main/resources/db/migration/
 app/game-engine/src/main/kotlin/opensamguk/engine/flush/DatabaseHooks.kt      ← ad0c8c53(남의 것, B2)
@@ -199,14 +207,16 @@ $ git diff --name-only --diff-filter=MD <merge-base> -- \
 (빈 출력)
 ```
 
-**판정: 이 티켓 귀속 기준(merge-base)으로 T2 수정/삭제 0건 = 계획 §4의 사전 선언(공집합)과 정확히 일치. PASS.**
-`origin/main` 기준의 1건은 `ad0c8c53`의 것으로 이 티켓 산출물이 아니다(§2).
+당시 결과는 “이 티켓 귀속 merge-base에서 T2 수정/삭제 0”이었다. 그러나 위 command form은
+`:(glob)`를 쓰지 않았고 current PR Round 1 working tree에는 delegated source edits가 있으므로,
+이 문장은 current PASS가 아니다. `origin/main` 기준의 1건은 `ad0c8c53`의 것으로 이 티켓 산출물이
+아니었다(§2).
 
 ---
 
-## 4. 게이트 ② — T1 diff 0
+## 4. 게이트 ② — T1 diff 0 (historical transcript)
 
-```
+```text
 $ git diff --name-only --diff-filter=MD origin/main -- \
     logic/src/main/kotlin/ common/src/main/kotlin/ logic/src/test/resources/golden/
 (빈 출력)
@@ -216,17 +226,18 @@ $ git diff --name-only --diff-filter=MD <merge-base> -- \
 (빈 출력)
 ```
 
-세 pathspec 모두 와일드카드가 없는 순수 디렉터리 접두라 §3의 결함에 해당하지 않는다.
-**PASS — 양쪽 기준 모두 빈 출력.**
+세 pathspec 모두 와일드카드가 없는 순수 디렉터리 접두라 §3의 결함에 해당하지 않았다. 이
+historical result는 A3 scope inventory에만 쓰며 current PR pass는 §15의 canonical measurement로
+판정한다.
 
 보강 증거: golden 트리 객체 해시가 HEAD·origin/main 동일
 (`3650b814950fb9f0d784ae1e4031a05658919ea4`), 워킹트리 golden 경로 변경 0건.
 
 ---
 
-## 5. 게이트 ⑤ — 설정 리소스 무수정
+## 5. 게이트 ⑤ — 설정 리소스 무수정 (historical transcript)
 
-```
+```text
 $ git diff --name-only --diff-filter=MD origin/main -- \
     'app/*/src/main/resources/' infra/src/main/resources/
 (빈 출력)
@@ -237,7 +248,7 @@ $ git diff --name-only --diff-filter=MD origin/main -- \
 
 교정 재실행:
 
-```
+```text
 $ git diff --name-only --diff-filter=MD origin/main -- \
     'app/*/src/main/resources/**' infra/src/main/resources/
 (빈 출력)
@@ -247,14 +258,15 @@ $ git diff --name-only --diff-filter=MD <merge-base> -- \
 (빈 출력)
 ```
 
-**PASS — 교정 명령으로도 빈 출력.** `application.yml` 등 설정 리소스 수정 0건이 실제로 확인된다.
-(`infra/src/main/resources/db/migration_v2/`·`content/v2/`는 **신규 파일**이라 `--diff-filter=MD`에 걸리지 않는다 — 계획 §4 예상대로.)
+이 historical remeasurement은 당시 `application.yml` 등 설정 리소스 수정 0을 보였다.
+`infra/src/main/resources/db/migration_v2/`·`content/v2/`는 **신규 파일**이라 `--diff-filter=MD`에
+걸리지 않는다. Current claim은 하지 않으며 §15 command가 정본이다.
 
 ---
 
-## 6. 추가 C1 확인
+## 6. 추가 C1 확인 (historical transcript)
 
-```
+```text
 $ git diff --name-only --diff-filter=MD origin/main -- \
     docker-compose.production.yml docker-compose.yml tools/agent-system/check.py
 (빈 출력)
@@ -263,18 +275,19 @@ $ git diff --name-only --diff-filter=MD <merge-base> -- (동일)
 (빈 출력)
 ```
 
-**PASS.** 계획 §2 C1 결정대로 `docker-compose.production.yml` 무수정 ·
-`tools/agent-system/check.py` 수정 0 · v2는 신규 `docker-compose.v2-sandbox.yml`로 분리.
+당시 결과는 C1 결정대로 `docker-compose.production.yml`·`tools/agent-system/check.py` 수정 0,
+v2 신규 `docker-compose.v2-sandbox.yml` 분리였다. Current PR claim은 하지 않으며 §15 command가
+정본이다.
 해당 신규 파일에서 확인된 값: `V2_ENABLED: "true"`(3개 서비스),
 `SCENARIO_SEED_ENABLED: ${V2_SCENARIO_SEED_ENABLED:-true}` — production 불변식과 파일이 분리돼 있다.
 
 ---
 
-## 7. 프론트 게이트
+## 7. 프론트 gate (historical transcript)
 
 `corepack`이 호스트에 없어 `pnpm` 직접 호출(S3-b와 동일).
 
-```
+```text
 $ cd web/game && pnpm typecheck
 > @opensamguk/web-game@0.0.1 typecheck
 > tsc --noEmit
@@ -289,7 +302,9 @@ $ pnpm test
    Duration  79.27s
 ```
 
-**PASS.** 전체 출력: `baseline/a4-web-gate.log`.
+이것은 pre-PR A4 historical transcript이며 current PR acceptance가 아니다. 해당 A4 log의 final
+XML/log record는 54 files / **288** tests, v2-lab route **17** tests, middleware **8** tests다.
+현재 verifier에서는 dependencies 부재로 `tsc: command not found`; typecheck failed, tests unexecuted였다.
 
 **변동 고지:** 3회 실행 중 1회차만 `284 passed`, 2·3회차는 `287 passed`(파일 수는 3회 모두 54,
 모든 회차 전부 pass, 실패 0). 3건 차이의 원인 **UNKNOWN** — 수정하지 않고 기록만 한다.
@@ -302,16 +317,18 @@ $ pnpm test
 
 | # | artifact | 상태 | 근거 |
 |---|---|---|---|
-| A1 | v1 schema dump | **생성** | `postgres:16-alpine` 일회성 컨테이너에 V*.sql 37개를 Flyway 버전 순서로 적용 후 `pg_dump --schema-only`. 비결정 라인 제거 후 **2회 덤프 byte-identical** 확인. 45 테이블/49 인덱스. 컨테이너 삭제 완료 |
+| A1 | v1 schema dump | **생성** | `postgres:16-alpine` 일회성 컨테이너에 SQL **36개**를 Flyway 버전 순서로 적용 후 `pg_dump --schema-only`. Inventory 37개는 SQL 36 + V29 `.conf` 1 metadata 파일이다. 비결정 라인 제거 후 **2회 덤프 byte-identical** 확인. 45 테이블/49 인덱스. |
 | A2 | seed hash | **생성** | `data/extracted/scenario/` tracked 시드 소스 82개 파일별 sha256. RTK14 생성본은 git-ignore 규약상 제외(미커밋 정본) |
-| A3 | PHP golden | **"해당 없음"** (필요한데 못 한 것 아님) | ① T1 diff 0 ② golden 트리 해시 HEAD=origin/main 동일 ③ v2 Kotlin 10파일에 `opensamguk.logic`/`opensamguk.common` import·`RandUtil`/`PhpRound`/`LiteHashDrbg`/`ConvertLog`/`Josa` **전부 0 hit**. RNG·라운딩·로그 경로 접점 0 ⇒ 새 캡처 불필요. 골든 불변은 게이트 ①의 `:logic:test` 3173건 green으로 입증. 회귀 비교용 골든 273개 파일별 sha256 인벤토리는 별도 생성 |
-| A4 | backend/web gate | **생성** | `a4-backend-gate.log` + XML 독립 집계 + `a4-web-gate.log` |
+| A3 | PHP golden | **scope/inventory proof** | canonical T1 diff, golden inventory/head object, 0A dependency inventory만 증명한다. PHP capture/draw-for-draw replay가 실행·통과했다는 claim이 아니며 A4를 대체하지 않는다. T1/parity를 바꾸는 후속 ticket은 PHP replay가 별도로 필요하다. |
+| A4 | backend/web gate | **current backend evidence + historical web artifact** | backend log/XML은 Java 21 `--rerun-tasks` one-run/no-retry 601/5050/0/0/1 (§16); `a4-web-gate.log`만 historical 54/288 record |
 
 ---
 
-## 9. 이번 티켓의 전체 변경 목록
+## 9. initial implementation의 historical 변경 목록
 
-기준: `git status --short` + `git diff --stat <merge-base>` (§2의 이유로 merge-base 기준).
+기준: 당시 `git status --short` + `git diff --stat <merge-base>` (§2의 이유로 merge-base 기준).
+이는 PR #370 Round 1 working tree inventory가 아니며, current source/doc remediation은 §15의 canonical
+command로 다시 판정한다.
 
 ### 수정한 기존 파일 — 4개 (기대와 정확히 일치)
 
@@ -342,7 +359,7 @@ $ pnpm test
 | `app/game-engine/src/test/kotlin/opensamguk/engine/v2/` (V2SandboxConfigurationTest, V2ContentCatalogBeanTest, V2ProductionContextBeanGateIT) | S2/S3-a/S4 | 빈 게이트·카탈로그 빈 테스트 |
 | `app/gateway-api/src/test/kotlin/opensamguk/gateway/v2/V2ProductionContextBeanGateIT.kt` | S4 | **S6 실행 중(11:21) 병렬 세션이 추가** — §11 참조 |
 | `web/game/app/game/v2-lab/` | S3-b | v2-lab 라우트 네임스페이스 |
-| `web/game/__tests__/v2-lab-route.test.tsx` | S3-b | 라우트 게이트 테스트 16건 |
+| `web/game/__tests__/v2-lab-route.test.tsx` | S3-b | stage 당시 16건; A4 final historical log에는 17건 |
 | `docker-compose.v2-sandbox.yml` | S5 | v2 스택 (C1 결정: production compose 분리) |
 | `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md` | 계획 | — |
 | `docs/loops/opensam-35-v2-0a-2026-08-08/` (측정 6종 + 본 문서 + `baseline/`) | S0~S6 | 증거 |
@@ -371,7 +388,7 @@ $ pnpm test
 
 게이트 ① 완료(11:22) 직후 워킹트리를 재확인했더니 착수 시점에 없던 경로가 생겨 있었다:
 
-```
+```text
 app/gateway-api/src/test/kotlin/opensamguk/gateway/v2/V2ProductionContextBeanGateIT.kt   (mtime 11:21)
 ```
 
@@ -385,7 +402,7 @@ S6는 아무것도 고치지 않으므로 그대로 보고한다. 확인된 사�
 
 2. **해당 모듈의 XML은 현재 RED다** (11:31 기록, 게이트 ① 종료 이후):
 
-   ```
+   ```text
    app/gateway-api: 1 suites, 1 tests, failures 1
    opensamguk.gateway.v2.V2ProductionShapeBeanGateIT > "gateway-api registers no v2 bean()"
      AssertionFailedError: beans whose type lives in an opensamguk *.v2.* package
@@ -411,7 +428,7 @@ S6는 아무것도 고치지 않으므로 그대로 보고한다. 확인된 사�
 팀 리드 지시 + GATE-f blocker에 따라 **`:(glob)` 매직 + `**` 접미 + merge-base 기준**으로 전량 재실행했다.
 아래는 이 세션이 직접 실행한 **원시 출력**이다(타인의 결과 인용 아님).
 
-```
+```text
 $ MB=$(git merge-base HEAD origin/main)
 MB=fb90eac1f1241b92c5a3746cc7e30d445f174744
 
@@ -473,15 +490,17 @@ web/game/middleware.ts
 
 ---
 
-## 13. 정리 상태
+## 13. 정리 상태 / deletion authorization boundary
 
-- 측정용 컨테이너 `opensam35-s6-v1schema` 삭제 완료 (`docker ps -a | grep opensam35` → 0건).
-- 비표준 포트 55435만 사용, 볼륨·네트워크 잔여 0.
-- 리포에 수정 0건 (본 문서와 `baseline/`은 신규 문서 산출물).
+- 이전 측정 기록은 컨테이너/포트/볼륨/네트워크 잔여가 없었다고 적지만, 이 artifact에는 그
+  삭제에 대한 별도 target-specific approval record가 없다.
+- 따라서 **BLOCKED — do not run or repeat cleanup/destructive commands**. 컨테이너·volume·network·image·worktree
+  정리는 사용자의 별도 명시 deletion approval 전에는 실행하거나 “승인된 cleanup”으로 해석하면 안 된다.
+- 리포 cleanup은 이 문서 범위 밖이며 current working tree는 PR Round 1 doc/source remediation을 포함한다.
 
 ---
 
-## 14. remediation 후 최종 재측정 (현재 정본)
+## 14. post-remediation A4 historical remeasurement (backend artifact superseded)
 
 ### 14.1 backend
 
@@ -491,10 +510,10 @@ BUILD SUCCESSFUL in 8m 46s
 XML gate green: 599 suites, 5023 tests
 ```
 
-위 8m 46s 실행은 세 false-green remediation 전 실행이라 최종 artifact로 사용하지 않는다.
+위 8m 46s 실행은 세 false-green remediation 전 historical run이라 A4 artifact로 사용하지 않는다.
 remediation 후 첫 exact-tree 실행은 Docker API HTTP 500으로 `GameApiApplicationTests`의
 Testcontainers 초기화가 실패했다. Docker daemon 정상화 확인 뒤 같은 명령을 한 번만 재실행했고,
-그 실행이 현재 정본이다:
+그 실행이 A4 historical artifact다:
 
 ```text
 BUILD SUCCESSFUL in 19m 36s
@@ -502,7 +521,8 @@ XML gate green: 599 suites, 5023 tests
 ```
 
 `tools/parity/gate.sh`가 `:app:gateway-api:test` 실행과 gateway-api XML root 채점을 모두
-포함하고 세 remediation까지 반영한 exact-tree 결과다. XML 독립 집계:
+포함하고 세 remediation까지 반영했던 historical tree의 결과다. 이는 `--rerun-tasks`가 아닌
+non-forced run이므로 current exact-SHA final backend provenance가 아니다. XML 독립 집계:
 
 | module | suites | tests | failures | errors | skipped |
 |---|---:|---:|---:|---:|---:|
@@ -514,9 +534,9 @@ XML gate green: 599 suites, 5023 tests
 | app/gateway-api | 27 | 159 | 0 | 0 | 0 |
 | **TOTAL** | **599** | **5023** | **0** | **0** | **1** |
 
-전체 로그는 `baseline/a4-backend-gate.log`, 독립 집계는
-`baseline/a4-backend-gate-xml-summary.txt`에 보존했다. skipped 1은 기존
-`LongSimReplayGateTest` 백로그다.
+위 historical transcript와 집계는 이 section에만 보존한다. `baseline/a4-backend-gate.log`와
+`baseline/a4-backend-gate-xml-summary.txt`는 §16의 current Round 1 one-run artifact로 교체됐다.
+skipped 1은 기존 `LongSimReplayGateTest` 백로그다.
 
 ### 14.2 web/game
 
@@ -531,12 +551,16 @@ Test Files  54 passed (54)
 Tests       288 passed (288)
 ```
 
-exit 0, 전체 출력은 `baseline/a4-web-gate.log`에 보존했다. v2-lab route suite 17건 포함.
+이는 historical exit 0이며 전체 출력은 `baseline/a4-web-gate.log`에 보존했다. v2-lab route suite
+17건, middleware suite 8건을 포함한다. Dependencies 부재(`tsc: command not found`)는 earlier verifier의
+**historical failure**다. Later current frontend typecheck is green and Vitest JSON reports 132 suites / 288
+tests / 0 failures. That frontend evidence does not replace post-commit exact-SHA review or PR CI.
 
-### 14.3 diff 제약
+### 14.3 historical diff snapshot
 
-`MB=$(git merge-base HEAD origin/main)` 기준으로 ② T1, ③ T2, ⑤ 설정 리소스, C1 production
-stack 불변 경로는 모두 빈 출력이다. final-review remediation 뒤 전체 M/D는 정확히 다음 7개다.
+이 section의 old output은 당시 final-review remediation 직후 snapshot이다. current PR Round 1의
+source/doc remediation은 이후 완료됐으므로 아래 seven-file listing과 “빈 출력”을 current pass로 쓰지
+않는다. canonical replacement는 §15다.
 
 ```text
 .ai/current-state.md
@@ -550,4 +574,98 @@ web/game/middleware.ts
 
 `build.gradle.kts`는 cross-module naming guard의 raw source inputs를 선언하고, `tools/parity/gate.sh`는
 gateway-api 아키텍처 테스트를 표준 gate에 포함하고 root별 XML 부재를 fail-closed하기 위한 S6 gate
-수정이다. 둘 다 T2 production source 범위가 아니다. 계획서 §4-1 기대 목록도 같은 7개로 교정했다.
+수정이었다. current live source diff disposition은 §15와 PR Round 1 ledger가 정한다.
+
+---
+
+## 15. PR #370 Round 1 — current evidence boundary
+
+All 23 actionable threads are resolved/dispositioned. The pre-PR GATE-f/f2/f3 and historical A4 artifacts did
+not clear Round 1; the independent terminal dirty-tree reviewer did, with no findings (fingerprint `3c1b357c…`).
+That clearance is exact reviewer-inspected dirty-tree only, not an immutable commit-SHA review. Merge/release/deploy
+plus the linked OPENSAM-177 consumer execution are not performed.
+
+### 15.1 canonical merge-base glob commands
+
+```shell
+MB=$(git merge-base HEAD origin/main) # current base: b847c351ff7f574c744e1f4f3da7c0410a1cbe38
+
+# ② T1
+git diff --name-only --diff-filter=MD "$MB" -- \
+  ':(glob)logic/src/main/kotlin/**' ':(glob)common/src/main/kotlin/**' \
+  ':(glob)logic/src/test/resources/golden/**'
+
+# ③ T2
+git diff --name-only --diff-filter=MD "$MB" -- \
+  ':(glob)app/*/src/main/kotlin/**' ':(glob)infra/src/main/kotlin/**' \
+  ':(glob)infra/src/main/resources/db/migration/**'
+
+# ⑤ configuration resources
+git diff --name-only --diff-filter=MD "$MB" -- \
+  ':(glob)app/*/src/main/resources/**' ':(glob)infra/src/main/resources/**'
+
+# C1 immutable production paths
+git diff --name-only --diff-filter=MD "$MB" -- \
+  docker-compose.production.yml docker-compose.yml tools/agent-system/check.py
+```
+
+### 15.2 observed canonical snapshot (2026-08-08; current working tree)
+
+Observed `MB` is `b847c351ff7f574c744e1f4f3da7c0410a1cbe38` and `HEAD` is
+`d8ce2abfc428b725142bfa07aa4a35a787eecbcc`. After the delegated source lanes stopped changing the tree,
+each of the four commands in §15.1 produced **empty output**:
+
+| Check | Observed output |
+|---|---|
+| ② T1 (`logic`/`common`/golden) | empty |
+| ③ T2 existing source/migration paths | empty |
+| ⑤ application/infra configuration resources | empty |
+| C1 production Compose/checker paths | empty |
+
+This is canonical scope evidence only. It does not turn the historical A4 web run into current frontend
+provenance and does not replace the current backend artifact in §16; the independent dirty-tree clearance is
+recorded separately in §17.
+
+---
+
+## 16. PR #370 Round 1 current backend gate provenance
+
+`baseline/a4-backend-gate.log` is the supplied complete log from one current dirty-tree run of
+`tools/parity/gate.sh backend`. The script enforces Java 21 and invokes Gradle with `--rerun-tasks` over all six
+test roots. This was **one run / no retry**:
+
+```text
+BUILD SUCCESSFUL in 12m 35s
+35 actionable tasks: 35 executed
+XML gate green: 601 suites, 5050 tests
+```
+
+Its exact SHA256 is
+`a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1`.
+`baseline/a4-backend-gate-xml-summary.txt` independently records the corresponding XML roots:
+
+| module | suites | tests | failures | errors | skipped |
+|---|---:|---:|---:|---:|---:|
+| common | 38 | 225 | 0 | 0 | 0 |
+| logic | 277 | 3173 | 0 | 0 | 0 |
+| infra | 55 | 226 | 0 | 0 | 0 |
+| app/game-engine | 132 | 799 | 0 | 0 | 1 |
+| app/game-api | 72 | 468 | 0 | 0 | 0 |
+| app/gateway-api | 27 | 159 | 0 | 0 | 0 |
+| **TOTAL** | **601** | **5050** | **0** | **0** | **1** |
+
+The lone skip is the existing `LongSimReplayGateTest` backlog. This backend result closes the Round 1 execution
+evidence for source items; it is neither an immutable committed-SHA review nor authorization for merge, release,
+deploy, production observation, or OPENSAM-177 execution. The independent dirty-tree reviewer cleared Round 1 in
+§17; post-commit exact-SHA review and PR CI remain residual.
+
+---
+
+## 17. PR #370 Round 1 independent dirty-tree terminal review
+
+The independent terminal reviewer returned **cleared, no findings** for the exact reviewer-inspected dirty working
+tree, fingerprint `3c1b357c…`. All 23 Round 1 threads are resolved/dispositioned in the review artifact.
+
+This is intentionally not a committed-SHA claim: after a commit is created, a new independent exact-SHA review and
+PR CI remain required. It neither authorizes nor records commit, push, merge, release, deploy, production
+observation, or OPENSAM-177 execution.

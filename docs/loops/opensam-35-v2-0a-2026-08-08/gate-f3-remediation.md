@@ -1,6 +1,9 @@
-# GATE-f3 false-green remediation — 2026-08-08
+# GATE-f3 false-green remediation — pre-PR historical stage (2026-08-08)
 
 정본 리뷰: `docs/superpowers/reviews/2026-08-08-opensam-35-v2-0a-isolation-review.md`.
+이 문서는 PR #370 Round 1 review나 release verdict가 아니다. 현재 controlling disposition은 review
+artifact의 23-thread `fix-required`; source remediation and backend evidence are now observed resolved, but the
+independent dirty-tree reviewer has not yet supplied a terminal disposition.
 평가 계약은 리뷰가 지적한 세 false-green을 각각 독립 가설로 고정했다. 테스트 기대값이나 기존
 golden은 완화하지 않았다.
 
@@ -46,5 +49,6 @@ golden은 완화하지 않았다.
 
 ## 현재 판정
 
-세 가설 모두 결함 주입 red와 final focused green을 관측했다. full backend gate와 fresh independent
-re-review는 이 문서 작성 시점에 아직 미실행이므로 통과로 주장하지 않는다.
+세 가설 모두 결함 주입 red와 final focused green을 관측했다. 이는 pre-PR focused remediation evidence다.
+full backend gate와 fresh independent re-review는 이 문서 작성 시점에 아직 미실행이었고, 이후 historical
+A4/cleared note도 current PR Round 1 exact-SHA acceptance로 승격되지 않는다.

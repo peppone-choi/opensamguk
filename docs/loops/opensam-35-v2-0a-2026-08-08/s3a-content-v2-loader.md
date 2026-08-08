@@ -39,7 +39,7 @@
 
 **(a) classpath가 jar에 구워지는가 — 확인됨.**
 
-```
+```text
 $ ./gradlew :infra:jar && unzip -l infra/build/libs/infra-0.0.1-SNAPSHOT.jar | grep -E 'content/|db/migration_v2'
         0  content/
         0  content/v2/
@@ -50,7 +50,7 @@ $ ./gradlew :infra:jar && unzip -l infra/build/libs/infra-0.0.1-SNAPSHOT.jar | g
 
 boot jar까지 도달하는지도 직접 확인했다(S1과 같은 경로):
 
-```
+```text
 $ ./gradlew :app:game-engine:bootJar
 $ unzip -o -q game-engine-0.0.1-SNAPSHOT.jar 'BOOT-INF/lib/infra-*.jar'
 $ unzip -l BOOT-INF/lib/infra-0.0.1-SNAPSHOT.jar | grep 'content/'
@@ -164,7 +164,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew \
 
 출력 tail: `BUILD SUCCESSFUL in 1m` / `20 actionable tasks: 20 executed`.
 
-```
+```text
 infra/build/test-results/test/TEST-opensamguk.infra.v2.V2ContentCatalogTest.xml
   tests="7" skipped="0" failures="0" errors="0"
 app/game-engine/build/test-results/test/TEST-opensamguk.engine.v2.V2ContentCatalogBeanTest.xml
@@ -175,24 +175,20 @@ app/game-engine/build/test-results/test/TEST-opensamguk.engine.v2.V2SandboxConfi
 
 ---
 
-## 5. 하드 제약 준수 (게이트 ②③⑤)
+## 5. 하드 제약 / PHP boundary
 
-```
-$ git diff --name-only --diff-filter=MD origin/main -- \
-    logic/src/main/kotlin/ common/src/main/kotlin/ logic/src/test/resources/golden/
-(빈 출력)
+S3-a 당시 `origin/main` + wildcard transcript의 blank output은 historical stage evidence만이다.
+Wildcard pathspec은 current proof가 아니므로, current canonical merge-base glob commands와 PR Round 1
+disposition은 `s6-gates-and-baseline.md` §15 및 review ledger를 따른다.
 
-$ git diff --name-only --diff-filter=MD origin/main -- \
-    'app/*/src/main/kotlin/' infra/src/main/kotlin/ infra/src/main/resources/db/migration/
-(빈 출력)
-
-$ git diff --name-only --diff-filter=MD origin/main -- \
-    'app/*/src/main/resources/' infra/src/main/resources/
-(빈 출력)
+```text
+$ git diff --name-only --diff-filter=MD origin/main -- …
+(historical blank output; no current PASS claim)
 ```
 
-T1 수정·삭제 0건 · T2 사전선언 공집합 유지 · `application.yml` 무수정 · `web/game/**` 미접촉(S3-b 소유).
-커밋·푸시 없음. `.env*`·키·토큰 미접근.
+T1/parity paths are unchanged. This loader/isolation ticket neither ran nor claims a PHP golden
+capture/draw-for-draw replay; A3 only inventories that scope. The local loader/bean assertions are not a
+replacement for A4 or the current exact-SHA backend gate. Commit·push 없음; `.env*`·키·토큰 미접근.
 
 ---
 

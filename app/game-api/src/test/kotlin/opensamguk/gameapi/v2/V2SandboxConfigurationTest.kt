@@ -7,8 +7,8 @@ import opensamguk.infra.v2.V2SandboxMarker
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 
 /**
- * OPENSAM-35 0A-b — game-api 게이트 4조합 실측.
- * env `V2_ENABLED` ↔ `v2.enabled` relaxed binding은 game-engine 쪽 동일 테스트에서 한 번 실측한다.
+ * OPENSAM-35 0A-b — executable coverage of game-api's four gate combinations.
+ * The matching game-engine test measures relaxed binding from env `V2_ENABLED` to `v2.enabled` once.
  */
 class V2SandboxConfigurationTest {
     private val runner = ApplicationContextRunner()

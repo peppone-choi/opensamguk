@@ -3,9 +3,14 @@
 계획 §1 M3 규약: `docs/loops/opensam-35-v2-0a-2026-08-08/baseline/` 아래 4종 + 본 MANIFEST에 sha256.
 
 - 생성 시각: 2026-08-08
-- 리포 상태: final backend A4는 false-green 3건 remediation을 모두 반영한 working tree에서 실행했고,
-  이후 변경은 compose relay와 문서 동기화뿐이라 backend source/test 입력은 바뀌지 않았다.
-- 최종 브랜치는 `origin/main=b847c351`에서 OPENSAM-35 변경을 단일 커밋으로 재구성했다.
+- 리포 상태: A1~A3과 web gate는 historical baseline artifact다. A4 backend log는 PR #370 Round 1
+  current dirty-tree의 Java 21 `--rerun-tasks` full gate 한 번(no retry)으로 교체했다:
+  601 suites / 5050 tests / failures 0 / errors 0 / skipped 1, SHA256
+  `a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1`.
+  이는 backend evidence이지만 immutable exact-SHA review 또는 release acceptance가 아니며 independent
+  dirty-tree reviewer의 terminal result가 여전히 필요하다.
+- 브랜치는 `origin/main=b847c351`에서 OPENSAM-35 변경을 단일 커밋으로 재구성했으나, PR #370은
+  open이고 merge/release/deploy는 미수행이다.
 
 ## 파일 sha256
 
@@ -15,13 +20,13 @@
 | `a1-v1-flyway-migration-sha256.txt` | `6888b07802d988a1e6d64fe974d6056f053e33022091ac60da94ef69d964bceb` |
 | `a2-scenario-seed-sha256.txt` | `f42d3a4f935be3a63de1524f146819c7b9bc1160c0b3aa255f7eb57a32bbbb67` |
 | `a3-php-golden-inventory-sha256.txt` | `229ee5cdb3f2c4e612d4593bf57eb1af83983cbb51189dfe990eb1a8fe15f233` |
-| `a4-backend-gate.log` | `743b85a3cb60aa9400e49513f766f4db56358c50547a8de57f74b2233fa15a32` |
-| `a4-backend-gate-xml-summary.txt` | `fa43bb8a7ae53c71e9ed8a58887cbd2cf4d7935b84ac682da1d3314ba9e849ce` |
+| `a4-backend-gate.log` | `a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1` |
+| `a4-backend-gate-xml-summary.txt` | `e7811d93772d1c1b280eb47bddb30bafff514495c29d0bfe4087fef4587a0ac4` |
 | `a4-web-gate.log` | `d803e60c5410b69409e98ed20c21a7b8661d313da8e17e91072252422fd3ca32` |
 
 재검증:
 
-```
+```shell
 cd docs/loops/opensam-35-v2-0a-2026-08-08/baseline && shasum -a 256 * | sort -k2
 ```
 
@@ -36,7 +41,7 @@ cd docs/loops/opensam-35-v2-0a-2026-08-08/baseline && shasum -a 256 * | sort -k2
 생성 방법 (재현 가능, 지어낸 값 0):
 
 1. `postgres:16-alpine`를 비표준 포트 55435로 일회성 기동 (컨테이너명 `opensam35-s6-v1schema`)
-2. `infra/src/main/resources/db/migration/V*.sql` 37개를 **Flyway 버전 순서**(`sort -t_ -k1,1n`)로 적용.
+2. `infra/src/main/resources/db/migration/`의 **SQL 36개**를 **Flyway 버전 순서**(`sort -t_ -k1,1n`)로 적용.
    각 파일을 `BEGIN;`/`COMMIT;`로 감싸 Flyway의 파일당 1트랜잭션 의미를 재현하고,
    `executeInTransaction=false`인 `V29__log_entry_year_month_index.sql`만 비트랜잭션으로 적용.
    적용 실패 0건.
@@ -50,8 +55,9 @@ cd docs/loops/opensam-35-v2-0a-2026-08-08/baseline && shasum -a 256 * | sort -k2
 `flyway_schema_history` 테이블은 포함되지 않는다(Flyway가 만드는 것이라 psql 경로에는 생기지 않는다).
 DDL 자체는 동일 SQL 파일·동일 순서이므로 스키마 형상은 일치한다.
 
-`a1-v1-flyway-migration-sha256.txt` — 마이그레이션 **원본 37개**(V*.sql + V29 .conf)의 파일별 sha256.
-스키마 dump가 어떤 입력에서 나왔는지 고정한다.
+`a1-v1-flyway-migration-sha256.txt` — 마이그레이션 inventory **37개 파일**(SQL **36개** +
+`V29__log_entry_year_month_index.sql.conf` **1개**)의 파일별 sha256. `.conf`는 Flyway가 적용하는
+SQL이 아니라 V29 metadata이며, schema dump 입력 SQL 수와 혼동하지 않는다.
 
 ## A2. seed hash — **생성됨 (실측)**
 
@@ -61,35 +67,45 @@ DDL 자체는 동일 SQL 파일·동일 순서이므로 스키마 형상은 일�
 **한계:** RTK14 5스탯 생성본(`SCENARIO_DIR` 오버라이드용)은 CLAUDE.md 규약상 **git-ignore·미커밋**이라
 기준선에 포함하지 않는다. 라이브 DB에 실제 시드된 행의 해시가 아니라 **시드 소스 파일** 해시다.
 
-## A3. PHP golden — **신규 캡처 없음 = "해당 없음"** (근거 있음, 미생성 아님)
+## A3. PHP golden — **scope/inventory proof; replay claim 없음**
 
-이 티켓은 PHP 오라클과 **접점이 0이다.** 근거 3종, 전부 실측:
+이 artifact는 PHP capture 또는 draw-for-draw replay를 실행하거나 통과시킨 기록이 아니다. 이 0A
+isolation/build-only ticket은 T1/parity code를 바꾸지 않았으므로 그러한 replay가 acceptance event가
+아니다. 다음 세 항목은 오직 **scope**를 보인다:
 
-1. **T1 diff 0** — `logic/src/main/kotlin/`·`common/src/main/kotlin/`·`logic/src/test/resources/golden/`
-   수정/삭제 0건 (게이트 ②, merge-base 및 origin/main 양쪽 빈 출력).
-2. **golden 트리 해시 동일** —
-   `git rev-parse HEAD:logic/src/test/resources/golden` = `origin/main:…` = `3650b814950fb9f0d784ae1e4031a05658919ea4`.
-   워킹트리도 golden 경로에 변경 0건.
-3. **v2 소스에 패리티 커널 참조 0건** — v2 Kotlin 10개 파일 전체 grep 결과
-   `import opensamguk.logic`·`import opensamguk.common`·`RandUtil`·`PhpRound`·`LiteHashDrbg`·
-   `ConvertLog`·`Josa` **전부 0 hit**. RNG draw·라운딩·한글 로그 경로를 하나도 건드리지 않는다.
+1. **T1 diff inventory** — `logic/src/main/kotlin/`·`common/src/main/kotlin/`·
+   `logic/src/test/resources/golden/`에 수정/삭제가 없다는 canonical merge-base glob measurement.
+2. **golden inventory/head object** — historical golden tree object와 273개 파일별 sha256 inventory가
+   보존돼 있고 working tree golden path에 변경이 없다는 비교 근거.
+3. **0A dependency inventory** — isolation gate source에 `opensamguk.logic`/`opensamguk.common` import,
+   `RandUtil`, `PhpRound`, `LiteHashDrbg`, `ConvertLog`, `Josa`가 없다는 static scope check.
 
-즉 새 골든이 **필요하지 않다**(≠ 필요한데 못 했다). 골든 불변성은 게이트 ①의
-`:logic:test` 3173건(골든 리플레이 포함) 전부 green으로 별도 입증된다.
+따라서 A3은 “replay passed”가 아니며, A4 backend gate나 이후 T1/parity ticket의 PHP capture/replay를
+대체하지 않는다. 후속 ticket이 T1/parity behavior를 바꾸면 PHP oracle capture/replay가 별도로 필수다.
 
 `a3-php-golden-inventory-sha256.txt` — 골든 파일 **273개**의 파일별 sha256. 향후 회귀 비교용 고정값.
 
-## A4. backend / web gate — **생성됨 (실측)**
+## A4. backend / web gate — **current Round 1 backend evidence; historical web artifact**
 
-- `a4-backend-gate.log` — remediation 뒤 `tools/parity/gate.sh backend` 최종 전체 출력.
-  첫 실행의 Docker API HTTP 500은 Testcontainers 환경 오류로 격리했고, Docker 정상화 뒤 단 한 번
-  재실행한 결과는 `BUILD SUCCESSFUL in 19m 36s`였다.
-- `a4-backend-gate-xml-summary.txt` — Gradle test XML 독립 집계.
-  gateway-api까지 포함한 599 suites / 5023 tests / failures 0 / errors 0 / skipped 1.
-  skipped 1 = `opensamguk.engine.golden.LongSimReplayGateTest`(CLAUDE.md에 기록된 **기존** 백로그
+- `a4-backend-gate.log` — current dirty-tree에서 Java 21로 실행한
+  `tools/parity/gate.sh backend` 전체 출력. 이 gate는 `--rerun-tasks` 여섯 test root를 실행했고,
+  **one run / no retry**로 `BUILD SUCCESSFUL in 12m 35s`, 35 actionable tasks executed,
+  XML 601 suites / 5050 tests / failures 0 / errors 0 / skipped 1을 기록했다. 전체 로그 SHA256은
+  `a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1`다.
+- `a4-backend-gate-xml-summary.txt` — 위 로그와 같은 run의 Gradle test XML 독립 집계.
+  common 38/225, logic 277/3173, infra 55/226, game-engine 132/799 (skip 1), game-api 72/468,
+  gateway-api 27/159이며 failures/errors는 모두 0이다. skipped 1 =
+  `opensamguk.engine.golden.LongSimReplayGateTest`(CLAUDE.md에 기록된 **기존** 백로그
   "long-sim multi-turn (gate dim c)"). 이번 티켓이 만든 skip이 아니다.
-- `a4-web-gate.log` — `cd web/game && pnpm typecheck && pnpm test`.
-  typecheck 무출력 통과, 54 files / 288 tests 전부 pass. `__tests__/v2-lab-route.test.tsx` 17건 포함.
+- `a4-web-gate.log` — historical `cd web/game && pnpm typecheck && pnpm test` result:
+  typecheck 무출력 통과, 54 files / 288 tests 전부 pass. `__tests__/v2-lab-route.test.tsx` 17건과
+  `middleware.test.ts` 8건을 포함한다.
+
+앞선 599/5023 non-forced backend record와 286/1,652 four-root subset은 historical evidence로만 남긴다.
+그 verifier의 frontend dependency absence
+(`tsc: command not found`)는 historical failure다. Later direct-pnpm frontend typecheck is green and Vitest
+JSON reports 132 suites / 288 tests / 0 failures. Current backend evidence는 source remediation을 관측하는
+근거이나, independent dirty-tree re-review 또는 merge/release/deploy approval을 대체하지 않는다.
 
 ---
 

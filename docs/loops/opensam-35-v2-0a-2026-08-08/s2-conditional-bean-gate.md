@@ -37,7 +37,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew \
 
 ### XML 판정 (exit code 아님)
 
-```
+```text
 app/game-engine/build/test-results/test/TEST-opensamguk.engine.v2.V2SandboxConfigurationTest.xml
   tests="6" skipped="0" failures="0" errors="0"
 app/game-api/build/test-results/test/TEST-opensamguk.gameapi.v2.V2SandboxConfigurationTest.xml
@@ -56,7 +56,7 @@ app/game-api/build/test-results/test/TEST-opensamguk.gameapi.v2.V2SandboxConfigu
 
 game-engine 케이스 목록 (XML `<testcase>` 실측):
 
-```
+```text
 PASS neither condition - no v2 bean()
 PASS profile only - no v2 bean()
 PASS V2_ENABLED env var maps onto the gate property()
@@ -151,6 +151,13 @@ Spring의 `SystemEnvironmentPropertySource`가 `_` → `.` 치환 + 소문자화
 `V2_ENABLED env var maps onto the gate property()` 테스트가 실제 `SystemEnvironmentPropertySource`에
 `{"V2_ENABLED": "true"}`를 넣고 빈 1개 등록을 확인한다(PASS).
 
+**Frontend/backend 값 semantics는 의도적으로 다르다.** frontend middleware/layout는 raw
+`process.env.V2_ENABLED === 'true'`만 허용하므로 `TRUE`·`True`·`tRuE`를 닫는다. 반면 backend의
+Spring `@ConditionalOnProperty(..., havingValue = "true")`는 `equalsIgnoreCase` semantics를 사용한다.
+현재 engine configuration test는 `TRUE`, `True`, `tRuE` 각각이 profile과 함께 있을 때 빈을 여는
+source-level regression case를 가진다. 이 차이는 bug/동일 규약 claim이 아니며, current test re-run은
+PR Round 1 source lane의 exact-SHA gate에서 다시 판정한다.
+
 ## 5. `matchIfMissing` 처리
 
 `@ConditionalOnProperty.matchIfMissing`의 **기본값은 `false`** = 프로퍼티 미설정이면 조건 불일치 =
@@ -170,28 +177,26 @@ Spring의 `SystemEnvironmentPropertySource`가 `_` → `.` 치환 + 소문자화
    분리) 부팅에서 관측한다.
 3. **프로파일 활성 방식 다양성.** `spring.profiles.active` 프로퍼티로만 쟀다.
    `spring.profiles.include`·`spring.config.activate.on-profile` 경유는 미측정.
-4. **`v2.enabled`의 다른 truthy 표기.** `TRUE`/`1`/`yes` 등은 미측정. `havingValue = "true"`는
-   대소문자 무시 비교를 하지만 이 리포에서 재지 않았다 — 운영 env는 소문자 `true`로 고정한다.
+4. **`v2.enabled`의 other truthy semantics.** current source test는 `TRUE`/`True`/`tRuE`의
+   case-insensitive backend match를 고정한다. `1`/`yes`가 활성화되지 않는지는 이 ticket에서
+   별도 case로 재지 않았다. 운영 compose literal은 소문자 `"true"`로 고정한다.
 5. **gateway-api.** 게이트를 설치하지 않았다. v2 빈 계획이 문서에 없다는 근거뿐이고, 없음을 실측한
    테스트는 없다.
 6. **v2 빈이 실제로 들어온 뒤의 동작.** 현재 게이트 안에는 마커 1개뿐이다. 실제 v2 store/핸들러가
    들어왔을 때의 의존성 주입(오토컨피그 `NamedParameterJdbcTemplate` 등)은 미측정 — 해당 티켓 소관.
 
-## 7. 하드 제약 준수 (게이트 ②③⑤)
+## 7. 하드 제약 / PHP boundary
 
-```
-$ git diff --name-only --diff-filter=MD origin/main -- \
-    logic/src/main/kotlin/ common/src/main/kotlin/ logic/src/test/resources/golden/
-(빈 출력)
+아래는 S2 stage의 **historical raw transcript**다. `origin/main` 기준과 wildcard pathspec은 current
+evidence가 아니다. Current canonical `MB=$(git merge-base HEAD origin/main)` + `:(glob)…/**` commands와
+PR Round 1 disposition은 `s6-gates-and-baseline.md` §15와 review ledger가 정본이다.
 
-$ git diff --name-only --diff-filter=MD origin/main -- \
-    'app/*/src/main/kotlin/' infra/src/main/kotlin/ infra/src/main/resources/db/migration/
-(빈 출력)
-
-$ git diff --name-only --diff-filter=MD origin/main -- \
-    'app/*/src/main/resources/' infra/src/main/resources/
-(빈 출력)
+```text
+$ git diff --name-only --diff-filter=MD origin/main -- …
+(historical blank output; no current PASS claim)
 ```
 
-T1 수정·삭제 0건 · T2 기존 파일 수정 0건(사전선언 공집합 유지) · 설정 리소스 무수정.
-커밋·푸시 없음. `.env*`·키·토큰 미접근.
+S2 local condition tests' PASS means only this configuration gate was exercised. OPENSAM-35 is
+isolation/build-only and T1/parity paths are unchanged, so no PHP golden capture/draw-for-draw replay was
+required or claimed here. A3 is scope/inventory proof, not a replay result and not a substitute for the backend
+gate. Commit·push 없음; `.env*`·키·토큰 미접근.

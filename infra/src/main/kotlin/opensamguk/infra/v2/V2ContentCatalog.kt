@@ -3,37 +3,37 @@ package opensamguk.infra.v2
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 
 /**
- * OPENSAM-35 0A-d — `content/v2/` **읽기 전용** 카탈로그 로더.
+ * OPENSAM-35 0A-d — read-only catalog loader for `content/v2/`.
  *
- * `ScenarioCatalogService`(`app/gateway-api/.../service/ScenarioCatalogService.kt:13-16`)의
- * [PathMatchingResourcePatternResolver] 패턴을 그대로 재사용한다. 다른 점은 스코프뿐이다 —
- * 이 로더는 [DEFAULT_LOCATION] **한 디렉터리의 직속 `*.json`만** 본다.
+ * It reuses the [PathMatchingResourcePatternResolver] pattern from
+ * `ScenarioCatalogService` (`app/gateway-api/.../service/ScenarioCatalogService.kt:13-16`). The scope is
+ * the only difference: this loader sees only direct `*.json` files in [DEFAULT_LOCATION].
  *
- * ## 이 클래스가 하지 **않는** 것 (0A-d의 본체)
+ * ## What this class does **not** do (the core of 0A-d)
  *
- * - **startup seed 없음.** `ApplicationRunner`/`CommandLineRunner`를 구현하지 않는다. 부팅 시
- *   아무 메서드도 자동 호출되지 않으며, 호출자가 [names]/[read]를 부를 때만 클래스패스를 읽는다.
- *   v1의 `ScenarioSeedRunner` 경로와는 어떤 접점도 없다.
- * - **DB 쓰기 없음.** `DataSource`·`JdbcTemplate`·`EntityManager`·`ChangeRecorder`를 의존하지 않는다.
- *   이 두 가지는 주석이 아니라 `V2ContentCatalogTest`의 클래스파일 상수풀 스캔이 강제한다.
- * - **전역 classpath scan 없음.** 패턴이 location 직속 `.json`으로 한정되고 `**`를 쓰지 않아 하위
- *   디렉터리로 재귀하지 않는다. (S1이 Flyway에서 겪은 재귀 스캔 사고의 반대 방향 실수를 막는다.)
- * - **쓰기 메서드 없음.** 조회 2개가 API 전부다.
+ * - **No startup seed.** It does not implement `ApplicationRunner` or `CommandLineRunner`. No method is
+ *   invoked automatically at boot; the classpath is read only when the caller invokes [names] or [read].
+ *   It has no connection to the v1 `ScenarioSeedRunner` path.
+ * - **No database writes.** It does not depend on `DataSource`, `JdbcTemplate`, `EntityManager`, or
+ *   `ChangeRecorder`. `V2ContentCatalogTest` enforces both properties with a class-file constant-pool scan.
+ * - **No global classpath scan.** The pattern is limited to direct `.json` files at the location and omits
+ *   `**`, so it cannot recurse into subdirectories. This prevents the inverse of S1's recursive Flyway scan.
+ * - **No write methods.** The two read methods are its entire API.
  *
- * 콘텐츠 파일이 0개면 [names]는 빈 목록을 돌려준다 — 예외를 던지지 않는다. `classpath*:` 접두사는
- * 루트가 없어도 빈 배열을 반환한다.
+ * When there are no content files, [names] returns an empty list rather than throwing. The `classpath*:`
+ * prefix also returns an empty array when the root is absent.
  *
- * @param location 클래스패스 루트 기준 디렉터리. 기본값 [DEFAULT_LOCATION]. 파라미터는 테스트가
- *   스코프 격리를 실측하기 위해 존재한다(운영 코드는 기본값을 쓴다).
+ * @param location A directory relative to the classpath root. The default is [DEFAULT_LOCATION]. The
+ *   parameter exists so tests can measure scope isolation; production code uses the default.
  */
 class V2ContentCatalog(private val location: String = DEFAULT_LOCATION) {
 
     private val resolver = PathMatchingResourcePatternResolver()
 
-    /** [location] 직속 `*.json` 파일명 목록(사전순). 없으면 빈 목록. */
+    /** Sorted names of direct `*.json` files in [location], or an empty list when none exist. */
     fun names(): List<String> = entries().mapNotNull { it.filename }.sorted()
 
-    /** [names]에 들어 있는 파일 하나의 원문. 없으면 `null`. 이름 대조라 경로 탈출이 불가능하다. */
+    /** Raw contents of an entry returned by [names], or `null`; filename matching prevents path traversal. */
     fun read(name: String): String? = entries()
         .firstOrNull { it.filename == name }
         ?.inputStream
@@ -42,7 +42,7 @@ class V2ContentCatalog(private val location: String = DEFAULT_LOCATION) {
     private fun entries() = resolver.getResources("classpath*:$location/*.json")
 
     companion object {
-        /** 규약 고정: v1 리소스(`scenario/`, `db/migration/`)와 겹치지 않는 형제 경로. */
+        /** Contractual sibling path that cannot overlap v1 resources (`scenario/`, `db/migration/`). */
         const val DEFAULT_LOCATION: String = "content/v2"
     }
 }

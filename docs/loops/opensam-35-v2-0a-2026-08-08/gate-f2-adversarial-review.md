@@ -72,7 +72,7 @@
 
 ### 3.1 diff 게이트 5종 — 직접 재실행 **[실측]**
 
-```
+```text
 MB=fb90eac1f1241b92c5a3746cc7e30d445f174744   (origin/main = b7735659, 전진 상태)
 ② T1   :(glob)logic/src/main/kotlin/** common/src/main/kotlin/** logic/src/test/resources/golden/**  → (빈 출력)
 ③ T2   :(glob)app/*/src/main/kotlin/** infra/src/main/kotlin/** infra/src/main/resources/db/migration/** → (빈 출력)
@@ -124,7 +124,7 @@ S1 문서는 형제 격리를 프로브 `V902__s1_probe_sibling.sql`로 실측�
 
 ### 3.5 compose 유효성·fail-closed **[실측]**
 
-```
+```text
 $ V2_SCENARIO_CODE=… V2_SCENARIO_HOST_DIR=… V2_POSTGRES_PASSWORD=… V2_JWT_SECRET=… V2_ADMIN_PASSWORD=… \
     docker compose -f docker-compose.v2-sandbox.yml config -q   → COMPOSE_CONFIG_OK
 $ docker compose -f docker-compose.v2-sandbox.yml config -q      → error: required variable V2_POSTGRES_PASSWORD is missing a value

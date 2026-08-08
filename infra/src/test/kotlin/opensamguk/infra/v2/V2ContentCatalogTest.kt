@@ -10,11 +10,11 @@ import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.CommandLineRunner
 
 /**
- * OPENSAM-35 0A-d — [V2ContentCatalog]의 스코프·빈 카탈로그 동작, 그리고 **"scan·seed 없음"의 실측**.
+ * OPENSAM-35 0A-d — [V2ContentCatalog] scope and empty-catalog behavior, plus executable proof of no scan or seed.
  *
- * 픽스처는 `infra/src/test/resources/v2-catalog-fixture/content/` 아래에 있다:
- * `content/v2/alpha.json`·`beta.json`(잡혀야 함) / `content/v2/nested/deep.json`(재귀 금지) /
- * `content/v2/ignored.txt`(비-JSON) / `content/v2-decoy/decoy.json`(형제 디렉터리).
+ * Fixtures live under `infra/src/test/resources/v2-catalog-fixture/content/`:
+ * `content/v2/alpha.json` and `beta.json` must be found; `content/v2/nested/deep.json` must not recurse;
+ * `content/v2/ignored.txt` is non-JSON; and `content/v2-decoy/decoy.json` is a sibling directory.
  */
 class V2ContentCatalogTest {
 
@@ -22,7 +22,7 @@ class V2ContentCatalogTest {
 
     @Test
     fun `empty catalog returns an empty list instead of throwing`() {
-        // 운영 기본 위치. 실제 v2 콘텐츠 파일은 아직 0개(README만)이므로 빈 목록이 정상 동작이다.
+        // The production default location contains no v2 content files yet (only a README), so empty is correct.
         assertEquals(emptyList(), V2ContentCatalog().names())
     }
 
@@ -51,8 +51,8 @@ class V2ContentCatalogTest {
     }
 
     /**
-     * "startup seed 없음"의 1차 실측: 스프링이 부팅 시 자동 호출하는 두 콜백 인터페이스를 이 타입이
-     * 구현하지 않는다. 구현하면 게이트가 열린 컨텍스트에서 부팅과 동시에 실행돼버린다.
+     * First executable proof of no startup seed: this type does not implement Spring's two boot-invoked callback
+     * interfaces. Implementing either would execute it immediately when a gated context starts.
      */
     @Test
     fun `is not a startup runner`() {
@@ -61,9 +61,10 @@ class V2ContentCatalogTest {
     }
 
     /**
-     * "DB 쓰기 없음"의 실측: `DaemonNoEntityManagerTest`와 같은 **클래스파일 상수풀 스캔**이다.
-     * 어떤 타입을 참조하면 슬래시 형식 내부 이름이 상수풀에 남으므로, 선언(주석·규약)이 아니라
-     * 컴파일 산출물로 판정한다. 나중에 누가 이 로더에 `JdbcTemplate`을 붙이면 이 테스트가 깨진다.
+     * Executable proof of no database write: the same class-file constant-pool scan used by
+     * `DaemonNoEntityManagerTest`. Referenced types leave slash-form internal names in the constant pool, so this
+     * judges compiled output rather than a declaration, comment, or contract. Adding `JdbcTemplate` to this loader
+     * would break this test.
      */
     @Test
     fun `references no persistence write type and no startup runner type`() {
@@ -88,7 +89,7 @@ class V2ContentCatalogTest {
         for (needle in forbidden) {
             assertTrue(needle !in text, "${classFile.path} constant pool references forbidden type $needle")
         }
-        // 비공허성: 스캔이 실제로 클래스 내용을 보고 있음을 고정한다.
+        // Non-vacuity: prove the scan actually examines this class's contents.
         assertTrue("org/springframework/core/io/support/PathMatchingResourcePatternResolver" in text)
         assertTrue("content/v2" in text)
     }
