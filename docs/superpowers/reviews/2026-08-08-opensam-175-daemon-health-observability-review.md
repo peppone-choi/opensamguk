@@ -1,6 +1,6 @@
 # Review: OPENSAM-175 — 턴 데몬 차단이 헬스에 드러나지 않던 관측 공백
 
-Scope: `app/game-engine/src/main/kotlin/opensamguk/engine/status/TurnDaemonHealthIndicator.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/status/DaemonPauseGate.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/status/StatusController.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/run/TurnDaemonRunner.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/turn/InMemoryTurnWorld.kt`, `app/game-engine/src/test/kotlin/opensamguk/engine/status/TurnDaemonHealthIndicatorTest.kt`, `app/game-engine/src/test/kotlin/opensamguk/engine/status/StatusControllerTest.kt`, `app/game-engine/src/test/kotlin/opensamguk/engine/run/TurnDaemonRunnerTest.kt`, `app/game-engine/src/test/kotlin/opensamguk/engine/flush/FlushRecoveryHealthIndicatorTest.kt` — 데몬 상태를 헬스에 정직하게 노출하는 신규 `HealthIndicator` 와 그 지지 변경
+Scope: `app/game-engine/src/main/kotlin/opensamguk/engine/status/TurnDaemonHealthIndicator.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/status/DaemonPauseGate.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/status/StatusController.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/run/TurnDaemonRunner.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/turn/InMemoryTurnWorld.kt`, `app/game-engine/src/test/kotlin/opensamguk/engine/status/TurnDaemonHealthIndicatorTest.kt`, `app/game-engine/src/test/kotlin/opensamguk/engine/status/StatusControllerTest.kt`, `app/game-engine/src/test/kotlin/opensamguk/engine/run/TurnDaemonRunnerTest.kt`, `app/game-engine/src/test/kotlin/opensamguk/engine/flush/FlushRecoveryHealthIndicatorTest.kt`, `.github/workflows/deploy.yml` — 데몬 상태를 헬스에 정직하게 노출하는 신규 `HealthIndicator` 와 그 지지 변경
 Verdict: cleared
 
 ## 사고 (프로덕션 실측)
@@ -14,9 +14,15 @@ Verdict: cleared
 - `FlushRecoveryHealthIndicator` 는 OPENSAM-132 이래 recovery not-ready 에 **이미 DOWN** 을 반환했다. 사고 2.3일 동안 엔진 자신의 `/actuator/health` 는 이미 DOWN 이었을 것이 거의 확실하다. 사고 기록의 `{"status":"UP"}` 은 nginx 가 노출하는 `/api/health`(게이트웨이/게임API 평면)이지 엔진 액추에이터가 아니다 — **엔진 액추에이터는 애초에 외부에서 볼 수 없었다.**
 - `docker-compose.production.yml` 의 game-engine 블록에는 **healthcheck 자체가 없고**(`expose: 8082` 뿐), `infra/nginx/nginx.conf:151-157` 엔진 라우트는 **주석 처리**되어 있다.
 
-따라서 정직한 진술은 이렇다:
+**정정 — 소비자는 0개가 아니다.** 이 문서 초안은 "듣는 주체가 0개"라고 단정했다. 커밋 직후 `deploy.yml` 실패 이력을 실측해 보니 **틀렸다.** `.github/workflows/deploy.yml:591` 이 배포마다 `docker exec <engine> wget -qO- localhost:8082/actuator/health | grep -q '"status":"UP"'` 로 **엔진 액추에이터를 직접 소비한다.** 그리고 실제로 사고를 잡았다 — 2026-08-07T23:41 / 08-08T00:27 배포 두 건이 정확히 이 줄에서 NO-GO 됐다(run 31227905107 / 31230125448, `deploy` job failure).
 
-> **이 PR 은 엔진이 자기 상태를 정직하게 말하게 만들지만, 프로덕션에서 그 말을 듣는 주체는 0개다.**
+문제는 그 줄이 **메시지 없이 `status=1`** 로만 끝난다는 것이다. 게이트는 제대로 걸렸는데 로그에는 "왜"가 없어 아무도 읽어내지 못했다. **침묵한 게이트는 안 걸린 게이트와 구분되지 않는다** — 이 리뷰의 필자조차 그 실패를 못 보고 "소비자 0개"라고 썼다. 같은 커밋에서 세 헬스 체크(api/engine/web route)에 실패 사유 echo 를 붙였다.
+
+따라서 정직한 진술은 이렇게 좁혀진다:
+
+> **배포 시점에는 소비자가 있다(그리고 작동했다). 배포와 배포 사이에는 없다.** 2.3일 방치는 continuous monitoring 부재이지 소비자 전무가 아니다.
+
+**이 PR 이 배포 게이트에 주는 영향(초안이 누락했던 것):** `deploy.yml:591` 이 액추에이터 종합 status 를 읽으므로, 신규 `turn_stalled`/`loop_not_running`/`clock_unavailable` DOWN 은 **그대로 배포 NO-GO 가 된다.** 의도한 방향이고(멈춘 데몬 위로 배포하지 않는다), `paused → UP` 결정이 여기서 결정적이다 — 그게 없었다면 의도된 동결이 배포를 막았다. 오탐 위험은 낮다: 재배포 시 컨테이너가 재기동하며 `loopStartedAt` 이 3틱 유예를 새로 발급한다. 다만 **stalled 상태에서 배포하면 verify 가 빨간불이 된다**(수정 배포 자체는 verify 앞 단계에서 이미 적용되므로 차단되지는 않는다).
 
 실질적 신규 커버리지는 **`turn_stalled` 하나**다. 이건 진짜 가치가 있다 — recovery gate 를 세우지 **않고** 멈추는 고장류(락업, `XREAD BLOCK 0` 동결)를 잡는 유일한 상위 지표이고, 기존 recovery 인디케이터가 못 잡는 영역이다. 그러나 **"2.3일 방치 방지" 는 프로덕션 healthcheck + 알림 소비자가 붙기 전까지 닫히지 않는다.** 후속 티켓이 필요하다.
 
@@ -89,9 +95,9 @@ A/B/C/D 재확인. **B 재판정**: 5번 순서 변경이 1차 BLOCKER 를 재�
 
 ## 범위 밖으로 남긴 것 (후속 필요)
 
-- **프로덕션 healthcheck 부재** — `docker-compose.production.yml` game-engine 블록에 healthcheck 가 없고 nginx 엔진 라우트는 주석 처리다. **이게 사고의 진짜 원인이고 이 PR 은 손대지 않는다.**
-- **알림/재시작 트리거 없음** — `/actuator/health`(8082)를 긁어서 알리거나 재시작시키는 주체가 0개다.
-- **`deploy.yml:503` 조용한 skip 재검토** — `recovery_ready != true` 일 때 "verification skipped" 로 넘어간다.
+- **배포 사이 continuous monitoring 부재** — `docker-compose.production.yml` game-engine 블록에 healthcheck 가 없고(로컬 `docker-compose.yml:202-208` 에는 있다) nginx 엔진 라우트는 주석 처리다. 배포와 배포 사이 며칠을 아무도 안 본다. **이게 2.3일 방치의 진짜 원인이고 이 PR 은 손대지 않는다.** 후속: #368.
+- **알림/재시작 트리거 없음** — DOWN 을 사람에게 도달시키는 경로가 없다. 배포 verify 는 배포할 때만 본다.
+- **`deploy.yml:503` 조용한 skip 재검토** — `recovery_ready != true` 일 때 "verification skipped" 로 넘어간다. 이번에 고친 침묵(`:591`)과 같은 종류의 문제이나, skip 은 사유를 echo 하므로 로그에는 남는다. 그 skip 이 정당한지는 별도 판단이 필요하다.
 - **`management.endpoint.health.show-details`** 미설정(기본 `never`) 유지 — actuator 본문 변경은 `predeploy_go_check.sh:63-65` 정규식과 `docker-compose.yml:203` 에 영향이 가므로 이 티켓에서 건드리지 않았다. 진단 디테일은 `/admin/turn-daemon/status` 로만 노출된다.
 
 ## 검증
