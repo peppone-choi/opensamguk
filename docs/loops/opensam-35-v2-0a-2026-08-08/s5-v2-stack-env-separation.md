@@ -1,24 +1,47 @@
 # S5 — 0A-e production 격리 + v2 스택 env 분리 (실측)
 
-- 티켓: OPENSAM-35 / 0A-e (ADR-LITE-021 (i)), 계획 `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md` §3 S5
+- 티켓: OPENSAM-35 / 0A-e (ADR-LITE-021 (i), ADR-LITE-023, ADR-LITE-029), 계획 `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md` §3 S5
 - 브랜치: `op-35-v2-0a`, 작성 2026-08-08
-- 산출물: `docker-compose.v2-sandbox.yml` (**신규 1파일**). 기존 파일 수정 0건.
+- ADR-LITE-023 보정 산출물: `docker-compose.v2-sandbox.yml` · `v2-sandbox.env.example` ·
+  `infra/nginx/shared-gateway-relay.conf.template` · 이 S5 계약/증거. 런타임 소스는 수정하지 않았다.
 - 전제(재측정하지 않음): S0 치환 semantics · S1 형제 location + U4-d · S2 이중 게이트 · S3-b 런타임 읽기 · S4 빈 0개.
 
 ---
 
-## 1. `docker-compose.v2-sandbox.yml` — 6개 env의 실제 값과 근거
+## 1. ADR-LITE-023 — v2 world 격리와 shared gateway 경계
 
 C1 결정대로 `docker-compose.production.yml`·`tools/agent-system/check.py`·`application.yml`은
 무수정이고 v2는 **별도 스택 파일**로 분리했다. `docker-compose.yml`(로컬 정본)도 무수정이다.
 
-### 1.1 v1과 다른 값으로 명시 주입한 6개
+### 1.1 현재 프로세스 계약
 
-컨테이너 안에서 `printenv`로 확인한 **실효값**이다(§3.1).
+ADR-LITE-023의 "별도 DB"는 **게임 월드 DB에만** 적용한다. v2 Compose에는 `gateway-api` service가
+없고, `shared-gateway-relay`는 계정 서비스가 아닌 relay다. relay만 required external
+`SHARED_GATEWAY_NETWORK`에 붙고, required `SHARED_GATEWAY_UPSTREAM`으로 existing v1 gateway를 프록시한다.
+tracked local Compose의 stable container DNS는 `opensamguk-gateway-api:8080`이다. `gateway-api:8080`는 relay의
+**v2-network 전용 alias**라 upstream으로 쓰면 self-proxy가 된다. web-gateway·web-game·nginx는 v2 network에만
+붙은 채 기존 `http://gateway-api:8080` URL로 relay를 사용한다. 이 방식은 account DB, admin seed, JWT issuer,
+profile writer를 중복 생성하지 않는다.
 
-| # | env | v1 스택 값 | **v2 스택 값** | 근거 |
+| 대상 | 연결/소유 | JWT·프로필 경계 |
+|---|---|---|
+| 기존 v1 `gateway-api` | `SHARED_GATEWAY_UPSTREAM`의 unique existing DNS host:port로 relay에서만 해석. v2 Compose는 이 서비스를 build·seed·DB 연결하지 않는다 | 기존 v1 gateway가 account/JWT 발급/profile writer의 단일 소유자 |
+| `shared-gateway-relay` | `shared-gateway`에는 unique service identity만, `opensamguk-v2`에는 `gateway-api` alias만 둔다. template은 required upstream을 Docker DNS로 프록시한다 | account DB·issuer·admin seed·profile writer 없음 |
+| `web-gateway`·`web-game`·`nginx` | `opensamguk-v2`에만 attach하고 기존 `http://gateway-api:8080` 내부 URL을 그대로 사용 | `nginx`는 `SHARED_GATEWAY_PROFILE_ICONS_VOLUME`을 read-only mount해 기존 writer의 파일을 제공 |
+| `game-api` | `jdbc:postgresql://postgres:5432/${V2_POSTGRES_DB:-sammo_v2}` + sandbox `redis`만 사용 | `${JWT_SECRET:?}`로 existing gateway가 발급한 토큰을 검증 |
+| `game-engine` | `jdbc:postgresql://postgres:5432/${V2_POSTGRES_DB:-sammo_v2}` + sandbox `redis`만 사용 | JWT 미사용 |
+
+`SPRING_FLYWAY_LOCATIONS`는 game-api와 game-engine에만
+`classpath:db/migration,classpath:db/migration_v2`로 주며, shared gateway에는 v2 migration을 주지 않는다.
+`ADMIN_USERNAME`/`ADMIN_PASSWORD`와 profile writer도 v2 서비스에는 존재하지 않는다. profile·닉네임·유산
+포인트의 정책적 공유 범위를 새로 결정하지 않고, 이미 shared gateway가 관리하는 profile metadata와 파일만
+같은 existing volume으로 일관되게 보이게 한다.
+
+### 1.2 v1과 다른 값으로 명시 주입한 v2 world 값
+
+| # | env | v1 스택 값 | **v2 world 값** | 근거 |
 |---|---|---|---|---|
-| ① | `GAME_DATABASE_URL` | `jdbc:postgresql://postgres:5432/sammo` | `jdbc:postgresql://postgres:5432/sammo_v2` (별도 postgres 컨테이너·별도 볼륨·별도 네트워크) | S1 U4-d — v2 행이 있는 DB에 v1이 붙어도 Flyway는 WARN만 내고 뜬다. **DB 분리가 유일한 1차 방어선** |
+| ① | `GAME_DATABASE_URL` (game-api·game-engine만) | `jdbc:postgresql://postgres:5432/sammo` | `jdbc:postgresql://postgres:5432/sammo_v2` (별도 postgres 컨테이너·별도 볼륨·별도 네트워크) | S1 U4-d — v2 행이 있는 DB에 v1이 붙어도 Flyway는 WARN만 내고 뜬다. **world DB 분리가 1차 방어선** |
 | ② | `OPENSAMGUK_WORLD_ID` | `1` | `9001` (`${V2_WORLD_ID:-9001}`) | `WorldIdConfig.kt:11` · `ScenarioSeedCoordinator.kt:46-48`이 world 동일성 불일치를 `error(...)`로 잡는다 |
 | ③ | `SCENARIO_CODE` | `scenario_1010` | **기본값 없음** — `${V2_SCENARIO_CODE:?...}` fail-closed | 계획 §0.2 조용한 실패. 상속하면 `ignoreDefaultEvents=false` → `ScenarioImporter.kt:888` defaults 분기 |
 | ④ | `SCENARIO_DIR` | `/data/scenarios` | `/data/scenarios-v2` + 호스트 마운트도 `${V2_SCENARIO_HOST_DIR:?...}` fail-closed | 동上. `EffectiveScenarioResolver`가 이 디렉터리를 classpath보다 우선한다 |
@@ -27,83 +50,90 @@ C1 결정대로 `docker-compose.production.yml`·`tools/agent-system/check.py`·
 
 ⑤⑥은 **리터럴**이다. 이 파일의 존재 이유가 "v2 게이트가 열린 스택"이므로 env로 끌 수 있게 두지 않았다.
 
-### 1.2 함께 넣은 load-bearing 값 3개 (6개 외)
+### 1.3 함께 넣은 load-bearing 값
 
 | env | 값 | 근거 |
 |---|---|---|
-| `SPRING_FLYWAY_LOCATIONS` | `classpath:db/migration,classpath:db/migration_v2` | S0 — 병합이 아니라 **치환**. v1 location 누락 시 V1~V38이 통째로 빠진다. S1 — 형제 경로여야 v1이 v2를 삼키지 않는다. **gateway-api에도 넣었다**: gateway-api도 같은 DB에 `classpath:db/migration`으로 Flyway를 돌린다(`app/gateway-api/src/main/resources/application.yml:12-14`) — 빼면 부팅 순서에 따라 U4-d의 "newer version" WARN이 난다 |
+| `SPRING_FLYWAY_LOCATIONS` | game-api·game-engine만 `classpath:db/migration,classpath:db/migration_v2` | S0 — 병합이 아니라 **치환**. v1 location 누락 시 V1~V38이 통째로 빠진다. S1 — 형제 경로여야 v1이 v2를 삼키지 않는다. existing shared gateway에는 v2 location을 주지 않는다 |
 | `SCENARIO_SEED_ENABLED` | `true` (`${V2_SCENARIO_SEED_ENABLED:-true}`) | C1 (a). production compose의 `false` 불변식은 그 파일에만 걸리고 `check.py`는 무수정 |
-| `V2_POSTGRES_PASSWORD` / `V2_JWT_SECRET` / `V2_ADMIN_PASSWORD` | 전부 `:?` fail-closed | v1 크리덴셜 재사용 금지. 로컬 compose의 기본값 관례를 따르지 않은 유일한 지점 |
+| `V2_POSTGRES_PASSWORD` | `:?` fail-closed | v2 world postgres만의 비밀번호 |
+| `SHARED_GATEWAY_NETWORK` | `:?` fail-closed external network name | relay만 attach하는 existing v1 gateway network |
+| `SHARED_GATEWAY_UPSTREAM` | `:?` fail-closed unique host:port | relay의 existing v1 gateway target. `gateway-api:8080`는 v2 alias라 금지하고, render contract가 그 self value를 거부한다. 기본 hostname을 만들지 않는다 |
+| `SHARED_GATEWAY_PROFILE_ICONS_VOLUME` | `:?` fail-closed external volume name | existing gateway writer와 nginx reader가 같은 profile icon 파일을 본다 |
+| `JWT_SECRET` | game-api의 `:?` input | existing v1 gateway issuer와 같은 value여야 한다. cross-world runtime에서 검증할 계약이다 |
 
-### 1.3 설계 규약 — **스택 격리에 load-bearing한 값만 `V2_`-접두 치환 변수를 쓴다**
+### 1.4 설계 규약 — world는 `V2_*`, shared gateway는 명시 입력
 
 v1과 같은 호스트/같은 `.env`에서 나란히 뜨는 것이 이 파일의 목적이므로,
 `${OPENSAMGUK_WORLD_ID}`처럼 v1과 같은 변수명을 쓰면 v2가 v1 값을 **조용히 상속**한다.
-그래서 격리에 관여하는 값은 전부 `${V2_*}`로 바꿨고, 상속되면 무증상인 3·4는
-기본값 자체를 주지 않았다.
+world 격리에 관여하는 값은 `${V2_*}`를 쓰고, 상속되면 무증상인 시나리오 값은 기본값 자체를
+주지 않았다. 예외인 shared gateway는 `${SHARED_GATEWAY_NETWORK}`·`${SHARED_GATEWAY_UPSTREAM}`·
+`${SHARED_GATEWAY_PROFILE_ICONS_VOLUME}`·`${JWT_SECRET}`을 **명시적으로 필수화**한다. 즉 `V2_*`
+default나 ambient v1 환경값을 읽어 account topology나 JWT trust를 우연히 선택하지 않는다.
+`TZ`·`NODE_ENV`·game-api/game-engine JVM 튜닝만 공통 이름을 쓴다.
 
-**전수 적용이 아니다.** 스택 격리와 무관한 값 — 상속돼도 v1/v2가 서로를 오염시키지 않는 값 —
-은 의도적으로 v1 이름을 공유한다. 실측(`grep -o '\${[A-Za-z_][A-Za-z0-9_]*'`)한 **예외 7종**:
+`:?`는 값의 내용을 검증하지 않는다. `V2_SCENARIO_HOST_DIR`이 v1 시나리오를 가리키면 v1 콘텐츠가
+v2 world DB에 시드될 수 있다. 반대로 game-api/game-engine은 이 파일의 `postgres`만 참조하므로
+v2 world schema가 v1 **world** DB에 연결되는 경로는 없다. shared gateway service는 relay 하나만 external
+network에서 소비하고, world 서비스는 그 network나 account DB에 붙지 않는다.
 
-| 변수 | 등장 위치 | 왜 v1 이름을 공유하는가 |
-|---|---|---|
-| `TZ` | 전 8서비스 (`:39`, `:61`, `:91`, `:139`, `:189`, `:248`, `:273` + `JAVA_TOOL_OPTIONS` 3곳) | 타임존은 호스트 단위 값이다. v1과 다르게 두면 오히려 로그 대조가 깨진다 |
-| `NODE_ENV` | `web-gateway:249`, `web-game:274` | 빌드/런타임 모드. 스택 정체성이 아니다 |
-| `JWT_ACCESS_EXPIRATION` | `gateway-api:100` | 만료 **시간**일 뿐이다. 격리는 `V2_JWT_SECRET`(서명키)이 하며 그건 `:?` fail-closed다 |
-| `JWT_REFRESH_EXPIRATION` | `gateway-api:101` | 동上 |
-| `GATEWAY_API_JAVA_OPTS` | `:111` | JVM 튜닝 플래그. v2 컨테이너 안에서만 작용하고 v1에 닿지 않는다 |
-| `GAME_API_JAVA_OPTS` | `:162` | 동上 |
-| `GAME_ENGINE_JAVA_OPTS` | `:219` | 동上 |
+### 1.5 Compose render + mutation evidence (2026-08-08)
 
-(계수 기준: `${…}` 치환으로 **실제 등장하는** 서로 다른 변수명. 헤더 주석 `:12`의
-`${OPENSAMGUK_WORLD_ID}`는 설명용 예시 문자열이라 치환이 아니다.)
+실제 `.env`나 시크릿은 읽지 않았다. `env -i`로 만든 complete placeholder input과 `--env-file /dev/null`만
+`docker compose … config --format json`에 사용했다.
 
-fail-closed 실측:
+회귀 대상은 v2가 gateway identity 또는 profile storage를 복제하지 않으면서, duplicate `gateway-api` DNS
+alias 없이 existing shared gateway를 유일하게 해석하는 path를 갖는지다.
 
-```
-$ V2_SCENARIO_HOST_DIR=… V2_POSTGRES_PASSWORD=x V2_JWT_SECRET=x V2_ADMIN_PASSWORD=x \
-  docker compose -f docker-compose.v2-sandbox.yml config
-EXIT=1
-error while interpolating services.game-engine.environment.SCENARIO_CODE:
-  required variable V2_SCENARIO_CODE is missing a value:
-  V2_SCENARIO_CODE required — inheriting v1 SCENARIO_CODE silently seeds the 12 v1 default events
-```
+수정 후 render는 다음 JSON 단언이 `true`/exit 0이었다.
 
-### 1.4 `:?` fail-closed의 한계 — **값의 내용은 검증하지 않는다** (GATE-f Q2)
+| 단언 | 관측 |
+|---|---|
+| services 목록에 local gateway service·local profile-icons volume 없음 | `true` |
+| `shared-gateway-relay`만 `shared-gateway` external network에 attach | `true` |
+| `web-gateway`·`web-game`·`nginx`는 `opensamguk-v2` network만 사용 | `true` |
+| relay의 `gateway-api` alias는 `opensamguk-v2`에만 있고 shared network에는 custom alias가 없음 | `true` |
+| relay `SHARED_GATEWAY_UPSTREAM` = `opensamguk-gateway-api:8080`, v2 alias/self `gateway-api:8080`와 다름 | `true` |
+| `game-api`·`game-engine`은 `opensamguk-v2` network만 사용 | `true` |
+| nginx profile-icons mount는 named external shared volume이며 read-only | `true` |
+| game-api `JWT_SECRET`은 supplied placeholder value를 받음 | `true` |
+| game-api DB = game-engine DB = `jdbc:postgresql://postgres:5432/sammo_v2` | `true` |
+| game-api/game-engine `REDIS_HOST` = `redis` | `true` |
+| web/nginx의 stable gateway target은 `http://gateway-api:8080` (v2 relay alias) | `true` |
+| nginx image entrypoint renders relay template and `nginx -t` succeeds | `true` |
 
-`V2_SCENARIO_HOST_DIR`(`:121`, `:171`, `:228`)·`V2_SCENARIO_CODE`(`:203`)의 `:?`가 막는 것은
-**변수 미설정 하나뿐**이다. 값이 무엇을 가리키는지는 compose가 알지 못한다. 따라서:
+`--env-file /dev/null`과 `env -i`로 만든 complete placeholder 입력에서 각 필수 shared 변수를 실제로
+unset하는 mutation도 모두 exit 1로 fail-closed했다.
 
-- **콘텐츠 방향(v1 → v2)은 열려 있다.** 운영자가 `V2_SCENARIO_HOST_DIR`을 v1 시나리오 호스트
-  디렉터리로 두고 `V2_SCENARIO_CODE`에 v1 시나리오 코드를 넣으면 **v1 콘텐츠가 v2 DB에 시드된다.**
-  compose는 뜨고 부팅·시드·헬스체크가 전부 성공하므로 §1.1 ③④가 막으려던 "조용한 실패"와
-  **같은 계열의 사고가 값 내용 쪽에는 남아 있다.**
-- **DB 방향(v2 → v1)은 막혀 있다.** S1 U4-d 대응은 `GAME_DATABASE_URL` 분리이며 이건 DB 방향
-  전용이다. 별도 postgres 컨테이너 + 별도 볼륨 + 별도 DB명 + 자기 네트워크의 `postgres`
-  서비스만 참조 ⇒ 이 compose 안에 v1 DB로 붙는 경로는 없다(GATE-f 리뷰 재확인).
+| unset mutation | exit | Compose 오류에 포함된 required 변수 |
+|---|---:|---|
+| `SHARED_GATEWAY_NETWORK` | 1 | `SHARED_GATEWAY_NETWORK required` |
+| `SHARED_GATEWAY_UPSTREAM` | 1 | `SHARED_GATEWAY_UPSTREAM required` |
+| `SHARED_GATEWAY_PROFILE_ICONS_VOLUME` | 1 | `SHARED_GATEWAY_PROFILE_ICONS_VOLUME required` |
+| `JWT_SECRET` | 1 | `JWT_SECRET required` |
 
-**두 방향을 헷갈리지 말 것**: DB는 격리, 콘텐츠는 운영자 신뢰. 값 내용 검증(예: 마운트 경로가
-v1 `SCENARIO_DIR`과 같은지 비교)은 이 티켓 범위 밖이고 compose에 가드를 넣지 않았다 —
-현재 결론은 **한계 명시**다.
+render는 external network/volume의 **이름과 wiring** 및 relay alias/upstream 구분만 검증한다. 실제 one-account
+v1 gateway → relay → v2 game-api JWT 검증, 로그인 후 `/d_pic` 동일 파일 관측은 실재 shared network/volume과
+같은 JWT를 준비한 뒤 실행할 최종 integration gate이며, 이 placeholder render의 통과로 주장하지 않는다.
 
 격리 나머지: 프로젝트명 `opensamguk-v2-sandbox` · 컨테이너 `opensamguk-v2-*` ·
-볼륨 `v2-pgdata`/`v2-redisdata`/`v2-profile-icons` · 네트워크 `opensamguk-v2` ·
-포트 전부 비표준(55432/56379/58080-58082/53000/53001/58090) — 다른 세션·v1 스택과 충돌 없음.
+볼륨 `v2-pgdata`/`v2-redisdata` + external shared profile-icons · 네트워크 `opensamguk-v2` + external
+shared gateway · 포트는 v2 world/web/nginx만 비표준(55432/56379/58081/58082/53000/53001/58090)이다.
 
 ---
 
 ## 2. (b) DB 실측 — 계획 §3 S5 판정
 
-### 2.1 판정 문구를 문자 그대로는 충족할 수 없다 (정직하게 남김)
+### 2.1 ADR-LITE-029 수용 기준 정정
 
-판정은 "**v2 leaf 이벤트 행이 존재**하고 v1 기본 12행이 적재되지 않음"이다.
-그런데 계획 §0.1대로 리포에 **v2 콘텐츠·v2 시나리오·v2 이벤트 leaf가 0건**이다.
-`infra/src/main/resources/db/migration_v2/`와 `content/v2/`는 `README.md`뿐이다.
-없는 v2 leaf를 만들어 "존재한다"고 쓰면 날조다.
+ADR-LITE-029는 이 티켓의 수용 기준을 **v2 전용 probe 이벤트 2행 존재 + v1 기본 이벤트 12행 미적재**로
+확정했다. 실제 v2 schema/content leaf 행은 OPENSAM-150의 필수 수용 기준으로 이관했다. 따라서 리포에
+v2 leaf가 0건인 것은 S5의 미충족이 아니라 명시된 비범위다. 없는 leaf를 0A에 만들어
+"존재"라고 쓰지 않는다.
 
-**대신 측정한 것**: 일회성 프로브 시나리오(§2.2)를 써서 "**v2 스택은 자기 시나리오가 준 이벤트만
-적재하고 v1 기본 12행은 적재하지 않는다**"를 DB로 실측했다. 판정의 두 번째 절(핵심 방어)은 충족,
-첫 번째 절은 **v2 콘텐츠가 생기기 전까지 UNKNOWN**이다 — 약화된 대체 판정을 진짜 판정으로 부르지 않는다.
+S5가 측정한 것은 일회성 프로브 시나리오(§2.2)가 준 이벤트만 v2 world DB에 적재하고 v1 기본 12행은
+적재하지 않는다는 격리 능력이다. OPENSAM-150은 같은 DB에서 실제 v2 schema/content leaf와 기본 12행
+0을 함께 재측정해야 한다.
 
 ### 2.2 프로브 (리포에 남기지 않음)
 
@@ -112,7 +142,7 @@ v1 `SCENARIO_DIR`과 같은지 비교)은 이 티켓 범위 밖이고 compose에
 경로: `<scratchpad>/scenarios-v2/scenario_9001.json`. **리포 워킹트리 밖**이며 §5에서 제거를 확인했다.
 
 프로브 이벤트 2행(`NoticeToHistoryLog "<S>S5-V2-PROBE-EVENT-A|B</>"`)은 v1 leaf 액션을 쓴다 —
-**v2 leaf가 아니다.** 그래서 §2.1의 UNKNOWN이 남는다.
+**v2 leaf가 아니다.** 이는 ADR-LITE-029가 OPENSAM-150으로 이관한 실제 leaf 수용 기준을 대체하지 않는다.
 
 **부수 발견(구속 조건):** 첫 시도의 코드 `scenario_s5v2probe`는 부팅을 깨뜨렸다 —
 `SCENARIO_CODE must be canonical scenario_<number>` (`ScenarioSeedRunner.kt:150`).
@@ -164,7 +194,7 @@ SELECT count(*) AS event_rows_total FROM event;
 |---|---|---|---|
 | `current_database()` | `sammo` | `sammo_v2` | **DB 분리 확인** |
 | `world_state.id` | `1` | `9001` | **world_id 분리 확인** |
-| `flyway_schema_history` 행수 | 38 (최신 V38) | 38 (최신 V38) | v2 location이 비어 있어 추가 행 없음(§4 UNKNOWN 1) |
+| `flyway_schema_history` 행수 | 38 (최신 V38) | 38 (최신 V38) | v2 location이 비어 있어 추가 행 없음. 실제 v2 migration/leaf는 ADR-LITE-029에 따라 OPENSAM-150에서 측정 |
 | `v1_default_rows` | **12** | **0** | **판정 핵심 — v2는 v1 기본 12행을 적재하지 않는다** |
 | `probe_event_rows` | 0 | **2** | v2는 자기 시나리오 이벤트만 적재 |
 | `scenario1010_event_rows` (`destroy_nation`) | **1** | 0 | v1 시나리오 고유 이벤트가 v2로 새지 않음 |
@@ -261,41 +291,44 @@ S3-b §4.3과 동일하며 범위를 넓히지 않았다.
 
 ## 4. UNKNOWN (정직하게 남김)
 
-1. **"v2 leaf 이벤트 행 존재"는 미충족.** 리포에 v2 콘텐츠 0건이라 실재하는 v2 leaf가 없다(§2.1).
-   `db/migration_v2/`·`content/v2/`도 `README.md`뿐이라 v2 스택의 `flyway_schema_history`가
-   v1과 같은 38행이다 — **v2 location이 비어 있다는 뜻이지 안 읽힌다는 뜻이 아니다**(S1이 프로브
-   V900/V901/V902로 이미 적용을 실측했다). OPENSAM-150(R1)이 실제 마이그레이션을 넣으면 재측정 대상.
-2. **컨테이너 안에서 v2 **빈** 0/1은 재측정하지 않았다.** `/actuator/beans`가 노출돼 있지 않고
+ADR-LITE-029가 실제 v2 leaf를 OPENSAM-150의 수용 기준으로 이관했으므로, 그것은 이 목록의 미확정
+항목이 아니다(§2.1).
+
+1. **컨테이너 안에서 v2 **빈** 0/1은 재측정하지 않았다.** `/actuator/beans`가 노출돼 있지 않고
    (`:58082/actuator/beans` → 404) 노출하려면 `application.yml` 수정이 필요해 게이트 ⑤ 위반이다.
    빈 게이트는 S4가 `@SpringBootTest` 8칸 + 비공허성 프로브 3회로 실측했고, S5는 그 게이트를 여는
    **두 env가 컨테이너에 실제로 도달함**(§3.1의 `printenv`, 프로파일 활성 로그
    `The following 1 profile is active: "v2-sandbox"`)까지만 확인했다.
-3. **장기 동작·턴 진행 미측정.** 부팅·시드·헬스체크까지다. v2 스택에서 턴이 도는지, v1/v2가
+2. **장기 동작·턴 진행 미측정.** 부팅·시드·헬스체크까지다. v2 스택에서 턴이 도는지, v1/v2가
    동시에 오래 떠 있을 때의 자원 경합은 범위 밖.
-4. **`gateway-api`의 v2 게이트 없음은 그대로다.** S2가 game-api·game-engine 양쪽에만 게이트를
-   설치했으므로 v2 스택의 gateway-api에는 `V2_ENABLED`/프로파일을 주지 않았다(Flyway location만 정렬).
-   gateway-api가 v2 빈을 갖게 되면 이 파일도 함께 고쳐야 한다.
-5. **sibling `opensamguk-docker` 리포 미반영** — C2 (a) 결정에 따른 후속 티켓 몫.
-6. **실제 프로덕션(`gcp-prod`) 미접속.** 전부 로컬 측정이다.
+3. **sibling `opensamguk-docker` 리포 미반영** — C2 (a) 결정에 따른 후속 티켓 몫.
+4. **실제 프로덕션(`gcp-prod`) 미접속.** 전부 로컬 측정이다.
+5. **one-account cross-world integration은 미실행.** 실재 shared network/volume과 existing unique gateway
+   upstream, 같은 `JWT_SECRET`이 준비된 뒤, v1 gateway 로그인 → relay → v2 game-api Bearer 검증 → `/d_pic`
+   동일 파일 응답을 함께 관측해야 한다. §1.5 render는 이 runtime 동작을 주장하지 않는다.
 
 ---
 
 ## 5. 정리(cleanup)
 
 ```
-$ docker compose -f docker-compose.v2-sandbox.yml down -v        # v2 스택 + 볼륨
+$ docker compose -f docker-compose.v2-sandbox.yml down -v        # v2 리소스만; external shared network/volume은 보존
 $ docker compose -p opensamguk-s5-v1 -f docker-compose.yml down -v   # v1 스택 + 볼륨
 $ docker rmi (측정용 이미지 10 태그)
 $ docker ps -a --format '{{.Names}}\t{{.Status}}' | grep opensamguk   # 무출력
 ```
 
-- 컨테이너 0 · 볼륨 0 · 네트워크 0 · 측정용 이미지 0.
+- 위 원래 S5 측정의 컨테이너·볼륨·네트워크·측정용 이미지는 정리했다.
 - 프로브 시나리오 `scenario_9001.json`은 스크래치패드에만 존재했고 리포에 **없다**
   (`git status --short`에 흔적 0건).
-- 비표준 포트만 썼다(55432/55433/56379/56380/58080-58085/53000-53003/58090/58091) — 표준 포트 미점유.
-- 브랜치 변경·stash·커밋·푸시 **0건**.
+- 비표준 v2 포트만 썼다(55432/55433/56379/56380/58081/58082/53000-53003/58090/58091) — 표준 포트 미점유.
+- ADR-LITE-023 보정은 `docker compose config`와 relay nginx template syntax check만 실행했다. 컨테이너·DB·볼륨을
+  새로 만들지 않았고, checkout·stash·커밋·푸시도 하지 않았다.
 
-## 6. 게이트 출력 (§7 보고와 동일)
+## 6. ADR-LITE-023 보정 게이트 출력
 
-`git diff --name-only --diff-filter=MD origin/main -- …` 4종 전부 **빈 출력**.
-`docker-compose.v2-sandbox.yml`은 신규 파일이라 `--diff-filter=MD`에 걸리지 않는다(계획 §2 C1 예상대로).
+- scoped `git diff --check -- docker-compose.v2-sandbox.yml v2-sandbox.env.example
+  infra/nginx/shared-gateway-relay.conf.template docs/loops/opensam-35-v2-0a-2026-08-08/s5-v2-stack-env-separation.md` exit 0.
+- temporary placeholder env의 render 및 필수 shared 입력 4종 unset mutation, relay alias/upstream assertion은 §1.5에 기록했다.
+- 이 보정에서는 스택을 기동하지 않았고 broad backend gate도 재실행하지 않았다. 이는 Compose interpolation과
+  topology 계약만 바뀐 범위이며, one-account cross-world runtime gate와 full gate 재실행은 상위 작업의 책임이다.

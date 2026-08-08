@@ -32,7 +32,8 @@
   - 게이트 ① `tools/parity/gate.sh backend` (출력 tail + XML, exit code 금지)
   - 게이트 ② T1 diff 0 · 게이트 ③ T2 diff = 사전 선언과 정확히 일치 · 게이트 ⑤ 설정 리소스 diff 0
   - 0A-f가 v1 프로세스 컨텍스트를 **실제로 띄워** v2 빈 0개를 실측(정적 스캔 대체 불가)
-  - v2 스택 부팅 후 v2 leaf 행 존재 + v1 기본 이벤트 12행 **미적재**를 DB로 실측
+  - v2 스택 부팅 후 v2 전용 probe 이벤트 행 존재 + v1 기본 이벤트 12행 **미적재**를 DB로 실측.
+    실제 v2 leaf 행은 OPENSAM-150의 필수 수용 기준으로 이관(ADR-LITE-029)
   - `web/game` `pnpm typecheck && pnpm test`
   - 외부 fresh reviewer 독립 적대적 리뷰 `cleared` (GATE-f)
 - Human approval checkpoints: 커밋·푸시·PR·머지·배포는 각각 별도 승인. 골든/테스트 약화,

@@ -11,7 +11,7 @@ foundation owner 1명을 등록한다. OPENSAM-35는 compose·Flyway location·�
 
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
-| `claude-opensam-35-v2-0a` | OPENSAM-35 V2-0A production 격리 게이트 (0A-a~g + ADR-LITE-021 DoD 3항목) — foundation owner | `op-35-v2-0a` (main `fb90eac1`에서 분기) | `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md`; `docs/loops/opensam-35-v2-0a-2026-08-08/**`; `.ai/task.md`; `.ai/current-state.md`; `.ai/ownership.md`; **신규 파일 전용** — `docker-compose.v2-sandbox.yml`, v2 Flyway location 디렉터리, `content/v2/**`, `web/game/app/game/v2-lab/**`, v2 조건부 빈/아키텍처 테스트. **T2 사전선언 확정 = 공집합**(계획서 §4) | active — S0 PASS(치환 semantics), S1 진행 중. **T1 수정·삭제 0건 강제.** `docker-compose.production.yml`·`application.yml`·`tools/agent-system/check.py`는 사용자 결정 C1에 따라 **무수정**. 커밋/푸시/PR/머지/배포 미승인 | 2026-08-08 |
+| `claude-opensam-35-v2-0a` | OPENSAM-35 V2-0A production 격리 게이트 (0A-a~g + ADR-LITE-021 DoD 3항목) — foundation owner | `op-35-v2-0a` (main `fb90eac1`에서 분기) | 계획·루프·review·`.ai/{task,current-state,decisions,ownership}.md`; 신규 v2 stack/Flyway/content/route/configuration/tests; 기존 파일 `web/game/middleware.ts`(하드 404)·`tools/parity/gate.sh`(root별 XML 채점)·`app/game-engine/build.gradle.kts`(cross-module naming source inputs). **T2 사전선언 = 공집합**(계획서 §4) | active — S0~S6 구현, false-green 3건 remediation targeted green, fresh broad gate green, independent final re-review `cleared`. latest-main PR 재구성·리뷰 3라운드·머지 진행 중; 배포 미실행. **T1 수정·삭제 0건.** production compose·`application.yml`·`tools/agent-system/check.py` 무수정 | 2026-08-08 |
 
 ## v1 비운영 폐쇄 lane release — 2026-07-29
 

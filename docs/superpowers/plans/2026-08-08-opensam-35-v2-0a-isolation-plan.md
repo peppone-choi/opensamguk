@@ -1,6 +1,6 @@
 # OPENSAM-35 — V2-0A production 격리 게이트 실행 계획
 
-- Status: **PROPOSED** (사람 승인 전 구현 금지)
+- Status: **ADOPTED · S0~S6 구현 완료 · release gate 진행 중** (사용자 승인 2026-08-08)
 - 작성: 2026-08-08
 - 티켓: OPENSAM-35 (Highest, `할 일`), 부모 에픽 OPENSAM-16
 - 정본: `docs/loops/v2-planning-2026-07-12/round3-proposal-city-guanxi.md` §7.1·§7.1-2·§7.2·§11 ·
@@ -114,7 +114,8 @@ v2 스택을 `docker-compose.production.yml`에 추가하면서 `true`를 주면
 `servers/<id>.env` 서버 정의 몫은 **별도 티켓으로 분리**하며 이 티켓에서 손대지 않는다
 (sibling은 별도 ownership·별도 PR·별도 승인 체계).
 
-→ S6 종결 시 sibling 리포용 후속 티켓을 OPENSAM에 생성하고 이 계획에서 교차 링크한다.
+→ sibling 리포용 후속 티켓 [OPENSAM-177](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-177)을
+생성해 OPENSAM-35와 `Relates`로 연결했다. sibling 변경·배포는 이 티켓에서 수행하지 않는다.
 
 ---
 
@@ -398,13 +399,16 @@ C1/C2 결정에 따름. v2 스택은 v1과 **다른 값**으로 아래 6개를 �
 `SCENARIO_CODE`/`SCENARIO_DIR`을 반드시 명시하는 이유는 §0.2의 조용한 실패다.
 (`SPRING_PROFILES_ACTIVE`는 현재 어느 compose/워크플로에서도 주입되지 않으므로 이 역시 신규다.)
 
-- **판정**: v2 스택 부팅 후 v2 leaf 이벤트 행이 존재하고 v1 기본 12행이 **적재되지 않음**을 DB로 실측.
+- **판정**: v2 스택 부팅 후 v2 전용 probe 이벤트 행이 존재하고 v1 기본 12행이 **적재되지 않음**을
+  DB로 실측. 실제 v2 leaf 행은 OPENSAM-150의 필수 수용 기준으로 이관한다(ADR-LITE-029).
 
-#### S5 실측 결과 (2026-08-08) — **핵심 방어 충족, 판정 첫 절은 UNKNOWN**
+#### S5 실측 결과 (2026-08-08) — **판정 충족**
 
 증거: `docs/loops/opensam-35-v2-0a-2026-08-08/s5-v2-stack-env-separation.md`.
-산출물 `docker-compose.v2-sandbox.yml` **신규 1파일**, 기존 파일 수정 0건
-(`docker-compose.production.yml`·`docker-compose.yml`·`check.py`·`application.yml` 전부 무수정 = C1 준수).
+최종 산출물은 `docker-compose.v2-sandbox.yml`, `v2-sandbox.env.example`,
+`infra/nginx/shared-gateway-relay.conf.template`이다. 기존 production/local compose·`check.py`·
+`application.yml`은 전부 무수정이라 C1을 유지한다. relay만 shared gateway network에 붙고
+v2 web/nginx/game 서비스는 v2 network에만 남는다.
 
 **DB 실측 — 동일 `game-engine` 이미지 1개를 두 스택이 공유하고 차이는 env뿐이다.**
 
@@ -421,23 +425,22 @@ C1/C2 결정에 따름. v2 스택은 v1과 **다른 값**으로 아래 6개를 �
 양쪽 공통 `Month/1000 = 77`(deferred 장수 등장)이 같다는 사실이 **차이가 이벤트 병합 분기에서만
 나왔음**을 보인다.
 
-**판정 첫 절("v2 leaf 이벤트 행 존재")은 충족하지 못했다 — 정직하게 미충족으로 남긴다.**
-리포에 v2 콘텐츠·시나리오·leaf가 0건이고(§0.1), 없는 것을 만들어 "존재한다"고 쓰면 날조다.
-프로브 이벤트 2행은 **v1 leaf 액션**을 쓴 일회성 측정 도구이며 리포에 남기지 않았다.
-OPENSAM-150(R1)이 실제 v2 마이그레이션·콘텐츠를 넣을 때 재측정 대상.
+**수용 기준 정정(2026-08-08 사용자 승인, ADR-LITE-029).** 이 티켓은 격리 게이트 선설치이고
+OPENSAM-150의 실제 v2 스키마·leaf는 명시적 비범위다. 따라서 존재하지 않는 v2 leaf를 만들어
+통과시키지 않고, v2 스택 전용 probe 이벤트 2행이 적재되면서 v1 기본 12행은 0임을 현재 판정으로
+삼는다. 실제 v2 leaf 행 존재는 OPENSAM-150의 필수 수용 기준이며 그 티켓에서 같은 DB 쿼리를
+실제 schema/content로 재측정한다.
 
 **v1 회귀 없음** — 같은 이미지·현재 브랜치 소스(v2 신규 파일 전부 포함)로 v1 스택 `healthy`,
 `SPRING_FLYWAY_LOCATIONS` 미설정 → 기본값 유지, `flyway_schema_history` 38행, `ERROR` 0건,
 U4-d의 "newer version" WARN 0건, 시드 결과 v2 도입 전과 동일.
 
-**설계 규약 — 모든 v2 값은 `V2_`-접두 치환 변수.** v1과 같은 호스트·같은 `.env`에서 나란히 뜨는 것이
-목적이므로 `${OPENSAMGUK_WORLD_ID}` 같은 v1 변수명을 쓰면 v2가 **조용히 상속**한다. 상속돼도
-무증상인 `SCENARIO_CODE`/`SCENARIO_DIR`은 기본값을 아예 주지 않고 `${V2_…:?}` fail-closed로 두었다
-(실측: 누락 시 `docker compose config` EXIT=1). 크리덴셜 3종도 fail-closed — v1 재사용 금지.
-
-**gateway-api에도 `SPRING_FLYWAY_LOCATIONS`를 넣었다** — gateway-api도 같은 DB에
-`classpath:db/migration`으로 Flyway를 돌리므로(`app/gateway-api/src/main/resources/application.yml:12-14`)
-빼면 부팅 순서에 따라 U4-d WARN이 난다.
+**최종 설계 규약 — game world 값만 `V2_`-접두 치환 변수.** v1과 같은 호스트·같은 `.env`에서
+나란히 뜨므로 world DB·world id·scenario가 v1 값을 조용히 상속하지 않게 한다. 반면 ADR-LITE-023에
+따라 계정·JWT issuer·profile writer는 분리하지 않는다. 최종 compose는 local gateway-api를 제거하고,
+필수 external network/profile volume과 shared `JWT_SECRET`으로 기존 v1 gateway 하나를 재사용한다.
+따라서 v2 Flyway location은 game-api·game-engine에만 주입되며 gateway에는 절대 주입되지 않는다.
+초기 local-gateway 측정과 위 문단의 종전 "크리덴셜 3종 분리" 설계는 이 보정으로 superseded됐다.
 
 **부수 발견(후속 티켓 구속 조건):** v2 시나리오 코드도 `scenario_<숫자>` 정규형이어야 한다
 (`ScenarioSeedRunner.kt:150` — `scenario_s5v2probe`가 부팅을 깨뜨렸다). **OPENSAM-151(R2)이 이 제약을 받는다.**
@@ -495,10 +498,10 @@ S1~S6의 산출물은 전부 신규 파일이다:
 |---|---|---|
 | S1 | v2 Flyway location 디렉터리 + 마이그레이션 | 신규 |
 | S2 | v2 조건부 `@Configuration`/빈 | 신규 |
-| S3 | v2 catalog loader · `web/game/app/game/v2-lab/**` | 신규 |
-| S4 | 아키텍처 테스트 클래스 | 신규 |
-| S5 | `docker-compose.v2-sandbox.yml` | 신규(T2 아님) |
-| S6 | `docs/loops/**` artifact | 신규(T2 아님) |
+| S3 | v2 catalog loader · `web/game/app/game/v2-lab/**` | 신규 + `web/game/middleware.ts` 기존 파일 수정(하드 404) |
+| S4 | 아키텍처 테스트 클래스 | 신규 + `app/game-engine/build.gradle.kts` 기존 파일 수정(6개 raw source root를 test input으로 선언) |
+| S5 | `docker-compose.v2-sandbox.yml` · `v2-sandbox.env.example` · `infra/nginx/shared-gateway-relay.conf.template` | 신규(T2 아님) |
+| S6 | `docs/loops/**` artifact | 신규(T2 아님) + `tools/parity/gate.sh` 기존 파일 수정(gateway-api 실행·XML 채점 포함) |
 
 따라서 게이트 ③의 기대값은 **빈 출력**이다. 명령 정본은 §4-1에 있다.
 
@@ -555,13 +558,17 @@ git diff --name-only --diff-filter=MD "$MB" -- \
 git diff --name-only --diff-filter=MD "$MB" -- \
   docker-compose.production.yml docker-compose.yml tools/agent-system/check.py
 
-# 전체 M/D — 기대: .ai/* 3개 + web/game/middleware.ts 1개 (승인된 유일 수정)
+# 전체 M/D — 기대: .ai/* 4개 + game-engine build input + middleware + backend gate
 git diff --name-only --diff-filter=MD "$MB"
 ```
 
 **개정 후 재측정 결과(2026-08-08, `MB=fb90eac1`): ②③⑤ 전부 빈 출력,
-전체 M/D = `.ai/current-state.md` · `.ai/ownership.md` · `.ai/task.md` ·
-`web/game/middleware.ts`.** 제약 자체는 실제로 지켜지고 있었다 — 고장난 건
+전체 M/D = `.ai/current-state.md` · `.ai/decisions.md` · `.ai/ownership.md` · `.ai/task.md` ·
+`app/game-engine/build.gradle.kts` · `tools/parity/gate.sh` · `web/game/middleware.ts`.**
+`build.gradle.kts` 수정은 cross-module naming guard가 읽는 6개 raw source root를 Gradle test input으로
+등록해 UP-TO-DATE false-green을 막는다. `gate.sh` 수정은 S4 후속 gateway-api
+아키텍처 테스트가 표준 backend 게이트에서 실제 실행되고 XML 채점되도록 하는 게이트 자체의
+폐쇄이며 T2 production source 수정이 아니다. 제약 자체는 실제로 지켜지고 있었다 — 고장난 건
 게이트였다. 이 결함 이력은 통과했다고 지우지 않는다.
 
 ---

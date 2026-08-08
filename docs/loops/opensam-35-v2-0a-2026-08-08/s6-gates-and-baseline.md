@@ -7,15 +7,16 @@
 
 | 게이트 | 판정 | 비고 |
 |---|---|---|
-| ① `tools/parity/gate.sh backend` | **PASS (단, 커버리지 구멍 + 시점 stale — 아래 B3)** | 571 suites / 4862 tests / fail 0 / err 0 / skip 1(기존 백로그) |
+| ① `tools/parity/gate.sh backend` | **PASS (fresh remediation 후 재실행)** | 599 suites / 5023 tests / fail 0 / err 0 / skip 1(기존 백로그), gateway-api 포함 |
 | ② T1 diff 0 | **PASS** | 빈 출력 (교정 명령 재측정 §12) |
 | ③ T2 diff = 사전 선언(공집합) | **1차 판정 무효(공허) → 교정 후 PASS** | §3에 결함 이력, §12에 교정 재측정 |
 | ⑤ 설정 리소스 무수정 | **1차 판정 무효(공허) → 교정 후 PASS** | 동상 |
 | C1 추가 확인 | **PASS** | 빈 출력 (§12) |
-| 프론트 `pnpm typecheck && pnpm test` | **PASS** | typecheck 무출력, 54 files / 287 tests pass |
+| 프론트 `pnpm typecheck && pnpm test` | **PASS (fresh)** | typecheck 무출력, 54 files / 288 tests pass |
 | artifact 4종 | **3종 생성 + 1종 "해당 없음"(근거 명시)** | §7 |
 
-**차단 사항 2건 (수정하지 않고 보고만 한다):**
+**초기 차단 이력(현재는 전부 해소, 결함 이력을 보존한다):** 아래 B1~B3는 최초 S6 실행
+시점의 사실이다. 현재 판정은 §14의 fresh 재측정이 대체한다.
 
 - **B1 — 게이트 ③·⑤의 pathspec이 vacuous.** §3 참조. 지금 상태로는 위반을 절대 검출하지 못하는
   false-green 명령이다. **게이트 명령의 정본(계획서 §3 S6 / §4)을 반드시 고쳐야 한다** — S6는
@@ -43,7 +44,7 @@
 
 ---
 
-## 1. 게이트 ① — `tools/parity/gate.sh backend`
+## 1. 최초 게이트 ① — `tools/parity/gate.sh backend` (역사적 실행)
 
 ### 실행 명령
 
@@ -60,7 +61,7 @@ Configuration cache entry reused.
 XML gate green: 571 suites, 4862 tests
 ```
 
-전체 로그: `baseline/a4-backend-gate.log` (sha256 `3db5656…`).
+전체 로그: `baseline/a4-backend-gate.log` (sha256 `4d60d74…`, 줄 끝 공백 1개 정규화).
 
 ### 테스트 XML 독립 집계 (exit code 미사용)
 
@@ -477,3 +478,76 @@ web/game/middleware.ts
 - 측정용 컨테이너 `opensam35-s6-v1schema` 삭제 완료 (`docker ps -a | grep opensam35` → 0건).
 - 비표준 포트 55435만 사용, 볼륨·네트워크 잔여 0.
 - 리포에 수정 0건 (본 문서와 `baseline/`은 신규 문서 산출물).
+
+---
+
+## 14. remediation 후 최종 재측정 (현재 정본)
+
+### 14.1 backend
+
+```text
+$ JAVA_HOME=$(/usr/libexec/java_home -v 21) tools/parity/gate.sh backend
+BUILD SUCCESSFUL in 8m 46s
+XML gate green: 599 suites, 5023 tests
+```
+
+위 8m 46s 실행은 세 false-green remediation 전 실행이라 최종 artifact로 사용하지 않는다.
+remediation 후 첫 exact-tree 실행은 Docker API HTTP 500으로 `GameApiApplicationTests`의
+Testcontainers 초기화가 실패했다. Docker daemon 정상화 확인 뒤 같은 명령을 한 번만 재실행했고,
+그 실행이 현재 정본이다:
+
+```text
+BUILD SUCCESSFUL in 19m 36s
+XML gate green: 599 suites, 5023 tests
+```
+
+`tools/parity/gate.sh`가 `:app:gateway-api:test` 실행과 gateway-api XML root 채점을 모두
+포함하고 세 remediation까지 반영한 exact-tree 결과다. XML 독립 집계:
+
+| module | suites | tests | failures | errors | skipped |
+|---|---:|---:|---:|---:|---:|
+| common | 38 | 225 | 0 | 0 | 0 |
+| logic | 277 | 3173 | 0 | 0 | 0 |
+| infra | 55 | 226 | 0 | 0 | 0 |
+| app/game-engine | 130 | 772 | 0 | 0 | 1 |
+| app/game-api | 72 | 468 | 0 | 0 | 0 |
+| app/gateway-api | 27 | 159 | 0 | 0 | 0 |
+| **TOTAL** | **599** | **5023** | **0** | **0** | **1** |
+
+전체 로그는 `baseline/a4-backend-gate.log`, 독립 집계는
+`baseline/a4-backend-gate-xml-summary.txt`에 보존했다. skipped 1은 기존
+`LongSimReplayGateTest` 백로그다.
+
+### 14.2 web/game
+
+최초 격리 러너의 `corepack pnpm typecheck`는 로컬 `corepack` 명령 부재로 exit 127이었다.
+제품·의존성 실패가 아니므로 저장소에 설치된 동일 package manager를 직접 실행했다.
+
+```text
+$ cd web/game
+$ pnpm typecheck
+$ pnpm test
+Test Files  54 passed (54)
+Tests       288 passed (288)
+```
+
+exit 0, 전체 출력은 `baseline/a4-web-gate.log`에 보존했다. v2-lab route suite 17건 포함.
+
+### 14.3 diff 제약
+
+`MB=$(git merge-base HEAD origin/main)` 기준으로 ② T1, ③ T2, ⑤ 설정 리소스, C1 production
+stack 불변 경로는 모두 빈 출력이다. final-review remediation 뒤 전체 M/D는 정확히 다음 7개다.
+
+```text
+.ai/current-state.md
+.ai/decisions.md
+.ai/ownership.md
+.ai/task.md
+app/game-engine/build.gradle.kts
+tools/parity/gate.sh
+web/game/middleware.ts
+```
+
+`build.gradle.kts`는 cross-module naming guard의 raw source inputs를 선언하고, `tools/parity/gate.sh`는
+gateway-api 아키텍처 테스트를 표준 gate에 포함하고 root별 XML 부재를 fail-closed하기 위한 S6 gate
+수정이다. 둘 다 T2 production source 범위가 아니다. 계획서 §4-1 기대 목록도 같은 7개로 교정했다.

@@ -3202,5 +3202,3 @@ ALTER TABLE ONLY public.yearbook_history
 
 --
 --
-
-

@@ -81,11 +81,14 @@ Docker 없이도 `skipped="0"`으로 돈다.
 |---|---|---|---|
 | game-engine | 있음 | 있음 | 주입 |
 | game-api | 있음 | 있음 | 주입 |
-| gateway-api | **없음(의도)** | **있음** | **미주입(의도)** — `SPRING_FLYWAY_LOCATIONS`만 주입 |
+| gateway-api | **없음(의도)** | **있음** | v2 compose service **없음** — external shared v1 gateway 재사용 |
 
-compose의 gateway-api 서비스는 v2 DB를 공유하므로 `SPRING_FLYWAY_LOCATIONS`는 이미 주입돼 있었고
-(`docker-compose.v2-sandbox.yml`의 `*v2-flyway-locations` 앵커), `V2_ENABLED`/`SPRING_PROFILES_ACTIVE`가
-없는 이유는 같은 파일 안 주석으로 고정했다.
+**S5 ADR-LITE-023 보정:** 초기 측정 때 존재하던 local v2 gateway-api와 그 v2 DB/Flyway 연결은
+superseded됐다. 최종 `docker-compose.v2-sandbox.yml`은 gateway-api를 build·seed·기동하지 않고,
+external shared network의 기존 v1 `gateway-api:8080`를 사용한다. 따라서 gateway에
+`SPRING_FLYWAY_LOCATIONS`·`V2_ENABLED`·`SPRING_PROFILES_ACTIVE`를 주입하는 경로 자체가 없다.
+이 문서의 gateway IT는 compose 서비스 존재가 아니라 동일 애플리케이션 이미지의 production-context
+격리 규칙을 계속 검증한다.
 
 game-api ④의 `V2ContentCatalog` 0은 결함이 아니라 S3-a의 결정이다 — game-api에 v2 콘텐츠 소비자가 0건이라
 로더를 등록하지 않았다. "게이트가 열려도 여기엔 없다"를 테스트가 명시적으로 고정한다.

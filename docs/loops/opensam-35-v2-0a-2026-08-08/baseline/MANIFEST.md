@@ -3,21 +3,22 @@
 계획 §1 M3 규약: `docs/loops/opensam-35-v2-0a-2026-08-08/baseline/` 아래 4종 + 본 MANIFEST에 sha256.
 
 - 생성 시각: 2026-08-08
-- 리포 상태: 브랜치 `op-35-v2-0a`, HEAD = `fb90eac1`(= merge-base), 워킹트리에 S1~S6 산출물 미커밋
-- **주의:** `origin/main`은 `ad0c8c53`로 HEAD보다 **1커밋 앞서 있다**(behind 1 / ahead 0).
-  기준선은 워킹트리 실측값이다.
+- 리포 상태: 브랜치 `op-35-v2-0a`, 구현 HEAD `18b8bd95`; fresh A4는 evidence/state 정규화가
+  워킹트리에 있는 상태에서 실행했다. 코드·테스트 입력은 `18b8bd95`와 동일하다.
+- **주의:** fresh 실행 시 `origin/main=b847c351`, merge-base=`fb90eac1`이었다. 기준선은
+  merge-base 이후 OPENSAM-35 변경을 포함한 워킹트리 실측값이다.
 
 ## 파일 sha256
 
 | 파일 | sha256 |
 |---|---|
-| `a1-v1-schema-dump.sql` | `eb6f2b736bf39103469bf24328ff14d2b8099196bde331975011b3d2b584959a` |
+| `a1-v1-schema-dump.sql` | `de16ba5bd3c5f531021e65b9432c761b3a296dd6cb3bcf1ff23e81259be2ce50` |
 | `a1-v1-flyway-migration-sha256.txt` | `6888b07802d988a1e6d64fe974d6056f053e33022091ac60da94ef69d964bceb` |
 | `a2-scenario-seed-sha256.txt` | `f42d3a4f935be3a63de1524f146819c7b9bc1160c0b3aa255f7eb57a32bbbb67` |
 | `a3-php-golden-inventory-sha256.txt` | `229ee5cdb3f2c4e612d4593bf57eb1af83983cbb51189dfe990eb1a8fe15f233` |
-| `a4-backend-gate.log` | `3db56563aaa3f99b93777271e97c25008d26b30b2336ff73fa77f35d67c63070` |
-| `a4-backend-gate-xml-summary.txt` | `25bdee7ffb24b1cd0a00a3909843059932ab045ca752635de2afad169fe56801` |
-| `a4-web-gate.log` | `babd15487a9bdff213cb7eece40ba04d72fdd8a3bc207f149df30f39913dd47e` |
+| `a4-backend-gate.log` | `4856bfdaef89c5d64287fbee40d678e44a1d90b74b81ae4556efc1bc2c68b9e6` |
+| `a4-backend-gate-xml-summary.txt` | `fa43bb8a7ae53c71e9ed8a58887cbd2cf4d7935b84ac682da1d3314ba9e849ce` |
+| `a4-web-gate.log` | `d803e60c5410b69409e98ed20c21a7b8661d313da8e17e91072252422fd3ca32` |
 
 재검증:
 
@@ -31,7 +32,7 @@ cd docs/loops/opensam-35-v2-0a-2026-08-08/baseline && shasum -a 256 * | sort -k2
 
 ## A1. v1 schema dump — **생성됨 (실측)**
 
-`a1-v1-schema-dump.sql` — 45 테이블 / 49 인덱스 / 3206행.
+`a1-v1-schema-dump.sql` — 45 테이블 / 49 인덱스 / 3204행.
 
 생성 방법 (재현 가능, 지어낸 값 0):
 
@@ -42,7 +43,8 @@ cd docs/loops/opensam-35-v2-0a-2026-08-08/baseline && shasum -a 256 * | sort -k2
    적용 실패 0건.
 3. `pg_dump --schema-only --no-owner --no-privileges --no-comments`
 4. 비결정 라인 제거: `-- Dumped …`, `-- PostgreSQL database dump…`, `\restrict`/`\unrestrict`
-   (pg_dump가 실행마다 새로 뽑는 난스). **제거 후 2회 연속 덤프가 byte-identical함을 확인.**
+   (pg_dump가 실행마다 새로 뽑는 난스). 저장소 whitespace gate에 맞춰 EOF의 빈 줄 2개도 제거했다.
+   **정규화 후 2회 연속 덤프가 byte-identical함을 확인.**
 5. 컨테이너 삭제 확인 (`docker ps -a | grep opensam35` → 0건).
 
 **한계 (정직 고지):** 이것은 Flyway가 실제로 적용한 스키마가 *아니라* psql 재현본이다.
@@ -80,20 +82,22 @@ DDL 자체는 동일 SQL 파일·동일 순서이므로 스키마 형상은 일�
 
 ## A4. backend / web gate — **생성됨 (실측)**
 
-- `a4-backend-gate.log` — `tools/parity/gate.sh backend` 전체 출력. `BUILD SUCCESSFUL in 23m 9s`.
+- `a4-backend-gate.log` — remediation 뒤 `tools/parity/gate.sh backend` 최종 전체 출력.
+  첫 실행의 Docker API HTTP 500은 Testcontainers 환경 오류로 격리했고, Docker 정상화 뒤 단 한 번
+  재실행한 결과는 `BUILD SUCCESSFUL in 19m 36s`였다.
 - `a4-backend-gate-xml-summary.txt` — Gradle test XML 독립 집계.
-  571 suites / 4862 tests / failures 0 / errors 0 / skipped 1.
+  gateway-api까지 포함한 599 suites / 5023 tests / failures 0 / errors 0 / skipped 1.
   skipped 1 = `opensamguk.engine.golden.LongSimReplayGateTest`(CLAUDE.md에 기록된 **기존** 백로그
   "long-sim multi-turn (gate dim c)"). 이번 티켓이 만든 skip이 아니다.
 - `a4-web-gate.log` — `cd web/game && pnpm typecheck && pnpm test`.
-  typecheck 무출력 통과, 54 files / 287 tests 전부 pass. `__tests__/v2-lab-route.test.tsx` 16건 포함.
+  typecheck 무출력 통과, 54 files / 288 tests 전부 pass. `__tests__/v2-lab-route.test.tsx` 17건 포함.
 
 ---
 
 ## UNKNOWN / 미측정
 
-- **`a4-web-gate.log` 테스트 개수 변동** — 3회 실행 중 1회차 284, 2·3회차 287(파일 수는 3회 모두 54,
-  전 회차 전부 pass). 3건 차이의 원인 **UNKNOWN**. artifact에는 2회차(287) 출력을 보존했다.
+- **과거 `a4-web-gate.log` 테스트 개수 변동** — remediation 전 3회 실행은 284/287/287로
+  달랐고 원인은 UNKNOWN이었다. 현재 artifact는 remediation 뒤 fresh 288건 출력이며 전부 pass다.
 - **라이브 Flyway 적용 스키마 dump** — A1은 psql 재현본이며 `flyway_schema_history` 미포함.
   실 Flyway 부팅 dump는 미생성.
 - **v2 마이그레이션 적용 후 스키마** — `db/migration_v2/`는 README뿐이라 적용할 것이 없다.

@@ -68,11 +68,16 @@ from pathlib import Path
 root = Path(sys.argv[1])
 module_roots = [root / rel for rel in sys.argv[2:]]
 files = []
+missing_roots = []
 for module_root in module_roots:
-    files.extend(module_root.glob("build/test-results/test/TEST-*.xml"))
+    module_files = sorted(module_root.glob("build/test-results/test/TEST-*.xml"))
+    if not module_files:
+        missing_roots.append(module_root.relative_to(root))
+    files.extend(module_files)
 files = sorted(files)
-if not files:
-    print("No Gradle test XML files found for selected modules", file=sys.stderr)
+if missing_roots:
+    missing = ", ".join(str(path) for path in missing_roots)
+    print(f"No Gradle test XML files found for selected module roots: {missing}", file=sys.stderr)
     sys.exit(1)
 
 bad = []

@@ -2,7 +2,7 @@ package opensamguk.gateway.v2
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import opensamguk.gateway.controller.AuthController
 import opensamguk.gateway.profile.ProfileIconSecureStorageTestConfiguration
 import opensamguk.infra.v2.V2ContentCatalog
 import opensamguk.infra.v2.V2SandboxGate
@@ -49,10 +49,10 @@ abstract class V2BeanGateContract {
 
     @Test
     fun `gateway-api registers no v2 bean`() {
-        val gatewayBeans = context.beansByTypePrefix("opensamguk.gateway")
-        assertTrue(
-            gatewayBeans.isNotEmpty(),
-            "context did not actually boot the gateway application beans (type-prefixed 'opensamguk.gateway' beans = 0)",
+        assertEquals(
+            1,
+            context.getBeansOfType(AuthController::class.java).size,
+            "context did not actually boot the production AuthController",
         )
         assertEquals(0, context.getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
         assertEquals(0, context.getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
