@@ -109,14 +109,14 @@ A/B/C/D 재확인. **B 재판정**: 5번 순서 변경이 1차 BLOCKER 를 재�
 ## 이 리뷰가 만족하지 못한 요건
 
 - `CLAUDE.md` mandatory legacy-gap chain 의 `loop-engineering` baseline/hypothesis/grader 산출물(`docs/loops/`)이 없다. 사고 자체는 PR #365 에서 관측→근본원인→수정→게이트 경로를 직접 탔고, 이 티켓은 그 사후 관측 보강이다. 증거는 이 문서와 위 반증 실증이 전부다.
-- ~~**프로덕션 검증 없음.**~~ **닫힘 — 아래 "프로덕션 실측" 참조.**
+- **프로덕션 health 통합 관측은 닫힘 — 아래 "프로덕션 실측" 참조.** 다만 이 단일 스냅샷은 `successfulTicks`의 증가를 비교하지 않았고 PHP golden replay의 draw-for-draw 산출물도 없으므로, **프로덕션 phase gate는 여전히 UNKNOWN**이다.
 - 커밋 트레일러가 `Claude Opus 5 (1M context)` 로 `CLAUDE.md` 규정 문자열(`Claude Opus 4.8 (1M context)`)과 다르다. 실제 작성 모델을 적었다.
 
 ## 프로덕션 실측 (승격 후, 2026-08-08T04:23Z)
 
 `920f64f5` 를 `spep` 에 승격(run 31239177936, `include_engine=true`)한 뒤 박스에서 직접 조회했다.
 
-```
+```text
 $ sudo docker exec spep-game-engine wget -qO- http://localhost:8082/admin/turn-daemon/status
 {"profile":"che:scenario_2","state":"running","running":true,"paused":false,"loopAlive":true,
  "statusLabel":"가동중","serviceMaterialized":true,
@@ -132,7 +132,7 @@ $ sudo docker exec spep-game-engine wget -qO- http://localhost:8082/actuator/hea
 
 **신규 4필드가 전부 살아 있다** — `loopUptimeSeconds` / `lastSuccessfulTickAgeSeconds` / `autoStartEnabled` / `clockError`. `loopAlive` 도 새 기준(`loopUptimeSeconds != null`)으로 `true`. `tickSeconds=300` 이므로 임계는 900초, 실제 age 32초 → UP. 판정이 의도대로 동작한다.
 
-**설계 판단 하나가 실측으로 증명됐다 — 벽시계 vs 게임 클럭.** 조회 시각(벽시계 `2026-08-08T04:23Z`)과 `lastTurnTime`(`2026-08-07T19:40:45Z`)의 **격차가 8.7시간**이다. 데몬은 완전히 정상이고(`successfulTicks` 증가, `failedTicks=0`, 32초 전 성공 틱) 단지 캐치업 중이라 게임 스케줄 시각이 뒤처져 있을 뿐이다. **1차 리뷰의 P2 지적대로 게임 클럭을 지연 지표로 썼다면 이 순간 `turn_stalled` DOWN 을 뿜고 `deploy.yml:591` 에서 배포를 막았을 것이다** — 임계 900초의 35배. 벽시계 기준이 옳았다는 라이브 증거다.
+**설계 판단 하나가 실측으로 증명됐다 — 벽시계 vs 게임 클럭.** 조회 시각(벽시계 `2026-08-08T04:23Z`)과 `lastTurnTime`(`2026-08-07T19:40:45Z`)의 **격차가 8.7시간**인데도 마지막 성공 틱의 벽시계 age는 32초이고 health는 UP이었다. **1차 리뷰의 P2 지적대로 게임 클럭을 지연 지표로 썼다면 이 순간 `turn_stalled` DOWN 을 뿜고 `deploy.yml:591` 에서 배포를 막았을 것이다** — 임계 900초의 35배. 이 스냅샷은 벽시계 기준이 캐치업 상태를 거짓 DOWN으로 판정하지 않음을 증명한다. 다만 `successfulTicks=2`는 단일 시점 값이므로 실제 증가와 phase 진행은 이 관측만으로 증명되지 않는다.
 
 같은 승격 로그에서 `spep-game-engine health: OK`, `pep public route: OK`. 직전 공용 스택 배포 2건(run 31237431386 / 31237775750)의 verify 도 `pep (spep) API, engine, web route: OK` + `turn-advance: OK` 로 통과했다 — 사고 기간 침묵하며 죽던 그 줄이다.
 
