@@ -649,7 +649,13 @@ object DatabaseHooks {
             createdNations = createdNations,
             createdNationTurns = dirty.nationTurnDirty,
             createdDiplomacy = createdDiplomacy,
-            updatedDiplomacy = toDiplomacyUpdates(recorder.diplomacyUpdateDirty()),
+            // 같은 tick에 외교 패치를 기록한 뒤 그 국가가 멸망하면, step-6 nation cascade가 diplomacy 행을
+            // 지운 뒤 step-7d UPDATE가 같은 행을 때려 `affected 0 rows` 로 틱이 영구 차단된다. recorder
+            // 채널에는 nation 단위 prune이 없으므로(removeNation은 world 맵만 prune) 여기서 월드에 더 이상
+            // 없는 (from,to) 쌍을 거른다 — 같은 tick 생성-후-삭제된 국가 행도 동일하게 걸러진다.
+            updatedDiplomacy = toDiplomacyUpdates(
+                recorder.diplomacyUpdateDirty().filter { world.getDiplomacy(it.fromNationId, it.toNationId) != null },
+            ),
             // Troop create/delete/rename are world-lifecycle effects (NOT a recorder channel) — the
             // troop table has no general-row coupling, so the world DirtyState is the dirty source.
             createdTroops = dirty.createdTroops.map { toTroopRow(it) },

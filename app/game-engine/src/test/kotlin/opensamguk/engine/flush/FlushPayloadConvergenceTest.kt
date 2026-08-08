@@ -126,6 +126,40 @@ class FlushPayloadConvergenceTest {
     }
 
     @Test
+    fun `같은 tick에 멸망한 국가의 외교 패치는 payload에서 빠진다 (prod 턴 영구차단 회귀)`() {
+        // prod: step-6 nation cascade가 diplomacy 행을 DELETE 한 뒤 step-7d가 같은 행을 UPDATE →
+        // `diplomacy UPDATE affected 0 rows` → 틱 롤백 → RELOAD_REQUIRED 무한 반복.
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(),
+                nations = listOf(engineNation(1, gold = 1000), engineNation(2, gold = 1000), engineNation(3, gold = 1000)),
+                diplomacy = listOf(
+                    opensamguk.engine.turn.TurnDiplomacy(1, 2, state = 2, term = 0),
+                    opensamguk.engine.turn.TurnDiplomacy(2, 1, state = 2, term = 0),
+                    opensamguk.engine.turn.TurnDiplomacy(1, 3, state = 2, term = 0),
+                ),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
+            ),
+        )
+        val recorder = ChangeRecorder()
+
+        listOf(1 to 2, 2 to 1, 1 to 3).forEach { (from, to) ->
+            val pre = world.getDiplomacy(from, to)!!
+            world.updateDiplomacy(from, to, state = 1, term = 24)
+            recorder.diffDiplomacy(pre, world.getDiplomacy(from, to)!!)
+        }
+        world.removeNation(2) // cascades diplomacy (1,2) and (2,1)
+
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+
+        assertEquals(
+            listOf(1 to 3),
+            payload.updatedDiplomacy.map { it.fromNationId to it.toNationId },
+            "멸망국가 쌍은 빠지고 살아있는 국가 쌍은 남아야 한다",
+        )
+    }
+
+    @Test
     fun `global-scope history log flushes as SYSTEM enum literal (the prod month-tick crash regression)`() {
         // prod 3차 턴-동결: 월간 정산(ProcessIncome '봄 봉록 지급' 등)이 push하는 global history 로그의
         // scope 문자열 "global"을 toLogRow가 단순 uppercase→"GLOBAL"로 만들어, log_scope enum
