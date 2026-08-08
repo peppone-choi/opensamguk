@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RestController
  * @property state `running`(가동중·틱진행) / `paused`(동결중·plock>0 우선) / `idle`(미동결·루프 미가동).
  * @property running 데몬 루프가 살아 있고 동결되지 않아 실제 틱을 처리 중인지(= `loopAlive && !paused`).
  * @property paused PHP `plock>0` 등가 — 동결 여부.
- * @property loopAlive [TurnDaemonRunner] SmartLifecycle 루프 스레드가 가동 중인지(`enabled=false`면 false).
+ * @property loopAlive [TurnDaemonRunner] 루프 **스레드가 실제로 살아 있는지**(`enabled=false`면 false).
+ *   `running` 플래그가 아니라 `loopUptimeSeconds != null` — 헬스 인디케이터와 같은 신호라 두 표면이 갈리지 않는다.
  * @property statusLabel 표시 라벨 — PHP `_119.php:36` `plock>0 ? "동결중" : "가동중"` verbatim.
  */
 data class TurnDaemonStatus(
@@ -38,6 +39,20 @@ data class TurnDaemonStatus(
     val recoveryMode: String? = null,
     val recoveryReason: String? = null,
     val recoveryReady: Boolean = true,
+    /**
+     * OPENSAM-175 진단 표면. `/actuator/health`는 `show-details: never`(기본값)라 본문이
+     * `{"status":"UP"}` 뿐이고, 그 설정은 `tools/ops/predeploy_go_check.sh`/`docker-compose.yml`
+     * 헬스체크가 물고 있어 이 티켓 범위 밖이다. 따라서 `daemon=turn_stalled`/`clock_unavailable`을
+     * 가른 근거 수치는 여기(어드민 status)로 낸다. 기존 필드는 이름·의미 불변
+     * (`.github/workflows/deploy.yml`의 `read_daemon_gate_state`가 `paused`/`recoveryReady`를 읽는다).
+     */
+    val autoStartEnabled: Boolean = true,
+    /** 루프 **스레드가 실제 살아 있을 때만** 기동 후 경과 벽시계 초. 죽었으면 null. */
+    val loopUptimeSeconds: Long? = null,
+    /** 마지막 성공 틱 이후 경과 **벽시계** 초(게임 클럭 아님 — 캐치업 오탐 방지). 성공 틱이 없으면 null. */
+    val lastSuccessfulTickAgeSeconds: Long? = null,
+    /** 클럭 스냅샷 조회가 실패한 경우의 예외 메시지 — 설정 이상(tickSeconds<=0)과 구분된다. */
+    val clockError: String? = null,
 )
 
 /** pause/resume 호출 결과 — 호출 후 실제 상태 + 호출이 상태를 바꿨는지(`changed`). */
@@ -69,9 +84,12 @@ class StatusController(
     @GetMapping("/status")
     fun status(): TurnDaemonStatus {
         val paused = pauseGate.isPaused()
-        val loopAlive = runner.isRunning
-        val running = loopAlive && !paused
         val diagnostics = runner.diagnostics()
+        // OPENSAM-175 — `runner.isRunning`(플래그)이 아니라 헬스와 **같은 신호**를 쓴다. `Error`로 루프
+        // 스레드가 죽으면 플래그는 true로 남아 어드민만 `loopAlive=true, state="running"`을 보고하고
+        // `/actuator/health`는 `loop_not_running` DOWN을 내는 모순이 생긴다.
+        val loopAlive = diagnostics.loopUptimeSeconds != null
+        val running = loopAlive && !paused
         // 동결(plock>0) 여부가 우선 — PHP `_119.php:36`은 루프 생존과 무관하게 plock만으로 동결중/가동중을
         // 가른다. 따라서 paused면 루프 미가동이라도 state="paused". 미동결·루프 미가동은 "idle"(데몬
         // enabled=false / 부팅 직후 등 — 표시는 statusLabel 가동중이지만 실 틱 미진행).
@@ -100,6 +118,10 @@ class StatusController(
             recoveryMode = diagnostics.recoveryMode,
             recoveryReason = diagnostics.recoveryReason,
             recoveryReady = diagnostics.recoveryReady,
+            autoStartEnabled = diagnostics.autoStartEnabled,
+            loopUptimeSeconds = diagnostics.loopUptimeSeconds,
+            lastSuccessfulTickAgeSeconds = diagnostics.lastSuccessfulTickAgeSeconds,
+            clockError = diagnostics.clockError,
         )
     }
 

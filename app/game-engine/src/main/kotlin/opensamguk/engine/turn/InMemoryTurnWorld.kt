@@ -87,7 +87,9 @@ class InMemoryTurnWorld(
     private val deletedNationSnapshots = mutableListOf<DeletedNationSnapshot>()
     private val logs = mutableListOf<LogEntryDraft>()
 
-    private var state: TurnWorldState
+    // 액추에이터/어드민 HTTP 스레드가 데몬 스레드의 `state = state.copy(...)`와 동시에 읽는다.
+    // [TurnWorldState]는 불변 data class라 torn object는 없지만, @Volatile 없이는 가시성 보장이 없다.
+    @Volatile private var state: TurnWorldState
     private val serverId: String?
 
     /**

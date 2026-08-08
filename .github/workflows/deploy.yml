@@ -587,9 +587,23 @@ jobs:
               false
             fi
 
-            docker exec "$api_container" wget -qO- http://localhost:8081/actuator/health | grep -q '"status":"UP"'
-            docker exec "$engine_container" wget -qO- http://localhost:8082/actuator/health | grep -q '"status":"UP"'
-            curl -fsSI "http://localhost/game/${public_server}" >/dev/null
+            # 실패 시 무엇이 왜 죽었는지 반드시 남긴다. 이 세 줄은 2026-08-05~08 턴 데몬 차단 사고에서
+            # 실제로 배포를 두 번 NO-GO 시켰지만(엔진 액추에이터 DOWN), 아무 메시지 없이 status=1 로만
+            # 끝나 원인을 아무도 몰랐다. 침묵한 게이트는 안 걸린 게이트와 구분되지 않는다.
+            if ! api_health="$(docker exec "$api_container" wget -qO- http://localhost:8081/actuator/health 2>&1)" \
+               || ! echo "$api_health" | grep -q '"status":"UP"'; then
+              echo "ERROR: ${public_server} game-api health not UP — ${api_health}" >&2
+              false
+            fi
+            if ! engine_health="$(docker exec "$engine_container" wget -qO- http://localhost:8082/actuator/health 2>&1)" \
+               || ! echo "$engine_health" | grep -q '"status":"UP"'; then
+              echo "ERROR: ${public_server} game-engine health not UP — ${engine_health}" >&2
+              false
+            fi
+            if ! curl -fsSI "http://localhost/game/${public_server}" >/dev/null; then
+              echo "ERROR: ${public_server} web route http://localhost/game/${public_server} failed" >&2
+              false
+            fi
             echo "${public_server} (${internal_server}) API, engine, web route: OK"
             RUNNING_INTERNAL_SERVERS+=("$internal_server")
           done

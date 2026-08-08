@@ -2,6 +2,8 @@ package opensamguk.engine.status
 
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -27,11 +29,33 @@ class DaemonPauseGate {
     /** plock 등가: true=동결중(틱 정지), false=가동중. */
     private val paused = AtomicBoolean(false)
 
+    /**
+     * 마지막 '락풀기'(동결→가동 **전이**) 벽시계 시각. 한 번도 해제된 적 없으면 null.
+     *
+     * 헬스 지연 판정([TurnDaemonHealthIndicator])의 기준점 후보다. 동결 중에는 틱이 안 도는 것이 정상이라
+     * `lastTickCompletedAt`이 동결 기간만큼 낡는데, 해제 직후 그 값만 보면 다음 성공 틱까지(프로덕션
+     * `tick_seconds=3600`이면 최대 1시간) `turn_stalled` 거짓 DOWN이다 — "위험 배포 전 동결 → 배포 →
+     * 해제"라는 정상 운영 흐름이 배포 게이트를 막는 자충수로 되돌아온다.
+     *
+     * 대안이었던 "동결 중 `lastTickCompletedAt`을 계속 갱신"은 **채택하지 않았다**. 실제로 안 돈 시간을
+     * 돈 것처럼 기록하는 성공 위조이기 때문이다. 사실 기록(`lastTickCompletedAt`)은 그대로 두고
+     * **판정 기준점**만 옮긴다.
+     */
+    @Volatile private var resumedAt: Instant? = null
+
     /** PHP `plock>0` — 현재 동결 여부. */
     fun isPaused(): Boolean = paused.get()
 
+    /** [resumedAt] 이후 경과 초. 한 번도 해제된 적 없으면 null. */
+    fun secondsSinceResume(now: Instant = Instant.now()): Long? =
+        resumedAt?.let { Duration.between(it, now).seconds }
+
     fun restore(locked: Boolean) {
         paused.set(locked)
+        // 부팅 시 durable plock 복원은 '전이'가 아니다. 여기서 resumedAt을 심으면 동결 상태로 복원된
+        // 프로세스가 해제도 없이 유예를 받는다. 프로세스 기동 직후 구간은 `loopStartedAt` 기준 유예가
+        // 이미 덮는다(restore(false)로 가동중 복원되는 경우도 마찬가지).
+        resumedAt = null
     }
 
     /**
@@ -65,6 +89,9 @@ class DaemonPauseGate {
      */
     fun unlock(): Boolean {
         val wasPaused = paused.getAndSet(false)
+        // 실제 전이(동결→가동)일 때만 기록한다. 이미 가동중인데 부른 락풀기는 no-op이므로 유예를
+        // 재발급하면 안 된다(있지도 않았던 동결로 지연 판정을 계속 미루게 된다).
+        if (wasPaused) resumedAt = Instant.now()
         log.info("DaemonPauseGate unlocked (락풀기) — wasPaused={}", wasPaused)
         return wasPaused
     }
