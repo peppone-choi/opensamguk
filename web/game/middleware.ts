@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// 서버 선택 쿠키 — 멀티서버 인게임에서 어느 게임 서버(world)를 보는지. 입장 URL `/game?server=pep`가
-// 페이지 로드될 때 이 미들웨어가 쿠키로 고정 → 이후 모든 /api/game 프록시가 이 쿠키로 대상 game-api를
-// 고른다(lib/serverRegistry). secret 아님(서버 선택자) — httpOnly 불필요, 클라가 읽어도 무관.
+// Server-selection cookie: determines which game server (world) the player views in
+// a multi-server game. On `/game?server=pep`, this middleware persists the choice;
+// every subsequent /api/game proxy uses it to select the game API (`lib/serverRegistry`).
+// It is a non-secret server selector, so it neither needs httpOnly nor harms clients that read it.
 const SERVER_COOKIE = 'sam_server';
 
 const PATH_SERVER_ID = /^[a-z0-9]{1,48}$/;
@@ -45,6 +46,10 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   'tournament',
   'tournament-admin',
   'troop',
+  // `PATH_SERVER_ID` excludes hyphens, making this unreachable in practice. Keep it
+  // for list consistency (for example, `battle-center`) and to prevent interpreting
+  // the v2 experimental namespace as a server ID.
+  'v2-lab',
   'vote',
   'world-log',
 ]);
@@ -66,10 +71,31 @@ function setServerCookie(res: NextResponse, server: string): void {
   });
 }
 
+// The v2 experimental namespace (OPENSAM-35 / 0A-a) exists only when
+// `V2_ENABLED=true`. The rendering-layer `notFound()` in
+// `app/game/v2-lab/layout.tsx` can produce HTTP 200 because `app/game/layout.tsx`
+// renders the `AuthGate` client component, streams the /game/** subtree within that
+// client boundary, and resolves `notFound()` only after the HTML shell flushes.
+// Reject it here, before rendering, to guarantee an HTTP 404. Retain the layout gate
+// as defense in depth so v2 content cannot render if middleware is bypassed.
+function isV2LabPath(pathname: string): boolean {
+  const segments = pathname.split('/');
+  if (segments[1] !== 'game') return false;
+  // The rewrite below folds `/game/<serverId>/v2-lab` into `/game/v2-lab`. Evaluate
+  // the effective render path rather than the raw pathname to prevent that bypass;
+  // the query-based `?server=` form already has its effective pathname.
+  const rest = segments[2] === configuredServerId() ? segments.slice(3) : segments.slice(2);
+  return rest[0] === 'v2-lab';
+}
+
 export function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
-  // 1) 쿼리 기반 서버 선택 — 기존 동작 유지.
+  if (isV2LabPath(pathname) && process.env.V2_ENABLED !== 'true') {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  // 1) Query-based server selection: preserve existing behavior.
   const queryServer = searchParams.get('server');
   if (queryServer && queryServer === configuredServerId()) {
     const res = NextResponse.next();
@@ -95,7 +121,8 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// /game 진입(및 하위)에서만 — 입장 시 ?server/path serverId를 쿠키로 심으면 SPA 이동 날개 유지된다.
+// Apply only to /game and its descendants: persisting the entry-time query or path
+// server ID in a cookie keeps it across SPA navigation.
 export const config = {
   matcher: ['/game', '/game/:path*'],
 };

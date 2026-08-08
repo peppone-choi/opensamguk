@@ -12,8 +12,10 @@ fi
 
 case "$target" in
   backend)
-    tasks=( ":common:test" ":logic:test" ":infra:test" ":app:game-engine:test" ":app:game-api:test" )
-    xml_roots=( "common" "logic" "infra" "app/game-engine" "app/game-api" )
+    # Every JVM service has a v2-isolation gate, including gateway-api.
+    # Keep tasks and xml_roots aligned so every executed task is also evaluated.
+    tasks=( ":common:test" ":logic:test" ":infra:test" ":app:game-engine:test" ":app:game-api:test" ":app:gateway-api:test" )
+    xml_roots=( "common" "logic" "infra" "app/game-engine" "app/game-api" "app/gateway-api" )
     ;;
   common)
     tasks=( ":common:test" )
@@ -42,14 +44,62 @@ case "$target" in
     ;;
 esac
 
-if [[ -x /usr/libexec/java_home ]]; then
-  export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 21)}"
+if [[ ${#tasks[@]} -ne ${#xml_roots[@]} ]]; then
+  echo "Gate task/XML root count mismatch: ${#tasks[@]} tasks, ${#xml_roots[@]} roots" >&2
+  exit 1
+fi
+
+for index in "${!tasks[@]}"; do
+  expected_root="${tasks[$index]#:}"
+  expected_root="${expected_root%:test}"
+  expected_root="${expected_root//:/\/}"
+  if [[ "${xml_roots[$index]}" != "$expected_root" ]]; then
+    echo "Gate task/XML root mismatch: ${tasks[$index]} expects $expected_root, got ${xml_roots[$index]}" >&2
+    exit 1
+  fi
+done
+
+if [[ -z "${JAVA_HOME:-}" && -x /usr/libexec/java_home ]]; then
+  if ! JAVA_HOME="$(/usr/libexec/java_home -v 21)"; then
+    echo "Gate requires Java 21, but macOS could not resolve it with /usr/libexec/java_home -v 21" >&2
+    exit 1
+  fi
+  export JAVA_HOME
+fi
+
+if [[ -n "${JAVA_HOME:-}" ]]; then
+  java_bin="$JAVA_HOME/bin/java"
+else
+  java_bin="$(command -v java || true)"
+fi
+
+if [[ ! -x "$java_bin" ]]; then
+  echo "Gate requires Java 21, but no executable Java was found at ${java_bin:-PATH}" >&2
+  exit 1
+fi
+
+if ! java_version="$("$java_bin" -version 2>&1)"; then
+  echo "Gate could not execute Java at $java_bin" >&2
+  exit 1
+fi
+
+if [[ ! "$java_version" =~ version[[:space:]]+\"([0-9]+) ]]; then
+  echo "Gate could not determine the Java major version from $java_bin:" >&2
+  echo "$java_version" >&2
+  exit 1
+fi
+
+java_major="${BASH_REMATCH[1]}"
+if [[ "$java_major" != "21" ]]; then
+  echo "Gate requires Java 21, but $java_bin reports Java $java_major:" >&2
+  echo "$java_version" >&2
+  exit 1
 fi
 
 log_file="${TMPDIR:-/tmp}/opensamguk-gradle-${target}-$(date +%Y%m%d%H%M%S).log"
 
-echo "Running gate '$target' with JAVA_HOME=${JAVA_HOME:-unset}"
-./gradlew --no-daemon --console=plain "${tasks[@]}" 2>&1 | tee "$log_file"
+echo "Running gate '$target' with Java $java_major at $java_bin (JAVA_HOME=${JAVA_HOME:-PATH})"
+./gradlew --no-daemon --console=plain --rerun-tasks "${tasks[@]}" 2>&1 | tee "$log_file"
 
 if ! grep -q "BUILD SUCCESSFUL" "$log_file"; then
   echo "Gradle output did not contain BUILD SUCCESSFUL: $log_file" >&2
@@ -64,11 +114,16 @@ from pathlib import Path
 root = Path(sys.argv[1])
 module_roots = [root / rel for rel in sys.argv[2:]]
 files = []
+missing_roots = []
 for module_root in module_roots:
-    files.extend(module_root.glob("build/test-results/test/TEST-*.xml"))
+    module_files = sorted(module_root.glob("build/test-results/test/TEST-*.xml"))
+    if not module_files:
+        missing_roots.append(module_root.relative_to(root))
+    files.extend(module_files)
 files = sorted(files)
-if not files:
-    print("No Gradle test XML files found for selected modules", file=sys.stderr)
+if missing_roots:
+    missing = ", ".join(str(path) for path in missing_roots)
+    print(f"No Gradle test XML files found for selected module roots: {missing}", file=sys.stderr)
     sys.exit(1)
 
 bad = []

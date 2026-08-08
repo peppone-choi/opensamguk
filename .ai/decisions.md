@@ -309,6 +309,18 @@
 
 ---
 
+## ADR-LITE-029 OPENSAM-35는 격리 probe로 닫고 실제 v2 leaf는 OPENSAM-150에서 증명한다
+
+- Date: 2026-08-08
+- Status: approved
+- Decision: OPENSAM-35 S5의 DB 수용 기준을 **v2 스택 전용 probe 이벤트 행 존재 + v1 기본 이벤트 12행 미적재**로 확정한다. 실제 v2 leaf 행 존재는 OPENSAM-150의 필수 수용 기준으로 이관하며, OPENSAM-150은 같은 격리 DB에서 실제 v2 schema/content leaf와 v1 기본 12행 0을 함께 재측정해야 한다.
+- Context: OPENSAM-35는 v2 런타임 코드가 0건인 상태에서 production 격리 게이트를 선설치하는 티켓이고, OPENSAM-150 `v2_city_ledger` 스키마는 명시적 비범위다. 기존 계약은 0A에서 실제 v2 leaf를 요구하면서 동시에 그 leaf를 만드는 티켓을 비범위로 두어 모순이었다. S5 실측은 v2 전용 DB/world와 probe 이벤트 2행, v1 기본 이벤트 12행 0을 이미 증명했다.
+- Alternatives: OPENSAM-35에 가짜 v2 leaf를 추가(기각 — 콘텐츠·스키마 날조이자 OPENSAM-150 범위 침범), OPENSAM-150 완료까지 OPENSAM-35 병합 보류(기각 — consumer가 foundation 격리 게이트를 소비해야 하므로 의존 순서 역전), leaf 기준 삭제(기각 — 실제 consumer 티켓에서 반드시 증명해야 한다).
+- Consequences: 0A는 격리 능력만으로 종결할 수 있고 OPENSAM-150은 실제 v2 leaf를 반드시 추가·실측해야 한다. probe는 제품 콘텐츠로 커밋하지 않으며, v1 기본 12행 미적재 불변식은 두 티켓 모두에서 유지한다.
+- Approved by: 사용자 (2026-08-08, "승인.")
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 

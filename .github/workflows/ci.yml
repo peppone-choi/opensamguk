@@ -7,6 +7,8 @@ on:
 
 jobs:
   agent-system:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,6 +16,8 @@ jobs:
           fetch-depth: 0
       - name: Check provider-agnostic agent working system
         run: python3 tools/agent-system/check.py --strict --base origin/main
+      - name: Verify v2 sandbox compose contract
+        run: bash tools/ops/v2_sandbox_compose_contract_test.sh
 
   jvm:
     runs-on: ubuntu-latest

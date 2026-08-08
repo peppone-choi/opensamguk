@@ -2,6 +2,22 @@
 
 병렬 에이전트(Claude Code, Codex, Gemini 등)의 파일 소유권 등록부. 규칙은 `docs/agent/collaboration-protocol.md`가 정본.
 
+## Shared-file ownership fence
+
+표에 없는 공유 파일(특히 compose/nginx, 공용 catalog/runtime schema, `.ai/*`)은 사전 조정 후
+foundation owner 한 명을 정하기 전까지 read-only다. 행 번호가 아니라 이 heading을 참조한다.
+
+## OPENSAM-35 V2-0A 격리 게이트 lane — 2026-08-08 (활성)
+
+[`Shared-file ownership fence`](#shared-file-ownership-fence)에 따라 foundation owner 1명을
+등록한다. OPENSAM-35는 compose·Flyway location·조건부 빈 게이팅 등
+공유 확장점을 신설하므로 **병렬 소유 금지, foundation-first 순차**다.
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `claude-opensam-35-v2-0a` | OPENSAM-35 V2-0A production 격리 게이트 (0A-a~g + ADR-LITE-021 DoD 3항목) — foundation owner | `codex/op-35-v2-0a-final` (`origin/main` `b847c351` 기반 재구성) | 신규 v2 stack/Flyway/content/route/configuration/tests; 기존 파일 `web/game/middleware.ts`(하드 404)·`tools/parity/gate.sh`(root별 XML 채점)·`app/game-engine/build.gradle.kts`(cross-module naming source inputs); Round 3 P2 approved scope: existing `docker-compose.v2-sandbox.yml`, new `tools/ops/v2_sandbox_compose_contract_test.sh`, and existing `.github/workflows/ci.yml` `agent-system` invocation. **T2 사전선언 = 공집합**(계획서 §4; P2 scope is outside T2) | active — S0~S6 및 Round 1 source remediation observed resolved; A4 is 601/5,050/0/0. Historical Round 3 P2 review cleared; terminal final-8 dirty-tree re-review cleared all eight CodeRabbit dispositions. PR head `70492bcc` green CI included the original contract step, but current permission/active-invocation/docs remediation awaits remote CI for an exact commit. CodeRabbit Round 2 was rate-limited request with no result; mentions=3 is CodeRabbit Round 1(23), Codex Round 3(2), and final CodeRabbit incremental(8). release/merge/deploy와 sibling OPENSAM-177 실행은 미수행. **T1 수정·삭제 0건.** production compose·`application.yml`·`tools/agent-system/check.py` 무수정 | 2026-08-08 |
+| `codex-op35-round1-docs` | PR #370 Round 1 문서·증거·상태 remediation | `codex/op-35-v2-0a-final` | `.ai/{current-state,task,ownership}.md`; `docs/loops/opensam-35-v2-0a-2026-08-08/**`; OPENSAM-35 isolation plan and review artifact | active — Round 1 ledger resolved/dispositioned; final CodeRabbit eight-row ledger, A4 rehash, fail-closed hash verifier, isolated S1 reproduction, S3b fence spacing, U12 historical disposition, and PHP scope rationale synchronized. Terminal final-8 dirty-tree re-review cleared all eight dispositions; PR head `70492bcc` CI included the original contract step, while current final-8 docs/source remediation awaits remote CI for an exact commit. mentions=3 is the three submitted results: CodeRabbit Round 1(23), Codex Round 3(2), final CodeRabbit incremental(8); Round 2 was rate-limited with no result | 2026-08-08 |
+
 ## v1 비운영 폐쇄 lane release — 2026-07-29
 
 2026-07-27에 시작한 `v1-nonoperational-root`와 그 하위 `v1-*` lane entries는
