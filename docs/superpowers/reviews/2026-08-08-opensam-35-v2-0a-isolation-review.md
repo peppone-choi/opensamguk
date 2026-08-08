@@ -1,10 +1,8 @@
 # Review: OPENSAM-35 — V2-0A production isolation gate
 
-Scope: PR #370 (`codex/op-35-v2-0a-final`) Round 1 reconciliation across `.ai/`, `app/`, `infra/`, `tools/`, `web/`, and the owned OPENSAM-35 docs. The terminal independent review inspected
-the reviewer-fingerprinted dirty working tree only, not an immutable commit SHA; post-commit exact-SHA review and
-PR CI remain required before any release action.
+Scope: PR #370 (`codex/op-35-v2-0a-final`) Round 1 reconciliation and current Round 3 PR state across `.ai/`, `.github/workflows/`, `app/`, `infra/`, `tools/`, `web/`, and the owned OPENSAM-35 docs. This artifact distinguishes the completed local Round 3 dirty-tree re-review from still-unobserved remote exact-SHA CI.
 
-Stage: **PR #370 Round 1 (CodeRabbit, 23 actionable threads) — independent dirty-working-tree re-review**
+Stage: **PR #370 Round 3 (Codex, two P2 findings resolved; Round 1 resolved)**
 Verdict: cleared
 
 ## Review-stage labels and release boundary
@@ -18,13 +16,26 @@ Verdict: cleared
   It is execution evidence, not by itself a reviewer disposition or release acceptance.
 - **A4 599 suites / 5,023 tests and web 54 files / 288 tests** are historical post-remediation records.
   The older backend run was non-forced; the old count does not establish current backend provenance.
-- **Independent terminal re-review:** **cleared, no findings**, reviewer fingerprint `3c1b357c…`. Its scope is the
-  exact reviewer-inspected dirty working tree only; it does not substitute a post-commit exact-SHA review or PR CI.
-- **PR #370 Round 1 controls now.** It remains open. No merge, release, deploy, production observation, or
+- **Independent terminal dirty-tree re-review (completed historical evidence):** **cleared, no findings**,
+  reviewer fingerprint `3c1b357c…`. Its scope was the exact reviewer-inspected dirty working tree only.
+- **Local immutable-SHA review (completed historical evidence):** completed at
+  `54ead4e70cf5fa7c822bc7fef11a8c42f09eded6`. It is a local exact-SHA review, not a third external PR review.
+- **Round 3 independent dirty-tree re-review (current review disposition):** terminal **cleared** with no
+  blockers, fixes, questions, or nits. It independently clears both P2 dispositions in the reviewed dirty tree;
+  it is local review evidence, not a third external PR review or remote exact-SHA CI result.
+- **Last observed GitHub CI:** `agent-system`, `jvm`, `web (gateway)`, and `web (game)` jobs were SUCCESS before
+  the new contract step was wired. The current remote PR CI run has not been observed. CodeRabbit Round 2 was
+  rate-limited and produced no completed review result; its current status context is separate from the historical
+  green CI jobs.
+- **PR review accounting:** mentions=3 must not be read as three completed external reviews. The actual completed
+  PR review results are CodeRabbit Round 1 and Codex Round 3; the local exact-SHA and dirty-tree reviews above are separate.
+- **PR #370 Round 3 controls now.** Both Codex P2 source remediations are implemented across three approved source
+  items and the independent dirty-tree re-review is terminal `cleared`. Remote exact-SHA CI remains unobserved and
+  separately pending; this review artifact is nevertheless `cleared`. The PR remains open. No merge, release, deploy, production observation, or
   OPENSAM-177 consumer execution occurred. OPENSAM-177 is the separate linked shared account/JWT/profile
   live-integration consumer, not proof that OPENSAM-35 was deployed.
 
-## PR Round 1 ledger (23 threads; all resolved/dispositioned)
+## PR Round 1 ledger (23 threads; historical resolved/dispositioned)
 
 | ID | Finding / disposition | Current state |
 |---|---|---|
@@ -56,13 +67,44 @@ The three PHP replay requests are rejected only as claims for this isolation/bui
 performed or represented as passed. That does not relax the project-wide parity rule; it records that no
 PHP-derived behavior changed. A future T1/parity change must run the appropriate PHP oracle capture/replay.
 
-All 23 Round 1 threads now have a resolved/dispositioned entry above. This closure is the independent reviewer’s
-dirty-working-tree result, not a committed-SHA release verdict.
+All 23 Round 1 threads now have a resolved/dispositioned entry above. The later independent Round 3 dirty-tree
+re-review separately resolves both Round 3 P2 findings.
+
+## Round 3 P2 resolution
+
+Codex Round 3 reported **two P2 findings**. Both source remediations now exist across three approved source items;
+the terminal independent dirty-tree re-review found no blockers, fixes, questions, or nits, so both are resolved
+for review disposition. The newly wired CI step still has no observed remote exact-SHA run:
+
+1. **P2 asset-prefix remediation:** `docker-compose.v2-sandbox.yml` now passes `ASSET_PREFIX: /game` to the
+   `web-game` build. Local production-mode `ASSET_PREFIX=/game pnpm build` is green, with 62 generated files
+   containing `/game/_next/`; no deployment is implied.
+2. **P2 regression-contract remediation:** new `tools/ops/v2_sandbox_compose_contract_test.sh` renders the v2
+   Compose file and fail-closes unless `web-game.build.args.ASSET_PREFIX == "/game"`. The source lane observed
+   red-before/green-after with the same contract. Existing `.github/workflows/ci.yml` now wires that script into
+   the `agent-system` job as `Verify v2 sandbox compose contract`; this local wiring validation is not a remote
+   CI green result.
+
+The approved canonical scope is exactly the existing `docker-compose.v2-sandbox.yml`, new contract test, and
+existing `.github/workflows/ci.yml` invocation; all three are outside T2 and are recorded in the plan §4.0a.
+The independent dirty-tree re-review clears both P2s. This artifact does not claim a remote CI result: remote
+exact-SHA CI remains pending, while the sole tracked review verdict is `cleared`.
 
 ## Evidence actually available
 
-- Independent terminal dirty-working-tree re-review: **cleared with no findings**, fingerprint `3c1b357c…`.
-  It covers only that reviewer-inspected uncommitted tree; a post-commit exact-SHA review and PR CI remain residual.
+- Historical independent dirty-tree re-review: **cleared with no findings**, fingerprint `3c1b357c…`.
+- Historical local immutable-SHA review: completed at `54ead4e70cf5fa7c822bc7fef11a8c42f09eded6`; it is separate
+  from external PR review accounting.
+- Round 3 independent dirty-tree re-review: terminal **cleared**, no blockers/fixes/questions/nits; it resolves
+  both Codex P2 review dispositions but does not observe remote exact-SHA CI.
+- Last observed GitHub CI: `agent-system`, `jvm`, `web (gateway)`, and `web (game)` jobs were SUCCESS before the
+  current contract-step wiring. Its remote PR CI run is not yet observed. CodeRabbit Round 2 was rate-limited and
+  did not produce a completed review result.
+- Current Codex Round 3: both P2 findings are resolved by the terminal independent dirty-tree re-review.
+- Round 3 source evidence: Compose now supplies `ASSET_PREFIX=/game`; the new Compose contract test observed
+  red-before/green-after; `ASSET_PREFIX=/game pnpm build` is green and 62 generated files contain `/game/_next/`.
+  `.github/workflows/ci.yml` locally validates as wiring that test into `agent-system`; the remote exact-SHA run is
+  unobserved. Together with the terminal dirty-tree re-review, this resolves the review disposition only.
 - Current backend log: Java 21 `tools/parity/gate.sh backend` with `--rerun-tasks` over all six roots, one run
   with no retry: `BUILD SUCCESSFUL in 12m 35s`, 35 actionable tasks, 601 suites / 5,050 tests / 0 failures /
   0 errors / 1 skipped. Module detail is in `baseline/a4-backend-gate-xml-summary.txt`; full-log SHA256 is
@@ -76,14 +118,13 @@ dirty-working-tree result, not a committed-SHA release verdict.
   and tests were not executed. Its Compose failure on missing `JWT_SECRET` was expected fail-closed behavior,
   not a syntax/config pass.
 - A later current frontend observation passed typecheck; Vitest JSON reports 132 suites / 288 tests /
-  0 failures. Together with the backend run, this resolves the execution evidence; it does not replace
-  post-commit exact-SHA review or PR CI.
+  0 failures. Together with the backend run, this resolves the execution evidence; it does not replace remote
+  exact-SHA CI or separately authorized release actions.
 
-## Residual post-clearance evidence
+## Remaining post-review closure
 
-1. After a commit is created, obtain a fresh independent review for that exact committed SHA and run PR CI.
-2. Canonical merge-base `:(glob)…/**` T1/T2/config/C1 snapshot is recorded as empty output. Rerun it if tested
-   source inputs change before the post-commit review.
-3. The current backend one-run/no-retry log and frontend direct-pnpm evidence need rerun only if their respective
-   tested inputs change.
-4. Merge, release, deploy, production observation, and OPENSAM-177 execution remain separately authorized actions.
+1. Observe/rerun remote exact-SHA PR CI including the new `agent-system` contract step. The cleared local dirty-tree
+   review does not supply that remote CI result.
+2. Canonical merge-base `:(glob)…/**` T1/T2/config/C1 snapshot and backend/frontend evidence need rerun if their
+   tested inputs change during P2 remediation.
+3. Commit/push, merge, release, deploy, production observation, and OPENSAM-177 execution remain separately authorized actions.

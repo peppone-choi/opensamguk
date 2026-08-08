@@ -3,9 +3,13 @@
 ## 2026-08-08 — OPENSAM-35 V2-0A production 격리 게이트 (활성 계약)
 
 - Status: 계획 채택됨(사용자 승인 2026-08-08), S0~S6 구현과 PR #370 Round 1 remediation은 완료됐다.
-  independent dirty-tree re-review는 no findings로 `cleared`(fingerprint `3c1b357c…`)지만, 이 결과는
-  exact reviewer-inspected dirty tree에만 적용된다. post-commit exact-SHA review·PR CI와
-  merge/release/deploy/production 관측은 미수행이다. 계획 정본:
+  dirty-tree review는 no findings로 `cleared`(fingerprint `3c1b357c…`)이고 local immutable-SHA review는
+  `54ead4e7…`에서 완료됐으며 last observed GitHub CI jobs도 green이다. 그러나 그 CI는 새 contract step 전
+  evidence다. Codex Round 3의 P2 두 건은 implemented(Compose `ASSET_PREFIX=/game` + new rendered-Compose
+  contract test + `.github/workflows/ci.yml` `agent-system` contract step)되고 independent dirty-tree re-review에서
+  no blockers/fixes/questions/nits로 `cleared`됐다. CodeRabbit Round 2는 rate-limited라 result가 없고, PR review
+  mentions=3은 completed external reviews=3이 아니다. Remote exact-SHA CI와 merge/release/deploy/production 관측은
+  미수행이다. 계획 정본:
   `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md`.
 - User request (verbatim): "OPENSAM-35" / "채택 + S6까지 연속 실행".
 - Goal: v2 코드가 production으로 새지 않음을 강제하는 격리 게이트 0A-a~g 7항목 +
@@ -51,7 +55,11 @@
     T1/parity 변경 티켓은 별도 capture/replay를 수행해야 하며, A3는 A4 backend gate를 대체하지 않는다.
   - PR #370의 23개 Round 1 disposition은 source remediation/full backend evidence와 함께 all
     resolved/dispositioned이며, **current dirty-tree** independent re-review는 `cleared`다
-    (no findings; fingerprint `3c1b357c…`). 이는 post-commit exact-SHA review 또는 PR CI를 대체하지 않는다.
+    (no findings; fingerprint `3c1b357c…`). local immutable-SHA review(`54ead4e7…`)와 last observed GitHub CI
+    green은 historical completion evidence다. Codex Round 3 P2 source remediation은 Compose `ASSET_PREFIX=/game`, new
+    `tools/ops/v2_sandbox_compose_contract_test.sh`, and `.github/workflows/ci.yml` `agent-system` invocation으로
+    implemented됐고 fresh independent dirty-tree re-review는 no blockers/fixes/questions/nits로 `cleared`다. 이는
+    remote exact-SHA CI run을 대체하지 않는다.
   - current backend evidence는 Java 21 `tools/parity/gate.sh backend`의 `--rerun-tasks` six-root
     **one run / no retry** 결과다: `BUILD SUCCESSFUL in 12m 35s`, 35 actionable tasks, XML 601 suites /
     5,050 tests / failures 0 / errors 0 / skipped 1; full-log SHA256
@@ -60,7 +68,7 @@
     같은 verifier의 frontend dependency absence(`tsc: command not found`)는 historical failure이고,
     later direct-pnpm typecheck는 green이며 Vitest JSON은 132 suites / 288 tests / failures 0이다.
     Compose required `JWT_SECRET` 오류는 fail-closed failure이고 syntax pass가 아니다. 현재 backend evidence는
-    post-commit exact-SHA review 또는 PR CI를 대체하지 않는다.
+    remote exact-SHA CI 또는 release authorization을 대체하지 않는다.
 - Human approval checkpoints: 커밋·푸시·PR·머지·배포는 각각 별도 승인. 골든/테스트 약화,
   legacy 쓰기, `.env*`·secret 접근, 데이터 삭제, production 접근은 금지.
 - Non-goals: v2 파이프라인 seam 개설(오픈 후 P0), OPENSAM-150 `v2_city_ledger` 스키마,

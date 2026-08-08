@@ -242,6 +242,7 @@ services:
       dockerfile: docker/web-game.Dockerfile
       args:
         NEXT_PUBLIC_GATEWAY_URL: ${V2_NEXT_PUBLIC_GATEWAY_URL:-http://localhost:53000}
+        ASSET_PREFIX: /game
     image: opensamguk-v2-sandbox/web-game:${V2_IMAGE_TAG:-dev}
     container_name: opensamguk-v2-web-game
     environment:

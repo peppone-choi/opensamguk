@@ -1,8 +1,10 @@
 # OPENSAM-35 — V2-0A production 격리 게이트 실행 계획
 
-- Status: **ADOPTED · S0~S6 구현 완료 · PR #370 Round 1 dirty-tree review `cleared`**
-  (no findings; fingerprint `3c1b357c…`; exact dirty-tree only). Post-commit exact-SHA review/CI와 PR
-  merge/release/deploy 및 OPENSAM-177 consumer 실행은 미수행이다.
+- Status: **ADOPTED · S0~S6 구현 완료 · PR #370 Round 3 P2 source remediation reviewed `cleared` · remote exact-SHA CI pending**.
+  `ASSET_PREFIX=/game` Compose remediation, its contract test, and the `agent-system` CI invocation are implemented,
+  and terminal independent dirty-tree re-review found no blockers/fixes/questions/nits. Remote exact-SHA CI observation,
+  PR merge/release/deploy 및 OPENSAM-177 consumer
+  실행은 미수행이다.
 - 작성: 2026-08-08
 - 티켓: OPENSAM-35 (Highest, `할 일`), 부모 에픽 OPENSAM-16
 - 정본: `docs/loops/v2-planning-2026-07-12/round3-proposal-city-guanxi.md` §7.1·§7.1-2·§7.2·§11 ·
@@ -324,9 +326,11 @@ HTML 셸이 flush된 **뒤에** `notFound()`가 해소되기 때문이다. 바�
 post-remediation historical 값은 `v2-lab route` 17 tests, `middleware` 8 tests, 합계 **54 files / 288 tests**다.
 The historical A4 value is not reused as current frontend acceptance. A later direct-pnpm frontend typecheck is
 green and Vitest JSON reports 132 suites / 288 tests / 0 failures. The current dirty-tree backend gate then ran
-once with Java 21 `--rerun-tasks` (601 suites / 5,050 tests / failures·errors 0); independent dirty-tree review
-is cleared (no findings; fingerprint `3c1b357c…`). Post-commit exact-SHA review/CI remain before any separately
-authorized release action.
+once with Java 21 `--rerun-tasks` (601 suites / 5,050 tests / failures·errors 0). Round 3 P2 source remediation
+now adds the v2 Compose `ASSET_PREFIX=/game` contract, its red-before/green-after regression test, and the
+`agent-system` CI invocation of that test. The CI wiring is locally validated only; the independent Round 3 dirty-tree
+re-review is `cleared` with no blockers/fixes/questions/nits, while remote exact-SHA CI remains pending before any
+separately authorized release action.
 
 **우회 구멍 폐쇄 실측.** 동일 빌드(`BUILD_ID=V75C2XFKp2JmjIY6b1Qt2`), 양 run `SERVER_ID=pep`:
 
@@ -497,8 +501,9 @@ nginx 없이 standalone 포트 직접 호출도 동일 ⇒ **nginx가 상태코�
   - ⑤ 설정 리소스 무수정 — 빈 출력
 - `web/game` `pnpm typecheck && pnpm test`.
 - PR #370 Round 1의 23개 disposition 및 source remediation은 dirty-tree independent review에서
-  `cleared`되었다(no findings; fingerprint `3c1b357c…`). 이는 exact reviewer-inspected dirty tree에만
-  적용되며, post-commit **exact-SHA** 외부 fresh reviewer와 PR CI가 release condition으로 남는다.
+  `cleared`되었다(no findings; fingerprint `3c1b357c…`). Subsequent Round 3 P2 source remediation is implemented
+  across the approved three-file scope and its independent dirty-tree re-review is terminal `cleared` with no
+  blockers/fixes/questions/nits. The review verdict is `cleared`; remote exact-SHA CI remains separate and pending.
 
 ---
 
@@ -519,11 +524,29 @@ S1~S6의 산출물은 전부 신규 파일이다:
 | S4 | 아키텍처 테스트 클래스 | 신규 + `app/game-engine/build.gradle.kts` 기존 파일 수정(6개 raw source root를 test input으로 선언) |
 | S5 | `docker-compose.v2-sandbox.yml` · `v2-sandbox.env.example` · `infra/nginx/shared-gateway-relay.conf.template` | 신규(T2 아님) |
 | S6 | `docs/loops/**` artifact | 신규(T2 아님) + `tools/parity/gate.sh` 기존 파일 수정(gateway-api 실행·XML 채점 포함) |
+| Round 3 P2 | `docker-compose.v2-sandbox.yml` existing-file build arg + `tools/ops/v2_sandbox_compose_contract_test.sh` new contract test + `.github/workflows/ci.yml` existing-file `agent-system` invocation | explicitly approved P2 remediation scope; all three outside T2 |
 
-따라서 원 구현의 게이트 ③ 기대값은 **빈 출력**이다. 명령 정본은 §4-1에 있다. PR #370 Round 1의
-uncommitted source remediation은 이 historical inventory에 자동으로 들어가지 않는다. source owner가
-완료한 뒤 canonical command로 live diff를 다시 판정하고, 초과 변경은 ownership/approval 없이 통과로
-기록하지 않는다.
+### 4.0a Round 3 P2 approved canonical existing-file list
+
+Round 3 P2 remediation에 승인된 source scope는 정확히 다음 세 항목이다. 이는 Codex의 두 P2 finding을
+구현하는 three-file scope이며, remote CI green claim이 아니다.
+
+1. **Existing file:** `docker-compose.v2-sandbox.yml` — `web-game` build args에
+   `ASSET_PREFIX: /game`을 추가한다. Production Compose/C1 immutable paths는 여전히 무수정이다.
+2. **New contract test:** `tools/ops/v2_sandbox_compose_contract_test.sh` — rendered Compose가
+   `web-game.build.args.ASSET_PREFIX == "/game"`임을 fail-closed로 검사한다.
+3. **Existing CI workflow:** `.github/workflows/ci.yml` — `agent-system` job의
+   `Verify v2 sandbox compose contract` step이 `bash tools/ops/v2_sandbox_compose_contract_test.sh`를 실행한다.
+   Local wiring validation은 완료됐지만 이 새 step의 remote PR CI run은 아직 관측하지 않았다.
+
+세 항목 모두 T2(`app/*/src/main/kotlin/**`, `infra/src/main/kotlin/**`,
+`infra/src/main/resources/db/migration/**`) 밖이다. 그러므로 게이트 ③의 T2 empty result를 P2 전체
+scope proof로 오용하지 않는다. 이 canonical existing/approved-file list와 전체 diff가 P2 범위를
+판정하며, 이 세 항목 밖의 source 변경은 별도 ownership/approval 없이는 통과로 기록하지 않는다.
+
+따라서 원 구현의 게이트 ③ 기대값은 **빈 출력**이다. 명령 정본은 §4-1에 있다. Round 3 P2 source
+remediation은 위 explicit scope로만 추가됐고 independent dirty-tree re-review is `cleared`; remote exact-SHA CI
+observation만 아직 없다.
 
 이 목록이 비지 않으면 **초과 = 위반**이다. 어느 단계에서든 T2 기존 파일 수정이
 불가피해지면 **구현을 멈추고** 이 절을 개정해 사람 승인을 받은 뒤에만 진행한다.

@@ -7,8 +7,21 @@
   current dirty-tree의 Java 21 `--rerun-tasks` full gate 한 번(no retry)으로 교체했다:
   601 suites / 5050 tests / failures 0 / errors 0 / skipped 1, SHA256
   `a35ea5cf8352e2fe518daa32dbe95343f92bf62c95dc41a3673e924aa9fcaad1`.
-  이는 backend evidence이지만 immutable exact-SHA review 또는 release acceptance가 아니며 independent
-  dirty-tree reviewer의 terminal result가 여전히 필요하다.
+- 완료된 review/CI evidence는 구분해 보존한다: independent dirty-tree review는 no findings로
+  `cleared`(fingerprint `3c1b357c…`), local immutable-SHA review는
+  `54ead4e70cf5fa7c822bc7fef11a8c42f09eded6`에서 완료됐고, last observed GitHub CI의 `agent-system`·`jvm`·
+  `web (gateway)`·`web (game)` jobs는 SUCCESS였다. 이는 새 contract CI step 전 evidence이며 remote exact-SHA
+  CI를 대체하지 않는다.
+- 현재 controlling review state는 Codex Round 3의 **two P2 resolved findings**다. 두 P2의 source remediation은
+  구현됐다: v2 Compose `web-game` build arg `ASSET_PREFIX=/game`, rendered Compose의 같은 값을 fail-closed로
+  검사하는 신규 `tools/ops/v2_sandbox_compose_contract_test.sh`, 그리고 existing `.github/workflows/ci.yml`
+  `agent-system` job의 `Verify v2 sandbox compose contract` invocation이다. 이 test는 red-before/green-after를
+  관측했고, `ASSET_PREFIX=/game pnpm build`는 green이며 생성물 62개가 `/game/_next/`를 포함한다. CI wiring은
+  locally validated됐지만 remote exact-SHA PR CI run은 아직 관측하지 않았다. 후속 independent Round 3 dirty-tree
+  re-review는 no blockers/fixes/questions/nits로 terminal `cleared`했고, 두 P2는 resolved다. 이 local review
+  clearance는 remote CI 또는 release authorization이 아니다. CodeRabbit Round 2는 rate-limited라
+  completed review result가 없으며, PR review mentions=3은 completed external reviews=3이라는 뜻이 아니다.
+  현재 실제 PR review results는 CodeRabbit Round 1과 Codex Round 3뿐이고, local exact-SHA/dirty-tree reviews는 별도다.
 - 브랜치는 `origin/main=b847c351`에서 OPENSAM-35 변경을 단일 커밋으로 재구성했으나, PR #370은
   open이고 merge/release/deploy는 미수행이다.
 
