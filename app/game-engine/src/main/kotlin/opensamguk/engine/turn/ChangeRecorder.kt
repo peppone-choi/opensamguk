@@ -115,9 +115,10 @@ class ChangeRecorder(
 
     /**
      * Diplomacy UPDATE delta channel (T0.4) — `(from, to)` → [DiplomacyRowPatch]. The recorder is the
-     * SOLE per-command emitter. Last-write-wins per `(from, to)` (a later transition in the same tick
-     * displaces the earlier patch); insertion order preserved. This is DISTINCT from the monthly TICK's
-     * bulk-SQL diplomacy update (P3 `PostUpdateMonthly`) — they run at different points in the pass and
+     * SOLE per-command emitter. Last-write-wins per `(from, to)` is COLUMN-wise, not row-wise: a later
+     * transition in the same tick wins on `state`/`term`, but does NOT erase a `dead` (casualties) value
+     * an earlier patch recorded — see [diffDiplomacy]. Insertion order preserved. This is DISTINCT
+     * from the monthly TICK's bulk-SQL diplomacy update (P3 `PostUpdateMonthly`) — they run at different points in the pass and
      * must not corrupt each other (commands during the general/nation pass, tick AFTER).
      */
     private val diplomacyUpdateDirty = LinkedHashMap<Pair<Int, Int>, DiplomacyRowPatch>()
@@ -548,14 +549,24 @@ class ChangeRecorder(
             "ChangeRecorder.diffDiplomacy: key changed (${pre.fromNationId},${pre.toNationId}) -> (${post.fromNationId},${post.toNationId})"
         }
         if (pre.state == post.state && pre.term == post.term && pre.dead == post.dead) return null
+        val key = post.fromNationId to post.toNationId
+        val prev = diplomacyUpdateDirty[key]
         val patch = DiplomacyRowPatch(
             fromNationId = post.fromNationId,
             toNationId = post.toNationId,
             state = post.state,
             term = post.term,
-            dead = if (pre.dead != post.dead) post.dead else null,
+            // COLUMN-wise last-write-wins (컬럼 단위 병합 — votePollUpdates 와 같은 취지). `state`/`term`은
+            // 항상 post-state라 나중 값이 이긴다. `dead`는 이 diff에서 변했을 때만 실리므로, 안 변한 나중
+            // 패치가 `null`로 앞선 casualty 기록을 지우면 안 된다 → 앞 패치의 `dead`를 이어받는다. 행 단위
+            // 교체였을 때는 같은 틱의 전투 casualty 쓰기가 뒤이은 월간 Q9 패치에 조용히 유실됐다.
+            // `post.dead`를 무조건 싣는 것도 값으로는 동등하지만(post는 항상 world full 값), `dead == null`은
+            // `JdbcFlushExecutor.diplomacyUpdate`에서 `casualties` 컬럼을 SET하지 않는 분기를 태우므로 —
+            // 이번 틱에 casualty 기록이 전혀 없으면 그 컬럼을 안 건드리는 기존 flush 노출 면을 그대로 유지한다.
+            dead = if (pre.dead != post.dead) post.dead else prev?.dead,
         )
-        diplomacyUpdateDirty[post.fromNationId to post.toNationId] = patch
+        // 기존 키에 put — LinkedHashMap은 재삽입 시에도 최초 삽입 위치를 유지한다(패리티 계약: 순서 보존).
+        diplomacyUpdateDirty[key] = patch
         return patch
     }
 
