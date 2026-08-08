@@ -82,4 +82,40 @@ class StatusControllerTest {
         assertFalse(r.paused)
         assertFalse(r.changed, "동결 아니었으므로 unlock changed=false")
     }
+
+    /**
+     * OPENSAM-175 — 어드민 표면과 헬스가 갈리면 안 된다. `Error`로 루프 스레드가 죽으면 `running` 플래그는
+     * true로 남지만(stop() 미호출) 어드민은 `loopAlive=false`/`state!="running"`을 보고해야 한다 —
+     * 그래야 `/actuator/health`의 `loop_not_running` DOWN과 같은 이야기를 한다.
+     *
+     * 루프 스레드는 [ObjectProvider.getObject]가 던지는 `Error`로 죽인다(loop()의 `catch (e: Exception)`이
+     * 못 잡는다). [opensamguk.engine.run.TurnDaemonRunnerTest]의 같은 회귀와 마찬가지로 uncaught 스택트레이스가
+     * test `system-out`에 남는데, Error가 스레드 밖으로 실제 빠져나가는 것이 검증 대상이라 의도된 로그다.
+     */
+    @Test
+    fun `loopAlive is false when the loop thread was killed by an Error`() {
+        val gate = DaemonPauseGate()
+        val provider = object : ObjectProvider<TurnRunService> {
+            override fun getObject(vararg args: Any?): TurnRunService = throw StackOverflowError("simulated")
+            override fun getObject(): TurnRunService = throw StackOverflowError("simulated")
+            override fun getIfAvailable(): TurnRunService? = null
+            override fun getIfUnique(): TurnRunService? = null
+        }
+        val runner = TurnDaemonRunner(provider, WorldStateAvailability { true }, gate, daemonEnabled = true, idlePollMs = 10)
+        val controller = StatusController(profile = "che", pauseGate = gate, runner = runner)
+        runner.start()
+        try {
+            val deadline = System.currentTimeMillis() + 3_000
+            while (System.currentTimeMillis() < deadline && runner.diagnostics().loopUptimeSeconds != null) {
+                Thread.sleep(10)
+            }
+            assertTrue(runner.isRunning, "running 플래그는 여전히 true — 이것이 모순의 원천이었다")
+            val status = controller.status()
+            assertFalse(status.loopAlive, "죽은 루프 스레드는 loopAlive=false")
+            assertFalse(status.running, "죽은 루프는 running=false")
+            assertEquals("idle", status.state, "죽은 루프는 state=running이 아니다")
+        } finally {
+            runner.stop()
+        }
+    }
 }

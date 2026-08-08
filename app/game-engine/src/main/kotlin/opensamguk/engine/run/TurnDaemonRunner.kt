@@ -26,6 +26,29 @@ data class TurnDaemonDiagnostics(
     val recoveryMode: String? = null,
     val recoveryReason: String? = null,
     val recoveryReady: Boolean = true,
+    /** `opensamguk.daemon.enabled` — 루프가 **떠야 하는지**. false면 의도적으로 꺼진 것이다. */
+    val autoStartEnabled: Boolean = true,
+    /**
+     * 루프 **스레드가 실제로 살아 있으면** 기동 후 경과 **벽시계** 초, 아니면 null.
+     *
+     * `running` 플래그만으로는 부족하다 — [TurnDaemonRunner.stop] 없이도 루프는 빠져나온다(외부 인터럽트
+     * `break`), 그리고 `catch (e: Exception)`은 `Error`(OOM/StackOverflow — 월드 전체를 RAM에 올리는
+     * 데몬에서 현실적)를 안 잡아 스레드째 죽는다. 그때 `running=true`만 믿으면 이 티켓이 없애려던
+     * "프로세스는 살아있는데 데몬은 죽었다" 거짓 UP을 한 단계 위에서 그대로 반복한다.
+     */
+    val loopUptimeSeconds: Long? = null,
+    /**
+     * 마지막으로 [TurnRunService.runTick]이 **성공한 실제(벽시계) 시각**으로부터 경과 초. 한 번도 성공한
+     * 틱이 없으면 null.
+     *
+     * 게임 클럭(`clock.lastTurnTime`)이 아니라 벽시계인 것이 핵심이다 — `TurnRunService.kt:489`가
+     * `setLastTurnTime(runTime)`으로 심는 값은 **게임 스케줄 시각**이라, 사고 후 캐치업 중에는 데몬이
+     * 정상 가동 중인 내내 며칠 뒤처진 채로 남는다(= 지연 오탐). 벽시계는 캐치업에서 오히려 더 자주
+     * 갱신되므로 오탐이 원천적으로 불가능하다.
+     */
+    val lastSuccessfulTickAgeSeconds: Long? = null,
+    /** [TurnRunService.clockSnapshot] 조회가 실패한 경우의 예외 메시지. 설정 이상(tickSeconds<=0)과 구분된다. */
+    val clockError: String? = null,
 )
 
 /**
@@ -75,6 +98,12 @@ class TurnDaemonRunner(
     @Volatile private var lastTickCompletedAt: Instant? = null
     @Volatile private var lastTickFailedAt: Instant? = null
     @Volatile private var lastTickError: String? = null
+
+    /**
+     * 루프 스레드 기동 **벽시계** 시각. 아직 한 번도 틱을 성공하지 못한 부팅 직후 구간의 유예 기준이다
+     * ([TurnDaemonDiagnostics.lastSuccessfulTickAgeSeconds]가 null일 때 헬스가 이 값을 대신 쓴다).
+     */
+    @Volatile private var loopStartedAt: Instant? = null
     private val successfulTicks = AtomicLong(0)
     private val failedTicks = AtomicLong(0)
     private val consecutiveFailures = AtomicInteger(0)
@@ -88,9 +117,11 @@ class TurnDaemonRunner(
 
     fun diagnostics(): TurnDaemonDiagnostics {
         val activeService = service
+        var clockError: String? = null
         val clock = try {
             activeService?.clockSnapshot()
         } catch (e: Exception) {
+            clockError = "${e::class.qualifiedName}: ${e.message}"
             TurnClockSnapshot(
                 currentYear = 0,
                 currentMonth = 0,
@@ -106,6 +137,7 @@ class TurnDaemonRunner(
         } catch (_: Exception) {
             null
         }
+        val now = Instant.now()
         return TurnDaemonDiagnostics(
             serviceMaterialized = activeService != null,
             clock = clock,
@@ -119,6 +151,14 @@ class TurnDaemonRunner(
             recoveryMode = recovery?.mode?.name,
             recoveryReason = recovery?.reason,
             recoveryReady = recovery?.ready ?: true,
+            autoStartEnabled = daemonEnabled,
+            // 살아 있는 스레드만 uptime을 낸다. `worker == null`(스레드 생성/기동 실패)도, 죽은 스레드
+            // (`isAlive=false` — loop()의 `catch (e: Exception)`이 못 잡는 `Error`)도 모두 null이 된다.
+            loopUptimeSeconds = loopStartedAt
+                ?.takeIf { running.get() && worker?.isAlive == true }
+                ?.let { Duration.between(it, now).seconds },
+            lastSuccessfulTickAgeSeconds = lastTickCompletedAt?.let { Duration.between(it, now).seconds },
+            clockError = clockError,
         )
     }
 
@@ -128,9 +168,15 @@ class TurnDaemonRunner(
             return
         }
         if (!running.compareAndSet(false, true)) return
+        // 스레드가 **실제로 뜬 뒤에만** 기동 시각을 심는다. `Thread(...)`/`start()`가
+        // `OutOfMemoryError: unable to create native thread`로 던지면 `running=true` + `worker=null`이
+        // 남는데, 그때 loopStartedAt이 이미 채워져 있으면 죽은 데몬이 영구히 uptime을 뿜는다(거짓 UP).
+        // 그 사이 창(마이크로초)에 들어온 [diagnostics]는 `loop_not_running`을 한 번 볼 수 있지만,
+        // 헬스 폴은 10초 간격 + `start_period: 90s`라 실제로 관측되지 않는다.
         val t = Thread({ loop() }, "turn-daemon-loop").apply { isDaemon = true }
         worker = t
         t.start()
+        loopStartedAt = Instant.now()
         log.info("TurnDaemonRunner started — idlePollMs={}", idlePollMs)
     }
 
@@ -145,6 +191,15 @@ class TurnDaemonRunner(
             }
         }
         worker = null
+        loopStartedAt = null
+        // `lastTickCompletedAt`은 **일부러** 리셋하지 않는다. loopStartedAt은 "루프가 지금 살아 있는가"라는
+        // 생존 신호라 미가동이면 반드시 null이어야 하지만, lastTickCompletedAt은 "마지막으로 턴이 실제
+        // 진행된 시각"이라는 사실 기록이다. 유지하면 장기 정지 뒤 재기동은 즉시 `turn_stalled`로 뜨는데,
+        // 세계가 실제로 그만큼 안 돈 것이므로 그게 정직한 보고다. successfulTicks/failedTicks 누적 카운터를
+        // 리셋하지 않는 것과도 일관된다.
+        // 범위는 정직하게: 이 보존이 유예 재발급을 실제로 막는 것은 **같은 프로세스 안에서** stop()→start()가
+        // 다시 불리는 경우뿐이다(어드민/테스트 경로). `SmartLifecycle.stop()`은 사실상 컨텍스트 종료 =
+        // 프로세스 종료라, 컨테이너 재기동 모드에서는 어차피 새 객체가 유예를 새로 받는다.
         log.info("TurnDaemonRunner stopped")
     }
 
