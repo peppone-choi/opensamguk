@@ -3,6 +3,7 @@ package opensamguk.engine.v2
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class V2MigrationConventionTest {
@@ -59,6 +60,66 @@ class V2MigrationConventionTest {
 
         assertTrue(violations.any { it.contains("world_id") }, "comment-only world_id must not satisfy the contract: $violations")
     }
+
+    @Test
+    fun `validator exposes PostgreSQL table persistence modifiers to runtime world scope checks`() {
+        listOf(
+            "UNLOGGED" to "v2_unlogged_example",
+            "TEMP" to "v2_temp_example",
+            "TEMPORARY" to "v2_temporary_example",
+            "GLOBAL TEMP" to "v2_global_temp_example",
+            "GLOBAL TEMPORARY" to "v2_global_temporary_example",
+            "LOCAL TEMP" to "v2_local_temp_example",
+            "LOCAL TEMPORARY" to "v2_local_temporary_example",
+        ).forEach { (modifier, tableName) ->
+            val sql = """
+                -- V2-FORWARD-ONLY: rollback is a new compensating V900+ migration.
+                CREATE $modifier TABLE $tableName (
+                    world_id integer NOT NULL REFERENCES world_state(id),
+                    PRIMARY KEY (world_id)
+                );
+            """.trimIndent()
+
+            assertEquals(
+                listOf(V2CreatedTable("public", tableName)),
+                V2MigrationConvention.createdTables(sql),
+                "$modifier CREATE TABLE must reach runtime world-scope checks",
+            )
+            assertEquals(emptyList(), V2MigrationConvention.validate("V900__${tableName}.sql", sql))
+
+            val unscopedSql = """
+                -- V2-FORWARD-ONLY: rollback is a new compensating V900+ migration.
+                CREATE $modifier TABLE $tableName (
+                    external_code integer NOT NULL PRIMARY KEY
+                );
+            """.trimIndent()
+            val violations = V2MigrationConvention.validate("V900__${tableName}.sql", unscopedSql)
+            assertTrue(
+                violations.any { it.contains("world_id") },
+                "$modifier CREATE TABLE without world_id must not bypass validation: $violations",
+            )
+        }
+    }
+
+    @Test
+    fun `validator fails closed when a recognized table modifier sequence is unsupported`() {
+        val sql = """
+            -- V2-FORWARD-ONLY: rollback is a new compensating V900+ migration.
+            CREATE TEMP GLOBAL TABLE v2_invalid_modifier_order (
+                world_id integer NOT NULL REFERENCES world_state(id),
+                PRIMARY KEY (world_id)
+            );
+        """.trimIndent()
+
+        assertFailsWith<IllegalArgumentException> {
+            V2MigrationConvention.createdTables(sql)
+        }
+        val violations = V2MigrationConvention.validate("V900__invalid_modifier_order.sql", sql)
+        assertTrue(
+            violations.any { it.contains("cannot be world-scope checked") },
+            "unparsed recognized CREATE TABLE modifier sequence must fail closed: $violations",
+        )
+    }
 }
 
 internal object V2MigrationConvention {
@@ -70,9 +131,14 @@ internal object V2MigrationConvention {
         """\bworld_id\s+(?:integer|bigint|int)\s+not\s+null\b""",
         RegexOption.IGNORE_CASE,
     )
-    private val createTableKeyword = Regex("""\bcreate\s+table\b""", RegexOption.IGNORE_CASE)
+    private const val TABLE_PERSISTENCE_MODIFIER =
+        """(?:(?:unlogged|(?:(?:global|local)\s+)?(?:temporary|temp))\s+)?"""
+    private val createTableKeyword = Regex(
+        """\bcreate\s+(?:(?:unlogged|global|local|temporary|temp)\s+)*table\b""",
+        RegexOption.IGNORE_CASE,
+    )
     private val createTable = Regex(
-        """\bcreate\s+table\s+(?:if\s+not\s+exists\s+)?(?:([a-z_][a-z0-9_]*)\.)?([a-z_][a-z0-9_]*)\b""",
+        """\bcreate\s+${TABLE_PERSISTENCE_MODIFIER}table\s+(?:if\s+not\s+exists\s+)?(?:([a-z_][a-z0-9_]*)\.)?([a-z_][a-z0-9_]*)\b""",
         RegexOption.IGNORE_CASE,
     )
 

@@ -4,10 +4,36 @@
 Scope: `.ai/`, `app/`, `common/`, `infra/`, and `docs/` — initial immutable review plus current PR #371 Round 1 dirty remediation based on `origin/main` `e9cc3b31fa72aa46716f375b623f6a4937ad6c06`.
 - Independent reviewer: `/root/op43_independent_review` (`fable-deep-reasoner`)
 - Historical reviewed-tree fingerprint: `3e05d2cfef9a808efb696db93f4f81f0afc53d39dbadd903798f80c922779cbb`
-- Terminal reviewed-tree fingerprint: `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`
+- Historical terminal reviewed-tree fingerprint: `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`
+- Review base HEAD: `ac1d199644f61685ca3fee25f19c36e07782f960` (CI all green)
+- Current reviewed dirty-tree diff SHA-256: `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`
 Verdict: cleared
 
-## Current PR #371 Round 1 state
+## Current exact dirty-tree re-review state
+
+The first `@codex` review of exact SHA `ac1d199` found two P2 findings:
+
+1. A standalone `CREATE UNIQUE INDEX` can bypass the v2 world-scoped key guard.
+2. `CREATE UNLOGGED TABLE`, `CREATE TEMP TABLE`, and `CREATE TEMPORARY TABLE`
+   can bypass the migration table-convention guard.
+
+Source remediation for both P2s is currently dirty. The reviewed exact dirty
+tree above received a terminal independent re-review `cleared` with no findings.
+The focused combined engine tests are green at 6 + 1. Fresh full verification
+is green; commit/push, remote CI for the resulting exact SHA, and the
+PR-conversation review counter (0/3) remain pending. This clearance does not
+claim merge or deployment.
+
+The 4,915-test full verifier (failures 0 / errors 0) is historical,
+pre-final-parser-edit evidence. Fresh post-review `scripts/agent/verify-changes.sh --run`
+completed green: exit 0, `BUILD SUCCESSFUL in 17m 11s` / 29 executed; common
+232 + logic 3,173 + infra 235 + game-api 468 + game-engine 808 = 4,916 tests /
+failures 0 / errors 0 / game-engine skipped 1. Strict recorded 45 changed /
+Errors 0 / Warnings 0 / findings 0; log
+`/tmp/op43-post-review-final-os-verify.log` SHA-256:
+`dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`.
+
+## Historical PR #371 Round 1 state
 
 PR #371 exists at initial remote commit
 `983598928f4375b902d1e49c72551056ce5c9a1f`. Its four remote CI jobs
@@ -28,18 +54,16 @@ Round 1 contains six CodeRabbit threads and one Codex P2:
 | CodeRabbit: exact diagnostics and deep/decoy scope | Implemented exact rejection-detail assertions and positive deep/decoy fixture-existence assertions. Focused infra rerun: `BUILD SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0 and adapter 6/0/0/0. |
 | Codex P2: world-owned key guard | Every v2-created table PK/UNIQUE must include `world_id`; scoped-key-plus-unscoped-UNIQUE mutation produced intended RED. Combined focused engine current-input fan-in passed: `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 and `V2BothConditionsBeanGateIT` 2/0/0/0; engine log SHA-256 `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`, diff-check green. |
 
-The terminal independent re-review at the fingerprint above found no
-BLOCKER/MAJOR/MINOR/QUESTION/NIT and clears the current dirty remediation. The
-latest Round 1 dirty-tree `scripts/agent/verify-changes.sh --run` ran exactly
+The terminal independent re-review at the historical fingerprint above found no
+BLOCKER/MAJOR/MINOR/QUESTION/NIT and cleared the then-current dirty remediation.
+The pre-final-SHA Round 1 dirty-tree `scripts/agent/verify-changes.sh --run` ran exactly
 once and exited 0: `BUILD SUCCESSFUL in 12m 54s` / 29 executed; common 232 +
 logic 3,173 + infra 235 + game-api 468 + game-engine 806 = 4,914 tests /
 failures 0 / errors 0 / game-engine skipped 1. Strict reported 44 changed /
 Errors 0 / Warnings 0 / findings 0; log SHA-256:
 `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`.
-Compose, smoke, and deploy were not run. Remote CI for the final-remediation
-SHA is pending. After the next remediation commit, the ADR-LITE-026
-PR-conversation review sequence restarts at 0/3 and requires three sequential
-mention reviews with remediation/reverification before merge.
+Compose, smoke, and deploy were not run. This historical evidence does not
+replace the current exact dirty-tree re-review or completed post-review full verifier.
 
 ## Historical initial critique
 

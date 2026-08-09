@@ -2,8 +2,11 @@
 
 ## 2026-08-09 — OPENSAM-43 V2-0B 런타임 계약·격리 가드 (활성 계약)
 
-- Status: 사용자 승인 완료(`"승인."`, 2026-08-09), PR #371 Round 1 remediation 및 terminal independent
-  re-review `cleared`; final-remediation SHA remote CI·exact-SHA PR reviews는 pending. 계획 정본:
+- Status: 사용자 승인 완료(`"승인."`, 2026-08-09), HEAD `ac1d199` 기반 current dirty tree
+  (diff SHA-256 `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`)의 independent exact
+  dirty-tree re-review는 findings 없이 terminal `cleared`다. source는 여전히 dirty이며 focused combined
+  engine tests는 6 + 1 green이고 fresh full verifier도 green이다. commit/push, 이후 exact-SHA remote CI,
+  PR-conversation reviews 0/3은 pending. 계획 정본:
   `docs/superpowers/plans/2026-08-09-opensam-43-v2-0b-runtime-contract-plan.md`.
 - Goal: OPENSAM-35의 isolation-only foundation 위에서 0B-a~k를 실제 런타임·wire·Flyway·catalog
   계약으로 닫고, v1 production에는 v2 bean/table/content가 0건임을 유지한다.
@@ -29,21 +32,34 @@
 - External tracking: Jira OPENSAM-43과 GitHub #185는 승인 계약으로 갱신됐고 Jira는 `진행 중`이다.
 - Human approval: 이 계약과 v2 완성 목표는 구현·PR·머지를 승인한다. deploy/cutover, secret 접근,
   데이터 삭제, legacy/golden 쓰기, 테스트 약화는 승인되지 않았다.
-- Current review/evidence: PR #371의 initial SHA `983598928f4375b902d1e49c72551056ce5c9a1f`에는
+- Current review/evidence: base HEAD `ac1d199644f61685ca3fee25f19c36e07782f960`의 모든 CI는 green이다.
+  그 SHA의 첫 `@codex` review는 standalone `CREATE UNIQUE INDEX` world-key guard bypass와 `CREATE
+  UNLOGGED/TEMP/TEMPORARY TABLE` convention-guard bypass P2 두 건을 찾았다. current dirty tree의
+  diff SHA-256 `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`는 두 P2를 반영했고,
+  independent exact dirty-tree re-review가 findings 없이 terminal `cleared`했다. source는 dirty이고
+  focused combined engine tests는 6 + 1 green이다. fresh `scripts/agent/verify-changes.sh --run`은 exit 0,
+  `BUILD SUCCESSFUL in 17m 11s` / 29 executed, common 232 + logic 3,173 + infra 235 + game-api 468 +
+  game-engine 808 = 4,916 tests / failures 0 / errors 0 / game-engine skipped 1을 기록했다. strict는
+  45 changed / Errors 0 / Warnings 0 / findings 0이고 로그
+  `/tmp/op43-post-review-final-os-verify.log` SHA-256은
+  `dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`다. commit/push, 이후 exact-SHA
+  remote CI, PR-conversation review counter 0/3은 pending이다. 그 전의 PR #371 initial SHA
+  `983598928f4375b902d1e49c72551056ce5c9a1f`에는
   `agent-system`, `jvm`, `web (gateway)`, `web (game)` 네 job이 green이지만 Round 1 전의
   historical CI다. Round 1의 CodeRabbit 6 threads와 Codex P2 1건은 구현됐고, focused infra rerun은
   `BUILD SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0, adapter 6/0/0/0이다. Engine evidence log
   SHA-256 `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`는
   `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 및 `V2BothConditionsBeanGateIT` 2/0/0/0을 기록한다.
-  Terminal independent re-review fingerprint
+  Historical terminal independent re-review fingerprint
   `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`는 BLOCKER/MAJOR/MINOR/QUESTION/NIT
-  없이 `cleared`다. 최신 Round 1 dirty-tree `scripts/agent/verify-changes.sh --run`은 정확히 한 번
+  없이 `cleared`였으나 current dirty-tree re-review를 대체하지 않는다. pre-final-SHA Round 1
+  dirty-tree `scripts/agent/verify-changes.sh --run`은 정확히 한 번
   exit 0으로 실행되어 `BUILD SUCCESSFUL in 12m 54s` / 29 executed, common 232 + logic 3,173 + infra 235 +
   game-api 468 + game-engine 806 = 4,914 tests / failures 0 / errors 0 / game-engine skipped 1을 기록했다.
   strict는 44 changed / Errors 0 / Warnings 0 / findings 0이고 로그
   `/tmp/op43-round1-final-os-verify.log` SHA-256은
-  `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`다. final-remediation SHA remote CI와
-  다음 exact-SHA PR-conversation mention review 0/3은 pending이며 compose/smoke/deploy는 비범위로 미실행이다.
+  `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`다. compose/smoke/deploy는
+  비범위로 미실행이다.
 
 ---
 

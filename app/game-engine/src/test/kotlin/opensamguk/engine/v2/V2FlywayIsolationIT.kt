@@ -22,7 +22,7 @@ internal const val V2_SANDBOX_FLYWAY_LOCATIONS = "$V1_FLYWAY_LOCATION,$V2_FLYWAY
 class V2FlywayIsolationConstraintMutationIT {
 
     @Test
-    fun `runtime guard rejects an unscoped unique constraint beside a world scoped primary key`() {
+    fun `runtime guard rejects an unscoped standalone unique index and accepts a scoped one`() {
         val dataSource = DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password)
         val flyway = Flyway.configure()
             .dataSource(dataSource)
@@ -34,12 +34,19 @@ class V2FlywayIsolationConstraintMutationIT {
         val jdbc = JdbcTemplate(dataSource)
         V2FlywayIsolationAssertions(flyway, dataSource).assertV2SandboxRuntime()
         jdbc.execute("ALTER TABLE v2_sandbox_probe ADD COLUMN external_code integer NOT NULL DEFAULT 0")
-        jdbc.execute("ALTER TABLE v2_sandbox_probe ADD CONSTRAINT v2_sandbox_probe_external_code_key UNIQUE (external_code)")
+        jdbc.execute("CREATE UNIQUE INDEX v2_sandbox_probe_external_code_unique ON v2_sandbox_probe (external_code)")
 
         val error = assertFailsWith<AssertionError> {
             V2FlywayIsolationAssertions(flyway, dataSource).assertV2SandboxRuntime()
         }
-        assertTrue(error.message.orEmpty().contains("every primary or unique key"))
+        assertTrue(error.message.orEmpty().contains("world_id"))
+
+        jdbc.execute("DROP INDEX v2_sandbox_probe_external_code_unique")
+        jdbc.execute(
+            "CREATE UNIQUE INDEX v2_sandbox_probe_world_external_code_unique " +
+                "ON v2_sandbox_probe (world_id, external_code)",
+        )
+        V2FlywayIsolationAssertions(flyway, dataSource).assertV2SandboxRuntime()
     }
 
     private companion object {
@@ -95,7 +102,7 @@ internal class V2FlywayIsolationAssertions(
         val label = "${applied.script} -> ${table.schema}.${table.name}"
         assertTrue(tableExists(table), "$label must exist after its applied migration")
         assertTrue(worldIdIsNotNull(table), "$label must keep world_id NOT NULL")
-        assertTrue(everyPrimaryOrUniqueKeyContainsWorldId(table), "$label must scope every primary or unique key by world_id")
+        assertTrue(everyPrimaryOrUniqueIndexContainsWorldId(table), "$label must scope every primary or unique index by world_id")
         assertTrue(worldIdReferencesWorldState(table), "$label must foreign-key world_id to world_state")
     }
 
@@ -134,28 +141,33 @@ internal class V2FlywayIsolationAssertions(
         table.name,
     )
 
-    private fun everyPrimaryOrUniqueKeyContainsWorldId(table: V2CreatedTable): Boolean = queryBoolean(
+    private fun everyPrimaryOrUniqueIndexContainsWorldId(table: V2CreatedTable): Boolean = queryBoolean(
         """
         SELECT EXISTS (
             SELECT 1
-              FROM information_schema.table_constraints AS table_constraint
-             WHERE table_constraint.table_schema = ?
-               AND table_constraint.table_name = ?
-               AND table_constraint.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+              FROM pg_index AS index_meta
+              JOIN pg_class AS relation ON relation.oid = index_meta.indrelid
+              JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+             WHERE namespace.nspname = ?
+               AND relation.relname = ?
+               AND (index_meta.indisprimary OR index_meta.indisunique)
         )
         AND NOT EXISTS (
             SELECT 1
-              FROM information_schema.table_constraints AS table_constraint
-             WHERE table_constraint.table_schema = ?
-               AND table_constraint.table_name = ?
-               AND table_constraint.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+              FROM pg_index AS index_meta
+              JOIN pg_class AS relation ON relation.oid = index_meta.indrelid
+              JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+             WHERE namespace.nspname = ?
+               AND relation.relname = ?
+               AND (index_meta.indisprimary OR index_meta.indisunique)
                AND NOT EXISTS (
                     SELECT 1
-                      FROM information_schema.key_column_usage AS key_column
-                     WHERE key_column.constraint_catalog = table_constraint.constraint_catalog
-                       AND key_column.constraint_schema = table_constraint.constraint_schema
-                       AND key_column.constraint_name = table_constraint.constraint_name
-                       AND key_column.column_name = 'world_id'
+                      FROM unnest(index_meta.indkey) WITH ORDINALITY AS key_column(attribute_number, position)
+                      JOIN pg_attribute AS attribute
+                        ON attribute.attrelid = relation.oid
+                       AND attribute.attnum = key_column.attribute_number
+                     WHERE key_column.position <= index_meta.indnkeyatts
+                       AND attribute.attname = 'world_id'
                )
         )
         """.trimIndent(),

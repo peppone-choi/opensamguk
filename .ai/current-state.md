@@ -1,18 +1,31 @@
 # Current State
 
-## OPENSAM-43 V2-0B — PR #371 Round 1 remediation + terminal independent review `cleared` · remote CI/reviews pending — 2026-08-09
+## OPENSAM-43 V2-0B — independent exact dirty-tree re-review `cleared` · source remediation dirty — 2026-08-09
 
 - 기준 SHA는 `e9cc3b31fa72aa46716f375b623f6a4937ad6c06`(`origin/main`)이고 worktree/branch는
   `/private/tmp/opensam43-v2-0b-runtime` / `codex/op-43-v2-0b-runtime`다. 승인된 pinned-city
   계약(94 total / 24 owned / SHA-256 `6759a682…d393`)과 ADR-LITE-030의 G0 post-open 경계는 유지된다.
+- base HEAD `ac1d199644f61685ca3fee25f19c36e07782f960`의 모든 CI는 green이다. 그 SHA의 첫 `@codex`
+  review는 standalone `CREATE UNIQUE INDEX` world-key guard bypass와 `CREATE
+  UNLOGGED/TEMP/TEMPORARY TABLE` migration table-convention guard bypass P2 두 건을 찾았다. current
+  dirty-tree diff SHA-256 `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`에 대한
+  independent exact dirty-tree re-review는 findings 없이 terminal `cleared`다. source는 dirty이고 focused
+  combined engine tests는 6 + 1 green이다. post-review fresh full verifier도 green이다. commit/push,
+  이후 exact-SHA remote CI, PR-conversation review counter 0/3은 pending이다.
+- 4,915 tests / failures 0 / errors 0 full verifier는 historical/pre-final-parser-edit evidence다.
+- Fresh post-review `scripts/agent/verify-changes.sh --run`은 exit 0: `BUILD SUCCESSFUL in 17m 11s` /
+  29 executed, common 232 + logic 3,173 + infra 235 + game-api 468 + game-engine 808 = 4,916 tests /
+  failures 0 / errors 0 / game-engine skipped 1. strict는 45 changed / Errors 0 / Warnings 0 /
+  findings 0이고 로그 `/tmp/op43-post-review-final-os-verify.log` SHA-256은
+  `dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`다.
 - PR #371은 존재하며 원격 initial commit은
   `983598928f4375b902d1e49c72551056ce5c9a1f`다. 그 commit의 `agent-system`, `jvm`, `web (gateway)`,
   `web (game)` 네 CI job은 green이지만, 모두 이후의 dirty Round 1 remediation보다 앞선
-  historical evidence다. final-remediation SHA의 remote CI는 아직 없다.
-- Round 1의 CodeRabbit 6 threads와 Codex P2 1건을 반영한 terminal independent re-review fingerprint
+  historical evidence다. `ac1d199` CI와 current dirty remediation 이후의 pending remote CI는 위에
+  구분해 기록한다.
+- Round 1의 CodeRabbit 6 threads와 Codex P2 1건을 반영한 historical terminal independent re-review fingerprint
   `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`는
-  BLOCKER/MAJOR/MINOR/QUESTION/NIT 없이 `cleared`다. 이는 prior immutable local clearance와 구분되는
-  current dirty-tree review evidence다.
+  BLOCKER/MAJOR/MINOR/QUESTION/NIT 없이 `cleared`였으나 current dirty-tree re-review를 대체하지 않는다.
 - CodeRabbit의 6 dispositions: historical 5,063-vs-4,911 wording과 V2-0A/G0 MD022 spacing은 수정했다.
   active task의 `Human approval` clause와 승인된 OP43 plan §7이 이 ticket의 PR/merge를 명시 승인하므로,
   approval comment는 inapplicable로 reject했고 ADR-LITE-026의 separate-approval 조건과 충돌하지 않는다.
@@ -26,7 +39,7 @@
   `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 및 `V2BothConditionsBeanGateIT` 2/0/0/0으로
   terminal이다. Engine log SHA-256은
   `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`이며 diff-check는 green이다.
-- 최신 Round 1 dirty-tree `scripts/agent/verify-changes.sh --run`은 정확히 한 번 exit 0으로 실행되어
+- pre-final-SHA Round 1 dirty-tree `scripts/agent/verify-changes.sh --run`은 정확히 한 번 exit 0으로 실행되어
   `BUILD SUCCESSFUL in 12m 54s` / 29 executed, common 232 + logic 3,173 + infra 235 + game-api 468 +
   game-engine 806 = 4,914 tests / failures 0 / errors 0 / game-engine skipped 1을 기록했다. strict는
   44 changed / Errors 0 / Warnings 0 / findings 0이고, 로그
@@ -35,11 +48,12 @@
 - Historical only: pre-initial-review backend gate는 605 suites / 5,063 tests / 0 failures / 0 errors /
   1 skip이고, 이전 initial-remediation verifier는 4,911 tests / 0 failures / 0 errors였다. 어느 결과도
   현재 Round 1 dirty remediation의 verifier record 또는 independent re-review를 대체하지 않는다.
-- Controlling review artifact의 유일한 verdict는 `cleared`다. 단 final-remediation SHA remote CI, 다음
-  exact-SHA PR-conversation review 0/3의 세 번 순차 요청·수정·재검증은 아직 pending이다. 이 process gates는
-  local independent review clearance로 대체되지 않는다.
+- Controlling review artifact의 유일한 verdict는 current dirty-tree diff
+  `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`에 대한 `cleared`다. fresh full
+  verifier는 green이며, commit/push, 이후 exact-SHA remote CI, 그리고 0/3의 세 번 순차 PR-conversation
+  review는 아직 pending이다.
 - OPENSAM-44/150 persistence/first leaf, OPENSAM-104/105 RTK builders, G0/1,180, deploy/cutover는
-  비범위다. source/docs lanes는 stable/released이며, 이 documentation lane은 commit/push/deploy를 수행하지 않는다.
+  비범위다. source remediation은 dirty이며, 이 documentation lane은 commit/push/deploy를 수행하지 않는다.
 
 ---
 

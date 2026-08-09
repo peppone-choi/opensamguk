@@ -1,54 +1,37 @@
-# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 PR #371 Round 1 remediation — independent review `cleared`, remote CI/reviews pending)
+# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 exact dirty-tree re-review `cleared`; remediation dirty)
 
-## Current PR and review state
+## Current OP43 handoff
 
-- PR #371 exists at initial remote commit
-  `983598928f4375b902d1e49c72551056ce5c9a1f`. Its `agent-system`, `jvm`,
-  `web (gateway)`, and `web (game)` jobs are green, but that CI predates the
-  current dirty remediation and is not final-remediation evidence.
-- The terminal independent re-review of the exact dirty tree is `cleared` at
-  fingerprint `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`,
-  with no BLOCKER/MAJOR/MINOR/QUESTION/NIT. It supersedes the prior
-  `fix-required` status; it does not replace remote CI or exact-SHA PR reviews.
-- CodeRabbit's approval suggestion is rejected/inapplicable: the active task's
-  `Human approval` clause and the approved OP43 plan §7 explicitly authorize
-  this ticket's PR and merge. That is the ticket-specific explicit approval
-  required by ADR-LITE-026, so no edit to the `Human approval` clause is correct.
-
-## Current implementation and verifier evidence
-
-- CodeRabbit dispositions now include duplicate-classpath fail-closed handling,
-  duplicate city-ID rejection, exact diagnostic assertions, and positive
-  deep/decoy fixture-existence assertions. Focused infra rerun: `BUILD
-  SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0, adapter 6/0/0/0. The
-  historical/current backend-count wording and the V2-0A and V2-G0 MD022
-  spacing are also fixed.
-- Codex P2 now requires every v2-created table PK/UNIQUE to include `world_id`.
-  The scoped-key-plus-unscoped-UNIQUE mutation observed its intended RED, and
-  the combined focused engine current-input fan-in is terminal:
-  `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 and
-  `V2BothConditionsBeanGateIT` 2/0/0/0. Engine log SHA-256:
-  `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`;
-  diff-check is green.
-- The latest Round 1 dirty-tree `scripts/agent/verify-changes.sh --run` ran
-  exactly once and exited 0: `BUILD SUCCESSFUL in 12m 54s` / 29 executed;
-  common 232 + logic 3,173 + infra 235 + game-api 468 + game-engine 806 =
-  4,914 tests / failures 0 / errors 0 / game-engine skipped 1. Strict reported
-  44 changed / Errors 0 / Warnings 0 / findings 0. Log SHA-256:
-  `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`.
-  Compose, smoke, and deploy remain unexecuted.
-
-## Next sequence
-
-1. After the next remediation commit/push, observe remote CI for that exact
-   SHA. The required three sequential PR-conversation mention reviews restart
-   at 0/3 after that commit; remediate and reverify each round before merge.
-2. Keep deploy/cutover, secrets, data deletion, legacy/golden writes, and test
-   weakening outside this task. This documentation lane made no commit or push.
+- HEAD is `ac1d199644f61685ca3fee25f19c36e07782f960` (`ac1d199`), whose CI is
+  all green. The current reviewed dirty-tree diff SHA-256 is
+  `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`.
+- The first `@codex` review found a standalone `UNIQUE INDEX` bypass of the v2
+  world-scoped key guard and `CREATE UNLOGGED/TEMP/TEMPORARY TABLE` bypasses of
+  the migration table-convention guard. The dirty source remediation is
+  terminally `cleared` with no findings by an independent exact dirty-tree
+  re-review; focused combined engine evidence is green at 6 + 1.
+- The 4,915-test full verifier (failures 0 / errors 0) is historical,
+  pre-final-parser-edit evidence. Fresh post-review `scripts/agent/verify-changes.sh --run`
+  is green: exit 0, `BUILD SUCCESSFUL in 17m 11s` / 29 executed, common 232 +
+  logic 3,173 + infra 235 + game-api 468 + game-engine 808 = 4,916 tests /
+  failures 0 / errors 0 / game-engine skipped 1. Strict recorded 45 changed /
+  Errors 0 / Warnings 0 / findings 0; log
+  `/tmp/op43-post-review-final-os-verify.log` SHA-256 is
+  `dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`.
+- Historical only: the prior cleared fingerprint
+  `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360` and
+  4,914-test verifier applied to an earlier Round 1 tree; neither replaces the
+  current dirty-tree re-review.
+- The PR-conversation review counter is 0/3. After the source remediation is
+  committed, observe its exact-SHA CI, then restart the three sequential
+  review/remediation/reverification rounds. Commit, push, exact-SHA CI, reviews,
+  merge, and deployment remain separate gates.
+- No deployment, cutover, production observation, secret access, data deletion,
+  legacy/golden write, or test weakening is claimed or authorized by this handoff.
 
 ---
 
-# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 V2-0B approved contract reconciliation)
+# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 V2-0B approved contract reconciliation; historical)
 
 ## User-approved contract and durable records
 
@@ -72,7 +55,7 @@
   has only its stale OP43 wording reconciled to that approval. The OP43
   runtime-contract plan itself remains unchanged and authoritative.
 
-## Implemented fan-in and current verification
+## Historical implemented fan-in and verification
 
 - The separately owned source lanes have now implemented 0B-b~i/k: the existing
   engine/API process-world identities, the profile/property AND gate, typed
