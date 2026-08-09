@@ -9,6 +9,9 @@ foundation owner 한 명을 정하기 전까지 read-only다. 행 번호가 아�
 
 ## OPENSAM-43 V2-0B runtime contract lane — 2026-08-09 (active)
 
+이 절의 `completed/released`는 로컬 산출물 완료와 파일 소유권 해제를 뜻한다. 제품 release·deploy 완료를
+뜻하지 않으며, OP43의 exact-SHA remote CI와 PR 대화 리뷰 0/3은 아래 상태대로 별도 pending gate다.
+
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
 | `codex-op43-root` | OP43 contract, fan-in, external tracking, review/PR | `codex/op-43-v2-0b-runtime` (`/private/tmp/opensam43-v2-0b-runtime`) | `.ai/handoff.md`; OP43 plan/backlog and remaining evidence docs; Jira OPENSAM-43; GitHub #185 | active — terminal independent review `cleared`; final-remediation remote CI and exact-SHA PR reviews 0/3 remain pending | 2026-08-09 |
