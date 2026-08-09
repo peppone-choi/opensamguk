@@ -1,6 +1,7 @@
 package opensamguk.engine.v2
 
 import opensamguk.infra.v2.V2ContentCatalog
+import opensamguk.infra.v2.V2CityCatalogAdapter
 import opensamguk.infra.v2.V2SandboxGate
 import opensamguk.infra.v2.V2SandboxMarker
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -40,4 +41,7 @@ class V2SandboxConfiguration {
      */
     @Bean
     fun v2ContentCatalog(): V2ContentCatalog = V2ContentCatalog()
+
+    @Bean
+    fun v2CityCatalogAdapter(catalog: V2ContentCatalog): V2CityCatalogAdapter = V2CityCatalogAdapter(catalog)
 }

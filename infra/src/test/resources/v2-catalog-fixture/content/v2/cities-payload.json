@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "cities-payload",
+  "status": "ACTIVE",
+  "source": "v2-catalog-fixture/scenario/cities.json",
+  "sha256": "2dc5ec3c107b828044d331acaa3a294a4de3e53915474000566143f1b959c9ee",
+  "cityCount": 2,
+  "scenarioOwnedCityCount": 1,
+  "cities": [
+    {
+      "id": 1,
+      "name": "테스트성",
+      "level": 5,
+      "region": 1,
+      "nation_id": 1,
+      "pop_max": 100,
+      "agri_max": 200,
+      "comm_max": 300,
+      "secu_max": 400,
+      "def_max": 500,
+      "wall_max": 600,
+      "x": 10,
+      "y": 20
+    },
+    {
+      "id": 2,
+      "name": "테스트현",
+      "level": 3,
+      "region": 2,
+      "nation_id": 0,
+      "pop_max": 110,
+      "agri_max": 210,
+      "comm_max": 310,
+      "secu_max": 410,
+      "def_max": 510,
+      "wall_max": 610,
+      "x": 11,
+      "y": 21
+    }
+  ]
+}

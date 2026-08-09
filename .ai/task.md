@@ -1,5 +1,41 @@
 # Current Task
 
+## 2026-08-09 — OPENSAM-43 V2-0B 런타임 계약·격리 가드 (활성 계약)
+
+- Status: 사용자 승인 완료(`"승인."`, 2026-08-09), 구현·dirty-tree 검증·독립 리뷰 완료, PR 준비. 계획 정본:
+  `docs/superpowers/plans/2026-08-09-opensam-43-v2-0b-runtime-contract-plan.md`.
+- Goal: OPENSAM-35의 isolation-only foundation 위에서 0B-a~k를 실제 런타임·wire·Flyway·catalog
+  계약으로 닫고, v1 production에는 v2 bean/table/content가 0건임을 유지한다.
+- Approved contract correction:
+  - 기존 G0 선행·counter 1,180·`CountyParticipationFixture` gameplay 전제를 v2 오픈 경로에서 제거한다.
+  - 추적 입력 `infra/src/main/resources/scenario/cities_1010.json`을 복제 없이 참조한다.
+  - 전체 94도시, `nation_id != 0` 소유 도시 24, SHA-256
+    `6759a68255cae1a6b9c05cbbaf5736ed8fc9fcb50c6623be44d7e3dfe0b4d393`을 fail-closed로 검증한다.
+  - 같은 입력의 반복 적재 snapshot은 동일하고 in-memory diff는 0이어야 한다.
+  - G0·1,180 콘텐츠는 폐기하지 않고 오픈 후로 유지한다(ADR-LITE-019/021).
+- Scope:
+  - 0B-a v1-completion ledger 정본 참조.
+  - 0B-b/c v2 profile/world identity와 feature flag runtime integration.
+  - 0B-d/e migration naming/rollback/location 계약 + test-only Flyway sandbox probe.
+  - 0B-f/g ACTIVE-only catalog와 94도시 typed adapter.
+  - 0B-h/i v1 wire를 바꾸지 않는 v2 전용 command-result/turn-event payload version 계약.
+  - 0B-j 영향 query 목록, 0B-k v1 production 미적용 가드.
+- Non-goals: OPENSAM-44 persistence, OPENSAM-150 실제 migration/첫 v2 leaf·도시 원장,
+  OPENSAM-104/105 RTK builder, G0 1,180 콘텐츠, production deploy/cutover.
+- Acceptance evidence: 계획서의 lane별 RED→GREEN 명령, JDK 21 focused XML,
+  `tools/parity/gate.sh backend`, `tools/agent-system/check.py --strict --base origin/main --format json`,
+  `scripts/agent/verify-changes.sh --run`, 독립 review artifact와 PR review disposition.
+- External tracking: Jira OPENSAM-43과 GitHub #185는 승인 계약으로 갱신됐고 Jira는 `진행 중`이다.
+- Human approval: 이 계약과 v2 완성 목표는 구현·PR·머지를 승인한다. deploy/cutover, secret 접근,
+  데이터 삭제, legacy/golden 쓰기, 테스트 약화는 승인되지 않았다.
+- Current terminal evidence: 독립 dirty-tree review `cleared`(fingerprint `3e05d2cf…cbb`),
+  `scripts/agent/verify-changes.sh --run` exit 0 / `BUILD SUCCESSFUL in 16m 19s` / 4,911 tests /
+  failures 0 / errors 0, strict findings 0. 로그 SHA-256은
+  `00b137ac81dca1757bb920ccc54f1b0eda1dac18343b5028587ffaab5286242a`다. compose/smoke/deploy는
+  비범위로 미실행이며 immutable commit review, remote CI, PR 대화 리뷰 3회가 남았다.
+
+---
+
 ## 2026-08-08 — OPENSAM-35 V2-0A production 격리 게이트 (활성 계약)
 
 - Status: 계획 채택됨(사용자 승인 2026-08-08), S0~S6 구현과 PR #370 Round 1 remediation은 완료됐다.

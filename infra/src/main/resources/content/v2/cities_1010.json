@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "cities_1010",
+  "status": "ACTIVE",
+  "source": "scenario/cities_1010.json",
+  "sha256": "6759a68255cae1a6b9c05cbbaf5736ed8fc9fcb50c6623be44d7e3dfe0b4d393",
+  "cityCount": 94,
+  "scenarioOwnedCityCount": 24
+}

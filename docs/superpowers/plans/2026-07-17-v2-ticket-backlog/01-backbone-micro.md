@@ -65,7 +65,7 @@
 - P-14b~h. Pack 인터페이스 7종 각 1티켓: `EraPack`/`FactionPack`/`UnitTemplate`/`Doctrine`/`TerrainTemplate`/`BattleRuleset`/`Scenario`
 
 ### §11 성공 기준 (선행: 미명시 / Exit: 각 수치 자체) — 기준당 gate 1티켓
-- P-15a p95<200ms / P-15b commandResolved→query 2초 / P-15c replay p95<1초 / P-15d hash diff 0 / P-15e v1 gate 회귀 0 / P-15f 승인→replay→관계 재현 / P-15g 3D 공통 snapshot / P-15h 2,000 catalog identity / P-15i CountyParticipationFixture 1,180 / P-15j 정책 전파 우선순위 / P-15k 60·30 FPS / P-15l production v2 0개. (대부분 계획 phase Exit와 중복 — 계획을 정본)
+- P-15a p95<200ms / P-15b commandResolved→query 2초 / P-15c replay p95<1초 / P-15d hash diff 0 / P-15e v1 gate 회귀 0 / P-15f 승인→replay→관계 재현 / P-15g 3D 공통 snapshot / P-15h 2,000 catalog identity / P-15i CountyParticipationFixture 1,180 (**V2-G0 오픈 후 gate; OP43 선행 아님**) / P-15j 정책 전파 우선순위 / P-15k 60·30 FPS / P-15l production v2 0개. (대부분 계획 phase Exit와 중복 — 계획을 정본)
 
 ---
 
@@ -80,7 +80,7 @@
 - 0A-f. production context v2 0개 architecture test
 - 0A-g. 기준선 artifact 저장(v1 schema dump·seed hash·PHP golden·backend/web gate)
 
-### Phase V2-G0 / Wave G0-A 행정 기준선 (선행: V2-0A 통과 / 공유 Exit: 원전 수량·189 hash·SeatAssignment 0중복·co-location 통과·counter 1,180)
+### Phase V2-G0 / Wave G0-A 행정 기준선 (v2 오픈 후 작업; OPENSAM-43 V2-0B의 선행 아님 / 공유 Exit: 원전 수량·189 hash·SeatAssignment 0중복·co-location 통과·counter 1,180)
 - G0A-a~g. 계약 7종 각 1티켓: `TemporalAdministrativeUnit`/`AdministrativeChange`/`PhysicalPlace`(+provenance·license)/`PlaceBudgetClass`/`SeatAssignment`/`PlaceControl`/`ScenarioPlacement`
 - G0A-h. 군·국 105 read-only catalog 전사
 - G0A-i. 현·읍·도·후국 1,180 read-only catalog 전사
@@ -121,18 +121,25 @@
 - G0C-j. 실제 2,000 source catalog 전체 동일 검사(연대기 모드 포함)
 - G0C-k. 60/30 FPS Playwright screenshot·canvas pixel·frame telemetry 검증
 
-### Phase V2-0B (선행: G0 통과 / 공유 Exit: gate 녹색·s1 독립·load hash 동일·counter 1,180·review cleared)
-- 0B-a. `v1-completion` ledger 갱신
+### Phase V2-0B (선행: V2-0A 격리 게이트; G0는 오픈 후 / 공유 Exit: gate 녹색·v1 production v2 미적용·pinned `cities_1010` source SHA/94/24·반복 typed snapshot diff 0·review cleared)
+
+> **2026-08-09 승인 정정 (ADR-LITE-030).** 이 phase의 구 G0 통과·counter 1,180·gameplay
+> `CountyParticipationFixture` 선행은 supersede되었다. `scenario/cities_1010.json`은 기존
+> tracked source payload이고, `content/v2/cities_1010.json`은 이를 가리키는 metadata일 뿐
+> 도시 행 복사본이 아니다. V2-G0/1,180/fixture 자체는 오픈 후로 보존한다.
+
+- 0B-a. canonical v1 non-operational completion ledger **참조** (새 v1 완료 주장 복사 금지)
 - 0B-b. v2 profile/world 식별자 runtime integration test
 - 0B-c. feature flag 0A 계약 runtime integration test
 - 0B-d. `world_id` 전제 v2 migration naming/rollback 규칙
 - 0B-e. v2 Flyway sandbox-only 실행 검증 test
 - 0B-f. catalog loader ACTIVE-only 적재·CANDIDATE·EXCLUDED·BUDGET_ONLY 거부
-- 0B-g. `CountyParticipationFixture` sandbox runtime adapter 반복 + in-memory diff 비교
+- 0B-g. metadata가 가리키는 tracked `scenario/cities_1010.json` typed adapter 반복 적재 +
+  SHA-256 `6759a68255cae1a6b9c05cbbaf5736ed8fc9fcb50c6623be44d7e3dfe0b4d393`·94 total·24 owned·in-memory diff 0 비교
 - 0B-h. command result payload version 정의
 - 0B-i. turn event payload version 정의
-- 0B-j. 영향 query 목록 정의
-- 0B-k. s1 미적용 가드(local/test sandbox 전용)
+- 0B-j. 실제 world/profile/catalog/wire/Flyway query·read·write impact seam inventory (완료 주장 금지)
+- 0B-k. v1 production v2 bean/probe table/content 미적용 guard (local/test sandbox 전용)
 
 ### Phase V2-1 (선행: `che_출병` Operation은 V2-3 뒤·전술은 V2-4A 뒤 / 공유 Exit: interval 무관 관측·700ms 제거·reload 없이 갱신·e2e 녹색)
 - 1-a. `commandAccepted` 이벤트 정의/발행
@@ -293,4 +300,5 @@
 ## 비범위(그대로) — 직전 반환과 동일. 요약:
 - MVP 112 커맨드 전체 / 병사 단위 조작·자유 카메라·cinematic·런타임 LLM·결제·네이티브·다국어 / 1,180 현급 동일 깊이 반복 관리 UI / s1에 v2 schema·seed 직접 주입 / 패러티 gate·PHP 약화. §9: 일일 퀘스트·무작위 전리품·과금 능력치·장식 3D·AI 즉석 서술. 계획 승인·보류: cadence 60분 외·s1 v2 world 생성·3D asset·license·인프라 비용·v1 gate/golden 완화는 자동 구현 금지.
 
-읽기 전용 유지, 파일 수정 없음.
+2026-08-09에 OPENSAM-43의 stale prerequisite만 ADR-LITE-030에 맞춰 정합화했다. 그 밖의
+최소 티켓 분해는 역사 기록으로 유지한다.

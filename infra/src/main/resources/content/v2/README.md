@@ -33,5 +33,11 @@ S1의 교훈(재귀 스캔)이 여기서도 유효하다. v1 로더 두 개가 �
 
 ## 4. 현재 상태
 
-**빈 디렉터리다(README만).** 실제 v2 콘텐츠 파일은 이 티켓의 범위가 아니다 — 내용을 지어내면
-날조다. 파일 0개일 때 `names()`가 빈 목록을 반환하는 것이 현재의 정상 동작이며 테스트로 고정돼 있다.
+`cities_1010.json`은 도시 행을 복사하지 않는 **메타데이터 전용** 파일이다. 각 항목은
+`schemaVersion`, `id`, `status`, `source`, `sha256`, `cityCount`, `scenarioOwnedCityCount`를
+가진다. 활성 항목은 `scenario/cities_1010.json`을 참조하고 SHA-256·총 도시 수·시나리오
+소유 도시 수를 고정한다. `ACTIVE`만 소비 API가 로드하며 `CANDIDATE`, `EXCLUDED`,
+`BUDGET_ONLY` 또는 형식이 잘못된 항목은 실패한다.
+
+`names()`와 `read()`는 직접 클래스패스 항목을 점검하는 진단용 API일 뿐 콘텐츠를 승인하지 않는다.
+소비자는 반드시 fail-closed `load()`를 사용한다.

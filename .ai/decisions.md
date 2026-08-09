@@ -321,6 +321,34 @@
 
 ---
 
+## ADR-LITE-030 OPENSAM-43는 고정된 기존 도시 입력으로 열고 G0·1,180 선행을 해제한다
+
+- Date: 2026-08-09
+- Status: approved
+- Decision: OPENSAM-43 V2-0B의 유일한 도시 입력은 추적 중인
+  `infra/src/main/resources/scenario/cities_1010.json`이다. 이 파일을 복제하지 않고
+  `content/v2/cities_1010.json`의 7필드 **메타데이터 참조**만으로 가리킨다. 고정 SHA-256은
+  `6759a68255cae1a6b9c05cbbaf5736ed8fc9fcb50c6623be44d7e3dfe0b4d393`, 총 도시는 94,
+  `nation_id != 0`인 시나리오 소유 도시는 24다. 같은 입력을 두 번 typed snapshot으로 적재한
+  in-memory diff는 0이어야 한다. 이 승인으로 구 OP43의 G0 통과·counter 1,180·gameplay
+  `CountyParticipationFixture` 선행은 **정식으로 supersede**한다. 단 V2-G0 자체와 1,180
+  콘텐츠/fixture는 폐기하지 않고 v2 오픈 후 작업으로 보존한다.
+- Context: 이전 backlog micro의 V2-0B header와 0B-g가 G0·1,180을 OP43 acceptance로
+  기록해, 승인된 runtime-contract plan의 실제 입력·94/24·repeat-diff 계약과 충돌했다.
+  `content/v2/cities_1010.json`은 도시 행 사본이 아니라 source path/hash/count를 담는
+  메타데이터이며, source payload는 계속 `scenario/cities_1010.json`이다.
+- Alternatives: G0/counter 1,180을 OP43 선행으로 유지(기각 — 승인된 빠른 v2 오픈 경로와
+  충돌), 도시 행을 `content/v2`에 재복사(기각 — 입력 이중 진실·drift 위험), G0를 삭제
+  처리(기각 — 오픈 후 역사 지리·CountyParticipationFixture 목표를 소실시킴).
+- Consequences: 0B-a는 새 v1 완료 주장을 복사하지 않고 canonical v1 completion ledger를
+  참조한다. 0B-g는 metadata → 기존 tracked source → typed snapshot 검증까지만 맡는다.
+  0B-j는 실제 world/profile/catalog/wire/Flyway read·write seam을 inventory로 남기되
+  persistence를 완료로 주장하지 않는다. OPENSAM-44/150의 실제 v2 schema·leaf, OPENSAM-104/105
+  RTK builder, G0, production deploy/cutover는 이 승인 범위가 아니다.
+- Approved by: 사용자 (2026-08-09, OPENSAM-43 V2-0B runtime contract `"승인."`)
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 

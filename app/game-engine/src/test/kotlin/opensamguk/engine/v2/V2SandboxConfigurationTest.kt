@@ -2,10 +2,17 @@ package opensamguk.engine.v2
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import opensamguk.common.world.WorldId
+import opensamguk.engine.config.EngineProcessWorld
+import opensamguk.engine.config.WorldIdConfig
+import opensamguk.infra.v2.V2CityCatalogAdapter
+import opensamguk.infra.v2.V2ContentCatalog
 import opensamguk.infra.v2.V2SandboxGate
 import opensamguk.infra.v2.V2SandboxMarker
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.core.env.SystemEnvironmentPropertySource
+import org.springframework.context.ApplicationContext
 
 /**
  * OPENSAM-35 0A-b — executable coverage of the four gate combinations.
@@ -14,8 +21,8 @@ import org.springframework.core.env.SystemEnvironmentPropertySource
  * zero v2 beans in a full Testcontainers v1-process context, so that work is not duplicated here.
  */
 class V2SandboxConfigurationTest {
-    private val runner = ApplicationContextRunner()
-        .withUserConfiguration(V2SandboxConfiguration::class.java)
+    private fun runner() = ApplicationContextRunner()
+        .withUserConfiguration(WorldIdConfig::class.java, V2SandboxConfiguration::class.java)
 
     private fun ApplicationContextRunner.withProfile() =
         withPropertyValues("spring.profiles.active=${V2SandboxGate.PROFILE}")
@@ -23,33 +30,46 @@ class V2SandboxConfigurationTest {
     private fun ApplicationContextRunner.withEnabled(value: String) =
         withPropertyValues("${V2SandboxGate.PROPERTY}=$value")
 
+    private fun ApplicationContextRunner.withWorldId(value: Int) =
+        withPropertyValues("OPENSAMGUK_WORLD_ID=$value")
+
     @Test
     fun `neither condition - no v2 bean`() {
-        runner.run { context -> assertEquals(0, context.getBeansOfType(V2SandboxMarker::class.java).size) }
+        runner().withWorldId(1).run { context -> context.assertNoEngineRuntimeV2Beans() }
     }
 
     @Test
     fun `property only - no v2 bean`() {
-        runner.withEnabled("true")
-            .run { context -> assertEquals(0, context.getBeansOfType(V2SandboxMarker::class.java).size) }
+        runner().withWorldId(1).withEnabled("true")
+            .run { context -> context.assertNoEngineRuntimeV2Beans() }
     }
 
     @Test
     fun `profile only - no v2 bean`() {
-        runner.withProfile()
-            .run { context -> assertEquals(0, context.getBeansOfType(V2SandboxMarker::class.java).size) }
+        runner().withWorldId(1).withProfile()
+            .run { context -> context.assertNoEngineRuntimeV2Beans() }
     }
 
     @Test
-    fun `both conditions - v2 bean registered`() {
-        runner.withProfile().withEnabled("true")
-            .run { context -> assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size) }
+    fun `both conditions register the existing sandbox process world and exact engine v2 beans`() {
+        runner().withWorldId(9001).withProfile().withEnabled("true")
+            .run { context ->
+                assertTrue(V2SandboxGate.PROFILE in context.environment.activeProfiles)
+
+                val processWorlds = context.getBeansOfType(EngineProcessWorld::class.java)
+                assertEquals(1, processWorlds.size, "EngineProcessWorld beans")
+                assertEquals(WorldId(9001), processWorlds.values.single().worldId)
+
+                assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size)
+                assertEquals(1, context.getBeansOfType(V2ContentCatalog::class.java).size)
+                assertEquals(1, context.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+            }
     }
 
     @Test
     fun `property set to false with profile active - no v2 bean`() {
-        runner.withProfile().withEnabled("false")
-            .run { context -> assertEquals(0, context.getBeansOfType(V2SandboxMarker::class.java).size) }
+        runner().withWorldId(1).withProfile().withEnabled("false")
+            .run { context -> context.assertNoEngineRuntimeV2Beans() }
     }
 
     /**
@@ -60,7 +80,7 @@ class V2SandboxConfigurationTest {
     @Test
     fun `property value is matched case-insensitively`() {
         for (value in listOf("TRUE", "True", "tRuE")) {
-            runner.withProfile().withEnabled(value)
+            runner().withWorldId(1).withProfile().withEnabled(value)
                 .run { context ->
                     assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size, "v2.enabled=$value")
                 }
@@ -74,12 +94,18 @@ class V2SandboxConfigurationTest {
      */
     @Test
     fun `V2_ENABLED env var maps onto the gate property`() {
-        runner.withProfile()
+        runner().withWorldId(1).withProfile()
             .withInitializer { context ->
                 context.environment.propertySources.addFirst(
                     SystemEnvironmentPropertySource("test-systemEnvironment", mapOf("V2_ENABLED" to "true")),
                 )
             }
             .run { context -> assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size) }
+    }
+
+    private fun ApplicationContext.assertNoEngineRuntimeV2Beans() {
+        assertEquals(0, getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
+        assertEquals(0, getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
+        assertEquals(0, getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
     }
 }

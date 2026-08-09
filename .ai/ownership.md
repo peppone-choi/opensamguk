@@ -7,6 +7,17 @@
 표에 없는 공유 파일(특히 compose/nginx, 공용 catalog/runtime schema, `.ai/*`)은 사전 조정 후
 foundation owner 한 명을 정하기 전까지 read-only다. 행 번호가 아니라 이 heading을 참조한다.
 
+## OPENSAM-43 V2-0B runtime contract lane — 2026-08-09 (active)
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `codex-op43-root` | OP43 contract, fan-in, external tracking, review/PR | `codex/op-43-v2-0b-runtime` (`/private/tmp/opensam43-v2-0b-runtime`) | `.ai/{task,current-state,ownership,handoff}.md`; OP43 plan/backlog/review/evidence docs; Jira OPENSAM-43; GitHub #185 | active — source/docs fan-in, dirty-tree re-review `cleared`, final OS verifier 4,911/0/0 and strict findings 0; immutable commit/PR gates pending | 2026-08-09 |
+| `op43-catalog` | 0B-f/g ACTIVE catalog + pinned 94-city adapter | same worktree, disjoint lane | `infra/src/main/kotlin/opensamguk/infra/v2/V2ContentCatalog.kt`; new infra v2 catalog/adapter types; `infra/src/main/resources/content/v2/**`; matching infra tests/resources | completed/released — initial pre-review 13/0/0/0 was superseded; exact-key remediation catalog XML 9/0/0/0 | 2026-08-09 |
+| `op43-wire` | 0B-h/i v2-only payload version contracts | same worktree, disjoint lane | new `common/src/main/kotlin/opensamguk/common/wire/v2/**`; matching common tests | completed/released — initial pre-review 5/0/0/0 was superseded; required-version remediation XML 7/0/0/0 | 2026-08-09 |
+| `op43-runtime` | 0B-b~e/k runtime identity, Flyway test probe, v1 no-apply fan-in | same worktree, sequential consumer | both app v2 configurations/tests; engine runtime/Flyway IT; `infra/src/main/resources/db/migration_v2/README.md`; test-only migration resources | completed/released — intended adapter RED; focused runtime/Flyway GREEN; no production SQL | 2026-08-09 |
+| `op43-docs-ledgers` | approved decision, 0B-a v1 reference ledger, 0B-j impact inventory | same worktree, disjoint docs lane | `.ai/decisions.md`; backbone micro backlog; OP43 loop ledgers; `docs/superpowers/SESSION_HANDOFF.md` | completed/released — ADR-LITE-030, canonical v1 pointer, impact inventory, fences/diff green | 2026-08-09 |
+| `op43-review-remediation` | independent-review exact metadata/wire/Flyway proof fixes | same worktree, three disjoint remediation lanes | catalog exact-key guard; wire required-version decode; engine Spring Flyway/runtime convention proof | completed/released — intended REDs observed; common 7, infra 9, engine v2 21 all green | 2026-08-09 |
+
 ## OPENSAM-35 V2-0A 격리 게이트 lane — 2026-08-08 (활성)
 
 [`Shared-file ownership fence`](#shared-file-ownership-fence)에 따라 foundation owner 1명을

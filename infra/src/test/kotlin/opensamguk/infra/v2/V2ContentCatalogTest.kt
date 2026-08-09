@@ -3,69 +3,70 @@ package opensamguk.infra.v2
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.CommandLineRunner
 
-/**
- * OPENSAM-35 0A-d — [V2ContentCatalog] scope and empty-catalog behavior, plus executable proof of no scan or seed.
- *
- * Fixtures live under `infra/src/test/resources/v2-catalog-fixture/content/`:
- * `content/v2/alpha.json` and `beta.json` must be found; `content/v2/nested/deep.json` must not recurse;
- * `content/v2/ignored.txt` is non-JSON; and `content/v2-decoy/decoy.json` is a sibling directory.
- */
 class V2ContentCatalogTest {
 
-    private val fixture = V2ContentCatalog("v2-catalog-fixture/content/v2")
+    private val fixture = V2ContentCatalog(FIXTURE_LOCATION)
 
     @Test
-    fun `empty catalog returns an empty list instead of throwing`() {
-        // The production default location contains no v2 content files yet (only a README), so empty is correct.
-        assertEquals(emptyList(), V2ContentCatalog().names())
+    fun `loads active metadata as the typed v2 catalog contract`() {
+        val metadata = fixture.load("active")
+
+        assertEquals(1, metadata.schemaVersion)
+        assertEquals("active", metadata.id)
+        assertEquals(V2ContentStatus.ACTIVE, metadata.status)
+        assertEquals("v2-catalog-fixture/scenario/cities.json", metadata.source)
+        assertEquals("2dc5ec3c107b828044d331acaa3a294a4de3e53915474000566143f1b959c9ee", metadata.sha256)
+        assertEquals(2, metadata.cityCount)
+        assertEquals(1, metadata.scenarioOwnedCityCount)
     }
 
     @Test
-    fun `lists only the direct json entries of its own location`() {
-        assertEquals(listOf("alpha.json", "beta.json"), fixture.names())
+    fun `rejects candidate metadata instead of loading it`() {
+        assertFailsWith<IllegalArgumentException> { fixture.load("candidate") }
     }
 
     @Test
-    fun `does not recurse into subdirectories`() {
-        assertTrue("deep.json" !in fixture.names())
-        assertNull(fixture.read("deep.json"))
+    fun `rejects excluded metadata instead of loading it`() {
+        assertFailsWith<IllegalArgumentException> { fixture.load("excluded") }
     }
 
     @Test
-    fun `does not read a sibling directory outside its scope`() {
-        assertTrue("decoy.json" !in fixture.names())
-        assertNull(fixture.read("decoy.json"))
+    fun `rejects budget-only metadata instead of loading it`() {
+        assertFailsWith<IllegalArgumentException> { fixture.load("budget-only") }
     }
 
     @Test
-    fun `reads the content of a listed entry and nothing else`() {
-        assertEquals("""{ "fixture": "alpha" }""", fixture.read("alpha.json")?.trim())
-        assertNull(fixture.read("ignored.txt"))
+    fun `fails closed for missing required fields and unknown statuses`() {
+        assertFailsWith<IllegalArgumentException> { fixture.load("malformed") }
+        assertFailsWith<IllegalArgumentException> { fixture.load("unknown-status") }
+    }
+
+    @Test
+    fun `rejects metadata with an extra copied cities payload`() {
+        assertFailsWith<IllegalArgumentException> { fixture.load("cities-payload") }
+    }
+
+    @Test
+    fun `catalog entry lookups reject traversal and preserve direct-entry scope`() {
+        assertFailsWith<IllegalArgumentException> { fixture.load("../candidate") }
         assertNull(fixture.read("../v2-decoy/decoy.json"))
+        assertTrue("deep.json" !in fixture.names())
+        assertTrue("decoy.json" !in fixture.names())
     }
 
-    /**
-     * First executable proof of no startup seed: this type does not implement Spring's two boot-invoked callback
-     * interfaces. Implementing either would execute it immediately when a gated context starts.
-     */
     @Test
     fun `is not a startup runner`() {
         assertTrue(!ApplicationRunner::class.java.isAssignableFrom(V2ContentCatalog::class.java))
         assertTrue(!CommandLineRunner::class.java.isAssignableFrom(V2ContentCatalog::class.java))
     }
 
-    /**
-     * Executable proof of no database write: the same class-file constant-pool scan used by
-     * `DaemonNoEntityManagerTest`. Referenced types leave slash-form internal names in the constant pool, so this
-     * judges compiled output rather than a declaration, comment, or contract. Adding `JdbcTemplate` to this loader
-     * would break this test.
-     */
     @Test
     fun `references no persistence write type and no startup runner type`() {
         val forbidden = listOf(
@@ -89,8 +90,11 @@ class V2ContentCatalogTest {
         for (needle in forbidden) {
             assertTrue(needle !in text, "${classFile.path} constant pool references forbidden type $needle")
         }
-        // Non-vacuity: prove the scan actually examines this class's contents.
         assertTrue("org/springframework/core/io/support/PathMatchingResourcePatternResolver" in text)
         assertTrue("content/v2" in text)
+    }
+
+    private companion object {
+        const val FIXTURE_LOCATION = "v2-catalog-fixture/content/v2"
     }
 }
