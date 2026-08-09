@@ -5,14 +5,51 @@ Scope: `.ai/`, `app/`, `common/`, `infra/`, and `docs/` — initial immutable re
 - Independent reviewer: `/root/op43_independent_review` (`fable-deep-reasoner`)
 - Historical reviewed-tree fingerprint: `3e05d2cfef9a808efb696db93f4f81f0afc53d39dbadd903798f80c922779cbb`
 - Historical terminal reviewed-tree fingerprint: `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`
-- Historical cleared review base HEAD: `ac1d199644f61685ca3fee25f19c36e07782f960` (CI all green)
+- Historical cleared review base HEAD: `ac1d199644f61685ca3fee25f19c36e07782f960`
 - Historical cleared dirty-tree diff SHA-256: `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`
-- Current reviewed HEAD: `8abb47a1` (CI all green)
-- Current structural dirty-tree combined fingerprint: `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`
-- Tracked fingerprint: `023225…06f4`; untracked fixture fingerprint: `898063…dd0`
+- Historical `8abb47a1` CI: all green
+- Historical `8abb47a1` structural dirty-tree combined fingerprint: `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`
+- Historical tracked fingerprint: `023225…06f4`; untracked fixture fingerprint: `898063…dd0`
+- Committed PR head: `5363abe9be95c304b30288df493c5b1f006ab8bb`; its exact-SHA remote CI, including CodeRabbit, completed SUCCESS.
+- CodeRabbit review on committed `5363abe9`: its 4 findings are remediated in the current uncommitted dirty tree; reviews `0/3`.
+- Prior/pre-infra-sync terminal code-remediation review fingerprint: `84dc8a5ee43586b00f36101b7a840f9eba3241fdb7c705460242790d2263b1ca`; no findings; focused exact-source `app:game-engine` mutation `4` / V2Both2 green. It is not a current exact-tree fingerprint.
+- Current exact dirty-tree full verifier is `infra-blocked`: after `2h 16m 30s`, only `app:game-api` `V2BothConditionsBeanGateIT` `initializationError` hit a Testcontainers PostgreSQL readiness timeout before assertions (log SHA-256 `8d6ff449e7fa672249768d486416f8d2ad17101d4e0ff59421b4ed13f76cec94`).
+- Authorized final isolated rerun was not started because Docker preflight produced no usable version/status; Docker health is `UNKNOWN/not confirmed healthy`. Strict/diff are green. The resulting exact-SHA remote CI after commit/push is the required deciding gate; reviews `0/3` remain pending. This is not a local-full-green or merge-ready claim.
 Verdict: cleared
 
-## Current `8abb47a1` structural dirty-tree re-review state
+## Committed `5363abe9` evidence, prior code-remediation clearance, and current infra-blocked gate
+
+The committed `5363abe9` local verifier and independent-review record are
+supplemented by exact-SHA remote CI: all jobs, including CodeRabbit, completed
+SUCCESS. The current uncommitted dirty remediation resolved CodeRabbit's four
+findings. The prior/pre-infra-sync terminal independent code-remediation review
+fingerprint `84dc8a5ee43586b00f36101b7a840f9eba3241fdb7c705460242790d2263b1ca` had no
+findings; it is not a current exact-tree fingerprint. Focused exact-source
+`app:game-engine` mutation 4 / V2Both2 are green. That clearance is
+prior/pre-infra-sync code-content evidence, not a current exact-tree clearance.
+The current exact dirty-tree full verifier ran for `2h 16m 30s` and failed solely
+when `app:game-api` `V2BothConditionsBeanGateIT` `initializationError` encountered a Testcontainers PostgreSQL
+readiness timeout before assertions (log SHA-256
+`8d6ff449e7fa672249768d486416f8d2ad17101d4e0ff59421b4ed13f76cec94`). The
+local full verifier is therefore `infra-blocked`, not green. The authorized
+isolated rerun was not started because Docker preflight returned no usable
+version/status and Docker health was `UNKNOWN/not confirmed healthy`. Focused exact-source
+`app:game-engine` mutation 4 / V2Both2, strict, and diff are green. After commit/push, new
+exact-SHA remote CI is the required deciding gate; reviews 0/3 remain pending.
+This code-content clearance does not claim merge readiness.
+
+The authorized healthy-Docker isolated local full-verifier rerun passed: exit 0,
+`BUILD SUCCESSFUL in 23m 46s` / 29 tasks; common 232 + logic 3,173 + infra 236 +
+game-api 468 + game-engine 822 = 4,931 tests / failures 0 / errors 0 / engine
+skipped 1; strict 46 changed / Errors 0 / Warnings 0 / findings 0; log
+`/tmp/op43-catalog-diff-final-os-verify-rerun.log` SHA-256
+`a95386e902908c199f12d86cb776e06d97ead25eef71e9dc3647b0e3e671e31e`.
+The preceding first run is historical infrastructure-only: a transient Docker
+HTTP 500 before game-api app assertions; its log
+`/tmp/op43-catalog-diff-final-os-verify.log` SHA-256 is
+`706131db0b7c24a2e57d4c7875031b195240b2e565ca2b798f54098bada6aadc`.
+
+### Historical `8abb47a1` structural dirty-tree re-review state
 
 The first submitted `@codex` review of exact SHA `8abb47a1` historically found
 three P2 findings:
@@ -21,23 +58,13 @@ three P2 findings:
 2. An FK same-name identity check can produce a false positive.
 3. `SELECT INTO` can bypass the table-creation guard.
 
-The reviewed structural dirty tree remediates the duplicate-key and FK identity
-findings and replaces source-parser-only discovery with a PostgreSQL `pg_class`
-OID baseline/post-v2 catalog-diff. The terminal independent re-review found no
-findings. Focused convention 17, mutation 4, V2Both 2, and infra catalog 11 are
-all green. The authorized healthy-Docker isolated full-verifier rerun passed:
-exit 0, `BUILD SUCCESSFUL in 23m 46s` / 29 tasks; common 232 + logic 3,173 +
-infra 236 + game-api 468 + game-engine 822 = 4,931 tests / failures 0 / errors
-0 / engine skipped 1; strict 46 changed / Errors 0 / Warnings 0 / findings 0;
-log `/tmp/op43-catalog-diff-final-os-verify-rerun.log` SHA-256
-`a95386e902908c199f12d86cb776e06d97ead25eef71e9dc3647b0e3e671e31e`.
-The preceding first run is historical infrastructure-only: a transient Docker
-HTTP 500 before game-api app assertions; its log
-`/tmp/op43-catalog-diff-final-os-verify.log` SHA-256 is
-`706131db0b7c24a2e57d4c7875031b195240b2e565ca2b798f54098bada6aadc`.
-Commit/push, remote CI for the resulting exact SHA, and the PR-conversation
-review counter (0/3) remain pending. This clearance does not claim merge or
-deployment.
+The historical reviewed structural tree remediates the duplicate-key and FK
+identity findings and replaces source-parser-only discovery with a PostgreSQL
+`pg_class` OID baseline/post-v2 catalog-diff. Its terminal independent re-review
+found no findings. Focused convention 17, `app:game-engine` mutation 4 / V2Both2, and infra
+catalog 11 were all green. This historical clearance and its all-green CI do not
+replace the prior/pre-infra-sync code-remediation clearance or current exact-tree
+infra-blocked full-verifier gate.
 
 ### Structural-remediation closure
 
@@ -54,7 +81,8 @@ game-api 468 + game-engine 808; failures/errors 0; game-engine skipped 1;
 strict 45 changed / Errors 0 / Warnings 0 / findings 0; log SHA-256
 `dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`) is
 pre-current-structural-tree historical evidence only and does not substitute for
-the current exact clearance or 4,931 full verifier.
+the prior/pre-infra-sync code-remediation clearance or current exact-tree
+infra-blocked full-verifier gate.
 
 ## Historical PR #371 Round 1 state
 
@@ -75,7 +103,7 @@ Round 1 contains six CodeRabbit threads and one Codex P2:
 | CodeRabbit: duplicate classpath | Implemented fail-closed duplicate-resource handling. |
 | CodeRabbit: duplicate city ID | Implemented duplicate-ID fixture and adapter rejection. |
 | CodeRabbit: exact diagnostics and deep/decoy scope | Implemented exact rejection-detail assertions and positive deep/decoy fixture-existence assertions. Focused infra rerun: `BUILD SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0 and adapter 6/0/0/0. |
-| Codex P2: world-owned key guard | Every v2-created table PK/UNIQUE must include `world_id`; scoped-key-plus-unscoped-UNIQUE mutation produced intended RED. Combined focused engine current-input fan-in passed: `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 and `V2BothConditionsBeanGateIT` 2/0/0/0; engine log SHA-256 `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`, diff-check green. |
+| Codex P2: world-owned key guard | Every v2-created table PK/UNIQUE must include `world_id`; scoped-key-plus-unscoped-UNIQUE mutation produced intended RED. Combined focused `app:game-engine` current-input fan-in passed: `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 and V2Both2 (`V2BothConditionsBeanGateIT`) 2/0/0/0; engine log SHA-256 `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`, diff-check green. |
 
 The terminal independent re-review at the historical fingerprint above found no
 BLOCKER/MAJOR/MINOR/QUESTION/NIT and cleared the then-current dirty remediation.
@@ -86,7 +114,8 @@ failures 0 / errors 0 / game-engine skipped 1. Strict reported 44 changed /
 Errors 0 / Warnings 0 / findings 0; log SHA-256:
 `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`.
 Compose, smoke, and deploy were not run. This historical evidence does not
-replace the current exact clearance or 4,931 full verifier.
+replace the prior/pre-infra-sync code-remediation clearance or current exact-tree
+infra-blocked full-verifier gate.
 
 ## Historical initial critique
 

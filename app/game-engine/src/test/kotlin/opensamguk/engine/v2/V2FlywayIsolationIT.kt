@@ -96,6 +96,7 @@ class V2FlywayIsolationConstraintMutationIT {
             jdbc.execute("ALTER TABLE nation DROP CONSTRAINT IF EXISTS v2_sandbox_probe_world_id_fkey")
             jdbc.execute("ALTER TABLE nation DROP CONSTRAINT IF EXISTS v2_foreign_key_wrong_target_id_key")
         }
+        sandbox.assertions().assertV2SandboxRuntime()
     }
 
     @Test

@@ -2,14 +2,18 @@
 
 ## 2026-08-09 — OPENSAM-43 V2-0B 런타임 계약·격리 가드 (활성 계약)
 
-- Status: 사용자 승인 완료(`"승인."`, 2026-08-09), HEAD `8abb47a1`의 terminal independent structural
-  dirty-tree review는 combined fingerprint
-  `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`에서 findings 없이 `cleared`다
-  (tracked `023225…06f4`; untracked fixture `898063…dd0`). runtime은 PostgreSQL `pg_class` OID baseline과
-  post-v2 catalog-diff를 비교하고 duplicate-key/FK fixes를 포함한다. Current focused convention 17,
-  mutation 4, V2Both 2, infra catalog 11은 all green이다. authorized healthy-Docker isolated full verifier
-  rerun은 4,931/0/0/skip1로 green이며, commit/push, exact-SHA remote CI, PR-conversation reviews 0/3은
-  pending이다. 계획 정본:
+- Status: 사용자 승인 완료(`"승인."`, 2026-08-09), committed PR head
+  `5363abe9be95c304b30288df493c5b1f006ab8bb`의 exact-SHA remote CI는 CodeRabbit을 포함한 모든 job이
+  SUCCESS로 완료됐다. prior/pre-infra-sync terminal independent code-remediation review fingerprint
+  `84dc8a5ee43586b00f36101b7a840f9eba3241fdb7c705460242790d2263b1ca`는 no findings로 `cleared`였으며 current exact-tree
+  fingerprint가 아니다. focused
+  focused exact-source `app:game-engine` mutation 4 / V2Both2는 green이다. exact dirty-tree full verifier는 `2h 16m 30s` 뒤
+  `app:game-api` `V2BothConditionsBeanGateIT` `initializationError`의 Testcontainers PostgreSQL readiness timeout(assertion 전)만으로 실패했다
+  (log SHA-256 `8d6ff449e7fa672249768d486416f8d2ad17101d4e0ff59421b4ed13f76cec94`). 따라서 local full verifier는
+  green이 아닌 `infra-blocked`다. authorized final isolated rerun은 Docker preflight가 usable version/status를
+  반환하지 않고 health가 `UNKNOWN/not confirmed healthy`여서 시작하지 않았다. strict/diff는 green이고 independent code-content
+  review는 `cleared`다. commit/push 뒤 resulting exact-SHA remote CI가 required deciding gate이며 reviews 0/3은
+  pending이다; merge-ready를 주장하지 않는다. `8abb47a1` CI도 historical green evidence다. 계획 정본:
   `docs/superpowers/plans/2026-08-09-opensam-43-v2-0b-runtime-contract-plan.md`.
 - Goal: OPENSAM-35의 isolation-only foundation 위에서 0B-a~k를 실제 런타임·wire·Flyway·catalog
   계약으로 닫고, v1 production에는 v2 bean/table/content가 0건임을 유지한다.
@@ -32,15 +36,22 @@
 - Acceptance evidence: 계획서의 lane별 RED→GREEN 명령, JDK 21 focused XML,
   `tools/parity/gate.sh backend`, `tools/agent-system/check.py --strict --base origin/main --format json`,
   `scripts/agent/verify-changes.sh --run`, 독립 review artifact와 PR review disposition.
-- External tracking: Jira OPENSAM-43과 GitHub #185는 승인 계약으로 갱신됐고 Jira는 `진행 중`이다.
+- External tracking: Jira OPENSAM-43과 GitHub issue #185는 승인 계약으로 갱신됐고 Jira는 `진행 중`이다.
+  PR #371은 별도의 pull-request record다.
 - Human approval: 이 계약과 v2 완성 목표는 구현·PR·머지를 승인한다. deploy/cutover, secret 접근,
   데이터 삭제, legacy/golden 쓰기, 테스트 약화는 승인되지 않았다.
-- Current review/evidence: PR head `8abb47a1`의 CI는 all green이다. terminal independent structural
-  dirty-tree review는 combined fingerprint
-  `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3` (tracked `023225…06f4`; untracked
-  fixture `898063…dd0`)에서 findings 없이 `cleared`다. runtime은 PostgreSQL `pg_class` OID baseline과
-  post-v2 catalog-diff를 비교하며 duplicate-key/FK fixes를 포함한다. focused convention 17, mutation 4,
-  V2Both 2, infra catalog 11은 all green이다. authorized healthy-Docker isolated
+- Current review/evidence: committed PR head `5363abe9be95c304b30288df493c5b1f006ab8bb`의 exact-SHA remote
+  CI는 CodeRabbit을 포함한 모든 job이 SUCCESS로 완료됐다. prior/pre-infra-sync terminal independent code-remediation
+  review fingerprint `84dc8a5ee43586b00f36101b7a840f9eba3241fdb7c705460242790d2263b1ca`는 no findings로 `cleared`였으며
+  current exact-tree fingerprint가 아니다. focused
+  focused exact-source `app:game-engine` mutation 4 / V2Both2는 green이고 sole code-content verdict는 `cleared`다. exact dirty-tree full
+  verifier는 `2h 16m 30s` 후 `app:game-api` `V2BothConditionsBeanGateIT` `initializationError`의 Testcontainers PostgreSQL readiness timeout이 assertion
+  전에 발생해 유일하게 실패했다 (log SHA-256
+  `8d6ff449e7fa672249768d486416f8d2ad17101d4e0ff59421b4ed13f76cec94`). local full verifier는 `infra-blocked`이며
+  green/merge-ready가 아니다. authorized final isolated rerun은 Docker preflight가 usable version/status를 주지 않고
+  health가 `UNKNOWN/not confirmed healthy`여서 시작하지 않았다. strict/diff는 green이다. commit/push 뒤 resulting exact-SHA
+  remote CI가 required deciding gate이고 PR-conversation reviews 0/3은 pending이다. historical PR head `8abb47a1`의
+  CI도 green evidence다. 아래 authorized healthy-Docker isolated verifier는 committed-head historical evidence다:
   `scripts/agent/verify-changes.sh --run` rerun은 exit 0, `BUILD SUCCESSFUL in 23m 46s` / 29 tasks,
   common 232 + logic 3,173 + infra 236 + game-api 468 + game-engine 822 = 4,931 tests / failures 0 /
   errors 0 / game-engine skipped 1을 기록했다. verifier strict는 46 changed / Errors 0 / Warnings 0 /
@@ -48,22 +59,24 @@
   `a95386e902908c199f12d86cb776e06d97ead25eef71e9dc3647b0e3e671e31e`다. 직전 첫 run은 game-api app
   assertion 전 transient Docker HTTP 500으로 실패한 historical infrastructure-only attempt이며 로그
   `/tmp/op43-catalog-diff-final-os-verify.log` SHA-256은
-  `706131db0b7c24a2e57d4c7875031b195240b2e565ca2b798f54098bada6aadc`다. commit/push, exact-SHA remote
-  CI, PR-conversation review counter 0/3은 pending이다. Historical only: the first submitted `@codex` review's
+  `706131db0b7c24a2e57d4c7875031b195240b2e565ca2b798f54098bada6aadc`다. Historical only: the first submitted `@codex` review's
   duplicate metadata-key, FK same-name identity, and `SELECT INTO` P2 findings, the prior immutable
   clearance at base HEAD `ac1d199644f61685ca3fee25f19c36e07782f960` / dirty diff
   `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`, focused 6 + 1/16 + 2, and fresh
   `scripts/agent/verify-changes.sh --run` 4,916/0/0/skip1 evidence are pre-current-structural-tree
-  history only; they do not substitute for the current exact clearance or current 4,931 full verifier. 그 전의 PR #371 initial SHA
+  history only; they do not substitute for the prior/pre-infra-sync code-remediation clearance or current exact-tree
+  infra-blocked full-verifier gate. 그 전의 PR #371 initial SHA
   `983598928f4375b902d1e49c72551056ce5c9a1f`에는
   `agent-system`, `jvm`, `web (gateway)`, `web (game)` 네 job이 green이지만 Round 1 전의
   historical CI다. Round 1의 CodeRabbit 6 threads와 Codex P2 1건은 구현됐고, focused infra rerun은
   `BUILD SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0, adapter 6/0/0/0이다. Engine evidence log
   SHA-256 `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`는
-  `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 및 `V2BothConditionsBeanGateIT` 2/0/0/0을 기록한다.
+  `app:game-engine` `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 및 `app:game-engine` V2Both2
+  (`V2BothConditionsBeanGateIT`) 2/0/0/0을 기록한다.
   Historical terminal independent re-review fingerprint
   `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`는 BLOCKER/MAJOR/MINOR/QUESTION/NIT
-  없이 `cleared`였으나 current exact structural-tree clearance를 대체하지 않는다. pre-final-SHA Round 1
+  없이 `cleared`였으나 prior/pre-infra-sync code-remediation clearance 또는 current exact-tree infra-blocked
+  full-verifier gate를 대체하지 않는다. pre-final-SHA Round 1
   dirty-tree `scripts/agent/verify-changes.sh --run`은 정확히 한 번
   exit 0으로 실행되어 `BUILD SUCCESSFUL in 12m 54s` / 29 executed, common 232 + logic 3,173 + infra 235 +
   game-api 468 + game-engine 806 = 4,914 tests / failures 0 / errors 0 / game-engine skipped 1을 기록했다.

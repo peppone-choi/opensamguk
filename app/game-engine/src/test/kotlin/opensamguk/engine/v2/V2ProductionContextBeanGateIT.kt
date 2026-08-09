@@ -211,7 +211,8 @@ class V2BothConditionsBeanGateIT {
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {
-            v1CatalogBaseline
+            // Materialize the v1-only catalog snapshot before Spring Boot resolves the v2 Flyway locations.
+            val v1CatalogBaselineBeforeContext = v1CatalogBaseline
             postgresProps(registry, postgres, worldId = 9001)
         }
     }
