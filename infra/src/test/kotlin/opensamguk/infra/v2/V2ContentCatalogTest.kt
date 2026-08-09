@@ -1,6 +1,7 @@
 package opensamguk.infra.v2
 
 import java.io.File
+import java.net.URLClassLoader
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -29,34 +30,78 @@ class V2ContentCatalogTest {
 
     @Test
     fun `rejects candidate metadata instead of loading it`() {
-        assertFailsWith<IllegalArgumentException> { fixture.load("candidate") }
+        val error = assertFailsWith<IllegalArgumentException> { fixture.load("candidate") }
+
+        assertEquals("v2 content 'candidate' is CANDIDATE and cannot be loaded", error.message)
     }
 
     @Test
     fun `rejects excluded metadata instead of loading it`() {
-        assertFailsWith<IllegalArgumentException> { fixture.load("excluded") }
+        val error = assertFailsWith<IllegalArgumentException> { fixture.load("excluded") }
+
+        assertEquals("v2 content 'excluded' is EXCLUDED and cannot be loaded", error.message)
     }
 
     @Test
     fun `rejects budget-only metadata instead of loading it`() {
-        assertFailsWith<IllegalArgumentException> { fixture.load("budget-only") }
+        val error = assertFailsWith<IllegalArgumentException> { fixture.load("budget-only") }
+
+        assertEquals("v2 content 'budget-only' is BUDGET_ONLY and cannot be loaded", error.message)
     }
 
     @Test
     fun `fails closed for missing required fields and unknown statuses`() {
-        assertFailsWith<IllegalArgumentException> { fixture.load("malformed") }
-        assertFailsWith<IllegalArgumentException> { fixture.load("unknown-status") }
+        val missingField = assertFailsWith<IllegalArgumentException> { fixture.load("malformed") }
+        val unknownStatus = assertFailsWith<IllegalArgumentException> { fixture.load("unknown-status") }
+
+        assertEquals("v2 content metadata must contain exactly the approved root keys", missingField.message)
+        assertEquals("unknown v2 content status: DRAFT", unknownStatus.message)
     }
 
     @Test
     fun `rejects metadata with an extra copied cities payload`() {
-        assertFailsWith<IllegalArgumentException> { fixture.load("cities-payload") }
+        val error = assertFailsWith<IllegalArgumentException> { fixture.load("cities-payload") }
+
+        assertEquals("v2 content metadata must contain exactly the approved root keys", error.message)
+    }
+
+    @Test
+    fun `rejects duplicate classpath metadata instead of selecting one arbitrarily`() {
+        val originalClassLoader = Thread.currentThread().contextClassLoader
+        val duplicateRoot = V2ContentCatalogTest::class.java.classLoader
+            .getResource(DUPLICATE_CLASSPATH_ROOT)
+            ?: fail("duplicate classpath fixture root not found")
+
+        URLClassLoader(arrayOf(duplicateRoot), originalClassLoader).use { duplicateClassLoader ->
+            Thread.currentThread().contextClassLoader = duplicateClassLoader
+            try {
+                val error = assertFailsWith<IllegalArgumentException> {
+                    V2ContentCatalog(FIXTURE_LOCATION).load("active")
+                }
+
+                assertEquals("v2 content metadata is ambiguous: active", error.message)
+            } finally {
+                Thread.currentThread().contextClassLoader = originalClassLoader
+            }
+        }
     }
 
     @Test
     fun `catalog entry lookups reject traversal and preserve direct-entry scope`() {
-        assertFailsWith<IllegalArgumentException> { fixture.load("../candidate") }
+        assertTrue(
+            V2ContentCatalogTest::class.java.classLoader.getResource("$FIXTURE_LOCATION/nested/deep.json") != null,
+        )
+        assertTrue(
+            V2ContentCatalogTest::class.java.classLoader
+                .getResource("v2-catalog-fixture/content/v2-decoy/decoy.json") != null,
+        )
+
+        val traversal = assertFailsWith<IllegalArgumentException> { fixture.load("../candidate") }
+
+        assertEquals("v2 content id is invalid: ../candidate", traversal.message)
         assertNull(fixture.read("../v2-decoy/decoy.json"))
+        assertNull(fixture.read("deep.json"))
+        assertNull(fixture.read("decoy.json"))
         assertTrue("deep.json" !in fixture.names())
         assertTrue("decoy.json" !in fixture.names())
     }
@@ -96,5 +141,6 @@ class V2ContentCatalogTest {
 
     private companion object {
         const val FIXTURE_LOCATION = "v2-catalog-fixture/content/v2"
+        const val DUPLICATE_CLASSPATH_ROOT = "v2-catalog-duplicate-classpath/"
     }
 }

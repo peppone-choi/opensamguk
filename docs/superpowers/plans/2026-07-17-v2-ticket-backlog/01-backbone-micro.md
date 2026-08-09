@@ -72,6 +72,7 @@
 ## 문서 2: execution-plan — 최소 티켓
 
 ### Phase V2-0A (선행: G0보다 먼저 / 공유 Exit: production v2 0개·404·diff 0·gate 녹색·review cleared)
+
 - 0A-a. v2 route `/game/v2-lab/` namespace 제한
 - 0A-b. `V2_ENABLED`+`v2-sandbox` 동시 조건 route/bean 등록 게이트
 - 0A-c. v2 Flyway location을 v1 기본에서 분리
@@ -81,6 +82,7 @@
 - 0A-g. 기준선 artifact 저장(v1 schema dump·seed hash·PHP golden·backend/web gate)
 
 ### Phase V2-G0 / Wave G0-A 행정 기준선 (v2 오픈 후 작업; OPENSAM-43 V2-0B의 선행 아님 / 공유 Exit: 원전 수량·189 hash·SeatAssignment 0중복·co-location 통과·counter 1,180)
+
 - G0A-a~g. 계약 7종 각 1티켓: `TemporalAdministrativeUnit`/`AdministrativeChange`/`PhysicalPlace`(+provenance·license)/`PlaceBudgetClass`/`SeatAssignment`/`PlaceControl`/`ScenarioPlacement`
 - G0A-h. 군·국 105 read-only catalog 전사
 - G0A-i. 현·읍·도·후국 1,180 read-only catalog 전사

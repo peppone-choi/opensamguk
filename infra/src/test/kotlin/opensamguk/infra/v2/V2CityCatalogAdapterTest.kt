@@ -37,26 +37,42 @@ class V2CityCatalogAdapterTest {
     fun `rejects a city source whose bytes do not match metadata`() {
         val adapter = V2CityCatalogAdapter(V2ContentCatalog(HASH_MISMATCH_LOCATION))
 
-        assertFailsWith<IllegalArgumentException> { adapter.load() }
+        val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
+
+        assertEquals("v2 city source sha256 does not match metadata", error.message)
     }
 
     @Test
     fun `rejects a city source whose total count does not match metadata`() {
         val adapter = V2CityCatalogAdapter(V2ContentCatalog(CITY_COUNT_MISMATCH_LOCATION))
 
-        assertFailsWith<IllegalArgumentException> { adapter.load() }
+        val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
+
+        assertEquals("v2 city source count does not match metadata", error.message)
     }
 
     @Test
     fun `rejects a city source whose owned count does not match metadata`() {
         val adapter = V2CityCatalogAdapter(V2ContentCatalog(OWNED_COUNT_MISMATCH_LOCATION))
 
-        assertFailsWith<IllegalArgumentException> { adapter.load() }
+        val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
+
+        assertEquals("v2 owned city count does not match metadata", error.message)
+    }
+
+    @Test
+    fun `rejects duplicate city ids after valid source verification`() {
+        val adapter = V2CityCatalogAdapter(V2ContentCatalog(DUPLICATE_CITY_ID_LOCATION))
+
+        val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
+
+        assertEquals("v2 city source contains duplicate city ids", error.message)
     }
 
     private companion object {
         const val HASH_MISMATCH_LOCATION = "v2-catalog-fixture/hash-mismatch/content/v2"
         const val CITY_COUNT_MISMATCH_LOCATION = "v2-catalog-fixture/city-count-mismatch/content/v2"
         const val OWNED_COUNT_MISMATCH_LOCATION = "v2-catalog-fixture/owned-count-mismatch/content/v2"
+        const val DUPLICATE_CITY_ID_LOCATION = "v2-catalog-fixture/duplicate-city-id/content/v2"
     }
 }

@@ -1,3 +1,53 @@
+# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 PR #371 Round 1 remediation — independent review `cleared`, remote CI/reviews pending)
+
+## Current PR and review state
+
+- PR #371 exists at initial remote commit
+  `983598928f4375b902d1e49c72551056ce5c9a1f`. Its `agent-system`, `jvm`,
+  `web (gateway)`, and `web (game)` jobs are green, but that CI predates the
+  current dirty remediation and is not final-remediation evidence.
+- The terminal independent re-review of the exact dirty tree is `cleared` at
+  fingerprint `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`,
+  with no BLOCKER/MAJOR/MINOR/QUESTION/NIT. It supersedes the prior
+  `fix-required` status; it does not replace remote CI or exact-SHA PR reviews.
+- CodeRabbit's approval suggestion is rejected/inapplicable: the active task's
+  `Human approval` clause and the approved OP43 plan §7 explicitly authorize
+  this ticket's PR and merge. That is the ticket-specific explicit approval
+  required by ADR-LITE-026, so no edit to the `Human approval` clause is correct.
+
+## Current implementation and verifier evidence
+
+- CodeRabbit dispositions now include duplicate-classpath fail-closed handling,
+  duplicate city-ID rejection, exact diagnostic assertions, and positive
+  deep/decoy fixture-existence assertions. Focused infra rerun: `BUILD
+  SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0, adapter 6/0/0/0. The
+  historical/current backend-count wording and the V2-0A and V2-G0 MD022
+  spacing are also fixed.
+- Codex P2 now requires every v2-created table PK/UNIQUE to include `world_id`.
+  The scoped-key-plus-unscoped-UNIQUE mutation observed its intended RED, and
+  the combined focused engine current-input fan-in is terminal:
+  `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 and
+  `V2BothConditionsBeanGateIT` 2/0/0/0. Engine log SHA-256:
+  `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`;
+  diff-check is green.
+- The latest Round 1 dirty-tree `scripts/agent/verify-changes.sh --run` ran
+  exactly once and exited 0: `BUILD SUCCESSFUL in 12m 54s` / 29 executed;
+  common 232 + logic 3,173 + infra 235 + game-api 468 + game-engine 806 =
+  4,914 tests / failures 0 / errors 0 / game-engine skipped 1. Strict reported
+  44 changed / Errors 0 / Warnings 0 / findings 0. Log SHA-256:
+  `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`.
+  Compose, smoke, and deploy remain unexecuted.
+
+## Next sequence
+
+1. After the next remediation commit/push, observe remote CI for that exact
+   SHA. The required three sequential PR-conversation mention reviews restart
+   at 0/3 after that commit; remediate and reverify each round before merge.
+2. Keep deploy/cutover, secrets, data deletion, legacy/golden writes, and test
+   weakening outside this task. This documentation lane made no commit or push.
+
+---
+
 # SESSION HANDOFF — 2026-08-09 (OPENSAM-43 V2-0B approved contract reconciliation)
 
 ## User-approved contract and durable records

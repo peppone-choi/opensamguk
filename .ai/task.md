@@ -2,7 +2,8 @@
 
 ## 2026-08-09 — OPENSAM-43 V2-0B 런타임 계약·격리 가드 (활성 계약)
 
-- Status: 사용자 승인 완료(`"승인."`, 2026-08-09), 구현·dirty-tree 검증·독립 리뷰 완료, PR 준비. 계획 정본:
+- Status: 사용자 승인 완료(`"승인."`, 2026-08-09), PR #371 Round 1 remediation 및 terminal independent
+  re-review `cleared`; final-remediation SHA remote CI·exact-SHA PR reviews는 pending. 계획 정본:
   `docs/superpowers/plans/2026-08-09-opensam-43-v2-0b-runtime-contract-plan.md`.
 - Goal: OPENSAM-35의 isolation-only foundation 위에서 0B-a~k를 실제 런타임·wire·Flyway·catalog
   계약으로 닫고, v1 production에는 v2 bean/table/content가 0건임을 유지한다.
@@ -28,11 +29,21 @@
 - External tracking: Jira OPENSAM-43과 GitHub #185는 승인 계약으로 갱신됐고 Jira는 `진행 중`이다.
 - Human approval: 이 계약과 v2 완성 목표는 구현·PR·머지를 승인한다. deploy/cutover, secret 접근,
   데이터 삭제, legacy/golden 쓰기, 테스트 약화는 승인되지 않았다.
-- Current terminal evidence: 독립 dirty-tree review `cleared`(fingerprint `3e05d2cf…cbb`),
-  `scripts/agent/verify-changes.sh --run` exit 0 / `BUILD SUCCESSFUL in 16m 19s` / 4,911 tests /
-  failures 0 / errors 0, strict findings 0. 로그 SHA-256은
-  `00b137ac81dca1757bb920ccc54f1b0eda1dac18343b5028587ffaab5286242a`다. compose/smoke/deploy는
-  비범위로 미실행이며 immutable commit review, remote CI, PR 대화 리뷰 3회가 남았다.
+- Current review/evidence: PR #371의 initial SHA `983598928f4375b902d1e49c72551056ce5c9a1f`에는
+  `agent-system`, `jvm`, `web (gateway)`, `web (game)` 네 job이 green이지만 Round 1 전의
+  historical CI다. Round 1의 CodeRabbit 6 threads와 Codex P2 1건은 구현됐고, focused infra rerun은
+  `BUILD SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0, adapter 6/0/0/0이다. Engine evidence log
+  SHA-256 `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`는
+  `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 및 `V2BothConditionsBeanGateIT` 2/0/0/0을 기록한다.
+  Terminal independent re-review fingerprint
+  `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`는 BLOCKER/MAJOR/MINOR/QUESTION/NIT
+  없이 `cleared`다. 최신 Round 1 dirty-tree `scripts/agent/verify-changes.sh --run`은 정확히 한 번
+  exit 0으로 실행되어 `BUILD SUCCESSFUL in 12m 54s` / 29 executed, common 232 + logic 3,173 + infra 235 +
+  game-api 468 + game-engine 806 = 4,914 tests / failures 0 / errors 0 / game-engine skipped 1을 기록했다.
+  strict는 44 changed / Errors 0 / Warnings 0 / findings 0이고 로그
+  `/tmp/op43-round1-final-os-verify.log` SHA-256은
+  `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`다. final-remediation SHA remote CI와
+  다음 exact-SHA PR-conversation mention review 0/3은 pending이며 compose/smoke/deploy는 비범위로 미실행이다.
 
 ---
 

@@ -1,41 +1,45 @@
 # Current State
 
-## OPENSAM-43 V2-0B — 구현·dirty-tree 검증·독립 리뷰 완료, PR 준비 — 2026-08-09
+## OPENSAM-43 V2-0B — PR #371 Round 1 remediation + terminal independent review `cleared` · remote CI/reviews pending — 2026-08-09
 
-- 기준 SHA `e9cc3b31fa72aa46716f375b623f6a4937ad6c06`(`origin/main`), worktree
-  `/private/tmp/opensam43-v2-0b-runtime`, branch `codex/op-43-v2-0b-runtime`.
-- 사용자 `"승인."`으로 OP43의 stale G0/1,180 전제를 기존 che 입력 계약으로 대체했다.
-  `cities_1010.json`은 94도시/소유 24도시/SHA-256 `6759a682…d393`; 복제하지 않는다.
-- Jira OPENSAM-43과 GitHub #185 본문은 새 계약으로 동기화됐다. Jira status는 `진행 중`.
-- Lane A의 초기 catalog/adapter focused XML 13/0/0/0와 Lane B wire 5/0/0/0은 독립 리뷰 전
-  historical baseline이다. 리뷰가 각각 extra metadata key와 missing wire version false-green을 찾아
-  보정했고, 현재 scoped XML은 catalog metadata 9/0/0/0, wire 7/0/0/0이다. adapter의 source SHA,
-  94/24 count, 반복 snapshot empty diff 계약은 유지되며 final broad verifier에서 다시 fan-in한다.
-  초기 병렬 Gradle이 shared output corruption을 일으켜 이후 모든 Gradle은 `--no-daemon --max-workers=1`
-  직렬 실행으로 고정했고, clean rebuild 뒤 위 결과를 다시 관측했다.
-- Lane C는 기존 `EngineProcessWorld`/`GameApiProcessWorld`의 `WorldId(9001)`과 active profile을
-  실측했고, engine gate에만 read-only adapter를 등록했다. intended missing-adapter RED 3건 뒤
-  focused engine/API runtime·Flyway·V900 convention XML이 green이다. production SQL은 없다.
-- Lane D는 ADR-LITE-030, canonical v1 completion pointer, query/read/write impact inventory와
-  backlog/handoff 정합화를 완료했다. OP44/OP150/RTK/G0/deploy는 비범위다.
-  commit·push·PR·merge는 아직 실행하지 않았다.
-- Exact dirty-tree backend gate는 Java 21 `--rerun-tasks` 단일 실행으로 green이다:
-  `BUILD SUCCESSFUL in 11m 16s`, 35/35 tasks, 605 suites / 5,063 tests /
-  failures 0 / errors 0 / skipped 1. 로그 `/tmp/op43-backend-gate.log` SHA-256은
-  `0a6ffedd0868bbf60d9d8439230c2c8664b9bfb78352f930b740be427a6d3a14`다.
-  첫 독립 dirty-tree review는 MAJOR 4건으로 `fix-required`였다: metadata extra-key 허용,
-  missing wire version 허용, manual Flyway 우회, comment-spoofable convention. 모두 테스트-first로
-  보정했다. intended RED는 wire 7개 중 2 실패와 catalog 9개 중 1 실패였고, 현재 common wire 7,
-  infra catalog 9, engine v2 21은 failures/errors/skips 0이다. 실제 PostgreSQL catalog 검증 첫 실행은
-  reserved alias `constraint` 때문에 1/21 실패했고 XML SQLSTATE로 원인을 확정해 `table_constraint`로
-  수정한 뒤 exact rerun `BUILD SUCCESSFUL in 1m 46s` / 21/0/0/0을 관측했다.
-  exact dirty-tree 독립 re-review는 fingerprint `3e05d2cf…cbb`에서 blocker/major/minor/question/nit 없이
-  `cleared`됐다. 이어 현재 트리에 `scripts/agent/verify-changes.sh --run`을 한 번 실행해 exit 0,
-  `BUILD SUCCESSFUL in 16m 19s`, 29 tasks, common 232 + logic 3,173 + infra 233 + game-api 468 +
-  game-engine 805 = 4,911 tests / failures 0 / errors 0을 관측했다. strict는 41 changed,
-  Errors 0 / Warnings 0 / findings 0이다. 로그 `/tmp/op43-final-os-verify.log` SHA-256은
-  `00b137ac81dca1757bb920ccc54f1b0eda1dac18343b5028587ffaab5286242a`다. compose/smoke/deploy는
-  이 비운영 계약 범위에서 실행하지 않았다. immutable commit review, remote CI, PR 대화 리뷰 3회만 남았다.
+- 기준 SHA는 `e9cc3b31fa72aa46716f375b623f6a4937ad6c06`(`origin/main`)이고 worktree/branch는
+  `/private/tmp/opensam43-v2-0b-runtime` / `codex/op-43-v2-0b-runtime`다. 승인된 pinned-city
+  계약(94 total / 24 owned / SHA-256 `6759a682…d393`)과 ADR-LITE-030의 G0 post-open 경계는 유지된다.
+- PR #371은 존재하며 원격 initial commit은
+  `983598928f4375b902d1e49c72551056ce5c9a1f`다. 그 commit의 `agent-system`, `jvm`, `web (gateway)`,
+  `web (game)` 네 CI job은 green이지만, 모두 이후의 dirty Round 1 remediation보다 앞선
+  historical evidence다. final-remediation SHA의 remote CI는 아직 없다.
+- Round 1의 CodeRabbit 6 threads와 Codex P2 1건을 반영한 terminal independent re-review fingerprint
+  `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`는
+  BLOCKER/MAJOR/MINOR/QUESTION/NIT 없이 `cleared`다. 이는 prior immutable local clearance와 구분되는
+  current dirty-tree review evidence다.
+- CodeRabbit의 6 dispositions: historical 5,063-vs-4,911 wording과 V2-0A/G0 MD022 spacing은 수정했다.
+  active task의 `Human approval` clause와 승인된 OP43 plan §7이 이 ticket의 PR/merge를 명시 승인하므로,
+  approval comment는 inapplicable로 reject했고 ADR-LITE-026의 separate-approval 조건과 충돌하지 않는다.
+- Dirty source remediation은 duplicate-classpath fail-closed, duplicate city ID rejection, exact
+  rejection diagnostics, 그리고 deep/decoy fixture의 positive existence assertion을 포함한다. focused infra
+  rerun은 `BUILD SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0, adapter 6/0/0/0인 focused remediation
+  evidence다.
+- Codex P2는 모든 v2-created table의 PK/UNIQUE가 `world_id`를 포함하도록 guard를 강화했다. scoped
+  key와 별도의 unscoped UNIQUE를 넣는 mutation에서 intended RED를 관측했다. combined focused engine
+  current-input fan-in은 `BUILD SUCCESSFUL in 2m 42s` / 17 executed,
+  `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 및 `V2BothConditionsBeanGateIT` 2/0/0/0으로
+  terminal이다. Engine log SHA-256은
+  `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`이며 diff-check는 green이다.
+- 최신 Round 1 dirty-tree `scripts/agent/verify-changes.sh --run`은 정확히 한 번 exit 0으로 실행되어
+  `BUILD SUCCESSFUL in 12m 54s` / 29 executed, common 232 + logic 3,173 + infra 235 + game-api 468 +
+  game-engine 806 = 4,914 tests / failures 0 / errors 0 / game-engine skipped 1을 기록했다. strict는
+  44 changed / Errors 0 / Warnings 0 / findings 0이고, 로그
+  `/tmp/op43-round1-final-os-verify.log` SHA-256은
+  `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`다. compose/smoke/deploy는 미실행이다.
+- Historical only: pre-initial-review backend gate는 605 suites / 5,063 tests / 0 failures / 0 errors /
+  1 skip이고, 이전 initial-remediation verifier는 4,911 tests / 0 failures / 0 errors였다. 어느 결과도
+  현재 Round 1 dirty remediation의 verifier record 또는 independent re-review를 대체하지 않는다.
+- Controlling review artifact의 유일한 verdict는 `cleared`다. 단 final-remediation SHA remote CI, 다음
+  exact-SHA PR-conversation review 0/3의 세 번 순차 요청·수정·재검증은 아직 pending이다. 이 process gates는
+  local independent review clearance로 대체되지 않는다.
+- OPENSAM-44/150 persistence/first leaf, OPENSAM-104/105 RTK builders, G0/1,180, deploy/cutover는
+  비범위다. source/docs lanes는 stable/released이며, 이 documentation lane은 commit/push/deploy를 수행하지 않는다.
 
 ---
 

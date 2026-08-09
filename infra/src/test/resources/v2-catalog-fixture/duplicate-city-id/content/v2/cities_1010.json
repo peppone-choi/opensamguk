@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "cities_1010",
+  "status": "ACTIVE",
+  "source": "v2-catalog-fixture/scenario/duplicate-cities.json",
+  "sha256": "9402bf6b4804426d31afed50e731ffa44061b025c243a09861499850937874c9",
+  "cityCount": 2,
+  "scenarioOwnedCityCount": 1
+}

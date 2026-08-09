@@ -16,10 +16,12 @@ class V2ContentCatalog(location: String = DEFAULT_LOCATION) {
 
     fun read(name: String): String? {
         if (!isSafeEntryName(name)) return null
-        return entries()
-            .firstOrNull { it.filename == name }
-            ?.inputStream
-            ?.use { it.readBytes().toString(Charsets.UTF_8) }
+        val matches = entries().filter { it.filename == name }
+        return when (matches.size) {
+            0 -> null
+            1 -> matches.single().inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
+            else -> throw IllegalArgumentException("v2 content metadata is ambiguous: ${name.removeSuffix(".json")}")
+        }
     }
 
     fun load(id: String): V2ContentMetadata {
