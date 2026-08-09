@@ -5,33 +5,56 @@ Scope: `.ai/`, `app/`, `common/`, `infra/`, and `docs/` — initial immutable re
 - Independent reviewer: `/root/op43_independent_review` (`fable-deep-reasoner`)
 - Historical reviewed-tree fingerprint: `3e05d2cfef9a808efb696db93f4f81f0afc53d39dbadd903798f80c922779cbb`
 - Historical terminal reviewed-tree fingerprint: `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`
-- Review base HEAD: `ac1d199644f61685ca3fee25f19c36e07782f960` (CI all green)
-- Current reviewed dirty-tree diff SHA-256: `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`
+- Historical cleared review base HEAD: `ac1d199644f61685ca3fee25f19c36e07782f960` (CI all green)
+- Historical cleared dirty-tree diff SHA-256: `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`
+- Current reviewed HEAD: `8abb47a1` (CI all green)
+- Current structural dirty-tree combined fingerprint: `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`
+- Tracked fingerprint: `023225…06f4`; untracked fixture fingerprint: `898063…dd0`
 Verdict: cleared
 
-## Current exact dirty-tree re-review state
+## Current `8abb47a1` structural dirty-tree re-review state
 
-The first `@codex` review of exact SHA `ac1d199` found two P2 findings:
+The first submitted `@codex` review of exact SHA `8abb47a1` historically found
+three P2 findings:
 
-1. A standalone `CREATE UNIQUE INDEX` can bypass the v2 world-scoped key guard.
-2. `CREATE UNLOGGED TABLE`, `CREATE TEMP TABLE`, and `CREATE TEMPORARY TABLE`
-   can bypass the migration table-convention guard.
+1. Duplicate catalog metadata keys are accepted.
+2. An FK same-name identity check can produce a false positive.
+3. `SELECT INTO` can bypass the table-creation guard.
 
-Source remediation for both P2s is currently dirty. The reviewed exact dirty
-tree above received a terminal independent re-review `cleared` with no findings.
-The focused combined engine tests are green at 6 + 1. Fresh full verification
-is green; commit/push, remote CI for the resulting exact SHA, and the
-PR-conversation review counter (0/3) remain pending. This clearance does not
-claim merge or deployment.
+The reviewed structural dirty tree remediates the duplicate-key and FK identity
+findings and replaces source-parser-only discovery with a PostgreSQL `pg_class`
+OID baseline/post-v2 catalog-diff. The terminal independent re-review found no
+findings. Focused convention 17, mutation 4, V2Both 2, and infra catalog 11 are
+all green. The authorized healthy-Docker isolated full-verifier rerun passed:
+exit 0, `BUILD SUCCESSFUL in 23m 46s` / 29 tasks; common 232 + logic 3,173 +
+infra 236 + game-api 468 + game-engine 822 = 4,931 tests / failures 0 / errors
+0 / engine skipped 1; strict 46 changed / Errors 0 / Warnings 0 / findings 0;
+log `/tmp/op43-catalog-diff-final-os-verify-rerun.log` SHA-256
+`a95386e902908c199f12d86cb776e06d97ead25eef71e9dc3647b0e3e671e31e`.
+The preceding first run is historical infrastructure-only: a transient Docker
+HTTP 500 before game-api app assertions; its log
+`/tmp/op43-catalog-diff-final-os-verify.log` SHA-256 is
+`706131db0b7c24a2e57d4c7875031b195240b2e565ca2b798f54098bada6aadc`.
+Commit/push, remote CI for the resulting exact SHA, and the PR-conversation
+review counter (0/3) remain pending. This clearance does not claim merge or
+deployment.
 
-The 4,915-test full verifier (failures 0 / errors 0) is historical,
-pre-final-parser-edit evidence. Fresh post-review `scripts/agent/verify-changes.sh --run`
-completed green: exit 0, `BUILD SUCCESSFUL in 17m 11s` / 29 executed; common
-232 + logic 3,173 + infra 235 + game-api 468 + game-engine 808 = 4,916 tests /
-failures 0 / errors 0 / game-engine skipped 1. Strict recorded 45 changed /
-Errors 0 / Warnings 0 / findings 0; log
-`/tmp/op43-post-review-final-os-verify.log` SHA-256:
-`dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`.
+### Structural-remediation closure
+
+The `pg_class` OID baseline catalog-diff closes the procedural/foreign table
+creation fail-open and `SELECT` alias false-positive paths. Duplicate-key and FK
+identity fixes are included in the reviewed dirty tree.
+
+The 4,915-test full verifier (failures 0 / errors 0), focused 6 + 1/16 + 2
+evidence, and the prior immutable clearance are historical/pre-current-
+structural-tree evidence.
+The 4,916-test `scripts/agent/verify-changes.sh --run` record (exit 0, `BUILD
+SUCCESSFUL in 17m 11s` / 29 executed; common 232 + logic 3,173 + infra 235 +
+game-api 468 + game-engine 808; failures/errors 0; game-engine skipped 1;
+strict 45 changed / Errors 0 / Warnings 0 / findings 0; log SHA-256
+`dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`) is
+pre-current-structural-tree historical evidence only and does not substitute for
+the current exact clearance or 4,931 full verifier.
 
 ## Historical PR #371 Round 1 state
 
@@ -63,7 +86,7 @@ failures 0 / errors 0 / game-engine skipped 1. Strict reported 44 changed /
 Errors 0 / Warnings 0 / findings 0; log SHA-256:
 `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`.
 Compose, smoke, and deploy were not run. This historical evidence does not
-replace the current exact dirty-tree re-review or completed post-review full verifier.
+replace the current exact clearance or 4,931 full verifier.
 
 ## Historical initial critique
 

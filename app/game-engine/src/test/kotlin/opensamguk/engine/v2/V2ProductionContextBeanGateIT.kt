@@ -17,6 +17,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.core.env.SystemEnvironmentPropertySource
+import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -195,14 +196,23 @@ class V2BothConditionsBeanGateIT {
         assertTrue(V2SandboxGate.PROFILE in context.environment.activeProfiles)
         assertEquals("true", context.environment.getProperty(V2SandboxGate.PROPERTY))
         assertEquals(V2_SANDBOX_FLYWAY_LOCATIONS, context.environment.getProperty("spring.flyway.locations"))
-        V2FlywayIsolationAssertions(flyway, dataSource).assertV2SandboxRuntime()
+        V2FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline).assertV2SandboxRuntime()
     }
 
     companion object {
         @Container @JvmStatic val postgres = PostgreSQLContainer("postgres:16-alpine")
 
+        private val v1CatalogBaseline: Set<V2CatalogRelation> by lazy {
+            v1PersistentTableBaseline(
+                DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password),
+            )
+        }
+
         @JvmStatic
         @DynamicPropertySource
-        fun props(registry: DynamicPropertyRegistry) = postgresProps(registry, postgres, worldId = 9001)
+        fun props(registry: DynamicPropertyRegistry) {
+            v1CatalogBaseline
+            postgresProps(registry, postgres, worldId = 9001)
+        }
     }
 }

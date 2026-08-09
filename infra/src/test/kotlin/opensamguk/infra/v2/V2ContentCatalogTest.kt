@@ -66,6 +66,13 @@ class V2ContentCatalogTest {
     }
 
     @Test
+    fun `rejects duplicate metadata keys before the last status can satisfy the active contract`() {
+        val error = assertFailsWith<IllegalArgumentException> { fixture.load("duplicate-status") }
+
+        assertEquals("v2 content metadata must not contain duplicate keys: status", error.message)
+    }
+
+    @Test
     fun `rejects duplicate classpath metadata instead of selecting one arbitrarily`() {
         val originalClassLoader = Thread.currentThread().contextClassLoader
         val duplicateRoot = V2ContentCatalogTest::class.java.classLoader

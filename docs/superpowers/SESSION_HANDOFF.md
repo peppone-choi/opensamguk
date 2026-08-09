@@ -1,29 +1,32 @@
-# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 exact dirty-tree re-review `cleared`; remediation dirty)
+# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 terminal structural dirty-tree review `cleared`; full verifier green)
 
 ## Current OP43 handoff
 
-- HEAD is `ac1d199644f61685ca3fee25f19c36e07782f960` (`ac1d199`), whose CI is
-  all green. The current reviewed dirty-tree diff SHA-256 is
-  `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`.
-- The first `@codex` review found a standalone `UNIQUE INDEX` bypass of the v2
-  world-scoped key guard and `CREATE UNLOGGED/TEMP/TEMPORARY TABLE` bypasses of
-  the migration table-convention guard. The dirty source remediation is
-  terminally `cleared` with no findings by an independent exact dirty-tree
-  re-review; focused combined engine evidence is green at 6 + 1.
-- The 4,915-test full verifier (failures 0 / errors 0) is historical,
-  pre-final-parser-edit evidence. Fresh post-review `scripts/agent/verify-changes.sh --run`
-  is green: exit 0, `BUILD SUCCESSFUL in 17m 11s` / 29 executed, common 232 +
-  logic 3,173 + infra 235 + game-api 468 + game-engine 808 = 4,916 tests /
-  failures 0 / errors 0 / game-engine skipped 1. Strict recorded 45 changed /
+- HEAD `8abb47a1` structural dirty tree is terminally `cleared` with no findings:
+  combined fingerprint `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`
+  (tracked `023225…06f4`; untracked fixture `898063…dd0`).
+- Runtime now compares a PostgreSQL `pg_class` OID baseline with post-v2 catalog
+  state and includes duplicate-key/FK fixes. Focused convention 17, mutation 4,
+  V2Both 2, and infra catalog 11 are all green.
+- The authorized healthy-Docker isolated `scripts/agent/verify-changes.sh --run`
+  rerun passed: exit 0, `BUILD SUCCESSFUL in 23m 46s` / 29 tasks; common 232 +
+  logic 3,173 + infra 236 + game-api 468 + game-engine 822 = 4,931 tests /
+  failures 0 / errors 0 / engine skipped 1. Verifier strict was 46 changed /
   Errors 0 / Warnings 0 / findings 0; log
-  `/tmp/op43-post-review-final-os-verify.log` SHA-256 is
-  `dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`.
+  `/tmp/op43-catalog-diff-final-os-verify-rerun.log` SHA-256 is
+  `a95386e902908c199f12d86cb776e06d97ead25eef71e9dc3647b0e3e671e31e`.
+- The preceding first run is historical infrastructure-only: transient Docker
+  HTTP 500 before game-api app assertions; log
+  `/tmp/op43-catalog-diff-final-os-verify.log` SHA-256 is
+  `706131db0b7c24a2e57d4c7875031b195240b2e565ca2b798f54098bada6aadc`.
+- The prior P2 reports, immutable clearance, focused 6 + 1/16 + 2, and 4,916
+  verifier are historical pre-current-structural-tree evidence only.
 - Historical only: the prior cleared fingerprint
   `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360` and
   4,914-test verifier applied to an earlier Round 1 tree; neither replaces the
-  current dirty-tree re-review.
-- The PR-conversation review counter is 0/3. After the source remediation is
-  committed, observe its exact-SHA CI, then restart the three sequential
+  current exact structural-tree clearance or 4,931 full verifier.
+- The PR-conversation review counter is 0/3. After commit/push, observe
+  exact-SHA CI, then start the three sequential
   review/remediation/reverification rounds. Commit, push, exact-SHA CI, reviews,
   merge, and deployment remain separate gates.
 - No deployment, cutover, production observation, secret access, data deletion,

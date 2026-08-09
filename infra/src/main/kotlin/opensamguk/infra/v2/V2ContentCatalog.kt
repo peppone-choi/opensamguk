@@ -35,6 +35,7 @@ class V2ContentCatalog(location: String = DEFAULT_LOCATION) {
     }
 
     private fun decode(raw: String, requestedId: String): V2ContentMetadata {
+        rejectDuplicateRootKeys(raw)
         val root = MetaJson.decode(raw)
         require(root.keys == APPROVED_METADATA_ROOT_KEYS) {
             "v2 content metadata must contain exactly the approved root keys"
@@ -126,6 +127,88 @@ class V2ContentCatalog(location: String = DEFAULT_LOCATION) {
         private fun validatedSha256(value: String): String {
             require(SHA256.matches(value)) { "v2 content sha256 must be lowercase hexadecimal" }
             return value
+        }
+
+        private fun rejectDuplicateRootKeys(raw: String) {
+            RootKeyScanner(raw).requireUniqueKeys()
+        }
+
+        private class RootKeyScanner(private val raw: String) {
+            private var index = 0
+            private var depth = 0
+
+            fun requireUniqueKeys() {
+                val keys = LinkedHashSet<String>()
+                while (index < raw.length) {
+                    when (raw[index]) {
+                        '{', '[' -> {
+                            depth++
+                            index++
+                        }
+
+                        '}', ']' -> {
+                            depth--
+                            index++
+                        }
+
+                        '"' -> {
+                            val value = readString()
+                            if (depth == 1 && nextNonWhitespace() == ':') {
+                                require(keys.add(value)) {
+                                    "v2 content metadata must not contain duplicate keys: $value"
+                                }
+                            }
+                        }
+
+                        else -> index++
+                    }
+                }
+            }
+
+            private fun readString(): String {
+                index++
+                val value = StringBuilder()
+                while (index < raw.length) {
+                    when (val character = raw[index++]) {
+                        '"' -> return value.toString()
+                        '\\' -> value.append(readEscape())
+                        else -> value.append(character)
+                    }
+                }
+                throw IllegalArgumentException("unterminated string in v2 content metadata")
+            }
+
+            private fun readEscape(): Char {
+                require(index < raw.length) { "unterminated escape in v2 content metadata" }
+                return when (val escape = raw[index++]) {
+                    '"', '\\', '/' -> escape
+                    'b' -> '\b'
+                    'f' -> '\u000C'
+                    'n' -> '\n'
+                    'r' -> '\r'
+                    't' -> '\t'
+                    'u' -> readUnicodeEscape()
+                    else -> throw IllegalArgumentException("invalid escape in v2 content metadata: \\$escape")
+                }
+            }
+
+            private fun readUnicodeEscape(): Char {
+                require(index + 4 <= raw.length) { "unterminated unicode escape in v2 content metadata" }
+                val hex = raw.substring(index, index + 4)
+                index += 4
+                return hex.toInt(16).toChar()
+            }
+
+            private fun nextNonWhitespace(): Char? {
+                var cursor = index
+                while (cursor < raw.length) {
+                    when (raw[cursor]) {
+                        ' ', '\t', '\n', '\r' -> cursor++
+                        else -> return raw[cursor]
+                    }
+                }
+                return null
+            }
         }
     }
 }
