@@ -6,24 +6,27 @@ import type { FrontInfoResponse, GameConstResponse } from '@/lib/types';
 const mocks = vi.hoisted(() => ({
     gameConst: vi.fn(),
     frontInfo: vi.fn(),
+    recruitAvailability: vi.fn(),
 }));
 
 vi.mock('@/lib/api', () => ({
     api: {
         gameConst: mocks.gameConst,
         frontInfo: mocks.frontInfo,
+        recruitAvailability: mocks.recruitAvailability,
     },
 }));
 
 const constData = {
     gameUnitConst: [
         { id: 1100, armType: 1, name: '보병', attack: 10, defence: 8, speed: 5, avoid: 3, magicCoef: 0, cost: 4, rice: 2, info: ['기본 병과'] },
-        { id: 1000, armType: 1, name: '성벽', attack: 1, defence: 20, speed: 0, avoid: 0, magicCoef: 0, cost: 0, rice: 0, info: ['불가능'] },
+        { id: 1000, armType: 1, name: '성벽', attack: 1, defence: 20, speed: 0, avoid: 0, magicCoef: 0, cost: 0, rice: 0, info: ['성벽입니다.', '생성할 수 없습니다.'] },
     ],
 } as unknown as GameConstResponse;
 
 const frontInfo = {
     general: {
+        generalId: 10,
         leadership: 80,
         leadershipBonus: 0,
         lbonus: 0,
@@ -35,9 +38,17 @@ const frontInfo = {
 } as unknown as FrontInfoResponse;
 
 describe('SelectRecruitField', () => {
-    it('shows only recruitable units by default and marks blocked units in full view', async () => {
+    it('uses server availability rather than Korean display text', async () => {
         mocks.gameConst.mockResolvedValueOnce(constData);
         mocks.frontInfo.mockResolvedValueOnce(frontInfo);
+        mocks.recruitAvailability.mockResolvedValueOnce({
+            result: true,
+            unitSet: 'che',
+            crewTypes: [
+                { crewType: 1100, available: true, reason: null },
+                { crewType: 1000, available: false, reason: '현재 선택할 수 없는 병종입니다.' },
+            ],
+        });
 
         render(<SelectRecruitField onChange={vi.fn()} />);
 
@@ -48,6 +59,6 @@ describe('SelectRecruitField', () => {
 
         const blocked = screen.getByRole('button', { name: /성벽/ });
         expect(blocked).toBeDisabled();
-        expect(blocked).toHaveTextContent('불가능');
+        expect(blocked).toHaveTextContent('현재 선택할 수 없는 병종입니다.');
     });
 });

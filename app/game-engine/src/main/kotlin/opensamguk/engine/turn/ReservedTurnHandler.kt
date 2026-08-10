@@ -21,6 +21,8 @@ import opensamguk.logic.actions.founding.CheSeonyang
 import opensamguk.logic.actions.develop.CheGunryangMaemae
 import opensamguk.logic.actions.military.CheSukryeonJeonhwan
 import opensamguk.logic.actions.military.RecruitAlgorithm
+import opensamguk.logic.actions.military.UnitSetTable
+import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.actions.personnel.CheInjaeTamsaek
 import opensamguk.logic.actions.personnel.CheRandomImgwan
 import opensamguk.logic.actions.personnel.JoinCommand
@@ -252,12 +254,15 @@ class ReservedTurnHandler(
         }
 
         // ONE env, built by THE shared env-builder (same call as E2 precheck — cannot drift).
-        val phase = world.getState().currentPhase.coerceIn(1, GameConst.phasesPerMonth)
+        val state = world.getState()
+        val phase = state.currentPhase.coerceIn(1, GameConst.phasesPerMonth)
         val env = LinkedHashMap(WorldEnvBuilder.commandEnvMap(year, startYear, month, phase))
         env["ownCities"] = world.listCities()
             .filter { it.nationId == nationId }
             .sortedBy { it.id }
             .associateTo(LinkedHashMap()) { it.id to it.level }
+        env["unitSet"] = UnitSetTable.activeUnitSet(state.config, state.meta)
+        env["mapName"] = CityConstRegistry.activeMapName(state.config, state.meta)
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear)
 
         val baseDefinition = resolveRuntimeDefinition(runtimeRegistry, actionCode, general, year)

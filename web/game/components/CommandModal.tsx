@@ -503,6 +503,10 @@ export default function CommandModal({
                 return api.command(cmd.value, fullBody, generalId, turnIdx);
             });
             if (terminalResult.status === 'applied') {
+                onToast(`${cmd.simpleName} 명령이 실행되었습니다.`, 'success');
+                onReserved?.();
+                onClose();
+            } else if (terminalResult.status === 'reserved') {
                 onToast(`${cmd.simpleName} 명령이 예약되었습니다.`, 'success');
                 onReserved?.();
                 onClose();

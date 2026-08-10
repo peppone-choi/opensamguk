@@ -1,6 +1,8 @@
 package opensamguk.gameapi.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.type.TypeReference
+import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommandResultSerializer
 import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
@@ -100,7 +102,12 @@ class CommandController(
         if (!isForecastReservable(code)) {
             return blocked("사용할 수 없는 커맨드입니다.")
         }
-        return when (val result = precheck.precheck(generalId = generalId, actionCode = code)) {
+        val result = if (argJson == null) {
+            precheck.precheck(generalId = generalId, actionCode = code)
+        } else {
+            precheck.precheck(generalId = generalId, actionCode = code, args = precheckArgs(argJson))
+        }
+        return when (result) {
             PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, argJson, ownerUserId)
 
             is PrecheckResult.Blocked ->
@@ -122,6 +129,11 @@ class CommandController(
                 }
         }
     }
+
+    private fun precheckArgs(argJson: String): Map<String, Any?> =
+        runCatching {
+            objectMapper.readValue(argJson, object : TypeReference<Map<String, Any?>>() {})
+        }.getOrNull() ?: emptyMap()
 
     private fun reserveAccepted(
         generalId: Int,
@@ -154,35 +166,59 @@ class CommandController(
     // ── W0-4 인테이크 결과 회신: GET /api/command/result/{requestId} ───────────────────────────────
     //
     // 응답 규약 (항상 200 — 폴링 채널이므로 404를 쓰지 않는다):
-    //   - 키 부재(아직 미처리 or TTL 만료) → `{status:"PENDING", requestId}` — FE는 폴링을 계속한다.
-    //   - 키 존재 → `{status:"RESOLVED", requestId, ok, type, reason?, result}` — `result`는 엔진이
-    //     발행한 [opensamguk.common.wire.TurnDaemonCommandResult] JSON 객체 그대로(타입별 부가 필드
-    //     보존). deny(ok=false)도 RESOLVED로 돌아온다 — 성공 토스트 위조 금지의 근거 데이터.
+    //   - 키 부재(아직 미처리 or TTL 만료)와 reservation admission → `{status:"PENDING", requestId}`
+    //     (admission is additionally marked `phase:"reservationAccepted"`) — FE는 폴링을 계속한다.
+    //   - execution terminal → `{status:"RESOLVED", requestId, ok, type, reason?, result}` — `result`는
+    //     엔진이 발행한 [opensamguk.common.wire.TurnDaemonCommandResult] JSON 객체 그대로(타입별 부가
+    //     필드 보존). deny(ok=false)도 RESOLVED로 돌아온다 — 성공 토스트 위조 금지의 근거 데이터.
     //   - 손상 페이로드 → PENDING (RESOLVED를 위조하지 않는다).
 
     /** 키 부재/손상 시의 PENDING 폴링 응답. */
-    private fun pending(requestId: String): ResponseEntity<Any> =
-        ResponseEntity.ok(linkedMapOf<String, Any?>("status" to "PENDING", "requestId" to requestId))
+    private fun pending(requestId: String, phase: String? = null): ResponseEntity<Any> =
+        ResponseEntity.ok(
+            linkedMapOf<String, Any?>("status" to "PENDING", "requestId" to requestId).apply {
+                phase?.let { this["phase"] = it }
+            },
+        )
+
+    private data class DecodedCommandResult(
+        val envelope: TurnDaemonEventEnvelope,
+        val result: opensamguk.common.wire.TurnDaemonCommandResult,
+    )
+
+    private fun decodeCommandResult(payload: String?): DecodedCommandResult? {
+        if (payload == null) return null
+        val envelope = runCatching {
+            WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), payload)
+        }.getOrNull() ?: return null
+        val result = (envelope.event as? TurnDaemonEvent.CommandResult)?.result ?: return null
+        return DecodedCommandResult(envelope, result)
+    }
+
+    private fun isPendingReservation(result: opensamguk.common.wire.TurnDaemonCommandResult?): Boolean =
+        result is CommandLifecycleResult &&
+            result.commandKind == "RESERVED_TURN" &&
+            result.type != "executionApplied" &&
+            result.type != "executionRejected"
 
     @GetMapping("/result/{requestId}")
     fun commandResult(@PathVariable requestId: String): ResponseEntity<Any> {
-        val payload = redis.opsForValue().get(commandResultKey(profile, worldId, requestId))
-            ?: commandResults.findResultPayload(worldId, requestId)
-            ?: return pending(requestId)
-
-        // 엔진과 같은 WireJson 디코더로 검증 — 손상/비정형 페이로드는 RESOLVED를 위조하지 않는다.
-        val envelope = try {
-            WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), payload)
-        } catch (_: Exception) {
-            val fallback = commandResults.findResultPayload(worldId, requestId) ?: return pending(requestId)
-            try {
-                WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), fallback)
-            } catch (_: Exception) {
-                return pending(requestId)
-            }
+        val redisResult = decodeCommandResult(redis.opsForValue().get(commandResultKey(profile, worldId, requestId)))
+        val durableResult = if (redisResult == null || isPendingReservation(redisResult.result)) {
+            decodeCommandResult(commandResults.findResultPayload(worldId, requestId))
+        } else {
+            null
         }
-        val result = (envelope.event as? TurnDaemonEvent.CommandResult)?.result
-            ?: return pending(requestId)
+        val selected = when {
+            isPendingReservation(redisResult?.result) && !isPendingReservation(durableResult?.result) -> durableResult
+            redisResult != null -> redisResult
+            else -> durableResult
+        } ?: return pending(requestId)
+        if (isPendingReservation(selected.result)) {
+            return pending(requestId, phase = selected.result.type)
+        }
+        val envelope = selected.envelope
+        val result = selected.result
 
         // result를 엔진과 동일한 WireJson 인코딩으로 재방출해 Jackson 트리로 — `type`/`ok`가 항상
         // 포함되고(커스텀 serializer가 encodeDefaults 강제) 타입별 부가 필드가 그대로 보존된다.

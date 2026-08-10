@@ -50,6 +50,7 @@ class PrecheckFullCrossCallSiteTest {
     private val registry = CommandRegistry(pipeline)
 
     private val ACTION = "che_농지개간"
+    private val RECRUIT_ACTION = "che_징병"
     private val GENERAL_ID = 10
     private val CITY_ID = 5
     private val NATION_ID = 1
@@ -64,35 +65,49 @@ class PrecheckFullCrossCallSiteTest {
         val gold: Int = 4000,
         val rice: Int = 3000,                // < generalMinimumRice(500) is never used; 헌납 funds clear
         val cityNationId: Int = NATION_ID,   // != actor nation -> OccupiedCity deny
+        val cityId: Int = CITY_ID,
+        val cityLevel: Int = 5,
+        val cityPopulation: Int = 100_000,
         val supplyState: Int = 1,            // 0 -> SuppliedCity deny
         val agri: Int = 4000,
         val agriMax: Int = 8000,             // agri == agriMax -> RemainCityCapacity deny
         val wall: Int = 2000,
         val wallMax: Int = 8000,             // wall == wallMax -> RemainCityCapacity deny (성벽 보수)
         val officerLevel: Int = 5,           // 12 -> NotLord deny (하야); != 12 -> BeChief deny (포상)
+        val nationTech: Int = 0,
+        val mapName: String = "che",
+        val unitSet: String? = null,
     )
+
+    private fun Fixture.worldConfig(): Map<String, Any?> = linkedMapOf<String, Any?>(
+        "startYear" to START_YEAR,
+        "mapName" to mapName,
+    ).apply {
+        unitSet?.let { this["unitSet"] = it }
+    }
 
     // --- game-api side: project the fixture into JPA read entities + stub the repos ---
 
     private fun precheckService(f: Fixture): CommandPrecheckService {
         val general = GeneralReadEntity(
-            id = GENERAL_ID, nationId = NATION_ID, cityId = CITY_ID,
+            id = GENERAL_ID, nationId = NATION_ID, cityId = f.cityId,
             leadership = 70, strength = 30, intel = 95, injury = 0,
             experience = 1200, dedication = 900, officerLevel = f.officerLevel,
             gold = f.gold, rice = f.rice,
             meta = linkedMapOf("explevel" to 4, "intel_exp" to 12, "max_domestic_critical" to 3.5),
         )
         val city = CityReadEntity(
-            id = CITY_ID, nationId = f.cityNationId, level = 5,
+            id = f.cityId, nationId = f.cityNationId, level = f.cityLevel,
             commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
             supplyState = f.supplyState, frontState = 0, trust = 82.0,
             wall = f.wall, wallMax = f.wallMax,
+            population = f.cityPopulation,
             meta = linkedMapOf(),
         )
-        val nation = NationReadEntity(id = NATION_ID, level = 7, capitalCityId = CITY_ID)
+        val nation = NationReadEntity(id = NATION_ID, level = 7, capitalCityId = f.cityId, tech = f.nationTech.toDouble())
         val worldState = WorldStateReadEntity(
             id = 1, scenarioCode = "scenario_2", currentYear = YEAR, currentMonth = MONTH,
-            tickSeconds = 3600, config = linkedMapOf("startYear" to START_YEAR), meta = linkedMapOf(),
+            tickSeconds = 3600, config = f.worldConfig(), meta = linkedMapOf(),
         )
 
         val generals = mock(GeneralReadRepository::class.java)
@@ -101,7 +116,8 @@ class PrecheckFullCrossCallSiteTest {
         val diplomacies = mock(DiplomacyReadRepository::class.java)
         val worldStates = mock(WorldStateReadRepository::class.java)
         `when`(generals.findById(GENERAL_ID)).thenReturn(Optional.of(general))
-        `when`(cities.findById(CITY_ID)).thenReturn(Optional.of(city))
+        `when`(cities.findById(f.cityId)).thenReturn(Optional.of(city))
+        `when`(cities.findByNationIdOrderByIdAsc(NATION_ID)).thenReturn(listOf(city))
         `when`(nations.findById(NATION_ID)).thenReturn(Optional.of(nation))
         `when`(diplomacies.findBySrcNationId(NATION_ID)).thenReturn(emptyList())
         `when`(worldStates.findAll()).thenReturn(listOf(worldState))
@@ -113,27 +129,36 @@ class PrecheckFullCrossCallSiteTest {
 
     private fun engineHandler(f: Fixture): Pair<ReservedTurnHandler, InMemoryTurnWorld> {
         val general = TurnGeneral(
-            id = GENERAL_ID, name = "g$GENERAL_ID", nationId = NATION_ID, cityId = CITY_ID, troopId = 0,
+            id = GENERAL_ID, name = "g$GENERAL_ID", nationId = NATION_ID, cityId = f.cityId, troopId = 0,
             stats = GeneralStats(leadership = 70, strength = 30, intelligence = 95),
             experience = 1200, dedication = 900, officerLevel = f.officerLevel,
             gold = f.gold, rice = f.rice, injury = 0, turnTime = t0,
             meta = linkedMapOf("explevel" to 4, "intel_exp" to 12, "max_domestic_critical" to 3.5),
         )
         val city = City(
-            id = CITY_ID, name = "c$CITY_ID", nationId = f.cityNationId, level = 5,
+            id = f.cityId, name = "c${f.cityId}", nationId = f.cityNationId, level = f.cityLevel,
             commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
             supplyState = f.supplyState, frontState = 0,
             wall = f.wall, wallMax = f.wallMax,
+            population = f.cityPopulation,
             meta = linkedMapOf("trust" to 82),   // engine City has no trust column; lives in meta
         )
         // The actor's own nation; a second nation 2 exists so the OccupiedCity-deny fixture (city
         // owned by nation 2) resolves a real nation row, matching the game-api stub world.
         val nations = listOf(
-            Nation(id = NATION_ID, name = "n$NATION_ID", color = "#000", level = 7, capitalCityId = CITY_ID),
+            Nation(
+                id = NATION_ID,
+                name = "n$NATION_ID",
+                color = "#000",
+                level = 7,
+                capitalCityId = f.cityId,
+                tech = f.nationTech.toDouble(),
+            ),
             Nation(id = 2, name = "n2", color = "#111", level = 7, capitalCityId = null),
         )
         val state = TurnWorldState(
             id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+            config = f.worldConfig(),
         )
         val world = InMemoryTurnWorld(WorldSnapshot(state, listOf(general), listOf(city), nations, worldId = opensamguk.common.world.WorldId((state).id)))
         return ReservedTurnHandler(world, registry, HIDDEN_SEED, START_YEAR) to world
@@ -179,6 +204,65 @@ class PrecheckFullCrossCallSiteTest {
         assertDenyAgreement(Fixture(agri = 8000, agriMax = 8000), "농지 개간은 충분합니다.", "RemainCityCapacity")
     }
 
+    @Test
+    fun `recruit numeric string amount is normalized identically before PRECHECK and FULL capacity checks`() {
+        assertRecruitDenyAgreement(
+            fixture = Fixture(),
+            args = linkedMapOf("crewType" to 1100, "amount" to "999999"),
+            argJson = """{"crewType":1100,"amount":"999999"}""",
+            reason = "주민이 부족합니다.",
+            constraintName = "ReqCityCapacity",
+        )
+    }
+
+    @Test
+    fun `recruit malformed crewType and amount are rejected identically before execution`() {
+        assertRecruitDenyAgreement(
+            fixture = Fixture(),
+            args = linkedMapOf("crewType" to "1100", "amount" to 100),
+            argJson = """{"crewType":"1100","amount":100}""",
+            reason = "인자가 올바르지 않습니다.",
+            constraintName = null,
+        )
+        assertRecruitDenyAgreement(
+            fixture = Fixture(),
+            args = linkedMapOf("crewType" to 1100, "amount" to -1),
+            argJson = """{"crewType":1100,"amount":-1}""",
+            reason = "인자가 올바르지 않습니다.",
+            constraintName = null,
+        )
+    }
+
+    @Test
+    fun `recruit blank unitSet fails closed at both real call sites`() {
+        assertRecruitDenyAgreement(
+            fixture = Fixture(unitSet = "  "),
+            args = linkedMapOf("crewType" to 1100, "amount" to 100),
+            argJson = """{"crewType":1100,"amount":100}""",
+            reason = "현재 선택할 수 없는 병종입니다.",
+            constraintName = "AvailableRecruitCrewType",
+        )
+    }
+
+    @Test
+    fun `recruit map-specific city and region requirements use miniche_b at both call sites`() {
+        assertRecruitAvailableAgreement(
+            fixture = Fixture(mapName = "miniche_b", nationTech = 3000, cityId = 1),
+            args = linkedMapOf("crewType" to 1104, "amount" to 100),
+            argJson = """{"crewType":1104,"amount":100}""",
+        )
+        assertRecruitAvailableAgreement(
+            fixture = Fixture(mapName = "miniche_b", nationTech = 3000, cityId = 3),
+            args = linkedMapOf("crewType" to 1204, "amount" to 100),
+            argJson = """{"crewType":1204,"amount":100}""",
+        )
+        assertRecruitAvailableAgreement(
+            fixture = Fixture(mapName = "miniche_b", nationTech = 1000, cityId = 1),
+            args = linkedMapOf("crewType" to 1101, "amount" to 100),
+            argJson = """{"crewType":1101,"amount":100}""",
+        )
+    }
+
     // =====================================================================================
     // P2 SAMPLE — the SAME cross-call-site invariant for a representative command per family
     // (develop / trade / personnel / nation). Each drives the REAL game-api precheck AND the
@@ -211,14 +295,14 @@ class PrecheckFullCrossCallSiteTest {
 
     @Test
     fun `P2 trade che_헌납 AVAILABLE both real call sites agree go`() {
-        assertAvailableAgreement("che_헌납", Fixture(), tributeRiceArgs)
+        assertAvailableAgreement("che_헌납", Fixture(), tributeRiceArgs, tributeRiceArgsMap)
     }
 
     @Test
     fun `P2 trade che_헌납 SuppliedCity deny both real call sites agree`() {
         assertDenyAgreement(
             Fixture(supplyState = 0), "고립된 도시입니다.", "SuppliedCity",
-            action = "che_헌납", argJson = tributeRiceArgs,
+            action = "che_헌납", argJson = tributeRiceArgs, args = tributeRiceArgsMap,
         )
     }
 
@@ -247,6 +331,7 @@ class PrecheckFullCrossCallSiteTest {
             "BeChief",
             action = "che_포상",
             argJson = rewardRiceArgs,
+            args = rewardRiceArgsMap,
         )
     }
 
@@ -255,8 +340,13 @@ class PrecheckFullCrossCallSiteTest {
      * agree on "go": game-api precheck == [PrecheckResult.Available] AND game-engine full resolves
      * the requested action (did NOT fall back to 휴식, carries no deny reason).
      */
-    private fun assertAvailableAgreement(action: String, fixture: Fixture, argJson: String = "") {
-        val precheck = precheckService(fixture).precheck(GENERAL_ID, action)
+    private fun assertAvailableAgreement(
+        action: String,
+        fixture: Fixture,
+        argJson: String = "",
+        args: Map<String, Any?> = emptyMap(),
+    ) {
+        val precheck = precheckService(fixture).precheck(GENERAL_ID, action, args)
         assertEquals(PrecheckResult.Available, precheck, "game-api precheck: AVAILABLE ($action)")
 
         val (handler, _) = engineHandler(fixture)
@@ -276,9 +366,10 @@ class PrecheckFullCrossCallSiteTest {
         constraintName: String,
         action: String = ACTION,
         argJson: String = "",
+        args: Map<String, Any?> = emptyMap(),
     ) {
         // game-api PRECHECK -> Blocked(reason, constraintName)
-        val precheck = precheckService(fixture).precheck(GENERAL_ID, action)
+        val precheck = precheckService(fixture).precheck(GENERAL_ID, action, args)
         val blocked = assertIs<PrecheckResult.Blocked>(precheck, "game-api precheck denies ($action)")
         assertEquals(reason, blocked.reason, "game-api deny reason ($action)")
         assertEquals(constraintName, blocked.constraintName, "game-api constraintName ($action)")
@@ -295,8 +386,43 @@ class PrecheckFullCrossCallSiteTest {
             "precheck reason == full reason (one shared constraint library, two real call sites)")
     }
 
+    private fun assertRecruitAvailableAgreement(
+        fixture: Fixture,
+        args: Map<String, Any?>,
+        argJson: String,
+    ) {
+        val precheck = precheckService(fixture).precheck(GENERAL_ID, RECRUIT_ACTION, args)
+        assertEquals(PrecheckResult.Available, precheck, "game-api precheck: recruit AVAILABLE")
+
+        val (handler, _) = engineHandler(fixture)
+        val outcome = handler.handle(GENERAL_ID, ReservedTurn(RECRUIT_ACTION, argJson), YEAR, MONTH, "12:34")
+        assertFalse(outcome.fellBack, "game-engine full: recruit Allow")
+        assertEquals(RECRUIT_ACTION, outcome.definition.key)
+    }
+
+    private fun assertRecruitDenyAgreement(
+        fixture: Fixture,
+        args: Map<String, Any?>,
+        argJson: String,
+        reason: String,
+        constraintName: String?,
+    ) {
+        val precheck = precheckService(fixture).precheck(GENERAL_ID, RECRUIT_ACTION, args)
+        val blocked = assertIs<PrecheckResult.Blocked>(precheck, "game-api precheck denies recruit")
+        assertEquals(reason, blocked.reason)
+        assertEquals(constraintName, blocked.constraintName)
+
+        val (handler, _) = engineHandler(fixture)
+        val outcome = handler.handle(GENERAL_ID, ReservedTurn(RECRUIT_ACTION, argJson), YEAR, MONTH, "12:34")
+        assertTrue(outcome.fellBack, "game-engine full denies recruit")
+        assertEquals(reason, outcome.denyReason)
+        assertEquals(blocked.reason, outcome.denyReason)
+    }
+
     private companion object {
         const val tributeRiceArgs = """{"isGold":false,"amount":1000}"""
         const val rewardRiceArgs = """{"isGold":false,"amount":1000,"destGeneralID":99}"""
+        val tributeRiceArgsMap = linkedMapOf<String, Any?>("isGold" to false, "amount" to 1000)
+        val rewardRiceArgsMap = linkedMapOf<String, Any?>("isGold" to false, "amount" to 1000, "destGeneralID" to 99)
     }
 }

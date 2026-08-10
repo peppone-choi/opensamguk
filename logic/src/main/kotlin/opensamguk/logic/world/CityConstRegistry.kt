@@ -29,6 +29,7 @@ sealed interface CityConstVariant {
     fun byName(name: String): CityInitialDetail?
     /** Mirrors CityConstBase::byRegion (the last-wins quirk: LAST city encountered per region). */
     fun byRegion(region: Int): CityInitialDetail?
+    fun regionIdByName(name: String): Int?
     /** Inherited from the base ($buildInit/$buildInitCommon are NOT overridden by the map files). */
     val buildInit: Map<String, Map<String, Int>>
     val buildInitCommon: Map<String, Int>
@@ -41,6 +42,7 @@ internal object CheCityConst : CityConstVariant {
     override fun byId(id: Int): CityInitialDetail? = CityConst.byId(id)
     override fun byName(name: String): CityInitialDetail? = CityConst.byName(name)
     override fun byRegion(region: Int): CityInitialDetail? = CityConst.byRegion(region)
+    override fun regionIdByName(name: String): Int? = CityConst.regionMap[name] as? Int
     override val buildInit: Map<String, Map<String, Int>> get() = CityConst.buildInit
     override val buildInitCommon: Map<String, Int> get() = CityConst.buildInitCommon
 }
@@ -59,11 +61,14 @@ internal class InitCityOverrideVariant(
     override fun byId(id: Int): CityInitialDetail? = generated.constID[id]
     override fun byName(name: String): CityInitialDetail? = generated.constName[name]
     override fun byRegion(region: Int): CityInitialDetail? = generated.constRegion[region]
+    override fun regionIdByName(name: String): Int? = CityConst.regionMap[name] as? Int
     override val buildInit: Map<String, Map<String, Int>> get() = CityConst.buildInit
     override val buildInitCommon: Map<String, Int> get() = CityConst.buildInitCommon
 }
 
 object CityConstRegistry {
+    const val DEFAULT_MAP_NAME = "che"
+
     /** 'miniche' $initCity override — `scenario/map/miniche.php`, 78 rows, faithful transcription. */
     private val minicheInitCity: List<RawCity> = listOf(
         RawCity(1, "낙양", "특", 8357, 117, 120, 100, 121, 124, "중원", 285, 176, listOf("하내", "홍농", "호로")),
@@ -162,4 +167,20 @@ object CityConstRegistry {
 
     /** The active variant for [mapName], or null if unknown (non-throwing lookup). */
     fun find(mapName: String): CityConstVariant? = variants[mapName]
+
+    fun activeMapName(config: Map<String, Any?>, meta: Map<String, Any?>): String =
+        stringField(config["mapName"])
+            ?: mapField(config["map"], "mapName")
+            ?: stringField(meta["mapName"])
+            ?: mapField(meta["map"], "mapName")
+            ?: DEFAULT_MAP_NAME
+
+    private fun mapField(raw: Any?, key: String): String? = when (raw) {
+        is Map<*, *> -> (raw[key] as? String)?.takeIf { it.isNotBlank() }
+        is String -> raw.takeIf { key == "mapName" && it.isNotBlank() }
+        else -> null
+    }
+
+    private fun stringField(raw: Any?): String? =
+        (raw as? String)?.takeIf { it.isNotBlank() }
 }

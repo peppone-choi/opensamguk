@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.ai.families.RatesPromoFamily
@@ -485,6 +486,44 @@ class AiTurnAdapterMaterializeTest {
         // the RAW recruit args the body emits — a crewType id (>=1000) + a positive crew amount.
         assertTrue((chosen.args["crewType"] as? Number)?.toInt()?.let { it >= 1000 } == true, "a real crewType id emitted")
         assertTrue((chosen.args["amount"] as? Number)?.toInt()?.let { it > 0 } == true, "a positive crew amount emitted")
+    }
+
+    @Test
+    fun `recruit candidate scores use miniche_b city ids instead of che city ids`() {
+        val state = baseState().copy(config = linkedMapOf("mapName" to "miniche_b", "unitSet" to "che"))
+        val general = general(id = 57, cityId = 1, leadership = 95, strength = 95, intel = 20)
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(general),
+                listOf(frontCapital().copy(id = 1, name = "낙양", nationId = 1)),
+                listOf(nation().copy(tech = 3000.0)),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+
+        val scores = adapter(world).recruitCrewScoresFor(general, 1, GameUnitConst.T_FOOTMAN, 3000, YEAR)
+
+        assertTrue(scores.any { it.first == 1104 }, "miniche_b city 1 is 낙양, so the 1104 city gate is eligible")
+    }
+
+    @Test
+    fun `recruit candidate scores fail closed for an unsupported active unit set`() {
+        val state = baseState().copy(config = linkedMapOf("unitSet" to "not-ported"))
+        val general = general(id = 58, cityId = CAP, leadership = 95, strength = 95, intel = 20)
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(general),
+                listOf(frontCapital()),
+                listOf(nation().copy(tech = 3000.0)),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+
+        val scores = adapter(world).recruitCrewScoresFor(general, 1, GameUnitConst.T_FOOTMAN, 3000, YEAR)
+
+        assertTrue(scores.isEmpty(), "an unsupported set must not silently enumerate che units")
     }
 
     // ── (trade) a general with a gold/rice imbalance at a trading city fires a real che_군량매매 ──

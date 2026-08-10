@@ -1,6 +1,7 @@
 package opensamguk.logic.actions.develop
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.military.UnitSetTable
@@ -101,11 +102,11 @@ class CheDanryeon(
         // PHP GameUnitConst::$typeData = [T_FOOTMAN=>'병', T_ARCHER=>'궁병', T_CAVALRY=>'기병',
         //   T_WIZARD=>'귀병', T_SIEGE=>'차병']
         val armTypeName = when (unit?.armType) {
-            UnitSetTable.T_FOOTMAN -> "보병"
-            UnitSetTable.T_ARCHER -> "궁병"
-            UnitSetTable.T_CAVALRY -> "기병"
-            UnitSetTable.T_WIZARD -> "귀병"
-            UnitSetTable.T_SIEGE -> "차병"
+            GameUnitConst.T_FOOTMAN -> "보병"
+            GameUnitConst.T_ARCHER -> "궁병"
+            GameUnitConst.T_CAVALRY -> "기병"
+            GameUnitConst.T_WIZARD -> "귀병"
+            GameUnitConst.T_SIEGE -> "차병"
             else -> "보병"
         }
 

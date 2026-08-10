@@ -1,5 +1,6 @@
 package opensamguk.logic.actions.military
 
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
@@ -35,10 +36,10 @@ fun addDexForUnit(
     exp0: Double,
 ): General {
     var armType = crewType.armType
-    if (armType == UnitSetTable.T_CASTLE) armType = UnitSetTable.T_SIEGE
+    if (armType == GameUnitConst.T_CASTLE) armType = GameUnitConst.T_SIEGE
     if (armType < 0) return general
     var exp = exp0
-    if (armType == UnitSetTable.T_WIZARD || armType == UnitSetTable.T_SIEGE) exp *= 0.9
+    if (armType == GameUnitConst.T_WIZARD || armType == GameUnitConst.T_SIEGE) exp *= 0.9
     exp = pipeline.onCalcStat(general, "addDex", exp, mapOf("armType" to armType))
     val dexKey = "dex$armType"
     return general.copy(meta = withMeta(general.meta, dexKey to metaDouble(general.meta, dexKey) + exp))

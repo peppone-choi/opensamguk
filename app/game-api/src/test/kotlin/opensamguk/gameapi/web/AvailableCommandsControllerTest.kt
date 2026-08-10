@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
+import opensamguk.gameapi.precheck.RecruitAvailability
+import opensamguk.gameapi.precheck.RecruitCrewTypeAvailability
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -135,5 +137,49 @@ class AvailableCommandsControllerTest {
 
         mockMvc().perform(get("/api/commands/available").param("generalId", "999").with(principal(7L)))
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `recruit availability is exposed as a typed server contract`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        `when`(precheck.recruitAvailability(10)).thenReturn(
+            RecruitAvailability(
+                unitSet = "che",
+                supported = true,
+                crewTypes = listOf(
+                    RecruitCrewTypeAvailability(1100, available = true),
+                    RecruitCrewTypeAvailability(1104, available = false, reason = "현재 선택할 수 없는 병종입니다."),
+                ),
+            ),
+        )
+
+        mockMvc().perform(
+            get("/api/commands/recruit/availability")
+                .param("generalId", "10")
+                .with(principal(7L)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.unitSet").value("che"))
+            .andExpect(jsonPath("$.crewTypes[0].crewType").value(1100))
+            .andExpect(jsonPath("$.crewTypes[1].available").value(false))
+            .andExpect(jsonPath("$.crewTypes[1].reason").value("현재 선택할 수 없는 병종입니다."))
+    }
+
+    @Test
+    fun `recruit availability requires an authenticated principal`() {
+        mockMvc().perform(get("/api/commands/recruit/availability").param("generalId", "10"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `recruit availability rejects a foreign generalId even for an authenticated caller`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+
+        mockMvc().perform(
+            get("/api/commands/recruit/availability")
+                .param("generalId", "999")
+                .with(principal(7L)),
+        ).andExpect(status().isForbidden)
     }
 }

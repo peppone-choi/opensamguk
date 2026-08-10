@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.common.world.WorldId
 import opensamguk.common.wire.NationSettingResult
 import opensamguk.common.wire.PlaceBetFail
+import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
@@ -136,6 +137,90 @@ class CommandResultLookupTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.committedWorldVersion").value(34))
+    }
+
+    @Test
+    fun `reservation admission is pending until execution has a terminal result`() {
+        val accepted = storedPayload(
+            "req-admission",
+            CommandLifecycleResult(
+                type = "reservationAccepted",
+                ok = true,
+                commandKind = "RESERVED_TURN",
+                actionCode = "che_징병",
+                generalId = 10,
+                turnIdx = 0,
+            ),
+        )
+        stubKey("req-admission", accepted)
+        stubDurable("req-admission", accepted)
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-admission"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.phase").value("reservationAccepted"))
+            .andExpect(jsonPath("$.ok").doesNotExist())
+    }
+
+    @Test
+    fun `queue mutation remains a resolved admission and is not presented as execution`() {
+        val queueMutation = storedPayload(
+            "req-queue",
+            CommandLifecycleResult(
+                type = "queueMutation",
+                ok = true,
+                commandKind = "QUEUE_MUTATION",
+                actionCode = "nationBulk",
+                generalId = 10,
+            ),
+        )
+        stubKey("req-queue", queueMutation)
+        stubDurable("req-queue", queueMutation)
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-queue"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.type").value("queueMutation"))
+            .andExpect(jsonPath("$.result.commandKind").value("QUEUE_MUTATION"))
+    }
+
+    @Test
+    fun `execution result supersedes a stale Redis admission without deleting the durable admission row`() {
+        stubKey(
+            "req-executed",
+            storedPayload(
+                "req-executed",
+                CommandLifecycleResult(
+                    type = "reservationAccepted",
+                    ok = true,
+                    commandKind = "RESERVED_TURN",
+                    actionCode = "che_징병",
+                    generalId = 10,
+                    turnIdx = 0,
+                ),
+            ),
+        )
+        stubDurable(
+            "req-executed",
+            storedPayload(
+                "req-executed",
+                CommandLifecycleResult(
+                    type = "executionApplied",
+                    ok = true,
+                    commandKind = "RESERVED_TURN",
+                    actionCode = "che_징병",
+                    generalId = 10,
+                    turnIdx = 0,
+                ),
+                committedWorldVersion = 35,
+            ),
+        )
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-executed"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.type").value("executionApplied"))
+            .andExpect(jsonPath("$.committedWorldVersion").value(35))
     }
 
     @Test

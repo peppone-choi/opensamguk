@@ -27,6 +27,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.RequestPostProcessor
@@ -119,6 +120,29 @@ class CommandControllerSecurityTest {
             .andExpect(jsonPath("$.status").value("AVAILABLE"))
 
         verify(precheck).precheck(10, "che_농지개간")
+    }
+
+    @Test
+    fun `selected recruit args reach precheck while forecast reservation stays queued`() {
+        val argJson = """{"crewType":1104,"amount":100}"""
+        val args = linkedMapOf<String, Any?>("crewType" to 1104, "amount" to 100)
+        `when`(precheck.precheck(10, "che_징병", args)).thenReturn(
+            PrecheckResult.Blocked("현재 선택할 수 없는 병종입니다.", "AvailableRecruitCrewType"),
+        )
+        `when`(reserve.reserve(10, "che_징병", 0, argJson)).thenReturn(ReserveResult("req-recruit", 0))
+
+        mockMvc().perform(
+            post("/api/command/{code}", "che_징병")
+                .param("generalId", "10")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(argJson),
+        )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("AVAILABLE"))
+            .andExpect(jsonPath("$.requestId").value("req-recruit"))
+
+        verify(precheck).precheck(10, "che_징병", args)
+        verify(reserve).reserve(10, "che_징병", 0, argJson)
     }
 
     @Test

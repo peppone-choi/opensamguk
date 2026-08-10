@@ -16,7 +16,9 @@ import org.mockito.Mockito.`when`
 import java.util.Optional
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 /**
  * Task E2 — no-DB unit test of [CommandPrecheckService]. The four JPA READ repos are stubbed
@@ -45,7 +47,7 @@ class CommandPrecheckServiceTest {
         CityReadEntity(
             id = 5, nationId = nationId, level = 5,
             commerce = 3000, commerceMax = 8000, agriculture = agri, agricultureMax = agriMax,
-            supplyState = supplyState, frontState = 0, trust = 82.0,
+            supplyState = supplyState, frontState = 0, trust = 82.0, population = 50_000,
             meta = linkedMapOf(),
         )
 
@@ -80,6 +82,73 @@ class CommandPrecheckServiceTest {
     fun `owned supplied funded city with che_농지개간 is AVAILABLE`() {
         val result = service().precheck(generalId = 10, actionCode = "che_농지개간")
         assertEquals(PrecheckResult.Available, result)
+    }
+
+    @Test
+    fun `selected recruit crewType reaches the precheck instead of defaulting to footman`() {
+        val result = service().precheck(
+            generalId = 10,
+            actionCode = "che_징병",
+            args = linkedMapOf("crewType" to 1104, "amount" to 100),
+        )
+
+        val blocked = assertIs<PrecheckResult.Blocked>(result)
+        assertEquals("현재 선택할 수 없는 병종입니다.", blocked.reason)
+        assertEquals("AvailableRecruitCrewType", blocked.constraintName)
+    }
+
+    @Test
+    fun `recruit precheck normalizes a numeric amount string before it evaluates capacity`() {
+        val result = service().precheck(
+            generalId = 10,
+            actionCode = "che_징병",
+            args = linkedMapOf("crewType" to 1100, "amount" to "999999"),
+        )
+
+        val blocked = assertIs<PrecheckResult.Blocked>(result)
+        assertEquals("주민이 부족합니다.", blocked.reason)
+        assertEquals("ReqCityCapacity", blocked.constraintName)
+    }
+
+    @Test
+    fun `recruit precheck rejects the same malformed args as full execution`() {
+        for (args in listOf(
+            linkedMapOf<String, Any?>("crewType" to "1100", "amount" to 100),
+            linkedMapOf<String, Any?>("crewType" to 1100, "amount" to -1),
+        )) {
+            val result = service().precheck(generalId = 10, actionCode = "che_징병", args = args)
+            val blocked = assertIs<PrecheckResult.Blocked>(result)
+            assertEquals("인자가 올바르지 않습니다.", blocked.reason)
+            assertEquals(null, blocked.constraintName)
+        }
+    }
+
+    @Test
+    fun `recruit availability exposes typed restrictions and fails closed for an unsupported set`() {
+        val availability = service().recruitAvailability(10)!!
+        assertTrue(availability.supported)
+        assertTrue(availability.crewTypes.single { it.crewType == 1100 }.available)
+        val elite = availability.crewTypes.single { it.crewType == 1104 }
+        assertFalse(elite.available)
+        assertEquals("현재 선택할 수 없는 병종입니다.", elite.reason)
+
+        val unsupportedWorld = worldState().apply {
+            config = linkedMapOf(
+                "startYear" to 190,
+                "map" to linkedMapOf("unitSet" to "che"),
+                "unitSet" to "not-ported",
+            )
+        }
+        val unsupported = service(worldStateEntity = unsupportedWorld).recruitAvailability(10)!!
+        assertFalse(unsupported.supported)
+        assertTrue(unsupported.crewTypes.isEmpty())
+
+        val blankWorld = worldState().apply {
+            config = linkedMapOf("startYear" to 190, "unitSet" to "  ")
+        }
+        val blank = service(worldStateEntity = blankWorld).recruitAvailability(10)!!
+        assertFalse(blank.supported)
+        assertTrue(blank.crewTypes.isEmpty())
     }
 
     @Test

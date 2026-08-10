@@ -1,9 +1,12 @@
 package opensamguk.logic.actions.military
 
+import opensamguk.common.constants.GameUnitConst
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * Port-faithful test for the declarative unit-set stat table + getTechCost curve.
@@ -14,9 +17,9 @@ class UnitSetTableTest {
 
     @Test
     fun `default crewtype is 보병 1100 footman with cost 9 rice 9`() {
-        val u = UnitSetTable.byId(UnitSetTable.DEFAULT_CREWTYPE)!!
+        val u = UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         assertEquals(1100, u.id)
-        assertEquals(UnitSetTable.T_FOOTMAN, u.armType)
+        assertEquals(GameUnitConst.T_FOOTMAN, u.armType)
         assertEquals("보병", u.name)
         assertEquals(9, u.cost)
         assertEquals(9, u.rice)
@@ -24,8 +27,8 @@ class UnitSetTableTest {
 
     @Test
     fun `castle 1000 is a castle armType with cost 99 rice 9`() {
-        val u = UnitSetTable.byId(UnitSetTable.CREWTYPE_CASTLE)!!
-        assertEquals(UnitSetTable.T_CASTLE, u.armType)
+        val u = UnitSetTable.byId(GameUnitConst.CREWTYPE_CASTLE)!!
+        assertEquals(GameUnitConst.T_CASTLE, u.armType)
         assertEquals(99, u.cost)
         assertEquals(9, u.rice)
     }
@@ -34,19 +37,19 @@ class UnitSetTableTest {
     fun `several unit-set cost rice armType values match GameUnitConstBase`() {
         // 맹수병 (1306): cavalry, the priciest unit cost 16 rice 16
         UnitSetTable.byId(1306)!!.let {
-            assertEquals(UnitSetTable.T_CAVALRY, it.armType); assertEquals(16, it.cost); assertEquals(16, it.rice)
+            assertEquals(GameUnitConst.T_CAVALRY, it.armType); assertEquals(16, it.cost); assertEquals(16, it.rice)
         }
         // 충차 (1501): siege cost 18 rice 5
         UnitSetTable.byId(1501)!!.let {
-            assertEquals(UnitSetTable.T_SIEGE, it.armType); assertEquals(18, it.cost); assertEquals(5, it.rice)
+            assertEquals(GameUnitConst.T_SIEGE, it.armType); assertEquals(18, it.cost); assertEquals(5, it.rice)
         }
         // 궁병 (1200): archer cost 10 rice 10
         UnitSetTable.byId(1200)!!.let {
-            assertEquals(UnitSetTable.T_ARCHER, it.armType); assertEquals(10, it.cost); assertEquals(10, it.rice)
+            assertEquals(GameUnitConst.T_ARCHER, it.armType); assertEquals(10, it.cost); assertEquals(10, it.rice)
         }
         // 남귀병 (1405): wizard, the cheapest cost 8 rice 8
         UnitSetTable.byId(1405)!!.let {
-            assertEquals(UnitSetTable.T_WIZARD, it.armType); assertEquals(8, it.cost); assertEquals(8, it.rice)
+            assertEquals(GameUnitConst.T_WIZARD, it.armType); assertEquals(8, it.cost); assertEquals(8, it.rice)
         }
     }
 
@@ -54,6 +57,48 @@ class UnitSetTableTest {
     fun `table has 34 units and an absent id returns null`() {
         assertEquals(34, UnitSetTable.all().size)
         assertNull(UnitSetTable.byId(9999))
+    }
+
+    @Test
+    fun `unsupported unit set never aliases the che table`() {
+        assertNotNull(UnitSetTable.byId(unitSet = "che", id = 1100))
+        assertNull(UnitSetTable.byId(unitSet = "not-ported", id = 1100))
+    }
+
+    @Test
+    fun `a present blank unit set is unsupported while a missing unit set defaults to che`() {
+        assertEquals(UnitSetTable.CHE_UNIT_SET, UnitSetTable.activeUnitSet(emptyMap(), emptyMap()))
+
+        val blank = UnitSetTable.activeUnitSet(config = linkedMapOf("unitSet" to "   "), meta = emptyMap())
+        assertEquals("   ", blank)
+        assertNull(UnitSetTable.byId(blank, 1100))
+        assertTrue(UnitSetTable.all(blank).isEmpty())
+    }
+
+    @Test
+    fun `che unit rows follow the canonical GameUnitConst catalog`() {
+        val expected = GameUnitConst.all().values.map { unit ->
+            listOf(unit.id, unit.armType, unit.name, unit.cost, unit.rice)
+        }
+        val actual = UnitSetTable.all().map { unit ->
+            listOf(unit.id, unit.armType, unit.name, unit.cost, unit.rice)
+        }
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `flattened active unit set overrides a stale nested fallback`() {
+        val active = UnitSetTable.activeUnitSet(
+            config = linkedMapOf(
+                "map" to linkedMapOf("unitSet" to "che"),
+                "unitSet" to "not-ported",
+            ),
+            meta = emptyMap(),
+        )
+
+        assertEquals("not-ported", active)
+        assertNull(UnitSetTable.byId(active, 1100))
     }
 
     @Test

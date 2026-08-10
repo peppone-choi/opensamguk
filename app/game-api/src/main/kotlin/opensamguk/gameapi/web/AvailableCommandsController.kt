@@ -3,6 +3,7 @@ package opensamguk.gameapi.web
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
+import opensamguk.gameapi.precheck.RecruitCrewTypeAvailability
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
@@ -59,6 +60,12 @@ class AvailableCommandsController(
         val commandTable: List<CommandCategory>,
     )
 
+    data class RecruitAvailabilityResponse(
+        val result: Boolean,
+        val unitSet: String?,
+        val crewTypes: List<RecruitCrewTypeAvailability>,
+    )
+
     @GetMapping("/commands/available")
     fun availableCommands(
         @AuthenticationPrincipal userId: Long?,
@@ -88,5 +95,28 @@ class AvailableCommandsController(
             )
             .map { (category, values) -> CommandCategory(category, values) }
         return ResponseEntity.ok(AvailableCommandsResponse(result = true, commandTable = table))
+    }
+
+    @GetMapping("/commands/recruit/availability")
+    fun recruitAvailability(
+        @AuthenticationPrincipal userId: Long?,
+        @RequestParam(required = false) generalId: Int?,
+    ): ResponseEntity<Any> {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+        val resolvedId = resolver.resolveGeneralId(userId)
+            ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        if (generalId != null && generalId != resolvedId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        val availability = precheck.recruitAvailability(resolvedId)
+        return ResponseEntity.ok(
+            RecruitAvailabilityResponse(
+                result = availability?.supported == true,
+                unitSet = availability?.unitSet,
+                crewTypes = availability?.crewTypes ?: emptyList(),
+            ),
+        )
     }
 }

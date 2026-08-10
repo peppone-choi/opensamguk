@@ -2,6 +2,8 @@ package opensamguk.gameapi.precheck
 
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
+import opensamguk.logic.actions.military.RecruitAlgorithm
+import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.constraints.ConstraintResult
@@ -28,6 +30,18 @@ sealed interface PrecheckResult {
     data class Unknown(val missing: List<RequirementKey>) : PrecheckResult
 }
 
+data class RecruitCrewTypeAvailability(
+    val crewType: Int,
+    val available: Boolean,
+    val reason: String? = null,
+)
+
+data class RecruitAvailability(
+    val unitSet: String,
+    val supported: Boolean,
+    val crewTypes: List<RecruitCrewTypeAvailability>,
+)
+
 /**
  * Task E2 — `CommandPrecheckService`. Loads the actor's general (via [PrecheckStateViewFactory]),
  * derives `cityId`/`nationId` from it, builds a `ConstraintContext(mode=PRECHECK)` over the
@@ -42,10 +56,18 @@ class CommandPrecheckService(
     private val registry: CommandRegistry,
 ) {
     /** Run the precheck for [generalId] + [actionCode]. */
-    fun precheck(generalId: Int, actionCode: String): PrecheckResult {
+    fun precheck(generalId: Int, actionCode: String): PrecheckResult =
+        precheck(generalId, actionCode, emptyMap())
+
+    fun precheck(generalId: Int, actionCode: String, args: Map<String, Any?>): PrecheckResult {
         val state = stateViewFactory.build(generalId)
             ?: return PrecheckResult.Unknown(listOf(RequirementKey.General(generalId)))
-        return evaluate(state, registry.resolve(actionCode))
+        val definition = registry.resolve(actionCode)
+        val parsedArgs = runCatching { definition.parseArgsForGeneral(args, generalId) }.getOrNull()
+        if (parsedArgs == null || !definition.matchesArgsSchema(parsedArgs)) {
+            return PrecheckResult.Blocked(INVALID_ARGS_DENY_REASON)
+        }
+        return evaluate(state, definition, parsedArgs)
     }
 
     /**
@@ -62,24 +84,61 @@ class CommandPrecheckService(
         return definitions.associate { def -> def.key to evaluate(state, def) }
     }
 
+    fun recruitAvailability(generalId: Int): RecruitAvailability? {
+        val state = stateViewFactory.build(generalId) ?: return null
+        val unitSet = state.env["unitSet"] as? String ?: UnitSetTable.CHE_UNIT_SET
+        if (!UnitSetTable.isSupported(unitSet)) {
+            return RecruitAvailability(unitSet = unitSet, supported = false, crewTypes = emptyList())
+        }
+        val definition = registry.resolve("che_징병") as? RecruitAlgorithm
+            ?: return RecruitAvailability(unitSet = unitSet, supported = false, crewTypes = emptyList())
+        val crewTypes = UnitSetTable.all(unitSet).map { unit ->
+            val ctx = context(state, linkedMapOf("crewType" to unit.id, "amount" to 0))
+            val result = definition.crewTypeAvailability(ctx, state.view, unit.id)
+            when (result) {
+                ConstraintResult.Allow -> RecruitCrewTypeAvailability(unit.id, available = true)
+                is ConstraintResult.Deny -> RecruitCrewTypeAvailability(unit.id, available = false, reason = result.reason)
+                is ConstraintResult.Unknown -> RecruitCrewTypeAvailability(
+                    unit.id,
+                    available = false,
+                    reason = "현재 선택할 수 없는 병종입니다.",
+                )
+            }
+        }
+        return RecruitAvailability(unitSet = unitSet, supported = true, crewTypes = crewTypes)
+    }
+
     private fun evaluate(
         state: PrecheckStateViewFactory.PrecheckState,
         definition: GeneralActionDefinition,
+        args: Map<String, Any?> = emptyMap(),
     ): PrecheckResult {
-        val actor = state.actor
-        val ctx = ConstraintContext(
-            actorId = actor.id,
-            cityId = actor.cityId,
-            nationId = actor.nationId,
-            env = state.env,
-            mode = ConstraintMode.PRECHECK,
-        )
+        val ctx = context(state, args)
         val constraints = definition.buildConstraints(ctx)
         return when (val r = evaluateConstraints(constraints, ctx, state.view)) {
             ConstraintResult.Allow -> PrecheckResult.Available
             is ConstraintResult.Deny -> PrecheckResult.Blocked(r.reason, r.constraintName)
             is ConstraintResult.Unknown -> PrecheckResult.Unknown(r.missing)
         }
+    }
+
+    private fun context(
+        state: PrecheckStateViewFactory.PrecheckState,
+        args: Map<String, Any?> = emptyMap(),
+    ): ConstraintContext {
+        val actor = state.actor
+        return ConstraintContext(
+            actorId = actor.id,
+            cityId = actor.cityId,
+            nationId = actor.nationId,
+            args = args,
+            env = state.env,
+            mode = ConstraintMode.PRECHECK,
+        )
+    }
+
+    private companion object {
+        const val INVALID_ARGS_DENY_REASON = "인자가 올바르지 않습니다."
     }
 }
 

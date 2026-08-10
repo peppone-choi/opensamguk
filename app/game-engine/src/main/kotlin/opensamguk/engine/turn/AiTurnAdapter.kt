@@ -10,6 +10,7 @@ import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.military.RecruitAlgorithm
+import opensamguk.logic.actions.military.RecruitUnitAvailability
 import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.ai.AiDiplomacyRow
 import opensamguk.logic.ai.AiEnv
@@ -47,6 +48,8 @@ import opensamguk.logic.domestic.techLimit
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.StatCalc
 import opensamguk.logic.statview.WorldEnvBuilder
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
 import java.time.Duration
 
 private sealed interface AiStateDelta {
@@ -401,7 +404,7 @@ class AiTurnAdapter(
         val statCalc = decisionState.statCalc
 
         // (3) the F-BRIDGE candidate gate over the FULL-mode WorldStateViewAdapter.
-        val envMap = WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)
+        val envMap = commandEnvMap(state, year, month)
         val verdictHook = candidateVerdictHook(generalId, general.cityId, nationId, envMap)
         val candidateAllowedHook: (String, Map<String, Any?>) -> Boolean =
             { code, args -> verdictHook(code, args) is CandidateVerdict.Allow }
@@ -478,7 +481,7 @@ class AiTurnAdapter(
         val statCalc = decisionState.statCalc
         refreshDecisionState(instance, statCalc, rng)
 
-        val envMap = WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)
+        val envMap = commandEnvMap(state, year, month)
         val verdictHook = candidateVerdictHook(generalId, general.cityId, nationId, envMap)
         val candidateAllowedHook: (String, Map<String, Any?>) -> Boolean =
             { code, args -> verdictHook(code, args) is CandidateVerdict.Allow }
@@ -717,6 +720,16 @@ class AiTurnAdapter(
 
     internal fun nationTechOf(nationId: Int): Int =
         world.getNationById(nationId)?.tech?.toInt() ?: 0
+
+    private fun commandEnvMap(
+        state: TurnWorldState,
+        year: Int,
+        month: Int,
+    ): Map<String, Any?> =
+        LinkedHashMap(WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)).apply {
+            this["unitSet"] = UnitSetTable.activeUnitSet(state.config, state.meta)
+            this["mapName"] = CityConstRegistry.activeMapName(state.config, state.meta)
+        }
 
     private fun pipelineFor(tg: TurnGeneral): GeneralActionPipeline =
         pipelineBuilder.pipelineFor(tg)
@@ -1390,8 +1403,8 @@ class AiTurnAdapter(
 
     /** S15 — `getCrewTypeObj()->costWithTech(nation['tech'], toInt(getLeadership(false)))` (PHP reward base). */
     private fun unitCostWithTechOf(gv: AiGeneralView, nationTech: Int): Double {
-        val crewTypeId = gv.general.crewTypeId.takeIf { it >= 1000 } ?: UnitSetTable.DEFAULT_CREWTYPE
-        val unit = UnitSetTable.byId(crewTypeId) ?: UnitSetTable.byId(UnitSetTable.DEFAULT_CREWTYPE)!!
+        val crewTypeId = gv.general.crewTypeId.takeIf { it >= 1000 } ?: GameUnitConst.DEFAULT_CREWTYPE
+        val unit = UnitSetTable.byId(crewTypeId) ?: UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         val leadership = gv.fullLeadership.toInt() // Util::toInt(getLeadership(false)) — trunc-toward-zero.
         return unit.costWithTech(nationTech, leadership)
     }
@@ -1432,8 +1445,8 @@ class AiTurnAdapter(
         // current crew type; goldCost = getCost()[0], riceCost = riceWithTech(tech, toInt(amount)).
         val fullLeadership = AiSeed.genTypeLeadership(statCalc)
         val probeAmount = fullLeadership * 100
-        val crewTypeId = general.crewTypeId.takeIf { it >= 1000 } ?: UnitSetTable.DEFAULT_CREWTYPE
-        val crewType = UnitSetTable.byId(crewTypeId) ?: UnitSetTable.byId(UnitSetTable.DEFAULT_CREWTYPE)!!
+        val crewTypeId = general.crewTypeId.takeIf { it >= 1000 } ?: GameUnitConst.DEFAULT_CREWTYPE
+        val crewType = UnitSetTable.byId(crewTypeId) ?: UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         val logicGeneral = PerTurnOverlay.toLogicGeneral(general)
         val costAlgo = if (generalPolicy.can모병) RecruitAlgorithm.cheMobyeong(pipeline) else RecruitAlgorithm.cheJingbyeong(pipeline)
         // PHP `$costCmd->getCost()[0]` — the gold cost of the probe over the APPLIED (post-cap) crew.
@@ -1534,30 +1547,34 @@ class AiTurnAdapter(
     }
 
     /**
-     * S14 — the do징병 `$types` candidate map (PHP `:2571-2577`): for each `GameUnitConst::byType(armType)`
-     * crew that `isValid` against the nation's owned cities/regions + tech + relYear, its `pickScore(tech)`,
-     * in `byType` iteration order. The `choiceUsingWeight($types)` walk is the body's draw. ZERO draws here.
+     * S14 — the do징병 `$types` candidate map (PHP `:2571-2577`): for each active-set crew of the requested
+     * arm type that is valid against the nation's owned cities/regions + tech + relYear, its `pickScore(tech)`,
+     * in canonical unit-set iteration order. The `choiceUsingWeight($types)` walk is the body's draw. ZERO draws here.
      */
-    private fun recruitCrewScoresFor(
+    internal fun recruitCrewScoresFor(
         general: TurnGeneral,
         nationId: Int,
         armType: Int,
         nationTech: Int,
         year: Int,
     ): List<Pair<Int, Double>> {
-        // :2561-2567 — own cities/regions from `SELECT city, region, secu, level FROM city WHERE nation = nationID`.
-        val ownCities = LinkedHashMap<Int, Int>() // cityId → level
-        val ownRegions = LinkedHashSet<Int>()
-        for (c in world.listCities().filter { it.nationId == nationId }) {
-            ownCities[c.id] = c.level
-            CityConst.byId(c.id)?.let { ownRegions.add(it.region) }
-        }
-        val relYear = maxOf(0, year - startYear) // :2568 valueFit(year - startyear, 0).
+        val availability = recruitAvailabilityContext(general, nationId, year) ?: return emptyList()
         val logicGeneral = PerTurnOverlay.toLogicGeneral(general)
-        val nationAux = nationAuxSnapshot(nationId)
         val out = ArrayList<Pair<Int, Double>>()
-        for (unit in GameUnitConst.byType(armType)) { // byType iteration order = the parity target.
-            if (unitIsValid(unit, logicGeneral, ownCities, ownRegions, relYear, nationTech, nationAux)) {
+        for (unitRow in UnitSetTable.all(availability.unitSet)) {
+            if (unitRow.armType != armType) continue
+            val unit = GameUnitConst.byId(unitRow.id) ?: continue
+            if (RecruitUnitAvailability.isValid(
+                    unit,
+                    logicGeneral,
+                    availability.ownCities,
+                    availability.ownRegions,
+                    availability.relYear,
+                    nationTech,
+                    availability.nationAux,
+                    availability.cityConst,
+                )
+            ) {
                 out.add(unit.id to unitPickScore(unit, nationTech)) // :2574-2575
             }
         }
@@ -1578,26 +1595,31 @@ class AiTurnAdapter(
         candidateAllowedHook: (String, Map<String, Any?>) -> Boolean,
     ): ChosenCommand? {
         val nationId = general.nationId
-        val ownCities = LinkedHashMap<Int, Int>()
-        val ownRegions = LinkedHashSet<Int>()
-        for (c in world.listCities().filter { it.nationId == nationId }) {
-            ownCities[c.id] = c.level
-            CityConst.byId(c.id)?.let { ownRegions.add(it.region) }
-        }
-        val relYear = maxOf(0, world.getState().currentYear - startYear)
+        val availability = recruitAvailabilityContext(general, nationId, world.getState().currentYear) ?: return null
         val logicGeneral = PerTurnOverlay.toLogicGeneral(general)
-        val nationAux = nationAuxSnapshot(nationId)
 
         var type = chosenCrewTypeId
         // :2585-2599 — can고급병종: keep the CURRENT crew type when it is still valid + high-tier.
         if (generalPolicy.can고급병종) {
             val currId = general.crewTypeId.takeIf { it >= 1000 }
-            val currUnit = currId?.let { GameUnitConst.byId(it) }
-            if (currUnit != null && unitIsValid(currUnit, logicGeneral, ownCities, ownRegions, relYear, nationTech, nationAux)) {
+            val currUnit = currId
+                ?.takeIf { UnitSetTable.byId(availability.unitSet, it) != null }
+                ?.let { GameUnitConst.byId(it) }
+            if (currUnit != null && RecruitUnitAvailability.isValid(
+                    currUnit,
+                    logicGeneral,
+                    availability.ownCities,
+                    availability.ownRegions,
+                    availability.relYear,
+                    nationTech,
+                    availability.nationAux,
+                    availability.cityConst,
+                )
+            ) {
                 val reqTech = (currUnit.reqConstraints.firstOrNull { it is UnitConstraint.ReqTech } as? UnitConstraint.ReqTech)?.reqTech
                 if (reqTech != null) {
                     if (reqTech >= 2000) type = currUnit.id // :2591-2592
-                    else if (currUnit.armType != recruitChosenArmType(chosenCrewTypeId) && reqTech >= 1000) type = currUnit.id // :2593-2595
+                    else if (currUnit.armType != recruitChosenArmType(chosenCrewTypeId, availability.unitSet) && reqTech >= 1000) type = currUnit.id // :2593-2595
                 }
             }
         }
@@ -1609,7 +1631,7 @@ class AiTurnAdapter(
         if (gold <= 0 || rice <= 0) return null // :2607-2609
 
         var crew: Double = fullLeadership * 100 // :2611
-        val crewType = UnitSetTable.byId(type) ?: return null
+        val crewType = UnitSetTable.byId(availability.unitSet, type) ?: return null
         // :2614-2618 — the riceCost probe at the kill/death-scaled crew.
         val kill = rankVar(general, "killcrew")
         val deathDen = maxOf(rankVar(general, "deathcrew"), 1.0)
@@ -1644,8 +1666,42 @@ class AiTurnAdapter(
     }
 
     /** The chosen crew type's armType (PHP `$armType` used in the can고급병종 `armType != $armType` compare). */
-    private fun recruitChosenArmType(crewTypeId: Int): Int =
-        GameUnitConst.byId(crewTypeId)?.armType ?: -1
+    private fun recruitChosenArmType(crewTypeId: Int, unitSet: String): Int =
+        UnitSetTable.byId(unitSet, crewTypeId)?.armType ?: -1
+
+    private data class RecruitAvailabilityContext(
+        val unitSet: String,
+        val cityConst: CityConstVariant,
+        val ownCities: Map<Int, Int>,
+        val ownRegions: Set<Int>,
+        val relYear: Int,
+        val nationAux: Map<String, Any?>,
+    )
+
+    private fun recruitAvailabilityContext(
+        general: TurnGeneral,
+        nationId: Int,
+        year: Int,
+    ): RecruitAvailabilityContext? {
+        val state = world.getState()
+        val unitSet = UnitSetTable.activeUnitSet(state.config, state.meta)
+        if (!UnitSetTable.isSupported(unitSet)) return null
+        val cityConst = CityConstRegistry.find(CityConstRegistry.activeMapName(state.config, state.meta)) ?: return null
+        val ownCities = LinkedHashMap<Int, Int>()
+        val ownRegions = LinkedHashSet<Int>()
+        for (city in world.listCities().filter { it.nationId == nationId }) {
+            ownCities[city.id] = city.level
+            cityConst.byId(city.id)?.let { ownRegions.add(it.region) }
+        }
+        return RecruitAvailabilityContext(
+            unitSet = unitSet,
+            cityConst = cityConst,
+            ownCities = ownCities,
+            ownRegions = ownRegions,
+            relYear = maxOf(0, year - startYear),
+            nationAux = nationAuxSnapshot(nationId),
+        )
+    }
 
     /** PHP `GameUnitDetail::pickScore($tech)` (`GameUnitDetail.php:215-222`). */
     private fun unitPickScore(unit: GameUnitDetail, tech: Int): Double {
@@ -1655,51 +1711,6 @@ class AiTurnAdapter(
         defaultWar /= opensamguk.logic.util.valueFit(1 - unit.avoid / 100.0, 0.1)
         defaultWar *= 1 + unit.magicCoef / 2.0
         return defaultWar
-    }
-
-    /**
-     * PHP `GameUnitDetail::isValid` (`GameUnitDetail.php:224-236`) — every `reqConstraint->test(...)` must pass.
-     * The constraint `test` bodies are ported from the `GameUnitConstraint` package (the do징병-relevant subset:
-     * ReqTech / ReqCities / ReqRegions / ReqMinRelYear / ReqChief / ReqNotChief / Impossible /
-     * ReqCitiesWithCityLevel / ReqHighLevelCities / ReqNationAux).
-     */
-    private fun unitIsValid(
-        unit: GameUnitDetail,
-        general: opensamguk.logic.domain.General,
-        ownCities: Map<Int, Int>,
-        ownRegions: Set<Int>,
-        relYear: Int,
-        tech: Int,
-        nationAux: Map<String, Any?>,
-    ): Boolean {
-        val effRelYear = maxOf(0, relYear) // :227 max(0, relativeYear).
-        for (c in unit.reqConstraints) {
-            val ok = when (c) {
-                is UnitConstraint.Impossible -> false
-                is UnitConstraint.ReqTech -> tech >= c.reqTech
-                is UnitConstraint.ReqCities -> c.reqCities.any { name -> CityConst.byName(name)?.id?.let { ownCities.containsKey(it) } == true }
-                is UnitConstraint.ReqRegions -> c.reqRegions.any { name -> (CityConst.regionMap[name] as? Int)?.let { ownRegions.contains(it) } == true }
-                is UnitConstraint.ReqMinRelYear -> effRelYear >= c.reqMinRelYear
-                is UnitConstraint.ReqChief -> general.officerLevel >= 5
-                is UnitConstraint.ReqNotChief -> general.officerLevel < 5
-                is UnitConstraint.ReqCitiesWithCityLevel ->
-                    c.reqCities.any { name -> CityConst.byName(name)?.id?.let { id -> (ownCities[id] ?: -1) >= c.reqCityLevel } == true }
-                is UnitConstraint.ReqHighLevelCities -> ownCities.values.count { it >= c.reqCityLevel } >= c.reqCityCount
-                is UnitConstraint.ReqNationAux -> nationAuxCompare((nationAux[c.reqNationAuxKey] as? Number)?.toDouble() ?: 0.0, c.cmp, c.value)
-            }
-            if (!ok) return false
-        }
-        return true
-    }
-
-    private fun nationAuxCompare(lhs: Double, cmp: String, rhs: Double): Boolean = when (cmp) {
-        "==" -> lhs == rhs
-        "!=" -> lhs != rhs
-        "<=" -> lhs <= rhs
-        ">=" -> lhs >= rhs
-        "<" -> lhs < rhs
-        ">" -> lhs > rhs
-        else -> false
     }
 
     /** PHP `$this->nation['aux']` — the nation's aux map (`meta['aux']`), defaulting empty. */

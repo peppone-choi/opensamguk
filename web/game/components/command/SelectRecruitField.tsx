@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { ICON_CDN } from '@/lib/constants';
-import type { FrontInfoResponse, GameConstResponse, GameUnitConstItem } from '@/lib/types';
+import type { FrontInfoResponse, GameConstResponse, GameUnitConstItem, RecruitAvailabilityResponse } from '@/lib/types';
 
 export interface SelectRecruitFieldProps {
     onChange: (value: Record<string, unknown> | null) => void;
@@ -25,6 +25,7 @@ function clampAmount(value: number, max: number): number {
 export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps) {
     const [constData, setConstData] = useState<GameConstResponse | null>(null);
     const [frontInfo, setFrontInfo] = useState<FrontInfoResponse | null>(null);
+    const [availability, setAvailability] = useState<RecruitAvailabilityResponse | null>(null);
     const [failed, setFailed] = useState(false);
     const [crewType, setCrewType] = useState<number | null>(null);
     const [amountUnit, setAmountUnit] = useState(0);
@@ -33,10 +34,15 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
     useEffect(() => {
         let on = true;
         Promise.all([api.gameConst(), api.frontInfo()])
-            .then(([constants, front]) => {
+            .then(async ([constants, front]) => {
+                const generalId = front.general.generalId;
+                if (generalId == null) throw new Error('general is unavailable');
+                const nextAvailability = await api.recruitAvailability(generalId);
+                if (!nextAvailability.result) throw new Error('recruit availability is unavailable');
                 if (!on) return;
                 setConstData(constants);
                 setFrontInfo(front);
+                setAvailability(nextAvailability);
             })
             .catch(() => on && setFailed(true));
         return () => {
@@ -45,10 +51,18 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
     }, []);
 
     const units = useMemo(() => constData?.gameUnitConst ?? [], [constData]);
-    const unitAvailability = useCallback((unit: GameUnitConstItem): { available: boolean; reason: string | null } => {
-        const reason = unit.info.find((line) => line.includes('불가능')) ?? null;
-        return { available: reason == null, reason };
-    }, []);
+    const availabilityByCrewType = useMemo(
+        () => new Map(availability?.crewTypes.map((entry) => [entry.crewType, entry])),
+        [availability],
+    );
+    const unitAvailability = useCallback(
+        (unit: GameUnitConstItem): { available: boolean; reason: string | null } =>
+            availabilityByCrewType.get(unit.id) ?? {
+                available: false,
+                reason: '현재 선택할 수 없는 병종입니다.',
+            },
+        [availabilityByCrewType],
+    );
     const visibleUnits = useMemo(
         () => units.filter((unit) => showAllUnits || unitAvailability(unit).available),
         [showAllUnits, unitAvailability, units],
@@ -110,7 +124,7 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
         setAmountUnit(fillAmountFor(id));
     }
 
-    if (!constData && !failed) return <p className="cmd-select-empty">병종 정보를 불러오는 중입니다.</p>;
+    if ((!constData || !availability) && !failed) return <p className="cmd-select-empty">병종 정보를 불러오는 중입니다.</p>;
     if (failed) return <p className="cmd-select-empty">병종 정보를 불러올 수 없습니다.</p>;
 
     return (

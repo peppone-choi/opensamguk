@@ -238,7 +238,11 @@ async function pollCommandResultPhase(
     };
     if (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) {
       const record = result.data as JsonRecord;
-      if (record.status === 'RESOLVED' && record.type === expectedType) return latest;
+      if (expectedType === 'reservationAccepted') {
+        if (record.status === 'PENDING' && record.phase === expectedType) return latest;
+      } else if (record.status === 'RESOLVED' && record.type === expectedType) {
+        return latest;
+      }
     }
     await sleep(250);
   }
@@ -1077,8 +1081,8 @@ test('operational smoke follows che_요양 from reservation through durable exec
     const reservationRecord = requireRecord(reservationAccepted.data, 'reservationAccepted');
     expect(reservationAccepted.status, 'reservationAccepted result HTTP status').toBe(200);
     expect(requireString(reservationRecord, 'requestId', 'reservationAccepted'), 'reservationAccepted requestId').toBe(requestId);
-    expect(reservationRecord.ok, 'reservationAccepted result').toBe(true);
-    expect(requireNumber(reservationRecord, 'committedWorldVersion', 'reservationAccepted')).toBe(0);
+    expect(reservationRecord.status, 'reservationAccepted remains nonterminal').toBe('PENDING');
+    expect(reservationRecord.phase, 'reservationAccepted phase').toBe('reservationAccepted');
     state.reservationAccepted = reservationAccepted;
 
     const executionApplied = await pollCommandResultPhase(

@@ -1,5 +1,6 @@
 package opensamguk.logic.ai
 
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.util.phpRound
 import kotlin.test.Test
@@ -174,7 +175,7 @@ class AutorunNationPolicyTest {
     fun `reqNPCWarGold uses PhpRound minus2 of reqGold times 4 at defaultStatNPCMax`() {
         val tech = 0
         val crew = AutorunNationPolicy.DEFAULT_STAT_NPC_MAX * 100
-        val unit = UnitSetTable.byId(UnitSetTable.DEFAULT_CREWTYPE)!!
+        val unit = UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         val expectedGold = phpRound(unit.costWithTech(tech, crew) * 4, -2)
         val expectedRice = phpRound(unit.riceWithTech(tech, crew) * 4, -2)
         val p = policy(tech = tech)
@@ -186,7 +187,7 @@ class AutorunNationPolicyTest {
     fun `reqHumanWarUrgent uses PhpRound minus2 of reqGold times 3 times 2 at defaultStatMax`() {
         val tech = 0
         val crew = AutorunNationPolicy.DEFAULT_STAT_MAX * 100 // defaultStatMax NOT NPC
-        val unit = UnitSetTable.byId(UnitSetTable.DEFAULT_CREWTYPE)!!
+        val unit = UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         val expectedGold = phpRound(unit.costWithTech(tech, crew) * 3 * 2, -2)
         val expectedRice = phpRound(unit.riceWithTech(tech, crew) * 3 * 2, -2)
         val p = policy(tech = tech)
@@ -212,7 +213,7 @@ class AutorunNationPolicyTest {
         assertEquals(99999, p.reqNPCWarGold)
         // the rice side is still 0-guarded → still derives (outer || guard re-enters; inner if(rice===0))
         val crew = AutorunNationPolicy.DEFAULT_STAT_NPC_MAX * 100
-        val unit = UnitSetTable.byId(UnitSetTable.DEFAULT_CREWTYPE)!!
+        val unit = UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         assertEquals(phpRound(unit.riceWithTech(0, crew) * 4, -2), p.reqNPCWarRice)
     }
 

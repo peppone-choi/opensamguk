@@ -9,6 +9,8 @@ import opensamguk.logic.domain.City
 import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
+import opensamguk.logic.actions.military.UnitSetTable
+import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.statview.MemoryStateView
 import opensamguk.logic.statview.WorldEnvBuilder
 import org.springframework.stereotype.Component
@@ -90,12 +92,15 @@ class PrecheckStateViewFactory(
             ?: ws.startYear
             ?: numberOf(ws.meta["startYear"])
             ?: error("world_state.config.startYear is missing")
-        return WorldEnvBuilder.commandEnvMap(
+        return LinkedHashMap(WorldEnvBuilder.commandEnvMap(
             year = year,
             startYear = startYear,
             month = ws.currentMonth,
             phase = ws.currentPhase,
-        )
+        )).apply {
+            this["unitSet"] = UnitSetTable.activeUnitSet(ws.config, ws.meta)
+            this["mapName"] = CityConstRegistry.activeMapName(ws.config, ws.meta)
+        }
     }
 
     private fun numberOf(value: Any?): Int? = (value as? Number)?.toInt()

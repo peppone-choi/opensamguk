@@ -89,6 +89,62 @@ class GetConstControllerTest {
     }
 
     @Test
+    fun `flat active mapName is canonical over the legacy nested fallback`() {
+        val world = WorldStateReadEntity(
+            id = 1,
+            scenarioCode = "scenario_2",
+            currentYear = 200,
+            currentMonth = 1,
+            config = mapOf(
+                "map" to mapOf("mapName" to "che"),
+                "mapName" to "miniche_b",
+            ),
+        )
+
+        mockMvc(listOf(world)).perform(get("/api/const"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapName").value("miniche_b"))
+            .andExpect(jsonPath("$.cityConst[0].name").value("낙양"))
+    }
+
+    @Test
+    fun `unsupported active unit set does not fall back to che content`() {
+        val world = WorldStateReadEntity(
+            id = 1,
+            scenarioCode = "scenario_2",
+            currentYear = 200,
+            currentMonth = 1,
+            config = mapOf(
+                "map" to mapOf("unitSet" to "che"),
+                "unitSet" to "not-ported",
+            ),
+        )
+
+        mockMvc(listOf(world)).perform(get("/api/const"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.gameConst.unitSet").value("not-ported"))
+            .andExpect(jsonPath("$.gameUnitConst").isEmpty)
+            .andExpect(jsonPath("$.iAction.crewtype").isEmpty)
+    }
+
+    @Test
+    fun `a present blank unit set is unsupported instead of defaulting to che`() {
+        val world = WorldStateReadEntity(
+            id = 1,
+            scenarioCode = "scenario_2",
+            currentYear = 200,
+            currentMonth = 1,
+            config = mapOf("unitSet" to "   "),
+        )
+
+        mockMvc(listOf(world)).perform(get("/api/const"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.gameConst.unitSet").value("   "))
+            .andExpect(jsonPath("$.gameUnitConst").isEmpty)
+            .andExpect(jsonPath("$.iAction.crewtype").isEmpty)
+    }
+
+    @Test
     fun `map dims come from the committed map resource, not controller literals`() {
         // 정본 = 커밋된 map/<GameConst.mapName>.json 리소스(MapJson 디코더, MapPreviewController와
         // 동일 로더). 컨트롤러 리터럴(1000/714 매직넘버) 금지 — 리소스가 바뀌면 응답도 따라가야 한다.

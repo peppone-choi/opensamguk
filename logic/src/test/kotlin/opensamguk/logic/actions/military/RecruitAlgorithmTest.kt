@@ -4,6 +4,7 @@ import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.common.constants.GameConst
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.ConstraintContext
@@ -291,7 +292,7 @@ class RecruitAlgorithmTest {
         assertEquals(10.0, metaDouble(draft.general.meta, "dex1"), 1e-9)
         @Suppress("UNCHECKED_CAST")
         val aux = draft.general.meta["aux"] as Map<String, Any?>
-        assertEquals(UnitSetTable.T_FOOTMAN, aux["armType"])
+        assertEquals(GameUnitConst.T_FOOTMAN, aux["armType"])
         assertEquals("징병", draft.general.lastTurn.command)
     }
 
@@ -311,7 +312,7 @@ class RecruitAlgorithmTest {
         assertEquals(listOf<Pair<String, Any?>>("징병" to null), observed)
         @Suppress("UNCHECKED_CAST")
         val aux = draft.general.meta["aux"] as Map<String, Any?>
-        assertEquals(UnitSetTable.T_FOOTMAN, aux["armType"])
+        assertEquals(GameUnitConst.T_FOOTMAN, aux["armType"])
         assertEquals("징병", draft.general.lastTurn.command)
         assertEquals("징병", command.lastUniqueLotteryIntent?.seedReason)
         assertEquals("아이템", command.lastUniqueLotteryIntent?.acquireType)
