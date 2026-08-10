@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
     command: vi.fn(),
     nationBulk: vi.fn(),
     mapPreview: vi.fn(),
-    pollCommandResult: vi.fn(),
+    pollCommandResultResponse: vi.fn(),
 }));
 
 vi.mock('@/lib/api', async importOriginal => {
@@ -24,7 +24,7 @@ vi.mock('@/lib/api', async importOriginal => {
             },
             mapPreview: mocks.mapPreview,
         },
-        pollCommandResult: mocks.pollCommandResult,
+        pollCommandResultResponse: mocks.pollCommandResultResponse,
     };
 });
 
@@ -34,7 +34,7 @@ describe('CommandModal ordered form specs', () => {
         mocks.command.mockReset();
         mocks.nationBulk.mockReset();
         mocks.mapPreview.mockReset();
-        mocks.pollCommandResult.mockReset();
+        mocks.pollCommandResultResponse.mockReset();
     });
 
     it('submits every field from a pinned non-aggression proposal form', async () => {
@@ -88,7 +88,7 @@ describe('CommandModal ordered form specs', () => {
             status: 'AVAILABLE',
             requestId: 'non-aggression-applied',
         });
-        mocks.pollCommandResult.mockResolvedValueOnce({
+        mocks.pollCommandResultResponse.mockResolvedValueOnce({
             status: 'RESOLVED',
             requestId: 'non-aggression-applied',
             ok: true,
@@ -248,7 +248,7 @@ describe('CommandModal ordered form specs', () => {
             }],
         });
         mocks.command.mockResolvedValueOnce({ status: 'AVAILABLE', requestId: 'compound-applied' });
-        mocks.pollCommandResult.mockResolvedValueOnce({
+        mocks.pollCommandResultResponse.mockResolvedValueOnce({
             status: 'RESOLVED',
             requestId: 'compound-applied',
             ok: true,
@@ -269,7 +269,7 @@ describe('CommandModal ordered form specs', () => {
             7,
             3,
         ));
-        expect(mocks.pollCommandResult).toHaveBeenCalledWith('compound-applied');
+        expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('compound-applied');
     });
 
     it('keeps a compound form open until all required select values are present', async () => {

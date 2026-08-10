@@ -584,6 +584,35 @@ class ReservedTurnHandlerTest {
     }
 
     @Test
+    fun `unsupported active unit set is denied again by the daemon`() {
+        val state = baseState().copy(
+            config = linkedMapOf(
+                "map" to linkedMapOf("unitSet" to "che"),
+                "unitSet" to "not-ported",
+            ),
+        )
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = state,
+                generals = listOf(general()),
+                cities = listOf(city().copy(population = 50_000)),
+                nations = listOf(nation()),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+        val outcome = handlerFor(world).handle(
+            42,
+            ReservedTurn("che_징병", """{"crewType":1100,"amount":100}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertTrue(outcome.fellBack)
+        assertEquals("현재 선택할 수 없는 병종입니다.", outcome.denyReason)
+    }
+
+    @Test
     fun `abdication rejects the actor as its own successor`() {
         val world = worldWith()
         val handler = handlerFor(world)
@@ -682,6 +711,8 @@ class ReservedTurnHandlerTest {
         // The precheck call site (E2 PrecheckStateViewFactory) builds its env through the SAME helper.
         val precheckEnv = LinkedHashMap(WorldEnvBuilder.commandEnvMap(YEAR, START_YEAR, MONTH, 1)).apply {
             this["ownCities"] = linkedMapOf(7 to 5)
+            this["unitSet"] = "che"
+            this["mapName"] = "che"
         }
 
         // key-for-key equality proves the one shared helper — neither call site can drift (P1 #7).

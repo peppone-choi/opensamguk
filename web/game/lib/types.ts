@@ -431,6 +431,18 @@ export interface GameUnitConstItem {
   info: string[];
 }
 
+export interface RecruitCrewTypeAvailability {
+  crewType: number;
+  available: boolean;
+  reason: string | null;
+}
+
+export interface RecruitAvailabilityResponse {
+  result: boolean;
+  unitSet: string | null;
+  crewTypes: RecruitCrewTypeAvailability[];
+}
+
 export interface GameCityConstItem {
   id: number;
   name: string;

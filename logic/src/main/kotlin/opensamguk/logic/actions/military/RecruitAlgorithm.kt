@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst as CommonGameUnitConst
 import opensamguk.common.constants.GameUnitDetail as CommonGameUnitDetail
@@ -24,6 +23,59 @@ import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.numberFormat
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.valueFit
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
+
+object RecruitUnitAvailability {
+    fun isValid(
+        unit: CommonGameUnitDetail,
+        general: General,
+        ownCities: Map<Int, Int>,
+        ownRegions: Set<Int>,
+        relYear: Int,
+        tech: Int,
+        nationAux: Map<String, Any?>,
+        cityConst: CityConstVariant,
+    ): Boolean {
+        for (constraint in unit.reqConstraints) {
+            val ok = when (constraint) {
+                is UnitConstraint.Impossible -> false
+                is UnitConstraint.ReqTech -> tech >= constraint.reqTech
+                is UnitConstraint.ReqCities ->
+                    constraint.reqCities.any { name -> cityConst.byName(name)?.id?.let { ownCities.containsKey(it) } == true }
+                is UnitConstraint.ReqRegions ->
+                    constraint.reqRegions.any { name -> cityConst.regionIdByName(name)?.let { ownRegions.contains(it) } == true }
+                is UnitConstraint.ReqMinRelYear -> relYear >= constraint.reqMinRelYear
+                is UnitConstraint.ReqChief -> general.officerLevel >= 5
+                is UnitConstraint.ReqNotChief -> general.officerLevel < 5
+                is UnitConstraint.ReqCitiesWithCityLevel ->
+                    constraint.reqCities.any { name ->
+                        cityConst.byName(name)?.id?.let { id -> (ownCities[id] ?: -1) >= constraint.reqCityLevel } == true
+                    }
+                is UnitConstraint.ReqHighLevelCities ->
+                    ownCities.values.count { it >= constraint.reqCityLevel } >= constraint.reqCityCount
+                is UnitConstraint.ReqNationAux ->
+                    nationAuxCompare(
+                        (nationAux[constraint.reqNationAuxKey] as? Number)?.toDouble() ?: 0.0,
+                        constraint.cmp,
+                        constraint.value,
+                    )
+            }
+            if (!ok) return false
+        }
+        return true
+    }
+
+    private fun nationAuxCompare(lhs: Double, cmp: String, rhs: Double): Boolean = when (cmp) {
+        "==" -> lhs == rhs
+        "!=" -> lhs != rhs
+        "<=" -> lhs <= rhs
+        ">=" -> lhs >= rhs
+        "<" -> lhs < rhs
+        ">" -> lhs > rhs
+        else -> false
+    }
+}
 
 /**
  * Shared 징병/모병 algorithm — faithful port of PHP `che_징병.php:21-236` (and `che_모병.php`, a 9-line
@@ -120,7 +172,7 @@ open class RecruitAlgorithm(
     )
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
-        val reqCrewTypeId = (ctx.args["crewType"] as? Number)?.toInt() ?: UnitSetTable.DEFAULT_CREWTYPE
+        val reqCrewTypeId = (ctx.args["crewType"] as? Number)?.toInt() ?: CommonGameUnitConst.DEFAULT_CREWTYPE
         val amount = (ctx.args["amount"] as? Number)?.toInt() ?: 0
         val reqCrew = requestedCrew(amount)
 
@@ -139,9 +191,18 @@ open class RecruitAlgorithm(
                     if (g == null) 0 else getStatValue(g, "leadership", pipeline, maxLevel, withInjury = true, useFloor = true).toInt()
                 },
             ),
-            availableRecruitCrewType(reqCrewTypeId) { c, view -> recruitableUnit(c, view, reqCrewTypeId) },
+            crewTypeConstraint(reqCrewTypeId),
         )
     }
+
+    fun crewTypeAvailability(
+        ctx: ConstraintContext,
+        view: StateView,
+        crewTypeId: Int,
+    ): ConstraintResult = crewTypeConstraint(crewTypeId).test(ctx, view)
+
+    private fun crewTypeConstraint(crewTypeId: Int): Constraint =
+        availableRecruitCrewType(crewTypeId) { c, view -> recruitableUnit(c, view, crewTypeId) }
 
     private fun costForConstraint(
         ctx: ConstraintContext,
@@ -150,7 +211,9 @@ open class RecruitAlgorithm(
         amount: Int,
     ): Cost {
         val general = view.get(RequirementKey.General(ctx.actorId)) as? General ?: return Cost(Int.MAX_VALUE, Int.MAX_VALUE)
-        val reqCrewType = UnitSetTable.byId(reqCrewTypeId) ?: return Cost(Int.MAX_VALUE, Int.MAX_VALUE)
+        val unitSet = activeUnitSet(ctx)
+        if (!UnitSetTable.isSupported(unitSet)) return Cost(0, 0)
+        val reqCrewType = UnitSetTable.byId(unitSet, reqCrewTypeId) ?: return Cost(Int.MAX_VALUE, Int.MAX_VALUE)
         val nation = view.get(RequirementKey.Nation(ctx.nationId ?: general.nationId)) as? Nation
         val appliedCrew = appliedCrew(general, reqCrewTypeId, amount)
         return getCost(general, reqCrewType, appliedCrew, (nation?.tech ?: 0.0).toInt())
@@ -159,12 +222,24 @@ open class RecruitAlgorithm(
     private fun recruitableUnit(ctx: ConstraintContext, view: StateView, reqCrewTypeId: Int): Boolean {
         val general = view.get(RequirementKey.General(ctx.actorId)) as? General ?: return false
         val nation = view.get(RequirementKey.Nation(ctx.nationId ?: general.nationId)) as? Nation ?: return false
+        if (UnitSetTable.byId(activeUnitSet(ctx), reqCrewTypeId) == null) return false
         val unit = CommonGameUnitConst.byId(reqCrewTypeId) ?: return false
+        val cityConst = CityConstRegistry.find(activeMapName(ctx)) ?: return false
         val ownCities = ownedCityLevels(ctx, view, general, nation)
-        val ownRegions = ownedRegions(ctx, view, ownCities.keys)
+        val ownRegions = ownedRegions(ctx, view, ownCities.keys, cityConst)
         val relYear = relYear(ctx)
         val nationAux = stringAnyMap(nation.meta["aux"])
-        return unitIsValid(unit, general, ownCities, ownRegions, relYear, nation.tech.toInt(), nationAux)
+        return RecruitUnitAvailability.isValid(unit, general, ownCities, ownRegions, relYear, nation.tech.toInt(), nationAux, cityConst)
+    }
+
+    private fun activeUnitSet(ctx: ConstraintContext): String? = when {
+        "unitSet" !in ctx.env -> null
+        else -> ctx.env["unitSet"] as? String ?: "__invalid_unit_set__"
+    }
+
+    private fun activeMapName(ctx: ConstraintContext): String = when {
+        "mapName" !in ctx.env -> CityConstRegistry.DEFAULT_MAP_NAME
+        else -> ctx.env["mapName"] as? String ?: "__invalid_map_name__"
     }
 
     private fun ownedCityLevels(
@@ -183,14 +258,19 @@ open class RecruitAlgorithm(
         return emptyMap()
     }
 
-    private fun ownedRegions(ctx: ConstraintContext, view: StateView, ownedCityIds: Set<Int>): Set<Int> {
+    private fun ownedRegions(
+        ctx: ConstraintContext,
+        view: StateView,
+        ownedCityIds: Set<Int>,
+        cityConst: CityConstVariant,
+    ): Set<Int> {
         val envRegions = intSet(ctx.env["ownRegions"])
             ?: intSet(ctx.env["ownedRegions"])
         if (envRegions != null) return envRegions
 
         val out = LinkedHashSet<Int>()
         for (cityId in ownedCityIds) {
-            CityConst.byId(cityId)?.let { out.add(it.region) }
+            cityConst.byId(cityId)?.let { out.add(it.region) }
         }
         return out
     }
@@ -240,56 +320,12 @@ open class RecruitAlgorithm(
         return out
     }
 
-    private fun unitIsValid(
-        unit: CommonGameUnitDetail,
-        general: General,
-        ownCities: Map<Int, Int>,
-        ownRegions: Set<Int>,
-        relYear: Int,
-        tech: Int,
-        nationAux: Map<String, Any?>,
-    ): Boolean {
-        for (constraint in unit.reqConstraints) {
-            val ok = when (constraint) {
-                is UnitConstraint.Impossible -> false
-                is UnitConstraint.ReqTech -> tech >= constraint.reqTech
-                is UnitConstraint.ReqCities ->
-                    constraint.reqCities.any { name -> CityConst.byName(name)?.id?.let { ownCities.containsKey(it) } == true }
-                is UnitConstraint.ReqRegions ->
-                    constraint.reqRegions.any { name -> (CityConst.regionMap[name] as? Int)?.let { ownRegions.contains(it) } == true }
-                is UnitConstraint.ReqMinRelYear -> relYear >= constraint.reqMinRelYear
-                is UnitConstraint.ReqChief -> general.officerLevel >= 5
-                is UnitConstraint.ReqNotChief -> general.officerLevel < 5
-                is UnitConstraint.ReqCitiesWithCityLevel ->
-                    constraint.reqCities.any { name ->
-                        CityConst.byName(name)?.id?.let { id -> (ownCities[id] ?: -1) >= constraint.reqCityLevel } == true
-                    }
-                is UnitConstraint.ReqHighLevelCities ->
-                    ownCities.values.count { it >= constraint.reqCityLevel } >= constraint.reqCityCount
-                is UnitConstraint.ReqNationAux ->
-                    nationAuxCompare((nationAux[constraint.reqNationAuxKey] as? Number)?.toDouble() ?: 0.0, constraint.cmp, constraint.value)
-            }
-            if (!ok) return false
-        }
-        return true
-    }
-
-    private fun nationAuxCompare(lhs: Double, cmp: String, rhs: Double): Boolean = when (cmp) {
-        "==" -> lhs == rhs
-        "!=" -> lhs != rhs
-        "<=" -> lhs <= rhs
-        ">=" -> lhs >= rhs
-        "<" -> lhs < rhs
-        ">" -> lhs > rhs
-        else -> false
-    }
-
     override fun resolve(context: GeneralActionResolveContext) {
         lastUniqueLotteryIntent = null
         val d = context.draft
         val date = context.date
 
-        val reqCrewTypeId = (context.args["crewType"] as? Number)?.toInt() ?: UnitSetTable.DEFAULT_CREWTYPE
+        val reqCrewTypeId = (context.args["crewType"] as? Number)?.toInt() ?: CommonGameUnitConst.DEFAULT_CREWTYPE
         val amount = (context.args["amount"] as? Number)?.toInt() ?: 0
         val reqCrewType = UnitSetTable.byId(reqCrewTypeId) ?: error("unknown crewType $reqCrewTypeId")
 

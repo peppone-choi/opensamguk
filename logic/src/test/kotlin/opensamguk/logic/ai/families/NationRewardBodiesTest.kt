@@ -2,6 +2,7 @@ package opensamguk.logic.ai.families
 
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.ai.AiDiplomacyRow
 import opensamguk.logic.ai.AiEnv
@@ -71,7 +72,7 @@ class NationRewardBodiesTest {
         crew: Int = 0,
         leadership: Int = 50,
         killturn: Int = 1000,
-        crewTypeId: Int = UnitSetTable.DEFAULT_CREWTYPE,
+        crewTypeId: Int = GameUnitConst.DEFAULT_CREWTYPE,
     ): General = General(
         id = no, nationId = nation, cityId = cityId,
         leadership = leadership, strength = 50, intel = 50, injury = 0,

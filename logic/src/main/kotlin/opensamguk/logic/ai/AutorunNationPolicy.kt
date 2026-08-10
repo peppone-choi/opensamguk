@@ -1,5 +1,6 @@
 package opensamguk.logic.ai
 
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.util.phpRound
 
@@ -129,7 +130,7 @@ class AutorunNationPolicy(
             reqNPCDevelGold = develcost * 30
         }
 
-        val defaultCrew = UnitSetTable.byId(UnitSetTable.DEFAULT_CREWTYPE)!!
+        val defaultCrew = UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
 
         // #2 reqNPCWar gold/rice (:228-238) — crew = defaultStatNPCMax*100; *4; PhpRound(-2).
         if (reqNPCWarGold == 0 || reqNPCWarRice == 0) {

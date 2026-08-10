@@ -12,8 +12,10 @@ import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.seed.MapJson
 import opensamguk.logic.domain.GetNationColors
+import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.traits.NationTypeModule
 import opensamguk.logic.traits.NationTypeRegistry
+import opensamguk.logic.world.CityConstRegistry
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -41,7 +43,33 @@ class GetConstController(
             officerLevelText = F4StateText.officerLevelTextDefault(),
             officerLevelTextByNationLevel = F4StateText.officerLevelTextByNationLevel(),
             gameConst = gameConstBundle(active),
-            gameUnitConst = GameUnitConst.all().values.map { u ->
+            gameUnitConst = gameUnitConstItems(active.unitSet),
+            cityConst = cityConst,
+            cityConstMap = CityConstMap(
+                region = CityConst.regionMap.filterKeys { it is String }
+                    .entries.associate { (k, v) -> (k as String) to (v as Int) },
+                level = CityConst.levelMap.filterKeys { it is String }
+                    .entries.associate { (k, v) -> (k as String) to (v as Int) },
+            ),
+            iAction = iActionBundle(active.unitSet),
+        )
+    }
+
+    private data class ActiveGameConfig(val mapName: String, val unitSet: String)
+
+    private fun activeGameConfig(): ActiveGameConfig {
+        val world = runCatching { worldStateReadRepository.findAll().firstOrNull() }.getOrNull()
+            ?: return ActiveGameConfig(GameConst.mapName, GameConst.unitSet)
+        val mapName = CityConstRegistry.activeMapName(world.config, world.meta)
+        val unitSet = UnitSetTable.activeUnitSet(world.config, world.meta)
+        return ActiveGameConfig(mapName, unitSet)
+    }
+
+    private fun gameUnitConstItems(unitSet: String): List<GameUnitConstItem> =
+        if (!UnitSetTable.isSupported(unitSet)) {
+            emptyList()
+        } else {
+            GameUnitConst.all().values.map { u ->
                 GameUnitConstItem(
                     id = u.id,
                     armType = u.armType,
@@ -55,44 +83,8 @@ class GetConstController(
                     rice = u.rice,
                     info = u.info,
                 )
-            },
-            cityConst = cityConst,
-            cityConstMap = CityConstMap(
-                region = CityConst.regionMap.filterKeys { it is String }
-                    .entries.associate { (k, v) -> (k as String) to (v as Int) },
-                level = CityConst.levelMap.filterKeys { it is String }
-                    .entries.associate { (k, v) -> (k as String) to (v as Int) },
-            ),
-            iAction = iActionBundle(),
-        )
-    }
-
-    private data class ActiveGameConfig(val mapName: String, val unitSet: String)
-
-    private fun activeGameConfig(): ActiveGameConfig {
-        val world = runCatching { worldStateReadRepository.findAll().firstOrNull() }.getOrNull()
-            ?: return ActiveGameConfig(GameConst.mapName, GameConst.unitSet)
-        val mapName =
-            mapField(world.config["map"], "mapName")
-                ?: mapField(world.meta["map"], "mapName")
-                ?: stringField(world.config["mapName"])
-                ?: stringField(world.meta["mapName"])
-                ?: GameConst.mapName
-        val unitSet =
-            mapField(world.config["map"], "unitSet")
-                ?: stringField(world.config["unitSet"])
-                ?: stringField(world.meta["unitSet"])
-                ?: GameConst.unitSet
-        return ActiveGameConfig(mapName, unitSet)
-    }
-
-    private fun mapField(raw: Any?, key: String): String? = when (raw) {
-        is Map<*, *> -> raw[key]?.toString()?.takeIf { it.isNotBlank() }
-        is String -> raw.takeIf { key == "mapName" && it.isNotBlank() }
-        else -> null
-    }
-
-    private fun stringField(raw: Any?): String? = raw?.toString()?.takeIf { it.isNotBlank() }
+            }
+        }
 
     private fun cityConstItems(mapName: String): List<CityConstItem> {
         val details = MapJson.loadCityDetailsFromClasspath(mapName)
@@ -201,7 +193,7 @@ class GetConstController(
      *  - item: allItems의 모든 카테고리 키를 평탄화
      *  - crewtype: GameUnitConst.all()의 id 문자열
      */
-    private fun iActionBundle(): Map<String, List<IActionItem>> = linkedMapOf(
+    private fun iActionBundle(unitSet: String): Map<String, List<IActionItem>> = linkedMapOf(
         "nationType" to (GameConst.availableNationType + GameConst.neutralNationType)
             .map { nationTypeItem(it) },
         "specialDomestic" to (listOf(GameConst.defaultSpecialDomestic) +
@@ -215,7 +207,7 @@ class GetConstController(
             .distinct().map { IActionItem(value = it) },
         // allItems = {horse:{...}, weapon:{...}, book:{...}, item:{...}} → 모든 키 평탄화(PHP flatLevel=1).
         "item" to GameConst.allItems.values.flatMap { it.keys }.map { IActionItem(value = it) },
-        "crewtype" to GameUnitConst.all().keys.map { IActionItem(value = it.toString()) },
+        "crewtype" to UnitSetTable.all(unitSet).map { IActionItem(value = it.id.toString()) },
     )
 
     private fun nationTypeItem(code: String): IActionItem {

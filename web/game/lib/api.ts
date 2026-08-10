@@ -29,6 +29,7 @@ import type {
     IntakeQueued,
     IntakeDenied,
     ReservedCommandsResponse,
+    RecruitAvailabilityResponse,
 } from './types';
 
 // ── 전황 (World-Log) read 계약 ────────────────────────────────────────────────
@@ -91,6 +92,7 @@ export interface GeneralLogResponse {
 export interface CommandResultPending {
     status: 'PENDING';
     requestId: string;
+    phase?: 'reservationAccepted';
 }
 
 export interface CommandResultResolved {
@@ -570,6 +572,8 @@ export const api = {
         post<IntakeOutcome & T>(`/api/command/${code}?generalId=${generalId}&turnIdx=${turnIdx}`, args),
     availableCommands: <T>(generalId?: number) =>
         get<T>(generalId == null ? '/api/commands/available' : `/api/commands/available?generalId=${generalId}`),
+    recruitAvailability: (generalId: number) =>
+        get<RecruitAvailabilityResponse>(`/api/commands/recruit/availability?generalId=${generalId}`),
 
     // 예약 명령 링 read — `GET /api/reserved-commands` (P0-01). 인증 principal 우선, generalId fallback.
     reservedCommands: (generalId?: number) =>
@@ -805,7 +809,8 @@ export const api = {
 const COMMAND_RESULT_POLL_ATTEMPTS = 20;
 const COMMAND_RESULT_POLL_INTERVAL_MS = 300;
 
-export async function pollCommandResult(requestId: string): Promise<CommandResultResolved | null> {
+export async function pollCommandResultResponse(requestId: string): Promise<CommandResultResponse | null> {
+    let lastPending: CommandResultPending | null = null;
     for (let attempt = 0; attempt < COMMAND_RESULT_POLL_ATTEMPTS; attempt += 1) {
         await new Promise<void>(resolve => setTimeout(resolve, COMMAND_RESULT_POLL_INTERVAL_MS));
         const result = await api.commandResult(requestId).catch(error => {
@@ -813,6 +818,12 @@ export async function pollCommandResult(requestId: string): Promise<CommandResul
             throw error;
         });
         if (result?.status === 'RESOLVED') return result;
+        if (result?.status === 'PENDING') lastPending = result;
     }
-    return null;
+    return lastPending;
+}
+
+export async function pollCommandResult(requestId: string): Promise<CommandResultResolved | null> {
+    const result = await pollCommandResultResponse(requestId);
+    return result?.status === 'RESOLVED' ? result : null;
 }

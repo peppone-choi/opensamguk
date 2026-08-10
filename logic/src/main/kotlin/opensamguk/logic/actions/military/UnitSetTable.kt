@@ -1,35 +1,22 @@
 package opensamguk.logic.actions.military
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.constants.GameUnitConst
 import kotlin.math.floor
 
 /**
- * Declarative unit-set stat table — faithful port of the `che` unit-set data
- * (`legacy/devsam-core/hwe/sammo/GameUnitConstBase.php` getBuildData()) reduced to the per-unit
- * fields the military commands consume: `armType` / `cost` / `rice`, plus the shared `getTechCost`
- * curve + `costWithTech`/`riceWithTech` (GameUnitDetail.php:120-128).
+ * Declarative unit-set stat view over the canonical `che` [GameUnitConst] catalog, reduced to the
+ * per-unit fields the military commands consume: `armType` / `cost` / `rice`, plus the shared
+ * `getTechCost` curve + `costWithTech`/`riceWithTech` (GameUnitDetail.php:120-128).
  *
  * Pure data, no RNG. The full battle-coefficient/skill-trigger surface (attack/defence/coef/info/
  * iActionList) is OUT of scope here — only the recruit-cost-relevant fields are transcribed.
  *
- * armType constants mirror GameUnitConstBase.php:16-22 (T_CASTLE=0 … T_MISC=6). The CASTLE unit
- * (1000) is `Impossible` to recruit but is kept in the table (addDex folds CASTLE→SIEGE).
+ * The CASTLE unit (1000) is `Impossible` to recruit but is kept in the table (addDex folds
+ * CASTLE→SIEGE).
  */
 object UnitSetTable {
-    // GameUnitConstBase.php:16-22 — armType taxonomy.
-    const val T_CASTLE = 0
-    const val T_FOOTMAN = 1
-    const val T_ARCHER = 2
-    const val T_CAVALRY = 3
-    const val T_WIZARD = 4
-    const val T_SIEGE = 5
-    const val T_MISC = 6
-
-    /** GameUnitConstBase.php:25 — the default crew-type id (보병 1100). */
-    const val DEFAULT_CREWTYPE = 1100
-
-    /** GameUnitConstBase.php:23 — the castle/wall pseudo-unit id. */
-    const val CREWTYPE_CASTLE = 1000
+    const val CHE_UNIT_SET = "che"
 
     /**
      * Per-unit recruit-cost stat row. `cost`/`rice` are the BASE per-100-crew values (GameUnitConstBase
@@ -62,51 +49,46 @@ object UnitSetTable {
      */
     fun getTechCost(tech: Int): Double = 1.0 + getTechLevel(tech) * 0.15
 
-    // GameUnitConstBase.php getBuildData() — id/armType/name/cost/rice (tuple slots 0/1/2/9/10).
-    private val UNITS: List<UnitDetail> = listOf(
-        UnitDetail(1000, T_CASTLE, "성벽", 99, 9),
-        UnitDetail(1100, T_FOOTMAN, "보병", 9, 9),
-        UnitDetail(1101, T_FOOTMAN, "청주병", 10, 11),
-        UnitDetail(1102, T_FOOTMAN, "수병", 11, 10),
-        UnitDetail(1103, T_FOOTMAN, "자객병", 10, 10),
-        UnitDetail(1104, T_FOOTMAN, "근위병", 12, 12),
-        UnitDetail(1105, T_FOOTMAN, "등갑병", 13, 10),
-        UnitDetail(1106, T_FOOTMAN, "백이병", 13, 11),
-        UnitDetail(1200, T_ARCHER, "궁병", 10, 10),
-        UnitDetail(1201, T_ARCHER, "궁기병", 11, 12),
-        UnitDetail(1202, T_ARCHER, "연노병", 12, 11),
-        UnitDetail(1203, T_ARCHER, "강궁병", 13, 13),
-        UnitDetail(1204, T_ARCHER, "석궁병", 13, 13),
-        UnitDetail(1300, T_CAVALRY, "기병", 11, 11),
-        UnitDetail(1301, T_CAVALRY, "백마병", 12, 13),
-        UnitDetail(1302, T_CAVALRY, "중장기병", 13, 12),
-        UnitDetail(1303, T_CAVALRY, "돌격기병", 13, 11),
-        UnitDetail(1304, T_CAVALRY, "철기병", 11, 13),
-        UnitDetail(1305, T_CAVALRY, "수렵기병", 12, 12),
-        UnitDetail(1306, T_CAVALRY, "맹수병", 16, 16),
-        UnitDetail(1307, T_CAVALRY, "호표기병", 14, 14),
-        UnitDetail(1400, T_WIZARD, "귀병", 9, 9),
-        UnitDetail(1401, T_WIZARD, "신귀병", 10, 10),
-        UnitDetail(1402, T_WIZARD, "백귀병", 9, 11),
-        UnitDetail(1403, T_WIZARD, "흑귀병", 11, 9),
-        UnitDetail(1404, T_WIZARD, "악귀병", 12, 12),
-        UnitDetail(1405, T_WIZARD, "남귀병", 8, 8),
-        UnitDetail(1406, T_WIZARD, "황귀병", 13, 10),
-        UnitDetail(1407, T_WIZARD, "천귀병", 11, 12),
-        UnitDetail(1408, T_WIZARD, "마귀병", 12, 11),
-        UnitDetail(1500, T_SIEGE, "정란", 14, 5),
-        UnitDetail(1501, T_SIEGE, "충차", 18, 5),
-        UnitDetail(1502, T_SIEGE, "벽력거", 20, 5),
-        UnitDetail(1503, T_SIEGE, "목우", 15, 5),
-    )
+    private val UNITS: List<UnitDetail> = GameUnitConst.all().values.map { unit ->
+        UnitDetail(
+            id = unit.id,
+            armType = unit.armType,
+            name = unit.name,
+            cost = unit.cost,
+            rice = unit.rice,
+        )
+    }
 
     private val BY_ID: Map<Int, UnitDetail> = UNITS.associateBy { it.id }
 
     fun all(): List<UnitDetail> = UNITS
+
+    fun all(unitSet: String?): List<UnitDetail> = if (isSupported(unitSet)) UNITS else emptyList()
+
+    fun isSupported(unitSet: String?): Boolean = normalizedUnitSet(unitSet) == CHE_UNIT_SET
+
+    fun activeUnitSet(config: Map<String, Any?>, meta: Map<String, Any?>): String =
+        stringField(config["unitSet"])
+            ?: mapField(config["map"], "unitSet")
+            ?: stringField(meta["unitSet"])
+            ?: mapField(meta["map"], "unitSet")
+            ?: CHE_UNIT_SET
 
     /** GameUnitConstBase.php:382-388 — byID (ids must be >= 1000); null when absent. */
     fun byId(id: Int): UnitDetail? {
         require(id >= 1000) { "적절한 id는 1000이상이어야합니다:$id" }
         return BY_ID[id]
     }
+
+    fun byId(unitSet: String?, id: Int): UnitDetail? =
+        if (isSupported(unitSet)) byId(id) else null
+
+    private fun normalizedUnitSet(unitSet: String?): String = unitSet ?: CHE_UNIT_SET
+
+    private fun mapField(raw: Any?, key: String): String? = when (raw) {
+        is Map<*, *> -> raw[key]?.toString()
+        else -> null
+    }
+
+    private fun stringField(raw: Any?): String? = raw?.toString()
 }
