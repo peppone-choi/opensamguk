@@ -1,3 +1,94 @@
+# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 terminal structural dirty-tree review `cleared`; full verifier green)
+
+## Current OP43 handoff
+
+- HEAD `8abb47a1` structural dirty tree is terminally `cleared` with no findings:
+  combined fingerprint `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`
+  (tracked `023225…06f4`; untracked fixture `898063…dd0`).
+- Runtime now compares a PostgreSQL `pg_class` OID baseline with post-v2 catalog
+  state and includes duplicate-key/FK fixes. Focused convention 17, mutation 4,
+  V2Both 2, and infra catalog 11 are all green.
+- The authorized healthy-Docker isolated `scripts/agent/verify-changes.sh --run`
+  rerun passed: exit 0, `BUILD SUCCESSFUL in 23m 46s` / 29 tasks; common 232 +
+  logic 3,173 + infra 236 + game-api 468 + game-engine 822 = 4,931 tests /
+  failures 0 / errors 0 / engine skipped 1. Verifier strict was 46 changed /
+  Errors 0 / Warnings 0 / findings 0; log
+  `/tmp/op43-catalog-diff-final-os-verify-rerun.log` SHA-256 is
+  `a95386e902908c199f12d86cb776e06d97ead25eef71e9dc3647b0e3e671e31e`.
+- The preceding first run is historical infrastructure-only: transient Docker
+  HTTP 500 before game-api app assertions; log
+  `/tmp/op43-catalog-diff-final-os-verify.log` SHA-256 is
+  `706131db0b7c24a2e57d4c7875031b195240b2e565ca2b798f54098bada6aadc`.
+- The prior P2 reports, immutable clearance, focused 6 + 1/16 + 2, and 4,916
+  verifier are historical pre-current-structural-tree evidence only.
+- Historical only: the prior cleared fingerprint
+  `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360` and
+  4,914-test verifier applied to an earlier Round 1 tree; neither replaces the
+  current exact structural-tree clearance or 4,931 full verifier.
+- The PR-conversation review counter is 0/3. After commit/push, observe
+  exact-SHA CI, then start the three sequential
+  review/remediation/reverification rounds. Commit, push, exact-SHA CI, reviews,
+  merge, and deployment remain separate gates.
+- No deployment, cutover, production observation, secret access, data deletion,
+  legacy/golden write, or test weakening is claimed or authorized by this handoff.
+
+---
+
+# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 V2-0B approved contract reconciliation; historical)
+
+## User-approved contract and durable records
+
+- The 2026-08-09 approval opens OPENSAM-43 on the existing tracked payload
+  `infra/src/main/resources/scenario/cities_1010.json`, with SHA-256
+  `6759a68255cae1a6b9c05cbbaf5736ed8fc9fcb50c6623be44d7e3dfe0b4d393`, 94 total
+  cities, 24 with `nation_id != 0`, and an empty repeated typed-snapshot diff.
+  `infra/src/main/resources/content/v2/cities_1010.json` is seven-field
+  metadata that references that payload; it is not a second city-row source.
+- ADR-LITE-030 in `.ai/decisions.md` formally supersedes the old OP43
+  G0/counter-1,180/`CountyParticipationFixture` prerequisite. It preserves
+  V2-G0 and the 1,180-content/fixture work as post-open work rather than
+  deleting it.
+- Durable docs ledger: `docs/loops/opensam-43-v2-0b-2026-08-09/LEDGER.md`.
+  Its `0B-a-v1-completion-reference.md` links, rather than copies, the
+  canonical `docs/loops/v1-nonoperational-completion-2026-07-27/LEDGER.md`.
+  Its `0B-j-query-read-write-impact-ledger.md` names the observed
+  world/profile/catalog/wire/Flyway seams and explicitly distinguishes them
+  from unimplemented persistence, handler, cache, realtime, and UI work.
+- `docs/superpowers/plans/2026-07-17-v2-ticket-backlog/01-backbone-micro.md`
+  has only its stale OP43 wording reconciled to that approval. The OP43
+  runtime-contract plan itself remains unchanged and authoritative.
+
+## Historical implemented fan-in and verification
+
+- The separately owned source lanes have now implemented 0B-b~i/k: the existing
+  engine/API process-world identities, the profile/property AND gate, typed
+  ACTIVE-only city metadata/adapter, independent required v2 wire versions,
+  and a test-only V900 sibling-location probe. There is no production v2 SQL
+  or product leaf.
+- The exact dirty-tree backend gate was green in one run: 605 suites / 5,063
+  tests / failures 0 / errors 0 / skipped 1. Independent review then found four
+  MAJOR false-green gaps. The remediations now reject metadata extra keys and
+  missing wire versions, boot actual v1/v2 Spring Flyway configurations, and
+  reject comment-spoofed migration rules while introspecting applied tables.
+  Focused current XML is common wire 7/0/0/0, infra catalog 9/0/0/0, and engine
+  v2 21/0/0/0. Exact dirty-tree re-review is `cleared` at fingerprint `3e05d2cf…cbb`.
+- The final current-tree `scripts/agent/verify-changes.sh --run` invocation exited 0:
+  `BUILD SUCCESSFUL in 16m 19s`, 29 tasks, 4,911 tests across common/logic/infra/game-api/game-engine,
+  failures 0 / errors 0. Strict reported 41 changed, Errors 0, Warnings 0, findings 0. The captured log
+  `/tmp/op43-final-os-verify.log` has SHA-256
+  `00b137ac81dca1757bb920ccc54f1b0eda1dac18343b5028587ffaab5286242a`.
+- OPENSAM-44/150 (v2 persistence/first leaf), OPENSAM-104/105 (RTK builders),
+  V2-G0/1,180, and production rollout remain outside this approval. Do not
+  infer a v2 schema, city ledger, JPA repository, cache, handler, Redis
+  producer, controller, SSE subscriber, or frontend invalidation from 0B-j.
+- Next: commit, perform immutable-SHA review, push/open the PR, observe remote CI, and complete the required
+  three sequential PR-conversation reviews before merge. Compose/smoke/deploy were not run because they are
+  outside this non-operational contract. The generic Fablize tool-failure notices seen on
+  otherwise successful read-only discovery remain the already-recorded
+  external tooling baseline, not runtime evidence.
+
+---
+
 # SESSION HANDOFF — 2026-08-03 (RTK14 전체 로스터·5능력치·생몰/등장 수명주기)
 
 ## 사용자 지시 원문

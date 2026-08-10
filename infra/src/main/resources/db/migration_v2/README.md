@@ -36,23 +36,38 @@ v1 스택은 `SPRING_FLYWAY_LOCATIONS`를 **설정하지 않는다**. `applicati
 따라서 **볼륨 마운트도, 이미지 베이크도, Dockerfile 수정도 필요 없다.**
 `filesystem:` 경로는 컨테이너 내부 경로 실재성을 따로 보장해야 하므로 쓰지 않는다.
 
-## 4. 버전 번호 — **미확정 (사람 결정 대기)**
+## 4. 버전·월드·롤백 규약
 
-실측된 제약:
+v2 마이그레이션은 v1의 최고 버전보다 높은 **`V900+__snake_case.sql`** 이름만 사용한다. `V900`은
+`app/game-engine/src/test/resources/db/migration_v2/`의 isolation probe에 예약되어 있고, 실제 product leaf는
+그 probe와 충돌하지 않는 다음 사용 가능 번호를 사용한다. 이 대역은 같은 `public.flyway_schema_history`에서
+v1 이력 뒤에 append되므로, 이미 적용된 `V*.sql`은 절대 수정하거나 재사용하지 않는다.
 
-- v1과 v2는 **같은 `public.flyway_schema_history` 테이블**을 공유한다. 별도 테이블이 생기지 않고,
-  버전 번호 순서대로 v1 행 사이에 끼어 정렬된다.
-- 이미 마이그레이션된 DB에 **기존 최고 버전보다 낮은** v2 버전을 붙이면
-  `Validate failed: Detected resolved migration not applied to database`로 **부팅 실패**(fail-closed, DB 무변경).
-- **높은** 버전은 정상 append 된다.
-- ⚠️ 반대로, v2 행이 있는 DB에 v1 스택이 붙으면 **WARN만 남기고 정상 부팅한다**
-  (`Schema "public" has a version (902) that is newer than the latest available migration (38) !`).
-  Flyway는 이 방향으로 게이트가 아니다 — **DB 분리(`GAME_DATABASE_URL`)가 1차 방어선이다.**
+v2 product leaf는 반드시 world-owned다. 새 행 테이블은 최소
+`world_id integer NOT NULL REFERENCES world_state(id)`를 선언하고 primary/unique key와 조회 인덱스를
+world scope로 구성한다. OPENSAM-43의 V900 probe도 같은 `world_id` foreign key와 world-scoped primary key로
+이 계약을 실측한다.
 
-선택지 P1(DB 분리 + 고번호 대역 V900~) / P2(V39~ 이어붙이기) / P3(`spring.flyway.table` 분리, **미측정**)는
-측정 문서 §U4 참조. **확정 전까지 이 디렉터리에 마이그레이션을 추가하지 마라.**
+Flyway는 down migration을 실행하지 않는다. 각 v2 SQL 파일의 첫 줄은 다음 계약 선언이어야 한다.
+
+```sql
+-- V2-FORWARD-ONLY: rollback is a new compensating V900+ migration.
+```
+
+rollback이 필요하면 `flyway_schema_history`를 지우거나 과거 SQL을 고치지 말고, 새 `V900+` compensating
+migration을 추가한다. 이 선언은 **물리적인 첫 줄과 정확히 일치**해야 한다. BOM, 빈 줄, 다른 주석, 또는
+다른 텍스트가 앞에 오면 안 된다. `V2MigrationConventionTest`는 sibling directory와 test probe 모두에서
+파일명과 이 첫 줄을 검사하고, `--`/`/* ... */` SQL 주석을 제거한 뒤에만 `world_id NOT NULL` 선언을 검사한다.
+따라서 주석에만 적힌 `world_id integer NOT NULL`은 통과하지 못한다.
 
 ## 5. 현재 상태
 
-**빈 디렉터리다(README만).** 실제 v2 마이그레이션(`v2_city_ledger` 등)은 **OPENSAM-150(R1)** 소관이며,
-버전 번호 정책 확정 후에 추가한다.
+production `db/migration_v2/`에는 아직 SQL이 없다. `V900__v2_sandbox_probe.sql`은 engine test resources에만
+있으며, v1-only Flyway location은 이를 보지 못하고 explicit sibling location만 적용함을
+실제 Spring Boot/Testcontainers context에서 검증한다. 기본 v1 context는 application.yml의
+`classpath:db/migration`만 해석해 V900 history/table이 없고, `v2-sandbox` profile과 literal
+`V2_ENABLED=true`, `SPRING_FLYWAY_LOCATIONS=classpath:db/migration,classpath:db/migration_v2` 환경 source는
+두 location을 해석해 V900 history/table을 만든다. 적용된 모든 v2 migration의 `CREATE TABLE`은 런타임에
+`world_id NOT NULL`, world-scoped primary/unique key, 그리고 `world_state` foreign key를 PostgreSQL catalog로
+검사한다. source SQL을 고유하게 찾을 수 없거나 지원하지 않는 `CREATE TABLE` 형식이면 이 검사는 fail-closed다.
+실제 v2 schema/product leaf는 **OPENSAM-150** 소관이다.

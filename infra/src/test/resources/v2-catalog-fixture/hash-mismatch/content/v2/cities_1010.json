@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "cities_1010",
+  "status": "ACTIVE",
+  "source": "v2-catalog-fixture/scenario/cities.json",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "cityCount": 2,
+  "scenarioOwnedCityCount": 1
+}

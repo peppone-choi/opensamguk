@@ -1,5 +1,92 @@
 # Current State
 
+## OPENSAM-43 V2-0B — prior/pre-infra-sync code-remediation review `cleared` · local full verifier infra-blocked · remote CI deciding gate — 2026-08-10
+
+- 기준 SHA는 `e9cc3b31fa72aa46716f375b623f6a4937ad6c06`(`origin/main`)이고 worktree/branch는
+  `/private/tmp/opensam43-v2-0b-runtime` / `codex/op-43-v2-0b-runtime`다. 승인된 pinned-city
+  계약(94 total / 24 owned / SHA-256 `6759a682…d393`)과 ADR-LITE-030의 G0 post-open 경계는 유지된다.
+- Historical PR head `8abb47a1`의 모든 CI는 green이다. 그 terminal independent structural dirty-tree review는
+  combined fingerprint `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`에서 findings 없이
+  `cleared`였다 (tracked `023225…06f4`; untracked fixture `898063…dd0`). committed PR head
+  `5363abe9be95c304b30288df493c5b1f006ab8bb`의 exact-SHA remote CI도 CodeRabbit을 포함한 모든 job이 SUCCESS로
+  완료됐다. prior/pre-infra-sync terminal independent code-remediation review fingerprint
+  `84dc8a5ee43586b00f36101b7a840f9eba3241fdb7c705460242790d2263b1ca`는 no findings로 `cleared`였으며 current exact-tree
+  fingerprint가 아니다. focused
+  focused exact-source `app:game-engine` mutation 4 / V2Both2는 green이고 sole code-content verdict는 `cleared`다. 그러나 exact dirty-tree
+  full verifier는 `2h 16m 30s` 뒤 `app:game-api` `V2BothConditionsBeanGateIT` `initializationError`의 Testcontainers PostgreSQL readiness timeout이
+  assertion 전에 발생해 유일하게 실패했다 (log SHA-256
+  `8d6ff449e7fa672249768d486416f8d2ad17101d4e0ff59421b4ed13f76cec94`). local full verifier는 green이 아닌
+  `infra-blocked`다. authorized final isolated rerun은 Docker preflight가 usable version/status를 반환하지 않고 health가
+  `UNKNOWN/not confirmed healthy`여서 시작하지 않았다. strict/diff는 green이다. commit/push 뒤 resulting exact-SHA remote CI가
+  required deciding gate이고 PR-conversation reviews 0/3은 pending이다; merge-ready를 주장하지 않는다. runtime은
+  PostgreSQL `pg_class` OID baseline과 post-v2 catalog-diff를 비교하고 duplicate-key/FK fixes를 포함한다. focused
+  convention 17, infra catalog 11도 historical focused evidence와 함께 기록된다. 아래 authorized healthy-Docker
+  isolated verifier는 committed-head historical evidence다:
+  `scripts/agent/verify-changes.sh --run` rerun은 exit 0, `BUILD SUCCESSFUL in 23m 46s` / 29 tasks,
+  common 232 + logic 3,173 + infra 236 + game-api 468 + game-engine 822 = 4,931 tests / failures 0 /
+  errors 0 / game-engine skipped 1이다. verifier strict는 46 changed / Errors 0 / Warnings 0 / findings 0,
+  log `/tmp/op43-catalog-diff-final-os-verify-rerun.log` SHA-256은
+  `a95386e902908c199f12d86cb776e06d97ead25eef71e9dc3647b0e3e671e31e`다. 그 직전 첫 run은 game-api app
+  assertion 전 transient Docker HTTP 500로 실패한 historical infrastructure-only attempt이며 log
+  `/tmp/op43-catalog-diff-final-os-verify.log` SHA-256은
+  `706131db0b7c24a2e57d4c7875031b195240b2e565ca2b798f54098bada6aadc`다.
+- 4,915 tests / failures 0 / errors 0 full verifier와 focused 6 + 1은
+  historical/pre-final-parser-edit evidence다. prior focused 16 + 2, immutable clearance at base HEAD
+  `ac1d199644f61685ca3fee25f19c36e07782f960` / dirty diff
+  `0657e23e82f37f2c8ee0a7080edb3cdfbf048bb78966590f3c310cd839a4bb8b`, plus the fresh post-review
+  `scripts/agent/verify-changes.sh --run` exit 0 (`BUILD SUCCESSFUL in 17m 11s` / 29 executed;
+  common 232 + logic 3,173 + infra 235 + game-api 468 + game-engine 808 = 4,916 tests / failures 0 /
+  errors 0 / game-engine skipped 1; strict 45 changed / Errors 0 / Warnings 0 / findings 0; log
+  `/tmp/op43-post-review-final-os-verify.log` SHA-256
+  `dbefda4b82181c2e0f24cb3c9667dd33e0e5b2d3c106785789672793a2dc5530`) are `8abb47a1`
+  pre-current-structural-tree historical evidence only and do not replace the prior/pre-infra-sync code-remediation
+  clearance or current exact-tree infra-blocked full-verifier gate.
+- PR #371은 존재하며 원격 initial commit은
+  `983598928f4375b902d1e49c72551056ce5c9a1f`다. 그 commit의 `agent-system`, `jvm`, `web (gateway)`,
+  `web (game)` 네 CI job은 green이지만, 모두 이후의 dirty Round 1 remediation보다 앞선
+  historical evidence다. `ac1d199` CI와 current dirty remediation 이후의 pending remote CI는 위에
+  구분해 기록한다.
+- Round 1의 CodeRabbit 6 threads와 Codex P2 1건을 반영한 historical terminal independent re-review fingerprint
+  `5c93a23653012a0e557b720f701374ea2fe2c86ea5cebf718856d51933e17360`는
+  BLOCKER/MAJOR/MINOR/QUESTION/NIT 없이 `cleared`였으나 prior/pre-infra-sync code-remediation clearance 또는 current
+  exact-tree infra-blocked full-verifier gate를 대체하지 않는다.
+- CodeRabbit의 6 dispositions: historical 5,063-vs-4,911 wording과 V2-0A/G0 MD022 spacing은 수정했다.
+  active task의 `Human approval` clause와 승인된 OP43 plan §7이 이 ticket의 PR/merge를 명시 승인하므로,
+  approval comment는 inapplicable로 reject했고 ADR-LITE-026의 separate-approval 조건과 충돌하지 않는다.
+- Dirty source remediation은 duplicate-classpath fail-closed, duplicate city ID rejection, exact
+  rejection diagnostics, 그리고 deep/decoy fixture의 positive existence assertion을 포함한다. focused infra
+  rerun은 `BUILD SUCCESSFUL in 42s` / 10 tasks, catalog 10/0/0/0, adapter 6/0/0/0인 focused remediation
+  evidence다.
+- Codex P2는 모든 v2-created table의 PK/UNIQUE가 `world_id`를 포함하도록 guard를 강화했다. scoped
+  key와 별도의 unscoped UNIQUE를 넣는 mutation에서 intended RED를 관측했다. combined focused engine
+  current-input fan-in은 `BUILD SUCCESSFUL in 2m 42s` / 17 executed,
+  `app:game-engine` `V2FlywayIsolationConstraintMutationIT` 1/0/0/0 및 `app:game-engine` V2Both2
+  (`V2BothConditionsBeanGateIT`) 2/0/0/0으로
+  terminal이다. Engine log SHA-256은
+  `d6ea51c9a8ee5fb9991443eb7313cee666f86092c56e1fd7daf2e461b3e36ba4`이며 diff-check는 green이다.
+- pre-final-SHA Round 1 dirty-tree `scripts/agent/verify-changes.sh --run`은 정확히 한 번 exit 0으로 실행되어
+  `BUILD SUCCESSFUL in 12m 54s` / 29 executed, common 232 + logic 3,173 + infra 235 + game-api 468 +
+  game-engine 806 = 4,914 tests / failures 0 / errors 0 / game-engine skipped 1을 기록했다. strict는
+  44 changed / Errors 0 / Warnings 0 / findings 0이고, 로그
+  `/tmp/op43-round1-final-os-verify.log` SHA-256은
+  `5dc8db9b1f94cb509a8e1c4f826aaa6621e2fcc81e6996db110adc77f8dd9454`다. compose/smoke/deploy는 미실행이다.
+- Historical only: pre-initial-review backend gate는 605 suites / 5,063 tests / 0 failures / 0 errors /
+  1 skip이고, 이전 initial-remediation verifier는 4,911 tests / 0 failures / 0 errors였다. 어느 결과도
+  현재 Round 1 dirty remediation의 verifier record 또는 independent re-review를 대체하지 않는다.
+- Controlling review artifact의 유일한 verdict는 prior/pre-infra-sync terminal code-remediation review fingerprint
+  `84dc8a5ee43586b00f36101b7a840f9eba3241fdb7c705460242790d2263b1ca`에 대한 no-findings `cleared`이며 current exact-tree
+  fingerprint가 아니다.
+  focused exact-source `app:game-engine` mutation 4 / V2Both2와 strict/diff는 green이다. exact dirty-tree full verifier는
+  `app:game-api` `V2BothConditionsBeanGateIT` `initializationError` Testcontainers PostgreSQL readiness timeout이 assertion 전에 발생해 `2h 16m 30s` 후
+  실패했고 (log SHA-256 `8d6ff449e7fa672249768d486416f8d2ad17101d4e0ff59421b4ed13f76cec94`), Docker health
+  `UNKNOWN/not confirmed healthy`로 authorized isolated rerun도 시작하지 않아 `infra-blocked`다. 따라서 commit/push 뒤 resulting
+  exact-SHA remote CI가 deciding gate이며, 0/3의 세 번 순차 PR-conversation review도 pending이다. 이는 local full
+  green 또는 merge-ready 주장이 아니다.
+- OPENSAM-44/150 persistence/first leaf, OPENSAM-104/105 RTK builders, G0/1,180, deploy/cutover는
+  비범위다. source remediation은 dirty이며, 이 documentation lane은 commit/push/deploy를 수행하지 않는다.
+
+---
+
 ## OPENSAM-35 V2-0A 격리 게이트 — 구현 완료 · final CodeRabbit 8 dispositions dirty-tree review `cleared` · remote exact-commit CI pending · release/deploy 미수행 — 2026-08-08
 
 - 브랜치 `codex/op-35-v2-0a-final`은 `origin/main` `b847c351`에서 재구성했다. 계획 정본: `docs/superpowers/plans/2026-08-08-opensam-35-v2-0a-isolation-plan.md`. 사용자 결정은 계획 **채택 + S6까지 연속 실행**이다. 현재 PR [#370](https://github.com/peppone-choi/opensamguk/pull/370)은 열려 있고, merge/release/deploy/production 관측은 어느 것도 수행하지 않았다.

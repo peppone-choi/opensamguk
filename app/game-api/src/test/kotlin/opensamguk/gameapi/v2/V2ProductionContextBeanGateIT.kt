@@ -3,13 +3,20 @@ package opensamguk.gameapi.v2
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.infra.v2.V2CityCatalogAdapter
 import opensamguk.infra.v2.V2ContentCatalog
 import opensamguk.infra.v2.V2SandboxGate
 import opensamguk.infra.v2.V2SandboxMarker
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextInitializer
+import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.core.env.SystemEnvironmentPropertySource
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
@@ -33,15 +40,28 @@ internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
 internal fun ApplicationContext.assertNoV2Beans() {
     assertEquals(0, getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
     assertEquals(0, getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
+    assertEquals(0, getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
     assertEquals(emptyMap(), v2PackageBeans(), "beans whose type lives in an opensamguk *.v2.* package")
 }
 
-private fun postgresProps(registry: DynamicPropertyRegistry, container: PostgreSQLContainer<*>) {
+private fun postgresProps(
+    registry: DynamicPropertyRegistry,
+    container: PostgreSQLContainer<*>,
+    worldId: Int = 1,
+) {
     registry.add("spring.datasource.url", container::getJdbcUrl)
     registry.add("spring.datasource.username", container::getUsername)
     registry.add("spring.datasource.password", container::getPassword)
-    registry.add("opensamguk.world-id") { "1" }
+    registry.add("opensamguk.world-id") { worldId.toString() }
     registry.add("management.health.redis.enabled") { "false" }
+}
+
+internal class V2EnabledEnvironmentInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
+    override fun initialize(context: ConfigurableApplicationContext) {
+        context.environment.propertySources.addFirst(
+            SystemEnvironmentPropertySource("test-systemEnvironment", mapOf("V2_ENABLED" to "true")),
+        )
+    }
 }
 
 /** ① Production shape — `V2_ENABLED` unset and profile inactive. Expect zero v2 beans. */
@@ -106,21 +126,29 @@ class V2ProfileOnlyBeanGateIT {
  */
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles(V2SandboxGate.PROFILE)
-@SpringBootTest(properties = ["${V2SandboxGate.PROPERTY}=true"])
+@ContextConfiguration(initializers = [V2EnabledEnvironmentInitializer::class])
+@SpringBootTest
 class V2BothConditionsBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
     fun `both conditions register the v2 beans`() {
+        assertTrue(V2SandboxGate.PROFILE in context.environment.activeProfiles)
+        assertEquals("true", context.environment.getProperty(V2SandboxGate.PROPERTY))
+
+        val processWorlds = context.getBeansOfType(GameApiProcessWorld::class.java)
+        assertEquals(1, processWorlds.size, "GameApiProcessWorld beans")
+        assertEquals(WorldId(9001), processWorlds.values.single().worldId)
+
         assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
         // game-api has no v2 content consumer (S3-a), so opening the gate does not register the loader.
         assertEquals(0, context.getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
+        assertEquals(0, context.getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
         val byPackage = context.v2PackageBeans()
-        assertTrue(
-            byPackage.values.containsAll(
-                listOf(V2SandboxConfiguration::class.java.name, V2SandboxMarker::class.java.name),
-            ),
-            "v2 package beans: $byPackage",
+        assertEquals(
+            setOf("v2SandboxConfiguration", "v2SandboxMarker"),
+            byPackage.keys,
+            "game-api v2 package beans: $byPackage",
         )
     }
 
@@ -129,6 +157,6 @@ class V2BothConditionsBeanGateIT {
 
         @JvmStatic
         @DynamicPropertySource
-        fun props(registry: DynamicPropertyRegistry) = postgresProps(registry, postgres)
+        fun props(registry: DynamicPropertyRegistry) = postgresProps(registry, postgres, worldId = 9001)
     }
 }

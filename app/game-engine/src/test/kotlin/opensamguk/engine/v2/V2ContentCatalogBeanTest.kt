@@ -3,6 +3,7 @@ package opensamguk.engine.v2
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import opensamguk.infra.v2.V2CityCatalogAdapter
 import opensamguk.infra.v2.V2ContentCatalog
 import opensamguk.infra.v2.V2SandboxGate
 import org.springframework.boot.ApplicationRunner
@@ -19,21 +20,33 @@ class V2ContentCatalogBeanTest {
         .withUserConfiguration(V2SandboxConfiguration::class.java)
 
     @Test
-    fun `gate closed - no content catalog bean`() {
-        runner.run { assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size) }
+    fun `gate closed - no content catalog or city adapter bean`() {
+        runner.run {
+            assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size)
+            assertEquals(0, it.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+        }
         runner.withPropertyValues("${V2SandboxGate.PROPERTY}=true")
-            .run { assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size) }
+            .run {
+                assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size)
+                assertEquals(0, it.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+            }
         runner.withPropertyValues("spring.profiles.active=${V2SandboxGate.PROFILE}")
-            .run { assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size) }
+            .run {
+                assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size)
+                assertEquals(0, it.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+            }
     }
 
     @Test
-    fun `gate open - content catalog bean registered and reads an empty catalog`() {
+    fun `gate open - content catalog and city adapter beans are registered`() {
         gateOpen().run { context ->
             val catalog = context.getBean(V2ContentCatalog::class.java)
             assertNotNull(catalog)
-            // There are no v2 content files yet (only a README), so an empty list is normal rather than an error.
-            assertEquals(emptyList(), catalog.names())
+            assertEquals(listOf("cities_1010.json"), catalog.names())
+
+            val adapter = context.getBean(V2CityCatalogAdapter::class.java)
+            assertNotNull(adapter)
+            assertEquals(94, adapter.load().cities.size)
         }
     }
 
