@@ -6,9 +6,11 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.City
+import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.RankColumn
+import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import java.time.Instant
@@ -42,6 +44,30 @@ class MakeGeneralHandlerTest {
         character = "Random",
     )
 
+    private fun existingTypedGeneral(npcState: Int) = TurnGeneral(
+        id = 10,
+        name = "기존장수",
+        nationId = 0,
+        cityId = 10,
+        troopId = 0,
+        stats = GeneralStats(50, 50, 50),
+        experience = 0,
+        dedication = 0,
+        officerLevel = 0,
+        npcState = npcState,
+        userId = "7",
+        turnTime = t0,
+    )
+
+    private fun worldWithExistingTypedGeneral(npcState: Int) = InMemoryTurnWorld(
+        WorldSnapshot(
+            state = state(),
+            generals = listOf(existingTypedGeneral(npcState)),
+            cities = listOf(City(id = 10, name = "낙양", nationId = 0, level = 5)),
+            worldId = opensamguk.common.world.WorldId((state()).id),
+        ),
+    )
+
     @Test
     fun `make general falls back to occupied level five-six cities when no neutral birth city exists`() {
         val world = InMemoryTurnWorld(
@@ -65,6 +91,24 @@ class MakeGeneralHandlerTest {
             created.cityId in setOf(10, 11),
             "PHP Join.php:278-283 falls back from neutral level 5-6 cities to all level 5-6 cities.",
         )
+    }
+
+    @Test
+    fun `released npc states with stale typed user id do not block creation`() {
+        for (npcState in listOf(2, 3)) {
+            val result = MakeGeneralHandler(worldWithExistingTypedGeneral(npcState), ChangeRecorder()).handle(command())
+
+            assertIs<MakeGeneralOk>(result, "npcState=$npcState is not a live player general")
+        }
+    }
+
+    @Test
+    fun `live typed player states still block creation`() {
+        for (npcState in listOf(0, 1)) {
+            val result = MakeGeneralHandler(worldWithExistingTypedGeneral(npcState), ChangeRecorder()).handle(command())
+
+            assertEquals("이미 등록하셨습니다!", assertIs<MakeGeneralFail>(result).reason, "npcState=$npcState is live")
+        }
     }
 
     @Test

@@ -32,7 +32,7 @@ import java.time.Instant
  *  2. ng_old_nations UPSERT per deleted-nation snapshot
  *  3. createMany general/nation/troop/diplomacy (guarded > 0)
  *  4. deleteMany troop
- *  5. kill() delete: general, general_turn, then rank_data
+ *  5. general_owner delete, then kill() delete: general, general_turn, then rank_data
  *  6. nation cascade: diplomacy, nation_turn, nation
  *  7. updates: general (excl created), city, nation upsert (excl created), troop, diplomacy
  *  8. rank_data upsert (RANK_ROWS_PER_GENERAL per target)
@@ -139,6 +139,10 @@ open class JdbcFlushExecutor(
 
             // 4. deleteMany troop (by troop_leader; ExitTroop leader-disband + outright removal).
             if (payload.deletedTroops.isNotEmpty()) troopDeleteMany(payload.worldId, payload.deletedTroops)
+
+            if (payload.generalOwnerDeletes.isNotEmpty()) {
+                generalOwnerDeleteMany(payload.worldId, payload.generalOwnerDeletes)
+            }
 
             // 5. deleteMany general, then rank_data (both guarded on deletedGenerals > 0).
             if (payload.deletedGenerals.isNotEmpty()) {
@@ -1084,6 +1088,15 @@ open class JdbcFlushExecutor(
             MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", generalIds),
         )
         lastOps.add(FlushExecOp("rank_data", FlushVerb.DELETE_MANY, generalIds.size))
+    }
+
+    private fun generalOwnerDeleteMany(worldId: WorldId, generalIds: List<Int>) {
+        val uniqueIds = generalIds.distinct()
+        jdbc.update(
+            "DELETE FROM general_owner WHERE world_id = :world_id AND general_id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", uniqueIds),
+        )
+        lastOps.add(FlushExecOp("general_owner", FlushVerb.DELETE_MANY, uniqueIds.size))
     }
 
     private fun generalAccessLogDeleteMany(worldId: WorldId, generalIds: List<Int>) {
@@ -2341,6 +2354,7 @@ data class FlushPayload(
     val createdGenerals: List<GeneralCreateRow> = emptyList(),
     val generalAccessLogUpserts: List<GeneralAccessLogWriteRow> = emptyList(),
     val generalAccessLogDeletes: List<Int> = emptyList(),
+    val generalOwnerDeletes: List<Int> = emptyList(),
     // --- P2 satellite write-set (Task FF2) ---
     val updatedNations: List<Nation> = emptyList(),           // step-7 nation UPDATE (excl created)
     val createdNations: List<Nation> = emptyList(),           // step-3 createMany

@@ -102,6 +102,7 @@ class ChangeRecorder(
 
     private val accessLogUpserts = LinkedHashMap<Int, GeneralAccessLog>()
     private val accessLogDeletes = LinkedHashSet<Int>()
+    private val generalOwnerDeletes = LinkedHashSet<Int>()
 
     /**
      * KV delta channel (T0.3) — `(table, namespace, key)` → encoded value | `null`-delete. The recorder
@@ -226,7 +227,7 @@ class ChangeRecorder(
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
-            accessLogUpserts.isNotEmpty() || accessLogDeletes.isNotEmpty() ||
+            accessLogUpserts.isNotEmpty() || accessLogDeletes.isNotEmpty() || generalOwnerDeletes.isNotEmpty() ||
             kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
             votePollUpdates.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
@@ -263,6 +264,7 @@ class ChangeRecorder(
     fun nationSnapshots(): List<DeletedNationSnapshot> = nationSnapshots.toList()
     fun accessLogUpserts(): List<GeneralAccessLog> = accessLogUpserts.values.toList()
     fun accessLogDeletes(): Set<Int> = accessLogDeletes.toSet()
+    fun generalOwnerDeletes(): Set<Int> = generalOwnerDeletes.toSet()
 
     fun recordAccessLogUpsert(world: InMemoryTurnWorld, row: GeneralAccessLog) {
         world.applyAccessLogDirtyFree(row)
@@ -274,6 +276,11 @@ class ChangeRecorder(
         world.removeAccessLogDirtyFree(generalId)
         accessLogUpserts.remove(generalId)
         accessLogDeletes.add(generalId)
+    }
+
+    fun recordGeneralOwnerDelete(generalId: Int) {
+        gateMutation("recordGeneralOwnerDelete")
+        generalOwnerDeletes.add(generalId)
     }
     fun generalPatches(): List<RowPatch> = generalPatches.values.toList()
     fun cityPatches(): List<RowPatch> = cityPatches.values.toList()
@@ -820,6 +827,7 @@ class ChangeRecorder(
         deletedNationIds.clear()
         accessLogUpserts.clear()
         accessLogDeletes.clear()
+        generalOwnerDeletes.clear()
         kvDirty.clear()
         diplomacyUpdateDirty.clear()
         votePollUpdates.clear()
@@ -970,12 +978,14 @@ class ChangeRecorder(
 
     /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE
-     * general/general_turn/rank_data). The recorder is the SOLE emitter:
+     * general/general_turn/rank_data). The recorder is the SOLE emitter for the PHP tombstone and
+     * Kotlin's durable `general_owner` cleanup:
      *  1. capture the pre-delete row (the `ng_old_generals` storeOldGeneral content),
      *  2. drop any pending UPDATE/rank patch (kill() clears updatedVar, `General.php:595` — no
      *     double-apply: the row leaves the update-set and lands ONLY as a delete),
      *  3. record the tombstone so a trailing [diffGeneral] for this id is a no-op, and
-     *  4. drop it from the world (which feeds `DirtyState.deletedGenerals`).
+     *  4. record the owner-link and access-log deletes, then drop it from the world (which feeds
+     *     `DirtyState.deletedGenerals`).
      *
      * A general created *and* killed within the same tick fully cancels in [InMemoryTurnWorld.removeGeneral]
      * (no archive write for a row that never persisted) — so the snapshot is only kept when the world
@@ -987,6 +997,7 @@ class ChangeRecorder(
         generalPatches.remove(generalId)
         rankPatches.remove(generalId)
         deletedGeneralIds.add(generalId)
+        recordGeneralOwnerDelete(generalId)
         recordAccessLogDelete(world, generalId)
         return world.removeGeneral(generalId)
     }

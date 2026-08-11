@@ -63,6 +63,18 @@ class WorldScopedReadRepositoryIT {
         assertTrue(nationTurns.findByNationIdOrderByOfficerLevelDescTurnIdxAsc(21).isEmpty())
     }
 
+    @Test
+    fun `direct owner lookup returns the first playable general and excludes released rows`() {
+        seedWorld(1)
+        seedWorld(2)
+        insertGeneral(id = 51, worldId = 1, nationId = 0, cityId = 0, userId = "7", npcState = 3)
+        insertGeneral(id = 52, worldId = 1, nationId = 0, cityId = 0, userId = "7", npcState = 1)
+        insertGeneral(id = 53, worldId = 1, nationId = 0, cityId = 0, userId = "7", npcState = 0)
+        insertGeneral(id = 61, worldId = 2, nationId = 0, cityId = 0, userId = "7", npcState = 0)
+
+        assertEquals(52, generals.findByUserId("7")?.id)
+    }
+
     private fun seedWorld(id: Int) {
         jdbc.update(
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (?, ?, 1, 1, 60)",
@@ -96,28 +108,37 @@ class WorldScopedReadRepositoryIT {
         )
     }
 
-    private fun insertGeneral(id: Int, worldId: Int, nationId: Int, cityId: Int) {
+    private fun insertGeneral(
+        id: Int,
+        worldId: Int,
+        nationId: Int,
+        cityId: Int,
+        userId: String? = null,
+        npcState: Int = 0,
+    ) {
         jdbc.update(
             """
             INSERT INTO general (
-                id, world_id, name, nation_id, city_id, leadership, strength, intel, injury,
+                id, world_id, user_id, name, nation_id, city_id, leadership, strength, intel, injury,
                 experience, dedication, officer_level, gold, rice,
                 crew, crew_type_id, train, atmos, troop_id,
                 weapon_code, book_code, horse_code, item_code, npc_state,
                 turn_time, last_turn, meta
             ) VALUES (
-                ?, ?, ?, ?, ?, 50, 50, 50, 0,
+                ?, ?, ?, ?, ?, ?, 50, 50, 50, 0,
                 0, 0, 1, 0, 0,
                 0, 0, 0, 0, 0,
-                'None', 'None', 'None', 'None', 0,
+                'None', 'None', 'None', 'None', ?,
                 now(), '{}'::jsonb, '{}'::jsonb
             )
             """.trimIndent(),
             id,
             worldId,
+            userId,
             "g$id",
             nationId,
             cityId,
+            npcState,
         )
     }
 

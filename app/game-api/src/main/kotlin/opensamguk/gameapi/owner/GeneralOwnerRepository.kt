@@ -6,7 +6,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.IdClass
 import jakarta.persistence.Table
 import opensamguk.gameapi.config.GameApiProcessWorld
-import opensamguk.gameapi.read.GeneralReadEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -22,13 +21,6 @@ class GeneralOwnerEntity(
     var claimRequestId: String? = null,
 )
 
-internal fun GeneralOwnerEntity.isFinalizedFor(general: GeneralReadEntity, userId: Long): Boolean =
-    if (claimRequestId == null) {
-        general.npcState != GeneralPossessionService.CLAIMABLE_NPC_STATE
-    } else {
-        general.npcState == GeneralPossessionService.POSSESSED_NPC_STATE && general.userId == userId.toString()
-    }
-
 interface GeneralOwnerRepository {
     fun findByUserId(userId: Long): GeneralOwnerEntity?
 
@@ -39,6 +31,8 @@ interface GeneralOwnerRepository {
     fun save(entity: GeneralOwnerEntity): GeneralOwnerEntity
 
     fun deleteByUserIdAndGeneralIdAndClaimRequestId(userId: Long, generalId: Long, claimRequestId: String): Int
+
+    fun deleteIfUnchanged(entity: GeneralOwnerEntity): Int
 }
 
 internal data class GeneralOwnerRecordId(
@@ -75,7 +69,7 @@ internal interface GeneralOwnerRecordRepository : JpaRepository<GeneralOwnerReco
 
     fun findAllByWorldIdOrderByGeneralIdAsc(worldId: Int): List<GeneralOwnerRecord>
 
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
         "delete from GeneralOwnerRecord r " +
             "where r.worldId = :worldId and r.userId = :userId and r.generalId = :generalId " +
@@ -86,6 +80,33 @@ internal interface GeneralOwnerRecordRepository : JpaRepository<GeneralOwnerReco
         @Param("userId") userId: Long,
         @Param("generalId") generalId: Long,
         @Param("claimRequestId") claimRequestId: String,
+    ): Int
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(
+        "delete from GeneralOwnerRecord r " +
+            "where r.worldId = :worldId and r.userId = :userId and r.generalId = :generalId " +
+            "and r.claimedAt = :claimedAt and r.claimRequestId = :claimRequestId",
+    )
+    fun deleteIfCurrentRequest(
+        @Param("worldId") worldId: Int,
+        @Param("userId") userId: Long,
+        @Param("generalId") generalId: Long,
+        @Param("claimedAt") claimedAt: Instant,
+        @Param("claimRequestId") claimRequestId: String,
+    ): Int
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(
+        "delete from GeneralOwnerRecord r " +
+            "where r.worldId = :worldId and r.userId = :userId and r.generalId = :generalId " +
+            "and r.claimedAt = :claimedAt and r.claimRequestId is null",
+    )
+    fun deleteIfCurrentLegacyReservation(
+        @Param("worldId") worldId: Int,
+        @Param("userId") userId: Long,
+        @Param("generalId") generalId: Long,
+        @Param("claimedAt") claimedAt: Instant,
     ): Int
 }
 
@@ -128,6 +149,22 @@ internal class WorldScopedGeneralOwnerRepository(
         generalId = generalId,
         claimRequestId = claimRequestId,
     )
+
+    override fun deleteIfUnchanged(entity: GeneralOwnerEntity): Int =
+        entity.claimRequestId?.let { requestId ->
+            raw.deleteIfCurrentRequest(
+                worldId = worldId.value,
+                userId = entity.userId,
+                generalId = entity.generalId,
+                claimedAt = entity.claimedAt,
+                claimRequestId = requestId,
+            )
+        } ?: raw.deleteIfCurrentLegacyReservation(
+            worldId = worldId.value,
+            userId = entity.userId,
+            generalId = entity.generalId,
+            claimedAt = entity.claimedAt,
+        )
 
     private fun GeneralOwnerRecord.toValue(): GeneralOwnerEntity = GeneralOwnerEntity(
         generalId = generalId,

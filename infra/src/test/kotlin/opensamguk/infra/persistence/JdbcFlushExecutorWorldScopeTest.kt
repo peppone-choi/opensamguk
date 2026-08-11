@@ -39,6 +39,7 @@ class JdbcFlushExecutorWorldScopeTest {
             "generalAccessLogUpsertMany",
             "diplomacyCreateMany",
             "rankDataDeleteMany",
+            "generalOwnerDeleteMany",
             "generalAccessLogDeleteMany",
             "rankDataUpdate",
             "rankDataNationSync",

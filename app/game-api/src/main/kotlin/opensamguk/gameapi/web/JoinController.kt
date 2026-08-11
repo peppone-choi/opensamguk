@@ -6,6 +6,7 @@ import opensamguk.common.auth.GatewayProfileClaims
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.gameapi.owner.GeneralOwnershipClassifier
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GameKvReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
@@ -50,6 +51,7 @@ class JoinController(
     private val gameKv: GameKvReadRepository,
     private val cities: CityReadRepository,
     private val objectMapper: ObjectMapper,
+    private val ownership: GeneralOwnershipClassifier,
 ) {
 
     data class JoinRequest(
@@ -168,8 +170,15 @@ class JoinController(
         val generalCount = generals.countByNpcStateLessThan(2)
         val maxGeneral = intConfig(worldConfig["maxgeneral"]) ?: GameConst.defaultMaxGeneral
 
-        // 1. One general per user (Join.php:181)
-        if (generals.findByUserId(userId.toString()) != null) {
+        var currentOwnership = ownership.classify(userId)
+        if (currentOwnership is GeneralOwnershipClassifier.Ownership.Stale) {
+            ownership.repair(currentOwnership)
+            currentOwnership = ownership.classify(userId)
+        }
+        if (currentOwnership is GeneralOwnershipClassifier.Ownership.LiveOwned ||
+            currentOwnership is GeneralOwnershipClassifier.Ownership.CorrelatedPending ||
+            currentOwnership is GeneralOwnershipClassifier.Ownership.Stale
+        ) {
             return ResponseEntity.ok(
                 JoinResponse(status = "BLOCKED", reason = "이미 등록하셨습니다!"),
             )

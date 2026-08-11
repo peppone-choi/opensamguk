@@ -37,6 +37,15 @@ class ClaimNpcHandler(
         val pre = world.getGeneralById(generalId)
             ?: return GeneralBoolResult(type = "claimNpc", ok = false, generalId = generalId, reason = "장수를 찾을 수 없습니다.")
 
+        if (world.listGenerals().any { general ->
+                general.id != generalId &&
+                    general.userId == command.userId.toString() &&
+                    general.npcState < 2
+            }
+        ) {
+            return GeneralBoolResult(type = "claimNpc", ok = false, generalId = generalId, reason = "이미 등록하셨습니다!")
+        }
+
         // PHP WHERE: owner <= 0 AND npc = 2 AND no = $pick
         val currentOwner = pre.userId?.toLongOrNull() ?: 0L
         if (pre.npcState != 2 || currentOwner > 0) {

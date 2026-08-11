@@ -97,6 +97,21 @@ class FlushPayloadConvergenceTest {
     }
 
     @Test
+    fun `general owner delete reaches the payload once and clears between ticks`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+        recorder.recordGeneralOwnerDelete(10)
+        recorder.recordGeneralOwnerDelete(10)
+
+        assertTrue(recorder.isDirty)
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        assertEquals(listOf(10), payload.generalOwnerDeletes)
+
+        recorder.clear()
+        assertTrue(recorder.generalOwnerDeletes().isEmpty())
+    }
+
+    @Test
     fun `bidirectional diplomacy update reaches the payload (both directions)`() {
         val world = InMemoryTurnWorld(
             WorldSnapshot(

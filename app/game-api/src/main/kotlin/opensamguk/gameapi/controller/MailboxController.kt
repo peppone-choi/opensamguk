@@ -36,8 +36,9 @@ import java.time.format.DateTimeFormatter
  * D7 GetRecentMessage — `/api/mailbox/recent` (신규). 4섹션 봉투 + valid_until 필터 + diplomacy 마스킹.
  * D8 GetOldMessage — `/api/mailbox/old` (봉투 재구성). `to(id<to)+type` 페이징 + valid_until 필터.
  *
- * Identity: JWT principal → [GeneralResolver] (general_owner / general.user_id). Never falls back to
- * "first playable general" — that leaked other players' mailboxes when unauthenticated or mis-bound.
+ * Identity: JWT principal → [GeneralResolver]'s authoritative playable `general.user_id` body; an
+ * account-side `general_owner` reservation is reconciled only. Never falls back to "first playable general"
+ * — that leaked other players' mailboxes when unauthenticated or mis-bound.
  *
  * read-only(§7).
  */
@@ -290,8 +291,8 @@ class MailboxController(
     // ------------------------------------------------------------------
 
     /**
-     * JWT principal → owned general via [GeneralResolver] (general_owner, then general.user_id).
-     * Null when anonymous or no character — never "first playable" (cross-user mailbox leak).
+     * JWT principal → [GeneralResolver]'s authoritative playable typed body, or null when anonymous/no
+     * character — never "first playable" (cross-user mailbox leak).
      */
     private fun currentGeneral(userId: Long?): GeneralReadEntity? {
         if (userId == null) return null

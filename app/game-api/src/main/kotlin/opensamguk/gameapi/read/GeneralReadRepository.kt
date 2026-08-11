@@ -15,6 +15,8 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.util.Optional
 
+private const val PLAYABLE_NPC_STATE_EXCLUSIVE = 2
+
 /**
  * Read-only JPA mapping of the `general` row for the PRECHECK path (game-api ONLY — the
  * legitimate JPA use per §7). The daemon write path never touches JPA.
@@ -326,6 +328,12 @@ interface GeneralReadRawRepository : SpringDataRepository<GeneralReadEntity, Int
     /** B1 Join — one general per user check. */
     fun findByWorldIdAndUserId(worldId: Int, userId: String): GeneralReadEntity?
 
+    fun findFirstByWorldIdAndUserIdAndNpcStateLessThanOrderByIdAsc(
+        worldId: Int,
+        userId: String,
+        npcState: Int,
+    ): GeneralReadEntity?
+
     /** B1 Join — unique name check. */
     fun existsByWorldIdAndName(worldId: Int, name: String): Boolean
 }
@@ -397,7 +405,18 @@ class GeneralReadRepository(
     fun findDistinctCityIdByNationId(nationId: Int): List<Int> =
         raw.findDistinctCityIdByWorldIdAndNationId(worldId.value, nationId)
 
-    fun findByUserId(userId: String): GeneralReadEntity? = raw.findByWorldIdAndUserId(worldId.value, userId)
+    /**
+     * B1 Join — one playable general per user check.
+     *
+     * A released `npc_state = 3` row is not a current possession, so the legacy-shaped method name
+     * intentionally maps to the ordered `npc_state < 2` query.
+     */
+    fun findByUserId(userId: String): GeneralReadEntity? =
+        raw.findFirstByWorldIdAndUserIdAndNpcStateLessThanOrderByIdAsc(
+            worldId.value,
+            userId,
+            PLAYABLE_NPC_STATE_EXCLUSIVE,
+        )
 
     fun existsByName(name: String): Boolean = raw.existsByWorldIdAndName(worldId.value, name)
 }

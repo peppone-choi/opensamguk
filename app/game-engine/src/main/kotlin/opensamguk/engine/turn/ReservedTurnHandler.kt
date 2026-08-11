@@ -989,9 +989,9 @@ class ReservedTurnHandler(
      * killturn<=0 branch of [updateTurnTime] (`TurnExecutionHelper.php:185-206`).
      *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch): push the global
      *    log FIRST, then legacy `killturn=(deadyear-year)*12` converted to three phase turns,
-     *    `npc=npc_org, owner=0, defence_train=80,
-     *    owner_name=null`, then DELETE general_access_log ONLY.
-     *  - else → [kill] (the F3 tombstone + 4-table delete).
+     *    `npc=npc_org, owner=0, user_id=null, defence_train=80,
+     *    owner_name=null`, then DELETE general_access_log and Kotlin `general_owner`.
+     *  - else → [kill] (the F3 tombstone/delete set plus durable owner-link deletion).
      */
     internal fun killOrReleasePossession(general: TurnGeneral, env: LifecycleEnv): LifecycleOutcome {
         val deadyear = metaInt(general, "deadyear", 0)
@@ -1005,6 +1005,7 @@ class ReservedTurnHandler(
             val npcOrg = metaInt(general, "npc_org", general.npcState)
             val released = general.copy(
                 npcState = npcOrg, // npc = npc_org
+                userId = null,
                 meta = withMeta(
                     general.meta,
                     "killturn" to (deadyear - env.year) * 12 * GameConst.phasesPerMonth,
@@ -1015,6 +1016,7 @@ class ReservedTurnHandler(
                 ),
             )
             applyLifecycleGeneral(general, released)
+            recorder.recordGeneralOwnerDelete(general.id)
             recorder.recordAccessLogDelete(world, general.id)
             return LifecycleOutcome.POSSESSION_RELEASED
         }
@@ -1023,11 +1025,11 @@ class ReservedTurnHandler(
     }
 
     /**
-     * kill() — the tombstone + 4-table delete (`General.php:515-600`). Ordering is load-bearing for
+     * kill() — the PHP tombstone plus Kotlin owner-link deletion (`General.php:515-600`). Ordering is load-bearing for
      * the log byte-match: nextRuler/demote → troop cleanup → dying message → storeOldGeneral → the F3
      * delete-set finalize → nation gennum-1. (Inherit-point refund / select_pool null / the user
      * logger are out of the engine slice; the F3 [ChangeRecorder.markGeneralDeleted] performs
-     * storeOldGeneral + the 4-table delete + clears updatedVar so the killed row never re-enters the
+     * storeOldGeneral + the PHP delete set, durable owner-link delete, and clears updatedVar so the killed row never re-enters the
      * update-set, `General.php:595`.)
      */
     private fun kill(general: TurnGeneral, env: LifecycleEnv) {
@@ -1050,7 +1052,7 @@ class ReservedTurnHandler(
         // dying message global log (:573-580) — default is the byte-exact $defaultMessage.
         world.pushLog(globalLog(general, dyingMessage(general)))
 
-        // storeOldGeneral + the F3 4-table delete (tombstone; clears updatedVar — no double-apply).
+        // storeOldGeneral + the F3 delete set and durable owner-link delete (clears updatedVar — no double-apply).
         recorder.markGeneralDeleted(world, generalId)
 
         // nation gennum-1 (:597-599) — gennum rides the nation meta bag in the slice.
@@ -2283,7 +2285,7 @@ enum class LifecycleOutcome {
     /** NPCType==1 & deadyear>year — possession released (유체이탈), turntime advanced, NOT deleted. */
     POSSESSION_RELEASED,
 
-    /** killturn<=0 (not possession) — kill() tombstoned the row (the F3 4-table delete). */
+    /** killturn<=0 (not possession) — kill() tombstoned the row and removed its durable owner link. */
     KILLED,
 
     /** age>=retirementYear human — rebirth() in-place UPDATE, turntime advanced, NOT deleted. */

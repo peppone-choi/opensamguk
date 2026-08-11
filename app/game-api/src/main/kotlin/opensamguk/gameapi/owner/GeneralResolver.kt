@@ -3,17 +3,17 @@ package opensamguk.gameapi.owner
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 /**
  * F2 Wave 1 — resolve a verified `userId` (JWT subject) to the game-state general they own.
  *
- * The primary link is the account-side [GeneralOwnerEntity] (V10 `general_owner`): `userId → general_id`,
- * then a READ-ONLY join to the game-state `general` row via [GeneralReadRepository] (the legitimate
- * precheck-path JPA read; never a write). Legacy-created characters, including `/api/join`, also carry
- * ownership directly on `general.user_id` (PHP `general.owner`), so that column is the read-only fallback
- * when `general_owner` is absent. Returns null when the user owns no general — the UI then shows
- * 장수선택/빙의.
+ * [GeneralOwnershipClassifier] classifies the account-side [GeneralOwnerEntity] and typed game-state
+ * ownership together. A playable `general.user_id` row wins, a correlated candidate remains unresolved,
+ * and a stale owner row cannot hide a replacement. The classifier uses a process-world JDBC ownership
+ * snapshot, while this resolver performs only the legitimate precheck-path JPA detail read; neither path
+ * writes game state. Returns null when the user owns no live general — the UI then shows 장수선택/빙의.
  *
  * [ResolvedGeneral] exposes exactly the fields MainControlBar gating keys on
  * (officer_level/permission/nation_id/nation level), derived PHP-faithfully:
@@ -25,11 +25,17 @@ import org.springframework.stereotype.Service
  *   * `nationLevel`    = `nation.level` for that nation (0 when 재야 / nation missing)
  */
 @Service
-class GeneralResolver(
-    private val owners: GeneralOwnerRepository,
+class GeneralResolver @Autowired constructor(
+    private val ownership: GeneralOwnershipClassifier,
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
 ) {
+    constructor(
+        owners: GeneralOwnerRepository,
+        generals: GeneralReadRepository,
+        nations: NationReadRepository,
+    ) : this(GeneralOwnershipClassifier(owners, generals), generals, nations)
+
     /**
      * The resolved possession view + gating fields. `permission`/`nationLevel` are DERIVED, not stored.
      */
@@ -65,11 +71,13 @@ class GeneralResolver(
         resolveGeneral(userId)?.id
 
     private fun resolveGeneral(userId: Long): GeneralReadEntity? {
-        val owner = owners.findByUserId(userId)
-            ?: return generals.findByUserId(userId.toString())
-        val general = generals.findById(owner.generalId.toInt()).orElse(null)
-        return general?.takeIf { owner.isFinalizedFor(it, userId) }
+        val body = (ownership.classify(userId) as? GeneralOwnershipClassifier.Ownership.LiveOwned)?.body ?: return null
+        val general = body.detail ?: generals.findById(body.id).orElse(null) ?: return null
+        return general.takeIf { it.matches(body) }
     }
+
+    private fun GeneralReadEntity.matches(body: GeneralOwnershipSnapshot): Boolean =
+        id == body.id && worldId == body.worldId && userId == body.userId && npcState == body.npcState
 
     companion object {
         /**
