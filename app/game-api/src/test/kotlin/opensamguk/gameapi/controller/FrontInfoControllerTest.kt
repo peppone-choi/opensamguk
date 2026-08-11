@@ -60,7 +60,7 @@ class FrontInfoControllerTest {
     // nation_env(V3) read mock — 스텁 미설정 시 null → notice null(기존 BLOCKED 동작 보존).
     private val nationEnv = mock(NationEnvReadRepository::class.java)
     private val objectMapper = ObjectMapper()
-    private val resolver = GeneralResolver(owners, generals, nations)
+    private val resolver = fixtureGeneralResolver(owners, generals, nations)
 
     private fun mockMvc(
         serverName: String = "",

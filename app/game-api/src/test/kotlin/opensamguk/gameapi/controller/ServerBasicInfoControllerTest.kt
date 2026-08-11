@@ -37,7 +37,7 @@ class ServerBasicInfoControllerTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
-    private val resolver = GeneralResolver(owners, generals, nations)
+    private val resolver = fixtureGeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(ServerBasicInfoController(resolver, world, generals, nations, ScenarioTitleResolver()))

@@ -49,7 +49,7 @@ class GeneralLogControllerTest {
     private val owners = mock(GeneralOwnerRepository::class.java)
     private val generals = mock(GeneralReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
-    private val resolver = GeneralResolver(owners, generals, nations)
+    private val resolver = fixtureGeneralResolver(owners, generals, nations)
     private val logs = mock(AdminGeneralLogReadRepository::class.java)
 
     private fun mvc(): MockMvc =
