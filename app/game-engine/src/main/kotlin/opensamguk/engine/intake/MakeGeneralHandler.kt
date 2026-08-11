@@ -47,7 +47,7 @@ class MakeGeneralHandler(
         val inheritCity = command.inheritCity
         val requestedBonusStat = command.inheritBonusStat
 
-        if (world.listGenerals().any { it.userId == command.userId.toString() }) {
+        if (world.listGenerals().any { it.userId == command.userId.toString() && it.npcState < 2 }) {
             return MakeGeneralFail(reason = "이미 등록하셨습니다!")
         }
         if (world.listGenerals().any { it.name == command.name }) {

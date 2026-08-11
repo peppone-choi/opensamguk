@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.RestController
  *
  *  - `GET  /api/generals/claimable` — the unowned NPC candidate pool (legacy `npc=2`), minus already
  *    claimed generals, with the caller's `hasGeneral` flag (true ⇒ candidates empty, one-per-user).
- *  - `POST /api/general/claim {generalId}` — claim an unowned candidate (account-side INSERT only;
- *    npc-flip deferred — see [GeneralPossessionService]). Idempotent on the same general; 409 on conflict.
+ *  - `POST /api/general/claim {generalId}` — record an account-side reservation and publish the daemon
+ *    ClaimNpc command that applies the NPC flip. Idempotent on the same general; 409 on conflict.
  */
 @RestController
 @RequestMapping("/api")

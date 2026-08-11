@@ -12,16 +12,18 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * B4 Task LC2 — kill() tombstone (4-table delete) + possession-release + storeOldGeneral.
+ * B4 Task LC2 — kill() tombstone (4 game-table delete + durable owner-link cleanup) + possession-release
+ * + storeOldGeneral.
  *
  * Port target: `TurnExecutionHelper.php:185-206` (the killturn<=0 gate: possession-release vs kill())
  * + `General.php:515-600` (kill()). The killturn<=0 branch of [ReservedTurnHandler.updateTurnTime]:
  *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch): push the global
  *    log FIRST, then legacy `killturn=(deadyear-year)*12` converted to three phase turns,
  *    `npc=npc_org, owner=0, defence_train=80,
- *    owner_name=null`, then DELETE general_access_log ONLY.
+ *    owner_name=null`, then record DELETE intents for general_access_log and the durable general_owner link.
  *  - else → kill(): nextRuler/demote → troop cleanup → dying message → storeOldGeneral → the F3
- *    4-table delete (the row leaves the update-set, no double-apply) → nation gennum-1.
+ *    4 game-table delete plus durable owner-link cleanup (the row leaves the update-set, no double-apply)
+ *    → nation gennum-1.
  */
 class KillTombstoneTest {
 
@@ -35,6 +37,7 @@ class KillTombstoneTest {
     private fun gen(
         id: Int = 1,
         npc: Int = 0,
+        userId: String? = null,
         nationId: Int = 1,
         officerLevel: Int = 1,
         troopId: Int = 0,
@@ -53,6 +56,7 @@ class KillTombstoneTest {
         officerLevel = officerLevel,
         age = 40,
         npcState = npc,
+        userId = userId,
         turnTime = t0,
         gold = 4242,
         meta = linkedMapOf<String, Any?>(
@@ -96,7 +100,7 @@ class KillTombstoneTest {
 
     @Test
     fun `NPC type 1 with deadyear ahead releases possession - field set, log, no delete`() {
-        val g = gen(npc = 1, killturn = 0, deadyear = 205)
+        val g = gen(npc = 1, userId = "77", killturn = 0, deadyear = 205)
         val w = world(listOf(g), accessLogs = listOf(GeneralAccessLog(1, 77, t0, refreshScore = 9)))
         val h = handler(w)
 
@@ -116,11 +120,13 @@ class KillTombstoneTest {
         assertEquals(180, (reloadedMeta["killturn"] as Number).toInt())
         // npc = npc_org (3)
         assertEquals(3, after.npcState)
+        assertNull(after.userId, "possession release clears the typed user owner")
         assertEquals(0, (after.meta["owner"] as Number).toInt())
         assertEquals(80, (after.meta["defence_train"] as Number).toInt())
         assertNull(after.meta["owner_name"])
         assertNull(w.getAccessLog(1))
         assertEquals(setOf(1), h.recorder.accessLogDeletes())
+        assertEquals(setOf(1), h.recorder.generalOwnerDeletes())
 
         val drained = w.consumeDirtyState()
         assertFalse(drained.deletedGenerals.contains(1), "possession release does NOT delete the general")
@@ -165,6 +171,7 @@ class KillTombstoneTest {
         assertTrue(drained.generals.none { it.id == 1 }, "killed general not in dirty rows")
         assertNull(w.getAccessLog(1))
         assertEquals(setOf(1), h.recorder.accessLogDeletes())
+        assertEquals(setOf(1), h.recorder.generalOwnerDeletes())
     }
 
     @Test

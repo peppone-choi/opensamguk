@@ -26,7 +26,7 @@ import kotlin.math.pow
 class SelectNpcTokenService(
     private val tokens: SelectNpcTokenRepository,
     private val owners: GeneralOwnerRepository,
-    private val possession: GeneralPossessionService,
+    private val ownership: GeneralOwnershipClassifier,
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val worldStates: WorldStateReadRepository,
@@ -43,14 +43,26 @@ class SelectNpcTokenService(
                 reason = NPC_MODE_BLOCKED_REASON,
             )
         }
-        val terminalDenyReason = possession.reconcileTerminalDenialForClaimable(userId)
-        val owner = owners.findByUserId(userId)
-        if (owner != null) {
-            val general = generals.findById(owner.generalId.toInt()).orElse(null)
-            if (general != null && owner.isFinalizedFor(general, userId)) {
-                return ClaimableResponse(result = true, hasGeneral = true, candidates = emptyList())
+        var current = ownership.classify(userId)
+        var terminalDenyReason: String? = null
+        if (current is GeneralOwnershipClassifier.Ownership.Stale) {
+            when (val repair = ownership.repair(current)) {
+                is GeneralOwnershipClassifier.RepairResult.TerminalRejected -> terminalDenyReason = repair.reason
+                else -> Unit
             }
-            if (owner.claimRequestId != null && general?.isResumableReservation() == true) {
+            current = ownership.classify(userId)
+        }
+
+        when (current) {
+            is GeneralOwnershipClassifier.Ownership.LiveOwned ->
+                return ClaimableResponse(result = true, hasGeneral = true, candidates = emptyList())
+
+            is GeneralOwnershipClassifier.Ownership.CorrelatedPending -> {
+                val general = current.body.detail ?: generals.findById(current.body.id).orElse(null)
+                    ?: return ClaimableResponse(result = true, hasGeneral = false, candidates = emptyList())
+                if (!general.matches(current.body)) {
+                    return ClaimableResponse(result = true, hasGeneral = false, candidates = emptyList())
+                }
                 val nationName = nations.findById(general.nationId).map { it.name }.orElse(null)
                 return ClaimableResponse(
                     result = true,
@@ -58,7 +70,11 @@ class SelectNpcTokenService(
                     candidates = listOf(general.toClaimableGeneral(nationName)),
                 )
             }
-            return ClaimableResponse(result = true, hasGeneral = false, candidates = emptyList())
+
+            is GeneralOwnershipClassifier.Ownership.Stale ->
+                return ClaimableResponse(result = true, hasGeneral = false, candidates = emptyList())
+
+            GeneralOwnershipClassifier.Ownership.None -> Unit
         }
 
         val now = Instant.now(clock)
@@ -158,8 +174,8 @@ class SelectNpcTokenService(
     private fun GeneralReadEntity.toClaimableGeneral(nationName: String?): ClaimableGeneral =
         toPickMap(nationName).toClaimableGeneral()
 
-    private fun GeneralReadEntity.isResumableReservation(): Boolean =
-        npcState == GeneralPossessionService.CLAIMABLE_NPC_STATE && (userId?.toLongOrNull() ?: 0L) <= 0L
+    private fun GeneralReadEntity.matches(body: GeneralOwnershipSnapshot): Boolean =
+        id == body.id && worldId == body.worldId && userId == body.userId && npcState == body.npcState
 
     private fun Map<*, *>.toClaimableGeneral(): ClaimableGeneral = ClaimableGeneral(
         generalId = intOf(this["generalId"]) ?: 0,

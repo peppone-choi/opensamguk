@@ -44,8 +44,9 @@ import java.time.Instant
 
 /**
  * F2 Wave 1 — the `my-*` read endpoints web/game's `lib/api.ts` calls (absent today). Each resolves the
- * caller's owned general via [GeneralResolver] (verified JWT principal → `general_owner` → game-state
- * read), then assembles from the existing read repositories. ALL reads — never a game-state write.
+ * caller's owned general via [GeneralResolver] (verified JWT principal → authoritative playable
+ * `general.user_id` body, with any `general_owner` reservation reconciled), then assembles from the
+ * existing read repositories. ALL reads — never a game-state write.
  *
  * No-character contract: `/api/my-page` 404s (no general to show); the nation/list endpoints return a
  * `result:false` empty shape (so the UI can render 장수선택/빙의 without treating it as an error).

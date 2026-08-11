@@ -1,13 +1,7 @@
 package opensamguk.gameapi.owner
 
-import opensamguk.common.wire.GeneralBoolResult
-import opensamguk.common.wire.TurnDaemonEvent
-import opensamguk.common.wire.TurnDaemonEventEnvelope
-import opensamguk.common.wire.WireJson
-import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
-import opensamguk.infra.persistence.CommandResultRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -21,34 +15,24 @@ import java.time.Instant
  * `claimed_at`) through the process-world repository. That table is NOT a game-state table, so this JPA write does NOT violate the
  * one-daemon-write rule. Guards mirror the legacy `j_select_npc.php` update predicate
  * `owner <= 0 AND npc = 2 AND no = %i`:
- *   * the user must not already own a general in this world (UNIQUE world_id + user_id), and
+ *   * the user must not already own a playable typed general or hold a correlated pending claim, and
  *   * the target general must be unowned in this world (PRIMARY KEY world_id + general_id), and
  *   * the target general must exist and be a claimable NPC (npc_state == 2 candidate pool).
  *
- * ## What this DELIBERATELY does NOT do — the DEFERRED game-state side-effect
- * Legacy possession ALSO mutates the `general` GAME-STATE row: `npc=2 → npc=1`, `owner=userID`,
- * `killturn=6`, `defence_train=80`, `permission='normal'`, plus pushes 빙의 logs. Those are GAME-STATE
- * writes — game-api MUST NOT perform them (one-daemon-write rule). They are DEFERRED: a follow-up wave
- * routes the npc-flip through the existing intake path (a `TurnDaemonCommand` published on the command
- * stream, consumed by the daemon, applied via ChangeRecorder→JdbcFlushExecutor) — the SAME mechanism
- * [opensamguk.gameapi.reserve.CommandReserveService] already uses to wake the daemon. Until that wave
- * lands, `general_owner` is the authoritative "who plays this general" link for read/identity purposes,
- * and the general's `npc_state` is left untouched by game-api.
- *
- * This split keeps possession working for identity (my-general/nation/city resolution) today, with the
- * game-state activation flip cleanly isolated as intake work.
+ * The API then publishes `TurnDaemonCommand.ClaimNpc`; the daemon exclusively applies the legacy
+ * game-state mutation (`npc=2 → npc=1`, typed owner, lifecycle fields, and logs) through
+ * `ChangeRecorder → JdbcFlushExecutor`. `general_owner` records the durable reservation/link; a live typed
+ * general is the authoritative owner for identity and further admission.
  */
 @Service
 class GeneralPossessionService(
     private val owners: GeneralOwnerRepository,
     private val generals: GeneralReadRepository,
+    private val ownership: GeneralOwnershipClassifier,
     private val npcTokens: SelectNpcTokenRepository,
     private val worldStates: WorldStateReadRepository,
-    private val commandResults: CommandResultRepository,
-    processWorld: GameApiProcessWorld,
     private val clock: Clock = Clock.systemUTC(),
 ) {
-    private val worldId = processWorld.worldId
 
     /** Outcome of a claim attempt. */
     sealed interface ClaimResult {
@@ -74,14 +58,68 @@ class GeneralPossessionService(
     fun claim(userId: Long, generalId: Int, admitClaim: (Int) -> String): ClaimResult {
         if (npcMode() != 1) return ClaimResult.ServerModeBlocked
 
-        // 1. one-per-user guard (idempotent on the same general).
-        val existingForUser = owners.findByUserId(userId)
-        if (existingForUser != null) {
-            return if (existingForUser.generalId.toInt() == generalId) {
-                reconcileExistingClaim(userId, generalId, existingForUser)
-            } else {
-                ClaimResult.UserAlreadyHasGeneral(existingForUser.generalId.toInt())
+        var current = ownership.classify(userId)
+        repeat(2) {
+            when (current) {
+                is GeneralOwnershipClassifier.Ownership.Stale -> {
+                    val stale = current
+                    val repair = ownership.repair(stale)
+                    if (repair is GeneralOwnershipClassifier.RepairResult.TerminalRejected &&
+                        stale.reservation.generalId.toInt() == generalId
+                    ) {
+                        return ClaimResult.TerminalDenied(generalId, repair.reason)
+                    }
+                    current = ownership.classify(userId)
+                }
+
+                is GeneralOwnershipClassifier.Ownership.CorrelatedPending -> {
+                    val pending = current
+                    val refreshed = ownership.classify(userId)
+                    if (refreshed is GeneralOwnershipClassifier.Ownership.CorrelatedPending &&
+                        refreshed.reservation == pending.reservation
+                    ) {
+                        val requestId = refreshed.reservation.claimRequestId
+                            ?: return ClaimResult.UncorrelatedReservation(generalId)
+                        return if (refreshed.reservation.generalId.toInt() == generalId) {
+                            ClaimResult.AwaitingDaemon(generalId, requestId)
+                        } else {
+                            ClaimResult.UserAlreadyHasGeneral(refreshed.reservation.generalId.toInt())
+                        }
+                    }
+                    current = refreshed
+                }
+
+                else -> return@repeat
             }
+        }
+
+        when (current) {
+            is GeneralOwnershipClassifier.Ownership.LiveOwned -> {
+                return if (current.body.id == generalId) {
+                    ClaimResult.AlreadyOwnedBySelf(generalId)
+                } else {
+                    ClaimResult.UserAlreadyHasGeneral(current.body.id)
+                }
+            }
+
+            is GeneralOwnershipClassifier.Ownership.CorrelatedPending -> {
+                val requestId = current.reservation.claimRequestId
+                    ?: return ClaimResult.UncorrelatedReservation(generalId)
+                return if (current.reservation.generalId.toInt() == generalId) {
+                    ClaimResult.AwaitingDaemon(generalId, requestId)
+                } else {
+                    ClaimResult.UserAlreadyHasGeneral(current.reservation.generalId.toInt())
+                }
+            }
+
+            is GeneralOwnershipClassifier.Ownership.Stale ->
+                return if (current.disposition == GeneralOwnershipClassifier.StaleDisposition.Invalid) {
+                    ClaimResult.InvalidClaimResult(generalId)
+                } else {
+                    ClaimResult.ReservationChanged(generalId)
+                }
+
+            GeneralOwnershipClassifier.Ownership.None -> Unit
         }
 
         // 2. target must exist and be a claimable NPC candidate (npc_state == 2 pool, legacy npc=2).
@@ -109,84 +147,16 @@ class GeneralPossessionService(
         return ClaimResult.Claimed(generalId, requestId)
     }
 
-    @Transactional
-    fun reconcileTerminalDenialForClaimable(userId: Long): String? {
-        val reservation = owners.findByUserId(userId) ?: return null
-        val generalId = reservation.generalId.toInt()
-        val general = generals.findById(generalId).orElse(null)
-        if (general?.isActivatedFor(userId) == true) return null
-
-        val requestId = reservation.claimRequestId ?: return null
-        val terminal = terminalClaimResult(requestId, generalId)
-        if (terminal !is StoredClaimResult.Rejected) return null
-
-        val removed = owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, reservation.generalId, requestId)
-        if (removed != 1) return null
-        return terminal.reason
-    }
-
-    private fun reconcileExistingClaim(
-        userId: Long,
-        generalId: Int,
-        reservation: GeneralOwnerEntity,
-    ): ClaimResult {
-        val general = generals.findById(generalId).orElse(null)
-        if (general?.isActivatedFor(userId) == true) return ClaimResult.AlreadyOwnedBySelf(generalId)
-
-        val requestId = reservation.claimRequestId ?: return ClaimResult.UncorrelatedReservation(generalId)
-        return when (val terminal = terminalClaimResult(requestId, generalId)) {
-            StoredClaimResult.Pending,
-            StoredClaimResult.Applied,
-            -> ClaimResult.AwaitingDaemon(generalId, requestId)
-
-            is StoredClaimResult.Rejected -> {
-                if (owners.deleteByUserIdAndGeneralIdAndClaimRequestId(userId, generalId.toLong(), requestId) == 1) {
-                    ClaimResult.TerminalDenied(generalId, terminal.reason)
-                } else {
-                    ClaimResult.ReservationChanged(generalId)
-                }
-            }
-
-            StoredClaimResult.Invalid -> ClaimResult.InvalidClaimResult(generalId)
-        }
-    }
-
-    private fun terminalClaimResult(requestId: String, generalId: Int): StoredClaimResult {
-        val payload = commandResults.findResultPayload(worldId, requestId) ?: return StoredClaimResult.Pending
-        val envelope = runCatching {
-            WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), payload)
-        }.getOrNull() ?: return StoredClaimResult.Invalid
-        if (envelope.requestId != requestId) return StoredClaimResult.Invalid
-        val result = (envelope.event as? TurnDaemonEvent.CommandResult)?.result as? GeneralBoolResult
-            ?: return StoredClaimResult.Invalid
-        if (result.type != CLAIM_NPC_RESULT_TYPE || result.generalId != generalId) return StoredClaimResult.Invalid
-        return if (result.ok) StoredClaimResult.Applied else StoredClaimResult.Rejected(
-            result.reason ?: CLAIM_FAILED_REASON,
-        )
-    }
-
-    private fun opensamguk.gameapi.read.GeneralReadEntity.isActivatedFor(userId: Long): Boolean =
-        npcState == POSSESSED_NPC_STATE && this.userId == userId.toString()
-
-    private sealed interface StoredClaimResult {
-        object Pending : StoredClaimResult
-        object Applied : StoredClaimResult
-        data class Rejected(val reason: String) : StoredClaimResult
-        object Invalid : StoredClaimResult
-    }
-
     private fun npcMode(): Int =
         intOf(runCatching { worldStates.findById(1)?.orElse(null) }.getOrNull()?.config?.get("npcmode")) ?: 0
 
     companion object {
         /**
-         * Legacy `npc=2` = the pure-NPC pool a user may 빙의(possess). After claim the legacy flips it to
-         * `npc=1` (possessed-player-NPC) — that flip is the DEFERRED game-state side-effect (see class doc).
+         * Legacy `npc=2` = the pure-NPC pool a user may 빙의(possess). The daemon ClaimNpc handler flips a
+         * successful claim to `npc=1` (possessed-player-NPC).
          */
         const val CLAIMABLE_NPC_STATE = 2
         const val POSSESSED_NPC_STATE = 1
-        private const val CLAIM_NPC_RESULT_TYPE = "claimNpc"
-        private const val CLAIM_FAILED_REASON = "빙의에 실패했습니다."
 
         private fun intOf(value: Any?): Int? = when (value) {
             is Int -> value

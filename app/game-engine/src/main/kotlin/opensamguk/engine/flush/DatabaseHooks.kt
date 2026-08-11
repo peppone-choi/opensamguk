@@ -55,10 +55,8 @@ import java.time.temporal.ChronoField
 
 /**
  * Flush STUB recording the exact write ORDER of `databaseHooks.ts` `flushChanges`.
- * NO real SQL. The recorder ([FlushOpRecorder]) is the only sink the daemon flush
- * path writes through — this is how design §0.1 #3 (no JPA EntityManager in the write
- * path) is enforced structurally; [opensamguk.engine.flush.DatabaseHooks] takes only a
- * recorder. P1 replaces the recorder with a JDBC-batch executor (never JPA).
+ * NO real SQL. [FlushOpRecorder] is the only sink for this DB-free order-test seam.
+ * Production uses the ChangeRecorder-aware payload builder and [JdbcFlushExecutor] (never JPA).
  *
  * Per design §7 the inheritance / storage / hall / dynasty tables are NOT in this op list —
  * they sit outside the world+flush boundary. The single archive write performed here is
@@ -70,7 +68,9 @@ import java.time.temporal.ChronoField
  *  2. ng_old_nations.upsert — one per deletedNationSnapshot
  *  3. createMany: general, nation, troop, diplomacy
  *  4. deleteMany troop (deletedTroops)
- *  5. kill() delete: general, general_turn, then rank_data (deletedGenerals)
+ *  runtime step 5 starts with owner-link delete from ChangeRecorder; this stub intentionally receives
+ *     only DirtyState, so it models the following kill() delete: general, general_turn, rank_data
+ *     (deletedGenerals)
  *  6. nation cascade: deleteMany diplomacy, nation_turn, nation (deletedNations)
  *  7. updates: general (excl created), city, nation upsert (excl created),
  *     troop (excl created), diplomacy (excl created)
@@ -148,19 +148,17 @@ object DatabaseHooks {
         recorder.record("reserved_turns", FlushOp.Verb.UPDATE, 1)
     }
 
-    /**
-     * The REAL P1 write path: drain the world's dirty set, map it to an [FlushPayload], and hand it
-     * to the injected [JdbcFlushExecutor] which runs the EXACT ordered contract above as plain JDBC
-     * inside ONE transaction (design §0.1 #3 — no `EntityManager`). The recorder-based overload
-     * stays for the order tests; this overload is what `TurnRunService` (Task F5) calls.
-     *
-     * The op ORDER is preserved by the executor itself (it implements steps 1→10); this method only
-     * builds the payload. P1 exercises steps 1 (world_state), 7 (general+city UPDATE), 9 (log_entry),
-     * 10 (reserved_turns) — the other steps are no-ops on the empty created/deleted lists.
-     */
-    fun flushChanges(world: InMemoryTurnWorld, executor: JdbcFlushExecutor) {
+    fun flushChanges(world: InMemoryTurnWorld, recorder: ChangeRecorder, executor: JdbcFlushExecutor) {
         val dirty = world.consumeDirtyState()
-        executor.flush(toFlushPayload(world.worldId, world.getState(), dirty))
+        executor.flush(toFlushPayload(world, recorder, dirty))
+    }
+
+    @Deprecated(
+        message = "Use the ChangeRecorder-aware overload so general_owner deletion deltas are preserved.",
+        level = DeprecationLevel.ERROR,
+    )
+    fun flushChanges(world: InMemoryTurnWorld, executor: JdbcFlushExecutor) {
+        error("ChangeRecorder is required for a daemon flush")
     }
 
     /**
@@ -169,6 +167,10 @@ object DatabaseHooks {
      * flushed rows are byte-identical to what the resolver produced. Created-this-tick ids are
      * excluded from the UPDATE batch (step-7 contract); P1 never creates, so this is identity here.
      */
+    @Deprecated(
+        message = "Use the ChangeRecorder-aware payload builder so general_owner deletion deltas are preserved.",
+        level = DeprecationLevel.ERROR,
+    )
     internal fun toFlushPayload(
         worldId: WorldId,
         state: TurnWorldState,
@@ -257,6 +259,7 @@ object DatabaseHooks {
             logEntries = logEntries,
             rankWrites = rankWrites,
             kvWrites = toKvWrites(dirty.kvDirty),
+            generalOwnerDeletes = dirty.deletedGenerals,
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,
@@ -646,6 +649,7 @@ object DatabaseHooks {
                 )
             },
             generalAccessLogDeletes = (recorder.accessLogDeletes() + dirty.deletedGenerals).toList(),
+            generalOwnerDeletes = (recorder.generalOwnerDeletes() + dirty.deletedGenerals).distinct(),
             createdNations = createdNations,
             createdNationTurns = dirty.nationTurnDirty,
             createdDiplomacy = createdDiplomacy,

@@ -1,6 +1,7 @@
 package opensamguk.gameapi.owner
 
 import opensamguk.gameapi.config.GameApiProcessWorldIdConfiguration
+import opensamguk.gameapi.read.GeneralReadRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,13 +12,20 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.TransactionDefinition
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.sql.Timestamp
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -26,13 +34,18 @@ import kotlin.test.assertTrue
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(
     GameApiProcessWorldIdConfiguration::class,
+    GeneralReadRepository::class,
+    JdbcGeneralOwnershipReadSource::class,
     WorldScopedGeneralOwnerRepository::class,
     WorldScopedSelectNpcTokenRepository::class,
 )
 class SelectNpcTokenRepositoryIT {
     @Autowired lateinit var jdbc: JdbcTemplate
+    @Autowired lateinit var generals: GeneralReadRepository
+    @Autowired lateinit var ownershipBodies: GeneralOwnershipReadSource
     @Autowired lateinit var tokens: SelectNpcTokenRepository
     @Autowired lateinit var owners: GeneralOwnerRepository
+    @Autowired lateinit var transactionManager: PlatformTransactionManager
 
     @BeforeEach
     fun seedProcessWorld() {
@@ -123,22 +136,115 @@ class SelectNpcTokenRepositoryIT {
     }
 
     @Test
-    fun `owner claim request id round trips and scopes terminal cleanup`() {
+    fun `owner cleanup matches the observed request or legacy reservation before deleting`() {
         val now = Instant.parse("2026-06-02T00:00:00Z")
+        val current = GeneralOwnerEntity(
+            generalId = 12L,
+            userId = 8L,
+            claimedAt = now,
+            claimRequestId = "req-claim-12",
+        )
+        owners.save(current)
+
+        assertEquals("req-claim-12", owners.findByUserId(8L)?.claimRequestId)
+        assertEquals(
+            0,
+            owners.deleteIfUnchanged(
+                GeneralOwnerEntity(12L, 8L, now, claimRequestId = "other-request"),
+            ),
+        )
+        assertEquals(
+            0,
+            owners.deleteIfUnchanged(
+                GeneralOwnerEntity(12L, 8L, now.plusSeconds(1), claimRequestId = "req-claim-12"),
+            ),
+        )
+        assertEquals("req-claim-12", owners.findByUserId(8L)?.claimRequestId)
+        assertEquals(1, owners.deleteIfUnchanged(current))
+        assertEquals(null, owners.findByUserId(8L))
+
+        val legacy = GeneralOwnerEntity(generalId = 13L, userId = 8L, claimedAt = now)
+        owners.save(legacy)
+        assertEquals(0, owners.deleteIfUnchanged(GeneralOwnerEntity(13L, 8L, now.plusSeconds(1))))
+        assertEquals(1, owners.deleteIfUnchanged(legacy))
+        assertEquals(null, owners.findByUserId(8L))
+    }
+
+    @Test
+    fun `legacy cleanup can reclaim the same owner key in one transaction`() {
+        val now = Instant.parse("2026-06-02T00:00:00Z")
+        val legacy = GeneralOwnerEntity(generalId = 14L, userId = 9L, claimedAt = now)
+        owners.save(legacy)
+
+        val observed = requireNotNull(owners.findByUserId(9L))
+        assertEquals(1, owners.deleteIfUnchanged(observed))
+
         owners.save(
             GeneralOwnerEntity(
-                generalId = 12L,
-                userId = 8L,
-                claimedAt = now,
-                claimRequestId = "req-claim-12",
+                generalId = 14L,
+                userId = 9L,
+                claimedAt = now.plusSeconds(1),
+                claimRequestId = "req-reclaimed-14",
             ),
         )
 
-        assertEquals("req-claim-12", owners.findByUserId(8L)?.claimRequestId)
-        assertEquals(0, owners.deleteByUserIdAndGeneralIdAndClaimRequestId(8L, 12L, "other-request"))
-        assertEquals("req-claim-12", owners.findByUserId(8L)?.claimRequestId)
-        assertEquals(1, owners.deleteByUserIdAndGeneralIdAndClaimRequestId(8L, 12L, "req-claim-12"))
-        assertEquals(null, owners.findByUserId(8L))
+        val reinserted = owners.findByUserId(9L)
+        assertEquals("req-reclaimed-14", reinserted?.claimRequestId)
+        assertEquals(now.plusSeconds(1), reinserted?.claimedAt)
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun `classifier snapshots a candidate after the daemon commits activation in the enclosing transaction`() {
+        val now = Instant.parse("2026-06-02T00:00:00Z")
+        seedWorld(OTHER_WORLD_ID)
+        insertGeneral(id = 15, worldId = PROCESS_WORLD_ID, userId = null, npcState = 2)
+        insertGeneral(id = 15, worldId = OTHER_WORLD_ID, userId = "99", npcState = 0)
+        jdbc.update(
+            """
+            INSERT INTO general_owner (world_id, general_id, user_id, claimed_at, claim_request_id)
+            VALUES (?, ?, ?, ?, ?)
+            """.trimIndent(),
+            PROCESS_WORLD_ID,
+            15,
+            77,
+            Timestamp.from(now),
+            "req-activated-15",
+        )
+        val status = AtomicReference<ClaimNpcRequestStatus>(ClaimNpcRequestStatus.Pending)
+        val classifier = GeneralOwnershipClassifier(
+            owners,
+            ownershipBodies,
+            ClaimNpcRequestStatusReader { _, _ -> status.get() },
+        )
+
+        TransactionTemplate(transactionManager).executeWithoutResult {
+            val cachedCandidate = generals.findById(15).orElseThrow()
+            assertEquals(PROCESS_WORLD_ID, cachedCandidate.worldId)
+            assertEquals(null, cachedCandidate.userId)
+            assertEquals(2, cachedCandidate.npcState)
+            assertIs<GeneralOwnershipClassifier.Ownership.CorrelatedPending>(classifier.classify(77L))
+
+            TransactionTemplate(transactionManager).apply {
+                propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+            }.executeWithoutResult {
+                jdbc.update(
+                    "UPDATE general SET user_id = ?, npc_state = ? WHERE world_id = ? AND id = ?",
+                    "77",
+                    1,
+                    PROCESS_WORLD_ID,
+                    15,
+                )
+            }
+            status.set(ClaimNpcRequestStatus.Applied)
+
+            val live = assertIs<GeneralOwnershipClassifier.Ownership.LiveOwned>(classifier.classify(77L))
+            assertEquals(15, live.body.id)
+            assertEquals(PROCESS_WORLD_ID, live.body.worldId)
+            assertEquals("77", live.body.userId)
+            assertEquals(1, live.body.npcState)
+            assertEquals(15L, owners.findByUserId(77L)?.generalId)
+        }
     }
 
     private fun seedWorld(id: Int) {
@@ -146,6 +252,31 @@ class SelectNpcTokenRepositoryIT {
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (?, ?, 1, 1, 60) ON CONFLICT (id) DO NOTHING",
             id,
             "world-$id",
+        )
+    }
+
+    private fun insertGeneral(id: Int, worldId: Int, userId: String?, npcState: Int) {
+        jdbc.update(
+            """
+            INSERT INTO general (
+                id, world_id, user_id, name, nation_id, city_id, leadership, strength, intel, injury,
+                experience, dedication, officer_level, gold, rice,
+                crew, crew_type_id, train, atmos, troop_id,
+                weapon_code, book_code, horse_code, item_code, npc_state,
+                turn_time, last_turn, meta
+            ) VALUES (
+                ?, ?, ?, ?, 0, 0, 50, 50, 50, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 0, 0,
+                'None', 'None', 'None', 'None', ?,
+                now(), '{}'::jsonb, '{}'::jsonb
+            )
+            """.trimIndent(),
+            id,
+            worldId,
+            userId,
+            "g$id",
+            npcState,
         )
     }
 

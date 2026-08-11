@@ -3,9 +3,9 @@ package opensamguk.engine.flush
 /**
  * A recorded flush op-tag — the **test seam** for the write ORDER, NOT the real SQL sink.
  *
- * In P1 the real daemon write path is [DatabaseHooks.flushChanges] (the
- * [opensamguk.infra.persistence.JdbcFlushExecutor] overload): it maps the world's [DirtyState]
- * → an [opensamguk.infra.persistence.FlushPayload] ([opensamguk.engine.turn.DirtyState]) and runs the EXACT ordered contract as plain
+ * In P1 the real daemon write path is the ChangeRecorder-aware [DatabaseHooks.toFlushPayload]: it
+ * maps the world's [DirtyState] and recorder deltas → an [opensamguk.infra.persistence.FlushPayload]
+ * and runs the exact ordered contract as plain
  * JDBC inside ONE transaction — never a JPA `EntityManager` (design §0.1 #3, enforced by
  * [DaemonNoEntityManagerTest] reading [DaemonWriteGuard]). The [FlushOpRecorder] is kept as the
  * pure, DB-free oracle the order tests ([DatabaseHooksOrderTest]) assert against.

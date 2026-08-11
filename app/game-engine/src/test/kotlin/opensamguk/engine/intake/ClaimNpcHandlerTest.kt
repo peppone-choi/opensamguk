@@ -1,8 +1,10 @@
 package opensamguk.engine.intake
 
 import opensamguk.common.wire.GeneralBoolResult
+import opensamguk.common.wire.MakeGeneralOk
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.flush.DatabaseHooks
+import opensamguk.engine.turn.City
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -13,6 +15,7 @@ import opensamguk.engine.turn.WorldSnapshot
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class ClaimNpcHandlerTest {
 
@@ -91,5 +94,42 @@ class ClaimNpcHandlerTest {
 
         assertEquals(false, result.ok)
         assertEquals("빙의 가능한 장수가 아닙니다.", result.reason)
+    }
+
+    @Test
+    fun `claim npc rejects a user who obtained a direct general before the queued claim runs`() {
+        val state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = state,
+                generals = listOf(npc()),
+                cities = listOf(City(id = 5, name = "낙양", nationId = 0, level = 5)),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+        val recorder = ChangeRecorder()
+        val created = assertIs<MakeGeneralOk>(
+            MakeGeneralHandler(world, recorder, nowProvider = { t0 }).handle(
+                TurnDaemonCommand.MakeGeneral(
+                    userId = 7,
+                    name = "직접생성",
+                    leadership = 55,
+                    strength = 55,
+                    intel = 55,
+                    politics = 55,
+                    charm = 55,
+                    character = "Random",
+                ),
+            ),
+        )
+
+        val result = ClaimNpcHandler(world, recorder).handle(
+            TurnDaemonCommand.ClaimNpc(generalId = 10, userId = 7L, userNick = "peppone"),
+        ) as GeneralBoolResult
+
+        assertEquals(false, result.ok)
+        assertEquals("이미 등록하셨습니다!", result.reason)
+        assertEquals(0, world.getGeneralById(created.generalId)?.npcState)
+        assertEquals(2, world.getGeneralById(10)?.npcState)
     }
 }

@@ -4,8 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.common.auth.GatewayProfileClaims
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.gameapi.owner.CommandResultClaimNpcRequestStatusReader
+import opensamguk.gameapi.owner.GeneralOwnerEntity
+import opensamguk.gameapi.owner.GeneralOwnerRepository
+import opensamguk.gameapi.owner.GeneralOwnershipClassifier
+import opensamguk.gameapi.owner.SelectNpcTokenRepository
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GameKvReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
@@ -14,6 +22,7 @@ import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
 import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.infra.entity.GameKvEntity
+import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -35,6 +44,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.util.Optional
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlin.test.assertEquals
 
 class JoinControllerTest {
@@ -43,6 +54,14 @@ class JoinControllerTest {
     private val reserve = mock(CommandReserveService::class.java)
     private val gameKv = mock(GameKvReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
+    private val owners = mock(GeneralOwnerRepository::class.java)
+    private val npcTokens = mock(SelectNpcTokenRepository::class.java)
+    private val commandResults = mock(CommandResultRepository::class.java)
+    private val ownership = GeneralOwnershipClassifier(
+        owners,
+        generals,
+        CommandResultClaimNpcRequestStatusReader(commandResults, GameApiProcessWorld(1)),
+    )
 
     private fun anyCommand(): TurnDaemonCommand =
         any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause()
@@ -55,7 +74,7 @@ class JoinControllerTest {
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(
-            JoinController(generals, worldStates, reserve, gameKv, cities, ObjectMapper()),
+            JoinController(generals, worldStates, reserve, gameKv, cities, ObjectMapper(), ownership),
         )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
@@ -142,6 +161,54 @@ class JoinControllerTest {
             .andExpect(jsonPath("$.reason").value("더이상 등록할 수 없습니다!"))
 
         verifyNoInteractions(reserve)
+    }
+
+    @Test
+    fun `blocks direct creation while a correlated NPC claim is still pending`() {
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(
+            GeneralOwnerEntity(generalId = 10L, userId = 7L, claimRequestId = "req-claim-10"),
+        )
+        `when`(generals.findById(10)).thenReturn(Optional.of(GeneralReadEntity(id = 10, npcState = 2, userId = null)))
+        `when`(commandResults.findResultPayload(WorldId(1), "req-claim-10")).thenReturn(null)
+
+        mockMvc().perform(
+            post("/api/join")
+                .with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(joinJson()),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("BLOCKED"))
+            .andExpect(jsonPath("$.reason").value("이미 등록하셨습니다!"))
+
+        verifyNoInteractions(reserve)
+    }
+
+    @Test
+    fun `repairs only the observed released legacy owner before direct creation`() {
+        seedWorld()
+        val stale = GeneralOwnerEntity(
+            generalId = 10L,
+            userId = 7L,
+            claimedAt = Instant.parse("2026-06-01T00:00:00Z"),
+        )
+        `when`(owners.findByUserId(7L)).thenReturn(stale, null)
+        `when`(generals.findById(10)).thenReturn(Optional.of(GeneralReadEntity(id = 10, npcState = 3, userId = null)))
+        `when`(owners.deleteIfUnchanged(stale)).thenReturn(1)
+        `when`(generals.existsByName("조조")).thenReturn(false)
+        `when`(reserve.publishImmediate(anyCommand())).thenReturn(ReserveResult("req-1", 0))
+
+        mockMvc().perform(
+            post("/api/join")
+                .with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(joinJson()),
+        )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("AVAILABLE"))
+
+        verify(owners).deleteIfUnchanged(stale)
     }
 
     @Test
