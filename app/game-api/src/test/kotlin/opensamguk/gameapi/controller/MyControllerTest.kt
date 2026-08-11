@@ -43,7 +43,7 @@ class MyControllerTest {
     private val nations = mock(NationReadRepository::class.java)
     private val accessLogs = mock(GeneralAccessLogReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
-    private val resolver = GeneralResolver(owners, generals, nations)
+    private val resolver = fixtureGeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(MyController(resolver, generals, cities, nations, world, accessLogs))

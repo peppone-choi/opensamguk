@@ -83,7 +83,7 @@ class F4ReadControllersTest {
     private val nations = mock(NationReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
     private val owners = mock(GeneralOwnerRepository::class.java)
-    private val resolver = GeneralResolver(owners, generals, nations)
+    private val resolver = fixtureGeneralResolver(owners, generals, nations)
     private val letters = mock(DiplomacyLetterReadRepository::class.java)
     private val diplomacy = mock(DiplomacyReadRepository::class.java)
     private val nationTurns = mock(NationTurnReadRepository::class.java)

@@ -36,7 +36,7 @@ class WorldMapControllerTest {
     private val nations = mock(NationReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
-    private val resolver = GeneralResolver(owners, generals, nations)
+    private val resolver = fixtureGeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(WorldMapController(resolver, world, generals, nations, cities))
