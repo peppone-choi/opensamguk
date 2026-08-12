@@ -25,4 +25,4 @@ COPY --from=build /src/web/game/.next/standalone ./
 COPY --from=build /src/web/game/.next/static ./.next/static
 COPY --from=build /src/web/game/public ./public
 EXPOSE 3001
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 exec node server.js"]

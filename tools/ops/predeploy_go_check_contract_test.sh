@@ -117,6 +117,16 @@ prepare_stubs() {
     'printf "Filesystem 1024-blocks Used Available Capacity Mounted on\n"' \
     'printf "/dev/stub 20971520 1048576 %s %s%% %s\n" "$available" "$used_percent" "$target"'
 
+  write_stub "$STUB_BIN/wget" \
+    '#!/usr/bin/env bash' \
+    'set -euo pipefail' \
+    'case "${PREDEPLOY_STUB_MODE:-}" in' \
+    '  web_health_down) printf "{\\\"status\\\":\\\"DOWN\\\",\\\"app\\\":\\\"web-game\\\"}\n" ;;' \
+    '  web_health_malformed) printf "{\\\"status\\\":\\\"UP\\\",not-json}\n" ;;' \
+    '  web_health_unavailable) exit 1 ;;' \
+    '  *) printf "{\\\"status\\\":\\\"UP\\\",\\\"app\\\":\\\"web-game\\\"}\n" ;;' \
+    'esac'
+
   write_stub "$STUB_BIN/docker" \
     '#!/usr/bin/env bash' \
     'set -euo pipefail' \
@@ -183,6 +193,10 @@ prepare_stubs() {
     '      esac' \
     '    elif [[ "$mode" == health_down && "$joined" == *"$TEST_INTERNAL_SERVER-game-engine"* ]]; then' \
     '      exit 1' \
+    '    elif [[ "$joined" == *"127.0.0.1:3001/api/health"* ]]; then' \
+    '      [[ "$joined" == *"wget -qO- http://127.0.0.1:3001/api/health"* ]] || exit 1' \
+    '      [[ "${3:-}" == sh && "${4:-}" == -ceu ]] || exit 1' \
+    '      sh -ceu "$last"' \
     '    elif [[ "$joined" == *redis-cli* ]]; then' \
     '      printf "PONG\\n"' \
     '    elif [[ "$joined" == *actuator/health* ]]; then' \
@@ -279,7 +293,7 @@ assert_docker_command_shapes() {
       'info --format {{.DockerRootDir}}' | \
       "exec $internal_server-game-api curl -fsS http://localhost:8081/actuator/health" | \
       "exec $internal_server-game-engine curl -fsS http://localhost:8082/actuator/health" | \
-      "exec $internal_server-web-game wget -qO /dev/null http://localhost:3001/" | \
+      "exec $internal_server-web-game sh -ceu "* | \
       "exec $internal_server-game-redis redis-cli ping") ;;
       exec\ "$internal_server-game-postgres"\ sh\ -ceu\ exec\ pg_isready\ *) ;;
       exec\ "$internal_server-game-postgres"\ env\ PGOPTIONS=-c\ default_transaction_read_only=on\ sh\ -ceu\ exec\ psql\ *) ;;
@@ -464,6 +478,18 @@ for mode in \
   run_grader "$mode" s1 "$TAG" scenario_1010 "$WORLD_ID" 2 10
   assert_no_go
 done
+
+run_grader web_health_down s1 "$TAG" scenario_1010 "$WORLD_ID" 2 10
+assert_no_go
+assert_contains "$LAST_OUTPUT" 'D4-33 web health check failed'
+
+run_grader web_health_malformed s1 "$TAG" scenario_1010 "$WORLD_ID" 2 10
+assert_no_go
+assert_contains "$LAST_OUTPUT" 'D4-33 web health check failed'
+
+run_grader web_health_unavailable s1 "$TAG" scenario_1010 "$WORLD_ID" 2 10
+assert_no_go
+assert_contains "$LAST_OUTPUT" 'D4-33 web health check failed'
 
 run_grader df_command_fail s1 "$TAG" scenario_1010 "$WORLD_ID" 2 10
 assert_no_go
