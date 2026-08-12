@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       server:
-        description: Target multi-server identifier (for example, s1).
+        description: Target public or internal game-server identifier (for example, pep, spep, or s1).
         required: true
         type: string
       expected_tag:
