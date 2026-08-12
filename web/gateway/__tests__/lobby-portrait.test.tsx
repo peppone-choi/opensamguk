@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/components/AuthGate', () => ({ default: ({ children }: { children: React.ReactNode }) => children }));
 vi.mock('@/components/Topbar', () => ({ default: () => <div>topbar</div> }));
@@ -51,10 +51,15 @@ function renderLobby(me: { name: string; picture: string | null; imageServer: nu
 }
 
 describe('lobby portrait contract', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        vi.stubGlobal('React', React);
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal('React', React);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
 
     it('adds jpg to a bare shared portrait code', async () => {
         const portrait = await renderLobby({ name: '테스터', picture: '1001', imageServer: 0 });

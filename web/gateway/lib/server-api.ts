@@ -6,3 +6,9 @@
 // GATEWAY_API_URL → GATEWAY_API_ORIGIN 순으로 읽는다.
 export const GATEWAY_API_URL =
     process.env.GATEWAY_API_URL ?? process.env.GATEWAY_API_ORIGIN ?? 'http://localhost:8080';
+
+export const GATEWAY_UPSTREAM_TIMEOUT_MS = 10_000;
+
+export function isGatewayTimeout(error: unknown): boolean {
+    return error instanceof Error && error.name === 'TimeoutError';
+}

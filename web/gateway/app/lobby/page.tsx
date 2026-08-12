@@ -220,75 +220,78 @@ function ServerRow({ server }: { server: ServerEntry }) {
 }
 
 function LobbyView() {
-    const [servers, setServers] = useState<ServerEntry[]>([]);
+  const [servers, setServers] = useState<ServerEntry[]>([]);
 
-    useEffect(() => {
-        let alive = true;
-        fetch('/api/servers', { cache: 'no-store' })
-            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-            .then((data: { servers?: ServerEntry[] }) => {
-                if (alive) setServers(data.servers ?? []);
-            })
-            .catch(() => {
-                if (alive) setServers([]);
-            });
-        return () => {
-            alive = false;
-        };
-    }, []);
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/servers', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((data: { servers?: ServerEntry[] }) => {
+        if (alive) setServers(data.servers ?? []);
+      })
+      .catch(() => {
+        if (alive) setServers([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-    return (
-        <div className="lobby-shell">
-            <Topbar />
-            <main className="lobby-main fade-in">
-                {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 전황 로그 (devsam '제 전황' 형태). */}
-                <ServerBoard />
+  return (
+    <div className="lobby-shell">
+      <Topbar />
+      <main className="lobby-main fade-in">
+        {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 전황 로그 (devsam '제 전황' 형태). */}
+        <ServerBoard />
 
-                {servers.length > 0 && (
-                    <section>
-                        <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
-                        <div className="game-table-wrap">
-                            <table className="game-table">
-                                <caption>{LOBBY_LABELS.serverSelect}</caption>
-                                <thead>
-                                    <tr>
-                                        <th>{LOBBY_LABELS.colServer}</th>
-                                        <th>{LOBBY_LABELS.colInfo}</th>
-                                        <th>{LOBBY_LABELS.colCharacter}</th>
-                                        <th>{LOBBY_LABELS.colSelect}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {servers.map((server) => (
-                                        <ServerRow key={server.id} server={server} />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-                )}
+        {servers.length > 0 && (
+          <section>
+            <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
+            <div className="game-table-wrap">
+              <table className="game-table">
+                <caption>{LOBBY_LABELS.serverSelect}</caption>
+                <thead>
+                  <tr>
+                    <th>{LOBBY_LABELS.colServer}</th>
+                    <th>{LOBBY_LABELS.colInfo}</th>
+                    <th>{LOBBY_LABELS.colCharacter}</th>
+                    <th>{LOBBY_LABELS.colSelect}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {servers.map((server) => (
+                    <ServerRow key={server.id} server={server} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
-                <section>
-                    <h2 className="lobby-section-title">{LOBBY_LABELS.accountSection}</h2>
-                    <Link className="btn-ghost" href="/account">
-                        {LOBBY_LABELS.accountManage}
-                    </Link>
-                </section>
+        <section>
+          <h2 className="lobby-section-title">{LOBBY_LABELS.accountSection}</h2>
+          <div className="lobby-account-actions">
+            <Link className="btn-ghost" href="/account">
+              {LOBBY_LABELS.accountManage}
+            </Link>
+            <Link className="btn-ghost" href="/board">커뮤니티 게시판</Link>
+          </div>
+        </section>
 
-                <ul className="footnotes">
-                    {LOBBY_FOOTNOTES.map((note) => (
-                        <li key={note}>{note}</li>
-                    ))}
-                </ul>
-            </main>
-        </div>
-    );
+        <ul className="footnotes">
+          {LOBBY_FOOTNOTES.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+      </main>
+    </div>
+  );
 }
 
 export default function LobbyPage() {
-    return (
-        <AuthGate>
-            <LobbyView />
-        </AuthGate>
-    );
+  return (
+    <AuthGate>
+      <LobbyView />
+    </AuthGate>
+  );
 }
