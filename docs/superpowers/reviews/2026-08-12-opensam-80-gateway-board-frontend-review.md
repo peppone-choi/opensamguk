@@ -1,45 +1,54 @@
 # Review: OPENSAM-80 gateway board frontend
 
-Scope: `web/gateway` community-board frontend, its same-origin board proxy, the lobby entry point, focused tests, the generic proxy empty-204 regression, and an authorized test-only global-mock cleanup. This review excludes the OPENSAM-79 backend implementation, infrastructure, deployment, and shared Agent OS state.
+Scope: `web/gateway` community-board frontend, its same-origin board proxy, the lobby entry point, focused tests, and the generic proxy empty-204 regression. This review excludes the OPENSAM-79 backend implementation, infrastructure, deployment, and shared Agent OS state.
 
-Stage: independent re-review completed
+Stage: fresh independent remediation re-review completed
 
 Verdict: cleared
 
-## Contract checked
+## Locked OPENSAM-79 contract
 
-- Anonymous visitors can list and read board posts through `/api/board/posts` without a cookie read or Bearer header.
-- Authenticated board writes bridge only the httpOnly access cookie: post/comment create, post delete, nested comment delete, and pin updates.
-- The paired OPENSAM-79 controller exposes comment deletion only at `DELETE /board/posts/{postId}/comments/{commentId}`. The client helper, proxy allowlist, detail page, and regression tests all use that nested path.
-- Title, author, and comment strings render as React text. `contentHtml` is the only HTML sink and is limited to the server-owned escaped-and-line-broken field in the agreed contract.
-- UI input limits match the paired backend constraints: title 120, post content 10,000, comment 2,000 characters.
-- The generic authenticated proxy now represents an empty upstream `204` as a null response body, avoiding the Next `Response constructor: Invalid response status code 204` exception.
+- Gateway API, not the retired game API, owns this surface: `/board/posts`, `/board/posts/{id}`, `/board/posts/{postId}/comments/{commentId}`, and `/board/posts/{id}/pin`.
+- `GET /board/posts` and `GET /board/posts/{id}` remain public. The proxy forwards `sam_access` opportunistically when it is present so OPENSAM-79 can calculate permissions; an absent, stale, or invalid bearer must still receive the public anonymous representation rather than a frontend-generated 401.
+- `PostDto` requires `canDelete` alongside `id`, `category`, `authorName`, `title`, `contentHtml`, `pinned`, `deleted`, `createdAt`, and `updatedAt`. `CommentDto` likewise requires `canDelete`. The client rejects malformed successful responses that omit either permission field and renders deletion controls only from that server decision.
+- OPENSAM-79 varies public representations by authorization. The board proxy adds `Vary: Authorization, Cookie` and `Cache-Control: private, no-store` to avoid sharing a personalized `canDelete` value.
+- Only `contentHtml` is an HTML sink. OPENSAM-79's `GatewayBoardContentSanitizer.plainTextToSafeHtml` escapes `<`, `>`, `&`, `\"`, and `'`, then converts normalized newlines to `<br>`; `GatewayBoardService` uses it before persistence. Title, author, and comment values render as React text. The browser-shaped contract test uses escaped image-looking text and asserts no executable element is produced.
 
-## Independent critique
+## CodeRabbit disposition
 
-An independent read-only reviewer first found a HIGH nested-comment-delete mismatch: the client and proxy used a nonexistent top-level comment route. It was corrected, then re-reviewed against the paired controller. The reviewer also requested the client length alignment, which was corrected and re-reviewed.
+CodeRabbit left 12 commented findings; it did not grant approval.
 
-Final independent result: cleared, with no blockers. The detailed reviewer evidence is retained at `.omo/evidence/OPENSAM-80-code-review.md` in the working environment.
+| Comment | Disposition | Resolution / evidence |
+| --- | --- | --- |
+| Review verdict and missing evidence reference | Fixed | This document now scopes the independent verdict separately from landing, removes the absent `.omo/evidence/OPENSAM-80-code-review.md` reference, and records unverified boundaries. |
+| Delete failure leaves the page unusable | Fixed | `actionError` is separate from initial-load failure; a 403 delete test proves the loaded title remains visible with an inline alert. |
+| Leaked `GATEWAY_API_ORIGIN` test mutation | Fixed | The unused process-environment assignment was removed; test cleanup restores mocks and globals. |
+| Missing invalid-path and upstream-failure tests | Fixed | Board proxy tests cover non-numeric/incomplete/unsupported paths without `fetch`, plus connection failure. |
+| Route should target old game API instead of `/board/posts` | Invalid against the locked contract | OPENSAM-79's gateway controller owns `/board/**`; this proxy deliberately forwards there. No redirect to the old game API is correct. |
+| No upstream timeout | Fixed | Both board and generic proxies use the shared 10-second `AbortSignal.timeout` and map a `TimeoutError` to 504; focused tests cover it. |
+| Mutation failure replaces loaded detail | Fixed | Post delete, comment delete, and pin failures retain detail and use the inline action alert path. |
+| Login implies delete permission | Fixed with OPENSAM-79 | Required `canDelete` is parsed for posts and comments; controls no longer infer authority from `user !== null`. Per-resource positive and negative UI tests cover it. |
+| Client/server HTML sanitization | Invalid in this frontend scope after contract verification | The backend owns a deliberately text-only sanitizer; the client receives its safe `contentHtml` contract rather than accepting arbitrary HTML. The escaped-HTML component regression verifies the integration boundary. |
+| Lobby TSX uses four-space indentation | Fixed | The owned `LobbyView` JSX hierarchy, including the account-action links, now follows two-space nesting without a whole-file quote/wrapping rewrite. |
+| Incomplete tab ARIA pattern | Fixed | Category controls are a labeled button group with `aria-pressed`, not tabs, because they reload a filtered list and do not control a tab panel. |
+| Duplicate post response validation | Fixed | `parsePost` centralizes the shared runtime guard for post creation and pin responses. |
 
-Nonblocking follow-ups noted by the reviewer:
+## Observed remediation evidence
 
-- `board-components.test.tsx` is fixture-heavy and can be split by page surface in a later cleanup.
-- `lib/board.ts` uses handwritten response guards; a later shared validation-schema decision can simplify that boundary without changing this contract.
-
-## Observed verification
-
-- `pnpm typecheck` completed with `tsc --noEmit` and no errors after the final changes.
-- Focused Vitest JSON output recorded 6 suites, 14 tests, 0 failures, and `success: true` for board components, board proxy, and generic 204 proxy regression coverage.
+- TDD red runs captured the missing `canDelete`, optional-read bearer, timeout, action-error, and button-group behavior before implementation.
+- The final focused Vitest run covered board list/detail/write/mutations, DTO parsing, board proxy, generic proxy, and the lobby portrait surface: 8 files, 31 tests, 0 failures. The independent re-review separately reran the seven board/proxy suites: 24 tests, 0 failures.
+- `pnpm typecheck` completed with `tsc --noEmit` after the remediation changes.
 - `git diff --check` completed without output.
-- The direct lobby test passed after the authorized `afterEach` mock cleanup.
+- Independent re-review verdict: cleared for the remediation scope, with `WATCH` only for the pre-existing unrelated full-suite contention. This is not landing approval.
 
 ## Unverified or contended checks
 
-- The complete gateway Vitest suite was attempted serially and under parallel workers. It retained unrelated async loading-state failures in `admin-server-id.test.tsx` and `lobby-possession.test.tsx`; their focused runs pass. This review does not call the full suite green.
-- `pnpm build` compiled and minified the board route chunks but did not complete the host's existing Next static-analysis phase before the bounded self-started process was stopped. No product build error was emitted, but local build success is unverified; PR CI is the deciding build gate.
-- A Playwright run against a local contract-shaped mock could not receive bytes from a Next dev server while the server remained in host-bound compilation. Browser validation is `채점대기`; the focused component tests are the available browser-shaped evidence.
-- Generic Fablize `tool failure` notices recurred around successful commands and output-session recovery. This is the pre-existing wrapper baseline recorded in `.ai/known-issues.md`; command output and JSON test artifacts, rather than that telemetry, are used above.
+- A complete gateway Vitest run previously retained unrelated asynchronous loading-state failures in `admin-server-id.test.tsx` and `lobby-possession.test.tsx`; focused runs pass. This review does not call the complete suite green until a fresh run proves it.
+- Local `pnpm build` previously reached Next static analysis but did not terminate within the bounded host run. No product build error was emitted, but local build success remains unverified; PR CI is the deciding build gate.
+- Playwright against a local contract-shaped mock remains `채점대기` because the Next development server did not serve bytes while host-bound compilation was active. Browser-shaped React Testing Library coverage is the available runtime evidence.
+- PHP golden draw-for-draw replay is not applicable to this gateway UI/proxy work: it contains no RNG, rounding, Korean game-log, or PHP-command-parity claim.
+- Generic Fablize `tool failure` notifications have recurred around otherwise successful command/output-session recovery. This is the pre-existing wrapper baseline recorded in `.ai/known-issues.md`; direct exit codes and test artifacts are the evidence used above.
 
 ## Conditional landing boundary
 
-This frontend PR depends on the OPENSAM-79 gateway-board backend landing first. Do not merge until that dependency is present and required PR CI checks are green. No deployment or production action is authorized by this review.
+PR #379 remains open. It must not merge or deploy until the OPENSAM-79 backend dependency lands, a fresh independent re-review clears this remediation, and required PR CI checks are green.

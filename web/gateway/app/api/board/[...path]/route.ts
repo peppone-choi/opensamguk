@@ -1,9 +1,10 @@
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { ACCESS_COOKIE } from '@/lib/cookies';
-import { GATEWAY_API_URL } from '@/lib/server-api';
+import { GATEWAY_API_URL, GATEWAY_UPSTREAM_TIMEOUT_MS, isGatewayTimeout } from '@/lib/server-api';
 
 type BoardMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+type AccessMode = 'optional' | 'required';
 type RouteContext = { params: Promise<{ path: string[] }> };
 
 function isPostId(value: string | undefined): boolean {
@@ -47,10 +48,10 @@ async function forward(
   request: NextRequest,
   path: readonly string[],
   method: BoardMethod,
-  authenticated: boolean,
+  accessMode: AccessMode,
 ): Promise<NextResponse> {
-  const access = authenticated ? (await cookies()).get(ACCESS_COOKIE)?.value : undefined;
-  if (authenticated && !access) {
+  const access = (await cookies()).get(ACCESS_COOKIE)?.value;
+  if (accessMode === 'required' && !access) {
     return NextResponse.json({ message: '로그인이 필요합니다.', status: 401 }, { status: 401 });
   }
 
@@ -59,17 +60,32 @@ async function forward(
   if (access) headers.Authorization = `Bearer ${access}`;
   if (method !== 'GET' && method !== 'DELETE' && contentType) headers['Content-Type'] = contentType;
 
-  const init: RequestInit = { method, headers, cache: 'no-store' };
+  const init: RequestInit = {
+    method,
+    headers,
+    cache: 'no-store',
+    signal: AbortSignal.timeout(GATEWAY_UPSTREAM_TIMEOUT_MS),
+  };
   if (method !== 'GET' && method !== 'DELETE') init.body = await request.text();
 
   try {
     const upstream = await fetch(`${GATEWAY_API_URL}/board/${path.join('/')}${request.nextUrl.search}`, init);
     const text = await upstream.text();
+    const responseHeaders: Record<string, string> = {
+      'Content-Type': upstream.headers.get('content-type') ?? 'application/json',
+    };
+    if (method === 'GET') {
+      responseHeaders.Vary = 'Authorization, Cookie';
+      responseHeaders['Cache-Control'] = 'private, no-store';
+    }
     return new NextResponse(text === '' ? null : text, {
       status: upstream.status,
-      headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json' },
+      headers: responseHeaders,
     });
   } catch (error) {
+    if (isGatewayTimeout(error)) {
+      return NextResponse.json({ message: '게이트웨이 응답 시간이 초과되었습니다.', status: 504 }, { status: 504 });
+    }
     if (error instanceof Error) {
       return NextResponse.json({ message: '게이트웨이에 연결할 수 없습니다.', status: 502 }, { status: 502 });
     }
@@ -79,24 +95,24 @@ async function forward(
 
 export async function GET(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
-  return isPublicReadPath(path) ? forward(request, path, 'GET', false) : routeNotFound();
+  return isPublicReadPath(path) ? forward(request, path, 'GET', 'optional') : routeNotFound();
 }
 
 export async function POST(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
   return isPostCreatePath(path) || isCommentCreatePath(path)
-    ? forward(request, path, 'POST', true)
+    ? forward(request, path, 'POST', 'required')
     : routeNotFound();
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
-  return isPinPath(path) ? forward(request, path, 'PATCH', true) : routeNotFound();
+  return isPinPath(path) ? forward(request, path, 'PATCH', 'required') : routeNotFound();
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
   return isPostDeletePath(path) || isCommentDeletePath(path)
-    ? forward(request, path, 'DELETE', true)
+    ? forward(request, path, 'DELETE', 'required')
     : routeNotFound();
 }

@@ -13,6 +13,7 @@ export type BoardPost = {
   readonly title: string;
   readonly contentHtml: string;
   readonly pinned: boolean;
+  readonly canDelete: boolean;
   readonly deleted: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -22,6 +23,7 @@ export type BoardComment = {
   readonly id: number;
   readonly authorName: string;
   readonly content: string;
+  readonly canDelete: boolean;
   readonly deleted: boolean;
   readonly createdAt: string;
 };
@@ -66,6 +68,7 @@ function isBoardPost(value: unknown): value is BoardPost {
     typeof value.title === 'string' &&
     typeof value.contentHtml === 'string' &&
     typeof value.pinned === 'boolean' &&
+    typeof value.canDelete === 'boolean' &&
     typeof value.deleted === 'boolean' &&
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string';
@@ -76,6 +79,7 @@ function isBoardComment(value: unknown): value is BoardComment {
     typeof value.id === 'number' &&
     typeof value.authorName === 'string' &&
     typeof value.content === 'string' &&
+    typeof value.canDelete === 'boolean' &&
     typeof value.deleted === 'boolean' &&
     typeof value.createdAt === 'string';
 }
@@ -104,6 +108,11 @@ function parseDetail(value: unknown): BoardPostDetail {
     throw new BoardRequestError(502, '게시글 응답이 올바르지 않습니다.');
   }
   return { post: value.post, comments: value.comments };
+}
+
+function parsePost(value: unknown): BoardPost {
+  if (!isBoardPost(value)) throw new BoardRequestError(502, '게시글 응답이 올바르지 않습니다.');
+  return value;
 }
 
 function parseComment(value: unknown): BoardComment {
@@ -154,13 +163,11 @@ export async function createBoardPost(input: {
   readonly title: string;
   readonly content: string;
 }): Promise<BoardPost> {
-  const body = await request('/api/board/posts', {
+  return parsePost(await request('/api/board/posts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
-  });
-  if (!isBoardPost(body)) throw new BoardRequestError(502, '게시글 응답이 올바르지 않습니다.');
-  return body;
+  }));
 }
 
 export async function createBoardComment(postId: string, content: string): Promise<BoardComment> {
@@ -180,13 +187,11 @@ export async function deleteBoardComment(postId: number, commentId: number): Pro
 }
 
 export async function setBoardPostPinned(postId: number, pinned: boolean): Promise<BoardPost> {
-  const body = await request(`/api/board/posts/${postId}/pin`, {
+  return parsePost(await request(`/api/board/posts/${postId}/pin`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ pinned }),
-  });
-  if (!isBoardPost(body)) throw new BoardRequestError(502, '게시글 응답이 올바르지 않습니다.');
-  return body;
+  }));
 }
 
 export function boardCategoryLabel(category: BoardCategory): string {

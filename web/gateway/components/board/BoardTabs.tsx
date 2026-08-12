@@ -9,14 +9,13 @@ export default function BoardTabs({
   readonly onSelect: (category: BoardCategory) => void;
 }) {
   return (
-    <div className="board-tabs" role="tablist" aria-label="게시판 분류">
+    <div className="board-tabs" role="group" aria-label="게시판 분류">
       {BOARD_CATEGORIES.map((category) => (
         <button
-          aria-selected={active === category.value}
+          aria-pressed={active === category.value}
           className={`board-tab${active === category.value ? ' active' : ''}`}
           key={category.value}
           onClick={() => onSelect(category.value)}
-          role="tab"
           type="button"
         >
           {category.label}
