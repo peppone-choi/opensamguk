@@ -76,6 +76,12 @@ require_actuator_health() {
     no_go 'D4-33 actuator health check failed'
 }
 
+require_web_game_health() {
+  local container="$1"
+  docker exec "$container" sh -ceu 'health="$(wget -qO- http://127.0.0.1:3001/api/health)"; HEALTH="$health" node -e "const health = JSON.parse(process.env.HEALTH ?? \"\"); if (health === null || typeof health !== \"object\" || Array.isArray(health) || health.status !== \"UP\") process.exit(1);"' 2>/dev/null ||
+    no_go 'D4-33 web health check failed'
+}
+
 psql_read() {
   local sql="$1"
   docker exec "$POSTGRES_CONTAINER" env 'PGOPTIONS=-c default_transaction_read_only=on' sh -ceu \
@@ -178,8 +184,7 @@ for container in "$API_CONTAINER" "$ENGINE_CONTAINER" "$WEB_GAME_CONTAINER" "$PO
 done
 require_actuator_health "$API_CONTAINER" 8081
 require_actuator_health "$ENGINE_CONTAINER" 8082
-docker exec "$WEB_GAME_CONTAINER" wget -qO /dev/null http://localhost:3001/ 2>/dev/null ||
-  no_go 'D4-33 web health check failed'
+require_web_game_health "$WEB_GAME_CONTAINER"
 docker exec "$POSTGRES_CONTAINER" sh -ceu \
   'exec pg_isready -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}"' 2>/dev/null ||
   no_go 'D4-33 PostgreSQL health check failed'
