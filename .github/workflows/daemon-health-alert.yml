@@ -1,0 +1,46 @@
+name: Daemon Health Alert
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: daemon-health-alert
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  alert:
+    runs-on: [self-hosted, Linux, X64, gcp-prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Alert on non-UP game-engine daemons
+        shell: bash
+        env:
+          DAEMON_ALERT_WEBHOOK_URL: ${{ secrets.DAEMON_ALERT_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+          failure=0
+          found=0
+          if ! engine_inventory="$(docker ps -a --format '{{.Names}}')"; then
+            echo 'ERROR: Docker inventory query failed' >&2
+            exit 1
+          fi
+          while IFS= read -r engine_container; do
+            [[ "$engine_container" =~ ^s[0-9][A-Za-z0-9_-]{0,63}-game-engine$ ]] || continue
+            found=1
+            server="${engine_container%-game-engine}"
+            if ! bash tools/ops/daemon_health_alert.sh "$server" "$engine_container"; then
+              failure=1
+            fi
+          done <<< "$engine_inventory"
+          if (( found == 0 )); then
+            echo 'no game-engine containers found; daemon alert scan skipped'
+          fi
+          if (( failure != 0 )); then
+            exit 1
+          fi

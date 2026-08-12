@@ -496,12 +496,12 @@ jobs:
 
             gate_state="$(read_daemon_gate_state "$engine_container")"
             IFS='|' read -r paused recovery_ready <<< "$gate_state"
+            if [[ "$recovery_ready" != true ]]; then
+              echo "ERROR: ${public_server} daemon recovery-gated; refusing to skip turn-advance verification" >&2
+              return 1
+            fi
             if [[ "$paused" == true ]]; then
               echo "${public_server} daemon paused; turn-advance verification skipped"
-              return 0
-            fi
-            if [[ "$recovery_ready" != true ]]; then
-              echo "${public_server} daemon recovery-gated; turn-advance verification skipped"
               return 0
             fi
             if (( observed_before < due_before )); then
@@ -515,12 +515,12 @@ jobs:
             while true; do
               gate_state="$(read_daemon_gate_state "$engine_container")"
               IFS='|' read -r paused recovery_ready <<< "$gate_state"
+              if [[ "$recovery_ready" != true ]]; then
+                echo "ERROR: ${public_server} daemon recovery-gated while polling; refusing to skip turn-advance verification" >&2
+                return 1
+              fi
               if [[ "$paused" == true ]]; then
                 echo "${public_server} daemon paused while polling; turn-advance verification skipped"
-                return 0
-              fi
-              if [[ "$recovery_ready" != true ]]; then
-                echo "${public_server} daemon recovery-gated while polling; turn-advance verification skipped"
                 return 0
               fi
 
