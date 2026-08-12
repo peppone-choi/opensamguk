@@ -245,9 +245,11 @@ same-tick case is a separately owned follow-up unless the orchestrator grants ne
 - Pre-review strict check on 2026-08-12 was intentionally RED only for missing evidence:
   `tools/agent-system/check.py --strict --base origin/main --format json` reported no code defect but
   required a `docs/superpowers/reviews/*.md` cross-agent critique artifact, which is also the
-  project-recognized docs/parity mapping for this logic change. The first independent review cleared
-  the source, but a second exact-commit review and strict rerun remain required after the clean-base
-  commit. Do not interpret this pre-review result as a passing strict gate.
+  project-recognized docs/parity mapping for this logic change. The exact-commit independent review
+  cleared source commit `83132d4a765bc2eae67ed6259e5ba1382aae98a2` against current base
+  `53f5d5ebc14e283d1f0dec1758ccb4bf2eaf3497`, with no BLOCKER, MAJOR, or MINOR finding. Its review
+  artifact is `docs/superpowers/reviews/2026-08-12-opensam-149-rehydrate-gate-review.md`; rerun
+  strict after that artifact is staged. Do not interpret the pre-review result as a passing strict gate.
 - Environment preflight on 2026-08-12: `docker info --format '{{.ServerVersion}} {{.OperatingSystem}}'`
   returned `29.3.1 Docker Desktop`, so Docker availability is not the expected reason for a skipped
   focused Testcontainers gate. The eventual XML must still prove `skipped=0`.
