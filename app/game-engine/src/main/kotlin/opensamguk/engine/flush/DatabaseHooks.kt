@@ -597,6 +597,8 @@ object DatabaseHooks {
         val createdNations = dirty.createdNations.map { PerTurnOverlay.toLogicNation(it) }
         val createdDiplomacy = dirty.createdDiplomacy.map { PerTurnOverlay.toLogicDiplomacy(it) }
         val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth, state.currentPhase) }
+        val auctionUpserts = recorder.auctionUpserts()
+        refreshActiveUniqueAuctionProjection(world, auctionUpserts)
 
         val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
             val currentHistory = currentNationHistory(dirty.logs, snap.nation.id)
@@ -683,7 +685,7 @@ object DatabaseHooks {
             diplomacyLetterUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>().apply {
                 recorder.diplomacyLetterUpdates().forEach { (letterNo, columns) -> put(letterNo, LinkedHashMap(columns)) }
             },
-            auctionUpserts = recorder.auctionUpserts().map { AuctionUpsertRow(it.id, it.allocatedId, it.columns) },
+            auctionUpserts = auctionUpserts.map { AuctionUpsertRow(it.id, it.allocatedId, it.columns) },
             auctionBidInserts = recorder.auctionBidInserts().map { AuctionBidInsertRow(it.columns) },
             bettingInserts = recorder.bettingInserts().map { BettingInsertRow(it.columns) },
             // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE (recorder
@@ -734,6 +736,36 @@ object DatabaseHooks {
                 NationTurnPullRow(it.nationId, it.officerLevel, it.turnCnt)
             },
         )
+    }
+
+    private fun refreshActiveUniqueAuctionProjection(
+        world: InMemoryTurnWorld,
+        upserts: List<opensamguk.engine.turn.AuctionUpsert>,
+    ) {
+        if (upserts.isEmpty()) return
+
+        val current = LinkedHashMap<Int, String?>()
+        (world.getState().meta["activeUniqueAuctionItemsById"] as? Map<*, *>)?.forEach { (rawId, rawTarget) ->
+            val id = (rawId as? Number)?.toInt() ?: return@forEach
+            current[id] = rawTarget?.toString()
+        }
+
+        upserts.forEach { upsert ->
+            val auctionId = upsert.id ?: upsert.allocatedId ?: return@forEach
+            val type = upsert.columns["type"]?.toString()
+            val finished = upsert.columns["finished"] as? Boolean ?: false
+            val target = upsert.columns["target"]?.toString()
+            if (type == "uniqueItem" && !finished) {
+                current[auctionId] = target
+            } else {
+                current.remove(auctionId)
+            }
+        }
+
+        val ordered = LinkedHashMap<Int, String?>()
+        current.toSortedMap().forEach { (auctionId, target) -> ordered[auctionId] = target }
+        world.setGameEnvValue("activeUniqueAuctionItemsById", ordered)
+        world.setGameEnvValue("activeUniqueAuctionItems", ordered.values.toList())
     }
 
     /** T0.4 — map the recorder's per-command diplomacy patches to the executor [DiplomacyUpdate] list. */

@@ -82,7 +82,7 @@ class WorldSnapshotLoader(
         val activeGame = resolveActiveGame(loadedState.meta)
         val activeServerId = activeGame?.serverId
         val serverCount = loadServerCount()
-        val activeUniqueAuctionItems = loadActiveUniqueAuctionItems()
+        val activeUniqueAuctionsById = loadActiveUniqueAuctionItems()
         val storedUniqueItemCounts = loadStoredUniqueItemCounts()
         val inheritancePoints = loadInheritancePoints()
         val inheritancePrevious = inheritancePoints.mapValues { (_, values) ->
@@ -103,7 +103,8 @@ class WorldSnapshotLoader(
                     activeGame.map?.let { this["map_theme"] = it }
                 }
                 this["serverCount"] = serverCount
-                this["activeUniqueAuctionItems"] = activeUniqueAuctionItems
+                this["activeUniqueAuctionItems"] = activeUniqueAuctionsById.values.toList()
+                this["activeUniqueAuctionItemsById"] = LinkedHashMap(activeUniqueAuctionsById)
                 this["storedUniqueItemCounts"] = storedUniqueItemCounts
                 this["inheritancePoints"] = inheritancePoints
                 this["inheritancePrevious"] = inheritancePrevious
@@ -272,18 +273,22 @@ class WorldSnapshotLoader(
         worldId.value,
     ) ?: 0
 
-    private fun loadActiveUniqueAuctionItems(): List<String> = jdbc.query(
-        """
-        SELECT target
-          FROM ng_auction
-         WHERE world_id = ?
-           AND type = 'uniqueItem'
-           AND finished = false
-         ORDER BY id ASC
-        """.trimIndent(),
-        { rs, _ -> rs.getString("target") },
-        worldId.value,
-    )
+    private fun loadActiveUniqueAuctionItems(): Map<Int, String?> {
+        val auctions = LinkedHashMap<Int, String?>()
+        jdbc.query(
+            """
+            SELECT id, target
+              FROM ng_auction
+             WHERE world_id = ?
+               AND type = 'uniqueItem'
+               AND finished = false
+             ORDER BY id ASC
+            """.trimIndent(),
+            { rs -> auctions[rs.getInt("id")] = rs.getString("target") },
+            worldId.value,
+        )
+        return auctions
+    }
 
     private fun loadStoredUniqueItemCounts(): Map<String, Int> {
         val counts = LinkedHashMap<String, Int>()
