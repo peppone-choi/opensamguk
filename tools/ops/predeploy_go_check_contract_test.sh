@@ -127,6 +127,15 @@ prepare_stubs() {
     '  *) printf "{\\\"status\\\":\\\"UP\\\",\\\"app\\\":\\\"web-game\\\"}\n" ;;' \
     'esac'
 
+  write_stub "$STUB_BIN/node" \
+    '#!/usr/bin/env bash' \
+    'set -euo pipefail' \
+    '[[ "${1:-}" == -e ]] || exit 1' \
+    'case "${HEALTH:-}" in' \
+    '  "{\"status\":\"UP\",\"app\":\"web-game\"}") exit 0 ;;' \
+    '  *) exit 1 ;;' \
+    'esac'
+
   write_stub "$STUB_BIN/docker" \
     '#!/usr/bin/env bash' \
     'set -euo pipefail' \
