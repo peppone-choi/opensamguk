@@ -42,7 +42,7 @@ object HotColdCatalog {
         SnapshotAccess(
             methodName = "loadActiveUniqueAuctionItems",
             relation = "ng_auction:active uniqueItem",
-            temperature = DataTemperature.QUERY_ONLY_COLD,
+            temperature = DataTemperature.ALWAYS_HOT,
             boundary = AccessBoundary.BOOT_SNAPSHOT,
             ordering = "ng_auction.id ASC",
             bound = AccessBound.ACTIVE_SET,
