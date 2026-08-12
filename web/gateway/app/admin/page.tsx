@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ConfirmModal from '@/components/ConfirmModal';
+import BoardControl from '@/components/admin/BoardControl';
 import MemberControl from '@/components/admin/MemberControl';
 
 // F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포) + "회원 관리" 탭(B2f).
@@ -12,6 +13,7 @@ import MemberControl from '@/components/admin/MemberControl';
 // 섹션명은 verbatim 패러티 대상, 본문은 탭별로 분기.
 const ADMIN_SECTIONS = [
     { id: 'members', label: '회원 관리' },
+    { id: 'board', label: '게시판 관리' },
     { id: 'server', label: '서버 제어' },
     { id: 'game', label: '게임 환경' },
 ] as const;
@@ -1670,6 +1672,8 @@ function AdminView() {
                         <ServerControl />
                     ) : active === 'members' ? (
                         <MemberControl />
+                    ) : active === 'board' ? (
+                        <BoardControl />
                     ) : active === 'game' ? (
                         <GameEnvControl />
                     ) : (
