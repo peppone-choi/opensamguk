@@ -45,14 +45,14 @@ object NationFinanceSetters {
      */
     fun setNotice(me: General, msg: String): FinanceSetterOutcome {
         SecretPermission.financeSetterDenyReason(me)?.let { return FinanceSetterOutcome.Denied(it) }
-        if (msg.length > NOTICE_MSG_MAX) return FinanceSetterOutcome.Denied("'msg' 항목의 길이는 최대 ${NOTICE_MSG_MAX}자 입니다.")
+        if (msg.codePointCount(0, msg.length) > NOTICE_MSG_MAX) return FinanceSetterOutcome.Denied("'msg' 항목의 길이는 최대 ${NOTICE_MSG_MAX}자 입니다.")
         return FinanceSetterOutcome.Notice(htmlPurifyQuarantine(msg))
     }
 
     /** SetScoutMsg.php — writes `scout_msg` KV into `nation_env`. */
     fun setScoutMsg(me: General, msg: String): FinanceSetterOutcome {
         SecretPermission.financeSetterDenyReason(me)?.let { return FinanceSetterOutcome.Denied(it) }
-        if (msg.length > SCOUT_MSG_MAX) return FinanceSetterOutcome.Denied("'msg' 항목의 길이는 최대 ${SCOUT_MSG_MAX}자 입니다.")
+        if (msg.codePointCount(0, msg.length) > SCOUT_MSG_MAX) return FinanceSetterOutcome.Denied("'msg' 항목의 길이는 최대 ${SCOUT_MSG_MAX}자 입니다.")
         return FinanceSetterOutcome.ScoutMsg(htmlPurifyQuarantine(msg))
     }
 

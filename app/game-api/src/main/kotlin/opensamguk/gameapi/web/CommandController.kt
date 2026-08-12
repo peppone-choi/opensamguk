@@ -16,6 +16,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandWireMapper
+import opensamguk.gameapi.sanitize.HtmlSanitizer
 import opensamguk.infra.persistence.CommandResultRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -102,17 +103,22 @@ class CommandController(
         if (!isForecastReservable(code)) {
             return blocked("사용할 수 없는 커맨드입니다.")
         }
-        val result = if (argJson == null) {
+        val rawLengthViolation = argJson?.let { HtmlSanitizer.rawLengthViolation(code, it, objectMapper) }
+        if (rawLengthViolation != null) {
+            return blocked("'${rawLengthViolation.field}' 항목의 길이는 최대 ${rawLengthViolation.maxCodePoints}자 입니다.")
+        }
+        val sanitizedArgJson = argJson?.let { HtmlSanitizer.sanitizeRequestJson(code, it, objectMapper) }
+        val result = if (sanitizedArgJson == null) {
             precheck.precheck(generalId = generalId, actionCode = code)
         } else {
-            precheck.precheck(generalId = generalId, actionCode = code, args = precheckArgs(argJson))
+            precheck.precheck(generalId = generalId, actionCode = code, args = precheckArgs(sanitizedArgJson))
         }
         return when (result) {
-            PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, argJson, ownerUserId)
+            PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId)
 
             is PrecheckResult.Blocked ->
                 if (isForecastReservable(code)) {
-                    reserveAccepted(generalId, code, turnIdx, argJson, ownerUserId)
+                    reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId)
                 } else {
                     ResponseEntity.ok(
                         BlockedResponse(status = "BLOCKED", reason = result.reason, constraintName = result.constraintName),
@@ -121,7 +127,7 @@ class CommandController(
 
             is PrecheckResult.Unknown ->
                 if (isForecastReservable(code)) {
-                    reserveAccepted(generalId, code, turnIdx, argJson, ownerUserId)
+                    reserveAccepted(generalId, code, turnIdx, sanitizedArgJson, ownerUserId)
                 } else {
                     ResponseEntity.ok(
                         BlockedResponse(status = "UNKNOWN", reason = "명령을 확인할 수 없습니다."),
