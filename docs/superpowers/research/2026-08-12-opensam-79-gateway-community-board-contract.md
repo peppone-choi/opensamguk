@@ -21,6 +21,16 @@ account to use the lobby independently of any selected game world.
 PostgreSQL integration test reruns the V40 SQL after Flyway startup before validating
 that Flyway records exactly one successful V40 history row.
 
+## World-scope inventory classification
+
+The canonical V32 world-scope migration test inventories every physical table. The two
+V40 gateway-board tables are explicitly classified as post-V32 global tables in that
+inventory, rather than being made world-scoped. This preserves their `users.id` account
+identity and ensures future inventory checks fail if the classification or the absence
+of `world_id` is removed. V32's zero-world data-survival fixture remains limited to
+global tables that existed when V32 ran; V40 tables have no pre-V32 rows to backfill or
+preserve.
+
 The feed index order is pinned first, then pin time, creation time, and id. Category
 filtering uses the same order after its fixed category prefix. Soft deletion clears a
 post pin, preserves the row for stable pagination, and masks it on all public reads.
