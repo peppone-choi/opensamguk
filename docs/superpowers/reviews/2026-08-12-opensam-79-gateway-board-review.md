@@ -10,7 +10,7 @@ Evidence: the fresh focused gateway command is corroborated by current XML: read
 
 Security and contract checks cleared:
 
-- Only gateway-api exposes the six required `/board/posts` routes; no game-api/UI/persistence-spine change.
+- Only gateway-api exposes the required `/board/posts` routes; no game-api/UI/persistence-spine change.
 - GET routes are public, include `Vary: Authorization`, and both malformed and genuinely signed expired Bearers yield anonymous `200` responses with `canDelete:false`.
 - `canDelete` exists on every post/comment response and is restricted to owner or ADMIN; writes, notice creation, deletion, and pinning enforce the specified roles.
 - V40 is additive, account-only via `users.id`, idempotent, Flyway-applied exactly once, and validated against PostgreSQL.
