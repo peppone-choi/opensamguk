@@ -114,6 +114,17 @@ class V32WorldScopeCompletionMigrationTest {
         migrateV32()
 
         val gatewayAccountTables = setOf("gateway_board_post", "gateway_board_comment")
+        val physicalGatewayTables = jdbc.queryForList(
+            """
+            SELECT table_name
+              FROM information_schema.tables
+             WHERE table_schema = 'public'
+               AND table_type = 'BASE TABLE'
+               AND table_name IN ('gateway_board_post', 'gateway_board_comment')
+            """.trimIndent(),
+            String::class.java,
+        ).toSet()
+        assertEquals(gatewayAccountTables, physicalGatewayTables, "V40 gateway tables must exist")
         assertTrue(
             globalAllowlist.containsAll(gatewayAccountTables),
             "gateway account tables must be explicitly classified instead of acquiring a game world",
