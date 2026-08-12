@@ -108,6 +108,33 @@ class V32WorldScopeCompletionMigrationTest {
     }
 
     @Test
+    fun `gateway board tables are explicitly account-global in the world-scope inventory`() {
+        migrateTo31()
+
+        migrateV32()
+
+        val gatewayAccountTables = setOf("gateway_board_post", "gateway_board_comment")
+        val physicalGatewayTables = jdbc.queryForList(
+            """
+            SELECT table_name
+              FROM information_schema.tables
+             WHERE table_schema = 'public'
+               AND table_type = 'BASE TABLE'
+               AND table_name IN ('gateway_board_post', 'gateway_board_comment')
+            """.trimIndent(),
+            String::class.java,
+        ).toSet()
+        assertEquals(gatewayAccountTables, physicalGatewayTables, "V40 gateway tables must exist")
+        assertTrue(
+            globalAllowlist.containsAll(gatewayAccountTables),
+            "gateway account tables must be explicitly classified instead of acquiring a game world",
+        )
+        gatewayAccountTables.forEach { table ->
+            assertFalse(hasWorldColumn(table), "$table is account-global and must not acquire world_id")
+        }
+    }
+
+    @Test
     fun `V32 backfills every remaining world-owned row from exactly one positive world`() {
         migrateTo31()
         seedWorld(701)
@@ -141,7 +168,7 @@ class V32WorldScopeCompletionMigrationTest {
 
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java))
         assertEquals(null, jdbc.queryForMap("SELECT world_id FROM game_kv")["world_id"])
-        globalAllowlist.forEach { table ->
+        v32GlobalAllowlist.forEach { table ->
             assertFalse(hasWorldColumn(table), "$table must remain global")
             assertTrue(
                 (jdbc.queryForObject("SELECT count(*) FROM $table", Int::class.java) ?: 0) > 0,
@@ -626,7 +653,7 @@ class V32WorldScopeCompletionMigrationTest {
         )
         private val v32WorldOwnedTables = firstCohort + remainingWorldTables
         private val worldOwnedTables = v32WorldOwnedTables + postV32WorldTables
-        private val globalAllowlist = setOf(
+        private val v32GlobalAllowlist = setOf(
             "inheritance_point",
             "inheritance_log",
             "inheritance_user_state",
@@ -635,6 +662,11 @@ class V32WorldScopeCompletionMigrationTest {
             "banned_member",
             "error_log",
         )
+        private val postV32GlobalTables = setOf(
+            "gateway_board_post",
+            "gateway_board_comment",
+        )
+        private val globalAllowlist = v32GlobalAllowlist + postV32GlobalTables
         private val serialIdentityColumns = mapOf(
             "general_turn" to "id",
             "nation_turn" to "id",
