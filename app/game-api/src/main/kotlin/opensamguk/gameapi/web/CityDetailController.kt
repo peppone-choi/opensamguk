@@ -11,6 +11,7 @@ import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.logic.domain.metaInt
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -118,7 +119,8 @@ class CityDetailController(
 
     /**
      * 장수 상세표 row(b_currentCity.php cityGeneral.php). ourGeneral(아국·userGrade7)에서만 병종/훈련/사기/
-     * 명령이 노출, 타국은 "?"·국가명, 재야는 "재 야". defenceTrainText/defenceTrain은 원천 미배선 → BLOCKED.
+     * 명령이 노출, 타국은 "?"·국가명, 재야는 "재 야". `defence_train`은 장수표 필드가 아니라 아래 아국 군사
+     * 집계에서만 원천 메타로 읽는다.
      */
     data class CityGeneralRow(
         val no: Int,
@@ -139,7 +141,7 @@ class CityDetailController(
         val officerLevel: Int,
         val officerLevelText: String,
         val leadershipBonus: Int,   // calcLeadershipBonus(officerLevel, 해당 장수 국가 level)
-        // ourGeneral 전용(타국/재야면 0/None — FE는 "?" 렌더). defenceTrain은 원천 미배선 → 항상 0(BLOCKED).
+        // ourGeneral 전용(타국/재야면 0/None — FE는 "?" 렌더). defence_train은 응답 필드가 아니다.
         val crewType: Int,
         val crewTypeName: String,   // GameUnitConst.byId(crewType).name, 비아국이면 ""
         val crew: Int,              // 비가시 타국이면 -1(PHP $crew=-1 → FE "?")
@@ -260,10 +262,10 @@ class CityDetailController(
         var enemyCrew = 0; var enemyCnt = 0; var enemyArmedCnt = 0
         var crewTotal = 0; var armedGenTotal = 0; var genTotal = 0
         var crew90 = 0; var gen90 = 0; var crew60 = 0; var gen60 = 0; var crewDef = 0; var genDef = 0
-        for (g in generalRows) {
+        for (g in cityGenerals) {
             // PHP: `if (!$general['nation'] || !$myNation['nation']) continue;`
-            if (g.nation == 0 || myNation == null || myNation == 0) continue
-            if (g.nation != myNation) {
+            if (g.nationId == 0 || myNation == null || myNation == 0) continue
+            if (g.nationId != myNation) {
                 enemyCnt += 1
                 if (g.crew >= 0) enemyCrew += g.crew
                 if (g.crew > 0) enemyArmedCnt += 1
@@ -276,10 +278,8 @@ class CityDetailController(
             val minTrain = minOf(g.train, g.atmos)
             if (minTrain >= 90) { crew90 += g.crew; gen90 += 1 }
             if (minTrain >= 60) { crew60 += g.crew; gen60 += 1 }
-            // defenceTrain 원천 미배선(GeneralReadEntity에 defence_train 컬럼 미존재) → 0으로 처리.
-            // PHP `$minTrain >= $defenceTrain` 비교의 defenceTrain이 0이면 항상 참 → 수비○가 과집계될 수 있어
-            // BLOCKED(REPORT 기재). 현재는 0 기준(미배선 표기). 원천 배선 시 1줄 교체로 정합.
-            val defenceTrain = 0
+            // PHP own-general setting: absent metadata defaults to 80; foreign rows continue above.
+            val defenceTrain = metaInt(g.meta, "defence_train", 80)
             if (minTrain >= defenceTrain) { crewDef += g.crew; genDef += 1 }
         }
 

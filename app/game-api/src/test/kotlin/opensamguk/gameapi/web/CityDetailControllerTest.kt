@@ -190,6 +190,67 @@ class CityDetailControllerTest {
     }
 
     @Test
+    fun `수비 집계는 아국 defence train 경계를 적용한다`() {
+        `when`(cities.findById(5)).thenReturn(Optional.of(heoChang()))
+        `when`(generals.findById(100)).thenReturn(Optional.of(GeneralReadEntity(id = 100, nationId = 1, cityId = 5)))
+        `when`(nations.findAll()).thenReturn(emptyList())
+        `when`(generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(5, listOf(4, 3, 2))).thenReturn(emptyList())
+        `when`(generals.findByCityIdOrderByTurnTimeAsc(5)).thenReturn(
+            listOf(
+                GeneralReadEntity(
+                    id = 101, nationId = 1, cityId = 5, crew = 100, train = 89, atmos = 95,
+                    meta = mapOf("defence_train" to 90),
+                ),
+                GeneralReadEntity(
+                    id = 102, nationId = 1, cityId = 5, crew = 200, train = 90, atmos = 95,
+                    meta = mapOf("defence_train" to 90),
+                ),
+            ),
+        )
+        `when`(world.findAll()).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "100"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.military.crewDef").value(200))
+            .andExpect(jsonPath("$.military.genDef").value(1))
+    }
+
+    @Test
+    fun `수비 집계는 기본값 opt out과 타국 마스킹을 적용한다`() {
+        `when`(cities.findById(5)).thenReturn(Optional.of(heoChang()))
+        `when`(generals.findById(100)).thenReturn(Optional.of(GeneralReadEntity(id = 100, nationId = 1, cityId = 5)))
+        `when`(nations.findAll()).thenReturn(emptyList())
+        `when`(generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(5, listOf(4, 3, 2))).thenReturn(emptyList())
+        `when`(generals.findByCityIdOrderByTurnTimeAsc(5)).thenReturn(
+            listOf(
+                GeneralReadEntity(id = 101, nationId = 1, cityId = 5, crew = 300, train = 80, atmos = 90),
+                GeneralReadEntity(
+                    id = 102, nationId = 1, cityId = 5, crew = 400, train = 100, atmos = 100,
+                    meta = mapOf("defence_train" to 999),
+                ),
+                GeneralReadEntity(
+                    id = 103, nationId = 1, cityId = 5, crew = 0, train = 100, atmos = 100,
+                    meta = mapOf("defence_train" to 60),
+                ),
+                GeneralReadEntity(
+                    id = 201, nationId = 2, cityId = 5, crew = 500, train = 100, atmos = 100,
+                    meta = mapOf("defence_train" to 0),
+                ),
+            ),
+        )
+        `when`(world.findAll()).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "100"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.generals[3].train").value(-1))
+            .andExpect(jsonPath("$.military.crewDef").value(300))
+            .andExpect(jsonPath("$.military.genDef").value(1))
+            .andExpect(jsonPath("$.military.enemyCrew").value(500))
+            .andExpect(jsonPath("$.military.enemyCnt").value(1))
+            .andExpect(jsonPath("$.military.enemyArmedCnt").value(1))
+    }
+
+    @Test
     fun `비가시 도시는 장수표·군사집계가 비고 showDetailedInfo false`() {
         `when`(cities.findById(5)).thenReturn(Optional.of(heoChang()))
         // 익명 → 비가시.
