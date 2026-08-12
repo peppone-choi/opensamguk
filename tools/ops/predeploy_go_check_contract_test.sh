@@ -75,6 +75,13 @@ assert_no_go() {
   assert_not_contains "$LAST_OUTPUT" 'JWT_SECRET'
 }
 
+assert_invalid_input() {
+  [[ "$LAST_STATUS" -eq 2 ]] || fail "expected invalid-input exit for $CURRENT_CASE"
+  assert_contains "$LAST_OUTPUT" 'NO-GO: invalid input:'
+  [[ ! -s "$DOCKER_LOG" ]] || fail 'invalid input reached Docker commands'
+  [[ ! -s "$SUDO_LOG" ]] || fail 'invalid input reached the server env file'
+}
+
 write_stub() {
   local path="$1"
   shift
@@ -124,14 +131,14 @@ prepare_stubs() {
     '  inspect)' \
     '    if [[ "$joined" == *".Config.Image"* ]]; then' \
     '      case "$joined" in' \
-    '        *s1-game-api*) image="ghcr.io/peppone-choi/opensamguk:game-api-$TEST_TAG" ;;' \
-    '        *s1-game-engine*) image="ghcr.io/peppone-choi/opensamguk:game-engine-$TEST_TAG" ;;' \
-    '        *s1-web-game*) image="ghcr.io/peppone-choi/opensamguk:web-game-$TEST_TAG" ;;' \
+    '        *"$TEST_INTERNAL_SERVER-game-api"*) image="ghcr.io/peppone-choi/opensamguk:game-api-$TEST_TAG" ;;' \
+    '        *"$TEST_INTERNAL_SERVER-game-engine"*) image="ghcr.io/peppone-choi/opensamguk:game-engine-$TEST_TAG" ;;' \
+    '        *"$TEST_INTERNAL_SERVER-web-game"*) image="ghcr.io/peppone-choi/opensamguk:web-game-$TEST_TAG" ;;' \
     '        *) exit 1 ;;' \
     '      esac' \
-    '      if [[ "$mode" == image_tag_mismatch && "$joined" == *s1-game-engine* ]]; then image="ghcr.io/peppone-choi/opensamguk:game-engine-latest"; fi' \
+    '      if [[ "$mode" == image_tag_mismatch && "$joined" == *"$TEST_INTERNAL_SERVER-game-engine"* ]]; then image="ghcr.io/peppone-choi/opensamguk:game-engine-latest"; fi' \
     '      printf "%s\n" "$image"' \
-    '    elif [[ "$mode" == container_down && "$joined" == *s1-game-engine* ]]; then' \
+    '    elif [[ "$mode" == container_down && "$joined" == *"$TEST_INTERNAL_SERVER-game-engine"* ]]; then' \
     '      printf "false\n"' \
     '    else' \
     '      printf "true\n"' \
@@ -174,7 +181,7 @@ prepare_stubs() {
     '          ;;' \
     '        *) exit 1 ;;' \
     '      esac' \
-    '    elif [[ "$mode" == health_down && "$joined" == *s1-game-engine* ]]; then' \
+    '    elif [[ "$mode" == health_down && "$joined" == *"$TEST_INTERNAL_SERVER-game-engine"* ]]; then' \
     '      exit 1' \
     '    elif [[ "$joined" == *redis-cli* ]]; then' \
     '      printf "PONG\\n"' \
@@ -191,6 +198,7 @@ prepare_stubs() {
 
 prepare_fixture() {
   local mode="$1"
+  local internal_server="$2"
   local image_tag="$TAG"
   local web_tag="$TAG"
   local scenario_code='scenario_1010'
@@ -207,7 +215,7 @@ prepare_fixture() {
     "SCENARIO_CODE=$scenario_code" \
     'JWT_SECRET=secret-sentinel' \
     'UNRELATED_JSON={"token":"secret-json-sentinel"}' \
-    > "$STACK_DIR/servers/s1.env"
+    > "$STACK_DIR/servers/$internal_server.env"
   : > "$DOCKER_LOG"
   : > "$DOCKER_VERBS"
   : > "$SQL_LOG"
@@ -216,6 +224,12 @@ prepare_fixture() {
 }
 
 run_grader() {
+  run_grader_for_internal s1 "$@"
+}
+
+run_grader_for_internal() {
+  local internal_server="$1"
+  shift
   local mode="$1"
   shift
   local runner_os='Linux'
@@ -223,8 +237,8 @@ run_grader() {
     runner_os='Darwin'
   fi
 
-  prepare_fixture "$mode"
-  CURRENT_CASE="$mode $*"
+  prepare_fixture "$mode" "$internal_server"
+  CURRENT_CASE="$mode $internal_server $*"
   set +e
   LAST_OUTPUT="$(
     env \
@@ -241,6 +255,7 @@ run_grader() {
       SQL_LOG="$SQL_LOG" \
       SUDO_LOG="$SUDO_LOG" \
       TEST_TAG="$TAG" \
+      TEST_INTERNAL_SERVER="$internal_server" \
       TEST_WORLD_ID="$WORLD_ID" \
       bash "$GRADER" "$@" 2>&1
   )"
@@ -249,34 +264,36 @@ run_grader() {
 }
 
 assert_docker_command_shapes() {
+  local internal_server="${1:-s1}"
   local command
   while IFS= read -r command; do
     case "$command" in
-      'inspect --format {{.State.Running}} s1-game-api' | \
-      'inspect --format {{.State.Running}} s1-game-engine' | \
-      'inspect --format {{.State.Running}} s1-web-game' | \
-      'inspect --format {{.State.Running}} s1-game-postgres' | \
-      'inspect --format {{.State.Running}} s1-game-redis' | \
-      'inspect --format {{.Config.Image}} s1-game-api' | \
-      'inspect --format {{.Config.Image}} s1-game-engine' | \
-      'inspect --format {{.Config.Image}} s1-web-game' | \
+      "inspect --format {{.State.Running}} $internal_server-game-api" | \
+      "inspect --format {{.State.Running}} $internal_server-game-engine" | \
+      "inspect --format {{.State.Running}} $internal_server-web-game" | \
+      "inspect --format {{.State.Running}} $internal_server-game-postgres" | \
+      "inspect --format {{.State.Running}} $internal_server-game-redis" | \
+      "inspect --format {{.Config.Image}} $internal_server-game-api" | \
+      "inspect --format {{.Config.Image}} $internal_server-game-engine" | \
+      "inspect --format {{.Config.Image}} $internal_server-web-game" | \
       'info --format {{.DockerRootDir}}' | \
-      'exec s1-game-api curl -fsS http://localhost:8081/actuator/health' | \
-      'exec s1-game-engine curl -fsS http://localhost:8082/actuator/health' | \
-      'exec s1-web-game wget -qO /dev/null http://localhost:3001/' | \
-      'exec s1-game-redis redis-cli ping') ;;
-      exec\ s1-game-postgres\ sh\ -ceu\ exec\ pg_isready\ *) ;;
-      exec\ s1-game-postgres\ env\ PGOPTIONS=-c\ default_transaction_read_only=on\ sh\ -ceu\ exec\ psql\ *) ;;
+      "exec $internal_server-game-api curl -fsS http://localhost:8081/actuator/health" | \
+      "exec $internal_server-game-engine curl -fsS http://localhost:8082/actuator/health" | \
+      "exec $internal_server-web-game wget -qO /dev/null http://localhost:3001/" | \
+      "exec $internal_server-game-redis redis-cli ping") ;;
+      exec\ "$internal_server-game-postgres"\ sh\ -ceu\ exec\ pg_isready\ *) ;;
+      exec\ "$internal_server-game-postgres"\ env\ PGOPTIONS=-c\ default_transaction_read_only=on\ sh\ -ceu\ exec\ psql\ *) ;;
       *) fail "grader invoked an unsafe docker command shape: $command" ;;
     esac
   done < "$DOCKER_LOG"
 }
 
 assert_read_only_commands() {
+  local internal_server="${1:-s1}"
   if grep -E -v '^(inspect|exec|info)$' "$DOCKER_VERBS" >/dev/null; then
     fail 'grader invoked a mutating or unsupported docker verb'
   fi
-  assert_docker_command_shapes
+  assert_docker_command_shapes "$internal_server"
   if grep -E -i '(^|[[:space:];])(alter|analyze|call|copy|create|delete|do|drop|grant|insert|reindex|revoke|set|truncate|update|vacuum)([[:space:];]|$)' "$SQL_LOG" >/dev/null; then
     fail 'grader issued a mutating SQL verb'
   fi
@@ -289,11 +306,11 @@ assert_read_only_commands() {
   if grep -F 'actuator/health' "$DOCKER_LOG" | grep -Fq wget; then
     fail 'grader used wget for an actuator health check'
   fi
-  grep -Fq 'exec s1-game-api curl -fsS http://localhost:8081/actuator/health' "$DOCKER_LOG" ||
+  grep -Fq "exec $internal_server-game-api curl -fsS http://localhost:8081/actuator/health" "$DOCKER_LOG" ||
     fail 'grader did not use curl -fsS for game-api health'
-  grep -Fq 'exec s1-game-engine curl -fsS http://localhost:8082/actuator/health' "$DOCKER_LOG" ||
+  grep -Fq "exec $internal_server-game-engine curl -fsS http://localhost:8082/actuator/health" "$DOCKER_LOG" ||
     fail 'grader did not use curl -fsS for game-engine health'
-  grep -Fq 'exec s1-game-postgres env PGOPTIONS=-c default_transaction_read_only=on sh -ceu exec psql' "$DOCKER_LOG" ||
+  grep -Fq "exec $internal_server-game-postgres env PGOPTIONS=-c default_transaction_read_only=on sh -ceu exec psql" "$DOCKER_LOG" ||
     fail 'grader did not enforce a read-only PostgreSQL session'
   assert_not_contains "$(<"$SUDO_LOG")" 'JWT_SECRET'
   assert_not_contains "$(<"$SUDO_LOG")" 'UNRELATED_JSON'
@@ -311,6 +328,17 @@ assert_world_query_contract() {
   assert_contains "$scenario_query" "w.scenario_code = 'scenario_1010'"
   assert_contains "$scenario_query" "g.env ->> 'scenario_code' = 'scenario_1010'"
   assert_not_contains "$scenario_query" "server_id = 's1'"
+}
+
+assert_target_derivation() {
+  local expected_internal_server="$1"
+  local container
+
+  assert_contains "$(<"$SUDO_LOG")" "$STACK_DIR/servers/$expected_internal_server.env"
+  for container in game-api game-engine web-game game-postgres game-redis; do
+    grep -Fq "inspect --format {{.State.Running}} $expected_internal_server-$container" "$DOCKER_LOG" ||
+      fail "grader did not derive the $expected_internal_server-$container target"
+  done
 }
 
 assert_workflow_contract() {
@@ -397,6 +425,16 @@ assert_success
 assert_read_only_commands
 assert_world_query_contract
 
+run_grader_for_internal spep success pep "$TAG" scenario_1010 "$WORLD_ID" 2 10
+assert_success
+assert_target_derivation spep
+assert_read_only_commands spep
+
+run_grader_for_internal spep success spep "$TAG" scenario_1010 "$WORLD_ID" 2 10
+assert_success
+assert_target_derivation spep
+assert_read_only_commands spep
+
 for mode in \
   env_tag_mismatch \
   env_web_tag_mismatch \
@@ -436,7 +474,13 @@ assert_no_go
 assert_contains "$LAST_OUTPUT" 'D4-34 df -Pk output is invalid'
 
 run_grader success '../s1' "$TAG" scenario_1010 "$WORLD_ID" 2 10
-assert_no_go
+assert_invalid_input
+
+run_grader success 'spep/../s1' "$TAG" scenario_1010 "$WORLD_ID" 2 10
+assert_invalid_input
+
+run_grader success 'spep;touch' "$TAG" scenario_1010 "$WORLD_ID" 2 10
+assert_invalid_input
 
 run_grader success s1 latest scenario_1010 "$WORLD_ID" 2 10
 assert_no_go

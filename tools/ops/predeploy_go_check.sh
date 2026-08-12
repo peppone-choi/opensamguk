@@ -25,6 +25,17 @@ immutable_tag() {
   [[ "$tag" =~ ^[0-9a-fA-F]{40}$ || "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]
 }
 
+canonical_internal_server() {
+  local requested_server="$1"
+  case "$requested_server" in
+    pep|spep) printf '%s' spep ;;
+    *)
+      [[ "$requested_server" =~ ^s[0-9][A-Za-z0-9_-]*$ ]] || return 1
+      printf '%s' "$requested_server"
+      ;;
+  esac
+}
+
 positive_decimal_at_most() {
   local value="$1"
   local upper_bound="$2"
@@ -120,15 +131,14 @@ if (( $# != 6 )); then
   invalid_input 'expected server, immutable tag, canonical scenario code, world ID, min free GiB, and min free percent'
 fi
 
-SERVER="$1"
+SERVER="$(canonical_internal_server "$1")" ||
+  invalid_input 'server must be pep, spep, or an s<number> multi-server identifier'
 EXPECTED_TAG="$2"
 EXPECTED_SCENARIO_CODE="$3"
 EXPECTED_WORLD_ID="$4"
 MIN_FREE_GIB="$5"
 MIN_FREE_PERCENT="$6"
 
-[[ "$SERVER" =~ ^s[0-9][A-Za-z0-9_-]*$ ]] ||
-  invalid_input 'server must use the s<number> multi-server identifier'
 immutable_tag "$EXPECTED_TAG" ||
   invalid_input 'expected tag must be a full commit SHA or immutable vX.Y.Z tag, never latest'
 [[ "$EXPECTED_SCENARIO_CODE" =~ ^scenario_(0|[1-9][0-9]*)$ ]] ||
