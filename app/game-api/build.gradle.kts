@@ -33,6 +33,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.jsoup:jsoup:1.22.2")
     implementation(libs.sentry.spring.boot.starter)
     // F2 Wave 1 — JWT verify (shares gateway-api's HS256 secret; verify-only, no token issue).
     implementation("org.springframework.boot:spring-boot-starter-security")
