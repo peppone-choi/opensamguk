@@ -26,7 +26,7 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
 
     const upstream = await fetch(target, init);
     const body = await upstream.text();
-    return new NextResponse(body, {
+    return new NextResponse(body === '' ? null : body, {
         status: upstream.status,
         headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json' },
     });

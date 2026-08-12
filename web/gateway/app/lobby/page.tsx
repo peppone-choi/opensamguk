@@ -270,9 +270,12 @@ function LobbyView() {
 
                 <section>
                     <h2 className="lobby-section-title">{LOBBY_LABELS.accountSection}</h2>
-                    <Link className="btn-ghost" href="/account">
-                        {LOBBY_LABELS.accountManage}
-                    </Link>
+                    <div className="lobby-account-actions">
+                        <Link className="btn-ghost" href="/account">
+                            {LOBBY_LABELS.accountManage}
+                        </Link>
+                        <Link className="btn-ghost" href="/board">커뮤니티 게시판</Link>
+                    </div>
                 </section>
 
                 <ul className="footnotes">
