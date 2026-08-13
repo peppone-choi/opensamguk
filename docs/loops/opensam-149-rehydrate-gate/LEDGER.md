@@ -381,6 +381,28 @@ orchestrator grants new ownership.
   has mtime `2026-08-13T18:10:10+0900` and reports `tests=1`, `skipped=0`, `failures=0`, and
   `errors=0`. This retained post-commit artifact, rather than the earlier overwritten result, is the
   evidence submitted for exact-source re-review.
+- PR review remediation on 2026-08-13 invalidated the historical `a9a167...` review binding because
+  that commit is unreachable. The immutable replacement source commit is
+  `85c79bee6b9d93961997b794ba4a63188081c5e0`; its exact `app/game-engine` tree is
+  `4ee085c4e8ed57df8d0dd3acb80cdc415a528e15` and its boot-test directory tree is
+  `2b5264313c2c328fb38341ba3a9be659b785230b`. The formerly 577-pure-LOC gate was split into six
+  concept files (92/51/28/172/165/126 pure LOC) without changing the one-test/four-tick scenario.
+  Fresh JDK 21 focused verification completed `BUILD SUCCESSFUL in 3m 9s`; XML is
+  `tests=1`, `skipped=0`, `failures=0`, `errors=0`, SHA-256
+  `a08f6924a28f26f3bc088183cfc4053770fc5db8e2ffcb4b5eff0682b4417946`. The serialized
+  one-daemon-write run completed `BUILD SUCCESSFUL in 16m 59s`; daemon and infra XML are each
+  `1/0/0/0`, with SHA-256
+  `179347937470b01234a15f960e54010b7348e4c75adb40470a681ddc944a4fe0` and
+  `ddc84313bda84968449a3661863408539cd1a4619f4245b3df2901061c73b5c6`. Gradle overwrites
+  same-module focused XML, so the focused and daemon XML were copied to isolated `/tmp` evidence
+  immediately after their runs; the tracked review records their counters and digests. A corrected
+  zsh Git object query also replaced an initial read-only `${source}:path` expansion typo; the typo
+  changed no repository or test state and is not gate evidence.
+- A final combined JDK 21 engine invocation retained both `FullRehydrateTurnGateIT` and
+  `DaemonNoEntityManagerTest` XML in the same module result directory and completed
+  `BUILD SUCCESSFUL in 1m 19s`. Both are `1/0/0/0`; their final simultaneously inspectable
+  SHA-256 values are `a9f137c1472f6545251cd3049b913edda24ed860c8237dc243e5bd3ebaba6e5d`
+  and `b8abc27c64bea97ba92057a88ca8e974a3940011b6331558cf074d84798d70d5`.
 
 ## Loop log
 
