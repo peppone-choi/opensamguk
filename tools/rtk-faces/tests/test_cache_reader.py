@@ -194,6 +194,23 @@ class TestCacheReader(unittest.TestCase):
 
             self.assertEqual(raised.exception.reason, "cache_too_large")
 
+    def test_cache_entry_growing_after_fstat_stays_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"
+            cache = Path(directory)
+            cache_entry = cache / (b.sha256_hex(url.encode()) + ".bin")
+            cache_entry.write_bytes(b"12345")
+            stale_metadata = mock.Mock(st_mode=os.stat(cache_entry).st_mode, st_size=4)
+
+            with (
+                mock.patch.object(b, "MAX_SOURCE_BYTES", 4),
+                mock.patch.object(b.os, "fstat", return_value=stale_metadata),
+            ):
+                with self.assertRaises(b.FetchError) as raised:
+                    b.CacheReader(cache).fetch(url)
+
+            self.assertEqual(raised.exception.reason, "cache_too_large")
+
     def test_attachment_cache_hit_is_reused(self):
         with tempfile.TemporaryDirectory() as directory:
             url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"

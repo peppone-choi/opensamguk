@@ -310,7 +310,10 @@ class CacheReader:
                     descriptor_stack.pop_all()
                     if os.fstat(source.fileno()).st_size > MAX_SOURCE_BYTES:
                         raise FetchError("cache_too_large")
-                    return source.read(MAX_SOURCE_BYTES + 1), True
+                    payload = source.read(MAX_SOURCE_BYTES + 1)
+                    if len(payload) > MAX_SOURCE_BYTES:
+                        raise FetchError("cache_too_large")
+                    return payload, True
         except OSError as error:
             raise FetchError("cache_unsafe") from error
 
