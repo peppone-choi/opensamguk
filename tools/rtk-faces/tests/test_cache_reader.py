@@ -1,3 +1,4 @@
+import os
 import sys
 import tempfile
 import unittest
@@ -29,6 +30,52 @@ class TestCacheReader(unittest.TestCase):
                 )
 
             self.assertEqual(raised.exception.reason, "cache_miss")
+
+    def test_directory_cache_entry_stays_fail_without_reading(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory)
+            url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"
+            cache_entry = cache / (b.sha256_hex(url.encode()) + ".bin")
+            cache_entry.mkdir()
+
+            with self.assertRaises(b.FetchError) as raised:
+                b.CacheReader(cache).fetch(url)
+
+            self.assertEqual(raised.exception.reason, "cache_unsafe")
+
+    def test_fifo_cache_entry_stays_fail_without_blocking(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory)
+            url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"
+            cache_entry = cache / (b.sha256_hex(url.encode()) + ".bin")
+            os.mkfifo(cache_entry)
+            descriptor = os.open(cache_entry, os.O_RDWR | os.O_NONBLOCK)
+
+            with mock.patch.object(b.os, "open", return_value=descriptor) as open_cache:
+                with self.assertRaises(b.FetchError) as raised:
+                    b.CacheReader(cache).fetch(url)
+
+            flags = open_cache.call_args.args[1]
+            self.assertTrue(flags & os.O_NONBLOCK)
+            self.assertEqual(raised.exception.reason, "cache_unsafe")
+
+    def test_missing_safe_open_capability_stays_fail_before_open(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory)
+            url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"
+            cache_entry = cache / (b.sha256_hex(url.encode()) + ".bin")
+            cache_entry.write_bytes(b"operator cache")
+
+            for attribute in ("O_NOFOLLOW", "O_NONBLOCK"):
+                with self.subTest(attribute=attribute):
+                    with mock.patch.dict(b.os.__dict__, {}, clear=False):
+                        del b.os.__dict__[attribute]
+                        with mock.patch.object(b.os, "open") as open_cache:
+                            with self.assertRaises(b.FetchError) as raised:
+                                b.CacheReader(cache).fetch(url)
+
+                            open_cache.assert_not_called()
+                            self.assertEqual(raised.exception.reason, "cache_unsafe")
 
     def test_oversized_cache_entry_stays_fail(self):
         with tempfile.TemporaryDirectory() as directory:

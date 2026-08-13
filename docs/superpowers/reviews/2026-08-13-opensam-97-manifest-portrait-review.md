@@ -37,7 +37,10 @@ visual/frontend contract. Their initial verdicts were `FIX_REQUIRED`:
 - Described cache bytes as operator-supplied and provenance-unverified; rights
   remain `BLOCKED`.
 - Repeated URL decoding until stable before namespace validation.
-- Bounded cache bytes and decoded pixels and rejected unsafe cache entries.
+- Bounded cache bytes and decoded pixels. Cache opens are non-blocking and
+  descriptor metadata rejects directories, FIFOs, and every other non-regular
+  entry as `FAIL/cache_unsafe` before a read. Platforms without both required
+  safe-open flags fail closed before opening a cache entry.
 - Replaced direct output/report writes with same-directory atomic replacement,
   preventing output symlinks from redirecting writes.
 - Added real CLI and Pillow regressions for deterministic bytes, 633×900 →
@@ -46,7 +49,7 @@ visual/frontend contract. Their initial verdicts were `FIX_REQUIRED`:
 
 ## Evidence
 
-- Python unit suite: 37 tests, 0 failures.
+- Python unit suite: 40 tests, 0 failures.
 - Python compile: exit 0.
 - Game portrait Vitest: 1 file, 22 tests, 0 failures.
 - Gateway portrait Vitest: 1 file, 24 tests, 0 failures.
@@ -62,7 +65,7 @@ visual/frontend contract. Their initial verdicts were `FIX_REQUIRED`:
 - Terminal provenance review: `CLEARED` after the machine report began carrying
   explicit `provenance: unverified`; no crawler/downloader/network path or
   tracked portrait/deploy change remains.
-- Terminal security review: `CLEARED`; exact 37/37, nested encoding, cache and
+- Terminal security review: `CLEARED`; exact 40/40, nested encoding, cache and
   output symlinks, decompression bomb, byte/pixel bounds, and no-network surface
   were independently rechecked.
 - Terminal visual/frontend review: `CLEARED`; full-frame geometry and unchanged

@@ -30,6 +30,7 @@ import io
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 import tempfile
@@ -280,15 +281,32 @@ class CacheReader:
         """Return cached bytes or a stable failure without network access."""
         canonical_url = strip_query(canonical_url)
         cache_path = self._cache_path(canonical_url)
+        no_follow_flag = getattr(os, "O_NOFOLLOW", None)
+        non_block_flag = getattr(os, "O_NONBLOCK", None)
+        if no_follow_flag is None or non_block_flag is None:
+            raise FetchError("cache_unsafe")
+
         try:
             descriptor = os.open(
                 cache_path,
-                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                os.O_RDONLY
+                | no_follow_flag
+                | non_block_flag,
             )
         except FileNotFoundError as error:
             raise FetchError("cache_miss") from error
         except OSError as error:
             raise FetchError("cache_unsafe") from error
+
+        try:
+            cache_mode = os.fstat(descriptor).st_mode
+        except OSError as error:
+            os.close(descriptor)
+            raise FetchError("cache_unsafe") from error
+        if not stat.S_ISREG(cache_mode):
+            os.close(descriptor)
+            raise FetchError("cache_unsafe")
+
         with os.fdopen(descriptor, "rb") as source:
             if os.fstat(source.fileno()).st_size > MAX_SOURCE_BYTES:
                 raise FetchError("cache_too_large")

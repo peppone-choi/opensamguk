@@ -91,7 +91,7 @@ activate an officer portrait dataset.
 | Gate | Observation | Verdict |
 |---|---|---|
 | RED checkpoint | New tests failed before implementation: missing Pillow operation, manifest accepted two-column/inconsistent URLs, and attachment cache miss reached the opener | EXPECTED RED |
-| Python unit suite | `python3 -m unittest discover -s tools/rtk-faces/tests -p 'test_*.py' -v` → 37 tests, 0 failures | PASS |
+| Python unit suite | `python3 -m unittest discover -s tools/rtk-faces/tests -p 'test_*.py' -v` → 40 tests, 0 failures; directory/FIFO cache entries and missing safe-open capabilities fail closed as `cache_unsafe` before any read | PASS |
 | Required geometry | Real Pillow fixture: 633×900 → 148×210; all four asymmetric corner markers remain | PASS |
 | Never-upscale / deterministic PNG | Real 100×80 fixture remains 100×80; repeated encode bytes are equal | PASS |
 | Cache-only CLI | Synthetic external cache and observed TSV ran twice through the real CLI: status OK, 633×900 → 148×210, report bytes equal, PNG bytes equal | PASS |
