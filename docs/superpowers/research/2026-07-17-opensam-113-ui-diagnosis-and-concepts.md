@@ -413,9 +413,10 @@ Edge 16.3초, middleware 6초, ready 104.4초, `/game` 81.5초/HTTP 200으로 wa
 
 ### 14.5 fresh concept-board evidence
 
-독립 visual review 1차는 기존 2026-07-17 board의 mobile specimen이 CJK text를 7.5–11px로 축소해 concept가 선언한
-13–15px body scale을 실제로 보여주지 못하고, current-app 재진단보다 capture가 오래됐다는 두 blocker를 찾았다. 제품
-source가 아닌 off-repo `comparison.html`만 다음처럼 보정했다.
+내부 preliminary visual inspection(독립 review 아님)은 기존 2026-07-17 board의 mobile specimen이 CJK text를
+7.5–11px로 축소해 concept가 선언한 13–15px body scale을 실제로 보여주지 못하고, current-app 재진단보다 capture가
+오래됐다는 두 blocker를 찾았다. 이는 독립 gate 증거가 아니며, 제품 source가 아닌 off-repo `comparison.html`만 다음처럼
+보정했다.
 
 - mobile phone specimen 폭을 240→330px로 늘리고 핵심 CJK leaf text 최소 크기를 13px로 고정했다.
 - mobile action specimen에 enabled action과 서버 precheck deny reason을 가진 disabled `회의실`을 함께 표시했다.
