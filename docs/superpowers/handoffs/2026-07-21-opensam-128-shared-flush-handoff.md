@@ -51,7 +51,9 @@
 ## Rules for OPENSAM-150 and later just-in-time consumers
 - Do not co-widen `JdbcFlushExecutor` / `ChangeRecorder` channels without sequential handoff.
 - New entity flush steps must accept process `WorldId` and never emit unscoped live SQL for world-owned tables.
-- Append new rows to the prepared generation; never drain/clear around `DeltaGenerationSession`.
+- Record new entity deltas before `DeltaGenerationSession.prepare()`. Preparation freezes the
+  resulting `FlushPayload`; retries reuse that exact payload unchanged. Never append to, drain, or
+  clear a prepared generation.
 - Preserve the existing JDBC operation order and canonical `world_state` CAS position. New steps
   participate in the same fenced transaction and must roll back on stale epoch/version.
 - Do not catch or downgrade `StaleWorldWriterException`, `FLUSH_RETRY`, or `RELOAD_REQUIRED`.

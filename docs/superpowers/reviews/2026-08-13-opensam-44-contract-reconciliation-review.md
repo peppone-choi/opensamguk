@@ -68,6 +68,19 @@ require S2-T3→S3-T1→S3-T2→S3-T3 plus recovery evidence before OPENSAM-150/
 OPENSAM-131 evidence description contains no test overclaim. No BLOCKER, MAJOR, MINOR, or QUESTION
 remains; immutable exact-head review is still required after commit and push.
 
+Codex Round 1 on `ccd41bb9` found two further stale instructions. The active R1-R6 design still
+described stage 3 as product persistence and made R1 depend on a pre-existing v2 DB/flush path that
+R1 now owns, while the handoff told consumers to append rows to an already prepared immutable
+generation. The stage table, R1 insertion rule, and conclusion now make stage 3 runtime/isolation
+plus ownership decomposition only; R1 creates the first product DB/flush at 3b. The handoff now
+requires recording deltas before `prepare()` and retrying the frozen payload unchanged. A new SHA
+and three fresh sequential Codex rounds are required.
+
+An independent dirty-tree re-review cleared both corrections. It found no remaining active claim
+that stage 3 already provides product persistence, no circular precondition on R1, and no instruction
+to mutate a prepared generation. `git diff --check` remained clean. An immutable exact-head review
+is still required after commit and push, followed by three fresh sequential Codex rounds.
+
 ## Independent evidence
 
 - All 14 issue #186 checklist families appear exactly once in the crosswalk: A02/A03, A07/A08,
