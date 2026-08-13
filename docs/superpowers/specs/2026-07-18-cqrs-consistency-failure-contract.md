@@ -552,10 +552,10 @@ The following signals are required for `ARCH-S1-T3`/later waves. `world_id`, use
 | Dependency | This contract consumes / requires | Boundary it enforces |
 |---|---|---|
 | `OPENSAM-43` | canonical `world_id` type, payload/version identity contract | `CQRS-CF-1.0.1-draft` uses only symbolic `world_id`; W1 schema/API/Redis implementation is blocked until this is Done. |
-| `OPENSAM-150` and later just-in-time product owners | v2 entity `ChangeRecorder → JdbcFlushExecutor` persistence extensions assigned by the OPENSAM-44 crosswalk | They must not co-modify the shared flush foundation while `ARCH-S2-T3 → ARCH-S3-T1 → ARCH-S3-T2` owns scope, generation, fence, and CAS. OPENSAM-150 consumes the documented handoff for the first product leaf; later owners consume it only when their accepted product slice requires persistence. OPENSAM-44 itself is documentation-only. |
+| `OPENSAM-150` and later just-in-time product owners | v2 entity `ChangeRecorder → JdbcFlushExecutor` persistence extensions assigned by the OPENSAM-44 crosswalk | They consume the complete `OPENSAM-128 → 130 → 131 → 132` foundation: world scope, immutable generation, writer fence, order-preserving `world_version` CAS/atomic rollback, and fail-closed `FLUSH_RETRY`/`RELOAD_REQUIRED`. OPENSAM-150 consumes the documented handoff for the first product leaf; later owners consume it only when their accepted product slice requires persistence. OPENSAM-44 itself is documentation-only. |
 | `OPENSAM-45` | UI/SSE lifecycle and query invalidation | It consumes durable reservation/execution/result/outbox vocabulary. It must not create a second result authority or collapse reservation acceptance into execution success. |
 
-The source-level implementation handoff for shared flush changes is sequential, not parallel: scoped flush (`S2-T3`) → immutable generation (`S3-T1`) → fence/CAS (`S3-T2`) → recovery (`S3-T3`).
+The source-level implementation handoff for shared flush changes is sequential, not parallel: scoped flush (`S2-T3`) → immutable generation (`S3-T1`) → fence/CAS (`S3-T2`) → recovery (`S3-T3`) → OPENSAM-150/JIT consumer. The consumer handoff is incomplete if it cites only scoped CRUD or omits the OPENSAM-130/131/132 tests and cleared reviews.
 
 ## 12. GWT acceptance criteria for OPENSAM-124
 

@@ -51,6 +51,23 @@ documentation. It verified that the foundation sequence, world scope, JDBC-only 
 no-second-dirty-truth rule, and v1 isolation remain unchanged. An immutable exact-head review is
 still required after commit and push.
 
+Fresh Round 1 on `80a964b1` found that the retargeted handoff still described only
+OPENSAM-128/S2-T3 world-scoped CRUD. The handoff and both governing CQRS documents now carry the
+complete OPENSAM-128→130→131→132 foundation, including immutable generations, writer fence,
+order-preserving `world_version` CAS with atomic rollback, fail-closed recovery/readiness, and the
+specific tests plus cleared review artifacts. This change requires a new independent review and SHA.
+
+The first independent remediation review rejected two overclaims: two hardening-plan passages still
+ended the owner sequence at S3-T2, and the handoff attributed rollback/order assertions directly to
+`WorldVersionCasIT`. Both are corrected: every active sequence now includes S3-T3 before consumer
+handoff, while the test is described only as matching/stale real-executor evidence and canonical
+order/transaction rollback are explicitly source-inspected review evidence.
+
+The terminal dirty-tree re-review returned `CLEAR`: the governing plan/spec/handoff now consistently
+require S2-T3→S3-T1→S3-T2→S3-T3 plus recovery evidence before OPENSAM-150/JIT handoff, and the
+OPENSAM-131 evidence description contains no test overclaim. No BLOCKER, MAJOR, MINOR, or QUESTION
+remains; immutable exact-head review is still required after commit and push.
+
 ## Independent evidence
 
 - All 14 issue #186 checklist families appear exactly once in the crosswalk: A02/A03, A07/A08,

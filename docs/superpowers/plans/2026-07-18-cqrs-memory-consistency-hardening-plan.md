@@ -46,16 +46,16 @@
 | `OPENSAM-148` / GitHub `#298` | canonical `world_id` contract and `WorldId` value type | `ARCH-S2-T0`의 foundation 단일 소유자다. `OPENSAM-43`과 `OPENSAM-126`을 block하며, build-only S2→S3→S4가 이 계약을 소비한다. |
 | `OPENSAM-43` | broad V2-0B `world_id` work (G0 선행과 기존 11항목 범위 전체) | `OPENSAM-148`에 의해 block되지만 **open으로 유지**한다. foundation은 이 티켓의 범위를 축소하거나 Done 처리하지 않는다. |
 | `OPENSAM-44` | broad v2 persistence의 계약·소유권 분해(문서 전용) | 2026-08-13 crosswalk가 과거 일괄 구현 계약을 supersede했다. shared flush 구현을 소비하지 않는다. |
-| `OPENSAM-150` 및 이후 just-in-time product owners | 실제 v2 entity의 `ChangeRecorder → JdbcFlushExecutor` 영속화 | shared flush substrate를 병렬 수정하지 않는다. `ARCH-S2-T3`, `ARCH-S3-T1`, `ARCH-S3-T2`가 foundation 단일 소유자이며 handoff 뒤 OPENSAM-150이 첫 product leaf로 소비하고, 이후 owner는 승인된 실제 소비 동작이 있을 때만 소비한다. |
+| `OPENSAM-150` 및 이후 just-in-time product owners | 실제 v2 entity의 `ChangeRecorder → JdbcFlushExecutor` 영속화 | shared flush substrate를 병렬 수정하지 않는다. `ARCH-S2-T3 → ARCH-S3-T1 → ARCH-S3-T2 → ARCH-S3-T3`가 foundation 단일 소유 순서이며 recovery까지 완료한 handoff 뒤 OPENSAM-150이 첫 product leaf로 소비하고, 이후 owner는 승인된 실제 소비 동작이 있을 때만 소비한다. |
 | `OPENSAM-45` | Accepted/Resolved/Rejected UI·SSE lifecycle와 query invalidation | `ARCH-S4-T3`의 durable result/outbox 계약을 선행 기반으로 소비한다. 프론트 lifecycle을 이 초안에서 중복 구현하지 않는다. |
 | `OPENSAM-33` | 60초 cadence 운영 smoke와 관측 배선 | `ARCH-S6-T2` 검증에 재사용한다. |
 | `OPENSAM-72` | 성능·동기화 gate | `ARCH-S1`, `ARCH-S5`, `ARCH-S6-T2`의 측정 결과를 연결한다. |
 
 ### Shared flush 단일 소유·handoff 규칙
 
-- Foundation owner: 이 Epic의 `ARCH-S2-T3 → ARCH-S3-T1 → ARCH-S3-T2` 순차 작업자.
+- Foundation owner: 이 Epic의 `ARCH-S2-T3 → ARCH-S3-T1 → ARCH-S3-T2 → ARCH-S3-T3` 순차 작업자.
 - 공유 계약: `world_id`가 포함된 delta key, generation token, immutable prepared batch, writer epoch, expected `world_version`, order-preserving JDBC flush 결과.
-- `OPENSAM-150` 및 이후 just-in-time owner는 위 세 작업이 완료되고 계약 테스트와 handoff
+- `OPENSAM-150` 및 이후 just-in-time owner는 위 네 작업이 완료되고 계약 테스트와 handoff
   문서가 연결될 때까지 동일 클래스의 shared foundation을 변경하지 않는다.
 - handoff 뒤 OPENSAM-150이 첫 entity mapper/flush 확장을 소유한다. 이후 확장은 OPENSAM-44
   crosswalk가 지정한 실제 product owner만 소유한다.
@@ -362,7 +362,7 @@
 | W0 (evidence) | `S1-T1`, `S1-T2` 병렬 → `S1-T3` | local/live `OPENSAM-123` proof와 `OPENSAM-124` W3 durable binding은 activation/cutover evidence로 유지한다. 이 증거의 보류는 아래 build-only foundation을 막지 않는다. |
 | B0 (build-only) | `S2-T0` / `OPENSAM-148` canonical identity | positive `WorldId`, SQL/wire contract, alias/default rejection, single-world fail-closed backfill rule. `OPENSAM-43`은 broad V2 scope를 보존한 채 open으로 남는다. |
 | B1 (build-only) | `S2-T1` → `S2-T2`/`S2-T3` → `S2-T4` | canonical identity를 소비한 scoped schema/read/write/key와 two-world 동일-ID gate green. `OPENSAM-148`이 `OPENSAM-126`을 block한다. |
-| B2 (build-only) | `S3-T1` → `S3-T2` → shared-contract handoff → `S3-T3` | generation state machine, fence/CAS rollback, recovery 동안 intake/tick 정지 증거; OPENSAM-150/JIT consumer handoff link |
+| B2 (build-only) | `S3-T1` → `S3-T2` → `S3-T3` → complete shared-contract handoff | generation state machine, fence/CAS rollback, recovery 동안 intake/tick 정지와 readiness evidence; OPENSAM-130/131/132 tests/reviews를 포함한 OPENSAM-150/JIT consumer handoff link |
 | B3 (build-only) | `S4-T1` → `S4-T3` → `S4-T2` ACK/reclaim implementation (inactive) → `S4-T4` | DB-before-202, atomic result/outbox, post-commit ACK, 전체 crash matrix green; durable W3 activation은 activation/cutover gate에서만 허용 |
 | Activation/cutover | local/live `OPENSAM-123` proof + `OPENSAM-124` W3 durable binding + B0→B3 evidence | 위 두 W0 proof가 승인되기 전에는 second-world admission, durable W3 activation, production cutover를 실행하지 않는다. |
 | W4 | `S5-T1`과 `S5-T3`의 구현은 durability gate 뒤 분리 가능 → `S5-T2` | bounded phase prefetch, full-history scan 0, 10배 cold heap delta 기준 통과, primary version barrier green |
@@ -370,7 +370,7 @@
 
 ### 병렬화 제한
 
-- `ChangeRecorder`, `JdbcFlushExecutor`, shared delta/flush contract는 `ARCH-S2-T3 → S3-T1 → S3-T2` 단일 writer 순서를 지킨다.
+- `ChangeRecorder`, `JdbcFlushExecutor`, shared delta/flush contract는 `ARCH-S2-T3 → S3-T1 → S3-T2 → S3-T3` 단일 writer 순서를 지키고, recovery evidence까지 닫힌 뒤 consumer handoff한다.
 - Build-only foundation 순서는 `ARCH-S2-T0` (identity) → `ARCH-S2` → `ARCH-S3` → `ARCH-S4`다. `OPENSAM-123` local/live proof와 `OPENSAM-124` W3 binding은 이 순서의 approval/implementation blocker가 아니라 activation/cutover gate다.
 - `OPENSAM-150` 및 이후 just-in-time consumer는 handoff 전 shared foundation을 수정하지 않는다.
 - Redis consumer-group 코드는 사전 준비할 수 있지만 ACK/reclaim을 활성화하는 배포는 `S3-T3`, `S4-T1`, `S4-T3` 완료 뒤다.
