@@ -8,10 +8,11 @@ import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
- * 인간이 예약한 dest-타깃 명령(외교 수락 — che_불가침수락 / che_종전수락)이 [ReservedTurnHandler]의
- * 일반 패스를 통해 올바르게 평가되는지를 증명하는 회귀 테스트.
+ * 인간이 예약한 dest-타깃 외교 제의/수락 명령이 [ReservedTurnHandler]의 일반 패스를 통해
+ * 올바르게 평가되고 상대국 identity를 resolver에 전달하는지 증명하는 회귀 테스트.
  *
  * 버그(수정 전): [ReservedTurnHandler.handle]가 [ConstraintContext]를 만들 때
  * `destGeneralID`/`destCityID`/`destNationID`를 ctx에 넣지 않아, dest-* 제약
@@ -82,21 +83,28 @@ class ReservedDiplomacyDestTargetTest {
         supplyState = 1, frontState = 0, meta = linkedMapOf("trust" to 50),
     )
 
-    private fun nation(id: Int, capital: Int) =
-        Nation(id = id, name = "n$id", color = "#000", level = 2, capitalCityId = capital)
+    private fun nation(id: Int, capital: Int, tech: Double = 0.0) =
+        Nation(
+            id = id,
+            name = if (id == ACCEPT_NATION) "수락자" else "제의국",
+            color = if (id == ACCEPT_NATION) "#00ff00" else "#0000ff",
+            level = 2,
+            capitalCityId = capital,
+            tech = tech,
+        )
 
     private fun dip(from: Int, to: Int, state: Int, term: Int = 0) =
         TurnDiplomacy(fromNationId = from, toNationId = to, state = state, term = term)
 
     /** 두 국가가 [startState]로 마주한 월드 + 양방향 외교 행. */
-    private fun worldInState(startState: Int) = InMemoryTurnWorld(
+    private fun worldInState(startState: Int, proposerTech: Double = 0.0) = InMemoryTurnWorld(
         WorldSnapshot(
             state = TurnWorldState(
                 id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
             ),
             generals = listOf(accepterChief(), proposerChief()),
             cities = listOf(city(7, ACCEPT_NATION), city(8, PROPOSER_NATION)),
-            nations = listOf(nation(ACCEPT_NATION, 7), nation(PROPOSER_NATION, 8)),
+            nations = listOf(nation(ACCEPT_NATION, 7), nation(PROPOSER_NATION, 8, proposerTech)),
             diplomacy = listOf(
                 dip(ACCEPT_NATION, PROPOSER_NATION, state = startState),
                 dip(PROPOSER_NATION, ACCEPT_NATION, state = startState),
@@ -182,4 +190,66 @@ class ReservedDiplomacyDestTargetTest {
         val patches = handler.recorder.diplomacyUpdateDirty()
         assertEquals(2, patches.size, "양방향 외교 패치가 기록되어야 한다")
     }
+
+    @Test
+    fun `reserved diplomacy proposals preserve the target nation identity in their mailbox payload`() {
+        val preciseTargetTech = 12.3456789012345
+        val cases = listOf(
+            ProposalCase(
+                "che_종전제의",
+                DiplomacyState.WAR,
+                "{\"destNationID\":2}",
+                "stop_war",
+                "<C>●</>1월:<D><b>제의국</b></>으로 종전 제의 서신을 보냈습니다.<1>12:34</>",
+            ),
+            ProposalCase(
+                "che_불가침제의",
+                DiplomacyState.TRADE,
+                "{\"destNationID\":2,\"year\":201,\"month\":1}",
+                "no_aggression",
+                "<C>●</>1월:<D><b>제의국</b></>로 불가침 제의 서신을 보냈습니다.<1>12:34</>",
+            ),
+            ProposalCase(
+                "che_불가침파기제의",
+                DiplomacyState.NON_AGGRESSION,
+                "{\"destNationID\":2}",
+                "cancel_na",
+                "<C>●</>1월:<D><b>제의국</b></>으로 불가침 파기 제의 서신을 보냈습니다.<1>12:34</>",
+            ),
+        )
+
+        for (case in cases) {
+            val world = worldInState(case.startState, proposerTech = preciseTargetTech)
+            val handler = handlerFor(world)
+
+            val outcome = handler.handle(
+                generalId = 10,
+                reserved = ReservedTurn(case.actionCode, case.argJson),
+                year = YEAR,
+                month = MONTH,
+                date = "12:34",
+            )
+
+            assertFalse(outcome.fellBack, "${case.actionCode}: ${outcome.denyReason}")
+            assertEquals(listOf(case.expectedLog), outcome.logs, case.actionCode)
+            val receiverRow = handler.recorder.createdMessages().first()
+            assertEquals(9_002, receiverRow.mailbox, case.actionCode)
+            assertTrue(receiverRow.bodyJson.contains("\"nation\":\"제의국\""), case.actionCode)
+            assertTrue(receiverRow.bodyJson.contains("\"color\":\"#0000ff\""), case.actionCode)
+            assertTrue(receiverRow.bodyJson.contains("\"action\":\"${case.action}\""), case.actionCode)
+            assertEquals(case.startState, world.getDiplomacy(ACCEPT_NATION, PROPOSER_NATION)?.state, case.actionCode)
+            assertEquals(case.startState, world.getDiplomacy(PROPOSER_NATION, ACCEPT_NATION)?.state, case.actionCode)
+            assertTrue(handler.recorder.diplomacyUpdateDirty().isEmpty(), case.actionCode)
+            assertTrue(handler.recorder.nationPatches().isEmpty(), case.actionCode)
+            assertEquals(preciseTargetTech, world.getNationById(PROPOSER_NATION)?.tech, case.actionCode)
+        }
+    }
+
+    private data class ProposalCase(
+        val actionCode: String,
+        val startState: Int,
+        val argJson: String,
+        val action: String,
+        val expectedLog: String,
+    )
 }

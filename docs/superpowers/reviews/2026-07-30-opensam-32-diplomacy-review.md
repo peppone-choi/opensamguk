@@ -1,6 +1,6 @@
 # OPENSAM-32 외교 상태 전이 독립 리뷰
 
-Scope: OPENSAM-32 D4-08~13의 PHP 대비 제의 payload/RNG, 수락 상태 전이, reserved/instant/flush/UI 경로
+Scope: OPENSAM-32 D4-08~13의 PHP 대비 제의 payload/RNG, 수락 상태 전이, app/ reserved/instant/flush/UI 및 logic/ resolver 경로
 
 Reviewer: `op32_independent_review` (`fable-deep-reasoner`, read-only)
 
@@ -80,4 +80,56 @@ Reviewer: `op32_independent_review` (`fable-deep-reasoner`, read-only)
 - 최종 read-only 재검토에서 BLOCKER/MAJOR/MINOR/QUESTION이 모두 0이며,
   current handoff의 다음 티켓도 OPENSAM-33 한 건으로 정합화됐다.
 
+Earlier review result: cleared
+
+## 2026-08-13 reserved proposal preload 재감사
+
+- Reviewer: `op32_static_review` (`fable-deep-reasoner`, read-only).
+- 검사 범위: 세 proposal의 reserved adapter preload, resolver name/color/log,
+  zero-RNG golden, proposal state non-mutation, 기존 accept state/term.
+- 변경 영역: `logic/src` resolver 3개와 `app/game-engine` reserved adapter/test.
+- PHP 근거: `che_종전제의.php:121-165`, `che_불가침제의.php:167-221`,
+  `che_불가침파기제의.php:119-167`; accept 상태/기간은 기존 범위를 재확인했다.
+- 결과: blocker/major/minor 0. 리뷰어가 지적한 engine fixture의 조사
+  구분력과 stale KDoc는 바로 보강했다.
+- fresh implementer evidence: engine XML 3/0/0/0, logic XML 30/0/0/0,
+  각각 `BUILD SUCCESSFUL in 28m 55s` / `9m 5s`; backend parity gate는
+  `BUILD SUCCESSFUL in 42m 22s`, XML 617 suites / 5,183 tests green이다.
+  `git diff --check` PASS.
+
 Verdict: cleared
+
+## 2026-08-13 Codex read-only target drain remediation
+
+- GitHub inline review `discussion_r3775385843` found that proposal-only target
+  preload reused the mutable `destNation` carrier. The unconditional drain then
+  materialized a high-precision `tech` value as MariaDB float, producing an
+  unrelated nation patch and overwriting the in-memory target.
+- PHP evidence confirms these proposal paths read target identity/color and send
+  a message, but do not update the target nation:
+  `che_종전제의.php:121-165`, `che_불가침제의.php:172-221`, and
+  `che_불가침파기제의.php:123-167`.
+- TDD RED: the focused engine test failed at
+  `ReservedDiplomacyDestTargetTest.kt:243` after the target fixture received
+  `tech=12.3456789012345`; the recorder contained a nation patch before any
+  production change (`BUILD FAILED`, 3 tests / 1 failure).
+- Remediation: the drain now compares the resolver's destination carrier with
+  the exact pre-resolution logic snapshot and exits without materialization,
+  recording, or world replacement when no resolver mutation occurred. Genuine
+  destination mutations still follow the existing materialize → diff → apply
+  path.
+- GREEN evidence: focused `ReservedTurnHandlerTest` plus
+  `ReservedDiplomacyDestTargetTest` completed with `BUILD SUCCESSFUL in 1m 2s`;
+  XML reports 30 + 3 tests, failures/errors/skips 0. The proposal regression
+  keeps exact logs and message target/action assertions, asserts
+  `nationPatches()` empty for all three commands, and preserves the exact
+  high-precision world value.
+- `tools/agent-system/check.py --strict --base origin/main` reports 7 changed
+  files, errors 0, warnings 0; `git diff --check` is clean.
+- Independent read-only remediation review (`review_pr400_remediation`) checked
+  PHP read-only behavior, the mutation path, ChangeRecorder invariants, and the
+  focused XML, and returned `cleared` with no findings. Existing 임관 and
+  무작위임관 coverage continues to prove genuine destination `gennum`
+  mutations reach the nation dirty channel.
+
+Remediation verdict: cleared
