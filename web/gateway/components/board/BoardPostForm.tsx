@@ -1,7 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
+import BoardRichTextEditor from '@/components/board/BoardRichTextEditor';
 import { BOARD_CATEGORIES, type BoardCategory } from '@/lib/board';
+
+const MAX_CONTENT_LENGTH = 10000;
+
+function richTextIsBlank(html: string): boolean {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;|&#160;|&#xA0;/gi, ' ')
+    .trim() === '';
+}
 
 export default function BoardPostForm({
   allowNotice,
@@ -20,8 +30,12 @@ export default function BoardPostForm({
     event.preventDefault();
     const nextTitle = title.trim();
     const nextContent = content.trim();
-    if (nextTitle === '' || nextContent === '') {
+    if (nextTitle === '' || richTextIsBlank(nextContent)) {
       setError('제목과 내용을 모두 입력해주세요.');
+      return;
+    }
+    if (nextContent.length > MAX_CONTENT_LENGTH) {
+      setError(`내용은 ${MAX_CONTENT_LENGTH}자 이내로 입력해주세요.`);
       return;
     }
     setBusy(true);
@@ -57,8 +71,9 @@ export default function BoardPostForm({
         <input id="board-title" maxLength={120} onChange={(event) => setTitle(event.target.value)} value={title} />
       </div>
       <div className="field">
-        <label htmlFor="board-content">내용</label>
-        <textarea id="board-content" maxLength={10000} onChange={(event) => setContent(event.target.value)} rows={12} value={content} />
+        <span className="field-label">내용</span>
+        <BoardRichTextEditor ariaLabel="내용" disabled={busy} onChange={setContent} value={content} />
+        <span className="board-rich-editor-counter" aria-live="polite">{content.length} / {MAX_CONTENT_LENGTH}</span>
       </div>
       {error ? <p className="field-error" role="alert">{error}</p> : null}
       <div className="board-compose-actions">

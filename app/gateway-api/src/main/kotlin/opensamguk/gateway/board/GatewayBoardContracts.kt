@@ -11,6 +11,11 @@ enum class GatewayBoardCategory {
     SUGGESTION,
 }
 
+enum class GatewayBoardContentFormat {
+    PLAIN_TEXT,
+    RICH_HTML,
+}
+
 data class CreateGatewayBoardPostRequest(
     @field:NotNull
     val category: GatewayBoardCategory?,
@@ -20,6 +25,7 @@ data class CreateGatewayBoardPostRequest(
     @field:NotBlank
     @field:Size(max = 10_000)
     val content: String,
+    val contentFormat: GatewayBoardContentFormat? = null,
 )
 
 data class UpdateGatewayBoardPostRequest(
@@ -31,6 +37,7 @@ data class UpdateGatewayBoardPostRequest(
     @field:NotBlank
     @field:Size(max = 10_000)
     val content: String,
+    val contentFormat: GatewayBoardContentFormat? = null,
 )
 
 data class CreateGatewayBoardCommentRequest(

@@ -1,0 +1,14 @@
+{
+  "evidenceTier": "fixture-backed real Next browser; not authenticated backend/daemon",
+  "consoleErrors": [],
+  "assertions": [
+    "fixture login redirected to /board/write",
+    "Tiptap submission declared RICH_HTML explicitly",
+    "Tiptap IME-shaped Korean content posted and rendered as <strong>",
+    "comment mutation appended to detail"
+  ],
+  "mobileWidth": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+  }
+}

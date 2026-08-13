@@ -35,7 +35,7 @@ export default function BoardWritePage(): React.ReactElement {
         <div>
           <p className="board-eyebrow">NEW POST</p>
           <h1>게시글 작성</h1>
-          <p>서식 없이 텍스트로 작성됩니다.</p>
+          <p>굵게, 기울임, 취소선 등 기본 서식을 사용할 수 있습니다.</p>
         </div>
         <Link className="btn-ghost" href="/board">취소</Link>
       </section>

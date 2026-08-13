@@ -80,6 +80,37 @@ class GatewayBoardPostMutationSecurityTest {
     }
 
     @Test
+    fun `authenticated author preserves allowlisted rich text and removes active markup`() {
+        mockMvc.perform(
+            post("/board/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"category":"FREE","title":"title","content":"<p><strong>천하</strong><img src=x onerror=alert(1)><script>alert(1)</script></p>","contentFormat":"RICH_HTML"}""",
+                )
+                .with(user(CustomUserDetails(author))),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.contentHtml").value("<p><strong>천하</strong></p>"))
+
+        val contentHtml = postRepository.findAll().single().contentHtml
+        assertFalse(contentHtml.contains("script"))
+        assertFalse(contentHtml.contains("onerror"))
+        assertFalse(contentHtml.contains("alert("))
+    }
+
+    @Test
+    fun `rich text with no visible content is rejected`() {
+        mockMvc.perform(
+            post("/board/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"category":"FREE","title":"title","content":"<p><br></p><script>alert(1)</script>","contentFormat":"RICH_HTML"}""",
+                )
+                .with(user(CustomUserDetails(author))),
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
     fun `notice creation is restricted to administrators`() {
         val notice = """{"category":"NOTICE","title":"notice","content":"body"}"""
 

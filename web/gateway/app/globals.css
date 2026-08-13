@@ -880,6 +880,48 @@ textarea:focus {
     border-radius: var(--radius-md);
     background: var(--bg-card);
 }
+.field-label {
+    display: block;
+    margin-bottom: var(--space-xs);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+.board-rich-editor {
+    overflow: hidden;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+}
+.board-rich-editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    border-bottom: 1px solid var(--border-subtle);
+}
+.board-rich-editor-toolbar button {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-sm);
+}
+.board-rich-editor-toolbar button[aria-pressed='true'] {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+.board-rich-editor-content {
+    min-height: 16rem;
+    padding: var(--space-md);
+    color: var(--text-primary);
+    line-height: 1.7;
+    outline: none;
+}
+.board-rich-editor-content:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--gold-dim);
+}
+.board-rich-editor-counter {
+    align-self: flex-end;
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+}
 
 /* server list */
 .server-grid {

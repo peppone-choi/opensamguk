@@ -1,0 +1,8 @@
+{
+  "evidenceTier": "fixture-backed real Next browser; not authenticated backend",
+  "assertions": [
+    "ADMIN pin mutation updated visible status",
+    "ADMIN confirmed soft-delete mutation removed row"
+  ],
+  "consoleErrors": []
+}
