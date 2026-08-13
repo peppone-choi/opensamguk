@@ -326,6 +326,21 @@ describe('NationFinancePage rich-text messages', () => {
         await act(async () => resolveRefresh(financeResponse));
     });
 
+    it('keeps the active editor mounted when a background turn refresh fails', async () => {
+        mocks.nationFinance
+            .mockResolvedValueOnce(financeResponse)
+            .mockRejectedValueOnce(new Error('offline'));
+        render(<NationFinancePage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '임관 권유문 수정' }));
+        const editor = screen.getByRole('textbox', { name: '임관 권유문' });
+
+        await act(async () => emitTurnCompleted());
+
+        expect(screen.getByRole('textbox', { name: '임관 권유문' })).toBe(editor);
+        expect(screen.queryByText('내무부 정보를 불러올 수 없습니다.')).not.toBeInTheDocument();
+    });
+
     it('closes active editors when refreshed permissions become read-only', async () => {
         mocks.nationFinance
             .mockResolvedValueOnce(financeResponse)

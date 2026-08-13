@@ -85,27 +85,35 @@ export default function NationFinancePage() {
     const fetchData = useCallback(async (background = false) => {
         const fetchId = latestFetchId.current + 1;
         latestFetchId.current = fetchId;
-        if (!background) setLoading(true);
-        setError('');
-        setNoNation(false);
+        if (!background) {
+            setLoading(true);
+            setError('');
+            setNoNation(false);
+        }
         try {
             const fi: FrontInfoResponse = await api.frontInfo();
             if (fetchId !== latestFetchId.current) return;
             const nid = fi.general.nationId;
-            setGeneralId(fi.general.generalId);
-            setNationId(nid);
-            setPermission(fi.general.permission ?? 0);
             // 재야(무소속): nationId 0 → 내무부 없음.
             if (!nid) {
+                setGeneralId(fi.general.generalId);
+                setNationId(nid);
+                setPermission(fi.general.permission ?? 0);
+                setError('');
                 setNoNation(true);
                 setData(null);
                 return;
             }
             const res = await api.nationFinance(nid);
             if (fetchId !== latestFetchId.current) return;
+            setGeneralId(fi.general.generalId);
+            setNationId(nid);
+            setPermission(fi.general.permission ?? 0);
+            setError('');
+            setNoNation(false);
             setData(res);
         } catch {
-            if (fetchId === latestFetchId.current) {
+            if (!background && fetchId === latestFetchId.current) {
                 setError('내무부 정보를 불러올 수 없습니다.');
             }
         } finally {
