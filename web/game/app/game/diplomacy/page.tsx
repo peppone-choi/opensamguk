@@ -5,6 +5,8 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import CommandModal from '../../../components/CommandModal';
+import { countHtmlCodePoints, RichTextEditor } from '../../../components/RichTextEditor';
+import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
@@ -47,6 +49,7 @@ const STATE_VARIANT: Record<string, 'crimson' | 'gold' | 'jade' | 'muted'> = {
     cancelled: 'crimson',
     replaced: 'muted',
 };
+const DIPLOMACY_DETAIL_MAX_CODE_POINTS = 500;
 
 // isBrightColor (legacy util) — black text on a bright nation color, white otherwise.
 function isBrightColor(hex?: string): boolean {
@@ -116,6 +119,7 @@ export default function DiplomacyPage() {
 
     // 수신국 후보 (자국·재야 제외)
     const candidateNations = nations.filter(n => n.id !== myNationId && n.id !== 0);
+    const detailDraftTooLong = countHtmlCodePoints(detailDraft.trim()) > DIPLOMACY_DETAIL_MAX_CODE_POINTS;
 
     const handleSendLetter = async () => {
         if (generalId == null) {
@@ -130,11 +134,16 @@ export default function DiplomacyPage() {
             showToast('요약문이 비어있습니다.');
             return;
         }
+        const detail = detailDraft.trim();
+        if (countHtmlCodePoints(detail) > DIPLOMACY_DETAIL_MAX_CODE_POINTS) {
+            showToast(`본문은 ${DIPLOMACY_DETAIL_MAX_CODE_POINTS}자 이내로 입력하세요.`);
+            return;
+        }
         try {
             const out = await submitCommandAndAwaitResult(() => api.commands.diploSendLetter({
                 destNation: destNationId,
                 brief: briefDraft.trim(),
-                detail: detailDraft.trim(),
+                detail,
                 prevNo,
             }, generalId));
             if (out.status === 'rejected') {
@@ -322,17 +331,18 @@ export default function DiplomacyPage() {
                             </div>
                             <div>
                                 <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>본문</label>
-                                <textarea
-                                    value={detailDraft}
-                                    onChange={(e) => setDetailDraft(e.target.value)}
-                                    placeholder="본문을 입력하세요"
-                                    rows={4}
-                                    style={{ width: '100%', marginTop: 'var(--space-xs)', resize: 'vertical' }}
-                                />
+                                <div style={{ marginTop: 'var(--space-xs)' }}>
+                                    <RichTextEditor
+                                        ariaLabel="외교 서신 본문"
+                                        maxTextLength={DIPLOMACY_DETAIL_MAX_CODE_POINTS}
+                                        onChange={setDetailDraft}
+                                        value={detailDraft}
+                                    />
+                                </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                                 <button
-                                    disabled={briefDraft.trim().length === 0 || destNationId === 0}
+                                    disabled={briefDraft.trim().length === 0 || detailDraftTooLong || destNationId === 0}
                                     onClick={handleSendLetter}
                                 >
                                     발송
@@ -512,7 +522,9 @@ function LetterCard({
                 {/* 내용(국가 내 공개) — legacy t_diplomacy.php th, 항상 표시(평문, 개행 보존) */}
                 <div style={{ marginBottom: letter.detail ? 'var(--space-sm)' : 0 }}>
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>내용(국가 내 공개)</span>
-                    <p style={{ whiteSpace: 'pre-wrap', margin: 'var(--space-xs) 0 0' }}>{letter.brief}</p>
+                    <div style={{ margin: 'var(--space-xs) 0 0', whiteSpace: 'pre-wrap' }}>
+                        <SafeHtml html={letter.brief} />
+                    </div>
                 </div>
 
                 {/* 내용(외교권자 전용) — legacy th. detail은 permission<3 시 BE에서 '(권한이 부족합니다)'로 마스킹됨 */}
@@ -524,7 +536,7 @@ function LetterCard({
                         }}
                     >
                         <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>내용(외교권자 전용)</span>
-                        <p
+                        <div
                             style={{
                                 whiteSpace: 'pre-wrap',
                                 color: 'var(--text-secondary)',
@@ -532,8 +544,8 @@ function LetterCard({
                                 margin: 'var(--space-xs) 0 0',
                             }}
                         >
-                            {letter.detail}
-                        </p>
+                            <SafeHtml html={letter.detail} />
+                        </div>
                     </div>
                 )}
 

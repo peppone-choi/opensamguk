@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
+import { countHtmlCodePoints, RichTextEditor } from '../../../components/RichTextEditor';
+import { SafeHtml } from '../../../components/SafeHtml';
 import { api, isIntakeQueued, isIntakeDenied, pollCommandResult } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
@@ -29,6 +31,7 @@ const TYPE_VARIANT: Record<string, 'gold' | 'jade' | 'muted' | 'crimson'> = {
 // select-pool/page.tsx 관례와 동일(20회 × 300ms, PENDING이면 재시도).
 const MESSAGE_RESULT_POLL_ATTEMPTS = 20;
 const MESSAGE_RESULT_POLL_INTERVAL_MS = 300;
+const MESSAGE_TEXT_MAX_CODE_POINTS = 500;
 
 type MessageArrayItem = {
     id: number | null;
@@ -156,6 +159,11 @@ export default function MailboxPage() {
         if (sending) return;
         const text = sendText.trim();
         if (!text) return;
+        if (countHtmlCodePoints(text) > MESSAGE_TEXT_MAX_CODE_POINTS) {
+            setToast(`서신 내용은 ${MESSAGE_TEXT_MAX_CODE_POINTS}자 이내로 입력하세요.`);
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            return;
+        }
         const generalId = identity.generalId;
         if (generalId == null) {
             setToast('장수 정보가 없습니다.');
@@ -320,6 +328,7 @@ export default function MailboxPage() {
     }, [scope, identity]);
 
     const messageName = (msg: MailboxMessage) => msg.srcTarget?.name || String(msg.src);
+    const sendTextTooLong = countHtmlCodePoints(sendText.trim()) > MESSAGE_TEXT_MAX_CODE_POINTS;
     const messageTime = (value: string) => {
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return value;
@@ -399,19 +408,19 @@ export default function MailboxPage() {
                     </select>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
-                    <textarea
-                        value={sendText}
-                        onChange={e => setSendText(e.target.value)}
-                        placeholder="메시지를 입력하세요..."
-                        rows={3}
-                        maxLength={500}
-                        disabled={sending || identity.generalId == null}
-                        style={{ flex: 1, fontSize: 'var(--text-sm)', padding: 'var(--space-xs)', background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)', resize: 'vertical' }}
-                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <RichTextEditor
+                            ariaLabel="서신 내용"
+                            disabled={sending || identity.generalId == null}
+                            maxTextLength={MESSAGE_TEXT_MAX_CODE_POINTS}
+                            onChange={setSendText}
+                            value={sendText}
+                        />
+                    </div>
                     <button
                         type="button"
                         onClick={handleSend}
-                        disabled={sending || !sendText.trim() || identity.generalId == null}
+                        disabled={sending || !sendText.trim() || sendTextTooLong || identity.generalId == null}
                         style={{ whiteSpace: 'nowrap' }}
                     >
                         {sending ? '발송 중...' : '발송'}
@@ -450,7 +459,9 @@ export default function MailboxPage() {
                                     </button>
                                 )}
                             </div>
-                            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>{msg.text ?? ''}</p>
+                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>
+                                <SafeHtml html={msg.text ?? ''} />
+                            </div>
                             {isDiplomacy && hasAction && (
                                 <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                                     {/* 요청 진행 중에는 수락/거절 모두 비활성화 — 이중 제출 방지 */}
