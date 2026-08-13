@@ -105,8 +105,10 @@ at the first observable consumer.
 ## External issue synchronization
 
 GitHub issue #186 was updated before the original PR handoff with the reviewed title/body and a
-contract-correction comment. The remediation adds the explicit OPENSAM-150/151 scenario-seeding
-split; issue #186 and the OPENSAM-150/151 issue bodies must receive the same wording after the
-remediation commit is pushed. Until that synchronization is observed, issue/body truth is pending.
+contract-correction comment. After the remediation push, live issues #186, #325 (OPENSAM-150), and
+#326 (OPENSAM-151) were read back and observed to contain the same mechanism/content/sequential-
+consumer scenario-seeding split. Issues #186 and #325 were also read back with the stage-3/R1
+dependency correction, and #325 carries the immutable-generation rule. Issue/body truth is
+synchronized at exact head `9327efd3`; later changes require a fresh observation.
 
 Verdict: cleared
