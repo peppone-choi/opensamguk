@@ -309,7 +309,8 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 
 ## 12. A3 사용자 결정 양식
 
-다음 중 하나를 사용자가 명시하고 PHP-golden draw-for-draw parity를 완료해야 A3가 열린다.
+다음 중 하나를 사용자가 명시해야 A3가 열린다. PHP-golden draw-for-draw parity는 실행 계약상 별도의 A2/출시 전
+증거 gate이며, 이 lane에서는 `채점대기`다. parity gate를 A3 선택 gate로 재정의하지 않는다.
 
 ```text
 선택 concept: A 야전 사령부 | B 현대 전략실 | C 수묵 장부
@@ -317,8 +318,8 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 보존 조건: 실제 한글 label, 20-action conceptual order+gating, API state, empty/error/disabled semantics
 ```
 
-**현재 A3 상태:** `BLOCKED BY USER SELECTION + PHP-GOLDEN PARITY`. 두 조건이 모두 충족되기 전에는 product
-implementation과 design-system 추출을 시작하지 않는다.
+**현재 A3 상태:** `BLOCKED BY USER SELECTION`. 실행 계약상 concept 선택 전에는 product implementation과
+design-system 추출을 시작하지 않는다. PHP-golden parity는 별도 A2/출시 전 gate로 계속 `채점대기`다.
 
 선택을 빠르게 하기 위한 사용자 관점 행렬:
 
@@ -405,8 +406,9 @@ Edge 16.3초, middleware 6초, ready 104.4초, `/game` 81.5초/HTTP 200으로 wa
   4면의 완전한 desktop/mobile evidence와 defect 위치가 확보됐다. 이는 synthetic fixture의 evidence 판정일 뿐이며,
   PHP draw-for-draw replay·live account/backend 수치·CDN asset 성공 또는 phase-gate 통과를 주장하지 않는다.
 - **concept comparison:** 세 concept, concept별 정확히 2 mockup, 동일 20-action gate와 동일 empty/error/disabled semantics를 유지한다.
-- **A3:** `BLOCKED BY USER SELECTION + PHP-GOLDEN PARITY` — A/B/C와 허용 변경 범위를 사용자가 선택해야 하며,
-  parity/live evidence가 `채점대기`인 동안 A3/phase-gate 완료를 주장하지 않는다.
+- **A3:** `BLOCKED BY USER SELECTION` — A/B/C와 허용 변경 범위를 사용자가 선택해야 한다. PHP-golden parity는
+  실행 계약상 별도 A2/출시 전 evidence gate이며 현재 `채점대기`; 이 문서는 A3 또는 parity/phase-gate 완료를
+  주장하지 않는다.
 - 이 문서/PR은 진단과 선택지만 제공한다. product implementation, OPENSAM-114/115, merge, deploy는 수행하지 않는다.
 
 ### 14.5 fresh concept-board evidence

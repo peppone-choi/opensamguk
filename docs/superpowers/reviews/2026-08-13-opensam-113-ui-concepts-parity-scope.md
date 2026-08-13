@@ -29,6 +29,8 @@ Verdict: quarantined-with-proof
   to a parity or phase-gate pass.
 - The document no longer claims independent visual approval; it records the missing portable reviewer identity,
   command transcript, and results as `채점대기 — NOT CLAIMED`.
+- The approved execution contract keeps A3 as the user concept-selection gate; PHP-golden parity is recorded as a
+  separate A2/pre-ship evidence gate and remains `채점대기`.
 - Fresh independent PR review is required on the pushed remediation commit; this artifact is not self-clearance.
 
 ## Required follow-up

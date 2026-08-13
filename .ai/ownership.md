@@ -64,7 +64,7 @@ local Docker runtime9, independent review가 그 상태를 대체한다. 어떤 
 | `lane-91b-catalog-research` | OPENSAM-91b source/catalog research | shared workspace (disjoint) | `docs/superpowers/research/2026-07-17-opensam-91b-*` | completed/released — research done; rights/activation blocked | 2026-07-17 |
 | `lane-102-map-research` | OPENSAM-102 map source/coordinate coverage | shared workspace (disjoint) | `docs/superpowers/research/2026-07-17-opensam-102-rtk14-rtk8r-map-source-coverage.md`; `docs/superpowers/research/2026-07-17-opensam-102-map-coordinate-ledger.csv` | completed/released — 101 coordinates cleared; non-repo quarantine + RIGHTS WARN | 2026-07-17 |
 | `lane-109-system-research` | OPENSAM-109 system candidate catalog | shared workspace (disjoint) | `docs/superpowers/research/2026-07-17-rtk-system-candidate-catalog.md` | completed/released — catalog research done; HOLDs remain | 2026-07-17 |
-| `lane-113-ui-concepts` | OPENSAM-113 UI diagnosis/concepts | shared workspace (disjoint) | `docs/superpowers/research/2026-07-17-opensam-113-ui-diagnosis-and-concepts.md`; preview artifacts는 repo 밖 user-data only | completed/released — docs/board done; live A2 pending; A3 blocked by user concept selection + PHP-golden parity (`채점대기`) | 2026-07-17 |
+| `lane-113-ui-concepts` | OPENSAM-113 UI diagnosis/concepts | shared workspace (disjoint) | `docs/superpowers/research/2026-07-17-opensam-113-ui-diagnosis-and-concepts.md`; preview artifacts는 repo 밖 user-data only | completed/released — docs/board done; live A2 pending; A3 blocked by user concept selection; PHP-golden parity is separate A2/pre-ship evidence (`채점대기`) | 2026-07-17 |
 
 ## Batch 3 lanes (2026-07-17, OPENSAM-92·93·94·97·103 A0 승인)
 
