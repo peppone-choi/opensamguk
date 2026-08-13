@@ -129,8 +129,7 @@ describe('NationFinancePage rich-text messages', () => {
     it('uses the PHP scout-message code-point limit while editing', async () => {
         render(<NationFinancePage />);
 
-        await screen.findByText('천하');
-        fireEvent.click(screen.getByRole('button', { name: '임관 권유문 수정' }));
+        fireEvent.click(await screen.findByRole('button', { name: '임관 권유문 수정' }));
 
         expect(await screen.findByRole('textbox', { name: '임관 권유문' })).toHaveAttribute('contenteditable', 'true');
         expect(screen.getByText('9 / 1000')).toBeInTheDocument();
@@ -139,8 +138,7 @@ describe('NationFinancePage rich-text messages', () => {
     it('allows the exact scout HTML limit and disables save at max plus one using Unicode code points', async () => {
         render(<NationFinancePage />);
 
-        await screen.findByText('천하');
-        fireEvent.click(screen.getByRole('button', { name: '임관 권유문 수정' }));
+        fireEvent.click(await screen.findByRole('button', { name: '임관 권유문 수정' }));
         const editor = await screen.findByRole('textbox', { name: '임관 권유문' });
         const save = screen.getByRole('button', { name: '저장' });
 
@@ -193,6 +191,27 @@ describe('NationFinancePage rich-text messages', () => {
         });
     });
 
+    it.each([
+        { status: 'pending' as const, reason: '처리 지연' },
+        { status: 'rejected' as const, reason: '명령을 실행할 수 없습니다.' },
+    ])('keeps the editor open without refreshing when the result is $status', async (outcome) => {
+        mocks.submitCommandAndAwaitResult.mockImplementation(async (submit: () => Promise<unknown>) => {
+            await submit();
+            return outcome;
+        });
+        render(<NationFinancePage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '임관 권유문 수정' }));
+        fireEvent.click(screen.getByRole('button', { name: '저장' }));
+
+        expect(await screen.findByRole('status')).toHaveTextContent(outcome.reason);
+        expect(screen.getByRole('textbox', { name: '임관 권유문' })).toBeInTheDocument();
+        expect(mocks.nationFinance).toHaveBeenCalledTimes(1);
+        fireEvent.click(screen.getByRole('button', { name: '취소' }));
+        fireEvent.click(await screen.findByRole('button', { name: '임관 권유문 수정' }));
+        expect(await screen.findByRole('textbox', { name: '임관 권유문' })).toHaveTextContent('천하');
+    });
+
     it('restores the fetched scout-message draft when the user cancels', async () => {
         render(<NationFinancePage />);
 
@@ -221,6 +240,8 @@ describe('NationFinancePage rich-text messages', () => {
         fireEvent.click(screen.getByRole('button', { name: '임관 권유문 수정' }));
         const saveButtons = screen.getAllByRole('button', { name: '저장' });
         fireEvent.click(saveButtons[0]);
+        await waitFor(() => expect(saveButtons[0]).toBeDisabled());
+        expect(saveButtons[1]).toBeEnabled();
         fireEvent.click(saveButtons[1]);
 
         await waitFor(() => {
@@ -286,6 +307,43 @@ describe('NationFinancePage rich-text messages', () => {
         const refreshedEditor = await screen.findByRole('textbox', { name: '임관 권유문' });
         await waitFor(() => expect(refreshedEditor).toHaveTextContent('예약 대기 문안'));
         expect(refreshedEditor).not.toHaveTextContent('새 서버 구문안');
+    });
+
+    it('keeps an active editor mounted while a background turn refresh is pending', async () => {
+        let resolveRefresh: (value: typeof financeResponse) => void = () => undefined;
+        mocks.nationFinance
+            .mockResolvedValueOnce(financeResponse)
+            .mockImplementationOnce(() => new Promise(resolve => { resolveRefresh = resolve; }));
+        render(<NationFinancePage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '임관 권유문 수정' }));
+        const editor = screen.getByRole('textbox', { name: '임관 권유문' });
+
+        act(() => { emitTurnCompleted(); });
+        await waitFor(() => expect(mocks.nationFinance).toHaveBeenCalledTimes(2));
+        expect(screen.getByRole('textbox', { name: '임관 권유문' })).toBe(editor);
+
+        await act(async () => resolveRefresh(financeResponse));
+    });
+
+    it('closes active editors when refreshed permissions become read-only', async () => {
+        mocks.nationFinance
+            .mockResolvedValueOnce(financeResponse)
+            .mockResolvedValueOnce({ ...financeResponse, editable: false });
+        render(<NationFinancePage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '국가방침 수정' }));
+        fireEvent.click(screen.getByRole('button', { name: '임관 권유문 수정' }));
+        expect(screen.getAllByRole('textbox')).toHaveLength(2);
+
+        await act(async () => emitTurnCompleted());
+
+        await waitFor(() => {
+            expect(screen.queryByText('로딩 중...')).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: '국가방침 수정' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: '임관 권유문 수정' })).not.toBeInTheDocument();
+        });
+        expect(screen.queryAllByRole('textbox')).toHaveLength(0);
     });
 
     it('discards an older message refresh that resolves after the latest refresh', async () => {

@@ -68,4 +68,4 @@
 
 ## Remaining gates
 
-- Confirm the final doc-only SHA, rerun strict/diff verification, push the rebased branch with lease protection, and open the PR. The PR must disclose the earlier default-five-second resumed local timing failures alongside the later explicit-30-second green result; remote exact-SHA CI remains the clean-environment deciding gate. Full-stack/API/daemon/production browser coverage remains unexecuted and is not implied by the fixture-scoped PASS.
+- Human approval was received before the branch push and PR creation; PR #397 is open and its review remediations are being pushed under that approval. Before merge, rerun strict/diff verification, require remote exact-SHA CI and the mandated PR-conversation review rounds, and disclose the earlier default-five-second resumed local timing failures alongside the later explicit-30-second green result. Full-stack/API/daemon/production browser coverage remains unexecuted and is not implied by the fixture-scoped PASS.

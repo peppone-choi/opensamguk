@@ -167,7 +167,7 @@ describe('JoinPage route guard', () => {
                     id: 1,
                     name: '위',
                     color: '#3355aa',
-                    scoutMsg: '<p><strong>천하</strong><img src=x onerror=alert(1)></p>',
+                    scoutMsg: '<p onclick="alert(1)"><strong>천하</strong><img src=x onerror=alert(1)></p>',
                 },
             ],
         });
@@ -179,6 +179,8 @@ describe('JoinPage route guard', () => {
         const scoutMessage = screen.getByText('천하').closest('div');
         expect(scoutMessage).not.toBeNull();
         expect(scoutMessage?.querySelector('img')).toBeNull();
+        expect(scoutMessage?.querySelector('[onclick]')).toBeNull();
+        expect(scoutMessage?.querySelector('[onerror]')).toBeNull();
         expect(scoutMessage?.innerHTML).not.toContain('onerror');
     });
 

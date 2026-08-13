@@ -24,7 +24,10 @@ interface FinanceModalSpec {
     extraArgs?: Record<string, unknown>;
 }
 
+// PHP raw `msg` length gates before sanitization:
+// legacy/devsam-core/hwe/sammo/API/Nation/SetNotice.php:18-29 (`mb_strlen`-equivalent 16,384 limit).
 const NOTICE_MAX_LENGTH = 16384;
+// legacy/devsam-core/hwe/sammo/API/Nation/SetScoutMsg.php:17-28 (`mb_strlen`-equivalent 1,000 limit).
 const SCOUT_MAX_LENGTH = 1000;
 
 // Mirrors legacy hwe/ts/PageNationStratFinan.vue:
@@ -79,10 +82,10 @@ export default function NationFinancePage() {
     const [savingMessages, setSavingMessages] = useState({ notice: false, scout: false });
     const latestFetchId = useRef(0);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (background = false) => {
         const fetchId = latestFetchId.current + 1;
         latestFetchId.current = fetchId;
-        setLoading(true);
+        if (!background) setLoading(true);
         setError('');
         setNoNation(false);
         try {
@@ -113,15 +116,22 @@ export default function NationFinancePage() {
     }, []);
 
     useEffect(() => {
-        fetchData();
+        void fetchData();
     }, [fetchData]);
 
     useEffect(() => {
         const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
+        es.addEventListener('turnCompleted', () => void fetchData(true));
         es.onerror = () => es.close();
         return () => es.close();
     }, [fetchData]);
+
+    useEffect(() => {
+        if (data?.editable === false) {
+            setEditingNotice(false);
+            setEditingScout(false);
+        }
+    }, [data?.editable]);
 
     async function saveMessage(kind: 'notice' | 'scout') {
         if (generalId == null) {
@@ -151,7 +161,7 @@ export default function NationFinancePage() {
             if (kind === 'notice') setEditingNotice(false);
             else setEditingScout(false);
             setToast(kind === 'notice' ? '국가 방침을 저장했습니다.' : '임관 권유문을 저장했습니다.');
-            void fetchData();
+            void fetchData(true);
         } catch (cause) {
             setToast(cause instanceof Error ? cause.message : '명령을 실행할 수 없습니다.');
         } finally {
@@ -177,7 +187,7 @@ export default function NationFinancePage() {
                     <h1>내무부</h1>
                     <div className="error-state">
                         <p>{error}</p>
-                        <button onClick={fetchData}>다시 시도</button>
+                        <button onClick={() => void fetchData()}>다시 시도</button>
                     </div>
                 </div>
             </Shell>
@@ -498,7 +508,7 @@ export default function NationFinancePage() {
                     amountMin={financeModal.amountMin}
                     amountMax={financeModal.amountMax}
                     extraArgs={financeModal.extraArgs}
-                    onReserved={() => void fetchData()}
+                    onReserved={() => void fetchData(true)}
                 />
             )}
             {toast && (
