@@ -36,8 +36,11 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import CommandModal from '../../../components/CommandModal';
+import { RichTextEditor } from '../../../components/RichTextEditor';
+import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
 import type { BoardResponse, BoardArticle, BoardComment } from '../../../lib/types';
+import { isArticleBodyBlank } from './articleBody';
 
 // 하나의 열린 board CommandModal spec. argType은 항상 null (args는 extraArgs에 실린다).
 type BoardModalSpec = { command: string; label: string; extraArgs?: Record<string, unknown> };
@@ -62,7 +65,9 @@ function CommentRow({ comment }: { comment: BoardComment }) {
             }}
         >
             <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{comment.authorName}</div>
-            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{comment.text}</div>
+            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                <SafeHtml html={comment.text} />
+            </div>
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>
                 {shortDate(comment.date)}
             </div>
@@ -107,12 +112,11 @@ function ArticleCard({
                 </span>
             </div>
 
-            {/* 본문: title (있으면) + content. content_html은 plain-text로 렌더(XSS 방지, 기존 read 관례). */}
             {article.title && (
                 <div style={{ fontWeight: 600, marginBottom: 'var(--space-xs)' }}>{article.title}</div>
             )}
             <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: 'var(--space-sm)' }}>
-                {article.contentHtml}
+                <SafeHtml html={article.contentHtml} />
             </div>
 
             {/* 댓글 */}
@@ -254,7 +258,9 @@ function BoardContent() {
             {/* 글쓰기 (boardArticle) — title + text → extraArgs; isSecret = 현재 방.
                 legacy PageBoard.vue `#newArticle`: 헤더 '새 게시물 작성', 제목/내용 라벨,
                 title maxlength=250, placeholder '제목'/'내용', 등록 버튼. isSecret은 방(prop)에서 결정.
-                제출 가드 = legacy `if (!title && !text) return;` (article 폼은 client trim 없음 — 서버측 trim). */}
+                제출 가드 = legacy의 title/body 공동 empty check. Rich editor는 시각적 빈 본문을 HTML로
+                직렬화하므로, page-local predicate가 tag-only/HTML-space 본문을 empty로 되돌린다.
+                데몬은 계속 최종 trim/권한/결과를 소유한다. */}
             {canWrite && (
                 <GameCard style={{ marginBottom: 'var(--space-md)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
@@ -266,16 +272,15 @@ function BoardContent() {
                             onChange={(e) => setArticleTitle(e.target.value)}
                             maxLength={250}
                         />
-                        <textarea
-                            placeholder="내용"
-                            rows={3}
+                        <RichTextEditor
+                            ariaLabel="내용"
+                            maxTextLength={65_535}
                             value={articleText}
-                            onChange={(e) => setArticleText(e.target.value)}
-                            style={{ resize: 'vertical' }}
+                            onChange={setArticleText}
                         />
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <button
-                                disabled={articleTitle.length === 0 && articleText.length === 0}
+                                disabled={articleTitle.length === 0 && isArticleBodyBlank(articleText)}
                                 onClick={() =>
                                     setModal({
                                         command: 'boardArticle',
