@@ -31,6 +31,7 @@ Verdict: quarantined-with-proof
   command transcript, and results as `채점대기 — NOT CLAIMED`.
 - The approved execution contract keeps A3 as the user concept-selection gate; PHP-golden parity is recorded as a
   separate A2/pre-ship evidence gate and remains `채점대기`.
+- ADR-LITE-031 records this distinction as `proposed` pending human approval; it is not an authorization source.
 - Fresh independent PR review is required on the pushed remediation commit; this artifact is not self-clearance.
 
 ## Required follow-up

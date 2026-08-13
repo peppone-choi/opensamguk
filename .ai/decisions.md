@@ -352,8 +352,8 @@
 ## ADR-LITE-031 OPENSAM-113의 A3 선택 gate와 PHP parity evidence gate는 별개다
 
 - Date: 2026-08-13
-- Status: approved
-- Decision: 2026-07-17 승인 실행 계약을 그대로 따른다. A3는 사용자가 concept 1개를 선택하는 hard gate이며,
+- Status: proposed
+- Decision (pending human approval): 2026-07-17 승인 실행 계약을 그대로 따른다. A3는 사용자가 concept 1개를 선택하는 hard gate이며,
   PHP-golden draw-for-draw parity는 패러티 대상 산출물에 적용되는 A2/출시 전 evidence gate다. 이 lane의
   parity는 실행 전까지 `채점대기`이며 A3를 재정의하지 않는다.
 - Context: PR #398 remediation 중 연구 문서와 ownership ledger가 parity를 A3 blocker로 합쳤지만, 정본 실행
@@ -361,9 +361,11 @@
   agent가 서로 다른 gate를 따르게 된다.
 - Alternatives: parity를 A3 prerequisite로 승격(기각 — 사용자 승인된 계약의 무단 변경), parity 요구를 삭제(기각 —
   프로젝트 패러티 규율 위반), A2/출시 전 별도 gate로 유지(채택).
-- Consequences: concept 선택 전 OPENSAM-114/115 implementation은 계속 금지된다. parity/live/independent visual
-  evidence가 없으면 해당 gate는 `채점대기`이며 A3 선택이나 synthetic evidence가 이를 통과시키지 않는다.
-- Approved by: 기존 승인 실행 계약의 정합성 정리; 사용자 concept 선택·parity replay·implementation 승인은 별도다.
+- Consequences: human approval 전에는 이 ADR을 새 authorization으로 사용할 수 없고 기존 실행 계약이 정본이다.
+  Concept 선택 전 OPENSAM-114/115 implementation은 계속 금지된다. parity/live/independent visual evidence가
+  없으면 해당 gate는 `채점대기`이며 A3 선택이나 synthetic evidence가 이를 통과시키지 않는다.
+- Approved by: NONE — human approval required. Existing execution-contract approval remains canonical; user concept
+  selection, parity replay, and implementation approvals are separate.
 
 ```md
 ## ADR-LITE-NNN 제목
