@@ -111,6 +111,18 @@ class GatewayBoardPostMutationSecurityTest {
     }
 
     @Test
+    fun `rich text containing only an invisible format control is rejected by the API`() {
+        mockMvc.perform(
+            post("/board/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"category":"FREE","title":"title","content":"<p>&#x2060;</p>","contentFormat":"RICH_HTML"}""",
+                )
+                .with(user(CustomUserDetails(author))),
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
     fun `notice creation is restricted to administrators`() {
         val notice = """{"category":"NOTICE","title":"notice","content":"body"}"""
 
