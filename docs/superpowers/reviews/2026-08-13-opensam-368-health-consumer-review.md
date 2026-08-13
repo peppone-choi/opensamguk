@@ -7,19 +7,19 @@ Verdict: cleared
 
 - Reviewer: independent `lazycodex-code-reviewer` subagent, read-only.
 - Current reviewed candidate parent:
-  `972d0638704813485a9643198bd2488607cf6963`.
+  `5786535a174ea757f606d44221ac8cefd202db89`.
 - Base and merge base: `origin/main` at
   `f4ee9135ad6cbce1c6cfb28f7113d7742f478282`.
 - Portable product-tree identity for the current candidate working tree based
   on that parent:
   - `.github/workflows/daemon-health-alert.yml` blob
-    `e6e09279effbd926fbada81f1774d4f37ca2df35`;
+    `f050c54bb7f0aefa493c64e4fee8668840341325`;
   - `docker-compose.production.yml` blob
-    `ca9beff780a1ed0e0674c6fe294edf7f296ad638`;
+    `a526c697f1050cd61f4bc1e86c84f21a91d7c27b`;
   - `tools/ops/daemon_health_alert.sh` blob
     `cac0971bc8737759eefbc3bec3eafc45a247de79`;
   - `tools/ops/daemon_health_alert_contract_test.sh` blob
-    `3421ac003fc249aa3b1052aa110c127ea96a425a`.
+    `af43067f124e707e771c4ea6624bfa29083ea121`.
 
 The first exact-HEAD review found no product/runtime issue but found one HIGH
 evidence-metadata issue: the earlier artifact cited a non-ancestor commit and an
@@ -29,6 +29,12 @@ was still `starting`. The runtime remediation was independently cleared, but
 that review correctly blocked the now-stale blob evidence. This portable report
 therefore records the new workflow/test blobs and the full review progression;
 it does not reuse either prior clearance as current-tree proof.
+
+A subsequent PR review found two more P2s in that candidate: the real managed
+sibling server Compose has no engine healthcheck, and the compatibility
+healthcheck's `5m + 30×10s` failure window was about ten minutes. The current
+candidate removes healthcheck availability from the scheduler grace decision
+and bounds both independent mechanisms to five minutes.
 
 ## Findings checked independently
 
@@ -43,10 +49,11 @@ it does not reuse either prior clearance as current-tree proof.
   loop through that policy.
 - Docker inventory query failure remains fail-closed; a deliberately empty
   inventory is a documented successful no-op.
-- The scheduler defers only exact Docker health `starting`. The production
-  engine healthcheck bounds that state with a five-minute start period.
-  `unhealthy` and stopped/no-healthcheck containers still enter the alerter;
-  inspect failure makes the workflow fail without dispatching invented status.
+- The scheduler defers only a `running` container with a validated Docker
+  `StartedAt` age below 300 seconds. This works for the managed sibling Compose
+  without requiring a healthcheck. Age 300 and older runs the alerter; stopped
+  containers do not receive grace; inspect or timestamp parsing failures make
+  the workflow fail without dispatching invented status.
 - The alert contract proves raw diagnostic and webhook sentinels do not leak to
   payload or output.
 - The already-present deploy recovery checks reject `recoveryReady != true`
@@ -61,7 +68,8 @@ it does not reuse either prior clearance as current-tree proof.
 - Focused GREEN: `bash tools/ops/daemon_health_alert_contract_test.sh` printed
   `PASS: daemon health alert workflow and script contracts` with `RESULT=0`.
   It uses local `docker`/`curl` stubs and an invalid sentinel URL only.
-- Rendered Compose GREEN: `docker compose --env-file /dev/null -f
+- Historical rendered Compose GREEN before the bounded-deadline correction:
+  `docker compose --env-file /dev/null -f
   docker-compose.production.yml config --format json` with explicit inert
   environment values rendered `restart=unless-stopped` and the expected
   10s/5s/30/5m healthcheck probe. No Docker daemon or secret file was used.
@@ -82,10 +90,20 @@ it does not reuse either prior clearance as current-tree proof.
 - Startup-grace RED: before the workflow guard, the new hermetic case exited 1
   with `FAIL: Docker health starting must remain inside startup grace` and had
   dispatched a false `status_unreadable` incident.
-- Startup-grace GREEN: the extracted workflow now returns success with no
+- Historical startup-grace GREEN, later superseded because managed Compose has
+  no engine healthcheck: the extracted workflow returned success with no
   payload only for `starting`. The same contract proves `unhealthy` returns
   nonzero with `recovery_gated`, stopped/no-healthcheck returns nonzero with
   `status_unreadable`, and an inspect failure returns nonzero with no payload.
+- Health-independent grace RED: the managed Compose has no engine healthcheck,
+  while the prior workflow depended on health `starting`; the compatibility
+  healthcheck also allowed roughly ten minutes before `unhealthy`.
+- Health-independent grace GREEN: a recent `running|StartedAt` returns success
+  without payload; exactly 300 seconds and an old running engine both reach the
+  alerter; stopped reaches `status_unreadable`; inspect and invalid timestamp
+  fail without payload. The compatibility Compose contract asserts a four-minute
+  start period, three retries, and 10-second interval, leaving timeout headroom
+  below the five-minute deadline.
 - The reviewer separately confirmed that the contract exercises the
   `spep-game-engine` inventory path, inventory/dispatch/status fail-closed
   branches, secret non-leakage, and Compose healthcheck shape. No secret value

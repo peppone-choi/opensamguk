@@ -56,18 +56,21 @@ prepare_stubs() {
     '    case "$DAEMON_ALERT_TEST_MODE" in' \
     '      inventory_failed) exit 1 ;;' \
     '      inventory_engine) printf "s1-game-engine\\n" ;;' \
-    '      inventory_alpha_engine|inventory_alpha_starting|inventory_alpha_unhealthy|inventory_alpha_stopped|inventory_health_inspect_failed) printf "spep-game-engine\\n" ;;' \
+    '      inventory_alpha_engine|inventory_recent_running|inventory_boundary_running|inventory_old_running|inventory_alpha_stopped|inventory_state_inspect_failed|inventory_started_at_invalid|inventory_started_at_future) printf "spep-game-engine\\n" ;;' \
     '      *) exit 0 ;;' \
     '    esac' \
     '    ;;' \
     '  inspect)' \
     '    [[ "${@: -1}" == spep-game-engine ]] || exit 1' \
     '    case "$DAEMON_ALERT_TEST_MODE" in' \
-    '      inventory_alpha_starting) printf "starting\\n" ;;' \
-    '      inventory_alpha_unhealthy) printf "unhealthy\\n" ;;' \
-    '      inventory_alpha_stopped) printf "none\\n" ;;' \
-    '      inventory_health_inspect_failed) exit 1 ;;' \
-    '      *) printf "healthy\\n" ;;' \
+    '      inventory_recent_running) printf "running|%s\\n" "$(python3 -c '\''from datetime import datetime, timezone; print(datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))'\'')" ;;' \
+    '      inventory_boundary_running) printf "running|%s\\n" "$(python3 -c '\''from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc) - timedelta(seconds=300)).isoformat().replace("+00:00", "Z"))'\'')" ;;' \
+    '      inventory_old_running) printf "running|2020-01-01T00:00:00Z\\n" ;;' \
+    '      inventory_alpha_stopped) printf "exited|2020-01-01T00:00:00Z\\n" ;;' \
+    '      inventory_state_inspect_failed) exit 1 ;;' \
+    '      inventory_started_at_invalid) printf "running|not-a-time\\n" ;;' \
+    '      inventory_started_at_future) printf "running|2999-01-01T00:00:00Z\\n" ;;' \
+    '      *) printf "running|2020-01-01T00:00:00Z\\n" ;;' \
     '    esac' \
     '    ;;' \
     '  exec)' \
@@ -77,10 +80,10 @@ prepare_stubs() {
     '    case "$joined" in' \
     '      *"/admin/turn-daemon/status"*)' \
     '        case "$DAEMON_ALERT_TEST_MODE" in' \
-    '          status_unreadable|inventory_alpha_starting|inventory_alpha_stopped) exit 1 ;;' \
+    '          status_unreadable|inventory_recent_running|inventory_alpha_stopped) exit 1 ;;' \
     '          paused) printf "%s\\n" "{\"paused\":true,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":999,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          paused_clock_down) printf "%s\\n" "{\"paused\":true,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
-    '          recovery_gated|dispatch_fail|inventory_alpha_engine|inventory_alpha_unhealthy) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":false,\"recoveryMode\":\"RELOAD_REQUIRED\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
+    '          recovery_gated|dispatch_fail|inventory_alpha_engine|inventory_boundary_running|inventory_old_running) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":false,\"recoveryMode\":\"RELOAD_REQUIRED\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          stalled) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":52,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          *) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '        esac' \
@@ -89,7 +92,7 @@ prepare_stubs() {
     '        case "$DAEMON_ALERT_TEST_MODE" in' \
     '          health_unreadable) printf "%s\\n" "not-json" ;;' \
     '          paused) printf "%s\\n" "{\"status\":\"OUT_OF_SERVICE\"}" ;;' \
-    '          paused_clock_down|recovery_gated|dispatch_fail|inventory_alpha_engine|inventory_alpha_unhealthy|stalled) printf "%s\\n" "{\"status\":\"DOWN\"}" ;;' \
+    '          paused_clock_down|recovery_gated|dispatch_fail|inventory_alpha_engine|inventory_boundary_running|inventory_old_running|stalled) printf "%s\\n" "{\"status\":\"DOWN\"}" ;;' \
     '          *) printf "%s\\n" "{\"status\":\"UP\"}" ;;' \
     '        esac' \
     '        ;;' \
@@ -250,23 +253,38 @@ assert_alert_workflow_inventory_fails_closed() {
   assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" "$SECRET_SENTINEL"
   assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" "$WEBHOOK_SENTINEL"
 
-  run_alert_workflow_inventory_case inventory_alpha_starting
-  [[ "$WORKFLOW_STATUS" -eq 0 ]] || fail 'Docker health starting must remain inside startup grace'
+  run_alert_workflow_inventory_case inventory_recent_running
+  [[ "$WORKFLOW_STATUS" -eq 0 ]] || fail 'recent running container must remain inside startup grace'
   [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail 'startup grace dispatched a false incident alert'
-  assert_contains "$WORKFLOW_OUTPUT" 'health=starting; daemon alert scan deferred'
+  assert_contains "$WORKFLOW_OUTPUT" 'startupAgeSeconds='
+  assert_contains "$WORKFLOW_OUTPUT" 'daemon alert scan deferred'
 
-  run_alert_workflow_inventory_case inventory_alpha_unhealthy
-  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'unhealthy engine was incorrectly granted startup grace'
+  run_alert_workflow_inventory_case inventory_boundary_running
+  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'five-minute boundary was incorrectly granted startup grace'
+  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"reason":"recovery_gated"'
+
+  run_alert_workflow_inventory_case inventory_old_running
+  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'old running engine was incorrectly granted startup grace'
   assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"reason":"recovery_gated"'
 
   run_alert_workflow_inventory_case inventory_alpha_stopped
   [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'stopped engine was incorrectly granted startup grace'
   assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"reason":"status_unreadable"'
 
-  run_alert_workflow_inventory_case inventory_health_inspect_failed
-  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'unreadable Docker health state must fail closed'
-  [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail 'health inspect failure must not fabricate daemon diagnostics'
-  assert_contains "$WORKFLOW_OUTPUT" 'ERROR: Docker health query failed for spep-game-engine'
+  run_alert_workflow_inventory_case inventory_state_inspect_failed
+  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'unreadable Docker state must fail closed'
+  [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail 'state inspect failure must not fabricate daemon diagnostics'
+  assert_contains "$WORKFLOW_OUTPUT" 'ERROR: Docker state query failed for spep-game-engine'
+
+  run_alert_workflow_inventory_case inventory_started_at_invalid
+  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'invalid Docker StartedAt must fail closed'
+  [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail 'invalid StartedAt must not fabricate daemon diagnostics'
+  assert_contains "$WORKFLOW_OUTPUT" 'ERROR: invalid Docker startup state for spep-game-engine'
+
+  run_alert_workflow_inventory_case inventory_started_at_future
+  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'future Docker StartedAt must fail closed'
+  [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail 'future StartedAt must not fabricate daemon diagnostics'
+  assert_contains "$WORKFLOW_OUTPUT" 'ERROR: invalid Docker startup state for spep-game-engine'
 }
 
 assert_production_compose_healthcheck_contract() {
@@ -279,8 +297,8 @@ assert_production_compose_healthcheck_contract() {
     abort "production game-engine healthcheck probe mismatch" unless healthcheck.fetch("test") == expected_probe
     abort "production game-engine healthcheck interval mismatch" unless healthcheck.fetch("interval") == "10s"
     abort "production game-engine healthcheck timeout mismatch" unless healthcheck.fetch("timeout") == "5s"
-    abort "production game-engine healthcheck retries mismatch" unless healthcheck.fetch("retries") == 30
-    abort "production game-engine healthcheck start period must cover catch-up" unless healthcheck.fetch("start_period") == "5m"
+    abort "production game-engine healthcheck retries mismatch" unless healthcheck.fetch("retries") == 3
+    abort "production game-engine startup deadline must remain below five minutes" unless healthcheck.fetch("start_period") == "4m"
     abort "production game-engine restart policy changed" unless engine.fetch("restart") == "unless-stopped"
   ' "$PRODUCTION_COMPOSE"
 }

@@ -92,8 +92,8 @@ services:
       test: ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health"]
       interval: 10s
       timeout: 5s
-      retries: 30
-      start_period: 5m
+      retries: 3
+      start_period: 4m
     networks:
       - opensamguk
     deploy:

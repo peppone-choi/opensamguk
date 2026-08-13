@@ -36,11 +36,14 @@ outside this task.
    report a skipped successful verification.
 7. All behavioral evidence is hermetic: local command stubs and Compose render
    only. No live Docker engine, production runner, or webhook is invoked.
-8. The scheduled consumer defers exactly the Docker health `starting` state,
-   which is bounded by the engine healthcheck's five-minute start period. An
-   `unhealthy`, stopped/no-healthcheck, or unreadable inspect result never gains
-   startup grace: the first two continue through the alert path and an inspect
-   failure fails the workflow closed without fabricating daemon diagnostics.
+8. The scheduled consumer's promotion grace is independent of Docker
+   healthcheck availability: only a `running` container whose validated
+   `StartedAt` age is less than 300 seconds is deferred. The 300-second boundary,
+   older running containers, stopped containers, inspect failure, malformed
+   timestamp, or future timestamp never gain grace. The compatibility Compose
+   healthcheck independently reaches failure before five minutes through a
+   four-minute start period plus three 10-second failures, with room for probe
+   timeouts.
 
 ## Baseline and one hypothesis
 
