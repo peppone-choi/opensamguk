@@ -1,6 +1,6 @@
 # OPENSAM-113 UI 진단과 concept 비교
 
-- **status:** `READY_FOR_A3_SELECTION`
+- **status:** `EVIDENCE_PASS_WITH_PHP_PARITY_PENDING`
 - **lane:** `lane-113-ui-concepts`
 - **scope:** gateway login/lobby, game `GameChrome`/auction의 진단과 A3 선택용 시안만
 - **implementation:** 없음. 제품 CSS/TSX/asset/backend/gating은 변경하지 않았다.
@@ -14,7 +14,8 @@
 - `[사실]`은 현재 source, component-test fixture, 실행한 명령, 실제 렌더된 comparison board, 별도 mocked browser baseline에서 직접 확인했다.
 - `[추론]`은 사실에서 도출한 UX 판단이다.
 - `[UNKNOWN]`은 live 인증/서버 응답 등 이번 lane에서 직접 확인하지 못한 값이다.
-- `채점대기`는 통과가 아니다. mocked API baseline은 확보했지만 live 인증/CDN을 포함한 A2 검토는 열려 있다.
+- `채점대기`는 통과가 아니다. 이번 addendum의 rendered/synthetic observations are scoped `EVIDENCE PASS` only;
+  PHP-golden draw-for-draw parity, live 인증/CDN, and the corresponding phase gate remain `채점대기`.
 
 **결론:** `[추론]` 현재 화면의 가장 큰 문제는 단순히 "어두운 색"이 아니라, 동일한 dark token 위에서 거의 모든 정보가 같은 크기·같은 표면·같은 경계 강도로 경쟁하고, 메인과 auction의 chrome이 갈라지며, desktop의 고밀도 구조가 mobile에서 축소만 된다는 점이다. 세 concept는 실제 라벨과 상태를 고정한 채 palette, typography, surface/hierarchy, spacing/density를 서로 다르게 바꾼다.
 
@@ -334,9 +335,10 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 
 | 검증 | 상태 | 증거 |
 |---|---|---|
-| comparison HTML browser render | `PASS` | §11 DOM counts, zero overflow, zero console error, desktop/mobile PNG |
+| comparison HTML browser render | `EVIDENCE PASS` | §11 DOM counts, zero overflow, zero console error, desktop/mobile PNG; not a PHP-golden parity pass |
 | mocked gateway/game browser baseline | `4 PASS / 4 FAIL — DOWNSTREAM INPUT` | §3.4 exact report SHA; gateway 4면 PASS, GameChrome 2면 internal clip FAIL, auction 2면 header layout FAIL |
 | live auth/CDN gateway/game browser baseline | `채점대기 — SEPARATE A2 LANE` | mocked result와 comparison board 검증으로 live baseline을 주장하지 않음 |
+| PHP-golden draw-for-draw UI/parity replay | `채점대기 — NOT RUN` | this docs-only lane has no PHP capture/replay artifact; no parity or phase-gate pass is claimed |
 | tracked doc whitespace | `PASS` | 비어 있지 않음, 마지막 LF 존재, trailing whitespace 0개를 Python으로 확인 |
 | `git diff --check -- <this doc>` | `NO COVERAGE` | 문서가 untracked라 exit 0은 본문 검증이 아니다. PASS 근거로 사용하지 않고 Python 전체본문 검사로 대체 |
 | comparison HTML static validation | `PASS` | 44,714 bytes, `HTMLParser` parse, invented empty copy 0, concept data 3개, gateway/game render template 2개, external URL 0. 렌더 후 exact DOM counts는 §11 Chrome 결과 |
@@ -398,10 +400,12 @@ Edge 16.3초, middleware 6초, ready 104.4초, `/game` 81.5초/HTTP 200으로 wa
 
 ### 14.4 A2/A3 판정
 
-- **current-app A2:** `PASS WITH PRODUCT FINDINGS` — 실제 current Next surface 4면의 완전한 desktop/mobile evidence와
-  defect 위치가 확보됐다. 비밀 없는 fixture이므로 live account/backend 수치 또는 CDN asset 성공은 주장하지 않는다.
+- **current-app A2:** `EVIDENCE PASS WITH PRODUCT FINDINGS / PHP-GOLDEN PARITY 채점대기` — 실제 current Next surface
+  4면의 완전한 desktop/mobile evidence와 defect 위치가 확보됐다. 이는 synthetic fixture의 evidence 판정일 뿐이며,
+  PHP draw-for-draw replay·live account/backend 수치·CDN asset 성공 또는 phase-gate 통과를 주장하지 않는다.
 - **concept comparison:** 세 concept, concept별 정확히 2 mockup, 동일 20-action gate와 동일 empty/error/disabled semantics를 유지한다.
-- **A3:** `BLOCKED BY USER SELECTION` — A/B/C와 허용 변경 범위를 사용자가 선택해야 한다.
+- **A3:** `BLOCKED BY USER SELECTION + PHP-GOLDEN PARITY` — A/B/C와 허용 변경 범위를 사용자가 선택해야 하며,
+  parity/live evidence가 `채점대기`인 동안 A3/phase-gate 완료를 주장하지 않는다.
 - 이 문서/PR은 진단과 선택지만 제공한다. product implementation, OPENSAM-114/115, merge, deploy는 수행하지 않는다.
 
 ### 14.5 fresh concept-board evidence
@@ -432,5 +436,7 @@ GameChrome full-page capture의 파일명에 적힌 `390×844`는 viewport
 ### 14.6 final independent visual gate
 
 2026-08-13 별도 reviewer가 current 4면과 fresh proposal 2면을 원본 크기로 다시 열고 hash·freshness·desktop
-header·A/B/C coverage·CJK wrapping·mobile disabled reason·font/target metric·console/page error를 재검증했다. 최종
-판정은 **`PASS / APPROVE`**, confidence `HIGH`, blocker `none`이다. 이는 A2 evidence의 합격이며 A3 선택을 대신하지 않는다.
+header·A/B/C coverage·CJK wrapping·mobile disabled reason·font/target metric·console/page error를 재검증했다. 판정은
+**`EVIDENCE PASS / APPROVE FOR VISUAL ARTIFACT ONLY`**, confidence `HIGH`, visual-scope blocker `none`이다. PHP-golden
+draw-for-draw parity와 live phase-gate는 `채점대기`이며, 이 visual evidence clearance는 A3 선택·parity·merge 승인을
+대신하지 않는다.
