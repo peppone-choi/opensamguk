@@ -427,6 +427,45 @@ describe('NationFinancePage rich-text messages', () => {
         expect(screen.getByRole('textbox', { name: '국가 방침' })).not.toHaveTextContent('이전 국가 방침 초안');
     });
 
+    it('keeps stale nation controls blocked when the new nation refresh fails', async () => {
+        mocks.frontInfo
+            .mockResolvedValueOnce({ general: { generalId: 10, nationId: 1, permission: 4 } })
+            .mockResolvedValueOnce({ general: { generalId: 10, nationId: 2, permission: 4 } })
+            .mockResolvedValueOnce({ general: { generalId: 10, nationId: 2, permission: 4 } });
+        mocks.nationFinance
+            .mockResolvedValueOnce(financeResponse)
+            .mockRejectedValueOnce(new Error('new nation offline'))
+            .mockResolvedValueOnce({
+                ...financeResponse,
+                nationId: 2,
+                nationMsg: '<p>새 국가 방침</p>',
+                scoutMsg: '<p>새 국가 권유문</p>',
+            });
+        render(<NationFinancePage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '국가방침 수정' }));
+        fireEvent.click(screen.getByRole('button', { name: '임관 권유문 수정' }));
+        const editors = screen.getAllByRole('textbox');
+        editors[0].innerHTML = '<p>이전 국가 방침 초안</p>';
+        fireEvent.input(editors[0]);
+        editors[1].innerHTML = '<p>이전 국가 권유문 초안</p>';
+        fireEvent.input(editors[1]);
+
+        await act(async () => emitTurnCompleted());
+
+        await waitFor(() => expect(screen.queryAllByRole('textbox')).toHaveLength(0));
+        expect(screen.queryByRole('button', { name: '국가방침 수정' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: '임관 권유문 수정' })).not.toBeInTheDocument();
+        expect(screen.queryByText('한😀')).not.toBeInTheDocument();
+        expect(screen.queryByText('천하')).not.toBeInTheDocument();
+
+        await act(async () => emitTurnCompleted());
+
+        fireEvent.click(await screen.findByRole('button', { name: '국가방침 수정' }));
+        expect(screen.getByRole('textbox', { name: '국가 방침' })).toHaveTextContent('새 국가 방침');
+        expect(screen.getByRole('textbox', { name: '국가 방침' })).not.toHaveTextContent('이전 국가 방침 초안');
+    });
+
     it('keeps an older successful background refresh when a queued newer refresh fails', async () => {
         let resolveOlderRefresh: (value: typeof financeResponse) => void = () => undefined;
         mocks.nationFinance

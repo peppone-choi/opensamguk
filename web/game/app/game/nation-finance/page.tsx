@@ -115,6 +115,11 @@ export default function NationFinancePage() {
                     setEditingScout(false);
                     setNoticeDraft('');
                     setScoutDraft('');
+                    setGeneralId(fi.general.generalId);
+                    setNationId(nid);
+                    setPermission(0);
+                    setNoNation(!nid);
+                    setData(null);
                 }
                 committedNationId.current = nid;
                 // 재야(무소속): nationId 0 → 내무부 없음.
