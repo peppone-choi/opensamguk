@@ -358,6 +358,25 @@ describe('NationFinancePage rich-text messages', () => {
         expect(screen.queryByText('내무부 정보를 불러올 수 없습니다.')).not.toBeInTheDocument();
     });
 
+    it('does not let a turn refresh supersede a pending foreground retry', async () => {
+        let resolveRetry: (value: typeof financeResponse) => void = () => undefined;
+        mocks.nationFinance
+            .mockRejectedValueOnce(new Error('initial offline'))
+            .mockImplementationOnce(() => new Promise(resolve => { resolveRetry = resolve; }))
+            .mockRejectedValueOnce(new Error('event offline'));
+        render(<NationFinancePage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '다시 시도' }));
+        await waitFor(() => expect(mocks.nationFinance).toHaveBeenCalledTimes(2));
+        act(() => { emitTurnCompleted(); });
+        expect(mocks.nationFinance).toHaveBeenCalledTimes(2);
+
+        await act(async () => resolveRetry(financeResponse));
+
+        expect(await screen.findByRole('button', { name: '임관 권유문 수정' })).toBeInTheDocument();
+        expect(screen.queryByText('내무부 정보를 불러올 수 없습니다.')).not.toBeInTheDocument();
+    });
+
     it('closes active editors when refreshed permissions become read-only', async () => {
         mocks.nationFinance
             .mockResolvedValueOnce(financeResponse)

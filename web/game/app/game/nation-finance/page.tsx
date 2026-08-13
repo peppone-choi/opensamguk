@@ -81,10 +81,11 @@ export default function NationFinancePage() {
     const [editingScout, setEditingScout] = useState(false);
     const [savingMessages, setSavingMessages] = useState({ notice: false, scout: false });
     const latestFetchId = useRef(0);
-    const initialFetchSettled = useRef(false);
+    const foregroundFetchPending = useRef(false);
 
     const fetchData = useCallback(async (background = false) => {
-        if (background && !initialFetchSettled.current) return;
+        if (background && foregroundFetchPending.current) return;
+        if (!background) foregroundFetchPending.current = true;
         const fetchId = latestFetchId.current + 1;
         latestFetchId.current = fetchId;
         if (!background) {
@@ -120,7 +121,7 @@ export default function NationFinancePage() {
             }
         } finally {
             if (fetchId === latestFetchId.current) {
-                if (!background) initialFetchSettled.current = true;
+                if (!background) foregroundFetchPending.current = false;
                 setLoading(false);
             }
         }
