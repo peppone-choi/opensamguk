@@ -397,7 +397,61 @@ describe('NationFinancePage rich-text messages', () => {
         expect(screen.queryAllByRole('textbox')).toHaveLength(0);
     });
 
-    it('discards an older message refresh that resolves after the latest refresh', async () => {
+    it('discards both drafts when a refresh moves the general to another editable nation', async () => {
+        mocks.frontInfo
+            .mockResolvedValueOnce({ general: { generalId: 10, nationId: 1, permission: 4 } })
+            .mockResolvedValueOnce({ general: { generalId: 10, nationId: 2, permission: 4 } });
+        mocks.nationFinance
+            .mockResolvedValueOnce(financeResponse)
+            .mockResolvedValueOnce({
+                ...financeResponse,
+                nationId: 2,
+                nationMsg: '<p>새 국가 방침</p>',
+                scoutMsg: '<p>새 국가 권유문</p>',
+            });
+        render(<NationFinancePage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '국가방침 수정' }));
+        fireEvent.click(screen.getByRole('button', { name: '임관 권유문 수정' }));
+        const editors = screen.getAllByRole('textbox');
+        editors[0].innerHTML = '<p>이전 국가 방침 초안</p>';
+        fireEvent.input(editors[0]);
+        editors[1].innerHTML = '<p>이전 국가 권유문 초안</p>';
+        fireEvent.input(editors[1]);
+
+        await act(async () => emitTurnCompleted());
+
+        await waitFor(() => expect(screen.queryAllByRole('textbox')).toHaveLength(0));
+        fireEvent.click(screen.getByRole('button', { name: '국가방침 수정' }));
+        expect(screen.getByRole('textbox', { name: '국가 방침' })).toHaveTextContent('새 국가 방침');
+        expect(screen.getByRole('textbox', { name: '국가 방침' })).not.toHaveTextContent('이전 국가 방침 초안');
+    });
+
+    it('keeps an older successful background refresh when a queued newer refresh fails', async () => {
+        let resolveOlderRefresh: (value: typeof financeResponse) => void = () => undefined;
+        mocks.nationFinance
+            .mockResolvedValueOnce(financeResponse)
+            .mockImplementationOnce(() => new Promise(resolve => { resolveOlderRefresh = resolve; }))
+            .mockRejectedValueOnce(new Error('newer offline'));
+        render(<NationFinancePage />);
+
+        await screen.findByRole('button', { name: '국가방침 수정' });
+        act(() => { emitTurnCompleted(); });
+        await waitFor(() => expect(mocks.nationFinance).toHaveBeenCalledTimes(2));
+        act(() => { emitTurnCompleted(); });
+        expect(mocks.nationFinance).toHaveBeenCalledTimes(2);
+
+        await act(async () => resolveOlderRefresh({
+            ...financeResponse,
+            nationMsg: '<p>성공한 갱신</p>',
+        }));
+
+        await waitFor(() => expect(mocks.nationFinance).toHaveBeenCalledTimes(3));
+        expect(await screen.findByText('성공한 갱신')).toBeInTheDocument();
+        expect(screen.queryByText('내무부 정보를 불러올 수 없습니다.')).not.toBeInTheDocument();
+    });
+
+    it('applies the latest queued message refresh after serializing overlap', async () => {
         let resolveOlderRefresh: (value: typeof financeResponse) => void = () => undefined;
         let resolveLatestRefresh: (value: typeof financeResponse) => void = () => undefined;
         let resolveScoutSave: (outcome: { status: 'applied'; result: Record<string, never> }) => void = () => undefined;
@@ -426,6 +480,14 @@ describe('NationFinancePage rich-text messages', () => {
         await act(async () => {
             resolveScoutSave({ status: 'applied', result: {} });
         });
+        expect(mocks.nationFinance).toHaveBeenCalledTimes(2);
+        await act(async () => {
+            resolveOlderRefresh({
+                ...financeResponse,
+                nationMsg: '<p>이전 국가 방침</p>',
+                scoutMsg: '<p>이전 임관 권유문</p>',
+            });
+        });
         await waitFor(() => expect(mocks.nationFinance).toHaveBeenCalledTimes(3));
         await act(async () => {
             resolveLatestRefresh({
@@ -436,19 +498,6 @@ describe('NationFinancePage rich-text messages', () => {
         });
         expect(await screen.findByText('최신 국가 방침')).toBeInTheDocument();
         expect(screen.getByText('최신 임관 권유문')).toBeInTheDocument();
-
-        await act(async () => {
-            resolveOlderRefresh({
-                ...financeResponse,
-                nationMsg: '<p>이전 국가 방침</p>',
-                scoutMsg: '<p>이전 임관 권유문</p>',
-            });
-        });
-
-        await waitFor(() => {
-            expect(screen.getByText('최신 국가 방침')).toBeInTheDocument();
-            expect(screen.getByText('최신 임관 권유문')).toBeInTheDocument();
-        });
         expect(screen.queryByText('이전 국가 방침')).not.toBeInTheDocument();
         expect(screen.queryByText('이전 임관 권유문')).not.toBeInTheDocument();
     });

@@ -82,48 +82,72 @@ export default function NationFinancePage() {
     const [savingMessages, setSavingMessages] = useState({ notice: false, scout: false });
     const latestFetchId = useRef(0);
     const foregroundFetchPending = useRef(false);
+    const backgroundFetchPending = useRef(false);
+    const backgroundFetchQueued = useRef(false);
+    const committedNationId = useRef<number | undefined>(undefined);
 
     const fetchData = useCallback(async (background = false) => {
         if (background && foregroundFetchPending.current) return;
-        if (!background) foregroundFetchPending.current = true;
-        const fetchId = latestFetchId.current + 1;
-        latestFetchId.current = fetchId;
-        if (!background) {
+        if (background && backgroundFetchPending.current) {
+            backgroundFetchQueued.current = true;
+            return;
+        }
+        if (background) {
+            backgroundFetchPending.current = true;
+        } else {
+            foregroundFetchPending.current = true;
+            backgroundFetchQueued.current = false;
             setLoading(true);
             setError('');
             setNoNation(false);
         }
-        try {
-            const fi: FrontInfoResponse = await api.frontInfo();
-            if (fetchId !== latestFetchId.current) return;
-            const nid = fi.general.nationId;
-            // 재야(무소속): nationId 0 → 내무부 없음.
-            if (!nid) {
+
+        do {
+            backgroundFetchQueued.current = false;
+            const fetchId = latestFetchId.current + 1;
+            latestFetchId.current = fetchId;
+            try {
+                const fi: FrontInfoResponse = await api.frontInfo();
+                if (fetchId !== latestFetchId.current) continue;
+                const nid = fi.general.nationId;
+                if (committedNationId.current !== undefined && committedNationId.current !== nid) {
+                    setEditingNotice(false);
+                    setEditingScout(false);
+                    setNoticeDraft('');
+                    setScoutDraft('');
+                }
+                committedNationId.current = nid;
+                // 재야(무소속): nationId 0 → 내무부 없음.
+                if (!nid) {
+                    setGeneralId(fi.general.generalId);
+                    setNationId(nid);
+                    setPermission(fi.general.permission ?? 0);
+                    setError('');
+                    setNoNation(true);
+                    setData(null);
+                    continue;
+                }
+                const res = await api.nationFinance(nid);
+                if (fetchId !== latestFetchId.current) continue;
                 setGeneralId(fi.general.generalId);
                 setNationId(nid);
                 setPermission(fi.general.permission ?? 0);
                 setError('');
-                setNoNation(true);
-                setData(null);
-                return;
+                setNoNation(false);
+                setData(res);
+            } catch {
+                if (!background && fetchId === latestFetchId.current) {
+                    setError('내무부 정보를 불러올 수 없습니다.');
+                }
+            } finally {
+                if (fetchId === latestFetchId.current) setLoading(false);
             }
-            const res = await api.nationFinance(nid);
-            if (fetchId !== latestFetchId.current) return;
-            setGeneralId(fi.general.generalId);
-            setNationId(nid);
-            setPermission(fi.general.permission ?? 0);
-            setError('');
-            setNoNation(false);
-            setData(res);
-        } catch {
-            if (!background && fetchId === latestFetchId.current) {
-                setError('내무부 정보를 불러올 수 없습니다.');
-            }
-        } finally {
-            if (fetchId === latestFetchId.current) {
-                if (!background) foregroundFetchPending.current = false;
-                setLoading(false);
-            }
+        } while (background && backgroundFetchQueued.current && !foregroundFetchPending.current);
+
+        if (background) {
+            backgroundFetchPending.current = false;
+        } else {
+            foregroundFetchPending.current = false;
         }
     }, []);
 
