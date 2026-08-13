@@ -52,6 +52,13 @@ class GatewayBoardController(
         @AuthenticationPrincipal principal: CustomUserDetails,
     ): GatewayBoardPostResponse = boardService.createPost(request, principal)
 
+    @PatchMapping("/posts/{postId}")
+    fun updatePost(
+        @PathVariable postId: Long,
+        @Valid @RequestBody request: UpdateGatewayBoardPostRequest,
+        @AuthenticationPrincipal principal: CustomUserDetails,
+    ): GatewayBoardPostResponse = boardService.updatePost(postId, request, principal)
+
     @PostMapping("/posts/{postId}/comments")
     @ResponseStatus(HttpStatus.CREATED)
     fun createComment(

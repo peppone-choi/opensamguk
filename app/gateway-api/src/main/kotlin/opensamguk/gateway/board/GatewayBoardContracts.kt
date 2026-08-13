@@ -22,6 +22,17 @@ data class CreateGatewayBoardPostRequest(
     val content: String,
 )
 
+data class UpdateGatewayBoardPostRequest(
+    @field:NotNull
+    val category: GatewayBoardCategory?,
+    @field:NotBlank
+    @field:Size(max = 120)
+    val title: String,
+    @field:NotBlank
+    @field:Size(max = 10_000)
+    val content: String,
+)
+
 data class CreateGatewayBoardCommentRequest(
     @field:NotBlank
     @field:Size(max = 2_000)
