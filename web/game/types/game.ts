@@ -854,8 +854,8 @@ export interface DiplomacyConflictResponse {
 
 // ── page 3 · 내무부 (GET /api/nation/{id}/finance) ────────────────────────────
 // Mirrors v_nationStratFinan.php. Budget table labels rendered verbatim.
-// editable = (officerLevel>=5 || permission==4). nationMsg/scoutMsg are plaintext
-// in F4 (TipTap rich editor deferred — spec OQ-3).
+// editable = (officerLevel>=5 || permission==4). nationMsg/scoutMsg contain the
+// sanitized rich HTML persisted by the legacy-compatible setter path.
 export interface NationFinancePolicy {
   rate: number; // 세율 (5-30)
   bill: number; // 지급률
@@ -901,8 +901,8 @@ export interface NationFinanceResponse {
   officerLevel: number;
   year: number;
   month: number;
-  nationMsg: string; // 국가 공지 (plaintext)
-  scoutMsg: string; // 등용 메시지 (plaintext)
+  nationMsg: string; // 국가 공지 (sanitized rich HTML)
+  scoutMsg: string; // 등용 메시지 (sanitized rich HTML)
   gold: number;
   rice: number;
   income: NationFinanceIncome;

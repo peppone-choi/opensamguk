@@ -6,17 +6,15 @@ import GameCard from '../../../components/GameCard';
 import GameTable from '../../../components/GameTable';
 import StatusBadge from '../../../components/StatusBadge';
 import CommandModal from '../../../components/CommandModal';
+import { RichTextEditor, countHtmlCodePoints } from '../../../components/RichTextEditor';
+import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
+import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { formatNumber } from '../../../lib/format';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type { NationFinanceResponse } from '../../../types/game';
 import type { CommandArgType } from '../../../types/game';
 
-// ── F4 Wave C2 (slice A) — 내무부 finance-setter launch descriptor ────────────────
-// Each "설정" button pins the CommandModal to one intake command code (matches the C1
-// betting/inherit pattern). The amount setters (세율/지급률/기밀) use the `amount` sub-form
-// (min/max from the PHP Validator range); the boolean toggles (전쟁/임관 금지) + the
-// notice/scout-msg edits pass their value via extraArgs (no-arg confirm).
 interface FinanceModalSpec {
     command: string;
     label: string;
@@ -26,11 +24,12 @@ interface FinanceModalSpec {
     extraArgs?: Record<string, unknown>;
 }
 
-// 내무부 (Nation strategy / finance) — READ-ONLY this wave.
+const NOTICE_MAX_LENGTH = 16384;
+const SCOUT_MAX_LENGTH = 1000;
+
 // Mirrors legacy hwe/ts/PageNationStratFinan.vue:
 //  - 예산&정책 budget tables (자금 예산 / 군량 예산) with verbatim labels + computed rows
 //  - 정책(세율/지급률/기밀 권한/전쟁 금지 설정) read-only display
-//  - 국가 방침 & 임관 권유 메시지 (nationMsg / scoutMsg) plaintext (TipTap deferred — spec OQ-3)
 // Identity (nationId) resolved from api.frontInfo().general.nationId, then api.nationFinance(id).
 // EMPTY-SAFE: a no-nation viewer (재야, nationId 0) renders an INFO empty state, never crashes.
 
@@ -75,6 +74,9 @@ export default function NationFinancePage() {
     // draft text for the notice / scout-message edits (passed via extraArgs.msg).
     const [noticeDraft, setNoticeDraft] = useState('');
     const [scoutDraft, setScoutDraft] = useState('');
+    const [editingNotice, setEditingNotice] = useState(false);
+    const [editingScout, setEditingScout] = useState(false);
+    const [savingMessages, setSavingMessages] = useState({ notice: false, scout: false });
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -94,8 +96,6 @@ export default function NationFinancePage() {
             }
             const res = await api.nationFinance(nid);
             setData(res);
-            setNoticeDraft(res.nationMsg ?? '');
-            setScoutDraft(res.scoutMsg ?? '');
         } catch {
             setError('내무부 정보를 불러올 수 없습니다.');
         } finally {
@@ -113,6 +113,42 @@ export default function NationFinancePage() {
         es.onerror = () => es.close();
         return () => es.close();
     }, [fetchData]);
+
+    async function saveMessage(kind: 'notice' | 'scout') {
+        if (generalId == null) {
+            setToast('장수 정보를 불러올 수 없습니다.');
+            return;
+        }
+
+        const command = kind === 'notice' ? 'setNotice' : 'setScoutMsg';
+        const msg = kind === 'notice' ? noticeDraft : scoutDraft;
+        const maxLength = kind === 'notice' ? NOTICE_MAX_LENGTH : SCOUT_MAX_LENGTH;
+        if (countHtmlCodePoints(msg) > maxLength) {
+            setToast(`${maxLength.toLocaleString()}자 이하로 입력해주세요.`);
+            return;
+        }
+        setSavingMessages(current => ({ ...current, [kind]: true }));
+        try {
+            const outcome = await submitCommandAndAwaitResult(() => api.command(command, { msg }, generalId));
+            if (outcome.status !== 'applied') {
+                setToast(outcome.reason ?? '명령을 실행할 수 없습니다.');
+                return;
+            }
+
+            setData(current => current === null ? current : {
+                ...current,
+                ...(kind === 'notice' ? { nationMsg: msg } : { scoutMsg: msg }),
+            });
+            if (kind === 'notice') setEditingNotice(false);
+            else setEditingScout(false);
+            setToast(kind === 'notice' ? '국가 방침을 저장했습니다.' : '임관 권유문을 저장했습니다.');
+            void fetchData();
+        } catch (cause) {
+            setToast(cause instanceof Error ? cause.message : '명령을 실행할 수 없습니다.');
+        } finally {
+            setSavingMessages(current => ({ ...current, [kind]: false }));
+        }
+    }
 
     if (loading) {
         return (
@@ -176,6 +212,8 @@ export default function NationFinancePage() {
     // editable = (officerLevel>=5 || permission==4) (game-api DTO에서 서버측 산정).
     // 권한이 없으면 설정 버튼 자체를 렌더하지 않는다(레거시와 동일하게 read-only 표시).
     const editable = data.editable;
+    const noticeTooLong = countHtmlCodePoints(noticeDraft) > NOTICE_MAX_LENGTH;
+    const scoutTooLong = countHtmlCodePoints(scoutDraft) > SCOUT_MAX_LENGTH;
 
     // Computed budget figures — byte-for-byte the legacy Vue computed() chain
     // (incomeGoldCity = income.gold.city * rate / 100, etc).
@@ -286,25 +324,33 @@ export default function NationFinancePage() {
                     </>
                 )}
 
-                {/* 국가 방침 & 임관 권유 메시지 (plaintext display; TipTap rich editor deferred per spec OQ-3) */}
                 <h2>국가 방침 &amp; 임관 권유 메시지</h2>
 
                 <GameCard>
                     <div className="card-header">
                         <h2>국가 방침</h2>
                     </div>
-                    <textarea
-                        value={noticeDraft}
-                        onChange={(e) => setNoticeDraft(e.target.value)}
-                        maxLength={16384}
-                        placeholder="등록된 국가 방침이 없습니다."
-                        readOnly={!editable}
-                        style={{ width: '100%', minHeight: 80, whiteSpace: 'pre-wrap' }}
-                    />
-                    {/* 레거시 v-if="editable" — 권한자만 방침 수정 버튼 노출 */}
-                    {editable && (
-                        <button onClick={() => setFinanceModal({ command: 'setNotice', label: '국가 방침 설정', argType: null, extraArgs: { msg: noticeDraft } })}>방침 설정</button>
+                    {editingNotice ? (
+                        <RichTextEditor
+                            ariaLabel="국가 방침"
+                            disabled={savingMessages.notice}
+                            maxTextLength={NOTICE_MAX_LENGTH}
+                            onChange={setNoticeDraft}
+                            value={noticeDraft}
+                        />
+                    ) : (
+                        <div style={{ minHeight: 80, whiteSpace: 'pre-wrap' }}>
+                            <SafeHtml html={data.nationMsg || '등록된 국가 방침이 없습니다.'} />
+                        </div>
                     )}
+                    {editable && (editingNotice ? (
+                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                            <button disabled={savingMessages.notice || noticeTooLong} onClick={() => void saveMessage('notice')}>저장</button>
+                            <button disabled={savingMessages.notice} onClick={() => { setNoticeDraft(data.nationMsg ?? ''); setEditingNotice(false); }}>취소</button>
+                        </div>
+                    ) : (
+                        <button onClick={() => { setNoticeDraft(data.nationMsg ?? ''); setEditingNotice(true); }}>국가방침 수정</button>
+                    ))}
                 </GameCard>
 
                 <GameCard>
@@ -312,18 +358,27 @@ export default function NationFinancePage() {
                         <h2>임관 권유</h2>
                     </div>
                     <p className="text-muted" style={{ marginTop: 0 }}>870px x 200px를 넘어서는 내용은 표시되지 않습니다.</p>
-                    <textarea
-                        value={scoutDraft}
-                        onChange={(e) => setScoutDraft(e.target.value)}
-                        maxLength={1000}
-                        placeholder="등록된 임관 권유문이 없습니다."
-                        readOnly={!editable}
-                        style={{ width: '100%', minHeight: 80, whiteSpace: 'pre-wrap' }}
-                    />
-                    {/* 레거시 v-if="editable" — 권한자만 권유문 수정 버튼 노출 */}
-                    {editable && (
-                        <button onClick={() => setFinanceModal({ command: 'setScoutMsg', label: '임관 권유문 설정', argType: null, extraArgs: { msg: scoutDraft } })}>권유문 설정</button>
+                    {editingScout ? (
+                        <RichTextEditor
+                            ariaLabel="임관 권유문"
+                            disabled={savingMessages.scout}
+                            maxTextLength={SCOUT_MAX_LENGTH}
+                            onChange={setScoutDraft}
+                            value={scoutDraft}
+                        />
+                    ) : (
+                        <div style={{ minHeight: 80, whiteSpace: 'pre-wrap' }}>
+                            <SafeHtml html={data.scoutMsg || '등록된 임관 권유문이 없습니다.'} />
+                        </div>
                     )}
+                    {editable && (editingScout ? (
+                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                            <button disabled={savingMessages.scout || scoutTooLong} onClick={() => void saveMessage('scout')}>저장</button>
+                            <button disabled={savingMessages.scout} onClick={() => { setScoutDraft(data.scoutMsg ?? ''); setEditingScout(false); }}>취소</button>
+                        </div>
+                    ) : (
+                        <button onClick={() => { setScoutDraft(data.scoutMsg ?? ''); setEditingScout(true); }}>임관 권유문 수정</button>
+                    ))}
                 </GameCard>
 
                 {/* 예산&정책 */}
@@ -422,9 +477,6 @@ export default function NationFinancePage() {
                 </GameCard>
             </div>
 
-            {/* F4 C2 — finance-setter CommandModal (pinnedCommand + extraArgs, C1 pattern).
-                The notice/scout edits (string `msg`) carry their textarea draft via extraArgs.msg and
-                open as a no-arg confirm; the amount setters use the modal's amount sub-form. */}
             {financeModal && generalId != null && (
                 <CommandModal
                     onClose={() => setFinanceModal(null)}
@@ -437,7 +489,7 @@ export default function NationFinancePage() {
                     amountMin={financeModal.amountMin}
                     amountMax={financeModal.amountMax}
                     extraArgs={financeModal.extraArgs}
-                    onReserved={() => fetchData()}
+                    onReserved={() => void fetchData()}
                 />
             )}
             {toast && (

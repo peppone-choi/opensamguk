@@ -159,6 +159,29 @@ describe('JoinPage route guard', () => {
         alertMock.mockRestore();
     });
 
+    it('공개 map preview의 임관 권유문은 안전한 서식만 렌더한다', async () => {
+        frontInfoState.hasGeneral = false;
+        apiMocks.mapPreview.mockResolvedValue({
+            nations: [
+                {
+                    id: 1,
+                    name: '위',
+                    color: '#3355aa',
+                    scoutMsg: '<p><strong>천하</strong><img src=x onerror=alert(1)></p>',
+                },
+            ],
+        });
+
+        render(<JoinPage />);
+
+        expect(await screen.findByText('천하')).toBeInTheDocument();
+        expect(screen.getByText('천하').closest('strong')).toHaveTextContent('천하');
+        const scoutMessage = screen.getByText('천하').closest('div');
+        expect(scoutMessage).not.toBeNull();
+        expect(scoutMessage?.querySelector('img')).toBeNull();
+        expect(scoutMessage?.innerHTML).not.toContain('onerror');
+    });
+
     it('유산과 계정 초상을 실제 선택해 join 요청에 전달한다', async () => {
         frontInfoState.hasGeneral = false;
         apiMocks.join.mockResolvedValue({ status: 'BLOCKED', reason: '테스트 종료' });
