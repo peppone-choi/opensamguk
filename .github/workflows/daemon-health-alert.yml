@@ -49,9 +49,10 @@ jobs:
               started = datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00"))
               if started.tzinfo is None:
                   raise ValueError("timezone required")
-              age = int((datetime.now(timezone.utc) - started).total_seconds())
-              if age < 0:
+              age_seconds = (datetime.now(timezone.utc) - started).total_seconds()
+              if age_seconds < 0:
                   raise ValueError("future StartedAt")
+              age = int(age_seconds)
           except (IndexError, OverflowError, ValueError):
               raise SystemExit(1)
           print(age)

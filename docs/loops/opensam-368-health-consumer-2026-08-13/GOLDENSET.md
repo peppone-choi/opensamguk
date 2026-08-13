@@ -40,7 +40,8 @@ outside this task.
    healthcheck availability: only a `running` container whose validated
    `StartedAt` age is less than 300 seconds is deferred. The 300-second boundary,
    older running containers, stopped containers, inspect failure, malformed
-   timestamp, or future timestamp never gain grace. The compatibility Compose
+   timestamp, or any future timestamp (including a subsecond skew) never gain
+   grace. The compatibility Compose
    healthcheck independently reaches failure before five minutes through a
    four-minute start period plus three 10-second failures, with room for probe
    timeouts.

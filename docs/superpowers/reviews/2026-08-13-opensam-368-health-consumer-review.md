@@ -7,19 +7,19 @@ Verdict: cleared
 
 - Reviewer: independent `lazycodex-code-reviewer` subagent, read-only.
 - Current reviewed candidate parent:
-  `5786535a174ea757f606d44221ac8cefd202db89`.
+  `bff0271813cfbff328ddc171a9bac584fece4205`.
 - Base and merge base: `origin/main` at
   `f4ee9135ad6cbce1c6cfb28f7113d7742f478282`.
 - Portable product-tree identity for the current candidate working tree based
   on that parent:
   - `.github/workflows/daemon-health-alert.yml` blob
-    `f050c54bb7f0aefa493c64e4fee8668840341325`;
+    `c94303748135011a6002407dd685496327951482`;
   - `docker-compose.production.yml` blob
     `a526c697f1050cd61f4bc1e86c84f21a91d7c27b`;
   - `tools/ops/daemon_health_alert.sh` blob
     `cac0971bc8737759eefbc3bec3eafc45a247de79`;
   - `tools/ops/daemon_health_alert_contract_test.sh` blob
-    `af43067f124e707e771c4ea6624bfa29083ea121`.
+    `6ed725280baf55d6c156b376b48630700bd6b6e3`.
 
 The first exact-HEAD review found no product/runtime issue but found one HIGH
 evidence-metadata issue: the earlier artifact cited a non-ancestor commit and an
@@ -35,6 +35,12 @@ sibling server Compose has no engine healthcheck, and the compatibility
 healthcheck's `5m + 30×10s` failure window was about ten minutes. The current
 candidate removes healthcheck availability from the scheduler grace decision
 and bounds both independent mechanisms to five minutes.
+
+The first ADR-LITE-026 review of `bff0271813...` found another P2 boundary:
+converting a raw `-0.5` second duration with `int()` produced zero before the
+future-time check. The current candidate compares the raw duration first and
+adds a frozen-clock regression for this exact subsecond case. Because this
+remediation changes the exact SHA, all three PR review rounds restart afterward.
 
 ## Findings checked independently
 
@@ -54,6 +60,8 @@ and bounds both independent mechanisms to five minutes.
   without requiring a healthcheck. Age 300 and older runs the alerter; stopped
   containers do not receive grace; inspect or timestamp parsing failures make
   the workflow fail without dispatching invented status.
+- Future timestamps are rejected on the raw duration before integer truncation,
+  including subsecond clock skew.
 - The alert contract proves raw diagnostic and webhook sentinels do not leak to
   payload or output.
 - The already-present deploy recovery checks reject `recoveryReady != true`
@@ -104,6 +112,11 @@ and bounds both independent mechanisms to five minutes.
   fail without payload. The compatibility Compose contract asserts a four-minute
   start period, three retries, and 10-second interval, leaving timeout headroom
   below the five-minute deadline.
+- Subsecond-future RED/GREEN: with the extracted workflow clock frozen at
+  `2026-08-13T00:00:00Z`, a `StartedAt` 500 ms later originally produced
+  `FAIL: subsecond future Docker StartedAt must fail closed before integer
+  conversion`; checking the raw duration before `int()` now fails closed with
+  no payload.
 - The reviewer separately confirmed that the contract exercises the
   `spep-game-engine` inventory path, inventory/dispatch/status fail-closed
   branches, secret non-leakage, and Compose healthcheck shape. No secret value

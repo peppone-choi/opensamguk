@@ -13,6 +13,7 @@ ALERT_PAYLOAD_LOG="$TEST_ROOT/alert-payload.log"
 DEPLOY_FUNCTIONS="$TEST_ROOT/deploy-functions.sh"
 DEPLOY_GATE_LOG="$TEST_ROOT/deploy-gate.log"
 ALERT_WORKFLOW_RUN="$TEST_ROOT/daemon-health-alert-run.sh"
+ALERT_WORKFLOW_FROZEN_RUN="$TEST_ROOT/daemon-health-alert-frozen-run.sh"
 SECRET_SENTINEL='secret-sentinel'
 WEBHOOK_SENTINEL='https://webhook.invalid/secret-sentinel'
 
@@ -56,7 +57,7 @@ prepare_stubs() {
     '    case "$DAEMON_ALERT_TEST_MODE" in' \
     '      inventory_failed) exit 1 ;;' \
     '      inventory_engine) printf "s1-game-engine\\n" ;;' \
-    '      inventory_alpha_engine|inventory_recent_running|inventory_boundary_running|inventory_old_running|inventory_alpha_stopped|inventory_state_inspect_failed|inventory_started_at_invalid|inventory_started_at_future) printf "spep-game-engine\\n" ;;' \
+    '      inventory_alpha_engine|inventory_recent_running|inventory_boundary_running|inventory_old_running|inventory_alpha_stopped|inventory_state_inspect_failed|inventory_started_at_invalid|inventory_started_at_future|inventory_started_at_subsecond_future) printf "spep-game-engine\\n" ;;' \
     '      *) exit 0 ;;' \
     '    esac' \
     '    ;;' \
@@ -70,6 +71,7 @@ prepare_stubs() {
     '      inventory_state_inspect_failed) exit 1 ;;' \
     '      inventory_started_at_invalid) printf "running|not-a-time\\n" ;;' \
     '      inventory_started_at_future) printf "running|2999-01-01T00:00:00Z\\n" ;;' \
+    '      inventory_started_at_subsecond_future) printf "running|2026-08-13T00:00:00.500000Z\\n" ;;' \
     '      *) printf "running|2020-01-01T00:00:00Z\\n" ;;' \
     '    esac' \
     '    ;;' \
@@ -210,10 +212,14 @@ load_alert_workflow_run() {
   ' "$WORKFLOW" > "$ALERT_WORKFLOW_RUN"
   [[ -s "$ALERT_WORKFLOW_RUN" ]] || fail 'could not extract daemon alert workflow run block'
   bash -n "$ALERT_WORKFLOW_RUN"
+  sed 's/datetime.now(timezone.utc)/datetime.fromisoformat("2026-08-13T00:00:00+00:00")/' \
+    "$ALERT_WORKFLOW_RUN" > "$ALERT_WORKFLOW_FROZEN_RUN"
+  bash -n "$ALERT_WORKFLOW_FROZEN_RUN"
 }
 
 run_alert_workflow_inventory_case() {
   local mode="$1"
+  local workflow_run="${2:-$ALERT_WORKFLOW_RUN}"
   : > "$ALERT_PAYLOAD_LOG"
   CURRENT_CASE="workflow inventory $mode"
   set +e
@@ -224,7 +230,7 @@ run_alert_workflow_inventory_case() {
       DAEMON_ALERT_TEST_MODE="$mode" \
       DAEMON_ALERT_WEBHOOK_URL="$WEBHOOK_SENTINEL" \
       PATH="$STUB_BIN:$PATH" \
-      bash "$ALERT_WORKFLOW_RUN" 2>&1
+      bash "$workflow_run" 2>&1
   )"
   WORKFLOW_STATUS=$?
   set -e
@@ -284,6 +290,11 @@ assert_alert_workflow_inventory_fails_closed() {
   run_alert_workflow_inventory_case inventory_started_at_future
   [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'future Docker StartedAt must fail closed'
   [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail 'future StartedAt must not fabricate daemon diagnostics'
+  assert_contains "$WORKFLOW_OUTPUT" 'ERROR: invalid Docker startup state for spep-game-engine'
+
+  run_alert_workflow_inventory_case inventory_started_at_subsecond_future "$ALERT_WORKFLOW_FROZEN_RUN"
+  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'subsecond future Docker StartedAt must fail closed before integer conversion'
+  [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail 'subsecond future StartedAt must not fabricate daemon diagnostics'
   assert_contains "$WORKFLOW_OUTPUT" 'ERROR: invalid Docker startup state for spep-game-engine'
 }
 
