@@ -3,7 +3,7 @@
 - 조사일: 2026-08-13 (Asia/Seoul)
 - 대상: 묘삼(묘섭), `samnet.kr`(칠랑섭), 현재 OpenSamguk
 - 기준선: PHP `devsam/core` 패러티를 보유한 OpenSamguk v1
-- 상태: `DONE_WITH_CONCERNS` — 공개 표면으로 확인 가능한 차분은 정리했지만 묘삼 현행 사이트와 samnet 인증 후 규칙은 `UNKNOWN`
+- 상태: `INCOMPLETE_BLOCKED` — 공개 표면 조사는 정리했지만 samnet 항목의 PHP/Vue devsam 차등은 `DIFFERENTIAL-UNKNOWN`이다. 해당 source path:line 대조 전에는 OPENSAM-108을 완료 처리하거나 이 조사만으로 후속 release 결정을 내리지 않는다.
 - 추적: [GitHub #251 / OPENSAM-108](https://github.com/peppone-choi/opensamguk/issues/251), 상위 [GitHub #250 / OPENSAM-107](https://github.com/peppone-choi/opensamguk/issues/250)
 
 ## 1. 조사 계약과 증거 등급

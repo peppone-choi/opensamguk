@@ -172,8 +172,10 @@ Historical re-review verdict: fix-required
 
 Executed: exact SHA/line count, focused line-numbered reread, stale-phrase search, and consistency check across the evidence ledger, differential table, synthesis, candidate list, drafts, risks, and conclusion.
 
-Unexecuted limitations are unchanged and correctly disclosed by the research: PHP oracle differential (legacy absent), authenticated surfaces, bulk crawl, and deployed OpenSamguk behavior. These limitations no longer support an unstated conclusion and therefore do not block this documentation review.
+Unexecuted limitations are unchanged and correctly disclosed by the research: PHP oracle differential (legacy absent), authenticated surfaces, bulk crawl, and deployed OpenSamguk behavior. The documentation is internally consistent within its observed evidence, but the missing PHP/Vue differential still blocks OPENSAM-108 acceptance and any release decision that depends on that differential.
 
 No BLOCKER, MAJOR, MINOR, or QUESTION finding remains in the assigned scope.
 
-Verdict: cleared
+Evidence-scope verdict: cleared
+
+Ticket acceptance/release verdict: `INCOMPLETE_BLOCKED` until the PHP/Vue source path:line differential is executed and reviewed.
