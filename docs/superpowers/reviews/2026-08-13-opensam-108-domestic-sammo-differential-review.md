@@ -179,3 +179,25 @@ No BLOCKER, MAJOR, MINOR, or QUESTION finding remains in the assigned scope.
 Evidence-scope verdict: cleared
 
 Ticket acceptance/release verdict: `INCOMPLETE_BLOCKED` until the PHP/Vue source path:line differential is executed and reviewed.
+
+---
+
+## Post-remediation exact re-review
+
+### Exact basis
+
+- Re-review date: 2026-08-13 (Asia/Seoul).
+- Post-remediation research artifact: 218 lines, SHA-256 `dc4643268328e03ba56f04d44c8692299a5f6c4ef198f9792fec80f6ac635517`.
+- A fresh independent read-only reviewer recomputed that hash, read all 218 lines, and compared the city-characteristic statement with `docs/loops/v2-planning-2026-07-12/round3-proposal-city-guanxi.md` §6.1.
+
+### Disposition
+
+- The research now accurately distinguishes eight actual city-characteristic types from nine map labels: `방어` aliases `성벽`, while `없음(無)` denotes absence of a characteristic.
+- The research remains `INCOMPLETE_BLOCKED`; the missing PHP/Vue source path:line differential remains `DIFFERENTIAL-UNKNOWN` and still blocks OPENSAM-108 acceptance, closure, and dependent release decisions.
+- The eight-type conclusion is a consistency check against the repository's canonical reconciliation, not a new independent crawl of the original Myosam mirror. The `HISTORICAL-PUBLIC` limitation remains unchanged.
+
+No BLOCKER, MAJOR, or MINOR finding remains for the exact research artifact above.
+
+Evidence-scope verdict: cleared
+
+Ticket acceptance/release verdict: `INCOMPLETE_BLOCKED` until the PHP/Vue source path:line differential is executed and reviewed.
