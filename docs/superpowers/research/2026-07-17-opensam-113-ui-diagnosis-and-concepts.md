@@ -309,7 +309,7 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 
 ## 12. A3 사용자 결정 양식
 
-다음 중 하나를 사용자가 명시해야 A3가 열린다.
+다음 중 하나를 사용자가 명시하고 PHP-golden draw-for-draw parity를 완료해야 A3가 열린다.
 
 ```text
 선택 concept: A 야전 사령부 | B 현대 전략실 | C 수묵 장부
@@ -317,7 +317,8 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 보존 조건: 실제 한글 label, 20-action conceptual order+gating, API state, empty/error/disabled semantics
 ```
 
-**현재 A3 상태:** `BLOCKED BY USER SELECTION`. 선택 전 product implementation과 design-system 추출을 시작하지 않는다.
+**현재 A3 상태:** `BLOCKED BY USER SELECTION + PHP-GOLDEN PARITY`. 두 조건이 모두 충족되기 전에는 product
+implementation과 design-system 추출을 시작하지 않는다.
 
 선택을 빠르게 하기 위한 사용자 관점 행렬:
 
