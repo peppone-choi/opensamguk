@@ -433,10 +433,10 @@ concept 전체를 한 파일에 담은 comparison board이며 정확한 document
 GameChrome full-page capture의 파일명에 적힌 `390×844`는 viewport
 요청값이고 실제 document는 `390×4660`임을 §14.2가 별도로 기록한다.
 
-### 14.6 final independent visual gate
+### 14.6 independent visual review gate
 
-2026-08-13 별도 reviewer가 current 4면과 fresh proposal 2면을 원본 크기로 다시 열고 hash·freshness·desktop
-header·A/B/C coverage·CJK wrapping·mobile disabled reason·font/target metric·console/page error를 재검증했다. 판정은
-**`EVIDENCE PASS / APPROVE FOR VISUAL ARTIFACT ONLY`**, confidence `HIGH`, visual-scope blocker `none`이다. PHP-golden
-draw-for-draw parity와 live phase-gate는 `채점대기`이며, 이 visual evidence clearance는 A3 선택·parity·merge 승인을
-대신하지 않는다.
+**`채점대기 — NOT CLAIMED`**. The six screenshots/reports referenced above are off-repo local artifacts, and this
+branch does not contain a portable visual-review record identifying a reviewer and recording the exact commands and
+results. Therefore this document makes no independent visual approval or `APPROVE` claim. The local fixture captures
+remain implementation input/evidence only; PHP-golden draw-for-draw parity, live phase-gate, and independent visual
+review are all `채점대기`.

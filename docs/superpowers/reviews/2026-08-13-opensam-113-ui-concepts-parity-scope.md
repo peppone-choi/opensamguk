@@ -13,7 +13,8 @@ Verdict: quarantined-with-proof
   `PASS / APPROVE` language for synthetic Next/Playwright observations without a PHP draw-for-draw replay.
 - **Disposition:** fixed in the owned research document. Rendered and synthetic observations now use
   `EVIDENCE PASS`; the current-app A2 line states `EVIDENCE PASS WITH PRODUCT FINDINGS / PHP-GOLDEN PARITY 채점대기`;
-  the visual reviewer line is scoped to `EVIDENCE PASS / APPROVE FOR VISUAL ARTIFACT ONLY`; and the validation table
+  the independent visual review gate is explicitly `채점대기 — NOT CLAIMED` because the off-repo screenshots/reports
+  do not have a portable tracked reviewer identity, command transcript, and result record; and the validation table
   records PHP-golden draw-for-draw replay as `채점대기 — NOT RUN`.
 - **Boundary:** no PHP capture, replay, live authentication, CDN, phase-gate, A3 selection, merge, or deploy is
   claimed by this documentation change. The unresolved parity item is intentionally quarantined with proof below.
@@ -26,6 +27,8 @@ Verdict: quarantined-with-proof
 - The document's §14.1–§14.2 artifacts are synthetic non-PII fixture captures; they are not PHP oracle output.
 - The document now names the missing PHP-golden invocation/artifact as `채점대기 — NOT RUN` and forbids promoting it
   to a parity or phase-gate pass.
+- The document no longer claims independent visual approval; it records the missing portable reviewer identity,
+  command transcript, and results as `채점대기 — NOT CLAIMED`.
 - Fresh independent PR review is required on the pushed remediation commit; this artifact is not self-clearance.
 
 ## Required follow-up
