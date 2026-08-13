@@ -196,7 +196,14 @@ The bounded evidence-scope review was cleared. Ticket acceptance and release rem
 
 No BLOCKER, MAJOR, or MINOR finding remains for the exact research artifact above.
 
-Scope: exact 218-line research artifact at SHA-256 `dc4643268328e03ba56f04d44c8692299a5f6c4ef198f9792fec80f6ac635517`, limited to documentation-evidence consistency; excludes OPENSAM-108 acceptance, closure, and dependent release decisions.
+### Myosam differential remediation re-review
+
+- A fresh independent read-only reviewer recomputed and read the complete 220-line research artifact at SHA-256 `35c2af436be107db29a9e54403ea3d729ba4eac284d31e919a1add7237f4b51e`.
+- Every Myosam row now separates `HISTORICAL-PUBLIC` product observation from devsam classification and marks the latter `DIFFERENTIAL-UNKNOWN` because the PHP/Vue oracle was unavailable.
+- Candidate and ticket prose does not restore a novelty claim: existing city tickets are attributed to a separate product decision, and the document is prohibited as devsam-differential evidence.
+- The independent disposition was cleared with no BLOCKER, MAJOR, or MINOR finding. Ticket acceptance, closure, and dependent releases remain blocked.
+
+Scope: exact 220-line research artifact at SHA-256 `35c2af436be107db29a9e54403ea3d729ba4eac284d31e919a1add7237f4b51e`, limited to documentation-evidence consistency; excludes OPENSAM-108 acceptance, closure, and dependent release decisions.
 
 Verdict: cleared
 

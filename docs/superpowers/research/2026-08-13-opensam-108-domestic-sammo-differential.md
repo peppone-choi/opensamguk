@@ -3,7 +3,7 @@
 - 조사일: 2026-08-13 (Asia/Seoul)
 - 대상: 묘삼(묘섭), `samnet.kr`(칠랑섭), 현재 OpenSamguk
 - 기준선: PHP `devsam/core` 패러티를 보유한 OpenSamguk v1
-- 상태: `INCOMPLETE_BLOCKED` — 공개 표면 조사는 정리했지만 samnet 항목의 PHP/Vue devsam 차등은 `DIFFERENTIAL-UNKNOWN`이다. 해당 source path:line 대조 전에는 OPENSAM-108을 완료 처리하거나 이 조사만으로 후속 release 결정을 내리지 않는다.
+- 상태: `INCOMPLETE_BLOCKED` — 공개 표면 조사는 정리했지만 묘삼·samnet 항목의 PHP/Vue devsam 차등은 `DIFFERENTIAL-UNKNOWN`이다. 해당 source path:line 대조 전에는 OPENSAM-108을 완료 처리하거나 이 조사만으로 후속 release 결정을 내리지 않는다.
 - 추적: [GitHub #251 / OPENSAM-108](https://github.com/peppone-choi/opensamguk/issues/251), 상위 [GitHub #250 / OPENSAM-107](https://github.com/peppone-choi/opensamguk/issues/250)
 
 ## 1. 조사 계약과 증거 등급
@@ -52,20 +52,20 @@
 
 ## 4. 묘삼 조사
 
-### 4.1 devsam 대비 확인된 추가·변경
+### 4.1 공개 도움말에서 확인된 묘삼 동작 — devsam 차분은 `DIFFERENTIAL-UNKNOWN`
 
-아래는 2026-08-13에도 접근 가능한 2009년 수정 공개 도움말, 2026-06-27 도움말 37페이지 조사, 2026-07-25 독립 재대조 기록에 기반한 `HISTORICAL-PUBLIC` 결과다. 접근 가능성은 확인했지만 현행 런타임 동작이라는 뜻은 아니다.
+아래는 2026-08-13에도 접근 가능한 2009년 수정 공개 도움말, 2026-06-27 도움말 37페이지 조사, 2026-07-25 독립 재대조 기록에 기반한 `HISTORICAL-PUBLIC` 관찰이다. 접근 가능성은 확인했지만 현행 런타임 동작이라는 뜻은 아니다. 또한 이 worktree에는 PHP `legacy/devsam-core`와 `hwe/ts` 오라클이 없으므로 devsam 대비 신규·변경·제거 분류는 모두 `DIFFERENTIAL-UNKNOWN`이다.
 
-| 영역 | 분류 | 묘삼 차분 | OpenSamguk 현재 | 판정 |
+| 영역 | devsam 차분 분류 | 묘삼 공개 관찰 | OpenSamguk 현재 | 판정 |
 |---|---|---|---|---|
-| 경제 | 변경 | 국가가 다루던 금·병량을 도시 소유로 이동 | v1은 국가/장수 소유. v2 `OPENSAM-150~155`가 도시 원장·수입·병사·수송·조회로 계획됨 | 검증된 핵심 후보. 이미 후속 티켓 존재 |
-| 군사/도시 | 신규 | 도시마다 도시병사 상주, 병사 0이면 공백지화 | v1에는 도시병사 없음. v2 `OPENSAM-152~154`가 감소·보충·수송을 계획 | 검증된 핵심 후보. 이미 후속 티켓 존재 |
-| 인사/내정 | 변경 | 태수·군사 담당도시와 임원진 주둔이 도시 효과를 만든다 | v1은 관직 2~4 담당도시 수입 효과만 있음 | 효과 카탈로그와 중첩 규칙을 별도 스펙으로 만들 가치 있음 |
-| 도시 성장 | 신규/변경 | 실제 도시 특색 8종(지도 표기 9개: `방어`는 `성벽`의 별칭, `없음(無)`은 무특색), 규모 5단계, 지역 7종 병종 게이트 | v1 `City.level/region`은 있으나 묘삼식 특색·발현 계약은 없음 | 콘텐츠/시설 티켓과 중복 확인 후 선택 도입 |
-| 시설 | 신규 | 요새·성채·야전병원·진·궁노/연노·악대·투석대·목책/철책 | v1 도시 성벽/방어 수치와 전투는 있으나 설치물 체계 없음 | `OPENSAM-53`, `OPENSAM-171` 소비 후보 |
-| 전투 | 변경 | 요격/야전 → 공성/농성 → 시가전과 시설 발동, 병력 일부 도시 복귀 | v1은 PHP 전투 패러티. v2 실시간 battle tickets `OPENSAM-157~174`가 별도 진행 예정 | phase 이름을 복제하지 말고 adapter 요구사항으로 재검증 |
-| 경제 정책 | 신규/변경 | 도시 세율 5~35%, 지급률 100~500%, 도시 예산·수송 | v1 국가 단위 세율/지급률과 인접 이동이 있음 | 도시 원장 귀속 후 정책 범위를 도시로 내릴지 제품 결정 필요 |
-| 조직/감시 | 신규/변경 | 인사부·감찰부, 발령·호기·파견·집합, 포상·증여·헌납으로 사람 의존 형성 | v1에 관직/발령/포상/증여/헌납은 있으나 도시 권한·감시 묶음은 없음 | 기존 명령 재사용 가능성은 있으나 v2 capability 계약 필요 |
+| 경제 | `DIFFERENTIAL-UNKNOWN` | 국가가 다루던 금·병량을 도시 소유로 이동 | v1은 국가/장수 소유. v2 `OPENSAM-150~155`가 도시 원장·수입·병사·수송·조회로 계획됨 | 공개 제품 패턴. 이미 후속 티켓 존재; devsam 차분 근거로는 미사용 |
+| 군사/도시 | `DIFFERENTIAL-UNKNOWN` | 도시마다 도시병사 상주, 병사 0이면 공백지화 | v1에는 도시병사 없음. v2 `OPENSAM-152~154`가 감소·보충·수송을 계획 | 공개 제품 패턴. 이미 후속 티켓 존재; devsam 차분 근거로는 미사용 |
+| 인사/내정 | `DIFFERENTIAL-UNKNOWN` | 태수·군사 담당도시와 임원진 주둔이 도시 효과를 만든다 | v1은 관직 2~4 담당도시 수입 효과만 있음 | 제품 후보. PHP/Vue 대조 뒤에만 차분 분류 가능 |
+| 도시 성장 | `DIFFERENTIAL-UNKNOWN` | 실제 도시 특색 8종(지도 표기 9개: `방어`는 `성벽`의 별칭, `없음(無)`은 무특색), 규모 5단계, 지역 7종 병종 게이트 | v1 `City.level/region`은 있으나 묘삼식 특색·발현 계약은 없음 | 제품 후보. PHP/Vue 대조와 콘텐츠/시설 중복 확인 필요 |
+| 시설 | `DIFFERENTIAL-UNKNOWN` | 요새·성채·야전병원·진·궁노/연노·악대·투석대·목책/철책 | v1 도시 성벽/방어 수치와 전투는 있으나 설치물 체계 없음 | `OPENSAM-53`, `OPENSAM-171` 소비 후보; devsam 차분은 미확정 |
+| 전투 | `DIFFERENTIAL-UNKNOWN` | 요격/야전 → 공성/농성 → 시가전과 시설 발동, 병력 일부 도시 복귀 | v1은 PHP 전투 패러티. v2 실시간 battle tickets `OPENSAM-157~174`가 별도 진행 예정 | phase 이름을 복제하지 말고 adapter 요구사항과 PHP/Vue 차분을 재검증 |
+| 경제 정책 | `DIFFERENTIAL-UNKNOWN` | 도시 세율 5~35%, 지급률 100~500%, 도시 예산·수송 | v1 국가 단위 세율/지급률과 인접 이동이 있음 | 도시 원장 귀속 후 정책 범위와 PHP/Vue 차분을 함께 결정 |
+| 조직/감시 | `DIFFERENTIAL-UNKNOWN` | 인사부·감찰부, 발령·호기·파견·집합, 포상·증여·헌납으로 사람 의존 형성 | v1에 관직/발령/포상/증여/헌납은 있으나 도시 권한·감시 묶음은 없음 | v2 capability 후보. 기존 명령과의 PHP/Vue 차분 확인 필요 |
 
 묘삼에는 확인된 장수↔장수 관계망이 없었다. 묘삼식 “인맥”을 개인 친밀도 시스템으로 오독하면 안 된다. 공개 도움말이 보여준 사람 의존은 인사권·배치효과·감시·자원분배다. OpenSamguk v2의 의형제·원한·사제 관계망은 별도의 독자 시스템이며 묘삼 근거로 정당화할 수 없다.
 
@@ -110,7 +110,9 @@
 
 2026-07-14 저장소 문서는 인증 후 관찰을 담지만, 이번 티켓의 “공개 표면만” 계약에 따라 위 current 판정에 재사용하지 않았다.
 
-## 6. 종합 차분 표
+## 6. 종합 관찰·차분 표
+
+묘삼과 samnet의 제품 관찰은 유효하지만, 어느 쪽도 이 worktree에서 PHP/Vue source path:line 대조를 수행하지 않았으므로 devsam 차분 분류는 `DIFFERENTIAL-UNKNOWN`이다.
 
 | 영역 | 묘삼 | samnet 공개 표면 | 현재 OpenSamguk | 후보 판정 |
 |---|---|---|---|---|
@@ -130,7 +132,7 @@
 
 | ID | 후보 | 출처/증거 | 상태 | 소비처/다음 행동 | 주요 위험 |
 |---|---|---|---|---|---|
-| `DOM-01` | 도시 소유 금·병량 + 도시병사 원장 | 묘삼 `HISTORICAL-PUBLIC`, 독립 재대조 완료 | `ADOPTED-ALREADY-TICKETED` | `OPENSAM-150~155`에 provenance 링크만 추가. 새 티켓 금지 | v1 `Nation.gold/rice`와 이중 진실, flush/rehydrate |
+| `DOM-01` | 도시 소유 금·병량 + 도시병사 원장 | 묘삼 `HISTORICAL-PUBLIC` 동작 관찰 재대조 완료; devsam 차분 `DIFFERENTIAL-UNKNOWN` | `ADOPTED-ALREADY-TICKETED` | `OPENSAM-150~155`에 provenance 링크만 추가. 새 티켓 금지 | v1 `Nation.gold/rice`와 이중 진실, flush/rehydrate |
 | `DOM-02` | 관직자/임원진의 담당도시 체류 효과 | 묘삼 `HISTORICAL-PUBLIC`; v1 `officerCntByCity` 확장점 | `CANDIDATE` | 아래 Draft A | 효과 중첩 폭증, 최적 배치 고착, v1 패러티 침범 |
 | `DOM-03` | 도시 시설·장애물과 전장 phase 연계 | 묘삼 `HISTORICAL-PUBLIC` | `CANDIDATE-DUPLICATE-CHECK` | `OPENSAM-53`, `OPENSAM-171` 요구사항에 evidence link. 새 티켓은 gap 확인 후 | 시설 목록 복제, adapter 간 규칙 불일치 |
 | `DOM-04` | 로그인 전 세계 사건·전쟁 요약 feed와 공개 전투 payload | samnet `CURRENT-PUBLIC`; devsam 차분 `UNKNOWN` | `PRODUCT-CANDIDATE` | 아래 Draft B. `OPENSAM-113`에는 귀속하지 않음 | 정보전 fog/기밀 유출, 캐시·개인정보 |
@@ -213,6 +215,6 @@
 
 ## 10. 결론
 
-공개 증거로 가장 강한 국내 삼모 차분은 묘삼의 **도시 자원·도시병사·사람 배치 효과**다. samnet에서는 **공개 world observability·지도 기반 온보딩·공개 전투 payload**라는 제품 패턴을 확인했지만 PHP/Vue 오라클 부재로 devsam 차분은 `DIFFERENTIAL-UNKNOWN`이다. 도시 원장 핵심은 이미 `OPENSAM-150~155`에 흡수됐으므로 새 티켓을 늘리는 것보다 provenance와 중복 방지가 중요하다. 새로 검토할 만한 것은 담당도시 체류 효과와, 선행 producer/route 티켓이 식별된 뒤의 공개 projection이다.
+공개 증거로 가장 강한 국내 삼모 제품 관찰은 묘삼의 **도시 자원·도시병사·사람 배치 효과**다. samnet에서는 **공개 world observability·지도 기반 온보딩·공개 전투 payload**라는 제품 패턴을 확인했다. 그러나 PHP/Vue 오라클 부재로 두 서버 모두 devsam 차분은 `DIFFERENTIAL-UNKNOWN`이다. 도시 원장 핵심은 이미 별도 제품 결정에 따라 `OPENSAM-150~155`에 흡수됐으므로, 이 문서를 devsam 차분 근거로 사용하지 않고 provenance와 중복 방지에만 쓴다. 새로 검토할 만한 것은 PHP/Vue 대조 뒤의 담당도시 체류 효과와, 선행 producer/route 티켓이 식별된 뒤의 공개 projection이다.
 
 반대로 samnet의 명령 셋·내정·외교·NPC/AI·계승은 이번 공개-only 조사로 확인하지 못했다. 전투 상세는 40턴 payload와 관측 값까지만 확인했으며 피해 공식·RNG·authoritative 판정은 `UNKNOWN`이다. 과거 인증 관찰이나 UI 단서로 빈칸을 채우지 않는다.
