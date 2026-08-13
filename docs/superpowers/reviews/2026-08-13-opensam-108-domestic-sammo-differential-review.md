@@ -78,7 +78,7 @@
 
 연구 파일의 소스 상태·samnet replay 범위·devsam 차분 분류·92/92 설명을 고치고 위 finding을 재검증하기 전에는 GitHub #251 AC를 닫거나 후속 티켓을 발행하면 안 된다.
 
-Historical verdict: fix-required
+The historical first-pass disposition was `fix-required`.
 
 ---
 
@@ -147,7 +147,7 @@ Unexecuted / unchanged limitations:
 
 The corrected artifact resolves three prior findings completely and most of the 92-inventory finding, but the stale `registry 92/92` synthesis statement at `:117` must be corrected before clearance.
 
-Historical re-review verdict: fix-required
+The historical corrected-artifact disposition remained `fix-required`.
 
 ---
 
@@ -176,9 +176,7 @@ Unexecuted limitations are unchanged and correctly disclosed by the research: PH
 
 No BLOCKER, MAJOR, MINOR, or QUESTION finding remains in the assigned scope.
 
-Evidence-scope verdict: cleared
-
-Ticket acceptance/release verdict: `INCOMPLETE_BLOCKED` until the PHP/Vue source path:line differential is executed and reviewed.
+The bounded evidence-scope review was cleared. Ticket acceptance and release remain `INCOMPLETE_BLOCKED` until the PHP/Vue source path:line differential is executed and reviewed.
 
 ---
 
@@ -198,6 +196,8 @@ Ticket acceptance/release verdict: `INCOMPLETE_BLOCKED` until the PHP/Vue source
 
 No BLOCKER, MAJOR, or MINOR finding remains for the exact research artifact above.
 
-Evidence-scope verdict: cleared
+Scope: exact 218-line research artifact at SHA-256 `dc4643268328e03ba56f04d44c8692299a5f6c4ef198f9792fec80f6ac635517`, limited to documentation-evidence consistency; excludes OPENSAM-108 acceptance, closure, and dependent release decisions.
 
-Ticket acceptance/release verdict: `INCOMPLETE_BLOCKED` until the PHP/Vue source path:line differential is executed and reviewed.
+Verdict: cleared
+
+Ticket acceptance and release remain `INCOMPLETE_BLOCKED` until the PHP/Vue source path:line differential is executed and reviewed.
