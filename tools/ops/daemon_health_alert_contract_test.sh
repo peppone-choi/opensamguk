@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ALERTER="$REPO_ROOT/tools/ops/daemon_health_alert.sh"
 WORKFLOW="$REPO_ROOT/.github/workflows/daemon-health-alert.yml"
 DEPLOY_WORKFLOW="$REPO_ROOT/.github/workflows/deploy.yml"
+PRODUCTION_COMPOSE="$REPO_ROOT/docker-compose.production.yml"
 TEST_ROOT="$(mktemp -d /tmp/opensamguk-daemon-alert-contract.XXXXXX)"
 STUB_BIN="$TEST_ROOT/bin"
 ALERT_PAYLOAD_LOG="$TEST_ROOT/alert-payload.log"
@@ -55,11 +56,12 @@ prepare_stubs() {
     '    case "$DAEMON_ALERT_TEST_MODE" in' \
     '      inventory_failed) exit 1 ;;' \
     '      inventory_engine) printf "s1-game-engine\\n" ;;' \
+    '      inventory_alpha_engine) printf "spep-game-engine\\n" ;;' \
     '      *) exit 0 ;;' \
     '    esac' \
     '    ;;' \
     '  exec)' \
-    '    [[ "$2" == s1-game-engine ]] || exit 1' \
+    '    [[ "$2" == s1-game-engine || "$2" == spep-game-engine ]] || exit 1' \
     '    shift 2' \
     '    joined="$*"' \
     '    case "$joined" in' \
@@ -68,7 +70,7 @@ prepare_stubs() {
     '          status_unreadable) exit 1 ;;' \
     '          paused) printf "%s\\n" "{\"paused\":true,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":999,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          paused_clock_down) printf "%s\\n" "{\"paused\":true,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
-    '          recovery_gated|dispatch_fail) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":false,\"recoveryMode\":\"RELOAD_REQUIRED\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
+    '          recovery_gated|dispatch_fail|inventory_alpha_engine) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":false,\"recoveryMode\":\"RELOAD_REQUIRED\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          stalled) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":52,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '          *) printf "%s\\n" "{\"paused\":false,\"recoveryReady\":true,\"recoveryMode\":\"READY\",\"recoveryReason\":\"secret-sentinel\",\"clock\":{\"tickSeconds\":17,\"lastTurnTime\":\"2026-08-05T16:15:45Z\"},\"lastSuccessfulTickAgeSeconds\":5,\"lastTickError\":\"secret-sentinel\"}" ;;' \
     '        esac' \
@@ -77,7 +79,7 @@ prepare_stubs() {
     '        case "$DAEMON_ALERT_TEST_MODE" in' \
     '          health_unreadable) printf "%s\\n" "not-json" ;;' \
     '          paused) printf "%s\\n" "{\"status\":\"OUT_OF_SERVICE\"}" ;;' \
-    '          paused_clock_down|recovery_gated|dispatch_fail|stalled) printf "%s\\n" "{\"status\":\"DOWN\"}" ;;' \
+    '          paused_clock_down|recovery_gated|dispatch_fail|inventory_alpha_engine|stalled) printf "%s\\n" "{\"status\":\"DOWN\"}" ;;' \
     '          *) printf "%s\\n" "{\"status\":\"UP\"}" ;;' \
     '        esac' \
     '        ;;' \
@@ -226,6 +228,33 @@ assert_alert_workflow_inventory_fails_closed() {
   [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'unreadable Docker inventory must fail closed'
   assert_contains "$WORKFLOW_OUTPUT" 'ERROR: Docker inventory query failed'
   assert_not_contains "$WORKFLOW_OUTPUT" "$WEBHOOK_SENTINEL"
+
+  run_alert_workflow_inventory_case inventory_alpha_engine
+  [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'alphanumeric game-engine inventory was silently skipped'
+  [[ -s "$ALERT_PAYLOAD_LOG" ]] || fail 'alphanumeric game-engine inventory did not dispatch an alert'
+  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"server":"spep"'
+  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"state":"DOWN"'
+  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"reason":"recovery_gated"'
+  assert_not_contains "$WORKFLOW_OUTPUT" "$SECRET_SENTINEL"
+  assert_not_contains "$WORKFLOW_OUTPUT" "$WEBHOOK_SENTINEL"
+  assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" "$SECRET_SENTINEL"
+  assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" "$WEBHOOK_SENTINEL"
+}
+
+assert_production_compose_healthcheck_contract() {
+  ruby -ryaml -e '
+    compose = YAML.load_file(ARGV.fetch(0))
+    engine = compose.fetch("services").fetch("game-engine")
+    healthcheck = engine["healthcheck"] or abort "production game-engine healthcheck is missing"
+    expected_probe = ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health"]
+
+    abort "production game-engine healthcheck probe mismatch" unless healthcheck.fetch("test") == expected_probe
+    abort "production game-engine healthcheck interval mismatch" unless healthcheck.fetch("interval") == "10s"
+    abort "production game-engine healthcheck timeout mismatch" unless healthcheck.fetch("timeout") == "5s"
+    abort "production game-engine healthcheck retries mismatch" unless healthcheck.fetch("retries") == 30
+    abort "production game-engine healthcheck start period must cover catch-up" unless healthcheck.fetch("start_period") == "5m"
+    abort "production game-engine restart policy changed" unless engine.fetch("restart") == "unless-stopped"
+  ' "$PRODUCTION_COMPOSE"
 }
 
 load_deploy_recovery_functions() {
@@ -283,6 +312,7 @@ assert_deploy_recovery_fails_closed() {
 prepare_stubs
 assert_workflow_contract
 assert_alert_workflow_inventory_fails_closed
+assert_production_compose_healthcheck_contract
 assert_deploy_recovery_fails_closed
 
 run_alert healthy
