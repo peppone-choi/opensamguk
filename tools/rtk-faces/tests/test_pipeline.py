@@ -1,18 +1,15 @@
-import importlib.util
+import io
 import json
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
+
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import build_rtk14_faces as b  # noqa: E402
-
-HAS_OPENCV = (
-    importlib.util.find_spec("cv2") is not None
-    and importlib.util.find_spec("numpy") is not None
-)
-
 
 # --------------------------------------------------------------------------- #
 # fakes                                                                        #
@@ -22,8 +19,6 @@ def img_bytes(w, h):
 
 
 class FakeImageOps:
-    """Deterministic stand-in for CvImageOps operating on img_bytes()."""
-
     def __init__(self, decodable=True):
         self.decodable = decodable
 
@@ -59,135 +54,85 @@ class FakeFetcher:
         return v, False
 
 
-@unittest.skipUnless(HAS_OPENCV, "OpenCV test requirements are not installed")
-class TestCvImageOps(unittest.TestCase):
-    def test_full_frame_resize_preserves_all_four_corner_markers(self):
-        import cv2
-        import numpy as np
+class TestPillowImageOps(unittest.TestCase):
+    def test_given_633x900_png_when_resized_then_full_frame_fits_148x210(self):
+        source = Image.new("RGB", (633, 900), "black")
+        source.paste("red", (0, 0, 120, 120))
+        source.paste("green", (513, 0, 633, 120))
+        source.paste("blue", (0, 780, 120, 900))
+        source.paste("yellow", (513, 780, 633, 900))
+        raw = io.BytesIO()
+        source.save(raw, format="PNG")
 
-        source = np.zeros((900, 633, 3), dtype=np.uint8)
-        source[:120, :120] = (0, 0, 255)
-        source[:120, -120:] = (0, 255, 0)
-        source[-120:, :120] = (255, 0, 0)
-        source[-120:, -120:] = (0, 255, 255)
-        encoded, source_buffer = cv2.imencode(".png", source)
-        self.assertTrue(encoded)
+        output, width, height, fmt = b.PillowImageOps().resize_encode(
+            b.PillowImageOps().decode(raw.getvalue()),
+            156,
+            210,
+        )
 
-        image_ops = b.CvImageOps()
-        decoded = image_ops.decode(source_buffer.tobytes())
-        output, width, height, fmt = image_ops.resize_encode(decoded, 156, 210)
-        resized = image_ops.decode(output)
+        with Image.open(io.BytesIO(output)) as resized:
+            self.assertEqual((width, height, fmt), (148, 210, "png"))
+            self.assertEqual(resized.getpixel((10, 10)), (255, 0, 0))
+            self.assertEqual(resized.getpixel((width - 11, 10)), (0, 128, 0))
+            self.assertEqual(resized.getpixel((10, height - 11)), (0, 0, 255))
+            self.assertEqual(resized.getpixel((width - 11, height - 11)), (255, 255, 0))
 
-        self.assertEqual((width, height, fmt), (148, 210, "png"))
-        self.assertEqual(tuple(resized[10, 10]), (0, 0, 255))
-        self.assertEqual(tuple(resized[10, width - 11]), (0, 255, 0))
-        self.assertEqual(tuple(resized[height - 11, 10]), (255, 0, 0))
-        self.assertEqual(tuple(resized[height - 11, width - 11]), (0, 255, 255))
+    def test_png_encoding_is_deterministic_and_does_not_upscale(self):
+        source = Image.new("RGB", (100, 80), "purple")
+        raw = io.BytesIO()
+        source.save(raw, format="PNG")
+        image = b.PillowImageOps().decode(raw.getvalue())
 
+        first, first_width, first_height, first_format = b.PillowImageOps().resize_encode(
+            image,
+            156,
+            210,
+        )
+        second, second_width, second_height, second_format = b.PillowImageOps().resize_encode(
+            image,
+            156,
+            210,
+        )
 
-# --------------------------------------------------------------------------- #
-# rate limiter                                                                 #
-# --------------------------------------------------------------------------- #
-class TestRateLimiter(unittest.TestCase):
-    def test_floor_at_min_delay(self):
-        rl = b.RateLimiter(0.1)
-        self.assertEqual(rl.min_delay, b.MIN_DELAY_SECONDS)
+        self.assertEqual((first_width, first_height, first_format), (100, 80, "png"))
+        self.assertEqual((second_width, second_height, second_format), (100, 80, "png"))
+        self.assertEqual(first, second)
 
-    def test_sleeps_between_requests(self):
-        t = [0.0]
-        slept = []
-        rl = b.RateLimiter(2.0, clock=lambda: t[0], sleeper=lambda s: slept.append(s))
-        rl.wait()                 # first: no sleep
-        t[0] = 0.5                # only 0.5s elapsed
-        rl.wait()                 # must sleep the remaining 1.5s
-        self.assertEqual(slept, [1.5])
+    def test_png_transparency_is_preserved(self):
+        source = Image.new("RGBA", (100, 80), (12, 34, 56, 0))
+        source.putpixel((50, 40), (78, 90, 12, 255))
+        raw = io.BytesIO()
+        source.save(raw, format="PNG")
 
-    def test_no_sleep_when_enough_elapsed(self):
-        t = [0.0]
-        slept = []
-        rl = b.RateLimiter(1.0, clock=lambda: t[0], sleeper=lambda s: slept.append(s))
-        rl.wait()
-        t[0] = 5.0
-        rl.wait()
-        self.assertEqual(slept, [])
+        output, width, height, _ = b.PillowImageOps().resize_encode(
+            b.PillowImageOps().decode(raw.getvalue()),
+            156,
+            210,
+        )
 
+        with Image.open(io.BytesIO(output)) as resized:
+            self.assertEqual((width, height, resized.mode), (100, 80, "RGBA"))
+            self.assertEqual(resized.getpixel((0, 0)), (12, 34, 56, 0))
 
-# --------------------------------------------------------------------------- #
-# fetch / cache / retry                                                        #
-# --------------------------------------------------------------------------- #
-class TestFetcher(unittest.TestCase):
-    def _rl(self):
-        return b.RateLimiter(1.0, clock=lambda: 0.0, sleeper=lambda s: None)
+    def test_oversized_pixel_dimensions_fail_decode(self):
+        source = Image.new("RGB", (100, 100), "black")
+        raw = io.BytesIO()
+        source.save(raw, format="PNG")
 
-    def test_cache_hit_skips_fetch_and_ratelimit(self):
-        import tempfile
-        with tempfile.TemporaryDirectory() as d:
-            cache = Path(d) / "cache"
-            cache.mkdir()
-            url = "http://x/a.png"
-            (cache / (b.sha256_hex(url.encode()) + ".bin")).write_bytes(b"CACHED")
-            waits = []
-            rl = b.RateLimiter(1.0, clock=lambda: 0.0, sleeper=lambda s: waits.append(s))
-            calls = []
-
-            def opener(u, ua, to):
-                calls.append(u)
-                return b"NET"
-
-            f = b.Fetcher(cache, rl, opener=opener)
-            data, cached = f.fetch(url)
-            self.assertEqual(data, b"CACHED")
-            self.assertTrue(cached)
-            self.assertEqual(calls, [])   # network never touched
-            self.assertEqual(waits, [])   # rate limiter never invoked
-
-    def test_writes_cache_on_success(self):
-        import tempfile
-        with tempfile.TemporaryDirectory() as d:
-            cache = Path(d) / "cache"
-            url = "http://x/a.png"
-            f = b.Fetcher(cache, self._rl(), opener=lambda u, ua, to: b"BYTES")
-            data, cached = f.fetch(url)
-            self.assertEqual(data, b"BYTES")
-            self.assertFalse(cached)
-            self.assertTrue((cache / (b.sha256_hex(url.encode()) + ".bin")).exists())
-
-    def test_retry_bounded_then_fail(self):
-        import tempfile
-        with tempfile.TemporaryDirectory() as d:
-            attempts = []
-
-            def opener(u, ua, to):
-                attempts.append(1)
-                raise b._Transient("network_error")
-
-            f = b.Fetcher(Path(d), self._rl(), retries=2, opener=opener)
-            with self.assertRaises(b.FetchError) as cm:
-                f.fetch("http://x/a.png")
-            self.assertEqual(cm.exception.reason, "network_error")
-            self.assertEqual(len(attempts), 3)  # 1 + 2 retries, bounded
-
-    def test_permanent_http_not_retried(self):
-        import tempfile
-        with tempfile.TemporaryDirectory() as d:
-            attempts = []
-
-            def opener(u, ua, to):
-                attempts.append(1)
-                raise b._PermanentHttp(403)
-
-            f = b.Fetcher(Path(d), self._rl(), retries=5, opener=opener)
-            with self.assertRaises(b.FetchError) as cm:
-                f.fetch("http://x/a.png")
-            self.assertEqual(cm.exception.reason, "http_403")
-            self.assertEqual(len(attempts), 1)  # 4xx = terminal, no retry
+        with mock.patch.object(b, "MAX_IMAGE_PIXELS", 9_999):
+            self.assertIsNone(b.PillowImageOps().decode(raw.getvalue()))
 
 
 # --------------------------------------------------------------------------- #
 # per-entry classification + report                                           #
 # --------------------------------------------------------------------------- #
 def _img_target(name, url):
-    return b.Target(name, url, "image", None)
+    page_key = f"test-{name}"
+    return b.Target(
+        name,
+        f"https://wikiwiki.jp/sangokushi14/{page_key}",
+        url,
+    )
 
 
 class TestProcessTarget(unittest.TestCase):
@@ -244,35 +189,46 @@ class TestProcessTarget(unittest.TestCase):
         self.assertEqual(e["status"], "FAIL")
         self.assertEqual(e["reason"], "http_403")
 
+    def test_attachment_cache_miss_failure_stays_fail(self):
+        cache = self.out / "cache"
+        fetcher = b.CacheReader(cache)
+        target = b.Target(
+            "a",
+            "https://wikiwiki.jp/sangokushi14/ENC",
+            "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg?rev=blocked",
+        )
+
+        entry = b.process_target(target, fetcher, FakeImageOps(), self.out / "output")
+
+        self.assertEqual(entry["status"], "FAIL")
+        self.assertEqual(entry["reason"], "cache_miss")
+        self.assertIsNone(entry["output"])
+
+    def test_output_symlink_does_not_overwrite_its_target(self):
+        img = img_bytes(100, 80)
+        target = _img_target("a", "http://x/a.png")
+        output_name = b.sha256_hex(b"http://x/a.png")[:16] + ".png"
+        protected = self.out / "protected.txt"
+        protected.write_bytes(b"keep")
+        output_path = self.out / output_name
+        output_path.symlink_to(protected)
+
+        entry = b.process_target(
+            target,
+            FakeFetcher({"http://x/a.png": img}),
+            FakeImageOps(),
+            self.out,
+        )
+
+        self.assertEqual(entry["status"], "OK")
+        self.assertEqual(protected.read_bytes(), b"keep")
+        self.assertFalse(output_path.is_symlink())
+
     def test_fail_on_decode_error(self):
         f = FakeFetcher({"http://x/a.png": b"garbage"})
         e = b.process_target(_img_target("a", "http://x/a.png"), f, FakeImageOps(decodable=False), self.out)
         self.assertEqual(e["status"], "FAIL")
         self.assertEqual(e["reason"], "decode_failed")
-
-    def test_page_mode_discovers_portrait_then_resizes(self):
-        page = b'<a href="x"><img src="https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg?rev=9"></a>'
-        img = img_bytes(400, 400)
-        f = FakeFetcher({
-            "https://wikiwiki.jp/sangokushi14/ENC": page,
-            "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg": img,
-        })
-        t = b.Target("曹操", "https://wikiwiki.jp/sangokushi14/ENC", "page", "ENC")
-        e = b.process_target(t, f, FakeImageOps(), self.out)
-        self.assertEqual(e["status"], "OK")
-        self.assertEqual(e["page_url"], "https://wikiwiki.jp/sangokushi14/ENC")
-        self.assertEqual(e["canonical_url"],
-                         "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg")
-
-    def test_page_mode_no_portrait_fails_closed(self):
-        page = b"<html>no portrait here</html>"
-        f = FakeFetcher({"https://wikiwiki.jp/sangokushi14/ENC": page})
-        t = b.Target("x", "https://wikiwiki.jp/sangokushi14/ENC", "page", "ENC")
-        e = b.process_target(t, f, FakeImageOps(), self.out)
-        self.assertEqual(e["status"], "FAIL")
-        self.assertEqual(e["reason"], "no_portrait_url")
-        self.assertEqual(e["page_url"], "https://wikiwiki.jp/sangokushi14/ENC")
-
 
 class TestReport(unittest.TestCase):
     def test_deterministic_ordering_and_bytes(self):
@@ -289,6 +245,24 @@ class TestReport(unittest.TestCase):
             self.assertEqual([e["name"] for e in r1["entries"]], ["a", "b"])
             self.assertEqual(b.dump_report(r1), b.dump_report(r2))
             self.assertEqual(r1["meta"]["counts"], {"OK": 2, "FAIL": 0})
+
+    def test_duplicate_display_names_have_stable_report_order(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d)
+            first = b.Target("동명", "https://wikiwiki.jp/sangokushi14/B", "http://x/b.png")
+            second = b.Target("동명", "https://wikiwiki.jp/sangokushi14/A", "http://x/a.png")
+            images = {
+                "http://x/a.png": img_bytes(400, 400),
+                "http://x/b.png": img_bytes(400, 400),
+            }
+
+            report = b.build_report([first, second], FakeFetcher(images), FakeImageOps(), out)
+
+            self.assertEqual(
+                [entry["page_url"] for entry in report["entries"]],
+                ["https://wikiwiki.jp/sangokushi14/A", "https://wikiwiki.jp/sangokushi14/B"],
+            )
 
 
 if __name__ == "__main__":
