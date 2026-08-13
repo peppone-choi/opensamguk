@@ -45,7 +45,8 @@
 |---|---|---|
 | `OPENSAM-148` / GitHub `#298` | canonical `world_id` contract and `WorldId` value type | `ARCH-S2-T0`의 foundation 단일 소유자다. `OPENSAM-43`과 `OPENSAM-126`을 block하며, build-only S2→S3→S4가 이 계약을 소비한다. |
 | `OPENSAM-43` | broad V2-0B `world_id` work (G0 선행과 기존 11항목 범위 전체) | `OPENSAM-148`에 의해 block되지만 **open으로 유지**한다. foundation은 이 티켓의 범위를 축소하거나 Done 처리하지 않는다. |
-| `OPENSAM-44` | v2 entity의 `ChangeRecorder → JdbcFlushExecutor` 영속화 | shared flush substrate를 병렬 수정하지 않는다. `ARCH-S2-T3`, `ARCH-S3-T1`, `ARCH-S3-T2`가 foundation 단일 소유자이며 handoff 뒤 OPENSAM-44가 소비한다. |
+| `OPENSAM-44` | broad v2 persistence의 계약·소유권 분해(문서 전용) | 2026-08-13 crosswalk가 과거 일괄 구현 계약을 supersede했다. shared flush 구현을 소비하지 않는다. |
+| `OPENSAM-150` 및 이후 just-in-time product owners | 실제 v2 entity의 `ChangeRecorder → JdbcFlushExecutor` 영속화 | shared flush substrate를 병렬 수정하지 않는다. `ARCH-S2-T3`, `ARCH-S3-T1`, `ARCH-S3-T2`가 foundation 단일 소유자이며 handoff 뒤 OPENSAM-150이 첫 product leaf로 소비하고, 이후 owner는 승인된 실제 소비 동작이 있을 때만 소비한다. |
 | `OPENSAM-45` | Accepted/Resolved/Rejected UI·SSE lifecycle와 query invalidation | `ARCH-S4-T3`의 durable result/outbox 계약을 선행 기반으로 소비한다. 프론트 lifecycle을 이 초안에서 중복 구현하지 않는다. |
 | `OPENSAM-33` | 60초 cadence 운영 smoke와 관측 배선 | `ARCH-S6-T2` 검증에 재사용한다. |
 | `OPENSAM-72` | 성능·동기화 gate | `ARCH-S1`, `ARCH-S5`, `ARCH-S6-T2`의 측정 결과를 연결한다. |
@@ -54,8 +55,10 @@
 
 - Foundation owner: 이 Epic의 `ARCH-S2-T3 → ARCH-S3-T1 → ARCH-S3-T2` 순차 작업자.
 - 공유 계약: `world_id`가 포함된 delta key, generation token, immutable prepared batch, writer epoch, expected `world_version`, order-preserving JDBC flush 결과.
-- `OPENSAM-44`는 위 세 작업이 완료되고 계약 테스트와 handoff 문서가 연결될 때까지 동일 클래스의 shared foundation 변경이 `blocked by` 상태다.
-- handoff 뒤 `OPENSAM-44`는 공개된 계약을 소비하는 entity mapper/flush 확장만 소유한다.
+- `OPENSAM-150` 및 이후 just-in-time owner는 위 세 작업이 완료되고 계약 테스트와 handoff
+  문서가 연결될 때까지 동일 클래스의 shared foundation을 변경하지 않는다.
+- handoff 뒤 OPENSAM-150이 첫 entity mapper/flush 확장을 소유한다. 이후 확장은 OPENSAM-44
+  crosswalk가 지정한 실제 product owner만 소유한다.
 - Jira 발행 시 `blocks/is blocked by` link와 양쪽 티켓 comment를 함께 추가한다. 이는 아래 승인 범위에 포함된다.
 
 ## 4. 공통 티켓 필드
@@ -81,7 +84,7 @@
   - Given API가 command에 `202 Accepted`를 반환한 직후 API/engine/Redis 중 하나가 중단되는 상황, When 서비스가 재개되면, Then PostgreSQL 원장에서 command를 찾아 중복 적용 없이 durable terminal result에 도달한다.
   - Given world A와 B에 동일한 local general/nation/city ID가 존재할 때, When boot/read/precheck/intake/flush/delete를 수행하면, Then 모든 결과와 부수효과가 요청한 `world_id`에만 발생한다.
   - Given client가 `minVersion=V`인 authoritative read를 요청할 때, When query path가 응답하면, Then primary에서 `world_version >= V`인 결과를 주거나 명시적인 version-not-visible 응답을 반환하며 stale 데이터를 성공 응답으로 위장하지 않는다.
-- **의존성:** `OPENSAM-148` canonical identity foundation이 scoped schema 시작의 hard predecessor이며 `OPENSAM-43`의 broad V2 범위 완료는 요구하지 않는다. `OPENSAM-148`은 `OPENSAM-43`과 `OPENSAM-126`을 block한다. `OPENSAM-44`, `OPENSAM-45`, `OPENSAM-33`, `OPENSAM-72`와 위 경계대로 link한다.
+- **의존성:** `OPENSAM-148` canonical identity foundation이 scoped schema 시작의 hard predecessor이며 `OPENSAM-43`의 broad V2 범위 완료는 요구하지 않는다. `OPENSAM-148`은 `OPENSAM-43`과 `OPENSAM-126`을 block한다. OPENSAM-44 문서 crosswalk, `OPENSAM-150` 및 이후 just-in-time owners, `OPENSAM-45`, `OPENSAM-33`, `OPENSAM-72`와 위 경계대로 link한다.
 - **검증 방법:** 모든 하위 Story gate, two-world isolation IT, crash/replay fault matrix, heap/JFR 3회 측정, backend parity gate, architecture tests, staging canary 증거를 Epic에 링크한다.
 
 ### ARCH-S1 — [P0] Runtime baseline, consistency contract, and capacity guardrails
@@ -169,9 +172,9 @@
 - **우선순위:** Highest
 - **사용자 가치:** engine의 일괄 저장과 삭제가 다른 world의 동일 ID row를 변경하지 않는다.
 - **수용 기준 (GWT):** Given prepared delta가 `world_id=W`를 가진 상태, When `JdbcFlushExecutor`가 create/update/delete/tombstone을 실행하면, Then 모든 key와 predicate가 W를 포함하고 affected row 검증이 적용되며 unscoped live SQL은 architecture test에서 실패한다.
-- **수용 기준 (GWT):** Given shared flush 계약을 변경할 때, When 구현 PR이 시작되면, Then 이 티켓이 foundation 단일 owner이고 `OPENSAM-44`는 handoff 전 동일 shared class를 병렬 변경하지 않는다.
-- **의존성:** `ARCH-S2-T1`, `ARCH-S2-T2`의 scoped key contract. Jira에서 `blocks OPENSAM-44` link를 설정한다.
-- **검증 방법:** Testcontainers CRUD/tombstone suite, SQL capture assertion, unscoped query static/architecture test, OPENSAM-44 handoff checklist.
+- **수용 기준 (GWT):** Given shared flush 계약을 변경할 때, When 구현 PR이 시작되면, Then 이 티켓이 foundation 단일 owner이고 `OPENSAM-150` 및 이후 just-in-time owner는 handoff 전 동일 shared class를 병렬 변경하지 않는다.
+- **의존성:** `ARCH-S2-T1`, `ARCH-S2-T2`의 scoped key contract. 과거 `blocks OPENSAM-44` Jira link는 발행 이력으로만 남고, 구현 dependency는 `OPENSAM-150` 및 이후 just-in-time owner에 적용한다.
+- **검증 방법:** Testcontainers CRUD/tombstone suite, SQL capture assertion, unscoped query static/architecture test, just-in-time consumer handoff checklist.
 
 #### ARCH-S2-T4 — Two-world identical-local-ID isolation gate
 
@@ -208,7 +211,7 @@
 - **사용자 가치:** 두 daemon이 같은 world를 쓰거나 오래된 daemon이 재등장해도 최신 상태를 덮어쓰지 않는다.
 - **수용 기준 (GWT):** Given writer epoch E와 expected `world_version=V`, When flush transaction이 시작되면, Then transaction 시작부에서 per-world lock/fence를 검증하고 기존 parity-sensitive JDBC operation order를 그대로 실행하며, 원래 canonical `world_state` 단계에서 `(world_id, writer_epoch, version=V)` CAS가 정확히 1 row를 갱신해야 commit한다.
 - **수용 기준 (GWT):** Given stale epoch 또는 version mismatch로 CAS affected-row가 0일 때, When transaction을 종료하면, Then 앞서 실행된 모든 SQL도 함께 rollback되고 generation은 commit되지 않으며 engine은 recovery state로 이동한다.
-- **의존성:** `ARCH-S3-T1` 완료. Jira에서 `blocks OPENSAM-44`를 유지하고 이 티켓 완료 시 shared-contract handoff artifact를 첨부한다.
+- **의존성:** `ARCH-S3-T1` 완료. 과거 `blocks OPENSAM-44` Jira link는 발행 이력으로만 남기고, shared-contract handoff artifact는 `OPENSAM-150` 및 이후 just-in-time consumer가 참조한다.
 - **검증 방법:** 두 writer concurrency IT, stale epoch negative test, CAS=0 rollback DB snapshot, SQL operation sequence golden/spy test, `DaemonNoEntityManagerTest`.
 
 #### ARCH-S3-T3 — FLUSH_RETRY/RELOAD safety gate and recovery
@@ -359,7 +362,7 @@
 | W0 (evidence) | `S1-T1`, `S1-T2` 병렬 → `S1-T3` | local/live `OPENSAM-123` proof와 `OPENSAM-124` W3 durable binding은 activation/cutover evidence로 유지한다. 이 증거의 보류는 아래 build-only foundation을 막지 않는다. |
 | B0 (build-only) | `S2-T0` / `OPENSAM-148` canonical identity | positive `WorldId`, SQL/wire contract, alias/default rejection, single-world fail-closed backfill rule. `OPENSAM-43`은 broad V2 scope를 보존한 채 open으로 남는다. |
 | B1 (build-only) | `S2-T1` → `S2-T2`/`S2-T3` → `S2-T4` | canonical identity를 소비한 scoped schema/read/write/key와 two-world 동일-ID gate green. `OPENSAM-148`이 `OPENSAM-126`을 block한다. |
-| B2 (build-only) | `S3-T1` → `S3-T2` → shared-contract handoff → `S3-T3` | generation state machine, fence/CAS rollback, recovery 동안 intake/tick 정지 증거; OPENSAM-44 handoff link |
+| B2 (build-only) | `S3-T1` → `S3-T2` → shared-contract handoff → `S3-T3` | generation state machine, fence/CAS rollback, recovery 동안 intake/tick 정지 증거; OPENSAM-150/JIT consumer handoff link |
 | B3 (build-only) | `S4-T1` → `S4-T3` → `S4-T2` ACK/reclaim implementation (inactive) → `S4-T4` | DB-before-202, atomic result/outbox, post-commit ACK, 전체 crash matrix green; durable W3 activation은 activation/cutover gate에서만 허용 |
 | Activation/cutover | local/live `OPENSAM-123` proof + `OPENSAM-124` W3 durable binding + B0→B3 evidence | 위 두 W0 proof가 승인되기 전에는 second-world admission, durable W3 activation, production cutover를 실행하지 않는다. |
 | W4 | `S5-T1`과 `S5-T3`의 구현은 durability gate 뒤 분리 가능 → `S5-T2` | bounded phase prefetch, full-history scan 0, 10배 cold heap delta 기준 통과, primary version barrier green |
@@ -369,7 +372,7 @@
 
 - `ChangeRecorder`, `JdbcFlushExecutor`, shared delta/flush contract는 `ARCH-S2-T3 → S3-T1 → S3-T2` 단일 writer 순서를 지킨다.
 - Build-only foundation 순서는 `ARCH-S2-T0` (identity) → `ARCH-S2` → `ARCH-S3` → `ARCH-S4`다. `OPENSAM-123` local/live proof와 `OPENSAM-124` W3 binding은 이 순서의 approval/implementation blocker가 아니라 activation/cutover gate다.
-- `OPENSAM-44`는 handoff 전 shared foundation을 수정하지 않는다.
+- `OPENSAM-150` 및 이후 just-in-time consumer는 handoff 전 shared foundation을 수정하지 않는다.
 - Redis consumer-group 코드는 사전 준비할 수 있지만 ACK/reclaim을 활성화하는 배포는 `S3-T3`, `S4-T1`, `S4-T3` 완료 뒤다.
 - hot/cold access-graph 조사는 일찍 할 수 있지만 runtime activation은 `S1-T3`와 `S4-T4` 뒤다.
 
@@ -387,7 +390,7 @@
 2. Jira Story 6개를 Epic parent로 생성한다.
 3. Jira Sub-task 20개를 해당 Story parent로 생성한다.
 4. 모든 신규 Jira 티켓 priority를 `Highest`로 확인한다.
-5. 기존 `OPENSAM-43/44/45/33/72`와 위 dependency/relates/block link를 생성하고, OPENSAM-44/45에는 소유 경계 comment를 추가한다.
+5. **Historical issuance record:** 기존 `OPENSAM-43/44/45/33/72`와 위 dependency/relates/block link를 생성했고, OPENSAM-44/45에는 당시 소유 경계 comment를 추가했다. OPENSAM-44 구현 routing은 2026-08-13 crosswalk가 OPENSAM-150/JIT owners로 supersede한다.
 6. GitHub에 Jira 27개를 1:1 mirror issue로 생성한다. 제목은 `[<Jira key>] <summary>`, 본문은 Jira URL, parent, 사용자 가치, GWT 수용 기준, 의존성, 검증 방법을 포함한다.
 7. 존재가 재확인된 `M6` milestone과 사용 가능한 제안 label을 연결한다.
 8. 생성 결과를 Jira key ↔ GitHub issue URL 표로 이 문서에 backfill한다.
@@ -396,7 +399,7 @@
 
 - Jira: 27개 (`1 Epic + 6 Stories + 20 Sub-tasks`)
 - GitHub: 27개 mirror issues
-- 추가 외부 변경: 기존 Jira 5개에 issue link, 그중 OPENSAM-44/45에 경계 comment
+- 추가 외부 변경(당시 이력): 기존 Jira 5개에 issue link, 그중 OPENSAM-44/45에 경계 comment. OPENSAM-44 구현 routing은 현재 유효하지 않다.
 - 구현, commit, push, PR, deploy, production data 변경: **0개**
 
 ## 8. 승인 기록
@@ -406,7 +409,7 @@
 - Jira issue 27개 생성 및 parent/`Highest` 설정
 - GitHub mirror issue 27개 생성
 - 기존 Jira `OPENSAM-43/44/45/33/72`와 dependency/relates link 생성
-- `OPENSAM-44/45` 소유 경계 comment 추가
+- `OPENSAM-44/45` 소유 경계 comment 추가(당시 이력; OPENSAM-44 구현 소유는 2026-08-13 superseded)
 - 발행된 key/URL을 이 문서에 backfill
 
 승인은 구현, commit, push, PR, merge, deploy, read replica 생성 또는 production data migration을 포함하지 않았으며 실행하지 않았다.
@@ -416,7 +419,7 @@
 ## 9. 검토 기록
 
 - 저장소와 Jira/GitHub 기존 backlog를 read-only로 대조했다.
-- 독립 architecture review에서 지적된 `world_id` 전 구간 scoping, DB-before-202, generation-safe flush, order-preserving CAS, ACK hard dependency, OPENSAM-44 handoff, point-of-no-return, replica ADR-only 조건을 반영했다.
+- 독립 architecture review에서 지적된 `world_id` 전 구간 scoping, DB-before-202, generation-safe flush, order-preserving CAS, ACK hard dependency, 당시 OPENSAM-44 handoff, point-of-no-return, replica ADR-only 조건을 반영했다. OPENSAM-44 handoff 수신자만 2026-08-13에 OPENSAM-150/JIT owners로 supersede됐다.
 - 모든 신규 티켓을 `Highest`로 두는 데 대한 reviewer의 범위 우려는 기록하되, 사용자의 명시적 지시가 우선하므로 이 초안에서는 27개 모두 `Highest`로 유지한다.
 - 실제 production OOM은 확인되지 않았으며 문서 전체에서 capacity risk로만 표현한다.
 

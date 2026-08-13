@@ -61,6 +61,14 @@ is superseded together with the broad OP44 implementation contract. Ownership is
 Thus the removal of product SQL from OPENSAM-44 leaves no ownerless path between the scenario input,
 database `event` rows, and the R2/R3 runtime consumers.
 
+## Shared flush handoff supersession
+
+The active shared-flush handoff, CQRS failure contract, and memory-consistency hardening plan formerly
+named OPENSAM-44 as the implementation consumer. This crosswalk retargets that routing without
+changing the foundation contract: OPENSAM-150 is the first consumer, and each later mapper/flush
+extension belongs to the just-in-time product ticket that owns the accepted model and observable
+mutation. OPENSAM-44 remains documentation-only and cannot receive shared-flush implementation work.
+
 ## Checklist crosswalk
 
 `Source row` is preserved for traceability. `Disposition` replaces the old assumption that all rows
@@ -137,6 +145,7 @@ Body:
 - OPENSAM-150이 첫 제품 leaf `v2_city_ledger`와 첫 production migration `V901__v2_city_ledger.sql`을 소유한다.
 - OPENSAM-150은 migration-before-seed 순서와 configured v2 scenario source→v2 DB `event` 적재 seam도 개설·실증한다.
 - OPENSAM-151은 그 seam을 소비하는 v2 시나리오 JSON, `ignoreDefaultEvents: true`, 시나리오 유래 event 전량, action 등록, seed/reseed 판정을 소유한다.
+- 기존 OPENSAM-128 shared-flush handoff의 첫 구현 소비자는 OPENSAM-150이며, 이후 mapper/flush 확장은 실제 mutation을 소유한 just-in-time product ticket이 소비한다. OPENSAM-44는 shared-flush 구현을 소유하지 않는다.
 - 이후 migration은 선행 모델/validator와 실제 write/read 소비자가 준비된 제품 티켓이 `V902+`를 순서대로 소유한다.
 - daemon mutation은 계속 `ChangeRecorder -> JdbcFlushExecutor` 단일 경로이며, read-only catalog에 불필요한 write channel을 선설치하지 않는다.
 - v1 default/production에는 v2 migration/bean/content가 0개여야 한다.
@@ -176,7 +185,7 @@ DoD:
 Comment after the issue edit:
 
 ```md
-2026-08-13 계약 정정: 기존 broad T1 persistence 일괄 구현 문구는 supersede했습니다. OPENSAM-44는 문서/소유권 crosswalk만 닫고 제품 SQL을 추가하지 않습니다. OPENSAM-43의 V900은 test-only isolation probe로 유지하며, OPENSAM-150이 `V901__v2_city_ledger.sql`과 첫 실제 v2 leaf 및 migration-before-seed/source→DB 적재 seam을 소유합니다. OPENSAM-151은 그 seam을 소비하는 v2 scenario event 저작·등록·재시드 판정을 소유합니다. 나머지 T1 `[아키]` 항목은 선행 모델과 실제 소비자가 준비된 제품 티켓으로 이관했습니다.
+2026-08-13 계약 정정: 기존 broad T1 persistence 일괄 구현 문구는 supersede했습니다. OPENSAM-44는 문서/소유권 crosswalk만 닫고 제품 SQL을 추가하지 않습니다. OPENSAM-43의 V900은 test-only isolation probe로 유지하며, OPENSAM-150이 `V901__v2_city_ledger.sql`과 첫 실제 v2 leaf, migration-before-seed/source→DB 적재 seam, OPENSAM-128 shared-flush handoff의 첫 구현 소비를 소유합니다. OPENSAM-151은 seed seam을 소비하는 v2 scenario event 저작·등록·재시드 판정을 소유합니다. 이후 shared-flush mapper/step은 실제 mutation을 소유한 just-in-time product ticket만 소비합니다. 나머지 T1 `[아키]` 항목은 선행 모델과 실제 소비자가 준비된 제품 티켓으로 이관했습니다.
 
 정본: `docs/superpowers/plans/2026-08-13-opensam-44-contract-crosswalk.md`
 ```

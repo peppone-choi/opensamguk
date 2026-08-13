@@ -39,6 +39,18 @@ single-writer boundary, the OPENSAM-150/151/152 split across the crosswalk/R1-R6
 ledger, and the truthful pending external issue synchronization. A final immutable exact-head
 review remains required after commit and push.
 
+A later exact-head Codex round found one additional stale routing defect on `ec4815aa`: the active
+shared-flush handoff, CQRS failure contract, and hardening plan still named OPENSAM-44 as the entity
+mapper/flush implementation consumer. Those authoritative documents now retain the foundation and
+historical Jira-link facts while routing the first product extension to OPENSAM-150 and every later
+extension to its crosswalk-assigned just-in-time product owner.
+
+The independent dirty-tree remediation review returned `CLEAR`: no active OPENSAM-44
+owner/consumer/blocker routing remains in the five authoritative documents or the combined changed
+documentation. It verified that the foundation sequence, world scope, JDBC-only daemon write,
+no-second-dirty-truth rule, and v1 isolation remain unchanged. An immutable exact-head review is
+still required after commit and push.
+
 ## Independent evidence
 
 - All 14 issue #186 checklist families appear exactly once in the crosswalk: A02/A03, A07/A08,
