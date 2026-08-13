@@ -98,3 +98,38 @@ Earlier review result: cleared
   `git diff --check` PASS.
 
 Verdict: cleared
+
+## 2026-08-13 Codex read-only target drain remediation
+
+- GitHub inline review `discussion_r3775385843` found that proposal-only target
+  preload reused the mutable `destNation` carrier. The unconditional drain then
+  materialized a high-precision `tech` value as MariaDB float, producing an
+  unrelated nation patch and overwriting the in-memory target.
+- PHP evidence confirms these proposal paths read target identity/color and send
+  a message, but do not update the target nation:
+  `che_종전제의.php:121-165`, `che_불가침제의.php:172-221`, and
+  `che_불가침파기제의.php:123-167`.
+- TDD RED: the focused engine test failed at
+  `ReservedDiplomacyDestTargetTest.kt:243` after the target fixture received
+  `tech=12.3456789012345`; the recorder contained a nation patch before any
+  production change (`BUILD FAILED`, 3 tests / 1 failure).
+- Remediation: the drain now compares the resolver's destination carrier with
+  the exact pre-resolution logic snapshot and exits without materialization,
+  recording, or world replacement when no resolver mutation occurred. Genuine
+  destination mutations still follow the existing materialize → diff → apply
+  path.
+- GREEN evidence: focused `ReservedTurnHandlerTest` plus
+  `ReservedDiplomacyDestTargetTest` completed with `BUILD SUCCESSFUL in 1m 2s`;
+  XML reports 30 + 3 tests, failures/errors/skips 0. The proposal regression
+  keeps exact logs and message target/action assertions, asserts
+  `nationPatches()` empty for all three commands, and preserves the exact
+  high-precision world value.
+- `tools/agent-system/check.py --strict --base origin/main` reports 7 changed
+  files, errors 0, warnings 0; `git diff --check` is clean.
+- Independent read-only remediation review (`review_pr400_remediation`) checked
+  PHP read-only behavior, the mutation path, ChangeRecorder invariants, and the
+  focused XML, and returned `cleared` with no findings. Existing 임관 and
+  무작위임관 coverage continues to prove genuine destination `gennum`
+  mutations reach the nation dirty channel.
+
+Remediation verdict: cleared

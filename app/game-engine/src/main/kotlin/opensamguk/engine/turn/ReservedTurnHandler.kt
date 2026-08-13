@@ -522,8 +522,10 @@ class ReservedTurnHandler(
         draft.destNation?.takeIf { it.id != nationId }?.let { destNation ->
             val pre = world.getNationById(destNation.id)
                 ?: error("ReservedTurnHandler: dest nation ${destNation.id} not in world")
+            val preNation = PerTurnOverlay.toLogicNation(pre)
+            if (destNation == preNation) return@let
             val postNation = destNation.copy(tech = materializeMariaDbFloat(destNation.tech))
-            recorder.diffNation(PerTurnOverlay.toLogicNation(pre), postNation)
+            recorder.diffNation(preNation, postNation)
             world.applyNationDirtyFree(applyNationPatch(pre, postNation))
         }
         // cascade generals (무작위건국 follower moves; 이동 roaming-leader / 집합 troop members — these were

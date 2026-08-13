@@ -83,27 +83,28 @@ class ReservedDiplomacyDestTargetTest {
         supplyState = 1, frontState = 0, meta = linkedMapOf("trust" to 50),
     )
 
-    private fun nation(id: Int, capital: Int) =
+    private fun nation(id: Int, capital: Int, tech: Double = 0.0) =
         Nation(
             id = id,
             name = if (id == ACCEPT_NATION) "수락자" else "제의국",
             color = if (id == ACCEPT_NATION) "#00ff00" else "#0000ff",
             level = 2,
             capitalCityId = capital,
+            tech = tech,
         )
 
     private fun dip(from: Int, to: Int, state: Int, term: Int = 0) =
         TurnDiplomacy(fromNationId = from, toNationId = to, state = state, term = term)
 
     /** 두 국가가 [startState]로 마주한 월드 + 양방향 외교 행. */
-    private fun worldInState(startState: Int) = InMemoryTurnWorld(
+    private fun worldInState(startState: Int, proposerTech: Double = 0.0) = InMemoryTurnWorld(
         WorldSnapshot(
             state = TurnWorldState(
                 id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
             ),
             generals = listOf(accepterChief(), proposerChief()),
             cities = listOf(city(7, ACCEPT_NATION), city(8, PROPOSER_NATION)),
-            nations = listOf(nation(ACCEPT_NATION, 7), nation(PROPOSER_NATION, 8)),
+            nations = listOf(nation(ACCEPT_NATION, 7), nation(PROPOSER_NATION, 8, proposerTech)),
             diplomacy = listOf(
                 dip(ACCEPT_NATION, PROPOSER_NATION, state = startState),
                 dip(PROPOSER_NATION, ACCEPT_NATION, state = startState),
@@ -192,6 +193,7 @@ class ReservedDiplomacyDestTargetTest {
 
     @Test
     fun `reserved diplomacy proposals preserve the target nation identity in their mailbox payload`() {
+        val preciseTargetTech = 12.3456789012345
         val cases = listOf(
             ProposalCase(
                 "che_종전제의",
@@ -217,7 +219,7 @@ class ReservedDiplomacyDestTargetTest {
         )
 
         for (case in cases) {
-            val world = worldInState(case.startState)
+            val world = worldInState(case.startState, proposerTech = preciseTargetTech)
             val handler = handlerFor(world)
 
             val outcome = handler.handle(
@@ -238,6 +240,8 @@ class ReservedDiplomacyDestTargetTest {
             assertEquals(case.startState, world.getDiplomacy(ACCEPT_NATION, PROPOSER_NATION)?.state, case.actionCode)
             assertEquals(case.startState, world.getDiplomacy(PROPOSER_NATION, ACCEPT_NATION)?.state, case.actionCode)
             assertTrue(handler.recorder.diplomacyUpdateDirty().isEmpty(), case.actionCode)
+            assertTrue(handler.recorder.nationPatches().isEmpty(), case.actionCode)
+            assertEquals(preciseTargetTech, world.getNationById(PROPOSER_NATION)?.tech, case.actionCode)
         }
     }
 
