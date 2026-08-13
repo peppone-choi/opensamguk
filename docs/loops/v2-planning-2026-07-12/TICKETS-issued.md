@@ -22,7 +22,7 @@ Jira↔GitHub 자동 동기화는 없다. 진실 순서는 **코드 > PR > GitHu
 | 0 | `v2-open-step-0` | `OPENSAM-31`·`32`·`33`·`34` | v1 선행 4종 |
 | 1 | `v2-open-step-1` | `OPENSAM-149` | restart-rehydrate lossless gate |
 | 2 | `v2-open-step-2` | `OPENSAM-35` | V2-0A production 격리 (+DoD 3항목 추가) |
-| 3 | `v2-open-step-3` | `OPENSAM-43`·`44` | V2-0B 적재 + 영속화 일괄 |
+| 3 | `v2-open-step-3` | `OPENSAM-43`·`44` | V2-0B runtime/isolation 계약 + broad T1 영속화의 just-in-time 소유권 분해(제품 SQL 0) |
 | 3b | `v2-open-step-3b` | `OPENSAM-150` → `151` → `152` | **R1 → R2 → R3, 순차** |
 | 4 | `v2-open-step-4` | `OPENSAM-45`·`46`·`47` · `155` | V2-1 lifecycle + 조작 대상 패널 · **R6 동시** |
 | 4b | `v2-open-step-4b` | `OPENSAM-153` → `154` | **R4 → R5, 순차** |

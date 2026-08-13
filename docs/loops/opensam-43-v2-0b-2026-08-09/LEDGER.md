@@ -22,9 +22,9 @@ implement or certify the runtime/Flyway/catalog/wire lanes.
 | Determinism | Two typed loads; in-memory diff is empty | This is an adapter acceptance condition, not a deployment claim. |
 
 The formerly recorded G0/counter-1,180/`CountyParticipationFixture` prerequisite
-is superseded only for OPENSAM-43. V2-G0 remains post-open work. OPENSAM-44/150
-persistence and first leaf, OPENSAM-104/105 RTK builders, deployment, and cutover
-remain outside this lane.
+is superseded only for OPENSAM-43. V2-G0 remains post-open work. OPENSAM-44
+contract decomposition, OPENSAM-150 first product persistence and leaf,
+OPENSAM-104/105 RTK builders, deployment, and cutover remain outside this lane.
 
 ## Documentation loop
 

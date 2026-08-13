@@ -2,7 +2,7 @@
 
 ## 재분해 규약 (읽는 사람 주의)
 - 각 티켓 앞 태그: `[문서]` = 내용·완료기준이 스펙 문서에 직접 근거. `[아키]` = 산출물 분리(마이그레이션/row mapper·flush/read API/프론트 렌더/ChangeRecorder 채널)는 **스펙 문서가 아니라 저장소 CQRS 아키텍처(CLAUDE.md)에서 추론한 구조적 산출물**. 스펙은 필드 모양·불변식만 주고 SQL·mapper 세부는 안 주므로 이런 티켓 완료기준은 대부분 "문서 미명시"이고 컬럼은 짝이 되는 `모델 정의` 티켓 필드에서 파생.
-- 문서1 시퀀싱: **G0 = in-memory contract(DB write 없음), V2-0B = sandbox 적재+runtime adapter**. `[아키]` 마이그레이션/mapper/flush는 원칙적으로 V2-0B 이후 산출물(→ (V2-0B) 표기), `모델 정의`·`validator`·`in-memory fixture`가 G0 산출물.
+- 문서1 시퀀싱: **G0 = in-memory contract(DB write 없음), V2-0B = sandbox 적재+runtime adapter**. `[아키]` 마이그레이션/mapper/flush의 `(V2-0B)` 표기는 역사적 최초 배치 가정이며, OPENSAM-44가 이를 일괄 구현한다는 뜻이 아니다. 정정 정본은 `2026-08-13-opensam-44-contract-crosswalk.md`: OPENSAM-44는 계약·소유권 분해만 하고, 실제 영속화는 선행 모델과 소비 동작을 가진 개별 제품 티켓이 just-in-time으로 소유한다. 첫 제품 migration은 OPENSAM-150의 `V901`; `모델 정의`·`validator`·`in-memory fixture`는 해당 G0/제품 계약 산출물이다.
 - 완료기준 없으면 "문서 미명시". 문서가 큰 덩어리로만 준 지점은 "추가 분해 필요".
 
 ---

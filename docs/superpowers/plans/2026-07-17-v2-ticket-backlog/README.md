@@ -36,7 +36,7 @@ v2 문서 10종 전체를 4개 독립 에이전트가 정독·분해한 결과�
 - D1(카탈로그) 명령 등록 ↔ D1-18~27(identity) ↔ T2-I(court) — **id·payload는 카탈로그가 정본**, identity/court 문서는 lifecycle·resolver 의미만.
 - T1-*(systems) 모델 정의 ↔ G0A~C 계약 티켓 — 같은 계약, T1이 필드 상세판. G0 착수 시 T1 필드 정의를 그대로 사용.
 
-`[아키]` 태그(04-systems): 스펙이 아니라 CQRS 아키텍처에서 추론한 산출물(마이그레이션/mapper/flush/read API). **영속화 시점은 V2-0B 이후**(문서1), 문서2는 미명시 → 착수 전 확정 필요.
+`[아키]` 태그(04-systems): 스펙이 아니라 CQRS 아키텍처에서 추론한 산출물(마이그레이션/mapper/flush/read API). 과거의 V2-0B 일괄 귀속은 `2026-08-13-opensam-44-contract-crosswalk.md`가 supersede한다. OPENSAM-44는 계약·소유권 분해만 하며, 실제 영속화는 선행 모델과 소비 동작을 가진 개별 제품 티켓이 just-in-time으로 소유한다. 첫 제품 migration은 OPENSAM-150의 `V901`이다.
 
 ## 계층 구조 (Jira 매핑)
 
@@ -60,7 +60,7 @@ v2 문서 10종 전체를 4개 독립 에이전트가 정독·분해한 결과�
 > | 0 | `OPENSAM-31`·`32`·`33`·`34` | v1 선행 — 안정화 체크리스트 · B1b 자동외교 6종 · B2 운영 스모크 · 배포 체크 Go 5종 |
 > | 1 | `OPENSAM-149` | restart-rehydrate lossless gate (v1/v2 공용 데몬 — 포크 전에 한 번만 고친다) |
 > | 2 | `OPENSAM-35` | V2-0A production 격리 게이트 (+DoD 3항목: v2 별도 compose 스택·env 분리 / `SPRING_FLYWAY_LOCATIONS` 오버라이드 / 0A-f 실측) |
-> | 3 | `OPENSAM-43`·`44` | V2-0B sandbox 적재 + 영속화 일괄 |
+> | 3 | `OPENSAM-43`·`44` | V2-0B runtime/isolation 계약 완료 + broad T1 영속화의 just-in-time 소유권 분해(OP44는 제품 SQL 0) |
 > | 3b | **`OPENSAM-150`(R1) → `151`(R2) → `152`(R3)** | **도시 원장 3종 — 순차.** R1 `v2_city_ledger` 기반(스키마+flush 경로) / R2 수입·봉록 도시 귀속(`ProcessIncome` leaf 치환, **생산자**) / R3 병력 0 → 공백지화(**소비자**). R3‖R2 병렬은 철회됐다(공유 파일 2건 + 등록 순서 의존) |
 > | 4 | `OPENSAM-45`·`46`·`47` · **`155`(R6, 동시)** | V2-1 command result lifecycle + 조작 대상 패널 · **R6 도시 원장 열람**(read API + 패널 필드)은 패널 위에 얹으므로 동시 |
 > | 4b | **`OPENSAM-153`(R4) → `154`(R5)** | **v2 개인턴 커맨드 2종 — 순차.** R4 도시병사 보충 / R5 수송(금·병량·도시병사, 인접 1홉). `CommandWireMapper`·`TurnDaemonCommandDispatcher` 두 파일을 공유 |
@@ -79,7 +79,7 @@ v2 문서 10종 전체를 4개 독립 에이전트가 정독·분해한 결과�
 1. **선행(비-v2)**: v1 안정화 잔여 D4-01~17 + 배포 체크 D4-31~35. B1은 오픈 전 hardening gate 승격.
 2. **V2-0A** production 격리(0A-a~g = D4-18~22) — 모든 v2 코드의 관문.
 3. **V2-G0** 3웨이브 병렬 가능(G0-A 행정 / G0-B 주변세계 / G0-C 3D) — in-memory, DB write 없음. T1 그룹 A/B/E/F/G의 `[문서]` 모델·validator 티켓이 여기 속한다.
-4. **V2-0B** sandbox 적재 — `[아키]` 마이그레이션/mapper/flush 티켓 일괄 여기서.
+4. **V2-0B** sandbox runtime 계약 — OP43이 test-only V900 probe와 typed adapter를 검증하고, OP44가 `[아키]` 항목을 실제 소비 제품 티켓으로 분해한다. 제품 SQL은 OP150 `V901`부터 시작한다.
 5. **V2-1** 명령 lifecycle → 이후 execution-plan 순서대로. C-track은 exact-count 게이트(120/72/18/24/24/32) 준수, ContentEntry는 ACTIVE만 완료 계수.
 6. **매 phase 공통 게이트** GATE-a~f (PHP oracle 증거·webapp-testing·loop 증거·check.py strict·v1 gate·외부 리뷰어).
 
