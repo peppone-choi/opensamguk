@@ -74,6 +74,28 @@ class GatewayBoardService(
     }
 
     @Transactional
+    fun updatePost(
+        postId: Long,
+        request: UpdateGatewayBoardPostRequest,
+        principal: CustomUserDetails,
+    ): GatewayBoardPostResponse {
+        val post = getPost(postId)
+        requireOwnerOrAdmin(post.authorAccountId, principal)
+        if (post.deletedAt != null) {
+            throw GatewayBoardConflictException("삭제된 게시글은 수정할 수 없습니다.")
+        }
+        val category = requireNotNull(request.category) { "category는 필수입니다." }
+        if (category == GatewayBoardCategory.NOTICE && !principal.isAdmin()) {
+            throw GatewayBoardForbiddenException("공지글은 관리자만 작성할 수 있습니다.")
+        }
+        post.category = category
+        post.title = request.title.trim()
+        post.contentHtml = contentSanitizer.plainTextToSafeHtml(request.content)
+        post.updatedAt = Instant.now()
+        return postResponse(post, principal)
+    }
+
+    @Transactional
     fun createComment(
         postId: Long,
         request: CreateGatewayBoardCommentRequest,
