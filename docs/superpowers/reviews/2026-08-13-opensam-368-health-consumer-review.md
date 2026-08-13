@@ -6,14 +6,27 @@ Verdict: cleared
 ## Independent review identity
 
 - Reviewer: independent `lazycodex-code-reviewer` subagent, read-only.
-- Reviewed exact rebased HEAD: `87bfbbd7cb5d8b0ed2cdce5d42546f559559f196`.
+- Reviewed reachable PR HEAD:
+  `ee2726cfa735468d9b13c0876f0b9db8e80ed6d8`.
 - Base and merge base: `origin/main` at
   `f4ee9135ad6cbce1c6cfb28f7113d7742f478282`.
-- Review report: `.omo/evidence/opensam368_health_consumer-code-review.md`.
+- Portable product-tree identity at that reviewed revision:
+  - `.github/workflows/daemon-health-alert.yml` blob
+    `adf653d1c8540fe15301c5047d721d4252c3d5e6`;
+  - `docker-compose.production.yml` blob
+    `ca9beff780a1ed0e0674c6fe294edf7f296ad638`;
+  - `tools/ops/daemon_health_alert.sh` blob
+    `cac0971bc8737759eefbc3bec3eafc45a247de79`;
+  - `tools/ops/daemon_health_alert_contract_test.sh` blob
+    `832729faaf343eaa499efe2f76af400c4b680987`.
 
-The fresh review found no CRITICAL, HIGH, MEDIUM, or LOW issue. This metadata
-refresh is the only change after the reviewed commit; no implementation or test
-file changed after that review.
+The exact-HEAD review found no product/runtime issue. It found one HIGH
+evidence-metadata issue in the prior revision of this artifact: that revision
+cited a non-ancestor commit and an untracked `.omo` report. This portable report
+replaces those references with a reachable reviewed revision, immutable product
+blob identities, and the independently observed commands below. The remediation
+changes evidence metadata only; the four reviewed product/test blobs remain
+unchanged.
 
 ## Findings checked independently
 
@@ -49,6 +62,21 @@ file changed after that review.
 - Static GREEN: `git diff --check`, shell syntax, and YAML parsing. The reviewer
   also confirmed the game-engine image supplies `curl` and the identifier
   grammar matches the canonical deploy/reset contract.
+- Exact-HEAD independent rerun:
+  - `git diff --check f4ee9135ad6cbce1c6cfb28f7113d7742f478282
+    ee2726cfa735468d9b13c0876f0b9db8e80ed6d8`;
+  - `bash -n tools/ops/daemon_health_alert.sh
+    tools/ops/daemon_health_alert_contract_test.sh`;
+  - `bash tools/ops/daemon_health_alert_contract_test.sh` printed
+    `PASS: daemon health alert workflow and script contracts`;
+  - production Compose rendered with `--env-file /dev/null` and explicit inert
+    required values, confirming the Actuator probe, `10s` interval, `5s`
+    timeout, 30 retries, `5m0s` start period, and
+    `restart=unless-stopped`.
+- The reviewer separately confirmed that the contract exercises the
+  `spep-game-engine` inventory path, inventory/dispatch/status fail-closed
+  branches, secret non-leakage, and Compose healthcheck shape. No secret value
+  was read or committed.
 
 ## Deliberately unexecuted
 
