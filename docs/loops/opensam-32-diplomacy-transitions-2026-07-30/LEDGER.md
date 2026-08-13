@@ -7,6 +7,7 @@
 | 2 | 고정 명령 모달이 backend catalog의 구조화 폼을 소비하면 D4-10이 `destNationID/year/month`를 순서대로 예약한다 | RED 1/3→15/15, edge RED 1/6→최종 16/16 green + typecheck | `CommandModal.form-spec` + terminal-result + `DiplomacyPage.command` | 채택 | authoritative `formSpec`의 세 필드를 pinned launch에도 보존하고 조회 실패·row 누락·form 누락은 fail-closed한다 |
 | 3 | 제의 메시지 target은 preload된 상대국 색을 사용해야 PHP JSON과 일치한다 | 20 tests / 3 failures→30/30 green | 세 proposal GoldenTest + proposal fallback regression | 채택 | 세 Kotlin 명령이 사용 가능한 `draft.destNation.color` 대신 `#000000`을 고정했다 |
 | 4 | 한 실제 제의→수락→recorder→JDBC 경로를 잇는 통합 회귀가 분리 seam의 false-green을 막는다 | 분리 seam green→실제 IT 2/2, skip 0 | `DiplomaticMessageWorldScopeIT` | 채택 | 실제 lifecycle proposal, DB message read, accept delta, 세 flush와 same-world declaration을 한 테스트가 잇는다 |
+| 5 | reserved proposal adapter가 세 제의의 `destNation` 실국가 identity를 resolver에 preload하면 PHP name/color/log payload가 복원된다 | engine 3 tests / 1 failure→3/3 green; logic 30/30 green | reserved runtime regression + 세 zero-RNG golden | 채택 | 제약은 `destNationID`를 알았지만 resolver draft는 대상국을 들고 있지 않아 `상대국/#000000`을 직렬화했다 |
 
 ## 0바퀴 계약
 
@@ -175,3 +176,29 @@
     grader인 focused Vitest 16/16과 typecheck는 PASS.
   - production/EC2, deploy, Jira transition, commit/push/merge, data delete,
     secret access, legacy/golden write.
+
+## 5바퀴 — 2026-08-13 runtime regression
+
+- PHP oracle:
+  - `che_종전제의.php:121-165`
+  - `che_불가침제의.php:167-221`
+  - `che_불가침파기제의.php:119-167`
+  - 세 명령 모두 `$this->destNation`의 name/color를 MessageTarget과 action log에 쓰며
+    RNG draw와 proposal-time diplomacy UPDATE가 없다.
+- 최소 수정:
+  - `ReservedTurnHandler.preloadDraftTargets` 대상을 세 proposal code에만 늘렸다.
+  - 세 resolver는 preload된 `draft.destNation.name/color`를 사용하고, 격리 unit
+    context의 기존 fallback은 유지한다.
+  - engine regression은 실제 국명/색, PHP 조사 quirk, action option, 제의 전·후
+    양방향 상태 불변, diplomacy dirty 0을 고정한다.
+- fresh evidence:
+  - engine focused: `BUILD SUCCESSFUL in 28m 55s`; XML 3/0/0/0.
+  - logic proposal goldens: `BUILD SUCCESSFUL in 9m 5s`; XML 30/0/0/0.
+  - backend parity gate: `BUILD SUCCESSFUL in 42m 22s`; 35 tasks executed,
+    XML gate 617 suites / 5,183 tests green.
+  - `git diff --check`: PASS.
+- 독립 static review: `cleared`; 대상 identity/color, 정확 로그/조사, zero RNG,
+  proposal 상태 불변, 기존 accept state/term을 PHP와 재대조했다.
+- 초기 engine RED 재실행은 로그의 ActionLogger 월 prefix와 JSON key
+  (`nation` vs `name`)를 테스트가 빠뜨린 것이었다. PHP/Kotlin 직렬화 규약으로
+  기대값을 보정했고 production behavior는 추가 확장하지 않았다.

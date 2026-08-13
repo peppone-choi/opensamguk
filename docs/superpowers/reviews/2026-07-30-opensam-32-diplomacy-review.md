@@ -1,6 +1,6 @@
 # OPENSAM-32 외교 상태 전이 독립 리뷰
 
-Scope: OPENSAM-32 D4-08~13의 PHP 대비 제의 payload/RNG, 수락 상태 전이, reserved/instant/flush/UI 경로
+Scope: OPENSAM-32 D4-08~13의 PHP 대비 제의 payload/RNG, 수락 상태 전이, app/ reserved/instant/flush/UI 및 logic/ resolver 경로
 
 Reviewer: `op32_independent_review` (`fable-deep-reasoner`, read-only)
 
@@ -79,5 +79,22 @@ Reviewer: `op32_independent_review` (`fable-deep-reasoner`, read-only)
 - Agent OS 상태·handoff·allowed-file 문서를 실제 diff와 최종 증거에 맞췄다.
 - 최종 read-only 재검토에서 BLOCKER/MAJOR/MINOR/QUESTION이 모두 0이며,
   current handoff의 다음 티켓도 OPENSAM-33 한 건으로 정합화됐다.
+
+Earlier review result: cleared
+
+## 2026-08-13 reserved proposal preload 재감사
+
+- Reviewer: `op32_static_review` (`fable-deep-reasoner`, read-only).
+- 검사 범위: 세 proposal의 reserved adapter preload, resolver name/color/log,
+  zero-RNG golden, proposal state non-mutation, 기존 accept state/term.
+- 변경 영역: `logic/src` resolver 3개와 `app/game-engine` reserved adapter/test.
+- PHP 근거: `che_종전제의.php:121-165`, `che_불가침제의.php:167-221`,
+  `che_불가침파기제의.php:119-167`; accept 상태/기간은 기존 범위를 재확인했다.
+- 결과: blocker/major/minor 0. 리뷰어가 지적한 engine fixture의 조사
+  구분력과 stale KDoc는 바로 보강했다.
+- fresh implementer evidence: engine XML 3/0/0/0, logic XML 30/0/0/0,
+  각각 `BUILD SUCCESSFUL in 28m 55s` / `9m 5s`; backend parity gate는
+  `BUILD SUCCESSFUL in 42m 22s`, XML 617 suites / 5,183 tests green이다.
+  `git diff --check` PASS.
 
 Verdict: cleared

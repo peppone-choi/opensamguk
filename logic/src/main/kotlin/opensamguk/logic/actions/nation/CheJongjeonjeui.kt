@@ -75,11 +75,11 @@ class CheJongjeonjeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipel
      */
     override fun resolve(context: GeneralActionResolveContext) {
         val destNationID = (context.args["destNationID"] as? Int) ?: return
-        val destNationName = context.destGeneralName.ifEmpty { "상대국" }
+        val draft = context.draft
+        val destNationName = draft.destNation?.name ?: context.destGeneralName.ifEmpty { "상대국" }
         val josaRo = JosaUtil.pick(destNationName, "로")
         context.addLog("<D><b>$destNationName</b></>$josaRo 종전 제의 서신을 보냈습니다.<1>${context.date}</>")
 
-        val draft = context.draft
         val general = draft.general
         val nation = draft.nation ?: return
 

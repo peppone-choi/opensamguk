@@ -134,7 +134,7 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
         val general = draft.general
         val nation = draft.nation ?: return
 
-        val destNationName = context.destGeneralName.ifEmpty { "상대국" }
+        val destNationName = draft.destNation?.name ?: context.destGeneralName.ifEmpty { "상대국" }
         // josaRo는 PHP대로 ACTOR 국명(nation.name)으로 고른다(che_불가침제의.php:170) — 표시는 상대국명(:182).
         val josaRo = JosaUtil.pick(nation.name, "로")
         val josaWa = JosaUtil.pick(nation.name, "과", "와")

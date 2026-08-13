@@ -1163,6 +1163,9 @@ class ReservedTurnHandler(
                 draft.destGeneral = PerTurnOverlay.toLogicGeneral(target)
                 preloadDestNationAndLordCity(draft, target.nationId)
             }
+            in DIPLOMACY_PROPOSAL_COMMANDS -> intArg(args, "destNationID")?.let { id ->
+                world.getNationById(id)?.let { draft.destNation = PerTurnOverlay.toLogicNation(it) }
+            }
         }
     }
 
@@ -1648,6 +1651,12 @@ class ReservedTurnHandler(
         const val INJAE_TAMSAEK = "che_인재탐색"
 
         val JOIN_COMMANDS_WITH_DEST_NATION = setOf(IMGWAN, JANGSU_DAESANG_IMGWAN)
+
+        internal val DIPLOMACY_PROPOSAL_COMMANDS = setOf(
+            "che_종전제의",
+            "che_불가침제의",
+            "che_불가침파기제의",
+        )
 
         val RANDOM_IMGWAN_WEIGHTED_NPC_TYPES = setOf(0, 1, 2, 3, 6)
 
