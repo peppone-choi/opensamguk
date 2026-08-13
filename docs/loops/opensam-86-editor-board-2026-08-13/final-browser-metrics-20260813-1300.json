@@ -1,0 +1,135 @@
+{
+  "generatedAt": "2026-08-13T03:46:30.563Z",
+  "results": [
+    {
+      "label": "meeting-desktop",
+      "url": "http://127.0.0.1:3102/game/board",
+      "metrics": {
+        "innerWidth": 1440,
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "editor": true,
+        "toolbarButtons": [
+          "굵게",
+          "기울임",
+          "취소선"
+        ],
+        "titleMax": "250",
+        "commentMax": "250"
+      },
+      "strongTexts": [
+        "새 게시물 작성",
+        "천하"
+      ],
+      "emTexts": [
+        "찬성"
+      ],
+      "xssExecuted": null,
+      "plainCommentText": 1
+    }
+  ],
+  "secretState": {
+    "heading": 1,
+    "badge": 2,
+    "strong": 2,
+    "controls": [
+      {
+        "text": "회의실",
+        "width": 66.59375
+      },
+      {
+        "text": "기밀실",
+        "width": 66.59375
+      },
+      {
+        "text": "새로고침",
+        "width": 78.125
+      },
+      {
+        "text": "수뇌부 전용",
+        "width": 73.09375
+      }
+    ],
+    "scroll": {
+      "clientWidth": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  "blockedState": {
+    "reasonVisible": 1,
+    "editorCount": 0
+  },
+  "toggleBack": {
+    "meetingHeading": 1,
+    "secretPressed": "false",
+    "meetingPressed": "true"
+  },
+  "mobileMeeting": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "controls": [
+      {
+        "text": "회의실",
+        "width": 66.59375,
+        "height": 33
+      },
+      {
+        "text": "기밀실",
+        "width": 66.59375,
+        "height": 33
+      },
+      {
+        "text": "새로고침",
+        "width": 78.125,
+        "height": 33
+      }
+    ]
+  },
+  "mobileSecret": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "controls": [
+      {
+        "text": "회의실",
+        "width": 66.59375,
+        "height": 33
+      },
+      {
+        "text": "기밀실",
+        "width": 66.59375,
+        "height": 33
+      },
+      {
+        "text": "새로고침",
+        "width": 78.125,
+        "height": 33
+      },
+      {
+        "text": "수뇌부 전용",
+        "width": 73.09375,
+        "height": 28
+      }
+    ]
+  },
+  "emptyGuard": {
+    "initialRegisterDisabled": true,
+    "titleOnlyEnabled": true,
+    "blankAfterTitleClearDisabled": true,
+    "boldHtml": "<p><strong>새 글</strong></p>",
+    "registerBeforeDelete": true,
+    "trailingHtml": "<p><br class=\"ProseMirror-trailingBreak\"></p>",
+    "registerAfterDelete": false,
+    "hasTrailingBreak": true
+  },
+  "boardRequests": [
+    false,
+    false,
+    true,
+    false,
+    true,
+    false,
+    true,
+    false
+  ],
+  "consoleErrors": []
+}
