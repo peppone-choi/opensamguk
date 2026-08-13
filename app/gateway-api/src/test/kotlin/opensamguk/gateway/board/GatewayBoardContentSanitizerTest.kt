@@ -27,7 +27,7 @@ class GatewayBoardContentSanitizerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["<p>&#x2007;</p>", "<p>&#x202f;</p>"])
+    @ValueSource(strings = ["<p>\u0085</p>", "<p>&#x2007;</p>", "<p>&#x202f;</p>"])
     fun `rich text containing only Unicode space separators is rejected`(content: String) {
         assertThrows(IllegalArgumentException::class.java) {
             sanitizer.toSafeHtml(content, GatewayBoardContentFormat.RICH_HTML)

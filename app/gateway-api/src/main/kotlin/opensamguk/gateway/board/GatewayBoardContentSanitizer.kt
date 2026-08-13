@@ -16,8 +16,7 @@ class GatewayBoardContentSanitizer {
         val safeHtml = Jsoup.clean(normalized, "", richTextSafelist, Document.OutputSettings().prettyPrint(false))
         val visibleText = Jsoup.parseBodyFragment(safeHtml).text().replace('\u00A0', ' ')
         val hasVisibleContent = visibleText.codePoints().anyMatch { codePoint ->
-            !Character.isWhitespace(codePoint) &&
-                !Character.isSpaceChar(codePoint) &&
+            !isUnicodeWhiteSpace(codePoint) &&
                 !isDefaultIgnorableCodePoint(codePoint)
         }
         require(hasVisibleContent) { "내용을 입력해주세요." }
@@ -32,6 +31,9 @@ class GatewayBoardContentSanitizer {
             .replace("\"", "&quot;")
             .replace("'", "&#39;")
             .replace("\n", "<br>")
+
+    private fun isUnicodeWhiteSpace(codePoint: Int): Boolean =
+        codePoint == 0x0085 || Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)
 
     // Unicode 15.0 Default_Ignorable_Code_Point ranges; used only for semantic emptiness.
     private fun isDefaultIgnorableCodePoint(codePoint: Int): Boolean =

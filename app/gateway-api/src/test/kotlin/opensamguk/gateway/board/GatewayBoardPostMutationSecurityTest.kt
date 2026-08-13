@@ -7,6 +7,8 @@ import opensamguk.infra.read.UserRepository
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -110,13 +112,14 @@ class GatewayBoardPostMutationSecurityTest {
         ).andExpect(status().isBadRequest)
     }
 
-    @Test
-    fun `rich text containing only an invisible format control is rejected by the API`() {
+    @ParameterizedTest
+    @ValueSource(strings = ["\\u0085", "&#x2060;"])
+    fun `rich text containing only invisible Unicode content is rejected by the API`(content: String) {
         mockMvc.perform(
             post("/board/posts")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    """{"category":"FREE","title":"title","content":"<p>&#x2060;</p>","contentFormat":"RICH_HTML"}""",
+                    """{"category":"FREE","title":"title","content":"<p>$content</p>","contentFormat":"RICH_HTML"}""",
                 )
                 .with(user(CustomUserDetails(author))),
         ).andExpect(status().isBadRequest)
