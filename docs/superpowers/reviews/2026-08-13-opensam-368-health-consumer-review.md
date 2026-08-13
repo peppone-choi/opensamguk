@@ -6,27 +6,29 @@ Verdict: cleared
 ## Independent review identity
 
 - Reviewer: independent `lazycodex-code-reviewer` subagent, read-only.
-- Reviewed reachable PR HEAD:
-  `ee2726cfa735468d9b13c0876f0b9db8e80ed6d8`.
+- Current reviewed candidate parent:
+  `972d0638704813485a9643198bd2488607cf6963`.
 - Base and merge base: `origin/main` at
   `f4ee9135ad6cbce1c6cfb28f7113d7742f478282`.
-- Portable product-tree identity at that reviewed revision:
+- Portable product-tree identity for the current candidate working tree based
+  on that parent:
   - `.github/workflows/daemon-health-alert.yml` blob
-    `adf653d1c8540fe15301c5047d721d4252c3d5e6`;
+    `e6e09279effbd926fbada81f1774d4f37ca2df35`;
   - `docker-compose.production.yml` blob
     `ca9beff780a1ed0e0674c6fe294edf7f296ad638`;
   - `tools/ops/daemon_health_alert.sh` blob
     `cac0971bc8737759eefbc3bec3eafc45a247de79`;
   - `tools/ops/daemon_health_alert_contract_test.sh` blob
-    `832729faaf343eaa499efe2f76af400c4b680987`.
+    `3421ac003fc249aa3b1052aa110c127ea96a425a`.
 
-The exact-HEAD review found no product/runtime issue. It found one HIGH
-evidence-metadata issue in the prior revision of this artifact: that revision
-cited a non-ancestor commit and an untracked `.omo` report. This portable report
-replaces those references with a reachable reviewed revision, immutable product
-blob identities, and the independently observed commands below. The remediation
-changes evidence metadata only; the four reviewed product/test blobs remain
-unchanged.
+The first exact-HEAD review found no product/runtime issue but found one HIGH
+evidence-metadata issue: the earlier artifact cited a non-ancestor commit and an
+untracked `.omo` report. After that correction, a new PR review found a real P2
+promotion race: the scheduled consumer called the alerter while Docker health
+was still `starting`. The runtime remediation was independently cleared, but
+that review correctly blocked the now-stale blob evidence. This portable report
+therefore records the new workflow/test blobs and the full review progression;
+it does not reuse either prior clearance as current-tree proof.
 
 ## Findings checked independently
 
@@ -41,6 +43,10 @@ unchanged.
   loop through that policy.
 - Docker inventory query failure remains fail-closed; a deliberately empty
   inventory is a documented successful no-op.
+- The scheduler defers only exact Docker health `starting`. The production
+  engine healthcheck bounds that state with a five-minute start period.
+  `unhealthy` and stopped/no-healthcheck containers still enter the alerter;
+  inspect failure makes the workflow fail without dispatching invented status.
 - The alert contract proves raw diagnostic and webhook sentinels do not leak to
   payload or output.
 - The already-present deploy recovery checks reject `recoveryReady != true`
@@ -62,7 +68,7 @@ unchanged.
 - Static GREEN: `git diff --check`, shell syntax, and YAML parsing. The reviewer
   also confirmed the game-engine image supplies `curl` and the identifier
   grammar matches the canonical deploy/reset contract.
-- Exact-HEAD independent rerun:
+- Historical exact-HEAD independent rerun before the startup-grace remediation:
   - `git diff --check f4ee9135ad6cbce1c6cfb28f7113d7742f478282
     ee2726cfa735468d9b13c0876f0b9db8e80ed6d8`;
   - `bash -n tools/ops/daemon_health_alert.sh
@@ -73,6 +79,13 @@ unchanged.
     required values, confirming the Actuator probe, `10s` interval, `5s`
     timeout, 30 retries, `5m0s` start period, and
     `restart=unless-stopped`.
+- Startup-grace RED: before the workflow guard, the new hermetic case exited 1
+  with `FAIL: Docker health starting must remain inside startup grace` and had
+  dispatched a false `status_unreadable` incident.
+- Startup-grace GREEN: the extracted workflow now returns success with no
+  payload only for `starting`. The same contract proves `unhealthy` returns
+  nonzero with `recovery_gated`, stopped/no-healthcheck returns nonzero with
+  `status_unreadable`, and an inspect failure returns nonzero with no payload.
 - The reviewer separately confirmed that the contract exercises the
   `spep-game-engine` inventory path, inventory/dispatch/status fail-closed
   branches, secret non-leakage, and Compose healthcheck shape. No secret value

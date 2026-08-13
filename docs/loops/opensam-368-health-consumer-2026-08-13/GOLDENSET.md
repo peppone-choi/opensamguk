@@ -36,6 +36,11 @@ outside this task.
    report a skipped successful verification.
 7. All behavioral evidence is hermetic: local command stubs and Compose render
    only. No live Docker engine, production runner, or webhook is invoked.
+8. The scheduled consumer defers exactly the Docker health `starting` state,
+   which is bounded by the engine healthcheck's five-minute start period. An
+   `unhealthy`, stopped/no-healthcheck, or unreadable inspect result never gains
+   startup grace: the first two continue through the alert path and an inspect
+   failure fails the workflow closed without fabricating daemon diagnostics.
 
 ## Baseline and one hypothesis
 

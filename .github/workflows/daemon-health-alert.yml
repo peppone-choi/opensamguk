@@ -34,6 +34,15 @@ jobs:
             [[ "$engine_container" =~ ^s[a-z0-9]{1,48}-game-engine$ ]] || continue
             found=1
             server="${engine_container%-game-engine}"
+            if ! engine_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$engine_container")"; then
+              echo "ERROR: Docker health query failed for ${engine_container}" >&2
+              failure=1
+              continue
+            fi
+            if [[ "$engine_health" == starting ]]; then
+              echo "daemon health server=${server} health=starting; daemon alert scan deferred"
+              continue
+            fi
             if ! bash tools/ops/daemon_health_alert.sh "$server" "$engine_container"; then
               failure=1
             fi
