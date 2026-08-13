@@ -412,6 +412,8 @@ class RuntimeBaselineRunnerTest(unittest.TestCase):
                     "heapBeforeGc": {"usedBytes": 80 + index, "committedBytes": 120},
                     "heapAfterGc": {"usedBytes": 70 + index, "committedBytes": 120},
                 }
+                sample["rows"]["database"]["general"] = 100 + index
+                sample["rows"]["snapshot"]["cities"] = index
 
         summary = runner.build_summary(records, analysis)
         metrics = summary["profiles"]["current"]["metrics"]
@@ -422,8 +424,15 @@ class RuntimeBaselineRunnerTest(unittest.TestCase):
         self.assertEqual(120.0, metrics["heapCommittedBeforeGcBytes"]["mean"])
         self.assertEqual(72.0, metrics["heapUsedAfterGcBytes"]["p50"])
         self.assertEqual(2.0, metrics["heapUsedAfterGcBytes"]["runToRunSpread"])
-        self.assertEqual(1.0, loaded_rows["database"]["general"]["mean"])
-        self.assertEqual(0.0, loaded_rows["snapshot"]["cities"]["runToRunSpread"])
+        self.assertEqual(102.0, loaded_rows["database"]["general"]["p50"])
+        self.assertEqual(102.9, loaded_rows["database"]["general"]["p95"])
+        self.assertEqual(2.0, loaded_rows["database"]["general"]["runToRunSpread"])
+        self.assertEqual(2.0, loaded_rows["snapshot"]["cities"]["p50"])
+        self.assertEqual(2.9, loaded_rows["snapshot"]["cities"]["p95"])
+        self.assertEqual(2.0, loaded_rows["snapshot"]["cities"]["runToRunSpread"])
+        self.assertEqual(72.0, metrics["retainedHeapAfterGcBytes"]["p50"])
+        self.assertEqual(72.9, metrics["retainedHeapAfterGcBytes"]["p95"])
+        self.assertEqual(2.0, metrics["retainedHeapAfterGcBytes"]["runToRunSpread"])
 
     def test_cleanup_container_only_removes_container_owned_by_run(self) -> None:
         with mock.patch.object(runner, "container_run_label", return_value="foreign-run"), mock.patch.object(

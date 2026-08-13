@@ -1829,14 +1829,14 @@ def loaded_row_summary(samples: Sequence[Mapping[str, Any]]) -> dict[str, dict[s
         "database": {
             row_name: summary_metric(
                 [nested_integer(sample, "rows", "database", row_name) for sample in samples],
-                True,
+                percentiles=True,
             )
             for row_name in PRODUCTION_SHAPE_TABLE_TO_RAW_FIELD.values()
         },
         "snapshot": {
             row_name: summary_metric(
                 [nested_integer(sample, "rows", "snapshot", row_name) for sample in samples],
-                True,
+                percentiles=True,
             )
             for row_name in REQUIRED_SNAPSHOT_CARDINALITIES
         },
@@ -1861,34 +1861,34 @@ def build_summary(
             "fixtureSha256": fixture_hashes.pop(),
             "metrics": {
                 "bootDurationMs": summary_metric(
-                    [nested_integer(sample, "durations", "bootDurationMs") for sample in samples], True
+                    [nested_integer(sample, "durations", "bootDurationMs") for sample in samples], percentiles=True
                 ),
                 "snapshotDurationMs": summary_metric(
-                    [nested_integer(sample, "durations", "snapshotDurationMs") for sample in samples], True
+                    [nested_integer(sample, "durations", "snapshotDurationMs") for sample in samples], percentiles=True
                 ),
                 "tickDurationMs": summary_metric(
-                    [nested_integer(sample, "durations", "tickDurationMs") for sample in samples], True
+                    [nested_integer(sample, "durations", "tickDurationMs") for sample in samples], percentiles=True
                 ),
                 "rssBeforeGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "rssBeforeGcBytes") for sample in samples], True
+                    [nested_integer(sample, "memory", "rssBeforeGcBytes") for sample in samples], percentiles=True
                 ),
                 "rssAfterGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "rssAfterGcBytes") for sample in samples], True
+                    [nested_integer(sample, "memory", "rssAfterGcBytes") for sample in samples], percentiles=True
                 ),
                 "heapUsedBeforeGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "heapBeforeGc", "usedBytes") for sample in samples], True
+                    [nested_integer(sample, "memory", "heapBeforeGc", "usedBytes") for sample in samples], percentiles=True
                 ),
                 "heapCommittedBeforeGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "heapBeforeGc", "committedBytes") for sample in samples], True
+                    [nested_integer(sample, "memory", "heapBeforeGc", "committedBytes") for sample in samples], percentiles=True
                 ),
                 "heapUsedAfterGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "heapAfterGc", "usedBytes") for sample in samples], True
+                    [nested_integer(sample, "memory", "heapAfterGc", "usedBytes") for sample in samples], percentiles=True
                 ),
                 "heapCommittedAfterGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "heapAfterGc", "committedBytes") for sample in samples], True
+                    [nested_integer(sample, "memory", "heapAfterGc", "committedBytes") for sample in samples], percentiles=True
                 ),
                 "retainedHeapAfterGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "heapAfterGc", "usedBytes") for sample in samples]
+                    [nested_integer(sample, "memory", "heapAfterGc", "usedBytes") for sample in samples], percentiles=True
                 ),
                 "gcCollectionTimeProxyMillis": summary_metric(
                     [nested_integer(sample, "gc", "collectionTimeDeltaMillis") for sample in samples]

@@ -44,3 +44,31 @@ The first pass found two major issues:
 No remaining blocker, major, minor, or question finding in the OPENSAM-123
 source/artifact scope. Clearance is conditional only on preserving the two
 behind-main OPENSAM-31 documents during the pre-PR rebase.
+
+## PR #401 CodeRabbit remediation re-review
+
+The subsequent CodeRabbit review correctly found that retained-heap summary
+metrics lacked p50/p95, that row-count fixtures did not exercise percentile
+or spread behavior, and that new `summary_metric` boolean arguments were
+positional. The minimal remediation:
+
+- passes `percentiles=True` by name for all affected summary metrics,
+- emits retained-heap p50/p95 alongside its existing run-to-run spread, and
+- makes the three-sample row and retained-heap fixtures vary, asserting each
+  p50, p95, and spread.
+
+The first remediation critique found one additional test-adequacy gap (the
+retained-heap spread assertion); it was added before the final independent
+re-review. The final exact-diff independent verdict is `cleared`.
+
+Fresh evidence: 47 Python tests passed with 3 documented opt-in skips;
+`uvx ruff@0.16.1 check --select FBT003` passed; a derived-only reanalysis of
+`op123-local-20260813-final-v5` succeeded and recorded 15 raw/JFR/fixture/policy
+source hashes. The detailed, sanitized evidence record is
+`.omo/evidence/2026-08-13-pr401-coderabbit-remediation.md`.
+
+An additional `:app:game-engine:test --rerun-tasks` regression attempt produced
+no fresh XML after more than 20 minutes and was terminated. It is an incomplete
+environment/tool result, not a JVM pass claim; the remediation changed no JVM
+source and retains its direct Python, lint, artifact, strict, and independent
+review evidence above.
