@@ -59,6 +59,25 @@ vi.mock('@/components/StatusBadge', () => ({
     default: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
+vi.mock('@/components/RichTextEditor', () => ({
+    countHtmlCodePoints: (html: string) => Array.from(html).length,
+    RichTextEditor: ({
+        ariaLabel,
+        onChange,
+        value,
+    }: {
+        ariaLabel: string;
+        onChange: (html: string) => void;
+        value: string;
+    }) => (
+        <textarea
+            aria-label={ariaLabel}
+            onChange={event => onChange(`<p>${event.target.value}</p>`)}
+            value={value}
+        />
+    ),
+}));
+
 class EventSourceStub {
     onerror: (() => void) | null = null;
     addEventListener(): void {}
@@ -164,16 +183,35 @@ describe('DiplomacyPage command reservation', () => {
         fireEvent.click(screen.getByRole('button', { name: '펼치기' }));
         fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: '2' } });
         fireEvent.change(screen.getByPlaceholderText('요약문을 입력하세요'), { target: { value: '동맹 제안' } });
-        fireEvent.change(screen.getByPlaceholderText('본문을 입력하세요'), { target: { value: '함께 합시다.' } });
+        fireEvent.change(screen.getByRole('textbox', { name: '외교 서신 본문' }), { target: { value: '함께 합시다.' } });
         fireEvent.click(screen.getByRole('button', { name: '발송' }));
 
         await waitFor(() => expect(mocks.diploSendLetter).toHaveBeenCalledWith({
             destNation: 2,
             brief: '동맹 제안',
-            detail: '함께 합시다.',
+            detail: '<p>함께 합시다.</p>',
             prevNo: null,
         }, 10));
         await waitFor(() => expect(screen.getByText('전송했습니다.')).toBeInTheDocument());
+    });
+
+    it('does not reserve a diplomacy body beyond the raw 500-code-point limit', async () => {
+        mocks.diplomacyLetters.mockResolvedValue(diplomacyPayload());
+
+        render(<DiplomacyPage />);
+
+        await waitFor(() => expect(mocks.diplomacyLetters).toHaveBeenCalled());
+        fireEvent.click(screen.getByRole('button', { name: '펼치기' }));
+        fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: '2' } });
+        fireEvent.change(screen.getByPlaceholderText('요약문을 입력하세요'), { target: { value: '동맹 제안' } });
+        fireEvent.change(screen.getByRole('textbox', { name: '외교 서신 본문' }), { target: { value: '가'.repeat(501) } });
+
+        const sendButton = screen.getByRole('button', { name: '발송' });
+        await waitFor(() => expect(sendButton).toBeDisabled());
+        fireEvent.click(sendButton);
+
+        expect(mocks.diploSendLetter).not.toHaveBeenCalled();
+        expect(mocks.submitCommandAndAwaitResult).not.toHaveBeenCalled();
     });
 
     it('approves a received proposed letter through the awaited command result', async () => {
