@@ -25,6 +25,7 @@ Source and rights boundary:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import io
 import json
@@ -146,7 +147,7 @@ def _fully_unquote(value: str) -> str:
     raise ManifestError("url encoding did not converge")
 
 
-def _parse_observed_page_url(raw_url: str, lineno: int) -> str:
+def _parse_observed_page_url(raw_url: str, lineno: int) -> tuple[str, str]:
     """Parse one exact RTK14 officer page URL from an operator observation."""
     parsed = urllib.parse.urlsplit(raw_url)
     if (
@@ -166,7 +167,7 @@ def _parse_observed_page_url(raw_url: str, lineno: int) -> str:
         or "::" in fully_decoded_key
     ):
         raise ManifestError(f"line {lineno}: invalid observed officer page path")
-    return page_key
+    return page_key, fully_decoded_key
 
 
 def _parse_observed_attachment_url(raw_url: str, page_key: str, lineno: int) -> str:
@@ -202,7 +203,7 @@ def parse_manifest(text: str) -> list[Target]:
     all other query values are stripped before the cache key and report are made.
     """
     rows: list[Target] = []
-    seen_page_urls: set[str] = set()
+    seen_page_identities: set[str] = set()
     for lineno, line in enumerate(text.splitlines(), 1):
         s = line.strip()
         if not s or s.startswith("#"):
@@ -220,10 +221,10 @@ def parse_manifest(text: str) -> list[Target]:
             raise ManifestError(f"line {lineno}: empty name")
         if not page_url or not attachment_url:
             raise ManifestError(f"line {lineno}: empty observed url")
-        page_key = _parse_observed_page_url(page_url, lineno)
-        if page_url in seen_page_urls:
+        page_key, page_identity = _parse_observed_page_url(page_url, lineno)
+        if page_identity in seen_page_identities:
             raise ManifestError(f"line {lineno}: duplicate observed officer page")
-        seen_page_urls.add(page_url)
+        seen_page_identities.add(page_identity)
         canonical_url = _parse_observed_attachment_url(attachment_url, page_key, lineno)
         rows.append(
             Target(
@@ -299,18 +300,19 @@ class CacheReader:
             raise FetchError("cache_unsafe") from error
 
         try:
-            cache_mode = os.fstat(descriptor).st_mode
-        except OSError as error:
-            os.close(descriptor)
-            raise FetchError("cache_unsafe") from error
-        if not stat.S_ISREG(cache_mode):
-            os.close(descriptor)
-            raise FetchError("cache_unsafe")
+            with contextlib.ExitStack() as descriptor_stack:
+                descriptor_stack.callback(os.close, descriptor)
+                if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    raise FetchError("cache_unsafe")
 
-        with os.fdopen(descriptor, "rb") as source:
-            if os.fstat(source.fileno()).st_size > MAX_SOURCE_BYTES:
-                raise FetchError("cache_too_large")
-            return source.read(MAX_SOURCE_BYTES + 1), True
+                source = os.fdopen(descriptor, "rb")
+                with source:
+                    descriptor_stack.pop_all()
+                    if os.fstat(source.fileno()).st_size > MAX_SOURCE_BYTES:
+                        raise FetchError("cache_too_large")
+                    return source.read(MAX_SOURCE_BYTES + 1), True
+        except OSError as error:
+            raise FetchError("cache_unsafe") from error
 
 
 # --------------------------------------------------------------------------- #

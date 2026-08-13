@@ -62,6 +62,16 @@ class TestManifest(unittest.TestCase):
         with self.assertRaises(b.ManifestError):
             b.parse_manifest(text)
 
+    def test_rejects_percent_encoded_duplicate_observed_officer_page(self):
+        text = (
+            "n\thttps://wikiwiki.jp/sangokushi14/ENC\t"
+            "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/1.png\n"
+            "n2\thttps://wikiwiki.jp/sangokushi14/%45NC\t"
+            "https://cdn.wikiwiki.jp/to/w/sangokushi14/%45NC/::attach/2.png"
+        )
+        with self.assertRaises(b.ManifestError):
+            b.parse_manifest(text)
+
     def test_rejects_nested_encoded_page_traversal(self):
         text = (
             "조조\thttps://wikiwiki.jp/sangokushi14/%252E%252E\t"

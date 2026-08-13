@@ -1,3 +1,4 @@
+import errno
 import os
 import sys
 import tempfile
@@ -11,6 +12,18 @@ import build_rtk14_faces as b  # noqa: E402
 
 
 class TestCacheReader(unittest.TestCase):
+    def _close_if_open(self, descriptor):
+        try:
+            os.close(descriptor)
+        except OSError as error:
+            if error.errno != errno.EBADF:
+                raise
+
+    def _assert_descriptor_closed(self, descriptor):
+        with self.assertRaises(OSError) as raised:
+            os.fstat(descriptor)
+        self.assertEqual(raised.exception.errno, errno.EBADF)
+
     def test_cache_hit_returns_operator_supplied_bytes(self):
         with tempfile.TemporaryDirectory() as directory:
             cache = Path(directory)
@@ -76,6 +89,98 @@ class TestCacheReader(unittest.TestCase):
 
                             open_cache.assert_not_called()
                             self.assertEqual(raised.exception.reason, "cache_unsafe")
+
+    def test_fdopen_error_stays_fail_and_closes_descriptor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory)
+            url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"
+            cache_entry = cache / (b.sha256_hex(url.encode()) + ".bin")
+            cache_entry.write_bytes(b"operator cache")
+            descriptor = os.open(cache_entry, os.O_RDONLY)
+            self.addCleanup(self._close_if_open, descriptor)
+
+            with (
+                mock.patch.object(b.os, "open", return_value=descriptor),
+                mock.patch.object(b.os, "fdopen", side_effect=OSError("fdopen")),
+            ):
+                with self.assertRaises(b.FetchError) as raised:
+                    b.CacheReader(cache).fetch(url)
+
+            self.assertEqual(raised.exception.reason, "cache_unsafe")
+            self._assert_descriptor_closed(descriptor)
+
+    def test_second_fstat_error_stays_fail_and_closes_descriptor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory)
+            url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"
+            cache_entry = cache / (b.sha256_hex(url.encode()) + ".bin")
+            cache_entry.write_bytes(b"operator cache")
+            descriptor = os.open(cache_entry, os.O_RDONLY)
+            self.addCleanup(self._close_if_open, descriptor)
+            metadata = os.stat(cache_entry)
+
+            with (
+                mock.patch.object(b.os, "open", return_value=descriptor),
+                mock.patch.object(
+                    b.os,
+                    "fstat",
+                    side_effect=(metadata, OSError("second fstat")),
+                ),
+            ):
+                with self.assertRaises(b.FetchError) as raised:
+                    b.CacheReader(cache).fetch(url)
+
+            self.assertEqual(raised.exception.reason, "cache_unsafe")
+            self._assert_descriptor_closed(descriptor)
+
+    def test_read_error_stays_fail_and_closes_descriptor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory)
+            url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"
+            cache_entry = cache / (b.sha256_hex(url.encode()) + ".bin")
+            cache_entry.write_bytes(b"operator cache")
+            descriptor = os.open(cache_entry, os.O_RDONLY)
+            self.addCleanup(self._close_if_open, descriptor)
+            source = mock.MagicMock()
+            source.__enter__.return_value = source
+            source.__exit__.side_effect = lambda *_args: os.close(descriptor)
+            source.fileno.return_value = descriptor
+            source.read.side_effect = OSError("read")
+
+            with (
+                mock.patch.object(b.os, "open", return_value=descriptor),
+                mock.patch.object(b.os, "fdopen", return_value=source),
+            ):
+                with self.assertRaises(b.FetchError) as raised:
+                    b.CacheReader(cache).fetch(url)
+
+            self.assertEqual(raised.exception.reason, "cache_unsafe")
+            self._assert_descriptor_closed(descriptor)
+
+    def test_descriptor_error_becomes_per_entry_report_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root / "cache"
+            cache.mkdir()
+            url = "https://cdn.wikiwiki.jp/to/w/sangokushi14/ENC/::attach/f.jpg"
+            cache_entry = cache / (b.sha256_hex(url.encode()) + ".bin")
+            cache_entry.write_bytes(b"operator cache")
+
+            with mock.patch.object(b.os, "fdopen", side_effect=OSError("fdopen")):
+                entry = b.process_target(
+                    b.Target(
+                        name="조조",
+                        page_url="https://wikiwiki.jp/sangokushi14/ENC",
+                        observed_image_url=url,
+                    ),
+                    b.CacheReader(cache),
+                    mock.Mock(),
+                    root / "out",
+                )
+
+            self.assertEqual(entry["status"], "FAIL")
+            self.assertEqual(entry["reason"], "cache_unsafe")
+            self.assertIsNone(entry["output"])
 
     def test_oversized_cache_entry_stays_fail(self):
         with tempfile.TemporaryDirectory() as directory:
