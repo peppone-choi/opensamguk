@@ -34,12 +34,14 @@ The first rebased exact-SHA review (`eb27f314`) superseded the earlier narrow cl
 
 The remediation separates fetched authoritative values from edit buffers, seeds a buffer only when that editor is opened, updates only the successfully applied field, and never rewrites an active/saving sibling during SSE or post-save refresh. The save path now counts serialized HTML Unicode code points, permits the exact PHP maximum, and disables submission at maximum plus one; backend validation remains authoritative. Focused regressions cover notice/scout boundaries (including astral Unicode), modified-sibling plus other-field apply/refresh, and pending plus SSE refresh followed by a reserved result. The type comments now describe sanitized rich HTML.
 
-Independent re-review of exact product SHA `962aa4cf` cleared every product/code finding. The only reported blocker was this artifact's temporary non-enumerated `pending exact-SHA re-review` verdict, which failed the mechanical strict gate; this terminal `cleared` value and the fresh evidence below resolve that documentation-only blocker. The final doc-only amend is subject to exact-SHA confirmation.
+Independent adversarial re-review of exact product SHA `12984bdb12d7799c0b99787f5098fcad69583385` cleared the final request-sequencing implementation and regression with no findings. The reviewer independently confirmed that the monotonically increasing request id gates both `frontInfo` and `nationFinance` results plus error/loading completion, so an older notice/scout refresh cannot overwrite newer state. The reviewer also confirmed that the regression starts two message refreshes, resolves the latest response first, then resolves the older response and proves both latest messages remain rendered. This durable `cleared` verdict supersedes the earlier `962aa4cf` review and removes the prior exact-SHA-pending qualification. The resulting documentation-only commit does not alter the reviewed product tree; its own remote CI and PR-conversation review rounds remain separate merge gates.
 
 ## Verification observed
 
 - Focused finance suite: 5/5 passed, including applied, reserved, cancel, and concurrent-save state behavior.
 - Post-review focused finance suite: 9/9 passed in 18.00 seconds with a 30-second per-test ceiling, including both exact-max/max+1 boundaries and both refresh-retention regressions.
+- Exact-product-SHA (`12984bdb12d7799c0b99787f5098fcad69583385`) independent re-review reran the focused finance suite: 10/10 passed, including the out-of-order refresh regression.
+- Exact-product-SHA independent re-review reran `pnpm typecheck` with exit 0 and `git diff --check` clean; the reviewed worktree was clean.
 - Fresh post-amend cross-surface selector: 15 passed / 6 intentionally filtered tests skipped across finance, join, RichTextEditor, and SafeHtml in 46.43 seconds with the explicit 30-second per-test ceiling.
 - Focused cross-surface suite: 11 passed / 6 intentionally filtered tests skipped across the rich-editor, safe-renderer, finance, and join-renderer cases after the final concurrent-save case was added.
 - `pnpm typecheck` exited 0 after the result-state remediation.
