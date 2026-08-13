@@ -287,4 +287,60 @@ describe('NationFinancePage rich-text messages', () => {
         await waitFor(() => expect(refreshedEditor).toHaveTextContent('예약 대기 문안'));
         expect(refreshedEditor).not.toHaveTextContent('새 서버 구문안');
     });
+
+    it('discards an older message refresh that resolves after the latest refresh', async () => {
+        let resolveOlderRefresh: (value: typeof financeResponse) => void = () => undefined;
+        let resolveLatestRefresh: (value: typeof financeResponse) => void = () => undefined;
+        let resolveScoutSave: (outcome: { status: 'applied'; result: Record<string, never> }) => void = () => undefined;
+        mocks.submitCommandAndAwaitResult
+            .mockImplementationOnce(async (submit: () => Promise<unknown>) => {
+                await submit();
+                return { status: 'applied', result: {} };
+            })
+            .mockImplementationOnce(async (submit: () => Promise<unknown>) => {
+                await submit();
+                return new Promise(resolve => { resolveScoutSave = resolve; });
+            });
+        mocks.nationFinance
+            .mockResolvedValueOnce(financeResponse)
+            .mockImplementationOnce(() => new Promise(resolve => { resolveOlderRefresh = resolve; }))
+            .mockImplementationOnce(() => new Promise(resolve => { resolveLatestRefresh = resolve; }));
+        render(<NationFinancePage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '국가방침 수정' }));
+        fireEvent.click(screen.getByRole('button', { name: '임관 권유문 수정' }));
+        const saveButtons = screen.getAllByRole('button', { name: '저장' });
+        fireEvent.click(saveButtons[0]);
+        fireEvent.click(saveButtons[1]);
+
+        await waitFor(() => expect(mocks.nationFinance).toHaveBeenCalledTimes(2));
+        await act(async () => {
+            resolveScoutSave({ status: 'applied', result: {} });
+        });
+        await waitFor(() => expect(mocks.nationFinance).toHaveBeenCalledTimes(3));
+        await act(async () => {
+            resolveLatestRefresh({
+                ...financeResponse,
+                nationMsg: '<p>최신 국가 방침</p>',
+                scoutMsg: '<p>최신 임관 권유문</p>',
+            });
+        });
+        expect(await screen.findByText('최신 국가 방침')).toBeInTheDocument();
+        expect(screen.getByText('최신 임관 권유문')).toBeInTheDocument();
+
+        await act(async () => {
+            resolveOlderRefresh({
+                ...financeResponse,
+                nationMsg: '<p>이전 국가 방침</p>',
+                scoutMsg: '<p>이전 임관 권유문</p>',
+            });
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText('최신 국가 방침')).toBeInTheDocument();
+            expect(screen.getByText('최신 임관 권유문')).toBeInTheDocument();
+        });
+        expect(screen.queryByText('이전 국가 방침')).not.toBeInTheDocument();
+        expect(screen.queryByText('이전 임관 권유문')).not.toBeInTheDocument();
+    });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import GameTable from '../../../components/GameTable';
@@ -77,13 +77,17 @@ export default function NationFinancePage() {
     const [editingNotice, setEditingNotice] = useState(false);
     const [editingScout, setEditingScout] = useState(false);
     const [savingMessages, setSavingMessages] = useState({ notice: false, scout: false });
+    const latestFetchId = useRef(0);
 
     const fetchData = useCallback(async () => {
+        const fetchId = latestFetchId.current + 1;
+        latestFetchId.current = fetchId;
         setLoading(true);
         setError('');
         setNoNation(false);
         try {
             const fi: FrontInfoResponse = await api.frontInfo();
+            if (fetchId !== latestFetchId.current) return;
             const nid = fi.general.nationId;
             setGeneralId(fi.general.generalId);
             setNationId(nid);
@@ -95,11 +99,16 @@ export default function NationFinancePage() {
                 return;
             }
             const res = await api.nationFinance(nid);
+            if (fetchId !== latestFetchId.current) return;
             setData(res);
         } catch {
-            setError('내무부 정보를 불러올 수 없습니다.');
+            if (fetchId === latestFetchId.current) {
+                setError('내무부 정보를 불러올 수 없습니다.');
+            }
         } finally {
-            setLoading(false);
+            if (fetchId === latestFetchId.current) {
+                setLoading(false);
+            }
         }
     }, []);
 
