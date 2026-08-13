@@ -341,6 +341,23 @@ describe('NationFinancePage rich-text messages', () => {
         expect(screen.queryByText('내무부 정보를 불러올 수 없습니다.')).not.toBeInTheDocument();
     });
 
+    it('does not let a turn refresh supersede the pending initial load', async () => {
+        let resolveInitial: (value: typeof financeResponse) => void = () => undefined;
+        mocks.nationFinance
+            .mockImplementationOnce(() => new Promise(resolve => { resolveInitial = resolve; }))
+            .mockRejectedValueOnce(new Error('offline'));
+        render(<NationFinancePage />);
+
+        await waitFor(() => expect(mocks.nationFinance).toHaveBeenCalledTimes(1));
+        act(() => { emitTurnCompleted(); });
+        expect(mocks.nationFinance).toHaveBeenCalledTimes(1);
+
+        await act(async () => resolveInitial(financeResponse));
+
+        expect(await screen.findByRole('button', { name: '임관 권유문 수정' })).toBeInTheDocument();
+        expect(screen.queryByText('내무부 정보를 불러올 수 없습니다.')).not.toBeInTheDocument();
+    });
+
     it('closes active editors when refreshed permissions become read-only', async () => {
         mocks.nationFinance
             .mockResolvedValueOnce(financeResponse)
