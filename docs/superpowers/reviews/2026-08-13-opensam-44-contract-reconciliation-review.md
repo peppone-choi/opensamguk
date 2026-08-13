@@ -21,6 +21,24 @@ remains authoritative for runtime behavior and explicitly records the OP44 decom
 
 No BLOCKER, MAJOR, MINOR, or QUESTION finding remains.
 
+The first PR-conversation Codex round then found two integration gaps on commit `01ddf4c37d`:
+
+- The crosswalk asserted an authoritative supersession without a durable approval record. The
+  crosswalk now records the user's 2026-08-13 merge authorization and is explicitly the task-local
+  OPENSAM-44 execution contract. Shared `.ai/*` remains single-writer/fan-in scope rather than being
+  edited concurrently from this worktree.
+- Removing product implementation from OPENSAM-44 left the older R1-R6 prose claiming that the v2
+  scenario seed mechanism already existed. The crosswalk, R1-R6 design, and ticket ledger now assign
+  migration-before-seed/configured-source-to-DB integration to OPENSAM-150 and the scenario event
+  payload, action registration, and seed/reseed acceptance to OPENSAM-151. OPENSAM-152 remains the
+  sequential consumer.
+
+An independent remediation review inspected the latest dirty tree and returned `CLEAR` with no
+BLOCKER, MAJOR, MINOR, QUESTION, or NIT. It verified the task-local approval record, shared `.ai`
+single-writer boundary, the OPENSAM-150/151/152 split across the crosswalk/R1-R6 design/ticket
+ledger, and the truthful pending external issue synchronization. A final immutable exact-head
+review remains required after commit and push.
+
 ## Independent evidence
 
 - All 14 issue #186 checklist families appear exactly once in the crosswalk: A02/A03, A07/A08,
@@ -42,9 +60,11 @@ channels before model/consumer contracts and contradict OP150's first-leaf owner
 persistence obligations was also rejected. Just-in-time product ownership preserves the obligations
 at the first observable consumer.
 
-## Residual condition
+## External issue synchronization
 
-GitHub issue #186 was intentionally not mutated before review. The exact reviewed title/body/comment
-must be applied after commit, push, and ready PR creation before OPENSAM-44 is reported complete.
+GitHub issue #186 was updated before the original PR handoff with the reviewed title/body and a
+contract-correction comment. The remediation adds the explicit OPENSAM-150/151 scenario-seeding
+split; issue #186 and the OPENSAM-150/151 issue bodies must receive the same wording after the
+remediation commit is pushed. Until that synchronization is observed, issue/body truth is pending.
 
 Verdict: cleared

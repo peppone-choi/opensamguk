@@ -968,7 +968,7 @@ fun getDedLevelText(dedLevel: Int): String {
 
       **대가를 적는다 — v1 `DEFAULT_EVENTS` 12행의 전사(轉寫)가 데이터 이중 진실 1건으로 남는다.** v1이 행을 늘리면 v2 JSON은 따라오지 않는다. 그럼에도 이쪽을 고르는 이유는 반대 분기가 **이중 수입**이라는 조용한 정산 오류를 낳고 그것을 막을 코드 경로가 없기 때문이다. 이중 진실은 보이지만 이중 수입은 보이지 않는다.
 
-      **그리고 이 판정이 티켓 경계를 정한다.** 1월 행의 `ProcessIncome("gold")`(`EventStore.kt:169`)·7월 행의 `ProcessIncome("rice")`(`:188`) 치환도, 1·4·7·10월 네 행(`:171`·`:180`·`:190`·`:197`)에 R3 leaf를 append하는 것도 **같은 파일 하나(v2 시나리오 JSON)를 고쳐 쓰는 일**이다. 따라서 두 작업은 병렬일 수 없다 — 귀속은 §9.2에서 R2 단일 소유로 확정하고 R3는 소비자로 뒤에 세운다. 시드 메커니즘 자체는 3단계(`OPENSAM-43`·`44`, V2-0B 적재·영속화)가 이미 갖고 있으므로 **새 티켓 증분 0**이다.
+      **그리고 이 판정이 티켓 경계를 정한다.** 1월 행의 `ProcessIncome("gold")`(`EventStore.kt:169`)·7월 행의 `ProcessIncome("rice")`(`:188`) 치환도, 1·4·7·10월 네 행(`:171`·`:180`·`:190`·`:197`)에 R3 leaf를 append하는 것도 **같은 파일 하나(v2 시나리오 JSON)를 고쳐 쓰는 일**이다. 따라서 두 작업은 병렬일 수 없다 — 귀속은 §9.2에서 R2 단일 소유로 확정하고 R3는 소비자로 뒤에 세운다. **2026-08-13 OPENSAM-44 계약 정정:** 제품 시드 메커니즘은 OPENSAM-43/44가 이미 구현한 것으로 보지 않는다. OPENSAM-150(R1)이 migration-before-seed 부팅 순서와 설정된 v2 시나리오 source→DB 적재 seam을 개설·실증하고, OPENSAM-151(R2)이 그 seam을 소비해 `ignoreDefaultEvents: true`인 v2 시나리오 JSON과 시나리오 유래 event 전량·재시드 검증을 소유한다. R3는 R2 뒤의 소비자다. 기존 6티켓 안의 소유권 정정이므로 **새 티켓 증분 0**이다.
    3. **DB 행만으론 치환이 성립하지 않는다.** `EventAction.kt:70-74`의 `create`가 미등록 이름에 `IllegalArgumentException("존재하지 않는 Action입니다 :${raw.name}")`를 던진다(`:72`). **팩토리 등록(위 `EngineEventConfig.kt:81`)이 행 수정보다 반드시 선행**해야 하며, 순서가 뒤집히면 v2 월드가 첫 1월에 예외로 죽는다. R2·R3의 DoD에 이 순서를 명시한다.
 
    **부수 — `event` 로드는 world-scoped가 아니다. 그런데 그럴 필요가 없다(개정 6차 정정).** `EngineEventConfig.kt:47`의 쿼리는 `SELECT ... FROM event ORDER BY id ASC`로 **`world_id` 필터가 없다.** 시드는 `world_id`를 넣는데(`ScenarioImporter.kt:831`) 로드는 무시한다.

@@ -2,6 +2,16 @@
 
 Date: 2026-08-13
 Scope: contract reconciliation only; no code, schema, migration, mapper, flush, read API, or runtime change
+Status: approved for merge; effective when this PR is merged
+
+## Approval and supersession record
+
+The user explicitly authorized merging the reviewed open-PR queue, including this OPENSAM-44
+reconciliation, on 2026-08-13 (`"병합, 배포하고. 남은거 처리하자."`). That approval makes the
+contract change below an accepted supersession rather than an unapproved proposal. This task-local
+plan is the durable OPENSAM-44 execution contract for the PR. The shared `.ai/task.md` continues to
+describe the separate OPENSAM-43 lane and is not co-written from this parallel worktree; its later
+fan-in synchronization must preserve this approved decision rather than restore the broad T1 batch.
 
 ## Outcome
 
@@ -13,6 +23,11 @@ OPENSAM-44 is a **contract and ownership decomposition gate**, not the implement
 - OPENSAM-44 adds no production SQL and claims no persisted v2 product model.
 - OPENSAM-150 remains the first product persistence leaf and owns
   `infra/src/main/resources/db/migration_v2/V901__v2_city_ledger.sql`.
+- OPENSAM-150 also owns the v2 scenario-seeding **mechanism seam**: it must prove migration-before-
+  seed ordering and that the configured v2 scenario source can be loaded into the v2 database.
+  OPENSAM-151 owns the first v2 scenario **content** that consumes that seam: the tracked scenario
+  JSON, `ignoreDefaultEvents: true`, its complete scenario-authored event set, action registration,
+  and seed/reseed acceptance evidence.
 - Every remaining T1 `[아키]` item is implemented just in time by the product slice that owns its
   prerequisite model and observable behavior. It must be split into schema, daemon write, and read
   deliverables where those concerns do not land atomically.
@@ -31,6 +46,20 @@ ADR-LITE-029 (the first real v2 leaf belongs to OPENSAM-150), and the completed 
 
 Production `infra/src/main/resources/db/migration_v2/` therefore remains SQL-empty after OPENSAM-44.
 The test-only V900 probe does not consume the first product migration number.
+
+## V2 scenario-seeding ownership
+
+The earlier R1-R6 design said the seed mechanism already belonged to OPENSAM-43/44. That statement
+is superseded together with the broad OP44 implementation contract. Ownership is now explicit:
+
+| Owner | Required seam/deliverable |
+|---|---|
+| OPENSAM-150 (R1) | Establish and test the product seed integration seam: Flyway `V901` completes before seed consumption; the configured v2 `SCENARIO_CODE`/`SCENARIO_DIR` source is resolved and its event rows can be persisted in the isolated v2 database. It does not author the R2 event payload. |
+| OPENSAM-151 (R2) | Author the v2 scenario JSON with `ignoreDefaultEvents: true`, the complete scenario-derived event rows, `V2ProcessCityIncome` registration, and seed/reseed assertions including no `ProcessIncome` row. |
+| OPENSAM-152 (R3) | Consume the R2-owned scenario file only after R2 lands; it does not open a second seeding mechanism or edit that shared file in parallel. |
+
+Thus the removal of product SQL from OPENSAM-44 leaves no ownerless path between the scenario input,
+database `event` rows, and the R2/R3 runtime consumers.
 
 ## Checklist crosswalk
 
@@ -106,6 +135,8 @@ Body:
 - OPENSAM-43은 V2-0B runtime/isolation 계약을 test-only `V900__v2_sandbox_probe.sql`로 닫았다. V900은 제품 migration이 아니다.
 - OPENSAM-44 이후에도 production `infra/src/main/resources/db/migration_v2/`에는 SQL이 0개다.
 - OPENSAM-150이 첫 제품 leaf `v2_city_ledger`와 첫 production migration `V901__v2_city_ledger.sql`을 소유한다.
+- OPENSAM-150은 migration-before-seed 순서와 configured v2 scenario source→v2 DB `event` 적재 seam도 개설·실증한다.
+- OPENSAM-151은 그 seam을 소비하는 v2 시나리오 JSON, `ignoreDefaultEvents: true`, 시나리오 유래 event 전량, action 등록, seed/reseed 판정을 소유한다.
 - 이후 migration은 선행 모델/validator와 실제 write/read 소비자가 준비된 제품 티켓이 `V902+`를 순서대로 소유한다.
 - daemon mutation은 계속 `ChangeRecorder -> JdbcFlushExecutor` 단일 경로이며, read-only catalog에 불필요한 write channel을 선설치하지 않는다.
 - v1 default/production에는 v2 migration/bean/content가 0개여야 한다.
@@ -145,7 +176,7 @@ DoD:
 Comment after the issue edit:
 
 ```md
-2026-08-13 계약 정정: 기존 broad T1 persistence 일괄 구현 문구는 supersede했습니다. OPENSAM-44는 문서/소유권 crosswalk만 닫고 제품 SQL을 추가하지 않습니다. OPENSAM-43의 V900은 test-only isolation probe로 유지하며, OPENSAM-150이 `V901__v2_city_ledger.sql`과 첫 실제 v2 leaf를 소유합니다. 나머지 T1 `[아키]` 항목은 선행 모델과 실제 소비자가 준비된 제품 티켓으로 이관했습니다.
+2026-08-13 계약 정정: 기존 broad T1 persistence 일괄 구현 문구는 supersede했습니다. OPENSAM-44는 문서/소유권 crosswalk만 닫고 제품 SQL을 추가하지 않습니다. OPENSAM-43의 V900은 test-only isolation probe로 유지하며, OPENSAM-150이 `V901__v2_city_ledger.sql`과 첫 실제 v2 leaf 및 migration-before-seed/source→DB 적재 seam을 소유합니다. OPENSAM-151은 그 seam을 소비하는 v2 scenario event 저작·등록·재시드 판정을 소유합니다. 나머지 T1 `[아키]` 항목은 선행 모델과 실제 소비자가 준비된 제품 티켓으로 이관했습니다.
 
 정본: `docs/superpowers/plans/2026-08-13-opensam-44-contract-crosswalk.md`
 ```
