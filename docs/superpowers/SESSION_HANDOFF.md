@@ -714,7 +714,12 @@ deploy를 실행하거나 승인하지 않았다.
 
 ### H. 운영
 - **빼섭 보급-동결 버그** — 미수정 (doNPC구출발령 빈 supplyCities→RandUtil.choice throw, 상류 1030 보급 발산). 가드=band-aid.
-- **매 main 배포 = 턴 되감김** — 엔진 recreate→DB스냅샷 rehydrate. doc-only도 main push 금지.
+- **재기동 rehydrate source gate 해소, live promotion 별도** — OPENSAM-149/PR #399가
+  `N → flush → discard/reload → N+1` bounded 동등성과 channel quarantine matrix를 `main`에
+  병합했다. 따라서 rehydrate를 이유로 한 doc-only main push blanket 금지는 해제한다.
+  일반 main push 승인·CI·배포 게이트는 그대로이며, 현재 서버 이미지가 #399 이후 engine을
+  실제 승격·재기동했다는 의미도 아니다. live restart/clock 전진은 배포 런북의 별도 운영
+  검증으로 남는다.
 - **nginx canonical** `infra/nginx/default.conf` — server-basic-info 블록 parity-final에만, main 미반영.
 
 ### I. 검증 미완

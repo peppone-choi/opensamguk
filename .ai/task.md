@@ -1,5 +1,21 @@
 # Current Task
 
+## 2026-08-14 — OPENSAM-149 종결 문서 정합화 (활성 계약)
+
+- Status: 사용자 요청 "계획을 짜서 하나하나 처리해"에 따라 OPENSAM-32/#174,
+  OPENSAM-88/#230 종결 뒤 순차 실행 중.
+- Goal: 이미 `main`에 병합된 OPENSAM-149의 bounded restart gate와 명시적
+  quarantine을 정본 문서에 반영해 #324 Done 조건의 문서 불일치를 해소한다.
+- Allowed files: `.ai/{task,current-state,ownership}.md`,
+  `docs/superpowers/gap/LOGIC_GAP.md`, `docs/superpowers/SESSION_HANDOFF.md`,
+  `docs/superpowers/plans/2026-08-14-opensam-149-closeout-plan.md`,
+  `docs/superpowers/reviews/2026-08-14-opensam-149-closeout-review.md`.
+- Acceptance evidence: PR #399 merge/CI 확인, 기존 focused/architecture XML 증거와
+  quarantine matrix 대조, 문서 링크·strict·diff 검증, 독립 리뷰 `cleared`.
+- Human approval checkpoints: commit/push/PR/merge는 별도 승인 없이 수행하지 않는다.
+- Non-goals: product source/test 변경, quarantine 구현, engine promotion/deploy,
+  production/secret 접근, golden/legacy 수정.
+
 ## 2026-08-09 — OPENSAM-43 V2-0B 런타임 계약·격리 가드 (활성 계약)
 
 - Status: 사용자 승인 완료(`"승인."`, 2026-08-09), committed PR head
