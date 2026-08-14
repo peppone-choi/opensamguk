@@ -1,5 +1,11 @@
 # Work Ownership
 
+## OPENSAM-149 closeout lane — 2026-08-14 (active)
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `codex-op149-closeout` | merged bounded rehydrate gate의 canonical gap/handoff 정합화 | `codex/opensam149-closeout` (`/private/tmp/opensam-op149-closeout`) | `.ai/{task,current-state,ownership}.md`; `docs/superpowers/gap/LOGIC_GAP.md`; `docs/superpowers/SESSION_HANDOFF.md`; OP149 closeout plan/review artifact | active — docs-only, product source/test/deploy 제외 | 2026-08-14 |
+
 병렬 에이전트(Claude Code, Codex, Gemini 등)의 파일 소유권 등록부. 규칙은 `docs/agent/collaboration-protocol.md`가 정본.
 
 ## Shared-file ownership fence

@@ -1,5 +1,18 @@
 # Current State
 
+## OPENSAM-149 closeout — canonical docs remediation active — 2026-08-14
+
+- PR #399는 merge commit `80150f9fccf028556075bb8fab5425170418b668`로 `main`에
+  병합됐고 hosted agent-system/JVM/web checks가 모두 성공했다.
+- 제품 범위는 bounded `N -> discard/reload -> N+1` gate다. authoritative closure
+  matrix에서 Q로 표시된 모든 lifecycle은 그대로 quarantine이다. EventStore C/X,
+  resident general/nation allocator, diplomacy-letter allocator, same-due-tick visibility는
+  대표 예시일 뿐이며 all-channel green으로 승격하지 않는다.
+- `LOGIC_GAP.md` §15와 `SESSION_HANDOFF.md` H가 병합 전 상태를 유지해 #324 종결을
+  막고 있다. 이 lane은 그 두 정본, `.ai/{task,current-state,ownership}.md`, task-local
+  plan/review만 수정한다.
+- commit/push/PR/merge/deploy는 아직 수행하지 않았다.
+
 ## OPENSAM-43 V2-0B — prior/pre-infra-sync code-remediation review `cleared` · local full verifier infra-blocked · remote CI deciding gate — 2026-08-10
 
 - 기준 SHA는 `e9cc3b31fa72aa46716f375b623f6a4937ad6c06`(`origin/main`)이고 worktree/branch는

@@ -276,7 +276,7 @@ stubs). **No gap.**
 
 ---
 
-## 15. Restart / rehydrate (lossless) — PARTIAL
+## 15. Restart / rehydrate (lossless) — CLOSED WITH QUARANTINE
 
 **Kotlin:** `boot/WorldSnapshotLoader.kt` + `boot/ScenarioSeedRunner.kt` + `config/DaemonLoopConfig.kt`
 (survivor 리포지토리 주입 + DB 시드 id 할당자). `engine/turn/RehydrateService.kt`는 **SUPERSEDED —
@@ -289,11 +289,29 @@ stubs). **No gap.**
 닫힘. 게이트: `app/game-engine/.../boot/RehydrateRoundTripIT.kt`(채널 왕복 3셀) +
 `RehydrateWiringTest.kt`(부팅 survivor 배선).
 
-**Gap (remaining):** 턴 단위 full round-trip — `턴 N → flush → 재기동 → 턴 N+1`이 무재기동 실행과
-draw-for-draw + 로그 바이트 동일임을 증명하는 게이트는 미착수. 나머지 채널 × {created,dirty,deleted}
-매트릭스도 미측정. §0(founding created-set)에 묶인 부분은 여전히 측정 불가 — 증거 첨부 격리. **PARTIAL.**
+**Closed (2026-08-14, PR #399):** 실제 PostgreSQL/Flyway와 live `TurnRunService`를 사용한
+`FullRehydrateTurnGateIT`가 `턴 N → flush → discard/reload → 턴 N+1`을 무재기동 실행과
+비교한다. 두 월드와 같은 local id를 가진 poison world를 함께 두고 clock/version, HOT
+general/city/nation/troop/diplomacy/access/rank signature, ordered Korean UTF-8 logs,
+`command_result`/`command_outbox`, 두 번째 reload까지 동등함을 검증한다. 최종 focused XML은
+1 test / skip·failure·error 0이고, `DaemonNoEntityManagerTest`와
+`InfraNoEntityManagerTest`도 각각 1/0/0/0이다. 리뷰 정본은
+`docs/superpowers/reviews/2026-08-13-opensam-149-full-rehydrate-review.md`이며
+`Verdict: cleared`다.
 
-**Ticket:** `OPENSAM-149` / GitHub `#324` — ChangeRecorder 전 채널 × {created,dirty,deleted} 매트릭스 왕복 무손실 게이트. ADR-LITE-018(오리지널 on-demand 운영)의 선결 조건.
+**Quarantine (완료 조건에 포함해 명시적으로 보존):** 전 채널을 green으로 과장하지 않는다.
+`docs/loops/opensam-149-rehydrate-gate/LEDGER.md`의 authoritative closure matrix에서 Q로 표시된
+모든 lifecycle은 그대로 quarantine이며 각 행에 reader/seam과 follow-up owner가 기록돼 있다.
+EventStore event insert/delete, resident general/nation allocator continuation,
+diplomacy-letter allocator continuation, same-due-tick intake visibility는 대표 예시일 뿐이다.
+general/nation C/X, diplomacy C/D/X, general-turn/rank/access/KV/inheritance 등 그 밖의 HOT Q도
+green으로 승격하지 않는다. COLD/on-demand와 N/A transport 행 역시 같은 매트릭스의 분류를
+따른다. 따라서 #324의 "PASS 또는 quarantine with proof" 조건은 충족하지만 어떤 Q 항목도
+기능 구현 완료를 뜻하지 않는다.
+
+**Ticket:** `OPENSAM-149` / GitHub `#324` — bounded gate와 증거 기반 quarantine이 PR #399로
+병합됨. ADR-LITE-018의 source/build 선결 조건은 해소됐으며 live engine promotion·restart drill은
+별도 운영 검증이다.
 
 ---
 
