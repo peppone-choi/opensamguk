@@ -55,8 +55,9 @@
   world/profile/catalog/wire/Flyway seams and explicitly distinguishes them
   from unimplemented persistence, handler, cache, realtime, and UI work.
 - `docs/superpowers/plans/2026-07-17-v2-ticket-backlog/01-backbone-micro.md`
-  has only its stale OP43 wording reconciled to that approval. The OP43
-  runtime-contract plan itself remains unchanged and authoritative.
+  reconciles the stale OP43 wording to that approval. The OP43 runtime-contract
+  plan remains authoritative for runtime behavior; its scope paragraph now also
+  points to the later OP44 decomposition and OP150 `V901` ownership boundary.
 
 ## Historical implemented fan-in and verification
 
@@ -77,7 +78,7 @@
   failures 0 / errors 0. Strict reported 41 changed, Errors 0, Warnings 0, findings 0. The captured log
   `/tmp/op43-final-os-verify.log` has SHA-256
   `00b137ac81dca1757bb920ccc54f1b0eda1dac18343b5028587ffaab5286242a`.
-- OPENSAM-44/150 (v2 persistence/first leaf), OPENSAM-104/105 (RTK builders),
+- OPENSAM-44 (persistence contract decomposition), OPENSAM-150 (`V901` first product persistence/leaf), OPENSAM-104/105 (RTK builders),
   V2-G0/1,180, and production rollout remain outside this approval. Do not
   infer a v2 schema, city ledger, JPA repository, cache, handler, Redis
   producer, controller, SSE subscriber, or frontend invalidation from 0B-j.

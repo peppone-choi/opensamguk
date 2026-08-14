@@ -968,7 +968,7 @@ fun getDedLevelText(dedLevel: Int): String {
 
       **대가를 적는다 — v1 `DEFAULT_EVENTS` 12행의 전사(轉寫)가 데이터 이중 진실 1건으로 남는다.** v1이 행을 늘리면 v2 JSON은 따라오지 않는다. 그럼에도 이쪽을 고르는 이유는 반대 분기가 **이중 수입**이라는 조용한 정산 오류를 낳고 그것을 막을 코드 경로가 없기 때문이다. 이중 진실은 보이지만 이중 수입은 보이지 않는다.
 
-      **그리고 이 판정이 티켓 경계를 정한다.** 1월 행의 `ProcessIncome("gold")`(`EventStore.kt:169`)·7월 행의 `ProcessIncome("rice")`(`:188`) 치환도, 1·4·7·10월 네 행(`:171`·`:180`·`:190`·`:197`)에 R3 leaf를 append하는 것도 **같은 파일 하나(v2 시나리오 JSON)를 고쳐 쓰는 일**이다. 따라서 두 작업은 병렬일 수 없다 — 귀속은 §9.2에서 R2 단일 소유로 확정하고 R3는 소비자로 뒤에 세운다. 시드 메커니즘 자체는 3단계(`OPENSAM-43`·`44`, V2-0B 적재·영속화)가 이미 갖고 있으므로 **새 티켓 증분 0**이다.
+      **그리고 이 판정이 티켓 경계를 정한다.** 1월 행의 `ProcessIncome("gold")`(`EventStore.kt:169`)·7월 행의 `ProcessIncome("rice")`(`:188`) 치환도, 1·4·7·10월 네 행(`:171`·`:180`·`:190`·`:197`)에 R3 leaf를 append하는 것도 **같은 파일 하나(v2 시나리오 JSON)를 고쳐 쓰는 일**이다. 따라서 두 작업은 병렬일 수 없다 — 귀속은 §9.2에서 R2 단일 소유로 확정하고 R3는 소비자로 뒤에 세운다. **2026-08-13 OPENSAM-44 계약 정정:** 제품 시드 메커니즘은 OPENSAM-43/44가 이미 구현한 것으로 보지 않는다. OPENSAM-150(R1)이 migration-before-seed 부팅 순서와 설정된 v2 시나리오 source→DB 적재 seam을 개설·실증하고, OPENSAM-151(R2)이 그 seam을 소비해 `ignoreDefaultEvents: true`인 v2 시나리오 JSON과 시나리오 유래 event 전량·재시드 검증을 소유한다. R3는 R2 뒤의 소비자다. 기존 6티켓 안의 소유권 정정이므로 **새 티켓 증분 0**이다.
    3. **DB 행만으론 치환이 성립하지 않는다.** `EventAction.kt:70-74`의 `create`가 미등록 이름에 `IllegalArgumentException("존재하지 않는 Action입니다 :${raw.name}")`를 던진다(`:72`). **팩토리 등록(위 `EngineEventConfig.kt:81`)이 행 수정보다 반드시 선행**해야 하며, 순서가 뒤집히면 v2 월드가 첫 1월에 예외로 죽는다. R2·R3의 DoD에 이 순서를 명시한다.
 
    **부수 — `event` 로드는 world-scoped가 아니다. 그런데 그럴 필요가 없다(개정 6차 정정).** `EngineEventConfig.kt:47`의 쿼리는 `SELECT ... FROM event ORDER BY id ASC`로 **`world_id` 필터가 없다.** 시드는 `world_id`를 넣는데(`ScenarioImporter.kt:831`) 로드는 무시한다.
@@ -1257,7 +1257,7 @@ ADR-LITE-019(`.ai/decisions.md:194`, 표는 `docs/superpowers/plans/2026-07-17-v
 | 0 | OPENSAM-31·32·33·34 (v1 선행) | 4 |
 | 1 | OPENSAM-149 (restart-rehydrate) | 1 |
 | 2 | OPENSAM-35 (V2-0A 격리) | 1 |
-| 3 | OPENSAM-43·44 (V2-0B 적재·영속화) | 2 |
+| 3 | OPENSAM-43·44 (V2-0B runtime/isolation + persistence ownership decomposition; product SQL/flush 0) | 2 |
 | 4 | OPENSAM-45·46·47 (V2-1 lifecycle·패널) | 3 |
 | 5 | OPENSAM-48 (V2-2 부곡) | 1 |
 | 6 | OPENSAM-56 (V2-3 작전) | 1 |
@@ -1270,7 +1270,7 @@ ADR-LITE-019(`.ai/decisions.md:194`, 표는 `docs/superpowers/plans/2026-07-17-v
 
 | # | 티켓 | 산출물 | 삽입 단계 (선행 조건) |
 |---|---|---|---|
-| R1 | `v2_city_ledger` 기반 | **개정 6차 재작성** — 0A-c 분리 location의 마이그레이션 + `DirtyState`/`ChangeRecorder` 채널 + `DatabaseHooks.toFlushPayload` 매핑 1줄 + `JdbcFlushExecutor`의 `FlushPayload`(`:2287`) 후행 필드·v2 step + **`engine.v2` 신규 파일**(v2 원장 store · 판정 로직) + v2 flush IT. **v1 델타와 같은 트랜잭션에서 커밋된다**(두 번째 DataSource·풀 없음). **`TruncateContract`·`InMemoryTurnWorld`·`WorldSnapshotLoader`·`TurnRunService`·`RehydrateService`는 경유하지 않는다**(§7.1-2 개정 6차, T2 11행 전량 + 가드 영향 명시) | **3단계(V2-0B, `OPENSAM-43`·`44`) 직후** — v2 DB와 flush 경로가 있어야 성립 |
+| R1 | `v2_city_ledger` 기반 | **개정 6차 재작성** — 0A-c 분리 location의 마이그레이션 + `DirtyState`/`ChangeRecorder` 채널 + `DatabaseHooks.toFlushPayload` 매핑 1줄 + `JdbcFlushExecutor`의 `FlushPayload`(`:2287`) 후행 필드·v2 step + **`engine.v2` 신규 파일**(v2 원장 store · 판정 로직) + v2 flush IT. **v1 델타와 같은 트랜잭션에서 커밋된다**(두 번째 DataSource·풀 없음). **`TruncateContract`·`InMemoryTurnWorld`·`WorldSnapshotLoader`·`TurnRunService`·`RehydrateService`는 경유하지 않는다**(§7.1-2 개정 6차, T2 11행 전량 + 가드 영향 명시) | **3b, 3단계 runtime/isolation·ownership decomposition 직후** — OPENSAM-150 자신이 첫 product DB migration과 entity flush extension을 만들며, 선행으로 요구하는 것은 OP43 runtime/isolation, OP44 crosswalk, OP128→130→131→132 complete shared-flush foundation이다. 제품 v2 DB table/flush path의 선존재를 요구하지 않는다. |
 | R2 | 수입·봉록 도시 귀속 **(생산자 티켓)** | `V2ProcessCityIncome` leaf(`IncomeTick` 3함수 호출 + `ProcessIncome` 3분기 재조립) + **`prev_income_{gold,rice}` KV 유지**(§2.3) + 새 파일 `V2WorldActions` + **`EngineEventConfig.kt:79-81` 등록 체인 1줄** + **`WorldActionContext.kt` v2 컨텍스트 구현**(둘 다 T2, §7.1-2) + v2 시나리오 JSON에 `DEFAULT_EVENTS` 12행 전사 및 1·7월 행 `ProcessIncome`→`V2ProcessCityIncome` 치환 + 도시별 봉록 로그 | 3단계 직후, R1 뒤 |
 | R3 | 도시병사 감소·공백지화 | v2 월간 leaf(draw 0, 월 게이트 {1,4,7,10} = `EventStore.kt:171,180,190,197`) + `attritionLoss` 장수수 스케일 + v2 시나리오 JSON 1·4·7·10월 `event` 행에 leaf append + before/after 로그 | 3단계 직후, **R2 뒤 — 병렬 아님**(개정 4차, 아래) |
 | R4 | 병사보충 커맨드 | v2 개인턴 resolver + intake 배선 + `pollCommandResult` 규약 | **4단계(V2-1, `OPENSAM-45`·`46`·`47`) 이후** — command result lifecycle이 선행 |
@@ -1386,7 +1386,7 @@ emergent 관계 **5종 중 4종**이 **`OPENSAM-56`(V2-3 작전)과 `OPENSAM-61`
 채점기 §채택 규칙 마지막 줄대로, 채택되면 ADR-LITE-019 개정이 따른다.
 
 - **오픈 경로 14 → 20**(단일값, 조건부 없음). 개정 2차의 조건부 R0은 `OPENSAM-35` 범위 조회로 해소돼 오픈 후 `P0`이 됐다(§4.3).
-- **삽입 위치는 단일하지 않다.** R1·R2·R3은 3단계(V2-0B, `OPENSAM-43`·`44`) 직후, R4·R5는 4단계(V2-1, `OPENSAM-45`~`47`) 이후, R6은 4단계와 동시. 원안이 "3단계 직후"라고 뭉뚱그린 것을 티켓별로 나눴다.
+- **삽입 위치는 단일하지 않다.** R1은 3단계의 runtime/isolation·ownership decomposition 뒤 3b에서 첫 product DB/flush를 직접 만들고, R2·R3은 R1 뒤에 순차 실행한다. R4·R5는 4단계(V2-1, `OPENSAM-45`~`47`) 이후, R6은 4단계와 동시다. 3단계 OP43/44가 product 적재·영속화를 이미 제공한다는 과거 전제는 supersede됐으며, R1을 자기 산출물로 block하지 않는다.
 - `V2-G0`·`C-track`·`O0/V2-7`(임원진·중앙관직, §5-bis)을 오픈 후에 두는 기존 결정과 `OPENSAM-149` 선행은 **그대로 유지**된다. 이 설계안은 ADR-LITE-019가 뺀 것을 되돌리지 않는다.
 - **`spec:388` 개정은 오픈 후로 미룬다.** 관계망 착수가 오픈 후이므로 정본 문장도 그때 함께 고치는 것이 맞다. 지금 고치면 구현이 없는 선언만 남는다. 채택 시 등록만 해 둔다(§4.2).
 - **`docs/superpowers/specs/2026-07-12-opensamguk-v2-product-spec.md:307`과의 관계.** 그 줄은 "기존 개인턴·사령턴 커맨드의 코드, 예약 위치, 패리티 로그와 v1 결과를 유지한다"이다. 이 설계안은 v1 커맨드를 **한 줄도 고치지 않고**(§2.3의 42지점 무접촉, §7.1의 T1) 월간 leaf 하나만 v2 프로파일에서 치환하므로 이 조항과 충돌하지 않는다.

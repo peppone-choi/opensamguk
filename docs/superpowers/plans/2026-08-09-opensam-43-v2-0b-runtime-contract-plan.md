@@ -36,8 +36,10 @@ It opens no persistence leaf and changes no v1 wire shape.
 ## 4. Scope boundaries
 
 OP43 may add read-only catalog/runtime contract types, test-only migration probes, tests, and evidence.
-Actual v2 schema/persistence is OPENSAM-44/150. The first production `migration_v2` SQL file and first
-v2 leaf remain OPENSAM-150. RTK builders 104/105, G0, deployment, and cutover are excluded.
+Actual v2 schema/persistence belongs to OPENSAM-150 and later just-in-time product owners; OPENSAM-44
+only reconciles and decomposes the former broad T1 persistence contract. The first production
+`migration_v2` SQL file and first v2 leaf remain OPENSAM-150 at `V901`. RTK builders 104/105, G0,
+deployment, and cutover are excluded.
 
 ## 5. Execution lanes
 

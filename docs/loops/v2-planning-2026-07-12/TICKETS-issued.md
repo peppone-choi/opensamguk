@@ -8,8 +8,8 @@ Jira↔GitHub 자동 동기화는 없다. 진실 순서는 **코드 > PR > GitHu
 
 | 코드 | Jira 키 | GitHub | 요약 | 우선순위 | 라벨 |
 |---|---|---|---|---|---|
-| R1 | `OPENSAM-150` | [#325](https://github.com/peppone-choi/opensamguk/issues/325) | v2 도시 원장 기반 — `v2_city_ledger` 스키마 + `ChangeRecorder`→`JdbcFlushExecutor` 쓰기 경로 | High / `priority-next` | `v2-open-path`, `v2-open-step-3b` |
-| R2 | `OPENSAM-151` | [#326](https://github.com/peppone-choi/opensamguk/issues/326) | 수입·봉록 도시 귀속 (**생산자**) — `V2ProcessCityIncome` leaf + v2 시나리오 `event` 12행 재시드 | High / `priority-next` | `v2-open-path`, `v2-open-step-3b` |
+| R1 | `OPENSAM-150` | [#325](https://github.com/peppone-choi/opensamguk/issues/325) | v2 도시 원장 기반 — `v2_city_ledger` 스키마 + `ChangeRecorder`→`JdbcFlushExecutor` 쓰기 경로 + migration-before-seed/source→DB 적재 seam | High / `priority-next` | `v2-open-path`, `v2-open-step-3b` |
+| R2 | `OPENSAM-151` | [#326](https://github.com/peppone-choi/opensamguk/issues/326) | 수입·봉록 도시 귀속 (**생산자**) — `V2ProcessCityIncome` leaf + v2 시나리오 `event` 12행 저작·재시드 | High / `priority-next` | `v2-open-path`, `v2-open-step-3b` |
 | R3 | `OPENSAM-152` | [#327](https://github.com/peppone-choi/opensamguk/issues/327) | 도시병사 감소·공백지화 (**소비자, R2 뒤**) — `V2CityGarrisonAttrition` 월간 leaf | High / `priority-next` | `v2-open-path`, `v2-open-step-3b` |
 | R4 | `OPENSAM-153` | [#328](https://github.com/peppone-choi/opensamguk/issues/328) | 도시병사 보충 커맨드 — v2 개인턴 resolver + intake 배선 + `pollCommandResult` 규약 | High / `priority-next` | `v2-open-path`, `v2-open-step-4b` |
 | R5 | `OPENSAM-154` | [#329](https://github.com/peppone-choi/opensamguk/issues/329) | 수송 커맨드 — 금·병량·도시병사, 인접 1홉, 각 5만·최소 병사 2000 | High / `priority-next` | `v2-open-path`, `v2-open-step-4b` |
@@ -22,7 +22,7 @@ Jira↔GitHub 자동 동기화는 없다. 진실 순서는 **코드 > PR > GitHu
 | 0 | `v2-open-step-0` | `OPENSAM-31`·`32`·`33`·`34` | v1 선행 4종 |
 | 1 | `v2-open-step-1` | `OPENSAM-149` | restart-rehydrate lossless gate |
 | 2 | `v2-open-step-2` | `OPENSAM-35` | V2-0A production 격리 (+DoD 3항목 추가) |
-| 3 | `v2-open-step-3` | `OPENSAM-43`·`44` | V2-0B 적재 + 영속화 일괄 |
+| 3 | `v2-open-step-3` | `OPENSAM-43`·`44` | V2-0B runtime/isolation 계약 + broad T1 영속화의 just-in-time 소유권 분해(제품 SQL 0) |
 | 3b | `v2-open-step-3b` | `OPENSAM-150` → `151` → `152` | **R1 → R2 → R3, 순차** |
 | 4 | `v2-open-step-4` | `OPENSAM-45`·`46`·`47` · `155` | V2-1 lifecycle + 조작 대상 패널 · **R6 동시** |
 | 4b | `v2-open-step-4b` | `OPENSAM-153` → `154` | **R4 → R5, 순차** |
@@ -49,7 +49,7 @@ Jira↔GitHub 자동 동기화는 없다. 진실 순서는 **코드 > PR > GitHu
 | # | UNKNOWN | 닫는 티켓 |
 |---|---|---|
 | U9 | `@Serializable` sealed 서브클래스 파일 분리 | `OPENSAM-150`(R1) 착수 첫 작업 — 소비자는 R4·R5. §11은 원래 R4 착수 첫 작업으로 적었으나 앞당겼다 |
-| U10 | v2 시드·마이그레이션 부팅 순서 | `OPENSAM-150`(R1) 착수 첫 작업 |
+| U10 | v2 시드·마이그레이션 부팅 순서 + configured scenario source→v2 DB event 적재 seam | `OPENSAM-150`(R1) 착수 첫 작업; event payload·`ignoreDefaultEvents`·재시드 판정은 `OPENSAM-151`(R2) |
 | U12 | `SPRING_FLYWAY_LOCATIONS` env 오버라이드 | `OPENSAM-150`(R1) 착수 첫 작업 + `OPENSAM-35` DoD ② |
 | U6 | 도시병사 수송 상한 | `OPENSAM-154`(R5) 본문에서 5만 임시 적용 + **"묘섭 미명시"** 표기 |
 | U7 | 국고 4대 지출 균형 | 오픈 전 관측 3종(국고 월간 추이 / 병종연구 최초 완료 시점 / `maxResourceActionAmount` 분포) |
