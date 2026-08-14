@@ -3,77 +3,59 @@
 # Its safety, source, fetch, transform, and report stages share one audited rights boundary.
 """OPENSAM-97 — RTK14 local-only portrait pipeline.
 
-Deterministic name enumeration -> URL ?rev/query stripping -> polite
-fetch/cache -> proportional full-image resize -> byte-stable report.
+Deterministic observed URLs -> cache-first fetch -> proportional full-frame
+resize -> byte-stable report. The transform never changes content selection:
+it preserves the whole decoded image, fits it within the requested bounds, and
+never enlarges it.
 
-Rights posture (see docs/superpowers/plans/2026-07-17-opensam-92-93-94-97-103-
-execution-contract.md section 7 / D4):
-  * RTK14 ONLY. Never widen to RTK8R or another game.
-  * raw / cache / resized-output / report paths MUST be outside the repo or gitignored.
-    Repo-tracked targets fail closed.
-  * On fetch/decode/encode failure: record FAIL. NEVER substitute another image.
-    Portrait URLs are DERIVED from observed roster fields, never invented:
-    a wrong derivation 404s (honest FAIL), never a wrong-officer face.
-  * Nothing here commits, redistributes, or activates any image.
-
-Source facts extracted from research (recorded [사실]):
-  * Name/portrait source family: wikiwiki.jp/sangokushi14 (RTK14 community wiki).
-    Roster = 史実武将 page; each officer row is a rel-wiki-page name cell + a
-    katakana reading cell. Officer detail pages: .../sangokushi14/<urlencoded-name>.
-    -- docs/.../2026-07-17-opensam-91b-npc-portrait-data-pool.md
-  * Portrait is a CDN attachment in the officer's OWN namespace, filename == the
-    officer's katakana reading (confirmed: 曹操 -> ソウソウ.jpg):
-    https://cdn.wikiwiki.jp/to/w/sangokushi14/<page>/::attach/<reading>.jpg?rev=<hash>&t=<ts>
-    -- docs/.../2026-07-17-opensam-102-rtk14-rtk8r-map-source-coverage.md
-
-Portrait discovery (two modes; both fetch only real observed sources):
-  * 'page' (default): fetch each officer page and parse its ::attach portrait
-    attachment. Identity-safe (the attachment is read off the officer's own
-    page); the wiki page host rate-limits (429) sustained crawls, so keep the
-    polite delay. The 1000-officer run resolved 1000/1000 this way.
-  * 'reading': construct the ::attach URL from the roster's reading column and
-    fetch it from the CDN (not rate-limited). ~27% coverage (half-width kana /
-    suffixed filenames 404) and a suffixed attachment can silently resolve to a
-    DIFFERENT image than the page's real portrait (李衡: リコウ.jpg vs リコウ2.jpg).
-  Manifest mode (--names name<TAB>image_url) remains for offline determinism.
+Source and rights boundary:
+  * `--manifest` requires `name<TAB>observed_officer_page_url<TAB>` plus the exact
+    observed `::attach` URL. It does not construct attachment filenames or URLs.
+  * There is no roster/page crawl or downloader. Operators supply both the
+    observed manifest and an independently obtained local cache.
+  * Queries/fragments (including `?rev`) are removed before cache lookup and
+    report output. Raw/cache/output/report paths must be outside the repo or
+    gitignored; tracked destinations fail closed.
+  * Cache misses are `FAIL/cache_miss`; this program has no network path. A
+    manifest or cache entry does not itself establish reuse rights.
+  * Source/reuse rights still require separate clearance. This tool neither
+    commits, redistributes, nor activates images; fetch/decode/encode failures
+    remain `FAIL` and never substitute another image.
 """
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
-import html
+import io
 import json
+import os
 import re
+import stat
 import subprocess
 import sys
-import time
-import urllib.error
+import tempfile
 import urllib.parse
-import urllib.request
-from collections import namedtuple
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
 
+from PIL import Image, UnidentifiedImageError
+
 TOOL_NAME = "opensamguk-rtk-faces"
-TOOL_VERSION = "1.2"
+TOOL_VERSION = "1.4"
 DEFAULT_MAX_WIDTH = 156
 DEFAULT_MAX_HEIGHT = 210
-DEFAULT_USER_AGENT = (
-    f"{TOOL_NAME}/{TOOL_VERSION} "
-    "(local RTK14 research tool; +https://github.com/peppone-choi/opensamguk)"
-)
-MIN_DELAY_SECONDS = 1.0
+MAX_SOURCE_BYTES = 64 * 1024 * 1024
+MAX_IMAGE_PIXELS = 50_000_000
 
-# [사실] RTK14 community wiki. Roster = 史実武将 list page; each officer links to
-# https://wikiwiki.jp/sangokushi14/<urlencoded-name>. Portrait is a cdn attachment
-# in that officer's namespace: .../sangokushi14/<page>/::attach/<katakana>.jpg?rev=...
-# (::attach = faithful original; ::ref = possible .webp derivative).
-WIKI_ORIGIN = "https://wikiwiki.jp"
-DEFAULT_ROSTER_URL = "https://wikiwiki.jp/sangokushi14/%E5%8F%B2%E5%AE%9F%E6%AD%A6%E5%B0%86"
+@dataclass(frozen=True, slots=True)
+class Target:
+    """One RTK14 officer and its observed-page provenance."""
 
-# name -> fetch url. kind "image": url is the portrait itself (manifest mode).
-# kind "page": url is the officer page; portrait is discovered from its HTML.
-Target = namedtuple("Target", ["name", "url", "kind", "page_key"])
+    name: str
+    page_url: str
+    observed_image_url: str
 
 
 class ImageSize(TypedDict):
@@ -116,6 +98,7 @@ class ReportMeta(TypedDict):
     tool: str
     tool_version: str
     source: str
+    provenance: str
     resize_bounds: ResizeBounds
     total: int
     counts: ReportCounts
@@ -141,17 +124,6 @@ class FetchError(Exception):
         self.reason = reason
 
 
-class _PermanentHttp(Exception):
-    def __init__(self, code: int):
-        self.code = code
-
-
-class _Transient(Exception):
-    def __init__(self, reason: str, retry_after: float = 0.0):
-        self.reason = reason
-        self.retry_after = retry_after
-
-
 # --------------------------------------------------------------------------- #
 # pure helpers                                                                 #
 # --------------------------------------------------------------------------- #
@@ -164,106 +136,105 @@ def strip_query(url: str) -> str:
     return url.split("#", 1)[0].split("?", 1)[0]
 
 
-def parse_manifest(text: str) -> list[tuple[str, str, str]]:
-    """Deterministic enumeration of the fixed RTK14 name source.
+def _fully_unquote(value: str) -> str:
+    """Decode until stable so nested escapes cannot hide separators."""
+    current = value
+    for _ in range(len(value) + 1):
+        decoded = urllib.parse.unquote(current)
+        if decoded == current:
+            return decoded
+        current = decoded
+    raise ManifestError("url encoding did not converge")
 
-    Rows: `name<TAB>image_url`. `#` comments and blank lines are ignored.
-    Rejects empty names, empty urls, and duplicate names. Result is sorted by
-    name so two runs over the same source yield identical order/count and
-    identical normalized (query-stripped) URLs.
+
+def _parse_observed_page_url(raw_url: str, lineno: int) -> tuple[str, str]:
+    """Parse one exact RTK14 officer page URL from an operator observation."""
+    parsed = urllib.parse.urlsplit(raw_url)
+    if (
+        parsed.scheme != "https"
+        or parsed.netloc != "wikiwiki.jp"
+        or parsed.query
+        or parsed.fragment
+        or not parsed.path.startswith("/sangokushi14/")
+    ):
+        raise ManifestError(f"line {lineno}: invalid observed officer page url")
+    page_key = parsed.path.removeprefix("/sangokushi14/")
+    fully_decoded_key = _fully_unquote(page_key)
+    if (
+        not page_key
+        or fully_decoded_key in {".", ".."}
+        or "/" in fully_decoded_key
+        or "::" in fully_decoded_key
+    ):
+        raise ManifestError(f"line {lineno}: invalid observed officer page path")
+    return page_key, fully_decoded_key
+
+
+def _parse_observed_attachment_url(raw_url: str, page_key: str, lineno: int) -> str:
+    """Parse an observed original attachment tied to its officer page namespace."""
+    canonical_url = strip_query(raw_url)
+    parsed = urllib.parse.urlsplit(canonical_url)
+    prefix = f"/to/w/sangokushi14/{page_key}/::attach/"
+    if (
+        parsed.scheme != "https"
+        or parsed.netloc != "cdn.wikiwiki.jp"
+        or not parsed.path.startswith(prefix)
+    ):
+        raise ManifestError(
+            f"line {lineno}: attachment does not match observed officer page"
+        )
+    filename = parsed.path.removeprefix(prefix)
+    decoded_filename = _fully_unquote(filename)
+    if (
+        not filename
+        or "/" in decoded_filename
+        or decoded_filename in {".", ".."}
+        or not re.search(r"\.(?:jpg|jpeg|png|gif|webp)$", filename, re.IGNORECASE)
+    ):
+        raise ManifestError(f"line {lineno}: invalid observed attachment filename")
+    return canonical_url
+
+
+def parse_manifest(text: str) -> list[Target]:
+    """Parse a deterministic observed-URL manifest.
+
+    Rows are `name<TAB>observed_officer_page_url<TAB>observed_attachment_url`.
+    The attachment must stay in the page's own `::attach` namespace. `?rev` and
+    all other query values are stripped before the cache key and report are made.
     """
-    rows: list[tuple[str, str, str]] = []
-    seen: set[str] = set()
+    rows: list[Target] = []
+    seen_page_identities: set[str] = set()
     for lineno, line in enumerate(text.splitlines(), 1):
         s = line.strip()
         if not s or s.startswith("#"):
             continue
         parts = s.split("\t")
-        if len(parts) < 2:
-            raise ManifestError(f"line {lineno}: expected 'name<TAB>url'")
+        if len(parts) != 3:
+            raise ManifestError(
+                f"line {lineno}: expected "
+                "'name<TAB>page_url<TAB>observed_attachment_url'"
+            )
         name = parts[0].strip()
-        url = parts[1].strip()
+        page_url = parts[1].strip()
+        attachment_url = parts[2].strip()
         if not name:
             raise ManifestError(f"line {lineno}: empty name")
-        if not url:
-            raise ManifestError(f"line {lineno}: empty url")
-        if name in seen:
-            raise ManifestError(f"line {lineno}: duplicate name")
-        seen.add(name)
-        rows.append((name, url, strip_query(url)))
-    rows.sort(key=lambda r: r[0])
+        if not page_url or not attachment_url:
+            raise ManifestError(f"line {lineno}: empty observed url")
+        page_key, page_identity = _parse_observed_page_url(page_url, lineno)
+        if page_identity in seen_page_identities:
+            raise ManifestError(f"line {lineno}: duplicate observed officer page")
+        seen_page_identities.add(page_identity)
+        canonical_url = _parse_observed_attachment_url(attachment_url, page_key, lineno)
+        rows.append(
+            Target(
+                name=name,
+                page_url=page_url,
+                observed_image_url=canonical_url,
+            )
+        )
+    rows.sort(key=lambda row: (row.name, row.page_url))
     return rows
-
-
-# Officer data row in the 史実武将 table: a rel-wiki-page name cell followed by the
-# reading (katakana) cell. The name link + adjacent reading cell together exclude
-# menubar/guide links (FAQ, おまけ武将, …) that are not officer rows.
-_ROSTER_ROW = re.compile(
-    r'<td[^>]*><a href="/sangokushi14/([^"?#]+)"[^>]*class="rel-wiki-page"[^>]*>([^<]*)</a></td>'
-    r'\s*<td[^>]*>([^<]*)</td>'
-)
-
-
-def parse_roster(html_text: str) -> list[tuple[str, str, str]]:
-    """Deterministic officer enumeration from the 史実武将 roster page.
-
-    An officer row is a rel-wiki-page name cell followed by its reading cell
-    (that td + adjacent-reading structure is what excludes menu/guide links).
-    Returns (name, page_encoded, reading) sorted by name.
-
-    The DISPLAY name is the visible link text (true kanji). The page name is NOT
-    the display name: the wiki substitutes katakana for rare kanji in page names
-    (龐統 -> page ホウ統, 賈詡 -> 賈ク), so keying the name off the page dropped ~98
-    real officers. The page_encoded (katakana or not) still addresses the CDN
-    namespace; the reading (katakana) is the portrait attachment stem.
-    """
-    seen: set[str] = set()
-    rows: list[tuple[str, str, str]] = []
-    for enc, text, reading in _ROSTER_ROW.findall(html_text):
-        if "::" in enc or "/" in urllib.parse.unquote(enc):
-            continue
-        name = html.unescape(text.strip())
-        if not name or enc in seen:  # dedup by page (the roster repeats each link)
-            continue
-        seen.add(enc)
-        rows.append((name, enc, html.unescape(reading.strip())))
-    rows.sort(key=lambda r: (r[0], r[1]))
-    return rows
-
-
-def reading_portrait_url(page_encoded: str, reading: str, ext: str = "jpg") -> str:
-    """Construct the CDN portrait URL from observed roster fields (page name +
-    reading). Per-officer namespaced, so it can only resolve to THIS officer's
-    attachment — a wrong reading/ext 404s (honest FAIL), never a wrong face.
-    Not fabrication: the reading is observed roster data and the ::attach/<reading>
-    convention is confirmed against officer pages (曹操 -> ソウソウ.jpg)."""
-    stem = urllib.parse.quote(reading, safe="")
-    return f"https://cdn.wikiwiki.jp/to/w/sangokushi14/{page_encoded}/::attach/{stem}.{ext}"
-
-
-def parse_portrait_url(html_text: str, page_encoded: str) -> str | None:
-    """Discover the officer's portrait attachment URL from their page HTML.
-
-    Matches image attachments in THIS officer's cdn namespace only (rejects
-    embedded other-officer thumbnails). Prefers ::attach (faithful original) over
-    ::ref (possible .webp derivative). Returns the query-stripped canonical URL,
-    or None if the page carries no parseable portrait. Never fabricates a URL.
-
-    ponytail: first-match-in-document-order = the top infobox portrait; the
-    manual-QA identity check is the guard if a page ever front-loads another image.
-    """
-    pat = re.compile(
-        r"https?://cdn\.wikiwiki\.jp/to/w/sangokushi14/"
-        + re.escape(page_encoded)
-        + r"/::(?:attach|ref)/[^\"'<> ]+?\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\"'<> ]*)?",
-        re.IGNORECASE,
-    )
-    urls = [html.unescape(m.group(0)) for m in pat.finditer(html_text)]
-    if not urls:
-        return None
-    attach = [u for u in urls if "/::attach/" in u]
-    chosen = attach[0] if attach else urls[0]
-    return strip_query(chosen)
 
 
 def path_is_outside(path: Path, repo_root: Path) -> bool:
@@ -296,142 +267,98 @@ def assert_safe_path(path: Path, repo_root: Path, is_ignored=_git_ignored) -> No
 
 
 # --------------------------------------------------------------------------- #
-# rate limiting + fetch/cache                                                  #
+# cache-only source                                                            #
 # --------------------------------------------------------------------------- #
-class RateLimiter:
-    """Enforce a minimum delay between network requests (>= MIN_DELAY_SECONDS)."""
+class CacheReader:
+    """Resolve observed attachment URLs from an operator-supplied local cache."""
 
-    def __init__(self, min_delay: float, clock=time.monotonic, sleeper=time.sleep):
-        self.min_delay = max(MIN_DELAY_SECONDS, min_delay)
-        self._clock = clock
-        self._sleeper = sleeper
-        self._last: float | None = None
-
-    def wait(self) -> None:
-        now = self._clock()
-        if self._last is not None:
-            elapsed = now - self._last
-            if elapsed < self.min_delay:
-                self._sleeper(self.min_delay - elapsed)
-        self._last = self._clock()
-
-    def sleep(self, seconds: float) -> None:
-        """Explicit backoff sleep (resets the inter-request clock)."""
-        if seconds > 0:
-            self._sleeper(seconds)
-        self._last = self._clock()
-
-
-def _urllib_open(url: str, user_agent: str, timeout: float) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": user_agent})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read()
-    except urllib.error.HTTPError as e:
-        # 429 (rate limited) and 503 are transient — back off and retry politely.
-        if e.code in (429, 503):
-            try:
-                retry_after = float(e.headers.get("Retry-After", "0") or 0)
-            except (TypeError, ValueError):
-                retry_after = 0.0
-            raise _Transient(f"http_{e.code}", retry_after)
-        if 400 <= e.code < 500:
-            raise _PermanentHttp(e.code)
-        raise _Transient(f"http_{e.code}")
-    except (urllib.error.URLError, TimeoutError, OSError):
-        raise _Transient("network_error")
-
-
-class Fetcher:
-    """Polite fetch with cache reuse. A cached canonical URL is never re-fetched
-    and never waits on the rate limiter."""
-
-    def __init__(
-        self,
-        cache_dir: Path,
-        rate_limiter: RateLimiter,
-        user_agent: str = DEFAULT_USER_AGENT,
-        timeout: float = 20.0,
-        retries: int = 2,
-        opener=_urllib_open,
-    ):
+    def __init__(self, cache_dir: Path):
         self.cache_dir = cache_dir
-        self.rate_limiter = rate_limiter
-        self.user_agent = user_agent
-        self.timeout = timeout
-        self.retries = max(0, retries)
-        self._opener = opener
 
     def _cache_path(self, canonical_url: str) -> Path:
         return self.cache_dir / (sha256_hex(canonical_url.encode("utf-8")) + ".bin")
 
     def fetch(self, canonical_url: str) -> tuple[bytes, bool]:
-        """Return (bytes, cached). Raises FetchError on terminal failure.
-
-        Transient failures (429/503/network) back off exponentially, honoring a
-        server Retry-After when present, before the bounded retry."""
+        """Return cached bytes or a stable failure without network access."""
+        canonical_url = strip_query(canonical_url)
         cache_path = self._cache_path(canonical_url)
-        if cache_path.exists():
-            return cache_path.read_bytes(), True
-        last_reason = "network_error"
-        for attempt in range(self.retries + 1):
-            self.rate_limiter.wait()
-            try:
-                data = self._opener(canonical_url, self.user_agent, self.timeout)
-            except _PermanentHttp as e:
-                raise FetchError(f"http_{e.code}")
-            except _Transient as e:
-                last_reason = e.reason
-                if attempt < self.retries:
-                    backoff = max(e.retry_after, self.rate_limiter.min_delay * (2 ** attempt))
-                    self.rate_limiter.sleep(backoff)
-                continue
-            cache_path.parent.mkdir(parents=True, exist_ok=True)
-            cache_path.write_bytes(data)
-            return data, False
-        raise FetchError(last_reason)
+        no_follow_flag = getattr(os, "O_NOFOLLOW", None)
+        non_block_flag = getattr(os, "O_NONBLOCK", None)
+        if no_follow_flag is None or non_block_flag is None:
+            raise FetchError("cache_unsafe")
+
+        try:
+            descriptor = os.open(
+                cache_path,
+                os.O_RDONLY
+                | no_follow_flag
+                | non_block_flag,
+            )
+        except FileNotFoundError as error:
+            raise FetchError("cache_miss") from error
+        except OSError as error:
+            raise FetchError("cache_unsafe") from error
+
+        try:
+            with contextlib.ExitStack() as descriptor_stack:
+                descriptor_stack.callback(os.close, descriptor)
+                if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    raise FetchError("cache_unsafe")
+
+                source = os.fdopen(descriptor, "rb")
+                with source:
+                    descriptor_stack.pop_all()
+                    if os.fstat(source.fileno()).st_size > MAX_SOURCE_BYTES:
+                        raise FetchError("cache_too_large")
+                    payload = source.read(MAX_SOURCE_BYTES + 1)
+                    if len(payload) > MAX_SOURCE_BYTES:
+                        raise FetchError("cache_too_large")
+                    return payload, True
+        except OSError as error:
+            raise FetchError("cache_unsafe") from error
 
 
 # --------------------------------------------------------------------------- #
-# image ops (live path uses OpenCV; tests inject a fake)                       #
+# image ops (Pillow; tests may inject a deterministic fake)                    #
 # --------------------------------------------------------------------------- #
-class CvImageOps:
-    def __init__(self):
-        import cv2  # noqa: PLC0415  (lazy: keep tests stdlib-only)
+class PillowImageOps:
+    def decode(self, data: bytes) -> Image.Image | None:
+        try:
+            with Image.open(io.BytesIO(data)) as source:
+                if source.width * source.height > MAX_IMAGE_PIXELS:
+                    return None
+                source.load()
+                mode = (
+                    "RGBA"
+                    if "A" in source.getbands() or "transparency" in source.info
+                    else "RGB"
+                )
+                return source.convert(mode)
+        except (Image.DecompressionBombError, UnidentifiedImageError, OSError, ValueError):
+            return None
 
-        self._cv2 = cv2
-        self._np = __import__("numpy")
+    def size(self, image: Image.Image) -> tuple[int, int]:
+        return image.size
 
-    def decode(self, data: bytes):
-        arr = self._np.frombuffer(data, dtype=self._np.uint8)
-        return self._cv2.imdecode(arr, self._cv2.IMREAD_COLOR)  # None on failure
-
-    def size(self, img) -> tuple[int, int]:
-        h, w = img.shape[:2]
-        return int(w), int(h)
-
-    def resize_encode(self, img, max_width: int, max_height: int):
-        """Downscale the complete image to fit inside the bounds.
-
-        Aspect ratio is preserved and small inputs are never enlarged. No crop,
-        face detection, padding, or content-aware positioning is applied.
-        """
-        width, height = self.size(img)
+    def resize_encode(
+        self,
+        image: Image.Image,
+        max_width: int,
+        max_height: int,
+    ) -> tuple[bytes, int, int, str]:
+        width, height = self.size(image)
         scale = min(1.0, max_width / width, max_height / height)
         out_width = max(1, min(max_width, int(round(width * scale))))
         out_height = max(1, min(max_height, int(round(height * scale))))
-        resized = img
+        resized = image
         if (out_width, out_height) != (width, height):
-            resized = self._cv2.resize(
-                img,
-                (out_width, out_height),
-                interpolation=self._cv2.INTER_AREA,
-            )
-        ok, buf = self._cv2.imencode(".png", resized)
-        if not ok:
-            raise FetchError("encode_failed")
-        data = buf.tobytes()
-        return data, out_width, out_height, "png"
+            resized = image.resize((out_width, out_height), Image.Resampling.LANCZOS)
+        try:
+            payload = io.BytesIO()
+            resized.save(payload, format="PNG", optimize=False, compress_level=9)
+            return payload.getvalue(), out_width, out_height, "png"
+        except OSError as error:
+            raise FetchError("encode_failed") from error
 
 
 # --------------------------------------------------------------------------- #
@@ -454,19 +381,6 @@ def _entry(name, canonical_url, status, reason, **extra):
     return e
 
 
-def _resolve_image_url(target: Target, fetcher):
-    """For a page target, fetch the officer page and discover the portrait URL.
-    Returns (image_url, page_url). Raises FetchError on fetch failure or when the
-    page has no parseable portrait (reason 'no_portrait_url')."""
-    if target.kind != "page":
-        return target.url, None
-    page_data, _ = fetcher.fetch(strip_query(target.url))
-    portrait = parse_portrait_url(page_data.decode("utf-8", "replace"), target.page_key)
-    if not portrait:
-        raise FetchError("no_portrait_url")
-    return portrait, target.url
-
-
 def process_target(
     target: Target,
     fetcher,
@@ -475,13 +389,8 @@ def process_target(
     max_width: int = DEFAULT_MAX_WIDTH,
     max_height: int = DEFAULT_MAX_HEIGHT,
 ) -> ReportEntry:
-    try:
-        image_url, page_url = _resolve_image_url(target, fetcher)
-    except FetchError as e:
-        return _entry(target.name, None, "FAIL", e.reason, page_url=target.url)
-
-    canonical = strip_query(image_url)
-    base = {"page_url": page_url}
+    canonical = strip_query(target.observed_image_url)
+    base = {"page_url": target.page_url}
     try:
         data, _cached = fetcher.fetch(canonical)
     except FetchError as e:
@@ -503,7 +412,7 @@ def process_target(
     out_dir.mkdir(parents=True, exist_ok=True)
     out_fp = sha256_hex(out_data)
     out_name = sha256_hex(canonical.encode("utf-8"))[:16] + "." + fmt
-    (out_dir / out_name).write_bytes(out_data)
+    _atomic_write(out_dir / out_name, out_data)
 
     return _entry(
         target.name,
@@ -534,7 +443,13 @@ def build_report(
         process_target(t, fetcher, image_ops, out_dir, max_width, max_height)
         for t in targets
     ]
-    entries.sort(key=lambda e: e["name"])
+    entries.sort(
+        key=lambda entry: (
+            entry["name"],
+            entry["page_url"] or "",
+            entry["canonical_url"] or "",
+        )
+    )
     counts: ReportCounts = {
         "OK": sum(e["status"] == "OK" for e in entries),
         "FAIL": sum(e["status"] == "FAIL" for e in entries),
@@ -543,7 +458,8 @@ def build_report(
         "meta": {
             "tool": TOOL_NAME,
             "tool_version": TOOL_VERSION,
-            "source": "rtk14/wikiwiki",
+            "source": "rtk14/operator-manifest-cache",
+            "provenance": "unverified",
             "resize_bounds": {"max_width": max_width, "max_height": max_height},
             "total": len(entries),
             "counts": counts,
@@ -557,6 +473,19 @@ def dump_report(report: Report) -> str:
     return json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
 
+def _atomic_write(path: Path, data: bytes) -> None:
+    """Replace a file atomically without following a pre-existing output symlink."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temporary:
+        temporary.write(data)
+        temporary_path = Path(temporary.name)
+    try:
+        os.replace(temporary_path, path)
+    except OSError:
+        temporary_path.unlink(missing_ok=True)
+        raise
+
+
 # --------------------------------------------------------------------------- #
 # CLI                                                                          #
 # --------------------------------------------------------------------------- #
@@ -566,30 +495,21 @@ def _repo_root() -> Path:
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="RTK14 local-only full-portrait resize pipeline")
-    p.add_argument("--roster-url", default=DEFAULT_ROSTER_URL,
-                   help="wiki roster page enumerated for officer names (default: 史実武将)")
-    p.add_argument("--names", default=None,
-                   help="manifest override: TSV of name<TAB>image_url (outside repo). "
-                        "When given, skips wiki roster enumeration.")
-    p.add_argument("--portrait-source", choices=("reading", "page"), default="page",
-                   help="wiki portrait discovery. 'page' (default): fetch each officer "
-                        "page and parse its portrait attachment (identity-safe; "
-                        "1000/1000 on the full run). 'reading': construct the CDN "
-                        "::attach URL from the roster's reading column (un-throttled "
-                        "CDN, but ~27%% coverage and suffixed attachments can resolve "
-                        "to a different image).")
+    p.add_argument(
+        "--manifest",
+        required=True,
+        help=(
+            "TSV of name<TAB>observed_page_url<TAB>observed_attachment_url "
+            "(outside repo)"
+        ),
+    )
     p.add_argument("--source-dir", required=True,
-                   help="raw/cache root (outside repo or gitignored)")
+                   help="operator-supplied cache root (outside repo or gitignored)")
     p.add_argument("--out-dir", required=True,
                    help="full-image resized output dir (outside repo or gitignored)")
     p.add_argument("--report", required=True,
                    help="report JSON path (outside repo or gitignored)")
     p.add_argument("--limit", type=int, default=None, help="process at most N names")
-    p.add_argument("--delay", type=float, default=3.0,
-                   help=f"inter-request delay seconds (floored at {MIN_DELAY_SECONDS})")
-    p.add_argument("--timeout", type=float, default=20.0)
-    p.add_argument("--retries", type=int, default=2)
-    p.add_argument("--user-agent", default=DEFAULT_USER_AGENT)
     p.add_argument("--max-width", type=int, default=DEFAULT_MAX_WIDTH,
                    help=f"maximum output width (default: {DEFAULT_MAX_WIDTH})")
     p.add_argument("--max-height", type=int, default=DEFAULT_MAX_HEIGHT,
@@ -602,42 +522,18 @@ def main(argv=None) -> int:
     source_dir = Path(args.source_dir)
     out_dir = Path(args.out_dir)
     report_path = Path(args.report)
-    guarded = [source_dir, out_dir, report_path]
-    if args.names:
-        guarded.append(Path(args.names))
+    manifest_path = Path(args.manifest)
+    guarded = [manifest_path, source_dir, out_dir, report_path]
     for path in guarded:
         assert_safe_path(path, repo)
 
-    fetcher = Fetcher(
-        cache_dir=source_dir / "cache",
-        rate_limiter=RateLimiter(args.delay),
-        user_agent=args.user_agent,
-        timeout=args.timeout,
-        retries=args.retries,
-    )
-
-    if args.names:  # manifest mode (offline-deterministic source)
-        rows = parse_manifest(Path(args.names).read_text(encoding="utf-8"))
-        targets = [Target(name, url, "image", None) for name, url, _c in rows]
-    else:  # wiki mode: enumerate officers from the roster page, then discover portraits
-        roster_html, _ = fetcher.fetch(strip_query(args.roster_url))
-        officers = parse_roster(roster_html.decode("utf-8", "replace"))
-        if args.portrait_source == "page":
-            targets = [
-                Target(name, f"{WIKI_ORIGIN}/sangokushi14/{enc}", "page", enc)
-                for name, enc, _reading in officers
-            ]
-        else:  # reading: construct the CDN portrait URL from the roster reading column
-            targets = [
-                Target(name, reading_portrait_url(enc, reading), "image", enc)
-                for name, enc, reading in officers
-                if reading
-            ]
+    fetcher = CacheReader(source_dir / "cache")
+    targets = parse_manifest(manifest_path.read_text(encoding="utf-8"))
 
     if args.limit is not None:
         targets = targets[: max(0, args.limit)]
 
-    image_ops = CvImageOps()
+    image_ops = PillowImageOps()
     report = build_report(
         targets,
         fetcher,
@@ -646,8 +542,7 @@ def main(argv=None) -> int:
         args.max_width,
         args.max_height,
     )
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(dump_report(report), encoding="utf-8")
+    _atomic_write(report_path, dump_report(report).encode("utf-8"))
 
     c = report["meta"]["counts"]
     print(f"total={report['meta']['total']} OK={c['OK']} FAIL={c['FAIL']}")
