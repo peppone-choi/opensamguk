@@ -65,7 +65,7 @@ class GatewayBoardService(
                 authorAccountId = principal.id,
                 authorName = principal.username,
                 title = request.title.trim(),
-                contentHtml = contentSanitizer.plainTextToSafeHtml(request.content),
+                contentHtml = contentSanitizer.toSafeHtml(request.content, request.contentFormat.orPlainText()),
                 createdAt = now,
                 updatedAt = now,
             ),
@@ -90,7 +90,7 @@ class GatewayBoardService(
         }
         post.category = category
         post.title = request.title.trim()
-        post.contentHtml = contentSanitizer.plainTextToSafeHtml(request.content)
+        post.contentHtml = contentSanitizer.toSafeHtml(request.content, request.contentFormat.orPlainText())
         post.updatedAt = Instant.now()
         return postResponse(post, principal)
     }
@@ -174,6 +174,9 @@ class GatewayBoardService(
 
     private fun CustomUserDetails.isAdmin(): Boolean =
         authorities.any { it.authority == "ROLE_ADMIN" }
+
+    private fun GatewayBoardContentFormat?.orPlainText(): GatewayBoardContentFormat =
+        this ?: GatewayBoardContentFormat.PLAIN_TEXT
 
     private fun canDelete(authorAccountId: Long?, principal: CustomUserDetails?): Boolean =
         principal != null && (authorAccountId == principal.id || principal.isAdmin())

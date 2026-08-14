@@ -7,6 +7,8 @@ import opensamguk.infra.read.UserRepository
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -77,6 +79,50 @@ class GatewayBoardPostMutationSecurityTest {
             .andExpect(jsonPath("$.deleted").value(false))
 
         assertFalse(postRepository.findAll().single().contentHtml.contains("<script>"))
+    }
+
+    @Test
+    fun `authenticated author preserves allowlisted rich text and removes active markup`() {
+        mockMvc.perform(
+            post("/board/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"category":"FREE","title":"title","content":"<p><strong>천하</strong><img src=x onerror=alert(1)><script>alert(1)</script></p>","contentFormat":"RICH_HTML"}""",
+                )
+                .with(user(CustomUserDetails(author))),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.contentHtml").value("<p><strong>천하</strong></p>"))
+
+        val contentHtml = postRepository.findAll().single().contentHtml
+        assertFalse(contentHtml.contains("script"))
+        assertFalse(contentHtml.contains("onerror"))
+        assertFalse(contentHtml.contains("alert("))
+    }
+
+    @Test
+    fun `rich text with no visible content is rejected`() {
+        mockMvc.perform(
+            post("/board/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"category":"FREE","title":"title","content":"<p><br></p><script>alert(1)</script>","contentFormat":"RICH_HTML"}""",
+                )
+                .with(user(CustomUserDetails(author))),
+        ).andExpect(status().isBadRequest)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["\\u0085", "&#x2060;"])
+    fun `rich text containing only invisible Unicode content is rejected by the API`(content: String) {
+        mockMvc.perform(
+            post("/board/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"category":"FREE","title":"title","content":"<p>$content</p>","contentFormat":"RICH_HTML"}""",
+                )
+                .with(user(CustomUserDetails(author))),
+        ).andExpect(status().isBadRequest)
     }
 
     @Test

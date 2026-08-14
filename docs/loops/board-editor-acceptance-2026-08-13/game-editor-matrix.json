@@ -1,0 +1,20 @@
+{
+  "evidenceTier": "fixture-backed real Next browser; not authenticated backend/daemon",
+  "assertions": [
+    "mailbox Tiptap editor mounted and SafeHtml preserved strong while removing img",
+    "diplomacy summary stayed plain, detail Tiptap mounted, SafeHtml preserved em while removing img"
+  ],
+  "consoleErrors": [
+    "EventSource's response has a MIME type (\"application/json\") that is not \"text/event-stream\". Aborting the connection.",
+    "EventSource's response has a MIME type (\"application/json\") that is not \"text/event-stream\". Aborting the connection.",
+    "EventSource's response has a MIME type (\"application/json\") that is not \"text/event-stream\". Aborting the connection.",
+    "EventSource's response has a MIME type (\"application/json\") that is not \"text/event-stream\". Aborting the connection.",
+    "EventSource's response has a MIME type (\"application/json\") that is not \"text/event-stream\". Aborting the connection.",
+    "EventSource's response has a MIME type (\"application/json\") that is not \"text/event-stream\". Aborting the connection.",
+    "EventSource's response has a MIME type (\"application/json\") that is not \"text/event-stream\". Aborting the connection."
+  ],
+  "mobileWidth": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+  }
+}

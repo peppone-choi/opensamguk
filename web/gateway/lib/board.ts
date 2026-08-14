@@ -166,7 +166,7 @@ export async function createBoardPost(input: {
   return parsePost(await request('/api/board/posts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, contentFormat: 'RICH_HTML' }),
   }));
 }
 

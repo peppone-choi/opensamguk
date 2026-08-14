@@ -30,6 +30,24 @@ vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({ user: authUser, loading: false, refresh: vi.fn(), logout: vi.fn() }),
 }));
 
+vi.mock('@/components/board/BoardRichTextEditor', () => ({
+  default: ({ ariaLabel, onChange }: { readonly ariaLabel: string; readonly onChange: (html: string) => void }) => (
+    <div>
+      <div aria-label="서식 도구" role="toolbar">
+        <button aria-label="굵게" type="button">굵게</button>
+        <button aria-label="기울임" type="button">기울임</button>
+        <button aria-label="취소선" type="button">취소선</button>
+      </div>
+      <div
+        aria-label={ariaLabel}
+        contentEditable
+        onInput={(event) => onChange(event.currentTarget.innerHTML)}
+        role="textbox"
+      />
+    </div>
+  ),
+}));
+
 function response(body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status: 201,
@@ -75,19 +93,52 @@ describe('gateway board write', () => {
     vi.unstubAllGlobals();
   });
 
-  it('sends a plaintext post through the authenticated proxy and opens the created detail', async () => {
+  it('sends rich text from the StarterKit editor through the authenticated proxy', async () => {
     render(<BoardWritePage />);
     expect(screen.getByLabelText('제목')).toHaveAttribute('maxLength', '120');
-    expect(screen.getByLabelText('내용')).toHaveAttribute('maxLength', '10000');
+    expect(screen.getByRole('button', { name: '굵게' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '기울임' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '취소선' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('제목'), { target: { value: '새 글' } });
-    fireEvent.change(screen.getByLabelText('내용'), { target: { value: '첫 줄\n둘째 줄' } });
+    fireEvent.input(screen.getByRole('textbox', { name: '내용' }), {
+      target: { innerHTML: '<p><strong>첫 줄</strong><br>둘째 줄</p>' },
+    });
     fireEvent.click(screen.getByRole('button', { name: '등록' }));
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/board/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category: 'FREE', title: '새 글', content: '첫 줄\n둘째 줄' }),
+      body: JSON.stringify({
+        category: 'FREE',
+        title: '새 글',
+        content: '<p><strong>첫 줄</strong><br>둘째 줄</p>',
+        contentFormat: 'RICH_HTML',
+      }),
     }));
     expect(push).toHaveBeenCalledWith('/board/posts/50');
+  });
+
+  it('rejects rich text with no visible content before calling the proxy', () => {
+    render(<BoardWritePage />);
+    fireEvent.change(screen.getByLabelText('제목'), { target: { value: '빈 글' } });
+    fireEvent.input(screen.getByRole('textbox', { name: '내용' }), {
+      target: { innerHTML: '<p><br></p>' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '등록' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('제목과 내용을 모두 입력해주세요.');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('uses the backend UTF-16 length contract for astral characters', () => {
+    render(<BoardWritePage />);
+    fireEvent.change(screen.getByLabelText('제목'), { target: { value: '긴 글' } });
+    fireEvent.input(screen.getByRole('textbox', { name: '내용' }), {
+      target: { innerHTML: `<p>${'𠮷'.repeat(5001)}</p>` },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '등록' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('내용은 10000자 이내로 입력해주세요.');
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

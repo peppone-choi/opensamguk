@@ -30,6 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.jsoup:jsoup:1.22.2")
     implementation(libs.sentry.spring.boot.starter)
     implementation(libs.imageio.webp)
     implementation(libs.imageio.avif)
