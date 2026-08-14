@@ -66,6 +66,9 @@ class WorldSnapshotLoader(
                 "hiddenSeed",
                 "startYear",
                 "startTime",
+                "currentYear",
+                "currentMonth",
+                "currentPhase",
                 "scenario",
                 "map",
                 "maxNationId",
@@ -165,17 +168,24 @@ class WorldSnapshotLoader(
                 for ((key, value) in config) {
                     if (!meta.containsKey(key)) meta[key] = value
                 }
+                val currentYear = rs.getInt("current_year")
+                val currentMonth = rs.getInt("current_month")
+                val currentPhase = rs.getInt("current_phase").takeIf { it in 1..3 } ?: 1
+                meta["currentYear"] = currentYear
+                meta["currentMonth"] = currentMonth
+                meta["currentPhase"] = currentPhase
                 // isunited: dedicated column is source of truth (flush writes it; meta-only fallback for legacy rows).
                 meta["isunited"] = rs.getInt("isunited")
                 // lastTurnTime: prefer the persisted clock; fall back to start_time, then now.
                 val lastTurn = (meta["lastTurnTime"] as? String)?.let { Instant.parse(it) }
                     ?: persistedStartTime
                     ?: Instant.now()
+                meta["lastTurnTime"] = lastTurn.toString()
                 TurnWorldState(
                     id = rs.getInt("id"),
-                    currentYear = rs.getInt("current_year"),
-                    currentMonth = rs.getInt("current_month"),
-                    currentPhase = rs.getInt("current_phase").takeIf { it in 1..3 } ?: 1,
+                    currentYear = currentYear,
+                    currentMonth = currentMonth,
+                    currentPhase = currentPhase,
                     tickSeconds = rs.getInt("tick_seconds"),
                     lastTurnTime = lastTurn,
                     meta = meta,
