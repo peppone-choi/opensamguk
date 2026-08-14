@@ -12,7 +12,7 @@
   `docs/superpowers/reviews/2026-08-14-opensam-149-closeout-review.md`.
 - Acceptance evidence: PR #399 merge/CI 확인, 기존 focused/architecture XML 증거와
   quarantine matrix 대조, 문서 링크·strict·diff 검증, 독립 리뷰 `cleared`.
-- Human approval checkpoints: commit/push/PR/merge는 별도 승인 없이 수행하지 않는다.
+- Human approval checkpoints: commit/push/PR/merge와 데이터 삭제는 별도 승인 없이 수행하지 않는다.
 - Non-goals: product source/test 변경, quarantine 구현, engine promotion/deploy,
   production/secret 접근, golden/legacy 수정.
 

@@ -11,6 +11,7 @@
 ## Global Constraints
 
 - Do not edit Kotlin, SQL, tests, golden fixtures, `legacy/**`, deployment workflows, or production state.
+- Do not delete data without explicit human approval.
 - Preserve every lifecycle marked Q in the authoritative closure matrix; EventStore C/X, resident general/nation allocators, diplomacy-letter allocator, and same-due-tick visibility are notable examples, not the complete list.
 - Do not claim that the current live server image contains PR #399 until a separately authorized promotion proves it.
 - Commit, push, PR, merge, and issue closure remain human approval points.
