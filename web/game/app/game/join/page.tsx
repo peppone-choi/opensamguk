@@ -9,6 +9,7 @@ import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import { resolveServerGamePath, useServerId } from '../../../lib/serverGameUrl';
 import { JOIN_STAT_TOTAL, JOIN_STAT_MIN, JOIN_STAT_MAX, BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
 import { onPortraitError, portraitUrl } from '../../../lib/portrait';
+import { SafeHtml } from '../../../components/SafeHtml';
 import type { MapPreviewResponse } from '../../../lib/types';
 
 // 능력치 상수 — 레거시 GameConst(d_setting)·BE common GameConst.kt와 동일값.
@@ -295,8 +296,6 @@ export default function JoinPage() {
     }
   }, [frontInfo?.general?.hasGeneral, frontInfoLoading, homeHref, loading, router]);
 
-  // 국가 목록 로드 — game-api /api/map/preview의 nations(id/name/color)를 사용한다(레거시는 nation 테이블 직접
-  // read). 임관권유문(scout_msg)은 FE에 노출하는 read 채널이 아직 없어(NationFinance에서 P0-53 BLOCKED) 표시 보류.
   useEffect(() => {
     let alive = true;
     api.mapPreview()
@@ -500,7 +499,7 @@ export default function JoinPage() {
               <div style={{ padding: 'var(--space-md)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>표시할 국가가 없습니다.</div>
             ) : (
               shuffledNations.map((nation) => {
-                const scoutText = nation.scoutMsg ?? nation.infoText ?? '-';
+                const scoutText = nation.scoutMsg ?? '-';
                 return (
                   <div key={nation.id} style={{ display: 'grid', gridTemplateColumns: '130px 1fr', borderTop: '1px solid var(--color-border)' }}>
                     <div style={{
@@ -519,8 +518,9 @@ export default function JoinPage() {
                         color: 'var(--color-text-muted)',
                         alignSelf: 'center',
                       }}
-                      dangerouslySetInnerHTML={{ __html: scoutText }}
-                    />
+                    >
+                      <SafeHtml html={scoutText} />
+                    </div>
                   </div>
                 );
               })
