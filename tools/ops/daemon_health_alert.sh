@@ -112,7 +112,7 @@ fi
 
 server="$1"
 engine_container="$2"
-[[ "$server" =~ ^s[0-9][A-Za-z0-9_-]{0,63}$ ]] || invalid_input 'server must be a bounded s<number> identifier'
+[[ "$server" =~ ^s[a-z0-9]{1,48}$ ]] || invalid_input 'server must be a canonical internal game-server identifier'
 [[ "$engine_container" == "${server}-game-engine" ]] || invalid_input 'container must match the bounded server identifier'
 [[ -n "${DAEMON_ALERT_WEBHOOK_URL:-}" ]] || invalid_input 'alert webhook is not configured'
 

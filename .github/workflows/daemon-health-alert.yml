@@ -31,9 +31,42 @@ jobs:
             exit 1
           fi
           while IFS= read -r engine_container; do
-            [[ "$engine_container" =~ ^s[0-9][A-Za-z0-9_-]{0,63}-game-engine$ ]] || continue
+            [[ "$engine_container" =~ ^s[a-z0-9]{1,48}-game-engine$ ]] || continue
             found=1
             server="${engine_container%-game-engine}"
+            if ! engine_state="$(docker inspect --format '{{.State.Status}}|{{.State.StartedAt}}' "$engine_container")"; then
+              echo "ERROR: Docker state query failed for ${engine_container}" >&2
+              failure=1
+              continue
+            fi
+            IFS='|' read -r container_status started_at <<< "$engine_state"
+            if [[ "$container_status" == running ]]; then
+              if ! startup_age_seconds="$(python3 - "$started_at" <<'PY'
+          from datetime import datetime, timezone
+          import sys
+
+          try:
+              started = datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00"))
+              if started.tzinfo is None:
+                  raise ValueError("timezone required")
+              age_seconds = (datetime.now(timezone.utc) - started).total_seconds()
+              if age_seconds < 0:
+                  raise ValueError("future StartedAt")
+              age = int(age_seconds)
+          except (IndexError, OverflowError, ValueError):
+              raise SystemExit(1)
+          print(age)
+          PY
+              )"; then
+                echo "ERROR: invalid Docker startup state for ${engine_container}" >&2
+                failure=1
+                continue
+              fi
+              if (( startup_age_seconds < 300 )); then
+                echo "daemon health server=${server} startupAgeSeconds=${startup_age_seconds}; daemon alert scan deferred"
+                continue
+              fi
+            fi
             if ! bash tools/ops/daemon_health_alert.sh "$server" "$engine_container"; then
               failure=1
             fi

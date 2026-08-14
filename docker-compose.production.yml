@@ -88,6 +88,12 @@ services:
       - "8082"
     volumes:
       - ${SCENARIO_HOST_DIR:-./data/scenarios}:${SCENARIO_DIR:-/data/scenarios}:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 4m
     networks:
       - opensamguk
     deploy:
