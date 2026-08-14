@@ -1,10 +1,12 @@
 # OPENSAM-113 UI 진단과 concept 비교
 
-- **status:** `DONE_WITH_CONCERNS`
+- **status:** `EVIDENCE_PASS_WITH_PHP_PARITY_PENDING`
 - **lane:** `lane-113-ui-concepts`
 - **scope:** gateway login/lobby, game `GameChrome`/auction의 진단과 A3 선택용 시안만
 - **implementation:** 없음. 제품 CSS/TSX/asset/backend/gating은 변경하지 않았다.
 - **approval fence:** A3 미승인. 이 문서는 concept를 추천하거나 선택하지 않으며 OPENSAM-114/115를 시작하지 않는다.
+- **current-app addendum:** 2026-08-13 `origin/main` `f4ee9135`의 실제 Next DOM/CSS를 비밀 없는 fixture로 다시 렌더해
+  `GameChrome`/resource auction의 desktop·mobile 4면을 관측했다. §14가 이 재개 작업의 정본이다.
 - **comparison board:** `/Users/apple/.codex/visualizations/2026/07/17/019f6da9-8684-7500-a561-477b7aea3e48/opensam-113/comparison.html`
 
 ## 1. 판정 언어와 결론
@@ -12,7 +14,8 @@
 - `[사실]`은 현재 source, component-test fixture, 실행한 명령, 실제 렌더된 comparison board, 별도 mocked browser baseline에서 직접 확인했다.
 - `[추론]`은 사실에서 도출한 UX 판단이다.
 - `[UNKNOWN]`은 live 인증/서버 응답 등 이번 lane에서 직접 확인하지 못한 값이다.
-- `채점대기`는 통과가 아니다. mocked API baseline은 확보했지만 live 인증/CDN을 포함한 A2 검토는 열려 있다.
+- `채점대기`는 통과가 아니다. 이번 addendum의 rendered/synthetic observations are scoped `EVIDENCE PASS` only;
+  PHP-golden draw-for-draw parity, live 인증/CDN, and the corresponding phase gate remain `채점대기`.
 
 **결론:** `[추론]` 현재 화면의 가장 큰 문제는 단순히 "어두운 색"이 아니라, 동일한 dark token 위에서 거의 모든 정보가 같은 크기·같은 표면·같은 경계 강도로 경쟁하고, 메인과 auction의 chrome이 갈라지며, desktop의 고밀도 구조가 mobile에서 축소만 된다는 점이다. 세 concept는 실제 라벨과 상태를 고정한 채 palette, typography, surface/hierarchy, spacing/density를 서로 다르게 바꾼다.
 
@@ -306,7 +309,8 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 
 ## 12. A3 사용자 결정 양식
 
-다음 중 하나를 사용자가 명시해야 A3가 열린다.
+다음 중 하나를 사용자가 명시해야 A3가 열린다. PHP-golden draw-for-draw parity는 실행 계약상 별도의 A2/출시 전
+증거 gate이며, 이 lane에서는 `채점대기`다. parity gate를 A3 선택 gate로 재정의하지 않는다.
 
 ```text
 선택 concept: A 야전 사령부 | B 현대 전략실 | C 수묵 장부
@@ -314,7 +318,18 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 보존 조건: 실제 한글 label, 20-action conceptual order+gating, API state, empty/error/disabled semantics
 ```
 
-**현재 A3 상태:** `BLOCKED BY USER SELECTION`. 선택 전 product implementation과 design-system 추출을 시작하지 않는다.
+**현재 A3 상태:** `BLOCKED BY USER SELECTION`. 실행 계약상 concept 선택 전에는 product implementation과
+design-system 추출을 시작하지 않는다. PHP-golden parity는 별도 A2/출시 전 gate로 계속 `채점대기`다.
+
+선택을 빠르게 하기 위한 사용자 관점 행렬:
+
+| 내가 가장 중요하게 보는 것 | 고를 concept | 얻는 것 | 감수할 것 |
+|---|---|---|---|
+| 기존 dark 정체성과 숙련자용 고밀도 | **A 야전 사령부** | 현재 정보량을 거의 그대로 두고 frame·bronze·moss로 위계를 만든다. | 어두운 면적과 높은 밀도는 남는다. |
+| 신규 사용자 학습성과 가장 빠른 scan | **B 현대 전략실** | 밝은 work canvas, navy chrome, teal action으로 가능/불가·상태·form을 가장 빨리 읽는다. | 역사 게임만의 인상이 가장 약하다. |
+| 밝은 가독성과 삼국지 고유 분위기의 균형 | **C 수묵 장부** | paper/ink/cinnabar와 ruled ledger로 세계관과 데이터 위계를 함께 만든다. | serif·texture 품질 관리가 부족하면 장식처럼 보인다. |
+
+선택 후 허용 변경 범위도 함께 고른다: `palette`, `typography`, `spacing`, `component`, `mobile hierarchy`.
 
 ## 13. Validation record
 
@@ -322,12 +337,110 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 
 | 검증 | 상태 | 증거 |
 |---|---|---|
-| comparison HTML browser render | `PASS` | §11 DOM counts, zero overflow, zero console error, desktop/mobile PNG |
+| comparison HTML browser render | `EVIDENCE PASS` | §11 DOM counts, zero overflow, zero console error, desktop/mobile PNG; not a PHP-golden parity pass |
 | mocked gateway/game browser baseline | `4 PASS / 4 FAIL — DOWNSTREAM INPUT` | §3.4 exact report SHA; gateway 4면 PASS, GameChrome 2면 internal clip FAIL, auction 2면 header layout FAIL |
 | live auth/CDN gateway/game browser baseline | `채점대기 — SEPARATE A2 LANE` | mocked result와 comparison board 검증으로 live baseline을 주장하지 않음 |
+| PHP-golden draw-for-draw UI/parity replay | `채점대기 — NOT RUN` | this docs-only lane has no PHP capture/replay artifact; no parity or phase-gate pass is claimed |
 | tracked doc whitespace | `PASS` | 비어 있지 않음, 마지막 LF 존재, trailing whitespace 0개를 Python으로 확인 |
 | `git diff --check -- <this doc>` | `NO COVERAGE` | 문서가 untracked라 exit 0은 본문 검증이 아니다. PASS 근거로 사용하지 않고 Python 전체본문 검사로 대체 |
 | comparison HTML static validation | `PASS` | 44,714 bytes, `HTMLParser` parse, invented empty copy 0, concept data 3개, gateway/game render template 2개, external URL 0. 렌더 후 exact DOM counts는 §11 Chrome 결과 |
 | `tools/agent-system/check.py` | `BASELINE ERROR — OUT OF LANE` | exit 1: 공유 worktree의 `.codex/config.toml` personal-model pin(`codex-surface`). 이 lane 소유 파일이 아니며 수정하지 않음 |
 | gateway/game typecheck/test | `INCOMPLETE — NOT CLAIMED` | 세 명령을 시작했지만 30초 관측 안에 최종 exit를 얻지 못함. 공유 worktree가 계속 변하는 상태에서 재시도하지 않았으며 성공으로 간주하지 않음 |
 | `./tools/smoke.sh` | 미실행 | Docker socket 접근 불가; doc/board-only lane에서 product smoke 성공을 주장하지 않음 |
+
+## 14. 2026-08-13 current-app desktop/mobile 재진단
+
+### 14.1 실행 경계와 재현성
+
+- source: `origin/main` exact revision `f4ee9135`; worktree의 product TSX/CSS/API/backend는 변경하지 않았다.
+- surface: 실제 `web/game` Next.js 15.5.20 DOM/CSS/component tree. 브라우저 요청만 Playwright가 synthetic non-PII
+  fixture로 intercept했다. credential, cookie, `.env*`, backend, 외부 CDN은 읽거나 호출하지 않았다.
+- enumerated set: `GameChrome`과 resource auction 각각 desktop `1440×1000`, mobile `390×844` — 총 4면 전부.
+- report: `/Users/apple/.codex/visualizations/2026/08/08/019fdf9f-ecf1-7900-957e-04427e0b99f9/opensam-113-resume/current-app-report.json`
+  (`SHA-256 eea8532d1d53613e3608dbdfa319973e2d1be7aca509e7e02b5ba35dc4ac69fa`).
+- 모든 screenshot은 PNG signature `89504e470d0a1a0a`, 요청 viewport와 document width가 일치하고 console error/page
+  error가 0이다. fixture hit는 auth/front-info/const/menu/map/reserved/mailbox/auction 및 의도적으로 abort한 SSE뿐이다.
+
+초기 자동 캡처 timeout은 product failure가 아니었다. 같은 worktree의 orphaned Next 4 PID가 abandoned pipe에 연결된
+상태였고, 정리 뒤 webpack은 `/instrumentation` 104.1초, ready 155초, `/middleware` 57.1초를 썼다. clean-copy
+Turbopack은 외부 `node_modules` symlink를 명시적으로 거부했다. 최종 in-root Turbopack은 instrumentation Node 34.3초,
+Edge 16.3초, middleware 6초, ready 104.4초, `/game` 81.5초/HTTP 200으로 warm-up한 뒤 4면 캡처를 완료했다.
+이 기록은 반복된 tool failure를 cold-compile/evidence harness 문제로 격리하며 UI 합격 근거로 사용하지 않는다.
+
+### 14.2 실제 렌더 관측
+
+| surface | viewport | screenshot SHA-256 | DOM/geometry 관측 | 판정 |
+|---|---:|---|---|---|
+| GameChrome | 1440×1000 | `34d04916…ce8d` | document `1440×2239`; control node 21, disabled 13; reserved panel `298/318px` | `FAIL`: 내부 20px clip |
+| GameChrome | 390×844 | `c4786d97…a250` | document `390×4660`; control node 21, disabled 13; reserved panel `372/392px` | `FAIL`: 내부 20px clip + 지나친 세로 길이 |
+| resource auction | 1440×1000 | `66902e61…a26b` | document `1440×1000`; 두 `.auctionHeader` 모두 `display:block`, width 1100 | `FAIL`: 8열 header가 세로 목록으로 붕괴 |
+| resource auction | 390×844 | `95eaa6fd…b491` | document `390×914`; 두 `.auctionHeader` 모두 `display:block`, width 374 | `FAIL`: 같은 붕괴, form은 viewport 하단에서 잘림 |
+
+직접 screenshot 검토에서 추가로 확인했다.
+
+1. desktop GameChrome은 상단 13-cell 상태, 지도, 36턴 명령, 도시/국가/장수 card, 20-action bar가 모두 같은
+   1px dark boundary와 11–14px text로 경쟁한다. primary task가 지도인지 명령인지 조작 대상인지 한눈에 정해지지 않는다.
+2. mobile GameChrome은 재구성이 아니라 desktop section의 단일-column 직렬화다. 첫 viewport에 map 일부만 보이고,
+   action bar는 약 3,000px 아래에 있어 “지금 할 수 있는 행동”이 초기 화면에서 보이지 않는다.
+3. auction은 GameChrome의 world/general/nation context와 action spine이 사라진다. desktop도 canvas 대부분이 비며,
+   mobile은 header label 8개가 행이 아니라 세로 텍스트로 쌓여 데이터 구조를 읽을 수 없다.
+4. 올바른 기반도 유지한다: page-level horizontal overflow 0, 실제 disabled navigation 제거+`aria-disabled`, auction
+   `aria-pressed`, 빈 경매 행 날조 없음, mobile bottom navigation, console/page error 0.
+
+### 14.3 concept가 current defects를 다루는 방식
+
+| current defect | A 야전 사령부 | B 현대 전략실 | C 수묵 장부 |
+|---|---|---|---|
+| GameChrome hierarchy 경쟁 | frame header와 inset edge로 map/ledger/subject를 구획 | summary→map/command→action의 whitespace 단계 | paper band와 ruled ledger로 장부 단위 분리 |
+| mobile action discoverability | compact command sheet를 상단 context 뒤 배치 | executable action을 prioritized work area로 승격 | 핵심 action strip을 첫 장부 뒤에 고정 |
+| 20-action personalization | enabled bronze/moss, disabled dashed+reason | enabled teal, disabled solid neutral+reason | cinnabar active, ink-muted disabled+reason |
+| auction 8열 붕괴 | framed ledger + mobile row/detail disclosure | clean table + mobile key/value work card | ruled ledger + horizontal strip/detail pair |
+| game/auction chrome 단절 | 공통 metal command frame | 공통 navy workspace header | 공통 ink band와 seal marker |
+
+세 방향 모두 서버 precheck의 allow/deny+reason을 소비하며 frontend 조건 복제를 금지한다. 신분상 무관한 항목만 숨기고,
+현재는 불가능하지만 학습 가치가 있는 항목은 reason과 함께 disabled로 둔다는 ADR-LITE-022를 보존한다.
+
+### 14.4 A2/A3 판정
+
+- **current-app A2:** `EVIDENCE PASS WITH PRODUCT FINDINGS / PHP-GOLDEN PARITY 채점대기` — 실제 current Next surface
+  4면의 완전한 desktop/mobile evidence와 defect 위치가 확보됐다. 이는 synthetic fixture의 evidence 판정일 뿐이며,
+  PHP draw-for-draw replay·live account/backend 수치·CDN asset 성공 또는 phase-gate 통과를 주장하지 않는다.
+- **concept comparison:** 세 concept, concept별 정확히 2 mockup, 동일 20-action gate와 동일 empty/error/disabled semantics를 유지한다.
+- **A3:** `BLOCKED BY USER SELECTION` — A/B/C와 허용 변경 범위를 사용자가 선택해야 한다. PHP-golden parity는
+  실행 계약상 별도 A2/출시 전 evidence gate이며 현재 `채점대기`; 이 문서는 A3 또는 parity/phase-gate 완료를
+  주장하지 않는다.
+- 이 문서/PR은 진단과 선택지만 제공한다. product implementation, OPENSAM-114/115, merge, deploy는 수행하지 않는다.
+
+### 14.5 fresh concept-board evidence
+
+내부 preliminary visual inspection(독립 review 아님)은 기존 2026-07-17 board의 mobile specimen이 CJK text를
+7.5–11px로 축소해 concept가 선언한 13–15px body scale을 실제로 보여주지 못하고, current-app 재진단보다 capture가
+오래됐다는 두 blocker를 찾았다. 이는 독립 gate 증거가 아니며, 제품 source가 아닌 off-repo `comparison.html`만 다음처럼
+보정했다.
+
+- mobile phone specimen 폭을 240→330px로 늘리고 핵심 CJK leaf text 최소 크기를 13px로 고정했다.
+- mobile action specimen에 enabled action과 서버 precheck deny reason을 가진 disabled `회의실`을 함께 표시했다.
+- current-app report SHA와 2026-08-13 diagnosis mapping을 board 상단에 명시했다.
+- A/B/C desktop+mobile 전체를 새로 렌더했다. 3 concepts, 6 mockups, 12 mobile frames를 그대로 보존했다.
+
+fresh artifact:
+
+| artifact | SHA-256 | 측정 |
+|---|---|---|
+| `.../opensam-113-resume/comparison-desktop-fresh.png` | `bde627cc…0ff0` | 1600px document width, concepts 3, mockups 6 |
+| `.../opensam-113-resume/comparison-mobile-fresh.png` | `441d745b…4189` | 390px document width, mobile frames 12 |
+| `.../opensam-113-resume/concept-board-fresh-report.json` | `2ab31db8…18ac` | PNG signatures valid, min mobile font 13px, below-13 text 0, sub-44px target 0, console/page error 0 |
+
+`...`의 공통 prefix는
+`/Users/apple/.codex/visualizations/2026/08/08/019fdf9f-ecf1-7900-957e-04427e0b99f9`이다. full-page PNG는 세
+concept 전체를 한 파일에 담은 comparison board이며 정확한 document height를 계약으로 삼지 않는다. 실제 current
+GameChrome full-page capture의 파일명에 적힌 `390×844`는 viewport
+요청값이고 실제 document는 `390×4660`임을 §14.2가 별도로 기록한다.
+
+### 14.6 independent visual review gate
+
+**`채점대기 — NOT CLAIMED`**. The six screenshots/reports referenced above are off-repo local artifacts, and this
+branch does not contain a portable visual-review record identifying a reviewer and recording the exact commands and
+results. Therefore this document makes no independent visual approval or `APPROVE` claim. The local fixture captures
+remain implementation input/evidence only; PHP-golden draw-for-draw parity, live phase-gate, and independent visual
+review are all `채점대기`.

@@ -74,7 +74,7 @@
 |---|---|---|
 | A0 | 이 계약 전체와 5개 bounded lane 착수 | 사용자의 명시 문구 |
 | A1 | 특히 OPENSAM-91/91b의 저장·시간·삭제·디코더·동시성·소스/IP·수량·번들·패러티 결정 | 결정표의 모든 항목에 선택과 이유 기록 |
-| A2 | 각 산출물의 근거, 테스트, 보안/IP 결과와 독립 검토 | lane별 증거 묶음 + verifier 승인 + `fix-required=0` |
+| A2 | 각 산출물의 근거, 테스트, 보안/IP 결과와 독립 검토; 패러티 대상 산출물은 PHP-golden draw-for-draw 증거 포함 | lane별 증거 묶음 + verifier 승인 + `fix-required=0`; 미실행 parity는 `채점대기` |
 | A3 | OPENSAM-113의 시안 1개를 사용자가 선택 | 선택한 concept ID와 허용 변경 기록 |
 | A4 | commit/push/PR | 정확한 대상·브랜치·base·행위별 사용자 승인 |
 | A5 | deploy | 환경·이미지/커밋·롤백 계획에 대한 사용자 승인 |
@@ -93,6 +93,8 @@ A0
 - OPENSAM-91은 UI 92, serving 93, engine 94보다 앞선 API/저장 계약이다. 91b의 catalog/allowlist 확대는 포함하지만 gameplay roster 활성화는 96/103/98/105와 seed/parity gate를 통과한 OPENSAM-104 하위 wave다.
 - OPENSAM-102는 `102 → 103 → 105`의 조사 선행 조건이다. 102가 103/105의 구현을 승인하지 않는다.
 - OPENSAM-113은 A3 사용자 선택 전 114/115로 진행할 수 없다.
+- OPENSAM-113의 A3는 승인된 실행 계약대로 사용자 concept 선택 hard gate만 의미한다. PHP-golden draw-for-draw
+  parity는 패러티 대상 산출물의 A2/출시 전 evidence gate이며, 별도 gate를 A3 선택 조건으로 재정의하지 않는다.
 
 ## 4. OPENSAM-90 / GitHub #232 — gateway 초상 경로 통일
 
@@ -448,7 +450,8 @@ tools/agent-system/check.py
 
 - A0 후 진단/시안만 가능.
 - A2에서 baseline과 비교 가능성, 접근성 근거를 검토한다.
-- A3는 사용자 concept 선택의 hard gate다. 선택 전 114/115 코드 작업 금지.
+- A3는 사용자 concept 선택의 hard gate다. 선택 전 114/115 코드 작업 금지. PHP-golden parity는 별도 A2/출시 전
+  evidence gate이며, 미실행이면 `채점대기`로 남긴다.
 
 ## 9. 승인 후 실행 모델
 
