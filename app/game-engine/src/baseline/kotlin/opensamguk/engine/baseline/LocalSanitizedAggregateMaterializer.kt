@@ -60,7 +60,7 @@ internal class LocalSanitizedAggregateMaterializer(
         require(fixture.expectedTableCardinalities == expectedTableCardinalities(fixture.coldHistoryRows)) {
             "Local materializer table cardinalities do not match the deterministic policy"
         }
-        require(fixture.expectedSnapshotCardinalities == expectedSnapshotCardinalities(fixture.coldHistoryRows)) {
+        require(fixture.expectedSnapshotCardinalities == expectedSnapshotCardinalities()) {
             "Local materializer snapshot cardinalities do not match the deterministic policy"
         }
         require(fixture.expectedLoaderInputs == expectedLoaderInputs(fixture.coldHistoryRows)) {
@@ -125,8 +125,8 @@ internal class LocalSanitizedAggregateMaterializer(
             require(
                 statement.executeUpdate(
                     """
-                    INSERT INTO log_entry (scope, category, year, month, text, meta)
-                    SELECT CAST('SYSTEM' AS log_scope), CAST('ACTION' AS log_category), 184, 1,
+                    INSERT INTO log_entry (world_id, scope, category, year, month, text, meta)
+                    SELECT 1, CAST('SYSTEM' AS log_scope), CAST('ACTION' AS log_category), 184, 1,
                            repeat('H', 192), '{}'::jsonb
                       FROM generate_series(1, ${fixture.fixedHotActionRows}) AS series
                     """.trimIndent(),
@@ -135,8 +135,8 @@ internal class LocalSanitizedAggregateMaterializer(
             require(
                 statement.executeUpdate(
                     """
-                    INSERT INTO log_entry (scope, category, year, month, text, meta)
-                    SELECT CAST('SYSTEM' AS log_scope), CAST('HISTORY' AS log_category), 184, 1,
+                    INSERT INTO log_entry (world_id, scope, category, year, month, text, meta)
+                    SELECT 1, CAST('SYSTEM' AS log_scope), CAST('HISTORY' AS log_category), 184, 1,
                            repeat('C', 192), '{}'::jsonb
                       FROM generate_series(1, ${fixture.coldHistoryRows}) AS series
                     """.trimIndent(),
@@ -220,7 +220,7 @@ internal class LocalSanitizedAggregateMaterializer(
         private val worldStatePayloadExpression = payloadExpression(
             listOf(
                 "id", "current_year", "current_month", "current_phase", "tick_seconds",
-                "isunited", "status", "meta", "config", "start_time",
+                "isunited", "status", "meta", "config", "start_time", "world_version", "writer_epoch",
             ),
         )
         private val generalPayloadExpression = payloadExpression(
@@ -235,7 +235,8 @@ internal class LocalSanitizedAggregateMaterializer(
             ),
         )
         private const val worldStateSourceQuery = """
-            SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time
+            SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time,
+                   world_version, writer_epoch
               FROM world_state
              WHERE id = 1
         """
@@ -255,16 +256,16 @@ internal class LocalSanitizedAggregateMaterializer(
         private fun expectedTableCardinalities(coldHistoryRows: Int): Map<String, Int> =
             LinkedHashMap(expectedTableBase).apply { this["logEntry"] = 256 + coldHistoryRows }
 
-        private fun expectedSnapshotCardinalities(coldHistoryRows: Int): Map<String, Int> =
-            LinkedHashMap(expectedSnapshotBase).apply { this["globalLogs"] = 256 + coldHistoryRows }
+        private fun expectedSnapshotCardinalities(): Map<String, Int> =
+            LinkedHashMap(expectedSnapshotBase).apply { this["globalLogs"] = 0 }
 
         private fun expectedLoaderInputs(coldHistoryRows: Int): Map<String, ExpectedLoaderInputMetric> =
             linkedMapOf<String, ExpectedLoaderInputMetric>().apply {
                 this["worldState"] = ExpectedLoaderInputMetric(1, 1, 4096)
                 this["ngGames"] = ExpectedLoaderInputMetric(0, 1, 1)
                 for (inputId in zeroMetrics) this[inputId] = ExpectedLoaderInputMetric(0, 0, 0)
-                this["systemActionLogs"] = ExpectedLoaderInputMetric(256, 256, 256 * 192)
-                this["systemHistoryLogs"] = ExpectedLoaderInputMetric(coldHistoryRows, coldHistoryRows, coldHistoryRows * 192)
+                this["systemActionLogs"] = ExpectedLoaderInputMetric(256, 0, 256 * 192)
+                this["systemHistoryLogs"] = ExpectedLoaderInputMetric(coldHistoryRows, 0, coldHistoryRows * 192)
                 this["generals"] = ExpectedLoaderInputMetric(1, 1, 4096)
             }
 

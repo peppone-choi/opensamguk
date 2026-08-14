@@ -20,8 +20,8 @@
           "ngGames": {"payloadBytes": 1, "retainedItems": 1, "sourceRows": 0},
           "statistics": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
           "storedUniqueItemNamespaces": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
-          "systemActionLogs": {"payloadBytes": 49152, "retainedItems": 256, "sourceRows": 256},
-          "systemHistoryLogs": {"payloadBytes": 19200000, "retainedItems": 100000, "sourceRows": 100000},
+          "systemActionLogs": {"payloadBytes": 49152, "retainedItems": 0, "sourceRows": 256},
+          "systemHistoryLogs": {"payloadBytes": 19200000, "retainedItems": 0, "sourceRows": 100000},
           "worldState": {"payloadBytes": 4096, "retainedItems": 1, "sourceRows": 1}
         },
         "snapshotCardinalities": {
@@ -30,7 +30,7 @@
           "diplomacy": 0,
           "generalHistoryEntries": 0,
           "generals": 1,
-          "globalLogs": 100256,
+          "globalLogs": 0,
           "nationHistoryEntries": 0,
           "nations": 0
         },
@@ -65,8 +65,8 @@
           "ngGames": {"payloadBytes": 1, "retainedItems": 1, "sourceRows": 0},
           "statistics": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
           "storedUniqueItemNamespaces": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
-          "systemActionLogs": {"payloadBytes": 49152, "retainedItems": 256, "sourceRows": 256},
-          "systemHistoryLogs": {"payloadBytes": 1920000, "retainedItems": 10000, "sourceRows": 10000},
+          "systemActionLogs": {"payloadBytes": 49152, "retainedItems": 0, "sourceRows": 256},
+          "systemHistoryLogs": {"payloadBytes": 1920000, "retainedItems": 0, "sourceRows": 10000},
           "worldState": {"payloadBytes": 4096, "retainedItems": 1, "sourceRows": 1}
         },
         "snapshotCardinalities": {
@@ -75,7 +75,7 @@
           "diplomacy": 0,
           "generalHistoryEntries": 0,
           "generals": 1,
-          "globalLogs": 10256,
+          "globalLogs": 0,
           "nationHistoryEntries": 0,
           "nations": 0
         },
@@ -93,10 +93,10 @@
       }
     }
   },
-  "loaderInputInventorySha256": "34dc29dea4813fb0758ec70272ac5d24abdf5af97a60cf2d6c15ff454932ae17",
+  "loaderInputInventorySha256": "419cb24848e9cdbaae930633ba50ca79d2520f5844ff8c3b514790cb716fc104",
   "payloadByteSemantics": "selected-loader-fields-postgres-text-bytes.v1",
   "schemaVersion": "cqrs-local-sanitized-aggregate-policy.v1",
-  "sha256": "9b7e2a53f2dac9e5b90ed09044adf5537ce6a6aad29ce1cf6857ff22691f6cf2",
+  "sha256": "8bd5f8ce68a173f27fecd0ffc8fc100b5e844c184767efdcdc1e44eadabb9020",
   "source": {
     "policyId": "op123-local-sanitized-aggregate-v1",
     "provenance": "checked-in deterministic local aggregate policy; no production, live, or seeded-db observation",

@@ -38,7 +38,7 @@ SNAPSHOT_CARDINALITIES = {
     "nations": 2,
     "diplomacy": 1,
     "accessLogs": 0,
-    "globalLogs": 266,
+    "globalLogs": 0,
     "nationHistoryEntries": 0,
     "generalHistoryEntries": 0,
 }
@@ -118,7 +118,7 @@ def complete_manifest() -> dict:
         "fixture.payloadSizeBytes.coldHistory",
     ]
     cold_tables = dict(current_tables, logEntry=356)
-    cold_snapshot = dict(current_snapshot, globalLogs=356)
+    cold_snapshot = dict(current_snapshot)
     manifest = {
         "schemaVersion": "cqrs-production-shape-manifest.v3",
         "loaderInputInventorySha256": runner.loader_input_inventory_sha256(),
@@ -189,10 +189,10 @@ def loader_inputs(*, cold_history_rows: int) -> dict:
             "worldState": {"sourceRows": 1, "retainedItems": 1, "payloadBytes": 2},
             "ngGames": {"sourceRows": 1, "retainedItems": 1, "payloadBytes": 2},
             "statistics": {"sourceRows": 1, "retainedItems": 1, "payloadBytes": 2},
-            "systemActionLogs": {"sourceRows": 256, "retainedItems": 256, "payloadBytes": 51_200},
+            "systemActionLogs": {"sourceRows": 256, "retainedItems": 0, "payloadBytes": 51_200},
             "systemHistoryLogs": {
                 "sourceRows": cold_history_rows,
-                "retainedItems": cold_history_rows,
+                "retainedItems": 0,
                 "payloadBytes": cold_history_rows * 200,
             },
             "nations": {"sourceRows": 2, "retainedItems": 2, "payloadBytes": 2},
@@ -341,6 +341,24 @@ class ProductionShapeManifestTest(unittest.TestCase):
         seal(manifest)
 
         with self.assertRaises(runner.RunnerFailure):
+            self.validator()(manifest)
+
+    def test_production_manifest_rejects_unbounded_cold_boot_log_retention(self) -> None:
+        manifest = complete_manifest()
+        for profile_name, retained in (("current", 10), ("cold10x", 100)):
+            profile = manifest["fixture"]["profiles"][profile_name]
+            profile["snapshotCardinalities"]["globalLogs"] = 256 + retained
+            profile["loaderInputs"]["systemActionLogs"]["retainedItems"] = 256
+            profile["loaderInputs"]["systemHistoryLogs"]["retainedItems"] = retained
+        manifest["observed"]["snapshotCardinalities"] = copy.deepcopy(
+            manifest["fixture"]["profiles"]["current"]["snapshotCardinalities"]
+        )
+        manifest["observed"]["loaderInputs"] = copy.deepcopy(
+            manifest["fixture"]["profiles"]["current"]["loaderInputs"]
+        )
+        seal(manifest)
+
+        with self.assertRaisesRegex(runner.RunnerFailure, "bounded cold boot"):
             self.validator()(manifest)
 
     def test_unknown_or_sensitive_manifest_fields_are_rejected(self) -> None:
@@ -541,6 +559,10 @@ class ProductionShapeManifestTest(unittest.TestCase):
         policy = loader(policy_path)
         self.assertEqual("local-sanitized-aggregate-surrogate", policy.fixture_kind)
         self.assertEqual("op123-local-sanitized-aggregate-v1", policy.policy_id)
+        for profile in policy.profiles.values():
+            self.assertEqual(0, profile.snapshot_cardinalities["globalLogs"])
+            self.assertEqual(0, profile.loader_inputs["systemActionLogs"].retained_items)
+            self.assertEqual(0, profile.loader_inputs["systemHistoryLogs"].retained_items)
         feasibility(policy)
 
     def test_local_policy_rejects_impossible_tick_shape_before_materialization(self) -> None:
@@ -789,10 +811,10 @@ class ScenarioSeedProxyDockerValidationTest(unittest.TestCase):
             current_history = current["rows"]["loaderInputs"]["systemHistoryLogs"]
             cold_history = cold["rows"]["loaderInputs"]["systemHistoryLogs"]
             self.assertGreater(current_history["sourceRows"], 0)
-            self.assertGreater(current_history["retainedItems"], 0)
+            self.assertEqual(0, current_history["retainedItems"])
             self.assertGreater(current_history["payloadBytes"], 0)
             self.assertEqual(current_history["sourceRows"] + 9, cold_history["sourceRows"])
-            self.assertEqual(current_history["retainedItems"] + 9, cold_history["retainedItems"])
+            self.assertEqual(0, cold_history["retainedItems"])
             self.assertEqual(current_history["payloadBytes"] + 9 * 192, cold_history["payloadBytes"])
 
             fixture = current["fixture"]

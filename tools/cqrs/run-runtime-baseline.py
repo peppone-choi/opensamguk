@@ -250,15 +250,15 @@ def validate_local_sanitized_aggregate_feasibility(policy: LocalSanitizedAggrega
                 raise RunnerFailure(f"{profile_name} local policy cannot materialize snapshot cardinality {field}")
         if profile.table_cardinalities["logEntry"] != 256 + profile.cold_history_rows:
             raise RunnerFailure(f"{profile_name} local policy logEntry cardinality is not deterministic")
-        if profile.snapshot_cardinalities["globalLogs"] != 256 + profile.cold_history_rows:
-            raise RunnerFailure(f"{profile_name} local policy globalLogs cardinality is not deterministic")
+        if profile.snapshot_cardinalities["globalLogs"] != 0:
+            raise RunnerFailure(f"{profile_name} local policy must preserve bounded cold-boot globalLogs")
         expected_metrics = {
             "worldState": (1, 1, 4096),
             "ngGames": (0, 1, 1),
-            "systemActionLogs": (256, 256, 256 * 192),
+            "systemActionLogs": (256, 0, 256 * 192),
             "systemHistoryLogs": (
                 profile.cold_history_rows,
-                profile.cold_history_rows,
+                0,
                 profile.cold_history_rows * 192,
             ),
             "generals": (1, 1, 4096),
@@ -1824,6 +1824,25 @@ def gc_phase_pause_profile_metrics(
     return {bucket: gc_phase_pause_metrics(values) for bucket, values in durations_by_bucket.items()}
 
 
+def loaded_row_summary(samples: Sequence[Mapping[str, Any]]) -> dict[str, dict[str, dict[str, Any]]]:
+    return {
+        "database": {
+            row_name: summary_metric(
+                [nested_integer(sample, "rows", "database", row_name) for sample in samples],
+                percentiles=True,
+            )
+            for row_name in PRODUCTION_SHAPE_TABLE_TO_RAW_FIELD.values()
+        },
+        "snapshot": {
+            row_name: summary_metric(
+                [nested_integer(sample, "rows", "snapshot", row_name) for sample in samples],
+                percentiles=True,
+            )
+            for row_name in REQUIRED_SNAPSHOT_CARDINALITIES
+        },
+    }
+
+
 def build_summary(
     records: Mapping[str, Sequence[Mapping[str, Any]]],
     analysis_samples: Mapping[str, Mapping[str, Any]],
@@ -1842,25 +1861,41 @@ def build_summary(
             "fixtureSha256": fixture_hashes.pop(),
             "metrics": {
                 "bootDurationMs": summary_metric(
-                    [nested_integer(sample, "durations", "bootDurationMs") for sample in samples], True
+                    [nested_integer(sample, "durations", "bootDurationMs") for sample in samples], percentiles=True
                 ),
                 "snapshotDurationMs": summary_metric(
-                    [nested_integer(sample, "durations", "snapshotDurationMs") for sample in samples], True
+                    [nested_integer(sample, "durations", "snapshotDurationMs") for sample in samples], percentiles=True
                 ),
                 "tickDurationMs": summary_metric(
-                    [nested_integer(sample, "durations", "tickDurationMs") for sample in samples], True
+                    [nested_integer(sample, "durations", "tickDurationMs") for sample in samples], percentiles=True
                 ),
-                "retainedHeapAfterGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "heapAfterGc", "usedBytes") for sample in samples]
+                "rssBeforeGcBytes": summary_metric(
+                    [nested_integer(sample, "memory", "rssBeforeGcBytes") for sample in samples], percentiles=True
                 ),
                 "rssAfterGcBytes": summary_metric(
-                    [nested_integer(sample, "memory", "rssAfterGcBytes") for sample in samples]
+                    [nested_integer(sample, "memory", "rssAfterGcBytes") for sample in samples], percentiles=True
+                ),
+                "heapUsedBeforeGcBytes": summary_metric(
+                    [nested_integer(sample, "memory", "heapBeforeGc", "usedBytes") for sample in samples], percentiles=True
+                ),
+                "heapCommittedBeforeGcBytes": summary_metric(
+                    [nested_integer(sample, "memory", "heapBeforeGc", "committedBytes") for sample in samples], percentiles=True
+                ),
+                "heapUsedAfterGcBytes": summary_metric(
+                    [nested_integer(sample, "memory", "heapAfterGc", "usedBytes") for sample in samples], percentiles=True
+                ),
+                "heapCommittedAfterGcBytes": summary_metric(
+                    [nested_integer(sample, "memory", "heapAfterGc", "committedBytes") for sample in samples], percentiles=True
+                ),
+                "retainedHeapAfterGcBytes": summary_metric(
+                    [nested_integer(sample, "memory", "heapAfterGc", "usedBytes") for sample in samples], percentiles=True
                 ),
                 "gcCollectionTimeProxyMillis": summary_metric(
                     [nested_integer(sample, "gc", "collectionTimeDeltaMillis") for sample in samples]
                 ),
                 "jfrGcPhasePause": gc_phase_pause,
             },
+            "loadedRows": loaded_row_summary(samples),
             "rawFiles": [f"raw/{profile}-{index}.json" for index in range(1, SAMPLES_PER_PROFILE + 1)],
         }
     current_retained = profile_summary["current"]["metrics"]["retainedHeapAfterGcBytes"]["mean"]
@@ -1998,6 +2033,42 @@ def summary_markdown(summary: Mapping[str, Any]) -> str:
                 "`jfrGcPhasePause.operational` is host-JDK postprocessed JFR pause duration evidence and excludes "
                 "the explicit retained-heap `System.gc()` probes; the forced-probe metrics are reported separately."
             ),
+        ]
+    )
+    lines.extend(
+        [
+            "",
+            "## Memory and loaded-row evidence",
+            "",
+            "| Profile | RSS before / after GC mean bytes | Heap used / committed before GC mean bytes | Heap used / committed after GC mean bytes | Loaded database / snapshot rows mean |",
+            "| --- | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for profile in PROFILES:
+        detail = require_mapping(profiles, profile)
+        metrics = require_mapping(detail, "metrics")
+        loaded_rows = require_mapping(detail, "loadedRows")
+        database_rows = require_mapping(loaded_rows, "database")
+        snapshot_rows = require_mapping(loaded_rows, "snapshot")
+        database_total = sum(float(metric["mean"]) for metric in database_rows.values())
+        snapshot_total = sum(float(metric["mean"]) for metric in snapshot_rows.values())
+        lines.append(
+            "| "
+            + profile
+            + " | "
+            + f"{format_number(float(metrics['rssBeforeGcBytes']['mean']))} / {format_number(float(metrics['rssAfterGcBytes']['mean']))}"
+            + " | "
+            + f"{format_number(float(metrics['heapUsedBeforeGcBytes']['mean']))} / {format_number(float(metrics['heapCommittedBeforeGcBytes']['mean']))}"
+            + " | "
+            + f"{format_number(float(metrics['heapUsedAfterGcBytes']['mean']))} / {format_number(float(metrics['heapCommittedAfterGcBytes']['mean']))}"
+            + " | "
+            + f"{format_number(database_total)} / {format_number(snapshot_total)}"
+            + " |"
+        )
+    lines.extend(
+        [
+            "",
+            "Per-table and per-snapshot loaded-row p50, p95, and run-to-run spread are recorded in `summary.json`.",
         ]
     )
     return "\n".join(lines) + "\n"

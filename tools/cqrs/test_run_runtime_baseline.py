@@ -37,9 +37,36 @@ def make_record(profile: str, multiplier: int, *, base_rows: int = 10_000, hot_r
             "version": "21.0.11+10-LTS",
             "inputArguments": list(runner.REQUIRED_JVM_ARGS),
         },
-        "memory": {"heapAfterGc": {"usedBytes": 1}, "rssAfterGcBytes": 1},
+        "memory": {
+            "rssBeforeGcBytes": 2,
+            "rssAfterGcBytes": 1,
+            "heapBeforeGc": {"usedBytes": 3, "committedBytes": 4},
+            "heapAfterGc": {"usedBytes": 1, "committedBytes": 4},
+        },
         "gc": {"collectionTimeDeltaMillis": 1},
         "durations": {"bootDurationMs": 1, "snapshotDurationMs": 1, "tickDurationMs": 1},
+        "rows": {
+            "database": {
+                "world_state": 1,
+                "general": 1,
+                "city": 0,
+                "nation": 0,
+                "diplomacy": 0,
+                "rank_data": 0,
+                "log_entry": hot_rows + base_rows * multiplier,
+            },
+            "snapshot": {
+                "generals": 1,
+                "cities": 0,
+                "nations": 0,
+                "diplomacy": 0,
+                "accessLogs": 0,
+                "globalLogs": hot_rows + base_rows * multiplier,
+                "nationHistoryEntries": 0,
+                "generalHistoryEntries": 0,
+            },
+            "loaderInputs": {},
+        },
         "artifacts": {"jfrConfiguration": "profile"},
         "images": {
             "probeTag": "eclipse-temurin:21-jre",
@@ -368,6 +395,44 @@ class RuntimeBaselineRunnerTest(unittest.TestCase):
             probe["bootDurationMetric"],
         )
         self.assertIn("Harness setup+boot p50 / p95 ms", runner.summary_markdown(summary))
+
+    def test_summary_aggregates_required_memory_and_loaded_row_evidence(self) -> None:
+        records = make_records()
+        analysis = {
+            f"{profile}-{index}": sample_analysis(profile, [float(index)], [float(index + 10)])
+            for profile in runner.PROFILES
+            for index in range(1, runner.SAMPLES_PER_PROFILE + 1)
+        }
+
+        for profile in runner.PROFILES:
+            for index, sample in enumerate(records[profile], start=1):
+                sample["memory"] = {
+                    "rssBeforeGcBytes": 100 + index,
+                    "rssAfterGcBytes": 90 + index,
+                    "heapBeforeGc": {"usedBytes": 80 + index, "committedBytes": 120},
+                    "heapAfterGc": {"usedBytes": 70 + index, "committedBytes": 120},
+                }
+                sample["rows"]["database"]["general"] = 100 + index
+                sample["rows"]["snapshot"]["cities"] = index
+
+        summary = runner.build_summary(records, analysis)
+        metrics = summary["profiles"]["current"]["metrics"]
+        loaded_rows = summary["profiles"]["current"]["loadedRows"]
+
+        self.assertEqual(102.9, metrics["rssBeforeGcBytes"]["p95"])
+        self.assertEqual(92.9, metrics["rssAfterGcBytes"]["p95"])
+        self.assertEqual(120.0, metrics["heapCommittedBeforeGcBytes"]["mean"])
+        self.assertEqual(72.0, metrics["heapUsedAfterGcBytes"]["p50"])
+        self.assertEqual(2.0, metrics["heapUsedAfterGcBytes"]["runToRunSpread"])
+        self.assertEqual(102.0, loaded_rows["database"]["general"]["p50"])
+        self.assertEqual(102.9, loaded_rows["database"]["general"]["p95"])
+        self.assertEqual(2.0, loaded_rows["database"]["general"]["runToRunSpread"])
+        self.assertEqual(2.0, loaded_rows["snapshot"]["cities"]["p50"])
+        self.assertEqual(2.9, loaded_rows["snapshot"]["cities"]["p95"])
+        self.assertEqual(2.0, loaded_rows["snapshot"]["cities"]["runToRunSpread"])
+        self.assertEqual(72.0, metrics["retainedHeapAfterGcBytes"]["p50"])
+        self.assertEqual(72.9, metrics["retainedHeapAfterGcBytes"]["p95"])
+        self.assertEqual(2.0, metrics["retainedHeapAfterGcBytes"]["runToRunSpread"])
 
     def test_cleanup_container_only_removes_container_owned_by_run(self) -> None:
         with mock.patch.object(runner, "container_run_label", return_value="foreign-run"), mock.patch.object(

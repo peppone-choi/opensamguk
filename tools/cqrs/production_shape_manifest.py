@@ -263,7 +263,7 @@ def validate_manifest(value: Mapping[str, Any]) -> ProductionShapeManifest:
         raise ManifestValidationError("current fixture snapshot cardinalities do not match observed production shape")
     if current.loader_inputs != observed_loader_inputs:
         raise ManifestValidationError("current fixture loader inputs do not match observed production shape")
-    _validate_cross_profile_equivalence(current, profiles["cold10x"])
+    _validate_cross_profile_equivalence(current, profiles["cold10x"], bounded_snapshot_logs=True)
     return ProductionShapeManifest(
         sha256=declared_sha256,
         observed_at=observed_at,
@@ -365,7 +365,7 @@ def validate_local_sanitized_aggregate_policy(value: Mapping[str, Any]) -> Local
         raise ManifestValidationError("local sanitized aggregate policy provenance must explicitly exclude production, live, and seeded-db observation")
 
     profiles = _validate_fixture(_require_mapping(document["fixture"], "local sanitized aggregate policy.fixture"))
-    _validate_cross_profile_equivalence(profiles["current"], profiles["cold10x"])
+    _validate_cross_profile_equivalence(profiles["current"], profiles["cold10x"], bounded_snapshot_logs=True)
     return LocalSanitizedAggregatePolicy(
         sha256=declared_sha256,
         policy_id=policy_id,
@@ -596,7 +596,12 @@ def _require_positive_int(value: Any, label: str, maximum: int = MAX_CARDINALITY
     return value
 
 
-def _validate_cross_profile_equivalence(current: FixtureProfile, cold: FixtureProfile) -> None:
+def _validate_cross_profile_equivalence(
+    current: FixtureProfile,
+    cold: FixtureProfile,
+    *,
+    bounded_snapshot_logs: bool = False,
+) -> None:
     if current.fixed_hot_action_rows != cold.fixed_hot_action_rows:
         raise ManifestValidationError("cold10x fixed hot action rows diverge from current")
     if current.payload_size_bytes != cold.payload_size_bytes:
@@ -612,11 +617,19 @@ def _validate_cross_profile_equivalence(current: FixtureProfile, cold: FixturePr
     history_growth = current.cold_history_rows * 9
     if cold.table_cardinalities["logEntry"] != current.table_cardinalities["logEntry"] + history_growth:
         raise ManifestValidationError("cold10x logEntry cardinality must add exactly nine current cold-history sets")
-    if cold.snapshot_cardinalities["globalLogs"] != current.snapshot_cardinalities["globalLogs"] + history_growth:
-        raise ManifestValidationError("cold10x globalLogs cardinality must add exactly nine current cold-history sets")
+    expected_cold_global_logs = (
+        current.snapshot_cardinalities["globalLogs"]
+        if bounded_snapshot_logs
+        else current.snapshot_cardinalities["globalLogs"] + history_growth
+    )
+    if cold.snapshot_cardinalities["globalLogs"] != expected_cold_global_logs:
+        contract = "bounded cold boot" if bounded_snapshot_logs else "snapshot loading"
+        raise ManifestValidationError(f"cold10x globalLogs cardinality does not match {contract}")
+    if bounded_snapshot_logs and current.snapshot_cardinalities["globalLogs"] != 0:
+        raise ManifestValidationError("current globalLogs cardinality must match bounded cold boot")
     if current.table_cardinalities["logEntry"] < current.fixed_hot_action_rows + current.cold_history_rows:
         raise ManifestValidationError("current logEntry cardinality cannot contain the declared hot and cold fixture rows")
-    if current.snapshot_cardinalities["globalLogs"] < current.fixed_hot_action_rows + current.cold_history_rows:
+    if not bounded_snapshot_logs and current.snapshot_cardinalities["globalLogs"] < current.fixed_hot_action_rows + current.cold_history_rows:
         raise ManifestValidationError("current globalLogs cardinality cannot contain the declared hot and cold fixture rows")
     for input_id in REQUIRED_LOADER_INPUT_IDS:
         if input_id == "systemHistoryLogs":
@@ -624,23 +637,34 @@ def _validate_cross_profile_equivalence(current: FixtureProfile, cold: FixturePr
         if cold.loader_inputs[input_id] != current.loader_inputs[input_id]:
             raise ManifestValidationError(f"cold10x loader input {input_id} diverges from current")
     current_actions = current.loader_inputs["systemActionLogs"]
-    if current_actions.source_rows < current.fixed_hot_action_rows or current_actions.retained_items < current.fixed_hot_action_rows:
+    if current_actions.source_rows < current.fixed_hot_action_rows or (
+        not bounded_snapshot_logs and current_actions.retained_items < current.fixed_hot_action_rows
+    ):
         raise ManifestValidationError("systemActionLogs cannot contain the declared fixed hot action rows")
     if current_actions.payload_bytes < current.fixed_hot_action_rows * current.payload_size_bytes["hotAction"]:
         raise ManifestValidationError("systemActionLogs payload cannot contain the declared fixed hot action rows")
+    if bounded_snapshot_logs and current_actions.retained_items != 0:
+        raise ManifestValidationError("current systemActionLogs retained items must match bounded cold boot")
     current_history = current.loader_inputs["systemHistoryLogs"]
     cold_history = cold.loader_inputs["systemHistoryLogs"]
     if (
         current_history.source_rows < current.cold_history_rows
-        or current_history.retained_items < current.cold_history_rows
+        or (not bounded_snapshot_logs and current_history.retained_items < current.cold_history_rows)
         or current_history.payload_bytes < current.cold_history_rows * current.payload_size_bytes["coldHistory"]
     ):
         raise ManifestValidationError("systemHistoryLogs cannot contain the declared current cold-history rows")
+    if bounded_snapshot_logs and current_history.retained_items != 0:
+        raise ManifestValidationError("current systemHistoryLogs retained items must match bounded cold boot")
     expected_history_growth = current.cold_history_rows * 9
     expected_history_payload_growth = expected_history_growth * current.payload_size_bytes["coldHistory"]
     if cold_history.source_rows != current_history.source_rows + expected_history_growth:
         raise ManifestValidationError("cold10x systemHistoryLogs source rows must add exactly nine current cold-history sets")
-    if cold_history.retained_items != current_history.retained_items + expected_history_growth:
-        raise ManifestValidationError("cold10x systemHistoryLogs retained items must add exactly nine current cold-history sets")
+    expected_cold_retained = (
+        current_history.retained_items
+        if bounded_snapshot_logs
+        else current_history.retained_items + expected_history_growth
+    )
+    if cold_history.retained_items != expected_cold_retained:
+        raise ManifestValidationError("cold10x systemHistoryLogs retained items do not match its snapshot-loading contract")
     if cold_history.payload_bytes != current_history.payload_bytes + expected_history_payload_growth:
         raise ManifestValidationError("cold10x systemHistoryLogs payload must add exactly nine current cold-history sets")

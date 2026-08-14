@@ -1,10 +1,11 @@
 import java.util.zip.ZipFile
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
@@ -15,9 +16,9 @@ abstract class VerifyRuntimeBaselineJarIsolation : DefaultTask() {
     @get:InputDirectory
     abstract val baselineJarDirectory: DirectoryProperty
 
-    @get:Optional
-    @get:InputDirectory
-    abstract val productionJarDirectory: DirectoryProperty
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val productionJars: ConfigurableFileCollection
 
     @TaskAction
     fun verify() {
@@ -37,10 +38,8 @@ abstract class VerifyRuntimeBaselineJarIsolation : DefaultTask() {
         check(dedicatedClassifierJars.size == 1 && dedicatedClassifierJars.single() == classifier) {
             "Baseline output directory must contain only the fixed classifier $classifier, found ${dedicatedClassifierJars.joinToString()}"
         }
-        val productionClassifierJars = productionJarDirectory.orNull?.asFile
-            ?.listFiles()
-            ?.filter { it.isFile && it.name.endsWith("-cqrs-baseline.jar") }
-            .orEmpty()
+        val productionClassifierJars = productionJars.files
+            .filter { it.isFile && it.name.endsWith("-cqrs-baseline.jar") }
         check(productionClassifierJars.isEmpty()) {
             "Production build/libs contains baseline classifier artifacts: ${productionClassifierJars.joinToString()}"
         }
@@ -180,7 +179,9 @@ tasks.test {
 }
 
 val runtimeBaselineJarDirectory = layout.buildDirectory.dir("cqrs-runtime-baseline/jars")
-val productionDockerJarDirectory = layout.buildDirectory.dir("libs")
+val productionDockerJars = layout.buildDirectory.dir("libs").map { directory ->
+    directory.asFileTree.matching { include("*.jar") }
+}
 
 val runtimeBaselineJar by tasks.registering(org.springframework.boot.gradle.tasks.bundling.BootJar::class) {
     group = "verification"
@@ -200,5 +201,5 @@ tasks.register<VerifyRuntimeBaselineJarIsolation>("verifyRuntimeBaselineJarIsola
     dependsOn(runtimeBaselineJar)
     classifierJar.set(runtimeBaselineJar.flatMap { it.archiveFile })
     baselineJarDirectory.set(runtimeBaselineJarDirectory)
-    productionJarDirectory.set(productionDockerJarDirectory)
+    productionJars.from(productionDockerJars)
 }
