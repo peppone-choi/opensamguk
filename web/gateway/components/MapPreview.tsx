@@ -83,7 +83,9 @@ function levelText(level: number): string {
 }
 
 // CDN 베이스맵 코드 — 시나리오가 맵을 특정 못한 경우(mapCode="scenario") che 베이스로 폴백.
-const CDN_MAPS = new Set(['che', 'chess', 'cr', 'ludo_rathowm', 'miniche', 'miniche_b', 'miniche_clean', 'pokemon_v1']);
+// 2026-08-17: pokemon_v1 은 옵션 IP 퍼지로 제거했다 — 이미지 레포의 game/map/pokemon_v1/ 타일이
+// 이미 404 이고 소비 시나리오도 0이다. 목록에서 빠지면 cdnMapCode() 가 che 로 폴백한다.
+const CDN_MAPS = new Set(['che', 'chess', 'cr', 'ludo_rathowm', 'miniche', 'miniche_b', 'miniche_clean']);
 const MINICHE_MAPS = new Set(['miniche', 'miniche_b', 'miniche_clean']);
 function cdnMapCode(mc: string): string {
     if (MINICHE_MAPS.has(mc)) return 'che';

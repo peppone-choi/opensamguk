@@ -104,6 +104,12 @@ SQL이 아니라 V29 metadata이며, schema dump 입력 SQL 수와 혼동하지 
 `a2-scenario-seed-sha256.txt` — `data/extracted/scenario/`의 tracked 시드 소스 **82개**
 (`scenario_*.json` 81 + `_meta.json`) 파일별 sha256.
 
+**각주 (2026-08-17):** 이후 옵션 IP 초상 세트 퍼지로 그 세트를 참조하던 시나리오 16개를 삭제해
+트리 실제값은 **66개**(`scenario_*.json` 65 + `_meta.json`)가 됐다. `a2-scenario-seed-sha256.txt`
+본문은 **그대로 둔다** — 위 sha256 표에 그 파일의 해시(`f42d3a4f…bbb67`)가 고정돼 있어 편집하면 이 MANIFEST가 깨지고,
+기준선은 "그 시점에 무엇을 관측했는가"의 기록이기 때문이다. 삭제 목록·근거는
+`docs/superpowers/research/2026-08-17-asset-license-audit.md` 부록 D 참고.
+
 **한계:** RTK14 5스탯 생성본(`SCENARIO_DIR` 오버라이드용)은 CLAUDE.md 규약상 **git-ignore·미커밋**이라
 기준선에 포함하지 않는다. 라이브 DB에 실제 시드된 행의 해시가 아니라 **시드 소스 파일** 해시다.
 
