@@ -342,6 +342,13 @@ open class JdbcFlushExecutor(
             if (payload.commandResults.isNotEmpty()) {
                 commandResultUpsertMany(payload.worldId, payload.commandResults)
             }
+
+            // 14. v2 도시 원장 (OPENSAM-150 R1) — v2_city_ledger 멱등 UPSERT. v1 payload에서는 리스트가
+            //     비어 있어 이 분기가 미진입하고 SQL이 0건이다(P6 betting 채널 선례). v1 델타와 같은
+            //     transactionTemplate 블록 안이므로 한 커밋에 함께 반영된다.
+            if (payload.cityLedgerV2Upserts.isNotEmpty()) {
+                cityLedgerV2UpsertMany(payload.worldId, payload.cityLedgerV2Upserts)
+            }
             null
         }
     }
@@ -1416,6 +1423,38 @@ open class JdbcFlushExecutor(
     }
 
     /**
+     * OPENSAM-150 (R1) — v2 도시 원장 `v2_city_ledger` 멱등 UPSERT (설계안 §2.1).
+     *
+     * `gold`/`rice`/`garrison`은 누적 델타가 아니라 **엔진이 계산한 절대 상태**라 `DO UPDATE SET`이
+     * 덮어쓴다 — 같은 payload를 재적용해도 결과가 같다(재시작·리플레이 안전). betting 채널이 amount를
+     * `+=` 누적하는 것과 의도적으로 다르며, 그쪽은 PHP `insertUpdate` 패러티가 이유다.
+     *
+     * v1 스택은 이 테이블을 마이그레이션하지 않는다(0A-c 분리 location `db/migration_v2`) — 대신 v1
+     * payload가 이 채널을 채우지 않아 호출 자체가 없다.
+     */
+    private fun cityLedgerV2UpsertMany(worldId: WorldId, rows: List<CityLedgerV2UpsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("city_id", c["city_id"])
+                .addValue("gold", c["gold"])
+                .addValue("rice", c["rice"])
+                .addValue("garrison", c["garrison"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO v2_city_ledger (world_id, city_id, gold, rice, garrison)
+            VALUES (:world_id, :city_id, :gold, :rice, :garrison)
+            ON CONFLICT (world_id, city_id)
+                DO UPDATE SET gold = EXCLUDED.gold, rice = EXCLUDED.rice, garrison = EXCLUDED.garrison
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("v2_city_ledger", FlushVerb.UPSERT, rows.size))
+    }
+
+    /**
      * OPENSAM-94 프로필 아이콘 sync — `general.picture`/`image_server` 전용 표시-컬럼 UPDATE.
      *
      * generalUpdate SET 절이 picture/image_server를 방출하지 않으므로(officer_city #17류 typed-컬럼 누락)
@@ -2408,6 +2447,10 @@ data class FlushPayload(
     val generalTurnSlotWrites: List<GeneralTurnSlotWriteRow> = emptyList(),
     val reservedNationTurnPulls: List<NationTurnPullRow> = emptyList(),
     val commandResults: List<CommandResultRow> = emptyList(),
+    // --- OPENSAM-150 (R1) v2 도시 원장 채널 ---
+    // 후행 기본값 필드. v1 경로는 이 리스트를 채우지 않으므로 v2 step이 미진입한다 ⇒ v1 SQL 0.
+    // v1 델타와 **같은** [transactionTemplate] 안에서 커밋된다 (두 번째 DataSource·풀 없음).
+    val cityLedgerV2Upserts: List<CityLedgerV2UpsertRow> = emptyList(), // step-14 v2_city_ledger UPSERT
 )
 
 data class GeneralTurnPullRow(
@@ -2515,6 +2558,13 @@ data class AuctionBidInsertRow(val columns: Map<String, Any?>)
  * amount-누적 UPSERT (UNIQUE(general_id,betting_id,betting_type) 충돌 시 amount += EXCLUDED.amount).
  */
 data class BettingInsertRow(val columns: Map<String, Any?>)
+
+/**
+ * OPENSAM-150 (R1) — `v2_city_ledger` 한 행의 멱등 UPSERT. `columns`는 `city_id`/`gold`/`rice`/
+ * `garrison` **절대값**이라 같은 payload를 재적용해도 결과가 같다(재시작 안전성, 설계안 §11 U11 완화안).
+ */
+data class CityLedgerV2UpsertRow(val columns: Map<String, Any?>)
+
 /** OPENSAM-94 프로필 아이콘 sync — general portrait 컬럼(picture/image_server) UPDATE 운반체. */
 data class ProfileIconUpdateRow(val columns: Map<String, Any?>)
 
