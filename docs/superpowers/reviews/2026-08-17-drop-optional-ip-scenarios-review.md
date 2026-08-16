@@ -110,6 +110,8 @@ app/gateway-api/build/test-results/test/TEST-opensamguk.gateway.profile.SharedPr
 FAILURE: org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
 ```
 
+주: 이 리뷰를 쓰는 도중 워크트리에 `SharedProfileIconCatalogTest.kt:46`을 새 SHA로 바꾸는 **미커밋 수정**이 나타났다(다른 레인 소행, 이 리뷰 커밋에 포함하지 않았다). 위 판정은 리뷰 대상 커밋 `c7827e3e` 기준이며, 그 수정이 커밋되고 `:app:gateway-api:test`가 XML 기준 green으로 재확인되기 전까지 F1은 열린 상태다.
+
 고쳐야 할 것: `SharedProfileIconCatalogTest.kt:46`의 리비전을 `05842c61132fd5a71268fd9babd80ba74e27be62`로 갱신한다. 이 단언은 PHP 골든이 아니라 **핀 계약 단언**이므로 갱신이 정상 경로다(골든 약화 아님). 갱신 후 `:app:gateway-api:test`를 다시 돌려 증거를 남겨야 한다.
 
 ## 3. `_meta.json` 정합 — PASS
