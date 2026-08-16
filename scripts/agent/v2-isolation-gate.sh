@@ -49,14 +49,32 @@ gate() { # gate <이름> <pathspec...>
 }
 
 # ② T1 — 패러티 코어 + 기존 테스트: 수정·삭제 0건. 신규 파일 추가만 허용(--diff-filter=MD).
-gate "② T1 parity core + existing tests" \
+#
+# 좁히기 (OPENSAM-190) — 테스트 루트의 `**/v2/**` 디렉터리만 제외한다. 게이트 ⑤의 README
+# 제외와 동형 결함이었다: v2 소유 테스트가 통째로 동결돼 v2 후속 티켓이 OPENSAM-35가 만든
+# 자기 테스트를 고칠 구조적 방법이 없었다. 특히 `V2ProductionContextBeanGateIT`는
+# "production에 v2 빈 0개"를 **v2 빈 타입을 하나씩 열거해** 증명하므로, 얼려 두면 v2가
+# 자랄수록 격리 증명이 낡는다 — 즉 동결이 격리를 지키는 게 아니라 좀먹는다.
+#
+# 제외 범위가 좁은 이유:
+#   · 디렉터리 세그먼트 `/v2/`만 본다. `V26NpcLifecycleMigrationTest.kt` 같은 **Flyway
+#     버전 번호가 앞에 붙은 v1 테스트**는 `infra/.../persistence/`에 있어 걸리지 않는다.
+#   · `logic/src/main/kotlin/**`·`common/src/main/kotlin/**`·golden은 제외 대상이 아니다
+#     (v2 소유 main 소스도 T1 동결 유지).
+#   · v1 테스트를 `/v2/`로 **옮겨서** 고치는 우회는 원경로의 삭제가 `--diff-filter=MD`에
+#     걸리므로 여전히 위반이다.
+gate "② T1 parity core + existing tests (테스트 루트의 v2 디렉터리 제외)" \
   ':(glob)logic/src/main/kotlin/**' \
   ':(glob)common/src/main/kotlin/**' \
   ':(glob)logic/src/test/resources/golden/**' \
   ':(glob)logic/src/test/kotlin/**' \
   ':(glob)common/src/test/kotlin/**' \
   ':(glob)infra/src/test/kotlin/**' \
-  ':(glob)app/*/src/test/kotlin/**'
+  ':(glob)app/*/src/test/kotlin/**' \
+  ':(glob,exclude)logic/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)common/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)infra/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)app/*/src/test/kotlin/**/v2/**'
 
 # ③ T2 — 경계 수정 목록. 출력이 티켓 본문 사전선언과 "정확히" 일치해야 한다(초과 = 위반).
 #    빈 출력이 아니어도 되는 유일한 게이트이므로 rc에 반영하지 않고 목록만 낸다.

@@ -623,13 +623,27 @@ wildcard 없는 `infra/...` 세그먼트와 게이트 ②는 영향 없었다.
 게이트 ⑤의 `README.md` 제외 사유와 그 좁히기가 아무것도 놓치지 않는다는 mutation 증명은
 `docs/superpowers/reviews/2026-08-17-opensam-188-gate-defects-review.md` 참조.
 
+**개정 (2026-08-17, OPENSAM-190) — 게이트 ②에서 테스트 루트의 `**/v2/**` 디렉터리를 제외한다.**
+⑤의 README 결함과 동형이었다: v2 소유 테스트가 통째로 동결돼 v2 후속 티켓이 OPENSAM-35가 만든
+자기 테스트를 고칠 구조적 방법이 없었다. 특히 `V2ProductionContextBeanGateIT`는 "production에
+v2 빈 0개"를 **v2 빈 타입을 하나씩 열거해** 증명하므로, 얼려 두면 v2가 자랄수록 격리 증명이
+낡는다 — 동결이 격리를 지키는 게 아니라 좀먹는다. v1 패러티 코어·골든·v1 가드 테스트는 전부
+동결 유지이며, 무엇이 보호를 잃고 무엇이 남는지의 전수 열거와 mutation 증명은
+`docs/superpowers/reviews/2026-08-17-opensam-190-gate2-narrowing-review.md`에 있다.
+
 ```bash
 MB=$(git merge-base HEAD origin/main)
 
-# ② T1 — 기대: 빈 출력
+# ② T1 — 기대: 빈 출력 (2026-08-17 OPENSAM-190: 테스트 루트의 v2 디렉터리 제외)
 git diff --name-only --diff-filter=MD "$MB" -- \
   ':(glob)logic/src/main/kotlin/**' ':(glob)common/src/main/kotlin/**' \
-  ':(glob)logic/src/test/resources/golden/**'
+  ':(glob)logic/src/test/resources/golden/**' \
+  ':(glob)logic/src/test/kotlin/**' ':(glob)common/src/test/kotlin/**' \
+  ':(glob)infra/src/test/kotlin/**' ':(glob)app/*/src/test/kotlin/**' \
+  ':(glob,exclude)logic/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)common/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)infra/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)app/*/src/test/kotlin/**/v2/**'
 
 # ③ T2 — 사전선언 = 공집합, 기대: 빈 출력
 git diff --name-only --diff-filter=MD "$MB" -- \
