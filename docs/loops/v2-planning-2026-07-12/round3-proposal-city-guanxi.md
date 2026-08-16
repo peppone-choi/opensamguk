@@ -1182,22 +1182,40 @@ fun getDedLevelText(dedLevel: Int): String {
 
 **개정 2차 — 원안 게이트는 두 가지로 고장나 있었다.** ① `logic/src/main/kotlin/opensamguk/logic/` 아래 패키지는 **24개**인데 6개만 열거해 `actions/`·`ai/`·`constraints/`·`event/`·`tick/`·`items/`·`log/`·`util/` 등 **18개가 게이트 밖**이었다 — 즉 `ActionPipeline`은 감시하면서 `logic/event/WorldActions.kt`(월간 leaf 등록 체인)와 `logic/constraints/Presets.kt`(precheck 판정)는 감시하지 않았다. ② `git diff --stat`은 **신규 파일도 출력하므로** "출력이 비어 있어야 한다"는 조건이 v2 새 파일 하나만 있어도 실패한다. 두 결함을 함께 고친다.
 
+**개정 (2026-08-17, OPENSAM-188) — 아래 코드블록은 결함 3건을 닫은 판이다.** ①
+`'app/*/src/main/kotlin/'`처럼 **와일드카드 + 트레일링 슬래시** pathspec은 git wildmatch에서
+**항상 빈 출력**이라(git 2.50.1 실측) 게이트 ③의 `app/` 절반이 아무것도 검사하지 않았다 —
+"빈 출력 = PASS"가 공허하게 참이었다. 와일드카드가 든 pathspec은 **반드시 `:(glob)` 접두 +
+`/**` 접미**로 쓴다. ② 게이트 ⑤가 `infra/src/main/resources/` 전체를 얼려 v2 소유 문서
+(`db/migration_v2/README.md`·`content/v2/README.md`)가 영구 갱신 불가였다 — `README.md`만
+제외한다(어떤 로더도 읽지 않는다: Flyway는 `V*.sql`, `V2ContentCatalog`는 `*.json`만 스캔).
+③ 기준선이 `origin/main`이면 분기 후 머지된 타 브랜치가 섞여 **거짓 위반**이 뜬다 —
+기준선은 **merge-base 고정**이다.
+
+**실행은 문서 복붙이 아니라 `scripts/agent/v2-isolation-gate.sh`로 한다.** 그 스크립트가
+merge-base 계산과 pathspec을 고정해 사람이 틀릴 여지를 없앤다(fail-closed, exit 1). 아래
+블록은 그 스크립트가 실제로 실행하는 명령의 문서판이다.
+
 ```bash
 # ① v1 게이트 green (출력 tail + test XML로 확인, exit code 아님)
 tools/parity/gate.sh backend
 
+# 기준선 — origin/main 직접 사용 금지 (분기 후 전진분이 거짓 위반을 만든다)
+MB=$(git merge-base HEAD origin/main)
+
 # ② T1 — 패러티 코어 수정·삭제 0건 (신규 파일 추가는 허용 → --diff-filter=MD)
-git diff --name-only --diff-filter=MD origin/main -- \
-  logic/src/main/kotlin/ \
-  common/src/main/kotlin/ \
-  logic/src/test/resources/golden/ \
-  logic/src/test/kotlin/ common/src/test/kotlin/ infra/src/test/kotlin/ \
-  app/game-engine/src/test/kotlin/ app/game-api/src/test/kotlin/
+git diff --name-only --diff-filter=MD "$MB" -- \
+  ':(glob)logic/src/main/kotlin/**' \
+  ':(glob)common/src/main/kotlin/**' \
+  ':(glob)logic/src/test/resources/golden/**' \
+  ':(glob)logic/src/test/kotlin/**' ':(glob)common/src/test/kotlin/**' \
+  ':(glob)infra/src/test/kotlin/**' ':(glob)app/*/src/test/kotlin/**'
 # → 출력이 비어 있어야 한다. 한 줄이라도 나오면 설계 위반
 
 # ③ T2 — 경계 수정 목록이 티켓 본문 선언과 일치하는지
-git diff --name-only --diff-filter=MD origin/main -- \
-  app/*/src/main/kotlin/ infra/src/main/kotlin/ infra/src/main/resources/db/migration/
+git diff --name-only --diff-filter=MD "$MB" -- \
+  ':(glob)app/*/src/main/kotlin/**' ':(glob)infra/src/main/kotlin/**' \
+  ':(glob)infra/src/main/resources/db/migration/**'
 # → 티켓 본문이 사전 명시한 파일 집합과 정확히 일치해야 한다(초과 = 위반)
 #   각 파일의 diff는 티켓 본문에 전량 인용하고, v1 inert 근거를 한 줄씩 붙인다
 
@@ -1214,9 +1232,16 @@ git diff --name-only --diff-filter=MD origin/main -- \
 - **`app/*/src/main/resources/**` (개정 5차 신설)** — ②는 `**/src/main/kotlin/`만, ③은 `app/*/src/main/kotlin/`·`infra/src/main/kotlin/`·`infra/.../db/migration/`만 본다. 그래서 **`application.yml` 수정은 두 게이트 어디에도 걸리지 않는다.** 이 공백은 실재하는 위험이다 — `spring.flyway.locations`·`spring.jpa.hibernate.ddl-auto`·`spring.datasource.*`가 전부 거기 있고, 그 한 줄이 v1 부팅을 깰 수 있다(§7.1-2 R6·(3) 참조). 그래서 이 설계안은 **v2가 `app/*/src/main/resources/**`를 한 글자도 고치지 않는다**를 설계 제약으로 선언하고(v2 프로퍼티는 신규 `@Configuration`의 `@Value` 기본값으로만 읽는다), 게이트에 다음 한 줄을 더한다.
 
 ```bash
-# ⑤ 설정 리소스 무수정 (개정 5차 신설 — ②③의 사각지대)
-git diff --name-only --diff-filter=MD origin/main -- 'app/*/src/main/resources/' 'infra/src/main/resources/'
+# ⑤ 설정 리소스 무수정 (개정 5차 신설 — ②③의 사각지대 / 개정 2026-08-17 OPENSAM-188)
+git diff --name-only --diff-filter=MD "$MB" -- \
+  ':(glob)app/*/src/main/resources/**' ':(glob)infra/src/main/resources/**' \
+  ':(glob,exclude)app/*/src/main/resources/**/README.md' \
+  ':(glob,exclude)infra/src/main/resources/**/README.md'
 # → 출력이 비어 있어야 한다. v2 Flyway location은 신규 디렉터리이므로 --diff-filter=MD에 걸리지 않는다
+# → README.md 제외 사유: Flyway는 V*.sql, V2ContentCatalog는 *.json만 스캔하므로 문서는 v1 런타임을
+#   바꿀 수 없다. 제외하지 않으면 v2 소유 문서가 영구 갱신 불가가 된다(OPENSAM-188 결함 ②).
+#   yml·json·sql·map·scenario는 전부 동결 유지 — 좁히기가 원래 막던 대상을 하나도 놓치지 않음을
+#   mutation 10종으로 실증했다: docs/superpowers/reviews/2026-08-17-opensam-188-gate-defects-review.md
 ```
 
 `traits/`가 원안에서 특별 취급된 이유(관계 보정을 `OfficerLevelModule`에 한 줄 얹고 싶어지는 유혹)는 여전히 유효하고, 이제 `logic/` 전체 잠금에 자연히 포함된다.
