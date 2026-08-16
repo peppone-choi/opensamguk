@@ -1,244 +1,272 @@
 # 에셋 라이선스 전수 감사 (2026-08-17)
 
-- 범위: opensamguk 저장소에 **커밋된 모든 에셋**과 **에셋 생성 경로**, 런타임에 외부에서 당겨오는 이미지, 서드파티 번들.
-- 기준선: `origin/main` = `2db5ea06`.
-- 판정 규칙: 레인 C의 CHGIS 선례(`docs/loops/opensam-37-evidence-contracts-2026-08-16/chgis-license-review.md`)와 동일한 엄격도를 적용한다.
-  라이선스 원문을 확보하지 못하면 `UNKNOWN`이며, `UNKNOWN`은 "아마 괜찮다"가 아니라 **차단 사유**다
-  (`logic/src/main/kotlin/opensamguk/logic/v2/evidence/EvidenceContracts.kt:86-96`).
-- 이 문서는 **감사와 문서화**다. 에셋을 추가·삭제·교체하지 않았다.
+- 범위: **메인 레포**(`peppone-choi/opensamguk`)에 커밋된 모든 에셋·에셋 생성 경로 + **별도 에셋 레포**(`peppone-choi/opensamguk-images`, jsDelivr CDN) 전량 + 두 레포를 잇는 참조 경로.
+- 기준선: 메인 `origin/main` = `2db5ea06` / 에셋 레포 `main`(blob 11,666, 최종 push `2026-07-18T14:26:17Z`, 태그 `v2026.05.21` 1개).
+- 목적: **라이선스 분리** — 자작 자산과 제3자 파생 자산의 경계를 파일 단위로 확정한다. 공개/비공개 전환, 삭제·교체, 대체 에셋 조달은 이 문서의 범위가 아니다.
+- 판정 규칙: 레인 C의 CHGIS 검토(`docs/loops/opensam-37-evidence-contracts-2026-08-16/chgis-license-review.md`)와 동일. 라이선스 원문을 확보하지 못하면 `UNKNOWN`이며, `UNKNOWN`은 제품 자산 검증에서 차단된다(`logic/src/main/kotlin/opensamguk/logic/v2/evidence/EvidenceContracts.kt:86-96`).
+- 본 감사는 문서화만 수행했다. 에셋을 추가·삭제·교체하지 않았다.
 
 ---
 
 ## 1. 요약
 
-### 1-1. 즉시 조치 필요 (BLOCKED / NEEDS-REPLACEMENT)
+### 1-1. 라이선스 경계 (한 줄)
 
-| # | 항목 | 왜 즉시인가 |
+| 구획 | 파일 수 | 성격 |
 |---|---|---|
-| **A1** | **공개 CDN 저장소 `github.com/peppone-choi/opensamguk-images` 가 PUBLIC + MIT LICENSE 로 코에이 추정 장수 초상 ~4,167장을 재배포 중** | 이 저장소는 PRIVATE이지만 초상 자산은 이미 **공개 배포되고 있다**. 게다가 소유권이 없는 이미지에 MIT("sublicense, sell" 허용)를 붙였다 — 제3자에게 잘못된 권리를 부여하는 표기다. 저장소를 PRIVATE으로 돌려도 이 노출은 닫히지 않는다 |
-| **A2** | **런타임 초상 fetch 경로가 A1 저장소를 기본값으로 하드코딩** (`web/game/lib/portrait.ts:17`, `web/gateway/lib/portrait.ts:3-19`) | 프로덕션이 켜지는 순간 코에이 추정 초상을 게임 화면에 서빙한다. `NEXT_PUBLIC_IMAGE_CDN` 오버라이드는 있으나 **기본값이 위험 경로** |
-| **A3** | **`web/game/public/icons/*.gif`·`web/gateway/public/icons/*.gif` 14×2 = 28개 파일이 라이선스 없는 upstream(`devsam/image`)에서 verbatim 복사돼 커밋됨** | 저장소 자체 커밋 위반. 게다가 **코드에서 더 이상 참조하지 않는 고아 파일**(CDN으로 이전, 커밋 `1642bbaa`) — 위험만 남고 효용은 0 |
-| **A4** | **저장소에 LICENSE / NOTICE / THIRD-PARTY 파일이 전혀 없다** | 서드파티 바이너리 에셋과 서드파티 폰트를 배포하면서 고지 파일이 없다 |
+| 자작 — 프로젝트가 만든 것 | 메인 레포 285 + 에셋 레포 3 | v2 전투 에셋 265, QA 스크린샷 20, 에셋 레포 루트 문서 3 |
+| 자작 **변환** / 제3자 **콘텐츠** | 에셋 레포 7,015 | `portraits/rtk14/**` — 파이프라인·크롭·매니페스트는 자작, 원본 이미지는 RTK14 |
+| 제3자 미러 (자작 아님) | 에셋 레포 4,648 + 메인 레포 44 | `devsam/image` 전량 미러(`game`/`icons`/`hook`) + 메인 레포에 복사된 아이콘·깃발 |
+| 제3자 데이터 (허용 라이선스) | 메인 레포 82+ | `data/extracted/**` ← `legacy/devsam-core` MIT |
 
-### 1-2. 안전한 것 (OK)
+메인 레포 285 = v2 병종 원본 105 + 런타임 105 + 지형 40 + 이펙트 20(소스 18 + 아틀라스 2) − 중복 5(매니페스트류 제외) 로 계산한 이미지 파일 기준이며, 정확한 내역은 §3 표를 따른다.
 
-- `assets/battle/v2/**` 중 **생성 영수증이 있는 24개 병종 원본** — OpenAI `gpt-image-2` 생성물. 프롬프트에 "no Koei, no franchise imitation" 명시(§2 표 참조). 단 §1-3의 유보 참조.
-- `data/extracted/**` (시나리오·상수·아이템 등 JSON) — 출처가 `legacy/devsam-core`(MIT, `legacy/devsam-core/LICENSE:1-3` "Copyright (c) 2023 Hide_D, 62che").
-- `web/*/package.json` 의존성 전부 — **에셋을 동봉하는 패키지가 하나도 없다**. 폰트 패키지·아이콘 세트·CSS 프레임워크 0개.
-- 인라인 SVG 0개 — 아이콘 세트 무단 복사 위험 없음.
-- `docker/`, `infra/nginx/`, `scripts/` — 이미지에 굽는 폰트·이미지 다운로드 없음.
-- `tools/rtk14/`, `tools/rtk-faces/` — **빌더 스크립트만 커밋**, 입력 원본·산출물 전부 미커밋 + fail-closed 가드. 설계상 안전(§4).
-
-### 1-3. UNKNOWN (확인 못 함 — 사용 전 차단)
+### 1-2. UNKNOWN 목록 (원문 근거 미확보 → 차단)
 
 | 항목 | 무엇을 확인 못 했나 |
 |---|---|
-| `web/*/public/flags/flag-cloth-*.png`, `flag-pole-*.png` (8×2) | devsam `game/fFF0000.gif`에서 PIL로 추출한 **파생물**이라고 커밋 메시지가 말하지만, 원본 `devsam/image`에 **LICENSE 파일이 없다**. 원본이 무권리면 파생물도 무권리 |
-| `assets/battle/v2/units/source/*.png` 중 **81개** (`origin: "adopted-v1"`) | `provider: null, model: null` — 어떤 생성기로 만들었는지 **기록이 없다** |
-| `assets/battle/v2/terrain/source/*.png` 8장 → 파생 tiles 32장 | `sourceProvenance.kind = "adopted-existing"`, `provider: null, model: null`. `assets/battle/v2/README.md`가 스스로 "최초 생성 공급자와 모델은 확인할 영수증이 없어"라고 적었다 |
-| `assets/battle/v2/effects/source/*.png` 18장 → atlases 2장 | 매니페스트에 `provider`/`model` 키 자체가 없다(문자열 검색 0회) |
-| OpenAI 출력물 소유권 조항 (24개 생성 스프라이트에 적용) | `openai.com/policies/row-terms-of-use/` 와 help.openai.com 문서 모두 **WebFetch HTTP 403**. 검색 인덱스 요약은 "OpenAI assigns to you all right, title, and interest in and to Output"이라 하나 **원문 verbatim 미확보** |
-| Pretendard 폰트 (`web/gateway/app/layout.tsx:13-16`, jsDelivr CDN 런타임 로드) | 업스트림이 SIL OFL 1.1로 알려져 있으나 **이 저장소에 OFL 원문·고지 없음**. 라이선스 파일을 확인해 넣기 전까지 고지 의무 미이행 |
-| `game/3d/*.glb` 50개 (Meshy.ai 생성, CDN 저장소에만 존재) | `docs/wiki/pages/design/3d-asset-generation-meshy.md:14,39`이 "Pro 플랜 commercial OK"라고만 적었다. **약관 원문 인용 없음** |
-| `docs/loops/**/*.png` 스크린샷 20장 | 자체 QA 스크린샷이지만, 화면에 코에이 추정 초상이 찍혔는지 픽셀 검사는 하지 않았다 |
+| 에셋 레포 `icons/**` 4,167장 전체 | upstream `devsam/image`에 LICENSE 파일 없음. 서브디렉터리별 원저작권자는 **각기 다른 제3자**(§2-2) |
+| 에셋 레포 `portraits/rtk14/**` 원본 1,000장 | RTK14 wikiwiki 첨부 이미지. wikiwiki 및 코에이 테크모의 재사용 허가 문서 미확인 |
+| 에셋 레포 `game/**` 476장, `hook/*.php` 5개 | 같은 무LICENSE upstream |
+| 메인 레포 `web/*/public/flags/*.png` 16장 | devsam `game/fFF0000.gif` 파생. 원본 무LICENSE → 파생물 권리 미확인 |
+| `assets/battle/v2/units/source/*.png` 81장 (`origin: adopted-v1`) | `provider: null, model: null` — 생성기 기록 없음 |
+| `assets/battle/v2/terrain/source/*.png` 8장 → tiles 32장 | `sourceProvenance.kind = "adopted-existing"`, provider/model `null` |
+| `assets/battle/v2/effects/source/*.png` 18장 → atlases 2장 | 매니페스트에 provider/model 키 자체가 없음 |
+| OpenAI 출력물 소유권 조항 (생성 24장에 적용) | `openai.com/policies/row-terms-of-use/`·`help.openai.com` 모두 **WebFetch HTTP 403**, verbatim 미확보 |
+| Pretendard (`web/gateway/app/layout.tsx:13-16`) | 업스트림 SIL OFL 1.1로 알려짐. 이 레포에 원문·고지 파일 없음 |
+| `game/3d/*.glb` 50개 (에셋 레포 미보유 — wiki 기록만) | Meshy 약관 원문 미인용 |
+| `three` / `dompurify` / `@tiptap/*` | 선언·import 되나 `node_modules` 미설치 → 라이선스 파일 미확인 |
+
+### 1-3. 근거 있는 허용 (OK)
+
+- `data/extracted/**` — `legacy/devsam-core` MIT (`legacy/devsam-core/LICENSE:1-3`, "Copyright (c) 2023 Hide_D, 62che").
+- `assets/battle/v2/units/source/*.png` 중 24장 — `provider: openai`, `model: gpt-image-2` 영수증 보유(§1-2의 약관 원문 유보 포함).
+- `web/*/package.json` 의존성 — **에셋을 동봉하는 패키지 0개**. 폰트 패키지·아이콘 세트·CSS 프레임워크 없음, 인라인 SVG 0개.
+- `docker/`·`infra/nginx/`·`scripts/` — 이미지에 굽는 폰트·이미지 다운로드 없음.
+- `tools/rtk14/`, `tools/rtk-faces/` — 빌더 스크립트만 커밋, 입력 원본·산출물 미커밋 + tracked 경로 fail-closed(§5).
+- `'JetBrains Mono'`, `'Fira Code'` — CSS 이름 선언만, fetch·번들 없음.
 
 ---
 
-## 2. 전수 표
+## 2. 에셋 레포 `peppone-choi/opensamguk-images`
 
-`판정` 열: `OK` / `BLOCKED` / `UNKNOWN` / `NEEDS-REPLACEMENT`.
+- visibility **PUBLIC**, default branch `main`, blob **11,666**, 태그 `v2026.05.21` 1개.
+- 루트 `LICENSE` = **MIT, "Copyright (c) 2026 peppone-choi"** — 저장소 전체에 걸린 단일 표기이며, 아래 §2-2·§2-3의 제3자 저작물도 이 표기 아래 놓여 있다.
+- 루트 `README.md`는 구조를 "`game/` — game assets · `icons/` — icon images · `hook/` — hook assets"로만 적고 출처를 적지 않는다. 출처 기록은 `portraits/rtk14/README.md`에만 있다.
+- 배포 URL: `https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images@<tag>/` (immutable 태그).
 
-### 2-1. 커밋된 이미지 자산
+### 2-1. 디렉터리 전수
 
-| 항목 | 출처 | 라이선스 | 상업적 사용 | 재배포/번들 | 커밋 여부 | 판정 |
-|---|---|---|---|---|---|---|
-| `web/game/public/icons/cast_1..8.gif`, `event1..5.gif`, `event51.gif` (14) + `web/gateway/public/icons/` 동일 14 | `legacy/devsam-image/game/` **md5 완전 일치** (예: `cast_1.gif` = `6cd6c561e859285fb24f47b60dd7d3f1`, `event51.gif` = `f39e0a5c3d5ba5d7beaee5b89d7e714b`). upstream = `storage.hided.net/gitea/devsam/image` | **없음** — `devsam/image` 저장소에 LICENSE 파일 부재 (sibling `devsam-core`에는 있음) | 불명 | 불명 | **예** (커밋 `80b4a47a`, `cd81083c`) | **NEEDS-REPLACEMENT** — 코드 참조 0(커밋 `1642bbaa`가 CDN으로 이전), 삭제만 해도 위험 소멸 |
-| `web/game/public/flags/flag-cloth-0..3.png`, `flag-pole-0..3.png` (8) + gateway 동일 8 | devsam `game/fFF0000.gif`에서 PIL 추출(커밋 `6017ad23` 본문). devsam에 동일 바이트 파일 없음 = 파생물 | 원본 라이선스 없음 → 파생물 권리 **미확인** | 불명 | 불명 | **예** | **UNKNOWN** — 사용 중(`web/*/lib/flagTint.ts:64-65`)이므로 §5 정책 결정 필요 |
-| `assets/battle/v2/units/source/*.png` 24장 (`origin: generated`) | ppgen → `provider: openai`, `model: gpt-image-2` (`source-receipt-ledger.v1.json` `creation.tool`) | OpenAI 이용약관(출력물 소유권 이용자 귀속) — **원문 403으로 verbatim 미확보** | 약관상 허용으로 보고됨 | 프롬프트에 "no Koei, no franchise imitation" 고정 | 예 | **OK (조건부)** — §5-1 조치로 약관 원문 캡처 후 확정 |
-| `assets/battle/v2/units/source/*.png` 81장 (`origin: adopted-v1`) | `provider: null, model: null` | **기록 없음** | 불명 | 불명 | 예 | **UNKNOWN** |
-| `assets/battle/v2/units/sprites/*.png` 105장 | 위 105장을 `sprite-gen` 결정적 추출로 컷아웃 | 원본 상태를 그대로 승계 | 승계 | 승계 | 예 | 24장분 OK(조건부) / 81장분 **UNKNOWN** |
-| `assets/battle/v2/terrain/source/*.png` 8장, `terrain/tiles/*.png` 32장 | `"adopted-existing"`, provider/model `null` (`terrain/manifest.json` `sourceProvenance`) | **기록 없음** | 불명 | 불명 | 예 | **UNKNOWN** |
-| `assets/battle/v2/effects/source/*.png` 18장, `effects/atlases/*.png` 2장 | 매니페스트에 provider/model 키 없음. 컴파일러(`sprite-gen`) 정보만 존재 | **기록 없음** | 불명 | 불명 | 예 | **UNKNOWN** |
-| `docs/loops/**/*.png` 20장 (board-editor, opensam-86, opensam-90) | 자체 Playwright QA 스크린샷 | 자체 제작 | OK | 저장소 내부 | 예 | **OK** (단 §1-3 유보) |
+| 경로 | blob | 내용 | 출처 |
+|---|---|---|---|
+| (root) | 3 | `LICENSE`, `README.md`, `.gitignore` | 자작 |
+| `game/` (하위 map 11 포함) | 427 | 깃발 `b<HEX>.png` 34, 도시아이콘 `cast_*.gif`, 상태 `event*.gif`, 배경 `back*.jpg`, `crewtype*.png`, 맵 타일 `map/{che,chess,cr,ludo_rathowm,pokemon_v1}` | `devsam/image` |
+| `game/src/` | 49 | 병종 일러스트 `각궁병.jpg`·`기병.jpg`·`목우.jpg` 등 한글 병종명 | `devsam/image` (원저작자 UNKNOWN) |
+| `hook/` | 5 | `hook.php`, `git_pull.php`, `InstallKey.php`, `HashKey.orig.php`, `gogs_key.orig.php` — 운영 PHP 스크립트 | `devsam/image` |
+| `icons/` (루트) | 1,832 | 삼국지 장수 초상 `0.jpg`…`4000+.jpg` (번호 체계) | `devsam/image` |
+| `icons/<프랜차이즈>/` 10개 | 2,335 | §2-2 | `devsam/image` |
+| `portraits/rtk14/` | 7,015 | §2-3 | RTK14 wikiwiki |
 
-### 2-2. 런타임에 외부에서 가져오는 자산 (커밋 안 됨 ≠ 안전)
+**`game`·`icons`·`hook` = `devsam/image` 파일명 완전 일치 미러.** 로컬 클론 `legacy/devsam-image`와 대조 결과 `game` 476/476, `icons` 4,167/4,167, `hook` 5/5 — **차집합 0**(CDN 전용 0, 로컬 전용 0). 바이트 일치는 메인 레포에 복사된 14개 아이콘에서 md5로 확인했다(예: `cast_1.gif` = `6cd6c561e859285fb24f47b60dd7d3f1`, `event51.gif` = `f39e0a5c3d5ba5d7beaee5b89d7e714b`). `devsam/image`(origin `https://storage.hided.net/gitea/devsam/image.git`)에는 **LICENSE 파일이 없다** — MIT LICENSE가 있는 sibling `devsam-core`와 대조된다.
 
-| 항목 | 출처 | 라이선스 | 상업적 사용 | 재배포/번들 | 커밋 여부 | 판정 |
-|---|---|---|---|---|---|---|
-| 장수 초상 `icons/<id>.jpg` (~4,167) | `cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images/icons/` — `web/game/lib/portrait.ts:17,20,32-40`, `web/gateway/lib/portrait.ts:3-19`, 기본값 `web/game/lib/constants.ts:7` / `web/gateway/lib/constants.ts:12` | 해당 저장소는 **MIT를 표방**(`LICENSE`: "Copyright (c) 2026 peppone-choi") 하나, 내용물은 **코에이 테크모 삼국지 시리즈 초상으로 추정**(`docs/wiki/pages/design/image-asset-pipeline.md:84-86`, git-ignored 로컬 문서) | **불가로 보아야 함** | **현재 공개 재배포 중** | 아니오(fetch) | **BLOCKED** |
-| 도시/이벤트 아이콘 `game/cast_*.gif`, `event*.gif` | 같은 CDN (`ICON_CDN`, `web/game/lib/constants.ts:15`) — 사용처 `web/game/components/game/MapViewer.tsx:606,630`, `web/gateway/components/MapPreview.tsx:362,369,385` | upstream `devsam/image` 무LICENSE | 불명 | 공개 재배포 중 | 아니오 | **UNKNOWN → 사실상 BLOCKED** |
-| `app/gateway-api/src/main/resources/profile-icons/shared-manifest.json` 2개 항목(`1001.jpg`, `default.jpg`) | 위와 같은 CDN, 커밋 SHA로 핀 고정 | 매니페스트가 **스스로** `"license_status": "unknown"`, `"redistribution_status": "unknown"` 이라 적음 | 불명 | 불명 | 매니페스트만 커밋(바이너리 아님) | **UNKNOWN** — 정직한 기록. `bundled_cleared: []`로 번들은 0개 |
-| 3D `game/3d/*.glb` 50개 | Meshy.ai 생성, CDN 저장소 | Meshy Pro 플랜 약관(원문 미인용) | "commercial OK"로만 기록 | 불명 | 아니오 | **UNKNOWN** |
-| Pretendard 폰트 | `cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/...` (`web/gateway/app/layout.tsx:13-16`) | SIL OFL 1.1(업스트림) — 저장소에 원문·고지 없음 | OFL은 허용 | CDN 로드(번들 아님) | 아니오 | **UNKNOWN(고지 미비)** — 라이선스 자체는 허용적, **고지 의무 미이행** |
-| `'JetBrains Mono'`, `'Fira Code'` (`web/game/app/globals.css:27`, `web/gateway/app/globals.css:28`) | 이름만 선언, fetch·번들 없음 | 해당 없음 | — | — | 아니오 | **OK** |
+### 2-2. `icons/` 서브디렉터리 — RTK14 외 제3자 저작물
 
-### 2-3. 데이터 에셋
+루트 1,832장(삼국지 초상) 외에, 프랜차이즈·실존인물별 서브디렉터리 10개 2,335장이 있다. 각각 **원저작권자가 서로 다르다**.
 
-| 항목 | 출처 | 라이선스 | 상업적 사용 | 재배포/번들 | 커밋 여부 | 판정 |
-|---|---|---|---|---|---|---|
-| `data/extracted/**` (시나리오 80+, 상수, 아이템, 성격, 맵, 제약) | `legacy/devsam-core/hwe/scenario/*` (`data/extracted/scenario/_meta.json` `source`), 커밋 `895c4d85` | **MIT** (`legacy/devsam-core/LICENSE:1-3`) | OK | OK | 예 | **OK** (단 §3-3 유보) |
-| `data/scenarios/scenario_*.json`, `data/scenario-source/`, `data/scenarios/refined|reports/` | RTK14 5스탯 divergence 산출물 | 코에이 IP | 불가 | 불가 | **아니오** — `.gitignore:97-102`가 차단 | **OK (격리 성공)** |
-| CHGIS / TGAZ 사료 지리 데이터 | Harvard/Fudan | EULA §3/§5 상업·재배포 금지, Dataverse CC0 표기와 충돌 | 불가 | 불가 | 아니오 | **BLOCKED** (기판정, `chgis-license-review.md`) |
-| `content/v2/**` | **존재하지 않음** (디렉터리 없음) | — | — | — | — | 해당 없음 |
-
-### 2-4. 서드파티 코드 의존성 (에셋 동봉 여부)
-
-`web/game/package.json:12-21`, `web/gateway/package.json:12-19`. **에셋을 동봉하는 패키지 0개.**
-
-| 패키지 | 버전 | 라이선스 | 에셋 동봉 | 판정 |
+| 디렉터리 | 파일 | 파일명 예시 | 추정 원저작권자 | 판정 |
 |---|---|---|---|---|
-| `@sentry/nextjs` | 10.66.0 | MIT (설치본 `package.json` 확인) | 없음 | OK |
-| `next` | 15.5.20 | MIT (설치본 확인) | 없음 | OK |
-| `react`, `react-dom` | 19.0.0 | MIT (설치본 확인) | 없음 | OK |
-| `three` | 0.171.0 | 미설치 — 선언·import만(`web/game/components/v2/SpaceProof3D.tsx:15`) | `three/examples` 미사용 | **UNKNOWN(미검증)** |
-| `dompurify` | 3.4.13 | 미설치 | 없음 | **UNKNOWN(미검증)** |
-| `@tiptap/*` | 3.29.2 / 3.30.0 | 미설치 | 없음 | **UNKNOWN(미검증)** |
+| `걸그룹` | 530 | `AOA 민아.png`, `ITZY 예지.png`, `CL.png` | **실존 인물 사진** — 사진 저작권 + 초상권(퍼블리시티권) | **UNKNOWN** |
+| `루드라사움` | 464 | `가넷.png`, `가라샤.png`, `3G.png` | 출처 미확인 | **UNKNOWN** |
+| `롤시나리오` | 439 | `가렌.png`, `갈리오.png`, `Faker.jpg` | Riot Games (League of Legends) + 실존 프로게이머 사진 | **UNKNOWN** |
+| `스타1프로게이머` | 297 | `강민.jpg`, `강도경.jpg`, `hao lei.jpg` | **실존 인물 사진** | **UNKNOWN** |
+| `포켓몬스터` | 291 | `갸라도스.png`, `강철톤.png` | The Pokémon Company / Nintendo / Game Freak | **UNKNOWN** |
+| `환상향` | 176 | `구마리사.png`, `겐지.png` | 東方Project (上海アリス幻樂団) 및 2차 창작 | **UNKNOWN** |
+| `강서유서월드` | 108 | `가마오.webp`, `니아드라.webp` | 출처 미확인 | **UNKNOWN** |
+| `쿠키런킹덤` | 22 | `용감한쿠키.png`, `어둠마녀.png` | Devsisters | **UNKNOWN** |
+| `삼모시네마틱유니버스` | 7 | `사스케.jpg`, `정승필.png` | 커뮤니티 창작 추정, 출처 미확인 | **UNKNOWN** |
+| `삼국지6` | 1 | `헌제.jpg` | 코에이 테크모 (삼국지6) | **UNKNOWN** |
 
-`three`/`dompurify`/`@tiptap/*`는 업스트림이 허용적 라이선스로 알려져 있으나 **이 체크아웃에서 파일로 확인하지 못했다**. `pnpm install` 후 재확인 대상.
+### 2-3. `portraits/rtk14/` — 자작 변환 / RTK14 콘텐츠
 
-### 2-5. 에셋 생성 도구
+`portraits/rtk14/README.md` 원문:
 
-| 도구 | 입력 | 출력 | 커밋되는 것 | 판정 |
-|---|---|---|---|---|
-| `tools/rtk14/build_rtk14_stats.py` | RTK14 무장 스탯 xlsx (코에이 IP) | `scenario_*.json` tuple 14/15 | **스크립트+테스트만** | **OK** (격리 성공) |
-| `tools/rtk14/build_rtk14_hexmap.py` | RTK14 지도 원본 PNG (코에이 IP) | 헥스 지형 JSON | **스크립트+테스트만**. 헤더 `:6-9`가 "`RIGHTS WARN`… 원본 이미지도 산출 JSON도 커밋하지 않는다", repo-tracked 경로 fail-closed | **OK** (격리 성공) |
-| `tools/rtk-faces/build_rtk14_faces.py` | **wikiwiki.jp / cdn.wikiwiki.jp** 에서 관측된 RTK14 무장 초상 URL (`:154-155`, `:179-180`) | 리사이즈된 초상 이미지 | **스크립트+테스트만**. `assert_safe_path()` `:257-265`가 tracked 경로 거부, 네트워크 경로 없음(캐시 미스 = FAIL) | **OK (도구)** / 산출물은 **BLOCKED** — §3-2 |
-| `tools/assets/generate-v2-roster-static-sprites.mjs` | 병종 카탈로그 md + 프롬프트 | ppgen(OpenAI gpt-image-2) 1024px 원본 | 원본 PNG + 영수증 원장 | 24장 OK(조건부) / 81장 UNKNOWN |
-| `tools/assets/compile-v2-{unit-static-sprites,terrain-core,battle-effects}.mjs` | 위 원본 + 지형/이펙트 소스 시트 | 런타임 스프라이트·타일·아틀라스 | 예 | 입력 상태 승계 |
+> - 원본: **RTK14 wikiwiki** (`https://wikiwiki.jp/sangokushi14/`) 의 인물 일러스트.
+>   각 인물 페이지의 첨부 이미지(`cdn.wikiwiki.jp/.../::attach/*.jpg`)를 취득한다.
+> - 취득 URL은 매니페스트/리포트 파일에 인물명과 함께 기록된다.
 
----
-
-## 3. 코에이 IP 노출 위험 항목
-
-### 3-1. 🔴 최상위 — 공개 CDN 저장소가 코에이 추정 초상을 MIT로 재배포 중
-
-- 저장소: `https://github.com/peppone-choi/opensamguk-images` — `gh repo view` 결과 **`"visibility": "PUBLIC"`, `"licenseInfo": {"key": "mit"}`**.
-- 내용: `icons/`(초상 ~4,167장, `0.jpg`…`4000+.jpg`), `portraits/`, `game/`, `hook/`.
-- LICENSE 원문: `MIT License / Copyright (c) 2026 peppone-choi / … rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell …`
-- 이 저장소의 자체 문서가 이미 코에이 유래를 지목한다 — `docs/wiki/pages/design/image-asset-pipeline.md:84-86`(git-ignored 로컬):
-  > `icons/` 4,400+ 파일 = 코에이 테크모(KOEI TECMO) 삼국지 시리즈 portrait로 추정
-  > **M1 외부 공개 (5~10개월차) 전 라이선스 재검토 필수 TODO**
-- **왜 최상위인가**: (a) opensamguk 저장소를 PRIVATE으로 유지하는 보호가 여기서 무력화된다. (b) 소유하지 않은 저작물에 MIT를 붙이는 것은 단순 무단 사용보다 **더 나쁜 표기 문제**다 — 제3자에게 재배포·판매 권리를 부여한 것처럼 보인다. (c) jsDelivr는 태그별 불변 캐시라 원본을 지워도 캐시가 남는다.
-
-### 3-2. 🔴 RTK14 초상 수집 파이프라인 (`tools/rtk-faces/`)
-
-- 소스 호스트가 `wikiwiki.jp` / `cdn.wikiwiki.jp`로 하드코딩(`build_rtk14_faces.py:154-155,179-180`) — RTK14 팬위키의 **무장 초상 이미지**다. 원저작권자는 코에이 테크모.
-- 도구 자체는 모범적이다: 네트워크 경로 없음, 오퍼레이터가 캐시를 직접 공급, tracked 경로 fail-closed, 헤더가 "A manifest or cache entry does not itself establish reuse rights. Source/reuse rights still require separate clearance."라고 명시.
-- **그러나 산출물에는 사용 권리가 없다.** 이 파이프라인의 출력은 어떤 형태로도 제품에 들어갈 수 없다. 현재 저장소에 산출물 커밋은 **0건**(확인함).
-
-### 3-3. 🟡 RTK14 스탯·지도 (기존 격리, 유지 확인)
-
-`tools/rtk14/` 두 빌더 모두 원본·산출물을 커밋하지 않고 스크립트만 버전 관리한다. `.gitignore:97-102`가 `**/rtk14_stats.local.json`, `data/scenarios/scenario_*.json`, `data/scenario-source/` 등을 차단한다. **현행 격리는 유효하다.** 다만 `data/extracted/scenario/*.json`(커밋됨)에는 devsam 유래 장수 이름·통무지가 들어 있다 — devsam은 MIT지만 **devsam 자체가 코에이 데이터를 어디까지 포함하는지는 이 감사 범위 밖이며 UNKNOWN**이다.
-
-### 3-4. 🟡 devsam/image 유래 커밋 자산 (§2-1 icons/flags)
-
-`legacy/devsam-image`에는 LICENSE 파일이 없다(`devsam-core`에는 MIT LICENSE가 있는 것과 대조). 같은 저장소의 `icons/`가 코에이 추정 초상이라는 점을 감안하면, **같은 저장소의 `game/` 아이콘도 출처 심사 대상**으로 봐야 한다.
-
-### 3-5. 🟢 위험 아님으로 판정한 것
-
-v2 병종 스프라이트의 프롬프트는 **모든 105행에 동일하게** `No text, no fantasy, no modern gear, no Total War, no Koei, and no franchise imitation.` 을 포함한다(`source-receipt-ledger.v1.json`). `assets/battle/v2/README.md` "출처와 IP 경계" 절도 "Total War, Koei 또는 다른 게임의 이미지·UI·실루엣을 복사하거나 참조 에셋으로 사용하지 않는다"고 명시한다. 코에이 IP 관점에서는 **깨끗한 트랙**이다 — 남은 문제는 코에이가 아니라 **생성기 출처 기록 누락**(§1-3)이다.
-
----
-
-## 4. 비주얼 트랙 선행조건
-
-각 트랙을 진행하려면 무엇이 먼저 닫혀야 하는가, 그리고 에셋 조달 경로 후보와 제약.
-
-### 4-1. 장수 얼굴 (초상) — **가장 막혀 있다**
-
-**선행조건 (순서대로)**
-1. `portraitUrl()`의 기본 CDN을 코에이 추정 초상에서 떼어낸다 (`web/game/lib/portrait.ts:17`, `web/gateway/lib/portrait.ts`). 기본값이 위험 경로인 한 나머지 조치는 의미가 없다.
-2. `peppone-choi/opensamguk-images` 를 PRIVATE 전환하거나 `icons/`·`portraits/`를 제거하고, **MIT LICENSE 표기를 내린다**(소유하지 않은 자산에 대한 권리 부여 표기 제거).
-3. 대체 초상 세트를 조달한다(아래).
-4. `SharedProfileIconCatalog`의 `license_status: "unknown"` 항목을 대체본으로 교체하고 `BUNDLED_CLEARED` 스코프로 올린다. 이 계약은 이미 존재하므로 **새로 만들 것은 없다**.
-
-**조달 경로**
-
-| 경로 | 제약 |
-|---|---|
-| **AI 0-shot 생성** (참조 이미지 없음) | 현실적 1순위. 이미 병종 스프라이트에서 검증된 파이프라인(ppgen/OpenAI). 제약: **생성기·모델·프롬프트를 영수증에 반드시 기록**해야 한다(현재 81장이 이걸 안 해서 UNKNOWN이 됐다). 약 4,000장 규모면 비용·시간이 실질 제약. 인물 동일성 유지가 어렵다 |
-| **img2img 스타일 변환** (기존 코에이 초상 기반) | **권장하지 않는다.** 로컬 wiki 문서가 "변환 강도 ≥0.7이면 transformative 주장 가능"이라 적었지만, 한국·일본 저작권법에서 2차적저작물은 원저작자 권리에 종속된다. 이건 법률 의견이 아니라 **위험 등급이 UNKNOWN이라는 사실 기술**이다. 원본 접근 자체가 §3-2 문제를 재발시킨다 |
-| **직접 제작 / 발주** | 권리 명확. 비용·리드타임이 제약. 4,000장 전량은 비현실적 — 등장 빈도 상위 N명만 우선 |
-| **CC0·퍼블릭도메인** | 삼국지 인물 초상에 쓸 만한 CC0 세트가 사실상 없다. 청대 판화 등 PD 자료는 화풍·수량이 안 맞는다 |
-| **초상 없이 출시** | 가장 싼 선행조건 해제. 이니셜/실루엣/색상 뱃지로 대체하고 초상 트랙을 나중에 연다 |
-
-### 4-2. 병종 스프라이트 (2D)
-
-**선행조건**
-1. **81개 `adopted-v1` 원본의 생성 출처를 확정한다.** `build/perfectpixel/v2-battle/roster-static/` 캐시 영수증에 provider/model이 남아 있으면 원장에 승격, 없으면 **`--force --only <slug>`로 재생성**한다(README에 절차 있음). 재생성이 UNKNOWN을 닫는 가장 확실한 방법이다.
-2. OpenAI 이용약관 출력물 소유권 조항을 **브라우저로 캡처해 원문 인용**한다(WebFetch 403 — CHGIS 때와 같은 우회: Playwright).
-3. 그 다음에야 런타임 배선. 현재 `assets/battle/v2/**`는 **컴파일러 외에 어떤 코드도 참조하지 않는다**(확인함) — 즉 지금 배선 전에 닫으면 비용 0.
-
-**조달 경로**: 현행 절차적 생성(ppgen + sprite-gen 결정적 컷아웃)이 그대로 최적. 프롬프트에 프랜차이즈 배제 문구가 이미 고정돼 있다. 제약은 "영수증 없는 에셋을 원장에 넣지 않는다" 규율뿐.
-
-### 4-3. 지형·이펙트 (2D 타일 / 아틀라스)
-
-**선행조건**: 8장의 지형 소스 시트와 18장의 이펙트 소스가 `adopted-existing` = **출처 불명**이다. 파생물인 32 타일 + 2 아틀라스가 전부 여기에 종속된다. 소스 26장을 **기록된 파이프라인으로 재생성**하면 40장 가까이가 한 번에 UNKNOWN에서 빠져나온다. 이게 2D 비주얼 트랙에서 가장 레버리지 큰 단일 조치다.
-
-**조달 경로**: 재생성(1순위) / CC0 타일셋(예: Kenney, OpenGameArt CC0 — 단 삼국시대 톤과 안 맞아 리터치 필요) / 직접 제작.
-
-### 4-4. 3D 지형·유닛
-
-**선행조건**
-1. Meshy 약관 원문에서 **출력물 소유권 + 상업 재배포 조항**을 인용해 기록한다. 현재 근거는 wiki 한 줄("Pro 플랜 commercial OK")뿐이다. 플랜별로 다르면 **어느 플랜으로 생성했는지**도 영수증에 남아야 한다.
-2. `.glb` 50개가 §3-1의 같은 공개 저장소에 얹혀 있다 — 저장소 정리와 함께 이동한다.
-3. 이 저장소에는 3D 자산이 **한 개도 커밋돼 있지 않다**. 배선 전에 닫으면 비용 0.
-
-**조달 경로**: Meshy(약관 확인 후) / Poly Haven·Kenney 등 CC0 3D / 직접 제작 / 절차적 생성(지형 메시는 하이트맵에서 절차적 생성 가능 — 라이선스 문제 자체가 없다. **지형에 한해 1순위**).
-
-### 4-5. 폰트
-
-**선행조건**: Pretendard OFL 1.1 원문을 저장소에 두고(`licenses/` 또는 `NOTICE`) 고지한다. `web/game`은 Pretendard를 CSS에서 부르지만 실제로 로드하지 않아 폴백 중이므로(`web/game/app/layout.tsx`에 링크 없음), **고지와 로드를 같이 정리**한다. 오프라인·차단 환경을 고려하면 self-host(OFL은 허용)가 낫다.
-
----
-
-## 5. 권고 정책
-
-재발을 막기 위해 `CLAUDE.md`(또는 계약 코드)에 못박을 규칙.
-
-### 5-1. 즉시 (이번 주)
-
-| # | 조치 | 대상 |
+| 하위 경로 | 파일 | 내용 |
 |---|---|---|
-| P0-1 | `peppone-choi/opensamguk-images` PRIVATE 전환 + **MIT LICENSE 표기 제거**. 최소한 LICENSE를 "코드에만 적용, 이미지 자산은 제3자 권리" 로 정정 | 사용자 본인 결정 필요 |
-| P0-2 | `web/*/public/icons/**` 28개 파일 삭제 (코드 참조 0) | 별도 티켓 |
-| P0-3 | `portraitUrl()` 기본 CDN에서 코에이 추정 초상 경로 제거 또는 기본값을 `DEFAULT_PORTRAIT`로 강등 | 별도 티켓 |
-| P0-4 | 저장소 루트에 `LICENSE` + `NOTICE`(서드파티 고지: Pretendard OFL, devsam-core MIT) 추가 | 별도 티켓 |
+| `original/` | 1,000 | 취득 원본 바이트 보존. 파일명 = 원본 SHA-256, 확장자 `.bin` |
+| `full-frame-148x210/` | 1,000 | 원본 전체 프레임 148×210 PNG 리사이즈 |
+| `face-crop-148x210/` | 1,000 (+`report.tsv`, `qc/` 2) | YuNet 얼굴 검출 기반 크롭(얼굴높이 ×2.1, face_y 37%) |
+| `face-icon-96/` | 1,000 (+`report.tsv`) | 96×96 얼굴 아이콘(얼굴높이 ×2.0, y 50%) |
+| `serving/portrait`·`serving/icon`·`serving/original` | 각 1,000 | id 키(10001–11000) 서빙 사본 |
+| `manifest/` | 8 | `rtk14-name-file-map.tsv`(정본 1,000행, 인물명·mode·**source_url**·cache_path·output_path), `officer-id-registry.tsv`, `mismatch-judgment.txt`, famous20 리포트류 |
+| `README.md`, `.gitattributes` | 2 | 문서 |
 
-### 5-2. `CLAUDE.md`에 추가할 하드 룰 (제안 문구)
-
-> **에셋 권리 규율 (하드 룰, 에이전트가 약화 불가)**
-> 1. **에셋은 영수증 없이 커밋하지 않는다.** 저장소에 들어오는 모든 이미지·폰트·3D·오디오는 같은 커밋에 provider/model/prompt(생성물) 또는 출처 URL+라이선스 원문 인용(외부물)을 담은 매니페스트 행을 동반한다. `provider: null` / `origin: adopted-*` 는 **UNKNOWN이며 머지 차단 사유**다.
-> 2. **`legacy/` 유래 바이너리는 커밋 금지.** 코드·데이터 포팅은 허용, 바이너리 자산 복사는 금지. `legacy/devsam-image`는 검증용 참조일 뿐 소스가 아니다.
-> 3. **런타임 fetch도 배포다.** 외부 CDN에서 당겨오는 자산은 "커밋 안 했으니 안전"이 아니다. 기본값 URL은 커밋된 자산과 동일한 권리 심사를 받는다.
-> 4. **소유하지 않은 자산에 라이선스를 붙이지 않는다.** 미러 저장소에 MIT/Apache 등 권리 부여 표기를 붙이는 것은 무단 사용보다 무겁다.
-> 5. **UNKNOWN은 차단이다.** 라이선스 원문(URL + 인용문)을 확보하지 못하면 `LicenseBundling.UNKNOWN`이며, 추측으로 `BUNDLING_ALLOWED`나 `RESEARCH_ONLY`로 올리지 않는다. 접근 실패(403 등)는 "확인됨"이 아니라 UNKNOWN이다.
-> 6. **레퍼런스 이미지 금지.** 생성 프롬프트에 특정 프랜차이즈(코에이·Total War 등)를 참조·모방시키지 않으며, 타사 에셋을 img2img 입력으로 쓰지 않는다.
-
-### 5-3. 계약 코드로 강제할 것 (기존 자산 재사용)
-
-이미 있는 두 계약을 **에셋에도 확장**하면 새 인프라가 필요 없다:
-
-- `LicenseBundling` / `SourceLicense` (`EvidenceContracts.kt:86-118`) — 지금은 사료 데이터 전용이다. `SharedProfileIconEntry.licenseStatus: String = "unknown"`(`SharedProfileIconCatalog.kt:31`)를 **String에서 `LicenseBundling` enum으로 바꾸면** 아이콘 카탈로그가 같은 게이트를 탄다.
-- `tools/agent-system/check.py` — 새 바이너리 에셋이 커밋되는데 대응 매니페스트 행이 없으면 finding을 내는 체크를 추가하면 5-2의 1번이 자동 강제된다.
-
-### 5-4. 감사 재실행
-
-이 문서는 `origin/main` = `2db5ea06` 시점의 스냅샷이다. 새 에셋 도입 PR마다 §2 표에 행을 추가하고, 비주얼 트랙 착수 전 전체 재실행한다.
+- 취득·가공 파이프라인은 메인 레포 `tools/rtk-faces/build_rtk14_faces.py`다(README 명시). 검출 파라미터·크롭 판정·QC 증적·id 레지스트리는 **프로젝트 자작 산출물**이고, 픽셀 콘텐츠는 RTK14 일러스트다.
+- `manifest/rtk14-name-file-map.tsv`(653KB)에 인물별 **취득 URL이 그대로 기록**돼 있다. `mismatch-judgment.txt`에도 `https://cdn.wikiwiki.jp/to/w/sangokushi14/%E6%9D%8E%E8%A1%A1/::attach/…` 형태의 원본 URL이 남아 있다.
+- **메인 레포·프로덕션 어디에서도 아직 참조되지 않는다**(`portraits/rtk14`, `serving/portrait`, `officer-id-registry` grep 결과 0). README도 "CDN 태깅은 **활성화 시점에** 별도로 부여한다", id 범위는 "라이브 컷오버 시 고정"이라고 적어 미활성 상태임을 밝힌다.
 
 ---
 
-## 부록 A. 확인 실패 기록 (재검증하는 사람 주의)
+## 3. 메인 레포 커밋 자산
+
+| 항목 | 출처 | 라이선스 | 커밋 여부 | 판정 |
+|---|---|---|---|---|
+| `web/game/public/icons/*.gif` 14 + `web/gateway/public/icons/*.gif` 14 | `legacy/devsam-image/game/` md5 완전 일치 | 무LICENSE upstream | 예 (커밋 `80b4a47a`, `cd81083c`) | **UNKNOWN** — 코드 참조 0(커밋 `1642bbaa`가 CDN 단일출처로 이전) |
+| `web/game/public/flags/*.png` 8 + gateway 8 | devsam `game/fFF0000.gif`에서 PIL 추출(커밋 `6017ad23`) | 원본 무LICENSE → 파생 권리 미확인 | 예 | **UNKNOWN** — 사용 중(`web/*/lib/flagTint.ts:64-65`) |
+| `assets/battle/v2/units/source/*.png` 24 (`origin: generated`) | ppgen → `creation.tool = {provider: openai, model: gpt-image-2}` | OpenAI 약관(원문 403 미확보) | 예 | **OK (조건부)** |
+| `assets/battle/v2/units/source/*.png` 81 (`origin: adopted-v1`) | provider/model `null` | 기록 없음 | 예 | **UNKNOWN** |
+| `assets/battle/v2/units/sprites/*.png` 105 | 위 105장의 `sprite-gen` 결정적 컷아웃 | 원본 승계 | 예 | 24장분 OK(조건부) / 81장분 **UNKNOWN** |
+| `assets/battle/v2/terrain/source` 8 + `tiles` 32 | `"adopted-existing"`, provider/model `null` | 기록 없음 | 예 | **UNKNOWN** |
+| `assets/battle/v2/effects/source` 18 + `atlases` 2 | 매니페스트에 provider/model 키 없음 | 기록 없음 | 예 | **UNKNOWN** |
+| `docs/loops/**/*.png` 20 | 자체 Playwright QA 스크린샷 | 자작 | 예 | **OK** (화면에 CDN 초상이 찍혔는지 픽셀 검사는 하지 않음) |
+| `data/extracted/**` | `legacy/devsam-core/hwe/scenario/*` (`data/extracted/scenario/_meta.json`), 커밋 `895c4d85` | **MIT** | 예 | **OK** |
+| `data/scenarios/scenario_*.json`, `data/scenario-source/`, `**/rtk14_stats.local.json` | RTK14 5스탯 divergence 산출물 | 코에이 IP | **아니오** — `.gitignore:96-102` 차단(`infra/src/main/resources/scenario/rtk14_stats.local.json`도 `git check-ignore` 확인) | **격리됨** |
+| CHGIS / TGAZ | Harvard/Fudan | EULA §3/§5 상업·재배포 금지 | 아니오 | **BLOCKED** (기판정) |
+| `content/v2/**` | 디렉터리 없음 | — | — | 해당 없음 |
+
+**서드파티 코드 의존성**: `web/game/package.json:12-21`, `web/gateway/package.json:12-19`. `@sentry/nextjs` 10.66.0 / `next` 15.5.20 / `react`·`react-dom` 19.0.0 = MIT(설치본 확인). `three` 0.171.0 / `dompurify` 3.4.13 / `@tiptap/*` 3.29.2·3.30.0 = 미설치(§1-2). **에셋 동봉 패키지 0개.** 폰트는 Pretendard 1종만 CDN 런타임 로드(`web/gateway/app/layout.tsx:13-16`)이며 `web/game`은 CSS에 선언만 하고 로드하지 않는다(`web/game/app/globals.css:26`). `.woff`/`.ttf`/`.otf` 파일과 `@font-face`·`next/font`는 저장소에 0개.
+
+---
+
+## 4. 메인 레포·프로덕션 → CDN 참조 경로
+
+### 4-1. 코드
+
+| 경로 | 내용 |
+|---|---|
+| `web/game/lib/constants.ts:6-7` | `IMAGE_CDN_BASE = process.env.NEXT_PUBLIC_IMAGE_CDN ?? 'https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images'` — **기본값 하드코딩** |
+| `web/gateway/lib/constants.ts:11-12` | 동일 |
+| `web/game/lib/constants.ts:10` | `MAP_CDN = ${IMAGE_CDN_BASE}/game/map` |
+| `web/game/lib/constants.ts:15` | `ICON_CDN = ${IMAGE_CDN_BASE}/game` |
+| `web/game/lib/portrait.ts:17,20` | `PORTRAIT_CDN = ${IMAGE_CDN_BASE}/icons`, `DEFAULT_PORTRAIT = .../icons/default.jpg` |
+| `web/game/lib/portrait.ts:32-40` | `portraitUrl(picture, imageServer)` — `imageServer=0` → `${PORTRAIT_CDN}/${picture}`(확장자 없으면 `.jpg` 부착), truthy → `/d_pic/` |
+| `web/gateway/lib/portrait.ts:3-19` | 동일 계약 |
+| 초상 호출부 | `web/game/app/game/generals/page.tsx:254`, `my-generals/page.tsx:140`, `rankings/generals/page.tsx:132`, `select-pool/page.tsx:176`, `join/page.tsx:450,551`, `components/game/GeneralBasicCard.tsx:238` |
+| 아이콘 호출부 | `web/game/components/game/MapViewer.tsx:606,630`, `web/gateway/components/MapPreview.tsx:362,369,385` |
+| `app/gateway-api/src/main/resources/profile-icons/shared-manifest.json:18,21,37,40` | `source_repository: https://github.com/peppone-choi/opensamguk-images`, `delivery_url` = 커밋 SHA `1b6624d8…`로 핀 고정된 jsDelivr URL 2건(`icons/1001.jpg`, `icons/default.jpg`). 두 항목 모두 `"license_status": "unknown"`, `"redistribution_status": "unknown"`, `bundled_cleared: []` |
+| `app/gateway-api/.../SharedProfileIconCatalog.kt:145` | `https://cdn.jsdelivr.net/gh/$repositorySlug@${entry.sourceRevision}/${entry.sourcePath}` 조립 |
+
+### 4-2. 설정·배포
+
+| 경로 | 내용 |
+|---|---|
+| `.env.example:116-118` | `NEXT_PUBLIC_IMAGE_CDN=https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images` (주석: "선택 — 미설정 시 기본값 사용") |
+| `app/gateway-api/.../DeployService.kt:43` | `NEXT_PUBLIC_IMAGE_CDN`이 `sharedEnvKeys`에 포함 — 어드민 배포 경로가 이 값을 전 서버에 전파 |
+| `README.md:11` | 관련 저장소로 `opensamguk-images`(jsDelivr CDN) 명시 |
+
+즉 **미설정이 곧 CDN 사용**이다. 환경변수는 오버라이드 수단이지 차단 수단이 아니다.
+
+### 4-3. `d_pic`와의 관계 — 별개 경로
+
+`/d_pic/`는 CDN과 **무관한 same-origin 경로**다.
+
+- `infra/nginx/default.conf:39-46`(및 `:196`, `nginx.conf:105`) — `location ~ "^/d_pic/(?<profile_icon>[0-9a-f]{8}\.(?:avif|webp|jpg|png|gif))$"` → `alias /var/lib/opensamguk/profile-icons/$profile_icon`.
+- `infra/nginx/default.conf:49-51`(`:206`, `nginx.conf:116`) — 그 외 모든 `/d_pic/` 경로는 `return 404`.
+- `docker-compose.yml:277-281`, `docker-compose.production.yml:244-247` — `profile-icons` named volume을 nginx에 **읽기 전용** 마운트, gateway-api가 유일 writer.
+
+분기점은 DB `image_server` 컬럼이다(`infra/.../UserEntity.kt:62-63`). `0` = 공유 초상 → **CDN**, truthy = 사용자 업로드 → **`/d_pic/`**(canonical 8-hex 파일명이 아니면 기본 초상 폴백). 따라서 `/d_pic/`에 놓이는 것은 사용자가 올린 파일이고, 제3자 에셋 노출 경로는 CDN 쪽 하나다.
+
+### 4-4. DB 시드 → CDN 경로 결합 (프랜차이즈 아이콘)
+
+`infra/src/main/kotlin/opensamguk/infra/seed/ScenarioImporter.kt:516-533` `resolvedScenarioPicture()`가 시드 시 `picture` 컬럼 값을 만든다:
+
+- 숫자 코드면 `storedIconByKey(".", n)` 조회, 아니면 `picturePath = "$iconPath/$picturePath"` (`:527-528`) — **시나리오의 `iconPath`가 경로 접두사가 된다**.
+- `iconPath`는 시나리오 JSON의 필드다(`ScenarioJson.kt:74,313`).
+- FE는 이 값을 `${IMAGE_CDN_BASE}/icons/<picture>`로 해석한다(`web/game/lib/portrait.ts:39`).
+
+커밋된 `data/extracted/scenario/*.json` 82개 중 16개가 `iconPath`로 **§2-2의 프랜차이즈 디렉터리명과 정확히 같은 값**을 갖는다:
+
+| iconPath | 시나리오 |
+|---|---|
+| `롤시나리오` | 2900, 2901, 2903, 2904 |
+| `환상향` | 2130, 2131 |
+| `걸그룹` | 2140, 2141 |
+| `삼모시네마틱유니버스` | 2600, 2601 |
+| `강서유서월드` | 2800, 2801 |
+| `루드라사움` | 2171 |
+| `스타1프로게이머` | 2200 |
+| `포켓몬스터` | 2210 |
+| `쿠키런킹덤` | 2300 |
+
+나머지 65개는 `"."`(루트 `icons/`).
+
+**현재 시딩 대상에는 포함되지 않는다.** 시드는 classpath 또는 `SCENARIO_DIR`에서 파일을 읽는데(`ScenarioSeedRunner`), 커밋된 classpath 리소스 `infra/src/main/resources/scenario/`에는 31개(0·1·2·1010~1120·900~914)만 있고 **2xxx 프랜차이즈 시나리오는 없다**. 프로덕션 기본값도 `SCENARIO_CODE: scenario_1010`(`docker-compose.production.yml:67`)이다. 즉 프랜차이즈 아이콘 경로는 **데이터로는 레포에 있고, 실행 경로로는 비활성**이다.
+
+---
+
+## 5. 자작 / 제3자 파생 경계
+
+라이선스 분리 시 그어야 할 선.
+
+### 5-1. 자작 (프로젝트 저작물)
+
+| 자산 | 근거 |
+|---|---|
+| `assets/battle/v2/**` 전량(265 이미지 + 매니페스트·영수증) | 프롬프트·카탈로그·컴파일러 모두 프로젝트 산출. 전 105행 프롬프트에 `No text, no fantasy, no modern gear, no Total War, no Koei, and no franchise imitation.` 고정. `assets/battle/v2/README.md` "출처와 IP 경계" 절이 타사 이미지 참조·복사를 금한다. **단 생성기 출처가 기록된 것은 24장뿐**(§1-2) |
+| `docs/loops/**/*.png` 20 | 자체 QA 스크린샷 |
+| `tools/rtk14/*.py`, `tools/rtk-faces/*.py`, `tools/assets/*.mjs` + 테스트 | 알고리즘·파이프라인 코드 |
+| 에셋 레포 `portraits/rtk14/`의 **파생 레이어**: 크롭 파라미터(v3 얼굴높이×2.1·face_y 37% / 아이콘 ×2.0·y 50%), `report.tsv`, `qc/`, `officer-id-registry.tsv`, `manifest/*` | 검출·판정·정본화 작업 결과 |
+| 에셋 레포 루트 `README.md`, `.gitignore` | 자작 문서 |
+| `web/*/lib/flagTint.ts` 캔버스 틴팅 로직 | `docs/superpowers/gap/_full_audit_2026-06-07.raw.json:2768` — "국기 컬러 틴팅(Canvas 기반, tintFlag). **legacy에 없음.** 신규 추가" |
+
+### 5-2. 제3자 파생 (자작 아님)
+
+| 자산 | 원천 | 자작 부분 |
+|---|---|---|
+| 에셋 레포 `game/` 476, `icons/` 4,167, `hook/` 5 | `devsam/image` (무LICENSE) | 없음 — 파일명 완전 일치 미러 |
+| 에셋 레포 `portraits/rtk14/original/` 1,000, `serving/original/` 1,000 | RTK14 wikiwiki 첨부 이미지 | 없음 — 원본 바이트 보존 |
+| 에셋 레포 `portraits/rtk14/{full-frame,face-crop,face-icon,serving/portrait,serving/icon}` 5,001 | 위 원본의 리사이즈·크롭 | 크롭·검출 파라미터는 자작, **픽셀 콘텐츠는 원본 파생** |
+| 메인 레포 `web/*/public/icons/` 28 | `devsam/image` md5 일치 | 없음 |
+| 메인 레포 `web/*/public/flags/` 16 | devsam `fFF0000.gif` PIL 추출 | 추출 스크립트는 자작, 픽셀은 파생 |
+| `data/extracted/**` | `legacy/devsam-core` (MIT) | 추출·정본화 |
+
+### 5-3. 경계가 판단 불가한 지점 (UNKNOWN)
+
+1. **`assets/battle/v2` 81+8+18 = 107장의 소스** — 자작이라고 부르려면 생성기·모델·프롬프트가 필요한데 그 기록이 없다. "누가 만들었는지 모른다"는 자작의 반대편도 아니고 파생의 반대편도 아니다. `origin: "adopted-v1"` / `"adopted-existing"`이 곧 이 미확정 상태의 라벨이다.
+2. **`portraits/rtk14`의 크롭본** — 변환 강도가 파생물성을 어디까지 희석하는지는 이 감사가 판단할 문제가 아니다. 파일 단위 경계만 §5-2에 기록한다.
+3. **`game/src/*.jpg` 49장(병종 일러스트)** — `devsam/image` 유래인 것만 확인했고, devsam이 이를 어디서 얻었는지는 확인하지 못했다.
+4. **`icons/루드라사움`·`강서유서월드`·`삼모시네마틱유니버스`** — 프랜차이즈명이 알려진 IP와 매칭되지 않아 원저작권자 자체가 미상이다.
+5. **`data/extracted/**`의 인물 데이터** — devsam-core는 MIT지만, devsam이 그 데이터를 어디서 얻었는지는 이 감사의 범위 밖이다.
+
+### 5-4. 분리 단위
+
+라이선스를 파일 트리에 반영한다면 경계는 **디렉터리 단위로 이미 정렬돼 있다**:
+
+- 에셋 레포: `game/`·`icons/`·`hook/` = devsam 유래 / `portraits/` = RTK14 유래 / 루트 문서 = 자작. 현재 루트 `LICENSE`(MIT) 하나가 세 구획 전부를 덮고 있다.
+- 메인 레포: `assets/battle/v2/**` = 자작 / `web/*/public/**` = devsam 파생 / `data/extracted/**` = devsam MIT.
+- 코드 계약에는 이미 라벨 자리가 있다 — `LicenseBundling`(`EvidenceContracts.kt:86-96`), `SharedProfileIconEntry.licenseStatus`(`SharedProfileIconCatalog.kt:31`, 현재 기본값 `"unknown"`). 후자는 `String`이라 enum 게이트를 타지 않는다.
+
+---
+
+## 6. 비주얼 트랙이 의존하는 자산군
+
+각 트랙이 어느 구획에 붙어 있는지만 기록한다.
+
+| 트랙 | 의존 자산 | 현재 상태 |
+|---|---|---|
+| 장수 얼굴 | 에셋 레포 `icons/`(4,167, §2-2) — **현재 런타임 경로** / `portraits/rtk14/serving/*`(3,000) — 준비됐으나 **미배선** | 런타임 경로의 라이선스 = UNKNOWN. `portraits/rtk14`는 §1-2 원본 권리 미확인 |
+| 병종 스프라이트 (2D) | 메인 레포 `assets/battle/v2/units/**` 210 | 24장 영수증 보유 / 81장 UNKNOWN. **컴파일러 외 코드 참조 0 — 미배선** |
+| 지형·이펙트 (2D) | `assets/battle/v2/terrain/**` 40, `effects/**` 20 | 소스 26장 UNKNOWN → 파생 34장이 이에 종속. 미배선 |
+| 3D | `game/3d/*.glb` 50 (Meshy 생성, wiki 기록. 에셋 레포 현재 트리에는 **없음**) | 약관 원문 미확보. 메인 레포 커밋 0 |
+| 맵·도시 아이콘 | 에셋 레포 `game/`(`cast_*`, `event*`, `b<HEX>`, `map/`) | 런타임 사용 중(`MapViewer.tsx:606,630`). UNKNOWN |
+| 폰트 | Pretendard(CDN 런타임 로드) | 라이선스는 허용적으로 알려짐, 고지 파일 부재 |
+
+---
+
+## 부록 A. 확인 실패 기록
 
 | URL | 결과 |
 |---|---|
-| `https://openai.com/policies/row-terms-of-use/` | **HTTP 403** (WebFetch). 브라우저 필요 |
-| `https://help.openai.com/en/articles/5008634-…` | **HTTP 403** (WebFetch). 브라우저 필요 |
+| `https://openai.com/policies/row-terms-of-use/` | **HTTP 403** (WebFetch) |
+| `https://help.openai.com/en/articles/5008634-…` | **HTTP 403** (WebFetch) |
 
-CHGIS 검토와 동일한 우회(Playwright로 브라우저 취득)가 필요하다.
+CHGIS 검토와 동일한 우회(브라우저 취득)가 필요하다.
 
-## 부록 B. 본 감사에서 확인한 것 / 확인하지 않은 것
+## 부록 B. 확인한 것 / 확인하지 않은 것
 
-**확인함**: 커밋된 전 에셋 파일 목록(git ls-files 확장자 스캔), 각 파일의 매니페스트/영수증 provenance 필드, devsam-image와의 md5 대조, 공개 CDN 저장소의 visibility·LICENSE·디렉터리 구조(gh api), `web/*` 의존성 전수와 폰트 로드 경로, Dockerfile 에셋 다운로드 유무, `.gitignore`/`.claudeignore` 커버리지, 에셋 생성 도구 4종의 입출력과 fail-closed 가드.
+**확인함**: 두 레포의 전 파일 목록(메인 `git ls-files` 확장자 스캔 / 에셋 레포 `git/trees?recursive=1` 11,666 blob, `truncated: false`), 에셋 레포 visibility·LICENSE·README·태그·브랜치, `portraits/rtk14/README.md`·`.gitattributes`·`mismatch-judgment.txt` 원문, 에셋 레포 ↔ `legacy/devsam-image` 파일명 차집합, 메인 레포 복사본 md5 대조, `assets/battle/v2` 매니페스트·영수증의 provider/model 분포, 메인 레포 전 CDN 참조 경로(코드·env·nginx·compose·배포 env 키), `ScenarioImporter` picture 해석과 시나리오 `iconPath` 분포, classpath 시드 목록, `web/*` 의존성·폰트·SVG, Dockerfile 에셋 다운로드, `.gitignore` 커버리지(`git check-ignore` 확인), 생성 도구 4종의 입출력·fail-closed 가드.
 
-**확인하지 않음**: 코에이 추정 초상의 실제 코에이 원본 대조(원본 미보유), `docs/loops/**` 스크린샷 내 초상 픽셀 검사, devsam/core MIT 저작권자가 코에이 데이터를 어떤 근거로 배포했는지, 미설치 npm 패키지 3종의 라이선스 파일, Meshy·Pretendard 약관 원문.
+**확인하지 않음**: 에셋 레포 이미지의 픽셀 단위 원본 대조(원본 미보유), `icons/` 서브디렉터리 파일 개별 바이트 다운로드, `docs/loops/**` 스크린샷 내 초상 픽셀 검사, devsam이 각 자산을 취득한 경로, 미설치 npm 3종의 라이선스 파일, Meshy·Pretendard·OpenAI 약관 원문.
