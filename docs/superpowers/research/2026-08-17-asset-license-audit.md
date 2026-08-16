@@ -270,3 +270,12 @@ CHGIS 검토와 동일한 우회(브라우저 취득)가 필요하다.
 **확인함**: 두 레포의 전 파일 목록(메인 `git ls-files` 확장자 스캔 / 에셋 레포 `git/trees?recursive=1` 11,666 blob, `truncated: false`), 에셋 레포 visibility·LICENSE·README·태그·브랜치, `portraits/rtk14/README.md`·`.gitattributes`·`mismatch-judgment.txt` 원문, 에셋 레포 ↔ `legacy/devsam-image` 파일명 차집합, 메인 레포 복사본 md5 대조, `assets/battle/v2` 매니페스트·영수증의 provider/model 분포, 메인 레포 전 CDN 참조 경로(코드·env·nginx·compose·배포 env 키), `ScenarioImporter` picture 해석과 시나리오 `iconPath` 분포, classpath 시드 목록, `web/*` 의존성·폰트·SVG, Dockerfile 에셋 다운로드, `.gitignore` 커버리지(`git check-ignore` 확인), 생성 도구 4종의 입출력·fail-closed 가드.
 
 **확인하지 않음**: 에셋 레포 이미지의 픽셀 단위 원본 대조(원본 미보유), `icons/` 서브디렉터리 파일 개별 바이트 다운로드, `docs/loops/**` 스크린샷 내 초상 픽셀 검사, devsam이 각 자산을 취득한 경로, 미설치 npm 3종의 라이선스 파일, Meshy·Pretendard·OpenAI 약관 원문.
+
+## 부록 C. 후속 조치 — 메인 레포 제3자 파일 44개 (2026-08-17)
+
+브랜치 `fix-thirdparty-assets-main-repo`에서 §4 표의 메인 레포 두 행을 닫았다.
+
+- `web/{gateway,game}/public/icons/*.gif` 28장 — 코드 참조 0(전 경로가 `ICON_CDN` 단일 출처)이라 **삭제**했다. CDN 쪽 `game/cast_*.gif`·`event*.gif`의 UNKNOWN 판정은 그대로 남는다(이 조치의 범위 밖).
+- `web/{gateway,game}/public/flags/*.png` 16장 — devsam `fFF0000.gif` 파생본을 버리고 `tools/assets/build_flag_assets.py`가 입력 이미지 없이 그리는 자작 12x12 픽셀아트로 **교체**했다. 런타임 계약(`flagTint.ts`의 cloth/pole 2레이어 · 4프레임)은 불변.
+
+표의 나머지 UNKNOWN 행(에셋 레포 전체, `assets/battle/v2/**`)은 손대지 않았다 — 여전히 UNKNOWN이다.

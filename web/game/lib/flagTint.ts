@@ -1,4 +1,5 @@
-// 깃발 동적 착색 — devsam 깃발 1장(빨강)을 천 grayscale(질감)+깃대 2레이어로 분리한 에셋
+// 깃발 동적 착색 — 자작 12x12 픽셀아트(`tools/assets/build_flag_assets.py`가 생성)를
+// 천 grayscale(질감)+깃대 2레이어로 나눠 둔 에셋
 // (`/flags/flag-cloth.png` = 천 명도, `/flags/flag-pole.png` = 깃대)을 nation 색으로 캔바스 틴트한다.
 //
 // 합성식(앵커 color-blend, 강도 1.0, 그림자 부드럽게): 천 픽셀의 명도(주름·질감)는 보존하되 색상·채도는
@@ -48,7 +49,7 @@ function hexToRgb(hex: string): [number, number, number] {
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-/** 나부끼는 4프레임. devsam 깃발 GIF의 4프레임 전부를 천/깃대로 분리해 둔 에셋. */
+/** 나부끼는 4프레임. 빌더가 사인파 위상 4단계를 천/깃대로 나눠 그린다. */
 export const FLAG_FRAMES = 4;
 
 let assetsPromise: Promise<{ cloth: HTMLImageElement[]; pole: HTMLImageElement[] }> | null = null;
