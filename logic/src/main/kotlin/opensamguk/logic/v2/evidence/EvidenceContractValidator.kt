@@ -162,6 +162,7 @@ object EvidenceContractValidator {
      * T1-A15 + T1-A16 — 월드 단위 검증.
      *
      * - overlay는 base claim을 **덮어쓰지 못한다**(추가만).
+     * - overlay는 자기 프로필 월드에서만 활성화된다(LEGACY overlay가 CLASSIC 월드에 새지 못한다).
      * - CHRONICLE base 계층에는 연의·게임 claim이 들어올 수 없다.
      * - 엄격 고증(`CHRONICLE`)에서 `ROMANCE_ATTESTED`/`GAME_REFERENCE` claim이 활성이거나
      *   overlay(특히 `LEGACY`)가 활성이면 실패한다.
@@ -224,7 +225,19 @@ object EvidenceContractValidator {
         }
         val overlayById = overlays.associateBy { it.id }
         snapshot.activeOverlayIds.forEach { id ->
-            if (id !in overlayById) add(ContractViolation("V-A15-2", "snapshot이 없는 overlay ${id}을 활성화한다"))
+            val overlay = overlayById[id]
+            if (overlay == null) {
+                add(ContractViolation("V-A15-2", "snapshot이 없는 overlay ${id}을 활성화한다"))
+            } else if (overlay.profile != profile) {
+                // overlay는 자기 프로필에서만 활성화된다. 손으로 만든 snapshot이 LEGACY overlay(v1 패러티 콘텐츠)를
+                // CLASSIC 월드에 끼워 넣는 경로를 막는다 — resolveSnapshot은 만들지 않지만 snapshot은 외부 입력이다.
+                add(
+                    ContractViolation(
+                        "V-A15-6",
+                        "snapshot이 $profile 월드에서 ${overlay.profile} overlay ${id}을 활성화한다",
+                    ),
+                )
+            }
         }
 
         if (profile == WorldContentProfile.CHRONICLE) {

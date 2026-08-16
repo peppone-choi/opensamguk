@@ -110,8 +110,11 @@ V6 ST5KKM·HHVVHX·2K4FHX·0P89R9·6CHSR7, Tibetan Monasteries W6PFXR.
 `logic/src/main/kotlin/opensamguk/logic/v2/evidence/EvidenceContracts.kt`의
 `SourceLicense.bundling: LicenseBundling`에 기록한다.
 
-- CHGIS v1~v6 → `LicenseBundling.RESEARCH_ONLY` (상업 프로젝트라면 사실상 사용 자체가 RESTRICTED이므로
-  실무상 `UNKNOWN`과 동일하게 차단 취급)
+- CHGIS v1~v6 → `LicenseBundling.UNKNOWN`.
+  `RESEARCH_ONLY`로 적지 **않는다**: 그 값의 뜻은 "위치 검증 등 내부 연구에는 쓸 수 있다"인데
+  §2 판정표는 상업 프로젝트의 내부 위치 검증조차 RESTRICTED로 결론냈다. 라벨이 실제보다 넉넉한 허가를
+  암시하면 나중에 읽는 사람이 내부 사용을 승인된 것으로 오독한다. 비상업 학술 용도로만 쓰는 별도 맥락이
+  생기면 그때 다시 판정한다.
 - TGAZ 데이터 → `LicenseBundling.UNKNOWN`
 - Dataverse CC0 표기 → 근거로 사용 금지
 

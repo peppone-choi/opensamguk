@@ -294,6 +294,28 @@ class EvidenceContractValidatorTest {
         )
     }
 
+    @Test
+    fun `CLASSIC 월드가 LEGACY overlay를 활성화하면 거부된다`() {
+        val base = claim(id = "c-base")
+        val legacy = claim(
+            id = "c-legacy",
+            evidenceClass = EvidenceClass.GAME_REFERENCE,
+            refs = listOf(ref("r-game", SourceProximity.GAME)),
+            subject = "귀병",
+        )
+        val overlay = WorldContentOverlay("ov-legacy", WorldContentProfile.LEGACY, listOf("c-legacy"))
+        // resolveSnapshot은 이런 snapshot을 만들지 않지만 snapshot은 외부 입력이다.
+        val forced = WorldContentSnapshot(WorldContentProfile.CLASSIC, listOf("ov-legacy"))
+        val violations = EvidenceContractValidator.validateWorld(
+            profile = WorldContentProfile.CLASSIC,
+            claims = listOf(base, legacy),
+            baseClaimIds = setOf("c-base"),
+            overlays = listOf(overlay),
+            snapshot = forced,
+        )
+        assertContains(codes(violations), "V-A15-6")
+    }
+
     // ---------------------------------------------------------------- T1-A16
 
     @Test

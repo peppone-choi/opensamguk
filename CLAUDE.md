@@ -95,6 +95,17 @@ Each phase = one cycle **spec → plan → adversarial review → execute → ga
 
 **CQRS 정합성 하드닝 트랙 (ARCH-S1–S6, OPENSAM-127~139) — 전부 build-only, 라이브 동작·골든 불변.** ✅ 월드 스코프(127~129) · flush 무결성 `DeltaGenerationSession`/`world_version` CAS+`writer_epoch`/`FlushRecoveryGate`(130~132) · S4 durable 명령 경로(command_inbox 선기록·durable result/outbox·consumer-group wake+post-commit ACK·크래시/리플레이, 133~136, PR #312, 리뷰 cleared) · S5 읽기·부팅 경계(hot/cold 카탈로그·bounded boot reads·minVersion read barrier→409 `VERSION_NOT_VISIBLE`, 137~139, PR #314/#315) 모두 main 머지. ⬜ **S6 롤아웃**(canary/expand-backfill/replica ADR, #268) 잔여 — 프로덕션 cutover/activation 미수행. 트리아지: `docs/superpowers/research/2026-07-23-ticket-triage-next.md`.
 
+**v2 출처·확실성 계약 (OPENSAM-37, G0-A②).** `logic/src/main/kotlin/opensamguk/logic/v2/evidence/`가
+v2 역사 데이터의 출처·확실성 계약을 소유한다 — `EvidenceContracts.kt`(SourceProximity 7값 / EvidenceClass 5값 /
+WorldContentProfile 3값 / SourceLicense·LicenseBundling / EvidenceRef / HistoricalClaim / WorldContentOverlay·Snapshot)와
+`EvidenceContractValidator.kt`(시기 역투영 차단 · 등급 혼합 차단 · overlay 격리 · 엄격 고증 · 번들 게이트).
+in-memory 순수 계약이며 v1 패러티 코어(RNG·로그·골든·DB)를 전혀 참조하지 않는다. 등급 값 추가·혼합 등급 신설 금지.
+**CHGIS = 번들 금지.** `docs/loops/opensam-37-evidence-contracts-2026-08-16/chgis-license-review.md` 판정:
+CHGIS V6 EULA가 상업 이용·재배포·전체 레이어 공개 배포를 금지하며(버전 페이지도 "no commercial use, resale, or
+redistribution permitted"), Harvard Dataverse의 `CC0 1.0` 표기는 동봉 EULA와 정면 충돌하고 그 표기의 출처는
+**UNKNOWN**이다. **CC0 표기만 보고 번들하지 마라** — CHGIS·TGAZ는 `LicenseBundling.UNKNOWN`(=차단)이며,
+번들하려면 CHGIS Management Committee의 서면 계약이 유일한 경로다. 비평: `docs/superpowers/reviews/2026-08-16-opensam-37-evidence-contracts-review.md`.
+
 **미래 마일스톤(로드맵 외, 조건 충족 시):** `docs/superpowers/MILESTONES.md` — **M-config**(post-parity 상수 외부화: 풀 패러티 close + 운영 안정 후 `GameConst` 등 패러티값을 JSON으로, 패러티 골든을 frozen-baseline 회귀 게이트로 교체).
 
 ## 프론트엔드/배포 (F0–F5)
