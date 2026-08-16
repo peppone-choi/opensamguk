@@ -367,6 +367,20 @@
 - Approved by: NONE — human approval required. Existing execution-contract approval remains canonical; user concept
   selection, parity replay, and implementation approvals are separate.
 
+---
+
+## ADR-LITE-032 P-4 작전 replay 계약과 BattleTicket 전투 세션 계약은 두 계층으로 병존한다
+
+- Date: 2026-08-16
+- Status: approved
+- Decision: **P-4(`ReplayEnvelope`/`DeterministicReplayBody`/`deterministicReplayHash`)와 ADR-LITE-025의 `BattleTicket` 세션 모델은 병존한다.** 계층 경계는 스코프 키로 긋는다 — **P-4 = 작전(Operation) 단위 사후 리플레이 계약**(키 `operationId`), **07-30 세션 스펙 = 전투 인스턴스 단위 실시간 세션 계약**(키 `battle_id`). 어느 쪽도 다른 쪽을 폐기하지 않는다. 함께 **P-13 전술 엔진 7종은 07-30 계열에 (a) 포함으로 판정**하며 생존 형태는 **동명 생존 4종**(`BattleState`·`BattleClock`·`BattleEvent`·`BattleReplay`) / **개명 생존 2종**(`OrderIntent` → 07-30 §8 명령 상태기계, `BattleServerAuthority` → `BattleAuthoritySnapshot` + §5 소유권 불변식) / **어댑터 이연 1종**(`BattleTopology`)이다. 동결값 `ContinuousTopology + REALTIME_FIXED_TICK`은 유지한다. 계약 동결 문서(`docs/superpowers/specs/2026-08-16-v2-contract-freeze-p1-p15.md`, 브랜치 `op-73-75-contract-freeze` / PR #405) §OPEN QUESTION **Q1·Q3은 이 ADR로 닫힌다**(그 문서 자체는 이 ADR이 수정하지 않는다).
+- Context: 판정 근거 원본은 `docs/superpowers/research/2026-08-16-v2-battle-canon-reconcile-p4-p13.md`(레인 G, 297줄)다. 결정적 근거 4개: (1) `.ai/decisions.md:271` — ADR-LITE-025가 supersede 대상을 **명시 열거**(ADR-019/021의 일정 분류 + 07-28 2.5D 문서 4개 절)하면서 product-spec §6(P-4)·§10(P-13)을 그 목록에 **넣지 않았다**. 열거형 supersede에서의 누락은 침묵이 아니라 비-supersede의 증거다. (2) `docs/superpowers/plans/2026-07-28-v2-2_5d-tactical-battle-and-sprite-design.md:70` — "기존 제품 spec의 … replay 계약을 개정하지 않는다". 동기화 커밋 `3f4d2f2a`가 **같은 문장의 뒷절만 재작성**하고 이 앞절은 보존했다 = 침묵이 아니라 **선택적 보존**. 같은 커밋은 product-spec을 아예 건드리지 않았다. (3) `docs/superpowers/plans/2026-07-30-v2-realtime-battle-foundation-implementation-plan.md:80,82,92,143` — `deterministic/BattleClock.kt`·`deterministic/BattleState.kt`·`replay/BattleReplayReducer.kt`·`persistence/BattleEventRepository.kt`가 P-13 7종 중 4종을 **파일명 그대로** 되살린다("07-30이 7종을 한 번도 언급하지 않는다"는 스펙 파일에 한해 참). (4) Jira에서 **아무도 닫지 않았다** — OPENSAM-24(P-4 소유, V2-4A replay spine)·OPENSAM-21(P-13 소유, Spike B0) 둘 다 여전히 "할 일"이다.
+- Alternatives: **(b) 대체 — ADR-LITE-025가 P-4/P-13을 폐기했다: 기각.** 위 근거 1·2·3·4가 각각 독립적으로 (b)를 무너뜨린다. 백로그 `README.md:77`의 "V2-4A 대체·재분해"는 **티켓 층위** 서술이며, 같은 README:28의 라벨 분리 규칙(스펙 티켓=계약 동결 / 계획 티켓=구현)상 구현 티켓 교체가 동결된 계약을 자동 폐기하지 않는다. **(a) 포함 — 어휘만 다르다: P-13에는 성립, P-4에는 기각**(`operationId`·`normalizedLogEntries` 대응물 0건, `phases[]` 7값 미열거, 단일 다이제스트 ↔ checkpoint 해시 체인은 다른 산출물). **(d) 판정 불가: Q3에는 부적용**(동명 부활이 직접 증거), Q1에는 형식 등급으로 성립했으나 이 비준으로 해소한다.
+- Consequences: **남는 경계 문제** — `operationId`와 `normalizedLogEntries`는 07-30 세션 모델에 대응물이 **0건**이다(작전층 전용 필드로 남는다). `phases[]`(APPROACH/SCOUT/INTERCEPT/FIELD/SIEGE/URBAN/AFTERMATH)는 **한 작전 안의 순차 단계 축**이고 07-30 어댑터는 **전투 종류 축**(야전/공성/수전)이라 두 목록은 같은 축이 아니다 — 특히 ADR-LITE-025가 출시 필수로 넣은 **수전은 `phases[]`에 자리가 없다**. 이 경계는 이 ADR이 닫지 않고 **H2로 이연**해 별도 티켓에서 결정한다(마감선 = BATTLE-F2 착수 전). **BATTLE 트랙 영향** — F0(OPENSAM-156)·F1(157)은 P-4/P-13 어휘를 소비하지 않으므로 **착수 안전**이다. 위험 시작점은 **F2(158)** — `BattleTicketV1`과 버전/아티팩트 레지스트리 이름이 여기서 동결되고 F3(159)에서 해시 형태가 굳는다. **F12(168)가 만드는 G1 checkpoint state hash 게이트는 P-15d(`DeterministicReplayBody` hash diff 0)와 다른 산출물**이므로 현행대로면 P-15d는 미측정으로 남는다 — 소유자 공백은 실재 결함이며 별도 티켓으로 등록한다. 잔여 리스크: P-13b 불변식("사각형/육각형 grid와 연속 좌표 지형을 같은 위치·이동·충돌 계약으로")과 P-13e("부곡도 같은 부대 인터페이스로")를 07-30 계열 문서 어디도 재진술하지 않아, 어댑터 3종이 각자 좌표·부대 모델을 만들면 조용히 깨진다. **수정 금지**: 07-28 2.5D 문서 `:70`은 (b) 기각의 핵심 증거이므로 변경하지 않는다.
+- Approved by: 사용자 (2026-08-16, H1 = (c) 병존 비준 · H8 = Q3 종결 두 건 승인). 판정 근거 원본: `docs/superpowers/research/2026-08-16-v2-battle-canon-reconcile-p4-p13.md`(커밋 `8608a90f`). 이 ADR은 product-spec 개정·Jira 상태 전이·merge·배포를 승인하지 않는다.
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 
