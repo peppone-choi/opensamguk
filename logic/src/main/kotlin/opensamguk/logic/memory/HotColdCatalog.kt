@@ -155,6 +155,7 @@ object HotColdCatalog {
         "app/game-engine/src/main/kotlin/opensamguk/engine/run",
         "app/game-engine/src/main/kotlin/opensamguk/engine/tournament",
         "app/game-engine/src/main/kotlin/opensamguk/engine/turn",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/v2",
         "app/game-engine/src/main/kotlin/opensamguk/engine/war",
         "app/game-engine/src/main/kotlin/opensamguk/engine/world",
     )
@@ -177,6 +178,15 @@ object HotColdCatalog {
             bound = AccessBound.EXACT_KEY,
             ordering = "world/scope/entity exact, log_entry.id DESC",
             followUp = "S5-T2 moves archive history reads from boot meta to flush-time exact-key JDBC reads.",
+        ),
+        DirectSqlBoundary(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/v2/V2CityLedgerStore.kt",
+            relation = "v2_city_ledger",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            bound = AccessBound.HOT_KEYSET,
+            ordering = "world_id = :world_id exact, city_id ASC",
+            followUp = "S5-T2 folds the v2 ledger into the boot snapshot loader once R2 wires it into the loop.",
         ),
     )
 

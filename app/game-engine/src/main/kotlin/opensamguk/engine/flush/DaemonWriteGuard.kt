@@ -31,6 +31,9 @@ object DaemonWriteGuard {
         "opensamguk/engine/turn",
         "opensamguk/engine/run",
         "opensamguk/engine/nationbulk",
+        // OPENSAM-189: `engine/v2` reaches the write path through `ChangeRecorder` (V2CityLedgerStore records
+        // upsert deltas), so the same JDBC-only invariant applies to it.
+        "opensamguk/engine/v2",
     )
 
     /**

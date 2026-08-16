@@ -34,8 +34,9 @@ import org.testcontainers.junit.jupiter.Testcontainers
  * context shaped like the v1 process and count [ApplicationContext.getBeansOfType]. Existing repository
  * architecture tests such as `DaemonNoEntityManagerTest` are static scans and cannot replace this layer.
  *
- * The four classes are the four cells of the decision matrix. The final [V2BothConditionsBeanGateIT] is the
+ * The first four classes are the four cells of the decision matrix. [V2BothConditionsBeanGateIT] is the
  * **positive control**, proving that an all-zero result comes from a running context.
+ * [V2BeanAllowlistSelfCheckTest] then checks the allowlist those assertions read.
  */
 private const val SECURITY_EXCLUDES =
     // As in GameEngineApplicationTests, game-api(:mainClassesForTest)'s transitive security starter reaches the
@@ -56,6 +57,27 @@ internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
         val type = runCatching { getType(name, false) }.getOrNull()?.name ?: return@mapNotNull null
         if (type.startsWith("opensamguk.") && type.contains(".v2.")) name to type else null
     }.toMap()
+
+/**
+ * OPENSAM-184 — the **approved v2 bean allowlist**, the single place where a v2 bean is granted the right to
+ * exist inside the 0A-b gate.
+ *
+ * Before this ticket the positive control compared [ApplicationContext.v2PackageBeans] keys to a literal
+ * `setOf(...)` written inline in the assertion. That was equivalent to this list, but it made every legitimate
+ * new v2 bean (OPENSAM-150 R2's city ledger being the first) look like a test edit rather than an allowlist
+ * entry, and it hid the decision inside an assertion message. The property being defended is unchanged: a v2
+ * bean that nobody put here still fails the gate. Adding a name is a deliberate, reviewable one-line edit —
+ * that review IS the control, so never widen this to a prefix, a pattern, or a package sweep.
+ *
+ * The production-context side ([assertNoV2Beans]) is NOT relaxed by this list: outside the gate the expected
+ * v2 bean set is empty, allowlist or not.
+ */
+internal val APPROVED_V2_BEAN_NAMES: Set<String> = setOf(
+    "v2SandboxConfiguration",
+    "v2SandboxMarker",
+    "v2ContentCatalog",
+    "v2CityCatalogAdapter",
+)
 
 internal fun ApplicationContext.assertNoV2Beans() {
     assertEquals(0, getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
@@ -185,9 +207,10 @@ class V2BothConditionsBeanGateIT {
         assertEquals(1, context.getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
         val byPackage = context.v2PackageBeans()
         assertEquals(
-            setOf("v2SandboxConfiguration", "v2SandboxMarker", "v2ContentCatalog", "v2CityCatalogAdapter"),
-            byPackage.keys,
-            "engine v2 package beans: $byPackage",
+            emptySet(),
+            byPackage.keys - APPROVED_V2_BEAN_NAMES,
+            "v2 package beans outside APPROVED_V2_BEAN_NAMES — add the name there deliberately or drop the " +
+                "bean; all v2 beans: $byPackage",
         )
     }
 
@@ -214,6 +237,28 @@ class V2BothConditionsBeanGateIT {
             // Materialize the v1-only catalog snapshot before Spring Boot resolves the v2 Flyway locations.
             val v1CatalogBaselineBeforeContext = v1CatalogBaseline
             postgresProps(registry, postgres, worldId = 9001)
+        }
+    }
+}
+
+/**
+ * ⑤ **Self-check of the allowlist itself** (OPENSAM-184). Needs no container: an allowlist is only a control
+ * while it names concrete beans, so an emptied or widened list must fail here rather than silently turn ④'s
+ * subset assertion into a no-op.
+ */
+class V2BeanAllowlistSelfCheckTest {
+    @Test
+    fun `allowlist names concrete v2 beans and never widens to a pattern`() {
+        assertTrue(
+            APPROVED_V2_BEAN_NAMES.isNotEmpty(),
+            "an empty APPROVED_V2_BEAN_NAMES makes the ④ subset assertion vacuous",
+        )
+        val beanName = Regex("^[a-z][A-Za-z0-9]*$")
+        for (name in APPROVED_V2_BEAN_NAMES) {
+            assertTrue(
+                beanName.matches(name),
+                "APPROVED_V2_BEAN_NAMES must hold literal bean names, not wildcards/prefixes/packages: '$name'",
+            )
         }
     }
 }
