@@ -43,7 +43,10 @@ class SharedProfileIconCatalogTest {
         assertEquals("4d27da9a19571236183fd9ec40f5cd9550432ef574000ab78519692c1176d3b5", existing.sha256)
         assertEquals(SharedProfileIconScope.EXISTING_SHARED_CDN, existing.scope)
         assertEquals("icons/1001.jpg", existing.sourcePath)
-        assertTrue(requireNotNull(existing.deliveryUrl).contains("@1b6624d886c1b326a2feeda449288b41231df5ef/"))
+        // 2026-08-17: opensamguk-images 히스토리를 재작성해 옵션 IP 초상 2,335장을 제거하면서
+        // 태그 v2026.05.21 이 새 커밋으로 옮겨졌다. 파일 바이트와 경로는 불변이라 위 sha256 은
+        // 그대로고, 리비전 핀만 갱신된다.
+        assertTrue(requireNotNull(existing.deliveryUrl).contains("@05842c61132fd5a71268fd9babd80ba74e27be62/"))
         assertFalse(existing.operationalFallback)
         assertFalse(existing.clearedFallback)
 
