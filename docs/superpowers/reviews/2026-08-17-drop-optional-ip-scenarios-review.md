@@ -14,7 +14,7 @@ Verdict: fix-required
 | # | 축 | 결과 |
 |---|---|---|
 | 1 | 전수 스캔 완전성 (누락/과잉) | **PASS** — 정확히 16개, 과잉·누락 0 |
-| 2 | 고아 참조 (코드/설정/테스트/docs/CI) | **FAIL→CLOSED (F1)** — 테스트가 깨졌고, 리뷰 중 `df8068e7`로 수정·재검증 green |
+| 2 | 고아 참조 (코드/설정/테스트/docs/CI) | **FAIL→CLOSED (F1)** — 레인이 미실행 인정한 백엔드 테스트 안에 실패가 숨어 있었다. `df8068e7`로 수정·재검증 green |
 | 3 | `_meta.json` 정합 | **PASS** — count 81→65, 배열 길이·순서·포맷 무결 |
 | 4 | 핀 SHA 실측 | **PASS** — URL·해시·치수 4/4 일치 (연동 결함은 F1에서 종결) |
 | 5 | LEDGER 각주 처리 | **FAIL (F2)** — 각주의 핵심 주장이 사실과 다르다 |
@@ -123,7 +123,21 @@ $ (app/gateway-api/build/test-results/test/*.xml 집계)
 suites=33 tests=200 failures=0 errors=0 skipped=0
 ```
 
+조율자가 별도로 돌린 백엔드 게이트도 같은 결함을 잡았다: `:app:gateway-api:test` 200 tests / **1 failure**, `:logic:test` 3230 tests / 0 failures, `BUILD FAILED in 6m 8s`. **그 실행의 exit code 는 0 이었다** — CLAUDE.md의 "exit code가 아니라 OUTPUT TAIL + XML로 판정하라"가 실제로 값을 한 사례다. exit code를 믿었으면 이 결함은 통과했다.
+
 **F1 = CLOSED.** (단, `df8068e7`이 스테이징돼 있던 이 리뷰 파일 재작성분까지 함께 삼켰다 — 커밋 경계가 섞였을 뿐 내용 손실은 없다.)
+
+### F1이 이 PR의 핵심 교훈이다
+
+레인 자체 리뷰 §5는 "백엔드 테스트 결과는 진행 중이며 이 문서에 반영되지 않았다"고 **스스로 미실행을 인정했다.** 그리고 그 미실행 구간 안에 실패가 실제로 숨어 있었다. 즉 §5는 형식적 면책 문구가 아니라 **정확히 결함이 있던 자리를 가리키는 신호**였다. "돌리지 못했다"는 자백은 리뷰를 통과시켜도 되는 사유가 아니라, 독립 리뷰어가 **가장 먼저 실행해봐야 할 지점**이다.
+
+구조적 원인은 한 줄이다 — 프로덕션 리소스를 값으로 검증하는 테스트가 있는데, 리소스만 고치고 검증자를 안 고쳤다. `shared-manifest.json`을 건드리는 변경은 항상 `:app:gateway-api:test`를 동반해야 한다.
+
+### `df8068e7` 재검증 (독립 축)
+
+- **옛 SHA 잔존 스캔.** `grep -rIn "1b6624d886c1b326a2feeda449288b41231df5ef"`(`.git`/`node_modules`/`build` 제외) → 히트 **1건, `docs/loops/opensam-91-profile-icon/LEDGER.md:85`뿐**이다. 코드·리소스·테스트에는 0건. LEDGER 잔존은 의도된 역사 보존이므로 그 자체는 옳다(단 문구는 F2로 별건).
+- **매니페스트 필드 격리.** 매니페스트 diff에서 바뀐 키는 `source_revision`·`delivery_url` **2개뿐**이다(diff의 `[-+]` 라인에서 추출한 키 집합 = 그 둘 + 두 SHA 리터럴). `sha256`·`width`/`height`·`media_type`을 안 바꾼 것은 §4의 실측(두 리비전에서 바이트·해시·64x64 동일)으로 **옳다고 확인**됐다. `portrait_asset_id`도 값이 `pa_<sha256>` 형태(`pa_4d27da9a…d3b5`)라 리비전이 아니라 **바이트에서 파생**된다 — 바이트가 불변이므로 그대로 두는 게 맞다.
+- **테스트 수정 범위.** `df8068e7`은 46행 한 줄 + 주석 3줄만 바꿨고, 같은 테스트의 `sha256`·64x64 단언은 건드리지 않았다. 위 근거로 그 판단이 맞다.
 
 ## 3. `_meta.json` 정합 — PASS
 
