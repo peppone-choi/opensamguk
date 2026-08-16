@@ -17,6 +17,7 @@ import opensamguk.infra.persistence.AuctionUpsertRow
 import opensamguk.infra.persistence.BettingInsertRow
 import opensamguk.infra.persistence.BoardCommentInsertRow
 import opensamguk.infra.persistence.BoardPostInsertRow
+import opensamguk.infra.persistence.CityLedgerV2UpsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyLetterInsertRow
 import opensamguk.infra.persistence.DiplomacyUpdate
@@ -688,6 +689,8 @@ object DatabaseHooks {
             auctionUpserts = auctionUpserts.map { AuctionUpsertRow(it.id, it.allocatedId, it.columns) },
             auctionBidInserts = recorder.auctionBidInserts().map { AuctionBidInsertRow(it.columns) },
             bettingInserts = recorder.bettingInserts().map { BettingInsertRow(it.columns) },
+            // OPENSAM-150 (R1) — v2 도시 원장 채널. v1 경로에서는 항상 빈 리스트라 flush step이 미진입한다.
+            cityLedgerV2Upserts = recorder.cityLedgerV2Upserts().map { CityLedgerV2UpsertRow(it.columns) },
             // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE (recorder
             // 채널, betting과 동일; world-state 효과 아님 — 표시-컬럼은 generalUpdate SET 절에 없다).
             profileIconUpdates = recorder.profileIconUpdates().map { ProfileIconUpdateRow(it.columns) },

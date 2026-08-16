@@ -168,6 +168,14 @@ class ChangeRecorder(
     /** Betting channel (P6) — ng_betting insertUpdate 의도(flush가 (general,betting,type) UPSERT amount +=). */
     private val bettingInserts = mutableListOf<BettingInsert>()
 
+    /**
+     * v2 도시 원장 채널 (OPENSAM-150 R1) — `v2_city_ledger` 멱등 UPSERT 의도. 값이 **절대값**이므로
+     * 같은 도시를 한 틱에 여러 번 만져도 마지막 상태 하나만 남으면 된다 ⇒ cityId 키 LinkedHashMap
+     * (삽입 순서 보존 + 컬럼 last-write-wins, `votePollUpdates`/`diplomacyUpdateDirty`와 동일 형태).
+     * v1 경로에서는 비어 있고, 비면 v2 flush step이 미진입한다.
+     */
+    private val cityLedgerV2Upserts = linkedMapOf<Int, CityLedgerV2Upsert>()
+
     /** 프로필 아이콘 채널 (OPENSAM-94) — general.picture/image_server 전용 컬럼 UPDATE 의도. */
     private val profileIconUpdates = mutableListOf<ProfileIconUpdate>()
 
@@ -234,6 +242,7 @@ class ChangeRecorder(
             diplomacyLetterInserts.isNotEmpty() || diplomacyLetterUpdates.isNotEmpty() ||
             auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
             bettingInserts.isNotEmpty() ||
+            cityLedgerV2Upserts.isNotEmpty() ||
             profileIconUpdates.isNotEmpty() ||
             boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() ||
             votePollInserts.isNotEmpty() || voteInserts.isNotEmpty() ||
@@ -683,6 +692,17 @@ class ChangeRecorder(
     }
 
     /**
+     * OPENSAM-150 (R1) — v2 도시 원장 UPSERT 기록. `columns`는 `city_id`/`gold`/`rice`/`garrison`
+     * **절대값**이고, 같은 `city_id` 재기록은 마지막 상태로 대체된다(멱등 UPSERT 대상이라 누적이 아니다).
+     */
+    fun recordCityLedgerV2Upsert(columns: Map<String, Any?>) {
+        val cityId = requireNotNull((columns["city_id"] as? Number)?.toInt()) {
+            "v2 city ledger upsert must carry city_id: $columns"
+        }
+        cityLedgerV2Upserts[cityId] = CityLedgerV2Upsert(columns)
+    }
+
+    /**
      * OPENSAM-94 프로필 아이콘 UPDATE 기록 — general.picture/image_server 전용 컬럼. columns는
      * `id`/`user_id`/`picture`/`image_server` (flush WHERE가 id+user_id+npc_state=0 predicate 재-단언).
      */
@@ -726,6 +746,9 @@ class ChangeRecorder(
 
     /** The recorded ng_betting INSERTs (P6 flush source), in emit order. */
     fun bettingInserts(): List<BettingInsert> = bettingInserts.toList()
+
+    /** 기록된 v2 도시 원장 UPSERT (OPENSAM-150 R1 flush 소스), 최초 기록 순서대로. */
+    fun cityLedgerV2Upserts(): List<CityLedgerV2Upsert> = cityLedgerV2Upserts.values.toList()
 
     /** 기록된 프로필 아이콘 UPDATE (OPENSAM-94 flush 소스), emit 순서대로. */
     fun profileIconUpdates(): List<ProfileIconUpdate> = profileIconUpdates.toList()
@@ -838,6 +861,7 @@ class ChangeRecorder(
         auctionUpserts.clear()
         auctionBidInserts.clear()
         bettingInserts.clear()
+        cityLedgerV2Upserts.clear()
         profileIconUpdates.clear()
         boardPostInserts.clear()
         boardCommentInserts.clear()
