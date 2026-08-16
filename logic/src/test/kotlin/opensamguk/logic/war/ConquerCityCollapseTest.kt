@@ -1,6 +1,13 @@
 package opensamguk.logic.war
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.constants.GameConst
+import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
@@ -72,8 +79,9 @@ class ConquerCityCollapseTest {
         joinMode: String = "normal",
         defenderNation: Nation = Nation(id = 20, level = 5, capitalCityId = 200, gold = 5000, rice = 6000),
         defenderConflict: String = """{"10":100.0}""",
+        lordOverride: General? = null,
     ): ConquerCityInput {
-        val lord = gen(lordId, officerLevel = 12)
+        val lord = lordOverride ?: gen(lordId, officerLevel = 12)
         return ConquerCityInput(
             admin = ConquerAdmin(hiddenSeed = hidden, year = 200, month = 6, joinMode = joinMode),
             attacker = attacker(),
@@ -315,6 +323,166 @@ class ConquerCityCollapseTest {
         assertFalse(res.generalDeltas.any { it.post.id == 6 })
         assertNull(res.deletedNationId, "survive does NOT delete the nation")
         assertEquals(0, res.collapseLoopDraws, "the survive branch makes NO rng draw")
+    }
+
+    // --- PHP collapse GOLDEN (real capture) ------------------------------------------------------------
+
+    private fun loadGolden(name: String): JsonObject = Json.parseToJsonElement(
+        ConquerCityCollapseTest::class.java.classLoader
+            .getResourceAsStream("golden/p4/$name")!!
+            .readBytes().toString(Charsets.UTF_8),
+    ).jsonObject
+
+    /** `general_record.text` carries the ActionLogger flush prefix (`<C>●</>` + `Y년 M월:` for history). */
+    private fun stripLogPrefix(text: String): String =
+        text.removePrefix("<C>●</>").replace(Regex("^\\d+년 \\d+월:"), "")
+
+    /**
+     * 정복-멸망 골든 게이트 — `conquercity-collapse-full-01.json` (실제 PHP `processWar()→ConquerCity` 캡처,
+     * `tools/php-golden/capture_conquercity.php`, scenario_1010, 황건적(nation 2) 마지막 도시 업(1) 함락).
+     *
+     * 골든에서 직접 뽑은 멸망 로그 3종(func.php:1729 global 【멸망】, :1772 장수 action, :1773 장수 history)의
+     * **문자열과 순서**를 [ConquerCity.resolve] 산출과 대조한다. OPENSAM-186 이전에는 이 3종이 통째로 누락돼
+     * 있었고 collapse 골든이 없어 게이트가 통과시켰다.
+     *
+     * 금/쌀 draw 대조는 아래 `collapse loseGold-loseRice draws replay…` 테스트가 담당한다.
+     *
+     * 장수 순서 주의: PHP `func.php:1733` 의 `SELECT no FROM general WHERE nation=%i AND no != %i` 에는
+     * **ORDER BY 가 없다.** 관측된 asc PK 는 InnoDB PK 스캔의 부수 효과지 PHP 가 보장하는 계약이 아니므로,
+     * 다른 스토리지/플랜에서 순서가 달라질 수 있다 (backlog CC-3).
+     */
+    @Test
+    fun `collapse destroy logs byte-match the PHP collapse golden - strings and general order`() {
+        val golden = loadGolden("conquercity-collapse-full-01.json")
+        val records = golden["conquest_records"]!!.jsonArray.map { it.jsonObject }
+        val nationName = golden["db_delta"]!!.jsonObject["nation"]!!.jsonObject["deleted"]!!
+            .jsonObject["2"]!!.jsonObject["name"]!!.jsonPrimitive.content
+
+        fun type(r: JsonObject) = r["log_type"]!!.jsonPrimitive.content
+        fun gid(r: JsonObject) = r["general_id"]!!.jsonPrimitive.int
+        fun body(r: JsonObject) = stripLogPrefix(r["text"]!!.jsonPrimitive.content)
+
+        // 골든이 실제로 담은 멸망 로그 3종 (하드코딩 아님 — 캡처에서 추출).
+        val goldenDestroyAction = records
+            .filter { type(it) == "action" && body(it).endsWith("<R>멸망</>했습니다.") }
+        val goldenDestroyHistory = records
+            .filter { type(it) == "history" && body(it).endsWith("<R>멸망</>") }
+        val goldenGlobal = golden["db_delta"]!!.jsonObject["world_history"]!!.jsonObject["created"]!!
+            .jsonObject.values.map { stripLogPrefix(it.jsonObject["text"]!!.jsonPrimitive.content) }
+            .single { it.contains("【멸망】") }
+
+        val destroyLog = goldenDestroyAction.map { body(it) }.distinct().single()
+        val destroyHistoryLog = goldenDestroyHistory.map { body(it) }.distinct().single()
+        // 장수 순서: 타 장수 asc PK + 군주 LAST (func.php:1732-1735).
+        val goldenOrder = goldenDestroyAction.map { gid(it) }
+        assertEquals(goldenOrder.size, goldenDestroyHistory.map { gid(it) }.size)
+        assertTrue(goldenOrder.size > 1, "collapse golden must carry the whole nation's generals")
+
+        // 골든 자체의 장수별 발행 순서: 멸망 action 이 도주 action 보다 앞선다 (deleteNation → 도주 루프).
+        for (id in goldenOrder) {
+            val own = records.filter { gid(it) == id && type(it) == "action" }.map { body(it) }
+            val destroyIdx = own.indexOf(destroyLog)
+            val escapeIdx = own.indexOfFirst { it.startsWith("도주하며 금") }
+            assertTrue(destroyIdx >= 0 && escapeIdx > destroyIdx, "general $id: 멸망 로그가 도주 로그보다 앞서야 한다")
+        }
+
+        // Kotlin 재현 — 골든과 동일한 국가명/장수 집합(군주 = 골든의 마지막)으로 collapse 를 돌린다.
+        val lordId = goldenOrder.last()
+        val input = collapseInput(
+            lordId = lordId,
+            otherGenerals = goldenOrder.dropLast(1).map { gen(id = it, npcType = 0) },
+            joinMode = "onlyRandom", // 로그 대조 전용 — 조건부 draw 를 빼고 금/쌀 draw 만 남긴다
+        ).copy(defenderNationName = nationName)
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(List(goldenOrder.size * 2) { 0.3 }),
+            bools = ArrayDeque(emptyList()),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+
+        assertEquals(goldenOrder, res.collapseGeneralOrder, "장수 순서가 골든과 다르다")
+        assertEquals(
+            listOf(ConquerLog.globalHistory(goldenGlobal)),
+            res.conquerLogs.filter { it.text.contains("【멸망】") },
+            "global history 【멸망】 이 골든과 바이트 일치해야 한다",
+        )
+        assertEquals(
+            goldenOrder.flatMap {
+                listOf(ConquerLog.generalAction(it, 0, destroyLog), ConquerLog.generalHistory(it, 0, destroyHistoryLog))
+            },
+            res.conquerLogs.filter { it.text == destroyLog || it.text == destroyHistoryLog },
+            "장수별 멸망 action/history 로그가 골든 문자열·순서와 일치해야 한다",
+        )
+    }
+
+    /**
+     * DRAW-FOR-DRAW 게이트 — `conquercity-collapse-only-random-01.json` 의 collapse 금/쌀 draw 스트림 전량.
+     *
+     * PHP 의 `$rng`(process_war.php:589)는 지역 변수지만 시드는 완전 결정적이고 그 문자열이 골든의
+     * `conquerCitySeeds.seed1` 로 커밋돼 있다. `join_mode='onlyRandom'` 골든은 scout `nextBool(0.5)`(:645)
+     * 와 NPC 임관 draw(:656)가 단락돼 **장수당 정확히 nextRange(0.2,0.5) 2회**만 남으므로, 그 시드로
+     * [ConquerCity.resolve] 를 돌리면 19장수 38 draw 전량을 재현할 수 있다.
+     *
+     * 입력(장수 집합·금·쌀·경험·공헌)과 기대값(금/쌀 post)은 전부 골든의 `db_delta.general.updated`
+     * `from`/`to` 에서 읽는다 — 테스트에 수치 하드코딩 없음(순환 게이트 금지).
+     */
+    @Test
+    fun `collapse loseGold-loseRice draws replay from the golden ConquerCity seed`() {
+        val golden = loadGolden("conquercity-collapse-only-random-01.json")
+        val records = golden["conquest_records"]!!.jsonArray.map { it.jsonObject }
+        val updated = golden["db_delta"]!!.jsonObject["general"]!!.jsonObject["updated"]!!.jsonObject
+        val seed = golden["conquerCitySeeds"]!!.jsonObject["seed1"]!!.jsonPrimitive.content
+
+        fun body(r: JsonObject) = stripLogPrefix(r["text"]!!.jsonPrimitive.content)
+        val order = records
+            .filter { it["log_type"]!!.jsonPrimitive.content == "action" && body(it).endsWith("<R>멸망</>했습니다.") }
+            .map { it["general_id"]!!.jsonPrimitive.int }
+        fun col(id: Int, name: String, side: String) =
+            updated[id.toString()]!!.jsonObject[name]!!.jsonObject[side]!!.jsonPrimitive.int
+
+        fun fromGolden(id: Int, officerLevel: Int = 1) = gen(
+            id = id, officerLevel = officerLevel,
+            gold = col(id, "gold", "from"), rice = col(id, "rice", "from"),
+            experience = col(id, "experience", "from").toDouble(),
+            dedication = col(id, "dedication", "from").toDouble(),
+        )
+        val input = collapseInput(
+            lordId = order.last(),
+            otherGenerals = order.dropLast(1).map { fromGolden(it) },
+            joinMode = "onlyRandom",
+            lordOverride = fromGolden(order.last(), officerLevel = 12),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = RandUtil(LiteHashDrbg(seed)))
+
+        assertEquals(order, res.collapseGeneralOrder)
+        // 장수별 금/쌀 post 가 골든과 일치 = 38 draw 가 값·순서 모두 일치한다는 뜻.
+        for (id in order) {
+            val post = res.generalDeltas.first { it.post.id == id }.post
+            assertEquals(col(id, "gold", "to"), post.gold, "general $id loseGold draw")
+            assertEquals(col(id, "rice", "to"), post.rice, "general $id loseRice draw")
+        }
+        // 도주 로그 문자열(수치 포함)도 골든과 바이트 일치.
+        val goldenEscape = records.filter { body(it).startsWith("도주하며 금") }.map { body(it) }
+        assertEquals(order.size, goldenEscape.size)
+        assertEquals(goldenEscape, res.conquerLogs.map { it.text }.filter { it.startsWith("도주하며 금") })
+    }
+
+    /**
+     * 골든 쌍의 자기정합성 확인 — **패러티 게이트가 아니다.** 프로덕션 코드를 호출하지 않고 두 캡처 파일만
+     * 비교해, `join_mode == 'onlyRandom'` 단락(process_war.php:645, :656)이 등용장(message) 발부 유무로
+     * 실제 갈렸음을 기록한다. (조건부 draw 순서 자체의 재현은 CC-1 잔여 — `db_delta` 에 `npc` 컬럼이 없어
+     * NPC 임관 분기를 재구성할 수 없다.)
+     *
+     * 취약점: `created` 를 `full` 은 `.jsonObject`, `onlyRandom` 은 `.jsonArray` 로 읽는다. PHP 가 빈 맵을
+     * `[]`, 비지 않은 맵을 `{}` 로 직렬화하는 형태에 의존하므로 캡처 스크립트가 바뀌면 깨진다.
+     */
+    @Test
+    fun `the onlyRandom collapse golden issues no scout message while the full golden does`() {
+        fun createdMessages(name: String) =
+            loadGolden(name)["db_delta"]!!.jsonObject["message"]!!.jsonObject["created"]!!
+
+        assertTrue(createdMessages("conquercity-collapse-full-01.json").jsonObject.isNotEmpty())
+        assertTrue(createdMessages("conquercity-collapse-only-random-01.json").jsonArray.isEmpty())
     }
 
     private fun valueFitInt(v: Int): Int = maxOf(0, v)

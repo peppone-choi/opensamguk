@@ -28,9 +28,10 @@ import kotlin.test.assertTrue
  *    nation alive (no `nation.deleted`).
  *
  * **QUARANTINED (backlog CC-1 + CC-2):**
- *  - the COLLAPSE per-general gold/rice/scout/NPC-join sub-stream comes off a LOCAL rng inside ConquerCity
- *    (`process_war.php:627-664`) that the PHP recorder cannot capture without editing grand truth — so that
- *    sub-stream is NOT asserted (documented like MonthTickReplayGateTest's matched-count-gate-with-quarantine);
+ *  - the COLLAPSE branch is not exercised here (both fixtures SURVIVE). Its gold/rice draws ARE captured and
+ *    replayed off the committed `conquerCitySeeds.seed1` by `ConquerCityCollapseTest` against
+ *    `conquercity-collapse-{full,only-random}-01.json`; only the CONDITIONAL scout/NPC-join draws stay
+ *    unreplayed (the golden lacks the `npc` column that decides their branch) — backlog CC-1;
  *  - the FULL numeric db_delta replay needs the complete pre-state world (every city/general/nation/diplomacy
  *    row for the findNextCapital BFS + the front recompute), which these delta-only goldens do not carry. The
  *    delta `from→to` pairs are asserted for STRUCTURAL facts (capital move target, nation survival, the

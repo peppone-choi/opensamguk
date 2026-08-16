@@ -72,29 +72,63 @@ at `process_war.php:549` AND `:589`).
 
 ## Quarantined / deferred (with the exact PHP reason — NOT a gap in faithfulness)
 
-### CC-1 — the COLLAPSE branch per-general draw sub-stream
+### CC-0 — the COLLAPSE branch DB-delta + log golden (CAPTURED, 2026-08-17, OPENSAM-186)
 
-**What:** the collapse branch (`process_war.php:589-664`, fired when the defender nation's
-`cityCount==1` → `DestroyNation`): the `onArbitraryAction` defender loop (`:599`) + the
-per-general `nextRange(0.2,0.5)` gold/rice loss (`:628-629`) + the `nextBool(0.5)` scout
-lottery (`:645`) + the `nextBool(joinRuinedNPCProp)` + `nextRangeInt(0,12)` NPC-join draws
-(`:654-658`).
+`capture_conquercity.php` runs the collapse branch on both `join_mode` values and writes
+`conquercity-collapse-full-01.json` / `conquercity-collapse-only-random-01.json`. Both are
+byte-identical (sha256) across two independent fresh-DB runs. They carry the REAL `deleteNation`
+(`func.php:1713`) destroy logs — global history `【멸망】` (`:1729`) + per-general action/history
+(`:1772-1773`) — the defender-nation `nation.deleted` row, the 재야 reset general deltas, the
+winner gold/rice reward, and (full only) the 6 scout messages the `join_mode != 'onlyRandom'`
+branch issues. Asserted by `ConquerCityCollapseTest`, including the 38-draw gold/rice stream replayed off the
+committed `conquerCitySeeds.seed1`. Only the CONDITIONAL scout/NPC-join draws remain (CC-1 below).
 
-**Why deferred:** those draws come off a **LOCAL `$rng`** created INSIDE `ConquerCity()`
-(`process_war.php:549` and `:589`) — NOT the war `RandUtil`, and not reachable from outside
-the function. Wrapping it with `RandUtilDrawRecorder` would require editing
-`process_war.php`, which is grand truth and **must not be altered**. Additionally, forcing
-the collapse branch requires reducing the defender nation to 1 city (deleting 9 of nation-2's
-10 cities — extensive DB surgery). The two NON-collapse branches captured here DO exercise
-the `:599` `onArbitraryAction` defender loop + both ConquerCity seed STRINGS + the full
-side-effect order, so the seed lineage and side-effect ordering ARE pinned.
+### CC-1 — the COLLAPSE branch CONDITIONAL draw sub-stream (scout / NPC-join)
 
-**How it closes:** the Kotlin **B2 `ConquerCity` port** replays the documented collapse draw
-order (CC-1 above + the draw catalog) on the captured ConquerCity seed STRING through the
-symmetric Kotlin draw-recording harness, against a synthetic 1-city defender nation. The
-seed string is the bridge — it is captured here; the sub-stream is a B2 standalone-replay
-deliverable, not a PHP-capture deliverable (the local-rng cannot be observed without editing
-grand truth). Owner: **B2 follow-up**.
+**RESOLVED as of CC-0 (2026-08-17): the gold/rice draws ARE captured and gated.** The earlier
+"the LOCAL `$rng` cannot be observed" reason was WRONG. The `$rng` at `process_war.php:589` is a
+local *variable*, but its seed is fully deterministic —
+`Util::simpleSerialize(hiddenSeed,'ConquerCity',year,month,attNationID,attID,cityID)` — and that
+seed STRING is committed in every conquest golden as `conquerCitySeeds.seed1`. Re-seeding a Kotlin
+`RandUtil(LiteHashDrbg(seed1))` reproduces the stream without touching grand truth, and the draw
+RESULTS are already in the golden (the per-general 도주 log 금/쌀 amounts + the
+`db_delta.general.updated` gold/rice `from`/`to` pairs). `conquercity-collapse-only-random-01.json`
+short-circuits both conditional draws (`:645`, `:656`), so its stream is exactly
+`nextRange(0.2,0.5)` ×2 per general — 19 generals / 38 draws, replayed value-for-value and
+order-for-order by `ConquerCityCollapseTest.collapse loseGold-loseRice draws replay from the golden
+ConquerCity seed`.
+
+**What actually remains:** the CONDITIONAL draws in the `join_mode != 'onlyRandom'` branch — the
+scout `nextBool(0.5)` (`:645`) and the NPC-join `nextBool(joinRuinedNPCProp)` + `nextRangeInt(0,12)`
+(`:656-658`).
+
+**Why deferred:** the NPC-join branch is gated on `2 <= npcType <= 8 && npcType != 5`, and
+`db_delta.general.updated` carries only CHANGED columns — `npc` never changes during collapse, so
+it is absent from the golden. Without each general's `npcType` the conditional draw ORDER of the
+`full` fixture cannot be reconstructed, so `conquercity-collapse-full-01.json` is asserted for logs
+and message-issuance only, not draw-for-draw.
+
+**How it closes:** add the defender generals' `npc` (and `owner`) columns to the collapse capture's
+general snapshot as an explicit pre-state block (a capture-script change, not a golden edit), then
+extend the replay to the `full` fixture. Owner: **next conquest-capture pass**.
+
+### CC-3 — `deleteNation` general order has no `ORDER BY` in PHP
+
+`func.php:1733` runs `SELECT no FROM general WHERE nation=%i AND no != %i` with **no `ORDER BY`**.
+The observed "others ascending PK + lord appended LAST" holds in the capture, but ascending PK is an
+InnoDB PK-scan side effect, not a contract PHP guarantees — a different storage engine or query plan
+could reorder it, which would reorder both the destroy logs AND the per-general draw pairing. The
+Kotlin port sorts explicitly, so it is deterministic; the risk is that the ORACLE's order is not
+pinned by PHP. Noted in `ConquerCityCollapseTest`. No action unless a divergent capture appears.
+
+### CC-4 — the harness writes pretty-printed JSON but the committed goldens are minified
+
+`capture_conquercity.php:266` passes `JSON_PRETTY_PRINT` to `Json::encode`, yet every committed p4
+golden is a single minified line. The minifying step is not committed or documented anywhere, so
+"re-run the harness and reproduce the committed sha256" is not a runnable path — reproduction
+currently requires normalizing (e.g. `python3 -m json.tool`) before comparing. Pre-existing across
+ALL p4 goldens, not introduced by CC-0. Fix by making the capture write the committed form directly
+(and re-verifying, NOT re-editing, the existing goldens). Owner: **harness cleanup**.
 
 ### Notes (faithful pins, not gaps)
 
@@ -177,9 +211,11 @@ phase count + per-unit `activatedSkillLog` match the golden EXACTLY on both batt
   rounding in the warpower chain I could not pin to a PHP `file:line` without a PHP runtime trace
   of `computeWarPower` per phase. If exact numeric closure becomes required, run the capture host
   with per-phase `rawWarPower`/`getComputedAtmos`/`getDexLog` tracing.
-- **CC-1** — the ConquerCity COLLAPSE per-general gold/rice/scout/NPC sub-stream
-  (`process_war.php:627-664`) draws off a LOCAL rng not capturable without editing grand truth
-  (both goldens are SURVIVE cases, so no collapse fires — but the gate documents the exclusion).
+- **CC-1** — as of CC-0 the collapse gold/rice draws ARE captured and replayed (see CC-1 above);
+  `ConquerCityReplayGateTest`'s two fixtures are still SURVIVE cases, so the collapse assertions
+  live in `ConquerCityCollapseTest` against the two collapse fixtures instead. Only the CONDITIONAL
+  scout/NPC-join draws (`process_war.php:645`, `:656-658`) remain unreplayed — the golden lacks the
+  `npc` column needed to reconstruct their branch order.
 - **CC-2** — the FULL numeric db_delta re-drive needs the complete pre-state world (every
   city/general/nation/diplomacy row for the findNextCapital BFS + front recompute), which the
   delta-only goldens do not carry. The gate asserts the seed strings (double-seed), the
