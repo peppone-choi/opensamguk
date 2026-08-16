@@ -1,6 +1,6 @@
 # 옵션 IP 초상 세트 전량 제거(메인 레포 쪽) — 독립 적대적 리뷰
 
-Scope: `data/extracted/scenario/` 16개 시나리오 JSON 삭제 + `_meta.json` 항목 제거, `app/gateway-api/src/main/resources/profile-icons/shared-manifest.json` 핀 SHA 갱신, 감사 문서·LEDGER 각주.
+Scope: `data/extracted/scenario/` 16개 시나리오 JSON 삭제 + `_meta.json` 항목 제거, `app/gateway-api/` 공유 아이콘 매니페스트 핀 SHA 갱신 + 그 값을 검증하는 테스트(F1), `data/extracted/map/`·`infra/` 포켓몬 맵 리소스 삭제 + `web/game`·`web/gateway` 의 `CDN_MAPS` 항목 제거(F3), 감사 문서·LEDGER·baseline MANIFEST 각주(F2).
 Verdict: cleared
 
 리뷰 대상: 브랜치 `chore-drop-optional-ip-scenarios`, 커밋 `c7827e3e`, base `origin/main`.
