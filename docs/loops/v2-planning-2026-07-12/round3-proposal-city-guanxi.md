@@ -1204,12 +1204,17 @@ tools/parity/gate.sh backend
 MB=$(git merge-base HEAD origin/main)
 
 # ② T1 — 패러티 코어 수정·삭제 0건 (신규 파일 추가는 허용 → --diff-filter=MD)
+#      2026-08-17 OPENSAM-190: 테스트 루트의 `**/v2/**` 디렉터리만 제외한다(아래 사유 참조)
 git diff --name-only --diff-filter=MD "$MB" -- \
   ':(glob)logic/src/main/kotlin/**' \
   ':(glob)common/src/main/kotlin/**' \
   ':(glob)logic/src/test/resources/golden/**' \
   ':(glob)logic/src/test/kotlin/**' ':(glob)common/src/test/kotlin/**' \
-  ':(glob)infra/src/test/kotlin/**' ':(glob)app/*/src/test/kotlin/**'
+  ':(glob)infra/src/test/kotlin/**' ':(glob)app/*/src/test/kotlin/**' \
+  ':(glob,exclude)logic/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)common/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)infra/src/test/kotlin/**/v2/**' \
+  ':(glob,exclude)app/*/src/test/kotlin/**/v2/**'
 # → 출력이 비어 있어야 한다. 한 줄이라도 나오면 설계 위반
 
 # ③ T2 — 경계 수정 목록이 티켓 본문 선언과 일치하는지
@@ -1224,6 +1229,16 @@ git diff --name-only --diff-filter=MD "$MB" -- \
 #    - 엣지-0 등가 테스트 green
 #    - v1 조립 코드의 관계 패키지 import 0 (아키텍처 테스트)
 ```
+
+**개정 (2026-08-17, OPENSAM-190) — ②의 테스트 루트에서 `**/v2/**` 디렉터리를 제외한다.** ⑤의
+README 결함과 동형이었다: ②가 v2 소유 테스트까지 통째로 얼려 v2 후속 티켓이 OPENSAM-35가 만든
+자기 테스트를 고칠 구조적 방법이 없었다. 특히 `V2ProductionContextBeanGateIT`는 "production에
+v2 빈 0개"를 **v2 빈 타입을 하나씩 열거해** 증명하므로 동결하면 v2가 자랄수록 격리 증명이 낡는다 —
+동결이 격리를 지키는 게 아니라 좀먹는다. 제외는 **디렉터리 세그먼트 `/v2/`**만 보므로
+`V26NpcLifecycleMigrationTest.kt`처럼 Flyway 버전 번호가 이름에 든 v1 테스트는 걸리지 않고,
+`logic/`·`common/`의 v2 **main** 소스와 골든은 동결 유지이며, v1 테스트를 `/v2/`로 옮겨서 고치는
+우회는 원경로 삭제가 `--diff-filter=MD`에 걸려 여전히 위반이다. 보호를 잃는 파일 전수 열거와
+mutation 증명(27종 × bash 3.2·5.3): `docs/superpowers/reviews/2026-08-17-opensam-190-gate2-narrowing-review.md`.
 
 ②가 이 설계안의 실질적 게이트다. **패키지를 열거하지 않고 `logic/src/main/kotlin/` 전체를 잠그는 것**이 원안 대비 핵심 변경이며, 이렇게 하면 "어느 패키지를 빠뜨렸나"라는 질문 자체가 사라진다. ③은 T2가 슬금슬금 넓어지는 것을 막는 유일한 장치다 — 게이트가 "0건"을 요구할 수 없는 영역이므로 대신 **선언과의 일치**를 요구한다. **비교 대상 정본은 §7.1-2 개정 6차의 T2 11행 표**(편집 10 + 마이그레이션 1)이며, 티켓 본문은 그 표에서 자기 행만 옮겨 적는다 — **"가드 영향" 열을 포함해서** 옮긴다(그 열이 티켓 착수 시 확인해야 할 아키텍처 테스트 제약을 담고 있다). ④는 R8에만 붙는 추가 DoD다(오픈 후).
 
