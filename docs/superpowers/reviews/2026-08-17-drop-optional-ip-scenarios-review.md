@@ -14,9 +14,9 @@ Verdict: fix-required
 | # | 축 | 결과 |
 |---|---|---|
 | 1 | 전수 스캔 완전성 (누락/과잉) | **PASS** — 정확히 16개, 과잉·누락 0 |
-| 2 | 고아 참조 (코드/설정/테스트/docs/CI) | **FAIL (F1)** — 프로덕션 매니페스트 핀을 검증하는 테스트가 깨진다 |
+| 2 | 고아 참조 (코드/설정/테스트/docs/CI) | **FAIL→CLOSED (F1)** — 테스트가 깨졌고, 리뷰 중 `df8068e7`로 수정·재검증 green |
 | 3 | `_meta.json` 정합 | **PASS** — count 81→65, 배열 길이·순서·포맷 무결 |
-| 4 | 핀 SHA 실측 | **PASS(값)** / **FAIL(연동, F1)** — URL·해시·치수 4/4 일치하나 테스트 미갱신 |
+| 4 | 핀 SHA 실측 | **PASS** — URL·해시·치수 4/4 일치 (연동 결함은 F1에서 종결) |
 | 5 | LEDGER 각주 처리 | **FAIL (F2)** — 각주의 핵심 주장이 사실과 다르다 |
 | 6 | `web/game` vitest | **조건부 PASS** — 2 fail은 이 브랜치와 무관함을 증명 |
 | 7 | 범위 밖 변경 | **PASS** — 스코프 밖 파일 0 |
@@ -110,9 +110,20 @@ app/gateway-api/build/test-results/test/TEST-opensamguk.gateway.profile.SharedPr
 FAILURE: org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
 ```
 
-주: 이 리뷰를 쓰는 도중 워크트리에 `SharedProfileIconCatalogTest.kt:46`을 새 SHA로 바꾸는 **미커밋 수정**이 나타났다(다른 레인 소행, 이 리뷰 커밋에 포함하지 않았다). 위 판정은 리뷰 대상 커밋 `c7827e3e` 기준이며, 그 수정이 커밋되고 `:app:gateway-api:test`가 XML 기준 green으로 재확인되기 전까지 F1은 열린 상태다.
+### F1 후속 — 리뷰 중 수정됨, 재검증 green
 
-고쳐야 할 것: `SharedProfileIconCatalogTest.kt:46`의 리비전을 `05842c61132fd5a71268fd9babd80ba74e27be62`로 갱신한다. 이 단언은 PHP 골든이 아니라 **핀 계약 단언**이므로 갱신이 정상 경로다(골든 약화 아님). 갱신 후 `:app:gateway-api:test`를 다시 돌려 증거를 남겨야 한다.
+이 리뷰를 쓰는 도중 다른 레인이 `df8068e7 fix(test): OPENSAM 공유 아이콘 카탈로그 테스트의 리비전 핀을 새 SHA로 갱신한다`를 커밋해 46행 리비전을 `05842c61…`로 갱신했다(단언 대상은 PHP 골든이 아니라 **핀 계약**이므로 갱신이 정상 경로다 — 골든 약화 아님). 그 커밋 위에서 직접 재검증했다:
+
+```
+$ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:gateway-api:test --rerun-tasks
+BUILD SUCCESSFUL in 2m 15s
+13 actionable tasks: 13 executed
+
+$ (app/gateway-api/build/test-results/test/*.xml 집계)
+suites=33 tests=200 failures=0 errors=0 skipped=0
+```
+
+**F1 = CLOSED.** (단, `df8068e7`이 스테이징돼 있던 이 리뷰 파일 재작성분까지 함께 삼켰다 — 커밋 경계가 섞였을 뿐 내용 손실은 없다.)
 
 ## 3. `_meta.json` 정합 — PASS
 
@@ -208,4 +219,6 @@ $ git diff origin/main...HEAD --stat
 
 ## 결론
 
-전수 스캔·`_meta.json` 정합·핀 SHA 값·스코프 격리는 재현 검증으로 모두 **통과**했다. 그러나 (F1) 브랜치가 `:app:gateway-api:test`를 깨뜨리고, (F2) LEDGER 각주의 핵심 사실 주장이 실측과 다르며 삭제된 자산이 옛 SHA로 여전히 공개 접근 가능하고, (F3) 동일 IP 등급의 포켓몬 맵 데이터가 근거 기록 없이 잔존한다. **F1은 머지 차단 사유**이고 F2는 이 작업의 존재 이유(IP 리스크 종결) 자체를 미완으로 만든다.
+전수 스캔·`_meta.json` 정합·핀 SHA 값·스코프 격리는 재현 검증으로 모두 **통과**했다. F1(`:app:gateway-api:test` 파손)은 리뷰 중 `df8068e7`로 수정됐고 33 suites / 200 tests / failures·errors 0으로 재검증해 **종결**했다.
+
+남은 차단 사유는 두 건이다. (F2) LEDGER 각주의 핵심 사실 주장이 실측과 다르며, 삭제했다는 2,335장이 옛 SHA로 지금도 공개 접근 가능하다 — 이 작업의 존재 이유인 IP 리스크가 실제로 닫히지 않았다. (F3) 동일 IP 등급의 포켓몬 맵 데이터가 판단 기록 없이 메인 레포에 잔존한다. **두 건이 닫히기 전까지 `fix-required`다.**
