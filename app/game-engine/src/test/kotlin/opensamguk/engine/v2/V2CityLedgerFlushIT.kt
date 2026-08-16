@@ -189,6 +189,30 @@ class V2CityLedgerFlushIT {
         )
     }
 
+    /**
+     * R1 적대적 리뷰 결함 — `entries()`가 `LinkedHashMap`을 그대로 돌려주면 적재 순서(`ORDER BY city_id`)
+     * 뒤에 신규 도시가 append 되어 `city_id ASC`가 깨진다. 설계안 §8 R3의 공백지화 순회가 그 순서를
+     * 전제하므로 반환 시점 정렬을 고정한다.
+     */
+    @Test
+    fun `entries는 신규 도시를 만진 뒤에도 city_id 오름차순이다`() {
+        jdbc.update(
+            "INSERT INTO v2_city_ledger (world_id, city_id, gold, rice, garrison) " +
+                "VALUES (1, 40, 1, 1, 1), (1, 60, 1, 1, 1)",
+            MapSqlParameterSource(),
+        )
+        val store = V2CityLedgerStore(jdbc)
+        val recorder = recorder()
+        // 40/60 적재 후 그 사이 번호(50)를 처음 만진다 — LinkedHashMap이면 40,60,50 순이 된다.
+        store.adjust(worldId, recorder, cityId = 50, goldDelta = 5)
+
+        val ordered = store.entries(worldId).keys.filter { it in 40..60 }
+        assertEquals(listOf(40, 50, 60), ordered, "city_id ASC 유지: ${store.entries(worldId).keys}")
+
+        flush(186, recorder)
+        assertEquals(5L, ledgerRow(50)!!["gold"])
+    }
+
     @Test
     fun `v2 채널이 비면 v2 step이 미진입한다 -- v1 경로 SQL 0건`() {
         executor.flush(FlushPayload(worldId, worldState(190)))

@@ -98,3 +98,25 @@ R1은 빈 원장에서 출발한다. 도시별 시작 금·병량·도시병사�
 - v2 프로세스를 실제 부팅했을 때 `ScenarioSeedRunner`가 v2 DB에 심는 시점 — 미실측. R1 산출물이 이
   순서에 의존하지 않도록 lazy 적재로 설계했으므로 결론의 전제가 아니다.
 - 도시병사 훈련·사기·3개월 병량 유지비 — 설계안 §2.1이 명시적으로 오픈 후로 보낸 항목. 미구현이 정상.
+
+## 6. 독립 적대적 리뷰 결과 (2026-08-16, 별도 레인)
+
+정본: `docs/superpowers/reviews/2026-08-16-opensam-150-v2-city-ledger-review.md` (`Verdict: cleared`).
+위 §1~§5 주장은 전부 독립 재현됐고(이탈 ①은 임시 `V2*` 선언 mutation으로 가드 FAILED 실증, 이탈 ②는
+`V1__baseline.sql:11` serial + `WorldId.kt:17` Int 확인), B1 분석은 정확하다 — 오히려 막는 단언이
+`V2ProductionContextBeanGateIT.kt:186-190` 하나가 아니라 같은 파일 `:64` `assertNoV2Beans()`까지 **둘**이다.
+
+리뷰가 브랜치에서 직접 닫은 결함:
+- **D-1** `entries()`가 신규 도시 append 때문에 `city_id ASC`를 잃었다 → `toSortedMap()` + IT 회귀 케이스
+  (mutation으로 테스트 유효성 확인). 설계안 §8 R3 공백지화 순회가 이 순서에 의존한다.
+- **D-2** `engine/v2`가 `HotColdCatalog.runtimeSourceDirectories`·`runtimeDirectSqlBoundaries` 양쪽 밖이라
+  store의 `jdbc.query`가 무-카탈로그 런타임 읽기다(`Store` 접미사 선택이 수신자-이름 탐지를 회피한 결과).
+  보완 통제로 `V2CityLedgerReadBoundGuardTest` 신설. **항구적 해법인 카탈로그 등재는 R2 선행 조건** —
+  `HotColdCatalog.kt`가 T1 동결 영역이라 R1 범위에서 닫을 수 없다.
+- **D-3** B1 참조에 파일 경로 추가.
+
+**M1 정정 (문서 drift, 고칠 수 없음).** `infra/src/main/resources/db/migration_v2/README.md` §5의
+"production `db/migration_v2/`에는 아직 SQL이 없다"는 이 브랜치 이후 **거짓**이다 — `V901__v2_city_ledger.sql`이 있다.
+게이트 ⑤가 `infra/src/main/resources/` 전체에 `--diff-filter=MD`를 걸어 그 README 수정을 금지하므로
+고치지 않았다. 게이트 pathspec을 설정 파일로 좁히는 것은 OPENSAM-35 후속 결정 사항이며, 그때까지의
+정정 사실은 이 문단과 리뷰 문서가 보유한다.
