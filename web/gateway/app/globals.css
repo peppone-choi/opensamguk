@@ -257,10 +257,9 @@ textarea:focus {
     top: 0;
     z-index: 100;
 }
-.gw-brand {
-    font-size: var(--text-lg);
-    font-weight: 700;
-    color: var(--gold);
+.gw-brand-logo {
+    height: 32px;
+    width: auto;
 }
 .gw-center {
     flex: 1;

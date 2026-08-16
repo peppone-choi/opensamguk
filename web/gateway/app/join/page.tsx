@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { register } from '@/lib/client';
 import { AUTH_LABELS, BRAND, FOOTER_LINKS } from '@/lib/constants';
@@ -76,7 +77,14 @@ export default function JoinPage() {
     return (
         <div className="gw-shell">
             <header className="gw-navbar">
-                <span className="gw-brand">{BRAND}</span>
+                <Image
+                    className="gw-brand-logo"
+                    src="/logo-wordmark.png"
+                    alt={BRAND}
+                    width={86}
+                    height={32}
+                    priority
+                />
             </header>
 
             <main className="gw-center fade-in">

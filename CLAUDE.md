@@ -119,6 +119,13 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `
 - 🔄 **F4 액션 페이지 + mutation** — 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결했다. 남은 하드 스텁·상수 빈 응답·PHP 불일치는 라이브 루프에서 계속 폐쇄한다. **result-poll 규약(OPENSAM-13/135):** 인테이크 202는 성공이 아니다 — FE는 `pollCommandResult(requestId)`로 `RESOLVED`까지 폴링해 `ok`/`reason`을 분기하고, 엔진 핸들러는 성공·deny 모두 `TurnDaemonCommandResult`(`ok`/`reason`)를 반환한다(202만 보고 성공 토스트 = 성공 위조 금지).
 - 🔄 **F5 turnkey + docs** — 정본 `docker-compose.yml`(로컬 8서비스) + 호환용 `docker-compose.production.yml`(GCP Compute Engine e2-standard-2, GHCR 이미지) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드.
 
+**브랜드 에셋.** 마스터 `assets/brand/logo-master.png`(AI 자체제작, 제3자 파생 아님) 하나에서
+`python3 tools/assets/build_brand_assets.py`가 두 프런트엔드의 파비콘·앱아이콘·워드마크를 전량
+재생성한다. 산출물(`web/*/app/{icon,apple-icon}.png`, `favicon.ico`, `web/*/public/logo-wordmark*.png`)을
+손으로 고치지 말고 빌더를 다시 돌려라. Next App Router가 `app/` 아래 파일명만 보고 자동 배선하므로
+`layout.tsx`의 `metadata.icons`는 쓰지 않는다. 출처·파생 규약은 `assets/brand/README.md`.
+`opensamguk-images`(제3자 파생 에셋)와는 무관한 별도 계보다.
+
 ## Skill routing
 
 When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
