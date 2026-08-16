@@ -22,6 +22,16 @@ warn_undelivered() {
   fi
 }
 
+# A broken delivery channel must never be silent, but it must also never be the
+# only reason a run is red — the judgement exit code is decided by the daemon
+# state alone.
+warn_dispatch_failed() {
+  printf '::warning title=Daemon alert dispatch failed::%s\n' "$1"
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    printf -- '- :warning: %s\n' "$1" >> "$GITHUB_STEP_SUMMARY"
+  fi
+}
+
 parse_status() {
   python3 -c '
 import json
@@ -96,13 +106,17 @@ dispatch_alert() {
     return 0
   fi
 
+  # Discord rejects a bare custom object with 400 (50006 "Cannot send an empty
+  # message"): Execute Webhook requires at least one of content/embeds/
+  # components/file/poll. The structural diagnostics are unchanged — they are
+  # rendered from one dict into the embed fields, so nothing is lost.
   payload="$(
     python3 - "$server" "$state" "$reason" "$recovery_mode" "$tick_seconds" "$allowed_seconds" "$last_turn_time" <<'PY'
 import json
 import sys
 
 server, state, reason, recovery_mode, tick_seconds, allowed_seconds, last_turn_time = sys.argv[1:]
-print(json.dumps({
+diagnostics = {
     "source": "opensamguk-daemon-health",
     "server": server,
     "state": state,
@@ -111,14 +125,30 @@ print(json.dumps({
     "tickSeconds": int(tick_seconds),
     "allowedSeconds": int(allowed_seconds),
     "lastTurnTime": last_turn_time,
+}
+color = {"DOWN": 0xE74C3C, "OUT_OF_SERVICE": 0xF1C40F}.get(state, 0x2ECC71)
+print(json.dumps({
+    "username": diagnostics["source"],
+    "embeds": [{
+        "title": f"[{state}] {server} / {reason}",
+        "color": color,
+        "fields": [
+            {"name": key, "value": str(value), "inline": key != "lastTurnTime"}
+            for key, value in diagnostics.items()
+        ],
+    }],
 }, separators=(",", ":")))
 PY
   )"
 
+  # --retry covers Discord's 429 and transient 5xx (curl honours Retry-After);
+  # a real outage still fails, and a failed dispatch never decides the exit code.
   if ! curl --fail --silent --show-error --max-time 10 \
+    --retry 3 --retry-delay 2 --retry-max-time 40 \
     -H 'Content-Type: application/json' \
     --data-binary "$payload" \
     "$DAEMON_ALERT_WEBHOOK_URL" >/dev/null 2>&1; then
+    warn_dispatch_failed "alert dispatch failed; alert NOT delivered server=${server} state=${state} reason=${reason}"
     printf 'ERROR: alert dispatch failed for server=%s state=%s reason=%s\n' "$server" "$state" "$reason" >&2
     return 1
   fi
