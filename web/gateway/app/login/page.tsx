@@ -2,6 +2,7 @@
 
 import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { login } from '@/lib/client';
 import { AUTH_LABELS, BRAND, FOOTER_LINKS } from '@/lib/constants';
@@ -97,7 +98,14 @@ export default function LoginPage() {
     return (
         <div className="gw-shell">
             <header className="gw-navbar">
-                <span className="gw-brand">{BRAND}</span>
+                <Image
+                    className="gw-brand-logo"
+                    src="/logo-wordmark.png"
+                    alt={BRAND}
+                    width={1200}
+                    height={448}
+                    priority
+                />
             </header>
             <main className="gw-center fade-in">
                 <Suspense fallback={<div className="spinner" />}>

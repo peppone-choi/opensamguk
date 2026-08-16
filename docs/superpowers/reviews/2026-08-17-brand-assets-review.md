@@ -6,9 +6,10 @@ Verdict: fix-required
 - 대상: 브랜치 `feat-brand-assets`의 미커밋 변경 (전부 신규 추가, 기존 파일 수정 0). 기준 `origin/main` = `a95e5a90`.
 - 리뷰어는 team-lead와 독립. `tools/agent-system/check.py` 무편집. 코드 수정 0건 — 결함만 보고한다.
 - 환경: Python 3 / Pillow 12.2.0, Next.js 15.5.20, macOS Darwin 25.5.0.
-- **리뷰 도중 작업 트리가 바뀌었다.** `tools/assets/build_brand_assets.py`의 `is_seal_pixel`이 02:22에
-  수정되고 6개 산출물이 재생성되어, index(staged)와 worktree가 갈라진 상태다(§7 F11).
-  아래 §1~§6은 **현재 worktree 버전** 기준으로 재검증한 결과다.
+- **리뷰 도중 작업 트리가 두 번 바뀌었다.** ① 02:22에 `is_seal_pixel`이 수정되고 산출물이 재생성됐다.
+  ② 이후 전체가 `38adca98`로 커밋·푸시됐다(이 리뷰 문서 포함). §1~§6은 **커밋된 최종본** 기준이다.
+- **§17이 2차 패스다** — 금박 오검출 수정 이후 team-lead가 추가로 요구한 3가지(다른 붉은 요소의
+  통과 여부·512px 육안 검사·자동 체크 제안)에 대한 실측이며, §3과 §7을 갱신한다.
 
 ---
 
@@ -164,6 +165,9 @@ full-width density box (창 제거, DENSITY_FLOOR=30 그대로): (810, 93, 1751,
 돌리면 된다"는 운영 약속이 성립하지 않는다. 고치려면 floor를 `max(8, round(height * 30/720))`처럼
 높이 비례로 두거나, 최대 행/열 카운트의 비율(예: `max(cols.values()) * 0.2`)로 잡아라.
 
+**§17.2에서 같은 상수의 더 날카로운 형태를 찾았다 — 유효 구간이 19~32뿐이고 현재값 30은 상한에서
+2 떨어져 있다. 그쪽이 상위 심각도다.**
+
 ## 4. F4 (medium) — 512 아이콘이 104×167 크롭을 1.92배 업스케일한 가짜 해상도다
 
 `seal_bounds` 결과 크롭은 **104×167**이다. `build_seal_tile:75-76`에서
@@ -257,8 +261,11 @@ $ git diff --stat
 ```
 
 `git commit`을 부분 스테이지 상태에서 하면 "커밋된 스크립트로는 재생성되지 않는 커밋된 산출물"이
-남는다. 커밋 전에 `git add -A` 후 §0.1 재현성 검사를 **다시** 돌려라(현재 worktree 조합에 대해서는
-이미 바이트 동일을 확인했다).
+남는다.
+
+**해소됨.** 이후 전체가 `38adca98`로 한 커밋에 들어갔고 `git diff --stat`이 비어 있다. 커밋된
+`icon.png`와 커밋된 스크립트로 재생성한 결과가 바이트 동일임을 확인했다(`ImageChops.difference`
+bbox `None`, 변경 픽셀 0).
 
 ## 12. F12 (low) — 마스터의 알파가 완전 이진이다
 
@@ -297,6 +304,8 @@ $ git diff --stat
 
 | # | 심각도 | 조치 |
 | --- | --- | --- |
+| F15 | high | `DENSITY_FLOOR` 여유가 +2뿐 (§17.2) — 상수 재산정 또는 불변식 assert |
+| F16 | high | 커밋 `38adca98`이 `Verdict: fix-required`를 담은 채 푸시돼 strict 게이트가 막힌다 (§17.5) |
 | F1 | high | 루트 `LICENSE` 추가 또는 README:18 문장 수정 |
 | F2 | high | README:45-47을 `search_from = int(width*0.7)` 사실에 맞게 수정 |
 | F7 | medium | 워드마크 4개 소비처 배선 또는 커밋 제외 |
@@ -305,3 +314,277 @@ $ git diff --stat
 | F11 | medium | `git add -A` 후 재현성 재확인 |
 | F3/F4/F5 | medium | floor 정규화 · 아이콘 목표 256 하향(또는 더 큰 마스터) · 16px 전용 마크 |
 | F6/F8/F12/F13/F14 | low | 문구·최적화 정리 |
+
+---
+
+# 17. 2차 패스 — 금박 오검출 수정 이후
+
+`is_seal_pixel`이 `r-g>45 and r-b>45 and r>90` → `r>110 and g<90 and b<90 and abs(g-b)<40 and r-g>60`
+으로 수정된 뒤, team-lead가 추가로 요구한 3가지에 대한 실측이다.
+
+## 17.1 수정은 유효하다. 그리고 결함은 보고된 것보다 컸다
+
+동일 마스터·동일 파이프라인에서 판정식만 갈아끼워 A/B를 떴다.
+
+```python
+B.build_seal_tile(m)                                        # 신 판정식
+B.is_seal_pixel = lambda r,g,b: r-g>45 and r-b>45 and r>90  # 구 판정식 복원
+B.build_seal_tile(m)
+→ ImageChops.difference bbox (93,91,419,421), 변경 픽셀 41,348
+```
+
+`seal_bounds` 결과:
+
+| 판정식 | bounds | crop | 캔버스 대비 면적 | 종횡비 |
+| --- | --- | --- | --- | --- |
+| 구 | `(1461, 386, 1751, 597)` | **291×212** | 4.45% | 1.37 |
+| 신 | `(1648, 386, 1751, 552)` | **104×167** | 1.25% | 0.62 |
+
+보고된 내용은 "'국'자 ㄱ 획이 붉게 칠해진 채 들어갔다"였지만, 실제 영향은 덧칠이 아니다.
+금박이 통과하면서 **바운딩 박스 자체가 x축으로 187px 왼쪽까지 늘어났고**, 그 결과 낙관이 정사각
+타일 안에서 면적 기준 약 1/3 크기로 쪼그라들고 오른쪽으로 밀려났다. 512px A/B 렌더에서
+좌측 패널의 낙관은 우측 패널의 절반 크기이고, 그 왼쪽에 금박 ㄱ 획과 잡티 방울 3개가 남아 있다.
+수정 후 512px에서 ㄱ 획·잡티 모두 소실됐고 낙관이 타일을 채운다. **수정 유효.**
+
+## 17.2 F15 (high) — `DENSITY_FLOOR`의 유효 구간은 19~32뿐이고, 현재값 30은 상한에서 2 떨어져 있다
+
+`seal_bounds`가 정답 상자 `(1648,386,1751,552)`를 내는 floor를 1~120 전수 탐색했다.
+
+```
+정답 상자를 내는 floor 범위: 19 ~ 32   (현재 DENSITY_FLOOR = 30)
+```
+
+경계 근거:
+
+```
+창 안 잡광 최대 col count = 14, 최대 row count = 18   → 하한 19
+낙관 최소 col count      = 16, 최소 row count = 11   → 상한 32
+낙관 col 중 30 미만: 21/104,  row 중 30 미만: 57/167
+```
+
+여유가 **-11 / +2**다. 마스터의 낙관 외곽선이 몇 px 얇아지거나 잉크가 살짝 옅어지면 최소 카운트가
+32 아래로 내려가 상자가 줄어든다. **그때 빌더는 죽지 않는다** — `xs`/`ys`가 비지 않으므로 §0.2의
+fail-loud 경로를 타지 않고, 조용히 잘린 낙관을 낸다. 이것이 이번 금박 결함과 정확히 같은 실패
+형태(육안으로만 잡히는 사일런트 오크롭)다.
+
+`DENSITY_FLOOR = 30`을 고른 근거가 코드·README 어디에도 없다. 실측 중앙값 근처의 임의값으로 보인다.
+하한/상한의 중앙인 25 근처가 여유를 -6/+7로 균등하게 만든다.
+
+## 17.3 F17 (high) — 새 판정식도 단독으로는 안전하지 않다. 창과 밀도필터가 **둘 다** load-bearing이다
+
+team-lead의 질문(중앙 붉은 태양·칼날 반사·배경 잔불이 새 조건을 통과하는가)에 대한 직접 픽셀 스캔:
+
+```
+새 판정식 통과 픽셀: 33,898 (캔버스의 2.44%)
+연결 성분 249개, 상위 5개:
+   12,079 px  bbox=( 989,135,1188,309)   ← 중앙 붉은 태양/깃발
+   10,969 px  bbox=( 784,128, 966,318)   ← 중앙 붉은 태양/깃발
+    3,556 px  bbox=(1648,386,1751,553)   ← 낙관 외곽
+    2,401 px  bbox=(1668,468,1731,534)   ← 낙관 國
+    1,920 px  bbox=(1028, 60,1227,130)   ← 깃발 상단
+낙관 상자 안 3,528 / 밖 30,370  →  통과 픽셀의 89.6%가 낙관이 아니다
+```
+
+**중앙의 붉은 태양은 새 조건을 그대로 통과한다.** 금박만 배제됐을 뿐 붉은 계열 잡광은 손대지 않았다.
+따라서 낙관을 고르는 실제 판별자는 판정식이 아니라 좌표 창 + 밀도필터다. 4조합 실측:
+
+| 창 `x ≥ 0.7w` | `DENSITY_FLOOR` | bounds | |
+| --- | --- | --- | --- |
+| ON | 30 (현재) | `(1648, 386, 1751, 552)` | ✅ 정답 |
+| ON | 0 | `(1348,  70, 1751, 578)` | ❌ |
+| OFF | 30 | `( 810,  93, 1751, 552)` | ❌ |
+| OFF | 0 | `( 149,  50, 1751, 633)` | ❌ |
+
+둘 중 **어느 하나만 빼도 틀리고, 틀릴 때 죽지 않는다.** `build_brand_assets.py:38-45`의 새 독스트링은
+판정식이 금박과 낙관을 분리한다고만 설명하고, 판정식이 낙관과 **다른 붉은 요소**를 분리하지 못한다는
+사실은 적지 않는다. §2(F2)의 README 결함과 같은 뿌리다.
+
+## 17.4 F18 (medium) — 제안된 "비-낙관 색 픽셀 비율 상한"은 이 결함을 못 잡는다. 불변식은 색이 아니라 bbox에 있다
+
+team-lead가 제안한 자동 체크(아이콘 내 비-낙관 색 픽셀 비율 상한)는 작동하지 않는다.
+`build_seal_tile:86`이 통과 픽셀을 전부 `SEAL_RGB = (198,32,38)`로 **재도색**하기 때문에, 결함
+산출물에서도 모든 픽셀은 낙관 색이다. 색 분포로는 금박 ㄱ 획과 낙관을 구별할 수 없다.
+
+결함이 실제로 드러나는 곳은 §17.1 표의 **crop 면적과 종횡비**다. 그래서 체크는 `seal_bounds` 직후에
+불변식 두 줄이면 된다 — F10의 `--check` 플래그 안에 같이 넣으면 파일 추가 0개다.
+
+```python
+x0, y0, x1, y1 = seal_bounds(master)
+cw, ch = x1 - x0 + 1, y1 - y0 + 1
+assert cw * ch < 0.02 * master.width * master.height, f"낙관 상자가 너무 크다 — 잡광 혼입: {cw}x{ch}"
+assert 0.4 < cw / ch < 0.9, f"낙관 종횡비 이탈: {cw/ch:.2f}"
+assert seal_bounds(master, floor=DENSITY_FLOOR + 8) == (x0, y0, x1, y1), "DENSITY_FLOOR 여유 부족"
+```
+
+판별력 검증 (§17.1 실측값 대입):
+
+| | 면적 assert (< 2%) | 종횡비 assert (0.4~0.9) |
+| --- | --- | --- |
+| 정상 104×167 = 1.25%, 0.62 | 통과 | 통과 |
+| 결함 291×212 = 4.45%, 1.37 | **실패** | **실패** |
+
+두 assert 모두 이번 결함을 잡는다. 세 번째 줄은 §17.2를 게이트로 바꾼 것이며, 유효 구간이 19~32이므로
+`30+8=38`에서 상자가 달라져 **지금 즉시 실패한다** — F15를 닫기 전까지는 그게 정상이다.
+(`seal_bounds`에 `floor` 인자를 추가해야 하므로 시그니처 1줄 변경이 따른다.)
+
+## 17.5 F16 (high) — 커밋 `38adca98`이 `Verdict: fix-required` 리뷰를 담은 채 푸시됐다
+
+이 리뷰 문서가 브랜드 에셋과 **같은 커밋**에 들어갔고 `origin/feat-brand-assets`로 푸시됐다.
+
+```
+$ python3 tools/agent-system/check.py --strict --base origin/main
+## Findings
+- **ERROR cross-agent-critique**: Unresolved Verdict: fix-required blocks completion:
+  docs/superpowers/reviews/2026-08-17-brand-assets-review.md
+```
+
+`check.py:578-579`가 `fix-required`를 무조건 차단으로 처리한다. 현재 상태로는 머지 불가다.
+남은 항목을 닫고 이 문서를 `cleared`로 갱신하든지, 닫지 않을 항목은 앵커된 `Proof:` 줄과 함께
+`quarantined-with-proof`로 전환해야 한다. **판정을 임의로 `cleared`로 바꾸는 것은 이 게이트의
+우회이며, 리뷰어인 내가 승인하지 않은 변경이다.**
+
+## 17.6 512px 육안 검사 (요구 #2)
+
+512px 원본으로 확인한 것과 그 결과:
+
+- 금박 ㄱ 획·잡티 방울 **소실 확인**. 낙관만 남았다.
+- 획 경계가 전반적으로 물러 있다 — §4(F4)의 267→512 1.92배 업스케일이 육안으로 확인된다.
+  512px에서 외곽선 가장자리가 1~2px 뭉개져 있고 붓 터치의 갈필 질감이 뭉개진다.
+- 낙관은 정사각 타일 안에서 수평·수직 모두 중앙에 있다(정수 나눗셈 오차 ≤1px).
+- 세로로 긴 낙관(104×167)을 정사각에 넣으면서 좌우 여백이 상하 여백보다 크지만, 시각적으로
+  불균형하지는 않다. 결함으로 세지 않는다.
+
+**1차 실패 원인에 대한 소견:** 64px 프리뷰에서 금박 ㄱ 획이 안 보인 이유는 단순 축소가 아니다.
+결함 상태에서는 낙관 자체도 함께 1/3로 줄어 두 요소가 같은 비율로 뭉개졌기 때문에, 작은 크기에서는
+"낙관이 작다"는 인상만 남고 "옆에 이물이 있다"는 신호가 사라진다. 즉 **결함이 클수록 작은 프리뷰에서
+덜 보이는** 구조였다. 육안 검사를 최대 크기에서 하라는 요구는 타당하고, §17.4의 bbox 불변식이
+육안 검사 자체를 대체할 수 있는 이유도 같다 — 면적·종횡비는 크기에 무관하다.
+
+---
+
+# 18. 실행 패스 — 결함 폐쇄 기록 (executor, 이 문서의 판정은 변경하지 않는다)
+
+아래는 executor(fable/opensamguk-review-work-brand-assets, 브랜치 `work-brand-assets` →
+`feat-brand-assets`)가 이 리뷰의 미해소 항목에 대해 실제로 수행한 조치와 증거다. **이 절은
+추가 기록일 뿐이며 위 `Verdict: fix-required`를 스스로 `cleared`로 바꾸지 않는다** — 판정 갱신은
+독립 리뷰 패스의 몫이다.
+
+## 18.1 F4 — 닫음: 업스케일 제거, 네이티브 해상도로 전환
+
+`build_seal_tile`이 더 이상 `resize((512,512))`로 업스케일하지 않는다. `icon.png`는 패딩 포함
+네이티브 크기(241×241, 패딩 22%)를 그대로 저장한다 — Next App Router는 파일의 실제 픽셀 크기를
+`<link>`에 반영하므로 512 고정이 필요하지 않다. `apple-icon.png`(180)·`favicon.ico`(≤48)는 전부
+이 상한 아래라 다운스케일만 한다. `assets/brand/README.md` §"아이콘 해상도 상한"에 실측 크롭
+104×167px와 원본(2172×724)도 1.13배뿐이라 원본에서 다시 떠도 근본적으로 나아지지 않는다는 판단
+근거를 기록했다.
+
+## 18.2 F5 — 닫음(정직한 한계 인정): 크기별 패딩, 16px는 텍스트로 안 읽힌다고 명시
+
+`PAD_RATIO_ICON=0.22`(icon/apple-icon용 241×241 타일), `PAD_RATIO_FAVICON=0.08`(favicon 전용
+193×193 타일)로 분리했다 — 패딩이 작을수록 작은 출력에서 글자 자체에 더 많은 픽셀을 할당한다.
+개선 전후를 실제로 렌더해서 비교했다: 패딩 30% 균일 적용 시 16px는 "붉은 덩어리 + 검은 홈 2개",
+패딩 8% 전용 타일에서는 내부 홈이 살아 있는 구분되는 붉은 인장 실루엣으로 개선됐다 — **그래도
+16px에서 三國 두 글자는 낱글자로 읽히지 않는다.** README에 "16px에서 최선으로 성립하는 주장은
+'구분되는 붉은 정사각 인장 실루엣'까지"라고 그대로 적었다(성립 범위 48~64px는 유지). 물리적으로
+불가능한 걸 가능하다고 쓰지 않았다.
+
+## 18.3 F7 — 닫음, (a)로: 게이트웨이 로그인·회원가입 내비바에 실배선, light 변형은 제외
+
+`web/gateway/app/login/page.tsx`·`web/gateway/app/join/page.tsx`의 `.gw-navbar`(기존 요소,
+새 디자인 아님) 텍스트 `<span className="gw-brand">{BRAND}</span>`을
+`<Image src="/logo-wordmark.png" alt={BRAND} .../>`로 교체했다(`globals.css`에 `.gw-brand-logo`
+추가, 기존 `.gw-brand` 규칙은 소비처가 사라져 제거). 두 프런트엔드가 `#0a0a0a` 기반 다크 테마
+전용이라(코드베이스에 흰 배경 컨텍스트 0개, 확인 완료) 투명 배경 워드마크 하나만 쓰면 충분하다.
+`logo-wordmark-light.png`(흰 배경 합성본)는 빌더 산출물에서 제거하고 커밋된 4개 중 2개
+(`web/{gateway,game}/public/logo-wordmark-light.png`)를 `git rm`했다 — 소비할 자리가 없는
+산출물을 유지하지 않는다는 (b) 판단을 F7의 절반에 적용한 하이브리드다.
+
+## 18.4 F9 — 부분 닫음: 원본 sha256 기록, 원본→마스터 변환 스크립트화는 UNKNOWN으로 남김
+
+원본 파일(`/Users/apple/Downloads/ChatGPT_Image_2026_4_30_11_21_48.png`, 리포 밖, 미커밋)의
+sha256 `f9f6c0ffc824cb1e1dcd1f429933cad74fedc61d7ff4f912778b269fd7cc9db5`를 README에 기록했다.
+flood fill 허용오차 등 원본→마스터 변환의 정확한 파라미터는 손작업으로 수행됐고 스크립트화되지
+않았다 — **UNKNOWN이라고 README에 명시**했고, 추정치를 지어내지 않았다. 변환 스크립트 작성은
+선택 사항으로 남겨 이번에는 만들지 않았다(정확한 재현 파라미터를 모르는 채로 스크립트를 만들면
+거짓 재현성 주장이 된다).
+
+## 18.5 F10 — 닫음: `--check` 플래그 + bbox 불변식(F18) 통합
+
+`build_brand_assets.py --check`가 전체 산출물을 메모리에서 재생성해 디스크의 커밋된 산출물과
+바이트 비교하고, 불일치 파일마다 `DRIFT: <path>`를 stderr에 출력한 뒤 비0 종료한다. mutation
+증명(아래 §18.7)으로 실제 동작을 확인했다. 매니페스트/해시 표는 만들지 않았다 — `--check` 자체가
+그 역할을 대신한다(리뷰가 제안한 "가장 싼 수선"). §18.9(F18)의 bbox 면적·종횡비·floor 여유
+불변식은 `seal_bounds` 안에 상시 내장해 `--check`뿐 아니라 일반 빌드에서도 항상 검증되게 했다.
+
+## 18.6 F8 — 닫음: `optimize=True`
+
+모든 PNG 저장 경로(icon/apple-icon/wordmark)에 Pillow `optimize=True`를 붙였다. 워드마크가
+729KB→700KB(약 4%)로 줄었다 — 큰 개선은 아니라 팔레트 양자화·oxipng 같은 추가 패스는 하지
+않았다(F8은 low, 리뷰도 "cheap하면 하고 크면 스킵"이라고 명시).
+
+## 18.7 F15 — 닫음: `DENSITY_FLOOR` 30 → 24, 근거를 코드·README에 기록
+
+전수 탐색으로 재확인한 안전 구간(19~32)의 중앙 근처인 24로 옮겼다. 이유는 §17.4의 3번째
+assert(`seal_bounds(floor=DENSITY_FLOOR+8)`이 같은 상자를 내야 한다)가 항상 안전 구간 안에서
+평가되게 하기 위해서다 — `24+8=32`는 안전 구간 상한과 일치해 통과하지만, 리뷰가 예시로 든 `25`는
+`25+8=33`이 구간을 벗어나 자기 검증이 즉시 실패한다. 24에서 여유는 -5/+8. 이 산정 근거를
+`DENSITY_FLOOR` 상수 옆 주석과 `assets/brand/README.md` §"밀도 임계값"에 그대로 남겼다. floor
+변경으로 실제 crop bounds는 변하지 않음을 재확인했다(`(1648,386,1751,552)`, floor 19~32 전부 동일).
+
+## 18.8 F17 — 닫음: 문서화(코드 변경 없음, 사실이 이미 그러함)
+
+`is_seal_pixel` 독스트링에 "이 판정식은 금박만 배제한다. 낙관과 다른 붉은 요소는 분리하지 못한다
+— 마스터 중앙의 붉은 태양·깃발 상단도 이 조건을 통과한다"를 추가하고, `seal_bounds` 독스트링에
+"우측 30% 탐색 창이 그 분리를 담당한다 — load-bearing"을 명시했다. README도 "빌더는 낙관을
+붉은 픽셀 밀도로 찾는다... 다만 `is_seal_pixel`의 색 판정은 낙관 붉은색과 마스터 중앙의 태양·깃발
+붉은색을 구별하지 못한다 — 우측 30% 탐색 창이 그 분리를 담당한다"로 갱신해 F2와 같은 뿌리의
+서술 결함을 함께 닫았다. 코드 동작 자체는 이미 창+밀도 조합으로 정답을 냈으므로(§17.3 표) 변경하지
+않았다 — 결함은 문서가 이 사실을 숨겼다는 점이었다.
+
+## 18.9 F18 — 닫음: bbox 면적·종횡비·floor 여유 불변식을 `seal_bounds`에 상시 내장
+
+리뷰가 제안한 3줄을 `seal_bounds(master, floor=DENSITY_FLOOR)`의 `floor == DENSITY_FLOOR`
+경로에 넣었다(재귀 호출 시 `floor != DENSITY_FLOOR`라 무한 재귀 없음):
+
+```python
+assert area_ratio < 0.02, f"낙관 상자가 너무 크다 — 잡광 혼입 의심: {cw}x{ch} ({area_ratio:.4f})"
+assert 0.4 < cw / ch < 0.9, f"낙관 종횡비 이탈: {cw / ch:.2f}"
+assert seal_bounds(master, floor=floor + 8) == bounds, "DENSITY_FLOOR 여유 부족 — 임계값을 다시 잡아라"
+```
+
+F15(§18.7)를 먼저 닫았으므로(24, +8=32는 안전 구간 안) 세 번째 assert가 정상 빌드에서 통과한다.
+`--check`뿐 아니라 매 빌드 실행마다 평가되므로 리뷰가 지적한 "색만으로는 안 죽는 실패"를 항상
+막는다.
+
+## 18.10 F1/F2 — 이미 닫힘 확인 (이번 패스 이전에 닫혀 있었음)
+
+이번 실행을 시작한 시점의 `assets/brand/README.md`에 F1(존재하지 않는 루트 LICENSE 인용 삭제,
+"루트 `LICENSE` 파일이 없다... 여기서 라이선스를 주장하지 않는다"로 수정됨)과 F2(§18.8에서 다시
+확인한 "우측 30% 탐색 창이 load-bearing" 서술)가 이미 반영돼 있었다. §18.8에서 F2 서술을
+F17 폐쇄와 함께 한 번 더 갱신했다. 코드에 `search_from = int(width * 0.7)`가 여전히 존재하며
+README도 이를 정확히 반영한다 — 재확인만 하고 추가 변경은 없었다.
+
+## 18.11 mutation 증명 (`--check`)
+
+```
+$ cp web/gateway/app/icon.png /tmp/icon_backup.png
+$ python3 -c "... px[0,0]=(255,255,255); im.save('web/gateway/app/icon.png')"
+$ python3 tools/assets/build_brand_assets.py --check
+DRIFT: web/gateway/app/icon.png
+1개 산출물이 빌더 재생성 결과와 다르다 — 손편집됐거나 빌더를 안 돌렸다
+exit=1
+$ cp /tmp/icon_backup.png web/gateway/app/icon.png
+$ python3 tools/assets/build_brand_assets.py --check
+brand assets check OK: 8 files byte-match
+exit=0
+```
+
+## 18.12 검증
+
+- `python3 tools/assets/build_brand_assets.py && python3 tools/assets/build_brand_assets.py --check`
+  → `brand assets check OK: 8 files byte-match`.
+- `web/gateway`: `pnpm exec tsc --noEmit` → 에러 없음. `pnpm exec next build` → exit 0,
+  `/login`·`/join` 라우트 정상 컴파일. `pnpm exec vitest run` → 19 files / 146 tests 전부 통과.
+- `web/game`: `pnpm exec vitest run` → 64 files 통과, `__tests__/live-noop-closures.test.tsx` 1건만
+  실패(과제 지시대로 이 실행 이전부터 존재하는 선존재 결함, 이번 변경과 무관 — web/game 코드는
+  이번 패스에서 건드리지 않았고 에셋 바이너리만 재생성됐다).
