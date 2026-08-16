@@ -91,6 +91,10 @@ data class AdministrativeChange(
 ) {
     init {
         require(id !in dependsOnChangeIds) { "AdministrativeChange $id cannot depend on itself" }
+        // [effectiveFrom, effectiveTo) 도 ValidTime 과 같은 반열림 규칙을 따른다 — 역전·0길이 창 금지.
+        require(effectiveTo == null || effectiveTo > effectiveFrom) {
+            "AdministrativeChange $id effective window must be half-open: $effectiveFrom..$effectiveTo"
+        }
         require(subjectUnitIds.isNotEmpty() || successorUnitIds.isNotEmpty()) {
             "AdministrativeChange $id must name at least one subject or successor unit"
         }

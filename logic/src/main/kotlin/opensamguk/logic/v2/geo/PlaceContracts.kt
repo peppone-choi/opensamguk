@@ -46,6 +46,11 @@ data class CandidateRegion(
 ) {
     init {
         require(envelope.size >= 3) { "CandidateRegion $id envelope needs >= 3 points" }
+        // 투영 버전이 섞이면 envelope 는 replay 간 같은 영역을 뜻하지 않는다.
+        require(envelope.distinctBy { it.projectionVersion }.size == 1) {
+            "CandidateRegion $id envelope mixes projection versions: " +
+                envelope.map { it.projectionVersion }.distinct()
+        }
     }
 }
 
@@ -90,10 +95,14 @@ data class PhysicalPlace(
         }
     }
 
-    /** T1-B10 — 불확실 위치 UI는 이 배지로만 복원 여부를 표시한다. */
+    /**
+     * T1-B10 — 불확실 위치 UI는 이 배지로만 복원 여부를 표시한다.
+     * [uncertaintyRadius]가 붙은 순간 그 점은 확정 사료가 아니므로 RESOLVED_POINT·ATTESTED여도 배지를 켠다.
+     */
     val showsReconstructionBadge: Boolean
         get() = locationResolution == LocationResolution.CANDIDATE_REGION ||
-            confidence != Confidence.ATTESTED
+            confidence != Confidence.ATTESTED ||
+            uncertaintyRadius != null
 }
 
 /** PlaceControl이 행사하는 권한 축. */

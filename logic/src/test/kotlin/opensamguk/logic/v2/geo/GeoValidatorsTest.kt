@@ -364,6 +364,75 @@ class GeoContractInvariantTest {
     }
 
     @Test
+    fun `administrative change window is half open like ValidTime`() {
+        assertFailsWith<IllegalArgumentException> {
+            AdministrativeChange(
+                id = "c3",
+                type = AdministrativeChangeType.RETIRE,
+                effectiveFrom = d(200),
+                effectiveTo = d(140),
+                subjectUnitIds = listOf("u1"),
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AdministrativeChange(
+                id = "c4",
+                type = AdministrativeChangeType.RETIRE,
+                effectiveFrom = d(200),
+                effectiveTo = d(200),
+                subjectUnitIds = listOf("u1"),
+            )
+        }
+        AdministrativeChange(
+            id = "c5",
+            type = AdministrativeChangeType.RETIRE,
+            effectiveFrom = d(200),
+            effectiveTo = d(201),
+            subjectUnitIds = listOf("u1"),
+        )
+    }
+
+    @Test
+    fun `candidate region envelope may not mix projection versions`() {
+        assertFailsWith<IllegalArgumentException> {
+            CandidateRegion(
+                id = "r-mixed",
+                derivedFromUnitId = "commandery-1",
+                envelope = listOf(
+                    GeoPoint(0.0, 0.0, "p1"),
+                    GeoPoint(1.0, 0.0, "p2"),
+                    GeoPoint(0.0, 1.0, "p1"),
+                ),
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            CandidateRegion(
+                id = "r-thin",
+                derivedFromUnitId = "commandery-1",
+                envelope = listOf(GeoPoint(0.0, 0.0, "p1"), GeoPoint(1.0, 0.0, "p1")),
+            )
+        }
+    }
+
+    @Test
+    fun `an uncertainty radius always shows the reconstruction badge`() {
+        val hedged = PhysicalPlace(
+            id = "p4",
+            names = listOf(TemporalName("p4", vt(140))),
+            type = PlaceType.SETTLEMENT,
+            developmentClass = DevelopmentClass.TOWN,
+            placeIdentityKey = "p4",
+            placeBudgetClass = PlaceBudgetClass.ADMINISTRATIVE_SETTLEMENT,
+            locationResolution = LocationResolution.RESOLVED_POINT,
+            coordinate = GeoPoint(1.0, 2.0, "p1"),
+            uncertaintyRadius = 40.0,
+            time = vt(140),
+            confidence = Confidence.ATTESTED,
+        )
+        assertTrue(hedged.showsReconstructionBadge)
+    }
+
+    @Test
     fun `requireNoViolations throws with every violation listed`() {
         val error = assertFailsWith<IllegalArgumentException> {
             requireNoViolations(listOf("a", "b"))
