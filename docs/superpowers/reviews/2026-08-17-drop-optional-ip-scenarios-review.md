@@ -1,7 +1,7 @@
 # 옵션 IP 초상 세트 전량 제거(메인 레포 쪽) — 독립 적대적 리뷰
 
 Scope: `data/extracted/scenario/` 16개 시나리오 JSON 삭제 + `_meta.json` 항목 제거, `app/gateway-api/src/main/resources/profile-icons/shared-manifest.json` 핀 SHA 갱신, 감사 문서·LEDGER 각주.
-Verdict: fix-required
+Verdict: cleared
 
 리뷰 대상: 브랜치 `chore-drop-optional-ip-scenarios`, 커밋 `c7827e3e`, base `origin/main`.
 이 리뷰는 변경을 만든 레인과 **독립된 에이전트**가 작성했고, 앞선 자체 리뷰 본문은 전부 폐기하고 처음부터 재검증했다.
@@ -17,10 +17,10 @@ Verdict: fix-required
 | 2 | 고아 참조 (코드/설정/테스트/docs/CI) | **FAIL→CLOSED (F1)** — 레인이 미실행 인정한 백엔드 테스트 안에 실패가 숨어 있었다. `df8068e7`로 수정·재검증 green |
 | 3 | `_meta.json` 정합 | **PASS** — count 81→65, 배열 길이·순서·포맷 무결 |
 | 4 | 핀 SHA 실측 | **PASS** — URL·해시·치수 4/4 일치 (연동 결함은 F1에서 종결) |
-| 5 | LEDGER 각주 처리 | **FAIL (F2)** — 각주의 핵심 주장이 사실과 다르다 |
+| 5 | LEDGER 각주 처리 | **FAIL→CLOSED (F2)** — `20c9388e`가 실측대로 정정, 문구 대조 완료 |
 | 6 | `web/game` vitest | **조건부 PASS** — 2 fail은 이 브랜치와 무관함을 증명 |
 | 7 | 범위 밖 변경 | **PASS** — 스코프 밖 파일 0 |
-| 8 | (추가 발견) 퍼지 잔여물 | **FAIL (F3)** — 포켓몬 IP 맵 데이터가 메인 레포에 남았다 |
+| 8 | (추가 발견) 퍼지 잔여물 | **FAIL→CLOSED (F3)** — `20c9388e`가 맵 2종 + `CDN_MAPS` 항목 2개 제거 |
 
 ---
 
@@ -231,8 +231,45 @@ $ git diff origin/main...HEAD --stat
 
 ---
 
+## 10. F2·F3 수정 재검증 — 커밋 `20c9388e`
+
+수정자와 승인자를 분리하기 위해 조율자의 수정을 내가 다시 측정했다.
+
+**F2 문구 대조 — 정확, 과장·축소 없음.** `LEDGER.md:85`에서 `"that revision no longer exists in the rewritten history"`가 사라졌고, 대신 `**The old revision is unreferenced, NOT gone:**` … `still returns 200 for the removed files (measured 2026-08-17)` … `only a GitHub Support unreachable-object purge or a delete-and-recreate of the repository does`로 다시 쓰였다. 이는 내가 §5에서 실측한 내용과 **한 글자도 어긋나지 않는다**(옛 SHA 200, 신규 SHA 404, contents API가 퍼지 대상 디렉터리를 그대로 열거). 감사 문서 부록 D 말미에도 같은 ⚠️ 항목이 들어갔고, `- **시나리오 코드 참조는 0건.**` + `- **단, 역방향 고아가 두 건 있었다**`로 나뉘어 F1·F3을 포함하도록 재작성됐다 — 내 지적(§9)대로다.
+
+**F3 제거 완전성 — 완전.** `grep -rIn "pokemon"`(`.git`/`node_modules`/`build`/`legacy` 제외) 잔존은 4종뿐이다: 두 컴포넌트의 **사유 주석 2줄**, 감사 문서 부록 D의 제거 기록, 그리고 `2026-05-30-p3-research.md`·`2026-06-29-…-review.md`의 **과거 서술**. 실행 경로 참조 0건.
+
+- **조용히 깨지는 로더 없음.** 맵 리소스를 열거해 로드하는 코드는 없다 — Kotlin은 전부 이름 지정 로드(`ScenarioImporterIT.kt:84` 등 `readResource("map/che.json")`·`map/miniche_b.json`)이고 `pokemon_v1`을 이름으로 부르는 곳은 0건이다. 디렉터리 스캔·`classpath*:map/**` 패턴도 없다. 따라서 파일 2개 삭제로 실패하는 테스트는 없다(아래 게이트가 실증).
+- **폴백 안전.** 두 컴포넌트의 `cdnMapCode()`는 문자 단위로 동일하다(`MapViewer.tsx:110-113` ≡ `MapPreview.tsx:90-93`): `MINICHE_MAPS`면 `che`, 아니면 `CDN_MAPS.has(mc) ? mc : 'che'`. 목록에서 빠진 코드는 **미지 코드와 같은 경로로 `che`에 폴백**하며, `che` 타일은 200임을 §8에서 실측했다. `cdnRoadName()`도 `che_road.png`로 귀착한다. **동작 차이 없음** — 두 파일 diff는 각각 주석 2줄 + 목록 1항목 제거로 동일하다. `MapViewer.interaction.test.tsx:103-117`의 파라미터 목록은 miniche 계열 3종뿐이라 영향 없다.
+
+**§9 부수 지적 처리 — 옳다.** `a2-scenario-seed-sha256.txt` 본문은 그대로고 `shasum -a 256` = `f42d3a4f935be3a63de1524f146819c7b9bc1160c0b3aa255f7eb57a32bbbb67`로 `MANIFEST.md:34` 표 값과 일치한다(해시 계약 무손상). `MANIFEST.md` 자체의 sha256이 고정된 곳은 **없다** — 레포 전체에서 `MANIFEST.md`를 언급하는 곳은 생성 스크립트·서술 참조뿐이고, 같은 파일 48·65행의 awk 스니펫은 `a1~a4` 행을 읽는 검증기라 각주 추가에 영향받지 않는다. 즉 각주를 MANIFEST에 단 판단이 맞다.
+
+**게이트 — 내가 직접 재실행, XML로 집계(exit code 무시).**
+
+```
+$ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test :logic:test :infra:test \
+    :app:game-engine:test :app:game-api:test :app:gateway-api:test --rerun-tasks
+BUILD SUCCESSFUL in 11m 41s        35 actionable tasks: 35 executed
+
+common           suites= 39 tests= 232 failures=0 errors=0 skipped=0
+logic            suites=283 tests=3230 failures=0 errors=0 skipped=0
+infra            suites= 58 tests= 239 failures=0 errors=0 skipped=0
+app/game-engine  suites=140 tests= 848 failures=0 errors=0 skipped=1
+app/game-api     suites= 74 tests= 510 failures=0 errors=0 skipped=0
+app/gateway-api  suites= 33 tests= 200 failures=0 errors=0 skipped=0
+                                 합계 5,259 tests / failures 0 / errors 0
+```
+
+조율자 측정치(infra 239·engine 848/1 skipped·game-api 510·logic 3230·gateway-api 200)와 **전부 일치**한다.
+
+**프런트 — 내가 재실행.** `web/game` `tsc --noEmit` 오류 0, `web/gateway` `tsc --noEmit` 오류 0(exit 0). `web/game` vitest `2 failed | 370 passed (372)`이고 실패 2건은 §6과 동일한 `v2-space-proof`(기본 5초 타임아웃, 연장 시 통과)·`live-noop-closures`다. 두 파일 모두 `MapViewer`·`MapPreview`·`pokemon` 중 **어느 것도 참조하지 않는다**(grep 0건). 조율자가 `MapViewer.tsx`만 `origin/main`으로 되돌려 `live-noop-closures`를 재실행했을 때도 동일 실패 → **선행 결함 확정**, §6의 UNKNOWN을 닫는다.
+
+**잔여 nit(비차단).** 감사 문서 `2026-08-17-asset-license-audit.md:63`의 이미지 레포 `game/` 인벤토리 행은 아직 맵 타일 목록에 `pokemon_v1`을 포함한다. 그 표는 퍼지 이전 인벤토리 서술이고 부록 D가 삭제 사실을 기록하므로 모순은 아니지만, 언젠가 그 행에도 §2-2처럼 제거 표기를 다는 편이 깔끔하다.
+
+---
+
 ## 결론
 
-전수 스캔·`_meta.json` 정합·핀 SHA 값·스코프 격리는 재현 검증으로 모두 **통과**했다. F1(`:app:gateway-api:test` 파손)은 리뷰 중 `df8068e7`로 수정됐고 33 suites / 200 tests / failures·errors 0으로 재검증해 **종결**했다.
+전수 스캔·`_meta.json` 정합·핀 SHA 값·스코프 격리는 재현 검증으로 모두 **통과**했다. 차단 3건이 모두 닫혔고 각각 **수정자가 아닌 내가** 재측정했다 — F1은 `df8068e7`(gateway-api 200/0), F2·F3은 `20c9388e`(문구 실측 대조 + `pokemon` 실행 경로 참조 0건 + 폴백 등가성 확인). 백엔드 게이트는 6개 모듈 **5,259 tests / failures 0 / errors 0**(XML 직접 집계), 프런트 `tsc` 양쪽 0 오류, vitest 실패 2건은 이 브랜치와 무관함을 두 방향으로 증명했다. 따라서 **`cleared`**.
 
-남은 차단 사유는 두 건이다. (F2) LEDGER 각주의 핵심 사실 주장이 실측과 다르며, 삭제했다는 2,335장이 옛 SHA로 지금도 공개 접근 가능하다 — 이 작업의 존재 이유인 IP 리스크가 실제로 닫히지 않았다. (F3) 동일 IP 등급의 포켓몬 맵 데이터가 판단 기록 없이 메인 레포에 잔존한다. **두 건이 닫히기 전까지 `fix-required`다.**
+**단, 이 `cleared`는 코드 변경에 대한 것이지 IP 리스크 종결에 대한 것이 아니다.** 옛 리비전 `1b6624d8…`로 2,335장이 여전히 공개 접근된다. 이제 그 사실이 LEDGER와 감사 문서에 ⚠️로 명시돼 있으므로 **은폐가 아니라 열린 항목으로 기록된 상태**이고, 그것이 이 브랜치가 할 수 있는 전부다. 닫는 조치(GitHub Support unreachable-object purge 또는 레포 삭제·재생성)는 별도 티켓으로 추적해야 하며, 그 전까지 어디에서도 "제거 완료"로 기록하면 안 된다.
