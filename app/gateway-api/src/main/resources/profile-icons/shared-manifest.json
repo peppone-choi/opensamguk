@@ -16,9 +16,9 @@
       "operational_fallback": false,
       "cleared_fallback": false,
       "source_repository": "https://github.com/peppone-choi/opensamguk-images",
-      "source_revision": "1b6624d886c1b326a2feeda449288b41231df5ef",
+      "source_revision": "05842c61132fd5a71268fd9babd80ba74e27be62",
       "source_path": "icons/1001.jpg",
-      "delivery_url": "https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images@1b6624d886c1b326a2feeda449288b41231df5ef/icons/1001.jpg",
+      "delivery_url": "https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images@05842c61132fd5a71268fd9babd80ba74e27be62/icons/1001.jpg",
       "provenance_status": "pinned-immutable-byte-evidence",
       "license_status": "unknown",
       "redistribution_status": "unknown"
@@ -35,9 +35,9 @@
       "operational_fallback": true,
       "cleared_fallback": false,
       "source_repository": "https://github.com/peppone-choi/opensamguk-images",
-      "source_revision": "1b6624d886c1b326a2feeda449288b41231df5ef",
+      "source_revision": "05842c61132fd5a71268fd9babd80ba74e27be62",
       "source_path": "icons/default.jpg",
-      "delivery_url": "https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images@1b6624d886c1b326a2feeda449288b41231df5ef/icons/default.jpg",
+      "delivery_url": "https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images@05842c61132fd5a71268fd9babd80ba74e27be62/icons/default.jpg",
       "provenance_status": "pinned-immutable-byte-evidence",
       "license_status": "unknown",
       "redistribution_status": "unknown"

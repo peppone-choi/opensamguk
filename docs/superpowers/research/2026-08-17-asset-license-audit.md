@@ -75,16 +75,16 @@
 
 | 디렉터리 | 파일 | 파일명 예시 | 추정 원저작권자 | 판정 |
 |---|---|---|---|---|
-| `걸그룹` | 530 | `AOA 민아.png`, `ITZY 예지.png`, `CL.png` | **실존 인물 사진** — 사진 저작권 + 초상권(퍼블리시티권) | **UNKNOWN** |
-| `루드라사움` | 464 | `가넷.png`, `가라샤.png`, `3G.png` | 출처 미확인 | **UNKNOWN** |
-| `롤시나리오` | 439 | `가렌.png`, `갈리오.png`, `Faker.jpg` | Riot Games (League of Legends) + 실존 프로게이머 사진 | **UNKNOWN** |
-| `스타1프로게이머` | 297 | `강민.jpg`, `강도경.jpg`, `hao lei.jpg` | **실존 인물 사진** | **UNKNOWN** |
-| `포켓몬스터` | 291 | `갸라도스.png`, `강철톤.png` | The Pokémon Company / Nintendo / Game Freak | **UNKNOWN** |
-| `환상향` | 176 | `구마리사.png`, `겐지.png` | 東方Project (上海アリス幻樂団) 및 2차 창작 | **UNKNOWN** |
-| `강서유서월드` | 108 | `가마오.webp`, `니아드라.webp` | 출처 미확인 | **UNKNOWN** |
-| `쿠키런킹덤` | 22 | `용감한쿠키.png`, `어둠마녀.png` | Devsisters | **UNKNOWN** |
-| `삼모시네마틱유니버스` | 7 | `사스케.jpg`, `정승필.png` | 커뮤니티 창작 추정, 출처 미확인 | **UNKNOWN** |
-| `삼국지6` | 1 | `헌제.jpg` | 코에이 테크모 (삼국지6) | **UNKNOWN** |
+| `걸그룹` | 530 | `AOA 민아.png`, `ITZY 예지.png`, `CL.png` | **실존 인물 사진** — 사진 저작권 + 초상권(퍼블리시티권) | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `루드라사움` | 464 | `가넷.png`, `가라샤.png`, `3G.png` | 출처 미확인 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `롤시나리오` | 439 | `가렌.png`, `갈리오.png`, `Faker.jpg` | Riot Games (League of Legends) + 실존 프로게이머 사진 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `스타1프로게이머` | 297 | `강민.jpg`, `강도경.jpg`, `hao lei.jpg` | **실존 인물 사진** | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `포켓몬스터` | 291 | `갸라도스.png`, `강철톤.png` | The Pokémon Company / Nintendo / Game Freak | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `환상향` | 176 | `구마리사.png`, `겐지.png` | 東方Project (上海アリス幻樂団) 및 2차 창작 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `강서유서월드` | 108 | `가마오.webp`, `니아드라.webp` | 출처 미확인 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `쿠키런킹덤` | 22 | `용감한쿠키.png`, `어둠마녀.png` | Devsisters | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `삼모시네마틱유니버스` | 7 | `사스케.jpg`, `정승필.png` | 커뮤니티 창작 추정, 출처 미확인 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `삼국지6` | 1 | `헌제.jpg` | 코에이 테크모 (삼국지6) | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
 
 ### 2-3. `portraits/rtk14/` — 자작 변환 / RTK14 콘텐츠
 
@@ -193,7 +193,9 @@
 
 나머지 65개는 `"."`(루트 `icons/`).
 
-**현재 시딩 대상에는 포함되지 않는다.** 시드는 classpath 또는 `SCENARIO_DIR`에서 파일을 읽는데(`ScenarioSeedRunner`), 커밋된 classpath 리소스 `infra/src/main/resources/scenario/`에는 31개(0·1·2·1010~1120·900~914)만 있고 **2xxx 프랜차이즈 시나리오는 없다**. 프로덕션 기본값도 `SCENARIO_CODE: scenario_1010`(`docker-compose.production.yml:67`)이다. 즉 프랜차이즈 아이콘 경로는 **데이터로는 레포에 있고, 실행 경로로는 비활성**이다.
+**현재 시딩 대상에는 포함되지 않는다.** 시드는 classpath 또는 `SCENARIO_DIR`에서 파일을 읽는데(`ScenarioSeedRunner`), 커밋된 classpath 리소스 `infra/src/main/resources/scenario/`에는 31개(0·1·2·1010~1120·900~914)만 있고 **2xxx 프랜차이즈 시나리오는 없다**. 프로덕션 기본값도 `SCENARIO_CODE: scenario_1010`(`docker-compose.production.yml:67`)이다. 즉 프랜차이즈 아이콘 경로는 **데이터로는 레포에 있고, 실행 경로로는 비활성**이었다.
+
+**2026-08-17 갱신: 위 16개 시나리오는 제거됐다** — `data/extracted/scenario/`에서 삭제, `_meta.json`에서 해당 항목 제거. 실행 경로가 비활성이었다는 사실 자체가 제거 근거는 아니다(실행 경로 비활성 ≠ 저장소에 남겨도 안전) — 판정 근거는 §2-2와 동일(초상권·제3자 IP·출처 미확인). 상세: 부록 D.
 
 ---
 
@@ -279,3 +281,13 @@ CHGIS 검토와 동일한 우회(브라우저 취득)가 필요하다.
 - `web/{gateway,game}/public/flags/*.png` 16장 — devsam `fFF0000.gif` 파생본을 버리고 `tools/assets/build_flag_assets.py`가 입력 이미지 없이 그리는 자작 12x12 픽셀아트로 **교체**했다. 런타임 계약(`flagTint.ts`의 cloth/pole 2레이어 · 4프레임)은 불변.
 
 표의 나머지 UNKNOWN 행(에셋 레포 전체, `assets/battle/v2/**`)은 손대지 않았다 — 여전히 UNKNOWN이다.
+
+## 부록 D. 옵션 IP 초상 세트 전량 제거 — 메인 레포 쪽 (2026-08-17)
+
+`opensamguk-images` 레포에서 §2-2의 10개 프랜차이즈/실존인물 세트(2,335장)를 히스토리까지 제거하는 결정과 짝을 이뤄, 메인 레포에서 그 세트를 참조하는 시나리오 데이터를 제거했다. 브랜치 `chore-drop-optional-ip-scenarios`.
+
+- **삭제한 시나리오 16개** (전수 스캔 `grep -rl <세트명> data/extracted/scenario/` 근거, 삼국지 시나리오의 참조 0건 확인): `scenario_2130`·`2131`(환상향), `scenario_2140`·`2141`(걸그룹), `scenario_2171`(루드라사움), `scenario_2200`(스타1프로게이머), `scenario_2210`(포켓몬스터), `scenario_2300`(쿠키런킹덤), `scenario_2600`·`2601`(삼모시네마틱유니버스), `scenario_2800`·`2801`(강서유서월드), `scenario_2900`·`2901`·`2903`·`2904`(롤시나리오).
+- `data/extracted/scenario/_meta.json`의 `scenarios` 배열에서 위 16개 항목 제거, `count` 81→65로 갱신.
+- `삼국지6`(1장)은 어떤 시나리오도 참조하지 않았다 — 메인 레포 쪽에 삭제할 시나리오가 없다(이미지 레포 쪽 삭제만 해당).
+- **깨지는 참조 없음.** 코드(`ScenarioImporter`/`ScenarioSeedRunner`/테스트) 전수 grep 결과 이 16개 코드에 대한 참조는 0건 — classpath 시드 목록(`infra/src/main/resources/scenario/`)에 애초에 없었고 `SCENARIO_CODE` 기본값도 `scenario_1010`이다. `docs/loops/opensam-35-v2-0a-2026-08-08/baseline/a2-scenario-seed-sha256.txt`에 과거 sha256 스냅샷이 남아 있으나 그 루프는 이미 닫힌 정적 기록이라 손대지 않았다.
+- `app/gateway-api/src/main/resources/profile-icons/shared-manifest.json`의 핀 고정 SHA는 이 조치 범위 밖 — 이미지 레포 히스토리 재작성 후 별도로 갱신된다.

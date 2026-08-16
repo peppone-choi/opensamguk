@@ -44,7 +44,7 @@
     "hwe/sammo/Scenario/GeneralBuilder.php",
     "hwe/sammo/Scenario/Nation.php"
   ],
-  "count": 81,
+  "count": 65,
   "scenarios": [
     {
       "code": "scenario_0",
@@ -467,54 +467,6 @@
       "core2026Identical": true
     },
     {
-      "code": "scenario_2130",
-      "title": "【가상모드13-a】 환상향 공",
-      "startYear": null,
-      "nations": 0,
-      "generals": 243,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 1,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2131",
-      "title": "【가상모드13-b】 환상향 춘",
-      "startYear": null,
-      "nations": 18,
-      "generals": 243,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 1,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2140",
-      "title": "【가상모드14】 걸그룹대전",
-      "startYear": null,
-      "nations": 0,
-      "generals": 460,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 1,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2141",
-      "title": "【가상모드14-b】 걸그룹대전(비급)",
-      "startYear": 180,
-      "nations": 0,
-      "generals": 460,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 7,
-      "core2026Identical": true
-    },
-    {
       "code": "scenario_2150",
       "title": "【가상모드15a】 소울소드",
       "startYear": null,
@@ -545,18 +497,6 @@
       "nations": 0,
       "generals": 755,
       "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 1,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2171",
-      "title": "【가상모드17】 루드라사움",
-      "startYear": 1,
-      "nations": 0,
-      "generals": 528,
-      "generalsEx": 37,
       "generalsNeutral": 0,
       "diplomacy": 0,
       "events": 1,
@@ -599,30 +539,6 @@
       "core2026Identical": true
     },
     {
-      "code": "scenario_2200",
-      "title": "【가상모드20】 스타크래프트 1 프로게이대전",
-      "startYear": 2002,
-      "nations": 0,
-      "generals": 477,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 1,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2210",
-      "title": "【가상모드21】 Poke-관동지방",
-      "startYear": 1993,
-      "nations": 0,
-      "generals": 153,
-      "generalsEx": 40,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 1,
-      "core2026Identical": true
-    },
-    {
       "code": "scenario_2220",
       "title": "【가상모드22】 찐유저무쌍!",
       "startYear": 180,
@@ -644,18 +560,6 @@
       "generalsNeutral": 0,
       "diplomacy": 0,
       "events": 7,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2300",
-      "title": "【가상모드23】 CookieRun : Kingdom",
-      "startYear": 180,
-      "nations": 0,
-      "generals": 59,
-      "generalsEx": 10,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 3,
       "core2026Identical": true
     },
     {
@@ -700,30 +604,6 @@
       "startYear": 180,
       "nations": 0,
       "generals": 698,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 7,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2600",
-      "title": "【가상모드26】 삼모 시네마틱 유니버스!",
-      "startYear": 180,
-      "nations": 0,
-      "generals": 880,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 1,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2601",
-      "title": "【가상모드26-b】 삼모 시네마틱 유니버스!(비급)",
-      "startYear": 180,
-      "nations": 0,
-      "generals": 880,
       "generalsEx": 0,
       "generalsNeutral": 0,
       "diplomacy": 0,
@@ -788,78 +668,6 @@
       "generalsNeutral": 0,
       "diplomacy": 0,
       "events": 7,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2800",
-      "title": "【가상모드28】 강서유서 월드",
-      "startYear": 180,
-      "nations": 7,
-      "generals": 364,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 7,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2801",
-      "title": "【가상모드28-b】 강서유서 월드(비세력)",
-      "startYear": 180,
-      "nations": 0,
-      "generals": 364,
-      "generalsEx": 0,
-      "generalsNeutral": 0,
-      "diplomacy": 0,
-      "events": 7,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2900",
-      "title": "【가상모드29】 리그오브레전드 v1.1",
-      "startYear": 2025,
-      "nations": 14,
-      "generals": 432,
-      "generalsEx": 0,
-      "generalsNeutral": 3,
-      "diplomacy": 0,
-      "events": 0,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2901",
-      "title": "【가상모드29-b】 리그오브레전드 v1.1 (비급)",
-      "startYear": 2025,
-      "nations": 14,
-      "generals": 432,
-      "generalsEx": 0,
-      "generalsNeutral": 3,
-      "diplomacy": 0,
-      "events": 0,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2903",
-      "title": "【가상모드29-d】 리그오브레전드 v1.1 (파죽지세)",
-      "startYear": 2025,
-      "nations": 14,
-      "generals": 432,
-      "generalsEx": 0,
-      "generalsNeutral": 3,
-      "diplomacy": 0,
-      "events": 0,
-      "core2026Identical": true
-    },
-    {
-      "code": "scenario_2904",
-      "title": "【가상모드29-e】 리그오브레전드 v1.1 (비급+파죽지세)",
-      "startYear": 2025,
-      "nations": 14,
-      "generals": 432,
-      "generalsEx": 0,
-      "generalsNeutral": 3,
-      "diplomacy": 0,
-      "events": 0,
       "core2026Identical": true
     },
     {
