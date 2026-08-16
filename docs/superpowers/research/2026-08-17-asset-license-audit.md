@@ -60,7 +60,7 @@
 | 경로 | blob | 내용 | 출처 |
 |---|---|---|---|
 | (root) | 3 | `LICENSE`, `README.md`, `.gitignore` | 자작 |
-| `game/` (하위 map 11 포함) | 427 | 깃발 `b<HEX>.png` 34, 도시아이콘 `cast_*.gif`, 상태 `event*.gif`, 배경 `back*.jpg`, `crewtype*.png`, 맵 타일 `map/{che,chess,cr,ludo_rathowm,pokemon_v1}` | `devsam/image` |
+| `game/` (하위 map 11 포함) | 427 | 깃발 `b<HEX>.png` 34, 도시아이콘 `cast_*.gif`, 상태 `event*.gif`, 배경 `back*.jpg`, `crewtype*.png`, 맵 타일 `map/{che,chess,cr,ludo_rathowm,~~pokemon_v1~~}` (`pokemon_v1`은 부록 D에서 제거) | `devsam/image` |
 | `game/src/` | 49 | 병종 일러스트 `각궁병.jpg`·`기병.jpg`·`목우.jpg` 등 한글 병종명 | `devsam/image` (원저작자 UNKNOWN) |
 | `hook/` | 5 | `hook.php`, `git_pull.php`, `InstallKey.php`, `HashKey.orig.php`, `gogs_key.orig.php` — 운영 PHP 스크립트 | `devsam/image` |
 | `icons/` (루트) | 1,832 | 삼국지 장수 초상 `0.jpg`…`4000+.jpg` (번호 체계) | `devsam/image` |
