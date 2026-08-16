@@ -9,6 +9,19 @@ invalid_input() {
   exit 2
 }
 
+webhook_configured() {
+  [[ -n "${DAEMON_ALERT_WEBHOOK_URL:-}" ]]
+}
+
+# Visible in the Actions log (annotation) and in the job summary, so a missing
+# webhook cannot silently swallow alerts.
+warn_undelivered() {
+  printf '::warning title=Daemon alert webhook missing::%s\n' "$1"
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    printf -- '- :warning: %s\n' "$1" >> "$GITHUB_STEP_SUMMARY"
+  fi
+}
+
 parse_status() {
   python3 -c '
 import json
@@ -76,6 +89,13 @@ dispatch_alert() {
   local last_turn_time="$7"
   local payload
 
+  if ! webhook_configured; then
+    warn_undelivered "alert webhook is not configured; alert NOT delivered server=${server} state=${state} reason=${reason}"
+    printf 'daemon alert undelivered server=%s state=%s reason=%s tickSeconds=%s allowedSeconds=%s lastTurnTime=%s\n' \
+      "$server" "$state" "$reason" "$tick_seconds" "$allowed_seconds" "$last_turn_time"
+    return 0
+  fi
+
   payload="$(
     python3 - "$server" "$state" "$reason" "$recovery_mode" "$tick_seconds" "$allowed_seconds" "$last_turn_time" <<'PY'
 import json
@@ -114,7 +134,6 @@ server="$1"
 engine_container="$2"
 [[ "$server" =~ ^s[a-z0-9]{1,48}$ ]] || invalid_input 'server must be a canonical internal game-server identifier'
 [[ "$engine_container" == "${server}-game-engine" ]] || invalid_input 'container must match the bounded server identifier'
-[[ -n "${DAEMON_ALERT_WEBHOOK_URL:-}" ]] || invalid_input 'alert webhook is not configured'
 
 status_json="$(docker exec "$engine_container" curl --silent --show-error --max-time 5 \
   http://localhost:8082/admin/turn-daemon/status 2>/dev/null)" || status_json=''
@@ -145,6 +164,8 @@ elif [[ "$paused" == true ]]; then
   state=OUT_OF_SERVICE
   reason=paused
 elif [[ "$health_status" == UP ]]; then
+  webhook_configured ||
+    warn_undelivered "alert webhook is not configured; health checks still run but alerts will not be delivered server=${server}"
   printf 'daemon health server=%s state=UP reason=running tickSeconds=%s allowedSeconds=%s lastTurnTime=%s\n' \
     "$server" "$tick_seconds" "$allowed_seconds" "$last_turn_time"
   exit 0
