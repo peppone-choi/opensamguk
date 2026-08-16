@@ -1,6 +1,5 @@
 package opensamguk.engine.v2
 
-import opensamguk.logic.memory.HotColdCatalog
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,19 +7,19 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * OPENSAM-150 (R1) 적대적 리뷰 산출물 — `V2CityLedgerStore`의 DB 읽기에 대한 **보완 통제**.
+ * OPENSAM-150 (R1) 적대적 리뷰 산출물 — `V2CityLedgerStore`의 DB 읽기 **형태**에 대한 통제.
  *
- * **왜 필요한가.** S5의 `HotColdWorldCatalogGuardTest`는 `HotColdCatalog.runtimeSourceDirectories`
- * (`logic/src/main/kotlin/opensamguk/logic/memory/HotColdCatalog.kt`)에 열거된 8개 디렉터리와
- * `runtimeDirectSqlBoundaries`가 지목한 파일만 스캔한다. `app/game-engine/src/main/kotlin/opensamguk/engine/v2`는
- * **그 목록에 없다.** 게다가 `V2CityLedgerStore`는 `*Repository`/`*Reader` 접미사를 의도적으로 피해
- * 수신자-이름 탐지에도 걸리지 않는다. 결과적으로 이 클래스의 `jdbc.query`는 **어떤 카탈로그 단언에도
- * 묶여 있지 않다** — 즉 무제한 스캔이나 쓰기가 들어와도 기존 가드는 침묵한다.
+ * **OPENSAM-189으로 달라진 것.** 원래 이 파일에는 "engine/v2가 아직 S5 카탈로그 밖"이라는 사실을 고정하는
+ * 세 번째 케이스가 있었고, 그 미등재가 이 파일 전체의 존재 이유였다. 이제
+ * `app/game-engine/src/main/kotlin/opensamguk/engine/v2`가 `HotColdCatalog.runtimeSourceDirectories`에,
+ * `V2CityLedgerStore.kt`가 `runtimeDirectSqlBoundaries`에 등재됐으므로 그 케이스는 삭제했고,
+ * "이 파일의 JDBC 호출이 카탈로그에 있는가"는 이제 `HotColdWorldCatalogGuardTest`의
+ * `direct SQL calls stay in cataloged cold boundaries`가 `assertEquals`로 직접 판정한다.
  *
- * R1에서는 이 클래스가 빈도 아니고 턴 루프에 배선돼 있지도 않아 실해가 없다. 그러나 R2가 데몬 루프에
- * 물리는 순간 카탈로그 밖 런타임 읽기가 되므로, 그때까지의 대체 통제로 **이 파일의 SQL 형태 자체**를
- * 고정한다. 카탈로그 등재(= 항구적 해법)는 R2의 선행 조건이며, 아래 마지막 테스트가 그 미등재 사실을
- * 실측으로 못박아 "등재됐다고 착각하는" 상태를 막는다.
+ * **그래도 아래 두 케이스는 남긴다 — 중복이 아니다.** 카탈로그 가드는 "이 파일이 직접 SQL을 쓴다"는
+ * *사실*만 등재와 대조할 뿐, SQL **본문**은 보지 않는다. 즉 `SELECT *`로 바꾸거나 `WHERE world_id`를
+ * 빼도, `jdbc.update`로 직접 쓰기를 넣어도(`isDirectSqlMethod`는 `update`도 통과시킨다) 카탈로그 가드는
+ * 여전히 green이다. 무제한 스캔 금지와 읽기 전용(쓰기는 `ChangeRecorder` 경유)은 여기서만 단언된다.
  *
  * 소스 텍스트 스캔이라는 한계는 `V2NamingConventionGuardTest`와 동일하다(문자열/주석 구분 불가).
  */
@@ -76,19 +75,4 @@ class V2CityLedgerReadBoundGuardTest {
         )
     }
 
-    /**
-     * 미등재 사실의 실측 고정. **이 테스트가 빨개지면 등재가 끝났다는 뜻이므로, 그때 이 테스트를 지우고
-     * 카탈로그 단언에 맡겨라** — 실패가 곧 좋은 소식인 유일한 케이스다.
-     */
-    @Test
-    fun `engine v2는 아직 S5 hot-cold 카탈로그 밖이다 -- R2 등재 전까지 이 가드가 대체 통제다`() {
-        val cataloged = HotColdCatalog.runtimeSourceDirectories
-            .any { it.endsWith("/engine/v2") } || storePath in HotColdCatalog.runtimeDirectSqlBoundarySources
-
-        assertTrue(
-            !cataloged,
-            "engine/v2가 S5 카탈로그에 등재됐다. 이제 HotColdWorldCatalogGuardTest가 직접 검사하므로 " +
-                "이 보완 통제 테스트를 삭제하라 (OPENSAM-150 R2 선행 조건 완료).",
-        )
-    }
 }

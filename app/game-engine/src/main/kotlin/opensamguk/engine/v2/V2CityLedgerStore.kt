@@ -15,29 +15,31 @@ data class V2CityLedgerEntry(val gold: Long, val rice: Long, val garrison: Int) 
 /**
  * OPENSAM-150 (R1) — v2 도시 원장(`v2_city_ledger`)의 메모리 보유자 겸 델타 기록기.
  *
- * **이름이 `Store`인 이유 (그리고 그 대가)**: `HotColdWorldCatalogGuardTest`는 스캔 대상 파일 안에서
- * `*Repository`/`*Reader` 수신자 호출을 카탈로그와 `assertEquals`로 묶는다. 이 클래스는 스캔 대상
- * 밖(`engine/v2`는 `HotColdCatalog.runtimeSourceDirectories`에 없다)이지만 이름이 그 접미사를 가지면
- * 소비자(R2의 `DaemonLoopConfig`)에서 가드를 깨므로 접미사를 피했다.
+ * **S5 카탈로그 등재 완료 (OPENSAM-189).** 이 파일은 `HotColdCatalog.runtimeDirectSqlBoundaries`에,
+ * `engine/v2` 디렉터리는 `runtimeSourceDirectories`에 등재돼 있다. 따라서 아래 `load()`의 `jdbc.query`는
+ * `HotColdWorldCatalogGuardTest`의 `assertEquals`에 묶여 있고, 등재를 지우거나 이 패키지에 새 JDBC
+ * 수신자를 들이면 그 가드가 빨개진다. SQL **본문**(world-scoped·`SELECT *` 금지·결정적 정렬·직접 쓰기
+ * 금지)은 카탈로그가 보지 않으므로 [V2CityLedgerReadBoundGuardTest]가 별도로 고정한다.
  *
- * **그래서 이 클래스의 SELECT는 어떤 S5 카탈로그에도 등재돼 있지 않다.** R1에서는 빈도 아니고 턴 루프에
- * 배선돼 있지도 않아 실해가 없지만, R2가 이 store를 데몬 루프에 물리는 순간 **카탈로그 밖 런타임 읽기**가
- * 된다. R2의 선행 조건으로 `HotColdCatalog.runtimeDirectSqlBoundaries`(또는 `runtimeSourceDirectories`)에
- * 이 파일을 등재해야 한다. 그때까지의 보완 통제는 [V2CityLedgerReadBoundGuardTest] — 이 파일의 SQL이
- * world-scoped·결정적 정렬·읽기 전용임을 소스 스캔으로 고정한다.
+ * **이름이 `Store`인 이유**: R1 원본 KDoc은 `*Repository`/`*Reader` 접미사를 "소비자에서 가드를 깨므로"
+ * 피했다고 적었다 — 즉 수신자-이름 탐지의 회피였다. OPENSAM-189이 정식 등재로 그 회피의 필요를 없앴고,
+ * 이제 이름은 실체를 그대로 가리킨다: 이 클래스는 v1의 `InMemoryTurnWorld`와 같은 **메모리 보유자**이지
+ * 조회 리포지터리가 아니다(읽기는 lazy 1회, 이후 모든 접근은 메모리). 대신 R2가 이 store를
+ * `DaemonLoopConfig`에 주입할 때 수신자-이름 탐지는 이름 기반이라 자동으로 걸리지 않는다는 점을 기억할 것 —
+ * 그 호출들은 `HotColdCatalog.runtimeReadSeams`에 **손으로** 등재해야 한다.
  *
  * **U10(부팅 순서) 대응 — lazy 초기화.** 첫 접근 시점에 한 번만 적재하므로 Flyway/시드/스냅샷 로더와의
  * 부팅 순서에 의존하지 않는다(`@DependsOn`·`ApplicationRunner` 순서 선언 불필요). 데몬 프로세스는 한
  * 월드를 담당하므로 캐시는 월드 하나 분량이며, 다른 `worldId`로 접근하면 다시 적재한다.
  *
- * **아직 `@Bean`이 아니다 (BLOCKER, OPENSAM-150 보고 대상).** 0A-b 게이트를 그대로 쓴 신규
- * `@Configuration`을 추가하면 `V2BothConditionsBeanGateIT`
- * (`app/game-engine/src/test/kotlin/opensamguk/engine/v2/V2ProductionContextBeanGateIT.kt:186-190`)이
- * **모든** `opensamguk.*.v2.*` 빈 이름 집합을 리터럴 4개와 `assertEquals`하므로 실패한다. 게이트 없이
- * 무조건 등록해도 같은 파일 `:64`의 `assertNoV2Beans()`(프로덕션 컨텍스트에서 v2 빈 0)가 깨진다 —
- * 막는 단언은 하나가 아니라 둘이다. 그 파일은 R1 게이트 ②가 수정을 금지한 테스트 소스라, 빈 등록은
- * (i) 그 기대 집합 확장에 대한 사람 승인 또는 (ii) OPENSAM-35 후속으로 그 단언을 allowlist화하는
- * 결정을 받은 뒤에 붙인다. 그때까지 이 클래스는 직접 생성해 쓴다(IT가 그 경로를 증명).
+ * **아직 `@Bean`이 아니다 — 그러나 더 이상 막혀 있지 않다 (OPENSAM-184).** R1 시점에는
+ * `V2BothConditionsBeanGateIT`가 **모든** `opensamguk.*.v2.*` 빈 이름 집합을 인라인 리터럴과
+ * `assertEquals`해서 신규 v2 빈이 무조건 실패했다. 그 단언은 이제 명시 allowlist
+ * (`V2ProductionContextBeanGateIT.kt`의 `APPROVED_V2_BEAN_NAMES`) 부분집합 검사다. R2가 이 store를
+ * [V2SandboxConfiguration]의 `@Bean`으로 올릴 때 그 allowlist에 빈 이름 한 줄을 **의도적으로** 추가하면
+ * 된다(그 편집 = 리뷰 지점). 프로덕션 컨텍스트에서 v2 빈 0을 요구하는 같은 파일의 `assertNoV2Beans()`는
+ * allowlist와 무관하게 그대로이므로 0A-b 게이트 밖 등록은 여전히 불가능하다. 그때까지 이 클래스는
+ * 직접 생성해 쓴다(IT가 그 경로를 증명).
  *
  * **쓰기 경로**: 절대 직접 쓰지 않는다. 변경은 [ChangeRecorder]에 절대값 UPSERT 델타로 기록되고
  * `JdbcFlushExecutor`의 v2 step이 v1 델타와 **같은 트랜잭션**에서 커밋한다(one-daemon-write rule).

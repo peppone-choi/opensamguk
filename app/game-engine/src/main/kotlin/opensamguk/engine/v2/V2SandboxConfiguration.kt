@@ -18,10 +18,16 @@ import org.springframework.context.annotation.Profile
  *
  * This class belongs in package `opensamguk.engine.v2`, inside `GameEngineApplication`'s
  * `@SpringBootApplication` component-scan root (`opensamguk.engine`). It needs no existing-file modification to be
- * registered and belongs to neither `HotColdCatalog.runtimeSourceDirectories` nor
- * `DaemonWriteGuard.writePathPackages`, so it does not affect v1 guard tests.
+ * registered.
  *
- * Future concrete v2 beans, including ledger stores and command handlers, belong here as `@Bean` methods. A v2
+ * Since OPENSAM-189 this package IS inside `HotColdCatalog.runtimeSourceDirectories` and
+ * `DaemonWriteGuard.writePathPackages`: v2 code reaches the daemon write path through `ChangeRecorder`, so it
+ * carries the same JDBC-only and cataloged-read obligations as v1. Its own reads/writes are none, so the guards
+ * are vacuously satisfied here.
+ *
+ * Future concrete v2 beans, including ledger stores and command handlers, belong here as `@Bean` methods, and
+ * each bean name must be added to `APPROVED_V2_BEAN_NAMES` in
+ * `app/game-engine/src/test/kotlin/opensamguk/engine/v2/V2ProductionContextBeanGateIT.kt` (OPENSAM-184). A v2
  * bean outside the gate (for example, an `@Component`) violates 0A-b.
  */
 @Configuration(proxyBeanMethods = false)

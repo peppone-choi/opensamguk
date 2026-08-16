@@ -562,6 +562,34 @@ final-8 CodeRabbit source/documentation re-review is `cleared`, while final-8 re
 T1(`logic/src/main/kotlin/**`·`common/src/main/kotlin/**`·golden·기존 테스트)은 **수정·삭제 0건,
 신규 파일 추가만 허용, 예외 없음.**
 
+### 4.0b 승인된 T1/T2 예외 — OPENSAM-184 · OPENSAM-189 (2026-08-17)
+
+**위 "예외 없음"은 이 절로 한 번 개정된다.** 개정 절차는 §4.0가 요구한 그대로다 — 우회하지 않고
+이 절을 열어 범위를 명시하고 승인을 받는다. 승인 요청자는 OPENSAM-151(R2) 차단 해제를 지시한
+팀 리드이고, 승인 근거는 아래 두 결함이 **동결 목록 자체 때문에 닫히지 못하는** 종류라는 점이다
+(동결이 결함을 보존하는 상태 = 동결의 목적과 반대). 승인 범위는 **정확히 아래 5파일**이며,
+이 목록 밖의 T1/T2 파일 수정은 여전히 위반이다.
+
+| # | 파일 | 분류 | 무엇을 왜 |
+|---|---|---|---|
+| 1 | `app/game-engine/src/test/kotlin/opensamguk/engine/v2/V2ProductionContextBeanGateIT.kt` | T1 "기존 테스트" | **OPENSAM-184.** ④ 양성 대조가 모든 `opensamguk.*.v2.*` 빈 이름을 인라인 리터럴 4개와 `assertEquals`해서, 합법적인 신규 v2 빈(R2 도시 원장)이 **구조적으로 등록 불가**였다(OPENSAM-150 리뷰 §2 B1). 리터럴을 `APPROVED_V2_BEAN_NAMES` allowlist + 부분집합 단언으로 바꾸고 allowlist 자기검증 테스트를 추가했다. 게이트 성질은 불변 — allowlist에 없는 v2 빈은 여전히 실패한다(§4.0b 증명 1). `assertNoV2Beans()`(프로덕션 0)는 무수정 |
+| 2 | `logic/src/main/kotlin/opensamguk/logic/memory/HotColdCatalog.kt` | **T1** | **OPENSAM-189.** `engine/v2`가 `runtimeSourceDirectories`·`runtimeDirectSqlBoundaries` 어디에도 없어 `V2CityLedgerStore.load()`의 `jdbc.query`가 **어떤 `assertEquals`에도 묶이지 않았다**(같은 리뷰 §4 D-2). R1은 이 파일이 T1이라 닫지 못하고 R2 선행 조건으로 넘겼다. 디렉터리 1줄 + `DirectSqlBoundary` 1건 **추가**(기존 항목 무수정·무삭제) |
+| 3 | `app/game-engine/src/test/kotlin/opensamguk/engine/v2/V2CityLedgerReadBoundGuardTest.kt` | T1 "기존 테스트" | #2의 등재로 케이스 ③(미등재 사실 고정)이 **설계대로** 빨개져 삭제했다. 그 테스트의 KDoc이 "등재되면 이 테스트를 지우고 카탈로그 단언에 넘겨라"라고 명시한 계획된 수명 종료다. 케이스 ①②는 유지 — 카탈로그는 SQL **본문**을 보지 않는다(§4.0b 증명 3) |
+| 4 | `app/game-engine/src/main/kotlin/opensamguk/engine/v2/V2CityLedgerStore.kt` | T2 아님(v2 신규 파일) | KDoc이 #1·#2가 닫은 블로커와 미등재를 여전히 사실로 진술하고 있어 갱신. 로직 무변경 |
+| 5 | `app/game-engine/src/main/kotlin/opensamguk/engine/flush/DaemonWriteGuard.kt` · `V2SandboxConfiguration.kt` | T2(전자) | `writePathPackages`에 `opensamguk/engine/v2` 1줄 추가 — v2는 `ChangeRecorder`로 데몬 쓰기 경로에 닿으므로 JPA 금지 불변식이 똑같이 적용돼야 한다. 후자는 "이 패키지는 두 목록 밖"이라는 거짓이 된 KDoc 문장 정정 |
+
+**증명(요약; 실측 출력은 `docs/superpowers/reviews/2026-08-17-r2-unblock-bean-gate-and-catalog-review.md`).**
+
+1. allowlist 밖 v2 빈(`v2MutationProbe`)을 게이트 안에 등록 → `V2BothConditionsBeanGateIT` FAILED.
+2. allowlist를 `emptySet()` / `setOf("v2*")`로 각각 무력화 → `V2BeanAllowlistSelfCheckTest` FAILED.
+3. `HotColdCatalog`에서 `V2CityLedgerStore` 경계를 제거 → `HotColdWorldCatalogGuardTest > direct SQL
+   calls stay in cataloged cold boundaries` FAILED (등재가 실효적임 + 디렉터리 등재가 탐지원임을 동시 증명).
+4. store에 `SELECT *` / `jdbc.update` 주입 → `V2CityLedgerReadBoundGuardTest` FAILED, 같은 실행에서
+   `HotColdWorldCatalogGuardTest`는 green(케이스 ①②가 중복이 아니라는 증거).
+
+**여전히 R2 범위 밖:** `DaemonLoopConfig` 배선, v2 store의 빈 등록, 원장 초기 적재. 이 개정은
+**차단 해제만** 한다.
+
 ## 4-1. diff 게이트 명령 정본 (2026-08-08 개정 — 결함 2건 수정)
 
 GATE-f 적대적 리뷰가 잡고 실측으로 재현한 **blocker 2건**. 개정 전 명령은
