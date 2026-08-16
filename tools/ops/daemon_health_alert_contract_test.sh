@@ -116,7 +116,7 @@ prepare_stubs() {
     'done' \
     '[[ -n "$payload" ]] || exit 1' \
     'printf "%s\\n" "$payload" >> "$ALERT_PAYLOAD_LOG"' \
-    '[[ "$DAEMON_ALERT_TEST_MODE" != dispatch_fail ]]'
+    '[[ "$DAEMON_ALERT_TEST_MODE" != dispatch_fail && "$DAEMON_ALERT_TEST_MODE" != dispatch_fail_healthy ]]'
 }
 
 run_alert() {
@@ -124,6 +124,7 @@ run_alert() {
   local server="${2:-s1}"
   local container="${3:-s1-game-engine}"
   : > "$ALERT_PAYLOAD_LOG"
+  : > "$STEP_SUMMARY_LOG"
   CURRENT_CASE="$mode $server $container"
   set +e
   LAST_OUTPUT="$(
@@ -131,6 +132,7 @@ run_alert() {
       ALERT_PAYLOAD_LOG="$ALERT_PAYLOAD_LOG" \
       DAEMON_ALERT_TEST_MODE="$mode" \
       DAEMON_ALERT_WEBHOOK_URL="$WEBHOOK_SENTINEL" \
+      GITHUB_STEP_SUMMARY="$STEP_SUMMARY_LOG" \
       PATH="$STUB_BIN:$PATH" \
       bash "$ALERTER" "$server" "$container" 2>&1
   )"
@@ -176,6 +178,38 @@ assert_healthy() {
   assert_safe_output
 }
 
+assert_diagnostic_field() {
+  assert_contains "$1" "{\"name\":\"$2\",\"value\":\"$3\","
+}
+
+# Discord's Execute Webhook rejects a body without content/embeds/components/
+# file/poll (400, JSON error 50006). Anything the stub receives must therefore
+# be a real Discord message, not our private envelope.
+assert_discord_schema() {
+  local payload="$1"
+  local expected_state="$2"
+  local expected_reason="$3"
+  assert_contains "$payload" '"embeds":[{'
+  assert_contains "$payload" '"fields":[{'
+  assert_contains "$payload" "\"title\":\"[$expected_state] "
+  assert_contains "$payload" " / $expected_reason\""
+  case "$expected_state" in
+    DOWN) assert_contains "$payload" '"color":15158332' ;;
+    OUT_OF_SERVICE) assert_contains "$payload" '"color":15844367' ;;
+    *) fail "unexpected alert state $expected_state" ;;
+  esac
+  python3 -c '
+import json, sys
+body = json.loads(sys.argv[1])
+embeds = body.get("embeds")
+assert isinstance(embeds, list) and 1 <= len(embeds) <= 10, "embeds must be a 1..10 array"
+assert body.get("content") or embeds, "Discord needs content or embeds"
+for embed in embeds:
+    assert isinstance(embed.get("fields"), list) and embed["fields"], "embed fields missing"
+    assert len(embed["title"]) <= 256, "embed title over Discord limit"
+' "$payload" || fail "payload is not a valid Discord webhook body for $CURRENT_CASE"
+}
+
 assert_alert() {
   local expected_state="$1"
   local expected_reason="$2"
@@ -184,14 +218,16 @@ assert_alert() {
   [[ -s "$ALERT_PAYLOAD_LOG" ]] || fail "expected webhook dispatch for $CURRENT_CASE"
   local payload
   payload="$(<"$ALERT_PAYLOAD_LOG")"
-  assert_contains "$payload" "\"state\":\"$expected_state\""
-  assert_contains "$payload" "\"reason\":\"$expected_reason\""
+  assert_discord_schema "$payload" "$expected_state" "$expected_reason"
+  assert_diagnostic_field "$payload" state "$expected_state"
+  assert_diagnostic_field "$payload" reason "$expected_reason"
+  assert_diagnostic_field "$payload" source opensamguk-daemon-health
   if [[ "$expected_diagnostics" == true ]]; then
-    assert_contains "$payload" '"tickSeconds":17'
-    assert_contains "$payload" '"lastTurnTime":"2026-08-05T16:15:45Z"'
+    assert_diagnostic_field "$payload" tickSeconds 17
+    assert_diagnostic_field "$payload" lastTurnTime 2026-08-05T16:15:45Z
   else
-    assert_contains "$payload" '"tickSeconds":0'
-    assert_contains "$payload" '"lastTurnTime":"unavailable"'
+    assert_diagnostic_field "$payload" tickSeconds 0
+    assert_diagnostic_field "$payload" lastTurnTime unavailable
   fi
   assert_safe_output
 }
@@ -260,9 +296,9 @@ assert_alert_workflow_inventory_fails_closed() {
   run_alert_workflow_inventory_case inventory_alpha_engine
   [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'alphanumeric game-engine inventory was silently skipped'
   [[ -s "$ALERT_PAYLOAD_LOG" ]] || fail 'alphanumeric game-engine inventory did not dispatch an alert'
-  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"server":"spep"'
-  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"state":"DOWN"'
-  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"reason":"recovery_gated"'
+  assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" server spep
+  assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" state DOWN
+  assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" reason recovery_gated
   assert_not_contains "$WORKFLOW_OUTPUT" "$SECRET_SENTINEL"
   assert_not_contains "$WORKFLOW_OUTPUT" "$WEBHOOK_SENTINEL"
   assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" "$SECRET_SENTINEL"
@@ -276,15 +312,15 @@ assert_alert_workflow_inventory_fails_closed() {
 
   run_alert_workflow_inventory_case inventory_boundary_running
   [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'five-minute boundary was incorrectly granted startup grace'
-  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"reason":"recovery_gated"'
+  assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" reason recovery_gated
 
   run_alert_workflow_inventory_case inventory_old_running
   [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'old running engine was incorrectly granted startup grace'
-  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"reason":"recovery_gated"'
+  assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" reason recovery_gated
 
   run_alert_workflow_inventory_case inventory_alpha_stopped
   [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'stopped engine was incorrectly granted startup grace'
-  assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"reason":"status_unreadable"'
+  assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" reason status_unreadable
 
   run_alert_workflow_inventory_case inventory_state_inspect_failed
   [[ "$WORKFLOW_STATUS" -ne 0 ]] || fail 'unreadable Docker state must fail closed'
@@ -398,7 +434,7 @@ assert_alert DOWN recovery_gated
 
 run_alert stalled
 assert_alert DOWN turn_stalled
-assert_contains "$(<"$ALERT_PAYLOAD_LOG")" '"allowedSeconds":51'
+assert_diagnostic_field "$(<"$ALERT_PAYLOAD_LOG")" allowedSeconds 51
 
 run_alert health_unreadable
 assert_alert DOWN health_unreadable
@@ -409,7 +445,19 @@ assert_alert DOWN status_unreadable false
 run_alert dispatch_fail
 [[ "$LAST_STATUS" -ne 0 ]] || fail 'failed webhook dispatch must fail closed'
 assert_contains "$LAST_OUTPUT" 'alert dispatch failed'
+assert_contains "$LAST_OUTPUT" '::warning title=Daemon alert dispatch failed::'
+assert_contains "$(<"$STEP_SUMMARY_LOG")" 'alert NOT delivered'
 assert_safe_output
+
+# The point of the adapter: a broken delivery channel must never be the reason a
+# healthy daemon goes red. A healthy daemon dispatches nothing at all.
+run_alert dispatch_fail_healthy
+assert_healthy
+assert_not_contains "$LAST_OUTPUT" 'alert dispatch failed'
+assert_not_contains "$(<"$STEP_SUMMARY_LOG")" 'alert dispatch failed'
+
+grep -Fq -- '--retry 3' "$ALERTER" ||
+  fail 'dispatch does not retry Discord 429/5xx responses'
 
 run_alert_without_webhook healthy
 [[ "$LAST_STATUS" -eq 0 ]] || fail 'missing webhook must not break the health check of a healthy daemon'
