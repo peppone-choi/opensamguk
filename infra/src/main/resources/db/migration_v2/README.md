@@ -62,7 +62,8 @@ migration을 추가한다. 이 선언은 **물리적인 첫 줄과 정확히 일
 
 ## 5. 현재 상태
 
-production `db/migration_v2/`에는 아직 SQL이 없다. `V900__v2_sandbox_probe.sql`은 engine test resources에만
+production `db/migration_v2/`의 SQL은 **`V901__v2_city_ledger.sql` 1건**이다(OPENSAM-150 R1 산출물,
+`v2_city_ledger` 표). `V900__v2_sandbox_probe.sql`은 engine test resources에만
 있으며, v1-only Flyway location은 이를 보지 못하고 explicit sibling location만 적용함을
 실제 Spring Boot/Testcontainers context에서 검증한다. 기본 v1 context는 application.yml의
 `classpath:db/migration`만 해석해 V900 history/table이 없고, `v2-sandbox` profile과 literal
@@ -71,3 +72,7 @@ production `db/migration_v2/`에는 아직 SQL이 없다. `V900__v2_sandbox_prob
 `world_id NOT NULL`, world-scoped primary/unique key, 그리고 `world_state` foreign key를 PostgreSQL catalog로
 검사한다. source SQL을 고유하게 찾을 수 없거나 지원하지 않는 `CREATE TABLE` 형식이면 이 검사는 fail-closed다.
 실제 v2 schema/product leaf는 **OPENSAM-150** 소관이다.
+
+> 이 §5는 2026-08-16까지 "아직 SQL이 없다"로 남아 있었다(거짓). 갱신을 막고 있던 것은
+> OPENSAM-35 게이트 ⑤가 `infra/src/main/resources/` 전체를 `--diff-filter=MD`로 얼린 결함이며,
+> **OPENSAM-188이 `README.md`를 게이트 ⑤에서 제외해** 닫았다. v2 leaf가 늘면 이 절을 갱신하라.

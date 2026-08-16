@@ -587,6 +587,14 @@ wildcard 없는 `infra/...` 세그먼트와 게이트 ②는 영향 없었다.
 타 세션 커밋(`DatabaseHooks.kt` M, `FlushPayloadConvergenceTest.kt` D)이 섞여
 **거짓 T1/T2 위반**이 뜬다. 기준선은 **merge-base 고정**이다.
 
+**개정 (2026-08-17, OPENSAM-188) — 게이트 실행은 스크립트가 정본이다.**
+아래 명령을 사람이 복붙하면 기준선(merge-base)과 pathspec 두 곳에서 계속 틀린다. 실행은
+`scripts/agent/v2-isolation-gate.sh [<ref>]`로 한다 — merge-base를 스스로 계산하고,
+`:(glob)` pathspec을 고정하고, 위반 시 exit 1로 fail-closed한다. 아래 블록은 그 스크립트가
+실행하는 명령의 문서판이며 스크립트와 어긋나면 **스크립트가 정본**이다.
+게이트 ⑤의 `README.md` 제외 사유와 그 좁히기가 아무것도 놓치지 않는다는 mutation 증명은
+`docs/superpowers/reviews/2026-08-17-opensam-188-gate-defects-review.md` 참조.
+
 ```bash
 MB=$(git merge-base HEAD origin/main)
 
@@ -600,9 +608,11 @@ git diff --name-only --diff-filter=MD "$MB" -- \
   ':(glob)app/*/src/main/kotlin/**' ':(glob)infra/src/main/kotlin/**' \
   ':(glob)infra/src/main/resources/db/migration/**'
 
-# ⑤ 설정 리소스 무수정 — 기대: 빈 출력
+# ⑤ 설정 리소스 무수정 — 기대: 빈 출력 (2026-08-17 OPENSAM-188: README.md 제외)
 git diff --name-only --diff-filter=MD "$MB" -- \
-  ':(glob)app/*/src/main/resources/**' ':(glob)infra/src/main/resources/**'
+  ':(glob)app/*/src/main/resources/**' ':(glob)infra/src/main/resources/**' \
+  ':(glob,exclude)app/*/src/main/resources/**/README.md' \
+  ':(glob,exclude)infra/src/main/resources/**/README.md'
 
 # C1 스택 파일 분리 — 기대: 빈 출력
 git diff --name-only --diff-filter=MD "$MB" -- \
