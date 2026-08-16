@@ -60,7 +60,7 @@
 | 경로 | blob | 내용 | 출처 |
 |---|---|---|---|
 | (root) | 3 | `LICENSE`, `README.md`, `.gitignore` | 자작 |
-| `game/` (하위 map 11 포함) | 427 | 깃발 `b<HEX>.png` 34, 도시아이콘 `cast_*.gif`, 상태 `event*.gif`, 배경 `back*.jpg`, `crewtype*.png`, 맵 타일 `map/{che,chess,cr,ludo_rathowm,pokemon_v1}` | `devsam/image` |
+| `game/` (하위 map 11 포함) | 427 | 깃발 `b<HEX>.png` 34, 도시아이콘 `cast_*.gif`, 상태 `event*.gif`, 배경 `back*.jpg`, `crewtype*.png`, 맵 타일 `map/{che,chess,cr,ludo_rathowm,~~pokemon_v1~~}` (`pokemon_v1`은 부록 D에서 제거) | `devsam/image` |
 | `game/src/` | 49 | 병종 일러스트 `각궁병.jpg`·`기병.jpg`·`목우.jpg` 등 한글 병종명 | `devsam/image` (원저작자 UNKNOWN) |
 | `hook/` | 5 | `hook.php`, `git_pull.php`, `InstallKey.php`, `HashKey.orig.php`, `gogs_key.orig.php` — 운영 PHP 스크립트 | `devsam/image` |
 | `icons/` (루트) | 1,832 | 삼국지 장수 초상 `0.jpg`…`4000+.jpg` (번호 체계) | `devsam/image` |
@@ -75,16 +75,16 @@
 
 | 디렉터리 | 파일 | 파일명 예시 | 추정 원저작권자 | 판정 |
 |---|---|---|---|---|
-| `걸그룹` | 530 | `AOA 민아.png`, `ITZY 예지.png`, `CL.png` | **실존 인물 사진** — 사진 저작권 + 초상권(퍼블리시티권) | **UNKNOWN** |
-| `루드라사움` | 464 | `가넷.png`, `가라샤.png`, `3G.png` | 출처 미확인 | **UNKNOWN** |
-| `롤시나리오` | 439 | `가렌.png`, `갈리오.png`, `Faker.jpg` | Riot Games (League of Legends) + 실존 프로게이머 사진 | **UNKNOWN** |
-| `스타1프로게이머` | 297 | `강민.jpg`, `강도경.jpg`, `hao lei.jpg` | **실존 인물 사진** | **UNKNOWN** |
-| `포켓몬스터` | 291 | `갸라도스.png`, `강철톤.png` | The Pokémon Company / Nintendo / Game Freak | **UNKNOWN** |
-| `환상향` | 176 | `구마리사.png`, `겐지.png` | 東方Project (上海アリス幻樂団) 및 2차 창작 | **UNKNOWN** |
-| `강서유서월드` | 108 | `가마오.webp`, `니아드라.webp` | 출처 미확인 | **UNKNOWN** |
-| `쿠키런킹덤` | 22 | `용감한쿠키.png`, `어둠마녀.png` | Devsisters | **UNKNOWN** |
-| `삼모시네마틱유니버스` | 7 | `사스케.jpg`, `정승필.png` | 커뮤니티 창작 추정, 출처 미확인 | **UNKNOWN** |
-| `삼국지6` | 1 | `헌제.jpg` | 코에이 테크모 (삼국지6) | **UNKNOWN** |
+| `걸그룹` | 530 | `AOA 민아.png`, `ITZY 예지.png`, `CL.png` | **실존 인물 사진** — 사진 저작권 + 초상권(퍼블리시티권) | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `루드라사움` | 464 | `가넷.png`, `가라샤.png`, `3G.png` | 출처 미확인 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `롤시나리오` | 439 | `가렌.png`, `갈리오.png`, `Faker.jpg` | Riot Games (League of Legends) + 실존 프로게이머 사진 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `스타1프로게이머` | 297 | `강민.jpg`, `강도경.jpg`, `hao lei.jpg` | **실존 인물 사진** | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `포켓몬스터` | 291 | `갸라도스.png`, `강철톤.png` | The Pokémon Company / Nintendo / Game Freak | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `환상향` | 176 | `구마리사.png`, `겐지.png` | 東方Project (上海アリス幻樂団) 및 2차 창작 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `강서유서월드` | 108 | `가마오.webp`, `니아드라.webp` | 출처 미확인 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `쿠키런킹덤` | 22 | `용감한쿠키.png`, `어둠마녀.png` | Devsisters | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `삼모시네마틱유니버스` | 7 | `사스케.jpg`, `정승필.png` | 커뮤니티 창작 추정, 출처 미확인 | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
+| `삼국지6` | 1 | `헌제.jpg` | 코에이 테크모 (삼국지6) | **UNKNOWN → 제거됨(2026-08-17, 부록 D)** |
 
 ### 2-3. `portraits/rtk14/` — 자작 변환 / RTK14 콘텐츠
 
@@ -193,7 +193,9 @@
 
 나머지 65개는 `"."`(루트 `icons/`).
 
-**현재 시딩 대상에는 포함되지 않는다.** 시드는 classpath 또는 `SCENARIO_DIR`에서 파일을 읽는데(`ScenarioSeedRunner`), 커밋된 classpath 리소스 `infra/src/main/resources/scenario/`에는 31개(0·1·2·1010~1120·900~914)만 있고 **2xxx 프랜차이즈 시나리오는 없다**. 프로덕션 기본값도 `SCENARIO_CODE: scenario_1010`(`docker-compose.production.yml:67`)이다. 즉 프랜차이즈 아이콘 경로는 **데이터로는 레포에 있고, 실행 경로로는 비활성**이다.
+**현재 시딩 대상에는 포함되지 않는다.** 시드는 classpath 또는 `SCENARIO_DIR`에서 파일을 읽는데(`ScenarioSeedRunner`), 커밋된 classpath 리소스 `infra/src/main/resources/scenario/`에는 31개(0·1·2·1010~1120·900~914)만 있고 **2xxx 프랜차이즈 시나리오는 없다**. 프로덕션 기본값도 `SCENARIO_CODE: scenario_1010`(`docker-compose.production.yml:67`)이다. 즉 프랜차이즈 아이콘 경로는 **데이터로는 레포에 있고, 실행 경로로는 비활성**이었다.
+
+**2026-08-17 갱신: 위 16개 시나리오는 제거됐다** — `data/extracted/scenario/`에서 삭제, `_meta.json`에서 해당 항목 제거. 실행 경로가 비활성이었다는 사실 자체가 제거 근거는 아니다(실행 경로 비활성 ≠ 저장소에 남겨도 안전) — 판정 근거는 §2-2와 동일(초상권·제3자 IP·출처 미확인). 상세: 부록 D.
 
 ---
 
@@ -279,3 +281,17 @@ CHGIS 검토와 동일한 우회(브라우저 취득)가 필요하다.
 - `web/{gateway,game}/public/flags/*.png` 16장 — devsam `fFF0000.gif` 파생본을 버리고 `tools/assets/build_flag_assets.py`가 입력 이미지 없이 그리는 자작 12x12 픽셀아트로 **교체**했다. 런타임 계약(`flagTint.ts`의 cloth/pole 2레이어 · 4프레임)은 불변.
 
 표의 나머지 UNKNOWN 행(에셋 레포 전체, `assets/battle/v2/**`)은 손대지 않았다 — 여전히 UNKNOWN이다.
+
+## 부록 D. 옵션 IP 초상 세트 전량 제거 — 메인 레포 쪽 (2026-08-17)
+
+`opensamguk-images` 레포에서 §2-2의 10개 프랜차이즈/실존인물 세트(2,335장)를 히스토리까지 제거하는 결정과 짝을 이뤄, 메인 레포에서 그 세트를 참조하는 시나리오 데이터를 제거했다. 브랜치 `chore-drop-optional-ip-scenarios`.
+
+- **삭제한 시나리오 16개** (전수 스캔 `grep -rl <세트명> data/extracted/scenario/` 근거, 삼국지 시나리오의 참조 0건 확인): `scenario_2130`·`2131`(환상향), `scenario_2140`·`2141`(걸그룹), `scenario_2171`(루드라사움), `scenario_2200`(스타1프로게이머), `scenario_2210`(포켓몬스터), `scenario_2300`(쿠키런킹덤), `scenario_2600`·`2601`(삼모시네마틱유니버스), `scenario_2800`·`2801`(강서유서월드), `scenario_2900`·`2901`·`2903`·`2904`(롤시나리오).
+- `data/extracted/scenario/_meta.json`의 `scenarios` 배열에서 위 16개 항목 제거, `count` 81→65로 갱신.
+- `삼국지6`(1장)은 어떤 시나리오도 참조하지 않았다 — 메인 레포 쪽에 삭제할 시나리오가 없다(이미지 레포 쪽 삭제만 해당).
+- **시나리오 코드 참조는 0건.** 코드(`ScenarioImporter`/`ScenarioSeedRunner`/테스트) 전수 grep 결과 이 16개 코드에 대한 실행 경로 참조는 0건 — classpath 시드 목록(`infra/src/main/resources/scenario/`)에 애초에 없었고 `SCENARIO_CODE` 기본값도 `scenario_1010`이다. `docs/loops/opensam-35-v2-0a-2026-08-08/baseline/a2-scenario-seed-sha256.txt`에 과거 sha256 스냅샷이 남아 있으나 그 루프는 이미 닫힌 정적 기록이고, 그 파일의 sha256이 같은 디렉터리 `MANIFEST.md:34`에 고정돼 있어 편집하면 MANIFEST가 깨진다 — 손대지 않았다. 대신 `MANIFEST.md`가 "tracked 시드 소스 82개"라고 단언하는 자리에 이 삭제를 가리키는 각주를 달았다(트리 실제값 66 = 시나리오 65 + `_meta.json`).
+- **단, 역방향 고아가 두 건 있었다** — 시나리오 코드 grep만으로는 안 잡히는 축이다.
+  - `SharedProfileIconCatalogTest.kt:46`이 프로덕션 매니페스트의 `delivery_url`에 박힌 **옛 리비전**을 assert하고 있어 매니페스트 갱신만으로 `:app:gateway-api:test`가 깨졌다. `df8068e7`로 핀을 갱신해 종결(200 tests / 0 failures). 교훈: `shared-manifest.json`을 건드리는 변경은 항상 `:app:gateway-api:test`를 동반해야 한다.
+  - `scenario_2210` 삭제로 `pokemon_v1` 맵의 소비 시나리오가 0이 됐다. §2-2 `포켓몬스터` 행과 **동일한 IP 등급**인 관동지방 지명 데이터가 남아 있었으므로 함께 제거했다: `data/extracted/map/pokemon_v1.json`·`infra/src/main/resources/map/pokemon_v1.json` 삭제, `web/game/components/game/MapViewer.tsx`·`web/gateway/components/MapPreview.tsx`의 `CDN_MAPS`에서 `'pokemon_v1'` 제거(빠지면 `cdnMapCode()`가 `che`로 폴백). 이미지 레포의 `game/map/pokemon_v1/` 타일은 이미 삭제돼 404였다. `game/map/ludo_rathowm/`은 시나리오 **2180**이 계속 쓰므로 **남긴다**.
+- `app/gateway-api/src/main/resources/profile-icons/shared-manifest.json`의 핀 고정 SHA는 이미지 레포 히스토리 재작성에 맞춰 `1b6624d8…` → `05842c61…`로 갱신했다. 두 URL을 jsDelivr·raw 양쪽에서 실제로 내려받아 매니페스트의 `sha256`·64x64 치수와 4/4 일치를 확인했다(파일 바이트 불변 → `sha256`/`portrait_asset_id`/치수 필드는 불변).
+- ⚠️ **IP 노출은 아직 닫히지 않았다.** 이미지 레포 force-push 후에도 옛 리비전 `1b6624d886c1b326a2feeda449288b41231df5ef`로 삭제 대상 2,335장이 **여전히 공개 접근된다**(실측 2026-08-17: `raw.githubusercontent.com/.../1b6624d8…/icons/포켓몬스터/강철톤.png` → `200`; 신규 SHA에서는 404). GitHub가 unreachable 객체를 GC 전까지 보관하기 때문이다. 닫는 경로는 GitHub Support의 unreachable-object purge 또는 레포 삭제 후 재생성뿐이며, 그 조치가 **검증되기 전까지 이 항목을 "제거 완료"로 기록하면 안 된다.**
