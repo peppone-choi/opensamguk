@@ -10,6 +10,7 @@ PRODUCTION_COMPOSE="$REPO_ROOT/docker-compose.production.yml"
 TEST_ROOT="$(mktemp -d /tmp/opensamguk-daemon-alert-contract.XXXXXX)"
 STUB_BIN="$TEST_ROOT/bin"
 ALERT_PAYLOAD_LOG="$TEST_ROOT/alert-payload.log"
+STEP_SUMMARY_LOG="$TEST_ROOT/step-summary.log"
 DEPLOY_FUNCTIONS="$TEST_ROOT/deploy-functions.sh"
 DEPLOY_GATE_LOG="$TEST_ROOT/deploy-gate.log"
 ALERT_WORKFLOW_RUN="$TEST_ROOT/daemon-health-alert-run.sh"
@@ -138,13 +139,16 @@ run_alert() {
 }
 
 run_alert_without_webhook() {
+  local mode="$1"
   : > "$ALERT_PAYLOAD_LOG"
-  CURRENT_CASE='missing webhook'
+  : > "$STEP_SUMMARY_LOG"
+  CURRENT_CASE="missing webhook $mode"
   set +e
   LAST_OUTPUT="$(
-    env \
+    env -u DAEMON_ALERT_WEBHOOK_URL \
       ALERT_PAYLOAD_LOG="$ALERT_PAYLOAD_LOG" \
-      DAEMON_ALERT_TEST_MODE=healthy \
+      DAEMON_ALERT_TEST_MODE="$mode" \
+      GITHUB_STEP_SUMMARY="$STEP_SUMMARY_LOG" \
       PATH="$STUB_BIN:$PATH" \
       bash "$ALERTER" s1 s1-game-engine 2>&1
   )"
@@ -157,6 +161,10 @@ assert_safe_output() {
   assert_not_contains "$LAST_OUTPUT" "$WEBHOOK_SENTINEL"
   assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" "$SECRET_SENTINEL"
   assert_not_contains "$(<"$ALERT_PAYLOAD_LOG")" "$WEBHOOK_SENTINEL"
+  if [[ -f "$STEP_SUMMARY_LOG" ]]; then
+    assert_not_contains "$(<"$STEP_SUMMARY_LOG")" "$SECRET_SENTINEL"
+    assert_not_contains "$(<"$STEP_SUMMARY_LOG")" "$WEBHOOK_SENTINEL"
+  fi
 }
 
 assert_healthy() {
@@ -164,6 +172,7 @@ assert_healthy() {
   [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail "healthy daemon dispatched an alert for $CURRENT_CASE"
   assert_contains "$LAST_OUTPUT" 'state=UP'
   assert_contains "$LAST_OUTPUT" 'lastTurnTime=2026-08-05T16:15:45Z'
+  assert_not_contains "$LAST_OUTPUT" '::warning'
   assert_safe_output
 }
 
@@ -402,10 +411,22 @@ run_alert dispatch_fail
 assert_contains "$LAST_OUTPUT" 'alert dispatch failed'
 assert_safe_output
 
-run_alert_without_webhook
-[[ "$LAST_STATUS" -ne 0 ]] || fail 'missing webhook configuration must fail closed'
-assert_contains "$LAST_OUTPUT" 'alert webhook is not configured'
+run_alert_without_webhook healthy
+[[ "$LAST_STATUS" -eq 0 ]] || fail 'missing webhook must not break the health check of a healthy daemon'
+assert_contains "$LAST_OUTPUT" 'state=UP'
+assert_contains "$LAST_OUTPUT" '::warning title=Daemon alert webhook missing::'
+assert_contains "$(<"$STEP_SUMMARY_LOG")" 'alert webhook is not configured'
 [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail 'missing webhook configuration must not dispatch an alert'
+
+for incident_mode in recovery_gated stalled paused health_unreadable status_unreadable; do
+  run_alert_without_webhook "$incident_mode"
+  [[ "$LAST_STATUS" -ne 0 ]] || fail "daemon incident must still fail closed when the webhook is unset for $CURRENT_CASE"
+  assert_contains "$LAST_OUTPUT" 'daemon alert undelivered server=s1'
+  assert_contains "$LAST_OUTPUT" 'alert NOT delivered'
+  assert_contains "$(<"$STEP_SUMMARY_LOG")" 'alert NOT delivered'
+  [[ ! -s "$ALERT_PAYLOAD_LOG" ]] || fail "missing webhook configuration must not dispatch an alert for $CURRENT_CASE"
+  assert_safe_output
+done
 
 run_alert healthy bad/server s1-game-engine
 [[ "$LAST_STATUS" -ne 0 ]] || fail 'unsafe server label must be rejected'
