@@ -43,7 +43,7 @@ python3 tools/assets/build_brand_assets.py --check   # 손편집 드리프트 �
 | `web/{gateway,game}/app/icon.png` | 241×241 (네이티브, 무업스케일) | Next App Router 자동 배선 파비콘 |
 | `web/{gateway,game}/app/apple-icon.png` | 180×180 (241에서 다운스케일) | iOS 홈 화면 |
 | `web/{gateway,game}/app/favicon.ico` | 16/32/48 (193×193 별도 타일에서 다운스케일) | 레거시 브라우저 |
-| `web/{gateway,game}/public/logo-wordmark.png` | 1200×448 | 투명 워드마크 (어두운 배경) |
+| `web/gateway/public/logo-wordmark.png` | 1200×448 | 투명 워드마크 (어두운 배경) — gateway 전용 |
 
 `logo-wordmark-light.png`(흰 배경 합성본)는 만들지 않는다 — 아래 "워드마크 소비처" 참고.
 
@@ -64,6 +64,12 @@ App Router는 파일의 실제 픽셀 크기를 그대로 `<link>`에 반영하�
 
 `logo-wordmark.png`는 `web/gateway/app/login/page.tsx`·`web/gateway/app/join/page.tsx`의
 `.gw-navbar` 로고 자리에 배선했다(두 앱 다 다크 테마뿐이라 투명 배경 변형만 쓰면 된다).
+빌더는 이 파일을 **gateway 에만** 쓴다 — `web/game` 에는 워드마크를 놓을 자리가 없어서,
+두 앱에 무조건 쓰면 700KB 짜리 미사용 에셋이 game 의 standalone 빌드에 그대로 실린다.
+`next/image` 의 `width`/`height` 는 렌더 크기(86×32)로 준다. 마스터 크기(1200×448)를 그대로
+주면 `sizes` 가 없는 fixed-size 경로에서 후보가 `deviceSizes`(최소 640)로만 잡혀 폴백 `src`
+가 `w=3840` 이 된다 — 86px 자리에 면적 2000배짜리를 내려받는 셈이다. 렌더 크기를 주면
+`imageSizes`(32·48·64·96·128…)에서 후보가 잡힌다.
 `logo-wordmark-light.png`(흰 배경 합성본)는 만들지 않는다 — `web/gateway`·`web/game` 어디에도
 흰 배경 컨텍스트가 없어(둘 다 `#0a0a0a` 기반 다크 테마 전용) 소비할 자리가 없다. 없는
 소비처를 위해 산출물을 만들어 이미지 4장(~2.7MB)을 두 컨테이너 이미지에 태우지 않는다.

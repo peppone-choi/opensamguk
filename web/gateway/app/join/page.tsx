@@ -81,8 +81,8 @@ export default function JoinPage() {
                     className="gw-brand-logo"
                     src="/logo-wordmark.png"
                     alt={BRAND}
-                    width={1200}
-                    height={448}
+                    width={86}
+                    height={32}
                     priority
                 />
             </header>

@@ -11,7 +11,7 @@
     web/{gateway,game}/app/icon.png             네이티브 해상도 三國 인장 (Next App Router 자동 배선)
     web/{gateway,game}/app/apple-icon.png       180px 동일 (다운스케일)
     web/{gateway,game}/app/favicon.ico          16/32/48 멀티사이즈 (패딩을 줄인 별도 타일)
-    web/{gateway,game}/public/logo-wordmark.png 1200px 투명 워드마크
+    web/gateway/public/logo-wordmark.png       1200px 투명 워드마크 (game 은 소비처 없음)
 
 인장 마크는 마스터 우측의 붉은 三國 낙관만 추출해 어두운 정사각 타일에 올린 것이다.
 워드마크 전체를 파비콘 크기로 줄이면 '오픈삼국' 네 글자와 부제가 뭉개지므로 인장을 쓴다.
@@ -149,7 +149,10 @@ def build() -> dict[Path, Image.Image | bytes]:
         outputs[app_dir / "icon.png"] = icon_tile
         outputs[app_dir / "apple-icon.png"] = apple_icon
         outputs[app_dir / "favicon.ico"] = favicon_tile
-        outputs[public_dir / "logo-wordmark.png"] = wordmark
+        # 워드마크는 gateway 의 로그인·가입 내비바에만 배선돼 있다. game 에는 소비처가
+        # 없어서, 두 앱에 무조건 쓰면 700KB 짜리 미사용 에셋이 standalone 빌드에 실린다.
+        if app == "gateway":
+            outputs[public_dir / "logo-wordmark.png"] = wordmark
     return outputs
 
 
