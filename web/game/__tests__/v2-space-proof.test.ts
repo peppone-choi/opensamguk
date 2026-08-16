@@ -1,6 +1,8 @@
 // OPENSAM-41 [G0-C] 순수 로직 게이트 — G0C-b~e(왕복), g(4-class count), h(catalog tier),
 // i(runtime LOD 독립축). 브라우저가 필요 없는 항목은 전부 여기서 결정적으로 닫는다.
 
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   CATALOG_TIER_BUDGET,
@@ -301,6 +303,52 @@ describe('OPENSAM-35 격리 전제 복원 — v2 클라이언트 번들 배제',
     for (const request of ['react', 'three', '@/components/GameChrome', '@/lib/v2/terrain/lod']) {
       expect(shouldStubV2Client(request, false), request).toBe(false);
     }
+  });
+
+  // 리뷰 발견(2026-08-16): shouldStubV2Client 단위 테스트만 있으면 next.config.mjs에서
+  // 훅을 떼어내도 전 테스트가 초록이고 three.js가 프로덕션 번들로 나간다. 배선 자체를 건다.
+  it('next.config.mjs가 스텁 플러그인을 V2_ENABLED 조건과 함께 실제로 배선한다', () => {
+    const config = readFileSync(join(__dirname, '..', 'next.config.mjs'), 'utf8');
+    expect(config).toMatch(/createV2ClientStubPlugin\(/);
+    expect(config).toMatch(/process\.env\.V2_ENABLED === 'true'/);
+    expect(config).toMatch(/webpack\(config\)/);
+  });
+
+  // buildIsolation.mjs가 스스로 신고한 한계: 스텁은 webpack 훅이다. build가 turbopack으로
+  // 바뀌면 훅이 조용히 죽는다 → 주석이 아니라 테스트로 잠근다.
+  it('build 스크립트가 turbopack으로 바뀌면 실패한다 (스텁은 webpack 전용)', () => {
+    const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    expect(pkg.scripts.build).not.toMatch(/turbo/);
+  });
+
+  // 스텁은 `components/v2/**` import만 가로챈다. v2 로직(lib/v2/terrain/*)을
+  // components/v2 밖의 클라이언트 컴포넌트가 직접 import하면 그 경로로 새어 나간다.
+  it('components/v2 밖의 클라이언트 컴포넌트는 lib/v2를 import하지 않는다', () => {
+    const root = join(__dirname, '..');
+    const skip = new Set(['node_modules', '.next', 'test-results', '__tests__', 'e2e', '.git']);
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory()
+          ? skip.has(e.name)
+            ? []
+            : walk(join(dir, e.name))
+          : /\.tsx?$/.test(e.name)
+            ? [join(dir, e.name)]
+            : [],
+      );
+
+    const files = walk(root);
+    expect(files.length).toBeGreaterThan(0); // 공허한 통과 방지
+    const leaks = files.filter((f) => {
+      if (f.includes(`${sep}components${sep}v2${sep}`)) return false;
+      const src = readFileSync(f, 'utf8');
+      // 서버 컴포넌트(page.tsx 등)는 클라이언트 번들에 들어가지 않으므로 대상이 아니다.
+      if (!/^\s*['"]use client['"]/m.test(src)) return false;
+      return /from '@\/lib\/v2\//.test(src);
+    });
+    expect(leaks).toEqual([]);
   });
 });
 

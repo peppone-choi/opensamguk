@@ -64,7 +64,11 @@ TerrainPatch / 좌표·projectionVersion / 렌더·fallback / uncertainty 구분
 | synthetic | CLUSTER | 2,000 (825 클러스터) | 134 | 2233.2 | **60.0036** | 16.700 | 16.700 | 16.800 |
 
 - 60 FPS 게이트(demo): p50 ≤ 16.9ms, p95 ≤ 17.5ms → **통과** (둘 다 16.700ms).
-- 30 FPS 게이트(synthetic 2,000): p95 ≤ 33.3ms → **통과** (16.800ms). 여유 약 2배.
+- 30 FPS 게이트(synthetic 2,000): p95 ≤ 33.3ms → **통과** (16.800ms).
+- **측정 한계(리뷰 2026-08-16 지적, 정정):** 세 시나리오의 p50/p95가 모두 정확히 16.700ms다.
+  rAF가 vsync에 묶여 있다는 뜻이고, 이 게이트는 "vsync 아래로 떨어지지 않는다"만 증명한다.
+  **헤드룸은 알 수 없다** — 2,000 거점이 3 거점보다 얼마나 무거운지 이 수치로는 말할 수 없으므로
+  "여유 약 2배" 같은 해석을 하지 않는다.
 - 캔버스 픽셀: 스크린샷 1024×768 = 786,432px, 고유 색 **144**, 배경 점유 **99.15%**
   (단색 = 빈 화면 아님, 전면 도형 = 오염 아님). 스크린샷: `web/game/test-results/v2-space-demo.png`.
 
@@ -76,10 +80,14 @@ TerrainPatch / 좌표·projectionVersion / 렌더·fallback / uncertainty 구분
    G0B-n/o(주변 240 / 주변 물리 장소 500)의 산출물이며 아직 없다.
    `__tests__/v2-space-source-catalog.test.ts`가 이 사실을 단언으로 고정하고, 카탈로그가
    나타나면 synthetic과 **같은 함수**(`auditCatalog`)로 자동 검사한다. 수치는 지어내지 않았다.
+   **한계(리뷰 2026-08-16):** 탐지 경로는 테스트 안의 `CANDIDATES` 4개뿐이다. 카탈로그가 그 밖에
+   놓이면 이 테스트는 계속 BLOCKED 분기로 남는다 — 카탈로그를 만드는 레인이 경로를 추가해야 한다.
+   또한 카탈로그가 착지해도 BLOCKED 단언이 "빨개지는" 것이 아니라 분기가 교체된다.
 2. **연대기 모드** 판정도 같은 이유로 미측정(UNKNOWN) — 실제 catalog에 `chronicleOnly` 항목이 없다.
 3. **프로덕션 빌드 FPS 미측정.** 위 수치는 `next dev` 기준이다.
 4. **기존 실패 1건은 이 작업과 무관.** `web/game/__tests__/live-noop-closures.test.tsx`의
    `선택 풀 즉시 반영` 테스트는 base(`d63f6fec`)에서도 동일하게 실패한다(stash 후 재현 확인).
+   리뷰어가 독립 재확인: `d63f6fec` 1 failed / 7 passed, `origin/main`(`dcb205d8`)도 1 failed / 7 passed.
 
 ## 5. 격리(OPENSAM-35) 관련 결정 — 리뷰 필요
 
@@ -126,3 +134,48 @@ grep -rl "v2-space-canvas" .next/static/ → app/game/v2-lab/space/page-…
 | `/game/v2-lab` | 404 | 200 |
 | `/game/v2-lab/space` | 404 | 200 |
 | `/game/rankings` | 200 | 200 |
+
+## 6. 빌드 격리 메커니즘 — 정본 설명 (turbopack 한계 포함)
+
+이 절이 격리 메커니즘의 정본이다. 나중에 빌드 도구를 바꾸면 **여기부터 읽어라.**
+
+```
+next.config.mjs  webpack(config) { config.plugins.push(createV2ClientStubPlugin(stubPath, V2_ENABLED === 'true')) }
+   └─ lib/v2/buildIsolation.mjs
+        compiler.hooks.normalModuleFactory → nmf.hooks.beforeResolve
+        request가 /(^|[./])components\/v2\// 에 걸리고 v2Enabled=false 이면
+        request를 lib/v2/clientDisabled.tsx (return null 스텁)로 치환
+```
+
+- 적용 대상은 **`components/v2/**` import specifier 뿐이다.** 정적·동적 import 모두 같은 훅을 탄다.
+- `V2_ENABLED === 'true'`인 빌드에서는 치환하지 않는다(실제 코드가 들어온다 — §5 대조군).
+- `middleware.ts`(HTTP 404)와 `app/game/v2-lab/layout.tsx`(`notFound()`)는 **별개 축**이다.
+  빌드 격리는 `/_next/static/**`(matcher 밖)을, 라우트 게이트는 렌더 자체를 막는다. 둘 다 필요하다.
+  특히 서버 컴포넌트 `page.tsx`가 fixture(최대 2,000 거점)를 클라이언트 경계 props로 내려보내므로,
+  **RSC payload 유출을 막는 것은 빌드 격리가 아니라 라우트 게이트다.**
+
+### 한계와 그것을 잠그는 테스트 (리뷰 2026-08-16에서 추가)
+
+| 한계 | 왜 위험한가 | 잠금 |
+| --- | --- | --- |
+| **webpack 전용.** `next build --turbopack`으로 옮기면 훅이 조용히 죽는다 | 아무 테스트도 빨개지지 않은 채 three.js가 프로덕션으로 나간다 | `__tests__/v2-space-proof.test.ts` — `package.json`의 `build` 스크립트에 `turbo`가 들어가면 실패. turbopack으로 옮기려면 **먼저 동등한 turbopack 규칙을 만들고** 이 테스트를 갱신해라 |
+| **배선 제거.** `next.config.mjs`에서 훅만 지우면 격리가 사라진다 | `shouldStubV2Client` 단위 테스트는 그대로 초록 | 같은 파일 — `createV2ClientStubPlugin(` · `process.env.V2_ENABLED === 'true'` · `webpack(config)` 배선을 소스에서 단언 |
+| **`lib/v2/**` 직접 import.** 스텁은 `components/v2/`만 가로챈다 | `components/v2` 밖의 클라이언트 컴포넌트가 `@/lib/v2/terrain/*`를 import하면 그 경로로 v2 로직·fixture가 샌다 | 같은 파일 — `'use client'` 파일 중 `components/v2` 밖에서 `@/lib/v2/`를 import하는 것이 있으면 실패 |
+| **`app/game/v2-lab/**`에 직접 `'use client'`** | 페이지 자체가 클라이언트 청크가 된다 | 기존 `__tests__/v2-lab-route.test.tsx` 소스 스캔(OPENSAM-35) |
+
+### 독립 재현 (리뷰어, 2026-08-16 — 작성자와 별개 실행)
+
+`rm -rf .next && pnpm build` (V2_ENABLED 미설정, next 15.5.20 webpack):
+
+- `.next/static/chunks/app/game/v2-lab/space/page-a60c3e311e865f23.js` = **658 B**,
+  본문 `d.d(n,{SpaceProof3D:()=>f});let f=function(){return null}`
+  (해시는 Sentry `_sentryDebugIds` 주입 때문에 빌드마다 다르다 — 크기·본문은 동일)
+- `grep -rlE "WebGLRenderer|InstancedMesh|BufferGeometry|OrthographicCamera|RingGeometry" .next/static/` → **0**
+- `grep -rlE "gl_FragColor|varying vec|THREE\.WebGL|instanceMatrix|morphTarget|srgb-linear" .next/static/` → **0**
+- `grep -rl "v2-space-canvas|v2-space-fallback|합성거점|place:luoyang" .next/static/` → **0**
+- `find .next/static -name "*.map"` → **0** (SENTRY_AUTH_TOKEN 미설정 시 소스맵 비활성)
+- `grep -rl "components/v2/" node_modules/` → **0** (스텁 정규식이 서드파티 요청을 오탐하지 않는다)
+- `next start` 실측: `/game/v2-lab` 404 · `/game/v2-lab/space` 404 · `/game/rankings` 200 ·
+  스텁 청크 200(본문 `return null`)
+
+전체 비평: `docs/superpowers/reviews/2026-08-16-opensam-41-g0c-3d-proof-review.md`.

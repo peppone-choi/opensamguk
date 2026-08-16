@@ -6,7 +6,10 @@
 //
 // 그래서 이 테스트는 (1) 실제 catalog가 나타나면 synthetic과 **같은 함수**로 검사하고,
 // (2) 아직 없으면 "없음"을 사실로 고정한다. 수치를 지어내 통과시키지 않는다.
-// 카탈로그가 착지하는 순간 아래 BLOCKED 단언이 빨개지고, 검사 경로가 자동으로 켜진다.
+// 카탈로그가 CANDIDATES 경로 중 하나에 착지하면 BLOCKED 분기가 꺼지고 실검사가 자동으로 켜진다.
+// (정정 — 리뷰 2026-08-16: BLOCKED 단언이 "빨개지는" 것이 아니라 분기가 교체된다. 대신
+//  CANDIDATES 밖에 카탈로그가 놓이면 이 테스트는 계속 BLOCKED로 남으므로, 카탈로그를
+//  만드는 레인이 경로를 여기 추가해야 한다.)
 
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
