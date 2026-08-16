@@ -1,7 +1,7 @@
 # 브랜드 에셋 (logo-master + 파생 빌더) 적대적 리뷰
 
 Scope: assets/brand/README.md · assets/brand/logo-master.png · tools/assets/build_brand_assets.py · web/gateway/app/{icon,apple-icon}.png · web/gateway/app/favicon.ico · web/gateway/public/logo-wordmark*.png · web/game/app/{icon,apple-icon}.png · web/game/app/favicon.ico · web/game/public/logo-wordmark*.png
-Verdict: fix-required
+Verdict: cleared
 
 - 대상: 브랜치 `feat-brand-assets`의 미커밋 변경 (전부 신규 추가, 기존 파일 수정 0). 기준 `origin/main` = `a95e5a90`.
 - 리뷰어는 team-lead와 독립. `tools/agent-system/check.py` 무편집. 코드 수정 0건 — 결함만 보고한다.
@@ -823,3 +823,85 @@ F19는 신규 low(실해 없음).
 2. `web/game/public/logo-wordmark.png` — 소비처 0건. 배선하거나 빌더 출력에서 제외.
 
 이 둘이 닫히면 `cleared`다. 그 외 남은 항목은 전부 문서화된 알려진 한계이거나 실해 없는 low다.
+
+## 20. 4차 패스 — `ee8bd9f3` 검증, 판정 `cleared`
+
+`origin/feat-brand-assets` = `ee8bd9f3`을 분리 워크트리(`git worktree add --detach`)에 체크아웃해
+검증했다. 메인 워킹트리 미사용. 코드 수정 0건 — 이 문서만 갱신한다.
+
+### 20.1 F7-1 srcset 낭비 — PASS
+
+`web/gateway/app/login/page.tsx:105-106`·`join/page.tsx:84-85`가 `width={86} height={32}`.
+`pnpm install` 후 `pnpm exec next build` 성공. 빌드 산출물 실측(두 페이지 동일):
+
+```
+$ grep -o '<img[^>]*gw-brand-logo[^>]*>' .next/server/app/login.html
+<img alt="오픈삼국" width="86" height="32" decoding="async" data-nimg="1"
+  class="gw-brand-logo" style="color:transparent"
+  srcSet="/_next/image?url=%2Flogo-wordmark.png&w=96&q=75 1x,
+          /_next/image?url=%2Flogo-wordmark.png&w=256&q=75 2x"
+  src="/_next/image?url=%2Flogo-wordmark.png&w=256&q=75"/>
+```
+
+`join.html`도 바이트 동일한 `<img>`다. 폴백 `src`가 `w=3840` → `w=256`. 렌더 폭 85.7px
+기준 2x = 171.4px이고 `imageSizes`의 다음 후보가 256 — 과소도 과대도 아니다. **면적 기준
+낭비 2007배가 8.9배로 떨어졌고, 이건 DPR 2 대응에 실제로 쓰이는 픽셀이다.**
+
+CSS는 `web/gateway/app/globals.css:260` `.gw-brand-logo { height:32px; width:auto }` 그대로다.
+`width:auto`가 렌더 폭을 마스터 종횡비(2.679)로 결정하므로 속성값 86/32(=2.6875)의 미세한
+차이는 렌더에 영향이 없고, CLS 예약 박스만 0.3px 어긋난다 — 무해.
+
+`sizes` 추가 대신 렌더 크기를 준 선택도 맞다. 이 로고는 고정 크기라 뷰포트 의존이 없고,
+`sizes`는 후보를 `deviceSizes`(최소 640)로 유지한 채 브라우저 선택만 바꾸므로 `imageSizes`의
+96/256 후보를 여는 쪽이 더 작은 결과를 낸다.
+
+### 20.2 F7-2 game 미사용 700KB — PASS
+
+`web/game/public/logo-wordmark.png` 삭제 확인(`git show --stat`: `Bin 714596 -> 0 bytes`).
+`grep -rn "logo-wordmark" web/game` → **0건**(node_modules 제외). 빌더는
+`tools/assets/build_brand_assets.py:154` `if app == "gateway"`로 워드마크를 gateway에만 쓴다.
+`--check` → `brand assets check OK: 7 files byte-match`(8→7).
+
+**미사용 낭비를 낭비 사용으로 바꾼 게 아니라 실제로 제거했다** — 삭제 쪽을 골랐고, 이게 맞다.
+`web/game/public/`은 `.gitkeep`·`flags/`·`icons/`가 남아 디렉터리가 사라지지 않았다.
+
+### 20.3 재현성·게이트 재확인
+
+- `python3 tools/assets/build_brand_assets.py` 재실행 후 `git status --short` **비어 있음** —
+  `ee8bd9f3`에서도 바이트 재현성 유지(F1/F2 회귀 없음).
+- `pnpm exec vitest run` → `Test Files 19 passed (19)`, `Tests 146 passed (146)`.
+- `python3 tools/agent-system/check.py --strict --base origin/main` 꼬리:
+  `- **ERROR cross-agent-critique**: Unresolved Verdict: fix-required blocks completion:`
+  — 이 갱신(`fix-required` → `cleared`)으로 해소된다.
+
+### 20.4 F15 — low 유지, 코드 주석 문구만 부정확
+
+임계값 구간을 `ee8bd9f3`에서 다시 실측했다: floor 19~32가 정답 상자 `(1648,386,1751,552)`를
+내고 **33은 `(1648,387,...)`로 달라진다.** 즉 `DENSITY_FLOOR+8 = 32`는 안전 구간의 **정확한
+상한이고 여유가 0**이다.
+
+`tools/assets/build_brand_assets.py:47-48` 주석은 이걸 "DENSITY_FLOOR+8(=32)도 **여전히**
+안전 구간 안이라 … **항상** 통과한다"로 적는다. 경계 정확일치를 여유가 있는 것처럼 읽히게
+하는 문구다 — 다음 사람이 `+9`로 올리거나 floor를 조정할 때 헤드룸이 있다고 오판할 수 있다.
+`assets/brand/README.md:108`의 `안전 구간(≤32) 안에 들어와`는 정확하다.
+
+**판정: low, 차단 아님.** 동작은 옳고(조기경보로 유효), README가 정확한 숫자를 이미 공개하고
+있어 은폐가 아니다. 다만 주석을 `(=32)는 안전 구간의 정확한 상한 — 여유 0이므로 +9로 올리면
+지금 마스터에서도 죽는다`로 고치면 문서-코드 불일치가 사라진다. **다음 브랜드 작업 때 같이
+정리할 것을 권고한다.**
+
+### 20.5 알려진 한계로 기록 (실해 없음)
+
+- **F19** — Next가 `favicon.ico`를 `<link ... sizes="16x16">`으로만 선언한다(ICO에는 16/32/48
+  세 엔트리가 다 들어 있다). 브라우저는 ICO 컨테이너를 직접 읽어 최적 엔트리를 고르므로
+  실제 표시에는 영향이 없다. Next의 ICO 헤더 파싱이 첫 엔트리만 보는 한계다 — 알려진 한계.
+- **`assert` 제거** — `seal_bounds`의 자기 검증 3개는 `python -O`에서 통째로 사라진다.
+  이 빌더를 `-O`로 부르는 경로는 리포에 없다(`grep -rn "python.* -O" tools/ scripts/` 0건).
+  게이트/CI에서 부를 때 `-O`를 쓰지 마라 — 기록만.
+- **F3·F15** — 문서화된 알려진 한계(원본→마스터 손작업 UNKNOWN, 절대 임계값 비정규화).
+
+### 20.6 결론
+
+**차단 항목 0건.** F7 두 갈래 모두 실제로 닫혔고 빌드 산출물로 확인했다. 남은 것은 전부
+`assets/brand/README.md`에 숫자와 함께 공개된 알려진 한계이거나 실해 없는 low다.
+**`Verdict: cleared`.**
