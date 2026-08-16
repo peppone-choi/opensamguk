@@ -380,6 +380,99 @@ P-14b~h Pack 인터페이스 **7종** — 동결 (`:418`): `EraPack` · `Faction
 
 ---
 
+## OPENSAM-75 — P-15 성공 기준 + 공통 게이트 GATE-a~f
+
+### P-15. 제품·운영 성공 기준 (§11) — 동결(수치), 측정 소유는 각 phase Exit
+
+근거: `product-spec.md:444-457` · 분해 = `01-backbone-micro.md:67-68` · **구현 정본 = 각 phase Exit**(`README.md:32`)
+
+**계약 동결의 의미**: 아래 12개 수치는 이 문서로 고정된다. 그러나 각 수치를 *언제 어느 게이트가 측정하는가*는
+실행계획 phase Exit이 소유하며(`01-backbone-micro.md:68` "대부분 계획 phase Exit와 중복 — 계획을 정본"),
+이 문서는 게이트를 만들지 않는다.
+
+| ID | 기준 (동결) | 근거 | 측정 소유 |
+|---|---|---|---|
+| P-15a | command acceptance **p95 < 200ms** | `:446` | V2-1 |
+| P-15b | `commandResolved` 후 영향 query가 **2초 이내** 갱신 | `:447` | V2-1 / V2-8 freshness |
+| P-15c | replay 생성 **p95 < 1초** (정산 자체는 비동기 가능) | `:448` | V2-4A |
+| P-15d | 동일 입력·버전·seed 재실행 시 `DeterministicReplayBody`와 **hash diff 0**. **envelope id/timestamp는 비교 제외** | `:449` | V2-4A/4B |
+| P-15e | **v1 backend gate + web typecheck/build 회귀 0** | `:450` | 전 phase 공통 = GATE-e |
+| P-15f | v2 sandbox에서 **승인부터 replay·관계 변화까지 한 번에 재현** | `:451` | V2-5 / V2-6 |
+| P-15g | 3D proof scene에서 도시 picking·작전 경로·전장 진입·formation 명령·replay camera가 **같은 spatial snapshot 사용** | `:452` | V2-G0-C (`OPENSAM-41`) |
+| P-15h | 2,000 synthetic 전체 지도 **및** 2,000 실제 source catalog 전체에서 catalog Tier A/B/C **120/380/1,500**과 runtime `CLUSTER\|SYMBOL\|KIT\|FULL_SCENE` 전환이 동일한 `PhysicalPlace` identity와 picking·점령·보급 상태를 유지하고, **streaming 전후 simulation diff 0** | `:453` | V2-G0-C / V2-8 |
+| P-15i | `CountyParticipationFixture`가 현급 **1,180개 각각**에서 조회·점령·주둔·징병·세입·보급의 read-model과 순수 상태 전이를 실행해 **기능별 누락 0** 증명 | `:454` | V2-G0 (**오픈 후 gate**) |
+| P-15j | 군·국 정책 1회가 소속 현에 전파되고 우선순위 **`현 override > 유효한 위임 > 군·국 정책 > world default`** 준수. 검색·필터·다중 예외, 이상 알림, 위임 감사·철회·복구를 command/read-model/browser fixture로 검증 | `:455` | V2-G0-A (`OPENSAM-36`) |
+| P-15k | 데스크톱 1080p **60 FPS**, 지원 모바일 **30 FPS**를 Playwright screenshot·canvas pixel·frame telemetry로 검증 | `:456` | V2-G0-C / V2-8 |
+| P-15l | production profile에서 **v2 route·bean·Flyway location·catalog loader가 0개**이고, production에서 v1 world와 v2 sandbox world를 명확히 구분 | `:457` | V2-0A (`OPENSAM-35`, 격리 게이트) |
+
+표기 정정: `appendix-backbone-initial.md:121`은 §11을 "13개 기준"으로 적었으나 `product-spec.md:446-457`의
+실제 항목은 **12개**이며 `01-backbone-micro.md:68`의 a~l 열거(12개)와 일치한다. 12가 맞다.
+
+**적용 시점 — 이미 결정됨, 재결정하지 않는다.**
+
+- P-15i는 **`OPENSAM-43`(V2-0B)의 선행이 아니다.** ADR-LITE-030이 OP43을 고정된 기존 도시 입력으로 열고
+  G0·1,180 선행을 해제했다(`.ai/decisions.md:324`, `01-backbone-micro.md:68` 괄호 주석과 동일).
+- P-15h·P-15i·P-15k는 ADR-LITE-019에 의해 **v2 오픈 판정 기준에서 제외**되고 오픈 후 G0 착수 시점에 적용된다
+  (`.ai/decisions.md:197`). 항목 자체는 폐기되지 않았다.
+- P-15l은 `OPENSAM-35`의 격리 게이트로 이미 선설치됐다(브랜치 `op-35-v2-0a`, 커밋 `18b8bd95`/`db91d56d`).
+  ADR-LITE-029가 "OPENSAM-35는 격리 probe로 닫고 실제 v2 leaf는 OPENSAM-150에서 증명한다"로 확정
+  (`.ai/decisions.md:312`).
+
+### GATE-a ~ GATE-f. 매 phase 공통 게이트 — 동결
+
+근거: `01-backbone-micro.md:294-295` · `README.md:34` · `CLAUDE.md` §Skills(mandatory legacy-gap chain / 외부 리뷰어)
+
+**전 phase Exit에 공통 적용된다.** 항목당 1체크이며, 하나라도 미충족이면 phase는 닫히지 않는다.
+
+| ID | 게이트 | 요구 증거 | 정합 근거 |
+|---|---|---|---|
+| GATE-a | PHP oracle 증거 | PHP/hwe **source path + line** + 해당 golden | `01-backbone-micro.md:295`; `CLAUDE.md` "opensamguk-php-oracle 먼저" |
+| GATE-b | webapp-testing UI 재현 | 브라우저로 재현한 UI 증거 | 동 `:295`; `CLAUDE.md` mandatory legacy-gap chain |
+| GATE-c | loop-engineering 증거 | `docs/loops/v2-*`에 **가설 · baseline · grader · 채택 · 원복** 기록 | 동 `:295`; `docs/superpowers/LOOP_ENGINEERING.md` |
+| GATE-d | provider-agnostic 가드 | `tools/agent-system/check.py --strict --base origin/main --format json` | 동 `:295`; `CLAUDE.md` §provider-agnostic guard |
+| GATE-e | v1 패러티 게이트 green | v1 backend gate + web typecheck/build **회귀 0** (= P-15e와 동일 대상) | 동 `:295`; `product-spec.md:450` |
+| GATE-f | 외부 fresh 리뷰어 | 크로스-에이전트 판정 `cleared` \| `fix-required` \| `quarantined-with-proof`. **미해결 `fix-required`는 머지·배포를 막는다** | 동 `:295`; `CLAUDE.md` §cross-agent critique |
+
+부가 규칙 — 이미 결정되어 재결정하지 않는 것:
+
+- **증거 부재는 통과가 아니다.** 체인의 링크가 불가하면 `채점대기`/`blocked`로 기록하고 조용히 ship/merge 하지 않는다
+  (`CLAUDE.md` mandatory legacy-gap chain). 미검증은 UNKNOWN이지 추측이 아니다(`CLAUDE.md` Hard rules).
+- GATE-f의 PR 운용은 ADR-LITE-026이 이미 확정 — 리뷰 에이전트를 **3회 멘션**하고 수정·재검증 후에만 머지
+  (`.ai/decisions.md:276`).
+- **골든·게이트 약화 금지**가 모든 게이트의 상위 규칙이다(`product-spec.md:245`, `01-backbone-micro.md:303`,
+  `CLAUDE.md` 패러티 discipline 5).
+
+### 전 티켓 공통 비범위 (동결, 변경 없음)
+
+근거: `product-spec.md:239-245`·`:401-404` · `01-backbone-micro.md:303` · `README.md:78`
+
+- v2 MVP에서 112개 커맨드 전체 구현 / 실시간 병사 단위 조작·병사 시점 자유 카메라·cinematic·**런타임 LLM**·
+  결제·인앱·네이티브 앱·다국어 / 1,180개 현급을 같은 깊이로 반복 관리하는 UI(전수 simulation ≠ 전수 수동 관리) /
+  v1 production s1에 v2 schema·seed 직접 주입 / 패러티 골든·게이트 약화 또는 v2 편의를 위한 PHP 동작 변경.
+- §9 넣지 않을 콘텐츠: 반복 클릭형 일일 퀘스트 · 무작위 전리품 · 과금형 능력치 · (핵심 루프 증명 전) 장식용 3D ·
+  **AI 즉석 서술 생성**.
+- 자동 구현 금지(승인·보류): cadence 60분 외 값 · s1 v2 world 생성 · 3D asset · license · 인프라 비용 ·
+  v1 gate/golden 완화(`01-backbone-micro.md:303`).
+- one-daemon-write rule(`ChangeRecorder → JdbcFlushExecutor`) 유지 · CHRONICLE에서 연의·게임 콘텐츠
+  역사화 금지(`README.md:78`).
+
+---
+
+## 병행 레인과의 정합 검토 (충돌 없음)
+
+동시 진행 중인 구현 레인의 티켓 본문을 대조했다. **이 문서가 동결한 계약과 모순되는 항목은 없다.**
+
+| 레인 | 티켓 | 접점 | 판정 |
+|---|---|---|---|
+| B | `OPENSAM-36` G0-A① 행정 계약 7종 + 도시 분리 4모델 | Jira가 말한 "P-5 행정"은 정본 P-5(RetainerProposal)가 아니라 **T1 그룹 B/E**다. 실제 접점은 **P-12**(`PhysicalPlace` 2,000·4-class = 체크리스트 `T1-B07`)와 **P-15j**(군·국 정책 전파) | **정합.** 2,000·4-class 수치가 P-12 동결값과 일치. P-5는 접점이 아니므로 이 문서의 P-5 동결이 레인 B를 제약하지 않는다 |
+| C | `OPENSAM-37` 출처·확실성 계약 (EvidenceRef/HistoricalClaim/WorldContentProfile) | product-spec P-* 어디에도 대응 항목이 **없다**(T1 그룹 A·K 전용) | **정합.** 겹치는 계약 표면 없음. 단 P-12의 "정밀한 단일 좌표를 역사 사실처럼 표시 금지"(`product-spec.md:235`)가 레인 C의 `T1-A05` 시기분리 validator와 **같은 방향**이라 상호 보강 |
+| D | `OPENSAM-41` G0-C 3D 공간 증명 | **P-12**(catalog LOD 120/380/1,500 · runtime LOD 4종 · 2,000 4-class) + **P-15g/h/k** | **정합.** 체크리스트 `G0C-g/h/i/k`가 P-12·P-15h·P-15k 동결값과 1:1 일치. `G0C-b~e`(picking·경로·anchor·camera 왕복)가 P-15g의 "같은 spatial snapshot"을 그대로 측정 |
+
+주의로 남기는 것(충돌 아님): 레인 B·D는 **오픈 후** 분류인 `V2-G0`에 속한다(ADR-LITE-019, `.ai/decisions.md:190`).
+이 문서는 그 순서를 바꾸지 않으며, P-12·P-15h/i/k의 적용 시점도 ADR-019/030이 정한 대로 둔다.
+
+---
+
 ## OPEN QUESTION (동결하지 않음 — 근거 없음 / 결정 필요)
 
 이 목록은 착수 시점까지 열려 있으며, **임의로 채우지 않는다.** 각 항목은 결정 주체를 명시한다.
@@ -401,3 +494,9 @@ P-14b~h Pack 인터페이스 **7종** — 동결 (`:418`): `EraPack` · `Faction
 - **Q5 (P-9g)** — 첫 건물군 6종의 template 실체는 `EraPack` 소속이라 C-track ContentEntry lifecycle을 따르는데
   (`product-spec.md:345`, `01-backbone-micro.md:43` "중복 관리 필요"), C-track exact-count
   120/72/18/24/24/32 중 어느 버킷에 6종이 들어가는지 문서에 없다. 결정 주체: C-track(오픈 후).
+- **Q6 (P-15 / GATE-a)** — P-1~P-15는 전부 **v2 신규 계약**이라 PHP 오라클이 존재하지 않는데, GATE-a는
+  "PHP oracle source/line + golden"을 매 phase Exit에 요구한다(`01-backbone-micro.md:295`). v2-only 산출물에서
+  GATE-a를 어떻게 충족(또는 면제)하는지 문서에 규정이 없다. `CLAUDE.md`는 "링크 불가 시 `채점대기`/`blocked`"만
+  말하고 면제 절차는 주지 않는다. 결정 주체: 사람 승인(게이트 정의 변경이므로).
+- **Q7 (P-15 개수 표기)** — `appendix-backbone-initial.md:121`의 "13개 기준"과 실제 12개의 불일치.
+  이 문서는 12로 동결했으나 appendix 원문 정정 여부는 문서 소유자의 결정이다.
