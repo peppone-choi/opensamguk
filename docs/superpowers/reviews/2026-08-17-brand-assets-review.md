@@ -588,3 +588,238 @@ exit=0
 - `web/game`: `pnpm exec vitest run` → 64 files 통과, `__tests__/live-noop-closures.test.tsx` 1건만
   실패(과제 지시대로 이 실행 이전부터 존재하는 선존재 결함, 이번 변경과 무관 — web/game 코드는
   이번 패스에서 건드리지 않았고 에셋 바이너리만 재생성됐다).
+
+---
+
+# 19. 3차 패스 — `e2a170a8` 검증 (리뷰어)
+
+`origin/feat-brand-assets` = `e2a170a8`을 **별도 워크트리**(`git worktree add --detach`)에 체크아웃해
+검증했다. 메인 워킹트리는 쓰지 않았다. 환경: Python 3 / Pillow 12.2.0, Next.js 15.5.20,
+`web/gateway`는 이 워크트리에서 `pnpm install` 후 빌드(메인 워크트리의 `node_modules`는
+`@tiptap/*` 미설치 상태라 §0.3의 빌드 실패 원인이었다 — 이번 변경과 무관한 선존재 환경 문제).
+
+## 19.1 항목별 판정
+
+| 항목 | 판정 | 근거 |
+| --- | --- | --- |
+| F1 루트 LICENSE | **PASS** | §19.2 |
+| F2 창 하드코딩 서술 | **PASS** | §19.3 |
+| F3 floor 해상도 미정규화 | **부분 — 문서화로 강등** | §19.4 |
+| F4 512 업스케일 | **PASS** | §19.5 |
+| F5 16px 판독 | **PASS** | §19.6 |
+| F6 "세 글자" | **PASS** | §19.3 |
+| F7 워드마크 고아 | **FAIL — 미폐쇄** | §19.7 |
+| F8 PNG 최적화 | **PASS (수치 정정)** | §19.8 |
+| F9 원본 출처 | **PASS** | §19.2 |
+| F10 드리프트 검출 | **PASS** | §19.9 |
+| F11 index/worktree 분기 | **PASS** | §7 |
+| F12 이진 알파 | 변화 없음 (실해 없음) | — |
+| F13 `#F2F2F2` | **PASS** | §19.2 |
+| F14 `픈` 받침 | 미변경 (아트 성질) | — |
+| F15 DENSITY_FLOOR 여유 | **부분 — §19.4** | §19.4 |
+| F16 fix-required 푸시 | 진행 중 (이 문서 갱신으로 해소) | §19.11 |
+| F17 판정식 한계 미기재 | **PASS** | §19.3 |
+| F18 자동 체크 | **PASS** | §19.10 |
+| F19 favicon `<link sizes>` | **신규 low** | §19.5 |
+
+## 19.2 F1 · F9 · F13 — PASS
+
+`assets/brand/README.md`가 루트 `LICENSE` 인용을 삭제하고 "이 리포에는 루트 `LICENSE` 파일이
+없다 … 여기서 라이선스를 주장하지 않는다"로 바꿨다. 없는 문서를 근거로 들지 않는다.
+
+원본 sha256이 기록됐고 **실측과 일치한다**:
+
+```
+$ shasum -a 256 /Users/apple/Downloads/ChatGPT_Image_2026_4_30_11_21_48.png
+f9f6c0ffc824cb1e1dcd1f429933cad74fedc61d7ff4f912778b269fd7cc9db5
+README 기재:  f9f6c0ffc824cb1e1dcd1f429933cad74fedc61d7ff4f912778b269fd7cc9db5
+```
+
+flood fill 허용오차는 `UNKNOWN`으로 명시됐다 — 재현 경로가 없다는 사실을 감추지 않았다.
+"재현하려면 마스터를 그대로 쓰거나 동일 원본에서 같은 배경 제거·트림을 다시 수행해야 한다"까지
+적었다. 정직한 표기다. 배경색도 "근백색 ≈#F2F2F2, 평탄하지 않음 — 코너 샘플 241~243"으로 정정.
+
+## 19.3 F2 · F6 · F17 — PASS
+
+`build_brand_assets.py`의 `is_seal_pixel` 독스트링과 `seal_bounds` 독스트링, README 모두에
+2차 패스 실측이 정확히 반영됐다 — "실측 33,898px 중 89.6%가 낙관이 아닌 그 요소들",
+"낙관만 남기는 건 이 함수가 아니라 `seal_bounds`의 우측 30% 탐색 창이다", "창이
+load-bearing이라는 뜻이다". 수치·결론 모두 내 측정과 일치한다. "세 글자"는 "三國 두 글자"로 정정.
+
+## 19.4 F15 · F3 — 부분 폐쇄. 여유 개선은 실증됐으나 자기검증 지점은 경계 정확일치다
+
+`DENSITY_FLOOR` 30 → 24. 이 커밋 상태에서 전수 재탐색(assert 우회를 위해 `floor=` 인자 사용):
+
+```
+정답 상자 floor 구간: 19 ~ 32   (bounds (1648,386,1751,552), crop 104x167)
+  → 24 기준 여유 -5 / +8        ← 레인 주장과 일치. (a) 검증 PASS
+자기검증 지점 DENSITY_FLOOR+8 = 32, 구간 상한 = 32, 여유 = 0
+  floor=31 -> (1648,386,1751,552) 동일
+  floor=32 -> (1648,386,1751,552) 동일
+  floor=33 -> (1648,387,1751,552) ★다름
+최외곽 카운트 col[1648]=130 col[1751]=34 row[386]=32 row[552]=66 → min=32
+```
+
+**(a) -5/+8 주장은 참이다.** 구간 재산정도 19~32로 동일하다 — **(c) 검증 PASS**.
+
+**(b) tautology는 아니지만 여유 0이다.** assert는 "floor 24~32 구간에서 상자 불변"을 실제로
+검사한다. 실제 파손은 최외곽 카운트가 24 미만으로 떨어질 때고, assert는 32 미만에서 이미
+발화하므로 **8단계 앞선 조기경보**다 — 설계 자체는 유효하다. 다만 상한을 정하는 값이
+`row[386]=32` 단 하나이고 `DENSITY_FLOOR+8`이 정확히 32이므로, `+9`였으면 지금 당장 실패한다.
+**`+8`이 그 실측 32에서 역산된 값이라는 team-lead의 지적은 사실이다.**
+
+실질 영향: 마스터의 최상단 획이 1px만 옅어져 `row[386]`이 31로 떨어지면 실제 파손까지 8단계
+남았는데도 빌더가 죽는다. 오탐 감도가 최대다. 다만 실패 모드가 **사일런트 오크롭 → 즉시 사망**
+으로 바뀐 것은 명확한 개선이고, README §밀도 임계값이 구간 19~32와 "+8 재확인도 안전
+구간(≤32) 안" 을 숫자로 공개해 독자가 경계값임을 알 수 있게 했다. 은폐가 아니다.
+
+남는 지적 두 가지(둘 다 low, 차단 아님):
+- 코드 주석 `DENSITY_FLOOR+8(=32)도 여전히 안전 구간 안이라 … 항상 통과한다`의 "여전히 안 /
+  항상"은 경계 정확일치를 여유가 있는 것처럼 읽히게 한다. "구간 상한과 정확히 일치(여유 0)"가
+  사실이다. README 쪽(`≤32`)은 정확하다.
+- 여유를 실제로 두려면 `+8`이 아니라 구간 폭에서 유도해야 한다(예: 상한 32에 대해 `+4`).
+- F3(해상도 미정규화)은 여전히 남아 있으나 README가 "절대값이라 해상도 정규화가 안 돼 있는
+  점은 그대로다 — 마스터를 크게 축소한 것으로 교체하면 빌더가 죽고, 그때 임계값을 다시
+  잡아야 한다"로 **알려진 한계로 명시**했다. 사일런트가 아니므로 low로 강등한다.
+
+## 19.5 F4 — PASS. 빌드 산출물이 레인의 주장을 확인해준다. + F19 (신규 low)
+
+`icon.png`는 241×241 네이티브(업스케일 없음), `apple-icon.png` 180(241에서 다운스케일),
+`favicon.ico` 16/32/48(193×193 별도 타일에서 다운스케일) — 전부 다운스케일 전용이다.
+파일 크기도 50,282B → **5,152B**로 줄었다(없던 디테일을 만들지 않으니 당연한 결과).
+
+"App Router가 파일의 실제 픽셀 크기를 `<link>`에 반영한다"는 주장은 **실제 빌드 HTML로 확인됨**:
+
+```html
+<link rel="icon" href="/icon.png?b49be90f77461e37" type="image/png" sizes="241x241"/>
+<link rel="apple-touch-icon" href="/apple-icon.png?53ef79d5794031d7" type="image/png" sizes="180x180"/>
+<link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16"/>
+```
+
+(`web/gateway/.next/server/app/login.html` 외 23개 프리렌더 페이지 전부 동일. §0.3에서
+UNKNOWN으로 남겼던 "렌더된 `<link>` 실문자열"이 이제 확보됐다.) 512 고정은 불필요했다.
+
+**F19 (신규, low):** favicon `<link>`가 `sizes="16x16"`으로 나간다. ICO 안에는 16/32/48
+세 엔트리가 다 들어 있는데(파싱 실측: entry 16/32/48, 각 528·1415·2640B) Next가 첫 엔트리만
+읽어 선언한다. 브라우저는 대개 .ico의 선언 크기를 무시하고 파일을 직접 읽으므로 실해는
+거의 없다. 32/48 엔트리를 확실히 쓰이게 하려면 `app/icon.png`가 이미 그 역할을 하므로
+`favicon.ico`를 16px 단일 엔트리로 줄이는 편이 정직하다 — 선택 사항이다.
+
+## 19.6 F5 — PASS. 개선은 실재하고 README 서술은 과장이 아니다
+
+`38adca98`의 16px 엔트리와 `e2a170a8`의 16px 엔트리를 ICO에서 직접 추출해 나란히 비교했다.
+
+- 이전(패딩 30%): 형체 없는 붉은 덩어리에 검은 홈 두 개 — 인장이 아니라 얼굴처럼 읽힌다.
+- 현재(패딩 8%, 193×193 소스): **직사각 외곽선과 내부 가로획의 리듬이 살아 있어 "인장"으로
+  읽힌다.** 三國 낱글자는 여전히 판독 불가.
+
+README의 서술 — "16px ICO 엔트리에서는 三國 두 글자가 판독되지 않는다 … 16px에서 최선으로
+성립하는 주장은 '구분되는 붉은 정사각 인장 실루엣'까지다" — 는 **실제 렌더와 정확히 일치한다.
+과장 없음.** 48px 엔트리에서 三國 두 글자가 또렷이 판독되는 것도 확인했다("48px 이상에서는
+또렷이 판독된다" 역시 참).
+
+## 19.7 F7 — **FAIL. 미폐쇄.** 배선은 됐으나 낭비가 오히려 커졌고 game 앱은 그대로 고아다
+
+**(a) 렌더 — PASS.** 빌드된 `login.html`·`join.html`에 실제로 들어간다:
+
+```html
+<img alt="오픈삼국" width="1200" height="448" class="gw-brand-logo" style="color:transparent"
+  srcSet="/_next/image?url=%2Flogo-wordmark.png&w=1200&q=75 1x,
+          /_next/image?url=%2Flogo-wordmark.png&w=3840&q=75 2x"
+  src="/_next/image?url=%2Flogo-wordmark.png&w=3840&q=75"/>
+```
+
+**(c) alt — PASS.** `alt="오픈삼국"`(`BRAND` 상수). **(d) light 삭제 — PASS.** 잔존 코드 참조 0건
+(`grep -rn logo-wordmark-light`는 설명 문서·주석만 히트).
+
+**(b) 낭비 — FAIL, 의심보다 나쁘다.** `.gw-brand-logo`가 `height:32px; width:auto`이므로 실제
+렌더 폭은 `32 × 1200/448 = 85.7px`다. 그런데 `src` 폴백이 **`w=3840`**이다.
+
+```
+85.7px 슬롯에 3840px 이미지  →  선형 44.8배, 면적 2007배
+1x 후보(w=1200)조차          →  선형 14.0배
+```
+
+원인은 `sizes` prop 부재다. Next 공식 문서(`docs/01-app/03-api-reference/02-components/image.mdx`):
+
+> Omitting `sizes` can lead to unnecessarily large images being downloaded, as the browser
+> defaults to `100vw`. When `sizes` is present, Next.js generates a full `srcset` optimized
+> for responsive layouts, unlike the limited `srcset` generated without it.
+
+같은 문서상 `imageSizes`(32·48·64·96·128·256·384 — 86px 슬롯이 정확히 여기 속한다)는
+**`sizes`가 있을 때만** `srcset` 후보에 들어간다. 지금은 `deviceSizes`(최소 640)만 후보라
+86px 슬롯에 맞는 크기가 아예 생성되지 않는다.
+
+F7의 원래 지적은 "2.7MB가 아무 데도 안 쓰인다"였다. 지금은 **쓰이되 로그인 랜딩 페이지에서
+슬롯의 2000배 면적을 받아온다.** 미사용이 낭비 사용으로 바뀐 것이지 낭비가 사라진 게 아니다.
+한 줄이면 닫힌다 — `width={86} height={32}`로 선언하거나 `sizes="86px"`를 추가하라.
+
+**(e) game 앱 — FAIL.** `web/game/public/logo-wordmark.png`(714,596B)는 **여전히 소비처 0건**이다.
+
+```
+$ grep -rn "logo-wordmark" web/game --include="*.tsx" --include="*.ts" --include="*.css"
+(0건)
+```
+
+빌더가 두 앱 모두에 무조건 쓰고 있고(`build()`의 `for app in APPS`), `web/game`에는 배선이
+없다. `output: 'standalone'` 컨테이너 이미지에 714KB가 그대로 실린다. F7이 지적한 바로 그
+상태가 절반 남았다. gateway처럼 배선하든지, 빌더의 워드마크 출력을 gateway로 한정하라.
+
+## 19.8 F8 — PASS (수치 정정)
+
+`optimize=True` 적용. 실측 감소는 **729,365B → 714,596B = 2.02%**다(레인 보고 "~4%"는 과대).
+실질 절감은 압축이 아니라 light 변종 2개(각 615,042B) 삭제 쪽이다 — 커밋 기준 총 -1,259,853B.
+
+## 19.9 F10 — PASS
+
+```
+$ python3 tools/assets/build_brand_assets.py --check
+brand assets check OK: 8 files byte-match                     exit 0
+$ <icon.png의 (0,0) 픽셀 1개를 흰색으로 변조>
+$ python3 tools/assets/build_brand_assets.py --check
+DRIFT: web/gateway/app/icon.png                               exit 1
+$ git checkout -- web/gateway/app/icon.png && ... --check
+brand assets check OK: 8 files byte-match                     exit 0
+$ python3 tools/assets/build_brand_assets.py && git status --short
+(출력 없음 — 전량 재생성 결과가 커밋 내용과 바이트 동일)
+```
+
+**1픽셀 변조도 잡는다.** 레인 보고의 검증 꼬리를 그대로 재현했다. 재현성 + 드리프트 검출
+둘 다 성립하므로 F10은 매니페스트 없이 닫힌다.
+
+## 19.10 F18 — PASS. 판별력 재현됨
+
+`seal_bounds`에 assert 3개가 상시 내장됐고 `floor == DENSITY_FLOOR` 경로에서만 평가돼
+무한 재귀가 없다. 2차 패스에서 제시한 판별력을 그대로 재현했다 — 구 판정식으로 되돌리면:
+
+```python
+B.is_seal_pixel = lambda r,g,b: r-g>45 and r-b>45 and r>90
+B.seal_bounds(m)
+→ AssertionError: 낙관 상자가 너무 크다 — 잡광 혼입 의심: 402x212 (0.0614)
+```
+
+면적 6.14% > 2% 상한에서 죽는다. 이번 금박 결함이 다시 들어오면 **육안 검사 없이 빌드가
+멈춘다.** (상자가 402×212로 2차 패스의 291×212보다 넓은 것은 `DENSITY_FLOOR`가 30→24로
+내려가 구 판정식 기준 상자가 더 커지기 때문 — 일관된 결과다.)
+
+한 가지만 기록해 둔다: `assert`는 `python -O`에서 통째로 제거된다. 이 빌더를 `-O`로 부르는
+경로는 현재 없으므로 실해 없음. 게이트에서 부를 때 `-O`를 쓰지 마라.
+
+## 19.11 F16 — 이 갱신으로 해소
+
+판정 줄은 리뷰어만 바꾼다. `e2a170a8`에서 판정 줄이 미변경 상태였음을 확인했고
+(`Verdict: fix-required` 1개, `Scope:` 1개), 수정 레인이 §18을 덧붙이면서 내 발견을 지운
+흔적은 없다(문서 diff의 삭제 줄은 전부 내 2차 패스 자체 수정분).
+
+## 19.12 결론
+
+**F1·F2·F4·F5·F6·F8·F9·F10·F11·F17·F18 폐쇄.** F3·F15는 알려진 한계로 문서화돼 low로 강등.
+F19는 신규 low(실해 없음).
+
+**차단 항목은 F7 하나다.** 두 갈래 모두 미폐쇄이고 둘 다 한 줄짜리 수정이다:
+
+1. `web/gateway/app/login/page.tsx` · `join/page.tsx` — `width={1200} height={448}` →
+   `width={86} height={32}`(또는 `sizes="86px"` 추가). 지금은 86px 슬롯에 `w=3840`을 받는다.
+2. `web/game/public/logo-wordmark.png` — 소비처 0건. 배선하거나 빌더 출력에서 제외.
+
+이 둘이 닫히면 `cleared`다. 그 외 남은 항목은 전부 문서화된 알려진 한계이거나 실해 없는 low다.
