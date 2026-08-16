@@ -22,7 +22,8 @@
     "dompurify": "3.4.13",
     "next": "15.5.20",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "three": "0.171.0"
   },
   "devDependencies": {
     "@playwright/test": "1.52.0",
@@ -32,6 +33,7 @@
     "@types/node": "^22.12.0",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
+    "@types/three": "0.171.0",
     "@vitejs/plugin-react": "^4.7.0",
     "eslint": "9.39.4",
     "eslint-config-next": "15.5.20",
