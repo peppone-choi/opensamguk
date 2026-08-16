@@ -253,6 +253,43 @@ class ConquerCityCollapseTest {
         assertTrue(res.deletedGeneralIds.isEmpty(), "generals SURVIVE as 재야 — markGeneralDeleted is NOT used")
     }
 
+    /**
+     * deleteNation 멸망 로그 3종 (func.php:1729, :1772-1773). 순서도 패리티 대상:
+     * 정복 nation-history(process_war.php:621) → global 【멸망】(func.php:1729) → deleteNation 장수 루프
+     * 전체(장수별 action + history, 타 장수 asc PK + 군주 LAST) → 그 다음에야 process_war 의 도주 루프.
+     */
+    @Test
+    fun `collapse emits the deleteNation destroy logs before the 도주 loop in PHP order`() {
+        val g3 = gen(id = 3, npcType = 0)
+        val g8 = gen(id = 8, npcType = 0)
+        val input = collapseInput(lordId = 9, otherGenerals = listOf(g8, g3))
+            .copy(defenderNationName = "촉")
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(List(6) { 0.3 }),
+            bools = ArrayDeque(listOf(false, false, false)),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+
+        val destroyLog = "<D><b>촉</b></>이 <R>멸망</>했습니다."
+        val destroyHistory = "<D><b>촉</b></>이 <R>멸망</>"
+        // conquerLogs[0..5] = the 공략/지배 logs; the collapse cascade starts at index 6.
+        val expected = listOf(
+            ConquerLog.nationHistory(10, "<D><b>촉</b></>을 정복"),
+            ConquerLog.globalHistory("<R><b>【멸망】</b></><D><b>촉</b></>은 <R>멸망</>했습니다."),
+            ConquerLog.generalAction(3, 0, destroyLog),
+            ConquerLog.generalHistory(3, 0, destroyHistory),
+            ConquerLog.generalAction(8, 0, destroyLog),
+            ConquerLog.generalHistory(8, 0, destroyHistory),
+            ConquerLog.generalAction(9, 0, destroyLog),
+            ConquerLog.generalHistory(9, 0, destroyHistory),
+            ConquerLog.generalAction(3, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다."),
+            ConquerLog.generalAction(8, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다."),
+            ConquerLog.generalAction(9, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다."),
+        )
+        assertEquals(expected, res.conquerLogs.drop(6).take(expected.size))
+    }
+
     // --- SURVIVE / capital-move branch (cityCount > 1) --------------------------------------------------
 
     @Test

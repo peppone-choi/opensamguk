@@ -9,6 +9,9 @@ import opensamguk.logic.domain.City
 import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
+import opensamguk.logic.domain.NpcType
+import opensamguk.logic.domain.metaInt
+import opensamguk.logic.domain.withMeta
 import opensamguk.logic.log.BattleLogTokens
 import opensamguk.logic.util.phpToInt
 import opensamguk.logic.util.valueFit
@@ -178,6 +181,20 @@ object ConquerCity {
             "<D><b>${input.defenderNationName}</b></>$defenderNationUl 정복",
         )
 
+        // deleteNation (func.php:1729, :1772-1773) — 멸망 로그 3종. PHP 는 deleteNation 루프를 통째로 끝낸
+        // 뒤에야 process_war.php:627 의 도주 루프를 돌므로, 장수별 멸망 로그는 아래 draw 루프보다 앞선다.
+        val defenderNationUn = JosaUtil.pick(input.defenderNationName, "은")
+        val defenderNationYi = JosaUtil.pick(input.defenderNationName, "이")
+        logs += ConquerLog.globalHistory(
+            "<R><b>【멸망】</b></><D><b>${input.defenderNationName}</b></>$defenderNationUn <R>멸망</>했습니다.",
+        )
+        val destroyLog = "<D><b>${input.defenderNationName}</b></>$defenderNationYi <R>멸망</>했습니다."
+        val destroyHistoryLog = "<D><b>${input.defenderNationName}</b></>$defenderNationYi <R>멸망</>"
+        for (oldGeneral in oldNationGenerals) {
+            logs += ConquerLog.generalAction(oldGeneral.id, 0, destroyLog)
+            logs += ConquerLog.generalHistory(oldGeneral.id, 0, destroyHistoryLog)
+        }
+
         var loseGeneralGold = 0
         var loseGeneralRice = 0
         for (oldGeneral in oldNationGenerals) {
@@ -195,15 +212,13 @@ object ConquerCity {
             val newDed = oldGeneral.dedication + (-oldGeneral.dedication * 0.5)
 
             // The general SURVIVES as 재야 (the markNationDeleted cascade neutralizes nation/officer fields):
-            // belong/troop/officer_level/officer_city/nation reset to the 재야 baseline (func.php:1753-1759).
-            val post = oldGeneral.copy(
+            // belong/troop/officer_level/officer_city/nation/permission reset to the 재야 baseline
+            // (func.php:1753-1760) + NPCType<2 의 aux.max_belong 갱신 (func.php:1745-1752).
+            val post = neutralize(oldGeneral).copy(
                 gold = oldGeneral.gold - loseGold,
                 rice = oldGeneral.rice - loseRice,
                 experience = newExp,
                 dedication = newDed,
-                officerLevel = 0,
-                officerCity = 0,
-                nationId = 0,
             )
             generalDeltas.add(GeneralDelta(oldGeneral, post))
             logs += ConquerLog.generalAction(
@@ -413,6 +428,25 @@ object ConquerCity {
         return conquerNation
     }
 
+    /**
+     * deleteNation 의 per-general 재야화 (func.php:1745-1760) — CheHaesan.neutralizeMember 와 동일 규약:
+     * npcType<2 → aux.max_belong = max(belong, aux.max_belong); belong=0, troop=0, officer_level=0,
+     * officer_city=0, nation=0, permission='normal'.
+     */
+    private fun neutralize(g: General): General {
+        var meta = g.meta
+        if (NpcType.getNpcType(g) < 2) {
+            @Suppress("UNCHECKED_CAST")
+            val aux = (meta["aux"] as? Map<String, Any?>) ?: emptyMap()
+            val prevMaxBelong = (aux["max_belong"] as? Number)?.toInt() ?: 0
+            val nextAux = LinkedHashMap(aux)
+            nextAux["max_belong"] = maxOf(metaInt(meta, "belong"), prevMaxBelong)
+            meta = withMeta(meta, "aux" to nextAux)
+        }
+        meta = withMeta(meta, "belong" to 0, "officer_city" to 0, "permission" to "normal")
+        return g.copy(troop = 0, officerLevel = 0, officerCity = 0, nationId = 0, meta = meta)
+    }
+
     /** Merge a new General delta into the list — folds onto an existing pre/post for the same general id. */
     private fun mergeGeneralDelta(deltas: MutableList<GeneralDelta>, pre: General, post: General) {
         val idx = deltas.indexOfFirst { it.post.id == post.id }
@@ -494,7 +528,11 @@ data class ConquerCityInput(
     val defenderCityGenerals: List<General>,
     /** `SELECT count(city) FROM city WHERE nation=defenderNationID` — ==1 ⇒ collapse (BC2). */
     val defenderNationCityCount: Int,
-    /** All generals of the defender nation EXCLUDING the city ones — the deleteNation cascade set (BC2). */
+    /**
+     * ALL generals of the defender nation (도시 주둔 장수 포함) — the deleteNation cascade set (BC2).
+     * func.php:1731-1736 은 `nation=%i AND no != lord` 전원을 대상으로 하므로 도시 장수를 빼면 그들의
+     * 멸망 로그·재야 리셋이 통째로 누락된다 (caller: ReservedTurnHandler.kt:692-694).
+     */
     val defenderNationGenerals: List<General>,
     /** All cities (for the findNextCapital BFS + the front recalc neighbor scan, BC3). */
     val allCitiesForBfs: List<City>,
