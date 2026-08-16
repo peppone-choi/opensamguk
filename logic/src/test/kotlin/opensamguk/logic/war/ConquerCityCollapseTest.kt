@@ -1,5 +1,11 @@
 package opensamguk.logic.war
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.City
@@ -315,6 +321,106 @@ class ConquerCityCollapseTest {
         assertFalse(res.generalDeltas.any { it.post.id == 6 })
         assertNull(res.deletedNationId, "survive does NOT delete the nation")
         assertEquals(0, res.collapseLoopDraws, "the survive branch makes NO rng draw")
+    }
+
+    // --- PHP collapse GOLDEN (real capture) ------------------------------------------------------------
+
+    private fun loadGolden(name: String): JsonObject = Json.parseToJsonElement(
+        ConquerCityCollapseTest::class.java.classLoader
+            .getResourceAsStream("golden/p4/$name")!!
+            .readBytes().toString(Charsets.UTF_8),
+    ).jsonObject
+
+    /** `general_record.text` carries the ActionLogger flush prefix (`<C>●</>` + `Y년 M월:` for history). */
+    private fun stripLogPrefix(text: String): String =
+        text.removePrefix("<C>●</>").replace(Regex("^\\d+년 \\d+월:"), "")
+
+    /**
+     * 정복-멸망 골든 게이트 — `conquercity-collapse-full-01.json` (실제 PHP `processWar()→ConquerCity` 캡처,
+     * `tools/php-golden/capture_conquercity.php`, scenario_1010, 황건적(nation 2) 마지막 도시 업(1) 함락).
+     *
+     * 골든에서 직접 뽑은 멸망 로그 3종(func.php:1729 global 【멸망】, :1772 장수 action, :1773 장수 history)의
+     * **문자열과 순서**를 [ConquerCity.resolve] 산출과 대조한다. OPENSAM-186 이전에는 이 3종이 통째로 누락돼
+     * 있었고 collapse 골든이 없어 게이트가 통과시켰다.
+     *
+     * 금/쌀 분실 수치와 draw 는 PHP 의 LOCAL rng(process_war.php:589)에서 나와 캡처 불가(backlog CC-1)이므로
+     * 여기서 단언하지 않는다 — 로그 문자열·발행 순서·장수 순서만 골든 대조한다.
+     */
+    @Test
+    fun `collapse destroy logs byte-match the PHP collapse golden - strings and general order`() {
+        val golden = loadGolden("conquercity-collapse-full-01.json")
+        val records = golden["conquest_records"]!!.jsonArray.map { it.jsonObject }
+        val nationName = golden["db_delta"]!!.jsonObject["nation"]!!.jsonObject["deleted"]!!
+            .jsonObject["2"]!!.jsonObject["name"]!!.jsonPrimitive.content
+
+        fun type(r: JsonObject) = r["log_type"]!!.jsonPrimitive.content
+        fun gid(r: JsonObject) = r["general_id"]!!.jsonPrimitive.int
+        fun body(r: JsonObject) = stripLogPrefix(r["text"]!!.jsonPrimitive.content)
+
+        // 골든이 실제로 담은 멸망 로그 3종 (하드코딩 아님 — 캡처에서 추출).
+        val goldenDestroyAction = records
+            .filter { type(it) == "action" && body(it).endsWith("<R>멸망</>했습니다.") }
+        val goldenDestroyHistory = records
+            .filter { type(it) == "history" && body(it).endsWith("<R>멸망</>") }
+        val goldenGlobal = golden["db_delta"]!!.jsonObject["world_history"]!!.jsonObject["created"]!!
+            .jsonObject.values.map { stripLogPrefix(it.jsonObject["text"]!!.jsonPrimitive.content) }
+            .single { it.contains("【멸망】") }
+
+        val destroyLog = goldenDestroyAction.map { body(it) }.distinct().single()
+        val destroyHistoryLog = goldenDestroyHistory.map { body(it) }.distinct().single()
+        // 장수 순서: 타 장수 asc PK + 군주 LAST (func.php:1732-1735).
+        val goldenOrder = goldenDestroyAction.map { gid(it) }
+        assertEquals(goldenOrder.size, goldenDestroyHistory.map { gid(it) }.size)
+        assertTrue(goldenOrder.size > 1, "collapse golden must carry the whole nation's generals")
+
+        // 골든 자체의 장수별 발행 순서: 멸망 action 이 도주 action 보다 앞선다 (deleteNation → 도주 루프).
+        for (id in goldenOrder) {
+            val own = records.filter { gid(it) == id && type(it) == "action" }.map { body(it) }
+            val destroyIdx = own.indexOf(destroyLog)
+            val escapeIdx = own.indexOfFirst { it.startsWith("도주하며 금") }
+            assertTrue(destroyIdx >= 0 && escapeIdx > destroyIdx, "general $id: 멸망 로그가 도주 로그보다 앞서야 한다")
+        }
+
+        // Kotlin 재현 — 골든과 동일한 국가명/장수 집합(군주 = 골든의 마지막)으로 collapse 를 돌린다.
+        val lordId = goldenOrder.last()
+        val input = collapseInput(
+            lordId = lordId,
+            otherGenerals = goldenOrder.dropLast(1).map { gen(id = it, npcType = 0) },
+            joinMode = "onlyRandom", // 금/쌀 draw 만 남긴다 (scout/npc-join 은 CC-1 미캡처)
+        ).copy(defenderNationName = nationName)
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(List(goldenOrder.size * 2) { 0.3 }),
+            bools = ArrayDeque(emptyList()),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+
+        assertEquals(goldenOrder, res.collapseGeneralOrder, "장수 순서가 골든과 다르다")
+        assertEquals(
+            listOf(ConquerLog.globalHistory(goldenGlobal)),
+            res.conquerLogs.filter { it.text.contains("【멸망】") },
+            "global history 【멸망】 이 골든과 바이트 일치해야 한다",
+        )
+        assertEquals(
+            goldenOrder.flatMap {
+                listOf(ConquerLog.generalAction(it, 0, destroyLog), ConquerLog.generalHistory(it, 0, destroyHistoryLog))
+            },
+            res.conquerLogs.filter { it.text == destroyLog || it.text == destroyHistoryLog },
+            "장수별 멸망 action/history 로그가 골든 문자열·순서와 일치해야 한다",
+        )
+    }
+
+    /**
+     * `join_mode == 'onlyRandom'` 단락(process_war.php:645, :656)의 실증 — 같은 멸망을 두 join_mode 로 캡처한
+     * 골든 쌍이 등용장(message) 발부 유무로 갈린다.
+     */
+    @Test
+    fun `the onlyRandom collapse golden issues no scout message while the full golden does`() {
+        fun createdMessages(name: String) =
+            loadGolden(name)["db_delta"]!!.jsonObject["message"]!!.jsonObject["created"]!!
+
+        assertTrue(createdMessages("conquercity-collapse-full-01.json").jsonObject.isNotEmpty())
+        assertTrue(createdMessages("conquercity-collapse-only-random-01.json").jsonArray.isEmpty())
     }
 
     private fun valueFitInt(v: Int): Int = maxOf(0, v)

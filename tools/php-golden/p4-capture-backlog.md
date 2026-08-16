@@ -72,6 +72,16 @@ at `process_war.php:549` AND `:589`).
 
 ## Quarantined / deferred (with the exact PHP reason — NOT a gap in faithfulness)
 
+### CC-0 — the COLLAPSE branch DB-delta + log golden (CAPTURED, 2026-08-17, OPENSAM-186)
+
+`capture_conquercity.php` runs the collapse branch on both `join_mode` values and writes
+`conquercity-collapse-full-01.json` / `conquercity-collapse-only-random-01.json`. Both are
+byte-identical (sha256) across two independent fresh-DB runs. They carry the REAL `deleteNation`
+(`func.php:1713`) destroy logs — global history `【멸망】` (`:1729`) + per-general action/history
+(`:1772-1773`) — the defender-nation `nation.deleted` row, the 재야 reset general deltas, the
+winner gold/rice reward, and (full only) the 6 scout messages the `join_mode != 'onlyRandom'`
+branch issues. Asserted by `ConquerCityCollapseTest`. The DRAW sub-stream is still CC-1 below.
+
 ### CC-1 — the COLLAPSE branch per-general draw sub-stream
 
 **What:** the collapse branch (`process_war.php:589-664`, fired when the defender nation's
