@@ -24,19 +24,24 @@ class V2CityGarrisonAttritionTest {
         assertEquals(0, attritionLoss(-5, 300))
     }
 
-    /** 묘섭 원문 값 — 장수 300명이 기준선이고 거기서는 스케일이 1.0 이다. */
+    /**
+     * 묘섭 원문 값(`help__start__other__etcetera.md:67`) — 장수 300명 기준 감소량은 **3000명**이다.
+     * OPENSAM-193 교정 전에는 여기가 지어낸 정률(garrison × 12.5%)이었다.
+     */
     @Test
-    fun `at the 300-general reference the scale is exactly one`() {
-        // 10000 * 0.125 = 1250 (하한 100 위) → 스케일 1.0 → 1250
-        assertEquals(1250, attritionLoss(10_000, 300))
+    fun `at the 300-general reference the loss is the myosam base of 3000`() {
+        assertEquals(3000, attritionLoss(10_000, 300))
         // 기준선을 넘겨도 더 아프지 않다(coerce 상한).
-        assertEquals(1250, attritionLoss(10_000, 5_000))
+        assertEquals(3000, attritionLoss(10_000, 5_000))
+        // garrison 에 비례하지 않는다 — 병력이 두 배여도 감소량은 같다.
+        assertEquals(3000, attritionLoss(20_000, 300))
     }
 
-    /** 묘섭 원문 값 — 장수가 0이면 감소량이 최저 1/6 이다. */
+    /** 묘섭 원문 값 — 장수가 0이면 500명, 즉 3000의 정확히 1/6 이다(같은 줄). */
     @Test
-    fun `with no generals the loss floors at one sixth`() {
-        assertEquals((1250.0 / 6).toInt(), attritionLoss(10_000, 0)) // 208
+    fun `with no generals the loss floors at the myosam 500`() {
+        assertEquals(500, attritionLoss(10_000, 0))
+        assertEquals(ATTRITION_BASE_LOSS / 6, attritionLoss(10_000, 0))
     }
 
     /** 300명 사이 보간은 선형 — 묘섭 미명시, 오픈삼국 결정. */
@@ -49,11 +54,11 @@ class V2CityGarrisonAttritionTest {
     }
 
     /**
-     * 정률만 쓰면 `garrison` 이 0에 **도달하지 못해** 공백지화가 영영 안 일어난다.
-     * 하한 100(스케일 안쪽)이 그 종결성을 만든다.
+     * 정률이라면 `garrison` 이 0에 **도달하지 못해** 공백지화가 영영 안 일어난다.
+     * 절대 수량 + `garrison` 절단이 그 종결성을 만든다.
      */
     @Test
-    fun `a small garrison is wiped out by the flat floor, so vacating is reachable`() {
+    fun `a small garrison is wiped out by the flat base, so vacating is reachable`() {
         assertEquals(50, attritionLoss(50, 300))
         assertEquals(1, attritionLoss(1, 300))
         assertTrue(attritionLoss(1, 0) >= 1, "장수가 없어도 감소는 최소 1명 이상이어야 종결한다")
@@ -99,7 +104,7 @@ class V2CityGarrisonAttritionTest {
     fun `garrison is reduced and never goes below zero`() {
         val o = v2CityGarrisonAttrition(7, listOf(city(1, 5, 10_000)), 300).outcomes.single()
         assertEquals(10_000, o.before)
-        assertEquals(8_750, o.after)
+        assertEquals(7_000, o.after) // 10000 - 3000(묘섭 기준 감소량)
         assertFalse(o.vacated)
 
         val wiped = v2CityGarrisonAttrition(7, listOf(city(1, 5, 30)), 300).outcomes.single()
