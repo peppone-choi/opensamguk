@@ -14,6 +14,7 @@ import { formatNumber } from '../../../lib/format';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type { NationFinanceResponse } from '../../../types/game';
 import type { CommandArgType } from '../../../types/game';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 interface FinanceModalSpec {
     command: string;
@@ -160,12 +161,7 @@ export default function NationFinancePage() {
         void fetchData();
     }, [fetchData]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => void fetchData(true));
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    useTurnRefresh(() => void fetchData(true));
 
     useEffect(() => {
         if (data?.editable === false) {

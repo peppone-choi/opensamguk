@@ -10,6 +10,7 @@ import { api, isIntakeQueued, isIntakeDenied, pollCommandResult } from '../../..
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
 import { mailboxIdForScope, isMessageDeletable, MAILBOX_PUBLIC, MAILBOX_NATIONAL_BASE, type MailboxScope } from '../../../lib/mailbox';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type { MailboxMessage } from '../../../types/game';
 
@@ -148,12 +149,11 @@ export default function MailboxPage() {
         fetchMessages();
     }, [fetchMessages]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchMessages());
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchMessages]);
+    // 기존에도 자체 SSE로 턴 완료 시 fetchMessages를 호출해왔다(개인/외교함 최신 열람 처리 포함) —
+    // 여기서는 Shell 공용 SSE 구독으로 갈아탈 뿐, 읽음 처리 동작은 그대로 유지한다(OPENSAM-196).
+    useTurnRefresh(() => {
+        fetchMessages();
+    });
 
     async function handleSend() {
         if (sending) return;

@@ -22,6 +22,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
+import { useTurnRefresh } from '../../hooks/useTurnRefresh';
 
 // ── D2/D3 와이어 타입(game-api AuctionDto.kt와 동형) ──────────────────────────────────────
 interface UniqueItemAuctionBidder {
@@ -127,15 +128,10 @@ export default function AuctionUniqueItem({ generalId, onToast }: Props) {
         void refreshDetail(currentAuctionId);
     }, [currentAuctionId, refreshDetail]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => {
+    useTurnRefresh(() => {
             void refreshList();
             void refreshDetail(currentAuctionId);
         });
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [refreshList, refreshDetail, currentAuctionId]);
 
     async function bidAuction() {
         if (currentAuction === undefined) return;

@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import NationFinancePage from '@/app/game/nation-finance/page';
+import { __resetTurnListeners, deliverTurnCompleted } from '@/lib/turnEvents';
 
 const mocks = vi.hoisted(() => ({
     command: vi.fn(),
@@ -38,22 +39,9 @@ vi.mock('@/components/StatusBadge', () => ({
     default: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-class EventSourceStub {
-    onerror: (() => void) | null = null;
-
-    addEventListener(type: string, listener: () => void): void {
-        if (type === 'turnCompleted') emitTurnCompleted = listener;
-    }
-
-    close(): void {}
-}
-
-let emitTurnCompleted: () => void = () => undefined;
-
-Object.defineProperty(globalThis, 'EventSource', {
-    configurable: true,
-    value: EventSourceStub,
-});
+// OPENSAM-196 — 페이지는 더 이상 자기 EventSource를 열지 않는다. Shell의 연결 하나가 받은
+// 턴 신호를 [lib/turnEvents]가 화면에 나눠 주므로, 테스트도 그 신호를 직접 흘린다.
+const emitTurnCompleted = deliverTurnCompleted;
 
 const financeResponse = {
     result: true,
@@ -87,7 +75,7 @@ const financeResponse = {
 
 describe('NationFinancePage rich-text messages', () => {
     beforeEach(() => {
-        emitTurnCompleted = () => undefined;
+        __resetTurnListeners();
         mocks.command.mockReset().mockResolvedValue({ status: 'AVAILABLE', requestId: 'editor-1' });
         mocks.frontInfo.mockReset().mockResolvedValue({
             general: {

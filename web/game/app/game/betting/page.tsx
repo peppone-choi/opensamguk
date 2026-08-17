@@ -14,6 +14,7 @@ import StatusBadge from '../../../components/StatusBadge';
 import BettingDetail from '../../../components/betting/BettingDetail';
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 // ── D4 와이어 타입(game-api BettingDto.kt와 동형) ─────────────────────────────────────────
 interface BettingListItem {
@@ -74,12 +75,7 @@ export default function BettingPage() {
         void fetchData();
     }, [fetchData]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => { void fetchData(); });
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    useTurnRefresh(() => { void fetchData(); });
 
     return (
         <Shell>

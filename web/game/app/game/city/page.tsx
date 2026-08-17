@@ -14,6 +14,7 @@ import {
     getNPCColor,
 } from '../../../lib/utilGame';
 import { useServerGameUrl } from '../../../lib/serverGameUrl';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 // 도시 상세 본문(b_currentCity.php 패러티) — 쿼리 ?id=<도시번호>로 특정 도시를 조회한다(MapViewer 도시 클릭 진입).
 // id가 없거나 0이면 현재 장수 소재 도시(서버가 0을 현재 도시로 해석).
@@ -59,8 +60,9 @@ function CityDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const fetchData = async () => {
-        setLoading(true);
+    // background=true(턴 갱신)면 로딩 스켈레톤을 띄우지 않는다(OPENSAM-196).
+    const fetchData = async (background = false) => {
+        if (!background) setLoading(true);
         setError('');
         try {
             const res = await api.city<CityDetailResponse>(Number.isFinite(cityId) ? cityId : 0);
@@ -68,7 +70,7 @@ function CityDetail() {
         } catch {
             setError('도시 정보를 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     };
 
@@ -76,6 +78,11 @@ function CityDetail() {
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cityId]);
+
+    // 턴 완료 시 현재 도시 정보만 조용히 재조회(OPENSAM-196).
+    useTurnRefresh(() => {
+        fetchData(true);
+    });
 
     if (loading) {
         return (
@@ -92,7 +99,7 @@ function CityDetail() {
                 <h1>도시 정보</h1>
                 <div className="error-state">
                     <p>{error}</p>
-                    <button onClick={fetchData}>다시 시도</button>
+                    <button onClick={() => fetchData()}>다시 시도</button>
                 </div>
             </div>
         );

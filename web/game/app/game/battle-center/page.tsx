@@ -7,6 +7,7 @@ import GeneralBasicCard from '../../../components/game/GeneralBasicCard';
 import { api, type GeneralLogType, type NationGeneralListResponse } from '../../../lib/api';
 import { formatLog } from '../../../lib/utilGame';
 import type { FrontGeneralInfo, FrontNationInfo } from '../../../lib/types';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 type SortKey = 'recent_war' | 'warnum' | 'turntime' | 'name';
 
@@ -249,11 +250,14 @@ export default function BattleCenterPage() {
   const orderedGenerals = useMemo(() => sortGenerals(generals, sortKey), [generals, sortKey]);
   const targetGeneral = useMemo(() => orderedGenerals.find((general) => general.no === targetId) ?? null, [orderedGenerals, targetId]);
 
-  const loadGenerals = useCallback(async () => {
-    setLoading(true);
+  // background=true는 턴 갱신용 — 보고 있던 목록/로그를 지우지 않고 장수 목록만 새로 읽는다.
+  const loadGenerals = useCallback(async (background = false) => {
+    if (!background) {
+      setLoading(true);
+      setLogs(emptyLogs());
+      setLogErrors({});
+    }
     setError('');
-    setLogs(emptyLogs());
-    setLogErrors({});
     try {
       const [listResponse, frontInfo] = await Promise.all([api.nationGeneralList(), api.frontInfo()]);
       if (listResponse.permission === 0) {
@@ -274,13 +278,15 @@ export default function BattleCenterPage() {
       setTargetId(null);
       setError(e instanceof Error ? e.message : '감찰부 정보를 불러올 수 없습니다.');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     void loadGenerals();
   }, [loadGenerals]);
+
+  useTurnRefresh(() => void loadGenerals(true));
 
   useEffect(() => {
     if (targetId == null) {
@@ -350,7 +356,7 @@ export default function BattleCenterPage() {
               <p role="alert" style={{ color: 'var(--crimson)', margin: 0 }}>
                 {error}
               </p>
-              <button type="button" onClick={loadGenerals} style={{ marginTop: 'var(--space-sm)' }}>
+              <button type="button" onClick={() => void loadGenerals()} style={{ marginTop: 'var(--space-sm)' }}>
                 다시 시도
               </button>
             </div>
@@ -359,7 +365,7 @@ export default function BattleCenterPage() {
           {!error && orderedGenerals.length === 0 ? (
             <div>
               <p style={{ color: 'var(--text-muted)' }}>감찰할 장수가 없습니다.</p>
-              <button type="button" onClick={loadGenerals}>
+              <button type="button" onClick={() => void loadGenerals()}>
                 다시 시도
               </button>
             </div>

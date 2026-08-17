@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameCard from '../../../../components/GameCard';
 import { api } from '../../../../lib/api';
 import { getNPCColor } from '../../../../lib/utilGame';
+import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { KingdomRoster, KingdomRosterGeneral } from '../../../../types/game';
 
 // legacy func_converter.php newColor() 충실 포팅 — 어두운 국가색 위에 올릴 헤더 텍스트 대비색.
@@ -50,13 +51,20 @@ export default function KingdomsPage() {
   // (GetConstController.nationTypeItem, FrontInfoController 성향 해석과 동일 소스). 상수라 1회 로드.
   const [typeNameMap, setTypeNameMap] = useState<Map<string, string>>(new Map());
 
-  useEffect(() => {
+  // OPENSAM-196 — background=true면 로딩 화면을 다시 띄우지 않는다.
+  const fetchData = useCallback((background = false) => {
+    if (!background) setLoading(true);
     api.rankings
       .kingdomRoster<KingdomRoster>()
       .then(setData)
       .catch(() => setError('데이터를 불러올 수 없습니다.'))
-      .finally(() => setLoading(false));
+      .finally(() => { if (!background) setLoading(false); });
   }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // OPENSAM-196 — 턴 종료 시 세력 일람 재조회.
+  useTurnRefresh(() => fetchData(true));
 
   useEffect(() => {
     let on = true;

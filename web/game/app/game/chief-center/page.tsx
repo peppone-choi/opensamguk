@@ -28,6 +28,7 @@ import CommandModal from '../../../components/CommandModal';
 import ChiefCommandReserve, { type ChiefReserveLaunch } from '../../../components/game/ChiefCommandReserve';
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { ChiefReservedResponse, ChiefPost, ChiefCommandCategory } from '../../../types/game';
 import { postFilterNationCommandGen, type TurnObj } from '../../../lib/utilGame/postFilterNationCommandGen';
 import type { GameCityConstItem } from '../../../lib/types';
@@ -176,16 +177,18 @@ export default function ChiefCenterPage() {
         setTimeout(() => setToast(''), 3000);
     }
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
+    // background=true: 전체 로딩 문구 없이 직책 칸만 갱신(OPENSAM-196). 열려 있는 CommandModal(launch)은
+    // 별도 상태라 이 갱신으로 닫히거나 초기화되지 않는다.
+    const fetchData = useCallback(async (background = false) => {
+        if (!background) setLoading(true);
         try {
             const res = await api.chiefReserved();
             setData(res);
             setError('');
         } catch {
-            setError('사령부 정보를 불러올 수 없습니다.');
+            if (!background) setError('사령부 정보를 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
@@ -202,12 +205,8 @@ export default function ChiefCenterPage() {
         return () => { on = false; };
     }, []);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    // 턴 완료 시 직책/예약 갱신. Shell의 단일 SSE 구독으로 대체(OPENSAM-196).
+    useTurnRefresh(() => void fetchData(true));
 
     const maxChiefTurn = data?.maxChiefTurn ?? 0;
     const posts = data?.posts ?? [];
@@ -232,7 +231,7 @@ export default function ChiefCenterPage() {
                         {data.year}년 {data.month}월
                     </span>
                 )}
-                <button onClick={fetchData} style={{ marginLeft: 'auto' }}>새로고침</button>
+                <button onClick={() => void fetchData()} style={{ marginLeft: 'auto' }}>새로고침</button>
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}

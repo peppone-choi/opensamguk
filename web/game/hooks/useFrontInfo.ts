@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { GLOBAL_MENU_V2 } from '@/lib/global-menu-fixture';
-import { useSSE } from './useSSE';
+import { useTurnRefresh } from './useTurnRefresh';
 import type { FrontInfoResponse, GameConstResponse } from '@/lib/types';
 import type { MenuNode } from '@/lib/menu-types';
 
@@ -76,8 +76,9 @@ export function useFrontInfo(): FrontInfoState {
         };
     }, [refreshKey]);
 
-    // SSE turnCompleted → soft refresh (refetch front-info, no full reload).
-    useSSE(refresh);
+    // 턴 완료 → soft refresh (front-info만 재조회). 연결은 Shell 하나뿐이므로 여기서 EventSource를
+    // 새로 열지 않는다 (OPENSAM-196).
+    useTurnRefresh(refresh);
 
     return { frontInfo, constData, menu, loading, error, refreshKey, refresh };
 }

@@ -27,6 +27,7 @@ import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
 import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
 import { formatCityName } from '../../../lib/utilGame/formatCityName';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type {
     DiplomacyConflictResponse,
     ConflictNation,
@@ -120,12 +121,10 @@ export default function GlobalDiplomacyPage() {
         };
     }, []);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    // 외교/분쟁 현황만 재조회(OPENSAM-196).
+    useTurnRefresh(() => {
+        fetchData();
+    });
 
     const nations: ConflictNation[] = data?.nations ?? [];
     const conflict = data?.conflict ?? [];

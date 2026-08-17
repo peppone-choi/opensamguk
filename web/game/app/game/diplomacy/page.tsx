@@ -10,6 +10,7 @@ import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type {
     DiplomacyLettersResponse,
     DiplomacyLetter,
@@ -85,13 +86,15 @@ export default function DiplomacyPage() {
         setTimeout(() => setToast(''), 3000);
     }
 
-    const fetchData = useCallback(async () => {
+    // background=true는 턴 갱신용 — 보고 있던 화면을 로딩/에러로 바꾸지 않는다.
+    const fetchData = useCallback(async (background = false) => {
         try {
             const res = await api.diplomacyLetters();
             setData(res);
             setError('');
         } catch {
-            setError('데이터를 불러올 수 없습니다.');
+            // 턴 갱신(background) 실패는 보고 있던 화면을 지우지 않는다.
+            if (!background) setError('데이터를 불러올 수 없습니다.');
         } finally {
             setLoading(false);
         }
@@ -101,12 +104,10 @@ export default function DiplomacyPage() {
         fetchData();
     }, [fetchData]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    // 서신/외교 대상국 목록만 재조회 — 작성 중인 서신 폼(draft)은 건드리지 않는다(OPENSAM-196).
+    useTurnRefresh(() => {
+        fetchData(true);
+    });
 
     const myNationId = data?.myNationID ?? 0;
     // legacy 응답은 nations를 Record<id, NationStaticItem> 맵으로 내려준다 → 값 순회.
@@ -249,7 +250,7 @@ export default function DiplomacyPage() {
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>외교부</h1>
 
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <button onClick={fetchData}>새로고침</button>
+                <button onClick={() => void fetchData()}>새로고침</button>
             </div>
 
             {/* 외교 빠른 명령 — route each through CommandModal (nation-target SelectNationField). */}

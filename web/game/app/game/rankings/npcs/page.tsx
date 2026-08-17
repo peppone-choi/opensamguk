@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
 import { api } from '../../../../lib/api';
 import { getNPCColor } from '../../../../lib/utilGame';
+import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { NpcGeneral } from '../../../../types/game';
 
 // legacy a_npcList.php 정렬 8종. PHP $sortType: [key, isAsc].
@@ -27,13 +28,20 @@ export default function NpcsPage() {
   const [error, setError] = useState('');
   const [sortType, setSortType] = useState<SortType>(1);
 
-  useEffect(() => {
+  // OPENSAM-196 — background=true면 로딩 화면을 다시 띄우지 않는다.
+  const fetchData = useCallback((background = false) => {
+    if (!background) setLoading(true);
     api.rankings
       .npcs<NpcGeneral[]>()
       .then(setData)
       .catch(() => setError('데이터를 불러올 수 없습니다.'))
-      .finally(() => setLoading(false));
+      .finally(() => { if (!background) setLoading(false); });
   }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // OPENSAM-196 — 턴 종료 시 빙의 일람 재조회.
+  useTurnRefresh(() => fetchData(true));
 
   // PHP usort: asc=1·2, 그 외 desc. (PHP `<=>` 동치)
   const sorted = useMemo(() => {

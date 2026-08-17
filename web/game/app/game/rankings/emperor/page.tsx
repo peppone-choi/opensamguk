@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatDate } from '../../../../lib/format';
 import { useServerGameUrl } from '../../../../lib/serverGameUrl';
+import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { EmperorRecord } from '../../../../types/game';
 
 export default function EmperorPage() {
@@ -15,12 +16,19 @@ export default function EmperorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  // OPENSAM-196 — background=true면 로딩 화면을 다시 띄우지 않는다.
+  const fetchData = useCallback((background = false) => {
+    if (!background) setLoading(true);
     api.rankings.emperor<EmperorRecord[]>()
       .then(setData)
       .catch(() => setError('데이터를 불러올 수 없습니다.'))
-      .finally(() => setLoading(false));
+      .finally(() => { if (!background) setLoading(false); });
   }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // OPENSAM-196 — 턴 종료 시 황제 목록 재조회.
+  useTurnRefresh(() => fetchData(true));
 
   if (loading) return (
     <Shell>

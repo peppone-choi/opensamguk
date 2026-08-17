@@ -74,6 +74,8 @@ vi.mock('@/lib/api', () => ({
         },
     },
     pollCommandResult: apiMocks.pollCommandResult,
+    // submitCommandAndAwaitResult가 실제로 부르는 건 이쪽이다(요청ID + abort 시그널).
+    pollCommandResultResponse: apiMocks.pollCommandResult,
     isIntakeDenied: (out: { status: string }) => out.status === 'BLOCKED' || out.status === 'UNKNOWN',
     isIntakeQueued: (out: { status: string }) => out.status === 'AVAILABLE',
 }));
@@ -323,7 +325,7 @@ describe('production-reachable frontend no-op closures', () => {
             },
             77,
         ));
-        await waitFor(() => expect(apiMocks.pollCommandResult).toHaveBeenCalledWith('update-1'));
+        await waitFor(() => expect(apiMocks.pollCommandResult).toHaveBeenCalledWith('update-1', expect.anything()));
         await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('변경이 처리되었습니다.'));
         await waitFor(() => expect(apiMocks.selectPool.mock.calls.length).toBeGreaterThan(poolCallsBeforeUpdate));
     });

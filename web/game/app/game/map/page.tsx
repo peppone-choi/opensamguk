@@ -7,12 +7,13 @@
 // 지도 하단 중원정세 섹션: devsam PageCachedMap.vue `cachedMap.history[]` v-html 패턴 대응.
 // world-log/page.tsx 와 동일한 렌더 인프라(api.worldLog, GameCard, dangerouslySetInnerHTML)를 재사용.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
 import MapViewer from '../../../components/game/MapViewer';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { WorldLogResponse } from '../../../lib/api';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 // ── 중원정세 섹션바 — world-log/page.tsx sectionBarStyle과 동일 ──────────────
 const sectionBarStyle: React.CSSProperties = {
@@ -38,22 +39,30 @@ export default function GameMapPage() {
     const [logLoading, setLogLoading] = useState(true);
     const [logError, setLogError] = useState<string | null>(null);
 
-    useEffect(() => {
-        let alive = true;
-        (async () => {
-            try {
-                const result = await api.worldLog();
-                if (alive) setLogData(result);
-            } catch {
-                if (alive) setLogError('전황 데이터를 불러올 수 없습니다.');
-            } finally {
-                if (alive) setLogLoading(false);
-            }
-        })();
-        return () => {
-            alive = false;
-        };
+    // background=true(턴 갱신)면 로딩 문구를 다시 띄우지 않는다(OPENSAM-196).
+    const fetchLog = useCallback(async (background = false) => {
+        if (!background) setLogLoading(true);
+        try {
+            const result = await api.worldLog();
+            setLogData(result);
+            setLogError(null);
+        } catch {
+            setLogError('전황 데이터를 불러올 수 없습니다.');
+        } finally {
+            if (!background) setLogLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchLog();
+    }, [fetchLog]);
+
+    // MapViewer는 refreshKey prop 변경 시 조용히 자체 재조회한다(리마운트 아님) — OPENSAM-196.
+    const [mapRefreshKey, setMapRefreshKey] = useState(0);
+    useTurnRefresh(() => {
+        fetchLog(true);
+        setMapRefreshKey((k) => k + 1);
+    });
 
     const entries = logData?.entries ?? [];
 
@@ -62,7 +71,7 @@ export default function GameMapPage() {
             <div className="page-content">
                 <h1>세계 지도</h1>
                 <p className="text-muted">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>
-                <MapViewer />
+                <MapViewer refreshKey={mapRefreshKey} />
 
                 {/* ── 중원정세 — devsam PageCachedMap.vue cachedMap.history[] v-html 대응 ── */}
                 <div style={sectionBarStyle}>중원 정세</div>

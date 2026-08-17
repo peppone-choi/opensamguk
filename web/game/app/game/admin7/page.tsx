@@ -22,6 +22,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { AdminGeneralLogResponse } from '../../../lib/api';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 const panelTitleStyle: React.CSSProperties = {
     textAlign: 'center',
@@ -68,8 +69,9 @@ export default function Admin7Page() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
 
-    const fetchData = useCallback(async (g: number, qt: string | null) => {
-        setLoading(true);
+    // background=true는 턴 갱신용 — 보고 있던 로그를 로딩 표시로 지우지 않는다.
+    const fetchData = useCallback(async (g: number, qt: string | null, background = false) => {
+        if (!background) setLoading(true);
         try {
             const d = await api.admin.generalLog(g, qt ?? undefined);
             setData(d);
@@ -87,9 +89,11 @@ export default function Admin7Page() {
                         : '데이터를 불러올 수 없습니다.',
             );
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
+
+    useTurnRefresh(() => void fetchData(gen, queryType, true));
 
     // 초기 1회: BE 기본(첫 정렬키 + 첫 장수)으로 로드.
     useEffect(() => {

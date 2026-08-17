@@ -25,6 +25,7 @@ import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { AdminDiplomacyAllResponse } from '../../../lib/api';
 import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 // legacy newColor: perceived-luminance > 140 → 어두운 글자.
 function contrastText(color: string): string {
@@ -77,12 +78,7 @@ export default function Admin8Page() {
     }, [fetchData]);
 
     // 턴 완료 시 외교 갱신.
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    useTurnRefresh(() => fetchData());
 
     const relations = data?.relations ?? [];
 

@@ -6,6 +6,7 @@ import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import { getNPCColor } from '../../../lib/utilGame';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { MyCitiesResponse, MyCitySummary, MyCityGeneralName, MyNationDetailResponse } from '../../../types/game';
 
 // legacy func_converter.php newColor() 충실 포팅 — 어두운 국가색 위에 올릴 헤더 텍스트 대비색.
@@ -202,8 +203,9 @@ export default function MyCitiesPage() {
         });
     }, [cities, sortKey, sortDir]);
 
-    const fetchData = async () => {
-        setLoading(true);
+    // OPENSAM-196: background=true면 로딩 스피너를 건너뛴다(턴 갱신 시 화면이 잠깐 비는 것을 방지).
+    const fetchData = async (background = false) => {
+        if (!background) setLoading(true);
         setError('');
         try {
             // 카드 헤더의 국가색은 b_myCityInfo가 nation.color로 칠한다 — my-nation-detail에서 함께 읽는다.
@@ -217,13 +219,18 @@ export default function MyCitiesPage() {
         } catch {
             setError('도시 목록을 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    // OPENSAM-196: 턴 완료 시 도시 목록을 백그라운드로 다시 읽는다.
+    useTurnRefresh(() => {
+        fetchData(true);
+    });
 
     if (loading) {
         return (
@@ -243,7 +250,7 @@ export default function MyCitiesPage() {
                     <h1>세력 도시</h1>
                     <div className="error-state">
                         <p>{error}</p>
-                        <button onClick={fetchData}>다시 시도</button>
+                        <button onClick={() => fetchData()}>다시 시도</button>
                     </div>
                 </div>
             </Shell>

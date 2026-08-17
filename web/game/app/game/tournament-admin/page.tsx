@@ -11,6 +11,7 @@ import {
     TOURNAMENT_STATUS_LABEL,
     TOURNAMENT_STATUS_VARIANT,
 } from '../../../lib/constants';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from '../../../lib/types';
 
 interface TournamentEntry {
@@ -54,8 +55,9 @@ export default function TournamentAdminPage() {
     const [actionLoading, setActionLoading] = useState<'start' | 'reset' | null>(null);
     const [activeTab, setActiveTab] = useState<'entries' | 'matches' | 'admin'>('entries');
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
+    // OPENSAM-196 — background=true면 로딩 화면을 다시 띄우지 않는다.
+    const fetchData = useCallback(async (background = false) => {
+        if (!background) setLoading(true);
         try {
             const data = await api.tournament<TournamentData>();
             setEntries(data.entries ?? []);
@@ -64,13 +66,16 @@ export default function TournamentAdminPage() {
         } catch {
             setError('토너먼트 데이터를 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    // OPENSAM-196 — 턴 종료 시 참가자/대진표 재조회.
+    useTurnRefresh(() => fetchData(true));
 
     useEffect(() => {
         let on = true;
@@ -148,7 +153,7 @@ export default function TournamentAdminPage() {
             </h1>
 
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <button onClick={fetchData}>새로고침</button>
+                <button onClick={() => fetchData()}>새로고침</button>
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}

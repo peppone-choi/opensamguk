@@ -6,13 +6,16 @@ import Header from './Header';
 import BackBar from './BackBar';
 import BottomNav from './BottomNav';
 import { useSSE } from '../hooks/useSSE';
+import { deliverTurnCompleted } from '../lib/turnEvents';
 import { normalizeGamePathname, useServerId } from '../lib/serverGameUrl';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
   const serverId = useServerId();
+    // OPENSAM-196 — 턴 SSE는 페이지를 리로드하지 않는다. 앱 전역에 하나뿐인 이 연결이 신호를
+    // 받아 화면 구독자(useTurnRefresh)에게 나눠 주고, 각 화면이 자기 데이터만 다시 읽는다.
     const refresh = useCallback(() => {
-        window.location.reload();
+        deliverTurnCompleted();
     }, []);
   const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
     const isMainPage = normalizedPathname === '/game';
