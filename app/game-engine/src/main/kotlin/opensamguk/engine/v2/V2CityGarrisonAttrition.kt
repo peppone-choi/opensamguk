@@ -41,21 +41,15 @@ val BAD_STATE_CODES: Set<Int> = setOf(3, 4, 5, 6, 7, 8, 9)
 val ATTRITION_MONTHS: Set<Int> = setOf(1, 4, 7, 10)
 
 /**
- * 묘섭 미명시 · 오픈삼국 결정 — 감소 기본율.
+ * 묘섭 **원문 값** — 장수 300명 기준 감소량 3000명
+ * (`help__start__other__etcetera.md:67` "300명 기준 3000명이며, 장수수가 적은 경우, 500명까지로 줄어듭니다").
  *
- * v1 재난은 스탯을 `affectRatio = 0.8 + fit*0.15`(`RaiseDisaster.kt:199`)로 깎는다 = 손실 5~20%.
- * 도시병사에도 같은 폭을 쓰되 v2 leaf는 `secu/secu_max`를 읽지 않으므로(§2.4가 정한 인자는 둘뿐)
- * 그 구간의 중앙값 12.5%를 고정 비율로 쓴다.
+ * OPENSAM-193 교정: R3(OPENSAM-152)는 이 줄을 놓치고 "묘섭 미명시"라고 적은 채 정률 12.5% + 하한
+ * 100명을 **지어냈다**. 원문은 정률이 아니라 **절대 수량**이고, 하한 500명은 3000의 정확히 1/6이라
+ * 바로 앞 줄("감소량이 최저 6분의 1까지 감소")과 정확히 맞물린다 — 즉 스케일 곡선의 두 끝값이
+ * 원문에서 이미 정해져 있었다. 정률 잔재는 남기지 않는다.
  */
-const val ATTRITION_BASE_RATE: Double = 0.125
-
-/**
- * 묘섭 미명시 · 오픈삼국 결정 — 감소 하한(명).
- *
- * 비율 감소만으로는 `garrison`이 0에 **도달하지 못하므로** 공백지화가 영영 일어나지 않는다.
- * 묘섭 원문이 "일정수 감소"(a fixed number)라고 쓴 것도 정률이 아니라 정량을 가리킨다(§2.4 인용).
- */
-const val ATTRITION_MIN_LOSS: Int = 100
+const val ATTRITION_BASE_LOSS: Int = 3000
 
 /** 묘섭 원문 값 — "장수수 300명 기준"(`help__start__other__etcetera.md:64`). */
 const val ATTRITION_REFERENCE_GENERALS: Int = 300
@@ -66,21 +60,22 @@ const val ATTRITION_MIN_SCALE: Double = 1.0 / 6.0
 /**
  * 도시병사 감소량 — 순수 함수, draw 0.
  *
- * 장수 수 스케일은 묘섭 원문의 두 값(기준 300명 · 최저 1/6)을 그대로 쓰고, **그 사이의 보간 곡선은
- * 원문에 없으므로 선형으로 정한다 — 묘섭 미명시, 오픈삼국 결정**(§2.6).
+ * 감소량은 `garrison`에 비례하지 않는다 — 묘섭 원문이 절대 수량으로 못박았다(OPENSAM-193).
+ * 장수 수 스케일의 두 끝값(기준 300명에서 3000 · 장수 0에서 500 = 1/6)도 원문 값이고,
+ * **그 사이의 보간 곡선만 원문에 없어 선형으로 정한다 — 묘섭 미명시, 오픈삼국 결정**(§2.6).
  *
  *   scale = 1/6 + (5/6) * min(count, 300)/300     // count=300 → 1.0, count=0 → 1/6
- *   loss  = floor(max(MIN_LOSS, garrison * BASE_RATE) * scale)
+ *   loss  = floor(3000 * scale)                   // count=300 → 3000, count=0 → 500
  *
- * 하한이 스케일 **안쪽**에 있으므로 장수가 적으면 하한도 함께 줄어든다(묘섭의 "감소량이 감소한다").
+ * 마지막에 `garrison`으로 자른다: 남은 병사보다 많이 줄일 수는 없고, 이 절단이 0 도달(=공백지화)을
+ * 보장한다(정률만 쓰면 0에 도달하지 못한다).
  */
 fun attritionLoss(garrison: Int, activeGeneralCount: Int): Int {
     if (garrison <= 0) return 0
     val capped = activeGeneralCount.coerceIn(0, ATTRITION_REFERENCE_GENERALS)
     val scale = ATTRITION_MIN_SCALE +
         (1.0 - ATTRITION_MIN_SCALE) * capped.toDouble() / ATTRITION_REFERENCE_GENERALS
-    val raw = maxOf(ATTRITION_MIN_LOSS.toDouble(), garrison * ATTRITION_BASE_RATE)
-    return kotlin.math.floor(raw * scale).toInt().coerceAtMost(garrison)
+    return kotlin.math.floor(ATTRITION_BASE_LOSS * scale).toInt().coerceAtMost(garrison)
 }
 
 /** leaf 입력 1행 — `city_id ASC` 순으로 공급된다. */
