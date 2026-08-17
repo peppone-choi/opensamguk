@@ -76,6 +76,19 @@ gate "② T1 parity core + existing tests (테스트 루트의 v2 디렉터리 �
   ':(glob,exclude)infra/src/test/kotlin/**/v2/**' \
   ':(glob,exclude)app/*/src/test/kotlin/**/v2/**'
 
+# ②' 제외된 v2 테스트의 수정·삭제 목록 (OPENSAM-191).
+#    ②의 제외는 v2 테스트를 **통째로 무검사**로 만든다 — `V2ProductionContextBeanGateIT`를
+#    지우거나 비워도 게이트가 침묵한다. 블라스트 반경은 v1 파손이 아니라 증명 부패이므로
+#    ③과 동형으로 rc에 반영하지 않고 목록만 낸다(사람이 티켓 선언과 대조).
+echo
+echo "LIST      ②' excluded v2 tests — 수정·삭제 (삭제/축소는 격리 증명 부패, 티켓과 대조할 것)"
+git diff --name-only --diff-filter=MD "$MB" ${TO[@]+"${TO[@]}"} -- \
+  ':(glob)logic/src/test/kotlin/**/v2/**' \
+  ':(glob)common/src/test/kotlin/**/v2/**' \
+  ':(glob)infra/src/test/kotlin/**/v2/**' \
+  ':(glob)app/*/src/test/kotlin/**/v2/**' | sed 's/^/  /'
+
+echo
 # ③ T2 — 경계 수정 목록. 출력이 티켓 본문 사전선언과 "정확히" 일치해야 한다(초과 = 위반).
 #    빈 출력이 아니어도 되는 유일한 게이트이므로 rc에 반영하지 않고 목록만 낸다.
 echo "LIST      ③ T2 boundary edits (티켓 사전선언과 대조할 것 — 초과 = 위반)"
@@ -98,6 +111,6 @@ gate "C1 production compose + checker" \
   docker-compose.production.yml docker-compose.yml tools/agent-system/check.py
 
 echo
-[ "$rc" -eq 0 ] && echo "GATE RESULT: PASS (③ 목록은 사람이 티켓 선언과 대조)" \
+[ "$rc" -eq 0 ] && echo "GATE RESULT: PASS (②'·③ 목록은 사람이 티켓 선언과 대조)" \
                 || echo "GATE RESULT: FAIL"
 exit "$rc"

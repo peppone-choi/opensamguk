@@ -44,8 +44,9 @@ SEAL_RGB = (198, 32, 38)  # 낙관 붉은색 정규화 값
 # 현재 마스터에서 정답 상자(104x167)를 내는 구간은 floor 19~32 전 구간이다(전수 탐색 실측).
 # 30은 그 구간 끝에 붙어 있어 여유가 -11/+2로 한쪽에 치우쳤었다 — 낙관 외곽선이 몇 px만
 # 얇아져도 조용히 상자가 줄어들 수 있는데, xs/ys가 비지 않으니 SystemExit 가드를 안 탄다.
-# 24는 여유가 -5/+8로 더 균등하고, DENSITY_FLOOR+8(=32)도 여전히 안전 구간 안이라
-# seal_bounds()의 자기 검증(floor 여유 assert, 아래)이 항상 통과한다.
+# 24는 여유가 -5/+8로 더 균등하다. seal_bounds()의 자기 검증(floor 여유 assert, 아래)이
+# 쓰는 DENSITY_FLOOR+8(=32)는 안전 구간의 정확한 상한 — 여유 0이므로 +9면 지금 마스터에서도
+# 죽는다(floor 33 → 상자가 달라진다). 실 파손보다 8단계 앞선 조기경보로서 유효하다.
 DENSITY_FLOOR = 24
 PAD_RATIO_ICON = 0.22  # icon.png/apple-icon.png 타일 패딩
 PAD_RATIO_FAVICON = 0.08  # favicon.ico 타일 패딩 (16px에서 최대한 읽히도록 최소화)
