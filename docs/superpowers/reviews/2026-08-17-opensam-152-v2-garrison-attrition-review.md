@@ -94,6 +94,17 @@ RNG draw 0 — `attritionLoss`·`v2CityGarrisonAttrition`·`V2CityGarrisonAttrit
 그 이름을 안다. 순서를 못박는 이유는 실패가 조용하기 때문이다 — leaf가 `RaiseDisaster` **앞**에 오면
 아직 이번 달 재난 코드가 안 써진 `city.state`(전월 리셋값 0)를 읽어 감소가 통째로 사라진다.
 
+## 7-1. 검증 결과 — 플레이키 1건을 숨기지 않는다
+
+`:common :logic :infra :app:game-engine :app:game-api --rerun-tasks` 1회차에서 game-api의
+`ReadConsistencyBarrierIT > primary minVersion waits until concurrent version commit becomes visible`가
+`expected:<200> but was:<409>`(VERSION_NOT_VISIBLE)로 떨어졌다. 이 티켓은 game-api를 한 줄도 고치지
+않았고 read barrier와 접점이 없다. 단독 재실행 green, game-api 전체 재실행 green(510/0/0)으로 **타이밍
+플레이키**로 판정한다. "무관하니까 무시"가 아니라 재실행 두 번으로 확인한 결과를 적는다.
+
+최종 XML: common 232 / logic 3230 / infra 239 / game-engine 877(skipped 1, Docker IT) / game-api 510 —
+failures 0, errors 0.
+
 ## 8. 남은 것 (이 티켓 밖)
 
 - 실제 9200 월드를 돌려 원장이 이렇게 변한다는 end-to-end 리플레이는 여전히 없다(R2와 동일한 잔여).
