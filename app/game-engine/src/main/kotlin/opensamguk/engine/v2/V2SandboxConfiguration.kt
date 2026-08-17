@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /**
  * OPENSAM-35 0A-b — v2 bean-registration gate for game-engine.
@@ -50,4 +51,13 @@ class V2SandboxConfiguration {
 
     @Bean
     fun v2CityCatalogAdapter(catalog: V2ContentCatalog): V2CityCatalogAdapter = V2CityCatalogAdapter(catalog)
+
+    /**
+     * OPENSAM-151 — 도시 금·쌀·수비병 원장 스토어(OPENSAM-150이 만든 것). [V2ProcessCityIncomeAction]이
+     * 유일한 소비처이고, 데몬은 `ObjectProvider`로 **있으면 쓰고 없으면 null**로 받는다. 그래서 게이트가
+     * 꺼진 v1 프로덕션에서는 이 빈이 아예 없고, v2 leaf가 (시나리오 실수로) 돌면 조용한 no-op이 아니라
+     * `V2ProcessCityIncomeAction`에서 죽는다.
+     */
+    @Bean
+    fun v2CityLedgerStore(jdbc: NamedParameterJdbcTemplate): V2CityLedgerStore = V2CityLedgerStore(jdbc)
 }

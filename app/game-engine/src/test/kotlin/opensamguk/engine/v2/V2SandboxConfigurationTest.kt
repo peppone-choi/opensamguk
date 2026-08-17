@@ -11,6 +11,8 @@ import opensamguk.infra.v2.V2ContentCatalog
 import opensamguk.infra.v2.V2SandboxGate
 import opensamguk.infra.v2.V2SandboxMarker
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.core.env.SystemEnvironmentPropertySource
 import org.springframework.context.ApplicationContext
 
@@ -23,6 +25,10 @@ import org.springframework.context.ApplicationContext
 class V2SandboxConfigurationTest {
     private fun runner() = ApplicationContextRunner()
         .withUserConfiguration(WorldIdConfig::class.java, V2SandboxConfiguration::class.java)
+        // OPENSAM-151 — v2CityLedgerStore 가 NamedParameterJdbcTemplate 을 요구한다. 이 테스트의 측정
+        // 대상은 조건 평가이지 DB 가용성이 아니므로, DataSource 없는 껍데기만 넣어 컨텍스트를 띄운다
+        // (쿼리를 던지는 순간 죽지만 이 테스트는 던지지 않는다).
+        .withBean(NamedParameterJdbcTemplate::class.java, { NamedParameterJdbcTemplate(JdbcTemplate()) })
 
     private fun ApplicationContextRunner.withProfile() =
         withPropertyValues("spring.profiles.active=${V2SandboxGate.PROFILE}")
