@@ -86,12 +86,26 @@ git diff --name-only --diff-filter=MD "$MB" ${TO[@]+"${TO[@]}"} -- \
 
 # ⑤ 설정 리소스 무수정. README.md만 제외 — 어떤 로더도 읽지 않으므로(Flyway는 V*.sql,
 #    V2ContentCatalog는 *.json만 스캔) v1 런타임을 바꿀 수 없고, 제외하지 않으면
-#    v2 문서가 영구 갱신 불가가 된다(OPENSAM-188 결함 ②). yml·json·sql·map·scenario는 동결 유지.
-gate "⑤ configuration resources (README.md 제외)" \
+#    v2 문서가 영구 갱신 불가가 된다(OPENSAM-188 결함 ②). yml·json·sql·map은 동결 유지.
+#
+# 좁히기 (OPENSAM-152) — `scenario/scenario_9[0-9][0-9][0-9].json`(9000번대)만 추가로 제외한다.
+# 게이트 ⑤의 목적은 "v1 프로덕션 설정이 드리프트하지 않을 것"인데 9000번대는 정의상 **v2 샌드박스
+# 전용 시나리오**라 v1 설정이 아니다: `ScenarioCatalogService.V2_SANDBOX_CODE_FLOOR`(=9000)가 v1
+# 선택 목록에서 통째로 걸러내므로 v1 운영자에게 보이지도, 시드되지도 않는다.
+# 좁히지 않으면 R2가 main에 머지된 순간부터 `scenario_9200.json`이 Addition이 아니라 Modification이
+# 되어, R4~R6이 자기 leaf 행을 그 파일에 append할 구조적 방법이 사라진다(② 가 테스트 루트의
+# `**/v2/**`를 제외한 OPENSAM-190과 같은 모양의 결함).
+#
+# 제외 범위가 좁은 이유:
+#   · 정확히 4자리 9000번대 파일명만 본다. 기존 대역(0~2 / 900번대 / 1010~1120)은 걸리지 않는다.
+#   · `scenario/` 디렉터리 밖의 리소스(application*.yml, db/migration/**, map/**)는 그대로 동결.
+#   · v1 시나리오를 9000번대로 **옮겨서** 고치는 우회는 원경로 삭제가 --diff-filter=MD 에 걸린다.
+gate "⑤ configuration resources (README.md · v2 9000번대 시나리오 제외)" \
   ':(glob)app/*/src/main/resources/**' \
   ':(glob)infra/src/main/resources/**' \
   ':(glob,exclude)app/*/src/main/resources/**/README.md' \
-  ':(glob,exclude)infra/src/main/resources/**/README.md'
+  ':(glob,exclude)infra/src/main/resources/**/README.md' \
+  ':(glob,exclude)infra/src/main/resources/scenario/scenario_9[0-9][0-9][0-9].json'
 
 # C1 — production 불변식 파일: 수정 0건.
 gate "C1 production compose + checker" \

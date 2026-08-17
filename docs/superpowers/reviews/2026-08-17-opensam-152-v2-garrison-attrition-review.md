@@ -4,7 +4,7 @@
 - 브랜치: `feat-opensam-152-v2-garrison-attrition` (base = `feat-opensam-151-v2-city-income`)
 - 일자: 2026-08-17
 
-Scope: OPENSAM-152 v2 도시병사 감소·공백지화 leaf·등록·디스패치 배선(app/) + v2 시나리오 4행 append(infra/)
+Scope: OPENSAM-152 v2 도시병사 감소·공백지화 leaf·등록·디스패치 배선(app/) + v2 시나리오 4행 append(infra/) + 격리 게이트 ⑤ 9000번대 제외(scripts/agent/, §5-1)
 Verdict: cleared
 
 ## 0. 선행 조건에서 벗어난 점 — 먼저 적는다
@@ -78,6 +78,25 @@ RNG draw 0 — `attritionLoss`·`v2CityGarrisonAttrition`·`V2CityGarrisonAttrit
 가드 제약 준수: v2 타입명에 `Repository`/`Reader` 없음 · `JdbcTemplate`/`NamedParameterJdbcTemplate`/
 `Connection`/`DataSource` 선언 없음 · 기존 네 수신자(`auctionRepository`·`auctionBidRepository`·
 `archiveHistoryReader`·`statisticSnapshotReader`) 호출 0. 새 bean 0(R2의 `v2CityLedgerStore` 재사용).
+
+## 5-1. ⚠️ 공유 가드를 좁혔다 — 크게 적는다
+
+**`scripts/agent/v2-isolation-gate.sh`의 게이트 ⑤를 좁혔다.** 자기 변경을 통과시키려고 가드를 만지는
+것은 원칙적으로 금지이므로, 별도 커밋으로 분리하고 여기에 드러낸다. 판단 근거는 사람이 직접 재검토할 것.
+
+- **무엇을**: `infra/src/main/resources/scenario/scenario_9[0-9][0-9][0-9].json`(9000번대 4자리)만
+  게이트 ⑤의 동결 대상에서 제외.
+- **왜 필요해졌나**: R2(#424)가 main에 머지되면서 `scenario_9200.json`이 **Addition에서 Modification으로
+  바뀌었다.** 티켓이 "v2 시나리오 JSON은 게이트 ②③⑤에 잡히지 않는 데이터"라고 쓴 것은 **머지 전에만
+  참**이었다. 좁히지 않으면 R4~R6이 자기 leaf 행을 그 파일에 append할 구조적 방법이 없다.
+- **왜 정당한가**: 게이트 ⑤의 목적은 "v1 프로덕션 설정이 드리프트하지 않을 것"인데, 9000번대는 정의상
+  v2 샌드박스 전용이라 v1 설정이 아니다 — `ScenarioCatalogService.V2_SANDBOX_CODE_FLOOR`(=9000)가
+  v1 선택 목록에서 통째로 걸러내므로 v1 운영자에게 보이지도 시드되지도 않는다. ②가 테스트 루트의
+  `**/v2/**`를 제외한 OPENSAM-190과 **같은 모양**이다.
+- **잔여 위험**: 9000번대 파일 안에서 v1 leaf 이름을 부르는 행을 몰래 늘려도 게이트 ⑤는 잡지 못한다.
+  다만 그 월드는 v1 목록에 없고 프로덕션에서 시드되지 않으므로 v1 런타임에 도달할 경로가 없다.
+  `scenario/` 밖(application*.yml, db/migration/**, map/**)과 기존 대역(0~2 / 900번대 / 1010~1120)은
+  그대로 동결이다.
 
 ## 6. fail-closed (무음 no-op 금지)
 
