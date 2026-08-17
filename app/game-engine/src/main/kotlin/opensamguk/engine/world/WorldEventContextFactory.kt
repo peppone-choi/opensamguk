@@ -2,6 +2,7 @@ package opensamguk.engine.world
 
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.v2.V2CityLedgerStore
 import opensamguk.infra.read.ArchiveHistoryReader
 import opensamguk.infra.read.BettingRepository
 import opensamguk.infra.read.GameKvRepository
@@ -59,6 +60,8 @@ object WorldEventContextFactory {
         inheritanceRepository: InheritanceRepository? = null,
         lockGame: () -> Boolean = { false },
         unlockGame: () -> Unit = {},
+        // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼져 있으면 null(= v1 프로덕션 기본값).
+        v2CityLedger: V2CityLedgerStore? = null,
     ): (MutableMap<String, Any?>) -> EventActionContext {
         val cityConst = CityConstRegistry.find(mapName) ?: CityConstRegistry.of("che")
         return { env ->
@@ -89,6 +92,7 @@ object WorldEventContextFactory {
                 inheritanceRepository = inheritanceRepository,
                 lockGame = lockGame,
                 unlockGame = unlockGame,
+                v2CityLedger = v2CityLedger,
             )
 
             // env-read leaf의 world-view 키 (모두 같은 wctx — WorldActionContext가 전부 구현).

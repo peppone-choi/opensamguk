@@ -1,6 +1,7 @@
 package opensamguk.engine.config
 
 import opensamguk.common.world.WorldId
+import opensamguk.engine.v2.V2WorldActions
 import opensamguk.logic.event.EventActionFactory
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
@@ -79,9 +80,14 @@ class EngineEventConfig {
         val action: String,
     )
 
+    /**
+     * OPENSAM-151 — v2 leaf도 같은 팩토리에 이름으로 등록한다([V2WorldActions]). 등록은 이름 추가일 뿐,
+     * v2 leaf는 시나리오 `event` 행이 그 이름을 부르지 않는 한 절대 돌지 않는다. v1 시나리오에는 그 이름을
+     * 쓰는 행이 없으므로 v1 월드 동작은 불변이다.
+     */
     @Bean
     fun eventActionFactory(): EventActionFactory =
-        RaiseInvaderAction.register(WorldActions.register(EventActionFactory()))
+        RaiseInvaderAction.register(V2WorldActions.register(WorldActions.register(EventActionFactory())))
 
     @Bean
     fun eventDispatcher(store: EventStore, factory: EventActionFactory): EventDispatcher =

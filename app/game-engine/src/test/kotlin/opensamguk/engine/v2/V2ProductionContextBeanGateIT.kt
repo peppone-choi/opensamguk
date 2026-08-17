@@ -77,12 +77,16 @@ internal val APPROVED_V2_BEAN_NAMES: Set<String> = setOf(
     "v2SandboxMarker",
     "v2ContentCatalog",
     "v2CityCatalogAdapter",
+    // OPENSAM-151 — R2 도시 수입 leaf의 유일한 원장 소비처. 데몬은 ObjectProvider 로 받으므로
+    // 게이트 밖(v1 프로덕션)에서는 이 빈이 없고 leaf 는 fail-closed 로 죽는다.
+    "v2CityLedgerStore",
 )
 
 internal fun ApplicationContext.assertNoV2Beans() {
     assertEquals(0, getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
     assertEquals(0, getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
     assertEquals(0, getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
+    assertEquals(0, getBeansOfType(V2CityLedgerStore::class.java).size, "V2CityLedgerStore beans")
     assertEquals(emptyMap(), v2PackageBeans(), "beans whose type lives in an opensamguk *.v2.* package")
 }
 

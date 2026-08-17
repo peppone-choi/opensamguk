@@ -29,7 +29,8 @@ describe('submitCommandAndAwaitResult', () => {
 
         const result = await submitCommandAndAwaitResult(async () => ({ status: 'AVAILABLE', requestId: 'req-1' }));
 
-        expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('req-1');
+        // 두 번째 인자는 OPENSAM-45의 폴링 중단 신호다(신호로 결론이 나면 남은 시도를 버린다).
+        expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('req-1', expect.any(AbortSignal));
         expect(result).toMatchObject({
             status: 'applied',
             result: { ok: true, requestId: 'req-1', result: { messageId: 10 } },

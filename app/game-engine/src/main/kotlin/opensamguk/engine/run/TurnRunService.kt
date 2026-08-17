@@ -139,6 +139,8 @@ open class TurnRunService(
     private val recoveryGateProvider: FlushRecoveryGateProvider? = null,
     private val commandInboxRepository: CommandInboxRepository? = null,
     private val commandOutboxRelay: CommandOutboxRelay? = null,
+    /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 v2GarrisonRecruit는 fail-closed deny. */
+    private val v2CityLedger: opensamguk.engine.v2.V2CityLedgerStore? = null,
 ) {
     init {
         handler.recorder.generationSession = generationSession
@@ -172,6 +174,7 @@ open class TurnRunService(
             inheritanceRepository = inheritanceRepository,
             selectPoolRepository = selectPoolRepository,
             processNationCommand = processNationCommand,
+            v2CityLedger = v2CityLedger,
             raiseInvader = { spec ->
                 val env = mutableMapOf<String, Any?>(
                     "year" to world.getState().currentYear,

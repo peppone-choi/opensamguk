@@ -269,7 +269,7 @@ describe('CommandModal ordered form specs', () => {
             7,
             3,
         ));
-        expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('compound-applied');
+        expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('compound-applied', expect.any(AbortSignal));
     });
 
     it('keeps a compound form open until all required select values are present', async () => {

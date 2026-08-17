@@ -809,10 +809,18 @@ export const api = {
 const COMMAND_RESULT_POLL_ATTEMPTS = 20;
 const COMMAND_RESULT_POLL_INTERVAL_MS = 300;
 
-export async function pollCommandResultResponse(requestId: string): Promise<CommandResultResponse | null> {
+/**
+ * 결과가 나올 때까지 정본을 되묻는다. [signal]이 끊기면 남은 시도를 버린다 — OPENSAM-45의 push
+ * 신호가 먼저 결론을 냈을 때 이미 필요 없어진 요청 19번을 마저 쏘지 않기 위해서다.
+ */
+export async function pollCommandResultResponse(
+    requestId: string,
+    signal?: AbortSignal,
+): Promise<CommandResultResponse | null> {
     let lastPending: CommandResultPending | null = null;
     for (let attempt = 0; attempt < COMMAND_RESULT_POLL_ATTEMPTS; attempt += 1) {
         await new Promise<void>(resolve => setTimeout(resolve, COMMAND_RESULT_POLL_INTERVAL_MS));
+        if (signal?.aborted) return lastPending;
         const result = await api.commandResult(requestId).catch(error => {
             if (error instanceof Error) return null;
             throw error;

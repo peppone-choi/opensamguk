@@ -9,6 +9,8 @@ import opensamguk.infra.v2.V2SandboxGate
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /**
  * OPENSAM-35 0A-d — measures, with the same [ApplicationContextRunner] approach as S2, that the loader bean
@@ -18,6 +20,8 @@ class V2ContentCatalogBeanTest {
 
     private val runner = ApplicationContextRunner()
         .withUserConfiguration(V2SandboxConfiguration::class.java)
+        // OPENSAM-151 — 위와 같은 이유의 DataSource 없는 JDBC 껍데기.
+        .withBean(NamedParameterJdbcTemplate::class.java, { NamedParameterJdbcTemplate(JdbcTemplate()) })
 
     @Test
     fun `gate closed - no content catalog or city adapter bean`() {
