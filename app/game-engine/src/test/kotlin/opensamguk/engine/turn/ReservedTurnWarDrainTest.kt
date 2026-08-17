@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.josa.JosaUtil
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -76,7 +77,72 @@ class ReservedTurnWarDrainTest {
         assertEquals(31, world.getGeneralById(100)!!.cityId)
         assertTrue(2 in handler.recorder.deletedNationIds())
         assertNotNull(handler.recorder.cityPatches().singleOrNull { it.id == 31 })
-        assertTrue(world.consumeDirtyState().logs.any { it.text.contains("공략에 <S>성공</>했습니다.") })
+        val logs = world.consumeDirtyState().logs
+        assertTrue(logs.any { it.text.contains("공략에 <S>성공</>했습니다.") })
+
+        // OPENSAM-187: ActionLogger prefix parity — every ConquerCity log line must carry the same
+        // <C>●</> family prefix WorldActionContext.actionLogText applies elsewhere (format 1/2/4).
+        val cityUl = JosaUtil.pick("c31", "을")
+        val nationYi = JosaUtil.pick("n1", "이")
+        val generalYi = JosaUtil.pick("g100", "이")
+        val defenderNationYi = JosaUtil.pick("n2", "이")
+
+        // generalAction — PLAIN (<C>●</>{text}).
+        assertTrue(
+            logs.any {
+                it.scope == "general" && it.category == "action" && it.generalId == 100 &&
+                    it.text == "<C>●</><G><b>c31</b></> 공략에 <S>성공</>했습니다."
+            },
+        )
+        // generalHistory — YEAR_MONTH (<C>●</>{year}년 {month}월:{text}).
+        assertTrue(
+            logs.any {
+                it.scope == "general" && it.category == "history" && it.generalId == 100 &&
+                    it.text == "<C>●</>200년 1월:<G><b>c31</b></>${cityUl} <S>점령</>"
+            },
+        )
+        // globalAction — MONTH (<C>●</>{month}월:{text}).
+        assertTrue(
+            logs.any {
+                it.scope == "global" && it.category == "action" &&
+                    it.text == "<C>●</>1월:<Y>g100</>${generalYi} <G><b>c31</b></> 공략에 <S>성공</>했습니다."
+            },
+        )
+        // globalHistory — YEAR_MONTH.
+        assertTrue(
+            logs.any {
+                it.scope == "global" && it.category == "history" &&
+                    it.text == "<C>●</>200년 1월:<S><b>【지배】</b></><D><b>n1</b></>${nationYi} <G><b>c31</b></>${cityUl} 지배했습니다."
+            },
+        )
+        // nationHistory — YEAR_MONTH (attacker-side conquer log).
+        assertTrue(
+            logs.any {
+                it.scope == "nation" && it.category == "history" && it.nationId == 1 &&
+                    it.text == "<C>●</>200년 1월:<Y>g100</>${generalYi} <D><b>n2</b></>의 <G><b>c31</b></> ${cityUl} <S>점령</>"
+            },
+        )
+        // nationHistory — the 멸망 (collapse) log fires from the same helper.
+        assertTrue(
+            logs.any {
+                it.scope == "nation" && it.category == "history" && it.nationId == 1 &&
+                    it.text == "<C>●</>200년 1월:<D><b>n2</b></>${JosaUtil.pick("n2", "을")} 정복"
+            },
+        )
+        // globalHistory — the 멸망 announcement, format YEAR_MONTH again on a distinct call site.
+        assertTrue(
+            logs.any {
+                it.scope == "global" && it.category == "history" &&
+                    it.text == "<C>●</>200년 1월:<R><b>【멸망】</b></><D><b>n2</b></>${JosaUtil.pick("n2", "은")} <R>멸망</>했습니다."
+            },
+        )
+        // generalAction — the per-oldGeneral 멸망 log (deleteNation cascade), PLAIN again on a distinct call site.
+        assertTrue(
+            logs.any {
+                it.scope == "general" && it.category == "action" && it.generalId == 201 &&
+                    it.text == "<C>●</><D><b>n2</b></>${defenderNationYi} <R>멸망</>했습니다."
+            },
+        )
     }
 
     private fun warWorld(

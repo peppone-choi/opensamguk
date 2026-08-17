@@ -73,7 +73,13 @@ object ConquerCity {
         val generalYi = JosaUtil.pick(input.attackerGeneralName, "이")
         val defenderDecoration =
             if (input.isNeutralCapture) "공백지인" else "<D><b>${input.defenderNationName}</b></>의"
-        logs += ConquerLog.generalAction(attacker.id, attacker.nationId, "<G><b>$cityName</b></> 공략에 <S>성공</>했습니다.")
+        // PLAIN 명시 = process_war.php:575.
+        logs += ConquerLog.generalAction(
+            attacker.id,
+            attacker.nationId,
+            "<G><b>$cityName</b></> 공략에 <S>성공</>했습니다.",
+            ConquerLogFormat.PLAIN,
+        )
         logs += ConquerLog.generalHistory(attacker.id, attacker.nationId, "<G><b>$cityName</b></>$cityUl <S>점령</>")
         logs += ConquerLog.globalAction("<Y>${input.attackerGeneralName}</>$generalYi <G><b>$cityName</b></> 공략에 <S>성공</>했습니다.")
         logs += ConquerLog.globalHistory(
@@ -191,7 +197,8 @@ object ConquerCity {
         val destroyLog = "<D><b>${input.defenderNationName}</b></>$defenderNationYi <R>멸망</>했습니다."
         val destroyHistoryLog = "<D><b>${input.defenderNationName}</b></>$defenderNationYi <R>멸망</>"
         for (oldGeneral in oldNationGenerals) {
-            logs += ConquerLog.generalAction(oldGeneral.id, 0, destroyLog)
+            // PLAIN 명시 = func.php:1772 (바로 다음 줄의 history 는 기본 YEAR_MONTH).
+            logs += ConquerLog.generalAction(oldGeneral.id, 0, destroyLog, ConquerLogFormat.PLAIN)
             logs += ConquerLog.generalHistory(oldGeneral.id, 0, destroyHistoryLog)
         }
 
@@ -225,6 +232,8 @@ object ConquerCity {
                 oldGeneral.id,
                 0,
                 "도주하며 금<C>$loseGold</> 쌀<C>$loseRice</>을 분실했습니다.",
+                // PLAIN 명시 = process_war.php:631.
+                ConquerLogFormat.PLAIN,
             )
 
             // (5) scout (process_war.php:644) — CONDITIONAL, short-circuit AND on join_mode != 'onlyRandom'.
@@ -272,7 +281,8 @@ object ConquerCity {
             "<D><b>${input.defenderNationName}</b></> 정복으로 금<C>${formatInteger(loseNationGold)}</> " +
                 "쌀<C>${formatInteger(loseNationRice)}</>을 획득했습니다."
         for (chiefId in input.attackerNationChiefIds) {
-            logs += ConquerLog.generalAction(chiefId, input.attacker.nationId, resourceLog)
+            // PLAIN 명시 = process_war.php:691,694.
+            logs += ConquerLog.generalAction(chiefId, input.attacker.nationId, resourceLog, ConquerLogFormat.PLAIN)
         }
 
         // DestroyNation EventTarget SLOT (process_war.php:700) — a no-op in P4 (the OpenNationBetting handler
@@ -321,8 +331,11 @@ object ConquerCity {
                 g.id,
                 g.nationId,
                 "수도가 함락되어 <G><b>$minCityName</b></>$minCityRo <M>긴급천도</>합니다.",
+                // PLAIN 명시 = process_war.php:726.
+                ConquerLogFormat.PLAIN,
             )
             if (g.officerLevel >= 5) {
+                // 포맷 인자 없음 = process_war.php:728 — 기본 MONTH. 바로 위 줄과 포맷이 다르다.
                 logs += ConquerLog.generalAction(
                     g.id,
                     g.nationId,
@@ -603,30 +616,54 @@ enum class ConquerLogCategory(val wireValue: String) {
     HISTORY("history"),
 }
 
+/**
+ * ActionLogger format-number mirror (`WorldActionContext.actionLogText`, format types 1/2/4) — the
+ * `<C>●</>` prefix family every ConquerCity log line needs. PLAIN = `<C>●</>{text}`, YEAR_MONTH =
+ * `<C>●</>{year}년 {month}월:{text}`, MONTH = `<C>●</>{month}월:{text}`.
+ */
+enum class ConquerLogFormat {
+    PLAIN,
+    YEAR_MONTH,
+    MONTH,
+}
+
 data class ConquerLog(
     val scope: ConquerLogScope,
     val category: ConquerLogCategory,
     val text: String,
     val generalId: Int? = null,
     val nationId: Int? = null,
+    // 기본값 없음 — 기본값을 두면 헬퍼를 안 거친 새 로그가 조용히 한 포맷으로 새고, 그 divergence는
+    // 접두사 한 조각이라 리뷰에서 눈에 안 띈다. 컴파일러가 매번 고르게 강제한다.
+    val format: ConquerLogFormat,
 ) {
     operator fun contains(value: CharSequence): Boolean = text.contains(value)
 
     companion object {
-        fun generalAction(generalId: Int, nationId: Int, text: String) =
-            ConquerLog(ConquerLogScope.GENERAL, ConquerLogCategory.ACTION, text, generalId, nationId)
+        // 포맷은 **call site 인자**다 — PHP `ActionLogger`가 그렇기 때문이다. 헬퍼 이름에 포맷을
+        // 고정하면 같은 push 메서드를 서로 다른 포맷으로 부르는 PHP 호출부를 표현할 수 없다.
+        // 실제로 `process_war.php:726`은 `PLAIN`을 넘기고 바로 다음 줄 `:728`(수뇌 집합)은 인자
+        // 없이 부른다 — 골든 `conquercity-capital-01.json`이 전자는 접두사 없음, 후자는 `1월:`로
+        // 못박는다. 기본값은 PHP push 메서드의 기본 포맷 그대로다(generalAction/globalAction=MONTH,
+        // 나머지=YEAR_MONTH). 명시 인자를 주는 자리 = PHP가 명시 인자를 주는 자리.
+        fun generalAction(
+            generalId: Int,
+            nationId: Int,
+            text: String,
+            format: ConquerLogFormat = ConquerLogFormat.MONTH,
+        ) = ConquerLog(ConquerLogScope.GENERAL, ConquerLogCategory.ACTION, text, generalId, nationId, format)
 
         fun generalHistory(generalId: Int, nationId: Int, text: String) =
-            ConquerLog(ConquerLogScope.GENERAL, ConquerLogCategory.HISTORY, text, generalId, nationId)
+            ConquerLog(ConquerLogScope.GENERAL, ConquerLogCategory.HISTORY, text, generalId, nationId, ConquerLogFormat.YEAR_MONTH)
 
         fun nationHistory(nationId: Int, text: String) =
-            ConquerLog(ConquerLogScope.NATION, ConquerLogCategory.HISTORY, text, nationId = nationId)
+            ConquerLog(ConquerLogScope.NATION, ConquerLogCategory.HISTORY, text, nationId = nationId, format = ConquerLogFormat.YEAR_MONTH)
 
         fun globalAction(text: String) =
-            ConquerLog(ConquerLogScope.GLOBAL, ConquerLogCategory.ACTION, text)
+            ConquerLog(ConquerLogScope.GLOBAL, ConquerLogCategory.ACTION, text, format = ConquerLogFormat.MONTH)
 
         fun globalHistory(text: String) =
-            ConquerLog(ConquerLogScope.GLOBAL, ConquerLogCategory.HISTORY, text)
+            ConquerLog(ConquerLogScope.GLOBAL, ConquerLogCategory.HISTORY, text, format = ConquerLogFormat.YEAR_MONTH)
     }
 }
 
