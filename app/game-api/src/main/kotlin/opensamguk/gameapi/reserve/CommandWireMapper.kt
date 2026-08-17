@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.wire.CityGarrisonRecruit
+import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.TurnDaemonCommand
 
 /**
@@ -106,6 +107,8 @@ object CommandWireMapper {
         "selectPoolUpdate",
         // OPENSAM-153 (v2 R4) — v2 전용 도시병사 보충. v1 turn-reserved che_*와 무관한 typed-publish 즉시 인테이크.
         "v2GarrisonRecruit",
+        // OPENSAM-154 (v2 R5) — v2 전용 도시 자원 수송. 같은 typed-publish 즉시 인테이크 경로다.
+        "v2CityTransport",
         // NB: join(REST-only, no daemon command), /bulk·/push·/repeat(W6e, CommandQueueService),
         //     buildNationCandidate(NationController가 wire 명령을 직접 발행)는 의도적으로 intakeCodes
         //     밖이다 — 추가 금지.
@@ -429,6 +432,12 @@ object CommandWireMapper {
             "v2GarrisonRecruit" -> CityGarrisonRecruit(
                 requestId = requestId, generalId = generalId,
                 cityId = args.int("cityId") ?: 0, amount = args.int("amount") ?: 0,
+            )
+            "v2CityTransport" -> CityTransport(
+                requestId = requestId, generalId = generalId,
+                fromCityId = args.int("fromCityId") ?: 0, toCityId = args.int("toCityId") ?: 0,
+                gold = args.int("gold")?.toLong() ?: 0L, rice = args.int("rice")?.toLong() ?: 0L,
+                garrison = args.int("garrison") ?: 0,
             )
             else -> null
         }

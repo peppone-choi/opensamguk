@@ -1,6 +1,7 @@
 package opensamguk.gameapi.reserve.v2
 
 import opensamguk.common.wire.CityGarrisonRecruit
+import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.decodeCommandEnvelope
@@ -54,5 +55,35 @@ class V2CommandWireMapperTest {
         val recruit = roundTrip(cmd!!) as CityGarrisonRecruit
         assertEquals(0, recruit.cityId)
         assertEquals(0, recruit.amount)
+    }
+
+    @Test
+    fun `v2CityTransport maps the three resource amounts and both city ids`() {
+        val cmd = CommandWireMapper.toCommand(
+            code = "v2CityTransport",
+            generalId = 42,
+            requestId = "req-v2-tr",
+            argJson = """{"fromCityId":5,"toCityId":6,"gold":1000,"rice":500,"garrison":300}""",
+        )
+        assertTrue(CommandWireMapper.isIntakeCommand("v2CityTransport"))
+        val tr = roundTrip(cmd!!) as CityTransport
+        assertEquals(42, tr.generalId) // resolved id, NOT from the body
+        assertEquals(5, tr.fromCityId)
+        assertEquals(6, tr.toCityId)
+        assertEquals(1000L, tr.gold)
+        assertEquals(500L, tr.rice)
+        assertEquals(300, tr.garrison)
+    }
+
+    @Test
+    fun `v2CityTransport missing args default to zero`() {
+        val tr = roundTrip(
+            CommandWireMapper.toCommand("v2CityTransport", generalId = 42, requestId = "r", argJson = null)!!,
+        ) as CityTransport
+        assertEquals(0, tr.fromCityId)
+        assertEquals(0, tr.toCityId)
+        assertEquals(0L, tr.gold)
+        assertEquals(0L, tr.rice)
+        assertEquals(0, tr.garrison)
     }
 }

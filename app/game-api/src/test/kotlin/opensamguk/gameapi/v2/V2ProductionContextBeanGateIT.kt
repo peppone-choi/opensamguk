@@ -148,7 +148,8 @@ class V2BothConditionsBeanGateIT {
         assertEquals(
             // OPENSAM-153 (v2 R4) — V2GarrisonRecruitController shares this gate's @Profile/@ConditionalOnProperty,
             // so it registers alongside the marker when both conditions are true.
-            setOf("v2SandboxConfiguration", "v2SandboxMarker", "v2GarrisonRecruitController"),
+            // OPENSAM-154 (v2 R5) — V2CityTransportController shares the same gate.
+            setOf("v2SandboxConfiguration", "v2SandboxMarker", "v2GarrisonRecruitController", "v2CityTransportController"),
             byPackage.keys,
             "game-api v2 package beans: $byPackage",
         )
