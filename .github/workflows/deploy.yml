@@ -214,8 +214,10 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@v4
-
+      # actions/checkout 없음(의도) — 이 job은 워크스페이스를 한 번도 읽지 않고 전부
+      # $HOME/opensamguk-docker(=$STACK) 안에서 돈다. self-hosted 러너는 매 실행마다
+      # codeload.github.com에서 액션 tarball을 새로 받는데, 그 IP가 429(Too Many Requests)에
+      # 걸리면 쓰지도 않는 체크아웃 때문에 배포 전체가 죽는다(run 32035675655·32037387818·32038640965).
       - name: Deploy shared stack on box
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
