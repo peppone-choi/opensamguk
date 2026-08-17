@@ -67,7 +67,7 @@ describe('CommandModal terminal result handling', () => {
         fireEvent.click(screen.getByRole('button', { name: '예약' }));
 
         await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('che_test', {}, 7, 2));
-        await waitFor(() => expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('general-applied'));
+        await waitFor(() => expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('general-applied', expect.any(AbortSignal)));
 
         expect(onToast).toHaveBeenCalledWith('시험 명령이 실행되었습니다.', 'success');
         expect(onReserved).toHaveBeenCalledOnce();
@@ -126,7 +126,7 @@ describe('CommandModal terminal result handling', () => {
                 { action: 'che_test', turnList: [2], arg: {} },
             ]),
         );
-        await waitFor(() => expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('nation-applied'));
+        await waitFor(() => expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('nation-applied', expect.any(AbortSignal)));
 
         expect(onToast).toHaveBeenCalledWith('시험 명령이 예약되었습니다.', 'success');
         expect(onReserved).toHaveBeenCalledOnce();
