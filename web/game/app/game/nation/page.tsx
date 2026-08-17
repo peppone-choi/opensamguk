@@ -62,7 +62,8 @@ export default function NationPage() {
             setGeneralId(frontRes?.general?.generalId ?? null);
             setError('');
         } catch {
-            setError('데이터를 불러올 수 없습니다.');
+            // 턴 갱신(background) 실패는 보고 있던 화면을 지우지 않는다.
+            if (!background) setError('데이터를 불러올 수 없습니다.');
         } finally {
             if (!background) setLoading(false);
         }

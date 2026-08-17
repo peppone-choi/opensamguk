@@ -64,7 +64,8 @@ export default function Admin2Page() {
             setData(d);
             setError('');
         } catch (e) {
-            setError(errorText(e));
+            // 턴 갱신(background) 실패는 보고 있던 화면을 지우지 않는다.
+            if (!background) setError(errorText(e));
         } finally {
             if (!background) setLoading(false);
         }

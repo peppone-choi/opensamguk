@@ -77,3 +77,32 @@ Shell 밖에서 렌더되는 화면에는 신호가 오지 않는다 — 갱신�
 - 입력 중 폼이 본체인 화면(join, select-pool, npc-control)의 "충돌 없는 부분 갱신"은 별도 과제다.
   낙관적 병합 규칙이 필요하며 이번 범위 밖이다.
 - 브라우저 실측(webapp-testing)은 하지 않았다. 근거는 단위 테스트 + 타입 + 빌드다.
+
+## 7. CodeRabbit 지적 처리 (PR #433)
+
+**고쳤다**
+- `useTurnRefresh` — 최신 콜백을 passive effect가 아니라 **렌더 시점**에 ref에 넣는다. 커밋 후
+  effect 전에 도착한 턴 신호가 낡은 클로저(방금 바뀐 필터·선택 상태를 모르는)를 부르던 창을 없앴다.
+- **background 실패가 화면을 지우던 것** — `generals`·`nation`·`admin2`·`diplomacy`·`board`·
+  `troop`·`nation-betting`: 턴 갱신 조회가 실패해도 보고 있던 데이터를 유지하고 차단용 error로
+  전환하지 않는다(성공하면 stale error 해제). 일시적 네트워크 오류로 화면이 통째로 에러가 되는
+  편이 낡은 목록보다 나쁘다.
+- **턴 콜백이 foreground 경로를 쓰던 것** — `board`·`nation-betting`·`troop`·`diplomacy`를
+  `background=true`로 바꿨다. 갱신 중 로딩 화면이 목록·댓글 draft를 덮지 않는다.
+- `inherit` — 최초/수동/턴 조회가 겹칠 때 늦게 온 옛 응답이 새 값을 덮어쓰던 경합을 세대 번호로
+  막았다(언마운트 후 commit도 함께 차단).
+
+**안 고쳤다(이유)**
+- "주석을 영어로" — 이 저장소의 프런트엔드 주석은 한국어가 관례다(기존 파일 다수, CLAUDE.md·
+  리뷰 문서 모두 한국어). 일관성을 깨는 쪽이 손해다.
+- "들여쓰기 2칸" — `web/game`의 기존 코드가 4칸이다. 새 줄만 2칸으로 바꾸면 파일 안에서 섞인다.
+- `nation`의 응답 경합 — 같은 엔드포인트 집합을 통째로 다시 세팅하는 구조라 순서가 어긋나도 다음
+  갱신에서 자가 치유되고 사용자 입력을 덮지 않는다. `inherit`과 달리 언마운트 누수도 없다.
+
+## 8. 이번 변경과 무관한 기존 결함 1건 (미해결, 보고만)
+
+`__tests__/GameChrome.main-map.test.tsx`의 "returns a successful explicit possession claim …"이
+로컬에서 실패한다. **origin/main 내용으로 되돌려도 동일하게 실패**하므로 이 PR이 만든 결함이
+아니다(같은 커밋으로 CI `web (game)`은 통과했다 — 환경/스케줄 의존 플레이크로 보인다).
+`mockReturnValueOnce` 뒤 재렌더가 기본 목으로 떨어지며 `routerReplace('/game/s1')`가 불리는
+구조라 렌더 횟수에 민감하다. 별도 티켓 감이며 여기서 손대지 않았다.

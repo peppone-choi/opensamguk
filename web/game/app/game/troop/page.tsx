@@ -264,16 +264,18 @@ export default function TroopPage() {
     const [createName, setCreateName] = useState('');
     const [renameName, setRenameName] = useState('');
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
+    // background=true는 턴 갱신용 — 부대 목록을 로딩 표시로 지우지 않는다.
+    const fetchData = useCallback(async (background = false) => {
+        if (!background) setLoading(true);
         try {
             const res = await api.troops();
             setData(res);
             setError('');
         } catch {
-            setError('부대 정보를 불러올 수 없습니다.');
+            // 턴 갱신(background) 실패는 보고 있던 화면을 지우지 않는다.
+            if (!background) setError('부대 정보를 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
@@ -284,7 +286,7 @@ export default function TroopPage() {
     // OPENSAM-196: 전용 EventSource 대신 Shell의 단일 SSE를 공유하는 턴 완료 신호로 갈아탄다.
     // 부대 창설/개명 입력 draft는 fetchData가 건드리지 않으므로 갱신해도 안전하다.
     useTurnRefresh(() => {
-        fetchData();
+        fetchData(true);
     });
 
     // EMPTY-SAFE: a fresh seed with no formed troops returns { troops: [] } (200).
@@ -322,7 +324,7 @@ export default function TroopPage() {
                 {data && (
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>{troops.length}개 부대</span>
                 )}
-                <button onClick={fetchData} style={{ marginLeft: 'auto' }}>새로고침</button>
+                <button onClick={() => void fetchData()} style={{ marginLeft: 'auto' }}>새로고침</button>
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}

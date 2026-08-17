@@ -185,17 +185,21 @@ function BoardContent() {
     const [modal, setModal] = useState<BoardModalSpec | null>(null);
     const [toast, setToast] = useState<string | null>(null);
 
-    const fetchBoard = useCallback(async (isSecret: boolean) => {
-        setLoading(true);
+    // background=true는 턴 갱신용 — 읽던 글 목록과 작성 중인 댓글 draft가 로딩 화면으로
+    // 바뀌지 않게 하고, 일시적 실패로 목록을 지우지도 않는다.
+    const fetchBoard = useCallback(async (isSecret: boolean, background = false) => {
+        if (!background) setLoading(true);
         try {
             const d = await api.board(isSecret);
             setData(d);
             setError('');
         } catch {
-            setData(null);
-            setError('게시판을 불러올 수 없습니다.');
+            if (!background) {
+                setData(null);
+                setError('게시판을 불러올 수 없습니다.');
+            }
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
@@ -210,7 +214,7 @@ function BoardContent() {
             .catch(() => setMyGeneralId(0));
     }, []);
 
-    useTurnRefresh(() => fetchBoard(secret));
+    useTurnRefresh(() => fetchBoard(secret, true));
 
     const setCommentDraft = useCallback((no: number, value: string) => {
         setCommentDrafts((prev) => ({ ...prev, [no]: value }));

@@ -62,8 +62,9 @@ export default function NationBettingPage() {
         setTimeout(() => setToast(''), 3000);
     }
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
+    // background=true는 턴 갱신용 — 목록을 로딩 표시로 지우지 않는다.
+    const fetchData = useCallback(async (background = false) => {
+        if (!background) setLoading(true);
         try {
             const data = await api.betting<BettingListResponse>('bettingNation');
             // bettingList는 Map<id,item> — 값 배열로 펴서 역순 렌더.
@@ -76,9 +77,10 @@ export default function NationBettingPage() {
             setSelectedId(prev => prev ?? items.find(b => !b.finished)?.id ?? items[0]?.id ?? null);
             setError('');
         } catch {
-            setError('국가 베팅 목록을 불러올 수 없습니다.');
+            // 턴 갱신(background) 실패는 보고 있던 화면을 지우지 않는다.
+            if (!background) setError('국가 베팅 목록을 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
@@ -88,7 +90,7 @@ export default function NationBettingPage() {
 
     // OPENSAM-196: 전용 EventSource 대신 Shell의 단일 SSE를 공유하는 턴 완료 신호로 갈아탄다.
     useTurnRefresh(() => {
-        void fetchData();
+        void fetchData(true);
     });
 
     // yearMonth 계산 — PageNationBetting.vue joinYearMonth 패러티.

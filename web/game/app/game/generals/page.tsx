@@ -108,15 +108,20 @@ export default function GeneralsPage() {
 
     // background=true(턴 갱신)면 로딩 스켈레톤을 띄우지 않는다(OPENSAM-196).
     const fetchData = (background = false) => {
-        if (!background) setLoading(true);
-        setError('');
+        if (!background) {
+            setLoading(true);
+            setError('');
+        }
         api
             .generalsList()
             .then((res: PublicGeneral[]) => {
                 // EMPTY-SAFE: 응답은 bare 배열. 빈 seed면 [] (200), 500 아님.
                 setData(Array.isArray(res) ? res : []);
+                setError('');
             })
-            .catch(() => setError('장수 목록을 불러올 수 없습니다.'))
+            // 턴 갱신(background) 실패는 보고 있던 목록을 지우지 않는다 — 일시적 네트워크
+            // 오류로 화면이 통째로 에러가 되는 편이 낡은 목록보다 나쁘다.
+            .catch(() => { if (!background) setError('장수 목록을 불러올 수 없습니다.'); })
             .finally(() => {
                 if (!background) setLoading(false);
             });

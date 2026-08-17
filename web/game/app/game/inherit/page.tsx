@@ -161,23 +161,30 @@ export default function InheritPage() {
         setTimeout(() => setToast(''), 3000);
     }
 
-    function load() {
-        let on = true;
+    // 최초 조회·수동 조회·턴 갱신이 겹칠 수 있다. 세대 번호로 **마지막** 요청만 화면에 반영해
+    // 늦게 온 옛 응답이 새 값을 덮어쓰지 않게 한다. background=true(턴 갱신)는 실패해도
+    // 보고 있던 화면을 에러로 바꾸지 않는다.
+    const loadSeq = useRef(0);
+
+    function load(background = false) {
+        const seq = ++loadSeq.current;
+        const current = () => seq === loadSeq.current;
         (api.inheritPoint() as Promise<InheritPointResponse>)
             .then((d) => {
-                if (on) {
+                if (current()) {
                     setData(d);
                     setError('');
                 }
             })
             .catch(() => {
-                if (on) setError('데이터를 불러올 수 없습니다.');
+                if (current() && !background) setError('데이터를 불러올 수 없습니다.');
             })
             .finally(() => {
-                if (on) setLoading(false);
+                if (current() && !background) setLoading(false);
             });
         return () => {
-            on = false;
+            // 언마운트/재요청 — 이 요청의 결과를 버린다.
+            if (current()) loadSeq.current += 1;
         };
     }
 
@@ -185,7 +192,7 @@ export default function InheritPage() {
 
     // 유산 포인트/로그만 재조회 — 상점 폼 선택값(nextSpecialPick 등)은 건드리지 않는다(OPENSAM-196).
     useTurnRefresh(() => {
-        load();
+        load(true);
     });
 
     async function handleResetStat() {

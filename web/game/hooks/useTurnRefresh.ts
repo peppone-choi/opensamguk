@@ -16,9 +16,9 @@ import { subscribeTurnCompleted } from '@/lib/turnEvents';
 export function useTurnRefresh(onTurn: () => void) {
     const onTurnRef = useRef(onTurn);
 
-    useEffect(() => {
-        onTurnRef.current = onTurn;
-    }, [onTurn]);
+    // 렌더 시점에 바로 최신화한다. effect로 미루면 그 사이(커밋 후 passive effect 전)에 도착한
+    // 턴 신호가 낡은 클로저를 부른다 — 방금 바뀐 필터·선택 상태를 무시한 재조회가 된다.
+    onTurnRef.current = onTurn;
 
     useEffect(() => subscribeTurnCompleted(() => onTurnRef.current()), []);
 }
