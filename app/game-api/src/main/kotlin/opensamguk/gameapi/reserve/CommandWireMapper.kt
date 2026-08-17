@@ -9,6 +9,7 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.TurnDaemonCommand
 
 /**
@@ -103,6 +104,8 @@ object CommandWireMapper {
         // W6f 장수 선택 풀 — 픽/갱신 (RNG-bearing — 골든은 /parity-wave).
         "selectPoolPick",
         "selectPoolUpdate",
+        // OPENSAM-153 (v2 R4) — v2 전용 도시병사 보충. v1 turn-reserved che_*와 무관한 typed-publish 즉시 인테이크.
+        "v2GarrisonRecruit",
         // NB: join(REST-only, no daemon command), /bulk·/push·/repeat(W6e, CommandQueueService),
         //     buildNationCandidate(NationController가 wire 명령을 직접 발행)는 의도적으로 intakeCodes
         //     밖이다 — 추가 금지.
@@ -422,6 +425,10 @@ object CommandWireMapper {
                 leadership = args.int("leadership"), strength = args.int("strength"), intel = args.int("intel"),
                 personalityName = args.str("personalityName"),
                 useOwnPicture = args.bool("useOwnPicture") ?: false,
+            )
+            "v2GarrisonRecruit" -> CityGarrisonRecruit(
+                requestId = requestId, generalId = generalId,
+                cityId = args.int("cityId") ?: 0, amount = args.int("amount") ?: 0,
             )
             else -> null
         }

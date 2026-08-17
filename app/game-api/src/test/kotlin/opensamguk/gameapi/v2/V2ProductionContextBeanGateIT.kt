@@ -146,7 +146,9 @@ class V2BothConditionsBeanGateIT {
         assertEquals(0, context.getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
         val byPackage = context.v2PackageBeans()
         assertEquals(
-            setOf("v2SandboxConfiguration", "v2SandboxMarker"),
+            // OPENSAM-153 (v2 R4) — V2GarrisonRecruitController shares this gate's @Profile/@ConditionalOnProperty,
+            // so it registers alongside the marker when both conditions are true.
+            setOf("v2SandboxConfiguration", "v2SandboxMarker", "v2GarrisonRecruitController"),
             byPackage.keys,
             "game-api v2 package beans: $byPackage",
         )
