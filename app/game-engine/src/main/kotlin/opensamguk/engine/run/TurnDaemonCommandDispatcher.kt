@@ -1,6 +1,7 @@
 package opensamguk.engine.run
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
@@ -36,6 +37,8 @@ import opensamguk.engine.tournament.TournamentAdminHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
+import opensamguk.engine.v2.V2CityLedgerStore
+import opensamguk.engine.v2.V2GarrisonRecruitHandler
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BettingRepository
@@ -118,6 +121,11 @@ class TurnDaemonCommandDispatcher(
     inheritanceRepository: InheritanceRepository? = null,
     processNationCommand: ProcessNationCommand? = null,
     raiseInvader: (RaiseInvaderSpec) -> Int = { 0 },
+    /**
+     * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [v2GarrisonRecruit]도 null이고
+     * `dispatch`가 [V2GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
+     */
+    v2CityLedger: V2CityLedgerStore? = null,
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
@@ -339,6 +347,9 @@ class TurnDaemonCommandDispatcher(
     private val adminGeneralModeration = AdminGeneralModerationHandler(world, recorder)
     private val adminWorldSettings = AdminWorldSettingsHandler(world, recorder)
 
+    // ── OPENSAM-153 (v2 R4) — 도시병사 보충 핸들러 (원장 없으면 null, dispatch에서 fail-closed deny) ──
+    private val v2GarrisonRecruit = v2CityLedger?.let { V2GarrisonRecruitHandler(world, recorder, it) }
+
     /**
      * Dispatch one command to its handler.
      *
@@ -423,6 +434,9 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.ProfileIconSync -> profileIconSync.handle(command)
         is TurnDaemonCommand.AdminGeneralModeration -> adminGeneralModeration.handle(command)
         is TurnDaemonCommand.AdminWorldSettings -> adminWorldSettings.handle(command)
+        // ── OPENSAM-153 (v2 R4) — 도시병사 보충. 원장 없음 = fail-closed deny (null 반환 금지: null이면
+        //    FE result-poll이 RESOLVED를 영영 못 보고 PENDING에 갇힌다). ──
+        is CityGarrisonRecruit -> v2GarrisonRecruit?.handle(command) ?: V2GarrisonRecruitHandler.unavailable(command)
         else -> null
     }
 

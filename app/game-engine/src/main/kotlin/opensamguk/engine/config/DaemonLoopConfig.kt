@@ -459,6 +459,7 @@ class DaemonLoopConfig {
             auctionRepository = auctionRepository,
             auctionBidRepository = auctionBidRepository,
             boardPostRepository = boardPostRepository,
+            v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
             votePollRepository = votePollRepository,
             diplomacyLetterRepository = diplomacyLetterRepository,
             contactReader = contactReader,
