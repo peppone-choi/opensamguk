@@ -173,7 +173,7 @@ class V2ProcessCityIncomeAction(val resource: String) : EventAction {
         // 수입이 통째로 사라진 월드가 그린으로 보인다.
         val vc = ctx as? V2CityIncomeContext
             ?: error("V2ProcessCityIncomeAction requires a V2CityIncomeContext (v2 city ledger unavailable)")
-        vc.applyV2CityIncome(v2ProcessCityIncome(resource, vc.v2CityIncomeNations(), vc.pipeline))
+        vc.applyV2CityIncome(v2ProcessCityIncome(resource, vc.v2CityIncomeNations(resource), vc.pipeline))
     }
 
     companion object {
@@ -189,6 +189,7 @@ class V2ProcessCityIncomeAction(val resource: String) : EventAction {
 /** [V2ProcessCityIncomeAction]이 요구하는 디스패치 컨텍스트. 데몬이 공급한다. */
 interface V2CityIncomeContext : EventActionContext {
     val pipeline: GeneralActionPipeline
-    fun v2CityIncomeNations(): List<V2CityIncomeNation>
+    /** [resource]는 "gold"|"rice" — [V2CityIncomeNation.ledger]가 어느 원장 칸을 담을지 결정한다. */
+    fun v2CityIncomeNations(resource: String): List<V2CityIncomeNation>
     fun applyV2CityIncome(result: V2CityIncomeResult)
 }

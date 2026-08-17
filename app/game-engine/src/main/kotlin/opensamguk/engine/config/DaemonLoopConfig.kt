@@ -69,6 +69,7 @@ import java.time.Instant
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.transaction.PlatformTransactionManager
@@ -209,6 +210,9 @@ class DaemonLoopConfig {
         commandInboxRepository: CommandInboxRepository,
         commandOutboxRelay: CommandOutboxRelay,
         daemonPauseGate: DaemonPauseGate,
+        // OPENSAM-151 — v2 도시 원장. V2SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
+        // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
+        v2CityLedgerProvider: ObjectProvider<opensamguk.engine.v2.V2CityLedgerStore>,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 
@@ -274,6 +278,7 @@ class DaemonLoopConfig {
             inheritanceRepository = inheritanceRepository,
             lockGame = durableGameLock::tryLock,
             unlockGame = durableGameLock::unlock,
+            v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
         )
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled

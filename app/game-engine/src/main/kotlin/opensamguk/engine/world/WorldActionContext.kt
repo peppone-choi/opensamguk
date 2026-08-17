@@ -15,6 +15,11 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation as EngineNation
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.v2.V2CityIncomeContext
+import opensamguk.engine.v2.V2CityIncomeNation
+import opensamguk.engine.v2.V2CityIncomeResult
+import opensamguk.engine.v2.V2CityLedgerEntry
+import opensamguk.engine.v2.V2CityLedgerStore
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnDiplomacy
@@ -142,8 +147,12 @@ class WorldActionContext(
     private val ambientPhpRandom: PhpMt19937 = PhpMt19937.ambient(),
     private val lockGame: () -> Boolean = { false },
     private val unlockGame: () -> Unit = {},
+    // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼진 프로덕션에서는 null이고, 그 상태에서
+    // V2ProcessCityIncome leaf가 돌면 fail-closed로 죽는다(무음 no-op이면 수입이 통째로 사라진다).
+    private val v2CityLedger: V2CityLedgerStore? = null,
 ) : EventActionContext,
     ProcessIncomeContext,
+    V2CityIncomeContext,
     ProcessWarIncomeContext,
     RandomizeCityTradeRateContext,
     ProcessSemiAnnualContext,
@@ -363,6 +372,55 @@ class WorldActionContext(
             val postEngine = if (resource == "gold") pre.copy(gold = nu.newResource) else pre.copy(rice = nu.newResource)
             recorder.diffNation(preLogic, postLogic)
             world.updateNation(postEngine)
+        }
+        for ((nationId, value) in result.prevIncome) {
+            recorder.recordKv("nation_env", nationId.toString(), "prev_income_$resource", value)
+        }
+        for (pg in result.generalPayouts) {
+            val pre = world.getGeneralById(pg.generalId) ?: continue
+            val preLogic = PerTurnOverlay.toLogicGeneral(pre)
+            val postLogic = if (resource == "gold") preLogic.copy(gold = preLogic.gold + pg.amount) else preLogic.copy(rice = preLogic.rice + pg.amount)
+            val postEngine = if (resource == "gold") pre.copy(gold = pre.gold + pg.amount) else pre.copy(rice = pre.rice + pg.amount)
+            recorder.diffGeneral(preLogic, postLogic)
+            world.updateGeneral(postEngine)
+            for (line in pg.logLines) {
+                world.pushLog(logDraft("general", "history", line, generalId = pre.id, nationId = pre.nationId))
+            }
+        }
+        world.pushLog(logDraft("global", "history", result.globalHistory))
+    }
+
+    // ── V2CityIncomeContext (OPENSAM-151) ──────────────────────────────────────────────────────
+
+    private fun requireV2Ledger(): V2CityLedgerStore = v2CityLedger
+        ?: error("v2 도시 원장 스토어가 없다 — v2 샌드박스 게이트 밖에서 V2ProcessCityIncome 이 디스패치됐다")
+
+    override fun v2CityIncomeNations(resource: String): List<V2CityIncomeNation> {
+        val ledger = requireV2Ledger().entries(world.worldId)
+        // 국가/도시/장수 스냅샷은 v1 [incomeNations]를 **그대로** 재사용한다(세율 rate_tmp, npcState!=5 제외,
+        // officerCntByCity 집계까지 동일해야 하므로 두 벌로 갈라 두지 않는다).
+        return incomeNations().map { n ->
+            V2CityIncomeNation(
+                nation = n,
+                generalCityIds = n.generals.mapNotNull { g -> world.getGeneralById(g.id)?.let { g.id to it.cityId } }.toMap(),
+                ledger = n.cities.associate { c ->
+                    val e = ledger[c.id] ?: V2CityLedgerEntry.EMPTY
+                    c.id to (if (resource == "gold") e.gold else e.rice)
+                },
+            )
+        }
+    }
+
+    override fun applyV2CityIncome(result: V2CityIncomeResult) {
+        val resource = result.resource
+        val store = requireV2Ledger()
+        // v1과 달리 nation.gold/rice 는 건드리지 않는다 — v2에서 수입은 도시 원장에만 들어간다.
+        for (d in result.ledgerDeltas) {
+            if (resource == "gold") {
+                store.adjust(world.worldId, recorder, d.cityId, goldDelta = d.delta)
+            } else {
+                store.adjust(world.worldId, recorder, d.cityId, riceDelta = d.delta)
+            }
         }
         for ((nationId, value) in result.prevIncome) {
             recorder.recordKv("nation_env", nationId.toString(), "prev_income_$resource", value)
