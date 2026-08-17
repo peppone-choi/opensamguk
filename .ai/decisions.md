@@ -427,6 +427,18 @@
 
 ---
 
+## ADR-LITE-036 product-spec 개정 권한 규칙을 v2 백로그 README에 둔다 (H6)
+
+- Date: 2026-08-17
+- Status: proposed
+- Decision (pending human approval): product-spec(정본) 개정 절차·권한을 **v2 백로그 `README.md`의 새 절 "정본 개정 규칙"**으로 고정한다. 네 조항 — (1) 값·키·불변식·산출물이 달라지면 개정 시점이다, (2) 본문 수정은 **사람 승인** 필수이며 ADR-LITE 기록이 의무이고 수정 커밋은 그 번호를 인용한다, (3) 새 스펙이 product-spec 절을 대체하면 **절 번호를 명시 열거**해야 하고 열거되지 않은 절은 살아 있는 것으로 간주한다("언급하지 않음"은 유효한 상태가 아니다), (4) 후속 구현 계획의 Spec-to-Task 표는 자기가 구현·대체하는 product-spec 항목 행을 포함해야 한다.
+- Context: 규칙 부재가 이번 Q1/Q3 충돌의 구조적 원인이다. ADR-LITE-025는 supersede 대상을 열거하면서 product-spec §6·§10을 넣지도 빼지도 않았고, 동기화 커밋 `3f4d2f2a`는 5개 파일을 고치면서 product-spec을 건드리지 않았으며, 07-30 계획의 Spec-to-Task 표는 product-spec을 0회 참조한다(연구문서 §1 E1/E2·§3 (b) 반대 3·R8·H6). 규칙을 정본 판정 절 바로 뒤에 둔 것은 "무엇이 이기는가"와 "그것을 어떻게 고치는가"가 붙어 있어야 읽히기 때문이다.
+- Alternatives: 별도 규칙 문서 신설(기각 — 정본 판정 규칙과 떨어지면 읽히지 않고, 규칙 문서 자체의 정본성이 또 문제가 된다), CLAUDE.md에 편입(기각 — CLAUDE.md는 저장소 전역 규율이고 이 규칙은 v2 스펙 계열에 한정된다), 규칙 없이 사례별 판단(기각 — 그것이 현 상태이며 사고를 만들었다).
+- Consequences: 앞으로 product-spec 절과 충돌하는 스펙·계획은 **개정 또는 비개정을 한 줄로 명시**해야 하고, traceability 표에 product-spec 행이 없는 계획은 리뷰에서 막힌다 — 계획 문서 작성 비용이 조금 늘어난다. 소급 적용은 하지 않는다(기존 문서를 일괄 재감사하지 않는다). **product-spec 본문은 이 결정으로 한 글자도 바뀌지 않는다.** 이 규칙이 서면서 H2(OPENSAM-178, `phases[]` 수전 축)가 product-spec §6을 실제로 고치려면 사람 승인 + ADR-LITE 경로를 밟게 된다.
+- Approved by: NONE — human approval required. 이 ADR은 product-spec 개정 자체를 승인하지 않으며, 규칙의 발효 역시 사람 비준을 전제로 한다.
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 
