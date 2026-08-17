@@ -79,6 +79,12 @@ class CommandReserveServiceIT {
         assertEquals("""{"amount": 100}""", reserved.argJson)
         assertEquals(result.requestId, reserved.requestId)
         assertEquals(1, inboxCount(result.requestId))
+        // OPENSAM-197 — 결과 조회 소유권의 근거 행이 실제로 읽힌다. 일반 명령은 제출 계정을 따로
+        // 남기지 않으므로(=NULL) 소유권은 general_id로 판정된다.
+        assertEquals(
+            CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = null),
+            CommandInboxRepository(jdbc).findRequestOwner(WorldId(1), result.requestId),
+        )
         val redisWakePublishedAt = assertNotNull(readRedisWakePublishedAt(result.requestId))
         assertEquals(Instant.parse("0200-01-01T00:00:00Z"), redisWakePublishedAt.toInstant())
 
@@ -144,6 +150,9 @@ class CommandReserveServiceIT {
                 turn_idx integer,
                 action_code text,
                 payload jsonb NOT NULL,
+                -- OPENSAM-197 — V41. 결과 조회 소유권 검사의 근거(제출 계정). 이 하드 DDL은 Flyway
+                -- 스키마를 손으로 옮긴 것이라, 마이그레이션이 늘면 여기도 함께 늘려야 한다.
+                owner_user_id integer,
                 redis_wake_published_at timestamptz,
                 created_at timestamptz NOT NULL DEFAULT now(),
                 updated_at timestamptz NOT NULL DEFAULT now(),

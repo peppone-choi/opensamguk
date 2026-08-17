@@ -17,6 +17,7 @@ import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandWireMapper
 import opensamguk.gameapi.sanitize.HtmlSanitizer
+import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -61,6 +62,8 @@ class CommandController(
     private val queue: CommandQueueService,
     private val generals: GeneralReadRepository,
     private val commandResults: CommandResultRepository,
+    /** OPENSAM-197 — 결과 조회 소유권 검사의 근거(인테이크가 202 전에 기록한 제출자). */
+    private val commandInbox: CommandInboxRepository,
     /** W0-4 인테이크 결과 회신 — 엔진이 SET한 [commandResultKey] string 키를 읽는 폴링 read seam. */
     private val redis: StringRedisTemplate,
     /** 엔진 발행 result JSON을 응답 트리로 그대로 옮기는 변환기(타입별 부가 필드 보존). */
@@ -171,6 +174,9 @@ class CommandController(
 
     // ── W0-4 인테이크 결과 회신: GET /api/command/result/{requestId} ───────────────────────────────
     //
+    // **OPENSAM-197 — 자기 결과만 읽는다.** 인테이크 원장(command_inbox)이 202 전에 기록한 제출자와
+    // 대조해 남의 requestId로는 아무것도 못 읽게 한다. 확인 불가는 전부 PENDING으로 접는다([ownsRequest]).
+    //
     // 응답 규약 (항상 200 — 폴링 채널이므로 404를 쓰지 않는다):
     //   - 키 부재(아직 미처리 or TTL 만료)와 reservation admission → `{status:"PENDING", requestId}`
     //     (admission is additionally marked `phase:"reservationAccepted"`) — FE는 폴링을 계속한다.
@@ -207,8 +213,32 @@ class CommandController(
             result.type != "executionApplied" &&
             result.type != "executionRejected"
 
+    /**
+     * OPENSAM-197 — 이 결과가 호출자의 것인가.
+     *
+     * 인테이크 원장이 202 **전에** 기록한 제출자와 대조한다. 근거가 둘인 이유: 보통은 제출 장수가
+     * 곧 호출자의 장수지만, 장수선택(selectPoolPick/selectPoolUpdate)은 **아직 소유하지 않은** 장수를
+     * 대상으로 내므로 그 경우엔 제출 계정만이 유일한 증거다.
+     *
+     * 확인할 수 없으면(비인증 호출, 원장 행 없음, 소유자 미기록 = 이 티켓 이전 행) **거절**한다.
+     * 거절은 404가 아니라 [pending]과 **같은 응답**이다 — 다르게 답하면 남의 requestId를 넣어 보며
+     * 존재 여부를 떠볼 수 있고, 그 자체가 이 티켓이 막으려는 정보다.
+     */
+    private fun ownsRequest(userId: Long?, requestId: String): Boolean {
+        if (userId == null || userId <= 0) return false
+        val owner = commandInbox.findRequestOwner(worldId, requestId) ?: return false
+        val ownerUserId = owner.ownerUserId
+        if (ownerUserId != null && ownerUserId.toLong() == userId) return true
+        val callerGeneralId = resolver.resolveGeneralId(userId) ?: return false
+        return owner.generalId != null && owner.generalId == callerGeneralId
+    }
+
     @GetMapping("/result/{requestId}")
-    fun commandResult(@PathVariable requestId: String): ResponseEntity<Any> {
+    fun commandResult(
+        @AuthenticationPrincipal userId: Long?,
+        @PathVariable requestId: String,
+    ): ResponseEntity<Any> {
+        if (!ownsRequest(userId, requestId)) return pending(requestId)
         val redisResult = decodeCommandResult(redis.opsForValue().get(commandResultKey(profile, worldId, requestId)))
         val durableResult = if (redisResult == null || isPendingReservation(redisResult.result)) {
             decodeCommandResult(commandResults.findResultPayload(worldId, requestId))

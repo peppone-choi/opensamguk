@@ -29,6 +29,11 @@ open class CommandInboxRepository(
         val turnIdx: Int?,
         val actionCode: String?,
         val payloadJson: String,
+        /**
+         * OPENSAM-197 — 제출 계정(JWT subject). 결과 조회 소유권 검사의 두 근거 중 하나다.
+         * 장수선택은 아직 소유하지 않은 장수를 대상으로 내므로 [generalId]만으로는 제출자를 못 가린다.
+         */
+        val ownerUserId: Int? = null,
     )
 
     sealed class InsertResult {
@@ -60,7 +65,8 @@ open class CommandInboxRepository(
                 general_id,
                 turn_idx,
                 action_code,
-                payload
+                payload,
+                owner_user_id
             ) VALUES (
                 :world_id,
                 :request_id,
@@ -71,7 +77,8 @@ open class CommandInboxRepository(
                 :general_id,
                 :turn_idx,
                 :action_code,
-                :payload
+                :payload,
+                :owner_user_id
             )
             ON CONFLICT (world_id, request_id) DO NOTHING
             """.trimIndent(),
@@ -84,7 +91,8 @@ open class CommandInboxRepository(
                 .addValue("general_id", command.generalId)
                 .addValue("turn_idx", command.turnIdx)
                 .addValue("action_code", command.actionCode)
-                .addValue("payload", jsonb(command.payloadJson)),
+                .addValue("payload", jsonb(command.payloadJson))
+                .addValue("owner_user_id", command.ownerUserId),
         )
         if (updated == 1) return InsertResult.Inserted
         val existing = jdbc.query(
@@ -104,6 +112,31 @@ open class CommandInboxRepository(
             InsertResult.Conflict(existing)
         }
     }
+
+    /** OPENSAM-197 — 결과 조회 소유권 검사의 근거. 인테이크가 202 **전에** 기록한 값이다. */
+    data class RequestOwner(val generalId: Int?, val ownerUserId: Int?)
+
+    /**
+     * 인테이크 원장이 기록한 제출자. 행이 없으면 null — 호출자는 그것을 "확인 불가 = 거절"로 다뤄야
+     * 한다. 여기서 결과 payload를 함께 읽지 않는 이유는, 소유권 판단이 결과 존재 여부와 독립이어야
+     * 남의 requestId로 존재 여부를 떠보는 것조차 막히기 때문이다.
+     */
+    open fun findRequestOwner(worldId: WorldId, requestId: String): RequestOwner? =
+        jdbc.query(
+            """
+            SELECT general_id, owner_user_id
+              FROM command_inbox
+             WHERE world_id = :world_id AND request_id = :request_id
+            """.trimIndent(),
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("request_id", requestId),
+        ) { rs, _ ->
+            RequestOwner(
+                generalId = rs.getObject("general_id") as Int?,
+                ownerUserId = rs.getObject("owner_user_id") as Int?,
+            )
+        }.firstOrNull()
 
     open fun markRedisWakePublished(worldId: WorldId, requestId: String, publishedAt: Instant) {
         val updated = jdbc.update(

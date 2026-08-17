@@ -16,14 +16,23 @@ import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.core.ValueOperations
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -50,6 +59,7 @@ class CommandResultLookupTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val commandResults = mock(CommandResultRepository::class.java)
     private val redis = mock(StringRedisTemplate::class.java)
+    private val commandInbox = mock(CommandInboxRepository::class.java)
 
     @Suppress("UNCHECKED_CAST")
     private val valueOps = mock(ValueOperations::class.java) as ValueOperations<String, String>
@@ -59,10 +69,11 @@ class CommandResultLookupTest {
     private fun mockMvc(): MockMvc = MockMvcBuilders
         .standaloneSetup(
             CommandController(
-                precheck, reserve, resolver, queue, generals, commandResults, redis,
+                precheck, reserve, resolver, queue, generals, commandResults, commandInbox, redis,
                 ObjectMapper(), profile, GameApiProcessWorld(1),
             ),
         )
+        .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
         .build()
 
     /** 엔진 발행과 동일한 인코딩으로 저장 페이로드를 만든다. */
@@ -90,12 +101,37 @@ class CommandResultLookupTest {
         `when`(commandResults.findResultPayload(WorldId(1), requestId)).thenReturn(payload)
     }
 
+    /** 인증 주체를 심는다 — 컨트롤러의 `@AuthenticationPrincipal userId`가 이 값을 받는다. */
+    private fun principal(userId: Long): RequestPostProcessor = RequestPostProcessor { req ->
+        SecurityContextHolder.getContext().authentication =
+            UsernamePasswordAuthenticationToken(userId, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
+        req
+    }
+
+    /**
+     * OPENSAM-197 — 결과 조회는 제출자만 읽는다. 기존 계약 테스트는 모두 "제출한 본인이 읽는" 경우이므로
+     * 인테이크가 남긴 소유자([OWNER_USER_ID])를 함께 세워 두고 그 주체로 읽는다.
+     */
+    private fun readOwnResult(requestId: String): ResultActions {
+        `when`(commandInbox.findRequestOwner(WorldId(1), requestId))
+            .thenReturn(CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = OWNER_USER_ID.toInt()))
+        return mockMvc().perform(
+            get("/api/command/result/{requestId}", requestId).with(principal(OWNER_USER_ID)),
+        )
+    }
+
+    @BeforeEach
+    fun clearAuthBefore() = SecurityContextHolder.clearContext()
+
+    @AfterEach
+    fun clearAuthAfter() = SecurityContextHolder.clearContext()
+
     @Test
     fun `키 부재면 PENDING으로 응답한다`() {
         stubKey("req-x", null)
         stubDurable("req-x", null)
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-x"))
+        readOwnResult("req-x")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("PENDING"))
             .andExpect(jsonPath("$.requestId").value("req-x"))
@@ -113,7 +149,7 @@ class CommandResultLookupTest {
             ),
         )
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-db"))
+        readOwnResult("req-db")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.requestId").value("req-db"))
@@ -133,7 +169,7 @@ class CommandResultLookupTest {
         stubKey("req-ryw", payload)
         stubDurable("req-ryw", null)
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-ryw"))
+        readOwnResult("req-ryw")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.committedWorldVersion").value(34))
@@ -155,7 +191,7 @@ class CommandResultLookupTest {
         stubKey("req-admission", accepted)
         stubDurable("req-admission", accepted)
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-admission"))
+        readOwnResult("req-admission")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("PENDING"))
             .andExpect(jsonPath("$.phase").value("reservationAccepted"))
@@ -177,7 +213,7 @@ class CommandResultLookupTest {
         stubKey("req-queue", queueMutation)
         stubDurable("req-queue", queueMutation)
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-queue"))
+        readOwnResult("req-queue")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.type").value("queueMutation"))
@@ -216,7 +252,7 @@ class CommandResultLookupTest {
             ),
         )
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-executed"))
+        readOwnResult("req-executed")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.type").value("executionApplied"))
@@ -233,7 +269,7 @@ class CommandResultLookupTest {
             ),
         )
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-a"))
+        readOwnResult("req-a")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.requestId").value("req-a"))
@@ -253,7 +289,7 @@ class CommandResultLookupTest {
             ),
         )
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-b"))
+        readOwnResult("req-b")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.ok").value(false))
@@ -266,7 +302,7 @@ class CommandResultLookupTest {
         stubKey("req-broken", "not-json{{{")
         stubDurable("req-broken", null)
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-broken"))
+        readOwnResult("req-broken")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("PENDING"))
             .andExpect(jsonPath("$.requestId").value("req-broken"))
@@ -283,10 +319,100 @@ class CommandResultLookupTest {
             ),
         )
 
-        mockMvc().perform(get("/api/command/result/{requestId}", "req-durable-broken-redis"))
+        readOwnResult("req-durable-broken-redis")
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.ok").value(true))
             .andExpect(jsonPath("$.type").value("tournamentEnroll"))
+    }
+
+    // ── OPENSAM-197 소유권 ──────────────────────────────────────────────────────
+    //
+    // 이 엔드포인트는 경로 값만으로 결과를 돌려줬다. requestId를 아는 사람이 곧 남의 명령 성공 여부·
+    // deny 사유·payload를 읽는 사람이었다. 거절은 **미처리와 똑같은 PENDING 본문**으로 답한다 —
+    // 엔드포인트 계약이 "항상 200 폴링"이라 404를 쓸 수 없고, 응답이 같아야 존재 여부도 새지 않는다.
+
+    /** 저장된 결과가 실제로 RESOLVED인데도 남에게는 PENDING으로 보여야 한다 — 응답 구분 불가. */
+    private fun stubResolvedPayload(requestId: String) {
+        stubKey(
+            requestId,
+            storedPayload(
+                requestId,
+                NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+            ),
+        )
+    }
+
+    @Test
+    fun `남의 requestId는 결과가 준비돼 있어도 PENDING과 구분되지 않는다`() {
+        stubResolvedPayload("req-other")
+        `when`(commandInbox.findRequestOwner(WorldId(1), "req-other"))
+            .thenReturn(CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = OWNER_USER_ID.toInt()))
+        `when`(resolver.resolveGeneralId(99L)).thenReturn(42)
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-other").with(principal(99L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.requestId").value("req-other"))
+            .andExpect(jsonPath("$.ok").doesNotExist())
+            .andExpect(jsonPath("$.result").doesNotExist())
+    }
+
+    @Test
+    fun `인증이 없으면 결과를 읽지 못한다`() {
+        stubResolvedPayload("req-anon")
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-anon"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.result").doesNotExist())
+    }
+
+    /**
+     * 장수선택(selectPoolPick/Update)은 **아직 소유하지 않은** 장수를 대상으로 제출한다. general_id만으로
+     * 소유권을 판정하면 제출자 본인이 자기 결과를 못 읽는다 — 그래서 owner_user_id를 따로 남긴다.
+     */
+    @Test
+    fun `아직 소유하지 않은 장수에 낸 명령도 제출 계정이면 읽는다`() {
+        stubResolvedPayload("req-pool")
+        `when`(commandInbox.findRequestOwner(WorldId(1), "req-pool"))
+            .thenReturn(CommandInboxRepository.RequestOwner(generalId = 777, ownerUserId = OWNER_USER_ID.toInt()))
+        `when`(resolver.resolveGeneralId(OWNER_USER_ID)).thenReturn(null)
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-pool").with(principal(OWNER_USER_ID)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.ok").value(true))
+    }
+
+    /**
+     * 마이그레이션 이전 행은 owner_user_id가 NULL이다. 그 행은 general_id로만 판정하며, 일치하지 않으면
+     * 거절한다(폴링 창은 제출 직후 6초라 실사용 영향이 없다).
+     */
+    @Test
+    fun `마이그레이션 이전 행은 자기 장수의 명령일 때만 읽는다`() {
+        stubResolvedPayload("req-legacy")
+        `when`(commandInbox.findRequestOwner(WorldId(1), "req-legacy"))
+            .thenReturn(CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = null))
+        `when`(resolver.resolveGeneralId(OWNER_USER_ID)).thenReturn(10)
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-legacy").with(principal(OWNER_USER_ID)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+    }
+
+    @Test
+    fun `인테이크 기록이 없는 requestId는 읽지 못한다`() {
+        stubResolvedPayload("req-norow")
+        `when`(commandInbox.findRequestOwner(WorldId(1), "req-norow")).thenReturn(null)
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-norow").with(principal(OWNER_USER_ID)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("PENDING"))
+    }
+
+    private companion object {
+        /** 인테이크가 남긴 제출 계정(JWT subject). */
+        const val OWNER_USER_ID = 7L
     }
 }

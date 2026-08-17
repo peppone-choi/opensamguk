@@ -136,6 +136,9 @@ class CommandReserveService(
                         turnIdx = turnIdx,
                         actionCode = actionCode,
                         payloadJson = payload,
+                        // OPENSAM-197 — 결과 조회 소유권 검사의 근거. 장수선택처럼 아직 소유하지 않은
+                        // 장수로 내는 명령은 이 값이 유일한 제출자 증거다.
+                        ownerUserId = ownerUserId,
                     ),
                 ).throwIfConflict()
             }
@@ -163,6 +166,7 @@ class CommandReserveService(
                     turnIdx = turnIdx,
                     actionCode = actionCode,
                     payloadJson = payload,
+                    ownerUserId = ownerUserId,
                 ),
             )
             result.throwIfConflict()

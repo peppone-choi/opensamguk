@@ -9,6 +9,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
+import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -30,6 +31,7 @@ class CommandControllerHtmlSanitizerTest {
         queue = mock(CommandQueueService::class.java),
         generals = mock(GeneralReadRepository::class.java),
         commandResults = mock(CommandResultRepository::class.java),
+        commandInbox = mock(CommandInboxRepository::class.java),
         redis = mock(StringRedisTemplate::class.java),
         objectMapper = objectMapper,
         profile = "che:scenario_2",
