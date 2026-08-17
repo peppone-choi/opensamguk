@@ -285,15 +285,15 @@ class ConquerCityCollapseTest {
         val expected = listOf(
             ConquerLog.nationHistory(10, "<D><b>촉</b></>을 정복"),
             ConquerLog.globalHistory("<R><b>【멸망】</b></><D><b>촉</b></>은 <R>멸망</>했습니다."),
-            ConquerLog.generalAction(3, 0, destroyLog),
+            ConquerLog.generalAction(3, 0, destroyLog, ConquerLogFormat.PLAIN),
             ConquerLog.generalHistory(3, 0, destroyHistory),
-            ConquerLog.generalAction(8, 0, destroyLog),
+            ConquerLog.generalAction(8, 0, destroyLog, ConquerLogFormat.PLAIN),
             ConquerLog.generalHistory(8, 0, destroyHistory),
-            ConquerLog.generalAction(9, 0, destroyLog),
+            ConquerLog.generalAction(9, 0, destroyLog, ConquerLogFormat.PLAIN),
             ConquerLog.generalHistory(9, 0, destroyHistory),
-            ConquerLog.generalAction(3, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다."),
-            ConquerLog.generalAction(8, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다."),
-            ConquerLog.generalAction(9, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다."),
+            ConquerLog.generalAction(3, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다.", ConquerLogFormat.PLAIN),
+            ConquerLog.generalAction(8, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다.", ConquerLogFormat.PLAIN),
+            ConquerLog.generalAction(9, 0, "도주하며 금<C>300</> 쌀<C>600</>을 분실했습니다.", ConquerLogFormat.PLAIN),
         )
         assertEquals(expected, res.conquerLogs.drop(6).take(expected.size))
     }
@@ -408,7 +408,10 @@ class ConquerCityCollapseTest {
         )
         assertEquals(
             goldenOrder.flatMap {
-                listOf(ConquerLog.generalAction(it, 0, destroyLog), ConquerLog.generalHistory(it, 0, destroyHistoryLog))
+                listOf(
+                    ConquerLog.generalAction(it, 0, destroyLog, ConquerLogFormat.PLAIN),
+                    ConquerLog.generalHistory(it, 0, destroyHistoryLog),
+                )
             },
             res.conquerLogs.filter { it.text == destroyLog || it.text == destroyHistoryLog },
             "장수별 멸망 action/history 로그가 골든 문자열·순서와 일치해야 한다",
@@ -483,6 +486,57 @@ class ConquerCityCollapseTest {
 
         assertTrue(createdMessages("conquercity-collapse-full-01.json").jsonObject.isNotEmpty())
         assertTrue(createdMessages("conquercity-collapse-only-random-01.json").jsonArray.isEmpty())
+    }
+
+    /**
+     * 긴급천도 로그의 **ActionLogger 포맷**을 `conquercity-capital-01.json` 골든에서 직접 읽어 대조한다
+     * (OPENSAM-187). 골든 텍스트의 접두사가 곧 포맷이다 — `<C>●</>` 뒤에 `Y년 M월:`이면 YEAR_MONTH,
+     * `M월:`이면 MONTH, 아무것도 없으면 PLAIN. 기대값을 코드에 박지 않고 캡처에서 뽑는다.
+     *
+     * 이 경로가 사각지대였던 이유: 다른 로그 대조 테스트는 전부 [stripLogPrefix]로 접두사를 **떼고** 비교해서,
+     * 포맷이 통째로 틀려도 통과했다. 그리고 `process_war.php:726`(PLAIN 명시)과 `:728`(인자 없음 ⇒ MONTH)은
+     * 붙어 있는 두 줄인데 포맷이 다르다 — 헬퍼 하나로 뭉뚱그리면 정확히 여기서 갈라진다.
+     */
+    @Test
+    fun `capital-move log formats match the PHP capital golden prefixes`() {
+        fun goldenFormatOf(marker: String): ConquerLogFormat {
+            val text = loadGolden("conquercity-capital-01.json")["conquest_records"]!!.jsonArray
+                .map { it.jsonObject["text"]!!.jsonPrimitive.content }
+                .first { it.contains(marker) }
+            val body = text.removePrefix("<C>●</>")
+            return when {
+                Regex("^\\d+년 \\d+월:").containsMatchIn(body) -> ConquerLogFormat.YEAR_MONTH
+                Regex("^\\d+월:").containsMatchIn(body) -> ConquerLogFormat.MONTH
+                else -> ConquerLogFormat.PLAIN
+            }
+        }
+
+        // 수도(200)를 잃고 다른 도시가 남은 국가 ⇒ 긴급천도 분기. 수뇌(officer_level>=5) 1명 포함.
+        val chief = gen(id = 7, officerLevel = 5)
+        val plain = gen(id = 8, officerLevel = 1)
+        val res = ConquerCity.resolve(
+            ConquerCityInput(
+                admin = ConquerAdmin(hiddenSeed = hidden, year = 200, month = 6, joinMode = "normal"),
+                attacker = attacker(),
+                // 골든과 같은 도시 쌍: 업(1) 함락 → findNextCapital 이 복양(18)을 고른다.
+                defenderCity = city(id = 1, nationId = 20),
+                defenderNation = Nation(id = 20, level = 5, capitalCityId = 1, gold = 100, rice = 100),
+                defenderCityGenerals = emptyList(),
+                defenderNationCityCount = 3, // ⇒ SURVIVE + capital-move
+                defenderNationGenerals = listOf(chief, plain),
+                allCitiesForBfs = listOf(city(id = 18, nationId = 20), city(id = 1, nationId = 20)),
+            ),
+        )
+
+        // scope 로 좁힌다 — 같은 "수도가 함락되어" 문구가 global history(【긴급천도】)에도 들어 있다.
+        val move = res.conquerLogs.filter { it.scope == ConquerLogScope.GENERAL && "긴급천도" in it }
+        val gather = res.conquerLogs.filter { it.scope == ConquerLogScope.GENERAL && "수뇌는" in it }
+        assertEquals(2, move.size, "긴급천도 로그는 국가 장수 전원에게 발행된다")
+        assertEquals(1, gather.size, "수뇌 집합 로그는 officer_level>=5 에게만 발행된다")
+        assertTrue(move.all { it.format == goldenFormatOf("긴급천도") })
+        assertTrue(gather.all { it.format == goldenFormatOf("수뇌는") })
+        // 두 줄이 붙어 있으면서 포맷이 다르다는 것 자체가 회귀 방지 계약이다.
+        assertFalse(move.first().format == gather.first().format)
     }
 
     private fun valueFitInt(v: Int): Int = maxOf(0, v)

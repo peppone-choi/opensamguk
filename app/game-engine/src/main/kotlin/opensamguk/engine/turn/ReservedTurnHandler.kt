@@ -50,6 +50,7 @@ import opensamguk.logic.util.valueFit
 import opensamguk.logic.war.ConquerAdmin
 import opensamguk.logic.war.ConquerCity
 import opensamguk.logic.war.ConquerCityInput
+import opensamguk.logic.war.ConquerLogFormat
 import opensamguk.logic.war.ProcessWarResult
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.world.GeneralBuilder
@@ -770,11 +771,16 @@ class ReservedTurnHandler(
             )
         }
         for (line in conquer.conquerLogs) {
+            val prefixedText = when (line.format) {
+                ConquerLogFormat.PLAIN -> "<C>●</>${line.text}"
+                ConquerLogFormat.YEAR_MONTH -> "<C>●</>${year}년 ${month}월:${line.text}"
+                ConquerLogFormat.MONTH -> "<C>●</>${month}월:${line.text}"
+            }
             world.pushLog(
                 LogEntryDraft(
                     scope = line.scope.wireValue,
                     category = line.category.wireValue,
-                    text = line.text,
+                    text = prefixedText,
                     generalId = line.generalId,
                     nationId = line.nationId,
                 ),
