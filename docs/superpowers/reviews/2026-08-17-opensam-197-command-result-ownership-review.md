@@ -87,7 +87,28 @@ OPENSAM-45에서는 신호에서 식별자를 **삭제**해 유출 경로를 막
 - **fingerprint를 건드렸나?** 아니다. `intentFingerprint`의 입력은 그대로다(멱등/중복 제출 판정 불변).
 - **daemon-write 규칙?** 위반 없음 — game-api의 읽기 한 건(SELECT)과 인테이크 INSERT 열 추가뿐이다.
 
-## 5. 남긴 것
+## 5. CodeRabbit이 잡은 실제 결함 — `publishImmediate` 경로 (2차 커밋)
+
+첫 커밋은 `CommandReserveService.publishImmediate`를 놓쳤다. 이 경로는 `general_id`도 `owner_user_id`도
+남기지 않으므로, 새 소유권 검사 아래에서는 그 `requestId`가 **영원히 PENDING**이 된다. 즉 보안 수정이
+기능 회귀를 만들 뻔했다. 호출자를 모두 확인했다(테스트 제외 실코드):
+
+| 호출자 | 결과 폴링 | 조치 |
+| --- | --- | --- |
+| `SelectPoolController.refresh` | 예 | `ownerUserId = 주체` |
+| `NpcPolicyController.updateNpcPolicy` | 예 | `ownerUserId = 주체` |
+| `DiplomaticMessageController.accept/decline` | 예 | `ownerUserId = 주체` |
+| `PossessionController.claim` | 예(응답의 requestId) | `ownerUserId = 주체` — claim 대상 장수는 아직 남의 것이라 general_id 증인이 성립하지 않는다 |
+| `JoinController.join` | 예 | `ownerUserId = 주체` — 장수를 **생성**하는 명령이라 소유 행이 아직 없다 |
+| `ProfileIconSyncController.sync` | 아니오(M2M 토큰 경로, 사용자 주체 없음) | null 유지 |
+| `AdminWriteController` / `AdminGeneralModerationService` | 아니오(어드민 FE에 requestId 소비 없음 — `web/game/app/admin` grep 0건) | null 유지 |
+
+기본인자 대신 **오버로드**(`publishImmediate(command)` → `publishImmediate(command, null)`)로 넣었다.
+Kotlin 기본인자는 Mockito 스텁의 매처 개수를 어긋나게 해 무관한 테스트(Admin·ProfileIconSync 등)까지
+깨뜨린다 — 오버로드면 1-인자 스텁이 그대로 유효하다. 소유자를 넘기게 된 5개 호출자의 테스트는
+`eq(주체)`를 요구하도록 **조였다**(약화 아님). fingerprint 입력은 건드리지 않았다.
+
+## 6. 남긴 것
 
 - `permitAll` 자체는 그대로다. 이 티켓은 엔드포인트 내부의 소유권 검사만 닫는다 — 시큐리티 설정을
   같이 바꾸면 회귀 범위가 커지고, 검사가 있는 한 결과는 새지 않는다.

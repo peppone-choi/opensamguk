@@ -27,6 +27,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
@@ -197,7 +198,7 @@ class JoinControllerTest {
         `when`(generals.findById(10)).thenReturn(Optional.of(GeneralReadEntity(id = 10, npcState = 3, userId = null)))
         `when`(owners.deleteIfUnchanged(stale)).thenReturn(1)
         `when`(generals.existsByName("조조")).thenReturn(false)
-        `when`(reserve.publishImmediate(anyCommand())).thenReturn(ReserveResult("req-1", 0))
+        `when`(reserve.publishImmediate(anyCommand(), eq(7))).thenReturn(ReserveResult("req-1", 0))
 
         mockMvc().perform(
             post("/api/join")
@@ -235,7 +236,7 @@ class JoinControllerTest {
         seedWorld()
         `when`(generals.findByUserId("7")).thenReturn(null)
         `when`(generals.existsByName("조조")).thenReturn(false)
-        `when`(reserve.publishImmediate(anyCommand())).thenReturn(ReserveResult("req-1", 0))
+        `when`(reserve.publishImmediate(anyCommand(), eq(7))).thenReturn(ReserveResult("req-1", 0))
 
         mockMvc().perform(
             post("/api/join")
@@ -261,7 +262,7 @@ class JoinControllerTest {
             .andExpect(jsonPath("$.requestId").value("req-1"))
 
         val captor = ArgumentCaptor.forClass(TurnDaemonCommand::class.java)
-        verify(reserve).publishImmediate(captureCommand(captor))
+        verify(reserve).publishImmediate(captureCommand(captor), eq(7))
         val command = captor.value as TurnDaemonCommand.MakeGeneral
         assertEquals(60, command.politics)
         assertEquals(50, command.charm)
@@ -308,7 +309,7 @@ class JoinControllerTest {
         `when`(
             gameKv.findByTableAndNamespaceAndKey("inheritance", "inheritance_7", "previous"),
         ).thenReturn(GameKvEntity("inheritance", "inheritance_7", "previous", "[20000,null]"))
-        `when`(reserve.publishImmediate(anyCommand())).thenReturn(ReserveResult("req-inherit", 0))
+        `when`(reserve.publishImmediate(anyCommand(), eq(7))).thenReturn(ReserveResult("req-inherit", 0))
 
         mockMvc().perform(
             post("/api/join")
@@ -337,7 +338,7 @@ class JoinControllerTest {
         ).andExpect(status().isAccepted)
 
         val captor = ArgumentCaptor.forClass(TurnDaemonCommand::class.java)
-        verify(reserve).publishImmediate(captureCommand(captor))
+        verify(reserve).publishImmediate(captureCommand(captor), eq(7))
         val command = captor.value as TurnDaemonCommand.MakeGeneral
         assertEquals("che_귀병", command.inheritSpecial)
         assertEquals(12, command.inheritTurntimeZone)

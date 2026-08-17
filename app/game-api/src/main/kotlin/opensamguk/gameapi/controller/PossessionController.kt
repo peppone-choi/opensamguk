@@ -58,6 +58,9 @@ class PossessionController(
                     userId = userId,
                     userNick = userNick(userId, authorization),
                 ),
+                // OPENSAM-197 — result-read ownership witness (the claimed general is not yet the
+                // caller's, so general_id cannot serve as one).
+                ownerUserId = userId.toInt(),
             ).requestId
         }) {
             is GeneralPossessionService.ClaimResult.Claimed -> {

@@ -304,7 +304,9 @@ class JoinController(
             inheritCity = request.inheritCity,
             inheritBonusStat = inheritBonusStat,
         )
-        val result = reserve.publishImmediate(command)
+        // OPENSAM-197 — result-read ownership witness. Join creates the general, so there is no
+        // general_id to own the row yet.
+        val result = reserve.publishImmediate(command, ownerUserId = userId.toInt())
         return ResponseEntity.status(HttpStatus.ACCEPTED)
             .body(JoinResponse(status = "AVAILABLE", requestId = result.requestId))
     }
