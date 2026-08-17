@@ -15,6 +15,7 @@ import Shell from '../../../../components/Shell';
 import GameCard from '../../../../components/GameCard';
 import { api } from '../../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../../lib/commandSubmit';
+import CityLedgerPanel from '../../../../components/v2/CityLedgerPanel';
 import type { IntakeOutcome } from '../../../../lib/types';
 
 type Outcome = { kind: 'applied' | 'rejected' | 'pending'; message: string };
@@ -25,6 +26,8 @@ export default function V2GarrisonRecruitPage() {
     const [amount, setAmount] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [outcome, setOutcome] = useState<Outcome | null>(null);
+    // OPENSAM-155 (R6) — 보충 결과가 원장을 움직이므로 제출이 끝날 때마다 다시 읽는다.
+    const [ledgerRefresh, setLedgerRefresh] = useState(0);
 
     async function handleSubmit() {
         const gid = Number(generalId);
@@ -54,6 +57,7 @@ export default function V2GarrisonRecruitPage() {
             setOutcome({ kind: 'rejected', message: cause instanceof Error ? cause.message : '보충에 실패했습니다.' });
         } finally {
             setSubmitting(false);
+            setLedgerRefresh(n => n + 1);
         }
     }
 
@@ -62,6 +66,7 @@ export default function V2GarrisonRecruitPage() {
             <div className="page-content">
                 <h1>v2-lab · 도시병사 보충</h1>
                 <GameCard>
+                    <CityLedgerPanel cityId={Number(cityId)} refreshKey={ledgerRefresh} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', maxWidth: 320 }}>
                         <label>
                             장수 ID
