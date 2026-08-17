@@ -381,6 +381,18 @@
 
 ---
 
+## ADR-LITE-033 `BattleTopology`는 BATTLE-F2의 어댑터 SPI에 선치한다 (H7)
+
+- Date: 2026-08-17
+- Status: proposed
+- Decision (pending human approval): H7 세 선택지 중 **(1) BATTLE-F2(OPENSAM-158)의 `BattleRulesAdapter` SPI에 선치**를 채택한다. `BattleTopology`(위치·이동·충돌 계약)와 그 계약이 다루는 **부대 핸들 인터페이스**를 F2의 범위·수용 기준에 이름으로 명시하고, 야전/공성/수전 어댑터 에픽(OPENSAM-170/171/172)은 그 SPI를 **소비만** 한다. 동결 초기 구현값은 ADR-LITE-032가 유지한 `ContinuousTopology`다. OPENSAM-21(Spike B0)은 `BattleTopology`를 범위로 갖지 않는다 — 명명 티켓은 **OPENSAM-158 하나뿐**이다.
+- Context: ADR-LITE-032 Consequences가 남긴 잔여 리스크 — P-13b 불변식("사각형/육각형 grid와 연속 좌표 지형을 **같은** 위치·이동·충돌 계약으로", `docs/superpowers/specs/2026-07-12-opensamguk-v2-product-spec.md:423`)과 P-13e("삼국지 부곡도 **같은** 부대 인터페이스로", `:426`)를 07-30 계열 문서가 어디에서도 재진술하지 않는다. 판정 원본 `docs/superpowers/research/2026-08-16-v2-battle-canon-reconcile-p4-p13.md:211`은 `BattleTopology`를 7종 중 유일하게 **어느 티켓에도 없는 결함**으로 기록했고, 같은 문서 `:240`(R7)·`:280`(H7)이 마감선을 "어댑터 에픽 발행 전"으로 잡았다. F2는 아직 `할 일`이고 현재 범위가 `BattleTopology`를 언급하지 않으므로 (1)안이 여전히 가능하다 — F2가 착수되면 SPI 시그니처가 굳어 선치 창이 닫힌다.
+- Alternatives: **(2) 어댑터 3종 자율 + 사후 게이트: 기각.** 좌표·부대 모델을 세 에픽이 각자 만든 뒤 사후에 맞추는 것은 P-13b/P-13e를 "조용히 깨진 다음 발견"하는 순서이고, 이미 굳은 세 구현을 되돌리는 비용이 SPI 한 줄을 미리 못박는 비용보다 크다. **(3) OPENSAM-21에 흡수: 기각.** ADR-LITE-032가 7종 중 4종을 F2/F3 구현으로 판정해 B0의 계약 범위는 이미 축소됐고(연구문서 `:238` R5), 어댑터가 실제로 소비하는 지점은 F2의 SPI다 — 계약을 소비처와 다른 티켓에 두면 F2가 SPI를 먼저 동결해 B0 결정이 사후 추인이 된다.
+- Consequences: **범위 증가는 F2에 국한**된다 — F2 수용 기준에 "grid 지형과 연속 좌표 지형이 동일한 위치·이동·충돌 인터페이스를 통과하고, 부곡 부대가 동일 부대 인터페이스를 쓴다"를 **테스트로** 요구하는 항목이 추가되므로 F2 공수가 늘어난다. 그 테스트는 실제 규칙이 아니라 **두 개의 최소 지형 구현(grid 1 + 연속 1)이 같은 SPI를 통과함**만 고정한다(전투 규칙은 F2 비범위 유지). `FormationModel`(P-13e) 전체 모델은 여전히 어댑터 이연이며, 이 ADR이 F2로 끌어오는 것은 **부대 핸들 인터페이스**뿐이다. 미해결로 남는 인접 공백: H2(`phases[]` 축 대 어댑터 축, 수전 자리 없음)와 P-15d 미측정은 이 ADR이 닫지 않는다. v1 패러티(logic/war·PHP golden·RNG·로그)는 무관·무변경이며 이 ADR은 코드를 만들지 않는다.
+- Approved by: NONE — human approval required. 이 ADR은 product-spec 개정·구현 착수·merge·배포를 승인하지 않는다. 티켓 범위 편집(OPENSAM-158)은 되돌릴 수 있는 기록 행위로서 선반영하되, F2 착수 승인은 별건이다.
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 
