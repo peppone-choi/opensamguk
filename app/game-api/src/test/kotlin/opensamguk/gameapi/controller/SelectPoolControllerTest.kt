@@ -128,7 +128,8 @@ class SelectPoolControllerTest {
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
         val expected = TurnDaemonCommand.SelectPoolRefresh(ownerUserId = 77, requestedAt = now.toString())
-        `when`(reserve.publishImmediate(expected)).thenReturn(ReserveResult("refresh-1", 0))
+        // OPENSAM-197 — 제출 계정이 함께 기록돼야 본인이 결과를 읽는다.
+        `when`(reserve.publishImmediate(expected, 77)).thenReturn(ReserveResult("refresh-1", 0))
         SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
             77L,
             null,
@@ -143,7 +144,7 @@ class SelectPoolControllerTest {
                 .andExpect(jsonPath("$.status").value("AVAILABLE"))
                 .andExpect(jsonPath("$.requestId").value("refresh-1"))
 
-            verify(reserve).publishImmediate(expected)
+            verify(reserve).publishImmediate(expected, 77)
         } finally {
             SecurityContextHolder.clearContext()
         }

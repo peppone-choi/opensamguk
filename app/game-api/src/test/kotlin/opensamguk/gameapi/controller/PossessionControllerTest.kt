@@ -293,7 +293,13 @@ class PossessionControllerTest {
             ),
         ).thenReturn(activeToken(10))
         `when`(owners.existsByGeneralId(10L)).thenReturn(false)
-        `when`(reserve.publishImmediate(org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause()))
+        // OPENSAM-197 — 아직 소유하지 않은 장수를 claim하므로 제출 계정만이 결과 조회의 증인이다.
+        `when`(
+            reserve.publishImmediate(
+                org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause(),
+                org.mockito.ArgumentMatchers.eq(7),
+            ),
+        )
             .thenReturn(CommandReserveService.ReserveResult("req-claim-10", 0))
 
         mockMvc().perform(
@@ -335,7 +341,13 @@ class PossessionControllerTest {
             ),
         ).thenReturn(activeToken(10))
         `when`(owners.existsByGeneralId(10L)).thenReturn(false)
-        `when`(reserve.publishImmediate(org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause()))
+        // OPENSAM-197 — 아직 소유하지 않은 장수를 claim하므로 제출 계정만이 결과 조회의 증인이다.
+        `when`(
+            reserve.publishImmediate(
+                org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause(),
+                org.mockito.ArgumentMatchers.eq(7),
+            ),
+        )
             .thenReturn(CommandReserveService.ReserveResult("req-claim-10", 0))
 
         mockMvc().perform(
@@ -638,7 +650,13 @@ class PossessionControllerTest {
             ),
         ).thenReturn(activeToken(10))
         `when`(owners.existsByGeneralId(10L)).thenReturn(false)
-        `when`(reserve.publishImmediate(org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause()))
+        // OPENSAM-197 — 아직 소유하지 않은 장수를 claim하므로 제출 계정만이 결과 조회의 증인이다.
+        `when`(
+            reserve.publishImmediate(
+                org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause(),
+                org.mockito.ArgumentMatchers.eq(7),
+            ),
+        )
             .thenReturn(CommandReserveService.ReserveResult("req-new-claim-10", 0))
 
         mockMvc().perform(
@@ -716,7 +734,13 @@ class PossessionControllerTest {
             ),
         ).thenReturn(activeToken(10))
         `when`(owners.existsByGeneralId(10L)).thenReturn(false)
-        `when`(reserve.publishImmediate(org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause()))
+        // OPENSAM-197 — 아직 소유하지 않은 장수를 claim하므로 제출 계정만이 결과 조회의 증인이다.
+        `when`(
+            reserve.publishImmediate(
+                org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause(),
+                org.mockito.ArgumentMatchers.eq(7),
+            ),
+        )
             .thenReturn(CommandReserveService.ReserveResult("req-claim-10", 0))
 
         mockMvc().perform(

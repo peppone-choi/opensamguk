@@ -98,6 +98,8 @@ class NpcPolicyController(
                 policyType = body.type,
                 data = Json.parseToJsonElement(objectMapper.writeValueAsString(data)),
             ),
+            // OPENSAM-197 — result-read ownership witness (this path records no general_id).
+            ownerUserId = userId.toInt(),
         )
         return ResponseEntity.status(HttpStatus.ACCEPTED)
             .body(NpcPolicyUpdateAcceptedResponse(status = "AVAILABLE", requestId = accepted.requestId, code = "npcPolicyUpdate"))

@@ -10,6 +10,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
+import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -59,7 +60,8 @@ class CommandControllerSecurityTest {
         MockMvcBuilders
             .standaloneSetup(
                 CommandController(
-                    precheck, reserve, resolver, queue, generals, commandResults, redis,
+                    precheck, reserve, resolver, queue, generals, commandResults,
+                    mock(CommandInboxRepository::class.java), redis,
                     ObjectMapper(), "che:scenario_2", GameApiProcessWorld(1),
                 ),
             )

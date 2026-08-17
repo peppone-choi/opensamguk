@@ -76,6 +76,8 @@ class SelectPoolController(
                 ownerUserId = userId.toInt(),
                 requestedAt = clock.instant().toString(),
             ),
+            // OPENSAM-197 — result-read ownership witness (this path records no general_id).
+            ownerUserId = userId.toInt(),
         )
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(
             SelectPoolRefreshResponse(status = "AVAILABLE", requestId = accepted.requestId),

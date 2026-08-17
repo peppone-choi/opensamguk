@@ -33,6 +33,9 @@ class DiplomaticMessageController(
         }
         val result = reserve.publishImmediate(
             TurnDaemonCommand.AcceptDiplomaticMessage(messageId = id, generalId = generalId),
+            // OPENSAM-197 — this path records no general_id, so the submitting account is the only
+            // ownership witness for reading the result back.
+            ownerUserId = userId.toInt(),
         )
         return accepted(result)
     }
@@ -51,6 +54,7 @@ class DiplomaticMessageController(
         }
         val result = reserve.publishImmediate(
             TurnDaemonCommand.DeclineDiplomaticMessage(messageId = id, generalId = generalId),
+            ownerUserId = userId.toInt(),
         )
         return accepted(result)
     }

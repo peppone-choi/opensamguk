@@ -781,7 +781,8 @@ class F4ReadControllersTest {
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
         val anyCommand = any(opensamguk.common.wire.TurnDaemonCommand::class.java)
             ?: opensamguk.common.wire.TurnDaemonCommand.Pause()
-        `when`(reserve.publishImmediate(anyCommand))
+        // OPENSAM-197 — 제출 계정(7)이 함께 실린다.
+        `when`(reserve.publishImmediate(anyCommand, org.mockito.ArgumentMatchers.eq(7)))
             .thenReturn(CommandReserveService.ReserveResult("req-npc", 0))
 
         mvc(NpcPolicyController(resolver, nations, nationEnv, gameKv, SecretPermissionReader(nations), reserve, objectMapper))
@@ -798,6 +799,7 @@ class F4ReadControllersTest {
         val captor = ArgumentCaptor.forClass(opensamguk.common.wire.TurnDaemonCommand::class.java)
         verify(reserve).publishImmediate(
             captor.capture() ?: opensamguk.common.wire.TurnDaemonCommand.Pause(),
+            org.mockito.ArgumentMatchers.eq(7),
         )
         val command = captor.value as opensamguk.common.wire.TurnDaemonCommand.NpcPolicyUpdate
         kotlin.test.assertEquals("generalPriority", command.policyType)

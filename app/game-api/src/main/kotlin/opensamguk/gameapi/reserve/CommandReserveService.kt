@@ -136,6 +136,9 @@ class CommandReserveService(
                         turnIdx = turnIdx,
                         actionCode = actionCode,
                         payloadJson = payload,
+                        // OPENSAM-197 — 결과 조회 소유권 검사의 근거. 장수선택처럼 아직 소유하지 않은
+                        // 장수로 내는 명령은 이 값이 유일한 제출자 증거다.
+                        ownerUserId = ownerUserId,
                     ),
                 ).throwIfConflict()
             }
@@ -163,6 +166,7 @@ class CommandReserveService(
                     turnIdx = turnIdx,
                     actionCode = actionCode,
                     payloadJson = payload,
+                    ownerUserId = ownerUserId,
                 ),
             )
             result.throwIfConflict()
@@ -201,8 +205,16 @@ class CommandReserveService(
     /**
      * Ring-less immediate publish — used by Join (B1) and other out-of-band daemon commands
      * that carry their own typed command (no general_turn reservation).
+     *
+     * OPENSAM-197 — [ownerUserId] is the submitting account. This path records no `general_id`,
+     * so the account is the ONLY ownership witness: without it the returned `requestId` can never
+     * be read back through `GET /api/command/result/{requestId}`. Pass it wherever a principal
+     * exists; machine-to-machine publishes (profile-icon sync) and admin batch actions have no
+     * user to attribute and stay null — their callers do not poll the result.
      */
-    fun publishImmediate(command: TurnDaemonCommand): ReserveResult {
+    fun publishImmediate(command: TurnDaemonCommand): ReserveResult = publishImmediate(command, null)
+
+    fun publishImmediate(command: TurnDaemonCommand, ownerUserId: Int?): ReserveResult {
         val requestId = requestIds()
         val envelope = TurnDaemonCommandEnvelope(
             requestId = requestId,
@@ -221,6 +233,7 @@ class CommandReserveService(
                     turnIdx = 0,
                     actionCode = command::class.simpleName,
                     payloadJson = payload,
+                    ownerUserId = ownerUserId,
                 ),
             ).throwIfConflict()
         }
