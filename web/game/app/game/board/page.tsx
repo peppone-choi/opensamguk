@@ -41,6 +41,7 @@ import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
 import type { BoardResponse, BoardArticle, BoardComment } from '../../../lib/types';
 import { isArticleBodyBlank } from './articleBody';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 // 하나의 열린 board CommandModal spec. argType은 항상 null (args는 extraArgs에 실린다).
 type BoardModalSpec = { command: string; label: string; extraArgs?: Record<string, unknown> };
@@ -209,12 +210,7 @@ function BoardContent() {
             .catch(() => setMyGeneralId(0));
     }, []);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchBoard(secret));
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchBoard, secret]);
+    useTurnRefresh(() => fetchBoard(secret));
 
     const setCommentDraft = useCallback((no: number, value: string) => {
         setCommentDrafts((prev) => ({ ...prev, [no]: value }));

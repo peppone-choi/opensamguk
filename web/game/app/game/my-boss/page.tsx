@@ -8,6 +8,7 @@ import StatusBadge from '../../../components/StatusBadge';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { getNPCColor } from '../../../lib/utilGame';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { IntakeOutcome } from '../../../lib/types';
 import type { MyBossGeneralSummary, MyBossOfficerSlot, MyBossResponse } from '../../../types/game';
 
@@ -75,8 +76,9 @@ export default function MyBossPage() {
   const [selectedAmbassadors, setSelectedAmbassadors] = useState<number[]>([]);
   const [selectedAuditors, setSelectedAuditors] = useState<number[]>([]);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  // background=true(턴 갱신)면 로딩 스켈레톤을 띄우지 않는다(OPENSAM-196).
+  const fetchData = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
     setError('');
     try {
       const res = await api.myBoss<MyBossResponse>();
@@ -84,13 +86,20 @@ export default function MyBossPage() {
     } catch {
       setError('상관 정보를 불러올 수 없습니다.');
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // 인사부 현황만 조용히 재조회. 외교권자/감찰관 체크박스는 boss 변경 시 서버값으로 재동기화되는
+  // 기존 useEffect를 그대로 타므로, 저장 전 진행 중이던 체크 상태는 리셋될 수 있다(기존 동작과 동일 —
+  // "다시 시도"/수동 새로고침 때도 이미 그랬다. OPENSAM-196에서 새로 만든 회귀 아님).
+  useTurnRefresh(() => {
+    fetchData(true);
+  });
 
   const assignableSlots = useMemo(() => [...(boss?.chiefSlots ?? []), ...(boss?.citySlots ?? [])].filter((slot) => !slot.locked), [boss]);
   const appointableGenerals = useMemo(() => (boss?.roster ?? []).filter((g) => g.canBeAppointed), [boss]);
@@ -223,7 +232,7 @@ export default function MyBossPage() {
           <h1>내 상관</h1>
           <div className="error-state">
             <p>{error}</p>
-            <button onClick={fetchData}>다시 시도</button>
+            <button onClick={() => fetchData()}>다시 시도</button>
           </div>
         </div>
       </Shell>

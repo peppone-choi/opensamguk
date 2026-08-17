@@ -9,6 +9,7 @@ import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { formatNumber } from '../../../lib/format';
 import { formatDefenceTrain } from '../../../lib/utilGame';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { FrontInfoResponse, MyPageItem, MyPageResponse } from '../../../lib/types';
 
 function InfoGrid({ rows }: { rows: [string, React.ReactNode][] }) {
@@ -50,25 +51,34 @@ export default function MyPage() {
     const [actionMessage, setActionMessage] = useState('');
     const [settings, setSettings] = useState<MyPageResponse['settings'] | null>(null);
 
-    const fetchData = () => {
-        setLoading(true);
+    // OPENSAM-196: background=true면 로딩 스피너와 settings/selectedItemType 재설정을 건너뛴다 —
+    // settings는 편집 중인 폼 상태라 턴 갱신으로 덮어쓰면 입력 중이던 값이 날아간다.
+    const fetchData = (background = false) => {
+        if (!background) setLoading(true);
         setError('');
         Promise.all([api.frontInfo(), api.myPage<MyPageResponse>()])
             .then(([front, mine]) => {
                 setFrontInfo(front);
                 setMyPage(mine);
-                setSettings(mine.settings);
-                setSelectedItemType((current) => {
-                    const droppable = mine.items.filter((item) => item.droppable);
-                    if (droppable.some((item) => item.type === current)) return current;
-                    return droppable[0]?.type ?? '';
-                });
+                if (!background) {
+                    setSettings(mine.settings);
+                    setSelectedItemType((current) => {
+                        const droppable = mine.items.filter((item) => item.droppable);
+                        if (droppable.some((item) => item.type === current)) return current;
+                        return droppable[0]?.type ?? '';
+                    });
+                }
             })
             .catch(() => setError('내 정보를 불러올 수 없습니다.'))
-            .finally(() => setLoading(false));
+            .finally(() => { if (!background) setLoading(false); });
     };
 
     useEffect(fetchData, []);
+
+    // OPENSAM-196: 턴 완료 시 장수/설정 정보를 백그라운드로 다시 읽는다(편집 중인 설정 폼은 보존).
+    useTurnRefresh(() => {
+        fetchData(true);
+    });
 
     if (loading) {
         return (
@@ -88,7 +98,7 @@ export default function MyPage() {
                     <h1>내 정보&설정</h1>
                     <div className="error-state">
                         <p>{error || '장수 정보가 없습니다.'}</p>
-                        <button onClick={fetchData}>다시 시도</button>
+                        <button onClick={() => fetchData()}>다시 시도</button>
                     </div>
                 </div>
             </Shell>

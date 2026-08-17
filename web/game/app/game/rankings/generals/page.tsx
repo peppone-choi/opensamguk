@@ -17,6 +17,7 @@ import GameTable from '../../../../components/GameTable';
 import { api } from '../../../../lib/api';
 import { formatRefreshScore, getNPCColor } from '../../../../lib/utilGame';
 import { portraitUrl, onPortraitError } from '../../../../lib/portrait';
+import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { PublicGeneral } from '../../../../types/game';
 
 const NO_NATION = 0;
@@ -69,17 +70,23 @@ export default function GeneralsListPage() {
     const [error, setError] = useState('');
     const [sortIdx, setSortIdx] = useState(DEFAULT_SORT_INDEX);
 
-    const fetchData = () => {
-        setLoading(true);
-        setError('');
+    // OPENSAM-196 — background=true면 로딩 화면을 다시 띄우지 않는다.
+    const fetchData = (background = false) => {
+        if (!background) {
+            setLoading(true);
+            setError('');
+        }
         api
             .generalsList()
             .then((res: PublicGeneral[]) => setData(Array.isArray(res) ? res : []))
             .catch(() => setError('데이터를 불러올 수 없습니다.'))
-            .finally(() => setLoading(false));
+            .finally(() => { if (!background) setLoading(false); });
     };
 
     useEffect(fetchData, []);
+
+    // OPENSAM-196 — 턴 종료 시 장수 일람 재조회.
+    useTurnRefresh(() => fetchData(true));
 
     const sorted = useMemo(() => {
         const { value, text } = SORTS[sortIdx];

@@ -10,6 +10,7 @@ import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type {
     DiplomacyLettersResponse,
     DiplomacyLetter,
@@ -101,12 +102,10 @@ export default function DiplomacyPage() {
         fetchData();
     }, [fetchData]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    // 서신/외교 대상국 목록만 재조회 — 작성 중인 서신 폼(draft)은 건드리지 않는다(OPENSAM-196).
+    useTurnRefresh(() => {
+        fetchData();
+    });
 
     const myNationId = data?.myNationID ?? 0;
     // legacy 응답은 nations를 Record<id, NationStaticItem> 맵으로 내려준다 → 값 순회.

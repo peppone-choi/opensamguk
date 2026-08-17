@@ -27,6 +27,7 @@ import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { AdminNationStatsResponse } from '../../../lib/api';
 import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 // legacy newColor: perceived-luminance(r*.299+g*.587+b*.114) > 140 → 어두운 글자, 아니면 흰 글자.
 function contrastText(color: string): string {
@@ -79,12 +80,7 @@ export default function Admin5Page() {
     }, [fetchData, type, type2]);
 
     // 턴 완료 시 통계 갱신(현재 정렬 유지).
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData(type, type2));
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData, type, type2]);
+    useTurnRefresh(() => fetchData(type, type2));
 
     const sortOptions = data?.sortOptions ?? [];
     const sortOptions2 = data?.sortOptions2 ?? [];

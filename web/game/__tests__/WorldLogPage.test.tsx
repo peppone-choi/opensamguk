@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WorldLogPage from '@/app/game/world-log/page';
+import { __resetTurnListeners, deliverTurnCompleted } from '@/lib/turnEvents';
 
 type Listener = (event: Event) => void;
 
@@ -55,6 +56,7 @@ vi.mock('@/components/GameCard', () => ({
 describe('WorldLogPage', () => {
   beforeEach(() => {
     eventSources = [];
+    __resetTurnListeners();
     vi.stubGlobal('EventSource', FakeEventSource);
   });
 
@@ -75,10 +77,12 @@ describe('WorldLogPage', () => {
     render(<WorldLogPage />);
 
     await waitFor(() => expect(screen.getByText(/첫 기록/)).toBeInTheDocument());
-    expect(eventSources).toHaveLength(1);
+    // OPENSAM-196 — 화면은 자기 SSE를 열지 않는다. 연결은 Shell 하나뿐이고(여기선 목),
+    // 화면은 [lib/turnEvents] 신호만 받는다.
+    expect(eventSources).toHaveLength(0);
 
     await act(async () => {
-      eventSources[0].emit('turnCompleted');
+      deliverTurnCompleted();
     });
 
     await waitFor(() => expect(screen.getByText(/새 기록/)).toBeInTheDocument());

@@ -21,6 +21,7 @@ import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
 import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
 import { formatLog } from '../../../lib/utilGame';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { MapPreviewResponse } from '../../../lib/types';
 import type { HistoryRecord, HistoryResponse, SimpleNationObj } from '../../../types/game';
 
@@ -204,6 +205,11 @@ export default function HistoryPage() {
             active = false;
         };
     }, []);
+
+    // 현재 선택 중인 연월 그대로 재조회(과거 열람 중이면 그 달을 유지) — OPENSAM-196.
+    useTurnRefresh(() => {
+        fetchData(queryYearMonth);
+    });
 
     const first = data?.firstYearMonth ?? 0;
     const last = data?.lastYearMonth ?? 0;

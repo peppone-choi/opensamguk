@@ -17,7 +17,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { WorldLogResponse } from '../../../lib/api';
-import { useSSE } from '../../../hooks/useSSE';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 const sectionBarStyle: React.CSSProperties = {
     textAlign: 'center',
@@ -70,7 +70,7 @@ export default function WorldLogPage() {
         };
     }, []);
 
-    useSSE(() => {
+    useTurnRefresh(() => {
         fetchData().catch(() => setError('데이터를 불러올 수 없습니다.'));
     });
 

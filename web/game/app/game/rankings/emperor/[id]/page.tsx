@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Shell from '../../../../../components/Shell';
 import GameCard from '../../../../../components/GameCard';
@@ -9,6 +9,7 @@ import StatusBadge from '../../../../../components/StatusBadge';
 import { api } from '../../../../../lib/api';
 import { formatDate, formatNumber } from '../../../../../lib/format';
 import { resolveServerGamePath, useServerId } from '../../../../../lib/serverGameUrl';
+import { useTurnRefresh } from '../../../../../hooks/useTurnRefresh';
 import type { EmperorDetail } from '../../../../../types/game';
 
 export default function EmperorDetailPage() {
@@ -22,17 +23,24 @@ export default function EmperorDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  // OPENSAM-196 — background=true면 로딩 화면을 다시 띄우지 않는다.
+  const fetchData = useCallback((background = false) => {
     if (!id || isNaN(id)) {
       setError('잘못된 ID입니다.');
       setLoading(false);
       return;
     }
+    if (!background) setLoading(true);
     api.rankings.emperorDetail<EmperorDetail>(id)
       .then(setData)
       .catch(() => setError('데이터를 불러올 수 없습니다.'))
-      .finally(() => setLoading(false));
+      .finally(() => { if (!background) setLoading(false); });
   }, [id]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // OPENSAM-196 — 턴 종료 시 황제 상세 재조회.
+  useTurnRefresh(() => fetchData(true));
 
   if (loading) return (
     <Shell>

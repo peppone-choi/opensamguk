@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
 import { formatLog } from '../../lib/utilGame';
+import { useTurnRefresh } from '../../hooks/useTurnRefresh';
 
 // ── D1 와이어 타입(game-api AuctionDto.kt와 동형) ──────────────────────────────────────────
 interface BasicResourceAuctionBidder {
@@ -97,12 +98,7 @@ export default function AuctionResource({ generalId, onToast }: Props) {
         void refresh();
     }, [refresh]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => { void refresh(); });
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [refresh]);
+    useTurnRefresh(() => { void refresh(); });
 
     // 선택 시 입찰값 프리필(legacy watch).
     function selectBuyRice(a: BasicResourceAuctionInfo) {

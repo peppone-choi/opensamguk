@@ -30,6 +30,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { TroopInfo, TroopListResponse, TroopMember } from '../../../types/game';
 
 // One open troop CommandModal spec. argType is always null (args ride extraArgs).
@@ -280,12 +281,11 @@ export default function TroopPage() {
         fetchData();
     }, [fetchData]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    // OPENSAM-196: 전용 EventSource 대신 Shell의 단일 SSE를 공유하는 턴 완료 신호로 갈아탄다.
+    // 부대 창설/개명 입력 draft는 fetchData가 건드리지 않으므로 갱신해도 안전하다.
+    useTurnRefresh(() => {
+        fetchData();
+    });
 
     // EMPTY-SAFE: a fresh seed with no formed troops returns { troops: [] } (200).
     const troops = data?.troops ?? [];

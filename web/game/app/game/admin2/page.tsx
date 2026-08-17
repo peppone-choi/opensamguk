@@ -5,6 +5,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { AdminBlockedWrite, AdminGeneralModerationResponse, AdminGeneralModerationRow } from '../../../lib/api';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 function errorText(e: unknown, fallback = '데이터를 불러올 수 없습니다.'): string {
     const msg = e instanceof Error ? e.message : '';
@@ -55,8 +56,9 @@ export default function Admin2Page() {
     const [error, setError] = useState('');
     const [notice, setNotice] = useState('');
 
-    const load = useCallback(async () => {
-        setLoading(true);
+    // background=true는 턴 갱신용 — 이미 보고 있는 목록을 로딩 표시로 지우지 않는다.
+    const load = useCallback(async (background = false) => {
+        if (!background) setLoading(true);
         try {
             const d = await api.admin.generalModeration();
             setData(d);
@@ -64,13 +66,15 @@ export default function Admin2Page() {
         } catch (e) {
             setError(errorText(e));
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
     useEffect(() => {
         load();
     }, [load]);
+
+    useTurnRefresh(() => void load(true));
 
     const selectedRows = useMemo(
         () => data?.generals.filter((g) => selected.includes(g.no)) ?? [],
@@ -209,7 +213,7 @@ export default function Admin2Page() {
 
                     <GameCard>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                            <button onClick={load}>새로고침</button>
+                            <button onClick={() => void load()}>새로고침</button>
                             <span style={{ color: 'var(--text-muted)' }}>
                                 선택 {selectedRows.length}명 / 전체 {data.generals.length}명
                             </span>

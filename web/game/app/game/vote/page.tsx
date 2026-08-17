@@ -42,6 +42,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type {
     VoteListResponse,
     VoteDetailResponse,
@@ -113,8 +114,10 @@ export default function VotePage() {
     const [modal, setModal] = useState<VoteModalSpec | null>(null);
     const [toast, setToast] = useState<string | null>(null);
 
-    const fetchList = useCallback(async () => {
-        setLoading(true);
+    // OPENSAM-196: background=true면 로딩 스피너를 건너뛴다 — 결과표/댓글은 `!loading`으로
+    // 게이팅되어 있어, 아니면 턴 갱신마다 화면이 잠깐 사라진다.
+    const fetchList = useCallback(async (background = false) => {
+        if (!background) setLoading(true);
         try {
             const d = await api.votes();
             setList(d);
@@ -128,7 +131,7 @@ export default function VotePage() {
             setList(null);
             setError('설문 목록을 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
@@ -179,12 +182,12 @@ export default function VotePage() {
         };
     }, [currentId]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchList());
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchList]);
+    // OPENSAM-196: 전용 EventSource 대신 Shell의 단일 SSE를 공유하는 턴 완료 신호로 갈아탄다.
+    // 목록만 백그라운드로 다시 읽는다 — 상세(fetchDetail)는 currentId effect가 이미 재조회하며,
+    // 투표/댓글/개설 draft는 fetchList가 건드리지 않으므로 보존된다.
+    useTurnRefresh(() => {
+        fetchList(true);
+    });
 
     const votesMap = list?.votes ?? {};
     // 이전 설문 조사 list — newest-first (legacy Object.entries(...).reverse()).
@@ -269,7 +272,7 @@ export default function VotePage() {
                 className="control-bar"
                 style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}
             >
-                <button onClick={fetchList}>새로고침</button>
+                <button onClick={() => fetchList()}>새로고침</button>
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}

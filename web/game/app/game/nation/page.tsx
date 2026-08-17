@@ -7,6 +7,7 @@ import StatusBadge from '../../../components/StatusBadge';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { formatNumber } from '../../../lib/format';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type { MyNationDetailResponse, MyNationCityRef, InheritPointResponse } from '../../../types/game';
 
@@ -44,8 +45,9 @@ export default function NationPage() {
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
+    // OPENSAM-196: background=true면 로딩 스피너를 건너뛴다(턴 갱신 시 화면이 잠깐 비는 것을 방지).
+    const fetchData = useCallback(async (background = false) => {
+        if (!background) setLoading(true);
         try {
             const [nationRes, inheritRes, frontRes] = await Promise.all([
                 api.myNationDetail<MyNationDetailResponse>(),
@@ -62,13 +64,18 @@ export default function NationPage() {
         } catch {
             setError('데이터를 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (!background) setLoading(false);
         }
     }, []);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    // OPENSAM-196: 턴 완료 시 국가 정보/유산 버프를 백그라운드로 다시 읽는다.
+    useTurnRefresh(() => {
+        fetchData(true);
+    });
 
     async function buyBuff(buffKey: string, level: number) {
         const prevLevel = myBuffs[buffKey] ?? 0;
@@ -136,7 +143,7 @@ export default function NationPage() {
             <Shell>
                 <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
                 <p style={{ color: 'var(--crimson)' }}>{error}</p>
-                <button onClick={fetchData} style={{ marginTop: 'var(--space-md)' }}>다시 시도</button>
+                <button onClick={() => fetchData()} style={{ marginTop: 'var(--space-md)' }}>다시 시도</button>
             </Shell>
         );
     }

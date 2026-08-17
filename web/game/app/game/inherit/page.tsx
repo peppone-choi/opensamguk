@@ -24,6 +24,7 @@ import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { InheritPointResponse } from '../../../types/game';
 
 // ── inheritanceViewText (verbatim) — display order matches the Vue v-for ───────
@@ -181,6 +182,11 @@ export default function InheritPage() {
     }
 
     useEffect(() => load(), []);
+
+    // 유산 포인트/로그만 재조회 — 상점 폼 선택값(nextSpecialPick 등)은 건드리지 않는다(OPENSAM-196).
+    useTurnRefresh(() => {
+        load();
+    });
 
     async function handleResetStat() {
         if (generalId == null) {

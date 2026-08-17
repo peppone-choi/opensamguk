@@ -9,6 +9,7 @@ import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import { getNPCColor } from '../../../lib/utilGame';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type {
     TournamentResponse,
@@ -48,17 +49,23 @@ export default function TournamentPage() {
     const [enrollOpen, setEnrollOpen] = useState<{ value: number } | null>(null);
     const [toast, setToast] = useState<string | null>(null);
 
-    const fetchData = () => {
-        setLoading(true);
-        setError('');
+    // OPENSAM-196 — background=true면 로딩 화면을 다시 띄우지 않는다.
+    const fetchData = (background = false) => {
+        if (!background) {
+            setLoading(true);
+            setError('');
+        }
         api
             .tournamentView()
             .then((res: TournamentResponse) => setData(res ?? null))
             .catch(() => setError('토너먼트 정보를 불러올 수 없습니다.'))
-            .finally(() => setLoading(false));
+            .finally(() => { if (!background) setLoading(false); });
     };
 
     useEffect(fetchData, []);
+
+    // OPENSAM-196 — 턴 종료 시 토너먼트 현황 재조회.
+    useTurnRefresh(() => fetchData(true));
 
     useEffect(() => {
         api.frontInfo()
@@ -94,7 +101,7 @@ export default function TournamentPage() {
                 <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>토너먼트</h1>
                 <p style={{ color: 'var(--crimson)' }}>{error}</p>
                 <button
-                    onClick={fetchData}
+                    onClick={() => fetchData()}
                     style={{
                         marginTop: 'var(--space-md)',
                         background: 'var(--bg-hover)',
@@ -172,7 +179,7 @@ export default function TournamentPage() {
                         </>
                     )}
                     <button
-                        onClick={fetchData}
+                        onClick={() => fetchData()}
                         style={{
                             marginLeft: generalId != null ? undefined : 'auto',
                             background: 'var(--bg-hover)',

@@ -15,6 +15,7 @@ import StatusBadge from '../../../components/StatusBadge';
 import BettingDetail from '../../../components/betting/BettingDetail';
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
+import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
 // ── D4 와이어 타입(game-api BettingDto.kt와 동형) ─────────────────────────────────────────
 interface BettingListItem {
@@ -85,12 +86,10 @@ export default function NationBettingPage() {
         void fetchData();
     }, [fetchData]);
 
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => { void fetchData(); });
-        es.onerror = () => es.close();
-        return () => es.close();
-    }, [fetchData]);
+    // OPENSAM-196: 전용 EventSource 대신 Shell의 단일 SSE를 공유하는 턴 완료 신호로 갈아탄다.
+    useTurnRefresh(() => {
+        void fetchData();
+    });
 
     // yearMonth 계산 — PageNationBetting.vue joinYearMonth 패러티.
     const yearMonth = year != null && month != null ? year * 12 + month - 1 : null;
