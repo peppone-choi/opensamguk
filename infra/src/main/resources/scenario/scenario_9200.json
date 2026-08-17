@@ -33,11 +33,17 @@
       ["V2ProcessCityIncome", "gold"],
       ["ResetOfficerLock"],
       ["RaiseDisaster"],
+      ["V2CityGarrisonAttrition"],
       ["RandomizeCityTradeRate"],
       ["NewYear"],
       ["AssignGeneralSpeciality"]
     ],
-    ["month", 9000, ["Date", "==", null, 4], ["ResetOfficerLock"], ["RaiseDisaster"]],
+    [
+      "month", 9000, ["Date", "==", null, 4],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"],
+      ["V2CityGarrisonAttrition"]
+    ],
     [
       "month", 9000, ["Date", "==", null, 7],
       ["MergeInheritPointRank"],
@@ -45,9 +51,15 @@
       ["V2ProcessCityIncome", "rice"],
       ["ResetOfficerLock"],
       ["RaiseDisaster"],
+      ["V2CityGarrisonAttrition"],
       ["RandomizeCityTradeRate"]
     ],
-    ["month", 9000, ["Date", "==", null, 10], ["ResetOfficerLock"], ["RaiseDisaster"]],
+    [
+      "month", 9000, ["Date", "==", null, 10],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"],
+      ["V2CityGarrisonAttrition"]
+    ],
     [
       "month", 2000, ["DateRelative", "==", 1, 1],
       ["NoticeToHistoryLog", "<S>2년 뒤 출병 제한이 풀립니다.</>", "EVENT_YEAR_MONTH"],

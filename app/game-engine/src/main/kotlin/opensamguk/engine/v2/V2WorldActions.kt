@@ -14,5 +14,5 @@ import opensamguk.logic.event.EventActionFactory
  */
 object V2WorldActions {
     fun register(factory: EventActionFactory): EventActionFactory =
-        V2ProcessCityIncomeAction.register(factory)
+        V2CityGarrisonAttritionAction.register(V2ProcessCityIncomeAction.register(factory))
 }

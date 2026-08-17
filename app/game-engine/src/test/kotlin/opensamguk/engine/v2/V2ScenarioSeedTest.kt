@@ -53,7 +53,9 @@ class V2ScenarioSeedTest {
             assertEquals(expected.priority, actual[1].jsonPrimitive.content.toInt(), "행 $i priority")
             assertEquals(expected.condition, actual[2].toString(), "행 $i condition")
 
-            // 기대 액션 = 기본 액션에서 ProcessIncome 만 V2ProcessCityIncome 으로 이름 치환한 것.
+            // 기대 액션 = 기본 액션에 두 가지 변형만 적용한 것.
+            //  (1) R2 — ProcessIncome 을 V2ProcessCityIncome 으로 이름 치환
+            //  (2) R3 — RaiseDisaster **직후**에 V2CityGarrisonAttrition 삽입 (OPENSAM-152)
             val substituted = buildJsonArray {
                 for (action in Json.parseToJsonElement(expected.action).jsonArray) {
                     val a = action.jsonArray
@@ -64,6 +66,9 @@ class V2ScenarioSeedTest {
                         })
                     } else {
                         add(a)
+                    }
+                    if (a[0].jsonPrimitive.content == "RaiseDisaster") {
+                        add(buildJsonArray { add(JsonPrimitive(V2CityGarrisonAttritionAction.NAME)) })
                     }
                 }
             }
@@ -96,6 +101,32 @@ class V2ScenarioSeedTest {
         )
     }
 
+    /**
+     * (d) OPENSAM-152 — v2 감소 leaf 가 1·4·7·10월 네 행에 있고, 각 행에서 **`RaiseDisaster` 바로 뒤**다.
+     *
+     * 순서가 어긋나면 그 달의 재난 stateCode 를 아직 안 쓴 `city.state`(전월 리셋값 0)를 읽게 되어
+     * 감소가 통째로 사라진다 — 조용히 아무 일도 안 일어나는 실패라서 순서 자체를 못박는다.
+     */
+    @Test
+    fun `attrition leaf follows RaiseDisaster in every disaster month`() {
+        val found = eventRows.mapNotNull { row ->
+            val names = actionNames(row)
+            val at = names.indexOf(V2CityGarrisonAttritionAction.NAME)
+            if (at < 0) null else row[2].toString() to names.getOrNull(at - 1)
+        }
+        assertEquals(
+            listOf(
+                """["Date","==",null,1]""" to "RaiseDisaster",
+                """["Date","==",null,4]""" to "RaiseDisaster",
+                """["Date","==",null,7]""" to "RaiseDisaster",
+                """["Date","==",null,10]""" to "RaiseDisaster",
+            ),
+            found,
+        )
+        // 한 행에 두 번 들어가는 실수도 막는다(위 목록은 행당 첫 위치만 본다).
+        assertEquals(4, eventRows.sumOf { row -> actionNames(row).count { it == V2CityGarrisonAttritionAction.NAME } })
+    }
+
     /** 등록기가 실제로 그 이름을 안다 — 시나리오가 부르는 이름과 팩토리 이름이 어긋나면 디스패치에서 죽는다. */
     @Test
     fun `the registrar knows the name the scenario calls`() {
@@ -105,5 +136,10 @@ class V2ScenarioSeedTest {
         )
         assertTrue(action is V2ProcessCityIncomeAction)
         assertEquals("gold", (action as V2ProcessCityIncomeAction).resource)
+
+        val attrition = factory.create(
+            opensamguk.logic.event.RawAction(V2CityGarrisonAttritionAction.NAME, emptyList()),
+        )
+        assertTrue(attrition is V2CityGarrisonAttritionAction)
     }
 }
