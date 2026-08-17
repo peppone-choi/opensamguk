@@ -413,6 +413,20 @@
 
 ---
 
+## ADR-LITE-035 P-15d 게이트는 OPENSAM-57이 소유하고 V2-4A는 작전층 경계만 갖는다 (H3+H4)
+
+- Date: 2026-08-17
+- Status: proposed
+- Decision (pending human approval): **H3 = (1)안, H4 = (1)안**을 함께 채택한다. 두 결정은 같은 레인의 앞뒤라 하나로 기록한다.
+  1. **P-15d 소유** — `P-15d`(동일 입력 재실행 시 `DeterministicReplayBody` hash diff 0, `docs/superpowers/specs/2026-07-12-opensamguk-v2-product-spec.md:449`)를 이름으로 명시한 수용 기준은 **OPENSAM-57 하나**가 갖는다. BATTLE-F3(OPENSAM-159)에는 **작전층 단일 다이제스트 파생 훅**을 범위·수용 기준 3번으로 넣되 `P-15d` 토큰은 넣지 않는다 — "정확히 1개 티켓" 조건을 지키기 위해서다.
+  2. **V2-4A 처분** — OPENSAM-24(에픽)는 `operationId` 작전층 ↔ `battle_id` 세션층 **경계·스코프만** 소유하고 07-30 세션 계약을 재구현하지 않는다. 중복이던 4A-a~j 구현 목록은 본문에서 걷어내고 **자식 OPENSAM-57 단독 소유**로 남긴다(같은 산출물 소유 티켓 = 1개).
+- Context: H3은 실재 결함이다 — F12(OPENSAM-168)의 G1 checkpoint state hash 게이트는 P-15d와 다른 산출물이고(ADR-LITE-032 Consequences), 07-30 구현 계획은 product-spec을 0회 참조하므로 현행대로면 P-15d가 미측정으로 남는다. H4는 `README.md:77`("V2-4A 대체·재분해")와 Jira 현황(OPENSAM-24 `할 일`, BATTLE-F0~F13 부모가 전부 OPENSAM-25)의 불일치다. ADR-LITE-032가 (c) 병존을 비준했으므로 작전층 replay 계약은 살아 있고, 살아 있는 계약에 소유 티켓이 붙어 있어야 한다. 마감선은 F3 착수 전(해시 형태가 F3에서 굳는다)이며 F3은 아직 `할 일`이다.
+- Alternatives: **H3 (2) P-15d를 checkpoint-hash 기준으로 개정해 F12 귀속: 기각.** 그것은 product-spec §6/§15 **본문 개정**이고, 개정 권한 규칙 자체가 아직 없다(H6 = OPENSAM-182 미결). 권한이 정의되기 전에 정본을 고치는 것이 이번 사고의 재발이다. **H3 (3) 신규 게이트 티켓: 기각** — 이미 4A-g(replay body hash)·4A-i(replay gate)를 가진 OPENSAM-57과 산출물이 겹쳐 소유 중복을 새로 만든다. **H4 (2) 종료: 기각** — 병존 비준으로 작전층 계약이 살아 있는데 소유 티켓을 없애면 P-15d가 다시 고아가 된다. **H4 (3) 현행 유지: 기각** — 24와 57이 같은 목록을 중복 선언한 상태가 AC2 위반이다.
+- Consequences: F3의 공수가 파생 훅 + 결정성 테스트만큼 늘어난다(전투 규칙은 여전히 비범위). 훅의 **구체 알고리즘**(체인 → 단일 다이제스트 축약 방식)은 아직 정의돼 있지 않다 — F3 구현 시 결정하며 이 ADR은 "결정적일 것"과 "wall-clock 제외"만 요구한다. `phases[]` 축과 수전 문제(H2/OPENSAM-178)는 이 ADR이 닫지 않는다. product-spec 본문은 **한 글자도 고치지 않았다**(H6 미결 존중). 상태·라벨·담당자 변경 없음. v1 패러티 무관·코드 무변경.
+- Approved by: NONE — human approval required. 이 ADR은 product-spec 개정·구현 착수·티켓 종료·merge·배포를 승인하지 않는다.
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 
