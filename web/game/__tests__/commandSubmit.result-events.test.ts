@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
+import { __resetCommandSettledListeners, deliverCommandSettled } from '@/lib/commandResultEvents';
 
 const mocks = vi.hoisted(() => ({
     commandResult: vi.fn(),
     pollCommandResultResponse: vi.fn(),
-    waitForCommandSettled: vi.fn(),
 }));
 
 vi.mock('@/lib/api', async () => {
@@ -15,11 +15,6 @@ vi.mock('@/lib/api', async () => {
         api: { commandResult: mocks.commandResult },
         pollCommandResultResponse: mocks.pollCommandResultResponse,
     };
-});
-
-vi.mock('@/lib/commandResultEvents', async () => {
-    const actual = await vi.importActual<typeof import('@/lib/commandResultEvents')>('@/lib/commandResultEvents');
-    return { ...actual, waitForCommandSettled: mocks.waitForCommandSettled };
 });
 
 const queued = () => ({ status: 'AVAILABLE' as const, requestId: 'req-1' });
@@ -35,17 +30,31 @@ const resolved = (ok: boolean, reason?: string) => ({
 /** 폴링이 끝내 결론을 내지 못하는 케이스를 표현한다 — 신호 경로만 남는 상황. */
 const neverResolvingPoll = () => new Promise(() => {});
 
+/**
+ * 신호는 구독이 붙은 **뒤에** 와야 한다(pub/sub은 replay가 없다). 제출 호출이 await 한 단계를
+ * 지나야 구독이 생기므로, 대기열을 몇 번 비운 뒤 발행한다.
+ */
+async function settleAfterSubscribe() {
+    for (let i = 0; i < 5; i += 1) await Promise.resolve();
+    deliverCommandSettled();
+}
+
 describe('submitCommandAndAwaitResult — push 신호 vs 폴링', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
+    afterEach(() => {
+        __resetCommandSettledListeners();
+    });
+
     it('신호가 먼저 오면 폴링 간격을 기다리지 않고 정본을 한 번 읽는다', async () => {
         mocks.pollCommandResultResponse.mockImplementation(neverResolvingPoll);
-        mocks.waitForCommandSettled.mockResolvedValue(true);
         mocks.commandResult.mockResolvedValue(resolved(true));
 
-        const outcome = await submitCommandAndAwaitResult(async () => queued());
+        const pending = submitCommandAndAwaitResult(async () => queued());
+        await settleAfterSubscribe();
+        const outcome = await pending;
 
         expect(outcome.status).toBe('applied');
         expect(mocks.commandResult).toHaveBeenCalledWith('req-1');
@@ -57,17 +66,16 @@ describe('submitCommandAndAwaitResult — push 신호 vs 폴링', () => {
      */
     it('신호가 와도 판정은 정본이 한다 — 정본이 거절이면 거절이다', async () => {
         mocks.pollCommandResultResponse.mockImplementation(neverResolvingPoll);
-        mocks.waitForCommandSettled.mockResolvedValue(true);
         mocks.commandResult.mockResolvedValue(resolved(false, '금이 부족합니다.'));
 
-        const outcome = await submitCommandAndAwaitResult(async () => queued());
+        const pending = submitCommandAndAwaitResult(async () => queued());
+        await settleAfterSubscribe();
 
-        expect(outcome).toMatchObject({ status: 'rejected', reason: '금이 부족합니다.' });
+        await expect(pending).resolves.toMatchObject({ status: 'rejected', reason: '금이 부족합니다.' });
     });
 
     it('신호가 없어도 폴링이 그대로 결론을 낸다', async () => {
         mocks.pollCommandResultResponse.mockResolvedValue(resolved(false, '금이 부족합니다.'));
-        mocks.waitForCommandSettled.mockResolvedValue(false);
 
         const outcome = await submitCommandAndAwaitResult(async () => queued());
 
@@ -76,15 +84,24 @@ describe('submitCommandAndAwaitResult — push 신호 vs 폴링', () => {
         expect(mocks.commandResult).not.toHaveBeenCalled();
     });
 
-    /** 신호가 정본보다 빠를 수 있다. 그때 PENDING을 결론으로 삼으면 성공을 '처리 지연'으로 위조한다. */
-    it('신호 직후 정본이 아직 PENDING이면 폴링 결과를 기다린다', async () => {
-        mocks.waitForCommandSettled.mockResolvedValue(true);
+    /**
+     * 신호에는 식별자가 없으므로 남의 명령이 만든 신호에도 깨어난다. 그때 정본이 아직 PENDING이면
+     * 그것을 결론으로 삼아선 안 된다 — 성공을 '처리 지연'으로 위조하게 된다.
+     */
+    it('남의 신호에 깨어나 정본이 PENDING이면 헛읽기로 끝나고 폴링을 기다린다', async () => {
         mocks.commandResult.mockResolvedValue({ status: 'PENDING', requestId: 'req-1' });
-        mocks.pollCommandResultResponse.mockResolvedValue(resolved(true));
+        let releasePoll: (value: unknown) => void = () => {};
+        mocks.pollCommandResultResponse.mockImplementation(() => new Promise(resolve => {
+            releasePoll = resolve;
+        }));
 
-        const outcome = await submitCommandAndAwaitResult(async () => queued());
+        const pending = submitCommandAndAwaitResult(async () => queued());
+        await settleAfterSubscribe();
+        await settleAfterSubscribe();
+        releasePoll(resolved(true));
 
-        expect(outcome.status).toBe('applied');
+        await expect(pending).resolves.toMatchObject({ status: 'applied' });
+        expect(mocks.commandResult).toHaveBeenCalledTimes(2);
     });
 
     /** 결론이 난 뒤에도 폴링이 계속 돌면 지연만 줄고 요청 수는 그대로다. */
@@ -96,10 +113,11 @@ describe('submitCommandAndAwaitResult — push 신호 vs 폴링', () => {
             });
             return new Promise(() => {});
         });
-        mocks.waitForCommandSettled.mockResolvedValue(true);
         mocks.commandResult.mockResolvedValue(resolved(true));
 
-        await submitCommandAndAwaitResult(async () => queued());
+        const pending = submitCommandAndAwaitResult(async () => queued());
+        await settleAfterSubscribe();
+        await pending;
 
         expect(aborted).toBe(true);
     });
@@ -113,12 +131,24 @@ describe('submitCommandAndAwaitResult — push 신호 vs 폴링', () => {
             });
             return Promise.resolve(resolved(true));
         });
-        mocks.waitForCommandSettled.mockResolvedValue(true);
         mocks.commandResult.mockResolvedValue({ status: 'PENDING', requestId: 'req-1' });
 
-        const outcome = await submitCommandAndAwaitResult(async () => queued());
+        const pending = submitCommandAndAwaitResult(async () => queued());
+        await settleAfterSubscribe();
 
-        expect(outcome.status).toBe('applied');
+        await expect(pending).resolves.toMatchObject({ status: 'applied' });
         expect(aborted).toBe(false);
+    });
+
+    /** 해제가 안 되면 제출할 때마다 리스너가 쌓여, 신호 한 번에 죽은 명령의 요청이 그만큼 나간다. */
+    it('기다림이 끝나면 신호 구독을 해제한다', async () => {
+        mocks.pollCommandResultResponse.mockResolvedValue(resolved(true));
+
+        await submitCommandAndAwaitResult(async () => queued());
+        mocks.commandResult.mockClear();
+        deliverCommandSettled();
+        await Promise.resolve();
+
+        expect(mocks.commandResult).not.toHaveBeenCalled();
     });
 });

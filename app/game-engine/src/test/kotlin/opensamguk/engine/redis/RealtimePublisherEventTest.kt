@@ -28,7 +28,7 @@ class RealtimePublisherEventTest {
         val worldId = WorldId(3)
         val publisher = RealtimePublisher(template, "che", worldId)
 
-        publisher.publishRealtimeEvent(CommandSettledEvent(at = "0200-01-01T00:00:00.000Z", requestId = "req-9"))
+        publisher.publishRealtimeEvent(CommandSettledEvent(at = "0200-01-01T00:00:00.000Z"))
 
         val channel = ArgumentCaptor.forClass(String::class.java)
         val body = ArgumentCaptor.forClass(Any::class.java)
@@ -37,6 +37,6 @@ class RealtimePublisherEventTest {
         assertEquals(gameEventChannel("che", worldId), channel.value)
         val tree = Json.parseToJsonElement(body.value as String) as JsonObject
         assertEquals("commandSettled", tree["type"]?.jsonPrimitive?.content)
-        assertEquals("req-9", tree["requestId"]?.jsonPrimitive?.content)
+        assertEquals("0200-01-01T00:00:00.000Z", tree["at"]?.jsonPrimitive?.content)
     }
 }

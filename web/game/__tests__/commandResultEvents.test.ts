@@ -1,59 +1,52 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-    __resetCommandSettledWaiters,
+    __resetCommandSettledListeners,
     deliverCommandSettled,
-    waitForCommandSettled,
+    subscribeCommandSettled,
 } from '@/lib/commandResultEvents';
 
-describe('waitForCommandSettled', () => {
+describe('subscribeCommandSettled', () => {
     afterEach(() => {
-        __resetCommandSettledWaiters();
-        vi.useRealTimers();
+        __resetCommandSettledListeners();
     });
 
-    it('같은 requestId 신호만 깨우고 다른 명령의 신호는 무시한다', async () => {
-        const waited = waitForCommandSettled('req-a', 1_000);
+    /** 신호에는 식별자가 없다 — 기다리는 쪽이 전부 깨어나 각자 자기 정본을 읽는다. */
+    it('신호가 오면 구독자 전원이 깨어난다', () => {
+        const first = vi.fn();
+        const second = vi.fn();
+        subscribeCommandSettled(first);
+        subscribeCommandSettled(second);
 
-        deliverCommandSettled(JSON.stringify({ requestId: 'req-b' }));
-        deliverCommandSettled(JSON.stringify({ requestId: 'req-a' }));
+        deliverCommandSettled();
+        deliverCommandSettled();
 
-        await expect(waited).resolves.toBe(true);
+        expect(first).toHaveBeenCalledTimes(2);
+        expect(second).toHaveBeenCalledTimes(2);
     });
 
-    it('신호가 오지 않으면 타임아웃에 false로 끝난다', async () => {
-        vi.useFakeTimers();
-        const waited = waitForCommandSettled('req-c', 500);
+    /** 해제가 안 되면 제출할 때마다 리스너가 쌓여 신호 한 번에 죽은 요청이 그만큼 나간다. */
+    it('해제한 구독자는 더 이상 깨어나지 않는다', () => {
+        const listener = vi.fn();
+        const unsubscribe = subscribeCommandSettled(listener);
 
-        await vi.advanceTimersByTimeAsync(500);
+        unsubscribe();
+        deliverCommandSettled();
 
-        await expect(waited).resolves.toBe(false);
+        expect(listener).not.toHaveBeenCalled();
     });
 
-    /** 깨진 프레임에 대기자가 끌려가면 아직 준비 안 된 정본을 읽고 PENDING으로 접힌다. */
-    it('해독할 수 없거나 requestId 없는 프레임은 아무도 깨우지 않는다', async () => {
-        vi.useFakeTimers();
-        const waited = waitForCommandSettled('req-d', 500);
+    /** 콜백 안에서 자기 자신을 해제해도 그 순회가 깨지면 안 된다. */
+    it('콜백이 순회 중에 자기 구독을 해제해도 나머지가 깨어난다', () => {
+        const other = vi.fn();
+        const unsubscribe = subscribeCommandSettled(() => unsubscribe());
+        subscribeCommandSettled(other);
 
-        deliverCommandSettled('{not json');
-        deliverCommandSettled(JSON.stringify({ at: '2026-08-17T00:00:00Z' }));
-        await vi.advanceTimersByTimeAsync(499);
-        deliverCommandSettled(JSON.stringify({ requestId: '' }));
-        await vi.advanceTimersByTimeAsync(1);
-
-        await expect(waited).resolves.toBe(false);
+        expect(() => deliverCommandSettled()).not.toThrow();
+        expect(other).toHaveBeenCalledTimes(1);
     });
 
-    /** 같은 화면에서 두 명령을 연달아 보내면 각자 자기 신호에만 깨어나야 한다. */
-    it('여러 대기자가 서로의 신호에 끌려가지 않는다', async () => {
-        vi.useFakeTimers();
-        const first = waitForCommandSettled('req-e', 1_000);
-        const second = waitForCommandSettled('req-f', 1_000);
-
-        deliverCommandSettled(JSON.stringify({ requestId: 'req-f' }));
-        await expect(second).resolves.toBe(true);
-
-        await vi.advanceTimersByTimeAsync(1_000);
-        await expect(first).resolves.toBe(false);
+    it('구독자가 없어도 신호는 조용히 지나간다', () => {
+        expect(() => deliverCommandSettled()).not.toThrow();
     });
 });

@@ -1,4 +1,4 @@
-# OPENSAM-45 — 명령 결과 push 신호 (SSE `commandResolved`/`commandRejected`)
+# OPENSAM-45 — 명령 결과 push 신호 (SSE `commandSettled`)
 
 Scope: OPENSAM-45 명령 결과 push 신호 — RealtimeEvent lifecycle 변형(common/) · outbox 릴레이 발행과 SSE 이벤트 이름(app/) · 신호-폴링 경주 수신(web/)
 Verdict: cleared
@@ -10,9 +10,9 @@ FE는 명령 제출 뒤 `pollCommandResultResponse`로 300ms × 20회 되물어 
 알리지 않았다**. 이 티켓은 그 알림을 붙인다.
 
 - `common`: `RealtimeEvent`에 `commandSettled` **한** 변형 추가(별도 파일 — 게이트 ② 동결 파일을
-  건드리지 않는다). payload는 `at` + `requestId`뿐이다(§2).
-- `app/game-engine`: `CommandOutboxRelay`가 outbox 행을 published로 마킹한 **뒤** 같은 게임
-  이벤트 채널로 신호를 발행한다.
+  건드리지 않는다). payload는 `at` **하나뿐**이다(§2).
+- `app/game-engine`: `CommandOutboxRelay`가 배치의 outbox 행을 전부 published로 마킹한 **뒤**
+  같은 게임 이벤트 채널로 신호를 한 번 발행한다.
 - `app/game-api`: `RealtimeRelayController.fanOut`이 SSE 이벤트 이름을 payload의 `type`에서 뽑는다.
 - `web/game`: `submitCommandAndAwaitResult`가 **신호 vs 폴링을 경주**시킨다. 신호는 Shell이 이미
   열어 둔 SSE 연결(`hooks/useSSE.ts`)에 얹어 받는다 — 제출 때 두 번째 연결을 새로 열지 않는다.
@@ -30,27 +30,34 @@ FE는 명령 제출 뒤 `pollCommandResultResponse`로 300ms × 20회 되물어 
 
 ## 2. 신호는 결과가 아니다 (설계의 축)
 
-푸시 payload에는 `at`과 `requestId`만 싣는다. 결과 본문도, 성공/실패 여부도, deny 사유도 싣지
+푸시 payload에는 `at`만 싣는다. 결과 본문도, 성공/실패 여부도, deny 사유도, **식별자조차** 싣지
 않는다. 정본은 여전히 `GET /api/command/result/{requestId}`이다. 이유는 세 가지다.
 
 1. **정보 노출 (초판의 blocker).** `/sse/turn`은 수신자별 필터가 **없는** 월드 전역 브로드캐스트다.
    초판은 `reason`("금이 부족합니다.")과 `resultType`을 실었는데, 그러면 접속한 모든 브라우저가
    남의 명령 결과와 실패 사유를 그대로 받아 본다. 필터를 다는 대신 payload를 지웠다 — FE가 그 값을
-   애초에 쓰지 않았기 때문에(깨움 신호로만 썼다) 지우는 쪽이 더 작은 diff다. `requestId`는 제출자만
-   아는 불투명 값이라 남이 받아도 쓸 수 없다.
+   애초에 쓰지 않았기 때문에(깨움 신호로만 썼다) 지우는 쪽이 더 작은 diff다.
+   **`requestId`도 실을 수 없다(2차 지적, §10).** 불투명 값이라 안전해 보이지만 정본 엔드포인트
+   `CommandController.commandResult(requestId)`에 요청자 소유권 검사가 **없다** — 값을 아는 사람이
+   곧 결과를 읽는 사람이다. 지금까지 그 값은 제출자만 알았고, 전역 채널에 실으면 그 전제가 깨진다.
+   엔드포인트에 소유권 검사를 더하는 일은 별개 티켓 **OPENSAM-197**로 올렸다.
 2. **위조 방지 (OPENSAM-13/135).** 두 경로가 각자 판정하면 조용히 어긋난다. push를 판정 근거로
    쓰면 "202 = 성공"과 같은 종류의 거짓말이 다시 생긴다.
 3. **유실 내성.** SSE는 프록시 버퍼링·연결 끊김으로 없어질 수 있다. 신호가 사라졌을 때 결과까지
    사라지면 안 되므로 폴링 루프를 **제거하지 않았다** — 신호는 폴링을 앞당길 뿐이다.
 
-그래서 FE는 `Promise.race([폴링, 신호])`를 돌리고, 신호가 이겨도 곧바로 정본을 한 번 더 읽는다.
-그 읽기가 아직 `PENDING`이면 결론을 내지 않고 원래 폴링이 끝나기를 기다린다(성공을 '처리 지연'으로
-잘못 접는 것을 막는다 — 테스트로 고정).
+식별자가 없으므로 신호의 뜻은 "**누군가의** 명령 결과가 커밋됐다"까지다. FE는
+`Promise.race([폴링, 신호])`를 돌리고, 신호가 올 때마다 **자기** requestId로 정본을 한 번 읽어
+`RESOLVED`일 때만 결론을 낸다. 남의 명령이 만든 신호에는 헛읽기 한 번으로 끝나고 기다림이 이어진다
+(폴링 19회보다 싸다). 정본이 `PENDING`이면 결론을 내지 않고 원래 폴링이 끝나기를 기다린다 —
+성공을 '처리 지연'으로 잘못 접는 것을 막는다(둘 다 테스트로 고정).
 
 ## 3. 순서 문제 — 키 먼저, 신호 나중
 
-`CommandOutboxRelay`는 `publishCommandResultPayload`(폴링 키) → `markCommandOutboxPublished`
-→ `publishRealtimeEvent`(신호) 순으로 움직인다. 뒤집으면 알림을 받은 FE가 **아직 없는 키**를 읽고
+`CommandOutboxRelay`는 배치의 모든 행에 대해 `publishCommandResultPayload`(폴링 키) →
+`markCommandOutboxPublished`를 끝낸 **뒤** `publishRealtimeEvent`(신호)를 **한 번** 낸다.
+배치당 한 번인 이유는 신호에 식별자가 없어 N번 보내면 같은 내용을 N번 뿌리는 것뿐이기 때문이다
+(커밋된 행이 0이면 신호도 없다 — 테스트로 고정). 순서를 뒤집으면 알림을 받은 FE가 **아직 없는 키**를 읽고
 PENDING으로 물러나 신호가 무의미해진다. 릴레이가 이미 커밋된 outbox 행만 읽으므로 커밋 전 알림은
 구조적으로 불가능하다. 신호 발행은 `runCatching`으로 감쌌다 — 발행이 실패해도 결과 처리(키 + 마킹)는
 되돌리지 않는다. 세 가지 모두 테스트로 고정했다(`CommandOutboxRelayLifecycleEventTest`).
@@ -96,10 +103,15 @@ main 소스에 **생산자가 없어**(선언·wire 테스트·골든 corpus뿐)
 
 ## 7. 검증
 
-- `:common:test :app:game-engine:test :app:game-api:test --rerun-tasks` → BUILD SUCCESSFUL.
-  XML 집계: common 239 / game-engine 911(skip 1, Docker 부재 IT) / game-api 521 = **1671, fail 0 err 0**.
-- `web/game` vitest 신규 10건 통과(`commandResultEvents.test.ts` 4, `commandSubmit.result-events.test.ts` 6).
-  전체 385건 중 383 통과 + §6의 선행 실패 2건. 기존 테스트 4곳의 `pollCommandResultResponse` 호출
+- `:common:test :app:game-engine:test :app:game-api:test --rerun-tasks`. XML 집계:
+  common 239 / game-engine 911(skip 1) / game-api 521 = **1671, fail 0 err 0** —
+  단, §10 수정 뒤 재실행에서 `WorldSnapshotLoaderArchiveIT` 1건이 Testcontainers 연결 실패
+  (`SQL State 08001`)로 떨어졌다. **단독 재실행 시 BUILD SUCCESSFUL**이고 원인은 이전 실행에서
+  남은 postgres 컨테이너가 쌓인 로컬 Docker 상태다(Ryuk 비활성). 이 브랜치의 변경(3개 파일)과
+  접점이 없다. CI의 `jvm` 잡이 최종 판정이다.
+- 신규 백엔드 7건 전부 통과(wire 2 · 릴레이 4 · 발행자 1) — XML에서 개별 확인.
+- `web/game` vitest 신규 11건 통과(`commandResultEvents.test.ts` 4, `commandSubmit.result-events.test.ts` 7).
+  전체 386건 중 384 통과 + §6의 선행 실패 2건. 기존 테스트 4곳의 `pollCommandResultResponse` 호출
   단언은 인자가 하나 늘어(중단 신호) `expect.any(AbortSignal)`로 **넓히지 않고 정확히** 갱신했다.
 - `pnpm lint` error 0(기존 `<img>`/exhaustive-deps warning만) · `pnpm build` 성공.
 - `scripts/agent/v2-isolation-gate.sh` → **PASS**. ③ 경계 목록 = 선언한 3개 파일과 일치
@@ -107,6 +119,8 @@ main 소스에 **생산자가 없어**(선언·wire 테스트·골든 corpus뿐)
 - **비어 있지 않음(non-vacuity) 실측:** `fanOut`의 `.name(eventNameOf(json))`을 예전
   `.name(DEFAULT_EVENT_NAME)`로 되돌려 재실행 → `RealtimeRelayControllerEventNameTest` FAILED,
   복구 후 다시 green. 초판에서는 이 되돌림이 백엔드 1672건을 전부 통과시켰다.
+- **비어 있지 않음 실측 2:** `awaitCommandResult`의 `finally { unsubscribe() }`를 빼고 재실행 →
+  "기다림이 끝나면 신호 구독을 해제한다" FAILED(나머지 6건은 green), 복구 후 7/7.
 - **미측정(UNKNOWN):** 실제 브라우저에서의 end-to-end 지연 단축은 재지 않았다(webapp-testing 채점대기).
   단위 수준에서는 신호 경로가 폴링 간격을 기다리지 않음을 테스트로 고정했다.
 
@@ -115,9 +129,9 @@ main 소스에 **생산자가 없어**(선언·wire 테스트·골든 corpus뿐)
 - `RealtimePublisher`를 `open class` + 두 메서드 `open`으로 바꿨다. 같은 파일군의
   `CommandResultRepository`/`CommandOutboxRelay`가 이미 쓰는 방식이며, 릴레이의 발행 **순서**를
   실제 객체로 검증하기 위해 필요하다.
-- `RealtimeRelayController.eventNameOf`를 `private` → `internal`로 낮췄다. `fanOut`이 그 값을
-  `SseEmitter.event().name(...)`에 넘기는 부분은 한 줄이고, pub/sub→fanOut 배달 경로는
-  `RealtimeRelayIT`가 따로 덮는다.
+- `RealtimeRelayController`에 `internal fun eventFor(json)`를 뽑았다(이름 결정 + 프레임 조립).
+  `eventNameOf`는 `private` 그대로다. `fanOut` 자체는 emitter 목록 순회 + 죽은 emitter 정리뿐이라
+  테스트가 닿지 않고, 이름이 실제 전송 프레임에 실리는지는 `eventFor(...).build()`로 확인한다.
 
 ## 9. 독립 리뷰 대응 (blocker 1 · fix-required 8 · nit 7)
 
@@ -142,3 +156,15 @@ main 소스에 **생산자가 없어**(선언·wire 테스트·골든 corpus뿐)
 | nit | `VerticalSliceE2EIT:645` 낡은 주석(`name("realtime")`) | **미반영.** 선행 결함이며 이 티켓 경계(3파일) 밖이다 |
 | nit | 테스트마다 heartbeat 스케줄러가 뜬다 | **미반영.** 데몬 스레드라 JVM을 붙잡지 않는다 |
 | — | 잘못된 판정 노출·ONE daemon-write 위반·기존 리스너 파손·공허한 테스트 | 리뷰어가 각각 전수 추적 후 **없음**으로 판정 |
+
+## 10. 2차 리뷰 대응 (CodeRabbit)
+
+PR #430에 붙은 자동 리뷰의 지적과 처리다. 첫 번째 것은 **실재하는 노출 경로**였다.
+
+| 지적 | 처리 |
+| --- | --- |
+| 전역 채널로 나가는 `requestId`를 남이 주워 정본 엔드포인트를 호출할 수 있다 — `commandResult`에 소유권 검사가 없다 | **확인 후 수정.** `CommandController.kt:211`을 읽어 principal 파라미터도 소유권 검사도 없음을 확인했다. payload에서 `requestId`를 제거해(식별자 없는 깨움 신호) 노출 경로를 닫고, 엔드포인트 자체의 결함은 **OPENSAM-197**로 올렸다. FE는 신호마다 자기 결과를 되읽는 방식으로 바꿨다(§2) |
+| `markCommandOutboxPublished`를 `ChangeRecorder` 경유로 바꿔라 | **미반영(사유 기록).** 이 PR이 만든 쓰기가 아니라 선행 코드이며, 독립 리뷰어가 ONE daemon-write 위반 여부를 전수 추적해 **위반 없음**으로 판정했다. 릴레이는 턴 델타가 아니라 outbox 발행 표시를 쓰는 별개 경로다. 바꾸려면 그 자체가 별도 티켓이다 |
+| `.coderabbit.yaml`의 path instruction이 영어 주석을 요구한다 | **미반영(사유 기록).** 이 저장소의 주석은 전부 한글이며 같은 지적을 R6에서도 같은 이유로 거절했다. 새 파일만 영어로 쓰면 한 파일군 안에서 언어가 갈린다. 설정과 실제 관행의 불일치는 설정을 고칠 문제다 |
+| 리뷰 문서 제목이 옛 이벤트 이름(`commandResolved`/`commandRejected`)이고 §8이 `eventNameOf`를 `internal`이라 적었다 | **수정.** 제목을 `commandSettled`로, §8을 실제 가시성(`eventNameOf`는 `private`, 새로 뽑은 `eventFor`가 `internal`)으로 고쳤다 |
+| 새 TS는 2-space 들여쓰기 | **미반영.** `web/game`의 기존 파일이 4-space이고 `pnpm lint` error 0이다. 신규 파일만 다르게 쓰면 같은 디렉터리에서 스타일이 갈린다 |
