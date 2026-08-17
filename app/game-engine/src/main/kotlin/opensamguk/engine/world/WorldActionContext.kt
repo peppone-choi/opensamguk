@@ -15,6 +15,9 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation as EngineNation
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.v2.V2AttritionCity
+import opensamguk.engine.v2.V2AttritionResult
+import opensamguk.engine.v2.V2CityGarrisonAttritionContext
 import opensamguk.engine.v2.V2CityIncomeContext
 import opensamguk.engine.v2.V2CityIncomeNation
 import opensamguk.engine.v2.V2CityIncomeResult
@@ -153,6 +156,7 @@ class WorldActionContext(
 ) : EventActionContext,
     ProcessIncomeContext,
     V2CityIncomeContext,
+    V2CityGarrisonAttritionContext,
     ProcessWarIncomeContext,
     RandomizeCityTradeRateContext,
     ProcessSemiAnnualContext,
@@ -437,6 +441,46 @@ class WorldActionContext(
             }
         }
         world.pushLog(logDraft("global", "history", result.globalHistory))
+    }
+
+    // ── V2CityGarrisonAttritionContext (OPENSAM-152) ───────────────────────────────────────────
+
+    override fun attritionMonth(): Int = resolveMonth()
+
+    /** 묘섭의 "등록 장수" 대응 — 월드에 살아 있는 장수 수(NPC 포함, 전 국가 합산). */
+    override fun activeGeneralCount(): Int = world.listGenerals().size
+
+    override fun attritionCities(): List<V2AttritionCity> {
+        val ledger = requireV2Ledger().entries(world.worldId)
+        return world.listCities().sortedBy { it.id }.map {
+            V2AttritionCity(
+                cityId = it.id,
+                name = it.name,
+                nationId = it.nationId,
+                state = it.state,
+                garrison = (ledger[it.id] ?: V2CityLedgerEntry.EMPTY).garrison,
+            )
+        }
+    }
+
+    override fun applyV2Attrition(result: V2AttritionResult) {
+        val store = requireV2Ledger()
+        for (o in result.outcomes) {
+            val delta = o.after - o.before
+            if (delta != 0) store.adjust(world.worldId, recorder, o.cityId, garrisonDelta = delta)
+
+            val pre = world.getCityById(o.cityId)
+            if (o.vacated && pre != null) {
+                // 공백지화는 nationId=0 한 줄만 쓴다 — 관직·부대 정리는 v1 ConquerCity의 영역이라
+                // 부르지 않는다(그 경로의 로그·draw를 끌어들이게 된다).
+                val preLogic = PerTurnOverlay.toLogicCity(pre)
+                recorder.diffCity(preLogic, preLogic.copy(nationId = 0))
+                world.updateCity(pre.copy(nationId = 0))
+            }
+            for (line in o.logLines) {
+                world.pushLog(logDraft("global", "history", line, nationId = pre?.nationId))
+            }
+        }
     }
 
     // ── ProcessWarIncomeContext ────────────────────────────────────────────────────────────────
