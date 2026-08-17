@@ -393,6 +393,26 @@
 
 ---
 
+## ADR-LITE-034 OPENSAM-21(Spike B0)은 개명 2종 이름 대응만 남기고 축소한다 (H5)
+
+- Date: 2026-08-17
+- Status: proposed
+- Decision (pending human approval): H5 세 선택지 중 **(1) 잔여 범위 축소**를 채택한다. OPENSAM-21의 B0 절은 동명 생존 4종(`BattleState`·`BattleClock`·`BattleEvent`·`BattleReplay`)을 BATTLE-F2/F3/F5(OPENSAM-158/159/161)에 **위임**하고, `BattleTopology`는 ADR-LITE-033에 따라 OPENSAM-158 단독 소유이므로 B0 범위에서 뺀다. 따라서 **B0의 실제 잔여는 개명 2종의 이름 대응 기록 하나**다. C0(콘텐츠 lifecycle)는 무변경이며 에픽을 종료하지 않는다(옵션 2 기각) — C0가 살아 있기 때문이다.
+
+  **개명 대응표(이 ADR이 그 기록이다):**
+
+  | 구 이름 (P-13, product-spec §10) | 신 계약 (07-30 계열) |
+  |---|---|
+  | `OrderIntent` (P-13d) | 07-30 실시간 전투 세션·명령·리플레이 설계 **§8 명령 상태기계** |
+  | `BattleServerAuthority` (P-13g) | `BattleAuthoritySnapshot` + 같은 스펙 **§5 소유권 불변식** |
+
+- Context: ADR-LITE-032가 P-13 7종을 07-30 계열에 (a) 포함으로 판정했고(근거 원본 `docs/superpowers/research/2026-08-16-v2-battle-canon-reconcile-p4-p13.md` §2.4·§4·R5), 07-30 구현 계획 `:80,82,92,143`이 4종을 파일명 그대로 되살린다. OPENSAM-21 본문은 그 판정 전에 쓰인 채 "grid/연속좌표 두 topology 공통 BattleState·OrderIntent·BattleEvent/Replay 직렬화 계약"을 여전히 자기 범위로 선언하고 있었다 — 손대지 않으면 B0와 BATTLE-F2/F3/F5가 같은 계약을 **이중 착수**한다.
+- Alternatives: **(2) 종료: 기각.** OPENSAM-21은 B0+C0 합본 에픽이고 C0(FormationTemplate/Facility/… + CatalogBudget lifecycle + dangling fixture 4종)는 어느 판정도 건드리지 않았다. B0만의 사유로 에픽을 닫으면 C0가 소유자를 잃는다. **(3) 현행 유지: 기각.** 이중 착수 위험이 실재하고 마감선(F2 착수 전)이 임박했다.
+- Consequences: OPENSAM-21 본문에 위임 표와 "이 티켓이 동명 4종·`BattleTopology`에 어떤 계약도 새로 정의하지 않는다"는 잔여 수용 기준 2번을 넣었다. **마이크로 티켓 B0-a~g는 축소를 아직 반영하지 않았다** — 백로그 문서(`docs/superpowers/plans/2026-07-17-v2-ticket-backlog/01-backbone-micro.md:61` 등) 갱신은 이 ADR이 하지 않고 남긴다. 상태·라벨·담당자 변경은 하지 않았다(OPENSAM-181 비범위 준수). v1 패러티 무관·코드 무변경.
+- Approved by: NONE — human approval required. 이 ADR은 OPENSAM-21의 상태 전이·종료·구현 착수를 승인하지 않는다.
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 
