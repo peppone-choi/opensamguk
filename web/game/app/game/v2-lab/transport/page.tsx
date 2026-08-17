@@ -11,6 +11,7 @@ import Shell from '../../../../components/Shell';
 import GameCard from '../../../../components/GameCard';
 import { api } from '../../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../../lib/commandSubmit';
+import CityLedgerPanel from '../../../../components/v2/CityLedgerPanel';
 import type { IntakeOutcome } from '../../../../lib/types';
 
 type Outcome = { kind: 'applied' | 'rejected' | 'pending'; message: string };
@@ -24,6 +25,8 @@ export default function V2CityTransportPage() {
     const [garrison, setGarrison] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [outcome, setOutcome] = useState<Outcome | null>(null);
+    // OPENSAM-155 (R6) — 수송은 두 도시를 동시에 움직이므로 양쪽 원장을 같이 보여준다.
+    const [ledgerRefresh, setLedgerRefresh] = useState(0);
 
     async function handleSubmit() {
         const nums = [generalId, fromCityId, toCityId].map(Number);
@@ -61,6 +64,7 @@ export default function V2CityTransportPage() {
             setOutcome({ kind: 'rejected', message: cause instanceof Error ? cause.message : '수송에 실패했습니다.' });
         } finally {
             setSubmitting(false);
+            setLedgerRefresh(n => n + 1);
         }
     }
 
@@ -76,6 +80,8 @@ export default function V2CityTransportPage() {
             <div className="page-content">
                 <h1>v2-lab · 도시 자원 수송</h1>
                 <GameCard>
+                    <CityLedgerPanel cityId={Number(fromCityId)} refreshKey={ledgerRefresh} />
+                    <CityLedgerPanel cityId={Number(toCityId)} refreshKey={ledgerRefresh} />
                     <p>인접한 자국 도시로만 수송할 수 있고, 금·병량은 각각 5만까지입니다. 수송에는 병사 2000명이 필요합니다.</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', maxWidth: 320 }}>
                         {field('장수 ID', generalId, setGeneralId)}
