@@ -89,6 +89,25 @@ v2 샌드박스 게이트가 꺼진 v1 프로덕션에는 `V2CityLedgerStore` �
 - (c) `V2ProcessCityIncome` 정확히 2건 — 1월 gold / 7월 rice.
 - 추가: 등록기가 시나리오가 부르는 이름을 실제로 안다(이름 어긋나면 디스패치에서 죽는 것을 사전 차단).
 
+## 6-1. CI 가 잡은 누락 — 게이트웨이 시나리오 목록 (사후 수정)
+
+로컬 검증 명령(CLAUDE.md "full check")에 **`:app:gateway-api` 가 없어서** 놓친 회귀를 CI 가 잡았다:
+`ScenarioCatalogServiceTest > classpath scenario resources expose code and title` 가
+`assertEquals(30, scenarios.size)` 에서 31 로 깨졌다. `ScenarioCatalogService` 가
+`classpath*:scenario/scenario_*.json` 을 전수 열거하기 때문에 새 `scenario_9200.json` 이 **v1 운영자의
+시나리오 선택 목록에 그대로 노출**된 것이다.
+
+고친 방향이 중요하다. **30 → 31 로 기대값을 올리는 것은 오답이다** — 그러면 v2 샌드박스 월드가 v1
+프로덕션 UI 에서 고를 수 있는 자리에 남는다. 그 월드는 `V2_ENABLED` 밖에서 `V2ProcessCityIncome` 이
+일부러 죽도록 설계돼 있으므로(§5), 고르면 반드시 실패하는 선택지를 노출하는 셈이다. 그래서 카탈로그
+쪽에 **9000번대 = v2 샌드박스 대역** 을 정의해 목록에서 제외했다.
+
+- `app/gateway-api/.../service/ScenarioCatalogService.kt` — `V2_SANDBOX_CODE_FLOOR = 9000` 필터 (게이트 ③ 추가 1행)
+- 테스트는 개수 30 을 유지하되 **`scenario_9200.json` 이 클래스패스에 실재함**을 먼저 단언하고 그 다음
+  목록에 없음을 단언한다. 개수만 세면 필터가 죽어도 테스트가 통과한다.
+
+부수 효과로 §7 이 "문서화된 대역 규약은 없다"고 적었던 자리에 규약이 생겼다 — 9000번대는 v2 전용이다.
+
 ## 7. 남은 것 (이 티켓 밖, 숨기지 않음)
 
 - **실제 v2 월드 end-to-end 리플레이는 아직 없다.** 이 티켓이 증명한 것은 순수 정산 계약 + 배선 + 시드
