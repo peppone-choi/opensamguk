@@ -2,6 +2,7 @@ package opensamguk.engine.run
 
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.CityGarrisonRecruit
+import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
@@ -38,6 +39,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.v2.V2CityLedgerStore
+import opensamguk.engine.v2.V2CityTransportHandler
 import opensamguk.engine.v2.V2GarrisonRecruitHandler
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
@@ -349,6 +351,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── OPENSAM-153 (v2 R4) — 도시병사 보충 핸들러 (원장 없으면 null, dispatch에서 fail-closed deny) ──
     private val v2GarrisonRecruit = v2CityLedger?.let { V2GarrisonRecruitHandler(world, recorder, it) }
+    private val v2CityTransport = v2CityLedger?.let { V2CityTransportHandler(world, recorder, it) }
 
     /**
      * Dispatch one command to its handler.
@@ -437,6 +440,8 @@ class TurnDaemonCommandDispatcher(
         // ── OPENSAM-153 (v2 R4) — 도시병사 보충. 원장 없음 = fail-closed deny (null 반환 금지: null이면
         //    FE result-poll이 RESOLVED를 영영 못 보고 PENDING에 갇힌다). ──
         is CityGarrisonRecruit -> v2GarrisonRecruit?.handle(command) ?: V2GarrisonRecruitHandler.unavailable(command)
+        // ── OPENSAM-154 (v2 R5) — 도시 자원 수송. 같은 fail-closed 규약. ──
+        is CityTransport -> v2CityTransport?.handle(command) ?: V2CityTransportHandler.unavailable(command)
         else -> null
     }
 
