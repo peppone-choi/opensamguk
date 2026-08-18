@@ -146,6 +146,22 @@ ROLE = {
     "LOGISTICS":         (SIEGE, "치중", "의복", None, 3000),
 }
 
+# 역할 → 등급. 民兵(1) 값싸고 약하다 · 部曲(2) 표준 전력 · 精銳(3) 최고.
+# 사료가 이미 이 사다리를 갖고 있다 — 材官·郡兵 은 징집이고, 部曲 은 호족의 사병이고,
+# 北軍五校·虎賁·羽林 은 중앙 상비군이다. 등급은 그 실상에 이름을 붙인 것뿐이다.
+TIER = {
+    1: ("民兵", "민병", ["INFANTRY_LEVY", "INFANTRY_SKIRMISH", "GARRISON",
+                        "CAVALRY_LIGHT", "NAVY_LIGHT"]),
+    2: ("部曲", "부곡", ["INFANTRY_LINE", "INFANTRY_SHOCK", "INFANTRY_SHIELD",
+                        "INFANTRY_FANATIC", "RANGED_LIGHT", "RANGED_HEAVY",
+                        "CAVALRY_RAID", "CAVALRY_RANGED", "CHARIOT", "SIEGE",
+                        "NAVY_LINE", "LOGISTICS"]),
+    3: ("精銳", "정예", ["INFANTRY_ELITE", "INFANTRY_GUARD", "CAVALRY_SHOCK",
+                        "CAVALRY_GUARD", "BEAST", "NAVY_CAPITAL"]),
+}
+TIER_OF = {r: t for t, (_, _, rs) in TIER.items() for r in rs}
+assert set(TIER_OF) == set(ROLE), set(TIER_OF) ^ set(ROLE)
+
 # 이름이 장비를 말하는 병종. 사료가 적어둔 것을 역할 기본값이 덮지 않게 한다.
 # (부분 문자열이 아니라 한자 표기 전체로 건다 — 우연히 겹치는 글자가 많다.)
 OVERRIDE = {
@@ -201,7 +217,7 @@ def load_roster():
             else:
                 notes.append(f"{k}={v}")
         out.append(dict(id=2100 + n, name=u["ko"], han=u["han"], arm=arm, weapon=weapon,
-                        armor=armor, shield=shield, tech=tech, role=role,
+                        armor=armor, shield=shield, tech=tech, role=role, tier=TIER_OF[role],
                         req=sorted(set(req)), notes=notes,
                         forbid=WA if arm == CAV else [],
                         src=f"{u['source']['cite']} 「{u['source']['quote'][:40]}」",
@@ -246,13 +262,16 @@ def derive(u: dict) -> dict:
     if u["forbid"]:
         req.append({"type": "ForbidRegions", "forbidRegions": u["forbid"]})
 
-    info = [f"{u['weapon']}·{u['armor']}" + (f"·{sh}" if sh else "") + ".",
+    tier_han, tier_ko, _ = TIER[u["tier"]]
+    info = [f"{tier_ko}({tier_han}) 등급.",
+            f"{u['weapon']}·{u['armor']}" + (f"·{sh}" if sh else "") + ".",
             w_note, a_note] + ([s_note] if s_note else [])
     # 제약 타입이 없는 조건은 문구로만 남긴다 — 없는 메커니즘을 있는 척하지 않는다.
     info += [f"조건(미구현): {n}" for n in u["notes"]]
     return {
         "id": u["id"], "armType": u["arm"], "name": u["name"], "han": u["han"],
-        "role": u["role"], "evidence": u["cls"],
+        "role": u["role"], "tier": u["tier"], "tierName": tier_ko,
+        "evidence": u["cls"],
         "attack": atk, "defence": dfn, "speed": spd, "avoid": avoid,
         "magicCoef": 0, "cost": cost, "rice": rice,
         "requirements": req,
@@ -276,6 +295,7 @@ def build() -> dict:
             "generator": "tools/unitset/build_han_unitset.py",
             "note": "수치는 무기·갑옷·방패 조합에서 유도된다. 손으로 찍지 않는다.",
             "armTypes": {"1": "보병", "2": "궁병", "3": "기병", "4": "귀병", "5": "차병"},
+            "tiers": {str(t): {"han": h, "ko": k} for t, (h, k, _) in TIER.items()},
             "sources": ["devsam/core che 병종표 (armType·상성 골격)",
                         "data/v2/unit-types.json (이름·출전·게이팅·역할 — 사료 실측 71종)",
                         "Total War: Three Kingdoms (조성 축만 참고, 수치·이름 미차용)"],

@@ -11,6 +11,20 @@
    "4": "귀병",
    "5": "차병"
   },
+  "tiers": {
+   "1": {
+    "han": "民兵",
+    "ko": "민병"
+   },
+   "2": {
+    "han": "部曲",
+    "ko": "부곡"
+   },
+   "3": {
+    "han": "精銳",
+    "ko": "정예"
+   }
+  },
   "sources": [
    "devsam/core che 병종표 (armType·상성 골격)",
    "data/v2/unit-types.json (이름·출전·게이팅·역할 — 사료 실측 71종)",
@@ -29,6 +43,8 @@
    "name": "유주돌기",
    "han": "幽州突騎",
    "role": "CAVALRY_SHOCK",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 140,
@@ -76,6 +92,7 @@
     "shield": null
    },
    "info": [
+    "정예(精銳) 등급.",
     "삭·경철갑.",
     "긴 장창. 기병에 가장 강하고 보병전엔 둔하다.",
     "쇠미늘. 무겁지 않다."
@@ -88,6 +105,8 @@
    "name": "호표기",
    "han": "虎豹騎",
    "role": "CAVALRY_GUARD",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 125,
    "defence": 200,
@@ -127,6 +146,7 @@
     "shield": "소형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "극·중철갑·소형방패.",
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "두꺼운 쇠미늘. 느리다.",
@@ -142,6 +162,8 @@
    "name": "함진영",
    "han": "陷陣營",
    "role": "INFANTRY_SHOCK",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 140,
@@ -172,6 +194,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "부곡(部曲) 등급.",
     "환수도·경철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 무겁지 않다.",
@@ -186,6 +209,8 @@
    "name": "단양병",
    "han": "丹楊兵",
    "role": "INFANTRY_ELITE",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 175,
@@ -222,6 +247,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "환수도·평철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 튼튼하다.",
@@ -236,6 +262,8 @@
    "name": "산월병",
    "han": "山越兵",
    "role": "INFANTRY_SKIRMISH",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 120,
    "defence": 100,
@@ -268,6 +296,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "표창·경피갑.",
     "던지고 붙는다. 첫 합에서 기병을 흔든다.",
     "가죽. 가볍다.",
@@ -282,6 +311,8 @@
    "name": "판순만병",
    "han": "板楯蠻兵",
    "role": "INFANTRY_SHIELD",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 120,
    "defence": 140,
@@ -319,6 +350,7 @@
     "shield": "대형방패"
    },
    "info": [
+    "부곡(部曲) 등급.",
     "표창·경철갑·대형방패.",
     "던지고 붙는다. 첫 합에서 기병을 흔든다.",
     "쇠미늘. 무겁지 않다.",
@@ -332,6 +364,8 @@
    "name": "무당비군",
    "han": "無當飛軍",
    "role": "INFANTRY_ELITE",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 175,
@@ -369,6 +403,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "환수도·평철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 튼튼하다.",
@@ -382,6 +417,8 @@
    "name": "황중의종",
    "han": "湟中義從",
    "role": "CAVALRY_LIGHT",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -424,6 +461,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "궁·경피갑.",
     "표준 활.",
     "가죽. 가볍다."
@@ -436,6 +474,8 @@
    "name": "강족기병",
    "han": "羌騎(先零·燒當·參狼)",
    "role": "CAVALRY_RAID",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -482,6 +522,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "모·경피갑.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 가볍다."
@@ -494,6 +535,8 @@
    "name": "선비기병",
    "han": "鮮卑騎",
    "role": "CAVALRY_RAID",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -533,6 +576,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "모·경피갑.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 가볍다.",
@@ -546,6 +590,8 @@
    "name": "오환기병",
    "han": "烏桓騎",
    "role": "CAVALRY_SHOCK",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 140,
@@ -585,6 +631,7 @@
     "shield": null
    },
    "info": [
+    "정예(精銳) 등급.",
     "삭·경철갑.",
     "긴 장창. 기병에 가장 강하고 보병전엔 둔하다.",
     "쇠미늘. 무겁지 않다.",
@@ -598,6 +645,8 @@
    "name": "강노병",
    "han": "彊弩",
    "role": "RANGED_HEAVY",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 150,
    "defence": 100,
@@ -628,6 +677,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "노·경피갑.",
     "관통. 갑옷을 뚫지만 재장전이 느리다.",
     "가죽. 가볍다.",
@@ -641,6 +691,8 @@
    "name": "누선수군",
    "han": "樓船",
    "role": "NAVY_CAPITAL",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 160,
@@ -671,6 +723,7 @@
     "shield": "대형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "모·중등갑·대형방패.",
     "장병기. 정면 돌격을 되받는다.",
     "등나무를 겹쳤다. 불에 약하다.",
@@ -686,6 +739,8 @@
    "name": "북군오교",
    "han": "北軍五校",
    "role": "INFANTRY_GUARD",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 125,
    "defence": 175,
@@ -723,6 +778,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "극·평철갑·중형방패.",
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "쇠미늘. 튼튼하다.",
@@ -737,6 +793,8 @@
    "name": "서역기병",
    "han": "西域胡騎",
    "role": "CAVALRY_LIGHT",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -771,6 +829,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "궁·경피갑.",
     "표준 활.",
     "가죽. 가볍다.",
@@ -785,6 +844,8 @@
    "name": "등갑병",
    "han": "藤甲兵",
    "role": "INFANTRY_SHOCK",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "ROMANCE_ATTESTED",
    "attack": 110,
    "defence": 160,
@@ -821,6 +882,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "부곡(部曲) 등급.",
     "환수도·중등갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "등나무를 겹쳤다. 불에 약하다.",
@@ -836,6 +898,8 @@
    "name": "상병",
    "han": "象兵",
    "role": "CAVALRY_SHOCK",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "GAME_REFERENCE",
    "attack": 100,
    "defence": 160,
@@ -881,6 +945,7 @@
     "shield": null
    },
    "info": [
+    "정예(精銳) 등급.",
     "모·중등갑.",
     "장병기. 정면 돌격을 되받는다.",
     "등나무를 겹쳤다. 불에 약하다.",
@@ -894,6 +959,8 @@
    "name": "백마의종",
    "han": "白馬義從",
    "role": "CAVALRY_RANGED",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 150,
    "defence": 100,
@@ -932,6 +999,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "강궁·경피갑.",
     "강한 활. 사거리와 관통이 붙는다.",
     "가죽. 가볍다.",
@@ -945,6 +1013,8 @@
    "name": "해번병",
    "han": "解煩兵",
    "role": "INFANTRY_ELITE",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 175,
@@ -975,6 +1045,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "환수도·평철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 튼튼하다.",
@@ -990,6 +1061,8 @@
    "name": "거하호사",
    "han": "車下虎士",
    "role": "INFANTRY_GUARD",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 125,
    "defence": 175,
@@ -1021,6 +1094,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "극·평철갑·중형방패.",
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "쇠미늘. 튼튼하다.",
@@ -1036,6 +1110,8 @@
    "name": "적갑군",
    "han": "赤甲軍",
    "role": "INFANTRY_ELITE",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 175,
@@ -1073,6 +1149,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "환수도·평철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 튼튼하다.",
@@ -1086,6 +1163,8 @@
    "name": "연노사",
    "han": "連弩士",
    "role": "RANGED_HEAVY",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 175,
    "defence": 100,
@@ -1123,6 +1202,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "연노·경피갑.",
     "연사. 탄약이 적어 오래 못 쏜다.",
     "가죽. 가볍다.",
@@ -1136,6 +1216,8 @@
    "name": "돌장무전",
    "han": "突將無前",
    "role": "INFANTRY_SHOCK",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 140,
@@ -1166,6 +1248,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "부곡(部曲) 등급.",
     "환수도·경철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 무겁지 않다.",
@@ -1180,6 +1263,8 @@
    "name": "몽충",
    "han": "蒙衝",
    "role": "NAVY_LINE",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 150,
    "defence": 160,
@@ -1211,6 +1296,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "노·중등갑.",
     "관통. 갑옷을 뚫지만 재장전이 느리다.",
     "등나무를 겹쳤다. 불에 약하다.",
@@ -1224,6 +1310,8 @@
    "name": "투함",
    "han": "鬥艦",
    "role": "NAVY_LINE",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 150,
    "defence": 160,
@@ -1255,6 +1343,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "노·중등갑.",
     "관통. 갑옷을 뚫지만 재장전이 느리다.",
     "등나무를 겹쳤다. 불에 약하다.",
@@ -1268,6 +1357,8 @@
    "name": "주가",
    "han": "走舸",
    "role": "NAVY_LIGHT",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 105,
@@ -1293,6 +1384,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "모·경등갑.",
     "장병기. 정면 돌격을 되받는다.",
     "등나무. 가볍고 물에 뜬다.",
@@ -1306,6 +1398,8 @@
    "name": "귀졸",
    "han": "鬼卒",
    "role": "INFANTRY_FANATIC",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 150,
    "defence": 75,
@@ -1343,6 +1437,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "부·의복.",
     "관통. 느리지만 중장 보병을 쪼갠다.",
     "갑옷이랄 것이 없다.",
@@ -1356,6 +1451,8 @@
    "name": "청주병",
    "han": "青州兵",
    "role": "INFANTRY_LINE",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 115,
@@ -1388,6 +1485,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "부곡(部曲) 등급.",
     "검·평피갑·중형방패.",
     "가볍고 빠르다. 전선 유지용.",
     "가죽. 무난하다.",
@@ -1402,6 +1500,8 @@
    "name": "철거병",
    "han": "鐵車兵",
    "role": "CHARIOT",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "ROMANCE_ATTESTED",
    "attack": 110,
    "defence": 200,
@@ -1438,6 +1538,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "과·중철갑.",
     "갈고리 달린 창. 말과 수레를 걸어 끌어내린다.",
     "두꺼운 쇠미늘. 느리다.",
@@ -1451,6 +1552,8 @@
    "name": "맹수부대",
    "han": "驅猛獸",
    "role": "BEAST",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "ROMANCE_ATTESTED",
    "attack": 100,
    "defence": 160,
@@ -1496,6 +1599,7 @@
     "shield": null
    },
    "info": [
+    "정예(精銳) 등급.",
     "모·중등갑.",
     "장병기. 정면 돌격을 되받는다.",
     "등나무를 겹쳤다. 불에 약하다.",
@@ -1509,6 +1613,8 @@
    "name": "비도병",
    "han": "飛刀",
    "role": "RANGED_LIGHT",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "ROMANCE_ATTESTED",
    "attack": 130,
    "defence": 100,
@@ -1545,6 +1651,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "투부·경피갑.",
     "던지는 도끼. 방패째 부순다.",
     "가죽. 가볍다.",
@@ -1558,6 +1665,8 @@
    "name": "백모병",
    "han": "白毦兵",
    "role": "INFANTRY_GUARD",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "GAME_REFERENCE",
    "attack": 125,
    "defence": 175,
@@ -1589,6 +1698,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "극·평철갑·중형방패.",
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "쇠미늘. 튼튼하다.",
@@ -1603,6 +1713,8 @@
    "name": "호사",
    "han": "虎士",
    "role": "INFANTRY_GUARD",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 125,
    "defence": 175,
@@ -1634,6 +1746,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "극·평철갑·중형방패.",
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "쇠미늘. 튼튼하다.",
@@ -1649,6 +1762,8 @@
    "name": "대극사",
    "han": "大戟士",
    "role": "INFANTRY_GUARD",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 125,
    "defence": 175,
@@ -1686,6 +1801,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "극·평철갑·중형방패.",
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "쇠미늘. 튼튼하다.",
@@ -1700,6 +1816,8 @@
    "name": "벽력거",
    "han": "霹靂車",
    "role": "SIEGE",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 150,
    "defence": 75,
@@ -1730,6 +1848,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "투석·의복.",
     "돌을 날린다.",
     "갑옷이랄 것이 없다.",
@@ -1744,6 +1863,8 @@
    "name": "충거",
    "han": "衝車",
    "role": "SIEGE",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 150,
    "defence": 75,
@@ -1774,6 +1895,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "충차·의복.",
     "성문을 깬다.",
     "갑옷이랄 것이 없다.",
@@ -1787,6 +1909,8 @@
    "name": "정란",
    "han": "井闌",
    "role": "SIEGE",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 150,
    "defence": 75,
@@ -1817,6 +1941,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "충차·의복.",
     "성문을 깬다.",
     "갑옷이랄 것이 없다.",
@@ -1830,6 +1955,8 @@
    "name": "운제",
    "han": "雲梯",
    "role": "SIEGE",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "ROMANCE_ATTESTED",
    "attack": 150,
    "defence": 75,
@@ -1860,6 +1987,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "충차·의복.",
     "성문을 깬다.",
     "갑옷이랄 것이 없다."
@@ -1872,6 +2000,8 @@
    "name": "둔전병",
    "han": "屯田兵",
    "role": "GARRISON",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 115,
@@ -1897,6 +2027,7 @@
     "shield": "대형방패"
    },
    "info": [
+    "민병(民兵) 등급.",
     "모·평피갑·대형방패.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 무난하다.",
@@ -1911,6 +2042,8 @@
    "name": "재관",
    "han": "材官",
    "role": "INFANTRY_LEVY",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 75,
@@ -1936,6 +2069,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "검·의복.",
     "가볍고 빠르다. 전선 유지용.",
     "갑옷이랄 것이 없다.",
@@ -1949,6 +2083,8 @@
    "name": "경거",
    "han": "輕車",
    "role": "CHARIOT",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 140,
@@ -1979,6 +2115,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "과·경철갑.",
     "갈고리 달린 창. 말과 수레를 걸어 끌어내린다.",
     "쇠미늘. 무겁지 않다.",
@@ -1992,6 +2129,8 @@
    "name": "호분",
    "han": "虎賁",
    "role": "INFANTRY_GUARD",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 125,
    "defence": 175,
@@ -2023,6 +2162,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "극·평철갑·중형방패.",
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "쇠미늘. 튼튼하다.",
@@ -2037,6 +2177,8 @@
    "name": "우림",
    "han": "羽林",
    "role": "CAVALRY_GUARD",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 125,
    "defence": 175,
@@ -2076,6 +2218,7 @@
     "shield": "소형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "극·평철갑·소형방패.",
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "쇠미늘. 튼튼하다.",
@@ -2090,6 +2233,8 @@
    "name": "진호기병",
    "han": "秦胡騎",
    "role": "CAVALRY_LIGHT",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -2131,6 +2276,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "궁·경피갑.",
     "표준 활.",
     "가죽. 가볍다."
@@ -2143,6 +2289,8 @@
    "name": "휴도각기병",
    "han": "休屠各騎",
    "role": "CAVALRY_RAID",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -2189,6 +2337,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "모·경피갑.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 가볍다."
@@ -2201,6 +2350,8 @@
    "name": "남흉노기병",
    "han": "南匈奴騎",
    "role": "CAVALRY_LIGHT",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -2242,6 +2393,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "궁·경피갑.",
     "표준 활.",
     "가죽. 가볍다."
@@ -2254,6 +2406,8 @@
    "name": "요동속국기병",
    "han": "遼東屬國騎",
    "role": "CAVALRY_LIGHT",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -2295,6 +2449,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "궁·경피갑.",
     "표준 활.",
     "가죽. 가볍다."
@@ -2307,6 +2462,8 @@
    "name": "청강",
    "han": "青羌",
    "role": "INFANTRY_SKIRMISH",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 120,
    "defence": 100,
@@ -2340,6 +2497,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "표창·경피갑.",
     "던지고 붙는다. 첫 합에서 기병을 흔든다.",
     "가죽. 가볍다."
@@ -2352,6 +2510,8 @@
    "name": "종수",
    "han": "賨叟",
    "role": "INFANTRY_ELITE",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 175,
@@ -2389,6 +2549,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "환수도·평철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 튼튼하다.",
@@ -2402,6 +2563,8 @@
    "name": "산기",
    "han": "散騎",
    "role": "CAVALRY_RAID",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -2441,6 +2604,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "모·경피갑.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 가볍다.",
@@ -2454,6 +2618,8 @@
    "name": "무기",
    "han": "武騎",
    "role": "CAVALRY_SHOCK",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 140,
@@ -2493,6 +2659,7 @@
     "shield": null
    },
    "info": [
+    "정예(精銳) 등급.",
     "삭·경철갑.",
     "긴 장창. 기병에 가장 강하고 보병전엔 둔하다.",
     "쇠미늘. 무겁지 않다.",
@@ -2506,6 +2673,8 @@
    "name": "수병",
    "han": "叟兵",
    "role": "INFANTRY_SKIRMISH",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 120,
    "defence": 100,
@@ -2539,6 +2708,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "표창·경피갑.",
     "던지고 붙는다. 첫 합에서 기병을 흔든다.",
     "가죽. 가볍다."
@@ -2551,6 +2721,8 @@
    "name": "종민병",
    "han": "賨民兵",
    "role": "INFANTRY_LEVY",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 75,
@@ -2584,6 +2756,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "검·의복.",
     "가볍고 빠르다. 전선 유지용.",
     "갑옷이랄 것이 없다."
@@ -2596,6 +2769,8 @@
    "name": "남중경졸",
    "han": "南中勁卒",
    "role": "INFANTRY_ELITE",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 175,
@@ -2632,6 +2807,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "환수도·평철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 튼튼하다.",
@@ -2646,6 +2822,8 @@
    "name": "목우유마",
    "han": "木牛流馬",
    "role": "LOGISTICS",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "ROMANCE_ATTESTED",
    "attack": 50,
    "defence": 75,
@@ -2676,6 +2854,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "치중·의복.",
     "싣고 나른다. 싸우라고 만든 것이 아니다.",
     "갑옷이랄 것이 없다.",
@@ -2690,6 +2869,8 @@
    "name": "감사",
    "han": "敢死",
    "role": "INFANTRY_SHOCK",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 140,
@@ -2720,6 +2901,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "부곡(部曲) 등급.",
     "환수도·경철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 무겁지 않다.",
@@ -2735,6 +2917,8 @@
    "name": "오루선",
    "han": "五樓船",
    "role": "NAVY_CAPITAL",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 160,
@@ -2765,6 +2949,7 @@
     "shield": "대형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "모·중등갑·대형방패.",
     "장병기. 정면 돌격을 되받는다.",
     "등나무를 겹쳤다. 불에 약하다.",
@@ -2780,6 +2965,8 @@
    "name": "비운대선",
    "han": "飛雲大船",
    "role": "NAVY_CAPITAL",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 160,
@@ -2810,6 +2997,7 @@
     "shield": "대형방패"
    },
    "info": [
+    "정예(精銳) 등급.",
     "모·중등갑·대형방패.",
     "장병기. 정면 돌격을 되받는다.",
     "등나무를 겹쳤다. 불에 약하다.",
@@ -2825,6 +3013,8 @@
    "name": "선등",
    "han": "先登",
    "role": "INFANTRY_SHOCK",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 110,
    "defence": 140,
@@ -2855,6 +3045,7 @@
     "shield": "중형방패"
    },
    "info": [
+    "부곡(部曲) 등급.",
     "환수도·경철갑·중형방패.",
     "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 무겁지 않다.",
@@ -2869,6 +3060,8 @@
    "name": "부곡",
    "han": "部曲",
    "role": "INFANTRY_LEVY",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 75,
@@ -2894,6 +3087,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "검·의복.",
     "가볍고 빠르다. 전선 유지용.",
     "갑옷이랄 것이 없다.",
@@ -2907,6 +3101,8 @@
    "name": "이병",
    "han": "夷兵",
    "role": "INFANTRY_SKIRMISH",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 120,
    "defence": 100,
@@ -2939,6 +3135,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "표창·경피갑.",
     "던지고 붙는다. 첫 합에서 기병을 흔든다.",
     "가죽. 가볍다.",
@@ -2952,6 +3149,8 @@
    "name": "황건병",
    "han": "黃巾兵",
    "role": "INFANTRY_LEVY",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 75,
@@ -2977,6 +3176,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "검·의복.",
     "가볍고 빠르다. 전선 유지용.",
     "갑옷이랄 것이 없다.",
@@ -2990,6 +3190,8 @@
    "name": "백파병",
    "han": "白波兵",
    "role": "INFANTRY_SKIRMISH",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 120,
    "defence": 100,
@@ -3022,6 +3224,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "표창·경피갑.",
     "던지고 붙는다. 첫 합에서 기병을 흔든다.",
     "가죽. 가볍다."
@@ -3034,6 +3237,8 @@
    "name": "흑산병",
    "han": "黑山兵",
    "role": "INFANTRY_SKIRMISH",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 120,
    "defence": 100,
@@ -3059,6 +3264,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "표창·경피갑.",
     "던지고 붙는다. 첫 합에서 기병을 흔든다.",
     "가죽. 가볍다.",
@@ -3073,6 +3279,8 @@
    "name": "고구려기병",
    "han": "高句麗騎",
    "role": "CAVALRY_RAID",
+   "tier": 2,
+   "tierName": "부곡",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 100,
@@ -3119,6 +3327,7 @@
     "shield": null
    },
    "info": [
+    "부곡(部曲) 등급.",
     "모·경피갑.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 가볍다."
@@ -3131,6 +3340,8 @@
    "name": "읍루주사",
    "han": "挹婁舟師",
    "role": "NAVY_LIGHT",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 130,
    "defence": 105,
@@ -3164,6 +3375,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "독시·경등갑.",
     "독 바른 화살. 스치면 죽는다.",
     "등나무. 가볍고 물에 뜬다.",
@@ -3177,6 +3389,8 @@
    "name": "상림만병",
    "han": "象林蠻兵",
    "role": "INFANTRY_SKIRMISH",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 120,
    "defence": 100,
@@ -3210,6 +3424,7 @@
     "shield": null
    },
    "info": [
+    "민병(民兵) 등급.",
     "표창·경피갑.",
     "던지고 붙는다. 첫 합에서 기병을 흔든다.",
     "가죽. 가볍다."
@@ -3222,6 +3437,8 @@
    "name": "군병",
    "han": "郡兵",
    "role": "GARRISON",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 115,
@@ -3247,6 +3464,7 @@
     "shield": "대형방패"
    },
    "info": [
+    "민병(民兵) 등급.",
     "모·평피갑·대형방패.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 무난하다.",
@@ -3260,6 +3478,8 @@
    "name": "현병",
    "han": "縣兵",
    "role": "GARRISON",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 115,
@@ -3292,6 +3512,7 @@
     "shield": "대형방패"
    },
    "info": [
+    "민병(民兵) 등급.",
     "모·평피갑·대형방패.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 무난하다.",
@@ -3305,6 +3526,8 @@
    "name": "정부오병",
    "han": "亭部五兵",
    "role": "GARRISON",
+   "tier": 1,
+   "tierName": "민병",
    "evidence": "PRIMARY_ATTESTED",
    "attack": 100,
    "defence": 115,
@@ -3330,6 +3553,7 @@
     "shield": "대형방패"
    },
    "info": [
+    "민병(民兵) 등급.",
     "모·평피갑·대형방패.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 무난하다.",
@@ -3343,6 +3567,8 @@
    "name": "철기",
    "han": "鐵騎",
    "role": "CAVALRY_SHOCK",
+   "tier": 3,
+   "tierName": "정예",
    "evidence": "ROMANCE_ATTESTED",
    "attack": 100,
    "defence": 200,
@@ -3382,6 +3608,7 @@
     "shield": null
    },
    "info": [
+    "정예(精銳) 등급.",
     "삭·중철갑.",
     "긴 장창. 기병에 가장 강하고 보병전엔 둔하다.",
     "두꺼운 쇠미늘. 느리다.",
