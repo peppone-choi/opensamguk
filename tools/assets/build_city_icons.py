@@ -18,8 +18,11 @@
 그대로 유지돼 레이아웃이 바뀌지 않는다.
 
 레벨 라벨(`MapViewer.LEVEL_TEXT`)에 맞춘 모양:
-  1 수(마을)  2 진(목책 요새)  3 관(관문)  4 이(이민족 취락)
-  5 소  6 중  7 대  8 특 — 5~8은 같은 성 실루엣을 규모만 키운다.
+  1 수(水 · 항구)  2 진(목책 요새)  3 관(관문)  4 이(이민족 취락)
+  5 소  6 중  7 대  8 특 — 넷 다 성벽을 두르고, 천수각 재료·층수·규모로만 등급을 올린다.
+
+`수`는 마을이 아니라 물 수(水)다 — 수군의 수. lv1은 `data/extracted/map/che.json` 기준
+적벽·파양·탐라·유구 넷뿐이고 전부 항구다. 그래서 부두와 배로 그린다.
 """
 
 from __future__ import annotations
@@ -44,9 +47,9 @@ DIMS = {
     3: (14, 14),
     4: (20, 15),
     5: (24, 16),
-    6: (26, 18),
-    7: (28, 20),
-    8: (32, 24),
+    6: (28, 19),
+    7: (32, 22),
+    8: (36, 26),
 }
 
 OUTLINE = (26, 22, 20, 255)
@@ -58,11 +61,16 @@ ROOF_D = (112, 38, 32, 255)
 WOOD = (152, 106, 60, 255)
 WOOD_D = (98, 66, 36, 255)
 GATE = (48, 40, 34, 255)
-GOLD = (238, 198, 92, 255)
-STRAW = (198, 170, 104, 255)
-STRAW_D = (146, 122, 70, 255)
 TENT = (196, 178, 142, 255)
 TENT_D = (138, 120, 90, 255)
+WATER = (58, 104, 140, 255)
+WATER_L = (96, 148, 184, 255)
+SAIL = (226, 220, 200, 255)
+SAIL_D = (176, 168, 148, 255)
+# 특(lv8) 전용 금빛 석재 — 대와 특은 크기 차이만으로는 구분이 안 돼서 성체 색을 바꾼다.
+GSTONE = (206, 172, 88, 255)
+GSTONE_L = (240, 212, 132, 255)
+GSTONE_D = (148, 116, 50, 255)
 
 
 class Canvas:
@@ -102,20 +110,21 @@ class Canvas:
         return img
 
 
-def wall(c: Canvas, x0: int, x1: int, top: int, bottom: int) -> None:
+def wall(c: Canvas, x0: int, x1: int, top: int, bottom: int,
+         sc=STONE, sl=STONE_L, sd=STONE_D) -> None:
     """성벽 몸통 — 윗줄은 밝게, 아래·양끝은 어둡게 해서 입체감을 만든다."""
-    c.rect(x0, top, x1, bottom, STONE)
-    c.rect(x0, top, x1, top, STONE_L)
-    c.rect(x0, bottom, x1, bottom, STONE_D)
-    c.rect(x0, top, x0, bottom, STONE_D)
-    c.rect(x1, top, x1, bottom, STONE_D)
+    c.rect(x0, top, x1, bottom, sc)
+    c.rect(x0, top, x1, top, sl)
+    c.rect(x0, bottom, x1, bottom, sd)
+    c.rect(x0, top, x0, bottom, sd)
+    c.rect(x1, top, x1, bottom, sd)
 
 
-def merlons(c: Canvas, x0: int, x1: int, y: int) -> None:
+def merlons(c: Canvas, x0: int, x1: int, y: int, sl=STONE_L) -> None:
     """총안(凸凹) — 두 칸 걸러 한 칸씩 위로 솟은 돌."""
     for x in range(x0, x1 + 1):
         if (x - x0) % 2 == 0:
-            c.set(x, y, STONE_L)
+            c.set(x, y, sl)
 
 
 def gate(c: Canvas, cx: int, bottom: int, gw: int, gh: int) -> None:
@@ -127,38 +136,41 @@ def gate(c: Canvas, cx: int, bottom: int, gw: int, gh: int) -> None:
         c.rect(cx - half + shrink, y, cx + half - shrink, y, GATE)
 
 
-def roof(c: Canvas, cx: int, top: int, rows: int, width: int, tip: bool) -> None:
+def roof(c: Canvas, cx: int, top: int, rows: int, width: int, tip: bool,
+         rc=ROOF, rd=ROOF_D) -> None:
     """지붕 — 아래로 갈수록 넓어지는 사다리꼴. tip=True면 꼭대기에 용마루 한 점."""
     for i in range(rows):
         w = width - 2 * (rows - 1 - i)
         if w < 1:
             continue
         half = w // 2
-        color = ROOF if i < rows - 1 else ROOF_D
+        color = rc if i < rows - 1 else rd
         c.rect(cx - half, top + i, cx + half, top + i, color)
     if tip:
-        c.set(cx, top - 1, ROOF_D)
+        c.set(cx, top - 1, rd)
 
 
-def hut(c: Canvas, cx: int, bottom: int, w: int, body_h: int) -> None:
-    """초가 — 나무 벽 + 짚 지붕. 마을(lv1)의 단위."""
-    half = w // 2
-    c.rect(cx - half, bottom - body_h + 1, cx + half, bottom, WOOD)
-    c.rect(cx - half, bottom, cx + half, bottom, WOOD_D)
-    c.set(cx, bottom, GATE)  # 출입구
-    top = bottom - body_h
-    for i in range(2):
-        y = top - i
-        half_r = half + 1 - i
-        c.rect(cx - half_r, y, cx + half_r, y, STRAW if i == 0 else STRAW_D)
+def draw_port(c: Canvas) -> None:
+    """1 수(水) — 항구. 물 위에 놓인 부두와 돛단배. 마을이 아니다."""
+    base = c.h - 1
+    water_top = base - 2
+    c.rect(0, water_top, c.w - 1, base, WATER)
+    c.rect(0, water_top, c.w - 1, water_top, WATER_L)  # 물결 윗줄
 
+    # 부두 — 물가에서 왼쪽으로 뻗은 널판과 말뚝.
+    deck = water_top - 1
+    c.rect(0, deck, 7, deck, WOOD)
+    for px in (1, 4, 7):
+        c.rect(px, deck + 1, px, base - 1, WOOD_D)
 
-def draw_village(c: Canvas) -> None:
-    """1 수 — 담장 없는 마을. 뒤쪽 언덕의 초가 한 채 + 앞줄 두 채."""
-    base = c.h - 2
-    hut(c, 8, base - 6, 5, 4)   # 뒤 — 먼저 그려 앞줄이 덮게 한다
-    hut(c, 3, base, 5, 4)
-    hut(c, 12, base, 5, 4)
+    # 배 — 선체 + 돛대 + 돛.
+    c.rect(8, deck, c.w - 1, deck, WOOD)
+    c.rect(9, deck + 1, c.w - 2, deck + 1, WOOD_D)
+    mast = 11
+    c.rect(mast, 3, mast, deck - 1, WOOD_D)
+    for i in range(6):
+        y = 4 + i
+        c.rect(mast + 1, y, min(c.w - 1, mast + 2 + i // 2), y, SAIL if i < 5 else SAIL_D)
 
 
 def draw_palisade(c: Canvas) -> None:
@@ -202,21 +214,29 @@ def draw_camp(c: Canvas) -> None:
     c.rect(tx - 1, base - 6, tx + 1, base - 6, WOOD)
 
 
-# 5~8 성 — 같은 실루엣의 규모 차이. (성벽 높이, 천수각 폭, 천수각 높이, 곁탑, 금장)
+# 5~8 성 — 넷 다 성벽·총안·성문을 두른다(치소는 소부터 성을 쌓는다). 등급은 성벽 높이,
+# 천수각 규모, 곁탑, 그리고 재료 색으로 오른다: 소는 목조 지붕, 중·대는 붉은 기와,
+# 특은 성체 전체가 금빛 석재다. 색이 1px 크기 차이보다 멀리서 잘 읽힌다 — 대와 특은
+# 크기만 다를 땐 구분이 안 됐다.
 CASTLE_SPEC = {
-    5: dict(wall_h=5, keep_w=7, keep_h=3, towers=False, gold=False),
-    6: dict(wall_h=6, keep_w=9, keep_h=4, towers=True, gold=False),
-    7: dict(wall_h=6, keep_w=9, keep_h=6, towers=True, gold=False),
-    8: dict(wall_h=7, keep_w=11, keep_h=8, towers=True, gold=True),
+    5: dict(wall_h=5, keep_w=7, keep_h=3, towers=False, rc=WOOD, rd=WOOD_D,
+            sc=STONE, sl=STONE_L, sd=STONE_D),
+    6: dict(wall_h=6, keep_w=9, keep_h=4, towers=False, rc=ROOF, rd=ROOF_D,
+            sc=STONE, sl=STONE_L, sd=STONE_D),
+    7: dict(wall_h=7, keep_w=11, keep_h=6, towers=True, rc=ROOF, rd=ROOF_D,
+            sc=STONE, sl=STONE_L, sd=STONE_D),
+    8: dict(wall_h=8, keep_w=13, keep_h=8, towers=True, rc=ROOF, rd=ROOF_D,
+            sc=GSTONE, sl=GSTONE_L, sd=GSTONE_D),
 }
 
 
 def draw_castle(c: Canvas, spec: dict) -> None:
     base = c.h - 2
     x0, x1 = 1, c.w - 2
+    sc, sl, sd = spec["sc"], spec["sl"], spec["sd"]
     wall_top = base - spec["wall_h"] + 1
-    wall(c, x0, x1, wall_top, base)
-    merlons(c, x0, x1, wall_top - 1)
+    wall(c, x0, x1, wall_top, base, sc, sl, sd)
+    merlons(c, x0, x1, wall_top - 1, sl)
 
     cx = c.w // 2
     gate(c, cx, base, 3 if c.w < 28 else 5, max(3, spec["wall_h"] - 2))
@@ -224,31 +244,30 @@ def draw_castle(c: Canvas, spec: dict) -> None:
     # 곁탑 — 성벽 양끝에서 한 칸 솟는다.
     if spec["towers"]:
         for tx in (x0, x1 - 2):
-            c.rect(tx, wall_top - 3, tx + 2, base, STONE)
-            c.rect(tx, wall_top - 3, tx + 2, wall_top - 3, STONE_D)
+            c.rect(tx, wall_top - 3, tx + 2, base, sc)
+            c.rect(tx, wall_top - 3, tx + 2, wall_top - 3, sd)
             c.set(tx + 1, wall_top - 1, GATE)  # 총안 구멍
 
     # 천수각 — 성벽 위 중앙. 층마다 지붕을 얹는다.
     kw, kh = spec["keep_w"], spec["keep_h"]
     khalf = kw // 2
     keep_top = wall_top - kh
-    c.rect(cx - khalf, keep_top, cx + khalf, wall_top - 1, STONE)
-    c.rect(cx - khalf, keep_top, cx - khalf, wall_top - 1, STONE_D)
-    c.rect(cx + khalf, keep_top, cx + khalf, wall_top - 1, STONE_D)
+    c.rect(cx - khalf, keep_top, cx + khalf, wall_top - 1, sc)
+    c.rect(cx - khalf, keep_top, cx - khalf, wall_top - 1, sd)
+    c.rect(cx + khalf, keep_top, cx + khalf, wall_top - 1, sd)
     for wy in range(keep_top + 2, wall_top - 1, 3):
         c.set(cx, wy, GATE)  # 창
-    if spec["gold"]:
-        c.rect(cx - khalf + 1, keep_top + 1, cx + khalf - 1, keep_top + 1, GOLD)
-    roof(c, cx, keep_top - 2, 2, kw + 2, tip=kh >= 6)
+    rc, rd = spec["rc"], spec["rd"]
+    roof(c, cx, keep_top - 2, 2, kw + 2, tip=kh >= 6, rc=rc, rd=rd)
     if kh >= 6:  # 대·특은 중간층에도 처마를 둔다.
-        roof(c, cx, keep_top + kh // 2, 1, kw + 2, tip=False)
+        roof(c, cx, keep_top + kh // 2, 1, kw + 2, tip=False, rc=rc, rd=rd)
 
 
 def build(level: int) -> Image.Image:
     w, h = DIMS[level]
     c = Canvas(w, h)
     if level == 1:
-        draw_village(c)
+        draw_port(c)
     elif level == 2:
         draw_palisade(c)
     elif level == 3:
