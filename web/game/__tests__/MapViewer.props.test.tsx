@@ -303,6 +303,16 @@ describe('MapViewer — live/showMe(P1-003, GetMap neutralView:0 showMe:1 패러
     });
 });
 
+describe('MapViewer — 도시 아이콘 출처(자작 에셋, tools/assets/build_city_icons.py)', () => {
+    it('성 아이콘이 CDN gif 가 아니라 로컬 자작 png `/city/cast_<lv>.png` 를 가리킨다', async () => {
+        render(<MapViewer mapData={MAP_FIXTURE} />);
+        await waitFor(() => expect(getCanvas()).toBeTruthy());
+        const nakyang = screen.getByLabelText(/낙양 레벨 8 위/);
+        const cast = nakyang.querySelector('.city-cast') as HTMLImageElement;
+        expect(cast.getAttribute('src')).toBe('/city/cast_8.png');
+    });
+});
+
 describe('MapViewer — P0-36 FE측 state 아이콘(레거시 MapCityDetail.vue:44 state>0, 캡 없음)', () => {
     it('state=6(코드 6~9)도 상태 아이콘이 렌더된다', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} />);

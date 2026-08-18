@@ -115,3 +115,40 @@ App Router는 파일의 실제 픽셀 크기를 그대로 `<link>`에 반영하�
 잡아먹으므로, 작은 출력(favicon)일수록 패딩을 줄여 글자 자체에 더 많은 픽셀을 할당한다.
 이전 버전은 모든 산출물에 패딩 30%를 균일 적용했고, 16px에서는 그 패딩이 판독 가능한
 나머지 픽셀을 다 잡아먹어 "붉은 덩어리"로만 보였다.
+
+## 도시 아이콘 (`city-icons/`)
+
+`web/{gateway,game}/public/city/cast_{1..8}.png` 16장은 **입력 이미지 없이 코드로 그린
+자작 픽셀아트**다 — 마스터 이미지가 없고, `tools/assets/build_city_icons.py`의 드로잉
+코드 자체가 원본이다(깃발 `build_flag_assets.py`와 같은 방식).
+
+```sh
+python3 tools/assets/build_city_icons.py
+python3 tools/assets/build_city_icons.py --check   # 손편집 드리프트 검사, 불일치면 비0 종료
+```
+
+`city-icons/preview.png`는 **산출물이지 입력이 아니다** — 16~32px 아이콘을 8배 확대해
+한 장에 늘어놓은 검수용 시트다. 빌더가 매 실행 재생성하므로 손으로 고치지 마라.
+
+교체 이유: 기존 도시 아이콘은 CDN(`opensamguk-images`)의 `game/cast_*.gif`이고 그 출처
+`devsam/image` 리포에는 LICENSE가 없어 권리가 **UNKNOWN**이었다
+(`docs/superpowers/research/2026-08-17-asset-license-audit.md`). 20px 남짓 픽셀아트는
+권리 확인보다 다시 그리는 편이 싸다는 깃발 때와 같은 판단이다. CDN의 상태 아이콘
+`event*.gif`·수도별 `event51.gif`는 **이번 범위 밖**이며 UNKNOWN 판정 그대로다.
+
+| 레벨 | 라벨 | 모양 | 캔버스 |
+| --- | --- | --- | --- |
+| 1 | 수 | 초가 세 채의 마을(담장 없음) | 16×15 |
+| 2 | 진 | 통나무 목책 + 망루 | 20×14 |
+| 3 | 관 | 좌우 절벽에 낀 관문 | 14×14 |
+| 4 | 이 | 이민족 천막 두 채 + 토템 | 20×15 |
+| 5~8 | 소·중·대·특 | 같은 성 실루엣의 규모 차이(곁탑 6+, 금장 8) | 24×16 ~ 32×24 |
+
+캔버스 크기는 레거시 자산의 자연 크기(`MapViewer.DETAIL_SIZES`의 iconW/iconH)와 같다 —
+`.city-cast`가 `width/height:100%` + `image-rendering: pixelated`로 렌더하므로 크기를
+그대로 두어야 기존 배율·레이아웃이 바뀌지 않는다.
+
+**두 앱에 같은 파일을 둔다.** 참조는 절대경로 `/city/cast_<lv>.png`이고, 공유 도메인
+(`sam.peppone.dev`)에서는 이 경로가 nginx 라우팅에 따라 어느 앱으로도 갈 수 있다. 양쪽
+`public/`에 동일 파일을 두면 어디로 가든 해석된다(삭제된 `public/icons/`가 겪던 누수의
+해법이다). `assetPrefix`는 `/_next` 에셋만 바꾸므로 `public/` 경로에는 관여하지 않는다.
