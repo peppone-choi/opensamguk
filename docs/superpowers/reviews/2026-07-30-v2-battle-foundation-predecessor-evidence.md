@@ -78,13 +78,17 @@ lossless 가 아니고, **V2 campaign 은 애초에 범위 밖**이다. 이 커�
 - `application-v2-sandbox.yml` 부재(`find app -name 'application-v2*'` 0건).
 - v2 compose 스택 부재 — `docker-compose.yml`(서비스 8개)·`docker-compose.production.yml`·
   `.github/workflows/deploy.yml` 에서 `V2_ENABLED`/`SPRING_FLYWAY_LOCATIONS`/v2 서비스 0건.
-  OPENSAM-35 DoD ① 미충족(`docs/loops/v2-planning-2026-07-12/TICKETS-issued.md:44`).
+  **이것은 OPENSAM-35 의 잔여가 아니라 OPENSAM-177 의 범위다** — 35 는 배포·cutover 를 명시적으로
+  177 로 넘기고 닫혔다.
 - `battle_*` 스키마·역할 분리 부재 — `infra/src/main/resources/db` 전체 `battle_` 0건.
 
-**계획–리포 경로 불일치(기록).** 계획 `:19` 는 기본 location 을 `classpath:db/v2/migration` 으로
-적지만 실제 규약은 `classpath:db/migration_v2` 이고, README `:6-13` 은 `db/migration` **하위**
-경로가 격리를 정확히 반대로 깬다고 실측으로 못박는다. 계획 문안이 리포 규약과 충돌한다 —
-계획을 고치는 것이 맞고, 규약을 계획에 맞추면 안 된다.
+**계획–리포 경로 표기 차이(기록, 위험 아님).** 계획 `:19` 는 기본 location 을
+`classpath:db/v2/migration` 으로 적고 실제 리포 규약은 `classpath:db/migration_v2` 다.
+**둘 다 `db/migration` 의 하위가 아니라 형제이므로** README `:6-13` 이 실측으로 못박은 재귀-스캔
+위험(v1 이 `db/migration/v2/` 를 삼켜버리는 것)은 어느 쪽에도 해당하지 않는다. 앞선 판(`b33292b7`)
+에서 이 README 근거를 계획 경로에까지 적용해 "계획이 규약과 충돌한다"고 적은 것은 **오독이다.**
+남는 것은 이름 규약의 불일치 하나뿐이고, 어느 표기로 통일할지는 실제로 provisioner 를 만드는
+**BATTLE-F4(OPENSAM-160)** 가 정한다.
 
 ## Task 0 이 요구하는 검증 명령과 그 현재 결과
 
@@ -131,13 +135,19 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test \
 
 1. OPENSAM-46/47/48/56 — 코드 흔적 0이고 상태도 `할 일`이다. 선행으로 먼저 닫아야 한다.
 2. v2 compose 스택 / v1↔v2 live smoke — **OPENSAM-177** 소유(35 가 명시적으로 넘긴 범위).
-3. 계획 `:19` 의 `classpath:db/v2/migration` 표기 정정(리포 규약은 `db/migration_v2`).
-4. 런타임 non-owner(`flyway.enabled=false`) + one-shot provisioner 모듈 — 축 4 잔여. 현재
-   **소유 티켓이 지정돼 있지 않다**(35 는 0A-a~g 로 닫혔고 46/47/48/56 범위도 아니다).
-   F1 착수 전에 소유자를 정해야 한다.
+3. 기본 Flyway location 이름 규약 통일(계획 `:19` `db/v2/migration` vs 리포 `db/migration_v2`).
+   격리 위험은 없다(둘 다 형제 경로) — **BATTLE-F4(OPENSAM-160)** 가 결정한다.
+4. 런타임 non-owner(`flyway.enabled=false`) + one-shot provisioner 모듈 — 축 4 잔여.
+   **소유자는 BATTLE-F4(OPENSAM-160)** 다. 그 티켓 범위가 "one-shot v2-schema-provisioner와
+   NOLOGIN owner/transient migrator" 를 명시하고 AC1 이 "runtime services는 Flyway를 실행하지
+   않는다" 를 그대로 요구한다(Jira 실조회, 2026-08-18). 앞선 판에서 "소유 티켓 없음" 으로 적은
+   것은 **틀렸다** — 새 티켓을 만들 필요가 없다. 다만 F4 는 F3 뒤이므로, F1 착수 시점에는 이
+   잔여가 아직 열려 있는 것이 정상이다.
 
 **44·35 를 다시 열지 마라.** 둘은 각자 supersede·범위 경계를 코멘트로 남기고 정당하게 닫혔다.
-F0 이 발견한 것은 "닫힌 티켓이 거짓"이 아니라 **닫힌 범위 밖에 남은 잔여의 소유자가 비어 있다**는
-것이다. 잔여를 이유로 완료 티켓을 되돌리면 그 티켓들의 독립 검토 기록까지 흐려진다.
+잔여를 이유로 완료 티켓을 되돌리면 그 티켓들의 독립 검토 기록까지 흐려진다. 남은 잔여는 전부
+열린 티켓(177 · 160 · 46/47/48/56)이 이미 소유하고 있다 — **F0 때문에 새로 만들 티켓은 없다.**
 
-위 항목이 닫히기 전에는 BATTLE-F1(OPENSAM-157) 이후를 시작하지 않는다.
+**F1 착수를 막는 것은 1번뿐이다.** 2·3·4 는 F1 보다 뒤(F4·177)에 오는 항목이므로 F1 시점에
+열려 있는 것이 정상이다. 축 1~3(campaign revision · mutation gate · restart rehydrate)이
+코드로 존재하기 전에는 BATTLE-F1(OPENSAM-157) 을 시작하지 않는다.
