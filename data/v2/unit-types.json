@@ -1,7 +1,7 @@
 {
   "$schema": "opensamguk/v2/unit-types",
   "profile": "CLASSIC",
-  "note": "한 사다리 로스터. 정사·연의·게임허용을 게임 규칙으로 가르지 않는다(사용자 결정 2026-08-18). source 필드는 데이터 정직성용 주석일 뿐 플레이 게이팅에 쓰지 않는다. requires 는 tools/map/build_junguozhi.py 가 郡國志에서 뽑은 縣 태그·戶口를 가리킨다. 병종 이름은 부대 이름이다 — 나라·종족 이름을 그대로 쓰지 않는다(고구려 X / 고구려기병 O). 사료가 부대로 표기한 것(叟兵·夷兵·賨叟·青羌·鮮卑騎…)은 그 표기 그대로 두고, 종족·세력 이름만 있던 것에는 그들이 실제로 싸운 방식대로 접미(騎·兵·舟師)를 붙였다. 원래 종족명은 peopleHan 에 남는다. 명부는 두 층이다 — 등급×무기로 짜인 기본 사다리(generic:true, 25종)와 그 위에 얹히는 사료 실명 부대(71종). 기본 사다리는 어디서나 뽑고, 실명 부대는 출신·기술이 맞아야 나온다.",
+  "note": "한 사다리 로스터. 정사·연의·게임허용을 게임 규칙으로 가르지 않는다(사용자 결정 2026-08-18). source 필드는 데이터 정직성용 주석일 뿐 플레이 게이팅에 쓰지 않는다. requires 는 tools/map/build_junguozhi.py 가 郡國志에서 뽑은 縣 태그·戶口를 가리킨다. 병종 이름은 부대 이름이다 — 나라·종족 이름을 그대로 쓰지 않는다(고구려 X / 고구려기병 O). 사료가 부대로 표기한 것(叟兵·夷兵·賨叟·青羌·鮮卑騎…)은 그 표기 그대로 두고, 종족·세력 이름만 있던 것에는 그들이 실제로 싸운 방식대로 접미(騎·兵·舟師)를 붙였다. 원래 종족명은 peopleHan 에 남는다. 명부는 두 층이다 — 등급×무기로 짜인 기본 사다리(generic:true, 25종)와 그 위에 얹히는 사료 실명 부대(71종). 기본 사다리는 어디서나 뽑고, 실명 부대는 출신·기술이 맞아야 나온다. 목록은 다섯 절로 읽는다 — 공용·세력전용·지역전용·인물전용·기타(categories). 절은 지어낸 축이 아니라 requires 가 이미 말하고 있던 것에 이름을 붙인 것이다.",
   "units": [
     {
       "id": "민병대_도병",
@@ -21,7 +21,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "민병대_창병",
@@ -41,7 +42,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "민병대_부병",
@@ -61,7 +63,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "민병대_궁병",
@@ -81,7 +84,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "민병대_투창병",
@@ -101,7 +105,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "민병대_경기병",
@@ -121,7 +126,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_도병",
@@ -141,7 +147,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_창병",
@@ -161,7 +168,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_극병",
@@ -181,7 +189,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_도끼병",
@@ -201,7 +210,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_궁병",
@@ -221,7 +231,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_노병",
@@ -241,7 +252,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_창기병",
@@ -261,7 +273,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_궁기병",
@@ -281,7 +294,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "부곡_도기병",
@@ -301,7 +315,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_검병",
@@ -321,7 +336,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_창병",
@@ -341,7 +357,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_극병",
@@ -361,7 +378,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_대도병",
@@ -381,7 +399,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_참마검병",
@@ -401,7 +420,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_구겸도병",
@@ -421,7 +441,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_강궁병",
@@ -441,7 +462,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_연노병",
@@ -461,7 +483,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_삭기병",
@@ -481,7 +504,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "정예_검기병",
@@ -501,7 +525,8 @@
         "proximity": "GAME",
         "cite": "게임 설계(등급×무기 기본 사다리)",
         "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "YOUZHOU_TUQI",
@@ -521,7 +546,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷8 公孫瓚傳",
         "quote": "光和中，涼州賊起，發幽州突騎三千人，假瓚都督行事傳"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "HUBAO_QI",
@@ -538,7 +564,8 @@
         "proximity": "EARLY_ANNOTATION",
         "cite": "三國志 卷9 曹純傳 裴注 魏書",
         "quote": "純所督虎豹騎，皆天下骁锐，或從百人將補之"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "XIANZHEN_YING",
@@ -554,7 +581,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷7 呂布傳",
         "quote": "精練齊整，每所攻擊無不破者，名爲陷陣營"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "DANYANG_BING",
@@ -571,7 +599,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷7·8·9·64 다수",
         "quote": "丹楊 출병 기록 16건 실측(卷64 7건 최다)"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "SHANYUE",
@@ -581,7 +610,7 @@
       "requires": {
         "province": "揚州",
         "terrain": "MOUNTAIN",
-        "tribe": true
+        "tribe": "山越"
       },
       "role": "INFANTRY_SKIRMISH",
       "source": {
@@ -590,7 +619,8 @@
         "cite": "三國志 卷47·60·64",
         "quote": "山越 11건 실측"
       },
-      "peopleHan": "山越"
+      "peopleHan": "山越",
+      "category": "REGIONAL"
     },
     {
       "id": "BANDUN_MAN",
@@ -608,7 +638,8 @@
         "cite": "後漢書 卷86 南蠻傳",
         "quote": "賨錢，口四十。世號爲板楯蠻 … 板楯七姓，射殺白虎，立功先世"
       },
-      "peopleHan": "板楯蠻"
+      "peopleHan": "板楯蠻",
+      "category": "REGIONAL"
     },
     {
       "id": "WUDANG_FEIJUN",
@@ -625,7 +656,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "華陽國志 卷四",
         "quote": "馬忠為牂柯太守。移南中勁卒、青羌萬餘家於蜀，為五部，所當無前，號為飛軍"
-      }
+      },
+      "category": "OTHER"
     },
     {
       "id": "HUANGZHONG_YICONG",
@@ -645,7 +677,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷9 / 後漢書 卷87",
         "quote": "郃等平河關，渡河入小湟中，河西諸羌盡降 / 義從 3건"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "XIANLING_QIANG",
@@ -662,7 +695,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷87 西羌傳",
         "quote": "先零 74건 · 燒當 46건 · 參狼 4건 실측(전권). 이전 미검출 보고는 卷87 만 본 오류였다"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "XIANBEI_QI",
@@ -678,7 +712,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷90",
         "quote": "鮮卑 58건 실측"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "WUHUAN_QI",
@@ -694,7 +729,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷90",
         "quote": "烏桓 53건 실측"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "QIANGNU",
@@ -710,7 +746,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷1 / 後漢書 卷89",
         "quote": "彊弩 8건 · 强弩 1건. 「冀州彊弩」 관용구는 전권에서 미검출 — UNKNOWN"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "LOUCHUAN",
@@ -730,7 +767,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷86 / 三國志 卷47",
         "quote": "樓船 1건 · 水軍 6건"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "BEIJUN_WUXIAO",
@@ -747,7 +785,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷1·7·9·64 다수",
         "quote": "屯騎·越騎·步兵·長水·射聲 상비 5교 실측"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "XIYU_QIBING",
@@ -764,7 +803,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "漢書 卷96上下 / 三國志 卷30 裴注 魏略西戎傳",
         "quote": "각국 勝兵 수치 49건 실측"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "TENGJIA_BING",
@@ -782,7 +822,8 @@
         "proximity": "FICTION",
         "cite": "三國演義 90회 烏戈國 兀突骨",
         "quote": "정사 미검출. 漢書 卷96上의 烏戈山離國은 서역 국명으로 別件이다(동명이물 주의)"
-      }
+      },
+      "category": "OTHER"
     },
     {
       "id": "XIANG_BING",
@@ -799,7 +840,8 @@
         "proximity": "GAME",
         "cite": "게임 허용",
         "quote": "정사 근거 없음. 後漢書의 유일한 象兵 용례는 「或執銅鏡以象兵」 — 동경을 병기처럼 '보이게 했다'는 동사이며 부대가 아니다. 코끼리 부대는 연의 木鹿大王 騎象뿐"
-      }
+      },
+      "category": "OTHER"
     },
     {
       "id": "BAIMA_YICONG",
@@ -815,7 +857,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷73 公孫瓚傳 / 三國志 卷6",
         "quote": "常乘白馬，以為左右翼，自號「白馬義從」。烏桓更相告語，避白馬長史 … 白馬義從爲中堅，亦分作兩校，左射右，右射左"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "JIEFAN_BING",
@@ -832,7 +875,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷55 韓當傳",
         "quote": "後又加都督之號。將敢死及解煩兵萬人，討丹楊賊，破之"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "CHEXIA_HUSHI",
@@ -849,7 +893,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷55 甘寧傳",
         "quote": "軍旅皆已引出，唯車下虎士千餘人，并呂蒙、蔣欽、凌統及寧，從權逍遙津北"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "CHIJIA_JUN",
@@ -866,7 +911,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "華陽國志 卷一",
         "quote": "漢時，赤甲軍常取其民"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "LIANNU_SHI",
@@ -884,7 +930,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "華陽國志 卷一 / 三國志 卷35",
         "quote": "蜀丞相亮亦發其勁卒三千人為連弩士 … 損益連弩，謂之元戎，以鐵為矢，矢長八寸，一弩十矢俱發"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "TUJIANG_WUQIAN",
@@ -900,7 +947,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷33",
         "quote": "突將無前。賨、叟、青羌散騎、武騎一千餘人，此皆數十年之內所糾合四方之精銳"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "MENGCHONG",
@@ -916,7 +964,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷54",
         "quote": "祖橫兩蒙衝挾守沔口，以栟閭大紲繫石爲矴，上有千人，以弩交射"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "DOUJIAN",
@@ -932,7 +981,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷54 周瑜傳",
         "quote": "劉表治水軍，蒙沖鬥艦，乃以千數，操悉浮以沿江"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "ZOUGE",
@@ -948,7 +998,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷55",
         "quote": "使襲督五樓船住濡須口。夜卒暴風，五樓船傾覆，左右散走舸"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "GUIZU",
@@ -965,7 +1016,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷8 張魯傳",
         "quote": "以鬼道教民，自號「師君」。其來學道者，初皆名「鬼卒」"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "QINGZHOU_BING",
@@ -982,7 +1034,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷18",
         "quote": "霸所部及青州兵，以為天下將亂，皆鳴鼓擅去"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "TIECHE_BING",
@@ -999,7 +1052,8 @@
         "proximity": "FICTION",
         "cite": "三國演義(10건)",
         "quote": "或用駱駝駕車，或用騾馬駕車，號為「鐵車兵」"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "MENGSHOU",
@@ -1016,7 +1070,8 @@
         "proximity": "FICTION",
         "cite": "三國演義 90회",
         "quote": "八納洞，洞主木鹿大王，深通法術：出則騎象，能呼風喚雨"
-      }
+      },
+      "category": "OTHER"
     },
     {
       "id": "FEIDAO_NV",
@@ -1033,7 +1088,8 @@
         "proximity": "FICTION",
         "cite": "三國演義",
         "quote": "祝融夫人 … 世居南蠻，乃祝融氏之後；善使飛刀，百發百中"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "BAIER_BING",
@@ -1049,7 +1105,8 @@
         "proximity": "GAME",
         "cite": "게임 허용(전승 인용)",
         "quote": "코퍼스 722권 전권 미검출. 資治通鑑 卷118의 白毦 2건은 劉裕 却月陣의 신호 깃발로 別件이다 — UNKNOWN"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "HU_SHI",
@@ -1066,7 +1123,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷18 魏書·二李臧文吕许典二庞阎传",
         "quote": "引入宿衛。諸從褚俠客，皆以為虎士。從徵張繡，先登，斬首萬計"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "DA_JI_SHI",
@@ -1083,7 +1141,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷06 魏書·董二袁劉傳",
         "quote": "爲設備，惟帳下彊弩數十張，大戟士百餘人自隨。瓚部迸騎二千餘"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "PILI_CHE",
@@ -1100,7 +1159,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷074A 袁紹劉表列傳 第六十四上",
         "quote": "石車擊紹樓，皆破，軍中呼曰「霹靂車」"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "CHONG_CHE",
@@ -1116,7 +1176,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷03 魏書·明帝紀",
         "quote": "燒死。昭又以繩連石磨壓其衝車，衝車折。亮乃更爲井闌百尺以付城中"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "JING_LAN",
@@ -1132,7 +1193,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "資治通鑑 卷071 魏紀三",
         "quote": "磨壓其衝車，衝車折。亮乃更為井闌百尺以射城中，以土丸填塹"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "YUN_TI",
@@ -1146,7 +1208,8 @@
         "proximity": "FICTION",
         "cite": "三國演義 卷097 第九十七回 討魏國武侯再上表 破曹兵姜維詐獻書",
         "quote": "裝起雲梯，四面而來，即令三千軍各執火箭，分布四面"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "TUNTIAN_BING",
@@ -1162,7 +1225,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "資治通鑑 卷079 巻七十九 晉紀一",
         "quote": "詔濬罷屯田兵，大作舟艦。別駕何攀以爲「屯田兵不過五六百"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "CAI_GUAN",
@@ -1178,7 +1242,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷001B 下‧光武帝紀第一下",
         "quote": "材官、樓船，常以立秋後講肄課試，各有員數。平地用車騎，山阻用材"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "QING_CHE",
@@ -1194,7 +1259,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷119 輿服志",
         "quote": "輕車，古之戰車也。洞朱輪輿，不巾不蓋，建矛戟"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "HU_BEN",
@@ -1210,7 +1276,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷115 百官志 百官二",
         "quote": "虎賁中郎將，比二千石。"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "YU_LIN",
@@ -1226,7 +1293,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷115 百官志 百官二",
         "quote": "羽林中郎將，比二千石。本注曰：主羽林郎"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "QIN_HU",
@@ -1244,7 +1312,8 @@
         "cite": "後漢書 卷074B 袁紹劉表列傳 第六十四下",
         "quote": "於草棘。又乃圖獲鄴城，許賞賜秦胡，其財物婦女，豫有分數"
       },
-      "peopleHan": "秦胡"
+      "peopleHan": "秦胡",
+      "category": "REGIONAL"
     },
     {
       "id": "XIUTUGE_HU",
@@ -1262,7 +1331,8 @@
         "cite": "後漢書 卷008 帝紀第八 孝靈皇帝",
         "quote": "大司農曹嵩爲太尉。\n\n十二月，休屠各胡叛。"
       },
-      "peopleHan": "休屠各胡"
+      "peopleHan": "休屠各胡",
+      "category": "REGIONAL"
     },
     {
       "id": "NAN_XIONGNU",
@@ -1280,7 +1350,8 @@
         "cite": "資治通鑑 卷052 漢紀四十四",
         "quote": "春，二月，戊申，京師地震。\n<BR>\n南匈奴句龍王吾斯、車紐等反，寇西河"
       },
-      "peopleHan": "南匈奴"
+      "peopleHan": "南匈奴",
+      "category": "REGIONAL"
     },
     {
       "id": "LIAODONG_SHUGUO",
@@ -1298,7 +1369,8 @@
         "cite": "三國志 卷30 魏書三十 烏丸鮮卑東夷傳第三十",
         "quote": "者八十餘人，使居塞內，布列遼東屬國、遼西、右北平、漁陽、廣陽、上穀"
       },
-      "peopleHan": "遼東屬國"
+      "peopleHan": "遼東屬國",
+      "category": "REGIONAL"
     },
     {
       "id": "QING_QIANG",
@@ -1315,7 +1387,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷31 蜀書一 劉二牧傳",
         "quote": "校尉賈龍，使引兵還擊焉，焉出青羌與戰，故能破殺"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "CONG_SOU",
@@ -1332,7 +1405,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷35 蜀書五 諸葛亮傳",
         "quote": "銅等及曲長屯將七十餘人，突將無前。賨、叟、青羌散騎、武騎一千餘"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "SAN_QI",
@@ -1348,7 +1422,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "資治通鑑 卷071 魏紀三",
         "quote": "銅等及曲長、屯將七十餘人，突將、無前、賨叟、青羌、散騎、武騎一千餘"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "WU_QI",
@@ -1364,7 +1439,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "資治通鑑 卷071 魏紀三",
         "quote": "銅等及曲長、屯將七十餘人，突將、無前、賨叟、青羌、散騎、武騎一千餘"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "SOU_BING",
@@ -1381,7 +1457,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷31 蜀書一 劉二牧傳",
         "quote": "璋復遣別駕從事蜀郡張肅送叟兵三百人並雜御物於曹公"
-      }
+      },
+      "category": "REGIONAL"
     },
     {
       "id": "CONG_MIN",
@@ -1399,7 +1476,8 @@
         "cite": "華陽國志 卷五 公孫述劉二牧志",
         "quote": "禦魯。羲以宜須兵衛，輒召漢昌賨民為兵"
       },
-      "peopleHan": "賨民"
+      "peopleHan": "賨民",
+      "category": "REGIONAL"
     },
     {
       "id": "NANZHONG_JINGZU",
@@ -1416,7 +1494,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "華陽國志 卷四 南中志",
         "quote": "古郡，以馬忠為牂柯太守。移南中勁卒、青羌萬餘家於蜀，為五部，所"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "MUNIU_LIUMA",
@@ -1433,7 +1512,8 @@
         "proximity": "FICTION",
         "cite": "三國演義 卷103 第百零三回 上方谷司馬受困 五丈原諸葛禳星",
         "quote": "兵驅木牛流馬而來。二人一齊殺將過去，蜀兵大敗奔走，木牛流馬"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "GAN_SI",
@@ -1450,7 +1530,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
         "quote": "冠軍太守，後又加都督之號。將敢死及解煩兵萬人，討丹楊賊，破之"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "WULOU_CHUAN",
@@ -1467,7 +1548,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
         "quote": "權赴之，使襲督五樓船住濡須口。夜卒暴風，五樓船傾覆，左右散走"
-      }
+      },
+      "category": "CHARACTER"
     },
     {
       "id": "FEIYUN_DACHUAN",
@@ -1484,7 +1566,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷54 吴書·周瑜、魯肅、吕蒙傳",
         "quote": "此多之。劉備之自京還也，權乘飛雲大船，與張昭、秦松、魯肅等十餘"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "XIANDENG",
@@ -1500,7 +1583,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
         "quote": "及孫策東渡，從討三郡，遷先登校尉，授兵二千，騎五十匹"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "BU_QU",
@@ -1516,7 +1600,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷56 吳書·三朱吕範傳",
         "quote": "十里。魏時夷王梅敷兄弟三人，部曲萬餘家屯此，分布在中廬宜城"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "YI_BING",
@@ -1533,7 +1618,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷58 吴書·陆逊传",
         "quote": "破之。秭歸大姓文布、鄧凱等合夷兵數千人，首尾西方"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "HUANG_JIN",
@@ -1550,7 +1636,8 @@
         "cite": "資治通鑑 卷058 漢紀五十",
         "quote": "一時俱起，皆著黃巾以為標幟，故時人謂之「黃巾賊」。二月，角自稱天"
       },
-      "peopleHan": "黃巾"
+      "peopleHan": "黃巾",
+      "category": "CHARACTER"
     },
     {
       "id": "BAI_BO",
@@ -1567,7 +1654,8 @@
         "cite": "後漢書 卷072 董卓列傳 第六十二",
         "quote": "西河白波谷，轉寇太原，遂破河東，百姓流轉三輔，號為「白波賊」，眾十"
       },
-      "peopleHan": "白波"
+      "peopleHan": "白波",
+      "category": "FACTION"
     },
     {
       "id": "HEI_SHAN",
@@ -1585,7 +1673,8 @@
         "cite": "資治通鑑 卷060 漢紀五十二",
         "quote": "大河之南以待其變。」操善之。會黑山、於毒、白繞、眭固等十餘萬眾人略東郡"
       },
-      "peopleHan": "黑山"
+      "peopleHan": "黑山",
+      "category": "CHARACTER"
     },
     {
       "id": "GAOGOULI",
@@ -1603,7 +1692,8 @@
         "cite": "三國志 卷08 魏書·二公孫陶四張傳",
         "quote": "憑恃，是以決計斬賊之使。又高句麗、濊貊與淵為仇，並為寇鈔"
       },
-      "peopleHan": "高句麗"
+      "peopleHan": "高句麗",
+      "category": "REGIONAL"
     },
     {
       "id": "YI_LOU",
@@ -1621,7 +1711,8 @@
         "cite": "三國志 卷30 魏書三十 烏丸鮮卑東夷傳第三十",
         "quote": "百餘-{里}-，其俗南北皆同，與挹婁接。挹婁喜乘船寇鈔，北沃沮畏之，夏"
       },
-      "peopleHan": "挹婁"
+      "peopleHan": "挹婁",
+      "category": "REGIONAL"
     },
     {
       "id": "XIANG_LIN_MAN",
@@ -1639,7 +1730,8 @@
         "cite": "後漢書 卷086 南蠻西南夷列傳第七十",
         "quote": "日南、象林徼外蠻夷區憐等數千人攻象林縣，燒城寺，殺長"
       },
-      "peopleHan": "象林蠻夷"
+      "peopleHan": "象林蠻夷",
+      "category": "REGIONAL"
     },
     {
       "id": "JUN_BING",
@@ -1653,7 +1745,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "資治通鑑 卷049 漢紀四十一",
         "quote": "及邊郡兵二萬餘人，又詔遼東太守耿夔率鮮卑及諸郡兵共擊之"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "XIAN_BING",
@@ -1669,7 +1762,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "三國志 卷43 蜀書十三 黃李呂馬王張傳",
         "quote": "敗績猇亭，巴西太守閻芝發諸縣兵五千人以補遣闕，遣忠送往"
-      }
+      },
+      "category": "FACTION"
     },
     {
       "id": "TING_WU_BING",
@@ -1683,7 +1777,8 @@
         "proximity": "OFFICIAL_HISTORY",
         "cite": "後漢書 卷118 百官志 百官五 州郡 縣鄕 亭里",
         "quote": "尉、-{遊}-徼、亭長皆習設備五兵。五兵：弓弩，戟，楯，刀劍，甲鎧"
-      }
+      },
+      "category": "COMMON"
     },
     {
       "id": "TIE_QI",
@@ -1699,6 +1794,352 @@
         "proximity": "FICTION",
         "cite": "三國演義 卷005 第五回 發矯詔諸鎮應曹公 破關兵三英戰呂布",
         "quote": "抄小路，直到關下搦戰。華雄引鐵騎五百，飛下關來"
+      },
+      "category": "CHARACTER"
+    },
+    {
+      "id": "강족_궁병",
+      "ko": "강족 궁병",
+      "han": "羌弓手",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 2,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "羌",
+        "province": "涼州"
+      },
+      "composition": {
+        "weapon": "궁",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": "羌人 은 활을 쓴다 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "강족_도끼병",
+      "ko": "강족 도끼병",
+      "han": "羌斧兵",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 1,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "羌",
+        "province": "涼州"
+      },
+      "composition": {
+        "weapon": "부",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": "산지 근접 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "강족_정예기병",
+      "ko": "강족 정예기병",
+      "han": "精銳羌騎",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 3,
+      "armType": 3,
+      "reqTech": 3000,
+      "requires": {
+        "tribe": "羌",
+        "province": "涼州"
+      },
+      "composition": {
+        "weapon": "삭",
+        "armor": "경철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": "先零·燒當 의 기마 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "선비_궁기병",
+      "ko": "선비 궁기병",
+      "han": "鮮卑弓騎",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 3,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "鮮卑"
+      },
+      "composition": {
+        "weapon": "궁",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": "기사(騎射) — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "선비_투창병",
+      "ko": "선비 투창병",
+      "han": "鮮卑標槍兵",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 1,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "鮮卑"
+      },
+      "composition": {
+        "weapon": "표창",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "선비_정예_궁기병",
+      "ko": "선비 정예 궁기병",
+      "han": "精銳鮮卑弓騎",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 3,
+      "armType": 3,
+      "reqTech": 3000,
+      "requires": {
+        "tribe": "鮮卑"
+      },
+      "composition": {
+        "weapon": "강궁",
+        "armor": "평피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "오환_궁기병",
+      "ko": "오환 궁기병",
+      "han": "烏桓弓騎",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 3,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "烏桓"
+      },
+      "composition": {
+        "weapon": "궁",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": "기사(騎射) — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "오환_궁병",
+      "ko": "오환 궁병",
+      "han": "烏桓步弓手",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 1,
+      "armType": 2,
+      "reqTech": 0,
+      "requires": {
+        "tribe": "烏桓"
+      },
+      "composition": {
+        "weapon": "단궁",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "흉노_투창병",
+      "ko": "흉노 투창병",
+      "han": "匈奴標槍兵",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 1,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "匈奴",
+        "province": "并州"
+      },
+      "composition": {
+        "weapon": "표창",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "흉노_정예_중장기병",
+      "ko": "흉노 정예 중장기병",
+      "han": "精銳匈奴重騎",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 3,
+      "armType": 3,
+      "reqTech": 3000,
+      "requires": {
+        "tribe": "匈奴",
+        "province": "并州"
+      },
+      "composition": {
+        "weapon": "삭",
+        "armor": "중철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "산월_도병",
+      "ko": "산월 도병",
+      "han": "山越刀兵",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 1,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "山越",
+        "province": "揚州"
+      },
+      "composition": {
+        "weapon": "환수도",
+        "armor": "평피갑",
+        "shield": "중형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": "험한 산을 탄다 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "산월_정예_전사",
+      "ko": "산월 정예 전사",
+      "han": "精銳山越戰士",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 3,
+      "armType": 1,
+      "reqTech": 2000,
+      "requires": {
+        "tribe": "山越",
+        "province": "揚州"
+      },
+      "composition": {
+        "weapon": "환수도",
+        "armor": "경철갑",
+        "shield": "중형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "수족_궁병",
+      "ko": "수족 궁병",
+      "han": "叟弓手",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 2,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "叟",
+        "province": "益州"
+      },
+      "composition": {
+        "weapon": "단궁",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
+      }
+    },
+    {
+      "id": "맥궁수",
+      "ko": "맥궁수",
+      "han": "貊弓手",
+      "category": "REGIONAL",
+      "role": "REGIONAL",
+      "tier": 2,
+      "armType": 2,
+      "reqTech": 1000,
+      "requires": {
+        "tribe": "高句麗",
+        "province": "幽州"
+      },
+      "composition": {
+        "weapon": "강궁",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(지역×등급×무기 배분)",
+        "quote": "樂浪檀弓出其地 — 동이의 활 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
       }
     }
   ],
@@ -1753,5 +2194,27 @@
     "RANGED_HEAVY",
     "RANGED_LIGHT",
     "SIEGE"
-  ]
+  ],
+  "categories": {
+    "COMMON": {
+      "ko": "공용",
+      "desc": "어느 세력이나 뽑는다. 등급×무기 기본 사다리와 지역을 가리지 않는 병종."
+    },
+    "FACTION": {
+      "ko": "세력 전용",
+      "desc": "특정 주·군·나라·조정을 쥐어야 나온다."
+    },
+    "REGIONAL": {
+      "ko": "지역 전용",
+      "desc": "변경의 이민족을 끼고 있어야 나온다. 그들이 쓰는 무기대로 갈린다."
+    },
+    "CHARACTER": {
+      "ko": "인물 전용",
+      "desc": "그 사람이 있어야 나온다. 죽으면 사라진다."
+    },
+    "OTHER": {
+      "ko": "기타",
+      "desc": "남중·남만·남이."
+    }
+  }
 }

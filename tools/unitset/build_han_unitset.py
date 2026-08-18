@@ -144,6 +144,8 @@ ROLE = {
     "NAVY_CAPITAL":      (FOOT, "모", "중등갑", "대형방패", 3000),   # 누선은 뱃전에 방패벽을 세운다
     "SIEGE":             (SIEGE, "충차", "의복", None, 1000),
     "LOGISTICS":         (SIEGE, "치중", "의복", None, 3000),
+    # 지역 부대는 조성을 명부가 직접 들고 온다 — 아래 값은 쓰이지 않는다.
+    "REGIONAL":          (FOOT, "검", "의복", None, 0),
 }
 
 # 역할 → 등급. 民兵(1) 값싸고 약하다 · 部曲(2) 표준 전력 · 精銳(3) 최고.
@@ -152,7 +154,7 @@ ROLE = {
 TIER = {
     1: ("民兵", "민병", ["INFANTRY_LEVY", "INFANTRY_SKIRMISH", "GARRISON",
                         "CAVALRY_LIGHT", "NAVY_LIGHT"]),
-    2: ("部曲", "부곡", ["INFANTRY_LINE", "INFANTRY_SHOCK", "INFANTRY_SHIELD",
+    2: ("部曲", "부곡", ["REGIONAL", "INFANTRY_LINE", "INFANTRY_SHOCK", "INFANTRY_SHIELD",
                         "INFANTRY_FANATIC", "RANGED_LIGHT", "RANGED_HEAVY",
                         "CAVALRY_RAID", "CAVALRY_RANGED", "CHARIOT", "SIEGE",
                         "NAVY_LINE", "LOGISTICS"]),
@@ -161,6 +163,22 @@ TIER = {
 }
 TIER_OF = {r: t for t, (_, _, rs) in TIER.items() for r in rs}
 assert set(TIER_OF) == set(ROLE), set(TIER_OF) ^ set(ROLE)
+
+# 집단 성격. 같은 무기를 들어도 누가 드느냐에 따라 다르게 싸운다 — TROM 이 "서량 부곡
+# 창병"과 "북방 부곡 창병"을 따로 두는 이유가 이것이다. 사료가 그들을 어떻게 적었는지가
+# 방향을 정하고(유목은 말, 산지는 험지, 중앙은 갖춘 장비), 크기는 게임이 정한다.
+TRAIT = {
+    "유목": (["羌", "鮮卑", "烏桓", "烏丸", "匈奴", "屠各", "胡", "高句麗"],
+             dict(spd=1, avoid=5, dfn=0.90), "말 위에서 산다 — 빠르고 가볍다"),
+    "산지": (["山越", "叟", "賨", "蠻", "夷", "青羌", "挹婁"],
+             dict(avoid=10, atk=10, dfn=0.95), "험한 곳을 탄다 — 붙잡히지 않는다"),
+    "중앙": ([], dict(dfn=1.10, avoid=5), "조정이 입히고 먹인다 — 장비가 갖춰져 있다"),
+}
+TRAIT_OF = {t: k for k, (ts, _, _) in TRAIT.items() for t in ts}
+
+# 사료가 이름을 남긴 부대는 같은 등급 기본 병종보다 낫다. 그래야 게이팅을 뚫고
+# 뽑을 이유가 있다. 이름값이지 사료 수치가 아니다 — 사료에 수치는 없다.
+RENOWN = dict(atk=10, dfn=15, avoid=5)
 
 # 이름이 장비를 말하는 병종. 사료가 적어둔 것을 역할 기본값이 덮지 않게 한다.
 # (부분 문자열이 아니라 한자 표기 전체로 건다 — 우연히 겹치는 글자가 많다.)
@@ -207,6 +225,7 @@ def load_roster():
                             shield=c["shield"], tech=u["reqTech"], role="GENERIC",
                             tier=u["tier"], req=[], notes=[],
                             forbid=WA if u["armType"] == CAV else [],
+                            cat=u["category"], trait=None, renown=False,
                             src=u["source"]["cite"], cls=u["source"]["class"]))
             continue
         n, named = named, named + 1
@@ -214,6 +233,13 @@ def load_roster():
         if role not in ROLE:
             sys.exit(f"{u['han']}: 모르는 역할 {role} — ROLE 표에 넣어라")
         arm, weapon, armor, shield, tech = ROLE[role]
+        tier = TIER_OF[role]
+        if "composition" in u:
+            # 명부가 조성을 직접 들고 있으면 역할 기본값을 쓰지 않는다. 같은 역할이라도
+            # 무기가 다르면 다른 병종이다 — 지역별 무기 배분이 여기서 갈린다.
+            c = u["composition"]
+            weapon, armor, shield = c["weapon"], c["armor"], c["shield"]
+            arm, tier, tech = u["armType"], u["tier"], u["reqTech"]
         ov = OVERRIDE.get(u["han"], {})
         weapon, armor = ov.get("weapon", weapon), ov.get("armor", armor)
         shield = ov["shield"] if "shield" in ov else shield
@@ -229,12 +255,28 @@ def load_roster():
             else:
                 notes.append(f"{k}={v}")
         out.append(dict(id=2100 + n, name=u["ko"], han=u["han"], arm=arm, weapon=weapon,
-                        armor=armor, shield=shield, tech=tech, role=role, tier=TIER_OF[role],
-                        req=sorted(set(req)), notes=notes,
+                        armor=armor, shield=shield, tech=tech, role=role,
+                        tier=tier, req=sorted(set(req)), notes=notes,
+                        cat=u["category"], trait=trait_of(u),
+                        renown=u["source"]["class"] != "GAME_REFERENCE",
                         forbid=WA if arm == CAV else [],
                         src=f"{u['source']['cite']} 「{u['source']['quote'][:40]}」",
                         cls=u["source"]["class"]))
     return out
+
+
+def trait_of(u: dict):
+    r = u.get("requires") or {}
+    for k in ("tribe", "adjacentTribe"):
+        v = r.get(k)
+        for t in ([v] if isinstance(v, str) else (v if isinstance(v, list) else [])):
+            if t in TRAIT_OF:
+                return TRAIT_OF[t]
+    if r.get("region") == "南中" or r.get("terrain") == "MOUNTAIN":
+        return "산지"          # 종족 이름이 없어도 험지에서 싸우면 험지 사람이다
+    if r.get("court") or r.get("ruler"):
+        return "중앙"
+    return None
 
 
 def derive(u: dict) -> dict:
@@ -263,6 +305,19 @@ def derive(u: dict) -> dict:
     if u["armor"] in RATTAN:
         d = mul(d, {SIEGE: 1.5})      # 등갑은 불에 두 배로 탄다(투석·화시가 차병·궁병 계열이다).
 
+    # 집단 성격 → 명성 순서로 얹는다. 곱은 성격에만 쓰고 명성은 더하기다.
+    notes_extra = []
+    if u["trait"]:
+        adj, why = TRAIT[u["trait"]][1], TRAIT[u["trait"]][2]
+        atk = int(atk * adj["atk"]) if isinstance(adj.get("atk"), float) else atk + adj.get("atk", 0)
+        dfn = int(dfn * adj["dfn"]) if isinstance(adj.get("dfn"), float) else dfn + adj.get("dfn", 0)
+        spd += adj.get("spd", 0)
+        avoid += adj.get("avoid", 0)
+        notes_extra.append(f"{u['trait']}: {why}.")
+    if u["renown"]:
+        atk += RENOWN["atk"]; dfn += RENOWN["dfn"]; avoid += RENOWN["avoid"]
+        notes_extra.append("사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.")
+
     cost = round((atk + dfn) / 30) + weight + (2 if u["arm"] == CAV else 0)
     rice = cost + (1 if u["arm"] == CAV else 0) - (5 if u["arm"] == SIEGE else 0)
 
@@ -279,10 +334,10 @@ def derive(u: dict) -> dict:
             f"{u['weapon']}·{u['armor']}" + (f"·{sh}" if sh else "") + ".",
             w_note, a_note] + ([s_note] if s_note else [])
     # 제약 타입이 없는 조건은 문구로만 남긴다 — 없는 메커니즘을 있는 척하지 않는다.
-    info += [f"조건(미구현): {n}" for n in u["notes"]]
+    info += notes_extra + [f"조건(미구현): {n}" for n in u["notes"]]
     return {
         "id": u["id"], "armType": u["arm"], "name": u["name"], "han": u["han"],
-        "role": u["role"], "tier": u["tier"], "tierName": tier_ko,
+        "role": u["role"], "category": u["cat"], "tier": u["tier"], "tierName": tier_ko,
         "evidence": u["cls"],
         "attack": atk, "defence": dfn, "speed": spd, "avoid": avoid,
         "magicCoef": 0, "cost": cost, "rice": rice,
