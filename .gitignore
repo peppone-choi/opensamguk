@@ -114,3 +114,4 @@ data/map/
 # 사료 코퍼스 — zh.wikisource(PD) 원문·파생 인덱스는 미커밋.
 # tools/corpus/fetch_sources.py 로 언제든 재현된다. 커밋 대상은 tools/corpus/*.py 뿐이다.
 data/corpus/
+data/natural-earth/
