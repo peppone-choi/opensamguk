@@ -1,14 +1,16 @@
 package opensamguk.infra.entity
 
+import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
+import jakarta.persistence.Converter
 import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import opensamguk.logic.message.MessageType
+import org.hibernate.annotations.JdbcType
 import java.time.Instant
 
 /**
@@ -26,8 +28,15 @@ class MessageEntity(
     @Column(name = "mailbox", nullable = false)
     var mailbox: Int,
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    // PG ENUM `message_type` stores lowercase `.value` labels (`private`, not `PRIVATE`).
+    // Two things must match at once:
+    //  - value: `@Enumerated(STRING)` binds `.name` (PRIVATE) — the converter binds `.value`.
+    //  - type: a varchar bind yields `operator does not exist: message_type = character varying`
+    //    (42883). `columnDefinition` is DDL-only, so [PostgresValueEnumJdbcType] sends the
+    //    converter string as Types.OTHER and lets PG infer the enum.
+    @Convert(converter = MessageTypeValueConverter::class)
+    @JdbcType(PostgresValueEnumJdbcType::class)
+    @Column(name = "type", nullable = false, columnDefinition = "message_type")
     var type: MessageType,
 
     @Column(name = "src", nullable = false)
@@ -49,3 +58,11 @@ class MessageEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int? = null,
 )
+
+@Converter
+class MessageTypeValueConverter : AttributeConverter<MessageType, String> {
+    override fun convertToDatabaseColumn(attribute: MessageType?): String? = attribute?.value
+
+    override fun convertToEntityAttribute(dbData: String?): MessageType? =
+        dbData?.let(MessageType::from)
+}
