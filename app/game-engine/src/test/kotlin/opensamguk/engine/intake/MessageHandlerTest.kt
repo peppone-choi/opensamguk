@@ -14,6 +14,7 @@ import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.logic.util.jsonDecode
 import java.time.Instant
+import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -589,5 +590,29 @@ class MessageHandlerTest {
         assertNull(receiverOption["receiverMessageID"])
         assertEquals(receiver.id, (senderOption["receiverMessageID"] as Number).toInt())
         assertEquals(receiverOption["overwrite"], senderOption["overwrite"])
+    }
+
+    /**
+     * 회귀 — 저장 시각 문자열은 오프셋을 반드시 포함한다.
+     *
+     * flush는 `CAST(:time AS timestamptz)`로 바인딩한다(`JdbcFlushExecutor.messageCreateMany`).
+     * 오프셋이 없는 `yyyy-MM-dd HH:mm:ss` 문자열을 넘기면 PostgreSQL이 세션 TimeZone으로 해석하므로,
+     * UTC 벽시계가 KST(+09)로 읽혀 저장 시각이 9시간 과거가 된다. 그 상태에서는 방금 보낸 서신도
+     * `deleteMessage`의 "5분 이내" 게이트에 걸려 사용자가 자기 서신을 영영 삭제할 수 없다.
+     *
+     * 로컬 도커 스택 실측(2026-08-18): `now() - time` = 09:01:06 (1분 전에 만든 서신).
+     * 왕복 비교만 하는 기존 테스트·IT는 세션 TZ가 일정하면 통과하므로 이 결함을 잡지 못했다.
+     */
+    @Test
+    fun `formatPhpDate가 오프셋을 포함해 절대시각을 보존한다`() {
+        val sentAt = Instant.parse("2026-08-18T03:59:02Z")
+        val formatted = MessageHandler.formatPhpDate(sentAt)
+
+        // 오프셋이 문자열에 있어야 세션 TimeZone 과 무관하게 해석된다.
+        assertEquals("2026-08-18 03:59:02Z", formatted)
+
+        // 되읽으면 원래 순간과 정확히 같다 — 시간대 없는 포맷이면 여기서 파싱 자체가 실패한다.
+        val parsed = OffsetDateTime.parse(formatted.replace(" ", "T")).toInstant()
+        assertEquals(sentAt, parsed)
     }
 }

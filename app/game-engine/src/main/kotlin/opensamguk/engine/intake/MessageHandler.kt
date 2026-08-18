@@ -568,10 +568,13 @@ class MessageHandler(
         /** PHP DateTime '9999-12-31' (genXMessage의 validUntil). */
         const val VALID_UNTIL_SENTINEL = "9999-12-31 00:00:00"
 
+        // flush가 `CAST(:time AS timestamptz)`로 바인딩하므로 오프셋을 반드시 문자열에 담는다.
+        // 오프셋이 없으면 PostgreSQL이 값을 세션 TimeZone으로 해석한다 — UTC 벽시계를 KST로 읽어
+        // 저장 시각이 9시간 과거가 되고, MessageHandler의 "5분 이내" 삭제 게이트가 항상 걸렸다.
         private val PHP_DATE_FMT: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC)
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX").withZone(ZoneOffset.UTC)
 
-        /** PHP `$date->format('Y-m-d H:i:s')` — flush가 CAST(... AS timestamptz)로 바인딩한다. */
+        /** PHP `$date->format('Y-m-d H:i:s')` + 명시 오프셋 — flush가 CAST(... AS timestamptz)로 바인딩한다. */
         fun formatPhpDate(instant: Instant): String = PHP_DATE_FMT.format(instant)
     }
 }
