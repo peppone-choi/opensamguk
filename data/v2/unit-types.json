@@ -1,0 +1,580 @@
+{
+  "$schema": "opensamguk/v2/unit-types",
+  "profile": "CLASSIC",
+  "note": "한 사다리 로스터. 정사·연의·게임허용을 게임 규칙으로 가르지 않는다(사용자 결정 2026-08-18). source 필드는 데이터 정직성용 주석일 뿐 플레이 게이팅에 쓰지 않는다. requires 는 tools/map/build_junguozhi.py 가 郡國志에서 뽑은 縣 태그·戶口를 가리킨다.",
+  "units": [
+    {
+      "id": "YOUZHOU_TUQI",
+      "ko": "유주돌기",
+      "han": "幽州突騎",
+      "home": "幽州",
+      "requires": {
+        "province": "幽州",
+        "adjacentTribe": [
+          "烏桓",
+          "鮮卑"
+        ]
+      },
+      "role": "CAVALRY_SHOCK",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷8 公孫瓚傳",
+        "quote": "光和中，涼州賊起，發幽州突騎三千人，假瓚都督行事傳"
+      }
+    },
+    {
+      "id": "HUBAO_QI",
+      "ko": "호표기",
+      "han": "虎豹騎",
+      "home": "中央",
+      "requires": {
+        "ruler": true,
+        "minLoyalty": "elite"
+      },
+      "role": "CAVALRY_GUARD",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "EARLY_ANNOTATION",
+        "cite": "三國志 卷9 曹純傳 裴注 魏書",
+        "quote": "純所督虎豹騎，皆天下骁锐，或從百人將補之"
+      }
+    },
+    {
+      "id": "XIANZHEN_YING",
+      "ko": "함진영",
+      "han": "陷陣營",
+      "home": "并州",
+      "requires": {
+        "general": "高順"
+      },
+      "role": "INFANTRY_BREAKER",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷7 呂布傳",
+        "quote": "精練齊整，每所攻擊無不破者，名爲陷陣營"
+      }
+    },
+    {
+      "id": "DANYANG_BING",
+      "ko": "단양병",
+      "han": "丹楊兵",
+      "home": "丹楊郡",
+      "requires": {
+        "commandery": "丹楊",
+        "terrain": "MOUNTAIN"
+      },
+      "role": "INFANTRY_ELITE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷7·8·9·64 다수",
+        "quote": "丹楊 출병 기록 16건 실측(卷64 7건 최다)"
+      }
+    },
+    {
+      "id": "SHANYUE",
+      "ko": "산월",
+      "han": "山越",
+      "home": "揚州",
+      "requires": {
+        "province": "揚州",
+        "terrain": "MOUNTAIN",
+        "tribe": true
+      },
+      "role": "INFANTRY_SKIRMISH",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷47·60·64",
+        "quote": "山越 11건 실측"
+      }
+    },
+    {
+      "id": "BANDUN_MAN",
+      "ko": "판순만",
+      "han": "板楯蠻",
+      "home": "巴郡",
+      "requires": {
+        "commandery": "巴",
+        "tribe": "賨"
+      },
+      "role": "INFANTRY_SHIELD",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷86 南蠻傳",
+        "quote": "賨錢，口四十。世號爲板楯蠻 … 板楯七姓，射殺白虎，立功先世"
+      }
+    },
+    {
+      "id": "WUDANG_FEIJUN",
+      "ko": "무당비군",
+      "han": "無當飛軍",
+      "home": "南中",
+      "requires": {
+        "region": "南中",
+        "tribe": "青羌"
+      },
+      "role": "INFANTRY_ELITE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "華陽國志 卷四",
+        "quote": "馬忠為牂柯太守。移南中勁卒、青羌萬餘家於蜀，為五部，所當無前，號為飛軍"
+      }
+    },
+    {
+      "id": "HUANGZHONG_YICONG",
+      "ko": "황중의종",
+      "han": "湟中義從",
+      "home": "涼州",
+      "requires": {
+        "province": "涼州",
+        "tribe": [
+          "羌",
+          "胡"
+        ]
+      },
+      "role": "CAVALRY_LIGHT",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷9 / 後漢書 卷87",
+        "quote": "郃等平河關，渡河入小湟中，河西諸羌盡降 / 義從 3건"
+      }
+    },
+    {
+      "id": "XIANLING_QIANG",
+      "ko": "강족기병",
+      "han": "羌騎(先零·燒當·參狼)",
+      "home": "涼州",
+      "requires": {
+        "province": "涼州",
+        "tribe": "羌"
+      },
+      "role": "CAVALRY_RAID",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷87 西羌傳",
+        "quote": "先零 74건 · 燒當 46건 · 參狼 4건 실측(전권). 이전 미검출 보고는 卷87 만 본 오류였다"
+      }
+    },
+    {
+      "id": "XIANBEI_QI",
+      "ko": "선비기병",
+      "han": "鮮卑騎",
+      "home": "塞外",
+      "requires": {
+        "adjacentTribe": "鮮卑"
+      },
+      "role": "CAVALRY_RAID",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷90",
+        "quote": "鮮卑 58건 실측"
+      }
+    },
+    {
+      "id": "WUHUAN_QI",
+      "ko": "오환기병",
+      "han": "烏桓騎",
+      "home": "塞外",
+      "requires": {
+        "adjacentTribe": "烏桓"
+      },
+      "role": "CAVALRY_SHOCK",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷90",
+        "quote": "烏桓 53건 실측"
+      }
+    },
+    {
+      "id": "QIANGNU",
+      "ko": "강노병",
+      "han": "彊弩",
+      "home": "any",
+      "requires": {
+        "countyTag": "IRON"
+      },
+      "role": "RANGED_HEAVY",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷1 / 後漢書 卷89",
+        "quote": "彊弩 8건 · 强弩 1건. 「冀州彊弩」 관용구는 전권에서 미검출 — UNKNOWN"
+      }
+    },
+    {
+      "id": "LOUCHUAN",
+      "ko": "누선수군",
+      "han": "樓船",
+      "home": "荊揚交",
+      "requires": {
+        "countyTag": [
+          "MARSH",
+          "FORD"
+        ],
+        "riverAccess": true
+      },
+      "role": "NAVY_HEAVY",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷86 / 三國志 卷47",
+        "quote": "樓船 1건 · 水軍 6건"
+      }
+    },
+    {
+      "id": "BEIJUN_WUXIAO",
+      "ko": "북군오교",
+      "han": "北軍五校",
+      "home": "雒陽",
+      "requires": {
+        "city": "雒陽",
+        "court": true
+      },
+      "role": "INFANTRY_GUARD",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷1·7·9·64 다수",
+        "quote": "屯騎·越騎·步兵·長水·射聲 상비 5교 실측"
+      }
+    },
+    {
+      "id": "XIYU_QIBING",
+      "ko": "서역기병",
+      "han": "西域胡騎",
+      "home": "西域",
+      "requires": {
+        "gate": "玉門關",
+        "external": true
+      },
+      "role": "CAVALRY_LIGHT",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "漢書 卷96上下 / 三國志 卷30 裴注 魏略西戎傳",
+        "quote": "각국 勝兵 수치 49건 실측"
+      }
+    },
+    {
+      "id": "TENGJIA_BING",
+      "ko": "등갑병",
+      "han": "藤甲兵",
+      "home": "南中",
+      "requires": {
+        "region": "南中",
+        "tribe": true,
+        "loyaltyPath": "孟獲"
+      },
+      "role": "INFANTRY_ARMOR",
+      "source": {
+        "class": "ROMANCE_ATTESTED",
+        "proximity": "FICTION",
+        "cite": "삼국지연의 90회 烏戈國 兀突骨",
+        "quote": "정사 미검출. 漢書 卷96上의 烏戈山離國은 서역 국명으로 別件이다(동명이물 주의)"
+      }
+    },
+    {
+      "id": "XIANG_BING",
+      "ko": "상병",
+      "han": "象兵",
+      "home": "南中",
+      "requires": {
+        "region": "南中",
+        "tribe": true
+      },
+      "role": "CAVALRY_HEAVY",
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 허용",
+        "quote": "정사 근거 없음. 後漢書의 유일한 象兵 용례는 「或執銅鏡以象兵」 — 동경을 병기처럼 '보이게 했다'는 동사이며 부대가 아니다. 코끼리 부대는 연의 木鹿大王 騎象뿐"
+      }
+    },
+    {
+      "id": "BAIMA_YICONG",
+      "ko": "백마의종",
+      "han": "白馬義從",
+      "home": "幽州",
+      "requires": {
+        "general": "公孫瓚"
+      },
+      "role": "CAVALRY_RANGED",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷73 公孫瓚傳 / 三國志 卷6",
+        "quote": "常乘白馬，以為左右翼，自號「白馬義從」。烏桓更相告語，避白馬長史 … 白馬義從爲中堅，亦分作兩校，左射右，右射左"
+      }
+    },
+    {
+      "id": "JIEFAN_BING",
+      "ko": "해번병",
+      "han": "解煩兵",
+      "home": "吳",
+      "requires": {
+        "nation": "吳",
+        "minGold": "elite"
+      },
+      "role": "INFANTRY_ELITE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷55 韓當傳",
+        "quote": "後又加都督之號。將敢死及解煩兵萬人，討丹楊賊，破之"
+      }
+    },
+    {
+      "id": "CHEXIA_HUSHI",
+      "ko": "거하호사",
+      "han": "車下虎士",
+      "home": "吳",
+      "requires": {
+        "nation": "吳",
+        "ruler": true
+      },
+      "role": "INFANTRY_GUARD",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷55 甘寧傳",
+        "quote": "軍旅皆已引出，唯車下虎士千餘人，并呂蒙、蔣欽、凌統及寧，從權逍遙津北"
+      }
+    },
+    {
+      "id": "CHIJIA_JUN",
+      "ko": "적갑군",
+      "han": "赤甲軍",
+      "home": "巴郡",
+      "requires": {
+        "commandery": "巴",
+        "tribe": "賨"
+      },
+      "role": "INFANTRY_ELITE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "華陽國志 卷一",
+        "quote": "漢時，赤甲軍常取其民"
+      }
+    },
+    {
+      "id": "LIANNU_SHI",
+      "ko": "연노사",
+      "han": "連弩士",
+      "home": "巴郡",
+      "requires": {
+        "commandery": "巴",
+        "tribe": "賨",
+        "tech": "元戎"
+      },
+      "role": "RANGED_HEAVY",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "華陽國志 卷一 / 三國志 卷35",
+        "quote": "蜀丞相亮亦發其勁卒三千人為連弩士 … 損益連弩，謂之元戎，以鐵為矢，矢長八寸，一弩十矢俱發"
+      }
+    },
+    {
+      "id": "TUJIANG_WUQIAN",
+      "ko": "돌장무전",
+      "han": "突將無前",
+      "home": "蜀",
+      "requires": {
+        "nation": "蜀"
+      },
+      "role": "INFANTRY_BREAKER",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷33",
+        "quote": "突將無前。賨、叟、青羌散騎、武騎一千餘人，此皆數十年之內所糾合四方之精銳"
+      }
+    },
+    {
+      "id": "MENGCHONG",
+      "ko": "몽충",
+      "han": "蒙衝",
+      "home": "荊揚",
+      "requires": {
+        "riverAccess": true
+      },
+      "role": "NAVY_RAM",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷54",
+        "quote": "祖橫兩蒙衝挾守沔口，以栟閭大紲繫石爲矴，上有千人，以弩交射"
+      }
+    },
+    {
+      "id": "DOUJIAN",
+      "ko": "투함",
+      "han": "鬥艦",
+      "home": "荊揚",
+      "requires": {
+        "riverAccess": true
+      },
+      "role": "NAVY_LINE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷54 周瑜傳",
+        "quote": "劉表治水軍，蒙沖鬥艦，乃以千數，操悉浮以沿江"
+      }
+    },
+    {
+      "id": "ZOUGE",
+      "ko": "주가",
+      "han": "走舸",
+      "home": "荊揚",
+      "requires": {
+        "riverAccess": true
+      },
+      "role": "NAVY_LIGHT",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷55",
+        "quote": "使襲督五樓船住濡須口。夜卒暴風，五樓船傾覆，左右散走舸"
+      }
+    },
+    {
+      "id": "GUIZU",
+      "ko": "귀졸",
+      "han": "鬼卒",
+      "home": "漢中",
+      "requires": {
+        "commandery": "漢中",
+        "faith": "五斗米道"
+      },
+      "role": "INFANTRY_FANATIC",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷8 張魯傳",
+        "quote": "以鬼道教民，自號「師君」。其來學道者，初皆名「鬼卒」"
+      }
+    },
+    {
+      "id": "QINGZHOU_BING",
+      "ko": "청주병",
+      "han": "青州兵",
+      "home": "青州",
+      "requires": {
+        "province": "青州",
+        "event": "黃巾降"
+      },
+      "role": "INFANTRY_LINE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷18",
+        "quote": "霸所部及青州兵，以為天下將亂，皆鳴鼓擅去"
+      }
+    },
+    {
+      "id": "TIECHE_BING",
+      "ko": "철거병",
+      "han": "鐵車兵",
+      "home": "西羌",
+      "requires": {
+        "tribe": "羌",
+        "ally": "越吉"
+      },
+      "role": "CHARIOT",
+      "source": {
+        "class": "ROMANCE_ATTESTED",
+        "proximity": "FICTION",
+        "cite": "삼국지연의(10건)",
+        "quote": "或用駱駝駕車，或用騾馬駕車，號為「鐵車兵」"
+      }
+    },
+    {
+      "id": "MENGSHOU",
+      "ko": "맹수부대",
+      "han": "驅猛獸",
+      "home": "八納洞",
+      "requires": {
+        "region": "南中",
+        "ally": "木鹿大王"
+      },
+      "role": "BEAST",
+      "source": {
+        "class": "ROMANCE_ATTESTED",
+        "proximity": "FICTION",
+        "cite": "삼국지연의 90회",
+        "quote": "八納洞，洞主木鹿大王，深通法術：出則騎象，能呼風喚雨"
+      }
+    },
+    {
+      "id": "FEIDAO_NV",
+      "ko": "비도병",
+      "han": "飛刀",
+      "home": "南中",
+      "requires": {
+        "region": "南中",
+        "general": "祝融夫人"
+      },
+      "role": "RANGED_LIGHT",
+      "source": {
+        "class": "ROMANCE_ATTESTED",
+        "proximity": "FICTION",
+        "cite": "삼국지연의",
+        "quote": "祝融夫人 … 世居南蠻，乃祝融氏之後；善使飛刀，百發百中"
+      }
+    },
+    {
+      "id": "BAIER_BING",
+      "ko": "백모병",
+      "han": "白毦兵",
+      "home": "蜀",
+      "requires": {
+        "general": "陳到"
+      },
+      "role": "INFANTRY_GUARD",
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 허용(전승 인용)",
+        "quote": "코퍼스 722권 전권 미검출. 資治通鑑 卷118의 白毦 2건은 劉裕 却月陣의 신호 깃발로 別件이다 — UNKNOWN"
+      }
+    }
+  ],
+  "formation": {
+    "note": "後漢書 百官志(이 판본 卷114-118)의 軍制. 부대 규모 단위를 지어낼 필요가 없다.",
+    "cite": "後漢書 百官志一",
+    "quote": "部校尉一人，比二千石 … 軍司馬一人，比千石 … 曲有軍候一人，比六百石 … 屯長一人，比二百石",
+    "ladder": [
+      {
+        "unit": "部",
+        "officer": "校尉",
+        "rank": "比二千石"
+      },
+      {
+        "unit": "部",
+        "officer": "軍司馬",
+        "rank": "比千石"
+      },
+      {
+        "unit": "曲",
+        "officer": "軍候",
+        "rank": "比六百石"
+      },
+      {
+        "unit": "屯",
+        "officer": "屯長",
+        "rank": "比二百石"
+      }
+    ]
+  }
+}
