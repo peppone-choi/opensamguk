@@ -3,7 +3,7 @@
 Scope: 2026-07-30 v2 realtime battle foundation 계획 Task 0의 선행조건 4축을 main 코드베이스에서 실측한 증거 기록. 코드 변경 없음.
 Verdict: fix-required
 
-기준 커밋: `e203e31e` (main). 조사일 2026-08-18. 계획 원문:
+기준 커밋: `e203e31e` (main). 조사일 2026-08-18. 선행 티켓 처분은 2026-08-18 Jira 실조회로 갱신(아래 표 각주). 계획 원문:
 `docs/superpowers/plans/2026-07-30-v2-realtime-battle-foundation-implementation-plan.md`.
 
 **결론 먼저 — Task 1 착수 불가.** 계획이 Task 0에서 Verify 하라고 지목한 `campaign/*.kt` 소스와
@@ -108,9 +108,9 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test \
 | 티켓 | 코드 흔적 | 판정 |
 | --- | --- | --- |
 | OPENSAM-149 | `RehydrateLosslessGateIT` 외 2종, PR #332/#399 | **v1 한정 충족**, Q 셀 quarantine 잔존, V2 campaign 미포함 |
-| OPENSAM-35 | `V2SandboxGate`, `V2FlywayIsolationIT`, `migration_v2/README` | **부분** — 0A-a~g 충족, DoD ①(v2 compose 스택) 미충족 |
+| OPENSAM-35 | `V2SandboxGate`, `V2FlywayIsolationIT`, `migration_v2/README` | **정당하게 종료됨(완료).** 0A-a~g 충족(PR #370, `e9cc3b31`). production 배포·cutover와 v1↔v2 live smoke는 티켓 코멘트가 명시적으로 범위 밖으로 선언하고 **OPENSAM-177** 로 넘겼다 |
 | OPENSAM-43 | 커밋 `90c442cb` 외 | 충족(런타임 계약·Flyway 격리 가드) |
-| OPENSAM-44 | 커밋 `b1b94e61` — **docs 전용**, 제품 SQL 0건 | 문서만 |
+| OPENSAM-44 | 커밋 `b1b94e61` — **docs 전용**, 제품 SQL 0건 | **정당하게 종료됨(완료).** broad T1 일괄 구현은 분해 티켓으로 supersede(티켓 코멘트 2026-08-16). 미구현이 아니라 **소유 이전**이다 |
 | OPENSAM-45 | 커밋 `34e42029` | 충족(단 battle 과 무관한 result-push) |
 | OPENSAM-46 | 커밋 0건 | 부재 |
 | OPENSAM-47 | 커밋 0건, 문서 0건 | 부재 |
@@ -129,10 +129,15 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test \
 
 ## 남긴 것 / 다음 행동
 
-1. OPENSAM-46/47/48/56 — 코드 흔적 0. 선행으로 먼저 닫아야 한다.
-2. OPENSAM-44 — docs 전용. 제품 스키마가 없다.
-3. OPENSAM-35 DoD ① — v2 compose 스택.
-4. 계획 `:19` 의 `classpath:db/v2/migration` 표기 정정(리포 규약은 `db/migration_v2`).
-5. 런타임 non-owner(`flyway.enabled=false`) + one-shot provisioner 모듈 — 축 4 잔여.
+1. OPENSAM-46/47/48/56 — 코드 흔적 0이고 상태도 `할 일`이다. 선행으로 먼저 닫아야 한다.
+2. v2 compose 스택 / v1↔v2 live smoke — **OPENSAM-177** 소유(35 가 명시적으로 넘긴 범위).
+3. 계획 `:19` 의 `classpath:db/v2/migration` 표기 정정(리포 규약은 `db/migration_v2`).
+4. 런타임 non-owner(`flyway.enabled=false`) + one-shot provisioner 모듈 — 축 4 잔여. 현재
+   **소유 티켓이 지정돼 있지 않다**(35 는 0A-a~g 로 닫혔고 46/47/48/56 범위도 아니다).
+   F1 착수 전에 소유자를 정해야 한다.
 
-이 다섯이 닫히기 전에는 BATTLE-F1(OPENSAM-157) 이후를 시작하지 않는다.
+**44·35 를 다시 열지 마라.** 둘은 각자 supersede·범위 경계를 코멘트로 남기고 정당하게 닫혔다.
+F0 이 발견한 것은 "닫힌 티켓이 거짓"이 아니라 **닫힌 범위 밖에 남은 잔여의 소유자가 비어 있다**는
+것이다. 잔여를 이유로 완료 티켓을 되돌리면 그 티켓들의 독립 검토 기록까지 흐려진다.
+
+위 항목이 닫히기 전에는 BATTLE-F1(OPENSAM-157) 이후를 시작하지 않는다.
