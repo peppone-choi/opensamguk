@@ -33,6 +33,16 @@ function requireRecord(value: unknown, label: string): JsonRecord {
   return value;
 }
 
+/**
+ * command/result 의 terminal payload 는 핸들러 결과를 `result` 안에 중첩해 싣는다(실측 2026-08-18):
+ *   {"status":"RESOLVED","ok":true,"type":"sendMessage",
+ *    "result":{"type":"sendMessage","ok":true,"generalId":1230,"msgID":2}}
+ * `ok`/`type`/`reason` 은 최상위에도 복제되지만 `msgID` 는 `result` 안에만 있다.
+ */
+function terminalResult(terminal: JsonRecord, label: string): JsonRecord {
+  return requireRecord(terminal.result, `${label}.result`);
+}
+
 function requireNonEmptyString(record: JsonRecord, key: string, label: string): string {
   const value = record[key];
   if (typeof value !== 'string' || value.length === 0) {
@@ -182,7 +192,7 @@ async function createDisposableSelfMessage(page: Page, generalId: number, text: 
   const terminal = await terminalCommandResult(page, requestId);
   expect(terminal.type, 'sendMessage terminal type').toBe('sendMessage');
   expect(terminal.ok, 'sendMessage terminal result').toBe(true);
-  return requirePositiveInteger(terminal, 'msgID', 'sendMessage terminal');
+  return requirePositiveInteger(terminalResult(terminal, 'sendMessage terminal'), 'msgID', 'sendMessage terminal.result');
 }
 
 function mailboxRow(page: Page, text: string): Locator {
@@ -312,7 +322,7 @@ test('Given an authenticated disposable general, when canceling then confirming 
   const terminal = await waitForBrowserTerminalResult(page, requestId);
   expect(terminal.type, 'deleteMessage terminal type').toBe('deleteMessage');
   expect(terminal.ok, 'deleteMessage terminal result').toBe(true);
-  expect(terminal.msgID, 'deleteMessage terminal message id').toBe(messageId);
+  expect(terminalResult(terminal, 'deleteMessage terminal').msgID, 'deleteMessage terminal message id').toBe(messageId);
 
   const mailboxReload = await reloadedMailbox;
   expect(mailboxReload.status(), 'post-delete mailbox reload response').toBe(200);
