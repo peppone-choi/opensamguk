@@ -3,7 +3,7 @@
   "id": "han",
   "name": "후한 군현 병종표",
   "generator": "tools/unitset/build_han_unitset.py",
-  "note": "한 파일이다. 이름·출전·게이팅·조성·등급은 사람이 적고(authored), 수치는 tools/unitset/build_han_unitset.py 가 조성에서 유도해 이 파일에 다시 써넣는다. 명부를 다른 파일에 두지 않는다 — 둘이 되면 어느 쪽이 맞는지 아무도 모른다.",
+  "note": "한 파일이다. 설계표(tables)·명부·수치가 모두 여기 있다. authored 필드는 사람이 적고, generated 필드는 tools/unitset/build_han_unitset.py 가 tables 를 써서 조성에서 유도해 이 파일에 되쓴다. 빌더를 두 번 돌리면 같은 파일이 나온다.",
   "armTypes": {
    "1": "보병",
    "2": "궁병",
@@ -30,7 +30,6 @@
    "사료 실측 — 三國志·後漢書·資治通鑑·華陽國志 (evidence.cite/quote)",
    "Total War: Three Kingdoms (조성 축·목록 구성만 참고, 수치·이름 미차용)"
   ],
-  "castleCrewTypeId": 2099,
   "counts": {
    "units": 116,
    "byCategory": {
@@ -66,7 +65,35 @@
    "defenceCoef",
    "info",
    "tierName"
-  ],
+  ]
+ },
+ "tables": {
+  "armTypes": {
+   "0": "성벽",
+   "1": "보병",
+   "2": "궁병",
+   "3": "기병",
+   "4": "귀병",
+   "5": "차병"
+  },
+  "tiers": {
+   "0": {
+    "han": "—",
+    "ko": "—"
+   },
+   "1": {
+    "han": "民兵",
+    "ko": "민병"
+   },
+   "2": {
+    "han": "部曲",
+    "ko": "부곡"
+   },
+   "3": {
+    "han": "精銳",
+    "ko": "정예"
+   }
+  },
   "categories": {
    "COMMON": {
     "ko": "공용",
@@ -88,10 +115,472 @@
     "ko": "기타",
     "desc": "남중·남만·남이."
    }
-  }
+  },
+  "weapons": {
+   "환수도": {
+    "attack": 110,
+    "attackCoef": {
+     "2": 1.15
+    },
+    "defenceCoef": {},
+    "shieldable": true,
+    "speed": 0,
+    "note": "베기 위주. 빠르지만 두꺼운 갑옷에 약하다."
+   },
+   "검": {
+    "attack": 100,
+    "attackCoef": {
+     "2": 1.2
+    },
+    "defenceCoef": {},
+    "shieldable": true,
+    "speed": 0,
+    "note": "가볍고 빠르다. 전선 유지용."
+   },
+   "부": {
+    "attack": 150,
+    "attackCoef": {
+     "1": 1.3
+    },
+    "defenceCoef": {},
+    "shieldable": true,
+    "speed": -1,
+    "note": "관통. 느리지만 중장 보병을 쪼갠다."
+   },
+   "모": {
+    "attack": 100,
+    "attackCoef": {},
+    "defenceCoef": {
+     "3": 0.6
+    },
+    "shieldable": true,
+    "speed": 0,
+    "note": "장병기. 정면 돌격을 되받는다."
+   },
+   "삭": {
+    "attack": 100,
+    "attackCoef": {
+     "1": 0.9
+    },
+    "defenceCoef": {
+     "3": 0.5
+    },
+    "shieldable": false,
+    "speed": -1,
+    "note": "긴 장창. 기병에 가장 강하고 보병전엔 둔하다."
+   },
+   "극": {
+    "attack": 125,
+    "attackCoef": {
+     "1": 1.1
+    },
+    "defenceCoef": {
+     "3": 0.8
+    },
+    "shieldable": true,
+    "speed": 0,
+    "note": "창과 도끼를 겸한다. 되받음은 얕다."
+   },
+   "구겸도": {
+    "attack": 175,
+    "attackCoef": {},
+    "defenceCoef": {
+     "3": 0.7
+    },
+    "shieldable": false,
+    "speed": -1,
+    "note": "양손 대도. 방패를 들 수 없어 무르다."
+   },
+   "궁": {
+    "attack": 100,
+    "attackCoef": {},
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "표준 활."
+   },
+   "강궁": {
+    "attack": 150,
+    "attackCoef": {},
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "강한 활. 사거리와 관통이 붙는다."
+   },
+   "단궁": {
+    "attack": 140,
+    "attackCoef": {},
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "짧고 억센 활."
+   },
+   "노": {
+    "attack": 150,
+    "attackCoef": {
+     "1": 1.3
+    },
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "관통. 갑옷을 뚫지만 재장전이 느리다."
+   },
+   "연노": {
+    "attack": 175,
+    "attackCoef": {
+     "3": 1.3
+    },
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 1,
+    "note": "연사. 탄약이 적어 오래 못 쏜다."
+   },
+   "화시": {
+    "attack": 125,
+    "attackCoef": {
+     "5": 1.6
+    },
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "불화살. 공성병기와 등갑에 치명적이다."
+   },
+   "과": {
+    "attack": 110,
+    "attackCoef": {
+     "3": 1.2
+    },
+    "defenceCoef": {
+     "3": 0.7
+    },
+    "shieldable": true,
+    "speed": 0,
+    "note": "갈고리 달린 창. 말과 수레를 걸어 끌어내린다."
+   },
+   "대도": {
+    "attack": 140,
+    "attackCoef": {
+     "1": 1.15
+    },
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": -1,
+    "note": "양손 큰 칼. 방패를 못 든다."
+   },
+   "참마검": {
+    "attack": 160,
+    "attackCoef": {
+     "3": 1.4
+    },
+    "defenceCoef": {
+     "3": 0.6
+    },
+    "shieldable": false,
+    "speed": -1,
+    "note": "말을 베는 긴 칼. 느리지만 기병을 끊는다."
+   },
+   "철추": {
+    "attack": 145,
+    "attackCoef": {
+     "1": 1.35
+    },
+    "defenceCoef": {},
+    "shieldable": true,
+    "speed": -1,
+    "note": "쇠몽둥이. 갑옷을 부수지만 굼뜨다."
+   },
+   "표창": {
+    "attack": 120,
+    "attackCoef": {
+     "3": 1.25
+    },
+    "defenceCoef": {},
+    "shieldable": true,
+    "speed": 0,
+    "note": "던지고 붙는다. 첫 합에서 기병을 흔든다."
+   },
+   "투부": {
+    "attack": 130,
+    "attackCoef": {
+     "1": 1.2
+    },
+    "defenceCoef": {},
+    "shieldable": true,
+    "speed": 0,
+    "note": "던지는 도끼. 방패째 부순다."
+   },
+   "취전": {
+    "attack": 110,
+    "attackCoef": {
+     "1": 1.3
+    },
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "독 불대. 갑옷을 가리지 않는다."
+   },
+   "독시": {
+    "attack": 130,
+    "attackCoef": {
+     "1": 1.25
+    },
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "독 바른 화살. 스치면 죽는다."
+   },
+   "치중": {
+    "attack": 50,
+    "attackCoef": {},
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "싣고 나른다. 싸우라고 만든 것이 아니다."
+   },
+   "투석": {
+    "attack": 150,
+    "attackCoef": {},
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "돌을 날린다."
+   },
+   "충차": {
+    "attack": 150,
+    "attackCoef": {},
+    "defenceCoef": {},
+    "shieldable": false,
+    "speed": 0,
+    "note": "성문을 깬다."
+   }
+  },
+  "armors": {
+   "의복": {
+    "defence": 75,
+    "speed": 8,
+    "weight": 0,
+    "note": "갑옷이랄 것이 없다.",
+    "rattan": false
+   },
+   "경피갑": {
+    "defence": 100,
+    "speed": 8,
+    "weight": 0,
+    "note": "가죽. 가볍다.",
+    "rattan": false
+   },
+   "평피갑": {
+    "defence": 115,
+    "speed": 7,
+    "weight": 1,
+    "note": "가죽. 무난하다.",
+    "rattan": false
+   },
+   "중피갑": {
+    "defence": 120,
+    "speed": 7,
+    "weight": 1,
+    "note": "두꺼운 가죽.",
+    "rattan": false
+   },
+   "경철갑": {
+    "defence": 140,
+    "speed": 7,
+    "weight": 1,
+    "note": "쇠미늘. 무겁지 않다.",
+    "rattan": false
+   },
+   "평철갑": {
+    "defence": 175,
+    "speed": 7,
+    "weight": 2,
+    "note": "쇠미늘. 튼튼하다.",
+    "rattan": false
+   },
+   "중철갑": {
+    "defence": 200,
+    "speed": 6,
+    "weight": 2,
+    "note": "두꺼운 쇠미늘. 느리다.",
+    "rattan": false
+   },
+   "강철갑": {
+    "defence": 230,
+    "speed": 6,
+    "weight": 2,
+    "note": "최상급 갑주. 매우 느리다.",
+    "rattan": false
+   },
+   "경등갑": {
+    "defence": 105,
+    "speed": 8,
+    "weight": 0,
+    "note": "등나무. 가볍고 물에 뜬다.",
+    "rattan": true
+   },
+   "중등갑": {
+    "defence": 160,
+    "speed": 7,
+    "weight": 1,
+    "note": "등나무를 겹쳤다. 불에 약하다.",
+    "rattan": true
+   }
+  },
+  "shields": {
+   "없음": {
+    "avoid": 0,
+    "vsArcherDefence": 1.0,
+    "note": null
+   },
+   "소형방패": {
+    "avoid": 15,
+    "vsArcherDefence": 0.85,
+    "note": "작고 가볍다. 피하는 데 쓴다."
+   },
+   "중형방패": {
+    "avoid": 10,
+    "vsArcherDefence": 0.8,
+    "note": "가리며 싸운다."
+   },
+   "대형방패": {
+    "avoid": 5,
+    "vsArcherDefence": 0.65,
+    "note": "화살을 막는 벽이 된다."
+   }
+  },
+  "traits": {
+   "유목": {
+    "members": [
+     "羌",
+     "鮮卑",
+     "烏桓",
+     "烏丸",
+     "匈奴",
+     "屠各",
+     "胡",
+     "高句麗"
+    ],
+    "adjust": {
+     "spd": 1,
+     "avoid": 5,
+     "dfn": 0.9
+    },
+    "why": "말 위에서 산다 — 빠르고 가볍다"
+   },
+   "산지": {
+    "members": [
+     "山越",
+     "叟",
+     "賨",
+     "蠻",
+     "夷",
+     "青羌",
+     "挹婁"
+    ],
+    "adjust": {
+     "avoid": 10,
+     "atk": 10,
+     "dfn": 0.95
+    },
+    "why": "험한 곳을 탄다 — 붙잡히지 않는다"
+   },
+   "중앙": {
+    "members": [],
+    "adjust": {
+     "dfn": 1.1,
+     "avoid": 5
+    },
+    "why": "조정이 입히고 먹인다 — 장비가 갖춰져 있다"
+   }
+  },
+  "renown": {
+   "adjust": {
+    "atk": 10,
+    "dfn": 15,
+    "avoid": 5
+   },
+   "why": "사료가 이름을 남긴 부대는 같은 등급 기본 병종보다 낫다. 그래야 게이팅을 뚫고 뽑을 이유가 있다."
+  },
+  "armTypeCoef": {
+   "attack": {
+    "1": {
+     "2": 1.2,
+     "3": 0.8,
+     "5": 1.2
+    },
+    "2": {
+     "1": 0.8,
+     "3": 1.2,
+     "5": 1.2
+    },
+    "3": {
+     "2": 1.2,
+     "1": 1.2,
+     "5": 0.8
+    },
+    "5": {
+     "1": 1.2,
+     "2": 1.2,
+     "3": 1.2
+    },
+    "4": {
+     "5": 1.2
+    }
+   },
+   "defence": {
+    "1": {
+     "2": 0.8,
+     "3": 1.2,
+     "5": 0.8
+    },
+    "2": {
+     "1": 1.2,
+     "3": 1.2,
+     "5": 0.8
+    },
+    "3": {
+     "2": 0.8,
+     "1": 0.8,
+     "5": 1.2
+    },
+    "5": {
+     "1": 1.2,
+     "2": 1.2,
+     "3": 1.2
+    },
+    "4": {
+     "5": 0.8
+    }
+   }
+  },
+  "formulas": {
+   "attack": "무기.attack → 성격 보정 → 명성 보정",
+   "defence": "갑옷.defence → 성격 보정 → 명성 보정",
+   "speed": "갑옷.speed + 무기.speed + (기병 +1) + (차병 -1) + 성격.spd",
+   "avoid": "방패.avoid + (기병 +5) + (활 든 기병 +10) + (차병 0) + 성격.avoid + 명성.avoid",
+   "magicCoef": "귀병만: 민병 0.5 / 부곡 0.55 / 정예 0.6",
+   "cost": "round((공격+방어)/30) + 갑옷.weight + (기병 +2)",
+   "rice": "max(1, cost + (기병 +1) - (차병 5))",
+   "attackCoef": "armTypeCoef.attack[armType] × 무기.attackCoef",
+   "defenceCoef": "armTypeCoef.defence[armType] × 무기.defenceCoef × 방패.vsArcherDefence × (등갑이면 차병 1.5)"
+  },
+  "forbidRegionsForCavalry": [
+   "邪馬壹國",
+   "奴國",
+   "投馬國"
+  ],
+  "gateKeys": [
+   "province",
+   "commandery",
+   "region",
+   "city",
+   "external",
+   "tribe"
+  ]
  },
  "id": "han",
  "defaultCrewTypeId": 2100,
+ "castleCrewTypeId": 2099,
  "crewTypes": [
   {
    "id": 2000,
