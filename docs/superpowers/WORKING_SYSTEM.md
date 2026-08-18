@@ -15,6 +15,14 @@ This document is the operating contract for future agents working on opensamguk.
 | `java-testing` | `pluginagentmarketplace/custom-plugin-java` | JUnit/testing reference only. The skills.sh Gen audit marked it High Risk, so project gates below remain authoritative. |
 | `kotlin-spring-boot` | `ashchupliak/dream-team` | Kotlin + Spring Boot idioms. |
 | `supabase-postgres-best-practices` | `supabase/agent-skills` | PostgreSQL migration/query discipline. Use with this repo's JDBC-only daemon write rule. |
+| `higgsfield-generate` | `higgsfield-ai/skills` | Higgsfield image/video/3D/audio generation via the `higgsfield` CLI. Entry point for the OPENSAM-114 asset lane. |
+| `higgsfield-brandkit` | `higgsfield-ai/skills` | Palette/logo/typography brand systems. Concept A tokens (OPENSAM-113 §7) are the input, not a freehand brand. |
+| `higgsfield-soul-id` | `higgsfield-ai/skills` | Identity-consistent character models. Candidate for the OPENSAM-98/100 general-portrait set. |
+| `higgsfield-product-photoshoot` | `higgsfield-ai/skills` | Product/brand image modes. Not used by this repo's game-asset lane; listed for lock completeness. |
+| `higgsfield-marketplace-cards` | `higgsfield-ai/skills` | Marketplace listing imagery. Not used by this repo; listed for lock completeness. |
+| `higgsfield-youtube-thumbnail` | `higgsfield-ai/skills` | Thumbnail/cover composition. Not used by this repo; listed for lock completeness. |
+| `higgsfield-video-explainer` | `higgsfield-ai/skills` | Narrated explainer video assembly. Not used by this repo; listed for lock completeness. |
+| `higgsfield-websites` | `higgsfield-ai/skills` | Higgsfield-hosted site/app/game scaffolding, and its game-art references (spritesheet, tileable texture, rigged 3D). Only the game-art references are relevant here; this repo's frontend stays Next.js and is never scaffolded by this skill. |
 
 Restore or refresh these with:
 
@@ -22,6 +30,10 @@ Restore or refresh these with:
 scripts/agent/project-skills.sh restore
 scripts/agent/project-skills.sh update
 ```
+
+The `higgsfield-*` skills all require the `higgsfield` CLI (`npm i -g @higgsfield/cli`) plus an authenticated
+account (`higgsfield auth login`) and a selected workspace. Generation spends account credits, so any lane that
+calls them must state the credit cost before running and must not generate speculatively.
 
 Downloaded external skill bodies are restored locally under `.agents/skills/` from the committed `skills-lock.json`; they are not copied into git. A git-ignored `.agents/.skills-integrity.json` binds the current local bodies to the lock hash and detects local drift on SessionStart. Repo-native process skills, including `opensamguk-working-system`, `loop-engineering`, `opensamguk-php-oracle`, `parity-close`, and `parity-ship`, are tracked alongside the Codex `$os-*` adapters and `$find-project-skill`.
 
