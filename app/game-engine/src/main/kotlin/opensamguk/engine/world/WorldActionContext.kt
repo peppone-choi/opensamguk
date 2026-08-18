@@ -2,6 +2,7 @@ package opensamguk.engine.world
 
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.PhpMt19937
 import opensamguk.common.rng.RandUtil
@@ -1386,7 +1387,7 @@ class WorldActionContext(
             personalityNameOf = { GameConst.personalityNameOf(it.toString()) },
             specialDomesticNameOf = { SpecialityHelper.domesticName(it) },
             specialWarNameOf = { SpecialityHelper.warName(it) },
-            crewtypeShortNameOf = { GameUnitConst.byId(it)?.name ?: "$it" },
+            crewtypeShortNameOf = { UnitCatalog.byId(it)?.name ?: "$it" },
         )
         recorder.recordStatisticInsert(StatisticInsertColumns.from(row))
     }

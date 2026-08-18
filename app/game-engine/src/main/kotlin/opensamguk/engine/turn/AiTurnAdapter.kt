@@ -3,6 +3,7 @@ package opensamguk.engine.turn
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.GameUnitDetail
 import opensamguk.common.constants.UnitConstraint
 import opensamguk.infra.persistence.MetaJson
@@ -1563,7 +1564,7 @@ class AiTurnAdapter(
         val out = ArrayList<Pair<Int, Double>>()
         for (unitRow in UnitSetTable.all(availability.unitSet)) {
             if (unitRow.armType != armType) continue
-            val unit = GameUnitConst.byId(unitRow.id) ?: continue
+            val unit = UnitCatalog.byId(unitRow.id) ?: continue
             if (RecruitUnitAvailability.isValid(
                     unit,
                     logicGeneral,
@@ -1604,7 +1605,7 @@ class AiTurnAdapter(
             val currId = general.crewTypeId.takeIf { it >= 1000 }
             val currUnit = currId
                 ?.takeIf { UnitSetTable.byId(availability.unitSet, it) != null }
-                ?.let { GameUnitConst.byId(it) }
+                ?.let { UnitCatalog.byId(it) }
             if (currUnit != null && RecruitUnitAvailability.isValid(
                     currUnit,
                     logicGeneral,

@@ -90,9 +90,32 @@ data class ForbidRegions(val forbidRegions: List<String>) : UnitConstraint()
 
 아직 반영하지 않은 것 — 挹婁 「其國便乘船寇盜」·倭人 「乘船南北市糴」 의 해로 보정. 이동 그래프의 `adjacency.cross === 'RIVER'` 와 117개 나루터 위에 붙일 자리는 있으나 이동비용 규칙이 아직 없다.
 
-## 6. 남은 배선
+## 6. 엔진 배선 (2026-08-19 완료)
 
-`data/unitset/units.json` 은 데이터일 뿐 아직 엔진에 물리지 않았다. `GameUnitConst` 는 하드코딩된 단일 `object` 이고 `UnitSetTable.isSupported()` 는 `"che"` 하나만 참이다. han 을 실제로 뽑으려면 카탈로그를 변종화해야 하고(`CityConstRegistry` 가 맵에 한 것과 같은 모양), 그건 이 작업의 범위 밖이다 — 별도 티켓.
+`common/UnitCatalog` 이 세트 카탈로그다. `CityConstRegistry` 가 맵에 한 것과 같은 모양이되,
+**한 가지가 다르다 — 세트 문자열을 실어나르지 않는다.**
+
+세트마다 id 대역을 갈라 뒀기 때문이다(che 1000~1999 · han 2000~2999). 그래서 전투·표시처럼
+"이 id 가 무슨 병종이냐"만 묻는 자리는 `UnitCatalog.byId(id)` 한 줄이면 되고, 세트를 알아야
+하는 곳은 **뽑을 수 있는 병종을 나열할 때뿐**이다. 그 자리는 이미 `UnitSetTable` 이 `unitSet`
+문자열을 받고 있었다. 60여 개 호출부에 세트를 꿰는 대신 id 대역 하나로 끝냈다.
+
+- **che 는 JSON 을 읽지 않는다.** `UnitCatalog.all("che")` 는 `GameUnitConst` 를 그대로 위임한다.
+  골든이 덮은 패러티 면을 로더에 태우면 파싱 하나로 조용히 어긋난다. JSON 의 che 행은
+  `CheUnitSetExportTest` 가 지키는 사본이고, 런타임은 코틀린을 본다.
+- `UnitSetTable.isSupported()` 가 세트 목록을 본다 — 이전엔 `"che"` 하나만 참이었다.
+- `UnitSetTable.defaultCrewTypeId(set)` / `castleCrewTypeId(set)` 신설. `AutorunNationPolicy` 가
+  상수 `DEFAULT_CREWTYPE`(1100)을 그대로 쓰다가 han 에서 NPE 나던 자리를 이걸로 바꿨다.
+- 전투·표시 조회 `GameUnitConst.byId(` → `UnitCatalog.byId(` (logic 5파일 · game-api 3 · game-engine 3).
+- 리소스는 gradle `processResources` 가 `data/unitset/units.json` 을 실어 나른다. 사본을 커밋하지 않는다.
+
+**세트 선택은 시나리오가 한다.** `ScenarioImporter` 가 `map.unitSet` 을 월드 config 로 넘기고
+`UnitSetTable.activeUnitSet(config, meta)` 가 그걸 읽는다. 아직 han 을 선언한 시나리오는 없다 —
+배선은 끝났고 켜는 것은 시나리오 쪽 일이다.
+
+**남은 것 하나.** `WarUnitCity` 의 성벽은 여전히 `CREWTYPE_CASTLE`(1000) 고정이다. han 성벽(2099)은
+수치·계수가 che 성벽과 같게 만들어 둬서 지금은 결과가 같지만, 성벽을 세트마다 다르게 만들 거면
+`WarUnitCity` 에 세트를 넘겨야 한다.
 
 ## 근거 재현
 

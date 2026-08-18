@@ -1,6 +1,7 @@
 package opensamguk.gameapi.controller
 
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
@@ -64,9 +65,9 @@ class SimulatorController(
         val worldState = world.findAll().firstOrNull()
             ?: return status(HttpStatus.CONFLICT, "world state not found")
 
-        val attackerCrewType = GameUnitConst.byId(attacker.crewTypeId)
+        val attackerCrewType = UnitCatalog.byId(attacker.crewTypeId)
             ?: return badRequest("attacker crewtype unknown")
-        val defenderCrewType = GameUnitConst.byId(defender.crewTypeId)
+        val defenderCrewType = UnitCatalog.byId(defender.crewTypeId)
             ?: return badRequest("defender crewtype unknown")
 
         val warSeed = (body["warSeed"] ?: body["seed"])?.toString()?.takeIf { it.isNotBlank() }

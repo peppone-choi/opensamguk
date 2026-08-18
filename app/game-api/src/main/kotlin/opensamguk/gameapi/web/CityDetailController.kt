@@ -3,6 +3,7 @@ package opensamguk.gameapi.web
 import com.fasterxml.jackson.annotation.JsonProperty
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.getCityLevelList
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralListText
@@ -143,7 +144,7 @@ class CityDetailController(
         val leadershipBonus: Int,   // calcLeadershipBonus(officerLevel, 해당 장수 국가 level)
         // ourGeneral 전용(타국/재야면 0/None — FE는 "?" 렌더). defence_train은 응답 필드가 아니다.
         val crewType: Int,
-        val crewTypeName: String,   // GameUnitConst.byId(crewType).name, 비아국이면 ""
+        val crewTypeName: String,   // UnitCatalog.byId(crewType).name, 비아국이면 ""
         val crew: Int,              // 비가시 타국이면 -1(PHP $crew=-1 → FE "?")
         val train: Int,             // 비아국이면 -1
         val atmos: Int,             // 비아국이면 -1
@@ -227,7 +228,7 @@ class CityDetailController(
             // PHP: ourGeneral이면 `GameUnitConst::byID($crewtype)->name` — 실 장수의 crewtype은 항상 유효 id(>=1000,
             // ResetHelper가 DEFAULT_CREWTYPE 1100으로 초기화). byID는 id<1000에 예외를 던지므로(파리티), 미초기화
             // crewtype(<1000)은 호출하지 않고 ""(FrontInfoController crewTypeName 동식). 비아국이면 PHP ''.
-            val crewTypeName = if (ourGeneral && g.crewTypeId >= 1000) (GameUnitConst.byId(g.crewTypeId)?.name ?: "") else ""
+            val crewTypeName = if (ourGeneral && g.crewTypeId >= 1000) (UnitCatalog.byId(g.crewTypeId)?.name ?: "") else ""
             val crew = if (ourGeneral) g.crew else if (!visible) -1 else g.crew
             val train = if (ourGeneral) g.train else -1
             val atmos = if (ourGeneral) g.atmos else -1

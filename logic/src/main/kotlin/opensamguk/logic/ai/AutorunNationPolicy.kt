@@ -45,6 +45,8 @@ class AutorunNationPolicy(
     aiOptions: Map<String, Any?>? = null,
     nationPolicy: Map<String, Any?>? = null,
     serverPolicy: Map<String, Any?>? = null,
+    /** 활성 병종 세트. 기본값 che 라 기존 경로·골든은 그대로다. */
+    private val unitSet: String = UnitSetTable.CHE_UNIT_SET,
 ) {
     // --- can* action gates (AutorunNationPolicy.php:88-113); all default true ---
     // NOT `private set` — mirrors AutorunGeneralPolicy: the chief-gate (init) sets them, and a test
@@ -130,7 +132,9 @@ class AutorunNationPolicy(
             reqNPCDevelGold = develcost * 30
         }
 
-        val defaultCrew = UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
+        // 기본 병종은 세트마다 다르다(che 1100 · han 2006). 상수로 굳히면 han 에서 NPE 다.
+        val defaultCrewId = UnitSetTable.defaultCrewTypeId(unitSet) ?: GameUnitConst.DEFAULT_CREWTYPE
+        val defaultCrew = UnitSetTable.byId(defaultCrewId)!!
 
         // #2 reqNPCWar gold/rice (:228-238) — crew = defaultStatNPCMax*100; *4; PhpRound(-2).
         if (reqNPCWarGold == 0 || reqNPCWarRice == 0) {

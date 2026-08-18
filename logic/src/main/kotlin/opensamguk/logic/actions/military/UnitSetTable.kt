@@ -2,6 +2,7 @@ package opensamguk.logic.actions.military
 
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import kotlin.math.floor
 
 /**
@@ -49,23 +50,32 @@ object UnitSetTable {
      */
     fun getTechCost(tech: Int): Double = 1.0 + getTechLevel(tech) * 0.15
 
-    private val UNITS: List<UnitDetail> = GameUnitConst.all().values.map { unit ->
-        UnitDetail(
-            id = unit.id,
-            armType = unit.armType,
-            name = unit.name,
-            cost = unit.cost,
-            rice = unit.rice,
-        )
-    }
+    private fun row(unit: opensamguk.common.constants.GameUnitDetail) = UnitDetail(
+        id = unit.id,
+        armType = unit.armType,
+        name = unit.name,
+        cost = unit.cost,
+        rice = unit.rice,
+    )
 
-    private val BY_ID: Map<Int, UnitDetail> = UNITS.associateBy { it.id }
+    private val BY_SET: Map<String, List<UnitDetail>> =
+        UnitCatalog.sets().keys.associateWith { set -> UnitCatalog.all(set).values.map(::row) }
 
-    fun all(): List<UnitDetail> = UNITS
+    /** id 대역이 세트마다 갈려 있어 세트를 몰라도 찾을 수 있다 (UnitCatalog 참조). */
+    private val BY_ID: Map<Int, UnitDetail> = BY_SET.values.flatten().associateBy { it.id }
 
-    fun all(unitSet: String?): List<UnitDetail> = if (isSupported(unitSet)) UNITS else emptyList()
+    fun all(): List<UnitDetail> = BY_SET.getValue(CHE_UNIT_SET)
 
-    fun isSupported(unitSet: String?): Boolean = normalizedUnitSet(unitSet) == CHE_UNIT_SET
+    fun all(unitSet: String?): List<UnitDetail> = BY_SET[normalizedUnitSet(unitSet)].orEmpty()
+
+    fun isSupported(unitSet: String?): Boolean = normalizedUnitSet(unitSet) in BY_SET
+
+    /** 그 세트의 기본 병종. che 는 1100, han 은 2006 — 세트마다 다르므로 상수로 굳히지 않는다. */
+    fun defaultCrewTypeId(unitSet: String?): Int? =
+        UnitCatalog.meta(normalizedUnitSet(unitSet))?.defaultCrewTypeId
+
+    fun castleCrewTypeId(unitSet: String?): Int? =
+        UnitCatalog.meta(normalizedUnitSet(unitSet))?.castleCrewTypeId
 
     fun activeUnitSet(config: Map<String, Any?>, meta: Map<String, Any?>): String =
         stringField(config["unitSet"])

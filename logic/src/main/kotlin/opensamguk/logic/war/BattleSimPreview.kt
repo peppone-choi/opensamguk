@@ -2,6 +2,7 @@ package opensamguk.logic.war
 
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.GameUnitDetail
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
@@ -307,7 +308,7 @@ class BattleSimPreview(
         require(g.experience >= 0) { "[$who] experience must be >= 0" }
         require(g.gold >= 0) { "[$who] gold must be >= 0" }
         require(g.rice >= 0) { "[$who] rice must be >= 0" }
-        require(GameUnitConst.byId(g.crewTypeId) != null) { "[$who] unknown crewtype ${g.crewTypeId}" }
+        require(UnitCatalog.byId(g.crewTypeId) != null) { "[$who] unknown crewtype ${g.crewTypeId}" }
         require(isAllowedItem("horse", g.horse)) { "[$who] horse ${g.horse} not in allowlist" }
         require(isAllowedItem("weapon", g.weapon)) { "[$who] weapon ${g.weapon} not in allowlist" }
         require(isAllowedItem("book", g.book)) { "[$who] book ${g.book} not in allowlist" }

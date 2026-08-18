@@ -2,6 +2,7 @@ package opensamguk.logic.actions.military
 
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst as CommonGameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.GameUnitDetail as CommonGameUnitDetail
 import opensamguk.common.constants.UnitConstraint
 import opensamguk.logic.actions.GeneralActionDefinition
@@ -229,7 +230,7 @@ open class RecruitAlgorithm(
         val general = view.get(RequirementKey.General(ctx.actorId)) as? General ?: return false
         val nation = view.get(RequirementKey.Nation(ctx.nationId ?: general.nationId)) as? Nation ?: return false
         if (UnitSetTable.byId(activeUnitSet(ctx), reqCrewTypeId) == null) return false
-        val unit = CommonGameUnitConst.byId(reqCrewTypeId) ?: return false
+        val unit = UnitCatalog.byId(reqCrewTypeId) ?: return false
         val cityConst = CityConstRegistry.find(activeMapName(ctx)) ?: return false
         val ownCities = ownedCityLevels(ctx, view, general, nation)
         val ownRegions = ownedRegions(ctx, view, ownCities.keys, cityConst)

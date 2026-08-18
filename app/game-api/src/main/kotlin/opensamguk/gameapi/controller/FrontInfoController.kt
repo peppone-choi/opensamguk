@@ -45,6 +45,7 @@ import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.getCityLevelList
 import opensamguk.logic.domestic.getBillByLevel
 import opensamguk.logic.domestic.getDedLevel
@@ -816,11 +817,11 @@ class FrontInfoController(
         if (code.isBlank() || code == "None") "-" else resolved
 
     /**
-     * 병종 표시 이름. GameUnitConst.byId(id)?.name (= GameUnitConst::all()[id]->name). 미장착(id<1000,
+     * 병종 표시 이름. UnitCatalog.byId(id)?.name (= GameUnitConst::all()[id]->name). 미장착(id<1000,
      * 예: 0)이면 '-'(byId는 id<1000에서 require throw하므로 1000 미만은 조회 자체를 건너뛴다).
      */
     private fun crewTypeName(crewTypeId: Int): String =
-        if (crewTypeId < 1000) "-" else GameUnitConst.byId(crewTypeId)?.name ?: "-"
+        if (crewTypeId < 1000) "-" else UnitCatalog.byId(crewTypeId)?.name ?: "-"
 
     private fun emptyGeneral() = FrontGeneralInfo(
         hasGeneral = false,

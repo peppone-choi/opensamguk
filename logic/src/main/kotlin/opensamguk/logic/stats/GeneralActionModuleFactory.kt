@@ -1,6 +1,7 @@
 package opensamguk.logic.stats
 
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.logic.domain.General
 import opensamguk.logic.inheritance.InheritBuffModuleFactory
 import opensamguk.logic.traits.OfficerLevelModule
@@ -88,7 +89,7 @@ class GeneralActionModuleFactory(
         // #5 personality
         personalityRegistry.resolve(personalityCode)?.let { mods.add(it) }
         if (general.crewTypeId >= 1000) {
-            GameUnitConst.byId(general.crewTypeId)?.let { mods.add(CrewTypeWarModule(it)) }
+            UnitCatalog.byId(general.crewTypeId)?.let { mods.add(CrewTypeWarModule(it)) }
         }
         // #7 inherit — the inherit-buff module pair (general then war), folded from aux.inheritBuff
         //   (PHP General.php:125-128 builds inheritBuffObj; :787-799 merges it at slot #7). Resolves

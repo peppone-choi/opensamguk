@@ -126,7 +126,7 @@ class CheCheobo(
 
             // 병종 분포 (che_첩보.php:168-172)
             val crewTypeTexts = byCrewType.map { (crewTypeId, list) ->
-                val unitName = opensamguk.common.constants.GameUnitConst.byId(crewTypeId)?.name ?: ""
+                val unitName = opensamguk.common.constants.UnitCatalog.byId(crewTypeId)?.name ?: ""
                 val crewTypeText = if (unitName.length >= 2) unitName.substring(0, 2) else unitName
                 "$crewTypeText:${list.size}"
             }
