@@ -1,7 +1,7 @@
 {
  "_meta": {
   "name": "opensamguk 병종표",
-  "note": "병종은 이 파일 하나다. 두 세트(che·han)가 여기 함께 있다. 설계표(tables)는 han 세트에만 적용된다 — che 는 코틀린에서 그대로 뽑아온 사본이다. authored 필드는 사람이 적고, generated 필드는 빌더가 조성에서 유도해 되쓴다.",
+  "note": "병종은 이 파일 하나다. 두 세트(che·han)가 여기 함께 있다. 설계표(tables)는 han 세트에만 적용된다 — che 는 코틀린에서 그대로 뽑아온 사본이다. authored 필드는 사람이 적고, generated 필드는 빌더가 조성에서 유도해 되쓴다. nameCoined 가 채워진 행은 부대는 실재하나 그 이름이 후대·게임 조어라는 뜻이다.",
   "generator": "tools/unitset/build_unitset.py",
   "gate": "common CheUnitSetExportTest — che 행이 GameUnitConst 와 어긋나면 깨진다",
   "armTypes": {
@@ -28,7 +28,8 @@
    "generic",
    "composition",
    "requires",
-   "evidence"
+   "evidence",
+   "nameCoined"
   ],
   "generated": [
    "attack",
@@ -851,6 +852,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 7,
@@ -899,6 +901,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 150,
    "speed": 7,
@@ -948,6 +951,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 200,
    "speed": 7,
@@ -1008,6 +1012,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 150,
    "speed": 7,
@@ -1068,6 +1073,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 150,
    "speed": 8,
@@ -1128,6 +1134,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 200,
    "speed": 7,
@@ -1188,6 +1195,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 225,
    "speed": 7,
@@ -1248,6 +1256,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 175,
    "defence": 175,
    "speed": 7,
@@ -1308,6 +1317,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 7,
@@ -1357,6 +1367,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 8,
@@ -1418,6 +1429,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 100,
    "speed": 8,
@@ -1479,6 +1491,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 150,
    "speed": 7,
@@ -1540,6 +1553,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 200,
    "defence": 100,
    "speed": 7,
@@ -1601,6 +1615,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 100,
    "speed": 7,
@@ -1649,6 +1664,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 200,
    "defence": 100,
    "speed": 7,
@@ -1709,6 +1725,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 150,
    "speed": 7,
@@ -1769,6 +1786,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 200,
    "defence": 100,
    "speed": 8,
@@ -1829,6 +1847,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 250,
    "speed": 7,
@@ -1889,6 +1908,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 100,
    "speed": 8,
@@ -1949,6 +1969,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 250,
    "defence": 175,
    "speed": 6,
@@ -2009,6 +2030,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 200,
    "defence": 150,
    "speed": 7,
@@ -2069,6 +2091,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 80,
    "defence": 80,
    "speed": 7,
@@ -2110,6 +2133,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 80,
    "defence": 80,
    "speed": 7,
@@ -2164,6 +2188,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 80,
    "defence": 130,
    "speed": 7,
@@ -2218,6 +2243,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 80,
    "speed": 7,
@@ -2272,6 +2298,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 130,
    "speed": 7,
@@ -2326,6 +2353,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 60,
    "defence": 60,
    "speed": 7,
@@ -2373,6 +2401,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 110,
    "speed": 7,
@@ -2427,6 +2456,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 80,
    "defence": 130,
    "speed": 7,
@@ -2481,6 +2511,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 80,
    "speed": 7,
@@ -2535,6 +2566,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 6,
@@ -2598,6 +2630,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 100,
    "speed": 6,
@@ -2659,6 +2692,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 100,
    "speed": 6,
@@ -2729,6 +2763,7 @@
     "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php",
     "quote": null
    },
+   "nameCoined": null,
    "attack": 50,
    "defence": 200,
    "speed": 5,
@@ -2800,6 +2835,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 75,
    "speed": 8,
@@ -2853,6 +2889,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 75,
    "speed": 8,
@@ -2906,6 +2943,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 75,
    "speed": 7,
@@ -2959,6 +2997,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 75,
    "speed": 8,
@@ -3011,6 +3050,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 100,
    "speed": 8,
@@ -3063,6 +3103,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 9,
@@ -3125,6 +3166,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 115,
    "speed": 7,
@@ -3183,6 +3225,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 115,
    "speed": 7,
@@ -3241,6 +3284,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 125,
    "defence": 140,
    "speed": 7,
@@ -3300,6 +3344,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 140,
    "speed": 6,
@@ -3358,6 +3403,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 115,
    "speed": 7,
@@ -3415,6 +3461,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 115,
    "speed": 7,
@@ -3472,6 +3519,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 9,
@@ -3539,6 +3587,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 9,
@@ -3605,6 +3654,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 140,
    "speed": 8,
@@ -3672,6 +3722,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 175,
    "speed": 7,
@@ -3730,6 +3781,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 175,
    "speed": 7,
@@ -3788,6 +3840,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 125,
    "defence": 175,
    "speed": 7,
@@ -3847,6 +3900,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 140,
    "defence": 175,
    "speed": 6,
@@ -3905,6 +3959,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 160,
    "defence": 175,
    "speed": 6,
@@ -3962,6 +4017,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 175,
    "defence": 175,
    "speed": 6,
@@ -4019,6 +4075,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 175,
    "speed": 7,
@@ -4076,6 +4133,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 175,
    "defence": 175,
    "speed": 8,
@@ -4133,6 +4191,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 200,
    "speed": 6,
@@ -4200,6 +4259,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 175,
    "speed": 8,
@@ -4267,6 +4327,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 75,
    "speed": 8,
@@ -4316,6 +4377,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 8,
@@ -4370,6 +4432,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 115,
    "speed": 7,
@@ -4424,6 +4487,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 50,
    "defence": 75,
    "speed": 7,
@@ -4481,6 +4545,7 @@
     "cite": "게임 설계(등급×무기 기본 사다리)",
     "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 140,
    "speed": 6,
@@ -4545,6 +4610,7 @@
     "cite": "三國志 卷8 公孫瓚傳",
     "quote": "光和中，涼州賊起，發幽州突騎三千人，假瓚都督行事傳"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 141,
    "speed": 8,
@@ -4625,6 +4691,7 @@
     "cite": "三國志 卷9 曹純傳 裴注 魏書",
     "quote": "純所督虎豹騎，皆天下骁锐，或從百人將補之"
    },
+   "nameCoined": null,
    "attack": 135,
    "defence": 235,
    "speed": 7,
@@ -4699,6 +4766,7 @@
     "cite": "三國志 卷7 呂布傳",
     "quote": "精練齊整，每所攻擊無不破者，名爲陷陣營"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 155,
    "speed": 7,
@@ -4762,6 +4830,7 @@
     "cite": "三國志 卷7·8·9·64 다수",
     "quote": "丹楊 출병 기록 16건 실측(卷64 7건 최다)"
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 181,
    "speed": 7,
@@ -4833,6 +4902,7 @@
     "cite": "三國志 卷47·60·64",
     "quote": "山越 11건 실측"
    },
+   "nameCoined": null,
    "attack": 140,
    "defence": 110,
    "speed": 8,
@@ -4899,6 +4969,7 @@
     "cite": "後漢書 卷86 南蠻傳",
     "quote": "賨錢，口四十。世號爲板楯蠻 … 板楯七姓，射殺白虎，立功先世"
    },
+   "nameCoined": null,
    "attack": 140,
    "defence": 148,
    "speed": 7,
@@ -4969,6 +5040,7 @@
     "cite": "華陽國志 卷四",
     "quote": "馬忠為牂柯太守。移南中勁卒、青羌萬餘家於蜀，為五部，所當無前，號為飛軍"
    },
+   "nameCoined": "華陽國志는 「所當無前」…「號為飛軍」이라 적는다. 無當飛軍이라는 네 자 합성은 후대 표기다.",
    "attack": 130,
    "defence": 181,
    "speed": 7,
@@ -5009,7 +5081,8 @@
     "쇠미늘. 튼튼하다.",
     "가리며 싸운다.",
     "산지: 험한 곳을 탄다 — 붙잡히지 않는다.",
-    "사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다."
+    "사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.",
+    "이름 주의: 華陽國志는 「所當無前」…「號為飛軍」이라 적는다. 無當飛軍이라는 네 자 합성은 후대 표기다."
    ]
   },
   {
@@ -5042,6 +5115,7 @@
     "cite": "三國志 卷9 / 後漢書 卷87",
     "quote": "郃等平河關，渡河入小湟中，河西諸羌盡降 / 義從 3건"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 105,
    "speed": 10,
@@ -5122,6 +5196,7 @@
     "cite": "後漢書 卷87 西羌傳",
     "quote": "先零 74건 · 燒當 46건 · 參狼 4건 실측(전권). 이전 미검출 보고는 卷87 만 본 오류였다"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 105,
    "speed": 10,
@@ -5201,6 +5276,7 @@
     "cite": "後漢書 卷90",
     "quote": "鮮卑 58건 실측"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 105,
    "speed": 10,
@@ -5278,6 +5354,7 @@
     "cite": "後漢書 卷90",
     "quote": "烏桓 53건 실측"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 141,
    "speed": 8,
@@ -5355,6 +5432,7 @@
     "cite": "三國志 卷1 / 後漢書 卷89",
     "quote": "彊弩 8건 · 强弩 1건. 「冀州彊弩」 관용구는 전권에서 미검출 — UNKNOWN"
    },
+   "nameCoined": null,
    "attack": 160,
    "defence": 115,
    "speed": 8,
@@ -5420,6 +5498,7 @@
     "cite": "後漢書 卷86 / 三國志 卷47",
     "quote": "樓船 1건 · 水軍 6건"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 175,
    "speed": 7,
@@ -5484,6 +5563,7 @@
     "cite": "三國志 卷1·7·9·64 다수",
     "quote": "屯騎·越騎·步兵·長水·射聲 상비 5교 실측"
    },
+   "nameCoined": null,
    "attack": 135,
    "defence": 207,
    "speed": 7,
@@ -5555,6 +5635,7 @@
     "cite": "漢書 卷96上下 / 三國志 卷30 裴注 魏略西戎傳",
     "quote": "각국 勝兵 수치 49건 실측"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 115,
    "speed": 9,
@@ -5624,6 +5705,7 @@
     "cite": "三國演義 90회 烏戈國 兀突骨",
     "quote": "정사 미검출. 漢書 卷96上의 烏戈山離國은 서역 국명으로 別件이다(동명이물 주의)"
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 167,
    "speed": 7,
@@ -5695,6 +5777,7 @@
     "cite": "게임 허용",
     "quote": "정사 근거 없음. 後漢書의 유일한 象兵 용례는 「或執銅鏡以象兵」 — 동경을 병기처럼 '보이게 했다'는 동사이며 부대가 아니다. 코끼리 부대는 연의 木鹿大王 騎象뿐"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 152,
    "speed": 8,
@@ -5772,6 +5855,7 @@
     "cite": "後漢書 卷73 公孫瓚傳 / 三國志 卷6",
     "quote": "常乘白馬，以為左右翼，自號「白馬義從」。烏桓更相告語，避白馬長史 … 白馬義從爲中堅，亦分作兩校，左射右，右射左"
    },
+   "nameCoined": null,
    "attack": 160,
    "defence": 115,
    "speed": 9,
@@ -5843,6 +5927,7 @@
     "cite": "三國志 卷55 韓當傳",
     "quote": "後又加都督之號。將敢死及解煩兵萬人，討丹楊賊，破之"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 190,
    "speed": 7,
@@ -5907,6 +5992,7 @@
     "cite": "三國志 卷55 甘寧傳",
     "quote": "軍旅皆已引出，唯車下虎士千餘人，并呂蒙、蔣欽、凌統及寧，從權逍遙津北"
    },
+   "nameCoined": null,
    "attack": 135,
    "defence": 207,
    "speed": 7,
@@ -5973,6 +6059,7 @@
     "cite": "華陽國志 卷一",
     "quote": "漢時，赤甲軍常取其民"
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 181,
    "speed": 7,
@@ -6044,6 +6131,7 @@
     "cite": "華陽國志 卷一 / 三國志 卷35",
     "quote": "蜀丞相亮亦發其勁卒三千人為連弩士 … 損益連弩，謂之元戎，以鐵為矢，矢長八寸，一弩十矢俱發"
    },
+   "nameCoined": null,
    "attack": 195,
    "defence": 110,
    "speed": 9,
@@ -6113,6 +6201,7 @@
     "cite": "三國志 卷33",
     "quote": "突將無前。賨、叟、青羌散騎、武騎一千餘人，此皆數十年之內所糾合四方之精銳"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 155,
    "speed": 7,
@@ -6175,6 +6264,7 @@
     "cite": "三國志 卷54",
     "quote": "祖橫兩蒙衝挾守沔口，以栟閭大紲繫石爲矴，上有千人，以弩交射"
    },
+   "nameCoined": null,
    "attack": 160,
    "defence": 175,
    "speed": 7,
@@ -6237,6 +6327,7 @@
     "cite": "三國志 卷54 周瑜傳",
     "quote": "劉表治水軍，蒙沖鬥艦，乃以千數，操悉浮以沿江"
    },
+   "nameCoined": null,
    "attack": 160,
    "defence": 175,
    "speed": 7,
@@ -6299,6 +6390,7 @@
     "cite": "三國志 卷55",
     "quote": "使襲督五樓船住濡須口。夜卒暴風，五樓船傾覆，左右散走舸"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 120,
    "speed": 8,
@@ -6356,6 +6448,7 @@
     "cite": "三國志 卷8 張魯傳",
     "quote": "以鬼道教民，自號「師君」。其來學道者，初皆名「鬼卒」"
    },
+   "nameCoined": null,
    "attack": 160,
    "defence": 90,
    "speed": 7,
@@ -6421,6 +6514,7 @@
     "cite": "三國志 卷18",
     "quote": "霸所部及青州兵，以為天下將亂，皆鳴鼓擅去"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 130,
    "speed": 7,
@@ -6486,6 +6580,7 @@
     "cite": "三國演義(10건)",
     "quote": "或用駱駝駕車，或用騾馬駕車，號為「鐵車兵」"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 195,
    "speed": 6,
@@ -6555,6 +6650,7 @@
     "cite": "三國演義 90회",
     "quote": "八納洞，洞主木鹿大王，深通法術：出則騎象，能呼風喚雨"
    },
+   "nameCoined": "三國演義 90회는 「虎豹豺狼…跟隨」라 적을 뿐 부대명을 주지 않는다. 驅猛獸는 게임 조어다.",
    "attack": 120,
    "defence": 167,
    "speed": 8,
@@ -6604,7 +6700,8 @@
     "등나무를 겹쳤다. 불에 약하다.",
     "산지: 험한 곳을 탄다 — 붙잡히지 않는다.",
     "사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.",
-    "조건(미구현): ally=木鹿大王"
+    "조건(미구현): ally=木鹿大王",
+    "이름 주의: 三國演義 90회는 「虎豹豺狼…跟隨」라 적을 뿐 부대명을 주지 않는다. 驅猛獸는 게임 조어다."
    ]
   },
   {
@@ -6634,6 +6731,7 @@
     "cite": "三國演義",
     "quote": "祝融夫人 … 世居南蠻，乃祝融氏之後；善使飛刀，百發百中"
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 110,
    "speed": 8,
@@ -6702,6 +6800,7 @@
     "cite": "게임 허용(전승 인용)",
     "quote": "코퍼스 722권 전권 미검출. 資治通鑑 卷118의 白毦 2건은 劉裕 却月陣의 신호 깃발로 別件이다 — UNKNOWN"
    },
+   "nameCoined": "코퍼스 미검출. 諸葛亮集 전승에 기대며 출처를 확인하지 못했다.",
    "attack": 125,
    "defence": 175,
    "speed": 7,
@@ -6735,7 +6834,8 @@
     "창과 도끼를 겸한다. 되받음은 얕다.",
     "쇠미늘. 튼튼하다.",
     "가리며 싸운다.",
-    "조건(미구현): general=陳到"
+    "조건(미구현): general=陳到",
+    "이름 주의: 코퍼스 미검출. 諸葛亮集 전승에 기대며 출처를 확인하지 못했다."
    ]
   },
   {
@@ -6747,13 +6847,13 @@
    "tier": 3,
    "tierName": "정예",
    "category": "CHARACTER",
-   "role": "INFANTRY_GUARD",
+   "role": "INFANTRY_SHOCK",
    "generic": false,
    "derived": true,
    "composition": {
-    "weapon": "극",
+    "weapon": "환수도",
     "armor": "평철갑",
-    "shield": "중형방패"
+    "shield": "소형방패"
    },
    "requires": {
     "general": "許褚",
@@ -6765,10 +6865,11 @@
     "cite": "三國志 卷18 魏書·二李臧文吕许典二庞阎传",
     "quote": "引入宿衛。諸從褚俠客，皆以為虎士。從徵張繡，先登，斬首萬計"
    },
-   "attack": 135,
+   "nameCoined": null,
+   "attack": 120,
    "defence": 207,
    "speed": 7,
-   "avoid": 20,
+   "avoid": 25,
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
@@ -6779,14 +6880,13 @@
     }
    ],
    "attackCoef": {
-    "1": 1.1,
-    "2": 1.2,
+    "2": 1.38,
     "3": 0.8,
     "5": 1.2
    },
    "defenceCoef": {
-    "2": 0.64,
-    "3": 0.96,
+    "2": 0.68,
+    "3": 1.2,
     "5": 0.8
    },
    "initSkillTrigger": null,
@@ -6794,10 +6894,10 @@
    "iActionList": null,
    "info": [
     "정예(精銳) 등급.",
-    "극·평철갑·중형방패.",
-    "창과 도끼를 겸한다. 되받음은 얕다.",
+    "환수도·평철갑·소형방패.",
+    "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
     "쇠미늘. 튼튼하다.",
-    "가리며 싸운다.",
+    "작고 가볍다. 피하는 데 쓴다.",
     "중앙: 조정이 입히고 먹인다 — 장비가 갖춰져 있다.",
     "사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.",
     "조건(미구현): general=許褚",
@@ -6831,6 +6931,7 @@
     "cite": "三國志 卷06 魏書·董二袁劉傳",
     "quote": "爲設備，惟帳下彊弩數十張，大戟士百餘人自隨。瓚部迸騎二千餘"
    },
+   "nameCoined": null,
    "attack": 135,
    "defence": 190,
    "speed": 7,
@@ -6901,6 +7002,7 @@
     "cite": "後漢書 卷074A 袁紹劉表列傳 第六十四上",
     "quote": "石車擊紹樓，皆破，軍中呼曰「霹靂車」"
    },
+   "nameCoined": null,
    "attack": 160,
    "defence": 90,
    "speed": 7,
@@ -6964,6 +7066,7 @@
     "cite": "三國志 卷03 魏書·明帝紀",
     "quote": "燒死。昭又以繩連石磨壓其衝車，衝車折。亮乃更爲井闌百尺以付城中"
    },
+   "nameCoined": null,
    "attack": 160,
    "defence": 135,
    "speed": 6,
@@ -7026,6 +7129,7 @@
     "cite": "資治通鑑 卷071 魏紀三",
     "quote": "磨壓其衝車，衝車折。亮乃更為井闌百尺以射城中，以土丸填塹"
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 115,
    "speed": 7,
@@ -7086,6 +7190,7 @@
     "cite": "三國演義 卷097 第九十七回 討魏國武侯再上表 破曹兵姜維詐獻書",
     "quote": "裝起雲梯，四面而來，即令三千軍各執火箭，分布四面"
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 90,
    "speed": 7,
@@ -7147,6 +7252,7 @@
     "cite": "資治通鑑 卷079 巻七十九 晉紀一",
     "quote": "詔濬罷屯田兵，大作舟艦。別駕何攀以爲「屯田兵不過五六百"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 130,
    "speed": 7,
@@ -7204,6 +7310,7 @@
     "cite": "後漢書 卷001B 下‧光武帝紀第一下",
     "quote": "材官、樓船，常以立秋後講肄課試，各有員數。平地用車騎，山阻用材"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 86,
    "speed": 8,
@@ -7261,6 +7368,7 @@
     "cite": "後漢書 卷119 輿服志",
     "quote": "輕車，古之戰車也。洞朱輪輿，不巾不蓋，建矛戟"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 155,
    "speed": 6,
@@ -7322,6 +7430,7 @@
     "cite": "後漢書 卷115 百官志 百官二",
     "quote": "虎賁中郎將，比二千石。"
    },
+   "nameCoined": null,
    "attack": 135,
    "defence": 207,
    "speed": 7,
@@ -7386,6 +7495,7 @@
     "cite": "後漢書 卷115 百官志 百官二",
     "quote": "羽林中郎將，比二千石。本注曰：主羽林郎"
    },
+   "nameCoined": null,
    "attack": 135,
    "defence": 207,
    "speed": 8,
@@ -7460,6 +7570,7 @@
     "cite": "後漢書 卷074B 袁紹劉表列傳 第六十四下",
     "quote": "於草棘。又乃圖獲鄴城，許賞賜秦胡，其財物婦女，豫有分數"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 105,
    "speed": 10,
@@ -7534,6 +7645,7 @@
     "cite": "後漢書 卷008 帝紀第八 孝靈皇帝",
     "quote": "大司農曹嵩爲太尉。\n\n十二月，休屠各胡叛。"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 105,
    "speed": 10,
@@ -7613,6 +7725,7 @@
     "cite": "資治通鑑 卷052 漢紀四十四",
     "quote": "春，二月，戊申，京師地震。\n<BR>\n南匈奴句龍王吾斯、車紐等反，寇西河"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 105,
    "speed": 10,
@@ -7687,6 +7800,7 @@
     "cite": "三國志 卷30 魏書三十 烏丸鮮卑東夷傳第三十",
     "quote": "者八十餘人，使居塞內，布列遼東屬國、遼西、右北平、漁陽、廣陽、上穀"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 105,
    "speed": 10,
@@ -7761,6 +7875,7 @@
     "cite": "三國志 卷31 蜀書一 劉二牧傳",
     "quote": "校尉賈龍，使引兵還擊焉，焉出青羌與戰，故能破殺"
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 105,
    "speed": 9,
@@ -7826,6 +7941,7 @@
     "cite": "三國志 卷35 蜀書五 諸葛亮傳",
     "quote": "銅等及曲長屯將七十餘人，突將無前。賨、叟、青羌散騎、武騎一千餘"
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 181,
    "speed": 7,
@@ -7872,8 +7988,8 @@
   {
    "set": "han",
    "id": 2149,
-   "name": "산기",
-   "han": "散騎",
+   "name": "청강 산기",
+   "han": "青羌散騎",
    "armType": 3,
    "tier": 2,
    "tierName": "부곡",
@@ -7887,18 +8003,20 @@
     "shield": null
    },
    "requires": {
-    "nation": "蜀"
+    "nation": "蜀",
+    "tribe": "青羌"
    },
    "evidence": {
     "class": "PRIMARY_ATTESTED",
     "proximity": "OFFICIAL_HISTORY",
-    "cite": "資治通鑑 卷071 魏紀三",
-    "quote": "銅等及曲長、屯將七十餘人，突將、無前、賨叟、青羌、散騎、武騎一千餘"
+    "cite": "三國志 卷35 蜀書 諸葛亮傳",
+    "quote": "賨、叟、青羌散騎、武騎一千餘人，此皆數十年之內所糾合四方之精銳"
    },
-   "attack": 110,
-   "defence": 115,
+   "nameCoined": null,
+   "attack": 120,
+   "defence": 110,
    "speed": 9,
-   "avoid": 10,
+   "avoid": 20,
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 11,
@@ -7906,6 +8024,12 @@
     {
      "type": "ReqTech",
      "reqTech": 1000
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "青羌"
+     ]
     },
     {
      "type": "ForbidRegions",
@@ -7936,6 +8060,7 @@
     "모·경피갑.",
     "장병기. 정면 돌격을 되받는다.",
     "가죽. 가볍다.",
+    "산지: 험한 곳을 탄다 — 붙잡히지 않는다.",
     "사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.",
     "조건(미구현): nation=蜀"
    ]
@@ -7963,9 +8088,10 @@
    "evidence": {
     "class": "PRIMARY_ATTESTED",
     "proximity": "OFFICIAL_HISTORY",
-    "cite": "資治通鑑 卷071 魏紀三",
-    "quote": "銅等及曲長、屯將七十餘人，突將、無前、賨叟、青羌、散騎、武騎一千餘"
+    "cite": "三國志 卷35 蜀書 諸葛亮傳",
+    "quote": "賨、叟、青羌散騎、武騎一千餘人，此皆數十年之內所糾合四方之精銳"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 155,
    "speed": 7,
@@ -8038,6 +8164,7 @@
     "cite": "三國志 卷31 蜀書一 劉二牧傳",
     "quote": "璋復遣別駕從事蜀郡張肅送叟兵三百人並雜御物於曹公"
    },
+   "nameCoined": null,
    "attack": 140,
    "defence": 110,
    "speed": 8,
@@ -8103,6 +8230,7 @@
     "cite": "華陽國志 卷五 公孫述劉二牧志",
     "quote": "禦魯。羲以宜須兵衛，輒召漢昌賨民為兵"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 86,
    "speed": 8,
@@ -8168,6 +8296,7 @@
     "cite": "華陽國志 卷四 南中志",
     "quote": "古郡，以馬忠為牂柯太守。移南中勁卒、青羌萬餘家於蜀，為五部，所"
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 181,
    "speed": 7,
@@ -8238,6 +8367,7 @@
     "cite": "三國演義 卷103 第百零三回 上方谷司馬受困 五丈原諸葛禳星",
     "quote": "兵驅木牛流馬而來。二人一齊殺將過去，蜀兵大敗奔走，木牛流馬"
    },
+   "nameCoined": null,
    "attack": 70,
    "defence": 86,
    "speed": 7,
@@ -8302,6 +8432,7 @@
     "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
     "quote": "冠軍太守，後又加都督之號。將敢死及解煩兵萬人，討丹楊賊，破之"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 155,
    "speed": 7,
@@ -8366,6 +8497,7 @@
     "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
     "quote": "權赴之，使襲督五樓船住濡須口。夜卒暴風，五樓船傾覆，左右散走"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 175,
    "speed": 7,
@@ -8430,6 +8562,7 @@
     "cite": "三國志 卷54 吴書·周瑜、魯肅、吕蒙傳",
     "quote": "此多之。劉備之自京還也，權乘飛雲大船，與張昭、秦松、魯肅等十餘"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 191,
    "speed": 7,
@@ -8494,6 +8627,7 @@
     "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
     "quote": "及孫策東渡，從討三郡，遷先登校尉，授兵二千，騎五十匹"
    },
+   "nameCoined": "三國志55는 先登校尉라는 관직과 授兵二千을 적는다. 先登이라는 부대명 자체는 게임 조어다.",
    "attack": 120,
    "defence": 155,
    "speed": 7,
@@ -8527,7 +8661,8 @@
     "쇠미늘. 무겁지 않다.",
     "가리며 싸운다.",
     "사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.",
-    "조건(미구현): nation=吳"
+    "조건(미구현): nation=吳",
+    "이름 주의: 三國志55는 先登校尉라는 관직과 授兵二千을 적는다. 先登이라는 부대명 자체는 게임 조어다."
    ]
   },
   {
@@ -8556,6 +8691,7 @@
     "cite": "三國志 卷56 吳書·三朱吕範傳",
     "quote": "十里。魏時夷王梅敷兄弟三人，部曲萬餘家屯此，分布在中廬宜城"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 90,
    "speed": 8,
@@ -8613,6 +8749,7 @@
     "cite": "三國志 卷58 吴書·陆逊传",
     "quote": "破之。秭歸大姓文布、鄧凱等合夷兵數千人，首尾西方"
    },
+   "nameCoined": null,
    "attack": 140,
    "defence": 110,
    "speed": 8,
@@ -8677,6 +8814,7 @@
     "cite": "資治通鑑 卷058 漢紀五十",
     "quote": "一時俱起，皆著黃巾以為標幟，故時人謂之「黃巾賊」。二月，角自稱天"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 90,
    "speed": 8,
@@ -8733,6 +8871,7 @@
     "cite": "後漢書 卷072 董卓列傳 第六十二",
     "quote": "西河白波谷，轉寇太原，遂破河東，百姓流轉三輔，號為「白波賊」，眾十"
    },
+   "nameCoined": null,
    "attack": 130,
    "defence": 115,
    "speed": 8,
@@ -8796,6 +8935,7 @@
     "cite": "資治通鑑 卷060 漢紀五十二",
     "quote": "大河之南以待其變。」操善之。會黑山、於毒、白繞、眭固等十餘萬眾人略東郡"
    },
+   "nameCoined": null,
    "attack": 140,
    "defence": 110,
    "speed": 8,
@@ -8855,6 +8995,7 @@
     "cite": "三國志 卷08 魏書·二公孫陶四張傳",
     "quote": "憑恃，是以決計斬賊之使。又高句麗、濊貊與淵為仇，並為寇鈔"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 105,
    "speed": 10,
@@ -8934,6 +9075,7 @@
     "cite": "三國志 卷30 魏書三十 烏丸鮮卑東夷傳第三十",
     "quote": "百餘-{里}-，其俗南北皆同，與挹婁接。挹婁喜乘船寇鈔，北沃沮畏之，夏"
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 114,
    "speed": 8,
@@ -9000,6 +9142,7 @@
     "cite": "後漢書 卷086 南蠻西南夷列傳第七十",
     "quote": "日南、象林徼外蠻夷區憐等數千人攻象林縣，燒城寺，殺長"
    },
+   "nameCoined": null,
    "attack": 140,
    "defence": 110,
    "speed": 8,
@@ -9062,6 +9205,7 @@
     "cite": "資治通鑑 卷049 漢紀四十一",
     "quote": "及邊郡兵二萬餘人，又詔遼東太守耿夔率鮮卑及諸郡兵共擊之"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 130,
    "speed": 7,
@@ -9118,6 +9262,7 @@
     "cite": "三國志 卷43 蜀書十三 黃李呂馬王張傳",
     "quote": "敗績猇亭，巴西太守閻芝發諸縣兵五千人以補遣闕，遣忠送往"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 115,
    "speed": 8,
@@ -9179,6 +9324,7 @@
     "cite": "後漢書 卷118 百官志 百官五 州郡 縣鄕 亭里",
     "quote": "尉、-{遊}-徼、亭長皆習設備五兵。五兵：弓弩，戟，楯，刀劍，甲鎧"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 90,
    "speed": 8,
@@ -9235,6 +9381,7 @@
     "cite": "三國演義 卷005 第五回 發矯詔諸鎮應曹公 破關兵三英戰呂布",
     "quote": "抄小路，直到關下搦戰。華雄引鐵騎五百，飛下關來"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 215,
    "speed": 6,
@@ -9307,6 +9454,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": "羌人 은 활을 쓴다 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 90,
    "speed": 9,
@@ -9375,6 +9523,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": "산지 근접 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 90,
    "speed": 8,
@@ -9444,6 +9593,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": "先零·燒當 의 기마 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 126,
    "speed": 8,
@@ -9521,6 +9671,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": "기사(騎射) — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 90,
    "speed": 10,
@@ -9596,6 +9747,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 90,
    "speed": 9,
@@ -9662,6 +9814,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 103,
    "speed": 9,
@@ -9737,6 +9890,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": "기사(騎射) — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 90,
    "speed": 10,
@@ -9812,6 +9966,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 140,
    "defence": 90,
    "speed": 9,
@@ -9875,6 +10030,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 90,
    "speed": 9,
@@ -9943,6 +10099,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 180,
    "speed": 7,
@@ -10021,6 +10178,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": "험한 산을 탄다 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 109,
    "speed": 7,
@@ -10090,6 +10248,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 133,
    "speed": 7,
@@ -10159,6 +10318,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": " — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 95,
    "speed": 8,
@@ -10227,6 +10387,7 @@
     "cite": "게임 설계(지역×등급×무기 배분)",
     "quote": "樂浪檀弓出其地 — 동이의 활 — 집단은 사료가 말하고, 무기 배분은 게임이 정한다."
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 90,
    "speed": 9,
@@ -10292,6 +10453,7 @@
     "cite": "게임 설계(세트마다 하나 있어야 하는 자리)",
     "quote": ""
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 100,
    "speed": 7,
@@ -10342,6 +10504,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 辰韓",
     "quote": "便步戰，兵仗與馬韓同"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 124,
    "speed": 7,
@@ -10406,6 +10569,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 弁辰",
     "quote": "國出鐵，韓、濊、倭皆從取之"
    },
+   "nameCoined": null,
    "attack": 120,
    "defence": 205,
    "speed": 6,
@@ -10470,6 +10634,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 辰韓",
     "quote": "便步戰，兵仗與馬韓同"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 110,
    "speed": 8,
@@ -10534,6 +10699,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 濊",
     "quote": "作矛長三丈，或數人共持之，能步戰"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 124,
    "speed": 6,
@@ -10597,6 +10763,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 濊",
     "quote": "樂浪檀弓出其地"
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 110,
    "speed": 8,
@@ -10660,6 +10827,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 東沃沮",
     "quote": "人性質直強勇，少牛馬，便持矛步戰"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 110,
    "speed": 8,
@@ -10724,6 +10892,7 @@
     "cite": "後漢書 卷85 東夷列傳 夫餘",
     "quote": "出名馬、赤玉、貂豽，大珠如酸棗"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 141,
    "speed": 9,
@@ -10798,6 +10967,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 高句麗",
     "quote": "其馬皆小，便登山"
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 105,
    "speed": 10,
@@ -10871,6 +11041,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 挹婁",
     "quote": "其弓長四尺，力如弩，矢用楛，長尺八寸，青石爲鏃"
    },
+   "nameCoined": null,
    "attack": 150,
    "defence": 86,
    "speed": 8,
@@ -10934,6 +11105,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 倭人",
     "quote": "兵用矛、楯、木弓"
    },
+   "nameCoined": null,
    "attack": 110,
    "defence": 86,
    "speed": 8,
@@ -10998,6 +11170,7 @@
     "cite": "三國志 卷30 魏書 東夷傳 倭人",
     "quote": "木弓短下長上，竹箭或鐵鏃或骨鏃"
    },
+   "nameCoined": null,
    "attack": 100,
    "defence": 86,
    "speed": 8,

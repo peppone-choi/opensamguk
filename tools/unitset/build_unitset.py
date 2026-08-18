@@ -165,6 +165,8 @@ def derive(u: dict) -> dict:
             w_note, a_note] + ([s_note] if s_note else []) + extra
     # 제약 타입이 없는 조건은 문구로만 남긴다 — 없는 메커니즘을 있는 척하지 않는다.
     info += [f"조건(미구현): {n}" for n in notes]
+    if u.get("nameCoined"):
+        info.append(f"이름 주의: {u['nameCoined']}")
 
     u.update(tierName=tier_ko, attack=atk, defence=dfn, speed=spd, avoid=avoid,
              magicCoef=magic, cost=cost, rice=rice, reqConstraints=req,
@@ -175,7 +177,7 @@ def derive(u: dict) -> dict:
 
 
 KEYS = ["set", "id", "name", "han", "armType", "tier", "tierName", "category", "role",
-        "generic", "derived", "composition", "requires", "evidence", "attack", "defence",
+        "generic", "derived", "composition", "requires", "evidence", "nameCoined", "attack", "defence",
         "speed", "avoid", "magicCoef", "cost", "rice", "reqConstraints", "attackCoef",
         "defenceCoef", "initSkillTrigger", "phaseSkillTrigger", "iActionList", "info"]
 
