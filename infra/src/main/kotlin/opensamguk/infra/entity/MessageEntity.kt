@@ -28,12 +28,12 @@ class MessageEntity(
     @Column(name = "mailbox", nullable = false)
     var mailbox: Int,
 
-    // `message.type`은 Postgres ENUM(`message_type`)이고 라벨은 소문자 `.value`다.
-    // 두 가지를 동시에 맞춰야 한다.
-    //  - 값: `@Enumerated(STRING)`은 `.name`(PRIVATE)을 쓴다 → converter로 `.value`를 쓴다.
-    //  - 타입: varchar로 바인딩하면 `operator does not exist: message_type = character varying`
-    //    (42883)으로 읽기 쿼리가 죽는다. `columnDefinition`은 DDL 전용이라 바인딩을 못 바꾼다 →
-    //    [PostgresValueEnumJdbcType]이 그 문자열을 Types.OTHER로 보내 PG가 enum으로 추론하게 한다.
+    // PG ENUM `message_type` stores lowercase `.value` labels (`private`, not `PRIVATE`).
+    // Two things must match at once:
+    //  - value: `@Enumerated(STRING)` binds `.name` (PRIVATE) — the converter binds `.value`.
+    //  - type: a varchar bind yields `operator does not exist: message_type = character varying`
+    //    (42883). `columnDefinition` is DDL-only, so [PostgresValueEnumJdbcType] sends the
+    //    converter string as Types.OTHER and lets PG infer the enum.
     @Convert(converter = MessageTypeValueConverter::class)
     @JdbcType(PostgresValueEnumJdbcType::class)
     @Column(name = "type", nullable = false, columnDefinition = "message_type")

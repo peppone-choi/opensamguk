@@ -55,12 +55,12 @@ class PostgresValueEnumJdbcType : JdbcType {
     override fun <X> getExtractor(javaType: JavaType<X>): ValueExtractor<X> =
         object : BasicExtractor<X>(javaType, this) {
             override fun doExtract(rs: ResultSet, paramIndex: Int, options: WrapperOptions): X =
-                javaType.wrap(rs.getObject(paramIndex), options)
+                javaType.wrap(rs.getString(paramIndex), options)
 
             override fun doExtract(statement: CallableStatement, index: Int, options: WrapperOptions): X =
-                javaType.wrap(statement.getObject(index), options)
+                javaType.wrap(statement.getString(index), options)
 
             override fun doExtract(statement: CallableStatement, name: String, options: WrapperOptions): X =
-                javaType.wrap(statement.getObject(name), options)
+                javaType.wrap(statement.getString(name), options)
         }
 }
