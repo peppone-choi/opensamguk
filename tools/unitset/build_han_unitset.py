@@ -95,17 +95,21 @@ SHIELD = {
 }
 
 # ── armType 골격 상성 (che 그대로) ──────────────────────────────────────────────
+CASTLE, WIZARD = 0, 4      # v1 GameUnitConst 와 같은 번호를 쓴다
+
 BASE_ATK = {
     FOOT:   {ARCHER: 1.2, CAV: 0.8, SIEGE: 1.2},
     ARCHER: {FOOT: 0.8, CAV: 1.2, SIEGE: 1.2},
     CAV:    {ARCHER: 1.2, FOOT: 1.2, SIEGE: 0.8},
     SIEGE:  {FOOT: 1.2, ARCHER: 1.2, CAV: 1.2},
+    WIZARD: {SIEGE: 1.2},
 }
 BASE_DEF = {
     FOOT:   {ARCHER: 0.8, CAV: 1.2, SIEGE: 0.8},
     ARCHER: {FOOT: 1.2, CAV: 1.2, SIEGE: 0.8},
     CAV:    {ARCHER: 0.8, FOOT: 0.8, SIEGE: 1.2},
     SIEGE:  {FOOT: 1.2, ARCHER: 1.2, CAV: 1.2},
+    WIZARD: {SIEGE: 0.8},
 }
 
 
@@ -127,7 +131,7 @@ ROLE = {
     "GARRISON":          (FOOT, "모", "평피갑", "대형방패", 0),
     "INFANTRY_SHIELD":   (FOOT, "모", "경철갑", "대형방패", 1000),
     "INFANTRY_SHOCK":    (FOOT, "환수도", "경철갑", "중형방패", 1000),
-    "INFANTRY_FANATIC":  (FOOT, "부", "의복", None, 1000),
+    "INFANTRY_FANATIC":  (WIZARD, "부", "의복", None, 1000),   # 계략을 쓰는 종교병
     "INFANTRY_ELITE":    (FOOT, "환수도", "평철갑", "중형방패", 2000),
     "INFANTRY_GUARD":    (FOOT, "극", "평철갑", "중형방패", 3000),
     "RANGED_LIGHT":      (ARCHER, "표창", "경피갑", None, 1000),
@@ -318,8 +322,12 @@ def derive(u: dict) -> dict:
         atk += RENOWN["atk"]; dfn += RENOWN["dfn"]; avoid += RENOWN["avoid"]
         notes_extra.append("사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.")
 
+    magic = {1: 0.5, 2: 0.55, 3: 0.6}[u["tier"]] if u["arm"] == WIZARD else 0.0
+
     cost = round((atk + dfn) / 30) + weight + (2 if u["arm"] == CAV else 0)
-    rice = cost + (1 if u["arm"] == CAV else 0) - (5 if u["arm"] == SIEGE else 0)
+    # 차병은 사람이 적게 먹는다. 다만 0 아래로는 내리지 않는다 — 먹이면 먹는 것이지
+    # 병종을 굴리면 쌀이 늘어나는 일은 없다.
+    rice = max(1, cost + (1 if u["arm"] == CAV else 0) - (5 if u["arm"] == SIEGE else 0))
 
     req = []
     if u["tech"]:
@@ -340,8 +348,9 @@ def derive(u: dict) -> dict:
         "role": u["role"], "category": u["cat"], "tier": u["tier"], "tierName": tier_ko,
         "evidence": u["cls"],
         "attack": atk, "defence": dfn, "speed": spd, "avoid": avoid,
-        "magicCoef": 0, "cost": cost, "rice": rice,
-        "requirements": req,
+        "magicCoef": magic, "cost": cost, "rice": rice,
+        "reqConstraints": req,
+        "initSkillTrigger": None, "phaseSkillTrigger": None, "iActionList": None,
         "attackCoef": {str(k): v for k, v in sorted(a.items())},
         "defenceCoef": {str(k): v for k, v in sorted(d.items())},
         "composition": {"weapon": u["weapon"], "armor": u["armor"], "shield": sh},
@@ -350,12 +359,30 @@ def derive(u: dict) -> dict:
     }
 
 
+# 성벽은 뽑는 병종이 아니다. 수비 측이 늘 깔고 시작하는 자리라 세트마다 하나 있어야
+# 한다 — v1 GameUnitConst 의 1000번(T_CASTLE)과 같은 역할이다.
+CASTLE_ID = 2099
+CASTLE = {
+    "id": CASTLE_ID, "armType": CASTLE, "name": "성벽", "han": "城壁",
+    "role": "CASTLE", "category": "COMMON", "tier": 0, "tierName": "—",
+    "evidence": "GAME_REFERENCE",
+    "attack": 100, "defence": 100, "speed": 7, "avoid": 0,
+    "magicCoef": 0.0, "cost": 99, "rice": 9,
+    "reqConstraints": [{"type": "Impossible"}],
+    "initSkillTrigger": None, "phaseSkillTrigger": None, "iActionList": None,
+    "attackCoef": {}, "defenceCoef": {"1": 1.2},
+    "composition": {"weapon": None, "armor": None, "shield": None},
+    "info": ["성벽입니다.", "생성할 수 없습니다."],
+    "source": "게임 설계(세트마다 하나 있어야 하는 자리)",
+}
+
+
 def build() -> dict:
     R = load_roster()
     assert len([u for u in R if u["role"] == "GENERIC"]) < 100, "기본 사다리가 100종을 넘었다 — id 대역이 겹친다"
     ids = [u["id"] for u in R]
     assert len(ids) == len(set(ids)), "id 중복"
-    units = [derive(u) for u in R]
+    units = [derive(u) for u in R] + [CASTLE]
     return {
         "_meta": {
             "id": "han",
@@ -367,6 +394,7 @@ def build() -> dict:
             "sources": ["devsam/core che 병종표 (armType·상성 골격)",
                         "data/v2/unit-types.json (이름·출전·게이팅·역할 — 사료 실측 71종)",
                         "Total War: Three Kingdoms (조성 축만 참고, 수치·이름 미차용)"],
+            "castleCrewTypeId": CASTLE_ID,
             "counts": {"units": len(units)},
         },
         "id": "han",

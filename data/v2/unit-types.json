@@ -529,6 +529,111 @@
       "category": "COMMON"
     },
     {
+      "id": "민병대_무격",
+      "ko": "민병대 무격",
+      "han": "巫覡",
+      "generic": true,
+      "category": "COMMON",
+      "tier": 1,
+      "armType": 4,
+      "reqTech": 0,
+      "composition": {
+        "weapon": "검",
+        "armor": "의복",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_방사",
+      "ko": "부곡 방사",
+      "han": "方士",
+      "generic": true,
+      "category": "COMMON",
+      "tier": 2,
+      "armType": 4,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "검",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_도사",
+      "ko": "정예 도사",
+      "han": "道士",
+      "generic": true,
+      "category": "COMMON",
+      "tier": 3,
+      "armType": 4,
+      "reqTech": 2000,
+      "composition": {
+        "weapon": "검",
+        "armor": "평피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_치중대",
+      "ko": "부곡 치중대",
+      "han": "輜重隊",
+      "generic": true,
+      "category": "COMMON",
+      "tier": 2,
+      "armType": 5,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "치중",
+        "armor": "의복",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_충거",
+      "ko": "정예 충거",
+      "han": "重衝車",
+      "generic": true,
+      "category": "COMMON",
+      "tier": 3,
+      "armType": 5,
+      "reqTech": 3000,
+      "composition": {
+        "weapon": "충차",
+        "armor": "경철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
       "id": "YOUZHOU_TUQI",
       "ko": "유주돌기",
       "han": "幽州突騎",
