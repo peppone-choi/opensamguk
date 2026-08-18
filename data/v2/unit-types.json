@@ -48,7 +48,7 @@
       "requires": {
         "general": "高順"
       },
-      "role": "INFANTRY_BREAKER",
+      "role": "INFANTRY_SHOCK",
       "source": {
         "class": "PRIMARY_ATTESTED",
         "proximity": "OFFICIAL_HISTORY",
@@ -222,7 +222,7 @@
         ],
         "riverAccess": true
       },
-      "role": "NAVY_HEAVY",
+      "role": "NAVY_CAPITAL",
       "source": {
         "class": "PRIMARY_ATTESTED",
         "proximity": "OFFICIAL_HISTORY",
@@ -274,11 +274,11 @@
         "tribe": true,
         "loyaltyPath": "孟獲"
       },
-      "role": "INFANTRY_ARMOR",
+      "role": "INFANTRY_SHOCK",
       "source": {
         "class": "ROMANCE_ATTESTED",
         "proximity": "FICTION",
-        "cite": "삼국지연의 90회 烏戈國 兀突骨",
+        "cite": "三國演義 90회 烏戈國 兀突骨",
         "quote": "정사 미검출. 漢書 卷96上의 烏戈山離國은 서역 국명으로 別件이다(동명이물 주의)"
       }
     },
@@ -291,7 +291,7 @@
         "region": "南中",
         "tribe": true
       },
-      "role": "CAVALRY_HEAVY",
+      "role": "CAVALRY_SHOCK",
       "source": {
         "class": "GAME_REFERENCE",
         "proximity": "GAME",
@@ -392,7 +392,7 @@
       "requires": {
         "nation": "蜀"
       },
-      "role": "INFANTRY_BREAKER",
+      "role": "INFANTRY_SHOCK",
       "source": {
         "class": "PRIMARY_ATTESTED",
         "proximity": "OFFICIAL_HISTORY",
@@ -408,7 +408,7 @@
       "requires": {
         "riverAccess": true
       },
-      "role": "NAVY_RAM",
+      "role": "NAVY_LINE",
       "source": {
         "class": "PRIMARY_ATTESTED",
         "proximity": "OFFICIAL_HISTORY",
@@ -495,7 +495,7 @@
       "source": {
         "class": "ROMANCE_ATTESTED",
         "proximity": "FICTION",
-        "cite": "삼국지연의(10건)",
+        "cite": "三國演義(10건)",
         "quote": "或用駱駝駕車，或用騾馬駕車，號為「鐵車兵」"
       }
     },
@@ -512,7 +512,7 @@
       "source": {
         "class": "ROMANCE_ATTESTED",
         "proximity": "FICTION",
-        "cite": "삼국지연의 90회",
+        "cite": "三國演義 90회",
         "quote": "八納洞，洞主木鹿大王，深通法術：出則騎象，能呼風喚雨"
       }
     },
@@ -529,7 +529,7 @@
       "source": {
         "class": "ROMANCE_ATTESTED",
         "proximity": "FICTION",
-        "cite": "삼국지연의",
+        "cite": "三國演義",
         "quote": "祝融夫人 … 世居南蠻，乃祝融氏之後；善使飛刀，百發百中"
       }
     },
@@ -547,6 +547,645 @@
         "proximity": "GAME",
         "cite": "게임 허용(전승 인용)",
         "quote": "코퍼스 722권 전권 미검출. 資治通鑑 卷118의 白毦 2건은 劉裕 却月陣의 신호 깃발로 別件이다 — UNKNOWN"
+      }
+    },
+    {
+      "id": "HU_SHI",
+      "ko": "호사",
+      "han": "虎士",
+      "home": "中央",
+      "requires": {
+        "general": "許褚",
+        "ruler": true
+      },
+      "role": "INFANTRY_GUARD",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷18 魏書·二李臧文吕许典二庞阎传",
+        "quote": "引入宿衛。諸從褚俠客，皆以為虎士。從徵張繡，先登，斬首萬計"
+      }
+    },
+    {
+      "id": "DA_JI_SHI",
+      "ko": "대극사",
+      "han": "大戟士",
+      "home": "冀州",
+      "requires": {
+        "general": "袁紹",
+        "province": "冀州"
+      },
+      "role": "INFANTRY_GUARD",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷06 魏書·董二袁劉傳",
+        "quote": "爲設備，惟帳下彊弩數十張，大戟士百餘人自隨。瓚部迸騎二千餘"
+      }
+    },
+    {
+      "id": "PILI_CHE",
+      "ko": "벽력거",
+      "han": "霹靂車",
+      "home": "中原",
+      "requires": {
+        "countyTag": "IRON",
+        "general": "劉曄"
+      },
+      "role": "SIEGE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷074A 袁紹劉表列傳 第六十四上",
+        "quote": "石車擊紹樓，皆破，軍中呼曰「霹靂車」"
+      }
+    },
+    {
+      "id": "CHONG_CHE",
+      "ko": "충거",
+      "han": "衝車",
+      "home": "中原",
+      "requires": {
+        "countyTag": "IRON"
+      },
+      "role": "SIEGE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷03 魏書·明帝紀",
+        "quote": "燒死。昭又以繩連石磨壓其衝車，衝車折。亮乃更爲井闌百尺以付城中"
+      }
+    },
+    {
+      "id": "JING_LAN",
+      "ko": "정란",
+      "han": "井闌",
+      "home": "中原",
+      "requires": {
+        "countyTag": "IRON"
+      },
+      "role": "SIEGE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "資治通鑑 卷071 魏紀三",
+        "quote": "磨壓其衝車，衝車折。亮乃更為井闌百尺以射城中，以土丸填塹"
+      }
+    },
+    {
+      "id": "YUN_TI",
+      "ko": "운제",
+      "han": "雲梯",
+      "home": "中原",
+      "requires": {},
+      "role": "SIEGE",
+      "source": {
+        "class": "ROMANCE_ATTESTED",
+        "proximity": "FICTION",
+        "cite": "三國演義 卷097 第九十七回 討魏國武侯再上表 破曹兵姜維詐獻書",
+        "quote": "裝起雲梯，四面而來，即令三千軍各執火箭，分布四面"
+      }
+    },
+    {
+      "id": "TUNTIAN_BING",
+      "ko": "둔전병",
+      "han": "屯田兵",
+      "home": "中原",
+      "requires": {
+        "countyTag": "MARSH"
+      },
+      "role": "GARRISON",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "資治通鑑 卷079 巻七十九 晉紀一",
+        "quote": "詔濬罷屯田兵，大作舟艦。別駕何攀以爲「屯田兵不過五六百"
+      }
+    },
+    {
+      "id": "CAI_GUAN",
+      "ko": "재관",
+      "han": "材官",
+      "home": "中原",
+      "requires": {
+        "terrain": "MOUNTAIN"
+      },
+      "role": "INFANTRY_LEVY",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷001B 下‧光武帝紀第一下",
+        "quote": "材官、樓船，常以立秋後講肄課試，各有員數。平地用車騎，山阻用材"
+      }
+    },
+    {
+      "id": "QING_CHE",
+      "ko": "경거",
+      "han": "輕車",
+      "home": "中原",
+      "requires": {
+        "terrain": "PLAIN"
+      },
+      "role": "CHARIOT",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷119 輿服志",
+        "quote": "輕車，古之戰車也。洞朱輪輿，不巾不蓋，建矛戟"
+      }
+    },
+    {
+      "id": "HU_BEN",
+      "ko": "호분",
+      "han": "虎賁",
+      "home": "中央",
+      "requires": {
+        "ruler": true
+      },
+      "role": "INFANTRY_GUARD",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷115 百官志 百官二",
+        "quote": "虎賁中郎將，比二千石。"
+      }
+    },
+    {
+      "id": "YU_LIN",
+      "ko": "우림",
+      "han": "羽林",
+      "home": "中央",
+      "requires": {
+        "ruler": true
+      },
+      "role": "CAVALRY_GUARD",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷115 百官志 百官二",
+        "quote": "羽林中郎將，比二千石。本注曰：主羽林郎"
+      }
+    },
+    {
+      "id": "QIN_HU",
+      "ko": "진호",
+      "han": "秦胡",
+      "home": "涼州",
+      "requires": {
+        "province": "涼州",
+        "tribe": "胡"
+      },
+      "role": "CAVALRY_LIGHT",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷074B 袁紹劉表列傳 第六十四下",
+        "quote": "於草棘。又乃圖獲鄴城，許賞賜秦胡，其財物婦女，豫有分數"
+      }
+    },
+    {
+      "id": "XIUTUGE_HU",
+      "ko": "휴도각호",
+      "han": "休屠各胡",
+      "home": "并州",
+      "requires": {
+        "province": "并州",
+        "tribe": "屠各"
+      },
+      "role": "CAVALRY_RAID",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷008 帝紀第八 孝靈皇帝",
+        "quote": "大司農曹嵩爲太尉。\n\n十二月，休屠各胡叛。"
+      }
+    },
+    {
+      "id": "NAN_XIONGNU",
+      "ko": "남흉노",
+      "han": "南匈奴",
+      "home": "并州",
+      "requires": {
+        "province": "并州",
+        "tribe": "匈奴"
+      },
+      "role": "CAVALRY_LIGHT",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "資治通鑑 卷052 漢紀四十四",
+        "quote": "春，二月，戊申，京師地震。\n<BR>\n南匈奴句龍王吾斯、車紐等反，寇西河"
+      }
+    },
+    {
+      "id": "LIAODONG_SHUGUO",
+      "ko": "요동속국",
+      "han": "遼東屬國",
+      "home": "幽州",
+      "requires": {
+        "province": "幽州",
+        "tribe": "烏丸"
+      },
+      "role": "CAVALRY_LIGHT",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷30 魏書三十 烏丸鮮卑東夷傳第三十",
+        "quote": "者八十餘人，使居塞內，布列遼東屬國、遼西、右北平、漁陽、廣陽、上穀"
+      }
+    },
+    {
+      "id": "QING_QIANG",
+      "ko": "청강",
+      "han": "青羌",
+      "home": "益州",
+      "requires": {
+        "province": "益州",
+        "tribe": "羌"
+      },
+      "role": "INFANTRY_SKIRMISH",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷31 蜀書一 劉二牧傳",
+        "quote": "校尉賈龍，使引兵還擊焉，焉出青羌與戰，故能破殺"
+      }
+    },
+    {
+      "id": "CONG_SOU",
+      "ko": "종수",
+      "han": "賨叟",
+      "home": "益州",
+      "requires": {
+        "province": "益州",
+        "tribe": "賨"
+      },
+      "role": "INFANTRY_ELITE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷35 蜀書五 諸葛亮傳",
+        "quote": "銅等及曲長屯將七十餘人，突將無前。賨、叟、青羌散騎、武騎一千餘"
+      }
+    },
+    {
+      "id": "SAN_QI",
+      "ko": "산기",
+      "han": "散騎",
+      "home": "益州",
+      "requires": {
+        "nation": "蜀"
+      },
+      "role": "CAVALRY_RAID",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "資治通鑑 卷071 魏紀三",
+        "quote": "銅等及曲長、屯將七十餘人，突將、無前、賨叟、青羌、散騎、武騎一千餘"
+      }
+    },
+    {
+      "id": "WU_QI",
+      "ko": "무기",
+      "han": "武騎",
+      "home": "益州",
+      "requires": {
+        "nation": "蜀"
+      },
+      "role": "CAVALRY_SHOCK",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "資治通鑑 卷071 魏紀三",
+        "quote": "銅等及曲長、屯將七十餘人，突將、無前、賨叟、青羌、散騎、武騎一千餘"
+      }
+    },
+    {
+      "id": "SOU_BING",
+      "ko": "수병",
+      "han": "叟兵",
+      "home": "益州",
+      "requires": {
+        "province": "益州",
+        "tribe": "叟"
+      },
+      "role": "INFANTRY_SKIRMISH",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷31 蜀書一 劉二牧傳",
+        "quote": "璋復遣別駕從事蜀郡張肅送叟兵三百人並雜御物於曹公"
+      }
+    },
+    {
+      "id": "CONG_MIN",
+      "ko": "종민",
+      "han": "賨民",
+      "home": "巴西",
+      "requires": {
+        "commandery": "巴西",
+        "tribe": "賨"
+      },
+      "role": "INFANTRY_LEVY",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "華陽國志 卷五 公孫述劉二牧志",
+        "quote": "禦魯。羲以宜須兵衛，輒召漢昌賨民為兵"
+      }
+    },
+    {
+      "id": "NANZHONG_JINGZU",
+      "ko": "남중경졸",
+      "han": "南中勁卒",
+      "home": "南中",
+      "requires": {
+        "region": "南中",
+        "general": "馬忠"
+      },
+      "role": "INFANTRY_ELITE",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "華陽國志 卷四 南中志",
+        "quote": "古郡，以馬忠為牂柯太守。移南中勁卒、青羌萬餘家於蜀，為五部，所"
+      }
+    },
+    {
+      "id": "MUNIU_LIUMA",
+      "ko": "목우유마",
+      "han": "木牛流馬",
+      "home": "益州",
+      "requires": {
+        "general": "諸葛亮",
+        "terrain": "MOUNTAIN"
+      },
+      "role": "LOGISTICS",
+      "source": {
+        "class": "ROMANCE_ATTESTED",
+        "proximity": "FICTION",
+        "cite": "三國演義 卷103 第百零三回 上方谷司馬受困 五丈原諸葛禳星",
+        "quote": "兵驅木牛流馬而來。二人一齊殺將過去，蜀兵大敗奔走，木牛流馬"
+      }
+    },
+    {
+      "id": "GAN_SI",
+      "ko": "감사",
+      "han": "敢死",
+      "home": "揚州",
+      "requires": {
+        "general": "陳武",
+        "nation": "吳"
+      },
+      "role": "INFANTRY_SHOCK",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
+        "quote": "冠軍太守，後又加都督之號。將敢死及解煩兵萬人，討丹楊賊，破之"
+      }
+    },
+    {
+      "id": "WULOU_CHUAN",
+      "ko": "오루선",
+      "han": "五樓船",
+      "home": "揚州",
+      "requires": {
+        "riverAccess": true,
+        "general": "董襲"
+      },
+      "role": "NAVY_CAPITAL",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
+        "quote": "權赴之，使襲督五樓船住濡須口。夜卒暴風，五樓船傾覆，左右散走"
+      }
+    },
+    {
+      "id": "FEIYUN_DACHUAN",
+      "ko": "비운대선",
+      "han": "飛雲大船",
+      "home": "揚州",
+      "requires": {
+        "riverAccess": true,
+        "ruler": true
+      },
+      "role": "NAVY_CAPITAL",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷54 吴書·周瑜、魯肅、吕蒙傳",
+        "quote": "此多之。劉備之自京還也，權乘飛雲大船，與張昭、秦松、魯肅等十餘"
+      }
+    },
+    {
+      "id": "XIANDENG",
+      "ko": "선등",
+      "han": "先登",
+      "home": "揚州",
+      "requires": {
+        "nation": "吳"
+      },
+      "role": "INFANTRY_SHOCK",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷55 吳書·十二虎臣傳 第十",
+        "quote": "及孫策東渡，從討三郡，遷先登校尉，授兵二千，騎五十匹"
+      }
+    },
+    {
+      "id": "BU_QU",
+      "ko": "부곡",
+      "han": "部曲",
+      "home": "荊州",
+      "requires": {
+        "general": true
+      },
+      "role": "INFANTRY_LEVY",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷56 吳書·三朱吕範傳",
+        "quote": "十里。魏時夷王梅敷兄弟三人，部曲萬餘家屯此，分布在中廬宜城"
+      }
+    },
+    {
+      "id": "YI_BING",
+      "ko": "이병",
+      "han": "夷兵",
+      "home": "荊州",
+      "requires": {
+        "commandery": "秭歸",
+        "terrain": "MOUNTAIN"
+      },
+      "role": "INFANTRY_SKIRMISH",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷58 吴書·陆逊传",
+        "quote": "破之。秭歸大姓文布、鄧凱等合夷兵數千人，首尾西方"
+      }
+    },
+    {
+      "id": "HUANG_JIN",
+      "ko": "황건",
+      "han": "黃巾",
+      "home": "冀州",
+      "requires": {
+        "general": "張角"
+      },
+      "role": "INFANTRY_LEVY",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "資治通鑑 卷058 漢紀五十",
+        "quote": "一時俱起，皆著黃巾以為標幟，故時人謂之「黃巾賊」。二月，角自稱天"
+      }
+    },
+    {
+      "id": "BAI_BO",
+      "ko": "백파",
+      "han": "白波",
+      "home": "河東",
+      "requires": {
+        "commandery": "河東"
+      },
+      "role": "INFANTRY_SKIRMISH",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷072 董卓列傳 第六十二",
+        "quote": "西河白波谷，轉寇太原，遂破河東，百姓流轉三輔，號為「白波賊」，眾十"
+      }
+    },
+    {
+      "id": "HEI_SHAN",
+      "ko": "흑산",
+      "han": "黑山",
+      "home": "冀州",
+      "requires": {
+        "general": "張燕",
+        "terrain": "MOUNTAIN"
+      },
+      "role": "INFANTRY_SKIRMISH",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "資治通鑑 卷060 漢紀五十二",
+        "quote": "大河之南以待其變。」操善之。會黑山、於毒、白繞、眭固等十餘萬眾人略東郡"
+      }
+    },
+    {
+      "id": "GAOGOULI",
+      "ko": "고구려",
+      "han": "高句麗",
+      "home": "遼東",
+      "requires": {
+        "tribe": "高句麗",
+        "province": "幽州"
+      },
+      "role": "CAVALRY_RAID",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷08 魏書·二公孫陶四張傳",
+        "quote": "憑恃，是以決計斬賊之使。又高句麗、濊貊與淵為仇，並為寇鈔"
+      }
+    },
+    {
+      "id": "YI_LOU",
+      "ko": "읍루",
+      "han": "挹婁",
+      "home": "遼東",
+      "requires": {
+        "tribe": "挹婁",
+        "riverAccess": true
+      },
+      "role": "NAVY_LIGHT",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷30 魏書三十 烏丸鮮卑東夷傳第三十",
+        "quote": "百餘-{里}-，其俗南北皆同，與挹婁接。挹婁喜乘船寇鈔，北沃沮畏之，夏"
+      }
+    },
+    {
+      "id": "XIANG_LIN_MAN",
+      "ko": "상림만",
+      "han": "象林蠻夷",
+      "home": "日南",
+      "requires": {
+        "commandery": "日南",
+        "tribe": "蠻"
+      },
+      "role": "INFANTRY_SKIRMISH",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷086 南蠻西南夷列傳第七十",
+        "quote": "日南、象林徼外蠻夷區憐等數千人攻象林縣，燒城寺，殺長"
+      }
+    },
+    {
+      "id": "JUN_BING",
+      "ko": "군병",
+      "han": "郡兵",
+      "home": "州郡",
+      "requires": {},
+      "role": "GARRISON",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "資治通鑑 卷049 漢紀四十一",
+        "quote": "及邊郡兵二萬餘人，又詔遼東太守耿夔率鮮卑及諸郡兵共擊之"
+      }
+    },
+    {
+      "id": "XIAN_BING",
+      "ko": "현병",
+      "han": "縣兵",
+      "home": "州郡",
+      "requires": {
+        "commandery": "巴西"
+      },
+      "role": "GARRISON",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "三國志 卷43 蜀書十三 黃李呂馬王張傳",
+        "quote": "敗績猇亭，巴西太守閻芝發諸縣兵五千人以補遣闕，遣忠送往"
+      }
+    },
+    {
+      "id": "TING_WU_BING",
+      "ko": "정부오병",
+      "han": "亭部五兵",
+      "home": "州郡",
+      "requires": {},
+      "role": "GARRISON",
+      "source": {
+        "class": "PRIMARY_ATTESTED",
+        "proximity": "OFFICIAL_HISTORY",
+        "cite": "後漢書 卷118 百官志 百官五 州郡 縣鄕 亭里",
+        "quote": "尉、-{遊}-徼、亭長皆習設備五兵。五兵：弓弩，戟，楯，刀劍，甲鎧"
+      }
+    },
+    {
+      "id": "TIE_QI",
+      "ko": "철기",
+      "han": "鐵騎",
+      "home": "司隷",
+      "requires": {
+        "general": "華雄"
+      },
+      "role": "CAVALRY_SHOCK",
+      "source": {
+        "class": "ROMANCE_ATTESTED",
+        "proximity": "FICTION",
+        "cite": "三國演義 卷005 第五回 發矯詔諸鎮應曹公 破關兵三英戰呂布",
+        "quote": "抄小路，直到關下搦戰。華雄引鐵騎五百，飛下關來"
       }
     }
   ],
@@ -576,5 +1215,30 @@
         "rank": "比二百石"
       }
     ]
-  }
+  },
+  "roles": [
+    "BEAST",
+    "CAVALRY_GUARD",
+    "CAVALRY_LIGHT",
+    "CAVALRY_RAID",
+    "CAVALRY_RANGED",
+    "CAVALRY_SHOCK",
+    "CHARIOT",
+    "GARRISON",
+    "INFANTRY_ELITE",
+    "INFANTRY_FANATIC",
+    "INFANTRY_GUARD",
+    "INFANTRY_LEVY",
+    "INFANTRY_LINE",
+    "INFANTRY_SHIELD",
+    "INFANTRY_SHOCK",
+    "INFANTRY_SKIRMISH",
+    "LOGISTICS",
+    "NAVY_CAPITAL",
+    "NAVY_LIGHT",
+    "NAVY_LINE",
+    "RANGED_HEAVY",
+    "RANGED_LIGHT",
+    "SIEGE"
+  ]
 }
