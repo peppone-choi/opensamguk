@@ -439,6 +439,18 @@
 
 ---
 
+## ADR-LITE-037 `phases[]`는 작전층 순차 단계 축, 전투 종류는 별도 축이다 (H2)
+
+- Date: 2026-08-18
+- Status: approved
+- Decision: H2 세 선택지 중 **(3) 축 분리**를 채택한다. `phases[]`(APPROACH/SCOUT/INTERCEPT/FIELD/SIEGE/URBAN/AFTERMATH)는 **한 작전 안의 순차 단계 축**으로 한정하고, 야전·공성·수전은 **전투 종류 축(battle type)**으로 분리한다. 두 축의 관계는 "한 phase 안에서 0..N개의 전투가 열리고 각 전투가 battle type 하나를 갖는다"이며, 이 문장을 `docs/superpowers/specs/2026-07-12-opensamguk-v2-product-spec.md` §6 `BattleReplay` 절에 넣었다. **수전은 phase 값이 아니다** — `phases[]`에 `NAVAL`을 추가하지 않는다.
+- Context: ADR-LITE-032가 이연한 유일한 경계 문제다. `phases[]` 7값은 순차 단계 축인데 07-30 어댑터 3종은 전투 종류 축이라 두 목록이 같은 축이 아니고, ADR-LITE-025가 출시 필수로 넣은 수전에는 `phases[]` 자리가 없다(연구문서 §2.5·R2·H2). 마감선은 BATTLE-F2(OPENSAM-158) 착수 전 — F2에서 `BattleTicketV1`과 레지스트리 이름이 동결된다.
+- Alternatives: **(1) `phases[]`에 `NAVAL` 추가: 기각.** 가장 작은 수정이지만 순차 단계 축에 전투 종류를 섞는다 — `NAVAL`은 "순서상 어디"가 아니라 "무엇으로 싸우나"이고, 수전 뒤에 URBAN이 오는 작전을 표현할 수 없다. FIELD/SIEGE의 이중 의미도 그대로 남는다. **(2) battle type 선언만 하고 `phases[]`는 무언급: 기각.** 결과는 (3)과 비슷하나 두 축의 관계를 명시하지 않아 티켓 AC2("한 문장으로 명시")를 절반만 만족한다.
+- Consequences: FIELD/SIEGE가 "단계이자 종류"로 이중 해석되던 것이 해소된다 — 같은 이름이 두 축에 있으므로 **F2가 battle type 열거를 동결할 때 phase 이름과 구분되는 표기를 쓸 것**(예: `FIELD_BATTLE`)을 권고한다. `battle type` 열거의 정식 값·이름은 이 ADR이 동결하지 않는다(F2 소유, OPENSAM-158). 작전층 `phases[]` 7값 자체는 **변경 없음** — 값 추가·삭제 없이 의미만 한정했다. 이 개정은 ADR-LITE-036(H6) 개정 규칙의 첫 적용 사례다: 사람 승인 → ADR 기록 → 본문 수정 커밋이 ADR 번호 인용.
+- Approved by: 사용자 (2026-08-18, H2 = (3) 축 분리 선택). 이 ADR은 §6의 위 한 문장 외 product-spec 개정, F2 착수 승인, merge·배포를 승인하지 않는다.
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 

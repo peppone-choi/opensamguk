@@ -193,6 +193,8 @@ DeterministicReplayBody
 deterministicReplayHash = hash(canonicalSerialize(DeterministicReplayBody))
 ```
 
+`phases[]`는 **한 작전 안의 순차 단계 축**이며 전투 종류를 나타내지 않는다 — 야전·공성·수전은 별개의 **전투 종류 축(battle type)**이고, 한 phase 안에서 0..N개의 전투가 열려 각 전투가 battle type 하나를 갖는다(수전은 phase 값이 아니다. OPENSAM-178 / ADR-LITE-037).
+
 같은 `world snapshot + operation input + seed + content/balance/geography version`은 같은 `DeterministicReplayBody`와 hash, 같은 결과를 만들어야 한다. `replayId`, `createdAt`, DB log id 같은 persistence metadata는 동등성 비교에서 제외하고 필요하면 normalized sequence key로 대응한다. replay는 UI 장식이 아니라 검증 가능한 결과 계약이다.
 
 ### RetainerProposal
