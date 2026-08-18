@@ -197,7 +197,19 @@ WA = ["邪馬壹國", "奴國", "投馬國"]
 def load_roster():
     doc = json.loads(ROSTER.read_text())
     out = []
-    for n, u in enumerate(doc["units"]):
+    named = 0
+    for u in doc["units"]:
+        # 기본 사다리는 역할표를 거치지 않는다 — 조성·등급·기술을 명부가 직접 들고 있다.
+        if u.get("generic"):
+            c = u["composition"]
+            out.append(dict(id=2000 + len(out), name=u["ko"], han=u["han"],
+                            arm=u["armType"], weapon=c["weapon"], armor=c["armor"],
+                            shield=c["shield"], tech=u["reqTech"], role="GENERIC",
+                            tier=u["tier"], req=[], notes=[],
+                            forbid=WA if u["armType"] == CAV else [],
+                            src=u["source"]["cite"], cls=u["source"]["class"]))
+            continue
+        n, named = named, named + 1
         role = u["role"]
         if role not in ROLE:
             sys.exit(f"{u['han']}: 모르는 역할 {role} — ROLE 표에 넣어라")
@@ -285,6 +297,7 @@ def derive(u: dict) -> dict:
 
 def build() -> dict:
     R = load_roster()
+    assert len([u for u in R if u["role"] == "GENERIC"]) < 100, "기본 사다리가 100종을 넘었다 — id 대역이 겹친다"
     ids = [u["id"] for u in R]
     assert len(ids) == len(set(ids)), "id 중복"
     units = [derive(u) for u in R]

@@ -31,12 +31,1173 @@
    "Total War: Three Kingdoms (조성 축만 참고, 수치·이름 미차용)"
   ],
   "counts": {
-   "units": 71
+   "units": 96
   }
  },
  "id": "han",
  "defaultCrewTypeId": 2100,
  "crewTypes": [
+  {
+   "id": 2000,
+   "armType": 1,
+   "name": "민병대 도병",
+   "han": "民兵刀兵",
+   "role": "GENERIC",
+   "tier": 1,
+   "tierName": "민병",
+   "evidence": "GAME_REFERENCE",
+   "attack": 110,
+   "defence": 75,
+   "speed": 8,
+   "avoid": 15,
+   "magicCoef": 0,
+   "cost": 6,
+   "rice": 6,
+   "requirements": [],
+   "attackCoef": {
+    "2": 1.38,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.68,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "환수도",
+    "armor": "의복",
+    "shield": "소형방패"
+   },
+   "info": [
+    "민병(民兵) 등급.",
+    "환수도·의복·소형방패.",
+    "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
+    "갑옷이랄 것이 없다.",
+    "작고 가볍다. 피하는 데 쓴다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2001,
+   "armType": 1,
+   "name": "민병대 창병",
+   "han": "民兵矛兵",
+   "role": "GENERIC",
+   "tier": 1,
+   "tierName": "민병",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 75,
+   "speed": 8,
+   "avoid": 15,
+   "magicCoef": 0,
+   "cost": 6,
+   "rice": 6,
+   "requirements": [],
+   "attackCoef": {
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.68,
+    "3": 0.72,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "모",
+    "armor": "의복",
+    "shield": "소형방패"
+   },
+   "info": [
+    "민병(民兵) 등급.",
+    "모·의복·소형방패.",
+    "장병기. 정면 돌격을 되받는다.",
+    "갑옷이랄 것이 없다.",
+    "작고 가볍다. 피하는 데 쓴다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2002,
+   "armType": 1,
+   "name": "민병대 부병",
+   "han": "民兵斧兵",
+   "role": "GENERIC",
+   "tier": 1,
+   "tierName": "민병",
+   "evidence": "GAME_REFERENCE",
+   "attack": 150,
+   "defence": 75,
+   "speed": 7,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 8,
+   "rice": 8,
+   "requirements": [],
+   "attackCoef": {
+    "1": 1.3,
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.8,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "부",
+    "armor": "의복",
+    "shield": null
+   },
+   "info": [
+    "민병(民兵) 등급.",
+    "부·의복.",
+    "관통. 느리지만 중장 보병을 쪼갠다.",
+    "갑옷이랄 것이 없다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2003,
+   "armType": 2,
+   "name": "민병대 궁병",
+   "han": "民兵弓手",
+   "role": "GENERIC",
+   "tier": 1,
+   "tierName": "민병",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 75,
+   "speed": 8,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 6,
+   "rice": 6,
+   "requirements": [],
+   "attackCoef": {
+    "1": 0.8,
+    "3": 1.2,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "1": 1.2,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "궁",
+    "armor": "의복",
+    "shield": null
+   },
+   "info": [
+    "민병(民兵) 등급.",
+    "궁·의복.",
+    "표준 활.",
+    "갑옷이랄 것이 없다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2004,
+   "armType": 1,
+   "name": "민병대 투창병",
+   "han": "民兵標槍兵",
+   "role": "GENERIC",
+   "tier": 1,
+   "tierName": "민병",
+   "evidence": "GAME_REFERENCE",
+   "attack": 120,
+   "defence": 100,
+   "speed": 8,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 7,
+   "rice": 7,
+   "requirements": [],
+   "attackCoef": {
+    "2": 1.2,
+    "3": 1.0,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.8,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "표창",
+    "armor": "경피갑",
+    "shield": null
+   },
+   "info": [
+    "민병(民兵) 등급.",
+    "표창·경피갑.",
+    "던지고 붙는다. 첫 합에서 기병을 흔든다.",
+    "가죽. 가볍다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2005,
+   "armType": 3,
+   "name": "민병대 경기병",
+   "han": "民兵輕騎",
+   "role": "GENERIC",
+   "tier": 1,
+   "tierName": "민병",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 100,
+   "speed": 9,
+   "avoid": 15,
+   "magicCoef": 0,
+   "cost": 9,
+   "rice": 10,
+   "requirements": [
+    {
+     "type": "ForbidRegions",
+     "forbidRegions": [
+      "邪馬壹國",
+      "奴國",
+      "投馬國"
+     ]
+    }
+   ],
+   "attackCoef": {
+    "1": 1.2,
+    "2": 1.2,
+    "5": 0.8
+   },
+   "defenceCoef": {
+    "1": 0.8,
+    "2": 0.8,
+    "5": 1.2
+   },
+   "composition": {
+    "weapon": "궁",
+    "armor": "경피갑",
+    "shield": null
+   },
+   "info": [
+    "민병(民兵) 등급.",
+    "궁·경피갑.",
+    "표준 활.",
+    "가죽. 가볍다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2006,
+   "armType": 1,
+   "name": "부곡 도병",
+   "han": "部曲刀兵",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 110,
+   "defence": 115,
+   "speed": 7,
+   "avoid": 10,
+   "magicCoef": 0,
+   "cost": 9,
+   "rice": 9,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    }
+   ],
+   "attackCoef": {
+    "2": 1.38,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.64,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "환수도",
+    "armor": "평피갑",
+    "shield": "중형방패"
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "환수도·평피갑·중형방패.",
+    "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
+    "가죽. 무난하다.",
+    "가리며 싸운다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2007,
+   "armType": 1,
+   "name": "부곡 창병",
+   "han": "部曲矛兵",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 115,
+   "speed": 7,
+   "avoid": 10,
+   "magicCoef": 0,
+   "cost": 8,
+   "rice": 8,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    }
+   ],
+   "attackCoef": {
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.64,
+    "3": 0.72,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "모",
+    "armor": "평피갑",
+    "shield": "중형방패"
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "모·평피갑·중형방패.",
+    "장병기. 정면 돌격을 되받는다.",
+    "가죽. 무난하다.",
+    "가리며 싸운다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2008,
+   "armType": 1,
+   "name": "부곡 극병",
+   "han": "部曲戟兵",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 125,
+   "defence": 140,
+   "speed": 7,
+   "avoid": 10,
+   "magicCoef": 0,
+   "cost": 10,
+   "rice": 10,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    }
+   ],
+   "attackCoef": {
+    "1": 1.1,
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.64,
+    "3": 0.96,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "극",
+    "armor": "경철갑",
+    "shield": "중형방패"
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "극·경철갑·중형방패.",
+    "창과 도끼를 겸한다. 되받음은 얕다.",
+    "쇠미늘. 무겁지 않다.",
+    "가리며 싸운다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2009,
+   "armType": 1,
+   "name": "부곡 도끼병",
+   "han": "部曲斧兵",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 150,
+   "defence": 140,
+   "speed": 6,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 11,
+   "rice": 11,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    }
+   ],
+   "attackCoef": {
+    "1": 1.3,
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.8,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "부",
+    "armor": "경철갑",
+    "shield": null
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "부·경철갑.",
+    "관통. 느리지만 중장 보병을 쪼갠다.",
+    "쇠미늘. 무겁지 않다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2010,
+   "armType": 2,
+   "name": "부곡 궁병",
+   "han": "部曲弓手",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 115,
+   "speed": 7,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 8,
+   "rice": 8,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    }
+   ],
+   "attackCoef": {
+    "1": 0.8,
+    "3": 1.2,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "1": 1.2,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "궁",
+    "armor": "평피갑",
+    "shield": null
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "궁·평피갑.",
+    "표준 활.",
+    "가죽. 무난하다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2011,
+   "armType": 2,
+   "name": "부곡 노병",
+   "han": "部曲弩手",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 150,
+   "defence": 115,
+   "speed": 7,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 10,
+   "rice": 10,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    }
+   ],
+   "attackCoef": {
+    "1": 1.04,
+    "3": 1.2,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "1": 1.2,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "노",
+    "armor": "평피갑",
+    "shield": null
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "노·평피갑.",
+    "관통. 갑옷을 뚫지만 재장전이 느리다.",
+    "가죽. 무난하다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2012,
+   "armType": 3,
+   "name": "부곡 창기병",
+   "han": "部曲槍騎",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 100,
+   "speed": 9,
+   "avoid": 5,
+   "magicCoef": 0,
+   "cost": 9,
+   "rice": 10,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    },
+    {
+     "type": "ForbidRegions",
+     "forbidRegions": [
+      "邪馬壹國",
+      "奴國",
+      "投馬國"
+     ]
+    }
+   ],
+   "attackCoef": {
+    "1": 1.2,
+    "2": 1.2,
+    "5": 0.8
+   },
+   "defenceCoef": {
+    "1": 0.8,
+    "2": 0.8,
+    "3": 0.6,
+    "5": 1.2
+   },
+   "composition": {
+    "weapon": "모",
+    "armor": "경피갑",
+    "shield": null
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "모·경피갑.",
+    "장병기. 정면 돌격을 되받는다.",
+    "가죽. 가볍다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2013,
+   "armType": 3,
+   "name": "부곡 궁기병",
+   "han": "部曲弓騎",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 100,
+   "speed": 9,
+   "avoid": 15,
+   "magicCoef": 0,
+   "cost": 9,
+   "rice": 10,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    },
+    {
+     "type": "ForbidRegions",
+     "forbidRegions": [
+      "邪馬壹國",
+      "奴國",
+      "投馬國"
+     ]
+    }
+   ],
+   "attackCoef": {
+    "1": 1.2,
+    "2": 1.2,
+    "5": 0.8
+   },
+   "defenceCoef": {
+    "1": 0.8,
+    "2": 0.8,
+    "5": 1.2
+   },
+   "composition": {
+    "weapon": "궁",
+    "armor": "경피갑",
+    "shield": null
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "궁·경피갑.",
+    "표준 활.",
+    "가죽. 가볍다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2014,
+   "armType": 3,
+   "name": "부곡 도기병",
+   "han": "部曲刀騎",
+   "role": "GENERIC",
+   "tier": 2,
+   "tierName": "부곡",
+   "evidence": "GAME_REFERENCE",
+   "attack": 110,
+   "defence": 140,
+   "speed": 8,
+   "avoid": 20,
+   "magicCoef": 0,
+   "cost": 11,
+   "rice": 12,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 1000
+    },
+    {
+     "type": "ForbidRegions",
+     "forbidRegions": [
+      "邪馬壹國",
+      "奴國",
+      "投馬國"
+     ]
+    }
+   ],
+   "attackCoef": {
+    "1": 1.2,
+    "2": 1.38,
+    "5": 0.8
+   },
+   "defenceCoef": {
+    "1": 0.8,
+    "2": 0.68,
+    "5": 1.2
+   },
+   "composition": {
+    "weapon": "환수도",
+    "armor": "경철갑",
+    "shield": "소형방패"
+   },
+   "info": [
+    "부곡(部曲) 등급.",
+    "환수도·경철갑·소형방패.",
+    "베기 위주. 빠르지만 두꺼운 갑옷에 약하다.",
+    "쇠미늘. 무겁지 않다.",
+    "작고 가볍다. 피하는 데 쓴다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2015,
+   "armType": 1,
+   "name": "정예 검병",
+   "han": "精銳劍兵",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 175,
+   "speed": 7,
+   "avoid": 10,
+   "magicCoef": 0,
+   "cost": 11,
+   "rice": 11,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 2000
+    }
+   ],
+   "attackCoef": {
+    "2": 1.44,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.64,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "검",
+    "armor": "평철갑",
+    "shield": "중형방패"
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "검·평철갑·중형방패.",
+    "가볍고 빠르다. 전선 유지용.",
+    "쇠미늘. 튼튼하다.",
+    "가리며 싸운다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2016,
+   "armType": 1,
+   "name": "정예 창병",
+   "han": "精銳矛兵",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 175,
+   "speed": 7,
+   "avoid": 5,
+   "magicCoef": 0,
+   "cost": 11,
+   "rice": 11,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 2000
+    }
+   ],
+   "attackCoef": {
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.52,
+    "3": 0.72,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "모",
+    "armor": "평철갑",
+    "shield": "대형방패"
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "모·평철갑·대형방패.",
+    "장병기. 정면 돌격을 되받는다.",
+    "쇠미늘. 튼튼하다.",
+    "화살을 막는 벽이 된다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2017,
+   "armType": 1,
+   "name": "정예 극병",
+   "han": "精銳戟兵",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 125,
+   "defence": 175,
+   "speed": 7,
+   "avoid": 10,
+   "magicCoef": 0,
+   "cost": 12,
+   "rice": 12,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 2000
+    }
+   ],
+   "attackCoef": {
+    "1": 1.1,
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.64,
+    "3": 0.96,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "극",
+    "armor": "평철갑",
+    "shield": "중형방패"
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "극·평철갑·중형방패.",
+    "창과 도끼를 겸한다. 되받음은 얕다.",
+    "쇠미늘. 튼튼하다.",
+    "가리며 싸운다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2018,
+   "armType": 1,
+   "name": "정예 대도병",
+   "han": "精銳大刀兵",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 140,
+   "defence": 175,
+   "speed": 6,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 12,
+   "rice": 12,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 3000
+    }
+   ],
+   "attackCoef": {
+    "1": 1.15,
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.8,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "대도",
+    "armor": "평철갑",
+    "shield": null
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "대도·평철갑.",
+    "양손 큰 칼. 방패를 못 든다.",
+    "쇠미늘. 튼튼하다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2019,
+   "armType": 1,
+   "name": "정예 참마검병",
+   "han": "精銳斬馬劍兵",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 160,
+   "defence": 175,
+   "speed": 6,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 13,
+   "rice": 13,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 3000
+    }
+   ],
+   "attackCoef": {
+    "2": 1.2,
+    "3": 1.12,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.8,
+    "3": 0.72,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "참마검",
+    "armor": "평철갑",
+    "shield": null
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "참마검·평철갑.",
+    "말을 베는 긴 칼. 느리지만 기병을 끊는다.",
+    "쇠미늘. 튼튼하다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2020,
+   "armType": 1,
+   "name": "정예 구겸도병",
+   "han": "精銳鉤鎌刀兵",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 175,
+   "defence": 175,
+   "speed": 6,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 14,
+   "rice": 14,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 3000
+    }
+   ],
+   "attackCoef": {
+    "2": 1.2,
+    "3": 0.8,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "2": 0.8,
+    "3": 0.84,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "구겸도",
+    "armor": "평철갑",
+    "shield": null
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "구겸도·평철갑.",
+    "양손 대도. 방패를 들 수 없어 무르다.",
+    "쇠미늘. 튼튼하다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2021,
+   "armType": 2,
+   "name": "정예 강궁병",
+   "han": "精銳強弓手",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 150,
+   "defence": 175,
+   "speed": 7,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 13,
+   "rice": 13,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 2000
+    }
+   ],
+   "attackCoef": {
+    "1": 0.8,
+    "3": 1.2,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "1": 1.2,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "강궁",
+    "armor": "평철갑",
+    "shield": null
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "강궁·평철갑.",
+    "강한 활. 사거리와 관통이 붙는다.",
+    "쇠미늘. 튼튼하다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2022,
+   "armType": 2,
+   "name": "정예 연노병",
+   "han": "精銳連弩手",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 175,
+   "defence": 175,
+   "speed": 8,
+   "avoid": 0,
+   "magicCoef": 0,
+   "cost": 14,
+   "rice": 14,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 3000
+    }
+   ],
+   "attackCoef": {
+    "1": 0.8,
+    "3": 1.56,
+    "5": 1.2
+   },
+   "defenceCoef": {
+    "1": 1.2,
+    "3": 1.2,
+    "5": 0.8
+   },
+   "composition": {
+    "weapon": "연노",
+    "armor": "평철갑",
+    "shield": null
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "연노·평철갑.",
+    "연사. 탄약이 적어 오래 못 쏜다.",
+    "쇠미늘. 튼튼하다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2023,
+   "armType": 3,
+   "name": "정예 삭기병",
+   "han": "精銳槊騎",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 200,
+   "speed": 6,
+   "avoid": 5,
+   "magicCoef": 0,
+   "cost": 14,
+   "rice": 15,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 3000
+    },
+    {
+     "type": "ForbidRegions",
+     "forbidRegions": [
+      "邪馬壹國",
+      "奴國",
+      "投馬國"
+     ]
+    }
+   ],
+   "attackCoef": {
+    "1": 1.08,
+    "2": 1.2,
+    "5": 0.8
+   },
+   "defenceCoef": {
+    "1": 0.8,
+    "2": 0.8,
+    "3": 0.5,
+    "5": 1.2
+   },
+   "composition": {
+    "weapon": "삭",
+    "armor": "중철갑",
+    "shield": null
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "삭·중철갑.",
+    "긴 장창. 기병에 가장 강하고 보병전엔 둔하다.",
+    "두꺼운 쇠미늘. 느리다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
+  {
+   "id": 2024,
+   "armType": 3,
+   "name": "정예 검기병",
+   "han": "精銳劍騎",
+   "role": "GENERIC",
+   "tier": 3,
+   "tierName": "정예",
+   "evidence": "GAME_REFERENCE",
+   "attack": 100,
+   "defence": 175,
+   "speed": 8,
+   "avoid": 20,
+   "magicCoef": 0,
+   "cost": 13,
+   "rice": 14,
+   "requirements": [
+    {
+     "type": "ReqTech",
+     "reqTech": 2000
+    },
+    {
+     "type": "ForbidRegions",
+     "forbidRegions": [
+      "邪馬壹國",
+      "奴國",
+      "投馬國"
+     ]
+    }
+   ],
+   "attackCoef": {
+    "1": 1.2,
+    "2": 1.44,
+    "5": 0.8
+   },
+   "defenceCoef": {
+    "1": 0.8,
+    "2": 0.68,
+    "5": 1.2
+   },
+   "composition": {
+    "weapon": "검",
+    "armor": "평철갑",
+    "shield": "소형방패"
+   },
+   "info": [
+    "정예(精銳) 등급.",
+    "검·평철갑·소형방패.",
+    "가볍고 빠르다. 전선 유지용.",
+    "쇠미늘. 튼튼하다.",
+    "작고 가볍다. 피하는 데 쓴다."
+   ],
+   "source": "게임 설계(등급×무기 기본 사다리)"
+  },
   {
    "id": 2100,
    "armType": 3,

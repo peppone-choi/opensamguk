@@ -1,8 +1,508 @@
 {
   "$schema": "opensamguk/v2/unit-types",
   "profile": "CLASSIC",
-  "note": "한 사다리 로스터. 정사·연의·게임허용을 게임 규칙으로 가르지 않는다(사용자 결정 2026-08-18). source 필드는 데이터 정직성용 주석일 뿐 플레이 게이팅에 쓰지 않는다. requires 는 tools/map/build_junguozhi.py 가 郡國志에서 뽑은 縣 태그·戶口를 가리킨다. 병종 이름은 부대 이름이다 — 나라·종족 이름을 그대로 쓰지 않는다(고구려 X / 고구려기병 O). 사료가 부대로 표기한 것(叟兵·夷兵·賨叟·青羌·鮮卑騎…)은 그 표기 그대로 두고, 종족·세력 이름만 있던 것에는 그들이 실제로 싸운 방식대로 접미(騎·兵·舟師)를 붙였다. 원래 종족명은 peopleHan 에 남는다.",
+  "note": "한 사다리 로스터. 정사·연의·게임허용을 게임 규칙으로 가르지 않는다(사용자 결정 2026-08-18). source 필드는 데이터 정직성용 주석일 뿐 플레이 게이팅에 쓰지 않는다. requires 는 tools/map/build_junguozhi.py 가 郡國志에서 뽑은 縣 태그·戶口를 가리킨다. 병종 이름은 부대 이름이다 — 나라·종족 이름을 그대로 쓰지 않는다(고구려 X / 고구려기병 O). 사료가 부대로 표기한 것(叟兵·夷兵·賨叟·青羌·鮮卑騎…)은 그 표기 그대로 두고, 종족·세력 이름만 있던 것에는 그들이 실제로 싸운 방식대로 접미(騎·兵·舟師)를 붙였다. 원래 종족명은 peopleHan 에 남는다. 명부는 두 층이다 — 등급×무기로 짜인 기본 사다리(generic:true, 25종)와 그 위에 얹히는 사료 실명 부대(71종). 기본 사다리는 어디서나 뽑고, 실명 부대는 출신·기술이 맞아야 나온다.",
   "units": [
+    {
+      "id": "민병대_도병",
+      "ko": "민병대 도병",
+      "han": "民兵刀兵",
+      "generic": true,
+      "tier": 1,
+      "armType": 1,
+      "reqTech": 0,
+      "composition": {
+        "weapon": "환수도",
+        "armor": "의복",
+        "shield": "소형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "민병대_창병",
+      "ko": "민병대 창병",
+      "han": "民兵矛兵",
+      "generic": true,
+      "tier": 1,
+      "armType": 1,
+      "reqTech": 0,
+      "composition": {
+        "weapon": "모",
+        "armor": "의복",
+        "shield": "소형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "민병대_부병",
+      "ko": "민병대 부병",
+      "han": "民兵斧兵",
+      "generic": true,
+      "tier": 1,
+      "armType": 1,
+      "reqTech": 0,
+      "composition": {
+        "weapon": "부",
+        "armor": "의복",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "민병대_궁병",
+      "ko": "민병대 궁병",
+      "han": "民兵弓手",
+      "generic": true,
+      "tier": 1,
+      "armType": 2,
+      "reqTech": 0,
+      "composition": {
+        "weapon": "궁",
+        "armor": "의복",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "민병대_투창병",
+      "ko": "민병대 투창병",
+      "han": "民兵標槍兵",
+      "generic": true,
+      "tier": 1,
+      "armType": 1,
+      "reqTech": 0,
+      "composition": {
+        "weapon": "표창",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "민병대_경기병",
+      "ko": "민병대 경기병",
+      "han": "民兵輕騎",
+      "generic": true,
+      "tier": 1,
+      "armType": 3,
+      "reqTech": 0,
+      "composition": {
+        "weapon": "궁",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_도병",
+      "ko": "부곡 도병",
+      "han": "部曲刀兵",
+      "generic": true,
+      "tier": 2,
+      "armType": 1,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "환수도",
+        "armor": "평피갑",
+        "shield": "중형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_창병",
+      "ko": "부곡 창병",
+      "han": "部曲矛兵",
+      "generic": true,
+      "tier": 2,
+      "armType": 1,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "모",
+        "armor": "평피갑",
+        "shield": "중형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_극병",
+      "ko": "부곡 극병",
+      "han": "部曲戟兵",
+      "generic": true,
+      "tier": 2,
+      "armType": 1,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "극",
+        "armor": "경철갑",
+        "shield": "중형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_도끼병",
+      "ko": "부곡 도끼병",
+      "han": "部曲斧兵",
+      "generic": true,
+      "tier": 2,
+      "armType": 1,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "부",
+        "armor": "경철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_궁병",
+      "ko": "부곡 궁병",
+      "han": "部曲弓手",
+      "generic": true,
+      "tier": 2,
+      "armType": 2,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "궁",
+        "armor": "평피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_노병",
+      "ko": "부곡 노병",
+      "han": "部曲弩手",
+      "generic": true,
+      "tier": 2,
+      "armType": 2,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "노",
+        "armor": "평피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_창기병",
+      "ko": "부곡 창기병",
+      "han": "部曲槍騎",
+      "generic": true,
+      "tier": 2,
+      "armType": 3,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "모",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_궁기병",
+      "ko": "부곡 궁기병",
+      "han": "部曲弓騎",
+      "generic": true,
+      "tier": 2,
+      "armType": 3,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "궁",
+        "armor": "경피갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "부곡_도기병",
+      "ko": "부곡 도기병",
+      "han": "部曲刀騎",
+      "generic": true,
+      "tier": 2,
+      "armType": 3,
+      "reqTech": 1000,
+      "composition": {
+        "weapon": "환수도",
+        "armor": "경철갑",
+        "shield": "소형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_검병",
+      "ko": "정예 검병",
+      "han": "精銳劍兵",
+      "generic": true,
+      "tier": 3,
+      "armType": 1,
+      "reqTech": 2000,
+      "composition": {
+        "weapon": "검",
+        "armor": "평철갑",
+        "shield": "중형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_창병",
+      "ko": "정예 창병",
+      "han": "精銳矛兵",
+      "generic": true,
+      "tier": 3,
+      "armType": 1,
+      "reqTech": 2000,
+      "composition": {
+        "weapon": "모",
+        "armor": "평철갑",
+        "shield": "대형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_극병",
+      "ko": "정예 극병",
+      "han": "精銳戟兵",
+      "generic": true,
+      "tier": 3,
+      "armType": 1,
+      "reqTech": 2000,
+      "composition": {
+        "weapon": "극",
+        "armor": "평철갑",
+        "shield": "중형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_대도병",
+      "ko": "정예 대도병",
+      "han": "精銳大刀兵",
+      "generic": true,
+      "tier": 3,
+      "armType": 1,
+      "reqTech": 3000,
+      "composition": {
+        "weapon": "대도",
+        "armor": "평철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_참마검병",
+      "ko": "정예 참마검병",
+      "han": "精銳斬馬劍兵",
+      "generic": true,
+      "tier": 3,
+      "armType": 1,
+      "reqTech": 3000,
+      "composition": {
+        "weapon": "참마검",
+        "armor": "평철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_구겸도병",
+      "ko": "정예 구겸도병",
+      "han": "精銳鉤鎌刀兵",
+      "generic": true,
+      "tier": 3,
+      "armType": 1,
+      "reqTech": 3000,
+      "composition": {
+        "weapon": "구겸도",
+        "armor": "평철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_강궁병",
+      "ko": "정예 강궁병",
+      "han": "精銳強弓手",
+      "generic": true,
+      "tier": 3,
+      "armType": 2,
+      "reqTech": 2000,
+      "composition": {
+        "weapon": "강궁",
+        "armor": "평철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_연노병",
+      "ko": "정예 연노병",
+      "han": "精銳連弩手",
+      "generic": true,
+      "tier": 3,
+      "armType": 2,
+      "reqTech": 3000,
+      "composition": {
+        "weapon": "연노",
+        "armor": "평철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_삭기병",
+      "ko": "정예 삭기병",
+      "han": "精銳槊騎",
+      "generic": true,
+      "tier": 3,
+      "armType": 3,
+      "reqTech": 3000,
+      "composition": {
+        "weapon": "삭",
+        "armor": "중철갑",
+        "shield": null
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
+    {
+      "id": "정예_검기병",
+      "ko": "정예 검기병",
+      "han": "精銳劍騎",
+      "generic": true,
+      "tier": 3,
+      "armType": 3,
+      "reqTech": 2000,
+      "composition": {
+        "weapon": "검",
+        "armor": "평철갑",
+        "shield": "소형방패"
+      },
+      "source": {
+        "class": "GAME_REFERENCE",
+        "proximity": "GAME",
+        "cite": "게임 설계(등급×무기 기본 사다리)",
+        "quote": "어느 세력이나 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다."
+      }
+    },
     {
       "id": "YOUZHOU_TUQI",
       "ko": "유주돌기",
