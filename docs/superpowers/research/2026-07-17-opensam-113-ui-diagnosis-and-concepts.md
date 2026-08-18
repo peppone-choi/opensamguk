@@ -318,8 +318,8 @@ headless installed Chrome로 board를 직접 열어 확인했다.
 보존 조건: 실제 한글 label, 20-action conceptual order+gating, API state, empty/error/disabled semantics
 ```
 
-**현재 A3 상태:** `BLOCKED BY USER SELECTION`. 실행 계약상 concept 선택 전에는 product implementation과
-design-system 추출을 시작하지 않는다. PHP-golden parity는 별도 A2/출시 전 gate로 계속 `채점대기`다.
+**현재 A3 상태:** `RESOLVED BY USER SELECTION (2026-08-18)`. 아래 §12.1이 결정 기록이다. PHP-golden parity는
+별도 A2/출시 전 gate로 계속 `채점대기`이며, A3 해제가 parity gate를 대신하지 않는다.
 
 선택을 빠르게 하기 위한 사용자 관점 행렬:
 
@@ -330,6 +330,41 @@ design-system 추출을 시작하지 않는다. PHP-golden parity는 별도 A2/�
 | 밝은 가독성과 삼국지 고유 분위기의 균형 | **C 수묵 장부** | paper/ink/cinnabar와 ruled ledger로 세계관과 데이터 위계를 함께 만든다. | serif·texture 품질 관리가 부족하면 장식처럼 보인다. |
 
 선택 후 허용 변경 범위도 함께 고른다: `palette`, `typography`, `spacing`, `component`, `mobile hierarchy`.
+
+### 12.1 A3 결정 기록 — 2026-08-18
+
+사용자가 §12 양식으로 명시적으로 택일했다. 이 절이 A3 gate의 정본 결정 기록이다.
+
+```text
+선택 concept: A 야전 사령부
+허용 변경: palette / typography / spacing / component / mobile hierarchy  (전 범위)
+보존 조건: 실제 한글 label, 20-action conceptual order+gating (7/13), API state,
+          empty/error/disabled semantics
+```
+
+| 항목 | 값 |
+|---|---|
+| 결정일 | 2026-08-18 |
+| 결정자 | repository owner (`peppone-choi`) |
+| 채널 | 대화형 선택 프롬프트; GitHub `#256` 코멘트에 동일 내용 게시 |
+| 선택 근거 | 현행 `#0a0a0a` dark GameChrome 척추와 연속성이 가장 크고, 숙련자용 고밀도 정보량을 유지한다 |
+| 감수 항목 | dark 면적과 dark fatigue 위험은 남는다 (§7 trade-off) |
+
+**해제되는 downstream:** `#258` (OPENSAM-115 디자인 시스템 공통 척추)와 `#257` (OPENSAM-114 AI 에셋 파이프라인)의
+착수 금지가 풀린다. 두 lane 모두 concept A의 §7 token 계약을 기준으로 삼는다.
+
+**해제되지 않는 것:** PHP-golden draw-for-draw parity (`채점대기 — NOT RUN`), §14.6 independent visual review
+(`채점대기 — NOT CLAIMED`), live phase gate. A3 해제는 시각 방향 결정일 뿐 증거 gate가 아니다.
+
+**concept A 적용 시 확인된 제약 (구현 입력):**
+
+- `web/game/components/game/MapViewer.tsx`의 맵 좌표계(`data.width × data.height`, 폴백 `700×500`)와 도시
+  절대 좌표는 고정이다. 렌더 크기만 `aspectRatio` + `transform: scale(canvasW / w)`로 컨테이너에 반응한다
+  (`MapViewer.tsx:486-487`, `:509`, `:520`). 줌/팬은 없다(`:517` 주석).
+- 따라서 concept A가 맵에서 바꿀 수 있는 범위는 프레임·테두리·오버레이 칩(도시명/깃발/상태 아이콘) 표면뿐이며,
+  좌표·비율은 불변이다.
+- 맵 배경(`bg_*.jpg`)과 도로 레이어는 `MAP_CDN` 외부 에셋이라 concept A 팔레트(`#0c0f0e` / `#d3b064`)와
+  색 정합이 보장되지 않는다. 이 정합은 `#257` 에셋 재생성 lane의 입력으로 넘긴다.
 
 ## 13. Validation record
 
