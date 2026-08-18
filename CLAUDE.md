@@ -100,14 +100,17 @@ v2 역사 데이터의 출처·확실성 계약을 소유한다 — `EvidenceCon
 WorldContentProfile 3값 / SourceLicense·LicenseBundling / EvidenceRef / HistoricalClaim / WorldContentOverlay·Snapshot)와
 `EvidenceContractValidator.kt`(시기 역투영 차단 · 등급 혼합 차단 · overlay 격리 · 엄격 고증 · 번들 게이트).
 in-memory 순수 계약이며 v1 패러티 코어(RNG·로그·골든·DB)를 전혀 참조하지 않는다. 등급 값 추가·혼합 등급 신설 금지.
-**CHGIS = 사용 허용, 번들 금지 (ADR-LITE-039, 2026-08-18 사용자 지시).** 역사 지도 트랙에서 CHGIS V6 /
+**CHGIS = 사용 허용, 게임 타일맵은 서빙 허용 (ADR-LITE-039 + 040, 2026-08-18 사용자 지시).** 역사 지도 트랙에서 CHGIS V6 /
 TGAZ 를 **사용한다**. 조건은 RTK14 와 동일한 격리다: 원본 shapefile·다운로드물과 그로부터 만든 좌표 데이터는
 **git-ignore·미커밋**이고, 커밋 대상은 추출 스크립트뿐이다(`tools/map/*.py`). 저장소 번들·CDN·배포 이미지·
 런타임 allowlist 로 올리지 않는다. **잔여 위험은 소멸하지 않았다** — V6 README 원문은 `License: free for
 academic research, no commercial use, resale, or redistribution permitted.` 인데 같은 Dataverse 데이터셋
 메타데이터는 `CC0 1.0`(`termsOfUse: None`)이라 두 표기가 충돌하고 CC0 표기의 출처는 여전히 **UNKNOWN**이다.
-따라서 **레포 공개 전환 시점 또는 상업화 시점에** CHGIS Management Committee 서면 계약을 받거나 파생물을
-걷어내야 하며, 그 조치는 현재 **미이행**이다. 판정 근거: `docs/loops/opensam-37-evidence-contracts-2026-08-16/
+**ADR-LITE-040(2026-08-18)에서 사용자가 위험을 인수하고 공개 서버 서빙을 승인했다** —
+게임이 먹는 `data/map/han-tiles.json` 만 커밋·이미지 동봉하고, 원본 shapefile·`han-places.json`·
+`terrain-grid.json` 은 계속 미커밋이다. 서면 계약은 여전히 **미이행**이며 상업화는 승인 밖이다.
+철거 경로는 파일 한 개 삭제(→ `/api/map/terrain` 404 → 기존 맵 폴백), 복구 경로는 續漢書 郡國志 +
+Wikidata(CC0) 로 좌표를 다시 세우는 것이다. 판정 근거: `docs/loops/opensam-37-evidence-contracts-2026-08-16/
 chgis-license-review.md`, 비평: `docs/superpowers/reviews/2026-08-16-opensam-37-evidence-contracts-review.md`,
 결정: `.ai/decisions.md` ADR-LITE-039.
 
