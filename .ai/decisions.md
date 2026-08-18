@@ -463,6 +463,18 @@
 
 ---
 
+## ADR-LITE-039 CHGIS/TGAZ 사용을 허용한다 — 사용자 지시, 미커밋 조건
+
+- Date: 2026-08-18
+- Status: proposed
+- Decision: v2 역사 지도 작업에 **CHGIS V6 / TGAZ 를 사용한다**. ADR-LITE 이전의 차단 판정(`CLAUDE.md` "CHGIS = 번들 금지")을 이 결정이 대체한다. 단 **RTK14 와 동일한 격리 조건**을 건다: 원본 shapefile·DBF·다운로드물과 그로부터 생성한 좌표 데이터는 **git-ignore, 미커밋**이고, 버전 관리 대상은 **추출 스크립트뿐**이다(`tools/map/*.py`). 저장소 번들·CDN·배포 이미지·런타임 allowlist 에 CHGIS 파생물을 올리지 않는다.
+- Context: 사용자 지시(2026-08-18, "CHGIS/TGAZ를 써. 이건 명령이야"). 배경은 새 역사 지도 트랙 — 기존 devsam 추상 맵을 버리고 실제 고대 중국 도시 좌표 위에 아이소메트릭 타일 맵을 세우기로 했다. 실측 확인 사항: (a) CHGIS V6 `v6_time_cnty_pts` 는 서기 220년 시점 활성 현 치소 **982개**를 좌표·`PRES_LOC` 현대 비정·`BEG_YR`/`END_YR` 존속 기간과 함께 제공한다 — v2 설계(`docs/superpowers/specs/2026-07-13-v2-historical-city-army-terrain-design.md:299`)가 목표한 후한서 1,180현과 같은 자릿수이고, 그 문서는 이미 CHGIS 를 출처로 열거한다(`:403-416`). (b) V6 의 route 레이어(`v6_Ming_Routes_2016`, `TeaHorse`)는 **명대·차마고도이며 한대 도로가 아니다** — 한대 도로망 공개 데이터셋은 확인되지 않았다.
+- Alternatives: **(a) 차단 유지(기존 판정): 기각** — 사용자가 명시적으로 지시했고, 대체 출처가 같은 것을 주지 못한다. Wikidata(CC0)는 현대 대도시 좌표만 있어 한대 현 치소 982개를 못 준다. Natural Earth(퍼블릭 도메인)는 지형·해안선만 준다. **(b) 무조건 사용(원본까지 커밋): 기각** — 재배포가 EULA 가 금지하는 바로 그 행위다. **(c) 채택: 사용하되 미커밋** — RTK14 선례(`CLAUDE.md` 5스탯 divergence 절)와 같은 격리로, 지시를 이행하면서 금지 행위 자체는 피한다.
+- Consequences: **잔여 위험은 소멸하지 않는다.** V6 README 원문은 `License: free for academic research, no commercial use, resale, or redistribution permitted.` 이고, 같은 Dataverse 데이터셋의 메타데이터는 `CC0 1.0` 으로 표기한다(`doi:10.7910/DVN/Q9VOF5`, `termsOfUse: None`). 두 표기가 정면 충돌하며 CC0 표기의 출처는 여전히 **UNKNOWN** 이다. 따라서 (1) 이 저장소가 **공개로 전환되거나** (2) 게임이 **상업화되면** 파생 좌표 데이터의 배포가 EULA 조항에 걸린다 — 그 시점에 CHGIS Management Committee 서면 계약을 받거나 파생물을 걷어내야 한다. 이 ADR 은 그 두 시점의 조치를 **미이행 상태로 남긴다**. 학술·비공개 연구 이용은 EULA 가 명시적으로 허용하는 범위다.
+- Approved by: 사용자 (2026-08-18, 명시적 지시). 이 ADR 은 CHGIS 파생물의 **공개 배포·상업 이용을 승인하지 않는다** — 미커밋·비공개 조건에서의 사용만 승인한다.
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 

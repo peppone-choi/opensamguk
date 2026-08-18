@@ -100,11 +100,16 @@ v2 역사 데이터의 출처·확실성 계약을 소유한다 — `EvidenceCon
 WorldContentProfile 3값 / SourceLicense·LicenseBundling / EvidenceRef / HistoricalClaim / WorldContentOverlay·Snapshot)와
 `EvidenceContractValidator.kt`(시기 역투영 차단 · 등급 혼합 차단 · overlay 격리 · 엄격 고증 · 번들 게이트).
 in-memory 순수 계약이며 v1 패러티 코어(RNG·로그·골든·DB)를 전혀 참조하지 않는다. 등급 값 추가·혼합 등급 신설 금지.
-**CHGIS = 번들 금지.** `docs/loops/opensam-37-evidence-contracts-2026-08-16/chgis-license-review.md` 판정:
-CHGIS V6 EULA가 상업 이용·재배포·전체 레이어 공개 배포를 금지하며(버전 페이지도 "no commercial use, resale, or
-redistribution permitted"), Harvard Dataverse의 `CC0 1.0` 표기는 동봉 EULA와 정면 충돌하고 그 표기의 출처는
-**UNKNOWN**이다. **CC0 표기만 보고 번들하지 마라** — CHGIS·TGAZ는 `LicenseBundling.UNKNOWN`(=차단)이며,
-번들하려면 CHGIS Management Committee의 서면 계약이 유일한 경로다. 비평: `docs/superpowers/reviews/2026-08-16-opensam-37-evidence-contracts-review.md`.
+**CHGIS = 사용 허용, 번들 금지 (ADR-LITE-039, 2026-08-18 사용자 지시).** 역사 지도 트랙에서 CHGIS V6 /
+TGAZ 를 **사용한다**. 조건은 RTK14 와 동일한 격리다: 원본 shapefile·다운로드물과 그로부터 만든 좌표 데이터는
+**git-ignore·미커밋**이고, 커밋 대상은 추출 스크립트뿐이다(`tools/map/*.py`). 저장소 번들·CDN·배포 이미지·
+런타임 allowlist 로 올리지 않는다. **잔여 위험은 소멸하지 않았다** — V6 README 원문은 `License: free for
+academic research, no commercial use, resale, or redistribution permitted.` 인데 같은 Dataverse 데이터셋
+메타데이터는 `CC0 1.0`(`termsOfUse: None`)이라 두 표기가 충돌하고 CC0 표기의 출처는 여전히 **UNKNOWN**이다.
+따라서 **레포 공개 전환 시점 또는 상업화 시점에** CHGIS Management Committee 서면 계약을 받거나 파생물을
+걷어내야 하며, 그 조치는 현재 **미이행**이다. 판정 근거: `docs/loops/opensam-37-evidence-contracts-2026-08-16/
+chgis-license-review.md`, 비평: `docs/superpowers/reviews/2026-08-16-opensam-37-evidence-contracts-review.md`,
+결정: `.ai/decisions.md` ADR-LITE-039.
 
 **미래 마일스톤(로드맵 외, 조건 충족 시):** `docs/superpowers/MILESTONES.md` — **M-config**(post-parity 상수 외부화: 풀 패러티 close + 운영 안정 후 `GameConst` 등 패러티값을 JSON으로, 패러티 골든을 frozen-baseline 회귀 게이트로 교체).
 
