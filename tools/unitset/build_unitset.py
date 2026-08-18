@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""후한 군현 맵용 병종표 빌더 — `data/unitset/han.json` 을 낸다.
+"""병종표 빌더 — `data/unitset/units.json` 의 han 세트 수치를 다시 만든다.
 
 **세 갈래를 엮은 것이지 한 쪽을 베낀 것이 아니다.**
 
@@ -10,7 +10,7 @@
      역할(전선유지/측후방/원거리)과 등급(민병→정예→최정예)을 매기는 축. 수치나 이름을
      가져오지 않는다(CC BY-NC-SA 자료다). 가져온 것은 "무엇으로 무엇을 입고 무엇을 드는가"
      라는 분해 축 하나뿐이다.
-  3. `data/unitset/han.json` — 병종은 이 파일 하나다. 이름·출전·게이팅·조성·등급은
+  3. `data/unitset/units.json` — 병종은 이 파일 하나다. che 세트(코틀린 사본)와 함께 있다. 이름·출전·게이팅·조성·등급은
      사람이 적고(authored), 수치는 이 스크립트가 조성에서 유도해 같은 파일에 다시
      써넣는다(generated). 명부를 다른 파일에 두지 않는다 — 둘이 되면 어느 쪽이
      맞는지 아무도 모른다. 예전 `data/v2/unit-types.json` 은 여기로 흡수됐다.
@@ -24,8 +24,8 @@
 계수를 정하고 cost/rice 는 거기서 유도된다. 손으로 찍은 표는 균형이 어디서 깨졌는지
 아무도 못 찾는다 — 조합을 바꾸면 수치가 따라 움직여야 한다.
 
-    python3 tools/unitset/build_han_unitset.py
-    python3 tools/unitset/build_han_unitset.py --check
+    python3 tools/unitset/build_unitset.py
+    python3 tools/unitset/build_unitset.py --check
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "data" / "unitset" / "han.json"
+OUT = ROOT / "data" / "unitset" / "units.json"
 
 FOOT, ARCHER, CAV, WIZ, SIEGE = 1, 2, 3, 4, 5
 
@@ -45,9 +45,9 @@ FOOT, ARCHER, CAV, WIZ, SIEGE = 1, 2, 3, 4, 5
 # 관통 무기(부·노)는 방어 높은 상대에 계수를 얹고, 장병기(모·삭·극)는 기병 돌격을 되받는다.
 # 되받음은 새 메커니즘이 아니라 defenceCoef[기병] < 1 한 줄이다 — 엔진을 건드리지 않는다.
 # ── 설계표는 파일 안에 있다 ─────────────────────────────────────────────────────
-# 무기·갑옷·방패·등급·성격·계수·공식이 전부 data/unitset/han.json 의 `tables` 에 있다.
+# 무기·갑옷·방패·등급·성격·계수·공식이 전부 data/unitset/units.json 의 `tables` 에 있다.
 # 여기서 다시 적지 않는다 — 표가 두 곳에 있으면 어느 쪽이 맞는지 아무도 모른다.
-UNITSET = ROOT / "data" / "unitset" / "han.json"
+UNITSET = ROOT / "data" / "unitset" / "units.json"
 CASTLE, FOOT, ARCHER, CAV, WIZARD, SIEGE = 0, 1, 2, 3, 4, 5
 
 DOC = json.loads(UNITSET.read_text())
@@ -69,7 +69,7 @@ def mul(base: dict, extra: dict) -> dict:
 
 
 def trait_of(req: dict):
-    for k in ("tribe", "adjacentTribe"):
+    for k in ("tribe", "adjacentTribe", "external"):
         v = req.get(k)
         for t in ([v] if isinstance(v, str) else (v if isinstance(v, list) else [])):
             if t in TRAIT_OF:
@@ -150,7 +150,7 @@ def derive(u: dict) -> dict:
             notes.append(f"{k}={v}")
 
     req = []
-    tech = u.get("reqTech", 0) or next((r["reqTech"] for r in u.get("reqConstraints", [])
+    tech = u.get("reqTech", 0) or next((r["reqTech"] for r in (u.get("reqConstraints") or [])
                                         if r.get("type") == "ReqTech"), 0)
     if tech:
         req.append({"type": "ReqTech", "reqTech": tech})
@@ -174,20 +174,46 @@ def derive(u: dict) -> dict:
     return u
 
 
+KEYS = ["set", "id", "name", "han", "armType", "tier", "tierName", "category", "role",
+        "generic", "derived", "composition", "requires", "evidence", "attack", "defence",
+        "speed", "avoid", "magicCoef", "cost", "rice", "reqConstraints", "attackCoef",
+        "defenceCoef", "initSkillTrigger", "phaseSkillTrigger", "iActionList", "info"]
+
+
 def build() -> dict:
     doc = DOC
     ids = [u["id"] for u in doc["crewTypes"]]
     assert len(ids) == len(set(ids)), "id 중복"
-    doc["crewTypes"] = [derive(u) for u in doc["crewTypes"]]
+    for s, r in doc["sets"].items():          # id 대역을 벗어난 행은 세트가 섞였다는 뜻이다
+        lo, hi = r["idRange"]
+        bad = [u["id"] for u in doc["crewTypes"] if u["set"] == s and not lo <= u["id"] <= hi]
+        assert not bad, f"{s} 세트 id 대역 이탈: {bad}"
+    # che 행은 코틀린 사본이다 — 여기서 수치를 만들지 않는다. han 행만 다시 만든다.
+    doc["crewTypes"] = [{k: u.get(k) for k in KEYS}
+                        for u in (derive(u) if u["set"] == "han" else u for u in doc["crewTypes"])]
     doc["_meta"]["counts"] = {
         "units": len(ids),
+        "bySet": {s: sum(1 for u in doc["crewTypes"] if u["set"] == s) for s in doc["sets"]},
         "byCategory": {c: sum(1 for u in doc["crewTypes"] if u["category"] == c)
-                       for c in ("COMMON", "FACTION", "REGIONAL", "CHARACTER", "OTHER")},
+                       for c in ("CHE", "COMMON", "FACTION", "REGIONAL", "CHARACTER", "OTHER")},
     }
     return doc
 
 
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--che", type=Path,
+                    help="CheUnitSetExportTest -Dunitset.write=true 가 낸 common/build/che-export.json. "
+                         "코틀린 GameUnitConst 를 고쳤을 때 che 세트 행을 갈아끼운다.")
+    a = ap.parse_args()
+    if a.che:
+        fresh = json.loads(a.che.read_text())
+        DOC["crewTypes"] = [u for u in DOC["crewTypes"] if u["set"] != "che"]
+        base = {k: None for k in ("han", "tier", "tierName", "role", "generic", "composition", "requires")}
+        base |= {"category": "CHE", "derived": False, "generic": False,
+                 "evidence": {"class": "GAME_REFERENCE", "proximity": "NONE",
+                              "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php", "quote": None}}
+        DOC["crewTypes"] = [dict(base, **u) for u in fresh] + DOC["crewTypes"]
     doc = build()
     UNITSET.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n")
     print(f"{UNITSET.relative_to(ROOT)} — 병종 {len(doc['crewTypes'])}")

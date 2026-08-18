@@ -45,7 +45,7 @@ administrative geography and the office/military-rank tables.
    a plausible term, and do not silently downgrade the claim.
 5. **Grade the source, don't mix grades.** 正史 and 演義 are separate claims, never one
    averaged assertion — see `logic/src/main/kotlin/opensamguk/logic/v2/evidence/EvidenceContracts.kt`
-   (`EvidenceClass` / `SourceProximity`) and `data/unitset/han.json` for the applied pattern.
+   (`EvidenceClass` / `SourceProximity`) and `data/unitset/units.json` for the applied pattern.
 6. **Read the snippet — matches are character-level, so false positives are real.**
    Querying `屯長` (a Han officer rank) also returns 「西**屯長**安」 — "garrisoned Chang'an",
    a word boundary the index cannot see. Never count hits without reading them; a raw

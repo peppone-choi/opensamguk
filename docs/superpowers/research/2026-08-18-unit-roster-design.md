@@ -1,9 +1,9 @@
 # 후한 군현 맵 병종표 설계 (v2)
 
-- 산출물: `tools/unitset/build_han_unitset.py` → `data/unitset/han.json` (병종 71종 · 무기 24종 · 갑옷 10종 · 방패 4종)
+- 산출물: `tools/unitset/build_unitset.py` → `data/unitset/units.json` (병종 161종 = che 34 + han 127 · 무기 28종 · 갑옷 10종 · 방패 4종)
 - 새 제약: `UnitConstraint.ForbidRegions` (common) + `RecruitUnitAvailability` 분기 (logic)
 - 개정 2026-08-19 — 초판의 "표 하나 손으로 찍기"를 버렸다. 수치는 **조성에서 유도**하고,
-  명부와 수치는 **`data/unitset/han.json` 한 파일**에 있다(로스터를 두 곳에 두지 않는다).
+  명부와 수치는 **`data/unitset/units.json` 한 파일**에 있다(로스터를 두 곳에 두지 않는다).
 
 ## 0. 무엇을 어디서 가져왔나
 
@@ -15,8 +15,8 @@
 | Total War: Three Kingdoms (namu.wiki) | **분해 축 하나** — 병종 = (무기 · 갑옷 · 방패) 조합이고 역할과 등급이 거기서 나온다는 발상 | 수치·이름·병종 목록. CC BY-NC-SA 2.0 KR 자료이고, 이 저장소는 이미 Koei-IP 심사 대기 중이다. IP 위험을 한 겹 더 얹지 않는다 |
 | 사료 실측 (三國志·後漢書·資治通鑑·華陽國志) | 병종 이름·한자·출전·인용문·역할·게이팅 | 수치 — 사료에 수치는 없다 |
 
-**파일은 하나다.** 한때 명부(`data/v2/unit-types.json`)와 병종표(`data/unitset/han.json`)가
-갈려 있었는데, 그러면 진실이 둘이 된다. 지금은 `data/unitset/han.json` 하나다 — 사람이 적는
+**파일은 하나다.** 한때 명부(`data/v2/unit-types.json`)·han 병종표·che 병종표가
+갈려 있었는데, 그러면 진실이 둘이 된다. 지금은 `data/unitset/units.json` 하나다 — 사람이 적는
 `authored` 필드(이름·한자·armType·등급·절·조성·게이팅·출전)와 빌더가 다시 쓰는 `generated`
 필드(수치·계수·제약·info)를 `_meta` 가 명시한다. 빌더를 두 번 돌리면 같은 파일이 나온다.
 
@@ -92,7 +92,7 @@ data class ForbidRegions(val forbidRegions: List<String>) : UnitConstraint()
 
 ## 6. 남은 배선
 
-`data/unitset/han.json` 은 데이터일 뿐 아직 엔진에 물리지 않았다. `GameUnitConst` 는 하드코딩된 단일 `object` 이고 `UnitSetTable.isSupported()` 는 `"che"` 하나만 참이다. han 을 실제로 뽑으려면 카탈로그를 변종화해야 하고(`CityConstRegistry` 가 맵에 한 것과 같은 모양), 그건 이 작업의 범위 밖이다 — 별도 티켓.
+`data/unitset/units.json` 은 데이터일 뿐 아직 엔진에 물리지 않았다. `GameUnitConst` 는 하드코딩된 단일 `object` 이고 `UnitSetTable.isSupported()` 는 `"che"` 하나만 참이다. han 을 실제로 뽑으려면 카탈로그를 변종화해야 하고(`CityConstRegistry` 가 맵에 한 것과 같은 모양), 그건 이 작업의 범위 밖이다 — 별도 티켓.
 
 ## 근거 재현
 
@@ -101,3 +101,63 @@ import sys; sys.path.insert(0, '.')
 from shiliao import index as ix
 print(ix.volume(560)['text'])   # 三國志 卷30 烏丸鮮卑東夷傳
 ```
+
+## 9. 총정리 (2026-08-19) — 두 세트를 한 파일로
+
+`data/unitset/che.json` + `data/unitset/han.json` → **`data/unitset/units.json` 하나**.
+파일이 둘이면 "우리 병종이 몇 종인가"에 답이 둘이 된다.
+
+- `sets` — 세트 선언(`idRange` · `defaultCrewTypeId` · `castleCrewTypeId` · `frozen`).
+  che 는 1000~1999 / 기본 1100 / 성벽 1000, han 은 2000~2999 / 기본 **2006(부곡 도병)** / 성벽 2099.
+  han 의 기본 병종이 2100(유주돌기)이던 것을 고쳤다 — 기본값이 지역 전용 정예일 수는 없다.
+- `equivalents` — che 34행 ↔ han 대응표. 맵을 갈아끼울 때 저장된 부대를 옮길 표이자,
+  "che 의 이 병종은 han 에서 무엇인가"에 대한 답이다. 귀병 9종은 han 에서
+  무격·방사·도사 3단으로 접혔으므로 7행은 `null` 로 **명시**한다(빠뜨린 것이 아니다).
+- 세트 경계는 두 곳에서 지킨다 — 빌더의 `idRange` assert 와 `CheUnitSetExportTest`
+  「세트 선언이 실제 행과 맞는다」.
+
+**드리프트 게이트.** che 세트의 런타임 진실은 여전히 코틀린 `GameUnitConst` 다(골든이 덮은
+패러티 면, 외부화는 `M-config` 마일스톤 이후). `CheUnitSetExportTest` 가 units.json 의 che 행을
+코틀린과 필드 단위로 대조한다. 코틀린을 고쳤다면:
+
+```bash
+./gradlew :common:test --tests '*CheUnitSetExportTest*' -Dunitset.write=true
+python3 tools/unitset/build_unitset.py --che common/build/che-export.json
+```
+
+### 같이 고친 것
+
+| 무엇 | 왜 |
+| --- | --- |
+| 공성기구 4종(충거·정란·운제·포차)이 수치가 **전부 같았다** | 넷 다 무기가 `충차` 였다. `운제`·`정란` 무기를 만들고 갑옷을 갈랐다. 대성벽 계수도 물건마다 다르다(충차 2.4 · 운제 2.0 · 정란/투석 1.8) |
+| `정예 충거`(2029)와 `충거`(2135) 중복 | 2029 를 `정예 포차 精銳砲車`(투석)로 바꿔 일반 사다리의 정예 차병 자리를 채웠다 |
+| 郡兵·縣兵·亭部五兵 수치 동일 | 같은 수비대의 다른 층위다. 亭 → 縣 → 郡 순으로 장비를 올렸다 |
+| `羌騎(先零·燒當·參狼)` — 이름 안에 주석 | 한자명은 `羌騎`, 부족은 `requires.subTribes` 로 내렸다 |
+| `武騎` 한글 "무기" — 병기(武器)와 충돌 | "무기병" |
+
+### 한반도·왜 병종 11종 (2185–2195)
+
+Steam 워크숍 모드의 **구성 축만** 참고했다(출신 + 등급 + 무기). 이름·수치는 가져오지 않았고,
+전부 三國志 卷30 魏書 東夷傳 · 後漢書 卷85 東夷列傳 실인용으로 세웠다.
+
+| id | 병종 | 근거 |
+| --- | --- | --- |
+| 2185 | 마한 창병 馬韓矛兵 | 辰韓 「便步戰，兵仗與馬韓同」 |
+| 2186 | 변진 철갑병 弁辰鐵甲兵 | 弁辰 「國出鐵，韓、濊、倭皆從取之」 — 철 산지라 쇠미늘을 입는다 |
+| 2187 | 진한 보졸 辰韓步卒 | 辰韓 「便步戰」 |
+| 2188 | 예 장모병 濊長矛兵 | 濊 「作矛長三丈，或數人共持之，能步戰」 — `장모` 무기를 새로 만들었다 |
+| 2189 | 낙랑 단궁수 樂浪檀弓手 | 濊 「樂浪檀弓出其地」 |
+| 2190 | 옥저 모병 沃沮矛兵 | 東沃沮 「人性質直強勇，少牛馬，便持矛步戰」 |
+| 2191 | 부여 기병 夫餘騎 | 後漢書 夫餘 「出名馬、赤玉、貂豽」 |
+| 2192 | 고구려 산기병 高句麗山騎 | 高句麗 「其馬皆小，便登山」 |
+| 2193 | 읍루 독시수 挹婁毒矢手 | 挹婁 「其弓長四尺，力如弩，矢用楛，長尺八寸，青石爲鏃」 |
+| 2194 | 왜인 모순병 倭矛楯兵 | 倭人 「兵用矛、楯、木弓」 |
+| 2195 | 왜인 목궁수 倭木弓手 | 倭人 「木弓短下長上，竹箭或鐵鏃或骨鏃」 |
+
+- 새 집단 성격 **해동** — 「바다 건너 동쪽 — 쇠와 배는 있으나 말이 드물다」(회피 +5, 방어 ×0.95).
+- 기병 금제(`forbidRegionsForCavalry`)에 **馬韓** 을 넣었다 — 馬韓 「不知乘牛馬，牛馬盡於送死」.
+  倭(邪馬壹國·奴國·投馬國)는 「其地無牛、馬」 로 이미 들어 있었다.
+- `trait_of` 가 `requires.external` 도 본다 — 외이(外夷)는 `tribe` 가 아니라 `external` 로 게이팅된다.
+
+수치 중복은 82/116 → **94/127** 로 줄었다. 남은 중복은 같은 조성·같은 성격이면 같은 물건이라
+정상이다.
