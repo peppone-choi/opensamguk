@@ -53,9 +53,9 @@ const DETAIL_SIZES: Record<number, CitySize> = {
     3: { areaW: 42, areaH: 42, iconW: 14, iconH: 14, flagRight: -8, flagTop: -4 },
     4: { areaW: 60, areaH: 45, iconW: 20, iconH: 15, flagRight: -6, flagTop: -3 },
     5: { areaW: 72, areaH: 48, iconW: 24, iconH: 16, flagRight: -6, flagTop: -4 },
-    6: { areaW: 78, areaH: 54, iconW: 26, iconH: 18, flagRight: -6, flagTop: -4 },
-    7: { areaW: 84, areaH: 60, iconW: 28, iconH: 20, flagRight: -6, flagTop: -4 },
-    8: { areaW: 96, areaH: 72, iconW: 32, iconH: 24, flagRight: -6, flagTop: -3 },
+    6: { areaW: 78, areaH: 54, iconW: 28, iconH: 19, flagRight: -6, flagTop: -4 },
+    7: { areaW: 84, areaH: 60, iconW: 32, iconH: 22, flagRight: -6, flagTop: -4 },
+    8: { areaW: 96, areaH: 72, iconW: 36, iconH: 26, flagRight: -6, flagTop: -3 },
 };
 // 인게임 MapViewer와 동일하게 cast 아이콘(iconW/iconH)만 ICON_SCALE로 줄인다(아우라/깃발 비율 유지).
 // 로그인/로비/메인 3개 맵의 모양을 동일하게 맞추는 단일 노브 — 값은 MapViewer.ICON_SCALE와 일치시킬 것.

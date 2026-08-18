@@ -57,19 +57,19 @@ const DETAIL_SIZES: Record<number, CitySize> = {
     3: { areaW: 42, areaH: 42, iconW: 14, iconH: 14, flagRight: -8, flagTop: -4 },
     4: { areaW: 60, areaH: 45, iconW: 20, iconH: 15, flagRight: -6, flagTop: -3 },
     5: { areaW: 72, areaH: 48, iconW: 24, iconH: 16, flagRight: -6, flagTop: -4 },
-    6: { areaW: 78, areaH: 54, iconW: 26, iconH: 18, flagRight: -6, flagTop: -4 },
-    7: { areaW: 84, areaH: 60, iconW: 28, iconH: 20, flagRight: -6, flagTop: -4 },
-    8: { areaW: 96, areaH: 72, iconW: 32, iconH: 24, flagRight: -6, flagTop: -3 },
+    6: { areaW: 78, areaH: 54, iconW: 28, iconH: 19, flagRight: -6, flagTop: -4 },
+    7: { areaW: 84, areaH: 60, iconW: 32, iconH: 22, flagRight: -6, flagTop: -4 },
+    8: { areaW: 96, areaH: 72, iconW: 36, iconH: 26, flagRight: -6, flagTop: -3 },
 };
 const BASIC_SIZES: Record<number, Pick<CitySize, 'iconW' | 'iconH'>> = {
     1: { iconW: 12, iconH: 12 },
     2: { iconW: 12, iconH: 12 },
     3: { iconW: 14, iconH: 14 },
     4: { iconW: 16, iconH: 14 },
-    5: { iconW: 18, iconH: 16 },
-    6: { iconW: 20, iconH: 16 },
-    7: { iconW: 22, iconH: 18 },
-    8: { iconW: 24, iconH: 18 },
+    5: { iconW: 18, iconH: 12 },
+    6: { iconW: 21, iconH: 14 },
+    7: { iconW: 24, iconH: 17 },
+    8: { iconW: 27, iconH: 20 },
 };
 // 로그인/로비/메인 3개 맵의 모양을 동일하게 맞추는 단일 노브 — 값은 gateway MapPreview.ICON_SCALE와 일치.
 // 아우라(areaW/areaH)·깃발 위치는 레거시 비율 유지, cast 아이콘(iconW/iconH)만 ICON_SCALE로 줄인다.
