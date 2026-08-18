@@ -45,6 +45,12 @@ object RecruitUnitAvailability {
                     constraint.reqCities.any { name -> cityConst.byName(name)?.id?.let { ownCities.containsKey(it) } == true }
                 is UnitConstraint.ReqRegions ->
                     constraint.reqRegions.any { name -> cityConst.regionIdByName(name)?.let { ownRegions.contains(it) } == true }
+                // 주둔지 기준이다 — 소유가 아니라 지금 서 있는 땅을 본다.
+                is UnitConstraint.ForbidRegions -> {
+                    // 지역을 못 찾으면 막지 않는다 — 모르는 것을 금제로 바꾸지 않는다.
+                    val here = cityConst.byId(general.cityId)?.region
+                    here == null || constraint.forbidRegions.none { cityConst.regionIdByName(it) == here }
+                }
                 is UnitConstraint.ReqMinRelYear -> relYear >= constraint.reqMinRelYear
                 is UnitConstraint.ReqChief -> general.officerLevel >= 5
                 is UnitConstraint.ReqNotChief -> general.officerLevel < 5

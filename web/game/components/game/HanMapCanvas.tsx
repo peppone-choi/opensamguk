@@ -1,6 +1,7 @@
 'use client';
 
-// 후한 군현 지형 맵 렌더러 — game-api `GET /api/map/terrain` (256×256 셀 격자).
+// 후한 군현 지형 맵 렌더러 — game-api `GET /api/map/terrain` 의 셀 격자.
+// 격자는 정사각이 아니다. 세계 프레임(93~133E · 15~45N)이 가로로 길어 cols≠rows 다.
 //
 // 기존 MapViewer 와는 그리는 방식이 다르다. MapViewer 는 php 정본 700×500 좌표계 위에 CDN
 // 베이스 이미지를 깔고 도시 점을 얹는다. 이쪽은 사료 좌표에서 구운 셀 격자를 직접 칠한다.
@@ -10,6 +11,9 @@
 // 호출부는 그때 기존 맵으로 폴백한다(ADR-LITE-040 의 철거 경로가 그대로 동작하려면 필요하다).
 
 import { useEffect, useRef, useState } from 'react';
+
+export interface Jun { name: string; seat: number; col: number; row: number }
+export interface AdjEdge { a: number; b: number; cells: number; cross: string; ford?: number[] }
 
 export interface HanTiles {
     _meta: {
@@ -21,7 +25,11 @@ export interface HanTiles {
     };
     terrain: string[];
     owner: [number, number][];
+    seatOwner: [number, number][];
     roads: Record<string, number>;
+    juns: Jun[];
+    adjacency: { county: AdjEdge[]; commandery: AdjEdge[] };
+    fords: { col: number; row: number; roads: number }[];
     regions: { name: string; en: string; cls: string; col: number; row: number; cells: number }[];
     cities: {
         id: string; name: string; nameCh: string; level: number; kind: string;
@@ -42,7 +50,7 @@ const TERRAIN = [
     '#6f7a4e', // 8 구릉
 ];
 
-const SEA_BIT = 16;
+const WATER_BIT = 16;              // 수로 — 하천 조운과 연안 항해를 한 망으로 둔다
 // 4방향 비트(N=1 E=2 S=4 W=8) → 셀 중심에서 뻗는 방향. 이웃과 만나 길이 이어진다.
 const DIRS: [number, number, number][] = [[1, 0, -1], [2, 1, 0], [4, 0, 1], [8, -1, 0]];
 
@@ -61,26 +69,41 @@ export function labelledRegions(regions: HanTiles['regions'], minCells = 120) {
     return regions.filter((r) => r.cells >= minCells);
 }
 
+/** 소유 격자에서 경계 셀만 뽑는다. 라벨이 갈리는 자리가 곧 국경이다. */
+export function borderCells(lab: Int16Array, cols: number, rows: number) {
+    const out: number[] = [];
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            const v = lab[y * cols + x];
+            if (v < 0) continue;
+            if ((x + 1 < cols && lab[y * cols + x + 1] !== v)
+                || (y + 1 < rows && lab[(y + 1) * cols + x] !== v)) out.push(y * cols + x);
+        }
+    }
+    return out;
+}
+
 function draw(cv: HTMLCanvasElement, data: HanTiles, px: number) {
-    const n = data._meta.cols;
+    const { cols, rows } = data._meta;
     const ctx = cv.getContext('2d');
     if (!ctx) return;
+    const s = px / cols;                 // 셀 하나의 화면 크기. 등적 투영이라 가로세로가 같다.
     cv.width = px;
-    cv.height = px;
+    cv.height = Math.round(rows * s);
 
     // 지형은 셀당 1픽셀 오프스크린에 찍고 한 번에 확대한다. 65536번 fillRect 하는 것보다 빠르고,
     // 확대 보간이 켜져 있어 셀 경계가 부드럽게 풀린다(픽셀 격자처럼 보이지 않는다).
     const off = document.createElement('canvas');
-    off.width = n;
-    off.height = n;
+    off.width = cols;
+    off.height = rows;
     const octx = off.getContext('2d');
     if (!octx) return;
-    const img = octx.createImageData(n, n);
-    for (let y = 0; y < n; y++) {
+    const img = octx.createImageData(cols, rows);
+    for (let y = 0; y < rows; y++) {
         const row = data.terrain[y];
-        for (let x = 0; x < n; x++) {
+        for (let x = 0; x < cols; x++) {
             const hex = TERRAIN[Number(row[x])] ?? TERRAIN[0];
-            const o = (y * n + x) * 4;
+            const o = (y * cols + x) * 4;
             img.data[o] = parseInt(hex.slice(1, 3), 16);
             img.data[o + 1] = parseInt(hex.slice(3, 5), 16);
             img.data[o + 2] = parseInt(hex.slice(5, 7), 16);
@@ -89,10 +112,20 @@ function draw(cv: HTMLCanvasElement, data: HanTiles, px: number) {
     }
     octx.putImageData(img, 0, 0);
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(off, 0, 0, px, px);
+    ctx.drawImage(off, 0, 0, cv.width, cv.height);
 
-    const s = px / n;
     const cx = (c: number) => (c + 0.5) * s;
+
+    // 郡 경계 — 이동 판정의 단위다. 길이 아니라 이 선을 넘느냐로 움직인다.
+    // 지형과 같은 오프스크린 해상도로 찍어야 셀 경계와 어긋나지 않는다.
+    const seat = expandOwner(data.seatOwner, cols * rows);
+    ctx.save();
+    ctx.fillStyle = 'rgba(24,18,16,0.72)';
+    for (const i of borderCells(seat, cols, rows)) {
+        ctx.fillRect(((i % cols) + 0.5) * s - s * 0.28, (Math.floor(i / cols) + 0.5) * s - s * 0.28,
+                     Math.max(1, s * 0.56), Math.max(1, s * 0.56));
+    }
+    ctx.restore();
 
     // 지역 이름 — 지형 바로 위, 도시 아래. 큰 지형지물이 배경으로 읽히는 층이다.
     ctx.textAlign = 'center';
@@ -102,13 +135,13 @@ function draw(cv: HTMLCanvasElement, data: HanTiles, px: number) {
 
     // 도로 — 셀 중심에서 이웃 방향으로 반 칸씩 그어 잇는다. 해로는 점선이다.
     ctx.lineCap = 'round';
-    for (const kind of ['LAND', 'SEA'] as const) {
+    for (const kind of ['LAND', 'WATER'] as const) {
         ctx.strokeStyle = kind === 'LAND' ? 'rgba(226,206,160,0.85)' : 'rgba(150,200,225,0.7)';
         ctx.lineWidth = Math.max(1, s * (kind === 'LAND' ? 0.9 : 0.6));
-        ctx.setLineDash(kind === 'SEA' ? [s * 1.5, s * 1.5] : []);
+        ctx.setLineDash(kind === 'WATER' ? [s * 1.5, s * 1.5] : []);
         ctx.beginPath();
         for (const [key, mask] of Object.entries(data.roads)) {
-            if ((mask & SEA_BIT ? 'SEA' : 'LAND') !== kind) continue;
+            if ((mask & WATER_BIT ? 'WATER' : 'LAND') !== kind) continue;
             const [gx, gy] = key.split(',').map(Number);
             for (const [bit, dx, dy] of DIRS) {
                 if (!(mask & bit)) continue;
@@ -119,6 +152,18 @@ function draw(cv: HTMLCanvasElement, data: HanTiles, px: number) {
         ctx.stroke();
     }
     ctx.setLineDash([]);
+
+    // 나루터 — 길이 강에 끊긴 자리. 도하 인접은 여기를 지난다.
+    ctx.fillStyle = 'rgba(120,200,235,0.9)';
+    ctx.strokeStyle = 'rgba(10,30,45,0.8)';
+    ctx.lineWidth = 1;
+    for (const f of data.fords) {
+        const r = Math.max(1.5, s * 0.7);
+        ctx.beginPath();
+        ctx.arc(cx(f.col), cx(f.row), r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    }
 
     // 도시 — 郡治만 이름을 단다. 縣 970개까지 쓰면 글자가 지도를 덮는다.
     ctx.font = `${Math.max(9, Math.round(px / 64))}px sans-serif`;
@@ -134,14 +179,14 @@ function draw(cv: HTMLCanvasElement, data: HanTiles, px: number) {
             ctx.stroke();
         }
     }
+    // 이름은 郡 이름을 단다. 郡治의 縣 이름(襄平)보다 郡 이름(遼東郡)이 이동 단위다.
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
     ctx.lineWidth = 3;
-    for (const c of data.cities) {
-        if (!c.seat) continue;
-        const [tx, ty] = [cx(c.col), cx(c.row) - Math.max(4, s * 2)];
-        ctx.strokeText(c.name, tx, ty);
-        ctx.fillText(c.name, tx, ty);
+    for (const j of data.juns) {
+        const [tx, ty] = [cx(j.col), cx(j.row) - Math.max(4, s * 2)];
+        ctx.strokeText(j.name, tx, ty);
+        ctx.fillText(j.name, tx, ty);
     }
 }
 
@@ -181,7 +226,7 @@ export default function HanMapCanvas(
         <canvas
             ref={ref}
             aria-label={data ? `후한 군현 지도 (${data._meta.year}년)` : '지도 불러오는 중'}
-            style={{ width: '100%', maxWidth: px, aspectRatio: '1 / 1', display: 'block', margin: '0 auto' }}
+            style={{ width: '100%', maxWidth: px, aspectRatio: data ? `${data._meta.cols} / ${data._meta.rows}` : '1 / 1', display: 'block', margin: '0 auto' }}
         />
     );
 }

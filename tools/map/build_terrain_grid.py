@@ -13,7 +13,8 @@
 
 용법:  python3 tools/map/build_terrain_grid.py [--grid 256] [--preview]
 """
-import argparse, json, math, os, sys
+import argparse, heapq, json, math, os, sys
+from collections import Counter
 import numpy as np
 
 PLACES = 'data/map/han-places.json'
@@ -40,19 +41,20 @@ class Proj:
     따라서 pad = span/1.04*0.02 로 정확히 복원된다 — 근사가 아니다.
     """
 
-    def __init__(self, p, n):
-        self.k, self.x0, self.y1, self.span, self.n = p['k'], p['x0'], p['y1'], p['span'], n
-        self.pad = self.span / 1.04 * 0.02
+    def __init__(self, p, n=None):
+        self.k, self.x0, self.y1 = p['k'], p['x0'], p['y1']
+        self.pad, self.cell = p['pad'], p['cell']
+        self.cols, self.rows = p['cols'], p['rows']
 
     def to_cell(self, lon, lat):
-        gx = (lon * self.k - self.x0 + self.pad) / self.span * self.n
-        gy = (self.y1 - lat + self.pad) / self.span * self.n
+        gx = (lon * self.k - self.x0 + self.pad) / self.cell
+        gy = (self.y1 + self.pad - lat) / self.cell
         return gx, gy
 
     def cell_lonlat(self, gx, gy):
         """셀 중심(+0.5)의 경위도. 격자→지리 방향이라 래스터라이즈에 이걸 쓴다."""
-        lon = ((gx + 0.5) / self.n * self.span - self.pad + self.x0) / self.k
-        lat = self.y1 + self.pad - (gy + 0.5) / self.n * self.span
+        lon = ((gx + 0.5) * self.cell - self.pad + self.x0) / self.k
+        lat = self.y1 + self.pad - (gy + 0.5) * self.cell
         return lon, lat
 
 
@@ -80,7 +82,7 @@ def rasterize(features, proj, bbox):
     외곽을 모두 칠한 뒤 구멍을 지운다 — 순서를 섞으면 구멍이 도로 메워진다.
     """
     from PIL import Image, ImageDraw
-    img = Image.new('L', (proj.n, proj.n), 0)
+    img = Image.new('L', (proj.cols, proj.rows), 0)
     d = ImageDraw.Draw(img)
     holes = []
     for feat in features:
@@ -97,7 +99,7 @@ def rasterize(features, proj, bbox):
 def stroke_lines(grid, proj, path, bbox, value, only_land=True):
     """하천은 선이라 채울 수 없다. 변을 촘촘히 샘플링해 지나는 셀을 찍는다."""
     lo_lon, hi_lon, lo_lat, hi_lat = bbox
-    n = proj.n
+    h, w = grid.shape
     for feat in json.load(open(path))['features']:
         g = feat['geometry']
         lines = g['coordinates'] if g['type'] == 'MultiLineString' else [g['coordinates']]
@@ -113,7 +115,7 @@ def stroke_lines(grid, proj, path, bbox, value, only_land=True):
                 t = np.linspace(0, 1, steps)
                 xs = (gx[i] + t * (gx[i + 1] - gx[i])).astype(int)
                 ys = (gy[i] + t * (gy[i + 1] - gy[i])).astype(int)
-                ok = (xs >= 0) & (xs < n) & (ys >= 0) & (ys < n)
+                ok = (xs >= 0) & (xs < w) & (ys >= 0) & (ys < h)
                 xs, ys = xs[ok], ys[ok]
                 if only_land:
                     ok = grid[ys, xs] != SEA                 # 하천이 바다를 덮으면 해안이 망가진다
@@ -121,33 +123,497 @@ def stroke_lines(grid, proj, path, bbox, value, only_land=True):
                 grid[ys, xs] = value
 
 
-# ── 도로: Gabriel 그래프 ─────────────────────────────────────────────────────
-def gabriel(pts):
-    """두 점을 지름으로 하는 원 안에 제3의 점이 없으면 간선.
+# ── 도로: 지형 통행비용 위의 최소비용 경로 ──────────────────────────────────
+# 이전 판은 郡治 점들의 Gabriel 그래프를 직선으로 이었다. 지형을 아예 안 봐서 秦嶺·大巴山을
+# 자로 그은 듯 관통하고, 강만 건너도 해로로 찍혔다. 실제 후한 도로는 잔도와 협곡을 따라
+# 났다 — 관중과 한중은 陳倉道·褒斜道 같은 몇 갈래로만 통했다. 그래서 그래프가 아니라
+# 비용을 고친다. 지형에 통행비용을 주고 최소비용 경로를 뽑으면 길이 알아서 고개를 찾는다.
+#
+# 비용은 셀 하나를 지나는 값이다. 평지 10 을 1일 행군으로 읽으면 산지는 5배 든다.
+# 하천은 도하 지점이 드물다는 뜻이고, 호수·바다는 육로가 아예 못 지난다.
+INF = float('inf')
+LAND_COST = {PLAIN: 10, HILL: 18, BASIN: 13, PLATEAU: 24, DESERT: 34,
+             RIVER: 90, MOUNTAIN: 120, LAKE: INF, SEA: INF}
+# 수로. 漕運은 육운보다 쌌다 — 하천을 바다보다 싸게 매겨 내륙 물길이 먼저 잡히게 한다.
+# 바다·강·호수를 한 망으로 둔다. 실제로도 조운은 강에서 운하로, 다시 연안으로 이어졌다.
+WATER_COST = {RIVER: 8, LAKE: 10, SEA: 12}
+# 길이 상한(셀). 빈 땅에서는 縣 하나의 통행권이 수백 km 로 뻗어 사막을 가로지르는
+# 가짜 간선이 생긴다. 셀 하나가 약 5km 이니 지선 250km · 간선 800km 를 넘으면 길이 아니다.
+MAX_CELLS = {'LOCAL': 24, 'MAIN': 160, 'WATER': 200}
+DIAG = [(-1, -1, 1.414), (0, -1, 1.0), (1, -1, 1.414), (-1, 0, 1.0),
+        (1, 0, 1.0), (-1, 1, 1.414), (0, 1, 1.0), (1, 1, 1.414)]
 
-    삼각분할보다 성기고 최근접이웃보다 촘촘해 도로망의 밀도가 사람 손 없이 맞는다.
-    scipy 없이 O(n^3) 로 푼다 — 郡治가 100여 개뿐이라 이게 가장 짧은 코드다.
+
+def cost_field(terrain, table):
+    c = np.full(terrain.shape, INF)
+    for t, v in table.items():
+        c[terrain == t] = v
+    return c
+
+
+def multi_dijkstra(cost, sources):
+    """모든 출발점에서 동시에 번진다. dist 와 어느 출발점 소속인지(label)를 함께 낸다.
+
+    라벨이 만나는 자리가 곧 두 郡治의 통행 경계다 — 직선거리 보로노이가 아니라
+    실제 통행비용 보로노이라 산맥이 경계를 갈라준다.
     """
-    p = np.asarray(pts, dtype=float)
-    n = len(p)
-    edges = []
-    for i in range(n):
-        for j in range(i + 1, n):
-            mid, r2 = (p[i] + p[j]) / 2, ((p[i] - p[j]) ** 2).sum() / 4
-            d2 = ((p - mid) ** 2).sum(axis=1)
-            d2[i] = d2[j] = np.inf
-            if (d2 > r2 - 1e-9).all():
-                edges.append((i, j))
+    h, w = cost.shape
+    dist = np.full((h, w), INF)
+    label = np.full((h, w), -1, dtype=np.int32)
+    parent = np.full((h, w, 2), -1, dtype=np.int32)
+    pq = []
+    for k, (x, y) in enumerate(sources):
+        if cost[y, x] == INF:                     # 항구·섬 治所가 바다칸에 걸린 경우
+            continue
+        dist[y, x] = 0.0
+        label[y, x] = k
+        heapq.heappush(pq, (0.0, x, y))
+    while pq:
+        d, x, y = heapq.heappop(pq)
+        if d > dist[y, x]:
+            continue
+        for dx, dy, w8 in DIAG:
+            nx, ny = x + dx, y + dy
+            if not (0 <= nx < w and 0 <= ny < h):
+                continue
+            c = cost[ny, nx]
+            if c == INF:
+                continue
+            nd = d + c * w8
+            if nd < dist[ny, nx]:
+                dist[ny, nx] = nd
+                label[ny, nx] = label[y, x]
+                parent[ny, nx] = (x, y)
+                heapq.heappush(pq, (nd, nx, ny))
+    return dist, label, parent
+
+
+def touching_pairs(label):
+    """라벨이 맞닿는 이웃쌍 = 인접한 郡治. 맞닿은 셀 수도 함께 센다."""
+    pairs = Counter()
+    for a, b in ((label[:, :-1], label[:, 1:]), (label[:-1, :], label[1:, :])):
+        m = (a >= 0) & (b >= 0) & (a != b)
+        for u, v in zip(a[m].tolist(), b[m].tolist()):
+            pairs[(u, v) if u < v else (v, u)] += 1
+    return pairs
+
+
+def astar(cost, start, goal):
+    """최소비용 경로의 셀 목록. 휴리스틱은 남은 칸수 × 최저비용이라 최적성을 깨지 않는다."""
+    h, w = cost.shape
+    cheapest = float(np.min(cost[np.isfinite(cost)]))
+    (sx, sy), (gx, gy) = start, goal
+    if cost[sy, sx] == INF or cost[gy, gx] == INF:
+        return None
+    g = {(sx, sy): 0.0}
+    prev = {}
+    pq = [(0.0, 0.0, sx, sy)]
+    while pq:
+        _, gc, x, y = heapq.heappop(pq)
+        if (x, y) == (gx, gy):
+            path = [(x, y)]
+            while (x, y) in prev:
+                x, y = prev[(x, y)]
+                path.append((x, y))
+            return path[::-1]
+        if gc > g.get((x, y), INF):
+            continue
+        for dx, dy, w8 in DIAG:
+            nx, ny = x + dx, y + dy
+            if not (0 <= nx < w and 0 <= ny < h):
+                continue
+            c = cost[ny, nx]
+            if c == INF:
+                continue
+            ng = gc + c * w8
+            if ng < g.get((nx, ny), INF):
+                g[(nx, ny)] = ng
+                prev[(nx, ny)] = (x, y)
+                heapq.heappush(pq, (ng + max(abs(gx - nx), abs(gy - ny)) * cheapest, ng, nx, ny))
+    return None
+
+
+def walk_back(parent, cell):
+    """부모 포인터를 따라 출발점까지 되짚는다. 다익스트라가 이미 최소비용 경로를 남겨놨다."""
+    path = [cell]
+    x, y = cell
+    while True:
+        px, py = parent[y, x]
+        if px < 0:
+            return path
+        x, y = int(px), int(py)
+        path.append((x, y))
+
+
+def boundary_edges(dist, label, min_touch):
+    """라벨이 맞닿는 쌍마다 가장 싸게 넘어가는 경계 셀 한 쌍을 고른다.
+
+    두 영역이 만나는 자리 중 dist 합이 최소인 곳이 곧 두 治所를 잇는 최소비용 경로가
+    지나는 자리다. 그 셀에서 양쪽으로 부모를 되짚으면 A* 를 다시 돌 필요가 없다.
+    """
+    best, touch = {}, Counter()
+    for A, B, off in ((label[:, :-1], label[:, 1:], (1, 0)),
+                      (label[:-1, :], label[1:, :], (0, 1))):
+        dA = dist[:, :-1] if off[0] else dist[:-1, :]
+        dB = dist[:, 1:] if off[0] else dist[1:, :]
+        m = (A >= 0) & (B >= 0) & (A != B) & np.isfinite(dA) & np.isfinite(dB)
+        ys, xs = np.nonzero(m)
+        for y, x in zip(ys.tolist(), xs.tolist()):
+            u, v = int(A[y, x]), int(B[y, x])
+            key = (u, v) if u < v else (v, u)
+            touch[key] += 1
+            score = float(dA[y, x] + dB[y, x])
+            if key not in best or score < best[key][0]:
+                ca, cb = (x, y), (x + off[0], y + off[1])
+                best[key] = (score, ca, cb) if u < v else (score, cb, ca)
+    return {k: v for k, v in best.items() if touch[k] >= min_touch}
+
+
+def field_roads(cost, seats, ids, min_touch, kind, tier):
+    """한 번의 다익스트라로 인접관계와 경로를 동시에 낸다 — 간선 수가 많을 때 쓴다."""
+    dist, label, parent = multi_dijkstra(cost, seats)
+    roads = []
+    for (i, j), (score, ca, cb) in boundary_edges(dist, label, min_touch).items():
+        path = walk_back(parent, ca)[::-1] + walk_back(parent, cb)
+        roads.append({'a': ids[i], 'b': ids[j], 'kind': kind, 'tier': tier,
+                      'cost': round(score, 1), 'cells': [[x, y] for x, y in path]})
+    return roads
+
+
+def coast_distance(terrain):
+    """각 물칸이 뭍에서 몇 칸 떨어졌나. 다중출발 BFS 한 번이면 된다."""
+    h, w = terrain.shape
+    d = np.full((h, w), 1 << 20, dtype=np.int32)
+    land = terrain != SEA
+    d[land] = 0
+    ys, xs = np.nonzero(land)
+    frontier = list(zip(xs.tolist(), ys.tolist()))
+    step = 0
+    while frontier:
+        step += 1
+        nxt = []
+        for x, y in frontier:
+            for dx, dy, _ in DIAG:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h and d[ny, nx] > step:
+                    d[ny, nx] = step
+                    nxt.append((nx, ny))
+        frontier = nxt
+    return d
+
+
+def nearest(cost, x, y, radius):
+    """그 지점에서 가장 가까운 통행 가능 칸. 治所의 외항·나루를 잡는 데 쓴다."""
+    h, w = cost.shape
+    if cost[y, x] != INF:
+        return (x, y)
+    for r in range(1, radius + 1):
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                if max(abs(dx), abs(dy)) != r:
+                    continue
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h and cost[ny, nx] != INF:
+                    return (nx, ny)
+    return None
+
+
+def build_roads(terrain, pts, hubs):
+    """간선(郡治 사이)과 지선(縣 사이). 縣이 건물 슬롯이면 부대는 縣 사이를 행군한다 —
+    郡治끼리만 이으면 그 사이 縣들은 길 없는 땅이 된다."""
+    src = [(int(pts[i][0]), int(pts[i][1])) for i in hubs]
+    land = cost_field(terrain, LAND_COST)
+    for (x, y) in pts:                          # 治所 칸 자체는 항상 밟을 수 있어야 한다
+        x, y = int(x), int(y)
+        if land[y, x] == INF:
+            land[y, x] = LAND_COST[PLAIN]
+    ldist, label, lpar = multi_dijkstra(land, src)
+    roads, land_cost = [], {}
+    for (i, j), touch in touching_pairs(label).items():
+        if touch < 3:                           # 한두 칸 스치는 건 경계 잡음이지 인접이 아니다
+            continue
+        path = astar(land, src[i], src[j])
+        if path is None or len(path) > MAX_CELLS['MAIN']:
+            continue
+        c = sum(land[y, x] for x, y in path)
+        land_cost[(i, j)] = c
+        roads.append({'a': hubs[i], 'b': hubs[j], 'kind': 'LAND', 'tier': 'MAIN',
+                      'cost': round(c, 1), 'cells': [[x, y] for x, y in path]})
+
+    # 수로. 물칸에 닿는 治所는 모두 나루를 갖는다 — 郡治만 잇던 예전 판은 長江 연변
+    # 縣들이 강을 코앞에 두고도 물길이 없었다.
+    water = cost_field(terrain, WATER_COST)
+    # 연안 가산. 후한의 항해는 연안항해였다 — 먼바다로 나갈수록 비싸게 만들면 항로가
+    # 해안을 따라 붙는다. 균일 비용이면 다익스트라가 먼바다를 지그재그로 가로지른다.
+    off = coast_distance(terrain)
+    water += np.minimum(off, 24) * 2.0
+    ports, port_of = [], []
+    for k in hubs:
+        px, py = pts[k]
+        near = nearest(water, int(px), int(py), 10)
+        if near:
+            ports.append(near)
+            port_of.append(k)
+    _, wlabel, _ = multi_dijkstra(water, ports)
+    for (i, j) in touching_pairs(wlabel):
+        if touching_pairs(wlabel)[(i, j)] < 3:
+            continue
+        path = astar(water, ports[i], ports[j])
+        if path is None or len(path) > MAX_CELLS['WATER']:
+            continue
+        roads.append({'a': port_of[i], 'b': port_of[j], 'kind': 'WATER', 'tier': 'WATER',
+                      'cost': round(sum(water[y, x] for x, y in path), 1),
+                      'cells': [[x, y] for x, y in path]})
+
+    return thin(dedupe(roads)), label
+
+
+def dedupe(roads, keep=0.3):
+    """이미 깔린 길 위를 덧칠하는 구간을 버린다. 끝점 쌍만 비교하면 A-C 간선이 지나가는
+    길에 A-B 가 그대로 겹쳐 깔린다 — 쌍은 달라도 밟는 셀이 같다. 싼 길부터 훑는다."""
+    used = {'LAND': set(), 'WATER': set()}
+    out = []
+    for r in sorted(roads, key=lambda r: r['cost']):
+        seen = used[r['kind']]
+        cells = [tuple(c) for c in r['cells']]
+        if sum(1 for c in cells if c not in seen) / len(cells) < keep:
+            continue
+        seen.update(cells)
+        out.append(r)
+    return out
+
+
+def thin(roads, cap={'MAIN': 4, 'WATER': 3, 'LOCAL': 2}, local_cost=900):
+    """길을 줄로 만든다. 인접한 治所를 전부 이으면 델로네 그물이 나오는데, 후한의 縣은
+    격자로 엮여 있지 않았다 — 골짜기 길 하나에 줄줄이 꿰여 있었다.
+
+    싼 길부터 훑으며 각 治所의 차수를 상한까지만 채운다. 그러면 길이 끊긴 조각이
+    생기므로, 마지막에 조각을 잇는 가장 싼 길만 차수를 무시하고 되살린다(최소신장숲).
+    """
+    deg, par = Counter(), {}
+
+    def find(a):
+        while par.setdefault(a, a) != a:
+            par[a] = par[par[a]] = par[par[a]]
+            a = par[a]
+        return a
+
+    kept, spare = [], []
+    for r in sorted(roads, key=lambda r: (r['tier'] != 'MAIN', r['cost'])):
+        a, b, k = r['a'], r['b'], r['tier']
+        # 縣 사이 지선은 이웃이라는 이유만으로 놓지 않는다. 멀거나 험한 쌍은 길이 아니라
+        # 보로노이가 이웃이라고 부른 것뿐이다 — 간선으로 돌아가는 게 실제 통행이었다.
+        if k == 'LOCAL' and r['cost'] > local_cost:
+            continue
+        if deg[(a, k)] >= cap[k] or deg[(b, k)] >= cap[k]:
+            spare.append(r)
+            continue
+        deg[(a, k)] += 1
+        deg[(b, k)] += 1
+        par[find((a, k))] = find((b, k))
+        kept.append(r)
+    for r in sorted(spare, key=lambda r: r['cost']):     # 끊긴 조각만 되살린다
+        x, y = find((r['a'], r['tier'])), find((r['b'], r['tier']))
+        if x == y:
+            continue
+        par[x] = y
+        kept.append(r)
+    return kept
+
+
+def adjacency(label, seats=3):
+    """소유 격자에서 인접을 뽑는다. 이동은 길이 아니라 영역 인접으로 판정한다 —
+    治所를 길로 다 이으면 델로네 그물이 되고, 그건 후한의 도로망이 아니라 삼각분할이다.
+
+    `seats` 칸 미만 맞닿은 쌍은 버린다. 모서리 한 칸 스치는 건 경계 잡음이지 국경이 아니다.
+    """
+    return [{'a': a, 'b': b, 'cells': n}
+            for (a, b), n in sorted(touching_pairs(label).items()) if n >= seats]
+
+
+def ambiguous_seeds(junguo):
+    """두 郡 이상이 물고 있는 좌표. 이름 비정이 한 지점을 나눠 가진 자리다."""
+    dup = {}
+    for jun in junguo:
+        for c in jun['counties']:
+            if c.get('lat'):
+                dup.setdefault((c['lon'], c['lat']), set()).add(jun['name'])
+    return {k for k, v in dup.items() if len(v) > 1}
+
+
+def fold_to_jun(places, proj, junguo):
+    """縣을 郡國志가 적어둔 소속 郡으로 접는다.
+
+    郡 영역을 "가장 가까운 郡治"로 자르면 사료와 절반밖에 안 맞는다 — 郡國志가 河南尹
+    소속 縣 16개를 이름으로 다 적어놨는데 거리로 추측하는 꼴이다. 소속은 읽어오고,
+    영역은 그 縣들이 가진 셀의 합집합으로 만든다.
+
+    맞춤은 좌표가 먼저다. 郡國志의 縣 이름과 CHGIS 이름은 자주 어긋난다(雒陽/洛陽 같은
+    한대-후대 표기 차이). 이름은 같은 거리의 후보를 가를 때만 쓴다.
+    """
+    import math
+
+    # 이체자. CHGIS 표기와 郡國志 표기가 갈리면 같은 郡이 둘로 쪼개져 서로의 땅에
+    # 위요지를 만든다(郁林/鬱林, 河間/河閒). 접기 전에 한 글자로 맞춘다.
+    var = str.maketrans('郁閒雒鴈沇涼峕竝恒鬴', '鬱間洛雁兗凉時并弘釜')
+
+    def norm(n):
+        return (n or '').translate(var).rstrip('縣县國国道邑侯郡尹屬國属国')
+
+    by_name = {}
+    for i, pl in enumerate(places):
+        by_name.setdefault(norm(pl.get('nameFt') or pl.get('nameCh')), []).append(i)
+
+    # 서로 다른 郡의 縣이 **똑같은** 좌표를 물고 있으면 비정 실패다 — 이름으로 찾다가 한
+    # 지점을 둘이 나눠 가진 것이다(常山國 真定 = 中山國 恒山, 鉅鹿郡 章 = 東平國 章).
+    # 그대로 접으면 남의 郡 한복판에 위요지가 생긴다. 모르는 것을 소속으로 바꾸지 않는다.
+    ambiguous = ambiguous_seeds(junguo)
+
+    jun_of = [-1] * len(places)
+    seat_of, names = {}, []
+    bound = unbound = 0
+    for jn, jun in enumerate(junguo):
+        names.append(jun['name'])
+        for c in jun['counties']:
+            if not c.get('lat'):
+                continue
+            if (c['lon'], c['lat']) in ambiguous:
+                continue
+            cand = by_name.get(norm(c['name']))
+            pool = cand if cand else range(len(places))
+            ranked = sorted(
+                ((math.hypot((places[i]['lon'] - c['lon']) * math.cos(math.radians(c['lat'])),
+                             places[i]['lat'] - c['lat']) * 111.0, i) for i in pool))
+            # 동명이인 縣이 흔하다(新安·安陽·豐…). 가장 가까운 후보가 이미 다른 郡에
+            # 물려 있으면 다음 후보로 넘어간다 — 먼저 잡은 郡이 이기고 끝내면 뒤에 온
+            # 郡은 제 縣을 영영 못 찾는다.
+            lim = 120 if cand else 30
+            free = next((x for x in ranked if x[0] < lim and jun_of[x[1]] < 0), None)
+            best, bd = (free if free else (ranked[0] if ranked else (1e9, -1)))[::-1]
+            if best >= 0 and bd < lim:
+                bound += 1
+                if jun_of[best] < 0:
+                    jun_of[best] = jn
+                if c['name'] == jun.get('seat'):
+                    seat_of[jn] = best
+            else:
+                unbound += 1
+    print(f'郡國志 소속 결합: 縣 {bound}/{bound + unbound} 결합 · 미결합 {unbound}',
+          file=sys.stderr)
+
+    # CHGIS 의 郡 治所는 郡國志에도 같은 이름으로 있다. 이름으로 붙이지 않으면 같은 郡이
+    # 둘로 쪼개져 영역이 반씩 갈린다.
+    jun_ix = {n: k for k, n in enumerate(names)}
+    misplaced = set()
+    for i, pl in enumerate(places):
+        if jun_of[i] >= 0 or pl.get('kind') != 'COMMANDERY':
+            continue
+        k = jun_ix.get(norm(pl.get('nameFt') or pl.get('nameCh')))
+        if k is None:
+            for n, kk in jun_ix.items():
+                if norm(n) == norm(pl.get('nameFt') or pl.get('nameCh')):
+                    k = kk
+                    break
+        if k is None:
+            continue
+        # CHGIS 의 郡 점이 제 郡의 縣들과 동떨어진 자리에 찍히는 일이 있다(中山郡 점이
+        # 常山國 治所 바로 옆에 있다). 그대로 붙이면 남의 郡 한복판에 두 번째 핵이 생겨
+        # 위요지가 된다.
+        #
+        # 판정에 임계값을 쓰지 않는다. 郡國志가 이미 그 郡의 治所 縣을 찾아줬다면
+        # CHGIS 의 郡 점은 **필요 없다** — 소속은 사료에서 읽어온다는 이 파일의 원칙
+        # 그대로다. 그때 CHGIS 점을 덧대면 핵이 둘이 되고, 그 점이 어긋나 있으면
+        # 남의 郡 한복판에 위요지가 된다. 治所를 못 찾은 郡에서만 CHGIS 점이 근거다.
+        if k in seat_of:
+            # 제 郡이 아니라고 판정했다고 **독립 郡**으로 승격시키면 안 된다. 아래 소국
+            # 승격 규칙이 그걸 하려 들기 때문에 여기서 표시해 둔다 — 이 점은 그냥
+            # 가장 가까운 郡에 흡수된다.
+            misplaced.add(i)
+            continue
+        jun_of[i] = k
+
+    # 漢 밖 소국(level>=6)은 郡國志에 없으니 저마다 郡이 된다.
+    for i, pl in enumerate(places):
+        if jun_of[i] < 0 and i not in misplaced and pl.get('level', 5) >= 6 and pl.get('kind') != 'PROVINCE':
+            jun_of[i] = len(names)
+            names.append(pl.get('nameFt') or pl.get('nameCh'))
+            seat_of[jun_of[i]] = i
+    # 郡國志에 없는 縣(CHGIS 에만 있는 것)은 독립 郡으로 두지 않는다 — 그러면 郡이
+    # 900개가 된다. 가장 가까운 소속 縣의 郡에 붙인다.
+    known = [i for i, v in enumerate(jun_of) if v >= 0]
+    for i, v in enumerate(jun_of):
+        if v >= 0:
+            continue
+        pl = places[i]
+        j = min(known, key=lambda k: (places[k]['lon'] - pl['lon']) ** 2
+                + (places[k]['lat'] - pl['lat']) ** 2)
+        jun_of[i] = jun_of[j]
+    # 縣이 하나도 안 붙은 郡(좌표 미해결뿐인 郡)은 지운다. 빈 영역을 남기면 인접 계산이
+    # 없는 郡을 이웃으로 센다.
+    live = sorted({v for v in jun_of if v >= 0})
+    remap = {jn: k for k, jn in enumerate(live)}
+    jun_of = [remap[v] for v in jun_of]
+    members = {}
+    for i, v in enumerate(jun_of):
+        members.setdefault(v, []).append(i)
+    hubs, out_names = [], []
+    for jn in live:
+        k = remap[jn]
+        seat = seat_of.get(jn)
+        hubs.append(seat if seat is not None and jun_of[seat] == k else members[k][0])
+        out_names.append(names[jn])
+    return np.array(jun_of, dtype=np.int32), hubs, out_names
+
+
+def cross_by_path(cost, pts, edges, terrain):
+    """인접한 두 治所를 실제로 오갈 때 강을 건너느냐로 도하를 판정한다.
+
+    경계 셀의 지형으로 보면 거의 걸리지 않는다 — 통행비용 보로노이는 강을 국경으로 삼지
+    않고 郡 안을 관통하게 두기 때문이다. 그래서 실제로는 강을 건너야 오가는 郡 쌍인데
+    경계는 마른 땅이다. 판정할 것은 국경의 지형이 아니라 통로가 물을 지나느냐다.
+    """
+    for e in edges:
+        a, b = (int(pts[e['a']][0]), int(pts[e['a']][1])), (int(pts[e['b']][0]), int(pts[e['b']][1]))
+        path = astar(cost, a, b)
+        if path is None:
+            e['cross'] = 'NONE'                 # 육로가 아예 없다 — 배로만 간다
+            continue
+        wet = [(x, y) for x, y in path if terrain[y, x] in (RIVER, LAKE)]
+        e['cross'] = 'RIVER' if wet else 'LAND'
+        if wet:
+            e['ford'] = list(wet[len(wet) // 2])   # 나루는 도하 구간 한가운데다
     return edges
 
 
-def _sea_run(terrain, p, q):
-    """두 지점을 잇는 직선이 지나는 바다 셀 수. 육로/해로 판정에 쓴다."""
-    steps = max(2, int(np.hypot(*(p - q))) * 2)
-    t = np.linspace(0, 1, steps)
-    xs = np.clip((p[0] + t * (q[0] - p[0])).astype(int), 0, terrain.shape[1] - 1)
-    ys = np.clip((p[1] + t * (q[1] - p[1])).astype(int), 0, terrain.shape[0] - 1)
-    return int((terrain[ys, xs] == SEA).sum() / 2)      # 샘플이 셀당 2회라 되돌린다
+def _boundary_cells(label):
+    """라벨이 갈리는 자리와 그 셀 좌표. 어느 지형 위에서 갈리는지 봐야 도하를 알 수 있다."""
+    h, w = label.shape
+    for y in range(h):
+        for x in range(w - 1):
+            a, b = int(label[y, x]), int(label[y, x + 1])
+            if a >= 0 and b >= 0 and a != b:
+                yield (a, b), (x, y)
+    for y in range(h - 1):
+        for x in range(w):
+            a, b = int(label[y, x]), int(label[y + 1, x])
+            if a >= 0 and b >= 0 and a != b:
+                yield (a, b), (x, y)
+
+
+def fords(terrain, roads):
+    """육로가 하천을 지나는 칸 = 나루터(津). 길이 강에 끊기면 거기가 도하 지점이다.
+
+    실제 후한 지리서도 나루를 따로 적었다 — 孟津·白馬津·延津처럼 이름이 남은 도하점이
+    전쟁의 길목이었다. 도로를 다 깐 뒤 지형과 겹쳐 뽑으면 따로 지어낼 필요가 없다.
+    """
+    seen = Counter()
+    for r in roads:
+        if r['kind'] != 'LAND':
+            continue
+        for x, y in r['cells']:
+            if terrain[y, x] in (RIVER, LAKE):
+                seen[(x, y)] += 1
+    return [{'col': x, 'row': y, 'roads': c} for (x, y), c in sorted(seen.items())]
 
 
 def main():
@@ -159,16 +625,16 @@ def main():
     if not os.path.exists(PLACES):
         sys.exit(f'{PLACES} 가 없다. 먼저 tools/map/build_han_places.py 를 돌려라.')
     hp = json.load(open(PLACES))
-    n = a.grid
-    proj = Proj(hp['projection'], n)
+    proj = Proj(hp['projection'])
+    n, rows = proj.cols, proj.rows
 
-    lo_lon, lo_lat = proj.cell_lonlat(0, n - 1)
+    lo_lon, lo_lat = proj.cell_lonlat(0, rows - 1)
     hi_lon, hi_lat = proj.cell_lonlat(n - 1, 0)
     bbox = (lo_lon - 1, hi_lon + 1, lo_lat - 1, hi_lat + 1)
-    print(f'격자 {n}×{n} · 경도 {lo_lon:.2f}~{hi_lon:.2f} · 위도 {lo_lat:.2f}~{hi_lat:.2f}',
+    print(f'격자 {n}×{rows} · 경도 {lo_lon:.2f}~{hi_lon:.2f} · 위도 {lo_lat:.2f}~{hi_lat:.2f}',
           file=sys.stderr)
 
-    terrain = np.zeros((n, n), dtype=np.uint8)               # 기본 바다
+    terrain = np.zeros((rows, n), dtype=np.uint8)               # 기본 바다
     land = rasterize(json.load(open(f'{NE}/ne_50m_land.geojson'))['features'], proj, bbox)
     terrain[land] = PLAIN
     land_cells = int(land.sum())
@@ -176,7 +642,7 @@ def main():
     # ── 지형: Natural Earth 의 실제 지리구역 폴리곤 ──
     # 표고 래스터 대신 이름 붙은 구역(秦嶺·大別山·華北平原·四川盆地·黃土高原·河西走廊…)을 쓴다.
     # 지형선 자체는 아니지만 사료 태그로 찍는 네모 얼룩과 달리 실제 경계를 따른다.
-    region = np.full((n, n), -1, dtype=np.int16)
+    region = np.full((rows, n), -1, dtype=np.int16)
     names = []
     geo = f'{NE}/ne_10m_geography_regions_polys.geojson'
     if os.path.exists(geo):
@@ -210,60 +676,118 @@ def main():
         sub = terrain[max(0, y - 1):y + 2, max(0, x - 1):x + 2]
         sub[sub == PLAIN] = HILL
 
-    # ── 소유: 각 육지 셀을 가장 가까운 縣에 ──
+    # ── 소유: 각 육지 셀을 가장 "가까운" 縣에. 직선거리가 아니라 통행비용이다 ──
+    # 유클리드로 자르면 경계가 강도 산도 무시한 채 직선으로 뻗는다. 실제 郡界는 능선과
+    # 물줄기를 탔다 — 그쪽이 넘어가기 비싼 자리이기 때문이다. 같은 비용장을 쓰면
+    # 경계가 저절로 秦嶺·大巴山·長江을 따라간다.
     pts = np.array([[p['gx'], p['gy']] for p in hp['places']], dtype=float)
-    ys, xs = np.nonzero(terrain != SEA)
-    owner = np.full((n, n), -1, dtype=np.int16)
-    for s in range(0, len(xs), 4096):                        # 65k×1.1k 를 한 번에 잡으면 메모리가 터진다
-        cx, cy = xs[s:s + 4096], ys[s:s + 4096]
-        d = (cx[:, None] - pts[None, :, 0]) ** 2 + (cy[:, None] - pts[None, :, 1]) ** 2
-        owner[cy, cx] = d.argmin(axis=1)
+    field = cost_field(terrain, LAND_COST)
+    for (x, y) in pts:
+        x, y = int(x), int(y)
+        if field[y, x] == INF:
+            field[y, x] = LAND_COST[PLAIN]
+    _, owner, _ = multi_dijkstra(field, [(int(x), int(y)) for x, y in pts])
+    owner = owner.astype(np.int16)
 
-    # ── 도로: 郡治(level>=6) 사이 ──
-    hubs = [i for i, p in enumerate(hp['places']) if p.get('level', 5) >= 6]
-    roads = []
-    for i, j in gabriel(pts[hubs]):
-        src, dst = hubs[i], hubs[j]
-        sea = _sea_run(terrain, pts[src], pts[dst])
-        # 순수 기하 그래프는 발해를 육로로 잇는다. 바다를 2셀 넘게 지나면 육로가 아니다 —
-        # 버리지 않고 해로로 표시한다. 후한도 요동을 뱃길로 오갔다.
-        roads.append({'a': src, 'b': dst, 'kind': 'SEA' if sea > 2 else 'LAND',
-                      'len': round(float(np.hypot(*(pts[src] - pts[dst]))), 2)})
+    # ── 郡: 소속은 郡國志에서 읽고, 영역은 그 縣들이 가진 셀의 합집합으로 만든다 ──
+    junguo = json.load(open(JUNGUO))['places'] if os.path.exists(JUNGUO) else []
+    jun_of, hubs, jun_names = fold_to_jun(hp['places'], proj, junguo)
+    jun_name_ix = {nm: k for k, nm in enumerate(jun_names)}
+    # 郡 영역은 縣 소유를 접기만 해선 사료와 100% 안 맞는다. 郡國志가 적은 縣 좌표와
+    # CHGIS 좌표가 한두 셀 어긋나면 그 縣이 이웃 郡 땅에 떨어진다. 두 좌표를 **모두**
+    # 제 郡의 소스로 넣으면 그 사이가 전부 그 郡이 되어 어긋남이 사라진다.
+    # 두 郡의 縣이 **똑같은** 좌표를 물고 있으면 그건 비정 실패다 — 이름으로 찾다가 한
+    # 지점을 둘이 나눠 가진 것이다(常山國 真定 = 中山國 恒山). 그 점을 그대로 씨앗으로
+    # 쓰면 남의 郡 한복판에 6칸짜리 위요지가 생긴다. 모르는 것을 경계로 바꾸지 않는다.
+    ambiguous = ambiguous_seeds(junguo)
+
+    jsrc, jlab = [], []
+    for jn, jun in enumerate(junguo):
+        for c in jun['counties']:
+            if not c.get('lat'):
+                continue
+            if (c['lon'], c['lat']) in ambiguous:
+                continue
+            k = jun_name_ix.get(jun['name'])
+            if k is None:
+                continue
+            gx, gy = proj.to_cell(c['lon'], c['lat'])
+            if 0 <= int(gy) < rows and 0 <= int(gx) < n:
+                jsrc.append((int(gx), int(gy)))
+                jlab.append(k)
+    # 한 칸에 두 소스가 겹치면 郡國志가 이긴다. 격자 한 칸이 5km 라 이웃 縣이 같은 칸에
+    # 떨어지는 일이 흔한데, 그때 CHGIS 추정이 사료를 덮어쓰면 안 된다.
+    cell_lab = {}
+    for (c, k) in zip([(int(x), int(y)) for x, y in pts], list(jun_of)):
+        cell_lab.setdefault(c, k)
+    for c, k in zip(jsrc, jlab):
+        cell_lab[c] = k
+    src, lab = list(cell_lab), list(cell_lab.values())
+    _, raw, _ = multi_dijkstra(field, src)
+    tbl = np.array(lab + [-1], dtype=np.int32)
+    seat_label = tbl[np.where(raw >= 0, raw, len(lab))].astype(np.int32)
+    roads, _ = build_roads(terrain, pts, hubs)
+    ford_list = fords(terrain, roads)
+
+    # 郡 인접의 도하 판정. 이동 단위가 郡이므로 여기만 실제 경로를 뽑는다.
+    land_field = cost_field(terrain, LAND_COST)
+    for (x, y) in pts:
+        x, y = int(x), int(y)
+        if land_field[y, x] == INF:
+            land_field[y, x] = LAND_COST[PLAIN]
+    adj_m = cross_by_path(land_field, pts, adjacency(seat_label), terrain)
+    ford_list += [{'col': f[0], 'row': f[1], 'roads': 0}
+                  for f in (e['ford'] for e in adj_m if 'ford' in e)]
 
     legend = ['SEA', 'PLAIN', 'MOUNTAIN', 'RIVER', 'LAKE', 'DESERT', 'PLATEAU', 'BASIN', 'HILL']
     counts = {name: int((terrain == i).sum()) for i, name in enumerate(legend)}
     json.dump({
-        'grid': n, 'year': hp.get('year'), 'projection': hp['projection'],
+        'grid': n, 'cols': n, 'rows': rows, 'year': hp.get('year'), 'projection': hp['projection'],
         'legend': {str(i): name for i, name in enumerate(legend)},
         'counts': counts, 'terrain': terrain.tolist(), 'owner': owner.tolist(),
         'region': region.tolist(), 'regionNames': names,
-        'hubs': hubs, 'roads': roads,
+        'hubs': hubs, 'junOf': jun_of.tolist(), 'junNames': jun_names,
+        'roads': roads, 'fords': ford_list,
+        # 이동 그래프. 길이 아니라 영역 인접이다 — 도로는 간선만 남겨 통행 보정에 쓴다.
+        'adjacency': {'county': adjacency(owner), 'commandery': adj_m},
+        'seatOwner': seat_label.tolist(),
         'source': 'Natural Earth 50m (public domain) + CHGIS V6 좌표(재배포 금지, ADR-LITE-039)',
     }, open(OUT, 'w'), separators=(',', ':'))
 
     print(f'육지 {land_cells} 셀 · ' + ' · '.join(f'{k} {v}' for k, v in counts.items()),
           file=sys.stderr)
-    land_roads = sum(1 for r in roads if r['kind'] == 'LAND')
-    print(f'郡治 {len(hubs)} · 육로 {land_roads} · 해로 {len(roads) - land_roads} → {OUT}',
-          file=sys.stderr)
+    kinds = Counter(r['kind'] for r in roads)
+    ac, am = adjacency(owner), adj_m
+    print(f'郡治 {len(hubs)} · 간선 {kinds["LAND"]} · 수로 {kinds["WATER"]} · '
+          f'나루터 {len(ford_list)} · 인접 縣 {len(ac)}/郡 {len(am)} '
+          f'(도하 {sum(1 for e in am if e["cross"] == "RIVER")}) → {OUT}', file=sys.stderr)
 
     if a.preview:
-        preview(terrain, pts, hubs, roads, n)
+        preview(terrain, pts, hubs, roads, seat_label)
 
 
-def preview(terrain, pts, hubs, roads, n):
+def preview(terrain, pts, hubs, roads, seat_label=None):
     from PIL import Image, ImageDraw
     pal = {SEA: (38, 62, 92), PLAIN: (126, 143, 92), MOUNTAIN: (108, 96, 84),
            RIVER: (74, 122, 158), LAKE: (60, 100, 140), DESERT: (196, 178, 130),
            PLATEAU: (150, 132, 104), BASIN: (140, 152, 104), HILL: (132, 130, 92)}
     scale = 4
-    img = Image.new('RGB', (n, n))
+    rows, n = terrain.shape
+    img = Image.new('RGB', (n, rows))
     img.putdata([pal[v] for v in terrain.reshape(-1)])
-    img = img.resize((n * scale, n * scale), Image.NEAREST)
+    img = img.resize((n * scale, rows * scale), Image.NEAREST)
     d = ImageDraw.Draw(img)
+    if seat_label is not None:      # 郡 경계 — 이동은 이 영역의 인접으로 판정한다
+        e = (seat_label[:, 1:] != seat_label[:, :-1])
+        f = (seat_label[1:, :] != seat_label[:-1, :])
+        for y, x in zip(*np.nonzero(e)):
+            d.rectangle([(x + 1) * scale - 1, y * scale, (x + 1) * scale, (y + 1) * scale],
+                        fill=(40, 30, 30))
+        for y, x in zip(*np.nonzero(f)):
+            d.rectangle([x * scale, (y + 1) * scale - 1, (x + 1) * scale, (y + 1) * scale],
+                        fill=(40, 30, 30))
     for r in roads:
-        (x1, y1), (x2, y2) = pts[r['a']], pts[r['b']]
-        d.line([(x1 * scale, y1 * scale), (x2 * scale, y2 * scale)],
+        d.line([(x * scale + scale // 2, y * scale + scale // 2) for x, y in r['cells']],
                fill=(110, 180, 200) if r['kind'] == 'SEA' else (196, 168, 112), width=2)
     for i, (x, y) in enumerate(pts):
         big = i in hubs

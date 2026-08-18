@@ -71,6 +71,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--year', type=int, default=220)
     ap.add_argument('--grid', type=int, default=256)
+    # 後漢 세계 프레임. 서 돈황(94.1E) · 동 왜 규슈(130.4E) · 남 象林/林邑(15.75N) ·
+    # 북 부여(44.4N). 더 넓히면 필리핀·태국이 딸려와 중원이 쪼그라든다.
+    ap.add_argument('--bbox', nargs=4, type=float, metavar=('LO_LON', 'HI_LON', 'LO_LAT', 'HI_LAT'),
+                    default=[93.0, 133.0, 15.0, 45.0])
     ap.add_argument('--out', default=OUT)
     args = ap.parse_args()
 
@@ -105,35 +109,58 @@ def main():
                 begYr=as_int(r['BEG_YR'], -9999), endYr=as_int(r['END_YR'], 9999),
             )
 
+    # CHGIS 밖 지점(交州 남부·한반도·소국)을 합류시킨다. 점만 찍는 게 아니라 소유 격자와
+    # 도로망에 그대로 들어가야 한다 — 낙랑이 지도에만 있고 길이 없으면 갈 수가 없다.
+    ext_path = os.path.join(os.path.dirname(args.out), 'external-places.json')
+    external = []
+    if os.path.exists(ext_path):
+        for e in json.load(open(ext_path))['places']:
+            if not (e['begYr'] <= args.year <= e['endYr']):
+                continue
+            e.setdefault('nameCh', e['nameFt'])
+            seats[(e['nameFt'], round(e['lon'], 4), round(e['lat'], 4))] = e
+            external.append(e['nameFt'])
+
     places = sorted(seats.values(), key=lambda p: (p['nameCh'], p['lon'], p['lat']))
     if not places:
         sys.exit(f'FATAL: {args.year}년 유효 치소 0건.')
 
     # --- 등적 투영: 위도 중심에서 경도를 cos(lat0)으로 눌러 실거리 종횡비를 맞춘다 ---
-    lat0 = sum(p['lat'] for p in places) / len(places)
+    # 프레임은 지점 분포가 아니라 세계 범위로 정한다. 지점에서 뽑으면 CHGIS 커버리지가
+    # 곧 세계가 되어버린다 — 한반도·왜·교주 남부는 땅덩어리조차 안 그려진다.
+    lo_lon, hi_lon, lo_lat, hi_lat = args.bbox
+    lat0 = (lo_lat + hi_lat) / 2
     k = math.cos(math.radians(lat0))
     px = [p['lon'] * k for p in places]
     py = [p['lat'] for p in places]
-    x0, x1, y0, y1 = min(px), max(px), min(py), max(py)
-    span = max(x1 - x0, y1 - y0)          # 정사각 격자 — 실측 종횡비 1.06이라 낭비가 없다
-    pad = span * 0.02                     # 가장자리 도시가 격자 벽에 붙지 않도록
-    span += pad * 2
-    N = args.grid
+    x0, x1, y0, y1 = lo_lon * k, hi_lon * k, lo_lat, hi_lat
+    # 정사각 격자를 강제하지 않는다. 강제하면 짧은 축에 프레임 밖 여백이 붙어 —
+    # 이 프레임에선 남쪽에 4도 넘게 — 필리핀까지 딸려 들어온다.
+    pad = max(x1 - x0, y1 - y0) * 0.02
+    cell = (x1 - x0 + pad * 2) / args.grid     # 등적이라 x·y 셀 크기가 같다
+    cols, rows = args.grid, round((y1 - y0 + pad * 2) / cell)
+    N = cols
+    out_of_frame = [p['nameFt'] for p, sx, sy in zip(places, px, py)
+                    if not (x0 <= sx <= x1 and y0 <= sy <= y1)]
+    if out_of_frame:
+        print(f'  경고  프레임 밖 {len(out_of_frame)}곳: {out_of_frame[:5]}')
 
     taken, nudged = {}, 0
     for p, sx, sy in zip(places, px, py):
-        gx = min(N - 1, int((sx - x0 + pad) / span * N))
-        gy = min(N - 1, int((y1 - sy + pad) / span * N))   # 북쪽이 gy=0
+        gx = min(cols - 1, int((sx - x0 + pad) / cell))
+        gy = min(rows - 1, int((y1 + pad - sy) / cell))   # 북쪽이 gy=0
         if (gx, gy) in taken:
-            gx, gy = free_cell(taken, gx, gy, N)
+            gx, gy = free_cell(taken, gx, gy, cols, rows)
             nudged += 1
         taken[(gx, gy)] = p['id']
         p['gx'], p['gy'] = gx, gy
 
     doc = dict(
         source='CHGIS V6 (Harvard/Fudan) — 재배포 금지, ADR-LITE-039',
-        year=args.year, grid=N, projection=dict(lat0=round(lat0, 4), k=round(k, 6),
-        x0=round(x0, 6), y1=round(y1, 6), span=round(span, 6)),
+        year=args.year, grid=N, cols=cols, rows=rows,
+        projection=dict(lat0=round(lat0, 4), k=round(k, 6), x0=round(x0, 6),
+                        y1=round(y1, 6), pad=round(pad, 6), cell=round(cell, 8),
+                        cols=cols, rows=rows),
         budgetClass='ADMINISTRATIVE_SETTLEMENT',
         count=len(places), nudged=nudged, places=places,
     )
@@ -142,22 +169,24 @@ def main():
         json.dump(doc, fh, ensure_ascii=False, indent=1, sort_keys=True)
 
     lv = Counter(p['level'] for p in places)
-    print(f'{args.out}: {args.year}년 치소 {len(places)}개 → {N}x{N} 격자')
+    print(f'{args.out}: {args.year}년 치소 {len(places)}개 → {cols}x{rows} 격자')
     print(f'  등급  ' + ' '.join(f'lv{l}:{lv[l]}' for l in sorted(lv)))
     print(f'  나눔  {nudged}개 (동일칸 충돌 → 결정론적 나선 이동)')
+    if external:
+        print(f'  합류  CHGIS 밖 {len(external)}곳: ' + ' '.join(external[:6]) + ' …')
     if dropped:
         print(f'  제외  {dict(dropped.most_common(8))}')
 
 
-def free_cell(taken, gx, gy, N):
+def free_cell(taken, gx, gy, cols, rows):
     """빈 칸을 나선형으로 찾는다. 정렬된 입력 + 고정 순회 = 결정론적."""
-    for radius in range(1, N):
+    for radius in range(1, max(cols, rows)):
         for dx in range(-radius, radius + 1):
             for dy in range(-radius, radius + 1):
                 if max(abs(dx), abs(dy)) != radius:
                     continue
                 nx, ny = gx + dx, gy + dy
-                if 0 <= nx < N and 0 <= ny < N and (nx, ny) not in taken:
+                if 0 <= nx < cols and 0 <= ny < rows and (nx, ny) not in taken:
                     return nx, ny
     sys.exit('FATAL: 격자에 빈 칸이 없다. --grid 를 키워라.')
 

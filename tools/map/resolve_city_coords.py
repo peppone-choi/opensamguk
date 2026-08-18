@@ -82,11 +82,25 @@ CITIES: dict[str, tuple[str, str, str]] = {
 }
 
 
-def sparql(query: str) -> list[dict]:
+def sparql(query: str, tries: int = 5) -> list[dict]:
+    """공개 엔드포인트는 502/504/429 를 자주 뱉는다. 물러났다 다시 묻는다 —
+    한 번 실패했다고 좌표를 비워두면 그 자리는 영영 UNKNOWN 으로 남는다."""
+    import time
     url = ENDPOINT + "?" + urllib.parse.urlencode({"query": query, "format": "json"})
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/sparql-results+json"})
-    with urllib.request.urlopen(req, timeout=90) as r:
-        return json.load(r)["results"]["bindings"]
+    req = urllib.request.Request(
+        url, headers={"User-Agent": UA, "Accept": "application/sparql-results+json"})
+    for k in range(tries):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                return json.load(r)["results"]["bindings"]
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 500, 502, 503, 504) or k == tries - 1:
+                raise
+        except urllib.error.URLError:
+            if k == tries - 1:
+                raise
+        time.sleep(5 * (k + 1))
+    return []
 
 
 def resolve() -> tuple[list[dict], list[str]]:

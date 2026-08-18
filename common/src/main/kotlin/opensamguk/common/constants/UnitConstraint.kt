@@ -27,6 +27,18 @@ sealed class UnitConstraint {
         override fun getInfo() = "${regionNameText} 지역 소유시 가능"
     }
 
+    /**
+     * 지역 금제 — 주둔한 땅이 이 목록에 들면 뽑을 수 없다. [ReqRegions] 의 거울이 아니다:
+     * 저쪽은 "나라가 그 땅을 가졌나"를 보고, 이쪽은 "지금 이 부대가 어디 서 있나"를 본다.
+     * 없는 것을 뽑을 수 없다는 규칙이라 소유가 아니라 위치가 기준이어야 한다.
+     * (倭人傳 「其地無牛、馬、虎、豹、羊、鵲」 — 왜 땅에는 말이 없으므로 기병을 뽑지 못한다.)
+     *
+     * devsam/core 에는 없는 v2 확장이다. 기존 34행 중 이 제약을 쓰는 행이 없으므로 패러티 불변.
+     */
+    data class ForbidRegions(val forbidRegions: List<String>) : UnitConstraint() {
+        override fun getInfo() = "${forbidRegions.joinToString(", ")} 지역에서는 불가"
+    }
+
     data class ReqMinRelYear(val reqMinRelYear: Int) : UnitConstraint() {
         override fun getInfo() = "${reqMinRelYear}년 경과 후 사용 가능"
     }

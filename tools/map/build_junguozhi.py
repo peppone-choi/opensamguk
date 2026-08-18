@@ -178,6 +178,19 @@ def main():
     lex = county_lexicon()
     cnty_xy = chgis_points('cnty')
     pref_xy = chgis_points('pref')
+    # 郡國志-CHGIS 이체자. 한 글자 차이로 같은 郡이 남남이 되고, 앵커를 못 찾은 郡은
+    # 아래 필터가 통째로 꺼져 동명이인을 1500km 밖에서 물어온다.
+    VARIANT = str.maketrans('鴈郁閒雒沇涼竝', '雁鬱間洛兗凉并')
+    # CHGIS 판도 밖이라 앵커가 있을 수 없는 郡(交趾·九真·日南·樂浪·帶方…).
+    # 좌표는 external-places.json 이 사료·Wikidata 로 비정한 것이며 필터 기준점으로만 쓴다.
+    EXTRA_ANCHOR = {}
+    try:
+        for _e in json.load(open('data/map/external-places.json'))['places']:
+            EXTRA_ANCHOR.setdefault(
+                re.sub(r'(郡|國|尹)$', '', _e['nameCh']), []).append((_e['lon'], _e['lat']))
+    except Exception:
+        pass
+
     MAX_KM = 400.0        # 縣은 자기 郡治 근처에 있다. 원거리 동명 縣은 오탐이다.
 
     # 1) ctext가 漢數字를 세그먼트 중간에서 자른다: 「十五」+「城，戶…」 → 병합
@@ -222,7 +235,12 @@ def main():
         b['dist'] = (cn_int(di.group(2)), di.group(1)) if di else (None, None)
         b['rest'] = b['text'][(hu.end() if hu else (m.end() if m else 0)):]
         key = re.sub(r'(郡|國|尹|屬國|都尉|校尉)$', '', b['jun'])
-        b['anchor'] = (pref_xy.get(key) or [None])[0]
+        # 이체자. 郡國志와 CHGIS 표기가 갈리면(鴈門/雁門, 郁林/鬱林, 河閒/河間) 앵커를
+        # 못 찾고, 앵커가 없으면 아래 MAX_KM 필터가 통째로 꺼져 동명이인을 1500km
+        # 밖에서 물어온다 — 交趾郡이 강소성에 찍히던 이유가 이것이다.
+        b['anchor'] = (pref_xy.get(key)
+                       or pref_xy.get(key.translate(VARIANT))
+                       or EXTRA_ANCHOR.get(key) or [None])[0]
         b['assigned'] = []
 
     # 3) PASS A — CHGIS 縣名을 블록 본문에서 찾는다. 이름을 잘라내지 않으므로 날조가 없다.
@@ -255,8 +273,11 @@ def main():
             d = min((km(b['anchor'], q) for q in pts), default=None) if b['anchor'] else None
             if d is not None and d > MAX_KM:
                 continue
+            # 동명이인은 앵커에 가장 가까운 것을 쓴다. 거리는 최근접으로 재놓고 좌표는
+            # 첫 후보를 쓰면, 잰 것과 쓴 것이 다른 縣이 된다.
+            q = min(pts, key=lambda q: km(b['anchor'], q)) if b['anchor'] else pts[0]
             cand.append(dict(name=nm, pos=first[nm], dist=d if d is not None else 9e9,
-                             lon=pts[0][0], lat=pts[0][1], resolution='RESOLVED_POINT'))
+                             lon=q[0], lat=q[1], resolution='RESOLVED_POINT'))
         # 城數 초과분은 郡治에서 가장 먼 것부터 버린다 (원문이 정한 수가 상한이다)
         if b['cities'] and len(cand) > b['cities']:
             keep = sorted(sorted(cand, key=lambda c: c['dist'])[:b['cities']], key=lambda c: c['pos'])
