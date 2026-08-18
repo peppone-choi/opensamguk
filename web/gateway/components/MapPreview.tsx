@@ -359,9 +359,12 @@ export default function MapPreview({
                                     style={{ left: imgLeft, top: imgTop, width: sz.iconW, height: sz.iconH }}
                                 >
                                     <div className={`city-filler${isMyCity ? ' my-city' : ''}`} />
-                                    {/* 2) 성 아이콘 cast_<level>.gif — city_img를 채움(픽셀아트). */}
+                                    {/* 2) 성 아이콘 — city_img를 채움(픽셀아트). 자작 에셋 `public/city/cast_<level>.png`
+                                        (tools/assets/build_city_icons.py). CDN `game/cast_*.gif`는 devsam/image 파생이라
+                                        권리 UNKNOWN이었다 — 깃발과 같은 이유로 교체했다. 두 앱 public/ 에 같은 파일을 두므로
+                                        공유 도메인에서 절대경로 `/city/...`가 어느 앱으로 라우팅돼도 해석된다. */}
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img className="city-cast" src={`${ICON_CDN}/cast_${c.level}.gif`} alt="" draggable={false} />
+                                    <img className="city-cast" src={`/city/cast_${c.level}.png`} alt="" draggable={false} />
 
                                     {/* 5) 상태 아이콘 event<state>.gif — 레거시 {top:5;left:0} 아이콘 기준. */}
                                     {showState && (
