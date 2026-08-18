@@ -10,7 +10,11 @@
      역할(전선유지/측후방/원거리)과 등급(민병→정예→최정예)을 매기는 축. 수치나 이름을
      가져오지 않는다(CC BY-NC-SA 자료다). 가져온 것은 "무엇으로 무엇을 입고 무엇을 드는가"
      라는 분해 축 하나뿐이다.
-  3. `data/v2/unit-types.json` — 이 저장소가 이미 사료 실측으로 확정해 둔 병종 명부
+  3. `data/unitset/han.json` — 병종은 이 파일 하나다. 이름·출전·게이팅·조성·등급은
+     사람이 적고(authored), 수치는 이 스크립트가 조성에서 유도해 같은 파일에 다시
+     써넣는다(generated). 명부를 다른 파일에 두지 않는다 — 둘이 되면 어느 쪽이
+     맞는지 아무도 모른다. 예전 `data/v2/unit-types.json` 은 여기로 흡수됐다.
+     (아래 옛 설명)  이 저장소가 이미 사료 실측으로 확정해 둔 병종 명부
      71종(PRIMARY_ATTESTED 62 · ROMANCE_ATTESTED 7 · GAME_REFERENCE 2). **이름·출전·
      게이팅·역할은 전부 거기서 읽는다.** 여기서 다시 짓지 않는다 — 로스터가 둘이 되면
      어느 쪽이 맞는지 아무도 모른다. 이 빌더가 더하는 것은 그 명부에 없는 것 하나,
@@ -120,53 +124,15 @@ def mul(base: dict, extra: dict) -> dict:
     return out
 
 
-# ── 명부는 읽어온다 ─────────────────────────────────────────────────────────────
-ROSTER = ROOT / "data" / "v2" / "unit-types.json"
-
-# 역할 → (armType, 무기, 갑옷, 방패, 기술). 이름이 무기를 말하면 아래 OVERRIDE 가 이긴다.
-ROLE = {
-    "INFANTRY_LEVY":     (FOOT, "검", "의복", None, 0),
-    "INFANTRY_LINE":     (FOOT, "검", "평피갑", "중형방패", 0),
-    "INFANTRY_SKIRMISH": (FOOT, "표창", "경피갑", None, 0),
-    "GARRISON":          (FOOT, "모", "평피갑", "대형방패", 0),
-    "INFANTRY_SHIELD":   (FOOT, "모", "경철갑", "대형방패", 1000),
-    "INFANTRY_SHOCK":    (FOOT, "환수도", "경철갑", "중형방패", 1000),
-    "INFANTRY_FANATIC":  (WIZARD, "부", "의복", None, 1000),   # 계략을 쓰는 종교병
-    "INFANTRY_ELITE":    (FOOT, "환수도", "평철갑", "중형방패", 2000),
-    "INFANTRY_GUARD":    (FOOT, "극", "평철갑", "중형방패", 3000),
-    "RANGED_LIGHT":      (ARCHER, "표창", "경피갑", None, 1000),
-    "RANGED_HEAVY":      (ARCHER, "노", "경피갑", None, 2000),
-    "CAVALRY_LIGHT":     (CAV, "궁", "경피갑", None, 0),
-    "CAVALRY_RAID":      (CAV, "모", "경피갑", None, 1000),
-    "CAVALRY_RANGED":    (CAV, "강궁", "경피갑", None, 1000),
-    "CAVALRY_SHOCK":     (CAV, "삭", "경철갑", None, 2000),
-    "CAVALRY_GUARD":     (CAV, "극", "평철갑", "소형방패", 3000),
-    "BEAST":             (CAV, "모", "중등갑", None, 3000),
-    "CHARIOT":           (SIEGE, "과", "경철갑", None, 2000),
-    "NAVY_LIGHT":        (FOOT, "모", "경등갑", None, 0),
-    "NAVY_LINE":         (FOOT, "노", "중등갑", None, 2000),
-    "NAVY_CAPITAL":      (FOOT, "모", "중등갑", "대형방패", 3000),   # 누선은 뱃전에 방패벽을 세운다
-    "SIEGE":             (SIEGE, "충차", "의복", None, 1000),
-    "LOGISTICS":         (SIEGE, "치중", "의복", None, 3000),
-    # 지역 부대는 조성을 명부가 직접 들고 온다 — 아래 값은 쓰이지 않는다.
-    "REGIONAL":          (FOOT, "검", "의복", None, 0),
-}
-
-# 역할 → 등급. 民兵(1) 값싸고 약하다 · 部曲(2) 표준 전력 · 精銳(3) 최고.
+# 등급. 民兵(1) 값싸고 약하다 · 部曲(2) 표준 전력 · 精銳(3) 최고.
 # 사료가 이미 이 사다리를 갖고 있다 — 材官·郡兵 은 징집이고, 部曲 은 호족의 사병이고,
 # 北軍五校·虎賁·羽林 은 중앙 상비군이다. 등급은 그 실상에 이름을 붙인 것뿐이다.
 TIER = {
-    1: ("民兵", "민병", ["INFANTRY_LEVY", "INFANTRY_SKIRMISH", "GARRISON",
-                        "CAVALRY_LIGHT", "NAVY_LIGHT"]),
-    2: ("部曲", "부곡", ["REGIONAL", "INFANTRY_LINE", "INFANTRY_SHOCK", "INFANTRY_SHIELD",
-                        "INFANTRY_FANATIC", "RANGED_LIGHT", "RANGED_HEAVY",
-                        "CAVALRY_RAID", "CAVALRY_RANGED", "CHARIOT", "SIEGE",
-                        "NAVY_LINE", "LOGISTICS"]),
-    3: ("精銳", "정예", ["INFANTRY_ELITE", "INFANTRY_GUARD", "CAVALRY_SHOCK",
-                        "CAVALRY_GUARD", "BEAST", "NAVY_CAPITAL"]),
+    0: ("—", "—", []),
+    1: ("民兵", "민병", []),
+    2: ("部曲", "부곡", []),
+    3: ("精銳", "정예", []),
 }
-TIER_OF = {r: t for t, (_, _, rs) in TIER.items() for r in rs}
-assert set(TIER_OF) == set(ROLE), set(TIER_OF) ^ set(ROLE)
 
 # 집단 성격. 같은 무기를 들어도 누가 드느냐에 따라 다르게 싸운다 — TROM 이 "서량 부곡
 # 창병"과 "북방 부곡 창병"을 따로 두는 이유가 이것이다. 사료가 그들을 어떻게 적었는지가
@@ -184,29 +150,23 @@ TRAIT_OF = {t: k for k, (ts, _, _) in TRAIT.items() for t in ts}
 # 뽑을 이유가 있다. 이름값이지 사료 수치가 아니다 — 사료에 수치는 없다.
 RENOWN = dict(atk=10, dfn=15, avoid=5)
 
-# 이름이 장비를 말하는 병종. 사료가 적어둔 것을 역할 기본값이 덮지 않게 한다.
-# (부분 문자열이 아니라 한자 표기 전체로 건다 — 우연히 겹치는 글자가 많다.)
-OVERRIDE = {
-    "彊弩":   {"weapon": "노"},
-    "連弩士": {"weapon": "연노"},
-    "大戟士": {"weapon": "극"},
-    "幽州突騎": {"weapon": "삭"},
-    "板楯蠻兵": {"weapon": "표창", "shield": "대형방패"},   # 板楯 = 널방패가 이름이다
-    "藤甲兵": {"armor": "중등갑"},
-    "鐵騎":   {"armor": "중철갑"},
-    "鐵車兵": {"armor": "중철갑"},
-    "象兵":   {"weapon": "모", "armor": "중등갑"},
-    "飛刀":   {"weapon": "투부"},
-    "挹婁舟師": {"weapon": "독시"},                        # 「矢施毒，人中皆死」
-    "白馬義從": {"weapon": "강궁"},
-    "霹靂車": {"weapon": "투석"},
-    "井闌":   {"weapon": "충차"},
-    "雲梯":   {"weapon": "충차"},
-    "木牛流馬": {"weapon": "치중"},
-    "赤甲軍": {"armor": "평철갑"},                        # 赤甲 = 붉은 갑옷이 이름이다
-    "白毦兵": {"armor": "평철갑"},
-    "虎豹騎": {"armor": "중철갑"},
-}
+
+# ── 명부는 이 파일 하나다 ───────────────────────────────────────────────────────
+UNITSET = ROOT / "data" / "unitset" / "han.json"
+
+
+def trait_of(req: dict):
+    for k in ("tribe", "adjacentTribe"):
+        v = req.get(k)
+        for t in ([v] if isinstance(v, str) else (v if isinstance(v, list) else [])):
+            if t in TRAIT_OF:
+                return TRAIT_OF[t]
+    if req.get("region") == "南中" or req.get("terrain") == "MOUNTAIN":
+        return "산지"          # 종족 이름이 없어도 험지에서 싸우면 험지 사람이다
+    if req.get("court") or req.get("ruler"):
+        return "중앙"
+    return None
+
 
 # 게이팅으로 옮길 수 있는 requires 키. 나머지(general·ruler·event·faith·minGold …)는
 # 대응하는 제약 타입이 없다 — 지어내지 않고 info 문구로만 남긴다.
@@ -216,209 +176,112 @@ GATE_KEYS = ("province", "commandery", "region", "city", "external", "tribe")
 WA = ["邪馬壹國", "奴國", "投馬國"]
 
 
-def load_roster():
-    doc = json.loads(ROSTER.read_text())
-    out = []
-    named = 0
-    for u in doc["units"]:
-        # 기본 사다리는 역할표를 거치지 않는다 — 조성·등급·기술을 명부가 직접 들고 있다.
-        if u.get("generic"):
-            c = u["composition"]
-            out.append(dict(id=2000 + len(out), name=u["ko"], han=u["han"],
-                            arm=u["armType"], weapon=c["weapon"], armor=c["armor"],
-                            shield=c["shield"], tech=u["reqTech"], role="GENERIC",
-                            tier=u["tier"], req=[], notes=[],
-                            forbid=WA if u["armType"] == CAV else [],
-                            cat=u["category"], trait=None, renown=False,
-                            src=u["source"]["cite"], cls=u["source"]["class"]))
-            continue
-        n, named = named, named + 1
-        role = u["role"]
-        if role not in ROLE:
-            sys.exit(f"{u['han']}: 모르는 역할 {role} — ROLE 표에 넣어라")
-        arm, weapon, armor, shield, tech = ROLE[role]
-        tier = TIER_OF[role]
-        if "composition" in u:
-            # 명부가 조성을 직접 들고 있으면 역할 기본값을 쓰지 않는다. 같은 역할이라도
-            # 무기가 다르면 다른 병종이다 — 지역별 무기 배분이 여기서 갈린다.
-            c = u["composition"]
-            weapon, armor, shield = c["weapon"], c["armor"], c["shield"]
-            arm, tier, tech = u["armType"], u["tier"], u["reqTech"]
-        ov = OVERRIDE.get(u["han"], {})
-        weapon, armor = ov.get("weapon", weapon), ov.get("armor", armor)
-        shield = ov["shield"] if "shield" in ov else shield
-
-        req, notes = [], []
-        for k, v in (u.get("requires") or {}).items():
-            if k in GATE_KEYS and isinstance(v, str):
-                req.append(v)
-            elif k in GATE_KEYS and isinstance(v, list):
-                req += [x for x in v if isinstance(x, str)]
-            elif k == "adjacentTribe" and isinstance(v, list):
-                req += v
-            else:
-                notes.append(f"{k}={v}")
-        out.append(dict(id=2100 + n, name=u["ko"], han=u["han"], arm=arm, weapon=weapon,
-                        armor=armor, shield=shield, tech=tech, role=role,
-                        tier=tier, req=sorted(set(req)), notes=notes,
-                        cat=u["category"], trait=trait_of(u),
-                        renown=u["source"]["class"] != "GAME_REFERENCE",
-                        forbid=WA if arm == CAV else [],
-                        src=f"{u['source']['cite']} 「{u['source']['quote'][:40]}」",
-                        cls=u["source"]["class"]))
-    return out
-
-
-def trait_of(u: dict):
-    r = u.get("requires") or {}
-    for k in ("tribe", "adjacentTribe"):
-        v = r.get(k)
-        for t in ([v] if isinstance(v, str) else (v if isinstance(v, list) else [])):
-            if t in TRAIT_OF:
-                return TRAIT_OF[t]
-    if r.get("region") == "南中" or r.get("terrain") == "MOUNTAIN":
-        return "산지"          # 종족 이름이 없어도 험지에서 싸우면 험지 사람이다
-    if r.get("court") or r.get("ruler"):
-        return "중앙"
-    return None
-
-
 def derive(u: dict) -> dict:
-    atk, a_extra, d_extra, shieldable, w_note = WEAPON[u["weapon"]]
-    dfn, spd, weight, a_note = ARMOR[u["armor"]]
-    spd += WEAPON_SPD.get(u["weapon"], 0)
-    sh = u["shield"]
+    """authored 필드만 읽어 generated 필드를 다시 만든다. 같은 입력이면 같은 출력."""
+    if not u.get("derived", True):
+        return u                       # 성벽 — 손으로 적은 자리, 유도하지 않는다
+
+    arm, tier = u["armType"], u["tier"]
+    c = u["composition"]
+    weapon, armor, sh = c["weapon"], c["armor"], c["shield"]
+
+    atk, a_extra, d_extra, shieldable, w_note = WEAPON[weapon]
+    dfn, spd, weight, a_note = ARMOR[armor]
+    spd += WEAPON_SPD.get(weapon, 0)
     if sh and not shieldable:
-        sys.exit(f"{u['name']}: {u['weapon']} 는 방패를 들 수 없다")
+        sys.exit(f"{u['name']}: {weapon} 는 방패를 들 수 없다")
     avoid, vs_archer, s_note = SHIELD[sh]
 
-    if u["arm"] == CAV:
+    if arm == CAV:
         spd += 1                      # 말은 빠르다. 대신 갑옷 무게가 그대로 남는다.
         avoid += 5
         # 활을 든 기병은 붙지 않고 돈다. 방패 대신 거리로 산다 — 치고빠지기가 곧 방어다.
-        if u["weapon"] in ("궁", "강궁", "단궁"):
+        if weapon in ("궁", "강궁", "단궁"):
             avoid += 10
-    if u["arm"] == SIEGE:
+    if arm == SIEGE:
         spd -= 1
         avoid = 0
 
-    a = mul(BASE_ATK.get(u["arm"], {}), a_extra)
-    d = mul(BASE_DEF.get(u["arm"], {}), d_extra)
+    a = mul(BASE_ATK.get(arm, {}), a_extra)
+    d = mul(BASE_DEF.get(arm, {}), d_extra)
     if vs_archer != 1.0:
         d = mul(d, {ARCHER: vs_archer})
-    if u["armor"] in RATTAN:
+    if armor in RATTAN:
         d = mul(d, {SIEGE: 1.5})      # 등갑은 불에 두 배로 탄다(투석·화시가 차병·궁병 계열이다).
 
     # 집단 성격 → 명성 순서로 얹는다. 곱은 성격에만 쓰고 명성은 더하기다.
-    notes_extra = []
-    if u["trait"]:
-        adj, why = TRAIT[u["trait"]][1], TRAIT[u["trait"]][2]
+    req_raw = u.get("requires") or {}
+    trait = trait_of(req_raw)
+    renown = u["evidence"]["class"] != "GAME_REFERENCE"
+    extra = []
+    if trait:
+        adj, why = TRAIT[trait][1], TRAIT[trait][2]
         atk = int(atk * adj["atk"]) if isinstance(adj.get("atk"), float) else atk + adj.get("atk", 0)
         dfn = int(dfn * adj["dfn"]) if isinstance(adj.get("dfn"), float) else dfn + adj.get("dfn", 0)
         spd += adj.get("spd", 0)
         avoid += adj.get("avoid", 0)
-        notes_extra.append(f"{u['trait']}: {why}.")
-    if u["renown"]:
+        extra.append(f"{trait}: {why}.")
+    if renown:
         atk += RENOWN["atk"]; dfn += RENOWN["dfn"]; avoid += RENOWN["avoid"]
-        notes_extra.append("사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.")
+        extra.append("사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.")
 
-    magic = {1: 0.5, 2: 0.55, 3: 0.6}[u["tier"]] if u["arm"] == WIZARD else 0.0
+    magic = {1: 0.5, 2: 0.55, 3: 0.6}[tier] if arm == WIZARD else 0.0
+    cost = round((atk + dfn) / 30) + weight + (2 if arm == CAV else 0)
+    # 차병은 사람이 적게 먹는다. 다만 0 아래로는 내리지 않는다.
+    rice = max(1, cost + (1 if arm == CAV else 0) - (5 if arm == SIEGE else 0))
 
-    cost = round((atk + dfn) / 30) + weight + (2 if u["arm"] == CAV else 0)
-    # 차병은 사람이 적게 먹는다. 다만 0 아래로는 내리지 않는다 — 먹이면 먹는 것이지
-    # 병종을 굴리면 쌀이 늘어나는 일은 없다.
-    rice = max(1, cost + (1 if u["arm"] == CAV else 0) - (5 if u["arm"] == SIEGE else 0))
+    gates, notes = [], []
+    for k, v in req_raw.items():
+        if k in GATE_KEYS and isinstance(v, str):
+            gates.append(v)
+        elif k in GATE_KEYS and isinstance(v, list):
+            gates += [x for x in v if isinstance(x, str)]
+        elif k == "adjacentTribe" and isinstance(v, list):
+            gates += v
+        elif k == "adjacentTribe" and isinstance(v, str):
+            gates.append(v)
+        else:
+            notes.append(f"{k}={v}")
 
     req = []
-    if u["tech"]:
-        req.append({"type": "ReqTech", "reqTech": u["tech"]})
-    if u["req"]:
-        req.append({"type": "ReqRegions", "reqRegions": u["req"]})
-    if u["forbid"]:
-        req.append({"type": "ForbidRegions", "forbidRegions": u["forbid"]})
+    tech = u.get("reqTech", 0) or next((r["reqTech"] for r in u.get("reqConstraints", [])
+                                        if r.get("type") == "ReqTech"), 0)
+    if tech:
+        req.append({"type": "ReqTech", "reqTech": tech})
+    if gates:
+        req.append({"type": "ReqRegions", "reqRegions": sorted(set(gates))})
+    if arm == CAV:
+        req.append({"type": "ForbidRegions", "forbidRegions": WA})
 
-    tier_han, tier_ko, _ = TIER[u["tier"]]
+    tier_han, tier_ko, _ = TIER[tier]
     info = [f"{tier_ko}({tier_han}) 등급.",
-            f"{u['weapon']}·{u['armor']}" + (f"·{sh}" if sh else "") + ".",
-            w_note, a_note] + ([s_note] if s_note else [])
+            f"{weapon}·{armor}" + (f"·{sh}" if sh else "") + ".",
+            w_note, a_note] + ([s_note] if s_note else []) + extra
     # 제약 타입이 없는 조건은 문구로만 남긴다 — 없는 메커니즘을 있는 척하지 않는다.
-    info += notes_extra + [f"조건(미구현): {n}" for n in u["notes"]]
-    return {
-        "id": u["id"], "armType": u["arm"], "name": u["name"], "han": u["han"],
-        "role": u["role"], "category": u["cat"], "tier": u["tier"], "tierName": tier_ko,
-        "evidence": u["cls"],
-        "attack": atk, "defence": dfn, "speed": spd, "avoid": avoid,
-        "magicCoef": magic, "cost": cost, "rice": rice,
-        "reqConstraints": req,
-        "initSkillTrigger": None, "phaseSkillTrigger": None, "iActionList": None,
-        "attackCoef": {str(k): v for k, v in sorted(a.items())},
-        "defenceCoef": {str(k): v for k, v in sorted(d.items())},
-        "composition": {"weapon": u["weapon"], "armor": u["armor"], "shield": sh},
-        "info": info,
-        "source": u["src"],
-    }
+    info += [f"조건(미구현): {n}" for n in notes]
 
-
-# 성벽은 뽑는 병종이 아니다. 수비 측이 늘 깔고 시작하는 자리라 세트마다 하나 있어야
-# 한다 — v1 GameUnitConst 의 1000번(T_CASTLE)과 같은 역할이다.
-CASTLE_ID = 2099
-CASTLE = {
-    "id": CASTLE_ID, "armType": CASTLE, "name": "성벽", "han": "城壁",
-    "role": "CASTLE", "category": "COMMON", "tier": 0, "tierName": "—",
-    "evidence": "GAME_REFERENCE",
-    "attack": 100, "defence": 100, "speed": 7, "avoid": 0,
-    "magicCoef": 0.0, "cost": 99, "rice": 9,
-    "reqConstraints": [{"type": "Impossible"}],
-    "initSkillTrigger": None, "phaseSkillTrigger": None, "iActionList": None,
-    "attackCoef": {}, "defenceCoef": {"1": 1.2},
-    "composition": {"weapon": None, "armor": None, "shield": None},
-    "info": ["성벽입니다.", "생성할 수 없습니다."],
-    "source": "게임 설계(세트마다 하나 있어야 하는 자리)",
-}
+    u.update(tierName=tier_ko, attack=atk, defence=dfn, speed=spd, avoid=avoid,
+             magicCoef=magic, cost=cost, rice=rice, reqConstraints=req,
+             attackCoef={str(k): v for k, v in sorted(a.items())},
+             defenceCoef={str(k): v for k, v in sorted(d.items())},
+             info=[i for i in info if i], reqTech=tech)
+    return u
 
 
 def build() -> dict:
-    R = load_roster()
-    assert len([u for u in R if u["role"] == "GENERIC"]) < 100, "기본 사다리가 100종을 넘었다 — id 대역이 겹친다"
-    ids = [u["id"] for u in R]
+    doc = json.loads(UNITSET.read_text())
+    ids = [u["id"] for u in doc["crewTypes"]]
     assert len(ids) == len(set(ids)), "id 중복"
-    units = [derive(u) for u in R] + [CASTLE]
-    return {
-        "_meta": {
-            "id": "han",
-            "name": "후한 군현 병종표",
-            "generator": "tools/unitset/build_han_unitset.py",
-            "note": "수치는 무기·갑옷·방패 조합에서 유도된다. 손으로 찍지 않는다.",
-            "armTypes": {"1": "보병", "2": "궁병", "3": "기병", "4": "귀병", "5": "차병"},
-            "tiers": {str(t): {"han": h, "ko": k} for t, (h, k, _) in TIER.items()},
-            "sources": ["devsam/core che 병종표 (armType·상성 골격)",
-                        "data/v2/unit-types.json (이름·출전·게이팅·역할 — 사료 실측 71종)",
-                        "Total War: Three Kingdoms (조성 축만 참고, 수치·이름 미차용)"],
-            "castleCrewTypeId": CASTLE_ID,
-            "counts": {"units": len(units)},
-        },
-        "id": "han",
-        "defaultCrewTypeId": 2100,
-        "crewTypes": units,
+    doc["crewTypes"] = [derive(u) for u in doc["crewTypes"]]
+    doc["_meta"]["counts"] = {
+        "units": len(ids),
+        "byCategory": {c: sum(1 for u in doc["crewTypes"] if u["category"] == c)
+                       for c in ("COMMON", "FACTION", "REGIONAL", "CHARACTER", "OTHER")},
     }
-
-
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--check", action="store_true")
-    args = ap.parse_args()
-    blob = json.dumps(build(), ensure_ascii=False, indent=1) + "\n"
-    if args.check:
-        if not OUT.exists() or OUT.read_text() != blob:
-            print(f"드리프트: {OUT.relative_to(ROOT)}")
-            return 1
-        print("일치.")
-        return 0
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(blob)
-    print(f"{OUT.relative_to(ROOT)} — 병종 {len(json.loads(blob)['crewTypes'])}")
-    return 0
+    return doc
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    doc = build()
+    UNITSET.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n")
+    print(f"{UNITSET.relative_to(ROOT)} — 병종 {len(doc['crewTypes'])}")

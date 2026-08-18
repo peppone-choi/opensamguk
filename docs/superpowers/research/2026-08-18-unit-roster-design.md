@@ -3,7 +3,7 @@
 - 산출물: `tools/unitset/build_han_unitset.py` → `data/unitset/han.json` (병종 71종 · 무기 24종 · 갑옷 10종 · 방패 4종)
 - 새 제약: `UnitConstraint.ForbidRegions` (common) + `RecruitUnitAvailability` 분기 (logic)
 - 개정 2026-08-19 — 초판의 "표 하나 손으로 찍기"를 버렸다. 수치는 **조성에서 유도**하고,
-  명부는 **이미 있는 `data/v2/unit-types.json` 71종을 읽어온다**(로스터를 새로 짓지 않는다).
+  명부와 수치는 **`data/unitset/han.json` 한 파일**에 있다(로스터를 두 곳에 두지 않는다).
 
 ## 0. 무엇을 어디서 가져왔나
 
@@ -13,11 +13,12 @@
 | --- | --- | --- |
 | devsam/core `che` 병종표 | armType 5종(보/궁/기/귀/차)과 그 상성 골격, 수치 4개(attack/defence/speed/avoid), cost/rice, `phaseSkillTrigger` 어휘 | 34행의 값 자체 — han 은 별도 세트다 |
 | Total War: Three Kingdoms (namu.wiki) | **분해 축 하나** — 병종 = (무기 · 갑옷 · 방패) 조합이고 역할과 등급이 거기서 나온다는 발상 | 수치·이름·병종 목록. CC BY-NC-SA 2.0 KR 자료이고, 이 저장소는 이미 Koei-IP 심사 대기 중이다. IP 위험을 한 겹 더 얹지 않는다 |
-| `data/v2/unit-types.json` (이 저장소가 이미 사료 실측으로 확정한 71종) | 병종 이름·한자·출전·인용문·역할·게이팅 전부 | 없다 — **여기서 병종을 새로 짓지 않는다** |
+| 사료 실측 (三國志·後漢書·資治通鑑·華陽國志) | 병종 이름·한자·출전·인용문·역할·게이팅 | 수치 — 사료에 수치는 없다 |
 
-**로스터는 하나다.** 초판은 41종을 손으로 새로 적었는데, 같은 브랜치에 이미 `data/v2/unit-types.json`
-71종이 사료 실측으로 들어와 있었다. 로스터가 둘이면 어느 쪽이 맞는지 아무도 모른다. 그래서
-빌더를 고쳐 그 파일을 **읽게** 했다 — 이 빌더가 더하는 것은 명부에 없는 것 하나, 곧 게임 수치뿐이다.
+**파일은 하나다.** 한때 명부(`data/v2/unit-types.json`)와 병종표(`data/unitset/han.json`)가
+갈려 있었는데, 그러면 진실이 둘이 된다. 지금은 `data/unitset/han.json` 하나다 — 사람이 적는
+`authored` 필드(이름·한자·armType·등급·절·조성·게이팅·출전)와 빌더가 다시 쓰는 `generated`
+필드(수치·계수·제약·info)를 `_meta` 가 명시한다. 빌더를 두 번 돌리면 같은 파일이 나온다.
 
 ## 1. 엔진을 건드리지 않는다
 
