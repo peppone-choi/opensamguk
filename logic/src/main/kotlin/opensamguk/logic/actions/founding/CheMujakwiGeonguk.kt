@@ -65,6 +65,7 @@ class CheMujakwiGeonguk(pipeline: GeneralActionPipeline) : CheGeonguk(pipeline) 
         lastUnifierGrant = 0
         lastAlternative = null
         lastUniqueLotteryIntent = null
+        lastAssaultCrewCost = 0
 
         val d = context.draft
         val nation = d.nation ?: return
@@ -96,18 +97,28 @@ class CheMujakwiGeonguk(pipeline: GeneralActionPipeline) : CheGeonguk(pipeline) 
 
         // draft.city ← the chosen city (PHP `$this->setCity()` after the choice). A minimal logic City;
         // foundNation claims it (nation=me, conflict={}).
-        d.city = chosenCity(chosenCityId)
+        d.city = chosenCity(chosenCityId, context)
 
         // 5. shared founding write-set + the extra aux can_무작위수도이전=1 (che_무작위건국.php:198-199).
         foundNation(context, nation, chosenCityId, extraAux = listOf("can_무작위수도이전" to 1))
     }
 
-    /** A minimal logic City for the rng-chosen capital (the full row is not on the draft). */
-    private fun chosenCity(cityId: Int): City = City(
+    /**
+     * A minimal logic City for the rng-chosen capital (the full row is not on the draft).
+     * `defense` 만은 실제 값이 필요하다 — han 수비병 돌파 판정(패러티 아님 · 튜닝값)이 읽는다. 어댑터가
+     * `candidateCityDefence` 로 선적재하며, 없으면 0 = 판정 없음(che 기존 동작).
+     */
+    private fun chosenCity(cityId: Int, context: GeneralActionResolveContext): City = City(
         id = cityId, nationId = 0, level = CityConst.byId(cityId)?.level ?: 5,
         commerce = 0, commerceMax = 0, agriculture = 0, agricultureMax = 0,
         supplyState = 1, frontState = 0, trust = 0.0,
+        defense = candidateCityDefence(context, cityId),
     )
+
+    private fun candidateCityDefence(context: GeneralActionResolveContext, cityId: Int): Int {
+        val raw = context.args["candidateCityDefence"] as? Map<*, *> ?: return 0
+        return (raw[cityId] as? Number)?.toInt() ?: 0
+    }
 
     companion object {
         /** The alternative command swapped in when there is no constructable city (che_무작위건국.php:155). */

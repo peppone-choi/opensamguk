@@ -705,6 +705,17 @@ class WorldActionContext(
         env["nationTurnSeed"] = existing
     }
 
+    /**
+     * 3축 랭크 축만 바뀐 경우 — nation meta 만 dirty 로 기록한다.
+     * 로그·nation_turn seed·gold/rice 는 건드리지 않는다(level-up 이 아니다). han 전용 경로.
+     */
+    override fun applyNationRank(nation: LogicNation) {
+        val pre = world.getNationById(nation.id) ?: return
+        val preLogic = PerTurnOverlay.toLogicNation(pre)
+        recorder.diffNation(preLogic, nation)
+        world.updateNation(pre.copy(meta = nation.meta))
+    }
+
     override fun giveRandomUniqueItem(rng: RandUtil, winnerId: Int): Boolean {
         // P6 seam — item grant requires catalog + occupancy queries not yet wired.
         return false

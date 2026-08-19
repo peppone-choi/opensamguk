@@ -51,6 +51,18 @@ class UnitCatalogTest {
     }
 
     @Test
+    fun `세트를 아는 조회는 활성 세트 밖 id 를 거절한다`() {
+        // han 병종 id 로 che 세트를 물으면 null — 전역에 있어도 활성 세트 밖은 통과시키지 않는다.
+        val hanOnlyId = UnitCatalog.all("han").keys.first { it !in UnitCatalog.all(UnitCatalog.CHE).keys }
+        assertNotNull(UnitCatalog.byId("han", hanOnlyId))
+        assertNull(UnitCatalog.byId(UnitCatalog.CHE, hanOnlyId))
+
+        val cheOnlyId = UnitCatalog.all(UnitCatalog.CHE).keys.first { it !in UnitCatalog.all("han").keys }
+        assertNotNull(UnitCatalog.byId(UnitCatalog.CHE, cheOnlyId))
+        assertNull(UnitCatalog.byId("han", cheOnlyId))
+    }
+
+    @Test
     fun `성벽은 두 세트 모두 뽑을 수 없다`() {
         for ((set, meta) in UnitCatalog.sets()) {
             val castle = assertNotNull(UnitCatalog.byId(set, meta.castleCrewTypeId), set)

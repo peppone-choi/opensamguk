@@ -860,6 +860,7 @@
    "magicCoef": 0.0,
    "cost": 99,
    "rice": 9,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "Impossible"
@@ -909,6 +910,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": null,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -959,6 +961,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 11,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1020,6 +1023,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 10,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1081,6 +1085,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1142,6 +1147,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1203,6 +1209,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 10,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1264,6 +1271,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 11,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1325,6 +1333,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": null,
    "reqConstraints": [],
    "attackCoef": {
     "3": 1.2,
@@ -1375,6 +1384,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 12,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1437,6 +1447,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 11,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1499,6 +1510,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1561,6 +1573,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1623,6 +1636,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": null,
    "reqConstraints": [],
    "attackCoef": {
     "1": 1.2,
@@ -1672,6 +1686,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 13,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1733,6 +1748,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 12,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1794,6 +1810,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 11,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1855,6 +1872,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 13,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1916,6 +1934,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -1977,6 +1996,7 @@
    "magicCoef": 0.0,
    "cost": 16,
    "rice": 16,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2038,6 +2058,7 @@
    "magicCoef": 0.0,
    "cost": 14,
    "rice": 14,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2099,6 +2120,7 @@
    "magicCoef": 0.5,
    "cost": 9,
    "rice": 9,
+   "reqTech": null,
    "reqConstraints": [],
    "attackCoef": {
     "5": 1.2
@@ -2141,6 +2163,7 @@
    "magicCoef": 0.6,
    "cost": 10,
    "rice": 10,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2196,6 +2219,7 @@
    "magicCoef": 0.6,
    "cost": 9,
    "rice": 11,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2251,6 +2275,7 @@
    "magicCoef": 0.6,
    "cost": 11,
    "rice": 9,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2306,6 +2331,7 @@
    "magicCoef": 0.6,
    "cost": 12,
    "rice": 12,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2361,6 +2387,7 @@
    "magicCoef": 0.8,
    "cost": 8,
    "rice": 8,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2409,6 +2436,7 @@
    "magicCoef": 0.8,
    "cost": 13,
    "rice": 10,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2464,6 +2492,7 @@
    "magicCoef": 0.6,
    "cost": 11,
    "rice": 12,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2519,6 +2548,7 @@
    "magicCoef": 0.6,
    "cost": 12,
    "rice": 11,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2574,6 +2604,7 @@
    "magicCoef": 0.0,
    "cost": 14,
    "rice": 5,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqMinRelYear",
@@ -2638,6 +2669,7 @@
    "magicCoef": 0.0,
    "cost": 18,
    "rice": 5,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2700,6 +2732,7 @@
    "magicCoef": 0.0,
    "cost": 20,
    "rice": 5,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2771,6 +2804,7 @@
    "magicCoef": 0.0,
    "cost": 15,
    "rice": 5,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -2843,6 +2877,7 @@
    "magicCoef": 0.0,
    "cost": 6,
    "rice": 6,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.38,
@@ -2897,6 +2932,7 @@
    "magicCoef": 0.0,
    "cost": 6,
    "rice": 6,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -2951,6 +2987,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "1": 1.3,
@@ -3005,6 +3042,7 @@
    "magicCoef": 0.0,
    "cost": 6,
    "rice": 6,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "1": 0.8,
@@ -3058,6 +3096,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -3111,6 +3150,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ForbidRegions",
@@ -3174,6 +3214,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3233,6 +3274,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3292,6 +3334,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3352,6 +3395,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3411,6 +3455,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3469,6 +3514,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3527,6 +3573,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3595,6 +3642,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3662,6 +3710,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 12,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3730,6 +3779,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3789,6 +3839,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3848,6 +3899,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3906,8 +3958,9 @@
    "speed": 6,
    "avoid": 0,
    "magicCoef": 0.0,
-   "cost": 12,
-   "rice": 12,
+   "cost": 13,
+   "rice": 13,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -3967,6 +4020,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4025,6 +4079,7 @@
    "magicCoef": 0.0,
    "cost": 14,
    "rice": 14,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4083,6 +4138,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4141,6 +4197,7 @@
    "magicCoef": 0.0,
    "cost": 14,
    "rice": 14,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4199,6 +4256,7 @@
    "magicCoef": 0.0,
    "cost": 14,
    "rice": 15,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4267,6 +4325,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 14,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4335,6 +4394,7 @@
    "magicCoef": 0.5,
    "cost": 6,
    "rice": 6,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -4385,6 +4445,7 @@
    "magicCoef": 0.55,
    "cost": 7,
    "rice": 7,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4440,6 +4501,7 @@
    "magicCoef": 0.6,
    "cost": 8,
    "rice": 8,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4495,6 +4557,7 @@
    "magicCoef": 0.0,
    "cost": 4,
    "rice": 1,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4553,6 +4616,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 6,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4618,6 +4682,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4699,6 +4764,7 @@
    "magicCoef": 0.0,
    "cost": 16,
    "rice": 17,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4774,6 +4840,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4838,6 +4905,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -4910,6 +4978,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -4977,6 +5046,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5048,6 +5118,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5123,6 +5194,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -5204,6 +5276,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5284,6 +5357,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5362,6 +5436,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5440,6 +5515,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5506,6 +5582,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5571,6 +5648,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5643,6 +5721,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 11,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ForbidRegions",
@@ -5713,6 +5792,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5785,6 +5865,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 13,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5863,6 +5944,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 12,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -5935,6 +6017,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6000,6 +6083,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6067,6 +6151,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6139,6 +6224,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6209,6 +6295,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6272,6 +6359,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6335,6 +6423,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6398,6 +6487,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -6456,6 +6546,7 @@
    "magicCoef": 0.55,
    "cost": 8,
    "rice": 8,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6522,6 +6613,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -6586,8 +6678,9 @@
    "speed": 6,
    "avoid": 10,
    "magicCoef": 0.0,
-   "cost": 12,
-   "rice": 7,
+   "cost": 13,
+   "rice": 8,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6658,6 +6751,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 14,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6739,6 +6833,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6808,6 +6903,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6873,6 +6969,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -6939,6 +7036,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7010,6 +7108,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 3,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7074,6 +7173,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 6,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7137,6 +7237,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 4,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7198,6 +7299,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 2,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7260,6 +7362,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -7318,6 +7421,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.44,
@@ -7376,6 +7480,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 5,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7438,6 +7543,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7503,6 +7609,7 @@
    "magicCoef": 0.0,
    "cost": 15,
    "rice": 16,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7578,6 +7685,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -7653,6 +7761,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -7733,6 +7842,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -7808,6 +7918,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -7883,6 +7994,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -7949,6 +8061,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8020,6 +8133,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 11,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8099,6 +8213,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 13,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8172,6 +8287,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -8238,6 +8354,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -8304,6 +8421,7 @@
    "magicCoef": 0.0,
    "cost": 12,
    "rice": 12,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8375,6 +8493,7 @@
    "magicCoef": 0.0,
    "cost": 5,
    "rice": 1,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8440,6 +8559,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8505,6 +8625,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8570,6 +8691,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 11,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8635,6 +8757,7 @@
    "magicCoef": 0.0,
    "cost": 10,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -8699,6 +8822,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.44,
@@ -8757,6 +8881,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -8822,6 +8947,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.44,
@@ -8879,6 +9005,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -8943,6 +9070,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -9003,6 +9131,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 10,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9083,6 +9212,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -9150,6 +9280,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -9213,6 +9344,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -9270,6 +9402,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -9332,6 +9465,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [],
    "attackCoef": {
     "2": 1.2,
@@ -9389,6 +9523,7 @@
    "magicCoef": 0.0,
    "cost": 15,
    "rice": 16,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9462,6 +9597,7 @@
    "magicCoef": 0.0,
    "cost": 6,
    "rice": 6,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9531,6 +9667,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9601,6 +9738,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 12,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9679,6 +9817,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 9,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9755,6 +9894,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9822,6 +9962,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 12,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9898,6 +10039,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 9,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -9974,6 +10116,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -10038,6 +10181,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -10107,6 +10251,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 14,
+   "reqTech": 3000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -10186,6 +10331,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -10256,6 +10402,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 2000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -10326,6 +10473,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -10395,6 +10543,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 1000,
    "reqConstraints": [
     {
      "type": "ReqTech",
@@ -10461,6 +10610,7 @@
    "magicCoef": 0.0,
    "cost": 99,
    "rice": 9,
+   "reqTech": null,
    "reqConstraints": [
     {
      "type": "Impossible"
@@ -10512,6 +10662,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -10577,6 +10728,7 @@
    "magicCoef": 0.0,
    "cost": 13,
    "rice": 13,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -10642,6 +10794,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -10707,6 +10860,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -10771,6 +10925,7 @@
    "magicCoef": 0.0,
    "cost": 9,
    "rice": 9,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -10835,6 +10990,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -10900,6 +11056,7 @@
    "magicCoef": 0.0,
    "cost": 11,
    "rice": 12,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -10973,8 +11130,9 @@
    "speed": 10,
    "avoid": 25,
    "magicCoef": 0.0,
-   "cost": 10,
-   "rice": 11,
+   "cost": 11,
+   "rice": 12,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -11049,6 +11207,7 @@
    "magicCoef": 0.0,
    "cost": 8,
    "rice": 8,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -11113,6 +11272,7 @@
    "magicCoef": 0.0,
    "cost": 7,
    "rice": 7,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",
@@ -11178,6 +11338,7 @@
    "magicCoef": 0.0,
    "cost": 6,
    "rice": 6,
+   "reqTech": 0,
    "reqConstraints": [
     {
      "type": "ReqRegions",

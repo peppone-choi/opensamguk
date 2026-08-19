@@ -92,28 +92,101 @@ PLACES = [
     ("張掖居延屬國", "COMMANDERY", 6, "Ejin Banner", CN, None, None,
      "郡國志 張掖居延屬國 治 居延. 額濟納 거연택", "Inner Mongolia", 60),
 
+    # --- 郡國志에는 있는데 CHGIS 에도, 위 목록에도 없어 지도에서 통째로 빠졌던 郡.
+    #     치소 縣의 좌표가 CHGIS 에 없으면 郡 자체가 사라진다(縣이 하나도 안 붙은 郡은
+    #     빈 영역이 되어 지워진다). 郡國志가 적은 治所를 근거로 되살린다. ---
+    ("上郡", "COMMANDERY", 6, "Yulin", CN, None, None,
+     "郡國志 上郡 治 膚施. 섬서 유림 — 魚河堡설/綏德설 중 유림 채택", "Shaanxi", 60),
+    ("西河郡", "COMMANDERY", 6, "Lishi District", CN, None, None,
+     "郡國志 西河郡 治 離石. 후한대 美稷에서 離石로 이치 — 산서 여량 이석",
+     "Shanxi", 40),
+    ("定襄郡", "COMMANDERY", 6, "Youyu County", CN, None, None,
+     "郡國志 定襄郡 治 善無. 산서 우옥", "Shanxi", 40),
+    # 문현의 위키데이터 영문 라벨은 "Wen County" 가 아니라 "Wen" 이다("Wen County" 는
+    # 하남 溫縣이라 감숙 필터에 걸려 후보 0개가 됐다). 陰平 라벨 항목은 삼국지연의 소설
+    # 지명이라 근거로 쓰지 않는다.
+    ("廣漢屬國", "COMMANDERY", 6, "Wen", CN, None, None,
+     "郡國志 廣漢屬國 治 陰平道. 감숙 문현", "Gansu", 40),
+    ("龜茲屬國", "COMMANDERY", 6, "Yuyang District", CN, None, None,
+     "郡國志 上郡 龜茲屬國. 龜茲縣 = 유림 북부 — 上郡 治와 가까워 비정이 겹친다",
+     "Shaanxi", 60),
+    ("張掖屬國", "COMMANDERY", 6, "Zhangye", CN, None, None,
+     "郡國志 張掖屬國 「有五城 … 候官·左騎·千人·司馬官·千人官」. 治所 이름이 안 남아 "
+     "張掖 일대로만 잡는다 — 점이 아니라 영역", "Gansu", 80),
+
     # --- 漢 밖 세력. 三國志 魏書30 烏丸鮮卑東夷傳 · 後漢書 卷85 東夷列傳 ---
-    # 중요 세력은 郡治급(lv6)으로 올린다 — 도로 간선의 허브가 되어 실제로 오갈 수 있어야 한다.
-    ("高句麗", "EXTERNAL_PLACE", 6, "Ji'an", CN, None, None,
-     "국내성 = 지린성 지안. 유리왕 3년 천도 이후 도읍", "Jilin", 10),
-    ("夫餘", "EXTERNAL_PLACE", 6, "Nong'an County", CN, None, None,
+    # level 은 계약대로 전부 lv4('이')다 — 등급을 도로 허브 표시로 겸용하지 않는다.
+    # 중요 세력은 대신 아래 HUB 에 이름을 올려 별도 필드로 표시한다.
+    # 고구려는 점 하나로 두지 않는다 — 220년까지 도읍이 卒本 → 國內城 → 丸都城으로
+    # 옮겨 다녔고, 그 자취가 다 남아 있다. 다만 옮긴 자리가 같은 칸이면 점을 나누지
+    # 않는다(丸都城은 國內城에서 4km — 지도 한 칸 안이라 國內城 basis 에 적는다).
+    # 평양성은 넣지 않는다: 천도가 427년이라 이 지도(220년)의 밖이고, 그 자리는
+    # 지금 樂浪郡 治 朝鮮縣으로 이미 지도에 있다.
+    ("國內城", "EXTERNAL_PLACE", 4, "Ji'an", CN, None, None,
+     "『삼국사기』 고구려본기 유리명왕 22년 「移都於國內，築尉那巖城」. 지린성 지안 — 유리왕 22년 천도. 산상왕 13년(209) 丸都城으로 옮겼으나 "
+     "산성자산성이 국내성에서 4km라 같은 칸이다 — 220년의 도읍은 이 점이다", "Jilin", 10),
+    ("卒本", "EXTERNAL_PLACE", 4, "Huanren Manchu Autonomous County", CN, None, None,
+     "『魏書』高句麗傳 「遂至紇升骨城，遂居焉，號曰高句麗」. 卒本 = 오녀산성, 환런 일대. "
+     "건국 도읍이자 220년에도 남은 고구려의 옛 거점", "Liaoning", 30),
+    ("北沃沮", "EXTERNAL_PLACE", 4, "Hoeryong", KP, None, None,
+     "東夷傳 「北沃沮一名置溝婁，去南沃沮八百餘里」. 두만강 유역 회령 일대 — 비정이 갈린다",
+     "North Hamgyong Province", 40),
+    ("安邪國", "EXTERNAL_PLACE", 4, "Haman County", KR, None, None,
+     "韓傳 「弁辰安邪國」. 『삼국사기』 지리지 咸安郡 「法興王以大兵滅阿尸良國(一云阿那加耶)」 "
+     "— 함안 말이산 고분군", None, 20),
+    # --- 220년 한반도 남부의 소국. 『삼국사기』 신라본기 + 지리지가 병합 연대와 現 지명을
+    # 같이 적어 놓아 위치가 잡히는 것만 싣는다. 이름만 남고 자리가 안 잡히는 소국
+    # (于尸山國·居柒山國·浦上八國의 대부분)은 넣지 않는다.
+    ("悉直國", "EXTERNAL_PLACE", 4, "Samcheok", KR, None, None,
+     "『삼국사기』 신라본기 파사이사금 23년 「悉直谷國來降」 · 지리지 三陟郡 「本悉直國」",
+     "Gangwon Province", 20),
+    ("押督國", "EXTERNAL_PLACE", 4, "Gyeongsan", KR, None, None,
+     "『삼국사기』 지리지 獐山郡 「祗味王時伐取押督小國置郡」. 경산", None, 20),
+    ("召文國", "EXTERNAL_PLACE", 4, "Uiseong County", KR, None, None,
+     "『삼국사기』 신라본기 벌휴이사금 2년 「波珍飡仇道 … 伐召文國」 · 지리지 聞韶郡 "
+     "「本召文國」. 의성 금성산 고분군", None, 20),
+    ("于山國", "EXTERNAL_PLACE", 4, "Ulleung County", KR, None, None,
+     "『삼국사기』 신라본기 지증마립간 13년 「于山國歸服 … 或名鬱陵島」. 220년에는 아직 "
+     "신라 밖의 섬 세력", None, 20),
+    ("夫餘", "EXTERNAL_PLACE", 4, "Nong'an County", CN, None, None,
      "쑹화강 유역 눙안 일대. 東夷傳 「夫餘在長城之北，去玄菟千里」", None, 20),
-    ("東沃沮", "EXTERNAL_PLACE", 6, "Hamhung", KP, None, None,
+    ("東沃沮", "EXTERNAL_PLACE", 4, "Hamhung", KP, None, None,
      "東夷傳 「東沃沮在高句麗蓋馬大山之東，濱大海而居」. 함흥 일대", None, 20),
-    ("濊", "EXTERNAL_PLACE", 6, "Gangneung", KR, None, None,
+    ("濊", "EXTERNAL_PLACE", 4, "Gangneung", KR, None, None,
      "東夷傳 「濊南與辰韓，北與高句麗、沃沮接，東窮大海」. 영동 강릉", "Gangwon Province", 15),
     ("挹婁", "EXTERNAL_PLACE", 4, "Ussuriysk", RU, None, None,
      "東夷傳 「挹婁在夫餘東北千餘里，濱大海」. 연해주 남부", None, 30),
-    ("馬韓", "EXTERNAL_PLACE", 6, "Iksan", KR, None, None,
-     "東夷傳 「馬韓在西，其民土著，有五十四國」. 目支國 익산~직산 중 익산 채택", None, 20),
-    ("伯濟國", "EXTERNAL_PLACE", 6, "Seoul", KR, None, None,
-     "韓傳 마한 54국 목록의 伯濟國. 한강 하류 풍납토성 일대 — 백제의 모태", None, 20),
-    ("州胡", "EXTERNAL_PLACE", 6, "Jeju City", KR, None, None,
+    # 삼한은 세력 이름이 아니라 그 안의 나라 이름으로 찍는다 — 馬韓/辰韓/弁韓은 지도의
+    # 한 점이 아니라 수십 나라의 묶음이고, 그 자리에 실제로 있던 건 國邑(目支·斯盧·狗邪)이다.
+    # 韓傳이 국명 78개를 적어놨지만 자리가 통설로 굳은 건 아래뿐이다. 나머지는 넣지 않는다.
+    ("目支國", "EXTERNAL_PLACE", 4, "Iksan", KR, None, None,
+     "韓傳 「辰王治月支國」. 마한 54국의 國邑 — 익산~천안 직산 중 익산 채택(비정이 갈린다)",
+     None, 20),
+    ("辟卑離國", "EXTERNAL_PLACE", 4, "Gimje", KR, None, None,
+     "韓傳 마한 54국의 辟卑離國. 김제의 옛 이름 碧骨과 음이 이어진다는 통설 — 확정은 아니다",
+     None, 20),
+    ("伯濟國", "EXTERNAL_PLACE", 4, "Seoul", KR, None, None,
+     "韓傳 마한 54국의 伯濟國. 『삼국사기』 백제본기 온조왕 「都河南慰禮城」 — 220년 구수왕대의 도읍. 한강 하류 풍납토성 일대", None, 20),
+    ("州胡", "EXTERNAL_PLACE", 4, "Jeju City", KR, None, None,
      "韓傳 「又有州胡在馬韓之西海中大島上 … 乘船往來，巿買韓中」. 탐라", None, 30),
-    ("辰韓", "EXTERNAL_PLACE", 6, "Gyeongju", KR, None, None,
-     "東夷傳 「辰韓在馬韓之東，十有二國」. 斯盧國 = 경주", None, 15),
-    ("弁韓", "EXTERNAL_PLACE", 6, "Gimhae", KR, None, None,
-     "東夷傳 弁辰十二국. 狗邪國 = 김해. 倭 여정의 출발점 狗邪韓國", None, 15),
+    ("斯盧國", "EXTERNAL_PLACE", 4, "Gyeongju", KR, None, None,
+     "韓傳 진한 12국의 斯盧國 = 경주. 『삼국사기』 신라본기 「築城曰金城」 — 220년 "
+     "나해이사금대의 도읍", None, 15),
+    ("狗邪國", "EXTERNAL_PLACE", 4, "Gimhae", KR, None, None,
+     "韓傳 「弁辰狗邪國」·倭 여정의 출발점 「其北岸狗邪韓國」 = 김해. 『삼국유사』 駕洛國記 "
+     "首露王의 金官加耶", None, 15),
+    # 나머지 변진 소국은 韓傳 국명으로는 자리가 안 잡힌다(半路·甘路·彌烏邪馬 …).
+    # 자리가 확실한 곳은 『삼국유사』 五伽耶條가 이름을 남긴 쪽이라 그 이름으로 찍는다.
+    ("古資彌凍國", "EXTERNAL_PLACE", 4, "Goseong County", KR, None, None,
+     "韓傳 「弁辰古資彌凍國」 = 고성. 『삼국유사』 五伽耶條의 小伽耶",
+     "South Gyeongsang", 20),
+    ("大伽耶", "EXTERNAL_PLACE", 4, "Goryeong County", KR, None, None,
+     "『삼국유사』 五伽耶條 「大伽耶(今高靈)」. 고령 지산동 고분군. 韓傳 半路國을 여기로 "
+     "보는 설이 있으나 성주설과 갈린다", None, 20),
+    ("星山伽耶", "EXTERNAL_PLACE", 4, "Seongju County", KR, None, None,
+     "『삼국유사』 五伽耶條 「星山伽耶(今京山，一云碧珍)」. 성주 성산동 고분군", None, 20),
+    ("古寧伽耶", "EXTERNAL_PLACE", 4, "Hamchang", KR, None, None,
+     "『삼국유사』 五伽耶條 「古寧伽耶(今咸寧)」. 상주 함창", None, 20),
     # 倭 여정. 東夷傳이 帶方에서 邪馬壹國까지 里程을 그대로 적어놨다 —
     #   「從郡至倭，循海岸水行，歷韓國，乍南乍東，到其北岸狗邪韓國，七千餘里，
     #    始渡一海，千餘里至對馬國 … 又渡一海，千餘里至末盧國 … 東南陸行五百里，到伊都國 …
@@ -130,41 +203,59 @@ PLACES = [
     ("奴國", "EXTERNAL_PLACE", 4, "Kasuga", JP, None, None,
      "後漢書 「建武中元二年，倭奴國奉貢朝賀 … 倭國之極南界也」. 金印은 志賀島 출토지만 "
      "왕도 후보는 須玖岡本 유적의 가스가", "Fukuoka Prefecture", 20),
-    ("邪馬壹國", "EXTERNAL_PLACE", 6, "Yoshinogari", JP, None, None,
+    # 邪馬壹國(야마타이) — 규슈설/기나이설이 지역 자체로 갈려 단일 좌표가 정본이 아니다.
+    # 그런데 devsam che 맵의 이민족 거점 '왜'가 바로 여기다(CityConst.kt:178). 게임 세계가
+    # 먹는 거점이라 빼면 세력 하나가 통째로 사라진다. 그래서 **빼지 않고 미결로 표시**한다 —
+    # 반경 60km 로 넓혀 점이 아니라 영역으로 읽히게 두고, `uncertain` 로 계약을 남긴다.
+    ("邪馬壹國", "EXTERNAL_PLACE", 4, "Yoshinogari", JP, None, None,
      "三國志는 邪馬壹國, 後漢書는 邪馬臺國으로 적는다(원문에 壹/臺 이체자 주석). "
-     "규슈설 채택 — 기나이설(나라 분지)과 미결", None, 15),
+     "규슈설 좌표를 대표로 쓰되 기나이설(나라 분지)과 미결 — 단일 정본 아님. "
+     "devsam che 맵의 이민족 '왜'", "Saga Prefecture", 60),
     # --- 남해. 후한 판도 밖이지만 사료가 항로 끝을 적어놨다 ---
-    ("夷洲", "EXTERNAL_PLACE", 6, "Tainan", TW, None, None,
+    ("夷洲", "EXTERNAL_PLACE", 4, "Tainan", TW, None, None,
      "吳主傳 「遣將軍衞溫、諸葛直將甲士萬人，浮海求夷洲及亶洲」. 資治通鑑은 "
      "「欲俘其民以益衆」이라 적었다 — 인구 약탈이 목적이었다. 대만 비정은 미결", None, 60),
-    ("流求", "EXTERNAL_PLACE", 6, "Naha", JP, None, None,
-     "隋書 卷81 東夷 流求國. 후한대 기록이 아니라 게임적 허용으로 남해 항로 끝에 둔다",
+    # 流求 — 隋書 卷81 東夷 流求國이라 후한대 기록이 아니다. 그런데 che 맵의 '왜'가
+    # 인접으로 '유구'를 들고 있다(CityConst.kt:178). 게임 항로의 끝이라 남기고,
+    # 시대 밖이라는 사실은 `anachronistic` 으로 표시한다.
+    ("流求", "EXTERNAL_PLACE", 4, "Naha", JP, None, None,
+     "隋書 卷81 東夷 流求國. 후한대 사료 아님 — devsam che 맵의 남해 항로 끝 '유구'",
      "Okinawa Prefecture", 30),
     # --- 기존 devsam 맵이 "이민족"으로 뭉뚱그린 곳. 사료로 비정해 되돌린다 ---
-    ("西羌", "EXTERNAL_PLACE", 6, "Xining", CN, None, None,
+    ("西羌", "EXTERNAL_PLACE", 4, "Xining", CN, None, None,
      "後漢書 卷87 西羌傳 「濱於賜支，至乎河首，綿地千里」. 賜支河曲 = 황하 상류 청해",
      "Qinghai", 40),
-    ("白馬氐", "EXTERNAL_PLACE", 6, "Longnan", CN, None, None,
+    ("白馬氐", "EXTERNAL_PLACE", 4, "Longnan", CN, None, None,
      "元和郡縣圖志 39 「戰國時，白馬氐居焉，氐即西戎之別種也」. 武都 = 隴南",
      "Gansu", 40),
-    ("哀牢", "EXTERNAL_PLACE", 6, "Baoshan", CN, None, None,
-     "後漢書 卷86 「哀牢夷者，其先有婦人名沙壹，居於牢山」. 永昌郡 — devsam 맵의 南蠻",
-     "Yunnan", 40),
-    ("山越", "EXTERNAL_PLACE", 6, "Huangshan", CN, None, None,
+    # 哀牢 를 保山 에 두면 永昌郡 治 不韋(99.26,25.15)와 10km 안에서 겹쳐 같은 칸을 다툰다.
+    # 永昌郡은 애초에 哀牢 를 내속시켜 세운 郡이라 治所가 곧 哀牢 땅이지만, 지도에서는
+    # 두 세력이 한 점일 수 없다. 後漢書가 적은 본거지(牢山·瀾滄江 서편)를 좌표로 삼아
+    # 高黎貢山 너머 騰衝 으로 물린다 — 郡 밖 서쪽이라는 사료의 그림과도 맞는다.
+    ("哀牢", "EXTERNAL_PLACE", 4, "Tengchong City", CN, None, None,
+     "後漢書 卷86 「哀牢夷者，其先有婦人名沙壹，居於牢山」. 永昌郡 서쪽 본거지 — "
+     "devsam 맵의 南蠻. 保山(不韋)은 永昌郡 治所라 비워둔다",
+     "Yunnan", 60),
+    ("山越", "EXTERNAL_PLACE", 4, "Huangshan", CN, None, None,
      "三國志 55·60 「諸山越不賔，有寇難之縣」. 丹陽 산지 黟·歙 일대 — 부족 영역이라 넓다",
      "Anhui", 60),
     # --- 초원 ---
-    ("烏桓", "EXTERNAL_PLACE", 6, "Chifeng", CN, None, None,
+    ("烏桓", "EXTERNAL_PLACE", 4, "Chifeng", CN, None, None,
      "東夷傳 「烏丸者，東胡也 … 餘類保烏丸山」. 蹋頓의 柳城은 遼西郡이라 CHGIS 에 있다",
      "Inner Mongolia", 20),
-    ("鮮卑", "EXTERNAL_PLACE", 6, "Zhangjiakou", CN, None, None,
+    ("鮮卑", "EXTERNAL_PLACE", 4, "Zhangjiakou", CN, None, None,
      "檀石槐 王庭 = 高柳 북쪽 삼백여 리. 軻比能은 雲中·五原 동쪽을 다 거뒀다", None, 20),
-    ("南匈奴", "EXTERNAL_PLACE", 6, "Ordos City", CN, None, None,
+    ("南匈奴", "EXTERNAL_PLACE", 4, "Ordos City", CN, None, None,
      "單于庭 美稷 = 西河郡 오르도스 남부. 王庭은 애초에 점이 아니라 넓게 잡는다",
      "Inner Mongolia", 40),
 ]
 
-DISPUTED = {"邪馬壹國", "馬韓", "鮮卑", "南匈奴"}          # 비정이 갈리는 것. 게임은 견디지만 기록은 못 견딘다.
+DISPUTED = {"目支國", "辟卑離國", "大伽耶", "北沃沮", "鮮卑", "南匈奴", "邪馬壹國", "流求", "張掖屬國", "龜茲屬國"}                       # 비정이 갈리는 것. 게임은 견디지만 기록은 못 견딘다.
+# 도로 간선의 허브 — 郡國志에 없는 세력이라도 이곳들은 郡治급으로 승격해 오갈 수 있어야
+# 한다(build_terrain_grid.py). level 이 아니라 여기서만 표시한다.
+HUB = {"國內城", "卒本", "北沃沮", "安邪國", "悉直國", "押督國", "召文國", "于山國", "夫餘", "東沃沮", "濊", "目支國", "辟卑離國", "伯濟國", "州胡", "斯盧國",
+       "狗邪國", "古資彌凍國", "大伽耶", "星山伽耶", "古寧伽耶",
+       "夷洲", "邪馬壹國", "流求", "西羌", "白馬氐", "哀牢", "山越", "烏桓", "鮮卑", "南匈奴"}
 FIELDS = ("nameFt", "kind", "level", "modern", "country", "jun", "prov", "basis", "adm", "tol")
 
 
@@ -236,7 +327,7 @@ SELECT ?label ?item WHERE {{
         p.update(id=f"X{i:03d}", nameCh=p["nameFt"], namePy="", typeCh="",
                  lon=lon, lat=lat, wikidata=qid, begYr=-9999, endYr=9999,
                  conf="DISPUTED" if p["nameFt"] in DISPUTED else "IDENTIFIED",
-                 presLoc=p.pop("modern"))
+                 hub=p["nameFt"] in HUB, presLoc=p.pop("modern"))
         p.pop("country")
         out.append(p)
     return out, unresolved

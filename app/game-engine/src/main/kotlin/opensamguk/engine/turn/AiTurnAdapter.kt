@@ -1564,7 +1564,7 @@ class AiTurnAdapter(
         val out = ArrayList<Pair<Int, Double>>()
         for (unitRow in UnitSetTable.all(availability.unitSet)) {
             if (unitRow.armType != armType) continue
-            val unit = UnitCatalog.byId(unitRow.id) ?: continue
+            val unit = UnitCatalog.byId(availability.unitSet, unitRow.id) ?: continue
             if (RecruitUnitAvailability.isValid(
                     unit,
                     logicGeneral,
@@ -1605,7 +1605,7 @@ class AiTurnAdapter(
             val currId = general.crewTypeId.takeIf { it >= 1000 }
             val currUnit = currId
                 ?.takeIf { UnitSetTable.byId(availability.unitSet, it) != null }
-                ?.let { UnitCatalog.byId(it) }
+                ?.let { UnitCatalog.byId(availability.unitSet, it) }
             if (currUnit != null && RecruitUnitAvailability.isValid(
                     currUnit,
                     logicGeneral,

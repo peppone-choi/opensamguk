@@ -19,8 +19,8 @@ import opensamguk.logic.war.trigger.triggers.CheBangeoryeokJeunga5p
  * post-state numeric gate caught it.
  *
  * Pure map lookup over the crewType's declared trigger names → the concrete [opensamguk.logic.war.trigger]
- * classes. ZERO RNG. Unknown names are skipped (logged-by-omission) until their port lands — today only
- * `che_방어력증가5p` is declared on any crewType row.
+ * classes. ZERO RNG. Unknown names are skipped (identity — che 런타임 불변, 이 배틀 결과 자체는 바뀌지 않는다)
+ * BUT logged once via [warnUnknownOnce] so a `units.json` 오타·미구현 트리거가 조용히 사라지지 않는다.
  */
 class CrewTypeWarModule(private val crewType: GameUnitDetail) : GeneralActionModule {
 
@@ -39,6 +39,20 @@ class CrewTypeWarModule(private val crewType: GameUnitDetail) : GeneralActionMod
 
     private fun build(name: String, unit: WarUnit): opensamguk.logic.war.trigger.BaseWarUnitTrigger? = when (name) {
         "che_방어력증가5p" -> CheBangeoryeokJeunga5p(unit)
-        else -> null
+        else -> {
+            warnUnknownOnce(name)
+            null
+        }
+    }
+
+    companion object {
+        // ponytail: 이름당 한 번만 stderr 경고 — 매 전투 스킵마다 스팸을 내지 않는다.
+        private val warnedNames = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+        private fun warnUnknownOnce(name: String) {
+            if (warnedNames.add(name)) {
+                System.err.println("[CrewTypeWarModule] units.json 스킬 트리거 미구현/오타 (조용히 스킵됨): $name")
+            }
+        }
     }
 }

@@ -122,6 +122,61 @@ def main():
             external.append(e['nameFt'])
 
     places = sorted(seats.values(), key=lambda p: (p['nameCh'], p['lon'], p['lat']))
+
+    # CHGIS 는 같은 縣을 시기별·비정별로 여러 번 싣는다 — 盧氏縣 이 -100~1911 과 23~1911 로
+    # 두 줄, 堂陽縣 이 -196~555 와 -144~264 로 두 줄이다. 220년 필터만으로는 둘 다 남아
+    # 지도에 같은 이름이 나란히 두 번 찍힌다. 이름이 같고 서로 붙어 있으면(또는 오늘날
+    # 비정지가 같으면) 한 점으로 접는다. 멀리 떨어진 동명은 진짜 별개라 남긴다 —
+    # 汝南 上蔡 과 豫章 上蔡 은 다른 곳이다.
+    # 어간이 같고 좌표가 같으면 같은 자리다 — CHGIS 는 彭城县 과 彭城国(侯國) 을 같은 좌표로
+    # 따로 싣는다. 둘 다 縣 등급이면 행정 단위 쪽이 군더더기라 縣 을 남긴다. 한쪽이 郡
+    # 등급이면 건드리지 않는다 — 그 점이 郡 승격의 근거다(下邳县/下邳郡).
+    SUFFIX = '县縣國国郡州道邑'
+    def stem(n):
+        return n.rstrip(SUFFIX) or n
+
+    NEAR_DEG = 0.5
+    kept, folded, ties = [], [], []
+    for p in places:
+        near = None
+        for q in kept:
+            if q['nameCh'] != p['nameCh']:
+                if (q['kind'] == 'COUNTY' and p['kind'] == 'COUNTY'
+                        and stem(q['nameCh']) == stem(p['nameCh'])
+                        and abs(q['lon'] - p['lon']) <= 0.02 and abs(q['lat'] - p['lat']) <= 0.02):
+                    loser = p if q.get('typeCh') == '县' else q
+                    if loser is q:
+                        kept[kept.index(q)] = p
+                    folded.append(loser['nameFt'])
+                    near = False
+                    break
+                continue
+            same_spot = (q.get('presLoc') and q.get('presLoc') == p.get('presLoc')) or (
+                abs(q['lon'] - p['lon']) <= NEAR_DEG and abs(q['lat'] - p['lat']) <= NEAR_DEG)
+            if same_spot:
+                near = q
+                break
+        if near is False:
+            continue          # 위에서 접었다
+        if near is None:
+            kept.append(p)
+            continue
+        # 220년을 더 좁게 감싸는 시기 조각을 남긴다. 그 시대에 더 특정된 기록이다.
+        rank_p = (p['endYr'] - p['begYr'], str(p['id']))
+        rank_q = (near['endYr'] - near['begYr'], str(near['id']))
+        if rank_p[0] == rank_q[0]:
+            ties.append(f"{p['nameFt']}({near['id']}·{p['id']})")
+        loser = p if rank_q < rank_p else near
+        if loser is near:
+            kept[kept.index(near)] = p
+        folded.append(loser['nameFt'])
+    if folded:
+        msg = f'  중복  붙어있는 동명 {len(folded)}곳 접음'
+        if ties:
+            msg += f' · 시기 동률 {len(ties)}건은 id 순으로 골랐다: {ties}'
+        print(msg)
+    places = kept
+
     if not places:
         sys.exit(f'FATAL: {args.year}년 유효 치소 0건.')
 

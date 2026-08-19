@@ -83,6 +83,14 @@ def titles():
 
 
 def fetch(job):
+    """성공하면 파일명(str). 못 받으면 None — 문서가 원래 없거나(리다이렉트,
+    HTTP 오류가 재시도 끝에도 계속됨) 이 스크립트가 애초에 있는지 확인 없이 권 번호
+    범위를 통으로 훑기 때문에 흔한 정상 상황이다.
+
+    단 하나는 예외로 표시한다: 위키소스가 **오류 없이 빈 본문(HTTP 200)** 을 주는
+    알려진 현상 — 병렬 요청이 몰릴 때 일어나며 문서가 없어서가 아니다. 이건
+    #REDIRECT 처럼 즉시 건너뛰지 않고 재시도하고, 마지막 재시도 후에도 비어 있으면
+    ('empty', name) 으로 보고해 조용히 빈 코퍼스가 만들어지는 것을 막는다."""
     title, name = job
     path = os.path.join(OUT, name)
     if os.path.exists(path) and os.path.getsize(path) > 0:
@@ -90,18 +98,24 @@ def fetch(job):
     url = 'https://zh.wikisource.org/w/index.php?' + urllib.parse.urlencode(
         {'action': 'raw', 'title': title})
     req = urllib.request.Request(url, headers={'User-Agent': UA})
+    saw_empty = False
     for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 body = r.read()
-            if not body or body.startswith(b'#REDIRECT'):      # 리다이렉트 문서는 본문이 아니다.
-                return None
-            with open(path, 'wb') as f:
-                f.write(body)
-            return name
         except Exception:
             time.sleep(1 + attempt)
-    return None
+            continue
+        if body.startswith(b'#REDIRECT'):       # 리다이렉트 문서는 본문이 아니다 — 재시도 대상이 아니다.
+            return None
+        if not body:                            # 알려진 빈 응답 — 재시도 가능한 실패로 다룬다.
+            saw_empty = True
+            time.sleep(1 + attempt)
+            continue
+        with open(path, 'wb') as f:
+            f.write(body)
+        return name
+    return ('empty', name) if saw_empty else None
 
 
 def main():
@@ -112,11 +126,17 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     jobs = list(titles())
     with ThreadPoolExecutor(a.jobs) as ex:
-        got = [n for n in ex.map(fetch, jobs) if n]
+        results = list(ex.map(fetch, jobs))
+    got = [r for r in results if isinstance(r, str)]
+    empty = [r[1] for r in results if isinstance(r, tuple)]
     have = len([f for f in os.listdir(OUT) if f.endswith('.txt')])
     print(f'요청 {len(jobs)} · 이번에 받음 {len(got)} · 보유 {have}권 → {OUT}', file=sys.stderr)
     if len(got) and have < len(jobs) * 0.4:
         print('빠진 것이 많다. 한 번 더 실행하면 이어받는다.', file=sys.stderr)
+    if empty:
+        print(f'재시도 끝에도 빈 응답 {len(empty)}건(문서가 없는 게 아니라 위키소스 쪽 문제): '
+              + ' '.join(empty[:20]) + (' …' if len(empty) > 20 else ''), file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

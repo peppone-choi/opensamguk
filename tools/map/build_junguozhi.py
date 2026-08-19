@@ -144,7 +144,7 @@ HEAD_NEXT = re.compile(r'([一二三四五六七八九十百]{1,4}城[，。]|�
 NOT_HEAD = {'侯國', '故國', '本國', '父國', '國', '屬國', '都尉', '校尉', '故郡'}
 STATS = re.compile(r'^([一-鿿]*)城[，。]')
 HU = re.compile(r'戶([一-鿿]+?)，口([一-鿿]+?)。')
-DIST = re.compile(r'雒陽(東|西|南|北|東北|東南|西北|西南)?([一-鿿]+?)里')
+DIST = re.compile(r'雒陽(東北|東南|西北|西南|東|西|南|北)?([一-鿿]+?)里')
 
 # 지형·자원 태그: 註에서 직접 뽑는다. 밸런싱 수치를 지어내지 않기 위한 근거다.
 TAGS = [('IRON', r'有鐵'), ('SALT', r'有鹽'), ('MOUNTAIN', r'有([一-鿿]{1,3})山'),
@@ -188,8 +188,8 @@ def main():
         for _e in json.load(open('data/map/external-places.json'))['places']:
             EXTRA_ANCHOR.setdefault(
                 re.sub(r'(郡|國|尹)$', '', _e['nameCh']), []).append((_e['lon'], _e['lat']))
-    except Exception:
-        pass
+    except FileNotFoundError:
+        pass  # 아직 안 만들어졌을 뿐 — 이 파일이 다루는 郡만 MAX_KM 필터가 꺼진다
 
     MAX_KM = 400.0        # 縣은 자기 郡治 근처에 있다. 원거리 동명 縣은 오탐이다.
 

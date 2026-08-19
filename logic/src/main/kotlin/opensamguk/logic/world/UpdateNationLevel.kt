@@ -9,6 +9,8 @@ import opensamguk.logic.event.EventAction
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.log.HistoryTokens
 import opensamguk.logic.tick.MonthScopedRng
+import opensamguk.logic.world.rank.Legitimacy
+import opensamguk.logic.world.rank.NationRank
 import kotlin.math.pow
 
 /**
@@ -39,15 +41,21 @@ object UpdateNationLevel {
      * cityCnt]` row) and `break`s on the first `cityCnt < cmpCityCnt`, keeping the last index that
      * passed. With the 0-based table starting at threshold 0 the loop always yields at least 0.
      */
-    fun targetLevelByCityCnt(cityCnt: Int): Int {
+    fun targetLevelByCityCnt(
+        cityCnt: Int,
+        thresholds: List<Int> = defaultCityThresholds,
+    ): Int {
         var level = 0
-        for ((cmpLevel, row) in GameConst.nationLevelByCityCnt09.withIndex()) {
-            val cmpCityCnt = (row[2] as Number).toInt()
+        for ((cmpLevel, cmpCityCnt) in thresholds.withIndex()) {
             if (cityCnt < cmpCityCnt) break
             level = cmpLevel
         }
         return level
     }
+
+    /** PHP 패러티 문턱(che 기본) — [GameConst.nationLevelByCityCnt09] 3번째 열. */
+    val defaultCityThresholds: List<Int> =
+        GameConst.nationLevelByCityCnt09.map { (it[2] as Number).toInt() }
 
     /**
      * PHP `SELECT nation, count(*) FROM city WHERE LEVEL>=4 GROUP BY nation` (`:34-37`).
@@ -67,7 +75,7 @@ object UpdateNationLevel {
         val counts = LinkedHashMap<Int, Int>()
         for ((cityId, nationId) in cityOwnership) {
             val level = cityConst.byId(cityId)?.level ?: continue
-            if (level < 4) continue
+            if (!cityConst.countsForNationLevel(level)) continue
             counts[nationId] = (counts[nationId] ?: 0) + 1
         }
         return counts
@@ -81,8 +89,12 @@ object UpdateNationLevel {
      * the old/new level + `levelDiff` (which drives the NL3 lottery iteration count + the NL2
      * `level*1000` grant).
      */
-    fun computeLevelUp(currentLevel: Int, cityCnt: Int): LevelUp? {
-        val target = targetLevelByCityCnt(cityCnt)
+    fun computeLevelUp(
+        currentLevel: Int,
+        cityCnt: Int,
+        thresholds: List<Int> = defaultCityThresholds,
+    ): LevelUp? {
+        val target = targetLevelByCityCnt(cityCnt, thresholds)
         if (target <= currentLevel) return null
         return LevelUp(oldLevel = currentLevel, newLevel = target, levelDiff = target - currentLevel)
     }
@@ -113,8 +125,11 @@ object UpdateNationLevel {
      *      12)` is HALF-OPEN) × `turnIdx 0..11` (`Util::range(maxChiefTurn=12)` → 0..11). insertIgnore.
      *
      * **8/9 (the APPEND):** HistoryTokens.nationLevelUp{Global,National} already routes 7/8/9 through
-     * the case-7 옹립 pattern with the new level names — so 8/9 emit the new 작위 templates by the
+     * the case-7 옹립 pattern with the new level names — so 8/9 emit the new 작위 템플릿 by the
      * existing arithmetic (no remap). The aux unlock also covers 8/9 (they inherit lv7's unlock).
+     *
+     * [titleUnlockLevel] 은 aux 국호/국기 해금 문턱이다. 기본 7 = PHP 패러티(case 7 이상)이라
+     * che·기존 호출부는 완전 무변이고, han 만 `CityConstVariant.nationTitleUnlockLevel` = 5 를 넘긴다.
      */
     fun applyLevelUp(
         nation: Nation,
@@ -122,6 +137,7 @@ object UpdateNationLevel {
         year: Int,
         month: Int,
         levelUp: LevelUp,
+        titleUnlockLevel: Int = 7,
     ): LevelUpEffects {
         val newLevel = levelUp.newLevel
         val oldLevel = levelUp.oldLevel
@@ -135,7 +151,7 @@ object UpdateNationLevel {
         val nationalLog = HistoryTokens.nationLevelUpNational(newLevel, nation.name, lordName, oldText, newText)
 
         // (1)+(3 aux): build the updated nation (level/gold/rice + aux unlock at 7/8/9).
-        val updatedMeta: Map<String, Any?> = if (newLevel >= 7) {
+        val updatedMeta: Map<String, Any?> = if (newLevel >= titleUnlockLevel) {
             unlockChiefAux(nation.meta)
         } else {
             nation.meta
@@ -400,6 +416,13 @@ interface UpdateNationLevelContext : EventActionContext {
      */
     fun applyNationLevelUp(effects: UpdateNationLevel.LevelUpEffects)
 
+    /**
+     * 3축 랭크 축(爵/官/천자)만 바뀌고 spine level 은 그대로인 경우의 meta 반영 seam.
+     * level-up 이 없을 때도 爵(亭侯→鄉侯→縣侯)은 올라가므로 이 경로가 없으면 표시가 멈춘다.
+     * che 에서는 호출되지 않는다.
+     */
+    fun applyNationRank(nation: Nation)
+
     /** The item grant seam; returns true if an item was granted. */
     fun giveRandomUniqueItem(rng: RandUtil, winnerId: Int): Boolean
 
@@ -414,26 +437,104 @@ interface UpdateNationLevelContext : EventActionContext {
 class UpdateNationLevelAction : EventAction {
     override fun run(ctx: EventActionContext) {
         val world = ctx as UpdateNationLevelContext
-        val cityCounts = UpdateNationLevel.cityCountsByNation(world.cityOwnership(), world.cityConst())
+        val cc = world.cityConst()
+        val ownership = world.cityOwnership()
+        val cityCounts = UpdateNationLevel.cityCountsByNation(ownership, cc)
+        // 3축 맵에서만 필요한 州별 郡治 분포. che 에서는 계산조차 하지 않는다.
+        val seatsByNationProvince: Map<Int, Map<Int, Int>> =
+            if (cc.supportsThreeAxisRank) seatsByNationProvince(ownership, cc) else emptyMap()
+
         for (nation in world.nations()) {
             val cityCnt = cityCounts[nation.id] ?: 0
-            val levelUp = UpdateNationLevel.computeLevelUp(nation.level, cityCnt) ?: continue
-            val lord = world.lordName(nation.id) ?: ""
-            val effects = UpdateNationLevel.applyLevelUp(nation, lord, world.year(), world.month(), levelUp)
-            world.applyNationLevelUp(effects)
-            val lottery = UpdateNationLevel.runUniqueLottery(
-                nationId = nation.id,
-                year = world.year(),
-                month = world.month(),
-                startYear = world.startYear(),
-                hiddenSeed = world.hiddenSeed(),
-                levelDiff = levelUp.levelDiff,
-                killturnEnv = world.killturnEnv(),
-                turnterm = world.turnterm(),
-                generals = world.generals(),
-                giveRandomUniqueItem = { rng: RandUtil, winnerId: Int -> world.giveRandomUniqueItem(rng, winnerId) },
+
+            if (!cc.supportsThreeAxisRank) {
+                // ── che (PHP 패러티) — 기존 경로 그대로. 호출 순서·인자·부수효과 순서 무변. ──
+                val levelUp = UpdateNationLevel
+                    .computeLevelUp(nation.level, cityCnt, cc.nationLevelCityThresholds)
+                    ?: continue
+                val lord = world.lordName(nation.id) ?: ""
+                val effects = UpdateNationLevel.applyLevelUp(nation, lord, world.year(), world.month(), levelUp)
+                world.applyNationLevelUp(effects)
+                runLottery(world, nation.id, levelUp.levelDiff)
+                continue
+            }
+
+            // ── han 3축(爵·官·天子) ──
+            val seatsByProvince = seatsByNationProvince[nation.id] ?: emptyMap()
+            val legitimacy = NationRank.legitimacyOf(
+                nation.name,
+                nation.typeCode,
+                nation.meta["legitimacy"] as? String,
             )
-            world.applyLotteryResult(nation.id, lottery)
+            val holdsEmperor = nation.meta["holdsEmperor"].let { it == true || it == 1 || it == "1" }
+            val rank = NationRank.compute(
+                seatCount = cityCnt,
+                seatsByProvince = seatsByProvince,
+                totalSeatsByProvince = cc.seatCountByProvince,
+                legitimacy = legitimacy,
+                holdsEmperor = holdsEmperor,
+            )
+            val nationWithAxes = nation.copy(meta = withRankAxes(nation.meta, rank, legitimacy))
+
+            // spine level 은 城 수 문턱이 아니라 3축 최댓값이 정한다. 단조 가드는 그대로.
+            if (rank.level > nation.level) {
+                val levelUp = UpdateNationLevel.LevelUp(nation.level, rank.level, rank.level - nation.level)
+                val lord = world.lordName(nation.id) ?: ""
+                val effects = UpdateNationLevel.applyLevelUp(
+                    nationWithAxes, lord, world.year(), world.month(), levelUp, cc.nationTitleUnlockLevel,
+                )
+                world.applyNationLevelUp(effects)
+                runLottery(world, nation.id, levelUp.levelDiff)
+            } else if (nationWithAxes.meta != nation.meta) {
+                world.applyNationRank(nationWithAxes)
+            }
         }
+    }
+
+    private fun runLottery(world: UpdateNationLevelContext, nationId: Int, levelDiff: Int) {
+        val lottery = UpdateNationLevel.runUniqueLottery(
+            nationId = nationId,
+            year = world.year(),
+            month = world.month(),
+            startYear = world.startYear(),
+            hiddenSeed = world.hiddenSeed(),
+            levelDiff = levelDiff,
+            killturnEnv = world.killturnEnv(),
+            turnterm = world.turnterm(),
+            generals = world.generals(),
+            giveRandomUniqueItem = { rng: RandUtil, winnerId: Int -> world.giveRandomUniqueItem(rng, winnerId) },
+        )
+        world.applyLotteryResult(nationId, lottery)
+    }
+
+    /** 세력 → (州 → 그 세력이 가진 郡治 수). [UpdateNationLevel.cityCountsByNation] 과 같은 필터를 쓴다. */
+    private fun seatsByNationProvince(
+        cityOwnership: List<Pair<Int, Int>>,
+        cityConst: CityConstVariant,
+    ): Map<Int, Map<Int, Int>> {
+        val out = LinkedHashMap<Int, LinkedHashMap<Int, Int>>()
+        for ((cityId, nationId) in cityOwnership) {
+            val city = cityConst.byId(cityId) ?: continue
+            if (!cityConst.countsForNationLevel(city.level)) continue
+            val perProvince = out.getOrPut(nationId) { LinkedHashMap() }
+            perProvince[city.region] = (perProvince[city.region] ?: 0) + 1
+        }
+        return out
+    }
+
+    /** 3축 결과를 meta 에 얹는다 — 기존 키 삽입 순서 보존, 있으면 제자리 덮어쓰기(PHP 대입 의미론). */
+    private fun withRankAxes(
+        meta: Map<String, Any?>,
+        rank: NationRank.Rank,
+        legitimacy: Legitimacy,
+    ): Map<String, Any?> {
+        val out = LinkedHashMap(meta)
+        out["rankPeerage"] = rank.peerage.name
+        out["rankProvincialOffice"] = rank.provincialOffice.name
+        out["rankProvinceId"] = rank.provinceId
+        out["rankCentralOffice"] = rank.centralOffice.name
+        if (rank.banditLabel.isNotEmpty()) out["rankBanditLabel"] = rank.banditLabel
+        out["legitimacy"] = legitimacy.name
+        return out
     }
 }

@@ -43,10 +43,17 @@ object UnitCatalog {
 
     fun all(unitSet: String): Map<Int, GameUnitDetail> = loaded.units[unitSet].orEmpty()
 
-    /** 세트를 몰라도 되는 조회 — id 대역이 겹치지 않는다. che 는 [GameUnitConst] 가 답한다. */
-    fun byId(id: Int): GameUnitDetail? =
-        if (id in 1000..1999) GameUnitConst.byId(id) else loaded.units.values.firstNotNullOfOrNull { it[id] }
+    /**
+     * 세트를 몰라도 되는 조회 — id 대역이 겹치지 않는다. che 는 [GameUnitConst] 가 답한다.
+     * che 판정은 리터럴이 아니라 `units.json` 이 선언한 [SetMeta.idRange] 하나만 본다 —
+     * 진실을 두 곳에 두지 않는다.
+     */
+    fun byId(id: Int): GameUnitDetail? {
+        val set = setOf(id) ?: return null
+        return if (set == CHE) GameUnitConst.byId(id) else loaded.units[set]?.get(id)
+    }
 
+    /** 세트를 아는 조회 — `all(unitSet)` 이 이미 그 세트 소속 id 만 담고 있어 대역 밖은 자연히 null 이다. */
     fun byId(unitSet: String, id: Int): GameUnitDetail? = all(unitSet)[id]
 
     fun setOf(id: Int): String? = loaded.sets.entries.firstOrNull { id in it.value.idRange }?.key

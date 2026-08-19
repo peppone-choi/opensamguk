@@ -455,7 +455,9 @@ def fold_to_jun(places, proj, junguo):
 
     # 이체자. CHGIS 표기와 郡國志 표기가 갈리면 같은 郡이 둘로 쪼개져 서로의 땅에
     # 위요지를 만든다(郁林/鬱林, 河間/河閒). 접기 전에 한 글자로 맞춘다.
-    var = str.maketrans('郁閒雒鴈沇涼峕竝恒鬴', '鬱間洛雁兗凉時并弘釜')
+    # 이체자 정규화. 鉅=巨(鉅鹿郡), 牁=柯(牂牁郡), 嶲=巂(越巂郡) 를 빼면 같은 郡이
+    # CHGIS 표기 차이만으로 둘로 갈라져 지도에 두 번 찍힌다.
+    var = str.maketrans('郁閒雒鴈沇涼峕竝恒鬴鉅牁嶲', '鬱間洛雁兗凉時并弘釜巨柯巂')
 
     def norm(n):
         return (n or '').translate(var).rstrip('縣县國国道邑侯郡尹屬國属国')
@@ -471,6 +473,9 @@ def fold_to_jun(places, proj, junguo):
 
     jun_of = [-1] * len(places)
     seat_of, names = {}, []
+    # 郡國志가 이름으로 적어둔 縣에 실제로 붙은 점. 이 집합만이 "사료에 실린 縣"이고,
+    # 나머지 CHGIS 점은 좌표만 있고 소속·이름 근거가 없어 게임 거점으로 못 쓴다.
+    zhi: set[int] = set()
     bound = unbound = 0
     for jn, jun in enumerate(junguo):
         names.append(jun['name'])
@@ -479,8 +484,13 @@ def fold_to_jun(places, proj, junguo):
                 continue
             if (c['lon'], c['lat']) in ambiguous:
                 continue
+            # 郡 점은 縣 후보가 아니다. 이름이 안 맞는 縣을 좌표만 보고 근처 아무 점에나
+            # 붙이는 폴백이 郡 점을 집어가면(定襄郡 점이 이웃 郡의 縣이 되는 식) 그 郡은
+            # 제 이름으로 승격될 기회를 잃고 지도에서 통째로 사라진다. 郡 자리는 아래
+            # 이름 매칭 블록이 따로 잡는다.
             cand = by_name.get(norm(c['name']))
-            pool = cand if cand else range(len(places))
+            pool = cand if cand else [i for i in range(len(places))
+                                      if places[i].get('kind') != 'COMMANDERY']
             ranked = sorted(
                 ((math.hypot((places[i]['lon'] - c['lon']) * math.cos(math.radians(c['lat'])),
                              places[i]['lat'] - c['lat']) * 111.0, i) for i in pool))
@@ -492,6 +502,7 @@ def fold_to_jun(places, proj, junguo):
             best, bd = (free if free else (ranked[0] if ranked else (1e9, -1)))[::-1]
             if best >= 0 and bd < lim:
                 bound += 1
+                zhi.add(best)
                 if jun_of[best] < 0:
                     jun_of[best] = jn
                 if c['name'] == jun.get('seat'):
@@ -508,10 +519,16 @@ def fold_to_jun(places, proj, junguo):
     for i, pl in enumerate(places):
         if jun_of[i] >= 0 or pl.get('kind') != 'COMMANDERY':
             continue
-        k = jun_ix.get(norm(pl.get('nameFt') or pl.get('nameCh')))
+        # 정확히 같은 이름이 먼저다. norm() 은 꼬리의 郡/國/屬國을 다 떼기 때문에
+        # 廣漢屬國 → '廣漢' → 廣漢郡 으로 무너진다. 그러면 屬國은 제 郡을 잃고 모군에
+        # 흡수돼 지도에서 사라진다(廣漢·張掖·遼東 세 屬國이 그렇게 없어졌다).
+        pn = pl.get('nameFt') or pl.get('nameCh')
+        k = jun_ix.get(pn)
+        if k is None:
+            k = jun_ix.get(norm(pn))
         if k is None:
             for n, kk in jun_ix.items():
-                if norm(n) == norm(pl.get('nameFt') or pl.get('nameCh')):
+                if norm(n) == norm(pn):
                     k = kk
                     break
         if k is None:
@@ -524,7 +541,10 @@ def fold_to_jun(places, proj, junguo):
         # CHGIS 의 郡 점은 **필요 없다** — 소속은 사료에서 읽어온다는 이 파일의 원칙
         # 그대로다. 그때 CHGIS 점을 덧대면 핵이 둘이 되고, 그 점이 어긋나 있으면
         # 남의 郡 한복판에 위요지가 된다. 治所를 못 찾은 郡에서만 CHGIS 점이 근거다.
-        if k in seat_of:
+        # 다만 그 治所 縣이 **실제로 이 郡에 붙어 있을 때만** 그렇다. 동명 縣 쟁탈에서
+        # 治所를 다른 郡에 뺏겼으면(遼東屬國 治 昌遼가 遼東郡에 먹히는 식) 이 郡은 縣이
+        # 하나도 없어 통째로 지워진다. 그때는 CHGIS/외부 점이 유일한 근거다.
+        if k in seat_of and jun_of[seat_of[k]] == k:
             # 제 郡이 아니라고 판정했다고 **독립 郡**으로 승격시키면 안 된다. 아래 소국
             # 승격 규칙이 그걸 하려 들기 때문에 여기서 표시해 둔다 — 이 점은 그냥
             # 가장 가까운 郡에 흡수된다.
@@ -532,12 +552,62 @@ def fold_to_jun(places, proj, junguo):
             continue
         jun_of[i] = k
 
-    # 漢 밖 소국(level>=6)은 郡國志에 없으니 저마다 郡이 된다.
+    # 郡國志에 붙지 못한 郡 점은 저마다 郡이 된다 — 兩者다.
+    #   · kind=COMMANDERY  : 郡國志에 이름이 없거나(屬國·후한말 이치) 治所 縣이 좌표
+    #                        미해결인 정식 郡. 이걸 빼면 遼東屬國처럼 실재한 郡이 지도에서
+    #                        사라진다(hub 만 보면 郡治 161 → 118 로 줄었다).
+    #   · hub=True         : 漢 밖 소국. level 은 lv4('이') 고정이라 여기 쓰지 않고
+    #                        build_external_places.py 의 HUB 표시만 본다.
+    #
+    # 그 郡의 治所는 곁에 같은 이름의 縣이 있으면 그 縣이다. CHGIS 는 郡 점과 治所 縣
+    # 점을 따로 싣기 때문에(樂平郡·樂平縣) 郡 점을 治所로 두면 같은 자리에 점이 둘
+    # 찍히고 성 이름이 '樂平郡'이 된다 — 성 이름은 治所 縣 이름이라는 규칙에도 어긋난다.
+    def _stem(n):
+        return n.rstrip('县縣國国郡州道邑') or n
+
+    twin_of = {}
     for i, pl in enumerate(places):
-        if jun_of[i] < 0 and i not in misplaced and pl.get('level', 5) >= 6 and pl.get('kind') != 'PROVINCE':
+        if pl.get('kind') == 'COUNTY':
+            twin_of.setdefault(_stem(pl.get('nameCh') or ''), []).append(i)
+    seated = set(seat_of.values())
+    def _twin(i, pl, want_seated):
+        """곁(0.25°)에 있는 같은 이름의 縣. want_seated 로 이미 治所인 것만/아닌 것만."""
+        return next((j for j in twin_of.get(_stem(pl.get('nameCh') or ''), [])
+                     if (j in seated) == want_seated
+                     and abs(places[j]['lon'] - pl['lon']) <= 0.25
+                     and abs(places[j]['lat'] - pl['lat']) <= 0.25), None)
+
+    for i, pl in enumerate(places):
+        if (jun_of[i] < 0 and i not in misplaced and pl.get('kind') != 'PROVINCE'
+                and (pl.get('hub') or pl.get('kind') == 'COMMANDERY')):
+            # 그 이름의 縣이 이미 다른 郡의 治所라면, 이 CHGIS 郡 점은 그 郡을 다른
+            # 이름으로 한 번 더 적은 것이다(蜀郡屬國 = 漢嘉郡, 陳國 = 陳郡). 승격하면
+            # 같은 자리에 郡이 둘 생긴다 — 승격하지 말고 그 郡에 흡수시킨다.
+            dup = _twin(i, pl, True)
+            if dup is not None:
+                jun_of[i] = jun_of[dup]
+                continue
             jun_of[i] = len(names)
             names.append(pl.get('nameFt') or pl.get('nameCh'))
             seat_of[jun_of[i]] = i
+            twin = _twin(i, pl, False)
+            if twin is not None:
+                jun_of[twin] = jun_of[i]
+                seat_of[jun_of[i]] = twin
+                seated.add(twin)
+    # 郡國志가 잡아준 治所가 CHGIS 의 郡 점인 경우도 있다(陳國 治가 '陳郡' 점으로 잡혔다).
+    # 그러면 성 이름이 '陳郡'이 되고 바로 옆 陳縣 점과 둘로 보인다. 같은 이름의 縣이
+    # 곁에 있으면 그쪽이 治所다.
+    for k, i in list(seat_of.items()):
+        if places[i].get('kind') != 'COMMANDERY':
+            continue
+        twin = _twin(i, places[i], False)
+        if twin is not None:
+            jun_of[twin] = k
+            seat_of[k] = twin
+            seated.discard(i)
+            seated.add(twin)
+
     # 郡國志에 없는 縣(CHGIS 에만 있는 것)은 독립 郡으로 두지 않는다 — 그러면 郡이
     # 900개가 된다. 가장 가까운 소속 縣의 郡에 붙인다.
     known = [i for i, v in enumerate(jun_of) if v >= 0]
@@ -562,7 +632,7 @@ def fold_to_jun(places, proj, junguo):
         seat = seat_of.get(jn)
         hubs.append(seat if seat is not None and jun_of[seat] == k else members[k][0])
         out_names.append(names[jn])
-    return np.array(jun_of, dtype=np.int32), hubs, out_names
+    return np.array(jun_of, dtype=np.int32), hubs, out_names, sorted(zhi)
 
 
 def cross_by_path(cost, pts, edges, terrain):
@@ -691,7 +761,7 @@ def main():
 
     # ── 郡: 소속은 郡國志에서 읽고, 영역은 그 縣들이 가진 셀의 합집합으로 만든다 ──
     junguo = json.load(open(JUNGUO))['places'] if os.path.exists(JUNGUO) else []
-    jun_of, hubs, jun_names = fold_to_jun(hp['places'], proj, junguo)
+    jun_of, hubs, jun_names, zhi_places = fold_to_jun(hp['places'], proj, junguo)
     jun_name_ix = {nm: k for k, nm in enumerate(jun_names)}
     # 郡 영역은 縣 소유를 접기만 해선 사료와 100% 안 맞는다. 郡國志가 적은 縣 좌표와
     # CHGIS 좌표가 한두 셀 어긋나면 그 縣이 이웃 郡 땅에 떨어진다. 두 좌표를 **모두**
@@ -747,6 +817,8 @@ def main():
         'counts': counts, 'terrain': terrain.tolist(), 'owner': owner.tolist(),
         'region': region.tolist(), 'regionNames': names,
         'hubs': hubs, 'junOf': jun_of.tolist(), 'junNames': jun_names,
+        # 郡國志에 이름이 실린 縣(=게임 거점 후보). 나머지 점은 배경이다.
+        'zhiPlaces': zhi_places,
         'roads': roads, 'fords': ford_list,
         # 이동 그래프. 길이 아니라 영역 인접이다 — 도로는 간선만 남겨 통행 보정에 쓴다.
         'adjacency': {'county': adjacency(owner), 'commandery': adj_m},

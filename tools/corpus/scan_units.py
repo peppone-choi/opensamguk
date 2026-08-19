@@ -9,10 +9,14 @@
 """
 import collections, glob, os, re, sys
 
-SRC = 'data/corpus'
+SRC = os.environ.get('SHILIAO_HOME') or ('data/corpus' if os.path.isdir('data') else os.path.expanduser('~/.shiliao'))
 GROUP = {'sgz': '三國志', 'hhs': '後漢書', 'hyg': '華陽國志', 'js': '晉書', 'js2': '晉書',
-         'yy': '演義', 'zztj': '資治通鑑', 'yhjx': '元和郡縣圖志', 'ssxy': '世說新語', 'ss': '宋書'}
-ORDER = ['三國志', '後漢書', '華陽國志', '晉書', '資治通鑑', '演義']
+         'yy': '演義', 'zztj': '資治通鑑', 'yhjx': '元和郡縣圖志', 'ssxy': '世說新語', 'ss': '宋書',
+         'hs': '漢書', 'sj': '史記', 'sui': '隋書', 'wei': '魏書', 'dsfy': '讀史方輿紀要', 'misc': '雜'}
+# 정사 우선 순위 그대로 훑는다 — fetch_sources.py 가 받는 사서 전부를 넣는다. 여기 없는
+# 사서에만 있는 용어는 "사료 근거 없음"으로 오판된다.
+ORDER = ['三國志', '後漢書', '華陽國志', '漢書', '史記', '晉書', '隋書', '魏書', '宋書',
+         '資治通鑑', '元和郡縣圖志', '讀史方輿紀要', '世說新語', '演義', '雜']
 
 CANDIDATES = [
     # 정사 부대

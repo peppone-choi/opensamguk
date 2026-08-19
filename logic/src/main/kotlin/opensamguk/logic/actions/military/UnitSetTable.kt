@@ -64,6 +64,9 @@ object UnitSetTable {
     /** id 대역이 세트마다 갈려 있어 세트를 몰라도 찾을 수 있다 (UnitCatalog 참조). */
     private val BY_ID: Map<Int, UnitDetail> = BY_SET.values.flatten().associateBy { it.id }
 
+    /** 세트 경계를 강제하는 조회용 — 세트별로 따로 인덱싱한다. */
+    private val BY_SET_ID: Map<String, Map<Int, UnitDetail>> = BY_SET.mapValues { (_, rows) -> rows.associateBy { it.id } }
+
     fun all(): List<UnitDetail> = BY_SET.getValue(CHE_UNIT_SET)
 
     fun all(unitSet: String?): List<UnitDetail> = BY_SET[normalizedUnitSet(unitSet)].orEmpty()
@@ -90,8 +93,8 @@ object UnitSetTable {
         return BY_ID[id]
     }
 
-    fun byId(unitSet: String?, id: Int): UnitDetail? =
-        if (isSupported(unitSet)) byId(id) else null
+    /** 세트 경계를 강제한다 — id 가 전역엔 있어도 그 세트 소속이 아니면 null. */
+    fun byId(unitSet: String?, id: Int): UnitDetail? = BY_SET_ID[normalizedUnitSet(unitSet)]?.get(id)
 
     private fun normalizedUnitSet(unitSet: String?): String = unitSet ?: CHE_UNIT_SET
 

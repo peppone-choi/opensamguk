@@ -105,7 +105,7 @@ data/scenarios/reports/
 # 커밋되는 것은 tools/map/*.py 추출 스크립트뿐이다.
 data/chgis-source/
 # 파생 좌표·격자·계층 전부 미커밋. 커밋되는 것은 tools/map/*.py 뿐이다.
-data/map/
+data/map/*
 # ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
 !data/map/han-tiles.json
 **/v6_*_pts*

@@ -33,9 +33,6 @@ object CityConst {
         "특" to 8, 8 to "특",
     )
 
-    private fun levelToInt(label: String): Int = levelMap.getValue(label) as Int
-    private fun regionToInt(label: String): Int = regionMap.getValue(label) as Int
-
     /**
      * Raw $initCity row before _generate(): level/region are labels, path is name-list, stats raw.
      *
@@ -64,7 +61,11 @@ object CityConst {
      * **last-wins quirk** `$constRegion[$region] = $city`). Behavior is unchanged from the original
      * inlined lazy block — this only makes it callable with a different initCity row set.
      */
-    fun generateCities(rawRows: List<RawCity>): GeneratedCities {
+    fun generateCities(
+        rawRows: List<RawCity>,
+        regionMap: Map<Any, Any> = CityConst.regionMap,
+        levelMap: Map<Any, Any> = CityConst.levelMap,
+    ): GeneratedCities {
         val nameMap = LinkedHashMap<String, Int>()
         for (raw in rawRows) nameMap[raw.name] = raw.id
 
@@ -73,14 +74,14 @@ object CityConst {
         val constRegion = LinkedHashMap<Int, CityInitialDetail>()
 
         for (raw in rawRows) {
-            val level = levelToInt(raw.level)
+            val level = levelMap.getValue(raw.level) as Int
             val population = raw.population * 100
             val agriculture = raw.agriculture * 100
             val commerce = raw.commerce * 100
             val security = raw.security * 100
             val defence = raw.defence * 100
             val wall = raw.wall * 100
-            val region = regionToInt(raw.region)
+            val region = regionMap.getValue(raw.region) as Int
             val newPath = LinkedHashMap<Int, String>()
             for (pathName in raw.path) {
                 val pathId = nameMap.getValue(pathName)

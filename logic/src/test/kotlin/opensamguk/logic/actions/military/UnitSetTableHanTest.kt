@@ -5,6 +5,7 @@ import opensamguk.common.constants.UnitCatalog
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** han 세트가 실제로 물렸는지 — 이전엔 `isSupported` 가 che 하나만 참이었다. */
@@ -33,6 +34,16 @@ class UnitSetTableHanTest {
         assertTrue(hanDefault >= 2000)
         // 예전 AutorunNationPolicy 는 상수 1100 을 그대로 썼다 — han 에서 NPE 였다.
         assertNotNull(UnitSetTable.byId(hanDefault))
+    }
+
+    @Test
+    fun `세트를 아는 조회는 활성 세트 밖 id 를 거절한다`() {
+        // che 병종 id 를 han 세트로 물으면 null — 전역엔 있어도 활성 세트 밖은 통과시키지 않는다.
+        assertNull(UnitSetTable.byId("han", GameUnitConst.DEFAULT_CREWTYPE))
+        assertNull(UnitSetTable.byId(UnitSetTable.CHE_UNIT_SET, UnitSetTable.defaultCrewTypeId("han")!!))
+        // 자기 세트 안에서는 여전히 찾는다.
+        assertNotNull(UnitSetTable.byId(UnitSetTable.CHE_UNIT_SET, GameUnitConst.DEFAULT_CREWTYPE))
+        assertNotNull(UnitSetTable.byId("han", UnitSetTable.defaultCrewTypeId("han")!!))
     }
 
     @Test

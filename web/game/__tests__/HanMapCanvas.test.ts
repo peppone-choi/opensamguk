@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { borderCells, expandOwner, labelledRegions } from '../components/game/HanMapCanvas';
+import { expandOwner, labelledRegions, seatLabel } from '../components/game/HanMapCanvas';
 
 describe('HanMapCanvas 격자 해제', () => {
     it('런렝스를 셀 배열로 되돌린다', () => {
@@ -12,13 +12,14 @@ describe('HanMapCanvas 격자 해제', () => {
 
     it('작은 지역은 라벨을 달지 않는다 — 겹쳐 읽히지 않게', () => {
         const r = (name: string, cells: number) =>
-            ({ name, en: name, cls: 'Range/mtn', col: 1, row: 1, cells });
+            ({ name, nameCh: name, en: name, cls: 'Range/mtn', col: 1, row: 1, cells });
         expect(labelledRegions([r('太行山', 500), r('조각', 3)]).map((x) => x.name)).toEqual(['太行山']);
     });
 
-    it('라벨이 갈리는 자리만 국경으로 뽑는다 — 바다(-1)는 국경이 아니다', () => {
-        // 2×2. 왼쪽 열은 郡0, 오른쪽 위는 郡1, 오른쪽 아래는 바다.
-        const g = Int16Array.from([0, 1, 0, -1]);
-        expect(borderCells(g, 2, 2)).toEqual([0, 1, 2]);
+    it('성 이름은 治所 縣 이름에서 縣을 뗀다 — 郡 이름이 아니다', () => {
+        expect(seatLabel('낙양현')).toBe('낙양');
+        expect(seatLabel('회현')).toBe('회');       // 한 글자로 줄어도 사료 그대로
+        expect(seatLabel('현')).toBe('현');         // 이름 자체가 '현'이면 그대로
+        expect(seatLabel('요동군')).toBe('요동군'); // 縣 기록이 없는 자리는 손대지 않는다
     });
 });

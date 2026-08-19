@@ -33,17 +33,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "data" / "unitset" / "units.json"
 
-FOOT, ARCHER, CAV, WIZ, SIEGE = 1, 2, 3, 4, 5
-
-# ── 무기 ────────────────────────────────────────────────────────────────────────
-# (공격, 공격계수 덧, 방어계수 덧, 방패 가능, 비고)
-# 관통 무기(부·노)는 방어 높은 상대에 계수를 얹고, 장병기(모·삭·극)는 기병 돌격을 되받는다.
-# 되받음은 새 메커니즘이 아니라 defenceCoef[기병] < 1 한 줄이다 — 엔진을 건드리지 않는다.
 # ── 설계표는 파일 안에 있다 ─────────────────────────────────────────────────────
 # 무기·갑옷·방패·등급·성격·계수·공식이 전부 data/unitset/units.json 의 `tables` 에 있다.
 # 여기서 다시 적지 않는다 — 표가 두 곳에 있으면 어느 쪽이 맞는지 아무도 모른다.
@@ -61,10 +56,17 @@ GATE_KEYS = tuple(T["gateKeys"])
 WA = T["forbidRegionsForCavalry"]
 
 
+def php_round(x: float, ndigits: int = 0) -> float:
+    """`Util::round`/`PhpRound` 와 같은 half-away-from-zero 반올림.
+    파이썬 내장 round() 는 half-to-even 이라 .5 에서 결과가 갈릴 수 있다."""
+    q = Decimal(1).scaleb(-ndigits)
+    return float(Decimal(str(x)).quantize(q, rounding=ROUND_HALF_UP))
+
+
 def mul(base: dict, extra: dict) -> dict:
     out = dict(base)
     for k, v in extra.items():
-        out[int(k)] = round(out.get(int(k), 1.0) * v, 3)
+        out[int(k)] = php_round(out.get(int(k), 1.0) * v, 3)
     return out
 
 
@@ -132,7 +134,7 @@ def derive(u: dict) -> dict:
         extra.append("사료가 이름을 남긴 부대 — 같은 등급 기본 병종보다 낫다.")
 
     magic = {1: 0.5, 2: 0.55, 3: 0.6}[tier] if arm == WIZARD else 0.0  # tables.formulas.magicCoef
-    cost = round((atk + dfn) / 30) + weight + (2 if arm == CAV else 0)
+    cost = int(php_round((atk + dfn) / 30)) + weight + (2 if arm == CAV else 0)
     # 차병은 사람이 적게 먹는다. 다만 0 아래로는 내리지 않는다.
     rice = max(1, cost + (1 if arm == CAV else 0) - (5 if arm == SIEGE else 0))
 
@@ -178,7 +180,7 @@ def derive(u: dict) -> dict:
 
 KEYS = ["set", "id", "name", "han", "armType", "tier", "tierName", "category", "role",
         "generic", "derived", "composition", "requires", "evidence", "nameCoined", "attack", "defence",
-        "speed", "avoid", "magicCoef", "cost", "rice", "reqConstraints", "attackCoef",
+        "speed", "avoid", "magicCoef", "cost", "rice", "reqTech", "reqConstraints", "attackCoef",
         "defenceCoef", "initSkillTrigger", "phaseSkillTrigger", "iActionList", "info"]
 
 
@@ -186,13 +188,17 @@ def build() -> dict:
     doc = DOC
     ids = [u["id"] for u in doc["crewTypes"]]
     assert len(ids) == len(set(ids)), "id 중복"
+    assert all(isinstance(i, int) for i in ids), "id 누락"
     for s, r in doc["sets"].items():          # id 대역을 벗어난 행은 세트가 섞였다는 뜻이다
         lo, hi = r["idRange"]
         bad = [u["id"] for u in doc["crewTypes"] if u["set"] == s and not lo <= u["id"] <= hi]
         assert not bad, f"{s} 세트 id 대역 이탈: {bad}"
     # che 행은 코틀린 사본이다 — 여기서 수치를 만들지 않는다. han 행만 다시 만든다.
-    doc["crewTypes"] = [{k: u.get(k) for k in KEYS}
-                        for u in (derive(u) if u["set"] == "han" else u for u in doc["crewTypes"])]
+    derived = [derive(u) if u["set"] == "han" else u for u in doc["crewTypes"]]
+    unknown = sorted({k for u in derived for k in u} - set(KEYS))
+    if unknown:                               # 알 수 없는 필드를 조용히 버리지 않는다
+        sys.exit(f"KEYS 에 없는 필드: {unknown} — 오타이거나 KEYS 에 추가해야 한다")
+    doc["crewTypes"] = [{k: u.get(k) for k in KEYS} for u in derived]
     doc["_meta"]["counts"] = {
         "units": len(ids),
         "bySet": {s: sum(1 for u in doc["crewTypes"] if u["set"] == s) for s in doc["sets"]},
@@ -207,6 +213,9 @@ if __name__ == "__main__":
     ap.add_argument("--che", type=Path,
                     help="CheUnitSetExportTest -Dunitset.write=true 가 낸 common/build/che-export.json. "
                          "코틀린 GameUnitConst 를 고쳤을 때 che 세트 행을 갈아끼운다.")
+    ap.add_argument("--check", action="store_true",
+                    help="파일을 고치지 않고, units.json 이 최신인지만 확인한다. "
+                         "authored 필드에서 다시 유도한 값이 파일과 다르면 비정상 종료한다(CI 게이트).")
     a = ap.parse_args()
     if a.che:
         fresh = json.loads(a.che.read_text())
@@ -217,5 +226,12 @@ if __name__ == "__main__":
                               "cite": "legacy/devsam-core hwe/sammo/GameUnitConst.php", "quote": None}}
         DOC["crewTypes"] = [dict(base, **u) for u in fresh] + DOC["crewTypes"]
     doc = build()
-    UNITSET.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n")
-    print(f"{UNITSET.relative_to(ROOT)} — 병종 {len(doc['crewTypes'])}")
+    fresh_text = json.dumps(doc, ensure_ascii=False, indent=1) + "\n"
+    if a.check:
+        if fresh_text != UNITSET.read_text():
+            sys.exit(f"{UNITSET.relative_to(ROOT)} 이 최신이 아니다 — "
+                      f"python3 tools/unitset/build_unitset.py 로 다시 만들어라")
+        print(f"{UNITSET.relative_to(ROOT)} — 최신")
+    else:
+        UNITSET.write_text(fresh_text)
+        print(f"{UNITSET.relative_to(ROOT)} — 병종 {len(doc['crewTypes'])}")

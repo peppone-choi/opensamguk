@@ -74,7 +74,8 @@ export default function GameMapPage() {
         <Shell>
             <div className="page-content">
                 <h1>세계 지도</h1>
-                <p className="text-muted">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>
+                {/* 후한 군현 지도(HanMapCanvas)는 아직 클릭 인터랙션이 없다 — 폴백(MapViewer)일 때만 안내한다. */}
+                {hanMissing && <p className="text-muted">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>}
                 {hanMissing
                     ? <MapViewer refreshKey={mapRefreshKey} />
                     : <HanMapCanvas onMissing={() => setHanMissing(true)} />}

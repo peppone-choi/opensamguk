@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MAP = ROOT / "data" / "map"
 GRID = MAP / "terrain-grid.json"
 PLACES = MAP / "han-places.json"
+READINGS = MAP / "readings.json"
 OUT = MAP / "han-tiles.json"
 
 # 도로 비트마스크 — 이웃 4방향(N=1 E=2 S=4 W=8). 타일 16종이 서로 이어진다.
@@ -55,24 +56,21 @@ def build() -> dict:
     places = json.loads(PLACES.read_text())["places"]
     cols, rows = grid["cols"], grid["rows"]
 
-    # 도로: 허브(郡治) 사이 직선을 셀로 굽는다. 육로와 해로는 타일이 달라 따로 센다.
-    # 경로는 렌더러가 이미 지형 통행비용 위에서 뽑아 셀 목록으로 준다. 여기서 다시 직선을
-    # 그으면 그 계산을 버리는 셈이다 — 예전 판이 그랬고, 그래서 도로가 산을 관통했다.
-    cells: dict[tuple[int, int], str] = {}
-    for r in grid["roads"]:
-        for gx, gy in r["cells"]:
-            # 한 셀에 육로와 해로가 겹치면 육로가 이긴다 — 걸어서 갈 수 있으면 배는 선택지다.
-            if r["kind"] == "LAND" or (gx, gy) not in cells:
-                cells[(gx, gy)] = r["kind"]
+    # 한글 독음 사전 — tools/map/build_readings.py 산출물. 없으면 지금처럼 한자 그대로
+    # 두고 경고만 낸다(폴백). 있으면 name 을 독음으로, 한자 원문은 nameCh 로 보존한다.
+    readings: dict[str, str] = {}
+    if READINGS.exists():
+        readings = json.loads(READINGS.read_text())
+    else:
+        print(f"경고: {READINGS.relative_to(ROOT)} 없음 — 지명이 한자로 남는다. "
+              "tools/map/build_readings.py 를 먼저 돌려라.", file=sys.stderr)
 
-    roads = {}
-    for (gx, gy), kind in sorted(cells.items()):
-        m = 0
-        for (dx, dy), bit in NEI.items():
-            if (gx + dx, gy + dy) in cells:
-                m |= bit
-        roads[f"{gx},{gy}"] = m if kind == "LAND" else m | 16   # 비트 16 = 수로
+    def kr(name: str) -> str:
+        return readings.get(name, name)
 
+    # 도로·수로·해로는 내보내지 않는다. 자동으로 그은 길이 사료와 너무 어긋나서
+    # 사람이 직접 놓기로 했다(2026-08-19 사용자 지시). 계산은 terrain-grid 에 남아
+    # 있으니 되살릴 때는 여기서 다시 꺼내 쓰면 된다.
     # 지역은 셀 목록 대신 라벨 하나로 줄인다. 65536셀을 프런트에 넘길 이유가 없다.
     acc: dict[int, list[int]] = {}
     for y, row in enumerate(grid["region"]):
@@ -84,12 +82,17 @@ def build() -> dict:
     for rid, (sx, sy, c) in sorted(acc.items()):
         # regionNames 원소는 {name, zh, cls} 다. 통째로 넣으면 라벨이 dict 가 된다.
         nm = grid["regionNames"][rid]
-        regions.append({"name": nm["zh"] or nm["name"], "en": nm["name"], "cls": nm["cls"],
+        zh = nm["zh"] or nm["name"]
+        regions.append({"name": kr(zh), "nameCh": zh, "en": nm["name"], "cls": nm["cls"],
                         "col": round(sx / c), "row": round(sy / c), "cells": c})
 
     hubs = set(grid["hubs"])
-    cities = [{"id": p["id"], "name": p["nameFt"], "nameCh": p["nameCh"], "level": p.get("level", 5),
-               "kind": p["kind"], "seat": i in hubs, "col": p["gx"], "row": p["gy"],
+    # 郡國志에 이름이 실린 縣에 `zhi` 를 세운다. 이 표시가 붙은 縣만 게임 거점이 되고,
+    # 나머지 CHGIS 점은 소속 郡도 등급 근거도 없어 배경으로만 남는다(郡國志 추출이 보강되면 는다).
+    # 배열에서 빼지는 않는다 — adjacency 와 juns[].seat 의 인덱스가 이 배열이다.
+    zhi = set(grid.get("zhiPlaces") or [])
+    cities = [{"id": p["id"], "name": kr(p["nameFt"]), "nameCh": p["nameCh"], "level": p.get("level", 5),
+               "kind": p["kind"], "seat": i in hubs, "zhi": i in zhi, "col": p["gx"], "row": p["gy"],
                "lon": p["lon"], "lat": p["lat"]}
               for i, p in enumerate(places)]
 
@@ -109,25 +112,21 @@ def build() -> dict:
             "year": grid["year"],
             "projection": grid["projection"],
             "terrainLegend": grid["legend"],
-            "roadMaskBits": {"N": 1, "E": 2, "S": 4, "W": 8, "WATER": 16},
             "ownerEncoding": "run-length [[placeIndex, count], …] · row-major · -1 = 바다",
-            "counts": {"cities": len(cities), "seats": len(hubs), "roadCells": len(roads),
-                       "fords": len(grid.get("fords", [])), "regions": len(regions),
+            "counts": {"cities": len(cities), "seats": len(hubs), "regions": len(regions),
                        "adjCounty": len(grid["adjacency"]["county"]),
                        "adjCommandery": len(grid["adjacency"]["commandery"]), **kinds},
         },
         "terrain": ["".join(str(v) for v in row) for row in grid["terrain"]],
         "owner": owner,
-        "roads": roads,
         "regions": regions,
         # 이동 그래프. 길이 아니라 영역 인접이다.
         "adjacency": grid["adjacency"],
         # 郡 명부. adjacency 의 a/b 가 이 배열의 인덱스다 — 이름 없이 인덱스만 넘기면
         # 프런트가 어느 郡인지 알 수 없다.
-        "juns": [{"name": nm, "seat": h, "col": places[h]["gx"], "row": places[h]["gy"]}
+        "juns": [{"name": kr(nm), "nameCh": nm, "seat": h, "col": places[h]["gx"], "row": places[h]["gy"]}
                  for nm, h in zip(grid["junNames"], grid["hubs"])],
         "seatOwner": rle(grid["seatOwner"]),
-        "fords": grid.get("fords", []),
         "cities": cities,
     }
 

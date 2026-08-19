@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the seed counts (`world_state`=1, `nation`=2, `city`=94[소유24+공백지70], `general`=229,
+ * Asserts the seed counts (`world_state`=1, `nation`=2, `city`=780[소유710+공백지70], `general`=229,
  * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
  * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
@@ -76,12 +76,19 @@ class ScenarioImporterIT {
         )
     }
 
+    /**
+     * 시나리오가 선언한 맵의 城을 읽는다 — 프로덕션 `ScenarioSeedRunner.scenarioMapName` 과 같은 규칙이다.
+     * 맵을 `che` 로 박아두면 시나리오가 han 으로 바뀌었을 때 城 id 가 하나도 안 맞아 소유가 통째로 날아간다.
+     */
+    private fun mapCitiesOf(scenario: Scenario) =
+        ScenarioJson.loadMapCities(readResource("map/${scenario.map["mapName"] as? String ?: "che"}.json"))
+
     private fun newImporter(
         showImageLevel: Int = 3,
         extendedGeneral: Boolean = true,
     ): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
-        val cities = ScenarioJson.loadMapCities(readResource("map/che.json"))
+        val cities = mapCitiesOf(scenario)
         return ScenarioImporter(
             scenario = scenario,
             cities = cities,
@@ -93,7 +100,7 @@ class ScenarioImporterIT {
     // 빼섭(2번째 서버)용 scenario_1030 군웅할거. cities는 che 풀맵 공용(맵 바운드, 시나리오 무관).
     private fun newImporter1030(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1030.json"))
-        val cities = ScenarioJson.loadMapCities(readResource("map/che.json"))
+        val cities = mapCitiesOf(scenario)
         return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
     }
 
@@ -112,8 +119,8 @@ class ScenarioImporterIT {
         assertEquals(1, counts.worldState)
         assertTrue(counts.gameEnv > 0)
         assertEquals(2, counts.nation)
-        // che 풀맵 94도시 = 소유 24(후한 14 + 황건적 10) + 공백지 70(nation_id=0).
-        assertEquals(94, counts.city)
+        // han 풀맵 780城 = 소유 710(후한 606 + 황건적 104) + 공백지 70(nation_id=0).
+        assertEquals(780, counts.city)
         assertEquals(229, counts.general)
         assertEquals(229 * 30, counts.generalTurn)
         assertEquals(229 * 37, counts.rankData)
@@ -171,21 +178,21 @@ class ScenarioImporterIT {
             ),
         )
         assertEquals(2, count("nation"))
-        assertEquals(94, count("city"))
+        assertEquals(780, count("city"))
         // 공백지 70(nation_id=0).
         assertEquals(70, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
-        // 소유 = 시나리오 nation.cities 기준(후한 14 + 황건적 10). 이 fix는 1010에 무변 —
-        // cities_1010.json의 baked nation_id와 nation.cities가 동일 집합이므로 소유 24가 그대로 유지.
-        assertEquals(14, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
-        assertEquals(10, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
-        // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음). 성도: pop 150000·wall 5000·trust 50.
-        val sd = jdbc.queryForMap("SELECT pop, wall, trust FROM city WHERE name = '성도'")
-        assertEquals(150000, (sd["pop"] as Number).toInt())
-        assertEquals(5000, (sd["wall"] as Number).toInt())
+        // 소유 = 시나리오 nation.cities 기준. han 맵은 郡을 가지면 그 郡의 縣도 함께 갖는다.
+        assertEquals(606, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
+        assertEquals(104, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
+        // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
+        // 서성(id 75, 소도시) 은 1010 지배표에 없는 郡이라 공백지다: pop 100000·wall 2000·trust 50.
+        val sd = jdbc.queryForMap("SELECT pop, wall, trust FROM city WHERE id = 75")
+        assertEquals(100000, (sd["pop"] as Number).toInt())
+        assertEquals(2000, (sd["wall"] as Number).toInt())
         assertEquals(50.0, (sd["trust"] as Number).toDouble())
-        // 점령지는 70%max 불변(parity). 낙양: pop=ratio70(835700)=584990, trust 80.
-        val ly = jdbc.queryForMap("SELECT pop, trust FROM city WHERE name = '낙양'")
-        assertEquals(584990, (ly["pop"] as Number).toInt())
+        // 점령지는 70%max 불변(parity). 낙양(id 46): pop=ratio70(754800)=528360, trust 80.
+        val ly = jdbc.queryForMap("SELECT pop, trust FROM city WHERE id = 46")
+        assertEquals(528360, (ly["pop"] as Number).toInt())
         assertEquals(80.0, (ly["trust"] as Number).toDouble())
         assertEquals(229, count("general"))
         assertEquals(229 * 30, count("general_turn"))
@@ -352,17 +359,17 @@ class ScenarioImporterIT {
         assertEquals(83, soi(so["intel"]))
         assertEquals(0, soi(so["nation_id"]))
 
-        // City x100 scaling + level/region int map: 낙양 (id 3) pop_max 835700, level 8 (특), region 2 (중원).
-        val nak = jdbc.queryForMap("SELECT name, level, region, pop_max, nation_id FROM city WHERE id = 3")
+        // City x100 scaling + level/region int map: 낙양 (id 46) pop_max 754800, level 9 (경), region 1 (사예).
+        val nak = jdbc.queryForMap("SELECT name, level, region, pop_max, nation_id FROM city WHERE id = 46")
         assertEquals("낙양", sso(nak["name"]))
-        assertEquals(8, soi(nak["level"]))
-        assertEquals(2, soi(nak["region"]))
-        assertEquals(835700, soi(nak["pop_max"]))
+        assertEquals(9, soi(nak["level"]))
+        assertEquals(1, soi(nak["region"]))
+        assertEquals(754800, soi(nak["pop_max"]))
         assertEquals(1, soi(nak["nation_id"]))
 
-        // capital_city_id wired: 후한 (id 1) capital = first owned city 낙양 (id 3).
+        // capital_city_id wired: 후한 (id 1) capital = first owned city 낙양 (id 46).
         val cap = jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE id = 1", Int::class.java)
-        assertEquals(3, cap)
+        assertEquals(46, cap)
 
         // nation.meta 패러티(PHP Scenario/Nation.php) — 종전 시드는 infoText 만 넣어 내무부 예산/정책
         // 표가 전부 '-'(FE 가드 미충족)였다. rate=15/bill=100/scout=0/war=0/strategic_cmd_limit=24/
@@ -384,7 +391,8 @@ class ScenarioImporterIT {
         assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
         assertTrue(meta.contains("\"serverId\""), "meta has active serverId: $meta")
         assertTrue(meta.contains("\"ngGameId\""), "meta has active ngGameId: $meta")
-        assertTrue(meta.contains("\"map\": \"che\"") || meta.contains("\"map\":\"che\""), "meta has map=che: $meta")
+        assertTrue(meta.contains("\"map\": \"han\"") || meta.contains("\"map\":\"han\""), "meta has map=han: $meta")
+        assertTrue(meta.contains("\"unitSet\": \"han\"") || meta.contains("\"unitSet\":\"han\""), "meta has unitSet=han: $meta")
 
         // world_state.config carries entrance-gating values used by ServerBasicInfoController/FrontInfoController.
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
@@ -482,7 +490,7 @@ class ScenarioImporterIT {
 
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
         val extendedName = scenario.generalEx.first().name
-        val cities = ScenarioJson.loadMapCities(readResource("map/che.json"))
+        val cities = mapCitiesOf(scenario)
         val counts = ScenarioImporter(
             scenario = scenario,
             cities = cities,
@@ -1253,26 +1261,32 @@ class ScenarioImporterIT {
 
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)            // 군웅할거 21세력
-        assertEquals(94, counts.city)              // che 풀맵 94도시(소유+공백지) — 맵 공용
+        assertEquals(780, counts.city)             // han 풀맵 780城(소유+공백지) — 맵 공용
         assertEquals(327, counts.general)
         assertEquals(counts.general * 30, counts.generalTurn)
         assertEquals(counts.general * 37, counts.rankData)
         assertEquals(1, counts.ngGames)
 
         assertEquals(21, count("nation"))
-        assertEquals(94, count("city"))
+        assertEquals(780, count("city"))
         assertTrue(count("diplomacy") > 0, "diplomacy seeded for 21 nations")
 
         // ── 도시 소유 정합 (보급-동결 버그 회귀 게이트) ──
         // 소유를 시나리오 nation.cities로 배정한다(cities_1010.json baked nation_id가 아님). baked로는
         // 국가 1·2만 소유 → 19국 무소유 → capital 보유인데 supplyCities 빔 → UpdateCitySupply 미시드 →
         // doNPC구출발령의 RandUtil.choice(빈 보급도시) throw → 빼섭 턴데몬 크래시-루프 동결.
-        // (1) 모든 21국이 도시를 ≥1개 소유.
+        // (1) 실재 세력(level > 0)은 도시를 ≥1개 소유. level 0 = 방랑군은 정의상 무소유라 뺀다 —
+        // 1030 의 공주는 사료상 領有한 郡이 없어 방랑군으로 시드된다(`apply_han_world.py`).
         val landlessNations = jdbc.queryForObject(
-            "SELECT count(*) FROM nation n WHERE NOT EXISTS (SELECT 1 FROM city c WHERE c.nation_id = n.id)",
+            "SELECT count(*) FROM nation n WHERE n.level > 0 AND NOT EXISTS (SELECT 1 FROM city c WHERE c.nation_id = n.id)",
             Int::class.java,
         )
-        assertEquals(0, landlessNations, "모든 1030 국가가 도시를 소유해야 한다(무소유 국가 0)")
+        assertEquals(0, landlessNations, "방랑군이 아닌 1030 국가는 모두 도시를 소유해야 한다")
+        assertEquals(
+            1,
+            jdbc.queryForObject("SELECT count(*) FROM nation WHERE level = 0", Int::class.java),
+            "1030 방랑군은 공주 하나뿐이다",
+        )
         // (2) 각 국가의 capital_city_id는 자국 소유 도시(UpdateCitySupply BFS가 capital을 seed할 수 있는 조건).
         val miscapital = jdbc.queryForObject(
             "SELECT count(*) FROM nation n JOIN city c ON c.id = n.capital_city_id WHERE c.nation_id <> n.id",
