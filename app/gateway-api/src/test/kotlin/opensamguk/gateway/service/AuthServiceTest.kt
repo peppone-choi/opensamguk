@@ -83,8 +83,11 @@ class AuthServiceTest {
         `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("access-token")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh-token")
 
-        val result = authService.register(RegisterRequest("newuser", "password123", null, null))
+        val result = authService.register(RegisterRequest("newuser", "password123", null, "새유저"))
 
+        val savedUser = ArgumentCaptor.forClass(UserEntity::class.java)
+        verify(userRepository).save(savedUser.capture() ?: UserEntity(username = "", password = ""))
+        assertEquals("새유저", savedUser.value.nickname)
         assertEquals("newuser", result.user.username)
         assertEquals("access-token", result.accessToken)
         assertEquals("refresh-token", result.refreshToken)
@@ -96,8 +99,20 @@ class AuthServiceTest {
         `when`(userRepository.existsByUsername("existing")).thenReturn(true)
 
         assertThrows(IllegalArgumentException::class.java) {
-            authService.register(RegisterRequest("existing", "password123", null, null))
+            authService.register(RegisterRequest("existing", "password123", null, "새유저"))
         }
+    }
+
+    @Test
+    fun `register duplicate nickname throws`() {
+        `when`(systemFlagRepository.findSingleton()).thenReturn(allowAllFlag())
+        `when`(userRepository.existsByUsername("newuser")).thenReturn(false)
+        `when`(userRepository.existsByNickname("새유저")).thenReturn(true)
+
+        val ex = assertThrows(IllegalArgumentException::class.java) {
+            authService.register(RegisterRequest("newuser", "password123", null, "  새유저  "))
+        }
+        assertEquals("이미 사용 중인 닉네임입니다: 새유저", ex.message)
     }
 
     @Test
@@ -106,7 +121,7 @@ class AuthServiceTest {
             .thenReturn(SystemFlagEntity(id = 1, allowJoin = false, allowLogin = true))
 
         val ex = assertThrows(IllegalArgumentException::class.java) {
-            authService.register(RegisterRequest("newuser", "password123", null, null))
+            authService.register(RegisterRequest("newuser", "password123", null, "새유저"))
         }
         assertEquals("현재는 가입이 금지되어있습니다!", ex.message)
     }
@@ -117,7 +132,7 @@ class AuthServiceTest {
         `when`(bannedMemberRepository.existsByHashedEmail(emailHasher.hash("ban@me.com"))).thenReturn(true)
 
         val ex = assertThrows(IllegalArgumentException::class.java) {
-            authService.register(RegisterRequest("newuser", "password123", "ban@me.com", null))
+            authService.register(RegisterRequest("newuser", "password123", "ban@me.com", "새유저"))
         }
         assertEquals("가입할 수 없는 이메일입니다.", ex.message)
     }
@@ -194,7 +209,7 @@ class AuthServiceTest {
 
     @Test
     fun `refresh with valid token`() {
-        val user = UserEntity(id = 1L, username = "testuser", password = "encoded")
+        val user = UserEntity(id = 1L, username = "testuser", password = "encoded", nickname = "testuser")
         `when`(jwtTokenProvider.validateRefreshToken("refresh-token")).thenReturn(true)
         `when`(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn(1L)
         `when`(userRepository.findById(1L)).thenReturn(Optional.of(user))

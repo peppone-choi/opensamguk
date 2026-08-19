@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
 import org.springframework.test.web.servlet.MockMvc
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -44,9 +45,9 @@ class GatewayBoardCommentSecurityTest {
         commentRepository.deleteAll()
         postRepository.deleteAll()
         userRepository.deleteAll()
-        author = userRepository.saveAndFlush(UserEntity(username = "board-author", password = "encoded"))
-        otherUser = userRepository.saveAndFlush(UserEntity(username = "board-other", password = "encoded"))
-        admin = userRepository.saveAndFlush(UserEntity(username = "board-admin", password = "encoded", role = "ADMIN"))
+        author = userRepository.saveAndFlush(UserEntity(username = "board-author", password = "encoded", nickname = "board-author"))
+        otherUser = userRepository.saveAndFlush(UserEntity(username = "board-other", password = "encoded", nickname = "board-other"))
+        admin = userRepository.saveAndFlush(UserEntity(username = "board-admin", password = "encoded", role = "ADMIN", nickname = "board-admin"))
     }
 
     @Test
@@ -106,10 +107,11 @@ class GatewayBoardCommentSecurityTest {
             delete("/board/posts/${post.id}/comments/${comment.id}")
                 .with(user(CustomUserDetails(otherUser))),
         ).andExpect(status().isNoContent)
+        // 소프트딜리트는 감사 기록으로만 남는다 — 읽기 경로에서는 없는 댓글이다.
         mockMvc.perform(get("/board/posts/${post.id}"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.comments[0].deleted").value(true))
-            .andExpect(jsonPath("$.comments[0].content").value("삭제된 댓글입니다."))
+            .andExpect(jsonPath("$.comments").isEmpty)
+        assertNotNull(commentRepository.findById(requireNotNull(comment.id)).orElseThrow().deletedAt)
     }
 
     private fun post(): GatewayBoardPostEntity =

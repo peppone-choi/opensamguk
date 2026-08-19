@@ -16,7 +16,7 @@ class AdminMemberGuardTest {
     private val guard = AdminMemberGuard()
 
     private fun user(id: Long, role: String) =
-        UserEntity(id = id, username = "u$id", password = "x", role = role)
+        UserEntity(id = id, username = "u$id", password = "x", role = role, nickname = "u$id")
 
     @Test
     fun `ADMIN can mutate a normal USER`() {

@@ -42,7 +42,7 @@ class ProfileIconHttpSecurityTest {
     fun resetUser() {
         userRepository.deleteAll()
         savedUser = userRepository.saveAndFlush(
-            UserEntity(username = "tester", password = "encoded", picture = ProfileIconService.DEFAULT_ICON),
+            UserEntity(username = "tester", password = "encoded", picture = ProfileIconService.DEFAULT_ICON, nickname = "tester"),
         )
     }
 
@@ -113,7 +113,7 @@ class ProfileIconHttpSecurityTest {
 
         userRepository.deleteAll()
         savedUser = userRepository.saveAndFlush(
-            UserEntity(username = "tester", password = "encoded", picture = ProfileIconService.DEFAULT_ICON),
+            UserEntity(username = "tester", password = "encoded", picture = ProfileIconService.DEFAULT_ICON, nickname = "tester"),
         )
         mockMvc.perform(
             multipart(PATH)
@@ -161,6 +161,7 @@ class ProfileIconHttpSecurityTest {
                 picture = duplicateFileName,
                 imgsvr = true,
                 profileIconManaged = false,
+                nickname = "duplicate-non-owner",
             ),
         )
 

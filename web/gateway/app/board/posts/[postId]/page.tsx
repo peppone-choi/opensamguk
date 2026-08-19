@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import BoardAuthor from '@/components/board/BoardAuthor';
 import BoardCommentForm from '@/components/board/BoardCommentForm';
 import BoardShell from '@/components/board/BoardShell';
 import {
@@ -113,7 +114,7 @@ export default function BoardPostDetail(): React.ReactElement {
           </div>
           <h1>{data.post.title}</h1>
           <div className="board-post-meta">
-            <span>{data.post.authorName}</span>
+            <BoardAuthor imageServer={data.post.authorImageServer} name={data.post.authorName} picture={data.post.authorPicture} size={40} />
             <time dateTime={data.post.createdAt}>{boardDate(data.post.createdAt)}</time>
           </div>
         </header>
@@ -130,7 +131,7 @@ export default function BoardPostDetail(): React.ReactElement {
           {data.comments.length === 0 ? <div className="board-empty">첫 댓글을 남겨보세요.</div> : data.comments.map((comment) => (
             <article className="board-comment" key={comment.id}>
               <div className="board-comment-meta">
-                <strong>{comment.authorName}</strong>
+                <BoardAuthor imageServer={comment.authorImageServer} name={comment.authorName} picture={comment.authorPicture} size={28} />
                 <time dateTime={comment.createdAt}>{boardDate(comment.createdAt)}</time>
               </div>
               <p>{comment.content}</p>

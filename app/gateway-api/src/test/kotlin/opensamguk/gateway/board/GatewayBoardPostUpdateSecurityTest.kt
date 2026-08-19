@@ -48,9 +48,9 @@ class GatewayBoardPostUpdateSecurityTest {
         commentRepository.deleteAll()
         postRepository.deleteAll()
         userRepository.deleteAll()
-        author = userRepository.saveAndFlush(UserEntity(username = "board-author", password = "encoded"))
-        otherUser = userRepository.saveAndFlush(UserEntity(username = "board-other", password = "encoded"))
-        admin = userRepository.saveAndFlush(UserEntity(username = "board-admin", password = "encoded", role = "ADMIN"))
+        author = userRepository.saveAndFlush(UserEntity(username = "board-author", password = "encoded", nickname = "board-author"))
+        otherUser = userRepository.saveAndFlush(UserEntity(username = "board-other", password = "encoded", nickname = "board-other"))
+        admin = userRepository.saveAndFlush(UserEntity(username = "board-admin", password = "encoded", role = "ADMIN", nickname = "board-admin"))
     }
 
     @Test

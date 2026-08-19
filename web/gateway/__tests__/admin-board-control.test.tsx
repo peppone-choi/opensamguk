@@ -89,7 +89,7 @@ describe('admin board control', () => {
 
         expect(await screen.findByText('서버 점검 안내')).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(
-            '/api/proxy/board/posts?category=NOTICE&page=0&size=20',
+            '/api/proxy/board/posts?category=NOTICE&page=0&size=20&includeDeleted=true',
             { cache: 'no-store' },
         );
 
@@ -116,7 +116,7 @@ describe('admin board control', () => {
 
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(
-                '/api/proxy/board/posts?category=FREE&page=0&size=20',
+                '/api/proxy/board/posts?category=FREE&page=0&size=20&includeDeleted=true',
                 { cache: 'no-store' },
             ),
         );
@@ -125,7 +125,7 @@ describe('admin board control', () => {
 
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(
-                '/api/proxy/board/posts?category=SUGGESTION&page=0&size=20',
+                '/api/proxy/board/posts?category=SUGGESTION&page=0&size=20&includeDeleted=true',
                 { cache: 'no-store' },
             ),
         );
@@ -175,11 +175,11 @@ describe('admin board control', () => {
             'fetch',
             vi.fn((input: RequestInfo | URL) => {
                 const path = String(input);
-                if (path === '/api/proxy/board/posts?category=NOTICE&page=0&size=20') {
+                if (path === '/api/proxy/board/posts?category=NOTICE&page=0&size=20&includeDeleted=true') {
                     firstPageRequests += 1;
                     return Promise.resolve(response(200, page([{ ...post }], 0, finalPostDeleted ? 20 : 21, finalPostDeleted ? 1 : 2)));
                 }
-                if (path === '/api/proxy/board/posts?category=NOTICE&page=1&size=20') {
+                if (path === '/api/proxy/board/posts?category=NOTICE&page=1&size=20&includeDeleted=true') {
                     return Promise.resolve(response(200, page([finalPost], 1, 21, 2)));
                 }
                 if (path === '/api/proxy/board/posts/8') {
@@ -209,8 +209,8 @@ describe('admin board control', () => {
             'fetch',
             vi.fn((input: RequestInfo | URL) => {
                 const path = String(input);
-                if (path === '/api/proxy/board/posts?category=NOTICE&page=0&size=20') return notice.promise;
-                if (path === '/api/proxy/board/posts?category=FREE&page=0&size=20') return free.promise;
+                if (path === '/api/proxy/board/posts?category=NOTICE&page=0&size=20&includeDeleted=true') return notice.promise;
+                if (path === '/api/proxy/board/posts?category=FREE&page=0&size=20&includeDeleted=true') return free.promise;
                 return Promise.resolve(response(404, { message: '게시물을 찾을 수 없습니다.', status: 404 }));
             }),
         );
@@ -218,14 +218,14 @@ describe('admin board control', () => {
         render(<BoardControl />);
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(
-                '/api/proxy/board/posts?category=NOTICE&page=0&size=20',
+                '/api/proxy/board/posts?category=NOTICE&page=0&size=20&includeDeleted=true',
                 { cache: 'no-store' },
             ),
         );
         fireEvent.change(screen.getByLabelText('게시판 분류'), { target: { value: 'FREE' } });
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(
-                '/api/proxy/board/posts?category=FREE&page=0&size=20',
+                '/api/proxy/board/posts?category=FREE&page=0&size=20&includeDeleted=true',
                 { cache: 'no-store' },
             ),
         );

@@ -10,6 +10,8 @@ export type BoardPost = {
   readonly id: number;
   readonly category: BoardCategory;
   readonly authorName: string;
+  readonly authorPicture?: string | null;
+  readonly authorImageServer?: number | null;
   readonly title: string;
   readonly contentHtml: string;
   readonly pinned: boolean;
@@ -22,6 +24,8 @@ export type BoardPost = {
 export type BoardComment = {
   readonly id: number;
   readonly authorName: string;
+  readonly authorPicture?: string | null;
+  readonly authorImageServer?: number | null;
   readonly content: string;
   readonly canDelete: boolean;
   readonly deleted: boolean;

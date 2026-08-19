@@ -18,6 +18,8 @@ interface UserRepository : JpaRepository<UserEntity, Long> {
     fun findByUsernameForUpdate(@Param("username") username: String): Optional<UserEntity>
 
     fun existsByUsername(username: String): Boolean
+
+    fun existsByNickname(nickname: String): Boolean
     fun existsByEmail(email: String): Boolean
     fun existsByPictureAndProfileIconManagedTrue(picture: String): Boolean
 }

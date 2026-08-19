@@ -33,12 +33,14 @@ export const AUTH_LABELS = {
     // 검증/에러 (verbatim, login.ts/join.ts/AuthService)
     emptyUsername: '유저명을 입력해주세요',
     emptyPassword: '비밀번호를 입력해주세요',
+    emptyNickname: '별명을 입력해주세요',
     loginFail: '아이디나 비밀번호가 올바르지 않습니다.',
     loginForbidden: '현재는 로그인이 금지되어있습니다!',
     passwordMismatch: '비밀번호가 일치하지 않습니다',
     registerSuccess: '회원 등록되었습니다.',
     // 가입 필드 제약 (AuthDto.kt; backend = grand truth)
     usernameRule: '3~50자',
+    nicknameRule: '2~20자, 다른 유저와 겹칠 수 없음',
     passwordRule: '6자 이상',
     usernameTooShort: (n: number) => `${n}글자 이상 입력하셔야 합니다`,
     usernameTooLong: (n: number) => `${n}자를 넘을 수 없습니다`,

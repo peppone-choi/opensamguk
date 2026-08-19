@@ -1,6 +1,7 @@
 package opensamguk.gateway.board
 
 import opensamguk.gateway.security.CustomUserDetails
+import opensamguk.infra.read.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -18,6 +19,7 @@ class GatewayBoardService(
     private val postRepository: GatewayBoardPostRepository,
     private val commentRepository: GatewayBoardCommentRepository,
     private val contentSanitizer: GatewayBoardContentSanitizer,
+    private val userRepository: UserRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -26,14 +28,24 @@ class GatewayBoardService(
         page: Int,
         size: Int,
         principal: CustomUserDetails?,
+        includeDeleted: Boolean = false,
     ): GatewayBoardPageResponse {
         require(page >= 0) { "page는 0 이상이어야 합니다." }
         require(size in 1..50) { "size는 1부터 50 사이여야 합니다." }
+        // 삭제분은 어드민 감사 화면에서만 보인다. 공개 피드가 이 문을 열 수 없게 권한으로 막는다.
+        if (includeDeleted && principal?.isAdmin() != true) {
+            throw GatewayBoardForbiddenException("삭제된 게시글은 관리자만 조회할 수 있습니다.")
+        }
         val pageable = PageRequest.of(page, size, FEED_SORT)
-        val result = category?.let { postRepository.findByCategory(it, pageable) }
-            ?: postRepository.findAll(pageable)
+        val result = if (includeDeleted) {
+            category?.let { postRepository.findByCategory(it, pageable) } ?: postRepository.findAll(pageable)
+        } else {
+            category?.let { postRepository.findByCategoryAndDeletedAtIsNull(it, pageable) }
+                ?: postRepository.findByDeletedAtIsNull(pageable)
+        }
+        val authors = authorsOf(result.content.map { it.authorAccountId })
         return GatewayBoardPageResponse(
-            content = result.content.map { postResponse(it, principal) },
+            content = result.content.map { postResponse(it, principal, authors, reveal = includeDeleted) },
             page = result.number,
             size = result.size,
             totalElements = result.totalElements,
@@ -44,12 +56,14 @@ class GatewayBoardService(
     @Transactional(readOnly = true)
     fun detail(postId: Long, principal: CustomUserDetails?): GatewayBoardPostDetailResponse {
         val post = getPost(postId)
-        val comments = if (post.deletedAt == null) {
-            commentRepository.findByPostIdOrderByCreatedAtAscIdAsc(postId).map { commentResponse(it, principal) }
-        } else {
-            emptyList()
+        // 삭제된 글은 없는 글로 취급한다. 묘비를 돌려주면 목록에서 감춘 글이 URL 로는 살아 있게 된다.
+        if (post.deletedAt != null) {
+            throw GatewayBoardNotFoundException()
         }
-        return GatewayBoardPostDetailResponse(postResponse(post, principal), comments)
+        val commentRows = commentRepository.findByPostIdAndDeletedAtIsNullOrderByCreatedAtAscIdAsc(postId)
+        val authors = authorsOf(commentRows.map { it.authorAccountId } + post.authorAccountId)
+        val comments = commentRows.map { commentResponse(it, principal, authors) }
+        return GatewayBoardPostDetailResponse(postResponse(post, principal, authors), comments)
     }
 
     @Transactional
@@ -63,14 +77,14 @@ class GatewayBoardService(
             GatewayBoardPostEntity(
                 category = category,
                 authorAccountId = principal.id,
-                authorName = principal.username,
+                authorName = principal.nickname,
                 title = request.title.trim(),
                 contentHtml = contentSanitizer.toSafeHtml(request.content, request.contentFormat.orPlainText()),
                 createdAt = now,
                 updatedAt = now,
             ),
         )
-        return postResponse(saved, principal)
+        return postResponse(saved, principal, authorsOf(listOf(principal.id)))
     }
 
     @Transactional
@@ -92,7 +106,7 @@ class GatewayBoardService(
         post.title = request.title.trim()
         post.contentHtml = contentSanitizer.toSafeHtml(request.content, request.contentFormat.orPlainText())
         post.updatedAt = Instant.now()
-        return postResponse(post, principal)
+        return postResponse(post, principal, authorsOf(listOf(principal.id)))
     }
 
     @Transactional
@@ -110,11 +124,12 @@ class GatewayBoardService(
                 GatewayBoardCommentEntity(
                     postId = postId,
                     authorAccountId = principal.id,
-                    authorName = principal.username,
+                    authorName = principal.nickname,
                     contentText = request.content,
                 ),
             ),
             principal,
+            authorsOf(listOf(principal.id)),
         )
     }
 
@@ -160,7 +175,7 @@ class GatewayBoardService(
         post.pinned = pinned
         post.pinnedAt = if (pinned) now else null
         post.updatedAt = now
-        return postResponse(post, principal)
+        return postResponse(post, principal, authorsOf(listOf(principal.id)))
     }
 
     private fun getPost(postId: Long): GatewayBoardPostEntity =
@@ -181,17 +196,44 @@ class GatewayBoardService(
     private fun canDelete(authorAccountId: Long?, principal: CustomUserDetails?): Boolean =
         principal != null && (authorAccountId == principal.id || principal.isAdmin())
 
+    /**
+     * 작성자의 **현재** 닉네임·전콘. 글에 박힌 `authorName` 은 작성 시점 스냅샷이라, 닉네임을
+     * 바꾸면 아이콘만 최신이고 이름은 옛것인 어긋남이 생긴다 — 둘 다 읽는 시점에 해석한다.
+     * 계정이 사라졌으면 스냅샷 이름으로 떨어진다.
+     */
+    private data class AuthorView(val name: String?, val picture: String?, val imageServer: Int)
+
+    /** 한 페이지의 작성자를 한 번의 쿼리로 끌어온다(행마다 조회하면 N+1). */
+    private fun authorsOf(accountIds: Collection<Long?>): Map<Long, AuthorView> {
+        val ids = accountIds.filterNotNull().toSet()
+        if (ids.isEmpty()) return emptyMap()
+        return userRepository.findAllById(ids).associate { user ->
+            user.id to AuthorView(
+                name = user.nickname?.takeIf { it.isNotBlank() },
+                picture = user.picture,
+                imageServer = if (user.imgsvr) 1 else 0,
+            )
+        }
+    }
+
     private fun postResponse(
         post: GatewayBoardPostEntity,
         principal: CustomUserDetails?,
+        authors: Map<Long, AuthorView>,
+        // 어드민 감사 목록은 삭제된 글의 제목·작성자를 그대로 봐야 조치를 할 수 있다.
+        reveal: Boolean = false,
     ): GatewayBoardPostResponse {
         val deleted = post.deletedAt != null
+        val mask = deleted && !reveal
+        val author = post.authorAccountId?.let { authors[it] }
         return GatewayBoardPostResponse(
             id = requireNotNull(post.id),
             category = post.category,
-            authorName = if (deleted) DELETED_AUTHOR_NAME else post.authorName,
-            title = if (deleted) DELETED_POST_TEXT else post.title,
-            contentHtml = if (deleted) DELETED_POST_TEXT else post.contentHtml,
+            authorName = if (mask) DELETED_AUTHOR_NAME else author?.name ?: post.authorName,
+            authorPicture = if (mask) null else author?.picture,
+            authorImageServer = if (mask) 0 else author?.imageServer ?: 0,
+            title = if (mask) DELETED_POST_TEXT else post.title,
+            contentHtml = if (mask) DELETED_POST_TEXT else post.contentHtml,
             pinned = !deleted && post.pinned,
             canDelete = canDelete(post.authorAccountId, principal),
             deleted = deleted,
@@ -203,14 +245,18 @@ class GatewayBoardService(
     private fun commentResponse(
         comment: GatewayBoardCommentEntity,
         principal: CustomUserDetails?,
+        authors: Map<Long, AuthorView>,
     ): GatewayBoardCommentResponse {
-        val deleted = comment.deletedAt != null
+        // 삭제된 댓글은 읽기 경로에 오지 않는다(쿼리에서 걸러진다) — 묘비 문구가 없는 이유다.
+        val author = comment.authorAccountId?.let { authors[it] }
         return GatewayBoardCommentResponse(
             id = requireNotNull(comment.id),
-            authorName = if (deleted) DELETED_AUTHOR_NAME else comment.authorName,
-            content = if (deleted) DELETED_COMMENT_TEXT else comment.contentText,
+            authorName = author?.name ?: comment.authorName,
+            authorPicture = author?.picture,
+            authorImageServer = author?.imageServer ?: 0,
+            content = comment.contentText,
             canDelete = canDelete(comment.authorAccountId, principal),
-            deleted = deleted,
+            deleted = false,
             createdAt = comment.createdAt,
         )
     }
@@ -224,6 +270,5 @@ class GatewayBoardService(
         )
         const val DELETED_AUTHOR_NAME = "삭제된 사용자"
         const val DELETED_POST_TEXT = "삭제된 게시글입니다."
-        const val DELETED_COMMENT_TEXT = "삭제된 댓글입니다."
     }
 }

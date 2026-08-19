@@ -46,7 +46,7 @@ class ProfileIconPostgresConcurrencyIT {
         }
         Files.list(storageRoot.resolve(".ops")).use { paths -> paths.forEach(Files::delete) }
         val saved = userRepository.saveAndFlush(
-            UserEntity(username = "concurrent-profile-icon", password = "encoded", picture = ProfileIconService.DEFAULT_ICON),
+            UserEntity(username = "concurrent-profile-icon", password = "encoded", picture = ProfileIconService.DEFAULT_ICON, nickname = "concurrent-profile-icon"),
         )
         userDetails = CustomUserDetails(saved)
     }

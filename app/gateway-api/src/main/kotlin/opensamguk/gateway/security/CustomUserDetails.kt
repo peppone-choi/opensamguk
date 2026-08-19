@@ -14,6 +14,9 @@ class CustomUserDetails(
 
     val id: Long = user.id
 
+    /** 사람에게 보이는 표시 이름. V42 이전에 발급된 세션 대비로 아이디 폴백을 남긴다. */
+    val nickname: String = user.nickname?.takeIf { it.isNotBlank() } ?: user.username
+
     override fun getAuthorities(): Collection<GrantedAuthority> =
         listOf(SimpleGrantedAuthority("ROLE_${user.role}"))
 

@@ -28,11 +28,12 @@ class GatewayBoardController(
         @RequestParam(required = false) category: GatewayBoardCategory?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "false") includeDeleted: Boolean,
         @AuthenticationPrincipal principal: CustomUserDetails?,
         response: HttpServletResponse,
     ): GatewayBoardPageResponse {
         response.addHeader(HttpHeaders.VARY, HttpHeaders.AUTHORIZATION)
-        return boardService.list(category, page, size, principal)
+        return boardService.list(category, page, size, principal, includeDeleted)
     }
 
     @GetMapping("/posts/{postId}")

@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus
 class AccountControllerTest {
     @Mock lateinit var authService: AuthService
 
-    private val user = UserEntity(id = 1, username = "tester", password = "encoded")
+    private val user = UserEntity(id = 1, username = "tester", password = "encoded", nickname = "tester")
     private val details = CustomUserDetails(user)
     private lateinit var controller: AuthController
 

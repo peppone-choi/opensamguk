@@ -8,13 +8,16 @@ export async function POST(req: NextRequest) {
     if (!body?.username || !body?.password) {
         return NextResponse.json({ error: '아이디와 비밀번호를 입력해주세요.' }, { status: 400 });
     }
+    if (!body?.nickname) {
+        return NextResponse.json({ error: '별명을 입력해주세요' }, { status: 400 });
+    }
 
     const payload: Record<string, unknown> = {
         username: body.username,
         password: body.password,
     };
     if (body.email) payload.email = body.email;
-    if (body.nickname) payload.nickname = body.nickname;
+    payload.nickname = body.nickname;
 
     const upstream = await fetch(`${GATEWAY_API_URL}/auth/register`, {
         method: 'POST',

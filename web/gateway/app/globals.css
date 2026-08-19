@@ -773,6 +773,20 @@ textarea:focus {
     color: var(--text-muted);
     font-size: var(--text-xs);
 }
+.board-author {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+/* 로딩 전에도 자리를 잡아 목록이 밀리지 않게 width/height 를 고정한다. */
+.board-author-icon {
+    flex: 0 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface-2, rgba(127, 127, 127, 0.15));
+}
+
 .board-list-meta {
     display: flex;
     flex: 0 0 auto;

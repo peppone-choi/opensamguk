@@ -12,6 +12,8 @@ import { AUTH_LABELS, BRAND, FOOTER_LINKS } from '@/lib/constants';
 const USERNAME_MIN = 3;
 const USERNAME_MAX = 50;
 const PASSWORD_MIN = 6;
+const NICKNAME_MIN = 2;
+const NICKNAME_MAX = 20;
 
 export default function JoinPage() {
     const router = useRouter();
@@ -55,6 +57,15 @@ export default function JoinPage() {
             setError(AUTH_LABELS.passwordMismatch);
             return;
         }
+        // 별명은 게시판 등 공개 표시 이름이므로 필수다(AuthDto.kt @NotBlank / Size(2,20)).
+        if (!nickname.trim()) {
+            setError(AUTH_LABELS.emptyNickname);
+            return;
+        }
+        if (nickname.trim().length < NICKNAME_MIN) {
+            setError(AUTH_LABELS.usernameTooShort(NICKNAME_MIN));
+            return;
+        }
 
         setSubmitting(true);
         try {
@@ -63,7 +74,7 @@ export default function JoinPage() {
                 username: username.trim(),
                 password,
                 email: email.trim() || undefined,
-                nickname: nickname.trim() || undefined,
+                nickname: nickname.trim(),
             });
             router.push('/lobby');
             router.refresh();
@@ -146,11 +157,14 @@ export default function JoinPage() {
                                 name="nickname"
                                 type="text"
                                 autoComplete="nickname"
-                                maxLength={USERNAME_MAX}
+                                minLength={NICKNAME_MIN}
+                                maxLength={NICKNAME_MAX}
+                                required
                                 disabled={submitting}
                                 value={nickname}
                                 onChange={(e) => setNickname(e.target.value)}
                             />
+                            <span className="field-hint">{AUTH_LABELS.nicknameRule}</span>
                         </div>
 
                         <div className="field">
