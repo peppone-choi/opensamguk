@@ -2,6 +2,7 @@ package opensamguk.engine.world
 
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.PhpMt19937
 import opensamguk.common.rng.RandUtil
@@ -704,6 +705,17 @@ class WorldActionContext(
         env["nationTurnSeed"] = existing
     }
 
+    /**
+     * 3축 랭크 축만 바뀐 경우 — nation meta 만 dirty 로 기록한다.
+     * 로그·nation_turn seed·gold/rice 는 건드리지 않는다(level-up 이 아니다). han 전용 경로.
+     */
+    override fun applyNationRank(nation: LogicNation) {
+        val pre = world.getNationById(nation.id) ?: return
+        val preLogic = PerTurnOverlay.toLogicNation(pre)
+        recorder.diffNation(preLogic, nation)
+        world.updateNation(pre.copy(meta = nation.meta))
+    }
+
     override fun giveRandomUniqueItem(rng: RandUtil, winnerId: Int): Boolean {
         // P6 seam — item grant requires catalog + occupancy queries not yet wired.
         return false
@@ -1386,7 +1398,7 @@ class WorldActionContext(
             personalityNameOf = { GameConst.personalityNameOf(it.toString()) },
             specialDomesticNameOf = { SpecialityHelper.domesticName(it) },
             specialWarNameOf = { SpecialityHelper.warName(it) },
-            crewtypeShortNameOf = { GameUnitConst.byId(it)?.name ?: "$it" },
+            crewtypeShortNameOf = { UnitCatalog.byId(it)?.name ?: "$it" },
         )
         recorder.recordStatisticInsert(StatisticInsertColumns.from(row))
     }

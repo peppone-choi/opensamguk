@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+"""시나리오를 후한 군현 맵(han, 175郡 · 780城)으로 갈아끼운다.
+
+바꾸는 것은 네 가지뿐이다.
+  1. `map.mapName` → "han"
+  2. `nation[i][8]` (세력 보유 성) → 사료 지배표(`han_ownership.json`)가 준 郡에
+     속한 城 전부. 郡을 가지면 그 郡의 縣도 함께 갖는다 — 縣은 郡의 하급 행정구역이지
+     별개 세력의 땅이 아니다. 목록의 첫 城이 수도가 되므로 治所를 맨 앞에 둔다.
+  2a. 지배표가 `cities` 로 특정 縣을 짚으면(「屯新野」처럼) 그 縣은 郡 배정보다 우선한다 —
+     남양군이 조조 것이어도 그 안의 신야현은 유비 것이다.
+  2b. 사료상 領有한 郡이 없는 세력은 `nation[i][7]`(scale=nation level)을 **0** 으로
+     내려 방랑군으로 둔다(2026-08-19 사용자 결정). 엔진이 `level > 0` 을 실재 세력으로
+     보고 방랑군을 따로 처리하므로 새로 만드는 상태가 아니다. 城을 지어내지 않는다.
+  3. `general[4]` / `general_ex[4]` / `general_neutral[4]` (장수 주둔지) →
+     che 94성 대응표(`che_to_jun.json`)로 옮긴 城
+
+**城은 이름이 아니라 id 로 적는다.** 780城 중에는 서로 다른 漢字가 같은 한글 독음이 되는
+城이 있다(零陵郡 零陵縣·梁國 寧陵縣이 둘 다 '영릉'). 이름으로 가리키면 어느 郡의 縣인지가
+안 정해진다. `ScenarioImporter` 는 숫자 토큰을 城 id 로, 그 외를 이름으로 푼다 —
+che 시나리오(이름 그대로)는 그대로 돌아간다.
+
+장수 위치가 대응표에 없거나, 옮긴 城이 그 세력 소유가 아니면 **null 로 비운다** —
+그러면 ScenarioImporter 가 그 세력 영토 안에서 RNG 로 배치한다(원래 대부분이 그 경로다).
+없는 이름을 지어내 넣지 않는다.
+
+패러티는 사용자가 이 범위에 한해 면제했다(2026-08-19). 다만 근거 없는 배치는 넣지
+않는다 — 지배표에 없는 郡은 공백지로 남는다.
+
+  python3 tools/scenario/apply_han_world.py            # 덮어쓴다
+  python3 tools/scenario/apply_han_world.py --check    # 드리프트만 보고, exit 1
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import pathlib
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+SCEN = ROOT / "infra/src/main/resources/scenario"
+HAN_MAP = ROOT / "infra/src/main/resources/map/han.json"
+CHE_TO_JUN = ROOT / "tools/scenario/che_to_jun.json"
+OWNERSHIP = ROOT / "tools/scenario/han_ownership.json"
+
+LOC_SLOT = 4          # general 튜플의 주둔 城 이름 자리
+NATION_SCALE = 7      # nation 튜플의 scale — 임포터가 nation.level 로 넣는다. 0 = 방랑군
+NATION_CITIES = 8     # nation 튜플의 보유 城 목록 자리
+GENERAL_KEYS = ("general", "general_ex", "general_neutral")
+
+# che 城 이름이 郡治가 아니라 특정 縣을 가리키는 경우. `che_to_jun.json` 은 郡까지만
+# 대응시켜서, 그대로 두면 그 郡의 治所로 밀려난다. 사료가 縣을 못 박는 것만 여기 적는다.
+CITY_OVERRIDE = {
+    # 『三國志』呂布傳 「布……使備屯小沛」. 小沛 = 豫州 沛國 沛縣이고 治所 相縣이 아니다.
+    "소패": "패",
+}
+
+
+def load_world() -> tuple[dict[str, list[int]], dict[str, int], dict[str, int]]:
+    """郡 한글명 → 그 郡의 城 id 전부(治所가 맨 앞), 城 이름 → id, 郡 → 治所 id."""
+    cities = json.loads(HAN_MAP.read_text(encoding="utf-8"))["cities"]
+    by_jun: dict[str, list[int]] = {}
+    seat_of: dict[str, int] = {}
+    # 이름은 겹칠 수 있다(零陵縣·寧陵縣 둘 다 '영릉'). 겹치는 이름은 아예 빼서 지배표가
+    # 그 이름으로 縣을 짚으면 조용히 엉뚱한 城에 가지 않고 경고가 나게 한다.
+    id_of: dict[str, int] = {}
+    dup: set[str] = set()
+    for c in cities:
+        jun, cid = c["meta"]["jun"], c["id"]
+        if c["name"] in id_of:
+            dup.add(c["name"])
+        id_of[c["name"]] = cid
+        by_jun.setdefault(jun, [])
+        if c["meta"].get("isSeat"):
+            seat_of[jun] = cid
+            by_jun[jun].insert(0, cid)
+        else:
+            by_jun[jun].append(cid)
+    for name in dup:
+        id_of.pop(name, None)
+    for jun in by_jun:
+        if jun not in seat_of:                  # 생성기가 治所를 안 찍었다 — 조용히 넘기지 않는다
+            sys.exit(f"郡 '{jun}' 에 meta.isSeat 인 城이 없다. 생성기를 확인해라.")
+    return by_jun, id_of, seat_of
+
+
+def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str, int],
+            seat_of: dict[str, int], che2jun: dict[str, str], own: dict) -> tuple[dict, list[str]]:
+    warn: list[str] = []
+    doc = json.loads(json.dumps(doc))            # 깊은 복사 — 원본을 건드리지 않는다
+    # 맵과 병종 세트는 한 몸이다 — han 맵의 城 게이트 키(州·郡·부족 漢字)를 읽는 건
+    # han 병종표뿐이라, 맵만 바꾸고 병종을 che 로 두면 지역 병종이 통째로 죽는다.
+    doc["map"] = {"mapName": "han", "unitSet": "han"}
+
+    table = (own.get(code) or {}).get("nations") or {}
+    taken: dict[int, str] = {}                   # 城 id → 세력. 중복 소유 차단.
+    owner_of: dict[int, str] = {}
+
+    # 縣 지정(`cities`)을 郡 확장보다 먼저 잡는다 — 지배표의 규칙이 「縣 배정이 郡 배정보다
+    # 우선」이라, 남양군이 조조 것이어도 사료가 「使備屯新野」로 짚은 신야현은 유비 것이다.
+    pinned: dict[str, list[int]] = {}
+    for nation, d in table.items():
+        for name in (d.get("cities") or []):
+            city = id_of.get(name)
+            if city is None:
+                warn.append(f"{code}/{nation}: 縣 '{name}' 이 새 맵에 없다 — 건너뛴다")
+                continue
+            if city in taken:
+                warn.append(f"{code}: 城 '{city}' 을 {taken[city]}·{nation} 이 겹쳐 짚는다 — 뒤를 버린다")
+                continue
+            taken[city] = nation
+            owner_of[city] = nation
+            pinned.setdefault(nation, []).append(city)
+
+    for row in doc.get("nation") or []:
+        if len(row) <= NATION_CITIES:
+            continue
+        nation = row[0]
+        juns = (table.get(nation) or {}).get("juns")
+        if juns is None and not pinned.get(nation):
+            warn.append(f"{code}: 세력 '{nation}' 이 지배표에 없다 — 방랑군으로 뒀다")
+            row[NATION_CITIES] = []
+            if len(row) > NATION_SCALE:
+                row[NATION_SCALE] = 0
+            continue
+        kept: list[int] = list(pinned.get(nation) or [])
+        for jun in (juns or []):
+            group = by_jun.get(jun)
+            if group is None:
+                warn.append(f"{code}/{nation}: 郡 '{jun}' 이 새 맵에 없다 — 건너뛴다")
+                continue
+            for city in group:
+                if city in taken:
+                    # 縣 지정에 이미 뺏긴 城은 규칙대로 넘어간 것이라 경고하지 않는다.
+                    if city not in (pinned.get(taken[city]) or []):
+                        warn.append(f"{code}: 城 '{city}' 을 {taken[city]}·{nation} 이 겹쳐 갖는다 — 뒤를 버린다")
+                    continue
+                taken[city] = nation
+                owner_of[city] = nation
+                kept.append(city)
+        row[NATION_CITIES] = kept
+        if not kept:
+            # 사료상 領有한 郡이 없다 → 城을 지어내지 않고 방랑군으로 내린다.
+            if len(row) > NATION_SCALE:
+                row[NATION_SCALE] = 0
+            warn.append(f"{code}: 세력 '{nation}' 은 領有 郡이 없어 방랑군(level 0)으로 뒀다")
+
+    for key in GENERAL_KEYS:
+        for g in doc.get(key) or []:
+            if len(g) <= LOC_SLOT or not g[LOC_SLOT]:
+                continue
+            old = g[LOC_SLOT]
+            # 이미 id 로 바뀐 입력(= 이 스크립트를 두 번째 돌리는 경우)은 건드리지 않는다.
+            # 대응표는 che **이름**만 알아서, id 를 다시 먹이면 못 찾고 주둔지를 통째로 비운다.
+            if isinstance(old, int) or (isinstance(old, str) and old.isdigit()):
+                g[LOC_SLOT] = int(old)
+                continue
+            name = CITY_OVERRIDE.get(old)
+            city = id_of.get(name) if name else None
+            if city is None:
+                jun = che2jun.get(old)
+                city = seat_of.get(jun) if jun else None
+            if city is None:
+                warn.append(f"{code}: 장수 주둔지 '{old}' 를 옮길 수 없어 비웠다")
+                g[LOC_SLOT] = None
+                continue
+            # 그 城이 이 장수의 세력 소유가 아니면 비운다 — 남의 성에 서 있게 두지 않는다.
+            nation_ref = g[3] if len(g) > 3 else None
+            if isinstance(nation_ref, str) and nation_ref not in ("재야", "") \
+                    and owner_of.get(city) not in (None, nation_ref):
+                g[LOC_SLOT] = None
+                continue
+            g[LOC_SLOT] = city
+    return doc, warn
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--check", action="store_true")
+    args = ap.parse_args()
+
+    for path in (HAN_MAP, CHE_TO_JUN, OWNERSHIP):
+        if not path.exists():
+            print(f"없는 입력: {path.relative_to(ROOT)}", file=sys.stderr)
+            return 2
+
+    by_jun, id_of, seat_of = load_world()
+    che2jun = {k: v["jun"] for k, v in
+               json.loads(CHE_TO_JUN.read_text(encoding="utf-8"))["map"].items()}
+    own = json.loads(OWNERSHIP.read_text(encoding="utf-8"))
+
+    codes = [c for c in own if c.startswith("scenario_")]
+    drift, warns = [], []
+    for code in sorted(codes):
+        path = SCEN / f"{code}.json"
+        if not path.exists():
+            warns.append(f"{code}: 시나리오 파일이 없다")
+            continue
+        raw = path.read_text(encoding="utf-8")
+        doc = json.loads(raw)
+        out, w = rewrite(doc, code, by_jun, id_of, seat_of, che2jun, own)
+        warns += w
+        blob = json.dumps(out, ensure_ascii=False, indent=2) + "\n"
+        if blob != raw:
+            drift.append(code)
+            if not args.check:
+                path.write_text(blob, encoding="utf-8")
+
+    for w in warns:
+        print(f"  경고  {w}", file=sys.stderr)
+    print(f"시나리오 {len(codes)}개 · 바뀐 파일 {len(drift)} · 경고 {len(warns)}", file=sys.stderr)
+    if args.check and drift:
+        print("드리프트: " + " ".join(drift), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

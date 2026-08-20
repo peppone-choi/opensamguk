@@ -3,6 +3,7 @@ package opensamguk.gameapi.controller
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.gameapi.dto.CityConstItem
 import opensamguk.gameapi.dto.CityConstMap
 import opensamguk.gameapi.dto.GameUnitConstItem
@@ -69,7 +70,7 @@ class GetConstController(
         if (!UnitSetTable.isSupported(unitSet)) {
             emptyList()
         } else {
-            GameUnitConst.all().values.map { u ->
+            UnitCatalog.all(unitSet).values.map { u ->
                 GameUnitConstItem(
                     id = u.id,
                     armType = u.armType,

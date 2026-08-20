@@ -70,7 +70,8 @@ function BoardRows({
     return posts.map((post) => (
         <tr key={post.id}>
             <td>{categoryLabel(post.category)}</td>
-            <td>{post.deleted ? '삭제된 게시물' : post.title}</td>
+            {/* 어드민은 무엇을 지웠는지 봐야 조치를 할 수 있다 — 제목을 가리지 않고 삭제 표시만 붙인다. */}
+            <td>{post.deleted ? <s>{post.title}</s> : post.title}</td>
             <td>{post.authorName}</td>
             <td>{post.pinned ? '고정됨' : '-'}</td>
             <td>

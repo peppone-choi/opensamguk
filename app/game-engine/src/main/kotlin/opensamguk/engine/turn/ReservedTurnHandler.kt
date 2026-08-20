@@ -69,6 +69,9 @@ import kotlin.math.sqrt
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
+import opensamguk.logic.world.HAN_MAP_NAME
+import opensamguk.logic.world.foundAssaultCrewCost
+import opensamguk.logic.world.isFoundableCityLevel
 
 private data class UniqueItemInfo(val name: String, val rawName: String)
 
@@ -403,10 +406,7 @@ class ReservedTurnHandler(
                     .map { PerTurnOverlay.toLogicGeneral(it) }
             } else emptyList(),
             candidateCityIds = if (actionCode == MUJAKWI_GEONGUK) {
-                world.listCities()
-                    .filter { it.nationId == 0 && it.level in 5..6 }
-                    .map { it.id }
-                    .sorted()
+                foundableCandidateCityIds(general)
             } else emptyList(),
             battleContext = battleContext,
         )
@@ -1353,10 +1353,7 @@ class ReservedTurnHandler(
                 emptyList()
             },
             candidateCityIds = if (spec.actionCode == MUJAKWI_GEONGUK) {
-                world.listCities()
-                    .filter { it.nationId == 0 && it.level in 5..6 }
-                    .map { it.id }
-                    .sorted()
+                foundableCandidateCityIds(general)
             } else {
                 emptyList()
             },
@@ -1494,9 +1491,34 @@ class ReservedTurnHandler(
             // 런타임 엔진 스캔 preload만 추가: sameMonthOrBefore 동월 가드(che_건국.php:148).
             LinkedHashMap(args).apply {
                 put("sameMonthOrBefore", sameMonthOrBefore(general, year, month))
+                // han 전용 건국 수비병 돌파 판정이 읽는 맵 이름(패러티 아님 · 튜닝값). che 면 판정 비용이 0이다.
+                put("mapName", activeMapName())
+                if (actionCode == MUJAKWI_GEONGUK) {
+                    // rng 가 고른 城의 실제 수비병(def) — 로직에는 후보 城의 행이 없다.
+                    put("candidateCityDefence", world.listCities().filter { it.nationId == 0 }.associate { it.id to it.defence })
+                }
             }
         }
         else -> args
+    }
+
+    private fun activeMapName(): String {
+        val state = world.getState()
+        return CityConstRegistry.activeMapName(state.config, state.meta)
+    }
+
+    /**
+     * 무작위건국 후보 城 — 공백지 + 건국 가능 등급, **그리고 han 이면 수비병을 뚫을 병력이 있는 城만**.
+     * 후보 단계에서 걸러야 rng.choice 가 뽑은 뒤 건국이 실패하는 일이 없다. che 는 비용이 항상 0이라
+     * 필터가 통째로 무해하다(= 기존 목록 그대로, 골든 무변).
+     */
+    private fun foundableCandidateCityIds(general: TurnGeneral): List<Int> {
+        val mapName = activeMapName()
+        return world.listCities()
+            .filter { it.nationId == 0 && isFoundableCityLevel(it.level) }
+            .filter { foundAssaultCrewCost(mapName, it.defence) <= general.crew }
+            .map { it.id }
+            .sorted()
     }
 
     private fun buildSameMonthGuardArgs(
@@ -1984,6 +2006,9 @@ class ReservedTurnHandler(
         return current.copy(
             nationId = postCity.nationId,
             conflict = postCity.conflict,
+            // han 수비병 돌파로 def 를 0 으로 쓸어낸 경우만 반영. che 는 postCity.defense 가 신뢰할 수 없는
+            // 합성값이므로 절대 덮어쓰지 않는다(골든 무변).
+            defense = if (activeMapName() == HAN_MAP_NAME) postCity.defense else current.defense,
         )
     }
 

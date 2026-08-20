@@ -30,8 +30,11 @@ class UserEntity(
     @Column(nullable = true, unique = true, length = 100)
     val email: String? = null,
 
+    // 공개 표시 이름. 아이디와 달리 바꿀 수 있어서 var 다.
+    // V42 가 NOT NULL + `ux_users_nickname ON users(lower(nickname))` 을 건다 — 대소문자
+    // 무시 유일성은 표현식 인덱스라 컬럼 unique 로는 표현되지 않는다.
     @Column(nullable = true, length = 50)
-    val nickname: String? = null,
+    var nickname: String? = null,
 
     @Column(nullable = false, length = 20)
     var role: String = "USER",

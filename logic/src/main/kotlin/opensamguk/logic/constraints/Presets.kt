@@ -7,6 +7,9 @@ import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.world.HAN_MAP_NAME
+import opensamguk.logic.world.foundAssaultCrewCost
+import opensamguk.logic.world.isFoundableCityLevel
 
 private fun gen(ctx: ConstraintContext, view: StateView) = view.get(RequirementKey.General(ctx.actorId)) as? General
 private fun city(ctx: ConstraintContext, view: StateView) =
@@ -43,6 +46,38 @@ fun occupiedCity(allowNeutral: Boolean = false) = object : Constraint {
         val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
         if (allowNeutral && g.nationId == 0) return ConstraintResult.Allow
         return if (c.nationId == g.nationId) ConstraintResult.Allow else ConstraintResult.Deny("아국이 아닙니다.")
+    }
+}
+
+/**
+ * 징병·모병 전용 城 판정 — [occupiedCity] 의 **han 한정** 완화판.
+ *
+ * **패러티 아님 · han divergence.** 방랑군은 보유 城이 0개라 공유 제약 [occupiedCity] 에 항상 막히고,
+ * 그래서 병력을 모을 수단이 아예 없다. han 은 건국에 수비병 돌파 병력이 필요하므로(→ [foundAssaultCrewCost])
+ * 그대로 두면 거병한 세력이 영원히 건국을 못 하는 데드락이 된다. 그래서 **방랑군(nation.level==0)**이
+ * **공백지(city.nation==0)**에 서 있을 때만 자기 城처럼 징병을 허용한다.
+ *
+ * 재야(general.nation==0)는 그대로 막힌다(NotBeNeutral 이 먼저 걸러내지만 여기서도 명시적으로 제외).
+ * che·miniche 는 완화 분기가 통째로 죽어 [occupiedCity] 와 바이트 무변이며, deny 사유도 동일하다.
+ * 공유 제약을 넓히지 않으려고 별도 제약으로 두었다 — 쓰는 곳은 징병/모병(RecruitAlgorithm)뿐이다.
+ */
+fun recruitableCity() = object : Constraint {
+    override val name = "OccupiedCity"
+    override fun requires(ctx: ConstraintContext): List<RequirementKey> {
+        // PHP OccupiedCity::REQ_VALUES = REQ_GENERAL|REQ_CITY (no nation) — che 는 그대로,
+        // han 완화 분기만 nation()을 읽으니 그 대역에서만 얹는다.
+        val base = listOf(RequirementKey.General(ctx.actorId), RequirementKey.City(ctx.cityId ?: 0))
+        return if (ctx.env["mapName"] == HAN_MAP_NAME) base + RequirementKey.Nation(ctx.nationId ?: 0) else base
+    }
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        if (c.nationId == g.nationId) return ConstraintResult.Allow
+        if (ctx.env["mapName"] == HAN_MAP_NAME && g.nationId != 0 && c.nationId == 0) {
+            val n = nation(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+            if (n.level == 0) return ConstraintResult.Allow
+        }
+        return ConstraintResult.Deny("아국이 아닙니다.")
     }
 }
 
@@ -359,11 +394,25 @@ fun neutralCity() = object : Constraint {
  */
 fun constructableCity() = object : Constraint {
     override val name = "ConstructableCity"
-    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.City(ctx.cityId ?: 0))
+    override fun requires(ctx: ConstraintContext): List<RequirementKey> {
+        // PHP ConstructableCity::REQ_VALUES = REQ_CITY only (no general) — che 는 그대로,
+        // han 전용 수비병 돌파 분기만 gen()을 읽으니 그 대역에서만 얹는다.
+        val base = listOf(RequirementKey.City(ctx.cityId ?: 0))
+        return if (ctx.env["mapName"] == HAN_MAP_NAME) base + RequirementKey.General(ctx.actorId) else base
+    }
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
         val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
         if (c.nationId != 0) return ConstraintResult.Deny("공백지가 아닙니다.")
-        if (c.level !in listOf(5, 6)) return ConstraintResult.Deny("중, 소 도시에만 가능합니다.")
+        // han 은 縣급(영현·장현)도 건국지다 — che 는 등급이 8까지라 {5,6} 그대로다.
+        if (!isFoundableCityLevel(c.level)) return ConstraintResult.Deny("중, 소 도시에만 가능합니다.")
+        // han 전용 수비병 돌파(패러티 아님 · 튜닝값). che 는 비용이 항상 0이라 이 블록이 통째로 죽는다.
+        val assaultCost = foundAssaultCrewCost(ctx.env["mapName"] as? String, c.defense)
+        if (assaultCost > 0) {
+            val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+            if (g.crew < assaultCost) {
+                return ConstraintResult.Deny("수비병을 뚫을 병력이 부족합니다. (필요 ${assaultCost}명)")
+            }
+        }
         return ConstraintResult.Allow
     }
 }

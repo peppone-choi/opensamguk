@@ -35,6 +35,7 @@ import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicGeneral
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicNation
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import opensamguk.logic.world.isFoundableCityLevel
 
 /**
  * P5 Task FM2 (F-SEAM) — the NATION-command resolve path (R-SEAM §4).
@@ -660,7 +661,7 @@ class ProcessNationCommand(
             // 무작위수도이전: neutral level 5-6 cities (PHP SELECT)
             "che_무작위수도이전" ->
                 world.listCities()
-                    .filter { it.nationId == 0 && it.level in 5..6 }
+                    .filter { it.nationId == 0 && isFoundableCityLevel(it.level) }
                     .map { it.id }
                     .sorted()
             else -> emptyList()

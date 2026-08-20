@@ -68,7 +68,7 @@ class V11AdminMemberMigrationIT {
     @Test
     fun `B0-DATA -- new admin columns are nullable (divergence -- grade null by default)`() {
         val saved = userRepository.save(
-            UserEntity(username = "bob", password = "enc", role = "USER"),
+            UserEntity(username = "bob", password = "enc", role = "USER", nickname = "bob"),
         )
         val found = userRepository.findById(saved.id).orElseThrow()
         // grade는 0.9.0 divergence로 미사용 → null. imgsvr만 NOT NULL(기본 false).

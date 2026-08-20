@@ -74,6 +74,8 @@ export default function BoardControl() {
                 category: nextCategory,
                 page: String(nextPage),
                 size: String(PAGE_SIZE),
+                // 어드민은 삭제분까지 봐야 조치 이력을 확인할 수 있다(공개 피드에서는 안 보인다).
+                includeDeleted: 'true',
             });
             const response = await fetch(`/api/proxy/board/posts?${query}`, { cache: 'no-store' });
             if (!response.ok) {

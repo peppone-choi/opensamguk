@@ -46,7 +46,7 @@ class ProfileIconMultipartLimitIT {
     fun resetUser() {
         userRepository.deleteAll()
         val user = userRepository.saveAndFlush(
-            UserEntity(username = "multipart-limit", password = "encoded"),
+            UserEntity(username = "multipart-limit", password = "encoded", nickname = "multipart-limit"),
         )
         token = jwtTokenProvider.generateAccessToken(
             GatewayProfileClaims(

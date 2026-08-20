@@ -100,3 +100,20 @@ data/scenarios/scenario_*.json
 data/scenario-source/
 data/scenarios/refined/
 data/scenarios/reports/
+
+# CHGIS/TGAZ (ADR-LITE-039) — 사용은 허용, 재배포 금지. 원본·파생 좌표 데이터 미커밋.
+# 커밋되는 것은 tools/map/*.py 추출 스크립트뿐이다.
+data/chgis-source/
+# 파생 좌표·격자·계층 전부 미커밋. 커밋되는 것은 tools/map/*.py 뿐이다.
+data/map/*
+# ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
+!data/map/han-tiles.json
+**/v6_*_pts*
+**/v6_*_pgn*
+**/v6_*_lin*
+**/tgaz_*
+
+# 사료 코퍼스 — zh.wikisource(PD) 원문·파생 인덱스는 미커밋.
+# tools/corpus/fetch_sources.py 로 언제든 재현된다. 커밋 대상은 tools/corpus/*.py 뿐이다.
+data/corpus/
+data/natural-earth/

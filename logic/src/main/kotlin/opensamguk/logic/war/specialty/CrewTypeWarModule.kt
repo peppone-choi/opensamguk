@@ -19,8 +19,8 @@ import opensamguk.logic.war.trigger.triggers.CheBangeoryeokJeunga5p
  * post-state numeric gate caught it.
  *
  * Pure map lookup over the crewType's declared trigger names → the concrete [opensamguk.logic.war.trigger]
- * classes. ZERO RNG. Unknown names are skipped (logged-by-omission) until their port lands — today only
- * `che_방어력증가5p` is declared on any crewType row.
+ * classes. ZERO RNG. Unknown names are skipped (identity — che 런타임 불변, 이 배틀 결과 자체는 바뀌지 않는다)
+ * BUT logged once via [warnUnknownOnce] so a `units.json` 오타·미구현 트리거가 조용히 사라지지 않는다.
  */
 class CrewTypeWarModule(private val crewType: GameUnitDetail) : GeneralActionModule {
 

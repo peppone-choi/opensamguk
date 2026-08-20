@@ -47,6 +47,7 @@ class ProfileIconRecoveryIT {
                 picture = oldFileName,
                 imgsvr = true,
                 profileIconManaged = true,
+                nickname = "committed-recovery",
             ),
         )
         val prepared = storage.prepareUpload(decoded(), oldFileName)
@@ -73,6 +74,7 @@ class ProfileIconRecoveryIT {
                 picture = oldFileName,
                 imgsvr = true,
                 profileIconManaged = true,
+                nickname = "rolled-back-recovery",
             ),
         )
         val prepared = storage.prepareUpload(decoded(), oldFileName)

@@ -3,6 +3,7 @@ package opensamguk.logic.war
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitDetail
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.getTechCost
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
@@ -134,7 +135,7 @@ fun processWar(
 
     // (2) the defender candidate WarUnits (each on the SHARED rng) + the ordered battle queue.
     val candidateUnits = defenderCandidates.map { g ->
-        val crewType = GameUnitConst.byId(
+        val crewType = UnitCatalog.byId(
             g.crewTypeId.takeIf { it >= GameUnitConst.CREWTYPE_CASTLE } ?: GameUnitConst.DEFAULT_CREWTYPE,
         ) ?: defenderCrewType
         WarUnitGeneral(

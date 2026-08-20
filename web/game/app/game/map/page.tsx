@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
 import MapViewer from '../../../components/game/MapViewer';
+import HanMapCanvas from '../../../components/game/HanMapCanvas';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { WorldLogResponse } from '../../../lib/api';
@@ -35,6 +36,9 @@ const logRowStyle: React.CSSProperties = {
 };
 
 export default function GameMapPage() {
+    // 후한 군현 격자가 배포에 주입돼 있으면 그걸 그리고, 없으면(404) 기존 마커 맵으로 돌아간다.
+    // ADR-LITE-040 의 철거 경로 — 파일 하나만 내리면 서비스는 계속 돈다 — 가 실제로 동작하는 지점이다.
+    const [hanMissing, setHanMissing] = useState(false);
     const [logData, setLogData] = useState<WorldLogResponse | null>(null);
     const [logLoading, setLogLoading] = useState(true);
     const [logError, setLogError] = useState<string | null>(null);
@@ -70,8 +74,11 @@ export default function GameMapPage() {
         <Shell>
             <div className="page-content">
                 <h1>세계 지도</h1>
-                <p className="text-muted">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>
-                <MapViewer refreshKey={mapRefreshKey} />
+                {/* 후한 군현 지도(HanMapCanvas)는 아직 클릭 인터랙션이 없다 — 폴백(MapViewer)일 때만 안내한다. */}
+                {hanMissing && <p className="text-muted">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>}
+                {hanMissing
+                    ? <MapViewer refreshKey={mapRefreshKey} />
+                    : <HanMapCanvas onMissing={() => setHanMissing(true)} />}
 
                 {/* ── 중원정세 — devsam PageCachedMap.vue cachedMap.history[] v-html 대응 ── */}
                 <div style={sectionBarStyle}>중원 정세</div>

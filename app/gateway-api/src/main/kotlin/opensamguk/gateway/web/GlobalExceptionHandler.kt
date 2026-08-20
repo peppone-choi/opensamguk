@@ -5,6 +5,7 @@ import opensamguk.gateway.profile.ProfileIconChangedTodayException
 import opensamguk.gateway.profile.ProfileIconPayloadTooLargeException
 import opensamguk.gateway.profile.ProfileIconPersistenceException
 import opensamguk.gateway.profile.ProfileIconStorageException
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
@@ -41,6 +42,16 @@ class GlobalExceptionHandler {
     fun illegalArg(e: IllegalArgumentException): ResponseEntity<ApiError> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(ApiError(e.message ?: "잘못된 요청입니다.", HttpStatus.BAD_REQUEST.value()))
+
+    /**
+     * 아이디·닉네임·이메일 중복은 서비스에서 먼저 걸러지지만, 검사와 INSERT 사이에 다른
+     * 요청이 끼어들면 유니크 인덱스가 마지막 문지기가 된다. 그 경우를 500 으로 흘리면
+     * 사용자는 이유를 알 수 없다.
+     */
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun duplicateKey(e: DataIntegrityViolationException): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiError("이미 사용 중인 값입니다.", HttpStatus.CONFLICT.value()))
 
     @ExceptionHandler(ProfileIconChangedTodayException::class)
     fun profileIconChangedToday(e: ProfileIconChangedTodayException): ResponseEntity<ApiError> =

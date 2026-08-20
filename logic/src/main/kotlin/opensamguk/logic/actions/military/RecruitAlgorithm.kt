@@ -2,6 +2,7 @@ package opensamguk.logic.actions.military
 
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst as CommonGameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.GameUnitDetail as CommonGameUnitDetail
 import opensamguk.common.constants.UnitConstraint
 import opensamguk.logic.actions.GeneralActionDefinition
@@ -43,8 +44,20 @@ object RecruitUnitAvailability {
                 is UnitConstraint.ReqTech -> tech >= constraint.reqTech
                 is UnitConstraint.ReqCities ->
                     constraint.reqCities.any { name -> cityConst.byName(name)?.id?.let { ownCities.containsKey(it) } == true }
+                // 보유 판정이다 — 국가가 가진 城 중 하나라도 그 키/지역이면 통과(인접은 보지 않는다).
+                // 게이트 키(han 漢字 4축)와 기존 지역 라벨을 둘 다 본다. che 는 게이트 키가 비어
+                // 있으므로 아래 regionIdByName 경로만 돈다 — 기존 동작 그대로.
                 is UnitConstraint.ReqRegions ->
-                    constraint.reqRegions.any { name -> cityConst.regionIdByName(name)?.let { ownRegions.contains(it) } == true }
+                    ownCities.keys.any { id -> cityConst.gateKeys(id).any(constraint.reqRegions::contains) } ||
+                        constraint.reqRegions.any { name -> cityConst.regionIdByName(name)?.let { ownRegions.contains(it) } == true }
+                // 주둔지 기준이다 — 소유가 아니라 지금 서 있는 땅을 본다.
+                is UnitConstraint.ForbidRegions -> {
+                    // 지역을 못 찾으면 막지 않는다 — 모르는 것을 금제로 바꾸지 않는다.
+                    val here = cityConst.byId(general.cityId)?.region
+                    val gate = cityConst.gateKeys(general.cityId)
+                    constraint.forbidRegions.none { gate.contains(it) } &&
+                        (here == null || constraint.forbidRegions.none { cityConst.regionIdByName(it) == here })
+                }
                 is UnitConstraint.ReqMinRelYear -> relYear >= constraint.reqMinRelYear
                 is UnitConstraint.ReqChief -> general.officerLevel >= 5
                 is UnitConstraint.ReqNotChief -> general.officerLevel < 5
@@ -166,7 +179,7 @@ open class RecruitAlgorithm(
     }
 
     override fun buildMinConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
-        notBeNeutral(), occupiedCity(),
+        notBeNeutral(), recruitableCity(),
         reqCityCapacity("pop", "주민", GameConst.minAvailableRecruitPop + 100),
         reqCityTrust { _, _ -> 20.0 },
     )
@@ -178,7 +191,7 @@ open class RecruitAlgorithm(
 
         return listOf(
             notBeNeutral(),
-            occupiedCity(),
+            recruitableCity(),
             reqCityCapacity("pop", "주민", GameConst.minAvailableRecruitPop + reqCrew),
             reqCityTrust { _, _ -> 20.0 },
             reqGeneralGold { c, view -> costForConstraint(c, view, reqCrewTypeId, amount).gold },
@@ -222,8 +235,9 @@ open class RecruitAlgorithm(
     private fun recruitableUnit(ctx: ConstraintContext, view: StateView, reqCrewTypeId: Int): Boolean {
         val general = view.get(RequirementKey.General(ctx.actorId)) as? General ?: return false
         val nation = view.get(RequirementKey.Nation(ctx.nationId ?: general.nationId)) as? Nation ?: return false
-        if (UnitSetTable.byId(activeUnitSet(ctx), reqCrewTypeId) == null) return false
-        val unit = CommonGameUnitConst.byId(reqCrewTypeId) ?: return false
+        val unitSet = activeUnitSet(ctx) ?: UnitSetTable.CHE_UNIT_SET
+        if (UnitSetTable.byId(unitSet, reqCrewTypeId) == null) return false
+        val unit = UnitCatalog.byId(unitSet, reqCrewTypeId) ?: return false
         val cityConst = CityConstRegistry.find(activeMapName(ctx)) ?: return false
         val ownCities = ownedCityLevels(ctx, view, general, nation)
         val ownRegions = ownedRegions(ctx, view, ownCities.keys, cityConst)

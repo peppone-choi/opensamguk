@@ -24,7 +24,7 @@ export async function register(input: {
     username: string;
     password: string;
     email?: string;
-    nickname?: string;
+    nickname: string;
 }): Promise<User> {
     const res = await fetch('/api/auth/register', {
         method: 'POST',

@@ -24,6 +24,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.StringUtil
 import opensamguk.logic.traits.NationTypeModule
 import opensamguk.logic.traits.NationTypeRegistry
+import opensamguk.logic.world.foundAssaultCrewCost
 
 /**
  * Typed intent for PHP's trailing `tryUniqueItemLottery(genGenericUniqueRNGFromGeneral(...), ...)`.
@@ -87,6 +88,13 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
     var lastUniqueLotteryIntent: GeneralUniqueLotteryIntent? = null
         protected set
 
+    /**
+     * 마지막 [resolve] 에서 공백지 수비병을 뚫는 데 쓴 병력 (han 전용 divergence). che 는 항상 0.
+     * **패러티 아님 · 튜닝값** — 계산은 [foundAssaultCrewCost].
+     */
+    var lastAssaultCrewCost: Int = 0
+        protected set
+
     /** che_건국 grants unifier +250; cr_건국 overrides to 0 (the divergence). */
     protected open val unifierGrant: Int get() = 250
 
@@ -132,6 +140,7 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
         lastUnifierGrant = 0
         lastAlternative = null
         lastUniqueLotteryIntent = null
+        lastAssaultCrewCost = 0
 
         val d = context.draft
         val nation = d.nation ?: return
@@ -179,6 +188,14 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
         nextCityMeta.remove("conflict")
         d.city = d.city.copy(nationId = nation.id, conflict = "{}", meta = nextCityMeta)
 
+        // 6-b. han 전용 수비병 돌파(패러티 아님 · 튜닝값 [FOUND_ASSAULT_RATIO]). 병력으로 수비병을 쓸어내고
+        //      그만큼 crew 를 잃는다. che 는 비용이 항상 0이라 crew/def 델타가 생기지 않는다 = 골든 무변.
+        //      두 변경 모두 draft(=ChangeRecorder 델타) 위에서만 일어난다.
+        lastAssaultCrewCost = foundAssaultCrewCost(context.args["mapName"] as? String, d.city.defense)
+        if (lastAssaultCrewCost > 0) {
+            d.city = d.city.copy(defense = 0)
+        }
+
         // 5 + 7. nation: name/color/level=1/type/capital + aux can_국기변경=1 (+ extras for 무작위건국)
         //         (che_건국.php:186-201). PHP sets aux BEFORE the UPDATE; aux key order = set order.
         d.nation = nation.copy(
@@ -199,7 +216,10 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
             "nationType" to nationType,
             "colorType" to colorType,
         )
-        var g = expRes.copy(lastTurn = LastTurn(command = name, arg = arg))
+        var g = expRes.copy(
+            crew = (expRes.crew - lastAssaultCrewCost).coerceAtLeast(0),
+            lastTurn = LastTurn(command = name, arg = arg),
+        )
         val statRes = opensamguk.logic.domestic.checkStatChange(g)
         statRes.plainLogs.forEach { context.addPlainLog(it) }
         d.general = statRes.general

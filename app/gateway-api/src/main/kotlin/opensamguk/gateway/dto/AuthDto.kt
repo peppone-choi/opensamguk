@@ -17,8 +17,9 @@ data class RegisterRequest(
     @field:Email
     val email: String? = null,
 
-    @field:Size(max = 50)
-    val nickname: String? = null,
+    @field:NotBlank
+    @field:Size(min = 2, max = 20)
+    val nickname: String,
 )
 
 /** 로그인 요청 */

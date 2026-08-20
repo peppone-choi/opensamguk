@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import React from 'react';
 import { boardCategoryLabel, boardDate, type BoardPost } from '@/lib/board';
+import BoardAuthor from './BoardAuthor';
 
 export default function BoardList({ posts }: { readonly posts: readonly BoardPost[] }) {
   if (posts.length === 0) {
@@ -21,7 +22,7 @@ export default function BoardList({ posts }: { readonly posts: readonly BoardPos
             <Link className="board-post-link" href={`/board/posts/${post.id}`}>{post.title}</Link>
           </div>
           <div className="board-list-meta">
-            <span>{post.authorName}</span>
+            <BoardAuthor imageServer={post.authorImageServer} name={post.authorName} picture={post.authorPicture} />
             <time dateTime={post.createdAt}>{boardDate(post.createdAt)}</time>
           </div>
         </article>

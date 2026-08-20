@@ -3,6 +3,8 @@ package opensamguk.logic.world
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.CityConst.RawCity
 import opensamguk.common.constants.CityInitialDetail
+import opensamguk.common.constants.HanCityConst
+import opensamguk.common.constants.HanGateIndex
 
 /**
  * F6 Task FM1 — per-map CityConst variant registry, keyed by `mapName`.
@@ -22,6 +24,45 @@ import opensamguk.common.constants.CityInitialDetail
  * `level==4` invader gate. The `path` adjacency is an insertion-ordered LinkedHashMap (the BFS
  * input order is load-bearing).
  */
+/**
+ * 그 등급의 공백지에서 **건국·무작위수도이전**이 가능한가.
+ *
+ * PHP `ConstructableCity.php` 는 {5,6}(중·소)이다. che 는 등급이 1~8뿐이라 이 함수는 che 에서
+ * **완전한 무변**이다 — 9 이상이 존재하지 않는다.
+ *
+ * han 은 郡治 위에 京(9), 아래에 縣급 영현(10)·장현(11)을 얹었다. 縣급을 빼면 사료상 郡을
+ * 領有하지 않고 縣 하나만 가진 세력(1060 유비 = 신야현)이 영영 건국을 못 한다 — 시나리오가
+ * 실제로 그런 세력을 두므로 縣급도 건국지로 연다. 京(9)·대(7)·특(8)은 그대로 막힌다.
+ */
+fun isFoundableCityLevel(level: Int): Boolean = level in 5..6 || level >= 10
+
+/**
+ * 건국 시 공백지 수비병(city.def)을 뚫는 데 필요한 병력 비율.
+ *
+ * **패러티 아님 · 게임 밸런스 튜닝값.** PHP devsam/core 에는 건국 전투 판정 자체가 없다(공백지에 서 있기만
+ * 하면 건국). han 맵 전용 divergence 이므로 골든/RNG/로그와 무관하며, 밸런싱은 이 값 하나만 고치면 된다.
+ *
+ * 값을 2.0 으로 잡은 근거는 **장수 한 명의 병력 상한**이다 — `RecruitAlgorithm.maxCrewOf` 가
+ * `통솔 * 100` 이라 통솔 70 이면 7,000 이 최대다. 그 기준으로 필요 병력은
+ * 장현 2,000(통솔 20+) · 영현 3,000(통솔 30+) · 소 4,000(통솔 40+) · 중 6,000(통솔 60+) 이 된다.
+ * 0.5 였을 때는 소 郡治가 1,000(통솔 10+)이라 사실상 아무 관문도 아니었다.
+ * 이 계단이 「縣부터 물고 郡治로 넓힌다」는 동선을 만든다.
+ */
+const val FOUND_ASSAULT_RATIO: Double = 2.0
+
+/** [CityConstVariant.mapName] of the han map — the ONLY map the founding assault applies to. */
+const val HAN_MAP_NAME: String = "han"
+
+/**
+ * 건국에 필요한 돌파 병력 = `ceil(city.def * FOUND_ASSAULT_RATIO)`.
+ *
+ * **han 전용**이다. che·miniche 는 항상 0 을 돌려주므로 판정·차감·def 초기화가 전부 사라진다
+ * (패러티 골든 무변). 수비병이 없는 城(def<=0)도 0 = 판정 없음.
+ */
+fun foundAssaultCrewCost(mapName: String?, cityDefense: Int): Int =
+    if (mapName != HAN_MAP_NAME || cityDefense <= 0) 0
+    else kotlin.math.ceil(cityDefense * FOUND_ASSAULT_RATIO).toInt()
+
 sealed interface CityConstVariant {
     val mapName: String
     fun all(): Map<Int, CityInitialDetail>
@@ -30,9 +71,61 @@ sealed interface CityConstVariant {
     /** Mirrors CityConstBase::byRegion (the last-wins quirk: LAST city encountered per region). */
     fun byRegion(region: Int): CityInitialDetail?
     fun regionIdByName(name: String): Int?
+
+    /**
+     * 그 城이 가진 **게이트 키**(漢字) 집합 — 州 · 郡 · 治所 縣 · 이민족 거점.
+     * han 병종의 `ReqRegions`/`ForbidRegions` 가 지역 라벨이 아니라 漢字 4축을 쓰기 때문에 필요하다.
+     * 기본은 빈 집합이며(che·miniche), 그 경우 판정은 기존 [regionIdByName] 경로만 탄다.
+     */
+    fun gateKeys(cityId: Int): Set<String> = emptySet()
+
+    /**
+     * 그 城이 **국가 등급 산정**에 세어지는가 (`UpdateNationLevel`).
+     *
+     * PHP 는 `WHERE LEVEL>=4` 하나뿐이다(`UpdateNationLevel.php:34-37`). che 는 등급이 1~8이라
+     * 수·진·관(1~3) 25성이 빠지고 **69성만** 세어진다 — 이 기본 구현이 그 규칙 그대로다.
+     *
+     * han 은 이 필터가 무력화된다. 縣을 영현(10)·장현(11)로 매겼기 때문에 605개 縣이 전부
+     * `>=4` 를 통과해 780성 전부가 세어지고, 94성 세계에 맞춰 얼어 있는 문턱
+     * ([opensamguk.common.constants.GameConst.nationLevelByCityCnt09] = 1/2/5/8/11/16/21/28/36)을
+     * 즉시 넘겨버린다. 실측: 1010 황건적이 104성이라 **첫 월간틱에 천자**가 된다.
+     * han 변형은 郡治만 세어(4~9) 세는 대상을 175개로 되돌린다 — 필터가 원래 하려던 일
+     * (작은 거점은 빼고 실질 거점만 센다)을 han 등급 축으로 옮긴 것이다.
+     */
+    fun countsForNationLevel(level: Int): Boolean = level >= 4
+
+    /**
+     * 국가 등급 0~9 의 城 수 문턱. 기본은 PHP 패러티 테이블
+     * ([opensamguk.common.constants.GameConst.nationLevelByCityCnt09] 3번째 열) 그대로다.
+     *
+     * han 은 [countsForNationLevel] 로 세는 대상이 69(che) → 175(郡治) 로 2.5배가 되므로
+     * 문턱도 같이 올리지 않으면 등급이 통째로 앞당겨진다. han 변형이 이 값을 재정의한다.
+     */
+    val nationLevelCityThresholds: List<Int>
+        get() = opensamguk.common.constants.GameConst.nationLevelByCityCnt09.map { (it[2] as Number).toInt() }
+
     /** Inherited from the base ($buildInit/$buildInitCommon are NOT overridden by the map files). */
     val buildInit: Map<String, Map<String, Int>>
     val buildInitCommon: Map<String, Int>
+
+    /**
+     * 3축 등급(爵·官·天子)을 이 맵이 지원하는가. 기본 false = 지금 단일 사다리 그대로.
+     * che 는 PHP 패러티 경로라 영원히 false 다.
+     */
+    val supportsThreeAxisRank: Boolean get() = false
+
+    /**
+     * 州(region) → 그 州에 속한 **郡治 城의 총 수**.
+     * 지방관(太守/刺史/州牧) 판정이 「州 장악도」이므로 분모가 필요하다.
+     * 기본은 빈 맵 = 3축 미지원.
+     */
+    val seatCountByProvince: Map<Int, Int> get() = emptyMap()
+
+    /**
+     * 국호·국기 변경이 풀리는 spine level. che 는 PHP 패러티(7 = 황제)를 그대로 쓰고,
+     * han 은 公(5)부터 국호를 쓴다(스펙 2026-08-19-nation-rank-three-axis.md §10.3).
+     */
+    val nationTitleUnlockLevel: Int get() = 7
 }
 
 /** 'che' = the canonical base — delegates directly to the GREEN [CityConst] object (zero delta). */
@@ -64,6 +157,110 @@ internal class InitCityOverrideVariant(
     override fun regionIdByName(name: String): Int? = CityConst.regionMap[name] as? Int
     override val buildInit: Map<String, Map<String, Int>> get() = CityConst.buildInit
     override val buildInitCommon: Map<String, Int> get() = CityConst.buildInitCommon
+}
+
+/**
+ * 'han' — 續漢書 郡國志 + CHGIS 격자에서 구운 178 郡 지도([HanCityConst], 생성물).
+ * region 라벨이 州 이름이라 base 의 8개 라벨 대신 자기 [regionMap] 을 쓰고,
+ * 게이트 키는 같은 생성기가 낸 [HanGateIndex] 에서 온다.
+ */
+internal object HanCityConstVariant : CityConstVariant {
+    /** han.json `_meta.regions` 순서 그대로 — build_han_world.py 의 `ju_order`(1-based). */
+    private val hanRegions: Map<Any, Any> = linkedMapOf<Any, Any>().apply {
+        listOf(
+            "사예", "예주", "기주", "연주", "서주", "청주", "형주",
+            "양주", "익주", "량주", "병주", "유주", "교주", "동이",
+        ).forEachIndexed { i, label ->
+            put(label, i + 1)
+            put(i + 1, label)
+        }
+    }
+
+    /**
+     * che 8등급 위에 '경'(京, 9)을 하나 더 얹는다 — 낙양·장안 딱 두 곳뿐인 京師 등급이다.
+     * 패러티 상수인 [CityConst.levelMap] 은 건드리지 않고 이 변형만 자기 표를 쓴다.
+     */
+    private val hanLevels: Map<Any, Any> =
+        LinkedHashMap<Any, Any>(CityConst.levelMap).apply {
+            put("경", 9); put(9, "경")
+            // 治所가 아닌 縣. 續漢書 百官志 「萬戶以上為令，不滿為長」 — 令이 앉는 縣이 '영현',
+            // 長이 앉는 縣이 '장현'이다. 숫자는 크기 순서가 아니라 그냥 식별자다(che 1-8 도 그렇다).
+            put("영현", 10); put(10, "영현")
+            put("장현", 11); put(11, "장현")
+        }
+
+    /** '경'·'영현'·'장현'의 초기값 — che 계단(def/wall +1000, pop 100k→150k)을 한 칸 더 이은 밸런스값이다. */
+    private val hanBuildInit: Map<String, Map<String, Int>> =
+        LinkedHashMap(CityConst.buildInit).apply {
+            put("경", linkedMapOf("pop" to 200000, "agri" to 1000, "comm" to 1000,
+                                 "secu" to 1000, "def" to 6000, "wall" to 6000))
+            // 縣 두 등급 — 생성기(tools/scenario/build_han_world.py)의 BUILD_INIT 과 같은 값이다.
+            put("영현", linkedMapOf("pop" to 50000, "agri" to 1000, "comm" to 1000,
+                                   "secu" to 1000, "def" to 1500, "wall" to 1500))
+            put("장현", linkedMapOf("pop" to 20000, "agri" to 500, "comm" to 500,
+                                   "secu" to 500, "def" to 1000, "wall" to 1000))
+        }
+
+    private val generated = CityConst.generateCities(HanCityConst.initCity, hanRegions, hanLevels)
+    override val mapName: String = "han"
+    override fun all(): Map<Int, CityInitialDetail> = generated.constID
+    override fun byId(id: Int): CityInitialDetail? = generated.constID[id]
+    /**
+     * 이름으로 찾는다. **han 은 이름이 겹칠 수 있다** — 서로 다른 漢字가 같은 한글 독음이
+     * 되는 城이 57쌍 있다(零陵郡 零陵縣·梁國 寧陵縣 둘 다 '영릉', 京兆尹·會稽郡 둘 다 '장안').
+     * 겹치면 마지막 城이 이긴다. 城을 확정해 가리켜야 하는 곳(시나리오·엔진·DB)은 **id** 를 써라.
+     */
+    override fun byName(name: String): CityInitialDetail? = generated.constName[name]
+    override fun byRegion(region: Int): CityInitialDetail? = generated.constRegion[region]
+    override fun regionIdByName(name: String): Int? = hanRegions[name] as? Int
+
+    /** 郡治(이 4 ~ 경 9)만 센다. 영현(10)·장현(11)은 郡의 하급 행정구역이라 세지 않는다. */
+    override fun countsForNationLevel(level: Int): Boolean = level in 4..9
+
+    /**
+     * **패러티 아님 · han 전용 밸런스값.** 도출 규칙 하나로 전부 나온다 —
+     * che 문턱을 「세는 城 전체 대비 비율」로 읽어 han 의 세는 城 수에 다시 씌웠다.
+     *
+     * che 는 `LEVEL>=4` 로 94성 중 **69성**을 세고, han 은 郡治만 세어 780성 중 **175성**을 센다.
+     * 그래서 배율은 175/69 = 2.5362 다. `round(che문턱 * 175 / 69)`:
+     *
+     * | 등급 | che | han |
+     * |---|---|---|
+     * | 군벌 | 2 | 5 |
+     * | 주자사 | 5 | 13 |
+     * | 주목 | 8 | 20 |
+     * | 공 | 11 | 28 |
+     * | 왕 | 16 | 41 |
+     * | 황제 | 21 | 53 |
+     * | 대황제 | 28 | 71 |
+     * | 천자 | 36 | 91 |
+     *
+     * 0(방랑군)·1(호족)은 비율이 아니라 **구조**라 그대로 둔다 — 방랑군은 城 0 의 상태이고,
+     * 郡治 하나를 가진 세력이 방랑군으로 남으면 안 된다.
+     *
+     * 이 값을 바꿔도 che 골든은 무관하다(che 는 기본 구현을 쓴다).
+     */
+    override val nationLevelCityThresholds: List<Int> =
+        listOf(0, 1, 5, 13, 20, 28, 41, 53, 71, 91)
+    override fun gateKeys(cityId: Int): Set<String> = HanGateIndex.keys(cityId)
+    override val buildInit: Map<String, Map<String, Int>> get() = hanBuildInit
+    override val buildInitCommon: Map<String, Int> get() = CityConst.buildInitCommon
+
+    override val supportsThreeAxisRank: Boolean = true
+
+    /** 公(5)부터 국호·국기를 쓴다 — 侯 3등급은 아직 남의 조정 신하다(스펙 §10.3). */
+    override val nationTitleUnlockLevel: Int = 5
+
+    /**
+     * 州(region) → 그 州의 郡治(=[countsForNationLevel] 참인 城) 수. [generated] 처럼 한 번만
+     * 계산해 캐시한다 — 지방관(太守/刺史/州牧) 판정마다 재계산하지 않는다.
+     */
+    override val seatCountByProvince: Map<Int, Int> by lazy {
+        generated.constID.values
+            .filter { countsForNationLevel(it.level) }
+            .groupingBy { it.region }
+            .eachCount()
+    }
 }
 
 object CityConstRegistry {
@@ -158,6 +355,7 @@ object CityConstRegistry {
             "miniche" to miniche,
             "miniche_b" to miniche,
             "miniche_clean" to miniche,
+            "han" to HanCityConstVariant,
         )
     }
 

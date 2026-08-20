@@ -3,6 +3,7 @@ package opensamguk.logic.actions.war
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.actions.GeneralActionDefinition
@@ -214,9 +215,9 @@ class CheChulbyeong(
             term = 3,
         )
 
-        val crewType = GameUnitConst.byId(
+        val crewType = UnitCatalog.byId(
             g0.crewTypeId.takeIf { it >= GameUnitConst.CREWTYPE_CASTLE } ?: GameUnitConst.DEFAULT_CREWTYPE,
-        ) ?: GameUnitConst.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
+        ) ?: UnitCatalog.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         var g = addDexForChulbyeong(g0, crewType.id, g0.crew / 100.0)
         // +1 inheritance (active_action) when crew>500 && train*atmos > 70*70 — P6 succession seam (no write).
         // (modeled as a no-op write; the predicate is preserved for parity.)
@@ -248,10 +249,10 @@ class CheChulbyeong(
         val destCity = d.destCity ?: bctx.cityById.getValue(chosenCityId)
         val defenderNation = bctx.nationById[destCity.nationId]
         val defenders = bctx.defenderGeneralsByCity[chosenCityId] ?: emptyList()
-        val attackerCrewType = GameUnitConst.byId(
+        val attackerCrewType = UnitCatalog.byId(
             d.general.crewTypeId.takeIf { it >= GameUnitConst.CREWTYPE_CASTLE } ?: GameUnitConst.DEFAULT_CREWTYPE,
-        ) ?: GameUnitConst.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
-        val defenderCrewType = GameUnitConst.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
+        ) ?: UnitCatalog.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
+        val defenderCrewType = UnitCatalog.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         val hooks = ProductionWarBattleHooks(
             defenderNationRice = (defenderNation?.rice ?: 0).toDouble(),
             citySupply = destCity.supplyState != 0,
@@ -292,7 +293,7 @@ class CheChulbyeong(
 
     /** PHP `addDex($crewTypeObj, crew/100)` — fold the crew dex accumulator (CASTLE→SIEGE, no draw). */
     private fun addDexForChulbyeong(g: General, crewTypeId: Int, exp: Double): General {
-        val crewType = GameUnitConst.byId(crewTypeId) ?: return g
+        val crewType = UnitCatalog.byId(crewTypeId) ?: return g
         var armType = crewType.armType
         if (armType == GameUnitConst.T_CASTLE) armType = GameUnitConst.T_SIEGE
         if (armType < 0) return g

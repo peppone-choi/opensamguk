@@ -2,6 +2,7 @@ package opensamguk.logic.war
 
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.GameUnitDetail
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
@@ -289,14 +290,16 @@ class BattleSimPreview(
     // --- input validation (PHP $generalCheck / $cityCheck / $nationCheck) -------------------------------
 
     private fun validate(input: BattleSimInput) {
-        validateGeneral(input.attacker, "출병자", input.attackerNation)
-        input.defenders.forEachIndexed { idx, d -> validateGeneral(d, "수비자${idx + 1}", input.defenderNation) }
+        // 이 프리뷰 실행 전체가 한 unitSet 안에서만 돈다 — attackerCrewType 이 속한 세트를 기준으로 삼는다.
+        val unitSet = UnitCatalog.setOf(input.attackerCrewType.id) ?: UnitCatalog.CHE
+        validateGeneral(input.attacker, "출병자", input.attackerNation, unitSet)
+        input.defenders.forEachIndexed { idx, d -> validateGeneral(d, "수비자${idx + 1}", input.defenderNation, unitSet) }
         require(input.month in 1..12) { "month out of range [1,12]" }
         require(input.year >= 0) { "year must be >= 0" }
         require(input.repeatCnt in 1..1000) { "repeatCnt out of range [1,1000]" }
     }
 
-    private fun validateGeneral(g: BattleSimGeneralInput, who: String, nation: Nation) {
+    private fun validateGeneral(g: BattleSimGeneralInput, who: String, nation: Nation, unitSet: String) {
         require(g.no >= 1) { "[$who] no must be >= 1" }
         require(g.crew >= 0) { "[$who] crew must be >= 0" }
         require(g.train in 40..GameConst.maxTrainByWar) { "[$who] train ${g.train} out of [40,${GameConst.maxTrainByWar}]" }
@@ -307,7 +310,9 @@ class BattleSimPreview(
         require(g.experience >= 0) { "[$who] experience must be >= 0" }
         require(g.gold >= 0) { "[$who] gold must be >= 0" }
         require(g.rice >= 0) { "[$who] rice must be >= 0" }
-        require(GameUnitConst.byId(g.crewTypeId) != null) { "[$who] unknown crewtype ${g.crewTypeId}" }
+        // che 대역은 PHP GameUnitConst::byID() 던지는 원문 그대로 — sub-1000 id 는 별개 오류다.
+        require(unitSet != UnitCatalog.CHE || g.crewTypeId >= 1000) { "적절한 id는 1000이상이어야합니다:${g.crewTypeId}" }
+        require(UnitCatalog.byId(unitSet, g.crewTypeId) != null) { "[$who] unknown crewtype ${g.crewTypeId}" }
         require(isAllowedItem("horse", g.horse)) { "[$who] horse ${g.horse} not in allowlist" }
         require(isAllowedItem("weapon", g.weapon)) { "[$who] weapon ${g.weapon} not in allowlist" }
         require(isAllowedItem("book", g.book)) { "[$who] book ${g.book} not in allowlist" }

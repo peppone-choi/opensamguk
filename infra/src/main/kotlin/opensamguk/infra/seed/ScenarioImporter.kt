@@ -335,14 +335,28 @@ class ScenarioImporter(
      * baked `nation_id`와 동일 집합이라 **무변(no-op)**, `scenario_1030`은 21국 소유가 복구된다(PHP는
      * 시나리오 `nation.cities`로 소유를 정한다 — 이쪽이 grand-truth 정합).
      */
-    private val cityOwnerByName: Map<String, Int> =
-        scenario.nations.flatMap { n -> n.cities.map { cityName -> cityName to n.id } }.toMap()
+    private val cityIdByName: Map<String, Int> = cities.associate { it.name to it.id }
+    private val cityIds: Set<Int> = cities.mapTo(HashSet()) { it.id }
+
+    /**
+     * 시나리오가 城을 가리키는 토큰 하나를 城 id 로 푼다. 숫자면 id, 아니면 이름이다.
+     *
+     * WHY id: han 맵(780城)은 서로 다른 漢字가 같은 한글 독음이 되는 城이 있다 —
+     * 零陵郡 零陵縣과 梁國 寧陵縣이 둘 다 '영릉'이고, 江夏郡 軑縣과 代郡 代縣이 둘 다 '대'다.
+     * 이름으로 가리키면 어느 郡의 縣인지가 안 정해진다. id 로 적으면 확정된다.
+     * che 시나리오는 이름을 그대로 쓰므로 무변(no-op)이다.
+     */
+    private fun cityRefToId(ref: String): Int? =
+        ref.toIntOrNull()?.takeIf { it in cityIds } ?: cityIdByName[ref]
+
+    private val cityOwnerById: Map<Int, Int> =
+        scenario.nations.flatMap { n -> n.cities.mapNotNull { ref -> cityRefToId(ref)?.let { it to n.id } } }.toMap()
 
     private fun insertCities(jdbc: JdbcTemplate, worldId: WorldId): Int {
         var n = 0
         for (c in cities) {
             // 소유: 시나리오 nation.cities 기준(baked c.nationId 무시). 미소유 도시 = 공백지(0).
-            val cityNationId = cityOwnerByName[c.name] ?: 0
+            val cityNationId = cityOwnerById[c.id] ?: 0
             // 초기 스탯 분기:
             //  - 점령지(nation_id!=0): PHP initialEvents ChangeCity가 *_max의 70%로 부스트(parity). trust 80.
             //  - 공백지(nation_id==0): 부스트 없음 → CityConstBase 베이스 initial(데이터의 *_init). trust 50.
@@ -383,10 +397,8 @@ class ScenarioImporter(
     // 4d capital
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     private fun updateCapitals(jdbc: JdbcTemplate, worldId: WorldId) {
-        val cityIdByName = cities.associate { it.name to it.id }
         for (nation in scenario.nations) {
-            val firstCityName = nation.cities.firstOrNull() ?: continue
-            val capitalId = cityIdByName[firstCityName] ?: continue
+            val capitalId = nation.cities.firstOrNull()?.let(::cityRefToId) ?: continue
             jdbc.update(
                 "UPDATE nation SET capital_city_id = ? WHERE world_id = ? AND id = ?",
                 capitalId,
@@ -429,7 +441,6 @@ class ScenarioImporter(
         startYear: Int,
         worldId: WorldId,
     ): Int {
-        val cityIdByName = cities.associate { it.name to it.id }
         val rngRows = replayInitScenarioGeneralRng(startYear)
 
         val sql = """
@@ -462,7 +473,7 @@ class ScenarioImporter(
             val age = (startYear - born).coerceAtLeast(0)
             val npcState = g.npcType
             val activeName = activeGeneralName(g)
-            val cityId = rngRow.cityId ?: resolveLocatedCityId(g.locatedCity, cityIdByName)
+            val cityId = rngRow.cityId ?: resolveLocatedCityId(g.locatedCity)
                 ?: error("active general $activeName has no PHP-resolved city")
             // experience/dedication default branch: age*100 (matches PHP GeneralBuilder default).
             val exp = age * 100
@@ -682,13 +693,12 @@ class ScenarioImporter(
     ) {
         val allCityIds = cities.map { it.id }
         val cityIdsByNation = scenario.nations.associate { nation ->
-            nation.id to nation.cities.mapNotNull { cityName -> cities.firstOrNull { it.name == cityName }?.id }
+            nation.id to nation.cities.mapNotNull(::cityRefToId)
         }
-        val cityIdByName = cities.associate { it.name to it.id }
         for (g in seededRows) {
             if (!shouldConsumeBuildRng(g)) continue
 
-            val locatedCityId = resolveLocatedCityId(g.locatedCity, cityIdByName)
+            val locatedCityId = resolveLocatedCityId(g.locatedCity)
             val cityId = if (locatedCityId != null) {
                 locatedCityId
             } else {
@@ -718,12 +728,8 @@ class ScenarioImporter(
         }
     }
 
-    private fun resolveLocatedCityId(locatedCity: String?, cityIdByName: Map<String, Int>): Int? {
-        if (locatedCity == null) return null
-        val id = locatedCity.toIntOrNull()
-        if (id != null && cities.any { it.id == id }) return id
-        return cityIdByName[locatedCity]
-    }
+    private fun resolveLocatedCityId(locatedCity: String?): Int? =
+        locatedCity?.let(::cityRefToId)
 
     private fun personalCode(ego: String?): String {
         if (ego.isNullOrBlank()) return "None"

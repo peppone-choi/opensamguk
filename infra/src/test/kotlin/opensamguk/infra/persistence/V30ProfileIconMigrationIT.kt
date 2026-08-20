@@ -33,6 +33,7 @@ class V30ProfileIconMigrationIT {
         val saved = userRepository.saveAndFlush(
             UserEntity(
                 username = "profile-icon-migration",
+                nickname = "profile-icon-migration",
                 password = "encoded",
                 profileIconChangedAt = changedAt,
             ),

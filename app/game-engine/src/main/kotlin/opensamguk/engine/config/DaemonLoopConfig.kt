@@ -5,6 +5,7 @@ import opensamguk.engine.flush.FlushRecoveryGateProvider
 import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.redis.CommandOutboxRelay
 import opensamguk.engine.redis.RealtimePublisher
@@ -367,7 +368,7 @@ class DaemonLoopConfig {
                     personalityNameOf = { p -> GameConst.personalityNameOf(p.toString()) },
                     specialDomesticNameOf = { s -> opensamguk.logic.world.SpecialityHelper.domesticName(s) },
                     specialWarNameOf = { s -> opensamguk.logic.world.SpecialityHelper.warName(s) },
-                    crewtypeShortNameOf = { c -> GameUnitConst.byId(c)?.name ?: "$c" },
+                    crewtypeShortNameOf = { c -> UnitCatalog.byId(c)?.name ?: "$c" },
                 )
                 // aux는 Map<String, Any?> — kotlinx Json.encodeToString은 런타임에
                 // SerializationException("Serializer for class 'Any'")을 던져 연경계(새 달 == 1월)
