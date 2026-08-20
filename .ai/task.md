@@ -1,5 +1,15 @@
 # Current Task
 
+## 2026-08-21 — OPENSAM-206~220 통합·검증·배포 (활성 계약)
+
+- Status: 사용자의 `전체 승인`에 따라 구현, commit, push, PR, merge, deploy, Jira 갱신까지 연속 수행한다.
+- Goal: OPENSAM-206~220의 현재 할 일을 하나의 clean integration tree로 fan-in하고, 독립 리뷰·통합 게이트·실사용 QA·운영 cutover를 실제 증거로 닫는다.
+- Active branch/worktree: `codex/integrate-206-220-wave` / `.omo/integration-wave`.
+- Scope: main에 이미 포함된 OPENSAM-220 consumer stage는 중복 적용하지 않는다. OPENSAM-211 브랜드 단일화와 OPENSAM-219 닉네임 변경도 Jira 현재 본문대로 포함한다.
+- Rollout invariants: `game_server` seed 완전성 검사 후 gateway migration, board readiness, web, nginx 순서로 기동한다. 모든 game-api consumer가 승격되기 전 gateway issuer claim 제거는 금지한다.
+- Acceptance: JDK 21 backend XML, frontend full tests/typecheck/build, Compose/Docker, 인증 포함 browser/API QA, exact-SHA 5면 review와 PR review, external compose cutover, production health, Jira evidence.
+- Safety: 기존 root checkout과 사용자 컨테이너/데이터를 보존한다. 비밀값을 읽거나 기록하지 않는다. destructive operation은 대상 확인 후 승인 범위에서만 수행한다.
+
 ## 2026-08-14 — OPENSAM-149 종결 문서 정합화 (활성 계약)
 
 - Status: 사용자 요청 "계획을 짜서 하나하나 처리해"에 따라 OPENSAM-32/#174,

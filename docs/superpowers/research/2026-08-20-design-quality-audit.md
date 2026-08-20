@@ -1,7 +1,7 @@
 # OPENSAM-212 design-quality audit
 
-Date: 2026-08-20  
-Scope: local gateway/game UI, desktop `1440x1000`, responsive `390x844`  
+Date: 2026-08-20
+Scope: local gateway/game UI, desktop `1440x1000`, responsive `390x844`
 Method: real Playwright browser flows against the local Docker stack. Screenshots and JSON/action logs are under the shared team artifact directory.
 
 ## Verdict

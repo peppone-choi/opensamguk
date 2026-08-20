@@ -1,5 +1,13 @@
 # Current State
 
+## OPENSAM-206~220 integration wave active — 2026-08-21
+
+- Integration base는 `origin/main@35710e05`, branch는 `codex/integrate-206-220-wave`다. root 사용자 checkout은 건드리지 않았다.
+- OPENSAM-206/208/209/210/211/212/213/214/215/216/218/219 fan-in과 UI P0, 배포 순서, final review blocker 세 건의 remediation이 모두 논리 커밋으로 고정됐다. 현재 정확한 HEAD에서 통합 verifier·실브라우저 QA·5면 재리뷰를 실행한다.
+- External `opensamguk-docker` cutover는 draft PR #36 commit `8da0dde11fc73813769ddb569980fac95cafa517`에 있으며, main workflow exact-SHA 승인 뒤 merge/deploy한다.
+- Frontend 통합 게이트는 gateway 150/150, game 419/419, 양쪽 typecheck/build가 green이다. Backend 첫 aggregate는 V43 inventory 누락과 Testcontainers EOF를 발견했고, inventory 수정 뒤 두 focused recovery와 game-api full은 green이다. 모든 final evidence는 remediation 후 새 SHA에서 다시 생성한다.
+- npm registry credential이 진단 도구 출력에 노출됐다는 보고가 있어 값은 보존·재사용하지 않았고 회전이 필요하다.
+
 ## OPENSAM-149 closeout — canonical docs remediation active — 2026-08-14
 
 - PR #399는 merge commit `80150f9fccf028556075bb8fab5425170418b668`로 `main`에
