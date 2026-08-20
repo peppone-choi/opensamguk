@@ -39,20 +39,6 @@ class CrewTypeWarModule(private val crewType: GameUnitDetail) : GeneralActionMod
 
     private fun build(name: String, unit: WarUnit): opensamguk.logic.war.trigger.BaseWarUnitTrigger? = when (name) {
         "che_방어력증가5p" -> CheBangeoryeokJeunga5p(unit)
-        else -> {
-            warnUnknownOnce(name)
-            null
-        }
-    }
-
-    companion object {
-        // ponytail: 이름당 한 번만 stderr 경고 — 매 전투 스킵마다 스팸을 내지 않는다.
-        private val warnedNames = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
-
-        private fun warnUnknownOnce(name: String) {
-            if (warnedNames.add(name)) {
-                System.err.println("[CrewTypeWarModule] units.json 스킬 트리거 미구현/오타 (조용히 스킵됨): $name")
-            }
-        }
+        else -> null
     }
 }

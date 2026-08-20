@@ -63,11 +63,12 @@ fun occupiedCity(allowNeutral: Boolean = false) = object : Constraint {
  */
 fun recruitableCity() = object : Constraint {
     override val name = "OccupiedCity"
-    override fun requires(ctx: ConstraintContext) = listOf(
-        RequirementKey.General(ctx.actorId),
-        RequirementKey.City(ctx.cityId ?: 0),
-        RequirementKey.Nation(ctx.nationId ?: 0),
-    )
+    override fun requires(ctx: ConstraintContext): List<RequirementKey> {
+        // PHP OccupiedCity::REQ_VALUES = REQ_GENERAL|REQ_CITY (no nation) — che 는 그대로,
+        // han 완화 분기만 nation()을 읽으니 그 대역에서만 얹는다.
+        val base = listOf(RequirementKey.General(ctx.actorId), RequirementKey.City(ctx.cityId ?: 0))
+        return if (ctx.env["mapName"] == HAN_MAP_NAME) base + RequirementKey.Nation(ctx.nationId ?: 0) else base
+    }
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
         val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
         val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
@@ -393,8 +394,12 @@ fun neutralCity() = object : Constraint {
  */
 fun constructableCity() = object : Constraint {
     override val name = "ConstructableCity"
-    override fun requires(ctx: ConstraintContext) =
-        listOf(RequirementKey.General(ctx.actorId), RequirementKey.City(ctx.cityId ?: 0))
+    override fun requires(ctx: ConstraintContext): List<RequirementKey> {
+        // PHP ConstructableCity::REQ_VALUES = REQ_CITY only (no general) — che 는 그대로,
+        // han 전용 수비병 돌파 분기만 gen()을 읽으니 그 대역에서만 얹는다.
+        val base = listOf(RequirementKey.City(ctx.cityId ?: 0))
+        return if (ctx.env["mapName"] == HAN_MAP_NAME) base + RequirementKey.General(ctx.actorId) else base
+    }
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
         val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
         if (c.nationId != 0) return ConstraintResult.Deny("공백지가 아닙니다.")

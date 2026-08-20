@@ -49,7 +49,12 @@ object UnitCatalog {
      * 진실을 두 곳에 두지 않는다.
      */
     fun byId(id: Int): GameUnitDetail? {
-        val set = setOf(id) ?: return null
+        val set = setOf(id)
+        if (set == null) {
+            // che 대역(id<1000)은 PHP GameUnitConst::byID() 처럼 던진다 — 대역 밖 미등록만 null.
+            require(id >= 1000) { "적절한 id는 1000이상이어야합니다:$id" }
+            return null
+        }
         return if (set == CHE) GameUnitConst.byId(id) else loaded.units[set]?.get(id)
     }
 

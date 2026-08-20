@@ -310,6 +310,8 @@ class BattleSimPreview(
         require(g.experience >= 0) { "[$who] experience must be >= 0" }
         require(g.gold >= 0) { "[$who] gold must be >= 0" }
         require(g.rice >= 0) { "[$who] rice must be >= 0" }
+        // che 대역은 PHP GameUnitConst::byID() 던지는 원문 그대로 — sub-1000 id 는 별개 오류다.
+        require(unitSet != UnitCatalog.CHE || g.crewTypeId >= 1000) { "적절한 id는 1000이상이어야합니다:${g.crewTypeId}" }
         require(UnitCatalog.byId(unitSet, g.crewTypeId) != null) { "[$who] unknown crewtype ${g.crewTypeId}" }
         require(isAllowedItem("horse", g.horse)) { "[$who] horse ${g.horse} not in allowlist" }
         require(isAllowedItem("weapon", g.weapon)) { "[$who] weapon ${g.weapon} not in allowlist" }
