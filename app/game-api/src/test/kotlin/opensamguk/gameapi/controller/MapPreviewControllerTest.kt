@@ -10,6 +10,7 @@ import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.entity.NationEnvEntity
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.test.web.servlet.MockMvc
@@ -17,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import kotlin.test.assertTrue
 
 /**
  * Lightweight slice test for [MapPreviewController] — MockMvc standalone setup over mocked read repos
@@ -46,7 +48,15 @@ class MapPreviewControllerTest {
         // 좌표 원천 = map/che.json(php 정본 native 700×500). id1 업(345,130) id3 낙양(275,180).
         // id 999 absent → omitted. (Double 직렬화라 345 → 345.0)
         `when`(worldRepo.findAll()).thenReturn(
-            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3))
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "che_1010",
+                    currentYear = 200,
+                    currentMonth = 3,
+                    config = mapOf("mapName" to "che"),
+                ),
+            )
         )
         `when`(cityRepo.findAll()).thenReturn(
             listOf(
@@ -117,11 +127,55 @@ class MapPreviewControllerTest {
     }
 
     @Test
+    fun `uses the flat han mapName written by the scenario importer`() {
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "scenario_1010",
+                    currentYear = 184,
+                    currentMonth = 1,
+                    config = mapOf("mapName" to "han"),
+                ),
+            ),
+        )
+        `when`(cityRepo.findAll()).thenReturn(emptyList())
+        `when`(nationRepo.findAll()).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/map/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapCode").value("han"))
+            .andExpect(jsonPath("$.width").value(700))
+            .andExpect(jsonPath("$.height").value(610))
+    }
+
+    @Test
+    fun `seeded preview without map metadata fails visibly`() {
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(WorldStateReadEntity(id = 4, scenarioCode = "scenario_broken")),
+        )
+
+        val failure = assertThrows<IllegalStateException> {
+            MapPreviewController(cityRepo, nationRepo, worldRepo, nationEnv, objectMapper).preview()
+        }
+
+        assertTrue(failure.message.orEmpty().contains("id=4 scenario=scenario_broken has no active mapName"))
+    }
+
+    @Test
     fun `surfaces city state disaster code not front_state`() {
         // 재해/사건 코드 — func_map.php tuple state자리 = city.state, front_state 아님.
         // front_state=1(전선)과 state=7(재해코드)를 서로 다르게 둬 노출 컬럼을 분리 검증.
         `when`(worldRepo.findAll()).thenReturn(
-            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3)),
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "che_1010",
+                    currentYear = 200,
+                    currentMonth = 3,
+                    config = mapOf("mapName" to "che"),
+                ),
+            ),
         )
         `when`(cityRepo.findAll()).thenReturn(
             listOf(CityReadEntity(id = 3, nationId = 1, level = 8, region = 2, frontState = 1, state = 7)), // 낙양
@@ -159,7 +213,7 @@ class MapPreviewControllerTest {
             listOf(
                 WorldStateReadEntity(
                     id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3,
-                    config = mapOf("startyear" to 180),
+                    config = mapOf("startyear" to 180, "mapName" to "che"),
                 ),
             ),
         )
@@ -174,7 +228,15 @@ class MapPreviewControllerTest {
     @Test
     fun `preview nations expose join scout message and scenario info text`() {
         `when`(worldRepo.findAll()).thenReturn(
-            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3)),
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "che_1010",
+                    currentYear = 200,
+                    currentMonth = 3,
+                    config = mapOf("mapName" to "che"),
+                ),
+            ),
         )
         `when`(cityRepo.findAll()).thenReturn(emptyList())
         `when`(nationRepo.findAll()).thenReturn(
@@ -200,7 +262,15 @@ class MapPreviewControllerTest {
     @Test
     fun `startYear is null when the config does not carry it`() {
         `when`(worldRepo.findAll()).thenReturn(
-            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3)),
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "che_1010",
+                    currentYear = 200,
+                    currentMonth = 3,
+                    meta = mapOf("mapName" to "che"),
+                ),
+            ),
         )
         `when`(cityRepo.findAll()).thenReturn(emptyList())
         `when`(nationRepo.findAll()).thenReturn(emptyList())

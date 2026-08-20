@@ -52,7 +52,7 @@ class WorldMapControllerTest {
                     currentYear = 200,
                     currentMonth = 3,
                     // ScenarioImporter가 실제로 쓰는 PHP 정본 키 = 소문자 `startyear`(PR #31 케이싱 분열).
-                    config = linkedMapOf("startyear" to 180),
+                    config = linkedMapOf("startyear" to 180, "mapName" to "han"),
                 ),
             ),
         )
@@ -78,6 +78,7 @@ class WorldMapControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.version").value(0))
+            .andExpect(jsonPath("$.mapName").value("han"))
             .andExpect(jsonPath("$.startYear").value(180))
             .andExpect(jsonPath("$.year").value(200))
             .andExpect(jsonPath("$.month").value(3))

@@ -54,6 +54,7 @@ const MAP_FIXTURE: MapPreviewResponse = {
 const WM_FIXTURE: WorldMapResponse = {
     result: true,
     version: 4,
+    mapName: 'che',
     startYear: 180,
     year: 201,
     month: 7,

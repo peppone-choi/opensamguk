@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.dto.MapPreviewCity
 import opensamguk.gameapi.dto.MapPreviewNation
 import opensamguk.gameapi.dto.MapPreviewResponse
+import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadRepository
@@ -63,7 +64,7 @@ class MapPreviewController(
         // world clock — the singleton row. Unseeded ⇒ empty snapshot (year/month 0), never 500.
         val world = worldStateReadRepository.findAll().firstOrNull()
 
-        val mapCode = world?.let { mapCodeOf(it.config, it.meta) } ?: defaultMapCode
+        val mapCode = world?.let(ActiveWorldMap::requireName) ?: defaultMapCode
         val mapData = loadMapData(mapCode)
 
         if (world == null) {
@@ -153,15 +154,6 @@ class MapPreviewController(
      *  공유 로더 [MapJson.loadFromClasspath]에 위임(GetConst와 단일 소스). 리소스가 없으면
      *  빈 맵(0×0, 도시 없음) → gateway가 placeholder를 그린다. */
     private fun loadMapData(mapCode: String): MapJson.MapData = MapJson.loadFromClasspath(mapCode)
-
-    private fun mapCodeOf(config: Map<String, Any?>, meta: Map<String, Any?>): String =
-        mapNameOf(config["map"]) ?: mapNameOf(meta["map"]) ?: defaultMapCode
-
-    private fun mapNameOf(raw: Any?): String? = when (raw) {
-        is String -> raw.takeIf { it.isNotBlank() }
-        is Map<*, *> -> (raw["mapName"] ?: raw["name"] ?: raw["code"])?.toString()?.takeIf { it.isNotBlank() }
-        else -> null
-    }
 
     private fun turnPhaseText(phase: Int): String = when (phase) {
         1 -> "상순"

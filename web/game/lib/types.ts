@@ -355,6 +355,7 @@ export interface MapPreviewResponse {
 export interface WorldMapResponse {
   result: boolean;
   version: number;
+  mapName: string;
   startYear: number;
   year: number;
   month: number;

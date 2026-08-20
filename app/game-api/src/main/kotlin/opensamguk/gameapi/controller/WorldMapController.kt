@@ -3,10 +3,12 @@ package opensamguk.gameapi.controller
 import opensamguk.gameapi.dto.WorldMapResponse
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.common.constants.GameConst
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.context.SecurityContextHolder
@@ -59,6 +61,7 @@ class WorldMapController(
 
         // 시계 — 싱글톤 world_state. 미시드 ⇒ 빈 맵(year/month 0), 절대 500 아님.
         val w = world.findAll().firstOrNull()
+        val mapName = w?.let(ActiveWorldMap::requireName) ?: GameConst.mapName
         // startYear 케이싱 분열 대응(PR #31): ScenarioImporter는 config에 소문자 `startyear`(PHP 정본),
         // meta에 camelCase `startYear`를 쓴다. 정본(소문자) 우선, 그다음 camelCase·meta 폴백.
         val startYear = listOf(
@@ -111,6 +114,7 @@ class WorldMapController(
             WorldMapResponse(
                 result = true,
                 version = 0,
+                mapName = mapName,
                 startYear = startYear,
                 year = w?.currentYear ?: 0,
                 month = w?.currentMonth ?: 0,

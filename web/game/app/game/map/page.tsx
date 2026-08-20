@@ -1,9 +1,5 @@
 'use client';
 
-// 인게임 세계 지도 페이지 — v_cachedMap.php → Next 커버. 로비 MapPreview와 동일한 정적 마커 맵을 렌더한다.
-// 좌표·도시점은 MapViewer가 game-api `/api/map/preview`에서 직접 가져온다. read 전용(mutation 없음).
-// 도시 마커 클릭 = 해당 도시 정보 페이지 이동(MapViewer의 유일한 인터랙션) — 로비와 픽셀 단위 동일.
-//
 // 지도 하단 중원정세 섹션: devsam PageCachedMap.vue `cachedMap.history[]` v-html 패턴 대응.
 // world-log/page.tsx 와 동일한 렌더 인프라(api.worldLog, GameCard, dangerouslySetInnerHTML)를 재사용.
 
@@ -36,9 +32,8 @@ const logRowStyle: React.CSSProperties = {
 };
 
 export default function GameMapPage() {
-    // 후한 군현 격자가 배포에 주입돼 있으면 그걸 그리고, 없으면(404) 기존 마커 맵으로 돌아간다.
-    // ADR-LITE-040 의 철거 경로 — 파일 하나만 내리면 서비스는 계속 돈다 — 가 실제로 동작하는 지점이다.
-    const [hanMissing, setHanMissing] = useState(false);
+    const [mapName, setMapName] = useState<string | null>(null);
+    const [mapError, setMapError] = useState<string | null>(null);
     const [logData, setLogData] = useState<WorldLogResponse | null>(null);
     const [logLoading, setLogLoading] = useState(true);
     const [logError, setLogError] = useState<string | null>(null);
@@ -61,6 +56,20 @@ export default function GameMapPage() {
         fetchLog();
     }, [fetchLog]);
 
+    useEffect(() => {
+        let active = true;
+        api.gameConst()
+            .then((result) => {
+                if (!active) return;
+                setMapName(result.mapName);
+                setMapError(null);
+            })
+            .catch(() => {
+                if (active) setMapError('지도 설정을 확인할 수 없습니다.');
+            });
+        return () => { active = false; };
+    }, []);
+
     // MapViewer는 refreshKey prop 변경 시 조용히 자체 재조회한다(리마운트 아님) — OPENSAM-196.
     const [mapRefreshKey, setMapRefreshKey] = useState(0);
     useTurnRefresh(() => {
@@ -74,11 +83,17 @@ export default function GameMapPage() {
         <Shell>
             <div className="page-content">
                 <h1>세계 지도</h1>
-                {/* 후한 군현 지도(HanMapCanvas)는 아직 클릭 인터랙션이 없다 — 폴백(MapViewer)일 때만 안내한다. */}
-                {hanMissing && <p className="text-muted">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>}
-                {hanMissing
-                    ? <MapViewer refreshKey={mapRefreshKey} />
-                    : <HanMapCanvas onMissing={() => setHanMissing(true)} />}
+                {mapError && <p role="alert" style={{ color: 'var(--crimson)' }}>{mapError}</p>}
+                {!mapError && mapName === null && <p className="text-muted">지도 설정을 불러오는 중입니다.</p>}
+                {!mapError && mapName === 'han' && (
+                    <HanMapCanvas onMissing={() => setMapError('후한 군현 지도 데이터를 불러올 수 없습니다.')} />
+                )}
+                {!mapError && mapName !== null && mapName !== 'han' && (
+                    <>
+                        <p className="text-muted">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>
+                        <MapViewer refreshKey={mapRefreshKey} />
+                    </>
+                )}
 
                 {/* ── 중원정세 — devsam PageCachedMap.vue cachedMap.history[] v-html 대응 ── */}
                 <div style={sectionBarStyle}>중원 정세</div>
