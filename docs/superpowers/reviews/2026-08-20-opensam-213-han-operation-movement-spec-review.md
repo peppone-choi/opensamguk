@@ -6,8 +6,8 @@
 - Reviewed artifact: `docs/superpowers/specs/2026-08-20-opensam-213-han-operation-movement-spec.md`
 - Exact reviewed artifact SHA-256: `2ea37fc159befa576a6897385ebab6021390474ae948e5170a0fa74fbe642b2f`
 - Exact reviewed artifact length: 563 lines
-- Scope: 문서 계약의 결정성, route/progress, Dijkstra, phase, 퇴각·합류,
-  campaign/battle-engine/replay 경계. 제품 구현 완료 여부는 리뷰하지 않는다.
+Scope: 문서 계약의 결정성, route/progress, Dijkstra, phase, 퇴각·합류,
+campaign/battle-engine/replay 경계. 제품 구현 완료 여부는 리뷰하지 않는다.
 
 Verdict: cleared
 
