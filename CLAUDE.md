@@ -4,10 +4,12 @@ Load-bearing rules. They encode the parity discipline; violating them silently b
 
 ## What this repo is
 
-**opensamguk** — faithful migration of the PHP game **devsam/core** (삼국지 모의전투 HiDCHe / 삼모) to **Kotlin/Spring + Next.js + PostgreSQL + Redis + nginx**, on a **memory-centric CQRS** architecture.
+**opensamguk** — PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모)에서 출발한 **Kotlin/Spring + Next.js + PostgreSQL + Redis + nginx** 턴제 시뮬레이션. **memory-centric CQRS** 아키텍처.
 
-- **`legacy/devsam-core` (PHP) = GRAND TRUTH.** Every behavior (RNG draws, rounding, log strings, side-effect order) matches byte-for-byte. The oracle, never "improved."
-- **`legacy/devsam-core2026` (TypeScript)** = a *second*, structural oracle only. **PHP wins every divergence** (collapse experience, findNextCapital BFS-vs-Euclidean, arsort-vs-V8 sort, append-additive order, `Math.round`-vs-half-away).
+v1 코어는 devsam/core 를 바이트 단위로 이식해 세웠지만, **2026-08-20(ADR-LITE-042) 부로 패러티 이식을 종료했다.** 이제 오픈삼국은 자기 설계를 따른다.
+
+- **`legacy/devsam-core` (PHP) = 참고 자료.** ~~GRAND TRUTH~~ — **2026-08-20 (ADR-LITE-042) 부로 오라클 지위가 해제됐다.** 체섭은 체섭이고 오픈삼국은 오픈삼국이다. PHP 동작은 설계를 참고할 때 읽는 자료이지, 맞춰야 할 정답이 아니다.
+- **`legacy/devsam-core2026` (TypeScript)** = 또 하나의 참고 자료. 예전 규칙("PHP wins every divergence")도 ADR-LITE-042 로 해제됐다 — 두 레거시 모두 이제 우리 설계를 정할 때 읽는 자료다.
 - `legacy/` is **git-ignored**, never committed. Design + roadmap: `docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`.
 - Repo stays **PRIVATE** until a Koei-IP review clears it. No Koei-owned assets/IP, secrets, or credentials in commits.
 
@@ -28,7 +30,23 @@ Modules (`settings.gradle`):
 
 **The ONE daemon-write rule (architecture-test-enforced):** the game-engine daemon NEVER uses a JPA `EntityManager` for writes. JPA = read/precheck only (game-api). Daemon writes go **only** through `ChangeRecorder` → `JdbcFlushExecutor` JDBC batch. (Two competing dirty-truths — JPA dirty-checking + change-recorder — would silently diverge.)
 
-## Parity discipline (NON-NEGOTIABLE)
+## Parity discipline — **해제됨 (ADR-LITE-042, 2026-08-20)**
+
+> **이 절은 더 이상 구속력이 없다.** 사용자 지시로 devsam/core(체섭) PHP 를 똑같이
+> 구현하는 것을 그만뒀다. RNG draw-for-draw · 로그 바이트 일치 · PHP 오라클 선행 캡처는
+> **전부 해제**다. 아래 1~6번은 v1 코어가 *어떻게 만들어졌는지*를 설명하는 이력으로만 읽어라.
+>
+> **다만 아래 넷은 패러티 규칙이 아니라 품질·아키텍처 규칙이라 그대로 살아 있다:**
+> (a) **거짓 완료 금지** — 골든·테스트·명령 결과를 지어내지 않는다. 테스트를 통과시키려고
+> 테스트를 약화하지 않는다. 미확인은 UNKNOWN 이지 추측이 아니다.
+> (b) **기존 골든·테스트는 지우지 않는다** — 성격만 바뀐다. PHP 오라클이 아니라
+> **frozen-baseline 회귀 게이트**다("PHP 와 같은가"가 아니라 "의도치 않게 벗어났는가").
+> 기대값을 바꿀 때는 왜 바꾸는지를 커밋에 남긴다.
+> (c) **리플레이 결정론** — 같은 시드 → 같은 결과는 재현·디버깅에 필요하므로 유지한다.
+> (d) **one-daemon-write-rule · flush 델타 · 삽입 순서** — 아키텍처 무결성 규칙이라 불변.
+>
+> 전문과 뒤집는 법: `.ai/decisions.md` ADR-LITE-042.
+
 
 1. **RNG draw-for-draw.** All randomness is `RandUtil(LiteHashDrbg(seed))`. The draw **order, count, and method args** are parity targets, not just the result. In battle, the WHOLE fight runs on **ONE** `RandUtil(warSeed)` built once in `processWar()` and threaded by reference — never re-seeded mid-stream. One extra/missing/reordered draw desyncs everything downstream.
 2. **Rounding.** `Util::round`/`setRound` = **half-AWAY-from-zero** → use `PhpRound` (negative-scale `phpRound(v,-2)`, NEVER `phpRound(v/100)*100`). NEVER `Math.round` (half-up) or `kotlin.math.round` (half-to-even). `Util::toInt`/`intdiv` = truncate-toward-zero. Damage-loop clamp = `ceil()` (distinct from round).
