@@ -1,5 +1,8 @@
 # OPENSAM-215 한 지도 시각 디자인 독립 검토
 
+Scope: OPENSAM-215 한 지도 시각 명세와 결정적 증거 묶음의 시각 충실도, 토큰, 레이어, 반응형, 접근성 계약.
+Verdict: cleared
+
 - 검토일: 2026-08-20
 - 대상: `docs/superpowers/specs/2026-08-20-han-map-visual-design.md` 및 연결된 증거 묶음
 - 검토 방식: 작성자와 분리된 읽기 전용 디자인 검토자
