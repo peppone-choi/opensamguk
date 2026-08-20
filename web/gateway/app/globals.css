@@ -639,6 +639,9 @@ textarea:focus {
     margin-top: var(--space-xs);
     color: var(--text-secondary);
 }
+.board-heading-subject {
+    white-space: nowrap;
+}
 .board-eyebrow {
     color: var(--gold);
     font-family: var(--font-mono);

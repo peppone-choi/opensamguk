@@ -43,8 +43,9 @@
 }
 
 .os-brand {
-  color: inherit;
-  font: inherit;
+  display: block;
+  height: auto;
+  max-width: 100%;
 }
 
 .os-button {

@@ -7,12 +7,16 @@ describe('shared UI foundation', () => {
   it('keeps consumer classes while adding shared primitives', () => {
     const { container } = render(
       <Card className="consumer-card">
-        <Brand className="consumer-brand" />
+        <Brand />
         <Button className="consumer-button" variant="primary">실행</Button>
       </Card>,
     );
 
-    expect(screen.getByText('오픈삼국')).toHaveClass('consumer-brand');
+    const brand = screen.getByRole('img', { name: '오픈삼국' });
+    expect(new URL(brand.getAttribute('src') ?? '', window.location.origin).searchParams.get('url'))
+      .toBe('/logo-wordmark.png');
+    expect(brand).toHaveAttribute('width', '64');
+    expect(brand).toHaveAttribute('height', '24');
     expect(screen.getByRole('button', { name: '실행' })).toHaveClass('consumer-button');
     expect(container.firstElementChild).toHaveClass('consumer-card');
   });

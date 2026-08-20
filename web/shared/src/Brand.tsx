@@ -1,13 +1,27 @@
-import type { HTMLAttributes } from 'react';
+import Image from 'next/image';
 
-export type BrandProps = HTMLAttributes<HTMLSpanElement> & {
-  readonly label?: string;
+const BRAND_SIZES = {
+  small: { width: 64, height: 24 },
+  large: { width: 86, height: 32 },
+} as const;
+
+export type BrandSize = keyof typeof BRAND_SIZES;
+
+export type BrandProps = {
+  readonly size?: BrandSize;
 };
 
-export function Brand({ className = '', label = '오픈삼국', ...props }: BrandProps) {
+export function Brand({ size = 'small' }: BrandProps) {
+  const dimensions = BRAND_SIZES[size];
+
   return (
-    <span className={`os-brand ${className}`.trim()} {...props}>
-      {label}
-    </span>
+    <Image
+      className={`os-brand os-brand--${size}`}
+      src="/logo-wordmark.png"
+      alt="오픈삼국"
+      width={dimensions.width}
+      height={dimensions.height}
+      priority
+    />
   );
 }

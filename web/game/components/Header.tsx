@@ -34,7 +34,7 @@ export default function Header() {
     return (
         <header className="game-header">
             <div className="game-header-left">
-                <Brand className="game-header-brand" />
+                <Brand size="small" />
                 <span className="game-header-turn">{turnText}</span>
             </div>
             <div className="game-header-right">

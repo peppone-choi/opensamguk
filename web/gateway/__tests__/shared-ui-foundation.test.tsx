@@ -8,12 +8,16 @@ describe('shared UI foundation', () => {
   it('preserves native accessible semantics', () => {
     render(
       <Card>
-        <Brand />
+        <Brand size="large" />
         <Button disabled>확인</Button>
       </Card>,
     );
 
-    expect(screen.getByText('오픈삼국')).toBeInTheDocument();
+    const brand = screen.getByRole('img', { name: '오픈삼국' });
+    expect(new URL(brand.getAttribute('src') ?? '', window.location.origin).searchParams.get('url'))
+      .toBe('/logo-wordmark.png');
+    expect(brand).toHaveAttribute('width', '86');
+    expect(brand).toHaveAttribute('height', '32');
     expect(screen.getByRole('button', { name: '확인' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '확인' })).toHaveAttribute('type', 'button');
   });
