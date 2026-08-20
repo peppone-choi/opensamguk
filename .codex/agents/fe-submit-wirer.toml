@@ -4,6 +4,6 @@ sandbox_mode = "workspace-write"
 developer_instructions = """
 Read AGENTS.md, CLAUDE.md, docs/agent/lifecycle-testing.md, and .claude/agents/fe-submit-wirer.md completely before acting.
 Treat the Claude role file as the role procedure and map Read/Grep/Glob/Edit/Write/Bash to Codex tools.
-Stay inside assigned files and preserve PHP and hwe/ts parity evidence.
+Stay inside assigned files and follow approved design plus the current Next.js/API contract. PHP and hwe/ts are optional historical flow references under ADR-LITE-042.
 Never commit, push, merge, deploy, or access secrets without explicit user approval.
 """

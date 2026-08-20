@@ -1,16 +1,16 @@
 ---
 name: parity-ship
-description: Ship a batch of CLOSED parity work through the full gate suite and adversarial review. Only an explicit human go can authorize a main merge or production action. The main workflow refreshes the shared opensamguk-docker stack while preserving per-server image pins; it does not silently promote a game server. Invoke as /parity-ship when the user explicitly asks to ship/deploy a coherent, test-green batch.
+description: Opt-in historical workflow for shipping an explicitly requested frozen-regression parity batch through final gates and review. Never required for new product work; merge/deploy still requires explicit human approval.
 ---
 
 # parity-ship
 
-Ship a batch of closed parity work. The contract: **a green build is NOT shipped until the shared stack is healthy and any running game server has the required post-deploy evidence.** A main merge builds GHCR images and refreshes the shared `opensamguk-docker` stack; per-server version pins remain unchanged unless an explicitly approved promotion changes them.
+Ship an explicitly selected batch of closed historical parity work. This opt-in name is preserved for compatibility under ADR-LITE-042; it does not make PHP parity a general release prerequisite. **A green build is NOT shipped until the shared stack is healthy and any running game server has the required post-deploy evidence.**
 
 ## Hard preconditions (refuse to proceed otherwise)
 
 - Work is logically complete (no `TODO`/stub left in the diff for this batch).
-- No golden/test was weakened to go green. If a parity gap exists, it must be **quarantined with proof** + logged to the phase backlog — NOT papered over. (CLAUDE.md parity rule 5.)
+- No golden/test was weakened to go green. If a selected historical parity gap exists, it must be **quarantined with proof** and logged, never papered over. (CLAUDE.md product and regression discipline.)
 - You are on the **phase branch**, never committing straight to `main`.
 
 If any fails, STOP and report — do not "fix" by editing a golden or relaxing an assertion.

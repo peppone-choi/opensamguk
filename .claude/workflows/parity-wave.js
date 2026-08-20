@@ -1,7 +1,7 @@
 export const meta = {
   name: 'parity-wave',
   description:
-    'Fan-out the parity-close pipeline across N command gaps. Foundation-first (shared-file stubs + CommandRegistry + intakeCodes + wire variants widened ONCE), then per-command golden→port→gate in parallel (disjoint files), then batch FE submit-wiring + one adversarial review. Hand the green set to /parity-ship. Args: a list of PHP command codes, e.g. ["출병","che_농지개간","che_몰수"].',
+    'Opt-in historical frozen-regression maintenance under ADR-LITE-042. Approved ADR/spec/current implementation remains product authority. Fan out parity-close only across the explicitly supplied PHP command codes; never use this workflow as a prerequisite for new product work.',
   phases: [
     { title: 'Foundation', detail: 'one agent widens shared files: stubs + CommandRegistry + intakeCodes + wire variants for all N codes' },
     { title: 'Close', detail: 'per command (parallel, disjoint files): golden-capturer → parity-porter(fill stub) → parity-gate-runner(loop until green)' },

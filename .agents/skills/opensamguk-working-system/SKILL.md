@@ -15,4 +15,4 @@ Read these sources completely before acting:
 6. `docs/agent/README.md`
 7. `docs/superpowers/WORKING_SYSTEM.md`
 
-Route only to the additional documents required by `docs/agent/README.md`. Preserve ownership, human approval gates, PHP grand truth, one-daemon-write, and executed-versus-unexecuted verification reporting. Use the matching `$os-*` skill as the workflow entry point.
+Route only to the additional documents required by `docs/agent/README.md`. Follow the latest approved ADR/spec and current implementation. Preserve ownership, human approval gates, deterministic replay, frozen regressions, one-daemon-write, and executed-versus-unexecuted verification reporting. PHP and hwe are optional historical/reference inputs under ADR-LITE-042. Use the matching `$os-*` skill as the workflow entry point.

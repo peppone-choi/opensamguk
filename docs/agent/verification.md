@@ -8,8 +8,8 @@
 
 | 변경 유형 | 최소 검증 | 추가 검증 조건 | 완료 조건 |
 |---|---|---|---|
-| `common` (RNG/round/log 커널) | `./gradlew :common:test :logic:test --rerun-tasks` | 전투/AI 골든 영향 시 `tools/parity/gate.sh logic` | XML fail 0 + 관련 골든 게이트 green |
-| `logic` 액션/전투/AI/틱 | 해당 `*GoldenTest` 타깃 실행 → `tools/parity/gate.sh logic` | 골든 없으면 먼저 캡처(`tools/php-golden/`) 또는 격리+증거 | 골든 draw-for-draw green, 골든/테스트 무약화 |
+| `common` (RNG/round/log 커널) | `./gradlew :common:test :logic:test --rerun-tasks` | 영향받는 동결 전투/AI 골든이 있으면 `tools/parity/gate.sh logic` | XML fail 0 + 영향받는 동결 게이트 green |
+| `logic` 액션/전투/AI/틱 | 변경 규칙의 targeted test → `tools/parity/gate.sh logic` | 기존 동결 골든 영향 시 해당 `*GoldenTest`; 명시적 역사 parity 유지보수일 때만 새 PHP 캡처 | 현재 spec 테스트 green + 영향받는 동결 회귀 green, 테스트/골든 무약화 |
 | `infra` flush/마이그레이션 | `./gradlew :infra:test` (Testcontainers) | 새 테이블/채널이면 flush IT 추가 | XML fail 0 (Docker 없으면 skip 명기) |
 | `app/game-engine` | `./gradlew :app:game-engine:test` | intake/dispatch 변경 시 `:app:game-api:test` 동반 | XML fail 0 |
 | `app/game-api` | `./gradlew :app:game-api:test` | precheck 변경 시 `PrecheckFullCrossCallSiteTest` 포함 확인 | XML fail 0 |
@@ -24,7 +24,7 @@
 
 | 루프 | 차단 대상 | 기제 (전부 실배선) | 증거 형태 |
 |---|---|---|---|
-| **① 코드 결함 차단** | 버그·패러티 드리프트가 조용히 남는 것 | provider 공통 PostToolUse 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `verify-changes.sh`의 diff→최소 검증 행렬 안내) + 위 행렬 실행 + `tools/parity/gate.sh backend`(XML 판정) | `BUILD SUCCESSFUL` tail + 테스트 XML `failures="0"` |
+| **① 코드 결함 차단** | 버그·동결 회귀 드리프트가 조용히 남는 것 | provider 공통 PostToolUse 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `verify-changes.sh`의 diff→최소 검증 행렬 안내) + 위 행렬 실행 + 역사적 이름의 `tools/parity/gate.sh backend`(XML 판정) | `BUILD SUCCESSFUL` tail + 테스트 XML `failures="0"` |
 | **② 자기 승인 차단** | 작성자가 자기 작업을 스스로 승인·머지 | PR 리뷰봇 CodeRabbit(`.coderabbit.yaml`) + `check.py --strict`의 cross-agent critique Verdict 검사(`docs/superpowers/reviews/*.md` 요구) + 사람/타 프로바이더 에이전트의 명시 비평 | PR 리뷰 코멘트 + reviews 아티팩트의 `Verdict:` 라인 |
 | **③ 규범 위반 차단** | 시크릿 접근·골든/legacy 수정·검증 없는 완료 선언 | provider 공통 PreToolUse 보호 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `protect-sensitive-files.sh` exit 2) + Claude 첨부 경계 `.claudeignore`(@멘션 구멍) + CI `check.py --strict --base origin/main`(ci.yml agent-system 잡) | BLOCKED stderr 캡처 + CI 그린 로그 |
 
@@ -33,7 +33,7 @@
 ## 판정 규칙
 
 - **실행한 검증과 실행하지 않은 검증을 구분해 보고한다.** 실행 안 한 것을 통과로 기록 금지.
-- 실패 테스트를 삭제·skip·assertion 약화로 우회 금지. 골든 불일치는 Kotlin 구현을 고친다(골든 수정 금지).
+- 실패 테스트를 삭제·skip·assertion 약화로 우회 금지. 동결 골든 불일치는 먼저 의도치 않은 회귀로 취급해 구현을 고친다. 승인된 제품 규칙 변경이라면 기대값 변경은 별도 명시 근거와 회귀 영향 기록 없이는 허용하지 않는다.
 - UI 변경은 시각/브라우저 검증 없이 "정상"이라 주장하지 않는다. 도구가 없으면 `채점대기`로 보고.
 - Testcontainers 단건 실패는 단독 재실행으로 flake 분별 후 판정(이력: `BettingUpsertFlushIT`).
 - 비자명 변경은 cross-agent critique(`docs/superpowers/WORKING_SYSTEM.md` §Cross-agent critique)가 `cleared`여야 완료. `fix-required`가 남으면 ship/merge 금지.

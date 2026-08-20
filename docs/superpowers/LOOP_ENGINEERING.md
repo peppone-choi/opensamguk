@@ -10,7 +10,7 @@
 
 - **AI 설정 자산**: `AGENTS.md`, `CLAUDE.md`, `.agents/skills/`, `.claude/skills/`, agent prompts, 라우팅 규칙.
   골든셋은 `docs/loops/<loop-name>/GOLDENSET.md`에 둔다.
-- **패러티/버그 작업**: 기존 repo gate가 골든셋이다.
+- **회귀/버그 작업**: 기존 repo gate가 골든셋이다.
   예: `tools/parity/gate.sh backend`, `*GoldenTest`, `*ReplayGateTest`, `*GateTest`.
   골든/게이트를 완화하지 않는다.
 
@@ -65,20 +65,19 @@ provider별 도구 이름은 달라도 루프 규율은 같다. 도구가 없으
 
 사용자 부재는 승인 불가 상태다. 임의 승인으로 해석하지 않는다.
 
-## 패러티 모드
+## 제품 버그와 명시적 역사 회귀 모드
 
-opensamguk 패러티/버그 루프에서는 PHP grand truth와 기존 gate가 우선이다.
+ADR-LITE-042 이후 신규 제품 판단의 정본은 최신 승인 ADR/spec/current implementation이다. PHP와 `hwe/ts/`는 명시적 역사 비교나 동결 회귀 유지보수에만 쓰는 선택적 참고 자료이며, 신규 기능의 선행 조건이 아니다.
 
-레거시 갭, UI 패러티, 실서버 버그가 포함된 바퀴는 아래 스킬 체인을 생략할 수 없다.
+현재 UI·API·실서버 버그가 포함된 바퀴는 아래 순서로 관측과 수렴 증거를 남긴다.
 
-1. **레거시 증거**: `opensamguk-php-oracle`로 `legacy/devsam-core` PHP source path + line range를 먼저 찍는다. UI 흐름은 PHP가 침묵할 때만 `hwe/ts/` Vue 경로 + line range를 함께 기록한다.
-2. **UI 재현**: 화면 문제가 있으면 `webapp-testing`으로 Playwright/브라우저/API 관측을 남긴다. 로컬 서버가 필요하면 helper script는 `--help`를 먼저 실행한다.
-3. **버그 수렴**: 예상 밖 동작이나 실패는 `systematic-debugging` 순서로 재현, 최근 변경, 데이터 흐름, working example 차이를 확인한 뒤 가설 1개만 세운다. 원인 확인 전 수정 금지.
-4. **전체 루프**: 위 증거를 `loop-engineering` 바퀴의 베이스라인, 가설, 채점자, 채택/원복 기준에 묶는다.
-5. **구현/채점**: Kotlin/Next 구현을 고친다. golden/test를 약화하지 않는다. 좁은 gate를 먼저 돌리고, 필요 시 `tools/parity/gate.sh backend`로 확장한다.
-6. **실서버 확인**: UI/실서버 문제가 포함되면 브라우저/API/DB 중 실제 관측 가능한 표면으로 재확인한다.
+1. **실행 표면 재현**: `webapp-testing` 또는 실제 브라우저/API/DB 관측으로 증상을 재현한다. 로컬 서버가 필요하면 helper script는 `--help`를 먼저 실행한다.
+2. **버그 수렴**: 예상 밖 동작이나 실패는 `systematic-debugging` 순서로 재현, 최근 변경, 데이터 흐름, working example 차이를 확인한 뒤 가설 1개만 세운다. 원인 확인 전 수정 금지.
+3. **전체 루프**: 위 증거를 `loop-engineering` 바퀴의 베이스라인, 가설, 채점자, 채택/원복 기준에 묶는다.
+4. **구현/채점**: Kotlin/Next 구현을 고친다. frozen golden/test를 삭제·위조·완화하지 않고 결정적 RNG·replay와 실행 순서를 보존한다. 좁은 gate를 먼저 돌리고, 필요 시 역사적 명칭을 유지한 `tools/parity/gate.sh backend`로 확장한다.
+5. **실서버 확인**: UI/실서버 문제가 포함되면 브라우저/API/DB 중 실제 관측 가능한 표면으로 재확인한다.
 
-위 체인 중 하나라도 사용할 수 없으면 이유를 LEDGER나 리뷰 아티팩트에 `채점대기`/`blocked`로 기록한다. 조용히 건너뛰고 ship/merge하지 않는다.
+작업 계약이 명시적 역사 parity 또는 동결 회귀 유지보수를 요구할 때만 `opensamguk-php-oracle`을 추가한다. 이 경우 `legacy/devsam-core` PHP source path + line range를 기록하고, UI 흐름은 PHP가 침묵할 때 `hwe/ts/` Vue 경로 + line range를 보조 근거로 기록한다. 역사 비교를 선택했는데 필요한 증거 체인을 사용할 수 없으면 이유를 LEDGER나 리뷰 아티팩트에 `채점대기`/`blocked`로 기록한다.
 
 ## AI 설정 자산 모드
 

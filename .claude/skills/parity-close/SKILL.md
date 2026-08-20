@@ -1,13 +1,13 @@
 ---
 name: parity-close
-description: Close ONE parity gap (a single reservable command/action) end-to-end — golden capture, logic port + GoldenTest, draw-for-draw gate, BE intake + flush + IT, FE submit, adversarial review, one commit. Invoke as `/parity-close <command-code>` (e.g. `/parity-close 출병`, `/parity-close che_농업`). Use when adding or fixing one command's full mutation path against the PHP grand truth.
+description: Opt-in historical workflow for maintaining ONE explicitly requested frozen-regression parity gap end-to-end. Invoke as `/parity-close <command-code>`. Never use as a prerequisite for new product work under ADR-LITE-042.
 ---
 
 # parity-close — close one parity gap, golden-gated
 
-A **process skill**. It takes ONE `<command-code>` and drives it from PHP grand truth to a live, gated, FE-wired mutation in opensamguk. One command per invocation — never batch. Each step delegates to a dedicated agent; this skill owns the **ordering** and the **safety gates** between them.
+An opt-in historical **process skill**. It takes ONE `<command-code>` and maintains its captured PHP comparison baseline through a live, gated, FE-wired mutation. One command per invocation. It does not define new product behavior; approved ADR/spec/current implementation does.
 
-The denominator this skill chips away at: **93 turn-reservable command classes** = 55 General (`legacy/devsam-core/hwe/sammo/Command/General/`) + 38 Nation/Chief (`legacy/devsam-core/hwe/sammo/Command/Nation/`), whitelisted in `GameConstBase.php` `$availableGeneralCommand` (~line 316) + `$availableChiefCommand` (~line 378). Plus ~40 non-Command mutations (Betting, Auction, Vote, Message, Troop, InheritAction, Nation Set* settings, misc General actions). PHP (`legacy/devsam-core`, git-ignored) **wins every divergence**; `devsam-core2026` (TS) is structural-only.
+Historical inventory: **93 turn-reservable command classes** = 55 General (`legacy/devsam-core/hwe/sammo/Command/General/`) + 38 Nation/Chief (`legacy/devsam-core/hwe/sammo/Command/Nation/`), plus non-Command mutations. This inventory is retained for frozen-regression maintenance, not as an active delivery denominator. `devsam-core2026` is optional structural reference.
 
 ## Classify the action seam before wiring it
 
@@ -38,7 +38,7 @@ actions use `web/game` `CommandModal` where that page contract requires it.
 
 1. **Never weaken a test. Never edit a golden.** On a mismatch, fix the **Kotlin impl**, not the fixture. Touching `logic/src/test/resources/golden/**` to make red go green is forbidden.
 2. **RNG-bearing commands are the highest-care path and MUST be golden-gated before commit.** If the command draws randomness (`RandUtil`/`LiteHashDrbg`), it is **not committable** until a `*GoldenTest`/`*ReplayGateTest` replays the real PHP draw stream **draw-for-draw green**. Draw **order + count + method-args** are the parity targets, not just the result.
-3. **Never fabricate a golden.** Numbers/logs/seeds come ONLY from a real PHP capture (`tools/php-golden/`, Docker). If a value genuinely can't be captured faithfully → **quarantine WITH PROOF** (sibling-code-path byte-match) + log to the phase backlog. Inventing a value = breaking the repo's grand-truth contract.
+3. **Never fabricate a golden.** Numbers/logs/seeds for this historical comparison come only from a real PHP capture (`tools/php-golden/`, Docker). If a value cannot be captured faithfully, quarantine with proof and log it. Inventing a value breaks the evidence contract.
 4. **Verify by TEST XML, not exit code.** The host routes gradle through a context-mode wrapper; `task-notification` exit 0 is unreliable. Read `logic/build/test-results/test/*.xml` + grep `BUILD SUCCESSFUL` from the tail. Use `--rerun-tasks` to defeat UP-TO-DATE false-greens. Java 21: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew ...` from repo root.
 5. **One logical commit** at the very end, message ending with the trailer:
    ```

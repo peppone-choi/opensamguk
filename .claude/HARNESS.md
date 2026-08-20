@@ -1,4 +1,4 @@
-# HARNESS.md — opensamguk work and parity map
+# HARNESS.md — opensamguk work and regression map
 
 > This is a navigable operating map, not a second source of truth. Project rules live in
 > [`CLAUDE.md`](../CLAUDE.md); task routing lives in
@@ -15,7 +15,7 @@ worker preserves all concurrent changes outside its assigned scope.
 | Need | Claude entrypoint | Codex entrypoint | Read next |
 |---|---|---|---|
 | Establish task contract | `/os-start-task` | `$os-start-task` | `.ai/task.md`, `.ai/decisions.md`, router |
-| Diagnose a discrepancy | `/os-analyze` or `/os-debug` | `$os-analyze` or `$os-debug` | PHP evidence, failure/verification docs |
+| Diagnose a discrepancy | `/os-analyze` or `/os-debug` | `$os-analyze` or `$os-debug` | approved ADR/spec, current runtime evidence, failure/verification docs |
 | Implement an approved scope | `/os-implement` | `$os-implement` | architecture and coding rules |
 | Verify a change | `/os-verify` | `$os-verify` | `docs/agent/verification.md` |
 | Obtain an adversarial review | `/os-review` | `$os-review` | `docs/agent/lifecycle-review.md` |
@@ -48,11 +48,12 @@ The detailed current status and activation residuals are in
 `.ai/current-state.md`; PHP/UI gap evidence belongs in `docs/loops/*/LEDGER.md`. Do not turn a
 build-only foundation into an activation claim without its separate gate.
 
-## 3. Parity closure map
+## 3. Historical parity closure map (opt-in)
 
-**Grand-truth order:** `legacy/devsam-core` (PHP) wins every behavioral divergence;
-`legacy/devsam-core2026` is structural context only; Kotlin/Next is the port. `legacy/` is
-git-ignored. Capture actual PHP evidence before changing a parity-sensitive behavior.
+Under ADR-LITE-042, the latest approved ADR/spec and current implementation are product authority.
+`legacy/devsam-core`, `legacy/devsam-core2026`, and `hwe/ts/` are optional historical/reference
+inputs. The workflow below is used only when the task explicitly selects a frozen-regression
+parity surface; it is never a prerequisite for new product work. `legacy/` remains git-ignored.
 
 For one reservable command, use `/parity-close <command>` or `$parity-close <command>` when the
 local process skill is available. Its seam is:
@@ -71,7 +72,7 @@ A missing `intakeCodes` entry is an open gap only for an immediate daemon comman
 path. Use English code comments. Identifiers remain conventional English,
 while game content and PHP-parity log strings retain their required Korean and markup exactly.
 
-Non-negotiable checks:
+Checks for that explicitly selected historical scope:
 
 1. RNG is draw-for-draw: order, count, and arguments matter; a battle threads one
    `RandUtil(warSeed)` reference.
@@ -92,7 +93,7 @@ a failed integration test is not a skip.
 
 | Change | Minimum evidence |
 |---|---|
-| RNG/logic parity | Targeted `*GoldenTest`/`*ReplayGateTest`, then `tools/parity/gate.sh logic` when applicable |
+| RNG/logic change | Targeted current tests plus affected frozen `*GoldenTest`/`*ReplayGateTest`; `tools/parity/gate.sh logic` when applicable |
 | Backend-wide or pre-commit proof | `tools/parity/gate.sh backend` with XML evidence |
 | API/engine/infra | The routed module test plus focused integration coverage |
 | Next.js surface | App typecheck/test and browser observation when behavior changes |
@@ -131,11 +132,11 @@ Two historical lessons are now operational invariants:
 | You need to… | Use |
 |---|---|
 | Understand architecture and current scope | `docs/agent/architecture.md` + `docs/agent/project-overview.md` |
-| Close one PHP parity gap | `parity-close` + PHP oracle protocol |
+| Maintain one explicitly selected historical parity gap | `parity-close` + historical PHP comparison protocol |
 | Validate a change | `docs/agent/verification.md` + `$os-verify` / `/os-verify` |
 | Review a completed slice | `$os-review` / `/os-review` and an independent critic |
-| Work on UI parity | `hwe/ts/` evidence → `webapp-testing` → the loop ledger |
+| Change current UI | approved design/current Next.js → `webapp-testing`; add `hwe/ts/` only as optional flow reference |
 | Operate or deploy | `docs/agent/lifecycle-ops.md` and the approved shared-stack runbook |
 
 This harness makes the next evidence-backed slice easier to run without replacing the project’s
-parity, ownership, or approval rules.
+product, regression, ownership, or approval rules.
