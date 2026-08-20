@@ -13,6 +13,9 @@ import { useTurnRefresh } from './useTurnRefresh';
 import type { FrontInfoResponse, GameConstResponse } from '@/lib/types';
 import type { MenuNode } from '@/lib/menu-types';
 
+const FRONT_INFO_TIMEOUT_MS = 10_000;
+const FRONT_INFO_TIMEOUT_MESSAGE = '서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.';
+
 interface FrontInfoState {
     frontInfo: FrontInfoResponse | null;
     constData: GameConstResponse | null;
@@ -58,21 +61,33 @@ export function useFrontInfo(): FrontInfoState {
     // front-info — refetch on every refreshKey bump (mount = key 0).
     useEffect(() => {
         let alive = true;
+        let expired = false;
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => {
+            if (!alive) return;
+            expired = true;
+            controller.abort();
+            setError(FRONT_INFO_TIMEOUT_MESSAGE);
+            setLoading(false);
+        }, FRONT_INFO_TIMEOUT_MS);
         void (async () => {
             try {
-                const fi = await api.frontInfo();
-                if (alive) {
+                const fi = await api.frontInfo(controller.signal);
+                if (alive && !expired) {
                     setFrontInfo(fi);
                     setError(null);
                 }
             } catch {
-                if (alive) setError('서버 정보를 불러올 수 없습니다.');
+                if (alive && !expired) setError('서버 정보를 불러올 수 없습니다.');
             } finally {
-                if (alive) setLoading(false);
+                window.clearTimeout(timeout);
+                if (alive && !expired) setLoading(false);
             }
         })();
         return () => {
             alive = false;
+            window.clearTimeout(timeout);
+            controller.abort();
         };
     }, [refreshKey]);
 

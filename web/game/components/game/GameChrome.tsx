@@ -86,7 +86,7 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
 
   if (error || !frontInfo) {
     return (
-      <div className="error-state">
+      <div className="error-state" role="alert">
         <p>{error ?? '서버 정보를 불러올 수 없습니다.'}</p>
         <button onClick={refresh}>다시 시도</button>
       </div>

@@ -340,8 +340,8 @@ export interface AdminGeneralModerationActionResponse {
     affected: number;
 }
 
-async function get<T>(path: string): Promise<T> {
-    const res = await fetch(`${BASE}${path}`, { cache: 'no-store' });
+async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
+    const res = await fetch(`${BASE}${path}`, { cache: 'no-store', signal });
     if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
     return res.json() as Promise<T>;
 }
@@ -415,7 +415,7 @@ export const api = {
     patch,
 
     // Identity envelope + server-driven menu/const (F2 Wave 1)
-    frontInfo: () => get<FrontInfoResponse>('/api/front-info'),
+    frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
     globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),
     gameConst: () => get<GameConstResponse>('/api/const'),
 
