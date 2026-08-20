@@ -78,6 +78,7 @@ class AiHookTest {
 
     private fun baseState() = TurnWorldState(
         id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+        config = linkedMapOf("mapName" to "che"),
     )
 
     private fun worldWith(generals: List<TurnGeneral> = listOf(general())) =

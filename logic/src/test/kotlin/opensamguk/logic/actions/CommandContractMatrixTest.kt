@@ -27,6 +27,7 @@ class CommandContractMatrixTest {
     private val pipeline = GeneralActionPipeline()
     private val registry = CommandRegistry(pipeline)
     private val env = WorldEnvBuilder.envMap(YEAR, START_YEAR) + mapOf(
+        "mapName" to "che",
         "join_mode" to "normal",
         "__isNeighbor" to true,
         "__atWarWithDest" to true,
@@ -232,6 +233,7 @@ class CommandContractMatrixTest {
         StateFixture.AWAY_FROM_CAPITAL_SUCCESS -> defaultSuccessView(capitalCityId = OWN_DEST_CITY_ID, profile = profile)
         StateFixture.TROOP_MEMBER_SUCCESS -> defaultSuccessView(includeTroopMember = true, profile = profile)
         StateFixture.NO_CREW_SUCCESS -> defaultSuccessView(actorCrew = 0, profile = profile)
+        StateFixture.ADJACENT_OWN_DEST_SUCCESS -> defaultSuccessView(destCityNationId = NATION_ID, profile = profile)
         StateFixture.DEFAULT_FAILURE -> defaultFailureView(profile)
         StateFixture.NO_CREW_FAILURE -> defaultSuccessView(actorCrew = 0, profile = profile)
         StateFixture.NO_TRADER_FAILURE -> defaultSuccessView(actorNpcType = 0, cityTrade = null, profile = profile)
@@ -246,6 +248,7 @@ class CommandContractMatrixTest {
         capitalCityId: Int? = CITY_ID,
         strategicCmdLimit: Int = 99,
         includeTroopMember: Boolean = false,
+        destCityNationId: Int = DEST_NATION_ID,
         profile: CommandCoverageProfile? = null,
     ): MemoryStateView = MemoryStateView(
         generals = linkedMapOf(
@@ -276,7 +279,7 @@ class CommandContractMatrixTest {
         },
         cities = linkedMapOf(
             CITY_ID to city(CITY_ID, nationId = NATION_ID, level = 6, frontState = 1, trade = cityTrade),
-            DEST_CITY_ID to city(DEST_CITY_ID, nationId = DEST_NATION_ID, level = 6, frontState = 1),
+            DEST_CITY_ID to city(DEST_CITY_ID, nationId = destCityNationId, level = 6, frontState = 1),
             OWN_DEST_CITY_ID to city(OWN_DEST_CITY_ID, nationId = NATION_ID, level = 7, frontState = 1),
         ),
         nations = linkedMapOf(
@@ -496,6 +499,7 @@ class CommandContractMatrixTest {
         AWAY_FROM_CAPITAL_SUCCESS,
         TROOP_MEMBER_SUCCESS,
         NO_CREW_SUCCESS,
+        ADJACENT_OWN_DEST_SUCCESS,
         DEFAULT_FAILURE,
         NO_CREW_FAILURE,
         NO_TRADER_FAILURE,
@@ -690,7 +694,10 @@ class CommandContractMatrixTest {
                 COMMON_FOREIGN_GENERAL + COMMON_DEST_NATION + COMMON_LATE_REL_YEAR + mapOf("srcMessageId" to 1),
                 successFixture = StateFixture.NEUTRAL_SUCCESS,
             ),
-            "cr_인구이동" to CommandContract(COMMON_OWN_DEST_CITY + COMMON_AMOUNT),
+            "cr_인구이동" to CommandContract(
+                COMMON_DEST_CITY + COMMON_AMOUNT,
+                successFixture = StateFixture.ADJACENT_OWN_DEST_SUCCESS,
+            ),
         )
     }
 }

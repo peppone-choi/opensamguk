@@ -60,7 +60,7 @@ class CommandPrecheckService(
         precheck(generalId, actionCode, emptyMap())
 
     fun precheck(generalId: Int, actionCode: String, args: Map<String, Any?>): PrecheckResult {
-        val state = stateViewFactory.build(generalId)
+        val state = stateViewFactory.build(generalId, args, loadAllCities = actionCode == "che_출병")
             ?: return PrecheckResult.Unknown(listOf(RequirementKey.General(generalId)))
         val definition = registry.resolve(actionCode)
         val parsedArgs = runCatching { definition.parseArgsForGeneral(args, generalId) }.getOrNull()
@@ -80,7 +80,7 @@ class CommandPrecheckService(
      * the caller decides whether to surface a registry-only catalog with `possible=true`.
      */
     fun precheckAll(generalId: Int, definitions: List<GeneralActionDefinition>): Map<String, PrecheckResult>? {
-        val state = stateViewFactory.build(generalId) ?: return null
+        val state = stateViewFactory.build(generalId, loadAllCities = true) ?: return null
         return definitions.associate { def -> def.key to evaluate(state, def) }
     }
 
@@ -131,6 +131,9 @@ class CommandPrecheckService(
             actorId = actor.id,
             cityId = actor.cityId,
             nationId = actor.nationId,
+            destGeneralId = (args["destGeneralID"] as? Number)?.toInt(),
+            destCityId = (args["destCityID"] as? Number)?.toInt(),
+            destNationId = (args["destNationID"] as? Number)?.toInt(),
             args = args,
             env = state.env,
             mode = ConstraintMode.PRECHECK,

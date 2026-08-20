@@ -1,7 +1,5 @@
 package opensamguk.logic.world
 
-import opensamguk.common.constants.CityConst
-
 /**
  * F-MAP / FM1 — minimal city-distance map module.
  *
@@ -30,7 +28,12 @@ object CalcCityDistance {
      *   mirroring PHP's "neighbour not in allowedCityList -> skip"). `null` = no restriction
      *   (PHP `$linkNationList === null` => `allowedCityList = CityConst::all()`).
      */
-    fun calcCityDistance(from: Int, to: Int, blockedCityIds: Set<Int>? = null): Int? {
+    fun calcCityDistance(
+        from: Int,
+        to: Int,
+        blockedCityIds: Set<Int>? = null,
+        cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
+    ): Int? {
         // PHP: if (!key_exists($to, $allowedCityList)) return null;
         // (a blocked destination can never be reached).
         if (blockedCityIds != null && to in blockedCityIds) {
@@ -60,7 +63,7 @@ object CalcCityDistance {
 
             // PHP: foreach (array_keys(CityConst::byID($cityID)->path) ...) — neighbour ids,
             // in CityConst path insertion order (LinkedHashMap key order).
-            val city = CityConst.byId(cityId) ?: continue
+            val city = cityConst.byId(cityId) ?: continue
             for (connCityId in city.path.keys) {
                 if (blockedCityIds != null && connCityId in blockedCityIds) {
                     continue
@@ -81,7 +84,11 @@ object CalcCityDistance {
      * `$distForm=false` branch (the one `NearCity` consumes): returns `cities[$cityID] = $dist`
      * for every city within [maxDist] hops of [from], INCLUDING [from] itself at distance 0.
      */
-    fun searchDistance(from: Int, maxDist: Int = 99): Map<Int, Int> {
+    fun searchDistance(
+        from: Int,
+        maxDist: Int = 99,
+        cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
+    ): Map<Int, Int> {
         val cities = LinkedHashMap<Int, Int>()
         val queue = ArrayDeque<IntArray>()
         queue.addLast(intArrayOf(from, 0))
@@ -98,7 +105,7 @@ object CalcCityDistance {
                 continue
             }
 
-            val city = CityConst.byId(cityId) ?: continue
+            val city = cityConst.byId(cityId) ?: continue
             for (connCityId in city.path.keys) {
                 if (connCityId in cities) {
                     continue
@@ -119,7 +126,11 @@ object CalcCityDistance {
      * Returns a `dist → [cityIds]` map (ascending dist; the origin's `dist=0` ring removed), the exact shape
      * `findNextCapital` walks outward.
      */
-    fun searchDistanceRings(from: Int, maxDist: Int = 99): Map<Int, List<Int>> {
+    fun searchDistanceRings(
+        from: Int,
+        maxDist: Int = 99,
+        cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
+    ): Map<Int, List<Int>> {
         val cities = HashSet<Int>()
         val rings = LinkedHashMap<Int, MutableList<Int>>()
         val queue = ArrayDeque<IntArray>()
@@ -137,7 +148,7 @@ object CalcCityDistance {
                 continue
             }
 
-            val city = CityConst.byId(cityId) ?: continue
+            val city = cityConst.byId(cityId) ?: continue
             for (connCityId in city.path.keys) {
                 if (connCityId in cities) {
                     continue
@@ -160,8 +171,12 @@ object CalcCityDistance {
      * origin (self-targets are rejected by notSameDestCity), so membership here is equivalent
      * to the PHP constraint's key check. For radius=1 this is exactly the direct path neighbours.
      */
-    fun nearCity(from: Int, radius: Int): Set<Int> {
-        val dist = searchDistance(from, radius)
+    fun nearCity(
+        from: Int,
+        radius: Int,
+        cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
+    ): Set<Int> {
+        val dist = searchDistance(from, radius, cityConst)
         return dist.keys.filterTo(LinkedHashSet()) { it != from }
     }
 }

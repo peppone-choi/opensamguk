@@ -106,4 +106,12 @@ class CalcCityDistanceTest {
             assertTrue(cityId in near, "dest $cityId within radius should be in nearCity set")
         }
     }
+
+    @Test
+    fun `Han duplicate city names retain both numeric neighbors`() {
+        val han = CityConstRegistry.of("han")
+        assertTrue(421 in CalcCityDistance.nearCity(3, 1, han))
+        assertTrue(600 in CalcCityDistance.nearCity(3, 1, han))
+        assertTrue(CityConstRegistry.of("che").byId(421) == null)
+    }
 }

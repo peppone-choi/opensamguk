@@ -1,6 +1,5 @@
 package opensamguk.logic.ai.families
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.ai.AiGeneralView
@@ -264,7 +263,7 @@ object NationDeployFamily {
             while (!world.frontCities.containsKey(targetCityID)) {
                 val distance = warRoute[targetCityID]?.get(toCityID) ?: break
                 val nextCityCandidate = ArrayList<Int>()
-                val path = CityConst.byId(targetCityID)?.path?.keys ?: emptySet() // :365 name-order
+                val path = ctx.cityConst.byId(targetCityID)?.path?.keys ?: emptySet() // :365 name-order
                 for (nearCityID in path) {
                     val nearRoute = warRoute[nearCityID] ?: continue // :366-368
                     val nearDist = nearRoute[toCityID] ?: continue

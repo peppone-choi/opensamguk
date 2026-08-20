@@ -10,7 +10,7 @@ import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.actions.military.UnitSetTable
-import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.statview.MemoryStateView
 import opensamguk.logic.statview.WorldEnvBuilder
 import org.springframework.stereotype.Component
@@ -53,15 +53,33 @@ class PrecheckStateViewFactory(
     )
 
     /** Load + assemble the precheck state for [generalId], or `null` when the general row is absent. */
-    fun build(generalId: Int): PrecheckState? {
+    fun build(
+        generalId: Int,
+        args: Map<String, Any?> = emptyMap(),
+        loadAllCities: Boolean = false,
+    ): PrecheckState? {
         val actor: General = generals.findById(generalId).orElse(null)?.toLogic() ?: return null
 
+        val generalById = LinkedHashMap<Int, General>()
+        generalById[actor.id] = actor
+        (args["destGeneralID"] as? Number)?.toInt()?.let { destId ->
+            generals.findById(destId).orElse(null)?.toLogic()?.let { generalById[it.id] = it }
+        }
         val cityById = LinkedHashMap<Int, City>()
+        if (loadAllCities) {
+            cities.findAll().map { it.toLogic() }.associateTo(cityById) { it.id to it }
+        }
         cities.findById(actor.cityId).orElse(null)?.toLogic()?.let { cityById[it.id] = it }
+        (args["destCityID"] as? Number)?.toInt()?.let { destId ->
+            cities.findById(destId).orElse(null)?.toLogic()?.let { cityById[it.id] = it }
+        }
         val ownCities = cities.findByNationIdOrderByIdAsc(actor.nationId).map { it.toLogic() }
 
         val nationById = LinkedHashMap<Int, Nation>()
         nations.findById(actor.nationId).orElse(null)?.toLogic()?.let { nationById[it.id] = it }
+        (args["destNationID"] as? Number)?.toInt()?.let { destId ->
+            nations.findById(destId).orElse(null)?.toLogic()?.let { nationById[it.id] = it }
+        }
 
         val diplomacy: List<Diplomacy> =
             diplomacies.findBySrcNationId(actor.nationId).map { it.toLogic() }
@@ -73,7 +91,7 @@ class PrecheckStateViewFactory(
         // constraint family (AllowDiplomacyStatus / battleground at-war existence) resolves
         // RequirementKey.Diplomacy WITHOUT touching the DB inside test().
         val view = MemoryStateView(
-            generals = linkedMapOf(actor.id to actor),
+            generals = generalById,
             cities = cityById,
             nations = nationById,
             env = env,
@@ -99,7 +117,7 @@ class PrecheckStateViewFactory(
             phase = ws.currentPhase,
         )).apply {
             this["unitSet"] = UnitSetTable.activeUnitSet(ws.config, ws.meta)
-            this["mapName"] = CityConstRegistry.activeMapName(ws.config, ws.meta)
+            this["mapName"] = ActiveWorldMap.requireName(ws.config, ws.meta)
         }
     }
 

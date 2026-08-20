@@ -1,6 +1,5 @@
 package opensamguk.engine.turn
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.UnitCatalog
@@ -49,9 +48,33 @@ import opensamguk.logic.domestic.techLimit
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.StatCalc
 import opensamguk.logic.statview.WorldEnvBuilder
-import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.CityConstVariant
 import java.time.Duration
+
+internal class AiDistanceListCache(
+    private val maxEntries: Int = 2,
+) {
+    init {
+        require(maxEntries > 0) { "maxEntries must be positive" }
+    }
+
+    private data class Key(val mapName: String, val cityIds: List<Int>)
+
+    private val entries = object : LinkedHashMap<Key, Map<Int, Map<Int, Int>>>(maxEntries + 1, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Key, Map<Int, Map<Int, Int>>>?): Boolean =
+            size > maxEntries
+    }
+
+    fun getOrCompute(
+        mapName: String,
+        cityIds: List<Int>,
+        compute: (List<Int>) -> Map<Int, Map<Int, Int>>,
+    ): Map<Int, Map<Int, Int>> {
+        val key = Key(mapName, cityIds.toList())
+        return entries[key] ?: compute(key.cityIds).also { entries[key] = it }
+    }
+}
 
 private sealed interface AiStateDelta {
     data class GeneralRow(
@@ -172,6 +195,16 @@ class AiTurnAdapter(
 ) {
 
     private val stateDeltas = ArrayList<AiStateDelta>()
+    private val distanceListCache = AiDistanceListCache()
+
+    private fun allDistanceByCityList(
+        cityIds: List<Int>,
+        cityConst: CityConstVariant = activeCityConst(),
+    ): Map<Int, Map<Int, Int>> {
+        return distanceListCache.getOrCompute(cityConst.mapName, cityIds) { orderedCityIds ->
+            AiDistance.searchAllDistanceByCityList(orderedCityIds, cityConst)
+        }
+    }
 
     internal fun drainNationPassDeltas(recorder: ChangeRecorder) {
         drainStateDeltas(recorder, decrementNpcKillturnAfterLifecycle = false)
@@ -383,6 +416,7 @@ class AiTurnAdapter(
         val general = world.getGeneralById(generalId)
             ?: error("AiTurnAdapter: general $generalId not in world")
         val state = world.getState()
+        val cityConst = activeCityConst(state)
         val year = state.currentYear
         val month = state.currentMonth
         val nationId = general.nationId
@@ -418,7 +452,7 @@ class AiTurnAdapter(
         }
 
         // F-FACADE — fed the REAL self-excluded PK-ascending nation generals + the FULL PK-ascending city table.
-        val worldView = buildWorldView(nationId, generalId, instance, nationPolicy)
+        val worldView = buildWorldView(nationId, generalId, instance, nationPolicy, cityConst)
 
         val logicCity = world.getCityById(general.cityId)?.let { PerTurnOverlay.toLogicCity(it) }
         val ctx = buildGeneralContext(
@@ -436,6 +470,7 @@ class AiTurnAdapter(
             recordGeneralKv = recordGeneralKv,
             year = year,
             month = month,
+            cityConst = cityConst,
         )
 
         val bodies = GeneralAiDoBodies.fromFamilies(ctx)
@@ -461,6 +496,7 @@ class AiTurnAdapter(
         val general = world.getGeneralById(generalId)
             ?: error("AiTurnAdapter: general $generalId not in world")
         val state = world.getState()
+        val cityConst = activeCityConst(state)
         val year = state.currentYear
         val month = state.currentMonth
         val nationId = general.nationId
@@ -488,7 +524,7 @@ class AiTurnAdapter(
             { code, args -> verdictHook(code, args) is CandidateVerdict.Allow }
         val recordGeneralKv: (Int, String, Any?) -> Unit = ::recordGeneralDelta
 
-        val worldView = buildWorldView(nationId, generalId, instance, nationPolicy)
+        val worldView = buildWorldView(nationId, generalId, instance, nationPolicy, cityConst)
 
         val logicCity = world.getCityById(general.cityId)?.let { PerTurnOverlay.toLogicCity(it) }
         val ctx = buildGeneralContext(
@@ -506,6 +542,7 @@ class AiTurnAdapter(
             recordGeneralKv = recordGeneralKv,
             year = year,
             month = month,
+            cityConst = cityConst,
         )
 
         // The diplo SELECTION inputs (decision #11 / m10 — SELECTION + boolean + draw IS P5 scope; the che_*
@@ -653,7 +690,13 @@ class AiTurnAdapter(
             "che_선전포고" -> {
                 val destNationId = (rawArgs["destNationID"] as? Number)?.toInt() ?: return envMap
                 val cityRows = world.listCities().sortedBy { it.id }.map { PerTurnOverlay.toLogicCity(it) }
-                val neighbor = AiDistance.isNeighbor(nationId, destNationId, cityRows, includeNoSupply = false)
+                val neighbor = AiDistance.isNeighbor(
+                    nationId,
+                    destNationId,
+                    cityRows,
+                    includeNoSupply = false,
+                    cityConst = activeCityConst(),
+                )
                 LinkedHashMap(envMap).apply { put("__isNeighbor", neighbor) }
             }
             else -> envMap
@@ -665,7 +708,7 @@ class AiTurnAdapter(
         if (capital == 0) return null
         val nationCityIds = capitalConnectedNationCities(nationId, capital)
         if (destCityId !in nationCityIds) return null
-        val distanceList = AiDistance.searchAllDistanceByCityList(nationCityIds)
+        val distanceList = allDistanceByCityList(nationCityIds)
         return distanceList[capital]?.get(destCityId)
     }
 
@@ -680,6 +723,7 @@ class AiTurnAdapter(
         selfGeneralId: Int,
         instance: AiInstanceState,
         nationPolicy: AutorunNationPolicy,
+        cityConst: CityConstVariant,
     ): AiWorldView {
         val generals = world.listGenerals()
             .filter { it.nationId == nationId && it.id != selfGeneralId }
@@ -698,6 +742,8 @@ class AiTurnAdapter(
             minWarCrew = nationPolicy.minWarCrew,
             minNpcWarLeadership = nationPolicy.minNPCWarLeadership,
             turnTerm = turnTerm,
+            cityConst = cityConst,
+            allDistanceByCityList = { cityIds -> allDistanceByCityList(cityIds, cityConst) },
         )
     }
 
@@ -722,6 +768,10 @@ class AiTurnAdapter(
     internal fun nationTechOf(nationId: Int): Int =
         world.getNationById(nationId)?.tech?.toInt() ?: 0
 
+    private fun activeCityConst(state: TurnWorldState = world.getState()): CityConstVariant {
+        return ActiveWorldMap.requireVariant(state.config, state.meta)
+    }
+
     private fun commandEnvMap(
         state: TurnWorldState,
         year: Int,
@@ -729,7 +779,7 @@ class AiTurnAdapter(
     ): Map<String, Any?> =
         LinkedHashMap(WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)).apply {
             this["unitSet"] = UnitSetTable.activeUnitSet(state.config, state.meta)
-            this["mapName"] = CityConstRegistry.activeMapName(state.config, state.meta)
+            this["mapName"] = ActiveWorldMap.requireName(state.config, state.meta)
         }
 
     private fun pipelineFor(tg: TurnGeneral): GeneralActionPipeline =
@@ -761,6 +811,7 @@ class AiTurnAdapter(
         recordGeneralKv: (Int, String, Any?) -> Unit,
         year: Int,
         month: Int,
+        cityConst: CityConstVariant,
     ): GeneralAiContext {
         val nationId = general.nationId
         val occupiedCities = occupiedCitiesSet() // S8 — lord/nation cities (shared by wander + found).
@@ -775,6 +826,7 @@ class AiTurnAdapter(
             turnTerm = turnTerm,
             selfGeneralId = general.id,
             selfCityId = general.cityId,
+            cityConst = cityConst,
             selfOfficerLevel = general.officerLevel,
             candidateAllowed = candidateAllowedHook,
             recordGeneralKv = recordGeneralKv,
@@ -1140,7 +1192,9 @@ class AiTurnAdapter(
             trialPropPow6 = trialPropPow6,
             lowTargetNations = lowTargetNations,
             allNationStaticInfo = allNationStaticInfo,
-            isNeighbor = { destNationId -> AiDistance.isNeighbor(nationId, destNationId, cityRows) },
+            isNeighbor = { destNationId ->
+                AiDistance.isNeighbor(nationId, destNationId, cityRows, cityConst = activeCityConst())
+            },
         )
     }
 
@@ -1176,7 +1230,7 @@ class AiTurnAdapter(
         val nationCityIds = capitalConnectedNationCities(nationId, capital)
 
         // :2060 — Floyd distance over the capital-connected city list (DB-row / PK-asc order).
-        val distanceList = AiDistance.searchAllDistanceByCityList(nationCityIds)
+        val distanceList = allDistanceByCityList(nationCityIds)
 
         // :2068-2073 — per-city score = pop * maxDist / sum(dist) * sqrt(dev), in nationCityIds order.
         val cityScores = LinkedHashMap<Int, Double>()
@@ -1201,7 +1255,7 @@ class AiTurnAdapter(
         val capitalToFinalDist = finalCityId?.let { distanceList[capital]?.get(it) } // :2088 $dist.
         val capitalPathNeighbors: List<Int> =
             if (finalCityId != null && capitalToFinalDist != null) {
-                CityConst.byId(capital)?.path?.keys.orEmpty().filter { stopId ->
+                activeCityConst().byId(capital)?.path?.keys.orEmpty().filter { stopId ->
                     val sub = distanceList[stopId] ?: return@filter false // :2093 key_exists($stopID, $distanceList)
                     sub[finalCityId]?.let { it + 1 == capitalToFinalDist } == true // :2096 stop one step closer.
                 }
@@ -1236,7 +1290,7 @@ class AiTurnAdapter(
         out.add(capital)
         while (queue.isNotEmpty()) {
             val cur = queue.removeFirst()
-            val city = CityConst.byId(cur) ?: continue
+            val city = activeCityConst().byId(cur) ?: continue
             for (next in city.path.keys) { // name-order neighbours
                 if (next in ownCities && next !in out) {
                     out.add(next)
@@ -1687,7 +1741,7 @@ class AiTurnAdapter(
         val state = world.getState()
         val unitSet = UnitSetTable.activeUnitSet(state.config, state.meta)
         if (!UnitSetTable.isSupported(unitSet)) return null
-        val cityConst = CityConstRegistry.find(CityConstRegistry.activeMapName(state.config, state.meta)) ?: return null
+        val cityConst = activeCityConst(state)
         val ownCities = LinkedHashMap<Int, Int>()
         val ownRegions = LinkedHashSet<Int>()
         for (city in world.listCities().filter { it.nationId == nationId }) {

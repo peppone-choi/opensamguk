@@ -1,6 +1,5 @@
 package opensamguk.engine.turn
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.NoRng
 import opensamguk.common.rng.RandUtil
@@ -30,6 +29,7 @@ import opensamguk.logic.statview.WorldEnvBuilder
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.world.CalcCityDistance
+import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicCity
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicGeneral
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicNation
@@ -253,8 +253,10 @@ class ProcessNationCommand(
         val ownedCityIds = world.listCities().asSequence()
             .filter { it.nationId == nationId }
             .mapTo(LinkedHashSet()) { it.id }
-        val blockedCityIds = CityConst.all().keys.filterTo(HashSet()) { it !in ownedCityIds }
-        return CalcCityDistance.calcCityDistance(capitalCityId, destCityId, blockedCityIds)
+        val state = world.getState()
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta)
+        val blockedCityIds = cityConst.all().keys.filterTo(HashSet()) { it !in ownedCityIds }
+        return CalcCityDistance.calcCityDistance(capitalCityId, destCityId, blockedCityIds, cityConst)
             ?: CHEONDO_FALLBACK_DISTANCE
     }
 
@@ -425,6 +427,7 @@ class ProcessNationCommand(
             .firstOrNull { it.fromNationId == nationId && it.state == 0 }
             ?.state
         return LinkedHashMap(base).apply {
+            put("mapName", ActiveWorldMap.requireName(world.getState().config, world.getState().meta))
             put("__disallowDiplomacyHit", blockedState != null)
             put("__disallowDiplomacyHitState", blockedState)
             if (actionCode == CHEONDO_COMMAND_CODE) {

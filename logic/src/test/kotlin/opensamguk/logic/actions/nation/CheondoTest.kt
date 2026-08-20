@@ -175,4 +175,26 @@ class CheondoTest {
         assertEquals(1110.0, d.general.experience, "exp += 10")
         assertEquals(4010.0, d.general.dedication, "ded += 10")
     }
+
+    @Test
+    fun `mujakwi resolves a Han-only capital without partial mutation`() {
+        val draft = GeneralActionDraft(actor(), city(), nation())
+        val context = GeneralActionResolveContext(
+            draft,
+            moveRng(),
+            env.copy(mapName = "han"),
+            MONTH,
+            date,
+            generalName = "조조",
+            args = emptyMap(),
+            candidateCityIds = listOf(421),
+        )
+
+        cheMujakwiSudoIjeon(pipeline).resolve(context)
+
+        assertEquals(421, draft.general.cityId)
+        assertEquals(421, draft.nation!!.capitalCityId)
+        assertTrue(draft.cascadeCities.any { it.id == 421 && it.nationId == 2 })
+        assertTrue(context.logs().any { it.contains("<b>석</b>") })
+    }
 }

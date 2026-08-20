@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
@@ -19,6 +18,7 @@ import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_천도 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_천도.php`.
@@ -91,7 +91,7 @@ class CheCheondo(private val pipeline: GeneralActionPipeline) : NationCommand() 
         val d = context.draft
         val nation = d.nation ?: return
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
         val distance = context.cityDistance ?: 50
         val expDed = 5 * (getPreReqTurnForDistance(distance) + 1)
 

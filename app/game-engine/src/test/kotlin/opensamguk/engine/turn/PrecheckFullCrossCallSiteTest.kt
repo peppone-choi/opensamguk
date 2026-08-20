@@ -6,6 +6,7 @@ import opensamguk.gameapi.precheck.PrecheckStateViewFactory
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.DiplomacyReadRepository
+import opensamguk.gameapi.read.DiplomacyReadEntity
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadEntity
@@ -23,6 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
@@ -66,6 +68,10 @@ class PrecheckFullCrossCallSiteTest {
         val rice: Int = 3000,                // < generalMinimumRice(500) is never used; 헌납 funds clear
         val cityNationId: Int = NATION_ID,   // != actor nation -> OccupiedCity deny
         val cityId: Int = CITY_ID,
+        val destCityId: Int? = null,
+        val destCityNationId: Int? = null,
+        val routeCityId: Int? = null,
+        val routeCityNationId: Int = 0,
         val cityLevel: Int = 5,
         val cityPopulation: Int = 100_000,
         val supplyState: Int = 1,            // 0 -> SuppliedCity deny
@@ -74,15 +80,19 @@ class PrecheckFullCrossCallSiteTest {
         val wall: Int = 2000,
         val wallMax: Int = 8000,             // wall == wallMax -> RemainCityCapacity deny (성벽 보수)
         val officerLevel: Int = 5,           // 12 -> NotLord deny (하야); != 12 -> BeChief deny (포상)
+        val crew: Int = 0,
+        val atWarNationId: Int? = null,
         val nationTech: Int = 0,
-        val mapName: String = "che",
+        val nationGold: Int = 100_000,
+        val nationRice: Int = 100_000,
+        val mapName: String? = "che",
         val unitSet: String? = null,
     )
 
     private fun Fixture.worldConfig(): Map<String, Any?> = linkedMapOf<String, Any?>(
         "startYear" to START_YEAR,
-        "mapName" to mapName,
     ).apply {
+        mapName?.let { this["mapName"] = it }
         unitSet?.let { this["unitSet"] = it }
     }
 
@@ -94,6 +104,7 @@ class PrecheckFullCrossCallSiteTest {
             leadership = 70, strength = 30, intel = 95, injury = 0,
             experience = 1200, dedication = 900, officerLevel = f.officerLevel,
             gold = f.gold, rice = f.rice,
+            crew = f.crew,
             meta = linkedMapOf("explevel" to 4, "intel_exp" to 12, "max_domestic_critical" to 3.5),
         )
         val city = CityReadEntity(
@@ -104,7 +115,28 @@ class PrecheckFullCrossCallSiteTest {
             population = f.cityPopulation,
             meta = linkedMapOf(),
         )
-        val nation = NationReadEntity(id = NATION_ID, level = 7, capitalCityId = f.cityId, tech = f.nationTech.toDouble())
+        val destCity = f.destCityId?.let { id ->
+            CityReadEntity(
+                id = id, nationId = f.destCityNationId ?: f.cityNationId, level = f.cityLevel,
+                commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
+                supplyState = f.supplyState, frontState = 0, trust = 82.0,
+                wall = f.wall, wallMax = f.wallMax,
+                population = f.cityPopulation,
+                meta = linkedMapOf(),
+            )
+        }
+        val routeCity = f.routeCityId?.let { id ->
+            CityReadEntity(
+                id = id, nationId = f.routeCityNationId, level = f.cityLevel,
+                commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
+                supplyState = f.supplyState, frontState = 0, trust = 82.0,
+                wall = f.wall, wallMax = f.wallMax, population = f.cityPopulation, meta = linkedMapOf(),
+            )
+        }
+        val nation = NationReadEntity(
+            id = NATION_ID, level = 7, capitalCityId = f.cityId, tech = f.nationTech.toDouble(),
+            gold = f.nationGold, rice = f.nationRice,
+        )
         val worldState = WorldStateReadEntity(
             id = 1, scenarioCode = "scenario_2", currentYear = YEAR, currentMonth = MONTH,
             tickSeconds = 3600, config = f.worldConfig(), meta = linkedMapOf(),
@@ -117,9 +149,14 @@ class PrecheckFullCrossCallSiteTest {
         val worldStates = mock(WorldStateReadRepository::class.java)
         `when`(generals.findById(GENERAL_ID)).thenReturn(Optional.of(general))
         `when`(cities.findById(f.cityId)).thenReturn(Optional.of(city))
+        destCity?.let { `when`(cities.findById(it.id)).thenReturn(Optional.of(it)) }
         `when`(cities.findByNationIdOrderByIdAsc(NATION_ID)).thenReturn(listOf(city))
         `when`(nations.findById(NATION_ID)).thenReturn(Optional.of(nation))
-        `when`(diplomacies.findBySrcNationId(NATION_ID)).thenReturn(emptyList())
+        val diplomacyRows = f.atWarNationId?.let { enemy ->
+            listOf(DiplomacyReadEntity(id = 1, srcNationId = NATION_ID, destNationId = enemy, stateCode = 0, term = 0))
+        }.orEmpty()
+        `when`(diplomacies.findBySrcNationId(NATION_ID)).thenReturn(diplomacyRows)
+        `when`(cities.findAll()).thenReturn(listOfNotNull(city, destCity, routeCity))
         `when`(worldStates.findAll()).thenReturn(listOf(worldState))
         val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
         return CommandPrecheckService(factory, registry)
@@ -133,6 +170,7 @@ class PrecheckFullCrossCallSiteTest {
             stats = GeneralStats(leadership = 70, strength = 30, intelligence = 95),
             experience = 1200, dedication = 900, officerLevel = f.officerLevel,
             gold = f.gold, rice = f.rice, injury = 0, turnTime = t0,
+            crew = f.crew,
             meta = linkedMapOf("explevel" to 4, "intel_exp" to 12, "max_domestic_critical" to 3.5),
         )
         val city = City(
@@ -143,6 +181,12 @@ class PrecheckFullCrossCallSiteTest {
             population = f.cityPopulation,
             meta = linkedMapOf("trust" to 82),   // engine City has no trust column; lives in meta
         )
+        val destCity = f.destCityId?.let { id ->
+            city.copy(id = id, name = "c$id", nationId = f.destCityNationId ?: f.cityNationId)
+        }
+        val routeCity = f.routeCityId?.let { id ->
+            city.copy(id = id, name = "c$id", nationId = f.routeCityNationId)
+        }
         // The actor's own nation; a second nation 2 exists so the OccupiedCity-deny fixture (city
         // owned by nation 2) resolves a real nation row, matching the game-api stub world.
         val nations = listOf(
@@ -152,6 +196,8 @@ class PrecheckFullCrossCallSiteTest {
                 color = "#000",
                 level = 7,
                 capitalCityId = f.cityId,
+                gold = f.nationGold,
+                rice = f.nationRice,
                 tech = f.nationTech.toDouble(),
             ),
             Nation(id = 2, name = "n2", color = "#111", level = 7, capitalCityId = null),
@@ -160,7 +206,18 @@ class PrecheckFullCrossCallSiteTest {
             id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
             config = f.worldConfig(),
         )
-        val world = InMemoryTurnWorld(WorldSnapshot(state, listOf(general), listOf(city), nations, worldId = opensamguk.common.world.WorldId((state).id)))
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(general),
+                listOfNotNull(city, destCity, routeCity),
+                nations,
+                diplomacy = f.atWarNationId?.let { enemy ->
+                    listOf(TurnDiplomacy(NATION_ID, enemy, state = 0, term = 0))
+                }.orEmpty(),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
         return ReservedTurnHandler(world, registry, HIDDEN_SEED, START_YEAR) to world
     }
 
@@ -180,6 +237,89 @@ class PrecheckFullCrossCallSiteTest {
         assertFalse(outcome.fellBack, "game-engine full: Allow (resolved, did NOT fall back to 휴식)")
         assertEquals(ACTION, outcome.definition.key, "the requested action resolved, not the fallback")
         assertEquals(null, outcome.denyReason, "no deny reason on an allowed turn")
+    }
+
+    @Test
+    fun `missing map fails identically at precheck and daemon call sites`() {
+        assertMapFailureAgreement(Fixture(mapName = null), "world state requires an explicit mapName in config/meta")
+    }
+
+    @Test
+    fun `unknown map fails identically at precheck and daemon call sites`() {
+        assertMapFailureAgreement(Fixture(mapName = "unknown"), "world state has unknown mapName: unknown")
+    }
+
+    @Test
+    fun `Han-only move adjacency agrees at precheck and daemon call sites`() {
+        val fixture = Fixture(cityId = 3, destCityId = 421, mapName = "han")
+        assertAvailableAgreement(
+            action = "che_이동",
+            fixture = fixture,
+            argJson = """{"destCityID":421}""",
+            args = linkedMapOf("destCityID" to 421),
+        )
+    }
+
+    @Test
+    fun `Han-only population movement edge agrees at precheck and daemon call sites`() {
+        val fixture = Fixture(cityId = 3, destCityId = 421, destCityNationId = NATION_ID, officerLevel = 12, mapName = "han")
+        assertAvailableAgreement(
+            action = "cr_인구이동",
+            fixture = fixture,
+            argJson = """{"destCityID":421,"amount":100}""",
+            args = linkedMapOf("destCityID" to 421, "amount" to 100),
+        )
+    }
+
+    @Test
+    fun `destination command families reject Han-only cities on Che identically`() {
+        val commands = linkedMapOf(
+            "che_수몰" to """{"destCityID":421}""",
+            "che_백성동원" to """{"destCityID":421}""",
+            "che_선동" to """{"destCityID":421}""",
+            "che_탈취" to """{"destCityID":421}""",
+            "che_첩보" to """{"destCityID":421}""",
+            "che_화계" to """{"destCityID":421}""",
+            "che_파괴" to """{"destCityID":421}""",
+            "che_초토화" to """{"destCityID":421}""",
+            "cr_인구이동" to """{"destCityID":421,"amount":100}""",
+            "che_허보" to """{"destCityID":421}""",
+        )
+        val fixture = Fixture(cityId = 3, destCityId = 421, destCityNationId = 2, officerLevel = 12, mapName = "che")
+        for ((action, argJson) in commands) {
+            val args = linkedMapOf<String, Any?>("destCityID" to 421).apply {
+                if (action == "cr_인구이동") put("amount", 100)
+            }
+            assertDenyAgreement(
+                fixture = fixture,
+                reason = "Invalid destination city.",
+                constraintName = "ActiveMapDestCity",
+                action = action,
+                argJson = argJson,
+                args = args,
+            )
+        }
+    }
+
+    @Test
+    fun `Han multi-hop sortie agrees at precheck and daemon call sites`() {
+        val fixture = Fixture(
+            cityId = 3,
+            cityNationId = NATION_ID,
+            destCityId = 29,
+            destCityNationId = 2,
+            routeCityId = 421,
+            routeCityNationId = 0,
+            crew = 1_000,
+            atWarNationId = 2,
+            mapName = "han",
+        )
+        assertAvailableAgreement(
+            action = "che_출병",
+            fixture = fixture,
+            argJson = """{"destCityID":29}""",
+            args = linkedMapOf("destCityID" to 29),
+        )
     }
 
     @Test
@@ -417,6 +557,20 @@ class PrecheckFullCrossCallSiteTest {
         assertTrue(outcome.fellBack, "game-engine full denies recruit")
         assertEquals(reason, outcome.denyReason)
         assertEquals(blocked.reason, outcome.denyReason)
+    }
+
+    private fun assertMapFailureAgreement(fixture: Fixture, message: String) {
+        val precheckError = assertFailsWith<RuntimeException> {
+            precheckService(fixture).precheck(GENERAL_ID, ACTION)
+        }
+        val (handler, _) = engineHandler(fixture)
+        val daemonError = assertFailsWith<RuntimeException> {
+            handler.handle(GENERAL_ID, ReservedTurn(ACTION, ""), YEAR, MONTH, "12:34")
+        }
+
+        assertEquals(precheckError::class, daemonError::class)
+        assertEquals(message, precheckError.message)
+        assertEquals(precheckError.message, daemonError.message)
     }
 
     private companion object {

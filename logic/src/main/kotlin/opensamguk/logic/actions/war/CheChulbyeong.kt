@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.war
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.UnitCatalog
@@ -18,6 +17,7 @@ import opensamguk.logic.domestic.uniqueLotterySeed
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.war.ProcessWarEnv
 import opensamguk.logic.war.ProcessWarResult
+import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.war.ProductionWarBattleHooks
 import opensamguk.logic.war.WarSeed
 import opensamguk.logic.war.candidateCities
@@ -144,15 +144,16 @@ class CheChulbyeong(
     private fun routeWithEnemyExists(c: ConstraintContext, view: StateView): Boolean {
         val g = view.get(RequirementKey.General(c.actorId)) as? General ?: return true
         val destCityId = c.destCityId ?: return true
+        val cityConst = CityConstRegistry.of(c.env["mapName"] as? String ?: CityConstRegistry.DEFAULT_MAP_NAME)
         val allowedCityList = LinkedHashMap<Int, Int>()
-        for (cityId in CityConst.all().keys) {
+        for (cityId in cityConst.all().keys) {
             val nationId = (view.get(RequirementKey.City(cityId)) as? opensamguk.logic.domain.City)?.nationId
                 ?: continue
             if (nationId == 0 || nationId == g.nationId || atWarWith(g.nationId, nationId, view)) {
                 allowedCityList[cityId] = nationId
             }
         }
-        return searchDistanceListToDest(g.cityId, destCityId, allowedCityList).isNotEmpty()
+        return searchDistanceListToDest(g.cityId, destCityId, allowedCityList, cityConst).isNotEmpty()
     }
 
     override fun resolve(context: GeneralActionResolveContext) {
@@ -180,7 +181,8 @@ class CheChulbyeong(
         val destCity = bctx.cityById[defenderCityId]
             ?: error("che_출병: chosen city $defenderCityId not staged")
         val defenderNationId = destCity.nationId
-        val destCityName = CityConst.byId(defenderCityId)?.name ?: ""
+        val cityConst = CityConstRegistry.of(context.env.mapName)
+        val destCityName = cityConst.byId(defenderCityId)?.name ?: ""
         val josaRo = JosaUtil.pick(destCityName, "로")
 
         // (3) friendly target → che_이동 alternative + RETURN (che_출병.php:201-213).
@@ -196,7 +198,7 @@ class CheChulbyeong(
 
         // the "거쳐야/거치기로" detour log when the chosen city is not the final target (che_출병.php:215-223).
         if (bctx.finalTargetCityId != defenderCityId) {
-            val finalName = CityConst.byId(bctx.finalTargetCityId)?.name ?: ""
+            val finalName = cityConst.byId(bctx.finalTargetCityId)?.name ?: ""
             val josaRoFinal = JosaUtil.pick(finalName, "로")
             val josaUl = JosaUtil.pick(destCityName, "을")
             val minDist = bctx.distanceList.keys.firstOrNull() ?: currDist

@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.founding
 
-import opensamguk.common.constants.CityConst
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
@@ -12,6 +11,7 @@ import opensamguk.logic.constraints.reqNationValue
 import opensamguk.logic.constraints.wanderingNation
 import opensamguk.logic.domain.City
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_무작위건국 — faithful port of `che_무작위건국.php`. Like che_건국 it raises the actor's wandering
@@ -109,7 +109,7 @@ class CheMujakwiGeonguk(pipeline: GeneralActionPipeline) : CheGeonguk(pipeline) 
      * `candidateCityDefence` 로 선적재하며, 없으면 0 = 판정 없음(che 기존 동작).
      */
     private fun chosenCity(cityId: Int, context: GeneralActionResolveContext): City = City(
-        id = cityId, nationId = 0, level = CityConst.byId(cityId)?.level ?: 5,
+        id = cityId, nationId = 0, level = CityConstRegistry.of(context.env.mapName).byId(cityId)?.level ?: 5,
         commerce = 0, commerceMax = 0, agriculture = 0, agricultureMax = 0,
         supplyState = 1, frontState = 0, trust = 0.0,
         defense = candidateCityDefence(context, cityId),

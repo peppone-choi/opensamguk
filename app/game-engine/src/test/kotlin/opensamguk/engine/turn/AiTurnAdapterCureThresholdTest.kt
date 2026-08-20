@@ -48,6 +48,7 @@ class AiTurnAdapterCureThresholdTest {
                 currentMonth = 1,
                 tickSeconds = 60,
                 lastTurnTime = turnTime,
+                config = linkedMapOf("mapName" to "che"),
             ),
             generals = listOf(general(injury)),
             cities = listOf(

@@ -471,6 +471,7 @@ class AiSelectionGateIT {
             currentMonth = month,
             tickSeconds = turnterm * 60,
             lastTurnTime = parseTurnTime(gameEnv["turntime"]?.jsonPrimitive?.contentOrNull),
+            config = linkedMapOf("mapName" to (gameEnv["map"]?.jsonPrimitive?.contentOrNull ?: "che")),
             meta = linkedMapOf(
                 "killturn" to (gameEnv["killturn"]?.jsonPrimitive?.intOrNull ?: 0),
                 "isunited" to (gameEnv["isunited"]?.jsonPrimitive?.intOrNull ?: 0),

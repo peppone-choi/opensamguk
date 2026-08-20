@@ -1,6 +1,7 @@
 package opensamguk.logic.world
 
 import opensamguk.common.constants.CityConst
+import java.security.MessageDigest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -101,6 +102,19 @@ class CityConstRegistryTest {
         val miniche = CityConstRegistry.of("miniche")
         val pathNames = miniche.byName("낙양")!!.path.values.toList()
         assertEquals(listOf("하내", "홍농", "호로"), pathNames, "LinkedHashMap insertion order preserved")
+    }
+
+    @Test
+    fun `Han numeric adjacency preserves the generated 780-city graph`() {
+        val graph = buildString {
+            for ((id, city) in CityConstRegistry.of("han").all()) {
+                append(id).append(':').append(city.path.keys.joinToString(",")).append('\n')
+            }
+        }
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(graph.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        assertEquals("a6d9370725010714960508bee046420ea671dddd8339f9e3b8796dddd2606014", digest)
     }
 
     @Test

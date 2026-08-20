@@ -319,7 +319,7 @@ object ConquerCity {
         val ownedPop = input.allCitiesForBfs
             .filter { it.nationId == defNation.id && it.id != cityId }
             .associate { it.id to it.population }
-        val minCity = findNextCapital(cityId, ownedPop)
+        val minCity = findNextCapital(cityId, ownedPop, input.cityConstVariant)
 
         logs += ConquerLog.globalHistory(
             BattleLogTokens.emergencyCapitalMoveHistory(input.defenderNationName, input.minCityNameOf(minCity)),
@@ -477,8 +477,12 @@ object ConquerCity {
      *
      * @param ownedCityPop the defender's OTHER owned cities (city!=capital) → pop.
      */
-    fun findNextCapital(capitalId: Int, ownedCityPop: Map<Int, Int>): Int {
-        val rings = CalcCityDistance.searchDistanceRings(capitalId, 99)
+    fun findNextCapital(
+        capitalId: Int,
+        ownedCityPop: Map<Int, Int>,
+        cityConstVariant: CityConstVariant = CityConstRegistry.of("che"),
+    ): Int {
+        val rings = CalcCityDistance.searchDistanceRings(capitalId, 99, cityConstVariant)
         for ((_, ringCities) in rings) {
             var maxPop = 0
             var minCity = 0

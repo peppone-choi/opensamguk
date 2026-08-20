@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
@@ -13,6 +12,7 @@ import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_무작위수도이전 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_무작위수도이전.php`.
@@ -52,7 +52,8 @@ fun cheMujakwiSudoIjeon(pipeline: GeneralActionPipeline): NationCommand = object
         }
 
         val destCityId = context.rng.choice(context.candidateCityIds)   // the ONLY RNG draw
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val cityConst = CityConstRegistry.of(context.env.mapName).byId(destCityId) ?: return
+        val destCityName = cityConst.name
         val josaRo = JosaUtil.pick(destCityName, "로")
 
         // exp/ded += 10
@@ -73,13 +74,13 @@ fun cheMujakwiSudoIjeon(pipeline: GeneralActionPipeline): NationCommand = object
         )
 
         // city ownership flip: dest → nation, old capital → neutral (che_무작위수도이전.php:125-138)
-        d.cascadeCities.add(CityConst.byId(destCityId)?.let {
+        d.cascadeCities.add(
             opensamguk.logic.domain.City(
-                id = destCityId, nationId = nation.id, level = 0,
+                id = cityConst.id, nationId = nation.id, level = 0,
                 commerce = 0, commerceMax = 0, agriculture = 0, agricultureMax = 0,
                 supplyState = 1, frontState = 0, trust = 0.0,
-            )
-        } ?: return)
+            ),
+        )
         if (oldCapitalId != null) {
             d.cascadeCities.add(
                 opensamguk.logic.domain.City(

@@ -1,11 +1,11 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.constraints.beChief
 import opensamguk.logic.constraints.nearCity
 import opensamguk.logic.constraints.notSameDestCity
@@ -21,6 +21,8 @@ import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.clamp
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CalcCityDistance
 
 /**
  * cr_인구이동 — `legacy/devsam-core/hwe/sammo/Command/Nation/cr_인구이동.php` (197줄) 충실 포팅.
@@ -79,12 +81,12 @@ class CrInguIdong(private val pipeline: GeneralActionPipeline) : NationCommand()
         phpRound(develCost.toDouble() * amount / 10000.0)
 
     /**
-     * cr_인구이동.php:31-66 argTest. destCityID(CityConst::byID 존재) + amount(is_numeric → int,
+     * cr_인구이동.php:31-66 argTest. destCityID(양의 정수; active-map FULL 검증) + amount(is_numeric → int,
      * AMOUNT_LIMIT 절단, 음수 reject). canonical `{destCityID, amount}` 또는 null.
      */
     fun argTest(raw: Map<String, Any?>): Map<String, Any?>? {
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
 
         val rawAmount = raw["amount"] ?: return null
         var amount = when (rawAmount) {           // is_numeric → (int)
@@ -98,11 +100,7 @@ class CrInguIdong(private val pipeline: GeneralActionPipeline) : NationCommand()
         return linkedMapOf("destCityID" to destCityID, "amount" to amount)
     }
 
-    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> =
-        linkedMapOf(
-            "destCityID" to (raw["destCityID"] as? Number)?.toInt(),
-            "amount" to (raw["amount"] as? Number)?.toInt(),
-        )
+    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = argTest(raw) ?: emptyMap()
 
     /** cr_인구이동.php:77-82 minConditionConstraints. */
     override fun buildMinConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
@@ -114,15 +112,13 @@ class CrInguIdong(private val pipeline: GeneralActionPipeline) : NationCommand()
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
         val amount = (ctx.args["amount"] as? Number)?.toInt() ?: 0
         val cost = getCost((ctx.env["develCost"] as Number).toInt(), amount)
-        // NearCity(1)의 도달 가능 도시 집합은 맵 모듈(searchDistance, Q9)이 산출 — 엔진/precheck 어댑터가
-        // ctx.env["__nearCityIds"](또는 args)로 주입한다(천도 __distance와 동형). 미주입 시 dest만 허용해
-        // 보수적으로 통과(자기참조는 NotSameDestCity가 별도 거부). P7 read-side TODO.
-        @Suppress("UNCHECKED_CAST")
-        val nearIds: Set<Int> = ((ctx.env["__nearCityIds"] as? Collection<*>)
-            ?: (ctx.args["__nearCityIds"] as? Collection<*>))
-            ?.mapNotNull { (it as? Number)?.toInt() }?.toSet()
-            ?: setOfNotNull((ctx.args["destCityID"] as? Number)?.toInt())
+        val cityConstVariant = (ctx.env["mapName"] as? String)?.let(CityConstRegistry::find)
+        val nearIds = cityConstVariant?.let { variant ->
+            CalcCityDistance.nearCity(ctx.cityId ?: 0, 1, variant)
+                .filterTo(LinkedHashSet()) { variant.byId(it) != null }
+        } ?: emptySet()
         return listOf(
+            activeMapDestCity(),
             notSameDestCity(),
             occupiedCity(),
             reqCityCapacity("pop", "주민", reqPop),
@@ -143,7 +139,8 @@ class CrInguIdong(private val pipeline: GeneralActionPipeline) : NationCommand()
         val dest = d.destCity ?: return
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val destCityName = CityConst.byId(destCityId)?.name ?: dest.let { CityConst.byId(it.id)?.name } ?: ""
+        val cityConstVariant = CityConstRegistry.of(context.env.mapName)
+        val destCityName = cityConstVariant.byId(destCityId)?.name ?: cityConstVariant.byId(dest.id)?.name ?: ""
         val argAmount = (context.args["amount"] as? Number)?.toInt() ?: 0
 
         // cr_인구이동.php:158 — amount = clamp(arg.amount, null, src.pop - minAvailableRecruitPop).

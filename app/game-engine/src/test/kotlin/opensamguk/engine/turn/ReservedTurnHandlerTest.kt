@@ -85,6 +85,7 @@ class ReservedTurnHandlerTest {
 
     private fun baseState() = TurnWorldState(
         id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+        config = linkedMapOf("mapName" to "che"),
     )
 
     private fun worldWith(
@@ -587,6 +588,7 @@ class ReservedTurnHandlerTest {
     fun `unsupported active unit set is denied again by the daemon`() {
         val state = baseState().copy(
             config = linkedMapOf(
+                "mapName" to "che",
                 "map" to linkedMapOf("unitSet" to "che"),
                 "unitSet" to "not-ported",
             ),

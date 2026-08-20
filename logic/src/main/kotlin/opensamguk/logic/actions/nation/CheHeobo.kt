@@ -1,9 +1,9 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.constraints.allowDiplomacyBetweenStatus
 import opensamguk.logic.constraints.beChief
 import opensamguk.logic.constraints.notNeutralDestCity
@@ -43,10 +43,10 @@ class CheHeobo(private val pipeline: GeneralActionPipeline) : NationCommand() {
     /** che_허보.php:99-101 getPreReqTurn = 1 (reqTurn = 2). exp/ded += 5*(1+1)=10. */
     override fun getPreReqTurn(): Int = 1
 
-    /** che_허보.php:30-47 argTest. CityConst::byID 존재 검증 후 canonical `{destCityID}` 또는 null. */
+    /** Structural parser; active-map membership is enforced by the first FULL constraint. */
     fun argTest(raw: Map<String, Any?>): Map<String, Any?>? {
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
         return linkedMapOf("destCityID" to destCityID)
     }
 
@@ -55,13 +55,12 @@ class CheHeobo(private val pipeline: GeneralActionPipeline) : NationCommand() {
     )
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
-        occupiedCity(), beChief(), notNeutralDestCity(), notOccupiedDestCity(),
+        activeMapDestCity(), occupiedCity(), beChief(), notNeutralDestCity(), notOccupiedDestCity(),
         allowDiplomacyBetweenStatus(listOf(0, 1), "선포, 전쟁중인 상대국에게만 가능합니다."),
         availableStrategicCommand(),
     )
 
-    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> =
-        linkedMapOf("destCityID" to (raw["destCityID"] as? Number)?.toInt())
+    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = argTest(raw) ?: emptyMap()
 
     /**
      * che_허보.php:49-106 run() 충실 포팅 — RNG: dest 도시 적 장수 1명당 choice 1회(같은 도시면 re-roll).

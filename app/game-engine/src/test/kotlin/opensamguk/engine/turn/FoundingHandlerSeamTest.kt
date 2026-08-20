@@ -97,6 +97,7 @@ class FoundingHandlerSeamTest {
 
     private fun baseState() = TurnWorldState(
         id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+        config = linkedMapOf("mapName" to "che"),
     )
 
     /** A world with two existing nations {1,2} + a neutral actor at 성도 → allocateNationId() == 3. */

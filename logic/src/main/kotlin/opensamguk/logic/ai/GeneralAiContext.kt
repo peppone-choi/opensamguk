@@ -2,6 +2,8 @@ package opensamguk.logic.ai
 
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.City
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
 
 enum class ExternalSqlRandBranch {
     SEONYANG_DEST_GENERAL,
@@ -152,6 +154,7 @@ data class GeneralAiContext(
     val turnTerm: Int,
     val selfGeneralId: Int,
     val selfCityId: Int,
+    val cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
     val selfOfficerLevel: Int = 12,
     val candidateAllowed: (actionCode: String, rawArgs: Map<String, Any?>) -> Boolean = { _, _ -> true },
     val recordGeneralKv: (generalId: Int, key: String, value: Any?) -> Unit = { _, _, _ -> },

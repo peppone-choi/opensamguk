@@ -1,9 +1,9 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.constraints.battleGroundCity
 import opensamguk.logic.constraints.beChief
 import opensamguk.logic.constraints.notNeutralDestCity
@@ -49,10 +49,10 @@ class CheSumol(private val pipeline: GeneralActionPipeline) : NationCommand() {
 
     override fun getPreReqTurn(): Int = 2
 
-    /** che_수몰.php:31-48 argTest. CityConst::byID 존재 검증 후 canonical `{destCityID}` 또는 null. */
+    /** Structural parser; active-map membership is enforced by the first FULL constraint. */
     fun argTest(raw: Map<String, Any?>): Map<String, Any?>? {
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
         return linkedMapOf("destCityID" to destCityID)
     }
 
@@ -61,13 +61,12 @@ class CheSumol(private val pipeline: GeneralActionPipeline) : NationCommand() {
     )
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
-        occupiedCity(), beChief(), notNeutralDestCity(), notOccupiedDestCity(),
+        activeMapDestCity(), occupiedCity(), beChief(), notNeutralDestCity(), notOccupiedDestCity(),
         battleGroundCity { c, _ -> (c.env["__atWarWithDest"] as? Boolean) ?: (c.args["__atWarWithDest"] as? Boolean) ?: false },
         availableStrategicCommand(),
     )
 
-    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> =
-        linkedMapOf("destCityID" to (raw["destCityID"] as? Number)?.toInt())
+    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = argTest(raw) ?: emptyMap()
 
     override fun resolve(context: GeneralActionResolveContext) {
         val d = context.draft

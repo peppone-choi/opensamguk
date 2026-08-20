@@ -20,6 +20,8 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.GetNationColors
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.StatCalc
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -152,6 +154,7 @@ class GenFoundBodiesTest {
         externalSqlRandSelector: ExternalSqlRandSelector? = null,
         generalPolicy: AutorunGeneralPolicy = AutorunGeneralPolicy(npcType = 6, nationId = nationId),
         nationPolicy: AutorunNationPolicy = AutorunNationPolicy(npcType = 2, tech = 0, develcost = 10),
+        cityConst: CityConstVariant = CityConstRegistry.of("che"),
     ): GeneralAiContext {
         val world = AiWorldView(
             ownNationId = nationId,
@@ -174,6 +177,7 @@ class GenFoundBodiesTest {
             turnTerm = 120,
             selfGeneralId = 1,
             selfCityId = selfCityId,
+            cityConst = cityConst,
             candidateAllowed = candidateAllowed,
             recordGeneralKv = recordGeneralKv,
             fullLeadership = fullLeadership,
@@ -386,6 +390,25 @@ class GenFoundBodiesTest {
         )
         assertNull(GenFoundFamily.do거병(ctx)(null), "no foundable near city → :3264 null")
         assertTrue(rng.draws.none { it.prob == 0.5 && it.kind == "nextBit" }, "foundable city → the :3232 0.5 draw is suppressed")
+    }
+
+    @Test
+    fun `do거병 treats a han county level as foundable and uses the han graph`() {
+        val han = CityConstRegistry.of("han")
+        val county = han.all().values.first { it.level >= 10 && it.path.isNotEmpty() }
+        val rng = RecordingRng("reb-han-county")
+        val ctx = ctxOf(
+            rng = rng,
+            instance = instance(nationId = 0),
+            selfNpcType = 2,
+            selfCityId = county.id,
+            selfCityLevel = county.level,
+            foundOccupiedCities = han.all().keys,
+            cityConst = han,
+        )
+
+        assertNull(GenFoundFamily.do거병(ctx)(null))
+        assertTrue(rng.draws.isEmpty(), "han county is foundable, and an occupied han frontier ends before RNG")
     }
 
     // ==================================================================================================

@@ -1,6 +1,7 @@
 package opensamguk.logic.war
 
-import opensamguk.common.constants.CityConst
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
 
 /**
  * BO2 — port target = PHP `func.php:2010-2066` (`searchDistanceListToDest`) + the candidateCities
@@ -26,10 +27,11 @@ fun searchDistanceListToDest(
     from: Int,
     to: Int,
     allowedCityList: Map<Int, Int>,
+    cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
 ): Map<Int, List<Pair<Int, Int>>> {
     // remainFromCities = the from-city's path neighbours present in allowedCityList (PHP :2027-2032).
     val remainFromCities = LinkedHashSet<Int>()
-    val fromCity = CityConst.byId(from)
+    val fromCity = cityConst.byId(from)
     if (fromCity != null) {
         for (neighbourId in fromCity.path.keys) {
             if (allowedCityList.containsKey(neighbourId)) remainFromCities.add(neighbourId)
@@ -54,7 +56,7 @@ fun searchDistanceListToDest(
             result.getOrPut(dist) { mutableListOf() }.add(cityId to allowedCityList.getValue(cityId))
         }
 
-        val city = CityConst.byId(cityId) ?: continue
+        val city = cityConst.byId(cityId) ?: continue
         for (connCityId in city.path.keys) {
             // PHP: skip neighbours not in allowedCityList, and already-visited cities (:2055-2060).
             if (!allowedCityList.containsKey(connCityId)) continue

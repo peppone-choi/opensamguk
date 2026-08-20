@@ -283,6 +283,7 @@ class TurnRunServiceFlushRecoveryTest {
                     lastTurnTime = t0,
                     worldVersion = 0L,
                     writerEpoch = 1L,
+                    config = linkedMapOf("mapName" to "che"),
                     meta = mapOf(
                         "startYear" to 200,
                         "startTime" to "0200-01-01T00:00:00Z",

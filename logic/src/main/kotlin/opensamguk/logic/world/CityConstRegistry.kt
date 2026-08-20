@@ -201,7 +201,35 @@ internal object HanCityConstVariant : CityConstVariant {
                                    "secu" to 500, "def" to 1000, "wall" to 1000))
         }
 
-    private val generated = CityConst.generateCities(HanCityConst.initCity, hanRegions, hanLevels)
+    private val generated = generateHanCities()
+
+    private fun generateHanCities(): CityConst.GeneratedCities {
+        val rawRows = HanCityConst.initCity
+        val base = CityConst.generateCities(rawRows, hanRegions, hanLevels)
+        val rowsByName = rawRows.groupBy { it.name }
+        val constId = LinkedHashMap<Int, CityInitialDetail>()
+        val constName = LinkedHashMap<String, CityInitialDetail>()
+        val constRegion = LinkedHashMap<Int, CityInitialDetail>()
+
+        for (raw in rawRows) {
+            val usedByName = HashMap<String, Int>()
+            val path = LinkedHashMap<Int, String>()
+            for (pathName in raw.path) {
+                val named = rowsByName.getValue(pathName).filter { it.id != raw.id }
+                val reciprocal = named.filter { raw.name in it.path }
+                val candidates = reciprocal.ifEmpty { named }
+                val occurrence = usedByName.getOrDefault(pathName, 0)
+                val target = candidates.getOrElse(occurrence) { candidates.last() }
+                usedByName[pathName] = occurrence + 1
+                path[target.id] = pathName
+            }
+            val city = base.constID.getValue(raw.id).copy(path = path)
+            constId[city.id] = city
+            constName[city.name] = city
+            constRegion[city.region] = city
+        }
+        return CityConst.GeneratedCities(constId, constName, constRegion)
+    }
     override val mapName: String = "han"
     override fun all(): Map<Int, CityInitialDetail> = generated.constID
     override fun byId(id: Int): CityInitialDetail? = generated.constID[id]

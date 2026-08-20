@@ -5,6 +5,8 @@ import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.util.phpToInt
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
 
 /**
  * F-FACADE — `AiWorldView`, a faithful port of the per-AI-instance read-only categorize/derive facade
@@ -58,6 +60,10 @@ class AiWorldView(
     private val minWarCrew: Int = 0,
     private val minNpcWarLeadership: Int = 0,
     private val turnTerm: Int = 1,
+    private val cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
+    private val allDistanceByCityList: (List<Int>) -> Map<Int, Map<Int, Int>> = { cityIds ->
+        AiDistance.searchAllDistanceByCityList(cityIds, cityConst)
+    },
 ) {
     /** Convenience ctor for an already-materialized snapshot (tests + the engine adapter). */
     constructor(
@@ -70,6 +76,10 @@ class AiWorldView(
         minWarCrew: Int = 0,
         minNpcWarLeadership: Int = 0,
         turnTerm: Int = 1,
+        cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
+        allDistanceByCityList: (List<Int>) -> Map<Int, Map<Int, Int>> = { cityIds ->
+            AiDistance.searchAllDistanceByCityList(cityIds, cityConst)
+        },
     ) : this(
         ownNationId = ownNationId,
         cityRowsSupplier = { cityRows },
@@ -80,6 +90,8 @@ class AiWorldView(
         minWarCrew = minWarCrew,
         minNpcWarLeadership = minNpcWarLeadership,
         turnTerm = turnTerm,
+        cityConst = cityConst,
+        allDistanceByCityList = allDistanceByCityList,
     )
 
     /** Secondary ctor that takes a [generalsSupplier] lambda (the lazy-once test path + the engine adapter). */
@@ -93,6 +105,10 @@ class AiWorldView(
         minWarCrew: Int,
         minNpcWarLeadership: Int,
         turnTerm: Int,
+        cityConst: CityConstVariant = CityConstRegistry.of(CityConstRegistry.DEFAULT_MAP_NAME),
+        allDistanceByCityList: (List<Int>) -> Map<Int, Map<Int, Int>> = { cityIds ->
+            AiDistance.searchAllDistanceByCityList(cityIds, cityConst)
+        },
     ) : this(
         ownNationId = ownNationId,
         cityRowsSupplier = { cityRows },
@@ -103,6 +119,8 @@ class AiWorldView(
         minWarCrew = minWarCrew,
         minNpcWarLeadership = minNpcWarLeadership,
         turnTerm = turnTerm,
+        cityConst = cityConst,
+        allDistanceByCityList = allDistanceByCityList,
     )
 
     // The PK-ascending `city` snapshot, materialized ONCE on first need (categorizeNationCities or
@@ -218,11 +236,9 @@ class AiWorldView(
         if (_warRoute != null) {
             return // PHP `:285-287` — the lazy-once null-guard.
         }
-        _warRoute = AiDistance.searchAllDistanceByNationList(
-            linkNationList = warRouteNationList(),
-            cityRows = cityRows,
-            suppliedCityOnly = false,
-        )
+        val nationSet = warRouteNationList().toHashSet()
+        val cityIds = cityRows.filter { it.nationId in nationSet }.map { it.id }
+        _warRoute = allDistanceByCityList(cityIds)
     }
 
     /**

@@ -347,6 +347,7 @@ class DiplomaticMessageWorldScopeIT {
                 currentMonth = 3,
                 tickSeconds = 3600,
                 lastTurnTime = DIPLOMACY_LIFECYCLE_TIME,
+                config = linkedMapOf("mapName" to "che"),
             ),
             generals = listOf(
                 TurnGeneral(
@@ -409,7 +410,10 @@ class DiplomaticMessageWorldScopeIT {
         val now = Instant.parse("0200-03-01T12:00:00Z")
         return InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(1, 200, 3, 3600, now),
+                state = TurnWorldState(
+                    1, 200, 3, 3600, now,
+                    config = linkedMapOf("mapName" to "che"),
+                ),
                 generals = listOf(
                     TurnGeneral(
                         id = 10,
