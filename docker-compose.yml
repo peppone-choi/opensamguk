@@ -2,8 +2,8 @@
 #
 #   git pull && cp .env.example .env && docker compose up --build
 #
-# Brings up the FULL stack: postgres, redis, the three Kotlin/Spring services
-# (gateway-api:8080, game-api:8081, game-engine:8082), both Next.js fronts
+# Brings up the FULL stack: postgres, redis, the four Kotlin/Spring services
+# (gateway-api:8080, game-api:8081, game-engine:8082, board-api:8083), both Next.js fronts
 # (web-gateway:3000, web-game:3001) and an nginx reverse proxy on :80 that
 # reuses infra/nginx/nginx.conf for same-origin routing.
 #
@@ -13,9 +13,9 @@
 # A second game-engine `up` is a no-op only when `world_state` contains exactly that configured id;
 # any other world identity set is rejected. Volumes persist admitted seed data.
 #
-# JWT: JWT_SECRET is defined ONCE in .env and wired to BOTH gateway-api (issuer,
-# JwtTokenProvider) AND game-api (verifier, GameApiJwtVerifier). They MUST share
-# the exact same BASE64 HS256 secret or game-api rejects every gateway-issued token.
+# JWT: JWT_SECRET is defined ONCE in .env and wired to gateway-api (issuer),
+# game-api, and board-api (verifiers). They MUST share the exact same BASE64
+# HS256 secret or verifier services reject gateway-issued tokens.
 #
 # Production overrides live on the server — see docker-compose.production.yml.
 name: opensamguk
@@ -92,7 +92,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       GATEWAY_API_PORT: 8080
-      # JWT — gateway-api ISSUES tokens with this secret (shared with game-api).
+      # JWT — gateway-api ISSUES tokens with this secret (shared with verifier services).
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — see .env.example}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
@@ -121,6 +121,43 @@ services:
       - ${SCENARIO_HOST_DIR:-./data/scenarios}:${SCENARIO_DIR:-/data/scenarios}:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    networks:
+      - opensamguk
+
+  board-api:
+    build:
+      context: .
+      dockerfile: docker/board-api.Dockerfile
+    container_name: opensamguk-board-api
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
+      GAME_DB_USER: ${POSTGRES_USER:-sammo}
+      GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:-sammo}
+      BOARD_API_PORT: 8083
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — see .env.example}
+      SENTRY_DSN: ${SENTRY_DSN_BOARD_API:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-local}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
+      JAVA_OPTS: ${BOARD_API_JAVA_OPTS:--XX:+UseG1GC -XX:MaxRAMPercentage=40.0 -XX:InitialRAMPercentage=25.0 -Djava.security.egd=file:/dev/./urandom}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway-api:
+        condition: service_healthy
+    ports:
+      - "${BOARD_API_PORT:-8083}:8083"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8083/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -257,6 +294,7 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       # Server-only (route handlers proxy to gateway-api; never exposed to the browser).
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
+      BOARD_API_URL: ${BOARD_API_URL:-http://board-api:8083}
       # 맵 프리뷰/현황 프록시 대상(해당 서버 game-api 내부 주소). servers.json gameApiUrl은 dev 기본값
       # localhost:8081이라 컨테이너 안에선 자기참조→502 → 컨테이너망 DNS로 오버라이드.
       GAME_API_ORIGIN: ${GAME_API_ORIGIN:-http://game-api:8081}
@@ -264,6 +302,8 @@ services:
       SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-[]}
     depends_on:
       gateway-api:
+        condition: service_healthy
+      board-api:
         condition: service_healthy
     ports:
       - "${WEB_GATEWAY_PORT:-3000}:3000"
@@ -321,6 +361,7 @@ services:
       - profile-icons:/var/lib/opensamguk/profile-icons:ro
     depends_on:
       - gateway-api
+      - board-api
       - game-api
       - game-engine
       - web-gateway

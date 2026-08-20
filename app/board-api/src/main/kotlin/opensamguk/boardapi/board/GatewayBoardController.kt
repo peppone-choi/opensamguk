@@ -1,8 +1,8 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
-import opensamguk.gateway.security.CustomUserDetails
+import opensamguk.boardapi.security.BoardUserDetails
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -29,7 +29,7 @@ class GatewayBoardController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(defaultValue = "false") includeDeleted: Boolean,
-        @AuthenticationPrincipal principal: CustomUserDetails?,
+        @AuthenticationPrincipal principal: BoardUserDetails?,
         response: HttpServletResponse,
     ): GatewayBoardPageResponse {
         response.addHeader(HttpHeaders.VARY, HttpHeaders.AUTHORIZATION)
@@ -39,7 +39,7 @@ class GatewayBoardController(
     @GetMapping("/posts/{postId}")
     fun getPost(
         @PathVariable postId: Long,
-        @AuthenticationPrincipal principal: CustomUserDetails?,
+        @AuthenticationPrincipal principal: BoardUserDetails?,
         response: HttpServletResponse,
     ): GatewayBoardPostDetailResponse {
         response.addHeader(HttpHeaders.VARY, HttpHeaders.AUTHORIZATION)
@@ -50,14 +50,14 @@ class GatewayBoardController(
     @ResponseStatus(HttpStatus.CREATED)
     fun createPost(
         @Valid @RequestBody request: CreateGatewayBoardPostRequest,
-        @AuthenticationPrincipal principal: CustomUserDetails,
+        @AuthenticationPrincipal principal: BoardUserDetails,
     ): GatewayBoardPostResponse = boardService.createPost(request, principal)
 
     @PatchMapping("/posts/{postId}")
     fun updatePost(
         @PathVariable postId: Long,
         @Valid @RequestBody request: UpdateGatewayBoardPostRequest,
-        @AuthenticationPrincipal principal: CustomUserDetails,
+        @AuthenticationPrincipal principal: BoardUserDetails,
     ): GatewayBoardPostResponse = boardService.updatePost(postId, request, principal)
 
     @PostMapping("/posts/{postId}/comments")
@@ -65,14 +65,14 @@ class GatewayBoardController(
     fun createComment(
         @PathVariable postId: Long,
         @Valid @RequestBody request: CreateGatewayBoardCommentRequest,
-        @AuthenticationPrincipal principal: CustomUserDetails,
+        @AuthenticationPrincipal principal: BoardUserDetails,
     ): GatewayBoardCommentResponse = boardService.createComment(postId, request, principal)
 
     @DeleteMapping("/posts/{postId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deletePost(
         @PathVariable postId: Long,
-        @AuthenticationPrincipal principal: CustomUserDetails,
+        @AuthenticationPrincipal principal: BoardUserDetails,
     ) {
         boardService.deletePost(postId, principal)
     }
@@ -82,7 +82,7 @@ class GatewayBoardController(
     fun deleteComment(
         @PathVariable postId: Long,
         @PathVariable commentId: Long,
-        @AuthenticationPrincipal principal: CustomUserDetails,
+        @AuthenticationPrincipal principal: BoardUserDetails,
     ) {
         boardService.deleteComment(postId, commentId, principal)
     }
@@ -91,6 +91,6 @@ class GatewayBoardController(
     fun updatePin(
         @PathVariable postId: Long,
         @Valid @RequestBody request: UpdateGatewayBoardPinRequest,
-        @AuthenticationPrincipal principal: CustomUserDetails,
+        @AuthenticationPrincipal principal: BoardUserDetails,
     ): GatewayBoardPostResponse = boardService.updatePin(postId, request, principal)
 }

@@ -153,6 +153,15 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-${{ env.IMAGE_TAG }}
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-latest
 
+      - name: Build + push board-api image
+        run: |
+          docker build -f docker/board-api.Dockerfile \
+            --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-latest .
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-latest
+
       - name: Build + push game-api image
         run: |
           docker build -f docker/game-api.Dockerfile \
@@ -298,6 +307,15 @@ jobs:
               sh -c 'wget -qO- --header="Authorization: Bearer $DEPLOYER_TOKEN" "http://localhost:9000/env/server?id=$1"' sh "$public_server" \
               | grep -q '"ok":true'
           done
+
+          if ! $COMPOSE config --services | grep -qx 'board-api'; then
+            echo "BLOCKED: opensamguk-docker must define board-api before gateway/web activation" >&2
+            exit 1
+          fi
+          if ! $COMPOSE config | grep -q 'BOARD_API_URL:'; then
+            echo "BLOCKED: opensamguk-docker web-gateway must define BOARD_API_URL before gateway/web activation" >&2
+            exit 1
+          fi
 
           # 공유 스택 IMAGE_TAG를 이 커밋 SHA로 영속 고정(.env가 단일 진실 — 재부팅/수동 up에도 유지).
           sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env

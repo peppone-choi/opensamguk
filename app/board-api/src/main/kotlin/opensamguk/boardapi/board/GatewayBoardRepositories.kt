@@ -1,4 +1,4 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable

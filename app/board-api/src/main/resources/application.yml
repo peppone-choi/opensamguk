@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: board-api
+  datasource:
+    url: ${GAME_DATABASE_URL:jdbc:postgresql://localhost:5432/sammo}
+    username: ${GAME_DB_USER:sammo}
+    password: ${GAME_DB_PASSWORD:sammo}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: false
+
+jwt:
+  secret: ${JWT_SECRET:Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU=}
+
+server:
+  port: ${BOARD_API_PORT:8083}
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  traces-sample-rate: 0.0
+  send-default-pii: false

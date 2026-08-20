@@ -1,6 +1,6 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
-import opensamguk.gateway.security.CustomUserDetails
+import opensamguk.boardapi.security.BoardUserDetails
 import opensamguk.infra.read.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -27,7 +27,7 @@ class GatewayBoardService(
         category: GatewayBoardCategory?,
         page: Int,
         size: Int,
-        principal: CustomUserDetails?,
+        principal: BoardUserDetails?,
         includeDeleted: Boolean = false,
     ): GatewayBoardPageResponse {
         require(page >= 0) { "page는 0 이상이어야 합니다." }
@@ -54,7 +54,7 @@ class GatewayBoardService(
     }
 
     @Transactional(readOnly = true)
-    fun detail(postId: Long, principal: CustomUserDetails?): GatewayBoardPostDetailResponse {
+    fun detail(postId: Long, principal: BoardUserDetails?): GatewayBoardPostDetailResponse {
         val post = getPost(postId)
         // 삭제된 글은 없는 글로 취급한다. 묘비를 돌려주면 목록에서 감춘 글이 URL 로는 살아 있게 된다.
         if (post.deletedAt != null) {
@@ -67,7 +67,7 @@ class GatewayBoardService(
     }
 
     @Transactional
-    fun createPost(request: CreateGatewayBoardPostRequest, principal: CustomUserDetails): GatewayBoardPostResponse {
+    fun createPost(request: CreateGatewayBoardPostRequest, principal: BoardUserDetails): GatewayBoardPostResponse {
         val category = requireNotNull(request.category) { "category는 필수입니다." }
         if (category == GatewayBoardCategory.NOTICE && !principal.isAdmin()) {
             throw GatewayBoardForbiddenException("공지글은 관리자만 작성할 수 있습니다.")
@@ -91,7 +91,7 @@ class GatewayBoardService(
     fun updatePost(
         postId: Long,
         request: UpdateGatewayBoardPostRequest,
-        principal: CustomUserDetails,
+        principal: BoardUserDetails,
     ): GatewayBoardPostResponse {
         val post = getPost(postId)
         requireOwnerOrAdmin(post.authorAccountId, principal)
@@ -113,7 +113,7 @@ class GatewayBoardService(
     fun createComment(
         postId: Long,
         request: CreateGatewayBoardCommentRequest,
-        principal: CustomUserDetails,
+        principal: BoardUserDetails,
     ): GatewayBoardCommentResponse {
         val post = getPost(postId)
         if (post.deletedAt != null) {
@@ -135,7 +135,7 @@ class GatewayBoardService(
     }
 
     @Transactional
-    fun deletePost(postId: Long, principal: CustomUserDetails) {
+    fun deletePost(postId: Long, principal: BoardUserDetails) {
         val post = getPost(postId)
         requireOwnerOrAdmin(post.authorAccountId, principal)
         if (post.deletedAt == null) {
@@ -149,7 +149,7 @@ class GatewayBoardService(
     }
 
     @Transactional
-    fun deleteComment(postId: Long, commentId: Long, principal: CustomUserDetails) {
+    fun deleteComment(postId: Long, commentId: Long, principal: BoardUserDetails) {
         getPost(postId)
         val comment = commentRepository.findById(commentId).orElseThrow { GatewayBoardNotFoundException() }
         if (comment.postId != postId) {
@@ -163,7 +163,7 @@ class GatewayBoardService(
     }
 
     @Transactional
-    fun updatePin(postId: Long, request: UpdateGatewayBoardPinRequest, principal: CustomUserDetails): GatewayBoardPostResponse {
+    fun updatePin(postId: Long, request: UpdateGatewayBoardPinRequest, principal: BoardUserDetails): GatewayBoardPostResponse {
         if (!principal.isAdmin()) {
             throw GatewayBoardForbiddenException("게시글 고정은 관리자만 변경할 수 있습니다.")
         }
@@ -182,19 +182,19 @@ class GatewayBoardService(
     private fun getPost(postId: Long): GatewayBoardPostEntity =
         postRepository.findById(postId).orElseThrow { GatewayBoardNotFoundException() }
 
-    private fun requireOwnerOrAdmin(authorAccountId: Long?, principal: CustomUserDetails) {
+    private fun requireOwnerOrAdmin(authorAccountId: Long?, principal: BoardUserDetails) {
         if (authorAccountId != principal.id && !principal.isAdmin()) {
             throw GatewayBoardForbiddenException("작성자 또는 관리자만 변경할 수 있습니다.")
         }
     }
 
-    private fun CustomUserDetails.isAdmin(): Boolean =
+    private fun BoardUserDetails.isAdmin(): Boolean =
         authorities.any { it.authority == "ROLE_ADMIN" }
 
     private fun GatewayBoardContentFormat?.orPlainText(): GatewayBoardContentFormat =
         this ?: GatewayBoardContentFormat.PLAIN_TEXT
 
-    private fun canDelete(authorAccountId: Long?, principal: CustomUserDetails?): Boolean =
+    private fun canDelete(authorAccountId: Long?, principal: BoardUserDetails?): Boolean =
         principal != null && (authorAccountId == principal.id || principal.isAdmin())
 
     /**
@@ -219,7 +219,7 @@ class GatewayBoardService(
 
     private fun postResponse(
         post: GatewayBoardPostEntity,
-        principal: CustomUserDetails?,
+        principal: BoardUserDetails?,
         authors: Map<Long, AuthorView>,
     ): GatewayBoardPostResponse {
         // 삭제된 글은 공개 읽기 경로에 오지 않는다(피드는 쿼리에서 걸러지고 상세는 404).
@@ -244,7 +244,7 @@ class GatewayBoardService(
 
     private fun commentResponse(
         comment: GatewayBoardCommentEntity,
-        principal: CustomUserDetails?,
+        principal: BoardUserDetails?,
         authors: Map<Long, AuthorView>,
     ): GatewayBoardCommentResponse {
         // 삭제된 댓글은 읽기 경로에 오지 않는다(쿼리에서 걸러진다) — 묘비 문구가 없는 이유다.

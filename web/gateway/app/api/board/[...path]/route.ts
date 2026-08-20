@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { ACCESS_COOKIE } from '@/lib/cookies';
-import { GATEWAY_API_URL, GATEWAY_UPSTREAM_TIMEOUT_MS, isGatewayTimeout } from '@/lib/server-api';
+import { BOARD_API_URL, GATEWAY_UPSTREAM_TIMEOUT_MS, isGatewayTimeout } from '@/lib/server-api';
 
 type BoardMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 type AccessMode = 'optional' | 'required';
@@ -69,7 +69,7 @@ async function forward(
   if (method !== 'GET' && method !== 'DELETE') init.body = await request.text();
 
   try {
-    const upstream = await fetch(`${GATEWAY_API_URL}/board/${path.join('/')}${request.nextUrl.search}`, init);
+    const upstream = await fetch(`${BOARD_API_URL}/board/${path.join('/')}${request.nextUrl.search}`, init);
     const text = await upstream.text();
     const responseHeaders: Record<string, string> = {
       'Content-Type': upstream.headers.get('content-type') ?? 'application/json',
@@ -84,10 +84,10 @@ async function forward(
     });
   } catch (error) {
     if (isGatewayTimeout(error)) {
-      return NextResponse.json({ message: '게이트웨이 응답 시간이 초과되었습니다.', status: 504 }, { status: 504 });
+      return NextResponse.json({ message: '게시판 서버 응답 시간이 초과되었습니다.', status: 504 }, { status: 504 });
     }
     if (error instanceof Error) {
-      return NextResponse.json({ message: '게이트웨이에 연결할 수 없습니다.', status: 502 }, { status: 502 });
+      return NextResponse.json({ message: '게시판 서버에 연결할 수 없습니다.', status: 502 }, { status: 502 });
     }
     throw error;
   }

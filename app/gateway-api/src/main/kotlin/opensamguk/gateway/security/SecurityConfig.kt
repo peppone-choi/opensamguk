@@ -43,7 +43,6 @@ class SecurityConfig(
                     .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
                     .requestMatchers("/health").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/board/**").permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     // 어드민 "서버 제어"(버전 표시·업데이트 트리거)는 ADMIN 전용.
                     .requestMatchers("/admin/**").hasRole("ADMIN")

@@ -1,4 +1,4 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

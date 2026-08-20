@@ -231,26 +231,27 @@ docker compose up -d --build
 
 ## 서비스 / 포트
 
-`docker-compose.yml`(로컬 개발) 기준 8개 서비스:
+`docker-compose.yml`(로컬 개발) 기준 9개 서비스:
 
 | 서비스 | 이미지/빌드 | 포트 | 역할 |
 |--------|-------------|------|------|
 | `postgres` | `postgres:16-alpine` | 5432 | 영속 저장소 (DB `sammo`) |
 | `redis` | `redis:7-alpine` | 6379 | best-effort 명령 wake + SSE pub/sub |
 | `gateway-api` | `docker/gateway-api.Dockerfile` | 8080 | 인증(JWT/BCrypt)·프로필·어드민 |
+| `board-api` | `docker/board-api.Dockerfile` | 8083 | 게시판 read/write·access JWT 검증·공유 users DB 조회 |
 | `game-api` | `docker/game-api.Dockerfile` | 8081 | read · precheck · intake · SSE |
 | `game-engine` | `docker/game-engine.Dockerfile` | 8082 | 턴 데몬 (`InMemoryTurnWorld`) |
 | `web-gateway` | `docker/web-gateway.Dockerfile` | 3000 | Next.js 게이트웨이(로그인/로비) |
 | `web-game` | `docker/web-game.Dockerfile` | 3001 | Next.js 게임 프론트 |
 | `nginx` | `nginx:1.27-alpine` | 80 | 리버스 프록시 (`infra/nginx/nginx.conf`) |
 
-nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gateway-api · `/api/game/` → web-gateway Next 프록시(httpOnly 쿠키 → Bearer, 서버 선택) · `/api/game/realtime/` → game-api(SSE, 버퍼링 off) · `/game/` → web-game · `/` → web-gateway · `/health` 헬스 체크.
+nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gateway-api · `/api/board/` → web-gateway Next 프록시 → board-api · `/api/game/` → web-gateway Next 프록시(httpOnly 쿠키 → Bearer, 서버 선택) · `/api/game/realtime/` → game-api(SSE, 버퍼링 off) · `/game/` → web-game · `/` → web-gateway · `/health` 헬스 체크.
 
 ### 환경변수 (`.env.example`)
 
 `.env.example`을 복사한 뒤 값은 로컬의 git-ignore된 `.env`에만 넣습니다. Compose가 명시적으로 요구하는 이름은 다음 두 개입니다. 값·토큰·비밀번호를 문서나 커밋에 넣지 마세요.
 
-- `JWT_SECRET` — gateway-api 발급자와 game-api 검증자가 **같이 쓰는** HS256 비밀값입니다.
+- `JWT_SECRET` — gateway-api 발급자와 game-api·board-api 검증자가 **같이 쓰는** HS256 비밀값입니다.
 - `OPENSAMGUK_WORLD_ID` — game-api와 game-engine이 같은 월드를 선택하는 식별자입니다.
 
 `POSTGRES_PASSWORD`는 로컬 기본값을 바꿀 때, `ADMIN_PASSWORD`는 관리자 시드를 만들 때

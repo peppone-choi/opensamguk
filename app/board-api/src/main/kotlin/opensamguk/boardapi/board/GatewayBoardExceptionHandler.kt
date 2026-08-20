@@ -1,6 +1,6 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
-import opensamguk.gateway.web.ApiError
+import opensamguk.boardapi.web.ApiError
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException

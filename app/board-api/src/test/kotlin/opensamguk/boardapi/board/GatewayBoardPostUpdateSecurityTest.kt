@@ -1,7 +1,6 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
-import opensamguk.gateway.profile.ProfileIconSecureStorageTestConfiguration
-import opensamguk.gateway.security.CustomUserDetails
+import opensamguk.boardapi.security.BoardUserDetails as CustomUserDetails
 import opensamguk.infra.entity.UserEntity
 import opensamguk.infra.read.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
@@ -25,7 +23,6 @@ import java.time.Instant
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(ProfileIconSecureStorageTestConfiguration::class)
 class GatewayBoardPostUpdateSecurityTest {
     @Autowired
     lateinit var mockMvc: MockMvc

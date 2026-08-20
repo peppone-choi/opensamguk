@@ -1,4 +1,4 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows

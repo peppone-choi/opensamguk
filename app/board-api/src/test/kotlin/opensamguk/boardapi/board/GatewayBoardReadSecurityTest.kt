@@ -1,12 +1,11 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
-import opensamguk.gateway.profile.ProfileIconSecureStorageTestConfiguration
-import opensamguk.gateway.security.CustomUserDetails
-import opensamguk.gateway.security.JwtTokenProvider
+import opensamguk.boardapi.security.BoardApiJwtVerifier
+import opensamguk.boardapi.security.BoardUserDetails as CustomUserDetails
 import opensamguk.infra.entity.UserEntity
 import opensamguk.infra.read.UserRepository
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -17,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
 import org.springframework.test.web.servlet.MockMvc
@@ -29,7 +27,6 @@ import java.util.Date
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(ProfileIconSecureStorageTestConfiguration::class)
 class GatewayBoardReadSecurityTest {
     @Autowired
     lateinit var mockMvc: MockMvc
@@ -44,7 +41,7 @@ class GatewayBoardReadSecurityTest {
     lateinit var userRepository: UserRepository
 
     @Autowired
-    lateinit var jwtTokenProvider: JwtTokenProvider
+    lateinit var jwtVerifier: BoardApiJwtVerifier
 
     @Value("\${jwt.secret}")
     lateinit var jwtSecret: String
@@ -97,7 +94,7 @@ class GatewayBoardReadSecurityTest {
         val post = post("expired session")
         val token = expiredAccessToken()
 
-        assertFalse(jwtTokenProvider.validateAccessToken(token))
+        assertFalse(jwtVerifier.verifyAccessToken(token) != null)
         mockMvc.perform(
             get("/board/posts/${post.id}")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer $token"),

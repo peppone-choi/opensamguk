@@ -41,8 +41,21 @@ tar -cf - "$COMPOSE_FILE" infra/nginx/nginx.conf | \
     docker compose -f "$COMPOSE_FILE" pull
 
     echo "=== Restarting services ==="
+    docker compose -f "$COMPOSE_FILE" up -d --no-deps gateway-api
+
+    for i in $(seq 1 30); do
+        if docker exec opensamguk-gateway-api curl -sf http://localhost:8080/actuator/health >/dev/null 2>&1; then
+            break
+        fi
+        if [[ $i -eq 30 ]]; then
+            echo "gateway-api migration readiness: FAILED"
+            exit 1
+        fi
+        sleep 5
+    done
+
     docker compose -f "$COMPOSE_FILE" up -d --no-deps \
-        gateway-api game-api web-gateway web-game nginx
+        board-api game-api web-gateway web-game nginx
 
     sleep 5
 
@@ -93,6 +106,20 @@ for i in $(seq 1 30); do
     fi
     if [[ $i -eq 30 ]]; then
         echo "  gateway-api actuator: FAILED — $RESP"
+        exit 1
+    fi
+    sleep 5
+done
+
+for i in $(seq 1 30); do
+    RESP=$(ssh -i "$SSH_KEY" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+        "docker exec opensamguk-board-api curl -sf http://localhost:8083/actuator/health 2>/dev/null || echo '{\"status\":\"DOWN\"}'" 2>/dev/null || echo '{"status":"DOWN"}')
+    if echo "$RESP" | grep -q '"status":"UP"'; then
+        echo "  board-api actuator: OK"
+        break
+    fi
+    if [[ $i -eq 30 ]]; then
+        echo "  board-api actuator: FAILED — $RESP"
         exit 1
     fi
     sleep 5

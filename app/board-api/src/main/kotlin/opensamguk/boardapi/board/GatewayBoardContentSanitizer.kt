@@ -1,4 +1,4 @@
-package opensamguk.gateway.board
+package opensamguk.boardapi.board
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
