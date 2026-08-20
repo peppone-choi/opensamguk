@@ -7,15 +7,13 @@ import opensamguk.gameapi.dto.ClaimResponse
 import opensamguk.gameapi.owner.GeneralPossessionService
 import opensamguk.gameapi.owner.SelectNpcTokenService
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.gameapi.security.GameApiJwtVerifier
-import org.springframework.http.HttpHeaders
+import opensamguk.infra.read.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -34,7 +32,7 @@ class PossessionController(
     private val possession: GeneralPossessionService,
     private val tokens: SelectNpcTokenService,
     private val reserve: CommandReserveService,
-    private val jwtVerifier: GameApiJwtVerifier,
+    private val users: UserRepository,
 ) {
 
     @GetMapping("/generals/claimable")
@@ -46,17 +44,18 @@ class PossessionController(
     @PostMapping("/general/claim")
     fun claim(
         @AuthenticationPrincipal userId: Long?,
-        @RequestHeader(HttpHeaders.AUTHORIZATION, required = false) authorization: String?,
         @RequestBody body: ClaimRequest,
     ): ResponseEntity<ClaimResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        // 계정 행이 없으면 여기서 끊는다 — 빙의는 `owner_name` 을 영구 상태·월드 로그에 남긴다.
+        val nick = userNick(userId) ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
 
         return when (val r = possession.claim(userId, body.generalId) { claimedGeneralId ->
             reserve.publishImmediate(
                 TurnDaemonCommand.ClaimNpc(
                     generalId = claimedGeneralId,
                     userId = userId,
-                    userNick = userNick(userId, authorization),
+                    userNick = nick,
                 ),
                 // OPENSAM-197 — result-read ownership witness (the claimed general is not yet the
                 // caller's, so general_id cannot serve as one).
@@ -106,10 +105,11 @@ class PossessionController(
         }
     }
 
-    private fun userNick(userId: Long, authorization: String?): String {
-        val token = authorization
-            ?.takeIf { it.startsWith("Bearer ") }
-            ?.substringAfter("Bearer ")
-        return token?.let { jwtVerifier.getUsername(it) }?.takeIf { it.isNotBlank() } ?: userId.toString()
-    }
+    /**
+     * 계정 아이디는 토큰이 아니라 `users` 행에서 읽는다(OPENSAM-220).
+     * 행이 없으면 null — 호출부가 401 로 끊는다. 이 값은 `owner_name` 과 월드 로그에 영구히 남으므로
+     * userId 문자열을 폴백으로 박아 넣지 않는다.
+     */
+    private fun userNick(userId: Long): String? =
+        users.findById(userId).orElse(null)?.username?.takeIf { it.isNotBlank() }
 }

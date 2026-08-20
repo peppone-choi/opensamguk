@@ -1,7 +1,7 @@
 package opensamguk.gameapi.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.common.auth.GatewayProfileClaims
+import opensamguk.common.auth.GatewayPrincipal
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
@@ -22,6 +22,8 @@ import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
 import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.infra.entity.GameKvEntity
+import opensamguk.infra.entity.UserEntity
+import opensamguk.infra.read.UserRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -58,6 +60,7 @@ class JoinControllerTest {
     private val owners = mock(GeneralOwnerRepository::class.java)
     private val npcTokens = mock(SelectNpcTokenRepository::class.java)
     private val commandResults = mock(CommandResultRepository::class.java)
+    private val users = mock(UserRepository::class.java)
     private val ownership = GeneralOwnershipClassifier(
         owners,
         generals,
@@ -75,26 +78,30 @@ class JoinControllerTest {
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(
-            JoinController(generals, worldStates, reserve, gameKv, cities, ObjectMapper(), ownership),
+            JoinController(generals, worldStates, reserve, gameKv, cities, ObjectMapper(), ownership, users),
         )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
+    /** 표시용 회원 정보는 토큰이 아니라 `users` 행에서 온다(OPENSAM-220). */
+    private fun memberRow(userId: Long) = UserEntity(
+        id = userId,
+        username = "owner",
+        password = "encoded",
+        nickname = "계정주인",
+        picture = "custom.jpg",
+        imgsvr = true,
+    )
+
     private fun principal(
         userId: Long,
-        profile: GatewayProfileClaims? = GatewayProfileClaims(
-            userId = userId,
-            username = "owner",
-            role = "USER",
-            nickname = "계정주인",
-            grade = 1,
-            picture = "custom.jpg",
-            imageServer = 1,
-        ),
+        profile: GatewayPrincipal? = GatewayPrincipal(userId = userId, role = "USER"),
+        memberRow: UserEntity? = memberRow(userId),
     ): RequestPostProcessor = RequestPostProcessor { req ->
         SecurityContextHolder.getContext().authentication =
             UsernamePasswordAuthenticationToken(userId, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
-        profile?.let { req.setAttribute(JwtVerifyFilter.PROFILE_ATTRIBUTE, it) }
+        `when`(users.findById(userId)).thenReturn(Optional.ofNullable(memberRow))
+        profile?.let { req.setAttribute(JwtVerifyFilter.PRINCIPAL_ATTRIBUTE, it) }
         req
     }
 
@@ -347,6 +354,14 @@ class JoinControllerTest {
         assertEquals("custom.jpg", command.picture)
         assertEquals(1, command.imgsvr)
         assertEquals("계정주인", command.ownerName)
+    }
+
+    /** 삭제된 계정 등 `users` 행이 없으면 표시 정보를 지어내지 않고 401 로 끊는다. */
+    @Test
+    fun `join form is rejected when the member row is gone`() {
+        seedWorld(mapOf("maxgeneral" to 500, "show_img_level" to 3))
+        mockMvc().perform(get("/api/join").with(principal(7L, memberRow = null)))
+            .andExpect(status().isUnauthorized)
     }
 
     @Test

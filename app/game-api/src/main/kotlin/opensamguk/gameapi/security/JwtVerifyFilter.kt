@@ -3,7 +3,7 @@ package opensamguk.gameapi.security
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import opensamguk.common.auth.GatewayProfileClaims
+import opensamguk.common.auth.GatewayPrincipal
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
@@ -34,13 +34,13 @@ class JwtVerifyFilter(
         filterChain: FilterChain,
     ) {
         val token = resolveToken(request)
-        val profile = token?.let(verifier::verifyAccessToken)
-        if (profile != null && SecurityContextHolder.getContext().authentication == null) {
-            request.setAttribute(PROFILE_ATTRIBUTE, profile)
+        val principal = token?.let(verifier::verifyAccessToken)
+        if (principal != null && SecurityContextHolder.getContext().authentication == null) {
+            request.setAttribute(PRINCIPAL_ATTRIBUTE, principal)
             val auth = UsernamePasswordAuthenticationToken(
-                profile.userId,
+                principal.userId,
                 null,
-                listOf(SimpleGrantedAuthority("ROLE_${profile.role}")),
+                listOf(SimpleGrantedAuthority("ROLE_${principal.role}")),
             )
             auth.details = WebAuthenticationDetailsSource().buildDetails(request)
             SecurityContextHolder.getContext().authentication = auth
@@ -54,9 +54,9 @@ class JwtVerifyFilter(
     }
 
     companion object {
-        const val PROFILE_ATTRIBUTE = "opensamguk.gateway.profile"
+        const val PRINCIPAL_ATTRIBUTE = "opensamguk.gateway.principal"
 
-        fun profile(request: HttpServletRequest): GatewayProfileClaims? =
-            request.getAttribute(PROFILE_ATTRIBUTE) as? GatewayProfileClaims
+        fun principal(request: HttpServletRequest): GatewayPrincipal? =
+            request.getAttribute(PRINCIPAL_ATTRIBUTE) as? GatewayPrincipal
     }
 }

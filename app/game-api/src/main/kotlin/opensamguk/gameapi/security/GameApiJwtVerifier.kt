@@ -5,7 +5,7 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
-import opensamguk.common.auth.GatewayProfileClaims
+import opensamguk.common.auth.GatewayPrincipal
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import javax.crypto.SecretKey
@@ -22,6 +22,9 @@ import javax.crypto.SecretKey
  *
  * The token subject = the gateway `users.id` (a Long), exactly as gateway-api sets it
  * (`Jwts.builder().subject(userId.toString())`). [getUserId] returns that as the verified principal.
+ *
+ * OPENSAM-220 — the access token carries ONLY identity (subject) + authorization (`role`). Display
+ * values (nickname/grade/picture/imgsvr) are read from the DB, never from the token.
  */
 @Component
 class GameApiJwtVerifier(
@@ -30,32 +33,17 @@ class GameApiJwtVerifier(
 ) {
     private val key: SecretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey))
 
-    fun verifyAccessToken(token: String): GatewayProfileClaims? {
+    fun verifyAccessToken(token: String): GatewayPrincipal? {
         return try {
             val claims = parseClaims(token)
             if (claims.get(GatewayJwtClaims.TOKEN_TYPE, String::class.java) != GatewayJwtClaims.ACCESS_TOKEN) {
                 return null
             }
             val userId = claims.subject?.toLongOrNull() ?: return null
-            val username = claims.get(GatewayJwtClaims.USERNAME, String::class.java) ?: return null
             val role = claims.get(GatewayJwtClaims.ROLE, String::class.java)
                 ?.takeIf { it == "USER" || it == "ADMIN" }
                 ?: return null
-            val grade = (claims[GatewayJwtClaims.GRADE] as? Number)?.toInt()
-                ?.takeIf { it in 0..9 }
-                ?: return null
-            val imageServer = (claims[GatewayJwtClaims.IMAGE_SERVER] as? Number)?.toInt()
-                ?.takeIf { it in 0..1 }
-                ?: return null
-            GatewayProfileClaims(
-                userId = userId,
-                username = username,
-                role = role,
-                nickname = claims.get(GatewayJwtClaims.NICKNAME, String::class.java),
-                grade = grade,
-                picture = claims.get(GatewayJwtClaims.PICTURE, String::class.java),
-                imageServer = imageServer,
-            )
+            GatewayPrincipal(userId = userId, role = role)
         } catch (e: Exception) {
             null
         }
@@ -65,8 +53,6 @@ class GameApiJwtVerifier(
 
     /** The verified user id (JWT subject). Null if the token is invalid or the subject is not numeric. */
     fun getUserId(token: String): Long? = verifyAccessToken(token)?.userId
-
-    fun getUsername(token: String): String? = verifyAccessToken(token)?.username
 
     fun getRole(token: String): String? = verifyAccessToken(token)?.role
 
