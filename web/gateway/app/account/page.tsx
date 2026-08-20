@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { type FormEvent, useRef, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
+import Topbar from '@/components/Topbar';
 import { useAuth } from '@/lib/auth-context';
-import { changePassword, deleteAccount, deleteProfileIcon, updateProfileIcon, uploadProfileIcon } from '@/lib/client';
+import { changeNickname, changePassword, deleteAccount, deleteProfileIcon, updateProfileIcon, uploadProfileIcon } from '@/lib/client';
 import { onPortraitError, portraitUrl } from '@/lib/portrait';
 import { normalizeProfileIcon } from '@/lib/profileIcon';
 
@@ -16,12 +17,13 @@ const ICON_GUIDE = 'jpg·png·gif·webp·avif 이미지를 올리면 중앙을 �
 const ICON_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp,image/avif';
 
 // 피드백은 그 액션을 일으킨 컨트롤 옆에서만 뜬다 — 화면 밖 전역 배너로 밀어내지 않는다.
-type Scope = 'password' | 'icon' | 'shared' | 'delete';
+type Scope = 'nickname' | 'password' | 'icon' | 'shared' | 'delete';
 type Feedback = { scope: Scope; ok: boolean; text: string };
 
 function AccountSettings() {
     const router = useRouter();
     const { user, refresh, logout } = useAuth();
+    const [nickname, setNickname] = useState(user?.nickname ?? '');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [picture, setPicture] = useState(user?.picture ?? '');
@@ -55,6 +57,15 @@ function AccountSettings() {
             setCurrentPassword('');
             setNewPassword('');
         }, '비밀번호를 변경했습니다.');
+    };
+
+    const submitNickname = async (event: FormEvent) => {
+        event.preventDefault();
+        await run('nickname', async () => {
+            const updated = await changeNickname(nickname.trim());
+            setNickname(updated.nickname ?? '');
+            await refresh();
+        }, '닉네임을 변경했습니다.');
     };
 
     const submitUpload = async (event: FormEvent) => {
@@ -112,6 +123,15 @@ function AccountSettings() {
                 <Link className="btn-ghost" href="/lobby">로비로</Link>
             </div>
             <section className="game-panel">
+                <h2>닉네임 변경</h2>
+                <form onSubmit={submitNickname}>
+                    <label>닉네임<input aria-label="닉네임" value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={20} required /></label>
+                    <p>2~20자, 다른 사용자와 겹칠 수 없습니다.</p>
+                    <button className="btn-primary" type="submit" disabled={busy}>닉네임 변경</button>
+                    {message('nickname')}
+                </form>
+            </section>
+            <section className="game-panel">
                 <h2>비밀번호 변경</h2>
                 <form onSubmit={submitPassword}>
                     <label>현재 비밀번호<input aria-label="현재 비밀번호" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required /></label>
@@ -148,5 +168,12 @@ function AccountSettings() {
 }
 
 export default function AccountPage() {
-    return <AuthGate><AccountSettings /></AuthGate>;
+    return (
+        <AuthGate>
+            <div className="lobby-shell">
+                <Topbar />
+                <AccountSettings />
+            </div>
+        </AuthGate>
+    );
 }

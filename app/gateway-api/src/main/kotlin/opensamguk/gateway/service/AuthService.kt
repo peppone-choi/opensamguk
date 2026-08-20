@@ -2,6 +2,7 @@ package opensamguk.gateway.service
 
 import opensamguk.common.auth.GatewayProfileClaims
 import opensamguk.gateway.dto.AuthResponse
+import opensamguk.gateway.dto.ChangeNicknameRequest
 import opensamguk.gateway.dto.ChangePasswordRequest
 import opensamguk.gateway.dto.DeleteAccountRequest
 import opensamguk.gateway.dto.LoginRequest
@@ -14,6 +15,7 @@ import opensamguk.infra.read.BannedMemberRepository
 import opensamguk.infra.read.EmailHasher
 import opensamguk.infra.read.SystemFlagRepository
 import opensamguk.infra.read.UserRepository
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -116,6 +118,31 @@ class AuthService(
         assertCurrentPassword(user, request.currentPassword)
         user.password = passwordEncoder.encode(request.newPassword)
         user.updatedAt = java.time.LocalDateTime.now()
+    }
+
+    @Transactional
+    fun changeNickname(userDetails: CustomUserDetails, request: ChangeNicknameRequest): AuthResponse {
+        val user = userRepository.findByUsernameForUpdate(userDetails.username)
+            .orElseThrow { IllegalArgumentException("사용자를 찾을 수 없습니다.") }
+        val nickname = request.nickname.trim()
+        if (nickname.length < 2 || nickname.length > 20) {
+            throw IllegalArgumentException("별명은 2자 이상 20자 이하여야 합니다.")
+        }
+        if (!nickname.equals(user.nickname, ignoreCase = true) && userRepository.existsByNicknameIgnoreCase(nickname)) {
+            throw NicknameAlreadyInUseException()
+        }
+        user.nickname = nickname
+        user.updatedAt = java.time.LocalDateTime.now()
+        try {
+            userRepository.saveAndFlush(user)
+        } catch (e: DataIntegrityViolationException) {
+            throw NicknameAlreadyInUseException()
+        }
+        return AuthResponse(
+            accessToken = jwtTokenProvider.generateAccessToken(user.toGatewayProfile()),
+            refreshToken = jwtTokenProvider.generateRefreshToken(user.id),
+            user = user.toResponse(),
+        )
     }
 
     @Transactional

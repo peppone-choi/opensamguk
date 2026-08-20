@@ -1,6 +1,7 @@
 package opensamguk.gateway.service
 
 import opensamguk.common.auth.GatewayProfileClaims
+import opensamguk.gateway.dto.ChangeNicknameRequest
 import opensamguk.gateway.dto.LoginRequest
 import opensamguk.gateway.dto.RegisterRequest
 import opensamguk.gateway.security.CustomUserDetails
@@ -22,6 +23,7 @@ import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -224,5 +226,67 @@ class AuthServiceTest {
         verify(jwtTokenProvider).generateAccessToken(captureProfile(profile))
         assertEquals(1, profile.value.grade)
         assertEquals(0, profile.value.imageServer)
+    }
+
+    @Test
+    fun `nickname change trims the value and reissues tokens with the updated claim`() {
+        val user = UserEntity(id = 1L, username = "testuser", password = "encoded", nickname = "예전별명")
+        val details = CustomUserDetails(user)
+        `when`(userRepository.findByUsernameForUpdate("testuser")).thenReturn(Optional.of(user))
+        `when`(userRepository.existsByNicknameIgnoreCase("새별명")).thenReturn(false)
+        `when`(userRepository.saveAndFlush(user)).thenReturn(user)
+        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("new-access")
+        `when`(jwtTokenProvider.generateRefreshToken(1L)).thenReturn("new-refresh")
+
+        val result = authService.changeNickname(details, ChangeNicknameRequest("  새별명  "))
+
+        val profile = ArgumentCaptor.forClass(GatewayProfileClaims::class.java)
+        verify(jwtTokenProvider).generateAccessToken(captureProfile(profile))
+        assertEquals("새별명", profile.value.nickname)
+        assertEquals("새별명", result.user.nickname)
+        assertEquals("new-access", result.accessToken)
+        assertEquals("new-refresh", result.refreshToken)
+    }
+
+    @Test
+    fun `nickname change rejects a case insensitive duplicate`() {
+        val user = UserEntity(id = 1L, username = "testuser", password = "encoded", nickname = "예전별명")
+        val details = CustomUserDetails(user)
+        `when`(userRepository.findByUsernameForUpdate("testuser")).thenReturn(Optional.of(user))
+        `when`(userRepository.existsByNicknameIgnoreCase("새별명")).thenReturn(true)
+
+        val failure = assertThrows(NicknameAlreadyInUseException::class.java) {
+            authService.changeNickname(details, ChangeNicknameRequest("새별명"))
+        }
+
+        assertEquals("이미 사용 중인 닉네임입니다.", failure.message)
+    }
+
+    @Test
+    fun `nickname change validates length after trimming`() {
+        val user = UserEntity(id = 1L, username = "testuser", password = "encoded", nickname = "예전별명")
+        val details = CustomUserDetails(user)
+        `when`(userRepository.findByUsernameForUpdate("testuser")).thenReturn(Optional.of(user))
+
+        val failure = assertThrows(IllegalArgumentException::class.java) {
+            authService.changeNickname(details, ChangeNicknameRequest("  한  "))
+        }
+
+        assertEquals("별명은 2자 이상 20자 이하여야 합니다.", failure.message)
+    }
+
+    @Test
+    fun `nickname change maps a concurrent unique index collision to the nickname conflict`() {
+        val user = UserEntity(id = 1L, username = "testuser", password = "encoded", nickname = "예전별명")
+        val details = CustomUserDetails(user)
+        `when`(userRepository.findByUsernameForUpdate("testuser")).thenReturn(Optional.of(user))
+        `when`(userRepository.existsByNicknameIgnoreCase("새별명")).thenReturn(false)
+        `when`(userRepository.saveAndFlush(user)).thenThrow(DataIntegrityViolationException("ux_users_nickname"))
+
+        val failure = assertThrows(NicknameAlreadyInUseException::class.java) {
+            authService.changeNickname(details, ChangeNicknameRequest("새별명"))
+        }
+
+        assertEquals("이미 사용 중인 닉네임입니다.", failure.message)
     }
 }

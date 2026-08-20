@@ -61,6 +61,11 @@ export async function changePassword(currentPassword: string, newPassword: strin
     await accountRequest('/api/account/password', { currentPassword, newPassword });
 }
 
+export async function changeNickname(nickname: string): Promise<User> {
+    const data = await accountRequest('/api/account/nickname', { nickname });
+    return data.user as User;
+}
+
 export async function updateProfileIcon(picture: string | null, imgsvr: number): Promise<User> {
     const data = await accountRequest('/api/account/profile-icon', { picture, imgsvr });
     return data as unknown as User;

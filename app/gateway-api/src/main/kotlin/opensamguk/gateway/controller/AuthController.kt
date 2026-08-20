@@ -2,6 +2,7 @@ package opensamguk.gateway.controller
 
 import jakarta.validation.Valid
 import opensamguk.gateway.dto.AuthResponse
+import opensamguk.gateway.dto.ChangeNicknameRequest
 import opensamguk.gateway.dto.ChangePasswordRequest
 import opensamguk.gateway.dto.DeleteAccountRequest
 import opensamguk.gateway.dto.LoginRequest
@@ -57,6 +58,12 @@ class AuthController(
         authService.changePassword(userDetails, request)
         return ResponseEntity.noContent().build()
     }
+
+    @PostMapping("/account/nickname")
+    fun changeNickname(
+        @AuthenticationPrincipal userDetails: CustomUserDetails,
+        @Valid @RequestBody request: ChangeNicknameRequest,
+    ): ResponseEntity<AuthResponse> = ResponseEntity.ok(authService.changeNickname(userDetails, request))
 
     @DeleteMapping("/account")
     fun deleteAccount(

@@ -64,6 +64,11 @@ data class ChangePasswordRequest(
     val newPassword: String,
 )
 
+data class ChangeNicknameRequest(
+    @field:NotBlank(message = "별명은 2자 이상 20자 이하여야 합니다.")
+    val nickname: String,
+)
+
 data class ProfileIconRequest(
     @field:Size(max = 64)
     val picture: String? = null,

@@ -85,6 +85,22 @@ describe('account settings interactions', () => {
         expect(within(panel('전콘')).queryByRole('status')).toBeNull();
     });
 
+    it('changes the nickname and refreshes the header session immediately', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(200, JSON.stringify({ user: {
+            id: 1, username: 'tester', email: null, nickname: '새별명', role: 'USER', picture: 'old.png', imageServer: 1,
+        } }))));
+        render(<AccountPage />);
+        fireEvent.change(screen.getByLabelText('닉네임'), { target: { value: '  새별명  ' } });
+        fireEvent.click(screen.getByRole('button', { name: '닉네임 변경' }));
+
+        await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/account/nickname', expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ nickname: '새별명' }),
+        })));
+        expect(refresh).toHaveBeenCalledTimes(1);
+        expect(await within(panel('닉네임 변경')).findByRole('status')).toHaveTextContent('닉네임을 변경했습니다.');
+    });
+
     it('uploads a spec-compliant icon byte-for-byte and drives the preview from the server canonical response', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(200, JSON.stringify({
             id: 1, username: 'tester', email: null, nickname: null, role: 'USER', picture: 'a1b2c3d4.png', imageServer: 1,
