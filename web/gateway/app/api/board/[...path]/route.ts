@@ -24,7 +24,7 @@ function isCommentCreatePath(path: readonly string[]): boolean {
   return path.length === 3 && path[0] === 'posts' && isPostId(path[1]) && path[2] === 'comments';
 }
 
-function isPostDeletePath(path: readonly string[]): boolean {
+function isPostMutationPath(path: readonly string[]): boolean {
   return path.length === 2 && path[0] === 'posts' && isPostId(path[1]);
 }
 
@@ -107,12 +107,14 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
 
 export async function PATCH(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
-  return isPinPath(path) ? forward(request, path, 'PATCH', 'required') : routeNotFound();
+  return isPostMutationPath(path) || isPinPath(path)
+    ? forward(request, path, 'PATCH', 'required')
+    : routeNotFound();
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
-  return isPostDeletePath(path) || isCommentDeletePath(path)
+  return isPostMutationPath(path) || isCommentDeletePath(path)
     ? forward(request, path, 'DELETE', 'required')
     : routeNotFound();
 }

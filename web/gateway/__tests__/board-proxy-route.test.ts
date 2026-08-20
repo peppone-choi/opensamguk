@@ -175,6 +175,38 @@ describe('gateway board proxy', () => {
     }));
   });
 
+  it('forwards an authenticated post update for a valid post id', async () => {
+    cookieValue = 'access-token';
+    vi.mocked(fetch).mockResolvedValue(
+      new Response('{"id":19,"title":"수정된 글"}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    const body = JSON.stringify({ title: '수정된 글', content: '수정된 본문' });
+    const response = await PATCH(
+      request('/api/board/posts/19', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      }),
+      context(['posts', '19']),
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenCalledWith('http://board-api.test/board/posts/19', expect.objectContaining({
+      method: 'PATCH',
+      headers: {
+        Authorization: 'Bearer access-token',
+        'Content-Type': 'application/json',
+      },
+      body,
+      cache: 'no-store',
+      signal: expect.any(AbortSignal),
+    }));
+  });
+
   it('rejects invalid public and mutation paths without contacting the gateway', async () => {
     const invalidDetail = await GET(request('/api/board/posts/abc'), context(['posts', 'abc']));
     const incompleteCommentDelete = await DELETE(
@@ -185,10 +217,15 @@ describe('gateway board proxy', () => {
       request('/api/board/posts/19/unpin', { method: 'PATCH' }),
       context(['posts', '19', 'unpin']),
     );
+    const invalidPostUpdate = await PATCH(
+      request('/api/board/posts/0', { method: 'PATCH' }),
+      context(['posts', '0']),
+    );
 
     expect(invalidDetail.status).toBe(404);
     expect(incompleteCommentDelete.status).toBe(404);
     expect(invalidPin.status).toBe(404);
+    expect(invalidPostUpdate.status).toBe(404);
     expect(fetch).not.toHaveBeenCalled();
   });
 
