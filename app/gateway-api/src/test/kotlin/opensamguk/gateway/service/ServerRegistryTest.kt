@@ -2,6 +2,9 @@ package opensamguk.gateway.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.datasource.DriverManagerDataSource
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -10,8 +13,40 @@ class ServerRegistryTest {
 
     private val mapper = ObjectMapper()
 
-    private fun registry(json: String): ServerRegistry =
-        ServerRegistry(json, "http://game-api:8081", "http://game-engine:8082", "opensamguk", "통일 서버", mapper)
+    @Test
+    fun `all reads servers inserted after registry construction`() {
+        val fixture = fixture("")
+
+        assertTrue(fixture.registry.all().isEmpty())
+        fixture.jdbc.update(
+            """
+            INSERT INTO game_server (
+                server_id, display_name, game_api_url, game_engine_url, deploy_project
+            ) VALUES ('live1', '라입 서버', 'http://slive1-game-api:8081', 'http://slive1-game-engine:8082', 'opensamguk-slive1')
+            """.trimIndent(),
+        )
+
+        assertEquals(listOf("live1"), fixture.registry.all().map { it.id })
+    }
+
+    @Test
+    fun `environment seed does not overwrite a non-empty database`() {
+        val fixture = fixture("""[{"id":"seeded"}]""") { jdbc ->
+            insertCanonical(jdbc, "existing")
+        }
+
+        assertEquals(listOf("existing"), fixture.registry.all().map { it.id })
+    }
+
+    @Test
+    fun `database read failure returns an empty registry`() {
+        val fixture = fixture("""[{"id":"seeded"}]""")
+        fixture.jdbc.execute("DROP TABLE game_server")
+
+        assertTrue(fixture.registry.all().isEmpty())
+        assertNull(fixture.registry.find("seeded"))
+        assertNull(fixture.registry.default())
+    }
 
     @Test
     fun `default compose coordinates derive from the public server ID`() {
@@ -72,4 +107,55 @@ class ServerRegistryTest {
 
         assertTrue(parsed.all().isEmpty())
     }
+
+    private fun registry(json: String): ServerRegistry = fixture(json).registry
+
+    private fun fixture(
+        json: String,
+        beforeRegistry: (JdbcTemplate) -> Unit = {},
+    ): RegistryFixture {
+        val dataSource = DriverManagerDataSource(
+            "jdbc:h2:mem:${UUID.randomUUID()};MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+            "sa",
+            "",
+        )
+        val jdbc = JdbcTemplate(dataSource)
+        jdbc.execute(
+            """
+            CREATE TABLE game_server (
+                sort_order BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,
+                server_id VARCHAR(48) PRIMARY KEY,
+                display_name VARCHAR(100) NOT NULL,
+                game_api_url VARCHAR(255) NOT NULL,
+                game_engine_url VARCHAR(255) NOT NULL,
+                deploy_project VARCHAR(100) NOT NULL,
+                generation INTEGER,
+                scenario_code VARCHAR(100)
+            )
+            """.trimIndent(),
+        )
+        beforeRegistry(jdbc)
+        val registry = ServerRegistry(json, mapper, jdbc)
+        return RegistryFixture(registry, jdbc)
+    }
+
+    private fun insertCanonical(jdbc: JdbcTemplate, id: String) {
+        jdbc.update(
+            """
+            INSERT INTO game_server (
+                server_id, display_name, game_api_url, game_engine_url, deploy_project
+            ) VALUES (?, ?, ?, ?, ?)
+            """.trimIndent(),
+            id,
+            id,
+            "http://s$id-game-api:8081",
+            "http://s$id-game-engine:8082",
+            "opensamguk-s$id",
+        )
+    }
+
+    private data class RegistryFixture(
+        val registry: ServerRegistry,
+        val jdbc: JdbcTemplate,
+    )
 }

@@ -1,7 +1,6 @@
 package opensamguk.gateway.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import opensamguk.gateway.dto.DeployResult
 import opensamguk.gateway.dto.DeployStatus
@@ -121,31 +120,10 @@ class DeployService(
         "world-log",
     )
 
-    private sealed interface DeployerServerList {
-        data class Available(val servers: List<ServerDef>) : DeployerServerList
-
-        data object Invalid : DeployerServerList
-
-        data object Unavailable : DeployerServerList
-    }
-
     private fun configured() = deployerUrl.isNotBlank() && deployerToken.isNotBlank()
     private fun deployerBase() = deployerUrl.trimEnd('/')
 
-    fun registeredServers(): List<ServerDef> {
-        val registryServers = canonicalServerDefs(registry.all())
-        return when (val deployerServers = fetchDeployerServers(registryServers.orEmpty())) {
-            is DeployerServerList.Available -> deployerServers.servers
-            DeployerServerList.Invalid -> {
-                log.warn("deployer 서버 목록이 canonical server contract를 위반해 전체를 거부합니다.")
-                emptyList()
-            }
-            DeployerServerList.Unavailable -> registryServers ?: run {
-                log.warn("부팅 서버 레지스트리가 canonical server contract를 위반해 전체를 거부합니다.")
-                emptyList()
-            }
-        }
-    }
+    fun registeredServers(): List<ServerDef> = canonicalServerDefs(registry.all()).orEmpty()
 
     /** deployer 상태: 대상 서버의 현재 IMAGE_TAG + 배포 가능한 태그 목록. serverId 미지정 시 기본 서버. */
     fun status(serverId: String?): DeployStatus {
@@ -231,18 +209,29 @@ class DeployService(
             ?: proxyEnvPatch(path = "/env/server?id={id}", serverId = server.id, body = body)
     }
 
-    fun createServer(body: String): EnvProxyResponse =
-        validateCreateServer(body) ?: proxyCreateServer(body)
+    fun createServer(body: String): EnvProxyResponse {
+        validateCreateServer(body)?.let { return it }
+        val server = serverDefFromCreateRequest(body)
+        val response = proxyCreateServer(body)
+        if (!isConfirmedServerSuccess(response, server.id)) return response
+        return persistRegistryChange("create", server.id, response) {
+            registry.register(server)
+        }
+    }
 
     fun deleteServer(serverId: String): EnvProxyResponse {
         val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
-        return proxyServerAction(
+        val response = proxyServerAction(
             method = "POST",
             path = "/servers/close",
             serverId = server.id,
             body = objectMapper.writeValueAsString(mapOf("id" to server.id)),
         )
+        if (!isConfirmedServerSuccess(response, server.id)) return response
+        return persistRegistryChange("close", server.id, response) {
+            registry.unregister(server.id)
+        }
     }
 
     fun resetServer(serverId: String, body: String): EnvProxyResponse {
@@ -541,59 +530,6 @@ class DeployService(
         }
     }
 
-    private fun fetchDeployerServers(fallbackServers: List<ServerDef>): DeployerServerList {
-        if (!configured()) return DeployerServerList.Unavailable
-        return try {
-            val raw = rest.get()
-                .uri("${deployerBase()}/servers")
-                .header("Authorization", "Bearer $deployerToken")
-                .retrieve()
-                .body(String::class.java)
-            parseServerDefs(raw, fallbackServers)
-                ?.let(DeployerServerList::Available)
-                ?: DeployerServerList.Invalid
-        } catch (e: Exception) {
-            log.warn("deployer 서버 목록 조회 실패 — 부팅 레지스트리로 fallback합니다.", e)
-            DeployerServerList.Unavailable
-        }
-    }
-
-    private fun parseServerDefs(raw: String?, fallbackServers: List<ServerDef>): List<ServerDef>? {
-        return try {
-            val root = objectMapper.readTree(raw ?: "[]")
-            if (!root.isArray) return null
-
-            val parsed = ArrayList<ServerDef>(root.size())
-            for (node in root) {
-                if (!node.isObject) return null
-                val rawId = node.path("id").takeIf { it.isTextual }?.asText() ?: return null
-                val id = canonicalServerId(rawId) ?: return null
-                val expectedProject = defaultDeployProject(id)
-                val expectedGameApiUrl = defaultGameApiUrl(id)
-                val expectedGameEngineUrl = defaultGameEngineUrl(id)
-                if (!hasExpectedCoordinate(node, expectedProject, "deployProject", "project") ||
-                    !hasExpectedCoordinate(node, expectedGameApiUrl, "gameApiUrl") ||
-                    !hasExpectedCoordinate(node, expectedGameEngineUrl, "gameEngineUrl")
-                ) {
-                    return null
-                }
-                val fallback = fallbackServers.firstOrNull { it.id == id }
-                parsed += ServerDef(
-                    id = id,
-                    name = text(node, "name") ?: fallback?.name ?: id,
-                    gameApiUrl = expectedGameApiUrl,
-                    gameEngineUrl = expectedGameEngineUrl,
-                    deployProject = expectedProject,
-                    generation = int(node, "generation") ?: fallback?.generation,
-                    scenarioCode = text(node, "scenarioCode", "scenario") ?: fallback?.scenarioCode,
-                )
-            }
-            canonicalServerDefs(parsed)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
     private fun canonicalServerDefs(servers: List<ServerDef>): List<ServerDef>? {
         val canonical = ArrayList<ServerDef>(servers.size)
         val seenIds = HashSet<String>(servers.size)
@@ -620,28 +556,9 @@ class DeployService(
         return canonical
     }
 
-    private fun hasExpectedCoordinate(node: JsonNode, expected: String, vararg fields: String): Boolean =
-        fields.all { field ->
-            !node.has(field) || (node.path(field).isTextual && node.path(field).asText() == expected)
-        }
-
     private fun canonicalServerId(rawId: String): String? =
         rawId.takeIf { serverIdRegex.matches(it) && it.length <= maxPublicServerIdLength }
             ?.lowercase()
-
-    private fun text(node: JsonNode, vararg fields: String): String? =
-        fields.asSequence()
-            .map { node.path(it).asText("") }
-            .firstOrNull { it.isNotBlank() }
-
-    private fun int(node: JsonNode, field: String): Int? {
-        val value = node.path(field)
-        return when {
-            value.isInt || value.isLong -> value.asInt()
-            value.isTextual -> value.asText().toIntOrNull()
-            else -> null
-        }
-    }
 
     private fun withServerId(body: String, serverId: String): String {
         val node = objectMapper.readTree(body)
@@ -656,6 +573,41 @@ class DeployService(
         objectNode.put("id", objectNode.path("id").asText("").lowercase())
         return objectMapper.writeValueAsString(objectNode)
     }
+
+    private fun serverDefFromCreateRequest(body: String): ServerDef {
+        val node = objectMapper.readTree(body)
+        val id = node.path("id").asText().lowercase()
+        return ServerDef(
+            id = id,
+            name = node.path("name").asText(),
+            gameApiUrl = defaultGameApiUrl(id),
+            gameEngineUrl = defaultGameEngineUrl(id),
+            deployProject = defaultDeployProject(id),
+            generation = node.path("generation").asText("").toIntOrNull(),
+            scenarioCode = node.path("scenarioCode").asText("").ifBlank { null },
+        )
+    }
+
+    private fun isConfirmedServerSuccess(response: EnvProxyResponse, expectedId: String): Boolean =
+        response.status in 200..299 && runCatching {
+            val node = objectMapper.readTree(response.body)
+            node.isObject && node.path("ok").isBoolean && node.path("ok").asBoolean() &&
+                node.path("id").isTextual && node.path("id").asText() == expectedId
+        }.getOrDefault(false)
+
+    private fun persistRegistryChange(
+        action: String,
+        serverId: String,
+        response: EnvProxyResponse,
+        change: () -> Unit,
+    ): EnvProxyResponse =
+        try {
+            change()
+            response
+        } catch (e: Exception) {
+            log.error("game_server persistence failed action={} server={}", action, serverId, e)
+            json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "Server registry update failed.")))
+        }
 
     private fun defaultDeployProject(canonicalId: String): String =
         "opensamguk-s$canonicalId"

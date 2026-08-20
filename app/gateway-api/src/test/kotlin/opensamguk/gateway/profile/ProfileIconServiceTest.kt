@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
+import org.mockito.Mockito.lenient
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -239,11 +240,10 @@ class ProfileIconServiceTest {
         val reconciler = ProfileIconOperationReconciler(userRepository, storage)
         // 빈 ServerRegistry 기반 publisher — all()이 비어 publish()가 no-op(afterCommit도 이 테스트의
         // 수동 initSynchronization에서는 commit 이벤트가 없어 호출되지 않는다).
+        val emptyRegistry = org.mockito.Mockito.mock(opensamguk.gateway.service.ServerRegistry::class.java)
+        lenient().`when`(emptyRegistry.all()).thenReturn(emptyList())
         val syncPublisher = opensamguk.gateway.service.ProfileIconSyncPublisher(
-            opensamguk.gateway.service.ServerRegistry(
-                "", "http://game-api:8081", "http://game-engine:8082", "opensamguk", "srv",
-                com.fasterxml.jackson.databind.ObjectMapper(),
-            ),
+            emptyRegistry,
             "",
         )
         return ProfileIconService(
