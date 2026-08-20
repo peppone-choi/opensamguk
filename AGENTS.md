@@ -1,17 +1,18 @@
 # AGENTS.md — opensamguk
 
-AI 코딩 에이전트 · 기여자용 온보딩 가이드. 코드를 건드리기 전에 이 문서를 읽으세요. **패러티/아키텍처 규칙은 조용히 어기기 쉽습니다.** 상세·정본 규칙은 [`CLAUDE.md`](CLAUDE.md)에 있으며 이 문서는 그 요약 + 빠른 참조입니다.
+AI 코딩 에이전트 · 기여자용 온보딩 가이드. 코드를 건드리기 전에 이 문서를 읽으세요. **제품 기준과 아키텍처 규칙은 조용히 어기기 쉽습니다.** 상세·정본 규칙은 [`CLAUDE.md`](CLAUDE.md)에 있으며 이 문서는 그 요약 + 빠른 참조입니다.
 
 ---
 
 ## 프로젝트 한 줄 요약
 
-PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모)를 **메모리 중심 CQRS** 스택(**Kotlin/Spring Boot + Next.js + PostgreSQL + Redis + nginx**)으로 byte-단위 충실 이식.
+PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모) 이식에서 출발해 **메모리 중심 CQRS** 스택(**Kotlin/Spring Boot + Next.js + PostgreSQL + Redis + nginx**)으로 발전한 독립 제품.
 
-- **`legacy/devsam-core` (PHP) = GRAND TRUTH.** 모든 동작(RNG 추출 순서·반올림·한글 로그·부수효과 순서)을 byte 단위로 일치. 원작을 절대 "개선"하지 않음.
-- **`legacy/devsam-core2026` (TS)** = 구조 힌트용 2차 오라클. **PHP가 모든 divergence에서 이김.**
-- 프론트 grand truth = `hwe/ts/` Vue (`hwe/*.php`는 dist mount 셸).
+- **제품 정본 = 최신 승인 ADR·spec·현재 구현.** ADR-LITE-042 이후 PHP 패러티는 신규 설계 제약이 아님.
+- **`legacy/devsam-core` (PHP)**와 **`legacy/devsam-core2026` (TS)**는 역사·구조·회귀 분석용 참고 자료.
+- 기존 `hwe/ts/` Vue는 흐름 참고 자료이며, 신규 프론트 기준은 현재 구현과 승인된 디자인 시스템.
 - `legacy/`는 **git-ignore**, 커밋 금지. 저장소는 코에이 IP 검토 전까지 **비공개** — 자산/IP·비밀키·자격증명 커밋 금지.
+- 사용자·관리자·기획 문서 진입점: [`docs/README.md`](docs/README.md).
 
 ---
 
@@ -58,7 +59,7 @@ game-engine 데몬은 **절대** JPA `EntityManager`로 write하지 않습니다
 # 전체 빌드 + 테스트
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build
 
-# 패러티 백엔드 표준 게이트(XML 검증 포함)
+# 동결 회귀 백엔드 표준 게이트(XML 검증 포함, 명령명은 역사적으로 parity 유지)
 tools/parity/gate.sh backend
 
 # 단일 모듈
@@ -90,16 +91,16 @@ cd web/game    && corepack pnpm dev   # :3001
 
 ---
 
-## 패러티 규율 (NON-NEGOTIABLE)
+## 제품·회귀 규율 (NON-NEGOTIABLE)
 
-상세는 [`CLAUDE.md`](CLAUDE.md). 요약 6조:
+상세는 [`CLAUDE.md`](CLAUDE.md)와 `.ai/decisions.md` ADR-LITE-042. 요약 6조:
 
-1. **RNG draw-for-draw** — `RandUtil(LiteHashDrbg(seed))`. 추출 **순서·횟수·인자**가 타깃. 전투는 단일 `RandUtil(warSeed)` 참조 전달, 중간 재시드 금지.
-2. **반올림** — `Util::round` = half-AWAY → `PhpRound`(음수 스케일 `phpRound(v,-2)`). `Math.round`/`kotlin.math.round` 금지. `toInt`/`intdiv` = 0 방향 절삭. 데미지 클램프 = `ceil()`.
-3. **한글 로그 byte-패러티** — 조사·색/태그·접두어 byte 일치. 로그 순서 = 실행 순서.
-4. **델타 flush, 인라인 write 금지** — `ChangeRecorder` `created`/`dirty`/`deleted` → 일괄 flush. 리졸버는 델타만.
-5. **충실 이식, 날조 금지** — 골든은 실제 PHP 캡처에서만. 불일치 시 Kotlin 구현 수정, 골든·테스트 약화 금지. 캡처 불가 시 증거와 함께 격리 + 백로그.
-6. **삽입 순서 보존** — `LinkedHashMap`. PHP 8.0+ 정렬 stable — 비-stable 2차 비교자 금지.
+1. **결정론적 재현** — 같은 seed·입력·순서는 같은 결과를 만든다. 신규 기능은 PHP draw-for-draw 일치를 요구하지 않는다.
+2. **수치 변경 기록** — 반올림·절삭·clamp는 의도와 회귀 영향을 기록한다. 기존 `PhpRound` 사용처를 이유 없이 바꾸지 않는다.
+3. **로그 품질과 순서** — 한글 로그는 UX 산출물이며 실행 순서를 안정적으로 보존한다. 신규 문구에 PHP byte 일치를 요구하지 않는다.
+4. **델타 flush, 인라인 write 금지** — `ChangeRecorder` `created`/`dirty`/`deleted` → 일괄 flush. 리졸버는 델타만 쓴다.
+5. **날조·테스트 약화 금지** — 기존 골든·테스트는 동결 회귀 기준선으로 보존한다. 기대값 변경에는 명시적 기획 근거가 필요하다.
+6. **삽입 순서 보존** — 결과에 영향을 주는 map·이벤트의 삽입·실행 순서를 명시적으로 유지한다.
 
 ---
 
@@ -113,7 +114,7 @@ cd web/game    && corepack pnpm dev   # :3001
 
 ## 골든 픽스처
 
-골든 수치/로그/시드는 **오직** `tools/php-golden/` 실제 PHP 캡처(Docker: MariaDB 11.4 + `php:8.3-cli`, 시나리오 `1010`)에서. quirk: `j_install.php` 두 번 호출, install 비멱등(매 실행 fresh DB), 덤프 byte-identical. 골든은 `logic/.../resources/golden/`·`common/.../resources/golden/`에 read-only 소비 대상으로 둠 — 다른 모듈로 복사 금지.
+기존 골든 수치/로그/시드는 `tools/php-golden/` 실제 PHP 캡처에서 만들어졌고, 지금은 **동결 회귀 기준선**이다. 신규 기능의 선행 조건은 아니지만 삭제·위조·근거 없는 기대값 변경은 금지한다. 골든은 `logic/.../resources/golden/`·`common/.../resources/golden/`에 read-only 소비 대상으로 둔다.
 
 ---
 
@@ -121,15 +122,15 @@ cd web/game    && corepack pnpm dev   # :3001
 
 - 정본 운영 문서: `docs/superpowers/WORKING_SYSTEM.md`.
 - 루프 엔지니어링 정본: `docs/superpowers/LOOP_ENGINEERING.md`. Claude/Codex 모두 같은 문서를 기준으로 측정 → 가설 1개 → 재측정 → 채택/원복 루프를 돈다.
-- 레거시 갭·UI 패러티·실서버 버그는 반드시 `opensamguk-php-oracle`(PHP/hwe path+line 증거) → `webapp-testing`(UI 재현/브라우저 관측) → `systematic-debugging`(원인 수렴, 수정 전 root cause) → `loop-engineering`(베이스라인/가설/채점/채택) 순서로 묶는다. 하나라도 못 쓰면 `채점대기`/`blocked`를 기록하고 조용히 ship/merge하지 않는다.
+- 기존 회귀 갭은 필요할 때 `opensamguk-php-oracle`로 역사적 근거를 확인한다. 실서버/UI 버그는 `webapp-testing` → `systematic-debugging` → `loop-engineering`으로 재현·원인·재측정 증거를 남긴다.
 - skills.sh 설치 목록은 `skills-lock.json`에 고정. 다운로드한 외부 `.agents/skills/*`는 로컬 실행 표면이며 git-ignore이고, 새 환경에서는 `scripts/agent/project-skills.sh restore`로 복원한다. Codex는 같은 복원을 `SessionStart`에서 자동 실행한다. 반면 `$os-*`, `$find-project-skill` 등 저장소 운영 스킬은 추적한다.
 - 설치된 외부 스킬: `vercel-react-best-practices`, `webapp-testing`, `redesign-existing-projects`, `java-spring-boot`, `java-testing`, `kotlin-spring-boot`, `supabase-postgres-best-practices`.
 - 필요한 전문 스킬이 없으면 Codex의 `$find-project-skill`로 skills.sh 후보를 검색·검토한 뒤 프로젝트에만 설치한다. 전역 설치는 기본값이 아니다.
 - `java-testing`은 skills.sh Gen 감사상 High Risk로 표시됨. 참고로만 사용하고, 실제 합격 판정은 repo 테스트와 `tools/parity/gate.sh`가 담당.
-- PHP 레거시 분석은 항상 `legacy/devsam-core` source path + line range → parity dimensions → `tools/php-golden/` capture/compare → Kotlin/Next implementation 순서.
-- 프론트 현대화는 `hwe/ts/` Vue 디자인/흐름을 grand truth로 삼고, 하드코딩 placeholder 대신 실제 API 상태를 렌더.
+- PHP 레거시 분석이 필요한 경우 `legacy/devsam-core` source path + line range와 비교 목적을 기록한다. 신규 기능에 PHP 캡처를 선행 조건으로 두지 않는다.
+- 프론트 현대화는 승인된 디자인 방향과 현재 Next.js 구현을 기준으로 하고, `hwe/ts/` Vue는 흐름 참고에만 사용한다. 하드코딩 placeholder 대신 실제 API 상태를 렌더한다.
 - provider/model 공통 개발도구는 `tools/agent-system/check.py`. 로컬은 `tools/agent-system/check.py`, CI/PR은 `tools/agent-system/check.py --strict --base origin/main`, 기계 판독은 `--format json`.
-- 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거친다. Kimi-backed Claude Code, Codex, Gemini 등 병렬 agent는 서로 PHP 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge 금지.
+- 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거친다. 병렬 agent는 구현 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge 금지.
 
 ---
 

@@ -1,13 +1,17 @@
 # opensamguk
 
-삼국지 모의전투 HiDCHe(삼모) — **Kotlin/Spring + Next.js, 메모리 중심 CQRS** 재작성.
+삼국지 모의전투 HiDCHe(삼모)에서 출발한 **Kotlin/Spring + Next.js, 메모리 중심 CQRS** 전략 게임.
 
-PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식한 프로젝트입니다. PHP 소스가 **grand truth**이며, 모든 RNG 추출·반올림·로그 문자열·부수효과 순서를 byte-단위로 일치시키고 PHP 골든 리플레이로 게이팅합니다. 게임 동작은 절대 "개선"하지 않고 원작 그대로 재현합니다.
+초기에는 PHP 게임 **devsam/core**의 동작을 충실히 이식했고, 그 결과는 동결된 회귀 기준선으로 보존합니다.
+2026-08-20 ADR-LITE-042 이후 신규 기획의 정본은 오픈삼국의 승인된 ADR·spec·현재 구현이며, PHP와의
+draw-for-draw·byte-for-byte 일치는 신규 기능의 절대 조건이 아닙니다. 결정론적 재현과 단일 daemon write
+경로 같은 아키텍처 불변식은 계속 유지합니다.
 
 - 마이그레이션 설계 + 로드맵: [`docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`](docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md)
 - 프론트엔드 패러티 + 시드 계획(F0–F5): [`docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`](docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md)
+- 문서 포털: [`docs/README.md`](docs/README.md) · [사용자 매뉴얼](docs/user/README.md) · [관리자 매뉴얼](docs/admin/README.md) · [제품 로드맵](docs/design/roadmap.md)
 - 기여자/에이전트 가이드(패러티 규율·관례): [`CLAUDE.md`](CLAUDE.md) · 모듈/빌드/테스트 온보딩: [`AGENTS.md`](AGENTS.md)
-- 원작(grand truth) · 라이선스: HideD님의 [**devsam**](https://storage.hided.net/gitea/devsam) (MIT) — 자세한 감사의 말은 [감사 / 라이선스](#감사--라이선스)
+- 원작·라이선스: HideD님의 [**devsam**](https://storage.hided.net/gitea/devsam) (MIT) — 자세한 감사의 말은 [감사 / 라이선스](#감사--라이선스)
 - 관련 저장소: 배포(오케스트레이션) [**opensamguk-docker**](https://github.com/peppone-choi/opensamguk-docker) · 이미지 자산 [**opensamguk-images**](https://github.com/peppone-choi/opensamguk-images)(jsDelivr CDN)
 
 ---
@@ -15,7 +19,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 ## 목차
 
 1. [프로젝트 소개](#프로젝트-소개)
-2. [현재 패러티 상태](#현재-패러티-상태)
+2. [현재 제품 기준과 회귀 상태](#현재-제품-기준과-회귀-상태)
 3. [아키텍처](#아키텍처)
 4. [빠른 시작](#빠른-시작)
 5. [서비스 / 포트](#서비스--포트)
@@ -24,20 +28,22 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 8. [테스트](#테스트)
 9. [작업 운영 체계](#작업-운영-체계)
 10. [프론트엔드 / 배포 (F0–F5)](#프론트엔드--배포-f0f5)
-11. [패러티 규율](#패러티-규율)
+11. [회귀·아키텍처 규율](#회귀아키텍처-규율)
 12. [감사 / 라이선스](#감사--라이선스)
 
 ---
 
 ## 프로젝트 소개
 
-**opensamguk**는 PHP로 작성된 웹 전략 게임 *삼국지 모의전투 HiDCHe*("삼모")의 완전 재작성판입니다. 원작 `devsam/core`의 모든 메커니즘·계산·로그 메시지를 Kotlin/Spring Boot + Next.js 스택으로 이식하면서 원작 PHP와 **byte-단위 동작 패러티**를 유지합니다.
+**opensamguk**는 PHP 웹 전략 게임 *삼국지 모의전투 HiDCHe*("삼모")의 이식에서 시작해 독립적인 제품
+기획으로 발전한 재작성판입니다. 기존 이식 결과는 회귀 보호 자산으로 유지하고, 신규 세계·시스템·UX는
+오픈삼국의 승인된 의사결정을 기준으로 발전시킵니다.
 
 ### 핵심 원칙
 
-- **PHP = grand truth** — RNG 추출, 반올림 방식, 한글 로그 문자열(조사 포함), 부수효과 순서까지 PHP 소스와 byte 단위로 일치. 원작 동작을 절대 "개선"하지 않습니다.
+- **오픈삼국 제품 정본** — 신규 기획은 최신 ADR·승인 spec·현재 구현을 따른다. PHP와 외부 레거시는 역사적 근거와 회귀 참고 자료다.
 - **메모리 중심 CQRS** — 게임 엔진 데몬이 전체 월드 상태를 메모리(`InMemoryTurnWorld`)에 보유. 모든 변경은 `ChangeRecorder`에 `created`/`dirty`/`deleted` 델타로 기록되고 JDBC 배치로 일괄 flush. JPA는 **읽기/사전검증 전용**(game-api)이며 데몬 write에는 절대 쓰지 않습니다.
-- **골든 게이팅** — 각 페이즈는 실제 PHP 골든 리플레이로 마감. Docker(MariaDB 11.4 + `php:8.3-cli`, 시나리오 `1010` = 174장수)로 PHP 실행을 캡처해 Kotlin 엔진과 draw-for-draw로 대조. 골든은 절대 날조하지 않습니다.
+- **결정론적 회귀 보호** — 기존 골든과 테스트는 동결 기준선으로 보존한다. 신규 규칙은 승인 근거와 재현 가능한 테스트로 보호하며 결과·골든·검증을 날조하지 않는다.
 - **완전 LLM-free 런타임** — 프로덕션 게임 서버는 전부 룰 엔진 + 템플릿으로 동작. 런타임 LLM API 호출 0건, 외부 API 의존 0개.
 
 ### 기술 스택
@@ -50,7 +56,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 | 영속화 | PostgreSQL 16 (JDBC 배치 flush) |
 | 캐시 / wake 버스 | Redis 7 (best-effort 명령 wake, SSE 릴레이) |
 | 프론트엔드 | Next.js 15 (App Router) / React 19 / TypeScript 5.7 |
-| 스타일 | Tailwind CSS + Pretendard |
+| 스타일 | CSS variables / global CSS + Pretendard (공유 UI 패키지 통합 진행 중) |
 | 빌드 | Gradle 8.12 (Kotlin DSL) |
 | 마이그레이션 | Flyway |
 | 테스트 | JUnit 5 + kotlin.test + Testcontainers |
@@ -59,7 +65,10 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 
 ---
 
-## 현재 패러티 상태
+## 현재 제품 기준과 회귀 상태
+
+> 아래 v1 패러티 기록은 2026-07-30에 관측한 역사적 회귀 기준선입니다. 2026-08-20 ADR-LITE-042가
+> 신규 제품 기준을 supersede했으며, 현재 방향은 [제품 로드맵](docs/design/roadmap.md)을 따릅니다.
 
 2026-07-30 기준 v1은 **2026-07-26 레거시 감사의 비운영 범위**를 완료했습니다.
 이는 "프로덕션 활성화 완료"가 아닙니다. PHP `devsam/core`를 정본으로 한
@@ -176,7 +185,7 @@ push, merge, deploy를 승인하거나 실행한 기록이 아닙니다.
 
 ### CQRS 정합성 하드닝 (ARCH-S1–S6)
 
-메모리 중심 CQRS의 다중 월드·크래시·읽기 정합성을 조이는 트랙(OPENSAM-127~139). 전부 **build-only**(프로덕션 cutover/activation 미수행)이며, 라이브 게임 동작과 패러티 골든은 불변입니다. 현재 S5까지 main에 머지됐고 S6(롤아웃)은 잔여입니다.
+메모리 중심 CQRS의 다중 월드·크래시·읽기 정합성을 조이는 트랙(OPENSAM-127~139). 전부 **build-only**(프로덕션 cutover/activation 미수행)이며, 동결 회귀 기준선과 아키텍처 불변식은 유지합니다. 현재 S5까지 main에 머지됐고 S6(롤아웃)은 잔여입니다.
 
 - **월드 스코프** — 로더·쿼리·예약·Redis 키·flush를 `world_id`로 스코프하고, 동일 local-ID 2월드 격리 게이트 통과. (OPENSAM-127~129)
 - **flush 무결성** — 불변 `DeltaGenerationSession`(prepare/commit/abort), `world_version` CAS + `writer_epoch` 펜스, `FlushRecoveryGate`(FLUSH_RETRY/RELOAD 안전). (OPENSAM-130~132)
@@ -278,7 +287,7 @@ nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gatew
 - **JDBC-only — one-daemon-write 규칙 비위반**: `JdbcTemplate`만 사용(Flyway/AdminSeeder와 동일 범주). JPA `EntityManager`나 `ChangeRecorder`를 쓰지 않으며, 아키텍처 테스트 write-path scan(`opensamguk.engine.{flush,turn,run}`) 밖인 `opensamguk.engine.boot` 패키지에 위치합니다.
 - **env fence**: `SCENARIO_SEED_ENABLED`(로컬 `.env.example` 기본 `true`, production compose 기본 `false`) · `SCENARIO_CODE`(기본 `scenario_1010`) · `SCENARIO_DIR`(외부 JSON 우선 디렉터리).
 
-> `scenario_1010`은 시나리오 JSON과 `map/<mapName>.json`을 함께 읽어 **94도시** 결과를 구성합니다. 게이트: configured-world admission, `general`/`city`/`nation` 행 > 0, 엔진 부팅·턴 진행. (이는 빠른 플레이를 위한 최소 시드(A)이며, PHP `Scenario::build` draw-for-draw 패러티 보정(B)은 후속 작업입니다.)
+> `scenario_1010`은 시나리오 JSON과 `map/<mapName>.json`을 함께 읽어 **94도시** 결과를 구성합니다. 게이트: configured-world admission, `general`/`city`/`nation` 행 > 0, 엔진 부팅·턴 진행. 이는 빠른 플레이와 동결 회귀 검증을 위한 기존 시드이며, 신규 한나라 세계 목표와는 구분합니다.
 
 ### RTK14 전체 장수 데이터
 
@@ -393,16 +402,16 @@ Codex 사용자 관점의 프로젝트 열기, 업무 요청, 구현·검증·�
 - 작업에 필요한 전문 스킬이 없으면 Codex에서 `$find-project-skill`로 skills.sh 후보를 검색·검토한 뒤 프로젝트에만 설치합니다. 전역 설치는 기본값이 아닙니다.
 - Claude 훅은 `.claude/settings.json`, Codex 훅은 `.codex/hooks.json`에 배선돼 있습니다. Codex에서 저장소를 처음 열 때 훅을 신뢰하고, 설정·훅 변경 뒤에는 reload/restart해야 합니다.
 - provider/model 공통 개발도구는 `tools/agent-system/check.py`입니다. 로컬은 `tools/agent-system/check.py`, PR/CI는 `tools/agent-system/check.py --strict --base origin/main`, 에이전트 통합은 `--format json`을 사용합니다.
-- 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거칩니다. Kimi-backed Claude Code, Codex, Gemini 등 병렬 agent는 서로 PHP 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge하지 않습니다.
+- 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거칩니다. 병렬 agent는 서로 구현 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge하지 않습니다.
 - 백엔드 표준 게이트는 `tools/parity/gate.sh backend`입니다. Java 21로 Gradle을 실행하고 `BUILD SUCCESSFUL` 및 테스트 XML의 `failures=0 errors=0`을 확인합니다.
-- PHP 레거시 분석은 항상 `legacy/devsam-core` 소스 경로와 line range를 먼저 잡고, 실제 캡처가 필요한 동작은 `tools/php-golden/`로 증거를 만든 뒤 Kotlin/Next 구현과 비교합니다.
-- 외부 스킬은 보조 지식입니다. PHP grand truth, `CLAUDE.md`, `AGENTS.md`, one-daemon-write 규칙과 충돌하면 repo 규칙이 이깁니다.
+- PHP 레거시 분석이 필요한 회귀 작업은 `legacy/devsam-core` 소스 경로와 line range를 먼저 잡고, 실제 캡처가 필요한 동작은 `tools/php-golden/`로 증거를 만든 뒤 Kotlin/Next 구현과 비교합니다.
+- 외부 스킬은 보조 지식입니다. 최신 ADR, `CLAUDE.md`, `AGENTS.md`, one-daemon-write 규칙과 충돌하면 저장소 규칙이 이깁니다.
 
 ---
 
 ## 프론트엔드 / 배포 (F0–F5)
 
-P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서: [`docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`](docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md). 원칙: `hwe/ts/` Vue가 프론트 grand truth(`hwe/*.php`는 dist mount 셸), PHP가 이깁니다. 인증은 JWT 로컬(Kakao 제거)을 패러티 예외로 확정했습니다.
+P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서: [`docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`](docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md). `hwe/ts/` Vue는 기존 흐름을 이해하는 참고 자료이며, 현재 구현과 승인된 디자인 시스템이 신규 UI의 기준입니다. 인증은 JWT 로컬(Kakao 제거)을 의도적 변경으로 확정했습니다.
 
 | 단계 | 내용 | 상태 |
 |------|------|------|
@@ -413,32 +422,32 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 | **F4 액션 페이지 + mutation** | 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로로 닫고, 202 접수와 terminal 결과를 구분한다. PHP matrix·local Docker E2E로 v1 비운영 감사 범위를 확인했다. | ✅ (v1 비운영 범위) |
 | **F5 turnkey + docs** | 로컬 compose·이미지·문서·인증 브라우저/재시작 gate까지는 완료했다. 실제 운영 오케스트레이션은 `opensamguk-docker`의 shared/server/deployer 모델이며 S6/cutover는 별도 미수행이다. | ✅ 로컬 / ⬜ 운영 |
 
-> **상태 표기 주의**: F0–F3는 기본 동선 사용 가능, F4는 실제 mutation을 포함합니다. 모든 명령의 완전 동형 여부는 `opensamguk-php-oracle` → `webapp-testing` → `systematic-debugging` → `loop-engineering` 순서의 라이브 루프로 계속 검증합니다.
+> **상태 표기 주의**: F0–F3는 기본 동선 사용 가능, F4는 실제 mutation을 포함합니다. 기존 회귀 결함은 근거 캡처와 재현 루프로 확인하고, 신규 기능은 승인 spec과 실제 API·daemon 결과로 검증합니다.
 
 ---
 
-## 패러티 규율
+## 회귀·아키텍처 규율
 
-여섯 가지 비타협 규칙. 하나라도 어기면 골든 게이트가 조용히 깨집니다. 상세는 [`CLAUDE.md`](CLAUDE.md).
+신규 제품 기획에서도 유지하는 여섯 가지 규칙입니다. 상세 결정은 `.ai/decisions.md`의 ADR-LITE-042를 따릅니다.
 
-1. **RNG draw-for-draw** — 모든 난수는 `RandUtil(LiteHashDrbg(seed))`. 추출 **순서·횟수·메서드 인자**가 패러티 타깃. 전투는 `processWar()`에서 한 번 만든 **단일** `RandUtil(warSeed)`를 참조로 전달, 중간 재시드 금지.
-2. **반올림** — `Util::round` = **half-AWAY-from-zero** → `PhpRound`(음수 스케일 `phpRound(v, -2)`, `phpRound(v/100)*100` 금지). `Math.round`(half-up)·`kotlin.math.round`(half-to-even) 금지. `Util::toInt`/`intdiv` = 0 방향 절삭. 데미지 클램프 = `ceil()`.
-3. **한글 로그 byte-패러티** — 조사·색/태그 마크업·접두어(`<Y1>【name】</> <C>HP (-dead)</>`, 진격·퇴각·패퇴·전멸·분쟁·정복 …) byte 일치. 로그 순서 = 실행 순서.
-4. **델타 flush, 인라인 write 금지** — 변경은 `ChangeRecorder`에 `created`/`dirty`/`deleted`로 기록 후 일괄 flush. 리졸버는 델타만 write.
-5. **충실 이식, 날조 금지** — 골든 수치/로그/시드는 실제 PHP 캡처에서만. 캡처 불가 시 증거(sibling-code-path byte-match)와 함께 격리 + 백로그 기록. 발명·테스트 약화·골든 수정 금지. 불일치 시 Kotlin 구현을 고칩니다.
-6. **삽입 순서 보존** — jsonb / conflict-map / trigger-caller 키는 `LinkedHashMap` 삽입 순서 유지. PHP 8.0+ 정렬은 stable — 비-stable 2차 비교자 추가 금지.
+1. **결정론적 재현** — 같은 seed·입력·실행 순서에서 같은 결과를 재현한다. 신규 기능에 PHP draw-for-draw 일치를 요구하지는 않는다.
+2. **수치 변경의 의도성** — 반올림·절삭·clamp를 바꾸면 기획 근거와 회귀 영향을 기록하고 테스트한다. 기존 `PhpRound` 사용처는 의도 없이 바꾸지 않는다.
+3. **로그의 순서와 품질** — 사용자에게 보이는 한글 로그와 실행 순서는 안정적으로 유지한다. byte 일치가 필요한 동결 기준선과 신규 UX 문구를 구분한다.
+4. **델타 flush, 인라인 write 금지** — 변경은 `ChangeRecorder`에 `created`/`dirty`/`deleted`로 기록 후 일괄 flush한다. 리졸버는 델타만 쓴다.
+5. **날조 금지** — 수치·로그·골든·테스트 결과를 만들지 않는다. 기존 테스트를 약화해 신규 설계를 통과시키지 않는다.
+6. **순서 보존** — 결과에 영향을 주는 map과 이벤트의 삽입·실행 순서를 명시적으로 보존한다.
 
 ---
 
 ## 감사 / 라이선스
 
-이 저장소는 **HideD**님이 만드신 PHP 원작 게임 **devsam** — 삼국지 모의전투 HiDCHe(삼모) — 없이는 존재할 수 없었습니다. 모든 게임 메커니즘·계산·로그 문자열·RNG 추출의 grand truth가 그분의 작업물이며, opensamguk은 그 동작을 byte-단위로 충실히 이식·재현한 파생물입니다.
+이 저장소는 **HideD**님이 만드신 PHP 원작 게임 **devsam** — 삼국지 모의전투 HiDCHe(삼모) — 없이는 존재할 수 없었습니다. 원작의 게임 메커니즘·계산·로그·운영 경험은 오픈삼국의 역사적 토대이며, 초기 이식 결과는 지금도 중요한 동결 회귀 기준선입니다.
 
-- 원작 소스 (grand truth): **devsam** — <https://storage.hided.net/gitea/devsam>
+- 원작 소스: **devsam** — <https://storage.hided.net/gitea/devsam>
 - 원작 `devsam/core`는 **MIT 라이선스**로 공개되어 있습니다. opensamguk은 그 출처와 저작자 표시를 유지하며, 파생물로서 MIT 라이선스의 정신을 존중합니다.
 
 > HideD님의 노력 없이는 이 저장소도 없었습니다. 깊이 감사드립니다 — 이 프로젝트의 토대 전부가 그분의 헌신에서 비롯되었습니다.
 
 ---
 
-*최종 갱신: 2026-07-30 · final parity review `CLEARED`, 연 36순 유지, corrected local Docker 수용 게이트 반영. S6/프로덕션 cutover는 미수행이며, git action은 이 문서 시점 미실행입니다. `main` 머지는 배포 경고 뒤 별도 재확인 대상입니다.*
+*최종 갱신: 2026-08-20 · ADR-LITE-042 제품 기준 전환과 문서 포털·사용자·관리자·기획 매뉴얼 반영. 2026-07-30 v1 회귀 기록은 역사적 증거로 보존합니다. S6/프로덕션 cutover는 미수행이며, `main` 반영은 별도 승인 대상입니다.*

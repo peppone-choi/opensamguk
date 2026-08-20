@@ -1,6 +1,6 @@
 # 문서 전면 개편 계획
 
-> 상태: 실행 중  
+> 상태: 완료
 > 사용자 요청: Gitea core2026 문서, GitHub 이슈, Jira 티켓을 근거로 Markdown 문서를 전면 개선하고 사용자·관리자 매뉴얼을 만든다.
 
 ## 범위
@@ -20,9 +20,14 @@
 
 ## 검증
 
-- 내부 Markdown 링크 존재 검사
-- 구 정본 문구와 현행/계획 혼동 검사
-- `git diff --check`
-- `scripts/agent/verify-changes.sh --run`
-- 작성자와 분리된 독립 문서 리뷰
+- 내부 Markdown 링크: 변경 Markdown 17개, 상대 링크 39개, 누락 0
+- GitHub: 인용 이슈 20개의 번호·제목·상태 확인
+- Jira: 실제 OPENSAM 사이트가 커넥터 권한 밖이므로 live 상태 `UNKNOWN`
+- `git diff --check`: clean
+- untracked Markdown whitespace: 0
+- `tools/agent-system/check.py --strict --base origin/main --format json`: `ok: true`, findings 0
+- `scripts/agent/verify-changes.sh --run`: 최초 1회 실행에서 `docs/admin/README.md`의 trailing whitespace와
+  EOF 빈 줄을 탐지해 실패; 두 항목 수정 후 해당 whitespace 검사와 strict check를 통과
+- 독립 리뷰: `docs/superpowers/reviews/2026-08-20-documentation-overhaul-review.md`, `Verdict: cleared`
 
+문서 전용 변경이므로 백엔드 Gradle, 프론트 typecheck/test, Docker, 브라우저 검증은 실행하지 않았다.

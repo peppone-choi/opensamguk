@@ -18,7 +18,7 @@
 - 관리자 메뉴별 책임과 권한 표
 - 배포, 초기화, 게임 취소의 데이터 경계를 분리하는 방식
 - 배포 전후 체크리스트와 실패/미검증을 pass에서 분리하는 규칙
-- command registry에서 사용자 카탈로그를 생성하는 방향
+- command registry에서 사용자 카탈로그를 생성하는 방향(후속 기획, 이번 개편에서는 미구현)
 
 ## 그대로 가져오지 않은 내용
 
@@ -55,4 +55,3 @@ Kotlin/Spring Boot/JDBC/Next.js/Docker/nginx이므로 다음은 복사하지 않
 - 연결된 Atlassian 사이트는 `dingco-4-team.atlassian.net`뿐이었고 실제 OPENSAM 사이트
   `pepponechoi-jira.atlassian.net`은 커넥터 권한 밖이었습니다.
 - 따라서 이 감사와 새 로드맵에서 Jira live 상태는 `UNKNOWN`이며 GitHub issue URL을 교차 참조로 사용합니다.
-
