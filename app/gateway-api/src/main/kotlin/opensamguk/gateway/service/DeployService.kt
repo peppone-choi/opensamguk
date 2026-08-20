@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
+import java.util.UUID
 
 /**
  * 버전 선택/다운그레이드 배포의 게이트키퍼 — 내부망 deployer 사이드카의 클라이언트.
@@ -209,29 +210,106 @@ class DeployService(
             ?: proxyEnvPatch(path = "/env/server?id={id}", serverId = server.id, body = body)
     }
 
+    @Synchronized
     fun createServer(body: String): EnvProxyResponse {
         validateCreateServer(body)?.let { return it }
         val server = serverDefFromCreateRequest(body)
-        val response = proxyCreateServer(body)
-        if (!isConfirmedServerSuccess(response, server.id)) return response
-        return persistRegistryChange("create", server.id, response) {
-            registry.register(server)
+        if (registry.find(server.id) != null) {
+            return json(409, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "이미 등록된 서버입니다: ${server.id}")))
         }
+        val ownerToken = UUID.randomUUID().toString()
+        val transition = try {
+            registry.beginTransition(ServerRegistryTransitionAction.CREATE, server, ownerToken)
+        } catch (e: ServerRegistryTransitionConflict) {
+            return registryConflict(server.id)
+        } catch (e: Exception) {
+            log.error("game_server transition start failed action=CREATE server={}", server.id, e)
+            return registryUnavailable(server.id)
+        }
+        if (transition.remoteApplied) {
+            return completeRecoveredRegistryTransition(transition)
+        }
+        if (transition.dispatched) {
+            val remoteExists = remoteServerExists(server.id)
+            if (remoteExists == null) {
+                releaseRegistryTransition(transition)
+                return registryRepairPending(server.id, remoteApplied = null)
+            }
+            if (remoteExists) {
+                return markAndCompleteRecoveredTransition(transition)
+            }
+            releaseRegistryTransition(transition)
+            return registryRepairPending(server.id, remoteApplied = null)
+        }
+        try {
+            registry.markDispatched(server.id, transition.action, transition.ownerToken)
+        } catch (e: Exception) {
+            log.error("game_server transition dispatch mark failed action=CREATE server={}", server.id, e)
+            cancelRegistryTransition(transition)
+            return registryUnavailable(server.id)
+        }
+        val response = proxyCreateServer(body)
+        if (!isConfirmedServerSuccess(response, server.id)) {
+            if (isConfirmedServerRejection(response)) {
+                cancelRegistryTransition(transition)
+                return response
+            }
+            releaseRegistryTransition(transition)
+            return registryRepairPending(server.id, remoteApplied = null)
+        }
+        return markAndCompleteRegistryTransition(transition, response)
     }
 
+    @Synchronized
     fun deleteServer(serverId: String): EnvProxyResponse {
         val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
+        val ownerToken = UUID.randomUUID().toString()
+        val transition = try {
+            registry.beginTransition(ServerRegistryTransitionAction.CLOSE, server, ownerToken)
+        } catch (e: ServerRegistryTransitionConflict) {
+            return registryConflict(server.id)
+        } catch (e: Exception) {
+            log.error("game_server transition start failed action=CLOSE server={}", server.id, e)
+            return registryUnavailable(server.id)
+        }
+        if (transition.remoteApplied) {
+            return completeRecoveredRegistryTransition(transition)
+        }
+        if (transition.dispatched) {
+            val remoteExists = remoteServerExists(server.id)
+            if (remoteExists == null) {
+                releaseRegistryTransition(transition)
+                return registryRepairPending(server.id, remoteApplied = null)
+            }
+            if (!remoteExists) {
+                return markAndCompleteRecoveredTransition(transition)
+            }
+            releaseRegistryTransition(transition)
+            return registryRepairPending(server.id, remoteApplied = null)
+        }
+        try {
+            registry.markDispatched(server.id, transition.action, transition.ownerToken)
+        } catch (e: Exception) {
+            log.error("game_server transition dispatch mark failed action=CLOSE server={}", server.id, e)
+            cancelRegistryTransition(transition)
+            return registryUnavailable(server.id)
+        }
         val response = proxyServerAction(
             method = "POST",
             path = "/servers/close",
             serverId = server.id,
             body = objectMapper.writeValueAsString(mapOf("id" to server.id)),
         )
-        if (!isConfirmedServerSuccess(response, server.id)) return response
-        return persistRegistryChange("close", server.id, response) {
-            registry.unregister(server.id)
+        if (!isConfirmedServerSuccess(response, server.id)) {
+            if (isConfirmedServerRejection(response)) {
+                cancelRegistryTransition(transition)
+                return response
+            }
+            releaseRegistryTransition(transition)
+            return registryRepairPending(server.id, remoteApplied = null)
         }
+        return markAndCompleteRegistryTransition(transition, response)
     }
 
     fun resetServer(serverId: String, body: String): EnvProxyResponse {
@@ -595,19 +673,116 @@ class DeployService(
                 node.path("id").isTextual && node.path("id").asText() == expectedId
         }.getOrDefault(false)
 
-    private fun persistRegistryChange(
-        action: String,
-        serverId: String,
-        response: EnvProxyResponse,
-        change: () -> Unit,
+    private fun isConfirmedServerRejection(response: EnvProxyResponse): Boolean =
+        runCatching {
+            val node = objectMapper.readTree(response.body)
+            node.isObject && node.path("ok").isBoolean && !node.path("ok").asBoolean()
+        }.getOrDefault(false)
+
+    private fun markAndCompleteRegistryTransition(
+        transition: ServerRegistryTransition,
+        remoteResponse: EnvProxyResponse,
     ): EnvProxyResponse =
         try {
-            change()
-            response
+            registry.markRemoteApplied(transition.server.id, transition.action, transition.ownerToken)
+            registry.completeTransition(transition.server.id, transition.action, transition.ownerToken)
+            remoteResponse
         } catch (e: Exception) {
-            log.error("game_server persistence failed action={} server={}", action, serverId, e)
-            json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "Server registry update failed.")))
+            log.error(
+                "game_server transition completion pending after remote success action={} server={}",
+                transition.action,
+                transition.server.id,
+                e,
+            )
+            releaseRegistryTransition(transition)
+            registryRepairPending(transition.server.id, remoteApplied = true)
         }
+
+    private fun markAndCompleteRecoveredTransition(transition: ServerRegistryTransition): EnvProxyResponse =
+        try {
+            registry.markRemoteApplied(transition.server.id, transition.action, transition.ownerToken)
+            completeRecoveredRegistryTransition(transition.copy(remoteApplied = true))
+        } catch (e: Exception) {
+            log.error("game_server recovered transition mark failed action={} server={}", transition.action, transition.server.id, e)
+            releaseRegistryTransition(transition)
+            registryRepairPending(transition.server.id, remoteApplied = true)
+        }
+
+    private fun completeRecoveredRegistryTransition(transition: ServerRegistryTransition): EnvProxyResponse =
+        try {
+            registry.completeTransition(transition.server.id, transition.action, transition.ownerToken)
+            json(
+                200,
+                objectMapper.writeValueAsString(
+                    mapOf("ok" to true, "id" to transition.server.id, "recovered" to true),
+                ),
+            )
+        } catch (e: Exception) {
+            log.error("game_server transition repair failed action={} server={}", transition.action, transition.server.id, e)
+            releaseRegistryTransition(transition)
+            registryRepairPending(transition.server.id, remoteApplied = true)
+        }
+
+    private fun releaseRegistryTransition(transition: ServerRegistryTransition) {
+        try {
+            registry.releaseTransition(transition.server.id, transition.action, transition.ownerToken)
+        } catch (e: Exception) {
+            log.error("game_server transition lease release failed action={} server={}", transition.action, transition.server.id, e)
+        }
+    }
+
+    private fun cancelRegistryTransition(transition: ServerRegistryTransition) {
+        try {
+            registry.cancelTransition(transition.server.id, transition.action, transition.ownerToken)
+        } catch (e: Exception) {
+            log.error("game_server transition cancellation failed action={} server={}", transition.action, transition.server.id, e)
+        }
+    }
+
+    private fun remoteServerExists(serverId: String): Boolean? =
+        try {
+            val raw = rest.get()
+                .uri("${deployerBase()}/servers")
+                .header("Authorization", "Bearer $deployerToken")
+                .retrieve()
+                .body(String::class.java)
+            val root = objectMapper.readTree(raw)
+            if (!root.isArray) null else root.any { it.path("id").isTextual && it.path("id").asText() == serverId }
+        } catch (e: Exception) {
+            log.warn("deployer server reconciliation failed server={}", serverId, e)
+            null
+        }
+
+    private fun registryConflict(serverId: String): EnvProxyResponse =
+        json(409, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "서버 레지스트리 작업이 진행 중입니다: $serverId")))
+
+    private fun registryUnavailable(serverId: String): EnvProxyResponse =
+        json(
+            503,
+            objectMapper.writeValueAsString(
+                mapOf("ok" to false, "id" to serverId, "message" to "서버 레지스트리를 준비하지 못해 deployer를 호출하지 않았습니다."),
+            ),
+        )
+
+    private fun registryRepairPending(serverId: String, remoteApplied: Boolean?): EnvProxyResponse =
+        json(
+            202,
+            objectMapper.writeValueAsString(
+                mapOf(
+                    "ok" to false,
+                    "completed" to false,
+                    "id" to serverId,
+                    "remoteApplied" to remoteApplied,
+                    "registryApplied" to false,
+                    "retryable" to true,
+                    "message" to if (remoteApplied == true) {
+                        "deployer 작업은 반영됐지만 서버 레지스트리 복구가 필요합니다. 같은 요청을 다시 시도하세요."
+                    } else {
+                        "이전 deployer 작업 상태를 확인하지 못했습니다. 같은 요청을 다시 시도하세요."
+                    },
+                ),
+            ),
+        )
 
     private fun defaultDeployProject(canonicalId: String): String =
         "opensamguk-s$canonicalId"

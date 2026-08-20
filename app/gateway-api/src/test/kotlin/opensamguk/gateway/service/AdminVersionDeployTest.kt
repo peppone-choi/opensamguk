@@ -45,6 +45,24 @@ class AdminVersionDeployTest {
             )
             """.trimIndent(),
         )
+        jdbc.execute(
+            """
+            CREATE TABLE game_server_registry_transition (
+                server_id VARCHAR(48) PRIMARY KEY,
+                action VARCHAR(8) NOT NULL,
+                display_name VARCHAR(100) NOT NULL,
+                game_api_url VARCHAR(255) NOT NULL,
+                game_engine_url VARCHAR(255) NOT NULL,
+                deploy_project VARCHAR(100) NOT NULL,
+                generation INTEGER,
+                scenario_code VARCHAR(100),
+                dispatched BOOLEAN NOT NULL DEFAULT FALSE,
+                remote_applied BOOLEAN NOT NULL DEFAULT FALSE,
+                owner_token VARCHAR(36) NOT NULL,
+                lease_until TIMESTAMP WITH TIME ZONE NOT NULL
+            )
+            """.trimIndent(),
+        )
         return ServerRegistry(json, mapper, jdbc)
     }
 
