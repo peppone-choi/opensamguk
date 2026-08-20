@@ -42,6 +42,18 @@ Verdict: cleared
 - N+1 없음 — 컨트롤러당 `findById` 1회.
 - one-daemon-write-rule 무관(읽기 경로만), 골든·RNG·로그 무관.
 
+## `common/src` 변경분 — 전용 테스트가 없는 이유
+
+`common/src/main/kotlin/opensamguk/common/auth/GatewayPrincipal.kt` 하나가 추가됐고,
+내용은 `data class GatewayPrincipal(userId: Long, role: String)` 뿐이다. 분기도, 계산도,
+RNG 도, 로그도 없다 — 값 두 개를 담는 그릇이다. 기존 `GatewayProfileClaims` 는
+**손대지 않았다**(게이트웨이가 계속 쓴다).
+
+그래서 `common/src/test/` 에 새 테스트를 넣지 않았다. 이 타입이 옳게 채워지는지는
+소비자 쪽에서 잠근다 — `GameApiJwtVerifierTest`(어떤 클레임이 principal 이 되는가),
+`JwtVerifyFilterTest`(principal 이 요청에 어떻게 실리는가). 그릇 자체를 단언하는
+테스트는 컴파일러가 이미 하는 일을 반복하는 것이라 넣지 않는다.
+
 ## 잔여 (후속 PR)
 
 게이트웨이가 표시 클레임 발급을 끊는 일. **선행 조건은 모든 게임 서버가 이 커밋 이후 이미지로
