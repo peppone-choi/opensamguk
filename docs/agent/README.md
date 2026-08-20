@@ -27,6 +27,8 @@ Codex를 처음 사용하는 사람은 먼저 [`codex-user-manual.md`](codex-use
 | 프롬프트/위임 작성 | `prompt-pack.md` |
 | 작업 방식 선택 (사람 vs AI) | `workflow-before-after.md` |
 | 컨텍스트가 길어짐 | `context-strategy.md` |
+| Jira 티켓 ↔ GitHub 이슈 미러 | `jira-github-mirror.md` |
+| 무엇부터 할지 (열린 이슈 우선순위) | `issue-priority-tiers.md` |
 
 ## 정본 관계 (중복 금지)
 
