@@ -1,0 +1,97 @@
+# 운영·복구 매뉴얼
+
+> 상태: 현재 GCP/shared-server 운영 경계 기준
+> 마지막 검토: 2026-08-20
+
+## 승인 경계
+
+다음은 각각 별도 승인 대상입니다.
+
+- commit, push, PR, merge
+- production workflow dispatch와 deploy
+- 서버 reset·delete와 운영 데이터 삭제
+- secret 접근·변경
+- DB migration 적용과 restore
+
+한 작업의 승인이 다른 작업의 승인을 자동으로 포함하지 않습니다.
+
+## 복구 준비 상태: `UNKNOWN / blocked`
+
+현재 이 저장소의 [reset workflow](../../.github/workflows/reset-game-server.yml)는 reset 전 PostgreSQL 백업을
+만드는 경로는 포함하지만, 그 백업을 새 격리 DB에 복원하고 검증하는 정본 restore runbook은 제공하지
+않습니다. 별도 운영 저장소의 승인된 runbook, 백업 보존 위치·기간, 암호화·접근 주체, RPO/RTO, restore
+명령과 성공 판정이 확인되기 전에는 production reset/delete를 실행하지 않습니다.
+
+이 문서의 복구 체크리스트는 restore 명령을 대신하지 않습니다. 실행 가능한 정본 절차가 확인될 때까지
+reset/delete는 `blocked`이며, 관리자 화면이나 workflow의 존재를 실행 승인으로 해석하지 않습니다.
+
+## 배포 전 체크리스트
+
+1. 대상 저장소, 서버 ID, branch와 immutable tag/SHA를 기록합니다.
+2. GitHub CI와 필요한 로컬 검증이 현재 SHA에서 통과했는지 확인합니다.
+3. `gcp-prod` runner와 대상 VM/container가 정상인지 확인합니다.
+4. disk 용량과 Docker image/volume 여유를 확인합니다.
+5. 승인된 DB backup/restore runbook, 보존 범위와 Flyway 현재/목표 버전을 확인합니다. 없으면 중단합니다.
+6. server env의 scenario code와 world ID를 값 노출 없이 확인합니다.
+7. rollback 가능한 앱 버전과 schema 호환성을 확인합니다.
+8. 점검 공지와 관측 담당자를 정합니다.
+
+## 배포 후 체크리스트
+
+- nginx `/health`
+- gateway-api, game-api, game-engine health
+- 로그인 → 로비 → 대상 서버 입장
+- read API와 SSE 연결
+- 명령 1건의 접수 → terminal 결과 → 권위 read 반영
+- `world_state`의 현재 연·월 또는 턴 시각 전진
+- 서버별 game-api/game-engine 버전 skew 없음
+- 로그에 secret·개인정보 노출 없음
+
+local unit, Testcontainers와 Docker smoke는 production 네트워크·runner·DNS·실데이터 전환을 증명하지 않습니다.
+
+## 대표 장애 대응
+
+### 서비스는 online인데 화면이 502
+
+nginx 정적 upstream의 stale DNS, 대상 container health와 포트를 확인합니다. shared 서비스 변경 뒤 nginx를
+마지막에 재시작하는 운영 순서를 따릅니다.
+
+### 명령은 접수됐는데 결과가 없음
+
+durable inbox, Redis wake, engine claim, flush, result/outbox, XACK 순서에서 요청 ID를 추적합니다. Redis 알림은
+DB commit의 대체 진실이 아닙니다.
+
+### engine 재기동 뒤 상태가 과거로 돌아감
+
+새로운 write를 멈추고 world ID, 마지막 version, snapshot loader와 flush/recovery 상태를 확인합니다. 현재
+DB를 추측으로 고치지 말고 restart-rehydrate 증거와 quarantine 절차를 따릅니다.
+
+### OOM 또는 반복 재시작
+
+최근 [OPENSAM-217/#477](https://github.com/peppone-choi/opensamguk/issues/477)의 Compose restart·메모리
+계약과 현재 JVM/container 한도를 대조합니다. 구형 로컬 `.env`에서 world ID가 빠졌는지도 확인하되 실제 값을
+출력하지 않습니다.
+
+### migration 실패
+
+추가 migration을 재시도하기 전에 실패한 버전, transaction 여부, 적용된 schema history와 앱 호환성을
+확인합니다. 이미 릴리스된 migration 파일을 수정하지 않고 새 전진 migration으로 수리합니다.
+
+## 복구 원칙
+
+- 앱 rollback과 DB rollback을 같은 것으로 취급하지 않습니다.
+- Flyway migration은 자동 역실행하지 않습니다.
+- 승인된 restore runbook이 생기면 새 격리 DB에서 먼저 연습하고 행 수·world ID·핵심 read를 대조합니다.
+- reset/delete가 commit된 뒤에는 “재시도”가 중복 삭제·정산을 만들지 않는지 확인합니다.
+- 복구 뒤 로그인, 권한, 명령, SSE와 턴 전진을 실제 사용자 경로로 다시 확인합니다.
+
+## 에스컬레이션에 필요한 정보
+
+- 발생 시각과 서버 ID
+- 배포 SHA/tag와 서비스별 버전
+- request ID 또는 operation ID
+- health와 오류 메시지의 비밀 제거본
+- 마지막 정상 관측과 최초 실패 관측
+- 실행한 조치와 결과
+
+토큰, 비밀번호, 실제 `.env`, 사용자 개인정보는 첨부하지 않습니다.

@@ -2,15 +2,16 @@
 
 ## 목적
 
-PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모)를 **Kotlin/Spring + Next.js + PostgreSQL + Redis + nginx**의 메모리 중심 CQRS 스택으로 **byte 단위 충실 이식**하고, shared/server `opensamguk-docker` 운영 모델로 라이브 서비스를 준비·운영한다. v1(패러티)이 기반이고, v2(실시간 대형 전장 등 신규 콘텐츠)가 그 위에 준비 중이다.
+PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모) 이식에서 출발한 제품을 **Kotlin/Spring + Next.js + PostgreSQL + Redis + nginx**의 메모리 중심 CQRS 스택으로 운영하고 발전시킨다. 기존 v1 결과는 동결 회귀 기준선이며, 신규 세계·시스템·UX는 오픈삼국의 승인된 제품 결정을 따른다(ADR-LITE-042).
 
 ## 핵심 소비자
 
 - 라이브 게임 유저(sam.peppone.dev), 그리고 이 저장소에서 작업하는 사람+AI 에이전트 팀.
 
-## 현재 구현 범위 (2026-07-30 기준)
+## 현재 구현 범위 (2026-08-20 기준)
 
-이 문서는 온보딩용 **bounded status**다. v1 비운영 종결의 상세 근거는
+이 문서는 온보딩용 **bounded status**다. 2026-07-30 v1 비운영 종결은 역사적 회귀 기준선이고, 신규 제품
+기준은 ADR-LITE-041/042와 `docs/design/roadmap.md`를 따른다. v1 상세 근거는
 `docs/superpowers/research/2026-07-26-v1-legacy-equivalence-audit.md`의 최종 부록,
 `docs/loops/v1-nonoperational-completion-2026-07-27/LEDGER.md`와 review를 따른다.
 
@@ -28,8 +29,8 @@ PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모)를 **Kotlin/S
   운영 활성화와 구분한다.
 - ⬜ S6/activation: canary·expand/backfill·replica ADR, capacity/admission,
   production cutover는 **별도 인간 승인**과 운영 게이트 전까지 미수행이다.
-- 🔄 v2: v1 오리지널을 보존한 별도 제품/운영 트랙이며, v1 비운영 종결과
-  혼동하지 않는다.
+- 🔄 신규 제품 트랙: 한나라 175군·780성·14지역, 공유 디자인 시스템, 서버 격리를
+  승인·진행 상태에 따라 구현한다. 승인된 목표를 구현 완료로 오해하지 않는다.
 
 이 상태는 git action 전에도 유효한 release-candidate 관측 증거다. commit, push,
 merge, deploy가 실행되었거나 승인되었다는 뜻은 아니다.
@@ -49,14 +50,14 @@ merge, deploy가 실행되었거나 승인되었다는 뜻은 아니다.
 ## 외부 시스템
 
 - 라이브 제어면: 별도 `opensamguk-docker` 저장소의 shared/server/deployer 모델. 이 앱 저장소의 GitHub Actions는 GHCR 이미지를 만들고 shared stack을 갱신하지만, 각 게임 서버의 이미지 핀 승격은 별도 운영 행위다. 이 저장소의 `docker-compose.production.yml`·`scripts/deploy.sh`는 호환 전용이다. **런타임 외부 API 의존 0, LLM-free.**
-- 오라클: `legacy/devsam-core`(PHP, git-ignore) — 모든 동작의 grand truth. `tools/php-golden/` Docker 캡처 하니스.
+- 역사·회귀 참고: `legacy/devsam-core`(PHP, git-ignore), `tools/php-golden/` Docker 캡처 하니스. 신규 설계 정본은 최신 ADR·승인 spec·현재 구현이다.
 
 ## 핵심 품질 속성
 
-1. **패러티**: RNG draw-for-draw, half-away 반올림, 한글 로그 byte-일치, 삽입 순서. (`CLAUDE.md` §Parity가 정본)
+1. **결정론적 회귀**: 같은 seed·입력·순서의 재현, 동결 골든 보존, 의도적인 수치·로그 변경 기록. PHP draw-for-draw는 신규 설계 제약이 아니다.
 2. **아키텍처 불변식**: one-daemon-write rule (데몬 write는 `ChangeRecorder`→`JdbcFlushExecutor`만).
 3. **CQRS 정합성**: world-scoped identity, generation/fence/recovery, durable command path, bounded reads는 build-only foundation이며 activation과 구분한다.
-4. **증거 기반**: 골든은 실 PHP 캡처만, 완료 판정은 게이트 XML.
+4. **증거 기반**: 기존 골든은 실 캡처 기반 동결 자산이며, 완료 판정은 현재 spec과 실제 게이트·사용 표면 관측으로 한다.
 
 ## 확인된 제약
 
@@ -66,7 +67,7 @@ merge, deploy가 실행되었거나 승인되었다는 뜻은 아니다.
 
 ## 주요 파일 경로
 
-- 규칙 정본: `CLAUDE.md` · 요약: `AGENTS.md` · 하니스 지도: `.claude/HARNESS.md`
+- 제품·규칙 정본: `.ai/decisions.md` · `CLAUDE.md` · 요약: `AGENTS.md` · 문서 포털: `docs/README.md`
 - 운영 계약: `docs/superpowers/WORKING_SYSTEM.md` · 루프 원장: `docs/loops/*/LEDGER.md`
 - 게이트: `tools/parity/gate.sh` · 에이전트 시스템 체크: `tools/agent-system/check.py` · 스모크: `tools/smoke.sh`
 - 현재 상태: `.ai/task.md`, `.ai/current-state.md`

@@ -1,6 +1,6 @@
 # CLAUDE.md — opensamguk
 
-Load-bearing rules. They encode the parity discipline; violating them silently breaks the golden gates.
+Load-bearing product and architecture rules. Violating them silently breaks deterministic regression and operational integrity.
 
 ## What this repo is
 
@@ -71,7 +71,7 @@ Modules (`settings.gradle`):
 
 Each phase = one cycle **spec → plan → adversarial review → execute → gate**. Plans in `docs/superpowers/plans/`, research in `docs/superpowers/research/`.
 - **Foundation-first.** Every *shared extension point* (registry, base class, stat-key enum, pipeline hook) is built in a **Tier-0 foundation wave** that later families only **consume**. Parallel worktree families must be **disjoint** — never co-widen the same file (⇒ merge conflict; cross-area shared artifacts build sequentially, creator-then-consumer).
-- The phase **gate** is a real PHP golden replayed draw-for-draw. Not "done" until green (or gaps quarantined with proof + logged to the backlog).
+- A phase **gate** must match its current spec and risk: preserve affected frozen-baseline tests, add reproducible evidence for new rules, and log any unverified gap as `UNKNOWN` or blocked.
 - One logical commit per task. **Every commit message ends with:**
   ```
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
@@ -86,14 +86,14 @@ Each phase = one cycle **spec → plan → adversarial review → execute → ga
 
 ## Skills (`Skill` tool or `/<name>`; use the **process** skill first, then implementation)
 
-- **working system** — start non-trivial work from `docs/superpowers/WORKING_SYSTEM.md`. It fixes skill routing, PHP oracle analysis, parity comparison, hardcoding policy, and the standard gate command. `skills-lock.json` records downloaded skills.sh project skills; those external skill directories remain local, while repository-owned operating skills are tracked under `.agents/skills/`.
+- **working system** — start non-trivial work from `docs/superpowers/WORKING_SYSTEM.md`. It fixes skill routing, historical PHP-oracle analysis when a frozen-baseline regression needs it, hardcoding policy, and the standard gate command. `skills-lock.json` records downloaded skills.sh project skills; those external skill directories remain local, while repository-owned operating skills are tracked under `.agents/skills/`.
 - **skills.sh project skills** — restore the locked set with `scripts/agent/project-skills.sh restore`; Codex also runs this from `SessionStart`. Use `vercel-react-best-practices` for Next.js/React, `webapp-testing` for browser flows, `redesign-existing-projects` for legacy UI modernization, `kotlin-spring-boot`/`java-spring-boot` for backend work, and `supabase-postgres-best-practices` for DB work. `java-testing` is reference-only because its skills.sh Gen audit was High Risk. If a task needs missing expertise, use `$find-project-skill` to search and review candidates before a project-only install; never install it globally by default.
 - **provider-agnostic guard** — `tools/agent-system/check.py` is the shared local/CI check for every model/provider. Use `--format json` for machine-readable agent integration and `--strict --base origin/main` in PR/CI.
-- **cross-agent critique** — non-trivial work must be attacked by an independent agent/provider before ship. Kimi-backed Claude Code, Codex, Gemini, or another peer should check PHP evidence, tests, docs, hardcoding, and production invariants; unresolved `fix-required` blocks merge/deploy.
+- **cross-agent critique** — non-trivial work must be attacked by an independent agent/provider before ship. A peer checks current spec/ADR evidence, tests, docs, hardcoding, and production invariants. PHP evidence is required only for a historical frozen-baseline claim. Unresolved `fix-required` blocks merge/deploy.
 - **backend gate** — use `tools/parity/gate.sh backend` for the standard backend proof. It runs Java 21 Gradle tasks and verifies XML failures/errors, not exit code alone.
 - **gstack** — all web browsing via **`/browse`** (never `mcp__claude-in-chrome__*`). Plan/review/ship/QA/deploy commands — full list in `~/.claude/CLAUDE.md`.
 - **loop engineering / compound engineering** — shared source of truth: `docs/superpowers/LOOP_ENGINEERING.md`. Claude/Codex adapters must stay thin and follow the same measure → one hypothesis → remeasure → adopt/revert loop. Claude `/ce-*` commands and review agents are provider surfaces, not separate rules.
-- **mandatory legacy-gap chain** — for legacy gaps, UI parity, and production bugs, run `opensamguk-php-oracle` first to record PHP/hwe path+line evidence, `webapp-testing` for UI reproduction, `systematic-debugging` for root-cause convergence before fixes, and wrap the whole pass with `loop-engineering` baseline/hypothesis/grader/adopt-or-revert evidence. If any link is unavailable, record `채점대기`/`blocked`; do not silently ship/merge.
+- **defect chain** — for a historical frozen-baseline gap, use `opensamguk-php-oracle` to record PHP/hwe path+line evidence before comparison. For current UI or production bugs, start from `webapp-testing`, converge the root cause with `systematic-debugging`, and wrap the pass with `loop-engineering` baseline/hypothesis/grader/adopt-or-revert evidence. New product defects do not require PHP evidence. If a required current-scope link is unavailable, record `채점대기`/`blocked`; do not silently ship/merge.
 - **superpowers** — `superpowers:subagent-driven-development` (TDD red→green, one commit/task) is the rigid execution skill; follow exactly.
 - **code-review-graph (MCP)** — live structural graph of this repo (565 files / 6936 nodes / 67k edges). Use `detect_changes` / `query_graph` (callers/callees/imports/tests) / `get_impact_radius` / `get_affected_flows` / `semantic_search_nodes` / `get_review_context` **BEFORE** Grep/Glob; rebuild via `build_or_update_graph_tool`.
 - **harness** ("하네스 구성해줘") · **graphify** (`/graphify`).
@@ -107,9 +107,9 @@ Each phase = one cycle **spec → plan → adversarial review → execute → ga
 - ✅ **P3** monthly pipeline — `MonthlyPipeline.runMonth()` + `PostUpdateMonthly` Q1-Q17 settlement + `TurnDaemonLifecycle` + `EventActionFactory` + `EventDispatcher` + all 9 world event leaves (`UpdateNationLevel`, `AssignGeneralSpeciality`, `ProcessIncome`, `ProcessWarIncome`, `RaiseDisaster`, `RandomizeCityTradeRate`, `UpdateCitySupply`, `ProcessSemiAnnual`, `MergeInheritPointRank`). Zero stubs.
 - ✅ **P6 pure-logic** gate-closed (~2195 tests): inheritance enum keyName parity + buff fold slot #7 + `TurnDaemonCommandDispatcher` + `BettingActions` registrar + missing diplomacy proposals (`종전제의`, `불가침파기제의`) + `BuyHiddenBuff` cumulative-diff cost + `AuctionBidHandler`/`AuctionFinalizeHandler` + messaging sink unified (`GeneralActionResolveContext` + `NationActionResolveContext`) + `BettingEngine` calcReward/giveReward + `BettingInfo` structural realignment.
 - ✅ **P6 P7-coupled** 완료 — `PlaceBetHandler` (gold deduction + ng_betting INSERT), `AuctionExpiryDaemon` (turn lifecycle wired), `DiplomaticMessageController` (accept/decline API), `ChangeRecorder` betting channel + `JdbcFlushExecutor` flush step.
-- ⬜ **P6 P8-coupled remainder** — P6-specific PHP golden capture scripts (diplomacy, message, auction, betting, inheritance, worldcmd), parity harness integration, restart-rehydrate 잔여. **정정(2026-08-18):** `OPENSAM-149`/`#324`의 bounded restart gate는 머지·클리어됐다(`docs/superpowers/reviews/2026-08-14-opensam-149-closeout-review.md` = cleared, `RehydrateLosslessGateIT`·`FullRehydrateTurnGateIT`·`RehydrateRoundTripIT`). 다만 closure matrix의 Q 셀은 여전히 quarantine이고 all-channel lossless도, V2 campaign 범위도 아니다.
-- 🔄 **P7** read API ✅ + frontend ⬜ — dedicated REST controllers for auction/betting/message/mailbox/diplomacy 완료, `GetDiplomacy.php` neutral-map masking 완료, frontend pages (`web/game/app/game/`) 진행 예정.
-- ⬜ **P8** parity harness (PHP 93-command compare, 23 missing ported/backlogged) + gateway orchestration + GCP Compute Engine e2-standard-2 (`gcp-prod`) deploy (LLM-free, 0 external API deps). Infra scaffold present: `.github/workflows/deploy.yml`, `docker-compose.prod.yml`, `infra/nginx/`, `scripts/deploy.sh`, `HealthCheckController`.
+- ✅ **P6 restart-rehydrate bounded gate** — `OPENSAM-149`/`#324`의 bounded restart gate는 머지·클리어됐다(`docs/superpowers/reviews/2026-08-14-opensam-149-closeout-review.md` = cleared, `RehydrateLosslessGateIT`·`FullRehydrateTurnGateIT`·`RehydrateRoundTripIT`). closure matrix의 Q 셀과 all-channel lossless는 여전히 격리된 운영 범위다. P6별 PHP 캡처·93-command 비교는 신규 기능 선행 조건이 아니며 기존 frozen-baseline을 조사할 때만 사용한다.
+- ✅ **P7 read API + frontend 기본 표면** — auction/betting/message/mailbox/diplomacy를 포함한 전용 REST controller와 `web/game/app/game/` 페이지가 존재하고 F4 live intake/daemon 경로에 연결돼 있다. 개별 기능의 완료 범위는 아래 F4와 `docs/design/roadmap.md`의 현재/진행 표기를 따른다.
+- 🔄 **P8 운영 전환** — 로컬/호환 표면은 `.github/workflows/deploy.yml`, `docker-compose.production.yml`, `infra/nginx/`, `scripts/deploy.sh`, `HealthCheckController`에 있다. 프로덕션 제어면은 별도 `opensamguk-docker` shared/server/deployer 모델이며, 서버별 승격·S6 cutover는 명시적 운영 승인과 검증 전까지 미완료다. 런타임은 LLM-free이고 외부 API 의존이 없다.
 
 **CQRS 정합성 하드닝 트랙 (ARCH-S1–S6, OPENSAM-127~139) — 전부 build-only, 라이브 동작·골든 불변.** ✅ 월드 스코프(127~129) · flush 무결성 `DeltaGenerationSession`/`world_version` CAS+`writer_epoch`/`FlushRecoveryGate`(130~132) · S4 durable 명령 경로(command_inbox 선기록·durable result/outbox·consumer-group wake+post-commit ACK·크래시/리플레이, 133~136, PR #312, 리뷰 cleared) · S5 읽기·부팅 경계(hot/cold 카탈로그·bounded boot reads·minVersion read barrier→409 `VERSION_NOT_VISIBLE`, 137~139, PR #314/#315) 모두 main 머지. ⬜ **S6 롤아웃**(canary/expand-backfill/replica ADR, #268) 잔여 — 프로덕션 cutover/activation 미수행. 트리아지: `docs/superpowers/research/2026-07-23-ticket-triage-next.md`.
 
@@ -132,17 +132,17 @@ Wikidata(CC0) 로 좌표를 다시 세우는 것이다. 판정 근거: `docs/loo
 chgis-license-review.md`, 비평: `docs/superpowers/reviews/2026-08-16-opensam-37-evidence-contracts-review.md`,
 결정: `.ai/decisions.md` ADR-LITE-039.
 
-**미래 마일스톤(로드맵 외, 조건 충족 시):** `docs/superpowers/MILESTONES.md` — **M-config**(post-parity 상수 외부화: 풀 패러티 close + 운영 안정 후 `GameConst` 등 패러티값을 JSON으로, 패러티 골든을 frozen-baseline 회귀 게이트로 교체).
+**미래 마일스톤(로드맵 외, 조건 충족 시):** `docs/superpowers/MILESTONES.md` — **M-config**(운영 안정과 현재 제품 spec 승인 뒤 `GameConst` 등 설계 상수를 외부화하고, 기존 골든은 frozen-baseline 회귀 게이트로 유지).
 
 ## 프론트엔드/배포 (F0–F5)
 
-P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`. 원칙: `hwe/ts/` Vue가 프론트 grand truth(`hwe/*.php`는 dist mount 셸), PHP가 이긴다. 사용법·서비스 표·빠른 시작은 `README.md`(한글), 모듈/명령은 `AGENTS.md` 참조.
+P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`. `hwe/ts/` Vue는 기존 흐름 참고 자료이고, 신규 UI는 현재 구현과 승인된 디자인 방향을 따른다. 사용법·서비스 표·빠른 시작은 `README.md`와 `docs/README.md`, 모듈/명령은 `AGENTS.md` 참조.
 
 - ✅ **F0 게이트웨이 인증** — gateway-api 자체 JWT/BCrypt 로컬 인증(Kakao OAuth에서 의도적 divergence). `web/gateway` 엔트런스/로그인/회원가입/로비/어드민. 토큰은 Next route handler가 gateway-api로 프록시(동일출처 → CORS 불필요)하며 **httpOnly 쿠키**(`sam_access`/`sam_refresh`)에만 보관 — 브라우저 JS에 토큰 미노출. `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` env로 관리자(peppone, role=ADMIN) 멱등 생성(둘 다 설정돼야 시드).
 - ✅ **F1 시나리오 시드** — `ScenarioSeedRunner`가 `SCENARIO_DIR`의 동일 파일명을 classpath보다 우선하고 `ScenarioImporter`가 선택된 모든 시나리오를 JDBC INSERT한다. fresh DB에서만 멱등 시드하며, RTK14 생성본은 tuple 14/15 원수치를 포함한 gitignored JSON이다. env fence: `SCENARIO_SEED_ENABLED`, `SCENARIO_CODE`, `SCENARIO_DIR`. **JDBC-only — one-daemon-write-rule 비위반**.
 - ✅ **F2 메인화면 + 메뉴 척추** — `web/game` 메인(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼+게이팅).
 - ✅ **F3 read API + 랭킹/내정보** — game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. 모두 game-api로 **read-only 렌더**.
-- 🔄 **F4 액션 페이지 + mutation** — 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결했다. 남은 하드 스텁·상수 빈 응답·PHP 불일치는 라이브 루프에서 계속 폐쇄한다. **result-poll 규약(OPENSAM-13/135):** 인테이크 202는 성공이 아니다 — FE는 `pollCommandResult(requestId)`로 `RESOLVED`까지 폴링해 `ok`/`reason`을 분기하고, 엔진 핸들러는 성공·deny 모두 `TurnDaemonCommandResult`(`ok`/`reason`)를 반환한다(202만 보고 성공 토스트 = 성공 위조 금지).
+- 🔄 **F4 액션 페이지 + mutation** — 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결했다. 남은 하드 스텁·상수 빈 응답·현재 spec/API 불일치는 라이브 루프에서 계속 폐쇄한다. 역사적 회귀 결함만 frozen baseline과 PHP 참고 자료로 비교한다. **result-poll 규약(OPENSAM-13/135):** 인테이크 202는 성공이 아니다 — FE는 `pollCommandResult(requestId)`로 `RESOLVED`까지 폴링해 `ok`/`reason`을 분기하고, 엔진 핸들러는 성공·deny 모두 `TurnDaemonCommandResult`(`ok`/`reason`)를 반환한다(202만 보고 성공 토스트 = 성공 위조 금지).
 - 🔄 **F5 turnkey + docs** — 정본 `docker-compose.yml`(로컬 8서비스) + 호환용 `docker-compose.production.yml`(GCP Compute Engine e2-standard-2, GHCR 이미지) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드.
 
 **브랜드 에셋.** 마스터 `assets/brand/logo-master.png`(AI 자체제작, 제3자 파생 아님) 하나에서
