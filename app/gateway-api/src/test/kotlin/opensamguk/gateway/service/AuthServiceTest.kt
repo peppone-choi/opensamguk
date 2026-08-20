@@ -107,7 +107,7 @@ class AuthServiceTest {
     fun `register duplicate nickname throws`() {
         `when`(systemFlagRepository.findSingleton()).thenReturn(allowAllFlag())
         `when`(userRepository.existsByUsername("newuser")).thenReturn(false)
-        `when`(userRepository.existsByNickname("새유저")).thenReturn(true)
+        `when`(userRepository.existsByNicknameIgnoreCase("새유저")).thenReturn(true)
 
         val ex = assertThrows(IllegalArgumentException::class.java) {
             authService.register(RegisterRequest("newuser", "password123", null, "  새유저  "))

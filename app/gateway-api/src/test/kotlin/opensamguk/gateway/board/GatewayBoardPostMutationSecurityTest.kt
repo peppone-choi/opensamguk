@@ -228,7 +228,10 @@ class GatewayBoardPostMutationSecurityTest {
     @Test
     fun `author display falls back to the stored name when the account is gone`() {
         val post = storedPost("orphaned")
-        postRepository.saveAndFlush(post.apply { authorAccountId = null })
+        // 계정 행만 지운다 — authorAccountId 는 남겨야 "조회했는데 없더라" 경로를 실제로 탄다.
+        commentRepository.deleteAll()
+        userRepository.delete(author)
+        userRepository.flush()
 
         mockMvc.perform(get("/board/posts/${post.id}"))
             .andExpect(status().isOk)

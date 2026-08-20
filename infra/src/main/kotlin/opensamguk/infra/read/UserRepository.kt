@@ -19,7 +19,7 @@ interface UserRepository : JpaRepository<UserEntity, Long> {
 
     fun existsByUsername(username: String): Boolean
 
-    fun existsByNickname(nickname: String): Boolean
+    fun existsByNicknameIgnoreCase(nickname: String): Boolean
     fun existsByEmail(email: String): Boolean
     fun existsByPictureAndProfileIconManagedTrue(picture: String): Boolean
 }

@@ -47,8 +47,12 @@ class AuthService(
             throw IllegalArgumentException("이미 사용 중인 아이디입니다: ${request.username}")
         }
         // 닉네임은 공개 표시 이름이므로 유일해야 한다(users.ux_users_nickname 과 짝).
+        // @Size 는 다듬기 **전** 값을 보므로 공백만 넣으면 통과한다 — 다듬은 뒤 다시 잰다.
         val nickname = request.nickname.trim()
-        if (userRepository.existsByNickname(nickname)) {
+        if (nickname.length < 2 || nickname.length > 20) {
+            throw IllegalArgumentException("별명은 2자 이상 20자 이하여야 합니다.")
+        }
+        if (userRepository.existsByNicknameIgnoreCase(nickname)) {
             throw IllegalArgumentException("이미 사용 중인 닉네임입니다: $nickname")
         }
         if (request.email != null && userRepository.existsByEmail(request.email)) {
