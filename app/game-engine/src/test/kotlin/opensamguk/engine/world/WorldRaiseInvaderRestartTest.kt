@@ -59,6 +59,7 @@ class WorldRaiseInvaderRestartTest {
         val now = Instant.parse("0200-03-01T00:00:00Z")
         val state = TurnWorldState(
             id = 8,
+            config = linkedMapOf("mapName" to "che"),
             currentYear = 200,
             currentMonth = 3,
             tickSeconds = 3600,
