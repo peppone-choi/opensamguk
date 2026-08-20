@@ -89,7 +89,6 @@ class ScenarioBlankUnificationIT {
             pipeline = pipeline,
             hiddenSeed = hiddenSeed,
             startYear = startYear,
-            mapName = world.getState().meta["map"] as? String ?: "che",
             eventStore = eventStore,
         )
         private var nextDate = GameDate(startYear, 1, 1)

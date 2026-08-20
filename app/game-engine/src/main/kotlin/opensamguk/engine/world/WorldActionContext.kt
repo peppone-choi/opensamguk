@@ -81,11 +81,11 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.AssignSpecialityResult
 import opensamguk.logic.world.BlockScoutWorld
 import opensamguk.logic.world.BuiltGeneral
 import opensamguk.logic.world.CityConstVariant
-import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.CityLevel
 import opensamguk.logic.world.CheckEmperiorContext
 import opensamguk.logic.world.CitySupplyResult
@@ -198,10 +198,8 @@ class WorldActionContext(
     private fun resolveKillturnEnv(): Int = (world.getState().meta["killturn"] as? Number)?.toInt() ?: 0
     private fun resolveTurnterm(): Int = (world.getState().meta["turnterm"] as? Number)?.toInt() ?: 1
     private fun activeCityConst(): CityConstVariant {
-        val fromEnv = env["cityConst"] as? CityConstVariant
-        if (fromEnv != null) return fromEnv
-        val mapName = world.getState().meta["map"] as? String ?: "che"
-        return CityConstRegistry.find(mapName) ?: CityConstRegistry.of("che")
+        val state = world.getState()
+        return ActiveWorldMap.requireVariant(state.config, state.meta)
     }
 
     private fun logDraft(

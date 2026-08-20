@@ -263,14 +263,12 @@ class DaemonLoopConfig {
         val rulerSuccession = RulerSuccessionHandler(world, recorder, hiddenSeed)
         val durableGameLock = DurableGameLock(daemonPauseGate, recorder, state.meta["plock"])
 
-        val mapName = state.meta["map"] as? String ?: "che"
         val worldContextFactory = WorldEventContextFactory.create(
             world = world,
             recorder = recorder,
             pipeline = generalActionPipeline,
             hiddenSeed = hiddenSeed,
             startYear = startYear,
-            mapName = mapName,
             eventStore = eventStore,
             archiveHistoryReader = archiveHistoryReader,
             statisticSnapshotReader = statisticSnapshotReader,

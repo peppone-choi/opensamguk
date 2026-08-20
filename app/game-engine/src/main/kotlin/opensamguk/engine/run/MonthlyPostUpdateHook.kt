@@ -28,7 +28,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.PostUpdateMonthly
-import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.DiplomacyRow
 import opensamguk.logic.world.FrontCity
 import opensamguk.logic.world.PowerKv
@@ -197,7 +197,7 @@ class MonthlyPostUpdateHook(
         val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
         val isUnited = (state.meta["isunited"] as? Int ?: 0) != 0
 
-        val cityConst = CityConstRegistry.find(state.meta["map"] as? String ?: "che") ?: CityConstRegistry.of("che")
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta)
         val checkEmperiorContext = WorldActionContext(
             env = mutableMapOf(
                 "year" to year,
@@ -318,7 +318,7 @@ class MonthlyPostUpdateHook(
     private fun runOccupyCityEvent(year: Int, month: Int) {
         val dispatcher = eventDispatcher ?: return
         val state = world.getState()
-        val cityConst = CityConstRegistry.find(state.meta["map"] as? String ?: "che") ?: CityConstRegistry.of("che")
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta)
         dispatcher.run(
             target = EventTarget.OCCUPY_CITY,
             contextFactory = { env ->
@@ -405,7 +405,7 @@ class MonthlyPostUpdateHook(
 
     private fun setNationFronts(): List<PostFrontResult> {
         val state = world.getState()
-        val cityConst = CityConstRegistry.find(state.meta["map"] as? String ?: "che") ?: CityConstRegistry.of("che")
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta)
         val cities = world.listCities()
         val frontCities = cities.map { FrontCity(it.id, it.nationId, it.frontState) }
         val diplomacy = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) }

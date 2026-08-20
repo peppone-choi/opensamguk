@@ -123,6 +123,7 @@ object LongSimWorldMaterializer {
             tickSeconds = turnterm * 60,
             lastTurnTime = turntime,
             meta = stateMeta,
+            config = linkedMapOf("mapName" to (mapName ?: "che")),
         )
         return InMemoryTurnWorld(
             WorldSnapshot(
