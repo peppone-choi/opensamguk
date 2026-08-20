@@ -45,6 +45,8 @@ Historical parity workflows (`tools/php-golden/`, `parity-close`, `parity-ship`,
 
 **Five-stat product extension — politics/charm.** `politics`(정치)/`charm`(매력)은 오픈삼국 독자 스탯이다. RTK14 원본과 생성 시나리오는 **git-ignore, 미커밋**하고 `tools/rtk14/build_rtk14_stats.py`만 버전 관리한다. 빌더는 모든 `scenario_*.json` 장수 tuple의 인덱스 14/15를 원수치로 덮어쓰며, 통무지·생몰년·별칭으로 동명이인을 1:1 배정하고 미매칭만 50/50으로 둔다. 유저 생성은 통무지정매 5개 입력과 총합 275 상한을 사용한다. 스펙: `docs/superpowers/specs/2026-06-13-five-stat-rtk14-divergence.md`.
 
+**Sanctioned divergence — han 건국·3축 등급 밸런스 (ADR-LITE-043).** han 맵에서만 공백지 수비병 돌파비율을 `FOUND_ASSAULT_RATIO=2.0`(`ceil(defence * 2.0)`)으로 두고, 건국 가능 등급을 중/소(5/6) + 영현/장현(`level >= 10`)으로 둔다. 군치 수에 따른 도적·황건 spine 문턱은 `1/13/28郡治 -> nation.level 2/3/4`다. CHE/miniche 건국 돌파비용은 0이고 기존 회귀 픽스처는 frozen-baseline으로 보존한다. 정본·뒤집기 경로는 `.ai/decisions.md` ADR-LITE-043이다.
+
 ## Build & test
 
 - **Java 21 LTS required** (Gradle 8.12 fails to parse Java 25). Always run from the **repo root**:
