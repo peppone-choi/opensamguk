@@ -9,6 +9,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
     output: 'standalone',
     reactStrictMode: true,
+    transpilePackages: ['@opensamguk/ui'],
     // OPENSAM-41: v2 클라이언트 코드는 `/_next/static/**`(middleware matcher 밖)로 나가므로
     // V2_ENABLED가 아닌 빌드에서는 번들 그래프에서 아예 제거한다. 근거는 lib/v2/buildIsolation.mjs.
     webpack(config) {

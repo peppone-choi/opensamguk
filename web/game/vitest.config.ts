@@ -12,6 +12,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': resolve(__dirname, '.'),
+            '@opensamguk/ui': resolve(__dirname, '../shared/src/index.ts'),
         },
     },
     test: {

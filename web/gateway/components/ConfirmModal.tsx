@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@opensamguk/ui';
 import { useEffect, useRef } from 'react';
 
 /**
@@ -63,18 +64,17 @@ export default function ConfirmModal({
                 <h3 className="modal-title">{title}</h3>
                 <div className="modal-body">{message}</div>
                 <div className="modal-actions">
-                    <button type="button" className="btn-ghost" onClick={onCancel} disabled={busy}>
+                    <Button variant="ghost" onClick={onCancel} disabled={busy}>
                         {cancelLabel}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         ref={confirmRef}
-                        type="button"
-                        className={danger ? 'btn-danger' : 'btn-primary'}
+                        variant={danger ? 'danger' : 'primary'}
                         onClick={onConfirm}
                         disabled={busy}
                     >
                         {busy ? '처리 중…' : confirmLabel}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

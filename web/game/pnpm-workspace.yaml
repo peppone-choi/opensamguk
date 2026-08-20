@@ -2,6 +2,10 @@
 # Allow the transitive native deps to run build scripts so a fresh CI `pnpm install` builds them
 # (sharp = next image optimizer, unrs-resolver = eslint-config-next import resolver). Without this,
 # pnpm 10 prints [ERR_PNPM_IGNORED_BUILDS] and the unbuilt natives break `next build`.
+packages:
+  - .
+  - ../shared
+
 onlyBuiltDependencies:
   - sharp
   - unrs-resolver

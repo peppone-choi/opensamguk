@@ -6,9 +6,11 @@ RUN npm install -g pnpm@10.33.0
 # `onlyBuiltDependencies` (sharp/unrs-resolver) — pnpm 10 blocks dep build scripts by default and
 # would otherwise leave the natives unbuilt (next build then fails).
 COPY web/game/package.json web/game/pnpm-lock.yaml web/game/pnpm-workspace.yaml web/game/
+COPY web/shared/package.json web/shared/
 WORKDIR /src/web/game
 RUN pnpm install --frozen-lockfile
-COPY web/game/ .
+COPY web/shared/ /src/web/shared/
+COPY web/game/ /src/web/game/
 ARG NEXT_PUBLIC_GATEWAY_URL=
 ENV NEXT_PUBLIC_GATEWAY_URL=$NEXT_PUBLIC_GATEWAY_URL
 # 공유 도메인 에셋 충돌 방지 — prod는 ASSET_PREFIX=/game(next.config assetPrefix가 빌드타임에 읽음).
