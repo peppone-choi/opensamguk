@@ -317,10 +317,13 @@ jobs:
             exit 1
           fi
 
+          docker exec opensamguk-deployer \
+            /usr/local/bin/deployer --check-running-registry-targets
+
           # 공유 스택 IMAGE_TAG를 이 커밋 SHA로 영속 고정(.env가 단일 진실 — 재부팅/수동 up에도 유지).
           sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
 
-          SHARED_SERVICES="gateway-api web-gateway"
+          SHARED_SERVICES="gateway-api board-api web-gateway"
           if $COMPOSE config --services | grep -qx 'game-frontend'; then
             SHARED_SERVICES="$SHARED_SERVICES game-frontend"
           fi
@@ -331,8 +334,36 @@ jobs:
           echo "=== Pulling shared images ==="
           $COMPOSE pull $SHARED_SERVICES
 
-          echo "=== Restarting shared upstreams ==="
-          $COMPOSE up -d --force-recreate --no-deps $SHARED_SERVICES
+          wait_container_health() {
+            local container="$1"
+            local port="$2"
+            local label="$3"
+            for i in $(seq 1 30); do
+              if docker exec "$container" curl -sf "http://localhost:${port}/actuator/health" >/dev/null 2>&1; then
+                echo "${label} readiness: OK"
+                return 0
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "${label} readiness: FAILED" >&2
+                return 1
+              fi
+              sleep 5
+            done
+          }
+
+          echo "=== Restarting gateway migrations ==="
+          $COMPOSE up -d --force-recreate --no-deps gateway-api
+          wait_container_health opensamguk-gateway-api 8080 gateway-api
+
+          echo "=== Restarting board API ==="
+          $COMPOSE up -d --force-recreate --no-deps board-api
+          wait_container_health opensamguk-board-api 8083 board-api
+
+          echo "=== Restarting shared web ==="
+          $COMPOSE up -d --force-recreate --no-deps web-gateway
+          if $COMPOSE config --services | grep -qx 'game-frontend'; then
+            $COMPOSE up -d --force-recreate --no-deps game-frontend
+          fi
           # nginx LAST + force-recreate(업스트림 IP 재해석 — Rule A: stale-DNS 502 방지)
           $COMPOSE up -d --force-recreate --no-deps nginx
 
@@ -384,7 +415,7 @@ jobs:
             status=$?
             echo "=== Shared diagnostics (status=$status) ==="
             docker ps -a --filter 'name=opensamguk-' --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' || true
-            for c in opensamguk-gateway-api opensamguk-web-gateway opensamguk-nginx opensamguk-gateway-postgres opensamguk-gateway-redis; do
+            for c in opensamguk-gateway-api opensamguk-board-api opensamguk-web-gateway opensamguk-nginx opensamguk-gateway-postgres opensamguk-gateway-redis; do
               echo "=== docker logs --tail 160 $c ==="
               docker logs --tail 160 "$c" || true
             done
@@ -411,6 +442,18 @@ jobs:
             fi
             if [ "$i" -eq 30 ]; then
               echo "gateway-api health: FAILED — $RESP"
+              false
+            fi
+            sleep 5
+          done
+          for i in $(seq 1 30); do
+            RESP=$(docker exec opensamguk-board-api curl -sf http://localhost:8083/actuator/health 2>/dev/null || echo DOWN)
+            if echo "$RESP" | grep -q '"status":"UP"'; then
+              echo "board-api health: OK"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "board-api health: FAILED — $RESP"
               false
             fi
             sleep 5
