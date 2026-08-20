@@ -1,14 +1,16 @@
 package opensamguk.gameapi.controller
 
 import jakarta.servlet.http.HttpServletRequest
-import opensamguk.common.auth.GatewayProfileClaims
+import opensamguk.common.auth.GatewayPrincipal
 import opensamguk.common.constants.GameConst
+import opensamguk.gameapi.member.toMemberProfile
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.infra.read.SelectPoolReadRow
 import opensamguk.infra.read.SelectPoolRepository
+import opensamguk.infra.read.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -23,6 +25,7 @@ import java.time.Clock
 class SelectPoolController(
     private val repository: SelectPoolRepository,
     private val resolver: GeneralResolver,
+    private val users: UserRepository,
     private val clock: Clock = Clock.systemUTC(),
     private val reserve: CommandReserveService? = null,
 ) {
@@ -35,6 +38,9 @@ class SelectPoolController(
         if (profile == null || userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
+        // 표시용 회원 정보는 토큰이 아니라 `users` 행에서 읽는다(OPENSAM-220).
+        val member = users.findById(userId).orElse(null)?.toMemberProfile()
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val now = clock.instant()
         val rows = repository.listForUser(userId.toInt(), now)
         val cards = rows.map(::toCard).sortedBy { it.dex.sum() }
@@ -55,8 +61,8 @@ class SelectPoolController(
                     },
                 ),
                 member = SelectPoolMember(
-                    name = profile.nickname?.takeIf { it.isNotBlank() } ?: profile.username,
-                    canUsePicture = showImageLevel >= 1 && profile.grade >= 1 && !profile.picture.isNullOrBlank(),
+                    name = member.name,
+                    canUsePicture = showImageLevel >= 1 && member.grade >= 1 && !member.picture.isNullOrBlank(),
                 ),
             ),
         )
@@ -123,10 +129,10 @@ class SelectPoolController(
         return List(size) { values.getOrElse(it) { 0 } }
     }
 
-    private fun verifiedProfile(userId: Long?, request: HttpServletRequest): GatewayProfileClaims? =
+    private fun verifiedProfile(userId: Long?, request: HttpServletRequest): GatewayPrincipal? =
         userId
             ?.takeIf { it in 1..Int.MAX_VALUE.toLong() }
-            ?.let { JwtVerifyFilter.profile(request)?.takeIf { profile -> profile.userId == it } }
+            ?.let { JwtVerifyFilter.principal(request)?.takeIf { principal -> principal.userId == it } }
 
     private companion object {
         const val DEFAULT_SHOW_IMAGE_LEVEL = 3

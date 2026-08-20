@@ -22,7 +22,7 @@ import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.gameapi.security.GameApiJwtVerifier
+import opensamguk.infra.read.UserRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -62,7 +62,7 @@ class PossessionControllerTest {
     private val worldStates = mock(WorldStateReadRepository::class.java)
     private val commandResults = mock(CommandResultRepository::class.java)
     private val reserve = mock(CommandReserveService::class.java)
-    private val jwtVerifier = mock(GameApiJwtVerifier::class.java)
+    private val users = mock(UserRepository::class.java)
     private val fixedClock = Clock.fixed(Instant.parse("2026-06-02T00:00:00Z"), ZoneOffset.UTC)
     private val ownership = GeneralOwnershipClassifier(
         owners,
@@ -80,8 +80,14 @@ class PossessionControllerTest {
     private val selectNpcTokens =
         SelectNpcTokenService(npcTokens, owners, ownership, generals, nations, worldStates, fixedClock)
 
+    /** 로그인한 호출자는 항상 `users` 행이 있다 — 표시 이름은 토큰이 아니라 여기서 온다(OPENSAM-220). */
+    @org.junit.jupiter.api.BeforeEach
+    fun seedCallerRow() {
+        `when`(users.findById(7L)).thenReturn(Optional.of(userRow("owner7")))
+    }
+
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(PossessionController(possession, selectNpcTokens, reserve, jwtVerifier))
+        MockMvcBuilders.standaloneSetup(PossessionController(possession, selectNpcTokens, reserve, users))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -316,7 +322,7 @@ class PossessionControllerTest {
             .arguments[0] as TurnDaemonCommand.ClaimNpc
         assertEquals(10, claim.generalId)
         assertEquals(7L, claim.userId)
-        assertEquals("7", claim.userNick)
+        assertEquals("owner7", claim.userNick)
         val owner = mockingDetails(owners).invocations
             .single { it.method.name == "save" }
             .arguments[0] as GeneralOwnerEntity
@@ -849,4 +855,28 @@ class PossessionControllerTest {
             .andExpect(jsonPath("$.result").value(false))
             .andExpect(jsonPath("$.reason").value("빙의 가능한 서버가 아닙니다"))
     }
+
+    private fun userRow(username: String) = opensamguk.infra.entity.UserEntity(
+        id = 7L,
+        username = username,
+        password = "enc",
+        role = "USER",
+        nickname = username,
+    )
+
+    @Test
+    fun `claim 401 when the caller has no users row -- no userId fallback reaches owner_name`() {
+        seedNpcMode()
+        `when`(users.findById(7L)).thenReturn(Optional.empty())
+
+        mockMvc().perform(
+            post("/api/general/claim").with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":10}"""),
+        )
+            .andExpect(status().isUnauthorized)
+
+        // 커맨드가 아예 나가지 않아야 한다 — "7" 같은 값이 월드 로그에 박히면 되돌릴 수 없다.
+        assertTrue(mockingDetails(reserve).invocations.none { it.method.name == "publishImmediate" })
+    }
+
 }
