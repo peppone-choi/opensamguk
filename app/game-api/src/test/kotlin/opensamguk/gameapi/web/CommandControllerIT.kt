@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
@@ -36,6 +37,7 @@ import kotlin.test.assertEquals
  * The fixture is the same baseline rows the E1/E2 tests use (nation 1 lvl7 / city 5 owned, agri
  * 4000<8000 / general 10 gold 4000; world_state year 200 startYear 190 → develCost 40 < 4000).
  */
+@ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(
     properties = [

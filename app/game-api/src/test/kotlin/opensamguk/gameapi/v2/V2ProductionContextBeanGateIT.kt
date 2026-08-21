@@ -65,6 +65,7 @@ internal class V2EnabledEnvironmentInitializer : ApplicationContextInitializer<C
 }
 
 /** ① Production shape — `V2_ENABLED` unset and profile inactive. Expect zero v2 beans. */
+@ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest
 class V2ProductionShapeBeanGateIT {
@@ -83,6 +84,7 @@ class V2ProductionShapeBeanGateIT {
 }
 
 /** ② `v2.enabled=true` only — no profile. Expect zero beans. */
+@ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = ["${V2SandboxGate.PROPERTY}=true"])
 class V2PropertyOnlyBeanGateIT {
@@ -102,7 +104,7 @@ class V2PropertyOnlyBeanGateIT {
 
 /** ③ Profile `v2-sandbox` only — no property. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
-@ActiveProfiles(V2SandboxGate.PROFILE)
+@ActiveProfiles("test", V2SandboxGate.PROFILE)
 @SpringBootTest
 class V2ProfileOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
@@ -125,7 +127,7 @@ class V2ProfileOnlyBeanGateIT {
  * Without this case, ①–③ could pass even if the context never starts.
  */
 @Testcontainers(disabledWithoutDocker = true)
-@ActiveProfiles(V2SandboxGate.PROFILE)
+@ActiveProfiles("test", V2SandboxGate.PROFILE)
 @ContextConfiguration(initializers = [V2EnabledEnvironmentInitializer::class])
 @SpringBootTest
 class V2BothConditionsBeanGateIT {
