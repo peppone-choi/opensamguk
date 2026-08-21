@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
     esbuild: { jsx: 'automatic' },
     resolve: {
+        dedupe: ['next', 'react', 'react-dom'],
         alias: {
             '@': path.resolve(__dirname),
             '@opensamguk/ui': path.resolve(__dirname, '../shared/src/index.ts'),

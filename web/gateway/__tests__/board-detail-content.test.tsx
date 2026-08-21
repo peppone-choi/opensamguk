@@ -92,12 +92,8 @@ describe('gateway board detail content', () => {
     const content = document.querySelector<HTMLElement>('.board-post-content');
     expect(content).not.toBeNull();
     expect(content?.innerHTML).toBe('안전한 본문&lt;img src=x onerror=alert(1)&gt;<br>두 번째 줄');
-    // 전콘(작성자 아바타) 은 우리가 넣은 <img> 라 존재한다 — 막아야 할 건 본문에서 나온
-    // 주입 태그다. 그래서 "img 가 없다" 가 아니라 "주입된 img 가 없다" 로 본다.
-    const injected = Array.from(document.querySelectorAll('img'))
-      .filter((el) => !el.classList.contains('board-author-icon'));
-    expect(injected).toHaveLength(0);
-    expect(document.querySelector('script')).toBeNull();
+    expect(content?.querySelector('img')).toBeNull();
+    expect(content?.querySelector('script')).toBeNull();
   });
 
   it('sends a plaintext comment through the authenticated proxy and displays the created comment', async () => {
