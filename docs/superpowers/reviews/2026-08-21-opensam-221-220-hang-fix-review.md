@@ -1,7 +1,9 @@
 # OPENSAM-221 / OPENSAM-220 — game-api 테스트 매달림 + 슬림 JWT 후속 리뷰 (PR #488)
 
-Scope: app/game-api/ app/gateway-api/ web/game/ .github/workflows/ docs/ — 브랜치 `opensam-220-slim-jwt-issuance`, base `origin/main`, 5커밋
-Verdict: cleared  (2026-08-21 3차 독립 검증: N1 은 `9709c799` 로 닫혔고 신규 결함 없음. fix-required 잔여 0건 — 아래 「3차 재검증」 참조. should-fix 3건은 열려 있으나 차단 아님)
+Scope: app/game-api/ app/gateway-api/ web/game/ .github/workflows/ tools/ docs/ — 브랜치 `opensam-220-slim-jwt-issuance`, base `origin/main`, 5커밋
+Verdict: cleared
+
+판정 주석 (2026-08-21 3차 독립 검증: N1 은 `9709c799` 로 닫혔고 신규 결함 없음. fix-required 잔여 0건 — 아래 「3차 재검증」 참조. should-fix 3건은 열려 있으나 차단 아님)
 
 작성 레인과 분리된 컨텍스트에서 독립 리뷰어(opus)가 read-only로 공격했다. 근본원인 주장 자체는
 **증거로 확인됐고** 매달림 수정도 게임 API 안에서는 빈틈이 없다.
