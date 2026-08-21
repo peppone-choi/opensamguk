@@ -21,6 +21,11 @@ describe('game portrait helper', () => {
         expect(portraitUrl('1001', imgsvr)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
     });
 
+    // web/gateway 사본과 동일 계약: 화이트리스트 검사 전에 trim 한다.
+    it('trims surrounding whitespace before the whitelist check', () => {
+        expect(portraitUrl('  1001  ', 0)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
+    });
+
     it.each([
         '../../secret.jpg', // traversal 시도
         'a/b.jpg', // 경로 주입 시도

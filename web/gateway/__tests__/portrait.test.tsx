@@ -33,6 +33,27 @@ describe('gateway portrait helper', () => {
         expect(portraitUrl(picture, 1)).toBe(DEFAULT_PORTRAIT);
     });
 
+    // OPENSAM-214: imgsvr=0 분기는 DB users.picture 를 CDN URL 에 그대로 이어붙였다.
+    // web/game 사본과 동일한 케이스로 잠근다 — 두 앱의 계약이 갈라지면 안 된다.
+    it.each([
+        '../../secret.jpg', // traversal 시도
+        'a/b.jpg', // 경로 주입 시도
+        '1001.svg', // 지원하지 않는 확장자
+        'name with space.jpg', // 공백
+        '1001?x=1', // 쿼리 주입 시도
+        'https://evil.test/a.jpg', // 절대 URL 주입 시도
+    ])('falls back to the default for a non-whitelisted imgsvr=0 name %j', (picture) => {
+        expect(portraitUrl(picture, 0)).toBe(DEFAULT_PORTRAIT);
+    });
+
+    it.each([undefined, null, 0])('keeps the shared-CDN path when imgsvr is falsy (%j)', (imgsvr) => {
+        expect(portraitUrl('1001', imgsvr)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
+    });
+
+    it('trims surrounding whitespace before the whitelist check', () => {
+        expect(portraitUrl('  1001  ', 0)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
+    });
+
     it.each([1, 0, null, undefined])(
         'keeps the shared-CDN resolution for a bare code regardless of imgsvr=%j when not managed',
         (imgsvr) => {

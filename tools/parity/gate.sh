@@ -14,7 +14,7 @@ case "$target" in
   backend)
     # Every JVM service has a v2-isolation gate, including gateway-api.
     # Keep tasks and xml_roots aligned so every executed task is also evaluated.
-    tasks=( ":common:test" ":logic:test" ":infra:test" ":app:game-engine:test" ":app:game-api:test" ":app:gateway-api:test" )
+    tasks=( ":common:test" ":logic:test" ":infra:test" ":app:game-engine:test" ":app:game-api:test" ":app:gateway-api:test" ":app:board-api:test" )
     xml_roots=( "common" "logic" "infra" "app/game-engine" "app/game-api" "app/gateway-api" )
     ;;
   common)

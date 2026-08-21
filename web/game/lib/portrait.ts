@@ -37,14 +37,18 @@ const MANAGED_ICON = /^[0-9a-f]{8}\.(avif|webp|jpg|png|gif)$/;
  * 양쪽 분기 모두 화이트리스트를 통과하지 못한 값은 기본 초상으로 폴백한다.
  */
 export function portraitUrl(picture?: string | null, imageServer?: number | null): string {
-    if (!picture) return DEFAULT_PORTRAIT;
+    // trim 은 web/gateway 사본과 동일 계약을 유지하기 위한 것이다. 화이트리스트보다 먼저
+    // 돌려야 " 1001 " 같은 값이 폴백으로 새지 않는다(두 앱이 갈라지면 같은 계정이 앱마다
+    // 다른 초상을 받는다).
+    const normalizedPicture = picture?.trim();
+    if (!normalizedPicture) return DEFAULT_PORTRAIT;
     if (imageServer) {
         // 서버 로컬 업로드 — canonical managed 파일명이면 같은 출처 /d_pic/, 아니면 폴백(날조 금지).
-        return MANAGED_ICON.test(picture) ? `/d_pic/${picture}` : DEFAULT_PORTRAIT;
+        return MANAGED_ICON.test(normalizedPicture) ? `/d_pic/${normalizedPicture}` : DEFAULT_PORTRAIT;
     }
     // 공유 CDN — 화이트리스트 밖 값(경로 주입·traversal 포함)은 폴백.
-    if (!SHARED_ICON.test(picture)) return DEFAULT_PORTRAIT;
-    const file = HAS_EXT.test(picture) ? picture : `${picture}.jpg`;
+    if (!SHARED_ICON.test(normalizedPicture)) return DEFAULT_PORTRAIT;
+    const file = HAS_EXT.test(normalizedPicture) ? normalizedPicture : `${normalizedPicture}.jpg`;
     return `${PORTRAIT_CDN}/${file}`;
 }
 
