@@ -54,12 +54,27 @@ tar -cf - "$COMPOSE_FILE" infra/nginx/nginx.conf | \
         sleep 5
     done
 
+    docker compose -f "$COMPOSE_FILE" up -d --no-deps board-api
+
+    for i in $(seq 1 30); do
+        if docker exec opensamguk-board-api curl -sf http://localhost:8083/actuator/health >/dev/null 2>&1; then
+            break
+        fi
+        if [[ $i -eq 30 ]]; then
+            echo "board-api schema readiness: FAILED"
+            exit 1
+        fi
+        sleep 5
+    done
+
     docker compose -f "$COMPOSE_FILE" up -d --no-deps \
-        board-api game-api web-gateway web-game nginx
+        game-api web-gateway web-game
 
     sleep 5
 
     docker compose -f "$COMPOSE_FILE" up -d --no-deps game-engine
+
+    docker compose -f "$COMPOSE_FILE" up -d --no-deps nginx
 
     docker image prune -af --filter "until=168h" || true
 
