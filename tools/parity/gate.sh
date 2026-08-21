@@ -15,7 +15,7 @@ case "$target" in
     # Every JVM service has a v2-isolation gate, including gateway-api.
     # Keep tasks and xml_roots aligned so every executed task is also evaluated.
     tasks=( ":common:test" ":logic:test" ":infra:test" ":app:game-engine:test" ":app:game-api:test" ":app:gateway-api:test" ":app:board-api:test" )
-    xml_roots=( "common" "logic" "infra" "app/game-engine" "app/game-api" "app/gateway-api" )
+    xml_roots=( "common" "logic" "infra" "app/game-engine" "app/game-api" "app/gateway-api" "app/board-api" )
     ;;
   common)
     tasks=( ":common:test" )
@@ -37,9 +37,17 @@ case "$target" in
     tasks=( ":app:game-api:test" )
     xml_roots=( "app/game-api" )
     ;;
+  gateway|gateway-api)
+    tasks=( ":app:gateway-api:test" )
+    xml_roots=( "app/gateway-api" )
+    ;;
+  board|board-api)
+    tasks=( ":app:board-api:test" )
+    xml_roots=( "app/board-api" )
+    ;;
   *)
     echo "Unknown gate target: $target" >&2
-    echo "Usage: tools/parity/gate.sh [backend|common|logic|infra|engine|api]" >&2
+    echo "Usage: tools/parity/gate.sh [backend|common|logic|infra|engine|api|gateway|board]" >&2
     exit 64
     ;;
 esac
