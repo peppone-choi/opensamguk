@@ -773,3 +773,104 @@ green 여부는 위 요약표대로 **UNKNOWN** 이며, 타 검증자의 풀런 
 커밋이 CI 에서 green 인 것으로 **환경 아티팩트로 확정**된다(같은 트리, 충돌 없는 실행).
 
 판정 변경 없음 — `cleared` 유지. UNKNOWN 1건 종결.
+
+---
+
+# 4차 — 2차 검증자(`pr488-reverify`) 종결 노트
+
+2차 패스에서 N1 을 올린 검증자가, 3차 `cleared` 판정과 그 근거를 확인하고 남기는 마지막 기록이다.
+**판정은 `cleared` 유지에 동의한다** — 새 blocker 없음. 다만 **정정 1건과 보완 2건**이 있다.
+
+## 정정 — shadow yml 안전 근거가 gateway-api 에서 사실과 다르다
+
+"gateway-api·board-api 는 **main·test 양쪽 모두** `flyway.enabled: false` 라 V29 에 도달할 수 없다"는
+근거가 오갔는데, **gateway-api 는 그렇지 않다**:
+
+| 파일 | `flyway.enabled` |
+| --- | --- |
+| `app/gateway-api/src/main/resources/application.yml:13` | **`true`** |
+| `app/gateway-api/src/test/resources/application.yml:12` | `false` |
+| `app/board-api/src/main/resources/application.yml:13` | `false` |
+| `app/board-api/src/test/resources/application.yml:12` | `false` |
+
+gateway-api 는 `build.gradle.kts:26` 으로 `:infra` 를 물고 있어 V29 가 클래스패스에 있고,
+**운영에서 실제로 Flyway 를 돌린다.**
+
+**결론은 그래도 "차단 아님"이다 — 이유가 다를 뿐이다.**
+`app/gateway-api/src/main/resources/application.yml:21` 이 `transactional-lock: false` 를 갖고 있고
+(`:18-20` 주석이 V29 CONCURRENTLY 요건을 명시), flyway 를 켜는 세 모듈 전부가 이 키를 갖는다
+(gateway-api `:21`, game-api `:21`, game-engine `:21`). **운영 데드락 위험은 없다.**
+테스트가 안 매달리는 이유도 "main 이 꺼져서"가 아니라 **test shadow 가 꺼서**다.
+
+즉 gateway-api 의 shadow yml 은 **#487 과 정확히 같은 모양**이다 — main 의 flyway 설정 전체
+(`transactional-lock` 포함)를 파일 단위로 가린다. 지금 안 터지는 건 그 shadow 가 flyway 자체를
+꺼두기 때문이고, 누군가 그 한 줄을 `true` 로 바꾸는 순간 #487 이 두 번째 모듈에서 재현된다.
+**"양쪽 다 꺼져 있어서 안전"으로 기록하면 다음 사람이 정확히 그 한 줄을 밟는다.**
+
+**최종 입장(3번 질문): 차단 아님, 별도 티켓으로 충분.** 오늘 실패도 운영 위험도 없고 PR #488 범위
+밖이다. 다만 티켓에는 위 표와 "gateway-api main 은 flyway ON" 을 근거로 적어라. 처방은
+`TestResourceShadowingTest` 를 두 모듈에 복제하고 오버라이드를 `application-test.yml` +
+`@ActiveProfiles("test")` 로 옮기는 것이다(game-api 가 이미 그 형태다).
+
+## 보완 1 — CI 런 인용은 잡 하나가 아니라 런 전체로
+
+`32449185250`(head `9709c799`)의 `jvm` 은 `success`(05:04:07→05:13:40)가 맞다. 모듈별 XML 7모듈
+전부 0건 아님도 로그에서 확인했다. 이걸로 2차의 `NoClassDefFoundError` 가 **환경 아티팩트로 확정**
+되고 F3 불필요하다는 결론에 동의한다.
+
+다만 **그 런의 전체 결론은 `failure`** 다. 원인은 `agent-system` 잡의
+`Check provider-agnostic agent working system` 스텝:
+
+```
+- **ERROR cross-agent-critique**: Unresolved Verdict: fix-required blocks completion:
+  docs/superpowers/reviews/2026-08-21-opensam-221-220-hang-fix-review.md
+```
+
+즉 **그 시점 아티팩트가 아직 `fix-required` 였기 때문**이며, `49d16b76` 이 `cleared` 로 바꿨으니
+자기해소된다. 코드 결함이 아니고, 오히려 `CLAUDE.md` 의 cross-agent-critique 게이트가 설계대로
+동작한 증거다. 다만 "CI 가 답을 냈다"를 잡 하나만 인용해 적으면 런이 빨간 사실이 기록에서 빠진다.
+**후속 확인 필요:** `49d16b76` 런(`32450039800`)은 이 노트 작성 시점 `in_progress` —
+green 전환 여부는 **UNKNOWN**, 머지 전 확인할 것.
+
+## 보완 2 — 3차 UNKNOWN(`gate.sh backend` 풀런)의 현재 상태
+
+3차 요약표의 `UNKNOWN — gate.sh backend 전체 7모듈 green 여부` 는 다음과 같이 갈라 적어야 정확하다:
+
+- **7모듈 테스트 green 여부 → 닫혔다.** CI `jvm` 이 같은 트리·같은 커밋에서 `./gradlew build` 로
+  7모듈 전부 실행·green. 충돌 없는 단독 러너라 로컬 풀런보다 강한 증거다.
+- **`gate.sh` 자체의 XML 평가 경로 → 닫혔다(2차 증거).** CI 는 `gate.sh` 를 타지 않으므로 이건
+  별개다. 2차에서 스크립트 끝 python 블록을 잘라내 직접 돌렸다: 빈 루트 → `No Gradle test XML
+  files found for selected module roots: app/board-api` **exit 1**(조용한 통과 아님, fail-closed),
+  실제 저장소 루트 → `XML gate green: 8 suites, 52 tests`. `app/board-api` 가 실제로 읽힌다.
+- **`gate.sh backend` 를 끝까지 돌린 단일 실행 → 여전히 없다.** 내 풀런(`backend-20260821141208`)은
+  팀리드 지시로 중단했다. 위 두 조각으로 판정 근거는 충분하지만, "풀런 1회 관측"은 **UNKNOWN** 으로
+  남는다. 추측으로 채우지 않는다.
+
+## 로그 귀속 최종 정리 (2차에서 두 번 틀렸던 항목)
+
+3차 검증자의 동시성 고지로 확정됐다. 내 초기 귀속은 틀렸고, 정정 기록을 남긴다.
+
+| 로그 | 주체 | 결과 |
+| --- | --- | --- |
+| `board-20260821140615` | 2차 검증자(나) | `BUILD FAILED` — XML write 충돌 |
+| `board-20260821140728` | 팀리드 | `BUILD SUCCESSFUL` / `8 suites, 52 tests` |
+| `backend-20260821140859` | **3차 검증자** (내가 팀리드로 오귀속 → 정정) | task graph 확인 후 kill |
+| `backend-20260821141208` | 2차 검증자(나) | 팀리드 지시로 중단 |
+
+`:common:test` 의 `NoClassDefFoundError` 는 이 겹침에서 나왔고 CI 단독 실행이 green 이므로
+**회귀 아님으로 확정**한다.
+
+## 4차 요약
+
+| 심각도 | 항목 | 상태 |
+| --- | --- | --- |
+| — | N1 (`gate.sh` 정렬) | `9709c799` 로 닫힘 — 동의 |
+| — | F1 (초상 화이트리스트) | `6229ce59` 로 닫힘 — 2차에서 실증 |
+| **정정** | shadow yml 안전 근거: gateway-api main 은 `flyway.enabled: **true**` | 결론(차단 아님)은 유지, 근거 교체 |
+| should-fix | gateway-api·board-api shadow yml — 별도 티켓 | 열림 |
+| should-fix | `ci.yml` `web`·`agent-system` 에 `timeout-minutes` 없음 | 열림 |
+| 관측 | `onPortraitError` 두 앱 동작 상이(UX 한정) | 열림 |
+| UNKNOWN | `49d16b76` CI(`32450039800`) green 전환 | 머지 전 확인 |
+| UNKNOWN | `gate.sh backend` 풀런 1회 관측 | 미실행 (중단) |
+
+**2차 검증자 최종: `cleared` 에 동의. 잔여 fix-required 0건.**
