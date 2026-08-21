@@ -665,6 +665,8 @@ class V32WorldScopeCompletionMigrationTest {
         private val postV32GlobalTables = setOf(
             "gateway_board_post",
             "gateway_board_comment",
+            "game_server",
+            "game_server_registry_transition",
         )
         private val globalAllowlist = v32GlobalAllowlist + postV32GlobalTables
         private val serialIdentityColumns = mapOf(

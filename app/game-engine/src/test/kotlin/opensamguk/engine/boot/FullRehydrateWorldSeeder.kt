@@ -12,7 +12,7 @@ internal class FullRehydrateWorldSeeder(
 ) {
     fun seedWorld(worldId: WorldId, worldName: String, generalName: String) {
         val worldMeta =
-            """{"startYear":${config.startYear},"startTime":"${config.start}","hiddenSeed":"${config.hiddenSeed}"}"""
+            """{"startYear":${config.startYear},"startTime":"${config.start}","hiddenSeed":"${config.hiddenSeed}","mapName":"che"}"""
         jdbc.update(
             """
             INSERT INTO world_state

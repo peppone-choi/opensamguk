@@ -99,6 +99,69 @@ CODEX_REQUIRED_SKILLS = frozenset(
     }
 )
 
+PRODUCT_AUTHORITY_REQUIRED = {
+    "AGENTS.md": ("ADR-LITE-042", "제품 정본 = 최신 승인 ADR·spec·현재 구현"),
+    "CLAUDE.md": ("Product and regression discipline", "optional historical/reference inputs"),
+    "docs/superpowers/WORKING_SYSTEM.md": ("ADR-LITE-042", "historical opt-in", "current implementation"),
+    "docs/superpowers/LOOP_ENGINEERING.md": ("ADR-LITE-042", "명시적 역사", "current implementation"),
+    "docs/agent/project-overview.md": ("신규 설계 정본", "명시적으로 요청된 동결 회귀"),
+    "docs/agent/prompt-pack.md": ("ADR-LITE-042", "승인 ADR/spec", "opt-in"),
+    "docs/agent/verification.md": ("명시적 역사 parity 유지보수일 때만", "현재 spec 테스트 green"),
+    ".claude/HARNESS.md": ("ADR-LITE-042", "never a prerequisite for new product work"),
+    ".agents/skills/opensamguk-working-system/SKILL.md": ("ADR-LITE-042", "latest approved ADR/spec"),
+    ".agents/skills/opensamguk-php-oracle/SKILL.md": ("opt-in historical comparison skill", "not product authority"),
+    ".claude/workflows/backlog-fanout.js": ("Retired mixed legacy/current backlog workflow", "ADR-LITE-042"),
+    ".claude/workflows/parity-backlog-pipeline.js": ("Retired mixed legacy/current backlog workflow", "ADR-LITE-042"),
+    ".claude/workflows/parity-wave.js": ("Opt-in historical frozen-regression maintenance", "ADR-LITE-042", "product authority"),
+}
+
+PRODUCT_AUTHORITY_SURFACES = (
+    *PRODUCT_AUTHORITY_REQUIRED,
+    "docs/agent/README.md",
+    "docs/agent/claude-user-manual.md",
+    "docs/agent/codex-user-manual.md",
+    "docs/agent/coding-rules.md",
+    "docs/agent/context-strategy.md",
+    "docs/agent/failure-cases.md",
+    "docs/agent/lifecycle-planning.md",
+    ".claude/commands/os-analyze.md",
+    ".claude/commands/os-implement.md",
+    ".claude/commands/os-review.md",
+    ".claude/agents/golden-capturer.md",
+    ".claude/agents/parity-gate-runner.md",
+    ".claude/agents/parity-porter.md",
+    ".claude/agents/parity-reviewer.md",
+    ".claude/skills/parity-close/SKILL.md",
+    ".claude/skills/parity-ship/SKILL.md",
+    ".codex/agents/fe-submit-wirer.toml",
+    ".codex/agents/golden-capturer.toml",
+    ".codex/agents/parity-gate-runner.toml",
+    ".codex/agents/parity-porter.toml",
+    ".codex/agents/parity-reviewer.toml",
+)
+
+OBSOLETE_PRODUCT_AUTHORITY_PATTERNS = (
+    re.compile(r"PHP\s+(?:is|as)\s+(?:the\s+)?grand truth", re.IGNORECASE),
+    re.compile(
+        r"PHP\s+(?:is|remains)\s+(?:the\s+)?(?:authoritative product source|source of truth|product authority|grand truth)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"PHP\s*=\s*(?:the\s+)?(?:authoritative product source|source of truth|product authority|grand truth)",
+        re.IGNORECASE,
+    ),
+    re.compile(r"PHP wins every divergence", re.IGNORECASE),
+    re.compile(r"PHP가 (?:이김|이긴다)"),
+    re.compile(r"frontend grand truth", re.IGNORECASE),
+    re.compile(r"mandatory legacy-gap", re.IGNORECASE),
+    re.compile(r"(?:all\s+)?new features?\s+must\s+(?:first\s+)?match\s+(?:devsam/core|PHP)", re.IGNORECASE),
+    re.compile(
+        r"hwe/ts\s+(?:is|remains)\s+(?:the\s+)?(?:authoritative(?:\s+frontend)?(?:\s+source)?|source of truth|product authority)",
+        re.IGNORECASE,
+    ),
+    re.compile(r"의무 사슬[^\n]*opensamguk-php-oracle"),
+)
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -502,7 +565,7 @@ def check_required_docs() -> list[Finding]:
         "README.md": ("작업 운영 체계", "tools/parity/gate.sh backend"),
         "AGENTS.md": ("작업 운영 체계 / skills.sh", "legacy/devsam-core"),
         "CLAUDE.md": ("working system", "skills-lock.json"),
-        "docs/superpowers/WORKING_SYSTEM.md": ("PHP oracle protocol", "Production policy"),
+        "docs/superpowers/WORKING_SYSTEM.md": ("Historical PHP comparison protocol", "Production policy"),
     }
     for rel, phrases in required_phrases.items():
         path = ROOT / rel
@@ -513,6 +576,39 @@ def check_required_docs() -> list[Finding]:
         for phrase in phrases:
             if phrase not in text:
                 findings.append(Finding("error", "required-docs", f"{rel} is missing required phrase: {phrase}"))
+    return findings
+
+
+def check_product_authority_policy() -> list[Finding]:
+    findings: list[Finding] = []
+    for rel, phrases in PRODUCT_AUTHORITY_REQUIRED.items():
+        path = ROOT / rel
+        if not path.is_file():
+            findings.append(Finding("error", "product-authority", f"{rel} is missing from the active policy surface."))
+            continue
+        text = path.read_text(encoding="utf-8")
+        for phrase in phrases:
+            if phrase not in text:
+                findings.append(
+                    Finding("error", "product-authority", f"{rel} is missing ADR-LITE-042 policy phrase: {phrase}")
+                )
+
+    for rel in PRODUCT_AUTHORITY_SURFACES:
+        path = ROOT / rel
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for pattern in OBSOLETE_PRODUCT_AUTHORITY_PATTERNS:
+            match = pattern.search(text)
+            if match:
+                line = text.count("\n", 0, match.start()) + 1
+                findings.append(
+                    Finding(
+                        "error",
+                        "product-authority",
+                        f"{rel}:{line} restores obsolete mandatory legacy authority: {match.group(0)}",
+                    )
+                )
     return findings
 
 
@@ -638,12 +734,13 @@ def render_markdown(files: list[str], findings: list[Finding]) -> str:
         f"- Errors: {len(errors)}",
         f"- Warnings: {len(warnings)}",
         "",
-        "## Source hierarchy",
+        "## Product authority",
         "",
-        "1. `legacy/devsam-core` PHP grand truth",
-        "2. `hwe/ts/` frontend grand truth when PHP shell is silent",
-        "3. `CLAUDE.md`, `AGENTS.md`, `docs/superpowers/WORKING_SYSTEM.md`",
-        "4. skills.sh installed skills in `skills-lock.json` as advisory workflow aids",
+        "1. Latest approved ADR/spec",
+        "2. Current implementation and executable tests",
+        "3. `CLAUDE.md`, `AGENTS.md`, and `docs/superpowers/WORKING_SYSTEM.md` repository policy",
+        "4. PHP/hwe historical references only when explicitly requested for frozen-regression maintenance",
+        "5. skills.sh installed skills in `skills-lock.json` as advisory workflow aids",
         "",
     ]
     if files:
@@ -669,6 +766,7 @@ def main() -> int:
     findings += check_skills_lock(files)
     findings += check_codex_surface()
     findings += check_required_docs()
+    findings += check_product_authority_policy()
     findings += check_mandatory_workflow_fallbacks()
     findings += check_cross_agent_critique(files, args.strict)
     findings += check_docs_with_code(files, args.strict)

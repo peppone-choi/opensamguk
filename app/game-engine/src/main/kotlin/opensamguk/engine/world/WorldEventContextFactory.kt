@@ -13,9 +13,9 @@ import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.LightActionWorld
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.AssignGeneralSpecialityAction
 import opensamguk.logic.world.BlockScoutAction
-import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.InvaderEndingContext
 import opensamguk.logic.world.MergeInheritWorld
 import opensamguk.logic.world.RaiseDisasterAction
@@ -44,14 +44,12 @@ import opensamguk.logic.world.UnblockScoutAction
  */
 object WorldEventContextFactory {
 
-    /** che/miniche만 등록돼 있으므로 미등록 맵은 che로 폴백(표시 외 정산은 prod=che). */
     fun create(
         world: InMemoryTurnWorld,
         recorder: ChangeRecorder,
         pipeline: GeneralActionPipeline,
         hiddenSeed: String,
         startYear: Int,
-        mapName: String,
         eventStore: EventStore,
         archiveHistoryReader: ArchiveHistoryReader? = null,
         statisticSnapshotReader: StatisticSnapshotReader? = null,
@@ -63,7 +61,8 @@ object WorldEventContextFactory {
         // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼져 있으면 null(= v1 프로덕션 기본값).
         v2CityLedger: V2CityLedgerStore? = null,
     ): (MutableMap<String, Any?>) -> EventActionContext {
-        val cityConst = CityConstRegistry.find(mapName) ?: CityConstRegistry.of("che")
+        val state = world.getState()
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta)
         return { env ->
             // 스칼라/스토어 env 키 (env-read leaf가 직접 읽음).
             // 케이싱 분열 주의: PHP 정본 키는 소문자 `startyear`(GameConstBase getValues + DateRelative.php +

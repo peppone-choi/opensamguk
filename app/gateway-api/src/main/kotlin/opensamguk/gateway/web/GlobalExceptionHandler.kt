@@ -5,6 +5,7 @@ import opensamguk.gateway.profile.ProfileIconChangedTodayException
 import opensamguk.gateway.profile.ProfileIconPayloadTooLargeException
 import opensamguk.gateway.profile.ProfileIconPersistenceException
 import opensamguk.gateway.profile.ProfileIconStorageException
+import opensamguk.gateway.service.NicknameAlreadyInUseException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -52,6 +53,11 @@ class GlobalExceptionHandler {
     fun duplicateKey(e: DataIntegrityViolationException): ResponseEntity<ApiError> =
         ResponseEntity.status(HttpStatus.CONFLICT)
             .body(ApiError("이미 사용 중인 값입니다.", HttpStatus.CONFLICT.value()))
+
+    @ExceptionHandler(NicknameAlreadyInUseException::class)
+    fun nicknameAlreadyInUse(e: NicknameAlreadyInUseException): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiError(e.message ?: "이미 사용 중인 닉네임입니다.", HttpStatus.CONFLICT.value()))
 
     @ExceptionHandler(ProfileIconChangedTodayException::class)
     fun profileIconChangedToday(e: ProfileIconChangedTodayException): ResponseEntity<ApiError> =

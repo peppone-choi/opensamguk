@@ -19,6 +19,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * AREA GATE-RUNTIME — che_첩보(CheCheobo) PHP-골든 draw-for-draw 바이트 게이트.
@@ -34,6 +35,37 @@ import kotlin.test.assertEquals
 class CheCheoboGoldenTest {
 
     private val registry = CommandRegistry(GeneralActionPipeline())
+
+    @Test
+    fun `che_첩보 resolves a Han-only edge with the Han city name and distance`() {
+        val definition = registry.resolve("che_첩보")
+        val actor = General(
+            id = 1, nationId = 1, cityId = 3, leadership = 70, strength = 70, intel = 70,
+            injury = 0, experience = 0.0, dedication = 0.0, officerLevel = 1,
+            gold = 100_000, rice = 100_000,
+        )
+        val source = City(
+            id = 3, nationId = 1, level = 1, commerce = 0, commerceMax = 1,
+            agriculture = 0, agricultureMax = 1, supplyState = 1, frontState = 0, trust = 100.0,
+        )
+        val destination = source.copy(id = 421, nationId = 2)
+        val draft = GeneralActionDraft(actor, source, Nation(id = 1, level = 1, capitalCityId = 3))
+        draft.destCity = destination
+        draft.destNation = Nation(id = 2, level = 1, capitalCityId = 421)
+        val context = GeneralActionResolveContext(
+            draft = draft,
+            rng = RandUtil(LiteHashDrbg("han-cheobo-edge")),
+            env = WorldEnv(year = 200, startYear = 184, develCost = 100, mapName = "han"),
+            month = 3,
+            date = "12:00",
+            args = linkedMapOf("destCityID" to 421),
+        )
+
+        definition.resolve(context)
+
+        assertTrue(context.logs().any { it.contains("<b>석</b>") && it.contains("정보를 많이 얻었습니다") })
+        assertTrue(context.globalActionLogs().any { it.contains("<b>석</b>") })
+    }
 
     @Test
     fun `che_첩보 golden byte-matches the PHP action log, 2-draw RNG, and post-state`() {

@@ -1,6 +1,8 @@
 package opensamguk.logic.ai.bfs
 
 import opensamguk.logic.domain.City
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -85,8 +87,50 @@ class FloydWarshallTest {
     }
 
     @Test
+    fun `optimized closure is entry-and-order identical to literal Floyd for che and han subsets`() {
+        val cases = listOf(
+            CityConstRegistry.of("che") to listOf(54, 30, 49, 53, 14, 15),
+            CityConstRegistry.of("han") to listOf(780, 779, 778, 777, 776, 775, 774, 773),
+        )
+
+        for ((cityConst, cityIds) in cases) {
+            val expected = literalFloyd(cityIds, cityConst)
+            val actual = AiDistance.searchAllDistanceByCityList(cityIds, cityConst)
+            assertEquals(expected, actual)
+            assertEquals(expected.keys.toList(), actual.keys.toList())
+            for (cityId in expected.keys) {
+                assertEquals(expected.getValue(cityId).keys.toList(), actual.getValue(cityId).keys.toList())
+            }
+        }
+    }
+
+    @Test
     fun `Floyd empty cityIDList returns empty map`() {
         assertEquals(emptyMap(), AiDistance.searchAllDistanceByCityList(emptyList()))
+    }
+
+    private fun literalFloyd(
+        cityIds: List<Int>,
+        cityConst: CityConstVariant,
+    ): Map<Int, Map<Int, Int>> {
+        val membership = cityIds.associateWithTo(LinkedHashMap()) { it }
+        val result = cityIds.associateWithTo(LinkedHashMap()) { cityId ->
+            linkedMapOf(cityId to 0).apply {
+                cityConst.byId(cityId)?.path?.keys?.forEach { nextCityId ->
+                    if (nextCityId in membership) this[nextCityId] = 1
+                }
+            }
+        }
+        for (stop in membership.keys) {
+            for (from in membership.keys) {
+                for (to in membership.keys) {
+                    val left = result.getValue(from)[stop] ?: continue
+                    val right = result.getValue(stop)[to] ?: continue
+                    result.getValue(from)[to] = minOf(result.getValue(from)[to] ?: Int.MAX_VALUE, left + right)
+                }
+            }
+        }
+        return result
     }
 
     // ---- searchAllDistanceByNationList (PK-ascending DB-row order → Floyd) -----------------------

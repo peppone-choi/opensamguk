@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
@@ -20,6 +21,7 @@ import java.time.LocalDateTime
 @Component
 class AdminSeeder(
     private val userRepository: UserRepository,
+    private val jdbcTemplate: JdbcTemplate,
     private val passwordEncoder: PasswordEncoder,
     @Value("\${ADMIN_USERNAME:}") private val adminUsername: String,
     @Value("\${ADMIN_PASSWORD:}") private val adminPassword: String,
@@ -34,23 +36,55 @@ class AdminSeeder(
         }
         val existing = userRepository.findByUsername(adminUsername).orElse(null)
         if (existing != null) {
-            existing.password = passwordEncoder.encode(adminPassword)
-            existing.role = "ADMIN"
-            existing.grade = 6
-            existing.updatedAt = LocalDateTime.now()
-            userRepository.save(existing)
+            ensureAdmin(existing)
             log.info("Admin '{}' already exists — ensured role=ADMIN", adminUsername)
             return
         }
-        userRepository.save(
-            UserEntity(
-                username = adminUsername,
-                password = passwordEncoder.encode(adminPassword),
-                nickname = adminUsername,
-                role = "ADMIN",
-                grade = 6,
-            ),
-        )
-        log.info("Admin '{}' created (role=ADMIN)", adminUsername)
+        val encodedPassword = passwordEncoder.encode(adminPassword)
+        for (nickname in adminNicknameCandidates()) {
+            val inserted = jdbcTemplate.update(
+                """
+                INSERT INTO users (username, password, nickname, role, grade)
+                VALUES (?, ?, ?, 'ADMIN', 6)
+                ON CONFLICT DO NOTHING
+                """.trimIndent(),
+                adminUsername,
+                encodedPassword,
+                nickname,
+            )
+            if (inserted == 1) {
+                log.info("Admin '{}' created (role=ADMIN)", adminUsername)
+                return
+            }
+            val concurrentlyCreated = userRepository.findByUsername(adminUsername).orElse(null)
+            if (concurrentlyCreated != null) {
+                ensureAdmin(concurrentlyCreated)
+                log.info("Admin '{}' was created concurrently — ensured role=ADMIN", adminUsername)
+                return
+            }
+        }
+        throw IllegalStateException("관리자 계정에 사용할 닉네임을 확보할 수 없습니다.")
+    }
+
+    private fun adminNicknameCandidates(): List<String> {
+        val preferred = adminUsername.trim()
+        val fingerprint = adminUsername.hashCode().toUInt().toString(16).padStart(8, '0')
+        return buildList {
+            if (preferred.length in 2..20) add(preferred)
+            add("관리자")
+            repeat(8) { index ->
+                val suffix = if (index == 0) "" else "-${index + 1}"
+                add("관리자-$fingerprint$suffix")
+            }
+        }
+            .distinct()
+    }
+
+    private fun ensureAdmin(user: UserEntity) {
+        user.password = passwordEncoder.encode(adminPassword)
+        user.role = "ADMIN"
+        user.grade = 6
+        user.updatedAt = LocalDateTime.now()
+        userRepository.save(user)
     }
 }

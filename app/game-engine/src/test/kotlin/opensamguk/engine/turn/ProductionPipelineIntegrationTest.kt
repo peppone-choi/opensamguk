@@ -19,7 +19,14 @@ class ProductionPipelineIntegrationTest {
     private fun world(general: TurnGeneral, nation: Nation = Nation(id = 1, name = "촉", color = "#0f0", level = 7)) =
         InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0),
+                state = TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = t0,
+                    config = linkedMapOf("mapName" to "che"),
+                ),
                 generals = listOf(general),
                 cities = listOf(
                     City(
@@ -119,7 +126,14 @@ class ProductionPipelineIntegrationTest {
         )
         val world = InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0),
+                state = TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = t0,
+                    config = linkedMapOf("mapName" to "che"),
+                ),
                 generals = listOf(general),
                 cities = listOf(city),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", level = 7)),

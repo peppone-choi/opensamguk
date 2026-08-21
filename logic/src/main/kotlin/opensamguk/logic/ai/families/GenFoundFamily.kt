@@ -1,6 +1,5 @@
 package opensamguk.logic.ai.families
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.ai.ChosenCommand
@@ -10,6 +9,7 @@ import opensamguk.logic.ai.bfs.AiDistance
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.GetNationColors
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.world.isFoundableCityLevel
 
 /**
  * L-GENFOUND — the founding / nation-selection `do<한글>` command family (거병/해산/건국/선양/국가선택/사망대비/중립).
@@ -397,17 +397,17 @@ object GenFoundFamily {
         if (ctx.selfNpcType > 2) return null // :3224 npcType>2
         if (!ctx.generalPolicy.can건국) return null // :3227 !can건국
         // PHP `:3231-3234` — the `&&` 0.5 skip (nextBit) ONLY on a non-foundable city (level ∉ {5,6}).
-        val cityLevelNotFoundable = ctx.selfCityLevel < 5 || 6 < ctx.selfCityLevel
+        val cityLevelNotFoundable = !isFoundableCityLevel(ctx.selfCityLevel)
         if (nonFoundableCitySkip(cityLevelNotFoundable, rng)) return null // :3232
 
         // PHP `:3249-3266` — BFS dist-3 scan (dequeue/visitation order) over the foundOccupiedCities-filtered
         // candidates; the FIRST kept foundable city sets availableNearCity; a dist-3 candidate rolls the 0.5 bit.
         var availableNearCity = false
-        val distMap = AiDistance.searchDistanceCities(ctx.selfCityId, 3) // :3250 searchDistance(cityID, 3)
+        val distMap = AiDistance.searchDistanceCities(ctx.selfCityId, 3, ctx.cityConst) // :3250 searchDistance(cityID, 3)
         for ((targetCityID, dist) in distMap) {
             if (ctx.foundOccupiedCities.contains(targetCityID)) continue // :3251
-            val cityLevel = CityConst.byId(targetCityID)?.level ?: continue
-            if (cityLevel < 5 || 6 < cityLevel) continue // :3255
+            val cityLevel = ctx.cityConst.byId(targetCityID)?.level ?: continue
+            if (!isFoundableCityLevel(cityLevel)) continue // :3255
             if (dist == 3 && dist3CandidateSkip(rng)) continue // :3258 per-dist-3-candidate nextBit
             availableNearCity = true // :3261
             break
@@ -522,7 +522,7 @@ object GenFoundFamily {
 
         // PHP `:3390-3399` — the sibling move-instead branch (only when the :3358 0.3 was false).
         if (nationChoiceMoveGate(rng)) { // :3390 nextBool(0.2)
-            val paths = CityConst.byId(ctx.selfCityId)?.path?.keys?.toList() ?: emptyList() // :3391 name-order
+            val paths = ctx.cityConst.byId(ctx.selfCityId)?.path?.keys?.toList() ?: emptyList() // :3391 name-order
             val destCityID = pickNationChoiceMove(paths, rng) // :3393 choice($paths)
             val args = linkedMapOf<String, Any?>("destCityID" to destCityID)
             if (!ctx.candidateAllowed(MOVE_ACTION, args)) return null // :3394

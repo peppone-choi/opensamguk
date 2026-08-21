@@ -78,6 +78,13 @@ class ConquerCityResetTest {
         assertEquals(last, ConquerCity.findNextCapital(1, owned), "the LAST max-pop city in ring order wins")
     }
 
+    @Test
+    fun `Han lost capital relocates to an adjacent Han-only city`() {
+        val han = CityConstRegistry.of("han")
+        assertTrue(421 in checkNotNull(han.byId(3)).path)
+        assertEquals(421, ConquerCity.findNextCapital(3, linkedMapOf(421 to 50_000), han))
+    }
+
     // --- winner tie-break: attacker-match moves the general; mismatch = 양도 log only ----------------------
 
     @Test

@@ -1,5 +1,6 @@
 'use client';
 
+import { Brand } from '@opensamguk/ui';
 import Link from 'next/link';
 import Shell from '../components/Shell';
 import GameCard from '../components/GameCard';
@@ -23,8 +24,8 @@ export default function Home() {
     return (
         <Shell>
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>
-                    오픈삼국
+                <h1 style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-sm)' }}>
+                    <Brand size="large" />
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)' }}>
                     오픈삼국 — 메모리 중심 CQRS 재작성

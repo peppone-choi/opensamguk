@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.founding
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
@@ -25,6 +24,7 @@ import opensamguk.logic.util.StringUtil
 import opensamguk.logic.traits.NationTypeModule
 import opensamguk.logic.traits.NationTypeRegistry
 import opensamguk.logic.world.foundAssaultCrewCost
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * Typed intent for PHP's trailing `tryUniqueItemLottery(genGenericUniqueRNGFromGeneral(...), ...)`.
@@ -167,7 +167,7 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
         val nationType = context.args["nationType"] as? String ?: return
         val colorType = (context.args["colorType"] as? Number)?.toInt() ?: return
         val color = GetNationColors().getOrNull(colorType) ?: return
-        val cityName = CityConst.byId(cityId)?.name ?: ""
+        val cityName = CityConstRegistry.of(context.env.mapName).byId(cityId)?.name ?: ""
 
         // 3. logs (che_건국.php:172-178).
         val josaUl = JosaUtil.pick(nationName, "을")

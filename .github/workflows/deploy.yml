@@ -153,6 +153,15 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-${{ env.IMAGE_TAG }}
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-latest
 
+      - name: Build + push board-api image
+        run: |
+          docker build -f docker/board-api.Dockerfile \
+            --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-latest .
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:board-api-latest
+
       - name: Build + push game-api image
         run: |
           docker build -f docker/game-api.Dockerfile \
@@ -299,10 +308,22 @@ jobs:
               | grep -q '"ok":true'
           done
 
+          if ! $COMPOSE config --services | grep -qx 'board-api'; then
+            echo "BLOCKED: opensamguk-docker must define board-api before gateway/web activation" >&2
+            exit 1
+          fi
+          if ! $COMPOSE config | grep -q 'BOARD_API_URL:'; then
+            echo "BLOCKED: opensamguk-docker web-gateway must define BOARD_API_URL before gateway/web activation" >&2
+            exit 1
+          fi
+
+          docker exec opensamguk-deployer \
+            /usr/local/bin/deployer --check-running-registry-targets
+
           # 공유 스택 IMAGE_TAG를 이 커밋 SHA로 영속 고정(.env가 단일 진실 — 재부팅/수동 up에도 유지).
           sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
 
-          SHARED_SERVICES="gateway-api web-gateway"
+          SHARED_SERVICES="gateway-api board-api web-gateway"
           if $COMPOSE config --services | grep -qx 'game-frontend'; then
             SHARED_SERVICES="$SHARED_SERVICES game-frontend"
           fi
@@ -313,8 +334,78 @@ jobs:
           echo "=== Pulling shared images ==="
           $COMPOSE pull $SHARED_SERVICES
 
-          echo "=== Restarting shared upstreams ==="
-          $COMPOSE up -d --force-recreate --no-deps $SHARED_SERVICES
+          wait_container_health() {
+            local container="$1"
+            local port="$2"
+            local label="$3"
+            for i in $(seq 1 30); do
+              if docker exec "$container" curl -sf "http://localhost:${port}/actuator/health" >/dev/null 2>&1; then
+                echo "${label} readiness: OK"
+                return 0
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "${label} readiness: FAILED" >&2
+                return 1
+              fi
+              sleep 5
+            done
+          }
+
+          echo "=== Restarting board API ==="
+          $COMPOSE up -d --force-recreate --no-deps board-api
+          wait_container_health opensamguk-board-api 8083 board-api
+
+          jwt_signing_mode="$(sed -n 's/^JWT_SIGNING_MODE=//p' .env | tail -1 | tr -d "\r[:space:]\"'" | tr '[:lower:]' '[:upper:]')"
+          include_profile_claims="$(sed -n 's/^JWT_INCLUDE_PROFILE_CLAIMS=//p' .env | tail -1 | tr -d "\r[:space:]\"'" | tr '[:upper:]' '[:lower:]')"
+          jwt_signing_mode="${jwt_signing_mode:-RS256}"
+          include_profile_claims="${include_profile_claims:-true}"
+          if [[ "$jwt_signing_mode" == "RS256" || "$include_profile_claims" == "false" ]]; then
+            jwt_public_key="$(sed -n 's/^JWT_PUBLIC_KEY=//p' .env | tail -1 | tr -d "\r[:space:]\"'")"
+            if [[ -z "$jwt_public_key" ]]; then
+              echo "BLOCKED: JWT_PUBLIC_KEY is required for asymmetric gateway cutover" >&2
+              exit 1
+            fi
+            expected_jwt_public_key_sha256="$(printf '%s' "$jwt_public_key" | base64 -d | sha256sum | awk '{print $1}')"
+            unset jwt_public_key
+            board_info="$(docker exec opensamguk-board-api curl -sf http://localhost:8083/actuator/info)"
+            if ! grep -q '"verifier":"rsa-audience-v1"' <<<"$board_info"; then
+              echo "BLOCKED: board-api has not advertised the asymmetric JWT verifier" >&2
+              exit 1
+            fi
+            if ! grep -Fq "\"publicKeySha256\":\"${expected_jwt_public_key_sha256}\"" <<<"$board_info"; then
+              echo "BLOCKED: board-api is not using the configured JWT public key" >&2
+              exit 1
+            fi
+            for envf in servers/s*.env; do
+              case "$envf" in *.bak*|*.example) continue;; esac
+              internal_server="$(basename "$envf" .env)"
+              api_container="${internal_server}-game-api"
+              if ! docker ps --format '{{.Names}}' | grep -qx "$api_container"; then
+                echo "BLOCKED: ${internal_server} must be running and promoted before gateway cutover" >&2
+                exit 1
+              fi
+              api_info="$(docker exec "$api_container" wget -qO- http://localhost:8081/actuator/info)"
+              if ! grep -q '"verifier":"rsa-audience-v1"' <<<"$api_info"; then
+                echo "BLOCKED: ${internal_server} must be promoted to the asymmetric JWT verifier before gateway cutover" >&2
+                exit 1
+              fi
+              if ! grep -Fq "\"publicKeySha256\":\"${expected_jwt_public_key_sha256}\"" <<<"$api_info"; then
+                echo "BLOCKED: ${internal_server} is not using the configured JWT public key" >&2
+                exit 1
+              fi
+            done
+            unset expected_jwt_public_key_sha256
+          fi
+
+          echo "=== Restarting gateway migrations ==="
+          $COMPOSE up -d --force-recreate --no-deps gateway-api
+          wait_container_health opensamguk-gateway-api 8080 gateway-api
+
+          echo "=== Restarting shared web ==="
+          $COMPOSE up -d --force-recreate --no-deps web-gateway
+          if $COMPOSE config --services | grep -qx 'game-frontend'; then
+            $COMPOSE up -d --force-recreate --no-deps game-frontend
+          fi
           # nginx LAST + force-recreate(업스트림 IP 재해석 — Rule A: stale-DNS 502 방지)
           $COMPOSE up -d --force-recreate --no-deps nginx
 
@@ -366,7 +457,7 @@ jobs:
             status=$?
             echo "=== Shared diagnostics (status=$status) ==="
             docker ps -a --filter 'name=opensamguk-' --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' || true
-            for c in opensamguk-gateway-api opensamguk-web-gateway opensamguk-nginx opensamguk-gateway-postgres opensamguk-gateway-redis; do
+            for c in opensamguk-gateway-api opensamguk-board-api opensamguk-web-gateway opensamguk-nginx opensamguk-gateway-postgres opensamguk-gateway-redis; do
               echo "=== docker logs --tail 160 $c ==="
               docker logs --tail 160 "$c" || true
             done
@@ -393,6 +484,18 @@ jobs:
             fi
             if [ "$i" -eq 30 ]; then
               echo "gateway-api health: FAILED — $RESP"
+              false
+            fi
+            sleep 5
+          done
+          for i in $(seq 1 30); do
+            RESP=$(docker exec opensamguk-board-api curl -sf http://localhost:8083/actuator/health 2>/dev/null || echo DOWN)
+            if echo "$RESP" | grep -q '"status":"UP"'; then
+              echo "board-api health: OK"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "board-api health: FAILED — $RESP"
               false
             fi
             sleep 5

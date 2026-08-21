@@ -27,6 +27,15 @@ class NationCommandDispatchTest {
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 
+    private fun cheState() = TurnWorldState(
+        id = 1,
+        currentYear = 200,
+        currentMonth = 3,
+        tickSeconds = 3600,
+        lastTurnTime = t0,
+        config = linkedMapOf("mapName" to "che"),
+    )
+
     @AfterTest fun reset() = NationActionResolverRegistry.clear()
 
     private fun world(
@@ -35,7 +44,7 @@ class NationCommandDispatchTest {
         nationMeta: Map<String, Any?> = emptyMap(),
     ): InMemoryTurnWorld = InMemoryTurnWorld(
         WorldSnapshot(
-            state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+            state = cheState(),
             generals = listOf(
                 TurnGeneral(id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,
                     stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0, officerLevel = 12, gold = 100, turnTime = t0),
@@ -71,7 +80,7 @@ class NationCommandDispatchTest {
         installDaemonResolvers()
         val world = InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                state = cheState(),
                 generals = listOf(
                     TurnGeneral(
                         id = 10, name = "유비", nationId = 1, cityId = 1, troopId = 0,
@@ -122,7 +131,7 @@ class NationCommandDispatchTest {
         installDaemonResolvers()
         val world = InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                state = cheState(),
                 generals = listOf(
                     TurnGeneral(
                         id = 10, name = "유비", nationId = 1, cityId = 1, troopId = 0,
@@ -583,7 +592,7 @@ class NationCommandDispatchTest {
         NationActionResolverRegistry.clear()
         val world = InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                state = cheState(),
                 generals = listOf(
                     TurnGeneral(
                         id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,
@@ -642,7 +651,7 @@ class NationCommandDispatchTest {
         NationActionResolverRegistry.clear()
         val world = InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                state = cheState(),
                 generals = listOf(
                     TurnGeneral(
                         id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,

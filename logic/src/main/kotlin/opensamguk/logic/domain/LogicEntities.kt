@@ -120,6 +120,7 @@ data class WorldEnv(
     // DIVERGENCE 플래그 (RTK14 5-stat). 기본 OFF = devsam 패러티. 내정개발(intel→politics, leadership→charm)에 더해
     // 인사/외교 5-stat 발산(등용 매력 평판완화 등)까지 포괄. 기본값 덕분에 기존 생성자/골든은 전부 무영향.
     val fiveStatLogic: Boolean = false,
+    val mapName: String = "che",
 ) {
     val relYear: Int get() = year - startYear
 }

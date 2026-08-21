@@ -15,10 +15,10 @@ Codex를 처음 사용하는 사람은 먼저 [`codex-user-manual.md`](codex-use
 
 | 작업 유형 | 읽을 문서 |
 |---|---|
-| 패러티 갭 폐쇄 (명령 1개) | `docs/superpowers/WORKING_SYSTEM.md`(정본 절차) + `.claude/HARNESS.md` + `verification.md` — Claude의 `/parity-close`와 Codex의 `$parity-close` 프로젝트 스킬은 모두 같은 정본 절차를 대신함 |
+| 명시적으로 요청된 동결 회귀/역사적 패러티 유지보수 (명령 1개) | `docs/superpowers/WORKING_SYSTEM.md`(정본 절차) + `.claude/HARNESS.md` + `verification.md` — `/parity-close`/`$parity-close`는 신규 제품 작업의 선행 조건이 아닌 opt-in 역사 워크플로 |
 | 신규 기능 / v2 구현 | `architecture.md`, `coding-rules.md`, `lifecycle-planning.md`, `lifecycle-testing.md` |
 | 버그 수정 / 라이브 갭 | `failure-cases.md`, `verification.md`, `lifecycle-testing.md`, 해당 `docs/loops/*/LEDGER.md` |
-| UI/프론트 변경 (`web/*`) | `coding-rules.md` §프론트, `verification.md`(pnpm typecheck/test), `lifecycle-testing.md` — 프론트 grand truth는 `hwe/ts/` Vue(PHP가 이김), 브라우저 재현은 `webapp-testing` 스킬 |
+| UI/프론트 변경 (`web/*`) | `coding-rules.md` §프론트, `verification.md`(pnpm typecheck/test), `lifecycle-testing.md` — 승인된 디자인 방향과 현재 Next.js 구현이 기준, `hwe/ts/` Vue는 흐름 참고만, 브라우저 재현은 `webapp-testing` 스킬 |
 | 코드 리뷰 | `lifecycle-review.md`, `coding-rules.md`, `verification.md` |
 | 배포·운영 | `lifecycle-ops.md`, `tool-capabilities.md`, `.claude/HARNESS.md` §6 |
 | 문서화 | `project-overview.md`, `architecture.md` |
@@ -32,8 +32,8 @@ Codex를 처음 사용하는 사람은 먼저 [`codex-user-manual.md`](codex-use
 
 ## 정본 관계 (중복 금지)
 
-- **패러티 규율·아키텍처 불변식 정본 = `/CLAUDE.md`.** 이 디렉터리 문서는 요약·라우팅만 하고 규칙을 재정의하지 않는다.
-- **패러티 작업 절차 정본 = `docs/superpowers/WORKING_SYSTEM.md`**, 하니스 지도 = `.claude/HARNESS.md`.
+- **제품·회귀 규율·아키텍처 불변식 정본 = 승인된 `.ai/decisions.md` + `/CLAUDE.md`.** 이 디렉터리 문서는 요약·라우팅만 하고 규칙을 재정의하지 않는다.
+- **작업 절차 정본 = `docs/superpowers/WORKING_SYSTEM.md`**, 하니스 지도 = `.claude/HARNESS.md`. 역사적 패러티 절차는 명시적 opt-in 범위에서만 사용한다.
 - 루프 이력 정본 = `docs/loops/*/LEDGER.md`, 세션 이력 = `docs/superpowers/SESSION_HANDOFF.md`.
 - 충돌 발견 시: 조용히 택일하지 말고 `.ai/current-state.md` Open questions에 기록 + 사람에게 보고.
 

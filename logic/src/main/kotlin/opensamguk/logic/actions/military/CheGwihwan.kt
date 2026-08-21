@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
@@ -18,6 +17,7 @@ import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_귀환 — faithful port of `legacy/devsam-core/hwe/sammo/Command/General/che_귀환.php`.
@@ -55,7 +55,7 @@ class CheGwihwan(private val pipeline: GeneralActionPipeline) : GeneralActionDef
         val officerLevel = g0.officerLevel
         val destCityId = if (officerLevel in 2..4) metaInt(g0.meta, "officer_city")
         else (d.nation?.capitalCityId ?: return)
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
         val josaRo = JosaUtil.pick(destCityName, "로")
         context.addLog("<G><b>$destCityName</b></>$josaRo 귀환했습니다. <1>${context.date}</>")
         var g = g0.copy(cityId = destCityId)

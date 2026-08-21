@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { Brand } from '@opensamguk/ui';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { register } from '@/lib/client';
-import { AUTH_LABELS, BRAND, FOOTER_LINKS } from '@/lib/constants';
+import { AUTH_LABELS, FOOTER_LINKS } from '@/lib/constants';
 
 // 계정 회원가입 전용 — POST /auth/register 1:1 매핑 (F0 스펙 §4a).
 // 장수 생성/캐릭터 생성은 별도 P7 game-web 페이지이므로 여기서 다루지 않는다.
@@ -88,14 +88,7 @@ export default function JoinPage() {
     return (
         <div className="gw-shell">
             <header className="gw-navbar">
-                <Image
-                    className="gw-brand-logo"
-                    src="/logo-wordmark.png"
-                    alt={BRAND}
-                    width={86}
-                    height={32}
-                    priority
-                />
+                <Brand size="large" />
             </header>
 
             <main className="gw-center fade-in">

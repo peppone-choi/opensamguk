@@ -1,12 +1,12 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.constraints.disallowDiplomacyBetweenStatus
 import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.notNeutralDestCity
@@ -28,6 +28,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.numberFormat
 import opensamguk.logic.util.valueFit
+import opensamguk.logic.world.CityConstRegistry
 import kotlin.math.log2
 
 /**
@@ -75,7 +76,7 @@ class ChePagoe(
     fun argTest(raw: Map<String, Any?>): Map<String, Any?>? {
         if (!raw.containsKey("destCityID")) return null
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
         return linkedMapOf("destCityID" to destCityID)
     }
 
@@ -95,7 +96,7 @@ class ChePagoe(
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
         val cost = (ctx.env["develCost"] as? Number)?.toInt()?.times(5) ?: 0
         return listOf(
-            notBeNeutral(),
+            activeMapDestCity(), notBeNeutral(),
             occupiedCity(),
             suppliedCity(),
             notOccupiedDestCity(),
@@ -142,7 +143,7 @@ class ChePagoe(
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
         val destCity = d.destCity ?: return
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
         val commandName = name
         val statType = "strength"
 

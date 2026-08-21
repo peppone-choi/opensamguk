@@ -579,6 +579,18 @@ class GenWarMoveBodiesTest {
         assertTrue(rng.draws.isEmpty())
     }
 
+    @Test
+    fun `do방랑군이동 reuses han county foundability and returns with no draws`() {
+        val st = instance()
+        val rng = RecordingRng("wander-han-county")
+        val ctx = ctxOf(
+            rng, st, selfCity = city(100, level = 10), selfCityLevel = 10, dupLordAtSelfCity = 1,
+        )
+
+        assertNull(GenWarMoveFamily.do방랑군이동(ctx)(null), "han county level 10 is a foundable city")
+        assertTrue(rng.draws.isEmpty())
+    }
+
     /** City 70 "호관" path neighbours (CityConst): 업/낙양/하내/진양 — used to assert the next-hop dest is real. */
     private fun CityConstNeighborsOf70(): Set<Int> =
         opensamguk.common.constants.CityConst.byId(70)!!.path.keys

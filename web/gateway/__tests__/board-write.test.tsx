@@ -95,6 +95,7 @@ describe('gateway board write', () => {
 
   it('sends rich text from the StarterKit editor through the authenticated proxy', async () => {
     render(<BoardWritePage />);
+    expect(screen.getByRole('link', { name: '취소' })).toHaveClass('board-heading-action');
     expect(screen.getByLabelText('제목')).toHaveAttribute('maxLength', '120');
     expect(screen.getByRole('button', { name: '굵게' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '기울임' })).toBeInTheDocument();

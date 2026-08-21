@@ -9,7 +9,7 @@ Load-bearing product and architecture rules. Violating them silently breaks dete
 v1 코어는 devsam/core 를 바이트 단위로 이식해 세웠지만, **2026-08-20(ADR-LITE-042) 부로 패러티 이식을 종료했다.** 이제 오픈삼국은 자기 설계를 따른다.
 
 - **`legacy/devsam-core` (PHP) = 참고 자료.** ~~GRAND TRUTH~~ — **2026-08-20 (ADR-LITE-042) 부로 오라클 지위가 해제됐다.** 체섭은 체섭이고 오픈삼국은 오픈삼국이다. PHP 동작은 설계를 참고할 때 읽는 자료이지, 맞춰야 할 정답이 아니다.
-- **`legacy/devsam-core2026` (TypeScript)** = 또 하나의 참고 자료. 예전 규칙("PHP wins every divergence")도 ADR-LITE-042 로 해제됐다 — 두 레거시 모두 이제 우리 설계를 정할 때 읽는 자료다.
+- **`legacy/devsam-core2026` (TypeScript)** = 또 하나의 참고 자료. 예전 PHP 우선 규칙도 ADR-LITE-042 로 해제됐다 — 두 레거시 모두 이제 우리 설계를 정할 때 읽는 자료다.
 - `legacy/` is **git-ignored**, never committed. Design + roadmap: `docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`.
 - Repo stays **PRIVATE** until a Koei-IP review clears it. No Koei-owned assets/IP, secrets, or credentials in commits.
 
@@ -25,37 +25,27 @@ Modules (`settings.gradle`):
 - **`common`** — RNG/log kernel: `rng/LiteHashDrbg` (byte-exact SHA-512 DRBG) + `rng/RandUtil` + `rng/SeedSerializer`, `util/PhpRound`, `log/*` (Josa/ConvertLog/tokens), `constants/GameConst`.
 - **`logic`** — pure game logic (no Spring/DB): `stats/ActionPipeline` (multi-source stat fold + `getStatValue` + calc-cache), `actions/*` + `CommandRegistry`, `war/*` battle engine, `ai/*` GeneralAI, `event/*` DSL, `tick/*`, domain.
 - **`infra`** — `JdbcFlushExecutor` (**JDBC-only** flush + delete/tombstone delta + row mappers), Flyway `db/migration/V*.sql`, Redis.
-- **`app/gateway-api`** (:8080) auth/profile · **`app/game-api`** (:8081) read+precheck+intake+SSE · **`app/game-engine`** (:8082) turn daemon (`InMemoryTurnWorld`+`ChangeRecorder`+`MonthlyPipeline`+`TurnRunService`).
+- **`app/gateway-api`** (:8080) auth/profile · **`app/game-api`** (:8081) read+precheck+intake+SSE · **`app/game-engine`** (:8082) turn daemon (`InMemoryTurnWorld`+`ChangeRecorder`+`MonthlyPipeline`+`TurnRunService`) · **`app/board-api`** (:8083) board read/write + verify-only access JWT.
 - **`web/gateway`** (:3000) · **`web/game`** (:3001) — Next.js.
 
 **The ONE daemon-write rule (architecture-test-enforced):** the game-engine daemon NEVER uses a JPA `EntityManager` for writes. JPA = read/precheck only (game-api). Daemon writes go **only** through `ChangeRecorder` → `JdbcFlushExecutor` JDBC batch. (Two competing dirty-truths — JPA dirty-checking + change-recorder — would silently diverge.)
 
-## Parity discipline — **해제됨 (ADR-LITE-042, 2026-08-20)**
+## Product and regression discipline (ADR-LITE-042, 2026-08-20)
 
-> **이 절은 더 이상 구속력이 없다.** 사용자 지시로 devsam/core(체섭) PHP 를 똑같이
-> 구현하는 것을 그만뒀다. RNG draw-for-draw · 로그 바이트 일치 · PHP 오라클 선행 캡처는
-> **전부 해제**다. 아래 1~6번은 v1 코어가 *어떻게 만들어졌는지*를 설명하는 이력으로만 읽어라.
->
-> **다만 아래 넷은 패러티 규칙이 아니라 품질·아키텍처 규칙이라 그대로 살아 있다:**
-> (a) **거짓 완료 금지** — 골든·테스트·명령 결과를 지어내지 않는다. 테스트를 통과시키려고
-> 테스트를 약화하지 않는다. 미확인은 UNKNOWN 이지 추측이 아니다.
-> (b) **기존 골든·테스트는 지우지 않는다** — 성격만 바뀐다. PHP 오라클이 아니라
-> **frozen-baseline 회귀 게이트**다("PHP 와 같은가"가 아니라 "의도치 않게 벗어났는가").
-> 기대값을 바꿀 때는 왜 바꾸는지를 커밋에 남긴다.
-> (c) **리플레이 결정론** — 같은 시드 → 같은 결과는 재현·디버깅에 필요하므로 유지한다.
-> (d) **one-daemon-write-rule · flush 델타 · 삽입 순서** — 아키텍처 무결성 규칙이라 불변.
->
-> 전문과 뒤집는 법: `.ai/decisions.md` ADR-LITE-042.
+The product authority is the latest approved ADR/spec plus the current implementation. PHP and hwe are optional historical/reference inputs. New work does not require PHP draw-for-draw, byte-log parity, or an oracle capture.
 
+1. **Deterministic replay.** The same seed, input, and ordering must reproduce the same result. This is a product debugging and dispute-resolution property, not PHP parity.
+2. **Intentional numerical changes.** Existing `PhpRound` and truncation/clamp behavior remains protected by frozen regressions. Any change must state the intended numerical rule and regression impact; PHP behavior alone is not a reason to keep or change it.
+3. **Stable logs and ordering.** Korean logs are UX output. Preserve execution order and record intentional copy/order changes; new copy need not byte-match PHP.
+4. **Flush delta, not inline writes.** Mutations are recorded as `created`/`dirty`/`deleted` on `ChangeRecorder` and flushed in bulk. Resolvers write only delta.
+5. **Never fabricate or weaken evidence.** Existing goldens and tests are frozen baselines. Do not delete or edit them merely to make a change pass. A justified product change may update an affected expectation only with explicit intent and regression evidence.
+6. **Insertion order matters.** Preserve result-affecting map/event insertion and execution order explicitly.
 
-1. **RNG draw-for-draw.** All randomness is `RandUtil(LiteHashDrbg(seed))`. The draw **order, count, and method args** are parity targets, not just the result. In battle, the WHOLE fight runs on **ONE** `RandUtil(warSeed)` built once in `processWar()` and threaded by reference — never re-seeded mid-stream. One extra/missing/reordered draw desyncs everything downstream.
-2. **Rounding.** `Util::round`/`setRound` = **half-AWAY-from-zero** → use `PhpRound` (negative-scale `phpRound(v,-2)`, NEVER `phpRound(v/100)*100`). NEVER `Math.round` (half-up) or `kotlin.math.round` (half-to-even). `Util::toInt`/`intdiv` = truncate-toward-zero. Damage-loop clamp = `ceil()` (distinct from round).
-3. **Korean log byte-parity.** Log strings (`Josa` 조사, color/tag markup, prefixes, `<Y1>【name】</> <C>HP (-dead)</>`, 진격·퇴각·패퇴·전멸·분쟁·정복 …) must match exactly. **Log order = execution order** → execution drift breaks the log gate.
-4. **Flush delta, not inline writes.** Mutations are recorded as `created`/`dirty`/`deleted` (tombstone) on `ChangeRecorder` and flushed in bulk. Resolvers write **only** delta — no inline DB write.
-5. **Faithful port, never fabricate.** Golden numbers/logs/seeds come **only** from a real PHP capture (`tools/php-golden`, Docker). If a value can't be captured faithfully, **quarantine it with proof** (sibling-code-path byte-match) + log to the phase backlog — do **not** invent it, do **not** weaken a test or edit a golden. On a mismatch: fix the Kotlin impl, not the golden.
-6. **Insertion order matters.** jsonb / conflict-map / trigger-caller keys preserve insertion order (`LinkedHashMap`), never re-keyed by id. PHP 8.0+ sorts are stable — never add a non-stable secondary comparator.
+Historical parity workflows (`tools/php-golden/`, `parity-close`, `parity-ship`, and `tools/parity/gate.sh`) remain available only for explicitly requested frozen-regression maintenance. Their historical names do not restore PHP as product authority. Full decision and reversal procedure: `.ai/decisions.md` ADR-LITE-042.
 
-**Sanctioned divergence — 정치·매력 5스탯 (1.0.0+, narrowly scoped).** `politics`(정치)/`charm`(매력)은 레거시 devsam/core(3스탯: 통/무/지)에 없는 오픈삼국 독자 스탯이다. PHP 골든 오라클이 없으며 출처는 RTK14 원본이다. 원본과 생성 시나리오는 **git-ignore, 미커밋**하고 `tools/rtk14/build_rtk14_stats.py`만 버전 관리한다. 빌더는 모든 `scenario_*.json` 장수 tuple의 인덱스 14/15를 원수치로 덮어쓰며, 통무지·생몰년·별칭으로 동명이인을 1:1 배정하고 미매칭만 50/50으로 둔다. 격리는 엄격하다: leadership/strength/intel의 `getStatValue`·RNG draw·로그·골든은 불변이고, 정치·매력은 divergence 플래그 뒤 비-RNG 내정·등용·외교 경로에만 주입한다. 유저 생성은 통무지정매 5개 입력과 총합 275 상한을 사용한다. 스펙: `docs/superpowers/specs/2026-06-13-five-stat-rtk14-divergence.md`, 현재 루프: `docs/loops/live-gap-closure-2026-07-10/`.
+**Five-stat product extension — politics/charm.** `politics`(정치)/`charm`(매력)은 오픈삼국 독자 스탯이다. RTK14 원본과 생성 시나리오는 **git-ignore, 미커밋**하고 `tools/rtk14/build_rtk14_stats.py`만 버전 관리한다. 빌더는 모든 `scenario_*.json` 장수 tuple의 인덱스 14/15를 원수치로 덮어쓰며, 통무지·생몰년·별칭으로 동명이인을 1:1 배정하고 미매칭만 50/50으로 둔다. 유저 생성은 통무지정매 5개 입력과 총합 275 상한을 사용한다. 스펙: `docs/superpowers/specs/2026-06-13-five-stat-rtk14-divergence.md`.
+
+**Sanctioned divergence — han 건국·3축 등급 밸런스 (ADR-LITE-043).** han 맵에서만 공백지 수비병 돌파비율을 `FOUND_ASSAULT_RATIO=2.0`(`ceil(defence * 2.0)`)으로 두고, 건국 가능 등급을 중/소(5/6) + 영현/장현(`level >= 10`)으로 둔다. 군치 수에 따른 도적·황건 spine 문턱은 `1/13/28郡治 -> nation.level 2/3/4`다. CHE/miniche 건국 돌파비용은 0이고 기존 회귀 픽스처는 frozen-baseline으로 보존한다. 정본·뒤집기 경로는 `.ai/decisions.md` ADR-LITE-043이다.
 
 ## Build & test
 

@@ -7,6 +7,8 @@
 export const GATEWAY_API_URL =
     process.env.GATEWAY_API_URL ?? process.env.GATEWAY_API_ORIGIN ?? 'http://localhost:8080';
 
+export const BOARD_API_URL = process.env.BOARD_API_URL ?? 'http://localhost:8083';
+
 export const GATEWAY_UPSTREAM_TIMEOUT_MS = 10_000;
 
 export function isGatewayTimeout(error: unknown): boolean {

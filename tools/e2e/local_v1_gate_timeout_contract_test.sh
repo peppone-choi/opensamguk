@@ -134,7 +134,8 @@ run_case() {
   export E2E_TIMEOUT_CAPTURE_FILE="$capture_file"
 
   OPENSAMGUK_WORLD_ID=1 \
-  JWT_SECRET=contract-test-only \
+  JWT_PRIVATE_KEY=contract-test-private-key \
+  JWT_PUBLIC_KEY=contract-test-public-key \
   E2E_OPERATIONAL_SMOKE=false \
   E2E_ARTIFACT_DIR="$tmp_dir/${label}-artifacts" \
   "$gate"
@@ -197,7 +198,8 @@ run_build_mode_contracts() {
   unset E2E_MOCK_TARGET_IMAGES E2E_MOCK_REMOVED_TARGET_IMAGES
   unset E2E_BUILD_MODE
   OPENSAMGUK_WORLD_ID=1 \
-  JWT_SECRET=contract-test-only \
+  JWT_PRIVATE_KEY=contract-test-private-key \
+  JWT_PUBLIC_KEY=contract-test-public-key \
   E2E_ARTIFACT_DIR="$default_artifact_dir" \
   "$gate"
 
@@ -212,7 +214,8 @@ run_build_mode_contracts() {
   unset E2E_MOCK_TARGET_IMAGES E2E_MOCK_REMOVED_TARGET_IMAGES
   export E2E_BUILD_MODE=sequential
   OPENSAMGUK_WORLD_ID=1 \
-  JWT_SECRET=contract-test-only \
+  JWT_PRIVATE_KEY=contract-test-private-key \
+  JWT_PUBLIC_KEY=contract-test-public-key \
   E2E_ARTIFACT_DIR="$sequential_artifact_dir" \
   "$gate"
 
@@ -251,7 +254,8 @@ run_prebuilt_image_contracts() {
   unset E2E_MOCK_TARGET_IMAGES E2E_MOCK_REMOVED_TARGET_IMAGES
   unset E2E_PREBUILT_IMAGE_PREFIX E2E_MOCK_MISSING_SOURCE_IMAGE E2E_MOCK_EXISTING_TARGET
   OPENSAMGUK_WORLD_ID=1 \
-  JWT_SECRET=contract-test-only \
+  JWT_PRIVATE_KEY=contract-test-private-key \
+  JWT_PUBLIC_KEY=contract-test-public-key \
   E2E_SKIP_BUILD=true \
   E2E_ARTIFACT_DIR="$default_artifact_dir" \
   "$gate"
@@ -267,7 +271,8 @@ run_prebuilt_image_contracts() {
   unset E2E_MOCK_TARGET_IMAGES E2E_MOCK_REMOVED_TARGET_IMAGES
   export E2E_PREBUILT_IMAGE_PREFIX=prebuilt-fixture
   OPENSAMGUK_WORLD_ID=1 \
-  JWT_SECRET=contract-test-only \
+  JWT_PRIVATE_KEY=contract-test-private-key \
+  JWT_PUBLIC_KEY=contract-test-public-key \
   E2E_SKIP_BUILD=true \
   E2E_ARTIFACT_DIR="$custom_artifact_dir" \
   "$gate"
@@ -279,7 +284,8 @@ run_prebuilt_image_contracts() {
   assert_project_cleanup custom-prebuilt "$custom_artifact_dir" "$custom_docker_capture" prebuilt-fixture
 
   if OPENSAMGUK_WORLD_ID=1 \
-    JWT_SECRET=contract-test-only \
+    JWT_PRIVATE_KEY=contract-test-private-key \
+    JWT_PUBLIC_KEY=contract-test-public-key \
     E2E_SKIP_BUILD=true \
     E2E_PREBUILT_IMAGE_PREFIX='invalid/prefix' \
     E2E_ARTIFACT_DIR="$tmp_dir/invalid-prebuilt-artifacts" \
@@ -291,7 +297,8 @@ run_prebuilt_image_contracts() {
   }
 
   if OPENSAMGUK_WORLD_ID=1 \
-    JWT_SECRET=contract-test-only \
+    JWT_PRIVATE_KEY=contract-test-private-key \
+    JWT_PUBLIC_KEY=contract-test-public-key \
     E2E_SKIP_BUILD=true \
     E2E_PREBUILT_IMAGE_PREFIX=prebuilt-fixture \
     E2E_MOCK_MISSING_SOURCE_IMAGE=prebuilt-fixture-game-api:latest \
@@ -304,7 +311,8 @@ run_prebuilt_image_contracts() {
   }
 
   if OPENSAMGUK_WORLD_ID=1 \
-    JWT_SECRET=contract-test-only \
+    JWT_PRIVATE_KEY=contract-test-private-key \
+    JWT_PUBLIC_KEY=contract-test-public-key \
     E2E_SKIP_BUILD=true \
     E2E_PREBUILT_IMAGE_PREFIX=prebuilt-fixture \
     E2E_MOCK_EXISTING_TARGET=true \
@@ -333,7 +341,8 @@ run_failure_cleanup_contracts() {
   export E2E_DOCKER_CAPTURE_FILE="$playwright_docker_capture"
   unset E2E_MOCK_TARGET_IMAGES E2E_MOCK_REMOVED_TARGET_IMAGES E2E_MOCK_FAIL_COMPOSE_DOWN E2E_MOCK_FAIL_IMAGE_REMOVE
   if OPENSAMGUK_WORLD_ID=1 \
-    JWT_SECRET=contract-test-only \
+    JWT_PRIVATE_KEY=contract-test-private-key \
+    JWT_PUBLIC_KEY=contract-test-public-key \
     E2E_OPERATIONAL_SMOKE=false \
     E2E_SKIP_BUILD=true \
     E2E_MOCK_PLAYWRIGHT_FAIL=true \
@@ -346,7 +355,8 @@ run_failure_cleanup_contracts() {
   export E2E_DOCKER_CAPTURE_FILE="$cleanup_docker_capture"
   unset E2E_MOCK_TARGET_IMAGES E2E_MOCK_REMOVED_TARGET_IMAGES E2E_MOCK_PLAYWRIGHT_FAIL E2E_MOCK_FAIL_IMAGE_REMOVE
   if OPENSAMGUK_WORLD_ID=1 \
-    JWT_SECRET=contract-test-only \
+    JWT_PRIVATE_KEY=contract-test-private-key \
+    JWT_PUBLIC_KEY=contract-test-public-key \
     E2E_OPERATIONAL_SMOKE=false \
     E2E_SKIP_BUILD=true \
     E2E_MOCK_FAIL_COMPOSE_DOWN=true \
@@ -379,7 +389,8 @@ run_operational_fail_closed_case() {
   fi
 
   if OPENSAMGUK_WORLD_ID=1 \
-    JWT_SECRET=contract-test-only \
+    JWT_PRIVATE_KEY=contract-test-private-key \
+    JWT_PUBLIC_KEY=contract-test-public-key \
     E2E_OPERATIONAL_SMOKE=true \
     E2E_ARTIFACT_DIR="$tmp_dir/${label}-artifacts" \
     "$gate" >"$output" 2>&1; then
@@ -399,7 +410,8 @@ run_operational_case() {
   export E2E_TIMEOUT_CAPTURE_FILE="$timeout_capture_file"
   unset E2E_TEST_TIMEOUT_MS
   OPENSAMGUK_WORLD_ID=1 \
-  JWT_SECRET=contract-test-only \
+  JWT_PRIVATE_KEY=contract-test-private-key \
+  JWT_PUBLIC_KEY=contract-test-public-key \
   E2E_OPERATIONAL_SMOKE=true \
   E2E_ARTIFACT_DIR="$tmp_dir/operational-artifacts" \
   "$gate"
@@ -420,7 +432,8 @@ run_operational_timeout_override_case() {
   export SCENARIO_QA_TURNTERM=1
   export E2E_TIMEOUT_CAPTURE_FILE="$timeout_capture_file"
   OPENSAMGUK_WORLD_ID=1 \
-  JWT_SECRET=contract-test-only \
+  JWT_PRIVATE_KEY=contract-test-private-key \
+  JWT_PUBLIC_KEY=contract-test-public-key \
   E2E_OPERATIONAL_SMOKE=true \
   E2E_TEST_TIMEOUT_MS=710000 \
   E2E_ARTIFACT_DIR="$tmp_dir/operational-override-artifacts" \

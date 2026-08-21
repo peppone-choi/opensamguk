@@ -159,7 +159,10 @@ class ReservedTurnWarDrainTest {
         defenderNation: Nation = nation(id = 2, capital = 31, rice = 100_000),
     ): InMemoryTurnWorld = InMemoryTurnWorld(
         WorldSnapshot(
-            state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0),
+            state = TurnWorldState(
+                id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0,
+                config = linkedMapOf("mapName" to "che"),
+            ),
             generals = listOf(attacker()) + defenders,
             cities = listOf(city(id = 7, nationId = 1), defenderCity),
             nations = listOf(nation(id = 1, capital = 7), defenderNation),

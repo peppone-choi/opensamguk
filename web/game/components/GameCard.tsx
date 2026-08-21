@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
+import { Card } from '@opensamguk/ui';
+import type { CSSProperties, ReactNode } from 'react';
 
 interface GameCardProps {
-    children: React.ReactNode;
+    children: ReactNode;
     className?: string;
-    style?: React.CSSProperties;
+    style?: CSSProperties;
 }
 
 export default function GameCard({ children, className = '', style }: GameCardProps) {
-    return <div className={`game-card ${className}`} style={style}>{children}</div>;
+    return <Card className={`game-card ${className}`} style={style}>{children}</Card>;
 }

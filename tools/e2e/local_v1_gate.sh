@@ -8,8 +8,8 @@ if [[ -z "${OPENSAMGUK_WORLD_ID:-}" ]]; then
   echo "OPENSAMGUK_WORLD_ID must be supplied by the caller" >&2
   exit 2
 fi
-if [[ -z "${JWT_SECRET:-}" ]]; then
-  echo "JWT_SECRET must be supplied by the caller" >&2
+if [[ -z "${JWT_PRIVATE_KEY:-}" || -z "${JWT_PUBLIC_KEY:-}" ]]; then
+  echo "JWT_PRIVATE_KEY and JWT_PUBLIC_KEY must be supplied by the caller" >&2
   exit 2
 fi
 

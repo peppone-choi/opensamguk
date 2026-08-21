@@ -521,6 +521,7 @@ class DiplomaticMessageHandlerTest {
                 currentMonth = 3,
                 tickSeconds = 3600,
                 lastTurnTime = now,
+                config = linkedMapOf("mapName" to "che"),
             ),
             generals = listOfNotNull(
                 actor,

@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.constraints.ConstraintResult
@@ -8,6 +7,7 @@ import opensamguk.logic.constraints.RequirementKey
 import opensamguk.logic.constraints.StateView
 import opensamguk.logic.domain.City
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -26,10 +26,11 @@ class CheGamchukConstraintTest {
 
     // 실제 시나리오 도시(계양, id=30). origCityLevel = 그 도시의 CityConst 정적 레벨.
     private val capitalId = 30
-    private val origLevel = CityConst.byId(capitalId)!!.level
+    private val origLevel = CityConstRegistry.of("che").byId(capitalId)!!.level
 
-    private fun ctx() = ConstraintContext(
-        actorId = 1, cityId = capitalId, nationId = 1, destCityId = capitalId,
+    private fun ctx(cityId: Int = capitalId, mapName: String = "che") = ConstraintContext(
+        actorId = 1, cityId = cityId, nationId = 1, destCityId = cityId,
+        env = mapOf("mapName" to mapName),
         mode = ConstraintMode.FULL,
     )
 
@@ -66,5 +67,19 @@ class CheGamchukConstraintTest {
     fun `현재 level 이 origCityLevel 초과면 두 번째 제약을 통과한다`() {
         val second = cheGamchuk(pipeline).buildConstraints(ctx())[4]
         assertEquals(ConstraintResult.Allow, second.test(ctx(), viewWith(cityAt(origLevel + 1))))
+    }
+
+    @Test
+    fun `Han capital reduction floor comes from the Han catalog`() {
+        val hanContext = ctx(cityId = 421, mapName = "han")
+        val destination = cityAt(10).copy(id = 421)
+        val view = object : StateView {
+            override fun has(req: RequirementKey) = true
+            override fun get(req: RequirementKey): Any? =
+                if (req == RequirementKey.DestCity(421)) destination else null
+        }
+        val result = cheGamchuk(pipeline).buildConstraints(hanContext)[4].test(hanContext, view)
+
+        assertIs<ConstraintResult.Deny>(result)
     }
 }

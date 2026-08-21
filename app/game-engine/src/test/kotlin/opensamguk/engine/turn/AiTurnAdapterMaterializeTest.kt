@@ -113,7 +113,8 @@ class AiTurnAdapterMaterializeTest {
     )
 
     private fun baseState(meta: Map<String, Any?> = emptyMap()) = TurnWorldState(
-        id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0, meta = meta,
+        id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+        config = linkedMapOf("mapName" to "che"), meta = meta,
     )
 
     /** A war world: nation 1 (front capital + backup) vs enemy nation 2, with an active war diplomacy row. */
@@ -254,12 +255,12 @@ class AiTurnAdapterMaterializeTest {
         // month 3 is a promotion month (∈ {3,6,9,12}); the ruler runs choosePromotion.
         val worldM3 = InMemoryTurnWorld(
             WorldSnapshot(
-                TurnWorldState(1, YEAR, 3, 3600, t0),
+                TurnWorldState(1, YEAR, 3, 3600, t0, config = linkedMapOf("mapName" to "che")),
                 listOf(chief) + gens,
                 listOf(frontCapital(), backupCity(), enemyCity()),
                 listOf(nation(1), nation(2, capital = ENEMY_CITY)),
                 diplomacy = listOf(TurnDiplomacy(1, 2, 0, 0)),
-                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, YEAR, 3, 3600, t0)).id),
+                worldId = opensamguk.common.world.WorldId(1),
             ),
         )
         val a = AiTurnAdapter(worldM3, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
@@ -334,7 +335,7 @@ class AiTurnAdapterMaterializeTest {
             supplyState = 1,
             meta = linkedMapOf("trust" to 100),
         )
-        val state = TurnWorldState(1, YEAR, 12, 3600, t0)
+        val state = TurnWorldState(1, YEAR, 12, 3600, t0, config = linkedMapOf("mapName" to "che"))
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state,
@@ -403,7 +404,7 @@ class AiTurnAdapterMaterializeTest {
             supplyState = 1,
             meta = linkedMapOf("trust" to 100),
         )
-        val state = TurnWorldState(1, YEAR, 6, 3600, t0)
+        val state = TurnWorldState(1, YEAR, 6, 3600, t0, config = linkedMapOf("mapName" to "che"))
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state,

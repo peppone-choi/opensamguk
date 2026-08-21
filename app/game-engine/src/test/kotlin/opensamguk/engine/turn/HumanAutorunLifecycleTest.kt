@@ -175,8 +175,9 @@ class HumanAutorunLifecycleTest {
         limitMinutes: Int? = null,
         turnTerm: Int = 60,
     ): Fixture {
-        val config = limitMinutes?.let { linkedMapOf<String, Any?>("autorun_user" to linkedMapOf("limit_minutes" to it)) }
-            ?: emptyMap()
+        val config = linkedMapOf<String, Any?>("mapName" to "che").apply {
+            if (limitMinutes != null) put("autorun_user", linkedMapOf("limit_minutes" to limitMinutes))
+        }
         val state = TurnWorldState(
             id = 1,
             currentYear = year,

@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.founding
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
@@ -20,6 +19,7 @@ import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_거병 — faithful port of `che_거병.php:25-186`. The CANONICAL created-set command: it INSERTs
@@ -76,7 +76,7 @@ class CheGeobyeong(private val pipeline: GeneralActionPipeline) : GeneralActionD
         val scenario = (context.args["scenario"] as? Number)?.toInt() ?: 0
 
         val generalName = context.generalName.ifEmpty { (d.general.meta["name"] as? String) ?: "" }
-        val cityName = CityConst.byId(d.city.id)?.name ?: ""
+        val cityName = CityConstRegistry.of(context.env.mapName).byId(d.city.id)?.name ?: ""
 
         // 1. nationName + ㉥ dedup (che_거병.php:79-91).
         var nationName = generalName

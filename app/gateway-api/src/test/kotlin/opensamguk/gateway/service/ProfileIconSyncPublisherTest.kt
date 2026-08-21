@@ -97,14 +97,7 @@ class ProfileIconSyncPublisherTest {
 
     @Test
     fun `an invalid owner registry publishes to no target`() {
-        val invalidRegistry = ServerRegistry(
-            """[{"id":"pep","gameApiUrl":"http://spep-game-api:8081"},{"id":"main"}]""",
-            "http://game-api:8081",
-            "http://game-engine:8082",
-            "opensamguk",
-            "통일 서버",
-            mapper,
-        )
+        val invalidRegistry = registry()
 
         assertTrue(invalidRegistry.all().isEmpty())
         ProfileIconSyncPublisher(invalidRegistry, "").publish(userId = 7L, picture = "x.jpg", imgsvr = 0, grade = 1)

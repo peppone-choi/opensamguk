@@ -105,7 +105,7 @@ class CommandControllerIT {
         jdbc.update(
             """
             INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, meta)
-            VALUES (1, 'scenario_2', 200, 3, 3600, '{"startYear":190}'::jsonb, '{}'::jsonb)
+            VALUES (1, 'scenario_2', 200, 3, 3600, '{"startYear":190,"mapName":"che"}'::jsonb, '{}'::jsonb)
             """.trimIndent()
         )
         jdbc.update(

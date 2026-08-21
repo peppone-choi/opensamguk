@@ -1,9 +1,9 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.constraints.beChief
 import opensamguk.logic.constraints.occupiedCity
 import opensamguk.logic.constraints.occupiedDestCity
@@ -11,6 +11,7 @@ import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.world.CityConstRegistry
 import kotlin.math.max
 
 /**
@@ -43,10 +44,10 @@ class CheBaekseongDongwon(private val pipeline: GeneralActionPipeline) : NationC
 
     override fun getPreReqTurn(): Int = 0
 
-    /** che_백성동원.php:31-48 argTest. CityConst::byID 존재 검증 후 canonical `{destCityID}` 또는 null. */
+    /** Structural parser; active-map membership is enforced by the first FULL constraint. */
     fun argTest(raw: Map<String, Any?>): Map<String, Any?>? {
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
         return linkedMapOf("destCityID" to destCityID)
     }
 
@@ -55,11 +56,10 @@ class CheBaekseongDongwon(private val pipeline: GeneralActionPipeline) : NationC
     )
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
-        occupiedCity(), beChief(), occupiedDestCity(), availableStrategicCommand(),
+        activeMapDestCity(), occupiedCity(), beChief(), occupiedDestCity(), availableStrategicCommand(),
     )
 
-    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> =
-        linkedMapOf("destCityID" to (raw["destCityID"] as? Number)?.toInt())
+    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = argTest(raw) ?: emptyMap()
 
     override fun resolve(context: GeneralActionResolveContext) {
         val d = context.draft
@@ -80,7 +80,7 @@ class CheBaekseongDongwon(private val pipeline: GeneralActionPipeline) : NationC
         //    golden broadcastLines=[] (addGlobalActionLog 아님). 같은 국가 candidate 장수에게 addPlainLogTo.
         if (context.candidateGenerals.isNotEmpty()) {
             val josaYi = opensamguk.common.josa.JosaUtil.pick(context.generalName, "이")
-            val destCityName = CityConst.byId(destCityId)?.name ?: ""
+            val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
             val broadcast =
                 "<Y>${context.generalName}</>$josaYi <G><b>$destCityName</b></>에 <M>백성동원</>을 하였습니다."
             val nationId = d.nation?.id

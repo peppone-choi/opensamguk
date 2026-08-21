@@ -7,6 +7,8 @@ import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.seed.MapJson
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertTrue
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.test.web.servlet.MockMvc
@@ -89,6 +91,65 @@ class GetConstControllerTest {
     }
 
     @Test
+    fun `historical scenario exposes the han map without che fallback`() {
+        val world = WorldStateReadEntity(
+            id = 1,
+            scenarioCode = "scenario_1010",
+            currentYear = 184,
+            currentMonth = 1,
+            config = mapOf("mapName" to "han"),
+        )
+
+        mockMvc(listOf(world)).perform(get("/api/const"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapName").value("han"))
+            .andExpect(jsonPath("$.gameConst.mapName").value("han"))
+            .andExpect(jsonPath("$.cityConst.length()").value(780))
+            .andExpect(jsonPath("$.cityConst[0].name").value("장안"))
+    }
+
+    @Test
+    fun `seeded world without map metadata fails with its identity visible`() {
+        val worldRepo = mock(WorldStateReadRepository::class.java)
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(
+                WorldStateReadEntity(
+                    id = 9,
+                    scenarioCode = "scenario_broken",
+                    config = emptyMap(),
+                ),
+            ),
+        )
+
+        val failure = assertThrows<IllegalStateException> {
+            GetConstController(worldRepo).getConst()
+        }
+
+        assertTrue(failure.message.orEmpty().contains("id=9 scenario=scenario_broken has no active mapName"))
+    }
+
+    @Test
+    fun `seeded world with unknown map metadata fails before resource lookup with its identity visible`() {
+        val worldRepo = mock(WorldStateReadRepository::class.java)
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(
+                WorldStateReadEntity(
+                    id = 10,
+                    scenarioCode = "scenario_unknown",
+                    config = mapOf("mapName" to "unknown"),
+                ),
+            ),
+        )
+
+        val failure = assertThrows<IllegalStateException> {
+            GetConstController(worldRepo).getConst()
+        }
+
+        assertTrue(failure.message.orEmpty().contains("id=10 scenario=scenario_unknown has invalid active mapName"))
+        assertTrue(failure.message.orEmpty().contains("world state has unknown mapName: unknown"))
+    }
+
+    @Test
     fun `flat active mapName is canonical over the legacy nested fallback`() {
         val world = WorldStateReadEntity(
             id = 1,
@@ -115,6 +176,7 @@ class GetConstControllerTest {
             currentYear = 200,
             currentMonth = 1,
             config = mapOf(
+                "mapName" to "che",
                 "map" to mapOf("unitSet" to "che"),
                 "unitSet" to "not-ported",
             ),
@@ -134,7 +196,7 @@ class GetConstControllerTest {
             scenarioCode = "scenario_2",
             currentYear = 200,
             currentMonth = 1,
-            config = mapOf("unitSet" to "   "),
+            config = mapOf("mapName" to "che", "unitSet" to "   "),
         )
 
         mockMvc(listOf(world)).perform(get("/api/const"))

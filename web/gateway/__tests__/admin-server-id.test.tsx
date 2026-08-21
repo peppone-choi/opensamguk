@@ -117,4 +117,32 @@ describe('admin server ID validation', () => {
             expect(create).toBeEnabled();
         }
     });
+
+    it('sends only the public JWT key when creating a server', async () => {
+        let createRequestBody: string | undefined;
+        vi.mocked(fetch).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+            const path = String(input);
+            if (path === '/api/proxy/admin/version') {
+                return Promise.resolve(response({ gateway: SERVICE, servers: [], skew: false }));
+            }
+            if (path === '/api/proxy/admin/scenarios') {
+                return Promise.resolve(response({ scenarios: [{ code: 'scenario_1010', title: '테스트 시나리오' }] }));
+            }
+            if (path === '/api/proxy/admin/servers' && init?.method === 'POST') {
+                if (typeof init.body === 'string') createRequestBody = init.body;
+                return Promise.resolve(response({ ok: true, id: 'pep', name: '통일 서버' }));
+            }
+            return Promise.resolve(new Response(null, { status: 404 }));
+        });
+        render(<AdminPage />);
+        fireEvent.click(screen.getByRole('button', { name: '서버 제어' }));
+
+        const publicKey = await screen.findByRole('textbox', { name: /JWT 공개키/ });
+        fireEvent.change(publicKey, { target: { value: 'public-key-material' } });
+        fireEvent.click(screen.getByRole('button', { name: '서버 생성' }));
+
+        await waitFor(() => expect(createRequestBody).toContain('"jwtPublicKey":"public-key-material"'));
+        expect(createRequestBody).not.toContain('jwtSecret');
+        expect(screen.queryByText('JWT_SECRET')).not.toBeInTheDocument();
+    });
 });

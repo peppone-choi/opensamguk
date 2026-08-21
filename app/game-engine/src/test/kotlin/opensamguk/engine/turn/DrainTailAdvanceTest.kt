@@ -85,7 +85,10 @@ class DrainTailAdvanceTest {
         InMemoryTurnWorld(
             WorldSnapshot(
                 // tickSeconds=3600 → turnterm 60; t0가 lastTurnTime, nextRunTime은 t0 + 1시간(strict 미래).
-                state = TurnWorldState(1, 200, 6, tickSeconds, t0),
+                state = TurnWorldState(
+                    1, 200, 6, tickSeconds, t0,
+                    config = linkedMapOf("mapName" to "che"),
+                ),
                 generals = generals.toList(),
                 // 장수 cityId=5 → handle()의 명령 resolve가 도시를 읽으므로 city 5를 월드에 넣는다.
                 cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5, meta = linkedMapOf("trust" to 50.0))),

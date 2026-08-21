@@ -209,6 +209,20 @@ class CandidateBridgeTest {
         assertFalse(canonical.containsKey("extra"), "canonicalization strips undeclared keys exactly once")
     }
 
+    @Test fun `npc warp accepts Han-only destination only on the active Han map`() {
+        val raw = linkedMapOf<String, Any?>(
+            "optionText" to "\uC21C\uAC04\uC774\uB3D9",
+            "destCityID" to 421,
+        )
+        val staged = view(
+            generals = mapOf(1 to general(cityId = 3)),
+            cities = mapOf(3 to city(id = 3), 421 to city(id = 421)),
+        )
+
+        assertFalse(candidateAllowed("che_NPC능동", raw, ctx(cityId = 3, env = mapOf("mapName" to "che")), staged, resolve))
+        assertTrue(candidateAllowed("che_NPC능동", raw, ctx(cityId = 3, env = mapOf("mapName" to "han")), staged, resolve))
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // (4) fresh ctx per candidate (no memo bleed): two calls with different args do not leak.
     // ─────────────────────────────────────────────────────────────────────────────────────────────

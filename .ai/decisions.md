@@ -583,3 +583,36 @@
 
 **미결.** 기존 ~5,400 테스트 중 순수 PHP 패러티 단언만 있는 것들을 어떻게 다룰지는
 정하지 않았다(유지/재해석/폐기). 개별 판단이 필요하며, 일괄 삭제는 하지 않는다.
+
+## ADR-LITE-043 — CHE 계열 시나리오를 런타임 목록에서 은퇴하고 han 밸런스 상수를 승인한다
+
+- Date: 2026-08-20
+- Status: approved
+- Decision: 운영자가 선택하는 시나리오 카탈로그는 han 제품 시나리오 15개(`1010`,
+  `1020`, `1021`, `1030`, `1031`, `1040`, `1041`, `1050`~`1120`)만 노출한다. 공백지
+  `0`, `1`, `2`, `900`, `901`, `902`, `903`, `905`, `906`, `908`, `910`, `911`, `912`,
+  `913`, `914`와 v2 시험장 `9200`은 지원 런타임 목록에서 은퇴한다. 클래스패스
+  JSON과 `scenario_1010_che.json`, `CheScenarioBootIT`, `ScenarioImporterIT`, 골든, CHE/
+  miniche 테스트 코드는 frozen-baseline 회귀 표면으로 삭제하지 않는다. 명시적
+  `SCENARIO_CODE`로 회귀 픽스처를 부트하는 테스트 경로는 보존하되, 제품 지원 표면은
+  `ScenarioCatalogService`의 명시적 allowlist다.
+- Decision: han 전용 건국 밸런스를 `FOUND_ASSAULT_RATIO = 2.0`으로 고정한다. 필요 돌파
+  병력은 `ceil(city.defence * 2.0)`이며 han 이외 맵은 0이다. 건국 가능 등급은 기존
+  중/소(5/6)에 han 영현/장현(`level >= 10`)을 추가하고 경(9)·대(7)·특(8)은 막는다.
+  군치 수로 정하는 도적·황건 spine은 `1/13/28郡治 -> nation.level 2/3/4`로 고정한다.
+- Context: OPENSAM-214 전수 감사에서 위 15개 공백지는 장수 0·세력 0이고 map이
+  `che`/`miniche`/`miniche_b`/`miniche_clean`/`cr`이었다. `9200`은 장수 2·세력 2의
+  `miniche_b` v2 시험장으로 이미 OPENSAM-151에서 카탈로그 비노출이었다. 사용자는
+  2026-08-19에 `che/miniche/miniche_b` 은퇴와 테스트 오라클 보존을 직접 지시했다.
+- Context: OPENSAM-204의 `161郡` 전제는 stale-premise다. ADR-LITE-041이 제품 세계를
+  `175郡治 / 780城`으로 이미 확정했고, 현재 `data/map/han-tiles.json` 메타는 `seats=175`,
+  `infra/src/main/resources/map/han.json`은 도시 780개다. 타일맵의 `cities=1,144`는 렌더·소유격자
+  입력이지 플레이 가능한 세계 노드 수가 아니다.
+- Alternatives: 시나리오 JSON/맵/테스트를 물리 삭제(기각 — frozen-baseline과 되돌리기
+  경로를 파괴), 숫자 대역으로 자동 노출(기각 — 새 샌드박스가 묵시적으로 제품 카탈로그에
+  유입), 기존 30개 모두 노출(기각 — 은퇴 지시 위반).
+- Consequences: 시나리오 리소스 추가는 자동 출시가 아니다. 제품 노출은 allowlist 리뷰를
+  필요로 한다. 은퇴한 CHE 경로의 테스트 코드와 직접 픽스처 부트는 계속 가능하지만
+  운영자 선택지로는 지원하지 않는다. han 상수 변경은 수치 변경 기록과 회귀 테스트를
+  필수로 한다.
+- Approved by: 사용자(2026-08-19 CHE 계열 은퇴 지시) + OPENSAM-214 승인 티켓

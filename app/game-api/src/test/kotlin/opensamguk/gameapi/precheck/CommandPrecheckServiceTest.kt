@@ -55,7 +55,7 @@ class CommandPrecheckServiceTest {
 
     private fun worldState() = WorldStateReadEntity(
         id = 1, scenarioCode = "scenario_2", currentYear = 200, currentMonth = 3, tickSeconds = 3600,
-        config = linkedMapOf("startYear" to 190), meta = linkedMapOf(),
+        config = linkedMapOf("startYear" to 190, "mapName" to "che"), meta = linkedMapOf(),
     )
 
     private fun service(
@@ -135,6 +135,7 @@ class CommandPrecheckServiceTest {
         val unsupportedWorld = worldState().apply {
             config = linkedMapOf(
                 "startYear" to 190,
+                "mapName" to "che",
                 "map" to linkedMapOf("unitSet" to "che"),
                 "unitSet" to "not-ported",
             )
@@ -144,7 +145,7 @@ class CommandPrecheckServiceTest {
         assertTrue(unsupported.crewTypes.isEmpty())
 
         val blankWorld = worldState().apply {
-            config = linkedMapOf("startYear" to 190, "unitSet" to "  ")
+            config = linkedMapOf("startYear" to 190, "mapName" to "che", "unitSet" to "  ")
         }
         val blank = service(worldStateEntity = blankWorld).recruitAvailability(10)!!
         assertFalse(blank.supported)
@@ -154,10 +155,10 @@ class CommandPrecheckServiceTest {
     @Test
     fun `lowercase or column startyear keeps precheck AVAILABLE`() {
         val lowercaseConfig = worldState().apply {
-            config = linkedMapOf("startyear" to 190)
+            config = linkedMapOf("startyear" to 190, "mapName" to "che")
         }
         val columnValue = worldState().apply {
-            config = linkedMapOf()
+            config = linkedMapOf("mapName" to "che")
             startYear = 190
         }
 

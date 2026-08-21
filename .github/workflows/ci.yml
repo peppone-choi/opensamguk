@@ -18,6 +18,10 @@ jobs:
         run: python3 tools/agent-system/check.py --strict --base origin/main
       - name: Verify v2 sandbox compose contract
         run: bash tools/ops/v2_sandbox_compose_contract_test.sh
+      - name: Verify JWT rollout contract
+        run: python3 tools/ops/jwt_rollout_contract_test.py
+      - name: Verify local compose service graph
+        run: docker compose --env-file .env.example config --quiet
 
   jvm:
     runs-on: ubuntu-latest

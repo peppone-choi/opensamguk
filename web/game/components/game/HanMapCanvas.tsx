@@ -13,7 +13,6 @@
 // 격자 정사각형을 2:1 다이아몬드로 보내는 행렬이 곧 아이소 투영이다.
 //
 // 격자가 배포에 주입되지 않으면 엔드포인트가 404 를 주고, 이 컴포넌트는 null 을 렌더한다.
-// 호출부는 그때 기존 맵으로 폴백한다(ADR-LITE-040 의 철거 경로가 그대로 동작하려면 필요하다).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -264,7 +263,6 @@ export default function HanMapCanvas({ onMissing }: { onMissing?: () => void }) 
         return () => {
             alive = false;
         };
-        // onMissing 은 폴백 신호 한 번뿐이라 재구독 대상이 아니다.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -357,7 +355,7 @@ export default function HanMapCanvas({ onMissing }: { onMissing?: () => void }) 
     };
     const endDrag = () => { dragRef.current = null; };
 
-    if (missing) return null;   // 호출부가 기존 맵으로 폴백한다.
+    if (missing) return null;
     return (
         <div ref={boxRef} style={{ position: 'relative', width: '100%' }}>
             <canvas

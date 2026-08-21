@@ -969,7 +969,6 @@ class LongSimReplayGateTest {
         val startTime = LongSimWorldMaterializer.parseTurnTime(
             baseline.state["game_env"]!!.jsonObject["starttime"]?.jsonPrimitive?.contentOrNull,
         )
-        val mapName = baseline.state["game_env"]!!.jsonObject["map"]?.jsonPrimitive?.contentOrNull ?: "che"
         val scenario = baseline.state["game_env"]!!.jsonObject["scenario"]?.jsonPrimitive?.intOrNull ?: 1010
         val expectedHandledCommands = manifest["handledCommands"]!!.jsonArray.map { it.jsonObject }
         val sightseeingStream = cohort?.let { loadSightseeingReplay(it) }
@@ -1567,7 +1566,6 @@ class LongSimReplayGateTest {
             pipeline = pipeline,
             hiddenSeed = hiddenSeed,
             startYear = startYear,
-            mapName = mapName,
             eventStore = eventStore,
         )
 

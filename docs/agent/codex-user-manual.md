@@ -522,7 +522,7 @@ commit하지 마.
 ```text
 $os-start-task
 web/game에 실제 API 상태를 사용하는 경매 내역 필터를 추가하려고 해.
-hwe/ts Vue 흐름을 grand truth로 조사하고, 하드코딩 placeholder 없이 계획해.
+승인된 디자인 방향과 현재 Next.js 구현을 기준으로 조사하고, hwe/ts Vue는 필요할 때 흐름 참고로만 사용해. 하드코딩 placeholder 없이 계획해.
 typecheck, test, Playwright 사용자 흐름을 완료 조건으로 넣어.
 ```
 

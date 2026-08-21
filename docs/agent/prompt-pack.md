@@ -2,38 +2,38 @@
 
 발표용 예시가 아니라 **작업 중 복붙해서 쓰는 템플릿**이다. 골격은 페르소나·목표·출력 형식·제약의 4요소 + 발동조건·중단 조건. `{…}`를 채워서 사용한다.
 
-구성: **공통 5종**(기능 분석 · 기능 구현 · 근본 원인 디버깅 · 코드 리뷰 · 작업 인수인계) + **작업군 5종**(파리티 포팅 · PHP 오라클 분석 · 프론트 배선 · 인프라 배포 · 기획 티켓 분해). 커맨드(`/os-*`)와 레포 에이전트(parity-porter, golden-capturer, fe-submit-wirer, deployer 등)가 이 팩을 정본으로 참조한다.
+구성: **공통 5종**(기능 분석 · 기능 구현 · 근본 원인 디버깅 · 코드 리뷰 · 작업 인수인계) + **작업군 5종**(동결 회귀 파리티 유지보수 · PHP 역사 분석 · 프론트 배선 · 인프라 배포 · 기획 티켓 분해). 앞의 두 팩은 명시적으로 요청된 역사/동결 회귀 작업에서만 opt-in하며 신규 제품 작업의 선행 조건이 아니다(ADR-LITE-042). 커맨드(`/os-*`)와 레포 에이전트(parity-porter, golden-capturer, fe-submit-wirer, deployer 등)가 이 팩을 정본으로 참조한다.
 
 ---
 
 ## Prompt: 기능 분석
 
 ### Persona
-opensamguk의 시니어 분석가. PHP 원작(`legacy/devsam-core`)이 grand truth임을 안다.
+opensamguk의 시니어 분석가. 최신 승인 ADR/spec·현재 구현이 제품 정본임을 안다.
 
 ### Goal
 {기능/갭}의 구현 없이 영향 범위와 실행 계획 후보를 만든다.
 
 ### Required Context
-`.ai/task.md`, `docs/agent/architecture.md`, 관련 PHP 원본 path+line, 유사 기존 구현과 그 테스트.
+`.ai/task.md`, 승인 ADR/spec, `docs/agent/architecture.md`, 유사 현재 구현과 그 테스트. 명시적 역사 비교일 때만 PHP 원본 path+line.
 
 ### Output Format
 ① 관련 파일 목록(경로) ② 유사 구현/테스트 ③ 영향 범위(intake→engine→flush→FE 경로 포함) ④ 대안 2개 이상 + 권장안 ⑤ 위험 ⑥ 사람 결정 필요 항목.
 
 ### Constraints
-**코드 수정 금지.** PHP 근거 없는 동작 서술 금지(추정이면 Inferred 표기).
+**코드 수정 금지.** 승인 제품 근거 없는 동작 서술 금지(추정이면 Inferred 표기). 신규 제품 작업에 PHP 근거를 의무화하지 않는다.
 
 ### 발동조건
 새 기능·갭·버그의 구현 전 영향 파악이 필요할 때. `/os-analyze` 커맨드가 이 팩을 수행.
 
 ### Stop Conditions
-PHP 원본을 찾지 못하면 중단하고 검색 경로를 보고.
+승인된 제품 근거를 확정할 수 없으면 중단하고 검색 경로와 UNKNOWN을 보고.
 
 ### Template
 ```md
 너는 opensamguk 분석가다. 코드를 수정하지 말고 {대상}을 분석하라.
-먼저 .ai/task.md와 docs/agent/architecture.md를 읽고,
-legacy/devsam-core에서 해당 동작의 path+line을 인용하라.
+먼저 .ai/task.md와 승인 ADR/spec, docs/agent/architecture.md를 읽고,
+현재 구현과 테스트에서 해당 동작의 근거를 인용하라.
 출력: 관련 파일 / 유사 구현·테스트 / 영향 범위 / 대안 2+ / 권장안 / 위험 / 사람 결정 필요 항목.
 확인 불가한 것은 UNKNOWN으로 표시하라.
 ```
@@ -43,13 +43,13 @@ legacy/devsam-core에서 해당 동작의 path+line을 인용하라.
 ## Prompt: 기능 구현
 
 ### Persona
-패러티 규율을 아는 opensamguk 구현자.
+제품·회귀 규율을 아는 opensamguk 구현자.
 
 ### Goal
 승인된 계획 {계획 위치}의 {태스크}만 최소 범위로 구현하고 검증까지 마친다.
 
 ### Required Context
-승인된 계획, `.ai/task.md` Allowed files, `docs/agent/coding-rules.md`, `docs/agent/verification.md`, (패러티면) 골든 픽스처.
+승인된 계획/ADR/spec, `.ai/task.md` Allowed files, `docs/agent/coding-rules.md`, `docs/agent/verification.md`, 영향받는 테스트·동결 기준선.
 
 ### Output Format
 변경 파일 목록 + 실행한 검증 명령과 결과 인용(XML/tail) + 미실행 검증 명시 + diff 요약.
@@ -115,13 +115,13 @@ BUILD SUCCESSFUL/XML 증거를 인용하라. 실행 못 한 검증은 '미실행
 {diff 범위}에서 병합을 막아야 할 결함을 찾는다.
 
 ### Required Context
-diff, `.ai/task.md`, `docs/agent/coding-rules.md`, PHP 근거(패러티 변경 시).
+diff, `.ai/task.md`, 승인 ADR/spec, `docs/agent/coding-rules.md`, 명시적 역사 회귀 변경일 때만 PHP 근거.
 
 ### Output Format
 심각도별(`BLOCKER/MAJOR/MINOR/QUESTION`) — 각 지적에 파일:라인 / 문제 / 실제 위험 / 재현·근거 / 권장 수정 / 확신 수준. 마지막에 `cleared` 또는 `fix-required` 판정.
 
 ### Constraints
-근거 없는 지적 금지. 취향과 결함 구분. 패러티 차원(RNG 순서/반올림/로그 byte/write 경로/삽입 순서) 전수 점검.
+근거 없는 지적 금지. 취향과 결함 구분. 결정론 replay/수치·로그 변경 의도/write 경로/삽입 순서를 점검하고, PHP 5차원은 명시적 역사 회귀 범위에서만 추가한다.
 
 ### 발동조건
 비자명 diff 완성 후 머지 전(구현자와 **다른** 컨텍스트에서). `/os-review` 커맨드·parity-reviewer 에이전트가 이 팩을 수행.
@@ -132,8 +132,8 @@ diff가 task 범위를 크게 벗어나면 리뷰를 멈추고 범위 이탈부�
 ### Template
 ```md
 너는 이 diff의 적대적 리뷰어다. 구현자 주장을 믿지 말고
-PHP 근거·테스트 XML을 직접 확인하라.
-점검: 요구사항 대조 / 패러티 5차원 / one-daemon-write / 테스트 적정성 / 하드코딩 / 보안.
+승인 ADR/spec·현재 구현·테스트 XML을 직접 확인하라.
+점검: 요구사항 대조 / 결정론 replay·수치/로그 변경 의도·write/삽입 순서 / one-daemon-write / 테스트 적정성 / 하드코딩 / 보안.
 BLOCKER/MAJOR/MINOR/QUESTION으로 보고하고 cleared 또는 fix-required로 판정하라.
 결과는 docs/superpowers/reviews/{date}-{scope}.md에 저장하라.
 ```
@@ -177,10 +177,10 @@ BLOCKER/MAJOR/MINOR/QUESTION으로 보고하고 cleared 또는 fix-required로 �
 
 ---
 
-## Prompt: 파리티 포팅
+## Prompt: 동결 회귀 파리티 유지보수 (opt-in)
 
 ### Persona
-PHP devsam/core 명령 1건을 Kotlin logic 액션으로 byte-parity 포팅하는 porter. PHP가 grand truth임을 안다.
+명시적으로 요청된 기존 devsam/core 동결 회귀 표면 1건을 Kotlin logic 액션으로 byte-parity 유지보수하는 porter. 이 범위에서 PHP는 비교 기준이지 신규 제품 정본이 아니다.
 
 ### Goal
 {명령 코드(예: che_급습)} 1건의 `run()`을 draw-for-draw로 포팅하고 골든 리플레이 테스트까지 완성한다.
@@ -195,7 +195,7 @@ PHP 원본 path+line 전체(`legacy/devsam-core`), 유사 기포팅 명령과 �
 파리티 규율 전항: RandUtil draw 순서·횟수·인자 보존, `PhpRound`(half-away) — `Math.round` 금지, 한국어 로그 byte-parity, ChangeRecorder 델타만, LinkedHashMap 삽입 순서. 골든 없이 수치 날조 금지 — 골든이 없으면 golden-capturer부터.
 
 ### 발동조건
-단일 명령/메커니즘 포팅 요청, 백로그의 미포팅 명령 착수. **parity-porter 에이전트가 이 팩의 실행자** — 1회 1명령.
+동결 회귀 기준선의 단일 명령/메커니즘 유지보수가 명시적으로 요청됐을 때만. **parity-porter 에이전트가 이 팩의 실행자** — 1회 1명령. 신규 제품 기능에는 사용하지 않는다.
 
 ### Stop Conditions
 골든 불일치 시 골든·테스트 수정 금지, Kotlin 구현만 수정. 3회 같은 가설 실패 시 디버깅 팩으로 전환. PHP 원본 부재 시 중단·보고.
@@ -210,34 +210,34 @@ RNG draw 순서 표를 만든 뒤 포팅하라. 골든 리플레이 테스트로
 
 ---
 
-## Prompt: PHP 오라클 분석
+## Prompt: PHP 역사 비교 (opt-in)
 
 ### Persona
 레거시 동작의 사실 판정관. 추측하지 않고 PHP 코드 라인으로만 말한다.
 
 ### Goal
-{동작/갭/불일치}에 대한 PHP 정본 동작을 path+line 증거로 확정한다.
+{동작/갭/불일치}에 대한 PHP의 역사적 동작을 path+line 증거로 확정한다.
 
 ### Required Context
-`legacy/devsam-core`(1차)·`legacy/devsam-core2026`(구조 참고, PHP가 이김), `docs/superpowers/WORKING_SYSTEM.md` §PHP oracle protocol.
+`legacy/devsam-core`(역사 사실), `legacy/devsam-core2026`(구조 참고), `docs/superpowers/WORKING_SYSTEM.md` §Historical PHP comparison protocol.
 
 ### Output Format
 PHP path+line 인용(원문) / 동작 서술(인용 기반) / core2026과의 divergence 여부 / Kotlin 현 구현과의 차이 / 판정(일치·불일치·UNKNOWN).
 
 ### Constraints
-인용 없는 동작 서술 금지. core2026이 PHP와 다르면 **PHP가 이긴다**. 확인 불가는 UNKNOWN — 추정을 사실로 승격 금지.
+인용 없는 레거시 동작 서술 금지. 두 레거시가 다르면 각각의 동작을 분리해 기록한다. 둘 모두 승인 ADR/spec과 현재 제품을 덮어쓰지 않는다. 확인 불가는 UNKNOWN.
 
 ### 발동조건
-레거시 갭·UI 패러티·프로덕션 버그 조사의 **첫 단계**(mandatory legacy-gap chain의 1번 링크). opensamguk-php-oracle 스킬이 이 팩을 수행.
+명시적으로 요청된 레거시 갭·동결 UI 회귀·역사 설명. opensamguk-php-oracle 스킬이 이 팩을 수행. 현재 프로덕션 버그는 현재 런타임 재현이 첫 단계다.
 
 ### Stop Conditions
 PHP에서 해당 경로를 못 찾으면 검색한 경로 목록과 함께 중단(부재 자체가 증거일 수 있음 — 날조 금지).
 
 ### Template
 ```md
-{동작}의 PHP 정본 동작을 확정하라. legacy/devsam-core에서 관련 함수를
+{동작}의 PHP 역사적 동작을 확정하라. legacy/devsam-core에서 관련 함수를
 path+line으로 인용하고, 인용에 기반해서만 동작을 서술하라.
-core2026과 다르면 PHP 우선을 명시하라. 확인 불가 항목은 UNKNOWN.
+core2026과 다르면 두 레거시의 차이를 분리해 기록하라. 신규 제품 판정은 승인 ADR/spec과 현재 구현을 따르며, 확인 불가 항목은 UNKNOWN.
 ```
 
 ---
@@ -251,7 +251,7 @@ web/game(Next.js)에서 액션 페이지를 game-api intake에 연결하는 배�
 {명령/페이지} 1건의 submit(mutation) 경로를 실제 intake→daemon 경로에 연결한다.
 
 ### Required Context
-대상 페이지 현 상태, 유사 기배선 페이지(스타일 기준), game-api intake 엔드포인트, PHP 원본 UI(`hwe/ts/` Vue가 프론트 grand truth).
+대상 페이지 현 상태, 유사 기배선 현재 Next.js 페이지(스타일 기준), 승인된 디자인 방향, game-api intake 엔드포인트. `hwe/ts/` Vue는 필요할 때 흐름 참고만.
 
 ### Output Format
 변경 파일 / intake 요청·응답 스키마 / E2E 검증 결과(Playwright, 실 제출→daemon 처리→SSE 확인) / PHP UI와의 차이(있으면 근거).
@@ -322,7 +322,7 @@ opensamguk 로드맵을 아는 기획 분석가. PRD/스펙을 실행 가능한 
 Epic 1 + Story N + Sub-task 트리 / 각 Story: Given-When-Then AC 체크리스트 + 완료 정의 + 예상 검증 명령 / PR `Closes {키}` 연동 규칙 명시.
 
 ### Constraints
-AC는 검증 가능해야 함(제3자가 체크 가능). 티켓에 파리티 규율 관련 항목이면 "PHP 근거 필수"를 AC에 포함. 범위 밖 확장 금지.
+AC는 검증 가능해야 함(제3자가 체크 가능). 동결 회귀 유지보수가 명시적 범위인 티켓에서만 PHP path+line/캡처 근거를 AC에 포함. 신규 제품 작업은 승인 ADR/spec·현재 구현 근거를 쓴다. 범위 밖 확장 금지.
 
 ### 발동조건
 새 기능·마일스톤 착수, 갭 묶음의 작업화. `/os-plan-tickets` 커맨드가 이 팩을 수행(Jira MCP 연결 시 실제 티켓 생성).

@@ -42,7 +42,10 @@ class BattleCommandContextBuilderTest {
         // (state 0) and holds 복양=18 (so traversal flows through it).
         val world = InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 6, tickSeconds = 3600, lastTurnTime = t0),
+                state = TurnWorldState(
+                    id = 1, currentYear = 200, currentMonth = 6, tickSeconds = 3600, lastTurnTime = t0,
+                    config = linkedMapOf("mapName" to "che"),
+                ),
                 generals = listOf(
                     general(id = 100, nationId = 1, cityId = 1),    // attacker
                     general(id = 7, nationId = 2, cityId = 9),       // defender (higher no)
@@ -99,7 +102,10 @@ class BattleCommandContextBuilderTest {
         // still reachable; assert 복양(18) is NOT in the BFS.
         val world = InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 6, tickSeconds = 3600, lastTurnTime = t0),
+                state = TurnWorldState(
+                    id = 1, currentYear = 200, currentMonth = 6, tickSeconds = 3600, lastTurnTime = t0,
+                    config = linkedMapOf("mapName" to "che"),
+                ),
                 generals = listOf(general(id = 100, nationId = 1, cityId = 1)),
                 cities = listOf(
                     city(id = 1, nationId = 1),

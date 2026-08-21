@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
@@ -14,6 +13,7 @@ import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_집합 — 집합. Faithful port of `che_집합.php` run() (lines 65-112).
@@ -50,7 +50,7 @@ class CheJiphap(
         val g0 = d.general
 
         val cityId = d.city.id
-        val cityName = CityConst.byId(cityId)?.name ?: error("unknown city $cityId")
+        val cityName = CityConstRegistry.of(context.env.mapName).byId(cityId)?.name ?: error("unknown city $cityId")
         val josaRo = JosaUtil.pick(cityName, "로")
         val troopId = g0.id   // PHP troopID = $general->getID() (the leader is the troop id)
 

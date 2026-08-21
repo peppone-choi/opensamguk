@@ -23,6 +23,7 @@ class ProcessNationCommandBallyeongTest {
                     currentMonth = 3,
                     tickSeconds = 7_200,
                     lastTurnTime = actorTurnTime,
+                    config = linkedMapOf("mapName" to "che"),
                 ),
                 generals = listOf(
                     TurnGeneral(

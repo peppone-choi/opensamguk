@@ -341,7 +341,6 @@ class ScenarioBootIT {
             pipeline = pipeline,
             hiddenSeed = world.getState().meta["hiddenSeed"] as String,
             startYear = world.getState().meta["startYear"] as Int,
-            mapName = world.getState().meta["map"] as String,
             eventStore = eventStore,
         )
 

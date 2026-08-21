@@ -1,10 +1,10 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.constraints.beChief
 import opensamguk.logic.constraints.occupiedCity
 import opensamguk.logic.constraints.occupiedDestCity
@@ -16,6 +16,7 @@ import opensamguk.logic.domain.withMeta
 import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_초토화 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_초토화.php`.
@@ -48,10 +49,10 @@ class CheChotohwa(private val pipeline: GeneralActionPipeline) : NationCommand()
     /** che_초토화.php:getPreReqTurn = 2 (reqTurn = 3). */
     override fun getPreReqTurn(): Int = 2
 
-    /** che_초토화.php:31-46 argTest. CityConst::byID 존재 검증 후 canonical `{destCityID}` 또는 null. */
+    /** Structural parser; active-map membership is enforced by the first FULL constraint. */
     fun argTest(raw: Map<String, Any?>): Map<String, Any?>? {
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
         return linkedMapOf("destCityID" to destCityID)
     }
 
@@ -61,14 +62,13 @@ class CheChotohwa(private val pipeline: GeneralActionPipeline) : NationCommand()
     )
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
-        occupiedCity(), occupiedDestCity(), beChief(), suppliedCity(), suppliedDestCity(),
+        activeMapDestCity(), occupiedCity(), occupiedDestCity(), beChief(), suppliedCity(), suppliedDestCity(),
         notCapitalDestCity(),  // ReqNationValue('capital','수도','!=',destCity,'수도입니다.')
         reqNationValue("surlimit", "제한 턴", "==", 0, "외교제한 턴이 남아있습니다."),
         disallowDiplomacyStatus(linkedMapOf(0 to "평시에만 가능합니다.")),
     )
 
-    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> =
-        linkedMapOf("destCityID" to (raw["destCityID"] as? Number)?.toInt())
+    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = argTest(raw) ?: emptyMap()
 
     /** che_초토화.php:115-122 calcReturnAmount — pop/5 * Π((res - res_max*0.5)/res_max + 0.8), Util::toInt(truncate). */
     fun calcReturnAmount(city: opensamguk.logic.domain.City): Int {
@@ -103,7 +103,7 @@ class CheChotohwa(private val pipeline: GeneralActionPipeline) : NationCommand()
         val d = context.draft
         val nation = d.nation ?: return
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
 
         // --- actor exp/ded (che_초토화.php:154-156) ---
         // addExperience(-exp*0.1, false): 트리거 미적용(증감폭 그대로), 레벨만 재계산.

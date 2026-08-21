@@ -220,7 +220,7 @@ function ServerRow({ server }: { server: ServerEntry }) {
 }
 
 function LobbyView() {
-  const [servers, setServers] = useState<ServerEntry[]>([]);
+  const [servers, setServers] = useState<ServerEntry[] | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -241,12 +241,19 @@ function LobbyView() {
     <div className="lobby-shell">
       <Topbar />
       <main className="lobby-main fade-in">
+        <h1 className="lobby-section-title">게임 로비</h1>
         {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 전황 로그 (devsam '제 전황' 형태). */}
         <ServerBoard />
 
-        {servers.length > 0 && (
-          <section>
-            <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
+        <section>
+          <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
+          {servers === null || servers.length === 0 ? (
+            <p className="text-muted" role="status" aria-live="polite">
+              {servers === null
+                ? '서버 목록을 불러오는 중입니다.'
+                : '현재 이용할 수 있는 게임 서버가 없습니다.'}
+            </p>
+          ) : (
             <div className="game-table-wrap">
               <table className="game-table">
                 <caption>{LOBBY_LABELS.serverSelect}</caption>
@@ -265,8 +272,8 @@ function LobbyView() {
                 </tbody>
               </table>
             </div>
-          </section>
-        )}
+          )}
+        </section>
 
         <section>
           <h2 className="lobby-section-title">{LOBBY_LABELS.accountSection}</h2>

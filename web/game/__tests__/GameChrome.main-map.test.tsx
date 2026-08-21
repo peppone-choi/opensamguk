@@ -150,6 +150,22 @@ describe('GameChrome main map', () => {
     expect(props.disallowClick).not.toBe(true);
   });
 
+  it('announces a front-info failure as an alert', () => {
+    mocks.useFrontInfo.mockReturnValue({
+      frontInfo: null,
+      constData: null,
+      menu: [],
+      loading: false,
+      error: '서버 응답이 지연되고 있습니다.',
+      refreshKey: 7,
+      refresh: vi.fn(),
+    });
+
+    render(<GameChrome />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('서버 응답이 지연되고 있습니다.');
+  });
+
   it('groups the owned city nation and general cards in the subject panel', () => {
     const { container } = render(<GameChrome />);
 

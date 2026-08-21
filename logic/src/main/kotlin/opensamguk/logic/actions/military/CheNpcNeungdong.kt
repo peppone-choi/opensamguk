@@ -1,13 +1,14 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_NPC능동 — faithful port of `legacy/devsam-core/hwe/sammo/Command/General/che_NPC능동.php`.
@@ -40,18 +41,18 @@ class CheNpcNeungdong(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
         if (raw["optionText"] != "순간이동") return null
         if (!raw.containsKey("destCityID")) return null
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
         return linkedMapOf("optionText" to "순간이동", "destCityID" to destCityID)
     }
 
-    /** EMPTY fullConditionConstraints (che_NPC능동.php:55-57) — MustBeNPC is permission-only. */
-    override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = emptyList()
+    /** PHP has no gameplay FULL constraints; the shared active-map boundary still validates the destination. */
+    override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(activeMapDestCity())
 
     override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = argTest(raw) ?: emptyMap()
 
     override fun resolve(context: GeneralActionResolveContext) {
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val cityName = CityConst.byId(destCityId)?.name ?: return
+        val cityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: return
         val josaRo = JosaUtil.pick(cityName, "로")
         context.addLog("NPC 전용 명령을 이용해 $cityName$josaRo 이동했습니다.")
         context.draft.general = context.draft.general.copy(

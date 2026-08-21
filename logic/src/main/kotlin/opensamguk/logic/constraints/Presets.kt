@@ -8,6 +8,7 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.world.HAN_MAP_NAME
+import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.foundAssaultCrewCost
 import opensamguk.logic.world.isFoundableCityLevel
 
@@ -16,6 +17,23 @@ private fun city(ctx: ConstraintContext, view: StateView) =
     (ctx.cityId ?: (gen(ctx, view)?.cityId))?.let { view.get(RequirementKey.City(it)) as? City }
 private fun nation(ctx: ConstraintContext, view: StateView) =
     (ctx.nationId ?: (gen(ctx, view)?.nationId))?.let { view.get(RequirementKey.Nation(it)) as? Nation }
+
+fun activeMapDestCity() = object : Constraint {
+    override val name = "ActiveMapDestCity"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val cityId = ctx.destCityId ?: return ConstraintResult.Deny("Invalid destination city.", name)
+        val mapName = ctx.env["mapName"] as? String
+            ?: return ConstraintResult.Deny("Invalid active map.", name)
+        val variant = CityConstRegistry.find(mapName)
+            ?: return ConstraintResult.Deny("Invalid active map.", name)
+        return if (variant.byId(cityId) != null && view.has(RequirementKey.DestCity(cityId))) {
+            ConstraintResult.Allow
+        } else {
+            ConstraintResult.Deny("Invalid destination city.", name)
+        }
+    }
+}
 
 fun notBeNeutral() = object : Constraint {
     override val name = "NotBeNeutral"

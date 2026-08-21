@@ -44,6 +44,7 @@ class ProcessNationCommandCheondoTest {
                     currentMonth = 3,
                     tickSeconds = 3600,
                     lastTurnTime = now,
+                    config = linkedMapOf("mapName" to "che"),
                     meta = linkedMapOf("isunited" to isUnited),
                 ),
                 generals = listOf(

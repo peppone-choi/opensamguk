@@ -1,12 +1,12 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.constraints.disallowDiplomacyBetweenStatus
 import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.notNeutralDestCity
@@ -26,6 +26,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.numberFormat
 import opensamguk.logic.util.valueFit
+import opensamguk.logic.world.CityConstRegistry
 import kotlin.math.ln
 
 /**
@@ -66,7 +67,7 @@ class CheSeondong(
     fun argTest(raw: Map<String, Any?>): Map<String, Any?>? {
         if (!raw.containsKey("destCityID")) return null
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
         return linkedMapOf("destCityID" to destCityID)
     }
 
@@ -84,7 +85,7 @@ class CheSeondong(
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
         val cost = ((ctx.env["develCost"] as? Number)?.toInt() ?: 0) * 5
         return listOf(
-            notBeNeutral(), occupiedCity(), suppliedCity(),
+            activeMapDestCity(), notBeNeutral(), occupiedCity(), suppliedCity(),
             notNeutralDestCity(), notOccupiedDestCity(),
             reqGeneralGold { _, _ -> cost },
             reqGeneralRice { _, _ -> cost },
@@ -133,7 +134,7 @@ class CheSeondong(
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
         val destCity = d.destCity ?: return
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
         val destNationId = destCity.nationId
         val commandName = name
         val statType = "leadership"

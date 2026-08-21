@@ -22,6 +22,7 @@ data class WorldMapResponse(
     val result: Boolean,
     /** 캐시 버저닝(PHP `CURRENT_MAP_VERSION` = 0). */
     val version: Int,
+    val mapName: String,
     val startYear: Int,
     val year: Int,
     val month: Int,

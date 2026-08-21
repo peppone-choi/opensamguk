@@ -22,6 +22,7 @@ import opensamguk.logic.actions.develop.CheGunryangMaemae
 import opensamguk.logic.actions.military.CheSukryeonJeonhwan
 import opensamguk.logic.actions.military.RecruitAlgorithm
 import opensamguk.logic.actions.military.UnitSetTable
+import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.actions.personnel.CheInjaeTamsaek
 import opensamguk.logic.actions.personnel.CheRandomImgwan
@@ -266,8 +267,10 @@ class ReservedTurnHandler(
             .sortedBy { it.id }
             .associateTo(LinkedHashMap()) { it.id to it.level }
         env["unitSet"] = UnitSetTable.activeUnitSet(state.config, state.meta)
-        env["mapName"] = CityConstRegistry.activeMapName(state.config, state.meta)
-        val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear)
+        env["mapName"] = ActiveWorldMap.requireName(state.config, state.meta)
+        val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear).copy(
+            mapName = ActiveWorldMap.requireName(state.config, state.meta),
+        )
 
         val baseDefinition = resolveRuntimeDefinition(runtimeRegistry, actionCode, general, year)
         val parsedArgs = runCatching { baseDefinition.parseArgsForGeneral(args, generalId) }.getOrNull()
@@ -713,6 +716,7 @@ class ReservedTurnHandler(
                 defenderNationGenerals = defenderNationGenerals,
                 allCitiesForBfs = logicCities,
                 diplomacyForFront = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) },
+                cityConstVariant = CityConstRegistry.of(activeMapName()),
                 attackerNationName = world.getNationById(attacker.nationId)?.name ?: "",
                 attackerGeneralName = attacker.name,
                 attackerNationChiefIds = world.listGenerals()
@@ -1504,7 +1508,7 @@ class ReservedTurnHandler(
 
     private fun activeMapName(): String {
         val state = world.getState()
-        return CityConstRegistry.activeMapName(state.config, state.meta)
+        return ActiveWorldMap.requireName(state.config, state.meta)
     }
 
     /**

@@ -141,8 +141,11 @@ class CrInguIdongGoldenTest {
             "amount clamped to AMOUNT_LIMIT")
         // 음수 reject
         assertEquals(null, cmd.argTest(mapOf("destCityID" to 1, "amount" to -5)), "negative amount rejected")
-        // 존재하지 않는 도시 reject
-        assertEquals(null, cmd.argTest(mapOf("destCityID" to 999_999, "amount" to 100)), "bad city rejected")
+        assertEquals(
+            999_999,
+            cmd.argTest(mapOf("destCityID" to 999_999, "amount" to 100))!!["destCityID"],
+            "city membership is validated by the active-map FULL constraint",
+        )
         // numeric string 허용 (is_numeric)
         assertEquals(100, (cmd.argTest(mapOf("destCityID" to 1, "amount" to "100"))!!["amount"] as Int),
             "numeric string amount accepted")

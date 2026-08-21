@@ -124,7 +124,7 @@ class MissingAiCommandDefsTest {
     // ---------------- che_NPC능동 (general, EMPTY fullCond) ----------------
 
     @Test fun `npcNeungdong FULL pack is EMPTY (MustBeNPC is permission-only, not the full gate)`() {
-        assertEquals(emptyList(), CheNpcNeungdong(pipeline).buildConstraints(ctx()).map { it.name })
+        assertEquals(listOf("ActiveMapDestCity"), CheNpcNeungdong(pipeline).buildConstraints(ctx()).map { it.name })
     }
 
     @Test fun `npcNeungdong argTest requires optionText 순간이동 + a real destCityID`() {
@@ -138,6 +138,14 @@ class MissingAiCommandDefsTest {
         assertNull(def.argTest(mapOf("optionText" to "순간이동", "destCityID" to -999)), "unknown city")
         assertNull(def.argTest(mapOf("optionText" to "기타")), "non-순간이동 optionText")
         assertNull(def.argTest(emptyMap()), "missing optionText")
+    }
+
+    @Test fun `npcNeungdong accepts a Han-only destination id`() {
+        val warp = "\uC21C\uAC04\uC774\uB3D9"
+        val parsed = CheNpcNeungdong(pipeline).argTest(
+            mapOf("optionText" to warp, "destCityID" to 421),
+        )
+        assertEquals(linkedMapOf<String, Any?>("optionText" to warp, "destCityID" to 421), parsed)
     }
 
     // ---------------- che_귀환 / 인재탐색 / 견문 / 요양 (no-arg) ----------------

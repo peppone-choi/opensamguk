@@ -26,6 +26,7 @@ PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모) 이식에서 
 | `logic` | 라이브러리 | — | 순수 게임 로직(Spring/DB 없음): `stats/ActionPipeline`, `actions/*`+`CommandRegistry`, `war/*` 전투, `ai/*` GeneralAI, `event/*` DSL, `tick/*`, 베팅·경매·유산·메시지 |
 | `infra` | 라이브러리 | — | `JdbcFlushExecutor`(JDBC 전용 flush + 델타/툼스톤 + row mapper), Flyway `db/migration/V*.sql`, Redis, JPA read repository, `seed/ScenarioImporter` |
 | `app:gateway-api` | Boot 앱 | `:8080` | 인증(JWT/BCrypt) · 프로필 · 어드민(`AdminSeeder`) |
+| `app:board-api` | Boot 앱 | `:8083` | 게시판 read/write · gateway 발급 access JWT 검증 · 공유 users DB 조회 |
 | `app:game-api` | Boot 앱 | `:8081` | read + precheck + 명령 intake + SSE 릴레이 |
 | `app:game-engine` | Boot 앱 | `:8082` | 턴 데몬: `InMemoryTurnWorld`·`ChangeRecorder`·`MonthlyPipeline`·`TurnRunService`, `boot/ScenarioSeedRunner`+`WorldSnapshotLoader` |
 | `web/gateway` | Next.js | `:3000` | 게이트웨이 프론트(로그인/로비/어드민) |
@@ -166,7 +167,7 @@ cd web/game    && corepack pnpm dev   # :3001
 ## 배포
 
 ```bash
-# 로컬 전체 스택 (8서비스: postgres·redis·gateway-api·game-api·game-engine·web-gateway·web-game·nginx)
+# 로컬 전체 스택 (9서비스: postgres·redis·gateway-api·board-api·game-api·game-engine·web-gateway·web-game·nginx)
 docker compose up -d --build
 
 # 프로덕션 호환 표면 (GCP Compute Engine e2-standard-2, GHCR 이미지 풀, POSTGRES_PASSWORD 필수)
@@ -174,7 +175,7 @@ docker compose -f docker-compose.production.yml up -d
 ```
 
 - 백엔드 이미지 멀티스테이지: `gradle:8.12-jdk21` 빌드 → `eclipse-temurin:21-jre` 런타임. 프론트: `node:22-alpine` 빌드(`next build`) → `node:22-alpine` standalone 런타임.
-- nginx(`infra/nginx/nginx.conf`) 라우팅: `/api/gateway/`→gateway-api · `/api/game/`→web-gateway Next 프록시(httpOnly 쿠키→Bearer, 서버 선택) · `/api/game/realtime/`→game-api(SSE, 버퍼링 off) · `/game/`→web-game · `/`→web-gateway · `/health`.
+- nginx(`infra/nginx/nginx.conf`) 라우팅: `/api/gateway/`→gateway-api · `/api/board/`→web-gateway Next 프록시→board-api · `/api/game/`→web-gateway Next 프록시(httpOnly 쿠키→Bearer, 서버 선택) · `/api/game/realtime/`→game-api(SSE, 버퍼링 off) · `/game/`→web-game · `/`→web-gateway · `/health`.
 - CI/CD: `.github/workflows/deploy.yml`(빌드 → GHCR push → GCP VM의 `gcp-prod` self-hosted runner에서 공유 스택 동기화), 수동 `scripts/deploy.sh`(헬스 체크 루프). 런타임 외부 API 의존 0, LLM-free.
 
 ---

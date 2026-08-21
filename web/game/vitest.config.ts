@@ -10,8 +10,10 @@ import { resolve } from 'node:path';
 export default defineConfig({
     plugins: [react()],
     resolve: {
+        dedupe: ['next', 'react', 'react-dom'],
         alias: {
             '@': resolve(__dirname, '.'),
+            '@opensamguk/ui': resolve(__dirname, '../shared/src/index.ts'),
         },
     },
     test: {

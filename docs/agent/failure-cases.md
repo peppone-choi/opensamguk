@@ -19,13 +19,13 @@
 
 - Status: **OBSERVED**
 - Category: 기술적 환각 (패러티 위조 포함)
-- Trigger: PHP 정본을 확인하지 않고 "그럴듯한" 코드·로그·wire 코드를 생성.
+- Trigger: 승인된 제품 계약과 실제 intake/engine 경로를 확인하지 않고 "그럴듯한" 코드·로그·wire 코드를 생성. 역사 parity 작업에서는 선택한 PHP 근거도 누락.
 - Incorrect behavior: ① FE가 미등록 명령 코드 `OpenUniqueAuction`을 전송(정본은 `auctionOpenUnique`) — 예약이 조용히 위조됨. ② 경매 위조 로그 push 6사이트 — `log_scope` enum 외 값이 flush `BatchUpdateException` 틱 롤백 = **턴 동결 지뢰**. ③ PHP `fight()` 대신 결정론 점수비교로 대체 구현(대회 승패·로그 패러티 미달).
-- Detection signal: intake `intakeCodes` 부재(precheck AVAILABLE인데 엔진 deny), 로그 문자열이 PHP 캡처와 byte 불일치, PHP 원본 path+line 인용 부재.
-- How it is caught: PHP oracle 프로토콜(`WORKING_SYSTEM.md` — path+line 인용 의무), 골든 게이트, cross-agent critique, 재채점 워크플로.
-- Immediate recovery: PHP 원본 확인 → 위조 산출물 제거 → 실 골든 캡처 후 재포팅.
-- Recovery prompt: "방금 산출물에서 PHP 원본 근거(`legacy/devsam-core` path+line)가 없는 모든 상수·로그 문자열·코드 식별자를 나열하라. 각각 PHP 원본을 찾아 인용하거나, 찾지 못하면 해당 부분을 '근거 없음'으로 표시하고 제거 계획을 제시하라. 골든/테스트는 수정 금지."
-- Permanent prevention: 규율 5조(faithful, never fabricate), 골든은 실 캡처만, 격리는 증거+백로그 필수.
+- Detection signal: intake `intakeCodes` 부재(precheck AVAILABLE인데 엔진 deny), 승인 spec/API와 다른 식별자·로그·부수효과, 근거 path/test 부재. 명시적 역사 비교에서는 캡처와 byte 불일치도 신호다.
+- How it is caught: 현재 ADR/spec/API 대조, 실행 경로 테스트, cross-agent critique, 재채점 워크플로. 역사 범위에만 `WORKING_SYSTEM.md`의 opt-in 비교 프로토콜과 골든 게이트를 추가한다.
+- Immediate recovery: 승인 계약과 현재 구현 확인 → 위조 산출물 제거 → 현재 회귀 테스트. 역사 parity 범위라면 실 골든 캡처 후 재포팅.
+- Recovery prompt: "방금 산출물에서 승인 ADR/spec·현재 API/구현 근거가 없는 모든 상수·로그 문자열·코드 식별자를 나열하라. 각각 근거를 인용하거나 '근거 없음'으로 표시하고 제거 계획을 제시하라. 명시적 역사 비교 항목에만 legacy path+line을 추가하라. 골든/테스트는 약화 금지."
+- Permanent prevention: never fabricate, 현재 제품 근거 우선, 동결 골든 보존, 역사 비교는 opt-in 증거+백로그.
 - Evidence: `docs/superpowers/SESSION_HANDOFF.md` 2026-06-12 바퀴 23(W-1)·24(W-9); `docs/loops/live-gap-closure-2026-07-10/LEDGER.md` 바퀴 8(fight() 갭).
 
 ## AI-Failure-003: 범위 이탈 — 과잉 적용/무단 확산

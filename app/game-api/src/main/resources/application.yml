@@ -24,10 +24,9 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 jwt:
-  # MUST be the SAME HS256 secret gateway-api signs access tokens with (env JWT_SECRET, BASE64).
-  # game-api only VERIFIES — it never issues. The default matches gateway-api's dev default so the
-  # two services validate the same dev tokens out of the box.
-  secret: ${JWT_SECRET:Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU=}
+  public-key: ${JWT_PUBLIC_KEY}
+  legacy-secret: ${JWT_LEGACY_SECRET:}
+  legacy-accept-until: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:}
 opensamguk:
   world-id: ${OPENSAMGUK_WORLD_ID}
   profile: ${OPENSAMGUK_PROFILE:che:scenario_2}

@@ -1,5 +1,6 @@
 'use client';
 
+import { Brand } from '@opensamguk/ui';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { formatNumber, formatYearMonthPhase } from '@/lib/format';
@@ -33,7 +34,7 @@ export default function Header() {
     return (
         <header className="game-header">
             <div className="game-header-left">
-                <span className="game-header-brand">오픈삼국</span>
+                <Brand size="small" />
                 <span className="game-header-turn">{turnText}</span>
             </div>
             <div className="game-header-right">

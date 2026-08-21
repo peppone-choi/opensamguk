@@ -330,6 +330,7 @@ class TurnRunServiceIT {
             currentMonth = month,
             tickSeconds = tickSeconds,
             lastTurnTime = t0,
+            config = linkedMapOf("mapName" to "che"),
             meta = linkedMapOf("startYear" to year, "startTime" to calendarStartTime.toString()),
         ),
         generals = listOf(

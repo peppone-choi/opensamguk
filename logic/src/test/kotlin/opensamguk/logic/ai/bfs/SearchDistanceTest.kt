@@ -1,6 +1,7 @@
 package opensamguk.logic.ai.bfs
 
 import opensamguk.common.constants.CityConst
+import opensamguk.logic.world.CityConstRegistry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -100,5 +101,16 @@ class SearchDistanceTest {
         assertEquals(94, cities.size, "all 94 connected cities finalized exactly once")
         assertEquals(1, cities.getValue(14), "장사(14) finalized at its minimal dist (first dequeue wins)")
         assertEquals(0, cities.getValue(54), "the from city is dist 0")
+    }
+
+    @Test
+    fun `searchDistance uses the injected han adjacency for city ids outside che`() {
+        val han = CityConstRegistry.of("han")
+        val from = han.all().values.first { it.id > 94 && it.path.isNotEmpty() }
+
+        val cities = AiDistance.searchDistanceCities(from.id, maxDist = 1, cityConst = han)
+
+        assertEquals(from.id to 0, cities.entries.first().let { it.key to it.value })
+        assertEquals(from.path.keys, cities.keys.drop(1).toSet())
     }
 }

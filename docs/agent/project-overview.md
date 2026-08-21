@@ -50,7 +50,7 @@ merge, deploy가 실행되었거나 승인되었다는 뜻은 아니다.
 ## 외부 시스템
 
 - 라이브 제어면: 별도 `opensamguk-docker` 저장소의 shared/server/deployer 모델. 이 앱 저장소의 GitHub Actions는 GHCR 이미지를 만들고 shared stack을 갱신하지만, 각 게임 서버의 이미지 핀 승격은 별도 운영 행위다. 이 저장소의 `docker-compose.production.yml`·`scripts/deploy.sh`는 호환 전용이다. **런타임 외부 API 의존 0, LLM-free.**
-- 역사·회귀 참고: `legacy/devsam-core`(PHP, git-ignore), `tools/php-golden/` Docker 캡처 하니스. 신규 설계 정본은 최신 ADR·승인 spec·현재 구현이다.
+- 역사·회귀 참고: `legacy/devsam-core`(PHP, git-ignore), `hwe/ts/`, `tools/php-golden/` Docker 캡처 하니스. 신규 설계 정본은 최신 승인 ADR·spec·현재 구현이며, 레거시 비교는 명시적으로 요청된 동결 회귀 유지보수에서만 필수다.
 
 ## 핵심 품질 속성
 

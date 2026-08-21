@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
@@ -14,6 +13,7 @@ import opensamguk.logic.domestic.checkStatChange
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.CalcCityDistance
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_강행 — 강행(강행군). Faithful port of `che_강행.php` run() (lines 113-165).
@@ -51,7 +51,10 @@ class CheGanghaeng(
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
         notSameDestCity(),                                                     // NotSameDestCity (php:54)
-        nearCity(3) { c, _ -> CalcCityDistance.nearCity(c.cityId ?: 0, 3) },   // NearCity(3) (php:55)
+        nearCity(3) { c, _ ->
+            val mapName = c.env["mapName"] as? String ?: CityConstRegistry.DEFAULT_MAP_NAME
+            CalcCityDistance.nearCity(c.cityId ?: 0, 3, CityConstRegistry.of(mapName))
+        },
         reqGeneralGold { c, _ -> getCostGold(envOf(c)) },                      // ReqGeneralGold(reqGold) (php:56)
         reqGeneralRice { _, _ -> 0 },                                          // ReqGeneralRice(reqRice=0) (php:57)
     )
@@ -63,7 +66,8 @@ class CheGanghaeng(
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: d.destCity?.id
         ?: error("강행 requires a destCityID")
-        val destCityName = d.destCity?.let { CityConst.byId(it.id)?.name } ?: CityConst.byId(destCityId)?.name
+        val cityConst = CityConstRegistry.of(env.mapName)
+        val destCityName = d.destCity?.let { cityConst.byId(it.id)?.name } ?: cityConst.byId(destCityId)?.name
         ?: error("unknown dest city $destCityId")
         val josaRo = JosaUtil.pick(destCityName, "로")
 
@@ -108,5 +112,6 @@ class CheGanghaeng(
         year = (c.env["year"] as Number).toInt(),
         startYear = (c.env["startYear"] as Number).toInt(),
         develCost = (c.env["develCost"] as Number).toInt(),
+        mapName = c.env["mapName"] as? String ?: CityConstRegistry.DEFAULT_MAP_NAME,
     )
 }

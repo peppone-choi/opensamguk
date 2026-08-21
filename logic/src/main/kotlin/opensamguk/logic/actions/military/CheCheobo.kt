@@ -1,11 +1,11 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.activeMapDestCity
 import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.notOccupiedDestCity
 import opensamguk.logic.constraints.occupiedCity
@@ -21,6 +21,7 @@ import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.numberFormat
 import opensamguk.logic.world.CalcCityDistance
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_첩보 — faithful port of `legacy/devsam-core/hwe/sammo/Command/General/che_첩보.php`.
@@ -57,7 +58,7 @@ class CheCheobo(
     fun argTest(raw: Map<String, Any?>): Map<String, Any?>? {
         if (!raw.containsKey("destCityID")) return null
         val destCityID = (raw["destCityID"] as? Number)?.toInt() ?: return null
-        if (CityConst.byId(destCityID) == null) return null
+        if (destCityID <= 0) return null
         return linkedMapOf("destCityID" to destCityID)
     }
 
@@ -75,7 +76,7 @@ class CheCheobo(
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
         val cost = ((ctx.env["develCost"] as? Number)?.toInt() ?: 0) * 3
         return listOf(
-            notBeNeutral(),
+            activeMapDestCity(), notBeNeutral(),
             notOccupiedDestCity(),
             reqGeneralGold { _, _ -> cost },
             reqGeneralRice { _, _ -> cost },
@@ -91,11 +92,12 @@ class CheCheobo(
 
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
         val destCity = d.destCity ?: return
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val cityConstVariant = CityConstRegistry.of(context.env.mapName)
+        val destCityName = cityConstVariant.byId(destCityId)?.name ?: ""
         val josaUl = JosaUtil.pick(destCityName, "을")
 
         // searchDistance로 거리 측정 (che_첩보.php:145)
-        val dist = CalcCityDistance.searchDistance(g0.cityId, 2)[destCityId] ?: 3
+        val dist = CalcCityDistance.searchDistance(g0.cityId, 2, cityConstVariant)[destCityId] ?: 3
 
         // dest city 적 장수 정보 — candidateGenerals에서 destNation 소속만 필터
         val destCityGeneralList = context.candidateGenerals.filter { it.nationId == destCity.nationId }

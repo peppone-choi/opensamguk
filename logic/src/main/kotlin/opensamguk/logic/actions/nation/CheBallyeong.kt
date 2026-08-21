@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.CommandFieldSpec
@@ -17,6 +16,7 @@ import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.constraints.suppliedDestCity
 import opensamguk.logic.domain.withMeta
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_발령 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_발령.php`.
@@ -72,7 +72,7 @@ fun cheBallyeong(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipeline):
         val d = context.draft
         val destGeneral = d.destGeneral ?: return
         val destCityId = (context.args["destCityID"] as? Number)?.toInt() ?: return
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
 
         // dest general → destCityID (che_발령.php:155)
         var movedDest = destGeneral.copy(cityId = destCityId)

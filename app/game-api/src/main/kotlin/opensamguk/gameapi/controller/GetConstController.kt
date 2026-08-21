@@ -10,17 +10,18 @@ import opensamguk.gameapi.dto.GameUnitConstItem
 import opensamguk.gameapi.dto.GetConstResponse
 import opensamguk.gameapi.dto.IActionItem
 import opensamguk.gameapi.read.F4StateText
+import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.seed.MapJson
 import opensamguk.logic.domain.GetNationColors
 import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.traits.NationTypeModule
 import opensamguk.logic.traits.NationTypeRegistry
-import opensamguk.logic.world.CityConstRegistry
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.slf4j.LoggerFactory
 import kotlin.math.roundToInt
 
 @RestController
@@ -28,6 +29,7 @@ import kotlin.math.roundToInt
 class GetConstController(
     private val worldStateReadRepository: WorldStateReadRepository,
 ) {
+    private val log = LoggerFactory.getLogger(GetConstController::class.java)
 
     @GetMapping
     fun getConst(): ResponseEntity<GetConstResponse> = ResponseEntity.ok(build())
@@ -35,6 +37,11 @@ class GetConstController(
     private fun build(): GetConstResponse {
         val active = activeGameConfig()
         val mapData = MapJson.loadFromClasspath(active.mapName)
+        if (mapData.width <= 0 || mapData.height <= 0 || mapData.cities.isEmpty()) {
+            val message = "active map resource is unavailable: map/${active.mapName}.json"
+            log.error(message)
+            error(message)
+        }
         val cityConst = cityConstItems(active.mapName)
         return GetConstResponse(
             mapName = active.mapName,
@@ -59,9 +66,9 @@ class GetConstController(
     private data class ActiveGameConfig(val mapName: String, val unitSet: String)
 
     private fun activeGameConfig(): ActiveGameConfig {
-        val world = runCatching { worldStateReadRepository.findAll().firstOrNull() }.getOrNull()
+        val world = worldStateReadRepository.findAll().firstOrNull()
             ?: return ActiveGameConfig(GameConst.mapName, GameConst.unitSet)
-        val mapName = CityConstRegistry.activeMapName(world.config, world.meta)
+        val mapName = ActiveWorldMap.requireName(world)
         val unitSet = UnitSetTable.activeUnitSet(world.config, world.meta)
         return ActiveGameConfig(mapName, unitSet)
     }
@@ -89,7 +96,11 @@ class GetConstController(
 
     private fun cityConstItems(mapName: String): List<CityConstItem> {
         val details = MapJson.loadCityDetailsFromClasspath(mapName)
-        if (details.isEmpty()) return cheCityConstItems()
+        if (details.isEmpty()) {
+            val message = "active map city metadata is unavailable: map/$mapName.json"
+            log.error(message)
+            error(message)
+        }
         val nameById = details.associate { it.id to it.name }
         return details.map { c ->
             val path = LinkedHashMap<Int, String>()
@@ -113,24 +124,6 @@ class GetConstController(
                 path = path,
             )
         }
-    }
-
-    private fun cheCityConstItems(): List<CityConstItem> = CityConst.all().values.map { c ->
-        CityConstItem(
-            id = c.id,
-            name = c.name,
-            level = c.level,
-            population = c.population,
-            agriculture = c.agriculture,
-            commerce = c.commerce,
-            security = c.security,
-            defence = c.defence,
-            wall = c.wall,
-            region = c.region,
-            posX = c.posX,
-            posY = c.posY,
-            path = c.path,
-        )
     }
 
     /**

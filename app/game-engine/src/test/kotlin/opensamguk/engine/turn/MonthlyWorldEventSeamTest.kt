@@ -36,7 +36,14 @@ class MonthlyWorldEventSeamTest {
 
     private fun world() = InMemoryTurnWorld(
         WorldSnapshot(
-            TurnWorldState(id = 1, currentYear = 190, currentMonth = 7, tickSeconds = 3600, lastTurnTime = t0),
+            TurnWorldState(
+                id = 1,
+                currentYear = 190,
+                currentMonth = 7,
+                tickSeconds = 3600,
+                lastTurnTime = t0,
+                config = linkedMapOf("mapName" to "che"),
+            ),
             generals = listOf(
                 TurnGeneral(
                     id = 42, name = "유비", nationId = 1, cityId = 5, troopId = 0,
@@ -76,7 +83,6 @@ class MonthlyWorldEventSeamTest {
             pipeline = pipeline,
             hiddenSeed = hiddenSeed,
             startYear = startYear,
-            mapName = "che",
             eventStore = EventStore.withDefaults(),
         )
 

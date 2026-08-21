@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.military
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
@@ -9,6 +8,7 @@ import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.notWanderingNation
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_접경귀환 — faithful port of `legacy/devsam-core/hwe/sammo/Command/General/che_접경귀환.php`.
@@ -44,7 +44,7 @@ class CheJeopgyeongGwihwan : GeneralActionDefinition {
         if (nearestCityList.isEmpty()) return
 
         val destCityId = rng.choice(nearestCityList)                           // DRAW1
-        val destCityName = CityConst.byId(destCityId)?.name ?: ""
+        val destCityName = CityConstRegistry.of(context.env.mapName).byId(destCityId)?.name ?: ""
         val josaRo = JosaUtil.pick(destCityName, "로")
 
         // PHP che_접경귀환.php:96 — 로그에 시각(<1>date</>) 미포함(다른 군사명령과 달리).

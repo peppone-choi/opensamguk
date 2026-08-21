@@ -868,7 +868,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const [scenarioCode, setScenarioCode] = useState('');
     const [scenarios, setScenarios] = useState<ScenarioOption[]>([]);
     const [scenarioSeedEnabled, setScenarioSeedEnabled] = useState(true);
-    const [jwtSecret, setJwtSecret] = useState('');
+    const [jwtPublicKey, setJwtPublicKey] = useState('');
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState<ServerCreateResponse | null>(null);
 
@@ -910,7 +910,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                     imageTag,
                     scenarioCode,
                     scenarioSeedEnabled,
-                    jwtSecret,
+                    jwtPublicKey,
                 }),
             });
             const data = (await res.json()) as ServerCreateResponse;
@@ -1007,14 +1007,13 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                     </select>
                 </label>
                 <label className="field">
-                    <span>JWT_SECRET</span>
+                    <span>JWT 공개키</span>
                     <input
-                        type="password"
-                        value={jwtSecret}
+                        value={jwtPublicKey}
                         disabled={busy}
-                        onChange={(e) => setJwtSecret(e.target.value)}
+                        onChange={(e) => setJwtPublicKey(e.target.value)}
                     />
-                    <small className="field-hint">비우면 공유 스택 JWT_SECRET을 복사합니다.</small>
+                    <small className="field-hint">비우면 호스트에 설치된 gateway 공개키를 사용합니다.</small>
                 </label>
                 <label className="env-toggle server-create-toggle">
                     <input

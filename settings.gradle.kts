@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 }
 
 include("common", "logic", "infra")
-include("app:gateway-api", "app:game-api", "app:game-engine")
+include("app:gateway-api", "app:game-api", "app:game-engine", "app:board-api")

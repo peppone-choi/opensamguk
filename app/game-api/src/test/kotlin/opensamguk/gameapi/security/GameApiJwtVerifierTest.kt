@@ -22,7 +22,7 @@ class GameApiJwtVerifierTest {
 
     // identical to gateway-api's dev default + game-api application.yml default.
     private val sharedSecret = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU="
-    private val verifier = GameApiJwtVerifier(sharedSecret)
+    private val verifier = GameApiJwtVerifier("", sharedSecret, "2099-01-01T00:00:00Z")
 
     private fun mint(
         secret: String,

@@ -1,6 +1,6 @@
 # opensamguk working system
 
-This document is the operating contract for future agents working on opensamguk. It turns the project rules into a repeatable workflow: choose the right skill, read the PHP grand truth, compare behavior, verify with gates, then document the evidence.
+This document is the operating contract for future agents working on opensamguk. It turns the project rules into a repeatable workflow: choose the right skill, follow the latest approved ADR/spec and current implementation, verify with gates, then document the evidence. Under ADR-LITE-042, PHP and hwe are optional historical/reference inputs, not product authority.
 
 ## Installed project skills
 
@@ -47,19 +47,19 @@ Start every non-trivial task by classifying the work:
 
 | Task shape | Required first surface |
 | --- | --- |
-| One command/action parity gap | `parity-close` |
-| Batch ready for PR/deploy | `parity-ship` |
+| Explicitly requested frozen-regression/parity maintenance for one command | `parity-close` (historical opt-in only) |
+| Explicitly requested frozen-regression/parity batch ready for PR/deploy | `parity-ship` (historical opt-in only) |
 | Frontend Next.js implementation | `vercel-react-best-practices`, then `redesign-existing-projects` for visual parity/modernization |
 | Browser flow verification | `webapp-testing` plus Playwright/browser tooling |
 | Backend Kotlin/Spring work | `kotlin-spring-boot`, `java-spring-boot`, then repo architecture rules |
 | PostgreSQL/Flyway/JDBC work | `supabase-postgres-best-practices`, then one-daemon-write rule |
-| PHP legacy or golden comparison | This document's PHP oracle protocol, then `tools/php-golden/` |
+| PHP legacy or frozen-golden comparison | This document's historical comparison protocol, then `tools/php-golden/` |
 
-External skills are advisory. If an external skill conflicts with `CLAUDE.md`, `AGENTS.md`, or PHP legacy behavior, the repo rules win.
+External skills are advisory. If an external skill conflicts with the latest approved ADR/spec, `CLAUDE.md`, `AGENTS.md`, or the current implementation, the repository product and architecture rules win.
 
-### Provider-agnostic fallback for parity-close
+### Provider-agnostic fallback for parity-close (historical opt-in)
 
-`parity-close` is a local process skill when available. In fresh providers that only restored `skills-lock.json`, execute the same sequence manually:
+`parity-close` is a local process skill for an explicitly requested frozen-regression comparison. It is never a prerequisite for new product work. In fresh providers that only restored `skills-lock.json`, execute the same sequence manually:
 
 1. PHP oracle inventory and real golden capture when needed.
 2. Kotlin logic port plus golden/replay test.
@@ -69,9 +69,9 @@ External skills are advisory. If an external skill conflicts with `CLAUDE.md`, `
 6. cross-agent critique artifact under `docs/superpowers/reviews/`.
 7. small Lore commit.
 
-### Provider-agnostic fallback for parity-ship
+### Provider-agnostic fallback for parity-ship (historical opt-in)
 
-`parity-ship` is a local process skill when available. In fresh providers, execute:
+`parity-ship` is a local process skill for an explicitly requested frozen-regression batch. It is never a prerequisite for new product work. In fresh providers, execute:
 
 1. `tools/agent-system/check.py --strict --base origin/main`.
 2. `tools/parity/gate.sh backend`.
@@ -80,16 +80,16 @@ External skills are advisory. If an external skill conflicts with `CLAUDE.md`, `
 5. explicit human go before main merge/deploy.
 6. production verification: health, nginx route, and either world-clock advancement or intentional empty-world invariant.
 
-## PHP oracle protocol
+## Historical PHP comparison protocol (opt-in)
 
-PHP is the grand truth. Before changing logic, find and quote the source:
+Use this protocol only when the task explicitly asks to investigate a frozen-baseline regression, maintain a historical parity surface, or explain legacy behavior. PHP and hwe evidence can establish what those legacy systems did; they do not decide new opensamguk product behavior. Before making a historical behavior claim:
 
 1. Locate the PHP entry point in `legacy/devsam-core`:
    - Commands: `hwe/sammo/Command/General/*.php` or `hwe/sammo/Command/Nation/*.php`
    - Join/possession/founding: search `hwe/` and `sammo/` by handler name and route
    - Frontend shape: `hwe/ts/` Vue first; `hwe/*.php` shell pages second
 2. Record the exact source path and line range in a research note or the PR body.
-3. Determine the parity dimensions:
+3. Determine the comparison dimensions relevant to the frozen baseline:
    - RNG draw order/count/arguments
    - `Util::round`, `intdiv`, `toInt`, `ceil`
    - Korean log bytes, Josa, markup, and log order
@@ -99,7 +99,7 @@ PHP is the grand truth. Before changing logic, find and quote the source:
    - Use `tools/php-golden/`
    - Commit only real fixtures
    - Never edit a golden to make Kotlin pass
-5. Compare Kotlin/Next implementation against the PHP evidence, not against intuition.
+5. Compare Kotlin/Next behavior against the captured legacy evidence only for the explicitly selected historical scope. For new design, compare against the approved ADR/spec and current implementation instead.
 
 If evidence is uncapturable, quarantine it with proof and backlog it. Do not fabricate expected values.
 
@@ -107,12 +107,12 @@ If evidence is uncapturable, quarantine it with proof and backlog it. Do not fab
 
 Every slice follows this loop:
 
-1. **Inventory**: PHP oracle path, Kotlin/Next target files, existing tests, and current gap doc.
-2. **Lock behavior**: add or identify a golden/replay/API/UI regression test before risky edits.
-3. **Implement narrowly**: prefer deletion and existing utilities. No hardcoded server/data placeholders unless they are PHP parity constants.
-4. **Compare**: run targeted golden/API/UI checks and inspect expected vs actual drift.
-5. **Cross-agent critique**: ask at least one independent agent/reviewer to attack the result before commit. For multi-agent work, the peer must check PHP evidence, changed files, tests, and docs without reusing the implementer's conclusion as truth.
-6. **Gate**: run `tools/parity/gate.sh` or a narrower equivalent with Java 21 and XML verification.
+1. **Inventory**: approved ADR/spec, current Kotlin/Next implementation, target files, existing tests, and current task/gap doc. Add a PHP path only for an explicitly historical comparison.
+2. **Lock behavior**: add or identify a deterministic replay/API/UI regression test before risky edits; preserve affected frozen baselines.
+3. **Implement narrowly**: prefer deletion and existing utilities. No hardcoded server/data placeholders unless they are documented product defaults or test fixtures.
+4. **Compare**: run targeted replay/API/UI checks and inspect expected vs actual drift. Run a PHP golden comparison only when the task opted into historical maintenance.
+5. **Cross-agent critique**: ask at least one independent agent/reviewer to attack the result before commit. For multi-agent work, the peer checks approved product evidence, changed files, tests, and docs without reusing the implementer's conclusion as truth; PHP evidence is required only for the selected historical scope.
+6. **Gate**: run the appropriate current gate. The historical filename `tools/parity/gate.sh` is preserved for compatibility and remains the standard backend helper; the name does not make PHP parity mandatory.
 7. **Document**: update the relevant gap, research, plan, or handoff doc with exact evidence and the critique outcome.
 8. **Commit small**: one logical commit with Lore trailers and the repo co-author trailers.
 
@@ -120,9 +120,9 @@ Every slice follows this loop:
 
 Every non-trivial slice needs an explicit adversarial review. Use whatever provider is available, but keep the review contract identical:
 
-- **Implementer claim**: what changed, PHP source/evidence used, commands run, known gaps.
-- **Critic task**: find the strongest reason this is wrong, stale, hardcoded, ungated, or divergent from PHP.
-- **Required checks**: PHP oracle path, RNG/rounding/log/write-order dimensions, test adequacy, docs freshness, production invariants, and hardcoded data.
+- **Implementer claim**: what changed, approved product evidence used, commands run, known gaps, and any explicitly requested historical evidence.
+- **Critic task**: find the strongest reason this is wrong, stale, hardcoded, ungated, or divergent from the current approved contract; include the selected PHP baseline only for opted-in historical work.
+- **Required checks**: current ADR/spec/implementation agreement, deterministic replay, numerical/log change intent, write/order invariants, test adequacy, docs freshness, production invariants, and hardcoded data. Add a PHP path-and-line check only for opted-in historical comparison.
 - **Result**: `cleared`, `fix-required`, or `quarantined-with-proof`.
 
 Do not merge or ship while the latest critique is `fix-required`. If Kimi-backed Claude Code, Codex, Gemini, or another agent is running in parallel, use them as peer critics on disjoint file scopes where possible. The leader owns the final decision and must reconcile conflicting reviews with evidence.
@@ -172,7 +172,7 @@ tools/agent-system/check.py --format json
 The checker enforces:
 
 - `skills-lock.json` exists and every skill is documented here.
-- required docs still mention the working system, PHP oracle, and gate commands.
+- required docs still mention the working system, ADR-LITE-042 authority boundary, optional historical comparison, and gate commands.
 - code changes include docs or evidence in strict mode.
 - behavior changes include tests, golden evidence, or docs in strict mode.
 - strict mode requires changed non-trivial work to keep the cross-agent critique rule documented.
@@ -187,7 +187,7 @@ This is the hook point for all providers. Claude hooks, Codex tools, Gemini agen
 
 Hardcoded UI/server/game data is a blocker unless it is one of:
 
-- a PHP parity constant captured from `legacy/devsam-core`
+- a documented product constant, or a frozen fixture retained for historical regression maintenance
 - a documented default in `.env.example`
 - a test fixture
 

@@ -15,6 +15,7 @@ import opensamguk.logic.world.UnblockScoutWorldView
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -23,7 +24,12 @@ class WorldScoutActionContextTest {
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 
-    private fun world(firstScout: Int = 0, secondScout: Int = 1): InMemoryTurnWorld =
+    private fun world(
+        firstScout: Int = 0,
+        secondScout: Int = 1,
+        config: Map<String, Any?> = linkedMapOf("mapName" to "che"),
+        meta: Map<String, Any?> = emptyMap(),
+    ): InMemoryTurnWorld =
         InMemoryTurnWorld(
             WorldSnapshot(
                 state = TurnWorldState(
@@ -32,6 +38,8 @@ class WorldScoutActionContextTest {
                     currentMonth = 1,
                     tickSeconds = 3600,
                     lastTurnTime = t0,
+                    config = config,
+                    meta = meta,
                 ),
                 nations = listOf(
                     Nation(id = 1, name = "촉", color = "#f00", level = 1, meta = linkedMapOf("scout" to firstScout)),
@@ -57,7 +65,6 @@ class WorldScoutActionContextTest {
             pipeline = GeneralActionPipeline(),
             hiddenSeed = "hidden",
             startYear = 200,
-            mapName = "che",
             eventStore = EventStore(),
         )(env)
 
@@ -65,6 +72,74 @@ class WorldScoutActionContextTest {
         assertIs<UnblockScoutWorldView>(ctx)
         assertTrue(env[BlockScoutAction.ENV_WORLD] === ctx)
         assertTrue(env[UnblockScoutAction.ENV_WORLD] === ctx)
+    }
+
+    @Test
+    fun `factory and action context prefer config map over conflicting legacy meta`() {
+        val env = mutableMapOf<String, Any?>()
+        val ctx = WorldEventContextFactory.create(
+            world = world(
+                config = linkedMapOf("mapName" to "han"),
+                meta = linkedMapOf("map" to "che"),
+            ),
+            recorder = ChangeRecorder(),
+            pipeline = GeneralActionPipeline(),
+            hiddenSeed = "hidden",
+            startYear = 200,
+            eventStore = EventStore(),
+        )(env) as WorldActionContext
+
+        assertEquals(listOf("han", "han"), listOf(
+            (env["cityConst"] as opensamguk.logic.world.CityConstVariant).mapName,
+            ctx.cityConst().mapName,
+        ))
+    }
+
+    @Test
+    fun `action context ignores stale city const env and resolves the world config`() {
+        val ctx = WorldActionContext(
+            env = mutableMapOf("cityConst" to opensamguk.logic.world.CityConstRegistry.of("che")),
+            world = world(
+                config = linkedMapOf("mapName" to "han"),
+                meta = linkedMapOf("map" to "che"),
+            ),
+            recorder = ChangeRecorder(),
+            pipeline = GeneralActionPipeline(),
+        )
+
+        assertEquals("han", ctx.cityConst().mapName)
+    }
+
+    @Test
+    fun `factory fails closed when seeded world has no map name`() {
+        val failure = assertFailsWith<IllegalStateException> {
+            WorldEventContextFactory.create(
+                world = world(config = emptyMap(), meta = emptyMap()),
+                recorder = ChangeRecorder(),
+                pipeline = GeneralActionPipeline(),
+                hiddenSeed = "hidden",
+                startYear = 200,
+                eventStore = EventStore(),
+            )
+        }
+
+        assertEquals("world state requires an explicit mapName in config/meta", failure.message)
+    }
+
+    @Test
+    fun `factory fails closed when seeded world map name is unknown`() {
+        val failure = assertFailsWith<IllegalArgumentException> {
+            WorldEventContextFactory.create(
+                world = world(config = linkedMapOf("mapName" to "unknown")),
+                recorder = ChangeRecorder(),
+                pipeline = GeneralActionPipeline(),
+                hiddenSeed = "hidden",
+                startYear = 200,
+                eventStore = EventStore(),
+            )
+        }
+
+        assertEquals("world state has unknown mapName: unknown", failure.message)
     }
 
     @Test
@@ -78,7 +153,6 @@ class WorldScoutActionContextTest {
             pipeline = GeneralActionPipeline(),
             hiddenSeed = "hidden",
             startYear = 200,
-            mapName = "che",
             eventStore = EventStore(),
         )(env)
 
@@ -103,7 +177,6 @@ class WorldScoutActionContextTest {
             pipeline = GeneralActionPipeline(),
             hiddenSeed = "hidden",
             startYear = 200,
-            mapName = "che",
             eventStore = EventStore(),
         )(env)
 

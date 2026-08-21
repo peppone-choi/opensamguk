@@ -15,6 +15,7 @@
 // No-arg commands reserve instantly on click; reqArg commands open the relevant field sub-form first.
 // If availableCommands() is absent/empty, surface the failure instead of fabricating a local command list.
 
+import { Modal } from '@opensamguk/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import {
@@ -554,8 +555,12 @@ export default function CommandModal({
     }
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <Modal
+            ariaLabel={pinnedLabel ? `명령: ${pinnedLabel}` : '명령'}
+            className="modal-content"
+            overlayClassName="modal-overlay"
+            onClose={onClose}
+        >
                 <div className="modal-header">
                     <h2>명령</h2>
                     <button onClick={onClose} aria-label="닫기">×</button>
@@ -692,7 +697,6 @@ export default function CommandModal({
 
                 {/* BLOCKED / UNKNOWN reason — info, not error (PHP-faithful deny string). */}
                 {blockedReason && <p className="cmd-blocked">{blockedReason}</p>}
-            </div>
-        </div>
+        </Modal>
     );
 }

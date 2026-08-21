@@ -134,6 +134,62 @@ assert module.scope_covers_area("tools/assets/", "tools/")
 assert not module.scope_covers_area("docs/webapp/", "app/")
 assert not module.scope_covers_area("not-tools/", "tools/")
 
+module.ROOT = root
+assert not module.check_product_authority_policy()
+with tempfile.TemporaryDirectory() as tmp:
+    module.ROOT = Path(tmp)
+    for rel, phrases in module.PRODUCT_AUTHORITY_REQUIRED.items():
+        path = module.ROOT / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join(phrases) + "\n", encoding="utf-8")
+    for rel in module.PRODUCT_AUTHORITY_SURFACES:
+        path = module.ROOT / rel
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                "Current product authority follows approved ADR/spec/current implementation.\n",
+                encoding="utf-8",
+            )
+    assert not module.check_product_authority_policy()
+    stale = module.ROOT / "docs/superpowers/WORKING_SYSTEM.md"
+    baseline = stale.read_text(encoding="utf-8")
+    stale.write_text(
+        baseline + "PHP legacy behavior is optional historical evidence, not product authority.\n",
+        encoding="utf-8",
+    )
+    assert not module.check_product_authority_policy()
+    obsolete_statements = (
+        "PHP wins every divergence",
+        "PHP is the authoritative product source",
+        "PHP remains the source of truth",
+        "All new features must first match devsam/core",
+        "hwe/ts is authoritative for frontend work",
+    )
+    for statement in obsolete_statements:
+        stale.write_text(baseline + statement + "\n", encoding="utf-8")
+        authority_findings = module.check_product_authority_policy()
+        assert any(
+            finding.check == "product-authority"
+            and "obsolete mandatory legacy authority" in finding.message
+            for finding in authority_findings
+        ), statement
+    stale.write_text(baseline, encoding="utf-8")
+    surface_baselines = {
+        rel: (module.ROOT / rel).read_text(encoding="utf-8")
+        for rel in module.PRODUCT_AUTHORITY_SURFACES
+    }
+    for rel, surface_baseline in surface_baselines.items():
+        surface = module.ROOT / rel
+        surface.write_text(surface_baseline + "PHP remains the source of truth\n", encoding="utf-8")
+        authority_findings = module.check_product_authority_policy()
+        assert any(
+            finding.check == "product-authority"
+            and finding.message.startswith(f"{rel}:")
+            for finding in authority_findings
+        ), rel
+        surface.write_text(surface_baseline, encoding="utf-8")
+module.ROOT = root
+
 def critique_findings(code_files: list[str], reviews: dict[str, str]):
     with tempfile.TemporaryDirectory() as tmp:
         module.ROOT = Path(tmp)

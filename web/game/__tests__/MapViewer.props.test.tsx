@@ -54,6 +54,7 @@ const MAP_FIXTURE: MapPreviewResponse = {
 const WM_FIXTURE: WorldMapResponse = {
     result: true,
     version: 4,
+    mapName: 'che',
     startYear: 180,
     year: 201,
     month: 7,
@@ -199,8 +200,8 @@ describe('MapViewer — mapData 주입(P0-22)', () => {
         await waitFor(() => expect(getCanvas()).toBeTruthy());
 
         const icon = document.querySelector('.city-img') as HTMLElement;
-        expect(icon.style.width).toBe('24px');
-        expect(icon.style.height).toBe('18px');
+        expect(icon.style.width).toBe('27px');
+        expect(icon.style.height).toBe('20px');
     });
 });
 

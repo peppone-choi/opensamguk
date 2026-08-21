@@ -1,11 +1,11 @@
 'use client';
 
 import { Suspense, useState, type FormEvent } from 'react';
+import { Brand } from '@opensamguk/ui';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { login } from '@/lib/client';
-import { AUTH_LABELS, BRAND, FOOTER_LINKS } from '@/lib/constants';
+import { AUTH_LABELS, FOOTER_LINKS } from '@/lib/constants';
 import ServerBoard from '@/components/ServerBoard';
 
 // 레거시 index.php: 네비바(brand) + 로그인 카드 + 현황 맵 프리뷰 + 푸터 링크.
@@ -98,14 +98,7 @@ export default function LoginPage() {
     return (
         <div className="gw-shell">
             <header className="gw-navbar">
-                <Image
-                    className="gw-brand-logo"
-                    src="/logo-wordmark.png"
-                    alt={BRAND}
-                    width={86}
-                    height={32}
-                    priority
-                />
+                <Brand size="large" />
             </header>
             <main className="gw-center fade-in">
                 <Suspense fallback={<div className="spinner" />}>

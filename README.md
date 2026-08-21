@@ -206,7 +206,7 @@ cd opensamguk
 
 # 2) 환경변수 — 예시를 복사한 뒤, 로컬 .env에 필요한 값을 직접 설정
 cp .env.example .env
-# Required: JWT_SECRET, OPENSAMGUK_WORLD_ID
+# Required: JWT_PRIVATE_KEY, JWT_PUBLIC_KEY, OPENSAMGUK_WORLD_ID
 
 # 3) 전체 스택 기동 (postgres·redis·3 API·2 프론트·nginx)
 docker compose up -d --build
@@ -231,27 +231,31 @@ docker compose up -d --build
 
 ## 서비스 / 포트
 
-`docker-compose.yml`(로컬 개발) 기준 8개 서비스:
+`docker-compose.yml`(로컬 개발) 기준 9개 서비스:
 
 | 서비스 | 이미지/빌드 | 포트 | 역할 |
 |--------|-------------|------|------|
 | `postgres` | `postgres:16-alpine` | 5432 | 영속 저장소 (DB `sammo`) |
 | `redis` | `redis:7-alpine` | 6379 | best-effort 명령 wake + SSE pub/sub |
 | `gateway-api` | `docker/gateway-api.Dockerfile` | 8080 | 인증(JWT/BCrypt)·프로필·어드민 |
+| `board-api` | `docker/board-api.Dockerfile` | 8083 | 게시판 read/write·access JWT 검증·공유 users DB 조회 |
 | `game-api` | `docker/game-api.Dockerfile` | 8081 | read · precheck · intake · SSE |
 | `game-engine` | `docker/game-engine.Dockerfile` | 8082 | 턴 데몬 (`InMemoryTurnWorld`) |
 | `web-gateway` | `docker/web-gateway.Dockerfile` | 3000 | Next.js 게이트웨이(로그인/로비) |
 | `web-game` | `docker/web-game.Dockerfile` | 3001 | Next.js 게임 프론트 |
 | `nginx` | `nginx:1.27-alpine` | 80 | 리버스 프록시 (`infra/nginx/nginx.conf`) |
 
-nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gateway-api · `/api/game/` → web-gateway Next 프록시(httpOnly 쿠키 → Bearer, 서버 선택) · `/api/game/realtime/` → game-api(SSE, 버퍼링 off) · `/game/` → web-game · `/` → web-gateway · `/health` 헬스 체크.
+nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gateway-api · `/api/board/` → web-gateway Next 프록시 → board-api · `/api/game/` → web-gateway Next 프록시(httpOnly 쿠키 → Bearer, 서버 선택) · `/api/game/realtime/` → game-api(SSE, 버퍼링 off) · `/game/` → web-game · `/` → web-gateway · `/health` 헬스 체크.
 
 ### 환경변수 (`.env.example`)
 
-`.env.example`을 복사한 뒤 값은 로컬의 git-ignore된 `.env`에만 넣습니다. Compose가 명시적으로 요구하는 이름은 다음 두 개입니다. 값·토큰·비밀번호를 문서나 커밋에 넣지 마세요.
+`.env.example`을 복사한 뒤 값은 로컬의 git-ignore된 `.env`에만 넣습니다. Compose가 명시적으로 요구하는 이름은 다음 세 개입니다. 값·토큰·비밀번호를 문서나 커밋에 넣지 마세요.
 
-- `JWT_SECRET` — gateway-api 발급자와 game-api 검증자가 **같이 쓰는** HS256 비밀값입니다.
+- `JWT_PRIVATE_KEY` — gateway-api만 받는 Base64 PKCS#8 RSA 서명 키입니다.
+- `JWT_PUBLIC_KEY` — 세 API가 같은 발급자를 검증하는 Base64 X.509 RSA 공개 키입니다.
 - `OPENSAMGUK_WORLD_ID` — game-api와 game-engine이 같은 월드를 선택하는 식별자입니다.
+
+기존 HS256 토큰을 받는 `JWT_LEGACY_*` 값은 소비자 먼저 배포하는 전환 기간에만 사용합니다. 정확한 단계와 중단 조건은 [JWT 키 롤아웃](docs/operations/jwt-key-rollout.md)을 따릅니다.
 
 `POSTGRES_PASSWORD`는 로컬 기본값을 바꿀 때, `ADMIN_PASSWORD`는 관리자 시드를 만들 때
 설정합니다. 나머지 데이터베이스·포트·프로필·시나리오 변수의 이름과 기본 동작은
@@ -349,9 +353,9 @@ daemon terminal 결과, route 렌더, 엔진 재기동 뒤 영속성을 확인�
 인증 fixture와 컨테이너를 복원/정리합니다.
 
 ```bash
-# JWT_SECRET와 OPENSAMGUK_WORLD_ID에는 로컬 .env의 값을 직접 넣습니다.
+# JWT_PRIVATE_KEY·JWT_PUBLIC_KEY와 OPENSAMGUK_WORLD_ID에는 로컬 .env의 값을 직접 넣습니다.
 # 값 자체를 셸 기록이나 문서에 남기지 마세요.
-OPENSAMGUK_WORLD_ID=<local-world-id> JWT_SECRET=<local-jwt-secret> \
+OPENSAMGUK_WORLD_ID=<local-world-id> JWT_PRIVATE_KEY=<local-private-key> JWT_PUBLIC_KEY=<local-public-key> \
   E2E_ENABLE_AUTH=true \
   E2E_ARTIFACT_DIR="$PWD/.omo/evidence/local-v1-manual" \
   ./tools/e2e/local_v1_gate.sh

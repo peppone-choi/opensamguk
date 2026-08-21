@@ -6,6 +6,7 @@ import opensamguk.logic.war.BattleCommandContext
 import opensamguk.logic.war.searchDistanceListToDest
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.domain.General
+import opensamguk.logic.world.ActiveWorldMap
 
 /**
  * BO2 — the engine-side builder that stages a [BattleCommandContext] for the `che_출병` resolver (BO3),
@@ -52,7 +53,9 @@ object BattleCommandContextBuilder {
             if (c.nationId in allowedNations) allowedCityList[c.id] = c.nationId
         }
 
-        val distanceList = searchDistanceListToDest(attackerCityId, finalTargetCityId, allowedCityList)
+        val state = world.getState()
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta)
+        val distanceList = searchDistanceListToDest(attackerCityId, finalTargetCityId, allowedCityList, cityConst)
 
         // per-city defender generals (same-nation, non-neutral) (process_war.php:40-41).
         val defenderGeneralsByCity = LinkedHashMap<Int, MutableList<opensamguk.logic.domain.General>>()

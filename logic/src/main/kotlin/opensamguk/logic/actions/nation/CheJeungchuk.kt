@@ -1,6 +1,5 @@
 package opensamguk.logic.actions.nation
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
@@ -17,6 +16,7 @@ import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 
 /**
  * che_증축 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_증축.php`.
@@ -83,7 +83,7 @@ fun cheJeungchuk(pipeline: GeneralActionPipeline): NationCommand = object : Nati
             rice = nation.rice - cost,
         )
 
-        val destName = CityConst.byId(capital.id)?.name ?: ""
+        val destName = CityConstRegistry.of(context.env.mapName).byId(capital.id)?.name ?: ""
         val josaUl = JosaUtil.pick(destName, "을")
         val josaYi = JosaUtil.pick(context.generalName, "이")
         context.addLog("<G><b>$destName</b></>$josaUl 증축했습니다. <1>${context.date}</>")

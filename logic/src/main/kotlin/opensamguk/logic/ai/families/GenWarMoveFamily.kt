@@ -1,6 +1,5 @@
 package opensamguk.logic.ai.families
 
-import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.ai.AiInstanceState
@@ -9,6 +8,7 @@ import opensamguk.logic.ai.GeneralAiContext
 import opensamguk.logic.ai.bfs.AiDistance
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.util.valueFit
+import opensamguk.logic.world.isFoundableCityLevel
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -470,7 +470,7 @@ object GenWarMoveFamily {
         if (attackableNations.isEmpty()) attackableNations.add(0) // :2754-2756
 
         // PHP `:2757` — array_keys(CityConst::byID(cityID)->path) (name-order), then the DB query (:2759-2763).
-        val nearCities = CityConst.byId(city.id)?.path?.keys?.toList() ?: emptyList()
+        val nearCities = ctx.cityConst.byId(city.id)?.path?.keys?.toList() ?: emptyList()
         val attackableCities = ctx.attackableCitiesOf(nearCities, attackableNations)
         // PHP `:2765` — count==0 throws ('출병 불가'); the adapter guards, so an empty list here = no candidate.
         if (attackableCities.isEmpty()) return null
@@ -728,7 +728,7 @@ object GenWarMoveFamily {
 
         // PHP `:3131-3140` — dupLord<=1 AND own city level∈{5,6} → null (already foundable here).
         if (ctx.dupLordAtSelfCity <= 1) {
-            if (ctx.selfCityLevel in 5..6) return null // :3137.
+            if (isFoundableCityLevel(ctx.selfCityLevel)) return null // :3137.
         }
 
         val occupied = ctx.wanderOccupiedCities // PHP `:3146-3152` occupiedCities key set.
@@ -744,11 +744,11 @@ object GenWarMoveFamily {
         // PHP `:3163-3182` — pick a fresh target ONLY when none cached (the :3180 target draw).
         if (movingTargetCityID == null) {
             val candidateCities = ArrayList<Pair<Int, Double>>() // :3165
-            val distMap = AiDistance.searchDistanceCities(currCityID, 4) // :3166 searchDistance(curr, 4).
+            val distMap = AiDistance.searchDistanceCities(currCityID, 4, ctx.cityConst) // :3166 searchDistance(curr, 4).
             for ((testCityID, dist) in distMap) { // dequeue (BFS visitation) order.
                 if (occupied.contains(testCityID)) continue // :3167
-                val cityLevel = CityConst.byId(testCityID)?.level ?: continue
-                if (cityLevel < 5 || 6 < cityLevel) continue // :3171
+                val cityLevel = ctx.cityConst.byId(testCityID)?.level ?: continue
+                if (!isFoundableCityLevel(cityLevel)) continue // :3171
                 candidateCities.add(testCityID to 1 / 2.0.pow(dist)) // :3174 weight 1/2^dist.
             }
             val picked = pickWanderTarget(candidateCities, rng) ?: return null // :3177-3180.
@@ -762,12 +762,12 @@ object GenWarMoveFamily {
         }
 
         // PHP `:3188-3208` — next-hop pick toward the target.
-        val distMap = AiDistance.searchDistanceCities(movingTargetCityID, 99) // :3188.
+        val distMap = AiDistance.searchDistanceCities(movingTargetCityID, 99, ctx.cityConst) // :3188.
         val targetDistance = distMap[currCityID] ?: return null // :3190.
         val candidateCities = ArrayList<Pair<Int, Double>>() // :3191.
-        for (nearCityID in (CityConst.byId(currCityID)?.path?.keys ?: emptyList())) { // :3193 name-order.
-            val cityLevel = CityConst.byId(nearCityID)?.level ?: continue
-            if (cityLevel in 5..6 && !occupied.contains(nearCityID)) {
+        for (nearCityID in (ctx.cityConst.byId(currCityID)?.path?.keys ?: emptyList())) { // :3193 name-order.
+            val cityLevel = ctx.cityConst.byId(nearCityID)?.level ?: continue
+            if (isFoundableCityLevel(cityLevel) && !occupied.contains(nearCityID)) {
                 candidateCities.add(nearCityID to 10.0) // :3197 foundable-adjacent → weight 10.
             }
             if ((distMap[nearCityID] ?: Int.MAX_VALUE) + 1 == targetDistance) {

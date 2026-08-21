@@ -101,6 +101,7 @@ class ReservedDiplomacyDestTargetTest {
         WorldSnapshot(
             state = TurnWorldState(
                 id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+                config = linkedMapOf("mapName" to "che"),
             ),
             generals = listOf(accepterChief(), proposerChief()),
             cities = listOf(city(7, ACCEPT_NATION), city(8, PROPOSER_NATION)),

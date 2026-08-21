@@ -5,12 +5,14 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
@@ -73,7 +75,12 @@ class AiTurnAdapterE2ETest {
         Nation(id = id, name = "n$id", color = "#000", level = 2, capitalCityId = capital)
 
     private fun baseState() = TurnWorldState(
-        id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+        id = 1,
+        currentYear = YEAR,
+        currentMonth = MONTH,
+        tickSeconds = 3600,
+        lastTurnTime = t0,
+        config = linkedMapOf("mapName" to "che"),
     )
 
     private fun worldWith(
@@ -104,6 +111,26 @@ class AiTurnAdapterE2ETest {
 
         assertEquals(chosen.actionCode, outcome.definition.key, "the AI-chosen command resolved end-to-end")
         assertTrue(outcome.autorunMode, "autorunMode set because the AI replaced the reserved 휴식")
+    }
+
+    @Test fun `AI fails closed when the world does not declare an active map`() {
+        val state = baseState().copy(config = emptyMap())
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(general(npcState = 2)),
+                listOf(city()),
+                listOf(nation()),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+
+        val error = assertFailsWith<IllegalStateException> {
+            adapter.chooseGeneralTurn(42, ReservedTurn("휴식", ""))
+        }
+
+        assertTrue(error.message.orEmpty().contains("explicit mapName"))
     }
 
     // ── (2) a nation chief runs chooseNationTurn picking a real nation command ─────────────────────────
@@ -152,6 +179,37 @@ class AiTurnAdapterE2ETest {
         assertEquals("che_건국", outcome.definition.key)
         assertEquals(1, world.getNationById(10)!!.level, "resolved founding raises the wandering nation")
         assertEquals(10, world.getCityById(17)!!.nationId, "resolved founding claims the neutral city")
+    }
+
+    @Test fun `a wandering NPC ruler founds from a han county through the active map seam`() {
+        val han = CityConstRegistry.of("han")
+        val county = han.all().values.first { it.level >= 10 }
+        val state = baseState().copy(config = linkedMapOf("mapName" to "han"))
+        val ruler = general(id = 20, nationId = 20, cityId = county.id, officerLevel = 12, npcState = 2).copy(crew = 10_000)
+        val follower = general(id = 21, nationId = 20, cityId = county.id, officerLevel = 1, npcState = 2)
+        val city = city(id = county.id, nationId = 0).copy(level = county.level, supplyState = 1, frontState = 0)
+        val wandering = nation(id = 20, capital = 0).copy(
+            name = "방랑",
+            level = 0,
+            gold = 100_000,
+            rice = 100_000,
+            meta = linkedMapOf("gennum" to 2),
+        )
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(ruler, follower),
+                listOf(city),
+                listOf(wandering),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+
+        val chosen = adapter.chooseGeneralTurn(20, ReservedTurn("휴식", ""))
+
+        assertEquals("che_건국", chosen.actionCode)
+        assertEquals("do건국", chosen.reason)
     }
 
     @Test fun `a war-ready NPC chooses and resolves sortie through the live adapter gate`() {

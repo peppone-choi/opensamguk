@@ -29,7 +29,7 @@ Claude를 "정답 자판기"가 아니라 **프로젝트 규칙을 읽고 도구
 Claude에게 맡기는 일:
 
 1. 작업에 필요한 문서·스킬 선택 (`docs/agent/README.md` 라우터, Progressive Disclosure)
-2. 코드·문서·PHP 오라클 조사 (code-review-graph MCP → Grep 순서)
+2. 승인 ADR/spec·현재 코드·문서·테스트 조사 (code-review-graph MCP → Grep 순서). PHP는 명시적 역사 비교일 때만 추가
 3. 실행 가능한 계획과 승인 지점 제시
 4. 승인된 범위의 구현 (서브에이전트 병렬 포함)
 5. 실제 검증 — gradle XML 판정, Playwright 브라우저 관측, 게이트 스크립트
@@ -158,8 +158,8 @@ Claude가 준비를 마치면 **사람이 승인해야** 커밋이 나간다. �
 | 세션 중단/인수인계 | `/os-checkpoint` | `.ai/current-state.md`·`handoff.md` 갱신 |
 | 기획→Jira 백로그 | `/os-plan-tickets` | 에픽/작업/마이크로 3층 분해 (§11 예시) |
 | 실제 화면 검증 | `/os-e2e` | Playwright 시나리오 실행 |
-| 패러티 갭 1개 폐쇄 | `/parity-close` | 오라클→골든→포트→게이트→intake→FE 전체 사슬 |
-| 게이트-green 일괄 출하 | `/parity-ship` | 검증된 것만 모아 PR |
+| 명시적 동결 회귀 1개 유지보수 | `/parity-close` | opt-in 역사 비교→골든→포트→게이트→intake→FE 전체 사슬 |
+| 동결 회귀 일괄 출하 | `/parity-ship` | 명시적으로 선택·검증된 역사 유지보수만 모아 PR |
 | 루프 증거 관리 | `loop-engineering` 스킬 | baseline→가설 1개→재측정→채택/롤백 |
 
 OMC(oh-my-claudecode) 계열 — `autopilot`(자율 완주), `ralph`(집요 실행), `team`(병렬 팀), `/plan`(합의 계획) — 은 전역 오케스트레이션 레이어다. **레포 규칙과 충돌하면 이 저장소의 `CLAUDE.md`가 이긴다.**
@@ -172,7 +172,7 @@ OMC(oh-my-claudecode) 계열 — `autopilot`(자율 완주), `ralph`(집요 실�
 2. **레포 로컬 스킬** (`.claude/skills/`): `parity-close`, `parity-ship`, `loop-engineering`, `wiki-*`.
 3. **superpowers**: `subagent-driven-development` (TDD red→green, 태스크당 커밋 1개) — 엄격 실행용.
 
-라우팅 원칙: **비trivial 작업은 `docs/superpowers/WORKING_SYSTEM.md`(working system 스킬)부터.** 레거시 갭·UI 패러티·프로덕션 버그는 의무 사슬 — `opensamguk-php-oracle`(PHP 경로+라인 증거) → `webapp-testing`(재현) → `systematic-debugging`(원인 수렴) → `loop-engineering`(채택/롤백 증거). 사슬이 끊기면 `채점대기`/`blocked`로 기록하고 조용히 출하하지 않는다.
+라우팅 원칙: **비trivial 작업은 `docs/superpowers/WORKING_SYSTEM.md`(working system 스킬)부터.** 현재 UI·프로덕션 버그는 `webapp-testing`(재현) → `systematic-debugging`(원인 수렴) → `loop-engineering`(채택/롤백 증거) 순서가 기본이다. `opensamguk-php-oracle`은 명시적으로 요청된 레거시/동결 회귀 비교에만 앞단으로 추가한다. 필요한 현재 범위 증거가 끊기면 `채점대기`/`blocked`로 기록하고 조용히 출하하지 않는다.
 
 ## 7. MCP와 외부 도구
 
@@ -259,13 +259,13 @@ OPENSAM-90의 완료 기준을 PR의 증거와 대조해. 전부 충족된 경�
 근거 링크를 코멘트로 남긴 뒤, GitHub 미러 이슈를 닫고 에픽의 하위 작업 체크리스트를 갱신해.
 ```
 
-### 백엔드 패러티 수정
+### 동결 백엔드 패러티 유지보수 (opt-in)
 
 ```
 /parity-close che_모반유도가 라이브에서 무동작이다
 ```
 
-의무 사슬(§6)이 자동 적용된다. 골든은 **절대 손으로 만들지 않는다** — `tools/php-golden` Docker 캡처만.
+이 예시는 명시적인 역사 회귀 요청이므로 §6의 opt-in 비교 사슬이 적용된다. 캡처 값을 새로 만들 때는 손으로 쓰지 않고 `tools/php-golden` Docker 캡처만 사용한다. 신규 제품 작업에는 이 사슬을 적용하지 않는다.
 
 ### 성능 개선 (측정 주도)
 

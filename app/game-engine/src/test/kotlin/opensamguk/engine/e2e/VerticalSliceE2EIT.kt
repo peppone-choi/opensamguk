@@ -479,7 +479,7 @@ class VerticalSliceE2EIT {
                 "VALUES (1, 'scenario_2', :y, :m, :t, CAST(:cfg AS jsonb))",
             MapSqlParameterSource()
                 .addValue("y", year).addValue("m", month).addValue("t", tickSeconds)
-                .addValue("cfg", """{"startYear":$startYear}"""),
+                .addValue("cfg", """{"startYear":$startYear,"mapName":"che"}"""),
         )
         // nation 2 (the general's owning nation) — a precondition the constraints READ
         // (NotWanderingNation needs level != 0; OccupiedCity needs city.nationId == general.nationId).
@@ -536,6 +536,7 @@ class VerticalSliceE2EIT {
             WorldSnapshot(
                 state = TurnWorldState(
                     id = 1, currentYear = year, currentMonth = month, tickSeconds = tickSeconds, lastTurnTime = t0,
+                    config = linkedMapOf("mapName" to "che"),
                 ),
                 generals = listOf(
                     TurnGeneral(

@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { type FormEvent, useRef, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
+import Topbar from '@/components/Topbar';
 import { useAuth } from '@/lib/auth-context';
-import { changePassword, deleteAccount, deleteProfileIcon, updateProfileIcon, uploadProfileIcon } from '@/lib/client';
+import { changeNickname, changePassword, deleteAccount, deleteProfileIcon, updateProfileIcon, uploadProfileIcon } from '@/lib/client';
 import { onPortraitError, portraitUrl } from '@/lib/portrait';
 import { normalizeProfileIcon } from '@/lib/profileIcon';
 
@@ -16,12 +17,13 @@ const ICON_GUIDE = 'jpg·png·gif·webp·avif 이미지를 올리면 중앙을 �
 const ICON_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp,image/avif';
 
 // 피드백은 그 액션을 일으킨 컨트롤 옆에서만 뜬다 — 화면 밖 전역 배너로 밀어내지 않는다.
-type Scope = 'password' | 'icon' | 'shared' | 'delete';
+type Scope = 'nickname' | 'password' | 'icon' | 'shared' | 'delete';
 type Feedback = { scope: Scope; ok: boolean; text: string };
 
 function AccountSettings() {
     const router = useRouter();
     const { user, refresh, logout } = useAuth();
+    const [nickname, setNickname] = useState(user?.nickname ?? '');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [picture, setPicture] = useState(user?.picture ?? '');
@@ -55,6 +57,15 @@ function AccountSettings() {
             setCurrentPassword('');
             setNewPassword('');
         }, '비밀번호를 변경했습니다.');
+    };
+
+    const submitNickname = async (event: FormEvent) => {
+        event.preventDefault();
+        await run('nickname', async () => {
+            const updated = await changeNickname(nickname.trim());
+            setNickname(updated.nickname ?? '');
+            await refresh();
+        }, '닉네임을 변경했습니다.');
     };
 
     const submitUpload = async (event: FormEvent) => {
@@ -112,10 +123,19 @@ function AccountSettings() {
                 <Link className="btn-ghost" href="/lobby">로비로</Link>
             </div>
             <section className="game-panel">
+                <h2>닉네임 변경</h2>
+                <form className="account-form" onSubmit={submitNickname}>
+                    <label className="account-field">닉네임<input aria-label="닉네임" value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={20} required /></label>
+                    <p>2~20자, 다른 사용자와 겹칠 수 없습니다.</p>
+                    <button className="btn-primary" type="submit" disabled={busy}>닉네임 변경</button>
+                    {message('nickname')}
+                </form>
+            </section>
+            <section className="game-panel">
                 <h2>비밀번호 변경</h2>
-                <form onSubmit={submitPassword}>
-                    <label>현재 비밀번호<input aria-label="현재 비밀번호" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required /></label>
-                    <label>새 비밀번호<input aria-label="새 비밀번호" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} required /></label>
+                <form className="account-form" onSubmit={submitPassword}>
+                    <label className="account-field">현재 비밀번호<input aria-label="현재 비밀번호" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required /></label>
+                    <label className="account-field">새 비밀번호<input aria-label="새 비밀번호" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} required /></label>
                     <button className="btn-primary" type="submit" disabled={busy}>변경</button>
                     {message('password')}
                 </form>
@@ -123,16 +143,16 @@ function AccountSettings() {
             <section className="game-panel">
                 <h2>전콘</h2>
                 <img src={preview} onError={onPortraitError} alt="현재 전콘" width={96} height={96} style={{ objectFit: 'contain', borderRadius: 4 }} />
-                <form onSubmit={submitUpload}>
+                <form className="account-form" onSubmit={submitUpload}>
                     <p>{ICON_GUIDE}</p>
-                    <label>이미지 파일<input ref={fileInputRef} aria-label="전콘 이미지 파일" type="file" accept={ICON_ACCEPT} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
+                    <label className="account-field">이미지 파일<input ref={fileInputRef} aria-label="전콘 이미지 파일" type="file" accept={ICON_ACCEPT} onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
                     <button className="btn-primary" type="submit" disabled={busy}>업로드</button>
                     <button className="btn-ghost" type="button" onClick={() => void removeUpload()} disabled={busy || imgsvr !== 1}>삭제</button>
                     {message('icon')}
                 </form>
-                <form onSubmit={submitShared}>
-                    <label>공유 전콘 파일명<input aria-label="전콘 파일명" value={picture} onChange={(e) => setPicture(e.target.value)} placeholder="icon.png" /></label>
-                    <label>이미지 서버<select aria-label="이미지 서버" value={imgsvr} onChange={(e) => setImgsvr(Number(e.target.value))}><option value={0}>공유</option><option value={1}>업로드</option></select></label>
+                <form className="account-form" onSubmit={submitShared}>
+                    <label className="account-field">공유 전콘 파일명<input aria-label="전콘 파일명" value={picture} onChange={(e) => setPicture(e.target.value)} placeholder="icon.png" /></label>
+                    <label className="account-field">이미지 서버<select aria-label="이미지 서버" value={imgsvr} onChange={(e) => setImgsvr(Number(e.target.value))}><option value={0}>공유</option><option value={1}>업로드</option></select></label>
                     <button className="btn-primary" type="submit" disabled={busy}>저장</button>
                     {message('shared')}
                 </form>
@@ -148,5 +168,12 @@ function AccountSettings() {
 }
 
 export default function AccountPage() {
-    return <AuthGate><AccountSettings /></AuthGate>;
+    return (
+        <AuthGate>
+            <div className="lobby-shell">
+                <Topbar />
+                <AccountSettings />
+            </div>
+        </AuthGate>
+    );
 }

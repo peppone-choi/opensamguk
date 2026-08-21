@@ -14,7 +14,7 @@ vi.mock('next/headers', () => ({
 }));
 
 vi.mock('@/lib/server-api', () => ({
-  GATEWAY_API_URL: 'http://gateway-api.test',
+  BOARD_API_URL: 'http://board-api.test',
   GATEWAY_UPSTREAM_TIMEOUT_MS: 10_000,
   isGatewayTimeout: (error: unknown) => error instanceof Error && error.name === 'TimeoutError',
 }));
@@ -57,7 +57,7 @@ describe('gateway board proxy', () => {
     expect(response.status).toBe(200);
     expect(cookieReadCount).toBe(1);
     expect(response.headers.get('Vary')).toContain('Authorization');
-    expect(fetch).toHaveBeenCalledWith('http://gateway-api.test/board/posts?category=FREE&page=0&size=20', expect.objectContaining({
+    expect(fetch).toHaveBeenCalledWith('http://board-api.test/board/posts?category=FREE&page=0&size=20', expect.objectContaining({
       method: 'GET',
       headers: {},
       cache: 'no-store',
@@ -79,7 +79,7 @@ describe('gateway board proxy', () => {
     expect(response.status).toBe(200);
     expect(cookieReadCount).toBe(1);
     expect(response.headers.get('Vary')).toContain('Authorization');
-    expect(fetch).toHaveBeenCalledWith('http://gateway-api.test/board/posts/7', expect.objectContaining({
+    expect(fetch).toHaveBeenCalledWith('http://board-api.test/board/posts/7', expect.objectContaining({
       method: 'GET',
       headers: { Authorization: 'Bearer possibly-stale-access-token' },
       cache: 'no-store',
@@ -119,7 +119,7 @@ describe('gateway board proxy', () => {
     );
 
     expect(response.status).toBe(201);
-    expect(fetch).toHaveBeenCalledWith('http://gateway-api.test/board/posts', expect.objectContaining({
+    expect(fetch).toHaveBeenCalledWith('http://board-api.test/board/posts', expect.objectContaining({
       method: 'POST',
       headers: {
         Authorization: 'Bearer access-token',
@@ -157,19 +157,51 @@ describe('gateway board proxy', () => {
 
     expect(deleted.status).toBe(204);
     expect(pinned.status).toBe(200);
-    expect(fetch).toHaveBeenNthCalledWith(1, 'http://gateway-api.test/board/posts/19/comments/8', expect.objectContaining({
+    expect(fetch).toHaveBeenNthCalledWith(1, 'http://board-api.test/board/posts/19/comments/8', expect.objectContaining({
       method: 'DELETE',
       headers: { Authorization: 'Bearer admin-token' },
       cache: 'no-store',
       signal: expect.any(AbortSignal),
     }));
-    expect(fetch).toHaveBeenNthCalledWith(2, 'http://gateway-api.test/board/posts/19/pin', expect.objectContaining({
+    expect(fetch).toHaveBeenNthCalledWith(2, 'http://board-api.test/board/posts/19/pin', expect.objectContaining({
       method: 'PATCH',
       headers: {
         Authorization: 'Bearer admin-token',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ pinned: true }),
+      cache: 'no-store',
+      signal: expect.any(AbortSignal),
+    }));
+  });
+
+  it('forwards an authenticated post update for a valid post id', async () => {
+    cookieValue = 'access-token';
+    vi.mocked(fetch).mockResolvedValue(
+      new Response('{"id":19,"title":"수정된 글"}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    const body = JSON.stringify({ title: '수정된 글', content: '수정된 본문' });
+    const response = await PATCH(
+      request('/api/board/posts/19', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      }),
+      context(['posts', '19']),
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenCalledWith('http://board-api.test/board/posts/19', expect.objectContaining({
+      method: 'PATCH',
+      headers: {
+        Authorization: 'Bearer access-token',
+        'Content-Type': 'application/json',
+      },
+      body,
       cache: 'no-store',
       signal: expect.any(AbortSignal),
     }));
@@ -185,10 +217,15 @@ describe('gateway board proxy', () => {
       request('/api/board/posts/19/unpin', { method: 'PATCH' }),
       context(['posts', '19', 'unpin']),
     );
+    const invalidPostUpdate = await PATCH(
+      request('/api/board/posts/0', { method: 'PATCH' }),
+      context(['posts', '0']),
+    );
 
     expect(invalidDetail.status).toBe(404);
     expect(incompleteCommentDelete.status).toBe(404);
     expect(invalidPin.status).toBe(404);
+    expect(invalidPostUpdate.status).toBe(404);
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -198,7 +235,7 @@ describe('gateway board proxy', () => {
     const response = await GET(request('/api/board/posts'), context(['posts']));
 
     expect(response.status).toBe(502);
-    await expect(response.json()).resolves.toEqual({ message: '게이트웨이에 연결할 수 없습니다.', status: 502 });
+    await expect(response.json()).resolves.toEqual({ message: '게시판 서버에 연결할 수 없습니다.', status: 502 });
   });
 
   it('bounds an upstream timeout and maps it to 504', async () => {
@@ -209,6 +246,6 @@ describe('gateway board proxy', () => {
     const response = await GET(request('/api/board/posts'), context(['posts']));
 
     expect(response.status).toBe(504);
-    await expect(response.json()).resolves.toEqual({ message: '게이트웨이 응답 시간이 초과되었습니다.', status: 504 });
+    await expect(response.json()).resolves.toEqual({ message: '게시판 서버 응답 시간이 초과되었습니다.', status: 504 });
   });
 });

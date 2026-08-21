@@ -5,8 +5,30 @@ import type { User } from './types';
 // 브라우저용 인증 호출 — Next route handler(/api/auth/*)만 친다(gateway-api 직접 호출 X).
 // 실패 시 route handler가 {error}로 내려준 한글 메시지를 throw.
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 async function readJson(res: Response): Promise<Record<string, unknown>> {
-    return (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    const value: unknown = await res.json().catch(() => ({}));
+    return isRecord(value) ? value : {};
+}
+
+function parseUser(value: unknown): User {
+    if (!isRecord(value)) throw new Error('계정 서버 응답이 올바르지 않습니다.');
+    const { id, username, email, nickname, role, picture, imageServer } = value;
+    if (
+        typeof id !== 'number' ||
+        typeof username !== 'string' ||
+        (email !== null && typeof email !== 'string') ||
+        (nickname !== null && typeof nickname !== 'string') ||
+        typeof role !== 'string' ||
+        (picture !== null && typeof picture !== 'string') ||
+        typeof imageServer !== 'number'
+    ) {
+        throw new Error('계정 서버 응답이 올바르지 않습니다.');
+    }
+    return { id, username, email, nickname, role, picture, imageServer };
 }
 
 export async function login(username: string, password: string): Promise<User> {
@@ -59,6 +81,11 @@ async function accountRequest(path: string, body: Record<string, unknown>, metho
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
     await accountRequest('/api/account/password', { currentPassword, newPassword });
+}
+
+export async function changeNickname(nickname: string): Promise<User> {
+    const data = await accountRequest('/api/account/nickname', { nickname });
+    return parseUser(data.user);
 }
 
 export async function updateProfileIcon(picture: string | null, imgsvr: number): Promise<User> {
