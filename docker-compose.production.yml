@@ -78,7 +78,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN_GAME_ENGINE:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
-      JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=40.0 -Djava.security.egd=file:/dev/./urandom"
+      JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=40 -Djava.security.egd=file:/dev/./urandom"
     depends_on:
       postgres:
         condition: service_healthy
