@@ -25,6 +25,9 @@ jobs:
 
   jvm:
     runs-on: ubuntu-latest
+    # OPENSAM-221 (GH #487): 상한이 없으면 Flyway CONCURRENTLY 데드락 같은 무한 대기가
+    # 러너 기본 상한(6시간)까지 붙잡고 배포 파이프 전체를 세운다. 실측 정상 소요는 ~9분.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -38,7 +41,14 @@ jobs:
         if: always()
         run: |
           echo "== test summary =="
-          find . -path '*/build/test-results/*/*.xml' -print | head -50
+          # 모듈별 XML 개수를 먼저 낸다. head 로 자른 전체 목록만 찍으면 결과가 0건인
+          # 모듈이 잘림에 묻혀 보이지 않는다(2026-08-21 game-api 매달림 진단이 그래서
+          # 늦어졌다). 목록은 그 뒤에 붙인다.
+          for m in common logic infra app/gateway-api app/game-api app/game-engine app/board-api; do
+            printf '%-22s %s\n' "$m" "$(find "$m" -path '*/build/test-results/*/*.xml' 2>/dev/null | wc -l)"
+          done
+          find . -path '*/build/test-results/*/*.xml' -print > /tmp/xml-list.txt 2>/dev/null || true
+          head -50 /tmp/xml-list.txt || true
 
   web:
     runs-on: ubuntu-latest
