@@ -1,8 +1,13 @@
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { withSentryConfig } from '@sentry/nextjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
+    outputFileTracingRoot: join(here, '..'),
     reactStrictMode: true,
     transpilePackages: ['@opensamguk/ui'],
 };

@@ -37,7 +37,7 @@ export default function BoardWritePage(): React.ReactElement {
           <h1>게시글 작성</h1>
           <p>굵게, 기울임, 취소선 등 기본 서식을 사용할 수 있습니다.</p>
         </div>
-        <Link className="btn-ghost" href="/board">취소</Link>
+        <Link className="btn-ghost board-heading-action" href="/board">취소</Link>
       </section>
       <BoardPostForm allowNotice={user.role === 'ADMIN'} onSubmit={submit} />
     </BoardShell>

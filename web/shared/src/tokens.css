@@ -38,6 +38,7 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
   --shadow-gold: 0 0 12px rgba(201, 162, 39, 0.2);
+  --overlay-scrim: rgba(0, 0, 0, 0.6);
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
 }
@@ -99,4 +100,84 @@
 .os-card:hover {
   border-color: var(--border-accent);
   box-shadow: var(--shadow-gold);
+}
+
+.os-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: var(--overlay-scrim);
+}
+
+.os-modal {
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+}
+
+.os-confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 440px;
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg);
+}
+
+.os-confirm-dialog__title {
+  color: var(--gold);
+  font-size: var(--text-lg);
+}
+
+.os-confirm-dialog__body {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.os-confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+.os-table-wrap {
+  overflow-x: auto;
+}
+
+.os-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.os-table th {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-hover);
+  border-bottom: 1px solid var(--border-medium);
+  font-weight: 600;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.os-table td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.os-table tr:nth-child(even) {
+  background: var(--bg-card);
+}
+
+.os-table tr:hover {
+  background: var(--bg-hover);
 }

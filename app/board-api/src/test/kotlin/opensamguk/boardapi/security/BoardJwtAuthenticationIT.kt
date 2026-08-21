@@ -40,7 +40,7 @@ class BoardJwtAuthenticationIT {
     @Autowired
     lateinit var commentRepository: GatewayBoardCommentRepository
 
-    @Value("\${jwt.secret}")
+    @Value("\${jwt.legacy-secret}")
     lateinit var jwtSecret: String
 
     private lateinit var user: UserEntity

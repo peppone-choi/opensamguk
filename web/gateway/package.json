@@ -34,11 +34,5 @@
     "postcss": "8.5.15",
     "typescript": "5.7.2",
     "vitest": "^3.2.7"
-  },
-  "pnpm": {
-    "overrides": {
-      "js-yaml": "^4.2.0",
-      "postcss": "^8.5.15"
-    }
   }
 }

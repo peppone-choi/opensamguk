@@ -8,6 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
+    outputFileTracingRoot: join(here, '..'),
     reactStrictMode: true,
     transpilePackages: ['@opensamguk/ui'],
     // OPENSAM-41: v2 클라이언트 코드는 `/_next/static/**`(middleware matcher 밖)로 나가므로

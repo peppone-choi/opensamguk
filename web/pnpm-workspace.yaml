@@ -1,0 +1,8 @@
+packages:
+  - gateway
+  - game
+  - shared
+
+onlyBuiltDependencies:
+  - sharp
+  - unrs-resolver

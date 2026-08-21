@@ -39,6 +39,7 @@ describe('Shell main route chrome', () => {
 
         expect(screen.queryByRole('button', { name: '돌아가기' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: '갱신' })).not.toBeInTheDocument();
+        expect(screen.getByRole('main', { name: '게임 콘텐츠' })).toHaveClass('shell-scroll-surface');
     });
 
     it('keeps the BackBar on sub pages', () => {

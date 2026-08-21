@@ -19,6 +19,7 @@ springBoot {
     buildInfo {
         properties {
             additional.put("image.tag", System.getenv("IMAGE_TAG") ?: "dev")
+            additional.put("jwt.verifier", "rsa-audience-v1")
         }
     }
 }
@@ -35,7 +36,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.jsoup:jsoup:1.22.2")
     implementation(libs.sentry.spring.boot.starter)
-    // F2 Wave 1 — JWT verify (shares gateway-api's HS256 secret; verify-only, no token issue).
+    // Verify-only JWT boundary: the RSA public key is sufficient; legacy HS256 is cutoff-bounded.
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")

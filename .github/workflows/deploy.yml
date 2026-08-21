@@ -351,13 +351,55 @@ jobs:
             done
           }
 
-          echo "=== Restarting gateway migrations ==="
-          $COMPOSE up -d --force-recreate --no-deps gateway-api
-          wait_container_health opensamguk-gateway-api 8080 gateway-api
-
           echo "=== Restarting board API ==="
           $COMPOSE up -d --force-recreate --no-deps board-api
           wait_container_health opensamguk-board-api 8083 board-api
+
+          jwt_signing_mode="$(sed -n 's/^JWT_SIGNING_MODE=//p' .env | tail -1 | tr -d "\r[:space:]\"'" | tr '[:lower:]' '[:upper:]')"
+          include_profile_claims="$(sed -n 's/^JWT_INCLUDE_PROFILE_CLAIMS=//p' .env | tail -1 | tr -d "\r[:space:]\"'" | tr '[:upper:]' '[:lower:]')"
+          jwt_signing_mode="${jwt_signing_mode:-RS256}"
+          include_profile_claims="${include_profile_claims:-true}"
+          if [[ "$jwt_signing_mode" == "RS256" || "$include_profile_claims" == "false" ]]; then
+            jwt_public_key="$(sed -n 's/^JWT_PUBLIC_KEY=//p' .env | tail -1 | tr -d "\r[:space:]\"'")"
+            if [[ -z "$jwt_public_key" ]]; then
+              echo "BLOCKED: JWT_PUBLIC_KEY is required for asymmetric gateway cutover" >&2
+              exit 1
+            fi
+            expected_jwt_public_key_sha256="$(printf '%s' "$jwt_public_key" | base64 -d | sha256sum | awk '{print $1}')"
+            unset jwt_public_key
+            board_info="$(docker exec opensamguk-board-api curl -sf http://localhost:8083/actuator/info)"
+            if ! grep -q '"verifier":"rsa-audience-v1"' <<<"$board_info"; then
+              echo "BLOCKED: board-api has not advertised the asymmetric JWT verifier" >&2
+              exit 1
+            fi
+            if ! grep -Fq "\"publicKeySha256\":\"${expected_jwt_public_key_sha256}\"" <<<"$board_info"; then
+              echo "BLOCKED: board-api is not using the configured JWT public key" >&2
+              exit 1
+            fi
+            for envf in servers/s*.env; do
+              case "$envf" in *.bak*|*.example) continue;; esac
+              internal_server="$(basename "$envf" .env)"
+              api_container="${internal_server}-game-api"
+              if ! docker ps --format '{{.Names}}' | grep -qx "$api_container"; then
+                echo "BLOCKED: ${internal_server} must be running and promoted before gateway cutover" >&2
+                exit 1
+              fi
+              api_info="$(docker exec "$api_container" wget -qO- http://localhost:8081/actuator/info)"
+              if ! grep -q '"verifier":"rsa-audience-v1"' <<<"$api_info"; then
+                echo "BLOCKED: ${internal_server} must be promoted to the asymmetric JWT verifier before gateway cutover" >&2
+                exit 1
+              fi
+              if ! grep -Fq "\"publicKeySha256\":\"${expected_jwt_public_key_sha256}\"" <<<"$api_info"; then
+                echo "BLOCKED: ${internal_server} is not using the configured JWT public key" >&2
+                exit 1
+              fi
+            done
+            unset expected_jwt_public_key_sha256
+          fi
+
+          echo "=== Restarting gateway migrations ==="
+          $COMPOSE up -d --force-recreate --no-deps gateway-api
+          wait_container_health opensamguk-gateway-api 8080 gateway-api
 
           echo "=== Restarting shared web ==="
           $COMPOSE up -d --force-recreate --no-deps web-gateway

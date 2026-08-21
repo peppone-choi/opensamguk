@@ -585,6 +585,26 @@ textarea:focus {
     flex-wrap: wrap;
     gap: var(--space-sm);
 }
+.account-form {
+    display: grid;
+    width: min(100%, 680px);
+    gap: var(--space-sm);
+}
+.account-field {
+    display: grid;
+    min-width: 0;
+    gap: var(--space-xs);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+.account-field > input,
+.account-field > select {
+    width: 100%;
+    min-width: 0;
+}
+.account-form > button {
+    justify-self: start;
+}
 
 .board-shell {
     min-height: 100vh;
@@ -628,6 +648,10 @@ textarea:focus {
 }
 .board-heading.compact {
     align-items: center;
+}
+.board-heading-action {
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 .board-heading h1,
 .board-post-header h1 {
@@ -1423,44 +1447,6 @@ textarea:focus {
     color: var(--gold);
 }
 
-/* ===== Modal (ConfirmModal) ===== */
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-md);
-}
-.modal-card {
-    width: 100%;
-    max-width: 440px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    padding: var(--space-lg);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-}
-.modal-title {
-    font-size: var(--text-lg);
-    color: var(--gold);
-}
-.modal-body {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
-    line-height: 1.6;
-}
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-sm);
-}
-
 /* ===== Misc ===== */
 .spinner {
     width: 24px;
@@ -1510,6 +1496,17 @@ textarea:focus {
     .lobby-main,
     .admin-main {
         padding: var(--space-lg) var(--space-md);
+    }
+    .account-form > button {
+        width: 100%;
+    }
+    .board-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+    .board-heading-action {
+        align-self: flex-start;
     }
 }
 

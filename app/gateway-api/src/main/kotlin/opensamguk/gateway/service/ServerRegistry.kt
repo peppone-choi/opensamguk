@@ -10,7 +10,9 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.stereotype.Component
 import org.springframework.transaction.support.TransactionTemplate
+import java.security.MessageDigest
 import java.sql.Timestamp
+import java.util.UUID
 
 data class ServerDef(
     val id: String,
@@ -30,9 +32,10 @@ enum class ServerRegistryTransitionAction {
 data class ServerRegistryTransition(
     val action: ServerRegistryTransitionAction,
     val server: ServerDef,
+    val operationId: String,
+    val requestFingerprint: String,
     val remoteApplied: Boolean,
     val dispatched: Boolean,
-    val newlyCreated: Boolean,
     val ownerToken: String,
 )
 
@@ -94,13 +97,22 @@ class ServerRegistry(
         jdbc.update("DELETE FROM game_server WHERE server_id = ?", serverId)
     }
 
-    fun beginTransition(action: ServerRegistryTransitionAction, server: ServerDef, ownerToken: String): ServerRegistryTransition {
+    fun beginTransition(
+        action: ServerRegistryTransitionAction,
+        server: ServerDef,
+        ownerToken: String,
+        requestPayload: String = objectMapper.writeValueAsString(mapOf("id" to server.id)),
+    ): ServerRegistryTransition {
         require(validateCollection(listOf(server)) != null) { "Invalid canonical server: ${server.id}" }
+        require(requestPayload.isNotBlank()) { "Server registry transition request payload is required" }
+        val requestFingerprint = fingerprint(requestPayload)
         return try {
             transactions.execute {
                 val existing = findTransition(server.id, forUpdate = true)
                 if (existing != null) {
-                    if (existing.action != action || existing.server != server) {
+                    if (existing.action != action || existing.server != server ||
+                        existing.requestFingerprint != requestFingerprint
+                    ) {
                         throw ServerRegistryTransitionConflict("Another server registry transition is already pending for ${server.id}")
                     }
                     val claimed = jdbc.update(
@@ -117,7 +129,7 @@ class ServerRegistry(
                     if (claimed != 1) {
                         throw ServerRegistryTransitionConflict("Another server registry transition is already pending for ${server.id}")
                     }
-                    return@execute existing.copy(newlyCreated = false, ownerToken = ownerToken)
+                    return@execute existing.copy(ownerToken = ownerToken)
                 }
                 val registered = jdbc.queryForObject(
                     "SELECT COUNT(*) FROM game_server WHERE server_id = ?",
@@ -133,8 +145,9 @@ class ServerRegistry(
                     """
                     INSERT INTO game_server_registry_transition (
                         server_id, action, display_name, game_api_url, game_engine_url, deploy_project,
-                        generation, scenario_code, dispatched, remote_applied, owner_token, lease_until
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, FALSE, FALSE, ?, ?)
+                        generation, scenario_code, operation_id, request_fingerprint,
+                        dispatched, remote_applied, owner_token, lease_until
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, FALSE, ?, ?)
                     """.trimIndent(),
                     server.id,
                     action.name,
@@ -144,17 +157,12 @@ class ServerRegistry(
                     server.deployProject,
                     server.generation,
                     server.scenarioCode,
+                    newOperationId(),
+                    requestFingerprint,
                     ownerToken,
                     leaseUntil(),
                 )
-                ServerRegistryTransition(
-                    action,
-                    server,
-                    remoteApplied = false,
-                    dispatched = false,
-                    newlyCreated = true,
-                    ownerToken = ownerToken,
-                )
+                requireNotNull(findTransition(server.id, forUpdate = true))
             } ?: error("Server registry transition transaction returned no result")
         } catch (e: DuplicateKeyException) {
             throw ServerRegistryTransitionConflict("Another server registry transition is already pending for ${server.id}")
@@ -280,7 +288,8 @@ class ServerRegistry(
         jdbc.query(
             """
             SELECT action, display_name, game_api_url, game_engine_url, deploy_project,
-                   generation, scenario_code, dispatched, remote_applied, owner_token
+                   generation, scenario_code, operation_id, request_fingerprint,
+                   dispatched, remote_applied, owner_token
               FROM game_server_registry_transition
              WHERE server_id = ?${if (forUpdate) " FOR UPDATE" else ""}
             """.trimIndent(),
@@ -296,9 +305,10 @@ class ServerRegistry(
                         generation = rs.getObject("generation", Integer::class.java)?.toInt(),
                         scenarioCode = rs.getString("scenario_code"),
                     ),
+                    operationId = rs.getString("operation_id"),
+                    requestFingerprint = rs.getString("request_fingerprint"),
                     remoteApplied = rs.getBoolean("remote_applied"),
                     dispatched = rs.getBoolean("dispatched"),
-                    newlyCreated = false,
                     ownerToken = rs.getString("owner_token"),
                 )
             },
@@ -311,6 +321,13 @@ class ServerRegistry(
         ) { "Database did not return CURRENT_TIMESTAMP" }
         return Timestamp.from(databaseNow.toInstant().plusSeconds(300))
     }
+
+    private fun newOperationId(): String = UUID.randomUUID().toString().replace("-", "")
+
+    private fun fingerprint(payload: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(payload.toByteArray(Charsets.UTF_8))
+            .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
 
     private fun parseSeed(): List<ServerDef>? =
         try {

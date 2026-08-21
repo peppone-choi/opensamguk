@@ -26,7 +26,7 @@ printf '%s\n' \
   'SHARED_GATEWAY_NETWORK=opensamguk-shared-gateway' \
   'SHARED_GATEWAY_UPSTREAM=opensamguk-gateway-api:8080' \
   'SHARED_GATEWAY_PROFILE_ICONS_VOLUME=opensamguk-profile-icons' \
-  'JWT_SECRET=placeholder-jwt-secret' > "$env_file"
+  'JWT_PUBLIC_KEY=placeholder-public-key' > "$env_file"
 
 docker compose --env-file "$env_file" -f "$compose_file" config --format json > "$rendered_file"
 

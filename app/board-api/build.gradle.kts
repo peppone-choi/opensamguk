@@ -14,6 +14,7 @@ springBoot {
     buildInfo {
         properties {
             additional.put("image.tag", System.getenv("IMAGE_TAG") ?: "dev")
+            additional.put("jwt.verifier", "rsa-audience-v1")
         }
     }
 }

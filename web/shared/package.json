@@ -8,10 +8,10 @@
     "./tokens.css": "./src/tokens.css"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify:topology": "node scripts/verify-peer-topology.mjs"
   },
   "peerDependencies": {
-    "next": "15.5.20",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },

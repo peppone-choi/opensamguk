@@ -12,4 +12,6 @@ spring:
     enabled: false
 
 jwt:
-  secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=
+  public-key: ""
+  legacy-secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=
+  legacy-accept-until: 2099-01-01T00:00:00Z

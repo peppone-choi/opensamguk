@@ -27,7 +27,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <Header />
             {/* 좌측 사이드바 제거(사용자 요청 — 1000px 폭에서 너비 부족). 네비는 Header(상단)+BottomNav(하단)+GameChrome GlobalMenu. */}
             <div className="shell-body">
-                <main className="shell-main">
+                <main className="shell-main shell-scroll-surface" aria-label="게임 콘텐츠">
                     {/* 서브 페이지 공통 돌아가기/갱신 바(레거시 TopBackBar). 메인은 GameChrome이라 미적용. */}
                     {!isMainPage && <BackBar />}
                     {children}

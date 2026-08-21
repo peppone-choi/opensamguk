@@ -17,7 +17,7 @@ import kotlin.test.assertNull
 
 class JwtVerifyFilterTest {
     private val secret = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU="
-    private val verifier = GameApiJwtVerifier(secret)
+    private val verifier = GameApiJwtVerifier("", secret, "2099-01-01T00:00:00Z")
     private val filter = JwtVerifyFilter(verifier)
 
     @AfterEach

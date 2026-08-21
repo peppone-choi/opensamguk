@@ -118,8 +118,9 @@ services:
       SERVER_ID: ${SERVER_ID:-pep}
       SERVER_NAME: ${SERVER_NAME:-통일 서버}
       SERVER_GENERATION: ${SERVER_GENERATION:-1}
-      # JWT — game-api VERIFIES tokens issued by gateway-api. SAME secret, verify-only.
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — same value as gateway-api}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?JWT_PUBLIC_KEY required}
+      JWT_LEGACY_SECRET: ${JWT_LEGACY_SECRET:-}
+      JWT_LEGACY_ACCESS_ACCEPT_UNTIL: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:-}
       # Sentry — 빈 값이면 SDK no-op (서비스별 DSN, .env.example 참조).
       SENTRY_DSN: ${SENTRY_DSN_GAME_API:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
@@ -153,8 +154,13 @@ services:
       SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      # JWT — gateway-api ISSUES tokens with this secret (SAME value as game-api).
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — same value as game-api}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?JWT_PRIVATE_KEY required}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?JWT_PUBLIC_KEY required}
+      JWT_SIGNING_MODE: ${JWT_SIGNING_MODE:-RS256}
+      JWT_INCLUDE_PROFILE_CLAIMS: ${JWT_INCLUDE_PROFILE_CLAIMS:-true}
+      JWT_LEGACY_SECRET: ${JWT_LEGACY_SECRET:-}
+      JWT_LEGACY_ACCESS_ACCEPT_UNTIL: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:-}
+      JWT_LEGACY_REFRESH_ACCEPT_UNTIL: ${JWT_LEGACY_REFRESH_ACCEPT_UNTIL:-}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
       DEPLOYER_URL: ${DEPLOYER_URL:-http://deployer:9000}
@@ -196,7 +202,9 @@ services:
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — same value as gateway-api}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?JWT_PUBLIC_KEY required}
+      JWT_LEGACY_SECRET: ${JWT_LEGACY_SECRET:-}
+      JWT_LEGACY_ACCESS_ACCEPT_UNTIL: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:-}
       SENTRY_DSN: ${SENTRY_DSN_BOARD_API:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}

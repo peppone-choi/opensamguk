@@ -2,6 +2,7 @@
 
 :root {
   --bottom-nav-height: 64px;
+  --bottom-nav-inset: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -164,7 +165,7 @@ input:focus, select:focus, textarea:focus {
   background: var(--bg-elevated);
   border-top: 1px solid var(--border-subtle);
   justify-content: space-around;
-  min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+  min-height: var(--bottom-nav-inset);
   padding: var(--space-xs) 0 calc(var(--space-xs) + env(safe-area-inset-bottom));
   z-index: 100;
 }
@@ -376,8 +377,18 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 1023px) {
   .game-sidebar { display: none; }
   .game-bottom-nav { display: flex; }
-  .shell-main {
-    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + var(--space-lg));
+  .shell {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+  .shell-body,
+  .shell-scroll-surface {
+    min-height: 0;
+  }
+  .shell-scroll-surface {
+    padding-bottom: calc(var(--bottom-nav-inset) + var(--space-lg));
+    scroll-padding-bottom: calc(var(--bottom-nav-inset) + var(--space-lg));
   }
   .toast-container { bottom: 80px; right: var(--space-md); left: var(--space-md); }
   .toast { min-width: auto; }
@@ -388,9 +399,9 @@ input:focus, select:focus, textarea:focus {
   .game-header { padding: var(--space-sm); }
   .game-header-brand { font-size: var(--text-base); }
   .game-header-res { display: none; }
-  .shell-main {
+  .shell-scroll-surface {
     padding: var(--space-sm);
-    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + var(--space-lg));
+    padding-bottom: calc(var(--bottom-nav-inset) + var(--space-lg));
   }
   .cmd-grid { grid-template-columns: 1fr; }
 }

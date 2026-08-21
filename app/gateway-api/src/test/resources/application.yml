@@ -29,6 +29,10 @@ profile-icon:
   shared-manifest: profile-icons/shared-manifest.json
 
 jwt:
-  secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=
+  legacy-secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=
+  legacy-access-accept-until: 2099-01-01T00:00:00Z
+  legacy-refresh-accept-until: 2099-01-01T00:00:00Z
+  signing-mode: LEGACY_HS256
+  include-profile-claims: true
   access-expiration: 900000
   refresh-expiration: 604800000

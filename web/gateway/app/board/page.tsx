@@ -51,7 +51,7 @@ export default function BoardIndex(): React.ReactElement {
           <h1>커뮤니티 게시판</h1>
           <p>공지, 자유로운 이야기, 건의를 <span className="board-heading-subject">한곳에서</span> 확인하세요.</p>
         </div>
-        {user ? <Link className="btn-primary" href="/board/write">글쓰기</Link> : <Link className="btn-ghost" href="/login?next=%2Fboard%2Fwrite">로그인 후 글쓰기</Link>}
+        {user ? <Link className="btn-primary board-heading-action" href="/board/write">글쓰기</Link> : <Link className="btn-ghost board-heading-action" href="/login?next=%2Fboard%2Fwrite">로그인 후 글쓰기</Link>}
       </section>
       <BoardTabs active={category} onSelect={selectCategory} />
       {loading ? <div className="board-loading" role="status">게시글을 불러오는 중…</div> : null}

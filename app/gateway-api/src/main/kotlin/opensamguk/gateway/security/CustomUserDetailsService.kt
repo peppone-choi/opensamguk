@@ -16,4 +16,10 @@ class CustomUserDetailsService(
             .orElseThrow { UsernameNotFoundException("사용자를 찾을 수 없습니다: $username") }
         return CustomUserDetails(user)
     }
+
+    fun loadUserById(userId: Long): CustomUserDetails {
+        val user = userRepository.findById(userId)
+            .orElseThrow { UsernameNotFoundException("사용자를 찾을 수 없습니다: $userId") }
+        return CustomUserDetails(user)
+    }
 }

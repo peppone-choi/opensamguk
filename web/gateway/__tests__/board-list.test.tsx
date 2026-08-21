@@ -81,6 +81,8 @@ describe('gateway board list', () => {
     expect(await screen.findByRole('heading', { name: '커뮤니티 게시판' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '서버 점검 안내' })).toHaveAttribute('href', '/board/posts/9');
     expect(screen.getByText('고정')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '로그인 후 글쓰기' }))
+      .toHaveClass('board-heading-action');
     expect(screen.getByRole('link', { name: '로그인 후 글쓰기' })).toHaveAttribute('href', '/login?next=%2Fboard%2Fwrite');
     expect(fetch).toHaveBeenCalledWith('/api/board/posts?category=NOTICE&page=0&size=20', { cache: 'no-store' });
   });

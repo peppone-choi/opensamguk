@@ -25,7 +25,8 @@ class DeployServiceRegistryPersistenceTest {
     @Test
     fun `successful deployer create is visible in registry without restart`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, """{"ok":true,"id":"live1","name":"Live One"}""")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueSucceeded("live1", ",\"name\":\"Live One\"")
             val registry = registry()
             val service = DeployService(deployer.url(), "token", registry, mapper)
 
@@ -44,7 +45,8 @@ class DeployServiceRegistryPersistenceTest {
     @Test
     fun `logical deployer create failure does not register server`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, """{"ok":false,"message":"rejected"}""")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueFailed("live1", "rejected")
             val registry = registry()
             val service = DeployService(deployer.url(), "token", registry, mapper)
 
@@ -60,7 +62,8 @@ class DeployServiceRegistryPersistenceTest {
     @Test
     fun `successful deployer close removes server from registry without restart`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, """{"ok":true,"id":"live1"}""")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueSucceeded("live1")
             val registry = registry("""[{"id":"live1","name":"Live One"}]""")
             val service = DeployService(deployer.url(), "token", registry, mapper)
 
@@ -74,7 +77,8 @@ class DeployServiceRegistryPersistenceTest {
     @Test
     fun `logical deployer close failure keeps server registered`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, """{"ok":false,"message":"busy"}""")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueFailed("live1", "busy")
             val registry = registry("""[{"id":"live1","name":"Live One"}]""")
             val service = DeployService(deployer.url(), "token", registry, mapper)
 
@@ -88,7 +92,8 @@ class DeployServiceRegistryPersistenceTest {
     @Test
     fun `deployer create success with database failure is truthfully pending and retry repairs without another create`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, """{"ok":true,"id":"live1"}""")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueSucceeded("live1")
             val fixture = registryFixture()
             fixture.jdbc.execute("ALTER TABLE game_server ADD CONSTRAINT reject_live1 CHECK (server_id <> 'live1')")
             val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
@@ -116,7 +121,8 @@ class DeployServiceRegistryPersistenceTest {
     @Test
     fun `deployer close success with database failure is truthfully pending and retry repairs without another close`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, """{"ok":true,"id":"live1"}""")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueSucceeded("live1")
             val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
             fixture.jdbc.execute("CREATE TABLE server_reference (server_id VARCHAR(48) REFERENCES game_server(server_id))")
             fixture.jdbc.update("INSERT INTO server_reference(server_id) VALUES ('live1')")
@@ -146,7 +152,13 @@ class DeployServiceRegistryPersistenceTest {
         FakeDeployer().use { deployer ->
             val requestStarted = CountDownLatch(1)
             val releaseResponse = CountDownLatch(1)
-            deployer.enqueueBlocking(200, """{"ok":true,"id":"live1"}""", requestStarted, releaseResponse)
+            deployer.enqueueMissingOperation()
+            deployer.enqueueBlocking(
+                200,
+                """{"ok":true,"id":"live1","operationId":"__OPERATION_ID__","operationStatus":"succeeded"}""",
+                requestStarted,
+                releaseResponse,
+            )
             val fixture = registryFixture()
             val registry = fixture.registry
             val firstService = DeployService(deployer.url(), "token", registry, mapper)
@@ -173,31 +185,41 @@ class DeployServiceRegistryPersistenceTest {
     }
 
     @Test
-    fun `retry reconciles an unmarked create transition from deployer membership`() {
+    fun `restart after crash before create transmission safely sends persisted operation`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, """[{"id":"live1"}]""")
+            deployer.enqueue(404, """{"ok":false,"operationId":"__OPERATION_ID__","status":"not_found"}""")
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"live1","operationId":"__OPERATION_ID__","operationStatus":"succeeded"}""",
+            )
             val fixture = registryFixture()
             val ownerToken = UUID.randomUUID().toString()
-            fixture.registry.beginTransition(ServerRegistryTransitionAction.CREATE, serverDef("live1"), ownerToken)
+            val request = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}"""
+            fixture.registry.beginTransition(ServerRegistryTransitionAction.CREATE, serverDef("live1"), ownerToken, request)
             fixture.registry.markDispatched("live1", ServerRegistryTransitionAction.CREATE, ownerToken)
             fixture.jdbc.update("UPDATE game_server_registry_transition SET lease_until = CURRENT_TIMESTAMP")
             val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
 
-            val result = service.createServer(
-                """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}""",
-            )
+            val result = service.createServer(request)
 
             assertEquals(200, result.status)
-            assertTrue(mapper.readTree(result.body).path("recovered").asBoolean())
             assertNotNull(fixture.registry.find("live1"))
-            assertEquals(listOf("/servers"), deployer.requests)
+            assertEquals(2, deployer.requests.size)
+            val operationPath = deployer.requests.first()
+            assertTrue(operationPath.matches(Regex("^/operations/[a-f0-9]{32}$")))
+            assertEquals("/servers/create", deployer.requests.last())
+            assertEquals(
+                operationPath.substringAfterLast('/'),
+                mapper.readTree(deployer.requestBodies.last()).path("operationId").asText(),
+            )
         }
     }
 
     @Test
-    fun `retry reconciles an unmarked close transition from deployer membership`() {
+    fun `restart after crash before close transmission safely sends persisted operation`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, "[]")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueSucceeded("live1")
             val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
             val server = requireNotNull(fixture.registry.find("live1"))
             val ownerToken = UUID.randomUUID().toString()
@@ -209,38 +231,90 @@ class DeployServiceRegistryPersistenceTest {
             val result = service.deleteServer("live1")
 
             assertEquals(200, result.status)
-            assertTrue(mapper.readTree(result.body).path("recovered").asBoolean())
             assertNull(fixture.registry.find("live1"))
-            assertEquals(listOf("/servers"), deployer.requests)
+            assertEquals(2, deployer.requests.size)
+            val operationPath = deployer.requests.first()
+            assertTrue(operationPath.matches(Regex("^/operations/[a-f0-9]{32}$")))
+            assertEquals("/servers/close", deployer.requests.last())
+            assertEquals(
+                operationPath.substringAfterLast('/'),
+                mapper.readTree(deployer.requestBodies.last()).path("operationId").asText(),
+            )
         }
     }
 
     @Test
-    fun `ambiguous create response preserves transition and retry reconciles without another create`() {
+    fun `generic operation 404 from old deployer fails closed without lifecycle replay`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, "{}")
-            deployer.enqueue(200, """[{"id":"live1"}]""")
-            val registry = registry()
-            val service = DeployService(deployer.url(), "token", registry, mapper)
+            deployer.enqueue(404, """{"ok":false,"message":"not found"}""")
+            val fixture = registryFixture()
+            val ownerToken = UUID.randomUUID().toString()
+            val request = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}"""
+            fixture.registry.beginTransition(ServerRegistryTransitionAction.CREATE, serverDef("live1"), ownerToken, request)
+            fixture.registry.markDispatched("live1", ServerRegistryTransitionAction.CREATE, ownerToken)
+            fixture.jdbc.update("UPDATE game_server_registry_transition SET lease_until = CURRENT_TIMESTAMP")
+            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper)
+
+            val result = restarted.createServer(request)
+
+            assertEquals(202, result.status)
+            assertEquals(1, deployer.requests.size)
+            assertTrue(deployer.requests.single().startsWith("/operations/"))
+            assertNull(fixture.registry.find("live1"))
+        }
+    }
+
+    @Test
+    fun `restart refuses to reuse operation key with changed create payload`() {
+        FakeDeployer().use { deployer ->
+            val fixture = registryFixture()
+            val ownerToken = UUID.randomUUID().toString()
+            val original = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}"""
+            fixture.registry.beginTransition(ServerRegistryTransitionAction.CREATE, serverDef("live1"), ownerToken, original)
+            fixture.registry.markDispatched("live1", ServerRegistryTransitionAction.CREATE, ownerToken)
+            fixture.jdbc.update("UPDATE game_server_registry_transition SET lease_until = CURRENT_TIMESTAMP")
+            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper)
+
+            val result = restarted.createServer(
+                """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101","imageTag":"v2"}""",
+            )
+
+            assertEquals(409, result.status)
+            assertTrue(deployer.requests.isEmpty())
+            assertNull(fixture.registry.find("live1"))
+        }
+    }
+
+    @Test
+    fun `restart after ambiguous create queries terminal result without replay`() {
+        FakeDeployer().use { deployer ->
+            deployer.enqueueMissingOperation()
+            deployer.enqueueRunning("live1")
+            deployer.enqueueQueriedTerminal("create", "succeeded", "live1", ok = true)
+            val fixture = registryFixture()
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
             val request = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}"""
 
             val pending = service.createServer(request)
-            val repaired = service.createServer(request)
+            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper)
+            val repaired = restarted.createServer(request)
 
             assertEquals(202, pending.status)
             assertFalse(mapper.readTree(pending.body).path("ok").asBoolean())
             assertTrue(mapper.readTree(pending.body).path("remoteApplied").isNull)
             assertEquals(200, repaired.status)
-            assertNotNull(registry.find("live1"))
-            assertEquals(listOf("/servers/create", "/servers"), deployer.requests)
+            assertNotNull(fixture.registry.find("live1"))
+            assertEquals(1, deployer.requests.count { it == "/servers/create" })
+            assertEquals(2, deployer.requests.count { it.startsWith("/operations/") })
         }
     }
 
     @Test
     fun `ambiguous create with unchanged membership remains pending without replay`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, "{}")
-            deployer.enqueue(200, "[]")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueRunning("live1")
+            deployer.enqueueQueriedPending("create")
             val registry = registry()
             val service = DeployService(deployer.url(), "token", registry, mapper)
             val request = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}"""
@@ -251,15 +325,17 @@ class DeployServiceRegistryPersistenceTest {
             assertEquals(202, first.status)
             assertEquals(202, second.status)
             assertNull(registry.find("live1"))
-            assertEquals(listOf("/servers/create", "/servers"), deployer.requests)
+            assertEquals(1, deployer.requests.count { it == "/servers/create" })
+            assertEquals(2, deployer.requests.count { it.startsWith("/operations/") })
         }
     }
 
     @Test
     fun `ambiguous close with unchanged membership remains pending without replay`() {
         FakeDeployer().use { deployer ->
-            deployer.enqueue(200, "{}")
-            deployer.enqueue(200, """[{"id":"live1"}]""")
+            deployer.enqueueMissingOperation()
+            deployer.enqueueRunning("live1")
+            deployer.enqueueQueriedPending("close")
             val registry = registry("""[{"id":"live1","name":"Live One"}]""")
             val service = DeployService(deployer.url(), "token", registry, mapper)
 
@@ -269,7 +345,8 @@ class DeployServiceRegistryPersistenceTest {
             assertEquals(202, first.status)
             assertEquals(202, second.status)
             assertNotNull(registry.find("live1"))
-            assertEquals(listOf("/servers/close", "/servers"), deployer.requests)
+            assertEquals(1, deployer.requests.count { it == "/servers/close" })
+            assertEquals(2, deployer.requests.count { it.startsWith("/operations/") })
         }
     }
 
@@ -349,6 +426,8 @@ class DeployServiceRegistryPersistenceTest {
                 deploy_project VARCHAR(100) NOT NULL,
                 generation INTEGER,
                 scenario_code VARCHAR(100),
+                operation_id CHAR(32) NOT NULL UNIQUE,
+                request_fingerprint CHAR(64) NOT NULL,
                 dispatched BOOLEAN NOT NULL DEFAULT FALSE,
                 remote_applied BOOLEAN NOT NULL DEFAULT FALSE,
                 owner_token VARCHAR(36) NOT NULL,
@@ -380,6 +459,7 @@ class DeployServiceRegistryPersistenceTest {
 
         private val responses = ArrayDeque<Response>()
         val requests = mutableListOf<String>()
+        val requestBodies = mutableListOf<String>()
         private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
 
         init {
@@ -393,17 +473,64 @@ class DeployServiceRegistryPersistenceTest {
             responses.add(Response(status, body))
         }
 
+        fun enqueueMissingOperation() {
+            enqueue(404, """{"ok":false,"operationId":"__OPERATION_ID__","status":"not_found"}""")
+        }
+
+        fun enqueueSucceeded(id: String, extraFields: String = "") {
+            enqueue(
+                200,
+                """{"ok":true,"id":"$id"$extraFields,"operationId":"__OPERATION_ID__","operationStatus":"succeeded"}""",
+            )
+        }
+
+        fun enqueueFailed(id: String, message: String) {
+            enqueue(
+                200,
+                """{"ok":false,"id":"$id","message":"$message","operationId":"__OPERATION_ID__","operationStatus":"failed"}""",
+            )
+        }
+
+        fun enqueueRunning(id: String) {
+            enqueue(
+                202,
+                """{"ok":true,"id":"$id","operationId":"__OPERATION_ID__","operationStatus":"running"}""",
+            )
+        }
+
+        fun enqueueQueriedPending(kind: String) {
+            enqueue(
+                200,
+                """{"operationId":"__OPERATION_ID__","kind":"$kind","status":"running","httpStatus":202,"result":null}""",
+            )
+        }
+
+        fun enqueueQueriedTerminal(kind: String, status: String, id: String, ok: Boolean) {
+            enqueue(
+                200,
+                """{"operationId":"__OPERATION_ID__","kind":"$kind","status":"$status","httpStatus":200,"result":{"ok":$ok,"id":"$id","operationId":"__OPERATION_ID__","operationStatus":"$status"}}""",
+            )
+        }
+
         fun enqueueBlocking(status: Int, body: String, started: CountDownLatch, release: CountDownLatch) {
             responses.add(Response(status, body, started, release))
         }
 
         private fun handle(exchange: HttpExchange) {
             val response = synchronized(responses) { responses.removeFirstOrNull() } ?: Response(500, "{}")
-            exchange.requestBody.use { it.readBytes() }
-            synchronized(requests) { requests += exchange.requestURI.path }
+            val requestBody = exchange.requestBody.use { it.readBytes().toString(Charsets.UTF_8) }
+            synchronized(requests) {
+                requests += exchange.requestURI.path
+                requestBodies += requestBody
+            }
             response.started?.countDown()
             response.release?.await(5, TimeUnit.SECONDS)
-            val bytes = response.body.toByteArray(Charsets.UTF_8)
+            val operationId = Regex("""\"operationId\"\s*:\s*\"([a-f0-9]{32})\"""")
+                .find(requestBody)
+                ?.groupValues
+                ?.get(1)
+                ?: exchange.requestURI.path.substringAfter("/operations/", "")
+            val bytes = response.body.replace("__OPERATION_ID__", operationId).toByteArray(Charsets.UTF_8)
             exchange.responseHeaders.add("Content-Type", "application/json")
             exchange.sendResponseHeaders(response.status, bytes.size.toLong())
             exchange.responseBody.use { it.write(bytes) }

@@ -1,0 +1,14 @@
+{
+  "name": "@opensamguk/web-workspace",
+  "private": true,
+  "version": "0.0.1",
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "overrides": {
+      "esbuild": "^0.28.1",
+      "form-data": "^4.0.6",
+      "js-yaml": "^4.2.0",
+      "postcss": "^8.5.15"
+    }
+  }
+}

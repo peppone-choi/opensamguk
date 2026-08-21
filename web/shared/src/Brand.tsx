@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import type { ImgHTMLAttributes } from 'react';
 
 const BRAND_SIZES = {
   small: { width: 64, height: 24 },
@@ -7,21 +7,23 @@ const BRAND_SIZES = {
 
 export type BrandSize = keyof typeof BRAND_SIZES;
 
-export type BrandProps = {
+export type BrandProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt' | 'height' | 'src' | 'width'> & {
   readonly size?: BrandSize;
 };
 
-export function Brand({ size = 'small' }: BrandProps) {
+export function Brand({ className = '', size = 'small', ...props }: BrandProps) {
   const dimensions = BRAND_SIZES[size];
 
   return (
-    <Image
-      className={`os-brand os-brand--${size}`}
+    <img
+      className={`os-brand os-brand--${size} ${className}`.trim()}
       src="/logo-wordmark.png"
       alt="오픈삼국"
       width={dimensions.width}
       height={dimensions.height}
-      priority
+      decoding="async"
+      fetchPriority="high"
+      {...props}
     />
   );
 }

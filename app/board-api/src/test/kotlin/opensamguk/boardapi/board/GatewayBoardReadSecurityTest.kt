@@ -43,7 +43,7 @@ class GatewayBoardReadSecurityTest {
     @Autowired
     lateinit var jwtVerifier: BoardApiJwtVerifier
 
-    @Value("\${jwt.secret}")
+    @Value("\${jwt.legacy-secret}")
     lateinit var jwtSecret: String
 
     private lateinit var author: UserEntity

@@ -56,6 +56,8 @@ class AdminVersionDeployTest {
                 deploy_project VARCHAR(100) NOT NULL,
                 generation INTEGER,
                 scenario_code VARCHAR(100),
+                operation_id CHAR(32) NOT NULL UNIQUE,
+                request_fingerprint CHAR(64) NOT NULL,
                 dispatched BOOLEAN NOT NULL DEFAULT FALSE,
                 remote_applied BOOLEAN NOT NULL DEFAULT FALSE,
                 owner_token VARCHAR(36) NOT NULL,
@@ -252,6 +254,74 @@ class AdminVersionDeployTest {
             assertTrue(request.body.contains(""""id":"s1""""))
             assertTrue(request.body.contains(""""generation":"3""""))
             assertFalse(result.body.contains("tok"))
+        }
+    }
+
+    @Test
+    fun `서버 생성은 legacy jwtSecret 필드를 거부하고 deployer를 호출하지 않는다`() {
+        FakeDeployer().use { deployer ->
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer(
+                """{"id":"s1","name":"통일 서버","gameApiPort":"8101","webGamePort":"3101","jwtSecret":"legacy"}""",
+            )
+
+            assertEquals(400, result.status)
+            assertTrue(deployer.requests.isEmpty())
+        }
+    }
+
+    @Test
+    fun `서버 생성은 legacy jwt 비밀과 만료 시각을 쌍으로 검증한다`() {
+        FakeDeployer().use { deployer ->
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val base = """{"id":"s1","name":"통일 서버","gameApiPort":"8101","webGamePort":"3101","jwtPublicKey":"public""""
+
+            val missingCutoff = svc.createServer("$base,\"jwtLegacySecret\":\"legacy\"}")
+            val expiredCutoff = svc.createServer(
+                "$base,\"jwtLegacySecret\":\"legacy\",\"jwtLegacyAcceptUntil\":\"2020-01-01T00:00:00Z\"}",
+            )
+
+            assertEquals(400, missingCutoff.status)
+            assertEquals(400, expiredCutoff.status)
+            assertTrue(deployer.requests.isEmpty())
+        }
+    }
+
+    @Test
+    fun `서버 생성은 public key와 bounded legacy jwt만 deployer에 전달한다`() {
+        FakeDeployer().use { deployer ->
+            deployer.enqueue(200, """{"ok":true,"id":"s1"}""")
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer(
+                """{"id":"s1","name":"통일 서버","gameApiPort":"8101","webGamePort":"3101","jwtPublicKey":"public","jwtLegacySecret":"legacy","jwtLegacyAcceptUntil":"2099-01-01T00:00:00Z"}""",
+            )
+
+            assertEquals(200, result.status)
+            val body = mapper.readTree(deployer.requests.single().body)
+            assertEquals("public", body.path("jwtPublicKey").asText())
+            assertEquals("legacy", body.path("jwtLegacySecret").asText())
+            assertEquals("2099-01-01T00:00:00Z", body.path("jwtLegacyAcceptUntil").asText())
+            assertFalse(body.has("jwtSecret"))
+            assertFalse(body.has("jwtPrivateKey"))
+        }
+    }
+
+    @Test
+    fun `server env patch는 legacy jwt 비밀과 만료 시각을 쌍으로 요구한다`() {
+        FakeDeployer().use { deployer ->
+            val svc = DeployService(
+                deployer.url(),
+                "tok",
+                registry(json = "[${canonicalServerJson("s1")}]"),
+                mapper,
+            )
+
+            val result = svc.patchServerEnv("s1", """{"values":{"JWT_LEGACY_SECRET":"legacy"}}""")
+
+            assertEquals(400, result.status)
+            assertTrue(deployer.requests.isEmpty())
         }
     }
 
@@ -752,6 +822,7 @@ class AdminVersionDeployTest {
     private class FakeDeployer : AutoCloseable {
         private val responses = ArrayDeque<Pair<Int, String>>()
         val requests = mutableListOf<RecordedRequest>()
+        private val mapper = ObjectMapper()
         private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
 
         init {
@@ -766,8 +837,18 @@ class AdminVersionDeployTest {
         }
 
         private fun handle(exchange: HttpExchange) {
-            val response = responses.removeFirstOrNull() ?: (200 to "{}")
             val requestBody = exchange.requestBody.readBytes().toString(Charsets.UTF_8)
+            if (exchange.requestURI.path.startsWith("/operations/")) {
+                val operationId = exchange.requestURI.path.substringAfterLast('/')
+                val bytes = mapper.writeValueAsBytes(
+                    mapOf("ok" to false, "operationId" to operationId, "status" to "not_found"),
+                )
+                exchange.responseHeaders.add("Content-Type", "application/json")
+                exchange.sendResponseHeaders(404, bytes.size.toLong())
+                exchange.responseBody.use { it.write(bytes) }
+                return
+            }
+            val response = responses.removeFirstOrNull() ?: (200 to "{}")
             requests.add(
                 RecordedRequest(
                     method = exchange.requestMethod,
@@ -776,7 +857,16 @@ class AdminVersionDeployTest {
                     body = requestBody,
                 ),
             )
-            val bytes = response.second.toByteArray(Charsets.UTF_8)
+            val operationId = runCatching { mapper.readTree(requestBody).path("operationId").asText("") }.getOrDefault("")
+            val responseBody = if (operationId.isNotBlank() && exchange.requestURI.path in setOf("/servers/create", "/servers/close")) {
+                val node = mapper.readTree(response.second).deepCopy<com.fasterxml.jackson.databind.node.ObjectNode>()
+                node.put("operationId", operationId)
+                node.put("operationStatus", if (node.path("ok").asBoolean()) "succeeded" else "failed")
+                mapper.writeValueAsString(node)
+            } else {
+                response.second
+            }
+            val bytes = responseBody.toByteArray(Charsets.UTF_8)
             exchange.responseHeaders.add("Content-Type", "application/json")
             exchange.sendResponseHeaders(response.first, bytes.size.toLong())
             exchange.responseBody.use { it.write(bytes) }

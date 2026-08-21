@@ -1,36 +1,36 @@
 package opensamguk.boardapi.security
 
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.io.Decoders
-import io.jsonwebtoken.security.Keys
-import opensamguk.common.auth.GatewayJwtClaims
+import opensamguk.common.auth.GatewayAccessTokenVerifier
+import opensamguk.common.auth.GatewayJwtContract
 import opensamguk.common.auth.GatewayPrincipal
+import org.springframework.boot.actuate.info.Info
+import org.springframework.boot.actuate.info.InfoContributor
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import javax.crypto.SecretKey
+import java.time.Instant
 
 @Component
 class BoardApiJwtVerifier(
-    @Value("\${jwt.secret}") secretKey: String,
-) {
-    private val key: SecretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey))
+    @Value("\${jwt.public-key}") publicKey: String,
+    @Value("\${jwt.legacy-secret:}") legacySecret: String,
+    @Value("\${jwt.legacy-accept-until:}") legacyAcceptUntil: String,
+) : InfoContributor {
+    private val verifier = GatewayAccessTokenVerifier(
+        publicKey,
+        GatewayJwtContract.BOARD_API_AUDIENCE,
+        legacySecret = legacySecret.takeIf(String::isNotBlank),
+        legacyAcceptUntil = legacyAcceptUntil.takeIf(String::isNotBlank)?.let(Instant::parse),
+    )
 
-    fun verifyAccessToken(token: String): GatewayPrincipal? =
-        try {
-            val claims = parseClaims(token)
-            if (claims.get(GatewayJwtClaims.TOKEN_TYPE, String::class.java) != GatewayJwtClaims.ACCESS_TOKEN) {
-                null
-            } else {
-                val userId = claims.subject?.toLongOrNull()
-                val role = claims.get(GatewayJwtClaims.ROLE, String::class.java)
-                    ?.takeIf { it == "USER" || it == "ADMIN" }
-                if (userId == null || role == null) null else GatewayPrincipal(userId, role)
-            }
-        } catch (_: Exception) {
-            null
-        }
+    fun verifyAccessToken(token: String): GatewayPrincipal? = verifier.verifyAccessToken(token)
 
-    private fun parseClaims(token: String): Claims =
-        Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload
+    override fun contribute(builder: Info.Builder) {
+        builder.withDetail(
+            "jwt",
+            mapOf(
+                "verifier" to "rsa-audience-v1",
+                "publicKeySha256" to (verifier.publicKeyFingerprint ?: "unconfigured"),
+            ),
+        )
+    }
 }

@@ -69,6 +69,16 @@ describe('account settings interactions', () => {
         vi.unstubAllGlobals();
     });
 
+    it('groups every account field as a full-width responsive control', () => {
+        render(<AccountPage />);
+
+        for (const name of ['닉네임', '현재 비밀번호', '새 비밀번호', '전콘 이미지 파일', '전콘 파일명', '이미지 서버']) {
+            const control = screen.getByLabelText(name);
+            expect(control.closest('label')).toHaveClass('account-field');
+            expect(control.closest('form')).toHaveClass('account-form');
+        }
+    });
+
     it('submits a password change and reports it inside the password form', async () => {
         render(<AccountPage />);
         fireEvent.change(screen.getByLabelText('현재 비밀번호'), { target: { value: 'oldpass' } });
