@@ -8,7 +8,7 @@
 | Shell | ✅ | ✅ | ✅ | gradle exit code 신뢰 금지(`verification.md`) |
 | Git | ✅ | ✅ | ✅ | main push = 자동 배포 — 승인 게이트 대상 |
 | GitHub CLI (`gh`) | ✅ | ✅ | ✅ 설치됨 | PR/이슈. deployer 에이전트가 사용 |
-| Docker | ✅ | ✅ | ✅ 설치됨 | compose 8서비스, php-golden 캡처, Testcontainers |
+| Docker | ✅ | ✅ | ✅ 설치됨 | compose 9서비스, php-golden 캡처, Testcontainers |
 | PHP (호스트) | — | — | ❌ NOT_INSTALLED | PHP는 **오직 Docker**(`tools/php-golden/`, php:8.3-cli) |
 | JDK 21 | — | — | ✅ temurin-21 | `JAVA_HOME=$(/usr/libexec/java_home -v 21)` 필수 |
 | Node/pnpm | ✅ | ✅ | ✅ | web/* 빌드·테스트 |

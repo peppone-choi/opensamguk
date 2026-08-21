@@ -91,8 +91,22 @@ class JwtTokenProviderTest {
 
         assertTrue(provider.validateAccessToken(access))
         assertEquals(1L, provider.getUserIdFromToken(access))
-        assertEquals("USER", provider.getRoleFromToken(access))
         assertNull(provider.getProfileFromAccessToken(access))
+
+        // OPENSAM-220: 표시 클레임이 다시 새지 않도록 sub/iat/exp/token_type/role/iss/aud 전량을 잠근다.
+        // 토큰은 고정 시각 now 기준으로 발급됐다. 파서에도 같은 시계를 줘야 실제 벽시계에 따라
+        // ExpiredJwtException 으로 깨지지 않는다.
+        val claims = Jwts.parser()
+            .clock { Date.from(now) }
+            .verifyWith(keys.public)
+            .build()
+            .parseSignedClaims(access)
+            .payload
+        assertEquals(
+            setOf("sub", "iat", "exp", GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ROLE, "iss", "aud"),
+            claims.keys,
+        )
+        assertEquals("USER", claims[GatewayJwtClaims.ROLE])
     }
 
     @Test

@@ -21,6 +21,22 @@ describe('game portrait helper', () => {
         expect(portraitUrl('1001', imgsvr)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
     });
 
+    // web/gateway 사본과 동일 계약: 화이트리스트 검사 전에 trim 한다.
+    it('trims surrounding whitespace before the whitelist check', () => {
+        expect(portraitUrl('  1001  ', 0)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
+    });
+
+    it.each([
+        '../../secret.jpg', // traversal 시도
+        'a/b.jpg', // 경로 주입 시도
+        '1001.svg', // 지원하지 않는 확장자
+        'name with space.jpg', // 공백
+        '1001?x=1', // 쿼리 주입 시도
+        'https://evil.test/a.jpg', // 절대 URL 주입 시도
+    ])('falls back to the default for a non-whitelisted imgsvr=0 name %j', (picture) => {
+        expect(portraitUrl(picture, 0)).toBe(DEFAULT_PORTRAIT);
+    });
+
     it.each(['a1b2c3d4.png', 'deadbeef.webp', '00000000.avif', 'ffffffff.jpg', '12345678.gif'])(
         'resolves imgsvr=1 canonical managed name %s to same-origin /d_pic/',
         (name) => {

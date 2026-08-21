@@ -21,6 +21,10 @@ jobs:
   # ------------------------------------------------------------------
   build-jvm:
     runs-on: ubuntu-latest
+    # 잡 기본값은 6시간이다. 2026-08-21 에 :app:game-api:test 가 매달려 72분 넘게 돌았고
+    # concurrency(deploy-production, cancel-in-progress: false) 때문에 그동안 모든 후속
+    # 배포가 큐에 갇혔다. 직전 성공 런들이 13~22분이므로 40분이면 정상 빌드에 넉넉하다.
+    timeout-minutes: 40
     permissions:
       contents: read
       packages: write
@@ -41,7 +45,13 @@ jobs:
         if: always()
         run: |
           echo "== test summary =="
-          find . -path '*/build/test-results/*/*.xml' -print | head -50
+          # 모듈별 XML 개수를 먼저 낸다. head 로 자른 전체 목록만 찍으면 결과가 0건인
+          # 모듈이 잘림에 묻혀 보이지 않는다(2026-08-21 game-api 매달림 진단이 그래서
+          # 늦어졌다). 목록은 그 뒤에 붙인다.
+          for m in common logic infra app/gateway-api app/game-api app/game-engine app/board-api; do
+            printf '%-22s %s\n' "$m" "$(find "$m" -path '*/build/test-results/*/*.xml' 2>/dev/null | wc -l)"
+          done
+          find . -path '*/build/test-results/*/*.xml' -print | head -50 || true
 
       - name: Materialize RTK14 scenario stats for image build
         shell: bash

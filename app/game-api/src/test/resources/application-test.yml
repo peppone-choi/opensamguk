@@ -1,3 +1,8 @@
+# OPENSAM-221 (GH #487): 이 모듈의 테스트 오버라이드는 반드시 이 profile 파일에만 둔다.
+# src/test/resources/application.yml 을 만들면 main 의 application.yml 을 통째로 가려서
+# flyway.postgresql.transactional-lock=false 가 사라지고, V29 의 CREATE INDEX CONCURRENTLY 가
+# Flyway 트랜잭션형 advisory lock 을 영원히 기다린다(=테스트 무한 매달림, CI 배포 파이프 정지).
+# 새 SpringBootTest 는 @ActiveProfiles("test") 를 붙여 이 파일을 태운다.
 spring:
   jpa:
     hibernate:

@@ -9,6 +9,8 @@
 // picture에 이미 확장자가 있으면(회원 업로드 등) 그대로 둔다.
 // 서버 로컬 업로드(imageServer truthy)는 gateway-api가 발급한 canonical managed 파일명이면 같은 출처
 // nginx /d_pic/<파일명>으로 해석한다(OPENSAM-93). managed 형식이 아니면 기본 초상으로 폴백(날조 금지).
+// 공유(imageServer=0) 쪽도 같은 화이트리스트 원칙을 쓴다 — DB picture 값이 그대로 URL에 박히면
+// 경로 구분자·상위 이동으로 CDN 밖을 가리킬 수 있다(OPENSAM-214).
 // 어떤 경로든 깨질 수 있으므로 <img onError>로 default.jpg 폴백을 함께 건다(엑박 방지).
 
 import { IMAGE_CDN_BASE } from './constants';
@@ -21,6 +23,9 @@ export const DEFAULT_PORTRAIT = `${PORTRAIT_CDN}/default.jpg`;
 
 const HAS_EXT = /\.(jpg|jpeg|png|gif|webp)$/i;
 
+/** 공유 CDN 초상 파일명: 영숫자/밑줄/하이픈 + 선택적 지원 확장자. 경로 구분자·상위 이동은 거부. */
+const SHARED_ICON = /^[A-Za-z0-9_-]+(\.(jpg|jpeg|png|gif|webp))?$/i;
+
 /** gateway-api canonical managed 파일명(LocalProfileIconStorage MANAGED_FILE): 8자리 hex + 관리 확장자. */
 const MANAGED_ICON = /^[0-9a-f]{8}\.(avif|webp|jpg|png|gif)$/;
 
@@ -28,14 +33,22 @@ const MANAGED_ICON = /^[0-9a-f]{8}\.(avif|webp|jpg|png|gif)$/;
  * 초상 URL을 만든다. picture 없음 또는 서버-로컬(imageServer) → 기본 초상.
  * @param picture     DB picture 컬럼(숫자코드 "1001" 또는 파일명).
  * @param imageServer 0=공유(CDN) / 1=서버로컬(미호스트 → 기본).
+ *
+ * 양쪽 분기 모두 화이트리스트를 통과하지 못한 값은 기본 초상으로 폴백한다.
  */
 export function portraitUrl(picture?: string | null, imageServer?: number | null): string {
-    if (!picture) return DEFAULT_PORTRAIT;
+    // trim 은 web/gateway 사본과 동일 계약을 유지하기 위한 것이다. 화이트리스트보다 먼저
+    // 돌려야 " 1001 " 같은 값이 폴백으로 새지 않는다(두 앱이 갈라지면 같은 계정이 앱마다
+    // 다른 초상을 받는다).
+    const normalizedPicture = picture?.trim();
+    if (!normalizedPicture) return DEFAULT_PORTRAIT;
     if (imageServer) {
         // 서버 로컬 업로드 — canonical managed 파일명이면 같은 출처 /d_pic/, 아니면 폴백(날조 금지).
-        return MANAGED_ICON.test(picture) ? `/d_pic/${picture}` : DEFAULT_PORTRAIT;
+        return MANAGED_ICON.test(normalizedPicture) ? `/d_pic/${normalizedPicture}` : DEFAULT_PORTRAIT;
     }
-    const file = HAS_EXT.test(picture) ? picture : `${picture}.jpg`;
+    // 공유 CDN — 화이트리스트 밖 값(경로 주입·traversal 포함)은 폴백.
+    if (!SHARED_ICON.test(normalizedPicture)) return DEFAULT_PORTRAIT;
+    const file = HAS_EXT.test(normalizedPicture) ? normalizedPicture : `${normalizedPicture}.jpg`;
     return `${PORTRAIT_CDN}/${file}`;
 }
 

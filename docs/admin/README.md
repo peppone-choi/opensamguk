@@ -40,7 +40,7 @@ shared/server/deployer 모델입니다. 이 앱 저장소의 `docker-compose.pro
 ## 아직 완료로 보지 않는 기능
 
 - 공지 고정·soft-delete를 포함한 게시판 관리자 기능: [#223](https://github.com/peppone-choi/opensamguk/issues/223)
-- 서버 레지스트리 DB화와 무재시작 반영: [#466](https://github.com/peppone-choi/opensamguk/issues/466)
+- 서버 레지스트리 DB화와 무재시작 반영: [#466](https://github.com/peppone-choi/opensamguk/issues/466) — DB 전환(`game_server` 테이블) 완료, 잔여는 운영 환경에서의 무재시작 반영 검증
 - v1/v2 서버·DB·world 격리 운영: [#452](https://github.com/peppone-choi/opensamguk/issues/452)
 - v2 군현·부대·명령 관리 UI: [#213](https://github.com/peppone-choi/opensamguk/issues/213)
 

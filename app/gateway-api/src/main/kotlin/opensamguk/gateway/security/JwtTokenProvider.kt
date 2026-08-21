@@ -114,9 +114,6 @@ class JwtTokenProvider @Autowired constructor(
     fun getUsernameFromToken(token: String): String? =
         parseAccessClaims(token)?.get(GatewayJwtClaims.USERNAME, String::class.java)
 
-    fun getRoleFromToken(token: String): String? =
-        parseAccessClaims(token)?.get(GatewayJwtClaims.ROLE, String::class.java)
-
     fun getProfileFromAccessToken(token: String): GatewayProfileClaims? {
         val claims = parseAccessClaims(token) ?: return null
         val userId = claims.subject?.toLongOrNull() ?: return null

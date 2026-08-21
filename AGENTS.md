@@ -68,7 +68,7 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test
 
 # 커밋 전 권장 풀 체크
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew \
-  :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test
+  :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test :app:board-api:test
 
 # Docker 스모크 (이미지 빌드 + 전체 스택 + health 단언)
 ./tools/smoke.sh

@@ -13,6 +13,7 @@
 | `infra` flush/마이그레이션 | `./gradlew :infra:test` (Testcontainers) | 새 테이블/채널이면 flush IT 추가 | XML fail 0 (Docker 없으면 skip 명기) |
 | `app/game-engine` | `./gradlew :app:game-engine:test` | intake/dispatch 변경 시 `:app:game-api:test` 동반 | XML fail 0 |
 | `app/game-api` | `./gradlew :app:game-api:test` | precheck 변경 시 `PrecheckFullCrossCallSiteTest` 포함 확인 | XML fail 0 |
+| `app/board-api` | `./gradlew :app:board-api:test` | — | XML fail 0 |
 | 백엔드 광역/커밋 전 | `tools/parity/gate.sh backend` | — | 스크립트가 XML까지 검증 |
 | `web/gateway` | `cd web/gateway && pnpm typecheck` | UI 흐름 변경 시 브라우저 검증(webapp-testing/Playwright) | tsc 0 error |
 | `web/game` | `cd web/game && pnpm typecheck && pnpm test` | UI 흐름 변경 시 브라우저 검증 | tsc 0 + 테스트 green |
