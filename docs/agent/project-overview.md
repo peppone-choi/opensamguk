@@ -45,6 +45,7 @@ merge, deploy가 실행되었거나 승인되었다는 뜻은 아니다.
 | `app/gateway-api` :8080 | 인증/프로필/어드민 |
 | `app/game-api` :8081 | read + precheck + intake + SSE |
 | `app/game-engine` :8082 | 턴 데몬(`InMemoryTurnWorld` = 진실 원천) |
+| `app/board-api` :8083 | board read/write + verify-only access JWT |
 | `web/gateway` :3000 · `web/game` :3001 | Next.js 프론트 |
 
 ## 외부 시스템

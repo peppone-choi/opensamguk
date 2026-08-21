@@ -2,13 +2,17 @@
 
 > 상태: 외부 참고 원천 감사  
 > 마지막 검토: 2026-08-20  
-> 원본 commit: `fafe4909dcdaee82eb1457e7a6c4cf870595a6ca`
+> 원본 commit: `2a73f80b` (devsam/core2026 origin/main 현재 HEAD)
 
 ## 조사 범위
 
-사용자가 지정한 [Gitea docs](https://gitea.hided.net/devsam/core2026/src/branch/main/docs)를 공개 Git으로
-확인했습니다. 원본에는 Markdown 34개와 VitePress 설정이 있으며 사용자, 관리자, 운영, 아키텍처, 개발자
-문서로 분리돼 있습니다.
+사용자가 지정한 [Gitea docs](https://storage.hided.net/gitea/devsam/core2026/src/branch/main/docs)를
+공개 Git으로 확인했습니다. 원본에는 Markdown 34개와 VitePress 설정이 있으며 사용자, 관리자, 운영, 아키텍처,
+개발자 문서로 분리돼 있습니다.
+
+로컬 `legacy/devsam-core2026` 워킹트리는 이 origin/main보다 1234 커밋 뒤진 stale 상태입니다 — 이 감사와
+아래 갭 목록은 로컬 워킹트리가 아니라 origin/main 기준입니다. `docs/architecture/legacy-engine-*.md`는
+origin/main에서 이미 삭제된 구판이므로 인용하지 않습니다.
 
 ## 채택한 패턴
 
@@ -38,6 +42,14 @@ Kotlin/Spring Boot/JDBC/Next.js/Docker/nginx이므로 다음은 복사하지 않
 - 최초 설치, 정기 백업, restore rehearsal, 모니터링·장애 runbook이 독립 문서가 아닙니다.
 - `game-api-direct-mutation-journal-inventory.md`는 서두의 86개와 표의 87개가 충돌합니다.
 - 저장소 밖 `report/`와 `ref-core2026-mapping.md`를 참조해 단독 문서 세트로는 증거가 완결되지 않습니다.
+- 아키텍처 경계 문서 + 자동검사 쌍이 없습니다 — core2026의 `docs/architecture/package-boundaries.md`는
+  패키지 경계 규칙을 자동검사(lint/CI)와 짝지어 문서화하는데, opensamguk에는 대응하는 단일 문서가 없고
+  아키텍처 테스트 존재만 여러 문서에 흩어져 언급됩니다.
+- ADR-LITE-042 이후 잔존 PHP 호환 흔적을 원장 형식으로 추적하는 문서가 없습니다 — core2026의
+  `docs/ref-compatibility-shims.md`처럼 호환 shim을 제거 대상 목록으로 관리하는 문서가 필요합니다.
+- 게임 시각(턴/월) vs 운영 벽시계 경계를 설명하는 독립 문서가 없습니다 — core2026의
+  `docs/architecture/game-clock.md`는 이 경계를 전용 문서로 분리하는데, opensamguk은 관련 규칙이
+  `docs/agent/architecture.md` 등에 산재해 있을 뿐 대응 문서가 없습니다.
 
 ## opensamguk 반영 결과
 

@@ -208,7 +208,7 @@ cd opensamguk
 cp .env.example .env
 # Required: JWT_PRIVATE_KEY, JWT_PUBLIC_KEY, OPENSAMGUK_WORLD_ID
 
-# 3) 전체 스택 기동 (postgres·redis·3 API·2 프론트·nginx)
+# 3) 전체 스택 기동 (postgres·redis·4 API·2 프론트·nginx)
 docker compose up -d --build
 
 # 4) 브라우저 접속
@@ -272,7 +272,7 @@ nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gatew
 
 운영 오케스트레이션 정본은 별도 저장소 [`opensamguk-docker`](https://github.com/peppone-choi/opensamguk-docker)입니다. 이 앱 저장소는 GHCR 이미지를 빌드·푸시하고, GCP VM의 `gcp-prod` self-hosted runner에서 docker repo main을 동기화한 뒤 **공유 스택**(`gateway-api`, `web-gateway`, `nginx`, `deployer`)만 자동 갱신합니다.
 
-- 첫 설치 직후에는 게임 서버가 0개여도 정상입니다. 공유 스택과 `SERVER_REGISTRY_JSON=[]`만 먼저 뜰 수 있어야 합니다.
+- 첫 설치 직후에는 게임 서버가 0개여도 정상입니다. 공유 스택만 먼저 뜰 수 있어야 합니다. 런타임 정본은 `game_server` 테이블(`ServerRegistry.kt`가 요청 시점 DB 조회)이고, `SERVER_REGISTRY_JSON`은 **테이블이 비어 있을 때만** 최초 시드로 쓰입니다.
 - 실행 중인 게임 서버의 `servers/<id>.env` 버전 핀(`IMAGE_TAG`, `WEB_GAME_TAG`)은 앱 CI가 수정하지 않습니다.
 - 게임 서버 승격은 어드민/deployer에서 서버별로 하거나, 리셋·재시드·새 기수 시작 같은 명시 운영 시점에 수행합니다.
 - `deployer` 자체는 docker repo main 동기화 후 공유 스택에서 자동 rebuild/recreate됩니다.

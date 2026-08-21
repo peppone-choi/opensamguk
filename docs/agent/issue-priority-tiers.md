@@ -130,13 +130,16 @@ ADR-LITE-043으로 해결됐다. `#473`은 세계 단위 미확정 블로커를 
 
 `#466` 게임 서버 생성·삭제가 게이트웨이를 죽인다 / `#467` deployer 재기동 목록 / `#468` board-api 분리.
 
-`#466` 실측: `app/gateway-api/.../service/ServerRegistry.kt:28` 이
-`@Value("\${SERVER_REGISTRY_JSON:}")` 를 생성자에서 **한 번만** 파싱한 불변 리스트다(`:37`).
-재로딩 진입점(`@Scheduled`/`refresh()`/`@RefreshScope`)이 없고, DB 경로도 없다
-(`game_server` 문자열이 `app/`·`infra/` 의 `.sql`/`.kt` 에 **0건**).
-파싱 실패 시 fail-closed 로 전체를 비운다(`:53`, `:92`).
+`#466` 판정: **코드 머지 완료, 라이브 검증 잔여.** 서버 레지스트리 정본은 `game_server` 테이블(마이그레이션
+`V43__game_server_registry.sql`, `V44__game_server_registry_transition.sql`)이고, `ServerRegistry.kt`가
+요청 시점 DB 조회로 재기동 없이 반영한다. `SERVER_REGISTRY_JSON`은 **테이블이 비어 있을 때만**
+`seedEmptyRegistry()`로 최초 시드된다. 남은 것은 운영 환경에서의 무재시작 반영 실측이다.
 
 `#467` 은 sibling 저장소(`opensamguk-docker`) 소관이라 `#466` 과 **동시 착수**가 필요하다 — 비용이 크다.
+
+`#468` 판정: **앱측 완료, 인프라측(`opensamguk-docker` PR #36) 대기.** `app/board-api`(:8083) 모듈이
+board 읽기/쓰기 + verify-only access JWT로 분리돼 있고 테스트 8개가 존재한다. 배포 토폴로지 반영은
+sibling 저장소 PR을 따른다.
 
 ---
 

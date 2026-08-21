@@ -21,7 +21,7 @@ api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──�
  └──────────── turnCompleted SSE ◀── ChangeRecorder dirty/created/deleted
 ```
 
-Modules (`settings.gradle`):
+Modules (`settings.gradle.kts`):
 - **`common`** — RNG/log kernel: `rng/LiteHashDrbg` (byte-exact SHA-512 DRBG) + `rng/RandUtil` + `rng/SeedSerializer`, `util/PhpRound`, `log/*` (Josa/ConvertLog/tokens), `constants/GameConst`.
 - **`logic`** — pure game logic (no Spring/DB): `stats/ActionPipeline` (multi-source stat fold + `getStatValue` + calc-cache), `actions/*` + `CommandRegistry`, `war/*` battle engine, `ai/*` GeneralAI, `event/*` DSL, `tick/*`, domain.
 - **`infra`** — `JdbcFlushExecutor` (**JDBC-only** flush + delete/tombstone delta + row mappers), Flyway `db/migration/V*.sql`, Redis.
@@ -55,7 +55,7 @@ Historical parity workflows (`tools/php-golden/`, `parity-close`, `parity-ship`,
   ```
 - **Verify by OUTPUT TAIL + test XML, not exit code** (the host routes gradle through a context-mode wrapper; `task-notification` exit 0 is unreliable). Pipe `... 2>&1 | tail -40`, grep `BUILD SUCCESSFUL` + counts, or read `**/build/test-results/test/*.xml`. Use `--rerun-tasks` (UP-TO-DATE false-greens).
 - **Testcontainers on macOS** needs `api.version=1.44` + `DOCKER_CONTEXT=default` + Ryuk disabled (wired in `tasks.test`). Docker-unavailable ⇒ IT **skipped**, not failed.
-- Full check: `./gradlew :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test`. Docker smoke: `./tools/smoke.sh`. Frontend: `cd web/gateway && corepack pnpm dev`.
+- Full check: `./gradlew :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test :app:board-api:test`. Docker smoke: `./tools/smoke.sh`. Frontend: `cd web/gateway && corepack pnpm dev`.
 
 ## How phases are built
 
@@ -128,12 +128,12 @@ chgis-license-review.md`, 비평: `docs/superpowers/reviews/2026-08-16-opensam-3
 
 P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`. `hwe/ts/` Vue는 기존 흐름 참고 자료이고, 신규 UI는 현재 구현과 승인된 디자인 방향을 따른다. 사용법·서비스 표·빠른 시작은 `README.md`와 `docs/README.md`, 모듈/명령은 `AGENTS.md` 참조.
 
-- ✅ **F0 게이트웨이 인증** — gateway-api 자체 JWT/BCrypt 로컬 인증(Kakao OAuth에서 의도적 divergence). `web/gateway` 엔트런스/로그인/회원가입/로비/어드민. 토큰은 Next route handler가 gateway-api로 프록시(동일출처 → CORS 불필요)하며 **httpOnly 쿠키**(`sam_access`/`sam_refresh`)에만 보관 — 브라우저 JS에 토큰 미노출. `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` env로 관리자(peppone, role=ADMIN) 멱등 생성(둘 다 설정돼야 시드).
+- ✅ **F0 게이트웨이 인증** — gateway-api 자체 JWT/BCrypt 로컬 인증(Kakao OAuth에서 의도적 divergence). `web/gateway` 엔트런스/로그인/회원가입/로비/어드민. 토큰은 Next route handler가 gateway-api로 프록시(동일출처 → CORS 불필요)하며 **httpOnly 쿠키**(`sam_access`/`sam_refresh`)에만 보관 — 브라우저 JS에 토큰 미노출. `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` env로 관리자(peppone, role=ADMIN) 멱등 생성(둘 다 설정돼야 시드). 액세스 토큰의 표시 클레임(username/nickname/grade/picture/imgsvr)은 `JwtTokenProvider.kt`의 `includeProfileClaims`(`JWT_INCLUDE_PROFILE_CLAIMS`) 플래그로 게이트되고 RS256 활성화 뒤에만 끌 수 있으며, 게임 서버는 표시 정보를 `users` 행에서 읽는다. 절차는 `docs/operations/jwt-key-rollout.md`.
 - ✅ **F1 시나리오 시드** — `ScenarioSeedRunner`가 `SCENARIO_DIR`의 동일 파일명을 classpath보다 우선하고 `ScenarioImporter`가 선택된 모든 시나리오를 JDBC INSERT한다. fresh DB에서만 멱등 시드하며, RTK14 생성본은 tuple 14/15 원수치를 포함한 gitignored JSON이다. env fence: `SCENARIO_SEED_ENABLED`, `SCENARIO_CODE`, `SCENARIO_DIR`. **JDBC-only — one-daemon-write-rule 비위반**.
 - ✅ **F2 메인화면 + 메뉴 척추** — `web/game` 메인(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼+게이팅).
 - ✅ **F3 read API + 랭킹/내정보** — game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. 모두 game-api로 **read-only 렌더**.
 - 🔄 **F4 액션 페이지 + mutation** — 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결했다. 남은 하드 스텁·상수 빈 응답·현재 spec/API 불일치는 라이브 루프에서 계속 폐쇄한다. 역사적 회귀 결함만 frozen baseline과 PHP 참고 자료로 비교한다. **result-poll 규약(OPENSAM-13/135):** 인테이크 202는 성공이 아니다 — FE는 `pollCommandResult(requestId)`로 `RESOLVED`까지 폴링해 `ok`/`reason`을 분기하고, 엔진 핸들러는 성공·deny 모두 `TurnDaemonCommandResult`(`ok`/`reason`)를 반환한다(202만 보고 성공 토스트 = 성공 위조 금지).
-- 🔄 **F5 turnkey + docs** — 정본 `docker-compose.yml`(로컬 8서비스) + 호환용 `docker-compose.production.yml`(GCP Compute Engine e2-standard-2, GHCR 이미지) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드.
+- 🔄 **F5 turnkey + docs** — 정본 `docker-compose.yml`(로컬 9서비스) + 호환용 `docker-compose.production.yml`(GCP Compute Engine e2-standard-2, GHCR 이미지) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드.
 
 **브랜드 에셋.** 마스터 `assets/brand/logo-master.png`(AI 자체제작, 제3자 파생 아님) 하나에서
 `python3 tools/assets/build_brand_assets.py`가 두 프런트엔드의 파비콘·앱아이콘·워드마크를 전량

@@ -5,6 +5,8 @@
 ## 데이터 흐름 (Observed — `AGENTS.md`, 아키텍처 테스트)
 
 ```
+web/gateway ─▶ gateway-api(:8080) auth/profile/admin
+web/game ─▶ board-api(:8083) board read/write (verify-only access JWT)
 web/game ─▶ game-api(:8081) ──Redis XADD──▶ game-engine(:8082) ──JDBC batch flush──▶ PostgreSQL
    ▲            │ read(JPA)/precheck          (InMemoryTurnWorld = 진실 원천)              │
    └── SSE ◀────┴──────────── turnCompleted ◀── ChangeRecorder dirty/created/deleted ◀────┘
