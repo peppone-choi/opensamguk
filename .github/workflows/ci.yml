@@ -21,6 +21,8 @@ jobs:
         run: bash tools/ops/v2_sandbox_compose_contract_test.sh
       - name: Verify JWT rollout contract
         run: python3 tools/ops/jwt_rollout_contract_test.py
+      - name: Verify deploy service inventory contract
+        run: python3 tools/ops/test_deploy_service_inventory_contract.py
       - name: Verify local compose service graph
         run: docker compose --env-file .env.example config --quiet
 
