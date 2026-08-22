@@ -43,6 +43,9 @@ class GameApiSecurityConfig {
                     .requestMatchers("/api/general/claim").authenticated()
                     .requestMatchers("/api/generals/claimable").authenticated()
                     .requestMatchers("/api/select-pool", "/api/select-pool/**").authenticated()
+                    .requestMatchers("/api/v2/commands/**").authenticated()
+                    .requestMatchers("/api/v2/garrison-recruit", "/api/v2/city-transport").authenticated()
+                    .requestMatchers("/api/command/v2GarrisonRecruit", "/api/command/v2CityTransport").authenticated()
                     // ── everything else stays public (transition: ?generalId= reads, health, const, menu, map) ──
                     .anyRequest().permitAll()
             }

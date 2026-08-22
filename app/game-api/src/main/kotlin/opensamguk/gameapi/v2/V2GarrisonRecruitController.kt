@@ -1,6 +1,7 @@
 package opensamguk.gameapi.v2
 
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.infra.v2.V2SandboxGate
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import opensamguk.logic.v2.command.V2CommandAvailability
 
 /**
  * OPENSAM-153 (v2 R4) — v2 도시병사 보충 인테이크 엔드포인트. **v2 샌드박스 전용, 새 파일**
@@ -33,8 +35,6 @@ class V2GarrisonRecruitController(
     private val reserve: CommandReserveService,
     private val resolver: GeneralResolver,
 ) {
-    data class IntakeAcceptedResponse(val status: String, val requestId: String, val code: String)
-
     /**
      * `POST /api/v2/garrison-recruit?generalId=` — `{cityId, amount}` 본문을 typed
      * [opensamguk.common.wire.CityGarrisonRecruit]로 인테이크한다.
@@ -45,16 +45,28 @@ class V2GarrisonRecruitController(
         @RequestParam generalId: Int,
         @RequestBody(required = false) argJson: String? = null,
     ): ResponseEntity<Any> {
-        if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
+        if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+        if (generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        val reserved = reserve.reserve(
+        val availability = validateLegacyV2Arguments("v2GarrisonRecruit", argJson)
+        if (availability !is V2CommandAvailability.Available) return availability.legacyError("v2GarrisonRecruit")
+        val reserved = reserve.reserveForOwner(
             generalId = generalId,
             actionCode = "v2GarrisonRecruit",
             turnIdx = 0,
             argJson = argJson,
+            ownerUserId = Math.toIntExact(userId),
         )
         return ResponseEntity.status(HttpStatus.ACCEPTED)
-            .body(IntakeAcceptedResponse(status = "AVAILABLE", requestId = reserved.requestId, code = "v2GarrisonRecruit"))
+            .body(
+                IntakeAcceptedResponse(
+                    status = "AVAILABLE",
+                    requestId = reserved.requestId,
+                    code = "v2GarrisonRecruit",
+                ),
+            )
     }
 }

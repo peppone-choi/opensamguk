@@ -3,6 +3,7 @@ package opensamguk.engine.run
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
+import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
@@ -51,12 +52,17 @@ import opensamguk.infra.read.GameKvRepository
 import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.InheritanceRepository
+import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.engine.turn.KvKey
 import opensamguk.logic.betting.BettingInfo
 import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
+import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.v2.command.V2CommandRegistry
 import opensamguk.logic.world.RaiseInvaderSpec
+import java.time.Clock
 import java.time.Instant
+import java.time.format.DateTimeParseException
 
 /**
  * Routes drained [TurnDaemonCommand]s to their engine handlers.
@@ -128,6 +134,7 @@ class TurnDaemonCommandDispatcher(
      * `dispatch`가 [V2GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
      */
     v2CityLedger: V2CityLedgerStore? = null,
+    private val clock: Clock = Clock.systemUTC(),
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
@@ -359,10 +366,16 @@ class TurnDaemonCommandDispatcher(
      * @return the handler's [TurnDaemonCommandResult], or `null` when no engine handler is wired for
      *   this command type yet (control commands + not-yet-built handlers).
      */
-    fun dispatch(command: TurnDaemonCommand): TurnDaemonCommandResult? =
-        dispatch(command, Instant.now())
+    fun dispatch(command: TurnDaemonCommand): TurnDaemonCommandResult? {
+        val now = Instant.now(clock)
+        return dispatch(command, now, now)
+    }
 
-    private fun dispatch(command: TurnDaemonCommand, sentAt: Instant): TurnDaemonCommandResult? = when (command) {
+    private fun dispatch(
+        command: TurnDaemonCommand,
+        sentAt: Instant,
+        executionAt: Instant,
+    ): TurnDaemonCommandResult? = when (command) {
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
@@ -439,9 +452,17 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.AdminWorldSettings -> adminWorldSettings.handle(command)
         // ── OPENSAM-153 (v2 R4) — 도시병사 보충. 원장 없음 = fail-closed deny (null 반환 금지: null이면
         //    FE result-poll이 RESOLVED를 영영 못 보고 PENDING에 갇힌다). ──
-        is CityGarrisonRecruit -> v2GarrisonRecruit?.handle(command) ?: V2GarrisonRecruitHandler.unavailable(command)
+        is CityGarrisonRecruit -> v2PrecheckFailure(command)?.let {
+            V2GarrisonRecruitHandler.rejected(command, it.reason, it.code)
+        } ?: expirationFailure(command.expiresAt, executionAt)?.let {
+            V2GarrisonRecruitHandler.rejected(command, it.reason, it.code)
+        } ?: (v2GarrisonRecruit?.handle(command) ?: V2GarrisonRecruitHandler.unavailable(command))
         // ── OPENSAM-154 (v2 R5) — 도시 자원 수송. 같은 fail-closed 규약. ──
-        is CityTransport -> v2CityTransport?.handle(command) ?: V2CityTransportHandler.unavailable(command)
+        is CityTransport -> v2PrecheckFailure(command)?.let {
+            V2CityTransportHandler.rejected(command, it.reason, it.code)
+        } ?: expirationFailure(command.expiresAt, executionAt)?.let {
+            V2CityTransportHandler.rejected(command, it.reason, it.code)
+        } ?: (v2CityTransport?.handle(command) ?: V2CityTransportHandler.unavailable(command))
         else -> null
     }
 
@@ -459,8 +480,54 @@ class TurnDaemonCommandDispatcher(
         envelopes: List<TurnDaemonCommandEnvelope>,
     ): List<Pair<String, TurnDaemonCommandResult>> =
         envelopes.mapNotNull { env ->
-            dispatch(env.command, Instant.parse(env.sentAt))?.let { env.requestId to it }
+            val sentAt = try {
+                Instant.parse(env.sentAt)
+            } catch (_: DateTimeParseException) {
+                return@mapNotNull env.requestId to invalidSentAt(env.command)
+            }
+            dispatch(env.command, sentAt, Instant.now(clock))?.let { env.requestId to it }
         }
+}
+
+private fun invalidSentAt(command: TurnDaemonCommand): TurnDaemonCommandResult =
+    CommandLifecycleResult(
+        type = "executionRejected",
+        ok = false,
+        commandKind = CommandInboxRepository.CommandKind.IMMEDIATE.name,
+        actionCode = command.type,
+        reason = "명령 발행 시각이 올바르지 않습니다.",
+        code = "COMMAND_SENT_AT_INVALID",
+    )
+
+private data class ExpirationFailure(val code: String, val reason: String)
+
+private fun v2PrecheckFailure(command: CityGarrisonRecruit): V2CommandAvailability.Blocked? =
+    V2CommandRegistry.precheck(
+        V2CommandRegistry.garrisonRecruitSchema.canonicalId,
+        mapOf("cityId" to command.cityId, "amount" to command.amount),
+    ) as? V2CommandAvailability.Blocked
+
+private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blocked? =
+    V2CommandRegistry.precheck(
+        V2CommandRegistry.cityTransportSchema.canonicalId,
+        buildMap {
+            put("fromCityId", command.fromCityId)
+            put("toCityId", command.toCityId)
+            put("gold", command.gold)
+            put("rice", command.rice)
+            put("garrison", command.garrison)
+            command.routeRevision?.let { put("routeRevision", it) }
+        },
+    ) as? V2CommandAvailability.Blocked
+
+private fun expirationFailure(expiresAt: String?, executionAt: Instant): ExpirationFailure? {
+    if (expiresAt == null) return null
+    val expiry = try {
+        Instant.parse(expiresAt)
+    } catch (_: DateTimeParseException) {
+        return ExpirationFailure("COMMAND_EXPIRY_INVALID", "명령 만료 시각이 올바르지 않습니다.")
+    }
+    return if (executionAt.isBefore(expiry)) null else ExpirationFailure("COMMAND_EXPIRED", "명령이 만료되었습니다.")
 }
 
 private fun ownerScopedMetaValue(map: Map<*, *>?, ownerId: Int): Any? =

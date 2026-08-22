@@ -1,5 +1,6 @@
 package opensamguk.gameapi.reserve.v2
 
+import kotlinx.serialization.SerialName
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.TurnDaemonCommand
@@ -7,6 +8,8 @@ import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.decodeCommandEnvelope
 import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.gameapi.reserve.CommandWireMapper
+import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.v2.command.V2CityTransportArgs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -20,6 +23,18 @@ import kotlin.test.assertTrue
  * private 이라 같은 모양으로 다시 적었다 — 검증 대상(데몬이 실제로 읽는 payload 바이트)은 동일하다.
  */
 class V2CommandWireMapperTest {
+
+    @Test
+    fun `every registered v2 wire command has exactly one canonical schema`() {
+        val schemaAliases = V2CommandRegistry.schemas.flatMap { it.legacyAliases }.toSet()
+        val v2WireTypes = TurnDaemonCommand::class.sealedSubclasses.mapNotNull { type ->
+            type.annotations.filterIsInstance<SerialName>().singleOrNull()?.value?.takeIf { it.startsWith("v2") }
+        }.toSet()
+
+        assertEquals(schemaAliases, CommandWireMapper.v2IntakeCodes)
+        assertEquals(v2WireTypes, schemaAliases)
+        assertEquals(V2CommandRegistry.schemas.size, schemaAliases.size)
+    }
 
     private fun roundTrip(command: TurnDaemonCommand): TurnDaemonCommand {
         val payload = encodeCommandPayload(
@@ -63,7 +78,8 @@ class V2CommandWireMapperTest {
             code = "v2CityTransport",
             generalId = 42,
             requestId = "req-v2-tr",
-            argJson = """{"fromCityId":5,"toCityId":6,"gold":1000,"rice":500,"garrison":300}""",
+            argJson = """{"fromCityId":5,"toCityId":6,"gold":1000,"rice":500,"garrison":300,"routeRevision":9}""",
+            expiresAt = "0200-01-01T01:00:00Z",
         )
         assertTrue(CommandWireMapper.isIntakeCommand("v2CityTransport"))
         val tr = roundTrip(cmd!!) as CityTransport
@@ -73,6 +89,8 @@ class V2CommandWireMapperTest {
         assertEquals(1000L, tr.gold)
         assertEquals(500L, tr.rice)
         assertEquals(300, tr.garrison)
+        assertEquals(9, tr.routeRevision)
+        assertEquals("0200-01-01T01:00:00Z", tr.expiresAt)
     }
 
     @Test
@@ -85,5 +103,22 @@ class V2CommandWireMapperTest {
         assertEquals(0L, tr.gold)
         assertEquals(0L, tr.rice)
         assertEquals(0, tr.garrison)
+    }
+
+    @Test
+    fun `canonical mapper uses validated typed args without reparsing json`() {
+        val command = CommandWireMapper.toV2Command(
+            schema = V2CommandRegistry.cityTransportSchema,
+            args = V2CityTransportArgs(5, 6, 1000, 500, 300, 9),
+            generalId = 42,
+            requestId = "typed-1",
+            expiresAt = "0200-01-01T01:00:00Z",
+        )
+
+        val transport = roundTrip(command) as CityTransport
+        assertEquals(5, transport.fromCityId)
+        assertEquals(6, transport.toCityId)
+        assertEquals(1000, transport.gold)
+        assertEquals(9, transport.routeRevision)
     }
 }

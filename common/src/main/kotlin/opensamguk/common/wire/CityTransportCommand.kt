@@ -25,6 +25,8 @@ data class CityTransport(
     val gold: Long = 0,
     val rice: Long = 0,
     val garrison: Int = 0,
+    val routeRevision: Long? = null,
+    val expiresAt: String? = null,
 ) : TurnDaemonCommand() {
     override val type: String get() = "v2CityTransport"
 }

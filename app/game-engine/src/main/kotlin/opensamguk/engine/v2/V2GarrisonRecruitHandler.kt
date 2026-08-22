@@ -7,6 +7,11 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.infra.persistence.CommandInboxRepository
+import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
+import opensamguk.logic.v2.command.V2GarrisonRecruitContext
+import opensamguk.logic.v2.command.V2GarrisonRecruitDecision
+import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.v2.command.decideGarrisonRecruit
 
 /**
  * OPENSAM-153 (v2 R4) — 도시병사 보충(`v2GarrisonRecruit`) 핸들러. 도메인 규칙은 [recruitDecision]
@@ -32,31 +37,34 @@ class V2GarrisonRecruitHandler(
 ) {
     fun handle(command: CityGarrisonRecruit): TurnDaemonCommandResult {
         val general = world.getGeneralById(command.generalId)
-            ?: return rejected(command, "장수를 찾을 수 없습니다.")
         val city = world.getCityById(command.cityId)
-            ?: return rejected(command, "도시를 찾을 수 없습니다.")
-        if (general.cityId != command.cityId) {
-            return rejected(command, "다른 도시의 병사를 보충할 수 없습니다.")
-        }
-        if (city.nationId == 0 || city.nationId != general.nationId) {
-            return rejected(command, "자국 도시가 아닙니다.")
-        }
-
-        val preLogic = PerTurnOverlay.toLogicCity(city)
-        val ledgerGold = ledger.entry(world.worldId, city.id).gold
+        val ledgerGold = city?.let { ledger.entry(world.worldId, it.id).gold } ?: 0
 
         return when (
-            val decision = recruitDecision(
-                amount = command.amount,
-                leadership = general.stats.leadership,
-                cityPopulation = preLogic.population,
-                cityTrust = preLogic.trust,
-                ledgerGold = ledgerGold,
+            val decision = decideGarrisonRecruit(
+                V2GarrisonRecruitArgs(command.cityId, command.amount),
+                V2GarrisonRecruitContext(
+                    generalCityId = general?.cityId,
+                    generalNationId = general?.nationId,
+                    leadership = general?.stats?.leadership,
+                    cityNationId = city?.nationId,
+                    cityPopulation = city?.population,
+                    cityTrust = city?.let { (it.meta["trust"] as? Number)?.toDouble() ?: 0.0 },
+                    ledgerGold = ledgerGold,
+                ),
             )
         ) {
-            is V2RecruitDecision.Denied -> rejected(command, decision.reason)
-            is V2RecruitDecision.Applied -> {
-                ledger.adjust(world.worldId, recorder, city.id, goldDelta = -decision.goldCost, garrisonDelta = decision.amount)
+            is V2GarrisonRecruitDecision.Denied -> rejected(command, decision.reason, decision.code)
+            is V2GarrisonRecruitDecision.Applied -> {
+                val resolvedCity = checkNotNull(city)
+                val preLogic = PerTurnOverlay.toLogicCity(resolvedCity)
+                ledger.adjust(
+                    world.worldId,
+                    recorder,
+                    resolvedCity.id,
+                    goldDelta = -decision.goldCost,
+                    garrisonDelta = decision.amount,
+                )
 
                 // 적용 경로는 `PersonnelHandler.applyCity`와 동형이다: 엔진 City를 먼저 만들고
                 // 양쪽을 `toLogicCity`로 변환해 diff 한다. 논리 City를 직접 copy 하면 `trust`는
@@ -65,7 +73,7 @@ class V2GarrisonRecruitHandler(
                 // `applyCityDirtyFree` — `updateCity`가 아니다. `updateCity`는 월드의
                 // `dirtyCityIds`를 함께 세워 ChangeRecorder 말고 **두 번째 dirty 원천**을 만든다
                 // (설계 Risk #4: 조용한 flush 분기). v2도 예외가 아니다.
-                val next = city.copy(
+                val next = resolvedCity.copy(
                     population = decision.popAfter,
                     meta = LinkedHashMap(city.meta).apply { put("trust", decision.trustAfter) },
                 )
@@ -88,9 +96,11 @@ class V2GarrisonRecruitHandler(
                 actionCode = ACTION_CODE,
                 generalId = command.generalId,
                 turnIdx = 0,
+                canonicalCommandId = V2CommandRegistry.garrisonRecruitSchema.canonicalId,
+                replayEvent = V2CommandRegistry.garrisonRecruitSchema.replayEvent,
             )
 
-        internal fun rejected(command: CityGarrisonRecruit, reason: String): TurnDaemonCommandResult =
+        internal fun rejected(command: CityGarrisonRecruit, reason: String, code: String? = null): TurnDaemonCommandResult =
             CommandLifecycleResult(
                 type = "executionRejected",
                 ok = false,
@@ -99,6 +109,9 @@ class V2GarrisonRecruitHandler(
                 generalId = command.generalId,
                 turnIdx = 0,
                 reason = reason,
+                code = code,
+                canonicalCommandId = V2CommandRegistry.garrisonRecruitSchema.canonicalId,
+                replayEvent = V2CommandRegistry.garrisonRecruitSchema.replayEvent,
             )
 
         /**

@@ -19,6 +19,10 @@ import opensamguk.gameapi.reserve.CommandWireMapper
 import opensamguk.gameapi.sanitize.HtmlSanitizer
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
+import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.gameapi.v2.legacyError
+import opensamguk.gameapi.v2.validateLegacyV2Arguments
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.HttpStatus
@@ -79,6 +83,8 @@ class CommandController(
     /** The JSON body of a 200 non-reservable response. */
     data class BlockedResponse(val status: String, val reason: String, val constraintName: String? = null)
 
+    data class UnknownCommandResponse(val status: String = "UNKNOWN", val code: String = "UNKNOWN_COMMAND")
+
     @PostMapping("/{code}")
     fun command(
         @AuthenticationPrincipal userId: Long?,
@@ -102,6 +108,24 @@ class CommandController(
         // Task 4 — when authenticated, the passed generalId MUST be the caller's own general.
         if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        val v2Schema = V2CommandRegistry.resolve(code)
+        if (v2Schema != null) {
+            if (code == v2Schema.canonicalId) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(UnknownCommandResponse())
+            }
+            if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            }
+            val availability = validateLegacyV2Arguments(code, argJson)
+            if (availability !is V2CommandAvailability.Available) return availability.legacyError(code)
+            val reserved = reserve.reserveForOwner(generalId, code, turnIdx, argJson, userId.toInt())
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(
+                ReservedResponse(status = "AVAILABLE", requestId = reserved.requestId, turnIdx = reserved.turnIdx),
+            )
+        }
+        if (looksLikeV2Command(code) && V2CommandRegistry.resolve(code) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(UnknownCommandResponse())
         }
         if (!isForecastReservable(code)) {
             return blocked("사용할 수 없는 커맨드입니다.")
@@ -478,5 +502,7 @@ class CommandController(
 
         private fun isForecastReservable(code: String): Boolean =
             code in FORECAST_RESERVABLE_COMMANDS || CommandWireMapper.isIntakeCommand(code)
+
+        private fun looksLikeV2Command(code: String): Boolean = code.startsWith("v2") || '.' in code
     }
 }
