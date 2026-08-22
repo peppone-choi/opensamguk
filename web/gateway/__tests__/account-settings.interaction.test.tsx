@@ -107,7 +107,9 @@ describe('account settings interactions', () => {
             method: 'POST',
             body: JSON.stringify({ nickname: '새별명' }),
         })));
-        expect(refresh).toHaveBeenCalledTimes(1);
+        expect(refresh).toHaveBeenCalledWith({
+            id: 1, username: 'tester', email: null, nickname: '새별명', role: 'USER', picture: 'old.png', imageServer: 1,
+        });
         expect(await within(panel('닉네임 변경')).findByRole('status')).toHaveTextContent('닉네임을 변경했습니다.');
     });
 

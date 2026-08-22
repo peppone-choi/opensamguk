@@ -1,12 +1,12 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { User } from './types';
 
 interface AuthCtx {
     user: User | null;
     loading: boolean;
-    refresh: () => Promise<User | null>;
+    refresh: (canonicalUser?: User) => Promise<User | null>;
     logout: () => Promise<void>;
 }
 
@@ -21,20 +21,27 @@ export function AuthProvider({
 }) {
     const [user, setUser] = useState<User | null>(initialUser);
     const [loading, setLoading] = useState(initialUser === null);
+    const refreshGeneration = useRef(0);
 
-    const refresh = useCallback(async (): Promise<User | null> => {
+    const refresh = useCallback(async (canonicalUser?: User): Promise<User | null> => {
+        const generation = ++refreshGeneration.current;
+        if (canonicalUser) {
+            setUser(canonicalUser);
+            setLoading(false);
+            return canonicalUser;
+        }
         setLoading(true);
         try {
             const res = await fetch('/api/auth/me', { cache: 'no-store' });
             const data = await res.json();
             const next: User | null = data?.user ?? null;
-            setUser(next);
+            if (generation === refreshGeneration.current) setUser(next);
             return next;
         } catch {
-            setUser(null);
+            if (generation === refreshGeneration.current) setUser(null);
             return null;
         } finally {
-            setLoading(false);
+            if (generation === refreshGeneration.current) setLoading(false);
         }
     }, []);
 
