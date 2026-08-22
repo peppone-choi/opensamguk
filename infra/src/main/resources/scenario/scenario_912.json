@@ -2,8 +2,8 @@
   "title": "【공백지】 다병종",
   "startYear": 180,
   "map": {
-    "mapName": "miniche",
-    "unitSet": "event_more_crewtype"
+    "mapName": "han",
+    "unitSet": "han"
   },
   "history": [],
   "const": {

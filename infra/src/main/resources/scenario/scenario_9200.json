@@ -4,7 +4,8 @@
   "life": 1,
   "fiction": 0,
   "map": {
-    "mapName": "miniche_b"
+    "mapName": "han",
+    "unitSet": "han"
   },
   "const": {
     "defaultMaxGeneral": 600

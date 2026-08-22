@@ -2,7 +2,8 @@
   "title": "【공백지】 파죽지세",
   "startYear": 180,
   "map": {
-    "mapName": "miniche"
+    "mapName": "han",
+    "unitSet": "han"
   },
   "history": [],
   "const": {

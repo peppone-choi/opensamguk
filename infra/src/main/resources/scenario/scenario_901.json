@@ -2,7 +2,8 @@
   "title": "【공백지】 무주공산",
   "startYear": 180,
   "map": {
-    "mapName": "miniche_clean"
+    "mapName": "han",
+    "unitSet": "han"
   },
   "history": [],
   "const": {

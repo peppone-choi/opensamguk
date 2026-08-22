@@ -11,6 +11,8 @@ import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.foundAssaultCrewCost
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -87,10 +89,18 @@ class ScenarioBlankPlayerCommandIT {
         val bootstrap = SeedBootstrap(scenarioCode = "scenario_0", worldId = opensamguk.common.world.WorldId(1))
         assertTrue(bootstrap.ensureSeeded(jdbc))
         assertEquals("scenario_0", jdbc.queryForObject("SELECT scenario_code FROM world_state WHERE id = 1", String::class.java))
-        assertEquals(94, count("city"))
+        // 전 시나리오 han 통일(사용자 지시)로 scenario_0 의 map 이 che(94개 도시)에서 han(780개 도시)으로
+        // 바뀌었다. 이 단정의 의도는 "94" 라는 숫자가 아니라 "로드된 맵의 전체 도시 수" 이므로,
+        // 하드코딩 대신 world_state.meta->>'map' 이 가리키는 CityConstRegistry 변형에서 동적으로
+        // 구한다 — 맵이 다시 바뀌어도 이 단정은 깨지지 않는다. 맵 이름은 world_state 의 별도
+        // 컬럼이 아니라 meta jsonb 안에 있다(ScenarioImporter.kt:187).
+        val mapName = jdbc.queryForObject("SELECT meta->>'map' FROM world_state WHERE id = 1", String::class.java)
+            ?: CityConstRegistry.DEFAULT_MAP_NAME
+        val expectedCityCount = CityConstRegistry.of(mapName).all().size
+        assertEquals(expectedCityCount, count("city"))
         assertEquals(0, count("nation"))
         assertEquals(0, count("general"))
-        assertEquals(94, countWhere("city", "nation_id = 0"))
+        assertEquals(expectedCityCount, countWhere("city", "nation_id = 0"))
 
         val loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1))
         val world = InMemoryTurnWorld(loader.buildSnapshot())
@@ -166,6 +176,11 @@ class ScenarioBlankPlayerCommandIT {
         world.setCurrentDate(startYear, 2, 1)
         leaderNationIds.forEachIndexed { index, nationId ->
             val leaderId = groups[index].first().generalId
+            // ADR-LITE-043: han 맵은 공백지 건국에 수비병 돌파(FOUND_ASSAULT_RATIO=2.0)가 필요하다.
+            // 이 테스트의 의도는 "많은 플레이어 국가를 실제 명령으로 만들 수 있다"이지 병력 조달
+            // 그라인딩이 아니므로, 돌파 병력을 직접 무장시켜 con_건국 제약을 실제로 통과시킨다
+            // (제약 자체는 우회하지 않는다 — che_건국은 여전히 crew >= 필요치를 검사한다).
+            armFoundingCrew(world, recorder, leaderId)
             assertAllowed(
                 turns.handle(
                     leaderId,
@@ -304,6 +319,25 @@ class ScenarioBlankPlayerCommandIT {
 
     private fun assertAllowed(outcome: ReservedTurnHandler.HandledTurn) {
         assertFalse(outcome.fellBack, "${outcome.definition.key} fell back: ${outcome.denyReason}")
+    }
+
+    /**
+     * han 전용 건국 수비병 돌파(ADR-LITE-043, [foundAssaultCrewCost])를 통과시킬 만큼 병력을 직접
+     * 무장한다. che_건국 제약([opensamguk.logic.constraints.constructableCity])은 이후 그대로
+     * 평가되므로 규칙을 우회하는 게 아니라 테스트 사전조건만 채운다.
+     */
+    private fun armFoundingCrew(world: InMemoryTurnWorld, recorder: ChangeRecorder, generalId: Int) {
+        val general = world.getGeneralById(generalId)!!
+        val city = world.getCityById(general.cityId)!!
+        val mapName = world.getState().meta["map"] as? String ?: CityConstRegistry.DEFAULT_MAP_NAME
+        val required = foundAssaultCrewCost(mapName, city.defence)
+        if (required <= general.crew) return
+        val armed = general.copy(crew = required)
+        recorder.diffGeneral(
+            opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(general),
+            opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(armed),
+        )
+        world.applyGeneralDirtyFree(armed)
     }
 
     private fun count(table: String): Int =

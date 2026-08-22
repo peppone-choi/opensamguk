@@ -2,7 +2,8 @@
   "title": "【공백지】 무작위 세계",
   "startYear": 180,
   "map": {
-    "mapName": "miniche_b"
+    "mapName": "han",
+    "unitSet": "han"
   },
   "history": [
     "<C>●</>180년 1월:<L><b>【공백지】</b></>무작위성이 넘치는 이벤트 깃수"

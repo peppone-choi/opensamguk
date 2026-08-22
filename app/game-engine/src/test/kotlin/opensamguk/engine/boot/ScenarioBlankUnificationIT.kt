@@ -17,6 +17,7 @@ import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.event.EventActionFactory
@@ -34,6 +35,7 @@ import opensamguk.logic.tick.PreUpdateMonthly
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.war.searchDistanceListToDest
 import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.foundAssaultCrewCost
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -176,6 +178,7 @@ class ScenarioBlankUnificationIT {
         val loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1))
         var world = InMemoryTurnWorld(loader.buildSnapshot())
         var recorder = recorderFor(world)
+        unitSetName = world.getState().meta["unitSet"] as? String ?: UnitSetTable.CHE_UNIT_SET
         val roles = roleSpecs()
         val startYear = (world.getState().meta["startYear"] as Number).toInt()
         val hiddenSeed = world.getState().meta["hiddenSeed"] as String
@@ -192,7 +195,7 @@ class ScenarioBlankUnificationIT {
             recorder = recorder,
         )
 
-        foundPlayerNations(world, turns, groups, startYear)
+        foundPlayerNations(world, recorder, turns, groups, startYear)
         appointDiplomats(world, recorder, groups)
         groups.flatten().forEach { runRoleCommand(turns, it, startYear) }
 
@@ -292,6 +295,7 @@ class ScenarioBlankUnificationIT {
 
     private fun foundPlayerNations(
         world: InMemoryTurnWorld,
+        recorder: ChangeRecorder,
         turns: ReservedTurnHandler,
         groups: List<List<CreatedPlayer>>,
         startYear: Int,
@@ -317,9 +321,15 @@ class ScenarioBlankUnificationIT {
 
         world.setCurrentDate(startYear, 2, 1)
         nationIds.forEachIndexed { index, nationId ->
+            val leaderId = groups[index].first().generalId
+            // ADR-LITE-043: han 맵은 공백지 건국에 수비병 돌파(FOUND_ASSAULT_RATIO=2.0)가 필요하다.
+            // 이 테스트의 의도는 "공백지 시작에서 통일 꼬리까지 도달하고 리로드를 견딘다"이지 병력
+            // 조달 그라인딩이 아니므로, 돌파 병력을 직접 무장시켜 con_건국 제약을 실제로 통과시킨다
+            // (제약 자체는 우회하지 않는다 — che_건국은 여전히 crew >= 필요치를 검사한다).
+            armFoundingCrew(world, recorder, leaderId)
             assertAllowed(
                 turns.handle(
-                    groups[index].first().generalId,
+                    leaderId,
                     ReservedTurn(
                         "che_건국",
                         """{"nationName":"자동국${index + 1}","nationType":"che_중립","colorType":$index}""",
@@ -332,6 +342,22 @@ class ScenarioBlankUnificationIT {
             assertEquals(1, world.getNationById(nationId)!!.level)
         }
         return nationIds
+    }
+
+    /**
+     * han 전용 건국 수비병 돌파(ADR-LITE-043, [foundAssaultCrewCost])를 통과시킬 만큼 병력을 직접
+     * 무장한다. che_건국 제약([opensamguk.logic.constraints.constructableCity])은 이후 그대로
+     * 평가되므로 규칙을 우회하는 게 아니라 테스트 사전조건만 채운다.
+     */
+    private fun armFoundingCrew(world: InMemoryTurnWorld, recorder: ChangeRecorder, generalId: Int) {
+        val general = world.getGeneralById(generalId)!!
+        val city = world.getCityById(general.cityId)!!
+        val mapName = world.getState().meta["map"] as? String ?: CityConstRegistry.DEFAULT_MAP_NAME
+        val required = foundAssaultCrewCost(mapName, city.defence)
+        if (required <= general.crew) return
+        val armed = general.copy(crew = required)
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(general), PerTurnOverlay.toLogicGeneral(armed))
+        world.applyGeneralDirtyFree(armed)
     }
 
     private fun appointDiplomats(
@@ -364,6 +390,18 @@ class ScenarioBlankUnificationIT {
         assertEquals(60, world.listAccessLogs().mapNotNull { it.userId }.toSet().size)
     }
 
+    /**
+     * 이 월드의 unitSet 기본 병종. 하드코딩 1100(che 보병)을 쓰면 han unitSet 월드에서
+     * [opensamguk.logic.actions.military.UnitSetTable.byId] 가 null 을 돌려주고, 징병 비용이
+     * Int.MAX_VALUE 로 잡혀 "자금이 모자랍니다"로 거부된다 — 실제 원인은 자금이 아니라
+     * 그 세트에 없는 병종이다. 세트가 바뀌어도 깨지지 않게 세트 메타에서 읽는다.
+     */
+    private lateinit var unitSetName: String
+
+    private val recruitCrewTypeId: Int
+        get() = UnitSetTable.defaultCrewTypeId(unitSetName)
+            ?: error("unitSet '$unitSetName' 에 defaultCrewTypeId 가 없다")
+
     private fun runRoleCommand(turns: ReservedTurnHandler, player: CreatedPlayer, year: Int) {
         when (player.spec.role) {
             "군주" -> assertAllowed(turns.handle(player.generalId, ReservedTurn("che_상업투자", ""), year, 2, "00:00"))
@@ -377,7 +415,7 @@ class ScenarioBlankUnificationIT {
                 assertAllowed(
                     turns.handle(
                         player.generalId,
-                        ReservedTurn("che_징병", """{"crewType":1100,"amount":1000}"""),
+                        ReservedTurn("che_징병", """{"crewType":$recruitCrewTypeId,"amount":1000}"""),
                         year,
                         2,
                         "00:00",
@@ -388,7 +426,7 @@ class ScenarioBlankUnificationIT {
             "징병" -> assertAllowed(
                 turns.handle(
                     player.generalId,
-                    ReservedTurn("che_징병", """{"crewType":1100,"amount":800}"""),
+                    ReservedTurn("che_징병", """{"crewType":$recruitCrewTypeId,"amount":800}"""),
                     year,
                     2,
                     "00:00",
@@ -491,7 +529,7 @@ class ScenarioBlankUnificationIT {
                     }
                     val outcome = turns.handle(
                         general.id,
-                        ReservedTurn("che_징병", """{"crewType":1100,"amount":$RECRUIT_AMOUNT}"""),
+                        ReservedTurn("che_징병", """{"crewType":$recruitCrewTypeId,"amount":$RECRUIT_AMOUNT}"""),
                         date.year,
                         date.month,
                         "00:00",

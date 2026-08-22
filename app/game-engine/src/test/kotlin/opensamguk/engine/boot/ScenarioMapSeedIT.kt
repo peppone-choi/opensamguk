@@ -78,25 +78,27 @@ class ScenarioMapSeedIT {
     }
 
     @Test
-    fun `scenario_2 seed uses miniche_b city catalog`() {
+    fun `scenario_2 seed uses han city catalog`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
         val bootstrap = SeedBootstrap(scenarioCode = "scenario_2", worldId = opensamguk.common.world.WorldId(1))
 
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_2 world is seeded")
-        assertEquals(78, count("city"))
+        // scenario_2's mapName was unified from miniche_b (78 cities) to han (780 cities).
+        assertEquals(780, count("city"))
         assertEquals(0, count("nation"))
         assertEquals(0, count("general"))
 
+        // city id=1 on the han catalog is 장안 (miniche_b's city id=1 was 낙양).
         val city = jdbc.queryForMap("SELECT name, level, pop_max, agri_max, comm_max FROM city WHERE id = 1")
-        assertEquals("낙양", city["name"].toString())
-        assertEquals(8, (city["level"] as Number).toInt())
-        assertEquals(668600, (city["pop_max"] as Number).toInt())
-        assertEquals(7800, (city["agri_max"] as Number).toInt())
-        assertEquals(8000, (city["comm_max"] as Number).toInt())
+        assertEquals("장안", city["name"].toString())
+        assertEquals(9, (city["level"] as Number).toInt())
+        assertEquals(754800, (city["pop_max"] as Number).toInt())
+        assertEquals(14000, (city["agri_max"] as Number).toInt())
+        assertEquals(14800, (city["comm_max"] as Number).toInt())
 
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"mapName\":\"miniche_b\"") || config.contains("\"mapName\": \"miniche_b\""), config)
+        assertTrue(config.contains("\"mapName\":\"han\"") || config.contains("\"mapName\": \"han\""), config)
     }
 
     @Test
