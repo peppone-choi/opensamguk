@@ -64,7 +64,7 @@ function AccountSettings() {
         await run('nickname', async () => {
             const updated = await changeNickname(nickname.trim());
             setNickname(updated.nickname ?? '');
-            await refresh();
+            await refresh(updated);
         }, '닉네임을 변경했습니다.');
     };
 
