@@ -1,0 +1,733 @@
+{
+  "claims": [
+    {
+      "claimId": "claim:northern-steppe:00",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "No lifecycle date inferred from attestation.",
+      "predicate": "HISTORICAL_ATTESTATION",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "hhs-90-xianbei",
+      "subjectEntityKey": "external:northern-steppe:00",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "烏桓"
+    },
+    {
+      "claimId": "claim:northern-steppe:01",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "No lifecycle date inferred from attestation.",
+      "predicate": "HISTORICAL_ATTESTATION",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "hhs-90-xianbei",
+      "subjectEntityKey": "external:northern-steppe:01",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "鮮卑"
+    },
+    {
+      "claimId": "claim:northern-steppe:02",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "No lifecycle date inferred from attestation.",
+      "predicate": "HISTORICAL_ATTESTATION",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "hhs-89-southern-xiongnu",
+      "subjectEntityKey": "external:northern-steppe:02",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "南匈奴"
+    },
+    {
+      "claimId": "claim:northern-steppe:xianbei-three-divisions",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "Three divisions are a claim, not fixed entities or cities.",
+      "predicate": "SPATIAL_DIVISIONS",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "hhs-90-xianbei",
+      "subjectEntityKey": "external:northern-steppe:01",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "東部|中部|西部"
+    }
+  ],
+  "coverageLedger": [
+    "legacy-external:X062",
+    "legacy-external:X063",
+    "legacy-external:X064"
+  ],
+  "entities": [
+    {
+      "aliases": [],
+      "canonicalName": "烏桓",
+      "claimRefs": [
+        "claim:northern-steppe:00"
+      ],
+      "entityKey": "external:northern-steppe:00",
+      "entityType": "PolityPresence",
+      "legacyCandidateKeys": [
+        "legacy-external:X062"
+      ],
+      "lifecycle": {
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "status": "UNKNOWN"
+      },
+      "locationStatus": "REMOTE_ONLY",
+      "reviewState": "APPROVED",
+      "scenarioStates": [
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "0",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "2",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "900",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "901",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "902",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "903",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "905",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "906",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "908",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "910",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "911",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "912",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "913",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "914",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1010",
+          "startYear": 181,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1020",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1021",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1030",
+          "startYear": 191,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1031",
+          "startYear": 192,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1040",
+          "startYear": 193,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1041",
+          "startYear": 194,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1050",
+          "startYear": 197,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1060",
+          "startYear": 199,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1070",
+          "startYear": 204,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1080",
+          "startYear": 210,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1090",
+          "startYear": 216,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1100",
+          "startYear": 222,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1110",
+          "startYear": 225,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1120",
+          "startYear": 188,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "9200",
+          "startYear": 190,
+          "state": "INACTIVE"
+        }
+      ]
+    },
+    {
+      "aliases": [],
+      "canonicalName": "鮮卑",
+      "claimRefs": [
+        "claim:northern-steppe:01",
+        "claim:northern-steppe:xianbei-three-divisions"
+      ],
+      "entityKey": "external:northern-steppe:01",
+      "entityType": "PolityPresence",
+      "legacyCandidateKeys": [
+        "legacy-external:X063"
+      ],
+      "lifecycle": {
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "status": "UNKNOWN"
+      },
+      "locationStatus": "REMOTE_ONLY",
+      "reviewState": "APPROVED",
+      "scenarioStates": [
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "0",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "2",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "900",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "901",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "902",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "903",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "905",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "906",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "908",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "910",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "911",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "912",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "913",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "914",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1010",
+          "startYear": 181,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1020",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1021",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1030",
+          "startYear": 191,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1031",
+          "startYear": 192,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1040",
+          "startYear": 193,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1041",
+          "startYear": 194,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1050",
+          "startYear": 197,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1060",
+          "startYear": 199,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1070",
+          "startYear": 204,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1080",
+          "startYear": 210,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1090",
+          "startYear": 216,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1100",
+          "startYear": 222,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1110",
+          "startYear": 225,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1120",
+          "startYear": 188,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "9200",
+          "startYear": 190,
+          "state": "INACTIVE"
+        }
+      ]
+    },
+    {
+      "aliases": [],
+      "canonicalName": "南匈奴",
+      "claimRefs": [
+        "claim:northern-steppe:02"
+      ],
+      "entityKey": "external:northern-steppe:02",
+      "entityType": "PolityPresence",
+      "legacyCandidateKeys": [
+        "legacy-external:X064"
+      ],
+      "lifecycle": {
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "status": "UNKNOWN"
+      },
+      "locationStatus": "REMOTE_ONLY",
+      "reviewState": "APPROVED",
+      "scenarioStates": [
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "0",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "2",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "900",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "901",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "902",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "903",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "905",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "906",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "908",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "910",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "911",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "912",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "913",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "914",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1010",
+          "startYear": 181,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1020",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1021",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1030",
+          "startYear": 191,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1031",
+          "startYear": 192,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1040",
+          "startYear": 193,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1041",
+          "startYear": 194,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1050",
+          "startYear": 197,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1060",
+          "startYear": 199,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1070",
+          "startYear": 204,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1080",
+          "startYear": 210,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1090",
+          "startYear": 216,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1100",
+          "startYear": 222,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1110",
+          "startYear": 225,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1120",
+          "startYear": 188,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "9200",
+          "startYear": 190,
+          "state": "INACTIVE"
+        }
+      ]
+    }
+  ],
+  "packId": "northern-steppe",
+  "relativeItineraries": [],
+  "reviewState": "APPROVED_DATA_CONTRACT",
+  "runtimeActivation": "NOT_CLAIMED_BY_W1_B_DATA_CONTRACT",
+  "schemaVersion": 1,
+  "sourceCandidateSetId": "han-external-world-candidates-v1",
+  "sourceCandidateSetSha256": "dd7359dee0060c941e563aaa3ed6ecf19086e700343518f940deae6d9bbd63fb",
+  "sourceRegistry": [
+    {
+      "lineEnd": 61,
+      "lineStart": 39,
+      "path": "data/corpus/hhs-090.txt",
+      "sha256": "fe4251a7cda027267c60c386a9e63b350c349a368e7484b091ce71dd9fa0d456",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "hhs-90-xianbei",
+      "verbatim": "　　鮮卑者，亦東胡之支也，別依鮮卑山，故因號焉。其言語習俗與烏桓同。唯婚姻先髡頭，以季春月大會於饒樂水上，{{*|水在今營州北}}飲讌畢，然後配合。又禽獸異於中國者，野馬、原羊、角端牛，以角為弓，俗謂之角端弓者。{{*|郭璞注[[爾雅]]曰：「原羊似吳羊而大角，出西方。」前書音義曰：「角端似牛，角可為弓。」}}又有貂、豽、鼲子，皮毛柔蝡，{{*|豽，音女滑反，猴屬也。鼲音胡昆反，鼠屬也。}}故天下以為名裘。\n\n　　漢初，亦為冒頓所破，遠竄遼東塞外，與烏桓相接，未常通中國焉。光武初，匈奴強盛，率鮮卑與烏桓寇抄北邊，殺略吏人，無有寧歲。{{YL|建武二十一年}}，鮮卑與匈奴入遼東，遼東太守祭肜擊破之，斬獲殆盡，事已具〈肜傳〉，由是震怖。及南單于附漢，北虜孤弱，二十五年，鮮卑始通驛使。\n\n　　其後都護偏何等詣祭肜求自效功，因令擊北匈奴左伊育訾部，斬首二千餘級。其後偏何連歲出兵擊北虜，還輒持首級詣遼東受賞賜。三十年，鮮卑大人於仇賁、滿頭等率種人詣闕朝賀，慕義內屬。帝封於仇賁為王，滿頭為侯。時漁陽赤山烏桓歆志賁等數寇上谷。{{YL|永平元年}}，祭肜復賂偏何擊歆志賁，破斬之，於是鮮卑大人皆來歸附，並詣遼東受賞賜，青徐二州給錢歲二億七千萬為常。明章二世，保塞無事。\n\n　　和帝永元中，大將軍竇憲遣右校尉耿夔擊破匈奴，北單于逃走，鮮卑因此轉徙據其地。匈奴餘種留者尚有十餘萬落，皆自號鮮卑，鮮卑由此漸盛。九年，遼東鮮卑攻肥如縣，{{*|肥如縣，故城在今平州也}}太守祭參坐沮敗，下獄死。十三年，遼東鮮卑寇右北平，因入漁陽，漁陽太守擊破之。延平元年，鮮卑復寇漁陽，太守張顯率數百人出塞追之。兵馬掾嚴授諫曰：「前道險阻，賊埶難量，宜且結營，先令輕騎偵視之。」顯意甚銳，怒欲斬之。因復進兵，遇虜伏發，士卒悉走，唯授力戰，身被十創，手殺數人而死。顯中流矢，主簿衛福、功曹徐咸皆自投赴顯，俱歿於陣。鄧太后策書褒歎，賜顯錢六十萬，以家二人為郎；授、福、咸各錢十萬，除一子為郎。\n\n　　安帝永初中，鮮卑大人燕荔陽詣闕朝賀，鄧太后賜燕荔陽王印綬，赤車參駕，令止烏桓校尉所居甯城下，通胡市，因築南北兩部質館。鮮卑邑落百二十部，各遣入質。是後或降或畔，與匈奴、烏桓更相攻擊。\n\n　　{{YL|元初二年}}秋，遼東鮮卑圍無慮縣{{*|屬遼東郡}}，州郡合兵固保清野，鮮卑無所得。{{*|清野謂收斂積聚，不令寇得之也。}}復攻扶黎營，殺長吏。{{*|扶黎，縣，屬遼東屬國，故城在今營州東南。}}四年，遼西鮮卑連休等遂燒塞門，寇百姓。烏桓大人於秩居等與連休有宿怨，共郡兵奔擊，大破之，斬首千三百級，悉獲其生口牛馬財物。五年秋，代郡鮮卑萬餘騎遂穿塞入寇，分攻城邑，燒官寺，殺長吏而去。乃發緣邊甲卒、黎陽營兵，屯上谷以備之。冬，鮮卑入上谷，攻居庸關，復發緣邊諸郡、黎陽營兵、積射士步騎二萬人，屯列衝要。六年秋，鮮卑入馬城塞，殺長吏，{{*|馬城縣，屬代郡也。}}度遼將軍鄧遵發積射士三千人，及中郎將馬續率南單于，與遼西、右北平兵馬會，出塞追擊鮮卑，大破之，獲生口及牛羊財物甚眾。又發積射士三千人，馬三千匹，詣度遼營屯守。\n\n　　{{YL|永寧元年}}，遼西鮮卑大人烏倫、其至鞬率眾詣鄧遵降，奉貢獻。詔封烏倫為率眾王，其至鞬為率眾侯，賜綵繒各有差。\n\n　　{{YL|建光元年}}秋，其至鞬復畔，寇居庸，雲中太守成嚴擊之，兵敗，功曹楊穆以身捍嚴，與俱戰歿。鮮卑於是圍烏桓校尉徐常於馬城。度遼將軍耿夔與幽州刺史龐參發廣陽、漁陽、涿郡甲卒，分為兩道救之；常夜得潛出，與夔等并力並進，攻賊圍，解之。鮮卑既累殺郡守，膽意轉盛，控弦數萬騎。{{YL|延光元年}}冬，復寇鴈門、定襄，遂攻太原，掠殺百姓。二年冬，其至鞬自將萬餘騎入東領候，分為數道，攻南匈奴於曼柏{{*|縣名，屬五原郡也}}，薁鞬日逐王戰死，殺千餘人。三年秋，復寇高柳，擊破南匈奴，殺漸將王。\n\n　　順帝{{YL|永建元年}}秋，鮮卑其至鞬寇代郡，太守李超戰死。明年春，中郎將張國遣從事將南單于兵步騎萬餘人出塞，擊破之，獲其資重二千餘種。時遼東鮮卑六千餘騎亦寇遼東玄菟，烏桓校尉耿曄發緣邊諸郡兵及烏桓率眾王出塞擊之，斬首數百級，大獲其生口牛馬什物，鮮卑乃率種眾三萬人詣遼東乞降。三年，四年，鮮卑頻寇漁陽、朔方。六年秋，耿曄遣司馬將胡兵數千人，出塞擊破之。冬，漁陽太守又遣烏桓兵擊之，斬首八百級，獲牛馬生口。烏桓豪人扶漱官勇健，每與鮮卑戰，輒陷敵，詔賜號「率眾君」。\n\n　　{{YL|陽嘉元年}}冬，耿曄遣烏桓親漢都尉戎朱廆率眾王侯咄歸等，出塞抄擊鮮卑，大斬獲而還，賜咄歸等已下為率眾王、侯、長，賜綵繒各有差。鮮卑後寇遼東屬國，於是耿曄乃移屯遼東無慮城拒之。二年春，匈奴中郎將趙稠遣從事將南匈奴骨都侯夫沈等，出塞擊鮮卑，破之，斬獲甚眾，詔賜夫沈金印紫綬及縑綵各有差。秋，鮮卑穿塞入馬城，代郡太守擊之，不能克。後其至鞬死，鮮卑抄盜差稀。\n\n　　桓帝時，鮮卑檀石槐者，其父投鹿侯、初從匈奴軍三年，其妻在家生子。投鹿侯歸，怪欲殺之。妻言嘗晝行聞雷震，仰天視而雹入其口，因吞之，遂妊身，十月而產，此子必有奇異，且宜長視。投鹿侯不聽，遂棄之。妻私語家令收養焉，名檀石槐。年十四五，勇健有智略。異部大人抄取其外家牛羊，檀石槐單騎追擊之，所向無前，悉還得所亡者，由是部落畏服。乃施法禁，平曲直，無敢犯者，遂推以為大人。檀石槐乃立庭於彈汗山歠仇水上，{{*|}}去高柳北三百餘里，兵馬甚盛，東西部大人皆歸焉。因南抄緣邊，北拒丁零，東卻夫餘，西擊烏孫，盡據匈奴故地，東西萬四千餘里，南北七千餘里，網羅山川水澤鹽池。\n\n　　{{YL|永壽二年}}秋，檀石槐遂將三四千騎寇雲中。{{YL|延熹元年}}，鮮卑寇北邊。冬，使匈奴中郎將張奐率南單于出塞擊之，斬首二百級。二年，復入鴈門，殺數百人，大抄掠而去。六年夏，千餘騎寇遼東屬國。九年夏，遂分騎數萬人入緣邊九郡，並殺掠吏人，於是復遣張奐擊之，鮮卑乃出塞去。朝廷積患之，而不能制，遂遣使持印綬封檀石槐為王，欲與和親。檀石槐不肯受，而寇抄滋甚。乃自分其地為三部，從右北平以東至遼東，接夫餘、濊貊二十餘邑為東部，從右北平以西至上谷十餘邑為中部，從上谷以西至敦煌、烏孫二十餘邑為西部，各置大人主領之，皆屬檀石槐。"
+    },
+    {
+      "lineEnd": 26,
+      "lineStart": 9,
+      "path": "data/corpus/hhs-089.txt",
+      "sha256": "e21cb98fc4680d0e055f55435c4f3a968577554d192d72d14feaba01319cc2f2",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "hhs-89-southern-xiongnu",
+      "verbatim": "==南匈奴==\n南匈奴醢落尸逐鞮單于比者，呼韓邪單于之孫，烏珠留若鞮單于之子也。自呼韓邪後，諸子以次立，至比季父孝單于輿時，以比為右薁鞬日逐王，部領南邊及烏桓。\n\n建武初，彭寵反叛於漁陽，單于與共連兵，因復權立盧芳，使入居五原。光武初，方平諸夏，未遑外事。至六年，始令歸德侯劉颯使匈奴，匈奴亦遣使来獻，漢復令中郎將韓統報命，賂遺金幣，以通舊好。而單于驕踞，自比冒頓，對使者辭語悖慢，帝待之如初。初，使命常通，而匈奴數與盧芳共侵北邊。九年，遣大司馬吳漢等擊之。經歲無功，而匈奴轉盛，抄暴日增。十三年，遂寇河東，州郡不能禁。於是漸徙幽、并邊人於常山關、居庸關以東，匈奴左部遂復轉居塞内。朝廷患之，增緣邊兵郡數千人，大築亭候，修烽火。匈奴聞漢購求盧芳，貪得財帛，乃遣芳還降，望得其賞。而芳以自歸為功，不稱匈奴所遣，單于復耻言其計，故賞遂不行。由是大恨，入寇尤深。二十年，遂至上黨、扶風、天水。二十一年冬，復寇上谷、中山，殺略抄掠甚眾，北邊無復寧歲。\n\n初，單于弟右谷蠡王伊屠知牙師以次當為左賢王。左賢王即是單于儲副。單于欲傳其子，遂殺知牙師。知牙師者，王昭君之子也。昭君字嫱，南郡人也。初，元帝時，以良家子選入掖庭。時，呼韓邪来朝，帝敕以宫女五人賜之。昭君入宫數岁，不得見御，積悲怨，乃請掖庭令求行。呼韓邪臨辭大會，帝召五女以示之。昭君豐容靓飾，光明漢宫，顾景裴回，竦動左右。帝見大驚，意欲留之，而難於失信，遂與匈奴。生二子。及呼韓邪死，其前閼氏子代立，欲妻之，昭君上書求歸，成帝敕令從胡俗，遂復為後單于閼氏焉。\n\n比見知牙師被誅，出怨言曰：“以兄弟言之，右谷蠡王次當立；以子言之，我前單于長子，我當立。”遂内懷猜懼，庭會稀闊。單于疑之，乃遣兩骨都侯監領比所部兵。二十二年，單于輿死，子左賢王烏達鞮侯立為單于。復死，弟左賢王蒲奴立為單于。比不得立，既懷憤恨。而匈奴中連年旱蝗，赤地數千里，草木盡枯，人畜飢疫，死耗太半。單于畏漢乘其敝，乃遣使詣漁陽求和親。於是遣中郎將李茂報命。而比密遣漢人郭衡奉匈奴地圖，二十三年，詣西河太守求内附。兩骨都侯頗覺其意，會五月龍祠，因白單于，言薁鞬日逐夙来欲為不善，若不誅，且亂國。時，比弟漸將王在單于帳下，聞之，馳以報比。比懼，遂斂所主南邊八部眾四五萬人，待兩骨都侯還，欲殺之。骨都侯且到，知其謀，皆輕騎亡去，以告單于。單于遣萬騎擊之，見比眾盛，不敢進而還。\n\n二十四年春，八部大人共議立比為呼韓邪單于，以其大父嘗依漢得安，故欲襲其號。於是款五原塞，願永為籓蔽，悍御北虜。帝用五官中郎將耿國議，乃許之。其冬，比自立為呼韓邪單于。\n\n二十五年春，遣弟左賢王莫將兵萬餘人擊北單于弟薁鞬左賢王，生獲之；又破北單于帳下，并得其眾，合萬餘人，馬七千匹、牛羊萬頭。北單于震怖，卻地千里。初，帝造戰車，可駕數牛，上作樓橹，置於塞上，以拒匈奴。時人見者或相謂曰：“讖言漢九世當卻北狄地千里，豈謂此邪？”及是，果拓地焉。北部薁鞬骨都侯與右骨都侯率眾三萬餘人来歸南單于，南單于復遣使詣闕，奉籓稱臣，獻國珍寶，求使者監護，遣侍子，修舊約。\n\n二十六年，遣中郎將段郴、副校尉王郁使南單于，立其庭，去五原西部塞八十里。單于乃延迎使者。使者曰：“單于當伏拜受詔。”單于顧望有頃，乃伏稱臣。拜訖，令譯曉使者曰：“單于新立，誠慚於左右，願使者眾中無相屈折也。”骨都侯等見，皆泣下。郴等反命，詔乃聽南單于入居雲中。遣使上書，獻駱駝二頭，文馬十匹。夏，南單于所獲北虜薁鞬左賢王將其眾及南部五骨都侯合三萬餘人叛歸，去北庭三百餘里，共立薁鞬左賢王為單于。月餘日，更相攻擊，五骨都侯皆死，左賢王遂自殺，諸骨都侯子各擁兵自守。秋，南單于遣子入侍，奉奏詣闕。詔賜單于冠帶、衣裳、黄金璽、盭緺綬，安車羽蓋，華藻駕駟，寶劍弓箭，黑節三，駙馬二，黄金、錦綉、繒布萬匹，絮萬斤，樂器鼓車，棨戟甲兵，飲食什器。又轉河東米糒二萬五千斛。牛、羊三萬六千頭，以瞻給之。令中郎將置安集掾史將弛刑五十人，持兵弩隨單于所處，参辭訟，察動静。單于歲盡輒遣使奉奏，送侍子入朝，中郎將從事一人將領詣闕。漢遣謁者送前侍子還單于庭，交會道路。元正朝賀，拜祠陵廟畢，漢乃遣單于使，令謁者將送，賜彩繒千匹，錦四端，金十斤，太宫御食醬及橙、橘、龍眼、荔支；賜單于母及諸閼氏、單于子及左右賢王、左右谷蠡王、骨都侯有功善有，繒彩合萬匹。歲以為常。\n\n匈奴俗，歲有三歲祠，常以正月、五月、九月戊日祭天神。南單于既内附，兼祠漢帝，因會諸部議國事，走馬及駱駝為樂。其大臣貴者左賢王，次左谷蠡王，次右賢王，次右谷蠡王，謂之四角；次左右日逐王，次左右温禺鞮王，次左右漸將王，是為六角；皆單于子弟，次第當為單于者也。異姓大臣：左右骨都侯，次左右尸逐骨都侯，其餘日逐、且渠、當户諸官號，各以權力優劣、部眾多少為高下次第焉。單于姓虛連題。異姓有呼衍氏、須卜氏、丘林氏、蘭氏四姓，为國中名族，常與單于婚姻。呼衍氏為左，蘭氏、須卜氏為右，主斷獄聽訟，當決輕重，口白單于，無文書簿領焉。\n\n冬，前叛五骨都侯子復將其眾三千人歸南部，北單于使騎追擊，悉獲其眾。南單于遣兵拒之，逆戰不利。於是復詔單于徙居西河美稷，因使中郎將段郴及副校尉王郁留西河擁護之，為設官府、從事、掾史。令西河長史歲將騎二千、弛刑五百人，助中郎將衛護單于，冬屯夏罷。自後以為常，及悉復缘邊八郡。"
+    }
+  ],
+  "summary": {
+    "approvedClaimCount": 4,
+    "approvedEntityCount": 3,
+    "claimCount": 4,
+    "entityCount": 3,
+    "itineraryCount": 0,
+    "legacyCandidateCount": 3,
+    "scenarioStateCount": 93
+  }
+}

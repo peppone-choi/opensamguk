@@ -1,0 +1,1185 @@
+{
+  "claims": [
+    {
+      "claimId": "claim:southern-maritime:00",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "No lifecycle date inferred from attestation.",
+      "predicate": "HISTORICAL_ATTESTATION",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "sgz-47-yizhou",
+      "subjectEntityKey": "external:southern-maritime:00",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "夷洲"
+    },
+    {
+      "claimId": "claim:southern-maritime:01",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "No lifecycle date inferred from attestation.",
+      "predicate": "HISTORICAL_ATTESTATION",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "suishu-81-liuqiu",
+      "subjectEntityKey": "external:southern-maritime:01",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "流求"
+    },
+    {
+      "claimId": "claim:southern-maritime:02",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "No lifecycle date inferred from attestation.",
+      "predicate": "HISTORICAL_ATTESTATION",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "sgz-55-shanyue",
+      "subjectEntityKey": "external:southern-maritime:02",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "山越"
+    },
+    {
+      "claimId": "claim:southern-maritime:03",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "No lifecycle date inferred from attestation.",
+      "predicate": "HISTORICAL_ATTESTATION",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "suishu-82-linyi",
+      "subjectEntityKey": "external:southern-maritime:03",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "林邑"
+    },
+    {
+      "claimId": "claim:southern-maritime:04",
+      "evidenceClass": "PRIMARY_ATTESTED",
+      "interpretationNote": "No lifecycle date inferred from attestation.",
+      "predicate": "HISTORICAL_ATTESTATION",
+      "reviewState": "APPROVED",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "sgz-47-funan",
+      "subjectEntityKey": "external:southern-maritime:04",
+      "subjectPeriod": {
+        "from": null,
+        "status": "UNKNOWN",
+        "to": null
+      },
+      "value": "扶南"
+    }
+  ],
+  "coverageLedger": [
+    "legacy-external:X056",
+    "legacy-external:X057",
+    "legacy-external:X061"
+  ],
+  "entities": [
+    {
+      "aliases": [],
+      "canonicalName": "夷洲",
+      "claimRefs": [
+        "claim:southern-maritime:00"
+      ],
+      "entityKey": "external:southern-maritime:00",
+      "entityType": "RemoteGate",
+      "legacyCandidateKeys": [
+        "legacy-external:X056"
+      ],
+      "lifecycle": {
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "status": "UNKNOWN"
+      },
+      "locationStatus": "CANDIDATE_REGION",
+      "reviewState": "APPROVED",
+      "scenarioStates": [
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "0",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "2",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "900",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "901",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "902",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "903",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "905",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "906",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "908",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "910",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "911",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "912",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "913",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "914",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1010",
+          "startYear": 181,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1020",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1021",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1030",
+          "startYear": 191,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1031",
+          "startYear": 192,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1040",
+          "startYear": 193,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1041",
+          "startYear": 194,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1050",
+          "startYear": 197,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1060",
+          "startYear": 199,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1070",
+          "startYear": 204,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1080",
+          "startYear": 210,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1090",
+          "startYear": 216,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1100",
+          "startYear": 222,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1110",
+          "startYear": 225,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1120",
+          "startYear": 188,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "9200",
+          "startYear": 190,
+          "state": "INACTIVE"
+        }
+      ]
+    },
+    {
+      "aliases": [],
+      "canonicalName": "流求",
+      "claimRefs": [
+        "claim:southern-maritime:01"
+      ],
+      "entityKey": "external:southern-maritime:01",
+      "entityType": "RemoteGate",
+      "legacyCandidateKeys": [
+        "legacy-external:X057"
+      ],
+      "lifecycle": {
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "status": "UNKNOWN"
+      },
+      "locationStatus": "SOURCE_TEXT_ONLY",
+      "reviewState": "INACTIVE_ALIAS_CANDIDATE",
+      "scenarioStates": [
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "0",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "2",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "900",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "901",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "902",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "903",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "905",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "906",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "908",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "910",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "911",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "912",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "913",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "914",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1010",
+          "startYear": 181,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1020",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1021",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1030",
+          "startYear": 191,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1031",
+          "startYear": 192,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1040",
+          "startYear": 193,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1041",
+          "startYear": 194,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1050",
+          "startYear": 197,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1060",
+          "startYear": 199,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1070",
+          "startYear": 204,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1080",
+          "startYear": 210,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1090",
+          "startYear": 216,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1100",
+          "startYear": 222,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1110",
+          "startYear": 225,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1120",
+          "startYear": 188,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "9200",
+          "startYear": 190,
+          "state": "INACTIVE"
+        }
+      ]
+    },
+    {
+      "aliases": [],
+      "canonicalName": "山越",
+      "claimRefs": [
+        "claim:southern-maritime:02"
+      ],
+      "entityKey": "external:southern-maritime:02",
+      "entityType": "PolityPresence",
+      "legacyCandidateKeys": [
+        "legacy-external:X061"
+      ],
+      "lifecycle": {
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "status": "UNKNOWN"
+      },
+      "locationStatus": "REMOTE_ONLY",
+      "reviewState": "APPROVED",
+      "scenarioStates": [
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "0",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "2",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "900",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "901",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "902",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "903",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "905",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "906",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "908",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "910",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "911",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "912",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "913",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "914",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1010",
+          "startYear": 181,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1020",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1021",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1030",
+          "startYear": 191,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1031",
+          "startYear": 192,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1040",
+          "startYear": 193,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1041",
+          "startYear": 194,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1050",
+          "startYear": 197,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1060",
+          "startYear": 199,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1070",
+          "startYear": 204,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1080",
+          "startYear": 210,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1090",
+          "startYear": 216,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1100",
+          "startYear": 222,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1110",
+          "startYear": 225,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1120",
+          "startYear": 188,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "9200",
+          "startYear": 190,
+          "state": "INACTIVE"
+        }
+      ]
+    },
+    {
+      "aliases": [],
+      "canonicalName": "林邑",
+      "claimRefs": [
+        "claim:southern-maritime:03"
+      ],
+      "entityKey": "external:southern-maritime:03",
+      "entityType": "PolityPresence",
+      "legacyCandidateKeys": [],
+      "lifecycle": {
+        "effectiveFrom": null,
+        "effectiveTo": null,
+        "status": "UNKNOWN"
+      },
+      "locationStatus": "REMOTE_ONLY",
+      "reviewState": "APPROVED",
+      "scenarioStates": [
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "0",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "2",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "900",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "901",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "902",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "903",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "905",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "906",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "908",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "910",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "911",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "912",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "913",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "914",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1010",
+          "startYear": 181,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1020",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1021",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1030",
+          "startYear": 191,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1031",
+          "startYear": 192,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1040",
+          "startYear": 193,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1041",
+          "startYear": 194,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1050",
+          "startYear": 197,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1060",
+          "startYear": 199,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1070",
+          "startYear": 204,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1080",
+          "startYear": 210,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1090",
+          "startYear": 216,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1100",
+          "startYear": 222,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1110",
+          "startYear": 225,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "1120",
+          "startYear": 188,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "UNKNOWN_LIFECYCLE_FAIL_CLOSED",
+          "scenarioId": "9200",
+          "startYear": 190,
+          "state": "INACTIVE"
+        }
+      ]
+    },
+    {
+      "aliases": [],
+      "canonicalName": "扶南",
+      "claimRefs": [
+        "claim:southern-maritime:04"
+      ],
+      "entityKey": "external:southern-maritime:04",
+      "entityType": "PolityPresence",
+      "legacyCandidateKeys": [],
+      "lifecycle": {
+        "effectiveFrom": 245,
+        "effectiveTo": null,
+        "status": "KNOWN_FROM_SOURCE"
+      },
+      "locationStatus": "REMOTE_ONLY",
+      "reviewState": "APPROVED",
+      "scenarioStates": [
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "0",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "2",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "900",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "901",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "902",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "903",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "905",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "906",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "908",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "910",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "911",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "912",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "913",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "914",
+          "startYear": 180,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1010",
+          "startYear": 181,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1020",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1021",
+          "startYear": 187,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1030",
+          "startYear": 191,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1031",
+          "startYear": 192,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1040",
+          "startYear": 193,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1041",
+          "startYear": 194,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1050",
+          "startYear": 197,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1060",
+          "startYear": 199,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1070",
+          "startYear": 204,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1080",
+          "startYear": 210,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1090",
+          "startYear": 216,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1100",
+          "startYear": 222,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1110",
+          "startYear": 225,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "1120",
+          "startYear": 188,
+          "state": "INACTIVE"
+        },
+        {
+          "reason": "BEFORE_SOURCE_ATTESTATION_245",
+          "scenarioId": "9200",
+          "startYear": 190,
+          "state": "INACTIVE"
+        }
+      ]
+    }
+  ],
+  "packId": "southern-maritime",
+  "relativeItineraries": [],
+  "reviewState": "APPROVED_DATA_CONTRACT",
+  "runtimeActivation": "NOT_CLAIMED_BY_W1_B_DATA_CONTRACT",
+  "schemaVersion": 1,
+  "sourceCandidateSetId": "han-external-world-candidates-v1",
+  "sourceCandidateSetSha256": "dd7359dee0060c941e563aaa3ed6ecf19086e700343518f940deae6d9bbd63fb",
+  "sourceRegistry": [
+    {
+      "lineEnd": 23,
+      "lineStart": 23,
+      "path": "data/corpus/sgz-55.txt",
+      "sha256": "af14d36115960881146ec95d5fdf1087db58e28d3ea95541bb050a8d63778f2e",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "sgz-55-shanyue",
+      "verbatim": "{{gap}}諸山越不賔，有寇難之縣，輙用蓋爲守長。石城縣吏，特難檢御，蓋乃署兩掾，分主諸曹。教曰：「令長不德，徒以武功爲官，不以文吏爲稱。今賊寇未平，有軍旅之務，一以文書委付兩掾，當檢攝諸曹，糾擿謬誤。兩掾所署，事入諾出，若有姦欺，終不加以鞭杖，宜各盡心，無爲衆先。」初皆怖威，夙夜恭職；久之，吏以蓋不視文書，漸容人事。蓋亦嫌外懈怠，時有所省，各得兩掾不奉法數事。乃悉請諸掾吏，賜酒食，因出事詰問。兩掾辭屈，皆叩頭謝罪。蓋曰：「前已相勑，終不以鞭杖相加，非相欺也。」遂殺之。縣中震慄。後轉春穀長，尋陽令。凡守九縣，所在平定。遷丹楊都尉，抑彊扶弱，山越懷附。"
+    },
+    {
+      "lineEnd": 9,
+      "lineStart": 9,
+      "path": "data/corpus/sui-082.txt",
+      "sha256": "88adade28ed069e97b6d42236c549d0f978422936ac64972f342bcd2d60ce726",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "suishu-82-linyi",
+      "verbatim": "林邑之先，因漢末交阯女子徵側之亂，內縣功曹子區連殺縣令，自號為王。無子，其甥范熊代立，死，子逸立。日南人范文因亂為逸僕隸，遂教之築宮室，造器械。逸甚信任，使文將兵，極得眾心。文因間其子弟，或奔或徙。及逸死，國無嗣，文自立為王。其後范佛為晉揚威將軍戴桓所破。宋交州刺史檀和之將兵擊之，深入其境。至梁、陳，亦通使往來。"
+    },
+    {
+      "lineEnd": 85,
+      "lineStart": 85,
+      "path": "data/corpus/sgz-47.txt",
+      "sha256": "947cbb6a295e8aea0056cf89cb662d648f14f4fefacdf149ea46f3ccd9c8af01",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "sgz-47-yizhou",
+      "verbatim": "　　二年春正月，魏作合肥新城。詔立[[w:都講祭酒|都講祭酒]]，以教學諸子。遣將軍衞溫、諸葛直將甲士萬人，浮海求[[w:夷洲|夷洲]]及[[w:亶洲|亶洲]]。亶洲在海中，長老傳言：秦始皇帝遣方士徐福將童男童女數千人入海，求蓬萊神山及仙藥，止此洲不還。世相承有數萬家，其上人民。時有至會稽貨布，會稽東縣人海行，亦有遭風流移至亶洲者。所在絶遠，卒不可得至，但得夷洲數千人還。"
+    },
+    {
+      "lineEnd": 119,
+      "lineStart": 119,
+      "path": "data/corpus/sgz-47.txt",
+      "sha256": "947cbb6a295e8aea0056cf89cb662d648f14f4fefacdf149ea46f3ccd9c8af01",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "sgz-47-funan",
+      "verbatim": "　　六年春正月，新都言白虎見。諸葛恪-{征}-六安，破魏將謝順營，收其民人。冬十一月，丞相顧雍卒。十二月，[[w:扶南|扶南]]王-{范}-旃遣使獻樂人及方物。是歳，司馬宣王率軍入舒，諸葛恪自皖遷於柴桑。"
+    },
+    {
+      "lineEnd": 69,
+      "lineStart": 67,
+      "path": "data/corpus/sui-081.txt",
+      "sha256": "52527afc31a2cba6581fa24d1046c6755f88a5707e85a6f2c69cf2df3ed9b01f",
+      "sourceProximity": "OFFICIAL_HISTORY",
+      "sourceRef": "suishu-81-liuqiu",
+      "verbatim": "==流求國==\n\n　{{ul|流求國}}，居海島之中，當{{ul|建安郡}}東，水行五日而至。土多山洞。其王姓{{ul|歡斯氏}}，名{{ul|渴剌兜}}，不知其由來有國代數也。彼土人呼之為可老羊，妻曰多拔荼。所居曰{{ul|波羅檀洞}}，壍柵三重，環以流水，樹棘為藩。王所居舍，其大一十六間，琱刻禽獸。多鬬鏤樹，似橘而葉密，條纖如髮，紛然下垂。國有四五帥，統諸洞，洞有小王。往往有村，村有鳥了帥，並以善戰者為之，自相樹立，理一村之事。男女皆以白紵繩纏髮，從項後盤繞至額。其男子用鳥羽為冠，裝以珠貝，飾以赤毛，形製不同。婦人以羅紋白布為帽，其形正方。織鬬鏤皮并雜色紵及雜毛以為衣，製裁不一。綴毛垂螺為飾，雜色相間，下垂小貝，其聲如珮。綴鐺施釧，懸珠於頸。織藤為笠，飾以毛羽。有刀、矟、弓、箭、劍、鈹之屬。其處少鐵，刃皆薄小，多以骨角輔助之。編紵為甲，或用熊豹皮。王乘木獸，令左右轝之而行，導從不過數十人。小王乘机，鏤為獸形。國人好相攻擊，人皆驍健善走，難死而耐創。諸洞各為部隊，不相救助。兩陣相當，勇者三五人出前跳噪，交言相罵，因相擊射。如其不勝，一軍皆走，遣人致謝，即共和解。收取鬬死者，共聚而食之，仍以髑髏將向王所。王則賜之以冠，使為隊帥。無賦斂，有事則均稅。用刑亦無常准，皆臨事科決。犯罪皆斷於鳥了帥；不伏，則上請於王，王令臣下共議定之。獄無枷鏁，唯用繩縛。決死刑以鐵錐，大如筯，長尺餘，鑽頂而殺之。輕罪用杖。俗無文字，望月虧盈以紀時節，候草藥枯以為年歲。"
+    }
+  ],
+  "summary": {
+    "approvedClaimCount": 5,
+    "approvedEntityCount": 4,
+    "claimCount": 5,
+    "entityCount": 5,
+    "itineraryCount": 0,
+    "legacyCandidateCount": 3,
+    "scenarioStateCount": 155
+  }
+}
