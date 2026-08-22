@@ -5,6 +5,15 @@
 > 상위 문서: `docs/superpowers/specs/2026-07-12-opensamguk-v2-product-spec.md`
 > 레거시 원천: `common/src/main/kotlin/opensamguk/common/constants/GameConst.kt`, `legacy/devsam-core/hwe/sammo/TurnExecutionHelper.php`
 
+> **2026-08-22 확장:** v2 canonical command는 CHE 동작 패러티가 아니라 typed intent/result 계약을
+> 따른다. `personal.travel.plan|cancel`, `logistics.convoy.create|reroute|cancel`,
+> `operation.route.revise`를 카탈로그에 추가하고 infrastructure project의 site를
+> `CITY | ROUTE_SEGMENT | CROSSING`으로 일반화한다. `operation.create/support/reinforce/setRetreat`는
+> route snapshot revision, waypoint, convoy, capacity, arrival window를 명시한다. v1 `che_*` facade와
+> 동결 회귀는 보존하되 새 world에서 즉시 city 변경이나 원격 재고 증가로 번역하지 않는다.
+> command availability는 `AVAILABLE | NEEDS_INPUT | BLOCKED | UNKNOWN`을 구분하며 신규 canonical id가
+> registry에 없으면 휴식 fallback이 아니라 `UNKNOWN_COMMAND`로 닫힌다.
+
 ## 1. 한 줄 규칙
 
 - 개인턴은 장수 관련 명령이다.

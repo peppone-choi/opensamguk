@@ -1,6 +1,6 @@
 # 제품 로드맵
 
-> 마지막 검토: 2026-08-20
+> 마지막 검토: 2026-08-22
 > GitHub 상태는 해당 날짜에 확인했다. Jira 실시간 상태는 권한 문제로 `UNKNOWN`이다.
 
 이 문서는 우선순위와 의존성을 보여 주는 기획 지도다. 티켓의 완료 조건이나 세부 구현 계약은 각 이슈와
@@ -12,6 +12,7 @@
 |---|---|---|---|
 | PHP 절대 패러티 종료 | 승인됨 | ADR-LITE-042, [#478](https://github.com/peppone-choi/opensamguk/issues/478) | 기존 골든은 회귀 기준선으로 보존하고 신규 설계는 오픈삼국 정본을 따른다. |
 | 한나라 세계 전환 | 승인됨 | ADR-LITE-041 | 목표 데이터는 175군·780성·14지역이다. 현재 구현 완료와 동일한 뜻은 아니다. |
+| 행정 지리·수송망 분리 | 승인됨 | ADR-LITE-045 | 현·읍·도·후국 1,180은 역사 행정 카탈로그, 780성은 전수 플레이 RouteNode다. |
 | CQRS daemon write 경로 | 구현됨·유지 | 아키텍처 테스트, ADR-LITE-042 | 메모리 월드와 JDBC delta flush의 단일 쓰기 경로를 유지한다. |
 | 연 36순 날짜 규칙 | 구현됨 | ADR-LITE-024, 현재 UI·설정 | 실제 한 순 간격은 서버 설정을 따르며 예약과 실행 시각을 구분한다. |
 | han 건국·3축 등급 밸런스 | 승인됨 | ADR-LITE-043 | han 맵 전용 공백지 돌파비율(`FOUND_ASSAULT_RATIO=2.0`)·건국 가능 등급(중/소 + 영현/장현)·군치 수 기반 spine 문턱을 정본으로 삼는다. CHE/miniche 건국 돌파비용은 0으로 두고 기존 회귀 픽스처는 frozen-baseline으로 보존한다. |
@@ -27,14 +28,19 @@
 | 게시판 관리 | 진행 중 | [#223](https://github.com/peppone-choi/opensamguk/issues/223), [#468](https://github.com/peppone-choi/opensamguk/issues/468) | 관리자 UI와 board API가 실제 CRUD·권한·감사 경로로 닫힌다. |
 | v2 관리자 표면 | 진행 중 | [#213](https://github.com/peppone-choi/opensamguk/issues/213) | 서버 선택, 권한, 위험 작업 확인, 결과 피드백이 v2에서도 일관된다. |
 
-### P1: 하나의 디자인 시스템과 지도 경험
+### P1: 780성 수송망 위의 지도 경험
 
 | 작업군 | 현재 판정 | 추적 | 기획 결정 |
 |---|---|---|---|
 | 디자인 방향 | 일부 승인 | [#256](https://github.com/peppone-choi/opensamguk/issues/256) | Concept A를 기본 방향으로 사용한다. |
 | 공유 UI 패키지 | 진행 중 | [#258](https://github.com/peppone-choi/opensamguk/issues/258), [#470](https://github.com/peppone-choi/opensamguk/issues/470), [#472](https://github.com/peppone-choi/opensamguk/issues/472) | gateway/game/v2가 토큰·컴포넌트·접근성 기준을 공유한다. 과거 PHP 화면은 참고일 뿐 절대 정본이 아니다. |
-| 한나라 지도 | 진행 중 | [#475](https://github.com/peppone-choi/opensamguk/issues/475) | 175군·780성에서 정보 계층, LOD, 색상, 선택·이동 피드백을 일관되게 제공한다. |
-| 이동 체계 | 기획 진행 | [#473](https://github.com/peppone-choi/opensamguk/issues/473), [#474](https://github.com/peppone-choi/opensamguk/issues/474) | multi-turn travel을 정본화하고 `che`/`miniche` 의존을 제거한다. |
+| 행정 검출·공간 매핑 | 원문 완전·결합 갭 확인 | ADR-LITE-045 | 원문 105군국·1,180항목은 전수 검출했다. 기존 좌표 결합은 1,076개라 104 join gap이 남고, 현재 780 선정은 reviewed manifest로 재검증한다. |
+| 외부 세계 | 재설계 승인 대기 | [#492](https://github.com/peppone-choi/opensamguk/issues/492) | 장소·세력권·여정·remote gate를 분리하고 시나리오 시간축과 위치 불확실성을 보존한다. |
+| 도로·수송망 | 기획 진행 | [#473](https://github.com/peppone-choi/opensamguk/issues/473), [#474](https://github.com/peppone-choi/opensamguk/issues/474) | 780성 전수 node와 승인 corridor, 변경 가능한 도로·수로 infrastructure snapshot을 먼저 고정한다. |
+| 이동·물류·작전 커맨드 | 기획 진행 | [#473](https://github.com/peppone-choi/opensamguk/issues/473), [#474](https://github.com/peppone-choi/opensamguk/issues/474) | 즉시 이동·원격 재고 이전을 durable travel·convoy·Operation으로 바꾸고 route encounter까지 검증한다. |
+| 한나라 지도 | 도메인 선행 대기 | [#475](https://github.com/peppone-choi/opensamguk/issues/475) | 아이소/3D를 미리 고정하지 않고 승인된 route geometry와 live state를 LOD·선택·명령 preview로 표현한다. |
+| canonical command 계약 | 신규 | [#493](https://github.com/peppone-choi/opensamguk/issues/493) | typed availability/result와 unknown fail-closed를 먼저 만들고 travel·convoy·operation이 소비한다. |
+| 귀환 루프·편년체 | 신규 | [#494](https://github.com/peppone-choi/opensamguk/issues/494) | 지난 접속 이후 인과 요약, 내 영향, 작전 회의와 replay를 다음 결정으로 연결한다. |
 
 ### P2: 플레이어 자기관리와 콘텐츠 확장
 
@@ -51,10 +57,12 @@
 3. 디자인 관련 #258, #470, #472를 하나의 공유 디자인 시스템 작업군으로 묶었다.
 4. 161군이나 PHP 화면 절대 복제를 전제로 한 과거 티켓 문구는 ADR-LITE-041/042에 맞춰 재정리 대상이다.
 5. 기능 목록은 route 존재만으로 완료 처리하지 않고 live intake·daemon·운영 결과까지 검증해야 한다.
+6. 지도 구현 순서는 `행정·공간 매핑 → corridor/infrastructure → 이동·수송·보급 → 작전·전투 → renderer`다.
 
-## 티켓 운영 제안
+## 티켓 운영
 
-외부 티켓은 이번 작업에서 수정하지 않았다. 다음 트리아지 때 아래를 권장한다.
+2026-08-22 정본 계획 `docs/superpowers/plans/2026-08-22-beyond-che-world-map-and-game-loop-plan.md`를
+기준으로 지도·커맨드·외부 세계·귀환 루프 티켓을 동기화한다.
 
 - #478은 코드와 ADR 반영 여부를 확인한 뒤 상태와 라벨을 실제 완료 상태에 맞춘다.
 - #472와 #475의 PHP grand truth 표현을 ADR-LITE-042 기준으로 고친다.
