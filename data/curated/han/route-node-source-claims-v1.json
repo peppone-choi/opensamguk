@@ -1,0 +1,380 @@
+{
+  "claimSetId": "han-w0c-route-node-location-claims-v1",
+  "claims": [
+    {
+      "aliases": [],
+      "canonicalName": "龍編",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [
+          "legacy-external-place:X000"
+        ],
+        "rationale": "交趾郡 치소 龍編의 외부 좌표 보조 record다. Luy Lâu/羸𨻻와의 비정 중첩을 숨기지 않고 넓은 불확실성 반경으로 제한 승인한다.",
+        "status": "ADJUDICATED"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "recordId": "X000",
+          "wikidataId": "Q33408"
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "external:v1:X000",
+        "uncertaintyRadiusKm": 75
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-location-claim-v1-x000",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1001,
+          "lineStart": 1001,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖龙编〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:交趾郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "胥浦",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "九真郡 치소 胥浦를 馬江 하류 권역에 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "recordId": "X001",
+          "wikidataId": "Q36175"
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "external:v1:X001",
+        "uncertaintyRadiusKm": 40
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-location-claim-v1-x001",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1027,
+          "lineStart": 1027,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖胥浦〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:九真郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "西捲",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [
+          "legacy-external-place:X002"
+        ],
+        "rationale": "日南郡 西捲 명칭과 외부 좌표 record의 장소 식별을 W0 선택 검토용으로 연결한다.",
+        "status": "ADJUDICATED"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "recordId": "X002",
+          "wikidataId": "Q36579"
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "external:v1:X002",
+        "uncertaintyRadiusKm": 60
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-location-claim-v1-x002",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 1039,
+          "lineStart": 1039,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖西卷〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:日南郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "朝鮮",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "樂浪郡 치소 朝鮮을 평양 낙랑토성 권역에 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "recordId": "X003",
+          "wikidataId": "Q18808"
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "external:v1:X003",
+        "uncertaintyRadiusKm": 25
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-location-claim-v1-x003",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 870,
+          "lineStart": 870,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖朝鲜〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:樂浪郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "襄平",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [],
+        "rationale": "遼東郡 치소 襄平을 요양 권역에 비정한 외부 좌표 보조 record다.",
+        "status": "NONE"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "recordId": "X005",
+          "wikidataId": "Q75203"
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "external:v1:X005",
+        "uncertaintyRadiusKm": 35
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-location-claim-v1-x005",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 832,
+          "lineStart": 832,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖襄平〗",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "高句驪",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [
+          "legacy-external-place:X006"
+        ],
+        "rationale": "玄菟郡 高句驪 명칭과 무순 권역 외부 좌표 record의 장소 식별을 W0 선택 검토용으로 연결한다.",
+        "status": "ADJUDICATED"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "recordId": "X006",
+          "wikidataId": "Q75026"
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "external:v1:X006",
+        "uncertaintyRadiusKm": 60
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-location-claim-v1-x006",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 856,
+          "lineStart": 856,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖高句骊〗辽山，辽水出。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:玄菟郡:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "昌遼",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [
+          "legacy-external-place:X007"
+        ],
+        "rationale": "遼東屬國 치소 昌遼의 昌黎 이표기와 의현 권역 비정을 함께 보존한 외부 좌표 보조 record다.",
+        "status": "ADJUDICATED"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "recordId": "X007",
+          "wikidataId": "Q1331458"
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "external:v1:X007",
+        "uncertaintyRadiusKm": 45
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-location-claim-v1-x007",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 908,
+          "lineStart": 908,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖昌辽〗故天辽，属辽西。",
+          "volume": 113
+        }
+      ],
+      "subjectKey": "hhs:113:遼東屬國:001",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    },
+    {
+      "aliases": [],
+      "canonicalName": "龜茲",
+      "claimRole": "LOCATION_ONLY",
+      "conflictDisposition": {
+        "rationaleCode": "PLACE_IDENTITY_ONLY",
+        "competingRefs": [
+          "legacy-external-place:X026"
+        ],
+        "rationale": "가짜 독립 군국 표기를 폐기하고 《後漢書》 권65의 上郡 소속 縣 龜茲로 교정한다. 물리점은 유림 북부 후보로만 제한 승인한다.",
+        "status": "ADJUDICATED"
+      },
+      "locationResolution": {
+        "coordinateDatasetRef": {
+          "datasetPath": "data/curated/han/route-node-external-place-authority-v1.json",
+          "datasetSha256": "17e11dad39a15b999dc7e498def8ab3046fefcf9db15a3f7fe3da90dcc65175a",
+          "recordId": "X026",
+          "wikidataId": "Q641396"
+        },
+        "kind": "POINT_REF",
+        "physicalPlaceId": "external:v1:X026",
+        "uncertaintyRadiusKm": 55
+      },
+      "reviewEvidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/route-node-external-place-authority-v1.json",
+        "data/curated/han/route-node-source-witness-v1.json"
+      ],
+      "reviewState": "APPROVED",
+      "selectionReviewCoverage": "W0_ROUTE_NODE_PLACE_IDENTITY_ONLY",
+      "sourceClaimId": "han-location-claim-v1-x026",
+      "sourceRecords": [
+        {
+          "corpusPath": "data/corpus/hhs-113.txt",
+          "lineEnd": 581,
+          "lineStart": 581,
+          "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "sourceBook": "後漢書",
+          "verbatim": "〖龟兹属国〗",
+          "volume": 113
+        },
+        {
+          "corpusPath": "data/corpus/hhs-065.txt",
+          "lineEnd": 49,
+          "lineStart": 49,
+          "snapshotSha256": "8c73aa6dfa50593ddfc410d404bfe68e9df3eee8a01cfd97baad5dbd9a672ed4",
+          "sourceBook": "後漢書",
+          "verbatim": "龜茲音丘慈，縣名，屬上郡。",
+          "volume": 65
+        }
+      ],
+      "subjectKey": "hhs:113:上郡:009",
+      "subjectType": "ADMINISTRATIVE_PLACE"
+    }
+  ],
+  "policy": {
+    "coordinateFieldsCopiedIntoThisArtifact": 0,
+    "externalHistoricalBindingCount": 0,
+    "legacyInfiniteLifecycleAccepted": false,
+    "purpose": "CHGIS V6 county coverage 밖의 HHS administrative unit 8건에만 유한 W0 물리 anchor를 제공한다.",
+    "selectionBasis": "HHS_ADMINISTRATIVE_UNIT"
+  },
+  "reviewAuthority": "user-blanket-approval-2026-08-22",
+  "reviewedAt": "2026-08-22",
+  "reviewedBy": "codex-w0c-root",
+  "schemaVersion": 1,
+  "status": "APPROVED"
+}

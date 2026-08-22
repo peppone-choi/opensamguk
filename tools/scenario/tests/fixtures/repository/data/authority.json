@@ -1,0 +1,12 @@
+{
+  "records": [
+    {"recordId":"X773","physicalPlaceId":"external:v1:X773","wikidataId":"Q773","subjectKey":"hhs:113:上郡:773","canonicalName":"縣773"},
+    {"recordId":"X774","physicalPlaceId":"external:v1:X774","wikidataId":"Q774","subjectKey":"hhs:113:上郡:774","canonicalName":"縣774"},
+    {"recordId":"X775","physicalPlaceId":"external:v1:X775","wikidataId":"Q775","subjectKey":"hhs:113:上郡:775","canonicalName":"縣775"},
+    {"recordId":"X776","physicalPlaceId":"external:v1:X776","wikidataId":"Q776","subjectKey":"hhs:113:上郡:776","canonicalName":"縣776"},
+    {"recordId":"X777","physicalPlaceId":"external:v1:X777","wikidataId":"Q777","subjectKey":"hhs:113:上郡:777","canonicalName":"縣777"},
+    {"recordId":"X778","physicalPlaceId":"external:v1:X778","wikidataId":"Q778","subjectKey":"hhs:113:上郡:778","canonicalName":"縣778"},
+    {"recordId":"X779","physicalPlaceId":"external:v1:X779","wikidataId":"Q779","subjectKey":"hhs:113:上郡:779","canonicalName":"縣779"},
+    {"recordId":"X780","physicalPlaceId":"external:v1:X780","wikidataId":"Q780","subjectKey":"hhs:113:上郡:780","canonicalName":"縣780"}
+  ]
+}

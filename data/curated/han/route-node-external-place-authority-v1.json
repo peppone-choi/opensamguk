@@ -1,0 +1,62 @@
+{
+  "authority": "OPENSAM-225 reviewed external place identities",
+  "records": [
+    {
+      "canonicalName": "龍編",
+      "physicalPlaceId": "external:v1:X000",
+      "recordId": "X000",
+      "subjectKey": "hhs:113:交趾郡:001",
+      "wikidataId": "Q33408"
+    },
+    {
+      "canonicalName": "胥浦",
+      "physicalPlaceId": "external:v1:X001",
+      "recordId": "X001",
+      "subjectKey": "hhs:113:九真郡:001",
+      "wikidataId": "Q36175"
+    },
+    {
+      "canonicalName": "西捲",
+      "physicalPlaceId": "external:v1:X002",
+      "recordId": "X002",
+      "subjectKey": "hhs:113:日南郡:001",
+      "wikidataId": "Q36579"
+    },
+    {
+      "canonicalName": "朝鮮",
+      "physicalPlaceId": "external:v1:X003",
+      "recordId": "X003",
+      "subjectKey": "hhs:113:樂浪郡:001",
+      "wikidataId": "Q18808"
+    },
+    {
+      "canonicalName": "襄平",
+      "physicalPlaceId": "external:v1:X005",
+      "recordId": "X005",
+      "subjectKey": "hhs:113:遼東郡:001",
+      "wikidataId": "Q75203"
+    },
+    {
+      "canonicalName": "高句驪",
+      "physicalPlaceId": "external:v1:X006",
+      "recordId": "X006",
+      "subjectKey": "hhs:113:玄菟郡:001",
+      "wikidataId": "Q75026"
+    },
+    {
+      "canonicalName": "昌遼",
+      "physicalPlaceId": "external:v1:X007",
+      "recordId": "X007",
+      "subjectKey": "hhs:113:遼東屬國:001",
+      "wikidataId": "Q1331458"
+    },
+    {
+      "canonicalName": "龜茲",
+      "physicalPlaceId": "external:v1:X026",
+      "recordId": "X026",
+      "subjectKey": "hhs:113:上郡:009",
+      "wikidataId": "Q641396"
+    }
+  ],
+  "schemaVersion": 1
+}

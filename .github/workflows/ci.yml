@@ -17,6 +17,13 @@ jobs:
           fetch-depth: 0
       - name: Check provider-agnostic agent working system
         run: python3 tools/agent-system/check.py --strict --base origin/main
+      - name: Verify Han map and route-node data contracts
+        run: |
+          python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
+          python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
+          python3 tools/scenario/han_route_node_candidates.py --check
+          python3 tools/scenario/han_route_node_selection.py --check
+          python3 tools/scenario/validate_han_route_node_selection.py
       - name: Verify v2 sandbox compose contract
         run: bash tools/ops/v2_sandbox_compose_contract_test.sh
       - name: Verify JWT rollout contract
