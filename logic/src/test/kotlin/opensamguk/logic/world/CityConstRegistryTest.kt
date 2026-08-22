@@ -114,7 +114,23 @@ class CityConstRegistryTest {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(graph.toByteArray())
             .joinToString("") { "%02x".format(it) }
-        assertEquals("a6d9370725010714960508bee046420ea671dddd8339f9e3b8796dddd2606014", digest)
+        // 2026-08-22 의도적 갱신: 섬 郡治 5개(이주·유구·우산국·주호·야마일국)가 육지 인접 0개라
+        // 도달 불가였고 checkEmperior 의 「전 城 소유」가 영구 불가능했다. build_han_world.py 의
+        // SEA_LINKS(사료 근거 4 + UNKNOWN 1)로 해상 간선 5개를 붙이면서 해시가 바뀐다.
+        assertEquals("88d14c49b03d96214b9e3e44abd91e7496269731070bd9e2fd704e18109cbd7b", digest)
+    }
+
+    @Test
+    fun `Han graph is fully connected — every city reachable from id 1`() {
+        val han = CityConstRegistry.of("han")
+        val seen = mutableSetOf(1)
+        val queue = ArrayDeque(listOf(1))
+        while (queue.isNotEmpty()) {
+            val cur = queue.removeFirst()
+            for (next in han.byId(cur)!!.path.keys) if (seen.add(next)) queue.addLast(next)
+        }
+        assertEquals(han.all().size, seen.size,
+            "고립 城: " + han.all().keys.filter { it !in seen })
     }
 
     @Test

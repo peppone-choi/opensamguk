@@ -151,6 +151,33 @@ BUILD_INIT = {
 LING_HOUSEHOLDS = 10000
 STAT_KEYS = ("population", "agriculture", "commerce", "security", "defence", "wall")
 
+# 해상 간선 — (섬 郡 nameCh, 육지 郡 nameCh, 근거).
+#
+# 縣 인접은 육지 보로노이라 섬 郡治는 연결이 0개로 나온다. 그 상태면 이동·출병이 전부
+# 인접 기반이라 도달 경로 자체가 없고, checkEmperior 가 「전 城 소유」를 요구하므로
+# 천하통일이 불가능해진다(측정: 780성 중 5성 고립).
+#
+# 그렇다고 섬을 가까운 육지에 기계적으로 붙이지 않는다. 사서가 항로를 적어 둔 쌍만 잇고,
+# 근거가 없는 것은 UNKNOWN 으로 명시한 채 최근접 육지 治所에 붙인다 — 지어낸 근거로
+# 채우지 않는다. 인용은 data/corpus 색인에서 직접 뽑은 원문이다.
+SEA_LINKS: list[tuple[str, str, str]] = [
+    ("夷洲", "會稽郡",
+     "讀史方輿紀要 卷94 인용 後漢書 東夷傳 「會稽海外有夷洲、亶洲」 + "
+     "三國志 吳書 孫權傳 黃龍二年 「遣將軍衞溫、諸葛直將甲士萬人，浮海求夷洲及亶洲」"),
+    ("流求", "會稽郡",
+     "隋書 卷81 東夷 流求國 「流求國，居海島之中，當建安郡東，水行五日而至」 — "
+     "建安郡은 260년 會稽에서 분치됐으므로 220년 시점의 관할은 會稽郡이다"),
+    ("州胡", "辟卑離國",
+     "三國志 魏書30 韓 「又有州胡在馬韓之西海中大島上 … 乘船往來，巿買韓中」 — "
+     "지도에 馬韓 자체는 없고 馬韓 소국만 있어 그중 최근접(257km)인 辟卑離國에 붙인다"),
+    ("邪馬壹國", "狗邪國",
+     "三國志 魏書30 倭人 「從郡至倭，循海岸水行，歷韓國 … 到其北岸狗邪韓國，七千餘里，"
+     "始渡一海，千餘里至對馬國」 — 도해 기점이 狗邪韓國이다"),
+    ("于山國", "悉直國",
+     "UNKNOWN — 색인된 사서(三國志·後漢書·晉書·隋書·資治通鑑·讀史方輿紀要 등)에 "
+     "于山國·鬱陵 용례 0건이다(三國史記 미수록). 근거 없이 최근접 육지 治所(152km)에 붙인다"),
+]
+
 
 def canon_ju() -> dict[str, str]:
     """build_junguozhi.py 의 CANON_105 를 파싱해 郡→州(한자) 를 만든다.
@@ -236,6 +263,11 @@ GATE_PLACES: dict[str, list[str]] = {
     "雒陽": ["雒阳县"],          # 河南尹 治所. 지도 城 이름은 간체 표기.
     "秭歸": ["秭归县"],          # 南郡 소속 縣(治所 아님) — seatOwner 격자로 南郡에 붙는다.
     "巴": ["巴郡", "巴西郡", "宕渠郡"],   # 巴人의 땅 = 巴郡에서 갈라진 세 郡.
+    "武陵": ["武陵郡"],          # 五谿蠻(武陵蠻)의 땅. 沙摩柯가 이릉에 이끌고 온 그 집단.
+    "牂牁": ["牂牁郡", "牂柯郡"],  # 지도에 牂牁/牂柯 두 표기가 다 있다.
+    "越巂": ["越巂郡", "越嶲郡"],  # 같은 이유로 두 표기.
+    "永昌": ["永昌郡"],
+    "鬱林": ["鬱林郡"],          # 烏滸蠻의 땅(後漢書 南蠻傳, 谷永의 招降).
     # 益州 남부 = 南中. 지도에 牂牁/牂柯, 越巂/越嶲 두 표기가 다 있어 둘 다 넣는다.
     "南中": ["益州郡", "永昌郡", "牂牁郡", "牂柯郡", "越巂郡", "越嶲郡", "犍為屬國", "哀牢"],
     # 부족·외부 세력.
@@ -250,7 +282,9 @@ GATE_PLACES: dict[str, list[str]] = {
     "胡": ["金城郡"],            # 湟中義從胡의 근거지 湟中이 金城郡이다.
     "賨": ["宕渠郡", "巴郡"],     # 賨人(板楯蠻)의 본거지가 巴郡 宕渠縣, 뒤에 宕渠郡.
     "叟": ["益州郡", "越巂郡", "越嶲郡", "永昌郡"],   # 叟兵은 南中 이민족 병력이다.
-    "蠻": ["哀牢"],              # 지도의 남만 거점 이름이 哀牢.
+    "蠻": ["哀牢", "武陵郡", "鬱林郡"],   # 남만 거점 哀牢 + 五谿蠻(武陵)·烏滸蠻(鬱林)의 郡.
+    # 南中의 夷 — 益州·永昌·牂牁·越巂 네 郡과 哀牢. 叟와 겹치되 叟보다 넓은 총칭이다.
+    "夷": ["益州郡", "永昌郡", "牂牁郡", "牂柯郡", "越巂郡", "越嶲郡", "哀牢"],
     "高句麗": ["國內城", "卒本"],  # 고구려 도읍 — 지도는 성 이름(國內城)과 초기 도읍(卒本)으로 둔다.
     "沃沮": ["東沃沮", "北沃沮"],
     "濊": ["濊"],
@@ -529,6 +563,23 @@ def build() -> tuple[dict, str, str, dict]:
             link(a, b)
             patched += 1
 
+    # 4. 섬 治所는 위 1~3 어디에도 걸리지 않는다(육지 인접이 없다). SEA_LINKS 만 잇는다.
+    jun_by_ch = {j["nameCh"]: i for i, j in enumerate(juns)}
+    sea_links: list[str] = []
+    sea_missing: list[str] = []
+    for island_ch, shore_ch, why in SEA_LINKS:
+        ai, bi = jun_by_ch.get(island_ch), jun_by_ch.get(shore_ch)
+        if ai is None or bi is None:
+            sea_missing.append(f"{island_ch}↔{shore_ch}")
+            continue
+        a, b = juns[ai]["seat"], juns[bi]["seat"]
+        if a not in inc_set or b not in inc_set:
+            sea_missing.append(f"{island_ch}↔{shore_ch}")
+            continue
+        if b not in conn[a]:
+            link(a, b)
+        sea_links.append(f"{island_ch}↔{shore_ch}({why.split(' ')[0]})")
+
     out_cities = []
     raw_rows = []
     for ci, jn in order:
@@ -584,6 +635,8 @@ def build() -> tuple[dict, str, str, dict]:
         "byLevel": Counter(c["level"] for c in out_cities),
         "connections": sum(len(v) for v in conn.values()) // 2,
         "patched": patched,
+        "seaLinks": sea_links,
+        "seaMissing": sea_missing,
         "collisions": collisions,
         "unresolved": unresolved,
         "thresholds": (t1, t2, t3),
@@ -626,6 +679,10 @@ def summary(stats: dict) -> None:
     print(f"城 {stats['cityCount']} (郡 {stats['juns']}) · 연결 {stats['connections']} · "
           f"戶 백분위 {stats['thresholds']}", file=e)
     print(f"縣 통로가 없어 治所끼리 직결로 보정한 인접 郡 쌍 {stats['patched']}", file=e)
+    print(f"해상 간선 {len(stats['seaLinks'])}: {', '.join(stats['seaLinks']) or '없음'}", file=e)
+    if stats["seaMissing"]:
+        print(f"경고: 지도에 없어 못 이은 해상 간선 {len(stats['seaMissing'])}: "
+              + ", ".join(stats["seaMissing"]), file=e)
     if stats["seaborne"]:
         print(f"소유 격자가 바다라 제외한 縣 {len(stats['seaborne'])}: "
               + ", ".join(stats["seaborne"]), file=e)
