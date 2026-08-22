@@ -616,3 +616,33 @@
   운영자 선택지로는 지원하지 않는다. han 상수 변경은 수치 변경 기록과 회귀 테스트를
   필수로 한다.
 - Approved by: 사용자(2026-08-19 CHE 계열 은퇴 지시) + OPENSAM-214 승인 티켓
+
+## ADR-LITE-044 현재 아이소 격자와 자동 도로 표현을 폐기한다
+
+- Date: 2026-08-22
+- Status: approved
+- Decision: 미커밋 `HanMap` 아이소 격자와 자동 산출 도로 표현은 제품 방향으로 채택하지 않는다. 새 지도는 렌더링부터 만들지 않고 공간 단위, 도로망, 이동, 보급, 전투 규칙을 먼저 확정한 뒤 그 규칙을 표현하는 화면으로 만든다.
+- Preserved: 후한 역사 지도 데이터, 175군·780성 제품 세계, 도시 좌표와 등급, 재생성 가능한 성·상태 아이콘, 부대·전투 표현 초안은 후속 설계 입력으로 보존한다.
+- Rejected: 지리 격자를 게임 격자로 리샘플한 `HanMap`, 자동 경로 셀을 도로처럼 표시한 구현, 해당 도로 테스트와 아이소 재질 실험은 작업 트리에서 분리한다.
+- Open: 새 지도의 투영 방식, 공간 해상도, 도로 건설 주체와 비용, 이동 시간, 전투 발생 위치는 후속 설계에서 확정한다.
+- Approved by: 사용자("아이소 격자도 맘에 안드는데, 새로 만들고 싶어", 2026-08-22)
+
+## ADR-LITE-045 1,180 현급 행정 카탈로그와 780성 수송망을 분리한다
+
+- Date: 2026-08-22
+- Status: approved
+- Decision: 《후한서》 순제기 기준의 현·읍·도·후국 1,180은 역사 행정 카탈로그로 보존하고,
+  제품 세계는 reviewed selection manifest의 stable `RouteNode` 780개를 목표로 한다. 현재 780개
+  개별 identity는 결손 `zhi` parser 산술에 의존하므로 자동 승인하지 않는다. 둘은 시나리오별
+  provenance mapping으로 연결하되 개수를 서로 대체하거나 자동 확장하지 않는다. 이 결정은
+  ADR-LITE-041의 “현행 175+605 선정을 영구 정본으로 간주”하는 부분을 supersede한다.
+- Decision: 현재 작업트리 `han.json.connections` 1,783개는 승인된 도로 자체가 아니라 geographic
+  corridor 후보 snapshot이다. 과거 1,778과의 차이를 포함해 숫자만 제품 불변식으로 동결하지 않고
+  승인 manifest의 count+hash를 검증한다. 도로·수로·해로·관문·나루·교량은 별도 versioned infrastructure state로 관리하고,
+  이동·출병·수송·보급은 같은 `RouteNetworkSnapshot`을 소비한다.
+- Consequences: 즉시 city-to-city 이동·원격 재고 이전을 v2 완료로 세지 않는다. 진행 중 작전은
+  network revision을 pin하며 변경은 typed invalidation/reroute로 반영한다. 렌더러는 adjacency에서
+  직선을 자동 생성하지 않고 승인된 geometry와 state를 표현한다.
+- Evidence: 《후한서》 권113 「군국지」 “凡郡、國百五，縣、邑、道、侯國千一百八十”. 로컬
+  권109~113 구조 검출은 105군국·1,180항목을 전수 확인했고, 기존 좌표 결합 산출물만 1,076개다.
+- Approved by: 사용자("780성에 적용", "현은 천개 정도가 맞을걸", 2026-08-22)

@@ -1,5 +1,42 @@
 # Work Ownership
 
+## W1-B 외부 세계 5개 pack lane — 2026-08-23 (paused/released)
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `codex-w1b-root` | W1-B 계약·사료 경계, Agent OS 기록, 독립 검토 fan-in | current root checkout | — (released) | paused/released — 사용자 요청으로 구현 중단; current exact tree 검증 미실행; `.ai/handoff.md`에서 재개 | 2026-08-23 |
+| `w1b-contract-source-review` | 5개 pack의 역사·데이터 계약 심층 검토 | current root checkout | — (released, read-only) | completed/released — `CONTRACT-READY / CONTENT FIX-REQUIRED`; UNKNOWN 비활성, 65행·5팩·31/15만 고정 | 2026-08-22 |
+| `w1b-independent-review` | 최초 W1-B 구현의 의미·사료 계약 독립 검토 | current root checkout | — (released, read-only) | completed/released — `fix-required`; 의미 위조, ACTIVE 공집합, lifecycle/ledger/source grade 결함 재현 | 2026-08-23 |
+| `w1b-pack-implementer` | 65행 ledger와 5개 사료 pack·strict validator 구현 | current root checkout | — (released) | interrupted/released — remediation mutation tests 일부 추가 후 사용자 요청으로 중단; 구현/JSON 보수와 current-tree 검증 미실행 | 2026-08-23 |
+
+## W1-A 교통·외부 세계 후보 계약 lane — 2026-08-22 (completed)
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `w1a-contract-implementer` | 기존 1,783 무방향 연결과 외부 65행을 승인 없는 PENDING 후보로 고정하고 W1 계약·검증기를 작성 | current root checkout | — (released) | completed/released — 25/25, actual drift 0, strict source/topology binding, canonical registry SHA fail-closed, 독립 재검토 `cleared`; W1-B 승인·사료 claim·geometry·runtime activation 제외 | 2026-08-22 |
+
+## W0-C reviewed 780 RouteNode lane — 2026-08-22 (completed)
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `codex-w0c-root` | 후보·승인 매니페스트, 외부 위치 claim, 31 시나리오 상태, 숫자 ID 이관 계약 | current root checkout | — (released) | completed/released — 1,960 PENDING, reviewed 780, migration 0/101/25/1, tests 110/110, independent review `cleared`; runtime scenario activation과 live-save cutover는 명시적 차단 | 2026-08-22 |
+
+## W0-B 행정단위·CHGIS 220년 오버레이 lane — 2026-08-22 (active)
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `codex-w0b-root` | 1,180 identity 전수 오버레이와 silent-nearest 0 계약 | current root checkout | — (released) | completed/released — tools/map 25/25, 722/55/400/3, selected physical IDs 722/722 unique, overlay SHA `bfefb8af…`, independent review `cleared` | 2026-08-22 |
+
+## W0-A 후한 군국지 정본 lane — 2026-08-22 (active)
+
+사용자의 목표 범위 내 `전체 승인`(2026-08-22)에 따라, 존재하지 않는 worktree 또는
+종료된 세션에 남아 있던 이전 `.ai/*` 공유 파일 소유권은 이 lane에 한해 해제·승계한다.
+아래 파일 외의 기존 사용자 변경과 다른 lane 소유 파일은 건드리지 않는다.
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `codex-w0a-root` | 105 군국·1,180 현급 단위 공개 정본과 결정적 생성 계약 | current root checkout | — (released) | completed/released — 9/9, 105/1,180 exact, artifact SHA `668165bc…`, independent review `cleared`; W0-B 좌표 결합과 W0-C 780 선택은 제외 | 2026-08-22 |
+
 ## OPENSAM-149 closeout lane — 2026-08-14 (active)
 
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
