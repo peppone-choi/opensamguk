@@ -52,6 +52,8 @@ TIER, TRAIT, RENOWN = T["tiers"], T["traits"], T["renown"]["adjust"]
 BASE_ATK = {int(k): {int(a): b for a, b in v.items()} for k, v in T["armTypeCoef"]["attack"].items()}
 BASE_DEF = {int(k): {int(a): b for a, b in v.items()} for k, v in T["armTypeCoef"]["defence"].items()}
 TRAIT_OF = {m: k for k, v in TRAIT.items() for m in v["members"]}
+TECH_MAT = T["techByMaterial"]
+CEILING = T["materialCeiling"]["rules"]
 GATE_KEYS = tuple(T["gateKeys"])
 WA = T["forbidRegionsForCavalry"]
 
@@ -71,7 +73,7 @@ def mul(base: dict, extra: dict) -> dict:
 
 
 def trait_of(req: dict):
-    for k in ("tribe", "adjacentTribe", "external"):
+    for k in ("tribe", "adjacentTribe", "external", "event"):
         v = req.get(k)
         for t in ([v] if isinstance(v, str) else (v if isinstance(v, list) else [])):
             if t in TRAIT_OF:
@@ -138,6 +140,24 @@ def derive(u: dict) -> dict:
     # 차병은 사람이 적게 먹는다. 다만 0 아래로는 내리지 않는다.
     rice = max(1, cost + (1 if arm == CAV else 0) - (5 if arm == SIEGE else 0))
 
+    # ── 기술축 ①: reqTech 는 손으로 찍지 않고 재료가 정한다. 병종은 그것을 물려받는다.
+    tech_mat = max(TECH_MAT["weapon"].get(weapon, 0),
+                   TECH_MAT["armor"].get(armor, 0),
+                   TECH_MAT["shield"].get(sh or "없음", 0))
+
+    # ── 기술축 ②: 집단 재료 천장. 넘으면 요란하게 실패한다 — 조용히 깎으면 표와 실물이 갈린다.
+    gate_vals = {v for k, v in req_raw.items() if isinstance(v, str)}
+    gate_vals |= {x for v in req_raw.values() if isinstance(v, list) for x in v if isinstance(x, str)}
+    for rule in CEILING:
+        if rule["key"] not in gate_vals:
+            continue
+        if armor in rule.get("forbidArmor", []):
+            sys.exit(f"{u['name']}: {rule['key']} 는 {armor} 를 쓸 수 없다 — {rule['cite']}")
+        if weapon in rule.get("forbidWeapon", []):
+            sys.exit(f"{u['name']}: {rule['key']} 는 {weapon} 를 쓸 수 없다 — {rule['cite']}")
+        if arm in rule.get("forbidArmType", []):
+            sys.exit(f"{u['name']}: {rule['key']} 는 armType {arm} 을 쓸 수 없다 — {rule['cite']}")
+
     gates, notes = [], []
     for k, v in req_raw.items():
         if k in GATE_KEYS and isinstance(v, str):
@@ -152,8 +172,10 @@ def derive(u: dict) -> dict:
             notes.append(f"{k}={v}")
 
     req = []
-    tech = u.get("reqTech", 0) or next((r["reqTech"] for r in (u.get("reqConstraints") or [])
-                                        if r.get("type") == "ReqTech"), 0)
+    # reqTech 는 **순수 유도값**이다. 사료상 특수 부대의 하한은 authored `techFloor` 에만 적는다 —
+    # 유도한 reqTech 를 다시 authored 로 읽으면 매 실행마다 값이 올라가는 피드백 루프가 된다
+    # (2026-08-21 실측: 황건병이 0 → 1000 으로 굳었다).
+    tech = max(u.get("techFloor") or 0, tech_mat)
     if tech:
         req.append({"type": "ReqTech", "reqTech": tech})
     if gates:
@@ -167,6 +189,8 @@ def derive(u: dict) -> dict:
             w_note, a_note] + ([s_note] if s_note else []) + extra
     # 제약 타입이 없는 조건은 문구로만 남긴다 — 없는 메커니즘을 있는 척하지 않는다.
     info += [f"조건(미구현): {n}" for n in notes]
+    if tech_mat:
+        info.append(f"기술 {tech_mat} 요구 — 재료({weapon}·{armor}) 가 정한 하한이다.")
     if u.get("nameCoined"):
         info.append(f"이름 주의: {u['nameCoined']}")
 
@@ -179,7 +203,7 @@ def derive(u: dict) -> dict:
 
 
 KEYS = ["set", "id", "name", "han", "armType", "tier", "tierName", "category", "role",
-        "generic", "derived", "composition", "requires", "evidence", "nameCoined", "attack", "defence",
+        "generic", "derived", "composition", "requires", "evidence", "nameCoined", "techFloor", "attack", "defence",
         "speed", "avoid", "magicCoef", "cost", "rice", "reqTech", "reqConstraints", "attackCoef",
         "defenceCoef", "initSkillTrigger", "phaseSkillTrigger", "iActionList", "info"]
 
