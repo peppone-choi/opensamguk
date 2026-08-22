@@ -27,7 +27,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /**
- * 메일함 read API (W3 enriched + D7/D8). PHP grand truth: `Message`/`MessageTarget`.
+ * 메일함 read API (W3 enriched + D7/D8). PHP frozen historical baseline (ADR-LITE-042; not current product authority): `Message`/`MessageTarget`.
  *
  * W3에서 [MessageResponse]에 body jsonb를 디코드한 구조화 필드(text/srcTarget/destTarget/option)를
  * 채운다. 디코드는 ContactReader와 동일한 [jsonDecode](PHP-faithful) 사용 — body는

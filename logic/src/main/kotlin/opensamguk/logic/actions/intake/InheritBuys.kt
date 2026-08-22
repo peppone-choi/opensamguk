@@ -10,7 +10,7 @@ import opensamguk.common.constants.GameConst
  * (previousPoint·현재 aux·isunited)을 받아 [InheritResetOutcome]를 돌려주고, 엔진 핸들러
  * ([opensamguk] InheritResetHandler)가 그 outcome을 적용한다(general aux mutate +
  * ChangeRecorder inheritance KV `previous` + rank `inherit_point_spent_dynamic` + inheritance_log).
- * RNG는 둘 다 **뽑지 않는다**(결정적). 로그 문자열 byte-parity가 골든 타깃.
+ * RNG는 둘 다 **뽑지 않는다**(결정적). 로그 문자열 동결 회귀가 골든 타깃.
  *
  * 비결정성 주의(BuyRandomUnique): PHP는 `aux.inheritRandomUnique = TimeUtil::now()`로 **타임스탬프**를
  * 적재하지만, 그 값은 다음 턴 가드(`!== null`)의 non-null 마커로만 쓰이고 **로그·포인트 차감에는 들어가지
@@ -26,7 +26,7 @@ object InheritBuys {
      * PHP `TriggerInheritBuff::BUFF_KEY_TEXT` (verbatim). **키는 const VALUE**(warAvoidRatio·
      * domesticSuccessProb·…)이며 `aux.inheritBuff`에 적재되는 `type`과 동일하다(BUFF_KEY_MAP의
      * 'success'/'fail' 매핑 VALUE가 아니다 — 그건 버프 적용 단계에서만 쓰임). 로그 문자열은 이 텍스트를
-     * 쓰므로 byte-parity 타깃. 삽입 순서는 PHP 배열 순서 보존(LinkedHashMap).
+     * 쓰므로 동결 회귀 타깃. 삽입 순서는 PHP 배열 순서 보존(LinkedHashMap).
      */
     val BUFF_KEY_TEXT: Map<String, String> = linkedMapOf(
         "warAvoidRatio" to "회피 확률 증가",

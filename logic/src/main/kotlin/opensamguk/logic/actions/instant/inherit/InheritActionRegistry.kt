@@ -40,8 +40,8 @@ package opensamguk.logic.actions.instant.inherit
 object InheritActionRegistry {
 
     /**
-     * 미포팅 inherit-action 코드-집합 — PHP `API/InheritAction/{ResetStat,CheckOwner}.php`. 정본
-     * 키-집합. (이미 배선된 reset/buy 5종은 [CommandWireMapper.intakeCodes]가 정본이므로 여기 두지 않는다 —
+     * 미포팅 inherit-action 코드-집합 — 동결된 역사 PHP 참고(ADR-LITE-042; 현재 제품 정본 아님):
+     * `API/InheritAction/{ResetStat,CheckOwner}.php`. (이미 배선된 reset/buy 5종은 [CommandWireMapper.intakeCodes]가 정본이므로 여기 두지 않는다 —
      * 중복 진리 회피.)
      */
     val INHERIT_ACTION_CODES: Set<String> = linkedSetOf(

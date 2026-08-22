@@ -204,7 +204,7 @@ export default function DiplomacyPage() {
             showToast('파기 요청을 처리했습니다.');
             fetchData();
         } catch (e) {
-            // 실패 알림 verbatim — legacy destroyLetter catch는 (복붙 버그로) 회수 문구를 쓴다. PHP wins.
+            // 실패 알림 verbatim — legacy destroyLetter catch는 (복붙 버그로) 회수 문구를 쓴다. the frozen historical PHP baseline is retained here.
             showToast('회수를 실패했습니다: ' + (e instanceof Error ? e.message : ''));
         }
     };

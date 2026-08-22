@@ -12,7 +12,7 @@ import kotlin.math.sqrt
 /**
  * L-REWARD — the nation-reward `do<한글>` command family: 포상 / 긴급포상 / 몰수.
  *
- * GRAND TRUTH = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
+ * frozen historical baseline (ADR-LITE-042; not current product authority) = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
  *  - `do유저장긴급포상` (`:1224-1310`, emits `che_포상`, sets `reqUpdateInstance=true` AFTER the gate),
  *  - `do유저장포상`     (`:1312-1417`, emits `che_포상`, NO reqUpdateInstance),
  *  - `doNPC긴급포상`    (`:1419-1511`, emits `che_포상`, sets `reqUpdateInstance=true` AFTER the gate),
@@ -125,8 +125,8 @@ object NationRewardFamily {
      * deterministically by the adapter (append order = the `usort`-then-loop order, never re-sorted). Returns
      * null with ZERO draws when the list is empty (PHP `if (!$candidateArgs) return null;` precedes the draw).
      *
-     * @param candidateArgs the `(argMap, weight)` pairs in PHP append order (the build order IS a parity target;
-     *  `choiceUsingWeightPair` walks it left-to-right consuming exactly ONE `nextFloat1`).
+     * @param candidateArgs the `(argMap, weight)` pairs in retained deterministic append order; the frozen historical
+     *  PHP comparison is regression evidence only (ADR-LITE-042; not current product authority).
      * @return the picked RAW arg map, or null when [candidateArgs] is empty.
      */
     fun pickReward(

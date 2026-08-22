@@ -54,14 +54,14 @@ object GameConst {
 
     const val refreshLimitCoef = 10.0
 
-    const val maxLevel = 255            // PHP grand truth (Nation 0-9 extension is separate)
+    const val maxLevel = 255            // PHP frozen historical baseline (ADR-LITE-042; not current product authority) (Nation 0-9 extension is separate)
 
     /**
      * Nation level 0-9 APPEND table (P3 / AREA F7 / Task FG1).
      *
      * Each row = `[name, chiefCnt, cityCnt]` matching the legacy `getNationLevelList()`
      * (`func_gamerule.php:15-28`) shape. Levels 0..7 are BYTE-IDENTICAL to the legacy 8-entry
-     * array (so the legacy table remains the parity oracle for the 0..7 numerics: the level-up
+     * array (the legacy table is frozen historical evidence, not current product authority, for the 0..7 numerics: the level-up
      * gate, income multiplier, `getNationChiefLevel`, and the `level*1000` gold/rice grant).
      *
      * Levels 8 and 9 are TWO NEW tiers APPENDED ABOVE 황제(7) — the intentional opensamguk

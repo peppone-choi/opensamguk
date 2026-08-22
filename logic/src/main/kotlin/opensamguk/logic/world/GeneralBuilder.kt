@@ -16,7 +16,7 @@ import kotlin.math.floor
  * 단일 [RandUtil] 을 ctor 로 받아 fill 및 build 가 by-reference 로 공유한다(절대 재시드 금지).
  * DB INSERT(general/general_turn/rank_data)는 별도 flush 단(infra/seed)에서 [BuiltGeneral] 을 소비한다.
  *
- * 호출 형상(캡처 grand truth = tools/php-golden/capture_general_builder.php):
+ * 호출 형상(캡처 frozen historical baseline (ADR-LITE-042; not current product authority) = tools/php-golden/capture_general_builder.php):
  *   - 인재탐색형: setSpecial, setMoney, setLifeSpan, setSpecYear, fillRemainSpecAsRandom, build
  *   - RegNPC형: setCity, setStat, setEgo null, setAffinity, setLifeSpan, fillRemainSpecAsZero, build
  *   - CreateManyNPC형: setLifeSpan, fillRandomStat, fillRemainSpecAsZero, build

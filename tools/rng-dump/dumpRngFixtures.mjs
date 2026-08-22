@@ -35,7 +35,8 @@ const out = {};
     iDefault: rng.nextInt(), i15: rng.nextInt(0x0f), i18: rng.nextInt(0x12), i99: rng.nextInt(99) }; }
 
 // (5b) inclusive-max golden: a deterministic block where nextInt(max) draws EXACTLY max (proves n==max ACCEPTED, not just in-range).
-//      Find a seed/max pair from a known block whose first nextInt(max) == max; e.g. the TS oracle pins nextInt(0x99)→0x99.
+//      Find a seed/max pair from a known block whose first nextInt(max) == max; the frozen historical TS fixture
+//      (ADR-LITE-042; not current product authority) records nextInt(0x99)→0x99.
 { const rng = new LiteHashDRBG('inclusiveMax');
   out.intInclusiveMax = { max: 0x99, draw: rng.nextInt(0x99) }; }   // assert draw === max in the Kotlin test
 

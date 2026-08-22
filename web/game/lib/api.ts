@@ -397,7 +397,7 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
 // ── 인테이크 결과 타입 가드 (W0-1 — P0-04/P0-06 근원 처리) ─────────────────────
 // 200 BLOCKED/UNKNOWN도 res.ok라 post()가 정상 resolve된다 — 호출부는 반드시 이 가드로
 // 분기해야 한다. queued(202)는 "접수/예약"이지 성공 확정이 아니다(엔진 비동기 deny 가능,
-// 결과 회신 채널은 W0-4). denied.reason은 PHP byte-parity deny 문자열 — 그대로 노출할 것.
+// 결과 회신 채널은 W0-4). denied.reason은 PHP 동결 회귀 deny 문자열 — 그대로 노출할 것.
 
 /** 202 큐잉(intake 수락) 여부. 성공 확정 아님 — "접수/예약" 시멘틱으로만 표시. */
 export function isIntakeQueued(o: IntakeOutcome): o is IntakeQueued {
@@ -599,7 +599,7 @@ export const api = {
 
     // ── 예약 큐 조작 (W6e bulk/push/repeat × {general, nation}) ───────────────────────────────
     // PHP SammoAPI.Command.* / NationCommand.*(PushCommand·RepeatCommand·ReserveBulkCommand) 대응.
-    // 응답 규약: 202 = 큐 갱신(bulk는 briefList 동봉) / 200 BLOCKED = PHP byte-parity deny 문자열.
+    // 응답 규약: 202 = 큐 갱신(bulk는 briefList 동봉) / 200 BLOCKED = PHP 동결 회귀 deny 문자열.
     // 한계값은 BE가 검증(push ±12, repeat 1..12; 사령부 실효 한계는 maxChiefTurn/2=6 — P0-10).
     commandQueue: {
         /** ReserveBulk(장수) — `[{action, turnList, arg?}]` 일괄 예약 (P0-02 고급 모드). */
@@ -754,7 +754,7 @@ export const api = {
         // (mapper는 `msgID`/`msgId`를 읽는다). 계약 주의: deleteMessage는 인테이크 명령이라 game-api
         // CommandController가 precheck Blocked/Unknown이어도 isForecastReservable→202 reserveAccepted로
         // 재라우팅한다(이 엔드포인트에서 200 BLOCKED는 나오지 않는다). 엔진 MessageHandler.handleDelete의
-        // 실제 deny(본인 아님/5분 초과/시스템 외교 등 PHP byte-parity 문자열)는 GET /api/command/result/{requestId}
+        // 실제 deny(본인 아님/5분 초과/시스템 외교 등 PHP 동결 회귀 문자열)는 GET /api/command/result/{requestId}
         // (RESOLVED + 톱레벨 ok/reason) 채널로만 온다 → 호출부(mailbox 페이지)는 202 후 api.commandResult를 폴링한다.
         deleteMessage: <T = unknown>(
             args: { msgID: number },

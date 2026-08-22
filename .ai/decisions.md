@@ -88,7 +88,7 @@
 ## ADR-LITE-010 v2 콘텐츠 정체성 — RTK 종합으로 devsam 콘텐츠 대체
 
 - Date: 2026-07-17
-- Status: approved
+- Status: approved; parity-authority clauses superseded by ADR-LITE-042
 - Decision: v2의 콘텐츠 정체성은 RTK 시리즈 종합 데이터(맵·시나리오·세력·장수 스탯·초상)로 devsam(체섭) 콘텐츠를 **대체**하는 것이다 — 신규 시나리오 병행이 아니다. devsam 시나리오는 프로덕트 콘텐츠에서 은퇴하고, 패러티 골든 게이트의 **동결 회귀 픽스처**로 강등·보존한다(M-config의 frozen-baseline 메커니즘과 연계). 엔진 시맨틱스(RNG·반올림·로그·전투·AI)와 골든 게이트 자체는 불변.
 - Context: 패러티 P0–P6 폐쇄로 엔진 확보 완료. 소스 실증(2026-07-17): wikiwiki sangokushi14/8r 전 무장 얼굴(633×900)·스탯, san14db Wayback 958/1000 무장 페이지의 시나리오별 세력·소속거점. 사용자 방향 선언: "슬슬 기존 devsam(체섭)의 그늘에서 벗어나야".
 - Alternatives: RTK 콘텐츠를 신규 시나리오로 병행 추가 (기각 — 사용자: "신규 시나리오보단 대체").
@@ -178,7 +178,7 @@
 ## ADR-LITE-018 v1을 오리지널로 동결하고 v2 뉴버전을 상시 운영으로 삼는다
 
 - Date: 2026-07-25
-- Status: approved
+- Status: approved; parity-authority clauses superseded by ADR-LITE-042
 - Decision: 현재 opensamguk(PHP `devsam/core` 패러티 산물)을 **오리지널**로 동결하고, v2를 **뉴버전**으로 구현해 상시 운영 월드로 삼는다. 오리지널은 상시 가동하지 않고 필요할 때 여는 on-demand 월드로 둔다. 동결은 기능 추가 중단을 뜻하며 유지보수 중단이 아니다 — CLAUDE.md 패러티 규율 6항(RNG draw-for-draw, `PhpRound`, 한글 로그 바이트 패러티, flush delta, 골든 날조 금지, 삽입 순서)은 오리지널에 그대로 계속 적용된다. 두 버전은 V2-0A 격리 게이트대로 별도 DB(`opensamguk_v2`)·별도 route/bean/migration으로 분리하며, 한 코드베이스에서 플래그로 공존시키지 않는다.
 - Context: v2는 v1의 확장이 아니라 별도 제품이다(`CommandSubject.subjectType`, Operation, BattleReplay, 3D 지도, 실시간 대형 부대 전장, 200ms tick, 별도 스키마 8종). v1은 PHP 골든이라는 대체 불가능한 정본 오라클을 가진 완성된 패러티 자산이므로 폐기하면 회귀 게이트 자체가 사라진다. 반대로 v1을 계속 주 운영으로 두면 v2 구현 대역이 나오지 않는다. 두 버전을 나누는 시점은 v2 구현 착수 전인 지금이 가장 싸다.
 - Alternatives: v1을 주 운영으로 유지하고 v2를 부가 콘텐츠로(기각 — v2는 전투·주체·tick 모델이 달라 부가로 얹을 수 없고 v1 패러티를 깬다), v1 폐기(기각 — PHP 골든 회귀 게이트와 패러티 자산 소실), 단일 코드베이스에서 런타임 플래그 공존(기각 — V2-0A 격리 게이트 "production profile의 v2 route·bean·migration·catalog loader 수 0" 위반).
@@ -532,6 +532,8 @@
 
 ## ADR-LITE-042 — PHP 패러티를 설계 제약에서 해제한다 (2026-08-20)
 
+<!-- ADR-LITE-042-CONTRACT retired=php_grand_truth,php_wins,draw_for_draw,byte_log,golden_first; retained=truthfulness,frozen_baseline,replay_determinism,one_daemon_write,flush_delta,insertion_order -->
+
 - Date: 2026-08-20
 - Status: approved
 - Approved by: 사용자 (직접 지시, 2026-08-20)
@@ -546,7 +548,8 @@
 **무엇이 풀리나.**
 
 - PHP 가 그랜드 트루스라는 지위. 이제 오픈삼국의 게임 설계가 스스로 정본이다.
-  PHP 와 다르게 만드는 것이 더 이상 divergence(예외 승인 대상)가 아니다.
+  예전의 **`PHP wins`** 우선 규칙은 은퇴했고, PHP 와 다르게 만드는 것이 더 이상
+  divergence(예외 승인 대상)가 아니다.
 - RNG draw-for-draw 일치. 드로우 개수·순서·인자를 PHP 에 맞출 의무가 없다.
   (OPENSAM-216 이 지적한 `GenFoundFamily.kt:410` dist-3 nextBit 소모 등은
   더 이상 블로커가 아니라 설계 자유도다.)
@@ -554,6 +557,7 @@
 - `phpRound` 반올림·`intdiv` 절삭을 "PHP 가 그러니까" 유지할 의무.
   수치 규약은 우리가 정하되, **바꿀 때는 의도적으로 바꾸고 기록한다.**
 - 새 기능을 만들 때 PHP 오라클(`tools/php-golden`) 캡처를 선행 조건으로 두는 것.
+  즉 **golden-first** 작업 순서는 신규 제품 작업의 기본 게이트가 아니다.
 
 **무엇이 남나.** (해제된 것은 "PHP 와 같아야 한다"이지 "품질 기준"이 아니다.)
 

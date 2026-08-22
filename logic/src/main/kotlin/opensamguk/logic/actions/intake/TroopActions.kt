@@ -10,7 +10,7 @@ import opensamguk.logic.util.StringUtil
  * `TroopHandler` applies (world troop lifecycle + ChangeRecorder general delta). Mirrors the slice-A
  * [NationFinanceSetters] split (logic = pure validators, handler = world effects).
  *
- * Troop identity convention (GRAND TRUTH `troop` table): a troop's id IS its `troop_leader`, which
+ * Troop identity convention (frozen historical baseline (ADR-LITE-042; not current product authority) `troop` table): a troop's id IS its `troop_leader`, which
  * equals the leader general's id. A general's `troop` field is `0` (no troop) or the `troop_leader`
  * id of its troop; the leader's own `troop` equals its own id.
  *
@@ -72,7 +72,7 @@ object TroopActions {
     // ── KickFromTroop.php ──────────────────────────────────────────────────────────────────────
     // PHP NOTE: `launch()` operates on `args['generalID']` (the TARGET) and NEVER references the
     // acting session general — there is NO kicker permission/ownership check. This is ported VERBATIM
-    // (faithful-port rule 5: PHP is grand truth). The missing authz is logged as a P8 parity-fidelity
+    // (faithful-port rule 5: PHP is frozen historical baseline (ADR-LITE-042; not current product authority)). The missing authz is logged as a P8 parity-fidelity
     // backlog item, NOT silently hardened here (a check would diverge from devsam/core).
     sealed interface KickOutcome {
         data class Denied(val reason: String) : KickOutcome

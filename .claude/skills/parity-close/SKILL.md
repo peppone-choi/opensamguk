@@ -36,9 +36,9 @@ actions use `web/game` `CommandModal` where that page contract requires it.
 
 ## SAFETY GATES (non-negotiable — read before every step)
 
-1. **Never weaken a test. Never edit a golden.** On a mismatch, fix the **Kotlin impl**, not the fixture. Touching `logic/src/test/resources/golden/**` to make red go green is forbidden.
-2. **RNG-bearing commands are the highest-care path and MUST be golden-gated before commit.** If the command draws randomness (`RandUtil`/`LiteHashDrbg`), it is **not committable** until a `*GoldenTest`/`*ReplayGateTest` replays the real PHP draw stream **draw-for-draw green**. Draw **order + count + method-args** are the parity targets, not just the result.
-3. **Never fabricate a golden.** Numbers/logs/seeds for this historical comparison come only from a real PHP capture (`tools/php-golden/`, Docker). If a value cannot be captured faithfully, quarantine with proof and log it. Inventing a value breaks the evidence contract.
+1. **Preserve existing tests and goldens as frozen regression baselines.** An approved product change may update expectations only with an explicit per-path reason, executed regression command/result, and cleared critique; deletion is forbidden.
+2. **RNG-bearing commands are the highest-care path.** Preserve replay determinism and existing `*GoldenTest`/`*ReplayGateTest` coverage. PHP draw streams are optional historical evidence, not a prerequisite or current product authority (ADR-LITE-042).
+3. **Never fabricate a golden.** Intentional expectation updates require truthful current-diff evidence. Historical PHP capture (`tools/php-golden/`, Docker) is opt-in evidence, never a mandatory oracle.
 4. **Verify by TEST XML, not exit code.** The host routes gradle through a context-mode wrapper; `task-notification` exit 0 is unreliable. Read `logic/build/test-results/test/*.xml` + grep `BUILD SUCCESSFUL` from the tail. Use `--rerun-tasks` to defeat UP-TO-DATE false-greens. Java 21: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew ...` from repo root.
 5. **One logical commit** at the very end, message ending with the trailer:
    ```
@@ -53,14 +53,14 @@ Run sequentially. Each step delegates to its agent; do not skip ahead. Use CodeG
 
 ### 1. Capture golden — agent: `golden-capturer`
 - Read the PHP class first (`hwe/sammo/Command/General/<Code>.php` or `Command/Nation/<Code>.php`) to determine **does it draw RNG?** and **what does it mutate?**
-- **RNG-free + deterministic** (e.g. pure stat/gold deltas, no `rand`): a golden fixture may be unnecessary. **You MUST state explicitly why** (quote the PHP showing no `RandUtil`/`rand`/`pickOne` call) and let the GoldenTest assert log/delta byte-parity against PHP-derived expected strings instead. Do not silently skip.
+- **RNG-free + deterministic** (e.g. pure stat/gold deltas, no `rand`): a golden fixture may be unnecessary. For explicitly selected historical maintenance, state why and assert the selected log/delta evidence. Do not silently skip.
 - **RNG-bearing**: capture is **mandatory**. Run the Docker harness (`tools/php-golden/`, MariaDB 11.4 + `php:8.3-cli`, scenario_1010). Use a `RandUtilDrawRecorder.php` override to record the draw stream + final mutations + log strings. Honor the quirks: `_boot.php` binds `DB::db()`, `j_install.php` called twice, install not idempotent (fresh DB), dumps byte-identical across two runs. Throwaway probes are `tools/php-golden/probe_*.php` (never committed).
 - Output: fixture JSON under `logic/src/test/resources/golden/<area>/`, retained with the final logical unit. Do **not** make an intermediate fixture commit. Any commit requires separate explicit human approval.
 
 ### 2. Port logic + write GoldenTest — agent: `parity-porter`
 - Port the PHP behavior into `logic/` (`actions/*`, register in `CommandRegistry`; war paths via `war/*`). Use English code comments; identifiers stay English, while game-content and log-parity strings retain the exact Korean/markup used by PHP.
 - Honor: `PhpRound` half-away-from-zero (`phpRound(v,-2)`, NEVER `phpRound(v/100)*100`, NEVER `Math.round`/`kotlin.math.round`); `Util::toInt`/`intdiv` = truncate-toward-zero; damage clamp = `ceil()`. `Josa` 조사 + color/tag markup for logs. Insertion order preserved (`LinkedHashMap`), PHP 8.0+ stable sorts (no non-stable secondary comparator).
-- Write the `*GoldenTest`/`*ReplayGateTest` that loads the step-1 fixture and asserts draw-for-draw (RNG) or log/delta byte-parity (RNG-free). Build the `RandUtil(LiteHashDrbg(SeedSerializer.serialize(...)))` exactly as PHP seeds it; for battle, ONE `RandUtil(warSeed)` threaded by reference, never re-seeded.
+- Write the `*GoldenTest`/`*ReplayGateTest` that loads the step-1 fixture and asserts selected historical RNG or log/delta evidence. For that selected scope, build the `RandUtil(LiteHashDrbg(SeedSerializer.serialize(...)))` exactly as the recorded seed specifies; for battle, ONE `RandUtil(warSeed)` is threaded by reference, never re-seeded.
 
 ### 3. Gate loop — agent: `parity-gate-runner`
 - Run the gate: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test --rerun-tasks --tests '*<Code>*' 2>&1 | tail -40`, then read `logic/build/test-results/test/*.xml`.
@@ -78,7 +78,7 @@ Run sequentially. Each step delegates to its agent; do not skip ahead. Use CodeG
 - Match the precheck/gating so the UI only offers the command when reservable.
 
 ### 6. Adversarial review — agent: `parity-reviewer`
-- Adversarial pass over the whole change: RNG draw order/count/args, rounding mode, log byte-parity (Josa + markup + order = execution order), flush-delta-not-inline, correct immediate-daemon vs turn-reserved `che_*` classification, `intakeCodes` presence **when immediate** and absence **when reserved**, and insertion order. Use CodeGraph `codegraph_explore` for affected-flow context.
+- Adversarial pass over the whole change: selected historical RNG evidence, rounding mode, selected historical logs (Josa + markup + order), flush-delta-not-inline, correct immediate-daemon vs turn-reserved `che_*` classification, `intakeCodes` presence **when immediate** and absence **when reserved**, and insertion order. Use CodeGraph `codegraph_explore` for affected-flow context.
 - Any **blocker** → fix it (or bounce to the owning agent) and re-run the relevant gate (step 3) / IT (step 4). Do not proceed with an open blocker.
 
 ### 7. Prepare one logical unit

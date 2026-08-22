@@ -214,7 +214,7 @@ object ConquerCity {
             loseGeneralRice += loseRice
 
             // (3)(4) exp/ded decay via the suppress-flagged addExperience/addDedication (NO onCalcStat fold;
-            // value = -exp*0.1 / -ded*0.5 — the PHP path wins, NOT the TS inline *0.9).
+            // value = -exp*0.1 / -ded*0.5 — frozen historical PHP evidence for this regression (ADR-LITE-042), not current authority.
             val newExp = oldGeneral.experience + (-oldGeneral.experience * 0.1)
             val newDed = oldGeneral.dedication + (-oldGeneral.dedication * 0.5)
 

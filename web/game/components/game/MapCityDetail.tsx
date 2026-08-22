@@ -55,7 +55,8 @@ interface Metric {
     max?: number;
     /**
      * 텍스트를 cur/max 가 아니라 cur 만 단독으로 렌더(민심). 막대는 cur/max 로 채운다.
-     * 오라클 CityBasicCard.vue: `city.trust.toLocaleString(undefined, {maximumFractionDigits: 1})`
+     * 동결된 역사 UI 참고(ADR-LITE-042; 현재 제품 정본 아님), CityBasicCard.vue:
+     * `city.trust.toLocaleString(undefined, {maximumFractionDigits: 1})`
      * — 접미사 '%' 없음, 소수점 최대 1자리.
      */
     barOnlyMax?: boolean;
@@ -189,9 +190,9 @@ export default function MapCityDetail({
                     {metrics.map((m) => (
                         <MetricRow key={m.label} m={m} />
                     ))}
-                    {/* 시세 (trade %) — `상인 없음` when null, never fabricated. 막대는 오라클
-                        CityBasicCard.vue(tradeBarPercent)대로 `(trade - 95) * 10`(0..100 클램프).
-                        trade==null(상인 없음)이면 막대 없이 텍스트만 — 오라클 tradeBarPercent=0과 동치. */}
+                    {/* 시세 (trade %) — `상인 없음` when null, never fabricated. 동결된 역사 UI
+                        CityBasicCard.vue(tradeBarPercent)를 회귀 참고한다(ADR-LITE-042; 현재 제품 정본 아님):
+                        `(trade - 95) * 10`(0..100 클램프), null이면 막대 없이 텍스트만 렌더한다. */}
                     <div className="mcd-metric">
                         <div className="mcd-metric-head">시세</div>
                         <div className="mcd-metric-body">

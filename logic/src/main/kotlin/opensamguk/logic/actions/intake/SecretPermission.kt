@@ -3,7 +3,7 @@ package opensamguk.logic.actions.intake
 import opensamguk.logic.domain.General
 
 /**
- * `checkSecretPermission()` 충실 포팅 — PHP 정본 `legacy/devsam-core/hwe/func.php:390-435`
+ * `checkSecretPermission()` 충실 포팅 — 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) `legacy/devsam-core/hwe/func.php:390-435`
  * (+ `checkSecretMaxPermission` 상한 `func.php:377-389`).
  *
  * W0-3 권한 파운데이션(감사 `docs/superpowers/gap/PAGE_PARITY_AUDIT_2026-06-10.md` §5):

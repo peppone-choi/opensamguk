@@ -37,7 +37,7 @@ import java.time.Instant
  * executor가 `CAST(... AS diplomacy_letter_state)`로 바인딩한다([letterStateEnum] 헬퍼가 변환).
  *
  * **generalIcon(메시지/aux 아이콘) — 설정 측 관심사.** PHP `GetImageURL($me['imgsvr'],$me['picture'])`는
- * config(공유 아이콘 경로)에 의존하는 문자열로, [MessageTarget] 격리 노트대로 daemon-golden 패러티 대상이
+ * config(공유 아이콘 경로)에 의존하는 문자열로, [MessageTarget] 격리 노트대로 daemon-golden 동결 회귀 대상이
  * 아니다(P7/config request-side 해소). 게이트웨이가 인테이크 시 `general.meta["icon"]`을 실어 보내면 그
  * 값을 쓰고, 부재 시 빈 문자열을 쓴다(발명 금지).
  *

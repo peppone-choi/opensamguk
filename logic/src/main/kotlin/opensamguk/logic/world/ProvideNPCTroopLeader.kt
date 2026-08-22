@@ -10,7 +10,7 @@ import opensamguk.logic.event.EventActionContext
 
 /**
  * A3 / Task NL4 — `ProvideNPCTroopLeader` (the Action paired with [UpdateNationLevel] under the
- * F2-owned `month/1000` `true` row, firing EVERY month). Faithful port of PHP grand truth
+ * F2-owned `month/1000` `true` row, firing EVERY month). Faithful port of PHP frozen historical baseline (ADR-LITE-042; not current product authority)
  * `legacy/devsam-core/hwe/sammo/Event/Action/ProvideNPCTroopLeader.php`.
  *
  * Per nation: a max NPC-troop-leader count keyed on nation level ([maxNpcTroopLeaderCnt], defined

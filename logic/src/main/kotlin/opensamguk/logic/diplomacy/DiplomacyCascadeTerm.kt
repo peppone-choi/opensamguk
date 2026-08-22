@@ -1,7 +1,8 @@
 package opensamguk.logic.diplomacy
 
 /**
- * Cascade-diplomacy term application — PHP grand-truth formulas for strategic commands that cannot
+ * Cascade-diplomacy term application — frozen historical PHP formulas (ADR-LITE-042; not current
+ * product authority) for strategic commands that cannot
  * emit absolute terms without a live pre-row read.
  *
  * ## Encoding (logic resolvers → engine apply)

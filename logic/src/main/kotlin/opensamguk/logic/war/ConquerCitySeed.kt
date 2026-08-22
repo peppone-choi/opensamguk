@@ -11,7 +11,7 @@ import opensamguk.common.rng.serializeSeed
  * keyed by a different component-2 token (`'ConquerCity'` vs `'war'`) and a different 7-arg tuple, so the two
  * lineages never collide.
  *
- * Port target (PHP grand truth):
+ * Port target (PHP frozen historical baseline (ADR-LITE-042; not current product authority)):
  *   - `process_war.php:549` AND `:589` — the SAME 7-arg DRBG is built TWICE, IDENTICAL:
  *       ```php
  *       $rng = new RandUtil(new LiteHashDRBG(Util::simpleSerialize(

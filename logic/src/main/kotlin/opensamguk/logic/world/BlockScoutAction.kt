@@ -9,7 +9,7 @@ import opensamguk.logic.event.EventActionFactory
 /**
  * A3 — `BlockScoutAction` 이벤트 리프(정찰/임관 차단 토글). draw 0.
  *
- * PHP grand truth: `Event/Action/BlockScoutAction.php:12-23`.
+ * PHP frozen historical baseline (ADR-LITE-042; not current product authority): `Event/Action/BlockScoutAction.php:12-23`.
  *   1. `$db->update('nation', ['scout'=>1], true)` — **모든 국가**의 `scout` 플래그를 1로 설정
  *      (3번째 `true` 인자는 WHERE 없는 전체 업데이트 허용 가드 — 관측 동작은 전체 국가 갱신).
  *      opensamguk에서 `nation.scout`은 `nation.meta['scout']`에 탑승(임관 차단 검사 = Presets.kt:866-872).

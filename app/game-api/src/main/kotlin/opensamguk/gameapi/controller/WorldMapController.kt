@@ -62,7 +62,7 @@ class WorldMapController(
         // 시계 — 싱글톤 world_state. 미시드 ⇒ 빈 맵(year/month 0), 절대 500 아님.
         val w = world.findAll().firstOrNull()
         val mapName = w?.let(ActiveWorldMap::requireName) ?: GameConst.mapName
-        // startYear 케이싱 분열 대응(PR #31): ScenarioImporter는 config에 소문자 `startyear`(PHP 정본),
+        // startYear 케이싱 분열 대응(PR #31): ScenarioImporter는 config에 소문자 `startyear`(역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님)),
         // meta에 camelCase `startYear`를 쓴다. 정본(소문자) 우선, 그다음 camelCase·meta 폴백.
         val startYear = listOf(
             w?.config?.get("startyear"),

@@ -114,7 +114,7 @@ export interface FrontGeneralInfo {
   specialDomestic?: string | null; // 내정 특기 코드(special_code)
   specialWar?: string | null; // 전투 특기 코드(special2_code)
   personal?: string | null; // 성격 코드(personal_code)
-  // ── F-fix: 코드 → 한글 이름 해석값(API가 PHP grand-truth getName으로 해석; None/0 → '-') ──
+  // ── F-fix: 코드 → 한글 이름 해석값(API의 동결된 역사 PHP getName 비교; ADR-LITE-042; 현재 정본 아님; None/0 → '-') ──
   specialDomesticName?: string | null; // 내정 특기 이름
   specialWarName?: string | null; // 전투 특기 이름
   crewTypeName?: string | null; // 병종 이름
@@ -411,8 +411,8 @@ export interface GameConstResponse {
   gameUnitConst?: GameUnitConstItem[];
   cityConst?: GameCityConstItem[];
   iAction?: Record<string, IActionConstItem[]>;
-  // 직책 라벨 기본열 — 정본 F4StateText(PHP func_converter.php getOfficerLevelText) 직렬화.
-  // 와이어 모양 = legacy hwe/ts/utilGame/formatOfficerLevelText.ts OfficerLevelMapDefault.
+  // 직책 라벨 기본열 — 현재 서버 계약 F4StateText 직렬화.
+  // 동결된 역사 PHP/hwe 참고는 ADR-LITE-042 회귀 증거이며 현재 제품 정본이 아니다.
   officerLevelText: Record<number, string>;
   // 국가레벨(7..0)별 수뇌 직책 — OfficerLevelMapByNationLevel 와이어. PHP 미정의 코드는 키 생략.
   officerLevelTextByNationLevel: Record<number, Record<number, string>>;
@@ -655,7 +655,7 @@ export interface MyNationDetailResponse {
 //  - 202 {status:'AVAILABLE', ...} = **큐잉됨**(intake 수락). legacy 동기 실행과 달리 성공 확정이
 //    아니다 — 엔진이 비동기로 deny할 수 있다(결과 회신 채널은 W0-4). 성공 문구가 아니라
 //    "접수/예약" 시멘틱으로 토스트할 것.
-//  - 200 {status:'BLOCKED'|'UNKNOWN', reason} = precheck deny. reason은 PHP byte-parity 문자열 —
+//  - 200 {status:'BLOCKED'|'UNKNOWN', reason} = precheck deny. reason은 PHP 동결 회귀 문자열 —
 //    페이지는 이 문자열을 그대로(danger/INFO) 노출한다. 날조·대체 금지.
 // 페이지 분기는 api.ts의 isIntakeQueued/isIntakeDenied 타입 가드로 한다.
 
@@ -674,7 +674,7 @@ export interface IntakeQueued {
   code?: string;
 }
 
-/** 200 — precheck/큐 조작 deny. reason = PHP byte-parity deny 문자열. */
+/** 200 — precheck/큐 조작 deny. reason = PHP 동결 회귀 deny 문자열. */
 export interface IntakeDenied {
   status: 'BLOCKED' | 'UNKNOWN';
   reason: string;

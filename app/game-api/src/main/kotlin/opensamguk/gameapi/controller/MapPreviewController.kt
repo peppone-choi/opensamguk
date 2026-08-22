@@ -46,7 +46,7 @@ class MapPreviewController(
 ) {
 
     /** 시나리오가 맵을 특정하지 못할 때의 기본 맵 코드. dims/coords는 `map/<code>.json`에서 읽는다
-     *  (하드코딩 X) — 좌표는 php 정본 native 700×500 표시 전용 값. 프론트 transform이 캔버스 폭에
+     *  (하드코딩 X) — 좌표는 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) native 700×500 표시 전용 값. 프론트 transform이 캔버스 폭에
      *  맞춰 좌표·아이콘·폰트를 균일 확대(컬럼 폭 ≈1000 → 약 ×1.43)하므로 비율은 php와 동일. */
     private val defaultMapCode = "che"
 

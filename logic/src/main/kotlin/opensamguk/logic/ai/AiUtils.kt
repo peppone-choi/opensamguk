@@ -8,7 +8,7 @@ package opensamguk.logic.ai
  * ## Why these exist (the parity contract)
  * Every `do<한글>` decision builds a candidate list, sorts it deterministically, then pulls ONE draw off
  * the shared `"GeneralAI"` stream (`choice`/`choiceUsingWeight`/`choiceUsingWeightPair`). The candidate
- * ORDER is itself a byte-parity target: a reorder on a tie shifts the positional `idx` → shifts the
+ * ORDER is itself a 동결 회귀 target: a reorder on a tie shifts the positional `idx` → shifts the
  * `count - idx` weight → shifts the single draw → desyncs every downstream draw. PHP 8 sorts are
  * **unconditionally STABLE** (equal elements keep their original relative order); these wrappers reproduce
  * that exactly and add **NO secondary comparator on ties** (CLAUDE.md parity law). Kotlin's

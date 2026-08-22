@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
  * W0-3 권한 파운데이션 — read API 표면의 정본 secretPermission(0..4 / -1) 헬퍼.
  * (감사 `docs/superpowers/gap/PAGE_PARITY_AUDIT_2026-06-10.md` §5 W0-3)
  *
- * PHP 정본 `checkSecretPermission($me)`(func.php:390-435)를 logic 단일 정본
+ * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) `checkSecretPermission($me)`(func.php:390-435)를 logic 단일 정본
  * [SecretPermission.check]로 위임한다. read API의 PHP 호출자들은 모두 **기본 인자**
  * (`$checkSecretLimit = true`)로 호출하므로(j_diplomacy_get_letter.php:33,
  * API/Nation/GetGeneralLog.php:60) 이 헬퍼도 belong/secretlimit 분기를 LIVE로 켠다.

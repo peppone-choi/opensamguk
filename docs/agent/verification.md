@@ -27,9 +27,9 @@
 |---|---|---|---|
 | **① 코드 결함 차단** | 버그·동결 회귀 드리프트가 조용히 남는 것 | provider 공통 PostToolUse 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `verify-changes.sh`의 diff→최소 검증 행렬 안내) + 위 행렬 실행 + 역사적 이름의 `tools/parity/gate.sh backend`(XML 판정) | `BUILD SUCCESSFUL` tail + 테스트 XML `failures="0"` |
 | **② 자기 승인 차단** | 작성자가 자기 작업을 스스로 승인·머지 | PR 리뷰봇 CodeRabbit(`.coderabbit.yaml`) + `check.py --strict`의 cross-agent critique Verdict 검사(`docs/superpowers/reviews/*.md` 요구) + 사람/타 프로바이더 에이전트의 명시 비평 | PR 리뷰 코멘트 + reviews 아티팩트의 `Verdict:` 라인 |
-| **③ 규범 위반 차단** | 시크릿 접근·골든/legacy 수정·검증 없는 완료 선언 | provider 공통 PreToolUse 보호 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `protect-sensitive-files.sh` exit 2) + Claude 첨부 경계 `.claudeignore`(@멘션 구멍) + CI `check.py --strict --base origin/main`(ci.yml agent-system 잡) | BLOCKED stderr 캡처 + CI 그린 로그 |
+| **③ 규범 위반 차단** | 시크릿 접근·legacy 수정·근거 없는 골든 갱신·검증 없는 완료 선언 | provider 공통 PreToolUse 보호 훅이 시크릿/legacy 위반은 `protect-sensitive-files.sh` exit 2로 차단하고, golden 기대값 갱신은 훅 NOTICE 후 `check.py --strict` 리뷰 게이트가 변경 경로마다 `Golden path:`·`Golden change reason:`·실행한 `Regression command:`·`Regression evidence: PASS — ...`·`Critique: CLEARED — ...`를 강제한다. 기존 추적 테스트의 삭제와 테스트 영역 밖 이동은 apply-patch/Bash 훅과 Git name-status strict 검사에서 차단한다. Claude 첨부 경계는 `.claudeignore`, CI는 agent-system 잡이다. | BLOCKED/NOTICE stderr 캡처 + 리뷰 근거 + CI 그린 로그 |
 
-세 루프는 서로 대체재가 아니다: ①이 초록이어도 ②없이 머지하면 자기 승인이고, ②가 있어도 ③없이는 골든 수정으로 게이트를 "통과"시킬 수 있다. 완료 선언은 셋 다 해당 증거를 인용할 수 있을 때만.
+세 루프는 서로 대체재가 아니다: ①이 초록이어도 ②없이 머지하면 자기 승인이고, ②가 있어도 ③의 명시적 변경 이유·회귀 증거 게이트 없이는 기대값을 바꿔 통과시킬 수 있다. 완료 선언은 셋 다 해당 증거를 인용할 수 있을 때만.
 
 ## 판정 규칙
 

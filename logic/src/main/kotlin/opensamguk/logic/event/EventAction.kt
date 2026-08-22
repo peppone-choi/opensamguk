@@ -77,7 +77,7 @@ class EventActionFactory {
 // ──────────────────────────────────────────────────────────────────────────────
 // B5 / Task LT1 — the genuinely-light Month/PreMonth Action leaves.
 //
-// Port targets (PHP grand truth, sammo/Event/Action/*.php): NewYear / ResetOfficerLock /
+// Port targets (PHP frozen historical baseline (ADR-LITE-042; not current product authority), sammo/Event/Action/*.php): NewYear / ResetOfficerLock /
 // NoticeToHistoryLog / AddGlobalBetray. Each is a bulk world mutation + (some) history-log push with
 // NO RNG and NO order-sensitive per-row iteration, so they bind to a small [LightActionWorld] view the
 // tick supplies under `env[LightActionWorld.ENV_KEY]` (the richer-context seam the A-family established

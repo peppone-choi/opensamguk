@@ -215,7 +215,7 @@ data class FrontGeneralInfo(
 
     // ── F-fix: 코드 → 한글 이름 해석값(raw 코드는 위에서 그대로 유지, 이름은 ADD) ──────────────────
     // PHP는 GetFrontInfo에서 raw 코드만 내려보내고 이름 해석을 Vue(GameConstStore)에서 했다.
-    // web/game(Next)은 그 해석을 포팅하지 않으므로 API가 PHP grand-truth 이름으로 해석해 함께 내려준다.
+    // web/game(Next)은 그 해석을 포팅하지 않으므로 API가 동결된 역사 PHP 이름으로 해석한다(ADR-LITE-042; 현재 정본 아님).
     //  - special*Name : SpecialityHelper.domesticName/warName (= buildGeneralSpecial*Class->getName()). None→'-'.
     //  - crewTypeName : GameUnitConst.byId(id)?.name (= GameUnitConst::all()[id]->name). 0/none→'-'.
     //  - personalName : GameConst.personalityNameOf (= buildPersonalityClass->getName()). None/미등록→'-'.

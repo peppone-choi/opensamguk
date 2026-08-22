@@ -22,7 +22,7 @@ import kotlin.math.truncate
 class StatCalc(
     general: General,
     private val pipeline: GeneralActionPipeline,
-    private val maxLevel: Int = 255,   // GameConst.maxLevel = 255 (PHP grand truth)
+    private val maxLevel: Int = 255,   // GameConst.maxLevel = 255 (PHP frozen historical baseline (ADR-LITE-042; not current product authority))
 ) {
     var general: General = general
         private set

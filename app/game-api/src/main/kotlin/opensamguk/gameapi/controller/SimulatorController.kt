@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * D3-01 — read-only battle simulator adapter.
  *
- * PHP grand truth: `legacy/devsam-core/hwe/j_simulate_battle.php:243-249,366-476,500-582`.
+ * PHP frozen historical baseline (ADR-LITE-042; not current product authority): `legacy/devsam-core/hwe/j_simulate_battle.php:243-249,366-476,500-582`.
  * The old endpoint fabricated `winner`/damage/turns/log with raw Kotlin `.random()`. This adapter instead
  * resolves live read rows and delegates to [BattleSimPreview], which reuses the same outer `processWar`
  * wrapper as real `che_출병`. It never writes; invalid or missing rows are surfaced honestly.

@@ -15,7 +15,7 @@ import opensamguk.logic.war.trigger.WarUnit as WarUnitContract
  * RNG draws — every draw flows through the inherited [WarUnit] sites (the city never calls nextBool/
  * nextRange itself). Holds a [WarUnitCityState] (the mutable working copy of the immutable [City]).
  *
- * Formulas (PHP grand truth):
+ * Formulas (PHP frozen historical baseline (ADR-LITE-042; not current product authority)):
  *  - `HP = def * 10` (`:30`);
  *  - `getComputedAttack() == getComputedDefence() == (def + wall*9) / 500 + 200` FLOAT, no round (`:56-62`);
  *  - `cityTrainAtmos = clamp(year - startYear + 59, 60, 110)` — the LITERAL +59 (`:24`);

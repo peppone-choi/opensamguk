@@ -6,7 +6,7 @@ import opensamguk.logic.util.phpRound
 
 /**
  * F-POLICY — `AutorunNationPolicy`, a faithful port of
- * `legacy/devsam-core/hwe/sammo/AutorunNationPolicy.php` (291 lines, GRAND TRUTH, read in full; R-NATIONPOL).
+ * `legacy/devsam-core/hwe/sammo/AutorunNationPolicy.php` (291 lines, frozen historical baseline (ADR-LITE-042; not current product authority), read in full; R-NATIONPOL).
  *
  * The nation-AI 4-layer policy merge. The merged [priority] list ORDER **is** the `do<한글>` dispatch
  * order in `chooseNationTurn`, which is the log order AND the per-decision RNG draw order. This class

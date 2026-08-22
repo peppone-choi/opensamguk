@@ -1,9 +1,11 @@
 # compare-command-logs (P2 GATE-STATIC, Task GS1)
 
+ADR-LITE-042 scope: this is an opt-in historical frozen-regression comparison tool. Its PHP input is historical evidence, not current product authority or a prerequisite for product changes.
+
 PORT of `legacy/devsam-core2026/tools/compare-command-logs.mjs`, re-pointed PHP↔Kotlin.
 
 A **static source-scan** gate that cross-checks the per-command **action-log template
-surface** of the PHP grand truth against the Kotlin resolvers — the GATE-STATIC half of the
+surface** of the frozen historical PHP baseline against the Kotlin resolvers — the GATE-STATIC half of the
 P2 two-tier log gate (the per-command runtime byte-match lives in
 `logic/.../golden/*GoldenTest.kt`, GATE-RUNTIME). No build, no DB, no `typescript` parser
 dependency — pure Node ESM.
@@ -12,7 +14,7 @@ dependency — pure Node ESM.
 
 - **PHP extractor** (kept VERBATIM from the legacy tool): scans
   `legacy/devsam-core/hwe/sammo/Command/{General,Nation}/*.php` (PHP_ROOT re-pointed from the
-  legacy 2026 fork's `legacy/hwe/sammo/Command` to **`legacy/devsam-core`**, the grand truth),
+  legacy 2026 fork's `legacy/hwe/sammo/Command` to **`legacy/devsam-core`**, the historical baseline),
   extracting `pushGeneralActionLog` / `pushGlobalActionLog` / … call templates with the same
   `normalizeTemplate` (strip `<1>…</>`, strip `<b>`, collapse `$var`/`${…}`→`${}`, collapse
   whitespace) and the same guard/target exclusions. The PHP `extends` chain is threaded so an
@@ -40,7 +42,7 @@ The matched set is **scoped to the 28 committed PHP-captured P2 goldens**
    age≥60 / multi-general troop / sub-max capital / seed-fragile lottery — NOT failures), plus
    (with `--all-commands`) the ~57-of-93 non-P2 commands.
 2. `Global` / per-command `templates`+`regex` — drops individual cross-module lines that survive
-   the scope filters but whose PHP grand truth lives outside the `Command/` tree (e.g.
+   the scope filters but whose historical PHP source lives outside the `Command/` tree (e.g.
    `che_장비매매`'s `…보충합니다.` line is emitted by `ActionItem/che_보물_도기.php`, which the
    command-file scan cannot reach — an extractor SCOPE artifact, not a parity bug).
 

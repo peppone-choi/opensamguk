@@ -4,11 +4,11 @@ P0–P8 / F0–F5 / WAVE 0–9 외의, **조건 충족 시 착수**하는 미래
 
 ---
 
-## M-config — post-parity 게임/서버 상수 외부화 (JSON/DB)
+## M-config — 안정화 후 게임/서버 상수 외부화 (JSON/DB)
 
-**Status:** 미래 마일스톤. NOT started. **선행조건 = 풀 패러티 close + 운영 안정.**
+**Status:** 미래 마일스톤. NOT started. **선행조건 = 동결 회귀 green + 운영 안정.**
 
-> **전제 변경 (2026-07-25, ADR-LITE-018).** v1이 **오리지널로 동결**되고 상시 운영은 v2 뉴버전이 맡는다. 따라서 **v1은 이 마일스톤의 대상에서 제외한다** — `GameConst`의 패러티 값과 PHP 골든은 오리지널의 정본 게이트로 그대로 남고, 아래 "게이트 교체"(패러티 골든 → frozen-baseline 회귀)는 v1에 적용하지 않는다. 상수 외부화가 필요한 쪽은 뉴버전이며, v2에는 애초에 PHP 골든이 없어 교체 논거 자체가 성립하지 않는다(§어떻게는 v1 기준으로 쓰인 원문이므로 v2 적용 시 재작성 필요). 아래 본문은 전제 변경 전 원문이다.
+> **전제 변경 (2026-08-20, ADR-LITE-042).** 현재 제품 정본은 승인 ADR/spec·구현이다. v1 기존 테스트와 골든은 지우지 않는 동결 회귀 기준선이고 PHP는 opt-in 역사 비교 자료다. 상수 외부화는 PHP 패러티 close를 선행 조건으로 삼지 않는다.
 
 ### 무엇
 
@@ -16,10 +16,10 @@ P0–P8 / F0–F5 / WAVE 0–9 외의, **조건 충족 시 착수**하는 미래
 
 ### 언제 (트리거 조건 — 둘 다 충족해야)
 
-1. **전 패러티 테스트 통과** — 전 GoldenTest / ReplayGateTest / GateTest가 draw-for-draw green이고, PHP devsam/core 대비 미마이그레이션 갭 0(또는 전부 proof로 quarantine + 백로그 마감).
+1. **현재 테스트 disposition 완료** — 기존 GoldenTest / ReplayGateTest / GateTest를 포함한 현재 승인 테스트가 green이고, 남은 제품 갭이 승인 spec·proof·백로그로 disposition됨.
 2. **운영 안정** — 라이브 prod가 무크래시로 턴 진행 + 핵심 ops(시드/배포/복구) 검증 완료.
 
-이 두 조건이 곧 **parity-closed** 시점 = opensamguk이 **PHP 거울이 아니라 자기 자신이 grand truth**가 되는 순간. 그 전엔 PHP가 oracle이라 상수 코드-락 + 골든 게이트가 규율(CLAUDE.md 패러티 규칙). DB/JSON 가변화는 런타임 오타가 골든을 **조용히** 깨는 위험.
+이 두 조건은 제품 안정화 시점을 뜻한다. PHP 오라클 완료 여부와 무관하게 오픈삼국의 승인 ADR/spec·현재 구현이 제품 정본이며, DB/JSON 가변화는 런타임 오타가 동결 회귀를 **조용히** 깨지 않도록 보호해야 한다.
 
 ### 어떻게 (load-bearing 규칙 — "패러티 게이트 → frozen-baseline 게이트" 인수인계)
 

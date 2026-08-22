@@ -3,7 +3,7 @@ package opensamguk.gameapi.dto
 import java.time.Instant
 
 /**
- * 메시지 응답 (W3 enriched). PHP grand truth: `Message` 객체 + `MessageTarget`.
+ * 메시지 응답 (W3 enriched). PHP frozen historical baseline (ADR-LITE-042; not current product authority): `Message` 객체 + `MessageTarget`.
  *
  * `message` jsonb body는 `{src:MsgTarget, dest:MsgTarget?, text, option}` 형태로 저장된다
  * (`MessageTarget::toArray()` = `{id, name, nation_id, nation, color, icon}`). W3에서 이 body를

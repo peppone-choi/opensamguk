@@ -1,6 +1,6 @@
 'use client';
 
-// 베팅장(b_betting) — 토너먼트 베팅 목록 + 상세(BettingDetail) 셸. FE grand truth=hwe/ts, PHP가 이김.
+// 베팅장(b_betting) — frozen historical UI reference: hwe/ts (ADR-LITE-042; not current product authority).
 // type='tournament' 필터: legacy GetBettingList req 화이트리스트 'tournament' 값.
 // read: game-api `GET /api/bettings?type=tournament`(D4) {result, bettingList(Map<id,item>), year, month}.
 //   상세는 BettingDetail 컴포넌트가 `GET /api/bettings/{id}/detail`(D5, 인증) 소비.

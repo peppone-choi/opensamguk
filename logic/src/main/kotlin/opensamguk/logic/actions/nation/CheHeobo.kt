@@ -73,7 +73,7 @@ class CheHeobo(private val pipeline: GeneralActionPipeline) : NationCommand() {
      *  4) dest 도시 적 장수마다(che_허보.php:75-90): 자신의 PLAIN 로그 "상대의 허보에 당했다! <1>{date}</>" +
      *     `rng.choice(보급 적 도시)` 1회 — 뽑힌 도시가 dest 도시(공격 대상)면 1회 re-roll → city 변경(cascade).
      *  5) nation strategic_cmd_limit = onCalcStrategic(name,'globalDelay',9) (che_허보.php:104) — 골든 미캡처,
-     *     meta 기록(패러티 대상).
+     *     meta 기록(동결 회귀 대상).
      *
      * 보급 적 도시 리스트(SELECT city FROM city WHERE nation=destNation AND supply=1)는 월드 집계라
      * 메모리 드래프트에 없어 args(documented fixture input)로 주입한다(__suppliedEnemyCities).

@@ -1,6 +1,6 @@
 'use client';
 
-// AuctionUniqueItem — legacy hwe/ts/components/AuctionUniqueItem.vue 충실 포팅(FE grand truth, PHP가 이김).
+// AuctionUniqueItem — frozen historical UI reference: legacy hwe/ts/components/AuctionUniqueItem.vue (ADR-LITE-042; not current product authority).
 // 유니크 경매: 익명 입찰(obfuscatedName=내 가명), 유산포인트 잔여, 입찰가 min=ceil(최고*1.01)/
 // max=remainPoint + confirm, 진행중/종료 경매 목록 + 상세 카드(경매명/주최자(익명)/종료일시/최대지연/
 // 입찰자 목록).

@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * B1b — 턴 데몬 일시정지(동결) 게이트. PHP `plock`(`type='GAME'`) 락의 단일프로세스 등가물.
  *
- * **PHP 정본(`func.php:1118-1146`).**
+ * **역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님)(`func.php:1118-1146`).**
  *  - `tryLock()` = `UPDATE plock SET plock=1 WHERE plock=0 AND type='GAME'` → affectedRows>0이면 락 획득(=직전 0).
  *    즉 **compare-and-set 0→1**: 이미 1이면(이미 동결) 실패한다. `_119_b.php:104-111`은 10회 재시도(usleep 0.5s).
  *  - `unlock()` = `UPDATE plock SET plock=0 WHERE type='GAME'` → 무조건 0으로(`_119_b.php:113-115`).

@@ -20,7 +20,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  * 수신국 군주가 종전 제의 서신을 수락하면 즉시 실행된다(PHP `DiplomaticMessage::agreeMessage()` →
  * `$commandObj->run()`). 양방향 diplomacy 행을 통상(TRADE=2)/term=0으로 전환해 교전/선포 상태를 끝낸다.
  *
- * PHP 정본: `legacy/devsam-core/hwe/sammo/Command/Nation/che_종전수락.php`
+ * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님): `legacy/devsam-core/hwe/sammo/Command/Nation/che_종전수락.php`
  *
  * ## 제약 (PHP run 진입 시 hasFullConditionMet 강제, che_종전수락.php:95-105)
  *  - BeChief, NotBeNeutral, ExistsDestNation, ExistsDestGeneral,

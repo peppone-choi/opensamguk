@@ -18,15 +18,15 @@ import kotlin.math.sqrt
  * (the diplomacy/relocation RESULT internals) are P6. The G-GATE downstream-delta/log assertion EXCLUDES
  * these three families (m10).**
  *
- * GRAND TRUTH = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
+ * frozen historical baseline (ADR-LITE-042; not current product authority) = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
  *  - `do불가침제의` (`:1765-1846`, emits `che_불가침제의`): **ZERO RNG draws** — pure deterministic selection
  *    over `recv_assist` candidates filtered by the 8-month cooldown (`joinYearMonth` gate, H-HELPERS §1), ONE
  *    stable `arsort` DESC, then the income-quarter walk; writes `resp_assist_try` (ChangeRecorder delta,
  *    decision #12) BELOW the `hasFullConditionMet()` gate.
- *  - `do선전포고`   (`:1848-1973`, emits `che_선전포고`): **up to 3 draws A+B+C** (PHP WINS the TS 2-draw shape,
+ *  - `do선전포고`   (`:1848-1973`, emits `che_선전포고`): **up to 3 draws A+B+C** (the frozen historical PHP baseline is retained here the TS 2-draw shape,
  *    M3); sets `reqUpdateInstance=true` (`:1972`).
  *  - `do천도`       (`:1976-2113`, emits `che_천도`): persistence-or-`arsort` path; `choice` next-hop ONLY if
- *    `dist>1` (TS DROPS the cooldown/sticky/BFS-restriction — PHP WINS); writes `last천도Trial` (delta).
+ *    `dist>1` (TS DROPS the cooldown/sticky/BFS-restriction — the frozen historical PHP baseline is retained here); writes `last천도Trial` (delta).
  *
  * This file holds the PURE, draw-order-bearing primitives each `do<한글>` composes (mirrors the established
  * `GenFoundFamily`/`NationDeployFamily`/`NationRewardFamily` pure-helper shape): the candidate-set
@@ -140,7 +140,7 @@ object NationDiploFamily {
         "n$destNationId" to listOf(destNationId, yearMonth)
 
     // ==================================================================================================
-    // do선전포고 (:1848-1973) — up to 3 draws A+B+C. PHP WINS the TS 2-draw shape (M3).
+    // do선전포고 (:1848-1973) — up to 3 draws A+B+C. the frozen historical PHP baseline is retained here the TS 2-draw shape (M3).
     // ==================================================================================================
 
     /**
@@ -195,7 +195,7 @@ object NationDiploFamily {
      * `do천도`'s sticky-persistence guard (PHP `:1981`):
      * `$lastTurn->getCommand() === '천도' && $lastTurn->getArg()['destCityID'] != $this->nation['capital']`.
      * When true the AI re-emits the SAME `che_천도` with NO draw (keep relocating toward the same target). TS
-     * DROPS this sticky persistence — PHP WINS.
+     * DROPS this sticky persistence — the frozen historical PHP baseline is retained here.
      *
      * @return true when the last turn was a 천도 to a non-capital city (re-emit, no draw).
      */
@@ -232,7 +232,7 @@ object NationDiploFamily {
      * city, `array_key_first`) UNLESS the BFS distance from the capital is `> 1`, in which case the AI takes an
      * INTERMEDIATE stop — ONE `choice($candidates)` over the capital's path-neighbors that lie exactly one step
      * closer to the final city (PHP `:2088-2100` `if ($distanceList[$stopID][$finalCityID] + 1 === $dist)`).
-     * **The `choice` draws ONLY when `dist > 1`** (TS DROPS this BFS-restriction — PHP WINS).
+     * **The `choice` draws ONLY when `dist > 1`** (TS DROPS this BFS-restriction — the frozen historical PHP baseline is retained here).
      *
      * @param dist `$distanceList[$capital][$finalCityID]` (PHP `:2069`) — the capital→final BFS distance.
      * @param finalCityId the top-score target city (used directly when [dist] <= 1).
@@ -472,7 +472,7 @@ object NationDiploFamily {
             }
         }
 
-        // :1952-1963 — the empty-$nations fallback (PHP WINS the TS 2-draw shape, M3).
+        // :1952-1963 — the empty-$nations fallback (the frozen historical PHP baseline is retained here the TS 2-draw shape, M3).
         val finalNations: LinkedHashMap<Int, Double> = if (nations.isEmpty()) {
             when {
                 warNations.isEmpty() -> return null // :1953-1955 (no draw)

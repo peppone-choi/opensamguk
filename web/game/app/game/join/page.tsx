@@ -60,7 +60,7 @@ function isBrightColor(color: string): boolean {
 }
 
 // 능력치 분배식 — 레거시 hwe/ts/util/generalStats.ts를 그대로 포팅(통/무/지 순).
-// PHP는 패러티 오라클이 아니다(폼 편의 기능, RNG draw 게이트 밖) → Vue 정본을 충실 이식.
+// 동결된 역사 Vue 구현을 참고한 폼 편의 기능이다(ADR-LITE-042; 현재 제품 정본/패러티 오라클 아님).
 type Stats = { min: number; max: number; total: number };
 
 // abilityRand: 각 스탯 = random*65+10 → 비율 정규화 → floor → 부족분은 통솔에 가산 → 범위 벗어나면 재추첨.

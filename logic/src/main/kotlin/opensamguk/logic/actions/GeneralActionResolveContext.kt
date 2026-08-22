@@ -136,10 +136,10 @@ class GeneralActionResolveContext(
     private fun plainLine(text: String): String = "<C>●</>$text"
 
     /**
-     * Buffer an action-log line, applying PHP `ActionLogger::pushGeneralActionLog`'s DEFAULT
-     * `MONTH` format (ActionLogger.php:135 + formatText:250): `<C>●</>{month}월:{body}`.
+     * Buffer an action-log line using the frozen historical PHP `ActionLogger` MONTH format
+     * (ADR-LITE-042; not current product authority): `<C>●</>{month}월:{body}`.
      * The resolver passes the BODY (mirroring che `run()` which passes the body to
-     * `pushGeneralActionLog`); the logger boundary owns the month prefix. (G2 byte oracle.)
+     * `pushGeneralActionLog`); the logger boundary owns the month prefix retained by regression coverage.
      */
     fun addLog(text: String) {
         if (text.isEmpty()) return

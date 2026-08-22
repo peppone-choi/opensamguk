@@ -1,14 +1,14 @@
 'use client';
 
 // ── 외교정보 (Admin8) — READ-ONLY 전 국가간 외교 관계 (마스킹 없음) ──────────────────
-// Grand-truth: legacy hwe/_admin8.php. game-api `GET /api/admin/diplomacy-all`
+// Frozen historical UI reference (ADR-LITE-042; not current product authority): legacy hwe/_admin8.php. game-api `GET /api/admin/diplomacy-all`
 // (AdminReadController, B4b). 전부 READ 렌더.
 //
 // ADMIN 게이트는 BE 강제: 비ADMIN→403, 비로그인→401. FE는 graceful 안내.
 //
 // legacy _admin8.php는 매트릭스가 아니라 **관계 리스트 테이블**(국가명/국가명/상태/기간)이다
 // (`SELECT * from diplomacy where me < you order by state desc`, state==2(통상) 행 skip).
-// grand-truth가 리스트이므로 매트릭스가 아닌 리스트를 충실 재현한다. BE relations가 me<you·state!=2·
+// 동결된 역사 UI가 리스트였으므로 회귀 기준도 매트릭스가 아닌 리스트다(ADR-LITE-042; 현재 제품 정본 아님). BE relations가 me<you·state!=2·
 // state desc 정렬·stateText verbatim까지 모두 적용해 내려준다 — FE는 가공 없이 행만 렌더.
 //
 // 정렬 form(_admin8.php:48-54): type select(상태 단일 옵션) + '정렬하기'. legacy도 옵션이 '상태'

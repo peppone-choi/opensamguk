@@ -2,7 +2,7 @@
 """che 풀맵(94도시) 시드 생성기 — 공백지 포함.
 
 소스:
-  - 맵 좌표/스탯 grand truth: legacy theme_che.js → core2026 map_che.json(동일 추출, 좌표 검증됨).
+  - 맵 좌표/스탯 동결 역사 참고(ADR-LITE-042; 현재 제품 정본 아님): legacy theme_che.js → core2026 map_che.json(동일 추출, 좌표 검증됨).
   - 소유: scenario_1010.json nation[].cities (후한=nation 1, 황건적=nation 2).
 산출: infra/src/main/resources/scenario/cities_1010.json (94도시).
 

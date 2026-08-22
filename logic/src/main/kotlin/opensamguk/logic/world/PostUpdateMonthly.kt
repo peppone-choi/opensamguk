@@ -193,7 +193,7 @@ fun postUpdateMonthlyPower(
 
 // ===========================================================================================
 // POST2 (Q5-Q10) — diplomacy settlement + war-term + 개전/종전 state machine.
-// PHP grand truth `func_gamerule.php:336-421`.
+// PHP frozen historical baseline (ADR-LITE-042; not current product authority) `func_gamerule.php:336-421`.
 // ===========================================================================================
 
 /** A `diplomacy` row (me/you ordered pair) feeding Q5-Q9. */
@@ -334,7 +334,7 @@ fun postUpdateMonthlyDiplomacy(
 
 // ===========================================================================================
 // POST3 (Q11-Q17) — the tail: checkWander / tournament / auction RNG order + SetNationFront last.
-// PHP grand truth `func_gamerule.php:423-442` (+ `:445-467` checkWander).
+// PHP frozen historical baseline (ADR-LITE-042; not current product authority) `func_gamerule.php:423-442` (+ `:445-467` checkWander).
 // ===========================================================================================
 
 /**

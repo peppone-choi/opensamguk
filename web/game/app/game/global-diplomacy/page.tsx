@@ -1,7 +1,7 @@
 'use client';
 
 // 중원정보 (Global Diplomacy) — F4 page 2. READ-ONLY this wave (no mutation wiring).
-// Grand-truth: legacy hwe/ts/PageGlobalDiplomacy.vue + hwe/sammo/API/Global/GetDiplomacy.php.
+// Frozen historical UI reference (ADR-LITE-042; not current product authority): legacy hwe/ts/PageGlobalDiplomacy.vue + hwe/sammo/API/Global/GetDiplomacy.php.
 //
 // Three sections, verbatim section titles + colors (legacy `.tb-title` backgrounds):
 //   외교 현황 (blue)   — the diplomacy matrix (nations × nations) with ★/▲/ㆍ/@ symbols.

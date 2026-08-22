@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 베팅 read API (D4-D5). PHP grand truth: `API/Betting/GetBettingList.php` / `GetBettingDetail.php`.
+ * 베팅 read API (D4-D5). PHP frozen historical baseline (ADR-LITE-042; not current product authority): `API/Betting/GetBettingList.php` / `GetBettingDetail.php`.
  *
  * D4: `GET /api/bettings` — 전체 베팅 목록. 봉투 `{result, bettingList(Map<id,item>), year, month}`.
  *     `req`(type) 필터는 PHP Validator `in 'req' ['bettingNation','tournament']` → 화이트리스트 외 값은 400.
