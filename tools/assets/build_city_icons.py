@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""도시 아이콘 빌더 (자작 · 절차적 · 결정적).
+"""도시 아이콘 빌더 (자작 · 절차적 · 결정적, 아이소메트릭).
 
-`web/{gateway,game}/public/city/cast_{1..8}.png` 16장과 사람이 눈으로 볼 수 있는
+`web/{gateway,game}/public/city/cast_{1..11}.png` 22장과 사람이 눈으로 볼 수 있는
 확대 시트 `assets/brand/city-icons/preview.png` 1장을 생성한다. 입력 이미지는 없다 —
 픽셀아트를 코드로 직접 그린다(`build_flag_assets.py`와 같은 방식).
 
@@ -13,13 +13,22 @@
 (`docs/superpowers/research/2026-08-17-asset-license-audit.md` §1-2, 부록). 깃발과 같은
 판단 — 20px 남짓 픽셀아트는 권리 확인보다 다시 그리는 편이 싸다.
 
-캔버스 크기는 레거시 자산의 자연 크기(`MapViewer.DETAIL_SIZES`의 iconW/iconH)와 같다.
-그래야 `.city-cast`(width/height 100% + image-rendering: pixelated) 렌더 결과의 배율이
-그대로 유지돼 레이아웃이 바뀌지 않는다.
+2026-08 맵 개편으로 전 시나리오가 `han` 격자맵(2:1 아이소메트릭, 다이아 128x64, 흙 두께
+32px)으로 통일되면서 두 가지가 바뀌었다:
+  1. 예전 정면 뷰 픽셀아트는 다이아 타일 위에 얹으면 투영이 어긋난다 — 전부 아이소로
+     다시 그린다(`iso_box`/`iso_roof` 헬퍼 — 위쪽 마름모 지붕면 + 좌/우 두 벽면).
+  2. `han.json`(780성) 레벨 분포를 세어 보면 5~8(소·중·대·특) 8종 체계로는 부족하다:
+       11(장현) 380 · 10(영현) 225 · 9(경) 2 · 8(특) 10 · 7(대) 15 · 6(중) 30 · 5(소) 111 · 4(이) 7
+     `_meta.note`(郡治 戶 백분위 · 百官志「萬戶以上為令，不滿為長」 경계)가 출처다.
+     9(경)·10(영현)·11(장현) 3종이 없으면 780성 중 607성이 아이콘 없이 깨진다.
 
-레벨 라벨(`MapViewer.LEVEL_TEXT`)에 맞춘 모양:
-  1 수(水 · 항구)  2 진(목책 요새)  3 관(관문)  4 이(이민족 취락)
-  5 소  6 중  7 대  8 특 — 넷 다 성벽을 두르고, 천수각 재료·층수·규모로만 등급을 올린다.
+레벨 라벨(`MapViewer.LEVEL_TEXT`)에 맞춘 모양 — 시각적 무게는 개수가 많을수록 작게:
+  1 수(水 · 항구)   2 진(목책)   3 관(관문)   4 이(이민족 취락)
+  5 소 6 중 7 대 8 특 — 성벽+지붕 계단, 대·특은 곁탑이 붙는다.
+  9 경(京 · 황도) — 최대. 궁성 — 중앙 대전 + 좌우 곁전 + 곁탑.
+  10 영현(令縣) — 만호 이상 현. 소(5)보다 작고 진(2)보다 큰 읍성.
+  11 장현(長縣) — 만호 미만 현, 380개로 최다수. 성벽 없는 초가 한 채, 가장 작다.
+  순서(작음→큼): 11 < 2 < 10 < 5 < 6 < 7 < 8 < 9.
 
 `수`는 마을이 아니라 물 수(水)다 — 수군의 수. lv1은 `data/extracted/map/che.json` 기준
 적벽·파양·탐라·유구 넷뿐이고 전부 항구다. 그래서 부두와 배로 그린다.
@@ -32,266 +41,300 @@ import io
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 APPS = ("gateway", "game")
 PREVIEW = ROOT / "assets" / "brand" / "city-icons" / "preview.png"
-PREVIEW_SCALE = 8
-PREVIEW_GAP = 4
+PREVIEW_SCALE = 4
+PREVIEW_GAP = 6
+MARGIN = 4  # 캔버스 가장자리 여백(외곽선이 잘리지 않게).
 
-# 레거시 자산의 자연 크기 = MapViewer.DETAIL_SIZES 의 (iconW, iconH).
-DIMS = {
-    1: (16, 15),
-    2: (20, 14),
-    3: (14, 14),
-    4: (20, 15),
-    5: (24, 16),
-    6: (28, 19),
-    7: (32, 22),
-    8: (36, 26),
-}
-
-OUTLINE = (26, 22, 20, 255)
+OUTLINE = (24, 20, 18, 255)
 STONE = (176, 168, 152, 255)
-STONE_L = (218, 212, 198, 255)
-STONE_D = (116, 108, 96, 255)
+STONE_L = (214, 206, 190, 255)
+STONE_D = (110, 102, 90, 255)
 ROOF = (168, 62, 52, 255)
+ROOF_L = (198, 88, 74, 255)
 ROOF_D = (112, 38, 32, 255)
 WOOD = (152, 106, 60, 255)
+WOOD_L = (182, 134, 84, 255)
 WOOD_D = (98, 66, 36, 255)
-GATE = (48, 40, 34, 255)
+THATCH = (196, 168, 88, 255)
+THATCH_L = (222, 196, 116, 255)
+THATCH_D = (140, 114, 54, 255)
+GATE = (44, 36, 32, 255)
 TENT = (196, 178, 142, 255)
+TENT_L = (222, 206, 172, 255)
 TENT_D = (138, 120, 90, 255)
 WATER = (58, 104, 140, 255)
 WATER_L = (96, 148, 184, 255)
 SAIL = (226, 220, 200, 255)
 SAIL_D = (176, 168, 148, 255)
-# 특(lv8) 전용 금빛 석재 — 대와 특은 크기 차이만으로는 구분이 안 돼서 성체 색을 바꾼다.
+# 특(lv8)·경(lv9) 전용 금빛 석재 — 대와 특, 특과 경이 크기만으로는 잘 안 갈려서 재질을 바꾼다.
 GSTONE = (206, 172, 88, 255)
 GSTONE_L = (240, 212, 132, 255)
 GSTONE_D = (148, 116, 50, 255)
+PALACE_ROOF = (150, 40, 44, 255)
+PALACE_ROOF_L = (188, 66, 62, 255)
+PALACE_ROOF_D = (98, 22, 26, 255)
 
 
-class Canvas:
-    """알파 포함 픽셀 격자. 범위 밖 쓰기는 조용히 버린다(모양 계산을 단순하게 두려고)."""
+class IsoCanvas:
+    """RGBA 캔버스 + 아이소메트릭(2:1) 박스/지붕 프리미티브.
+
+    좌표계: (cx, base_y) = 정면 아래 꼭짓점(벽 두 면이 만나는 바닥 점). 다이아
+    지붕면은 그 위 (height + 2*hh) 만큼 떨어진 곳에 놓인다. 광원은 위쪽에서 —
+    윗면이 가장 밝고, 좌면은 중간, 우면(정면 오른쪽)이 가장 어둡다.
+    """
 
     def __init__(self, w: int, h: int) -> None:
         self.w, self.h = w, h
-        self.px: dict[tuple[int, int], tuple[int, int, int, int]] = {}
+        self.img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        self.draw = ImageDraw.Draw(self.img)
 
-    def set(self, x: int, y: int, color) -> None:
-        if 0 <= x < self.w and 0 <= y < self.h:
-            self.px[(x, y)] = color
+    def box(self, cx: int, base_y: int, hw: int, hh: int, height: int,
+            top, left, right, outline=OUTLINE) -> int:
+        """returns top_y (지붕면 꼭짓점 y) — 위에 지붕/곁탑을 쌓을 때 쓴다."""
+        top_y = base_y - height - 2 * hh
+        apex = (cx, top_y)
+        rightp = (cx + hw, top_y + hh)
+        front = (cx, top_y + 2 * hh)
+        leftp = (cx - hw, top_y + hh)
+        top_face = [apex, rightp, front, leftp]
+        left_face = [leftp, front, (cx, base_y), (cx - hw, base_y - hh)]
+        right_face = [front, rightp, (cx + hw, base_y - hh), (cx, base_y)]
+        self.draw.polygon(right_face, fill=right, outline=outline)
+        self.draw.polygon(left_face, fill=left, outline=outline)
+        self.draw.polygon(top_face, fill=top, outline=outline)
+        return top_y
 
-    def get(self, x: int, y: int):
-        return self.px.get((x, y))
+    def roof(self, cx: int, top_y: int, hw: int, hh: int, ridge: int,
+              left, right, outline=OUTLINE) -> int:
+        """박스의 지붕면 위에 얹는 뾰족 지붕(만든 두 사면만 보인다). returns apex y."""
+        apex = (cx, top_y - ridge)
+        front = (cx, top_y + 2 * hh)
+        leftp = (cx - hw, top_y + hh)
+        rightp = (cx + hw, top_y + hh)
+        self.draw.polygon([front, rightp, apex], fill=right, outline=outline)
+        self.draw.polygon([leftp, front, apex], fill=left, outline=outline)
+        return apex[1]
 
-    def rect(self, x0: int, y0: int, x1: int, y1: int, color) -> None:
-        for y in range(y0, y1 + 1):
-            for x in range(x0, x1 + 1):
-                self.set(x, y, color)
-
-    def outline(self) -> None:
-        """채워진 픽셀에 4-이웃한 빈 픽셀을 외곽선으로 만든다. 어떤 배경 위에서도 읽히게."""
-        edge = set()
-        for (x, y) in self.px:
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                p = (x + dx, y + dy)
-                if p not in self.px and 0 <= p[0] < self.w and 0 <= p[1] < self.h:
-                    edge.add(p)
-        for p in edge:
-            self.px[p] = OUTLINE
+    def merlons(self, cx: int, top_y: int, hw: int, hh: int, color, n: int = 5) -> None:
+        """총안 — 지붕면 좌/우 능선 위에 작은 사각 돌기를 규칙적으로 얹는다."""
+        for i in range(n):
+            t = (i + 0.5) / n
+            if t < 0.5:
+                x = cx - hw + round(hw * (t * 2))
+                y = top_y + hh - round(hh * (t * 2))
+            else:
+                t2 = (t - 0.5) * 2
+                x = cx + round(hw * t2)
+                y = top_y + round(hh * t2)
+            self.draw.rectangle([x - 1, y - 2, x + 1, y], fill=color)
 
     def to_image(self) -> Image.Image:
-        img = Image.new("RGBA", (self.w, self.h), (0, 0, 0, 0))
-        for (x, y), color in self.px.items():
-            img.putpixel((x, y), color)
-        return img
+        return self.img
 
 
-def wall(c: Canvas, x0: int, x1: int, top: int, bottom: int,
-         sc=STONE, sl=STONE_L, sd=STONE_D) -> None:
-    """성벽 몸통 — 윗줄은 밝게, 아래·양끝은 어둡게 해서 입체감을 만든다."""
-    c.rect(x0, top, x1, bottom, sc)
-    c.rect(x0, top, x1, top, sl)
-    c.rect(x0, bottom, x1, bottom, sd)
-    c.rect(x0, top, x0, bottom, sd)
-    c.rect(x1, top, x1, bottom, sd)
+def build_castle(hw: int, hh: int, height: int, ridge: int,
+                  sc, sl, sd, rc, rl, rd, towers: bool) -> Image.Image:
+    """5~9 — 성벽 박스 + 지붕 얹은 천수각. towers=True면 곁탑 두 개를 앞귀에 세운다."""
+    keep_hw, keep_hh, keep_h = round(hw * 0.5), round(hh * 0.5), round(height * 0.55)
+    w = 2 * hw + 2 * MARGIN
+    h = height + 2 * hh + keep_h + 2 * keep_hh + ridge + 2 * MARGIN
+    c = IsoCanvas(w, h)
+    cx, base_y = w // 2, h - MARGIN
+    top_y = c.box(cx, base_y, hw, hh, height, sl, sc, sd)
+    c.merlons(cx, top_y, hw, hh, sl, n=7 if hw > 20 else 5)
+    if towers:
+        for side in (-1, 1):
+            tx = cx + side * round(hw * 0.72)
+            tb = base_y - hh + round(side * -0 + hh * 0.35)  # roughly on the wall slope
+            tb = base_y - round(hh * 0.55)
+            tt = c.box(tx, tb, 4, 2, round(height * 0.75), sl, sc, sd)
+            c.roof(tx, tt, 4, 2, 5, rl, rd)
+    keep_top = c.box(cx, top_y + hh, keep_hw, keep_hh, keep_h, rl if False else sl, sc, sd)
+    c.roof(cx, keep_top, keep_hw, keep_hh, ridge, rl, rd)
+    if height >= 20:
+        mid = keep_top + round(keep_h * 0.5)
+        c.roof(cx, mid, keep_hw, keep_hh, round(ridge * 0.4), rc, rd)
+    return c.to_image()
 
 
-def merlons(c: Canvas, x0: int, x1: int, y: int, sl=STONE_L) -> None:
-    """총안(凸凹) — 두 칸 걸러 한 칸씩 위로 솟은 돌."""
-    for x in range(x0, x1 + 1):
-        if (x - x0) % 2 == 0:
-            c.set(x, y, sl)
+def build_palace() -> Image.Image:
+    """9 경 — 황도. 넓은 궁성 담장 + 중앙 대전(2단 지붕) + 좌우 곁전. 최대 규모."""
+    hw, hh, height, ridge = 40, 18, 26, 12
+    w = 2 * hw + 2 * MARGIN + 24
+    h = height + 2 * hh + 30 + ridge + 2 * MARGIN
+    c = IsoCanvas(w, h)
+    cx, base_y = w // 2, h - MARGIN
+    top_y = c.box(cx, base_y, hw, hh, height, GSTONE_L, GSTONE, GSTONE_D)
+    c.merlons(cx, top_y, hw, hh, GSTONE_L, n=9)
+    # 좌우 곁전 — 담장 위 앞귀에 얹은 작은 지붕 건물.
+    for side in (-1, 1):
+        wx = cx + side * round(hw * 0.6)
+        wb = base_y - round(hh * 0.5)
+        wt = c.box(wx, wb, 7, 4, 12, GSTONE_L, GSTONE, GSTONE_D)
+        c.roof(wx, wt, 7, 4, 6, PALACE_ROOF_L, PALACE_ROOF_D)
+    # 중앙 대전 — 2단 지붕의 가장 높은 건물.
+    kt = c.box(cx, top_y + hh, 14, 7, 22, GSTONE_L, GSTONE, GSTONE_D)
+    c.roof(cx, kt, 14, 7, round(ridge * 0.5), PALACE_ROOF_L, PALACE_ROOF_D)
+    c.roof(cx, kt + 11, 16, 8, ridge, PALACE_ROOF, PALACE_ROOF_D)
+    return c.to_image()
 
 
-def gate(c: Canvas, cx: int, bottom: int, gw: int, gh: int) -> None:
-    """성문 — 위 한 줄은 양옆을 한 칸씩 좁혀 아치로."""
-    half = gw // 2
-    for i in range(gh):
-        y = bottom - i
-        shrink = 1 if i == gh - 1 and gw >= 3 else 0
-        c.rect(cx - half + shrink, y, cx + half - shrink, y, GATE)
+def build_county(level: int) -> Image.Image:
+    """10 영현 / 11 장현 — 성벽 없는 초가 한두 채. 5(소)보다 작다.
+
+    11(장현)이 훨씬 작다 — 380개로 최다수라 지도를 뒤덮으면 안 된다.
+    """
+    if level == 11:
+        hw, hh, height, ridge = 8, 4, 5, 5
+    else:  # 10 영현 — 11보다 크고 5보다 작다, 담장은 없지만 기단(基壇)이 있다.
+        hw, hh, height, ridge = 12, 6, 8, 7
+    w = 2 * hw + 2 * MARGIN
+    h = height + 2 * hh + ridge + 2 * MARGIN
+    c = IsoCanvas(w, h)
+    cx, base_y = w // 2, h - MARGIN
+    top_y = c.box(cx, base_y, hw, hh, height, STONE_L, STONE, STONE_D)
+    c.roof(cx, top_y, hw, hh, ridge, THATCH_L if level == 11 else ROOF_L,
+           THATCH_D if level == 11 else ROOF_D)
+    return c.to_image()
 
 
-def roof(c: Canvas, cx: int, top: int, rows: int, width: int, tip: bool,
-         rc=ROOF, rd=ROOF_D) -> None:
-    """지붕 — 아래로 갈수록 넓어지는 사다리꼴. tip=True면 꼭대기에 용마루 한 점."""
-    for i in range(rows):
-        w = width - 2 * (rows - 1 - i)
-        if w < 1:
-            continue
-        half = w // 2
-        color = rc if i < rows - 1 else rd
-        c.rect(cx - half, top + i, cx + half, top + i, color)
-    if tip:
-        c.set(cx, top - 1, rd)
+def build_palisade() -> Image.Image:
+    """2 진 — 뾰족한 통나무 목책 박스(지붕 없음) + 정면 성문."""
+    hw, hh, height = 13, 7, 11
+    w = 2 * hw + 2 * MARGIN
+    h = height + 2 * hh + 4 + 2 * MARGIN
+    c = IsoCanvas(w, h)
+    cx, base_y = w // 2, h - MARGIN
+    top_y = c.box(cx, base_y, hw, hh, height, WOOD_L, WOOD, WOOD_D)
+    # 목책 끝을 톱니처럼 — 능선 위에 교대로 뾰족한 말뚝.
+    for i in range(9):
+        t = (i + 0.5) / 9
+        if t < 0.5:
+            x = cx - hw + round(hw * (t * 2))
+            y = top_y + hh - round(hh * (t * 2))
+        else:
+            t2 = (t - 0.5) * 2
+            x = cx + round(hw * t2)
+            y = top_y + round(hh * t2)
+        if i % 2 == 0:
+            c.draw.line([(x, y), (x, y - 4)], fill=WOOD_D, width=1)
+    gx, gy = cx, base_y
+    c.draw.rectangle([gx - 2, gy - 6, gx + 2, gy], fill=GATE)
+    return c.to_image()
 
 
-def draw_port(c: Canvas) -> None:
-    """1 수(水) — 항구. 물 위에 놓인 부두와 돛단배. 마을이 아니다."""
-    base = c.h - 1
-    water_top = base - 2
-    c.rect(0, water_top, c.w - 1, base, WATER)
-    c.rect(0, water_top, c.w - 1, water_top, WATER_L)  # 물결 윗줄
-
-    # 부두 — 물가에서 왼쪽으로 뻗은 널판과 말뚝.
-    deck = water_top - 1
-    c.rect(0, deck, 7, deck, WOOD)
-    for px in (1, 4, 7):
-        c.rect(px, deck + 1, px, base - 1, WOOD_D)
-
-    # 배 — 선체 + 돛대 + 돛.
-    c.rect(8, deck, c.w - 1, deck, WOOD)
-    c.rect(9, deck + 1, c.w - 2, deck + 1, WOOD_D)
-    mast = 11
-    c.rect(mast, 3, mast, deck - 1, WOOD_D)
-    for i in range(6):
-        y = 4 + i
-        c.rect(mast + 1, y, min(c.w - 1, mast + 2 + i // 2), y, SAIL if i < 5 else SAIL_D)
+def build_pass() -> Image.Image:
+    """3 관 — 좌우 절벽 사이 관문. 폭 좁고 세로로 선 실루엣."""
+    hw, hh, height = 14, 7, 16
+    w = 2 * hw + 2 * MARGIN + 14
+    h = height + 2 * hh + 8 + 2 * MARGIN
+    c = IsoCanvas(w, h)
+    cx, base_y = w // 2, h - MARGIN
+    for side in (-1, 1):
+        cxs = cx + side * round(hw * 1.15)
+        c.box(cxs, base_y - 2, 6, 3, height + 4, STONE_D, STONE_D, (80, 74, 66, 255))
+    top_y = c.box(cx, base_y, hw, hh, height, STONE_L, STONE, STONE_D)
+    c.draw.rectangle([cx - 3, base_y - 7, cx + 3, base_y], fill=GATE)
+    c.roof(cx, top_y, hw, hh, 8, ROOF_L, ROOF_D)
+    return c.to_image()
 
 
-def draw_palisade(c: Canvas) -> None:
-    """2 진 — 끝을 뾰족하게 깎은 통나무 목책과 망루."""
-    base = c.h - 2
-    top = base - 8
-    for x in range(1, c.w - 1):
-        c.rect(x, top + 1, x, base, WOOD if x % 2 else WOOD_D)
-        c.set(x, top, WOOD_D)  # 뾰족한 끝
-    gate(c, c.w // 2, base, 3, 3)
-    # 망루 — 목책 오른쪽 뒤로 솟은 나무 단.
-    tx = c.w - 5
-    c.rect(tx, top - 3, tx + 3, top - 1, WOOD)
-    c.rect(tx, top - 3, tx + 3, top - 3, WOOD_D)
+def build_camp() -> Image.Image:
+    """4 이 — 이민족 취락. 천막 두 채(성벽 없음) + 토템 기둥."""
+    w, h = 46, 34
+    c = IsoCanvas(w, h)
+    base_y = h - MARGIN
+    for cx, hw, hh, height in ((13, 8, 4, 6), (32, 6, 3, 5)):
+        top_y = c.box(cx, base_y, hw, hh, height, TENT_L, TENT, TENT_D)
+        c.roof(cx, top_y, hw, hh, height + 2, TENT, TENT_D)
+    tx = 22
+    c.draw.line([(tx, base_y - 26), (tx, base_y)], fill=WOOD_D, width=2)
+    c.draw.rectangle([tx - 3, base_y - 26, tx + 3, base_y - 23], fill=WOOD)
+    return c.to_image()
 
 
-def draw_pass(c: Canvas) -> None:
-    """3 관 — 좌우 절벽 사이에 낀 관문. 폭이 좁고 세로로 선 실루엣."""
-    base = c.h - 2
-    c.rect(1, 3, 3, base, STONE_D)
-    c.rect(c.w - 4, 3, c.w - 2, base, STONE_D)
-    wall(c, 4, c.w - 5, 5, base)
-    cx = c.w // 2
-    gate(c, cx, base, 3, 4)
-    roof(c, cx, 2, 3, c.w - 4, tip=False)
+def build_port() -> Image.Image:
+    """1 수(水) — 항구. 물 위 부두 + 돛단배. 성이 아니다."""
+    w, h = 46, 30
+    c = IsoCanvas(w, h)
+    base_y = h - MARGIN
+    # 물 — 넓적한 다이아 판.
+    hw, hh = 22, 6
+    c.draw.polygon(
+        [(w // 2, base_y - 2 * hh), (w // 2 + hw, base_y - hh),
+         (w // 2, base_y), (w // 2 - hw, base_y - hh)],
+        fill=WATER, outline=OUTLINE,
+    )
+    c.draw.line([(w // 2 - hw + 3, base_y - hh), (w // 2 - 3, base_y - 2 * hh + 2)],
+                fill=WATER_L, width=1)
+    # 부두 — 물 왼쪽 위에 낮게 뜬 나무 판.
+    dock_top = c.box(w // 2 - 8, base_y - hh - 1, 9, 4, 3, WOOD_L, WOOD, WOOD_D)
+    # 배 — 부두 옆, 선체 + 돛대 + 돛.
+    boat_cx = w // 2 + 6
+    c.box(boat_cx, base_y - hh - 3, 8, 3, 3, WOOD_L, WOOD, WOOD_D)
+    mast_x = boat_cx
+    mast_top = base_y - hh - 3 - 6 - 10
+    c.draw.line([(mast_x, mast_top), (mast_x, base_y - hh - 6)], fill=WOOD_D, width=1)
+    for i in range(5):
+        y = mast_top + 2 + i
+        xr = mast_x + 2 + i
+        c.draw.line([(mast_x + 1, y), (xr, y)], fill=SAIL if i < 4 else SAIL_D)
+    return c.to_image()
 
 
-def draw_camp(c: Canvas) -> None:
-    """4 이 — 이민족 취락. 천막 두 채와 토템 기둥(성벽 없음)."""
-    base = c.h - 2
-    for cx, half_w, hgt in ((4, 3, 6), (15, 3, 7)):
-        for i in range(hgt):
-            half = round(half_w * i / (hgt - 1))
-            y = base - hgt + 1 + i
-            c.rect(cx - half, y, cx + half, y, TENT if i < hgt - 1 else TENT_D)
-        c.set(cx, base, GATE)  # 입구
-        c.set(cx, base - hgt, WOOD_D)  # 천막 꼭대기 장대
-    tx = 10
-    c.rect(tx, base - 9, tx, base, WOOD_D)
-    c.rect(tx - 1, base - 9, tx + 1, base - 9, WOOD)
-    c.rect(tx - 1, base - 6, tx + 1, base - 6, WOOD)
-
-
-# 5~8 성 — 넷 다 성벽·총안·성문을 두른다(치소는 소부터 성을 쌓는다). 등급은 성벽 높이,
-# 천수각 규모, 곁탑, 그리고 재료 색으로 오른다: 소는 목조 지붕, 중·대는 붉은 기와,
-# 특은 성체 전체가 금빛 석재다. 색이 1px 크기 차이보다 멀리서 잘 읽힌다 — 대와 특은
-# 크기만 다를 땐 구분이 안 됐다.
 CASTLE_SPEC = {
-    5: dict(wall_h=5, keep_w=7, keep_h=3, towers=False, rc=WOOD, rd=WOOD_D,
-            sc=STONE, sl=STONE_L, sd=STONE_D),
-    6: dict(wall_h=6, keep_w=9, keep_h=4, towers=False, rc=ROOF, rd=ROOF_D,
-            sc=STONE, sl=STONE_L, sd=STONE_D),
-    7: dict(wall_h=7, keep_w=11, keep_h=6, towers=True, rc=ROOF, rd=ROOF_D,
-            sc=STONE, sl=STONE_L, sd=STONE_D),
-    8: dict(wall_h=8, keep_w=13, keep_h=8, towers=True, rc=ROOF, rd=ROOF_D,
-            sc=GSTONE, sl=GSTONE_L, sd=GSTONE_D),
+    5: dict(hw=17, hh=9, height=13, ridge=7, sc=STONE, sl=STONE_L, sd=STONE_D,
+            rc=WOOD, rl=WOOD_L, rd=WOOD_D, towers=False),
+    6: dict(hw=20, hh=10, height=17, ridge=8, sc=STONE, sl=STONE_L, sd=STONE_D,
+            rc=ROOF, rl=ROOF_L, rd=ROOF_D, towers=False),
+    7: dict(hw=23, hh=12, height=21, ridge=9, sc=STONE, sl=STONE_L, sd=STONE_D,
+            rc=ROOF, rl=ROOF_L, rd=ROOF_D, towers=True),
+    8: dict(hw=26, hh=13, height=25, ridge=10, sc=GSTONE, sl=GSTONE_L, sd=GSTONE_D,
+            rc=ROOF, rl=ROOF_L, rd=ROOF_D, towers=True),
 }
 
 
-def draw_castle(c: Canvas, spec: dict) -> None:
-    base = c.h - 2
-    x0, x1 = 1, c.w - 2
-    sc, sl, sd = spec["sc"], spec["sl"], spec["sd"]
-    wall_top = base - spec["wall_h"] + 1
-    wall(c, x0, x1, wall_top, base, sc, sl, sd)
-    merlons(c, x0, x1, wall_top - 1, sl)
-
-    cx = c.w // 2
-    gate(c, cx, base, 3 if c.w < 28 else 5, max(3, spec["wall_h"] - 2))
-
-    # 곁탑 — 성벽 양끝에서 한 칸 솟는다.
-    if spec["towers"]:
-        for tx in (x0, x1 - 2):
-            c.rect(tx, wall_top - 3, tx + 2, base, sc)
-            c.rect(tx, wall_top - 3, tx + 2, wall_top - 3, sd)
-            c.set(tx + 1, wall_top - 1, GATE)  # 총안 구멍
-
-    # 천수각 — 성벽 위 중앙. 층마다 지붕을 얹는다.
-    kw, kh = spec["keep_w"], spec["keep_h"]
-    khalf = kw // 2
-    keep_top = wall_top - kh
-    c.rect(cx - khalf, keep_top, cx + khalf, wall_top - 1, sc)
-    c.rect(cx - khalf, keep_top, cx - khalf, wall_top - 1, sd)
-    c.rect(cx + khalf, keep_top, cx + khalf, wall_top - 1, sd)
-    for wy in range(keep_top + 2, wall_top - 1, 3):
-        c.set(cx, wy, GATE)  # 창
-    rc, rd = spec["rc"], spec["rd"]
-    roof(c, cx, keep_top - 2, 2, kw + 2, tip=kh >= 6, rc=rc, rd=rd)
-    if kh >= 6:  # 대·특은 중간층에도 처마를 둔다.
-        roof(c, cx, keep_top + kh // 2, 1, kw + 2, tip=False, rc=rc, rd=rd)
-
-
 def build(level: int) -> Image.Image:
-    w, h = DIMS[level]
-    c = Canvas(w, h)
     if level == 1:
-        draw_port(c)
-    elif level == 2:
-        draw_palisade(c)
-    elif level == 3:
-        draw_pass(c)
-    elif level == 4:
-        draw_camp(c)
-    else:
-        draw_castle(c, CASTLE_SPEC[level])
-    c.outline()
-    return c.to_image()
+        return build_port()
+    if level == 2:
+        return build_palisade()
+    if level == 3:
+        return build_pass()
+    if level == 4:
+        return build_camp()
+    if level in (10, 11):
+        return build_county(level)
+    if level == 9:
+        return build_palace()
+    spec = CASTLE_SPEC[level]
+    return build_castle(spec["hw"], spec["hh"], spec["height"], spec["ridge"],
+                         spec["sc"], spec["sl"], spec["sd"],
+                         spec["rc"], spec["rl"], spec["rd"], spec["towers"])
+
+
+LEVELS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+# 미리보기는 시각적 무게 순서(작음→큼)로 늘어놓는다: 11 < 2 < 10 < 5 < 6 < 7 < 8 < 9,
+# 1·3·4는 그 사이 어딘가에 형태별로 끼워 넣는다.
+PREVIEW_ORDER = (11, 4, 1, 3, 2, 10, 5, 6, 7, 8, 9)
 
 
 def preview_sheet(icons: dict[int, Image.Image]) -> Image.Image:
     s, gap = PREVIEW_SCALE, PREVIEW_GAP
-    w = sum(i.width * s for i in icons.values()) + gap * (len(icons) + 1)
-    h = max(i.height * s for i in icons.values()) + gap * 2
-    sheet = Image.new("RGBA", (w, h), (24, 24, 28, 255))
+    ordered = [icons[lv] for lv in PREVIEW_ORDER]
+    w = sum(i.width * s for i in ordered) + gap * (len(ordered) + 1)
+    h = max(i.height * s for i in ordered) + gap * 2
+    sheet = Image.new("RGBA", (w, h), (30, 34, 30, 255))
     x = gap
-    for level in sorted(icons):
-        img = icons[level].resize(
-            (icons[level].width * s, icons[level].height * s), Image.NEAREST
-        )
-        sheet.alpha_composite(img, (x, h - gap - img.height))
-        x += img.width + gap
+    for img in ordered:
+        scaled = img.resize((img.width * s, img.height * s), Image.NEAREST)
+        sheet.alpha_composite(scaled, (x, h - gap - scaled.height))
+        x += scaled.width + gap
     return sheet
 
 
@@ -316,7 +359,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="쓰지 않고 기존 파일과 바이트 비교")
     args = ap.parse_args()
 
-    icons = {level: build(level) for level in sorted(DIMS)}
+    icons = {level: build(level) for level in LEVELS}
     files = targets(icons)
 
     if args.check:
