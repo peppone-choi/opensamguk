@@ -1,0 +1,424 @@
+from __future__ import annotations
+
+_SIZE_OK_MARKER = "# noqa: SIZE_OK"
+
+from collections import Counter
+from dataclasses import dataclass
+from typing import TypeAlias
+from uuid import UUID
+
+JsonValue: TypeAlias = str | int | float | bool | None | list["JsonValue"] | dict[str, "JsonValue"]
+JsonObject: TypeAlias = dict[str, JsonValue]
+NODE_CLASSES = {"COUNTY": "COUNTY_NODE", "DAO": "DAO_NODE", "MARQUISATE": "MARQUISATE_NODE", "TOWN": "TOWN_NODE"}
+ALLOWED_NODE_CLASSES = frozenset(NODE_CLASSES.values())
+EXPECTED_BATCH_COUNTS = {"w0b-overlay-unique-220": 722, "w0c-reviewed-ambiguity": 50, "w0c-hhs-external-location": 8}
+EXPECTED_SELECTION = {"routeNodeCount": 780, "hhsAdministrativeBindingCount": 780, "externalHistoricalBindingCount": 0, "overlayUniqueCount": 722, "reviewedAmbiguousCount": 50, "externalLocationClaimCount": 8, "sourcePlaceholderCount": 0, "polityPresenceCount": 0, "remoteGateCount": 0}
+MUTABLE_REFERENCES: list[JsonValue] = ["city.id", "general.city_id", "general.officer_city", "nation.capital_city_id", "v2_city_ledger.city_id", "general_turn.arg", "nation_turn.arg", "general.last_turn", "general.meta.officer_city", "command_inbox.payload"]
+IMMUTABLE_AUDIT_REFERENCES: list[JsonValue] = ["command_result.result_payload", "command_outbox.payload", "history", "replay"]
+DERIVED_RESEED_REFERENCES: list[JsonValue] = ["scenario.nation.city_ids", "scenario.general.city_id", "HanCityConst", "HanGateIndex", "map.connections"]
+EXPECTED_REWRITE_SURFACES: JsonObject = {
+    "scenarioResources": {
+        "disposition": "RESEED",
+        "surfaces": ["scenario.nation.city_ids", "scenario.general.city_id"],
+        "otherwise": "BLOCK_UNTIL_TYPED_BINDINGS",
+    },
+    "derivedArtifacts": {
+        "disposition": "REGENERATE",
+        "surfaces": ["HanCityConst", "HanGateIndex", "map.connections"],
+        "otherwise": "BLOCK_UNTIL_TYPED_BINDINGS",
+    },
+    "immutableAudit": {
+        "disposition": "NO_REWRITE",
+        "surfaces": ["command_result.result_payload", "command_outbox.payload", "history", "replay"],
+    },
+}
+EXPECTED_FORBIDDEN_SELECTIONS: JsonObject = {
+    "physicalPlaceIds": [
+        "external:v1:X004", "external:v1:X028", "external:v1:X029", "external:v1:X030",
+        "external:v1:X031", "external:v1:X032", "external:v1:X033", "external:v1:X034",
+        "external:v1:X035", "external:v1:X036", "external:v1:X037", "external:v1:X038",
+        "external:v1:X040", "external:v1:X041", "external:v1:X042", "external:v1:X043",
+        "external:v1:X044", "external:v1:X045", "external:v1:X046", "external:v1:X047",
+        "external:v1:X048", "external:v1:X049", "external:v1:X055", "external:v1:X056",
+        "external:v1:X057", "external:v1:X058", "external:v1:X059", "external:v1:X060",
+        "external:v1:X061", "external:v1:X062", "external:v1:X063", "external:v1:X064",
+    ],
+    "canonicalNames": [
+        "流求", "夷洲", "古寧伽耶", "大伽耶", "星山伽耶", "山越", "白馬氐", "西羌",
+        "南匈奴", "烏桓", "鮮卑", "龜茲屬國",
+    ],
+    "nodeClasses": ["POLITY_PRESENCE", "REMOTE_GATE", "ALIAS_ONLY"],
+}
+COUNTER_NAMES = ("numericCityIdChangeCount", "routeNodeReplacementCount", "historicalBindingCorrectionCount", "physicalPlaceCorrectionCount", "displayNameChangeCount", "parentChangeCount", "seatRoleChangeCount")
+
+
+class MaterializationContractError(ValueError):
+    __slots__ = ()
+
+
+@dataclass(frozen=True, slots=True)
+class BuildResult:
+    selection: JsonObject
+    migration: JsonObject
+
+
+def obj(container: JsonObject, key: str) -> JsonObject:
+    if not isinstance(value := container.get(key), dict):
+        raise MaterializationContractError(f"{key} must be an object")
+    return value
+
+
+def rows(container: JsonObject, key: str) -> list[JsonObject]:
+    if not isinstance(value := container.get(key), list) or not all(isinstance(row, dict) for row in value):
+        raise MaterializationContractError(f"{key} must be an object array")
+    return [row for row in value if isinstance(row, dict)]
+
+
+def strings(container: JsonObject, key: str) -> list[str]:
+    if not isinstance(value := container.get(key), list) or not all(isinstance(row, str) for row in value):
+        raise MaterializationContractError(f"{key} must be a string array")
+    return [row for row in value if isinstance(row, str)]
+
+
+def text(container: JsonObject, key: str) -> str:
+    if not isinstance(value := container.get(key), str) or not value:
+        raise MaterializationContractError(f"{key} must be a non-empty string")
+    return value
+
+
+def number(container: JsonObject, key: str) -> int:
+    if not isinstance(value := container.get(key), int) or isinstance(value, bool):
+        raise MaterializationContractError(f"{key} must be an integer")
+    return value
+
+
+def _unit_id(unit: JsonObject) -> str:
+    return f"hhs:{number(unit, 'sourceVolume')}:{text(unit, 'canonicalGroup')}:{number(unit, 'ordinal'):03d}"
+
+
+def _catalog(catalog: JsonObject) -> tuple[list[str], dict[str, JsonObject]]:
+    ordered: list[str] = []
+    indexed: dict[str, JsonObject] = {}
+    for group in rows(catalog, "groups"):
+        for unit in rows(group, "units"):
+            unit_id = _unit_id(unit)
+            if unit_id in indexed:
+                raise MaterializationContractError(f"duplicate administrative unit: {unit_id}")
+            ordered.append(unit_id)
+            indexed[unit_id] = unit
+    if len(ordered) != 1180 or catalog.get("detectedUnitCount") != 1180:
+        raise MaterializationContractError("catalog must contain exactly 1,180 units")
+    return ordered, indexed
+
+
+def _candidate_index(candidate: JsonObject) -> tuple[dict[int, JsonObject], set[str]]:
+    all_rows = rows(candidate, "candidates")
+    if candidate.get("candidatePolicy") != {
+        "automaticSelectionCount": 0,
+        "numericPhysicalPlaceBinding": "chgis:v6:cnty:<legacyTileId>",
+        "ownerAgreement": "canonicalGroup exact, then unique sourceGroupName alias",
+        "reviewState": "PENDING",
+    } or any(row.get("reviewState") != "PENDING" for row in all_rows):
+        raise MaterializationContractError("candidate manifest must remain PENDING-only")
+    current = [row for row in all_rows if row.get("origin") == "CURRENT_780"]
+    pool = {text(row, "administrativeUnitId") for row in all_rows if row.get("origin") == "HHS_REPLACEMENT_POOL"}
+    indexed = {number(row, "legacyCityId"): row for row in current}
+    if sorted(indexed) != list(range(1, 781)) or len(pool) != 1180:
+        raise MaterializationContractError("candidate manifest counts or legacyCityId sequence drifted")
+    return indexed, pool
+
+
+def _reviewed_selection(overlay: dict[str, JsonObject], adjudications: JsonObject, claims: JsonObject,
+                        ) -> tuple[dict[str, tuple[str, str, JsonObject]], dict[str, JsonObject]]:
+    selected: dict[str, tuple[str, str, JsonObject]] = {}
+    for unit_id, row in overlay.items():
+        if row.get("joinStatus") == "RESOLVED_POINT":
+            place = obj(row, "selectedCandidate")
+            selected[unit_id] = (text(place, "physicalPlaceId"), "w0b-overlay-unique-220", place)
+    ambiguous = {unit_id for unit_id, row in overlay.items() if row.get("joinStatus") == "AMBIGUOUS_POINT"}
+    reviewed: set[str] = set()
+    for decision in rows(adjudications, "adjudications"):
+        unit_id, state = text(decision, "administrativeUnitId"), decision.get("reviewState")
+        if unit_id not in ambiguous or unit_id in reviewed:
+            raise MaterializationContractError("unreviewed ambiguity or duplicate adjudication")
+        reviewed.add(unit_id)
+        candidates = rows(overlay[unit_id], "candidates")
+        by_place = {text(row, "physicalPlaceId"): row for row in candidates}
+        rejected = decision.get("rejectedPhysicalPlaceIds")
+        if not isinstance(rejected, list) or not all(isinstance(item, str) for item in rejected):
+            raise MaterializationContractError("ambiguous adjudication rejected set is malformed")
+        if state == "APPROVED_FOR_SELECTION":
+            place_id = text(decision, "selectedPhysicalPlaceId")
+            if place_id not in by_place or set(rejected) != set(by_place) - {place_id}:
+                raise MaterializationContractError("ambiguous adjudication is not exhaustive")
+            selected[unit_id] = (place_id, "w0c-reviewed-ambiguity", by_place[place_id])
+        elif state != "REJECTED_FALSE_HOMONYM" or set(rejected) != set(by_place):
+            raise MaterializationContractError("unreviewed ambiguity disposition")
+    if reviewed != ambiguous:
+        raise MaterializationContractError("unreviewed ambiguity remains")
+    claim_rows = rows(claims, "claims")
+    if len(claim_rows) != 8:
+        raise MaterializationContractError("location claim set must contain exactly 8 LOCATION_ONLY claims")
+    claim_index: dict[str, JsonObject] = {}
+    for claim in claim_rows:
+        claim_id, unit_id = text(claim, "sourceClaimId"), text(claim, "subjectKey")
+        period, resolution = obj(claim, "subjectPeriod"), obj(claim, "locationResolution")
+        if claim.get("reviewState") != "APPROVED" or claim.get("claimRole") != "LOCATION_ONLY":
+            raise MaterializationContractError("location claim is not approved LOCATION_ONLY")
+        if number(period, "effectiveFromYear") <= -9999 or number(period, "effectiveToYear") >= 9999:
+            raise MaterializationContractError("location claim lifecycle must be finite")
+        if unit_id in selected or unit_id in claim_index or any(row.get("sourceClaimId") == claim_id for row in claim_index.values()):
+            raise MaterializationContractError("location claim duplicates a selected binding")
+        place_id = text(resolution, "physicalPlaceId")
+        selected[unit_id] = (place_id, "w0c-hhs-external-location", claim)
+        claim_index[unit_id] = claim
+    if len(selected) != 780 or len({value[0] for value in selected.values()}) != 780:
+        raise MaterializationContractError("duplicate physicalPlaceRef or selection count drift")
+    return selected, claim_index
+
+
+def _forbidden_policy(policy: JsonObject) -> JsonObject:
+    forbidden = obj(policy, "forbiddenSelections")
+    if forbidden != EXPECTED_FORBIDDEN_SELECTIONS:
+        raise MaterializationContractError("forbidden selection policy drift")
+    return forbidden
+
+
+def _enforce_forbidden_selection(nodes: list[JsonValue], forbidden: JsonObject) -> None:
+    physical = set(strings(forbidden, "physicalPlaceIds"))
+    names = set(strings(forbidden, "canonicalNames"))
+    classes = set(strings(forbidden, "nodeClasses"))
+    for raw in nodes:
+        if not isinstance(raw, dict):
+            raise MaterializationContractError("route node must be an object")
+        if raw.get("physicalPlaceRef") in physical:
+            raise MaterializationContractError("forbidden physicalPlaceRef selected")
+        if raw.get("canonicalName") in names or raw.get("displayName") in names:
+            raise MaterializationContractError("forbidden canonical name selected")
+        if raw.get("nodeClass") in classes:
+            raise MaterializationContractError("forbidden nodeClass selected")
+
+
+def _legacy_place(candidate: JsonObject) -> str:
+    physical = candidate.get("physicalPlaceRef")
+    if isinstance(physical, str):
+        return physical
+    external = text(candidate, "externalPlaceRef")
+    return "external:v1:" + external.removeprefix("han-tiles:")
+
+
+def _policy_corrections(policy: JsonObject, current: dict[int, JsonObject], selected: dict[str, tuple[str, str, JsonObject]],
+                        ) -> tuple[dict[str, tuple[int, str]], set[int], set[int]]:
+    corrected: dict[str, tuple[int, str]] = {}
+    binding_ids: set[int] = set()
+    physical_ids: set[int] = set()
+    same_node = rows(policy, "legacySameNodeCorrections")
+    x026 = next((row for row in same_node if row.get("oldCityId") == 704), None)
+    if x026 is None or x026.get("administrativeUnitId") != "hhs:113:上郡:009" or current[704].get("legacyTileId") != "X026":
+        raise MaterializationContractError("X026 correction must bind hhs:113:上郡:009")
+    for key in ("legacySameNodeCorrections", "legacyAttributionCorrections"):
+        corrections = same_node if key == "legacySameNodeCorrections" else rows(policy, key)
+        if len(corrections) != (8 if key == "legacySameNodeCorrections" else 17):
+            raise MaterializationContractError("binding correction policy count drift")
+        for correction in corrections:
+            old_id, unit_id = number(correction, "oldCityId"), text(correction, "administrativeUnitId")
+            legacy_place = text(correction, "legacyPhysicalPlaceId")
+            if (correction.get("disposition") != "CORRECTED_BINDING_SAME_NODE" or old_id in binding_ids
+                    or unit_id in corrected or unit_id not in selected or _legacy_place(current[old_id]) != legacy_place
+                    or selected[unit_id][0] != legacy_place):
+                raise MaterializationContractError("binding correction policy is malformed")
+            corrected[unit_id] = (old_id, "CORRECTED_BINDING_SAME_NODE")
+            binding_ids.add(old_id)
+    if len(rows(policy, "legacyLocationCorrections")) != 1:
+        raise MaterializationContractError("location correction policy count drift")
+    for correction in rows(policy, "legacyLocationCorrections"):
+        old_id, unit_id = number(correction, "oldCityId"), text(correction, "administrativeUnitId")
+        if (_legacy_place(current[old_id]) != correction.get("oldPhysicalPlaceId")
+                or selected.get(unit_id, (None,))[0] != correction.get("selectedPhysicalPlaceId")):
+            raise MaterializationContractError("location correction policy is malformed")
+        corrected[unit_id] = (old_id, "CORRECTED_LOCATION_SAME_NODE")
+        physical_ids.add(old_id)
+    return corrected, binding_ids, physical_ids
+
+
+def _existing_matches(selected: dict[str, tuple[str, str, JsonObject]], current: dict[int, JsonObject]) -> dict[str, tuple[int, str]]:
+    matched: dict[str, tuple[int, str]] = {}
+    for unit_id, (place_id, _, _) in selected.items():
+        for old_id, candidate in current.items():
+            proposed = candidate.get("proposedAdministrativeUnitId")
+            options = candidate.get("candidateAdministrativeUnitIds", [])
+            if candidate.get("physicalPlaceRef") == place_id and (proposed == unit_id or isinstance(options, list) and unit_id in options):
+                if unit_id in matched:
+                    raise MaterializationContractError("multiple legacy nodes match one selection")
+                matched[unit_id] = (old_id, "RETAINED_SAME_NODE")
+    return matched
+
+
+def _uuid_keys(registry: JsonObject, selected_ids: set[str]) -> dict[str, str]:
+    key_policy = obj(registry, "keyPolicy")
+    derived_flags = ("derivedFromNumericCityId", "derivedFromAdministrativeIdentity", "derivedFromPhysicalPlace",
+                     "derivedFromSourceClaim", "rebindingChangesKey")
+    if registry.get("status") != "ISSUED" or any(key_policy.get(flag) is not False for flag in derived_flags):
+        raise MaterializationContractError("registry must contain issued opaque non-derived keys")
+    indexed: dict[str, str] = {}
+    seen: set[str] = set()
+    for row in rows(registry, "keys"):
+        unit_id, key = text(row, "initialAdministrativeUnitId"), text(row, "routeNodeKey")
+        try:
+            parsed = UUID(key)
+        except ValueError as error:
+            raise MaterializationContractError("registry routeNodeKey is not a UUID") from error
+        if parsed.version != 4 or key != str(parsed) or unit_id in indexed or key in seen:
+            raise MaterializationContractError("registry keys must be unique literal UUIDv4 values")
+        indexed[unit_id] = key
+        seen.add(key)
+    if set(indexed) != selected_ids:
+        raise MaterializationContractError("registry must have exactly one key for every selection")
+    return indexed
+
+
+def build_outputs(
+    candidate: JsonObject, catalog: JsonObject, overlay_doc: JsonObject, policy: JsonObject,
+    adjudications: JsonObject, claims: JsonObject, registry: JsonObject,
+    scenarios: list[JsonObject], provenance: JsonObject,
+) -> BuildResult:
+    ordered, units = _catalog(catalog)
+    overlay = {text(row, "administrativeUnitId"): row for row in rows(overlay_doc, "administrativeUnits")}
+    if len(overlay) != 1180 or overlay_doc.get("sourceYear") != 220:
+        raise MaterializationContractError("overlay must cover 1,180 identities at year 220")
+    current, pool = _candidate_index(candidate)
+    selected, claim_index = _reviewed_selection(overlay, adjudications, claims)
+    if set(selected) - pool or policy.get("status") != "APPROVED":
+        raise MaterializationContractError("approved selection is outside the candidate pool")
+    if (any(row.get("reviewState") != "APPROVED" for row in rows(policy, "selectionBatches"))
+            or {text(row, "batchId"): number(row, "expectedCount") for row in rows(policy, "selectionBatches")} != EXPECTED_BATCH_COUNTS or Counter(value[1] for value in selected.values()) != Counter(EXPECTED_BATCH_COUNTS)):
+        raise MaterializationContractError("policy count drift")
+    if obj(policy, "expectedSelection") != EXPECTED_SELECTION:
+        raise MaterializationContractError("policy count drift")
+    forbidden = _forbidden_policy(policy)
+    matched = _existing_matches(selected, current)
+    corrections, binding_ids, physical_ids = _policy_corrections(policy, current, selected)
+    matched.update(corrections)
+    if len({value[0] for value in matched.values()}) != len(matched):
+        raise MaterializationContractError("same-node corrections reuse a legacy slot")
+    retired = sorted(set(range(1, 781)) - {value[0] for value in matched.values()})
+    replacements = [unit_id for unit_id in ordered if unit_id in selected and unit_id not in matched]
+    if len(retired) != 101 or len(replacements) != 101:
+        raise MaterializationContractError("route replacement count must be 101")
+    assignment = matched | {unit_id: (old_id, "REPLACED_UNRELATED_NODE") for unit_id, old_id in zip(replacements, retired, strict=True)}
+    keys = _uuid_keys(registry, set(selected))
+    route_nodes: list[JsonValue] = []
+    migration_rows: list[JsonValue] = []
+    counters = Counter[str]()
+    for unit_id, (old_id, disposition) in sorted(assignment.items(), key=lambda item: item[1][0]):
+        unit, old = units[unit_id], current[old_id]
+        place_id, batch_id, location = selected[unit_id]
+        if unit_id in claim_index:
+            period = obj(claim_index[unit_id], "subjectPeriod")
+            start, end, location_kind = number(period, "effectiveFromYear"), number(period, "effectiveToYear"), "APPROVED_LOCATION_ONLY_CLAIM"
+            location_claim_id = text(claim_index[unit_id], "sourceClaimId")
+            location_review: JsonObject = {"kind": location_kind, "sourceClaimId": location_claim_id}
+        else:
+            location_claim_id = None
+            start, end = number(location, "begYr"), number(location, "endYr")
+            location_review = {"kind": "W0B_GLOBAL_UNIQUE_220"}
+            if batch_id == "w0c-reviewed-ambiguity":
+                decision = next(row for row in rows(adjudications, "adjudications") if row.get("administrativeUnitId") == unit_id)
+                location_review = {"kind": "EXPLICIT_AMBIGUITY_REVIEW", "selectedPhysicalPlaceRef": place_id,
+                                   "rejectedPhysicalPlaceRefs": decision["rejectedPhysicalPlaceIds"],
+                                   "rationaleCode": decision["rationaleCode"], "rationale": decision["rationale"],
+                                   "evidenceRefs": decision["evidenceRefs"]}
+        correction = unit.get("nameCorrection")
+        canonical = text(correction, "correctedName") if isinstance(correction, dict) else text(unit, "sourceName")
+        seat_role = "COMMANDERY_SEAT" if number(unit, "ordinal") == 1 else "NON_SEAT"
+        node_class = "COUNTY_NODE" if unit_id == "hhs:113:上郡:009" else NODE_CLASSES[text(unit, "unitType")]
+        if node_class not in ALLOWED_NODE_CLASSES:
+            raise MaterializationContractError("nodeClass must be one of the four route-node classes")
+        scenario_states: list[JsonValue] = [
+            {"scenarioId": text(resource, "scenarioId"), "startYear": number(resource, "startYear"),
+             "state": "ACTIVE" if start <= number(resource, "startYear") <= end else "INACTIVE"}
+            for resource in scenarios
+        ]
+        node: JsonObject = {
+            "legacyCityId": old_id,
+            "legacyNodeFingerprint": text(old, "legacyNodeFingerprint"),
+            "legacyDisposition": "REPLACED" if disposition == "REPLACED_UNRELATED_NODE" else "RETAINED",
+            "numericCityId": old_id,
+            "routeNodeKey": keys[unit_id],
+            "reviewState": "APPROVED",
+            "nodeClass": node_class,
+            "displayName": canonical,
+            "canonicalName": canonical,
+            "seatRole": seat_role,
+            "parentName": text(unit, "canonicalGroup"),
+            "parentRef": f"hhs-group:{number(unit, 'sourceVolume')}:{text(unit, 'canonicalGroup')}",
+            "physicalPlaceRef": place_id,
+            "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+            "administrativeUnitId": unit_id,
+            "locationAdjudication": location_review,
+            "effectiveFrom": start,
+            "effectiveTo": end,
+            "bindingLifecycle": {
+                "effectiveFromYear": start,
+                "effectiveToYear": end,
+                "basis": "EXTERNAL_LOCATION_CLAIM" if unit_id in claim_index else "CHGIS_V6_RECORD",
+            },
+            "activeScenarioIds": [
+                text(resource, "scenarioId") for resource in scenarios
+                if start <= number(resource, "startYear") <= end
+            ],
+            "scenarioStates": scenario_states,
+            "selectionRationale": {
+                "method": "APPROVED_REVIEW_BATCH",
+                "batchId": batch_id,
+                "reviewPolicyId": text(policy, "policyId"),
+                "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+                "evidenceRefs": ["data/curated/han/route-node-review-policy-v1.json", batch_id],
+            },
+        }
+        if location_claim_id is not None:
+            node["locationClaimId"] = location_claim_id
+        if disposition == "REPLACED_UNRELATED_NODE":
+            node["replacementDisposition"] = {
+                "rationale": "기존 슬롯의 장소 identity를 승계하지 않고 승인된 HHS RouteNode로 명시 교체한다.",
+                "evidenceRefs": ["data/curated/han/route-node-review-policy-v1.json", unit_id],
+            }
+        if old_id in physical_ids:
+            node["physicalPlaceCorrection"] = {
+                "fromPhysicalPlaceRef": _legacy_place(old),
+                "toPhysicalPlaceRef": place_id,
+                "rationale": "모호 위치 행별 심사에서 기존 물리점을 기각하고 승인 물리점으로 교정했다.",
+                "evidenceRefs": ["data/curated/han/route-node-location-adjudications-v1.json", unit_id],
+            }
+        if old.get("classification") == "HHS_ATTRIBUTION_CONFLICT":
+            incompatible = old.get("incompatibleAdministrativeUnitIds")
+            if not isinstance(incompatible, list) or not all(isinstance(value, str) for value in incompatible):
+                raise MaterializationContractError("attribution conflict candidate is malformed")
+            node["historicalConflictDisposition"] = {
+                "selectedBindingRef": unit_id,
+                "rejectedAdministrativeUnitIds": [value for value in incompatible if value != unit_id],
+                "rationale": "legacy 물리점의 타 군국 귀속을 숨기지 않고 승인 정책의 HHS 결속으로 판정했다.",
+                "evidenceRefs": ["data/curated/han/route-node-review-policy-v1.json", unit_id],
+            }
+        route_nodes.append(node)
+        migration_rows.append({"oldCityId": old_id, "oldNodeFingerprint": text(old, "legacyNodeFingerprint"),
+                               "routeNodeKey": keys[unit_id], "newCityId": old_id, "disposition": disposition})
+        counters["routeNodeReplacementCount"] += disposition == "REPLACED_UNRELATED_NODE"
+        counters["historicalBindingCorrectionCount"] += old_id in binding_ids
+        counters["physicalPlaceCorrectionCount"] += old_id in physical_ids
+        counters["displayNameChangeCount"] += canonical != old.get("legacyNameCh")
+        counters["parentChangeCount"] += text(unit, "canonicalGroup") != old.get("legacyOwnerGroup")
+        counters["seatRoleChangeCount"] += (seat_role == "COMMANDERY_SEAT") != old.get("legacyIsSeat")
+    _enforce_forbidden_selection(route_nodes, forbidden)
+    selection: JsonObject = {"schemaVersion": 1, "selectionId": "han-route-node-selection-v1", "reviewState": "APPROVED", "baselineYear": 220,
+                             "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT", "scenarioCatalog": {"resourceCount": len(scenarios), "resources": list[JsonValue](scenarios)},
+                             "reviewPolicy": {"policyId": text(policy, "policyId"), "forbiddenSelections": forbidden,
+                                              "legacyAttributionCorrections": [number(row, "oldCityId") for row in rows(policy, "legacyAttributionCorrections")]},
+                             "provenance": provenance, "summary": {"approvedCount": 780, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": 780}}, "routeNodes": route_nodes}
+    migration: JsonObject = {"schemaVersion": 1, "migrationId": "han-route-node-migration-v1", "mode": "NEW_WORLD_ONLY", "sourceSelectionId": "han-route-node-selection-v1",
+                             "referenceInventory": {"mutable": MUTABLE_REFERENCES, "immutableAudit": IMMUTABLE_AUDIT_REFERENCES,
+                                                    "derivedReseed": DERIVED_RESEED_REFERENCES,
+                                                    "unknownPayloadPolicy": "REJECT_UNKNOWN", "inPlaceRewrite": False},
+                             "rewriteSurfaces": EXPECTED_REWRITE_SURFACES,
+                             "summary": {"rowCount": 780, **{name: counters[name] for name in COUNTER_NAMES}}, "rows": migration_rows}
+    return BuildResult(selection=selection, migration=migration)
