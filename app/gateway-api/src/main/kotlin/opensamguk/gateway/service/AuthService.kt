@@ -1,6 +1,5 @@
 package opensamguk.gateway.service
 
-import opensamguk.common.auth.GatewayProfileClaims
 import opensamguk.gateway.dto.AuthResponse
 import opensamguk.gateway.dto.ChangeNicknameRequest
 import opensamguk.gateway.dto.ChangePasswordRequest
@@ -67,7 +66,7 @@ class AuthService(
             nickname = nickname,
         )
         val saved = userRepository.save(user)
-        val accessToken = jwtTokenProvider.generateAccessToken(saved.toGatewayProfile())
+        val accessToken = jwtTokenProvider.generateAccessToken(saved.id, saved.role)
         val refreshToken = jwtTokenProvider.generateRefreshToken(saved.id)
         return AuthResponse(accessToken, refreshToken, saved.toResponse())
     }
@@ -86,7 +85,7 @@ class AuthService(
         if ((systemFlag == null || !systemFlag.allowLogin) && user.role != "ADMIN") {
             throw IllegalArgumentException("현재는 로그인이 금지되어있습니다!")
         }
-        val accessToken = jwtTokenProvider.generateAccessToken(user.toGatewayProfile())
+        val accessToken = jwtTokenProvider.generateAccessToken(user.id, user.role)
         val refreshToken = jwtTokenProvider.generateRefreshToken(user.id)
         return AuthResponse(accessToken, refreshToken, user.toResponse())
     }
@@ -100,7 +99,7 @@ class AuthService(
             ?: throw IllegalArgumentException("토큰에서 사용자 ID를 추출할 수 없습니다.")
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("사용자를 찾을 수 없습니다.") }
-        val accessToken = jwtTokenProvider.generateAccessToken(user.toGatewayProfile())
+        val accessToken = jwtTokenProvider.generateAccessToken(user.id, user.role)
         val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.id)
         return AuthResponse(accessToken, newRefreshToken, user.toResponse())
     }
@@ -139,7 +138,7 @@ class AuthService(
             throw NicknameAlreadyInUseException()
         }
         return AuthResponse(
-            accessToken = jwtTokenProvider.generateAccessToken(user.toGatewayProfile()),
+            accessToken = jwtTokenProvider.generateAccessToken(user.id, user.role),
             refreshToken = jwtTokenProvider.generateRefreshToken(user.id),
             user = user.toResponse(),
         )
@@ -168,16 +167,6 @@ class AuthService(
         email = email,
         nickname = nickname,
         role = role,
-        picture = picture,
-        imageServer = if (imgsvr) 1 else 0,
-    )
-
-    private fun UserEntity.toGatewayProfile(): GatewayProfileClaims = GatewayProfileClaims(
-        userId = id,
-        username = username,
-        role = role,
-        nickname = nickname,
-        grade = grade ?: if (role == "ADMIN") 6 else 1,
         picture = picture,
         imageServer = if (imgsvr) 1 else 0,
     )

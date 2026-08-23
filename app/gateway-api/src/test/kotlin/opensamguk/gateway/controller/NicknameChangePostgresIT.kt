@@ -3,7 +3,6 @@ package opensamguk.gateway.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gateway.profile.ProfileIconSecureStorageTestConfiguration
 import opensamguk.gateway.security.CustomUserDetails
-import opensamguk.gateway.security.JwtTokenProvider
 import opensamguk.infra.entity.UserEntity
 import opensamguk.infra.read.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -43,9 +42,6 @@ class NicknameChangePostgresIT {
 
     @Autowired
     lateinit var userRepository: UserRepository
-
-    @Autowired
-    lateinit var jwtTokenProvider: JwtTokenProvider
 
     @Autowired
     lateinit var objectMapper: ObjectMapper
@@ -131,11 +127,7 @@ class NicknameChangePostgresIT {
                             .with(user(CustomUserDetails(savedUser))),
                     ).andExpect(status().isOk).andReturn().response
                     val body = objectMapper.readTree(response.contentAsByteArray)
-                    val accessToken = body.path("accessToken").asText()
-                    NicknameResult(
-                        responseNickname = body.path("user").path("nickname").asText(),
-                        tokenNickname = jwtTokenProvider.getProfileFromAccessToken(accessToken)?.nickname,
-                    )
+                    NicknameResult(responseNickname = body.path("user").path("nickname").asText())
                 }
             }
             assertTrue(ready.await(10, TimeUnit.SECONDS))
@@ -144,8 +136,6 @@ class NicknameChangePostgresIT {
             val last = completion.take().get(30, TimeUnit.SECONDS)
             val storedNickname = userRepository.findById(savedUser.id).orElseThrow().nickname
 
-            assertEquals(first.responseNickname, first.tokenNickname)
-            assertEquals(last.responseNickname, last.tokenNickname)
             assertEquals(setOf("첫별명", "둘별명"), setOf(first.responseNickname, last.responseNickname))
             assertTrue(storedNickname in setOf(first.responseNickname, last.responseNickname))
         } finally {
@@ -155,7 +145,6 @@ class NicknameChangePostgresIT {
 
     private data class NicknameResult(
         val responseNickname: String,
-        val tokenNickname: String?,
     )
 
     companion object {

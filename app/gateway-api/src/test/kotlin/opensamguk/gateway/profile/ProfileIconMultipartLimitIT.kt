@@ -1,6 +1,5 @@
 package opensamguk.gateway.profile
 
-import opensamguk.common.auth.GatewayProfileClaims
 import opensamguk.gateway.security.JwtTokenProvider
 import opensamguk.infra.entity.UserEntity
 import opensamguk.infra.read.UserRepository
@@ -50,17 +49,7 @@ class ProfileIconMultipartLimitIT {
         val user = userRepository.saveAndFlush(
             UserEntity(username = "multipart-limit", password = "encoded", nickname = "multipart-limit"),
         )
-        token = jwtTokenProvider.generateAccessToken(
-            GatewayProfileClaims(
-                userId = user.id,
-                username = user.username,
-                role = user.role,
-                nickname = user.nickname,
-                grade = 1,
-                picture = user.picture,
-                imageServer = 0,
-            ),
-        )
+        token = jwtTokenProvider.generateAccessToken(user.id, user.role)
     }
 
     @Test
