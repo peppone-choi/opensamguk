@@ -29,9 +29,9 @@ function context(path: string[]) {
   return { params: Promise.resolve({ path }) };
 }
 
-function jsonResponse(body: unknown): Response {
+function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
-    status: 200,
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
 }
@@ -138,5 +138,24 @@ describe('game API proxy server selection', () => {
       duplex: 'half',
       body: JSON.stringify({ value: 1 }),
     });
+  });
+
+  it('plainly passes through a 401 from an expired access — no server-side refresh (sam_refresh never reaches this route, see cookie-refresh-path-scope.test.ts)', async () => {
+    cookieValues = { sam_access: 'expired-access', sam_refresh: 'refresh-ok' };
+    fetchMock.mockResolvedValue(jsonResponse({ error: 'expired' }, 401));
+
+    const response = await POST(
+      request('/api/game/select-pool/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: '장수' }),
+      }),
+      context(['select-pool', 'claim']),
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'expired' });
+    // 재시도 없음 — game-api 호출 딱 1회.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

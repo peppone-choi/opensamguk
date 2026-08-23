@@ -340,14 +340,27 @@ export interface AdminGeneralModerationActionResponse {
     affected: number;
 }
 
+// sam_access(15분)가 만료되면 game-api가 401을 준다. sam_refresh는 path=/api/auth로 좁혀 심어져
+// /api/game/** 프록시엔 절대 안 실리므로(web/game/lib/cookies.ts:7, 구조적 계약은
+// __tests__/cookie-refresh-path-scope.test.ts) 서버 프록시는 재시도를 할 수 없다 — sam_refresh가
+// 실제로 도달하는 유일한 경로인 /api/auth/me를 여기서 호출해 재발급을 받고, 원 요청을 딱 1회만
+// 재시도한다. body는 이미 JSON.stringify된 문자열이라 두 번째 fetch에 그대로 재사용해도 안전하다.
+async function fetchGame(path: string, init?: RequestInit): Promise<Response> {
+    const res = await fetch(`${BASE}${path}`, init);
+    if (res.status !== 401) return res;
+    const refreshed = await fetch('/api/auth/me', { cache: 'no-store' });
+    if (!refreshed.ok) return res;
+    return fetch(`${BASE}${path}`, init);
+}
+
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
-    const res = await fetch(`${BASE}${path}`, { cache: 'no-store', signal });
+    const res = await fetchGame(path, { cache: 'no-store', signal });
     if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
     return res.json() as Promise<T>;
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
-    const res = await fetch(`${BASE}${path}`, {
+    const res = await fetchGame(path, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -372,7 +385,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function patch<T>(path: string, body: unknown): Promise<T> {
-    const res = await fetch(`${BASE}${path}`, {
+    const res = await fetchGame(path, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
