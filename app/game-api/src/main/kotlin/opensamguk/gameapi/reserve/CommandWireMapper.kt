@@ -12,6 +12,11 @@ import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.v2.command.V2CommandArgs
+import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.v2.command.V2CommandSchema
+import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
 
 /**
  * F-INTAKE seam — maps a `POST /api/command/{code}` `{code, argJson, generalId}` onto the EXISTING
@@ -114,6 +119,8 @@ object CommandWireMapper {
         //     밖이다 — 추가 금지.
     )
 
+    val v2IntakeCodes: Set<String> = intakeCodes.filterTo(linkedSetOf()) { it.startsWith("v2") }
+
     /**
      * F4 C3 사령(chief) 커맨드 12종 — **턴-예약(turn-reserved) `che_*`이므로 의도적으로 [intakeCodes]에
      * 넣지 않는다.** 급습/몰수/물자원조/백성동원/부대탈퇴지시/수몰/의병모집/이호경식/초토화/피장파장/
@@ -136,6 +143,39 @@ object CommandWireMapper {
     /** True when [code] is an immediate-intake command (typed-publish, NOT general_turn reserve). */
     fun isIntakeCommand(code: String): Boolean = code in intakeCodes
 
+    fun toV2Command(
+        schema: V2CommandSchema,
+        args: V2CommandArgs,
+        generalId: Int,
+        requestId: String,
+        expiresAt: String,
+    ): TurnDaemonCommand = when (args) {
+        is V2GarrisonRecruitArgs -> {
+            require(schema === V2CommandRegistry.garrisonRecruitSchema)
+            CityGarrisonRecruit(
+                requestId = requestId,
+                generalId = generalId,
+                cityId = args.cityId,
+                amount = args.amount,
+                expiresAt = expiresAt,
+            )
+        }
+        is V2CityTransportArgs -> {
+            require(schema === V2CommandRegistry.cityTransportSchema)
+            CityTransport(
+                requestId = requestId,
+                generalId = generalId,
+                fromCityId = args.fromCityId,
+                toCityId = args.toCityId,
+                gold = args.gold,
+                rice = args.rice,
+                garrison = args.garrison,
+                routeRevision = args.routeRevision,
+                expiresAt = expiresAt,
+            )
+        }
+    }
+
     /**
      * Build the typed [TurnDaemonCommand] for an immediate-intake [code], or `null` when [code] is not
      * an immediate-intake command (the caller falls back to the turn-reserved path).
@@ -153,6 +193,7 @@ object CommandWireMapper {
         requestId: String,
         argJson: String?,
         ownerUserId: Int? = null,
+        expiresAt: String? = null,
     ): TurnDaemonCommand? {
         if (code !in intakeCodes) return null
         val args = parseArgs(argJson)
@@ -432,12 +473,14 @@ object CommandWireMapper {
             "v2GarrisonRecruit" -> CityGarrisonRecruit(
                 requestId = requestId, generalId = generalId,
                 cityId = args.int("cityId") ?: 0, amount = args.int("amount") ?: 0,
+                expiresAt = expiresAt,
             )
             "v2CityTransport" -> CityTransport(
                 requestId = requestId, generalId = generalId,
                 fromCityId = args.int("fromCityId") ?: 0, toCityId = args.int("toCityId") ?: 0,
-                gold = args.int("gold")?.toLong() ?: 0L, rice = args.int("rice")?.toLong() ?: 0L,
+                gold = args.long("gold") ?: 0L, rice = args.long("rice") ?: 0L,
                 garrison = args.int("garrison") ?: 0,
+                routeRevision = args.long("routeRevision"), expiresAt = expiresAt,
             )
             else -> null
         }
@@ -454,6 +497,9 @@ object CommandWireMapper {
 
     private fun Map<String, JsonElement>.int(key: String): Int? =
         (this[key] as? JsonPrimitive)?.let { it.intOrNull ?: it.content.toIntOrNull() }
+
+    private fun Map<String, JsonElement>.long(key: String): Long? =
+        (this[key] as? JsonPrimitive)?.content?.toLongOrNull()
 
     private fun Map<String, JsonElement>.str(key: String): String? =
         (this[key] as? JsonPrimitive)?.content

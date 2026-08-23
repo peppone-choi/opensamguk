@@ -9,6 +9,9 @@ import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.RealtimeEvent
+import opensamguk.common.wire.CityGarrisonRecruit
+import opensamguk.common.wire.CityTransport
+import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonStreamKeys
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.gameEventChannel
@@ -25,10 +28,15 @@ import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
+import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.v2.V2CityLedgerStore
+import opensamguk.engine.v2.V2CityTransportHandler
+import opensamguk.engine.v2.V2GarrisonRecruitHandler
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
+import opensamguk.gameapi.v2.V2CommandPrecheckService
 import opensamguk.gameapi.read.CityReadRawRepository
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.DiplomacyReadRawRepository
@@ -46,9 +54,14 @@ import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInstance
 import org.springframework.data.jpa.repository.support.JpaRepositoryFactory
 import org.springframework.data.redis.connection.MessageListener
@@ -80,6 +93,7 @@ import javax.sql.DataSource
 import kotlin.test.Test as KTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -166,7 +180,7 @@ class VerticalSliceE2EIT {
         }
         Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .locations("classpath:db/migration")
+            .locations("classpath:db/migration", "classpath:db/migration_v2")
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
             .load()
             .migrate()
@@ -197,6 +211,11 @@ class VerticalSliceE2EIT {
         if (this::connectionFactory.isInitialized) connectionFactory.destroy()
         if (this::redis.isInitialized) redis.stop()
         if (this::postgres.isInitialized) postgres.stop()
+    }
+
+    @BeforeEach
+    fun resetDatabase() {
+        jdbc.jdbcOperations.execute("TRUNCATE TABLE world_state CASCADE")
     }
 
     @KTest
@@ -316,6 +335,145 @@ class VerticalSliceE2EIT {
             container.stop()
             template.delete(streamKeys.commandStream)
         }
+    }
+
+    @KTest
+    fun `v2 API database precheck and daemon snapshot agree for recruit and transport`() {
+        seedV2ParityState(crew = 2000, gold = 100_000)
+        val api = V2CommandPrecheckService(buildRealPrecheckStateFactory(), jdbc, GameApiProcessWorld(1))
+
+        val recruitArgs = V2GarrisonRecruitArgs(cityId = 1, amount = 100)
+        val recruitAvailable = V2CommandAvailability.Available(V2CommandRegistry.garrisonRecruitSchema, recruitArgs)
+        val apiRecruitAllow = jpaTx.execute { api.precheck(10, recruitAvailable) }
+        val daemonRecruitAllow = V2GarrisonRecruitHandler(
+            buildV2ParityWorld(crew = 2000), ChangeRecorder(), V2CityLedgerStore(jdbc),
+        ).handle(CityGarrisonRecruit(generalId = 10, cityId = 1, amount = 100))
+        assertEquals(recruitAvailable, apiRecruitAllow)
+        assertTrue((daemonRecruitAllow as CommandLifecycleResult).ok)
+
+        jdbc.update(
+            "UPDATE v2_city_ledger SET gold = 0 WHERE world_id = 1 AND city_id = 1",
+            MapSqlParameterSource(),
+        )
+        val apiRecruitDeny = jpaTx.execute { api.precheck(10, recruitAvailable) }
+        val daemonRecruitDeny = V2GarrisonRecruitHandler(
+            buildV2ParityWorld(crew = 2000), ChangeRecorder(), V2CityLedgerStore(jdbc),
+        ).handle(CityGarrisonRecruit(generalId = 10, cityId = 1, amount = 100)) as CommandLifecycleResult
+        assertSameV2Denial(apiRecruitDeny, daemonRecruitDeny)
+
+        jdbc.update(
+            "UPDATE v2_city_ledger SET gold = 100000 WHERE world_id = 1 AND city_id = 1",
+            MapSqlParameterSource(),
+        )
+        val transportArgs = V2CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = 7)
+        val transportAvailable = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, transportArgs)
+        val apiTransportAllow = jpaTx.execute { api.precheck(10, transportAvailable) }
+        val daemonTransportAllow = V2CityTransportHandler(
+            buildV2ParityWorld(crew = 2000), ChangeRecorder(), V2CityLedgerStore(jdbc),
+        ).handle(
+            CityTransport(
+                generalId = 10, fromCityId = 1, toCityId = 9,
+                gold = 100, rice = 0, garrison = 0, routeRevision = 7,
+            ),
+        )
+        assertEquals(transportAvailable, apiTransportAllow)
+        assertTrue((daemonTransportAllow as CommandLifecycleResult).ok)
+
+        jdbc.update("UPDATE general SET crew = 1999 WHERE world_id = 1 AND id = 10", MapSqlParameterSource())
+        emf.cache.evictAll()
+        val apiTransportDeny = jpaTx.execute { api.precheck(10, transportAvailable) }
+        val daemonTransportDeny = V2CityTransportHandler(
+            buildV2ParityWorld(crew = 1999), ChangeRecorder(), V2CityLedgerStore(jdbc),
+        ).handle(
+            CityTransport(
+                generalId = 10, fromCityId = 1, toCityId = 9,
+                gold = 100, rice = 0, garrison = 0, routeRevision = 7,
+            ),
+        ) as CommandLifecycleResult
+        assertSameV2Denial(apiTransportDeny, daemonTransportDeny)
+    }
+
+    @KTest
+    fun `v2 recruit denial matrix keeps real API state and daemon snapshot in parity`() {
+        val cases = listOf(
+            RecruitDenialCase("general missing", V2GarrisonRecruitArgs(1, 100), V2ParityState(generalPresent = false), "GENERAL_NOT_FOUND", "장수를 찾을 수 없습니다."),
+            RecruitDenialCase("city missing", V2GarrisonRecruitArgs(99, 100), V2ParityState(), "CITY_NOT_FOUND", "도시를 찾을 수 없습니다."),
+            RecruitDenialCase("actor city mismatch", V2GarrisonRecruitArgs(9, 100), V2ParityState(), "ACTOR_CITY_MISMATCH", "다른 도시의 병사를 보충할 수 없습니다."),
+            RecruitDenialCase("city authority", V2GarrisonRecruitArgs(1, 100), V2ParityState(city1NationId = 2), "CITY_AUTHORITY_DENIED", "자국 도시가 아닙니다."),
+            RecruitDenialCase("minimum amount", V2GarrisonRecruitArgs(1, 99), V2ParityState(), "RECRUIT_AMOUNT_TOO_SMALL", "최소 100명부터 보충할 수 있습니다."),
+            RecruitDenialCase("leadership limit", V2GarrisonRecruitArgs(1, 8_001), V2ParityState(), "RECRUIT_LEADERSHIP_LIMIT", "통솔로 보충할 수 있는 한도를 넘었습니다."),
+            RecruitDenialCase(
+                "population", V2GarrisonRecruitArgs(1, 100),
+                V2ParityState(city1Population = GameConst.minAvailableRecruitPop + 99),
+                "CITY_POPULATION_INSUFFICIENT", "주민이 부족합니다.",
+            ),
+            RecruitDenialCase("gold", V2GarrisonRecruitArgs(1, 100), V2ParityState(ledgerGold = 0), "CITY_GOLD_INSUFFICIENT", "도시의 금이 부족합니다."),
+        )
+
+        cases.forEach { case ->
+            resetDatabase()
+            seedV2ParityState(case.state)
+            val available = V2CommandAvailability.Available(V2CommandRegistry.garrisonRecruitSchema, case.args)
+            val api = V2CommandPrecheckService(buildRealPrecheckStateFactory(), jdbc, GameApiProcessWorld(1))
+            val apiResult = jpaTx.execute { api.precheck(10, available) }
+            val daemonResult = V2GarrisonRecruitHandler(
+                buildV2ParityWorld(case.state), ChangeRecorder(), V2CityLedgerStore(jdbc),
+            ).handle(CityGarrisonRecruit(generalId = 10, cityId = case.args.cityId, amount = case.args.amount))
+
+            assertV2DenialParity(case.name, case.code, case.reason, apiResult, daemonResult)
+        }
+    }
+
+    @KTest
+    fun `v2 transport denial matrix keeps real API state and daemon snapshot in parity`() {
+        val base = V2CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = null)
+        val cases = listOf(
+            TransportDenialCase("general missing", base, V2ParityState(generalPresent = false), "GENERAL_NOT_FOUND", "장수를 찾을 수 없습니다."),
+            TransportDenialCase("source missing", base.copy(fromCityId = 99, toCityId = 1), V2ParityState(), "FROM_CITY_NOT_FOUND", "출발 도시를 찾을 수 없습니다."),
+            TransportDenialCase("target missing", base.copy(toCityId = 99), V2ParityState(), "TO_CITY_NOT_FOUND", "도착 도시를 찾을 수 없습니다."),
+            TransportDenialCase("actor city mismatch", base.copy(fromCityId = 9, toCityId = 1), V2ParityState(), "ACTOR_CITY_MISMATCH", "장수가 있는 도시에서만 수송할 수 있습니다."),
+            TransportDenialCase("same city", base.copy(toCityId = 1), V2ParityState(), "SAME_CITY", "같은 도시로는 수송할 수 없습니다."),
+            TransportDenialCase("city authority", base, V2ParityState(city9NationId = 2), "CITY_AUTHORITY_DENIED", "자국 도시끼리만 수송할 수 있습니다."),
+            TransportDenialCase("negative amount", base.copy(gold = -1), V2ParityState(), "TRANSPORT_AMOUNT_NEGATIVE", "수송량은 음수일 수 없습니다."),
+            TransportDenialCase("empty amount", base.copy(gold = 0), V2ParityState(), "TRANSPORT_AMOUNT_EMPTY", "수송할 자원을 지정해야 합니다."),
+            TransportDenialCase("route", base, V2ParityState(mapName = "not-a-map"), "ROUTE_NOT_ADJACENT", "인접한 도시로만 수송할 수 있습니다."),
+            TransportDenialCase("escort", base, V2ParityState(crew = 1_999), "ESCORT_INSUFFICIENT", "수송에는 병사 2000명이 필요합니다."),
+            TransportDenialCase("gold limit", base.copy(gold = 50_001), V2ParityState(), "TRANSPORT_GOLD_LIMIT", "금은 한 번에 50000까지 수송할 수 있습니다."),
+            TransportDenialCase("rice limit", base.copy(gold = 0, rice = 50_001), V2ParityState(), "TRANSPORT_RICE_LIMIT", "병량은 한 번에 50000까지 수송할 수 있습니다."),
+            TransportDenialCase("garrison limit", base.copy(gold = 0, garrison = 50_001), V2ParityState(), "TRANSPORT_GARRISON_LIMIT", "도시병사는 한 번에 50000까지 수송할 수 있습니다."),
+            TransportDenialCase("gold resource", base, V2ParityState(ledgerGold = 0), "CITY_GOLD_INSUFFICIENT", "도시의 금이 부족합니다."),
+            TransportDenialCase("rice resource", base.copy(gold = 0, rice = 100), V2ParityState(ledgerRice = 0), "CITY_RICE_INSUFFICIENT", "도시의 병량이 부족합니다."),
+            TransportDenialCase("garrison resource", base.copy(gold = 0, garrison = 100), V2ParityState(ledgerGarrison = 0), "CITY_GARRISON_INSUFFICIENT", "도시의 병사가 부족합니다."),
+        )
+
+        cases.forEach { case ->
+            resetDatabase()
+            seedV2ParityState(case.state)
+            val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, case.args)
+            val api = V2CommandPrecheckService(buildRealPrecheckStateFactory(), jdbc, GameApiProcessWorld(1))
+            val apiResult = jpaTx.execute { api.precheck(10, available) }
+            val daemonResult = V2CityTransportHandler(
+                buildV2ParityWorld(case.state), ChangeRecorder(), V2CityLedgerStore(jdbc),
+            ).handle(
+                CityTransport(
+                    generalId = 10, fromCityId = case.args.fromCityId, toCityId = case.args.toCityId,
+                    gold = case.args.gold, rice = case.args.rice, garrison = case.args.garrison,
+                    routeRevision = case.args.routeRevision,
+                ),
+            )
+
+            assertV2DenialParity(case.name, case.code, case.reason, apiResult, daemonResult)
+        }
+    }
+
+    @KTest
+    fun `v2 API transport precheck denies when active map is missing`() {
+        assertTransportMapDenial("""{"startYear":190}""")
+    }
+
+    @KTest
+    fun `v2 API transport precheck denies when active map is invalid`() {
+        assertTransportMapDenial("""{"startYear":190,"mapName":"not-a-map"}""")
     }
 
     // === golden byte-compares (STEP 5) ============================================================
@@ -584,8 +742,175 @@ class VerticalSliceE2EIT {
 
     // === REAL JPA read path bootstrap =============================================================
 
+    private data class V2ParityState(
+        val generalPresent: Boolean = true,
+        val generalCityId: Int = 1,
+        val generalNationId: Int = 1,
+        val leadership: Int = 80,
+        val crew: Int = 2_000,
+        val city1NationId: Int = 1,
+        val city9NationId: Int = 1,
+        val city1Population: Int = 50_000,
+        val mapName: String? = "che",
+        val ledgerGold: Long = 100_000,
+        val ledgerRice: Long = 100_000,
+        val ledgerGarrison: Int = 100_000,
+    )
+
+    private data class RecruitDenialCase(
+        val name: String,
+        val args: V2GarrisonRecruitArgs,
+        val state: V2ParityState,
+        val code: String,
+        val reason: String,
+    )
+
+    private data class TransportDenialCase(
+        val name: String,
+        val args: V2CityTransportArgs,
+        val state: V2ParityState,
+        val code: String,
+        val reason: String,
+    )
+
     /** Build the REAL game-api precheck service over the REAL JPA read repos (Hibernate / Testcontainers). */
-    private fun buildRealPrecheckService(): CommandPrecheckService {
+    private fun seedV2ParityState(crew: Int, gold: Long) =
+        seedV2ParityState(V2ParityState(crew = crew, ledgerGold = gold))
+
+    private fun seedV2ParityState(state: V2ParityState) {
+        val config = state.mapName?.let { """{"startYear":190,"mapName":"$it"}""" }
+            ?: """{"startYear":190}"""
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config) " +
+                "VALUES (1, 'scenario_2', 200, 3, 3600, CAST(:config AS jsonb))",
+            MapSqlParameterSource("config", config),
+        )
+        jdbc.update(
+            "INSERT INTO nation (world_id, id, name, color, capital_city_id, level, type_code) " +
+                "VALUES (1, 1, '위', '#0000ff', 1, 7, 'che_명사'), " +
+                "(1, 2, '촉', '#00ff00', 9, 7, 'che_명사')",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO city
+                (world_id, id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                 agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
+                 wall, wall_max, region, meta)
+            VALUES
+                (1, 1, '업', 8, :city1_nation, 1, 0, :city1_pop, 100000, 4000, 8000, 3000, 8000,
+                 1000, 2000, 82, 100, 500, 1000, 800, 1500, 1, '{}'::jsonb),
+                (1, 9, '남피', 8, :city9_nation, 1, 0, 50000, 100000, 4000, 8000, 3000, 8000,
+                 1000, 2000, 82, 100, 500, 1000, 800, 1500, 1, '{}'::jsonb)
+            """.trimIndent(),
+            MapSqlParameterSource("city1_nation", state.city1NationId)
+                .addValue("city9_nation", state.city9NationId)
+                .addValue("city1_pop", state.city1Population),
+        )
+        if (state.generalPresent) {
+            jdbc.update(
+                """
+                INSERT INTO general
+                    (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
+                     experience, dedication, officer_level, gold, rice, crew, turn_time, meta)
+                VALUES
+                    (1, 10, '관우', :nation, :city, :leadership, 90, 70, 0, 0, 0, 12,
+                     1000, 1000, :crew, :turn_time, '{}'::jsonb)
+                """.trimIndent(),
+                MapSqlParameterSource("nation", state.generalNationId)
+                    .addValue("city", state.generalCityId)
+                    .addValue("leadership", state.leadership)
+                    .addValue("crew", state.crew)
+                    .addValue("turn_time", java.sql.Timestamp.from(t0)),
+            )
+        }
+        jdbc.update(
+            "INSERT INTO v2_city_ledger (world_id, city_id, gold, rice, garrison) " +
+                "VALUES (1, 1, :gold, :rice, :garrison), (1, 9, 0, 0, 0)",
+            MapSqlParameterSource("gold", state.ledgerGold)
+                .addValue("rice", state.ledgerRice)
+                .addValue("garrison", state.ledgerGarrison),
+        )
+        emf.cache.evictAll()
+    }
+
+    private fun buildV2ParityWorld(crew: Int): InMemoryTurnWorld =
+        buildV2ParityWorld(V2ParityState(crew = crew))
+
+    private fun buildV2ParityWorld(state: V2ParityState): InMemoryTurnWorld = InMemoryTurnWorld(
+        WorldSnapshot(
+            state = TurnWorldState(
+                id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600,
+                lastTurnTime = t0, config = state.mapName?.let { mapOf("mapName" to it) }.orEmpty(),
+            ),
+            generals = if (state.generalPresent) listOf(
+                TurnGeneral(
+                    id = 10, name = "관우", nationId = state.generalNationId,
+                    cityId = state.generalCityId, troopId = 0,
+                    stats = GeneralStats(state.leadership, 90, 70), experience = 0, dedication = 0,
+                    officerLevel = 12, gold = 1000, rice = 1000, crew = state.crew, turnTime = t0,
+                ),
+            ) else emptyList(),
+            cities = listOf(
+                City(
+                    id = 1, name = "업", nationId = state.city1NationId, level = 8,
+                    population = state.city1Population, meta = mapOf("trust" to 82.0),
+                ),
+                City(id = 9, name = "남피", nationId = state.city9NationId, level = 8, population = 50000, meta = mapOf("trust" to 82.0)),
+            ),
+            nations = listOf(
+                Nation(id = 1, name = "위", color = "#0000ff", level = 7),
+                Nation(id = 2, name = "촉", color = "#00ff00", level = 7),
+            ),
+            worldId = WorldId(1),
+        ),
+    )
+
+    private fun assertTransportMapDenial(config: String) {
+        seedV2ParityState(crew = 2000, gold = 100_000)
+        jdbc.update(
+            "UPDATE world_state SET config = CAST(:config AS jsonb) WHERE id = 1",
+            MapSqlParameterSource("config", config),
+        )
+        emf.cache.evictAll()
+        val api = V2CommandPrecheckService(buildRealPrecheckStateFactory(), jdbc, GameApiProcessWorld(1))
+        val args = V2CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = null)
+        val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, args)
+
+        val result = jpaTx.execute { api.precheck(10, available) }
+
+        val denied = assertIs<V2CommandAvailability.Blocked>(result)
+        assertEquals("ROUTE_NOT_ADJACENT", denied.code)
+        assertEquals("인접한 도시로만 수송할 수 있습니다.", denied.reason)
+    }
+
+    private fun assertSameV2Denial(api: V2CommandAvailability?, daemon: CommandLifecycleResult) {
+        val blocked = assertIs<V2CommandAvailability.Blocked>(api)
+        assertFalse(daemon.ok)
+        assertEquals(blocked.code, daemon.code)
+        assertEquals(blocked.reason, daemon.reason)
+    }
+
+    private fun assertV2DenialParity(
+        name: String,
+        code: String,
+        reason: String,
+        api: V2CommandAvailability?,
+        daemon: opensamguk.common.wire.TurnDaemonCommandResult,
+    ) {
+        val blocked = assertIs<V2CommandAvailability.Blocked>(api, name)
+        val terminal = assertIs<CommandLifecycleResult>(daemon, name)
+        assertFalse(terminal.ok, name)
+        assertEquals(code, blocked.code, name)
+        assertEquals(reason, blocked.reason, name)
+        assertEquals(blocked.code, terminal.code, name)
+        assertEquals(blocked.reason, terminal.reason, name)
+    }
+
+    private fun buildRealPrecheckService(): CommandPrecheckService =
+        CommandPrecheckService(buildRealPrecheckStateFactory(), CommandRegistry(GeneralActionPipeline()))
+
+    private fun buildRealPrecheckStateFactory(): PrecheckStateViewFactory {
         val em = SharedEntityManagerCreator.createSharedEntityManager(emf)
         val factory = JpaRepositoryFactory(em)
         val processWorld = GameApiProcessWorld(1)
@@ -609,9 +934,7 @@ class VerticalSliceE2EIT {
             factory.getRepository(WorldStateReadRawRepository::class.java),
             processWorld,
         )
-        val stateViewFactory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
-        val registry = CommandRegistry(GeneralActionPipeline())
-        return CommandPrecheckService(stateViewFactory, registry)
+        return PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
     }
 
     private fun buildEntityManagerFactory(ds: DataSource): EntityManagerFactory {

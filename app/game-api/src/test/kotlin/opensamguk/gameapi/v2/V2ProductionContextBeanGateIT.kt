@@ -159,6 +159,8 @@ class V2BothConditionsBeanGateIT {
                 "v2GarrisonRecruitController",
                 "v2CityTransportController",
                 "v2CityLedgerReadController",
+                "v2CanonicalCommandController",
+                "v2CommandPrecheckService",
             ),
             byPackage.keys,
             "game-api v2 package beans: $byPackage",

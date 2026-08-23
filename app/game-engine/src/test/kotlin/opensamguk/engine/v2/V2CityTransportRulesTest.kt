@@ -111,10 +111,19 @@ class V2CityTransportRulesTest {
         error("CityConst.path 에서 인접 도시 쌍을 찾지 못했다")
     }
 
-    private fun handler(cityIds: List<Int>, crew: Int = 2000, nationId: Int = 1): V2CityTransportHandler {
+    private fun handler(
+        cityIds: List<Int>, crew: Int = 2000, nationId: Int = 1, mapName: String? = "che",
+    ): V2CityTransportHandler {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
-                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                state = TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 3,
+                    tickSeconds = 3600,
+                    lastTurnTime = t0,
+                    config = mapName?.let { mapOf("mapName" to it) }.orEmpty(),
+                ),
                 generals = listOf(
                     TurnGeneral(
                         id = 10, name = "관우", nationId = 1, cityId = cityIds.first(), troopId = 0,
@@ -167,6 +176,21 @@ class V2CityTransportRulesTest {
         assertEquals("인접한 도시로만 수송할 수 있습니다.", reasonOf(result))
         assertEquals(10_000L, lastLedger.entry(lastWorld.worldId, a).gold)
         assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+    }
+
+    @Test
+    fun `missing or invalid active map returns terminal route denial`() {
+        val (a, b) = adjacentPair()
+
+        listOf<String?>(null, "not-a-map").forEach { mapName ->
+            val result = handler(listOf(a, b), mapName = mapName)
+                .handle(CityTransport(generalId = 10, fromCityId = a, toCityId = b, gold = 100))
+
+            val lifecycle = assertIs<CommandLifecycleResult>(result)
+            assertFalse(lifecycle.ok)
+            assertEquals("ROUTE_NOT_ADJACENT", lifecycle.code)
+            assertEquals("인접한 도시로만 수송할 수 있습니다.", lifecycle.reason)
+        }
     }
 
     @Test

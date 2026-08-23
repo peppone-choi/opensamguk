@@ -1,5 +1,6 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.NationSettingResult
 import opensamguk.common.wire.RunReason
 import opensamguk.common.wire.TurnDaemonCommand
@@ -30,6 +31,7 @@ import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -110,6 +112,28 @@ class IntakeResultChannelTest {
         val denyResult = results[1].second as NationSettingResult
         assertFalse(denyResult.ok)
         assertEquals("장수가 존재하지 않습니다.", denyResult.reason)
+    }
+
+    @Test
+    fun `malformed sentAt returns terminal denial and does not abort later envelopes`() {
+        val malformed = TurnDaemonCommandEnvelope(
+            requestId = "req-malformed",
+            sentAt = "not-an-instant",
+            command = TurnDaemonCommand.TournamentEnroll(requestId = "req-malformed", generalId = 10, value = 1),
+        )
+        val valid = envelope(
+            "req-valid",
+            TurnDaemonCommand.TournamentEnroll(requestId = "req-valid", generalId = 99, value = 1),
+        )
+
+        val results = dispatcher(world(), ChangeRecorder()).dispatchEnvelopes(listOf(malformed, valid))
+
+        assertEquals(listOf("req-malformed", "req-valid"), results.map { it.first })
+        val malformedResult = assertIs<CommandLifecycleResult>(results[0].second)
+        assertFalse(malformedResult.ok)
+        assertEquals("COMMAND_SENT_AT_INVALID", malformedResult.code)
+        assertEquals("tournamentEnroll", malformedResult.actionCode)
+        assertFalse(results[1].second.ok)
     }
 
     @Test
