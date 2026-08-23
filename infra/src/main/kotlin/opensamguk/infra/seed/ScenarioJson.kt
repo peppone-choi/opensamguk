@@ -7,7 +7,7 @@ import opensamguk.infra.persistence.MetaJson
  * scenario-seed importer (F1a):
  *
  *  - `scenario/scenario_1010.json` — VERBATIM copy of `legacy/devsam-core/hwe/scenario/scenario_1010.json`
- *    (grand truth). Positional tuples decoded by the index maps below.
+ *    (frozen historical baseline (ADR-LITE-042; not current product authority)). Positional tuples decoded by the index maps below.
  *  - `scenario/cities_1010.json` — the 24-city A-minimal subset transcribed from `CityConstBase::$initCity`
  *    (== `common` `CityConst.cheInitCity`), already x100-scaled (see [ScenarioCity]).
  *

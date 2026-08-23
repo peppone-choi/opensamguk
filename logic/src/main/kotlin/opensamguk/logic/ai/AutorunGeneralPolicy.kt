@@ -2,7 +2,7 @@ package opensamguk.logic.ai
 
 /**
  * F-POLICY — `AutorunGeneralPolicy`, a faithful port of
- * `legacy/devsam-core/hwe/sammo/AutorunGeneralPolicy.php` (215 lines, GRAND TRUTH, read in full).
+ * `legacy/devsam-core/hwe/sammo/AutorunGeneralPolicy.php` (215 lines, frozen historical baseline (ADR-LITE-042; not current product authority), read in full).
  *
  * The general-AI 4-layer policy merge. The merged [priority] list ORDER **is** the `do<한글>` dispatch
  * order in `chooseGeneralTurn`, which is the log order AND the per-decision RNG draw order. This class

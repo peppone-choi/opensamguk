@@ -65,7 +65,7 @@ object F4StateText {
     data class ChiefPostMeta(val officerLevel: Int, val title: String)
 
     /**
-     * PHP `getOfficerLevelText($officerLevel, $nlevel)` (func_converter.php:522-565)의 정본 포팅 —
+     * 역사 PHP `getOfficerLevelText($officerLevel, $nlevel)` 비교를 보존한 동결 회귀(ADR-LITE-042; 현재 제품 정본 아님) —
      * 국가 레벨(`nlevel`)별 직책 한글명. officer_level 0..4는 국가 레벨과 무관(`nlevel=0`으로 강제)하므로
      * 항상 재야/일반/종사/군사/태수. 코드 = `nlevel*100 + officerLevel`. 미정의 코드는 '-'.
      *
@@ -114,8 +114,8 @@ object F4StateText {
     )
 
     /**
-     * GetConst 직렬화용 — 국가레벨 무관 기본 직책 맵(officerLevel → 한글명). 와이어 모양은 레거시
-     * 프론트 정본 `hwe/ts/utilGame/formatOfficerLevelText.ts`의 `OfficerLevelMapDefault`와 동일:
+     * GetConst 직렬화용 — 국가레벨 무관 기본 직책 맵(officerLevel → 한글명). 와이어 모양은 동결된
+     * 역사 프론트 참고 `hwe/ts/utilGame/formatOfficerLevelText.ts`와 동일(ADR-LITE-042; 현재 제품 정본 아님):
      * nlevel=8 기본열(코드 812..805 = 군주/참모/제1장군/…/제3모사) + 공통 0..4(태수/군사/종사/일반/재야).
      * 데이터 원천은 위 [OFFICER_LEVEL_TEXT] 단일 테이블(PHP func_converter.php:522-565) — 별도 사본 금지.
      */
@@ -129,7 +129,8 @@ object F4StateText {
     /**
      * GetConst 직렬화용 — 국가레벨(7..0)별 수뇌(officerLevel 12..5) 직책 맵. 와이어 모양은
      * `formatOfficerLevelText.ts`의 `OfficerLevelMapByNationLevel`과 동일. PHP 테이블에 없는 코드
-     * (예: 506)는 키 자체를 생략한다 — PHP는 '-'를 돌려주고(TS는 기본열 폴백) PHP가 이긴다.
+     * (예: 506)는 키 자체를 생략한다 — 동결된 역사 PHP 기준은 '-'를 돌려주고(TS는 기본열 폴백),
+     * 이 ADR-LITE-042 회귀 범위에서 해당 동작을 보존한다. PHP가 현재 제품 정본이라는 뜻은 아니다.
      * 데이터 원천은 [OFFICER_LEVEL_TEXT] 단일 테이블.
      */
     fun officerLevelTextByNationLevel(): Map<Int, Map<Int, String>> {
@@ -166,7 +167,7 @@ object F4StateText {
     val RANKING_TYPES: List<String> = listOf("전력전", "통솔전", "일기토", "설전")
 
     /**
-     * PHP `getHonor($experience)` (func_converter.php:612-629)의 정본 포팅 — 경험치 구간별 명성 한글명.
+     * 역사 PHP `getHonor($experience)` 비교를 보존한 동결 회귀(ADR-LITE-042; 현재 제품 정본 아님) — 경험치 구간별 명성 한글명.
      * 경계값/라벨 모두 byte-for-byte 그대로(locked rule 3 — 한글 패러티). FrontGeneralInfo.honorText에 쓴다.
      * `experience`는 실 컬럼이므로 파생값 계산은 날조가 아니다.
      */

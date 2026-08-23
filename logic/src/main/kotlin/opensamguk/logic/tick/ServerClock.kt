@@ -10,7 +10,7 @@ import java.time.ZoneOffset
 /**
  * FT1 — pure calendar helpers for the monthly tick.
  *
- * Faithful port of PHP `func.php` (grand truth):
+ * Faithful port of PHP `func.php` (frozen historical baseline (ADR-LITE-042; not current product authority)):
  * - `turnDate` (`:1250-1275`) — `num = intdiv(cutTurn(curtime) - startTime, turnTerm*60)` in
  *   SECONDS, then `date = startYear*12 + num`, `year = intdiv(date,12)`, `month = 1 + date%12`
  *   (1-based). The math is INTEGER FLOOR-division (`intdiv`), NEVER `Util::round`/[phpRound] — the

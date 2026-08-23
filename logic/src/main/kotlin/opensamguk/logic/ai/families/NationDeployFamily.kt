@@ -12,7 +12,7 @@ import opensamguk.logic.domain.LastTurn
 /**
  * L-DEPLOY — the nation-deploy `do<한글>` command family: the 11 `do발령` methods, all emitting `che_발령`.
  *
- * GRAND TRUTH = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
+ * frozen historical baseline (ADR-LITE-042; not current product authority) = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
  *  - `do부대전방발령` (`:294-411`), `do부대후방발령` (`:413-499`), `do부대구출발령` (`:501-571`),
  *  - `do부대유저장후방발령` (`:573-685`), `do유저장후방발령` (`:687-789`), `do유저장구출발령` (`:791-848`),
  *  - `do유저장전방발령` (`:850-908`), `do유저장내정발령` (`:910-980`),

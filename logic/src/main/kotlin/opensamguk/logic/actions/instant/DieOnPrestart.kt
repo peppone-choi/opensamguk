@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter
 /**
  * General-instant 액션 `DieOnPrestart` — 개전 전(prestart) 자기 장수 자살(삭제).
  *
- * PHP 정본: `legacy/devsam-core/hwe/sammo/API/General/DieOnPrestart.php` (`launch()` verbatim).
+ * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님): `legacy/devsam-core/hwe/sammo/API/General/DieOnPrestart.php` (`launch()` verbatim).
  *
  * 서버 **가오픈**(opentime 이전, `turntime <= opentime`) 동안만, 아직 어느 국가에도 소속되지 않은
  * (`nation == 0`) 자기 장수를, 마지막 새로고침(`lastRefresh`)으로부터 [GameConst.minTurnDieOnPrestart]

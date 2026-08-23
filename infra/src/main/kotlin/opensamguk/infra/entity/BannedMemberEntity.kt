@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 /**
  * 영구 이메일 차단 — legacy `banned_member` 테이블 대응.
  *
- * grand truth: legacy BanEmailAddress.php:46
+ * frozen historical baseline (ADR-LITE-042; not current product authority): legacy BanEmailAddress.php:46
  *   `hashed_email => hash('sha512', globalSalt . email . globalSalt)`
  * → opensamguk은 [opensamguk.infra.read.BannedMemberRepository.hashEmail]로 동일 해시를 산출한다.
  *

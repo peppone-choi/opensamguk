@@ -9,14 +9,14 @@ import opensamguk.logic.util.phpRound
 
 /**
  * F-INSTANCE — `AiInstanceState`, a faithful port of the per-AI-instance derived-state of
- * `legacy/devsam-core/hwe/sammo/GeneralAI.php` (GRAND TRUTH, read in full).
+ * `legacy/devsam-core/hwe/sammo/GeneralAI.php` (frozen historical baseline (ADR-LITE-042; not current product authority), read in full).
  *
  * Task FI1 ports `updateInstance` (`:86-145`), `maxResourceActionAmount` (`:128-137`), and
  * `calcDiplomacyState` (`:206-281`). `calcGenType` (the FIRST draw, `:175-204`) is Task FI2. The city/
  * general categorize buckets + `calcWarRoute` are F-FACADE (AiWorldView). This class is PURE `:logic`
  * (no Spring/DB): the world is supplied as plain-data lookups; the meta-KV side-effects are queued through
  * the [AiKvRecorder] seam (the ChangeRecorder delta path), NOT written inline and NOT held in a
- * module-static Map (M4 — the TS `last_attackable` static-Map is WRONG; PHP wins).
+ * module-static Map (M4 — the TS `last_attackable` static-Map is WRONG; the frozen historical PHP baseline is retained here).
  *
  * ## The two cache regimes are NEVER coupled (decision #2)
  * `reqUpdateInstance` (default true at PHP `:69`) gates ONLY the [updateInstance] block (city/nation/

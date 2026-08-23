@@ -3,7 +3,7 @@ package opensamguk.logic.actions.nation
 /**
  * DIVERGENCE 상수 — 외교 수락 5-stat 게이트 (오픈삼국 1.0.0+ 독자기능, devsam/core에 없음).
  *
- * **NO PHP GOLDEN ORACLE.** devsam/core(grand truth)는 3-stat이라 정치(politics) 컬럼이 없으므로 이 게이트는
+ * **NO PHP GOLDEN ORACLE.** devsam/core(frozen historical baseline (ADR-LITE-042; not current product authority))는 3-stat이라 정치(politics) 컬럼이 없으므로 이 게이트는
  * 캡처된 PHP 픽스처로 재생할 수 없다. [WorldEnv.fiveStatLogic][opensamguk.logic.domain.WorldEnv.fiveStatLogic]
  * 플래그가 ON일 때만 발동하며, OFF(기본)에서는 게이트가 inert → 패러티 경로는 byte-identical.
  *

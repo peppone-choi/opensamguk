@@ -19,7 +19,8 @@ import java.time.OffsetDateTime
  * The `meta` jsonb is parsed into a `LinkedHashMap` (insertion order preserved) and
  * re-encoded with [MetaJson] (insertion-order, PHP-faithful — NOT a sorted writer).
  * `leadership_exp`/`strength_exp`/`intel_exp`/`explevel`/`dedlevel`/`aux` ride `meta` (NO dedicated
- * columns — verified against `V1__baseline.sql` AND the PHP grand-truth `hwe/sql/schema.sql:22/24/26`
+ * columns — verified against `V1__baseline.sql` and frozen historical PHP evidence
+ * (`hwe/sql/schema.sql:22/24/26`; ADR-LITE-042; not current product authority)
  * which keeps *_exp as INT *inside the general row* but the V1/core2026 baseline moves them onto the
  * `meta` jsonb, consistent with P1 `intel_exp`/`explevel`). The row→entity path reads them back from
  * `meta`; [GeneralMeta] accessors expose them to the logic layer.
@@ -31,8 +32,8 @@ import java.time.OffsetDateTime
  *  - `experience`/`dedication` are `Double` raw accumulators (PHP `increaseVar` adds the float raw).
  *    The G1/G2 golden proves the ROUND: 3030 + 44*0.7 = 3060.8 → 3061, 3074.8 → 3075.
  *  - `train`/`atmos` are likewise `Double` in the logic entity but INTEGER columns in BOTH the V1
- *    baseline AND the PHP grand truth (`schema.sql:42/43` `train INT(3)`/`atmos INT(3)`). The plan's
- *    "train/atmos as float columns" diverges from the byte oracle; PHP wins — bound float → int column
+ *    baseline AND the PHP frozen historical baseline (ADR-LITE-042; not current product authority) (`schema.sql:42/43` `train INT(3)`/`atmos INT(3)`). The plan's
+ *    "train/atmos as float columns" diverges from the byte oracle; the frozen historical PHP baseline is retained here — bound float → int column
  *    rounds the same way exp/ded does. This is the single place float → int happens.
  */
 object GeneralRowMapper {

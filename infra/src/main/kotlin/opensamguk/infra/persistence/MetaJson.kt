@@ -10,7 +10,8 @@ package opensamguk.infra.persistence
  * - keys in INSERTION order — backed by a `LinkedHashMap`, never sorted
  * - integers serialize as `5`, never `5.0` (PHP `json_encode` of an int)
  *
- * The G4 byte-comparison against the PHP golden DB dump is the authority.
+ * The G4 byte-comparison against the PHP golden DB dump is frozen historical regression evidence
+ * (ADR-LITE-042), not current product authority.
  */
 object MetaJson {
 

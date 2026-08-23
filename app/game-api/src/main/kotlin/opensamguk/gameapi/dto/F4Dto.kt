@@ -664,7 +664,7 @@ data class BoardResponse(
 )
 
 // ── GET /api/troops — page 6 ───────────────────────────────────────────────────────────────────────
-// 레거시 grand truth: hwe/ts/PageTroop.vue. 멤버십/뮤테이션 게이팅은 `myGeneralId`(부대장 여부)와
+// 레거시 frozen historical baseline (ADR-LITE-042; not current product authority): hwe/ts/PageTroop.vue. 멤버십/뮤테이션 게이팅은 `myGeneralId`(부대장 여부)와
 // `permission`(레거시 myPermission)에서 파생되므로 응답에 둘 다 싣는다(Direction A). 멤버 소속 도시는
 // 숫자 id가 아니라 한글 `cityName`으로 노출한다(레거시는 cityConst[city].name 표시, bug #11).
 data class TroopMember(

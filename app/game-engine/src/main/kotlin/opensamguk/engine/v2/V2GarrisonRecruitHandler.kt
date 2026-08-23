@@ -17,12 +17,13 @@ import opensamguk.logic.v2.command.decideGarrisonRecruit
  * OPENSAM-153 (v2 R4) — 도시병사 보충(`v2GarrisonRecruit`) 핸들러. 도메인 규칙은 [recruitDecision]
  * (순수 함수, draw 0)이 갖고 여기서는 월드 조회·소속 검사·적용만 한다.
  *
- * **로그를 남기지 않는다.** v2 인테이크 결과는 result-poll(OPENSAM-13/135)로 회신되고, 로그 문자열은
- * v1 패러티 대상이라 v2가 새 문구를 만들면 로그 게이트의 의미가 흐려진다.
+ * **로그를 남기지 않는다.** v2 인테이크 결과는 승인된 result-poll(OPENSAM-13/135) 계약으로
+ * 회신되며 별도 사용자 로그를 정의하지 않았다. v1 동결 회귀는 v2 로그 설계를 제약하지 않는다
+ * (ADR-LITE-042).
  *
  * ## Why [CommandLifecycleResult] instead of a new result type
  *
- * `TurnDaemonCommandResult.kt` is T1-frozen (parity core), and its `TurnDaemonCommandResultSerializer.
+ * `TurnDaemonCommandResult.kt` is a retained frozen regression surface, and its `TurnDaemonCommandResultSerializer.
  * selectSerializer` dispatches on a **closed whitelist** of `type` strings — an unregistered type
  * string throws `IllegalArgumentException` at flush/serialize time, not at compile time. Reusing
  * `CommandLifecycleResult` with `type = "executionApplied"/"executionRejected"` and

@@ -41,7 +41,7 @@ or full-stack changes. Any changed UI flow also requires browser observation wit
 Spawn the **parity-reviewer** agent (or invoke the configured review workflow) against `git diff <parent>...HEAD`. It must clear, with focus on:
 - RNG draw order/count/args (one `RandUtil(warSeed)` threaded, never re-seeded),
 - `PhpRound` half-away (no `Math.round` / `kotlin.math.round`),
-- Korean log byte-parity + log-order == execution-order,
+- selected historical Korean log evidence + log-order == execution-order,
 - ChangeRecorder delta only (no inline DB writes; daemon never touches JPA for writes),
 - LinkedHashMap insertion-order preservation.
 

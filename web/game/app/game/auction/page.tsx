@@ -1,6 +1,6 @@
 'use client';
 
-// v_auction(경매장) — legacy hwe/PageAuction.vue 충실 포팅(FE grand truth, PHP가 이김).
+// v_auction(경매장) — frozen historical UI reference: legacy hwe/PageAuction.vue (ADR-LITE-042; not current product authority).
 // '금/쌀 ↔ 유니크' 모드 토글 셸이 C1 컴포넌트 2종(AuctionResource / AuctionUniqueItem)을 조립한다.
 // read/write는 각 컴포넌트가 game-api(D1-D3) + api.commands(wire 기존)로 수행. read-only 페이지 셸.
 

@@ -28,7 +28,7 @@ import opensamguk.common.rng.RandUtil
  * - **pickSpecialWar 는 post-bonus L/S/I** 를 받는다 — PHP 가 `$leadership = $leadership + $pleadership`
  *   재대입(307)을 천재 특기 선발(321) **앞**에서 수행하기 때문.
  * - **getRandTurn(369) 은 성격(388)·상성(392) 보다 먼저** 실행된다(라인 순서). 턴타임 드로우 2개가
- *   성격/상성 드로우 앞에 와야 byte-parity.
+ *   성격/상성 드로우 앞에 와야 동결 회귀.
  */
 object MakeGeneral {
 

@@ -9,7 +9,7 @@ import kotlin.math.sqrt
 /**
  * voteUnique 유니크-아이템 추첨 — RNG 패러티 CORE.
  *
- * PHP grand truth (legacy/devsam-core):
+ * PHP frozen historical baseline (ADR-LITE-042; not current product authority) (legacy/devsam-core):
  *   - hwe/sammo/API/Vote/Vote.php:111-117  추첨 전용 RNG 시드 =
  *       new RandUtil(new LiteHashDRBG(Util::simpleSerialize(UniqueConst::$hiddenSeed,'voteUnique',$voteID,$generalID)))
  *   - hwe/func.php:1611-1703  tryUniqueItemLottery — '설문조사' 분기 prob 공식 + 0.25 clamp + /sqrt(7)

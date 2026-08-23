@@ -9,8 +9,8 @@ import opensamguk.common.rng.RandUtil
  * **Ownership / seam (F1):** this interface is the SHARED extension point between the F1 trigger registry
  * and the F2 concrete units. F1 owns ONLY this trigger-facing surface; **F2 creates the concrete
  * `WarUnit`/`WarUnitGeneral`/`WarUnitCity` and makes them IMPLEMENT this interface** (it does NOT re-declare
- * it). This mirrors the core2026 oracle, where the `WarUnit` interface is imported by the triggers and the
- * concrete units in `units/` implement it — so the registry's `fire()` draw order depends on the contract,
+ * it). The frozen historical core2026 comparison has the same import/implementation shape
+ * (ADR-LITE-042; not current product authority), so retained registry draw order depends on the contract,
  * never on the concrete unit.
  *
  * Carries ONLY what the registry + base triggers need; the full power-formula / HP / finishBattle surface
@@ -41,7 +41,7 @@ interface WarUnit {
     // F1 owns this contract; A3 (the SOLE Tier-1 family touching war/trigger/) widens it for the catalog
     // leaves. The concrete F2 WarUnitGeneral/WarUnitCity (war/WarUnit*.kt, untouched by A1/A4) implement
     // these — they delegate the DRAW-free var/log/dex side-effects so the trigger bodies stay a faithful
-    // 1:1 transcription of the PHP grand truth while the draws (nextBool/choice/nextRangeInt) stay inline.
+    // 1:1 transcription of the PHP frozen historical baseline (ADR-LITE-042; not current product authority) while the draws (nextBool/choice/nextRangeInt) stay inline.
 
     /** PHP `getComputedAtmos()` — 저지시도's `ratio = atmos + train`. CROSS-folded inside the impl. */
     fun getComputedAtmos(): Double

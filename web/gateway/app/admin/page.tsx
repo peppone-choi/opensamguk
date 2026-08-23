@@ -10,7 +10,7 @@ import MemberControl from '@/components/admin/MemberControl';
 // F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포) + "회원 관리" 탭(B2f).
 // "게임 환경"(B1e)은 락(걸기/풀기 + 동결중/가동중) 부분만 우선 배선. 시간조정/봉급/운영자메시지/
 // 시작시간/최대장수·국가/시작년도/턴시간 등 나머지는 후속 웨이브 — '준비 중' 플레이스홀더 유지.
-// 섹션명은 verbatim 패러티 대상, 본문은 탭별로 분기.
+// 섹션명은 verbatim 동결 회귀 대상, 본문은 탭별로 분기.
 const ADMIN_SECTIONS = [
     { id: 'members', label: '회원 관리' },
     { id: 'board', label: '게시판 관리' },

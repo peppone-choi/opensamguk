@@ -144,7 +144,8 @@ fun remainCityCapacity(cityKey: String, keyNick: String) = object : Constraint {
 
 // ============================================================================
 // CP1 — pure general/city/nation-state presets (faithful port of PHP Constraint/[Name].php).
-// Reason strings are PHP grand truth (NOT TS). RequirementKey resolution stays inside the existing
+// Under ADR-LITE-042, reason strings preserve the frozen historical PHP baseline (not the TS port),
+// not current product authority. RequirementKey resolution stays inside the existing
 // General/City/Nation keys (NO DB inside test() — DB/diplomacy/unit-isValid forms take a preloaded
 // predicate, mirroring the P1 reqGeneralGold cost-lambda idiom).
 // ============================================================================
@@ -991,7 +992,8 @@ fun allowDiplomacyStatus(
 //  disallowDiplomacyBetweenStatus / allowDiplomacyBetweenStatus / allowDiplomacyWithTerm).
 // Faithful port of PHP Constraint/{ExistsDestNation,NearNation,HasRoute,HasRouteWithEnemy,
 // DisallowDiplomacyBetweenStatus,AllowDiplomacyBetweenStatus,AllowDiplomacyWithTerm}.php.
-// Reason strings are PHP grand truth. DB/isNeighbor/searchDistance-backed predicates are PRELOADED
+// Under ADR-LITE-042, reason strings preserve the frozen historical PHP baseline, not current
+// product authority. DB/isNeighbor/searchDistance-backed predicates are PRELOADED
 // as lambdas (the CD2 idiom — NO DB / searchDistance / isNeighbor inside test()); the F-BFS-backed
 // reachability + the directional diplomacy state are wired in by the daemon/precheck adapters.
 // ============================================================================

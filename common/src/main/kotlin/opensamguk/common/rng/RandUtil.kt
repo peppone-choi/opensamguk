@@ -46,12 +46,14 @@ open class RandUtil(private val rng: LiteHashDrbg) {
     // KEY ORDER = INSERTION (PHP-faithful). PHP `RandUtil::choiceUsingWeight` (src/sammo/RandUtil.php:104-130)
     // walks `foreach ($items as $item => $value)` — PHP arrays are insertion-ordered, so we iterate
     // `items.keys` (LinkedHashMap insertion order, what `linkedMapOf`/`mapOf` produce) directly. We do NOT use
-    // `jsKeyOrder` here: that helper models the core2026 *TS* oracle's Object-key order (integer keys ascending
+    // `jsKeyOrder` here: that helper models frozen historical core2026 TS Object-key order
+    // (ADR-LITE-042; not current product authority; integer keys ascending
     // FIRST, then string keys). jsKeyOrder == insertion order for all-string or ascending-int keys — so every
     // existing caller is byte-unchanged — but it DIVERGES for an int-like key inserted AFTER string keys, e.g.
     // SpecialityHelper's `pAbs["0"] = max(0,100-sum)` sentinel: PHP keeps the int key last, jsKeyOrder floats
-    // it first, which silently changed the war-/domestic-special pick. PHP is the byte oracle ⇒ insertion wins.
-    // (`choiceMap` still uses jsKeyOrder pending its own PHP-golden gate; no divergent caller exercises it today.)
+    // it first, which silently changed the war-/domestic-special pick. The frozen historical PHP comparison
+    // (ADR-LITE-042; not current product authority) records insertion order, which the retained order contract preserves.
+    // (`choiceMap` still uses jsKeyOrder pending its frozen regression disposition; no divergent caller exercises it today.)
     open fun choiceUsingWeight(items: Map<String, Double>): String {
         if (items.isEmpty()) throw IllegalArgumentException("Empty items")
         val keys = items.keys

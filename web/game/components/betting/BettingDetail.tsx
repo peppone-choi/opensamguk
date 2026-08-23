@@ -1,6 +1,6 @@
 'use client';
 
-// BettingDetail — legacy hwe/ts/components/BettingDetail.vue 충실 포팅(FE grand truth, PHP가 이김).
+// BettingDetail — frozen historical UI reference: legacy hwe/ts/components/BettingDetail.vue (ADR-LITE-042; not current product authority).
 // 후보 선택(단일/다중 selectCnt) + 선택율 + 베팅 제출 + 배당 순위(기대배율/확정배율) 렌더.
 //
 // read: game-api `GET /api/bettings/{id}/detail`(D5, per-OWNER 인증 필요)

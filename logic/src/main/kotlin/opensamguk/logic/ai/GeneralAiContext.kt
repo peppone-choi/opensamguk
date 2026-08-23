@@ -24,7 +24,7 @@ fun interface ExternalSqlRandSelector {
  * F-DISPATCH consumer seam — `GeneralAiContext`, the per-general AI INPUT bundle every world-driven
  * `do<한글>` body reads to assemble its candidate set, pull its draws, gate its emit, and route its
  * meta-KV deltas. It is the faithful Kotlin stand-in for the PHP `GeneralAI` object's per-instance
- * state (`legacy/devsam-core/hwe/sammo/GeneralAI.php`, GRAND TRUTH): the SOLE `"GeneralAI"` [rng]
+ * state (`legacy/devsam-core/hwe/sammo/GeneralAI.php`, frozen historical baseline (ADR-LITE-042; not current product authority)): the SOLE `"GeneralAI"` [rng]
  * threaded by reference, the derived [instance]/[world] facades, the merged policies, the env, the
  * acting general's identity, the F-BRIDGE gate, the meta-KV delta sink, and the per-general accessor
  * lambdas for the scalars that are NOT plain logic-model columns (turn-time / `last발령` aux /

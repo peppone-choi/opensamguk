@@ -4,7 +4,7 @@ package opensamguk.logic.v2.evidence
  * OPENSAM-37 [G0-A②] 출처·확실성 계약 — in-memory 모델만. DB write·마이그레이션 없음.
  *
  * 정본: `docs/superpowers/specs/2026-07-13-v2-historical-city-army-terrain-design.md` §3, §11.
- * v1 패러티 코어(RNG/로그/골든)와 완전히 분리된 v2 전용 계약이며 어떤 v1 경로도 참조하지 않는다.
+ * v1 동결 회귀 코어(RNG/로그/골든)와 완전히 분리된 v2 전용 계약이며 어떤 v1 경로도 참조하지 않는다.
  */
 
 /**

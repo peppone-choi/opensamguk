@@ -14,7 +14,7 @@
 
 ## Inputs
 
-diff, `.ai/task.md`(요구사항), PHP 근거(패러티 변경 시), 테스트 결과.
+diff, `.ai/task.md`(요구사항), 현재 승인 ADR/spec·구현·테스트 결과. ADR-LITE-042에 따라 명시적으로 선택한 역사 비교에서만 PHP 증거를 추가한다.
 
 ## Procedure
 
@@ -27,11 +27,11 @@ diff 확인 (git diff / code-review-graph detect_changes)
 → 수정 → 재검증 → 병합 승인
 ```
 
-리뷰 계약(정본: `docs/superpowers/WORKING_SYSTEM.md` §Cross-agent critique): 구현자 claim → critic이 PHP 증거·테스트·문서·하드코딩·운영 불변식을 **독립적으로** 공격 → `cleared` / `fix-required` / `quarantined-with-proof`. `fix-required`가 남으면 merge/ship 금지. 아티팩트는 `docs/superpowers/reviews/<date>-<scope>.md`.
+리뷰 계약(정본: `docs/superpowers/WORKING_SYSTEM.md` §Cross-agent critique): 구현자 claim → critic이 승인 요구사항·테스트·문서·하드코딩·운영 불변식을 **독립적으로** 공격하고, opt-in 역사 동결 회귀 범위에서만 PHP 비교 증거를 검토 → `cleared` / `fix-required` / `quarantined-with-proof`. `fix-required`가 남으면 merge/ship 금지. 아티팩트는 `docs/superpowers/reviews/<date>-<scope>.md`.
 
 ## AI 책임 / 사람 책임
 
-- AI: 잠재 버그, 누락 테스트, 패러티 차원(RNG/round/log/write-order), 일관성, 일반 보안, 성능 위험, 변경 요약.
+- AI: 잠재 버그, 누락 테스트, replay/RNG 수치 변경·로그·write-order 보존 규칙, 일관성, 일반 보안, 성능 위험, 변경 요약.
 - 사람: 비즈니스 요구, 아키텍처 의도, 운영 위험 수용, 보안 승인, **병합 여부**.
 
 ## 심각도

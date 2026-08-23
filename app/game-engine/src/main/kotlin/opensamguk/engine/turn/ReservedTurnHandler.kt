@@ -111,7 +111,7 @@ private val UNIQUE_ITEM_CATALOG: Map<String, UniqueItemInfo> =
  *  - **One env-builder:** the full-mode `ConstraintContext.env` (`year`/`startYear`/`develCost`) is
  *    built by [WorldEnvBuilder] — the SAME single helper E2's `PrecheckStateViewFactory` uses, so the
  *    precheck and full-mode env can NEVER drift (P1 review-edit #7).
- *  - **Seed (PHP grand truth `TurnExecutionHelper.php:340-347`):** six-component
+ *  - **Seed (PHP frozen historical baseline (ADR-LITE-042; not current product authority) `TurnExecutionHelper.php:340-347`):** six-component
  *    `serializeSeed(hiddenSeed, "generalCommand", year, month, generalId, definition.key)` where
  *    component 2 is the LITERAL string `"generalCommand"` and component 6 is the short command class
  *    name (= the registry key `che_상업투자`/`che_농지개간`). `hiddenSeed` is the per-game

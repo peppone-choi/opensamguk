@@ -48,7 +48,7 @@ object AiSeed {
     /**
      * Build the SOLE per-general-per-decision [RandUtil]. Call ONCE in the AI ctor and thread the result by
      * reference; NEVER re-seed. The DRBG starts at the fresh `stateIdx=0,bufferIdx=0` cursor — every later
-     * draw advances the single shared cursor (the byte-parity target).
+     * draw advances the single shared cursor (the 동결 회귀 target).
      */
     fun rng(hidden: String, year: Int, month: Int, generalId: Int): RandUtil =
         RandUtil(LiteHashDrbg(seed(hidden, year, month, generalId)))

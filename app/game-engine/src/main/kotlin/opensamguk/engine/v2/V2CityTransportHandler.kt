@@ -19,10 +19,12 @@ import opensamguk.logic.v2.command.decideCityTransport
  * OPENSAM-154 (v2 R5) — 도시 자원 수송(`v2CityTransport`) 핸들러.
  *
  * 도메인 규칙은 [transportDecision](순수 함수, draw 0)이 갖고 여기서는 월드 조회·소속 검사·인접 판정·
- * 원장 델타 적용만 한다. **로그를 남기지 않는다**(R4와 같은 이유 — 로그 문자열은 v1 패러티 대상이다).
+ * 원장 델타 적용만 한다. **로그를 남기지 않는다** — 이 v2 명령의 승인된 result-poll 계약이 별도
+ * 사용자 로그를 정의하지 않았기 때문이다. v1 동결 회귀는 이 v2 설계를 제약하지 않는다(ADR-LITE-042).
  *
  * 인접 판정은 `logic`의 [CalcCityDistance]를 **호출만** 한다. `logic/`은 T1 동결이라 한 줄도 고치지
- * 않았고, `CityConst.path` 인접은 골든으로 잠긴 값이다.
+ * 않았고, `CityConst.path` 인접은 기존 동결 회귀로 보호된 현재 구현 값이다. 변경 시 현재 spec과
+ * 회귀 테스트로 검토하며 PHP/golden 선행 조건을 두지 않는다.
  *
  * 결과 타입으로 `CommandLifecycleResult`(`executionApplied`/`executionRejected`)를 재사용하는 이유는
  * [V2GarrisonRecruitHandler]에 적은 것과 같다 — `TurnDaemonCommandResultSerializer`가 닫힌

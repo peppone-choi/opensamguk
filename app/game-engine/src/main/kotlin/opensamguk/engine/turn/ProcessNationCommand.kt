@@ -170,7 +170,7 @@ class ProcessNationCommand(
             }
         }
 
-        // --- the 'nationCommand' 6-component RNG (PHP grand truth :310-317) ---
+        // --- the 'nationCommand' 6-component RNG (PHP frozen historical baseline (ADR-LITE-042; not current product authority) :310-317) ---
         // Component 2 is the LITERAL string "nationCommand" (DISTINCT from "generalCommand"); component 6
         // is the nation command's short class name (= getRawClassName(true) = the action code). RE-SEEDED
         // here — NOT one shared stream with the general pass, NOT the 'GeneralAI' decision stream.

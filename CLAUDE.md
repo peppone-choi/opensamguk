@@ -32,6 +32,10 @@ Modules (`settings.gradle.kts`):
 
 ## Product and regression discipline (ADR-LITE-042, 2026-08-20)
 
+<!-- ADR-LITE-042-RULES replay_determinism,numerical_change_record,stable_logs_and_order,flush_delta,no_fabrication_or_weakening,insertion_order -->
+
+**Status:** PHP parity porting and its `PHP wins`/golden-first gates are retired. The six numbered rules below remain active as product regression and architecture rules, not legacy-equality rules.
+
 The product authority is the latest approved ADR/spec plus the current implementation. PHP and hwe are optional historical/reference inputs. New work does not require PHP draw-for-draw, byte-log parity, or an oracle capture.
 
 1. **Deterministic replay.** The same seed, input, and ordering must reproduce the same result. This is a product debugging and dispute-resolution property, not PHP parity.
@@ -107,7 +111,7 @@ Each phase = one cycle **spec → plan → adversarial review → execute → ga
 v2 역사 데이터의 출처·확실성 계약을 소유한다 — `EvidenceContracts.kt`(SourceProximity 7값 / EvidenceClass 5값 /
 WorldContentProfile 3값 / SourceLicense·LicenseBundling / EvidenceRef / HistoricalClaim / WorldContentOverlay·Snapshot)와
 `EvidenceContractValidator.kt`(시기 역투영 차단 · 등급 혼합 차단 · overlay 격리 · 엄격 고증 · 번들 게이트).
-in-memory 순수 계약이며 v1 패러티 코어(RNG·로그·골든·DB)를 전혀 참조하지 않는다. 등급 값 추가·혼합 등급 신설 금지.
+in-memory 순수 계약이며 v1 역사 동결 회귀 코어(RNG·로그·골든·DB)를 전혀 참조하지 않는다. 등급 값 추가·혼합 등급 신설 금지.
 **CHGIS = 사용 허용, 게임 타일맵은 서빙 허용 (ADR-LITE-039 + 040, 2026-08-18 사용자 지시).** 역사 지도 트랙에서 CHGIS V6 /
 TGAZ 를 **사용한다**. 조건은 RTK14 와 동일한 격리다: 원본 shapefile·다운로드물과 그로부터 만든 좌표 데이터는
 **git-ignore·미커밋**이고, 커밋 대상은 추출 스크립트뿐이다(`tools/map/*.py`). 저장소 번들·CDN·배포 이미지·

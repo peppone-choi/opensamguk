@@ -4,7 +4,7 @@ package opensamguk.logic.war
  * The battle-stat keys threaded through `GeneralActionModule.onCalcStat` / `onCalcOpposeStat`
  * (and, for `criticalDamageRange`, the pair-typed `onCalcStatRange`) during a battle.
  *
- * Port target = PHP grand truth (literal `statName` strings + cross-vs-single classification):
+ * Port target = PHP frozen historical baseline (ADR-LITE-042; not current product authority) (literal `statName` strings + cross-vs-single classification):
  *   - `warAvoidRatio`        — `WarUnitGeneral.php:144-145` (getComputedAvoidRatio), CROSS
  *   - `warCriticalRatio`     — `WarUnitGeneral.php:131-132` (getComputedCriticalRatio), CROSS
  *   - `warMagicTrialProb`    — `che_계략시도.php:40-41`, CROSS

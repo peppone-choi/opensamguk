@@ -20,7 +20,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  * 수신국 군주가 불가침 파기 서신을 수락하면 즉시 실행된다. 양방향 diplomacy 행을 통상(TRADE=2)/term=0으로
  * 전환해 불가침 조약을 해소한다.
  *
- * PHP 정본: `legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침파기수락.php`
+ * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님): `legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침파기수락.php`
  *
  * ## 제약 (che_불가침파기수락.php:87-97)
  *  - BeChief, NotBeNeutral, ExistsDestNation, ExistsDestGeneral,

@@ -15,7 +15,7 @@ const CITY_REGIONS = cityRegionsData.regions as Record<string, string>;
  * 게이트웨이 route handler `/api/server-map/[id]`가 해당 서버 game-api로 서버사이드 프록시 →
  * 여기서 opensamguk-images CDN 추상 게임맵(che bg/road) 위에 인게임 MapViewer와 동일한 정적 마커
  * (오오라 glow + 성 아이콘 cast_<lv>.gif + 국가색 깃발 4프레임 + 수도 별 event51)를 렌더한다.
- * 좌표 = php 정본 native 700×500 좌표계(서버가 응답 width/height/cities에 포함). map-world를 캔버스
+ * 좌표 = 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) native 700×500 좌표계(서버가 응답 width/height/cities에 포함). map-world를 캔버스
  * 폭에 맞춰 transform: scale()로 균일 확대 → 좌표·아이콘·폰트가 php 비율 그대로 1000폭으로 커진다.
  *
  * 인게임 MapViewer와 다른 점(로비 프리뷰 = glance용): 줌/팬/클릭 상세 없음. hover 시에만 도시 정보

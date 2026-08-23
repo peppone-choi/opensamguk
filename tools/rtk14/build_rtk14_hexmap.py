@@ -3,7 +3,7 @@
 """
 RTK14(삼국지14) 지도 원본 이미지 → 헥스 격자 지형 데이터 결정적 추출 빌더.
 
-**DIVERGENCE / RIGHTS 도구** — devsam/core 패러티 대상 아님. 입력 원본 지도 이미지는 코에이 IP이고
+**DIVERGENCE / RIGHTS 도구** — devsam/core 동결 회귀 대상 아님. 입력 원본 지도 이미지는 코에이 IP이고
 재배포 권리가 확인되지 않았다(OPENSAM-102 `RIGHTS WARN`). 따라서 원본 이미지도, 산출 JSON도
 저장소에 커밋하지 않는다. 이 스크립트(알고리즘)와 그 테스트·방법 문서만 버전 관리한다.
 `--source`/`--out`은 repo 밖 또는 gitignored 경로만 허용하며 tracked repo 경로에는 fail-closed 한다.

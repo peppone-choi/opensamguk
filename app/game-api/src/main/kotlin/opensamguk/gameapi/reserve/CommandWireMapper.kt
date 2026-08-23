@@ -210,8 +210,8 @@ object CommandWireMapper {
                 auctionId = args.int("auctionId") ?: 0,
                 generalId = generalId,
                 amount = args.int("amount") ?: 0,
-                // PHP API 인자 키는 `extendCloseDate`(BidUniqueAuction.php:41) — Vue 프론트 정본이 이
-                // 키로 보낸다. 내부 wire 키 `tryExtendCloseDate` 도 하위호환 수용.
+                // 동결된 역사 PHP/Vue 참고는 `extendCloseDate`를 보냈다(ADR-LITE-042; 현재 제품 정본 아님).
+                // 내부 wire 키 `tryExtendCloseDate`도 하위호환 수용.
                 tryExtendCloseDate = args.bool("extendCloseDate") ?: args.bool("tryExtendCloseDate"),
             )
             "setNotice" -> TurnDaemonCommand.SetNotice(
@@ -519,7 +519,7 @@ object CommandWireMapper {
 
     /**
      * 문자열 배열 추출 (newVote options). 배열이 아니면 단일 스칼라를 래핑한다. 빈 항목 검증/순서는
-     * PHP가 grand truth — 여기서는 입력 순서를 그대로 보존(stringArray)만 한다.
+     * 이 동결 회귀에서 PHP는 역사 비교 기준 — 여기서는 입력 순서를 그대로 보존(stringArray)만 한다.
      */
     private fun Map<String, JsonElement>.strList(key: String): List<String> {
         val el = this[key] ?: return emptyList()

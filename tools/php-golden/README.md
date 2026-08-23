@@ -1,17 +1,21 @@
-# php-golden — P1 che_상업투자 / che_농지개간 golden capture
+# php-golden — opt-in historical frozen-baseline capture
 
-One-shot golden generator. Boots the **devsam-core PHP** capture environment, drives
-a single REAL turn-execution for a deliberately module-free general, and emits the
-committed P1 golden fixtures that the Kotlin byte-match gate asserts against:
+This harness is an opt-in historical comparison tool for explicitly selected
+frozen-baseline maintenance. It is not product authority, is not a prerequisite for
+new work, and does not impose PHP-first behavior under ADR-LITE-042. It boots the
+**devsam-core PHP** capture environment, drives one real legacy turn execution, and
+can reproduce these committed P1 fixtures:
 
 | Output (committed) | Asserted by |
 | --- | --- |
 | `logic/src/test/resources/golden/p1/che-action-fixtures.json` | G2 `CommerceActionLogGoldenTest`, F3/C2 seed oracle |
 | `logic/src/test/resources/golden/p1/che-golden-db.json` | G4 `VerticalSliceE2EIT` step 5 (row + aux jsonb byte-compare) |
 
-**Oracle = PHP devsam-core** (the parity grand truth — where PHP diverges from the
-TS reference, PHP wins). Generate **ONCE**, commit the JSON + DB fragment, regenerate
-**ONLY** when the PHP source changes: `che_상업투자.php`, `func_process.php`/
+Existing fixtures are frozen regression baselines. Intentional product changes may
+update affected expectations only with an explicit reason and regression evidence;
+a fresh PHP capture is not required unless the task explicitly selects historical
+comparison. For that selected scope, relevant legacy sources include
+`che_상업투자.php`, `func_process.php`/
 `TurnExecutionHelper.php` (seed), `func_gamerule.php` (`updateMaxDomesticCritical`,
 `CriticalRatioDomestic`), `func_converter.php` (`getDomesticExpLevelBonus`,
 `getExpLevel`/`getDedLevel`), `RandUtil`, `Util::simpleSerialize`. **Never run in CI.**

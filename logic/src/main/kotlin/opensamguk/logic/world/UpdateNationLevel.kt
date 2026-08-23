@@ -14,7 +14,7 @@ import opensamguk.logic.world.rank.NationRank
 import kotlin.math.pow
 
 /**
- * A3 — `UpdateNationLevel` (0-9 monotonic level engine). Faithful port of PHP grand truth
+ * A3 — `UpdateNationLevel` (0-9 monotonic level engine). Faithful port of PHP frozen historical baseline (ADR-LITE-042; not current product authority)
  * `legacy/devsam-core/hwe/sammo/Event/Action/UpdateNationLevel.php:26-225`.
  *
  * The Action runs every month (the F2-owned `month/1000` `true` row names it before

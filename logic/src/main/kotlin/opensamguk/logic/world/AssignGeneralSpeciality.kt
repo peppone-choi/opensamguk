@@ -18,7 +18,7 @@ import opensamguk.logic.event.EventActionContext
  * shape: plain input rows (the PHP `SELECT` columns) + a [RandUtil] → a deterministic
  * [AssignSpecialityResult]. [AssignGeneralSpecialityAction] is the F2 leaf (registered "AssignGeneralSpeciality").
  *
- * Faithful-port pins (PHP grand truth, AssignGeneralSpeciality.php):
+ * Faithful-port pins (PHP frozen historical baseline (ADR-LITE-042; not current product authority), AssignGeneralSpeciality.php):
  *   - `if ($year < $startYear + 3) return;` (`:27-29`) — early return BEFORE building the rng (NO draw).
  *   - seed `simpleSerialize(UniqueConst::$hiddenSeed, 'assignGeneralSpeciality', year, month)` (`:33-38`).
  *   - DOMESTIC loop (`:40-58`): `WHERE specage<=age AND special=GameConst::$defaultSpecialDomestic`, PK asc;

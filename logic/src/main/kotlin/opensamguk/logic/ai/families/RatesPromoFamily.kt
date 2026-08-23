@@ -11,7 +11,7 @@ import opensamguk.logic.util.valueFit
  * L-RATES — the rate / promotion `do<한글>`-helper family: chooseTexRate / chooseGoldBillRate /
  * chooseRiceBillRate / choosePromotion / chooseNonLordPromotion + calcCityDevelRate / calcNationDevelopedRate.
  *
- * GRAND TRUTH = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
+ * frozen historical baseline (ADR-LITE-042; not current product authority) = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
  *  - `calcNationDevelopedRate` (`:3850-3879`): **ZERO draws** — averages [calcCityDevelRate] over supplyCities.
  *  - `chooseNonLordPromotion`  (`:3881-3963`): **up to 5 `choice` per EMPTY chief slot** (`Util::range(5)` inner
  *    loop, redraw-on-reject; first non-empty pool wins — npcWar→npcCivil→userWar→userCivil; all-empty `break`s
@@ -367,7 +367,7 @@ object RatesPromoFamily {
 
     /**
      * The per-nation-pass AI INPUT the 5 rate/promotion hooks read. Faithful Kotlin stand-in for the PHP
-     * `GeneralAI` per-instance nation/chief state (`GeneralAI.php`, GRAND TRUTH): the SOLE `"GeneralAI"`
+     * `GeneralAI` per-instance nation/chief state (`GeneralAI.php`, frozen historical baseline (ADR-LITE-042; not current product authority)): the SOLE `"GeneralAI"`
      * [rng] threaded by reference; the nation row scalars; the chief-slot scan inputs ([chiefSet] /
      * [chiefGeneralLevels] / [selfOfficerLevel]); the 4 promotion candidate pools (categorizeNationGeneral
      * buckets, PK-ascending) + the [chiefGeneralOf] / [userGenerals] / [nationGenerals] accessors; the
@@ -388,7 +388,8 @@ object RatesPromoFamily {
      * @param killturnEnv PHP `$this->env['killturn']` — the `minUserKillturn = killturn - toInt(240/turnterm)`
      *   base (choosePromotion `:3988`). [turnTerm] supplies the divisor.
      * @param npcWarGenerals/npcCivilGenerals/userWarGenerals/userCivilGenerals the 4 chooseNonLordPromotion
-     *   pools (PHP insertion order = the categorizeNationGeneral bucket order, a parity target). NOT re-sorted.
+     *   pools (retained categorizeNationGeneral insertion order; historical PHP comparison is frozen regression
+     *   evidence only under ADR-LITE-042, not current product authority). NOT re-sorted.
      * @param userGenerals PHP `$this->userGenerals` (the choosePromotion userChief availability pass `:4012`).
      * @param nationGenerals PHP `$this->nationGenerals` (the choosePromotion newChief stat-desc `uasort` pool
      *   `:4068`; the adapter supplies them PK-ascending — the deterministic `uasort` is NO draw).

@@ -5,7 +5,7 @@ import opensamguk.logic.domain.LastTurn
 
 /**
  * F-DISPATCH — `GeneralAI`, a faithful port of the two LIVE dispatcher spines of
- * `legacy/devsam-core/hwe/sammo/GeneralAI.php` (GRAND TRUTH, read in full).
+ * `legacy/devsam-core/hwe/sammo/GeneralAI.php` (frozen historical baseline (ADR-LITE-042; not current product authority), read in full).
  *
  * Task FD1 ports [chooseGeneralTurn] (`:3709-3848`). Task FD2 adds `chooseNationTurn` (`:3640-3683`) and
  * the QUARANTINED `chooseInstantNationTurn` stub (`:3685-3705`, decision #3 — not wired, off the gate).

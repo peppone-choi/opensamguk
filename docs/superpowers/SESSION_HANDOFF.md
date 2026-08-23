@@ -1,6 +1,17 @@
-# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 terminal structural dirty-tree review `cleared`; full verifier green)
+# SESSION HANDOFF — 2026-08-23 (OPENSAM-206~220 integration wave; OPENSAM-218 policy gate)
 
-## Current OP43 handoff
+## Current integration-wave / OPENSAM-218 handoff
+
+- Current task authority is `.ai/task.md` section `OPENSAM-206~220 통합·검증·배포 (활성 계약)` and the active integration worktree named there.
+- PR #499 is the bounded OPENSAM-218 policy lane. ADR-LITE-042 retires PHP grand-truth, PHP-wins, draw-for-draw, byte-log, and golden-first product gates while retaining truthful evidence, frozen existing tests, deterministic replay, one-daemon-write, flush-delta, and insertion-order rules.
+- The integration wave, not this lane, owns merge, deployment, production observation, Jira transition, and cleanup. No such result is claimed in this current section.
+- Detailed OPENSAM-218 implementation, verification, and risk evidence is in the metarepo task report `reports/opensamguk/tasks/2026-08-23-op218-parity-adr.md`.
+
+---
+
+# SESSION HANDOFF — 2026-08-09 (OPENSAM-43 terminal structural dirty-tree review; historical)
+
+## Historical OP43 handoff
 
 - HEAD `8abb47a1` structural dirty tree is terminally `cleared` with no findings:
   combined fingerprint `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`

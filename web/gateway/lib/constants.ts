@@ -1,5 +1,5 @@
 // 게이트웨이 verbatim 한글 라벨 + 상수 (F0 패러티 스펙 §3~§6 기준).
-// 렌더되는 텍스트는 레거시(devsam/core)와 byte-parity — 마케팅 카피 등 임의 문구 금지.
+// 렌더되는 텍스트는 레거시(devsam/core)와 동결 회귀 — 마케팅 카피 등 임의 문구 금지.
 // 예외: BRAND는 의도적 리브랜딩(devsam "삼국지 모의전투 HiDCHe" → "오픈삼국") — 사용자 결정 divergence.
 
 export const BRAND = '오픈삼국';

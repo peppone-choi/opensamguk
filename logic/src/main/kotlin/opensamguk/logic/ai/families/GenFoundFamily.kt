@@ -22,7 +22,7 @@ import opensamguk.logic.world.isFoundableCityLevel
  *
  * ## The `ORDER BY RAND()` quarantine (decision #6, G4, R-GATE §1) — the ONLY two non-DRBG random picks in the AI
  *
- * GRAND TRUTH = PHP `GeneralAI.php`:
+ * frozen historical baseline (ADR-LITE-042; not current product authority) = PHP `GeneralAI.php`:
  * ```php
  * // :3324  do선양     SELECT `no`   FROM general WHERE nation = %i AND npc != 5                ORDER BY RAND() LIMIT 1 → destGeneralID
  * // :3345  do국가선택  SELECT nation FROM general WHERE officer_level=12 AND npc=9 and nation    ORDER BY RAND() limit 1 → rulerNation

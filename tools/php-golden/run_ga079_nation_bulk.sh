@@ -5,7 +5,7 @@ usage() {
   cat <<'USAGE'
 Usage: tools/php-golden/run_ga079_nation_bulk.sh [--help | --self-test-cleanup | --replace-existing]
 
-Runs the GA-079 PHP oracle matrix twice against fresh disposable MariaDB 11.4
+Runs the GA-079 opt-in historical PHP comparison matrix twice against fresh disposable MariaDB 11.4
 scenario_1010 installs, compares the canonical JSON with cmp, and only then
 stages, cleanup-verifies, and atomically publishes
 docs/loops/cqrs-runtime-safety-2026-07-18/evidence/ga079-nation-bulk-php.json.

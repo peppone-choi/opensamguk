@@ -332,8 +332,8 @@ class ScenarioImporter(
      * 자기 국가들이 도시를 하나도 소유하지 못한다(→ capital 보유인데 supplyCities 빔 → UpdateCitySupply
      * 미시드 → `doNPC구출발령`의 `RandUtil.choice(빈 보급도시)`가 throw → 턴데몬 크래시-루프 동결).
      * 소유를 시나리오 `nation.cities`에서 배정하면 모든 시나리오가 올바르게 도시를 소유한다. `scenario_1010`은
-     * baked `nation_id`와 동일 집합이라 **무변(no-op)**, `scenario_1030`은 21국 소유가 복구된다(PHP는
-     * 시나리오 `nation.cities`로 소유를 정한다 — 이쪽이 grand-truth 정합).
+     * baked `nation_id`와 동일 집합이라 **무변(no-op)**, `scenario_1030`은 21국 소유가 복구된다.
+     * 역사 PHP `nation.cities` 비교는 동결 회귀 참고일 뿐 현재 제품 정본이 아니다(ADR-LITE-042).
      */
     private val cityIdByName: Map<String, Int> = cities.associate { it.name to it.id }
     private val cityIds: Set<Int> = cities.mapTo(HashSet()) { it.id }

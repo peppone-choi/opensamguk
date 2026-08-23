@@ -116,7 +116,7 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
      * Resolve flow (PHP run 본체 그대로):
      *  1. Extract destNationID, year, month from args.
      *  2. 장수 액션 로그 `<D><b>{상대국}</b></>{로} 불가침 제의 서신을 보냈습니다.<1>{date}</>`.
-     *     **byte-parity 주의**: PHP `$josaRo = JosaUtil::pick($nationName, '로')`(che_불가침제의.php:170)는
+     *     **동결 회귀 주의**: PHP `$josaRo = JosaUtil::pick($nationName, '로')`(che_불가침제의.php:170)는
      *     `로`/`으로` 형을 **행동 장수 자신의 국명**(`$nationName`)으로 고른 뒤, 표시는 `$destNationName`에
      *     대해 한다(:182). 즉 josa는 actor 국명, 텍스트는 상대국명 — quirk이지만 충실히 재현한다.
      *  3. DiplomaticMessage(action=no_aggression, year, month) buffer — title

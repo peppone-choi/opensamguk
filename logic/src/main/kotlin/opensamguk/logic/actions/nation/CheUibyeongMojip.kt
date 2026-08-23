@@ -99,7 +99,7 @@ class CheUibyeongMojip(private val pipeline: GeneralActionPipeline) : NationComm
         }
 
         // 4. game_env npccount += createGenCnt, nation.gennum += createGenCnt(che_의병모집.php:166-170).
-        //    golden snapshot 미캡처(npccount/gennum dump 없음) → 패러티 대상 외(draw/로그/actor·city로 게이트).
+        //    golden snapshot 미캡처(npccount/gennum dump 없음) → 동결 회귀 대상 외(draw/로그/actor·city로 게이트).
     }
 
     /**

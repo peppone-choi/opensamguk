@@ -1,7 +1,7 @@
 'use client';
 
 // ── 로그정보 (Admin7) — READ-ONLY 장수 상세 + 로그 패널 + 정렬/대상선택 ────────────────
-// Grand-truth: legacy hwe/_admin7.php. game-api `GET /api/admin/general-log?gen=&query_type=`
+// Frozen historical UI reference (ADR-LITE-042; not current product authority): legacy hwe/_admin7.php. game-api `GET /api/admin/general-log?gen=&query_type=`
 // (AdminReadController, B4a). 전부 READ 렌더.
 //
 // ADMIN 게이트는 BE 강제: 비ADMIN→403, 비로그인→401. FE는 graceful 안내.

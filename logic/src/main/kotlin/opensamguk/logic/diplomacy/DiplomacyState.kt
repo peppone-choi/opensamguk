@@ -1,12 +1,13 @@
 package opensamguk.logic.diplomacy
 
 /**
- * Foreign-keyed diplomacy state codes — faithful port of PHP DIPLOMACY_STATE constants.
+ * Foreign-keyed diplomacy state codes. The PHP DIPLOMACY_STATE comparison is frozen historical evidence
+ * (ADR-LITE-042), not current product authority.
  *
  * PHP V1 stores state as integer codes in the `diplomacy.state` column:
  *   0 = war (교전), 1 = declaration (선전포고), 2 = trade (통상), 7 = non-aggression (불가침).
  *
- * These values are the grand-truth keys used in:
+ * These values are the current implementation keys used in:
  *   - DB `diplomacy.state`
  *   - `DisallowDiplomacyBetweenStatus` / `AllowDiplomacyBetweenStatus` constraint maps
  *   - `postUpdateMonthlyDiplomacy` state-machine transitions (Q5-Q10)

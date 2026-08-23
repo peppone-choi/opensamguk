@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 /**
  * 어드민 회원관리 self/peer 보호 가드 — legacy `j_set_userlist.php:162,274` 패러티의 0.9.0 단순화.
  *
- * grand truth: legacy는 GRADE 다단계로
+ * frozen historical baseline (ADR-LITE-042; not current product authority): legacy는 GRADE 다단계로
  *   - 대상 grade ≥ 본인 grade면 거부(`:162`)
  *   - set_userlevel param ≥ 본인 grade 거부(`:274`)
  * 를 강제한다. opensamguk 0.9.0은 role 단일 게이트(ADMIN)이므로 다단계로 표현 불가 →

@@ -7,7 +7,7 @@ import opensamguk.common.rng.serializeSeed
 /**
  * F6 / FS1 — the `che_출병` battle RNG lineage (research Units 3/7, consolidated OQ #7).
  *
- * Port target (PHP grand truth):
+ * Port target (PHP frozen historical baseline (ADR-LITE-042; not current product authority)):
  *   - `che_출병.php:245-253`:
  *       ```php
  *       $warRngPre = new LiteHashDRBG(Util::simpleSerialize(

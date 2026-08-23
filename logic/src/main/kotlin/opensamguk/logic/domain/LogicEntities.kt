@@ -49,7 +49,7 @@ data class General(
     val penalty: Map<String, Any?> = linkedMapOf(), // V1 general.penalty jsonb, separate from meta.
     val meta: Map<String, Any?> = linkedMapOf(),   // explevel, intel_exp, leadership_exp, strength_exp, dedlevel, aux, max_domestic_critical, killturn …
     // --- DIVERGENCE (1.0.0+ 독자기능, 레거시 devsam/core에 없음) ---
-    // 정치(politics)/매력(charm): 오픈삼국 5스탯 확장. PHP 골든 오라클 없음 → 패러티 경로(leadership/strength/intel
+    // 정치(politics)/매력(charm): 오픈삼국 5스탯 확장. 역사 PHP에는 비교 자료가 없으며(ADR-LITE-042), 패러티 경로(leadership/strength/intel
     // getStatValue·battle·draw)에는 절대 주입하지 않는다. 기본 0으로 inert; 값 부여·UI는 후속 바퀴(W2/W4).
     val politics: Int = 0,        // 정치 (divergence)
     val charm: Int = 0,           // 매력 (divergence)
