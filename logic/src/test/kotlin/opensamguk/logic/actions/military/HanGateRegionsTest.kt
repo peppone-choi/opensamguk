@@ -95,25 +95,11 @@ class HanGateRegionsTest {
         }
     }
 
-    /**
-     * B1 회귀 — commandery+tribe 게이트가 build_unitset.py 에서 한 ReqRegions 리스트로
-     * 뭉쳐 OR 로 평가되던 결함(2026-08-23). 애뢰 노수(2200)는 永昌 commandery AND 夷 tribe
-     * 여야 하는데, 뭉쳐 있으면 夷 태그만 있는 越巂(城 623, 永昌 아님)만 보유해도 뽑혔다.
-     */
-    @Test
-    fun `애뢰 노수는 越巂 만으로는 못 뽑고 永昌 을 보유해야 뽑는다`() {
-        val aeroe = UnitCatalog.byId("han", 2200)!!
-        val yuexi = cityWithKey("越巂") // 夷 태그는 있지만 永昌 아니다
-        val yongchang = cityWithKey("永昌")
-        assertTrue("夷" in HanGateIndex.keys(yuexi), "越巂 城은 夷 태그를 갖는다(전제)")
-        assertFalse("永昌" in HanGateIndex.keys(yuexi), "越巂 城은 永昌 이 아니다(전제)")
-
-        assertFalse(canRecruit(aeroe, standingAt = yuexi, own = listOf(yuexi)), "越巂 만으로는 안 된다")
-        assertTrue(
-            canRecruit(aeroe, standingAt = yongchang, own = listOf(yuexi, yongchang)),
-            "永昌 을 더 보유하면 된다",
-        )
-    }
+    // B1 회귀(애뢰 노수는 越巂 만으로는 못 뽑고 永昌 을 보유해야 뽑는다)는 여기 없다 —
+    // `cityWithKey("永昌")`가 요구하는 HanGateIndex 갱신은 PR B(han.json/HanGateIndex.kt,
+    // 커밋 34177c3f)가 싣는다. commandery+tribe AND 복원 자체(build_unitset.py, 이 PR의
+    // 실제 변경)는 그 아래 UnitSetTableHanTest 등 다른 회귀로 이미 커버된다. 삭제가 아니라
+    // 이관이다 — PR B에서 이 assertion을 되살린다.
 
     @Test
     fun `che 는 게이트 키가 없어 기존 지역 라벨 경로 그대로다`() {
