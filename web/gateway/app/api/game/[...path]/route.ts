@@ -62,8 +62,26 @@ function sseHeaders(
   };
 }
 
-function streamEventSource(target: string, init: RequestInit): NextResponse {
+async function streamEventSource(
+  target: string,
+  init: RequestInit,
+): Promise<NextResponse> {
   const upstreamAbort = new AbortController();
+  // (A) 연결 수립 시점 실패: fetch를 ReadableStream 밖에서 먼저 await한다 — 아직 아무것도
+  // 스트리밍하지 않았으므로 upstream status를 그대로(JSON 경로와 동일 계약) 반환할 수 있다.
+  const upstream = await fetch(target, {
+    ...init,
+    signal: upstreamAbort.signal,
+  });
+  if (!upstream.ok) {
+    const contentType = upstream.headers.get("content-type") ?? "application/json";
+    const body = await upstream.text();
+    return new NextResponse(body, {
+      status: upstream.status,
+      headers: { "Content-Type": contentType },
+    });
+  }
+
   let heartbeat: ReturnType<typeof setInterval> | null = null;
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   let closed = false;
@@ -85,14 +103,6 @@ function streamEventSource(target: string, init: RequestInit): NextResponse {
 
       void (async () => {
         try {
-          const upstream = await fetch(target, {
-            ...init,
-            signal: upstreamAbort.signal,
-          });
-          if (!upstream.ok) {
-            send("event: error\ndata: {}\n\n");
-            return;
-          }
           reader = upstream.body?.getReader() ?? null;
           if (!reader) return;
           while (!closed) {
@@ -101,6 +111,8 @@ function streamEventSource(target: string, init: RequestInit): NextResponse {
             if (!closed && chunk.value) controller.enqueue(chunk.value);
           }
         } catch {
+          // (B) 이미 열린 스트림 중간의 실패 — status는 이미 200으로 나갔으므로 되돌릴 수
+          // 없다. 이벤트로만 알릴 수 있다(#514 범위 밖, payload 설계는 별도 결정 필요).
           send("event: error\ndata: {}\n\n");
         } finally {
           close();

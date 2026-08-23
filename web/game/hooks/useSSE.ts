@@ -47,12 +47,23 @@ export function useSSE(onEvent: () => void) {
         es.onerror = () => {
             es.close();
             esRef.current = null;
-            delayRef.current = Math.min(delayRef.current * 2, 30000);
-            if (reconnectRef.current) clearTimeout(reconnectRef.current);
-            reconnectRef.current = setTimeout(() => {
-                reconnectRef.current = null;
-                connect();
-            }, delayRef.current);
+            // 네이티브 EventSource는 onerror에 응답 status를 실어주지 않는다(#514) — upstream이
+            // 401을 준 경우와 일시적 네트워크 끊김을 구분할 수 없다. web/game/lib/api.ts:351과
+            // 동일한 패턴으로 /api/auth/me를 불러 세션이 실제로 만료됐는지 확인한다: 만료 확정이면
+            // 재연결을 멈춘다(만료된 세션으로 30초 간격 영구 재연결 금지 — AuthGate가 재로그인으로
+            // 보낸다). fetch 자체가 실패하면(네트워크 장애) 일시적 문제로 보고 기존 backoff를 유지한다.
+            void fetch('/api/auth/me', { cache: 'no-store' })
+                .then((res) => res.ok)
+                .catch(() => true)
+                .then((sessionAlive) => {
+                    if (!sessionAlive) return;
+                    delayRef.current = Math.min(delayRef.current * 2, 30000);
+                    if (reconnectRef.current) clearTimeout(reconnectRef.current);
+                    reconnectRef.current = setTimeout(() => {
+                        reconnectRef.current = null;
+                        connect();
+                    }, delayRef.current);
+                });
         };
     }, []);
 
