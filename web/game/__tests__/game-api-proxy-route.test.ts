@@ -29,9 +29,9 @@ function context(path: string[]) {
   return { params: Promise.resolve({ path }) };
 }
 
-function jsonResponse(body: unknown): Response {
+function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
-    status: 200,
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
 }
@@ -138,5 +138,71 @@ describe('game API proxy server selection', () => {
       duplex: 'half',
       body: JSON.stringify({ value: 1 }),
     });
+  });
+
+  it('on a 401 from an expired access, refreshes once, resends the buffered body, and sets renewed cookies', async () => {
+    cookieValues = { sam_access: 'expired-access', sam_refresh: 'refresh-ok' };
+    const user = { id: 1, username: 'u', email: 'u@test', nickname: 'U', role: 'USER' };
+
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url === 'http://default-game-api/select-pool/claim') {
+        if (init?.headers && (init.headers as Record<string, string>).Authorization === 'Bearer expired-access') {
+          return jsonResponse({ error: 'expired' }, 401);
+        }
+        expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer new-access');
+        expect(init?.body).toBe(JSON.stringify({ name: '장수' }));
+        return jsonResponse({ ok: true }, 200);
+      }
+      if (url === 'http://localhost:8080/auth/refresh') {
+        expect(JSON.parse(init?.body as string)).toEqual({ refreshToken: 'refresh-ok' });
+        return jsonResponse({ accessToken: 'new-access', refreshToken: 'new-refresh', user });
+      }
+      throw new Error(`unexpected fetch ${url}`);
+    });
+
+    const response = await POST(
+      request('/api/game/select-pool/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: '장수' }),
+      }),
+      context(['select-pool', 'claim']),
+    );
+    const body = await response.json();
+    const setCookie = response.headers.getSetCookie();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ ok: true });
+    expect(setCookie.some((v) => v.startsWith('sam_access=new-access;'))).toBe(true);
+    expect(setCookie.some((v) => v.startsWith('sam_refresh=new-refresh;'))).toBe(true);
+    // game-api 최초 시도 + refresh + game-api 재시도 = 3회, 재시도는 딱 1번뿐
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not retry a second time and returns the original 401 when refresh itself fails', async () => {
+    cookieValues = { sam_access: 'expired-access', sam_refresh: 'bad-refresh' };
+
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url === 'http://default-game-api/select-pool/claim') {
+        return jsonResponse({ error: 'expired' }, 401);
+      }
+      if (url === 'http://localhost:8080/auth/refresh') {
+        return jsonResponse({ error: 'invalid refresh' }, 401);
+      }
+      throw new Error(`unexpected fetch ${url}`);
+    });
+
+    const response = await POST(
+      request('/api/game/select-pool/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: '장수' }),
+      }),
+      context(['select-pool', 'claim']),
+    );
+
+    expect(response.status).toBe(401);
+    // game-api 최초 시도 + refresh 시도 = 2회, refresh 실패 후 game-api 재시도는 없음
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

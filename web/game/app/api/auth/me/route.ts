@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { GATEWAY_API_URL } from '@/lib/server-api';
 import { ACCESS_COOKIE, REFRESH_COOKIE, clearAuthCookies, setAuthCookies } from '@/lib/cookies';
+import { refreshAccessToken } from '@/lib/authRefresh';
 import type { User } from '@/lib/types';
 
 /**
@@ -12,12 +13,6 @@ import type { User } from '@/lib/types';
  * gateway-api `/auth/refresh`를 호출하고 갱신된 httpOnly 쿠키를 다시 심는다. 일시적 업스트림 오류는
  * 쿠키를 건드리지 않고 502로 전달해 유효한 7일 세션을 끊지 않는다.
  */
-type AuthResponse = {
-    accessToken: string;
-    refreshToken: string;
-    user: User;
-};
-
 function isAuthFailure(status: number): boolean {
     return status === 401 || status === 403;
 }
@@ -47,18 +42,13 @@ export async function GET() {
 
     if (refresh) {
         try {
-            const rr = await fetch(`${GATEWAY_API_URL}/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken: refresh }),
-            });
-            if (rr.ok) {
-                const data = (await rr.json()) as AuthResponse;
-                const res = NextResponse.json({ user: data.user });
-                setAuthCookies(res, data);
+            const result = await refreshAccessToken(refresh);
+            if (result.ok) {
+                const res = NextResponse.json({ user: result.data.user });
+                setAuthCookies(res, result.data);
                 return res;
             }
-            if (!isAuthFailure(rr.status)) {
+            if (!isAuthFailure(result.status)) {
                 return NextResponse.json({ error: '일시적 오류가 발생했습니다.' }, { status: 502 });
             }
         } catch {
