@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * Nation/GetGeneralLog 포팅 — PHP 정본 `hwe/sammo/API/Nation/GetGeneralLog.php`.
+ * Nation/GetGeneralLog 포팅 — 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) `hwe/sammo/API/Nation/GetGeneralLog.php`.
  * (`General/GetGeneralLog`는 이를 상속하되 checkPermission을 무력화해 본인 로그를
  * 누구나(재야 포함) 보게 하는 self-view 변형 — 별도 갭, 루프 LEDGER 백로그.)
  *

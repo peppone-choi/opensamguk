@@ -5,7 +5,7 @@ import path from 'node:path';
 // PORT of legacy/devsam-core2026/tools/compare-command-logs.mjs (P2 GS1).
 //
 //   * PHP_ROOT re-pointed legacy/hwe/sammo/Command  →  legacy/devsam-core/hwe/sammo/Command
-//     (the PHP grand-truth tree; devsam-core, NOT the 2026 fork).
+//     (opt-in frozen historical PHP evidence; ADR-LITE-042; not current product authority).
 //   * The PHP action-log extractor + `normalizeTemplate` + the guard/target excludes +
 //     the report shape are KEPT VERBATIM from the legacy tool.
 //   * The TS source extractor is REPLACED by a dependency-free Kotlin source extractor
@@ -38,7 +38,7 @@ const DEFAULT_IGNORE_FILE = path.join('tools', 'php-golden', 'compare-command-lo
 const ARG_HELP = `
 Usage: node tools/php-golden/compare-command-logs/compare-command-logs.mjs [options]
 
-Compares per-command action-log templates between the PHP grand truth
+Compares per-command action-log templates between the frozen historical PHP baseline (ADR-LITE-042; not current product authority)
 (legacy/devsam-core/hwe/sammo/Command) and the Kotlin resolvers
 (logic/src/main/kotlin/opensamguk/logic/actions). The matched set is scoped to the
 committed PHP-captured goldens (logic/src/test/resources/golden/p2/*.json) unless

@@ -5,7 +5,7 @@ object ScenarioLifecycleMeta {
     /**
      * 장수별 killturn(사망 예정 턴) 파생값.
      *
-     * devsam GeneralBuilder.php:662 month-only grand truth:
+     * devsam GeneralBuilder.php:662 month-only frozen historical baseline (ADR-LITE-042; not current product authority):
      *   killturn = (death - year) * 12 + rng.nextRangeInt(0, 11) + month - 1
      * (death=사망년도, year/month=장수 생성 시점의 게임 연/월)
      *

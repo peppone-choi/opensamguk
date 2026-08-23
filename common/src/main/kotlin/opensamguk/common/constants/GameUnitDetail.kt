@@ -110,7 +110,7 @@ data class GameUnitDetail(
 
 /**
  * Free functions ported from PHP `func_converter.php` so :common combat methods are self-contained
- * (PHP grand truth; do NOT reference :logic).
+ * (PHP frozen historical baseline (ADR-LITE-042; not current product authority); do NOT reference :logic).
  */
 
 /** func_converter.php:676-682 — getTechLevel = valueFit(floor(tech/1000), 0, maxTechLevel). */

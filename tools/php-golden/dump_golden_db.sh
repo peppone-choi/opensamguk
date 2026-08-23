@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# dump_golden_db.sh — P1 golden DB-fragment dump (devsam capture env, grand truth).
+# dump_golden_db.sh — opt-in frozen historical DB-fragment dump (ADR-LITE-042; not product authority).
 #
 # ONE-SHOT, MANUAL HOST STEP — NEVER CI.
 #
@@ -57,7 +57,7 @@ fi
 # Row-level SELECT → JSON via the SAME PHP runtime that produced the rows, so the
 # aux jsonb key order + number formatting match Json::encode exactly. We avoid
 # mysqldump precisely because it does not honor PHP's jsonb key insertion order;
-# the row→Json::encode path is the byte oracle.
+# the frozen historical row→Json::encode bytes are retained regression evidence, not a current oracle.
 SAMMO_GOLDEN_GENERALS="$GENERALS" \
 SAMMO_GOLDEN_CITIES="$CITIES" \
 SAMMO_GOLDEN_OUT="$OUT" \

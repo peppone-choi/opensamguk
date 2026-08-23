@@ -14,7 +14,7 @@
 //  - 개설 (newVote, admin):  { title, options:string[], multipleOptions:int, endDate?, keepOldVote? }.
 //      options는 legacy textarea(엔터 구분, 빈 줄 제거)를 그대로 따른다. endDate는 폼에 없으므로
 //      전송하지 않는다(legacy newVoteInfo.endDate=undefined). multipleOptions 클램프/기본값(?? 1,
-//      <0→0, valueFit 0..count)은 엔진(PHP grand truth)이 적용한다.
+//      <0→0, valueFit 0..count)은 엔진(frozen historical PHP baseline (ADR-LITE-042; not current product authority))이 적용한다.
 //  - 투표 (voteCast):        { voteId, selection:int[] }. selection은 단일(radio→[idx]) 또는
 //      다중(checkbox→[…]) — multipleOptions===1이면 단일, else 다중(legacy submitVote).
 //  - 댓글 (voteComment):     { voteId, text }. text 200자 절단은 엔진이 한다(mb_substr).

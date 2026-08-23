@@ -1,5 +1,6 @@
 # Agent Handoff
 
+
 ## Current handoff (2026-08-23) — W1-B remediation interrupted; resume from RED
 
 - Reason: 사용자가 진행 중인 구현을 중단하고 핸드오프 후 대기를 요청했다. 실행 중이던
@@ -51,7 +52,16 @@
   체크포인트의 read-only `sed`/`rg`는 exit 0이었으나 비특정 fablize wrapper 경고가
   반복됐고 제품 실패와 분리해 기록했다.
 
-## Current handoff (2026-08-09) — OPENSAM-43 V2-0B terminal structural review cleared; full verifier green
+## Current handoff (2026-08-23) — OPENSAM-206~220 integration wave; OPENSAM-218 policy gate
+
+- Current task authority is `.ai/task.md` section `OPENSAM-206~220 통합·검증·배포 (활성 계약)` and the active integration worktree named there.
+- OPENSAM-218 is the bounded policy lane in PR #499. ADR-LITE-042 retires PHP grand-truth, PHP-wins, draw-for-draw, byte-log, and golden-first product gates while retaining truthful evidence, frozen existing tests, deterministic replay, one-daemon-write, flush-delta, and insertion-order rules.
+- This handoff records policy/guard verification only. The integration wave owns merge, deploy, production observation, Jira transition, and cleanup; none is claimed here.
+- Durable OPENSAM-218 result and risk evidence is recorded in `reports/opensamguk/tasks/2026-08-23-op218-parity-adr.md` in the metarepo.
+
+---
+
+## Historical handoff (2026-08-09) — OPENSAM-43 V2-0B terminal structural review cleared; full verifier green
 
 - HEAD `8abb47a1` structural dirty tree is terminally `cleared` with no findings:
   combined fingerprint `0734d9d5625b70fb6a92ea12c6e5717302b1b689aadcc46a4f17fcbf06f28ac3`

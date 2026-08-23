@@ -51,7 +51,7 @@ interface BanEmailResult {
     reason: string;
 }
 
-// legacy admin_member.ts convUserGrade 정본. 매핑에 없는 등급은 숫자 문자열로 표기.
+// 동결된 역사 admin_member.ts convUserGrade 참고(ADR-LITE-042; 현재 제품 정본 아님). 매핑에 없는 등급은 숫자 문자열로 표기.
 const USER_GRADE_MAP: Record<number, string> = {
     0: '차단',
     1: '일반',

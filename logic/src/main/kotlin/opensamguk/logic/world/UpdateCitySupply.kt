@@ -125,7 +125,7 @@ data class CitySupplyResult(
  *      generals `officer_level=1, officer_city=0 WHERE officer_city IN lostIds`; neutralize cities
  *      `nation=0, officer_set=0, conflict={}, term=0, front=0 WHERE city IN lostIds`.
  *
- * PORT NOTE (PHP grand truth over the plan's "REUSE FoundingCascade"): the UpdateCitySupply
+ * PORT NOTE (PHP frozen historical baseline (ADR-LITE-042; not current product authority) over the plan's "REUSE FoundingCascade"): the UpdateCitySupply
  * officer-reset (`officer_level=1, officer_city=0`) is UNCONDITIONAL on the matched generals (NO
  * `officer_level<12` guard, NO makelimit write) — distinct from FoundingCascade.demoteMember; and
  * the city neutralize ALSO sets `officer_set=0`/`term=0` which FoundingCascade.neutralizeCity does

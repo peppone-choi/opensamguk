@@ -27793,111 +27793,21 @@
         "sha256": "668165bce575a618be5f30738221fe657b30710d0c92f7e984a018711313b19f"
       },
       "administrativePlaceOverlay": {
-        "path": "data/map/administrative-place-overlay.json",
-        "sha256": "bfefb8af7058aa11606cb20575653dcf4dec45b5535cab4a5e2e97fbb1e3ef30"
+        "path": "data/curated/han/administrative-place-bindings-v1.json",
+        "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
       },
       "legacyHanMap": {
         "path": "infra/src/main/resources/map/han.json",
-        "sha256": "2a2cd0c5813bbdd037c0cad41dc2ccd34c582830aacadb1ad8c135985f4d3a58"
+        "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
       },
       "legacyTileMap": {
         "path": "data/map/han-tiles.json",
         "sha256": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
       }
     },
-    "scenarioResourceCount": 31
+    "scenarioResourceCount": 15
   },
   "scenarioCatalog": [
-    {
-      "code": "0",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_0.json",
-      "resourceSha256": "53f45e07097fc9e08694634047e7f228a423db6faabfdf7ae8255cff5c70654c",
-      "startYear": 180
-    },
-    {
-      "code": "1",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_1.json",
-      "resourceSha256": "92a74c93cbeff70b92984f7dd6aecfef5f7edc3df12deba2d59eca5bcb3a4e7f",
-      "startYear": 180
-    },
-    {
-      "code": "2",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_2.json",
-      "resourceSha256": "14c7ba89127bd5ab053cc2c6838d6bbc836a65c8caac1aa8fb1a244bbc581c3b",
-      "startYear": 180
-    },
-    {
-      "code": "900",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_900.json",
-      "resourceSha256": "432a192685c1b04fe766d8a6ef6b988b8baff08f93e276e4ca373c705e716809",
-      "startYear": 180
-    },
-    {
-      "code": "901",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_901.json",
-      "resourceSha256": "aa5c8e6726d070d0df86144dbdfc9e8d0c266182110860e2fe9947e6a42620a4",
-      "startYear": 180
-    },
-    {
-      "code": "902",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_902.json",
-      "resourceSha256": "91e460e77e50665e075ae32f63ff4b6ac3d895adae75b75d396743a084aaa99f",
-      "startYear": 180
-    },
-    {
-      "code": "903",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_903.json",
-      "resourceSha256": "49f7d27ec2ea072bcbd9de43608a92b3de94a72b04fe9cdbe715b88c2929d0e9",
-      "startYear": 180
-    },
-    {
-      "code": "905",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_905.json",
-      "resourceSha256": "13461918aaf21f5c0421086eabcfcfd79b762883baf587c0ef691d28dc262db0",
-      "startYear": 180
-    },
-    {
-      "code": "906",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_906.json",
-      "resourceSha256": "fba66a94547ef20a3ef4f70ba8f478f3f8dccfa0f5e58cd694de41b4edab9939",
-      "startYear": 180
-    },
-    {
-      "code": "908",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_908.json",
-      "resourceSha256": "979dee2ea567b8c92077ff40b4a92b10496018f5a6396c89c76372e4981047e5",
-      "startYear": 180
-    },
-    {
-      "code": "910",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_910.json",
-      "resourceSha256": "9130bd1a02d51c26660647dd3bba2133e5273bee0c759db6da957a602f0e5733",
-      "startYear": 180
-    },
-    {
-      "code": "911",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_911.json",
-      "resourceSha256": "93c1cdb13bce391b88a364e138141e695422b9c4dbd627a0bf43751767a06121",
-      "startYear": 180
-    },
-    {
-      "code": "912",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_912.json",
-      "resourceSha256": "d6ff211c2d149cf684b61d3a16d5e2333fa58b3dbd6f252e1ed11b0c08244c50",
-      "startYear": 180
-    },
-    {
-      "code": "913",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_913.json",
-      "resourceSha256": "867aaef5fc9c4a7de31c9083e763422e727e18b990a34a2019d3a148178ccd19",
-      "startYear": 180
-    },
-    {
-      "code": "914",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_914.json",
-      "resourceSha256": "b7b6c3980a8e38492bc3e0262135637b1aa312b163211756cdeedd2a8e430405",
-      "startYear": 180
-    },
     {
       "code": "1010",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1010.json",
@@ -27987,12 +27897,6 @@
       "resourcePath": "infra/src/main/resources/scenario/scenario_1120.json",
       "resourceSha256": "eca43205898471c68d13402d6b9cc207f6e69d5b887a67b8e82fac71f8a75376",
       "startYear": 188
-    },
-    {
-      "code": "9200",
-      "resourcePath": "infra/src/main/resources/scenario/scenario_9200.json",
-      "resourceSha256": "d1ce3b2dfd1fd615f79e67bf6ee436335be9971925906c5d88d2a827f8506ad1",
-      "startYear": 190
     }
   ],
   "schemaVersion": 1,

@@ -22,7 +22,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  * 수신국 군주가 불가침 제의 서신을 수락하면 즉시 실행된다. 양방향 diplomacy 행을 불가침(NON_AGGRESSION=7)으로
  * 전환하고 term = (제의 만기 - 현재월)을 설정한다.
  *
- * PHP 정본: `legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침수락.php`
+ * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님): `legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침수락.php`
  *
  * ## 제약 (che_불가침수락.php:121-140 — reqMonth<=currentMonth면 AlwaysFail '이미 기한이 지났습니다.')
  *  - BeChief, NotBeNeutral, OccupiedCity, SuppliedCity, ExistsDestNation, ExistsDestGeneral,

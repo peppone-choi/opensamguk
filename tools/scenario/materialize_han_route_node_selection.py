@@ -25,6 +25,7 @@ from tools.scenario.han_route_node_selection import (
     JsonValue,
     MaterializationContractError,
     build_outputs,
+    number,
     obj,
     rows,
     text,
@@ -32,6 +33,7 @@ from tools.scenario.han_route_node_selection import (
 
 CURATED = ROOT / "data/curated/han"
 SCENARIOS = ROOT / "infra/src/main/resources/scenario"
+SOURCE_WITNESS = CURATED / "route-node-source-witness-v1.json"
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,13 +48,14 @@ class MaterializerInputs:
     han: Path
     tiles: Path
     scenario_dir: Path
+    source_witness: Path
 
 
 def default_inputs() -> MaterializerInputs:
     return MaterializerInputs(
         candidate=CURATED / "route-node-selection-candidates-v1.json",
         catalog=CURATED / "administrative-units.json",
-        overlay=ROOT / "data/map/administrative-place-overlay.json",
+        overlay=ROOT / "data/curated/han/administrative-place-bindings-v1.json",
         review_policy=CURATED / "route-node-review-policy-v1.json",
         adjudications=CURATED / "route-node-location-adjudications-v1.json",
         source_claims=CURATED / "route-node-source-claims-v1.json",
@@ -60,6 +63,7 @@ def default_inputs() -> MaterializerInputs:
         han=ROOT / "infra/src/main/resources/map/han.json",
         tiles=ROOT / "data/map/han-tiles.json",
         scenario_dir=SCENARIOS,
+        source_witness=SOURCE_WITNESS,
     )
 
 
@@ -82,14 +86,40 @@ def _load(path: Path) -> JsonObject:
     return value
 
 
-def _verify_location_claim_sources(claims: JsonObject) -> None:
+def _verify_location_claim_sources(claims: JsonObject, source_witness: Path) -> None:
     claim_rows = rows(claims, "claims")
+    witnesses: list[JsonObject] | None = None
     if len(claim_rows) != 8:
         raise MaterializationContractError("location claim set must contain exactly 8 LOCATION_ONLY claims")
     for claim in claim_rows:
         claim_id = text(claim, "sourceClaimId")
         if claim.get("claimRole") != "LOCATION_ONLY":
             raise MaterializationContractError(f"{claim_id} must be LOCATION_ONLY")
+        resolution = obj(claim, "locationResolution")
+        dataset_ref = obj(resolution, "coordinateDatasetRef")
+        dataset_path = Path(text(dataset_ref, "datasetPath"))
+        if dataset_path.is_absolute() or dataset_path.parts[:1] != ("data",) or ".." in dataset_path.parts:
+            raise MaterializationContractError(f"{claim_id} external authority path must be repo-relative data/")
+        dataset = (ROOT / dataset_path).resolve()
+        try:
+            dataset.relative_to((ROOT / "data").resolve())
+        except ValueError as error:
+            raise MaterializationContractError(f"{claim_id} external authority escapes repository data/") from error
+        if not dataset.is_file() or dataset_ref.get("datasetSha256") != _digest(dataset):
+            raise MaterializationContractError(f"{claim_id} external authority hash does not match")
+        authority = _load(dataset)
+        matching = [row for row in rows(authority, "records") if row.get("recordId") == dataset_ref.get("recordId")]
+        if len(matching) != 1:
+            raise MaterializationContractError(f"{claim_id} external authority recordId does not resolve uniquely")
+        authority_row = matching[0]
+        if authority_row.get("wikidataId") != dataset_ref.get("wikidataId"):
+            raise MaterializationContractError(f"{claim_id} external authority Wikidata identity does not match")
+        if authority_row.get("physicalPlaceId") != resolution.get("physicalPlaceId"):
+            raise MaterializationContractError(f"{claim_id} external authority physicalPlaceId does not match")
+        if authority_row.get("subjectKey") != claim.get("subjectKey"):
+            raise MaterializationContractError(f"{claim_id} external authority subjectKey does not match")
+        if authority_row.get("canonicalName") != claim.get("canonicalName"):
+            raise MaterializationContractError(f"{claim_id} external authority canonicalName does not match")
         records = rows(claim, "sourceRecords")
         if not records:
             raise MaterializationContractError(f"{claim_id} requires source records")
@@ -98,11 +128,23 @@ def _verify_location_claim_sources(claims: JsonObject) -> None:
             if corpus_path.is_absolute() or corpus_path.parts[:2] != ("data", "corpus") or ".." in corpus_path.parts:
                 raise MaterializationContractError(f"{claim_id} source record path must be repo-relative data/corpus")
             source = (ROOT / corpus_path).resolve()
+            corpus_root = (ROOT / "data/corpus").resolve()
             try:
-                source.relative_to(ROOT)
+                source.relative_to(corpus_root)
             except ValueError as error:
-                raise MaterializationContractError(f"{claim_id} source record escapes the repository") from error
-            if not source.is_file() or record.get("snapshotSha256") != _digest(source):
+                raise MaterializationContractError(f"{claim_id} source record escapes data/corpus") from error
+            if not source.is_file():
+                if witnesses is None:
+                    if not source_witness.is_file():
+                        raise MaterializationContractError(
+                            "location claim source witness is missing from the selected inputs"
+                        )
+                    witnesses = rows(_load(source_witness), "records")
+                expected = {"sourceClaimId": claim_id, **record}
+                if expected not in witnesses:
+                    raise MaterializationContractError(f"{claim_id} source record has no curated witness")
+                continue
+            if record.get("snapshotSha256") != _digest(source):
                 raise MaterializationContractError(f"{claim_id} source record hash does not match")
             start, end = record.get("lineStart"), record.get("lineEnd")
             if not isinstance(start, int) or isinstance(start, bool) or not isinstance(end, int) or isinstance(end, bool):
@@ -124,22 +166,33 @@ def _verify_hash(label: str, expected: JsonValue, path: Path) -> str:
 
 def _scenario_resources(candidate: JsonObject, scenario_dir: Path) -> list[JsonObject]:
     expected_rows = rows(candidate, "scenarioCatalog")
-    if len(expected_rows) != 31:
-        raise MaterializationContractError("candidate must pin exactly 31 scenario resources")
+    if len(expected_rows) != 15:
+        raise MaterializationContractError("candidate must pin exactly 15 active scenario resources")
+    expected_names = {Path(text(row, "resourcePath")).name for row in expected_rows}
+    actual_names: set[str] = set()
+    for path in scenario_dir.glob("scenario_*.json"):
+        map_info = _load(path).get("map")
+        if isinstance(map_info, dict) and map_info.get("mapName") == "han":
+            actual_names.add(path.name)
+    if actual_names != expected_names:
+        raise MaterializationContractError("scenario resource set drift")
     resources: list[JsonObject] = []
     seen: set[str] = set()
     for expected in expected_rows:
         scenario_id = text(expected, "code")
+        if not scenario_id.isdigit():
+            raise MaterializationContractError(f"scenario code must be numeric: {scenario_id}")
         resource_path = text(expected, "resourcePath")
         path = scenario_dir / Path(resource_path).name
         if scenario_id in seen or not path.is_file() or _digest(path) != expected.get("resourceSha256"):
             raise MaterializationContractError("scenario hash drift")
         payload = _load(path)
-        if obj(payload, "map").get("mapName") != "han" or payload.get("startYear") != expected.get("startYear"):
+        start_year = number(expected, "startYear")
+        if obj(payload, "map").get("mapName") != "han" or payload.get("startYear") != start_year:
             raise MaterializationContractError("scenario resource metadata drift")
         seen.add(scenario_id)
         resources.append({"scenarioId": scenario_id, "resourceName": path.name, "resourcePath": resource_path,
-                          "startYear": expected["startYear"], "sha256": expected["resourceSha256"]})
+                          "startYear": start_year, "sha256": expected["resourceSha256"]})
     return sorted(resources, key=lambda row: int(text(row, "scenarioId")))
 
 
@@ -164,10 +217,14 @@ def _verify_policy(inputs: MaterializerInputs, policy: JsonObject, candidate: Js
 
 
 def materialize(inputs: MaterializerInputs) -> BuildResult:
+    if inputs.source_witness.resolve().parent != inputs.source_claims.resolve().parent:
+        raise MaterializationContractError(
+            "source witness must be supplied beside the selected source claims"
+        )
     candidate, catalog, overlay = _load(inputs.candidate), _load(inputs.catalog), _load(inputs.overlay)
     policy, adjudications = _load(inputs.review_policy), _load(inputs.adjudications)
     claims, registry = _load(inputs.source_claims), _load(inputs.key_registry)
-    _verify_location_claim_sources(claims)
+    _verify_location_claim_sources(claims, inputs.source_witness)
     provenance = _verify_policy(inputs, policy, candidate)
     result = build_outputs(candidate, catalog, overlay, policy, adjudications, claims, registry,
                            _scenario_resources(candidate, inputs.scenario_dir), provenance)
@@ -185,19 +242,14 @@ def copy_default_inputs(destination: Path) -> MaterializerInputs:
     scenario_dir.mkdir()
     copied: dict[str, Path] = {}
     for field in ("candidate", "catalog", "overlay", "review_policy", "adjudications",
-                  "source_claims", "key_registry", "han", "tiles"):
+                  "source_claims", "source_witness", "key_registry", "han", "tiles"):
         source_path = getattr(source, field)
         copied[field] = Path(shutil.copy2(source_path, destination / source_path.name))
-    for path in source.scenario_dir.glob("scenario_*.json"):
+    candidate = _load(source.candidate)
+    for resource in rows(candidate, "scenarioCatalog"):
+        path = source.scenario_dir / Path(text(resource, "resourcePath")).name
         shutil.copy2(path, scenario_dir / path.name)
     return MaterializerInputs(**copied, scenario_dir=scenario_dir)
-
-
-def repin_policy_input(inputs: MaterializerInputs, key: str, path: Path) -> None:
-    policy = _load(inputs.review_policy)
-    entry = obj(obj(policy, "inputs"), key)
-    entry["sha256"] = _digest(path)
-    inputs.review_policy.write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -205,7 +257,8 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Materialize the approved W0-C RouteNode selection and migration")
     for option, field in (("candidate", "candidate"), ("catalog", "catalog"), ("overlay", "overlay"),
                           ("review-policy", "review_policy"), ("adjudications", "adjudications"),
-                          ("source-claims", "source_claims"), ("key-registry", "key_registry"),
+                          ("source-claims", "source_claims"), ("source-witness", "source_witness"),
+                          ("key-registry", "key_registry"),
                           ("han", "han"), ("tiles", "tiles"), ("scenario-dir", "scenario_dir")):
         parser.add_argument(f"--{option}", type=Path, default=getattr(defaults, field))
     parser.add_argument("--selection-output", type=Path, default=CURATED / "route-node-selection-v1.json")
@@ -233,7 +286,7 @@ def main() -> int:
         arguments.selection_output.write_text(selection_blob, encoding="utf-8")
         arguments.migration_output.write_text(migration_blob, encoding="utf-8")
         summary = obj(result.migration, "summary")
-        print(f"approved=780 scenarios=31 replacements={summary['routeNodeReplacementCount']} "
+        print(f"approved=780 scenarios=15 replacements={summary['routeNodeReplacementCount']} "
               f"bindingCorrections={summary['historicalBindingCorrectionCount']}")
         return 0
     except (OSError, json.JSONDecodeError, MaterializationContractError) as error:

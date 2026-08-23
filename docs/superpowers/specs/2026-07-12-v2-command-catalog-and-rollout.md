@@ -77,6 +77,21 @@ authority/precheck 실패는 `EXECUTING`에 들어가기 전 `REJECTED`가 된�
 - 전략 명령: `operationId` 또는 `projectId`를 만들거나 갱신하고, 권한·선행 조건·영향 범위를 함께 저장한다.
 - 전술 명령: `battleId`, `formationId`, `sequence`, `issuedAtTick`, `expiresAtTick`, `clientCommandId`를 가진다. 서버 ack와 simulation event를 분리한다.
 
+### 2.1 현재 도시 즉시 명령 catalog
+
+| commandId | legacyCode | layer | sourceRing | subjectType / target | authorityPolicyId / context | payloadVersion | adapter | parityStatus |
+|---|---|---|---|---|---|---:|---|---|
+| `city.garrison.recruit` | `v2GarrisonRecruit` | `STRATEGIC` | `NONE` | `CITY / CITY` | `SUBJECT_OWNER / 1` | 1 | `v2-city-garrison-recruit` | `ADAPTED` |
+| `city.resources.transport` | `v2CityTransport` | `STRATEGIC` | `NONE` | `CITY / CITY_ROUTE` | `SUBJECT_OWNER / 1` | 1 | `v2-city-transport` | `ADAPTED` |
+
+두 명령은 개인턴·사령턴 링을 소비하지 않는 v2 sandbox 즉시 명령이다. actor는 인증된 소유 장수이며,
+payload는 각각 `V2GarrisonRecruitArgs`, `V2CityTransportArgs`, terminal result는 실제 wire의
+`CommandLifecycleResult`다. 서버가 client retry key를 받지 않으므로 retry idempotency는
+`NOT_SUPPORTED`이고, 수송의 `routeRevision`은 현재 결과까지 전달하는 `PASSTHROUGH` 값이지
+동시성 검사를 수행하는 revision lock이 아니다. canonical intake는 1시간 expiry를 강제하며,
+동일 alias로 들어오는 legacy facade도 reserve 시 expiry를 부여한다. 이미 발행된 nullable-expiry wire는
+frozen legacy 호환을 위해 만료 없음으로 실행한다.
+
 ## 3. 개인턴 카탈로그
 
 원천은 `GameConst.availableGeneralCommand`다. 아래 legacy code는 제거하지 않고 `personal.*` canonical id로 adapter를 붙인다.

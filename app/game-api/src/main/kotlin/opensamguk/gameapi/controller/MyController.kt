@@ -146,8 +146,8 @@ class MyController(
                 picture = g.picture,
                 imageServer = g.imageServer,
                 officerLevelText = F4StateText.officerLevelText(g.officerLevel, nationLevel),
-                // 계급/봉록 — PHP b_myGenInfo는 getDed($general['dedication'])/getBill($general['dedication'])로
-                // dedication에서 직접 산출한다(STORED dedlevel 컬럼을 거치지 않음). byte-parity 위해 동일하게 직접 산출.
+                // 계급/봉록 — 현재 응답 계약은 dedication에서 직접 산출한다(STORED dedlevel 컬럼을
+                // 거치지 않음). 역사 PHP b_myGenInfo와의 동일성은 ADR-LITE-042 동결 회귀 증거일 뿐이다.
                 dedLevelText = getDedLevelText(getDedLevel(g.dedication.toDouble())),
                 honorText = F4StateText.honorText(g.experience),
                 bill = getBill(g.dedication.toDouble()),

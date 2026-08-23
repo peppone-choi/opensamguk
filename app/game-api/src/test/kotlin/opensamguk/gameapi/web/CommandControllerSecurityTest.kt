@@ -125,6 +125,67 @@ class CommandControllerSecurityTest {
     }
 
     @Test
+    fun `unknown v2 id fails closed before the legacy registry`() {
+        mockMvc().perform(
+            post("/api/command/{code}", "personal.travel.teleport").param("generalId", "10"),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.status").value("UNKNOWN"))
+            .andExpect(jsonPath("$.code").value("UNKNOWN_COMMAND"))
+
+        verifyNoInteractions(precheck, reserve)
+    }
+
+    @Test
+    fun `legacy v2 alias rejects anonymous mutation`() {
+        mockMvc().perform(
+            post("/api/command/{code}", "v2GarrisonRecruit")
+                .param("generalId", "10")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"cityId":1,"amount":100}"""),
+        ).andExpect(status().isUnauthorized)
+
+        verifyNoInteractions(precheck, reserve)
+    }
+
+    @Test
+    fun `legacy v2 alias rejects malformed arguments before reserve`() {
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+
+        mockMvc().perform(
+            post("/api/command/{code}", "v2CityTransport")
+                .param("generalId", "10")
+                .with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"fromCityId":1,"toCityId":2,"gold":"oops","rice":1}"""),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.code").value("INVALID_ARGUMENTS"))
+
+        verifyNoInteractions(precheck, reserve)
+    }
+
+    @Test
+    fun `generic legacy transport alias accepts omitted route revision for authenticated owner`() {
+        val args = """{"fromCityId":1,"toCityId":9,"gold":100}"""
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        `when`(reserve.reserveForOwner(10, "v2CityTransport", 0, args, 7))
+            .thenReturn(ReserveResult("req-v2-transport", 0))
+
+        mockMvc().perform(
+            post("/api/command/{code}", "v2CityTransport")
+                .param("generalId", "10")
+                .with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(args),
+        )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.requestId").value("req-v2-transport"))
+
+        verify(reserve).reserveForOwner(10, "v2CityTransport", 0, args, 7)
+    }
+
+    @Test
     fun `selected recruit args reach precheck while forecast reservation stays queued`() {
         val argJson = """{"crewType":1104,"amount":100}"""
         val args = linkedMapOf<String, Any?>("crewType" to 1104, "amount" to 100)

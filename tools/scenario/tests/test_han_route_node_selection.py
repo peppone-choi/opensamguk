@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
+import pickle
 import sys
 import tempfile
 import unittest
@@ -29,6 +31,34 @@ SPEC.loader.exec_module(MODULE)
 
 
 class HanRouteNodeCandidateTest(unittest.TestCase):
+    def test_candidate_contract_error_supports_standard_exception_copy_protocols(self) -> None:
+        error = MODULE.CandidateContractError("fixture contract failure")
+
+        copies = (copy.copy(error), copy.deepcopy(error), pickle.loads(pickle.dumps(error)))
+
+        self.assertEqual(("fixture contract failure",), error.args)
+        self.assertEqual(["fixture contract failure"] * 3, [str(value) for value in copies])
+
+    def test_catalog_fields_are_validated_with_the_administrative_unit_id(self) -> None:
+        for field, value in (
+            ("sourceName", ""),
+            ("sourceNameStatus", "UNKNOWN"),
+            ("unitType", "CITY"),
+        ):
+            with self.subTest(field=field):
+                source_unit = unit("測試郡", 1)
+                source_unit[field] = value
+                inputs = fixture(
+                    [source_unit],
+                    [overlay_row(source_unit, "RESOLVED_POINT", ["chgis:v6:cnty:100"])],
+                    [tile("100", "縣一")],
+                    ["測試郡"],
+                )
+                with self.assertRaisesRegex(
+                    MODULE.CandidateContractError, f"{field}.*{admin_id(source_unit)}"
+                ):
+                    MODULE.build_candidates(*inputs)
+
     def test_resolved_identity_uses_exact_canonical_group_and_stays_pending(self) -> None:
         source_unit = unit("測試郡", 1)
         inputs = fixture(

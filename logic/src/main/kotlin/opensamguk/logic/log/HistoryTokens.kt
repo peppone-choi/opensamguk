@@ -6,7 +6,7 @@ import opensamguk.logic.util.numberFormat
 /**
  * P3 / AREA F7 / Task FG2 — JosaUtil-backed history-string catalog scaffold.
  *
- * Byte-exact templates transcribed from PHP grand truth. These are the strings the gate (G1)
+ * Byte-exact templates transcribed from PHP frozen historical baseline (ADR-LITE-042; not current product authority). These are the strings the gate (G1)
  * byte-matches across the monthly tick (consolidated OQ #12); A1/A3/A5/B5 consume them. Each
  * template reproduces the literal color/tag markup (`<W>/<R>/<G>/<C>/<Y>/<D>/<S>/<b>/【…】`),
  * the JosaUtil josa selection, and `number_format` comma grouping (`numberFormat`) exactly.

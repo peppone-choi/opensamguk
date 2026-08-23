@@ -13,7 +13,7 @@ data class BettingItemResponse(
 )
 
 /**
- * D5 — 베팅 상세 응답. PHP grand truth: `API/Betting/GetBettingDetail.php:86-94`.
+ * D5 — 베팅 상세 응답. PHP frozen historical baseline (ADR-LITE-042; not current product authority): `API/Betting/GetBettingDetail.php:86-94`.
  *
  * PHP 봉투는 **정확히 7키**: `{result, bettingInfo, bettingDetail, myBetting, remainPoint, year, month}`.
  *  - [result]        = 항상 true(마스터 부재 시 PHP는 본문 대신 '해당 베팅이 없습니다' 문자열 반환).
@@ -53,7 +53,7 @@ data class BettingDetailItem(
 )
 
 /**
- * D4 — 베팅 전체 목록 응답. PHP grand truth: `GetBettingList.php:67-71/86-90`.
+ * D4 — 베팅 전체 목록 응답. PHP frozen historical baseline (ADR-LITE-042; not current product authority): `GetBettingList.php:67-71/86-90`.
  *
  * 봉투(정확히 4키): `{result:true, bettingList(Map<id,item>), year, month}`.
  */

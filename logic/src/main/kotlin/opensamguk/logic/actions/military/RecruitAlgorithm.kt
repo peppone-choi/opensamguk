@@ -98,7 +98,7 @@ object RecruitUnitAvailability {
  *   - 징병: costOffset 1, default train/atmos Low (40/40)
  *   - 모병: costOffset 2, default train/atmos High (70/70)
  *
- * Crew/cost specifics (PHP grand truth):
+ * Crew/cost specifics (PHP frozen historical baseline (ADR-LITE-042; not current product authority)):
  *   - maxCrew = getLeadership(true)*100 (getStatValue useFloor=true → truncated; PHP does NOT round
  *     through onCalcStat — unlike TS). When the requested crewType == the current crewType, maxCrew -= crew.
  *   - reqCrew(arg) = valueFit(amount, 100); appliedCrew = valueFit(amount, 100, maxCrew). Cost + run()

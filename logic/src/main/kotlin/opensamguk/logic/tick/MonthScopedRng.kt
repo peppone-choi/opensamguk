@@ -12,7 +12,7 @@ import opensamguk.common.rng.serializeSeed
  * `LiteHashDrbg` seeded by `serializeSeed` (PHP `Util::simpleSerialize`); F5 introduces NO new RNG primitive,
  * only the seed-token literals + arities the monthly tick needs.
  *
- * Port target (PHP grand truth):
+ * Port target (PHP frozen historical baseline (ADR-LITE-042; not current product authority)):
  *   - `TurnExecutionHelper.php:461-466` — `$monthlyRng = new RandUtil(new LiteHashDRBG(Util::simpleSerialize(
  *         UniqueConst::$hiddenSeed, 'monthly', $gameStor->year, $gameStor->month)))`. Created ONCE per month
  *     (pre-`turnDate`) and passed ONLY to `postUpdateMonthly` — the Month event batch never receives it.

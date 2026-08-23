@@ -14,6 +14,8 @@ import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.v2.command.V2CommandArgs
+import opensamguk.logic.v2.command.V2CommandSchema
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -107,6 +109,53 @@ class CommandReserveService(
         ownerUserId: Int,
     ): ReserveResult = reserveInternal(generalId, actionCode, turnIdx, argJson, ownerUserId)
 
+    fun reserveV2(
+        generalId: Int,
+        schema: V2CommandSchema,
+        args: V2CommandArgs,
+        ownerUserId: Int,
+    ): ReserveResult {
+        val requestId = requestIds()
+        val acceptedAt = Instant.now(clock)
+        val command = CommandWireMapper.toV2Command(
+            schema = schema,
+            args = args,
+            generalId = generalId,
+            requestId = requestId,
+            expiresAt = acceptedAt.plus(schema.expiry).toString(),
+        )
+        val envelope = TurnDaemonCommandEnvelope(
+            requestId = requestId,
+            sentAt = acceptedAt.toString(),
+            command = command,
+        )
+        val payload = encodeCommandPayload(envelope)
+        transactions.executeWithoutResult {
+            commandInbox.insertAccepted(
+                AcceptedCommand(
+                    worldId = worldId,
+                    requestId = requestId,
+                    commandKind = CommandKind.IMMEDIATE,
+                    intentFingerprint = intentFingerprint(
+                        CommandKind.IMMEDIATE,
+                        generalId,
+                        0,
+                        schema.canonicalId,
+                        args.toString(),
+                        ownerUserId,
+                    ),
+                    generalId = generalId,
+                    turnIdx = 0,
+                    actionCode = schema.canonicalId,
+                    payloadJson = payload,
+                    ownerUserId = ownerUserId,
+                ),
+            ).throwIfConflict()
+        }
+        publishAfterCommit(envelope)
+        return ReserveResult(requestId = requestId, turnIdx = 0)
+    }
+
     private fun reserveInternal(
         generalId: Int,
         actionCode: String,
@@ -115,13 +164,22 @@ class CommandReserveService(
         ownerUserId: Int?,
     ): ReserveResult {
         val requestId = requestIds()
+        val acceptedAt = Instant.now(clock)
+        val v2Schema = opensamguk.logic.v2.command.V2CommandRegistry.resolve(actionCode)
 
         // Model B — immediate daemon-command intake: publish the typed command, NO ring reservation.
-        val intake = CommandWireMapper.toCommand(actionCode, generalId, requestId, argJson, ownerUserId)
+        val intake = CommandWireMapper.toCommand(
+            actionCode,
+            generalId,
+            requestId,
+            argJson,
+            ownerUserId,
+            expiresAt = v2Schema?.let { acceptedAt.plus(it.expiry).toString() },
+        )
         if (intake != null) {
             val envelope = TurnDaemonCommandEnvelope(
                 requestId = requestId,
-                sentAt = Instant.now(clock).toString(),
+                sentAt = acceptedAt.toString(),
                 command = intake,
             )
             val payload = encodeCommandPayload(envelope)
@@ -149,7 +207,7 @@ class CommandReserveService(
         // Model A — turn-reserved che_* command.
         val envelope = TurnDaemonCommandEnvelope(
             requestId = requestId,
-            sentAt = Instant.now(clock).toString(),
+            sentAt = acceptedAt.toString(),
             command = TurnDaemonCommand.Run(reason = RunReason.POKE),
         )
         val payload = encodeCommandPayload(envelope)

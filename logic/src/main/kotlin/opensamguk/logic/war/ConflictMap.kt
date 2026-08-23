@@ -8,7 +8,7 @@ package opensamguk.logic.war
  * The city's `conflict` jsonb is an INSERTION-ordered `nation → weighted-dead` map (`LinkedHashMap`,
  * NEVER re-keyed by nation id). The siege winner = the first key after an arsort (stable DESC by value).
  *
- * ## Parity-critical details (PHP grand truth, NO RNG draws — pure arithmetic + a stable re-sort)
+ * ## Parity-critical details (PHP frozen historical baseline (ADR-LITE-042; not current product authority), NO RNG draws — pure arithmetic + a stable re-sort)
  *  - `dead = max(1, this.dead)` int floor (`:159`);
  *  - 선타(first-hit, `!$conflict`) / 막타(killing blow, `hp==0`) BONUS: `if(!$conflict || hp==0) dead *= 1.05`
  *    (`:161-163`) — a SINGLE ×1.05 even when BOTH guards hold (OR, never ×1.1025); stored as the raw

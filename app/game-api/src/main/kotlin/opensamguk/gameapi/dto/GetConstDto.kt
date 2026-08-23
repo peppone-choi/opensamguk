@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * W3 — `GetConst` 정적 상수 번들 응답 (`GET /api/const`).
  *
- * PHP grand truth: `legacy/devsam-core/hwe/sammo/API/Global/GetConst.php::genConstData()`.
+ * PHP frozen historical baseline (ADR-LITE-042; not current product authority): `legacy/devsam-core/hwe/sammo/API/Global/GetConst.php::genConstData()`.
  * Opensamguk overlays the active server map's city catalog so `cityConst` follows scenario maps.
  *
  * 본 번들에 담는 것(no-DB 정적 부분, W3 스펙):
@@ -33,9 +33,8 @@ data class GetConstResponse(
     val mapHeight: Int,
     val maxTurn: Int,
     /**
-     * 직책 라벨 기본열(officerLevel → 한글명) — 정본 `F4StateText`(PHP func_converter.php:522-565
-     * `getOfficerLevelText`) 직렬화. 와이어 모양 = `hwe/ts/utilGame/formatOfficerLevelText.ts`
-     * `OfficerLevelMapDefault`(nlevel=8 기본열 + 공통 0..4).
+     * 직책 라벨 기본열(officerLevel → 한글명)은 현재 서버 계약 `F4StateText` 직렬화다.
+     * 역사 PHP/hwe 형상은 동결 회귀 참고일 뿐 현재 제품 정본이 아니다(ADR-LITE-042).
      */
     val officerLevelText: Map<Int, String>,
     /**

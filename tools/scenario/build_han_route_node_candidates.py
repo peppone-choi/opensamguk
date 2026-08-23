@@ -33,7 +33,7 @@ from han_route_node_candidates import (
 
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "data/curated/han/administrative-units.json"
-OVERLAY = ROOT / "data/map/administrative-place-overlay.json"
+OVERLAY = ROOT / "data/curated/han/administrative-place-bindings-v1.json"
 TILES = ROOT / "data/map/han-tiles.json"
 HAN = ROOT / "infra/src/main/resources/map/han.json"
 SCENARIOS = ROOT / "infra/src/main/resources/scenario"
@@ -173,9 +173,11 @@ def build_scenario_catalog(scenario_dir: Path) -> list[JsonObject]:
         if not code.isdecimal() or code in codes:
             raise CandidateContractError(f"duplicate or malformed scenario code: {code}")
         document = load_document(path)
-        start_year, map_config = document.get("startYear"), required_dict(document, "map")
-        if not isinstance(start_year, int) or map_config.get("mapName") != "han":
-            raise CandidateContractError(f"scenario is not a dated Han resource: {path.name}")
+        start_year, map_config = document.get("startYear"), document.get("map")
+        if not isinstance(map_config, dict) or map_config.get("mapName") != "han":
+            continue
+        if not isinstance(start_year, int):
+            raise CandidateContractError(f"Han scenario is not dated: {path.name}")
         codes.add(code)
         rows.append({
             "code": code, "startYear": start_year, "resourcePath": _source_label(path),
@@ -224,8 +226,8 @@ def main() -> int:
         summary = required_dict(document, "summary")
         if summary.get("legacyNodeCount") != 780 or summary.get("replacementPoolCount") != 1180:
             raise CandidateContractError("real candidate build must contain 780 current and 1,180 replacement rows")
-        if len(required_list(document, "scenarioCatalog")) != 31:
-            raise CandidateContractError("real candidate build must contain exactly 31 Han scenarios")
+        if len(required_list(document, "scenarioCatalog")) != 15:
+            raise CandidateContractError("real candidate build must contain exactly 15 active Han scenarios")
         blob = serialized(document)
         if args.check:
             if args.output is None:

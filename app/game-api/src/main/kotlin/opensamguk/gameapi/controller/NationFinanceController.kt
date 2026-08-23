@@ -48,9 +48,9 @@ import org.springframework.web.bind.annotation.RestController
  *  - policy.blockWar/blockScout: `meta["war"]/["scout"] Int != 0` — W0-2(P0-53) read 키 정합
  *    (종전 metaBool("block_war")는 아무도 쓰지 않는 키였다).
  *  - warSettingCnt.inc/max: GameConst 실상수. remain: nation_env KV `available_war_setting_cnt`(W1-O 배선).
- *  - income/outcome: PHP rate=100 LIVE 산정(getGoldIncome/getWarGoldIncome/getRiceIncome/getWallIncome/
- *    getOutcome) — logic/domestic/IncomeTick.kt 패러티 함수를 read-side에서 도시/장수 실데이터로 재호출.
- *    비-RNG 결정식이라 골든 추가 없이 구성적 byte-parity(월틱 골든으로 이미 검증된 함수 재사용).
+ *  - income/outcome: 현재 read 계약은 rate=100 LIVE 산정(getGoldIncome/getWarGoldIncome/getRiceIncome/
+ *    getWallIncome/getOutcome)을 logic/domestic/IncomeTick.kt에서 재사용한다. 역사 PHP 식은
+ *    ADR-LITE-042 동결 회귀 증거이며 새 golden/PHP capture의 선행 조건이 아니다.
  *  - nationsList: getAllNationStaticInfo(전 국가) + cityCnt(city GROUP BY) + diplomacy{state,term}
  *    (자국 7/null, 타국 diplomacy WHERE me=id, 행 부재 시 통상=2 폴백).
  *  - nationMsg/scoutMsg: nation_env KV(nationNotice.msg / scout_msg). 부재 시 null.
@@ -110,10 +110,8 @@ class NationFinanceController(
         val editable = resolved != null && resolved.nationId == id && resolved.officerLevel >= 5
 
         // ── 수입/지출 LIVE 산정(PHP v_nationStratFinan.php:76-115) ──────────────────────────────────
-        // PHP는 매 read마다 rate=100 기준으로 getGoldIncome/getWarGoldIncome/getRiceIncome/getWallIncome/
-        // getOutcome을 LIVE 계산한다(저장값이 아니라 현재 도시/장수 상태의 what-if 미리보기). 동일 산정식은
-        // 이미 logic/domestic/IncomeTick.kt에 패러티 포팅돼 있으므로(월틱 골든으로 검증됨), read-side에서
-        // 동일 함수를 재사용하면 byte-parity가 구성적으로 보장된다 — 골든 추가 불필요(비-RNG 결정식).
+        // 현재 계약은 rate=100 what-if LIVE 산정을 IncomeTick.kt의 검증된 결정식으로 재사용한다.
+        // 역사 PHP 동작과 월틱 golden은 동결 회귀 증거이고, 신규 제품 변경의 오라클/선행 조건이 아니다.
         val cityList = cities.findByNationIdOrderByIdAsc(id).map { it.toLogic() }
         val nationType = NationTypeRegistry.resolve(nation.typeCode)
         // 소득 fold는 nation-type 소스만 사용(nationIncomeFold) — 빈 파이프라인이 정확(엔진과 동일 결과).

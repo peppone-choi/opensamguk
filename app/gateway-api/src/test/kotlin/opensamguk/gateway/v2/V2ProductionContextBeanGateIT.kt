@@ -23,8 +23,8 @@ import org.springframework.test.context.DynamicPropertySource
  * a v2 marker bean, so it does not duplicate an unused third conditional configuration. Therefore it must remain
  * **zero even when the gate is fully open (④)**. This test catches v2 code that leaks into gateway-api later.
  *
- * The context starts the same way as [opensamguk.gateway.GatewayApiApplicationTests]: H2 and Flyway disabled in
- * `src/test/resources/application.yml`; Docker and Testcontainers are unnecessary.
+ * The context starts the same way as [opensamguk.gateway.GatewayApiApplicationTests]: the `test` profile overlays
+ * H2 and disables Flyway through `src/test/resources/application-test.yml`; Docker and Testcontainers are unnecessary.
  */
 internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
     beansByTypePrefix("opensamguk.").filterValues { it.contains(".v2.") }
@@ -69,23 +69,25 @@ abstract class V2BeanGateContract {
 }
 
 /** ① Production shape — `V2_ENABLED` unset and profile inactive. */
+@ActiveProfiles("test")
 @SpringBootTest
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2ProductionShapeBeanGateIT : V2BeanGateContract()
 
 /** ② `v2.enabled=true` only. */
+@ActiveProfiles("test")
 @SpringBootTest(properties = ["${V2SandboxGate.PROPERTY}=true"])
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2PropertyOnlyBeanGateIT : V2BeanGateContract()
 
 /** ③ Profile `v2-sandbox` only. */
-@ActiveProfiles(V2SandboxGate.PROFILE)
+@ActiveProfiles("test", V2SandboxGate.PROFILE)
 @SpringBootTest
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2ProfileOnlyBeanGateIT : V2BeanGateContract()
 
 /** ④ Both conditions are true — still zero because gateway-api has no `V2SandboxConfiguration`. */
-@ActiveProfiles(V2SandboxGate.PROFILE)
+@ActiveProfiles("test", V2SandboxGate.PROFILE)
 @SpringBootTest(properties = ["${V2SandboxGate.PROPERTY}=true"])
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2BothConditionsBeanGateIT : V2BeanGateContract()

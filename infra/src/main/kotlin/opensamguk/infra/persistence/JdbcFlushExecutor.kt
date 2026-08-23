@@ -1393,7 +1393,7 @@ open class JdbcFlushExecutor(
     /**
      * `ng_betting` UPSERT (P6 베팅 — W0-8에서 INSERT 전용 → upsert로 확장, P0-07 flush 측).
      *
-     * PHP 정본 Betting::bet(Betting.php:160-164)은
+     * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) Betting::bet(Betting.php:160-164)은
      * `insertUpdate('ng_betting', row, ['amount' => sqleval('amount + %i', $amount)])` —
      * UNIQUE(general_id, betting_id, betting_type)(V7, PHP by_general 인덱스 동일) 충돌 시
      * amount만 누적하고 user_id 등 나머지 컬럼은 기존 행을 유지한다. 동일 키 재베팅이 행을
@@ -1857,7 +1857,7 @@ open class JdbcFlushExecutor(
     }
 
     /**
-     * `yearbook_history` INSERT (W0-8 연감 채널, P0-20). PHP 정본 LogHistory(func_history.php:436-448)는
+     * `yearbook_history` INSERT (W0-8 연감 채널, P0-20). 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) LogHistory(func_history.php:436-448)는
      * `ng_history`에 server_id/year/month + map/global_history/global_action/nations를 평INSERT한다.
      * V28부터 server_id를 정본 컬럼으로 싣고, profile_name/hash는 기존 loader/test 호환용으로만 보존한다.
      * map은 객체(기본 '{}'), global_history/global_action/nations는 배열(기본 '[]') jsonb.

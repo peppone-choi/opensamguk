@@ -25,7 +25,8 @@ import kotlin.math.max
  *     `StaticEventHandler::handleEvent($general, $destGeneral, $this::class, $env, $arg)` 호출
  *     (che_불가침제의.php:222 등). `setResultTurn` 뒤 · `applyDB` 앞 순서. scenario 1010에서 핸들러
  *     맵이 비어 있어 no-op이지만(게이트 동일), **호출 지점**은 외교 7종 공통 메커니즘이므로 여기서
- *     정본화한다. eventType = PHP `$this::class`(명령 FQCN)에 대응 — Kotlin에서는 명령 key를 넘긴다.
+ *     단일화한다. 역사 PHP `$this::class` 비교는 동결 회귀 참고일 뿐 현재 제품 정본이 아니다
+ *     (ADR-LITE-042); Kotlin에서는 eventType으로 명령 key를 넘긴다.
  *
  * 주의(왜 effect를 여기서 새로 만들지 않는가): message:send effect kind는 이미 존재하고 flush까지
  * 배선·테스트(MessageFlushIT)되어 있다. 외교 명령은 그저 [GeneralActionResolveContext.sendMessage]에

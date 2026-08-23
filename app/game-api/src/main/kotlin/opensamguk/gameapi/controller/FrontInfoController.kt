@@ -354,7 +354,7 @@ class FrontInfoController(
             personal = g.personalCode,
             penalty = g.penalty,
 
-            // F-fix: 코드 → 한글 이름 해석(PHP grand-truth getName 충실 포팅; None/0/미등록 → '-').
+            // F-fix: 코드 → 한글 이름 해석(동결된 역사 PHP getName 비교; ADR-LITE-042; 현재 정본 아님; None/0/미등록 → '-').
             // SpecialityHelper.domesticName/warName은 미등록 시 id를 그대로 반환하므로 "None"을 '-'로 보정.
             specialDomesticName = specialName(SpecialityHelper.domesticName(g.specialCode), g.specialCode),
             specialWarName = specialName(SpecialityHelper.warName(g.special2Code), g.special2Code),

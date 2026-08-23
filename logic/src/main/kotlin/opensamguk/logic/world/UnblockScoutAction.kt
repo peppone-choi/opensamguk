@@ -7,7 +7,7 @@ import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventActionFactory
 
 /**
- * A3 이벤트 리프 — "UnblockScoutAction"의 충실 포트 (PHP grand truth:
+ * A3 이벤트 리프 — "UnblockScoutAction"의 충실 포트 (PHP frozen historical baseline (ADR-LITE-042; not current product authority):
  * `Event/Action/UnblockScoutAction.php:7-24`). 정찰(스카웃/임관) 차단을 **해제**하는 월드 이벤트로,
  * `BlockScoutAction`(scout=1 set)의 짝이다.
  *

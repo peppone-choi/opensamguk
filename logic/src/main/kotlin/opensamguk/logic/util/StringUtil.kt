@@ -3,7 +3,8 @@ package opensamguk.logic.util
 /**
  * Faithful port of the parts of PHP `sammo\StringUtil` the intake commands rely on.
  *
- * GRAND TRUTH: `legacy/devsam-core/src/sammo/StringUtil.php`. PHP wins every divergence.
+ * ADR-LITE-042 scope: `legacy/devsam-core/src/sammo/StringUtil.php` is the frozen historical
+ * compatibility baseline for the behavior documented below, not current product authority.
  *
  * Only the arities the ported commands actually call are implemented (faithful-port rule 5: port
  * what is used, never fabricate the rest). The troop commands (NewTroop / SetTroopName) call

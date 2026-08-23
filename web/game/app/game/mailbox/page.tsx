@@ -257,7 +257,7 @@ export default function MailboxPage() {
     // 계약 주의: deleteMessage는 인테이크 명령(CommandWireMapper.intakeCodes)이라 game-api
     // CommandController가 precheck Blocked/Unknown이어도 isForecastReservable→202 reserveAccepted로
     // 재라우팅한다(이 엔드포인트에서 200 BLOCKED는 나오지 않는다). 엔진 MessageHandler.handleDelete의
-    // 실제 deny(본인 아님/5분 초과/시스템 외교 등 PHP byte-parity 문자열)는 GET /api/command/result/{requestId}
+    // 실제 deny(본인 아님/5분 초과/시스템 외교 등 PHP 동결 회귀 문자열)는 GET /api/command/result/{requestId}
     // (RESOLVED + 톱레벨 ok/reason) 채널로만 온다. 따라서 202 수신 후 select-pool과 동일하게
     // api.commandResult를 폴링해 성공/거부/미해결을 구분한다(성공 위장 금지).
     async function handleDelete(msg: MailboxMessage) {
@@ -269,7 +269,7 @@ export default function MailboxPage() {
             return;
         }
         if (msg.id == null) return;
-        // confirm 취소 시 네트워크 요청 없이 즉시 반환 — 문구는 레거시와 byte-parity.
+        // confirm 취소 시 네트워크 요청 없이 즉시 반환 — 문구는 레거시와 동결 회귀.
         if (!window.confirm('삭제하시겠습니까?')) return;
         // pendingId는 폴링 완료까지 유지(이중 제출·재조회 경합 차단).
         setPendingId(msg.id);
@@ -298,7 +298,7 @@ export default function MailboxPage() {
                         setToast('서신을 삭제했습니다.');
                         fetchMessages();
                     } else {
-                        // 엔진 deny 사유(PHP byte-parity) 그대로 노출 — 목록은 유지(삭제되지 않음).
+                        // 엔진 deny 사유(PHP 동결 회귀) 그대로 노출 — 목록은 유지(삭제되지 않음).
                         setToast(result.reason ?? '서신을 삭제할 수 없습니다.');
                     }
                     break;

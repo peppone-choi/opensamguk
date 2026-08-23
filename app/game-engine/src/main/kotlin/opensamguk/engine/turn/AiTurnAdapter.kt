@@ -970,7 +970,7 @@ class AiTurnAdapter(
 
     /**
      * Build the [RatesPromoFamily.RatesPromoContext] over the live nation buckets (categorize already run).
-     * The promotion candidate pools are the PK-ascending categorize buckets (a parity target, never re-sorted).
+     * The promotion candidate pools are the PK-ascending categorize buckets (a retained deterministic order, never re-sorted).
      * The rate-hook income inputs are left at their derived defaults (the bill hooks only run for an
      * officer_level==12 ruler in months 6/12 and make ZERO draws; the income half-away helpers are wired in a
      * follow-up — the develRate ladder over the live supplyCities already drives chooseTexRate's draw-free path).

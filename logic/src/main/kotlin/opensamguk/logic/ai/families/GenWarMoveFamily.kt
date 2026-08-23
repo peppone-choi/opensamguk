@@ -16,7 +16,7 @@ import kotlin.math.sqrt
  * L-GENWAR — the general war/movement `do<한글>` command family:
  * 전투준비 / 소집해제 / 출병 / 헌납 / 워프트리오(후방·전방·내정) / 귀환 / 집합 / 방랑군이동.
  *
- * GRAND TRUTH = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
+ * frozen historical baseline (ADR-LITE-042; not current product authority) = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
  *  - `do전투준비`   (`:2653-2682`, emits che_훈련/che_사기진작): one terminal `choiceUsingWeightPair($cmdList)`
  *    (`:2681`, only when `$cmdList` non-empty; `:2678` `if (!$cmdList) return null;` empty-guard, NO draw).
  *  - `do소집해제`   (`:2684-2703`, emits che_소집해제): `nextBool(0.75)` (`:2695`) **ALWAYS drawn** — there is NO
@@ -489,7 +489,8 @@ object GenWarMoveFamily {
         val policy = ctx.nationPolicy
         val isTongsol = has(ctx, AiInstanceState.T_TONGSOLJANG)
 
-        // PHP `:2789-2792` — resourceMap rice THEN gold (the iteration ORDER is the parity target):
+        // Frozen historical PHP `:2789-2792` evidence (ADR-LITE-042; not current product authority):
+        // resourceMap rice THEN gold is retained deterministic iteration order.
         //   ['rice', reqNationRice, reqNPCWarRice, reqNPCDevelRice], ['gold', reqNationGold, reqNPCWarGold, reqNPCDevelGold].
         data class Res(
             val isGold: Boolean,

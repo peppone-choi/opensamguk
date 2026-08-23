@@ -35,6 +35,7 @@ data class CityGarrisonRecruit(
     val generalId: Int,
     val cityId: Int,
     val amount: Int,
+    val expiresAt: String? = null,
 ) : TurnDaemonCommand() {
     override val type: String get() = "v2GarrisonRecruit"
 }

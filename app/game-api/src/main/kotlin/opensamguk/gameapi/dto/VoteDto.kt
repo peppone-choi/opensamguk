@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 // D9-D10 — Vote read DTOs. Disjunct from F4Dto.kt. Shapes mirror PHP VoteInfo / GetVoteList /
-// GetVoteDetail verbatim (devsam-core grand truth).
+// GetVoteDetail verbatim (devsam-core frozen historical baseline (ADR-LITE-042; not current product authority)).
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** PHP `VoteInfo` DTO — 7 fields, no body, no closed. */

@@ -5,7 +5,7 @@ import java.security.MessageDigest
 /**
  * 영구차단용 이메일 해시 산출기 — legacy의 전역 salt + SHA512 패러티.
  *
- * grand truth: legacy BanEmailAddress.php:46 + RootDB.php:74(getGlobalSalt)
+ * frozen historical baseline (ADR-LITE-042; not current product authority): legacy BanEmailAddress.php:46 + RootDB.php:74(getGlobalSalt)
  *   `hash('sha512', globalSalt . email . globalSalt)` → 소문자 hex 128자.
  *
  * 전역 salt는 생성자로 주입한다(legacy의 `RootDB::$globalSalt` 대응 — 운영 시 비밀값).
@@ -20,7 +20,7 @@ class EmailHasher(
 ) {
     /**
      * legacy `hash('sha512', salt . email . salt)` — 소문자 hex 128자.
-     * 입력 이메일은 PHP와 동일하게 정규화 없이 그대로 연결한다(byte-parity).
+     * 입력 이메일은 PHP와 동일하게 정규화 없이 그대로 연결한다(동결 회귀).
      */
     fun hash(email: String): String {
         val digest = MessageDigest.getInstance("SHA-512")

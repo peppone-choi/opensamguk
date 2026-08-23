@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SIZE_OK: One source grammar owns heading recovery, identity extraction, and count auditing.
+# noqa: SIZE_OK — these stateful parsing invariants must be reviewed as one contract.
 from __future__ import annotations
 
 import hashlib
@@ -308,13 +310,26 @@ def _traditional_group_citations(ctext_dir: Path) -> dict[str, TraditionalTextCi
             canonical_offset : canonical_offset + expected_count_for_volume
         ]
         if witnessed != expected:
+            divergence = next(
+                (
+                    f"{index}: {actual} != {wanted}"
+                    for index, (actual, wanted) in enumerate(zip(witnessed, expected), start=1)
+                    if actual != wanted
+                ),
+                "length only",
+            )
             raise CatalogContractError(
                 f"ctext canonical group sequence mismatch in volume {volume}: "
-                f"{len(witnessed)}/{expected_count_for_volume}"
+                f"{len(witnessed)}/{expected_count_for_volume} ({divergence})"
             )
         if volume == 113:
-            shang_index = segments.index("上郡")
-            xihe_index = segments.index("西河郡", shang_index + 1)
+            try:
+                shang_index = segments.index("上郡")
+                xihe_index = segments.index("西河郡", shang_index + 1)
+            except ValueError as error:
+                raise CatalogContractError(
+                    "ctext volume 113 is missing the 上郡/西河郡 segment boundary"
+                ) from error
             if "龜茲屬國" not in segments[shang_index + 1 : xihe_index]:
                 raise CatalogContractError("ctext 上郡 block is missing 龜茲屬國")
         url = f"https://ctext.org/hou-han-shu/jun-guo-{slug}/zh"

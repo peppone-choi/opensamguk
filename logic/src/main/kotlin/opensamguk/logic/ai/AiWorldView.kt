@@ -10,7 +10,7 @@ import opensamguk.logic.world.CityConstVariant
 
 /**
  * F-FACADE — `AiWorldView`, a faithful port of the per-AI-instance read-only categorize/derive facade
- * of `legacy/devsam-core/hwe/sammo/GeneralAI.php` (GRAND TRUTH, read in full).
+ * of `legacy/devsam-core/hwe/sammo/GeneralAI.php` (frozen historical baseline (ADR-LITE-042; not current product authority), read in full).
  *
  * Task FC1 ports `categorizeNationCities` (`:3469-3513`) and `calcWarRoute` (`:283-292`). Task FC2 adds
  * `categorizeNationGeneral` (the 9 buckets, by-ref into the city buckets). This class is PURE `:logic`

@@ -32,6 +32,12 @@ Verdict: cleared
 
 ## 최종 증거
 
+The raw-source commands below are a source-refresh audit and require the
+gitignored corpus fetched by `tools/corpus/fetch_sources.py`; they are not claimed
+as clean-checkout CI. Clean checkout independently validates the committed
+1,180-row catalog and reviewed W0 selection through the curated binding and
+witness ledgers.
+
 - `python3 -m unittest tools/map/tests/test_junguozhi_contract.py`: 9/9 통과.
 - `python3 tools/map/audit_junguozhi_source.py --check data/curated/han/administrative-units.json`:
   105/105 군국, 1,180/1,180 현급 단위, identity unique 1,180.

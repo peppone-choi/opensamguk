@@ -3,7 +3,7 @@ package opensamguk.common.constants
 /**
  * Faithful port of `legacy/devsam-core/hwe/sammo/GameUnitConstraint/` getInfo() bodies.
  *
- * PHP is the SOLE oracle for these human-facing strings — TS devsam-core2026 emits boolean
+ * Historical PHP strings are frozen regression evidence here (ADR-LITE-042), not current product authority; TS devsam-core2026 emits boolean
  * constraint logic only (no strings). The PHP method name `getInfo()` is preserved (NOT `info()`).
  * `cityNameText`/`regionNameText` = PHP `implode(', ', ...)` = comma-space join;
  * `cityLevelText` = `getCityLevelList()[reqCityLevel]` label.

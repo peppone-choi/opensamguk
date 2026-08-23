@@ -6,7 +6,7 @@ data class ContractViolation(val code: String, val message: String)
 /**
  * OPENSAM-37 — T1-A05(시기분리) / T1-A06(복수 claim) / T1-A15(overlay) / T1-A16(엄격 고증) validator.
  *
- * 순수 함수 집합이다. DB·Spring·RNG를 쓰지 않으며 v1 패러티 경로를 전혀 건드리지 않는다.
+ * 순수 함수 집합이다. DB·Spring·RNG를 쓰지 않으며 v1 동결 회귀 경로를 전혀 건드리지 않는다.
  */
 object EvidenceContractValidator {
 
@@ -229,7 +229,7 @@ object EvidenceContractValidator {
             if (overlay == null) {
                 add(ContractViolation("V-A15-2", "snapshot이 없는 overlay ${id}을 활성화한다"))
             } else if (overlay.profile != profile) {
-                // overlay는 자기 프로필에서만 활성화된다. 손으로 만든 snapshot이 LEGACY overlay(v1 패러티 콘텐츠)를
+                // overlay는 자기 프로필에서만 활성화된다. 손으로 만든 snapshot이 LEGACY overlay(v1 동결 회귀 콘텐츠)를
                 // CLASSIC 월드에 끼워 넣는 경로를 막는다 — resolveSnapshot은 만들지 않지만 snapshot은 외부 입력이다.
                 add(
                     ContractViolation(

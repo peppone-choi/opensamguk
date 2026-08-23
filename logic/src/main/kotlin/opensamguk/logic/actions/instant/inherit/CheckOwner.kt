@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 /**
  * 유산 액션 `CheckOwner` — 유산 포인트 1000을 써서 상대 장수의 본래 유저(소유자)명을 확인한다.
  *
- * PHP 정본: `legacy/devsam-core/hwe/sammo/API/InheritAction/CheckOwner.php` (`launch()` verbatim).
+ * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님): `legacy/devsam-core/hwe/sammo/API/InheritAction/CheckOwner.php` (`launch()` verbatim).
  *
  * inherit-action(즉시 액션)이라 [opensamguk.logic.actions.CommandRegistry] 예약 커맨드가 아니라
  * Model B(typed daemon-command intake)로 흐른다 — 자세한 dispatch 계약은 [InheritActionRegistry].

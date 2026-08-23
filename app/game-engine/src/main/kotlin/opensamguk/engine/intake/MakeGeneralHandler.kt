@@ -264,7 +264,7 @@ class MakeGeneralHandler(
             recorder.recordRankIncrease(generalId, RankColumn.INHERIT_SPENT_DYN, inheritRequiredPoint)
         }
 
-        // --- logs (Join.php:502–528) — 로그 문자열은 PHP grand truth와 byte-match 대상. ---------
+        // --- logs (Join.php:502–528) — 로그 문자열은 PHP frozen historical baseline (ADR-LITE-042; not current product authority)와 byte-match 대상. ---------
         val cityName = world.getCityById(drawResult.cityId)?.name ?: ""
         val josaRa = JosaUtil.pick(command.name, "라")
         val specialWarName = SpecialityHelper.warName(drawResult.special2)

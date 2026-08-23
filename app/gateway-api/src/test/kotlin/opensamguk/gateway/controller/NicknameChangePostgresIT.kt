@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
@@ -32,6 +33,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @Testcontainers(disabledWithoutDocker = true)
+@ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(ProfileIconSecureStorageTestConfiguration::class)

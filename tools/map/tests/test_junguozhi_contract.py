@@ -2,17 +2,20 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[3]
 MAP_TOOLS = ROOT / "tools" / "map"
 sys.path.insert(0, str(MAP_TOOLS))
 
+import junguozhi_contract as CONTRACT  # noqa: E402
 from junguozhi_contract import CatalogContractError, build_catalog, render_catalog  # noqa: E402
 
 
@@ -33,8 +36,26 @@ EXPECTED_GROUPS = (
     "涿郡 廣陽郡 代郡 上谷郡 漁陽郡 右北平郡 遼西郡 遼東郡 玄菟郡 樂浪郡 遼東屬國 "
     "南海郡 蒼梧郡 鬱林郡 合浦郡 交趾郡 九真郡 日南郡"
 ).split()
+SOURCE_REFRESH_INPUTS = (
+    *(ROOT / "data/corpus" / f"hhs-{volume:03d}.txt" for volume in (*range(109, 114), 65)),
+    *(ROOT / "data/chgis-source/junguozhi" / f"{slug}.html" for slug in ("yi", "er", "san", "si", "wu")),
+)
 
 
+def copy_source_fixture(directory: str) -> Path:
+    data_root = Path(directory) / "data"
+    corpus = data_root / "corpus"
+    corpus.mkdir(parents=True)
+    for volume in (*range(109, 114), 65):
+        shutil.copy2(ROOT / "data" / "corpus" / f"hhs-{volume:03d}.txt", corpus)
+    shutil.copytree(ROOT / "data" / "chgis-source", data_root / "chgis-source")
+    return corpus
+
+
+@unittest.skipUnless(
+    all(path.is_file() for path in SOURCE_REFRESH_INPUTS),
+    "source-refresh-only: fetch gitignored HHS corpus with tools/corpus/fetch_sources.py",
+)
 class JunguozhiContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -79,6 +100,7 @@ class JunguozhiContractTest(unittest.TestCase):
 
         shang = next(group for group in self.catalog["groups"] if group["canonicalGroup"] == "上郡")
         guizi = shang["units"][8]
+        self.assertEqual(113, guizi["sourceVolume"])
         self.assertEqual(9, guizi["ordinal"])
         self.assertEqual("龟兹属国", guizi["sourceName"])
         self.assertEqual("龜茲", guizi["nameCorrection"]["correctedName"])
@@ -133,26 +155,30 @@ class JunguozhiContractTest(unittest.TestCase):
 
     def test_unknown_source_heading_cannot_be_hidden_by_positional_canonicalization(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            corpus = Path(directory)
-            for volume in range(109, 114):
-                shutil.copy2(ROOT / "data" / "corpus" / f"hhs-{volume:03d}.txt", corpus)
+            corpus = copy_source_fixture(directory)
             first_volume = corpus / "hhs-109.txt"
             text = first_volume.read_text(encoding="utf-8")
             first_volume.write_text(text.replace("===河南尹===", "===偽河南尹===", 1), encoding="utf-8")
 
-            with self.assertRaises(CatalogContractError):
+            mutated_hash = hashlib.sha256(first_volume.read_bytes()).hexdigest()
+            with mock.patch.dict(CONTRACT.CORPUS_SHA256, {109: mutated_hash}), self.assertRaisesRegex(
+                CatalogContractError, "source group sequence mismatch"
+            ):
                 build_catalog(corpus)
 
     def test_source_unit_mutation_cannot_preserve_a_false_green_count(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            corpus = Path(directory)
-            for volume in range(109, 114):
-                shutil.copy2(ROOT / "data" / "corpus" / f"hhs-{volume:03d}.txt", corpus)
+            corpus = copy_source_fixture(directory)
             first_volume = corpus / "hhs-109.txt"
-            text = first_volume.read_text(encoding="utf-8")
-            first_volume.write_text(text.replace("〖雒阳", "〖假县", 1), encoding="utf-8")
+            lines = first_volume.read_text(encoding="utf-8").splitlines()
+            row_index = next(index for index, line in enumerate(lines) if "〖雒阳" in line)
+            lines[row_index] = "not a source unit row"
+            first_volume.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-            with self.assertRaises(CatalogContractError):
+            mutated_hash = hashlib.sha256(first_volume.read_bytes()).hexdigest()
+            with mock.patch.dict(CONTRACT.CORPUS_SHA256, {109: mutated_hash}), self.assertRaisesRegex(
+                CatalogContractError, "unit count mismatch"
+            ):
                 build_catalog(corpus)
 
     def test_rendering_is_byte_deterministic_and_newline_terminated(self) -> None:

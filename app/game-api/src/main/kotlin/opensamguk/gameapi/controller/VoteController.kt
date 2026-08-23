@@ -98,7 +98,7 @@ class VoteController(
 
         // comments — mirrors PHP VoteComment DTO (id/voteID/generalID/nationID/nationName/generalName/text/date).
         // PHP GetVoteDetail.php:52 = `ORDER BY id ASC` (id-only). 기존 repo 메서드는 created_at 우선이라
-        // 컨트롤러에서 id ASC로 재정렬해 byte-parity 행 순서를 맞춘다(repo 파일은 이 번들 소유 밖).
+        // 컨트롤러에서 id ASC로 재정렬해 동결 회귀 행 순서를 맞춘다(repo 파일은 이 번들 소유 밖).
         val commentRows = comments.findByVoteIdOrderByCreatedAtAscIdAsc(id)
             .sortedBy { it.id }
             .map { c ->

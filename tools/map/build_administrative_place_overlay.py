@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SIZE_OK: One deterministic overlay compiler shares a closed source/join/output schema.
+# noqa: SIZE_OK — splitting its joined-row invariants would duplicate the identity contract.
 import argparse
 import hashlib
 import json
@@ -151,6 +153,12 @@ def read_dbf(path: Path, source_year: int = SOURCE_YEAR) -> tuple[list[dict], li
 
 def validate_catalog(catalog: dict) -> None:
     groups = catalog.get("groups", [])
+    if not isinstance(groups, list) or not all(isinstance(group, dict) for group in groups):
+        raise ValueError("catalog groups must be an object array")
+    for group in groups:
+        group_units = group.get("units", [])
+        if not isinstance(group_units, list) or not all(isinstance(unit, dict) for unit in group_units):
+            raise ValueError("catalog group units must be an object array")
     units = [unit for group in groups for unit in group.get("units", [])]
     expected_groups = catalog.get("expectedGroupCount")
     expected_units = catalog.get("expectedUnitCount")
@@ -181,6 +189,8 @@ def validate_catalog(catalog: dict) -> None:
                 raise ValueError("catalog unit ordinals must be contiguous in source order")
             if (unit.get("sourceVolume"), unit.get("canonicalGroup")) != group_identity:
                 raise ValueError("catalog unit identity does not match its group")
+            if unit.get("unitType") not in {"COUNTY", "MARQUISATE", "TOWN", "DAO"}:
+                raise ValueError("catalog unit has unsupported unitType")
             if unit.get("sourceNameStatus") not in {"SOURCE_LITERAL", "SOURCE_PLACEHOLDER"}:
                 raise ValueError("catalog unit has unsupported sourceNameStatus")
             if not isinstance(unit.get("sourceName"), str) or not unit["sourceName"].strip():
@@ -264,9 +274,10 @@ def build_name_index(records: list[dict], source_year: int) -> dict[str, list[tu
     index = defaultdict(list)
     for record in active_records(records, source_year):
         for field_name in ("NAME_CH", "NAME_FT"):
-            normalized = normalize_name(str(record[field_name]))
-            if normalized:
-                index[normalized].append((record, field_name))
+            raw = unicodedata.normalize("NFC", str(record[field_name]).strip())
+            for key in dict.fromkeys((raw, normalize_name(raw))):
+                if key:
+                    index[key].append((record, field_name))
     return index
 
 
@@ -381,7 +392,7 @@ def build_overlay(catalog: dict, records: list[dict], source_year: int = SOURCE_
             "unitNames": ["sourceName", "independently cited nameCorrection.correctedName"],
             "chgisFields": ["NAME_CH", "NAME_FT"],
             "temporalPredicate": "BEG_YR <= sourceYear <= END_YR",
-            "namePredicate": "NFC exact match after one administrative suffix is removed",
+            "namePredicate": "NFC exact match on the original or one-suffix-removed CHGIS name",
             "ambiguityPolicy": (
                 "a unit has multiple candidate records or one physical place is used by multiple "
                 "administrative units; no coordinate is selected"

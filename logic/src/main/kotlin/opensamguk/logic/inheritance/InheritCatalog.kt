@@ -5,14 +5,14 @@ import opensamguk.common.constants.GameConst
 /**
  * 유산 관리 화면(v_inheritPoint.php:41-63)의 특기/유니크 카탈로그 — 순수 로직(스프링/DB 無).
  *
- * PHP grand truth:
+ * PHP frozen historical baseline (ADR-LITE-042; not current product authority):
  *  - availableSpecialWar: v_inheritPoint.php:41-48 — GameConst::$availableSpecialWar 순회 →
  *    buildGeneralSpecialWarClass(key) → { title: getName(), info: getInfo() }.
  *  - availableUnique: v_inheritPoint.php:50-63 — GameConst::$allItems 중첩 순회, amount != 0 필터 →
  *    buildItemClass(itemKey) → { title: getName(), rawName: getRawName(), info: getInfo() }.
  *
  * 모든 문자열은 실제 PHP 실행 캡처(php:8.3-cli Docker, probe 2회 실행 byte-identical 확인)에서 추출 —
- * 각 항목 주석의 hwe/sammo/... file:line 이 출처. 날조 없음. 삽입 순서 = PHP 순회 순서(패러티 대상).
+ * 각 항목 주석의 hwe/sammo/... file:line 이 출처. 날조 없음. 삽입 순서 = PHP 순회 순서(동결 회귀 대상).
  *
  * 명마/무기/서적 패밀리의 name/info 는 PHP 가 BaseStatItem 생성자(BaseStatItem.php:24-31)에서
  * 클래스명 토큰으로 동적 생성(sprintf)하므로 동일 계산을 [statEntry]가 재현하고, 일부 유니크 클래스가

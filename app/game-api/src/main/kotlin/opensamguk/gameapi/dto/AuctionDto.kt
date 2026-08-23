@@ -3,9 +3,9 @@ package opensamguk.gameapi.dto
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 경매 read API 응답 DTO (D1-D3, PHP grand truth에 1:1 정렬).
+ * 경매 read API 응답 DTO (D1-D3, PHP frozen historical baseline (ADR-LITE-042; not current product authority)에 1:1 정렬).
  *
- * PHP grand truth:
+ * PHP frozen historical baseline (ADR-LITE-042; not current product authority):
  *  - D1 `API/Auction/GetActiveResourceAuctionList.php` — 자원 경매(buyRice/sellRice)
  *  - D2 `API/Auction/GetUniqueItemAuctionList.php`     — 유니크 아이템 목록
  *  - D3 `API/Auction/GetUniqueItemAuctionDetail.php`   — 유니크 아이템 상세

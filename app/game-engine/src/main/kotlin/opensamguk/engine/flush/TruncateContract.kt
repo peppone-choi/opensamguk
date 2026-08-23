@@ -1,7 +1,7 @@
 package opensamguk.engine.flush
 
 /**
- * Frozen per-season reset allow/deny contract, transcribed from the PHP grand truth
+ * Frozen per-season reset allow/deny contract, transcribed from the PHP frozen historical baseline (ADR-LITE-042; not current product authority)
  * `legacy/devsam-core/hwe/sammo/ResetHelper.php` (`clearDB()`) + `hwe/sql/reset.sql`,
  * mapped onto the V1 baseline (`infra/src/main/resources/db/migration/V1__baseline.sql`)
  * table names.

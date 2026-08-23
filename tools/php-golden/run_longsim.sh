@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# run_longsim.sh — Phase 2 long-simulation golden capture runner (devsam-core PHP, grand truth).
+# run_longsim.sh — opt-in frozen historical long-simulation capture runner (ADR-LITE-042; not product authority).
 #
 # ONE-SHOT, MANUAL HOST STEP — NEVER CI.
 #

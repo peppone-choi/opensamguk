@@ -1,6 +1,6 @@
 'use client';
 
-// AuctionResource — legacy hwe/ts/components/AuctionResource.vue 충실 포팅(FE grand truth, PHP가 이김).
+// AuctionResource — frozen historical UI reference: legacy hwe/ts/components/AuctionResource.vue (ADR-LITE-042; not current product authority).
 // 거래장(금/쌀 자원 경매): 쌀 구매 / 쌀 판매 2섹션 8컬럼 테이블 + 인라인 입찰(min=시작가/max=마감가/
 // step=10) + 경매 등록 폼(매물타입·수량·기간턴·시작가·마감가) + 이전 경매(최근 20건) 로그.
 //

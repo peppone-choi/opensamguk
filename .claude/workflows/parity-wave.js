@@ -185,7 +185,7 @@ const reviewResults = []
 for (let i = 0; i < greenCodes.length; i += REVIEW_CHUNK) {
   const batch = greenCodes.slice(i, i + REVIEW_CHUNK)
   const review = await agent(
-    `Adversarial parity review of commands: ${batch.join(', ')}. Check RNG draw order/count/args, PhpRound (half-away), log byte-parity (Josa + markup + execution order), flush-delta-not-inline, intakeCodes presence, one-daemon-write-rule, insertion-order (LinkedHashMap). Use code-review-graph detect_changes/get_impact_radius before Grep. Return ONLY structured findings — no prose.`,
+    `Adversarial opt-in historical regression review of commands: ${batch.join(', ')}. Check selected frozen RNG evidence, PhpRound (half-away), historical log comparison, flush-delta-not-inline, intakeCodes presence, one-daemon-write-rule, insertion-order (LinkedHashMap). Use code-review-graph detect_changes/get_impact_radius before Grep. Return ONLY structured findings — no prose.`,
     { label: `review-batch${i}`, phase: 'Integrate', schema: REVIEW_SCHEMA, agentType: 'parity-reviewer' }
   )
   reviewResults.push(review)

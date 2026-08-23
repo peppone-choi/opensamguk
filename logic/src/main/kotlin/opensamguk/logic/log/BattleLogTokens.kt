@@ -5,7 +5,7 @@ import opensamguk.common.josa.JosaUtil
 /**
  * F7 / Task FU4 — JosaUtil-backed battle/phase/conquest log catalog (consolidated OQ #14).
  *
- * Byte-exact templates transcribed from PHP grand truth `legacy/devsam-core/hwe/process_war.php`
+ * Byte-exact templates transcribed from PHP frozen historical baseline (ADR-LITE-042; not current product authority) `legacy/devsam-core/hwe/process_war.php`
  * (진격 :252-253, 병량 패퇴 :274/:277, 퇴각 :411, 패퇴/전멸 :450-456, per-phase detail :386/:390,
  * 분쟁 :495, 지배 :578, 긴급천도 :718/:720, 분쟁협상 :771) and `WarUnitGeneral.php:322` (부상).
  * F2 (power/finishBattle logs) + A4 (conflict log) + B1/B2 (battle/conquest logs) consume these; G1

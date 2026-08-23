@@ -61,7 +61,7 @@ External skills are advisory. If an external skill conflicts with the latest app
 
 `parity-close` is a local process skill for an explicitly requested frozen-regression comparison. It is never a prerequisite for new product work. In fresh providers that only restored `skills-lock.json`, execute the same sequence manually:
 
-1. PHP oracle inventory and real golden capture when needed.
+1. Opt-in historical PHP evidence inventory and real golden capture when explicitly selected.
 2. Kotlin logic port plus golden/replay test.
 3. `tools/parity/gate.sh logic` or a narrower targeted Gradle gate.
 4. backend intake/wire/flush integration and tests.

@@ -57,6 +57,7 @@ class PrecheckStateViewFactory(
         generalId: Int,
         args: Map<String, Any?> = emptyMap(),
         loadAllCities: Boolean = false,
+        requireActiveMap: Boolean = true,
     ): PrecheckState? {
         val actor: General = generals.findById(generalId).orElse(null)?.toLogic() ?: return null
 
@@ -70,6 +71,9 @@ class PrecheckStateViewFactory(
             cities.findAll().map { it.toLogic() }.associateTo(cityById) { it.id to it }
         }
         cities.findById(actor.cityId).orElse(null)?.toLogic()?.let { cityById[it.id] = it }
+        (args["sourceCityID"] as? Number)?.toInt()?.let { sourceId ->
+            cities.findById(sourceId).orElse(null)?.toLogic()?.let { cityById[it.id] = it }
+        }
         (args["destCityID"] as? Number)?.toInt()?.let { destId ->
             cities.findById(destId).orElse(null)?.toLogic()?.let { cityById[it.id] = it }
         }
@@ -84,7 +88,7 @@ class PrecheckStateViewFactory(
         val diplomacy: List<Diplomacy> =
             diplomacies.findBySrcNationId(actor.nationId).map { it.toLogic() }
 
-        val env = LinkedHashMap(envMap()).apply {
+        val env = LinkedHashMap(envMap(requireActiveMap)).apply {
             this["ownCities"] = ownCities.associateTo(LinkedHashMap()) { it.id to it.level }
         }
         // CD1 — preload the actor nation's directional diplomacy rows into the view so the dest-*
@@ -101,7 +105,7 @@ class PrecheckStateViewFactory(
     }
 
     /** Build the `ConstraintContext.env` map from the singleton `world_state` via the shared builder. */
-    private fun envMap(): Map<String, Any?> {
+    private fun envMap(requireActiveMap: Boolean): Map<String, Any?> {
         val ws = worldStates.findAll().firstOrNull()
             ?: error("world_state singleton row is missing")
         val year = ws.currentYear
@@ -117,7 +121,12 @@ class PrecheckStateViewFactory(
             phase = ws.currentPhase,
         )).apply {
             this["unitSet"] = UnitSetTable.activeUnitSet(ws.config, ws.meta)
-            this["mapName"] = ActiveWorldMap.requireName(ws.config, ws.meta)
+            val mapName = if (requireActiveMap) {
+                ActiveWorldMap.requireName(ws.config, ws.meta)
+            } else {
+                runCatching { ActiveWorldMap.requireName(ws.config, ws.meta) }.getOrNull()
+            }
+            mapName?.let { this["mapName"] = it }
         }
     }
 

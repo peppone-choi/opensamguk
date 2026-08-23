@@ -18,7 +18,7 @@ import opensamguk.common.josa.JosaUtil
  * PHP `launch()`는 RNG를 전혀 소비하지 않는다. RandUtil을 받지 않으며 [DropItemGoldenTest]가 0-draw를
  * 명시 검증한다.
  *
- * ## PHP launch() 정본 (DropItem.php:37-71) — 실행/로그 순서 byte-exact
+ * ## 역사 PHP launch() 동결 회귀 증거 (DropItem.php:37-71; ADR-LITE-042; 현재 제품 정본 아님)
  *  1. `$item = $me->getItem($itemType)`. `$item->getRawClassName() === 'None'`이면(슬롯 비어있음)
  *     → `'아이템을 가지고 있지 않습니다.'` deny([DropItemOutcome.Denied]). 그 외 effect 없음.
  *  2. `$me->setItem($itemType, 'None')` — 해당 슬롯을 'None'으로 clear.

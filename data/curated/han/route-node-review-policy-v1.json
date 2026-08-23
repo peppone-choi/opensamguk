@@ -1,129 +1,326 @@
 {
-  "schemaVersion": 1,
-  "policyId": "han-w0c-route-node-review-policy-v1",
-  "status": "APPROVED",
-  "reviewAuthority": "user-blanket-approval-2026-08-22",
-  "reviewedBy": "codex-w0c-root",
-  "reviewedAt": "2026-08-22",
+  "expectedSelection": {
+    "externalHistoricalBindingCount": 0,
+    "externalLocationClaimCount": 8,
+    "hhsAdministrativeBindingCount": 780,
+    "overlayUniqueCount": 722,
+    "polityPresenceCount": 0,
+    "remoteGateCount": 0,
+    "reviewedAmbiguousCount": 50,
+    "routeNodeCount": 780,
+    "sourcePlaceholderCount": 0
+  },
+  "reviewDecisionAnchors": {
+    "historicalConflictDecisionSet": {
+      "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
+      "assignmentSha256": "ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
+      "reviewState": "APPROVED",
+      "rowCount": 21
+    },
+    "replacementDecisionSet": {
+      "anchor": "replacementDecisionSet:639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8",
+      "assignmentSha256": "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8",
+      "reviewState": "APPROVED",
+      "rowCount": 101
+    }
+  },
+  "forbiddenSelections": {
+    "canonicalNames": [
+      "流求",
+      "夷洲",
+      "古寧伽耶",
+      "大伽耶",
+      "星山伽耶",
+      "山越",
+      "白馬氐",
+      "西羌",
+      "南匈奴",
+      "烏桓",
+      "鮮卑",
+      "龜茲屬國"
+    ],
+    "nodeClasses": [
+      "POLITY_PRESENCE",
+      "REMOTE_GATE",
+      "ALIAS_ONLY"
+    ],
+    "physicalPlaceIds": [
+      "external:v1:X004",
+      "external:v1:X028",
+      "external:v1:X029",
+      "external:v1:X030",
+      "external:v1:X031",
+      "external:v1:X032",
+      "external:v1:X033",
+      "external:v1:X034",
+      "external:v1:X035",
+      "external:v1:X036",
+      "external:v1:X037",
+      "external:v1:X038",
+      "external:v1:X040",
+      "external:v1:X041",
+      "external:v1:X042",
+      "external:v1:X043",
+      "external:v1:X044",
+      "external:v1:X045",
+      "external:v1:X046",
+      "external:v1:X047",
+      "external:v1:X048",
+      "external:v1:X049",
+      "external:v1:X055",
+      "external:v1:X056",
+      "external:v1:X057",
+      "external:v1:X058",
+      "external:v1:X059",
+      "external:v1:X060",
+      "external:v1:X061",
+      "external:v1:X062",
+      "external:v1:X063",
+      "external:v1:X064"
+    ]
+  },
   "inputs": {
+    "administrativeCatalogSha256": "668165bce575a618be5f30738221fe657b30710d0c92f7e984a018711313b19f",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "c16fc6ca606c3343a3effe1068fb6cd17986443df2d9a5af22496074e8ab0b81"
+      "sha256": "1ce715b3e757b6bbb2a59115946bd0c71bbe063e0b5b68b8d2ac930d1c0a0f01"
     },
-    "administrativeCatalogSha256": "668165bce575a618be5f30738221fe657b30710d0c92f7e984a018711313b19f",
-    "coordinateOverlaySha256": "bfefb8af7058aa11606cb20575653dcf4dec45b5535cab4a5e2e97fbb1e3ef30",
+    "coordinateOverlaySha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1",
     "locationAdjudications": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "a181aa916ad0269247e2cb18d76ed1b4011b047b370e0485acf35c8ea6f6a881"
+      "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a"
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
-      "sha256": "5e093077911a8c3d0a55d53853802d80ba72b616f0ee0dd656ee6c8f83bf5186"
+      "sha256": "bdc84f732351962632b5e14306b60821d2436526f35ebc6c9fc6c46ca829266e"
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
       "sha256": "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
     }
   },
+  "legacyAttributionCorrections": [
+    {
+      "administrativeUnitId": "hhs:113:五原郡:005",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:82880",
+      "oldCityId": 56
+    },
+    {
+      "administrativeUnitId": "hhs:113:漢中郡:003",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:200069",
+      "oldCityId": 75
+    },
+    {
+      "administrativeUnitId": "hhs:110:汝南郡:027",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:82553",
+      "oldCityId": 77
+    },
+    {
+      "administrativeUnitId": "hhs:112:九江郡:014",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:43186",
+      "oldCityId": 109
+    },
+    {
+      "administrativeUnitId": "hhs:110:汝南郡:013",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:83166",
+      "oldCityId": 145
+    },
+    {
+      "administrativeUnitId": "hhs:110:鉅鹿郡:008",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:87159",
+      "oldCityId": 188
+    },
+    {
+      "administrativeUnitId": "hhs:113:安定郡:002",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:45198",
+      "oldCityId": 247
+    },
+    {
+      "administrativeUnitId": "hhs:111:琅邪國:004",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:85634",
+      "oldCityId": 335
+    },
+    {
+      "administrativeUnitId": "hhs:112:南陽郡:005",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:45713",
+      "oldCityId": 470
+    },
+    {
+      "administrativeUnitId": "hhs:112:江夏郡:010",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:43542",
+      "oldCityId": 471
+    },
+    {
+      "administrativeUnitId": "hhs:112:南郡:008",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:45651",
+      "oldCityId": 472
+    },
+    {
+      "administrativeUnitId": "hhs:112:九江郡:012",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:43187",
+      "oldCityId": 525
+    },
+    {
+      "administrativeUnitId": "hhs:112:豫章郡:010",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:41165",
+      "oldCityId": 568
+    },
+    {
+      "administrativeUnitId": "hhs:113:巴郡:002",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:200197",
+      "oldCityId": 570
+    },
+    {
+      "administrativeUnitId": "hhs:113:廣漢郡:006",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:96107",
+      "oldCityId": 587
+    },
+    {
+      "administrativeUnitId": "hhs:113:犍為郡:006",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:96023",
+      "oldCityId": 590
+    },
+    {
+      "administrativeUnitId": "hhs:113:合浦郡:003",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "chgis:v6:cnty:42300",
+      "oldCityId": 753
+    }
+  ],
+  "legacyLocationCorrections": [
+    {
+      "administrativeUnitId": "hhs:113:北地郡:001",
+      "disposition": "CORRECTED_LOCATION_SAME_NODE",
+      "oldCityId": 627,
+      "oldPhysicalPlaceId": "chgis:v6:cnty:70523",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:70524"
+    }
+  ],
+  "legacySameNodeCorrections": [
+    {
+      "administrativeUnitId": "hhs:113:上郡:009",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "external:v1:X026",
+      "locationClaimId": "han-location-claim-v1-x026",
+      "oldCityId": 704
+    },
+    {
+      "administrativeUnitId": "hhs:113:樂浪郡:001",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "external:v1:X003",
+      "locationClaimId": "han-location-claim-v1-x003",
+      "oldCityId": 720
+    },
+    {
+      "administrativeUnitId": "hhs:113:玄菟郡:001",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "external:v1:X006",
+      "locationClaimId": "han-location-claim-v1-x006",
+      "oldCityId": 728
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東屬國:001",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "external:v1:X007",
+      "locationClaimId": "han-location-claim-v1-x007",
+      "oldCityId": 729
+    },
+    {
+      "administrativeUnitId": "hhs:113:遼東郡:001",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "external:v1:X005",
+      "locationClaimId": "han-location-claim-v1-x005",
+      "oldCityId": 730
+    },
+    {
+      "administrativeUnitId": "hhs:113:九真郡:001",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "external:v1:X001",
+      "locationClaimId": "han-location-claim-v1-x001",
+      "oldCityId": 735
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:001",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "external:v1:X000",
+      "locationClaimId": "han-location-claim-v1-x000",
+      "oldCityId": 736
+    },
+    {
+      "administrativeUnitId": "hhs:113:日南郡:001",
+      "disposition": "CORRECTED_BINDING_SAME_NODE",
+      "legacyPhysicalPlaceId": "external:v1:X002",
+      "locationClaimId": "han-location-claim-v1-x002",
+      "oldCityId": 745
+    }
+  ],
+  "migrationPolicy": {
+    "compatibilityMode": "NEW_WORLD_ONLY",
+    "immutableHistoryRewriteAllowed": false,
+    "inPlaceRewriteAllowed": false,
+    "liveSavePresence": "UNKNOWN",
+    "unknownPayloadRewriteAllowed": false
+  },
+  "numericAssignmentPolicy": {
+    "numericCityIdChangeAllowed": false,
+    "replacementNodeOrder": "W0-A sourceVolume, canonicalGroup source order, ordinal",
+    "replacementNodesUseRetiredSlotsInAscendingOrder": true,
+    "retainedAndCorrectedNodesKeepOldCityId": true,
+    "routeNodeKeySource": "opaque UUID literals from route-node-key-registry-v1; never derived from numeric id, HHS identity, physical place, or claim"
+  },
+  "policyId": "han-w0c-route-node-review-policy-v1",
+  "reviewAuthority": "user-blanket-approval-2026-08-22",
+  "reviewedAt": "2026-08-22",
+  "reviewedBy": "codex-w0c-root",
+  "scenarioActivationPolicy": {
+    "chgisBindingRule": "W0 pins reviewed place identity only; runtime lifecycle is not derived here",
+    "expectedScenarioCount": 15,
+    "externalLocationClaimRule": "W0 pins reviewed external place identity only; runtime lifecycle is not derived here",
+    "note": "780은 reviewed route-node identity 집합이며 scenario catalog은 15개 active Han resource의 파일 해시만 고정한다.",
+    "routeNodeSelectionIs220Baseline": true,
+    "runtimeEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
+    "scenarioScope": "all tracked scenario resources whose map.mapName is han"
+  },
+  "schemaVersion": 1,
   "selectionBatches": [
     {
       "batchId": "w0b-overlay-unique-220",
-      "reviewState": "APPROVED",
       "criteria": "W0-B joinStatus == RESOLVED_POINT and selected physicalPlaceId is globally unique",
       "expectedCount": 722,
+      "reviewState": "APPROVED",
       "selectionRationale": "W0-A identity와 220년 CHGIS exact-name 전역 일대일 물리점이 모두 있는 행정단위를 전수 승인한다. 이 승인은 도로·중요도·거리 순위를 뜻하지 않는다."
     },
     {
       "batchId": "w0c-reviewed-ambiguity",
-      "reviewState": "APPROVED",
       "criteria": "route-node-location-adjudications-v1 reviewState == APPROVED_FOR_SELECTION",
       "expectedCount": 50,
       "rejectedFalseHomonymCount": 5,
-      "selectionRationale": "55개 exact-name 모호 행을 소속 군국과 record lifecycle로 행별 심사해 50개만 승인한다."
+      "reviewState": "APPROVED",
+      "selectionRationale": "55개 exact-name 모호 행을 소속 군국과 reviewed place identity evidence로 행별 심사해 50개만 승인한다."
     },
     {
       "batchId": "w0c-hhs-external-location",
-      "reviewState": "APPROVED",
-      "criteria": "HHS NO_COORDINATE_CANDIDATE identity with APPROVED finite LOCATION_ONLY point claim",
+      "criteria": "HHS NO_COORDINATE_CANDIDATE identity with APPROVED W0_ROUTE_NODE_PLACE_IDENTITY_ONLY point claim",
       "expectedCount": 8,
+      "reviewState": "APPROVED",
       "selectionRationale": "CHGIS county 경계 밖의 후한 현급 치소 7개와 上郡 龜茲 교정 1개를 외부 물리 claim으로 결합한다. 역사 binding은 모두 HHS identity다."
     }
   ],
-  "expectedSelection": {
-    "routeNodeCount": 780,
-    "hhsAdministrativeBindingCount": 780,
-    "externalHistoricalBindingCount": 0,
-    "overlayUniqueCount": 722,
-    "reviewedAmbiguousCount": 50,
-    "externalLocationClaimCount": 8,
-    "sourcePlaceholderCount": 0,
-    "polityPresenceCount": 0,
-    "remoteGateCount": 0
-  },
-  "legacySameNodeCorrections": [
-    {"oldCityId": 704, "legacyPhysicalPlaceId": "external:v1:X026", "administrativeUnitId": "hhs:113:上郡:009", "locationClaimId": "han-location-claim-v1-x026", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 720, "legacyPhysicalPlaceId": "external:v1:X003", "administrativeUnitId": "hhs:113:樂浪郡:001", "locationClaimId": "han-location-claim-v1-x003", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 728, "legacyPhysicalPlaceId": "external:v1:X006", "administrativeUnitId": "hhs:113:玄菟郡:001", "locationClaimId": "han-location-claim-v1-x006", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 729, "legacyPhysicalPlaceId": "external:v1:X007", "administrativeUnitId": "hhs:113:遼東屬國:001", "locationClaimId": "han-location-claim-v1-x007", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 730, "legacyPhysicalPlaceId": "external:v1:X005", "administrativeUnitId": "hhs:113:遼東郡:001", "locationClaimId": "han-location-claim-v1-x005", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 735, "legacyPhysicalPlaceId": "external:v1:X001", "administrativeUnitId": "hhs:113:九真郡:001", "locationClaimId": "han-location-claim-v1-x001", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 736, "legacyPhysicalPlaceId": "external:v1:X000", "administrativeUnitId": "hhs:113:交趾郡:001", "locationClaimId": "han-location-claim-v1-x000", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 745, "legacyPhysicalPlaceId": "external:v1:X002", "administrativeUnitId": "hhs:113:日南郡:001", "locationClaimId": "han-location-claim-v1-x002", "disposition": "CORRECTED_BINDING_SAME_NODE"}
-  ],
-  "legacyAttributionCorrections": [
-    {"oldCityId": 56, "legacyPhysicalPlaceId": "chgis:v6:cnty:82880", "administrativeUnitId": "hhs:113:五原郡:005", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 75, "legacyPhysicalPlaceId": "chgis:v6:cnty:200069", "administrativeUnitId": "hhs:113:漢中郡:003", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 77, "legacyPhysicalPlaceId": "chgis:v6:cnty:82553", "administrativeUnitId": "hhs:110:汝南郡:027", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 109, "legacyPhysicalPlaceId": "chgis:v6:cnty:43186", "administrativeUnitId": "hhs:112:九江郡:014", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 145, "legacyPhysicalPlaceId": "chgis:v6:cnty:83166", "administrativeUnitId": "hhs:110:汝南郡:013", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 188, "legacyPhysicalPlaceId": "chgis:v6:cnty:87159", "administrativeUnitId": "hhs:110:鉅鹿郡:008", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 247, "legacyPhysicalPlaceId": "chgis:v6:cnty:45198", "administrativeUnitId": "hhs:113:安定郡:002", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 335, "legacyPhysicalPlaceId": "chgis:v6:cnty:85634", "administrativeUnitId": "hhs:111:琅邪國:004", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 470, "legacyPhysicalPlaceId": "chgis:v6:cnty:45713", "administrativeUnitId": "hhs:112:南陽郡:005", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 471, "legacyPhysicalPlaceId": "chgis:v6:cnty:43542", "administrativeUnitId": "hhs:112:江夏郡:010", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 472, "legacyPhysicalPlaceId": "chgis:v6:cnty:45651", "administrativeUnitId": "hhs:112:南郡:008", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 525, "legacyPhysicalPlaceId": "chgis:v6:cnty:43187", "administrativeUnitId": "hhs:112:九江郡:012", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 568, "legacyPhysicalPlaceId": "chgis:v6:cnty:41165", "administrativeUnitId": "hhs:112:豫章郡:010", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 570, "legacyPhysicalPlaceId": "chgis:v6:cnty:200197", "administrativeUnitId": "hhs:113:巴郡:002", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 587, "legacyPhysicalPlaceId": "chgis:v6:cnty:96107", "administrativeUnitId": "hhs:113:廣漢郡:006", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 590, "legacyPhysicalPlaceId": "chgis:v6:cnty:96023", "administrativeUnitId": "hhs:113:犍為郡:006", "disposition": "CORRECTED_BINDING_SAME_NODE"},
-    {"oldCityId": 753, "legacyPhysicalPlaceId": "chgis:v6:cnty:42300", "administrativeUnitId": "hhs:113:合浦郡:003", "disposition": "CORRECTED_BINDING_SAME_NODE"}
-  ],
-  "legacyLocationCorrections": [
-    {
-      "oldCityId": 627,
-      "administrativeUnitId": "hhs:113:北地郡:001",
-      "oldPhysicalPlaceId": "chgis:v6:cnty:70523",
-      "selectedPhysicalPlaceId": "chgis:v6:cnty:70524",
-      "disposition": "CORRECTED_LOCATION_SAME_NODE"
-    }
-  ],
-  "numericAssignmentPolicy": {
-    "retainedAndCorrectedNodesKeepOldCityId": true,
-    "replacementNodesUseRetiredSlotsInAscendingOrder": true,
-    "replacementNodeOrder": "W0-A sourceVolume, canonicalGroup source order, ordinal",
-    "numericCityIdChangeAllowed": false,
-    "routeNodeKeySource": "opaque UUID literals from route-node-key-registry-v1; never derived from numeric id, HHS identity, physical place, or claim"
-  },
-  "scenarioActivationPolicy": {
-    "scenarioScope": "all tracked scenario resources whose map.mapName is han",
-    "expectedScenarioCount": 31,
-    "chgisBindingRule": "ACTIVE only when scenario startYear is within the reviewed CHGIS record begYr..endYr; otherwise INACTIVE",
-    "externalLocationClaimRule": "ACTIVE only when scenario startYear is within the approved finite claim effectiveFromYear..effectiveToYear",
-    "routeNodeSelectionIs220Baseline": true,
-    "runtimeEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
-    "note": "780은 reviewed route-node identity 집합이다. scenario state는 물리 binding의 해당 연도 유효성이고, 모든 시나리오에서 780개가 활성이라는 주장을 하지 않는다."
-  },
-  "migrationPolicy": {
-    "compatibilityMode": "NEW_WORLD_ONLY",
-    "liveSavePresence": "UNKNOWN",
-    "inPlaceRewriteAllowed": false,
-    "immutableHistoryRewriteAllowed": false,
-    "unknownPayloadRewriteAllowed": false
-  },
-  "forbiddenSelections": {
-    "physicalPlaceIds": ["external:v1:X004", "external:v1:X028", "external:v1:X029", "external:v1:X030", "external:v1:X031", "external:v1:X032", "external:v1:X033", "external:v1:X034", "external:v1:X035", "external:v1:X036", "external:v1:X037", "external:v1:X038", "external:v1:X040", "external:v1:X041", "external:v1:X042", "external:v1:X043", "external:v1:X044", "external:v1:X045", "external:v1:X046", "external:v1:X047", "external:v1:X048", "external:v1:X049", "external:v1:X055", "external:v1:X056", "external:v1:X057", "external:v1:X058", "external:v1:X059", "external:v1:X060", "external:v1:X061", "external:v1:X062", "external:v1:X063", "external:v1:X064"],
-    "canonicalNames": ["流求", "夷洲", "古寧伽耶", "大伽耶", "星山伽耶", "山越", "白馬氐", "西羌", "南匈奴", "烏桓", "鮮卑", "龜茲屬國"],
-    "nodeClasses": ["POLITY_PRESENCE", "REMOTE_GATE", "ALIAS_ONLY"]
-  }
+  "status": "APPROVED"
 }

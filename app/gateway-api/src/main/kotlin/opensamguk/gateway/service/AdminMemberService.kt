@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter
 /**
  * 어드민 회원관리 서비스 — 루트DB(gateway 공유) `users`/`system_flag`/`banned_member` 직접 관리.
  *
- * grand truth:
+ * frozen historical baseline (ADR-LITE-042; not current product authority):
  *   - 목록    : legacy `i_entrance/j_get_userlist.php`
  *   - 명령    : legacy `i_entrance/j_set_userlist.php`
  *   - 영구차단: legacy `src/sammo/API/Admin/BanEmailAddress.php`
@@ -205,7 +205,7 @@ class AdminMemberService(
                 target.password = passwordEncoder.encode(newPassword)
                 target.updatedAt = LocalDateTime.now()
                 userRepository.save(target)
-                // legacy `:210` 문구 byte-parity.
+                // legacy `:210` 문구 동결 회귀.
                 UserCommandResult(result = true, detail = "비밀번호가 ${newPassword}로 초기화되었습니다.")
             }
 

@@ -1,7 +1,7 @@
 'use client';
 
 // 국가 베팅장(v_nationBetting / PageNationBetting.vue) — 천통국 베팅 목록 + 상세 셸.
-// FE grand truth = hwe/ts/PageNationBetting.vue. PHP가 이김.
+// Frozen historical UI reference: hwe/ts/PageNationBetting.vue (ADR-LITE-042; not current product authority).
 // type='bettingNation' 필터: legacy GetBettingList req 화이트리스트 'bettingNation' 값.
 // read: game-api `GET /api/bettings?type=bettingNation`(D4) {result, bettingList(Map<id,item>), year, month}.
 //   상세는 BettingDetail 컴포넌트가 `GET /api/bettings/{id}/detail`(D5, 인증) 소비.

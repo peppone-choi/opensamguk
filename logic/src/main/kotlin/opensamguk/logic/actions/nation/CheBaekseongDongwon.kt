@@ -105,6 +105,6 @@ class CheBaekseongDongwon(private val pipeline: GeneralActionPipeline) : NationC
         }
 
         // 5. nation.strategic_cmd_limit = onCalcStrategic(globalDelay, 9) (che_백성동원.php:166-168).
-        //    golden snapshot에 미캡처(strategic_cmd_limit 컬럼 dump 없음) → 패러티 대상 외, 미적용.
+        //    golden snapshot에 미캡처(strategic_cmd_limit 컬럼 dump 없음) → 동결 회귀 대상 외, 미적용.
     }
 }

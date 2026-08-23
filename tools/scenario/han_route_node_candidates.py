@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+# SIZE_OK: One candidate classifier shares a closed catalog/overlay/legacy-node contract.
+# noqa: SIZE_OK — cohesive candidate contract; catalog indexing shares its recursive JSON types.
+
 import hashlib
 import json
 from collections import Counter, defaultdict
-from dataclasses import dataclass
 from typing import TypeAlias
 
 JsonValue: TypeAlias = str | int | float | bool | None | list["JsonValue"] | dict[str, "JsonValue"]
@@ -18,9 +20,10 @@ JOIN_STATUSES = {"RESOLVED_POINT", "AMBIGUOUS_POINT", "NO_COORDINATE_CANDIDATE",
 X026_ADMINISTRATIVE_UNIT_ID = "hhs:113:上郡:009"
 
 
-@dataclass(frozen=True, slots=True)
 class CandidateContractError(ValueError):
-    message: str
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(message)
 
     def __str__(self) -> str:
         return self.message
@@ -70,6 +73,13 @@ def _catalog_index(
             if not isinstance(raw_unit, dict) or raw_unit.get("canonicalGroup") != name:
                 raise CandidateContractError(f"malformed unit in canonical group: {name}")
             unit_id = administrative_unit_id(raw_unit)
+            source_name = raw_unit.get("sourceName")
+            if not isinstance(source_name, str) or not source_name:
+                raise CandidateContractError(f"sourceName is invalid: {unit_id}")
+            if raw_unit.get("sourceNameStatus") not in {"SOURCE_LITERAL", "SOURCE_PLACEHOLDER"}:
+                raise CandidateContractError(f"sourceNameStatus is invalid: {unit_id}")
+            if raw_unit.get("unitType") not in {"COUNTY", "DAO", "MARQUISATE", "TOWN"}:
+                raise CandidateContractError(f"unitType is invalid: {unit_id}")
             if unit_id in units:
                 raise CandidateContractError(f"duplicate administrative unit id: {unit_id}")
             units[unit_id] = name

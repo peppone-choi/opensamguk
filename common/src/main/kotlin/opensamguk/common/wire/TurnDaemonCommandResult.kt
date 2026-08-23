@@ -157,6 +157,10 @@ data class CommandLifecycleResult(
     val generalId: Int? = null,
     val turnIdx: Int? = null,
     val reason: String? = null,
+    val code: String? = null,
+    val canonicalCommandId: String? = null,
+    val replayEvent: String? = null,
+    val routeRevision: Long? = null,
 ) : TurnDaemonCommandResult()
 
 @Serializable

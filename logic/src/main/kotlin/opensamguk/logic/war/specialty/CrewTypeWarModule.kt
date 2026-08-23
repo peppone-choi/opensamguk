@@ -14,7 +14,7 @@ import opensamguk.logic.war.trigger.triggers.CheBangeoryeokJeunga5p
  * **Why this exists (P4 port gap closed by G1b).** Every footman crewType (1100..) carries
  * `phaseSkillTrigger = ['che_방어력증가5p']` — the defender's +5% defence (oppose `multiplyWarPowerMultiply(1/1.05)`
  * at FINAL+200). Until this module, the crewType source contributed NO battle triggers, so a footman defender
- * never reduced the attacker's warpower — desyncing per-phase damage from the PHP grand truth (battle-01:
+ * never reduced the attacker's warpower — desyncing per-phase damage from the PHP frozen historical baseline (ADR-LITE-042; not current product authority) (battle-01:
  * Kotlin over-killed by ~4%/phase). The draw STREAM was unaffected (this trigger draws nothing), so only the
  * post-state numeric gate caught it.
  *

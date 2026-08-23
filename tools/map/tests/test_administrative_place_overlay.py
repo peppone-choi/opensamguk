@@ -1,3 +1,5 @@
+# SIZE_OK: One fixture matrix exercises the indivisible administrative overlay contract.
+# noqa: SIZE_OK — shared identity and ambiguity fixtures keep mutations comparable.
 import copy
 import importlib.util
 import json
@@ -132,6 +134,17 @@ class AdministrativePlaceOverlayTest(unittest.TestCase):
         self.assertEqual(1, row["candidateCount"])
         self.assertEqual("R1", row["selectedCandidate"]["chgisSysId"])
         self.assertEqual([112.5963, 34.73157], row["selectedCandidate"]["coordinate"])
+
+    def test_raw_county_name_remains_indexed_alongside_suffix_stripped_name(self):
+        doc = MODULE.build_overlay(
+            catalog([unit(1, "雒陽縣")]),
+            [record("R1", "雒陽縣")],
+            source_year=220,
+        )
+
+        row = doc["administrativeUnits"][0]
+        self.assertEqual("RESOLVED_POINT", row["joinStatus"])
+        self.assertEqual(["雒陽縣"], row["matchNames"])
 
     def test_two_candidates_remain_ambiguous_without_selected_coordinate(self):
         doc = MODULE.build_overlay(
@@ -269,6 +282,17 @@ class AdministrativePlaceOverlayTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "catalog count contract"):
             MODULE.build_overlay(source, [], source_year=220)
 
+    def test_catalog_rejects_non_object_group_and_unit_rows(self):
+        malformed_group = catalog([unit(1, "甲")])
+        malformed_group["groups"][0] = "not-an-object"
+        with self.assertRaisesRegex(ValueError, "groups must be an object array"):
+            MODULE.build_overlay(malformed_group, [], source_year=220)
+
+        malformed_unit = catalog([unit(1, "甲")])
+        malformed_unit["groups"][0]["units"][0] = "not-an-object"
+        with self.assertRaisesRegex(ValueError, "units must be an object array"):
+            MODULE.build_overlay(malformed_unit, [], source_year=220)
+
     def test_catalog_rejects_non_integer_ordinal_duplicate_group_and_uncited_correction(self):
         string_ordinal = catalog([unit(1, "甲")])
         string_ordinal["groups"][0]["units"][0]["ordinal"] = "1"
@@ -288,6 +312,11 @@ class AdministrativePlaceOverlayTest(unittest.TestCase):
         uncited["groups"][0]["units"][0]["nameCorrection"] = {"correctedName": "乙"}
         with self.assertRaisesRegex(ValueError, "nameCorrection requires"):
             MODULE.build_overlay(uncited, [], source_year=220)
+
+        unsupported_type = catalog([unit(1, "甲")])
+        unsupported_type["groups"][0]["units"][0]["unitType"] = "CITY"
+        with self.assertRaisesRegex(ValueError, "unsupported unitType"):
+            MODULE.build_overlay(unsupported_type, [], source_year=220)
 
     def test_active_dbf_record_with_invalid_coordinate_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:

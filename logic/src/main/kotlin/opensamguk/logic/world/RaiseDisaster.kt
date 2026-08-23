@@ -18,7 +18,7 @@ import opensamguk.logic.util.valueFit
  * returns a fully-deterministic [RaiseDisasterResult]. The [RaiseDisasterAction] wrapper is the F2
  * leaf (registered by name "RaiseDisaster").
  *
- * Faithful-port pins (PHP grand truth):
+ * Faithful-port pins (PHP frozen historical baseline (ADR-LITE-042; not current product authority)):
  *   - seed `simpleSerialize(UniqueConst::$hiddenSeed, 'disater', year, month)` — the LEGACY MISSPELLING
  *     'disater' is byte-matched verbatim (RaiseDisaster.php:25-30). Do NOT "correct" to 'disaster'.
  *   - `$db->update('city', ['state'=>0], 'state <= 10')` — UNCONDITIONAL state reset, always (even within

@@ -3,7 +3,7 @@ name: opensamguk-php-oracle
 description: Use when an explicitly historical opensamguk regression or legacy comparison requires evidence from devsam/core PHP or hwe/ts; never as a prerequisite for new product work.
 ---
 
-# OpenSamguk PHP Oracle
+# OpenSamguk opt-in historical PHP comparison
 
 Read `AGENTS.md`, `CLAUDE.md`, and `docs/superpowers/WORKING_SYSTEM.md` completely.
 

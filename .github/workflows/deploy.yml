@@ -318,11 +318,12 @@ jobs:
               | grep -q '"ok":true'
           done
 
-          if ! $COMPOSE config --services | grep -qx 'board-api'; then
+          shared_services="$($COMPOSE config --services)"
+          if ! grep -Fxq 'board-api' <<<"$shared_services"; then
             echo "BLOCKED: opensamguk-docker must define board-api before gateway/web activation" >&2
             exit 1
           fi
-          if ! $COMPOSE config | grep -q 'BOARD_API_URL:'; then
+          if ! $COMPOSE config | grep -F 'BOARD_API_URL:' >/dev/null; then
             echo "BLOCKED: opensamguk-docker web-gateway must define BOARD_API_URL before gateway/web activation" >&2
             exit 1
           fi
@@ -334,7 +335,7 @@ jobs:
           sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
 
           SHARED_SERVICES="gateway-api board-api web-gateway"
-          if $COMPOSE config --services | grep -qx 'game-frontend'; then
+          if grep -Fxq 'game-frontend' <<<"$shared_services"; then
             SHARED_SERVICES="$SHARED_SERVICES game-frontend"
           fi
 
@@ -413,7 +414,7 @@ jobs:
 
           echo "=== Restarting shared web ==="
           $COMPOSE up -d --force-recreate --no-deps web-gateway
-          if $COMPOSE config --services | grep -qx 'game-frontend'; then
+          if grep -Fxq 'game-frontend' <<<"$shared_services"; then
             $COMPOSE up -d --force-recreate --no-deps game-frontend
           fi
           # nginx LAST + force-recreate(업스트림 IP 재해석 — Rule A: stale-DNS 502 방지)

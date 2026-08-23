@@ -1,10 +1,10 @@
-// one-shot golden generator — josa + log TS oracle (devsam-core2026)
+// one-shot frozen historical josa + log TS fixture generator (ADR-LITE-042; not product authority)
 //
 // Imports the reference TypeScript modules (JosaUtil, formatLogText, convertLog)
 // and emits committed JSON golden fixtures that the Kotlin JosaLogGoldenTest
-// asserts against byte-for-byte. Oracle = TS devsam-core2026 (the parity target),
-// NOT PHP. Run ONCE, commit the produced JSON, regenerate ONLY when the TS
-// modules change. Never executed in CI.
+// asserts against byte-for-byte. The TS devsam-core2026 output is frozen regression evidence,
+// not current product authority. Run only for an intentional fixture update with explicit reason
+// and regression evidence. Never executed in CI.
 //
 // Prerequisite (one-shot host step): from legacy/devsam-core2026 run `pnpm install`.
 // Run: npx tsx /Users/apple/Desktop/개인프로젝트/opensamguk/tools/golden-dump/josa-log-golden.mjs
@@ -12,7 +12,7 @@
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 
-// Reference oracle TS lives in the MAIN repo's legacy/ checkout.
+// The opt-in frozen historical TS reference lives in the MAIN repo's legacy/ checkout.
 const TS = '/Users/apple/Desktop/개인프로젝트/opensamguk/legacy/devsam-core2026';
 const { JosaUtil } = await import(`${TS}/packages/common/src/util/JosaUtil.ts`);
 const { formatLogText } = await import(`${TS}/packages/logic/src/logging/formatter.ts`);

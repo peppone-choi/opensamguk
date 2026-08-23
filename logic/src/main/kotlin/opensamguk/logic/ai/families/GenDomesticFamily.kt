@@ -13,7 +13,7 @@ import opensamguk.logic.util.valueFit
 /**
  * L-GENDOM — the general-domestic `do<한글>` command family: 일반내정 / 전쟁내정 / 긴급내정 / 금쌀구매 / 징병.
  *
- * GRAND TRUTH = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
+ * frozen historical baseline (ADR-LITE-042; not current product authority) = PHP `legacy/devsam-core/hwe/sammo/GeneralAI.php` (read in full):
  *  - `do일반내정`   (`:2117-2218`, emits one of che_주민선정/정착장려/수비강화/성벽보수/치안강화/기술연구/농지개간/상업투자):
  *    ONE conditional `nextBool(0.3)` (`:2136`, **`&&` only when `nation['rice'] < GameConst::$baserice`** — the
  *    low-rice 30% skip) THEN a terminal `choiceUsingWeightPair($cmdList)` (`:2217`, only when `$cmdList` non-empty;
@@ -248,7 +248,8 @@ object GenDomesticFamily {
     /**
      * `do징병`'s crew-type pick (PHP `:2580` `$type = $this->rng->choiceUsingWeight($types);`) — ALWAYS reached
      * (post arm-type). `$types` is `crewtype.id => crewtype.pickScore($tech)` for each `isValid` crew of the
-     * chosen `$armType` (PHP `:2572-2577`), in `GameUnitConst::byType($armType)` iteration order (a parity target).
+     * chosen `$armType`, in `GameUnitConst::byType($armType)` iteration order retained by frozen regression coverage
+     * (historical PHP `:2572-2577`; ADR-LITE-042; not current product authority).
      * The empty-`$types` path is a `MustNotBeReachedException` (PHP `:2582`, throw-unreachable — G7); the adapter
      * never passes an empty list here.
      *

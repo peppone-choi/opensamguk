@@ -1,7 +1,7 @@
 'use client';
 
 // ── 일제정보 (Admin5) — READ-ONLY 국가별 전체 통계 + 정렬 ────────────────────────────
-// Grand-truth: legacy hwe/_admin5.php. game-api `GET /api/admin/nation-stats?type=&type2=`
+// Frozen historical UI reference (ADR-LITE-042; not current product authority): legacy hwe/_admin5.php. game-api `GET /api/admin/nation-stats?type=&type2=`
 // (AdminReadController, B3a). 전부 READ 렌더 — 국가변경 폼(_admin5_submit, B3b intake)은
 // 아직 미배선이라 이 페이지에 두지 않는다(read 우선; mutation은 B6 intake 별도 웨이브).
 //
@@ -9,7 +9,7 @@
 //
 // 정렬 form(_admin5.php:56-85): type select(국력/장수/.../차숙) + type2 select(국력/.../기타) +
 // '정렬하기'. select 변경 즉시 재조회(legacy submit 등가). 옵션 라벨/value는 BE sortOptions를
-// 그대로 렌더 — 라벨 byte-parity는 BE 책임(verbatim).
+// 그대로 렌더 — 라벨 동결 회귀는 BE 책임(verbatim).
 //
 // 통계 테이블(_admin5.php:103-263): 28열 헤더 verbatim. 국명 셀은 nation.color 배경 + 대비 텍스트
 // (legacy newColor = perceived-luminance 분기). 총병 셀은 `{crew}/{sumLeadership}00`(legacy

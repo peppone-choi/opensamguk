@@ -35,8 +35,8 @@ function newColor(color: string): string {
 export default function NationPage() {
     const [data, setData] = useState<MyNationDetailResponse | null>(null);
     const [myBuffs, setMyBuffs] = useState<Record<string, number>>({});
-    // 유산 버프 비용 — 정본 API(inheritActionCost.buff = PHP GameConstBase $inheritBuffPoints,
-    // v_inheritPoint.php 'buff' 직렬화)에서 소비. web 레이어 상수 사본 금지(D3-04).
+    // 유산 버프 비용은 현재 API inheritActionCost.buff에서 소비한다. 역사 PHP 직렬화는 동결 회귀 참고일 뿐
+    // 현재 제품 정본이 아니다(ADR-LITE-042). web 레이어 상수 사본 금지(D3-04).
     const [buffCosts, setBuffCosts] = useState<number[]>([]);
     // P0-50 — 명령 인테이크는 ?generalId= 필수(누락 시 무조건 400). inherit 페이지 방식대로
     // front-info.general.generalId를 받아 전달한다.
