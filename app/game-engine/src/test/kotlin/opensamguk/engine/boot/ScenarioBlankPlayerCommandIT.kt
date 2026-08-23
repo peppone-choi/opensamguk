@@ -10,6 +10,7 @@ import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.foundAssaultCrewCost
@@ -267,6 +268,12 @@ class ScenarioBlankPlayerCommandIT {
         val beforeGeneral = world.getGeneralById(player.generalId)!!
         val beforeCity = world.getCityById(beforeGeneral.cityId)!!
         val beforeNation = world.getNationById(beforeGeneral.nationId)!!
+        // han unitSet 월드에서 하드코딩 1100(che 보병)을 쓰면 UnitSetTable.byId 가 null 을 돌려주고
+        // 징병 비용이 Int.MAX_VALUE 로 잡혀 "자금이 모자랍니다"로 거부된다 — ScenarioBlankUnificationIT
+        // 와 같은 원인이다. 세트 메타에서 읽어 세트가 바뀌어도 깨지지 않게 한다.
+        val unitSetName = world.getState().meta["unitSet"] as? String ?: UnitSetTable.CHE_UNIT_SET
+        val recruitCrewTypeId = UnitSetTable.defaultCrewTypeId(unitSetName)
+            ?: error("unitSet '$unitSetName' 에 defaultCrewTypeId 가 없다")
         when (player.spec.role) {
             "군주" -> assertAllowed(turns.handle(player.generalId, ReservedTurn("che_상업투자", ""), startYear, 2, "00:00"))
             "내정농지" -> assertAllowed(turns.handle(player.generalId, ReservedTurn("che_농지개간", ""), startYear, 2, "00:00"))
@@ -279,7 +286,7 @@ class ScenarioBlankPlayerCommandIT {
                 assertAllowed(
                     turns.handle(
                         player.generalId,
-                        ReservedTurn("che_징병", """{"crewType":1100,"amount":1000}"""),
+                        ReservedTurn("che_징병", """{"crewType":$recruitCrewTypeId,"amount":1000}"""),
                         startYear,
                         2,
                         "00:00",
@@ -290,7 +297,7 @@ class ScenarioBlankPlayerCommandIT {
             "징병" -> assertAllowed(
                 turns.handle(
                     player.generalId,
-                    ReservedTurn("che_징병", """{"crewType":1100,"amount":800}"""),
+                    ReservedTurn("che_징병", """{"crewType":$recruitCrewTypeId,"amount":800}"""),
                     startYear,
                     2,
                     "00:00",
