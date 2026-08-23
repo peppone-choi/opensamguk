@@ -58,10 +58,20 @@ const TERRAIN = [
 ];
 
 // 배율 문턱 — 줌 아웃 상태에서 지명을 다 그리면 지형이 안 보인다.
-// 여기서는 켜고 끄기만 한다. 州→郡→縣 정식 3계층 LOD 는 OPENSAM-202 다.
-const COUNTY_ZOOM = 2.2;
+// 郡·國(1급)은 항상 보이고, 줌인해야 縣·侯國(2급)이 나타난다. juns[] 는 아직 등급
+// 필드가 없어(치소는 郡·國 구분 없이 전부 juns 배열 하나다) 1급 라벨은 상수 하나로 균일
+// 적용한다. cities[].kind 는 AdministrativeLevel(logic/.../AdministrativeContracts.kt)과
+// 같은 값을 쓰므로 2급(縣·侯國)만 이 테이블에 올린다 — 새 2급 등급이 늘면 여기 한 줄만
+// 추가하면 된다. 테이블에 없는 등급(1급, 그리고 아직 데이터에 없는 KINGDOM 등)은
+// 마커·라벨을 여기서 찍지 않는다 — 郡治 마커·郡 라벨이 이미 그 자리를 대표하고 있어서다.
 const JUN_LABEL_ZOOM = 1.4;
-const COUNTY_LABEL_ZOOM = 5.5;   // 縣 970개 이름 — 여기까지 당겨야 서로 안 겹친다
+const TIER2_MARKER_ZOOM: Record<string, number> = { COUNTY: 2.2, MARQUISATE: 2.2 };
+const TIER2_LABEL_ZOOM: Record<string, number> = { COUNTY: 5.5, MARQUISATE: 5.5 }; // 縣 970개 — 여기까지 당겨야 안 겹친다
+
+/** 등급별 최소 표시 zoom(scale). 테이블에 없는 등급은 undefined — 호출부가 "안 그림"으로 처리한다. */
+export function tierZoom(table: Record<string, number>, kind: string): number | undefined {
+    return table[kind];
+}
 
 /**
  * 성(城) 이름은 郡 이름이 아니라 **治所 縣** 이름이다 — 遼東郡이 아니라 襄平, 河南尹이 아니라 낙양.
@@ -164,9 +174,10 @@ function draw(
         // 이민족 거점(EXTERNAL_PLACE)은 줌과 무관하게 항상 그린다 — 縣처럼 접히면
         // devsam che 의 이민족 세력(남만·산월·오환·왜 …)이 통째로 사라져 보인다.
         const ext = c.kind === 'EXTERNAL_PLACE';
-        // 郡治로 뽑히지 못한 郡·州 점은 찍지 않는다. 그 郡은 이미 治所가 대표하고 있어서
-        // 여기서 또 찍으면 治所 옆에 같은 郡이 縣 마크로 하나 더 박힌다.
-        if (!c.seat && !ext && (s < COUNTY_ZOOM || c.kind !== 'COUNTY')) continue;
+        // 郡治로 뽑히지 못한 1급(郡·國·州) 점은 찍지 않는다. 그 郡은 이미 治所가 대표하고
+        // 있어서 여기서 또 찍으면 治所 옆에 같은 郡이 縣 마크로 하나 더 박힌다.
+        const markerZoom = tierZoom(TIER2_MARKER_ZOOM, c.kind);
+        if (!c.seat && !ext && (markerZoom === undefined || s < markerZoom)) continue;
         if (!seen(c.col, c.row)) continue;
         const [x, y] = px(c.col, c.row);
         ctx.beginPath();
@@ -201,19 +212,19 @@ function draw(
         ctx.strokeText(label, x, ty);
         ctx.fillText(label, x, ty);
     }
-    // 縣 이름 — 郡治가 아닌 縣. 이 배율 아래에서는 점만 찍고 이름은 숨긴다.
-    if (s >= COUNTY_LABEL_ZOOM) {
-        ctx.font = `${Math.min(13, Math.max(9, Math.round(s * 2.6)))}px sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.82)';
-        ctx.lineWidth = 2.5;
-        for (const c of data.cities) {
-            if (c.seat || c.kind !== 'COUNTY' || !seen(c.col, c.row)) continue;
-            const [x, y] = px(c.col, c.row);
-            const ty = y - Math.max(5, s * 1.1);
-            const label = seatLabel(c.name);
-            ctx.strokeText(label, x, ty);
-            ctx.fillText(label, x, ty);
-        }
+    // 縣 이름 — 郡治가 아닌 2급(縣·侯國). 이 배율 아래에서는 점만 찍고 이름은 숨긴다.
+    ctx.font = `${Math.min(13, Math.max(9, Math.round(s * 2.6)))}px sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.lineWidth = 2.5;
+    for (const c of data.cities) {
+        if (c.seat || !seen(c.col, c.row)) continue;
+        const labelZoom = tierZoom(TIER2_LABEL_ZOOM, c.kind);
+        if (labelZoom === undefined || s < labelZoom) continue;
+        const [x, y] = px(c.col, c.row);
+        const ty = y - Math.max(5, s * 1.1);
+        const label = seatLabel(c.name);
+        ctx.strokeText(label, x, ty);
+        ctx.fillText(label, x, ty);
     }
 }
 

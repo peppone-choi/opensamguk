@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { expandOwner, labelledRegions, seatLabel } from '../components/game/HanMapCanvas';
+import { expandOwner, labelledRegions, seatLabel, tierZoom } from '../components/game/HanMapCanvas';
 
 describe('HanMapCanvas 격자 해제', () => {
     it('런렝스를 셀 배열로 되돌린다', () => {
@@ -21,5 +21,20 @@ describe('HanMapCanvas 격자 해제', () => {
         expect(seatLabel('회현')).toBe('회');       // 한 글자로 줄어도 사료 그대로
         expect(seatLabel('현')).toBe('현');         // 이름 자체가 '현'이면 그대로
         expect(seatLabel('요동군')).toBe('요동군'); // 縣 기록이 없는 자리는 손대지 않는다
+    });
+});
+
+describe('등급 → 최소 표시 zoom 매핑', () => {
+    const TABLE = { COUNTY: 2.2, MARQUISATE: 2.2 };
+
+    it('테이블에 있는 등급은 그 값을 돌려준다', () => {
+        expect(tierZoom(TABLE, 'COUNTY')).toBe(2.2);
+        expect(tierZoom(TABLE, 'MARQUISATE')).toBe(2.2);
+    });
+
+    it('모르는 등급(郡·國·州, 혹은 아직 없는 KINGDOM)은 undefined — 호출부가 안전하게 안 그린다', () => {
+        expect(tierZoom(TABLE, 'COMMANDERY')).toBeUndefined();
+        expect(tierZoom(TABLE, 'KINGDOM')).toBeUndefined();
+        expect(tierZoom(TABLE, 'PROVINCE')).toBeUndefined();
     });
 });
