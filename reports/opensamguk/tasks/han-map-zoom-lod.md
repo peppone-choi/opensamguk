@@ -249,3 +249,26 @@ label : K=5.48 * fit = 5.499094  vs 구 절대값 5.5   diff = -0.000906 (-0.016
 - 독립 리뷰: 아직 새 브랜치 기준으로 다시 안 띄웠다 — 코드 diff 자체는 #512 때 이미 두 번
   독립 재검토(cleared)를 거친 것과 동일하고, 이번에 추가된 건 순수 검증 강화(테스트 1개 +
   `initialView` export)뿐이다. 그래도 팀 리드 지시대로 별도 독립 리뷰어를 새로 띄운다.
+
+## 6차 — PR #515 독립 재검토 + CI
+
+- `work/opensamguk/han-map-lod-fitscale-relative` → `main`, PR #515:
+  https://github.com/peppone-choi/opensamguk/pull/515 (#512 는 닫고 이 PR 을 가리키게 코멘트).
+- 별도 code-reviewer 서브에이전트를 독립 검토자로 새로 띄웠다(직접 critique 안 씀). diff 를
+  스스로 읽고 tsc/vitest/check.py 를 직접 재실행해 다음을 재확인:
+  - 1600css@2x 옛 결함 실측 재현(`fitScale=2.2300 ≥` 구 절대값 2.2) — 프로즈 신뢰 없이 직접 계산.
+  - `K·fit > fit` (K=2.19>1) 대수 보장 — 런타임 가드는 없지만 테스트 2개가 K≤1 이면 fail.
+  - 라벨 문턱 손계산(fit=5): `min(13.5, max(5.5, 10.95)) = 10.95 < MAX_SCALE(14)` — 도달 가능.
+  - `fitScale` 는 `draw()` 당 1회만 호출(HanMapCanvas.tsx:189, 루프 밖) — perf 가드 회귀 없음.
+  - K=2.19 역산 근거: `2.2 / (1440/1435) = 2.1923` — 오차 0.1% 이내.
+  - 새 뷰포트×dpr 테스트가 절반은 기존 대수 테스트와 중복이지만, `initialView(...).scale` 쪽은
+    실제 175개 郡治 데이터·`junSpanCells`·`scaleForSpan`·`clampView` 를 다 타는 유일한 회귀
+    가드라 유지할 가치 있음 — 판단.
+  - 자체 실행 결과: `tsc --noEmit` 0 errors / `vitest run __tests__/HanMapCanvas.test.ts` 10/10 /
+    `vitest run`(전체) 443/443 / `check.py --strict` Errors 0, Warnings 0.
+  - **Verdict: cleared.** LOW 5건(런타임 K>1 가드 없음, dpr>6.16/6.39 극단에서만 발생하는
+    라벨/마커 역전·도달불가, resize 시 scale 재클램프 안 함(의도된 상대-LOD 의미론), draw 당
+    사소한 할당) — 전부 비차단.
+  - 리뷰 파일: `docs/superpowers/reviews/2026-08-24-han-map-lod-fitscale-relative-pr515-review.md`.
+- `tools/agent-system/check.py --strict --base origin/main` 재확인 — Errors 0, Warnings 0
+  (changed files 5, 리뷰 파일 포함).
