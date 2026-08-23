@@ -5,7 +5,7 @@
 - 리뷰 환경: 작성자 worktree가 아닌 **별도 신규 clone** (`git@github.com:peppone-choi/opensamguk.git`, scratch 디렉터리)
 - 날짜: 2026-08-24
 
-Scope: PR #520 `work/opensamguk/jwt-issuer-claim-removal` (OPENSAM-220/#483 JWT display-claim removal + InfoContributor) — covers app/, common/, .github/workflows/
+Scope: PR #520 `work/opensamguk/jwt-issuer-claim-removal` (OPENSAM-220/#483 JWT display-claim removal + InfoContributor) — covers app/, common/, .github/workflows/, tools/
 Verdict: cleared
 
 ## 판정: **cleared** (blocking 이슈 없음)
@@ -185,3 +185,48 @@ PR 본문의 `common=253 gateway-api=204 game-api=560 board-api=53 → 1070/0/0/
 | INFO | 1 (`/actuator/**` permitAll — 기존 패턴과 동일, 신규 노출 아님) |
 
 **verdict: cleared.** LOW-1/LOW-2는 문서 한 줄씩이라 머지 전에 같이 고치면 좋지만, 코드 정확성·보안·테스트 어느 축에서도 차단 사유가 아니다.
+
+---
+
+## 부록 A — 후속 커밋 재검토 (2026-08-24, `8a06f555` 이후)
+
+원 리뷰 이후 브랜치에 붙은 커밋들을 같은 clone에서 다시 확인했다. Scope에 `tools/` 를 추가한 근거가 A-1이다.
+
+### A-1. `7f42dde7` — `tools/ops/jwt_rollout_contract_test.py` (**검토 완료, 문제 없음**)
+
+`origin/main` 대비 이 파일의 **전체** 변경은 정확히 assert 2줄 교체 + 설명 주석 3줄이다:
+
+```diff
+-assert 'include_profile_claims="${include_profile_claims:-true}"' in workflow
+-assert '[[ "$jwt_signing_mode" == "RS256" || "$include_profile_claims" == "false" ]]' in workflow
++assert 'include_profile_claims' not in workflow
++assert '[[ "$jwt_signing_mode" == "RS256" ]]' in workflow
+```
+
+- **실제 `deploy.yml` 과 일치하는가 — 예.** `deploy.yml:374` 가 `if [[ "$jwt_signing_mode" == "RS256" ]]; then` 이고, `grep -n "include_profile_claims" .github/workflows/deploy.yml` → 0건. (369-370행 한글 주석에는 대문자 env 이름 `JWT_INCLUDE_PROFILE_CLAIMS` 만 남아 있어 소문자 셸 변수명 assert와 충돌하지 않는다.)
+- **다른 assert가 느슨해졌는가 — 아니오.** 파일 전체 diff가 위 5줄뿐이다. 순서 검사(`board_restart < capability_gate < gateway_restart`), `jwt_signing_mode="${jwt_signing_mode:-RS256}"`, `expected_jwt_public_key_sha256=`, `publicKeySha256`, compose의 `JWT_PRIVATE_KEY` 경계 검사, web 계층 비밀 미노출 검사, 두 verifier의 `"publicKeySha256"` 검사 — 전부 그대로다. 제거된 두 줄은 은퇴한 플래그를 참조하던 **유일한** assert 두 개였다.
+- **새 assert가 tautology인가 — 아니오. 뮤테이션 테스트로 확인했다.** `deploy.yml` 의 게이트 조건을 옛 2변수 형태로 되돌린 사본으로 돌리자 테스트가 `AssertionError`, exit 1 로 죽는다. 원본 복원 후 재실행은 `PASS ... exit 0`. 즉 두 assert 모두 실제로 문다.
+
+```
+$ python3 tools/ops/jwt_rollout_contract_test.py
+PASS: JWT consumer-first rollout, key identity, and asymmetric boundary are gated   (exit 0)
+$ # deploy.yml 게이트를 옛 형태로 되돌린 사본에서
+mutated-run exit: 1   AssertionError
+```
+
+`assert 'include_profile_claims' not in workflow` 는 되레 계약을 **강화**한다 — 플래그 분기가 다시 들어오는 것을 막는 negative guard다. 은퇴한 플래그를 떼어낸 것 외에 계약이 약해진 지점은 없다.
+
+### A-2. `a308dbfe` — 원 리뷰의 LOW-1/LOW-2 반영 (**확인**)
+
+- LOW-1: `jwt-key-rollout.md` 의 인용이 `GatewayJwtSecurity.kt:103-109` → `:111-117` 로 수정됨. 현재 파일의 실제 위치와 일치.
+- LOW-2: Stage 3 제목이 `(… 완료 — 2026-08-23)` → `(… 코드 반영 완료 — 배포 실측 미확인)` 로, `CLAUDE.md` 도 같은 취지로 완화됨.
+
+### A-3. `fd6332fa` — 검증측/서명측 분리 (**요청보다 더 보수적, 좋음**)
+
+Stage 2 3번 항목이 "검증측(board-api/game-api)은 RS256 실측 확인, **서명측(gateway-api)의 실제 `JWT_SIGNING_MODE` 는 미관측**" 으로 쪼개졌다. 내가 요구한 것보다 한 단계 더 정확한 구분이다. 다만 여기 새로 들어온 "2026-08-23 `docker exec ... curl .../actuator/info` 3회" 라는 **실측 주장 자체는 이 리뷰어가 재현할 수 없다**(프로덕션 접근 경로 없음) — 문구가 관측 범위와 미기록 항목(지문 값)을 명시하고 있어 과주장은 아니지만, 이 한 줄은 리뷰어 검증이 아니라 작성자 보고로 남는다.
+
+### A-4. `542cf6f8` — 작성자가 이 리뷰 문서에 `Scope:`/`Verdict:` 앵커 줄을 추가함 (**내용 왜곡 없음**)
+
+`check.py` 의 `cross-agent-critique` 게이트가 요구하는 형식 줄이며, 추가된 `Verdict: cleared` 는 이 리뷰어의 실제 판정과 일치하고 Scope 목록도 실제 검토 범위와 일치했다. 이번 커밋에서 `tools/` 를 추가한 것은 **A-1을 실제로 검토했기 때문**이지 정규식을 통과시키기 위해서가 아니다.
+
+**부록 판정: cleared 유지.** 새 LOW/HIGH 없음.
