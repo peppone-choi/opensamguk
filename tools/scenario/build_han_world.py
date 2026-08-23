@@ -151,6 +151,31 @@ BUILD_INIT = {
 LING_HOUSEHOLDS = 10000
 STAT_KEYS = ("population", "agriculture", "commerce", "security", "defence", "wall")
 
+# 縣 인접은 육지 보로노이라 섬 郡治는 연결이 0개로 나온다. 그 상태면 이동·출병이 전부
+# 인접 기반이라 도달 경로 자체가 없고, checkEmperior 가 「전 城 소유」를 요구하므로
+# 천하통일이 불가능해진다(측정: 780성 중 5성 고립).
+#
+# 그렇다고 섬을 가까운 육지에 기계적으로 붙이지 않는다. 사서가 항로를 적어 둔 쌍만 잇고,
+# 근거가 없는 것은 UNKNOWN 으로 명시한 채 최근접 육지 治所에 붙인다 — 지어낸 근거로
+# 채우지 않는다. 인용은 data/corpus 색인에서 직접 뽑은 원문이다.
+SEA_LINKS: list[tuple[str, str, str]] = [
+    ("夷洲", "會稽郡",
+     "讀史方輿紀要 卷94 인용 後漢書 東夷傳 「會稽海外有夷洲、亶洲」 + "
+     "三國志 吳書 孫權傳 黃龍二年 「遣將軍衞溫、諸葛直將甲士萬人，浮海求夷洲及亶洲」"),
+    ("流求", "會稽郡",
+     "隋書 卷81 東夷 流求國 「流求國，居海島之中，當建安郡東，水行五日而至」 — "
+     "建安郡은 260년 會稽에서 분치됐으므로 220년 시점의 관할은 會稽郡이다"),
+    ("州胡", "辟卑離國",
+     "三國志 魏書30 韓 「又有州胡在馬韓之西海中大島上 … 乘船往來，巿買韓中」 — "
+     "지도에 馬韓 자체는 없고 馬韓 소국만 있어 그중 최근접(257km)인 辟卑離國에 붙인다"),
+    ("邪馬壹國", "狗邪國",
+     "三國志 魏書30 倭人 「從郡至倭，循海岸水行，歷韓國 … 到其北岸狗邪韓國，七千餘里，"
+     "始渡一海，千餘里至對馬國」 — 도해 기점이 狗邪韓國이다"),
+    ("于山國", "悉直國",
+     "UNKNOWN — 색인된 사서(三國志·後漢書·晉書·隋書·資治通鑑·讀史方輿紀要 등)에 "
+     "于山國·鬱陵 용례 0건이다(三國史記 미수록). 근거 없이 최근접 육지 治所(152km)에 붙인다"),
+]
+
 
 def canon_ju() -> dict[str, str]:
     """build_junguozhi.py 의 CANON_105 를 파싱해 郡→州(한자) 를 만든다.
@@ -552,6 +577,23 @@ def build() -> tuple[dict, str, str, dict]:
             link(a, b)
             patched += 1
 
+    # 4. 섬 治所는 위 1~3 어디에도 걸리지 않는다(육지 인접이 없다). SEA_LINKS 만 잇는다.
+    jun_by_ch = {j["nameCh"]: i for i, j in enumerate(juns)}
+    sea_links: list[str] = []
+    sea_missing: list[str] = []
+    for island_ch, shore_ch, why in SEA_LINKS:
+        ai, bi = jun_by_ch.get(island_ch), jun_by_ch.get(shore_ch)
+        if ai is None or bi is None:
+            sea_missing.append(f"{island_ch}↔{shore_ch}")
+            continue
+        a, b = juns[ai]["seat"], juns[bi]["seat"]
+        if a not in inc_set or b not in inc_set:
+            sea_missing.append(f"{island_ch}↔{shore_ch}")
+            continue
+        if b not in conn[a]:
+            link(a, b)
+        sea_links.append(f"{island_ch}↔{shore_ch}({why.split(' ')[0]})")
+
     out_cities = []
     raw_rows = []
     for ci, jn in order:
@@ -603,6 +645,8 @@ def build() -> tuple[dict, str, str, dict]:
         "juns": len(juns),
         "cityCount": len(out_cities),
         "seaborne": seaborne,
+        "seaLinks": sea_links,
+        "seaMissing": sea_missing,
         "byRegion": Counter(region_of[jn] for _, jn in order),
         "byLevel": Counter(c["level"] for c in out_cities),
         "connections": sum(len(v) for v in conn.values()) // 2,
