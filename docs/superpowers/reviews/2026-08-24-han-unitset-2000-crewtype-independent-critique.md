@@ -1,6 +1,6 @@
 # PR #528 독립 비평 — work/opensamguk/han-unitset-2000-crewtype
 
-Verdict: fix-required
+Verdict: cleared
 Scope: app/, common/, data/, docs/, logic/, tools/
 
 리뷰 시각: 2026-08-24. 리뷰 대상 HEAD: `a4235574` (`origin/main` = `b9cec50c` 기준,
@@ -277,3 +277,165 @@ non-zero 종료로)이고, `UnitCatalogTest` 의 중복 assertion 하나를 제�
   `22b55497` 은 오히려 그 테스트에서 assertion 을 **하나 뺐다**.
 
 따라서 판정은 유지된다: **fix-required.**
+
+---
+
+# 재판정 (2026-08-24, 브랜치 tip `fa3e571a`)
+
+**위 `Verdict:` 줄을 `fix-required` → `cleared` 로 갱신했다. 그 아래 1차 판정 근거는
+그대로 둔다 — 무엇이 왜 막혔었는지가 기록으로 남아야 한다.**
+
+`fa3e571a` 기준으로 전건 재실측했다. 저자 커밋 메시지와 PR body 는 이번에도 증거로
+채택하지 않았다.
+
+## B1 — 해소
+
+- `git diff --name-status origin/main...fa3e571a` 실측: 파일 8개.
+  `tools/assets/build_unit_prompts.py` 와 `check_sprite_chroma.py` 는 **없다**.
+- 잔여물 전수 검사: `.git`/`build`/`node_modules` 를 뺀 트리 전체에서
+  `build_unit_prompts|check_sprite_chroma` grep → 리뷰 문서 본문 외 **0건**.
+  문서 언급·CI 스텝·import 어느 것도 남지 않았다.
+- 디프 총량 1893 insertions / 169 deletions, PR API 가 보고하는 값과 일치한다.
+
+**보존 확인 (지시받은 항목):** `origin/wip/opensamguk-209/sprite-chroma-tools` 가
+원격에 존재하고 두 파일을 담고 있다. blob SHA 를 제거 직전 커밋(`08cca52b`)과 대조:
+
+```
+build_unit_prompts.py   4889bacf…  == 4889bacf…   동일
+check_sprite_chroma.py  47ad9808…  == 47ad9808…   동일
+```
+
+이력 손실 없음. 덧붙여 보존 브랜치의 `check_sprite_chroma.py` 는
+`return 1 if fails else 0` 을 갖는다 — 즉 `22b55497` 의 vacuous-check 수정이
+**함께 보존돼 있다**(N6 참조).
+
+## B2 — 해소 (내 손으로 뮤테이션함)
+
+새 테스트 `han 기본 병종은 generic 이다(F4)` 를 그대로 믿지 않고, 1차 판정 때 B2 를
+잡았던 방식 그대로 다시 죽였다. 빌드 산출물 사본
+(`common/build/resources/main/unitset/units.json`)만 손대고 소스·데이터 파일은 불변,
+매 회차 후 `data/unitset/units.json` 과 바이트 일치 복원 확인(`RESTORED-OK`).
+
+| `defaultCrewTypeId` 뮤턴트 | 유닛 | 결과 |
+| --- | --- | --- |
+| **2167** | 군병 · `generic:false` · tier 1 · req 0 | **FAILED** — `han 기본 병종은 generic 이다(F4)` 하나만 빨감. `9 tests completed, 1 failed` |
+| **2023** | 정예 삭기병 · `generic:true` · tier 3 · def 200 · req 2 | **FAILED** — `기본 병종은 시작 시점부터 무제약으로 뽑을 수 있다` 가 잡음 |
+| **2004** | 민병대 투창병 · `generic:true` · tier 1 · req 0 | BUILD SUCCESSFUL (N9 참조) |
+
+1차 판정에서 "2167 로 되돌려도 3575개 전부 green" 이었던 것이 이제 정확히 그 한 건에서
+빨개진다. **B2 해소.**
+
+### 우회 가능성 공격 — 구멍 없음
+
+1. **che 제외가 편의상 예외인가?** 데이터로 확인: che 34행 중 `generic:true` **0건**,
+   han 134행 중 31건. che 를 포함시키면 테스트가 무조건 실패하는 구조다. che 행은 PHP
+   원본 사본이고 `generic` 이 authored 설계 태그로 쓰이지 않는다는 저자 설명은
+   **사실이다.** 정당한 예외이지 구멍이 아니다.
+2. **다른 `generic:false` 유닛으로 갈아끼우면?** han 134행 중 **103행(77%)이
+   `generic:false`** 다. 그 어느 것으로 바꿔도 F4 테스트가 잡는다. 2167 만 겨냥한
+   핀포인트 단언이 아니다.
+3. **소스 JSON 만 고치고 빌드를 안 돌려 통과하는 경로는?** 없다. 실측:
+   빌드 리소스를 2167 로 오염시킨 뒤 `-x :common:processResources` **없이** 평범하게
+   `./gradlew :common:test` 를 돌리면 `> Task :common:processResources` 가 다시 돌아
+   리소스가 2000 으로 되돌아오고 테스트는 통과한다. 1차 판정 때 내가 뮤테이션을 위해
+   `-x :common:processResources` 를 명시해야 했던 이유가 이것이다. 테스트가 읽는
+   `classpath:/unitset/units.json` 은 `common/build.gradle.kts:11` 이
+   `rootProject.file("data/unitset/units.json")` 에서 복사하는 것이고, `UnitCatalog`
+   가 읽는 것과 **같은 단일 정본**이다. 스테일 리소스로 통과하는 경로 없음.
+
+## 현재 tip 실측 숫자
+
+CI `agent-system` 잡 python 스텝 6개, 개별 실행:
+
+| 스텝 | 실측 |
+| --- | --- |
+| `tools/map/tests` | Ran **28**, OK, skipped=10 |
+| `tools/scenario/tests` | Ran **252**, OK, skipped=1 |
+| `tools/agent-system/tests` | Ran **9**, OK |
+| `han_route_node_candidates.py --check` | exit 0 |
+| `han_route_node_selection.py --check` | exit 0 |
+| `validate_han_route_node_selection.py` | exit 0 — `approved=780 scenarios=15 selectionSha256=a0171193… migrationSha256=d7ed5ae6…` |
+
+JVM (`--rerun-tasks`, XML 원문 파싱):
+
+| 모듈 | XML | tests | failures | errors | skipped |
+| --- | --- | --- | --- | --- | --- |
+| `common` | 45 | **256** | 0 | 0 | 0 |
+| `logic` | 296 | **3320** | 0 | 0 | 0 |
+
+`UnitCatalogTest` tests=**9**(F4 추가분), `HanGateRegionsTest` tests=5,
+`UnitSetTableHanTest` tests=5 — 전부 failures=0 errors=0 skipped=0.
+
+`python3 tools/unitset/build_unitset.py --check` → exit 0, `최신`.
+`data/unitset/units.json` 은 `a4235574` 이후 **한 바이트도 바뀌지 않았다**
+(`git diff a4235574 HEAD -- data/unitset/units.json` 빈 출력) — `fa3e571a`/`cdb07088`
+가 생성물을 건드리지 않았음을 확인.
+
+**리뷰어 측정 사고 기록:** 재판정 도중 내가 같은 워크트리에서 gradle 을 두 개
+동시에 돌려(`--rerun-tasks` 배경 1 + 전경 1) `logic:test` 가 927 failures 로 나온
+회차가 있었다. 실패 메시지는 전부
+`java.lang.NoClassDefFoundError: opensamguk/logic/traits/PersonalityRegistry` 류로,
+테스트 JVM 밑에서 jar 이 갈려나간 **내 조작 실수**다. 브랜치 결함이 아니다.
+단독 실행으로 재측정한 위 표(3320/0/0/0)가 유효 수치다. 이 회차를 지우지 않고
+남긴다 — 927 이라는 숫자가 근거 없이 돌아다니면 안 된다.
+
+## 부수 확인
+
+- **PR body 와 실물 일치.** body 는 이제 스프라이트 도구 제거(+499, 28%), 제거 커밋
+  `fa3e571a`, 보존 브랜치명, docstring 의 "OPENSAM-209" 가 오기라는 점, 새 추적 티켓
+  OPENSAM-230 을 전부 명시한다. 파일 8개·1893/169 도 실측과 일치. 1차 판정의 B1
+  본질("선언과 실물의 불일치")이 방향만 바뀐 채 남지 않았다.
+- **미도달 유닛 6종 공개 검증.** body 가 새로 밝힌 "郡+부족 유닛 6종이 이 base 에서
+  도달 불가" 를 직접 확인했다. `HanGateIndex.kt` 의 gate key 를 파싱하니 distinct
+  **44개**(body 와 일치)이고 `武陵`/`牂牁`/`越巂`/`永昌`/`鬱林` 이 **전부 0 城**이다.
+  결론(6종 도달 불가, #529 로 추적)은 옳다.
+- **B1 회귀는 여전히 살아 있다.** 1차 판정의 G1 뮤테이션(게이트 버킷 되돌리기 →
+  `UnitCatalogTest.kt:107` FAILED)은 이번 tip 에서도 유효하다 — `build_unitset.py` 의
+  이번 변경은 주석 추가뿐이고 생성물이 불변임을 위에서 확인했다.
+
+## 재판정 비블로킹 지적
+
+- **N6. `fa3e571a` 커밋 메시지가 사실과 다르다.** "`check_sprite_chroma.py` 의
+  vacuous-check 수정(`22b55497`)도 파일과 함께 빠진다 — 보존 브랜치에는 그 수정 이전
+  상태로 남아 있으니 … 다시 반영해야 한다" 고 적었지만, 실측하면 보존 브랜치의 그
+  파일은 `return 1 if fails else 0` 을 갖고 있고 blob 이 제거 직전 커밋과 동일하다.
+  **수정은 보존돼 있다.** PR body 쪽 서술이 맞고 커밋 메시지가 틀렸다. 커밋 메시지는
+  히스토리에 영구히 남으므로, OPENSAM-230 을 집는 사람이 하지 않아도 될 재작업을
+  하거나 보존 브랜치를 불신하게 된다.
+- **N7. body 의 부족 키 서술이 부정확하다.** "부족 키(叟/蠻/夷)는 있다" 고 적었으나
+  실측 gate key 는 `叟` 7 城, `蠻` 1 城, **`夷` 0 城** 이다. 따라서 2198(牂牁+夷)과
+  2200(永昌+夷)은 commandery 만이 아니라 **두 조건 모두** 거짓이다. 6종 도달 불가라는
+  결론은 바뀌지 않지만, #529 를 집는 사람이 郡 키만 채우면 될 것으로 오해한다.
+- **N8. 지시받은 OPENSAM-209 추적 코멘트는 GitHub 에 없다.** 실측: 이 저장소의
+  OPENSAM-209 는 GitHub **#469**(`정사 시나리오 … che 맵이 나온다`)이고 **CLOSED**,
+  코멘트 2건 모두 보존 브랜치와 무관하다. 스프라이트 파이프라인에 해당하는 이슈는
+  검색되지 않는다. body 는 추적을 Jira **OPENSAM-230** 으로 새로 팠다고 밝히는데,
+  이 리뷰어는 Jira 에 접근할 수 없어 그 티켓이 브랜치명+SHA 를 실제로 담고 있는지는
+  **UNKNOWN** 이다. 다만 손실 방지의 실체(원격 브랜치 + 동일 blob)는 위에서 검증됐다.
+  기록 매체를 GitHub 에서 Jira 로 바꾼 판단은 팀 리드가 확인할 사항이다.
+- **N9. B2 의 잔여 통과 집합은 설계상 동치 집합이다.** `generic:true` 이면서
+  `reqConstraints` 가 빈 han 유닛은 2000/2001/2002/2003/2004/2025 여섯뿐이고, 전부
+  tier 1 민병대(def 75~100 · cost 6~8)다. 실측으로 2004 는 green 이다. 즉 두 테스트의
+  **논리곱**이 기본 병종을 의도된 바닥선 6종으로 가둔다 — 2167(def 130) 이나
+  2023(def 200) 같은 F4 가 겨냥한 결함 부류는 전부 잡힌다. 구멍이 아니라 허용 범위다.
+- 1차 판정의 **N3**(`build_unitset.py --check` 가 CI 에 없다)는 그대로 남아 있다.
+  `.github/` 전수 grep 결과 `build_unitset` 참조 여전히 0건. 기존 결함이고 이 PR 의
+  블로커는 아니다.
+
+## UNKNOWN (재판정에서도 해소되지 않음)
+
+- Docker 기반 IT 2종(`ScenarioBlankPlayerCommandIT`, `ScenarioBlankUnificationIT`)은
+  이번에도 실행하지 않았다. 이 PR 의 선언된 동기(두 IT 의 RED→GREEN)는 여전히
+  리뷰어 실측으로 재현되지 않았고, `ScenarioBlankPlayerCommandIT.kt` 의 동적
+  `defaultCrewTypeId` 도출 변경도 실행 검증되지 않았다.
+- Jira OPENSAM-230 의 내용(N8).
+- PR B(`34177c3f`), #529, #524 의 내용은 이 리뷰 범위 밖이다.
+
+## 재판정 결론
+
+1차 판정의 블로킹 2건은 **둘 다 내 손의 실측으로 해소를 확인했다** — B1 은 파일
+제거와 잔여물 0건 + 보존 blob 동일성으로, B2 는 2167 뮤테이션이 실제로 빨개지는 것과
+우회 경로 3종이 모두 막혀 있는 것으로. 새로운 블로커는 발견되지 않았다. N6~N9 는 전부
+기록·서술 정확도 문제이고 코드 동작에 영향이 없다.
+
+**cleared.**
