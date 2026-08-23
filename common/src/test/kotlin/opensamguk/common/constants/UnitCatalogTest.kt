@@ -92,4 +92,23 @@ class UnitCatalogTest {
             )
         }
     }
+
+    /**
+     * B1: `build_unitset.py` 가 한때 `commandery`/`tribe` 게이트 키를 `ReqRegions` 항목
+     * 하나로 뭉쳐 `RecruitAlgorithm.any(...)` 가 OR 로 평가하던 결함(郡 전용 병종이 무관한
+     * 郡에서도 뽑힘)의 재발을 막는다. 애뢰 노수(2200, requires={commandery:永昌, tribe:夷})는
+     * 두 조건을 다 가진 병종이므로, 빌더가 AND 를 지키면 `ReqRegions` 항목이 키마다 하나씩
+     * 2개로 나오고, 뭉쳐서 되돌아가면 1개로 줄어든다.
+     */
+    @Test
+    fun `郡과 부족을 동시에 요구하는 병종은 ReqRegions 가 뭉치지 않는다(B1)`() {
+        val laoNu = assertNotNull(UnitCatalog.byId("han", 2200), "애뢰 노수(2200)가 사라졌다")
+        val reqRegions = laoNu.reqConstraints.filterIsInstance<UnitConstraint.ReqRegions>()
+        assertEquals(
+            2, reqRegions.size,
+            "永昌+夷 게이트가 ReqRegions ${reqRegions.size}개로 뭉쳤다 — commandery/tribe AND 가 깨졌다: $reqRegions",
+        )
+        assertTrue(reqRegions.any { it.reqRegions == listOf("永昌") }, "永昌 단독 항목이 없다: $reqRegions")
+        assertTrue(reqRegions.any { it.reqRegions == listOf("夷") }, "夷 단독 항목이 없다: $reqRegions")
+    }
 }
