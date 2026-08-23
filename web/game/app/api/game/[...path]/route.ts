@@ -22,7 +22,8 @@ const SERVER_COOKIE = 'sam_server';
  * 인한 401 복구는 클라이언트(`web/game/lib/api.ts`)가 `/api/auth/me`(sam_refresh가 실제로 도달하는
  * 유일한 경로)를 거쳐 담당한다.
  *
- * SSE(/api/game/sse/turn): 프록시가 즉시 event-stream을 열고 upstream.body를 그대로 스트리밍한다.
+ * SSE(/api/game/sse/turn): upstream을 먼저 확인해 !ok면 event-stream을 열지 않고 그 status를
+ * 그대로 반환한다(#514). ok면 event-stream을 열고 upstream.body를 그대로 스트리밍한다.
  */
 
 // SSE는 무한 스트림이므로 정적 최적화/캐시를 끈다.
@@ -134,7 +135,7 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
     }
 
     if (req.method === 'GET' && isTurnSsePath(path)) {
-        return await streamEventSource(target, init);
+        return streamEventSource(target, init);
     }
 
     const upstream = await fetch(target, init);

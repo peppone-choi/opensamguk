@@ -15,6 +15,10 @@ export function useSSE(onEvent: () => void) {
     const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const delayRef = useRef(1000);
     const onEventRef = useRef(onEvent);
+    // onerror의 세션 확인(fetch)이 비동기라 언마운트와 경합한다 — cleanup이 끝난 뒤 도착한
+    // .then이 재연결 타이머/EventSource를 새로 만들면 아무도 안 닫는 좀비가 된다. false가 되면
+    // 이후의 스케줄링을 전부 건너뛴다.
+    const aliveRef = useRef(true);
 
     useEffect(() => {
         onEventRef.current = onEvent;
@@ -49,14 +53,19 @@ export function useSSE(onEvent: () => void) {
             esRef.current = null;
             // 네이티브 EventSource는 onerror에 응답 status를 실어주지 않는다(#514) — upstream이
             // 401을 준 경우와 일시적 네트워크 끊김을 구분할 수 없다. web/game/lib/api.ts:351과
-            // 동일한 패턴으로 /api/auth/me를 불러 세션이 실제로 만료됐는지 확인한다: 만료 확정이면
-            // 재연결을 멈춘다(만료된 세션으로 30초 간격 영구 재연결 금지 — AuthGate가 재로그인으로
-            // 보낸다). fetch 자체가 실패하면(네트워크 장애) 일시적 문제로 보고 기존 backoff를 유지한다.
+            // 동일한 패턴으로 /api/auth/me를 불러 세션이 실제로 만료됐는지 확인한다. fetch 자체가
+            // 실패하면(네트워크 장애) 일시적 문제로 보고 기존 backoff를 유지한다.
             void fetch('/api/auth/me', { cache: 'no-store' })
                 .then((res) => res.ok)
                 .catch(() => true)
                 .then((sessionAlive) => {
-                    if (!sessionAlive) return;
+                    if (!aliveRef.current) return; // 그 사이 언마운트됨 — 재연결 예약 금지(좀비 방지)
+                    if (!sessionAlive) {
+                        // 만료 확정 — 30초 간격 영구 재연결을 멈춘다. 전체 리로드로 AuthGate의
+                        // 기존 /api/auth/me → 미인증 → 게이트웨이 로그인 리다이렉트 경로를 그대로 태운다.
+                        window.location.reload();
+                        return;
+                    }
                     delayRef.current = Math.min(delayRef.current * 2, 30000);
                     if (reconnectRef.current) clearTimeout(reconnectRef.current);
                     reconnectRef.current = setTimeout(() => {
@@ -68,8 +77,10 @@ export function useSSE(onEvent: () => void) {
     }, []);
 
     useEffect(() => {
+        aliveRef.current = true;
         connect();
         return () => {
+            aliveRef.current = false;
             esRef.current?.close();
             if (reconnectRef.current) clearTimeout(reconnectRef.current);
         };

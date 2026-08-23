@@ -80,4 +80,71 @@ describe('useSSE', () => {
         expect(instances[0].close).toHaveBeenCalledTimes(1);
         expect(instances[0].readyState).toBe(FakeEventSource.CLOSED);
     });
+
+    it('#514: does not open a zombie EventSource when unmounted while the onerror session check is in flight', async () => {
+        vi.useFakeTimers();
+        let resolveAuthMe: (res: Response) => void = () => {};
+        const fetchMock = vi.fn(
+            () => new Promise<Response>((resolve) => {
+                resolveAuthMe = resolve;
+            }),
+        );
+        vi.stubGlobal('fetch', fetchMock);
+
+        const { unmount } = render(<Harness onEvent={vi.fn()} />);
+        expect(instances).toHaveLength(1);
+
+        act(() => {
+            instances[0].onerror?.(new Event('error'));
+        });
+        expect(fetchMock).toHaveBeenCalledWith('/api/auth/me', { cache: 'no-store' });
+
+        // unmount before the /api/auth/me check resolves — cleanup already ran, aliveRef flipped.
+        unmount();
+
+        await act(async () => {
+            resolveAuthMe(new Response(null, { status: 200 }));
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        // Advance past the reconnect delay: a leaking implementation schedules a timer here that
+        // creates a second EventSource nothing will ever close.
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(30000);
+        });
+
+        expect(instances).toHaveLength(1);
+        vi.unstubAllGlobals();
+        vi.useRealTimers();
+    });
+
+    it('#514: reloads instead of looping forever once /api/auth/me confirms the session is gone', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 401 }));
+        vi.stubGlobal('fetch', fetchMock);
+        const reloadSpy = vi.fn();
+        const originalLocation = window.location;
+        // jsdom's window.location isn't writable-in-place; replace it for this test only.
+        Object.defineProperty(window, 'location', {
+            configurable: true,
+            value: { ...originalLocation, reload: reloadSpy },
+        });
+
+        render(<Harness onEvent={vi.fn()} />);
+        expect(instances).toHaveLength(1);
+
+        await act(async () => {
+            instances[0].onerror?.(new Event('error'));
+            await Promise.resolve();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(reloadSpy).toHaveBeenCalledTimes(1);
+        // no new EventSource was scheduled after the confirmed-expired session.
+        expect(instances).toHaveLength(1);
+
+        Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+        vi.unstubAllGlobals();
+    });
 });
