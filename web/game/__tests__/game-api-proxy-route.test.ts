@@ -19,7 +19,7 @@ vi.mock('next/headers', () => ({
 
 vi.mock('@/lib/serverRegistry', () => registryMocks);
 
-import { GET, POST } from '@/app/api/game/[...path]/route';
+import { GET, POST, PATCH } from '@/app/api/game/[...path]/route';
 
 function request(path: string, init?: ConstructorParameters<typeof NextRequest>[1]): NextRequest {
   return new NextRequest(`http://game.example.test${path}`, init);
@@ -164,6 +164,31 @@ describe('game API proxy server selection', () => {
       cache: 'no-store',
       duplex: 'half',
       body: JSON.stringify({ value: 1 }),
+    });
+  });
+
+  // #516 review F1 — this route lacked a PATCH export while its production twin
+  // (web/gateway) always had one; a live caller (admin1's game-settings save button)
+  // got a dev-only 405 as a result. Regression: PATCH must actually forward.
+  it('forwards PATCH (e.g. admin game-settings save)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
+
+    const response = await PATCH(
+      request('/api/game/api/admin/game-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: { maxgeneral: 650 } }),
+      }),
+      context(['api', 'admin', 'game-settings']),
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledWith('http://default-game-api/api/admin/game-settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      duplex: 'half',
+      body: JSON.stringify({ values: { maxgeneral: 650 } }),
     });
   });
 

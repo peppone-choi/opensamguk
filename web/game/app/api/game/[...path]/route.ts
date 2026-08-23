@@ -165,3 +165,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ path: stri
     const { path } = await ctx.params;
     return forward(req, path);
 }
+
+// PATCH/DELETE were missing here while web/gateway (the production twin) has always had
+// them — a live caller (app/game/admin1/page.tsx's game-settings save button, via
+// lib/api.ts's patchGameSettings) hit dev-only 405s as a result (#516 review F1).
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+    const { path } = await ctx.params;
+    return forward(req, path);
+}
+
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+    const { path } = await ctx.params;
+    return forward(req, path);
+}

@@ -26,8 +26,8 @@ import { GET, POST } from '@/app/api/game/[...path]/route';
 const originalGameApiOrigin = process.env.GAME_API_ORIGIN;
 const originalServerId = process.env.SERVER_ID;
 
-function request(path: string): NextRequest {
-  return new NextRequest(`http://gateway.example.test${path}`);
+function request(path: string, init?: ConstructorParameters<typeof NextRequest>[1]): NextRequest {
+  return new NextRequest(`http://gateway.example.test${path}`, init);
 }
 
 function context(path: string[]) {
@@ -168,6 +168,35 @@ describe('game API proxy server selection', () => {
       method: 'GET',
       headers: {},
       cache: 'no-store',
+    });
+  });
+
+  // #516 review F2 — dev 쌍둥이(web/game/__tests__/game-api-proxy-route.test.ts:148)엔
+  // 있던 본문 전달 단언이 프로덕션 쪽엔 없었다: `init.body = await req.text()`를 지워도
+  // 이전엔 175개 테스트가 전부 통과했다. 커맨드 POST 본문 유실을 여기서 잡는다.
+  it('forwards the POST body upstream unmodified', async () => {
+    cookieValues = { sam_access: 'access-token' };
+    process.env.SERVER_ID = 'pep';
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })));
+
+    const response = await POST(
+      request('/api/game/api/command/test?server=pep&turnIdx=0', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: 1 }),
+      }),
+      context(['api', 'command', 'test']),
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenCalledWith('http://pep-game-api/api/command/test?turnIdx=0', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer access-token', 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({ value: 1 }),
     });
   });
 

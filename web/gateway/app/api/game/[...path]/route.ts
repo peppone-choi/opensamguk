@@ -15,13 +15,19 @@ import { isPathServerId } from "@/lib/serverGameUrl";
  * `/api/` catch-all이 잡아 여기로 온다. 두 route는 프록시 로직을 중복 보유한다 — 발산 지점과
  * 판정(#516 조사, 2026-08-24):
  *
- * - 401/에러 등급 그대로 전파, SSE 401-우선-확인(#514) 동작 동일 — 검증됨(이 파일 테스트).
+ * - 401 그대로 전파, SSE 401-우선-확인(#514) 동작 동일 — 검증됨(이 파일 테스트; 403 등 다른
+ *   에러 등급은 양쪽 다 테스트가 없다 — 이 커밋이 만든 구멍이 아니라 기존 구멍).
  * - sam_refresh로 서버사이드 재시도 없음 — 동일. 그 쿠키는 `path=/api/auth`로 좁혀 심어져
  *   여기서도 읽을 수 없다(web/gateway/lib/cookies.ts 참고). 401 복구는 클라이언트가
  *   `/api/auth/me`를 거친다 — 의도된 설계, 결함 아님.
- * - HTTP 메서드: 이쪽은 GET/POST/PATCH/DELETE, `web/game` 쪽은 GET/POST뿐 —
- *   `web/game/lib/api.ts`의 PATCH 헬퍼는 현재 무호출(dead code)이라 실사용 격차는 없다.
- *   의도된 차이는 아니고 단지 아직 아무도 필요로 하지 않았을 뿐 — 결함 아님, 관찰만.
+ * - HTTP 메서드: 이쪽은 GET/POST/PATCH/DELETE, `web/game` 쪽은 원래 GET/POST뿐이었다.
+ *   `web/game/lib/api.ts:803`의 PATCH 헬퍼(`patchGameSettings`)는 무호출이 아니라
+ *   `app/game/admin1/page.tsx:59`(관리자 게임설정 저장 버튼)의 살아 있는 호출자였다 — 이
+ *   요청은 `BASE='/api/game'`를 거쳐 `/api/game/api/admin/game-settings`로 나가고, dev nginx
+ *   (`infra/nginx/default.conf:156`)는 prefix 길이로 `/api/game/`을 `web/game` route로 보낸다.
+ *   그 route에 PATCH export가 없어 Next App Router가 405를 돌려준다 — dev에서만 깨지고
+ *   prod(이 route)는 정상인 실제 발산이었다(#516 리뷰 F1). `web/game`에도 PATCH/DELETE export를
+ *   추가해 닫았다(대칭을 위해 DELETE도 추가 — 현재 호출자는 없지만 이 route에도 없다).
  * - fetch init에 `duplex: 'half'`가 없다(`web/game`엔 있음) — 여기서도 body는 항상
  *   `req.text()`로 먼저 버퍼링한 문자열이라(스트리밍 아님) Node fetch가 duplex를 요구하지
  *   않는다. 결함 아님.
