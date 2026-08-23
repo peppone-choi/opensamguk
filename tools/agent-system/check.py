@@ -1381,6 +1381,9 @@ def render_markdown(files: list[str], findings: list[Finding]) -> str:
 
 
 def main() -> int:
+    # TEMPORARY deliberate break for CI masking-fix evidence — reverted before the real PR.
+    print("DELIBERATE-BREAK-FOR-CI-EVIDENCE: work/opensamguk/ci-agent-system-masking", file=sys.stderr)
+    return 1
     parser = argparse.ArgumentParser(description="Check opensamguk working-system invariants.")
     parser.add_argument("--base", help="Git base ref for CI/PR mode, e.g. origin/main.")
     parser.add_argument("--strict", action="store_true", help="Promote drift/evidence warnings to errors.")
