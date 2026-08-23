@@ -65,8 +65,8 @@ const TERRAIN = [
 // 추가하면 된다. 테이블에 없는 등급(1급, 그리고 아직 데이터에 없는 KINGDOM 등)은
 // 마커·라벨을 여기서 찍지 않는다 — 郡治 마커·郡 라벨이 이미 그 자리를 대표하고 있어서다.
 const JUN_LABEL_ZOOM = 1.4;
-const TIER2_MARKER_ZOOM: Record<string, number> = { COUNTY: 2.2, MARQUISATE: 2.2 };
-const TIER2_LABEL_ZOOM: Record<string, number> = { COUNTY: 5.5, MARQUISATE: 5.5 }; // 縣 970개 — 여기까지 당겨야 안 겹친다
+export const TIER2_MARKER_ZOOM: Record<string, number> = { COUNTY: 2.2, MARQUISATE: 2.2 };
+export const TIER2_LABEL_ZOOM: Record<string, number> = { COUNTY: 5.5, MARQUISATE: 5.5 }; // 縣 970개 — 여기까지 당겨야 안 겹친다
 
 /** 등급별 최소 표시 zoom(scale). 테이블에 없는 등급은 undefined — 호출부가 "안 그림"으로 처리한다. */
 export function tierZoom(table: Record<string, number>, kind: string): number | undefined {

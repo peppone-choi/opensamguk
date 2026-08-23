@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { expandOwner, labelledRegions, seatLabel, tierZoom } from '../components/game/HanMapCanvas';
+import {
+    expandOwner, labelledRegions, seatLabel, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
+} from '../components/game/HanMapCanvas';
 
 describe('HanMapCanvas 격자 해제', () => {
     it('런렝스를 셀 배열로 되돌린다', () => {
@@ -25,16 +27,17 @@ describe('HanMapCanvas 격자 해제', () => {
 });
 
 describe('등급 → 최소 표시 zoom 매핑', () => {
-    const TABLE = { COUNTY: 2.2, MARQUISATE: 2.2 };
-
-    it('테이블에 있는 등급은 그 값을 돌려준다', () => {
-        expect(tierZoom(TABLE, 'COUNTY')).toBe(2.2);
-        expect(tierZoom(TABLE, 'MARQUISATE')).toBe(2.2);
+    it('실제 2급(縣·侯國) 테이블은 마커·라벨 문턱을 그대로 돌려준다', () => {
+        expect(tierZoom(TIER2_MARKER_ZOOM, 'COUNTY')).toBe(2.2);
+        expect(tierZoom(TIER2_MARKER_ZOOM, 'MARQUISATE')).toBe(2.2);
+        expect(tierZoom(TIER2_LABEL_ZOOM, 'COUNTY')).toBe(5.5);
+        expect(tierZoom(TIER2_LABEL_ZOOM, 'MARQUISATE')).toBe(5.5);
     });
 
-    it('모르는 등급(郡·國·州, 혹은 아직 없는 KINGDOM)은 undefined — 호출부가 안전하게 안 그린다', () => {
-        expect(tierZoom(TABLE, 'COMMANDERY')).toBeUndefined();
-        expect(tierZoom(TABLE, 'KINGDOM')).toBeUndefined();
-        expect(tierZoom(TABLE, 'PROVINCE')).toBeUndefined();
+    it('1급(郡·國·州)과 아직 데이터에 없는 KINGDOM은 undefined — 호출부가 안전하게 안 그린다', () => {
+        expect(tierZoom(TIER2_MARKER_ZOOM, 'COMMANDERY')).toBeUndefined();
+        expect(tierZoom(TIER2_MARKER_ZOOM, 'KINGDOM')).toBeUndefined();
+        expect(tierZoom(TIER2_MARKER_ZOOM, 'PROVINCE')).toBeUndefined();
+        expect(tierZoom(TIER2_LABEL_ZOOM, 'KINGDOM')).toBeUndefined();
     });
 });
