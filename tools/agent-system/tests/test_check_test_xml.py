@@ -6,6 +6,7 @@ incident this locks down) and asserts check_test_xml.py's exit code/output
 for each case. Real end-to-end Docker on/off proof lives in the task report;
 this is the permanent regression that keeps the parser's decision correct.
 """
+import json
 import os
 import subprocess
 import sys
@@ -38,13 +39,18 @@ def _write_suite(root: Path, module: str, filename: str, content: str) -> None:
     (d / filename).write_text(content, encoding="utf-8")
 
 
-def _run(root: Path, module: str, extra_env: dict | None = None) -> subprocess.CompletedProcess:
+def _run(
+    root: Path,
+    module: str,
+    extra_env: dict | None = None,
+    extra_args: list | None = None,
+) -> subprocess.CompletedProcess:
     env = dict(os.environ)
     env.pop("OPENSAM_ALLOW_SKIPPED_IT", None)
     if extra_env:
         env.update(extra_env)
     return subprocess.run(
-        [sys.executable, str(SCRIPT), "--repo-root", str(root), module],
+        [sys.executable, str(SCRIPT), "--repo-root", str(root), *(extra_args or []), module],
         capture_output=True,
         text=True,
         env=env,
@@ -86,6 +92,58 @@ class CheckTestXmlTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("SKIPPED TEST(S) DETECTED", result.stderr)
         self.assertIn("NOT verified", result.stderr)
+
+    def test_quarantined_skip_passes_without_opt_out(self):
+        # A skip whose test key is registered in the quarantine file (with a
+        # ticket) must pass green with no OPENSAM_ALLOW_SKIPPED_IT needed —
+        # but must still print QUARANTINED loudly, not silently.
+        _write_suite(self.root, "skipped-mod", "TEST-fake.ScenarioBlankUnificationIT.xml", SKIPPED_XML)
+        quarantine_path = self.root / "quarantine.json"
+        quarantine_path.write_text(
+            json.dumps({
+                "fake.ScenarioBlankUnificationIT#han founding grants a conscriptable crew type()": {
+                    "ticket": "https://example.invalid/issues/1",
+                    "reason": "test fixture",
+                },
+            }),
+            encoding="utf-8",
+        )
+        result = _run(self.root, "skipped-mod", extra_args=["--quarantine", str(quarantine_path)])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("QUARANTINED", result.stderr)
+        self.assertIn("https://example.invalid/issues/1", result.stderr)
+        self.assertIn("NOT verified", result.stderr)
+
+    def test_unquarantined_skip_alongside_quarantined_still_fails(self):
+        # Quarantine only covers the exact key it lists — an unrelated skip
+        # in the same run must still fail, opt-out notwithstanding absent.
+        _write_suite(self.root, "skipped-mod", "TEST-fake.ScenarioBlankUnificationIT.xml", SKIPPED_XML)
+        quarantine_path = self.root / "quarantine.json"
+        quarantine_path.write_text(
+            json.dumps({"fake.SomeOtherIT#unrelated()": {"ticket": "t", "reason": "r"}}),
+            encoding="utf-8",
+        )
+        result = _run(self.root, "skipped-mod", extra_args=["--quarantine", str(quarantine_path)])
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("SKIPPED: fake.ScenarioBlankUnificationIT", result.stderr)
+
+    def test_quarantine_entry_without_ticket_is_rejected(self):
+        # A quarantine registration with no ticket is worse than no guard —
+        # the loader must refuse the whole file rather than let it through.
+        _write_suite(self.root, "skipped-mod", "TEST-fake.ScenarioBlankUnificationIT.xml", SKIPPED_XML)
+        quarantine_path = self.root / "quarantine.json"
+        quarantine_path.write_text(
+            json.dumps({
+                "fake.ScenarioBlankUnificationIT#han founding grants a conscriptable crew type()": {
+                    "ticket": "",
+                    "reason": "no ticket",
+                },
+            }),
+            encoding="utf-8",
+        )
+        result = _run(self.root, "skipped-mod", extra_args=["--quarantine", str(quarantine_path)])
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("no non-empty 'ticket'", result.stderr)
 
     def test_failures_fail_even_with_opt_out(self):
         failed_xml = CLEAN_XML.replace('failures="0"', 'failures="1"').replace(
