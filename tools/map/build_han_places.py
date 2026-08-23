@@ -17,8 +17,9 @@ usage:  python3 tools/map/build_han_places.py [--year 220] [--grid 256]
 (data/curated/han/administrative-units.json, 續漢書 郡國志 기반, groups[].groupType)가
 판정자다. 실측: CHGIS dbf를 직접 읽으면 TYPE_CH='国' 하나에 진짜 KINGDOM과 마을급
 侯國(安眾/新成/征羌侯國), 屬國(犍為屬國), 심지어 이름이 '郡'인 것(樂安郡)까지 뒤섞여
-있다. 반대로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/彭城 같은 진짜 KINGDOM 10개는 220년
-그 해만 TYPE_CH='郡'|'侯国'로 잠깐 강등돼 있어 TYPE_CH만 믿으면 놓친다. `tools/map/*`의
+있다. 반대로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/河間/彭城 같은 진짜 KINGDOM 11개는
+CHGIS dbf에서 다년 구간(예: 常山郡 220-582년) 동안 TYPE_CH='郡'|'侯国'로 잘못 적혀
+있어 TYPE_CH만 믿으면 놓친다. `tools/map/*`의
 다른 스크립트를 훑어봐도(2026-08-24) CHGIS TYPE_CH에서 KINGDOM/COMMANDERY를 직접
 재유도하는 곳은 이 파일뿐이었다 — `build_external_places.py`는 수작업 리터럴,
 `build_administrative_place_overlay.py`/`build_terrain_grid.py`는 이미 카탈로그
@@ -81,11 +82,13 @@ if _bad_tier_kinds:
 del _bad_tier_kinds
 
 # --- 郡/國 재판정 (#524): CHGIS TYPE_CH='国'/'侯国'/'郡'만으로는 郡·國·侯國·屬國을 구분 못
-# 한다. 실측(#524): 安眾/新成/征羌侯國(마을급 侯國)과 樂安/陳留(실제로는 COMMANDERY)가 전부
-# TYPE_CH='国' 하나로 뭉뚱그려지고, 거꾸로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/彭城처럼
-# 220년 그 해만 TYPE_CH='郡'|'侯国'로 잠깐 강등돼 있던 진짜 KINGDOM이 COMMANDERY/COUNTY로
-# 떨어진다. 續漢書 郡國志 정본 카탈로그(data/curated/han/administrative-units.json,
-# groups[].groupType)로 되짚는다 — 이름 어간이 일치하면 CHGIS 표기 대신 정본이 이긴다.
+# 한다. 실측(#524): 安眾/新成/征羌侯國(마을급 侯國)과 陳留(실제로는 COMMANDERY, 樂安은
+# TYPE_CH='国'이지만 정본 카탈로그상 KINGDOM이라 이 목록엔 안 든다)가 전부 TYPE_CH='国'
+# 하나로 뭉뚱그려지고, 거꾸로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/河間/彭城(11개)처럼
+# CHGIS dbf에서 다년 구간 동안 TYPE_CH='郡'|'侯国'로 잘못 적혀 있던 진짜 KINGDOM이
+# COMMANDERY/COUNTY로 떨어진다. 續漢書 郡國志 정본 카탈로그
+# (data/curated/han/administrative-units.json, groups[].groupType)로 되짚는다 —
+# 이름 어간이 일치하면 CHGIS 표기 대신 정본이 이긴다.
 GROUP_SUFFIX = '县縣國国郡州道邑'
 
 

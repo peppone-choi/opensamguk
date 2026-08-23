@@ -8,8 +8,9 @@ CHGIS의 애매한 TYPE_CH='国'/'侯国'/'郡' 표기를 되짚는지 검증한
 실측(#524 이슈 본문 + 이 티켓에서 CHGIS dbf를 직접 읽어 재확인):
   - TYPE_CH='国' 은 진짜 KINGDOM과 마을급 侯國(安眾/新成/征羌侯國)·屬國(犍為屬國)·
     郡으로 잘못 적힌 것(樂安郡)이 전부 뒤섞여 있다.
-  - 반대로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/彭城 같은 진짜 KINGDOM은 220년 그 해만
-    TYPE_CH='郡'|'侯国'로 강등돼 있어 그대로 두면 COMMANDERY/COUNTY로 떨어진다.
+  - 반대로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/河間/彭城(11개) 같은 진짜 KINGDOM은
+    CHGIS dbf에서 다년 구간(예: 常山郡 220-582년) 동안 TYPE_CH='郡'|'侯国'로 잘못
+    적혀 있어 그대로 두면 COMMANDERY/COUNTY로 떨어진다.
 """
 import sys
 import unittest
@@ -53,14 +54,21 @@ class MisclassifiedGroupsAreFixedTest(unittest.TestCase):
 
 
 class UndetectedKingdomsAreNowDetectedTest(unittest.TestCase):
-    """#524에서 14/20 群 미탐지로 보고된 것 중, 220년 그 해 TYPE_CH가 '郡'|'侯国'로 강등돼
-    있던 10개가 정본 카탈로그 override로 KINGDOM으로 되돌아온다."""
+    """#524에서 14/20 群 미탐지로 보고된 것 중, TYPE_CH가 '郡'|'侯国'로 잘못 적힌 11개가
+    정본 카탈로그 override로 KINGDOM으로 되돌아온다.
 
-    def test_kingdoms_demoted_to_commandery_type_code_at_year_220_are_restored(self):
+    실측 정정(critic-524 MEDIUM-2): 이 강등은 220년 그 해만의 일시적 오류가 아니다 —
+    CHGIS dbf를 직접 재보면 다년 구간이다(예: 常山郡 TYPE_CH='郡' 220-582년, 582-220=362년;
+    彭城國 TYPE_CH='侯国' 88-323년, 235년). 220년은 그 구간에 포함될 뿐이다. 개수도
+    10개가 아니라 11개다 — 河間郡(카탈로그 canonicalGroup은 옛 이체자 河閒國, CHGIS
+    NAME_FT는 河間郡이라 sourceGroupName 경유로만 일치)이 이전 판에서 누락됐었다."""
+
+    def test_kingdoms_demoted_to_commandery_type_code_are_restored(self):
         for name_ch, name_ft in (
             ('常山郡', '常山郡'), ('赵郡', '趙郡'), ('中山郡', '中山郡'),
             ('齐郡', '齊郡'), ('北海郡', '北海郡'), ('琅邪郡', '琅邪郡'),
             ('梁郡', '梁郡'), ('陈郡', '陳郡'), ('下邳郡', '下邳郡'),
+            ('河间郡', '河間郡'),
         ):
             with self.subTest(name=name_ft):
                 self.assertEqual(classify('郡', name_ch, name_ft), ('KINGDOM', 6))
@@ -68,6 +76,14 @@ class UndetectedKingdomsAreNowDetectedTest(unittest.TestCase):
     def test_marquisate_type_code_kingdom_seat_is_restored(self):
         # 彭城國: CHGIS가 侯国로 적어놨지만 정본 카탈로그는 KINGDOM이다.
         self.assertEqual(classify('侯国', '彭城国', '彭城國'), ('KINGDOM', 6))
+
+    def test_archaic_variant_character_group_name_still_matches(self):
+        # critic-524 MEDIUM-1: 카탈로그의 canonicalGroup은 옛 이체자 河閒國(間 아님 閒)을
+        # 쓰는데 CHGIS NAME_FT는 河間郡이다 — 정확 어간 일치가 sourceGroupName 경유로만
+        # 성립한다. _load_group_kind()가 canonicalGroup만 인덱싱하도록 좁아지면(우회
+        # 뮤테이션) 이 케이스가 조용히 COMMANDERY로 되돌아간다 — 42개 테스트가 전부
+        # GREEN인 채로. 이 테스트가 그 회귀를 고정한다.
+        self.assertEqual(classify('郡', '河间郡', '河間郡'), ('KINGDOM', 6))
 
 
 class MatchingMustBeExactStemNotSubstringTest(unittest.TestCase):

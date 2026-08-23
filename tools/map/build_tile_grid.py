@@ -65,8 +65,13 @@ def build() -> dict:
         print(f"경고: {READINGS.relative_to(ROOT)} 없음 — 지명이 한자로 남는다. "
               "tools/map/build_readings.py 를 먼저 돌려라.", file=sys.stderr)
 
+    misses: list[str] = []
+
     def kr(name: str) -> str:
-        return readings.get(name, name)
+        if name not in readings:
+            misses.append(name)
+            return name
+        return readings[name]
 
     # 도로·수로·해로는 내보내지 않는다. 자동으로 그은 길이 사료와 너무 어긋나서
     # 사람이 직접 놓기로 했다(2026-08-19 사용자 지시). 계산은 terrain-grid 에 남아
@@ -103,6 +108,12 @@ def build() -> dict:
     assert all(len(r) == cols for r in grid["terrain"]) and len(grid["terrain"]) == rows, "지형 행/열"
     off = [c["name"] for c in cities if c["seat"] and grid["terrain"][c["row"]][c["col"]] == 0]
     assert not off, f"군치가 바다 위에 있다: {off[:5]}"
+    # readings.json 이 있는데 빠진 이름이 있으면 조용히 한자로 흘리지 않는다 — 그게 이번에
+    # 커밋에 한자 70건을 밀어넣은 사고다(#524 리뷰 HIGH-1). readings.json 이 아예 없을 때는
+    # 위에서 이미 경고했으니 여기서는 있는데 불완전한 경우만 잡는다.
+    if READINGS.exists() and misses:
+        sys.exit(f"readings.json 에 없는 지명 {len(misses)}개: {sorted(set(misses))[:10]}… "
+                  "tools/map/build_readings.py 를 다시 돌려라(hanja 패키지 필요).")
     return {
         "_meta": {
             "source": f"{GRID.name} + {PLACES.name}",
