@@ -27,13 +27,27 @@ Stage 1 소비자 승격이 끝나지 않았다면 gateway 서명 모드나 표�
 gateway-api·game-api·board-api 모두 즉시 부팅 예외로 죽는다(compose 재시작 루프). 4번 단계에서 값을 지울 때는 반드시
 관련된 값을 **동시에** 지워라 — 하나씩 순차 배포하지 마라.
 
-## Stage 3: 표시 클레임 발급 중단 (OPENSAM-220/#483, 코드 반영 완료 — 배포 실측 미확인)
+## Stage 3: 표시 클레임 발급 중단 (OPENSAM-220/#483, 코드 반영 + 배포 실측 완료 — 2026-08-23)
 
 Stage 1/2 게이트(모든 game-api 소비자가 `users` 조회 경로로 승격됨 — b5145ae9/#481; RS256이 코드·compose 기본 활성 경로)가
 모두 통과한 뒤, `JWT_INCLUDE_PROFILE_CLAIMS` 플래그를 끄는 대신 발급 코드 자체에서 표시 클레임(username/nickname/
 grade/picture/imgsvr)을 제거했다 — 플래그가 있으면 다음 사람이 다시 켠다. 액세스 토큰은 이제 `sub`/`iat`/`exp`/
 `token_type`/`role`(+RS256일 때 `iss`/`aud`)만 담는다. 표시 정보가 필요한 게임 서버·게시판은 `users` 행을 읽는다
 (`opensamguk.gameapi.member.toMemberProfile`). 되돌릴 수 없는 변경이므로 롤백은 이전 이미지 재배포로만 가능하다.
+
+**배포 실측(2026-08-23, team-lead, `0bb5f5224f7f21d42de90f758d921ae4a304b8b8` / run `32652837533`, 4개 잡 전부 success).**
+공유 스택(gateway-api, board-api 이미지 pull → recreate, web-gateway+nginx recreate)만 갱신했고 게임 서버 핀은
+그대로다(`=== Shared deploy complete; game server pins are unchanged ===`). 이 배포에서 RS256 컷오버 게이트가 **실제로
+발동**했음을 박스 위에서 게이트와 동일한 파이프라인(`sed|tail -1|tr -d|tr upper` → `== "RS256"`)을 값 출력 없이 재현해
+확인했다(`GATE-CONDITION: TRUE`) — `jwt_signing_mode="${jwt_signing_mode:-RS256}"` 기본값 때문에 `.env`에 값이
+없거나 비어도 게이트는 발동한다(fail-closed; 명시적으로 RS256이 아닌 값을 넣었을 때만 스킵). 게이트 본문도 **통과**했다
+— 배포 로그에 `BLOCKED:` 없이 `17:09:04.57 board-api readiness: OK` 다음 줄 `17:09:05.27 === Restarting gateway
+migrations ===`로 진행(0.7초 안에 `.env` 파싱+base64 디코드+sha256+board-api `/actuator/info`+`servers/s*.env` 루프의
+`spep-game-api /actuator/info`가 전부 돌고 4종 검사 통과). 현재 게임 서버 핀(`0220fe74`)의 `GatewayProfileClaims`
+참조자를 확인한 결과 `app/game-api`·`app/game-engine`·`web/game` 소비자는 0건이었다 — 발급 중단이 이 핀에 안전한
+이유는 "안 쓸 것"이 아니라 "참조자가 없다"이다. **여전히 미관측:** 서명측(gateway-api) `JWT_SIGNING_MODE`와 legacy
+HS256 병행 수용 여부는 이 배포로도 확인되지 않았다 — gateway-api `/actuator/info`에 jwt 블록이 없다(#525, 이 배포와
+무관하게 열려 있음). 이번 배포가 게임 서버에 반영됐다는 뜻은 아니다 — 게임 서버 승격은 `deployer` 경유로 별도다.
 
 ## 중단 조건
 
