@@ -1,7 +1,7 @@
 # PR #528 (`work/opensamguk/han-unitset-2000-crewtype`) — Independent Cross-Agent Critique
 
-Scope: data/unitset, tools/unitset + tools/assets, logic/ tests, common/ tests, app/ game-engine IT — 10 files, `b9cec50c..cdb07088`
-Verdict: cleared (see "Update 2026-08-24: re-verification after fixes" below for the current-round evidence)
+Scope: data/unitset, tools/unitset, logic/ tests, common/ tests, app/ game-engine IT — 6 non-review files (`tools/assets` sprite tooling removed from this PR in `fa3e571a`), `b9cec50c..fa3e571a`
+Verdict: cleared
 
 Reviewer: independent `code-reviewer` lane. Base `origin/main` = `b9cec50c` (verified merge-base).
 Diff read directly from git; every number below was produced by a command run in this review, not copied
@@ -316,3 +316,57 @@ independently against the actual diff/commits/test output rather than trusting t
 The new B2 test is real, meaningful, and independently mutation-confirmed. The only open item (B1,
 sprite-tooling scope) is a different reviewer's finding, already escalated by design, not a gap in this
 round's fixes — I am not treating it as blocking this verdict.
+
+## Update 2026-08-24 (2): fa3e571a — sprite-tooling files actually removed; format fix
+
+Branch moved `cdb07088` -> `fa3e571a`. The B1 item I left as "known-escalated, not blocking my
+verdict" in the previous update has now been resolved by removal, not just further disclosure.
+Re-verified independently, not from the other reviewer's or the author's claims:
+
+- `git show --stat fa3e571a` — pure deletion, `tools/assets/build_unit_prompts.py` (-455) and
+  `tools/assets/check_sprite_chroma.py` (-44), 499 lines removed, no other files touched.
+- `ls tools/assets/build_unit_prompts.py tools/assets/check_sprite_chroma.py` — both absent.
+  `grep -rln "build_unit_prompts\|check_sprite_chroma"` across `*.py/*.yml/*.md/*.kt` in the tree
+  finds nothing outside this review file's own prose.
+- History preserved on `origin/wip/opensamguk-209/sprite-chroma-tools` (fetched and confirmed both
+  files present there). One inaccuracy in the `fa3e571a` commit message: it claims the preserved
+  branch predates the vacuous-check fix (`22b55497`) and would need that fix reapplied — I checked
+  `git log` on the wip branch and it actually branches from `08cca52b` (after `22b55497`), so
+  `check_sprite_chroma.py` on that branch already has `return 1 if fails else 0`. Cosmetic
+  (commit-message-only, doesn't affect this PR's content or any test), noting it so whoever picks
+  up OPENSAM-230 doesn't duplicate a fix that's already there.
+- PR body (`gh pr view 528 --json body -q .body`) no longer describes either file as included; the
+  "고도화" section describing the `check_sprite_chroma.py` fix is gone; a new paragraph documents
+  the removal, the preservation branch, and tracking ticket OPENSAM-230.
+- Full suite re-run on `fa3e571a` after clearing stale Gradle daemons/caches that had produced one
+  spurious `NoClassDefFoundError` run and one spurious single-test-failure run (both artifacts of
+  daemon/config-cache contention from overlapping local runs, not real regressions — a clean
+  `--no-daemon --no-configuration-cache --no-build-cache` run resolved both):
+  ```
+  tools/map/tests            -> OK, Ran 28,  skipped=10
+  tools/scenario/tests       -> OK, Ran 252, skipped=1
+  tools/agent-system/tests   -> OK, Ran 9,  skipped=0
+  han_route_node_candidates.py --check   -> exit 0
+  han_route_node_selection.py --check    -> exit 0
+  validate_han_route_node_selection.py   -> exit 0, approved=780 scenarios=15
+  build_unitset.py --check   -> exit 0 ("data/unitset/units.json — 최신")
+
+  :common:test :logic:test --rerun-tasks (XML aggregated directly):
+     common: files=45  tests=256  skipped=0 failures=0 errors=0
+     logic:  files=296 tests=3320 skipped=0 failures=0 errors=0
+     UnitCatalogTest    tests=9 skipped=0 failures=0 errors=0
+     HanGateRegionsTest tests=5 skipped=0 failures=0 errors=0
+  ```
+  All numbers unchanged from the pre-removal round, as expected (nothing referenced the removed files).
+
+Separately: a peer flagged that my `Verdict:`/`Scope:` lines didn't match the gate regex
+(`^Verdict: (cleared|fix-required|quarantined-with-proof)\s*$`) because I'd appended a parenthetical
+after `cleared`, and that `Scope:` still listed `tools/assets` and a stale commit range
+(`b9cec50c..cdb07088`) after those files left the PR in `fa3e571a`. Both are fixed at the top of this
+file: `Verdict:` is now the bare anchored value, and `Scope:` reflects the current 6-file diff and
+`b9cec50c..fa3e571a`. The peer was correct that a review document with a stale declared scope is the
+same defect class as this PR's own B1 — fixed here for the same reason it was fixed there.
+
+**Verdict: cleared**, unchanged in substance from the prior update — this round confirms the one
+remaining open item from that verdict (B1) is now actually resolved by removal, and fixes this
+document's own scope/verdict staleness.
