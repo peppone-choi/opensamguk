@@ -51,8 +51,11 @@ class UnitSetTableHanTest {
         val che = assertNotNull(UnitSetTable.byId(GameUnitConst.DEFAULT_CREWTYPE))
         val han = assertNotNull(UnitSetTable.byId(UnitSetTable.defaultCrewTypeId("han")!!))
         for (tech in listOf(0, 1500, 9000)) {
-            assertEquals(che.cost * UnitSetTable.getTechCost(tech), che.costWithTech(tech))
-            assertEquals(han.rice * UnitSetTable.getTechCost(tech), han.riceWithTech(tech))
+            // costWithTech/riceWithTech 은 `x * crew / 100.0`(crew=100) 경로라 곱셈 순서가 달라
+            // ULP 단위로 어긋날 수 있다(예: 6.8999999999999995 vs 6.9) — 공식 자체는 같으므로
+            // 델타 허용 비교로 판정한다.
+            assertEquals(che.cost * UnitSetTable.getTechCost(tech), che.costWithTech(tech), 1e-9)
+            assertEquals(han.rice * UnitSetTable.getTechCost(tech), han.riceWithTech(tech), 1e-9)
         }
     }
 }
