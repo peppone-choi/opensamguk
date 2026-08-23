@@ -1,7 +1,7 @@
 # PR #528 (`work/opensamguk/han-unitset-2000-crewtype`) — Independent Cross-Agent Critique
 
-Scope: data/unitset, tools/unitset + tools/assets, logic/ tests, common/ tests, app/ game-engine IT — 8 files, `b9cec50c..a4235574`
-Verdict: fix-required
+Scope: data/unitset, tools/unitset + tools/assets, logic/ tests, common/ tests, app/ game-engine IT — 10 files, `b9cec50c..cdb07088`
+Verdict: cleared (see "Update 2026-08-24: re-verification after fixes" below for the current-round evidence)
 
 Reviewer: independent `code-reviewer` lane. Base `origin/main` = `b9cec50c` (verified merge-base).
 Diff read directly from git; every number below was produced by a command run in this review, not copied
@@ -195,3 +195,124 @@ REQUEST CHANGES (`fix-required`). Two HIGH findings at HIGH confidence: an undis
 commit that is the bulk of the diff, and 6 newly-shipped unrecruitable units that the disclosed
 scope-exclusion narrative does not cover. The titular fix (2006 -> 2000) and the B1 AND restoration
 are both correct and correctly tested; the problem is what rode along with them unannounced.
+
+## Update 2026-08-24: re-verification after fixes
+
+Branch moved `a4235574` -> `22b55497` -> `cdb07088` (PR body also rewritten). Re-ran everything myself
+in the same worktree (`/tmp/han-map-wave-unitset`), did not trust the author's claims, re-fetched and
+re-diffed from scratch. New HEAD `cdb07088`, base still `origin/main` = `b9cec50c` (re-confirmed via
+`git merge-base`).
+
+### What I re-ran
+
+```
+git diff --stat origin/main...HEAD  -> 10 files, 2271(+) 169(-), matches described set
+                                        (includes the 2 new review docs + the B2 test commit)
+
+python3 -m unittest discover -s tools/map/tests          -> OK, Ran 28,  skipped=10
+python3 -m unittest discover -s tools/scenario/tests      -> OK, Ran 252, skipped=1
+python3 -m unittest discover -s tools/agent-system/tests  -> OK, Ran 9,  skipped=0
+python3 tools/scenario/han_route_node_candidates.py --check  -> exit 0
+python3 tools/scenario/han_route_node_selection.py --check   -> exit 0
+python3 tools/scenario/validate_han_route_node_selection.py  -> exit 0
+   "approved production manifest ... approved=780 scenarios=15"
+python3 tools/unitset/build_unitset.py --check -> exit 0 ("data/unitset/units.json — 최신")
+
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test :logic:test --no-daemon --rerun-tasks
+  -> BUILD SUCCESSFUL. XML aggregated directly (glob + ElementTree, not exit code/text):
+     common: tests=256 skipped=0 failures=0 errors=0
+     logic:  tests=3320 skipped=0 failures=0 errors=0
+     UnitCatalogTest      tests=9 skipped=0 failures=0 errors=0
+     HanGateRegionsTest   tests=5 skipped=0 failures=0 errors=0
+```
+
+All numbers match the PR body's current verification section exactly (256 / 3320 / 9 / 5).
+
+### HIGH #1 (undisclosed `a9e9d901`, wrong SHAs) — RESOLVED
+
+`gh pr view 528 --json body -q .body` now: discloses `a9e9d901` by name with a description matching
+its actual diff (`git show --stat a9e9d901`: 1091(+) in `units.json`, new `build_unit_prompts.py`
+(455) and `check_sprite_chroma.py` (44), 32-line change to `build_unitset.py` — all confirmed).
+Verification section's SHAs — `34177c3f`, `b9cec50c` — both resolve to real commits
+(`git cat-file -t`) and `b9cec50c` is confirmed as the actual merge-base with `origin/main`. The
+five nonexistent cherry-pick SHAs from the old body are gone.
+
+### HIGH #2 (6 dead units 2196-2201) — RESOLVED (disclosure), not a code fix
+
+PR body now has a dedicated "이 PR로 뽑을 수 없는 것" section listing all 6 units with their gate keys
+and the reason they're unreachable, and links tracking issue #529. I independently confirmed:
+`gh issue view 529` — open, title "han 신규 郡+부족 유닛 6종(2196–2201)이 郡 게이트 키 부재로 도달 불가",
+matching. This doesn't make the units recruitable (that's PR B's job per the body, correctly scoped
+out here) — it converts a silent defect into a disclosed, tracked one, which is what the finding
+asked for.
+
+### MEDIUM (credit comment) — RESOLVED
+
+`HanGateRegionsTest.kt`'s comment now names `UnitCatalogTest` (the actual B1 coverage) instead of
+`UnitSetTableHanTest`. Confirmed via `git show 22b55497 -- logic/.../HanGateRegionsTest.kt`.
+
+### MEDIUM (`check_sprite_chroma.py` vacuous check) — RESOLVED
+
+`main()` now `return 1 if fails else 0` (was unconditional `return 0`). Confirmed via
+`git show 22b55497 -- tools/assets/check_sprite_chroma.py`. (The unguarded `sys.argv[1]` and the
+`//2` under-count I also flagged were not touched — minor, not re-flagging as blocking.)
+
+### MEDIUM (tribe-only OR bucket gap) — RESOLVED (documented, not code-changed, as expected)
+
+`build_unitset.py` now carries a comment above `gate_groups` explaining exactly what I found: only
+`tribe` is split out, `province`/`commandery`/`region`/`city`/`external` still bucket into one `_other`
+OR group, scoped out because no unit in the repo currently uses that combination. This was always a
+"make it loud" ask, not a "fix the code" ask, since there's no live bug — documentation satisfies it.
+
+### LOW (redundant assertion) — RESOLVED
+
+The second `assertTrue(units.values.any { it.reqConstraints.isEmpty() })` is removed from
+`UnitCatalogTest.kt`'s default-crew-type test (`git show 22b55497` confirms), leaving only the
+assertion that can actually fail independently.
+
+### LOW (stale "254 tests" claim) — RESOLVED
+
+Body's verification section now says `common:test -> 256 tests`, matching my measured 256 exactly (no
+staleness — the B2 test commit landed before this figure was quoted, unlike last round).
+
+### B2 (new `generic` regression, disclosed by both reviewers as the other reviewer's finding) — independently mutation-tested, CONFIRMED real
+
+Added by `cdb07088`. I did not trust either reviewer's or the author's claim of having mutation-tested
+this — reran it myself from scratch:
+
+1. Backed up `data/unitset/units.json`, edited the live source (not a build artifact — `processResources`
+   overwrites build outputs from source, so mutating the copy doesn't survive) to set
+   `sets.han.defaultCrewTypeId` from `2000` back to `2167`.
+2. `./gradlew :common:test --tests "opensamguk.common.constants.UnitCatalogTest" --rerun-tasks` ->
+   **FAILED**: `UnitCatalogTest > han 기본 병종은 generic 이다(F4)() FAILED — org.opentest4j.AssertionFailedError`
+   (the older `reqConstraints.isEmpty()`-based test in the same class stayed green, exactly as claimed
+   — 2167 has no `reqConstraints` but `generic:false`).
+3. Restored the file from backup, confirmed `git status --short` clean and
+   `build_unitset.py --check` reports "최신", then reran the full class -> 9/9 green.
+
+This independently reproduces both reviewers' mutation-testing claims. The test reads `generic`
+straight from the JSON resource (`GameUnitDetail` doesn't carry that field at runtime) and would
+catch a regression back to 2167 that the pre-existing constraint-only test misses.
+
+### B1 (sprite-tooling scope: `build_unit_prompts.py` + `check_sprite_chroma.py`, 499/1768 = 28%) — confirmed NOT addressed, and correctly so
+
+Independently reconfirmed via `git show --stat a9e9d901`: these two files are still bundled.
+`build_unit_prompts.py` (+455) and `check_sprite_chroma.py` (+44) total 499 lines of a 1768-line diff
+(28%), unrelated in cause-and-effect to the unitset/gate fix this PR is titled around. This is the other independent reviewer's B1, not mine originally, and I
+confirm it is real and still open. I was told, and independently confirm from the PR body's own "미해결로
+남긴 것" section, that this has been explicitly escalated to a human/team-lead scope decision (split into
+a separate PR vs. keep-with-disclosure) rather than silently dropped or auto-resolved. **I am not
+re-flagging it as a new HIGH from my own review** — it is a known, already-disclosed, already-tracked
+item awaiting a decision above this review's authority, not something either round of review missed.
+If a decision is needed from me: I'd lean toward splitting it (it's genuinely causally unrelated to the
+titular fix, and the disclosure paragraph, while honest, doesn't change that a reviewer of "the unitset
+fix" has to also review unrelated sprite tooling to approve it) — but that's a preference, not a blocker
+I'm asserting independently need fixing before merge, given it's already at the right decision level.
+
+### Verdict
+
+**Cleared.** Every finding from my original round (2 HIGH, 3 MEDIUM, 2 LOW) is resolved, each verified
+independently against the actual diff/commits/test output rather than trusting the author's summary.
+The new B2 test is real, meaningful, and independently mutation-confirmed. The only open item (B1,
+sprite-tooling scope) is a different reviewer's finding, already escalated by design, not a gap in this
+round's fixes — I am not treating it as blocking this verdict.
