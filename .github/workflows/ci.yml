@@ -17,21 +17,40 @@ jobs:
           fetch-depth: 0
       - name: Check provider-agnostic agent working system
         run: python3 tools/agent-system/check.py --strict --base origin/main
-      - name: Verify Han map and route-node data contracts
-        run: |
-          python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
-          python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
-          python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
-          python3 tools/scenario/han_route_node_candidates.py --check
-          python3 tools/scenario/han_route_node_selection.py --check
-          python3 tools/scenario/validate_han_route_node_selection.py
+      # Every step below runs with `!cancelled()`: a step failing must not hide
+      # whether the rest are green (2026-08-24 — check.py failing at the step
+      # above silently skipped everything after it, including the unittest
+      # discover that PRs #517/#519 both needed CI evidence for). Not
+      # `always()` — a cancelled job still shouldn't keep grinding.
+      - name: Verify Han map data contract tests
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
+      - name: Verify scenario data contract tests
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
+      - name: Verify agent-system tool tests
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
+      - name: Verify Han route-node candidates
+        if: '!cancelled()'
+        run: python3 tools/scenario/han_route_node_candidates.py --check
+      - name: Verify Han route-node selection
+        if: '!cancelled()'
+        run: python3 tools/scenario/han_route_node_selection.py --check
+      - name: Verify Han route-node selection validator
+        if: '!cancelled()'
+        run: python3 tools/scenario/validate_han_route_node_selection.py
       - name: Verify v2 sandbox compose contract
+        if: '!cancelled()'
         run: bash tools/ops/v2_sandbox_compose_contract_test.sh
       - name: Verify JWT rollout contract
+        if: '!cancelled()'
         run: python3 tools/ops/jwt_rollout_contract_test.py
       - name: Verify deploy service inventory contract
+        if: '!cancelled()'
         run: python3 tools/ops/test_deploy_service_inventory_contract.py
       - name: Verify local compose service graph
+        if: '!cancelled()'
         run: docker compose --env-file .env.example config --quiet
 
   jvm:
