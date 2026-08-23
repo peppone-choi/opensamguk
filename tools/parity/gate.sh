@@ -114,43 +114,4 @@ if ! grep -q "BUILD SUCCESSFUL" "$log_file"; then
   exit 1
 fi
 
-python3 - "$ROOT" "${xml_roots[@]}" <<'PY'
-import sys
-import xml.etree.ElementTree as ET
-from pathlib import Path
-
-root = Path(sys.argv[1])
-module_roots = [root / rel for rel in sys.argv[2:]]
-files = []
-missing_roots = []
-for module_root in module_roots:
-    module_files = sorted(module_root.glob("build/test-results/test/TEST-*.xml"))
-    if not module_files:
-        missing_roots.append(module_root.relative_to(root))
-    files.extend(module_files)
-files = sorted(files)
-if missing_roots:
-    missing = ", ".join(str(path) for path in missing_roots)
-    print(f"No Gradle test XML files found for selected module roots: {missing}", file=sys.stderr)
-    sys.exit(1)
-
-bad = []
-total_tests = 0
-for path in files:
-    tree = ET.parse(path)
-    suite = tree.getroot()
-    tests = int(float(suite.attrib.get("tests", "0")))
-    failures = int(float(suite.attrib.get("failures", "0")))
-    errors = int(float(suite.attrib.get("errors", "0")))
-    skipped = int(float(suite.attrib.get("skipped", "0")))
-    total_tests += tests
-    if failures or errors:
-        bad.append((path, tests, failures, errors, skipped))
-
-if bad:
-    for path, tests, failures, errors, skipped in bad:
-        print(f"RED {path}: tests={tests} failures={failures} errors={errors} skipped={skipped}", file=sys.stderr)
-    sys.exit(1)
-
-print(f"XML gate green: {len(files)} suites, {total_tests} tests")
-PY
+python3 "$ROOT/tools/agent-system/check_test_xml.py" --repo-root "$ROOT" "${xml_roots[@]}"

@@ -37,4 +37,5 @@
 - 실패 테스트를 삭제·skip·assertion 약화로 우회 금지. 동결 골든 불일치는 먼저 의도치 않은 회귀로 취급해 구현을 고친다. 승인된 제품 규칙 변경이라면 기대값 변경은 별도 명시 근거와 회귀 영향 기록 없이는 허용하지 않는다.
 - UI 변경은 시각/브라우저 검증 없이 "정상"이라 주장하지 않는다. 도구가 없으면 `채점대기`로 보고.
 - Testcontainers 단건 실패는 단독 재실행으로 flake 분별 후 판정(이력: `BettingUpsertFlushIT`).
+- Docker 없이 IT가 `assumeTrue(dockerAvailable)`로 skip되면 `BUILD SUCCESSFUL`이 찍혀도 그 IT는 검증된 게 아니다. `tools/agent-system/check_test_xml.py`가 test-results XML의 `skipped` 속성으로 기본 실패 판정하며, 로컬 무Docker 반복만 `OPENSAM_ALLOW_SKIPPED_IT=1`로 허용한다(스킵 목록은 항상 stderr에 찍힌다). CI는 이 opt-out을 절대 인정하지 않는다.
 - 비자명 변경은 cross-agent critique(`docs/superpowers/WORKING_SYSTEM.md` §Cross-agent critique)가 `cleared`여야 완료. `fix-required`가 남으면 ship/merge 금지.

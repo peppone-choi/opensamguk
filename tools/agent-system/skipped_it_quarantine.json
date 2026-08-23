@@ -1,0 +1,6 @@
+{
+  "opensamguk.engine.golden.LongSimReplayGateTest#12 month structural replay matches PHP golden()": {
+    "ticket": "https://github.com/peppone-choi/opensamguk/issues/521",
+    "reason": "gated on LONGSIM_SCHEMA4_CANDIDATE_DIR (external PHP golden candidate dir), not Docker; not wired into CI (CLAUDE.md P5 backlog: long-sim multi-turn). See PR #517 first CI run for the observed skip."
+  }
+}
