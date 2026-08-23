@@ -345,5 +345,106 @@ class TestFullPipelineOutput(unittest.TestCase):
                 self.assertNotIn('刺史部', c['note'], f"{p['name']}/{c['name']}")
 
 
+class TestNanyangYuyangNoteReferenceRegression(unittest.TestCase):
+    """南陽郡 育陽 註 내부 지명 참조 회귀 — 인라인 픽스처, data/chgis-source/**
+    없이도 CI 에서 항상 돈다. 育陽 註 「有小長安。」(後漢書 卷112 郡國四 원문,
+    data/corpus/hhs-112.txt:216 — 「育陽，邑。有小長安，{{*|漢軍為甄阜所破處。}}
+    有東陽聚。」)의 「小長安」은 育陽 안의 별칭 지명이지 縣이 아니다. 그런데
+    「長安」이 cnty_xy 에 京兆尹 도성 長安으로 실존하고 南陽郡 앵커에서
+    363.8km 로 MAX_KM(400km) 문턱 안에 들어 near() 를 통과해, NOTE_START
+    재동기화가 이걸 진짜 縣으로 오인했다(河南尹 「有前亭」·「有高都」와 같은
+    클래스 — CONFIRMED_NOTE_INTERNAL_REFERENCE 로 봉쇄). 아래 세그먼트는
+    data/chgis-source/junguozhi/si.html 의 「南陽郡」 블록 원문 셀을 그대로
+    옮긴 것이다(회귀 당시 실측, 2026-08 조사)."""
+
+    # data/chgis-source/junguozhi/si.html 「南陽郡」 블록 원문 셀 전체(37城
+    # 전량, 회귀 당시 실측). 涅陽‧陰‧酇‧鄧 병합(별개 미해결 결손)도 그대로
+    # 재현된다 — 실제 산출물도 checksum PASS(37=37) 로 통과하는 채 이 결손을
+    # 안고 있어, 부분 블록으로 잘라내면 city 수가 안 맞아 checksum FAIL 로
+    # main() 이 죽는다. 育陽 「長安」 회귀만 이 테스트의 대상이다.
+    SEGMENTS = [
+        ('si', '右青州刺史部，郡、國六，縣六十五。南陽郡'),
+        ('si', '三十七城，戶五十二萬八千五百五十一，口二百四十三萬九千六百一十八。'),
+        ('si', '宛'),
+        ('si', '。本申伯國。有南就聚。有瓜里津。有夕陽聚。有東武亭。冠軍邑。葉有長山，曰方城。有卷城。新野'),
+        ('si', '有東鄉，故新都。有黃郵聚。章陵故舂陵，世祖更名。有上唐鄉。西鄂雉'),
+        ('si', '魯陽'),
+        ('si', '有魯山。有牛蘭累亭。犨堵陽博望舞陰邑。比陽復陽侯國。有杏聚。平氏桐柏大復山，淮水出。有宜秋聚。棘陽'),
+        ('si', '有藍鄉。有黃淳聚。湖陽邑。隨西有斷蛇丘。育陽邑。有小長安。有東陽聚。涅陽陰酇鄧'),
+        ('si', '有鄾聚。山都侯國。酈侯國。穰'),
+        ('si', '朝陽'),
+        ('si', '蔡'),
+        ('si', '陽'),
+        ('si', '侯國。安眾侯國。筑陽侯國。有涉都鄉。武當有和成聚。順陽侯國，故博山。有須聚。成都襄鄉南鄉'),
+        ('si', '丹水'),
+        ('si', '故屬弘農。有章密鄉。有三戶亭。析故屬弘農，故楚白羽邑。有武關，在縣西。有豐鄉城。'),
+    ]
+
+    # 실제 CHGIS v6_time_cnty 좌표(회귀 재현에 필요한 것만). 「長安」은 京兆尹
+    # 도성 좌표를 그대로 넣는다 — 넣어야 near() 가 통과해 봉쇄 이전 상태를
+    # 재현한다(안 넣으면 이 테스트가 회귀 자체를 증명 못 한다). 筑陽‧順陽‧丹水
+    # ‧涅陽 은 실제 cnty_xy 에도 없다(CHGIS 결손) — 일부러 안 넣는다.
+    CNTY_XY = {
+        '宛': [(112.53547, 33.00168)], '冠軍': [(111.9222, 32.80205)],
+        '葉': [(113.30023, 33.50015)], '新野': [(112.35843, 32.52487)],
+        '章陵': [(112.77004, 31.99921)], '西鄂': [(112.61277, 33.17732)],
+        '雉': [(112.65376, 33.34375)], '魯陽': [(112.90194, 33.73712)],
+        '犨': [(113.14788, 33.65464)], '堵陽': [(113.02336, 33.25974)],
+        '博望': [(112.71764, 33.1689)], '舞陰': [(113.19347, 32.95993)],
+        '比陽': [(113.31919, 32.72317)], '平氏': [(113.07872, 32.53161)],
+        '棘陽': [(112.51661, 32.47629)], '湖陽': [(112.745, 32.40853)],
+        '隨': [(113.36982, 31.71511)], '育陽': [(112.4143, 32.78379)],
+        '山都': [(111.78699, 32.12441), (111.80595, 32.13685)],
+        '酈': [(111.79439, 33.12248)], '穰': [(112.08096, 32.68483)],
+        '朝陽': [(112.32459, 32.43506), (117.52655, 37.0117)],
+        '蔡陽': [(112.51083, 32.08644)], '安眾': [(112.28225, 32.79029)],
+        '武當': [(111.16658, 32.68161)], '成都': [(104.078, 30.65038)],
+        '襄鄉': [(112.87054, 32.22641)], '南鄉': [(107.9833, 32.32573)],
+        '析': [(111.47452, 33.30071)], '陰': [(111.62382, 32.46271)],
+        '酇': [(116.10895, 33.95912)], '鄧': [(112.09982, 32.08813)],
+        '長安': [(108.93719, 34.31799)],   # 京兆尹 도성 — 育陽과 무관, 회귀 원인
+    }
+    PREF_XY = {'南陽': [(112.535744, 33.001573)]}  # 앵커 — 실제 산출물 앵커값
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        fd, path = tempfile.mkstemp(suffix='.json')
+        import os as _os
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.nanyang = next(p for p in cls.data['places'] if p['name'] == '南陽郡')
+
+    def test_changan_note_reference_does_not_become_a_fake_county(self):
+        names = {c['name'] for c in self.nanyang['counties']}
+        self.assertNotIn('長安', names, '「有小長安」 안의 「長安」 이 育陽 註에서 縣으로 오인됐다')
+
+    def test_yuyang_is_still_resolved_correctly(self):
+        yuyang = next(c for c in self.nanyang['counties'] if c['name'] == '育陽')
+        self.assertEqual(yuyang['resolution'], 'RESOLVED_POINT')
+        self.assertEqual(yuyang['note'], '邑')
+
+    def test_real_counties_after_yuyang_are_not_swallowed(self):
+        names = {c['name'] for c in self.nanyang['counties']}
+        for real in ('山都', '酈', '穰'):
+            self.assertIn(real, names, f'{real} 이 育陽 註 오인 파편에 밀려 사라졌다')
+
+
 if __name__ == '__main__':
     unittest.main()
