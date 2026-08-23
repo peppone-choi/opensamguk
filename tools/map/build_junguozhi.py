@@ -218,6 +218,18 @@ CONFIRMED_1CHAR_NAMES = frozenset((
     '藺',   # 西河郡. ctext 원문에서 앞뒤 縣과 분리된 단독 셀, CHGIS cnty_xy 확인.
 ))
 
+# 위와 같은 「확증된 1자 縣」이지만 CHGIS cnty_xy 에도 아예 없어(좌표 无) run 안
+# 사전매치가 아니라 縣 경계 탐색 자체(PASS-A 주 스캔 루프)에서 인정해야 하는
+# 자리. (郡, 縣名) 로 못박는다 — 근거: 後漢書 卷113 郡國志 원문 〖陇〗(漢陽郡
+# 涼州刺史部 소재지 縣, data/corpus/hhs-113.txt). ctext 원문 셀은 「隴」 단독,
+# 바로 뒤 셀이 註(「州刺史治。有大阪名隴坻。豲坻聚有秦亭。…」)다. CHGIS 사전에
+# 「隴」이 없어 q=0 에서 PASS-A 직접매치가 실패, 뒤 註의 「州」까지 한 run 으로
+# 삼켜 「隴州」라는 가짜 縣名이 되고 그 여파로 뒤 顯親‧上邽 두 縣이 PASS-B
+# gap 예산(11칸)을 가짜 잔여 조각(隴州‧豲‧坻聚 3개)에 뺏겨 통째로 탈락했다.
+CONFIRMED_1CHAR_JUN_NAMES = frozenset((
+    ('漢陽郡', '隴'),
+))
+
 # NOTE_START_RUN 은 註 없는 縣 나열 구간의 끝을 「有/其/凡...」 같은 註 시작어에서
 # 끊는다. 그런데 그 글자가 진짜 縣名의 두 번째 글자로 우연히 낀 경우가 있다
 # (樂浪郡 「屯有」의 「有」 — CHGIS 사전 밖 지명이라 PASS-A 사전매치가 못 잡고,
@@ -225,6 +237,43 @@ CONFIRMED_1CHAR_NAMES = frozenset((
 # 後漢書 卷113 郡國志 원문에 〖屯有〗로 명시. 확증된 것만 예외로 뚫는다.
 CONFIRMED_NOTE_LIKE_NAMES = frozenset((
     '屯有',   # 樂浪郡. 後漢書 卷113 郡國志 원문 〖屯有〗.
+))
+
+# 縣 하나의 註가 「。」로 끝나는 절 여러 개로 이어지는 경우가 있다(雒陽 註
+# 「有唐聚。有士鄉聚。…」류). 그런 절의 첫머리가 CHGIS 상 딴 지역의 동명 縣과
+# 우연히 겹치면, 도성 河南尹처럼 CHGIS 점이 밀집한 郡에서는 400km 근접 필터도
+# 못 걸러 縣 경계로 오인된다 — 「河南尹」「河南」縣 註 「東城門名鼎門，北城門名
+# 乾祭。」(성문 東·北 이름 서술, 後漢書 卷109 郡國一 원문 확인)의 「東城」이
+# 그래서 縣으로 오인돼 뒤 진짜 縣 梁‧滎陽‧菀陵‧成皋‧匽師가 통째로 註로
+# 삼켜졌다. 확증된 절만 (郡, 절 첫머리) 로 縣 경계 시도 자체를 건너뛴다 — 뒤에
+# entry 가 안 생기면 note 조립 단계가 알아서 앞 縣(河南)의 註로 이어붙인다.
+CONFIRMED_NOTE_CONTINUATION = (
+    ('河南尹', '東城門名鼎門，'),
+    # 漢陽郡 「隴」縣 자신의 註 첫머리. ctext 원문 셀이 「州刺史治。…」로 시작하는데
+    # 앞의 「州」는 앞 셀(縣名 「隴」)과도, 이 註의 나머지(「刺史治」)와도 CHGIS/사전
+    # 매치가 없어 그대로 두면 홀로 잔여 조각("州")이 돼 gap 예산을 하나 더 먹는다.
+    # 後漢書 卷113 원문(〖陇〗刺史治。…)엔 「州」가 없다 — ctext 필사 이문으로 보고
+    # CONFIRMED_1CHAR_JUN_NAMES 로 「隴」을 먼저 자른 뒤, 이 절 전체를 註로 확정한다.
+    ('漢陽郡', '州刺史治'),
+    # 「隴」註의 나머지 두 절. 「有」로 시작해 NOTE_START 는 잡지만, 절 안의
+    # 「豲」「坻聚」가 CHGIS/사전 어디에도 없어 run/DP 가 이걸 縣 조각인 양
+    # 1+2자로 쪼갠다(後漢書 卷113 원문 확인 — 豲坻聚 는 지명 서술이지 縣이 아니다.
+    # 진짜 「豲道」 縣은 뒤 「豲道蘭干平襄…」절에 따로, 온전한 이름으로 나온다).
+    ('漢陽郡', '有大阪名隴坻'),
+    ('漢陽郡', '豲坻聚有秦亭'),
+)
+
+# 註가 다른 縣을 방향·경로 참조로만 언급하는 확증된 자리. 그 縣의 진짜 헤더는
+# 원문 뒤쪽에 註 없이 또 나온다 — 여기서 잡으면 縣이 註 위치로 밀려 뒤 縣들이
+# 통째로 어긋난다(河南尹: 卷 註 「有長城，經陽武到密。」의 「陽武」를 縣으로
+# 오인해 原武‧陽武‧中牟 나열이 밀렸다. 後漢書 卷109 郡國一 원문 확인 — 陽武 는
+# 「原武陽武中牟」에 註 없이 따로 나온다).
+CONFIRMED_NOTE_INTERNAL_REFERENCE = frozenset((
+    ('河南尹', '有長城，經陽武'),
+    ('河南尹', '有前亭'),   # 雒陽 註. 前亭 은 縣이 아니라 亭 이름(後漢書 卷109 원문).
+    ('河南尹', '有高都'),   # 新城 註 「有高都城」. 高都 는 옛 城 이름(後漢書 卷109
+                            # 원문) — 딴 郡(上黨郡)의 진짜 縣 高都 와 동명이인이라
+                            # CHGIS 매칭에 우연히 걸린다.
 ))
 
 
@@ -376,6 +425,9 @@ def main():
         n = len(rest)
         starts = [0] + [k + 1 for k, ch in enumerate(rest) if ch == '。']
         for s0 in starts:
+            if any(jun == b['jun'] and rest[s0:].startswith(prefix)
+                   for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
+                continue    # 앞 縣 註의 다음 절 — 縣 경계 시도를 건너뛴다
             q = s0
             after_residual = False   # 註 없이 이어진 縣 목록 한복판인지 표시
             while q < n:
@@ -394,6 +446,18 @@ def main():
                     q += len(hit)
                     after_residual = False
                     continue
+                # CHGIS 사전에 아예 없는 확증된 1자 縣(漢陽郡 「隴」류) — cnty_xy 에
+                # 없으니 위 hit 체크로는 못 잡는다. 좌표 없는 잔여 조각으로 잘라
+                # PASS-B 로 넘긴다(ok=False, 藺 과 같은 취급). 안 자르면 뒤 註 글자
+                # (「州」)까지 한 run 으로 삼켜 縣名 자리에 註가 섞인다.
+                if (b['jun'], rest[q]) in CONFIRMED_1CHAR_JUN_NAMES:
+                    entries.append([q, rest[q], False])
+                    q += 1
+                    if any(jun == b['jun'] and rest[q:].startswith(prefix)
+                           for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
+                        break   # 바로 뒤가 확증된 註 연속 — 縣 경계 시도를 그친다
+                    after_residual = True
+                    continue
                 if rest[q] == '。':
                     # 앞 縣을 CHGIS 매칭이 곧바로 삼켜, 그 縣 자신의 註 시작
                     # 「。」바로 위에 q 가 멈춰 서는 경우가 있다(河東郡 「安邑」
@@ -410,11 +474,22 @@ def main():
                     # 다음 「。」 전까지 CHGIS 적중(근접 필터 포함)이 다시
                     # 나오는지 앞으로 훑어보고, 나오면 거기서부터 매칭을
                     # 재개한다 — 나오면 그 사이는 註, 안 나오면 그대로 註 확정.
+                    # 그런데 이 재동기화가 註 안의 낱말(有前亭。의 「前亭」, 「經
+                    # 陽武到密。」의 「陽武」처럼 CHGIS 우연 일치·註 안 방향 참조)
+                    # 까지 縣으로 삼키는 사고가 실측됐다(河南尹: 雒陽 註 「有前亭。」
+                    # 의 「前亭」이 縣으로 오인돼 뒤 5개 진짜 縣 梁‧滎陽‧菀陵‧成皋‧
+                    # 匽師가 통째로 삼켜졌다). 「빈 tail 이면 거부」·「연달아 적중
+                    # 해야 인정」 둘 다 전역 규칙으로 시도했지만, 涪陵류 진짜
+                    # 재동기화까지 걷어차거나 蘇子‧高帝처럼 註 낱말을 縣으로 오인
+                    # 하는 반대 방향 오탐을 다른 郡 다수에서 냈다 — 둘 다 되돌렸다.
+                    # 사료로 확증된 자리만 (郡, q부터 적중까지 원문 그대로) 로 개별
+                    # 봉쇄한다 — 다른 郡의 진짜 재동기화는 그대로 둔다.
                     p = q + 1
                     resync = None
                     while p < n and rest[p] != '。':
-                        if next((True for L in (4, 3, 2)
-                                 if rest[p:p+L] in cnty_xy and near(rest[p:p+L])), False):
+                        hit_len = next((L for L in (4, 3, 2)
+                                        if rest[p:p+L] in cnty_xy and near(rest[p:p+L])), None)
+                        if hit_len and (b['jun'], rest[q:p+hit_len]) not in CONFIRMED_NOTE_INTERNAL_REFERENCE:
                             resync = p
                             break
                         p += 1
@@ -437,6 +512,11 @@ def main():
                         break
                     if any(rest[run_end:run_end+L] in cnty_xy and near(rest[run_end:run_end+L])
                            for L in (4, 3, 2, 1)):
+                        break
+                    if (b['jun'], rest[run_end]) in CONFIRMED_1CHAR_JUN_NAMES:
+                        # 확증된 1자 縣(CHGIS 사전 밖)도 run 경계로 인정한다 — 안
+                        # 그러면 DP 가 이 글자를 뒤 註 글자와 짝지어(「隴」+「州」
+                        # → 「隴州」) 縣名 자리에 註를 섞는다.
                         break
                     run_end += 1
                 run = rest[q:run_end]

@@ -99,6 +99,94 @@ class TestConfirmedNoteLikeNames(unittest.TestCase):
         self.assertIn('屯有', bj.CONFIRMED_NOTE_LIKE_NAMES)
 
 
+class TestHenanYinBoundaryRegression(unittest.TestCase):
+    """河南尹(수도) 경계 회귀 — 인라인 픽스처, data/chgis-source/** 없이도 CI 에서
+    항상 돈다. ctext.org 원문 셀은 縣/註 경계와 무관하게 잘려 있어(예: 「河南周公
+    時所城雒邑也」처럼 앞 縣 雒陽 註 한복판에 다음 縣 「河南」이 註도 구분자도 없이
+    바로 붙는다), 雒陽 註 안의 「有前亭」「東城門名鼎門」 같은 낱말이 CHGIS 사전에
+    우연히 걸리는 딴 지역 동명과 충돌하면 縣 경계로 오인돼 뒤 진짜 縣 4개(梁·熒陽
+    ·菀陵·成睪 — 熒陽/成睪 는 각각 滎陽/成皋 의 ctext 원문 이체자, CHGIS 사전엔
+    그 이체자가 없어 좌표 없이 CANDIDATE_REGION 으로 남는다)가 통째로 삼켜졌다.
+    아래 세그먼트는 data/chgis-source/junguozhi/yi.html 의 「河南尹」 블록 원문
+    셀을 그대로 옮긴 것이다(회귀 당시 실측, 2026-08 조사)."""
+
+    SEGMENTS = [
+        ('yi', '河南尹'),
+        ('yi', '二十一城，永和五年戶二十萬八千四百八十六，口百一萬八百二十七。'),
+        ('yi', '雒陽'),
+        ('yi', '周時號成周。有狄泉，在城中。有唐聚。有上程聚。有士鄉聚。有褚氏聚。'
+               '有榮錡澗。有前亭。有圉鄉。有大解城。河南周公時所城雒邑也，春秋時謂'
+               '之王城。東城門名鼎門，北城門名乾祭。又有甘城，有蒯鄉。梁故國，伯翳'
+               '後。有霍陽山。有注城。熒陽有鴻溝水。有廣武城。有总亭，总叔國。有隴'
+               '城。有薄亭。有敖亭。有費澤。卷'),
+        ('yi', '有長城，經陽武到密。有垣雝城，或曰古衡雍。有扈城亭。原武陽武中牟'),
+        ('yi', '有圃田澤。有清口水。有管城。有曲遇聚。有蔡亭。開封菀陵有棐林。有制'
+               '澤。有瑣侯亭。平陰穀城瀍水出。有函谷關。緱氏有鄔聚。有轘轅關。鞏'),
+        ('yi', '有尋谷水。有東訾聚，今名訾城。有坎埳聚。有黃亭。有湟水。有明谿泉。'
+               '成睪有旃然水。有瓶丘聚。有漫水。有汜水。京密'),
+        ('yi', '有大騩山。有梅山。有陘山。新城'),
+        ('yi', '有高都城。有廣成聚。有鄤聚，古鄤氏，今名蠻中。匽師'),
+        ('yi', '有尸鄉，春秋時曰尸氏。新鄭詩鄭國，祝融墟。平'),
+    ]
+
+    # 실제 CHGIS v6_time_cnty 좌표(RESOLVED_POINT 되는 16개만). 熒陽·菀陵·成睪·
+    # 匽師·梁은 실제 CHGIS 사전에도 이체자/결손으로 없다 — 일부러 안 넣는다
+    # (CANDIDATE_REGION 이 되는 게 맞다). 前亭·門名·鼎·東城 도 일부러 안 넣는다 —
+    # 넣으면 이 테스트가 회귀 자체를 증명 못 한다.
+    CNTY_XY = {
+        '雒陽': [(112.5963, 34.73157)], '河南': [(112.41652, 34.67085)],
+        '卷': [(113.78767, 35.03897)], '原武': [(113.96297, 35.05195)],
+        '陽武': [(114.0983, 34.98309)], '中牟': [(114.05868, 34.73158)],
+        '開封': [(114.29403, 34.59517)], '平陰': [(112.64783, 34.81961)],
+        '穀城': [(112.33608, 34.70347)], '緱氏': [(112.84392, 34.58003)],
+        '鞏': [(112.92985, 34.76676)], '京': [(113.43846, 34.71545)],
+        '密': [(113.49292, 34.44397)], '新城': [(108.85463, 34.41219)],
+        '新鄭': [(113.71909, 34.39732)], '平': [(112.94898, 34.81825)],
+    }
+    PREF_XY = {'河南': [(112.5963, 34.73157)]}   # 앵커 — 雒陽 좌표로 근사
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        import os as _os
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.henan = next(p for p in cls.data['places'] if p['name'] == '河南尹')
+
+    def test_checksum_passes_with_the_correct_21(self):
+        self.assertEqual(self.henan['checksum'], 'PASS')
+        self.assertEqual(self.henan['cities'], 21)
+        self.assertEqual(len(self.henan['counties']), 21)
+
+    def test_real_counties_are_not_swallowed_by_luoyang_note(self):
+        names = {c['name'] for c in self.henan['counties']}
+        for real in ('梁', '熒陽', '菀陵', '成睪'):
+            self.assertIn(real, names, f'{real} 이 雒陽 註에 삼켜져 사라졌다')
+
+    def test_note_fragments_do_not_become_fake_counties(self):
+        names = {c['name'] for c in self.henan['counties']}
+        for fake in ('前亭', '門名', '東城', '鼎'):
+            self.assertNotIn(fake, names, f'{fake} 은 雒陽/河南 註 안의 조각이지 縣이 아니다')
+
+
 @unittest.skipUnless(
     (ROOT / 'data/chgis-source/junguozhi/wu.html').exists() and
     (ROOT / 'data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf').exists(),
