@@ -197,3 +197,55 @@ web (gateway) / agent-system) 이 **한 번도 트리거되지 않았다** — `
 원인 미상 — 내 쪽에서 diff/구성을 건드린 결과가 아니라 GitHub 플랫폼/CI 트리거 쪽
 문제로 보인다. **CI 미확인 상태이므로 머지 여부 판단은 팀 리드/저장소 소유자 몫으로
 넘긴다.** 억지로 CI green 이라 보고하지 않는다.
+
+## 5차 — 새 브랜치 `han-map-lod-fitscale-relative` (#512 대체)
+
+팀 리드가 #506 을 머지했다(15:03:51Z, `gh pr merge --squash` — mergedBy 가 항상 계정
+공유로 `peppone-choi` 로 찍히는 건 저장소 구조상 정상이고 사람이 직접 눌렀다는 뜻이
+아니다, 팀 리드 확인). #512 는 그 뒤 `origin/main` 과 `mergeStateStatus: DIRTY /
+mergeable: CONFLICTING` 상태가 됐다 — squash 커밋(`fdc297fd`)과 #512 브랜치에 남아있던
+squash-전 개별 커밋들이 겹쳐서다. 지시대로 새 브랜치
+`work/opensamguk/han-map-lod-fitscale-relative` 를 `origin/main` 에서 새로 파고, #512
+전용 델타 커밋 2개(`18849f15` fitScale 상대화+라벨 수정, `443fdbf0` 리포트)만 깨끗하게
+cherry-pick 했다 — 충돌 0.
+
+### K 값 실측 근거 (1440×800 css, dpr=1 — 대표 뷰포트)
+```
+fitScale(1440,800,grid) = 1.0034843205574913
+marker: K=2.19 * fit = 2.197631  vs 구 절대값 2.2   diff = -0.002369 (-0.108%)
+label : K=5.48 * fit = 5.499094  vs 구 절대값 5.5   diff = -0.000906 (-0.016%)
+```
+주석의 "역산" 주장은 실측으로 확인됐다(오차 0.1%/0.02% 이내) — K 값을 고칠 필요 없음.
+
+### 문턱 불변식 실측표 — 5 뷰포트 × 2 dpr (실제 data/map/han-tiles.json, 768×669 격자)
+| css | dpr | fit | markerThresh(K·fit) | initScale | init<thresh | fit<thresh |
+|---|---|---|---|---|---|---|
+| 800×600 | 1 | 0.5575 | 1.2209 | 1.0988 | ✅ | ✅ |
+| 800×600 | 2 | 1.1150 | 2.4418 | 2.1976 | ✅ | ✅ |
+| 1280×800 | 1 | 0.8920 | 1.9534 | 1.7581 | ✅ | ✅ |
+| 1280×800 | 2 | 1.7840 | 3.9069 | 3.5162 | ✅ | ✅ |
+| 1600×900 | 1 | 1.1150 | 2.4418 | 2.1976 | ✅ | ✅ |
+| 1600×900 | 2 | 2.2300 | 4.8836 | 4.3953 | ✅ | ✅ |
+| 1920×1080 | 1 | 1.3380 | 2.9302 | 2.6372 | ✅ | ✅ |
+| 1920×1080 | 2 | 2.6760 | 5.8603 | 5.2743 | ✅ | ✅ |
+| 3013×1200 | 1 | 1.6725 | 3.6627 | 3.2964 | ✅ | ✅ |
+| 3013×1200 | 2 | 3.3449 | 7.3254 | 6.5929 | ✅ | ✅ |
+
+10/10 조합 모두 (a) `initScale < markerThresh`, (b) `fit < markerThresh` 성립. (b) 는
+`markerThresh = K·fit`, `K=2.19>1` 이라 대수적으로 항상 성립하지만, 팀 리드 요청대로 실제
+데이터·실제 함수로 재확인했다. 이 표는 임시 스크립트(비커밋)로 먼저 뽑고, 그 다음
+`export function initialView`(HanMapCanvas.tsx) 를 노출해 **실제 프로덕션 함수를 그대로
+호출하는 vitest 케이스**로 옮겨 `__tests__/HanMapCanvas.test.ts` 에 박았다 — 재구현이
+아니라 실제 함수 호출로 증명한다.
+
+### 검증(숫자)
+- `npm run typecheck` — 통과, 0 errors.
+- `npm run lint` — 경고 6건, 전부 이번 변경과 무관한 기존 파일(generals/select-pool/tournament
+  페이지, SelectRecruitField, GeneralBasicCard) — HanMapCanvas.tsx/테스트 파일 신규 경고 0.
+- `npx vitest run` — **78 files / 443 tests 통과** (신규 뷰포트×dpr 증명 테스트 1개 추가,
+  `HanMapCanvas.test.ts` 자체는 10/10).
+- `tools/agent-system/check.py --strict --base origin/main` — **Errors: 0, Warnings: 0**
+  (changed files 4).
+- 독립 리뷰: 아직 새 브랜치 기준으로 다시 안 띄웠다 — 코드 diff 자체는 #512 때 이미 두 번
+  독립 재검토(cleared)를 거친 것과 동일하고, 이번에 추가된 건 순수 검증 강화(테스트 1개 +
+  `initialView` export)뿐이다. 그래도 팀 리드 지시대로 별도 독립 리뷰어를 새로 띄운다.
