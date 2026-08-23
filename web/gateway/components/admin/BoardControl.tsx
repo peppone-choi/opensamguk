@@ -77,7 +77,7 @@ export default function BoardControl() {
                 // 어드민은 삭제분까지 봐야 조치 이력을 확인할 수 있다(공개 피드에서는 안 보인다).
                 includeDeleted: 'true',
             });
-            const response = await fetch(`/api/proxy/board/posts?${query}`, { cache: 'no-store' });
+            const response = await fetch(`/api/board/posts?${query}`, { cache: 'no-store' });
             if (!response.ok) {
                 const message = await responseMessage(response, '게시물 목록을 불러오지 못했습니다.');
                 if (latestLoad.current !== requestId) return;
@@ -114,7 +114,7 @@ export default function BoardControl() {
         setError(null);
         setNotice(null);
         try {
-            const response = await fetch(`/api/proxy/board/posts/${post.id}/pin`, {
+            const response = await fetch(`/api/board/posts/${post.id}/pin`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pinned: !post.pinned }),
@@ -148,7 +148,7 @@ export default function BoardControl() {
         setError(null);
         setNotice(null);
         try {
-            const response = await fetch(`/api/proxy/board/posts/${postId}`, { method: 'DELETE' });
+            const response = await fetch(`/api/board/posts/${postId}`, { method: 'DELETE' });
             if (response.status !== 204) {
                 setError(await responseMessage(response, '게시물을 삭제하지 못했습니다.'));
                 return;
