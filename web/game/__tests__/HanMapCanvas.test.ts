@@ -1,8 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { MAX_SCALE } from '../lib/isoMap';
+import { fitScale, MAX_SCALE } from '../lib/isoMap';
 import {
-    expandOwner, labelledRegions, labelZoomFor, seatLabel, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
+    expandOwner, type HanTiles, initialView, labelledRegions, labelZoomFor, seatLabel,
+    TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
 } from '../components/game/HanMapCanvas';
+
+const hanTiles: HanTiles = JSON.parse(
+    readFileSync(resolve(__dirname, '../../../data/map/han-tiles.json'), 'utf8'),
+);
+const grid = { cols: hanTiles._meta.cols, rows: hanTiles._meta.rows };
+const MIN_MARKER_K = Math.min(...Object.values(TIER2_MARKER_ZOOM));
 
 describe('HanMapCanvas 격자 해제', () => {
     it('런렝스를 셀 배열로 되돌린다', () => {
@@ -67,6 +76,24 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
             expect(t).toBeLessThan(MAX_SCALE);
             // 구조적 제약 — 라벨은 마커가 뜨기 전에는 뜨지 않는다.
             expect(t).toBeGreaterThanOrEqual(tierZoom(TIER2_MARKER_ZOOM, 'COUNTY', fit)!);
+        }
+    });
+
+    it('실제 격자·郡治 좌표로 5 뷰포트×2 dpr 전부에서 initialView·완전줌아웃 둘 다 마커 문턱 아래에서 시작한다', () => {
+        // 실측 데이터(data/map/han-tiles.json)로 직접 검증한다 — 그래프 상수를 다시 베낀
+        // 스크립트가 아니라 실제 initialView/fitScale 을 호출한다.
+        const viewports: [number, number][] = [[800, 600], [1280, 800], [1600, 900], [1920, 1080], [3013, 1200]];
+        for (const [cw, ch] of viewports) {
+            for (const dpr of [1, 2]) {
+                const w = cw * dpr;
+                const h = ch * dpr;
+                const fit = fitScale(w, h, grid);
+                const markerThreshold = MIN_MARKER_K * fit;
+                // (b) 완전 줌아웃(scale=fit) 은 어떤 화면에서도 문턱을 절대 못 넘는다.
+                expect(fit).toBeLessThan(markerThreshold);
+                // (a) 초기 뷰는 문턱보다 낮게 시작해 縣이 첫 화면에 안 깔린다.
+                expect(initialView(w, h, grid, hanTiles).scale).toBeLessThan(markerThreshold);
+            }
         }
     });
 });

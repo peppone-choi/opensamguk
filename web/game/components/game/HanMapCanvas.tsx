@@ -289,7 +289,7 @@ const INITIAL_SCALE_MARGIN = 0.9;
  * 문턱이 fitScale 배수로 바뀐 뒤로는 같은 좌표계에서 같은 fit 을 재사용해 상한을 건다.
  * 중심은 후한의 수도다 — 어느 방향으로 끌어도 중원이 먼저 나온다.
  */
-function initialView(w: number, h: number, g: GridSize, data: HanTiles): IsoView {
+export function initialView(w: number, h: number, g: GridSize, data: HanTiles): IsoView {
     const luo = data.juns.find((j) => j.name === '河南尹' || j.name === '하남윤') ?? data.juns[0];
     if (!luo) return centeredView(w, h, g);
     const span = 3 * junSpanCells(data.juns);
