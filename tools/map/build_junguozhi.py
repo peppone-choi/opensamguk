@@ -230,6 +230,22 @@ CONFIRMED_1CHAR_JUN_NAMES = frozenset((
     ('漢陽郡', '隴'),
 ))
 
+# 위와 같은 문제이지만 縣名이 2자 이상인 자리. CHGIS cnty_xy 에 없으면 q=0
+# PASS-A 직접매치·NOTE_START 판정 둘 다 못 미치고 곧장 run_end/DP 로 떨어져,
+# 縣名 자신이 사전(lex) DP 분절 대상이 돼 뒤 註까지 통째로 오분절된다(下記
+# 右扶風 「槐里」 — 자신은 못 잡히고, 그 결과 뒤 「周曰犬丘，高帝改」 註가
+# NOTE_START 재동기화 진입점을 잃어 DP 가 「周曰」「犬丘」「，高」「帝改」 네
+# 가짜 縣으로 쪼갠다). (郡, 縣名) 로 못박아 CONFIRMED_1CHAR_JUN_NAMES 와
+# 동일하게 좌표 없는 candidate 조각으로 자르고, 그 직후 위치가 확증된 註
+# 연속(CONFIRMED_NOTE_CONTINUATION)이면 縣 경계 시도를 그대로 그친다.
+CONFIRMED_JUN_NAMES_NO_CHGIS = frozenset((
+    # 右扶風 「槐里」— 郡治(治所) 縣. 後漢書 卷109 郡國一 원문 〖槐里〗周曰犬丘，
+    # 高帝改。(data/corpus/hhs-109.txt:224). CHGIS cnty_xy 에 「槐里」좌표가 없다
+    # (오늘날 陝西 興平 일대 — CHGIS V6 縣급 레이어 결손, pref_xy 郡治 좌표만
+    # 있을 수 있음). 좌표는 못 채우고 CANDIDATE_REGION 으로 남긴다.
+    ('右扶風', '槐里'),
+))
+
 # NOTE_START_RUN 은 註 없는 縣 나열 구간의 끝을 「有/其/凡...」 같은 註 시작어에서
 # 끊는다. 그런데 그 글자가 진짜 縣名의 두 번째 글자로 우연히 낀 경우가 있다
 # (樂浪郡 「屯有」의 「有」 — CHGIS 사전 밖 지명이라 PASS-A 사전매치가 못 잡고,
@@ -261,6 +277,27 @@ CONFIRMED_NOTE_CONTINUATION = (
     # 진짜 「豲道」 縣은 뒤 「豲道蘭干平襄…」절에 따로, 온전한 이름으로 나온다).
     ('漢陽郡', '有大阪名隴坻'),
     ('漢陽郡', '豲坻聚有秦亭'),
+    # 右扶風 「武功」 註의 세 번째 절(卷109 원문: 〖武功〗永平八年復。有太一山，
+    # 本終南。垂山，本敦物。有斜谷。data/corpus/hhs-109.txt:229). 「有太一山，
+    # 本終南。」「有斜谷。」 두 절은 「有」로 시작해 NOTE_START 재동기화가 절로
+    # 확정하지만(太一/終南/斜谷 모두 CHGIS 밖, 직접 확인), 「垂山，本敦物。」만은
+    # 「垂」로 시작해 NOTE_START 키워드가 아니라 곧장 run_end/DP 로 떨어진다.
+    # 「垂」가 사전(lex) 안 딴 지역 실존 지명(垂水 등)과 우연히 겹쳐 가짜 縣
+    # 「垂」(註 「山，本敦物」)를 냈고, 원래 槐里 절 註 파편(周曰/犬丘/，高/帝改)
+    # 4개가 채우던 PASS-B gap 예산이 그 파편 수정으로 비면서 뒤로 밀렸던 이
+    # 잔여 조각이 새로 gap 을 채워 들어왔다(right扶風 15城 상한이라 못 보이던
+    # 것이 드러남 — CANDIDATE_REGION 증가가 아니라 가짜 縣 자리바꿈이라 별도 봉쇄).
+    ('右扶風', '垂山，本敦物'),
+    # 右扶風 「武功」 註 첫 절(卷109 원문 위와 동일: 〖武功〗永平八年復。…). run_end
+    # 스캔은 이 run 을 통째로 「永平八年復」로 떼어 split_unresolved_run 의 DP 로
+    # 넘기는데, 「八年」「復」은 cnty_xy/lex 에 근접매치가 없어 DP 가 정보 없는
+    # run 을 2자씩 그리디로 짝짓는다(槐里 절의 周曰/犬丘/，高/帝改 와 같은
+    # fallback 분절) — 「永平」이 cnty_xy 에 딴 지역(江蘇 방면, >1000km) 좌표로
+    # 실존하지만 이 경로는 근접 필터를 타지 않는 lex 기반 DP 라 걸러지지 않는다.
+    # 「垂山，本敦物」 봉쇄로 gap 예산이 다시 비면서 드러났다 — PASS-A 정상
+    # hit(武功) 직후 위치라 s0 top 체크가 아니라 hit 분기 안
+    # CONFIRMED_NOTE_CONTINUATION 재확인이 잡는다.
+    ('右扶風', '永平八年復'),
 )
 
 # 註가 다른 縣을 방향·경로 참조로만 언급하는 확증된 자리. 그 縣의 진짜 헤더는
@@ -445,6 +482,22 @@ def main():
                     entries.append([q, hit, True])
                     q += len(hit)
                     after_residual = False
+                    if any(jun == b['jun'] and rest[q:].startswith(prefix)
+                           for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
+                        break   # 바로 뒤가 확증된 註 연속 — 縣 경계 시도를 그친다
+                    continue
+                # 위와 같은 문제의 2자 이상 縣名 판(右扶風 「槐里」류) — cnty_xy 에
+                # 없으니 위 hit 체크로는 못 잡는다. 먼저 시도해 자신을 잘라내야
+                # 뒤 註가 NOTE_START 재동기화 진입점을 되찾는다.
+                jun_hit = next((nm for j, nm in CONFIRMED_JUN_NAMES_NO_CHGIS
+                                if j == b['jun'] and rest[q:q+len(nm)] == nm), None)
+                if jun_hit:
+                    entries.append([q, jun_hit, False])
+                    q += len(jun_hit)
+                    if any(jun == b['jun'] and rest[q:].startswith(prefix)
+                           for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
+                        break   # 바로 뒤가 확증된 註 연속 — 縣 경계 시도를 그친다
+                    after_residual = True
                     continue
                 # CHGIS 사전에 아예 없는 확증된 1자 縣(漢陽郡 「隴」류) — cnty_xy 에
                 # 없으니 위 hit 체크로는 못 잡는다. 좌표 없는 잔여 조각으로 잘라
@@ -460,9 +513,14 @@ def main():
                     continue
                 if rest[q] == '。':
                     # 앞 縣을 CHGIS 매칭이 곧바로 삼켜, 그 縣 자신의 註 시작
-                    # 「。」바로 위에 q 가 멈춰 서는 경우가 있다(河東郡 「安邑」
-                    # 뒤 「。有鐵，有鹽池。」). 이 「。」 자체를 후보 縣名 조각으로
+                    # 구두점 바로 위에 q 가 멈춰 서는 경우가 있다(河東郡 「安邑」
+                    # 뒤 「。有鐵，有鹽池。」). 이 구두점 자체를 후보 縣名 조각으로
                     # 집어먹으면 縣名 자리에 구두점이 들어간다 — 건너뛴다.
+                    # 「，」는 여기서 같이 다루지 않는다 — 시도했다가 되돌렸다
+                    # (汝南郡 「宋公國，周名郪丘，漢改為新郪，章帝建初四年徙宋公
+                    # 於此。」처럼 註 안 산문 쉼표가 節 경계로 잘못 읽혀 진짜 縣
+                    # 北宜春 을 통째로 삼키고 가짜 「章」을 냈다). 下邳國「山，」류는
+                    # run_end 쪽만 좁게 고친다 — 아래 주석 참고.
                     q += 1
                     continue
                 if NOTE_START.match(rest, q):

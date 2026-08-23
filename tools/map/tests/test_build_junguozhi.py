@@ -187,6 +187,104 @@ class TestHenanYinBoundaryRegression(unittest.TestCase):
             self.assertNotIn(fake, names, f'{fake} 은 雒陽/河南 註 안의 조각이지 縣이 아니다')
 
 
+class TestYouFuFengBoundaryRegression(unittest.TestCase):
+    """右扶風 경계 회귀 — 인라인 픽스처, data/chgis-source/** 없이도 CI 에서 항상
+    돈다. 郡治 縣 「槐里」가 CHGIS cnty_xy 에 좌표가 없어(오늘날 陝西 興平 일대,
+    CHGIS V6 縣급 레이어 결손) PASS-A q=0 직접매치가 실패하고, 그 뒤를 잇는 縣
+    자신의 註(後漢書 卷109 郡國一 원문 〖槐里〗周曰犬丘，高帝改。data/corpus/
+    hhs-109.txt:224)가 NOTE_START 재동기화 진입점을 잃어 run_end/DP 가 사전
+    정보 없는 run 을 2자씩 그리디로 짝지어 가짜 縣 4개(周曰‧犬丘‧，高‧帝改)를
+    냈다. 같은 클래스 회귀가 「武功」 註(卷109 원문 〖武功〗永平八年復。有太一山，
+    本終南。垂山，本敦物。有斜谷。)의 「垂山，本敦物」·「永平八年復」 두 절에도
+    있다 — 「垂」「永平」어느 것도 CHGIS 근접매치가 없어 같은 DP fallback 이
+    가짜 縣 「垂」‧「永平」‧「八年」‧「復」 을 냈고, PASS-B gap 예산이 이 가짜
+    조각들에 밀려 진짜 縣 汧‧渝麋‧雍‧美陽 4개가 통째로 빠졌다(15城 checksum
+    은 가짜 개수 = 누락 개수라 우연히 PASS 로 통과했다). 아래 세그먼트는
+    data/chgis-source/junguozhi/yi.html 의 「右扶風」 블록 원문 셀을 그대로
+    옮긴 것이다(회귀 당시 실측, 2026-08 조사)."""
+
+    SEGMENTS = [
+        ('yi', '右扶風'),
+        ('yi', '十五城，戶萬七千三百五十二，口九萬三千九十一。'),
+        ('yi', '槐里'),
+        ('yi', '周曰犬丘，高帝改。安陵平陵'),
+        ('yi', '茂陵'),
+        ('yi', '鄠'),
+        ('yi', '豐'),
+        ('yi', '水出。有甘亭。郿有邰亭。武功永平八年復。有太一山，本終南。垂山，'
+               '本敦物。有斜谷。陳倉汧'),
+        ('yi', '有吳嶽山，本名汧，汧水出。有回城，名回中。渝麋侯國。雍'),
+        ('yi', '有鐵。栒邑有豳鄉。美陽有岐山，有周城。漆有漆水。有鐵。杜陽永和'
+               '二年復。'),
+    ]
+
+    # 실제 CHGIS v6_time_cnty 좌표 중 이 회귀와 무관한 것만 넣는다. 槐里(郡治
+    # 자신, CHGIS 결손) · 汧‧渝麋‧雍‧美陽(다른 사유로 CANDIDATE_REGION 이 맞는
+    # 진짜 縣) · 周曰‧犬丘‧，高‧帝改‧垂‧永平‧八年‧復(전부 가짜) 은 일부러 안
+    # 넣는다 — 넣으면 이 테스트가 회귀 자체를 증명 못 한다.
+    CNTY_XY = {
+        '安陵': [(108.6, 34.4)],  # CHGIS 결손이라 실측 아님 — CANDIDATE_REGION 확인용 최소값
+        '平陵': [(108.52646, 34.37203)], '茂陵': [(108.58281, 34.34693)],
+        '鄠': [(108.6039, 34.11182)], '郿': [(107.83877, 34.29156)],
+        '武功': [(108.10019, 34.25887)], '陳倉': [(107.27861, 34.36926)],
+        '栒邑': [(108.37369, 35.21846)], '漆': [(108.07799, 35.03966)],
+        '杜陽': [(107.55473, 34.88571)],
+    }
+    PREF_XY = {'右扶': [(108.47778, 34.27472)]}  # 앵커 — 실제 산출물 앵커값
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.youfufeng = next(p for p in cls.data['places'] if p['name'] == '右扶風')
+
+    def test_checksum_passes_with_the_correct_15(self):
+        self.assertEqual(self.youfufeng['checksum'], 'PASS')
+        self.assertEqual(self.youfufeng['cities'], 15)
+        self.assertEqual(len(self.youfufeng['counties']), 15)
+
+    def test_real_counties_are_not_swallowed(self):
+        names = {c['name'] for c in self.youfufeng['counties']}
+        for real in ('槐里', '安陵', '平陵', '茂陵', '鄠', '郿', '武功', '陳倉',
+                     '栒邑', '漆', '杜陽'):
+            self.assertIn(real, names, f'{real} 이 註 파편에 밀려 사라졌다')
+
+    def test_note_fragments_do_not_become_fake_counties(self):
+        names = {c['name'] for c in self.youfufeng['counties']}
+        for fake in ('周曰', '犬丘', '，高', '帝改', '垂', '永平', '八年', '復'):
+            self.assertNotIn(fake, names,
+                              f'{fake} 은 槐里/武功 註 안의 조각이지 縣이 아니다')
+
+    def test_huaili_note_is_reassembled_whole(self):
+        huaili = next(c for c in self.youfufeng['counties'] if c['name'] == '槐里')
+        self.assertEqual(huaili['note'], '周曰犬丘，高帝改')
+        self.assertEqual(huaili['resolution'], 'CANDIDATE_REGION')
+
+    def test_wugong_note_is_not_truncated_by_stolen_gap_slots(self):
+        wugong = next(c for c in self.youfufeng['counties'] if c['name'] == '武功')
+        self.assertEqual(wugong['note'], '永平八年復')
+
+
 @unittest.skipUnless(
     (ROOT / 'data/chgis-source/junguozhi/wu.html').exists() and
     (ROOT / 'data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf').exists(),
