@@ -83,7 +83,7 @@
     2000,
     2999
    ],
-   "defaultCrewTypeId": 2167,
+   "defaultCrewTypeId": 2000,
    "castleCrewTypeId": 2099,
    "note": "tables 로 조성에서 수치를 유도한다. 이름·출전·게이팅만 사람이 적는다."
   }
