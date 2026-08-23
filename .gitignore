@@ -19,6 +19,7 @@ web/*/out/
 .env
 .env.local
 .env.headroom.example
+.env.bak.*
 .DS_Store
 # .mcp.json은 커밋한다 (ADR-LITE-007): 토큰 무포함 원칙(값은 env 참조·대화형 OAuth),
 # 쓰기 시 protect-sensitive-files.sh가 토큰 패턴을 스캔한다.
@@ -85,7 +86,17 @@ web/*/.omc/
 # committed — #513: previously only .git/info/exclude, which check.py's
 # `git ls-files --others --exclude-standard` doesn't see, so an untracked
 # .omo/ leaked into the product-authority scan on machines that have one).
+# .omx/ and .codegraph had the same local-only-exclude gap (verified via
+# `git check-ignore -v`: both resolved to .git/info/exclude, not .gitignore,
+# on the checkout #513 was measured on).
 .omo/
+.omx/
+.codegraph
+# graphify cache output (verified untracked AND unignored on the #513
+# checkout — `git check-ignore -v` found no match at all, so it was leaking
+# into `git ls-files --others` too; harmless today only because it's all
+# .json, but it's generated output and shouldn't be scanned or committable).
+common/src/main/kotlin/graphify-out/
 
 # Local scratch directories
 parity-shots/
