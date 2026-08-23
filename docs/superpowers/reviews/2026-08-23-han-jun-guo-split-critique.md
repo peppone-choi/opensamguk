@@ -1,7 +1,7 @@
 # Review: 후한 1급 행정단위 郡/國/尹 분리 (PR #507)
 
 Scope: `tools/map/` (`junguozhi_contract.py`, `build_han_places.py`, `build_external_places.py`, `build_terrain_grid.py`, `tests/test_junguozhi_contract.py`), `tools/scenario/validate_han_route_node_selection.py`, `data/curated/han/` (`administrative-units.json` 및 route-node candidate/review-policy/selection/migration 앵커) — 1급 단위의 `groupType`/`kind` 어휘 분리와 그에 따른 PINNED 앵커 갱신
-Verdict: fix-required
+Verdict: cleared
 
 비평자는 이 변경의 작성에 관여하지 않은 별도 에이전트다. 작성자가 자기 작업을 승인하지 않았다. 작성자 보고를 전제로 삼지 않고 앵커·사료·코드를 각각 직접 재현해 대조했다. 확인하지 못한 항목은 UNKNOWN으로 남겼다.
 
@@ -141,3 +141,106 @@ web/game/components/game/HanMapCanvas.tsx:68-69
 ## 판정 근거
 
 blocker 2건이 모두 이 PR의 **핵심 주장** — "사료에 근거해 1급 단위를 올바르게 분리했다" — 을 직접 겨눈다. 하나는 분리가 파이프라인 안에서 일관되지 않다는 것이고, 다른 하나는 신설된 등급의 사료 근거가 서지 않으며 PR 자신의 105 산술과 모순된다는 것이다. 앵커 갱신은 안전하고 결정성도 재현되지만, 그 위에 실린 분류가 서지 않으면 결정성은 틀린 값을 안정적으로 재생산할 뿐이다.
+
+## Re-review 2026-08-24 (independent, commit 400e40b6)
+
+비평자는 이 재검토를 작성한 별도 에이전트다. `400e40b6`의 커밋 메시지 주장을 전제로 삼지 않고, 위 4개 blocker/minor/요청 항목을 코드·diff·사료 corpus·테스트·검증기 실행 결과로 각각 직접 재현했다. 작업은 `/Users/apple/Desktop/개인프로젝트/opensamguk-meta/worktrees/opensamguk/han-jun-guo-split` (branch `work/opensamguk/han-jun-guo-split`)에서 수행했다.
+
+**1. Blocker 1 (尹 4개 이원화) — 해소 확인.**
+
+```
+$ grep -rn "METROPOLITAN" tools/map tools/scenario   # exit code 1, zero hits
+```
+
+`git diff 4f4cfc4a..400e40b6`로 직접 diff를 읽었다. `build_external_places.py`의 左馮翊/右扶風이 `"METROPOLITAN"` → `"COMMANDERY"`로, `build_han_places.py`의 `TIER['尹']`은 원래부터 `COMMANDERY`였고 이번에 손대지 않았다(주석만 정합성 설명 추가), `junguozhi_contract.py:group_type()`의 尹/翊/風 분기도 `"METROPOLITAN"` → `"COMMANDERY"`로 바뀌었다. 3개 생산자 전부 동일한 값을 낸다 — 자기모순 해소됨.
+
+**2. Blocker 2 (인용 근거) — 해소 확인, 사료 corpus로 직접 재검증.**
+
+`tools/map/junguozhi_contract.py:238-249`의 `group_type()` docstring을 읽었다. 卷118 백관지 대신 卷117 백관지 「司隸所部郡七。河南尹一人，主京都…其京兆尹、左馮翊、右扶風三人…謂之三輔。中興都雒陽，更以河南郡爲尹…其餘弘農、河內、河東三郡」를 인용한다. 로컬 corpus로 독립 대조:
+
+```
+$ grep -n "司隶所部郡七" data/corpus/hhs-117.txt data/corpus/baiguan.txt
+data/corpus/baiguan.txt:384:...司隶所部郡七。
+data/corpus/hhs-117.txt:98:...司隶所部郡七。
+$ sed -n '100p' data/corpus/hhs-117.txt
+　　河南尹一人，主京都，特奉朝请。其京兆尹、左冯翊、右扶风三人，汉初都长安，
+皆秩中二千石，谓之三辅。中兴都雒阳，更以河南郡为尹，以三辅陵庙所在，不改其号，
+但减其秩。其餘弘农、河内、河东三郡。
+```
+
+(고서 corpus는 간체로 저장되어 있으나 자구는 번체 인용과 정확히 일치한다.) 「司隸所部郡七」 바로 다음 문장이 이 4개 단위를 나열하고 「其餘弘農、河內、河東三郡」으로 마무리하므로, 인용은 verbatim이고 완전하다. `test_junguozhi_contract.py:76-85`의 `test_group_type_splits_commandery_from_kingdom`도 확인:
+
+```python
+self.assertEqual({"COMMANDERY": 85, "KINGDOM": 20}, dict(counts))
+```
+
+`METROPOLITAN` 키가 사라졌고 85+20=105로 산술이 자기완결적이다(105 전체가 COMMANDERY/KINGDOM 두 값 안에만 있음, 더 이상 "센 집합에서 제외된 4개"가 없음). 테스트 실행 결과는 아래 5번 참조.
+
+**3. Minor (屬國 인용 절단) — 해소 확인, corpus로 직접 재검증.**
+
+`junguozhi_contract.py:237-238`은 이제 「屬國，分郡離遠縣置之，如郡差小，置本郡名」 전문을 인용한다. corpus 대조:
+
+```
+$ grep -n "分郡離遠縣置之" data/corpus/hhs-118.txt
+data/corpus/hhs-118.txt:18:...其屬國都尉。屬國，分郡離遠縣置之，如郡差小，置本郡名。世祖幷省郡縣...
+```
+
+`如郡差小，置本郡名` 포함, 절단 없음 — verbatim 일치.
+
+**4. kind 허용집합 검증 — 추가 확인, 실물 동작 검증.**
+
+`tools/map/build_external_places.py:264-269`와 `tools/map/build_han_places.py:65-70`에 각각 `ALLOWED_KIND` 상수 + load-time `raise ValueError` 어서션이 새로 생겼다. 실물 검증(트래킹 파일은 건드리지 않고, 파일 내용을 문자열로 읽어 in-memory 변조본만 `exec`):
+
+```python
+src = open('tools/map/build_han_places.py', encoding='utf-8').read()
+bad_src = src.replace("'邑': ('COUNTY', 5),", "'邑': ('BOGUS_KIND', 5),")
+exec(compile(bad_src, 'bad_copy', 'exec'), {})
+# -> ValueError: unrecognized TIER kind(s): ['BOGUS_KIND']
+```
+
+실제 파일을 정상 상태로 import하면 오류 없이 로드되고(`ALLOWED_KIND = {'KINGDOM', 'PROVINCE', 'COUNTY', 'COMMANDERY'}`), 타입값 하나를 허용집합 밖으로 바꾸면 즉시 `ValueError`가 뜬다 — 어서션이 실제로 작동함을 확인했다. 트래킹된 파일은 변경하지 않았다.
+
+**5. 결정성 & 다운스트림 체인 — 재현 확인.**
+
+```
+$ for i in 1 2 3; do python3 tools/map/audit_junguozhi_source.py --out /tmp/reverify-au-$i.json; done
+PASS groups=105/105 units=1180/1180 types={'COUNTY': 1043, 'DAO': 19, 'MARQUISATE': 108, 'TOWN': 10}  (×3, byte-identical)
+$ sha256sum /tmp/reverify-au-{1,2,3}.json data/curated/han/administrative-units.json
+2ba4bcc5...  (전부 동일 해시, PINNED_ADMINISTRATIVE_CATALOG_SHA256과도 일치)
+
+$ python3 -m unittest tools.map.tests.test_junguozhi_contract -v
+Ran 10 tests ... OK   (10/10)
+
+$ python3 -m unittest discover -s tools/scenario/tests -p "test_han_route_node*.py"
+Ran 186 tests ... OK   (186/186)
+
+$ python3 tools/scenario/validate_han_route_node_selection.py
+han route-node selection approved production manifest ...: approved=780 scenarios=15
+```
+
+4개 다운스트림 아티팩트를 `git diff 4f4cfc4a..400e40b6`로 sha256 문자열을 제외하고 대조:
+
+```
+route-node-migration-v1.json            → 0 non-sha256 changed lines
+route-node-review-policy-v1.json        → 0
+route-node-selection-candidates-v1.json → 0
+route-node-selection-v1.json            → 0
+```
+
+780개 노드 결정은 보존됨 — 커밋 메시지 주장대로 확인.
+
+**6. 새로 도입된 문제 — 없음.** `400e40b6`의 diff를 라인 단위로 읽었다(`git diff 4f4cfc4a..400e40b6 -- tools/map/*.py tools/scenario/validate_han_route_node_selection.py tools/map/tests/test_junguozhi_contract.py`). `build_terrain_grid.py`의 `SEAT_KINDS`는 `{'COMMANDERY', 'KINGDOM', 'METROPOLITAN'}` → `{'COMMANDERY', 'KINGDOM'}`로 정확히 축소됐고, 앞서 (이전 리뷰 "항목 7")에서 확인된 4-site 비교 교체는 그대로 유지된다(이번 diff가 `build_terrain_grid.py`를 이 한 군데 외에는 건드리지 않음). `PINNED_*_SHA256` 3개 값이 재계산된 해시와 정확히 맞물려 갱신되었다.
+
+**7. `tools/agent-system/check.py --strict --base origin/main` 실행 결과.**
+
+```
+- Errors: 1
+- Warnings: 0
+## Findings
+- ERROR cross-agent-critique: Unresolved Verdict: fix-required blocks completion:
+  docs/superpowers/reviews/2026-08-23-han-jun-guo-split-critique.md
+```
+
+다른 finding은 없다 — 유일한 실패 원인이 이 문서의 stale `Verdict: fix-required` 라인이라는 주장이 확인된다.
+
+**결론.** 이전 비평이 제기한 blocker 2건과 minor 1건 모두 코드·사료 corpus·테스트로 독립 재확인되었고, 새로 도입된 문제는 발견되지 않았다. 위 `Verdict:`을 `cleared`로 변경한다.
