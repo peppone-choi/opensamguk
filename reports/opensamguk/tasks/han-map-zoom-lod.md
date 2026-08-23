@@ -167,3 +167,33 @@ critic-507 가 근거를 뒤집었다: 河南尹·京兆尹·左馮翊·右扶�
   라벨 문턱이 마커 문턱보다 낮아지지 않는지 검증.
 - 3차 독립 재검토: `docs/superpowers/reviews/2026-08-24-han-map-zoom-lod-fitscale-relative-reverify.md`
   (라벨 결함 fix-required로 잡아냄) → 위 수정 반영 후 재확인 필요.
+
+## 4차 — PR #506 머지 경합 발견 + 후속 PR #512
+
+3차 수정(fitScale 상대 마커 문턱 + 절대·클램프 라벨 문턱, 커밋 `18849f15`) 을 독립
+재검토(`2026-08-24-han-map-zoom-lod-label-threshold-reverify.md`, Verdict: cleared)까지
+마치고 나서 `gh run list` 로 확인해 보니, **저장소 소유자(peppone-choi)가 이미 PR #506 을
+직접 머지했다**(`2026-08-23T15:03:51Z`, 머지 커밋 `fdc297fd`). 머지 시점이 이 3차 작업
+완료 시점보다 앞서서, `fdc297fd` 에는 2차까지의 절대 문턱 버전(`90eb5347`)만 들어가고
+3차 fitScale-상대화 + 라벨 수정(`18849f15`)은 빠졌다. **이 머지는 내가 한 게 아니다** —
+"머지 금지" 지시는 계속 지켰다.
+
+`main` 이 이미 #506 을 흡수해 닫혀서, 3차 수정을 올릴 새 PR **#512**
+(`work/opensamguk/han-map-zoom-lod` → `main`) 를 열었다. `git diff origin/main...HEAD` 로
+확인한 diff 는 6개 파일(HanMapCanvas.tsx, 3·4차 리뷰 문서 2개, 리포트, 테스트) 588
+추가/14 삭제로 깨끗하고 충돌 없음. PR 설명에 머지 경합 경위와 (b)+(a)+라벨 수정 전체
+요약·검증 계획을 적었다.
+
+### CI 트리거 이상 — 미해결, 보고만 함
+PR #512 를 열고 상당 시간이 지나도 `.github/workflows/ci.yml` (jvm / web (game) /
+web (gateway) / agent-system) 이 **한 번도 트리거되지 않았다** — `CodeRabbit` 만 붙었다
+(`state: success`, `description: "Review rate limited"`). 확인한 것:
+- `gh api .../actions/permissions` → Actions 활성화 상태(`enabled: true`).
+- `ci.yml` 의 `on:` 은 `pull_request:` 필터 없음 — #506 에서는 동일 트리거로 정상 작동했다
+  (동일 브랜치, 직전 커밋들에서 CI 4개 잡 전부 성공/실패 기록 있음).
+- PR #512 를 close → reopen 해 재트리거를 시도했으나 그래도 새 run 이 안 생겼다
+  (`gh api .../actions/runs` 로 커밋 `18849f15` 관련 run 0건 확인).
+
+원인 미상 — 내 쪽에서 diff/구성을 건드린 결과가 아니라 GitHub 플랫폼/CI 트리거 쪽
+문제로 보인다. **CI 미확인 상태이므로 머지 여부 판단은 팀 리드/저장소 소유자 몫으로
+넘긴다.** 억지로 CI green 이라 보고하지 않는다.
