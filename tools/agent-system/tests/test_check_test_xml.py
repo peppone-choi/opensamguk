@@ -156,6 +156,7 @@ class CheckTestXmlTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn("QUARANTINED: fake.LongSimReplayGateTest", result.stderr)
         self.assertIn("SKIPPED: fake.ScenarioBlankUnificationIT", result.stderr)
+        self.assertNotIn("SKIPPED: fake.LongSimReplayGateTest", result.stderr)
 
     def test_quarantine_entry_without_ticket_is_rejected(self):
         # A quarantine registration with no ticket is worse than no guard —
