@@ -22,12 +22,12 @@ Stage 1 소비자 승격이 끝나지 않았다면 gateway 서명 모드나 표�
 ### 정리 함정 — legacy 값은 전부 같이 지워야 한다
 
 `JwtTokenProvider`의 init 요구조건(`legacyKey == null ⇔ 두 accept-until 모두 null`)과 `GatewayAccessTokenVerifier.init()`
-(`common/src/main/kotlin/opensamguk/common/auth/GatewayJwtSecurity.kt:103-109`, `(legacyKey == null) == (legacyAcceptUntil == null)`)은
+(`common/src/main/kotlin/opensamguk/common/auth/GatewayJwtSecurity.kt:111-117`, `(legacyKey == null) == (legacyAcceptUntil == null)`)은
 둘 다 **전부 아니면 전무(all-or-nothing)** 짝 검사다. `JWT_LEGACY_SECRET`이나 accept-until 중 **하나만** 지우고 재배포하면
 gateway-api·game-api·board-api 모두 즉시 부팅 예외로 죽는다(compose 재시작 루프). 4번 단계에서 값을 지울 때는 반드시
 관련된 값을 **동시에** 지워라 — 하나씩 순차 배포하지 마라.
 
-## Stage 3: 표시 클레임 발급 중단 (OPENSAM-220/#483, 완료 — 2026-08-23)
+## Stage 3: 표시 클레임 발급 중단 (OPENSAM-220/#483, 코드 반영 완료 — 배포 실측 미확인)
 
 Stage 1/2 게이트(모든 game-api 소비자가 `users` 조회 경로로 승격됨 — b5145ae9/#481; RS256이 코드·compose 기본 활성 경로)가
 모두 통과한 뒤, `JWT_INCLUDE_PROFILE_CLAIMS` 플래그를 끄는 대신 발급 코드 자체에서 표시 클레임(username/nickname/
