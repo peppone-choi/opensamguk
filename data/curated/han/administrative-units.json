@@ -40,7 +40,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "河南尹",
       "canonicalGroup": "河南尹",
-      "groupType": "METROPOLITAN",
+      "groupType": "COMMANDERY",
       "declaredCities": 21,
       "enumeratedUnits": 21,
       "sourceCitation": {
@@ -1080,7 +1080,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "京兆尹",
       "canonicalGroup": "京兆尹",
-      "groupType": "METROPOLITAN",
+      "groupType": "COMMANDERY",
       "declaredCities": 10,
       "enumeratedUnits": 10,
       "sourceCitation": {
@@ -1242,7 +1242,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "左冯翊",
       "canonicalGroup": "左馮翊",
-      "groupType": "METROPOLITAN",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -1446,7 +1446,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "右扶风",
       "canonicalGroup": "右扶風",
-      "groupType": "METROPOLITAN",
+      "groupType": "COMMANDERY",
       "declaredCities": 15,
       "enumeratedUnits": 15,
       "sourceCitation": {

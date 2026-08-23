@@ -235,14 +235,20 @@ def group_type(canonical_group: str) -> str:
     """1급 행정단위(郡國) 종류 판별.
 
     續漢書 郡國志 卷113: 「凡郡、國百五」 — 郡과 國은 같은 1급 레벨의 서로 다른 종류.
-    屬國은 郡國志 卷118 百官志: 「屬國，分郡離遠縣置之，如郡」 — 郡에서 갈라져 나온
-    郡급 단위이므로 COMMANDERY. 河南尹/京兆尹/左馮翊/右扶風은 郡도 國도 아닌 수도권
-    특수 행정구역(三輔 등, 卷118 百官志 州郡)이므로 별도 METROPOLITAN.
+    屬國은 卷118 百官志 「屬國，分郡離遠縣置之，如郡差小，置本郡名」 — 郡에서 갈라져
+    나온 郡급 단위이므로 COMMANDERY.
+
+    河南尹/京兆尹/左馮翊/右扶風(三輔)도 마찬가지로 COMMANDERY다. 卷117 百官志
+    「司隸所部郡七。河南尹一人，主京都 … 其京兆尹、左馮翊、右扶風三人 … 謂之三輔。
+    中興都雒陽，更以河南郡爲尹 … 其餘弘農、河內、河東三郡」 — 司隸가 관할하는 郡이
+    일곱이라 세고, 河南郡을 尹으로 고친 것뿐이며(단위가 郡에서 다른 종류로 바뀐 게
+    아니라 장관 관직 명칭만 바뀜), "나머지 세 郡"이라 부르는 비교 대상이 곧 앞의
+    넷이다. 尹/翊/風은 郡의 장관 관직명이지 郡과 구분되는 1급 단위 종류가 아니다.
     """
     if canonical_group.endswith(("屬國", "属国")):
         return "COMMANDERY"
     if canonical_group.endswith(("尹", "翊", "風", "风")):
-        return "METROPOLITAN"
+        return "COMMANDERY"
     if canonical_group.endswith(("國", "国")):
         return "KINGDOM"
     if canonical_group.endswith("郡"):

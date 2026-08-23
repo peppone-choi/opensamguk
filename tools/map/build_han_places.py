@@ -62,6 +62,13 @@ TIER = {
     '邑': ('COUNTY', 5),
 }
 
+# kind 오타가 파이프라인 끝까지 조용히 흘러가지 않도록 여기서 막는다.
+ALLOWED_KIND = {'PROVINCE', 'COMMANDERY', 'KINGDOM', 'COUNTY'}
+_bad_tier_kinds = {kind for kind, _ in TIER.values() if kind not in ALLOWED_KIND}
+if _bad_tier_kinds:
+    raise ValueError(f'unrecognized TIER kind(s): {sorted(_bad_tier_kinds)}')
+del _bad_tier_kinds
+
 # lv8 "특" = 왕조 수도. CHGIS에 수도 플래그가 없어 저작한 목록이다 — 고증 근거를 남긴다.
 #   洛陽 후한/위 수도 · 許(허창) 196~220 헌제 파천지 · 成都 촉한 221~ · 建業 오 229~
 #   長安 후한 190~195 동탁 천도지, 이후 위 서도(西都)

@@ -76,10 +76,12 @@ class JunguozhiContractTest(unittest.TestCase):
         types = [group["groupType"] for group in self.catalog["groups"]]
         counts = Counter(types)
         # 續漢書 郡國志 卷113 「凡郡、國百五」: 75郡 + 6屬國(卷118 百官志「屬國，分郡
-        # 離遠縣置之，如郡」→ COMMANDERY) = 81, 純國 20, 尹/翊/風(METROPOLITAN) 4 = 105.
-        self.assertEqual({"COMMANDERY": 81, "KINGDOM": 20, "METROPOLITAN": 4}, dict(counts))
+        # 離遠縣置之，如郡差小，置本郡名」→ COMMANDERY) + 4尹/翊/風(卷117 百官志
+        # 「司隸所部郡七 … 更以河南郡爲尹 … 其餘弘農、河內、河東三郡」— 郡의 장관
+        # 관직명일 뿐 단위 종류가 아니므로 COMMANDERY) = 85, 純國 20 = 105.
+        self.assertEqual({"COMMANDERY": 85, "KINGDOM": 20}, dict(counts))
         self.assertEqual("KINGDOM", next(g for g in self.catalog["groups"] if g["canonicalGroup"] == "魯國")["groupType"])
-        self.assertEqual("METROPOLITAN", next(g for g in self.catalog["groups"] if g["canonicalGroup"] == "河南尹")["groupType"])
+        self.assertEqual("COMMANDERY", next(g for g in self.catalog["groups"] if g["canonicalGroup"] == "河南尹")["groupType"])
         self.assertEqual("COMMANDERY", next(g for g in self.catalog["groups"] if g["canonicalGroup"] == "廣漢屬國")["groupType"])
 
     def test_all_units_have_unique_stable_source_identities(self) -> None:

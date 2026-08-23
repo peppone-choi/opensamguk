@@ -78,11 +78,11 @@ PLACES = [
     # 續漢書 郡國志 卷113 「凡郡、國百五」: 魯國은 秦 薛郡이 高后 때 國으로 개칭된 사례.
     ("魯國", "KINGDOM", 6, "Qufu", CN, None, None,
      "郡國志 魯國 治 魯縣 = 곡부", "Shandong", 25),
-    # 卷118 百官志 州郡: 京兆尹·左馮翊·右扶風(三輔)은 郡도 國도 아닌 수도권 특수
-    # 행정구역이라 COMMANDERY 로 뭉개지 않는다.
-    ("左馮翊", "METROPOLITAN", 6, "Gaoling District", CN, None, None,
+    # 卷117 百官志 「司隸所部郡七 … 更以河南郡爲尹 … 其餘弘農、河內、河東三郡」:
+    # 尹/翊/風은 郡의 장관 관직명일 뿐 단위 종류가 郡과 다른 게 아니므로 COMMANDERY.
+    ("左馮翊", "COMMANDERY", 6, "Gaoling District", CN, None, None,
      "郡國志 左馮翊 治 高陵", "Shaanxi", 30),
-    ("右扶風", "METROPOLITAN", 6, "Xingping", CN, None, None,
+    ("右扶風", "COMMANDERY", 6, "Xingping", CN, None, None,
      "郡國志 右扶風 治 槐里 = 흥평", "Shaanxi", 30),
     ("廬江郡", "COMMANDERY", 6, "Lujiang County", CN, None, None,
      "郡國志 廬江郡 治 舒", "Anhui", 30),
@@ -260,6 +260,13 @@ HUB = {"國內城", "卒本", "北沃沮", "安邪國", "悉直國", "押督國"
        "狗邪國", "古資彌凍國", "大伽耶", "星山伽耶", "古寧伽耶",
        "夷洲", "邪馬壹國", "流求", "西羌", "白馬氐", "哀牢", "山越", "烏桓", "鮮卑", "南匈奴"}
 FIELDS = ("nameFt", "kind", "level", "modern", "country", "jun", "prov", "basis", "adm", "tol")
+
+# kind 오타가 파이프라인 끝까지 조용히 흘러가지 않도록 여기서 막는다.
+ALLOWED_KIND = {"COMMANDERY", "KINGDOM", "EXTERNAL_PLACE"}
+_bad_place_kinds = [(row[0], row[1]) for row in PLACES if row[1] not in ALLOWED_KIND]
+if _bad_place_kinds:
+    raise ValueError(f"unrecognized kind(s): {_bad_place_kinds}")
+del _bad_place_kinds
 
 
 def spread_km(cand):

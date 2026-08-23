@@ -24,10 +24,11 @@ OUT = 'data/map/terrain-grid.json'
 
 SEA, PLAIN, MOUNTAIN, RIVER, LAKE, DESERT, PLATEAU, BASIN, HILL = range(9)
 
-# 1급(郡治) 치소 kind. 郡/國/尹·翊·風(三輔)은 종류가 다르지만 지도 격자에서는 같은
-# lv6 치소다 — 郡國志 卷113 「凡郡、國百五」. build_han_places.py/build_external_places.py
+# 1급(郡治) 치소 kind. 郡/國은 같은 lv6 치소다 — 郡國志 卷113 「凡郡、國百五」.
+# 尹·翊·風(三輔)은 郡의 장관 관직명일 뿐이라 COMMANDERY 로 합류한다(卷117 百官志
+# 「司隸所部郡七…更以河南郡爲尹」). build_han_places.py/build_external_places.py
 # 의 kind 값과 맞춘다.
-SEAT_KINDS = {'COMMANDERY', 'KINGDOM', 'METROPOLITAN'}
+SEAT_KINDS = {'COMMANDERY', 'KINGDOM'}
 
 # Natural Earth 지리구역 → 지형. 칠하는 순서가 곧 우선순위다(뒤가 위를 덮는다).
 # 넓은 바탕(고원·분지·평원)을 먼저 깔고 산맥·사막을 얹는다. 사서 태그는 마지막에 온다.

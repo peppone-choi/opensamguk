@@ -4,13 +4,13 @@
     "generator": "tools/scenario/materialize_han_route_node_selection.py",
     "inputs": {
       "administrativeCatalog": {
-        "sha256": "8d1ab71c805a00f8cdb0e2502126a872ee070ff148410de989be5127cbbdc134"
+        "sha256": "2ba4bcc50b4cfc8c91e230c9e5c7927a2c9e127e47b21779d0c58cc8c5f8bf6f"
       },
       "administrativePlaceOverlay": {
         "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
       },
       "candidate": {
-        "sha256": "a62645faa62e0ce2b2bf9097982d45a4a0e9655d20f2ff0389ddcc9fa054a683"
+        "sha256": "531b377351f3dce9e9b547dbad98a8ee83ff8f823e8914d67ab1f69300551ffa"
       },
       "externalClaims": {
         "sha256": "bdc84f732351962632b5e14306b60821d2436526f35ebc6c9fc6c46ca829266e"
@@ -25,7 +25,7 @@
         "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a"
       },
       "reviewPolicy": {
-        "sha256": "662f338c8e04fd9773c52653b792b5f78ff932561998f428997294fe680203a3"
+        "sha256": "762d668db19bcf082bf69babd1c8dce0167e685a87492fa144a05b1a524484a8"
       },
       "routeNodeKeyRegistry": {
         "sha256": "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
