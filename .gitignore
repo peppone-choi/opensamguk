@@ -108,6 +108,9 @@ data/chgis-source/
 data/map/*
 # ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
 !data/map/han-tiles.json
+# Wikidata(CC0) 전용 산출물, CHGIS 입력 없음 — CHGIS 파생물이 아니므로 위 미커밋 규칙 대상이 아니다.
+# tools/map/build_external_places.py docstring 참조. han-places.json/terrain-grid.json 은 계속 미커밋.
+!data/map/external-places.json
 **/v6_*_pts*
 **/v6_*_pgn*
 **/v6_*_lin*
