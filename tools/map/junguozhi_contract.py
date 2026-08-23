@@ -149,6 +149,7 @@ class CatalogGroup(TypedDict):
     sourceVolume: int
     sourceGroupName: str
     canonicalGroup: str
+    groupType: str
     declaredCities: int | None
     enumeratedUnits: int
     sourceCitation: SourceCitation
@@ -228,6 +229,25 @@ def unit_type(name: str, remainder: str) -> str:
     if name.endswith("道"):
         return "DAO"
     return "COUNTY"
+
+
+def group_type(canonical_group: str) -> str:
+    """1급 행정단위(郡國) 종류 판별.
+
+    續漢書 郡國志 卷113: 「凡郡、國百五」 — 郡과 國은 같은 1급 레벨의 서로 다른 종류.
+    屬國은 郡國志 卷118 百官志: 「屬國，分郡離遠縣置之，如郡」 — 郡에서 갈라져 나온
+    郡급 단위이므로 COMMANDERY. 河南尹/京兆尹/左馮翊/右扶風은 郡도 國도 아닌 수도권
+    특수 행정구역(三輔 등, 卷118 百官志 州郡)이므로 별도 METROPOLITAN.
+    """
+    if canonical_group.endswith(("屬國", "属国")):
+        return "COMMANDERY"
+    if canonical_group.endswith(("尹", "翊", "風", "风")):
+        return "METROPOLITAN"
+    if canonical_group.endswith(("國", "国")):
+        return "KINGDOM"
+    if canonical_group.endswith("郡"):
+        return "COMMANDERY"
+    raise CatalogContractError(f"unrecognized group type for canonical group: {canonical_group}")
 
 
 def extract_marked_row(line: str) -> tuple[str, str] | None:
@@ -578,6 +598,7 @@ def build_catalog(corpus_dir: Path, ctext_dir: Path | None = None) -> Catalog:
                 "sourceVolume": volume,
                 "sourceGroupName": parsed_group["sourceGroupName"],
                 "canonicalGroup": canonical_group,
+                "groupType": group_type(canonical_group),
                 "declaredCities": declared,
                 "enumeratedUnits": enumerated,
                 "sourceCitation": {

@@ -55,7 +55,8 @@ def as_int(s, default):
 
 TIER = {
     '州': ('PROVINCE', 7), '刺史部': ('PROVINCE', 7),
-    '郡': ('COMMANDERY', 6), '国': ('COMMANDERY', 6), '尹': ('COMMANDERY', 6),
+    # 續漢書 郡國志 卷113 「凡郡、國百五」: 郡과 國은 같은 1급(lv6)이지만 서로 다른 종류다.
+    '郡': ('COMMANDERY', 6), '国': ('KINGDOM', 6), '尹': ('COMMANDERY', 6),
     '군': ('COMMANDERY', 6), '典农校尉': ('COMMANDERY', 6),
     '县': ('COUNTY', 5), '侯国': ('COUNTY', 5), '道': ('COUNTY', 5),
     '邑': ('COUNTY', 5),

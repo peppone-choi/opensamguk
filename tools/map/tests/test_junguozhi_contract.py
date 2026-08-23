@@ -7,6 +7,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 from unittest import mock
 
@@ -70,6 +71,16 @@ class JunguozhiContractTest(unittest.TestCase):
         self.assertEqual(105, len(set(names)))
         self.assertNotIn("巴陵秦置", names)
         self.assertNotIn("龜茲屬國", names)
+
+    def test_group_type_splits_commandery_from_kingdom(self) -> None:
+        types = [group["groupType"] for group in self.catalog["groups"]]
+        counts = Counter(types)
+        # 續漢書 郡國志 卷113 「凡郡、國百五」: 75郡 + 6屬國(卷118 百官志「屬國，分郡
+        # 離遠縣置之，如郡」→ COMMANDERY) = 81, 純國 20, 尹/翊/風(METROPOLITAN) 4 = 105.
+        self.assertEqual({"COMMANDERY": 81, "KINGDOM": 20, "METROPOLITAN": 4}, dict(counts))
+        self.assertEqual("KINGDOM", next(g for g in self.catalog["groups"] if g["canonicalGroup"] == "魯國")["groupType"])
+        self.assertEqual("METROPOLITAN", next(g for g in self.catalog["groups"] if g["canonicalGroup"] == "河南尹")["groupType"])
+        self.assertEqual("COMMANDERY", next(g for g in self.catalog["groups"] if g["canonicalGroup"] == "廣漢屬國")["groupType"])
 
     def test_all_units_have_unique_stable_source_identities(self) -> None:
         units = [unit for group in self.catalog["groups"] for unit in group["units"]]

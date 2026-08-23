@@ -24,6 +24,11 @@ OUT = 'data/map/terrain-grid.json'
 
 SEA, PLAIN, MOUNTAIN, RIVER, LAKE, DESERT, PLATEAU, BASIN, HILL = range(9)
 
+# 1급(郡治) 치소 kind. 郡/國/尹·翊·風(三輔)은 종류가 다르지만 지도 격자에서는 같은
+# lv6 치소다 — 郡國志 卷113 「凡郡、國百五」. build_han_places.py/build_external_places.py
+# 의 kind 값과 맞춘다.
+SEAT_KINDS = {'COMMANDERY', 'KINGDOM', 'METROPOLITAN'}
+
 # Natural Earth 지리구역 → 지형. 칠하는 순서가 곧 우선순위다(뒤가 위를 덮는다).
 # 넓은 바탕(고원·분지·평원)을 먼저 깔고 산맥·사막을 얹는다. 사서 태그는 마지막에 온다.
 REGION_TERRAIN = [
@@ -490,7 +495,7 @@ def fold_to_jun(places, proj, junguo):
             # 이름 매칭 블록이 따로 잡는다.
             cand = by_name.get(norm(c['name']))
             pool = cand if cand else [i for i in range(len(places))
-                                      if places[i].get('kind') != 'COMMANDERY']
+                                      if places[i].get('kind') not in SEAT_KINDS]
             ranked = sorted(
                 ((math.hypot((places[i]['lon'] - c['lon']) * math.cos(math.radians(c['lat'])),
                              places[i]['lat'] - c['lat']) * 111.0, i) for i in pool))
@@ -517,7 +522,7 @@ def fold_to_jun(places, proj, junguo):
     jun_ix = {n: k for k, n in enumerate(names)}
     misplaced = set()
     for i, pl in enumerate(places):
-        if jun_of[i] >= 0 or pl.get('kind') != 'COMMANDERY':
+        if jun_of[i] >= 0 or pl.get('kind') not in SEAT_KINDS:
             continue
         # 정확히 같은 이름이 먼저다. norm() 은 꼬리의 郡/國/屬國을 다 떼기 때문에
         # 廣漢屬國 → '廣漢' → 廣漢郡 으로 무너진다. 그러면 屬國은 제 郡을 잃고 모군에
@@ -579,7 +584,7 @@ def fold_to_jun(places, proj, junguo):
 
     for i, pl in enumerate(places):
         if (jun_of[i] < 0 and i not in misplaced and pl.get('kind') != 'PROVINCE'
-                and (pl.get('hub') or pl.get('kind') == 'COMMANDERY')):
+                and (pl.get('hub') or pl.get('kind') in SEAT_KINDS)):
             # 그 이름의 縣이 이미 다른 郡의 治所라면, 이 CHGIS 郡 점은 그 郡을 다른
             # 이름으로 한 번 더 적은 것이다(蜀郡屬國 = 漢嘉郡, 陳國 = 陳郡). 승격하면
             # 같은 자리에 郡이 둘 생긴다 — 승격하지 말고 그 郡에 흡수시킨다.
@@ -599,7 +604,7 @@ def fold_to_jun(places, proj, junguo):
     # 그러면 성 이름이 '陳郡'이 되고 바로 옆 陳縣 점과 둘로 보인다. 같은 이름의 縣이
     # 곁에 있으면 그쪽이 治所다.
     for k, i in list(seat_of.items()):
-        if places[i].get('kind') != 'COMMANDERY':
+        if places[i].get('kind') not in SEAT_KINDS:
             continue
         twin = _twin(i, places[i], False)
         if twin is not None:

@@ -98,9 +98,9 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
 )
 PINNED_ROUTE_KEY_REGISTRY_SHA256 = "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
 PINNED_SOURCE_WITNESS_SHA256 = "7fe27b667b4066200882f9e1815e07a6adb24d826f09e0605145041897f76ee4"
-PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "668165bce575a618be5f30738221fe657b30710d0c92f7e984a018711313b19f"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "1ce715b3e757b6bbb2a59115946bd0c71bbe063e0b5b68b8d2ac930d1c0a0f01"
-PINNED_REVIEW_POLICY_SHA256 = "b4a8755853f17180f3a4bc99200bfc758942199c8ead41a186f114c2568beb07"
+PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "8d1ab71c805a00f8cdb0e2502126a872ee070ff148410de989be5127cbbdc134"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "a62645faa62e0ce2b2bf9097982d45a4a0e9655d20f2ff0389ddcc9fa054a683"
+PINNED_REVIEW_POLICY_SHA256 = "662f338c8e04fd9773c52653b792b5f78ff932561998f428997294fe680203a3"
 PINNED_VALIDATION_CONTRACT_SHA256 = "83c11fc237a6f03f8699a97f56326a9a6dc65990c6460482b024e7a0ee3bef66"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -181,7 +181,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
             _allowed_keys(_mapping(row, "catalog declared mismatch"), frozenset({"canonicalGroup", "declaredCities", "enumeratedUnits", "sourceVolume"}), "catalog declared mismatch")
     for raw_group in _rows(documents.catalog, "groups"):
         group = _mapping(raw_group, "catalog group")
-        _allowed_keys(group, frozenset({"canonicalGroup", "declaredCities", "enumeratedUnits", "sourceCitation", "sourceGroupName", "sourceVolume", "traditionalTextCitation", "units"}), "catalog group")
+        _allowed_keys(group, frozenset({"canonicalGroup", "declaredCities", "enumeratedUnits", "groupType", "sourceCitation", "sourceGroupName", "sourceVolume", "traditionalTextCitation", "units"}), "catalog group")
         if "sourceCitation" in group:
             _allowed_keys(_mapping(group.get("sourceCitation"), "catalog group sourceCitation"), frozenset({"corpusPath", "line", "snapshotSha256", "sourceUrl"}), "catalog group sourceCitation")
         if "traditionalTextCitation" in group:

@@ -75,11 +75,14 @@ PLACES = [
      "郡國志 鉅鹿郡 治 廮陶 = 하북 寧晉. 상위 邢台로 잡는다", "Hebei", 45),
     ("東郡", "COMMANDERY", 6, "Puyang", CN, None, None,
      "郡國志 東郡 治 濮陽", "Henan", 30),
-    ("魯國", "COMMANDERY", 6, "Qufu", CN, None, None,
+    # 續漢書 郡國志 卷113 「凡郡、國百五」: 魯國은 秦 薛郡이 高后 때 國으로 개칭된 사례.
+    ("魯國", "KINGDOM", 6, "Qufu", CN, None, None,
      "郡國志 魯國 治 魯縣 = 곡부", "Shandong", 25),
-    ("左馮翊", "COMMANDERY", 6, "Gaoling District", CN, None, None,
+    # 卷118 百官志 州郡: 京兆尹·左馮翊·右扶風(三輔)은 郡도 國도 아닌 수도권 특수
+    # 행정구역이라 COMMANDERY 로 뭉개지 않는다.
+    ("左馮翊", "METROPOLITAN", 6, "Gaoling District", CN, None, None,
      "郡國志 左馮翊 治 高陵", "Shaanxi", 30),
-    ("右扶風", "COMMANDERY", 6, "Xingping", CN, None, None,
+    ("右扶風", "METROPOLITAN", 6, "Xingping", CN, None, None,
      "郡國志 右扶風 治 槐里 = 흥평", "Shaanxi", 30),
     ("廬江郡", "COMMANDERY", 6, "Lujiang County", CN, None, None,
      "郡國志 廬江郡 治 舒", "Anhui", 30),
