@@ -192,13 +192,66 @@ against `origin/main` before every commit in this PR (`git diff -- app/gateway-a
 No existing `assumeTrue` guard was removed or weakened — the goal was to
 surface skips, not eliminate the legitimate Docker-optional test paths.
 
+## 9. Real-world confirmation on remote CI
+
+PR #517's first remote CI run (`ubuntu-latest`, Docker alive on the runner)
+caught a genuine skip the guard was not specifically built for:
+
+```
+=== 1 SKIPPED TEST(S) DETECTED across 675 suite(s) ===
+  SKIPPED: opensamguk.engine.golden.LongSimReplayGateTest#12 month structural replay matches PHP golden()
+           (app/game-engine/build/test-results/test/TEST-opensamguk.engine.golden.LongSimReplayGateTest.xml)
+```
+
+Docker being available on the runner rules out `assumeTrue(dockerAvailable)`.
+Traced the actual cause from source (not guessed, per team lead's instruction):
+`LongSimReplayGateTest.kt:942-945` gates on `assumeTrue(candidateDir != null, ...)`,
+and `candidateDir` (`LongSimReplayGateTest.kt:616-624`) resolves from
+`LONGSIM_SCHEMA4_CANDIDATE_DIR`/`LONGSIM_CANDIDATE_DIR` — an external PHP golden
+candidate directory never wired into `.github/workflows/ci.yml`, matching
+`CLAUDE.md`'s documented P5 backlog item "long-sim multi-turn (gate dim c)".
+
+Filed [opensamguk#521](https://github.com/peppone-choi/opensamguk/issues/521)
+to track wiring or reclassifying this test. **The test itself was not touched**
+— out of scope for this guard. Root-cause finding posted verbatim to
+[PR #517's comments](https://github.com/peppone-choi/opensamguk/pull/517#issuecomment-5387055176).
+
+Since this skip is not caused by Docker availability, the blanket
+`OPENSAM_ALLOW_SKIPPED_IT` opt-out is the wrong tool (it's global, and CI never
+honors it anyway). Added a **name-scoped, ticket-required quarantine**
+(`tools/agent-system/skipped_it_quarantine.json`, commit `ec38bb45`): a JSON
+map keyed by `classname#test name`, each entry requiring a non-empty `ticket`
+and `reason`. The loader rejects the entire file if any entry is missing a
+ticket — a quarantine without a tracked ticket would be worse than no guard.
+Registered exactly the one known skip against issue #521; verified locally
+against a synthetic fixture reproducing the exact CI XML:
+
+```
+=== without registration: SKIPPED, exit 1 ===
+=== with tools/agent-system/skipped_it_quarantine.json: QUARANTINED (ticket=.../521), exit 0 ===
+```
+
+Also verified an unrelated unquarantined skip in the same run still fails
+regardless, and a quarantine entry with an empty ticket makes the whole file
+rejected — both locked in as permanent regressions
+(`test_unquarantined_skip_alongside_quarantined_still_fails`,
+`test_quarantine_entry_without_ticket_is_rejected`). Full suite: 8/8 passing.
+
+`docs/superpowers/reviews/2026-08-24-opensam-skipped-it-guard-review.md`
+records the independent reviewer's findings plus this real-world confirmation,
+satisfying `check.py --strict`'s cross-agent-critique gate (confirmed:
+`Errors: 0, Warnings: 0, No findings`).
+
 ## Status
 
-- Commits: `2debaeac` (initial guard), `5d96b2ef` (review-gap fixes).
+- Commits: `2debaeac` (initial guard), `5d96b2ef` (review-gap fixes), `ec38bb45`
+  (quarantine mechanism + review artifact).
 - PR #517 open, not merged.
 - Independent review: COMMENT verdict, all actionable findings closed except
   the one MEDIUM explicitly deferred with reasoning above and the one
   build-cache open question flagged as a known residual gap.
-- Remote CI on this exact PR head: not yet observed by me — team lead should
-  check the PR's Checks tab for the `jvm` job's new "Fail on skipped tests"
+- Remote CI on this exact PR head (pre-quarantine): observed directly —
+  `jvm` red on exactly the skip described in §9, `agent-system` red on the
+  missing cross-agent-critique artifact (now fixed by commit `ec38bb45`).
+  Team lead should re-check the PR's Checks tab after this push for green.
   step before merging.
