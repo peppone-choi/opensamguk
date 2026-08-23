@@ -8,6 +8,30 @@ import {
 } from "@/lib/serverRegistry";
 import { isPathServerId } from "@/lib/serverGameUrl";
 
+/**
+ * 프로덕션에서 `/api/game/**` 는 이 route로 온다(#516) — `web/game`의 동형 route는
+ * dev/호환용 nginx(`infra/nginx/default.conf`)에서만 도달하고, 프로덕션 제어면
+ * (`opensamguk-docker` `infra/nginx/nginx.conf`)에는 `/api/game/` location이 없어
+ * `/api/` catch-all이 잡아 여기로 온다. 두 route는 프록시 로직을 중복 보유한다 — 발산 지점과
+ * 판정(#516 조사, 2026-08-24):
+ *
+ * - 401/에러 등급 그대로 전파, SSE 401-우선-확인(#514) 동작 동일 — 검증됨(이 파일 테스트).
+ * - sam_refresh로 서버사이드 재시도 없음 — 동일. 그 쿠키는 `path=/api/auth`로 좁혀 심어져
+ *   여기서도 읽을 수 없다(web/gateway/lib/cookies.ts 참고). 401 복구는 클라이언트가
+ *   `/api/auth/me`를 거친다 — 의도된 설계, 결함 아님.
+ * - HTTP 메서드: 이쪽은 GET/POST/PATCH/DELETE, `web/game` 쪽은 GET/POST뿐 —
+ *   `web/game/lib/api.ts`의 PATCH 헬퍼는 현재 무호출(dead code)이라 실사용 격차는 없다.
+ *   의도된 차이는 아니고 단지 아직 아무도 필요로 하지 않았을 뿐 — 결함 아님, 관찰만.
+ * - fetch init에 `duplex: 'half'`가 없다(`web/game`엔 있음) — 여기서도 body는 항상
+ *   `req.text()`로 먼저 버퍼링한 문자열이라(스트리밍 아님) Node fetch가 duplex를 요구하지
+ *   않는다. 결함 아님.
+ * - 서버 선택 로직(`resolveSelectedGameApiOrigin` vs `resolveGameApiUrl`)이 다른 것은
+ *   두 앱이 서로 다른 `serverRegistry` 구현(멀티서버 게이트웨이 vs 단일 게임서버)을 쓰기
+ *   때문 — 의도된 차이.
+ *
+ * 두 route를 한 벌로 합칠지는 별도 결정 필요(#516 §5) — 이 커밋은 단기 완화(§6: 프로덕션
+ * 경로에 401 회귀 테스트 추가)만 다룬다.
+ */
 const SERVER_COOKIE = "sam_server";
 
 export const dynamic = "force-dynamic";

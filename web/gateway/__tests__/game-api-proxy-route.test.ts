@@ -21,7 +21,7 @@ vi.mock('next/headers', () => ({
 
 vi.mock('@/lib/serverRegistry', () => registryMocks);
 
-import { GET } from '@/app/api/game/[...path]/route';
+import { GET, POST } from '@/app/api/game/[...path]/route';
 
 const originalGameApiOrigin = process.env.GAME_API_ORIGIN;
 const originalServerId = process.env.SERVER_ID;
@@ -169,6 +169,35 @@ describe('game API proxy server selection', () => {
       headers: {},
       cache: 'no-store',
     });
+  });
+
+  // #516 — 이 route가 프로덕션 트래픽을 받는 실제 프록시다(web/game 쪽 동형 테스트는
+  // dev 전용 nginx location에서만 도달한다). game-api-proxy-route.test.ts(web/game):143과
+  // 동형: 401은 그대로 통과시켜야 한다 — 이 route는 sam_refresh로 서버사이드 재시도를
+  // 하지 않는다(그 쿠키는 path=/api/auth로 좁혀 심어져 여기서 읽을 수 없다; 복구는
+  // 클라이언트의 /api/auth/me 경유).
+  it('plainly passes through a 401 from an expired access — no server-side refresh', async () => {
+    cookieValues = { sam_access: 'expired-access' };
+    process.env.SERVER_ID = 'pep';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'expired' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    const response = await POST(
+      request('/api/game/select-pool/claim?server=pep'),
+      context(['select-pool', 'claim']),
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'expired' });
+    // 재시도 없음 — game-api 호출 딱 1회.
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
 
