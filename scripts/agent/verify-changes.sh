@@ -38,13 +38,15 @@ check_whitespace() {
 }
 NEED=""
 
-has '^common/'           && NEED="$NEED :common:test :logic:test"
-has '^logic/'            && NEED="$NEED :logic:test"
-has '^infra/'            && NEED="$NEED :infra:test"
-has '^app/game-engine/'  && NEED="$NEED :app:game-engine:test"
-has '^app/game-api/'     && NEED="$NEED :app:game-api:test"
-has '^app/gateway-api/'  && NEED="$NEED :app:gateway-api:test"
+XML_ROOTS=""
+has '^common/'           && NEED="$NEED :common:test :logic:test" && XML_ROOTS="$XML_ROOTS common logic"
+has '^logic/'            && NEED="$NEED :logic:test" && XML_ROOTS="$XML_ROOTS logic"
+has '^infra/'            && NEED="$NEED :infra:test" && XML_ROOTS="$XML_ROOTS infra"
+has '^app/game-engine/'  && NEED="$NEED :app:game-engine:test" && XML_ROOTS="$XML_ROOTS app/game-engine"
+has '^app/game-api/'     && NEED="$NEED :app:game-api:test" && XML_ROOTS="$XML_ROOTS app/game-api"
+has '^app/gateway-api/'  && NEED="$NEED :app:gateway-api:test" && XML_ROOTS="$XML_ROOTS app/gateway-api"
 NEED="$(printf '%s' "$NEED" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ')"
+XML_ROOTS="$(printf '%s' "$XML_ROOTS" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ')"
 
 WEB_GW=0;   has '^web/gateway/' && WEB_GW=1
 WEB_GAME=0; has '^web/game/'    && WEB_GAME=1
@@ -58,7 +60,7 @@ STRICT_CHECK=0
 echo "== 필요한 최소 검증 (docs/agent/verification.md 행렬) =="
 if [ -n "$NEED" ]; then
   echo "JAVA_HOME=\$(/usr/libexec/java_home -v 21) ./gradlew $NEED--rerun-tasks 2>&1 | tail -40"
-  echo "  → BUILD SUCCESSFUL + build/test-results/**/*.xml 의 failures=\"0\" errors=\"0\" 확인"
+  echo "  → BUILD SUCCESSFUL + build/test-results/**/*.xml 의 failures=\"0\" errors=\"0\" skipped=\"0\" 확인"
 fi
 [ $WEB_GW -eq 1 ]   && echo "cd web/gateway && pnpm typecheck"
 [ $WEB_GAME -eq 1 ] && echo "cd web/game && pnpm typecheck && pnpm test"
@@ -94,10 +96,13 @@ if [ $RUN -eq 1 ]; then
     if [ -z "$XML_FILES" ]; then
       echo "이번 실행에서 새 테스트 XML이 생성되지 않았다." >&2
       FAIL=1
-    else
-      XML_FAIL="$(printf '%s\n' "$XML_FILES" | xargs grep -lE \
-        '(failures|errors)="[1-9]' 2>/dev/null || true)"
-      if [ -n "$XML_FAIL" ]; then echo "XML 실패 감지:"; echo "$XML_FAIL"; FAIL=1; fi
+    elif [ -n "$XML_ROOTS" ]; then
+      # failures/errors + skipped 모두 여기서 판정한다 (skipped-it-guard):
+      # BUILD SUCCESSFUL은 스킵된 IT도 통과처럼 보이게 만든다. 로컬 무Docker
+      # 반복은 OPENSAM_ALLOW_SKIPPED_IT=1로만 허용하고, 그때도 스킵 목록을
+      # 눈에 띄게 찍는다(침묵 opt-out 금지).
+      # shellcheck disable=SC2086
+      "$PYTHON_BIN" tools/agent-system/check_test_xml.py $XML_ROOTS || FAIL=1
     fi
     rm -f "$START_MARKER" "$GRADLE_LOG"
   fi

@@ -21,6 +21,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
           python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
+          python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
           python3 tools/scenario/han_route_node_candidates.py --check
           python3 tools/scenario/han_route_node_selection.py --check
           python3 tools/scenario/validate_han_route_node_selection.py
@@ -45,8 +46,27 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Refuse the skipped-IT opt-out in CI
+        # OPENSAM_ALLOW_SKIPPED_IT is a local-only escape hatch for developers
+        # iterating without Docker (docs/agent/verification.md). ubuntu-latest
+        # always has Docker, so this var has no legitimate reason to be set
+        # here — if it is, something (workflow edit, secret, cached env) is
+        # trying to silence the skip gate. Fail loud instead of trusting it.
+        run: |
+          if [ -n "${OPENSAM_ALLOW_SKIPPED_IT:-}" ]; then
+            echo "OPENSAM_ALLOW_SKIPPED_IT is set in CI — this is not allowed. CI must never silence skipped IT." >&2
+            exit 1
+          fi
       - name: Build + test (Testcontainers uses the runner's Docker)
         run: ./gradlew build --no-daemon
+      - name: Fail on skipped tests (docker-gated IT must not silently skip in CI)
+        # OPENSAM_ALLOW_SKIPPED_IT is intentionally never set here: ubuntu-latest
+        # ships Docker, so any assumeTrue(dockerAvailable) skip in CI means Docker
+        # actually became unavailable on the runner and must be investigated, not
+        # waved through by a BUILD SUCCESSFUL that never ran the IT.
+        run: |
+          python3 tools/agent-system/check_test_xml.py \
+            common logic infra app/gateway-api app/game-api app/game-engine app/board-api
       - name: Surface test results
         if: always()
         run: |
