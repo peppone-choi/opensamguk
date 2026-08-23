@@ -276,7 +276,14 @@ def _glob_pattern_to_regex(pattern: str) -> re.Pattern[str]:
     the same relative-path strings pathlib.Path.glob(pattern) would, without
     ever touching the filesystem (see #513 — ROOT.glob() per pattern walks
     the whole tree once per pattern; a single git ls-files enumeration plus
-    this in-memory match replaces all 23 walks with one)."""
+    this in-memory match replaces all 24 walks with one).
+
+    Supported glob syntax only: literal segments, `*`/`?` within a segment,
+    and `**` as a whole segment (zero-or-more directories). Bracket classes
+    (`[abc]`, `[!a]`) and a `**` fused into a longer segment (`a**b`) are NOT
+    recognized as metacharacters and are silently mistranslated -- no
+    pattern in PRODUCT_AUTHORITY_SOURCE_GLOBS uses them today; don't add one
+    without extending this function first."""
     segments = pattern.split("/")
     parts: list[str] = []
     for i, segment in enumerate(segments):

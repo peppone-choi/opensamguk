@@ -1,7 +1,7 @@
 """test_check_product_authority_scan.py — #513 regression.
 
 check_product_authority_policy() used to call ROOT.glob(pattern) once per
-pattern (23 patterns, 9 of them full-tree recursive), walking the entire
+pattern (24 patterns, 9 of them full-tree recursive), walking the entire
 filesystem repeatedly. On a checkout with a large untracked-but-not-ignored
 tree (see #513) this made the guard either take ~1000s (CI timeout budget is
 5 minutes) or, once such a tree got merely gitignored, still scan tens of
@@ -11,7 +11,7 @@ from code that was never part of this repo's product surface.
 The fix: `scannable_repo_files()` enumerates the repo ONCE via
 `git ls-files --cached --others --exclude-standard` — every file git would
 ever show for this checkout, i.e. tracked, or untracked-but-not-ignored — and
-the 23 patterns are matched against that in-memory list instead of walking
+the 24 patterns are matched against that in-memory list instead of walking
 the tree per pattern.
 
 These tests assert the *property* the fix relies on — "untracked and
