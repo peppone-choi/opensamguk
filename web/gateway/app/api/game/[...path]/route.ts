@@ -9,34 +9,27 @@ import {
 import { isPathServerId } from "@/lib/serverGameUrl";
 
 /**
- * 프로덕션에서 `/api/game/**` 는 이 route로 온다(#516) — `web/game`의 동형 route는
- * dev/호환용 nginx(`infra/nginx/default.conf`)에서만 도달하고, 프로덕션 제어면
- * (`opensamguk-docker` `infra/nginx/nginx.conf`)에는 `/api/game/` location이 없어
- * `/api/` catch-all이 잡아 여기로 온다. 두 route는 프록시 로직을 중복 보유한다 — 발산 지점과
- * 판정(#516 조사, 2026-08-24):
+ * `/api/game/**` 는 dev/prod 모두 이 route 하나로 온다 — web/game은 더 이상 자체 프록시를 갖지
+ * 않는다(#516 §5 통합, 이 커밋).
  *
- * - 401 그대로 전파, SSE 401-우선-확인(#514) 동작 동일 — 검증됨(이 파일 테스트; 403 등 다른
- *   에러 등급은 양쪽 다 테스트가 없다 — 이 커밋이 만든 구멍이 아니라 기존 구멍).
- * - sam_refresh로 서버사이드 재시도 없음 — 동일. 그 쿠키는 `path=/api/auth`로 좁혀 심어져
- *   여기서도 읽을 수 없다(web/gateway/lib/cookies.ts 참고). 401 복구는 클라이언트가
- *   `/api/auth/me`를 거친다 — 의도된 설계, 결함 아님.
- * - HTTP 메서드: 이쪽은 GET/POST/PATCH/DELETE, `web/game` 쪽은 원래 GET/POST뿐이었다.
- *   `web/game/lib/api.ts:803`의 PATCH 헬퍼(`patchGameSettings`)는 무호출이 아니라
- *   `app/game/admin1/page.tsx:59`(관리자 게임설정 저장 버튼)의 살아 있는 호출자였다 — 이
- *   요청은 `BASE='/api/game'`를 거쳐 `/api/game/api/admin/game-settings`로 나가고, dev nginx
- *   (`infra/nginx/default.conf:156`)는 prefix 길이로 `/api/game/`을 `web/game` route로 보낸다.
- *   그 route에 PATCH export가 없어 Next App Router가 405를 돌려준다 — dev에서만 깨지고
- *   prod(이 route)는 정상인 실제 발산이었다(#516 리뷰 F1). `web/game`에도 PATCH/DELETE export를
- *   추가해 닫았다(대칭을 위해 DELETE도 추가 — 현재 호출자는 없지만 이 route에도 없다).
- * - fetch init에 `duplex: 'half'`가 없다(`web/game`엔 있음) — 여기서도 body는 항상
- *   `req.text()`로 먼저 버퍼링한 문자열이라(스트리밍 아님) Node fetch가 duplex를 요구하지
- *   않는다. 결함 아님.
- * - 서버 선택 로직(`resolveSelectedGameApiOrigin` vs `resolveGameApiUrl`)이 다른 것은
- *   두 앱이 서로 다른 `serverRegistry` 구현(멀티서버 게이트웨이 vs 단일 게임서버)을 쓰기
- *   때문 — 의도된 차이.
+ * 이전에 web/game이 동형 route(`app/api/game/[...path]/route.ts`)를 따로 갖고 있었을 때 실제 발산이
+ * 하나 있었다: web/gateway는 원래 GET/POST/PATCH/DELETE를 export했지만 web/game은 GET/POST뿐이었다.
+ * `web/game/lib/api.ts`의 PATCH 헬퍼(`patchGameSettings`)는 `app/game/admin1/page.tsx`(관리자
+ * 게임설정 저장 버튼)의 살아 있는 호출자였고, nginx 없이 `web/game`을 `pnpm dev`로 단독 실행하는
+ * 프론트 dev 흐름에서 그 요청이 web/game 자신의 route로 갔기 때문에 PATCH export가 없어 405가 났다
+ * (#516 리뷰 F1 — dev에서만 깨지고 이 route가 서빙하는 경로는 항상 정상이었다).
  *
- * 두 route를 한 벌로 합칠지는 별도 결정 필요(#516 §5) — 이 커밋은 단기 완화(§6: 프로덕션
- * 경로에 401 회귀 테스트 추가)만 다룬다.
+ * 근본 수정은 증상(PATCH export 추가)이 아니라 프록시를 하나로 합치는 것이었다: web/game의 route와
+ * 그 전용 `lib/serverRegistry.ts`를 삭제하고, `web/game/next.config.mjs`의 `rewrites()`가
+ * `/api/game/:path*`를 이 route로 넘긴다(docker/prod에서는 nginx `location /api/game/`가 이미 여기로
+ * 보낸다 — `infra/nginx/nginx.conf`). PATCH/DELETE·`duplex`·서버선택 로직 차이는 발산이 남을 자리
+ * 자체가 없어지면서 전부 함께 소멸했다.
+ *
+ * - 401/403 모두 그대로 전파, SSE 경로도 동일 — `!upstream.ok`는 상태코드를 특별취급하지 않는다(이
+ *   파일 테스트; #516 리뷰 F3 — 이전엔 401만 검증되어 403이 SSE에서 뭉개져도 잡지 못했다).
+ * - sam_refresh로 서버사이드 재시도 없음 — 그 쿠키는 `path=/api/auth`로 좁혀 심어져 여기서도 읽을 수
+ *   없다(web/gateway/lib/cookies.ts 참고). 401 복구는 클라이언트가 `/api/auth/me`를 거친다 — 의도된
+ *   설계, 결함 아님.
  */
 const SERVER_COOKIE = "sam_server";
 
