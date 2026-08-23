@@ -5,7 +5,7 @@
 - 대조 기준: `git diff origin/main...HEAD` (5 files, +190/-22)
 - 리뷰어: 독립 리뷰 레인 (구현자와 다른 컨텍스트). 구현자 요약을 신뢰하지 않고 diff/코드/실행으로 재검증했다.
 
-## 판정: **fix-required**
+## 1차 판정 (커밋 79ee91b5 기준) — **fix-required** · 아래 2차 재심으로 대체됨
 
 서버측 핵심 수정(A 케이스)은 정확하고 이슈의 완료 조건을 충족한다. 그러나 **클라이언트측
 `useSSE.ts` 변경이 언마운트 이후 EventSource 를 누수시키는 신규 회귀를 도입했고, 이것을
@@ -197,3 +197,144 @@ diff 는 5 파일뿐이다. 두 프록시 dedup(#516) 은 건드리지 않았고
 - 정상 경로 대조군 테스트가 있어 "401 이 401" 과 "SSE 를 깨뜨림" 이 구분된다.
 - 프로덕션 트래픽을 받는 `web/gateway` 와 dev 전용 `web/game` 을 동일하게 고쳤다.
 - 코드 주석이 (A)/(B) 구분과 그 이유를 코드 옆에 남겨, 다음 사람이 (B) 를 버그로 오인하지 않게 했다.
+
+---
+
+# 2차 재심 — 후속 커밋 `2209c08a` (2026-08-24)
+
+Scope: PR #530 / 이슈 #514 — `web/game`(프록시 라우트 + `hooks/useSSE.ts` + 테스트)와 `web/gateway`(프록시 라우트 + 테스트) 양쪽, `origin/main` 대조.
+
+Verdict: fix-required
+
+1차에서 낸 H1·H2·L1·L2 는 모두 실제로 해소됐다(아래 R1-R4, 직접 실행으로 확인). 그러나 H2 를
+고치면서 도입한 `window.location.reload()` 가 **유효한 세션을 일시적 게이트웨이 오류만으로
+로그인 화면에 내던지는 신규 회귀**를 만들었다(N1). 한 줄이면 고쳐진다.
+
+## 해소 확인
+
+### R1 — H1(좀비 EventSource) 해소됨, 회귀 테스트도 진짜다
+
+`useSSE.ts:18-21`(`aliveRef` 선언), `:62`(`.then` 첫 줄 가드), `:80,:83`(mount/cleanup 토글).
+가드 위치가 정확하다 — `sessionAlive` 분기보다 **앞**이라 만료 확정 경로의 `reload()` 까지 함께
+막는다(언마운트 후 리로드도 방지).
+
+내가 직접 뮤테이션 검증했다. `if (!aliveRef.current) return;` 한 줄만 제거:
+
+```
+× #514: does not open a zombie EventSource when unmounted while the onerror session check is in flight
+  → expected [ FakeEventSource{...}, ...(1) ] to have a length of 1 but got 2
+```
+
+가드 복원 시 GREEN. 구현자의 RED 주장은 사실이다.
+
+### R2 — H2(복구 경로 없음) 해소됨
+
+`useSSE.ts:63-68`. 리다이렉트 로직을 훅에 복제하지 않고 전체 리로드로 AuthGate 의 기존 경로를
+재사용한 선택은 옳다. 경로가 실제로 이어지는지 코드로 확인했다:
+`AuthProvider.refresh`(`lib/auth-context.tsx:28-42`)가 `/api/auth/me` 를 다시 부르고,
+401 응답 본문이 `{user: null}`(`app/api/auth/me/route.ts:59`)이므로 `data?.user` → null →
+`AuthGate.tsx:18-24` 가 게이트웨이 로그인으로 보낸다. 무한 리로드 루프는 없다 —
+리로드 후엔 AuthGate 가 `user` 없이 스피너만 그리므로 `useSSE` 자체가 마운트되지 않는다.
+
+`reload()` 제거 뮤테이션도 RED 확인:
+```
+× #514: reloads instead of looping forever once /api/auth/me confirms the session is gone
+  → expected "spy" to be called 1 times, but got 0 times
+```
+
+### R3 — H3(클라이언트 무커버리지) 해소됨
+
+`__tests__/useSSE.test.tsx` 에 2건 추가. 1차에서 요구한 3가지 중 (1)(3)을 덮는다.
+(2)(정상 세션 → backoff 재연결)는 여전히 미커버지만, 원래 동작이 회귀 없이 유지되는지는
+기존 테스트로 간접 확인되므로 블로킹하지 않는다.
+
+### R4 — L1(낡은 주석)·L2(양쪽 스타일 불일치) 해소됨
+
+`route.ts:25-26` 주석이 조건부 동작을 정확히 기술한다. `return streamEventSource(...)` 로
+양쪽이 일치한다.
+
+### R5 — 전체 스위트 재확인
+
+`web/game`: 78 files / 447 tests 통과, `tsc --noEmit` exit 0. `web/gateway` 는 이 커밋에서
+건드리지 않았고 1차에서 확인한 24 files / 174 tests · tsc clean 상태가 유효하다.
+
+## 신규 결함
+
+### [HIGH] N1 — 일시적 502 가 유효한 세션을 로그인 화면으로 내쫓는다
+
+`web/game/hooks/useSSE.ts:57,63-68`
+
+세션 판정이 `res.ok` 다. **그런데 `/api/auth/me` 는 인증 실패와 일시적 오류를 의도적으로
+구분해서 돌려준다** — `app/api/auth/me/route.ts:16-18` 의 `isAuthFailure(401|403)` 와,
+같은 파일 `:13-14` 의 명시적 계약:
+
+> 일시적 업스트림 오류는 쿠키를 건드리지 않고 **502로 전달해 유효한 7일 세션을 끊지 않는다.**
+
+`res.ok` 는 401 과 502 를 똑같이 falsy 로 뭉갠다. 그래서 게이트웨이가 잠깐 흔들려
+`/api/auth/me` 가 502 를 주면(`route.ts:36,39,52,55` — 재시작·배포·네트워크 순단),
+훅은 그걸 "세션 만료 확정"으로 읽고 `window.location.reload()` 를 부른다. 리로드 후
+`AuthProvider.refresh` 도 같은 502 를 받아 `data?.user` 가 undefined → `setUser(null)` →
+**AuthGate 가 멀쩡한 7일 세션을 가진 플레이어를 게이트웨이 로그인으로 보낸다.** 라우트가
+쿠키를 일부러 지우지 않았는데도 결과적으로 쫓겨난다.
+
+임시 프로브로 재현했다(제출 안 함, 삭제 완료). `/api/auth/me` → 502 고정:
+
+```
+reload called on transient 502: 1     ← 유효 세션인데 리로드 → 로그인 이탈
+```
+
+동작 이력으로 보면 이 경로만 계속 나빠졌다:
+
+| `/api/auth/me` 502 일 때 | 결과 |
+|---|---|
+| PR 이전 | backoff 재연결 → 자가 회복 |
+| 커밋 79ee91b5 | 재연결 영구 중단 → 조용한 정지 (1차 H2) |
+| 커밋 2209c08a | **리로드 → 로그인 이탈 (진행 중 입력 손실)** |
+
+#514 의 본질은 "인증 실패와 일시적 실패를 구분하지 못한다"였다. 지금은 그 혼동이 방향만
+뒤집힌 채, 더 파괴적인 반응과 함께 남아 있다.
+
+**수정 — 코드베이스에 이미 있는 술어를 그대로 쓰면 된다(`isAuthFailure`와 동일 기준):**
+
+```ts
+void fetch('/api/auth/me', { cache: 'no-store' })
+    .then((res) => res.status !== 401 && res.status !== 403) // 502 등 일시적 오류는 살아있는 것으로 본다
+    .catch(() => true)
+```
+
+`lib/api.ts:351` 의 `fetchGame` 이 `!refreshed.ok` 를 쓰는 건 선례가 되지 못한다 — 거기선
+결과가 "원래 401 을 그대로 반환"이라 무해하지만, 여기선 전체 리로드라 파괴적이다.
+
+### [MEDIUM] N2 — 새 테스트 2건이 전역 상태를 `afterEach` 밖에서 복원한다
+
+`__tests__/useSSE.test.tsx`
+
+- 첫 테스트: `vi.useFakeTimers()` 를 본문에서 켜고 **마지막 줄**에서 `useRealTimers()`
+- 둘째 테스트: `Object.defineProperty(window, 'location', ...)` 를 본문에서 갈고 **마지막 줄**에서 복원
+
+단언이 중간에 실패하면 복원 줄에 도달하지 못한다 → fake timer 와 목킹된 `window.location` 이
+후속 테스트로 새어나가 무관한 파일들이 연쇄 실패하고, 정작 진짜 실패 원인은 묻힌다. 지금은
+GREEN 이라 드러나지 않지만 이 두 테스트는 **회귀를 잡으라고 넣은 것**이라 언젠가 반드시
+빨개진다 — 그때 가장 시끄럽게 오작동한다. `afterEach` 로 옮기면 끝난다(기존 `afterEach`
+(`:56-58`)에 `vi.useRealTimers()` 추가 + location 복원을 `try/finally` 나 `afterEach` 로).
+
+### [LOW] N3 — 리로드는 작성 중이던 입력을 버린다
+
+만료가 진짜 확정된 경우라면 어차피 잃을 상태이므로 수용 가능하다. 다만 N1 을 고치기 전에는
+"만료가 아닌데 리로드되는" 경로가 살아 있어 실제 데이터 손실이 된다. N1 이 고쳐지면 LOW 로 남는다.
+
+## 이전 판단 유지
+
+M1(연결 수립 중 abort 불가)·M2(헤더 선전송 소실)는 구현자 말대로 비블로킹으로 유지한다.
+M1 은 이 PR 이 만든 회귀가 아니라 기존 미배선(`req.signal`)의 노출이고, M2 는 (A) 를 고치는 데
+내재된 대가로 이슈가 지시한 바다. 다만 M2 는 여전히 PR 본문/주석 어디에도 적혀 있지 않다.
+
+## 머지 전 필수
+
+1. **N1** — 세션 판정을 `res.ok` 에서 `status !== 401 && status !== 403` 으로 좁힐 것.
+   `/api/auth/me` 가 이미 401/403 과 502 를 구분해 주고 있고, 그 구분을 존중하지 않으면
+   일시적 장애가 정상 세션을 끊는다.
+2. **N2** — 새 테스트 2건의 전역 복원을 `afterEach` 로 옮길 것.
+
+N1 만 고치면 이 PR 은 clear 된다. 서버측 수정은 1차부터 계속 정확하고, H1/H2/H3/L1/L2 는
+실제로 해소됐다.

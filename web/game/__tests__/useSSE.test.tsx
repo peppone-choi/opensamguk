@@ -48,13 +48,20 @@ function Harness({ onEvent }: { onEvent: () => void }) {
 }
 
 describe('useSSE', () => {
+    let originalLocation: Location;
+
     beforeEach(() => {
         instances = [];
+        originalLocation = window.location;
         vi.stubGlobal('EventSource', FakeEventSource);
     });
 
     afterEach(() => {
+        // 개별 테스트 본문의 마지막 줄이 아니라 여기서 복원한다 — 도중에 assertion이 던지면
+        // 본문 끝의 복원 줄은 실행되지 않고 fake timers/mocked location이 다음 테스트로 샌다.
         vi.unstubAllGlobals();
+        vi.useRealTimers();
+        Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
     });
 
     it('keeps a connecting EventSource and dispatches to the latest callback', () => {
@@ -115,16 +122,14 @@ describe('useSSE', () => {
         });
 
         expect(instances).toHaveLength(1);
-        vi.unstubAllGlobals();
-        vi.useRealTimers();
     });
 
     it('#514: reloads instead of looping forever once /api/auth/me confirms the session is gone', async () => {
         const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 401 }));
         vi.stubGlobal('fetch', fetchMock);
         const reloadSpy = vi.fn();
-        const originalLocation = window.location;
-        // jsdom's window.location isn't writable-in-place; replace it for this test only.
+        // jsdom's window.location isn't writable-in-place; replace it for this test only
+        // (restored in afterEach).
         Object.defineProperty(window, 'location', {
             configurable: true,
             value: { ...originalLocation, reload: reloadSpy },
@@ -143,8 +148,34 @@ describe('useSSE', () => {
         expect(reloadSpy).toHaveBeenCalledTimes(1);
         // no new EventSource was scheduled after the confirmed-expired session.
         expect(instances).toHaveLength(1);
+    });
 
-        Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
-        vi.unstubAllGlobals();
+    it('#514: a transient 502 from /api/auth/me does not evict a still-valid session', async () => {
+        vi.useFakeTimers();
+        // /api/auth/me intentionally returns 502 (never touches cookies) for upstream hiccups —
+        // only 401/403 mean "the session is actually gone" (see app/api/auth/me/route.ts).
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 502 })));
+        const reloadSpy = vi.fn();
+        Object.defineProperty(window, 'location', {
+            configurable: true,
+            value: { ...originalLocation, reload: reloadSpy },
+        });
+
+        render(<Harness onEvent={vi.fn()} />);
+        expect(instances).toHaveLength(1);
+
+        await act(async () => {
+            instances[0].onerror?.(new Event('error'));
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(reloadSpy).not.toHaveBeenCalled();
+
+        // A 502 is transient — the existing backoff reconnect must still fire.
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(2000);
+        });
+        expect(instances).toHaveLength(2);
     });
 });

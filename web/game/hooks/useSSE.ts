@@ -56,7 +56,10 @@ export function useSSE(onEvent: () => void) {
             // 동일한 패턴으로 /api/auth/me를 불러 세션이 실제로 만료됐는지 확인한다. fetch 자체가
             // 실패하면(네트워크 장애) 일시적 문제로 보고 기존 backoff를 유지한다.
             void fetch('/api/auth/me', { cache: 'no-store' })
-                .then((res) => res.ok)
+                // /api/auth/me는 401/403만 실제 인증 실패로 본다 — 그 외(예: 502, 게이트웨이 재기동
+                // 중 일시 다운)는 세션 쿠키를 건드리지 않고 그대로 반환한다(app/api/auth/me/route.ts).
+                // res.ok로 뭉치면 그 502까지 "세션 만료"로 오판해 멀쩡한 세션을 리로드로 쫓아낸다.
+                .then((res) => res.status !== 401 && res.status !== 403)
                 .catch(() => true)
                 .then((sessionAlive) => {
                     if (!aliveRef.current) return; // 그 사이 언마운트됨 — 재연결 예약 금지(좀비 방지)
