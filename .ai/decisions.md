@@ -631,6 +631,43 @@
 - Open: 새 지도의 투영 방식, 공간 해상도, 도로 건설 주체와 비용, 이동 시간, 전투 발생 위치는 후속 설계에서 확정한다.
 - Approved by: 사용자("아이소 격자도 맘에 안드는데, 새로 만들고 싶어", 2026-08-22)
 
+## ADR-LITE-046 `data/map/external-places.json` 은 ADR-LITE-039 CHGIS 격리 대상이 아니다
+
+- Date: 2026-08-24
+- Status: approved
+- Decision: `data/map/external-places.json`(Wikidata SPARQL 산출, `tools/map/build_external_places.py`)
+  을 커밋한다. `.gitignore` 의 `data/map/*` 블랭킷 미커밋 규칙에서 `!data/map/han-tiles.json`
+  과 같은 자리에 별도 예외로 추가한다. **이 결정은 `external-places.json` 하나에만 적용된다** —
+  `data/map/han-places.json`, `data/map/terrain-grid.json`, `data/chgis-source/` 는 이 결정으로
+  바뀌지 않으며 계속 git-ignore·미커밋이다. ADR-LITE-040(han-tiles.json 서빙 예외)의 범위를
+  넓히는 것도 아니다 — ADR-LITE-040 은 "게임이 서빙하는 타일 파일 하나"로 명시적으로 좁혀 놓은
+  결정이라 이 파일에 자동 적용되지 않는다는 점을 근거로 별도 항목으로 기록한다.
+- Context: `tools/map/build_external_places.py` docstring: "CHGIS 커버리지 밖 지점 — 좌표를
+  Wikidata(CC0)에서 받는다. 입력 없음(Wikidata SPARQL)". CHGIS shapefile 을 전혀 읽지 않는다 —
+  존재 이유 자체가 CHGIS V6 가 현대 중국 국경 안만 담아 交州 남부 3郡·樂浪·帶方이 원본에 없다는
+  결손을 메우기 위함이다(항목마다 Wikidata QID 로 검증 가능). ADR-LITE-039 가 격리한 대상은
+  CHGIS 직접 파생물(`han-places.json`→`terrain-grid.json`)이고, 이 파일은 그 계열이 아니다.
+  실제 재생성 체인 4단계 중 1~3(원본 shapefile→han-places.json→terrain-grid.json)만 CHGIS
+  라이선스 위험을 승계하고, 4(han-tiles.json)만 ADR-LITE-040 으로 승인됐다 — `external-places.json`
+  은 이 체인 밖에서 독립적으로 생성되는 5번째 산출물이다. 이 구분이 흐려져서
+  `han-places.json` 까지 같이 커밋 대상으로 딸려 올라가는 걸 막는 게 이 항목의 목적이다.
+  `data/map/junguozhi.json` 도 CHGIS 파생이 아니라는 관찰(Wikidata `external-places.json` +
+  공개 사료 코퍼스에서 생성)이 있었으나, 이번 결정은 그 파일까지 확장하지 않는다 — 필요해지면
+  그때 별도 판단한다.
+- Alternatives: (1) 테스트 코드에 경로 오버라이드로 gitignored 픽스처 대체 — 라이선스 위험
+  자체를 없애지 못하고 CI 신선한 체크아웃에서 여전히 같은 파일 부재가 반복될 뿐이라 기각.
+  (2) `assumeTrue`/`skipIf` 로 조용히 건너뛰기 — pytest 30건 회귀가 CI 에서 한 번도 실행되지
+  않는 상태를 영구화하므로 기각.
+- Consequences: `tools/map/tests/test_route_*` pytest 3종이 신선한 체크아웃에서
+  `FileNotFoundError` 없이 실행된다 — `.github/workflows/ci.yml` 의 "Verify Han map and
+  route-node data contracts" 스텝이 처음으로 실제 실행된다. `tools/map/route_network_contract.py`
+  의 `EXPECTED_SOURCE_HASHES["routeNodeSelection"]` 은 이 파일 커밋과 별개로, `59ec25eb`(#501)
+  이후 갱신되지 않은 상태였던 걸 파이프라인 계산으로 재동기화했다(수기 입력 없음).
+- Evidence: `git show origin/main:tools/map/build_external_places.py` docstring 확인,
+  `data/map/external-places.json` 65 entries/31KB/schema `{basis, begYr, conf, endYr, hub, id,
+  jun, kind, lat, level, lon, nameCh, nameFt, namePy, presLoc, prov, typeCh, wikidata}` 실측.
+- Approved by: team-lead(세션 피어리뷰 레인, 라이선스 구분 근거는 engine-it 이 수집) — 2026-08-24.
+
 ## ADR-LITE-045 1,180 현급 행정 카탈로그와 780성 수송망을 분리한다
 
 - Date: 2026-08-22

@@ -1,6 +1,6 @@
 # Current Task
 
-## 2026-08-22 — W1-B 외부 세계 5개 pack 사료 계약 (진행 중)
+## 2026-08-22 — OPENSAM-226 W1-B 외부 세계 5개 pack 사료 계약 (진행 중)
 
 - Goal: W1-A의 legacy 외부 65행을 전부 명시적으로 disposition하고, 동해·동북·서역·
   북방·남방 5개 pack의 선택된 외부 대상을 `AdministrativePlace | AnchoredPlace |

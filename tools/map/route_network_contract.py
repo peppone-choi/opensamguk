@@ -16,7 +16,7 @@ EndpointPair: TypeAlias = tuple[str, str]
 
 EXPECTED_SOURCE_HASHES: Final = {
     "legacyHanMap": "2a2cd0c5813bbdd037c0cad41dc2ccd34c582830aacadb1ad8c135985f4d3a58",
-    "routeNodeSelection": "e2f2f1aec914071fbf8658ceacb099cbd9948f91766139eaa1316a87017f8c4a",
+    "routeNodeSelection": "a01711930e6f1162cb36718103add1d0feedbfd65d00f8b7bf53e88fad4ee038",
     "legacyExternalPlaces": "33cd7fbc2068b0552bc557e879ada0230596365f440db1719133a2dae05d20fe",
     "scenarioCatalogService": "e0a60532dcd47c7d8fd222aa153d03a73b381733be686ed795fc4be09c1b8f7c",
 }

@@ -1,6 +1,18 @@
-# SESSION HANDOFF — 2026-08-23 (OPENSAM-206~220 integration wave; OPENSAM-218 policy gate)
+# SESSION HANDOFF — 2026-08-23 (OPENSAM-226 W1-B external-world source pack contract)
 
-## Current integration-wave / OPENSAM-218 handoff
+## Current handoff — OPENSAM-226
+
+- Current task authority is `.ai/task.md` section `OPENSAM-226 W1-B 외부 세계 5개 pack 사료 계약 (진행 중)`. Full detail: `.ai/handoff.md`'s `Current handoff (2026-08-23) — OPENSAM-226 W1-B remediation interrupted; resume from RED`.
+- Status: **interrupted, resume from RED** — not complete. An independent review returned `fix-required` with 5 blocking findings (listed in `.ai/handoff.md`); do not report this as done until those are closed and the new mutation tests are observed RED→GREEN.
+- The OPENSAM-206~220 integration wave below is historical/closed, not the active task — OPENSAM-218's PR #499 merged 2026-08-23T12:30:59Z, which ended that wave.
+
+---
+
+## SESSION HANDOFF — 2026-08-23 (OPENSAM-206~220 integration wave; OPENSAM-218 policy gate) — historical, closed
+
+**Closure evidence:** OPENSAM-218's PR #499 merged 2026-08-23T12:30:59Z. The 206~220 integration wave ended there; OPENSAM-226 (W1-B) is the current active work as of this handoff.
+
+### Current integration-wave / OPENSAM-218 handoff (historical)
 
 - Current task authority is `.ai/task.md` section `OPENSAM-206~220 통합·검증·배포 (활성 계약)` and the active integration worktree named there.
 - PR #499 is the bounded OPENSAM-218 policy lane. ADR-LITE-042 retires PHP grand-truth, PHP-wins, draw-for-draw, byte-log, and golden-first product gates while retaining truthful evidence, frozen existing tests, deterministic replay, one-daemon-write, flush-delta, and insertion-order rules.
