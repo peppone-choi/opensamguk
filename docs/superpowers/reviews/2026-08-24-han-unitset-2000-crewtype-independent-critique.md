@@ -252,3 +252,28 @@ assertTrue(default.generic, "$set 기본 병종 ${meta.defaultCrewTypeId} 이 ge
 
 둘 다 작은 수정이다: 파일 2개를 별도 PR 로 옮기고, `UnitCatalogTest` 에 단언 한 줄을
 더하면 된다.
+
+## 측정 기준 시점 명시
+
+위 숫자는 전부 `a4235574` 의 **깨끗한 워킹트리**에서 측정했다(측정 시점
+`git status --short` 무출력으로 확인). 리뷰 문서를 쓰는 동안 같은 워크트리에
+다른 에이전트가 커밋되지 않은 편집 4건(`UnitCatalogTest.kt`, `HanGateRegionsTest.kt`,
+`build_unitset.py`, `check_sprite_chroma.py`)을 만들어 놓은 것을 확인했다. 그것들은
+PR #528 의 내용이 아니므로 이 리뷰의 대상이 아니며, 위 실측에도 영향을 주지 않았다.
+이 리뷰가 판정하는 것은 원격에 푸시된 브랜치 상태다.
+
+**후기(리뷰 작성 중 브랜치가 움직였다).** 이 문서를 쓰는 도중 저자 쪽이 `22b55497`
+(`fix(review): ... MEDIUM/LOW`)를 커밋했고, 그 커밋이 **아직 작성 중이던 이 리뷰
+파일까지 함께 쓸어담았다**(`git add` 범위가 넓었다는 뜻이다 — 리뷰 산출물이 저자
+커밋에 저자 이름으로 섞여 들어가는 것 자체가 작은 위생 문제다). `22b55497` 이 실제로
+고친 것은 위 **N2**(이관 주석의 credit 정정)와 **N5**(`check_sprite_chroma.py` 를
+non-zero 종료로)이고, `UnitCatalogTest` 의 중복 assertion 하나를 제거했다.
+
+**그 커밋 이후에도 이 리뷰의 블로킹 2건은 그대로 남는다:**
+
+- **B1** — `tools/assets/build_unit_prompts.py` / `check_sprite_chroma.py` 는 여전히
+  브랜치에 있고 여전히 PR 본문에 없다. `22b55497` 은 후자를 **고쳐서 남겼다**.
+- **B2** — `defaultCrewTypeId = 2000` 을 고정하는 단언은 여전히 0건이다.
+  `22b55497` 은 오히려 그 테스트에서 assertion 을 **하나 뺐다**.
+
+따라서 판정은 유지된다: **fix-required.**
