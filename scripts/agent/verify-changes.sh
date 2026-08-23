@@ -45,6 +45,7 @@ has '^infra/'            && NEED="$NEED :infra:test" && XML_ROOTS="$XML_ROOTS in
 has '^app/game-engine/'  && NEED="$NEED :app:game-engine:test" && XML_ROOTS="$XML_ROOTS app/game-engine"
 has '^app/game-api/'     && NEED="$NEED :app:game-api:test" && XML_ROOTS="$XML_ROOTS app/game-api"
 has '^app/gateway-api/'  && NEED="$NEED :app:gateway-api:test" && XML_ROOTS="$XML_ROOTS app/gateway-api"
+has '^app/board-api/'    && NEED="$NEED :app:board-api:test" && XML_ROOTS="$XML_ROOTS app/board-api"
 NEED="$(printf '%s' "$NEED" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ')"
 XML_ROOTS="$(printf '%s' "$XML_ROOTS" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ')"
 

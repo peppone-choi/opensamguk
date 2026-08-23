@@ -59,6 +59,14 @@ class CheckTestXmlTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_missing_xml_fails_loudly(self):
+        # A module root whose test task never produced any XML (deleted test
+        # class, excluded test task, etc.) must not read as green.
+        (self.root / "untested-mod").mkdir()
+        result = _run(self.root, "untested-mod")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("No Gradle test XML files found", result.stderr)
+
     def test_green_when_nothing_skipped(self):
         _write_suite(self.root, "clean-mod", "TEST-fake.CleanIT.xml", CLEAN_XML)
         result = _run(self.root, "clean-mod")
