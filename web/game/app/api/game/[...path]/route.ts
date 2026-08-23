@@ -15,6 +15,13 @@ const SERVER_COOKIE = 'sam_server';
  * 식별을 해결(W1 GeneralResolver)하므로 ?generalId= 를 주입하지 않는다. JWT는 절대 클라이언트 JS에
  * 노출되지 않는다(httpOnly 쿠키 → 서버 route handler에서만 읽힘).
  *
+ * 이 프록시는 sam_refresh로 401 재시도를 하지 않는다 — 그 쿠키는 `web/game/lib/cookies.ts`의
+ * `REFRESH_PATH='/api/auth'`로 좁혀 심어지므로(의도된 보안 결정, `web/gateway/lib/cookies.ts:14-16`
+ * 동일 패턴), 브라우저가 `/api/game/**` 요청에는 애초에 그 쿠키를 실어 보내지 않는다(RFC 6265 §5.1.4
+ * path-match). 서버 코드로는 절대 얻을 수 없는 값이라 여기서 재시도해도 항상 no-op이다 — access 만료로
+ * 인한 401 복구는 클라이언트(`web/game/lib/api.ts`)가 `/api/auth/me`(sam_refresh가 실제로 도달하는
+ * 유일한 경로)를 거쳐 담당한다.
+ *
  * SSE(/api/game/sse/turn): 프록시가 즉시 event-stream을 열고 upstream.body를 그대로 스트리밍한다.
  */
 
