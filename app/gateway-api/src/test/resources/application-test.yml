@@ -33,6 +33,5 @@ jwt:
   legacy-access-accept-until: 2099-01-01T00:00:00Z
   legacy-refresh-accept-until: 2099-01-01T00:00:00Z
   signing-mode: LEGACY_HS256
-  include-profile-claims: true
   access-expiration: 900000
   refresh-expiration: 604800000

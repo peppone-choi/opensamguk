@@ -35,7 +35,6 @@ jwt:
   legacy-access-accept-until: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:}
   legacy-refresh-accept-until: ${JWT_LEGACY_REFRESH_ACCEPT_UNTIL:}
   signing-mode: ${JWT_SIGNING_MODE:RS256}
-  include-profile-claims: ${JWT_INCLUDE_PROFILE_CLAIMS:true}
   access-expiration: ${JWT_ACCESS_EXPIRATION:900000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 

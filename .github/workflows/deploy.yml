@@ -366,11 +366,11 @@ jobs:
           $COMPOSE up -d --force-recreate --no-deps board-api
           wait_container_health opensamguk-board-api 8083 board-api
 
+          # OPENSAM-220/#483: 게이트웨이는 이제 표시 클레임을 절대 발급하지 않는다(JWT_INCLUDE_PROFILE_CLAIMS
+          # 플래그 자체가 제거됐다) — 이 게이트는 이제 RS256 전환 시에만 발동한다.
           jwt_signing_mode="$(sed -n 's/^JWT_SIGNING_MODE=//p' .env | tail -1 | tr -d "\r[:space:]\"'" | tr '[:lower:]' '[:upper:]')"
-          include_profile_claims="$(sed -n 's/^JWT_INCLUDE_PROFILE_CLAIMS=//p' .env | tail -1 | tr -d "\r[:space:]\"'" | tr '[:upper:]' '[:lower:]')"
           jwt_signing_mode="${jwt_signing_mode:-RS256}"
-          include_profile_claims="${include_profile_claims:-true}"
-          if [[ "$jwt_signing_mode" == "RS256" || "$include_profile_claims" == "false" ]]; then
+          if [[ "$jwt_signing_mode" == "RS256" ]]; then
             jwt_public_key="$(sed -n 's/^JWT_PUBLIC_KEY=//p' .env | tail -1 | tr -d "\r[:space:]\"'")"
             if [[ -z "$jwt_public_key" ]]; then
               echo "BLOCKED: JWT_PUBLIC_KEY is required for asymmetric gateway cutover" >&2

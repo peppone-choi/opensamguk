@@ -8,7 +8,6 @@ import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
 import opensamguk.common.auth.GatewayJwtContract
 import opensamguk.common.auth.GatewayJwtKeys
-import opensamguk.common.auth.GatewayProfileClaims
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
@@ -33,7 +32,6 @@ class GatewayJwtProperties {
     var legacyAccessAcceptUntil: String = ""
     var legacyRefreshAcceptUntil: String = ""
     var signingMode: GatewayJwtSigningMode = GatewayJwtSigningMode.LEGACY_HS256
-    var includeProfileClaims: Boolean = true
     var accessExpiration: Long = 900_000
     var refreshExpiration: Long = 604_800_000
 }
@@ -81,23 +79,13 @@ class JwtTokenProvider @Autowired constructor(
         require(legacyKey == null || (legacyAccessAcceptUntil != null && legacyRefreshAcceptUntil != null)) {
             "JWT legacy verification requires absolute access and refresh cutoffs"
         }
-        require(properties.includeProfileClaims || properties.signingMode == GatewayJwtSigningMode.RS256) {
-            "JWT profile claims may be removed only after RS256 activation"
-        }
     }
 
-    fun generateAccessToken(profile: GatewayProfileClaims): String {
+    /** OPENSAM-220/#483: 액세스 토큰은 신원(sub=userId)과 인가(role)만 담는다 — 표시 클레임은 발급하지 않는다. */
+    fun generateAccessToken(userId: Long, role: String): String {
         val now = clock.instant()
-        val builder = tokenBuilder(profile.userId, GatewayJwtClaims.ACCESS_TOKEN, properties.accessExpiration, now)
-            .claim(GatewayJwtClaims.ROLE, profile.role)
-        if (properties.includeProfileClaims) {
-            builder
-                .claim(GatewayJwtClaims.USERNAME, profile.username)
-                .claim(GatewayJwtClaims.GRADE, profile.grade)
-                .claim(GatewayJwtClaims.IMAGE_SERVER, profile.imageServer)
-            profile.nickname?.let { builder.claim(GatewayJwtClaims.NICKNAME, it) }
-            profile.picture?.let { builder.claim(GatewayJwtClaims.PICTURE, it) }
-        }
+        val builder = tokenBuilder(userId, GatewayJwtClaims.ACCESS_TOKEN, properties.accessExpiration, now)
+            .claim(GatewayJwtClaims.ROLE, role)
         return sign(builder)
     }
 
@@ -110,27 +98,6 @@ class JwtTokenProvider @Autowired constructor(
 
     fun getUserIdFromToken(token: String): Long? =
         (parseAccessClaims(token) ?: parseRefreshClaims(token))?.subject?.toLongOrNull()
-
-    fun getUsernameFromToken(token: String): String? =
-        parseAccessClaims(token)?.get(GatewayJwtClaims.USERNAME, String::class.java)
-
-    fun getProfileFromAccessToken(token: String): GatewayProfileClaims? {
-        val claims = parseAccessClaims(token) ?: return null
-        val userId = claims.subject?.toLongOrNull() ?: return null
-        val username = claims.get(GatewayJwtClaims.USERNAME, String::class.java) ?: return null
-        val role = claims.get(GatewayJwtClaims.ROLE, String::class.java) ?: return null
-        val grade = (claims[GatewayJwtClaims.GRADE] as? Number)?.toInt() ?: return null
-        val imageServer = (claims[GatewayJwtClaims.IMAGE_SERVER] as? Number)?.toInt() ?: return null
-        return GatewayProfileClaims(
-            userId = userId,
-            username = username,
-            role = role,
-            nickname = claims.get(GatewayJwtClaims.NICKNAME, String::class.java),
-            grade = grade,
-            picture = claims.get(GatewayJwtClaims.PICTURE, String::class.java),
-            imageServer = imageServer,
-        )
-    }
 
     fun getExpirationDate(token: String): Date? =
         (parseAccessClaims(token) ?: parseRefreshClaims(token))?.expiration

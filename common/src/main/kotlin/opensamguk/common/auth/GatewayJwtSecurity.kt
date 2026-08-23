@@ -16,6 +16,14 @@ import java.time.Clock
 import java.time.Instant
 import java.util.Date
 
+/** OPENSAM-220/#483: 신원·인가 클레임만 — 표시 클레임(username/nickname/grade/picture/imgsvr)은 발급하지 않는다. */
+object GatewayJwtClaims {
+    const val TOKEN_TYPE = "token_type"
+    const val ACCESS_TOKEN = "access"
+    const val REFRESH_TOKEN = "refresh"
+    const val ROLE = "role"
+}
+
 object GatewayJwtContract {
     const val ISSUER = "opensamguk-gateway"
     const val GATEWAY_API_AUDIENCE = "gateway-api"
