@@ -81,6 +81,12 @@ tools/php-golden/probe_*.php
 .omc/
 web/*/.omc/
 
+# Agent worktree/team scratch trees (local orchestration state, never
+# committed — #513: previously only .git/info/exclude, which check.py's
+# `git ls-files --others --exclude-standard` doesn't see, so an untracked
+# .omo/ leaked into the product-authority scan on machines that have one).
+.omo/
+
 # Local scratch directories
 parity-shots/
 tmp/
