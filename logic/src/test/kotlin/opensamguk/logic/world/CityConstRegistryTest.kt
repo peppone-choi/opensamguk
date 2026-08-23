@@ -105,6 +105,14 @@ class CityConstRegistryTest {
     }
 
     @Test
+    fun `han has exactly 780 cities (independent pin, not size-vs-itself)`() {
+        // 아래 인접 해시/BFS 연결성 테스트는 모두 han.all() 을 자기 자신과만 비교한다 — 임포터가
+        // 도시를 누락·중복해도 두 테스트 다 통과할 수 있다. 여기서는 DB IT(ScenarioImporterIT 등)
+        // 가 쓰는 것과 같은 780 이라는 고정 값을 Docker 없이 바로 대조한다.
+        assertEquals(780, CityConstRegistry.of("han").all().size, "han 780성 고정 핀")
+    }
+
+    @Test
     fun `Han numeric adjacency preserves the generated 780-city graph`() {
         val graph = buildString {
             for ((id, city) in CityConstRegistry.of("han").all()) {
