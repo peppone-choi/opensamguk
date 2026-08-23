@@ -5,6 +5,9 @@
 - 리뷰 환경: 작성자 worktree가 아닌 **별도 신규 clone** (`git@github.com:peppone-choi/opensamguk.git`, scratch 디렉터리)
 - 날짜: 2026-08-24
 
+Scope: PR #520 `work/opensamguk/jwt-issuer-claim-removal` (OPENSAM-220/#483 JWT display-claim removal + InfoContributor) — covers app/, common/, .github/workflows/
+Verdict: cleared
+
 ## 판정: **cleared** (blocking 이슈 없음)
 
 CRITICAL/HIGH 없음. 아래 LOW 4건 + INFO 1건은 머지 차단 사유가 아니다.
