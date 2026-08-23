@@ -200,11 +200,16 @@ diff 는 5 파일뿐이다. 두 프록시 dedup(#516) 은 건드리지 않았고
 
 ---
 
-# 2차 재심 — 후속 커밋 `2209c08a` (2026-08-24)
+# 재심 기록 — 커밋 `2209c08a`(2차) · `b8c5b62f`(3차, 최종)
+
+아래 Verdict 는 **3차(`b8c5b62f`) 최종 판정**이다. 2차 판정은 `fix-required` 였고,
+그때 낸 블로커 N1·N2 는 3차에서 해소됐다(문서 끝 3차 절 참조).
+
+## 2차 재심 — 커밋 `2209c08a`
 
 Scope: PR #530 / 이슈 #514 — `web/game`(프록시 라우트 + `hooks/useSSE.ts` + 테스트)와 `web/gateway`(프록시 라우트 + 테스트) 양쪽, `origin/main` 대조.
 
-Verdict: fix-required
+Verdict: cleared
 
 1차에서 낸 H1·H2·L1·L2 는 모두 실제로 해소됐다(아래 R1-R4, 직접 실행으로 확인). 그러나 H2 를
 고치면서 도입한 `window.location.reload()` 가 **유효한 세션을 일시적 게이트웨이 오류만으로
@@ -338,3 +343,61 @@ M1 은 이 PR 이 만든 회귀가 아니라 기존 미배선(`req.signal`)의 �
 
 N1 만 고치면 이 PR 은 clear 된다. 서버측 수정은 1차부터 계속 정확하고, H1/H2/H3/L1/L2 는
 실제로 해소됐다.
+
+---
+
+## 3차 재심 — 커밋 `b8c5b62f` (최종)
+
+2차의 블로커 N1 과 권고 N2 가 모두 해소됐다. 위 Verdict 를 `cleared` 로 갱신한다
+(게이트가 파일당 Verdict/Scope 각 1줄만 허용하므로 줄을 추가하지 않고 제자리 수정했다).
+
+### N1 해소 — 판정 기준이 `/api/auth/me` 자신의 계약과 일치한다
+
+`web/game/hooks/useSSE.ts:58` 이 `res.ok` 에서
+`res.status !== 401 && res.status !== 403` 으로 좁혀졌다. 이건 내가 제안한 값이 아니라
+**`app/api/auth/me/route.ts:16-18` 의 `isAuthFailure` 와 문자 그대로 같은 술어**다 — 코드베이스에
+이미 있는 기준을 재사용했으므로 두 곳이 따로 흘러갈 여지가 없다. 502(게이트웨이 재기동 등)는
+이제 "세션 살아있음"으로 분류돼 기존 backoff 재연결로 자가 회복한다.
+
+뮤테이션 검증(직접 실행): 술어만 `res.ok` 로 되돌리면
+
+```
+× #514: a transient 502 from /api/auth/me does not evict a still-valid session
+  → expected "spy" to not be called at all, but actually been called 1 times
+```
+
+복원 시 4/4 GREEN. 새 테스트는 진짜 회귀 테스트다.
+
+덤으로 이 테스트가 1차 H3 에서 유일하게 안 덮였다고 지적한 항목 (2)(정상 세션 → backoff 재연결)까지
+덮는다 — 502 후 `advanceTimersByTimeAsync(2000)` 으로 두 번째 EventSource 생성을 단언한다.
+이제 1차에서 요구한 3가지가 전부 커버된다.
+
+### N2 해소 — 전역 복원이 `afterEach` 로 이동
+
+`__tests__/useSSE.test.tsx:51-64`. `originalLocation` 을 `beforeEach` 에서 잡고
+`vi.unstubAllGlobals()` · `vi.useRealTimers()` · location 복원을 `afterEach` 에서 한다.
+테스트 본문 중간에 단언이 던져도 복원이 보장된다.
+
+### 최종 검증
+
+- `web/game`: 78 files / **448 tests** 통과, `tsc --noEmit` exit 0
+- `web/gateway`: `79ee91b5..HEAD` 에서 변경 0 — 1차에서 검증한 24 files / 174 tests · tsc clean 유효
+- PR 본문이 현재 동작과 3라운드 수정 이력을 정확히 기술한다. 이 저장소는 squash 머지라
+  PR 본문이 머지 커밋 메시지가 되므로 이건 실질적인 문서다.
+
+### 남는 비블로킹 항목 (후속 이슈 대상, 머지 차단 아님)
+
+- **M1** — 연결 수립 중 클라이언트 이탈을 abort 할 수 없다. `req.signal` 미배선(기존 결함)의 노출.
+- **M2** — 헤더 선전송 소실. (A) 를 고치는 데 내재된 대가. PR 본문에 반영됐다.
+- **L3** — `!upstream.ok` 응답이 `WWW-Authenticate` 등을 버린다. JSON 경로와 동일하므로 계약 일관성은 유지.
+- **L4** — onerror 가 겹치면 backoff 가 한 단계 더 뛴다(1초→4초). 이중 연결은 없다.
+- **N3** — 만료 확정 시 리로드가 작성 중이던 입력을 버린다. 진짜 만료 상황이므로 수용 가능.
+- **(B)** mid-stream 만료의 `data: {}` payload — 이슈가 명시적으로 범위 밖으로 지정.
+
+### 총평
+
+3라운드에 걸쳐 나온 결함 5건(H1 좀비 누수, H2 복구 경로 부재, H3 무커버리지, N1 502 오판, N2 테스트
+위생)이 모두 실제로 고쳐졌고, 각 수정은 **뮤테이션으로 RED 를 직접 확인**했다 — 구현자 보고를
+그대로 받은 항목은 없다. 서버측 수정은 1차부터 계속 정확했다. 이슈 #514 의 완료 조건 4개
+(양쪽 프록시 테스트 · status 단언 포함 · 401→401 · 정상 경로 유지)를 모두 충족하고, 범위(#516 dedup,
+(B) payload)를 넘지 않았다.
