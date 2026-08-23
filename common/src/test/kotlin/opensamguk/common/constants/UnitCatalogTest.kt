@@ -1,5 +1,11 @@
 package opensamguk.common.constants
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -86,6 +92,27 @@ class UnitCatalogTest {
                 "$set 기본 병종 ${meta.defaultCrewTypeId} 이 reqConstraints=${default.reqConstraints} 로 게이트돼 있다",
             )
         }
+    }
+
+    /**
+     * F4: han 기본 병종은 `reqConstraints` 뿐 아니라 `generic: true` 여야 한다 — "어느 세력이나
+     * 뽑는 기본 병종. 사료가 이름을 남긴 부대는 이 위에 얹힌다"는 설계 규칙 자체다.
+     * `reqConstraints` 만 보는 위 테스트는 2167(군병, generic:false, tier 1, ReqTech 없음)로
+     * 되돌려도 통과한다 — `generic` 은 [GameUnitDetail]이 런타임에 들고 있지 않은 authored
+     * 전용 필드라 원본 JSON을 직접 읽어 확인한다. che 는 제외한다 — che 행은 전부
+     * PHP 원본을 그대로 옮긴 사본(`derived:false`)이라 `generic` 이 34개 전부 false 로,
+     * 이 규칙이 뜻하는 "설계상 보편 기본값" 태그가 아니다.
+     */
+    @Test
+    fun `han 기본 병종은 generic 이다(F4)`() {
+        val text = javaClass.getResourceAsStream("/unitset/units.json")!!.bufferedReader().use { it.readText() }
+        val doc = Json.parseToJsonElement(text).jsonObject
+        val defaultId = doc.getValue("sets").jsonObject.getValue("han").jsonObject
+            .getValue("defaultCrewTypeId").jsonPrimitive.int
+        val row = doc.getValue("crewTypes").jsonArray.map { it.jsonObject }
+            .first { it.getValue("set").jsonPrimitive.content == "han" && it.getValue("id").jsonPrimitive.int == defaultId }
+        val generic = row["generic"]?.jsonPrimitive?.boolean
+        assertTrue(generic == true, "han 기본 병종($defaultId)의 generic=$generic — 이름을 남긴 특수 부대가 보편 기본값이 됐다")
     }
 
     /**
