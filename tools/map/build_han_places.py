@@ -55,11 +55,19 @@ def as_int(s, default):
 
 TIER = {
     '州': ('PROVINCE', 7), '刺史部': ('PROVINCE', 7),
-    '郡': ('COMMANDERY', 6), '国': ('COMMANDERY', 6), '尹': ('COMMANDERY', 6),
+    # 續漢書 郡國志 卷113 「凡郡、國百五」: 郡과 國은 같은 1급(lv6)이지만 서로 다른 종류다.
+    '郡': ('COMMANDERY', 6), '国': ('KINGDOM', 6), '尹': ('COMMANDERY', 6),
     '군': ('COMMANDERY', 6), '典农校尉': ('COMMANDERY', 6),
     '县': ('COUNTY', 5), '侯国': ('COUNTY', 5), '道': ('COUNTY', 5),
     '邑': ('COUNTY', 5),
 }
+
+# kind 오타가 파이프라인 끝까지 조용히 흘러가지 않도록 여기서 막는다.
+ALLOWED_KIND = {'PROVINCE', 'COMMANDERY', 'KINGDOM', 'COUNTY'}
+_bad_tier_kinds = {kind for kind, _ in TIER.values() if kind not in ALLOWED_KIND}
+if _bad_tier_kinds:
+    raise ValueError(f'unrecognized TIER kind(s): {sorted(_bad_tier_kinds)}')
+del _bad_tier_kinds
 
 # lv8 "특" = 왕조 수도. CHGIS에 수도 플래그가 없어 저작한 목록이다 — 고증 근거를 남긴다.
 #   洛陽 후한/위 수도 · 許(허창) 196~220 헌제 파천지 · 成都 촉한 221~ · 建業 오 229~

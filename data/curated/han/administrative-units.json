@@ -40,6 +40,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "河南尹",
       "canonicalGroup": "河南尹",
+      "groupType": "COMMANDERY",
       "declaredCities": 21,
       "enumeratedUnits": 21,
       "sourceCitation": {
@@ -355,6 +356,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "河内郡",
       "canonicalGroup": "河內郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 18,
       "enumeratedUnits": 18,
       "sourceCitation": {
@@ -628,6 +630,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "河东郡",
       "canonicalGroup": "河東郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 20,
       "enumeratedUnits": 20,
       "sourceCitation": {
@@ -929,6 +932,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "弘农郡",
       "canonicalGroup": "弘農郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -1076,6 +1080,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "京兆尹",
       "canonicalGroup": "京兆尹",
+      "groupType": "COMMANDERY",
       "declaredCities": 10,
       "enumeratedUnits": 10,
       "sourceCitation": {
@@ -1237,6 +1242,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "左冯翊",
       "canonicalGroup": "左馮翊",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -1440,6 +1446,7 @@
       "sourceVolume": 109,
       "sourceGroupName": "右扶风",
       "canonicalGroup": "右扶風",
+      "groupType": "COMMANDERY",
       "declaredCities": 15,
       "enumeratedUnits": 15,
       "sourceCitation": {
@@ -1671,6 +1678,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "潁川郡",
       "canonicalGroup": "潁川郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 17,
       "enumeratedUnits": 17,
       "sourceCitation": {
@@ -1930,6 +1938,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "汝南郡",
       "canonicalGroup": "汝南郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 37,
       "enumeratedUnits": 37,
       "sourceCitation": {
@@ -2469,6 +2478,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "梁國",
       "canonicalGroup": "梁國",
+      "groupType": "KINGDOM",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -2616,6 +2626,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "沛國",
       "canonicalGroup": "沛國",
+      "groupType": "KINGDOM",
       "declaredCities": 21,
       "enumeratedUnits": 21,
       "sourceCitation": {
@@ -2931,6 +2942,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "陳國",
       "canonicalGroup": "陳國",
+      "groupType": "KINGDOM",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -3078,6 +3090,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "魯國",
       "canonicalGroup": "魯國",
+      "groupType": "KINGDOM",
       "declaredCities": 6,
       "enumeratedUnits": 6,
       "sourceCitation": {
@@ -3183,6 +3196,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "魏郡",
       "canonicalGroup": "魏郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 15,
       "enumeratedUnits": 15,
       "sourceCitation": {
@@ -3414,6 +3428,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "鉅鹿郡",
       "canonicalGroup": "鉅鹿郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 15,
       "enumeratedUnits": 15,
       "sourceCitation": {
@@ -3645,6 +3660,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "常山國",
       "canonicalGroup": "常山國",
+      "groupType": "KINGDOM",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -3848,6 +3864,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "中山國",
       "canonicalGroup": "中山國",
+      "groupType": "KINGDOM",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -4051,6 +4068,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "安平國",
       "canonicalGroup": "安平國",
+      "groupType": "KINGDOM",
       "declaredCities": 13,
       "enumeratedUnits": 12,
       "sourceCitation": {
@@ -4240,6 +4258,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "河間國",
       "canonicalGroup": "河閒國",
+      "groupType": "KINGDOM",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -4415,6 +4434,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "清河國",
       "canonicalGroup": "清河國",
+      "groupType": "KINGDOM",
       "declaredCities": 7,
       "enumeratedUnits": 7,
       "sourceCitation": {
@@ -4534,6 +4554,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "趙國",
       "canonicalGroup": "趙國",
+      "groupType": "KINGDOM",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
@@ -4625,6 +4646,7 @@
       "sourceVolume": 110,
       "sourceGroupName": "勃海郡",
       "canonicalGroup": "勃海郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 8,
       "enumeratedUnits": 8,
       "sourceCitation": {
@@ -4758,6 +4780,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "陳留郡",
       "canonicalGroup": "陳留郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 17,
       "enumeratedUnits": 17,
       "sourceCitation": {
@@ -5017,6 +5040,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "東郡",
       "canonicalGroup": "東郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 15,
       "enumeratedUnits": 15,
       "sourceCitation": {
@@ -5248,6 +5272,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "東平國",
       "canonicalGroup": "東平國",
+      "groupType": "KINGDOM",
       "declaredCities": 7,
       "enumeratedUnits": 7,
       "sourceCitation": {
@@ -5367,6 +5392,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "任城國",
       "canonicalGroup": "任城國",
+      "groupType": "KINGDOM",
       "declaredCities": 3,
       "enumeratedUnits": 3,
       "sourceCitation": {
@@ -5430,6 +5456,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "泰山郡",
       "canonicalGroup": "泰山郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 12,
       "enumeratedUnits": 12,
       "sourceCitation": {
@@ -5619,6 +5646,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "濟北國",
       "canonicalGroup": "濟北國",
+      "groupType": "KINGDOM",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
@@ -5710,6 +5738,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "山陽郡",
       "canonicalGroup": "山陽郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 10,
       "enumeratedUnits": 10,
       "sourceCitation": {
@@ -5871,6 +5900,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "濟陰郡",
       "canonicalGroup": "濟陰郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -6046,6 +6076,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "東海郡",
       "canonicalGroup": "東海郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -6249,6 +6280,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "琅邪國",
       "canonicalGroup": "琅邪國",
+      "groupType": "KINGDOM",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -6452,6 +6484,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "彭城國",
       "canonicalGroup": "彭城國",
+      "groupType": "KINGDOM",
       "declaredCities": 8,
       "enumeratedUnits": 8,
       "sourceCitation": {
@@ -6585,6 +6618,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "廣陵郡",
       "canonicalGroup": "廣陵郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -6760,6 +6794,7 @@
       "sourceVolume": 111,
       "sourceGroupName": "下邳國",
       "canonicalGroup": "下邳國",
+      "groupType": "KINGDOM",
       "declaredCities": 17,
       "enumeratedUnits": 17,
       "sourceCitation": {
@@ -7019,6 +7054,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "濟南",
       "canonicalGroup": "濟南國",
+      "groupType": "KINGDOM",
       "declaredCities": 10,
       "enumeratedUnits": 10,
       "sourceCitation": {
@@ -7180,6 +7216,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "平原郡",
       "canonicalGroup": "平原郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -7327,6 +7364,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "樂安國",
       "canonicalGroup": "樂安國",
+      "groupType": "KINGDOM",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -7474,6 +7512,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "北海國",
       "canonicalGroup": "北海國",
+      "groupType": "KINGDOM",
       "declaredCities": 18,
       "enumeratedUnits": 18,
       "sourceCitation": {
@@ -7747,6 +7786,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "東萊郡",
       "canonicalGroup": "東萊郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -7950,6 +7990,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "齊國",
       "canonicalGroup": "齊國",
+      "groupType": "KINGDOM",
       "declaredCities": 6,
       "enumeratedUnits": 6,
       "sourceCitation": {
@@ -8055,6 +8096,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "南陽郡",
       "canonicalGroup": "南陽郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 37,
       "enumeratedUnits": 37,
       "sourceCitation": {
@@ -8594,6 +8636,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "南郡",
       "canonicalGroup": "南郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 17,
       "enumeratedUnits": 17,
       "sourceCitation": {
@@ -8853,6 +8896,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "江夏郡",
       "canonicalGroup": "江夏郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 14,
       "enumeratedUnits": 14,
       "sourceCitation": {
@@ -9070,6 +9114,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "零陵郡",
       "canonicalGroup": "零陵郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -9273,6 +9318,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "桂陽郡",
       "canonicalGroup": "桂陽郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -9448,6 +9494,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "武陵郡",
       "canonicalGroup": "武陵郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 12,
       "enumeratedUnits": 12,
       "sourceCitation": {
@@ -9637,6 +9684,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "長沙郡",
       "canonicalGroup": "長沙郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -9840,6 +9888,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "九江郡",
       "canonicalGroup": "九江郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 14,
       "enumeratedUnits": 14,
       "sourceCitation": {
@@ -10057,6 +10106,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "丹陽郡",
       "canonicalGroup": "丹陽郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 16,
       "enumeratedUnits": 16,
       "sourceCitation": {
@@ -10302,6 +10352,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "廬江郡",
       "canonicalGroup": "廬江郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 14,
       "enumeratedUnits": 14,
       "sourceCitation": {
@@ -10519,6 +10570,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "會稽郡",
       "canonicalGroup": "會稽郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 14,
       "enumeratedUnits": 14,
       "sourceCitation": {
@@ -10736,6 +10788,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "呉郡",
       "canonicalGroup": "吳郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -10939,6 +10992,7 @@
       "sourceVolume": 112,
       "sourceGroupName": "豫章郡",
       "canonicalGroup": "豫章郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 21,
       "enumeratedUnits": 21,
       "sourceCitation": {
@@ -11254,6 +11308,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "汉中郡",
       "canonicalGroup": "漢中郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -11401,6 +11456,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "巴陵秦置",
       "canonicalGroup": "巴郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 14,
       "enumeratedUnits": 14,
       "sourceCitation": {
@@ -11618,6 +11674,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "广汉郡",
       "canonicalGroup": "廣漢郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -11793,6 +11850,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "蜀郡",
       "canonicalGroup": "蜀郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -11968,6 +12026,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "犍为郡",
       "canonicalGroup": "犍為郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -12115,6 +12174,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "牂牁郡",
       "canonicalGroup": "牂牁郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 16,
       "enumeratedUnits": 16,
       "sourceCitation": {
@@ -12360,6 +12420,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "越巂郡",
       "canonicalGroup": "越巂郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 14,
       "enumeratedUnits": 14,
       "sourceCitation": {
@@ -12577,6 +12638,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "益州郡",
       "canonicalGroup": "益州郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 17,
       "enumeratedUnits": 17,
       "sourceCitation": {
@@ -12836,6 +12898,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "永昌郡",
       "canonicalGroup": "永昌郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 8,
       "enumeratedUnits": 8,
       "sourceCitation": {
@@ -12969,6 +13032,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "广汉属国",
       "canonicalGroup": "廣漢屬國",
+      "groupType": "COMMANDERY",
       "declaredCities": 3,
       "enumeratedUnits": 3,
       "sourceCitation": {
@@ -13032,6 +13096,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "蜀郡",
       "canonicalGroup": "蜀郡屬國",
+      "groupType": "COMMANDERY",
       "declaredCities": 4,
       "enumeratedUnits": 4,
       "sourceCitation": {
@@ -13109,6 +13174,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "犍为属国",
       "canonicalGroup": "犍為屬國",
+      "groupType": "COMMANDERY",
       "declaredCities": 2,
       "enumeratedUnits": 2,
       "sourceCitation": {
@@ -13158,6 +13224,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "陇西郡",
       "canonicalGroup": "隴西郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -13333,6 +13400,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "汉阳郡",
       "canonicalGroup": "漢陽郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -13536,6 +13604,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "武都郡",
       "canonicalGroup": "武都郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 7,
       "enumeratedUnits": 7,
       "sourceCitation": {
@@ -13655,6 +13724,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "金城郡",
       "canonicalGroup": "金城郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 10,
       "enumeratedUnits": 10,
       "sourceCitation": {
@@ -13816,6 +13886,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "安定郡",
       "canonicalGroup": "安定郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 8,
       "enumeratedUnits": 8,
       "sourceCitation": {
@@ -13949,6 +14020,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "北地郡",
       "canonicalGroup": "北地郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 6,
       "enumeratedUnits": 6,
       "sourceCitation": {
@@ -14065,6 +14137,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "武威郡",
       "canonicalGroup": "武威郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 14,
       "enumeratedUnits": 14,
       "sourceCitation": {
@@ -14294,6 +14367,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "张掖郡",
       "canonicalGroup": "張掖郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 8,
       "enumeratedUnits": 8,
       "sourceCitation": {
@@ -14427,6 +14501,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "酒泉郡",
       "canonicalGroup": "酒泉郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -14574,6 +14649,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "敦煌郡",
       "canonicalGroup": "敦煌郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 6,
       "enumeratedUnits": 6,
       "sourceCitation": {
@@ -14679,6 +14755,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "张掖属国",
       "canonicalGroup": "張掖屬國",
+      "groupType": "COMMANDERY",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
@@ -14770,6 +14847,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "张掖居延属国",
       "canonicalGroup": "張掖居延屬國",
+      "groupType": "COMMANDERY",
       "declaredCities": 1,
       "enumeratedUnits": 1,
       "sourceCitation": {
@@ -14805,6 +14883,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "上党郡",
       "canonicalGroup": "上黨郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -15008,6 +15087,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "太原郡",
       "canonicalGroup": "太原郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 16,
       "enumeratedUnits": 16,
       "sourceCitation": {
@@ -15253,6 +15333,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "上郡",
       "canonicalGroup": "上郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 10,
       "enumeratedUnits": 10,
       "sourceCitation": {
@@ -15425,6 +15506,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "西河郡",
       "canonicalGroup": "西河郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 13,
       "enumeratedUnits": 13,
       "sourceCitation": {
@@ -15628,6 +15710,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "五原郡",
       "canonicalGroup": "五原郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 10,
       "enumeratedUnits": 10,
       "sourceCitation": {
@@ -15789,6 +15872,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "云中郡",
       "canonicalGroup": "雲中郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -15964,6 +16048,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "定襄郡",
       "canonicalGroup": "定襄郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
@@ -16055,6 +16140,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "雁门郡",
       "canonicalGroup": "鴈門郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 14,
       "enumeratedUnits": 14,
       "sourceCitation": {
@@ -16272,6 +16358,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "朔方郡",
       "canonicalGroup": "朔方郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 6,
       "enumeratedUnits": 6,
       "sourceCitation": {
@@ -16377,6 +16464,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "涿郡",
       "canonicalGroup": "涿郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 7,
       "enumeratedUnits": 7,
       "sourceCitation": {
@@ -16496,6 +16584,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "广阳郡",
       "canonicalGroup": "廣陽郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
@@ -16587,6 +16676,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "代郡",
       "canonicalGroup": "代郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -16762,6 +16852,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "上谷郡",
       "canonicalGroup": "上谷郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 8,
       "enumeratedUnits": 8,
       "sourceCitation": {
@@ -16895,6 +16986,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "渔阳郡",
       "canonicalGroup": "漁陽郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 9,
       "enumeratedUnits": 9,
       "sourceCitation": {
@@ -17042,6 +17134,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "右北平郡",
       "canonicalGroup": "右北平郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 4,
       "enumeratedUnits": 4,
       "sourceCitation": {
@@ -17119,6 +17212,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "辽西郡",
       "canonicalGroup": "遼西郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
@@ -17210,6 +17304,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "辽东郡",
       "canonicalGroup": "遼東郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -17385,6 +17480,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "玄菟郡",
       "canonicalGroup": "玄菟郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 6,
       "enumeratedUnits": 6,
       "sourceCitation": {
@@ -17490,6 +17586,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "乐浪郡",
       "canonicalGroup": "樂浪郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 18,
       "enumeratedUnits": 18,
       "sourceCitation": {
@@ -17763,6 +17860,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "辽东属国",
       "canonicalGroup": "遼東屬國",
+      "groupType": "COMMANDERY",
       "declaredCities": 6,
       "enumeratedUnits": 6,
       "sourceCitation": {
@@ -17868,6 +17966,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "南海郡",
       "canonicalGroup": "南海郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 7,
       "enumeratedUnits": 7,
       "sourceCitation": {
@@ -17987,6 +18086,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "苍梧郡",
       "canonicalGroup": "蒼梧郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -18162,6 +18262,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "郁林郡",
       "canonicalGroup": "鬱林郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 11,
       "enumeratedUnits": 11,
       "sourceCitation": {
@@ -18337,6 +18438,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "合浦郡",
       "canonicalGroup": "合浦郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
@@ -18428,6 +18530,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "交趾郡",
       "canonicalGroup": "交趾郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 12,
       "enumeratedUnits": 12,
       "sourceCitation": {
@@ -18628,6 +18731,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "九真郡",
       "canonicalGroup": "九真郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
@@ -18719,6 +18823,7 @@
       "sourceVolume": 113,
       "sourceGroupName": "日南郡",
       "canonicalGroup": "日南郡",
+      "groupType": "COMMANDERY",
       "declaredCities": 5,
       "enumeratedUnits": 5,
       "sourceCitation": {
