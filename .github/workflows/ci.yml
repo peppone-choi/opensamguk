@@ -31,6 +31,26 @@ jobs:
       - name: Verify agent-system tool tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
+      - name: Verify Han world build artifacts (HanGateIndex.kt/HanCityConst.kt/han.json drift)
+        # build_han_world.py --check needs data/map/junguozhi.json, which is
+        # gitignored by design (ADR-LITE-039: CHGIS-derived coordinate data,
+        # no-redistribution license) and NEVER present in a checkout — CI
+        # included. A bare `--check` call here would be permanently RED on
+        # every PR, not a real gate (GH #534 investigation, 2026-08-24). Guard
+        # on the file so this activates on its own if that ever changes;
+        # until then it fails loudly (::warning::) instead of silently
+        # passing or blocking merges — HanGateIndex.kt/HanCityConst.kt/
+        # han.json drift must be checked manually (`python3
+        # tools/scenario/build_han_world.py --check`, with junguozhi.json
+        # regenerated locally via tools/map/build_junguozhi.py) before
+        # merging changes that touch build_han_world.py or its inputs.
+        if: '!cancelled()'
+        run: |
+          if [ -f data/map/junguozhi.json ]; then
+            python3 tools/scenario/build_han_world.py --check
+          else
+            echo "::warning::data/map/junguozhi.json is gitignored (ADR-LITE-039) and absent from this checkout — build_han_world.py --check cannot run in CI (GH #534). HanGateIndex.kt/HanCityConst.kt/han.json drift is NOT gated here; verify manually."
+          fi
       - name: Verify Han route-node candidates
         if: '!cancelled()'
         run: python3 tools/scenario/han_route_node_candidates.py --check
