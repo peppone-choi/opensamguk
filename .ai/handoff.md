@@ -1,7 +1,7 @@
 # Agent Handoff
 
 
-## Wave handoff (2026-08-23) — W1-B remediation interrupted; resume from RED
+## Current handoff (2026-08-23) — W1-B remediation interrupted; resume from RED
 
 - Reason: 사용자가 진행 중인 구현을 중단하고 핸드오프 후 대기를 요청했다. 실행 중이던
   `w1b-pack-implementer`를 interrupt했고, commit/push/merge/deploy/delete는 수행하지 않았다.
