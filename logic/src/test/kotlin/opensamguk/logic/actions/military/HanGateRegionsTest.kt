@@ -98,8 +98,9 @@ class HanGateRegionsTest {
     // B1 회귀(애뢰 노수는 越巂 만으로는 못 뽑고 永昌 을 보유해야 뽑는다)는 여기 없다 —
     // `cityWithKey("永昌")`가 요구하는 HanGateIndex 갱신은 PR B(han.json/HanGateIndex.kt,
     // 커밋 34177c3f)가 싣는다. commandery+tribe AND 복원 자체(build_unitset.py, 이 PR의
-    // 실제 변경)는 그 아래 UnitSetTableHanTest 등 다른 회귀로 이미 커버된다. 삭제가 아니라
-    // 이관이다 — PR B에서 이 assertion을 되살린다.
+    // 실제 변경)는 UnitCatalogTest 의 `郡과 부족을 동시에 요구하는 병종은 ReqRegions 가
+    // 뭉치지 않는다(B1)` 회귀로 이미 커버된다. 삭제가 아니라 이관이다 — PR B에서 이
+    // assertion을 되살린다.
 
     @Test
     fun `che 는 게이트 키가 없어 기존 지역 라벨 경로 그대로다`() {
