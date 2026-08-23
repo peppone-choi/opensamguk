@@ -11,8 +11,11 @@ capability_gate = workflow.index('"verifier":"rsa-audience-v1"', board_restart)
 gateway_restart = workflow.index('echo "=== Restarting gateway migrations ==="', capability_gate)
 assert board_restart < capability_gate < gateway_restart
 assert 'jwt_signing_mode="${jwt_signing_mode:-RS256}"' in workflow
-assert 'include_profile_claims="${include_profile_claims:-true}"' in workflow
-assert '[[ "$jwt_signing_mode" == "RS256" || "$include_profile_claims" == "false" ]]' in workflow
+# OPENSAM-220/#483: display claims are unconditionally never issued now (no
+# flag to gate them off), so the cutover gate no longer branches on
+# include_profile_claims — it only needs to know the signing mode.
+assert 'include_profile_claims' not in workflow
+assert '[[ "$jwt_signing_mode" == "RS256" ]]' in workflow
 assert 'api_container="${internal_server}-game-api"' in workflow
 assert 'must be running and promoted before gateway cutover' in workflow
 assert 'expected_jwt_public_key_sha256=' in workflow
