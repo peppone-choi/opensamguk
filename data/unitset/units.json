@@ -5257,8 +5257,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "山越",
       "揚州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "山越"
      ]
     }
    ],
@@ -5330,7 +5335,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "巴",
+      "巴"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "賨"
      ]
     }
@@ -5404,7 +5414,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "南中",
+      "南中"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "青羌"
      ]
     }
@@ -5478,7 +5493,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "涼州",
+      "涼州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "羌",
       "胡"
      ]
@@ -5565,7 +5585,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "涼州",
+      "涼州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "羌"
      ]
     },
@@ -6458,7 +6483,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "巴",
+      "巴"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "賨"
      ]
     }
@@ -6533,7 +6563,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "巴",
+      "巴"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "賨"
      ]
     }
@@ -8028,7 +8063,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "涼州",
+      "涼州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "胡"
      ]
     },
@@ -8109,8 +8149,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "屠各",
       "并州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "屠各"
      ]
     },
     {
@@ -8187,8 +8232,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "匈奴",
       "并州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "匈奴"
      ]
     },
     {
@@ -8264,7 +8314,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "幽州",
+      "幽州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "烏丸"
      ]
     },
@@ -8341,7 +8396,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "益州",
+      "益州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "羌"
      ]
     }
@@ -8413,7 +8473,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "益州",
+      "益州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "賨"
      ]
     }
@@ -8640,8 +8705,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "叟",
       "益州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "叟"
      ]
     }
    ],
@@ -8708,7 +8778,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "巴西",
+      "巴西"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "賨"
      ]
     }
@@ -9504,7 +9579,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "幽州",
+      "幽州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "高句麗"
      ]
     },
@@ -9651,7 +9731,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "日南",
+      "日南"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "蠻"
      ]
     }
@@ -9978,7 +10063,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "涼州",
+      "涼州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "羌"
      ]
     }
@@ -10049,7 +10139,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "涼州",
+      "涼州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "羌"
      ]
     }
@@ -10121,7 +10216,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "涼州",
+      "涼州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "羌"
      ]
     },
@@ -10572,8 +10672,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "匈奴",
       "并州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "匈奴"
      ]
     }
    ],
@@ -10643,8 +10748,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "匈奴",
       "并州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "匈奴"
      ]
     },
     {
@@ -10725,8 +10835,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "山越",
       "揚州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "山越"
      ]
     }
    ],
@@ -10797,8 +10912,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "山越",
       "揚州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "山越"
      ]
     }
    ],
@@ -10870,8 +10990,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "叟",
       "益州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "叟"
      ]
     }
    ],
@@ -10941,7 +11066,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "幽州",
+      "幽州"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "高句麗"
      ]
     }
@@ -11775,7 +11905,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "武陵",
+      "武陵"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "蠻"
      ]
     }
@@ -11844,7 +11979,12 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "武陵",
+      "武陵"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
       "蠻"
      ]
     }
@@ -11913,8 +12053,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "夷",
       "牂牁"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "夷"
      ]
     }
    ],
@@ -11982,8 +12127,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "叟",
       "越巂"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "叟"
      ]
     }
    ],
@@ -12051,8 +12201,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "夷",
       "永昌"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "夷"
      ]
     }
    ],
@@ -12119,8 +12274,13 @@
     {
      "type": "ReqRegions",
      "reqRegions": [
-      "蠻",
       "鬱林"
+     ]
+    },
+    {
+     "type": "ReqRegions",
+     "reqRegions": [
+      "蠻"
      ]
     }
    ],
