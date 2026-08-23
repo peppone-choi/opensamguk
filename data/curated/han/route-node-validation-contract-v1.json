@@ -1,0 +1,136 @@
+{
+  "allowedNodeClasses": [
+    "COUNTY_NODE",
+    "DAO_NODE",
+    "MARQUISATE_NODE",
+    "TOWN_NODE"
+  ],
+  "contractId": "han-w0-route-node-validation-contract-v1",
+  "expectedActiveScenarioResourceCount": 15,
+  "expectedForbiddenSelections": {
+    "canonicalNames": [
+      "流求",
+      "夷洲",
+      "古寧伽耶",
+      "大伽耶",
+      "星山伽耶",
+      "山越",
+      "白馬氐",
+      "西羌",
+      "南匈奴",
+      "烏桓",
+      "鮮卑",
+      "龜茲屬國"
+    ],
+    "nodeClasses": [
+      "POLITY_PRESENCE",
+      "REMOTE_GATE",
+      "ALIAS_ONLY"
+    ],
+    "physicalPlaceIds": [
+      "external:v1:X004",
+      "external:v1:X028",
+      "external:v1:X029",
+      "external:v1:X030",
+      "external:v1:X031",
+      "external:v1:X032",
+      "external:v1:X033",
+      "external:v1:X034",
+      "external:v1:X035",
+      "external:v1:X036",
+      "external:v1:X037",
+      "external:v1:X038",
+      "external:v1:X040",
+      "external:v1:X041",
+      "external:v1:X042",
+      "external:v1:X043",
+      "external:v1:X044",
+      "external:v1:X045",
+      "external:v1:X046",
+      "external:v1:X047",
+      "external:v1:X048",
+      "external:v1:X049",
+      "external:v1:X055",
+      "external:v1:X056",
+      "external:v1:X057",
+      "external:v1:X058",
+      "external:v1:X059",
+      "external:v1:X060",
+      "external:v1:X061",
+      "external:v1:X062",
+      "external:v1:X063",
+      "external:v1:X064"
+    ]
+  },
+  "expectedSelectionCount": 780,
+  "externalAuthorityExactFields": [
+    "canonicalName",
+    "physicalPlaceId",
+    "subjectKey",
+    "wikidataId"
+  ],
+  "externalAuthorityPathRoot": "data/",
+  "forbiddenRuntimeNodeFields": [
+    "activeScenarioIds",
+    "bindingLifecycle",
+    "effectiveFrom",
+    "effectiveTo",
+    "scenarioStates"
+  ],
+  "referenceInventory": {
+    "derivedReseed": [
+      "scenario.nation.city_ids",
+      "scenario.general.city_id",
+      "HanCityConst",
+      "HanGateIndex",
+      "map.connections"
+    ],
+    "immutableAudit": [
+      "command_result.result_payload",
+      "command_outbox.payload",
+      "history",
+      "replay"
+    ],
+    "mutable": [
+      "city.id",
+      "general.city_id",
+      "general.officer_city",
+      "nation.capital_city_id",
+      "v2_city_ledger.city_id",
+      "general_turn.arg",
+      "nation_turn.arg",
+      "general.last_turn",
+      "general.meta.officer_city",
+      "command_inbox.payload"
+    ]
+  },
+  "rewriteSurfaces": {
+    "derivedArtifacts": {
+      "disposition": "REGENERATE",
+      "otherwise": "BLOCK_UNTIL_TYPED_BINDINGS",
+      "surfaces": [
+        "HanCityConst",
+        "HanGateIndex",
+        "map.connections"
+      ]
+    },
+    "immutableAudit": {
+      "disposition": "NO_REWRITE",
+      "surfaces": [
+        "command_result.result_payload",
+        "command_outbox.payload",
+        "history",
+        "replay"
+      ]
+    },
+    "scenarioResources": {
+      "disposition": "RESEED",
+      "otherwise": "BLOCK_UNTIL_TYPED_BINDINGS",
+      "surfaces": [
+        "scenario.nation.city_ids",
+        "scenario.general.city_id"
+      ]
+    }
+  },
+  "schemaVersion": 1
+}

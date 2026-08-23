@@ -1,0 +1,95 @@
+{
+  "records": [
+    {
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1001,
+      "lineStart": 1001,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x000",
+      "verbatim": "〖龙编〗",
+      "volume": 113
+    },
+    {
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1027,
+      "lineStart": 1027,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x001",
+      "verbatim": "〖胥浦〗",
+      "volume": 113
+    },
+    {
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 1039,
+      "lineStart": 1039,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x002",
+      "verbatim": "〖西卷〗",
+      "volume": 113
+    },
+    {
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 870,
+      "lineStart": 870,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x003",
+      "verbatim": "〖朝鲜〗",
+      "volume": 113
+    },
+    {
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 832,
+      "lineStart": 832,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x005",
+      "verbatim": "〖襄平〗",
+      "volume": 113
+    },
+    {
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 856,
+      "lineStart": 856,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x006",
+      "verbatim": "〖高句骊〗辽山，辽水出。",
+      "volume": 113
+    },
+    {
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 908,
+      "lineStart": 908,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x007",
+      "verbatim": "〖昌辽〗故天辽，属辽西。",
+      "volume": 113
+    },
+    {
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 581,
+      "lineStart": 581,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x026",
+      "verbatim": "〖龟兹属国〗",
+      "volume": 113
+    },
+    {
+      "corpusPath": "data/corpus/hhs-065.txt",
+      "lineEnd": 49,
+      "lineStart": 49,
+      "snapshotSha256": "8c73aa6dfa50593ddfc410d404bfe68e9df3eee8a01cfd97baad5dbd9a672ed4",
+      "sourceBook": "後漢書",
+      "sourceClaimId": "han-location-claim-v1-x026",
+      "verbatim": "龜茲音丘慈，縣名，屬上郡。",
+      "volume": 65
+    }
+  ],
+  "schemaVersion": 1
+}

@@ -1,0 +1,838 @@
+{
+  "schemaVersion": 1,
+  "adjudicationSetId": "han-w0c-ambiguous-location-adjudications-v1",
+  "status": "REVIEWED",
+  "reviewAuthority": "user-blanket-approval-2026-08-22",
+  "reviewedBy": "codex-w0c-root",
+  "reviewedAt": "2026-08-22",
+  "inputOverlaySha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1",
+  "policy": {
+    "automaticNearestSelection": false,
+    "automaticFirstCandidateSelection": false,
+    "selectedCount": 50,
+    "rejectedCount": 5,
+    "note": "소속 군국의 역사 지리와 record lifecycle을 행별로 검토했다. 좌표·presentLocation·recordIndex는 W0-B ignored overlay에만 남긴다."
+  },
+  "adjudications": [
+    {
+      "administrativeUnitId": "hhs:109:河南尹:008",
+      "sourceName": "中牟",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:44356",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:82396"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:109:河南尹:012",
+      "sourceName": "穀城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:82843",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:85692"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:109:河東郡:003",
+      "sourceName": "平阳",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:95415",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:85673"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:109:河東郡:012",
+      "sourceName": "永安",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:95218",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:40132"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:109:河東郡:014",
+      "sourceName": "猗氏",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:95478",
+      "rejectedPhysicalPlaceIds": [],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:109:弘農郡:007",
+      "sourceName": "卢氏",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:83180",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:200450"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:109:弘農郡:008",
+      "sourceName": "湖",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:70628",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:83069"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:109:左馮翊:002",
+      "sourceName": "池阳",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:70671",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:70763"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:潁川郡:015",
+      "sourceName": "陽城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:82893",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:40899"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:汝南郡:004",
+      "sourceName": "上蔡",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:83175",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:41220"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:汝南郡:017",
+      "sourceName": "安城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:83099",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:40934"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:汝南郡:023",
+      "sourceName": "安陽",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:83169",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:200433"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:沛國:005",
+      "sourceName": "酇",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:82128",
+      "rejectedPhysicalPlaceIds": [],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:魏郡:006",
+      "sourceName": "黎陽",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:82316",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:41338"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:常山國:002",
+      "sourceName": "高邑",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87024",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:88352"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:常山國:009",
+      "sourceName": "靈壽",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87240",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:88449"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:常山國:010",
+      "sourceName": "蒲吾",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87241",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:88435"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:常山國:011",
+      "sourceName": "井陘",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87093",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:88430"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:中山國:004",
+      "sourceName": "新市",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87542",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:88470"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:中山國:009",
+      "sourceName": "漢昌",
+      "reviewState": "REJECTED_FALSE_HOMONYM",
+      "selectedPhysicalPlaceId": null,
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:42093",
+        "chgis:v6:cnty:44580",
+        "chgis:v6:cnty:44621"
+      ],
+      "rationaleCode": "FALSE_HOMONYM_OUTSIDE_CANONICAL_GROUP",
+      "rationale": "all exact-name candidates are outside 中山國 and are false homonyms",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/administrative-units.json"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:中山國:012",
+      "sourceName": "蒲陰",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87100",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:87690"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:中山國:013",
+      "sourceName": "廣昌",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87428",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:41195"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:安平國:008",
+      "sourceName": "堂陽",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87188",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:200020"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:安平國:011",
+      "sourceName": "安平",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87064",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:88124"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:清河國:003",
+      "sourceName": "東武城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:85168",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:87267"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:110:趙國:003",
+      "sourceName": "襄國",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87012",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:200022"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:111:東郡:012",
+      "sourceName": "樂平",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:45318",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:95375"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:111:東郡:015",
+      "sourceName": "穀城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:85692",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:82843"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:111:泰山郡:010",
+      "sourceName": "南城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:85596",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:40980"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:111:東海郡:009",
+      "sourceName": "利城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:42901",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:85581"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:111:下邳國:014",
+      "sourceName": "曲陽",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:42878",
+      "rejectedPhysicalPlaceIds": [],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:樂安國:004",
+      "sourceName": "樂安",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:85249",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:41174"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:齊國:002",
+      "sourceName": "西安",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:85222",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:41117"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:南陽郡:022",
+      "sourceName": "酇",
+      "reviewState": "REJECTED_FALSE_HOMONYM",
+      "selectedPhysicalPlaceId": null,
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:82128"
+      ],
+      "rationaleCode": "FALSE_HOMONYM_OUTSIDE_CANONICAL_GROUP",
+      "rationale": "the sole candidate is the 沛國 酇 physical place, already bound there",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/administrative-units.json"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:南陽郡:033",
+      "sourceName": "成都",
+      "reviewState": "REJECTED_FALSE_HOMONYM",
+      "selectedPhysicalPlaceId": null,
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:44394"
+      ],
+      "rationaleCode": "FALSE_HOMONYM_OUTSIDE_CANONICAL_GROUP",
+      "rationale": "the sole candidate is 成都 in 蜀郡, already bound there",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/administrative-units.json"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:桂陽郡:005",
+      "sourceName": "南平",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:41821",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:40303"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:武陵郡:002",
+      "sourceName": "漢壽",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:41901",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:44587"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:長沙郡:004",
+      "sourceName": "安城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:40934",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:83099"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:丹陽郡:001",
+      "sourceName": "宛陵",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:41302",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:41305"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:豫章郡:001",
+      "sourceName": "南昌",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:41092",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:45458"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:豫章郡:009",
+      "sourceName": "南城",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:40980",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:85596"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:豫章郡:018",
+      "sourceName": "平都",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:40906",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:44539"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:112:豫章郡:019",
+      "sourceName": "石陽",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:40886",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:43609"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:漢中郡:006",
+      "sourceName": "安阳",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:200433",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:83169"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:巴郡:011",
+      "sourceName": "平都",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:44539",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:40906"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:巴郡:014",
+      "sourceName": "汉昌",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:44580",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:42093",
+        "chgis:v6:cnty:44621"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:蜀郡:001",
+      "sourceName": "成都",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:44394",
+      "rejectedPhysicalPlaceIds": [],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:牂牁郡:014",
+      "sourceName": "句町",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:200170",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:80214"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:北地郡:001",
+      "sourceName": "富平",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:70524",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:70523"
+      ],
+      "rationaleCode": "HISTORICAL_LOCATION_CORRECTION",
+      "rationale": "北地郡 富平의 후한 위치를 寧夏 靈武 방향 후보로 교정하고 legacy 陝西 후보를 기각한다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:上黨郡:010",
+      "sourceName": "潞",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:95335",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:87436"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:上黨郡:011",
+      "sourceName": "猗氏",
+      "reviewState": "REJECTED_FALSE_HOMONYM",
+      "selectedPhysicalPlaceId": null,
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:95478"
+      ],
+      "rationaleCode": "FALSE_HOMONYM_OUTSIDE_CANONICAL_GROUP",
+      "rationale": "the sole candidate is 河東郡 猗氏, already bound there",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/administrative-units.json"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:鴈門郡:012",
+      "sourceName": "广武",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:95096",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:96006"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:漁陽郡:003",
+      "sourceName": "潞",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:87436",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:95335"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:蒼梧郡:007",
+      "sourceName": "冯乘",
+      "reviewState": "APPROVED_FOR_SELECTION",
+      "selectedPhysicalPlaceId": "chgis:v6:cnty:41975",
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:43920"
+      ],
+      "rationaleCode": "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW",
+      "rationale": "동일 이름 후보를 소속 군국의 역사 지리와 220년 유효 record로 대조해 이 물리 장소를 명시적으로 선택했다.",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md"
+      ]
+    },
+    {
+      "administrativeUnitId": "hhs:113:交趾郡:006",
+      "sourceName": "曲阳",
+      "reviewState": "REJECTED_FALSE_HOMONYM",
+      "selectedPhysicalPlaceId": null,
+      "rejectedPhysicalPlaceIds": [
+        "chgis:v6:cnty:42878"
+      ],
+      "rationaleCode": "FALSE_HOMONYM_OUTSIDE_CANONICAL_GROUP",
+      "rationale": "the sole candidate is 下邳國 曲陽, already bound there",
+      "evidenceRefs": [
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/administrative-units.json"
+      ]
+    }
+  ]
+}
