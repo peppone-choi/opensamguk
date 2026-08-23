@@ -158,16 +158,27 @@ def derive(u: dict) -> dict:
         if arm in rule.get("forbidArmType", []):
             sys.exit(f"{u['name']}: {rule['key']} 는 armType {arm} 을 쓸 수 없다 — {rule['cite']}")
 
-    gates, notes = [], []
+    # `tribe`(그 城 자체가 그 부족이다)는 지역 키(province/commandery/region/city/external)
+    # 와 같이 오면 AND 다 — "이 郡 이면서 이 부족" 이지 "이 郡 이거나 이 부족" 이 아니다.
+    # 예전엔 키를 안 가리고 한 ReqRegions 리스트로 뭉쳐 넣어서 RecruitAlgorithm 의
+    # .any(...) 평가가 전부를 OR 로 만들었다 — 아무 郡 하나만 있어도, 심지어 무관한
+    # 郡에 그 부족 태그가 있기만 해도 뽑혔다(2026-08-23 실측: 애뢰노수가 越巂 하나만으로
+    # 열림). `tribe` 만 별도 ReqRegions 항목으로 쪼개면 reqConstraints 리스트 자체의
+    # AND 로 복원된다. `adjacentTribe`(그 부족과 인접한 변경이다 — 국경 부대라 郡 소유
+    # 자체가 아니라 郡 소유 "이거나" 인접지 소유로도 뽑힌다, 예: 유주돌기가 幽州 만
+    # 보유해도 뽑히는 게 기존에 확정된 동작이다)는 지역 키와 여전히 OR 로 묶는다.
+    # 같은 키 안의 값끼리는 항상 OR(예: tribe: [羌,胡] = 羌 이거나 胡).
+    gate_groups: dict[str, list[str]] = {}
+    notes = []
     for k, v in req_raw.items():
-        if k in GATE_KEYS and isinstance(v, str):
-            gates.append(v)
-        elif k in GATE_KEYS and isinstance(v, list):
-            gates += [x for x in v if isinstance(x, str)]
-        elif k == "adjacentTribe" and isinstance(v, list):
-            gates += v
-        elif k == "adjacentTribe" and isinstance(v, str):
-            gates.append(v)
+        if k in GATE_KEYS or k == "adjacentTribe":
+            vals = v if isinstance(v, list) else [v]
+            vals = [x for x in vals if isinstance(x, str)]
+            if vals:
+                bucket = "tribe" if k == "tribe" else "_other"
+                gate_groups.setdefault(bucket, []).extend(vals)
+            else:
+                notes.append(f"{k}={v}")  # tribe:true 처럼 문자열이 아닌 값 — 게이트로 못 옮기니 문구로 남긴다
         else:
             notes.append(f"{k}={v}")
 
@@ -178,8 +189,8 @@ def derive(u: dict) -> dict:
     tech = max(u.get("techFloor") or 0, tech_mat)
     if tech:
         req.append({"type": "ReqTech", "reqTech": tech})
-    if gates:
-        req.append({"type": "ReqRegions", "reqRegions": sorted(set(gates))})
+    for key in sorted(gate_groups):
+        req.append({"type": "ReqRegions", "reqRegions": sorted(set(gate_groups[key]))})
     if arm == CAV:
         req.append({"type": "ForbidRegions", "forbidRegions": WA})
 
