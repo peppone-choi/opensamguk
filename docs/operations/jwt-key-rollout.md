@@ -15,8 +15,17 @@ Stage 1 소비자 승격이 끝나지 않았다면 gateway 서명 모드나 표�
 
 1. `JWT_SIGNING_MODE=RS256`으로 바꾸는 배포는 board-api를 먼저 재시작한다.
 2. 배포 workflow는 board-api와 등록된 모든 game-api가 실행 중인지 확인하고 `/actuator/info`에서 `rsa-audience-v1`과 공개 키 DER의 SHA-256 identity를 검증한다. 중지됐거나 marker가 없거나 공유 스택의 `JWT_PUBLIC_KEY`와 identity가 다른 서버가 하나라도 있으면 gateway-api 재시작 전에 배포를 중단한다. 등록 env가 남아 있는 중지 서버도 예외 없이 차단 대상이다.
-3. 게이트가 통과한 뒤 gateway-api를 RS256 발급자로 재시작한다.
-4. 15분 액세스 전환 창이 끝나면 game-api·board-api에서 `JWT_LEGACY_SECRET`과 `JWT_LEGACY_ACCESS_ACCEPT_UNTIL`을 제거해 공개 키만 남긴다. 7일 리프레시 전환 창이 끝나면 gateway-api에서도 모든 `JWT_LEGACY_*` 값을 제거한다.
+3. 게이트가 통과한 뒤 gateway-api를 RS256 발급자로 재시작한다. **완료 — 프로덕션은 2026-08-23부로 `JWT_SIGNING_MODE=RS256`이다.** `JWT_LEGACY_*` 값은 아래 전환 창이 끝날 때까지 (제거하지 않고) 그대로 유지 중이다.
+4. 15분 액세스 전환 창이 끝나면 game-api·board-api에서 `JWT_LEGACY_SECRET`과 `JWT_LEGACY_ACCESS_ACCEPT_UNTIL`을 제거해 공개 키만 남긴다. 7일 리프레시 전환 창이 끝나면 gateway-api에서도 모든 `JWT_LEGACY_*` 값을 제거한다. **이 제거는 반드시 세 값(secret + 두 accept-until, gateway-api 기준) 또는 두 값(secret + accept-until, game-api/board-api 기준)을 한 번에 지워야 한다 — 아래 "정리 함정" 참고.**
+5. gateway-api도 game-api/board-api와 동일한 `InfoContributor` 포맷(`{"jwt": {"verifier": "rsa-audience-v1", "publicKeySha256": <fingerprint|"unconfigured">}}`)으로 `/actuator/info`에 발급 키 지문을 노출한다(`JwtTokenProvider.contribute`) — 세 서비스의 `publicKeySha256`을 직접 3자 대조할 수 있다. 지문만 노출하며 키 원문·legacy secret은 절대 싣지 않는다. `JWT_SIGNING_MODE=LEGACY_HS256`이고 RS256 키가 비어 있어도 `publicKeySha256`이 `"unconfigured"`로 안전하게 나올 뿐 기동은 절대 실패하지 않는다(unit test로 고정: `JwtTokenProviderTest`).
+
+### 정리 함정 — legacy 값은 전부 같이 지워야 한다
+
+`JwtTokenProvider`의 init 요구조건(`legacyKey == null ⇔ 두 accept-until 모두 null`)과 `GatewayAccessTokenVerifier.init()`
+(`common/src/main/kotlin/opensamguk/common/auth/GatewayJwtSecurity.kt:103-109`, `(legacyKey == null) == (legacyAcceptUntil == null)`)은
+둘 다 **전부 아니면 전무(all-or-nothing)** 짝 검사다. `JWT_LEGACY_SECRET`이나 accept-until 중 **하나만** 지우고 재배포하면
+gateway-api·game-api·board-api 모두 즉시 부팅 예외로 죽는다(compose 재시작 루프). 4번 단계에서 값을 지울 때는 반드시
+관련된 값을 **동시에** 지워라 — 하나씩 순차 배포하지 마라.
 
 ## Stage 3: 표시 클레임 발급 중단 (OPENSAM-220/#483, 완료 — 2026-08-23)
 

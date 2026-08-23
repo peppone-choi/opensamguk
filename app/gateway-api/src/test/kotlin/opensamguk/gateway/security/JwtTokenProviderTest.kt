@@ -4,7 +4,9 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Encoders
 import opensamguk.common.auth.GatewayJwtClaims
 import opensamguk.common.auth.GatewayJwtContract
+import opensamguk.common.auth.GatewayJwtKeys
 import org.junit.jupiter.api.Test
+import org.springframework.boot.actuate.info.Info
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.time.Clock
@@ -111,8 +113,51 @@ class JwtTokenProviderTest {
         assertFalse(provider(rsaProperties(), now.plusSeconds(61)).validateAccessToken(access))
     }
 
+    @Test
+    fun `actuator info exposes the RSA public key fingerprint for cross-service comparison`() {
+        val provider = provider(rsaProperties(), now)
+        val info = Info.Builder()
+
+        provider.contribute(info)
+
+        val jwt = info.build().details["jwt"] as Map<*, *>
+        assertEquals("rsa-audience-v1", jwt["verifier"])
+        assertEquals(GatewayJwtKeys.rsaPublicKeyFingerprint(keys.public), jwt["publicKeySha256"])
+    }
+
+    @Test
+    fun `actuator info does not fail startup when no RSA key pair is configured`() {
+        val provider = provider(legacyProperties(), now)
+        val info = Info.Builder()
+
+        provider.contribute(info)
+
+        val jwt = info.build().details["jwt"] as Map<*, *>
+        assertEquals("unconfigured", jwt["publicKeySha256"])
+    }
+
+    @Test
+    fun `RS256 with retained legacy fallback (current production shape) boots and reports the fingerprint`() {
+        // OPENSAM-220 팔로업: 2026-08-23 프로덕션 형상 — signingMode=RS256, JWT_LEGACY_SECRET/accept-until
+        // 은 아직 지우지 않았다(전환창 종료 전). 이 조합에서 기동과 InfoContributor 출력이 둘 다 안전한지 고정한다.
+        val provider = provider(rsaProperties().apply { includeLegacyFallback() }, now)
+        val info = Info.Builder()
+
+        provider.contribute(info)
+
+        val jwt = info.build().details["jwt"] as Map<*, *>
+        assertEquals("rsa-audience-v1", jwt["verifier"])
+        assertEquals(GatewayJwtKeys.rsaPublicKeyFingerprint(keys.public), jwt["publicKeySha256"])
+    }
+
     private fun provider(properties: GatewayJwtProperties, instant: Instant): JwtTokenProvider =
         JwtTokenProvider(properties, Clock.fixed(instant, ZoneOffset.UTC))
+
+    private fun GatewayJwtProperties.includeLegacyFallback() {
+        legacySecret = Encoders.BASE64.encode(Jwts.SIG.HS256.key().build().encoded)
+        legacyAccessAcceptUntil = "2026-08-28T00:15:00Z"
+        legacyRefreshAcceptUntil = "2026-09-04T00:00:00Z"
+    }
 
     private fun rsaProperties(): GatewayJwtProperties = GatewayJwtProperties().apply {
         signingMode = GatewayJwtSigningMode.RS256

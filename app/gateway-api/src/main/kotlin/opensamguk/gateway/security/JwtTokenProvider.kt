@@ -9,6 +9,8 @@ import opensamguk.common.auth.GatewayJwtClaims
 import opensamguk.common.auth.GatewayJwtContract
 import opensamguk.common.auth.GatewayJwtKeys
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.actuate.info.Info
+import org.springframework.boot.actuate.info.InfoContributor
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 import java.security.PrivateKey
@@ -39,13 +41,16 @@ class GatewayJwtProperties {
 @Component
 class JwtTokenProvider @Autowired constructor(
     private val properties: GatewayJwtProperties,
-) {
+) : InfoContributor {
     private val privateKey: PrivateKey? = properties.privateKey
         .takeIf(String::isNotBlank)
         ?.let(GatewayJwtKeys::rsaPrivateKey)
     private val publicKey: PublicKey? = properties.publicKey
         .takeIf(String::isNotBlank)
         ?.let(GatewayJwtKeys::rsaPublicKey)
+    // OPENSAM-220 팔로업: game-api/board-api InfoContributor와 같은 키/포맷으로
+    // 발급자·검증자 공개키 지문을 3자 대조할 수 있게 한다. 지문만 노출 — 개인키/공개키 원문 금지.
+    private val publicKeyFingerprint: String? = publicKey?.let(GatewayJwtKeys::rsaPublicKeyFingerprint)
     private val legacyKey: SecretKey? = properties.legacySecret
         .takeIf(String::isNotBlank)
         ?.let { Keys.hmacShaKeyFor(Decoders.BASE64.decode(it)) }
@@ -185,4 +190,14 @@ class JwtTokenProvider @Autowired constructor(
     }
 
     private fun String.toInstantOrNull(): Instant? = takeIf(String::isNotBlank)?.let(Instant::parse)
+
+    override fun contribute(builder: Info.Builder) {
+        builder.withDetail(
+            "jwt",
+            mapOf(
+                "verifier" to "rsa-audience-v1",
+                "publicKeySha256" to (publicKeyFingerprint ?: "unconfigured"),
+            ),
+        )
+    }
 }
