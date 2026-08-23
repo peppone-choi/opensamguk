@@ -69,4 +69,27 @@ class UnitCatalogTest {
             assertTrue(castle.reqConstraints.any { it is UnitConstraint.Impossible }, "$set 성벽이 뽑힌다")
         }
     }
+
+    /**
+     * han defaultCrewTypeId 가 한때 2006(reqTech>=1000)을 가리켜, 갓 건국한 국가가 시작
+     * 시점에 뽑을 수 있는 병종이 하나도 없던 결함(scenario_0 han 전환 IT 를 RED 로 만들었다)의
+     * 재발을 막는다. 두 조건을 세트마다 확인한다: (1) defaultCrewTypeId 자신이 무제약이어야
+     * 하고, (2) 세트 안에 무제약 유닛이 하나라도 있어야 한다 — defaultCrewTypeId 가 우연히
+     * 다른 무제약 유닛으로 재조정돼도 이 클래스의 결함을 계속 잡기 위해서다.
+     */
+    @Test
+    fun `기본 병종은 시작 시점부터 무제약으로 뽑을 수 있다`() {
+        for ((set, meta) in UnitCatalog.sets()) {
+            val units = UnitCatalog.all(set)
+            val default = assertNotNull(units[meta.defaultCrewTypeId], "$set 기본 병종 ${meta.defaultCrewTypeId} 이 세트에 없다")
+            assertTrue(
+                default.reqConstraints.isEmpty(),
+                "$set 기본 병종 ${meta.defaultCrewTypeId} 이 reqConstraints=${default.reqConstraints} 로 게이트돼 있다",
+            )
+            assertTrue(
+                units.values.any { it.reqConstraints.isEmpty() },
+                "$set 세트에 무제약으로 뽑을 수 있는 병종이 하나도 없다",
+            )
+        }
+    }
 }
