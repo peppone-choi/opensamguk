@@ -405,18 +405,11 @@ CONFIRMED_JUN_NAMES_NO_CHGIS = frozenset((
     # CHGIS 직접매치로 정상 인식되고 註도 「沔水出東狼谷」로 올바르게
     # 붙는다.
     ('武都郡', '河池'),
-    # 武都郡 「沮」— 「河池」바로 다음 縣. CHGIS cnty_xy 에 좌표가 실제로
-    # 있는데도(直接 조회 확인, (106.44959, 33.27274)) 위 「河池」whitelist
-    # 매치 직후 after_residual=True 가 돼 1자 縣 CHGIS 직접-hit 검사(lens
-    # =(4,3,2) — 1자 제외)가 이 자리에서 꺼진다. 그 상태에서 「沮」바로
-    # 뒤의 註 「沔水出東狼谷」이 NOTE_START_RUN 의 「[1-3자]水出」패턴과
-    # 「沮」위치에서 곧바로 매치돼(「沮」자신이 그 1-3자 접두부로 삼켜짐)
-    # run 을 만들지도 못한 채 통째로 註로 확정돼 버린다(실측 — 「沮」가
-    # 縣 목록에서 통째로 사라짐). 이 자리는 CHGIS 결손이 아니라 「1자
-    # 縣의 정상 직접-hit 경로가 after_residual 로 막힌 채로, 註 트리거
-    # 정규식이 그 틈을 먼저 채가는」 별개의 경합이라 jun_hit 을 못박아
-    # run_end/NOTE_START_RUN 판정보다 먼저 잡게 한다.
-    ('武都郡', '沮'),
+    # (武都郡 「沮」는 여기 있었다가 뺐다 — 「河池」whitelist 직후
+    # after_residual=True 로 1자 직행 경로가 꺼져 縣이 통째로 사라지던
+    # 것을 덮은 항목이었는데, 원인 자리(jun_hit 뒤 after_residual)를 고친
+    # 지금은 CHGIS 좌표 (106.44959, 33.27274) 로 정상 해석된다. 오히려
+    # 이 목록에 남아 있으면 ok=False 라 좌표를 잃는다.)
     # 上郡 「漆垣」— 「白土」다음, 「奢延」바로 앞. ctext 원문 셀은 「漆垣」
     # 그대로 한 셀이지만(cell #284), 앞 「白土」가 CHGIS 결손이라 after_
     # residual=True 로 넘어와 1자 직접-hit 경로(lens=(4,3,2))가 꺼진 채
@@ -830,7 +823,17 @@ def main():
                     if any(jun == b['jun'] and rest[q:].startswith(prefix)
                            for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
                         break   # 바로 뒤가 확증된 註 연속 — 縣 경계 시도를 그친다
-                    after_residual = True
+                    # after_residual 은 「앞 조각을 DP 가 대충 떼어냈으니 다음
+                    # 1자 적중은 못 믿는다」는 뜻이다(아래 lens 주석). 확증
+                    # 화이트리스트 매치는 그 반대다 — 縣名 全稱을 사료로 못박아
+                    # 끝 위치가 정확하니 다음 자리는 진짜 縣 경계다. 여기서
+                    # True 로 두면 바로 뒤 1자 縣의 정상 CHGIS 직행 경로가 꺼져
+                    # 좌표를 잃거나(東平國 「章」— 앞 「富成」whitelist 직후),
+                    # 註 트리거 정규식에 그 틈을 뺏겨 縣 자체가 사라진다
+                    # (武都郡 「沮」— 앞 「河池」whitelist 직후. 이 사고는 「沮」를
+                    # 또 whitelist 에 넣어 덮어 뒀었는데, 화이트리스트를 늘릴수록
+                    # 이 함정이 넓어지는 자기증폭이라 원인 자리에서 끊는다).
+                    after_residual = False
                     continue
                 # 1자 縣名(卷·鞏·京 등)은 흔해서 원칙적으로 인정한다. 다만 바로
                 # 앞이 CHGIS 결손이라 DP 로 대충 떼어낸 잔여 조각(residual)이면
@@ -860,7 +863,11 @@ def main():
                     if any(jun == b['jun'] and rest[q:].startswith(prefix)
                            for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
                         break   # 바로 뒤가 확증된 註 연속 — 縣 경계 시도를 그친다
-                    after_residual = True
+                    # 위 jun_hit 과 같은 이유로 False — 확증 1자 縣도 끝 위치가
+                    # 정확하다. (현재 데이터에서는 이 자리 뒤에 1자 CHGIS 적중이
+                    # 오는 郡이 없어 실측 diff 는 0건이다 — 105 郡國 전량 대조로
+                    # 확인했다. 같은 결함을 가진 형제 경로라 함께 고친다.)
+                    after_residual = False
                     continue
                 if rest[q] == '。':
                     # 앞 縣을 CHGIS 매칭이 곧바로 삼켜, 그 縣 자신의 註 시작

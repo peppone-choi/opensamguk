@@ -843,6 +843,12 @@ class TestWuduJunSplitCellAndGreedyNoteRegression(unittest.TestCase):
     의 NOTE_START_RUN 「[1-3자]水出」트리거가 「沮」자신을 그 1-3자 접두로
     삼켜 縣 목록에서 통째로 사라진다(玄菟郡 「遼山，」·越巂郡 「南山」과는
     반대로, 여기는 진짜 CHGIS 점이 있는 縣이 삼켜지는 경우).
+    ②는 한때 「沮」를 CONFIRMED_JUN_NAMES_NO_CHGIS 에 넣어 덮어 뒀지만
+    (그러면 縣은 살아나도 ok=False 라 좌표를 잃는다), 지금은 원인 자리
+    — 확증 whitelist 매치 뒤에는 after_residual 을 세우지 않는다 — 를
+    고쳐서 「沮」가 자기 CHGIS 좌표로 정상 해석된다. 아래 좌표 assert 가
+    그 회귀 감시다: after_residual 을 다시 세우면 縣이 사라져 城數 체크섬
+    FAIL 로, whitelist 로 되돌려 덮으면 좌표 null 로 각각 빨개진다.
     data/chgis-source/junguozhi/wu.html 「武都郡」 블록 원문 셀(#151-161)
     그대로."""
 
@@ -910,6 +916,15 @@ class TestWuduJunSplitCellAndGreedyNoteRegression(unittest.TestCase):
     def test_ju_note_carries_full_clause(self):
         ju = next(c for c in self.wudu['counties'] if c['name'] == '沮')
         self.assertEqual(ju['note'], '沔水出東狼谷')
+
+    def test_ju_keeps_its_own_chgis_point(self):
+        # 「沮」는 CHGIS 좌표가 있는 縣이다 — 앞 「河池」whitelist 매치 때문에
+        # 1자 직행 경로가 꺼지거나, whitelist 로 덮어 ok=False 로 잘리면
+        # CANDIDATE_REGION(좌표 null)이 된다. 이름만 맞는지 보면 그 둘을
+        # 구별 못 한다.
+        ju = next(c for c in self.wudu['counties'] if c['name'] == '沮')
+        self.assertEqual(ju['resolution'], 'RESOLVED_POINT')
+        self.assertEqual((ju['lon'], ju['lat']), (106.44959, 33.27274))
 
 
 class TestShangJunQiyuanAndQiuciShuguoRegression(unittest.TestCase):
