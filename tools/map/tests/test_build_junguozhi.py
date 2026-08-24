@@ -512,5 +512,104 @@ class TestNanyangYuyangNoteReferenceRegression(unittest.TestCase):
             self.assertIn(real, names, f'{real} 이 育陽 註 오인 파편에 밀려 사라졌다')
 
 
+class TestJunHitTakesPriorityOverPartialCntyMatch(unittest.TestCase):
+    """확증된 (郡, 縣名) 은 우연한 짧은 cnty_xy 부분일치보다 먼저 봐야 한다 —
+    廣漢屬國 「陰平道」의 앞 2자 「陰平」만 cnty_xy 에 좌표로 있어, hit 체크를
+    먼저 보면 「陰平」만 잘라먹고 「道」가 뒤 縣과 섞여 가짜 縣이 된다."""
+
+    def test_confirmed_full_name_wins_over_shorter_cnty_hit(self):
+        self.assertIn(('廣漢屬國', '陰平道'), bj.CONFIRMED_JUN_NAMES_NO_CHGIS)
+        self.assertIn(('廣漢屬國', '甸氐道'), bj.CONFIRMED_JUN_NAMES_NO_CHGIS)
+        self.assertIn(('廣漢屬國', '剛氐道'), bj.CONFIRMED_JUN_NAMES_NO_CHGIS)
+
+
+class TestSplitUnresolvedRunJunWhitelist(unittest.TestCase):
+    """張掖屬國 「候官左騎千人司馬官千人官」— 사전 적중이 하나도 없는 run 에서
+    DP 는 2자 조각 보너스만 보고 맹목적으로 2자씩 자른다(候官‧左騎‧千人 은
+    우연히 2자라 결과가 맞았지만, 3자인 司馬官‧千人官 은 司馬‧官千‧人官 세
+    가짜 縣으로 쪼개졌다, 실측). jun 을 넘기면 CONFIRMED_JUN_NAMES_NO_CHGIS
+    항목이 사전 적중과 같은 가중치를 받아 DP 가 정확한 경계를 고른다."""
+
+    def test_jun_whitelisted_pieces_override_blind_pairing(self):
+        run = '候官左騎千人司馬官千人官'
+        pieces = bj.split_unresolved_run(run, lex=frozenset(), cnty_xy=None,
+                                          anchor=None, max_km=None, jun='張掖屬國')
+        self.assertEqual(pieces, ['候官', '左騎', '千人', '司馬官', '千人官'])
+
+    def test_without_jun_falls_back_to_blind_pairing(self):
+        # jun 을 안 넘기면(다른 郡 호출부) 예전처럼 2자 그리디 그대로다 —
+        # 이 whitelist 가 다른 郡에 새는 게 아님을 확인한다.
+        run = '候官左騎千人司馬官千人官'
+        pieces = bj.split_unresolved_run(run, lex=frozenset(), cnty_xy=None,
+                                          anchor=None, max_km=None)
+        self.assertNotEqual(pieces, ['候官', '左騎', '千人', '司馬官', '千人官'])
+
+
+class TestLiaodongShuguoNoCountBoundaryRegression(unittest.TestCase):
+    """遼東屬國류 屬國都尉는 「몇十몇城」선언이 없다(cities=None). 이전에는
+    PASS-B gap 이 0으로 고정돼 잔여 縣이 통째로 사라졌고(張掖屬國‧遼東屬國
+    0개), b['rest'] 계산도 DIST(雒陽거리) 절 끝을 안 봐서 「雒陽東北三千
+    二百六十里」가 그대로 남아 縣 경계 탐색에 떨어져 가짜 縣(雒陽‧東北‧三‧
+    千二‧百六‧十里)이 됐다. 아래는 data/chgis-source/junguozhi/wu.html 「遼東
+    屬國」 블록 원문 셀을 그대로 옮긴 것이다."""
+
+    SEGMENTS = [
+        ('wu', '遼東屬國'),
+        ('wu', '雒陽東'),
+        ('wu', '北三千二百六十里。'),
+        ('wu', '昌遼'),
+        ('wu', '故天遼，屬遼西。賓徒故屬遼西。徒河故屬遼西。無慮有醫無慮山。'
+               '險瀆房'),
+        ('wu', '右幽州刺史部，郡、國十一，縣、邑、侯國九十。南海郡'),
+        ('wu', '一城，戶七萬一千四百七十七，口二十五萬二百八十二。'),
+        ('wu', '番禺'),
+    ]
+
+    CNTY_XY = {
+        '番禺': [(113.26436, 23.12908)],
+    }
+    PREF_XY = {'遼東屬': [(123.5, 41.5)], '南海': [(113.26436, 23.12908)]}
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.liaodong = next(p for p in cls.data['places'] if p['name'] == '遼東屬國')
+
+    def test_distance_from_luoyang_is_extracted(self):
+        self.assertEqual(self.liaodong['distanceFromLuoyang'], 3260)
+        self.assertEqual(self.liaodong['direction'], '東北')
+
+    def test_no_count_jun_still_recovers_all_six_counties(self):
+        names = [c['name'] for c in self.liaodong['counties']]
+        self.assertEqual(names, ['昌遼', '賓徒', '徒河', '無慮', '險瀆', '房'])
+
+    def test_distance_clause_does_not_leak_into_fake_counties(self):
+        names = {c['name'] for c in self.liaodong['counties']}
+        for fake in ('雒陽', '東北', '三', '千二', '百六', '十里'):
+            self.assertNotIn(fake, names,
+                              f'{fake} 은 雒陽거리 절 파편이지 縣이 아니다')
+
+
 if __name__ == '__main__':
     unittest.main()

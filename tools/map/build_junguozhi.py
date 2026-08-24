@@ -259,6 +259,12 @@ CONFIRMED_1CHAR_JUN_NAMES = frozenset((
     # run_end/DP 로 떨어지면 뒤 「廣甯」과 한 run 으로 묶여 「甯廣」「甯居」「庸」
     # 세 가짜 縣으로 쪼개진다(실측).
     ('上谷郡', '甯'),
+    # 遼東屬國 「房」— 「險瀆」바로 뒤, 마지막 縣. ctext 원문 셀이 「險瀆房」로
+    # 구두점 없이 붙어 있다(data/chgis-source/junguozhi/wu.html cell #474).
+    # 後漢書 卷113 郡國志 원문 〖险渎〗〖房〗(data/corpus/hhs-113.txt:906
+    # 부근, 遼東屬國 「別領六城」의 마지막 두 縣) — 두 縣이 별개임을 확인.
+    # CHGIS cnty_xy·county_lexicon() 둘 다에 「房」이 없다.
+    ('遼東屬國', '房'),
 ))
 
 # 위와 같은 문제이지만 縣名이 2자 이상인 자리. CHGIS cnty_xy 에 없으면 q=0
@@ -282,6 +288,50 @@ CONFIRMED_JUN_NAMES_NO_CHGIS = frozenset((
     # 「甯」과 함께 명시적으로 못박는다.
     ('上谷郡', '廣甯'),
     ('上谷郡', '居庸'),
+    # 遼東屬國 「險瀆」— 「無慮」바로 뒤, 「房」바로 앞. ctext 원문 셀이 「無慮
+    # 有醫無慮山。險瀆房」로 이어져 있다(위 「房」과 같은 셀, cell #474).
+    # 後漢書 卷113 원문 〖险渎〗 확인(위 인용과 동일 위치). CHGIS cnty_xy·
+    # county_lexicon() 둘 다에 없다 — 없으면 run_end/DP 가 「險瀆房」(구두점
+    # 없는 3자 잔여)를 「險」+「瀆房」으로 오분절한다(실측).
+    ('遼東屬國', '險瀆'),
+    # 張掖屬國 「候官」・「左騎」・「千人」・「司馬官」・「千人官」. ctext 원문
+    # 셀이 「候官左騎千人司馬官千人官。」로 구두점 없이 이어진다(data/chgis-
+    # source/junguozhi/wu.html cell #245-249, 5개 독립 셀). 後漢書 卷113
+    # 원문 〖候官〗〖左骑〗〖千人〗〖司马官〗〖千人官〗(data/corpus/hhs-
+    # 113.txt:482 부근, 「別領五城」전부) 확인. U33(候官 이 縣官 명칭이지
+    # 실제 縣이 아닐 가능성)은 별도 검토 대상이라 이름 자체는 원문 그대로
+    # 다섯 자리 모두 縣 취급하고 좌표만 못 채운다 — CHGIS cnty_xy·
+    # county_lexicon() 다섯 다 없다. split_unresolved_run 의 DP 는 사전
+    # 적중이 하나도 없는 run 을 2자 조각 보너스(+0.3)만 보고 맹목적으로
+    # 2자씩 자른다 — 3자인 「司馬官」「千人官」만 못박으면 나머지 2자
+    # 조각들의 전역 평균점수 균형이 깨져 「候官左」「騎千人」처럼 엉뚱하게
+    # 갈린다(실측). 다섯 전부 못박아야 DP 가 정확히 2‧2‧2‧3‧3 으로 나뉜다.
+    ('張掖屬國', '候官'),
+    ('張掖屬國', '左騎'),
+    ('張掖屬國', '千人'),
+    ('張掖屬國', '司馬官'),
+    ('張掖屬國', '千人官'),
+    # 廣漢屬國 「陰平道」・「甸氐道」・「剛氐道」. ctext 원문 셀 3개가 「陰平道」
+    # 「甸氐道」「剛氐道」로 각각 독립 셀이다(data/chgis-source/junguozhi/
+    # wu.html cell #113-115). 後漢書 卷113 원문 〖阴平道〗〖甸氐道〗〖刚氐道〗
+    # (data/corpus/hhs-113.txt:251 부근, 廣漢屬國 「別領三城」전부) 확인.
+    # CHGIS cnty_xy 에 「陰平道」전체는 없지만 앞 2자 「陰平」만 좌표로 있어
+    # (改名 前 이름이 아니라 「道」접미사만 빠진 CHGIS 결손으로 보인다) hit
+    # 체크가 「陰平」만 잘라먹으면 「道」가 뒤 甸氐道‧剛氐道 와 섞여 「道甸」
+    # 「氐道」「剛」+note=「氐道」 세 가짜 縣이 된다(실측) — 확증 목록을 hit
+    # 체크보다 먼저 보게 고쳐 「陰平道」전체를 縣名으로 살린다(좌표는
+    # CANDIDATE_REGION 으로 남긴다). 「甸氐道」「剛氐道」는 CHGIS 에 전혀 없다.
+    ('廣漢屬國', '陰平道'),
+    ('廣漢屬國', '甸氐道'),
+    ('廣漢屬國', '剛氐道'),
+    # 犍為屬國 「漢陽」— 「朱提」다음, 마지막 縣(別領二城 중 두 번째).
+    # 後漢書 卷113 원문 〖朱提〗山出银、铜。〖汉阳〗(data/corpus/hhs-113.txt:
+    # 275 부근) 확인. 「漢」이 NOTE_START 키워드(漢改為…류 왕조명 서술)와
+    # 우연히 겹쳐, 확증 목록이 없으면 이 縣 시작점에서 곧장 NOTE_START 판정에
+    # 걸려 재동기화 실패로 통째로 삭제된다(실측 — 縣이 아예 안 나온다).
+    # CHGIS cnty_xy·county_lexicon() 둘 다에 「漢陽」(이 犍為屬國 縣)이 없다
+    # — 涼州 漢陽郡과는 별개 지점.
+    ('犍為屬國', '漢陽'),
 ))
 
 # NOTE_START_RUN 은 註 없는 縣 나열 구간의 끝을 「有/其/凡...」 같은 註 시작어에서
@@ -336,6 +386,14 @@ CONFIRMED_NOTE_CONTINUATION = (
     # hit(武功) 직후 위치라 s0 top 체크가 아니라 hit 분기 안
     # CONFIRMED_NOTE_CONTINUATION 재확인이 잡는다.
     ('右扶風', '永平八年復'),
+    # 蜀郡屬國 「漢嘉」註 첫 절. 後漢書 卷113 원문 〖汉嘉〗故青衣，{{YL|阳嘉
+    # 二年}}改。有蒙山。(data/corpus/hhs-113.txt:266 부근). 「靑衣」는 漢嘉의
+    # 改名 前 이름인데 CHGIS cnty_xy 에 漢嘉와 정확히 같은 좌표로 등재돼
+    # 있어(改名 前後 지명이 좌표를 공유) 근접 필터를 그대로 통과, NOTE_START
+    # 재동기화가 「靑衣」를 새 縣 경계로 오인한다(실측 — 「靑衣」가 가짜 縣이
+    # 되고 뒤 「，陽」「嘉二」「年改」 세 조각까지 잔여로 쪼개졌다). 「有」류와
+    # 같은 이유로 이 절만 재동기화 대상에서 뺀다.
+    ('蜀郡屬國', '故青衣，'),
 )
 
 # 註가 다른 縣을 방향·경로 참조로만 언급하는 사고는 예전엔 (郡, 절 첫머리)
@@ -429,7 +487,16 @@ def main():
         b['hu'] = (cn_int(hu.group(1)), cn_int(hu.group(2))) if hu else (None, None)
         di = DIST.search(b['text'][:120])
         b['dist'] = (cn_int(di.group(2)), di.group(1)) if di else (None, None)
-        b['rest'] = b['text'][(hu.end() if hu else (m.end() if m else 0)):]
+        # 이 세 절(城數·戶口·雒陽거리)이 다 안 나오는 郡도 있고, 나오는 순서도
+        # 郡마다 다르다(遼東屬國은 城數·戶口 없이 雒陽거리로 바로 시작한다).
+        # hu.end()/m.end() 만 보고 자르면 DIST 로 이미 뽑아낸 「雒陽東北三千
+        # 二百六十里」가 b['rest'] 에 그대로 남아 縣 경계 탐색에 떨어지고, PASS
+        # B gap 상한이 풀린 뒤로는 그 잔재가 「雒陽」「東北」「三」「千二」…
+        # 같은 가짜 縣으로 쪼개진다(실측, 遼東屬國). 셋 중 가장 뒤에서 끝난
+        # 절 다음부터를 rest 로 삼는다.
+        b['rest'] = b['text'][max(hu.end() if hu else 0,
+                                   m.end() if m else 0,
+                                   di.end() if di else 0):]
         key = re.sub(r'(郡|國|尹|屬國|都尉|校尉)$', '', b['jun'])
         # 이체자. 郡國志와 CHGIS 표기가 갈리면(鴈門/雁門, 郁林/鬱林, 河閒/河間) 앵커를
         # 못 찾고, 앵커가 없으면 아래 MAX_KM 필터가 통째로 꺼져 동명이인을 1500km
@@ -507,6 +574,30 @@ def main():
                 # 실존하되 291km 밖 딴 縣이다)이 진짜 2자 縣의 앞글자를 가로채
                 # 뒤가 통째로 어긋난다(西河郡 13→7 회귀 원인). 그 자리에서만
                 # 1자 적중을 보류하고 run/DP 분절에 맡긴다.
+                # (郡, 縣名) 로 못박힌 확증된 縣부터 먼저 본다 — CHGIS 에 그
+                # 全稱은 없어도 縣治가 겹쳐 딴 이름(改名 前 이름 등)의 「짧은」
+                # 좌표가 우연히 cnty_xy 에 있는 자리가 있다(廣漢屬國 「陰平道」
+                # 는 사전에 없지만 그 앞 2자 「陰平」만 cnty_xy 에 좌표로 있다
+                # — 아래 hit 체크가 먼저 「陰平」만 잘라먹으면 「道」가 뒤
+                # 甸氐道‧剛氐道 와 뒤섞여 가짜 縣이 된다). 확증 목록은 이미
+                # 사료로 검증됐으니 우연한 짧은 부분일치보다 우선한다.
+                jun_hit = next((nm for j, nm in CONFIRMED_JUN_NAMES_NO_CHGIS
+                                if j == b['jun'] and rest[q:q+len(nm)] == nm), None)
+                if jun_hit:
+                    entries.append([q, jun_hit, False])
+                    q += len(jun_hit)
+                    if any(jun == b['jun'] and rest[q:].startswith(prefix)
+                           for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
+                        break   # 바로 뒤가 확증된 註 연속 — 縣 경계 시도를 그친다
+                    after_residual = True
+                    continue
+                # 1자 縣名(卷·鞏·京 등)은 흔해서 원칙적으로 인정한다. 다만 바로
+                # 앞이 CHGIS 결손이라 DP 로 대충 떼어낸 잔여 조각(residual)이면
+                # — 즉 註 없는 縣들이 구두점 없이 줄줄이 붙은 구간 한복판이면 —
+                # 우연히 CHGIS에 있는 딴 지역 1자 縣(西河郡 「平定」의 「平」은
+                # 실존하되 291km 밖 딴 縣이다)이 진짜 2자 縣의 앞글자를 가로채
+                # 뒤가 통째로 어긋난다(西河郡 13→7 회귀 원인). 그 자리에서만
+                # 1자 적중을 보류하고 run/DP 분절에 맡긴다.
                 lens = (4, 3, 2) if after_residual else (4, 3, 2, 1)
                 hit = next((rest[q:q+L] for L in lens
                             if rest[q:q+L] in cnty_xy and near(rest[q:q+L])), None)
@@ -517,19 +608,6 @@ def main():
                     if any(jun == b['jun'] and rest[q:].startswith(prefix)
                            for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
                         break   # 바로 뒤가 확증된 註 연속 — 縣 경계 시도를 그친다
-                    continue
-                # 위와 같은 문제의 2자 이상 縣名 판(右扶風 「槐里」류) — cnty_xy 에
-                # 없으니 위 hit 체크로는 못 잡는다. 먼저 시도해 자신을 잘라내야
-                # 뒤 註가 NOTE_START 재동기화 진입점을 되찾는다.
-                jun_hit = next((nm for j, nm in CONFIRMED_JUN_NAMES_NO_CHGIS
-                                if j == b['jun'] and rest[q:q+len(nm)] == nm), None)
-                if jun_hit:
-                    entries.append([q, jun_hit, False])
-                    q += len(jun_hit)
-                    if any(jun == b['jun'] and rest[q:].startswith(prefix)
-                           for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
-                        break   # 바로 뒤가 확증된 註 연속 — 縣 경계 시도를 그친다
-                    after_residual = True
                     continue
                 # CHGIS 사전에 아예 없는 확증된 1자 縣(漢陽郡 「隴」류) — cnty_xy 에
                 # 없으니 위 hit 체크로는 못 잡는다. 좌표 없는 잔여 조각으로 잘라
@@ -590,7 +668,18 @@ def main():
                     # (燕 「有平陽亭」)‧泰山郡 東陽(南城 「有東陽城」)‧敦煌郡
                     # 玉門(龍勒 「有玉門關」) 을 같은 부류로 실측했다 — 개별
                     # 사고가 아니라 한 클래스다. 일반 규칙으로 대체한다.
-                    if rest[q] == '有':
+                    # 「有」와 같은 이유로, 앞 縣이 옛 이름(改名 前 이름)으로
+                    # 불리던 절도 재동기화 대상에서 뺀다 — 그 옛 이름이 CHGIS
+                    # 상 「같은 지점」(改名 前後 지명이 CHGIS 좌표를 공유)으로
+                    # 등재돼 있으면 근접 필터도 못 걸러 옛 이름 자체가 縣
+                    # 경계로 오인된다(蜀郡屬國 「漢嘉」註 「故青衣，陽嘉二年改。」
+                    # — 「靑衣」가 cnty_xy 에 漢嘉와 정확히 같은 좌표로 있어
+                    # 「靑衣」가 가짜 縣이 되고 뒤 「，陽」「嘉二」「年改」 세
+                    # 조각이 잔여로 쪼개졌다). 확증된 절만 (郡, 절 첫머리) 로
+                    # CONFIRMED_NOTE_CONTINUATION 에 등록해 재동기화를 끈다.
+                    if rest[q] == '有' or any(
+                            jun == b['jun'] and rest[q:].startswith(prefix)
+                            for jun, prefix in CONFIRMED_NOTE_CONTINUATION):
                         resync = None
                     else:
                         p = q + 1
@@ -634,7 +723,7 @@ def main():
                         break
                     run_end += 1
                 run = rest[q:run_end]
-                for piece in split_unresolved_run(run, lex, cnty_xy, b['anchor'], MAX_KM):
+                for piece in split_unresolved_run(run, lex, cnty_xy, b['anchor'], MAX_KM, b['jun']):
                     if piece:
                         entries.append([q, piece, False])
                         q += len(piece)
@@ -706,7 +795,14 @@ def main():
             c['lat'] = None
             c['resolution'] = 'CANDIDATE_REGION'
             extra.append(c)
-        gap = (b['cities'] - len(got) - len(extra)) if b['cities'] else 0
+        # 屬國都尉는 원래 「몇十몇城」 선언이 없다(cities=None, NO_COUNT). gap 을
+        # 0 으로 두면 잔여(ok=False) 조각이 하나도 안 채워져 屬國마다 縣이
+        # 통째로 사라진다(실측: 張掖屬國·遼東屬國 0개, 廣漢屬國 1개뿐이었는데
+        # 원문엔 候官‧左騎‧千人‧司馬官 4자리가 각각 독립 셀로 있다). 城數
+        # 상한이 없으니 잔여 전부를 CANDIDATE_REGION 으로 채운다 — 상한이
+        # 없다고 조작하는 게 아니라, 이미 boundary 탐색을 거쳐 나온 후보를
+        # 막던 인위적 gap=0 상한을 없애는 것뿐이다.
+        gap = (b['cities'] - len(got) - len(extra)) if b['cities'] else len(b['entries'])
         if gap > 0:
             # extra 는 이미 demoted 항목을 담고 시작할 수 있다 — len(extra) 를
             # gap 과 그대로 비교하면 demoted 로 미리 채워진 몫만큼 덜 채우게
@@ -875,7 +971,7 @@ def best_split(run, hit, k):
     return dp[L][k], pieces[::-1]
 
 
-def split_unresolved_run(run, lex, cnty_xy=None, anchor=None, max_km=None):
+def split_unresolved_run(run, lex, cnty_xy=None, anchor=None, max_km=None, jun=None):
     """CHGIS 매칭이 안 되는(결손) 구간을 사전 선호 DP 로 분절한다.
 
     「離石平定美稷…」처럼 註 없는 縣들이 줄줄이 붙어 있는데 그중 일부가 CHGIS에
@@ -892,6 +988,13 @@ def split_unresolved_run(run, lex, cnty_xy=None, anchor=None, max_km=None):
     if not run:
         return []
     def hit(piece):
+        # 확증된 (郡, 縣名) 조각(張掖屬國 「司馬官」「千人官」류)은 사전/CHGIS
+        # 둘 다에 없어도 적중으로 친다 — 안 그러면 이 run 전체가 사전 밖이라
+        # DP 가 2자 조각 보너스(+0.3)만 보고 「司馬」「官千」「人官」처럼 3자
+        # 縣名을 2자씩 맹목적으로 잘못 자른다(실측). jun 이 안 주어지면(다른
+        # 호출부) 이 예외는 그냥 안 걸린다.
+        if jun is not None and (jun, piece) in CONFIRMED_JUN_NAMES_NO_CHGIS:
+            return True
         # 이 run 자체가 이미 「처음부터 CHGIS 직접 매칭에 실패한」 구간이다
         # (2/3/4자는 물론 1자로도 안 걸렸으니까). 그런 자리에서 1자만 사전에
         # 우연히 있다고 점수를 얹으면, 딴 지역 동명 1자 縣(西河郡 「平定」의
