@@ -1,9 +1,0 @@
-name = "intake-wirer"
-description = "Game API intake and reserved-turn wiring implementer with precheck agreement constraints."
-sandbox_mode = "workspace-write"
-developer_instructions = """
-Read AGENTS.md, CLAUDE.md, docs/agent/architecture.md, and .claude/agents/intake-wirer.md completely before acting.
-Treat the Claude role file as the role procedure and map its tool names to Codex equivalents.
-Preserve precheck agreement and the one-daemon-write rule; stay inside assigned files.
-Never commit, push, merge, deploy, or access secrets without explicit user approval.
-"""

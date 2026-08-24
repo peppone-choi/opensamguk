@@ -26,7 +26,7 @@ import kotlin.test.assertEquals
  * UPDATE가 실제 Postgres `city.state` 컬럼과 정합함 + [CityRowMapper]가 그 행을 손실 없이
  * 되읽음을 증명한다 (repo 교훈: flush 변경 = real-Postgres IT 필수).
  *
- * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다 (CLAUDE.md).
+ * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CityStateFlushIT {

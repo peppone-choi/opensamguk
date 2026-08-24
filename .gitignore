@@ -20,8 +20,6 @@ web/*/out/
 .env.local
 .env.headroom.example
 .DS_Store
-# .mcp.json은 커밋한다 (ADR-LITE-007): 토큰 무포함 원칙(값은 env 참조·대화형 OAuth),
-# 쓰기 시 protect-sensitive-files.sh가 토큰 패턴을 스캔한다.
 # Local headroom/docker overrides
 docker-compose.headroom.yml
 # Legacy reference repos (kept locally, never committed)
@@ -30,43 +28,8 @@ legacy/
 **/generated/
 # Local workflow orchestration scripts (transient tooling)
 .workflow-*.mjs
-# LLM wiki (Karpathy pattern) — local knowledge base, never committed
+# Local wiki knowledge base
 docs/wiki/
-.claude/skills/wiki-ingest/
-.claude/skills/wiki-query/
-.claude/skills/wiki-lint/
-.gstack/
-# Harness scratch/tmp dir
-.claude-tmp/
-.claude-tmp-runner/
-.claude/worktrees/
-# Session tooling state (caveman/bkit/codex/agents — local by default)
-.agents/*
-!.agents/skills/
-.agents/skills/*
-!.agents/skills/find-project-skill/
-!.agents/skills/find-project-skill/SKILL.md
-!.agents/skills/os-*/
-!.agents/skills/os-*/SKILL.md
-!.agents/skills/opensamguk-working-system/
-!.agents/skills/opensamguk-working-system/SKILL.md
-!.agents/skills/opensamguk-php-oracle/
-!.agents/skills/opensamguk-php-oracle/SKILL.md
-!.agents/skills/loop-engineering/
-!.agents/skills/loop-engineering/SKILL.md
-!.agents/skills/parity-close/
-!.agents/skills/parity-close/SKILL.md
-!.agents/skills/parity-ship/
-!.agents/skills/parity-ship/SKILL.md
-!.agents/skills/*/agents/
-!.agents/skills/*/agents/openai.yaml
-.bkit/
-.codex/*
-!.codex/config.toml
-!.codex/hooks.json
-!.codex/agents/
-.codex/agents/*
-!.codex/agents/*.toml
 # Throwaway PHP golden investigation scripts
 tools/php-golden/probe_*.php
 # Playwright MCP temp dir
@@ -75,18 +38,11 @@ tools/php-golden/probe_*.php
 .tmp_research/
 **/tsconfig.tsbuildinfo
 
-.claude/scheduled_tasks.lock
-
-# OMC / agent session state (local, never commit)
-.omc/
-web/*/.omc/
-
 # Local scratch directories
 parity-shots/
 tmp/
 
-# superpowers brainstorm 런타임 상태(pid/token) + Playwright 실행 산출물
-.superpowers/
+# Playwright 실행 산출물
 web/*/test-results/
 
 # 감사 raw 스크래치(대용량, working dir 보존)

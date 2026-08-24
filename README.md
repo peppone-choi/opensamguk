@@ -10,7 +10,6 @@ draw-for-draw·byte-for-byte 일치는 신규 기능의 절대 조건이 아닙�
 - 마이그레이션 설계 + 로드맵: [`docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`](docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md)
 - 프론트엔드 패러티 + 시드 계획(F0–F5): [`docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`](docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md)
 - 문서 포털: [`docs/README.md`](docs/README.md) · [사용자 매뉴얼](docs/user/README.md) · [관리자 매뉴얼](docs/admin/README.md) · [제품 로드맵](docs/design/roadmap.md)
-- 기여자/에이전트 가이드(패러티 규율·관례): [`CLAUDE.md`](CLAUDE.md) · 모듈/빌드/테스트 온보딩: [`AGENTS.md`](AGENTS.md)
 - 원작·라이선스: HideD님의 [**devsam**](https://storage.hided.net/gitea/devsam) (MIT) — 자세한 감사의 말은 [감사 / 라이선스](#감사--라이선스)
 - 관련 저장소: 배포(오케스트레이션) [**opensamguk-docker**](https://github.com/peppone-choi/opensamguk-docker) · 이미지 자산 [**opensamguk-images**](https://github.com/peppone-choi/opensamguk-images)(jsDelivr CDN)
 
@@ -396,20 +395,8 @@ tools/parity/gate.sh backend
 
 ## 작업 운영 체계
 
-주먹구구식 구현을 막기 위한 정본 문서는 [`docs/superpowers/WORKING_SYSTEM.md`](docs/superpowers/WORKING_SYSTEM.md)입니다.
-
-Codex 사용자 관점의 프로젝트 열기, 업무 요청, 구현·검증·리뷰, skills.sh 스킬 탐색, MCP, commit·배포 승인 절차는 [`docs/agent/codex-user-manual.md`](docs/agent/codex-user-manual.md)에 정리되어 있습니다.
-
-- `skills-lock.json`은 skills.sh에서 설치한 프로젝트 스킬 목록을 고정합니다. Next.js/React 지침은 `next-best-practices` 대신 공식 Vercel 출처의 `vercel-react-best-practices`를 사용합니다.
-- 다운로드한 외부 `.agents/skills/*`는 로컬 실행 표면이며 git-ignore입니다. 새 환경에서는 `scripts/agent/project-skills.sh restore`로 복원하고, Codex는 프로젝트 `SessionStart` 훅에서 같은 복원을 자동 실행합니다.
-- Codex의 `.codex/config.toml`, `.codex/hooks.json`, `.codex/agents/*.toml`과 저장소 운영용 `$os-*`·`$find-project-skill` 프로젝트 스킬은 추적됩니다. Claude의 `/os-*`와 Codex의 `$os-*`는 동일한 `docs/agent/` 절차를 실행합니다.
-- 작업에 필요한 전문 스킬이 없으면 Codex에서 `$find-project-skill`로 skills.sh 후보를 검색·검토한 뒤 프로젝트에만 설치합니다. 전역 설치는 기본값이 아닙니다.
-- Claude 훅은 `.claude/settings.json`, Codex 훅은 `.codex/hooks.json`에 배선돼 있습니다. Codex에서 저장소를 처음 열 때 훅을 신뢰하고, 설정·훅 변경 뒤에는 reload/restart해야 합니다.
-- provider/model 공통 개발도구는 `tools/agent-system/check.py`입니다. 로컬은 `tools/agent-system/check.py`, PR/CI는 `tools/agent-system/check.py --strict --base origin/main`, 에이전트 통합은 `--format json`을 사용합니다.
-- 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거칩니다. 병렬 agent는 서로 구현 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge하지 않습니다.
 - 백엔드 표준 게이트는 `tools/parity/gate.sh backend`입니다. Java 21로 Gradle을 실행하고 `BUILD SUCCESSFUL` 및 테스트 XML의 `failures=0 errors=0`을 확인합니다.
 - PHP 레거시 분석이 필요한 회귀 작업은 `legacy/devsam-core` 소스 경로와 line range를 먼저 잡고, 실제 캡처가 필요한 동작은 `tools/php-golden/`로 증거를 만든 뒤 Kotlin/Next 구현과 비교합니다.
-- 외부 스킬은 보조 지식입니다. 최신 ADR, `CLAUDE.md`, `AGENTS.md`, one-daemon-write 규칙과 충돌하면 저장소 규칙이 이깁니다.
 
 ---
 
@@ -432,7 +419,7 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 
 ## 회귀·아키텍처 규율
 
-신규 제품 기획에서도 유지하는 여섯 가지 규칙입니다. 상세 결정은 `.ai/decisions.md`의 ADR-LITE-042를 따릅니다.
+신규 제품 기획에서도 유지하는 여섯 가지 규칙입니다.
 
 1. **결정론적 재현** — 같은 seed·입력·실행 순서에서 같은 결과를 재현한다. 신규 기능에 PHP draw-for-draw 일치를 요구하지는 않는다.
 2. **수치 변경의 의도성** — 반올림·절삭·clamp를 바꾸면 기획 근거와 회귀 영향을 기록하고 테스트한다. 기존 `PhpRound` 사용처는 의도 없이 바꾸지 않는다.

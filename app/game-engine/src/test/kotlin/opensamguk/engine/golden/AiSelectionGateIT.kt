@@ -69,7 +69,7 @@ import kotlin.test.assertTrue
  *
  * On a mismatch the test fails with the FIRST divergent turn — the golden is grand truth, NEVER weakened. Every
  * divergence is tallied into a cluster summary (by `reason` + cause) printed on failure, and the precise
- * remaining-divergence catalog is maintained in `.context/p5-research/GATE-DIVERGENCES.md`.
+ * remaining divergences stay explicitly quarantined rather than fabricated.
  */
 class AiSelectionGateIT {
 

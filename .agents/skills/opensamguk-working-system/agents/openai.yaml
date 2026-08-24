@@ -1,4 +1,0 @@
-interface:
-  display_name: "opensamguk-working-system"
-  short_description: "OpenSamguk project workflow adapter"
-  default_prompt: "Use $opensamguk-working-system for this task."

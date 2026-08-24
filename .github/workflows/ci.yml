@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  agent-system:
+  contracts:
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -15,11 +15,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Check provider-agnostic agent working system
-        run: python3 tools/agent-system/check.py --strict --base origin/main
       # Every step below runs with `!cancelled()`: a step failing must not hide
-      # whether the rest are green (2026-08-24 — check.py failing at the step
-      # above silently skipped everything after it, including the unittest
+      # whether the rest are green (2026-08-24 — a failing step near the top of
+      # this job silently skipped everything after it, including the unittest
       # discover that PRs #517/#519 both needed CI evidence for). Not
       # `always()` — a cancelled job still shouldn't keep grinding.
       - name: Verify Han map data contract tests
@@ -28,6 +26,10 @@ jobs:
       - name: Verify scenario data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
+      # tools/agent-system/ no longer holds the agent harness checker, but it
+      # does hold check_test_xml.py — the guard the jvm job below calls to fail
+      # the build when Docker-gated IT silently skip (#517). Its tests must keep
+      # running here; the harness removal deleted check.py only.
       - name: Verify agent-system tool tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
@@ -67,7 +69,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Refuse the skipped-IT opt-out in CI
         # OPENSAM_ALLOW_SKIPPED_IT is a local-only escape hatch for developers
-        # iterating without Docker (docs/agent/verification.md). ubuntu-latest
+        # iterating without Docker. ubuntu-latest
         # always has Docker, so this var has no legitimate reason to be set
         # here — if it is, something (workflow edit, secret, cached env) is
         # trying to silence the skip gate. Fail loud instead of trusting it.
