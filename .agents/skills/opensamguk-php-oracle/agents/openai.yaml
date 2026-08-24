@@ -1,4 +1,0 @@
-interface:
-  display_name: "opensamguk-php-oracle"
-  short_description: "OpenSamguk project workflow adapter"
-  default_prompt: "Use $opensamguk-php-oracle for this task."

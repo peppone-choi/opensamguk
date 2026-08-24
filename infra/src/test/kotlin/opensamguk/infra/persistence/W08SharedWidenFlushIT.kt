@@ -27,7 +27,7 @@ import kotlin.test.assertNull
  *  - user_record.date DATETIME NULL (schema.sql:618; v_inheritPoint.php:74) — V17이
  *    inheritance_log.date 추가.
  *
- * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다 (CLAUDE.md).
+ * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class W08SharedWidenFlushIT {

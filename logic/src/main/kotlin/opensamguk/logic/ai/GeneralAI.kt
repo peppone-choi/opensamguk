@@ -314,8 +314,7 @@ class GeneralAI(
      * `// @ParityQuarantine("R-SEAM-no-call-site")` — a repo-wide grep finds ZERO live PHP callers (R-SEAM §3;
      * its own TODO at `:3620` confirms it is an unwired stub). NO PHP golden exercises it, so it CANNOT be
      * captured faithfully → it is EXCLUDED from G-GATE and is NOT wired into F-SEAM (decision #3 / B3).
-     * Registered in `.context/p5-research/QUARANTINE-REGISTER.md` with the sibling `chooseNationTurn`
-     * byte-match proof.
+     * The sibling `chooseNationTurn` provides the byte-match proof.
      *
      * It is DELIBERATELY DIVERGENT from [chooseNationTurn] and must NOT be collapsed with it:
      *  - `:3687-3689` GATE-FIRST: `if($reservedCommand->hasFullConditionMet()) return $reservedCommand;`

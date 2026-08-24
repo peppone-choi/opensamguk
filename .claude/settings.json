@@ -1,5 +1,5 @@
 {
-  "_comment": "ACTIVE (ADR-LITE-005, 2026-07-16 — ADR-LITE-003 example-only를 대체). 중복 검증 완료: 전역 ~/.claude/settings.json에 hooks 없음, OMC 플러그인 훅(pre-tool-enforcer/post-tool-verifier 등)은 오케스트레이션 계층으로 이 레포 가드(시크릿/골든/legacy 차단, 검증 매트릭스)와 기능 중복 없음 — 체인 누적만 존재. verify-changes.sh는 plain stdout(exit 0)이라 모델 컨텍스트 미주입, docs-only diff는 한 줄 안내로 종료 → matcher 협소화 불필요 판정. 주의: @멘션 첨부는 PreToolUse로 못 막음 — .claudeignore가 담당. 훅은 세션 시작 시 스냅샷됨 — 이 파일 변경은 다음 세션부터 적용.",
+  "_comment": "ACTIVE (ADR-LITE-005, 2026-07-16 — ADR-LITE-003 example-only를 대체). 2026-08-24: 에이전트 하네스 제거와 함께 verify-changes.sh(PostToolUse 검증 매트릭스)가 삭제되어 해당 훅 항목을 뺐다 — 그 스크립트는 tools/agent-system/check.py·.agents/skills 를 호출해서 하네스 없이는 동작하지 않는다. 남는 건 시크릿/골든/legacy 차단 하나뿐이다. 중복 검증 완료: 전역 ~/.claude/settings.json 에 hooks 없음, OMC 플러그인 훅은 오케스트레이션 계층이라 이 레포 가드와 기능 중복 없음. 주의: @멘션 첨부는 PreToolUse 로 못 막음 — .claudeignore 가 담당. 훅은 세션 시작 시 스냅샷됨 — 이 파일 변경은 다음 세션부터 적용.",
   "hooks": {
     "PreToolUse": [
       {
@@ -8,17 +8,6 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/agent/protect-sensitive-files.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/agent/verify-changes.sh"
           }
         ]
       }

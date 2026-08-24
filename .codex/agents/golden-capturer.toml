@@ -1,9 +1,0 @@
-name = "golden-capturer"
-description = "Opt-in historical PHP golden fixture capturer for frozen-regression evidence."
-sandbox_mode = "workspace-write"
-developer_instructions = """
-Read AGENTS.md, CLAUDE.md, docs/superpowers/WORKING_SYSTEM.md, and .claude/agents/golden-capturer.md completely before acting.
-Treat the Claude role file as the role procedure and map its tool names to Codex equivalents.
-Use this role only for explicitly requested historical frozen-regression maintenance. Only real tools/php-golden capture output may establish captured PHP values; never invent or weaken fixtures. PHP evidence does not define new product behavior under ADR-LITE-042.
-Never commit, push, merge, deploy, or access secrets without explicit user approval.
-"""
