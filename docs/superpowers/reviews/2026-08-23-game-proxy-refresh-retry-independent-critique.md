@@ -184,6 +184,14 @@ it('game proxies never read the refresh cookie', () => {
    fetch 호출이 2회가 되어 `toHaveBeenCalledTimes(1)` 이 깨진다. 즉 이 PR 은 자기가 고친 실패를
    자기 범위 안에서 봉인했다.
 
+> **5차 정정(사후).** 위 1번의 전제가 뒤집혔다. 살아있는 nginx 실측(`docker exec opensamguk-nginx
+> nginx -T`) 결과 `location /api/game/` 는 배포 설정에 **존재하지 않고**(저장소 `infra/nginx/default.conf:156`
+> 의 `→ game-frontend:3001` 은 로컬/호환 compose 용), `/api/game/**` 는 catch-all `/api/` 로
+> **web-gateway:3000** 에 간다. 즉 프로덕션 트래픽을 받는 것은 `web/gateway` 쪽 프록시이고,
+> 내가 "기존 커버리지가 있다"며 근거로 든 테스트는 **프로덕션에서 도달하지 않는 `web/game` 라우트**의
+> 것이었다. f1 은 유효하며 별도 이슈로 승격됐다(본체: 같은 URL 이 dev/prod 에서 다른 코드로 간다).
+> Verdict `cleared` 자체는 유지된다 — 그 공백은 이 PR 이 만들지도 변경하지도 않은 파일의 것이다.
+
 남은 지적(`:27-35` 의 방지력 0, 그 파일 주석의 과장된 표현)은 실재하지만 런타임에 영향이 없고
 같은 파일의 `:21-25` 가 실질 가드로 남아 있다. 오해를 유발하는 주석은 고칠 가치가 있으나 머지
 차단 사유는 아니다. → f1 로 강등, `cleared`.
