@@ -86,10 +86,10 @@ sealed interface CityConstVariant {
      * 수·진·관(1~3) 25성이 빠지고 **69성만** 세어진다 — 이 기본 구현이 그 규칙 그대로다.
      *
      * han 은 이 필터가 무력화된다. 縣을 영현(10)·장현(11)로 매겼기 때문에 605개 縣이 전부
-     * `>=4` 를 통과해 780성 전부가 세어지고, 94성 세계에 맞춰 얼어 있는 문턱
+     * `>=4` 를 통과해 774성 전부가 세어지고, 94성 세계에 맞춰 얼어 있는 문턱
      * ([opensamguk.common.constants.GameConst.nationLevelByCityCnt09] = 1/2/5/8/11/16/21/28/36)을
      * 즉시 넘겨버린다. 실측: 1010 황건적이 104성이라 **첫 월간틱에 천자**가 된다.
-     * han 변형은 郡治만 세어(4~9) 세는 대상을 175개로 되돌린다 — 필터가 원래 하려던 일
+     * han 변형은 郡治만 세어(4~9) 세는 대상을 172개로 되돌린다 — 필터가 원래 하려던 일
      * (작은 거점은 빼고 실질 거점만 센다)을 han 등급 축으로 옮긴 것이다.
      */
     fun countsForNationLevel(level: Int): Boolean = level >= 4
@@ -98,7 +98,7 @@ sealed interface CityConstVariant {
      * 국가 등급 0~9 의 城 수 문턱. 기본은 PHP 패러티 테이블
      * ([opensamguk.common.constants.GameConst.nationLevelByCityCnt09] 3번째 열) 그대로다.
      *
-     * han 은 [countsForNationLevel] 로 세는 대상이 69(che) → 175(郡治) 로 2.5배가 되므로
+     * han 은 [countsForNationLevel] 로 세는 대상이 69(che) → 172(郡治) 로 2.5배가 되므로
      * 문턱도 같이 올리지 않으면 등급이 통째로 앞당겨진다. han 변형이 이 값을 재정의한다.
      */
     val nationLevelCityThresholds: List<Int>
@@ -249,27 +249,29 @@ internal object HanCityConstVariant : CityConstVariant {
      * **패러티 아님 · han 전용 밸런스값.** 도출 규칙 하나로 전부 나온다 —
      * che 문턱을 「세는 城 전체 대비 비율」로 읽어 han 의 세는 城 수에 다시 씌웠다.
      *
-     * che 는 `LEVEL>=4` 로 94성 중 **69성**을 세고, han 은 郡治만 세어 780성 중 **175성**을 센다.
-     * 그래서 배율은 175/69 = 2.5362 다. `round(che문턱 * 175 / 69)`:
+     * che 는 `LEVEL>=4` 로 94성 중 **69성**을 세고, han 은 郡治만 세어 (phantom/중복 郡 노드
+     * 병합·삭제 뒤) 774성 중 **172성**을 센다. 그래서 배율은 172/69 = 2.4928 다.
+     * `round(che문턱 * 172 / 69)`:
      *
      * | 등급 | che | han |
      * |---|---|---|
      * | 군벌 | 2 | 5 |
-     * | 주자사 | 5 | 13 |
+     * | 주자사 | 5 | 12 |
      * | 주목 | 8 | 20 |
-     * | 공 | 11 | 28 |
-     * | 왕 | 16 | 41 |
-     * | 황제 | 21 | 53 |
-     * | 대황제 | 28 | 71 |
-     * | 천자 | 36 | 91 |
+     * | 공 | 11 | 27 |
+     * | 왕 | 16 | 40 |
+     * | 황제 | 21 | 52 |
+     * | 대황제 | 28 | 70 |
+     * | 천자 | 36 | 90 |
      *
      * 0(방랑군)·1(호족)은 비율이 아니라 **구조**라 그대로 둔다 — 방랑군은 城 0 의 상태이고,
      * 郡治 하나를 가진 세력이 방랑군으로 남으면 안 된다.
      *
-     * 이 값을 바꿔도 che 골든은 무관하다(che 는 기본 구현을 쓴다).
+     * 이 값을 바꿔도 che 골든은 무관하다(che 는 기본 구현을 쓴다). 어떤 테스트도 이 리스트를
+     * 직접 단언하지 않는다(2026-08-24 measured, `grep -rln nationLevelCityThresholds *Test.kt` = 0건).
      */
     override val nationLevelCityThresholds: List<Int> =
-        listOf(0, 1, 5, 13, 20, 28, 41, 53, 71, 91)
+        listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90)
     override fun gateKeys(cityId: Int): Set<String> = HanGateIndex.keys(cityId)
     override val buildInit: Map<String, Map<String, Int>> get() = hanBuildInit
     override val buildInitCommon: Map<String, Int> get() = CityConst.buildInitCommon
