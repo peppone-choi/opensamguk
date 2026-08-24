@@ -2,8 +2,7 @@
   "title": "【공백지】 소형β",
   "startYear": 180,
   "map": {
-    "mapName": "han",
-    "unitSet": "han"
+    "mapName": "miniche_b"
   },
   "history": [],
   "const": {

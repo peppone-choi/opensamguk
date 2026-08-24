@@ -1,10 +1,6 @@
 {
   "title": "【공백지】 일반",
   "startYear": 180,
-  "map": {
-    "mapName": "han",
-    "unitSet": "han"
-  },
   "history": [],
   "const": {
     "joinRuinedNPCProp": 0,

@@ -2,8 +2,8 @@
   "title": "【공백지】 충차전",
   "startYear": 180,
   "map": {
-    "mapName": "han",
-    "unitSet": "han"
+    "mapName": "che",
+    "unitSet": "siegetank"
   },
   "stat": {
     "chiefMin": 9

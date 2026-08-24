@@ -2,8 +2,7 @@
   "title": "【공백지】 영웅전설",
   "startYear": 180,
   "map": {
-    "mapName": "han",
-    "unitSet": "han",
+    "mapName": "miniche",
     "targetGeneralPool": "SPoolUnderU30",
     "generalPoolAllowOption": [
       "ego"
