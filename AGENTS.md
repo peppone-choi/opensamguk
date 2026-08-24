@@ -6,7 +6,7 @@
 > `tools/agent-system/check.py`·`skills-lock.json` 경로 언급은 **역사 기록이다. 지금 그 파일은 없다.**
 > 살아 있는 층은 셋뿐이다 — 이 문서들의 제품·아키텍처 규칙, `.ai/decisions.md`(ADR-LITE),
 > `.claudeignore` + `scripts/agent/protect-sensitive-files.sh`(시크릿·골든·legacy 차단 훅).
-> 자세한 경위는 `.ai/decisions.md` ADR-LITE-044.
+> 자세한 경위는 `.ai/decisions.md` ADR-LITE-047.
 
 AI 코딩 에이전트 · 기여자용 온보딩 가이드. 코드를 건드리기 전에 이 문서를 읽으세요. **제품 기준과 아키텍처 규칙은 조용히 어기기 쉽습니다.** 상세·정본 규칙은 [`CLAUDE.md`](CLAUDE.md)에 있으며 이 문서는 그 요약 + 빠른 참조입니다.
 

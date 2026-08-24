@@ -6,7 +6,7 @@
 > `tools/agent-system/check.py`·`skills-lock.json` 경로 언급은 **역사 기록이다. 지금 그 파일은 없다.**
 > 살아 있는 층은 셋뿐이다 — 이 문서들의 제품·아키텍처 규칙, `.ai/decisions.md`(ADR-LITE),
 > `.claudeignore` + `scripts/agent/protect-sensitive-files.sh`(시크릿·골든·legacy 차단 훅).
-> 자세한 경위는 `.ai/decisions.md` ADR-LITE-044.
+> 자세한 경위는 `.ai/decisions.md` ADR-LITE-047.
 
 Load-bearing product and architecture rules. Violating them silently breaks deterministic regression and operational integrity.
 
