@@ -63,8 +63,12 @@ def read_segments():
     return out
 
 
-def chgis_points(layer, field='NAME_FT'):
+def chgis_points(layer, field='NAME_FT', han_only=False):
     """漢代(-206~280) 존속 지점의 繁體名 → [(lon, lat)] 사전.
+
+    han_only=True 면 後漢과 안 겹치는 점을 **버린다**. 자기보정처럼 「이 좌표로
+    갈아탈지」를 정하는 자리에서 쓴다 — 거기서는 순서만 바꿔 봐야 소용없고,
+    딴 시대 점밖에 없으면 아예 갈아타지 말아야 한다.
 
     같은 이름의 점이 여럿이면 **後漢(25~220)과 존속기간이 겹치는 점을 앞에** 둔다.
     -206~280 창은 前漢·王莽·三國을 다 담으므로, 이름별 첫 점(= 앵커가 쓰는
@@ -100,7 +104,10 @@ def chgis_points(layer, field='NAME_FT'):
         for suf in ('縣', '县', '侯國', '侯国', '郡', '國', '国', '尹', '道', '邑'):
             if nm.endswith(suf) and len(nm) > len(suf):
                 nm = nm[:-len(suf)]; break
-        out.setdefault(nm, []).append((beg <= 220 and end >= 25, (lon, lat)))
+        later_han = beg <= 220 and end >= 25
+        if han_only and not later_han:
+            continue
+        out.setdefault(nm, []).append((later_han, (lon, lat)))
     # 안정 정렬 — 後漢과 겹치는 점이 앞으로 오고, 그 안에서는 파일 순서가 남는다.
     return {nm: [xy for _, xy in sorted(pts, key=lambda t: not t[0])]
             for nm, pts in out.items()}
@@ -657,6 +664,7 @@ def main():
     segs = read_segments()
     lex = county_lexicon()
     cnty_xy = chgis_points('cnty')
+    cnty_han = chgis_points('cnty', han_only=True)   # 자기보정 방향 판정용
     pref_xy = chgis_points('pref')
     # 郡國志-CHGIS 이체자. 한 글자 차이로 같은 郡이 남남이 되고, 앵커를 못 찾은 郡은
     # 아래 필터가 통째로 꺼져 동명이인을 1500km 밖에서 물어온다.
@@ -789,10 +797,22 @@ def main():
         # 좌표로 갈아치워 버렸다).
         seat_guess = (None if b['anchor_verified'] else
                       next((rest[:L] for L in (4, 3, 2, 1) if rest[:L] in cnty_xy), None))
+        # 자기보정에는 방향 판정이 없었다 — 「멀다」만 보고 무조건 갈아탔다.
+        # 축 두 개를 세운다. 廣漢屬國은 둘 중 어느 쪽이든 혼자서도 막는다(실측):
+        #   (a) 郡治 후보가 「CHGIS 에 없다고 이미 확증된 縣」의 앞 조각이면 그
+        #       좌표는 동명이인이다. 본 매칭 루프는 이 화이트리스트를 이미
+        #       존중하는데 여기만 안 봤다(「陰平道」의 앞 2자 「陰平」).
+        #   (b) 後漢에 존속한 점으로만 옮긴다. 시대 창이 -206~280 이라 三國期
+        #       동명 縣으로 앵커를 갈아치울 수 있다(위 「陰平」은 廣西 貴港의
+        #       264~279년 縣이고 원래 앵커에서 1022km 떨어져 있다).
+        if seat_guess and any(nm.startswith(seat_guess) for j, nm
+                              in CONFIRMED_JUN_NAMES_NO_CHGIS if j == b['jun']):
+            seat_guess = None
         if seat_guess and b['anchor']:
             seat_d = min(km(b['anchor'], q) for q in cnty_xy[seat_guess])
-            if seat_d > MAX_KM:
-                b['anchor'] = min(cnty_xy[seat_guess], key=lambda q: km(b['anchor'], q))
+            # 後漢 점이 하나도 없으면 갈아타지 않는다 — 원래 앵커를 그냥 둔다.
+            if seat_d > MAX_KM and cnty_han.get(seat_guess):
+                b['anchor'] = min(cnty_han[seat_guess], key=lambda q: km(b['anchor'], q))
 
         # 縣名 인정에 앵커 거리를 같이 본다 — 이름만 보면 정경에 없는 딴 지역의
         # 우연한 동명 縣(定襄郡 「桐過武成駱」 안의 「成」은 CHGIS 상 山東 부근

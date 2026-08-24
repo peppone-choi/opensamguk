@@ -12,12 +12,14 @@
 data/chgis-source/** 는 ADR-LITE-039 로 gitignore 라 CI 에서는 skip 된다.
 """
 import importlib.util
+import re
 import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 DBF = ROOT / 'data/chgis-source/v6_time_pref_pts_utf_wgs84.dbf'
+OUT = ROOT / 'data/map/junguozhi.json'
 
 # 後漢(25~220)에 존속했고 CHGIS pref 레이어에 딴 시대 동명점이 같이 있는 郡.
 # 시대 선호가 없으면 이 이름들의 첫 점이 前漢/三國 점으로 잡힌다(실측).
@@ -31,6 +33,17 @@ def _build():
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
     return mod
+
+
+def _max_km():
+    """MAX_KM 은 main() 안의 지역변수라 import 로는 못 읽는다 — 소스에서 읽는다.
+
+    검사가 자기 임계값을 새로 만들면 파서가 실제로 쓰는 값과 갈라진다.
+    """
+    src = (ROOT / 'tools/map/build_junguozhi.py').read_text(encoding='utf-8')
+    m = re.search(r'^\s*MAX_KM\s*=\s*([\d.]+)', src, re.M)
+    assert m, 'MAX_KM 을 소스에서 못 찾았다 — 이 검사의 전제가 깨졌다.'
+    return float(m.group(1))
 
 
 def _later_han_points(path):
@@ -105,6 +118,49 @@ class TestAnchorEra(unittest.TestCase):
                       '앵커가 더 이상 pref 목록의 첫 원소가 아니다 — 이 파일의 '
                       '전제가 깨졌으니 검사를 다시 세워라.')
 
+
+@unittest.skipUnless(OUT.exists(),
+                     'data/map/junguozhi.json 은 gitignore 다 — CI 에서 skip.')
+class TestSeatCorrectionDirection(unittest.TestCase):
+    """자기보정(seatfix)이 옳은 앵커를 딴 지역으로 갈아치우지 못하게 한다.
+
+    보정에는 방향 판정이 없었다 — 「郡治가 MAX_KM 밖이다」만 보고 무조건
+    갈아탔다. 廣漢屬國은 그래서 앵커가 廣西 貴港(109.61, 23.10)으로 옮겨져
+    있었다. 실제 廣漢 일대에서 1000km 넘게 떨어진 三國期(264~279) 동명 縣이다.
+
+    이건 산출물의 anchor 필드에 그대로 남는다 — 縣 좌표는 하나도 안 변하므로
+    縣만 보는 회귀로는 안 잡힌다.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        cls.places = {p['name']: p
+                      for p in json.loads(OUT.read_text(encoding='utf-8'))['places']}
+
+    def test_guanghan_shuguo_anchor_is_not_the_guangxi_homonym(self):
+        got = tuple(self.places['廣漢屬國']['anchor'])
+        self.assertNotEqual(
+            (round(got[0], 3), round(got[1], 3)), (109.608, 23.099),
+            '廣漢屬國 앵커가 廣西 貴港의 「陰平」(264~279)으로 되돌아갔다 — '
+            '자기보정 방향 판정이 꺼졌다.')
+
+    def test_shuguo_anchors_sit_near_their_parent_commandery(self):
+        """屬國은 모군에서 갈라져 나온 단위다 — 앵커가 모군 곁을 벗어나면 틀렸다.
+
+        임계값을 새로 만들지 않는다: 파서 자신이 縣 인정에 쓰는 MAX_KM 을
+        그대로 쓴다. 지금 실측은 廣漢 0km · 犍為 0km 다.
+        """
+        build = _build()
+        max_km = _max_km()
+        for child, parent in (('廣漢屬國', '廣漢郡'), ('犍為屬國', '犍為郡')):
+            with self.subTest(child=child):
+                d = build.km(tuple(self.places[child]['anchor']),
+                             tuple(self.places[parent]['anchor']))
+                self.assertLessEqual(
+                    d, max_km,
+                    f'{child} 앵커가 {parent} 에서 {d:.0f}km 떨어져 있다 '
+                    f'(MAX_KM={max_km}).')
 
 if __name__ == '__main__':
     unittest.main()
