@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 
 /**
  * 사료 재검(OPENSAM-105) 전 che 1010 시나리오가 여전히 시드되는지 지키는 회귀 가드.
- * `scenario_1010.json` 이 han(780城) 으로 갈아끼워진 뒤 che 시드 경로가 조용히 죽지 않았음을
+ * `scenario_1010.json` 이 han(774城) 으로 갈아끼워진 뒤 che 시드 경로가 조용히 죽지 않았음을
  * 원본 94도시 사본(`scenario/scenario_1010_che.json`, che.json 맵)으로 증명한다.
  *
  * [ScenarioSeedCoordinator.ensureSeeded]는 world_state 테이블에 오직 configured world id 하나만

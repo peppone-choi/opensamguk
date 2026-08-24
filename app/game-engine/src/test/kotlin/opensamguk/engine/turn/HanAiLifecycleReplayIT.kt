@@ -141,7 +141,7 @@ class HanAiLifecycleReplayIT {
         },
     ): ReplayResult {
         assertEquals("han", snapshot.state.config["mapName"], "scenario_1010 must exercise the Han variant")
-        assertEquals(780, snapshot.cities.size, "playable-Han evidence must use the full city graph")
+        assertEquals(774, snapshot.cities.size, "playable-Han evidence must use the full city graph")
         assertEquals(229, snapshot.generals.size, "playable-Han evidence must use the active NPC roster")
 
         val world = InMemoryTurnWorld(snapshot)
