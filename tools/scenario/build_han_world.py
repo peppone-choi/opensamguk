@@ -16,6 +16,7 @@
 
     python3 tools/scenario/build_han_world.py
     python3 tools/scenario/build_han_world.py --check   # 손편집 드리프트 검사
+    python3 tools/scenario/build_han_world.py --check-gate  # HanGateIndex.kt만 검사 (CI, GH #534)
 
 --- 정한 규칙 (전부 파일에서 유도했다) -----------------------------------------
 level  · EXTERNAL_PLACE 治所 = '이'(4). che 가 남만·산월·오환을 그렇게 두는 것과 같다.
@@ -288,6 +289,20 @@ def seat_owner_grid(tiles: dict) -> list[int]:
     return grid
 
 
+def build_seat_of(juns: list[dict]) -> dict[int, int]:
+    """城 인덱스(治所) -> 郡 인덱스. 두 郡이 같은 seat 城을 가리키면 dict 구성이
+    last-write-wins로 조용히 하나를 지운다(크래시도 없고 개수도 안 틀린다) — 신흥군을
+    오원군과 같은 city로 잘못 재지정했을 때 오원군이 통째로 사라진 것도 이 경로였다.
+    같은 실수를 다시 조용히 삼키지 않도록 여기서 시끄럽게 죽는다.
+    """
+    seat_of = {j["seat"]: i for i, j in enumerate(juns)}
+    if len(seat_of) != len(juns):
+        seat_counts = Counter(j["seat"] for j in juns)
+        dup = {s: [j["name"] for j in juns if j["seat"] == s] for s, c in seat_counts.items() if c > 1}
+        raise AssertionError(f"중복 seat: {dup}")
+    return seat_of
+
+
 def gate_index(tiles: dict, region_of: list[str]) -> tuple[dict[int, list[str]], list[str]]:
     """**郡 인덱스** → 게이트 키 집합, 그리고 지도에서 못 찾은 게이트 키 목록.
 
@@ -302,7 +317,7 @@ def gate_index(tiles: dict, region_of: list[str]) -> tuple[dict[int, list[str]],
     place_to_juns: dict[str, set[int]] = defaultdict(set)
     for i, j in enumerate(juns):
         place_to_juns[j["nameCh"]].add(i)
-    seat_of = {j["seat"]: i for i, j in enumerate(juns)}
+    seat_of = build_seat_of(juns)
     for ci, c in enumerate(cities):
         if ci in seat_of:                      # 治所는 그 郡에 확정으로 붙인다.
             place_to_juns[c["nameCh"]].add(seat_of[ci])
@@ -358,18 +373,18 @@ def kotlin_gate(index: dict[int, list[str]]) -> str:
     )
 
 
-def build() -> tuple[dict, str, str, dict]:
+def build_gate_skeleton() -> dict:
+    """게이트 계산에 필요한 최소 뼈대 — TILES + CANON_105(tools/map/build_junguozhi.py 안의
+    파이썬 리터럴, JUNGUOZHI 산출물이 아니다) 만 있으면 된다. JUNGUOZHI(郡國志 戶 사료)와
+    CHE(che.json) 는 level/max 계산에만 쓰이고 州 배정·城 목록·id 배정에는 안 닿는다
+    (`build_gate()`/`--check-gate` 가 이 뼈대만으로 HanGateIndex.kt 드리프트를 잡는 이유 —
+    실측: JUNGUOZHI 를 훼손해 재생성해도 HanGateIndex.kt 는 바이트 단위로 그대로였다).
+    """
     tiles = json.loads(TILES.read_text(encoding="utf-8"))
     juns, cities = tiles["juns"], tiles["cities"]
-    zhi = {p["name"]: p for p in json.loads(JUNGUOZHI.read_text(encoding="utf-8"))["places"]}
     jun_ju = canon_ju()
-    maxes = che_max_by_level()
-
-    households = [p["households"] for p in zhi.values() if p["households"]]
-    t1, t2, t3 = level_thresholds(households)
 
     # --- 州 배정 -------------------------------------------------------------
-    seat_kind = [cities[j["seat"]]["kind"] for j in juns]
     region_of: list[str | None] = [None] * len(juns)
     for i, j in enumerate(juns):
         if j["nameCh"] in jun_ju:
@@ -396,7 +411,7 @@ def build() -> tuple[dict, str, str, dict]:
     # 거점으로 올린다 — CHGIS 에만 있는 縣은 소속 郡도 戶 근거도 없어 배경으로 남긴다.
     cols = tiles["_meta"]["cols"]
     grid = seat_owner_grid(tiles)
-    seat_of = {j["seat"]: i for i, j in enumerate(juns)}
+    seat_of = build_seat_of(juns)
     included: list[tuple[int, int]] = []          # (城 인덱스, 소속 郡 인덱스)
     seaborne: list[str] = []
     for ci, c in enumerate(cities):
@@ -418,7 +433,43 @@ def build() -> tuple[dict, str, str, dict]:
                                             0 if t[0] == juns[t[1]]["seat"] else 1,
                                             cities[t[0]]["nameCh"]))
     id_of = {ci: n + 1 for n, (ci, _) in enumerate(order)}
+
+    return {
+        "tiles": tiles, "juns": juns, "cities": cities,
+        "region_of": region_of, "ju_order": ju_order, "unresolved": unresolved,
+        "included": included, "seaborne": seaborne, "order": order, "id_of": id_of,
+    }
+
+
+def build_gate(sk: dict | None = None) -> tuple[str, dict[int, list[str]], list[str]]:
+    """HanGateIndex.kt 문자열 + city-id 게이트 인덱스 + 매칭 안 된 게이트 키.
+
+    TILES·CANON_105(tools/map/build_junguozhi.py)·UNITS 만 읽는다 — 전부 tracked 라
+    CI 체크아웃에 항상 있다(`--check-gate` 가 여기에 선다, GH #534).
+    """
+    sk = sk or build_gate_skeleton()
+    by_jun, missing = gate_index(sk["tiles"], sk["region_of"])
+    # 縣은 소속 郡의 게이트 키를 그대로 물려받는다.
+    index = {sk["id_of"][ci]: by_jun[jn] for ci, jn in sk["order"] if by_jun.get(jn)}
+    index = dict(sorted(index.items()))
+    return kotlin_gate(index), index, missing
+
+
+def build() -> tuple[dict, str, str, dict]:
+    sk = build_gate_skeleton()
+    tiles, juns, cities = sk["tiles"], sk["juns"], sk["cities"]
+    region_of, ju_order, unresolved = sk["region_of"], sk["ju_order"], sk["unresolved"]
+    included, seaborne, order, id_of = sk["included"], sk["seaborne"], sk["order"], sk["id_of"]
     jun_of = {ci: jn for ci, jn in included}
+
+    zhi = {p["name"]: p for p in json.loads(JUNGUOZHI.read_text(encoding="utf-8"))["places"]}
+    maxes = che_max_by_level()
+
+    households = [p["households"] for p in zhi.values() if p["households"]]
+    t1, t2, t3 = level_thresholds(households)
+
+    seat_kind = [cities[j["seat"]]["kind"] for j in juns]
+    cols = tiles["_meta"]["cols"]
 
     # --- level ---------------------------------------------------------------
     def level_of(i: int) -> str:
@@ -570,10 +621,7 @@ def build() -> tuple[dict, str, str, dict]:
         },
         "width": WIDTH, "height": HEIGHT, "cities": out_cities,
     }
-    by_jun, missing = gate_index(tiles, region_of)
-    # 縣은 소속 郡의 게이트 키를 그대로 물려받는다.
-    index = {id_of[ci]: by_jun[jn] for ci, jn in order if by_jun.get(jn)}
-    index = dict(sorted(index.items()))
+    gate_kt, index, missing = build_gate(sk)
     stats = {
         "gateKeys": index,
         "gateMissing": missing,
@@ -589,7 +637,7 @@ def build() -> tuple[dict, str, str, dict]:
         "thresholds": (t1, t2, t3),
         "cities": out_cities,
     }
-    return doc, kotlin(raw_rows), kotlin_gate(index), stats
+    return doc, kotlin(raw_rows), gate_kt, stats
 
 
 def kotlin(rows) -> str:
@@ -658,7 +706,21 @@ def summary(stats: dict) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--check-gate", action="store_true",
+                     help="HanGateIndex.kt 드리프트만 검사한다. TILES·CANON_105·UNITS(전부 "
+                          "tracked)만 있으면 되고 JUNGUOZHI·CHE(둘 다 gitignored, ADR-LITE-039)"
+                          "는 필요 없다 — CI 가 부르는 경로(GH #534).")
     args = ap.parse_args()
+    if args.check_gate:
+        for src in (TILES, CANON_SRC, UNITS):
+            if not src.exists():
+                sys.exit(f"{src.relative_to(ROOT)} 가 없다.")
+        gate_kt, _, _ = build_gate()
+        if OUT_GATE.exists() and OUT_GATE.read_text(encoding="utf-8") == gate_kt:
+            print("드리프트 없음 (gate).")
+            return 0
+        print(f"드리프트: {OUT_GATE.relative_to(ROOT)}")
+        return 1
     for src in (TILES, JUNGUOZHI, CANON_SRC, CHE, UNITS):
         if not src.exists():
             sys.exit(f"{src.relative_to(ROOT)} 가 없다.")

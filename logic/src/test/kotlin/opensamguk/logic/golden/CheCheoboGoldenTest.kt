@@ -17,6 +17,7 @@ import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.world.CityConstRegistry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -48,17 +49,22 @@ class CheCheoboGoldenTest {
             id = 3, nationId = 1, level = 1, commerce = 0, commerceMax = 1,
             agriculture = 0, agricultureMax = 1, supplyState = 1, frontState = 0, trust = 100.0,
         )
-        val destination = source.copy(id = 421, nationId = 2)
+        // id 419 는 형주 「석」(析) 이다 — han.json 에 이름이 같은 「석」이 하나 더 있다(id 595,
+        // 익주, 锡). 재번호매김이 419 를 다른 城으로 옮기면 이 단언이 먼저 빨개진다.
+        assertEquals("석", CityConstRegistry.of("han").byId(419)!!.name)
+        assertEquals(CityConstRegistry.of("han").regionIdByName("형주"), CityConstRegistry.of("han").byId(419)!!.region)
+
+        val destination = source.copy(id = 419, nationId = 2)
         val draft = GeneralActionDraft(actor, source, Nation(id = 1, level = 1, capitalCityId = 3))
         draft.destCity = destination
-        draft.destNation = Nation(id = 2, level = 1, capitalCityId = 421)
+        draft.destNation = Nation(id = 2, level = 1, capitalCityId = 419)
         val context = GeneralActionResolveContext(
             draft = draft,
             rng = RandUtil(LiteHashDrbg("han-cheobo-edge")),
             env = WorldEnv(year = 200, startYear = 184, develCost = 100, mapName = "han"),
             month = 3,
             date = "12:00",
-            args = linkedMapOf("destCityID" to 421),
+            args = linkedMapOf("destCityID" to 419),
         )
 
         definition.resolve(context)

@@ -263,10 +263,12 @@ services:
       NODE_ENV: production
       PORT: 3001
       SERVER_ID: ${SERVER_ID:-pep}
-      GAME_API_URL: ${GAME_API_URL:-http://game-api:8081}
+      # #516 §5 — web/game no longer talks to game-api directly; /api/game traffic goes through
+      # web-gateway's proxy (nginx.conf `location /api/game/` also targets web_gateway).
+      GATEWAY_WEB_URL: ${GATEWAY_WEB_URL:-http://web-gateway:3000}
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
     depends_on:
-      - game-api
+      - web-gateway
       - gateway-api
       - game-engine
     expose:

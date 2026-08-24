@@ -8,6 +8,29 @@ import {
 } from "@/lib/serverRegistry";
 import { isPathServerId } from "@/lib/serverGameUrl";
 
+/**
+ * `/api/game/**` 는 dev/prod 모두 이 route 하나로 온다 — web/game은 더 이상 자체 프록시를 갖지
+ * 않는다(#516 §5 통합, 이 커밋).
+ *
+ * 이전에 web/game이 동형 route(`app/api/game/[...path]/route.ts`)를 따로 갖고 있었을 때 실제 발산이
+ * 하나 있었다: web/gateway는 원래 GET/POST/PATCH/DELETE를 export했지만 web/game은 GET/POST뿐이었다.
+ * `web/game/lib/api.ts`의 PATCH 헬퍼(`patchGameSettings`)는 `app/game/admin1/page.tsx`(관리자
+ * 게임설정 저장 버튼)의 살아 있는 호출자였고, nginx 없이 `web/game`을 `pnpm dev`로 단독 실행하는
+ * 프론트 dev 흐름에서 그 요청이 web/game 자신의 route로 갔기 때문에 PATCH export가 없어 405가 났다
+ * (#516 리뷰 F1 — dev에서만 깨지고 이 route가 서빙하는 경로는 항상 정상이었다).
+ *
+ * 근본 수정은 증상(PATCH export 추가)이 아니라 프록시를 하나로 합치는 것이었다: web/game의 route와
+ * 그 전용 `lib/serverRegistry.ts`를 삭제하고, `web/game/next.config.mjs`의 `rewrites()`가
+ * `/api/game/:path*`를 이 route로 넘긴다(docker/prod에서는 nginx `location /api/game/`가 이미 여기로
+ * 보낸다 — `infra/nginx/nginx.conf`). PATCH/DELETE·`duplex`·서버선택 로직 차이는 발산이 남을 자리
+ * 자체가 없어지면서 전부 함께 소멸했다.
+ *
+ * - 401/403 모두 그대로 전파, SSE 경로도 동일 — `!upstream.ok`는 상태코드를 특별취급하지 않는다(이
+ *   파일 테스트; #516 리뷰 F3 — 이전엔 401만 검증되어 403이 SSE에서 뭉개져도 잡지 못했다).
+ * - sam_refresh로 서버사이드 재시도 없음 — 그 쿠키는 `path=/api/auth`로 좁혀 심어져 여기서도 읽을 수
+ *   없다(web/gateway/lib/cookies.ts 참고). 401 복구는 클라이언트가 `/api/auth/me`를 거친다 — 의도된
+ *   설계, 결함 아님.
+ */
 const SERVER_COOKIE = "sam_server";
 
 export const dynamic = "force-dynamic";
