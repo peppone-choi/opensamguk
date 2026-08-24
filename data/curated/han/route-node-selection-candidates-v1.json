@@ -27798,11 +27798,11 @@
       },
       "legacyHanMap": {
         "path": "infra/src/main/resources/map/han.json",
-        "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
+        "sha256": "54906cac48e5d82418a5622100474ea1feb5d2f471d5d252416c25cc27478663"
       },
       "legacyTileMap": {
         "path": "data/map/han-tiles.json",
-        "sha256": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
+        "sha256": "12abf75cb50e4449303307695a1109026aba1222445beecadaeb3860c2fd377d"
       }
     },
     "scenarioResourceCount": 15
