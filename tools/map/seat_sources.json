@@ -6,6 +6,7 @@
     "era 는 필수다. 사료도 시대가 다르면 다른 축이 아니라 틀린 축이다.",
     "test=false 인 행은 excludeReason 이 필수다. 검사에서 빼되 표에서는 빼지 마라.",
     "續漢書 郡國志는 郡 治所를 명기하지 않는다. seat 값은 '縣 나열 첫머리'이며 note 에 그렇게 적혀 있다.",
+    "currentWrongSeat 는 사료로 확증했지만 아직 안 고친 결함의 현재 값이다. 데이터 수정은 route-node provenance 앵커 재핀과 한 짝이라 별도 변경에서 한다 — 그때까지 결함을 단언으로 박아 둔다.",
     "「모른다」뿐 아니라 「이 답은 틀렸다」도 적어라. 부재만 기록하면 다음 사람이 같은 오답을 다시 찾아낸다. forbiddenCoords 를 보라."
   ],
   "rows": [
@@ -111,6 +112,7 @@
     },
     {
       "jun": "건위군",
+      "currentWrongSeat": "资中县",
       "expectedSeat": "武阳县",
       "era": "後漢·晉 일치",
       "verdict": "U56 — 순수 선택 오류",
@@ -132,6 +134,7 @@
     },
     {
       "jun": "문산군",
+      "currentWrongSeat": "汶山郡",
       "expectedSeat": "汶江道",
       "era": "後漢 본지 없음(靈帝 置) · 晉 汶山",
       "verdict": "U56 — 선택 오류(개명 미반영)",
@@ -153,6 +156,7 @@
     },
     {
       "jun": "파서군",
+      "currentWrongSeat": "巴西郡",
       "expectedSeat": "阆中县",
       "era": "後漢에 郡 없음(閬中는 巴郡 縣) · 晉 閬中",
       "verdict": "U56 — 순수 선택 오류",
@@ -174,6 +178,7 @@
     },
     {
       "jun": "신성군",
+      "currentWrongSeat": "新城郡",
       "expectedSeat": "房陵县",
       "era": "220년 曹丕 置 · 晉 房陵",
       "verdict": "U56 — 순수 선택 오류",

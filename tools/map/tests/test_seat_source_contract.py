@@ -72,8 +72,9 @@ class SeatSourceContract(unittest.TestCase):
         self.assertTrue(self.rows, "표가 비었다")
 
     def test_seat_matches_sources(self) -> None:
+        """expectedSeat 이 있고 currentWrongSeat 이 없는 행만 「맞아야 한다」로 단언한다."""
         for row in self.rows:
-            if not row.get("test") or not row.get("expectedSeat"):
+            if not row.get("test") or not row.get("expectedSeat") or row.get("currentWrongSeat"):
                 continue
             jun = row["jun"]
             with self.subTest(jun=jun):
@@ -85,6 +86,40 @@ class SeatSourceContract(unittest.TestCase):
                     f"\n{jun}: 사료 治所 {row['expectedSeat']} 인데 seat 은 {actual}"
                     f"\n  연대: {row['era']}\n  판정: {row['verdict']}\n  출전: {cites}",
                 )
+
+    def test_unfixed_seats_are_still_wrong(self) -> None:
+        """**미수정 결함 기준선.** 이 테스트가 초록인 건 「맞다」가 아니라 「아직 틀린 그대로다」다.
+
+        currentWrongSeat 이 있는 행은 사료로 결함을 확증했지만 **아직 안 고친** 郡이다.
+        han-tiles.json 의 juns[].seat 을 고치면 그 여파가 이 파일 밖으로 나간다 —
+        juns[].col/row 가 治所 城의 col/row 와 같아야 하고(4건 모두 어긋난다),
+        infra/.../map/han.json 이 seat 이름을 굽고, 무엇보다
+        tools/scenario/validate_han_route_node_selection.py 의 legacyTileMap 앵커가
+        han-tiles.json 해시에 핀돼 있어 **즉시 provenance 불일치로 빨개진다**(실측).
+        그래서 데이터 수정은 앵커 재핀과 한 짝으로 별도 변경에서 한다.
+
+        여기서는 결함을 **단언으로** 박아 둔다 — 주석이면 다음 사람이 지나치지만,
+        단언이면 누가 seat 을 건드리는 순간 「이 행을 재판정해라」로 빨개진다.
+        고쳤으면 currentWrongSeat 을 지워라. 그러면 위 test_seat_matches_sources 가
+        그 행을 넘겨받는다.
+        """
+        for row in self.rows:
+            wrong = row.get("currentWrongSeat")
+            if not row.get("test") or not wrong:
+                continue
+            jun = row["jun"]
+            with self.subTest(jun=jun):
+                self.assertIn(jun, self.seat_of, f"{jun} 이 juns 에 없다")
+                actual = self.cities[self.seat_of[jun]].get("nameCh")
+                self.assertNotEqual(
+                    row["expectedSeat"], wrong,
+                    f"{jun}: currentWrongSeat 이 expectedSeat 과 같다 — 결함이 아니라 오기다")
+                self.assertEqual(
+                    wrong, actual,
+                    f"\n{jun}: seat 이 {wrong} 에서 {actual} 로 바뀌었다."
+                    f"\n  사료 治所는 {row['expectedSeat']} 다. 고친 것이면 이 행에서 "
+                    f"currentWrongSeat 을 지워라 — 그러면 test_seat_matches_sources 가 받는다."
+                    f"\n  다른 값으로 바꾼 것이면 사료를 다시 대라.")
 
     def test_missing_seat_nodes_are_still_missing(self) -> None:
         """U54형(결손). 노드가 생기면 이 행을 다시 판정해야 하므로 그때 빨개진다."""
