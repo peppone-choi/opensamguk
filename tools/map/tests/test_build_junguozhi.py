@@ -32,6 +32,18 @@ class TestCnInt(unittest.TestCase):
     def test_none_on_garbage(self):
         self.assertIsNone(bj.cn_int('abc'))
 
+    def test_implicit_leading_one_before_wan(self):
+        # 十/百/千 앞의 「一」 생략은 이미 처리되지만(「十四」=14), 「萬」 앞의
+        # 「一」 생략은 별도 처리가 없으면 만 단위 전체가 사라진다. 酒泉郡 원문
+        # 「戶萬二千七百六」(data/chgis-source/junguozhi/si.html)= 12706,
+        # 上谷郡 원문 「戶萬三百五十二」= 10352 — 둘 다 앞에 「一」 없이 「萬」이
+        # 곧장 온다.
+        self.assertEqual(bj.cn_int('萬二千七百六'), 12706)
+        self.assertEqual(bj.cn_int('萬三百五十二'), 10352)
+        self.assertEqual(bj.cn_int('萬'), 10000)
+        # 회귀 방지: 앞자리가 이미 있는 경우(생략 아님)는 그대로여야 한다.
+        self.assertEqual(bj.cn_int('二萬三千'), 23000)
+
 
 class TestStateTail(unittest.TestCase):
     """右X州刺史部 요약문 — 郡 블록에 들어가면 마지막 縣의 註를 오염시킨다
@@ -370,6 +382,33 @@ class TestFullPipelineOutput(unittest.TestCase):
         # hhs-111.txt 만 「有葛嶧山」으로 되어 있다 — 底本이 다르다). 「有」로
         # 시작하지 않는 절이라 이 규칙의 적용 대상이 아니다 — NOTE_START 자체가
         # 안 걸리는 run-splitting 결손이라 별도 항목(涅陽류)이다.
+
+    def test_reign_era_restoration_note_does_not_become_fake_counties(self):
+        # 「…年復/年置/年徙/年分…」류 연호 註는 縣名 앞뒤에 구두점·NOTE_START
+        # 트리거 없이 바로 붙기도 한다(上谷郡 원문 data/chgis-source/junguozhi/
+        # wu.html 「沮陽潘永元十一年復。甯…」— 「潘」 뒤에 아무 표시 없이 바로
+        # 「永元十一年復」이 온다). 이 절이 縣 경계 탐색으로 떨어지면 DP 가
+        # 「永元」「十一」「年復」 같은 가짜 縣으로 쪼갠다. 개별 연호 이름
+        # (永元·永平·建初…) 화이트리스트가 아니라 「…年(復|置|省|并|罷|徙|屬|
+        # 分|更)」 구조 자체로 잡는다 — 실제 縣名 중 「年」이 든 것은 cnty_xy
+        # 직접매치로 이 검사 전에 이미 소비되는 廣年·萬年 둘뿐이다.
+        for jun in ('上谷郡', '左馮翊', '安定郡', '沛國', '勃海郡', '東海郡',
+                    '琅邪國', '零陵郡', '武陵郡', '南郡', '交趾郡', '豫章郡'):
+            names = {c['name'] for c in self._counties(jun)}
+            for fake in ('永元', '永平', '建初', '延光', '永和', '建武', '陽嘉', '建康'):
+                self.assertNotIn(fake, names,
+                                  f'{jun}에 연호 註 조각이 가짜 縣으로 새 나왔다: {fake}')
+
+    def test_household_only_header_does_not_leak_into_first_county(self):
+        # 酒泉郡 원문(data/chgis-source/junguozhi/si.html)은 「九城，戶萬二千
+        # 七百六。福祿…」로 口(인구) 없이 戶(호구)만 있다. HU 정규식이 「戶X，
+        # 口Y。」 꼴만 받으면 이 郡은 통째로 안 걸려 「戶萬二千七百六。」가
+        # rest 맨 앞에 그대로 남고 縣 경계 탐색에 떨어져 「戶萬」「二千」「七」
+        # 「百六」 같은 가짜 縣으로 쪼개진다.
+        names = {c['name'] for c in self._counties('酒泉郡')}
+        for fake in ('戶萬', '二千', '七', '百六'):
+            self.assertNotIn(fake, names, f'酒泉郡에 戶口 註 조각이 가짜 縣으로 새 나왔다: {fake}')
+        self.assertIn('福祿', names)
 
 
 class TestNanyangYuyangNoteReferenceRegression(unittest.TestCase):
