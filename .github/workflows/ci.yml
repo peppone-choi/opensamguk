@@ -17,20 +17,40 @@ jobs:
           fetch-depth: 0
       - name: Check provider-agnostic agent working system
         run: python3 tools/agent-system/check.py --strict --base origin/main
-      - name: Verify Han map and route-node data contracts
-        run: |
-          python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
-          python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
-          python3 tools/scenario/han_route_node_candidates.py --check
-          python3 tools/scenario/han_route_node_selection.py --check
-          python3 tools/scenario/validate_han_route_node_selection.py
+      # Every step below runs with `!cancelled()`: a step failing must not hide
+      # whether the rest are green (2026-08-24 — check.py failing at the step
+      # above silently skipped everything after it, including the unittest
+      # discover that PRs #517/#519 both needed CI evidence for). Not
+      # `always()` — a cancelled job still shouldn't keep grinding.
+      - name: Verify Han map data contract tests
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
+      - name: Verify scenario data contract tests
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
+      - name: Verify agent-system tool tests
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
+      - name: Verify Han route-node candidates
+        if: '!cancelled()'
+        run: python3 tools/scenario/han_route_node_candidates.py --check
+      - name: Verify Han route-node selection
+        if: '!cancelled()'
+        run: python3 tools/scenario/han_route_node_selection.py --check
+      - name: Verify Han route-node selection validator
+        if: '!cancelled()'
+        run: python3 tools/scenario/validate_han_route_node_selection.py
       - name: Verify v2 sandbox compose contract
+        if: '!cancelled()'
         run: bash tools/ops/v2_sandbox_compose_contract_test.sh
       - name: Verify JWT rollout contract
+        if: '!cancelled()'
         run: python3 tools/ops/jwt_rollout_contract_test.py
       - name: Verify deploy service inventory contract
+        if: '!cancelled()'
         run: python3 tools/ops/test_deploy_service_inventory_contract.py
       - name: Verify local compose service graph
+        if: '!cancelled()'
         run: docker compose --env-file .env.example config --quiet
 
   jvm:
@@ -45,8 +65,31 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Refuse the skipped-IT opt-out in CI
+        # OPENSAM_ALLOW_SKIPPED_IT is a local-only escape hatch for developers
+        # iterating without Docker (docs/agent/verification.md). ubuntu-latest
+        # always has Docker, so this var has no legitimate reason to be set
+        # here — if it is, something (workflow edit, secret, cached env) is
+        # trying to silence the skip gate. Fail loud instead of trusting it.
+        run: |
+          if [ -n "${OPENSAM_ALLOW_SKIPPED_IT:-}" ]; then
+            echo "OPENSAM_ALLOW_SKIPPED_IT is set in CI — this is not allowed. CI must never silence skipped IT." >&2
+            exit 1
+          fi
       - name: Build + test (Testcontainers uses the runner's Docker)
         run: ./gradlew build --no-daemon
+      - name: Fail on skipped tests (docker-gated IT must not silently skip in CI)
+        # OPENSAM_ALLOW_SKIPPED_IT is intentionally never set here: ubuntu-latest
+        # ships Docker, so any assumeTrue(dockerAvailable) skip in CI means Docker
+        # actually became unavailable on the runner and must be investigated, not
+        # waved through by a BUILD SUCCESSFUL that never ran the IT. Pinned empty
+        # here (not just refused in the prior step) so an env: block added
+        # anywhere else in this job can't quietly re-introduce the opt-out.
+        env:
+          OPENSAM_ALLOW_SKIPPED_IT: ""
+        run: |
+          python3 tools/agent-system/check_test_xml.py \
+            common logic infra app/gateway-api app/game-api app/game-engine app/board-api
       - name: Surface test results
         if: always()
         run: |

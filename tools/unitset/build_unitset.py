@@ -168,6 +168,10 @@ def derive(u: dict) -> dict:
     # 자체가 아니라 郡 소유 "이거나" 인접지 소유로도 뽑힌다, 예: 유주돌기가 幽州 만
     # 보유해도 뽑히는 게 기존에 확정된 동작이다)는 지역 키와 여전히 OR 로 묶는다.
     # 같은 키 안의 값끼리는 항상 OR(예: tribe: [羌,胡] = 羌 이거나 胡).
+    # 남은 구멍: 여기서 분리하는 건 tribe 뿐이다. province/commandery/region/city/external
+    # 처럼 지역 키 두 종류가 한 유닛에 같이 오면 여전히 `_other` 버킷 하나로 뭉쳐 OR 로
+    # 평가된다(예: commandery 두 개는 진짜 OR 지만, commandery+region 도 구분 없이 OR).
+    # 이번 PR 범위 밖 — 저장소에 그 조합을 쓰는 유닛이 없어 지금은 잠재 결함이다.
     gate_groups: dict[str, list[str]] = {}
     notes = []
     for k, v in req_raw.items():

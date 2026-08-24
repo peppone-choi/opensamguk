@@ -36,6 +36,33 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+function sseOkResponse(chunks: string[]): Response {
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+      controller.close();
+    },
+  });
+  return new Response(body, {
+    status: 200,
+    headers: { 'Content-Type': 'text/event-stream;charset=UTF-8' },
+  });
+}
+
+async function readAll(body: ReadableStream<Uint8Array> | null): Promise<string> {
+  if (!body) return '';
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let out = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    out += decoder.decode(value);
+  }
+  return out;
+}
+
 describe('game API proxy server selection', () => {
   beforeEach(() => {
     cookieValues = {};
@@ -157,5 +184,41 @@ describe('game API proxy server selection', () => {
     expect(await response.json()).toEqual({ error: 'expired' });
     // 재시도 없음 — game-api 호출 딱 1회.
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('game API proxy SSE (/api/game/sse/turn) — #514 401 passthrough', () => {
+  beforeEach(() => {
+    cookieValues = { sam_access: 'expired-access' };
+    registryMocks.resolveGameApiUrl.mockImplementation(() => 'http://default-game-api');
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('returns upstream 401 plainly instead of opening a text/event-stream (200 + {})', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ error: 'expired' }, 401));
+
+    const response = await GET(request('/api/game/sse/turn'), context(['sse', 'turn']));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get('content-type')).not.toContain('text/event-stream');
+    expect(await response.json()).toEqual({ error: 'expired' });
+  });
+
+  it('passes an ok upstream through as a live event-stream', async () => {
+    fetchMock.mockResolvedValue(sseOkResponse(['event: turnCompleted\ndata: {}\n\n']));
+
+    const response = await GET(request('/api/game/sse/turn'), context(['sse', 'turn']));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/event-stream');
+    const text = await readAll(response.body);
+    expect(text).toContain(': proxy-connected');
+    expect(text).toContain('event: turnCompleted');
   });
 });

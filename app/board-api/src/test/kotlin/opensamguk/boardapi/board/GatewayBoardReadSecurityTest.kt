@@ -202,7 +202,6 @@ class GatewayBoardReadSecurityTest {
             .issuedAt(Date.from(now.minusSeconds(120)))
             .expiration(Date.from(now.minusSeconds(60)))
             .claim(GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ACCESS_TOKEN)
-            .claim(GatewayJwtClaims.USERNAME, author.username)
             .claim(GatewayJwtClaims.ROLE, author.role)
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret)))
             .compact()

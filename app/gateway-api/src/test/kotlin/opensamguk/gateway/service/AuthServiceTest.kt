@@ -1,6 +1,5 @@
 package opensamguk.gateway.service
 
-import opensamguk.common.auth.GatewayProfileClaims
 import opensamguk.gateway.dto.ChangeNicknameRequest
 import opensamguk.gateway.dto.LoginRequest
 import opensamguk.gateway.dto.RegisterRequest
@@ -17,8 +16,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -55,12 +54,6 @@ class AuthServiceTest {
     /** allow_join/allow_login 둘 다 허용된 시스템 플래그(기본 정상 경로). */
     private fun allowAllFlag() = SystemFlagEntity(id = 1, allowJoin = true, allowLogin = true)
 
-    private fun anyProfile(): GatewayProfileClaims =
-        any(GatewayProfileClaims::class.java) ?: GatewayProfileClaims(0, "", "USER", null, 1, null, 0)
-
-    private fun captureProfile(captor: ArgumentCaptor<GatewayProfileClaims>): GatewayProfileClaims =
-        captor.capture() ?: GatewayProfileClaims(0, "", "USER", null, 1, null, 0)
-
     @BeforeEach
     fun setUp() {
         authService = AuthService(
@@ -82,7 +75,7 @@ class AuthServiceTest {
             val user = it.getArgument<UserEntity>(0)
             UserEntity(id = 1L, username = user.username, password = user.password)
         }
-        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("access-token")
+        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString())).thenReturn("access-token")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh-token")
 
         val result = authService.register(RegisterRequest("newuser", "password123", null, "새유저"))
@@ -155,19 +148,15 @@ class AuthServiceTest {
             UsernamePasswordAuthenticationToken(CustomUserDetails(user), null, emptyList())
         )
         `when`(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user))
-        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("access-token")
+        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString())).thenReturn("access-token")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh-token")
 
         val result = authService.login(LoginRequest("testuser", "pass123"))
 
         assertEquals("testuser", result.user.username)
         assertEquals("access-token", result.accessToken)
-        val profile = ArgumentCaptor.forClass(GatewayProfileClaims::class.java)
-        verify(jwtTokenProvider).generateAccessToken(captureProfile(profile))
-        assertEquals("테스터", profile.value.nickname)
-        assertEquals(4, profile.value.grade)
-        assertEquals("profile.jpg", profile.value.picture)
-        assertEquals(1, profile.value.imageServer)
+        // OPENSAM-220/#483: 액세스 토큰은 신원·인가만 받는다 — 표시 정보(닉네임/등급/사진)는 발급 인자에 없다.
+        verify(jwtTokenProvider).generateAccessToken(1L, "USER")
     }
 
     @Test
@@ -200,7 +189,7 @@ class AuthServiceTest {
             UsernamePasswordAuthenticationToken(CustomUserDetails(admin), null, emptyList())
         )
         `when`(userRepository.findByUsername("peppone")).thenReturn(Optional.of(admin))
-        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("access-token")
+        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString())).thenReturn("access-token")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh-token")
 
         val result = authService.login(LoginRequest("peppone", "pass123"))
@@ -215,17 +204,14 @@ class AuthServiceTest {
         `when`(jwtTokenProvider.validateRefreshToken("refresh-token")).thenReturn(true)
         `when`(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn(1L)
         `when`(userRepository.findById(1L)).thenReturn(Optional.of(user))
-        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("new-access")
+        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString())).thenReturn("new-access")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("new-refresh")
 
         val result = authService.refresh("refresh-token")
 
         assertEquals("testuser", result.user.username)
         assertEquals("new-access", result.accessToken)
-        val profile = ArgumentCaptor.forClass(GatewayProfileClaims::class.java)
-        verify(jwtTokenProvider).generateAccessToken(captureProfile(profile))
-        assertEquals(1, profile.value.grade)
-        assertEquals(0, profile.value.imageServer)
+        verify(jwtTokenProvider).generateAccessToken(1L, "USER")
     }
 
     @Test
@@ -235,14 +221,13 @@ class AuthServiceTest {
         `when`(userRepository.findByUsernameForUpdate("testuser")).thenReturn(Optional.of(user))
         `when`(userRepository.existsByNicknameIgnoreCase("새별명")).thenReturn(false)
         `when`(userRepository.saveAndFlush(user)).thenReturn(user)
-        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("new-access")
+        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString())).thenReturn("new-access")
         `when`(jwtTokenProvider.generateRefreshToken(1L)).thenReturn("new-refresh")
 
         val result = authService.changeNickname(details, ChangeNicknameRequest("  새별명  "))
 
-        val profile = ArgumentCaptor.forClass(GatewayProfileClaims::class.java)
-        verify(jwtTokenProvider).generateAccessToken(captureProfile(profile))
-        assertEquals("새별명", profile.value.nickname)
+        // OPENSAM-220/#483: 닉네임은 users 행에만 반영된다 — 재발급 토큰의 신원·인가는 그대로다.
+        verify(jwtTokenProvider).generateAccessToken(1L, "USER")
         assertEquals("새별명", result.user.nickname)
         assertEquals("new-access", result.accessToken)
         assertEquals("new-refresh", result.refreshToken)
