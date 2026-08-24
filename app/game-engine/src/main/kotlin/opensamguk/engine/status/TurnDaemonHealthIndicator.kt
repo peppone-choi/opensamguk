@@ -56,7 +56,7 @@ class TurnDaemonHealthIndicator(
          * 넘지 않는다. 3배는 느린 flush·긴 월간 파이프라인을 삼킬 여유라 지터로는 울리지
          * 않으면서(오탐 방지), 프로덕션 기본 `tick_seconds=3600`(1시간=1턴) 기준 영구 차단을 3시간 안에
          * 잡는다 — 2.3일 방치와 자릿수가 다르다.
-         * 상수 외부화는 하지 않는다(`CLAUDE.md` M-config: post-parity까지 상수 외부화 유예).
+         * post-parity까지 상수 외부화는 유예한다.
          */
         const val STALE_TICK_MULTIPLIER: Long = 3
 

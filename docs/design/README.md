@@ -10,12 +10,11 @@
 
 서로 다른 문서가 충돌하면 다음 순서로 판단한다.
 
-1. `.ai/decisions.md`의 승인된 최신 ADR-LITE
-2. 명시적으로 승인되었고 supersede 관계가 기록된 `docs/superpowers/specs/`
-3. 현재 코드와 실행 검증 결과
-4. `docs/design/roadmap.md`와 실행 계획
-5. GitHub 이슈와 Jira 티켓
-6. `legacy/`, 외부 Gitea 문서, 과거 리뷰·리서치
+1. 명시적으로 승인되었고 supersede 관계가 기록된 `docs/superpowers/specs/`
+2. 현재 코드와 실행 검증 결과
+3. `docs/design/roadmap.md`와 실행 계획
+4. GitHub 이슈와 Jira 티켓
+5. `legacy/`, 외부 Gitea 문서, 과거 리뷰·리서치
 
 티켓은 작업 추적 수단이지 제품 정본이 아니다. 특히 Jira는 2026-08-20 현재 이 세션에서 실시간 상태를
 조회할 권한이 없어 상태를 `UNKNOWN`으로 유지한다.

@@ -25,7 +25,7 @@ import kotlin.test.assertEquals
  *
  * PlaceBetHandler의 검증 체인 9종(P0-07 본체)은 W1-C 소관 — 이 IT는 flush/DDL 측만 증명한다.
  *
- * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다 (CLAUDE.md).
+ * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BettingUpsertFlushIT {

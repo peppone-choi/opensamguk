@@ -14,7 +14,7 @@ const ATLAS_ROOT = resolve(REPOSITORY_ROOT, 'assets/battle/v2/effects/atlases');
 const RECEIPT_ROOT = resolve(REPOSITORY_ROOT, 'assets/battle/v2/effects/receipts');
 const FINAL_MANIFEST_PATH = resolve(REPOSITORY_ROOT, 'assets/battle/v2/effects/manifest.json');
 
-const DEFAULT_SPRITE_GEN_ROOT = '/Users/apple/.codex/skills/sprite-gen';
+const DEFAULT_SPRITE_GEN_ROOT = resolve(REPOSITORY_ROOT, 'tools/sprite-gen');
 const SPRITE_GEN_ROOT = resolve(process.env.SPRITE_GEN_ROOT || DEFAULT_SPRITE_GEN_ROOT);
 const SPRITE_PYTHON = resolve(SPRITE_GEN_ROOT, '.venv/bin/python');
 const PREPARE_SCRIPT = resolve(SPRITE_GEN_ROOT, 'scripts/prepare_sprite_run.py');
