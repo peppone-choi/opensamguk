@@ -37,7 +37,7 @@ def main() -> int:
             print(f"{f.stem}\t{why}", file=sys.stderr)
             print(f.stem)
     print(f"검사 {len(list(raw.glob('*.png')))//2}장 · 불량 {fails}장", file=sys.stderr)
-    return 0
+    return 1 if fails else 0
 
 
 if __name__ == "__main__":
