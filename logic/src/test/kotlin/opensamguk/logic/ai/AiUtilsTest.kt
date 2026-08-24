@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
  * `choiceUsingWeightPair($candidateArgs)` candidate-list build (`:1302`).
  *
  * PHP 8 sorts are UNCONDITIONALLY STABLE — equal elements keep their original (insertion) relative order.
- * The wrappers add NO secondary comparator on ties (CLAUDE.md parity law). The candidate list order seeds
+ * The wrappers add NO secondary comparator on ties. The candidate list order seeds
  * every downstream `choiceUsingWeightPair` draw — a reorder on a tie shifts the idx → shifts the weight →
  * shifts the single draw → total desync.
  */

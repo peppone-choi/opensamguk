@@ -23,7 +23,7 @@ import java.util.IdentityHashMap
  * `general_turn` / `nation_turn` / `diplomacy` / `rank_data` / `ng_games`.
  *
  * ## Why this is JDBC-only (NOT a one-daemon-write-rule violation)
- * The "ONE daemon-write rule" (CLAUDE.md / design §0.1 #3) forbids the game-engine daemon from using a
+ * The "ONE daemon-write rule" forbids the game-engine daemon from using a
  * JPA `EntityManager` for *gameplay* writes — two competing dirty-truths (JPA dirty-checking +
  * ChangeRecorder) would silently diverge. This class is a **bootstrap row-loader via raw
  * [JdbcTemplate]**, in the SAME category as Flyway migrations and `AdminSeeder`: it runs ONCE, before

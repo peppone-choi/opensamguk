@@ -1,5 +1,13 @@
 # CLAUDE.md — opensamguk
 
+> **2026-08-24 — 에이전트 하네스는 이 저장소에서 제거됐다.**
+> 이 문서에 남아 있는 `.claude/agents`·`.claude/commands`·`.claude/skills`(단 `historical-sources` 는 살아 있다)·`.claude/workflows`·
+> `.codex/`·`.agents/skills`·`docs/agent/`·`scripts/agent/`(단 `protect-sensitive-files.sh` 는 살아 있다)·
+> `tools/agent-system/check.py`·`skills-lock.json` 경로 언급은 **역사 기록이다. 지금 그 파일은 없다.**
+> 살아 있는 층은 셋뿐이다 — 이 문서들의 제품·아키텍처 규칙, `.ai/decisions.md`(ADR-LITE),
+> `.claudeignore` + `scripts/agent/protect-sensitive-files.sh`(시크릿·골든·legacy 차단 훅).
+> 자세한 경위는 `.ai/decisions.md` ADR-LITE-047.
+
 Load-bearing product and architecture rules. Violating them silently breaks deterministic regression and operational integrity.
 
 ## What this repo is
