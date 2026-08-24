@@ -335,12 +335,15 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
       SERVER_ID: ${SERVER_ID:-pep}
-      # Server-only (route handlers proxy to game-api/gateway-api; never exposed to the browser).
-      GAME_API_URL: ${GAME_API_URL:-http://game-api:8081}
+      # Server-only (route handlers proxy to gateway-api directly; game-api traffic goes through
+      # web-gateway's /api/game proxy — #516 §5, web/game no longer talks to game-api at all).
+      GATEWAY_WEB_URL: ${GATEWAY_WEB_URL:-http://web-gateway:3000}
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
     depends_on:
-      game-api:
-        condition: service_healthy
+      # web-gateway has no healthcheck (nginx's depends_on further below hits the same gap) —
+      # service_healthy would hang forever, so this is a plain start-order dependency only.
+      web-gateway:
+        condition: service_started
       gateway-api:
         condition: service_healthy
       game-engine:
