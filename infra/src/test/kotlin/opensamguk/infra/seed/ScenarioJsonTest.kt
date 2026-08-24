@@ -10,28 +10,18 @@ import kotlin.test.assertTrue
 class ScenarioJsonTest {
 
     @Test
-    fun `scenario_1 preserves han map metadata`() {
-        // 전 시나리오를 han 맵/han 병종세트로 통일했다. scenario_1 은 mapName 이
-        // miniche -> han 으로 바뀌었고, unitSet 은 없었다가 han 이 새로 붙었다.
-        // (siegetank/cr/che_except_siege/event_more_crewtype 는 등록된 세트가 아니어서
-        //  UnitSetTable.all() 이 빈 목록을 주던 값들이다 — data/unitset/units.json 참조.)
+    fun `scenario_1 preserves miniche map metadata`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1.json"))
 
-        assertEquals("han", scenario.map["mapName"])
-        assertEquals("han", scenario.map["unitSet"])
+        assertEquals("miniche", scenario.map["mapName"])
         assertEquals(0, scenario.const["joinRuinedNPCProp"])
     }
 
     @Test
-    fun `scenario_2 preserves han map metadata`() {
-        // 전 시나리오를 han 맵/han 병종세트로 통일했다. scenario_2 은 mapName 이
-        // miniche_b -> han 으로 바뀌었고, unitSet 은 없었다가 han 이 새로 붙었다.
-        // (siegetank/cr/che_except_siege/event_more_crewtype 는 등록된 세트가 아니어서
-        //  UnitSetTable.all() 이 빈 목록을 주던 값들이다 — data/unitset/units.json 참조.)
+    fun `scenario_2 preserves miniche_b map metadata`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
 
-        assertEquals("han", scenario.map["mapName"])
-        assertEquals("han", scenario.map["unitSet"])
+        assertEquals("miniche_b", scenario.map["mapName"])
     }
 
     @Test

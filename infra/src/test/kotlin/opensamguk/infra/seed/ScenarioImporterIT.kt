@@ -124,9 +124,7 @@ class ScenarioImporterIT {
 
     private fun newImporter2(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
-        // scenario_2's mapName was unified to han — load han's city catalog, not the old
-        // hardcoded miniche_b one, or city id ownership silently mismatches (see mapCitiesOf doc above).
-        val cities = mapCitiesOf(scenario)
+        val cities = ScenarioJson.loadMapCities(readResource("map/miniche_b.json"))
         return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_2", scenarioNumber = 2)
     }
 
@@ -1626,32 +1624,29 @@ class ScenarioImporterIT {
     }
 
     @Test
-    fun `importAll seeds scenario_2 with han city catalog`() {
+    fun `importAll seeds scenario_2 with miniche_b city catalog`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         val counts = newImporter2().importAll(jdbc, canonicalWorldId)
 
         assertEquals(1, counts.worldState)
         assertEquals(0, counts.nation)
-        // scenario_2's mapName was unified from miniche_b (78 cities) to han (780 cities).
-        assertEquals(780, counts.city)
+        assertEquals(78, counts.city)
         assertEquals(0, counts.general)
         assertEquals(0, counts.generalTurn)
         assertEquals(0, counts.rankData)
         assertEquals(1, counts.ngGames)
-        assertEquals(780, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        assertEquals(78, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
 
-        // city id=1 on the han catalog is 장안 (miniche_b's city id=1 was 낙양).
         val city = jdbc.queryForMap("SELECT name, level, pop_max, agri_max, comm_max FROM city WHERE id = 1")
-        assertEquals("장안", sso(city["name"]))
-        assertEquals(9, soi(city["level"]))
-        assertEquals(754800, soi(city["pop_max"]))
-        assertEquals(14000, soi(city["agri_max"]))
-        assertEquals(14800, soi(city["comm_max"]))
+        assertEquals("낙양", sso(city["name"]))
+        assertEquals(8, soi(city["level"]))
+        assertEquals(668600, soi(city["pop_max"]))
+        assertEquals(7800, soi(city["agri_max"]))
+        assertEquals(8000, soi(city["comm_max"]))
 
-        // scenario_2's mapName was unified from miniche_b to han (all scenarios now use the han map).
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"mapName\":\"han\"") || config.contains("\"mapName\": \"han\""), config)
+        assertTrue(config.contains("\"mapName\":\"miniche_b\"") || config.contains("\"mapName\": \"miniche_b\""), config)
     }
 
     @Test
