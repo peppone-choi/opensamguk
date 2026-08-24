@@ -51,8 +51,8 @@ import java.util.Locale
  * Sort-metric parity (spec §4): best-generals & npcs = `leadership+strength+intel` DESC; kingdoms =
  * `power` proxy (SUM crew) DESC; generals default = `experience` DESC (the page re-sorts client-side).
  * Every board breaks ties on `general.id`/`nation.id` ASC for a deterministic stable order (PHP `usort`
- * is stable on 8.0+; the id tiebreak preserves that without adding a non-stable comparator — CLAUDE.md
- * rule 6). `rank` is the 1-based array index assigned AFTER the sort.
+ * is stable on 8.0+; the id tiebreak preserves that without adding a non-stable comparator).
+ * `rank` is the 1-based array index assigned AFTER the sort.
  *
  * Historical boards read only persisted rows: `hall`, `world_state`, and `statistic`-backed live
  * state. Missing source values stay empty/zero instead of being invented.

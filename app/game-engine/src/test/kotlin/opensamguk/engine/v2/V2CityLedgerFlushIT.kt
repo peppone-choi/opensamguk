@@ -36,7 +36,7 @@ import kotlin.test.assertTrue
  * Flyway location은 v2 스택 운영값과 같은 sibling 쌍이다(`db/migration_v2/README.md` §2 — 오버라이드는
  * 치환이라 v1 location을 반드시 함께 넣는다).
  *
- * Docker 미가용 시 skip — fail이 아니다 (CLAUDE.md).
+ * Docker 미가용 시 skip — fail이 아니다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class V2CityLedgerFlushIT {

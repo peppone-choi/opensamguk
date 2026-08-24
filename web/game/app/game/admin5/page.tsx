@@ -16,7 +16,7 @@
 // `{crew}/{leadership}00`). 인구율은 BE popRate(1자리), 비율(%)은 BE 2자리 그대로.
 //
 // historyStats(statistic 테이블)·sabotageLog(_sabotagelog.txt)는 opensamguk 스키마 원천 부재로
-// BE가 BLOCKED(빈 리스트 + *Blocked=true) — 값 날조 금지(CLAUDE.md §5). FE는 "원천 부재" 안내로
+// BE가 BLOCKED(빈 리스트 + *Blocked=true) — 값 날조 금지. FE는 "원천 부재" 안내로
 // 대체 노출만 한다.
 //
 // EMPTY-SAFE: rows [] → 빈-상태 행. 절대 크래시하지 않는다.

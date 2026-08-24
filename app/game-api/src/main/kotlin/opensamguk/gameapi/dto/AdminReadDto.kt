@@ -156,7 +156,7 @@ data class AdminNationStatsRow(
  * historyStats/sabotageLog는 legacy `_admin5`에 존재하나 opensamguk 스키마에 원천이 없어 BLOCKED:
  *  - historyStats : `statistic` 테이블 미존재(월별 누적 통계 스냅샷) → 빈 리스트 + blocked 플래그.
  *  - sabotageLog  : `getSabotageLogRecent`는 플랫파일(`_sabotagelog.txt`) 기반, DB 원천 없음 → 빈 리스트.
- * 값 날조 금지(CLAUDE.md §5) — 누락은 quarantine으로 표기만 한다.
+ * 값 날조 금지 — 누락은 quarantine으로 표기만 한다.
  */
 data class AdminNationStatsResponse(
     val type: Int,

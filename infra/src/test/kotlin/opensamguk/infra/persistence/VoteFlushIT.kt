@@ -29,7 +29,7 @@ import kotlin.test.assertTrue
  *  - vote는 PHP insertIgnore → ON CONFLICT(vote_id,general_id) DO NOTHING (중복 멱등 무시).
  *  - vote_poll UPDATE는 삽입 순서대로 SET 절을 구성하고 timestamptz로 캐스트한다.
  *
- * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다 (CLAUDE.md).
+ * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class VoteFlushIT {

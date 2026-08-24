@@ -11,7 +11,7 @@ package opensamguk.logic.ai
  * ORDER is itself a 동결 회귀 target: a reorder on a tie shifts the positional `idx` → shifts the
  * `count - idx` weight → shifts the single draw → desyncs every downstream draw. PHP 8 sorts are
  * **unconditionally STABLE** (equal elements keep their original relative order); these wrappers reproduce
- * that exactly and add **NO secondary comparator on ties** (CLAUDE.md parity law). Kotlin's
+ * that exactly and add **NO secondary comparator on ties**. Kotlin's
  * [List.sortedWith] / [List.sortWith] are documented stable, so a faithful comparator port is byte-equal.
  *
  * Port targets in `GeneralAI.php`:
