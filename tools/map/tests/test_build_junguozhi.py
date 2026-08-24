@@ -165,7 +165,9 @@ class TestHenanYinBoundaryRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -253,7 +255,9 @@ class TestYouFuFengBoundaryRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -480,7 +484,9 @@ class TestNanyangYuyangNoteReferenceRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         fd, path = tempfile.mkstemp(suffix='.json')
         import os as _os
@@ -579,7 +585,9 @@ class TestLiaodongShuguoNoCountBoundaryRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -647,7 +655,9 @@ class TestZhangyeShuguoJunHitLongestMatchRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -712,7 +722,9 @@ class TestXuantuJunPureNoteFragmentRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -792,7 +804,9 @@ class TestYuexiJunGluedTailRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -885,7 +899,9 @@ class TestWuduJunSplitCellAndGreedyNoteRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -982,7 +998,9 @@ class TestShangJunQiyuanAndQiuciShuguoRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -1051,7 +1069,9 @@ class TestLuGuoPunctuationNoteFragmentRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -1149,7 +1169,9 @@ class TestZhongshanGuoNoteSubstringCoincidenceRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
@@ -1260,7 +1282,9 @@ class TestChenliuJunPingqiuChangyuanSplitRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
-        bj.chgis_points = lambda layer, field='NAME_FT': (
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
+        
             dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
         bj.county_lexicon = lambda: frozenset()
         fd, path = tempfile.mkstemp(suffix='.json')
