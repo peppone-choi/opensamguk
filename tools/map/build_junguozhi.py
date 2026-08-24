@@ -669,13 +669,20 @@ def main():
     # 郡國志-CHGIS 이체자. 한 글자 차이로 같은 郡이 남남이 되고, 앵커를 못 찾은 郡은
     # 아래 필터가 통째로 꺼져 동명이인을 1500km 밖에서 물어온다.
     VARIANT = str.maketrans('鴈郁閒雒沇涼竝', '雁鬱間洛兗凉并')
+    VARIANT_INV = str.maketrans('雁鬱間洛兗凉并', '鴈郁閒雒沇涼竝')
     # CHGIS 판도 밖이라 앵커가 있을 수 없는 郡(交趾·九真·日南·樂浪·帶方…).
     # 좌표는 external-places.json 이 사료·Wikidata 로 비정한 것이며 필터 기준점으로만 쓴다.
+    # **온전한 이름으로도 색인한다.** 접미사를 하나만 떼는 이 정규식은 屬國을
+    # 「蜀郡屬」「張掖居延屬」「廣漢屬」처럼 잘라 놓는데, 郡 블록 쪽 키는
+    # 「蜀郡」「張掖居延」「廣漢」이라 다섯 屬國의 사료 비정 앵커가 전부 안 붙고
+    # 죽어 있었다(蜀郡屬國·張掖居延屬國은 앵커 None, 나머지 셋은 母郡 앵커를
+    # 빌려 씀). 잘라낸 키를 바꾸면 「廣漢屬國 -> 廣漢」이 廣漢郡의 키와 부딪히니,
+    # 자르지 말고 온전한 이름을 키로 하나 더 넣고 조회 때 그걸 먼저 본다.
     EXTRA_ANCHOR = {}
     try:
         for _e in json.load(open('data/map/external-places.json'))['places']:
-            EXTRA_ANCHOR.setdefault(
-                re.sub(r'(郡|國|尹)$', '', _e['nameCh']), []).append((_e['lon'], _e['lat']))
+            for _k in (_e['nameCh'], re.sub(r'(郡|國|尹)$', '', _e['nameCh'])):
+                EXTRA_ANCHOR.setdefault(_k, []).append((_e['lon'], _e['lat']))
     except FileNotFoundError:
         pass  # 아직 안 만들어졌을 뿐 — 이 파일이 다루는 郡만 MAX_KM 필터가 꺼진다
 
@@ -764,9 +771,16 @@ def main():
         # 日南 -Vietnam 에서 2000km 이상) 자기시대 검증도 없이 잡혀 앵커를
         # 통째로 오염시키는 경우가 있었다. EXTRA_ANCHOR 는 사료·Wikidata 로
         # 직접 비정한 값이라 더 신뢰된다.
-        b['anchor_verified'] = key in EXTRA_ANCHOR
-        b['anchor'] = (EXTRA_ANCHOR.get(key) or pref_xy.get(key)
-                       or pref_xy.get(key.translate(VARIANT)) or [None])[0]
+        # 온전한 이름이 먼저다 — 「廣漢屬國」의 앵커는 「廣漢」(母郡)의 것이
+        # 아니라 자기 治所 陰平道의 것이다(104.68, 32.94 · 甘肅 文縣).
+        # VARIANT 를 양방향으로 본다: 이 표는 CHGIS 표기를 우리 표기로 옮기는
+        # 방향인데, 정경 쪽이 이미 우리 표기인 경우(鬱林郡)에는 반대로 돌려야
+        # CHGIS 의 「郁林」에 닿는다. 鬱林郡 앵커가 None 이던 이유가 이것이다.
+        b['anchor_verified'] = b['jun'] in EXTRA_ANCHOR or key in EXTRA_ANCHOR
+        b['anchor'] = (EXTRA_ANCHOR.get(b['jun']) or EXTRA_ANCHOR.get(key)
+                       or pref_xy.get(key)
+                       or pref_xy.get(key.translate(VARIANT))
+                       or pref_xy.get(key.translate(VARIANT_INV)) or [None])[0]
         b['assigned'] = []
 
     # 3) PASS A — CHGIS 縣名을 블록 본문에서 찾는다. 이름을 잘라내지 않으므로 날조가 없다.

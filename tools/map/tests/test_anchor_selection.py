@@ -114,9 +114,10 @@ class TestAnchorEra(unittest.TestCase):
     def test_anchor_point_is_the_first_element(self):
         """앵커가 [0] 을 쓰는 한 이 순서가 곧 앵커다 — 그 계약을 소스에서 확인한다."""
         src = (ROOT / 'tools/map/build_junguozhi.py').read_text(encoding='utf-8')
-        self.assertIn("or pref_xy.get(key.translate(VARIANT)) or [None])[0]", src,
-                      '앵커가 더 이상 pref 목록의 첫 원소가 아니다 — 이 파일의 '
-                      '전제가 깨졌으니 검사를 다시 세워라.')
+        self.assertIn(
+            "or [None])[0]", src,
+            '앵커가 더 이상 후보 목록의 첫 원소가 아니다 — 이 파일의 전제가 '
+            '깨졌으니 검사를 다시 세워라.')
 
 
 @unittest.skipUnless(OUT.exists(),
@@ -161,6 +162,24 @@ class TestSeatCorrectionDirection(unittest.TestCase):
                     d, max_km,
                     f'{child} 앵커가 {parent} 에서 {d:.0f}km 떨어져 있다 '
                     f'(MAX_KM={max_km}).')
+
+    def test_no_commandery_is_left_without_an_anchor(self):
+        """앵커가 None 이면 near() 가 **모든 이름을 통과시킨다** — 필터가 통째로 꺼진다.
+
+        그 상태로는 1500km 밖 동명 縣이 그대로 들어온다(交趾郡이 강소성에
+        찍히던 사고가 그것이다). 조용한 무효화라 산출물만 봐서는 안 보인다.
+
+        蜀郡屬國·張掖居延屬國·鬱林郡 3郡이 그랬다. 앞 둘은 external-places.json
+        에 사료 비정 앵커가 **이미 있었는데** 키가 안 맞아 죽어 있었고,
+        鬱林郡은 CHGIS 표기가 「郁林」인데 우리 표기 「鬱林」으로만 조회했다.
+        """
+        missing = sorted(n for n, p in self.places.items() if not p.get('anchor'))
+        self.assertEqual(
+            missing, [],
+            f'앵커가 없는 郡: {missing}. 이 郡들은 MAX_KM 필터가 꺼진 채로 '
+            f'縣을 받는다 — 고칠 수 없으면 왜 못 고치는지 근거를 남기고 '
+            f'expectedFailure 로 명시해라. 조용히 두지 마라.')
+
 
 if __name__ == '__main__':
     unittest.main()
