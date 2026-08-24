@@ -5,6 +5,13 @@
 - Scope: `han` 월드의 작전 경로, 다중 턴 이동, 야전·공성·시가전 전이, 퇴각·합류, 작전 replay
 - Non-scope: 제품 코드, DB schema, UI, 기존 `che` 거리 계산, 전용 battle-engine 구현, 세부 전투 수식
 
+> **2026-08-22 정정:** 이 문서의 `780/1,778`과 고정 `ROAD=0.5`는 구현 불변식이 아니다.
+> 현재 작업트리는 780 node/1,783 후보 edge이며 추가 5개는 도서·외부 연결이라 수단과 provenance
+> 심사가 필요하다. 승인 대상은 숫자가 아니라 hash가 고정된 `RouteNetworkSnapshot`이며 각 corridor는
+> mode, geometry, source claims, grade, condition, capacity, control, access, season, damage를 가진다.
+> 이 정정과 충돌하는 고정 수치·자동 직선·정적 도로 전제는
+> `2026-08-22-han-route-network-and-command-design.md`가 우선한다.
+
 ## 1. 판정 순위와 목적
 
 이 문서는 OPENSAM-213 구현 티켓들이 소비할 작전층 계약이다. 충돌 시 다음 순서로 판정한다.
@@ -22,7 +29,7 @@
 
 ### 2.1 지도와 소유권
 
-- `han` 작전 그래프는 **780개 city node와 1,778개 무방향 edge**를 가진다.
+- `han` 작전 그래프는 reviewed manifest의 **780개 city node와 승인 snapshot의 edge 집합**을 가진다.
 - city ID가 node의 stable identity다. 이름은 중복될 수 있으므로 정본 key가 아니다.
 - 이동 중에도 각 city의 소유권은 유지된다. 부대가 edge 위에 있다는 이유로 출발지·경유지·
   목적지의 `PlaceControl` 또는 현행 city owner를 선반영해 바꾸지 않는다.
@@ -55,7 +62,7 @@
 - 0 이하 비용, 알 수 없는 terrain, dangling endpoint, self-edge, 비대칭 edge, 중복 edge는
   route snapshot validation을 실패시킨다. 실패한 snapshot으로 작전을 시작하지 않는다.
 
-현재 `han.json`은 780/1,778 topology만 제공하고 edge별 terrain/road/crossing/ford annotation은
+현재 `han.json`은 780/1,783 후보 topology만 제공하고 edge별 terrain/road/crossing/ford annotation은
 제공하지 않는다. `han-tiles.json`도 cell terrain은 있지만 이 edge annotation의 정본은 아니다.
 따라서 구현은 offline build가 다음 immutable artifact를 만들기 전에는 시작할 수 없다.
 
@@ -157,9 +164,9 @@ insertion order, thread scheduling, DB row order를 tie-break에 사용하지 �
 
 #### R1 — 780개 node 전수
 
-> **Given** valid `han` geography가 city ID 780개와 무방향 edge 1,778개를 제공하고
+> **Given** valid `han` geography가 reviewed city ID 780개와 hash가 승인된 edge snapshot을 제공하고
 > **When** route snapshot을 검증하면
-> **Then** node 780개가 정확히 한 번 등록되고 edge 1,778개가 양방향 동일 비용이며,
+> **Then** node 780개가 정확히 한 번 등록되고 승인 edge가 양방향 동일 비용이며,
 > 누락·추가·비대칭·dangling edge가 하나라도 있으면 fail closed한다.
 
 #### R2 — 가중 최단 경로
@@ -502,7 +509,7 @@ ordered campaign state diff, normalized log entries
 
 구현 계획은 최소 다음 fixture를 이름으로 가져야 한다.
 
-1. 780 node/1,778 edge graph validation과 full-graph Dijkstra 실행
+1. 780 node/승인 edge snapshot validation과 full-graph Dijkstra 실행
 2. road/plain/hill/basin/plateau/desert/mountain 및 crossing/ford 비용 표
 3. SEA-only와 disconnected destination의 `ROUTE_UNREACHABLE`
 4. 동일 비용·동일 hop의 lexicographic tie
@@ -551,7 +558,7 @@ offset이 아니라 §4의 exact fraction 식을 써야 하며, 속도/budget �
 
 - `.ai/decisions.md` ADR-LITE-041: 175郡·780城, 인접+치소 연결의 `han` 세계 규격.
 - `.ai/decisions.md` ADR-LITE-042: PHP 동일성 해제, 결정적 replay와 one-daemon-write 유지.
-- `infra/src/main/resources/map/han.json`: 현재 780 city, 1,778 symmetric undirected edge 실측.
+- `infra/src/main/resources/map/han.json`: 현재 작업트리 780 city, 1,783 symmetric undirected candidate edge 실측.
 - `tools/scenario/build_han_world.py`: 인접·치소 연결 생성 규칙과 sorted connection 출력.
 - `logic/.../CalcCityDistance.kt`: 기존 `che` BFS 및 insertion-order baseline; 이 문서의 변경 대상 아님.
 - `2026-07-12-opensamguk-v2-product-spec.md` §Operation/§BattleReplay: route, progress 계층,

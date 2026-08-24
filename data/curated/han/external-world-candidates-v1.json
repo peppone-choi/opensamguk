@@ -1,0 +1,1983 @@
+{
+  "candidateSetId": "han-external-world-candidates-v1",
+  "candidates": [
+    {
+      "candidateKey": "legacy-external:X000",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 0,
+        "sourceId": "X000"
+      },
+      "rawLegacy": {
+        "basis": "치소 龍編. 羸𨻻(Luy Lâu) 성터가 있는 박닌",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X000",
+        "jun": "交趾郡",
+        "kind": "COMMANDERY",
+        "lat": 21.1,
+        "level": 6,
+        "lon": 106.1,
+        "nameCh": "交趾郡",
+        "nameFt": "交趾郡",
+        "namePy": "",
+        "presLoc": "Bắc Ninh",
+        "prov": "交州",
+        "typeCh": "",
+        "wikidata": "Q33408"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X001",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 1,
+        "sourceId": "X001"
+      },
+      "rawLegacy": {
+        "basis": "치소 胥浦. 馬江(Sông Mã) 하류 타인호아 시가",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X001",
+        "jun": "九真郡",
+        "kind": "COMMANDERY",
+        "lat": 19.8075,
+        "level": 6,
+        "lon": 105.77639,
+        "nameCh": "九真郡",
+        "nameFt": "九真郡",
+        "namePy": "",
+        "presLoc": "Thanh Hóa",
+        "prov": "交州",
+        "typeCh": "",
+        "wikidata": "Q36175"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X002",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 2,
+        "sourceId": "X002"
+      },
+      "rawLegacy": {
+        "basis": "치소 西捲. 192년 象林이 이탈해 林邑(참파)이 된 제국 최남단",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X002",
+        "jun": "日南郡",
+        "kind": "COMMANDERY",
+        "lat": 16.75,
+        "level": 6,
+        "lon": 107.0,
+        "nameCh": "日南郡",
+        "nameFt": "日南郡",
+        "namePy": "",
+        "presLoc": "Quảng Trị",
+        "prov": "交州",
+        "typeCh": "",
+        "wikidata": "Q36579"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X003",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 3,
+        "sourceId": "X003"
+      },
+      "rawLegacy": {
+        "basis": "치소 朝鮮. 평양 낙랑토성",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X003",
+        "jun": "樂浪郡",
+        "kind": "COMMANDERY",
+        "lat": 39.01667,
+        "level": 6,
+        "lon": 125.7475,
+        "nameCh": "樂浪郡",
+        "nameFt": "樂浪郡",
+        "namePy": "",
+        "presLoc": "Pyongyang",
+        "prov": "幽州",
+        "typeCh": "",
+        "wikidata": "Q18808"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X004",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 4,
+        "sourceId": "X004"
+      },
+      "rawLegacy": {
+        "basis": "치소 帶方. 황해도 사리원~봉산 일대",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X004",
+        "jun": "帶方郡",
+        "kind": "COMMANDERY",
+        "lat": 38.50198,
+        "level": 6,
+        "lon": 125.75871,
+        "nameCh": "帶方郡",
+        "nameFt": "帶方郡",
+        "namePy": "",
+        "presLoc": "Sariwon",
+        "prov": "幽州",
+        "typeCh": "",
+        "wikidata": "Q505807"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X005",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 5,
+        "sourceId": "X005"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 遼東郡 治 襄平. 요양 일대",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X005",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 41.26432,
+        "level": 6,
+        "lon": 123.1772,
+        "nameCh": "遼東郡",
+        "nameFt": "遼東郡",
+        "namePy": "",
+        "presLoc": "Liaoyang",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q75203"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X006",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 6,
+        "sourceId": "X006"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 玄菟郡 治 高句驪. 3차 이치 후 무순 일대",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X006",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 41.87085,
+        "level": 6,
+        "lon": 123.89173,
+        "nameCh": "玄菟郡",
+        "nameFt": "玄菟郡",
+        "namePy": "",
+        "presLoc": "Fushun",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q75026"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X007",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 7,
+        "sourceId": "X007"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 遼東屬國 治 昌遼(昌黎). 금주 의현 일대",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X007",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 41.53247,
+        "level": 6,
+        "lon": 121.2349,
+        "nameCh": "遼東屬國",
+        "nameFt": "遼東屬國",
+        "namePy": "",
+        "presLoc": "Yi County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1331458"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X008",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 8,
+        "sourceId": "X008"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 上谷郡 治 沮陽. 하북 회래",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X008",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 40.4048,
+        "level": 6,
+        "lon": 115.51688,
+        "nameCh": "上谷郡",
+        "nameFt": "上谷郡",
+        "namePy": "",
+        "presLoc": "Huailai County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1197061"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X009",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 9,
+        "sourceId": "X009"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 雲中郡 治 雲中. 내몽골 托克托",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X009",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 40.27454,
+        "level": 6,
+        "lon": 111.19096,
+        "nameCh": "雲中郡",
+        "nameFt": "雲中郡",
+        "namePy": "",
+        "presLoc": "Togtoh County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q661113"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X010",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 10,
+        "sourceId": "X010"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 五原郡 治 九原. 포두 일대",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X010",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 40.65621,
+        "level": 6,
+        "lon": 109.83454,
+        "nameCh": "五原郡",
+        "nameFt": "五原郡",
+        "namePy": "",
+        "presLoc": "Baotou",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q569907"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X011",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 11,
+        "sourceId": "X011"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 朔方郡 治 臨戎. 하투 임하",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X011",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 40.76403,
+        "level": 6,
+        "lon": 107.40512,
+        "nameCh": "朔方郡",
+        "nameFt": "朔方郡",
+        "namePy": "",
+        "presLoc": "Linhe District",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1015883"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X012",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 12,
+        "sourceId": "X012"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 鉅鹿郡 治 廮陶 = 하북 寧晉. 상위 邢台로 잡는다",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X012",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 37.06594,
+        "level": 6,
+        "lon": 114.47531,
+        "nameCh": "鉅鹿郡",
+        "nameFt": "鉅鹿郡",
+        "namePy": "",
+        "presLoc": "Xingtai",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q58576"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X013",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 13,
+        "sourceId": "X013"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 東郡 治 濮陽",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X013",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 35.76392,
+        "level": 6,
+        "lon": 115.02996,
+        "nameCh": "東郡",
+        "nameFt": "東郡",
+        "namePy": "",
+        "presLoc": "Puyang",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q404484"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X014",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 14,
+        "sourceId": "X014"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 魯國 治 魯縣 = 곡부",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X014",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 35.6,
+        "level": 6,
+        "lon": 116.98333,
+        "nameCh": "魯國",
+        "nameFt": "魯國",
+        "namePy": "",
+        "presLoc": "Qufu",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q210287"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X015",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 15,
+        "sourceId": "X015"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 左馮翊 治 高陵",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X015",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 34.53515,
+        "level": 6,
+        "lon": 109.0873,
+        "nameCh": "左馮翊",
+        "nameFt": "左馮翊",
+        "namePy": "",
+        "presLoc": "Gaoling District",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q280060"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X016",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 16,
+        "sourceId": "X016"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 右扶風 治 槐里 = 흥평",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X016",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 34.27472,
+        "level": 6,
+        "lon": 108.47778,
+        "nameCh": "右扶風",
+        "nameFt": "右扶風",
+        "namePy": "",
+        "presLoc": "Xingping",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1201091"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X017",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 17,
+        "sourceId": "X017"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 廬江郡 治 舒",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X017",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 31.88082,
+        "level": 6,
+        "lon": 117.25911,
+        "nameCh": "廬江郡",
+        "nameFt": "廬江郡",
+        "namePy": "",
+        "presLoc": "Lujiang County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1334871"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X018",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 18,
+        "sourceId": "X018"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 越巂郡 治 邛都 = 서창",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X018",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 27.89833,
+        "level": 6,
+        "lon": 102.27056,
+        "nameCh": "越巂郡",
+        "nameFt": "越巂郡",
+        "namePy": "",
+        "presLoc": "Xichang",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q224603"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X019",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 19,
+        "sourceId": "X019"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 牂牁郡 治 且蘭. 귀주 황평 비정 채택 — 貴陽설과 미결",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X019",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 26.90155,
+        "level": 6,
+        "lon": 107.89738,
+        "nameCh": "牂牁郡",
+        "nameFt": "牂牁郡",
+        "namePy": "",
+        "presLoc": "Huangping County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1200556"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X020",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 20,
+        "sourceId": "X020"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 蜀郡屬國 治 漢嘉. 아안 일대",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X020",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 29.9888,
+        "level": 6,
+        "lon": 103.00074,
+        "nameCh": "蜀郡屬國",
+        "nameFt": "蜀郡屬國",
+        "namePy": "",
+        "presLoc": "Ya'an",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q427557"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X021",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 21,
+        "sourceId": "X021"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 張掖居延屬國 治 居延. 額濟納 거연택",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X021",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 41.95828,
+        "level": 6,
+        "lon": 101.06569,
+        "nameCh": "張掖居延屬國",
+        "nameFt": "張掖居延屬國",
+        "namePy": "",
+        "presLoc": "Ejin Banner",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q992936"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X022",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 22,
+        "sourceId": "X022"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 上郡 治 膚施. 섬서 유림 — 魚河堡설/綏德설 중 유림 채택",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X022",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 38.26548,
+        "level": 6,
+        "lon": 109.73881,
+        "nameCh": "上郡",
+        "nameFt": "上郡",
+        "namePy": "",
+        "presLoc": "Yulin",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q515712"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X023",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 23,
+        "sourceId": "X023"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 西河郡 治 離石. 후한대 美稷에서 離石로 이치 — 산서 여량 이석",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X023",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 37.51194,
+        "level": 6,
+        "lon": 111.12901,
+        "nameCh": "西河郡",
+        "nameFt": "西河郡",
+        "namePy": "",
+        "presLoc": "Lishi District",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q256594"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X024",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 24,
+        "sourceId": "X024"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 定襄郡 治 善無. 산서 우옥",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X024",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 39.98722,
+        "level": 6,
+        "lon": 112.46069,
+        "nameCh": "定襄郡",
+        "nameFt": "定襄郡",
+        "namePy": "",
+        "presLoc": "Youyu County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1196894"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X025",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 25,
+        "sourceId": "X025"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 廣漢屬國 治 陰平道. 감숙 문현",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X025",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 32.94432,
+        "level": 6,
+        "lon": 104.67775,
+        "nameCh": "廣漢屬國",
+        "nameFt": "廣漢屬國",
+        "namePy": "",
+        "presLoc": "Wen",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q519605"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X026",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 26,
+        "sourceId": "X026"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 上郡 龜茲屬國. 龜茲縣 = 유림 북부 — 上郡 治와 가까워 비정이 겹친다",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X026",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 38.29307,
+        "level": 6,
+        "lon": 109.7495,
+        "nameCh": "龜茲屬國",
+        "nameFt": "龜茲屬國",
+        "namePy": "",
+        "presLoc": "Yuyang District",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q641396"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X027",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 27,
+        "sourceId": "X027"
+      },
+      "rawLegacy": {
+        "basis": "郡國志 張掖屬國 「有五城 … 候官·左騎·千人·司馬官·千人官」. 治所 이름이 안 남아 張掖 일대로만 잡는다 — 점이 아니라 영역",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X027",
+        "jun": null,
+        "kind": "COMMANDERY",
+        "lat": 38.93545,
+        "level": 6,
+        "lon": 100.45529,
+        "nameCh": "張掖屬國",
+        "nameFt": "張掖屬國",
+        "namePy": "",
+        "presLoc": "Zhangye",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q197402"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X028",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 28,
+        "sourceId": "X028"
+      },
+      "rawLegacy": {
+        "basis": "『삼국사기』 고구려본기 유리명왕 22년 「移都於國內，築尉那巖城」. 지린성 지안 — 유리왕 22년 천도. 산상왕 13년(209) 丸都城으로 옮겼으나 산성자산성이 국내성에서 4km라 같은 칸이다 — 220년의 도읍은 이 점이다",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X028",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 41.12313,
+        "level": 4,
+        "lon": 126.18146,
+        "nameCh": "國內城",
+        "nameFt": "國內城",
+        "namePy": "",
+        "presLoc": "Ji'an",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1016720"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X029",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 29,
+        "sourceId": "X029"
+      },
+      "rawLegacy": {
+        "basis": "『魏書』高句麗傳 「遂至紇升骨城，遂居焉，號曰高句麗」. 卒本 = 오녀산성, 환런 일대. 건국 도읍이자 220년에도 남은 고구려의 옛 거점",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X029",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 41.26703,
+        "level": 4,
+        "lon": 125.35028,
+        "nameCh": "卒本",
+        "nameFt": "卒本",
+        "namePy": "",
+        "presLoc": "Huanren Manchu Autonomous County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1331781"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X030",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 30,
+        "sourceId": "X030"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 「北沃沮一名置溝婁，去南沃沮八百餘里」. 두만강 유역 회령 일대 — 비정이 갈린다",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X030",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 42.43333,
+        "level": 4,
+        "lon": 129.75,
+        "nameCh": "北沃沮",
+        "nameFt": "北沃沮",
+        "namePy": "",
+        "presLoc": "Hoeryong",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q48888"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X031",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 31,
+        "sourceId": "X031"
+      },
+      "rawLegacy": {
+        "basis": "韓傳 「弁辰安邪國」. 『삼국사기』 지리지 咸安郡 「法興王以大兵滅阿尸良國(一云阿那加耶)」 — 함안 말이산 고분군",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X031",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.23694,
+        "level": 4,
+        "lon": 128.42139,
+        "nameCh": "安邪國",
+        "nameFt": "安邪國",
+        "namePy": "",
+        "presLoc": "Haman County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q50338"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X032",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 32,
+        "sourceId": "X032"
+      },
+      "rawLegacy": {
+        "basis": "『삼국사기』 신라본기 파사이사금 23년 「悉直谷國來降」 · 지리지 三陟郡 「本悉直國」",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X032",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 37.44056,
+        "level": 4,
+        "lon": 129.17083,
+        "nameCh": "悉直國",
+        "nameFt": "悉直國",
+        "namePy": "",
+        "presLoc": "Samcheok",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q42102"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X033",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 33,
+        "sourceId": "X033"
+      },
+      "rawLegacy": {
+        "basis": "『삼국사기』 지리지 獐山郡 「祗味王時伐取押督小國置郡」. 경산",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X033",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.81667,
+        "level": 4,
+        "lon": 128.73333,
+        "nameCh": "押督國",
+        "nameFt": "押督國",
+        "namePy": "",
+        "presLoc": "Gyeongsan",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q42059"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X034",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 34,
+        "sourceId": "X034"
+      },
+      "rawLegacy": {
+        "basis": "『삼국사기』 신라본기 벌휴이사금 2년 「波珍飡仇道 … 伐召文國」 · 지리지 聞韶郡 「本召文國」. 의성 금성산 고분군",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X034",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 36.35,
+        "level": 4,
+        "lon": 128.68333,
+        "nameCh": "召文國",
+        "nameFt": "召文國",
+        "namePy": "",
+        "presLoc": "Uiseong County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q50317"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X035",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 35,
+        "sourceId": "X035"
+      },
+      "rawLegacy": {
+        "basis": "『삼국사기』 신라본기 지증마립간 13년 「于山國歸服 … 或名鬱陵島」. 220년에는 아직 신라 밖의 섬 세력",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X035",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 37.48333,
+        "level": 4,
+        "lon": 130.9,
+        "nameCh": "于山國",
+        "nameFt": "于山國",
+        "namePy": "",
+        "presLoc": "Ulleung County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q485570"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X036",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 36,
+        "sourceId": "X036"
+      },
+      "rawLegacy": {
+        "basis": "쑹화강 유역 눙안 일대. 東夷傳 「夫餘在長城之北，去玄菟千里」",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X036",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 44.4309,
+        "level": 4,
+        "lon": 125.17216,
+        "nameCh": "夫餘",
+        "nameFt": "夫餘",
+        "namePy": "",
+        "presLoc": "Nong'an County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1205815"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X037",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 37,
+        "sourceId": "X037"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 「東沃沮在高句麗蓋馬大山之東，濱大海而居」. 함흥 일대",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X037",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 39.96556,
+        "level": 4,
+        "lon": 127.48861,
+        "nameCh": "東沃沮",
+        "nameFt": "東沃沮",
+        "namePy": "",
+        "presLoc": "Hamhung",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q109356"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X038",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 38,
+        "sourceId": "X038"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 「濊南與辰韓，北與高句麗、沃沮接，東窮大海」. 영동 강릉",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X038",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 37.75556,
+        "level": 4,
+        "lon": 128.89611,
+        "nameCh": "濊",
+        "nameFt": "濊",
+        "namePy": "",
+        "presLoc": "Gangneung",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q42056"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X039",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 39,
+        "sourceId": "X039"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 「挹婁在夫餘東北千餘里，濱大海」. 연해주 남부",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X039",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 43.8,
+        "level": 4,
+        "lon": 131.95,
+        "nameCh": "挹婁",
+        "nameFt": "挹婁",
+        "namePy": "",
+        "presLoc": "Ussuriysk",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q196934"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X040",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 40,
+        "sourceId": "X040"
+      },
+      "rawLegacy": {
+        "basis": "韓傳 「辰王治月支國」. 마한 54국의 國邑 — 익산~천안 직산 중 익산 채택(비정이 갈린다)",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X040",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.94389,
+        "level": 4,
+        "lon": 126.95444,
+        "nameCh": "目支國",
+        "nameFt": "目支國",
+        "namePy": "",
+        "presLoc": "Iksan",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q42137"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X041",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 41,
+        "sourceId": "X041"
+      },
+      "rawLegacy": {
+        "basis": "韓傳 마한 54국의 辟卑離國. 김제의 옛 이름 碧骨과 음이 이어진다는 통설 — 확정은 아니다",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X041",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.80167,
+        "level": 4,
+        "lon": 126.88889,
+        "nameCh": "辟卑離國",
+        "nameFt": "辟卑離國",
+        "namePy": "",
+        "presLoc": "Gimje",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q42077"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X042",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 42,
+        "sourceId": "X042"
+      },
+      "rawLegacy": {
+        "basis": "韓傳 마한 54국의 伯濟國. 『삼국사기』 백제본기 온조왕 「都河南慰禮城」 — 220년 구수왕대의 도읍. 한강 하류 풍납토성 일대",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X042",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 37.56,
+        "level": 4,
+        "lon": 126.99,
+        "nameCh": "伯濟國",
+        "nameFt": "伯濟國",
+        "namePy": "",
+        "presLoc": "Seoul",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q8684"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X043",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 43,
+        "sourceId": "X043"
+      },
+      "rawLegacy": {
+        "basis": "韓傳 「又有州胡在馬韓之西海中大島上 … 乘船往來，巿買韓中」. 탐라",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X043",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 33.50972,
+        "level": 4,
+        "lon": 126.52194,
+        "nameCh": "州胡",
+        "nameFt": "州胡",
+        "namePy": "",
+        "presLoc": "Jeju City",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q27289020"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X044",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 44,
+        "sourceId": "X044"
+      },
+      "rawLegacy": {
+        "basis": "韓傳 진한 12국의 斯盧國 = 경주. 『삼국사기』 신라본기 「築城曰金城」 — 220년 나해이사금대의 도읍",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X044",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.85,
+        "level": 4,
+        "lon": 129.21667,
+        "nameCh": "斯盧國",
+        "nameFt": "斯盧國",
+        "namePy": "",
+        "presLoc": "Gyeongju",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q42097"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X045",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 45,
+        "sourceId": "X045"
+      },
+      "rawLegacy": {
+        "basis": "韓傳 「弁辰狗邪國」·倭 여정의 출발점 「其北岸狗邪韓國」 = 김해. 『삼국유사』 駕洛國記 首露王의 金官加耶",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X045",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.23417,
+        "level": 4,
+        "lon": 128.88111,
+        "nameCh": "狗邪國",
+        "nameFt": "狗邪國",
+        "namePy": "",
+        "presLoc": "Gimhae",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q42082"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X046",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 46,
+        "sourceId": "X046"
+      },
+      "rawLegacy": {
+        "basis": "韓傳 「弁辰古資彌凍國」 = 고성. 『삼국유사』 五伽耶條의 小伽耶",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X046",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.01478,
+        "level": 4,
+        "lon": 128.28244,
+        "nameCh": "古資彌凍國",
+        "nameFt": "古資彌凍國",
+        "namePy": "",
+        "presLoc": "Goseong County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q50208"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X047",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 47,
+        "sourceId": "X047"
+      },
+      "rawLegacy": {
+        "basis": "『삼국유사』 五伽耶條 「大伽耶(今高靈)」. 고령 지산동 고분군. 韓傳 半路國을 여기로 보는 설이 있으나 성주설과 갈린다",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X047",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.73028,
+        "level": 4,
+        "lon": 128.26889,
+        "nameCh": "大伽耶",
+        "nameFt": "大伽耶",
+        "namePy": "",
+        "presLoc": "Goryeong County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q50207"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X048",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 48,
+        "sourceId": "X048"
+      },
+      "rawLegacy": {
+        "basis": "『삼국유사』 五伽耶條 「星山伽耶(今京山，一云碧珍)」. 성주 성산동 고분군",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X048",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 35.91778,
+        "level": 4,
+        "lon": 128.28583,
+        "nameCh": "星山伽耶",
+        "nameFt": "星山伽耶",
+        "namePy": "",
+        "presLoc": "Seongju County",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q50250"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X049",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 49,
+        "sourceId": "X049"
+      },
+      "rawLegacy": {
+        "basis": "『삼국유사』 五伽耶條 「古寧伽耶(今咸寧)」. 상주 함창",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X049",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 36.57011,
+        "level": 4,
+        "lon": 128.17955,
+        "nameCh": "古寧伽耶",
+        "nameFt": "古寧伽耶",
+        "namePy": "",
+        "presLoc": "Hamchang",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q5644362"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X050",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 50,
+        "sourceId": "X050"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 狗邪韓國에서 바다 건너 천여 리. 쓰시마",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X050",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 34.20278,
+        "level": 4,
+        "lon": 129.28753,
+        "nameCh": "對馬國",
+        "nameFt": "對馬國",
+        "namePy": "",
+        "presLoc": "Tsushima",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q991032"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X051",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 51,
+        "sourceId": "X051"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 對馬國 남쪽 천여 리 瀚海. 이키섬 하루노쓰지 유적",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X051",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 33.74992,
+        "level": 4,
+        "lon": 129.69133,
+        "nameCh": "一大國",
+        "nameFt": "一大國",
+        "namePy": "",
+        "presLoc": "Iki",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q861519"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X052",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 52,
+        "sourceId": "X052"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 「又渡一海，千餘里至末盧國，有四千餘戶，濵山海居」. 가라쓰",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X052",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 33.45008,
+        "level": 4,
+        "lon": 129.96825,
+        "nameCh": "末盧國",
+        "nameFt": "末盧國",
+        "namePy": "",
+        "presLoc": "Karatsu",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q738275"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X053",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 53,
+        "sourceId": "X053"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 「東南陸行五百里，到伊都國」. 이토시마 미쿠모 유적",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X053",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 33.55731,
+        "level": 4,
+        "lon": 130.1955,
+        "nameCh": "伊都國",
+        "nameFt": "伊都國",
+        "namePy": "",
+        "presLoc": "Itoshima",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1011145"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X054",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 54,
+        "sourceId": "X054"
+      },
+      "rawLegacy": {
+        "basis": "後漢書 「建武中元二年，倭奴國奉貢朝賀 … 倭國之極南界也」. 金印은 志賀島 출토지만 왕도 후보는 須玖岡本 유적의 가스가",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": false,
+        "id": "X054",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 33.52417,
+        "level": 4,
+        "lon": 130.45639,
+        "nameCh": "奴國",
+        "nameFt": "奴國",
+        "namePy": "",
+        "presLoc": "Kasuga",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q47084"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X055",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 55,
+        "sourceId": "X055"
+      },
+      "rawLegacy": {
+        "basis": "三國志는 邪馬壹國, 後漢書는 邪馬臺國으로 적는다(원문에 壹/臺 이체자 주석). 규슈설 좌표를 대표로 쓰되 기나이설(나라 분지)과 미결 — 단일 정본 아님. devsam che 맵의 이민족 '왜'",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X055",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 33.32122,
+        "level": 4,
+        "lon": 130.39886,
+        "nameCh": "邪馬壹國",
+        "nameFt": "邪馬壹國",
+        "namePy": "",
+        "presLoc": "Yoshinogari",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1206915"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X056",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 56,
+        "sourceId": "X056"
+      },
+      "rawLegacy": {
+        "basis": "吳主傳 「遣將軍衞溫、諸葛直將甲士萬人，浮海求夷洲及亶洲」. 資治通鑑은 「欲俘其民以益衆」이라 적었다 — 인구 약탈이 목적이었다. 대만 비정은 미결",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X056",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 22.99,
+        "level": 4,
+        "lon": 120.185,
+        "nameCh": "夷洲",
+        "nameFt": "夷洲",
+        "namePy": "",
+        "presLoc": "Tainan",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q140631"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X057",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 57,
+        "sourceId": "X057"
+      },
+      "rawLegacy": {
+        "basis": "隋書 卷81 東夷 流求國. 후한대 사료 아님 — devsam che 맵의 남해 항로 끝 '유구'",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X057",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 26.21222,
+        "level": 4,
+        "lon": 127.67917,
+        "nameCh": "流求",
+        "nameFt": "流求",
+        "namePy": "",
+        "presLoc": "Naha",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q181966"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X058",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 58,
+        "sourceId": "X058"
+      },
+      "rawLegacy": {
+        "basis": "後漢書 卷87 西羌傳 「濱於賜支，至乎河首，綿地千里」. 賜支河曲 = 황하 상류 청해",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X058",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 36.62386,
+        "level": 4,
+        "lon": 101.77866,
+        "nameCh": "西羌",
+        "nameFt": "西羌",
+        "namePy": "",
+        "presLoc": "Xining",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q69060"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X059",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 59,
+        "sourceId": "X059"
+      },
+      "rawLegacy": {
+        "basis": "元和郡縣圖志 39 「戰國時，白馬氐居焉，氐即西戎之別種也」. 武都 = 隴南",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X059",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 33.535,
+        "level": 4,
+        "lon": 105.349,
+        "nameCh": "白馬氐",
+        "nameFt": "白馬氐",
+        "namePy": "",
+        "presLoc": "Longnan",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q519810"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X060",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 60,
+        "sourceId": "X060"
+      },
+      "rawLegacy": {
+        "basis": "後漢書 卷86 「哀牢夷者，其先有婦人名沙壹，居於牢山」. 永昌郡 서쪽 본거지 — devsam 맵의 南蠻. 保山(不韋)은 永昌郡 治所라 비워둔다",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X060",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 25.02077,
+        "level": 4,
+        "lon": 98.49723,
+        "nameCh": "哀牢",
+        "nameFt": "哀牢",
+        "namePy": "",
+        "presLoc": "Tengchong City",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q1355705"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X061",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 61,
+        "sourceId": "X061"
+      },
+      "rawLegacy": {
+        "basis": "三國志 55·60 「諸山越不賔，有寇難之縣」. 丹陽 산지 黟·歙 일대 — 부족 영역이라 넓다",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X061",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 30.125,
+        "level": 4,
+        "lon": 118.16667,
+        "nameCh": "山越",
+        "nameFt": "山越",
+        "namePy": "",
+        "presLoc": "Huangshan",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q36034"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X062",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 62,
+        "sourceId": "X062"
+      },
+      "rawLegacy": {
+        "basis": "東夷傳 「烏丸者，東胡也 … 餘類保烏丸山」. 蹋頓의 柳城은 遼西郡이라 CHGIS 에 있다",
+        "begYr": -9999,
+        "conf": "IDENTIFIED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X062",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 42.255,
+        "level": 4,
+        "lon": 118.8825,
+        "nameCh": "烏桓",
+        "nameFt": "烏桓",
+        "namePy": "",
+        "presLoc": "Chifeng",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q570829"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X063",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 63,
+        "sourceId": "X063"
+      },
+      "rawLegacy": {
+        "basis": "檀石槐 王庭 = 高柳 북쪽 삼백여 리. 軻比能은 雲中·五原 동쪽을 다 거뒀다",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X063",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 40.81078,
+        "level": 4,
+        "lon": 114.88114,
+        "nameCh": "鮮卑",
+        "nameFt": "鮮卑",
+        "namePy": "",
+        "presLoc": "Zhangjiakou",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q58650"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    },
+    {
+      "candidateKey": "legacy-external:X064",
+      "legacyLifecycleStatus": "UNBOUNDED_DEFAULT_REQUIRES_REVIEW",
+      "legacyProvenance": {
+        "rowIndex": 64,
+        "sourceId": "X064"
+      },
+      "rawLegacy": {
+        "basis": "單于庭 美稷 = 西河郡 오르도스 남부. 王庭은 애초에 점이 아니라 넓게 잡는다",
+        "begYr": -9999,
+        "conf": "DISPUTED",
+        "endYr": 9999,
+        "hub": true,
+        "id": "X064",
+        "jun": null,
+        "kind": "EXTERNAL_PLACE",
+        "lat": 39.815,
+        "level": 4,
+        "lon": 109.9975,
+        "nameCh": "南匈奴",
+        "nameFt": "南匈奴",
+        "namePy": "",
+        "presLoc": "Ordos City",
+        "prov": null,
+        "typeCh": "",
+        "wikidata": "Q570937"
+      },
+      "reviewState": "PENDING",
+      "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT"
+    }
+  ],
+  "classificationPolicy": "NO_W1_A_FINAL_EXTERNAL_TYPE_ASSIGNMENT",
+  "legacySourceMeta": {
+    "generator": "tools/map/build_external_places.py",
+    "note": "CHGIS V6 커버리지(현대 중국 국경) 밖 지점. 좌표는 손으로 적지 않는다.",
+    "resolved": 65,
+    "source": "비정 = 三國志 魏書 東夷傳·後漢書 郡國志 · 좌표 = Wikidata P625 (CC0)",
+    "unresolved": 0
+  },
+  "provenance": {
+    "generator": "tools/map/build_route_corridor_candidates.py",
+    "input": {
+      "path": "data/map/external-places.json",
+      "sha256": "33cd7fbc2068b0552bc557e879ada0230596365f440db1719133a2dae05d20fe"
+    }
+  },
+  "reviewState": "PENDING",
+  "runtimeActivation": "NOT_CLAIMED_BY_W1_DATA_CONTRACT",
+  "schemaVersion": 1,
+  "summary": {
+    "candidateCount": 65,
+    "legacyLifecycleStatusCounts": {
+      "UNBOUNDED_DEFAULT_REQUIRES_REVIEW": 65
+    },
+    "reviewStateCounts": {
+      "PENDING": 65
+    },
+    "runtimeActiveCount": 0
+  }
+}

@@ -1,147 +1,215 @@
-# PR #508 `work/opensamguk/han-map-wave` 독립 적대적 비평
+# han-map-wave / 郡國志 파서 레인 독립 적대적 비평 — 통합 재판정 (최종)
 
-Date: 2026-08-24
+Date: 2026-08-24 (1차 판정) / 재판정 1·2·3·4차 (같은 문서 in-place 재발행)
 
-Scope: PR #508 브랜치 `work/opensamguk/han-map-wave` 전체 (base `origin/main`, 110 files / +73,358 / -513) — data/unitset/units.json · tools/unitset/build_unitset.py · tools/map/tests · common/src/main/kotlin/opensamguk/common/constants · logic/src/test · app/game-engine/src/test · data/curated/han · data/map · .gitignore · .ai · docs/superpowers.
+Scope: PR #550 브랜치 `work/opensamguk/junguozhi-parser-fix` 팁 `6ecb18af` 의 전체 diff (base `origin/main` = `3715e6d3`, 실측 42 files / +6,372 / −310) — app/ · assets/ · data/ · docs/ · logic/ · tools/ · web/. 1차 판정 대상이던 PR #508 `work/opensamguk/han-map-wave` 의 unitset·han.json 레인은 이 diff 에서 사라졌으므로 이력으로만 남긴다.
 
-Reviewer: 코드 작성자가 아닌 독립 비평 에이전트. PR body·커밋 메시지·기존 리뷰 문서의 테스트 결과 주장은 근거로 채택하지 않고 전부 직접 재실행해 판정했다. 2026-08-23 자 두 비평 문서(`*-han-map-wave-pr508-independent-critique.md`, `*-han-city-const-gate-index-independent-critique.md`)는 이전(더 큰) 브랜치 상태를 본 stale 아티팩트라 읽지 않았다.
+Reviewer: 코드 작성자가 아닌 독립 비평 에이전트. PR body·커밋 메시지·수정자 실측을 근거로 채택하지 않고 전부 직접 재실행했다. 각 「닫혔다」 주장은 수정자가 쓴 축과 **다른 축**으로 확인했고, 새 단언은 깨뜨려서 빨개지는 것을 본 뒤에만 통과시켰다. 판정 도중 브랜치가 세 번 움직였고(`1ea06386` → `ba0e509b` → `6ecb18af`), 그때마다 이전 실측을 버리고 새 팁에서 다시 쟀다.
 
-## 내가 직접 돌린 것 (재현 명령과 실측값)
+**판정 요약:** 1차 블로커 4건, 2차 블로커 N1, 3차 블로커 B1·B2 를 **전부 닫았다.** 마지막 팁에서 마지막까지 의심한 것 — 「결함 기준선 테스트를 지운 것」 — 도 커버리지 손실이 아님을 RED 프로브로 확인했다. 남은 것은 코드가 아니라 **PR body 의 낡은 수치 하나**뿐이고, 이건 머지 전에 고쳐야 하지만 코드 블로커는 아니다. `cleared`.
 
-| # | 명령 | 실측 결과 |
-|---|------|-----------|
-| 1 | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test :logic:test --no-daemon --rerun-tasks` | `BUILD SUCCESSFUL`. XML 집계 failures=0 errors=0. 개별: `HanGateRegionsTest` tests=6 f=0 e=0 s=0 · `UnitCatalogTest` 7/0/0/0 · `CityConstRegistryTest` 12/0/0/0 · `UnitSetTableHanTest` 5/0/0/0 |
-| 2 | `python3 -m unittest discover -s tools/map/tests -p 'test_*.py'` | `Ran 29 tests ... OK`, 내 환경은 skipped=0 |
-| 3 | `python3 tools/unitset/build_unitset.py --check` | `data/unitset/units.json — 최신` (커밋본 == 생성기 산출물, exit 0) |
-| 4 | `git log --oneline origin/main..HEAD \| grep 753b8d8d` | 존재 |
-| 5 | `git ls-files \| grep HanGateIndex` | `common/src/main/kotlin/opensamguk/common/constants/HanGateIndex.kt` 추적 중, 브랜치 diff 에 +28/-28 |
+> **게이트 기계에 대한 메모.** PR #547 이 `tools/agent-system/check.py` 를 지웠으므로 `cross-agent-critique` 규칙은 더 이상 기계적으로 막지 않는다. 이 판정은 게이트가 아니라 **내용**으로 내렸다.
 
-PR body 가 지목한 두 전제 위험은 **이 브랜치 상태에서 실제로 충족돼 있다.** `753b8d8d`(병종 인프라)는 이력에 있고, `HanGateIndex.kt` 생성물도 커밋돼 있어 그것에 의존하는 `HanGateRegionsTest` 가 Docker 없이 6/6 green 이다. 이 두 건은 통과 처리한다.
+---
 
-PR body 의 `OK (skipped=10)` 와 내 `skipped=0` 차이도 결함이 아니다 — `test_junguozhi_contract.py:56` 의 `@unittest.skipUnless(all(path.is_file() for path in SOURCE_REFRESH_INPUTS), ...)` 가 gitignored HHS corpus 유무로 클래스 전체(10건)를 가른다. 내 워크트리엔 corpus 가 있고 신선한 체크아웃/CI 엔 없다. 다만 이 사실 자체가 아래 F5 의 근거다.
+## 머지 전에 반드시 고칠 것 (코드 아님, 문서)
 
-## 통과시킨 것 — 잘된 부분
+### D1 PR body 의 수치가 현재 diff 와 다르다 — 낡은 숫자가 기록으로 남는다
 
-- **`UnitCatalogTest` 의 새 회귀(F6)가 정확히 옳은 모양이다.** Docker 없이 도는 순수 데이터 테스트이고, (1) `defaultCrewTypeId` 자신의 `reqConstraints` 가 비었는지 (2) 세트 안에 무제약 유닛이 하나라도 있는지 — 특정형과 일반형을 둘 다 건다. 기본값이 우연히 다른 유닛으로 재조정돼도 결함 클래스를 계속 잡는다. 원 결함(2006 의 `ReqTech 1000` 으로 신생 국가가 아무 병종도 못 뽑음)을 CI 가 실제로 도는 레인에서 고정한 것이 이 PR 의 가장 단단한 부분이다.
-- **F4 자기 정정(2167 → 2000)이 옳은 판단이다.** 2167 군병은 `generic:false` / defence 130 인 사료 명명 부대라 보편 기본값으로 부적절하고, 2006 자신의 `evidence.quote` 가 선언한 설계 규칙과 정반대다. 실물 확인: `sets.han.defaultCrewTypeId = 2000`, 2000 은 tier 1 / `reqConstraints: []` / `reqTech` 없음.
-- **하드코딩을 되박지 않고 제거한 방향.** `ScenarioBlankPlayerCommandIT` 의 `assertEquals(94, count("city"))` → `world_state.meta->>'map'` 로 `CityConstRegistry` 조회, `crewType:1100` → `UnitSetTable.defaultCrewTypeId(unitSetName)`. 맵/세트가 또 바뀌어도 안 깨진다. 옳은 방향이다.
-- **`HanGateRegionsTest` B1 회귀가 vacuous 하지 않다.** 越巂 가 `夷` 를 갖고 `永昌` 이 아니라는 **전제 자체를 먼저 단언**한 뒤 행동을 단언한다. 태그가 사라지면 전제 단언이 먼저 터진다.
-- **`build_unitset.py --check` 가 clean.** 커밋된 `units.json` 이 생성기 산출물과 바이트 일치한다 — 손으로 고친 흔적 없음.
-- **`assertEquals(..., 1e-9)` 완화는 정당하다.** `x * crew / 100.0` 곱셈 순서 차이의 1 ULP 이고 공식 동일성은 유지된다. 초록을 만들려고 단정을 무르게 한 케이스가 아니다.
-- **`ScenarioMapSeedIT` 기대값 재작성은 조작이 아니다.** 실물 대조: `HanCityConst.kt:17` `RawCity(1, "장안", "경", 7548, 140, 148, ...)` → pop 754800 / agri 14000 / comm 14800 과 정확히 일치. 손으로 지어낸 숫자가 아니다.
+body 는 세 번의 머지 이전 상태를 서술하고 있다. 내가 팁 `6ecb18af` 에서 실측한 값과 대조하면:
 
-## 막는 지적
+| body 의 주장 | 실측 | |
+|---|---|---|
+| 84개 파일 / +9,024 −332 | **42개 파일 / +6,372 −310** | 틀림 |
+| `data/map/external-places.json` (+1,312) 를 싣는다 | **diff 에 없다** (`git diff --quiet origin/main HEAD --` 가 SAME-AS-MAIN) | 틀림 |
+| 아이콘 자산 `web/{game,gateway}/public/{city,status}/**` 48개 | **city PNG 22개뿐** (`status/` 없음) | 틀림 |
+| JVM 테스트 「boot IT 3개 · seed 2개」 | `ScenarioBlankPlayerCommandIT`·`ScenarioBlankUnificationIT` **2개뿐** (나머지는 `41b305d2` 로 main 복귀) | 틀림 |
+| 연결성 기준선 = 도달 불가 {523 이주, 550 유구, 759 우산국, 770 주호, 780 야마일국} | **그 테스트는 이제 없다** — #552 가 SEA_LINKS 로 결함을 고쳤다 | 틀림 |
+| RED 프로브 「5개 목록에서 780 제거 → 빨강」 | 그 단언이 존재하지 않으므로 이 프로브도 현재 코드를 서술하지 않는다 | 틀림 |
 
-### F1 [BLOCKING] PR 제목과 body 가 이 브랜치에 없는 변경을 서술한다
+이 저장소는 「지어낸 수치가 스펙이 된다」로 이미 물렸다. 머지 커밋 본문이 되는 글이 없는 파일을 실었다고 말하고 없는 테스트를 근거로 든다면, 다음 사람이 그걸 근거로 삼는다. **머지 전에 body 를 위 실측으로 갱신해라.** 코드는 고칠 것이 없다.
 
-PR #508 제목은 「han 기본 징병 병종을 tech 게이트 없는 **군병**으로 교체」이고, body 「변경 내용」도 `2006 → **2167(군병, 郡兵)**` 이라 못박는다. 그런데 브랜치 실물은 `2000`(민병대 도병)이다 — `fea53d71` 이 2167 을 되돌렸다.
+---
 
-```
-$ python3 -c "import json;print(json.load(open('data/unitset/units.json'))['sets']['han']['defaultCrewTypeId'])"
-2000
-```
+## 4차 재판정 — 마지막 팁에서 새로 의심한 것
 
-body 의 「변경 내용」·「검증」 절 전체가 2167 기준으로 쓰여 있고, 2167 이 왜 부적절한지(generic:false, defence 130) 설명하는 `fea53d71` 의 논거는 body 에 한 줄도 없다. **PR 을 body 로 리뷰하는 사람은 존재하지 않는 변경을 승인하게 된다.** CLAUDE.md 하드 룰 「never fabricate goldens/tests/commands · unverified = UNKNOWN, not guessed」의 취지 정면 위반이다. 코드가 아니라 문서 결함이지만, 리뷰 게이트가 문서를 진입점으로 쓰는 이상 블로킹이다.
+수정자가 「#552 가 섬 결함을 실제로 고쳤으니 결함 기준선 테스트를 지웠다」고 보고했다. **테스트를 지우는 변경은 기본적으로 의심 대상**이므로 세 축으로 따로 확인했다.
 
-**고칠 것:** PR 제목을 2000 기준으로 바꾸고, body 「변경 내용」/「검증」을 `fea53d71` 이후 상태로 갱신한다. `2167 → 2000` 재판단 논거를 body 에 옮긴다.
-
-### F2 [BLOCKING] 생성기·검증기 없는 66,000 줄짜리 고아 데이터
-
-이 브랜치는 아래를 커밋한다:
-
-| 파일 | 줄 수 |
-|------|-------|
-| `data/curated/han/route-corridor-candidates-v1.json` | 53,547 |
-| `data/curated/han/route-corridor-key-registry-v1.json` | 12,492 |
-| `data/curated/han/external-world-candidates-v1.json` | 1,983 |
-
-그런데 `6eab1f86`(「경로망 계약 기계를 이 PR 에서 분리한다」)가 `route_network_contract.py` 와 `test_tile_catalog_drift.py` 를 #518 로 떼어냈다. 실측:
+**축 1 — 결함이 정말 고쳐졌는가 (데이터 축).** 테스트가 아니라 원본 데이터를 봤다. 팁의 `HanCityConst.kt` 에서 인접이 빈 城은 **0개**다(`grep -o 'RawCity(... listOf())'` → 출력 없음). 1차 판정 때 5개였다. 다섯 섬은 전부 간선을 얻었다:
 
 ```
-$ grep -rn "route-corridor-candidates\|route_corridor\|route-corridor-key-registry\|external-world-candidates" \
-    . --include="*.py" --include="*.kt" --include="*.ts" --include="*.tsx" --include="*.md" -l
-docs/superpowers/research/2026-08-23-liuqiu-disputed-vs-runtime-adjacency-contradiction.md
-docs/superpowers/research/2026-08-23-route-network-contract-pytest-30-failed.md
-docs/superpowers/reviews/2026-08-23-han-city-const-gate-index-independent-critique.md
-.ai/task.md
+RawCity(520, "이주",     … listOf("산음")),
+RawCity(547, "유구",     … listOf("산음")),
+RawCity(753, "우산국",   … listOf("실직국")),
+RawCity(764, "주호",     … listOf("벽비리국")),
+RawCity(774, "야마일국", … listOf("구야국")),
 ```
 
-**코드 참조가 0건이다.** 이 브랜치 안에서 이 66k 줄을 재생성할 수도, 검증할 수도, 소비할 수도 없다. 분리 작업이 **증명을 떼어내고 산출물만 남겼다** — 정확히 반대로 갔어야 한다. 「이 PR 에서 분리했다」가 정당해지려면 데이터도 같이 #518 로 가거나, 최소한 이 브랜치에 `--check` 급 재현 경로 하나가 남아 있어야 한다. 지금 상태로 머지하면 `origin/main` 에 아무도 검증할 수 없는 66k 줄이 영구히 박힌다. 이건 rule 5(「Never fabricate or weaken evidence」)의 evidence-가용성 쪽 위반이다.
+**축 2 — 그 간선이 진짜인가 (양방향성).** 이건 그냥 넘기면 안 되는 자리다. 나는 3차 RED 프로브에서 **단방향 간선은 BFS 도달성을 만들지 못한다**는 것을 직접 확인했다 — 섬에서 육지로만 거는 간선은 섬을 여전히 고립시킨다. 그래서 다섯 쌍의 역방향을 전수 확인했다: 산음→이주 · 산음→유구 · 실직국→우산국 · 벽비리국→주호 · 구야국→야마일국 **5/5 존재**. 진짜 양방향 간선이다.
 
-또한 `external-world-candidates-v1.json` 은 流求 를 `DISPUTED` 로 두는데 `han.json`/`HanCityConst.kt` 는 流求 에 런타임 해상 인접 간선을 확정으로 부여한다 — `aaad9f16` 커밋 메시지가 이 모순을 스스로 인정하고 미해결로 넘긴다. 검증기가 없으니 이 모순을 잡을 기계도 없다.
-
-**고칠 것:** 세 파일을 #518 로 함께 옮기거나, 생성기/`--check` 를 이 PR 에 되돌려 붙이고 CI 에 건다.
-
-### F3 [BLOCKING] 새 가드 `test_tile_kind_sanity.py` 는 오늘 절대 실패할 수 없다
-
-PR body 는 이걸 신규 가드로 내세운다. 실물 대조:
+**축 3 — 대체 커버리지가 공허하지 않은가 (RED 프로브).** main 의 `HanMapConnectivityTest` 가 「고립 城 0」을 든다는 수정자 주장을 그대로 믿지 않고 깨뜨렸다. `산음` 의 인접 목록에서 `"이주"` **한 방향만** 지웠다(섬 쪽 간선은 그대로 뒀다 — 축 2 의 함정을 그대로 재현한 것이다):
 
 ```
-$ python3 -c "import json,collections;print(collections.Counter(c['kind'] for c in json.load(open('data/map/han-tiles.json'))['cities']))"
-Counter({'COUNTY': 958, 'COMMANDERY': 146, 'EXTERNAL_PLACE': 37, 'PROVINCE': 3})
+HanMapConnectivityTest > han 城 전체가 하나의 연결 성분이다(고립 城 0)()  FAILED
+    org.opentest4j.AssertionFailedError at HanMapConnectivityTest.kt:33
+CityConstRegistryTest  > Han numeric adjacency preserves the generated 774-city graph()  FAILED
 ```
 
-**KINGDOM 이 0개다.** 테스트의 `offenders` 리스트는 구조적으로 항상 빈 리스트이고, `self.fail(...)` 분기는 도달 불가다. PR body 도 「지금 커밋된 산출물엔 KINGDOM 0개라 green」이라고 스스로 밝힌다 — 그런데 그건 통과 근거가 아니라 **이 테스트가 아무것도 안 지킨다는 자백**이다.
+**빨개진다.** 게다가 지워진 결함 기준선보다 **강하다** — 옛 섬 테스트는 「도달 불가 집합이 정확히 이 5개」를 봤으므로 6번째 城이 끊기면 잡지만, 지금 테스트는 「하나라도 끊기면」 잡는다. 값을 맞춘 삭제가 아니라 **단언이 참이 아니게 되어 지운 것**이고, 그 자리를 더 센 단언이 이미 덮고 있다. 정당하다.
 
-진짜 결함은 산출물이 아니라 `build_han_places.py` 의 `TIER` 원시 라벨 매칭(侯國/屬國/郡 오승격)인데, 이 테스트는 그 코드를 한 줄도 부르지 않는다. 실제로 빨개지는 회귀는 지금 쓴 것보다 **더 작다**: `安眾侯國` / `犍為屬國` / `樂安郡` 세 라벨을 `TIER` 분류기에 직접 먹이고 KINGDOM 이 아님을 단언하면 된다. 산출물 스냅샷 검사 대신 결함 있는 함수를 직접 부르는 쪽이 코드도 짧고 오늘 당장 결함을 잡는다.
+`HanCityConst.kt` 는 프로브 전에 백업하고 복원해 **바이트 동일**을 확인했다(`shasum 8ee42033…`, `git diff --quiet` 통과).
 
-덧붙여 이 산출물은 저장소 자신의 정본(`administrative-units.json`: COMMANDERY 85 / KINGDOM 20)과 어긋난 채(COMMANDERY 146 / KINGDOM 0) 게임에 서빙된다. `.ai/known-issues.md` 가 #524 로 이연했으니 이 PR 이 만든 결함은 아니지만, 그 위에 얹은 가드가 vacuous 라 이연 상태가 더 굳는다.
+**남긴 것 — 브랜치가 logic 에 더하는 유일한 코드는 이제 8줄이다.** `CityConstRegistryTest` 에 `han has exactly 774 cities (independent pin, not size-vs-itself)` 하나. 이것도 공허하지 않은지 봤다 — 城 하나를 지우자 **빨개진다**. 주석이 밝힌 존재 이유(인접 해시와 BFS 는 `han.all()` 을 자기 자신과만 비교하므로 임포터가 城을 누락·중복해도 둘 다 통과할 수 있다)도 코드를 읽어 확인했고 맞다. main 에 없는 독립 축이므로 남길 값어치가 있다.
 
-**고칠 것:** `TIER` 분류기를 직접 호출하는 red-able 회귀로 바꾼다. 산출물 스냅샷 검사는 그 뒤에 보조로 남겨도 된다.
+## 4차 실측 — 팁 `6ecb18af`
 
-## 막지는 않지만 고쳐야 할 지적
+**게이트 실행 결과는 exit code 가 아니라 XML 집계로 읽었다.**
 
-### F4 [MEDIUM] 象林蠻兵(2166)이 이 브랜치에서 뽑을 수 있는 城 2 → 0 으로 죽었다
+| | tests | failures | errors | skipped | XML 최신 |
+|---|---|---|---|---|---|
+| `:logic:test` | 3,326 | 0 | 0 | 0 | 21:33 |
+| `:common:test` | 256 | 0 | 0 | 0 | 21:29 |
+| `:infra:test` | 246 | 0 | 0 | 0 | 21:49 |
+| `:app:game-engine:test` | 941 | 0 | 0 | 1 | 21:45 |
+| **합계** | **4,769** | **0** | **0** | **1** | |
 
-커밋 메시지의 주장이 아니라 내가 직접 확인했다:
+유일한 skip 은 `LongSimReplayGateTest`「12 month structural replay matches PHP golden」로 이 PR 과 무관한 기존 골든 게이트다.
+
+**깨졌던 모듈을 이번엔 반드시 돌렸다**(내 1차 실패의 재발 방지). 3차에 CI 를 깨뜨렸던 다섯 클래스 전부 Docker 로 실제 실행, `skipped=0`:
+
+`ScenarioJsonTest` 15 · `ScenarioImporterIT` 22 · `ScenarioMapSeedIT` 8 · `ScenarioBlankPlayerCommandIT` 1 · `ScenarioBlankUnificationIT` 1 — 모두 failures 0 / errors 0 / **skipped 0**. `assumeTrue(dockerAvailable)` 로 도망친 초록이 아니다.
+
+파이썬: `tools/map/tests` **Ran 130, OK** · `tools/scenario/tests` **Ran 252, OK (skipped=1)**.
+
+**N1(신선한 체크아웃 CI) 재확인.** 이 팁에서 다시 쟀다 — gitignored 입력 3종(`data/corpus/`, `data/chgis-source/`, `data/map/junguozhi.json`)을 치우고 `ci.yml` 명령 그대로:
 
 ```
-$ python3 -c "... requires/reqConstraints of 2166 ..."
-2166 상림만병 {'commandery': '日南', 'tribe': '蠻'}
-  [{'type':'ReqRegions','reqRegions':['日南']}, {'type':'ReqRegions','reqRegions':['蠻']}]
-$ grep -n '日南' common/.../HanGateIndex.kt
-757:        745 to setOf("交州", "日南"),
+Ran 130 tests in 5.393s
+OK (skipped=27)      ← 수정 전 나의 실측은 Ran 122 / FAILED (errors=1) / EXITCODE=1
 ```
 
-`日南` 태그를 가진 城 은 745 하나뿐이고 그 城 엔 `蠻` 이 없다. AND 복원 뒤 교집합이 공집합 → **2166 은 전 780성에서 징병 불가한 죽은 데이터**다. B1 의 AND 복원 자체는 옳고, 이 0 은 그 옳음이 드러낸 태그 커버리지 결함이다. 문제는 처리 방식이다:
+입력 3종은 전부 원위치로 복원했다.
 
-- `aaad9f16` 은 「후속 이슈로 남긴다」고 쓰지만 **이슈 번호가 없다.**
-- `.ai/known-issues.md` 는 같은 브랜치의 #523/#524 는 포인터로 남겼는데 이 건은 없다. 브랜치 자신의 관례와 불일치다.
-- 어떤 테스트도 이 상태를 고정하지 않아, 조용히 잊힌다.
+---
 
-**고칠 것:** `.ai/known-issues.md` 에 항목 + 이슈 번호를 남긴다(코드 수정은 이 PR 밖으로 이연해도 좋다).
+## 3차 블로커 — 둘 다 닫힘
 
-### F5 [MEDIUM] 생성·커밋 산출물 두 개의 드리프트 가드가 CI 에서 안 돈다
+### B1 브랜치가 main 대비 파일 5개를 지운다 → 닫힘
 
-`.github/workflows/ci.yml:22-23` 이 도는 파이썬은 `tools/map/tests` 와 `tools/scenario/tests` 뿐이다.
+3차 시점(`1ea06386`)에서 브랜치는 main 보다 20커밋 뒤처져 있었고, 그 결과 `git diff --diff-filter=D --name-only origin/main..HEAD` 가 **삭제 5건**을 냈다 — main 이 방금 세운 가드 셋(`HardcodedHanCityIdCanaryTest.kt` @`8e7548e2` · `test_han_tiles_adjacency_matches_owner.py` · `test_han_tiles_owner_locality.py` @`80896505`)과 다른 PR 의 독립 비평문 둘. 그대로 머지하면 가드가 조용히 사라졌을 것이다.
 
-- `data/unitset/units.json` — `build_unitset.py --check` 가 있고 로컬에서 통과하지만 **CI 어디서도 안 불린다.** 생성 산출물이 생성기와 조용히 갈라질 수 있다.
-- `data/curated/han/administrative-units.json` — 드리프트 가드 `test_committed_catalog_is_the_exact_generator_output` 가 있지만 `@unittest.skipUnless` 로 gitignored HHS corpus 에 묶여 있어 CI 에선 클래스 전체(10건)가 통째로 스킵된다.
+머지 뒤 팁 `6ecb18af` 에서 재측정: **삭제 0건**(빈 출력). 다섯 파일 전부 `git diff --quiet origin/main HEAD --` 로 **SAME-AS-MAIN**. 파일이 살아 있는 정도가 아니라 main 과 한 글자도 다르지 않다. 닫혔다.
 
-즉 이 브랜치가 손대는 두 「생성 후 커밋」 카탈로그 모두 드리프트 가드가 CI-inert 다. `--check` 한 줄을 ci.yml 에 추가하는 게 가장 싼 폐쇄다.
+### B2 城 핀 780 이 main 의 774 와 어긋난다 → 닫힘
 
-### F6 [MEDIUM] B1 수정이 규칙이 아니라 증상 하나를 하드코딩한다
+3차 시점 브랜치는 `han has exactly 780 cities` · 섬 baseline `{523,550,759,770,780}` · 인접 SHA `a6d93707…` 를 들고 있었고, main 은 이미 郡治 병합(`61fc608e`·`3f7c9466`·`bab0dcbf`)으로 774 축이었다. 774 데이터 위에서 780 단언이 도는 확정 RED 였다.
 
-```python
-bucket = "tribe" if k == "tribe" else "_other"
-```
+수정자가 「숫자를 갈지 않고 축을 옮겼다」고 보고한 중간 단계(`ba0e509b`, 섬 baseline 을 id 대신 이름으로 단언)를 나는 **데이터 축에서 독립 검증**했다 — 병합 전후의 `HanCityConst.kt` 를 직접 비교해 빈 인접을 가진 城이 `{523,550,759,770,780}` → `{520,547,753,764,774}` 로 **id 만 밀렸고 이름·좌표·능력치는 동일**함을 확인했다. 「결함은 그대로인데 핀만 빨개진 것」이라는 주장은 참이었고, 이름 축으로의 이동은 축 회피가 아니라 정당한 강화였다(다섯 이름이 파일 안에서 유일한 것도 확인했다 — 다만 han 에는 동명 城이 다수 있어 이 기법이 일반적으로 안전한 건 아니다. L4 참조).
 
-`requires` 딕셔너리의 키들은 의미상 AND 인데, 이 코드는 `tribe` 하나만 떼어내고 나머지 지역 키(province/commandery/region/city/external)는 여전히 한 `ReqRegions` 로 뭉쳐 OR 로 평가된다. 오늘은 안 터진다 — 실측으로 비-tribe 키를 둘 이상 가진 유닛은 유주돌기(2100, `{province:幽州, adjacentTribe:[烏桓,鮮卑]}`) 하나뿐이고 그건 **의도된 OR** 다. 문제는 다음 사람이 `{commandery: X, city: Y}` 를 AND 의도로 적는 순간 같은 클래스의 결함이 조용히 되살아나고, 그걸 막는 단언이 없다는 것이다.
+그 뒤 #552 가 SEA_LINKS 를 넣어 결함 자체를 없애면서 이 테스트는 폐기됐고(위 4차 절), 팁의 상태는: `RawCity(` **774개** · 인접 SHA **`58b4c44b…`** · `han has exactly 774 cities` 핀 유지. 브랜치는 `HanCityConst.kt`·`han.json`·`HanGateIndex.kt` 를 **한 줄도 바꾸지 않는다**(diff 파일 목록에 0건) — 즉 main 이 생성한 값을 그대로 쓴다. 그리고 그 값들이 실제로 맞는지는 가정하지 않고 **테스트를 돌려서** 확인했다(인접 해시 테스트는 `HanCityConst` 에서 다시 계산해 리터럴과 대조한다). 닫혔다.
 
-**더 짧고 안전한 모양:** 기본을 「키마다 `ReqRegions` 하나(=AND)」로 두고, OR 로 합칠 키만 명시 allowlist(`{"adjacentTribe"}` → 지역 그룹에 병합)로 둔다. 줄 수는 같고 fail-safe 방향이 반대가 된다.
+### 머지 해소 검증 (수정자 주장 재확인)
 
-### F7 [LOW] 「독립 오라클」이라는 표현이 실제보다 세다
+- `data/map/external-places.json` 충돌을 origin/main 쪽(魯國 `kind=KINGDOM`)으로 취했다 → **SAME-AS-MAIN 확인**. 제3의 상태가 생기지 않았다.
+- `tools/assets/build_status_icons.py` add/add 충돌은 내용 동일·모드만 달랐다 → **blob `e4ec393f` 동일 + 모드 `100755` 동일** 확인.
+- `HanGateRegionsTest.kt` 충돌을 main 쪽(테스트 3개 살아있는 판본)으로 취했다 → 이 파일은 이제 **diff 에 아예 없다**(= main 과 동일). 확인.
+- 수정자가 인용한 커밋 `24fc0e3f` 는 이 저장소에 **존재하지 않는다**(`git cat-file -t` 실패). 실제 커밋은 `ba0e509b` 였다. 결과에는 영향이 없으나 — 보고된 SHA 를 그대로 믿으면 안 된다는 사례로 적어 둔다.
 
-`CityConstRegistryTest` 의 `assertEquals(780, CityConstRegistry.of("han").all().size)` 는 커밋 메시지가 「Docker 없이 독립 오라클」이라 부르지만, 실제로는 DB IT 에서 **같은 손으로 찍은 780 을 복사해 온 pin** 이다. 사료·생성기에서 독립적으로 유도된 값이 아니다. pin 으로서는 유효하고 있는 편이 낫지만 「오라클」은 아니다. 같은 커밋이 함께 넣은 **BFS 전역 연결성 테스트가 진짜 가치 있는 추가**다 — 그건 자기 자신과 비교하지 않는다. 인접 해시 상수(`88d14c49...`) 갱신은 의도(섬 郡治 5개 해상 간선)와 근거가 코드 주석에 남아 있어 rule 2 요건을 만족한다.
+---
 
-### F8 [LOW] 이 PR 의 가장 강한 증거가 CI 가 안 도는 레인에 있다
+## 내가 놓쳤던 것 — 잔재 결함 클래스 (자인)
 
-`ScenarioBlankPlayerCommandIT` / `ScenarioBlankUnificationIT` / `ScenarioMapSeedIT` 는 전부 `assumeTrue(dockerAvailable)` 로 스킵되고 Gradle 은 그때도 `BUILD SUCCESSFUL` 을 찍는다. PR body 가 이 함정을 스스로 지적한 건 좋다. 나도 Docker 를 띄우지 않아 이 세 IT 는 **재현하지 못했다 — UNKNOWN 으로 남긴다.** 다행히 핵심 주장(신생 국가가 기본 병종을 뽑을 수 있다)은 F6 의 `UnitCatalogTest` 가 Docker 없이 덮으므로 이 UNKNOWN 이 판정을 좌우하진 않는다. 다만 `armFoundingCrew` 헬퍼는 읽어서 확인했고, `foundAssaultCrewCost` 로 필요 병력을 채워줄 뿐 `che_건국` 의 제약 검사 자체는 우회하지 않는다 — 테스트 셋업이지 증거 약화가 아니다.
+`41b305d2` 가 고친 결함은 **내가 1차 재판정에서 잡았어야 했다.** `f381da8a` 가 han 시나리오 레인을 뺄 때 **데이터(시나리오 JSON 16개)만 빼고 그 데이터를 전제로 고쳐 둔 테스트 3파일을 안 뺐고**, 그래서 CI jvm 4건이 깨졌다(run 32717387946): `ScenarioJsonTest`(:20, :33) · `ScenarioImporterIT`(:1637) · `ScenarioMapSeedIT`(:88).
+
+**내 실패의 정확한 형태:** 나는 `git diff --name-only` 로 이 세 파일이 diff 에 있다는 걸 **출력까지 받아 놓고**, Kotlin 테스트 중 둘만 열어 보고 「되돌리며 잃은 것은 없다」고 결론냈다. 그리고 `:logic:`·`:common:` 만 돌렸다 — **깨진 두 모듈을 아예 안 돌렸다.** 레인 제거를 검증할 때 봐야 할 것은 「뺀 파일」이 아니라 「뺀 것의 **소비처**」인데 그걸 전수로 훑지 않았다. 「exit 0 은 게이트의 증거가 아니다」를 남에게 지적해 놓고, 정작 **안 돌린 모듈의 초록을 가정**했다. 그래서 이번 판정에서는 네 모듈을 전부 돌리고 XML 로 집계했다(위 표).
+
+### 잔재 전수 조사 — 팁에서 재확인
+
+| 뺀 것 | 소비처 잔재 | 판정 |
+|---|---|---|
+| 시나리오 JSON 16개의 `mapName: "han"` | `infra/src/main/resources/scenario/` 에 `"map": "han"` **0건**. 문제의 3파일 전부 **SAME-AS-MAIN** | 닫힘 |
+| `route-corridor-*` 회랑 데이터 | `*.kt/*.ts/*.tsx/*.py/*.yml` 전체에서 **0건** | 잔재 없음 |
+| `SEA_LINKS`(당시) | 코드 참조 0건. #552 로 다시 들어왔고 지금은 main 소유 | 해소 |
+| `HanGateRegionsTest` 의 B1(애뢰 노수) assertion | 파일 자체가 main 판본으로 복귀. 그 불변식은 `UnitCatalogTest` 가 `reqRegions == listOf("永昌")` 로 다른 축에서 덮는다 | 커버리지 손실 0 |
+
+app/game-engine 에 남은 `"han"` 참조들(`HanAiLifecycleReplayIT` scenario_1010 · `PrecheckFullCrossCallSiteTest` `byId(419)=="석"` 등)은 전부 **main 소유**이고 main 의 재번호(421→419)와 정합한다 — 이 PR 의 잔재가 아니다.
+
+---
+
+## 1차 재판정 — 블로커 4건 (전부 닫힘)
+
+### F1 han.json 해상연결 레인 드리프트 → 닫힘
+
+「테스트가 초록이 됐다」가 아니라 **diff 표면**으로 확인했다. `git diff --name-only origin/main...HEAD` 에 `infra/.../map/han.json` · `HanCityConst.kt` · `HanGateIndex.kt` · `tools/scenario/build_han_world.py` · `infra/.../scenario/*.json` 이 **한 건도 없다**. 레인이 고쳐진 게 아니라 존재하지 않는다. (해상 간선은 예고대로 자기 PR #552 로 갔고 main 에서 왔다.)
+
+### F2 생성기 없는 고아 데이터 2.4MB → 실질 닫힘
+
+전 파일형 `git grep` 재확인: `route-corridor` 는 코드 확장자 전체에서 0건. 잔류한 `external-world-candidates-v1.json`(59KB)은 `provenance.input.sha256` 이 추적 중인 `data/map/external-places.json` 실측 해시(`33cd7fbc…d20fe`)와 **일치**하고, `reviewState: PENDING` · `runtimeActivation: NOT_CLAIMED_BY_W1_DATA_CONTRACT` 로 런타임 비활성 판정 대장임을 선언하며 research 2건이 流求 `DISPUTED` 근거로 인용한다. 재생성 산출물이 아니라 대장이므로 막지 않는다. (LOW: `provenance.generator` 가 저장소에 없는 `build_route_corridor_candidates.py` 를 가리킨다 — #518 이관 사실을 적어라.)
+
+### F3 `test_tile_kind_sanity.py` 진공 → 닫힘, 1차 처방은 철회
+
+스크래치패드 사본의 `han-tiles.json` 에서 `上党郡` 을 COMMANDERY→KINGDOM 으로 승격시키자 분포 핀과 승격 회귀가 **둘 다** 빨개졌다. 도달 불가 분기는 없어졌고 동어반복도 아니다.
+
+**1차 처방(「`TIER` 분류기에 `安眾侯國`/`犍為屬國`/`樂安郡` 을 직접 먹여라」)은 실행 불가능한 지시였고 철회한다.** `build_han_places.py:56-62` 의 `TIER` 는 縣名이 아니라 CHGIS `TYPE_CH` 타입 필드로 조회하고, 그 표에서 `'侯国'` 은 이미 `('COUNTY', 5)` 이며 `属国` 은 키 자체가 없다(→ drop). 이름을 먹여도 `None` 이다. `han-tiles.json` 은 재생성하지 않았으므로 docstring 의 「13개 KINGDOM 중 9개 오승격」 수치는 **UNKNOWN**.
+
+### F4 PR body 가 diff 를 서술하지 않음 → 당시엔 닫힘, 지금 다시 낡음
+
+1차 지적 당시 body 는 없는 변경(2167)을 서술하고 파서 밖 레인을 숨겼다. 수정 후 body 는 스스로 「제목은 파서 레인이지만 diff 는 파서 밖 레인이 함께 들어 있다」로 시작하고 레인 표를 diff 그대로 옮겼으며, 그 시점 수치가 내 측정과 일치했다. **레인 은폐라는 원래 결함은 닫혔다.** 다만 이후 세 번의 머지로 수치가 다시 어긋났고 그것이 위 **D1** 이다.
+
+---
+
+## 2차 블로커 — N1 (닫힘)
+
+`TestNanyangYuyangNoteReferenceRegression` 만 형제 픽스처 클래스 12개와 달리 `bj.county_lexicon` 을 백업만 하고 교체하지 않아, 신선한 체크아웃에서 `main()` → `build_junguozhi.py:728` → `:123 open(…dbf)` 로 `setUpClass` 가 죽었다(`ci.yml:27` exit 1). 그 클래스 docstring 은 정확히 반대(「`data/chgis-source/**` 없이도 CI 에서 항상 돈다」)를 주장하고 있었다. 내 첫 실행이 초록이었던 건 내 워크트리에 gitignored 입력이 있었기 때문이다.
+
+`47200e08` 이 `bj.county_lexicon = lambda: frozenset()` 등으로 막았고, 나는 **수정자와 다른 축 둘로** 확인했다.
+
+- **입력 은닉 축**(수정자는 별도 워크트리를 썼다): 위 4차 실측대로 `OK (skipped=27)` / exit 0. `grep -c '^ERROR:'` = 0.
+- **빈 lexicon 이 회귀를 공허하게 만드는가**(수정자는 파서 코드의 「有」 가드를 껐다 — 같은 자리를 같은 방식으로 두 번 보는 건 독립 확인이 아니다): 나는 **파서 코드를 한 글자도 안 건드리고 입력에서** 「有小長安」을 「，小長安」으로 바꿨다. 빈 lexicon 에서도 「長安」이 가짜 縣으로 튀어나온다 → `assertNotIn('長安', names)` 를 지키는 것은 lexicon 이 아니라 「有」 가드다. **부재 단언이 빈 집합 위를 지나가지 않는지도 같이 걸었다** — 정상 상태에서 이 픽스처의 南陽郡 블록은 縣 37개·城數 체크섬 PASS 1/1·RESOLVED_POINT 27 이고 宛·冠軍·新野·章陵·湖陽·育陽 이 전부 있으며, 이 이름집합은 실제 산출물 `data/map/junguozhi.json` 의 南陽郡 37개와 **완전히 일치**한다.
+
+---
+
+## 선언된 한계 — 열려 있으나 이 PR 의 블로커가 아닌 것
+
+지우지 말 것. 다음 판정자가 이 자리에서 다시 읽어야 한다.
+
+### L1 `build_junguozhi.py:745` 의 `except FileNotFoundError: pass` — 주석이 사실과 다르다
+
+위험 자체는 없다. 다른 축으로 확인했다 — `data/map/external-places.json` 을 치우고 map 테스트를 돌리면 **4건이 빨개진다**(`test_county_name_baseline` 3건 + `test_reign_era_restoration_note_does_not_become_fake_counties`). 삼킨 예외가 조용한 품질 저하로 이어지지 않고 이름집합 기준선이 잡는다. 남는 건 문서 결함이다 — 주석은 「아직 안 만들어졌을 뿐」이라 쓰지만 실제로는 **추적 중이고 사실상 필수**이며 없으면 5개 屬國 앵커가 죽는다.
+
+### L2 이 PR 의 간판 증거(縣 이름집합 기준선)는 CI 에서 항상 스킵된다
+
+`test_county_name_baseline.py:130` 의 `@unittest.skipUnless(CORPUS.exists() and DBF.exists() and OUT_PATH.exists(), …)` 로 클래스 전체가 CI 에서 스킵된다(신선한 체크아웃 시뮬레이션에서 `skipped=27` 실측). `county_name_baseline.json`(32郡 / 소실 59 / 가짜 60) 대조는 **로컬 전용 축**이고 CI 가 실제로 지키는 파서 커버리지는 인라인 픽스처 회귀들뿐이다. 막지 않는 이유: skip 사유 문자열이 ADR-LITE-039 를 인용하며 「CI 에서는 항상 skip 된다(실패 아님)」를 **스스로 명시**하고, 기준선 JSON 도 `한계_卷110_112`·`한계_字形`(±10)을 파일 안에 적어 수치를 임계값으로 오독하지 않게 막는다.
+
+### L3 南陽郡에 가짜 縣 2개가 남아 있고, 새 기준선이 그 郡을 덮지 않는다
+
+커밋 산출물의 南陽郡 縣 37개 안에 **「山，」**(桐柏大復山 오분절)과 **「西」**(隨西有斷蛇丘 오분절)가 가짜 縣으로 들어 있고 실제 縣 涅陽·陰·酇·鄧 쪽에 병합 결손이 있다. **城數 체크섬은 37=37 로 PASS 한다** — 이 PR 자신이 문제 삼는 상쇄 형태다. `county_name_baseline.json` 의 32郡에 **南陽郡이 없다**는 것도 확인했다. 블로커로 세지 않는 이유: 이 PR 이 만든 결함이 아니고, 산출물은 gitignored 이며, 기준선이 부분 기준선임을 스스로 선언한다. 다음 기준선 확장의 1순위로 남긴다.
+
+### L4 이름 축 단언은 일반적으로 안전하지 않다
+
+B2 에서 섬 baseline 을 id → 이름으로 옮긴 것은 정당했고 그 다섯 이름은 유일하다. 그러나 han 에는 **동명 城이 다수 존재한다**(강·경·경릉·고성·곡성 …). 이름 축이 id 축보다 항상 낫다고 일반화하면 언젠가 동명 城에서 해상도를 잃는다. 그 테스트는 지금 없어졌으므로 실害는 없지만, 같은 기법을 다른 곳에 옮겨 쓸 때 이 점을 확인해라.
+
+### L5 `ScenarioBlankPlayerCommandIT` 의 주석 전제가 거짓이다
+
+`:93` 의 「전 시나리오 han 통일로 scenario_0 의 map 이 che(94개 도시)에서 han(780개 도시)으로 바뀌었다」는 `f381da8a` 가 그 전환을 되돌렸으므로 **사실이 아니다**(scenario_0 엔 `map` 키가 없다 → `DEFAULT_MAP_NAME`= che → 94). 게다가 780 이라는 수치도 이제 낡았다. 바로 아래 코드가 맵을 동적으로 읽으므로 동작은 옳고 IT 도 초록이라 LOW 다. 다만 N1 이 「docstring 이 현실과 반대」였던 것과 같은 계열이니 문장을 사실에 맞춰라.
+
+### L6 재현하지 못한 것 / 이 PR 밖
+
+- `data/unitset/units.json` 의 `build_unitset.py --check` 는 CI 어디서도 안 불린다 — 이 PR 밖 레인이지만 드리프트 가드가 CI-inert 인 상태는 그대로다.
+- 1차 통합 실행 중 **딱 한 번** `test_anchor_selection.py::TestSeatCorrectionDirection::test_no_commandery_is_left_without_an_anchor` 가 빨갛게 나왔다. 이후 단독·통합 합계 6회 이상 전부 초록이었고 팁에서도 130건 OK 다. 같은 시각 내가 그 파일을 치웠다 되돌리는 프로브를 돌린 자리라 **내 프로브가 만든 경합**으로 본다. 재현되지 않았으므로 원인은 **UNKNOWN** 이고 이 PR 의 결함으로 세지 않는다.
+- `:infra:compileKotlin` 이 한 번 `Internal compiler error`(kotlin `jarfs` mmap)로 죽었다. 내가 gradle 을 동시에 두 개 돌린 직후였고, 데몬을 내리고 재실행하니 재현되지 않았다(이후 `:infra:test` 246건 초록). **환경 결함**으로 판단하며 소스 결함이 아니다.
+- 파일명이 `…-pr508-…` 인데 대상 PR 은 #550 이다. **지금 이름을 바꾸지 마라** — 제자리 재발행이어야 이전 판정이 대체된다.
+
+---
 
 ## 판정 근거 요약
 
-전제 위험 두 건(753b8d8d, HanGateIndex/34177c3f)은 **실측으로 충족 확인**했고, unitset 핵심 수정은 정확하며 회귀도 옳게 걸렸다. 그 부분만 보면 clear 다.
+1차 블로커 넷, 2차 N1, 3차 B1·B2 를 전부 닫았고, 각각 수정자와 **다른 축**으로 확인했다 — han.json 레인은 diff 에서의 **부재**로, 회랑 데이터는 **전 파일형 grep 과 해시 앵커 대조**로, 진공 테스트는 **산출물을 오염시켜 빨개지는 것을 보고**, N1 은 **입력 은닉**과 **입력에서 「有」 제거**로, B1 은 **삭제 목록이 빈 것 + 다섯 파일의 SAME-AS-MAIN 동등성**으로, B2 는 **테스트가 아니라 원본 데이터의 빈 인접 0건 + 역방향 간선 5/5**로. 1차 F3 의 처방이 `TIER` 조회 키를 오독한 것이었음도 확인해 철회했다.
 
-막는 것은 그 주변이다. PR 을 body 로 읽으면 존재하지 않는 변경(2167)을 승인하게 되고(F1), 생성기 없이 66k 줄이 영구 커밋되며(F2), 신규 가드로 내세운 테스트는 구조적으로 실패 불가다(F3). 셋 다 「증거가 있다고 주장하지만 그 증거가 실제로는 아무것도 안 지킨다」는 같은 형태의 결함이고, 이 저장소의 rule 5 가 정확히 금지하는 것이다. 코드 자체를 되돌릴 필요는 없고 F1·F3 은 각각 문서 갱신과 테스트 한 개 재작성, F2 는 파일 이동 또는 `--check` 복원이면 닫힌다.
+가장 오래 의심한 「결함 기준선 테스트 삭제」는 **축 셋으로 따로 확인해** 정당한 것으로 판단했다 — 결함이 데이터에서 실제로 사라졌고, 그 간선이 (내가 앞서 찾아 둔 단방향 함정을 피해) 진짜 양방향이며, 대체 단언이 단방향 파괴에도 빨개지고 옛 단언보다 넓다. 값을 맞춘 삭제가 아니다.
 
-Verdict: fix-required
+내가 1차에 놓쳤던 잔재 결함(레인을 뺄 때 데이터만 빼고 테스트를 안 뺀 것)은 `41b305d2` 로 닫혔고, 그것이 마지막 하나였음을 소비처 전수 조사로 확인했다. 이번엔 **깨졌던 두 모듈을 포함해 네 모듈 전부**를 돌렸고, exit code 가 아니라 XML 집계로 읽어 **4,769건 / failures 0 / errors 0**, Docker IT 다섯 클래스 **skipped 0** 을 실측했다.
+
+남은 것은 코드가 아니라 **PR body 의 낡은 수치**(D1) 하나다. 그건 머지 전에 고쳐야 하지만 코드 블로커가 아니므로 판정을 막지 않는다. L1~L6 도 막지 않는다.
+
+Verdict: cleared
