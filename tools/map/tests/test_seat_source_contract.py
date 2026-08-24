@@ -51,14 +51,21 @@ class SeatSourceContract(unittest.TestCase):
         cls.names = {c.get("nameCh") for c in cls.cities}
 
     def test_jun_names_are_unique(self) -> None:
-        """이 파일의 다른 단언들이 `{name: seat}` 매핑에 의존한다 — 이름이 겹치면 조용히 덮인다.
+        """**`tools/scenario/han_ownership.json` 이 이 유일성에 의존한다. 깨지면 소유권이 조용히 덮인다.**
 
-        의존하는 성질을 검증하지 않으면 그 단언들의 통과가 아무것도 증명하지 않는다.
-        실측 시점(2026-08-24)에 juns 175건은 `name`·`nameCh` 둘 다 중복 0 이다.
-        (다만 `cities` 쪽은 다르다 — 한글명 91개가 205노드에 겹친다. U57.)
+        그 파일은 세력별 보유 郡을 **郡名(한글)** 으로 적는다(`_comment`: 「郡名은 …
+        juns[].name 만 쓴다」). 실측(2026-08-24): 郡名 문자열 **1156회, 서로 다른 이름 116개**.
+        두 郡이 같은 한글명을 가지면 그 116개 중 하나가 어느 郡을 가리키는지 정해지지 않는다 —
+        오류가 아니라 **조용한 오배정**으로 나온다.
+
+        이 파일의 다른 단언들도 같은 성질에 의존한다: `{name: seat}` 는 이름이 겹치면 덮인다.
+        **의존하는 성질을 검증하지 않으면 그 단언들의 통과가 아무것도 증명하지 않는다** —
+        검사가 자기 전제를 안 재면 전제가 깨져도 초록이다(R47 × R48).
+        실측 시점에 juns 175건은 `name`·`nameCh` 둘 다 중복 0 이다.
+        (`cities` 쪽은 다르다 — U57, 아래 `KeySurfacesAreAmbiguous` 참조.)
         """
         names = [j["name"] for j in self.juns]
-        self.assertEqual(len(names), len(set(names)), "juns 한글명이 겹친다 — seat_of 매핑이 조용히 덮인다")
+        self.assertEqual(len(names), len(set(names)), "juns 한글명이 겹친다 — han_ownership.json 의 소유권이 조용히 덮인다")
 
     def test_table_rows_are_wellformed(self) -> None:
         self.assertTrue(self.rows, "표가 비었다")
@@ -166,11 +173,87 @@ class KnownDefectsAreStillBroken(unittest.TestCase):
         """**이 값은 결함이다.** `新興郡` 은 晉書 「統縣五」인데 판에는 소속이 **1** 이다(U53).
 
         게다가 그 1 은 縣이 아니라 **郡 자기 노드**다 — 실제 縣은 0 이다.
-        사료 근거는 U51 과 같은 줄에 있다: `dsfy-040.txt:349` 「立新興郡，領九原等縣」.
+        **縣 0 은 사료가 아니라 우리 결손이다.** 사료 근거는 U51 과 같은 줄에 있다:
+        `dsfy-040.txt:349` 「漢末大亂…建安中曹公集荒郡之户以爲縣，聚之九原界，**立新興郡，領九原等縣**」.
+        新興郡은 실재했고 九原縣을 거느렸다 — 이쪽이 「晉書 統縣五」보다 後漢말(220년 슬라이스)에 더 가깝다.
         縣이 붙으면 빨개진다 — 그때 값을 맞추지 말고 이 단언을 지우고 U53 을 닫아라.
         """
         members = [c["name"] for c in self.han_cities if (c.get("meta") or {}).get("jun") == "신흥군"]
         self.assertEqual(["신흥군"], members, "新興郡 소속이 변했다 — U53 을 재판정해라")
+
+
+class KeySurfacesAreAmbiguous(unittest.TestCase):
+    """U57 — **한글명은 유일하지 않다.** 한글명을 키로 쓰는 것이 생기면 이 숫자가 그 위험의 크기다.
+
+    R48 형식이다: 아래 숫자는 옳아서 그 값인 게 아니라 **현재 그만큼 겹쳐 있어서** 그 값이다.
+    줄어들면(정리됐으면) 빨개진다 — **그때 값을 맞추지 말고 이 단언을 지우고 U57 을 다시 판정해라.**
+
+    지금 안전한 이유는 유일성이 지켜져서가 아니라 **키로 쓰는 표면이 아직 郡(175, 중복 0)뿐**이어서다.
+    §13 이 縣을 이동 단위로 올리면 표면이 縣으로 넓어지고 그 순간 아래 숫자가 그대로 위험이 된다.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.cities = json.loads(TILES_PATH.read_text(encoding="utf-8"))["cities"]
+        cls.han_cities = json.loads(HAN_JSON_PATH.read_text(encoding="utf-8"))["cities"]
+
+    @staticmethod
+    def _collisions(names: list[str]) -> dict[str, list[int]]:
+        by: dict[str, list[int]] = {}
+        for i, name in enumerate(names):
+            by.setdefault(name, []).append(i)
+        return {k: v for k, v in by.items() if len(v) > 1}
+
+    def test_u57_han_tiles_korean_names_collide(self) -> None:
+        """han-tiles.json 1144 노드에서 한글명 **91개가 205노드**에 겹치고, **73개는 nameCh 가 실제로 다르다**.
+
+        73 은 「표기만 다른 같은 곳」이 아니라 **서로 다른 縣이 같은 한글명을 쓰는** 건수다
+        (임강현 `临江县`/`临羌县`, 경현 `京县`/`泾县`/`经县`, 신도현 `信都县`/`新都县` …).
+        """
+        dup = self._collisions([c["name"] for c in self.cities])
+        nodes = sum(len(v) for v in dup.values())
+        different = {k: v for k, v in dup.items() if len({self.cities[i].get("nameCh") for i in v}) > 1}
+        self.assertEqual(91, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(205, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(
+            73, len(different),
+            f"nameCh 가 실제로 다른 충돌 수가 변했다 — U57 을 재판정해라: {sorted(different)}",
+        )
+
+    def test_u57_han_json_city_names_collide(self) -> None:
+        """han.json 780 城에서 城名 **57개가 127노드**에 겹친다.
+
+        `han_ownership.json` 이 城名도 키로 쓸 수 있다고 스스로 적어놨다(`_comment`).
+        실측(2026-08-24) 현재 그 파일의 `cities[]` 항목은 **1건**이고 겹치는 이름은 **0건**이라 무해하다 —
+        **무해 판정은 조건부다.** 조건은 `test_ownership_city_names_are_unambiguous` 가 지킨다.
+        """
+        dup = self._collisions([c["name"] for c in self.han_cities])
+        self.assertEqual(57, len(dup), f"han.json 城名 충돌 수가 변했다 — U57 을 재판정해라: {sorted(dup)}")
+        self.assertEqual(127, sum(len(v) for v in dup.values()), "han.json 城名 충돌 노드 수가 변했다")
+
+    def test_ownership_city_names_are_unambiguous(self) -> None:
+        """`han_ownership.json` 이 참조하는 城名은 han.json 780 안에서 유일해야 한다.
+
+        **이건 R48 이 아니라 진짜 게이트다** — 위 두 개와 달리 「현재 상태 고정」이 아니라
+        「이 조건이 깨지면 안 된다」를 지킨다. 겹치는 이름을 쓰면 어느 城인지 정해지지 않는다.
+        """
+        dup = set(self._collisions([c["name"] for c in self.han_cities]))
+        payload = json.loads((ROOT / "tools/scenario/han_ownership.json").read_text(encoding="utf-8"))
+        referenced: list[str] = []
+
+        def walk(node: object) -> None:
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key == "cities" and isinstance(value, list):
+                        referenced.extend(v for v in value if isinstance(v, str))
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+
+        walk(payload)
+        bad = sorted(set(referenced) & dup)
+        self.assertEqual([], bad, f"han_ownership.json 이 중복 城名을 참조한다 — 어느 城인지 정해지지 않는다: {bad}")
 
 
 if __name__ == "__main__":
