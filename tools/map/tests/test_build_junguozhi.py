@@ -997,5 +997,75 @@ class TestShangJunQiyuanAndQiuciShuguoRegression(unittest.TestCase):
             self.assertNotIn(fake, names, f'{fake} 는 구두점 없는 원문 파편이지 縣이 아니다')
 
 
+class TestLuGuoPunctuationNoteFragmentRegression(unittest.TestCase):
+    """魯國 六城 중 郡治 「魯」의 註 「國，奄國。」에 낀 쉼표(，) 때문에 縣
+    경계가 두 겹으로 어긋났다: ① DP 가 2자 조각 보너스만 보고 「國，奄國」을
+    「國，」「奄國」으로 잘못 갈라 魯 자신의 註가 통째로 날아가고 가짜 縣
+    「國，」가 생겼다. ② 城數(六城) 초과분을 채우는 gap 자리가 하나뿐인데
+    그 가짜 「國，」가 먼저 그 자리를 차지해, 뒤에 있는 진짜 縣 「騶」가
+    통째로 소실됐다(城數 6=6 이 우연히 맞아떨어져 체크섬은 PASS 했다).
+    data/chgis-source/junguozhi/er.html 「魯國」 블록 원문 셀(#46-49)
+    그대로."""
+
+    SEGMENTS = [
+        ('er', '魯國'),
+        ('er', '六城，戶七萬八千四百四十七，口四十一萬一千五百九十。'),
+        ('er', '魯'),
+        ('er', '國，奄國。有大庭氏庫。有鐵。有闕里，孔子所居。有牛首亭。有五父衢。騶本邾國。蕃有南梁水。薛本國，六國時曰徐州。卞有盜泉。有郚鄉城。汶陽'),
+        ('er', '魏郡'),
+        ('er', '一城，戶十二萬九千三百一十，口六十九萬五千六百六。'),  # 종결용 다음 郡, 縣 1개만 제공
+        ('er', '鄴'),
+    ]
+
+    CNTY_XY = {
+        '魯': [(116.98606, 35.59755)],
+        '蕃': [(117.15701, 35.08502)],
+        '薛': [(117.21185, 34.91616)],
+        '卞': [(117.4981, 35.62962)],
+        '汶陽': [(116.97633, 35.91158)],
+        '鄴': [(114.41195, 36.27238)],
+    }
+    PREF_XY = {'魯': [(116.98333, 35.6)]}
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.lu = next(p for p in cls.data['places'] if p['name'] == '魯國')
+
+    def test_all_six_county_names_exact(self):
+        names = [c['name'] for c in self.lu['counties']]
+        self.assertEqual(names, ['魯', '騶', '蕃', '薛', '卞', '汶陽'])
+
+    def test_no_fake_fragments(self):
+        names = {c['name'] for c in self.lu['counties']}
+        for fake in ('國，', '奄國', '國'):
+            self.assertNotIn(fake, names, f'{fake} 는 구두점 없는 원문 파편이지 縣이 아니다')
+
+    def test_lu_note_carries_full_clause(self):
+        lu = next(c for c in self.lu['counties'] if c['name'] == '魯')
+        self.assertEqual(lu['note'], '國，奄國')
+
+
 if __name__ == '__main__':
     unittest.main()
