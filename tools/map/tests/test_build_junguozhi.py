@@ -484,6 +484,12 @@ class TestNanyangYuyangNoteReferenceRegression(unittest.TestCase):
         orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
                     county_lexicon=bj.county_lexicon, OUT=bj.OUT)
         bj.read_segments = lambda: list(cls.SEGMENTS)
+        # 다른 인라인 픽스처 클래스 12개와 같이 lexicon 도 막는다. orig 에 백업만
+        # 해 두고 실제로 안 바꿔 놔서, 신선한 체크아웃(= CI)에서 main() 이
+        # gitignore 된 data/chgis-source/**.dbf 를 직접 열어 setUpClass 가
+        # error 로 죽었다. 이 클래스 docstring 이 「data/chgis-source/** 없이도
+        # CI 에서 항상 돈다」고 말하는 바로 그 조건이 안 지켜지고 있었다.
+        bj.county_lexicon = lambda: frozenset()
         bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
             # 픽스처 좌표는 전부 後漢 縣이라 han_only 는 같은 사전을 준다.
         
