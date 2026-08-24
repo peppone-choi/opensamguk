@@ -12,6 +12,7 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -187,14 +188,19 @@ class CheondoTest {
             date,
             generalName = "조조",
             args = emptyMap(),
-            candidateCityIds = listOf(421),
+            candidateCityIds = listOf(419),
         )
+
+        // id 419 는 형주 「석」(析) 이다 — han.json 에 이름이 같은 「석」이 하나 더 있다(id 595,
+        // 익주, 锡). 재번호매김이 419 를 다른 城으로 옮기면 이 단언이 먼저 빨개진다.
+        assertEquals("석", CityConstRegistry.of("han").byId(419)!!.name)
+        assertEquals(CityConstRegistry.of("han").regionIdByName("형주"), CityConstRegistry.of("han").byId(419)!!.region)
 
         cheMujakwiSudoIjeon(pipeline).resolve(context)
 
-        assertEquals(421, draft.general.cityId)
-        assertEquals(421, draft.nation!!.capitalCityId)
-        assertTrue(draft.cascadeCities.any { it.id == 421 && it.nationId == 2 })
+        assertEquals(419, draft.general.cityId)
+        assertEquals(419, draft.nation!!.capitalCityId)
+        assertTrue(draft.cascadeCities.any { it.id == 419 && it.nationId == 2 })
         assertTrue(context.logs().any { it.contains("<b>석</b>") })
     }
 }
