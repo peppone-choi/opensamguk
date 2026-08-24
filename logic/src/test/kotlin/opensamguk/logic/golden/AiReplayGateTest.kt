@@ -48,7 +48,7 @@ import kotlin.test.assertTrue
  *    `InMemoryTurnWorld` and driving `AiTurnAdapter` (`:app:game-engine`). The world rows were NEVER banked,
  *    and `:logic` has no access to the engine adapter. So the live-selection replay is **BLOCKED on a missing
  *    world fixture** — it is NOT faked, NOT stubbed with an invented world, and is cataloged precisely in
- *    `.context/p5-research/GATE-DIVERGENCES.md` (cluster GAP-WORLD) as the gap GT3 surfaces.
+ *    as the GAP-WORLD cluster that GT3 surfaces.
  *  - **Dimension (b) downstream log/delta** likewise needs the resolved command over the live world (the
  *    EXISTING P2-P4 resolve gates) — same GAP-WORLD blocker; diplomacy families are EXCLUDED anyway (m10).
  *  - **Dimension (c) long-sim timeline** needs the multi-turn world advance — same GAP-WORLD blocker.
@@ -306,8 +306,8 @@ class AiReplayGateTest {
      * cities + 2 nations + diplomacy + nation_env) materialized into an `InMemoryTurnWorld` + the
      * `:app:game-engine` `AiTurnAdapter`. The GT1 golden NEVER banked those rows (the capture read them from
      * the live DB), and `:logic` has no engine adapter. So the live-selection replay cannot run faithfully
-     * here — it is documented as the GAP-WORLD cluster in `.context/p5-research/GATE-DIVERGENCES.md`, NOT
-     * faked with an invented world. This test PINS the gap (the golden carries the SELECTION targets but not
+     * here — this is the GAP-WORLD cluster, NOT faked with an invented world. This test PINS the gap
+     * (the golden carries the SELECTION targets but not
      * the world to reproduce them) so the harness is honest about what is and is not yet gated.
      */
     @Test
