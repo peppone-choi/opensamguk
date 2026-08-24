@@ -311,6 +311,24 @@ internal fun longSimReplayEventStore(
  * Loads the PHP golden baseline + capture points, materializes [InMemoryTurnWorld], drives the same
  * months with production wiring minus flush/Redis/JPA, and asserts state/draw parity at each capture
  * point.
+ *
+ * **`` `12 month structural replay matches PHP golden` `` is CI-skipped by design, not by accident (#521).**
+ * Two independent reasons, both permanent:
+ *   1. It needs an external `LONGSIM_SCHEMA4_CANDIDATE_DIR` — a fresh PHP capture produced by
+ *      `tools/php-golden/` — which requires `legacy/devsam-core` (git-ignored repo-wide, Koei-IP
+ *      hold per CLAUDE.md). A GitHub-hosted CI checkout never has `legacy/`, so this candidate can
+ *      never be produced there, on any schedule. `tools/php-golden/run_longsim.sh` states the same
+ *      constraint for its sibling capture ("ONE-SHOT, MANUAL HOST STEP — NEVER CI").
+ *   2. Every `assertEquals` in that test compares the Kotlin replay against data loaded from that
+ *      PHP-captured `candidateDir` (see `validateCandidateCohort`/`loadResource` below) — i.e. its
+ *      entire purpose is Kotlin-vs-PHP byte/structural parity. ADR-LITE-042 (2026-08-20) retired PHP
+ *      as product oracle; product authority is now the approved ADR/spec + current implementation.
+ *      So even where this candidate exists locally, this specific test is not a live product gate —
+ *      it is optional historical-parity evidence, in the same class as the frozen `tools/php-golden/`
+ *      workflows CLAUDE.md already scopes to "explicitly requested frozen-regression maintenance."
+ * Registered as a ticket-required quarantine entry in `tools/agent-system/skipped_it_quarantine.json`
+ * so the skip stays visible in CI output rather than silent. Not deleted — that call needs separate
+ * product-owner approval (does the repo still want a permanently-local PHP-parity check kept around).
  */
 class LongSimReplayGateTest {
 
@@ -939,9 +957,12 @@ class LongSimReplayGateTest {
 
     @Test
     fun `12 month structural replay matches PHP golden`() {
+        // Permanently local-only, not a CI gap to close — see class doc above and #521.
         assumeTrue(
             candidateDir != null,
-            "schema4 36-turn PHP candidate is required; set -DLONGSIM_SCHEMA4_CANDIDATE_DIR",
+            "schema4 36-turn PHP candidate is required; set -DLONGSIM_SCHEMA4_CANDIDATE_DIR " +
+                "(never available in CI — this needs legacy/devsam-core, which is git-ignored; " +
+                "see class doc / #521)",
         )
         val cohort = checkNotNull(candidateDir).let { dir ->
             val resolved = dir.toAbsolutePath().normalize()
