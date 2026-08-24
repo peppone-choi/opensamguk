@@ -744,5 +744,91 @@ class TestXuantuJunPureNoteFragmentRegression(unittest.TestCase):
         self.assertEqual(gaogouli['note'], '遼山，遼水出')
 
 
+class TestYuexiJunGluedTailRegression(unittest.TestCase):
+    """越巂郡 十四城 중 뒤 절반이 ctext 원문 셀 하나에 구두점 없이 통째로
+    붙어 있어 4중으로 어긋났다: ① 邛都 註 「南山出銅。」의 「南山」이 「出」
+    트리거 앞 잔여로 남아 가짜 縣이 됨(玄菟郡 「遼山，」와 같은 클래스).
+    ② 「靈關道」(3자)+「臺登」(2자)가 맹목 DP 로 「靈關」「道臺」「登」
+    (2‧2‧1) 로 갈림. ③~④ 「闡」(1자)+「蘇谀」「大莋」「莋秦」「姑復」
+    (2자×4) 9자가 「蘇谀」「大莋」「莋」「莋秦」「姑復」(2‧2‧1‧2‧2) 로
+    갈려 「闡」자체가 없어지고 「姑復」끝의 「莋秦姑復」가 마지막 가짜 縣의
+    註로 통째 삼켜졌다(실측 — 개수는 郡 선언 十四城과 우연히 맞아떨어짐).
+    data/chgis-source/junguozhi/wu.html 「越巂郡」 블록 원문 셀(#81-93)
+    그대로."""
+
+    SEGMENTS = [
+        ('wu', '越巂郡'),
+        ('wu', '十四城，戶十三萬一百二十，口六十二萬三千四百一十八。'),
+        ('wu', '邛都'),
+        ('wu', '南山出銅。遂久靈關道臺登出鐵。青蛉有禺同山，俗謂有金馬碧雞。卑水'),
+        ('wu', '三縫'),
+        ('wu', '會'),
+        ('wu', '無'),
+        ('wu', '出鐵。定莋'),
+        ('wu', '闡'),
+        ('wu', '蘇谀'),
+        ('wu', '大莋'),
+        ('wu', '莋秦'),
+        ('wu', '姑復'),
+        ('wu', '益州郡'),
+        ('wu', '一城，戶二萬九千三十六，口十一萬八百二。'),  # 종결용 다음 郡, 縣 1개만 제공
+        ('wu', '滇池'),
+    ]
+
+    CNTY_XY = {
+        '邛都': [(102.274129, 27.871663)],
+        '遂久': [(100.23212, 26.87603)],
+        '青蛉': [(101.32531, 25.72573)],
+        '滇池': [(102.6, 24.8)],
+    }
+    PREF_XY = {}
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.yuexi = next(p for p in cls.data['places'] if p['name'] == '越巂郡')
+
+    def test_all_fourteen_county_names_exact(self):
+        names = [c['name'] for c in self.yuexi['counties']]
+        self.assertEqual(names, [
+            '邛都', '遂久', '靈關道', '臺登', '青蛉', '卑水', '三縫',
+            '會無', '定莋', '闡', '蘇谀', '大莋', '莋秦', '姑復',
+        ])
+
+    def test_no_fake_fragments(self):
+        names = {c['name'] for c in self.yuexi['counties']}
+        for fake in ('南山', '靈關', '道臺', '登', '闡蘇', '谀大', '莋'):
+            self.assertNotIn(fake, names, f'{fake} 는 구두점 없는 원문 파편이지 縣이 아니다')
+
+    def test_qiongdu_note_carries_full_clause(self):
+        qiongdu = next(c for c in self.yuexi['counties'] if c['name'] == '邛都')
+        self.assertEqual(qiongdu['note'], '南山出銅')
+
+    def test_taideng_note_is_iron(self):
+        taideng = next(c for c in self.yuexi['counties'] if c['name'] == '臺登')
+        self.assertEqual(taideng['note'], '出鐵')
+
+
 if __name__ == '__main__':
     unittest.main()
