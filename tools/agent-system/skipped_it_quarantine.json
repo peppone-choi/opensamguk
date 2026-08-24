@@ -1,6 +1,6 @@
 {
   "opensamguk.engine.golden.LongSimReplayGateTest#12 month structural replay matches PHP golden()": {
     "ticket": "https://github.com/peppone-choi/opensamguk/issues/521",
-    "reason": "gated on LONGSIM_SCHEMA4_CANDIDATE_DIR (external PHP golden candidate dir), not Docker; not wired into CI (CLAUDE.md P5 backlog: long-sim multi-turn). See PR #517 first CI run for the observed skip."
+    "reason": "Permanently local-only, not a CI gap to close (#521 root-caused, not guessed). (1) Technical: gated on LONGSIM_SCHEMA4_CANDIDATE_DIR, a fresh PHP capture from tools/php-golden/ that requires legacy/devsam-core, which is git-ignored repo-wide (Koei-IP hold, CLAUDE.md) — a GitHub-hosted CI checkout never has legacy/, on any schedule, so this candidate can never be produced there; tools/php-golden/run_longsim.sh states the same constraint for its sibling capture (\"ONE-SHOT, MANUAL HOST STEP — NEVER CI\"). (2) Meaning: every assertion in this test compares the Kotlin replay against that PHP-captured data, i.e. its entire purpose is Kotlin-vs-PHP parity — ADR-LITE-042 (2026-08-20) retired PHP as product oracle, so even where the candidate exists locally this is optional historical-parity evidence, not a live product gate. Do not re-attempt CI wiring (self-hosted runner + legacy/ import would break the IP-isolation policy; requires explicit product-owner approval, not an agent decision). See PR #517 first CI run for the observed skip and #521 for the full analysis."
   }
 }

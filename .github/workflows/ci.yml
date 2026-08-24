@@ -131,6 +131,12 @@ jobs:
         # waved through by a BUILD SUCCESSFUL that never ran the IT. Pinned empty
         # here (not just refused in the prior step) so an env: block added
         # anywhere else in this job can't quietly re-introduce the opt-out.
+        #
+        # One known, permanent, ticket-registered exception passes through this gate:
+        # LongSimReplayGateTest's PHP-golden replay test (tools/agent-system/skipped_it_quarantine.json).
+        # It can never run here — its candidate data needs legacy/devsam-core, which is
+        # git-ignored and absent from every CI checkout — see LongSimReplayGateTest.kt's
+        # class doc and #521 before attempting to wire it in.
         env:
           OPENSAM_ALLOW_SKIPPED_IT: ""
         run: |
