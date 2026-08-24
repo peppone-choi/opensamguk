@@ -83,9 +83,15 @@ jobs:
         # only a "did you forget to rerun the generator" gate.
         if: '!cancelled()'
         run: python3 tools/unitset/build_unitset.py --check
+      - name: Verify Han route-node selection materialization
+        if: '!cancelled()'
+        run: python3 tools/scenario/materialize_han_route_node_selection.py --check
       - name: Verify Han route-node selection validator
         if: '!cancelled()'
         run: python3 tools/scenario/validate_han_route_node_selection.py
+      - name: Verify Han world scenario materialization
+        if: '!cancelled()'
+        run: python3 tools/scenario/apply_han_world.py --check
       - name: Verify v2 sandbox compose contract
         if: '!cancelled()'
         run: bash tools/ops/v2_sandbox_compose_contract_test.sh
