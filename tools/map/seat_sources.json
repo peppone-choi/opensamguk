@@ -156,7 +156,7 @@
     },
     {
       "jun": "파서군",
-      "currentWrongSeat": "巴西郡",
+      "fixedBy": "PR #548 — seat 을 阆中县 으로 옮겼다. currentWrongSeat 을 지웠으므로 이 행은 test_seat_matches_sources 가 받는다.",
       "expectedSeat": "阆中县",
       "era": "後漢에 郡 없음(閬中는 巴郡 縣) · 晉 閬中",
       "verdict": "U56 — 순수 선택 오류",
@@ -178,7 +178,7 @@
     },
     {
       "jun": "신성군",
-      "currentWrongSeat": "新城郡",
+      "fixedBy": "PR #548 — seat 을 房陵县 으로 옮겼다. currentWrongSeat 을 지웠으므로 이 행은 test_seat_matches_sources 가 받는다.",
       "expectedSeat": "房陵县",
       "era": "220년 曹丕 置 · 晉 房陵",
       "verdict": "U56 — 순수 선택 오류",

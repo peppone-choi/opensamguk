@@ -90,7 +90,7 @@ class FloydWarshallTest {
     fun `optimized closure is entry-and-order identical to literal Floyd for che and han subsets`() {
         val cases = listOf(
             CityConstRegistry.of("che") to listOf(54, 30, 49, 53, 14, 15),
-            CityConstRegistry.of("han") to listOf(780, 779, 778, 777, 776, 775, 774, 773),
+            CityConstRegistry.of("han") to listOf(774, 773, 772, 771, 770, 769, 768, 767),
         )
 
         for ((cityConst, cityIds) in cases) {

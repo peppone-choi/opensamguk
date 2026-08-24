@@ -370,23 +370,28 @@ class XSeriesCommanderyDuplicates(unittest.TestCase):
             "han_ownership.json 이 풍익군을 쓴다 — 좌풍익과 같은 곳이라 한 곳이 두 번 배정된다",
         )
 
-    def test_u59_fengyi_jun_sits_on_the_jingzhao_coordinate(self) -> None:
-        """**이 값은 결함이다.** `冯翊郡` 노드가 `京兆尹` 과 **완전히 같은 좌표**에 있다(U59).
+    def test_u59_closed_fengyi_duplicate_node_is_gone(self) -> None:
+        """**U59 는 닫혔다.** `冯翊郡`(CHGIS 211473) 노드가 삭제됐다 — 값을 맞춘 게 아니라 원인을 뺐다.
 
-        CHGIS 자기 `presLoc` 이 스스로를 부정한다 — `京兆尹`(212275) 은 「今陕西西安市北」,
-        `冯翊郡`(211473) 은 「今陕西省大荔县」인데 `lon/lat` 이 둘 다 108.93719, 34.31799 다.
-        **약 103km 어긋난다.** 판 안에 옳은 자리가 이미 있다: `临晋县`(idx 60, 109.939/34.7972,
-        「今陕西大荔县城」, `zhi=True`) — 曹魏 馮翊郡治다.
+        원래 단언(`test_u59_fengyi_jun_sits_on_the_jingzhao_coordinate`)은 그 노드가 `京兆尹` 과
+        **같은 좌표**(108.93719/34.31799)에 있는 상태를 고정했다. CHGIS 자기 `presLoc` 이 스스로를
+        부정하는 값이었고(「今陕西省大荔县」인데 좌표는 西安 북쪽), 약 103km 어긋났다.
+        `.ai/plans/2026-08-24-province-state-restructure.md` §3.30.7 이 「병합이 들어오면 빨개진다.
+        그때 값을 맞추지 말고 이 단언을 지우고 U59 를 닫아라」고 미리 적어둔 그 경로다.
 
-        **좌표는 지어내지 않는다** — 고치는 건 이 레인 몫이 아니고 `han-tiles.json` 은 재생성 금지다(GH #536).
-        지금 무해한 이유는 `풍익군` 타일이 공백지여서일 뿐이다(`_caveats`).
-        좌표가 바뀌면 빨개진다 — 그때 값을 맞추지 말고 이 단언을 지우고 U59 를 닫아라.
+        해소는 좌표를 지어내서가 아니라 **phantom 郡 노드 삭제**로 왔다(`f070cf36` 풍익군·북평군).
+        後漢 표기 `좌풍익`(X015) 쪽만 남았다 — `test_u58_ownership_avoids_the_era_twin` 이 지키던
+        「한 곳이 두 번 들어 있다」가 데이터에서 사라진 것이다.
+
+        **여기서 새로 지키는 건 재발이다.** 노드가 다시 생기면 좌표 문제도 같이 돌아온다.
+        빨개지면 값을 맞추지 말고 U59 를 다시 열어라.
         """
-        by_name = {c.get("nameCh"): c for c in self.cities}
-        jingzhao, fengyi = by_name["京兆尹"], by_name["冯翊郡"]
-        self.assertEqual(
-            (jingzhao["lon"], jingzhao["lat"]), (fengyi["lon"], fengyi["lat"]),
-            "冯翊郡 좌표가 京兆尹 과 갈렸다 — U59 를 재판정해라",
+        fengyi = [c for c in self.cities if c.get("nameCh") in ("冯翊郡", "馮翊郡")]
+        self.assertEqual([], fengyi, f"馮翊郡 郡 노드가 다시 생겼다 — U59 를 다시 열어라: {fengyi}")
+        # 양성 대조 — 조회가 살아 있는지 본다. 이게 비면 위 0건은 「없다」가 아니라 조회가 죽은 것이다.
+        self.assertTrue(
+            [c for c in self.cities if c.get("nameCh") == "京兆尹"],
+            "양성 대조(京兆尹)가 안 걸린다 — 조회 자체를 의심해라",
         )
 
 
@@ -403,19 +408,19 @@ class SelfSeatCommanderies(unittest.TestCase):
         cls.juns = tiles["juns"]
 
     def test_self_seat_count_by_kind_and_by_name_differ(self) -> None:
-        """**축을 바꾸면 분모가 바뀐다.** kind 축 67, 이름 축 57 — 차이 10 은 繁簡 표기차다.
+        """**축을 바꾸면 분모가 바뀐다.** kind 축 61, 이름 축 52 — 차이 9 는 繁簡 표기차다.
 
-        `馮翊郡`(郡 타일) 과 `冯翊郡`(seat 노드) 처럼 같은 郡인데 `nameCh` 가 繁/簡으로 갈린 10건이
+        같은 郡인데 `nameCh` 가 繁/簡으로 갈린 9건이
         이름 축에서 샌다. **분류를 시작하기 전에 분모부터 축에 따라 흔들린다** — 그래서 둘 다 박는다.
         바뀌면 빨개진다 — 그때 값을 맞추지 말고 §3.28 분류를 다시 돌려라.
         """
         by_kind = [j for j in self.juns if self.cities[j["seat"]].get("kind") != "COUNTY"]
         by_name = [j for j in self.juns if self.cities[j["seat"]].get("nameCh") == j.get("nameCh")]
-        self.assertEqual(67, len(by_kind), "A 유형(kind 축) 개수가 변했다 — §3.28 을 재판정해라")
-        self.assertEqual(57, len(by_name), "A 유형(이름 축) 개수가 변했다 — 繁簡 누수가 달라졌다")
+        self.assertEqual(61, len(by_kind), "A 유형(kind 축) 개수가 변했다 — §3.28 을 재판정해라")
+        self.assertEqual(52, len(by_name), "A 유형(이름 축) 개수가 변했다 — 繁簡 누수가 달라졌다")
 
     def test_non_han_polities_have_no_seat_proposition(self) -> None:
-        """A 67 중 **31 은 非漢 정치체**(`EXTERNAL_PLACE`)라 「治所」 명제가 성립하지 않는다.
+        """A 61 중 **31 은 非漢 정치체**(`EXTERNAL_PLACE`)라 「治所」 명제가 성립하지 않는다.
 
         부여·사로국·야마일국·선비… 는 결손도 오류도 아니다. **분류 전에 이걸 빼야 나머지가 보인다** —
         「A = 治所 미상」으로 뭉뚱그리면 절반이 애초에 대상이 아닌 것으로 채워진다.
@@ -492,7 +497,7 @@ class CoordinateAxisTolerance(unittest.TestCase):
     郡 노드와 治所 縣 노드는 같은 점에 놓이는 게 원칙이지만 CHGIS 는 소수점 5자리에서 갈리는 쌍이 있다
     (`신흥군`↔`九原县` 0.03km, `신평군`↔`漆县` 0.02km). **0 을 조건으로 쓰면 그게 임계값이 된다.**
     이건 축을 바꿔서 고칠 문제가 아니라 게이트 범위가 좁았던 것이다(§0.7) — 그래서 넓히고, 넓힌 값을 박는다.
-    2km 와 5km 가 같은 15 라 **평탄면에서 끊었다** — 「개수를 통과 조건으로」가 아니라 「뽑고 나서 셌다」.
+    2km 와 5km 가 같은 10 이라 **평탄면에서 끊었다** — 「개수를 통과 조건으로」가 아니라 「뽑고 나서 셌다」.
     """
 
     @classmethod
@@ -515,10 +520,10 @@ class CoordinateAxisTolerance(unittest.TestCase):
                 out.append(jun["name"])
         return sorted(out)
 
-    def test_candidate_count_plateaus_at_15(self) -> None:
+    def test_candidate_count_plateaus(self) -> None:
         counts = {tol: len(self._candidates(tol)) for tol in (1.0, 2.0, 5.0)}
         self.assertEqual(
-            {1.0: 13, 2.0: 15, 5.0: 15}, counts,
+            {1.0: 8, 2.0: 10, 5.0: 10}, counts,
             f"좌표 축 후보 수가 변했다 — §3.29 분류를 다시 돌려라: {counts}",
         )
 

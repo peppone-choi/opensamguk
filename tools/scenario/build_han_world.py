@@ -288,6 +288,20 @@ def seat_owner_grid(tiles: dict) -> list[int]:
     return grid
 
 
+def build_seat_of(juns: list[dict]) -> dict[int, int]:
+    """城 인덱스(治所) -> 郡 인덱스. 두 郡이 같은 seat 城을 가리키면 dict 구성이
+    last-write-wins로 조용히 하나를 지운다(크래시도 없고 개수도 안 틀린다) — 신흥군을
+    오원군과 같은 city로 잘못 재지정했을 때 오원군이 통째로 사라진 것도 이 경로였다.
+    같은 실수를 다시 조용히 삼키지 않도록 여기서 시끄럽게 죽는다.
+    """
+    seat_of = {j["seat"]: i for i, j in enumerate(juns)}
+    if len(seat_of) != len(juns):
+        seat_counts = Counter(j["seat"] for j in juns)
+        dup = {s: [j["name"] for j in juns if j["seat"] == s] for s, c in seat_counts.items() if c > 1}
+        raise AssertionError(f"중복 seat: {dup}")
+    return seat_of
+
+
 def gate_index(tiles: dict, region_of: list[str]) -> tuple[dict[int, list[str]], list[str]]:
     """**郡 인덱스** → 게이트 키 집합, 그리고 지도에서 못 찾은 게이트 키 목록.
 
@@ -302,7 +316,7 @@ def gate_index(tiles: dict, region_of: list[str]) -> tuple[dict[int, list[str]],
     place_to_juns: dict[str, set[int]] = defaultdict(set)
     for i, j in enumerate(juns):
         place_to_juns[j["nameCh"]].add(i)
-    seat_of = {j["seat"]: i for i, j in enumerate(juns)}
+    seat_of = build_seat_of(juns)
     for ci, c in enumerate(cities):
         if ci in seat_of:                      # 治所는 그 郡에 확정으로 붙인다.
             place_to_juns[c["nameCh"]].add(seat_of[ci])
@@ -396,7 +410,7 @@ def build() -> tuple[dict, str, str, dict]:
     # 거점으로 올린다 — CHGIS 에만 있는 縣은 소속 郡도 戶 근거도 없어 배경으로 남긴다.
     cols = tiles["_meta"]["cols"]
     grid = seat_owner_grid(tiles)
-    seat_of = {j["seat"]: i for i, j in enumerate(juns)}
+    seat_of = build_seat_of(juns)
     included: list[tuple[int, int]] = []          # (城 인덱스, 소속 郡 인덱스)
     seaborne: list[str] = []
     for ci, c in enumerate(cities):
