@@ -54,11 +54,10 @@ Jira를 직접 확인하지 못했다면 `Jira 상태: UNKNOWN`이라고 씁니�
 
 ```bash
 git diff --check
-python3 tools/agent-system/check.py --strict --base origin/main --format json
-scripts/agent/verify-changes.sh --run
 ```
+
+코드 변경은 영향받는 모듈의 테스트와 빌드를 함께 실행합니다.
 
 링크 검사는 저장소 안의 상대 Markdown 링크가 실제 파일을 가리키는지 확인해야 합니다. 외부 링크는 네트워크나
 권한으로 확인하지 못할 수 있으므로 실패 원인을 결과에 남깁니다. 문서 변경만으로 백엔드·프론트 테스트를
 실행했다고 주장하지 않습니다.
-

@@ -1,5 +1,5 @@
 {
-  "_comment": "EXAMPLE ONLY — 활성화하지 않음 (ADR-LITE-003). 사람이 검토 후 settings.json 또는 settings.local.json에 수동 병합한다. 주의: (1) 설치된 Claude Code 버전의 hooks 스키마를 먼저 확인할 것(NEEDS_VERSION_CONFIRMATION), (2) 전역 OMC가 이미 자체 훅을 주입 중이므로 중복 실행을 점검할 것, (3) @멘션 파일 첨부는 PreToolUse 훅으로 막을 수 없음 — 시크릿은 훅과 무관하게 절대 읽지 않는 규칙이 1차 방어선이다.",
+  "_comment": "EXAMPLE ONLY — 활성화하지 않음 (ADR-LITE-003). 사람이 검토 후 settings.json 또는 settings.local.json 에 수동 병합한다. 주의: (1) 설치된 Claude Code 버전의 hooks 스키마를 먼저 확인할 것(NEEDS_VERSION_CONFIRMATION), (2) 전역 OMC 가 이미 자체 훅을 주입 중이므로 중복 실행을 점검할 것, (3) @멘션 파일 첨부는 PreToolUse 훅으로 막을 수 없음 — 시크릿은 훅과 무관하게 절대 읽지 않는 규칙이 1차 방어선이다.",
   "hooks": {
     "PreToolUse": [
       {
@@ -8,17 +8,6 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/agent/protect-sensitive-files.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/agent/verify-changes.sh"
           }
         ]
       }

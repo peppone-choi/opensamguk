@@ -23,7 +23,7 @@ import kotlin.test.assertFailsWith
  * predicate(`user_id = ? AND npc_state = 0`)가 NPC/타 owner row를 절대 덮어쓰지 않는지(criterion 7)를
  * 실 Postgres로 단언한다.
  *
- * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다 (CLAUDE.md).
+ * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProfileIconFlushIT {

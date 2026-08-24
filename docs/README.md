@@ -12,14 +12,14 @@
 |---|---|---|
 | 플레이어 | [사용자 매뉴얼](./user/README.md) | [첫 시작](./user/getting-started.md), [게임플레이](./user/gameplay-guide.md), [기능 안내](./user/features.md) |
 | 관리자·운영자 | [관리자 매뉴얼](./admin/README.md) | [서버 생명주기](./admin/server-lifecycle.md), [회원·게임 관리](./admin/member-and-game-management.md), [운영·복구](./admin/operations-and-recovery.md) |
-| 개발자·AI 에이전트 | [Agent Documentation Router](./agent/README.md) | [아키텍처](./agent/architecture.md), [검증](./agent/verification.md) |
+| 개발자 | [기여 가이드](./CONTRIBUTING.md) | [아키텍처](../README.md#아키텍처), [검증](./CONTRIBUTING.md#최소-검증) |
 | 게임 기획자 | [기획 문서 지도](./design/README.md) | [현재 로드맵](./design/roadmap.md), [v1/v2 경계](./design/v1-v2-boundary.md) |
 
 ## 문서 등급
 
 | 등급 | 의미 | 대표 경로 |
 |---|---|---|
-| 제품 정본 | 승인된 제품 규칙과 경계 | `.ai/decisions.md`, `docs/superpowers/specs/` |
+| 제품 정본 | 승인된 제품 규칙과 경계 | `docs/superpowers/specs/`, `docs/design/` |
 | 현재 매뉴얼 | 지금 사용 가능한 화면과 운영 절차 | `docs/user/`, `docs/admin/` |
 | 실행 계획 | 아직 구현되지 않을 수 있는 작업 계약 | `docs/superpowers/plans/`, `docs/design/roadmap.md` |
 | 증거·이력 | 특정 시점의 측정, 검토, 실패와 결정 | `docs/loops/`, `docs/superpowers/research/`, `docs/superpowers/reviews/` |
