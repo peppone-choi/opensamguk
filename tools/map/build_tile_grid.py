@@ -65,8 +65,13 @@ def build() -> dict:
         print(f"경고: {READINGS.relative_to(ROOT)} 없음 — 지명이 한자로 남는다. "
               "tools/map/build_readings.py 를 먼저 돌려라.", file=sys.stderr)
 
+    misses: list[str] = []
+
     def kr(name: str) -> str:
-        return readings.get(name, name)
+        if name not in readings:
+            misses.append(name)
+            return name
+        return readings[name]
 
     # 도로·수로·해로는 내보내지 않는다. 자동으로 그은 길이 사료와 너무 어긋나서
     # 사람이 직접 놓기로 했다(2026-08-19 사용자 지시). 계산은 terrain-grid 에 남아
@@ -103,6 +108,18 @@ def build() -> dict:
     assert all(len(r) == cols for r in grid["terrain"]) and len(grid["terrain"]) == rows, "지형 행/열"
     off = [c["name"] for c in cities if c["seat"] and grid["terrain"][c["row"]][c["col"]] == 0]
     assert not off, f"군치가 바다 위에 있다: {off[:5]}"
+    # 郡 명부. adjacency 의 a/b 가 이 배열의 인덱스다 — 이름 없이 인덱스만 넘기면
+    # 프런트가 어느 郡인지 알 수 없다. kr() 호출은 미스 가드보다 먼저 끝나야 한다 —
+    # return 리터럴 안에 두면 가드를 지난 뒤에야 평가돼 juns 전용 이름(河閒國 등
+    # cities/regions 어디에도 없는 22개)의 미스를 가드가 못 잡는다(critic-524 재심).
+    juns = [{"name": kr(nm), "nameCh": nm, "seat": h, "col": places[h]["gx"], "row": places[h]["gy"]}
+            for nm, h in zip(grid["junNames"], grid["hubs"])]
+    # readings.json 이 있는데 빠진 이름이 있으면 조용히 한자로 흘리지 않는다 — 그게 이번에
+    # 커밋에 한자 70건을 밀어넣은 사고다(#524 리뷰 HIGH-1). readings.json 이 아예 없을 때는
+    # 위에서 이미 경고했으니 여기서는 있는데 불완전한 경우만 잡는다.
+    if READINGS.exists() and misses:
+        sys.exit(f"readings.json 에 없는 지명 {len(misses)}개: {sorted(set(misses))[:10]}… "
+                  "tools/map/build_readings.py 를 다시 돌려라(hanja 패키지 필요).")
     return {
         "_meta": {
             "source": f"{GRID.name} + {PLACES.name}",
@@ -122,10 +139,7 @@ def build() -> dict:
         "regions": regions,
         # 이동 그래프. 길이 아니라 영역 인접이다.
         "adjacency": grid["adjacency"],
-        # 郡 명부. adjacency 의 a/b 가 이 배열의 인덱스다 — 이름 없이 인덱스만 넘기면
-        # 프런트가 어느 郡인지 알 수 없다.
-        "juns": [{"name": kr(nm), "nameCh": nm, "seat": h, "col": places[h]["gx"], "row": places[h]["gy"]}
-                 for nm, h in zip(grid["junNames"], grid["hubs"])],
+        "juns": juns,
         "seatOwner": rle(grid["seatOwner"]),
         "cities": cities,
     }
