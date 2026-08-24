@@ -270,6 +270,51 @@ PRODUCT_AUTHORITY_SOURCE_GLOBS = (
     "scripts/**/*.py", "scripts/**/*.sh", "**/*.yaml", "**/*.yml",
 )
 
+
+def _glob_pattern_to_regex(pattern: str) -> re.Pattern[str]:
+    """Translate one of the posix glob patterns above into a regex matching
+    the same relative-path strings pathlib.Path.glob(pattern) would, without
+    ever touching the filesystem (see #513 — ROOT.glob() per pattern walks
+    the whole tree once per pattern; a single git ls-files enumeration plus
+    this in-memory match replaces all 24 walks with one).
+
+    Supported glob syntax only: literal segments, `*`/`?` within a segment,
+    and `**` as a whole segment (zero-or-more directories). Bracket classes
+    (`[abc]`, `[!a]`) and a `**` fused into a longer segment (`a**b`) are NOT
+    recognized as metacharacters and are silently mistranslated -- no
+    pattern in PRODUCT_AUTHORITY_SOURCE_GLOBS uses them today; don't add one
+    without extending this function first."""
+    segments = pattern.split("/")
+    parts: list[str] = []
+    for i, segment in enumerate(segments):
+        if segment == "**":
+            parts.append("(?:.*/)?" if i == 0 else "/(?:.*/)?")
+        else:
+            translated = re.escape(segment).replace(r"\*", "[^/]*").replace(r"\?", "[^/]")
+            if i > 0 and segments[i - 1] != "**":
+                parts.append("/")
+            parts.append(translated)
+    return re.compile("^" + "".join(parts) + "$")
+
+
+PRODUCT_AUTHORITY_SOURCE_REGEXES = tuple(
+    _glob_pattern_to_regex(pattern) for pattern in PRODUCT_AUTHORITY_SOURCE_GLOBS
+)
+
+
+def scannable_repo_files() -> list[str]:
+    """Every path git would ever surface here: committed plus untracked-but-
+    not-ignored (so a violation in a brand-new, not-yet-`git add`-ed file is
+    still caught pre-commit). Raises RuntimeError if git itself fails (e.g.
+    not a git checkout) — same fail-loud contract run_git() already uses
+    elsewhere in this file; never silently degrades to an empty/all-clear
+    list. Ignored paths (.gitignore / .git/info/exclude) are excluded at
+    enumeration time, not filtered after a filesystem walk — this is what
+    keeps large untracked local trees (.omo/, node_modules/) from ever being
+    walked at all."""
+    raw = run_git_bytes(["ls-files", "--cached", "--others", "--exclude-standard", "-z"])
+    return [token.decode("utf-8", "surrogateescape") for token in raw.split(b"\0") if token]
+
 PRODUCT_AUTHORITY_FIXTURE_SURFACES = {
     "scripts/agent/test-codex-agent-os.sh",
     "tools/agent-system/check.py",
@@ -957,10 +1002,10 @@ def check_product_authority_policy() -> list[Finding]:
                 )
 
     source_surfaces = {
-        path.relative_to(ROOT).as_posix()
-        for pattern in PRODUCT_AUTHORITY_SOURCE_GLOBS
-        for path in ROOT.glob(pattern)
-        if is_active_product_authority_source(path)
+        rel
+        for rel in scannable_repo_files()
+        if any(regex.match(rel) for regex in PRODUCT_AUTHORITY_SOURCE_REGEXES)
+        if is_active_product_authority_source(ROOT / rel)
     }
     for rel in (*PRODUCT_AUTHORITY_SURFACES, *sorted(source_surfaces - set(PRODUCT_AUTHORITY_SURFACES))):
         path = ROOT / rel

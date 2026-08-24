@@ -1,5 +1,142 @@
 # Current State
 
+## W1-B 외부 세계 5개 pack — 사용자 요청으로 중단·핸드오프 (2026-08-23)
+
+- W1-B 최초 구현은 5 pack, entity 53/승인 42, claim 45, scenario state 1,643,
+  legacy 65행을 생성했고 당시 타깃 14/14와 실제 `--check`가 통과했다. 그러나 독립
+  검토는 의미 위조 변이를 재현해 최종 `fix-required`를 판정했다. 이 최초 green은
+  현재 완료 증거가 아니다.
+- BLOCKER: pack SHA를 함께 갱신하면 claim 값·동일 pack 내 `sourceRef`·주체·기간을
+  위조하거나 entity/claim을 교차 결합해도 통과한다. claim별 exact attested form/citation
+  span, subject binding, period precision과 entity↔claim 양방향 결합이 필요하다.
+- BLOCKER: 승인 entity 42개가 있어도 31개 시나리오의 ACTIVE가 0이며 생성기와
+  validator가 이를 강제한다. historical scenario eligibility는 runtime activation과
+  분리하고 reviewed lifecycle에서 파생해야 한다.
+- MAJOR: legacy `APPROVE` 37행 중 11행이 비승인 alias/source-unknown 결과를 가리키며
+  summary도 37을 하드코딩한다. APPROVE는 실제 APPROVED 결과에만 허용하고 집계는
+  파생해야 한다. 모든 source를 `OFFICIAL_HISTORY`로 일괄 승격하는 규칙도 제거해야 한다.
+- 로컬 원문 재확인 결과, 扶南의 기존 245년은 오류다. 《삼국지》 권47의
+  `赤烏元年`(238) anchor와 `六年…扶南`을 결합하면 243년이다. 夷洲 230년 역시
+  `黃龍元年|229年` anchor와 `二年…夷洲` 사건을 두 citation span으로 보존해야 한다.
+  帶方은 `建安中` 196~220 RANGE, 林邑은 `漢末` 정밀도, 流求는 후대 alias-only로 둔다.
+- remediation 구현자는 mutation 테스트를 추가한 직후 사용자 요청으로 interrupt됐다.
+  현재 생성기·validator·JSON은 기존 all-INACTIVE/`approvedResultCount=37` 의미를 유지하며,
+  새 테스트와 함께 실행하지 않았다. 현재 exact tree의 타깃 테스트·`--check`·Ruff·
+  basedpyright·py_compile·no-excuse·Agent System은 모두 미실행이다.
+- 다음 행동: `.ai/handoff.md`의 W1-B 재개 순서를 따라 새 mutation RED를 관측하고,
+  reviewed binding/lifecycle/ledger를 구현·재생성한 뒤 동일 독립 reviewer에게 재검토한다.
+  W1-B가 `cleared`되기 전에는 W1-C를 시작하지 않는다.
+- 체크포인트 중 반복된 `fablize gate observed a tool failure`은 exit 0인 read-only
+  `sed`/`rg` 명령에도 주입된 비특정 wrapper 경고로 격리했다. 제품 검증은 실행하지 않았다.
+
+## W1-A 교통·외부 세계 후보 계약 — 완료·소유권 해제 (2026-08-22)
+
+- 착수 기준선은 RouteNode 780, directed connection 3,566 / undirected 1,783,
+  단일 component 780, degree 0=0, 구조 오류 0이다. 그러나 이 연결은 역사적으로
+  승인된 도로가 아니라 기존 생성 규칙의 후보 위상이다.
+- 1,783개는 county adjacency 1,261, county→commandery seat 합성 476,
+  commandery patch 41, sea link 5다. 현재 데이터에는 mode·geometry·provenance·
+  lifecycle이 없으므로 W1-A는 모두 PENDING으로만 고정한다.
+- 외부 입력 65행은 `-9999..9999` 기본 기간과 typed lifecycle/source claim이 없는
+  legacy 후보다. W1-A에서 활성화하지 않고 PENDING 재고로 보존하며, W1-B/C에서
+  `AdministrativePlace | AnchoredPlace | PolityPresence | RemoteGate` 처분과 실제 기간·근거를 심사한다.
+- 시나리오 기준 충돌은 해소했다. 제품 UI 활성 목록은 15개지만 Han 지도 계약
+  리소스는 31개이므로, W1 계약은 두 목록을 분리하고 31개 전수 lifecycle을 요구한다.
+- W0의 101개 무관 교체 slot이 339개 기존 간선에 닿으므로 숫자 ID를 새 RouteNode에
+  치환한 결과를 자동 승인하지 않는다. W1-A 결과는 runtime activation을 주장하지 않는다.
+- corridor registry는 독립 UUIDv4 1,783개와 canonical SHA
+  `fd2e7a823245db1717d3751e3e5bdd813c3b649a4e0186669912ebcee4a1e8b3`로 고정했다.
+  원장 누락·UUID 회전·pair-key 교환은 fail-closed한다.
+- strict validator는 `SourceBundle`과 `Topology`를 필수로 받고, 문서·행·중첩 객체의
+  exact-key schema와 endpoint·외부 raw 65행·31개 scenario·provenance 원본 결속을 강제한다.
+- 최종 검증은 25/25, 실제 `--check` drift 0, Ruff·py_compile·basedpyright 0,
+  no-excuse 7파일 0이다. 독립 재검토는 모든 coherent 변이를 거부하고
+  `BLOCKER 0 / MAJOR 0 / MINOR 0`, 최종 `cleared`로 판정했다.
+- 산출물 SHA는 contract `fcc6a110…`, registry `fd2e7a82…`, corridor candidates
+  `6b086297…`, external candidates `dd7359de…`다. W1-B 승인·사료 claim·geometry와
+  runtime activation은 시작하지 않았다.
+- 검증 중 비특정 `fablize gate observed a tool failure` 경고가 exit-0 명령에도
+  반복됐다. 실제 격리된 실패는 PATH의 bare `ruff` 부재(exit 127), no-excuse 탐색
+  무일치(exit 1), 존재하지 않는 리뷰 예시 경로 조회(exit 1)였고, 각각 `uvx ruff`,
+  설치된 checker 직접 경로, 현 리뷰 문서로 대체해 제품 게이트와 분리했다.
+
+## W0 전체 gate — 완료 (2026-08-22)
+
+- W0-A 105/1,180 행정 카탈로그, W0-B 1,180 위치 오버레이, W0-C 780
+  RouteNode 선정·이관 계약은 각각 독립 검토 `cleared`를 받았다.
+- W0-C 최신 SHA는 registry `7f462487…`, policy `54691d34…`, selection
+  `e2f2f1ae…`, migration `b30f6dba…`다. map 25/25, RouteNode 110/110,
+  각 생성기 `--check`, validator 780/31, Ruff·py_compile, whitespace, Agent System
+  strict 오류/경고 0이다.
+- `verify-changes.sh --run`은 Gradle `BUILD SUCCESSFUL`, gateway/game typecheck,
+  Vitest 76 files/431 tests, strict 검사를 통과했고 EOF 빈 줄 하나로 최종 exit 1이었다.
+  1회 실행 규칙에 따라 전체 스크립트는 반복하지 않았다. EOF를 해소한 후 영향
+  받은 해시 연쇄, 110 tests, materializer/validator, 전 W0 whitespace, strict를
+  재검증했고 독립 검토자가 최종 snapshot을 다시 `cleared`했다.
+
+## W0-C reviewed 780 RouteNode — 완료·소유권 해제 (2026-08-22)
+
+- 사전 실측에서 현재 780은 W0-B 기준 `ONE_IDENTITY 659`, `MULTI_IDENTITY 16`,
+  `NO_IDENTITY 60`, 외부 X 행 45다. 현 소유 군국까지 보수적으로 합의하는 HHS 결합은
+  654건뿐이며, 나머지 81개 숫자 CHGIS 노드와 외부 45개는 자동 승인할 수 없다.
+- 독립 사전 검토는 HHS 654 중 `RESOLVED_POINT 613`, `AMBIGUOUS_POINT 41`을 확인했고,
+  나머지는 HHS 미결합 60·소유 attribution conflict 21로 분류했다. 따라서 current 780
+  selection 자체를 입력 정본으로 쓰지 않고 legacy migration source로만 취급한다.
+- 치명적 외부 오분류는 `流求`, 고정 Tainan점으로 둔 `夷洲`, 이동·분산 세력인
+  `鮮卑/烏桓/西羌/哀牢`와 후대 가야 명칭이다. 이들은 W0-C RouteNode에서 제거하거나
+  W1의 `RemoteGate`/`PolityPresence`/후대 alias claim으로 낮춘다.
+- ID 704의 가짜 군국 `龜茲屬國`은 물리 거점을 유지할 수 있더라도 역사 결합을
+  `hhs:113:上郡:009` 龜茲로 교정해야 한다. 숫자 ID 변화, route-node 교체, 역사 결합,
+  표시명, 부모, 치소 역할 변화는 각각 별도 counter로 보고한다.
+- 최종 선정은 780 UUIDv4·physical place·HHS binding을 각각 780 unique로
+  유지한다. migration은 ID 변경 0, 무관한 교체 101, 역사 결합 교정 25,
+  물리 위치 교정 1이다.
+- ID 704는 `hhs:113:上郡:009` 龜茲 / `external:v1:X026` / same-node 결합
+  교정으로 고정했다. 31개 시나리오 상태는 전수 검증하되 런타임
+  activation은 `NOT_CLAIMED_BY_W0_DATA_CONTRACT`로 명시했다.
+- 시나리오의 533개 교체-slot 참조와 `scenario_9200` 이름 모호성 때문에
+  typed route-node sidecar/rewrite 없이 새 `han.json`을 runtime에 활성화하지 않는다.
+- 독립 재검토는 coherent rehash 변이 12종을 모두 거부하고 `cleared`를
+  내렸다. live-save cutover는 별도 rehearsal 전까지 `NEW_WORLD_ONLY`다.
+
+## W0-B 행정단위·CHGIS 220년 오버레이 — 완료·소유권 해제 (2026-08-22)
+
+- W0-A의 105/1,180 정본을 순서·identity oracle로 잠그고, 기존
+  `build_junguozhi.py`의 106 군국/1,076 행을 정본으로 재사용하지 않는다.
+- 착수 실측: 기존 생성물은 `RESOLVED_POINT 788` + `CANDIDATE_REGION 288`이고,
+  가짜 `龜茲屬國` 군국을 포함한다. 기존 builder는 동명 후보를 group anchor
+  거리로 고르거나 anchor가 없으면 첫 후보를 고르므로 W0 완료 조건에 부적합하다.
+- CHGIS county DBF를 정확히 220년으로 제한하면 982 record다. W0-A
+  `sourceName`/correctedName 정확 일치 착수 계측은 unique 731, multi 47,
+  none 399, source placeholder 3이다. 이 수치는 선정 결과가 아니라 RED 기준선이다.
+- W0-B는 104개를 좌표 날조로 채우지 않고, 1,180 identity 모두를 오버레이에
+  표현해 join gap을 0으로 만든다. 모호·미해결은 W0-C reviewed manifest의
+  명시적 심사 입력이며, W0-B에서 좌표로 승격하지 않는다.
+- 1차 별도 agent 비평은 동일 CHGIS record를 두 identity가 공유하는 4개
+  record/8개 false-resolved를 찾아 `fix-required`를 냈다. 전역 후보 그래프,
+  tracked-output guard, 카탈로그 타입·인용 검증, 고정 220년·엄격 DBF 파서,
+  접미 범위 축소로 모두 보완했다.
+- 보완 후 실제 산출물: 1,180/1,180 unique, `RESOLVED_POINT 722`,
+  `AMBIGUOUS_POINT 55`, `NO_COORDINATE_CANDIDATE 400`, `SOURCE_PLACEHOLDER 3`,
+  shared candidate record 19, ambiguous selected 0, selected physical-place collision 0.
+  tools/map tests 25/25와 real-source `--check`는 green이며, 최종 독립 재검토는
+  미해결 지적 0건으로 `cleared`다. 오버레이 SHA-256은
+  `bfefb8af7058aa11606cb20575653dcf4dec45b5535cab4a5e2e97fbb1e3ef30`이다.
+
+## W0-A 후한 군국지 정본 — 완료·소유권 해제 (2026-08-22)
+
+- 사용자의 목표 범위 내 `전체 승인`으로 기존 활성 계약과 낡은 `.ai/*` 소유권을
+  W0-A single-writer lane으로 승계했다.
+- 착수 계측: 기존 감사기는 105/1,180 count는 통과하지만 군국명 unique 104,
+  `蜀郡` 중복, `巴陵秦置` 오염 헤더, 안정 unit identity 부재 때문에 false-green이다.
+- 고정 경계: W0-A는 공개 도메인 원문 기반 identity/type/citation만 다룬다. CHGIS 좌표,
+  후보 도로 1,783개, playable 780 선택/save 이관은 각각 W0-B/W0-C로 남긴다.
+- 완료 증거: targeted 9/9, 105/1,180 exact, identity unique 1,180,
+  `安平國 13/12` 한 건, artifact SHA `668165bc…`, whole-worktree verifier exit 0,
+  독립 리뷰 `cleared`.
+- source/ctext snapshot은 hash pin으로 fail-closed하며, 손상 표기 세 건은
+  `UNRESOLVED_SOURCE_PLACEHOLDER`로 남겼다. 다음 경계는 W0-B 104개 join gap이다.
+
 ## OPENSAM-206~220 integration wave active — 2026-08-21
 
 - Integration base는 `origin/main@35710e05`, branch는 `codex/integrate-206-220-wave`다. root 사용자 checkout은 건드리지 않았다.
