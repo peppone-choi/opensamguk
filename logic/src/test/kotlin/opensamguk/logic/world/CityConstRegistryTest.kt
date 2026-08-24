@@ -139,9 +139,14 @@ class CityConstRegistryTest {
             val cur = queue.removeFirst()
             for (next in han.byId(cur)!!.path.keys) if (seen.add(next)) queue.addLast(next)
         }
+        // **이름으로 단언한다.** 예전엔 id 를 박아 뒀는데(523/550/759/770/780) #548 이 城을
+        // 780→774 로 줄이면서 같은 다섯 섬이 520/547/753/764/774 로 밀렸다. 결함은 그대로인데
+        // 핀만 빨개진 것이다 — id 는 재번호에 취약하고 이름은 아니다.
         val unreachable = han.all().keys.filter { it !in seen }.sorted()
-        assertEquals(listOf(523, 550, 759, 770, 780), unreachable,
-            "도달 불가 城 집합이 바뀌었다 — 해상 간선이 붙었거나 육지 간선이 끊겼다")
+        assertEquals(
+            listOf("야마일국", "우산국", "유구", "이주", "주호"),
+            unreachable.map { han.byId(it)!!.name }.sorted(),
+            "도달 불가 城 집합이 바뀌었다 — 해상 간선이 붙었거나 육지 간선이 끊겼다: $unreachable")
     }
 
     @Test
