@@ -15,7 +15,7 @@
 usage:  python3 tools/map/build_junguozhi.py
 """
 import glob, html, json, math, os, re, struct, sys
-from collections import Counter
+from collections import Counter, defaultdict
 
 SRC = 'data/chgis-source'
 OUT = 'data/map/junguozhi.json'
@@ -620,21 +620,61 @@ def main():
             cand = keep
         b['assigned'] = cand
 
+    # 3.5) 郡을 건너뛴 좌표 중복 정리 — 위 앵커 최근접 선택은 郡 하나 안에서
+    # 縣名이 겹칠 때만 본다. 다른 郡 두 곳이 CHGIS 상 같은 縣名에 딴 후보점이
+    # 여럿 있는데도(예: 「信都」4점, 「安平」9점) 우연히 같은 점을 각자
+    # 최근접으로 골라, 진짜 縣과 註 안 지명(「故屬信都」의 「信都」류, 아직
+    # 파싱 규칙으로 못 걸러낸 잔여 결손)이 좌표를 나눠 갖는 경우가 있다
+    # (105군국 좌표중복 감사 34그룹/78현). 縣名 자체는 여기서 안 건드린다 —
+    # 겹친 점 중 郡 앵커에 더 가까운 쪽만 좌표를 유지하고, 나머지는 좌표를
+    # 뗀다(가짜 좌표를 지어내는 것보다 CANDIDATE_REGION 으로 남기는 게
+    # 낫다 — spec 2026-07-13 :291). 좌표를 뗀 자리는 PASS B 의 gap 메우기가
+    # 그대로 이어받는다.
+    #
+    # 좌표를 뗀 항목을 assigned 에서 통째로 지우면, 그 縣이 城數 집계에서도
+    # 사라져 len(counties) 가 城數보다 모자라 체크섬 FAIL 로 번진다(잔여
+    # 결손 목록 residual 은 ok=False 항목만 채우므로 이 ok=True 항목을 다시
+    # 못 줍는다). 지우지 않고 demoted 로 표시만 해서 PASS B 가 CANDIDATE_REGION
+    # 으로 그대로 세도록 한다.
+    by_point = defaultdict(list)
+    for b in blocks:
+        for c in b['assigned']:
+            by_point[(round(c['lat'], 6), round(c['lon'], 6))].append((b, c))
+    for pt, owners in by_point.items():
+        if len(owners) < 2:
+            continue
+        owners.sort(key=lambda bc: (bc[1]['dist'], bc[0]['jun'], bc[1]['name']))
+        for b, c in owners[1:]:
+            c['demoted'] = True
+
     # 4) PASS B — 城數에 모자란 몫은 원문에서만 존재하는 縣이다(CHGIS 결손).
     #    좌표를 지어내지 않고 CANDIDATE_REGION 으로 남긴다 (spec 2026-07-13 :291).
     out, gap_total = [], 0
     for b in blocks:
-        got = sorted(b['assigned'], key=lambda c: c['pos'])
+        got = sorted((c for c in b['assigned'] if not c.get('demoted')), key=lambda c: c['pos'])
+        demoted = sorted((c for c in b['assigned'] if c.get('demoted')), key=lambda c: c['pos'])
         for c in got:
             c.pop('dist', None)
-        gap = (b['cities'] - len(got)) if b['cities'] else 0
         extra = []
+        for c in demoted:
+            c.pop('dist', None)
+            c.pop('demoted', None)
+            c['lon'] = None
+            c['lat'] = None
+            c['resolution'] = 'CANDIDATE_REGION'
+            extra.append(c)
+        gap = (b['cities'] - len(got) - len(extra)) if b['cities'] else 0
         if gap > 0:
-            known = {c['name'] for c in got}
+            # extra 는 이미 demoted 항목을 담고 시작할 수 있다 — len(extra) 를
+            # gap 과 그대로 비교하면 demoted 로 미리 채워진 몫만큼 덜 채우게
+            # 된다. 여기서 새로 보태는 개수만 따로 센다.
+            added = 0
+            known = {c['name'] for c in got} | {c['name'] for c in extra}
             residual = [(pos, nm) for pos, nm, ok in b['entries'] if not ok]
             for pos, w in sorted(residual):
-                if w in known or len(extra) >= gap:
+                if w in known or added >= gap:
                     continue
+                added += 1
                 known.add(w)
                 extra.append(dict(name=w, pos=pos, tags=[], lon=None, lat=None,
                                   resolution='CANDIDATE_REGION'))
