@@ -23,7 +23,7 @@ import java.util.IdentityHashMap
  * `general_turn` / `nation_turn` / `diplomacy` / `rank_data` / `ng_games`.
  *
  * ## Why this is JDBC-only (NOT a one-daemon-write-rule violation)
- * The "ONE daemon-write rule" (CLAUDE.md / design §0.1 #3) forbids the game-engine daemon from using a
+ * The "ONE daemon-write rule" forbids the game-engine daemon from using a
  * JPA `EntityManager` for *gameplay* writes — two competing dirty-truths (JPA dirty-checking +
  * ChangeRecorder) would silently diverge. This class is a **bootstrap row-loader via raw
  * [JdbcTemplate]**, in the SAME category as Flyway migrations and `AdminSeeder`: it runs ONCE, before
@@ -341,7 +341,7 @@ class ScenarioImporter(
     /**
      * 시나리오가 城을 가리키는 토큰 하나를 城 id 로 푼다. 숫자면 id, 아니면 이름이다.
      *
-     * WHY id: han 맵(780城)은 서로 다른 漢字가 같은 한글 독음이 되는 城이 있다 —
+     * WHY id: han 맵(774城)은 서로 다른 漢字가 같은 한글 독음이 되는 城이 있다 —
      * 零陵郡 零陵縣과 梁國 寧陵縣이 둘 다 '영릉'이고, 江夏郡 軑縣과 代郡 代縣이 둘 다 '대'다.
      * 이름으로 가리키면 어느 郡의 縣인지가 안 정해진다. id 로 적으면 확정된다.
      * che 시나리오는 이름을 그대로 쓰므로 무변(no-op)이다.

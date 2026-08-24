@@ -135,7 +135,7 @@ class CheChotohwa(private val pipeline: GeneralActionPipeline) : NationCommand()
 
         // --- amount/destLevel는 공백지화 BEFORE의 원본 dest로 계산 (che_초토화.php:158 — 도시 UPDATE 이전) ---
         // calcReturnAmount는 원본(미감쇄) pop/agri/comm/secu를 읽는다. 감쇄 후 계산하면 amount가
-        // 잘못 작아진다(실행순서 패러티 — CLAUDE.md rule 3: 로그/부수효과 순서 = 실행 순서).
+        // 잘못 작아진다(실행순서 패러티: 로그/부수효과 순서 = 실행 순서).
         val originalDest = d.destCity
         val amount = originalDest?.let { calcReturnAmount(it) }
             ?: context.args["__returnAmount"]?.let { (it as? Number)?.toInt() } ?: 0

@@ -46,7 +46,7 @@ import java.time.Instant
  *  - `obfuscatedNamePool` — regenerated deterministically from the hidden seed at the auction
  *    handlers, so there is nothing to preserve.
  * Wiring this service would make it a SECOND source of truth for rows the repositories already
- * serve — the exact two-dirty-truths failure mode CLAUDE.md forbids. Kept as the reference
+ * serve — the exact two-dirty-truths failure mode. Kept as the reference
  * implementation of the P6 contract; `boot/RehydrateWiringTest.kt` guards the real seam instead.
  * Note before any revival: [loadObfuscatedNamePool] passes the raw `hiddenSeed` to
  * `ObfuscatedNamePool.buildPool`, while the live handlers pass a serialized seed — the two pools

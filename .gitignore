@@ -16,12 +16,10 @@ web/*/.next/
 web/*/out/
 .pnpm-store/
 # Env / OS
-.env
-.env.local
+.env*
+!.env*.example
 .env.headroom.example
 .DS_Store
-# .mcp.json은 커밋한다 (ADR-LITE-007): 토큰 무포함 원칙(값은 env 참조·대화형 OAuth),
-# 쓰기 시 protect-sensitive-files.sh가 토큰 패턴을 스캔한다.
 # Local headroom/docker overrides
 docker-compose.headroom.yml
 # Legacy reference repos (kept locally, never committed)
@@ -30,43 +28,8 @@ legacy/
 **/generated/
 # Local workflow orchestration scripts (transient tooling)
 .workflow-*.mjs
-# LLM wiki (Karpathy pattern) — local knowledge base, never committed
+# Local wiki knowledge base
 docs/wiki/
-.claude/skills/wiki-ingest/
-.claude/skills/wiki-query/
-.claude/skills/wiki-lint/
-.gstack/
-# Harness scratch/tmp dir
-.claude-tmp/
-.claude-tmp-runner/
-.claude/worktrees/
-# Session tooling state (caveman/bkit/codex/agents — local by default)
-.agents/*
-!.agents/skills/
-.agents/skills/*
-!.agents/skills/find-project-skill/
-!.agents/skills/find-project-skill/SKILL.md
-!.agents/skills/os-*/
-!.agents/skills/os-*/SKILL.md
-!.agents/skills/opensamguk-working-system/
-!.agents/skills/opensamguk-working-system/SKILL.md
-!.agents/skills/opensamguk-php-oracle/
-!.agents/skills/opensamguk-php-oracle/SKILL.md
-!.agents/skills/loop-engineering/
-!.agents/skills/loop-engineering/SKILL.md
-!.agents/skills/parity-close/
-!.agents/skills/parity-close/SKILL.md
-!.agents/skills/parity-ship/
-!.agents/skills/parity-ship/SKILL.md
-!.agents/skills/*/agents/
-!.agents/skills/*/agents/openai.yaml
-.bkit/
-.codex/*
-!.codex/config.toml
-!.codex/hooks.json
-!.codex/agents/
-.codex/agents/*
-!.codex/agents/*.toml
 # Throwaway PHP golden investigation scripts
 tools/php-golden/probe_*.php
 # Playwright MCP temp dir
@@ -81,12 +44,22 @@ tools/php-golden/probe_*.php
 .omc/
 web/*/.omc/
 
+# Agent worktree/team scratch trees (local orchestration state, never
+# committed). #513 이 .git/info/exclude 에만 있던 걸 여기로 올렸다 — 그때 근거는
+# check.py 의 product-authority 스캔이었고 그 스크립트는 #547 에서 지워졌지만,
+# 규칙 자체는 살린다: 이걸 빼면 .omo/·.omx/·.codegraph 가 그냥 커밋 가능해진다.
+.omo/
+.omx/
+.codegraph
+# graphify cache output — #513 실측상 ignore 규칙이 아예 없어서 untracked 로
+# 남아 있었다. 생성물이라 커밋 대상이 아니다.
+common/src/main/kotlin/graphify-out/
+
 # Local scratch directories
 parity-shots/
 tmp/
 
-# superpowers brainstorm 런타임 상태(pid/token) + Playwright 실행 산출물
-.superpowers/
+# Playwright 실행 산출물
 web/*/test-results/
 
 # 감사 raw 스크래치(대용량, working dir 보존)
@@ -108,6 +81,9 @@ data/chgis-source/
 data/map/*
 # ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
 !data/map/han-tiles.json
+# Wikidata(CC0) 전용 산출물, CHGIS 입력 없음 — CHGIS 파생물이 아니므로 위 미커밋 규칙 대상이 아니다.
+# tools/map/build_external_places.py docstring 참조. han-places.json/terrain-grid.json 은 계속 미커밋.
+!data/map/external-places.json
 **/v6_*_pts*
 **/v6_*_pgn*
 **/v6_*_lin*

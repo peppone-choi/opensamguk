@@ -1,4 +1,0 @@
-interface:
-  display_name: "os-review"
-  short_description: "OpenSamguk project workflow adapter"
-  default_prompt: "Use $os-review for this task."
