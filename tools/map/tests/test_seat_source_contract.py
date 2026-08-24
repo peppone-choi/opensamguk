@@ -408,7 +408,13 @@ class SelfSeatCommanderies(unittest.TestCase):
         cls.juns = tiles["juns"]
 
     def test_self_seat_count_by_kind_and_by_name_differ(self) -> None:
-        """**축을 바꾸면 분모가 바뀐다.** kind 축 61, 이름 축 52 — 차이 9 는 繁簡 표기차다.
+        """**축을 바꾸면 분모가 바뀐다.** kind 축 60, 이름 축 52 — 차이 8 은 繁簡 표기차다.
+
+        2026-08-24 재판정: kind 축이 61 → **60**. 빠진 것은 정확히 `新成侯國` 하나이고,
+        원인은 CANON_105 재판정으로 그 城 노드가 COMMANDERY → COUNTY 로 강등된 것이다
+        (新成侯國은 CANON_105 에 없는 縣級 侯國이다). 이름 축은 52 그대로다 —
+        이 郡의 `nameCh` 는 繁體 `新成侯國` 인데 城 쪽은 簡體 `新成侯国` 이라
+        애초에 이름 축에서 안 잡히고 있었다. 그래서 차이가 9 → 8 로 줄었다.
 
         같은 郡인데 `nameCh` 가 繁/簡으로 갈린 9건이
         이름 축에서 샌다. **분류를 시작하기 전에 분모부터 축에 따라 흔들린다** — 그래서 둘 다 박는다.
@@ -416,7 +422,7 @@ class SelfSeatCommanderies(unittest.TestCase):
         """
         by_kind = [j for j in self.juns if self.cities[j["seat"]].get("kind") != "COUNTY"]
         by_name = [j for j in self.juns if self.cities[j["seat"]].get("nameCh") == j.get("nameCh")]
-        self.assertEqual(61, len(by_kind), "A 유형(kind 축) 개수가 변했다 — §3.28 을 재판정해라")
+        self.assertEqual(60, len(by_kind), "A 유형(kind 축) 개수가 변했다 — §3.28 을 재판정해라")
         self.assertEqual(52, len(by_name), "A 유형(이름 축) 개수가 변했다 — 繁簡 누수가 달라졌다")
 
     def test_non_han_polities_have_no_seat_proposition(self) -> None:
