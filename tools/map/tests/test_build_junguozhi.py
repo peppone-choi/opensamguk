@@ -1172,5 +1172,113 @@ class TestZhongshanGuoNoteSubstringCoincidenceRegression(unittest.TestCase):
         self.assertEqual(by_name['上曲陽']['note'], '故屬常山')
 
 
+class TestChenliuJunPingqiuChangyuanSplitRegression(unittest.TestCase):
+    """陳留郡 十七城 중 세 자리가 두 가지 원인으로 어긋났다:
+    ① 「平丘」(2자, ctext 원문 셀은 「平」「丘」 두 셀로 쪼개져 있다,
+    cell #8-9)는 CHGIS 결손인데 「平」1자가 딴 郡 진짜 縣과 우연히 같은
+    좌표(145km, MAX_KM 안쪽)라 진짜 縣의 앞글자를 가로챈다(西河郡
+    「平定」류). 게다가 그 좌표가 딴 郡 진짜 縣과 겹쳐 3.5절 좌표중복
+    정리에서 demoted 돼 「平」도 결국 CANDIDATE_REGION 으로 남는다.
+    ② 「長垣」(2자, ctext 원문 셀 그대로 한 셀, cell #11)은 「垣」1자가
+    上郡 「漆垣」과 똑같은 우연동명이라 run_end 전방탐색이 미리 끊겨
+    「長」「垣」1자×2 로 쪼개진다 — 城數 초과분 gap 자리 하나를 둘이
+    나눠 쓰는 바람에 뒤 CHGIS 결손 縣 「己吾」가 gap 경쟁에서 밀려
+    통째로 사라지고, 「長垣侯國」이 앞 「酸棗」의 註로 잘못 흘러든다.
+    ③ 「外黃」註 둘째 절 「城中有曲棘里。」은 앞 「。」뒤에서 곧바로 새
+    s0 로 다시 스캔되는데 「城」이 NOTE_START 트리거 글자가 아니라서
+    run/DP 가 「城中」2자를 통째로 가짜 縣으로 만든다(十七=十七 체크섬은
+    그래도 PASS 했다). data/chgis-source/junguozhi/san.html 「陳留郡」
+    블록 원문 셀(#0-15) 그대로."""
+
+    SEGMENTS = [
+        ('san', '陳留郡'),
+        ('san', '十七城，戶十七萬七千五百二十九，口八十六萬九千四百三十三。'),
+        ('san', '陳留'),
+        ('san', '有鳴鴈亭。浚儀本大梁。尉氏'),
+        ('san', '雍丘'),
+        ('san', '本杞國。襄邑有滑亭。有承匡城。外黃'),
+        ('san', '有葵丘聚，齊桓公會此。城中有曲棘里。有繁陽城。小黃東昏'),
+        ('san', '濟陽'),
+        ('san', '平'),
+        ('san', '丘'),
+        ('san', '有臨濟亭，田儋死此。有匡。有黃池亭。封丘有桐牢亭，或曰古蟲牢。酸棗'),
+        ('san', '長垣'),
+        ('san', '侯國。有匡城。有蒲城。有祭城。己吾有大棘鄉。有首鄉。考城'),
+        ('san', '故菑，章帝更名。故屬梁。圉'),
+        ('san', '故屬淮陽。有高陽亭。扶溝'),
+        ('san', '故屬淮陽。'),
+        ('san', '東郡'),
+        ('san', '一城，戶一千，口一千。'),  # 종결용 다음 郡, 縣 1개만 제공
+        ('san', '濮陽'),
+    ]
+
+    CNTY_XY = {
+        '陳留': [(114.52453, 34.67319)],
+        '浚儀': [(114.34333, 34.78548)],
+        '尉氏': [(114.18077, 34.41345)],
+        '雍丘': [(114.77448, 34.55351)],
+        '襄邑': [(115.06597, 34.4305)],
+        '外黃': [(114.96721, 34.75629)],
+        '小黃': [(114.47829, 34.78681)],
+        '東昏': [(114.85936, 34.92438)],
+        '濟陽': [(114.95262, 34.96236)],
+        '封丘': [(114.40883, 35.03968)],
+        '酸棗': [(114.06642, 35.13857)],
+        '考城': [(115.19367, 34.68144)],
+        '圉': [(114.70449, 34.33805)],
+        '扶溝': [(114.56855, 34.1884)],
+        # 딴 郡 우연 동명 1자 — 진짜 「平丘」「長垣」을 가로채던 자리(실측
+        # 좌표 그대로). whitelist 가 이 함정을 실제로 우회하는지 검증하려면
+        # 재현해 둬야 한다.
+        '平': [(112.94898, 34.81825)],
+        '垣': [(111.812626, 35.148973)],
+        '濮陽': [(114.9, 35.75)],
+    }
+    PREF_XY = {'陳留': [(114.52639, 34.671119)]}
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.cl = next(p for p in cls.data['places'] if p['name'] == '陳留郡')
+
+    def test_all_seventeen_county_names_exact(self):
+        names = [c['name'] for c in self.cl['counties']]
+        self.assertEqual(names, [
+            '陳留', '浚儀', '尉氏', '雍丘', '襄邑', '外黃', '小黃', '東昏',
+            '濟陽', '平丘', '封丘', '酸棗', '長垣', '己吾', '考城', '圉', '扶溝',
+        ])
+
+    def test_no_fake_fragments(self):
+        names = {c['name'] for c in self.cl['counties']}
+        for fake in ('城中', '平', '丘', '長', '垣'):
+            self.assertNotIn(fake, names, f'{fake} 는 구두점 없는 원문 파편이지 縣이 아니다')
+
+    def test_suanzao_note_does_not_swallow_changyuan(self):
+        by_name = {c['name']: c for c in self.cl['counties']}
+        self.assertEqual(by_name['酸棗']['note'], '')
+        self.assertEqual(by_name['長垣']['note'], '侯國')
+
+
 if __name__ == '__main__':
     unittest.main()
