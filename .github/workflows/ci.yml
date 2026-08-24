@@ -33,6 +33,42 @@ jobs:
       - name: Verify agent-system tool tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
+      - name: Verify HanGateIndex.kt drift
+        # `build_han_world.py --check` (full 3-artifact check) needs
+        # data/map/junguozhi.json, which is gitignored by design
+        # (ADR-LITE-039: CHGIS-derived coordinate data, no-redistribution
+        # license) and NEVER present in a checkout — CI included. A bare
+        # `--check` call would be permanently RED on every PR, not a real
+        # gate (GH #534 investigation, 2026-08-24).
+        #
+        # HanGateIndex.kt itself does NOT depend on junguozhi.json/CHE though
+        # — traced build()'s data flow and confirmed empirically (mutating
+        # junguozhi.json changes HanCityConst.kt/han.json but leaves
+        # HanGateIndex.kt byte-identical). `--check-gate` isolates exactly
+        # that: it reads only TILES/CANON_105/UNITS, all tracked, so this
+        # step runs for real on every PR instead of skipping. HanCityConst.kt
+        # /han.json drift (which DOES need junguozhi.json) is still not
+        # CI-gated — verify those manually before merging changes to
+        # build_han_world.py or its inputs.
+        if: '!cancelled()'
+        run: python3 tools/scenario/build_han_world.py --check-gate
+      - name: Warn on ungated HanCityConst.kt/han.json drift
+        # HanCityConst.kt/han.json (unlike HanGateIndex.kt above) genuinely
+        # need data/map/junguozhi.json (gitignored, ADR-LITE-039) and are not
+        # CI-gated. Never fails the job -- this is a visibility signal, not a
+        # gate: the point is to surface the limitation loudly in the CI
+        # log/UI instead of leaving it in a YAML comment nobody reads
+        # (2026-08-24 independent critique of GH #534's own first commit,
+        # dede1024, which had this warning and lost it when --check-gate
+        # replaced the guarded skip). See GH #536.
+        if: '!cancelled()'
+        run: |
+          if [ -f data/map/junguozhi.json ]; then
+            python3 tools/scenario/build_han_world.py --check \
+              || echo "::warning::HanCityConst.kt/han.json drift detected (see --check output above). Not failing this job -- see GH #536."
+          else
+            echo "::warning::data/map/junguozhi.json is gitignored (ADR-LITE-039) and absent from this checkout -- HanCityConst.kt/han.json drift is NOT verified here (GH #536). Verify manually (regenerate junguozhi.json locally via tools/map/build_junguozhi.py, then run build_han_world.py --check) before merging changes to build_han_world.py or its inputs."
+          fi
       - name: Verify unitset build (data/unitset/units.json drift)
         # build_unitset.py's only input is data/unitset/units.json itself
         # (authored table fields -> derived numeric fields, same file) --
