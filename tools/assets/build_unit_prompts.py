@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""han 병종 스프라이트 프롬프트 빌더 (OPENSAM-209).
+"""han 병종 스프라이트 프롬프트 빌더 (OPENSAM-230).
 
 data/unitset/units.json 의 실제 crewType 데이터(armType/tier/composition/role)에서
 병종별 생성 프롬프트를 결정론적으로 만든다. 지어낸 설명이 아니라 데이터가 SSoT다.
