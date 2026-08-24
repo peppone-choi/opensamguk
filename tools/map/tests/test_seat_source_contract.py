@@ -354,5 +354,42 @@ class XSeriesCommanderyDuplicates(unittest.TestCase):
         )
 
 
+class SelfSeatCommanderies(unittest.TestCase):
+    """A 유형 — `juns` 중 seat 이 縣이 아니라 자기 자신인 것. **분류의 분모를 고정한다.**
+
+    이 숫자는 세는 축에 따라 달라진다. §3.19 의 「66건」은 재현되지 않았다(§3.28).
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        tiles = json.loads(TILES_PATH.read_text(encoding="utf-8"))
+        cls.cities = tiles["cities"]
+        cls.juns = tiles["juns"]
+
+    def test_self_seat_count_by_kind_and_by_name_differ(self) -> None:
+        """**축을 바꾸면 분모가 바뀐다.** kind 축 67, 이름 축 57 — 차이 10 은 繁簡 표기차다.
+
+        `馮翊郡`(郡 타일) 과 `冯翊郡`(seat 노드) 처럼 같은 郡인데 `nameCh` 가 繁/簡으로 갈린 10건이
+        이름 축에서 샌다. **분류를 시작하기 전에 분모부터 축에 따라 흔들린다** — 그래서 둘 다 박는다.
+        바뀌면 빨개진다 — 그때 값을 맞추지 말고 §3.28 분류를 다시 돌려라.
+        """
+        by_kind = [j for j in self.juns if self.cities[j["seat"]].get("kind") != "COUNTY"]
+        by_name = [j for j in self.juns if self.cities[j["seat"]].get("nameCh") == j.get("nameCh")]
+        self.assertEqual(67, len(by_kind), "A 유형(kind 축) 개수가 변했다 — §3.28 을 재판정해라")
+        self.assertEqual(57, len(by_name), "A 유형(이름 축) 개수가 변했다 — 繁簡 누수가 달라졌다")
+
+    def test_non_han_polities_have_no_seat_proposition(self) -> None:
+        """A 67 중 **31 은 非漢 정치체**(`EXTERNAL_PLACE`)라 「治所」 명제가 성립하지 않는다.
+
+        부여·사로국·야마일국·선비… 는 결손도 오류도 아니다. **분류 전에 이걸 빼야 나머지가 보인다** —
+        「A = 治所 미상」으로 뭉뚱그리면 절반이 애초에 대상이 아닌 것으로 채워진다.
+        """
+        external = [
+            j for j in self.juns
+            if self.cities[j["seat"]].get("kind") == "EXTERNAL_PLACE"
+        ]
+        self.assertEqual(31, len(external), f"非漢 정치체 수가 변했다 — §3.28 을 재판정해라: {len(external)}")
+
+
 if __name__ == "__main__":
     unittest.main()
