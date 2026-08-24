@@ -1,0 +1,1377 @@
+{
+ "chars": [
+  {
+   "ours": "節",
+   "corpus": "节",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "葉",
+   "corpus": "叶",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "遼",
+   "corpus": "辽",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "屬",
+   "corpus": "属",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "懷",
+   "corpus": "怀",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "軹",
+   "corpus": "轵",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "楊",
+   "corpus": "杨",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "絳",
+   "corpus": "绛",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "頻",
+   "corpus": "频",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "蓮",
+   "corpus": "莲",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "魚",
+   "corpus": "鱼",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "復",
+   "corpus": "复",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "斂",
+   "corpus": "敛",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "單",
+   "corpus": "单",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "瀨",
+   "corpus": "濑",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "勞",
+   "corpus": "劳",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "棟",
+   "corpus": "栋",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "剛",
+   "corpus": "刚",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鸞",
+   "corpus": "鸾",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鳥",
+   "corpus": "鸟",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "媼",
+   "corpus": "媪",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "圍",
+   "corpus": "围",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "頭",
+   "corpus": "头",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "齊",
+   "corpus": "齐",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "樓",
+   "corpus": "楼",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "煩",
+   "corpus": "烦",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "蓋",
+   "corpus": "盖",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "龜",
+   "corpus": "龟",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "險",
+   "corpus": "险",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "瀆",
+   "corpus": "渎",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "賓",
+   "corpus": "宾",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "當",
+   "corpus": "当",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "闡",
+   "corpus": "阐",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "館",
+   "corpus": "馆",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "劇",
+   "corpus": "剧",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "馬",
+   "corpus": "马",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鹵",
+   "corpus": "卤",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "陽",
+   "corpus": "阳",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "漢",
+   "corpus": "汉",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "臨",
+   "corpus": "临",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "龍",
+   "corpus": "龙",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "無",
+   "corpus": "无",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "蘭",
+   "corpus": "兰",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "祿",
+   "corpus": "禄",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "樂",
+   "corpus": "乐",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "離",
+   "corpus": "离",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "廣",
+   "corpus": "广",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "開",
+   "corpus": "开",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "陰",
+   "corpus": "阴",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "緱",
+   "corpus": "缑",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鞏",
+   "corpus": "巩",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "師",
+   "corpus": "师",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "長",
+   "corpus": "长",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鄭",
+   "corpus": "郑",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "豐",
+   "corpus": "丰",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "藍",
+   "corpus": "蓝",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "閬",
+   "corpus": "阆",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "國",
+   "corpus": "国",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "談",
+   "corpus": "谈",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "溫",
+   "corpus": "温",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鐔",
+   "corpus": "镡",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "臥",
+   "corpus": "卧",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "進",
+   "corpus": "进",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "隨",
+   "corpus": "随",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "縫",
+   "corpus": "缝",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "勝",
+   "corpus": "胜",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "賁",
+   "corpus": "贲",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "澤",
+   "corpus": "泽",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "雙",
+   "corpus": "双",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "連",
+   "corpus": "连",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "韋",
+   "corpus": "韦",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "蘇",
+   "corpus": "苏",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "雲",
+   "corpus": "云",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "嚴",
+   "corpus": "严",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "烏",
+   "corpus": "乌",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鶉",
+   "corpus": "鹑",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "靈",
+   "corpus": "灵",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "張",
+   "corpus": "张",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "倉",
+   "corpus": "仓",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "厲",
+   "corpus": "厉",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "顯",
+   "corpus": "显",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "騎",
+   "corpus": "骑",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "門",
+   "corpus": "门",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "壽",
+   "corpus": "寿",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "銅",
+   "corpus": "铜",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "遠",
+   "corpus": "远",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "茲",
+   "corpus": "兹",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鄔",
+   "corpus": "邬",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "慮",
+   "corpus": "虑",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "膚",
+   "corpus": "肤",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "楨",
+   "corpus": "桢",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "陸",
+   "corpus": "陆",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "藺",
+   "corpus": "蔺",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "過",
+   "corpus": "过",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "駱",
+   "corpus": "骆",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鄉",
+   "corpus": "乡",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "羅",
+   "corpus": "罗",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "熒",
+   "corpus": "荧",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "獲",
+   "corpus": "获",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "蕩",
+   "corpus": "荡",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "農",
+   "corpus": "农",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "陝",
+   "corpus": "陕",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "黽",
+   "corpus": "黾",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "渾",
+   "corpus": "浑",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "華",
+   "corpus": "华",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "萬",
+   "corpus": "万",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "晉",
+   "corpus": "晋",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "陳",
+   "corpus": "陈",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "錫",
+   "corpus": "锡",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "墊",
+   "corpus": "垫",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "綿",
+   "corpus": "绵",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "資",
+   "corpus": "资",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "關",
+   "corpus": "关",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "紀",
+   "corpus": "纪",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "隴",
+   "corpus": "陇",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "親",
+   "corpus": "亲",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "涇",
+   "corpus": "泾",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "盤",
+   "corpus": "盘",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鸇",
+   "corpus": "鹯",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "刪",
+   "corpus": "删",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "驪",
+   "corpus": "骊",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "輿",
+   "corpus": "舆",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "薊",
+   "corpus": "蓟",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "軍",
+   "corpus": "军",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "東",
+   "corpus": "东",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "漁",
+   "corpus": "渔",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "獷",
+   "corpus": "犷",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "終",
+   "corpus": "终",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鮮",
+   "corpus": "鲜",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "蟬",
+   "corpus": "蝉",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "駟",
+   "corpus": "驷",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鏤",
+   "corpus": "镂",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "謝",
+   "corpus": "谢",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "賀",
+   "corpus": "贺",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "馮",
+   "corpus": "冯",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "塵",
+   "corpus": "尘",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "領",
+   "corpus": "领",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "編",
+   "corpus": "编",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "鬱",
+   "corpus": "郁",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "壺",
+   "corpus": "壶",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "彌",
+   "corpus": "弥",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "穀",
+   "corpus": "谷",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "會",
+   "corpus": "会",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "聞",
+   "corpus": "闻",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "涼",
+   "corpus": "凉",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "帶",
+   "corpus": "带",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "風",
+   "corpus": "风",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "盧",
+   "corpus": "卢",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "並",
+   "corpus": "并",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "穀",
+   "corpus": "谷",
+   "label": "simp2trad",
+   "fault": "코퍼스(위키문헌 底本 간체)",
+   "note": "코퍼스 쪽이 간체. 우리 번체가 원문 형태"
+  },
+  {
+   "ours": "慎",
+   "corpus": "愼",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "衛",
+   "corpus": "衞",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "吳",
+   "corpus": "呉",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "恒",
+   "corpus": "恆",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "高",
+   "corpus": "髙",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "褒",
+   "corpus": "襃",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "真",
+   "corpus": "眞",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "昏",
+   "corpus": "昬",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "鄉",
+   "corpus": "鄕",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "榆",
+   "corpus": "楡",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "即",
+   "corpus": "卽",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "毗",
+   "corpus": "毘",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "麊",
+   "corpus": "麋",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "稿",
+   "corpus": "稾",
+   "label": "variant",
+   "fault": "없음(양쪽 다 정당)",
+   "note": "정자/이체자 관계. 어느 쪽도 오류 아님"
+  },
+  {
+   "ours": "睪",
+   "corpus": "睾",
+   "label": "ours_corrupt",
+   "fault": "우리 파서",
+   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+  },
+  {
+   "ours": "啮",
+   "corpus": "𨻻",
+   "label": "ours_corrupt",
+   "fault": "우리 파서",
+   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+  },
+  {
+   "ours": "巿",
+   "corpus": "市",
+   "label": "ours_corrupt",
+   "fault": "우리 파서",
+   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+  },
+  {
+   "ours": "烫",
+   "corpus": "𧦦",
+   "label": "ours_corrupt",
+   "fault": "우리 파서",
+   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+  },
+  {
+   "ours": "〈",
+   "corpus": "定",
+   "label": "ours_corrupt",
+   "fault": "우리 파서",
+   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+  },
+  {
+   "ours": "禹",
+   "corpus": "襄",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "碭",
+   "corpus": "焉",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "西",
+   "corpus": "鄲",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "寧",
+   "corpus": "苦",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "魯",
+   "corpus": "騶",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "武",
+   "corpus": "脩",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "封",
+   "corpus": "平",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "堂",
+   "corpus": "寧",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "新",
+   "corpus": "成",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "南",
+   "corpus": "皖",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "郫",
+   "corpus": "徙",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "登",
+   "corpus": "阐",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "道",
+   "corpus": "沮",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "易",
+   "corpus": "逎",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "句",
+   "corpus": "显",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "城",
+   "corpus": "郑",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "城",
+   "corpus": "鄕",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "盧",
+   "corpus": "合",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "句",
+   "corpus": "顯",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  },
+  {
+   "ours": "除",
+   "corpus": "陰",
+   "label": "reject",
+   "fault": "—",
+   "note": "1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다"
+  }
+ ],
+ "name_exceptions": [
+  {
+   "jun": "河東郡",
+   "corpus": "蒲板",
+   "ours": "蒲阪",
+   "label": "corpus_corrupt_name",
+   "fault": "코퍼스(위키문헌 底本 오자)",
+   "note": "郡國志는 蒲阪. 板은 底本 오자다. 阪↔板은 이체자가 아니다"
+  },
+  {
+   "jun": "汝南郡",
+   "corpus": "郎陵",
+   "ours": "朗陵",
+   "label": "corpus_corrupt_name",
+   "fault": "코퍼스(위키문헌 底本 오자)",
+   "note": "郡國志는 朗陵. 郎↔朗은 문자 매핑 불가 — 牂牁 夜郎을 夜朗으로 오염시킨다"
+  },
+  {
+   "jun": "犍為郡",
+   "ours": "荷節",
+   "corpus": "符節",
+   "label": "ours_corrupt_name",
+   "fault": "우리 파서",
+   "note": "符이 荷로 깨졌다"
+  },
+  {
+   "jun": "五原郡",
+   "ours": "河除",
+   "corpus": "河陰",
+   "label": "ours_corrupt_name",
+   "fault": "우리 파서",
+   "note": "陰이 除로 깨졌다. 除↔陰은 문자 매핑이 아니다(다른 縣의 除를 오염시킨다)"
+  },
+  {
+   "jun": "五原郡",
+   "ours": "父國",
+   "corpus": "文國",
+   "label": "ours_corrupt_name",
+   "fault": "우리 파서",
+   "note": "文이 父로 깨졌다. 父↔文은 문자 매핑 불가 — 父城·城父·亢父·單父를 오염시킨다"
+  },
+  {
+   "jun": "漁陽郡",
+   "corpus": "平穀",
+   "ours": "平谷",
+   "label": "corpus_overconvert",
+   "fault": "코퍼스(간체 谷→穀 과잉변환)",
+   "note": "漁陽 平谷은 穀이 아니다. 문자 단위 매핑의 예외"
+  }
+ ]
+}
