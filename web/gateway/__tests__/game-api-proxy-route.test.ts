@@ -380,3 +380,79 @@ describe('game API proxy SSE (/api/game/sse/turn) — #514 401 passthrough', () 
     expect(text).toContain('event: turnCompleted');
   });
 });
+
+function sseOkResponse(chunks: string[]): Response {
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+      controller.close();
+    },
+  });
+  return new Response(body, {
+    status: 200,
+    headers: { 'Content-Type': 'text/event-stream;charset=UTF-8' },
+  });
+}
+
+async function readAll(body: ReadableStream<Uint8Array> | null): Promise<string> {
+  if (!body) return '';
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let out = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    out += decoder.decode(value);
+  }
+  return out;
+}
+
+describe('game API proxy SSE (/api/game/sse/turn) — #514 401 passthrough', () => {
+  beforeEach(() => {
+    cookieValues = { sam_access: 'expired-access' };
+    process.env.GAME_API_ORIGIN = 'http://default-game-api';
+    delete process.env.SERVER_ID;
+    registryMocks.getServers.mockReturnValue([]);
+    registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
+    registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('returns upstream 401 plainly instead of opening a text/event-stream (200 + {})', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'expired' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    const response = await GET(request('/api/game/sse/turn'), context(['sse', 'turn']));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get('content-type')).not.toContain('text/event-stream');
+    expect(await response.json()).toEqual({ error: 'expired' });
+  });
+
+  it('passes an ok upstream through as a live event-stream', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(sseOkResponse(['event: turnCompleted\ndata: {}\n\n'])),
+    );
+
+    const response = await GET(request('/api/game/sse/turn'), context(['sse', 'turn']));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/event-stream');
+    const text = await readAll(response.body);
+    expect(text).toContain(': proxy-connected');
+    expect(text).toContain('event: turnCompleted');
+  });
+});
