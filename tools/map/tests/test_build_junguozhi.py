@@ -1067,5 +1067,110 @@ class TestLuGuoPunctuationNoteFragmentRegression(unittest.TestCase):
         self.assertEqual(lu['note'], '國，奄國')
 
 
+class TestZhongshanGuoNoteSubstringCoincidenceRegression(unittest.TestCase):
+    """中山國 十三城 중 다섯 자리가 註 안에 우연히 박힌 딴 縣과 겹쳐 어긋났다:
+    「安憙」「漢昌」「蒲陰」의 개명 註(「本X，章帝更名」류)와 「上曲陽」의
+    소속 註(「故屬常山。恒山在西北。」)에 낀 「安險」「苦陘」「曲逆」「常山」
+    「恒山」이 각각 CHGIS 상 실존 縣(대부분 개명 전/후 동일지점이라 距離
+    0km, 「常山」「恒山」은 中山國 근방 별개 산 지명이라 400km 필터 안쪽)
+    이라 NOTE_START 리싱크가 縣 경계로 오인했다. 그 결과 十三城 초과분을
+    trim 하는 단계에서 진짜지만 더 먼 「北平」「蒲陰」「廣昌」이 잘려
+    나가고 가짜 다섯이 남았는데도, 十三=十三 체크섬은 그대로 PASS 했다.
+    「本X，」류 세 건은 NOTE_START 리싱크 억제, 「故屬常山」「恒山在西北」
+    두 건은 절 첫머리 자체가 縣 경계 시도로 오인되는 것을 막아야 해서
+    (전자는 resync 분기, 후자는 최상단 s0-스킵 분기) 서로 다른 코드
+    경로를 탄다. data/chgis-source/junguozhi/er.html 「中山國」 블록
+    원문 셀(#86-94) 그대로."""
+
+    SEGMENTS = [
+        ('er', '中山國'),
+        ('er', '十三城，戶九萬七千四百一十二，口六十五萬八千一百九十五。'),
+        ('er', '盧奴'),
+        ('er', '北平'),
+        ('er', '有鐵'),
+        ('er', '。母極新市'),
+        ('er', '有鮮虞亭，故國，子姓。望都'),
+        ('er', '唐'),
+        ('er', '有中人亭，有左人鄉。安國安憙本安險，章帝更名。漢昌本苦陘，章帝更名。'
+                '蠡吾侯國，故屬涿。上曲陽故屬常山。恒山在西北。蒲陰本曲逆，章帝更名。'
+                '有陽城。廣昌故屬代郡。'),
+        ('er', '安平國'),
+        ('er', '一城，戶一千，口一千。'),  # 종결용 다음 郡, 縣 1개만 제공
+        ('er', '信都'),
+    ]
+
+    CNTY_XY = {
+        '盧奴': [(114.97504, 38.52006)],
+        '北平': [(115.30381, 38.95788)],
+        '新市': [(115.08887, 37.44167)],
+        '望都': [(115.11769, 38.74389)],
+        '唐': [(115.02761, 38.82413)],
+        '安國': [(115.38495, 38.36392)],
+        '安憙': [(115.12755, 38.47064)],
+        '漢昌': [(115.0134, 38.31078)],
+        '蠡吾': [(115.35641, 38.53824)],
+        '上曲陽': [(114.64456, 38.61595)],
+        '蒲陰': [(115.22289, 38.7945)],
+        '廣昌': [(114.68795, 39.40357)],
+        # 딴 縣 註 속에 우연히 박힌 CHGIS 동명 縣 — whitelist 가 실제로
+        # 이 함정을 우회하는지 검증하려면 재현해 둬야 한다. 「安險」「苦陘」
+        # 「曲逆」은 개명 전 이름이라 개명 후 縣과 좌표가 아예 같고,
+        # 「常山」「恒山」은 中山國 근방의 별개 산 지명(400km 필터 안쪽).
+        '安險': [(115.12755, 38.47064)],
+        '苦陘': [(115.0134, 38.31078)],
+        '曲逆': [(115.22289, 38.7945)],
+        '常山': [(114.41512, 37.81672)],
+        '恒山': [(114.53077, 38.1012)],
+        '信都': [(115.55, 37.75)],
+    }
+    PREF_XY = {'中山': [(114.563995, 38.140121)]}
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.zs = next(p for p in cls.data['places'] if p['name'] == '中山國')
+
+    def test_all_thirteen_county_names_exact(self):
+        names = [c['name'] for c in self.zs['counties']]
+        self.assertEqual(names, [
+            '盧奴', '北平', '母極', '新市', '望都', '唐', '安國', '安憙',
+            '漢昌', '蠡吾', '上曲陽', '蒲陰', '廣昌',
+        ])
+
+    def test_no_fake_note_substring_counties(self):
+        names = {c['name'] for c in self.zs['counties']}
+        for fake in ('安險', '苦陘', '曲逆', '常山', '恒山'):
+            self.assertNotIn(fake, names,
+                              f'{fake} 는 딴 縣 註 속 우연 동명이지 中山國 소속 縣이 아니다')
+
+    def test_renamed_counties_carry_rename_note(self):
+        by_name = {c['name']: c for c in self.zs['counties']}
+        self.assertEqual(by_name['安憙']['note'], '本安險，章帝更名')
+        self.assertEqual(by_name['漢昌']['note'], '本苦陘，章帝更名')
+        self.assertEqual(by_name['蒲陰']['note'], '本曲逆，章帝更名')
+        self.assertEqual(by_name['上曲陽']['note'], '故屬常山')
+
+
 if __name__ == '__main__':
     unittest.main()
