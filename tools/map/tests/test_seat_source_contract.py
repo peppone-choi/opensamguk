@@ -11,6 +11,7 @@
 """
 
 import json
+import math
 import unittest
 from pathlib import Path
 
@@ -389,6 +390,102 @@ class SelfSeatCommanderies(unittest.TestCase):
             if self.cities[j["seat"]].get("kind") == "EXTERNAL_PLACE"
         ]
         self.assertEqual(31, len(external), f"非漢 정치체 수가 변했다 — §3.28 을 재판정해라: {len(external)}")
+
+
+# 邊郡·屬國의 治所 縣 이름. 값은 (사료가 말하는 治所, 출전). 전부 데이터에 **없다**(§3.29).
+# 繁簡 양쪽으로 조회했고 같은 조회에 양성 대조를 넣어 조회가 살아있는 걸 확인했다.
+MISSING_FRONTIER_SEATS = {
+    "상군": ("膚施", "續漢書 郡國志 上郡"),
+    "서하군": ("離石", "續漢書 郡國志 西河郡"),
+    "정양군": ("善無", "續漢書 郡國志 定襄郡"),
+    "삭방군": ("臨戎", "續漢書 郡國志 朔方郡"),
+    "요동군": ("襄平", "續漢書 郡國志 遼東郡"),
+    "현도군": ("高句驪", "續漢書 郡國志 玄菟郡"),
+    "낙랑군": ("朝鮮", "續漢書 郡國志 樂浪郡"),
+    "대방군": ("帶方", "帶方郡 치소"),
+    "교지군": ("龍編", "交趾郡 치소"),
+    "구진군": ("胥浦", "九真郡 치소"),
+    "일남군": ("西捲", "日南郡 치소"),
+    "요동속국": ("昌遼", "續漢書 郡國志 遼東屬國"),
+    "구자속국": ("龜茲", "續漢書 郡國志 上郡 龜茲屬國"),
+    "광위군": ("臨渭", "讀史方輿紀要 卷003 「魏廣魏郡也 … 領臨渭等縣」"),
+}
+# 繁 → 簡. 위 이름들이 簡體로 들어와 있어도 잡히게 한다.
+_SIMPLIFY = str.maketrans({
+    "膚": "肤", "離": "离", "無": "无", "臨": "临", "驪": "骊", "龍": "龙",
+    "編": "编", "捲": "卷", "遼": "辽", "龜": "龟", "茲": "兹", "鮮": "鲜", "帶": "带", "蘭": "兰",
+})
+
+
+class FrontierSeatsAreMissing(unittest.TestCase):
+    """§3.29 — 邊郡·屬國 14건의 治所 縣이 CHGIS 縣 레이어에 **없다**. (a) 결손 확정.
+
+    **0건은 「그 표기로 0건」이지 「없다」가 아니다** — 그래서 繁簡 양쪽으로 걸고,
+    같은 조회에 **반드시 걸려야 하는 양성 대조**를 넣는다. 대조가 안 걸리면 조회가 죽은 것이다.
+    노드가 생기면 빨개진다 — **그때 값을 맞추지 말고 그 郡을 (b) 선택 오류로 옮겨라.**
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.cities = json.loads(TILES_PATH.read_text(encoding="utf-8"))["cities"]
+
+    def _find(self, term: str) -> list[str]:
+        forms = {term, term.translate(_SIMPLIFY)}
+        return sorted({
+            c["nameCh"] for c in self.cities
+            if c.get("nameCh") and any(f in c["nameCh"] for f in forms)
+        })
+
+    def test_positive_control_is_alive(self) -> None:
+        """양성 대조. 이게 빨개지면 아래 0건은 「없다」가 아니라 **조회가 죽었다**는 뜻이다."""
+        self.assertEqual(["房陵县"], self._find("房陵"), "양성 대조가 안 걸린다 — 조회 자체를 의심해라")
+        self.assertEqual(["故且兰县"], self._find("故且蘭"), "繁簡 변환 대조가 안 걸린다")
+
+    def test_frontier_seat_counties_are_absent(self) -> None:
+        for jun, (seat, source) in MISSING_FRONTIER_SEATS.items():
+            with self.subTest(jun=jun):
+                found = [n for n in self._find(seat) if not n.endswith(("郡", "屬國", "国", "國"))]
+                self.assertEqual(
+                    [], found,
+                    f"{jun}: 治所 {seat}({source}) 노드가 생겼다. 결손이 해소됐으니 (b) 선택 오류로 옮겨라: {found}",
+                )
+
+
+class CoordinateAxisTolerance(unittest.TestCase):
+    """§3.29 — **좌표 축을 「완전 동일」로 구현했더니 소수점 차이로 8건을 흘렸다.**
+
+    郡 노드와 治所 縣 노드는 같은 점에 놓이는 게 원칙이지만 CHGIS 는 소수점 5자리에서 갈리는 쌍이 있다
+    (`신흥군`↔`九原县` 0.03km, `신평군`↔`漆县` 0.02km). **0 을 조건으로 쓰면 그게 임계값이 된다.**
+    이건 축을 바꿔서 고칠 문제가 아니라 게이트 범위가 좁았던 것이다(§0.7) — 그래서 넓히고, 넓힌 값을 박는다.
+    2km 와 5km 가 같은 15 라 **평탄면에서 끊었다** — 「개수를 통과 조건으로」가 아니라 「뽑고 나서 셌다」.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        tiles = json.loads(TILES_PATH.read_text(encoding="utf-8"))
+        cls.cities = tiles["cities"]
+        cls.juns = tiles["juns"]
+
+    def _candidates(self, tol_km: float) -> list[str]:
+        counties = [c for c in self.cities if c.get("kind") == "COUNTY" and c.get("lon") is not None]
+        out = []
+        for jun in self.juns:
+            seat = self.cities[jun["seat"]]
+            if seat.get("kind") in ("COUNTY", "EXTERNAL_PLACE") or seat.get("lon") is None:
+                continue
+            if any(
+                math.hypot((seat["lon"] - c["lon"]) * 88, (seat["lat"] - c["lat"]) * 111) <= tol_km
+                for c in counties
+            ):
+                out.append(jun["name"])
+        return sorted(out)
+
+    def test_candidate_count_plateaus_at_15(self) -> None:
+        counts = {tol: len(self._candidates(tol)) for tol in (1.0, 2.0, 5.0)}
+        self.assertEqual(
+            {1.0: 13, 2.0: 15, 5.0: 15}, counts,
+            f"좌표 축 후보 수가 변했다 — §3.29 분류를 다시 돌려라: {counts}",
+        )
 
 
 if __name__ == "__main__":
