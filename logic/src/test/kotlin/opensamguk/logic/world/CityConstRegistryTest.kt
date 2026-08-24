@@ -122,7 +122,7 @@ class CityConstRegistryTest {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(graph.toByteArray())
             .joinToString("") { "%02x".format(it) }
-        assertEquals("06b9a31e95584f11d87cc2e9060a4b077746682fba01edfc9793ec5a75d74756", digest)
+        assertEquals("58b4c44b5166ced1aaaf226564166fd0678f39757301352d71d32e771cdaa4e8", digest)
     }
 
     @Test

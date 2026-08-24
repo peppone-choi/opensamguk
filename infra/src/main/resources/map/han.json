@@ -20196,7 +20196,9 @@
         "defence": 2000,
         "wall": 2000
       },
-      "connections": [],
+      "connections": [
+        533
+      ],
       "meta": {
         "jun": "이주",
         "junCh": "夷洲",
@@ -20690,6 +20692,7 @@
         "wall": 3000
       },
       "connections": [
+        520,
         534,
         535,
         536,
@@ -20702,6 +20705,7 @@
         543,
         544,
         545,
+        547,
         548,
         565
       ],
@@ -21206,7 +21210,9 @@
         "defence": 2000,
         "wall": 2000
       },
-      "connections": [],
+      "connections": [
+        533
+      ],
       "meta": {
         "jun": "유구",
         "junCh": "流求",
@@ -29065,7 +29071,9 @@
         "defence": 2000,
         "wall": 2000
       },
-      "connections": [],
+      "connections": [
+        765
+      ],
       "meta": {
         "jun": "우산국",
         "junCh": "于山國",
@@ -29479,7 +29487,9 @@
         "defence": 2000,
         "wall": 2000
       },
-      "connections": [],
+      "connections": [
+        773
+      ],
       "meta": {
         "jun": "주호",
         "junCh": "州胡",
@@ -29513,6 +29523,7 @@
         "wall": 2000
       },
       "connections": [
+        753,
         757,
         759,
         770
@@ -29741,7 +29752,8 @@
       "connections": [
         763,
         766,
-        767
+        767,
+        774
       ],
       "meta": {
         "jun": "구야국",
@@ -29817,6 +29829,7 @@
         758,
         761,
         763,
+        764,
         772
       ],
       "meta": {
@@ -29851,7 +29864,9 @@
         "defence": 3000,
         "wall": 3000
       },
-      "connections": [],
+      "connections": [
+        771
+      ],
       "meta": {
         "jun": "야마일국",
         "junCh": "邪馬壹國",

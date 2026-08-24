@@ -27798,7 +27798,7 @@
       },
       "legacyHanMap": {
         "path": "infra/src/main/resources/map/han.json",
-        "sha256": "244a14c510dc2e1c570c8f54487512e58dad32576be538a60f1137006906af83"
+        "sha256": "10126205c31c61230eef5351548fd2b5cbf33b35873c80280be2118381fb2b1d"
       },
       "legacyTileMap": {
         "path": "data/map/han-tiles.json",
