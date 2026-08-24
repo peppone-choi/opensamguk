@@ -830,5 +830,87 @@ class TestYuexiJunGluedTailRegression(unittest.TestCase):
         self.assertEqual(taideng['note'], '出鐵')
 
 
+class TestWuduJunSplitCellAndGreedyNoteRegression(unittest.TestCase):
+    """武都郡 七城 중 두 자리가 서로 다른 원인으로 어긋났다:
+    ① 「武都道」(3자)가 ctext 원문 셀에서 「武都」「道」로 두 셀에 걸쳐
+    쪼개진 채(cell #154-155) 「下辨武都道上祿」7자가 맹목 DP 로 「下辨」
+    「武都」「道」「上祿」(2‧2‧1‧2) 로 갈린다(越巂郡 「靈關道」와 같은
+    3자-조각 DP 점수 열세 클래스). 「故道」도 같은 방식으로 두 셀(#157-158)
+    에 걸쳐 있지만 CHGIS 직접매치라 원래도 안 깨졌다.
+    ② 「沮」는 CHGIS 에 좌표가 실제로 있는데도(cnty_xy 조회 확인) 바로
+    앞 「河池」whitelist 매치가 after_residual=True 를 세워 1자 직접-hit
+    경로(lens=(4,3,2), 1자 제외)를 꺼버리고, 그 자리에서 註 「沔水出東狼谷」
+    의 NOTE_START_RUN 「[1-3자]水出」트리거가 「沮」자신을 그 1-3자 접두로
+    삼켜 縣 목록에서 통째로 사라진다(玄菟郡 「遼山，」·越巂郡 「南山」과는
+    반대로, 여기는 진짜 CHGIS 점이 있는 縣이 삼켜지는 경우).
+    data/chgis-source/junguozhi/wu.html 「武都郡」 블록 원문 셀(#151-161)
+    그대로."""
+
+    SEGMENTS = [
+        ('wu', '武都郡'),
+        ('wu', '七城，戶二萬一百二，口八萬一千七百二十八。'),
+        ('wu', '下辨'),
+        ('wu', '武都'),
+        ('wu', '道'),
+        ('wu', '上祿'),
+        ('wu', '故'),
+        ('wu', '道'),
+        ('wu', '河池'),
+        ('wu', '沮'),
+        ('wu', '沔水出東狼谷。羌道'),
+        ('wu', '金城郡'),
+        ('wu', '一城，戶三千八百五十八，口萬八千九百四十七。'),  # 종결용 다음 郡, 縣 1개만 제공
+        ('wu', '允吾'),
+    ]
+
+    CNTY_XY = {
+        '故道': [(107.08187, 34.30492)],
+        '沮': [(106.44959, 33.27274)],
+        '允吾': [(102.86, 36.17)],
+    }
+    PREF_XY = {'武都': [(105.093816, 33.96348)]}
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.wudu = next(p for p in cls.data['places'] if p['name'] == '武都郡')
+
+    def test_all_seven_county_names_exact(self):
+        names = [c['name'] for c in self.wudu['counties']]
+        self.assertEqual(names, [
+            '下辨', '武都道', '上祿', '故道', '河池', '沮', '羌道',
+        ])
+
+    def test_no_fake_fragments(self):
+        names = {c['name'] for c in self.wudu['counties']}
+        for fake in ('武都', '道', '道臺'):
+            self.assertNotIn(fake, names, f'{fake} 는 구두점 없는 원문 파편이지 縣이 아니다')
+
+    def test_ju_note_carries_full_clause(self):
+        ju = next(c for c in self.wudu['counties'] if c['name'] == '沮')
+        self.assertEqual(ju['note'], '沔水出東狼谷')
+
+
 if __name__ == '__main__':
     unittest.main()
