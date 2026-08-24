@@ -16,6 +16,7 @@ import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.time.Instant
@@ -303,12 +304,17 @@ class PrecheckFullCrossCallSiteTest {
 
     @Test
     fun `Han multi-hop sortie agrees at precheck and daemon call sites`() {
+        // id 419 는 남양군/형주 「석」(析) 이다 — han.json 에 이름이 같은 「석」이 하나 더 있다
+        // (id 595, 익주, 锡). 재번호매김이 419 를 다른 城으로 옮기면 이 단언이 먼저 빨개진다.
+        assertEquals("석", CityConstRegistry.of("han").byId(419)!!.name)
+        assertEquals(CityConstRegistry.of("han").regionIdByName("형주"), CityConstRegistry.of("han").byId(419)!!.region)
+
         val fixture = Fixture(
             cityId = 3,
             cityNationId = NATION_ID,
             destCityId = 29,
             destCityNationId = 2,
-            routeCityId = 421,
+            routeCityId = 419,
             routeCityNationId = 0,
             crew = 1_000,
             atWarNationId = 2,
