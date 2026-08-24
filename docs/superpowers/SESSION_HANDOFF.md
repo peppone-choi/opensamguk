@@ -1,18 +1,25 @@
-# SESSION HANDOFF — 2026-08-23 (OPENSAM-226 W1-B external-world source pack contract)
+# SESSION HANDOFF — 2026-08-24 (OPENSAM-226 W1-B 외부 세계 pack · 판별자 5 seat 계약)
 
-## Current handoff — OPENSAM-226
+## Current OPENSAM-226 handoff
 
-- Current task authority is `.ai/task.md` section `OPENSAM-226 W1-B 외부 세계 5개 pack 사료 계약 (진행 중)`. Full detail: `.ai/handoff.md`'s `Current handoff (2026-08-23) — OPENSAM-226 W1-B remediation interrupted; resume from RED`.
-- Status: **interrupted, resume from RED** — not complete. An independent review returned `fix-required` with 5 blocking findings (listed in `.ai/handoff.md`); do not report this as done until those are closed and the new mutation tests are observed RED→GREEN.
-- The OPENSAM-206~220 integration wave below is historical/closed, not the active task — OPENSAM-218's PR #499 merged 2026-08-23T12:30:59Z, which ended that wave.
+`.ai/task.md` 의 현재 절이 OPENSAM-226 이므로 이 절이 정본이다(check.py
+`current-handoff-authority`). 아래 OPENSAM-206~220 절은 그 앞 wave 의 기록이다.
 
----
+**이 PR 이 남기는 것.** `.ai/plans/2026-08-24-province-state-restructure.md`
+(province/state 재구성 설계, UNKNOWN 25 → 3) + `.ai/research/**` 실측 산출물 +
+판별자 5 `tools/map/seat_sources.json` · `tools/map/tests/test_seat_source_contract.py`.
 
-## SESSION HANDOFF — 2026-08-23 (OPENSAM-206~220 integration wave; OPENSAM-218 policy gate) — historical, closed
+**데이터는 안 고쳤다.** U56형 seat 결함 4건(건위·문산·파서·신성)은 사료로
+확증했지만 `currentWrongSeat` 로 **아직 틀린 그대로**를 단언해 뒀다. 초록의 뜻이
+「맞다」가 아니라 「아직 안 고쳤다」다 — 근거와 여파 실측은 그 계획서 §3.30.8 이다.
 
-**Closure evidence:** OPENSAM-218's PR #499 merged 2026-08-23T12:30:59Z. The 206~220 integration wave ended there; OPENSAM-226 (W1-B) is the current active work as of this handoff.
+**다음 사람이 할 일.** seat 4건을 고치려면 `juns[].col/row` 이동 + route-node
+provenance 앵커 재핀 + 인구조사 단언 재측정을 **한 짝으로** 해라. 숫자를 미리
+채워 넣지 마라 — 고친 뒤에 다시 재라.
 
-### Current integration-wave / OPENSAM-218 handoff (historical)
+# SESSION HANDOFF — 2026-08-23 (OPENSAM-206~220 integration wave; OPENSAM-218 policy gate)
+
+## Current integration-wave / OPENSAM-218 handoff
 
 - Current task authority is `.ai/task.md` section `OPENSAM-206~220 통합·검증·배포 (활성 계약)` and the active integration worktree named there.
 - PR #499 is the bounded OPENSAM-218 policy lane. ADR-LITE-042 retires PHP grand-truth, PHP-wins, draw-for-draw, byte-log, and golden-first product gates while retaining truthful evidence, frozen existing tests, deterministic replay, one-daemon-write, flush-delta, and insertion-order rules.
