@@ -27,15 +27,16 @@ DEMOTED_SUFFIXES = ("侯國", "屬國", "郡")
 class TileKindSanityTest(unittest.TestCase):
     def test_committed_tiles_carry_no_KINGDOM_at_all(self) -> None:
         """**이 파일의 숨은 전제를 드러낸다.** 지금 커밋된 han-tiles.json 에는
-        KINGDOM 이 단 하나도 없다(1,144개 중 COUNTY 958 · COMMANDERY 146 ·
-        EXTERNAL_PLACE 37 · PROVINCE 3). 그래서 아래 승격 회귀 테스트는 **오늘의
+        KINGDOM 이 단 하나도 없다(1,138개 중 COUNTY 958 · COMMANDERY 140 ·
+        EXTERNAL_PLACE 37 · PROVINCE 3 — #548 이 phantom 郡 노드 6개를 빼면서
+        1,144/146 에서 내려왔다. COUNTY 는 안 움직였다). 그래서 아래 승격 회귀 테스트는 **오늘의
         산출물에 대해 아무것도 단언하지 않는다** — 재생성으로 KINGDOM 이 다시
         들어올 때만 살아난다. 그 사실을 주석이 아니라 단언으로 고정해서, 등급
         어휘가 조용히 바뀌면 여기서 먼저 걸리게 한다."""
         cities = json.loads(TILES.read_text())["cities"]
         kinds = Counter(c["kind"] for c in cities)
         self.assertEqual(
-            {"COUNTY": 958, "COMMANDERY": 146, "EXTERNAL_PLACE": 37, "PROVINCE": 3},
+            {"COUNTY": 958, "COMMANDERY": 140, "EXTERNAL_PLACE": 37, "PROVINCE": 3},
             dict(kinds),
             "han-tiles.json 의 등급 분포가 바뀌었다 — 아래 KINGDOM 회귀의 전제가 달라졌다",
         )
