@@ -678,5 +678,71 @@ class TestZhangyeShuguoJunHitLongestMatchRegression(unittest.TestCase):
             self.assertEqual(c['note'], '', f"{c['name']} 의 note 가 비어있지 않다")
 
 
+class TestXuantuJunPureNoteFragmentRegression(unittest.TestCase):
+    """玄菟郡 「高句驪」 註 「遼山，遼水出。」의 NOTE_START_RUN 「水出」 트리거
+    직전 잔여 「遼山，」가 縣名을 하나도 안 담고 있는데도 split_unresolved_run
+    이 뭐라도 잘라야 해서 「遼」+「山，」 두 가짜 1자/2자 縣을 냈다. 六城 선언과
+    가짜 2개가 우연히 맞아떨어져(가짜 2개가 진짜 候城‧遼陽 두 縣을 城數
+    트리밍에서 밀어냄) 체크섬만으로는 못 잡는 「河南尹 21=21」류 상쇄다.
+    data/chgis-source/junguozhi/wu.html 「玄菟郡」 블록 원문 셀(#441-447)
+    그대로."""
+
+    SEGMENTS = [
+        ('wu', '玄菟郡'),
+        ('wu', '六城，戶一千五百九十四，口四萬三千一百六十三。'),
+        ('wu', '高句驪'),
+        ('wu', '遼山，遼水出。西蓋鳥上殷台'),
+        ('wu', '高顯'),
+        ('wu', '故屬遼東。候城'),
+        ('wu', '故屬遼東。遼陽故屬遼東。'),
+        ('wu', '樂浪郡'),
+        ('wu', '一城，戶六萬一千四百九十二，口二十五萬七千五十。'),  # 종결용 다음 郡, 縣 1개만 제공
+        ('wu', '朝鮮'),
+    ]
+
+    CNTY_XY = {'朝鮮': [(125.75, 39.02)]}
+    PREF_XY = {}
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.xuantu = next(p for p in cls.data['places'] if p['name'] == '玄菟郡')
+
+    def test_all_six_county_names_exact(self):
+        names = [c['name'] for c in self.xuantu['counties']]
+        self.assertEqual(names, ['高句驪', '西蓋鳥', '上殷台', '高顯', '候城', '遼陽'])
+
+    def test_no_fake_fragments_from_note(self):
+        names = {c['name'] for c in self.xuantu['counties']}
+        for fake in ('遼', '山，', '高句', '驪遼'):
+            self.assertNotIn(fake, names,
+                              f'{fake} 는 「遼山，遼水出」 註 파편이지 縣이 아니다')
+
+    def test_gaogouli_note_carries_full_clause(self):
+        gaogouli = next(c for c in self.xuantu['counties'] if c['name'] == '高句驪')
+        self.assertEqual(gaogouli['note'], '遼山，遼水出')
+
+
 if __name__ == '__main__':
     unittest.main()
