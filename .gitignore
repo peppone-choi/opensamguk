@@ -16,8 +16,8 @@ web/*/.next/
 web/*/out/
 .pnpm-store/
 # Env / OS
-.env
-.env.local
+.env*
+!.env*.example
 .env.headroom.example
 .DS_Store
 # .mcp.json은 커밋한다 (ADR-LITE-007): 토큰 무포함 원칙(값은 env 참조·대화형 OAuth),
@@ -81,6 +81,22 @@ tools/php-golden/probe_*.php
 .omc/
 web/*/.omc/
 
+# Agent worktree/team scratch trees (local orchestration state, never
+# committed — #513: previously only .git/info/exclude, which check.py's
+# `git ls-files --others --exclude-standard` doesn't see, so an untracked
+# .omo/ leaked into the product-authority scan on machines that have one).
+# .omx/ and .codegraph had the same local-only-exclude gap (verified via
+# `git check-ignore -v`: both resolved to .git/info/exclude, not .gitignore,
+# on the checkout #513 was measured on).
+.omo/
+.omx/
+.codegraph
+# graphify cache output (verified untracked AND unignored on the #513
+# checkout — `git check-ignore -v` found no match at all, so it was leaking
+# into `git ls-files --others` too; harmless today only because it's all
+# .json, but it's generated output and shouldn't be scanned or committable).
+common/src/main/kotlin/graphify-out/
+
 # Local scratch directories
 parity-shots/
 tmp/
@@ -108,6 +124,9 @@ data/chgis-source/
 data/map/*
 # ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
 !data/map/han-tiles.json
+# Wikidata(CC0) 전용 산출물, CHGIS 입력 없음 — CHGIS 파생물이 아니므로 위 미커밋 규칙 대상이 아니다.
+# tools/map/build_external_places.py docstring 참조. han-places.json/terrain-grid.json 은 계속 미커밋.
+!data/map/external-places.json
 **/v6_*_pts*
 **/v6_*_pgn*
 **/v6_*_lin*

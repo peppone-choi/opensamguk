@@ -31,12 +31,20 @@ jobs:
       - name: Verify agent-system tool tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
-      - name: Verify Han route-node candidates
+      - name: Verify unitset build (data/unitset/units.json drift)
+        # build_unitset.py's only input is data/unitset/units.json itself
+        # (authored table fields -> derived numeric fields, same file) --
+        # tracked, no gitignore barrier, unlike build_han_world.py (#534).
+        # Deterministic (verified: two consecutive runs byte-identical) and
+        # was never wired into CI -- same "gate exists, nobody calls it"
+        # shape as #534/#521. Ceiling: it only catches a missed regen (the
+        # derived fields not matching the authored ones) -- it re-derives
+        # from whatever is currently authored in units.json, so a wrong
+        # authored value that's been regenerated through this script reads
+        # as GREEN forever. This is not a correctness gate on the data,
+        # only a "did you forget to rerun the generator" gate.
         if: '!cancelled()'
-        run: python3 tools/scenario/han_route_node_candidates.py --check
-      - name: Verify Han route-node selection
-        if: '!cancelled()'
-        run: python3 tools/scenario/han_route_node_selection.py --check
+        run: python3 tools/unitset/build_unitset.py --check
       - name: Verify Han route-node selection validator
         if: '!cancelled()'
         run: python3 tools/scenario/validate_han_route_node_selection.py
