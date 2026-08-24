@@ -256,5 +256,103 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         self.assertEqual([], bad, f"han_ownership.json 이 중복 城名을 참조한다 — 어느 城인지 정해지지 않는다: {bad}")
 
 
+# U58 — 손으로 넣은 X-계열 郡 노드와 CHGIS 郡 노드가 같은 郡을 두 번 세운 쌍.
+# 28건 전수 대조(2026-08-24)에서 나온 4쌍. 키는 juns 가 채택한 쪽(X-계열), 값은 판 밖에 남은 CHGIS 짝.
+# 판정 축이 둘이었다 — 이름(이체자 정규화)으로 3쌍, 좌표+사료로 나머지 1쌍(汉嘉郡)이 나왔다.
+XSERIES_TWINS = {
+    "鉅鹿郡": "巨鹿郡",    # 讀史方輿紀要 卷014 「漢爲常山及鉅鹿郡」 / 後漢書 卷023 「薦融爲巨鹿太守」 — 이체자
+    "牂牁郡": "牂柯郡",    # 讀史方輿紀要 卷070 「漢牂牁郡地」 / 元和郡縣圖志 卷30 「武帝置牂柯郡」 — 이체자
+    "越巂郡": "越嶲郡",    # 後漢書 卷086 「以爲越巂郡」 / 華陽國志 卷三 「越嶲郡序」 — 이체자, 3km
+    "蜀郡屬國": "汉嘉郡",  # 讀史方輿紀要 卷072 「漢延光初置蜀郡屬國，三國漢改漢嘉郡」 — 연대 다른 이름, 20km
+}
+
+
+class XSeriesCommanderyDuplicates(unittest.TestCase):
+    """U58 — **한 郡이 지도 위에 두 번 서 있다.** 표기 문제가 아니라 동일성 문제다.
+
+    `han-places.json` 의 `id` 가 `X` 로 시작하는 노드는 CHGIS 가 아니라 사람이 손으로 넣은
+    보충 노드다(`begYr: -9999`, 한국어 `basis`). 그 28개 郡 노드를 CHGIS 105개와 전수 대조했다.
+
+    **지금 무해한 이유는 구조가 막아줘서가 아니라 `juns` 가 옳은 쪽을 채택했기 때문이다.**
+    채택이 뒤집히거나 CHGIS 짝이 판에 올라오면 조용히 틀린다 — 그래서 채택 자체를 단언으로 박는다.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        tiles = json.loads(TILES_PATH.read_text(encoding="utf-8"))
+        cls.cities = tiles["cities"]
+        cls.jun_nameCh = {j["name"]: j.get("nameCh") for j in tiles["juns"]}
+
+    def test_u58_twins_are_off_board(self) -> None:
+        """CHGIS 짝 4건은 전부 판 밖(`zhi=False`)이어야 한다. 판에 올라오면 같은 郡이 두 칸이 된다."""
+        for adopted, twin in XSERIES_TWINS.items():
+            with self.subTest(twin=twin):
+                nodes = [c for c in self.cities if c.get("nameCh") == twin]
+                self.assertEqual(1, len(nodes), f"{twin} 노드 수가 변했다 — U58 을 재판정해라")
+                self.assertFalse(
+                    nodes[0].get("zhi"),
+                    f"{twin} 가 판에 올라왔다 — {adopted} 와 같은 郡이 두 칸이 된다(U58)",
+                )
+
+    def test_u58_jun_tiles_adopted_the_xseries_side(self) -> None:
+        """**이 값은 우연히 맞은 것이다.** `juns` 175 가 4쌍 전부에서 X-계열 쪽을 채택했다.
+
+        X-계열 쪽 seat 이 郡國志와 맞기 때문에 지금 오배정이 없다(거록군→廮陶县, 장가군→故且兰县,
+        월휴군→邛都县, 촉군속국→汉嘉县). 채택이 CHGIS 쪽으로 뒤집히면 seat 이 같이 뒤집힌다.
+        뒤집히면 빨개진다 — 그때 값을 맞추지 말고 이 단언을 지우고 U58 을 재판정해라.
+        """
+        adopted_by_tile = {v: k for k, v in self.jun_nameCh.items() if v in XSERIES_TWINS}
+        self.assertEqual(
+            sorted(XSERIES_TWINS), sorted(adopted_by_tile),
+            f"郡 타일이 채택한 표기가 변했다 — U58 을 재판정해라: {adopted_by_tile}",
+        )
+
+    def test_u58_ownership_avoids_the_era_twin(self) -> None:
+        """`좌풍익`(左馮翊, X015) 과 `풍익군`(馮翊郡, CHGIS 211473) 은 **같은 곳의 다른 시기 이름**이다.
+
+        위 4쌍과 달리 이 쌍은 **둘 다 郡 타일이다** — 175 안에 같은 곳이 두 번 들어 있다.
+        `han_ownership.json` 이 「이 표는 후한 표기인 좌풍익만 쓴다」고 `_caveats` 에 적어놨는데,
+        **그건 주석이지 단언이 아니다**(R48). 규약이 깨지면 한 곳이 두 세력에 배정될 수 있다.
+        """
+        payload = json.loads((ROOT / "tools/scenario/han_ownership.json").read_text(encoding="utf-8"))
+        used: list[str] = []
+
+        def walk(node: object) -> None:
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key == "juns" and isinstance(value, list):
+                        used.extend(v for v in value if isinstance(v, str))
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+
+        walk(payload)
+        self.assertIn("좌풍익", used, "좌풍익이 안 쓰인다 — 규약이 바뀌었으면 _caveats 와 이 단언을 같이 고쳐라")
+        self.assertNotIn(
+            "풍익군", used,
+            "han_ownership.json 이 풍익군을 쓴다 — 좌풍익과 같은 곳이라 한 곳이 두 번 배정된다",
+        )
+
+    def test_u59_fengyi_jun_sits_on_the_jingzhao_coordinate(self) -> None:
+        """**이 값은 결함이다.** `冯翊郡` 노드가 `京兆尹` 과 **완전히 같은 좌표**에 있다(U59).
+
+        CHGIS 자기 `presLoc` 이 스스로를 부정한다 — `京兆尹`(212275) 은 「今陕西西安市北」,
+        `冯翊郡`(211473) 은 「今陕西省大荔县」인데 `lon/lat` 이 둘 다 108.93719, 34.31799 다.
+        **약 103km 어긋난다.** 판 안에 옳은 자리가 이미 있다: `临晋县`(idx 60, 109.939/34.7972,
+        「今陕西大荔县城」, `zhi=True`) — 曹魏 馮翊郡治다.
+
+        **좌표는 지어내지 않는다** — 고치는 건 이 레인 몫이 아니고 `han-tiles.json` 은 재생성 금지다(GH #536).
+        지금 무해한 이유는 `풍익군` 타일이 공백지여서일 뿐이다(`_caveats`).
+        좌표가 바뀌면 빨개진다 — 그때 값을 맞추지 말고 이 단언을 지우고 U59 를 닫아라.
+        """
+        by_name = {c.get("nameCh"): c for c in self.cities}
+        jingzhao, fengyi = by_name["京兆尹"], by_name["冯翊郡"]
+        self.assertEqual(
+            (jingzhao["lon"], jingzhao["lat"]), (fengyi["lon"], fengyi["lat"]),
+            "冯翊郡 좌표가 京兆尹 과 갈렸다 — U59 를 재판정해라",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
