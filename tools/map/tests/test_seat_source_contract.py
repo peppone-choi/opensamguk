@@ -80,5 +80,24 @@ class SeatSourceContract(unittest.TestCase):
                 )
 
 
+    def test_forbidden_coords_are_not_on_the_board(self) -> None:
+        """R48 확장 — 「모른다」뿐 아니라 「이 답은 틀렸다」도 단언으로 적는다.
+
+        부재만 기록하면 다음 사람이 CHGIS 를 조회해 같은 오답을 다시 찾아낸다.
+        누가 이 좌표로 노드를 만들면 즉시 빨개진다.
+        """
+        for row in self.rows:
+            for bad in row.get("forbiddenCoords", []):
+                lon, lat = bad["lonLat"]
+                for city in self.cities:
+                    if city.get("lon") is None or city.get("lat") is None:
+                        continue
+                    if abs(city["lon"] - lon) < 0.01 and abs(city["lat"] - lat) < 0.01:
+                        self.fail(
+                            f"\n{row['jun']}: 금지 좌표 {bad['name']} {bad['lonLat']} 에 "
+                            f"노드 {city.get('nameCh')} 가 있다.\n  {bad['why']}"
+                        )
+
+
 if __name__ == "__main__":
     unittest.main()
