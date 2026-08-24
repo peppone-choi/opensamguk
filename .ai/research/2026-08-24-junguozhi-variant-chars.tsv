@@ -163,11 +163,11 @@ ours	corpus	label	fault	note
 毗	毘	variant	없음(양쪽 다 정당)	정자/이체자 관계. 어느 쪽도 오류 아님
 麊	麋	variant	없음(양쪽 다 정당)	정자/이체자 관계. 어느 쪽도 오류 아님
 稿	稾	variant	없음(양쪽 다 정당)	정자/이체자 관계. 어느 쪽도 오류 아님
-睪	睾	ours_corrupt	우리 파서	우리 쪽 글자가 깨졌다. 이체자가 아니다
-啮	𨻻	ours_corrupt	우리 파서	우리 쪽 글자가 깨졌다. 이체자가 아니다
-巿	市	ours_corrupt	우리 파서	우리 쪽 글자가 깨졌다. 이체자가 아니다
-烫	𧦦	ours_corrupt	우리 파서	우리 쪽 글자가 깨졌다. 이체자가 아니다
-〈	定	ours_corrupt	우리 파서	우리 쪽 글자가 깨졌다. 이체자가 아니다
+睪	睾	edition_diff	없음(底本 계통 차이)	ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다
+啮	𨻻	edition_diff	없음(底本 계통 차이)	ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다
+巿	市	edition_diff	없음(底本 계통 차이)	ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다
+烫	𧦦	edition_diff	없음(底本 계통 차이)	ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다
+〈	定	edition_diff	없음(底本 계통 차이)	ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다
 禹	襄	reject	—	1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다
 碭	焉	reject	—	1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다
 西	鄲	reject	—	1글자 차이지만 서로 다른 縣이다. 매핑하면 안 된다

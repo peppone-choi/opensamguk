@@ -1151,37 +1151,37 @@
   {
    "ours": "睪",
    "corpus": "睾",
-   "label": "ours_corrupt",
-   "fault": "우리 파서",
-   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+   "label": "edition_diff",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다"
   },
   {
    "ours": "啮",
    "corpus": "𨻻",
-   "label": "ours_corrupt",
-   "fault": "우리 파서",
-   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+   "label": "edition_diff",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다"
   },
   {
    "ours": "巿",
    "corpus": "市",
-   "label": "ours_corrupt",
-   "fault": "우리 파서",
-   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+   "label": "edition_diff",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다"
   },
   {
    "ours": "烫",
    "corpus": "𧦦",
-   "label": "ours_corrupt",
-   "fault": "우리 파서",
-   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+   "label": "edition_diff",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다"
   },
   {
    "ours": "〈",
    "corpus": "定",
-   "label": "ours_corrupt",
-   "fault": "우리 파서",
-   "note": "우리 쪽 글자가 깨졌다. 이체자가 아니다"
+   "label": "edition_diff",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 底本(data/chgis-source/junguozhi)이 실제로 이 글자로 적는다. 우리 파서 오류가 아니다"
   },
   {
    "ours": "禹",
@@ -1345,25 +1345,33 @@
    "jun": "犍為郡",
    "ours": "荷節",
    "corpus": "符節",
-   "label": "ours_corrupt_name",
-   "fault": "우리 파서",
-   "note": "符이 荷로 깨졌다"
+   "label": "edition_diff_name",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 卷113 「僰道江陽荷節南廣漢安」 — ctext 底本이 荷節로 적는다"
   },
   {
    "jun": "五原郡",
    "ours": "河除",
    "corpus": "河陰",
-   "label": "ours_corrupt_name",
-   "fault": "우리 파서",
-   "note": "陰이 除로 깨졌다. 除↔陰은 문자 매핑이 아니다(다른 縣의 除를 오염시킨다)"
+   "label": "edition_diff_name",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 卷113 「九原五原臨沃父國河除武都」 — ctext 底本이 河除로 적는다. 除↔陰은 문자 매핑 불가"
   },
   {
    "jun": "五原郡",
    "ours": "父國",
    "corpus": "文國",
-   "label": "ours_corrupt_name",
-   "fault": "우리 파서",
-   "note": "文이 父로 깨졌다. 父↔文은 문자 매핑 불가 — 父城·城父·亢父·單父를 오염시킨다"
+   "label": "edition_diff_name",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 卷113 「臨沃父國河除」 — ctext 底本이 父國으로 적는다. 父↔文은 문자 매핑 불가(父城·城父·亢父·單父를 오염시킨다)"
+  },
+  {
+   "jun": "東海郡",
+   "ours": "合城",
+   "corpus": "合鄉",
+   "label": "edition_diff_name",
+   "fault": "없음(底本 계통 차이)",
+   "note": "ctext 卷111 「承陰平利城合城祝其」 — ctext 底本이 合城으로 적는다"
   },
   {
    "jun": "漁陽郡",
