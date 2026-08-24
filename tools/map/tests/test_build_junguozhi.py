@@ -1321,3 +1321,88 @@ class TestChenliuJunPingqiuChangyuanSplitRegression(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestDaoCountySuffixRegression(unittest.TestCase):
+    """「凡縣主蠻夷曰道」(後漢書 卷118 百官志五) — 道는 縣名의 일부다.
+
+    CHGIS 가 그 全稱을 안 갖고 앞 2자만 갖는 자리가 있어(湔氐道·汶江道·綿虒道
+    셋 다 cnty_xy 에 없고 湔氐/汶江/綿虒 만 있다) 縣 경계가 道 앞에서 잘리고,
+    떨어져 나온 道가 다음 縣의 첫 글자로 붙어 가짜 縣이 됐다(蜀郡 「道岷」).
+
+    **세 픽스처 전부 城數 체크섬은 PASS 다.** 규칙을 빼도, 가드를 빼도 PASS 다 —
+    개수는 하나도 안 변하기 때문이다. 이 클래스가 존재하는 이유가 그것이다.
+    실측한 RED probe 3건:
+
+    - 규칙 제거 → A 가 `汶江` 로 되돌아간다(道 소실)
+    - 亭 가드 제거 → B 가 `陽安道` 가 된다(汝南郡 파괴)
+    - 道人 가드 제거 → C 가 `高柳道`+`人` 이 된다(代郡 파괴)
+
+    A 의 원문은 data/chgis-source/junguozhi/wu.html 蜀郡 블록
+    「有鐵。湔氐道岷山在西徼外。汶江道八陵廣柔」에서, B 는 er.html 汝南郡
+    「…期思有蔣鄉，故蔣國。陽安」+「道亭，故國。項西華…」에서 그대로 옮겼다
+    (陽安 앞의 「有」를 ctext HTML 이 흘린 것까지 그대로다 — 그 「有」에 기댈 수
+    없다는 게 亭 가드가 필요한 이유다). C 는 代郡 道人縣을 재현한 최소 픽스처다.
+    """
+
+    @staticmethod
+    def _run(segments, cnty, pref):
+        import json
+        import os as _os
+        import tempfile
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(segments)
+        bj.chgis_points = lambda layer, field='NAME_FT', han_only=False: (
+            dict(cnty) if layer == 'cnty' else dict(pref))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            return json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+
+    def test_dao_is_absorbed_into_the_county_name(self):
+        doc = self._run(
+            [('wu', '蜀郡'), ('wu', '三城，戶一，口一。'), ('wu', '臨邛'),
+             ('wu', '有鐵。汶江道八陵廣柔')],
+            {'臨邛': [(103.6, 30.4)], '汶江': [(103.6, 31.5)], '廣柔': [(103.5, 31.6)]},
+            {'蜀': [(104.06, 30.65)]})
+        place = doc['places'][0]
+        self.assertEqual([c['name'] for c in place['counties']], ['臨邛', '汶江道', '廣柔'])
+        self.assertEqual(place['checksum'], 'PASS',
+                         '城數는 규칙이 있든 없든 PASS 다 — 이 검사가 볼 것은 이름이다')
+        wenjiang = next(c for c in place['counties'] if c['name'] == '汶江道')
+        self.assertEqual(wenjiang['resolution'], 'RESOLVED_POINT',
+                         'CHGIS 「汶江」 점은 汶江道의 縣治 그 자체다 — 全稱으로 고치면서 '
+                         '좌표를 버리면 안 된다')
+
+    def test_dao_ting_is_a_pavilion_not_a_county_suffix(self):
+        """汝南郡 「陽安，有道亭，故國」(卷110). 京兆尹 「霸陵有枳道亭」(卷109)도 같다."""
+        doc = self._run(
+            [('er', '汝南郡'), ('er', '四城，戶一，口一。'),
+             ('er', '期思有蔣鄉，故蔣國。陽安'), ('er', '道亭，故國。項西華')],
+            {'期思': [(115.5, 32.3)], '陽安': [(114.1, 33.1)],
+             '項': [(114.4, 33.4)], '西華': [(114.5, 33.7)]},
+            {'汝南': [(114.6, 32.9)]})
+        names = [c['name'] for c in doc['places'][0]['counties']]
+        self.assertEqual(names, ['期思', '陽安', '項', '西華'])
+        self.assertNotIn('陽安道', names, '道亭의 道를 縣名에 붙이면 汝南郡이 조용히 깨진다')
+
+    def test_daoren_county_is_not_eaten_by_the_preceding_name(self):
+        """代郡 道人縣 — 道로 **시작하는** 진짜 縣이다."""
+        doc = self._run(
+            [('wu', '代郡'), ('wu', '三城，戶一，口一。'), ('wu', '高柳'), ('wu', '道人班氏')],
+            {'高柳': [(113.6, 40.3)], '道人': [(113.4, 40.2)], '班氏': [(113.9, 40.1)]},
+            {'代': [(113.7, 40.3)]})
+        names = [c['name'] for c in doc['places'][0]['counties']]
+        self.assertEqual(names, ['高柳', '道人', '班氏'])
+        self.assertNotIn('高柳道', names, '道人의 道를 앞 縣에 붙이면 代郡이 조용히 깨진다')

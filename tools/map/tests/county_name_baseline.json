@@ -284,15 +284,11 @@
    "jun": "蜀郡",
    "missing": [
     "湔氐道",
-    "汶江道",
-    "八陵",
-    "綿虒道"
+    "八陵"
    ],
    "extra": [
     "湔氐",
-    "道岷",
-    "汶江",
-    "綿虒"
+    "道岷"
    ]
   },
   {
@@ -359,8 +355,8 @@
   }
  ],
  "jun_count": 32,
- "missing_total": 61,
- "extra_total": 62,
+ "missing_total": 59,
+ "extra_total": 60,
  "checksum_blind_count": 31,
  "checksum_blind_juns": [
   "河內郡",
