@@ -344,6 +344,33 @@ class TestFullPipelineOutput(unittest.TestCase):
             for c in p['counties']:
                 self.assertNotIn('刺史部', c['note'], f"{p['name']}/{c['name']}")
 
+    def _counties(self, jun):
+        return next(p for p in self.data['places'] if p['name'] == jun)['counties']
+
+    def test_note_internal_landmark_does_not_resync_as_fake_county(self):
+        # 「有X」 註 안 지명이 縣 경계로 오인되는 사고 一族 — 개별 CONFIRMED_*
+        # 화이트리스트가 아니라 일반 규칙으로 막혀야 한다(有 로 시작하는 절은
+        # NOTE_START 재동기화 대상에서 아예 제외). 아래 셋은 실측(수정 전
+        # data/map/junguozhi.json)에서 실제로 가짜 縣으로 새 나온 사례다,
+        # per-name 예외를 하나도 걸지 않은 채로.
+        #
+        # 陳留郡 外黃 註 원문(data/corpus/hhs-111.txt:27)
+        # 「有葵丘聚，齊桓公會此，城中有曲棘里。有繁陽城。」— 「有繁陽城」의
+        # 「繁陽」이 딴 郡(汝南郡 등)의 동명 CHGIS 점과 우연히 맞아 재동기화,
+        # 陳留郡에 가짜 「繁陽」 縣(note='城')이 생겼다.
+        self.assertNotIn('繁陽', {c['name'] for c in self._counties('陳留郡')},
+                          '外黃 註 「有繁陽城」의 「繁陽」이 陳留郡에 가짜 縣으로 새 나왔다')
+        # 泰山郡 南城 註 원문(data/chgis-source/junguozhi/san.html:860) 「有東陽城」
+        # 의 「東陽」이 가짜 「東陽」 縣(note='城')으로 새 나왔다.
+        self.assertNotIn('東陽', {c['name'] for c in self._counties('泰山郡')},
+                          '南城 註 「有東陽城」의 「東陽」이 泰山郡에 가짜 縣으로 새 나왔다')
+        # 주의: 下邳國 「葛嶧」/「山，」은 이 부류가 아니다 — 이 파이프라인이
+        # 실제로 읽는 data/chgis-source/junguozhi/san.html:1088 원문은
+        # 「本屬東海。葛嶧山，本嶧陽山。有鐵。」로 「有」가 없다(위키문헌 계열
+        # hhs-111.txt 만 「有葛嶧山」으로 되어 있다 — 底本이 다르다). 「有」로
+        # 시작하지 않는 절이라 이 규칙의 적용 대상이 아니다 — NOTE_START 자체가
+        # 안 걸리는 run-splitting 결손이라 별도 항목(涅陽류)이다.
+
 
 class TestNanyangYuyangNoteReferenceRegression(unittest.TestCase):
     """南陽郡 育陽 註 내부 지명 참조 회귀 — 인라인 픽스처, data/chgis-source/**
