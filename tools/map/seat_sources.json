@@ -1,0 +1,384 @@
+{
+  "_about": "판별자 5 — 사료가 명기한 郡 治所와 han-tiles.json 의 seat 대조표. 이 표에 있는 郡만 검사한다.",
+  "_scope": "이 표는 §3.21.2 의 15행 + 우부풍(무해 경계 사례) + 광한속국(U54 기확정). 표에 없는 郡은 테스트가 초록이어도 아무것도 보장되지 않는다.",
+  "_rowRules": [
+    "sources 의 각 항목은 book·seat·citation 을 모두 가져야 한다. 출전 없는 행은 로드 단계에서 거부된다.",
+    "era 는 필수다. 사료도 시대가 다르면 다른 축이 아니라 틀린 축이다.",
+    "test=false 인 행은 excludeReason 이 필수다. 검사에서 빼되 표에서는 빼지 마라.",
+    "續漢書 郡國志는 郡 治所를 명기하지 않는다. seat 값은 '縣 나열 첫머리'이며 note 에 그렇게 적혀 있다.",
+    "currentWrongSeat 는 사료로 확증했지만 아직 안 고친 결함의 현재 값이다. 데이터 수정은 route-node provenance 앵커 재핀과 한 짝이라 별도 변경에서 한다 — 그때까지 결함을 단언으로 박아 둔다.",
+    "「모른다」뿐 아니라 「이 답은 틀렸다」도 적어라. 부재만 기록하면 다음 사람이 같은 오답을 다시 찾아낸다. forbiddenCoords 를 보라."
+  ],
+  "rows": [
+    {
+      "jun": "파군",
+      "expectedSeat": "江州县",
+      "era": "後漢·晉 일치",
+      "verdict": "일치",
+      "test": true,
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "江州",
+          "citation": "hyg-一:79"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "江州",
+          "citation": "hhs-113:37",
+          "note": "縣 나열 첫머리"
+        }
+      ]
+    },
+    {
+      "jun": "촉군",
+      "expectedSeat": "成都县",
+      "era": "後漢·晉 일치",
+      "verdict": "일치",
+      "test": true,
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "成都",
+          "citation": "hyg-三:96"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "成都",
+          "citation": "hhs-113:91",
+          "note": "縣 나열 첫머리"
+        }
+      ]
+    },
+    {
+      "jun": "광한군",
+      "expectedSeat": "雒县",
+      "era": "後漢·晉 일치",
+      "verdict": "일치",
+      "test": true,
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "雒",
+          "citation": "hyg-三:120"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "雒",
+          "citation": "hhs-113:67",
+          "note": "縣 나열 첫머리 · 「刺史治」 병기"
+        }
+      ]
+    },
+    {
+      "jun": "한중군",
+      "expectedSeat": "南郑县",
+      "era": "後漢·晉 일치",
+      "verdict": "일치",
+      "test": true,
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "南鄭",
+          "citation": "hyg-二:45"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "南鄭",
+          "citation": "hhs-113:17",
+          "note": "縣 나열 첫머리"
+        }
+      ]
+    },
+    {
+      "jun": "영창군",
+      "expectedSeat": "不韦县",
+      "era": "後漢·晉 일치",
+      "verdict": "일치",
+      "test": true,
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "不韋",
+          "citation": "hyg-四:171"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "不韋",
+          "citation": "hhs-113:235",
+          "note": "縣 나열 첫머리"
+        }
+      ]
+    },
+    {
+      "jun": "건위군",
+      "currentWrongSeat": "资中县",
+      "expectedSeat": "武阳县",
+      "era": "後漢·晉 일치",
+      "verdict": "U56 — 순수 선택 오류",
+      "test": true,
+      "note": "현재 seat 은 资中县. 두 시대가 같은 治所를 적고 武阳县 노드도 존재하는데 안 골랐다.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "武陽",
+          "citation": "hyg-三:146"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "武陽",
+          "citation": "hhs-113:115",
+          "note": "縣 나열 첫머리"
+        }
+      ]
+    },
+    {
+      "jun": "문산군",
+      "currentWrongSeat": "汶山郡",
+      "expectedSeat": "汶江道",
+      "era": "後漢 본지 없음(靈帝 置) · 晉 汶山",
+      "verdict": "U56 — 선택 오류(개명 미반영)",
+      "test": true,
+      "note": "汶山县 노드는 없지만 汶江道 노드가 있다. 華陽國志 주 「本汶江道，蜀改」 — 없는 게 아니라 옛 이름으로 있는 것이다. **다만 축이 셋으로 갈린다**(독립 비평 2026-08-24): hyg-三:176 원문은 「汶山縣　郡治。本汶江道，蜀改」라 汶江道는 蜀漢 개명 **前** 이름이고 220년은 이미 蜀漢이다. 좌표 축은 §3.29.4 에서 绵虒道를 댄다. 그래서 currentWrongSeat 을 지우면 이 테스트가 汶江道를 **요구하게** 된다 — 나머지 3건과 같은 확신으로 고치지 마라.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "汶山(本汶江道·蜀改)",
+          "citation": "hyg-三:176"
+        },
+        {
+          "book": "續漢書 郡國志 校勘記",
+          "seat": "(治所 미기재)",
+          "citation": "hhs-113:1089",
+          "note": "「靈帝以汶江、蠶陵、廣柔三縣置汶山郡」 — 郡 설치만 적는다"
+        }
+      ]
+    },
+    {
+      "jun": "파서군",
+      "currentWrongSeat": "巴西郡",
+      "expectedSeat": "阆中县",
+      "era": "後漢에 郡 없음(閬中는 巴郡 縣) · 晉 閬中",
+      "verdict": "U56 — 순수 선택 오류",
+      "test": true,
+      "note": "현재 seat 은 巴西郡(자기 자신). 阆中县 노드는 존재한다.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "閬中",
+          "citation": "hyg-一:141"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "(巴郡 縣으로 존재)",
+          "citation": "hhs-113:43",
+          "note": "後漢에는 巴西郡이 없다"
+        }
+      ]
+    },
+    {
+      "jun": "신성군",
+      "currentWrongSeat": "新城郡",
+      "expectedSeat": "房陵县",
+      "era": "220년 曹丕 置 · 晉 房陵",
+      "verdict": "U56 — 순수 선택 오류",
+      "test": true,
+      "note": "현재 seat 은 新城郡(자기 자신). 房陵县 노드는 존재한다.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "房陵",
+          "citation": "hyg-二:91"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "(漢中郡 縣으로 존재)",
+          "citation": "hhs-113:33",
+          "note": "後漢에는 新城郡이 없다"
+        }
+      ]
+    },
+    {
+      "jun": "장가군",
+      "expectedSeat": "故且兰县",
+      "era": "갈림 — 後漢 故且蘭 / 晉 萬壽. 220년 기준은 後漢",
+      "verdict": "결함 아님",
+      "test": true,
+      "note": "華陽國志만 보고 고쳤으면 멀쩡한 걸 깨뜨렸을 건. 이 판정을 뒤집으려면 근거를 대라.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "萬壽",
+          "citation": "hyg-四:61"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "故且蘭",
+          "citation": "hhs-113:135",
+          "note": "縣 나열 첫머리 · 郡國志 표기는 「牂牁」(「牂柯」로는 0건)"
+        }
+      ]
+    },
+    {
+      "jun": "무도군",
+      "seatNodeMissing": "下辨县",
+      "era": "後漢·晉 일치",
+      "verdict": "U54 — 治所 노드 결손",
+      "test": true,
+      "note": "현재 seat 은 沮县. 두 시대 다 下辨인데 노드가 없다. 좌표를 지어내지 마라 — CHGIS 에 없으면 「治所 미상」으로 명시하고 멈춰라.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "下辨",
+          "citation": "hyg-二:127"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "下辨",
+          "citation": "hhs-113:332",
+          "note": "縣 나열 첫머리"
+        }
+      ]
+    },
+    {
+      "jun": "부릉군",
+      "seatNodeMissing": "涪陵县",
+      "era": "後漢에 郡 없음(涪陵는 巴郡 縣) · 晉 涪陵",
+      "verdict": "U54 — 治所 노드 결손",
+      "test": true,
+      "note": "涪陵는 後漢에 巴郡 縣으로 실재했는데 노드가 없다.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "涪陵",
+          "citation": "hyg-一:123"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "(巴郡 縣으로 존재)",
+          "citation": "hhs-113:51"
+        }
+      ]
+    },
+    {
+      "jun": "광한속국",
+      "seatNodeMissing": "阴平道",
+      "era": "後漢 陰平道 · 晉 陰平縣 — 두 시대 일치",
+      "verdict": "U54 — 治所 노드 결손",
+      "test": true,
+      "note": "표기 변이 두 가지(阴平道·阴平县) 모두 데이터에 없다. 현재 seat 广武县 은 어느 시대로도 설명되지 않는다. §3.16/§3.21.3 에서 기확정. 이름은 郡國志 파싱 쪽에도 있고(CANDIDATE_REGION) 두 데이터셋이 갈리지 않는다 — 이름은 양쪽에 다 있고 좌표만 어디에도 없다.",
+      "sources": [
+        {
+          "book": "續漢書 郡國志",
+          "seat": "陰平道",
+          "citation": "hhs-113:253",
+          "note": "「別領三城」의 첫 縣"
+        },
+        {
+          "book": "華陽國志",
+          "seat": "陰平縣",
+          "citation": "hyg-二:153",
+          "note": "「陰平縣　郡治。漢曰陰平道也」"
+        }
+      ],
+      "forbiddenCoords": [
+        {
+          "layer": "CHGIS cnty",
+          "name": "陰平縣",
+          "lonLat": [
+            109.608444,
+            23.099092
+          ],
+          "presLoc": "今广西贵港市",
+          "begYr": 264,
+          "endYr": 279,
+          "why": "吳代 廣西다. 甘肅 文縣에서 약 1,500km. 이 값을 쓰면 廣漢屬國 治所가 廣西에 찍힌다 — #541 이 터진 방식 그대로다.",
+          "alreadyLive": "data/map/junguozhi.json 의 廣漢屬國 anchor 가 이미 이 좌표다(seat=陰平道, 縣 3: 陰平道·甸氐道·剛氐道). 주석의 근거가 아니라 실데이터다."
+        },
+        {
+          "layer": "CHGIS pref",
+          "name": "陰平郡",
+          "lonLat": [
+            104.426495,
+            33.098781
+          ],
+          "presLoc": "今甘肃省文县西阴平寨",
+          "begYr": 224,
+          "endYr": 307,
+          "why": "자리로는 맞아 보이지만 BEG 224 로 220년 슬라이스보다 늦고, 郡 좌표지 縣 좌표가 아니다. 「이걸 쓰면 되겠다」로 읽지 마라."
+        }
+      ]
+    },
+    {
+      "jun": "탕거군",
+      "expectedSeat": "宕渠县",
+      "era": "연대 UNKNOWN(同名)",
+      "verdict": "일치",
+      "test": false,
+      "excludeReason": "後漢에 郡 자체가 없어 연대 교차가 불가능하다. 郡名=治所名이라 自明해 보이지만 그건 추론이다.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "宕渠",
+          "citation": "hyg-一:157"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "(巴郡 縣으로 존재)",
+          "citation": "hhs-113:39"
+        }
+      ]
+    },
+    {
+      "jun": "강양군",
+      "expectedSeat": "江阳县",
+      "era": "연대 UNKNOWN(同名)",
+      "verdict": "일치",
+      "test": false,
+      "excludeReason": "後漢에 郡 자체가 없어 연대 교차가 불가능하다.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "江陽",
+          "citation": "hyg-三:160"
+        }
+      ]
+    },
+    {
+      "jun": "재동군",
+      "expectedSeat": "梓潼县",
+      "era": "연대 UNKNOWN(同名)",
+      "verdict": "일치",
+      "test": false,
+      "excludeReason": "後漢에 郡 자체가 없어 연대 교차가 불가능하다.",
+      "sources": [
+        {
+          "book": "華陽國志",
+          "seat": "梓潼",
+          "citation": "hyg-二:107"
+        },
+        {
+          "book": "續漢書 郡國志",
+          "seat": "(廣漢郡 縣으로 존재)",
+          "citation": "hhs-113:77"
+        }
+      ]
+    },
+    {
+      "jun": "우부풍",
+      "expectedSeat": "槐里县",
+      "era": "後漢 槐里",
+      "verdict": "U56형이나 무해",
+      "test": false,
+      "excludeReason": "始平县·槐里县 둘 다 今兴平县이라 위치 피해가 없다. 무해한 사례가 표에 있어야 U56형의 경계가 보인다 — 「틀렸다」가 아니라 「안 골랐다」이고, 안 고른 결과가 항상 해로운 건 아니다. 고치지 마라.",
+      "sources": [
+        {
+          "book": "續漢書 郡國志(潘岳 關中記 인용)",
+          "seat": "槐里",
+          "citation": "hhs-109",
+          "note": "「扶風出治槐里」 — 「右扶風」으로는 0건이다. 표기 변이 주의"
+        }
+      ]
+    }
+  ]
+}

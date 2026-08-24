@@ -1,5 +1,143 @@
 # Current Task
 
+## 2026-08-22 — OPENSAM-226 W1-B 외부 세계 5개 pack 사료 계약 (진행 중)
+
+- Goal: W1-A의 legacy 외부 65행을 전부 명시적으로 disposition하고, 동해·동북·서역·
+  북방·남방 5개 pack의 선택된 외부 대상을 `AdministrativePlace | AnchoredPlace |
+  PolityPresence | RemoteGate`로 분리한다. 활성 대상은 원문·권차·시기·위치 판정을
+  갖고, `-9999..9999` 기본 기간과 현대 좌표 기반 역사 확정을 제거한다.
+- Source boundary: 로컬 공개 corpus의 repo-relative path, SHA-256, 1-based line range,
+  exact verbatim을 claim마다 고정한다. 제품 활성 15개와 lifecycle 검증 대상 Han
+  리소스 31개를 분리하며, 사료 밖 위치·시기·고정점을 만들지 않는다.
+- Required adjudication: 倭 여정은 `對馬→一大→末盧→伊都→奴→不彌→投馬→邪馬壹`
+  순서를 보존한다. `帶方郡`은 설치 근거 이전 활성 0, `流求`는 활성 0/후대 alias-only,
+  `夷洲`는 단일 확정점 금지, 후대 가야 명칭은 alias-only다. 이동·분산 세력은
+  고정 도시가 아닌 `PolityPresence`다.
+- Allowed files: `.ai/{task,current-state,ownership}.md`,
+  `tools/map/{external_world_contract,build_external_world_pack_index,external_world_validation,external_world_source_validation}.py`,
+  `tools/map/tests/{test_external_world_contract_validation,test_external_world_source_validation}.py`,
+  `data/curated/han/external-world-{pack-index,legacy-adjudications}-v1.json`,
+  `data/curated/han/external-world-packs/{east-sea-wa,northeast,western-regions,northern-steppe,southern-maritime}-v1.json`,
+  W1-B 독립 review artifact.
+- Acceptance: legacy 65 disposition 100%, 다섯 pack coverage 100%, 활성 외부 대상의
+  source/date/location resolution 100%, source SHA·line·verbatim exact, lifecycle 무기한
+  기본값 0, forbidden type/date/location 승격 0, 결정적 재생성·mutation tests·독립 검토.
+- Non-goals: W1-C 승인 corridor/access relation·mode·geometry·최종 graph snapshot,
+  `han.json`/시나리오/Kotlin/runtime 활성화, live infrastructure 값, W2+.
+
+## 2026-08-22 — W1-A 교통·외부 세계 후보 계약 (완료)
+
+- Goal: W0의 승인 RouteNode 780개에 현재 `han.json`의 무방향 연결 1,783개를
+  route-key 기반 후보로만 옮기고, `external-places.json` 65행도 전부 PENDING 후보로
+  보존한다. 후보 생성은 도로·항로의 승인, mode, geometry, 사료 근거를 추론하지 않는다.
+- Scenario boundary: Gateway가 노출하는 `ACTIVE_PRODUCT_SCENARIO_CODES`는 15개이고,
+  Han 지도 데이터 계약이 누락 없이 검사할 시나리오 리소스는 31개다. 두 집합을
+  별도 필드로 고정하며 수명주기 검증 범위는 31개 전체다.
+- Completed files: `.ai/{task,current-state,ownership}.md`,
+  `tools/map/{build_route_corridor_candidates,route_network_contract,route_network_validation,route_network_source_validation}.py`,
+  `tools/map/tests/{test_route_corridor_candidates,test_route_network_contract_validation,test_route_network_source_validation}.py`,
+  `data/curated/han/{route-network-contract,route-corridor-key-registry,route-corridor-candidates,external-world-candidates}-v1.json`,
+  `docs/superpowers/reviews/2026-08-22-w1a-route-corridor-candidate-contract-review.md`.
+- Acceptance: 후보 연결 1,783 exact/unique/PENDING, endpoint RouteNode 780 집합 안,
+  self/dangling/duplicate/asymmetry 0, UUIDv4 corridor key 1,783 unique, 외부 65 exact/PENDING,
+  허용 mode와 4개 외부 타입 계약, infrastructure state 분리, runtime activation
+  `NOT_CLAIMED_BY_W1_DATA_CONTRACT`, 결정적 재생성·drift 검사·타깃 테스트·독립 검토.
+- Non-goals: W1-B 행별 APPROVE/REJECT/SPLIT/SUPERSEDE, 사료 claim과 외부 5팩,
+  geometry, 최종 연결 그래프, live infrastructure 값, 시나리오/runtime 활성화, W2+.
+- Evidence: 타깃 25/25, 실제 `--check` drift 0, Ruff·py_compile·basedpyright·
+  no-excuse green, 산출물 4개 SHA 고정, 독립 remediation 재검토
+  `BLOCKER 0 / MAJOR 0 / MINOR 0`, 최종 `cleared`.
+
+## 2026-08-22 — W0 전체 정본 게이트 (완료)
+
+- Status: W0-A/B/C 산출물과 독립 비평은 모두 `cleared`다. map 25/25,
+  RouteNode 110/110, 정본/오버레이/후보/선정 드리프트 0, Ruff·py_compile,
+  Agent System strict 오류/경고 0으로 W0 게이트를 닫았다.
+- Boundary: W0-C는 data-contract approval이다. 시나리오 typed route-node binding과
+  fresh-world activation은 후속 prerequisite로 남겼고, live-save cutover는 계속
+  `NEW_WORLD_ONLY`로 차단한다. 이 경계를 유지한 채 W1로 넘어간다.
+
+## 2026-08-22 — W0-C reviewed 780 RouteNode 선정·저장 이관 (완료)
+
+- Status: 1,960 후보를 전부 `PENDING`으로 생성하고, 722 unique overlay + 50
+  행별 모호성 심사 + 8 외부 위치 claim으로 780개를 명시 승인했다.
+  materializer/validator 110/110과 최종 독립 재검토가 `cleared`다.
+- Goal: W0-A 1,180 identity와 W0-B 220년 물리 위치 오버레이를 서로 다른
+  `AdministrativeUnit`, `PhysicalPlace`, `RouteNode` 계층으로 유지하면서 정확히 780개
+  플레이 노드를 승인한다. 각 노드는 독립적으로 발급한 `routeNodeKey`, 하나의
+  `physicalPlaceRef`, 그리고 `HHS_ADMINISTRATIVE_UNIT` 또는
+  `EXTERNAL_SOURCE_CLAIM` 중 정확히 하나의 역사 결합을 가진다.
+- Review boundary: 후보 생성기는 모든 행을 `PENDING`으로만 출력한다. 승인 파일은
+  행별 선정 사유·위치 판정·역사 충돌 disposition·활성 기간·시나리오 집합을 명시하며,
+  거리/최근접/첫 후보 자동 선택은 허용하지 않는다. `PolityPresence`, 181~225년에
+  성립하지 않는 후대 명칭, 고정점으로 비정할 수 없는 해역은 RouteNode가 아니다.
+- Save boundary: 숫자 ID는 `oldCityId -> oldNodeFingerprint -> routeNodeKey -> newCityId`
+  원장으로만 이관한다. 실제 live save 존재와 전 참조 리허설이 확인되기 전에는
+  `NEW_WORLD_ONLY`로 fail-closed하며, 불변 history/replay JSON을 몰래 재작성하지 않는다.
+- Completed files: `.ai/{task,current-state,ownership}.md`, 신규
+  `tools/scenario/{build_han_route_node_candidates,validate_han_route_node_selection}.py`,
+  신규 `tools/scenario/tests/test_han_route_node_selection.py`, 신규
+  `data/curated/han/route-node-*-v1.json`, W0-C review artifact.
+- Acceptance: 후보 1,180/현재 780 전수 분류, APPROVED 780, old/new ID 각각
+  `1..780`, route key 780 unique, binding XOR/dangling/duplicate 0, 모호 위치 행별
+  adjudication 100%, `-9999..9999` 0, `流求` 활성 0, 204년 전 `帶方郡` 활성 0,
+  `PolityPresence` RouteNode 0, 가짜 `龜茲屬國` 0, ID 704 역사 결합 교정 수치,
+  결정적 생성·참조 무결성·독립 검토 `cleared`.
+- Non-goals: W1 corridor 승인·외부 세계 전수 저작, W2+ 런타임 명령/이동, live save
+  cutover, 배포, 골든/legacy 변경, 시크릿 접근.
+
+## 2026-08-22 — W0-B 1,180 행정단위·CHGIS 220년 좌표 오버레이 (완료)
+
+- Status: tools/map 25/25, real-source drift 0, 1,180 identity exact, independent
+  terminal review `cleared`로 완료했다.
+- Goal: 1,180개 안정 identity를 누락 없이 CHGIS V6 county point 220년
+  snapshot과 결합하되, 동명 후보를 거리로 임의 선택하지 않고 해결·모호·미해결·
+  손상 원문을 명시적 상태로 보존한다.
+- Join contract: key는 `(sourceVolume, canonicalGroup, ordinal)`로만 만든다.
+  일치는 `sourceName`과 독립 인용이 있는 `nameCorrection.correctedName`만 사용하고,
+  CHGIS `NAME_CH|NAME_FT`의 현/도/후국/읍 접미를 규칙으로 제거한 정확 일치만 후보로 삼는다.
+  `BEG_YR <= 220 <= END_YR`만 포함하고, 후보 1건은 `RESOLVED_POINT`, 2건 이상은
+  `AMBIGUOUS_POINT`, 0건은 `NO_COORDINATE_CANDIDATE`, 원문 손상 3건은
+  `SOURCE_PLACEHOLDER`로 fail-closed한다. 단, 유일 후보 record를 다른 identity도
+  사용하면 양쪽 모두 `AMBIGUOUS_POINT`이며 선택 좌표를 두지 않는다.
+- Output policy: CHGIS 좌표·record provenance가 든 생성물
+  `data/map/administrative-place-overlay.json`은 ADR-LITE-039에 따라 gitignored/uncommitted로
+  유지하고, 추적 코드·테스트·리뷰 증거만 commit surface에 둔다.
+- Allowed files: `.ai/{task,current-state,ownership}.md`,
+  `tools/map/build_administrative_place_overlay.py`,
+  `tools/map/tests/test_administrative_place_overlay.py`,
+  `docs/superpowers/reviews/2026-08-22-w0b-administrative-place-overlay-review.md`.
+- Acceptance: 오버레이 identity 1,180/1,180 exact+unique, input catalog 105/1,180
+  fail-closed, CHGIS DBF hash·year·record provenance 보존, 후보 2건 이상의 좌표 선택 0,
+  legacy 1,076에서 빠진 104 identity를 모두 명시적 상태로 표현, 결정적 재생성,
+  targeted test/real-source `--check` green, 별도 agent 비평 `cleared`.
+- Non-goals: 모호 후보의 인수 승인, 780 playable 선정·save migration(W0-C),
+  외부 세력·도로(W1), 런타임/DB/UI 변경, 추적 좌표 데이터 추가.
+
+## 2026-08-22 — W0-A 후한 군국지 정본 카탈로그 (완료)
+
+- Status: 9/9 targeted test, 105/1,180 exact audit, byte-exact artifact,
+  whole-worktree verifier와 별도 agent 검토 `cleared`로 완료했다.
+- Goal: 《後漢書》 卷109–113 郡國志의 구조를 경계 정본으로 삼아 105개 군국과
+  1,180개 현급 단위를 중복 없는 안정 식별자 `(sourceVolume, canonicalGroup, ordinal)`로
+  공개 정본화한다.
+- Source contract: 로컬 공개 도메인 corpus는 블록 경계·열거 순서·유형 판정의 근거다.
+  ctext 사본/CHGIS는 W0-A 정본 좌표에 포함하지 않는다. 원문 불일치는 숨기지 않고
+  `安平國 城十三 / 열거 12` 한 건으로 명시한다.
+- Allowed files: `.ai/{task,current-state,ownership}.md`,
+  `tools/map/audit_junguozhi_source.py`, `tools/map/junguozhi_contract.py`,
+  `tools/map/tests/test_junguozhi_contract.py`,
+  `data/curated/han/administrative-units.json`,
+  `docs/superpowers/reviews/2026-08-22-w0a-administrative-catalog-review.md`.
+- Acceptance: canonical group 105/105 exact+unique, unit identity 1,180/1,180 exact+unique,
+  `龜茲`는 `上郡` 제9 단위이고 가짜 군국 `龜茲屬國`·오염 헤더 `巴陵秦置`는 0건,
+  mismatch는 `安平國 13/12` 단 한 건, 생성기를 두 번 실행해 byte drift 0,
+  타깃 테스트 green, Agent OS 검증, 별도 agent 비평 `cleared`.
+- Non-goals: 좌표/도로/외부 세계 결합(W0-B), 780 playable 선택·save ID 이관(W0-C),
+  런타임·DB·프론트 변경, golden/legacy 수정, 배포·운영 cutover.
+- Safety: 기존 dirty worktree와 사용자 변경을 보존한다. `.env*`·secret은 읽거나 쓰지
+  않는다. 이 계약은 W0-A 파일에만 쓰기 권한을 행사한다.
+
 ## 2026-08-21 — OPENSAM-206~220 통합·검증·배포 (활성 계약)
 
 - Status: 사용자의 `전체 승인`에 따라 구현, commit, push, PR, merge, deploy, Jira 갱신까지 연속 수행한다.
