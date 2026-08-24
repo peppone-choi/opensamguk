@@ -15,8 +15,8 @@ import kotlin.test.assertTrue
  * GRAND TRUTH = PHP `GeneralAI.php:3324` (`do선양`) + `:3345` (`do국가선택`-오랑캐). Both are MySQL/MariaDB-side
  * `ORDER BY RAND()` row-picks — they draw **ZERO bytes** off the `RandUtil(LiteHashDrbg)` DRBG stream, so the
  * AI's rng cursor (`stateIdx`/`bufferIdx`) is UNAFFECTED (G4 §G truth: "DRBG stream position is unaffected").
- * The only non-determinism is *which row id is chosen among ties*; the safe faithful substitute (CLAUDE.md
- * parity rule #5) is a deterministic `min(no)` / `min(nation)` over the SAME WHERE-filtered candidate set
+ * The only non-determinism is *which row id is chosen among ties*; the safe faithful substitute is a
+ * deterministic `min(no)` / `min(nation)` over the SAME WHERE-filtered candidate set
  * (insertion = general.no order, G13), proven 0-draw + valid-member.
  *
  * Reachability: scenario 1010 has **0 npc==5 and 0 npc==9** generals of 678 (R-GATE §1); `can선양` requires

@@ -17,8 +17,8 @@ import kotlin.test.assertTrue
  * `data/unitset/units.json` 의 **che 세트** 행이 [GameUnitConst] 와 같은지 검사한다.
  *
  * 병종표는 파일 하나다(che·han 두 세트가 그 안에 함께 있다). 그런데 che 세트의 **런타임
- * 진실은 여전히 코틀린**이다 — 골든이 덮고 있는 패러티 면이고, 상수 외부화는 CLAUDE.md 의
- * `M-config` 마일스톤(풀 패러티 close 이후)이다. 그래서 이 테스트는 cutover 가 아니라
+ * 진실은 여전히 코틀린**이다 — 골든이 덮고 있는 패러티 면이고, 상수 외부화는
+ * 풀 패러티 close 이후다. 그래서 이 테스트는 cutover 가 아니라
  * **드리프트 게이트**다: 코틀린을 고치면 여기서 깨진다.
  *
  * 깨졌을 때 되살리는 길:

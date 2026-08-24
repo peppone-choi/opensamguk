@@ -1,4 +1,0 @@
-interface:
-  display_name: "loop-engineering"
-  short_description: "OpenSamguk project workflow adapter"
-  default_prompt: "Use $loop-engineering for this task."

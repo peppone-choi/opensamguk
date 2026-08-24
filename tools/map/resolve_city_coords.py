@@ -143,7 +143,7 @@ def build() -> dict:
             "source": "Wikidata P625 (CC0) — https://query.wikidata.org/sparql",
             "generator": "tools/map/resolve_city_coords.py",
             "note": "게임 도시명의 현대 비정 좌표. 비정이 갈리는 지명과 이민족 지역은 표에 없다.",
-            "forbidden": "CHGIS/TGAZ 는 EULA 로 번들 금지(CLAUDE.md).",
+            "forbidden": "CHGIS/TGAZ 는 EULA 로 번들 금지.",
             "resolved": len(rows), "unresolved": len(unresolved),
         },
         "cities": rows,

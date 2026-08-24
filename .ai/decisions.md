@@ -687,3 +687,30 @@
 - Evidence: 《후한서》 권113 「군국지」 “凡郡、國百五，縣、邑、道、侯國千一百八十”. 로컬
   권109~113 구조 검출은 105군국·1,180항목을 전수 확인했고, 기존 좌표 결합 산출물만 1,076개다.
 - Approved by: 사용자("780성에 적용", "현은 천개 정도가 맞을걸", 2026-08-22)
+
+## ADR-LITE-047 하네스는 지우고 보호층·ADR 은 남긴다
+
+- Date: 2026-08-24
+- Status: proposed
+- Decision: 에이전트 하네스(`.claude/agents`·`commands`·`skills`·`workflows`, `.codex/`,
+  `.agents/skills`, `docs/agent/`, `tools/agent-system/`, `skills-lock.json`, `.mcp.json`)는
+  삭제한다. **보호층과 결정 기록은 남긴다** — `CLAUDE.md`, `AGENTS.md`, `.claudeignore`,
+  `.ai/*`, `docs/superpowers/WORKING_SYSTEM.md`, `docs/superpowers/SESSION_HANDOFF.md`,
+  `scripts/agent/protect-sensitive-files.sh`, `.claude/skills/historical-sources/SKILL.md`.
+- Decision: `.claude/settings.json`·`settings.example.json` 의 PostToolUse 항목
+  (`scripts/agent/verify-changes.sh`)은 **뺀다**. 그 스크립트는 `tools/agent-system/check.py`·
+  `tools/agent-system/check_test_xml.py`·`.agents/skills/`·`scripts/agent/test-codex-agent-os.sh`
+  를 호출하므로 하네스 없이는 동작하지 않는다. 되살리려면 그 의존 사슬을 통째로
+  되살려야 하고, 그건 이 삭제의 목적과 반대다. 남는 훅은 PreToolUse 하나
+  (`protect-sensitive-files.sh`)뿐이다.
+- Context: 첫 삭제안은 128개 파일을 한 번에 지우면서 하드룰(`CLAUDE.md`·`AGENTS.md`)·
+  ADR 등록부(`.ai/decisions.md`)·시크릿 차단 훅까지 같이 끌고 나갔다. 삭제 규모가 커서
+  diff 만 보고는 그게 안 보였다. 사용자가 2026-08-24 에 「보호층·ADR 은 살려라」로 지시했다.
+- Alternatives: (1) 전부 삭제 — 기각, 시크릿 차단과 승인된 결정 기록까지 잃는다.
+  (2) `verify-changes.sh` 만 되살리기 — 기각, 위 의존 사슬이 하네스 전체를 되끌고 온다.
+  (3) 훅 항목을 남긴 채 스크립트만 없애기 — 기각, 매 Write/Edit 마다 죽는 훅이 된다.
+- Consequences: 복원된 문서들에는 삭제된 경로 언급이 남는다(`CLAUDE.md` 11건,
+  `AGENTS.md` 11건, `WORKING_SYSTEM.md` 6건, `.ai/*` 다수). 본문을 재작성하면 규칙 문장
+  자체를 잃을 위험이 있어 **본문은 건드리지 않고 상단 배너로 「그 경로는 역사 기록」임을
+  명시**했다. 배너를 지우려면 문장 단위로 하나씩 옮겨 써야 하고, 그건 별도 작업이다.
+- Approved by: (pending — 사용자가 2026-08-24 에 복원 범위를 직접 지시했으나 PR 머지 승인 전)
