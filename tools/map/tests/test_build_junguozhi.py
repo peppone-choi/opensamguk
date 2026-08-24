@@ -611,5 +611,72 @@ class TestLiaodongShuguoNoCountBoundaryRegression(unittest.TestCase):
                               f'{fake} 은 雒陽거리 절 파편이지 縣이 아니다')
 
 
+class TestZhangyeShuguoJunHitLongestMatchRegression(unittest.TestCase):
+    """張掖屬國의 마지막 縣 「千人官」이 「千人」(#247)과 이름이 겹친다.
+    CONFIRMED_JUN_NAMES_NO_CHGIS 에 두 이름이 다 확증돼 있는데, jun_hit
+    조회가 frozenset 을 그냥 next() 로 훑으면 순회 순서가 안 보장돼 짧은
+    「千人」이 먼저 걸려 3번째 글자 「官」이 떨어져 나가 가짜 1자 縣이 됐다
+    (개수는 5로 맞아떨어져 城數 체크섬은 통과했다 — 河南尹 21=21 과 같은
+    「개수는 맞는데 내용이 틀린」 상쇄 사례). data/chgis-source/junguozhi/
+    wu.html 「張掖屬國」 블록 원문 셀(#242-250, 候官/左騎/千人/司馬官/千人官
+    5개 각각 별도 셀) 그대로."""
+
+    SEGMENTS = [
+        ('wu', '張掖屬國'),
+        ('wu', '戶四千'),
+        ('wu', '六百五十六，口萬六千九百五十二。'),
+        ('wu', '候官'),
+        ('wu', '左騎'),
+        ('wu', '千人'),
+        ('wu', '司馬官'),
+        ('wu', '千人官。'),
+        ('wu', '張掖居延屬國'),
+        ('wu', '戶一千五百六十，口四千七百三十三。'),
+        ('wu', '居延'),
+    ]
+
+    CNTY_XY = {}
+    PREF_XY = {}
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import tempfile
+        import os as _os
+
+        orig = dict(read_segments=bj.read_segments, chgis_points=bj.chgis_points,
+                    county_lexicon=bj.county_lexicon, OUT=bj.OUT)
+        bj.read_segments = lambda: list(cls.SEGMENTS)
+        bj.chgis_points = lambda layer, field='NAME_FT': (
+            dict(cls.CNTY_XY) if layer == 'cnty' else dict(cls.PREF_XY))
+        bj.county_lexicon = lambda: frozenset()
+        fd, path = tempfile.mkstemp(suffix='.json')
+        _os.close(fd)
+        bj.OUT = path
+        try:
+            bj.main()
+            cls.data = json.load(open(path, encoding='utf-8'))
+        finally:
+            bj.read_segments = orig['read_segments']
+            bj.chgis_points = orig['chgis_points']
+            bj.county_lexicon = orig['county_lexicon']
+            bj.OUT = orig['OUT']
+            _os.remove(path)
+        cls.zhangye = next(p for p in cls.data['places'] if p['name'] == '張掖屬國')
+
+    def test_all_five_county_names_exact(self):
+        names = [c['name'] for c in self.zhangye['counties']]
+        self.assertEqual(names, ['候官', '左騎', '千人', '司馬官', '千人官'])
+
+    def test_no_stray_guan_fragment(self):
+        names = {c['name'] for c in self.zhangye['counties']}
+        self.assertNotIn('官', names,
+                          '「千人官」의 3번째 글자만 떨어져 나온 가짜 1자 縣')
+
+    def test_notes_are_clean(self):
+        for c in self.zhangye['counties']:
+            self.assertEqual(c['note'], '', f"{c['name']} 의 note 가 비어있지 않다")
+
+
 if __name__ == '__main__':
     unittest.main()

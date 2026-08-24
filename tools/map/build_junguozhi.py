@@ -581,8 +581,14 @@ def main():
                 # — 아래 hit 체크가 먼저 「陰平」만 잘라먹으면 「道」가 뒤
                 # 甸氐道‧剛氐道 와 뒤섞여 가짜 縣이 된다). 확증 목록은 이미
                 # 사료로 검증됐으니 우연한 짧은 부분일치보다 우선한다.
-                jun_hit = next((nm for j, nm in CONFIRMED_JUN_NAMES_NO_CHGIS
-                                if j == b['jun'] and rest[q:q+len(nm)] == nm), None)
+                # frozenset 순회 순서는 보장이 없다 — 「千人」과 「千人官」처럼
+                # 확증 목록 안에서 한쪽이 다른 쪽의 접두라면 next() 가 짧은
+                # 쪽을 먼저 집어 「官」 1자를 흘릴 수 있다(張掖屬國에서 실측:
+                # 千人官 전체가 있는데도 千人 만 먹고 官 이 가짜 縣이 됐다).
+                # cnty_xy 쪽 lens=(4,3,2,1) 과 같은 이유로 여기도 최장 우선.
+                jun_hit = max((nm for j, nm in CONFIRMED_JUN_NAMES_NO_CHGIS
+                               if j == b['jun'] and rest[q:q+len(nm)] == nm),
+                              key=len, default=None)
                 if jun_hit:
                     entries.append([q, jun_hit, False])
                     q += len(jun_hit)
