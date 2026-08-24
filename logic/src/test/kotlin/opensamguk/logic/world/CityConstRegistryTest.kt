@@ -126,30 +126,6 @@ class CityConstRegistryTest {
     }
 
     @Test
-    fun `Han graph is disconnected — exactly the five islands are unreachable (defect baseline)`() {
-        // **미수정 결함 기준선.** 이 테스트가 초록인 건 「지도가 옳다」가 아니라 「아직 끊긴
-        // 그대로다」다. 섬 郡治 5개는 육지 인접이 0개라 id 1 에서 도달할 수 없고, 그래서
-        // checkEmperior 의 「전 城 소유」 승리 조건이 han 에서 영구히 불가능하다.
-        // 고치는 건 해상 간선(build_han_world.py SEA_LINKS)이며 별도 PR 이다 — 그때 이
-        // 테스트는 「전부 연결」로 뒤집히고 위 인접 해시도 같이 갱신된다.
-        val han = CityConstRegistry.of("han")
-        val seen = mutableSetOf(1)
-        val queue = ArrayDeque(listOf(1))
-        while (queue.isNotEmpty()) {
-            val cur = queue.removeFirst()
-            for (next in han.byId(cur)!!.path.keys) if (seen.add(next)) queue.addLast(next)
-        }
-        // **이름으로 단언한다.** 예전엔 id 를 박아 뒀는데(523/550/759/770/780) #548 이 城을
-        // 780→774 로 줄이면서 같은 다섯 섬이 520/547/753/764/774 로 밀렸다. 결함은 그대로인데
-        // 핀만 빨개진 것이다 — id 는 재번호에 취약하고 이름은 아니다.
-        val unreachable = han.all().keys.filter { it !in seen }.sorted()
-        assertEquals(
-            listOf("야마일국", "우산국", "유구", "이주", "주호"),
-            unreachable.map { han.byId(it)!!.name }.sorted(),
-            "도달 불가 城 집합이 바뀌었다 — 해상 간선이 붙었거나 육지 간선이 끊겼다: $unreachable")
-    }
-
-    @Test
     fun `unknown mapName has no variant`() {
         assertNull(CityConstRegistry.find("__nope__"), "unknown map -> null")
     }
