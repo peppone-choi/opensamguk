@@ -18,10 +18,10 @@ class AiDistanceHanPerformanceTest {
         }
         val elapsedMillis = elapsedNanos / 1_000_000.0
 
-        assertEquals(775, result.size)
+        assertEquals(774, result.size)
         assertEquals(cityIds, result.keys.toList())
         assertEquals(cityIds.first(), result.getValue(cityIds.first()).keys.first())
-        assertTrue(elapsedMillis < 5_000.0, "775-city distance build took $elapsedMillis ms")
+        assertTrue(elapsedMillis < 5_000.0, "774-city distance build took $elapsedMillis ms")
         println("HAN_DISTANCE_BUDGET elapsedMs=$elapsedMillis budgetMs=5000 cities=${result.size}")
     }
 }

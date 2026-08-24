@@ -104,7 +104,7 @@ class GetConstControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.mapName").value("han"))
             .andExpect(jsonPath("$.gameConst.mapName").value("han"))
-            .andExpect(jsonPath("$.cityConst.length()").value(775))
+            .andExpect(jsonPath("$.cityConst.length()").value(774))
             .andExpect(jsonPath("$.cityConst[0].name").value("장안"))
     }
 

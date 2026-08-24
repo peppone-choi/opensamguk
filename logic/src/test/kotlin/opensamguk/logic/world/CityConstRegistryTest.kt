@@ -105,7 +105,7 @@ class CityConstRegistryTest {
     }
 
     @Test
-    fun `Han numeric adjacency preserves the generated 775-city graph`() {
+    fun `Han numeric adjacency preserves the generated 774-city graph`() {
         val graph = buildString {
             for ((id, city) in CityConstRegistry.of("han").all()) {
                 append(id).append(':').append(city.path.keys.joinToString(",")).append('\n')
@@ -114,7 +114,7 @@ class CityConstRegistryTest {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(graph.toByteArray())
             .joinToString("") { "%02x".format(it) }
-        assertEquals("3dc3962f51959d6b0d226ed0d8727e06a016bbc3133b304e8c4750b981db238b", digest)
+        assertEquals("434426d03b2ee0ab6f391f432d23b31897623e31c348049193b04e73037e95f7", digest)
     }
 
     @Test
