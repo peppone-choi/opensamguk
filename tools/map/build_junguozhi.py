@@ -64,7 +64,14 @@ def read_segments():
 
 
 def chgis_points(layer, field='NAME_FT'):
-    """漢代(-206~280) 존속 지점의 繁體名 → [(lon, lat)] 사전."""
+    """漢代(-206~280) 존속 지점의 繁體名 → [(lon, lat)] 사전.
+
+    같은 이름의 점이 여럿이면 **後漢(25~220)과 존속기간이 겹치는 점을 앞에** 둔다.
+    -206~280 창은 前漢·王莽·三國을 다 담으므로, 이름별 첫 점(= 앵커가 쓰는
+    b['anchor'])이 dbf 파일 순서로 정해지면 딴 시대 점이 뽑힌다 — pref 레이어
+    앵커 80개 중 41개가 後漢과 안 겹쳤고 그 중 열 개 남짓은 17~407km 어긋나
+    있었다(실측). 겹치는 점끼리·안 겹치는 점끼리의 순서는 파일 순서 그대로다.
+    점을 버리지는 않는다: 後漢 점이 아예 없는 이름은 예전과 같은 점을 쓴다."""
     path = f'{SRC}/v6_time_{layer}_pts_utf_wgs84.dbf'
     with open(path, 'rb') as fh:
         buf = fh.read()
@@ -93,8 +100,10 @@ def chgis_points(layer, field='NAME_FT'):
         for suf in ('縣', '县', '侯國', '侯国', '郡', '國', '国', '尹', '道', '邑'):
             if nm.endswith(suf) and len(nm) > len(suf):
                 nm = nm[:-len(suf)]; break
-        out.setdefault(nm, []).append((lon, lat))
-    return out
+        out.setdefault(nm, []).append((beg <= 220 and end >= 25, (lon, lat)))
+    # 안정 정렬 — 後漢과 겹치는 점이 앞으로 오고, 그 안에서는 파일 순서가 남는다.
+    return {nm: [xy for _, xy in sorted(pts, key=lambda t: not t[0])]
+            for nm, pts in out.items()}
 
 
 def km(a, b):
