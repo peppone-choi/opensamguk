@@ -26,7 +26,7 @@ import kotlin.test.assertEquals
  * SQL이 실제 Postgres `statistic` 테이블(V13)과 정합함을 증명한다 (repo 교훈: flush 변경 =
  * 유닛 green만으론 부족, real DB로 닫고 푸시).
  *
- * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다 (CLAUDE.md).
+ * Docker 미가용 시 Testcontainers가 컨테이너를 못 띄우므로 IT는 skip — fail이 아니다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class StatisticFlushIT {

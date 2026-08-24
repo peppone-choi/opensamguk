@@ -8,10 +8,6 @@ legacy/
 .claude-tmp
 .code-review-graph
 .codegraph
-.codex
-.omc
-.omo
-.omx
 .playwright-mcp
 **/build
 **/node_modules

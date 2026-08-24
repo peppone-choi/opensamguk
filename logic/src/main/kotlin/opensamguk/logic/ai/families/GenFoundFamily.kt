@@ -32,7 +32,7 @@ import opensamguk.logic.world.isFoundableCityLevel
  * The ONLY non-determinism is *which row id is chosen among ties*; PHP itself is non-deterministic here and a
  * captured id would fail the "byte-identical across two runs" install rule.
  *
- * **The faithful substitute (CLAUDE.md parity rule #5: quarantine-with-proof, NEVER fabricate):**
+ * **The faithful substitute (quarantine-with-proof, NEVER fabricate):**
  * a deterministic `min(no)` / `min(nation)` over the SAME WHERE-filtered candidate set. The candidate-set
  * ITERATION order is general.no insertion order (G13), but the PICK is `min(no)` so it is order-independent
  * and reviewer-legible. **These helpers MUST NOT pull a single draw off [rng]** — they take the [RandUtil] only
@@ -43,7 +43,7 @@ import opensamguk.logic.world.isFoundableCityLevel
  * generals of 678 (install assigns only npc 2/6). `can선양` requires npc==5 (`AutorunGeneralPolicy.php:98-100`);
  * 오랑캐임관 requires npc==9 (`GeneralAI.php:3343`); the 2 officer_level==12 rulers (하진/장각) are both npc==2.
  * ⇒ NEITHER `ORDER BY RAND()` site fires in the P5 gate — tail paths, not gate paths. DO NOT fabricate an id,
- * weaken a test, or seed npc 5/9 into 1010. Registered in `.context/p5-research/QUARANTINE-REGISTER.md`.
+ * weaken a test, or seed npc 5/9 into 1010.
  */
 object GenFoundFamily {
 

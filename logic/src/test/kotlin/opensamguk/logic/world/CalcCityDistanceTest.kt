@@ -110,8 +110,14 @@ class CalcCityDistanceTest {
     @Test
     fun `Han duplicate city names retain both numeric neighbors`() {
         val han = CityConstRegistry.of("han")
-        assertTrue(421 in CalcCityDistance.nearCity(3, 1, han))
-        assertTrue(600 in CalcCityDistance.nearCity(3, 1, han))
-        assertTrue(CityConstRegistry.of("che").byId(421) == null)
+        // id 419 는 형주 「석」(析), id 595 는 익주 「석」(锡) 이다 — 같은 한글명이 붙은 서로
+        // 다른 두 城. 재번호매김이 둘 중 하나를 다른 城으로 옮기면 이 단언이 먼저 빨개진다.
+        assertEquals("석", han.byId(419)!!.name)
+        assertEquals(han.regionIdByName("형주"), han.byId(419)!!.region)
+        assertEquals("석", han.byId(595)!!.name)
+        assertEquals(han.regionIdByName("익주"), han.byId(595)!!.region)
+        assertTrue(419 in CalcCityDistance.nearCity(3, 1, han))
+        assertTrue(595 in CalcCityDistance.nearCity(3, 1, han))
+        assertTrue(CityConstRegistry.of("che").byId(419) == null)
     }
 }

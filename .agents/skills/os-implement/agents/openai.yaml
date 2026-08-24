@@ -1,4 +1,0 @@
-interface:
-  display_name: "os-implement"
-  short_description: "OpenSamguk project workflow adapter"
-  default_prompt: "Use $os-implement for this task."

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Server-selection cookie: determines which game server (world) the player views in
 // a multi-server game. On `/game?server=pep`, this middleware persists the choice;
-// every subsequent /api/game proxy uses it to select the game API (`lib/serverRegistry`).
+// every subsequent /api/game request carries it to web/gateway's proxy, which is the
+// sole place that resolves it to a game API origin (#516 §5 — web/game no longer has
+// its own server registry or /api/game proxy).
 // It is a non-secret server selector, so it neither needs httpOnly nor harms clients that read it.
 const SERVER_COOKIE = 'sam_server';
 
