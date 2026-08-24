@@ -17,6 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 TABLE_PATH = ROOT / "tools/map/seat_sources.json"
 TILES_PATH = ROOT / "data/map/han-tiles.json"
+HAN_JSON_PATH = ROOT / "infra/src/main/resources/map/han.json"
 
 
 def load_table() -> list[dict]:
@@ -45,8 +46,19 @@ class SeatSourceContract(unittest.TestCase):
         cls.rows = load_table()
         tiles = json.loads(TILES_PATH.read_text(encoding="utf-8"))
         cls.cities = tiles["cities"]
+        cls.juns = tiles["juns"]
         cls.seat_of = {j["name"]: j["seat"] for j in tiles["juns"]}
         cls.names = {c.get("nameCh") for c in cls.cities}
+
+    def test_jun_names_are_unique(self) -> None:
+        """이 파일의 다른 단언들이 `{name: seat}` 매핑에 의존한다 — 이름이 겹치면 조용히 덮인다.
+
+        의존하는 성질을 검증하지 않으면 그 단언들의 통과가 아무것도 증명하지 않는다.
+        실측 시점(2026-08-24)에 juns 175건은 `name`·`nameCh` 둘 다 중복 0 이다.
+        (다만 `cities` 쪽은 다르다 — 한글명 91개가 205노드에 겹친다. U57.)
+        """
+        names = [j["name"] for j in self.juns]
+        self.assertEqual(len(names), len(set(names)), "juns 한글명이 겹친다 — seat_of 매핑이 조용히 덮인다")
 
     def test_table_rows_are_wellformed(self) -> None:
         self.assertTrue(self.rows, "표가 비었다")
@@ -97,6 +109,68 @@ class SeatSourceContract(unittest.TestCase):
                             f"\n{row['jun']}: 금지 좌표 {bad['name']} {bad['lonLat']} 에 "
                             f"노드 {city.get('nameCh')} 가 있다.\n  {bad['why']}"
                         )
+
+
+class KnownDefectsAreStillBroken(unittest.TestCase):
+    """R48 — 「모른다」와 「아직 안 고쳤다」를 주석이 아니라 단언으로 적는다(§3.23).
+
+    **아래 단언들은 전부 현재의 깨진 상태를 고정한다. 옳아서 그 값인 게 아니라 틀렸는데 그 값이다.**
+    고치면 빨개진다 — **그때 값을 맞추지 말고 그 단언을 지워라.**
+    값을 맞추는 것과 단언을 지우는 것은 다르다. 값만 맞추면 결함이 사라진 게 아니라 기록이 사라진다.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        tiles = json.loads(TILES_PATH.read_text(encoding="utf-8"))
+        cls.cities = tiles["cities"]
+        cls.han_cities = json.loads(HAN_JSON_PATH.read_text(encoding="utf-8"))["cities"]
+
+    def test_u46_jiangxia_has_two_offboard_commanderies(self) -> None:
+        """**이 값은 결함이다.** `江夏郡` 이 COMMANDERY 노드로 둘이다(U46).
+
+        둘 다 `zhi=False` 라 판 밖이어서 지금은 무해하다 — **무해 판정은 조건부다.**
+        이 단언은 「고쳐졌다」가 아니라 **「아직 안 고쳐졌다」를 지킨다.**
+        하나로 합치거나 판에 올리면 빨개진다 — 그때 값을 맞추지 말고 이 단언을 지워라.
+        """
+        nodes = [c for c in self.cities if c.get("nameCh") == "江夏郡"]
+        self.assertEqual(2, len(nodes), "江夏郡 COMMANDERY 노드 수가 변했다 — U46 을 재판정해라")
+        for node in nodes:
+            self.assertFalse(node.get("zhi"), f"江夏郡 {node.get('name')} 이 판에 올라왔다 — U46 이 무해가 아니게 됐다")
+
+    def test_u47_shiping_two_nodes_have_different_korean_names(self) -> None:
+        """**이 값은 결함이다.** `始平县` 두 노드의 한글명이 `시평현`/`시령현` 으로 다르다(U47).
+
+        `nameCh` 는 같은데 `name` 이 다르다. **어느 쪽이 오기인지 확인 안 했다** — 그래서 고치지 않고 고정한다.
+        정정하면 빨개진다 — 그때 값을 맞추지 말고 이 단언을 지우고 U47 을 닫아라.
+        """
+        names = sorted(c.get("name") for c in self.cities if c.get("nameCh") == "始平县")
+        self.assertEqual(["시령현", "시평현"], names, "始平县 한글명이 변했다 — U47 을 재판정해라")
+
+    def test_u48_offboard_homonyms_are_still_offboard(self) -> None:
+        """**이 값은 결함이다.** `zhi=False` 동명 縣이 15개 이름에 걸쳐 있다(U48).
+
+        **「지금은 무해하다」는 시간이 지나면 조용히 거짓이 되는 문장이다.**
+        §13 확장이 이 縣들을 판에 올리는 순간 동명 충돌이 나는데, 조건이 주석에만 있으면 아무 일도 안 일어난다.
+        개수가 변하면 빨개진다 — 그때 값을 맞추지 말고 §13 에서 조사 1 을 다시 돌려라.
+        """
+        by_name: dict[str, list[dict]] = {}
+        for city in self.cities:
+            by_name.setdefault(city.get("nameCh"), []).append(city)
+        clashing = sorted(
+            name for name, group in by_name.items()
+            if any(c.get("zhi") for c in group) and any(not c.get("zhi") for c in group)
+        )
+        self.assertEqual(15, len(clashing), f"동명 충돌 후보가 변했다 — U48 을 재판정해라: {clashing}")
+
+    def test_u53_xinxing_commandery_has_no_counties(self) -> None:
+        """**이 값은 결함이다.** `新興郡` 은 晉書 「統縣五」인데 판에는 소속이 **1** 이다(U53).
+
+        게다가 그 1 은 縣이 아니라 **郡 자기 노드**다 — 실제 縣은 0 이다.
+        사료 근거는 U51 과 같은 줄에 있다: `dsfy-040.txt:349` 「立新興郡，領九原等縣」.
+        縣이 붙으면 빨개진다 — 그때 값을 맞추지 말고 이 단언을 지우고 U53 을 닫아라.
+        """
+        members = [c["name"] for c in self.han_cities if (c.get("meta") or {}).get("jun") == "신흥군"]
+        self.assertEqual(["신흥군"], members, "新興郡 소속이 변했다 — U53 을 재판정해라")
 
 
 if __name__ == "__main__":
