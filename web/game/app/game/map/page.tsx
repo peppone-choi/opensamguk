@@ -6,7 +6,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
 import MapViewer from '../../../components/game/MapViewer';
-import HanMapCanvas from '../../../components/game/HanMapCanvas';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { WorldLogResponse } from '../../../lib/api';
@@ -85,10 +84,7 @@ export default function GameMapPage() {
                 <h1>세계 지도</h1>
                 {mapError && <p role="alert" style={{ color: 'var(--crimson)' }}>{mapError}</p>}
                 {!mapError && mapName === null && <p className="text-muted">지도 설정을 불러오는 중입니다.</p>}
-                {!mapError && mapName === 'han' && (
-                    <HanMapCanvas onMissing={() => setMapError('후한 군현 지도 데이터를 불러올 수 없습니다.')} />
-                )}
-                {!mapError && mapName !== null && mapName !== 'han' && (
+                {!mapError && mapName !== null && (
                     <>
                         <p className="text-muted">도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.</p>
                         <MapViewer refreshKey={mapRefreshKey} />

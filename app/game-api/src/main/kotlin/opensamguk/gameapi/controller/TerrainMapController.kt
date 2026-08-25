@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
  * CHGIS 파생물을 **저장소 번들·CDN·배포 이미지·런타임 allowlist 에 올리는 것을 금지**한다.
  * 그래서 jar 에 넣지 않고, 운영자가 읽기 전용으로 마운트한 경로를 읽는다 — F1 `SCENARIO_DIR`
  * 선례와 같은 형태다(`docker-compose.yml:106`). 파일이 없으면 **404** 이고 500 이 아니다.
- * 프런트는 404 를 보고 기존 che 베이스맵으로 폴백한다. 즉 맵을 주입하지 않은 배포도 그대로 돈다.
+ * 프런트는 404 를 보고 준비/오류 상태를 보인다. 다른 맵으로 바꾸지 않는다.
  *
  * **파싱하지 않는다.** `tools/map/build_tile_grid.py` 가 이미 굽고 불변식까지 검사한 blob 이라
  * 여기서 DTO 로 되돌렸다가 다시 직렬화할 이유가 없다. 바이트를 그대로 준다.
@@ -35,9 +36,12 @@ class TerrainMapController(
 
     @GetMapping("/terrain")
     fun terrain(
+        @RequestParam(defaultValue = "han") mapCode: String,
         @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
     ): ResponseEntity<ByteArray> {
-        val path: Path = Path.of(mapFile)
+        if (!MAP_CODE.matches(mapCode)) return ResponseEntity.notFound().build()
+        val configured = Path.of(mapFile)
+        val path: Path = if (mapCode == "han") configured else configured.resolveSibling("$mapCode-tiles.json")
         if (!Files.isRegularFile(path)) return ResponseEntity.notFound().build()
 
         val tag = "\"${Files.size(path)}-${Files.getLastModifiedTime(path).toMillis()}\""
@@ -49,5 +53,9 @@ class TerrainMapController(
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
             .contentType(MediaType.APPLICATION_JSON)
             .body(Files.readAllBytes(path))
+    }
+
+    private companion object {
+        val MAP_CODE = Regex("[a-z0-9_]+")
     }
 }
