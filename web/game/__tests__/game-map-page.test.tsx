@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import GameMapPage from '@/app/game/map/page';
@@ -17,13 +17,7 @@ vi.mock('@/components/GameCard', () => ({
 }));
 
 vi.mock('@/components/game/MapViewer', () => ({
-    default: () => <output data-testid="legacy-map">legacy map</output>,
-}));
-
-vi.mock('@/components/game/HanMapCanvas', () => ({
-    default: ({ onMissing }: { onMissing?: () => void }) => (
-        <button data-testid="han-map" type="button" onClick={onMissing}>han map</button>
-    ),
+    default: () => <output data-testid="shared-map-viewer">shared map viewer</output>,
 }));
 
 vi.mock('@/hooks/useTurnRefresh', () => ({ useTurnRefresh: vi.fn() }));
@@ -39,22 +33,10 @@ describe('GameMapPage map selection', () => {
         mocks.worldLog.mockResolvedValue({ entries: [] });
     });
 
-    it('renders the legacy map for an explicitly selected che world', async () => {
-        mocks.gameConst.mockResolvedValue({ mapName: 'che' });
-
+    it.each(['che', 'han'])('renders %s through the shared map viewer', async (mapName) => {
+        mocks.gameConst.mockResolvedValue({ mapName });
         render(<GameMapPage />);
-
-        expect(await screen.findByTestId('legacy-map')).toBeInTheDocument();
-        expect(screen.queryByTestId('han-map')).not.toBeInTheDocument();
-    });
-
-    it('keeps a han world fail-visible when its terrain cannot load', async () => {
-        mocks.gameConst.mockResolvedValue({ mapName: 'han' });
-
-        render(<GameMapPage />);
-
-        fireEvent.click(await screen.findByTestId('han-map'));
-        expect(await screen.findByText('후한 군현 지도 데이터를 불러올 수 없습니다.')).toBeInTheDocument();
-        expect(screen.queryByTestId('legacy-map')).not.toBeInTheDocument();
+        expect(await screen.findByTestId('shared-map-viewer')).toBeInTheDocument();
+        expect(screen.getByText('도시를 클릭하면 해당 도시 정보를 볼 수 있습니다.')).toBeInTheDocument();
     });
 });

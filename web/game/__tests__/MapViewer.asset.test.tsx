@@ -1,62 +1,36 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse } from '@/lib/types';
+
+const shared = vi.hoisted(() => ({ props: null as ComponentProps<typeof HanMapCanvasType> | null }));
+vi.mock('@opensamguk/ui', async () => {
+  const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
+  return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+    shared.props = props;
+    return <div data-testid="shared-iso-map" />;
+  } };
+});
 
 import MapViewer from '@/components/game/MapViewer';
 
-const MAP_FIXTURE: MapPreviewResponse = {
-    serverName: '테스트섭',
-    year: 200,
-    month: 5,
-    turnPhase: 1,
-    turnPhaseText: '상순',
-    mapCode: 'miniche_b',
-    width: 700,
-    height: 500,
-    cities: [
-        { id: 11, name: '낙양', level: 8, nationId: 0, x: 300, y: 250, state: 0, supply: true, isCapital: false },
-    ],
-    nations: [],
+const MAP: MapPreviewResponse = {
+  serverName: '테스트섭', year: 200, month: 5, mapCode: 'han', width: 700, height: 610,
+  cities: [{ id: 11, name: '낙양', level: 8, nationId: 0, x: 300, y: 250, state: 0, supply: true, isCapital: false }],
+  nations: [],
 };
 
-function jsonResponse(body: unknown): Response {
-    return new Response(JSON.stringify(body), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-    });
-}
-
-function getCanvas(): HTMLElement {
-    return document.querySelector('.map-viewer-canvas') as HTMLElement;
-}
-
-beforeEach(() => {
-    vi.stubGlobal(
-        'fetch',
-        vi.fn(async () => jsonResponse(MAP_FIXTURE)),
-    );
-    Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
-        configurable: true,
-        get() {
-            return this.classList?.contains('map-viewer-canvas') ? 700 : 0;
-        },
-    });
-});
-
-afterEach(() => {
-    vi.unstubAllGlobals();
-});
-
-describe('MapViewer — miniche 계열 CDN 폴백', () => {
-    it('miniche_b는 che 배경과 miniche_road.png를 쓴다', async () => {
-        render(<MapViewer mapData={MAP_FIXTURE} />);
-        await waitFor(() => expect(getCanvas()).toBeTruthy());
-
-        const bg = document.querySelector('.map-bg') as HTMLImageElement | null;
-        const road = document.querySelector('.map-road') as HTMLImageElement | null;
-        expect(bg).toBeTruthy();
-        expect(road).toBeTruthy();
-        expect(bg!.src).toContain('/game/map/che/bg_summer.jpg');
-        expect(road!.src).toContain('/game/map/che/miniche_road.png');
-    });
+describe('MapViewer asset-independent terrain selection', () => {
+  it('requests han tiles and never renders a che background or road image', () => {
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
+    render(<MapViewer mapData={MAP} />);
+    expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
+    const url = typeof shared.props?.terrainUrl === 'function' ? shared.props.terrainUrl('han') : shared.props?.terrainUrl;
+    expect(url).toBe('/api/game/api/map/terrain?mapCode=han');
+    expect(document.querySelector('.map-bg')).toBeNull();
+    expect(document.querySelector('.map-road')).toBeNull();
+    expect(document.querySelector('img[src*="/game/map/che/"]')).toBeNull();
+  });
 });

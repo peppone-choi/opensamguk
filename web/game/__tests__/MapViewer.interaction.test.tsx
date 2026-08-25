@@ -1,225 +1,114 @@
-// 컴포넌트 상호작용 테스트 — components/game/MapViewer.tsx.
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse } from '@/lib/types';
 
-const tintedColors: string[] = [];
-vi.mock('@/lib/flagTint', () => ({
-    FLAG_FRAMES: 4,
-    tintFlag: vi.fn(async (color: string) => {
-        tintedColors.push(color);
-        return Array.from({ length: 4 }, (_, i) => `data:image/png;tint=${color};frame=${i}`);
-    }),
-}));
+const shared = vi.hoisted(() => ({ props: null as ComponentProps<typeof HanMapCanvasType> | null }));
+
+vi.mock('@opensamguk/ui', async () => {
+  const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
+  return {
+    ...actual,
+    HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+      shared.props = props;
+      const city = props.cities?.[0];
+      return (
+        <div data-testid="shared-iso-map" data-map-code={props.mapCode}>
+          <button type="button" onClick={() => city && props.onCityHover?.(city, { x: 20, y: 30 })}>hover city</button>
+          <button type="button" onClick={() => city && props.onCityActivate?.(city, { pointerType: 'mouse' })}>activate mouse</button>
+          <button type="button" onClick={() => city && props.onCityActivate?.(city, { pointerType: 'touch' })}>activate touch</button>
+        </div>
+      );
+    },
+  };
+});
 
 import MapViewer from '@/components/game/MapViewer';
 
-const NATION_RED = '#ff0000';
-const MAP_FIXTURE: MapPreviewResponse = {
-    serverName: '테스트섭',
-    year: 200,
-    month: 5,
-    turnPhase: 1,
-    turnPhaseText: '상순',
-    mapCode: 'che',
-    width: 700,
-    height: 500,
-    cities: [
-        { id: 11, name: '낙양', level: 8, nationId: 1, x: 300, y: 250, state: 0, supply: true, isCapital: true },
-        { id: 22, name: '장안', level: 3, nationId: 0, x: 120, y: 120, state: 0, supply: true, isCapital: false },
-        { id: 33, name: '허창', level: 6, nationId: 1, x: 500, y: 300, state: 0, supply: false, isCapital: false },
-    ],
-    nations: [{ id: 1, name: '위', color: NATION_RED }],
+const MAP: MapPreviewResponse = {
+  serverName: '테스트섭', year: 200, month: 5, turnPhase: 1, turnPhaseText: '상순',
+  mapCode: 'han', width: 700, height: 610,
+  cities: [
+    { id: 11, name: '낙양', level: 8, nationId: 1, x: 300, y: 250, state: 6, supply: true, isCapital: true },
+    { id: 22, name: '허창', level: 6, nationId: 1, x: 500, y: 300, state: 0, supply: false, isCapital: false },
+  ],
+  nations: [{ id: 1, name: '위', color: '#ff0000' }],
 };
 
-function mockFetch() {
-    return vi.fn(async (url: string | URL | Request) => {
-        const path = typeof url === 'string' ? url : url.toString();
-        if (path.includes('/api/map/preview')) {
-            return jsonResponse(MAP_FIXTURE);
-        }
-        return new Response('not found', { status: 404, statusText: 'Not Found' });
-    });
-}
-function jsonResponse(body: unknown): Response {
-    return new Response(JSON.stringify(body), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-    });
-}
-
-function getCanvas(): HTMLElement {
-    return document.querySelector('.map-viewer-canvas') as HTMLElement;
-}
-
-function setServerCookie(serverId: string) {
-    document.cookie = `sam_server=${serverId}; path=/`;
-}
-
-function clearServerCookie() {
-    document.cookie = 'sam_server=; Max-Age=0; path=/';
-}
-
 beforeEach(() => {
-    clearServerCookie();
-    tintedColors.length = 0;
-    vi.stubGlobal('fetch', mockFetch());
-    Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
-        configurable: true,
-        get() {
-            return this.classList?.contains('map-viewer-canvas') ? 700 : 0;
-        },
-    });
+  shared.props = null;
+  const values = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key),
+    clear: () => values.clear(),
+    key: () => null,
+    get length() { return values.size; },
+  });
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
+  Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 0 });
 });
 
-afterEach(() => {
-    vi.unstubAllGlobals();
-    clearServerCookie();
-});
+describe('MapViewer shared canvas overlays', () => {
+  it('passes all city visuals and removes legacy DOM assets', () => {
+    render(<MapViewer mapData={MAP} currentCityId={11} selectedCityId={22} />);
+    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', 'han');
+    expect(document.querySelector('.map-bg')).toBeNull();
+    expect(document.querySelector('.map-road')).toBeNull();
+    expect(shared.props?.currentCityId).toBe(11);
+    expect(shared.props?.selectedCityId).toBe(22);
+    expect(shared.props?.cities).toEqual([
+      expect.objectContaining({ id: 11, nationColor: '#ff0000', nationName: '위', state: 6, supply: true, isCapital: true }),
+      expect.objectContaining({ id: 22, nationColor: '#ff0000', supply: false }),
+    ]);
+  });
 
-async function renderAndLoad() {
-    const utils = render(<MapViewer />);
-    await waitFor(() => expect(getCanvas()).toBeTruthy());
-    return utils;
-}
+  it('keeps hover tooltip content through the canvas callback', () => {
+    render(<MapViewer mapData={MAP} />);
+    fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
+    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    expect(screen.getByRole('status')).toHaveTextContent('위');
+  });
 
-describe('MapViewer — 정적 렌더(로비 MapPreview와 동일)', () => {
-    it('줌 컨트롤/줌 레이어가 없다(정적)', async () => {
-        await renderAndLoad();
-        expect(document.querySelector('.map-zoomlayer')).toBeNull();
-        expect(document.querySelector('.map-controls')).toBeNull();
-        expect(screen.queryByRole('button', { name: '지도 초기화' })).toBeNull();
-    });
+  it('selection mode activates onCitySelect without navigation', () => {
+    const onCitySelect = vi.fn();
+    const onNavigate = vi.fn();
+    render(<MapViewer mapData={MAP} onCitySelect={onCitySelect} onNavigate={onNavigate} />);
+    fireEvent.click(screen.getByRole('button', { name: 'activate mouse' }));
+    expect(onCitySelect).toHaveBeenCalledWith(11);
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
 
-    it('모든 도시명이 항상 표시된다(줌 조건 제거)', async () => {
-        await renderAndLoad();
-        expect(screen.getByText('낙양')).toBeInTheDocument();
-        expect(screen.getByText('장안')).toBeInTheDocument();
-        expect(screen.getByText('허창')).toBeInTheDocument();
-    });
-});
+  it('navigation mode activates the server-aware city URL', () => {
+    const onNavigate = vi.fn();
+    render(<MapViewer mapData={MAP} disallowClick={false} onNavigate={onNavigate} />);
+    fireEvent.click(screen.getByRole('button', { name: 'activate mouse' }));
+    expect(onNavigate).toHaveBeenCalledWith('/game/city?id=11');
+  });
 
-describe('MapViewer — miniche 계열 CDN 폴백', () => {
-    it.each(['miniche', 'miniche_b', 'miniche_clean'] as const)(
-        '%s는 che 배경과 miniche_road.png를 쓴다',
-        async (mapCode) => {
-            render(<MapViewer mapData={{ ...MAP_FIXTURE, mapCode }} />);
-            await waitFor(() => expect(getCanvas()).toBeTruthy());
+  it('disallowClick blocks activation', () => {
+    const onNavigate = vi.fn();
+    render(<MapViewer mapData={MAP} disallowClick onNavigate={onNavigate} />);
+    fireEvent.click(screen.getByRole('button', { name: 'activate mouse' }));
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
 
-            const bg = document.querySelector('.map-bg') as HTMLImageElement | null;
-            const road = document.querySelector('.map-road') as HTMLImageElement | null;
-            expect(bg).toBeTruthy();
-            expect(road).toBeTruthy();
-            expect(bg!.src).toContain('/game/map/che/bg_summer.jpg');
-            expect(road!.src).toContain('/game/map/che/miniche_road.png');
-        },
-    );
-});
+  it('touch requires the same city twice when single-tap is off', () => {
+    const onNavigate = vi.fn();
+    render(<MapViewer mapData={MAP} disallowClick={false} onNavigate={onNavigate} />);
+    const touch = screen.getByRole('button', { name: 'activate touch' });
+    fireEvent.click(touch);
+    expect(onNavigate).not.toHaveBeenCalled();
+    fireEvent.click(touch);
+    expect(onNavigate).toHaveBeenCalledWith('/game/city?id=11');
+  });
 
-describe('MapViewer — 도시 마커 클릭 → 도시 정보 페이지 라우팅', () => {
-    it('도시 마커가 `/game/city?id=<id>` 링크를 가진다', async () => {
-        await renderAndLoad();
-        const cityLink = screen.getByRole('link', { name: /낙양 레벨 8 위/ });
-        expect(cityLink).toHaveAttribute('href', '/game/city?id=11');
-    });
-
-    it('공백지(장안 id 22)도 해당 id 링크를 가진다', async () => {
-        await renderAndLoad();
-        const cityLink = screen.getByRole('link', { name: /장안 레벨 3/ });
-        expect(cityLink).toHaveAttribute('href', '/game/city?id=22');
-    });
-
-    it('선택 서버 쿠키가 있으면 도시 클릭 URL에 서버 경로를 보존한다', async () => {
-        setServerCookie('s1');
-        await renderAndLoad();
-        const cityLink = screen.getByRole('link', { name: /낙양 레벨 8 위/ });
-        expect(cityLink).toHaveAttribute('href', '/game/s1/city?id=11');
-    });
-});
-
-describe('MapViewer — 명령 모달 도시 선택 모드', () => {
-    it('도시 마커가 링크 이동 대신 onCitySelect 를 호출한다', async () => {
-        const onCitySelect = vi.fn();
-        render(<MapViewer mapData={MAP_FIXTURE} selectedCityId={22} onCitySelect={onCitySelect} />);
-        await waitFor(() => expect(tintedColors).toContain(NATION_RED));
-
-        const cityButton = screen.getByRole('button', { name: /낙양 레벨 8 위/ });
-        expect(cityButton).not.toHaveAttribute('href');
-        fireEvent.click(cityButton);
-
-        expect(onCitySelect).toHaveBeenCalledWith(11);
-        expect(screen.getByRole('button', { name: /장안 레벨 3/ })).toHaveAttribute('aria-pressed', 'true');
-    });
-
-    it('공백지 툴팁은 공백지 국가명을 화면 텍스트로 표시하지 않는다', async () => {
-        render(<MapViewer mapData={MAP_FIXTURE} />);
-        await waitFor(() => expect(tintedColors).toContain(NATION_RED));
-
-        fireEvent.mouseEnter(screen.getByLabelText(/장안 레벨 3/));
-
-        expect(screen.queryByText('공 백 지')).toBeNull();
-    });
-});
-
-describe('MapViewer — 오오라(소유국만)', () => {
-    it('소유국 마커에는 city-aura 가 있고 공백지에는 없다', async () => {
-        await renderAndLoad();
-        const ownedBase = screen.getByLabelText(/낙양 레벨 8 위/);
-        expect(ownedBase.querySelector('.city-aura')).toBeTruthy();
-        const neutralBase = screen.getByLabelText(/장안 레벨 3/);
-        expect(neutralBase.querySelector('.city-aura')).toBeNull();
-    });
-});
-
-describe('MapViewer — 깃발 틴트(nation 색)', () => {
-    it('소유국 색(#ff0000)으로 flagTint 가 호출되고 공백지 색은 틴트하지 않는다', async () => {
-        await renderAndLoad();
-        await waitFor(() => expect(tintedColors).toContain(NATION_RED));
-        expect(tintedColors).not.toContain('#555555'); // NEUTRAL_COLOR
-    });
-
-    it('소유국 마커에 nation 색이 박힌 깃발 이미지가 city-img 안에 렌더된다', async () => {
-        await renderAndLoad();
-        await waitFor(() => {
-            const flag = document.querySelector('.city-img .city-flag-img') as HTMLImageElement | null;
-            expect(flag).toBeTruthy();
-            expect(flag!.getAttribute('src')).toContain(`tint=${NATION_RED}`);
-        });
-        expect(document.querySelector('.city-capital')).toBeTruthy();
-    });
-
-    it('공백지 마커에는 깃발 이미지가 없다', async () => {
-        await renderAndLoad();
-        const neutralBase = screen.getByLabelText(/장안 레벨 3/);
-        expect(neutralBase.querySelector('.city-flag-img')).toBeNull();
-    });
-});
-
-describe('MapViewer — 미보급(supply-off) 도시 흐리게', () => {
-    it('소유국 미보급(supply=false)은 city-base 에 supply-off 가 붙고, 보급(supply=true)은 붙지 않는다', async () => {
-        await renderAndLoad();
-        const unsuppliedBase = screen.getByLabelText(/허창 레벨 6 위/);
-        expect(unsuppliedBase.className).toContain('supply-off');
-        const suppliedBase = screen.getByLabelText(/낙양 레벨 8 위/);
-        expect(suppliedBase.className).not.toContain('supply-off');
-    });
-});
-
-describe('MapViewer — graceful 상태', () => {
-    it('빈 월드(cities=[])는 placeholder 를 렌더한다(크래시 없음)', async () => {
-        vi.stubGlobal(
-            'fetch',
-            vi.fn(async () =>
-                jsonResponse({ ...MAP_FIXTURE, cities: [], nations: [] } as MapPreviewResponse),
-            ),
-        );
-        render(<MapViewer />);
-        expect(await screen.findByText('지도 데이터 준비 중입니다.')).toBeInTheDocument();
-    });
-
-    it('preview fetch 실패 시 placeholder 를 렌더한다', async () => {
-        vi.stubGlobal('fetch', vi.fn(async () => new Response('err', { status: 500, statusText: 'err' })));
-        render(<MapViewer />);
-        expect(await screen.findByText('지도 데이터 준비 중입니다.')).toBeInTheDocument();
-    });
+  it('city-name toggle controls canvas labels', () => {
+    render(<MapViewer mapData={MAP} />);
+    expect(shared.props?.hideCityNames).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: '도시명 표기' }));
+    expect(shared.props?.hideCityNames).toBe(true);
+  });
 });

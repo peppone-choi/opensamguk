@@ -621,15 +621,35 @@
   필수로 한다.
 - Approved by: 사용자(2026-08-19 CHE 계열 은퇴 지시) + OPENSAM-214 승인 티켓
 
-## ADR-LITE-044 현재 아이소 격자와 자동 도로 표현을 폐기한다
+## ADR-LITE-044 개정 — 아이소 타일 격자를 지도 렌더링 정본으로 삼는다
 
-- Date: 2026-08-22
-- Status: approved
-- Decision: 미커밋 `HanMap` 아이소 격자와 자동 산출 도로 표현은 제품 방향으로 채택하지 않는다. 새 지도는 렌더링부터 만들지 않고 공간 단위, 도로망, 이동, 보급, 전투 규칙을 먼저 확정한 뒤 그 규칙을 표현하는 화면으로 만든다.
-- Preserved: 후한 역사 지도 데이터, 175군·780성 제품 세계, 도시 좌표와 등급, 재생성 가능한 성·상태 아이콘, 부대·전투 표현 초안은 후속 설계 입력으로 보존한다.
-- Rejected: 지리 격자를 게임 격자로 리샘플한 `HanMap`, 자동 경로 셀을 도로처럼 표시한 구현, 해당 도로 테스트와 아이소 재질 실험은 작업 트리에서 분리한다.
-- Open: 새 지도의 투영 방식, 공간 해상도, 도로 건설 주체와 비용, 이동 시간, 전투 발생 위치는 후속 설계에서 확정한다.
-- Approved by: 사용자("아이소 격자도 맘에 안드는데, 새로 만들고 싶어", 2026-08-22)
+- Date: 2026-08-25 (2026-08-22 결정 개정)
+- Status: approved; supersedes the 2026-08-22 text of ADR-LITE-044
+- Decision: 로비 `MapPreview`, 인게임 `MapViewer`, 지도 페이지는 모두
+  shared `HanMapCanvas`를 범용화한 **아이소 타일 렌더러**를 쓴다. 아이소
+  격자와 `data/map/<mapCode>-tiles.json` 계약이 제품 지도의 투영·렌더링
+  정본이다. `han` 월드는 `han-tiles.json`을 직접 쓰며 `che` CDN 배경으로
+  폴백하지 않는다.
+- Rendering: 지형·도로·국가색·도시·깃발·수도·사건 표시는 외부 맵 아트
+  없이 캔버스 팔레트로 그린다. 레거시 맵 아트는 자산 정본이 아니며,
+  비-`han` 호환성은 같은 타일 스키마와 결정적 테스트 픽스처로 검증한다.
+- Coordinates: `HanCityConst` 의 `(x,y)`를 타일 `(col,row)`로 돌릴 때 축별
+  역변환 `col=x*cols/width`, `row=y*rows/height`를 쓴다. 단일 배율로 두
+  축을 섞지 않는다(`tools/scenario/build_han_world.py` 산출식의 역).
+- Preserved: ADR-LITE-039/040의 CHGIS 격리는 그대로다. 커밋·서버 대상 CHGIS
+  파생물은 `data/map/han-tiles.json` 하나뿐이고, 원본 shapefile·`han-places.json`·
+  `terrain-grid.json`은 계속 미커밋이다. ADR-LITE-042 규칙 5의 frozen baseline도
+  삭제·약화하지 않는다.
+- Consequences: 세 표면의 줌·패닝·타일 표현과 도시 오버레이가 하나의
+  구현으로 수렴한다. 게임·로비 래퍼는 API 로드, 제목·캡션, 라우팅,
+  터치 두 번 탭 정책만 소유한다. 타일 파일이 없으면 다른 맵으로 바꾸지
+  않고 준비/오류 상태를 보인다.
+- Rollback: 문제 발생 시 이 개정 문구를 2026-08-22 본문으로 돌리고,
+  `MapPreview`/`MapViewer`의 DOM·CDN 렌더 경로를 복원한 뒤 shared 캔버스는
+  지도 페이지에만 제한한다. 롤백은 frozen 테스트나 CHGIS 격리 규칙을
+  삭제하는 근거가 아니다.
+- Approved by: 사용자(“ADR-LITE-044를 개정해 아이소 격자를 정본화”,
+  “HanMapCanvas를 shared로 올려 로비에서 재사용”, 2026-08-25)
 
 ## ADR-LITE-046 `data/map/external-places.json` 은 ADR-LITE-039 CHGIS 격리 대상이 아니다
 
