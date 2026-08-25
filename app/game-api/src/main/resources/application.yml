@@ -37,6 +37,9 @@ opensamguk:
     pool:
       max-size: ${OPENSAMGUK_READ_BARRIER_POOL_MAX_SIZE:4}
       connection-timeout-ms: ${OPENSAMGUK_READ_BARRIER_POOL_CONNECTION_TIMEOUT_MS:250}
+member-profile:
+  gateway-origin: ${GATEWAY_API_URL:http://localhost:8080}
+  service-token: ${INTERNAL_SERVICE_TOKEN:}
 server:
   port: ${GAME_API_PORT:8081}
 management:

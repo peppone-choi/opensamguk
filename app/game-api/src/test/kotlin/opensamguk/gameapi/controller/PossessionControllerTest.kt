@@ -7,6 +7,9 @@ import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.gameapi.member.MemberProfile
+import opensamguk.gameapi.member.MemberProfileClient
+import opensamguk.gameapi.member.MemberProfileUnavailableException
 import opensamguk.gameapi.owner.CommandResultClaimNpcRequestStatusReader
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
@@ -22,7 +25,6 @@ import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.infra.read.UserRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -62,7 +64,7 @@ class PossessionControllerTest {
     private val worldStates = mock(WorldStateReadRepository::class.java)
     private val commandResults = mock(CommandResultRepository::class.java)
     private val reserve = mock(CommandReserveService::class.java)
-    private val users = mock(UserRepository::class.java)
+    private val memberProfiles = mock(MemberProfileClient::class.java)
     private val fixedClock = Clock.fixed(Instant.parse("2026-06-02T00:00:00Z"), ZoneOffset.UTC)
     private val ownership = GeneralOwnershipClassifier(
         owners,
@@ -83,11 +85,11 @@ class PossessionControllerTest {
     /** 로그인한 호출자는 항상 `users` 행이 있다 — 표시 이름은 토큰이 아니라 여기서 온다(OPENSAM-220). */
     @org.junit.jupiter.api.BeforeEach
     fun seedCallerRow() {
-        `when`(users.findById(7L)).thenReturn(Optional.of(userRow("owner7")))
+        `when`(memberProfiles.get(7L)).thenReturn(MemberProfile("owner7", 1, null, 0))
     }
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(PossessionController(possession, selectNpcTokens, reserve, users))
+        MockMvcBuilders.standaloneSetup(PossessionController(possession, selectNpcTokens, reserve, memberProfiles))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -856,18 +858,10 @@ class PossessionControllerTest {
             .andExpect(jsonPath("$.reason").value("빙의 가능한 서버가 아닙니다"))
     }
 
-    private fun userRow(username: String) = opensamguk.infra.entity.UserEntity(
-        id = 7L,
-        username = username,
-        password = "enc",
-        role = "USER",
-        nickname = username,
-    )
-
     @Test
     fun `claim 401 when the caller has no users row -- no userId fallback reaches owner_name`() {
         seedNpcMode()
-        `when`(users.findById(7L)).thenReturn(Optional.empty())
+        `when`(memberProfiles.get(7L)).thenReturn(null)
 
         mockMvc().perform(
             post("/api/general/claim").with(principal(7L))
@@ -876,6 +870,19 @@ class PossessionControllerTest {
             .andExpect(status().isUnauthorized)
 
         // 커맨드가 아예 나가지 않아야 한다 — "7" 같은 값이 월드 로그에 박히면 되돌릴 수 없다.
+        assertTrue(mockingDetails(reserve).invocations.none { it.method.name == "publishImmediate" })
+    }
+
+    @Test
+    fun `claim returns 503 when gateway profile is unavailable on a cache miss`() {
+        seedNpcMode()
+        `when`(memberProfiles.get(7L)).thenThrow(MemberProfileUnavailableException())
+
+        mockMvc().perform(
+            post("/api/general/claim").with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":10}"""),
+        ).andExpect(status().isServiceUnavailable)
+
         assertTrue(mockingDetails(reserve).invocations.none { it.method.name == "publishImmediate" })
     }
 

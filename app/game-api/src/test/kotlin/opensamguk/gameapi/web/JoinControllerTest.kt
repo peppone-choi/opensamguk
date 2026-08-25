@@ -6,6 +6,9 @@ import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.gameapi.member.MemberProfile
+import opensamguk.gameapi.member.MemberProfileClient
+import opensamguk.gameapi.member.MemberProfileUnavailableException
 import opensamguk.gameapi.owner.CommandResultClaimNpcRequestStatusReader
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
@@ -22,8 +25,6 @@ import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
 import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.infra.entity.GameKvEntity
-import opensamguk.infra.entity.UserEntity
-import opensamguk.infra.read.UserRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -60,7 +61,7 @@ class JoinControllerTest {
     private val owners = mock(GeneralOwnerRepository::class.java)
     private val npcTokens = mock(SelectNpcTokenRepository::class.java)
     private val commandResults = mock(CommandResultRepository::class.java)
-    private val users = mock(UserRepository::class.java)
+    private val memberProfiles = mock(MemberProfileClient::class.java)
     private val ownership = GeneralOwnershipClassifier(
         owners,
         generals,
@@ -78,29 +79,26 @@ class JoinControllerTest {
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(
-            JoinController(generals, worldStates, reserve, gameKv, cities, ObjectMapper(), ownership, users),
+            JoinController(generals, worldStates, reserve, gameKv, cities, ObjectMapper(), ownership, memberProfiles),
         )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
-    /** 표시용 회원 정보는 토큰이 아니라 `users` 행에서 온다(OPENSAM-220). */
-    private fun memberRow(userId: Long) = UserEntity(
-        id = userId,
-        username = "owner",
-        password = "encoded",
-        nickname = "계정주인",
-        picture = "custom.jpg",
-        imgsvr = true,
-    )
+    private fun memberProfile() = MemberProfile("계정주인", 1, "custom.jpg", 1)
 
     private fun principal(
         userId: Long,
         profile: GatewayPrincipal? = GatewayPrincipal(userId = userId, role = "USER"),
-        memberRow: UserEntity? = memberRow(userId),
+        memberRow: MemberProfile? = memberProfile(),
+        memberUnavailable: Boolean = false,
     ): RequestPostProcessor = RequestPostProcessor { req ->
         SecurityContextHolder.getContext().authentication =
             UsernamePasswordAuthenticationToken(userId, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
-        `when`(users.findById(userId)).thenReturn(Optional.ofNullable(memberRow))
+        if (memberUnavailable) {
+            `when`(memberProfiles.get(userId)).thenThrow(MemberProfileUnavailableException())
+        } else {
+            `when`(memberProfiles.get(userId)).thenReturn(memberRow)
+        }
         profile?.let { req.setAttribute(JwtVerifyFilter.PRINCIPAL_ATTRIBUTE, it) }
         req
     }
@@ -362,6 +360,29 @@ class JoinControllerTest {
         seedWorld(mapOf("maxgeneral" to 500, "show_img_level" to 3))
         mockMvc().perform(get("/api/join").with(principal(7L, memberRow = null)))
             .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `join form returns 503 when gateway profile is unavailable on a cache miss`() {
+        seedWorld(mapOf("maxgeneral" to 500, "show_img_level" to 3))
+        mockMvc().perform(get("/api/join").with(principal(7L, memberUnavailable = true)))
+            .andExpect(status().isServiceUnavailable)
+    }
+
+    @Test
+    fun `join submission returns 503 without publishing when gateway profile is unavailable on a cache miss`() {
+        seedWorld()
+        `when`(generals.findByUserId("7")).thenReturn(null)
+        `when`(generals.existsByName("조조")).thenReturn(false)
+
+        mockMvc().perform(
+            post("/api/join")
+                .with(principal(7L, memberUnavailable = true))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(joinJson()),
+        ).andExpect(status().isServiceUnavailable)
+
+        verifyNoInteractions(reserve)
     }
 
     @Test

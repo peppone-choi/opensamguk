@@ -38,6 +38,9 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION:900000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
+internal:
+  service-token: ${INTERNAL_SERVICE_TOKEN:}
+
 server:
   port: ${GATEWAY_API_PORT:8080}
   error:

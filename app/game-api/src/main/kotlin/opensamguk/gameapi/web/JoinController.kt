@@ -6,7 +6,7 @@ import opensamguk.common.auth.GatewayPrincipal
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommand
-import opensamguk.gameapi.member.toMemberProfile
+import opensamguk.gameapi.member.MemberProfileClient
 import opensamguk.gameapi.owner.GeneralOwnershipClassifier
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GameKvReadRepository
@@ -15,7 +15,6 @@ import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.security.JwtVerifyFilter
-import opensamguk.infra.read.UserRepository
 import opensamguk.logic.inheritance.InheritCatalog
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -54,7 +53,7 @@ class JoinController(
     private val cities: CityReadRepository,
     private val objectMapper: ObjectMapper,
     private val ownership: GeneralOwnershipClassifier,
-    private val users: UserRepository,
+    private val memberProfiles: MemberProfileClient,
 ) {
 
     data class JoinRequest(
@@ -326,13 +325,13 @@ class JoinController(
     private fun activeWorld(): WorldStateReadEntity? =
         worldStates.findById(1).orElse(null) ?: worldStates.findById(0).orElse(null)
 
-    /** 표시용 회원 정보는 토큰이 아니라 `users` 행에서 읽는다(OPENSAM-220). 행이 없으면 null → 401. */
+    /** 표시용 회원 정보는 유일한 정본인 gateway-api에서 읽는다. */
     private fun resolveMember(
         principal: GatewayPrincipal,
         worldConfig: Map<String, Any?>,
         requested: Boolean,
     ): JoinMember? {
-        val member = users.findById(principal.userId).orElse(null)?.toMemberProfile() ?: return null
+        val member = memberProfiles.get(principal.userId) ?: return null
         val showImageLevel = intConfig(worldConfig["show_img_level"]) ?: 3
         val canUsePicture = showImageLevel >= 1 && member.grade >= 1 && !member.picture.isNullOrBlank()
         val usePicture = requested && canUsePicture

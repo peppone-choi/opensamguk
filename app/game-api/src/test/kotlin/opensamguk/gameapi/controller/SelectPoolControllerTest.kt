@@ -3,13 +3,14 @@ package opensamguk.gameapi.controller
 import opensamguk.common.auth.GatewayPrincipal
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.member.MemberProfile
+import opensamguk.gameapi.member.MemberProfileClient
+import opensamguk.gameapi.member.MemberProfileUnavailableException
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
 import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.infra.read.SelectPoolReadRow
 import opensamguk.infra.read.SelectPoolRepository
-import opensamguk.infra.entity.UserEntity
-import opensamguk.infra.read.UserRepository
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -31,9 +32,9 @@ import java.time.ZoneOffset
 class SelectPoolControllerTest {
     private val repository = mock(SelectPoolRepository::class.java)
     private val resolver = mock(GeneralResolver::class.java)
-    private val users = mock(UserRepository::class.java)
+    private val memberProfiles = mock(MemberProfileClient::class.java)
     private val now = Instant.parse("2026-07-10T03:00:00Z")
-    private val controller = SelectPoolController(repository, resolver, users, Clock.fixed(now, ZoneOffset.UTC))
+    private val controller = SelectPoolController(repository, resolver, memberProfiles, Clock.fixed(now, ZoneOffset.UTC))
     private val mvc = MockMvcBuilders.standaloneSetup(controller)
         .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
         .build()
@@ -119,6 +120,24 @@ class SelectPoolControllerTest {
     }
 
     @Test
+    fun `candidate read returns 503 when gateway profile is unavailable on a cache miss`() {
+        `when`(memberProfiles.get(77L)).thenThrow(MemberProfileUnavailableException())
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            77L,
+            null,
+            listOf(SimpleGrantedAuthority("ROLE_USER")),
+        )
+        try {
+            mvc.perform(
+                get("/api/select-pool")
+                    .requestAttr(JwtVerifyFilter.PRINCIPAL_ATTRIBUTE, profile()),
+            ).andExpect(status().isServiceUnavailable)
+        } finally {
+            SecurityContextHolder.clearContext()
+        }
+    }
+
+    @Test
     fun `anonymous candidate read is rejected`() {
         SecurityContextHolder.clearContext()
 
@@ -147,7 +166,7 @@ class SelectPoolControllerTest {
     @Test
     fun `refresh publishes an owner bound daemon command`() {
         val reserve = mock(CommandReserveService::class.java)
-        val refreshController = SelectPoolController(repository, resolver, users, Clock.fixed(now, ZoneOffset.UTC), reserve)
+        val refreshController = SelectPoolController(repository, resolver, memberProfiles, Clock.fixed(now, ZoneOffset.UTC), reserve)
         val refreshMvc = MockMvcBuilders.standaloneSetup(refreshController)
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
@@ -176,19 +195,9 @@ class SelectPoolControllerTest {
 
     private fun profile(userId: Long = 77L) = GatewayPrincipal(userId = userId, role = "USER")
 
-    /** 표시용 회원 정보는 토큰이 아니라 `users` 행에서 온다(OPENSAM-220). */
     private fun seedMemberRow(userId: Long = 77L) {
-        `when`(users.findById(userId)).thenReturn(
-            Optional.of(
-                UserEntity(
-                    id = userId,
-                    username = "tester",
-                    password = "encoded",
-                    nickname = "테스터",
-                    picture = "member.png",
-                    imgsvr = true,
-                ),
-            ),
+        `when`(memberProfiles.get(userId)).thenReturn(
+            MemberProfile("테스터", 1, "member.png", 1),
         )
     }
 }

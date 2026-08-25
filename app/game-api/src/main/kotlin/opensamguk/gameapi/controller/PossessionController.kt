@@ -4,10 +4,10 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.dto.ClaimableResponse
 import opensamguk.gameapi.dto.ClaimRequest
 import opensamguk.gameapi.dto.ClaimResponse
+import opensamguk.gameapi.member.MemberProfileClient
 import opensamguk.gameapi.owner.GeneralPossessionService
 import opensamguk.gameapi.owner.SelectNpcTokenService
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.infra.read.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -32,7 +32,7 @@ class PossessionController(
     private val possession: GeneralPossessionService,
     private val tokens: SelectNpcTokenService,
     private val reserve: CommandReserveService,
-    private val users: UserRepository,
+    private val memberProfiles: MemberProfileClient,
 ) {
 
     @GetMapping("/generals/claimable")
@@ -105,11 +105,7 @@ class PossessionController(
         }
     }
 
-    /**
-     * 계정 아이디는 토큰이 아니라 `users` 행에서 읽는다(OPENSAM-220).
-     * 행이 없으면 null — 호출부가 401 로 끊는다. 이 값은 `owner_name` 과 월드 로그에 영구히 남으므로
-     * userId 문자열을 폴백으로 박아 넣지 않는다.
-     */
+    /** 현재 gateway 표시 이름을 claim 시점의 `owner_name` 게임 사실로 기록한다. */
     private fun userNick(userId: Long): String? =
-        users.findById(userId).orElse(null)?.username?.takeIf { it.isNotBlank() }
+        memberProfiles.get(userId)?.name
 }

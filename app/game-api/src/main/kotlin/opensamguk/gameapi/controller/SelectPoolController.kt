@@ -3,14 +3,13 @@ package opensamguk.gameapi.controller
 import jakarta.servlet.http.HttpServletRequest
 import opensamguk.common.auth.GatewayPrincipal
 import opensamguk.common.constants.GameConst
-import opensamguk.gameapi.member.toMemberProfile
+import opensamguk.gameapi.member.MemberProfileClient
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.infra.read.SelectPoolReadRow
 import opensamguk.infra.read.SelectPoolRepository
-import opensamguk.infra.read.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -25,7 +24,7 @@ import java.time.Clock
 class SelectPoolController(
     private val repository: SelectPoolRepository,
     private val resolver: GeneralResolver,
-    private val users: UserRepository,
+    private val memberProfiles: MemberProfileClient,
     private val clock: Clock = Clock.systemUTC(),
     private val reserve: CommandReserveService? = null,
 ) {
@@ -38,8 +37,7 @@ class SelectPoolController(
         if (profile == null || userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
-        // 표시용 회원 정보는 토큰이 아니라 `users` 행에서 읽는다(OPENSAM-220).
-        val member = users.findById(userId).orElse(null)?.toMemberProfile()
+        val member = memberProfiles.get(userId)
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val now = clock.instant()
         val rows = repository.listForUser(userId.toInt(), now)
