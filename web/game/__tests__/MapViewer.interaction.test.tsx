@@ -53,8 +53,9 @@ beforeEach(() => {
 
 describe('MapViewer shared canvas overlays', () => {
   it('passes all city visuals and removes legacy DOM assets', () => {
-    render(<MapViewer mapData={MAP} currentCityId={11} selectedCityId={22} />);
-    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', 'han');
+    const mapCode = 'ha n&?';
+    render(<MapViewer mapData={{ ...MAP, mapCode }} currentCityId={11} selectedCityId={22} />);
+    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', mapCode);
     expect(document.querySelector('.map-bg')).toBeNull();
     expect(document.querySelector('.map-road')).toBeNull();
     expect(shared.props?.currentCityId).toBe(11);
@@ -64,9 +65,9 @@ describe('MapViewer shared canvas overlays', () => {
       expect.objectContaining({ id: 22, nationColor: '#ff0000', supply: false }),
     ]);
     const provinceUrl = typeof shared.props?.provinceUrl === 'function'
-      ? shared.props.provinceUrl('han')
+      ? shared.props.provinceUrl(mapCode)
       : shared.props?.provinceUrl;
-    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=han');
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=ha%20n%26%3F');
   });
 
   it('keeps hover tooltip content through the canvas callback', () => {

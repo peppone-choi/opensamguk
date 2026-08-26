@@ -62,9 +62,10 @@ beforeEach(() => {
 
 describe('MapPreview shared isometric renderer', () => {
   it('passes the real han map code and every city overlay without CDN map nodes', () => {
-    render(<MapPreview serverId="s1" mapData={MAP} currentCityId={11} />);
+    const mapCode = 'ha n&?';
+    render(<MapPreview serverId="s 1&?" mapData={{ ...MAP, mapCode }} currentCityId={11} />);
 
-    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', 'han');
+    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', mapCode);
     expect(document.querySelector('.map-bg')).toBeNull();
     expect(document.querySelector('.map-road')).toBeNull();
     expect(shared.props?.currentCityId).toBe(11);
@@ -76,13 +77,13 @@ describe('MapPreview shared isometric renderer', () => {
       isCapital: true,
     });
     const url = typeof shared.props?.terrainUrl === 'function'
-      ? shared.props.terrainUrl('han')
+      ? shared.props.terrainUrl(mapCode)
       : shared.props?.terrainUrl;
-    expect(url).toBe('/api/game/api/map/terrain?server=s1&mapCode=han');
+    expect(url).toBe('/api/game/api/map/terrain?server=s%201%26%3F&mapCode=ha%20n%26%3F');
     const provinceUrl = typeof shared.props?.provinceUrl === 'function'
-      ? shared.props.provinceUrl('han')
+      ? shared.props.provinceUrl(mapCode)
       : shared.props?.provinceUrl;
-    expect(provinceUrl).toBe('/api/game/api/map/provinces?server=s1&mapCode=han');
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?server=s%201%26%3F&mapCode=ha%20n%26%3F');
   });
 
   it('keeps the lobby tooltip through the canvas hover callback', () => {

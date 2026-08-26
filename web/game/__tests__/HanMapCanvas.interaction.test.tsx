@@ -365,14 +365,16 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
   it('keeps terrain when the province request rejects or dimensions mismatch', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    const onMissing = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    const rejected = render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} />);
+    const rejected = render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} onMissing={onMissing} />);
     const rejectedCanvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/game/api/map/provinces?mapCode=che'));
     await waitFor(() => expect(recordFor(rejectedCanvas).drawImages.length).toBeGreaterThan(0));
     expect(new Set(recordFor(rejectedCanvas).drawImages).size).toBe(1);
     expect(politicalCompositions()).toBe(0);
+    expect(onMissing).not.toHaveBeenCalled();
     rejected.unmount();
 
     records.clear();
