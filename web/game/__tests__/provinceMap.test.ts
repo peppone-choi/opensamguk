@@ -41,6 +41,14 @@ describe('province identity map', () => {
     expect(() => decodeProvincePixels(new Uint8ClampedArray([0, 0, 1, 255]), 1, 1)).toThrow(/hierarchy/);
   });
 
+  it('accepts the Python codec maximum commandery and rejects upper-bit overflow', () => {
+    const maximum = decodeProvincePixels(new Uint8ClampedArray([0x0f, 0xf0, 0x01, 255]), 1, 1);
+
+    expect(Array.from(maximum.provinces)).toEqual([0]);
+    expect(Array.from(maximum.commanderies)).toEqual([254]);
+    expect(() => decodeProvincePixels(new Uint8ClampedArray([0x10, 0x10, 0x01, 255]), 1, 1)).toThrow(/commandery/);
+  });
+
   it('binds nation colors by sampling each live city province tile', () => {
     const binding = bindProvinceOwnership(identityMapWithTwoProvinces(), CHE_OVERLAYS_FIXTURE, { cols: 4, rows: 3 }, SOURCE);
 
@@ -49,13 +57,14 @@ describe('province identity map', () => {
     expect(binding.conflicts).toEqual([]);
   });
 
-  it('leaves a province neutral when two nations claim one sampled province', () => {
+  it('keeps a province neutral after a second and third nation claim', () => {
     const oneProvinceMap = decodeProvincePixels(new Uint8ClampedArray([
       0, 16, 1, 255, 0, 16, 1, 255,
     ]), 2, 1);
     const conflictingCities: IsoCityOverlay[] = [
       { ...CHE_OVERLAYS_FIXTURE[0], x: 0, y: 0 },
       { ...CHE_OVERLAYS_FIXTURE[1], x: 100, y: 0 },
+      { ...CHE_OVERLAYS_FIXTURE[0], id: 33, nationId: 3, nationColor: '#00ff00', x: 0, y: 0 },
     ];
 
     const binding = bindProvinceOwnership(oneProvinceMap, conflictingCities, { cols: 2, rows: 1 }, { width: 200, height: 1 });
@@ -64,9 +73,12 @@ describe('province identity map', () => {
     expect(binding.conflicts).toEqual([0]);
   });
 
-  it('ignores neutral, invalid, out-of-grid, and sea samples', () => {
+  it('ignores neutral, non-integer, invalid, out-of-grid, and sea samples', () => {
     const cities: IsoCityOverlay[] = [
       { ...CHE_OVERLAYS_FIXTURE[0], nationId: 0, x: 50, y: 40 },
+      { ...CHE_OVERLAYS_FIXTURE[0], id: 9, nationId: Number.NaN, x: 50, y: 40 },
+      { ...CHE_OVERLAYS_FIXTURE[0], id: 10, nationId: Number.POSITIVE_INFINITY, x: 50, y: 40 },
+      { ...CHE_OVERLAYS_FIXTURE[0], id: 11, nationId: 1.5, x: 50, y: 40 },
       { ...CHE_OVERLAYS_FIXTURE[0], id: 12, nationColor: 'red', x: 50, y: 40 },
       { ...CHE_OVERLAYS_FIXTURE[0], id: 13, x: 250, y: 40 },
       { ...CHE_OVERLAYS_FIXTURE[0], id: 14, x: 0, y: 0 },
@@ -95,6 +107,24 @@ describe('province identity map', () => {
     expect(Array.from(composeProvincePixels(map, binding, 40))).toEqual([
       255, 0, 0, 40,
       0, 0, 255, 40,
+      0, 0, 0, 0,
+    ]);
+  });
+
+  it('never composes sea or conflicted provinces from an untrusted binding map', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 0, 0, 0, 0, 16, 1, 255,
+    ]), 2, 1);
+    const binding = {
+      colors: new Map([
+        [-1, { nationId: 1, rgb: [255, 0, 0] as [number, number, number] }],
+        [0, { nationId: 2, rgb: [0, 0, 255] as [number, number, number] }],
+      ]),
+      conflicts: [0],
+    };
+
+    expect(Array.from(composeProvincePixels(map, binding))).toEqual([
+      0, 0, 0, 0,
       0, 0, 0, 0,
     ]);
   });

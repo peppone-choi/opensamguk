@@ -74,10 +74,11 @@ export function decodeProvincePixels(
     if (code === 0) continue;
 
     const province = (code & PROVINCE_MASK) - 1;
-    const commandery = ((code >>> 12) & 0xff) - 1;
+    const commandery = (code >>> 12) - 1;
     if (province < 0 || commandery < 0) {
       throw new Error(`Province identity hierarchy is incomplete at pixel ${index}`);
     }
+    if (commandery > 254) throw new Error(`Province commandery identity is out of range at pixel ${index}`);
     provinces[index] = province;
     commanderies[index] = commandery;
   }
@@ -136,7 +137,7 @@ export function bindProvinceOwnership(
   const conflicts = new Set<number>();
 
   for (const city of cities) {
-    if (city.nationId <= 0) continue;
+    if (!Number.isInteger(city.nationId) || city.nationId <= 0) continue;
     const rgb = parseNationColor(city.nationColor);
     if (!rgb) continue;
 
@@ -167,8 +168,11 @@ export function composeProvincePixels(
   alpha = 96,
 ): Uint8ClampedArray {
   const pixels = new Uint8ClampedArray(map.width * map.height * 4);
+  const conflicts = new Set(binding.conflicts);
   for (let index = 0; index < map.provinces.length; index += 1) {
-    const color = binding.colors.get(map.provinces[index]);
+    const province = map.provinces[index];
+    if (province < 0 || conflicts.has(province)) continue;
+    const color = binding.colors.get(province);
     if (!color) continue;
     const offset = index * 4;
     pixels[offset] = color.rgb[0];
