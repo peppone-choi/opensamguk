@@ -1,14 +1,40 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   bindProvinceOwnership,
   composeProvincePixels,
   decodeProvincePixels,
+  loadProvinceIdentityMap,
   type IsoCityOverlay,
   type IsoSourceSize,
 } from '@opensamguk/ui';
 import { CHE_OVERLAYS_FIXTURE } from './fixtures/che-tiles';
 
 const SOURCE: IsoSourceSize = { width: 200, height: 120 };
+
+function installSuccessfulFetch() {
+  const blob = new Blob(['png']);
+  const fetchMock = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    blob: vi.fn().mockResolvedValue(blob),
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return { blob, fetchMock };
+}
+
+function installBitmap(width = 2, height = 1) {
+  const close = vi.fn();
+  const bitmap = { width, height, close };
+  const createBitmap = vi.fn().mockResolvedValue(bitmap);
+  vi.stubGlobal('createImageBitmap', createBitmap);
+  return { bitmap, close, createBitmap };
+}
+
+function installDecodeCanvas(context: CanvasRenderingContext2D | null) {
+  const canvas = { width: 0, height: 0, getContext: vi.fn().mockReturnValue(context) };
+  vi.spyOn(document, 'createElement').mockReturnValue(canvas as unknown as HTMLCanvasElement);
+  return canvas;
+}
 
 function identityMapWithTwoProvinces() {
   return decodeProvincePixels(new Uint8ClampedArray([
@@ -19,6 +45,10 @@ function identityMapWithTwoProvinces() {
 }
 
 describe('province identity map', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('decodes both identities and separates province from commandery edges', () => {
     const rgba = new Uint8ClampedArray([
       0, 0, 0, 255, 0, 16, 1, 255, 0, 16, 2, 255,
@@ -127,5 +157,98 @@ describe('province identity map', () => {
       0, 0, 0, 0,
       0, 0, 0, 0,
     ]);
+  });
+});
+
+describe('province identity image loader', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('fetches, decodes literal pixels, and closes the acquired bitmap', async () => {
+    const { blob, fetchMock } = installSuccessfulFetch();
+    const { bitmap, close, createBitmap } = installBitmap();
+    const drawImage = vi.fn();
+    installDecodeCanvas({
+      drawImage,
+      getImageData: vi.fn().mockReturnValue({
+        data: new Uint8ClampedArray([0, 16, 1, 255, 0, 0, 0, 255]),
+      }),
+    } as unknown as CanvasRenderingContext2D);
+
+    const map = await loadProvinceIdentityMap('/province.png');
+
+    expect(fetchMock).toHaveBeenCalledWith('/province.png');
+    expect(createBitmap).toHaveBeenCalledWith(blob);
+    expect(drawImage).toHaveBeenCalledWith(bitmap, 0, 0);
+    expect(Array.from(map.provinces)).toEqual([0, -1]);
+    expect(Array.from(map.commanderies)).toEqual([0, -1]);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a non-OK response before acquiring a bitmap', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 503 });
+    const createBitmap = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', createBitmap);
+
+    await expect(loadProvinceIdentityMap('/missing.png')).rejects.toThrow('province map fetch failed: 503');
+    expect(createBitmap).not.toHaveBeenCalled();
+  });
+
+  it('closes the bitmap when the decode context is unavailable', async () => {
+    installSuccessfulFetch();
+    const { close } = installBitmap();
+    installDecodeCanvas(null);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow('province decode context unavailable');
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the bitmap when canvas creation throws after acquisition', async () => {
+    installSuccessfulFetch();
+    const { close } = installBitmap();
+    vi.spyOn(document, 'createElement').mockImplementation(() => {
+      throw new Error('canvas unavailable');
+    });
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow('canvas unavailable');
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the bitmap when reading decoded pixels throws', async () => {
+    installSuccessfulFetch();
+    const { close } = installBitmap();
+    installDecodeCanvas({
+      drawImage: vi.fn(),
+      getImageData: vi.fn().mockImplementation(() => { throw new Error('tainted canvas'); }),
+    } as unknown as CanvasRenderingContext2D);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow('tainted canvas');
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the bitmap when drawing it into the decode canvas throws', async () => {
+    installSuccessfulFetch();
+    const { close } = installBitmap();
+    installDecodeCanvas({
+      drawImage: vi.fn().mockImplementation(() => { throw new Error('bitmap draw failed'); }),
+      getImageData: vi.fn(),
+    } as unknown as CanvasRenderingContext2D);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow('bitmap draw failed');
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the bitmap when pixel decoding rejects an invalid hierarchy', async () => {
+    installSuccessfulFetch();
+    const { close } = installBitmap(1, 1);
+    installDecodeCanvas({
+      drawImage: vi.fn(),
+      getImageData: vi.fn().mockReturnValue({ data: new Uint8ClampedArray([0, 16, 0, 255]) }),
+    } as unknown as CanvasRenderingContext2D);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(/hierarchy/);
+    expect(close).toHaveBeenCalledTimes(1);
   });
 });

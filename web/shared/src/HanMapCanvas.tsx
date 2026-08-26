@@ -104,6 +104,7 @@ export interface IsoCityOverlay {
 export interface IsoSceneCity extends IsoCityOverlay {
   col: number;
   row: number;
+  color: string;
   territoryColor: string;
   iconColor: string;
   layers: string[];
@@ -254,6 +255,7 @@ export function buildIsoScene(
         ...city,
         col,
         row,
+        color: city.nationColor ?? NEUTRAL_COLOR,
         territoryColor: city.nationColor ?? NEUTRAL_COLOR,
         iconColor: CASTLE_FILL,
         layers,
@@ -343,6 +345,15 @@ function matchesGrid(map: ProvinceIdentityMap | null, grid: GridSize): map is Pr
     && map.height === grid.rows
     && map.provinces.length === grid.cols * grid.rows
     && map.commanderies.length === grid.cols * grid.rows;
+}
+
+function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
+  return JSON.stringify(cities.map((city) => [
+    city.x,
+    city.y,
+    city.nationId,
+    city.nationColor ?? null,
+  ]));
 }
 
 function starPath(context: CanvasRenderingContext2D, x: number, y: number, radius: number) {
@@ -598,8 +609,15 @@ export function HanMapCanvas({
 
   const sceneRef = useRef<IsoScene | null>(scene);
   const hideCityNamesRef = useRef(hideCityNames);
+  const ownershipCitiesRef = useRef(cities);
   sceneRef.current = scene;
   hideCityNamesRef.current = hideCityNames;
+  ownershipCitiesRef.current = cities;
+  const gridCols = loadedTiles?._meta.cols ?? 0;
+  const gridRows = loadedTiles?._meta.rows ?? 0;
+  const sourceWidth = sourceSize.width;
+  const sourceHeight = sourceSize.height;
+  const ownershipKey = politicalOwnershipKey(cities);
 
   useEffect(() => {
     terrainRef.current = loadedTiles ? bakeTerrain(loadedTiles) : null;
@@ -629,19 +647,19 @@ export function HanMapCanvas({
   }, []);
 
   useEffect(() => {
-    if (!provinceMap || !loadedTiles) {
+    if (!provinceMap || gridCols === 0 || gridRows === 0) {
       politicalRef.current = null;
       render();
       return;
     }
     politicalRef.current = bakePoliticalFill(
       provinceMap,
-      cities,
-      { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows },
-      sourceSize,
+      ownershipCitiesRef.current,
+      { cols: gridCols, rows: gridRows },
+      { width: sourceWidth, height: sourceHeight },
     );
     render();
-  }, [cities, loadedTiles, provinceMap, render, sourceSize]);
+  }, [gridCols, gridRows, ownershipKey, provinceMap, render, sourceHeight, sourceWidth]);
 
   useEffect(() => {
     render();

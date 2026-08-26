@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   HanMapCanvas,
   screenToCell,
@@ -16,10 +16,15 @@ interface CanvasRecord {
   strokes: string[];
   strokeWidths: { style: string; width: number }[];
   fillRects: string[];
+  transforms: number[][];
+  drawSmoothing: boolean[];
+  radialGradients: unknown[];
+  gradientFills: unknown[];
 }
 
 const records = new Map<HTMLCanvasElement, CanvasRecord>();
 let pathConstructions = 0;
+const pathRecords: { moves: number[][]; lines: number[][] }[] = [];
 
 const PROVINCE_MAP: ProvinceIdentityMap = {
   width: 4,
@@ -48,6 +53,10 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   const strokes: string[] = [];
   const strokeWidths: { style: string; width: number }[] = [];
   const fillRects: string[] = [];
+  const transforms: number[][] = [];
+  const drawSmoothing: boolean[] = [];
+  const radialGradients: unknown[] = [];
+  const gradientFills: unknown[] = [];
   const gradient = { addColorStop: vi.fn() };
   const context = {
     canvas,
@@ -61,9 +70,10 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     clearRect: () => operations.push('clearRect'),
     save: vi.fn(),
     restore: vi.fn(),
-    transform: vi.fn(),
+    transform: (...values: number[]) => transforms.push(values),
     drawImage: (source: unknown) => {
       drawImages.push(source);
+      drawSmoothing.push(context.imageSmoothingEnabled);
       operations.push('drawImage');
     },
     beginPath: vi.fn(),
@@ -75,7 +85,9 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
       strokeWidths.push({ style, width: context.lineWidth });
       operations.push(`stroke:${style}`);
     },
-    fill: vi.fn(),
+    fill: () => {
+      if (context.fillStyle === gradient) gradientFills.push(gradient);
+    },
     fillRect: () => {
       const style = String(context.fillStyle);
       fillRects.push(style);
@@ -84,7 +96,10 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     strokeRect: vi.fn(),
     arc: vi.fn(),
     closePath: vi.fn(),
-    createRadialGradient: () => gradient,
+    createRadialGradient: () => {
+      radialGradients.push(gradient);
+      return gradient;
+    },
     fillText: vi.fn(),
     strokeText: vi.fn(),
     imageSmoothingEnabled: true,
@@ -96,7 +111,19 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     textBaseline: 'alphabetic',
     globalAlpha: 1,
   } as unknown as CanvasRenderingContext2D;
-  const record = { context, operations, drawImages, putImages, strokes, strokeWidths, fillRects };
+  const record = {
+    context,
+    operations,
+    drawImages,
+    putImages,
+    strokes,
+    strokeWidths,
+    fillRects,
+    transforms,
+    drawSmoothing,
+    radialGradients,
+    gradientFills,
+  };
   records.set(canvas, record);
   return record;
 }
@@ -106,10 +133,21 @@ function politicalCompositions(): number {
     .filter((pixels) => pixels.some((value, index) => index % 4 === 3 && value === 96)).length;
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => { resolve = next; });
+  return { promise, resolve };
+}
+
+function pngResponse() {
+  return { ok: true, status: 200, blob: vi.fn().mockResolvedValue(new Blob(['png'])) };
+}
+
 describe('shared HanMapCanvas viewport interaction', () => {
   beforeEach(() => {
     records.clear();
     pathConstructions = 0;
+    pathRecords.length = 0;
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function getContext(this: HTMLCanvasElement) {
       return recordFor(this).context;
     });
@@ -120,12 +158,20 @@ describe('shared HanMapCanvas viewport interaction', () => {
     Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
     Object.defineProperty(globalThis, 'Path2D', {
       value: class Path2DStub {
-        constructor() { pathConstructions += 1; }
-        moveTo() {}
-        lineTo() {}
+        private readonly record = { moves: [] as number[][], lines: [] as number[][] };
+        constructor() {
+          pathConstructions += 1;
+          pathRecords.push(this.record);
+        }
+        moveTo(...values: number[]) { this.record.moves.push(values); }
+        lineTo(...values: number[]) { this.record.lines.push(values); }
       },
       configurable: true,
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('reuses political pixels and cached borders while zooming and panning', () => {
@@ -150,6 +196,26 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const main = recordFor(canvas);
     const initialDraws = main.drawImages.length;
     const initial = views.at(-1)!;
+    const terrainCanvas = [...records].find(([, record]) => (
+      record.putImages.some((pixels) => pixels.some((value, index) => index % 4 === 3 && value === 255))
+    ))?.[0];
+    const politicalCanvas = [...records].find(([, record]) => (
+      record.putImages.some((pixels) => pixels.some((value, index) => index % 4 === 3 && value === 96))
+    ))?.[0];
+    expect(main.drawImages.slice(-2)).toEqual([terrainCanvas, politicalCanvas]);
+    expect(main.drawSmoothing.slice(-2)).toEqual([false, false]);
+    expect(pathRecords).toEqual([
+      { moves: [[1.5, 0.5]], lines: [[1.5, 1.5]] },
+      { moves: [[1.5, 0.5]], lines: [[1.5, 1.5]] },
+    ]);
+    expect(main.transforms.at(-1)).toEqual([
+      initial.scale,
+      initial.scale / 2,
+      -initial.scale,
+      initial.scale / 2,
+      initial.ox,
+      initial.oy,
+    ]);
     const pointer = { x: 210, y: 110 };
     const before = screenToCell(pointer.x, pointer.y, initial);
 
@@ -166,7 +232,39 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(politicalCompositions()).toBe(1);
     expect(pathConstructions).toBe(2);
 
-    const recolored = CHE_OVERLAYS_FIXTURE.map((city, index) => (
+    const markerOnly = CHE_OVERLAYS_FIXTURE.map((city, index) => (
+      index === 0
+        ? { ...city, name: '낙양성', level: 9, state: 2, supply: false, isCapital: false }
+        : { ...city }
+    ));
+    rerender(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={{ ...CHE_TILES_FIXTURE, terrain: [...CHE_TILES_FIXTURE.terrain] }}
+        provinceMap={PROVINCE_MAP}
+        cities={markerOnly}
+        sourceSize={{ width: 200, height: 120 }}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    expect(politicalCompositions()).toBe(1);
+    expect(pathConstructions).toBe(2);
+
+    const equivalentCities = markerOnly.map((city) => ({ ...city }));
+    rerender(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={{ ...CHE_TILES_FIXTURE, terrain: [...CHE_TILES_FIXTURE.terrain] }}
+        provinceMap={PROVINCE_MAP}
+        cities={equivalentCities}
+        sourceSize={{ width: 200, height: 120 }}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    expect(politicalCompositions()).toBe(1);
+    expect(pathConstructions).toBe(2);
+
+    const recolored = equivalentCities.map((city, index) => (
       index === 0 ? { ...city, nationColor: '#00ff00' } : city
     ));
     rerender(
@@ -182,10 +280,25 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(politicalCompositions()).toBe(2);
     expect(pathConstructions).toBe(2);
 
+    rerender(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={PROVINCE_MAP}
+        cities={recolored}
+        sourceSize={{ width: 400, height: 120 }}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    expect(politicalCompositions()).toBe(3);
+    expect(pathConstructions).toBe(2);
+
     expect(main.strokes).not.toContain('rgba(225, 192, 120, 0.72)');
     expect(main.fillRects).toContain('#8b8172');
     expect(main.fillRects).not.toContain('#ff0000');
     expect(main.fillRects).not.toContain('#0000ff');
+    expect(main.radialGradients).toHaveLength(0);
+    expect(main.gradientFills).toHaveLength(0);
 
     const frame = main.operations.slice(main.operations.lastIndexOf('clearRect'));
     const terrain = frame.indexOf('drawImage');
@@ -276,6 +389,50 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(new Set(recordFor(mismatchCanvas).drawImages).size).toBe(1);
     expect(politicalCompositions()).toBe(0);
     mismatch.unmount();
+  });
+
+  it('ignores a stale province URL completion after the replacement map loads', async () => {
+    const first = deferred<ReturnType<typeof pngResponse>>();
+    const second = deferred<ReturnType<typeof pngResponse>>();
+    const fetchMock = vi.fn((url: string) => url === '/first' ? first.promise : second.promise);
+    const secondClose = vi.fn();
+    const firstClose = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', vi.fn()
+      .mockResolvedValueOnce({ width: 4, height: 3, close: secondClose })
+      .mockResolvedValueOnce({ width: 4, height: 3, close: firstClose }));
+
+    const view = render(
+      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/first" />,
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/first'));
+    view.rerender(
+      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/second" />,
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/second'));
+
+    await act(async () => { second.resolve(pngResponse()); });
+    await waitFor(() => expect(pathConstructions).toBe(2));
+    expect(secondClose).toHaveBeenCalledTimes(1);
+
+    await act(async () => { first.resolve(pngResponse()); });
+    await waitFor(() => expect(firstClose).toHaveBeenCalledTimes(1));
+    expect(pathConstructions).toBe(2);
+  });
+
+  it('ignores a province completion after unmount while still closing its bitmap', async () => {
+    const pending = deferred<ReturnType<typeof pngResponse>>();
+    const close = vi.fn();
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(pending.promise));
+    vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue({ width: 4, height: 3, close }));
+    const view = render(
+      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/late" />,
+    );
+    view.unmount();
+
+    await act(async () => { pending.resolve(pngResponse()); });
+    await waitFor(() => expect(close).toHaveBeenCalledTimes(1));
+    expect(pathConstructions).toBe(0);
   });
 
   it('focuses and activates canvas city markers from the keyboard', () => {

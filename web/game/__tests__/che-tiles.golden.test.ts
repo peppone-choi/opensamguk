@@ -20,6 +20,7 @@ describe('che-tiles palette render golden', () => {
       'city:22@3.000,2.000 territory=#0000ff icon=#8b8172[castle:6,flag,supply:off,selected,name:허창]',
     );
     expect(scene.roads).toEqual([]);
+    expect(scene.cities[0].color).toBe(scene.cities[0].territoryColor);
     expect(scene.cities[0].iconColor).toBe('#8b8172');
     expect(scene.cities[0].layers).not.toContain('aura');
   });

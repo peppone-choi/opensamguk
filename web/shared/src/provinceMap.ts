@@ -33,15 +33,12 @@ export async function loadProvinceIdentityMap(url: string): Promise<ProvinceIden
   const response = await fetch(url);
   if (!response.ok) throw new Error(`province map fetch failed: ${response.status}`);
   const bitmap = await createImageBitmap(await response.blob());
-  const canvas = document.createElement('canvas');
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (!context) {
-    bitmap.close();
-    throw new Error('province decode context unavailable');
-  }
   try {
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) throw new Error('province decode context unavailable');
     context.drawImage(bitmap, 0, 0);
     return decodeProvincePixels(
       context.getImageData(0, 0, bitmap.width, bitmap.height).data,
