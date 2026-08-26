@@ -25,7 +25,7 @@ The province geometry is baked once into a lossless image artifact. Zoom and pan
 - `seatOwner`: row-major RLE; every land tile stores its 군·국 index.
 - `cities`: stable array addressed by `owner` values.
 - `juns`: stable array addressed by `seatOwner` values.
-- `terrain`: identifies sea and land independently of political ownership.
+- `terrain`: provides visual terrain independently of political ownership. It is not the political coastline authority; the committed grid contains coastal/range-edge cells where terrain and political coverage intentionally differ.
 
 These indices are geographic identities, not runtime nation IDs. The implementation must never interpret an `owner` or `seatOwner` value as a nation.
 
@@ -54,9 +54,11 @@ The generator validates:
 
 - `provinceIndex < 4095` and `commanderyIndex < 255`;
 - RLE expansion length equals `cols * rows` for both arrays;
-- sea pixels encode `0`;
-- every land pixel has both a province and a 군·국 identity;
+- cells where both ownership arrays are `-1` encode `0`;
+- `owner` and `seatOwner` agree on covered versus uncovered cells, and every covered cell has both identities;
 - decoding every emitted pixel reproduces the input `owner` and `seatOwner` values exactly.
+
+The generator records counts where terrain water/land classification differs from political coverage, but does not use terrain to rewrite or reject the political identity grid.
 
 The metadata sidecar records schema version, dimensions, source SHA-256, PNG SHA-256, province count, commandery count, and the bit layout. Re-running the generator with unchanged input must produce byte-identical PNG and metadata content, except that metadata contains no timestamp or machine-specific path.
 
