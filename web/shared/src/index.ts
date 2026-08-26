@@ -44,3 +44,12 @@ export {
   type GridSize,
   type IsoView,
 } from './isoMap';
+export {
+  bindProvinceOwnership,
+  composeProvincePixels,
+  decodeProvincePixels,
+  type ProvinceColor,
+  type ProvinceEdge,
+  type ProvinceIdentityMap,
+  type ProvinceOwnershipBinding,
+} from './provinceMap';

@@ -9,8 +9,8 @@ export const CHE_TILES_FIXTURE: HanTiles = {
     roadMaskBits: {},
   },
   terrain: ['0110', '1231', '0110'],
-  owner: [[-1, 12]],
-  seatOwner: [[-1, 12]],
+  owner: [[0, 6], [1, 6]],
+  seatOwner: [[0, 6], [1, 6]],
   juns: [
     { name: '사예', nameCh: '司隸', seat: 0, col: 1, row: 1 },
     { name: '예주', nameCh: '豫州', seat: 1, col: 3, row: 2 },
