@@ -31,4 +31,20 @@ describe('che-tiles palette render golden', () => {
     expect(scene.cities[0].layers).not.toContain('aura');
     expect(scene.cities[0].layers).not.toContain('flag');
   });
+
+  it.each([
+    ['unknown color', 1, undefined],
+    ['malformed color', 1, 'gray'],
+    ['NaN id', Number.NaN, '#ff0000'],
+    ['infinite id', Number.POSITIVE_INFINITY, '#ff0000'],
+    ['fractional id', 1.5, '#ff0000'],
+  ])('keeps invalid ownership neutral for %s', (_label, nationId, nationColor) => {
+    const city = { ...CHE_OVERLAYS_FIXTURE[0], nationId, nationColor, supply: false };
+
+    const rendered = buildIsoScene(CHE_TILES_FIXTURE, [city], SOURCE, {}).cities[0];
+
+    expect(rendered.territoryColor).toBe('#555555');
+    expect(rendered.layers).not.toContain('flag');
+    expect(rendered.layers).toContain('supply:on');
+  });
 });

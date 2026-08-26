@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     HanMapCanvas,
+    isOwnedNationVisual,
     type IsoActivation,
     type IsoCityOverlay,
     type IsoHoverPoint,
@@ -14,7 +15,6 @@ import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/
 import { getMaxRelativeTechLevel } from '@/lib/utilGame';
 
 const CITY_REGIONS = cityRegionsData.regions as Record<string, string>;
-const NEUTRAL_COLOR = '#555555';
 const NEUTRAL_NAME = '공 백 지';
 const DEFAULT_PHASES_PER_MONTH = 3;
 const DEFAULT_TURNS_PER_YEAR = 36;
@@ -219,10 +219,11 @@ export default function MapViewer({
     ), [data]);
     const cities = useMemo<IsoCityOverlay[]>(() => data?.cities.map((city) => {
         const nation = nationById.get(city.nationId);
+        const owned = isOwnedNationVisual(city.nationId, nation?.color);
         return {
             ...city,
-            nationName: nation?.name ?? NEUTRAL_NAME,
-            nationColor: nation?.color ?? NEUTRAL_COLOR,
+            nationName: owned ? nation?.name : NEUTRAL_NAME,
+            nationColor: owned ? nation.color : undefined,
         };
     }) ?? [], [data, nationById]);
     const sourceSize = useMemo(() => ({
@@ -309,7 +310,8 @@ export default function MapViewer({
             {hoverCity && (
                 <div className="map-tooltip" role="status" style={{ left: cursor.x + 12, top: cursor.y + 30 }}>
                     <div className="map-tooltip-name">{`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} | ${LEVEL_TEXT[hoverCity.level] ?? hoverCity.level}】 ${hoverCity.name}`}</div>
-                    {hoverCity.nationId !== 0 && <div className="map-tooltip-meta">{hoverCity.nationName}</div>}
+                    {isOwnedNationVisual(hoverCity.nationId, hoverCity.nationColor)
+                        && <div className="map-tooltip-meta">{hoverCity.nationName}</div>}
                 </div>
             )}
         </section>

@@ -77,6 +77,44 @@ describe('MapViewer shared canvas overlays', () => {
     expect(screen.getByRole('status')).toHaveTextContent('위');
   });
 
+  it.each([
+    ['unknown nation', 99, []],
+    ['malformed color', 1, [{ id: 1, name: '위', color: 'red' }]],
+    ['NaN id', Number.NaN, [{ id: Number.NaN, name: '위', color: '#ff0000' }]],
+    ['infinite id', Number.POSITIVE_INFINITY, [{ id: Number.POSITIVE_INFINITY, name: '위', color: '#ff0000' }]],
+    ['fractional id', 1.5, [{ id: 1.5, name: '위', color: '#ff0000' }]],
+  ])('keeps %s visually and semantically unowned', (_label, nationId, nations) => {
+    render(<MapViewer mapData={{
+      ...MAP,
+      cities: [{ ...MAP.cities[0], nationId }],
+      nations,
+    }} />);
+
+    expect(shared.props?.cities?.[0]).toEqual(expect.objectContaining({
+      nationId,
+      nationColor: undefined,
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
+    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    expect(document.querySelector('.map-tooltip-meta')).toBeNull();
+  });
+
+  it('preserves explicit nation id zero as neutral', () => {
+    render(<MapViewer mapData={{
+      ...MAP,
+      cities: [{ ...MAP.cities[0], nationId: 0 }],
+      nations: [],
+    }} />);
+
+    expect(shared.props?.cities?.[0]).toEqual(expect.objectContaining({
+      nationId: 0,
+      nationName: '공 백 지',
+      nationColor: undefined,
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
+    expect(document.querySelector('.map-tooltip-meta')).toBeNull();
+  });
+
   it('selection mode activates onCitySelect without navigation', () => {
     const onCitySelect = vi.fn();
     const onNavigate = vi.fn();

@@ -1,7 +1,13 @@
 import { mapCityToTile, type IsoCityOverlay, type IsoSourceSize } from './HanMapCanvas';
 import type { GridSize } from './isoMap';
+import { isOwnedNationVisual, parseNationColor } from './nationVisual';
 
 const PROVINCE_MASK = 0x0fff;
+const PNG_SIGNATURE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const FORBIDDEN_IDENTITY_CHUNKS = new Set([
+  'PLTE', 'tRNS', 'gAMA', 'cHRM', 'sRGB', 'iCCP', 'cICP', 'mDCV', 'cLLI', 'sBIT',
+  'acTL', 'fcTL', 'fdAT',
+]);
 
 export interface ProvinceEdge {
   x1: number;
@@ -29,19 +35,118 @@ export interface ProvinceOwnershipBinding {
   conflicts: number[];
 }
 
+interface ProvincePngShape {
+  width: number;
+  height: number;
+}
+
+function readUint32(bytes: Uint8Array, offset: number): number {
+  return new DataView(bytes.buffer, bytes.byteOffset + offset, 4).getUint32(0);
+}
+
+function pngChunkName(bytes: Uint8Array, offset: number): string {
+  return String.fromCharCode(bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
+}
+
+function validateProvincePng(bytes: Uint8Array): ProvincePngShape {
+  if (bytes.length < PNG_SIGNATURE.length || PNG_SIGNATURE.some((value, index) => bytes[index] !== value)) {
+    throw new Error('Province identity PNG signature is invalid');
+  }
+
+  let offset = PNG_SIGNATURE.length;
+  let width = 0;
+  let height = 0;
+  let seenHeader = false;
+  let seenImageData = false;
+  let imageDataEnded = false;
+  let seenEnd = false;
+  while (offset < bytes.length) {
+    if (bytes.length - offset < 12) throw new Error('Province identity PNG chunk is truncated');
+    const length = readUint32(bytes, offset);
+    const kind = pngChunkName(bytes, offset + 4);
+    if (!/^[A-Za-z]{4}$/.test(kind)) throw new Error('Province identity PNG chunk name is invalid');
+    if (length > bytes.length - offset - 12) throw new Error(`Province identity PNG ${kind} chunk is truncated`);
+    const payloadOffset = offset + 8;
+    const nextOffset = offset + 12 + length;
+
+    if (!seenHeader && kind !== 'IHDR') throw new Error('Province identity PNG must begin with IHDR');
+    if (FORBIDDEN_IDENTITY_CHUNKS.has(kind)) {
+      throw new Error(`Province identity PNG must not contain ${kind}`);
+    }
+    if (kind === 'IHDR') {
+      if (seenHeader || length !== 13) throw new Error('Province identity PNG has an invalid IHDR');
+      width = readUint32(bytes, payloadOffset);
+      height = readUint32(bytes, payloadOffset + 4);
+      const bitDepth = bytes[payloadOffset + 8];
+      const colorType = bytes[payloadOffset + 9];
+      const compression = bytes[payloadOffset + 10];
+      const filter = bytes[payloadOffset + 11];
+      const interlace = bytes[payloadOffset + 12];
+      if (width < 1 || height < 1) throw new Error('Province identity PNG dimensions must be positive');
+      if (bitDepth !== 8) throw new Error('Province identity PNG must use 8-bit samples');
+      if (colorType !== 2) throw new Error('Province identity PNG must use truecolor RGB without alpha or palette');
+      if (compression !== 0 || filter !== 0) throw new Error('Province identity PNG uses an unsupported codec');
+      if (interlace !== 0) throw new Error('Province identity PNG must not be interlaced');
+      seenHeader = true;
+    } else if (kind === 'IDAT') {
+      if (imageDataEnded) throw new Error('Province identity PNG IDAT chunks must be consecutive');
+      seenImageData = true;
+    } else {
+      if (seenImageData) imageDataEnded = true;
+      if (kind === 'IEND') {
+        if (length !== 0 || nextOffset !== bytes.length) throw new Error('Province identity PNG has an invalid IEND');
+        seenEnd = true;
+      } else if ((bytes[offset + 4] & 0x20) === 0) {
+        throw new Error(`Province identity PNG has unsupported critical chunk ${kind}`);
+      }
+    }
+    offset = nextOffset;
+    if (seenEnd) break;
+  }
+  if (!seenHeader || !seenImageData || !seenEnd) throw new Error('Province identity PNG is incomplete');
+  return { width, height };
+}
+
+async function createProvinceBitmap(blob: Blob): Promise<ImageBitmap> {
+  try {
+    return await createImageBitmap(blob, {
+      colorSpaceConversion: 'none',
+      premultiplyAlpha: 'none',
+    });
+  } catch (error) {
+    const unsupported = error instanceof TypeError
+      || (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'NotSupportedError');
+    if (!unsupported) throw error;
+    return createImageBitmap(blob);
+  }
+}
+
 export async function loadProvinceIdentityMap(url: string): Promise<ProvinceIdentityMap> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`province map fetch failed: ${response.status}`);
-  const bitmap = await createImageBitmap(await response.blob());
+  const contentType = response.headers.get('content-type');
+  if (contentType == null || !/^image\/png(?:\s*;.*)?$/i.test(contentType)) {
+    throw new Error(`Province identity Content-Type must be image/png, received ${contentType ?? 'missing'}`);
+  }
+  const pngBytes = new Uint8Array(await response.arrayBuffer());
+  const shape = validateProvincePng(pngBytes);
+  const bitmap = await createProvinceBitmap(new Blob([pngBytes], { type: 'image/png' }));
   try {
+    if (bitmap.width !== shape.width || bitmap.height !== shape.height) {
+      throw new Error('Province identity decoded dimensions do not match IHDR');
+    }
     const canvas = document.createElement('canvas');
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) throw new Error('province decode context unavailable');
     context.drawImage(bitmap, 0, 0);
+    const rgba = context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+    for (let offset = 3; offset < rgba.length; offset += 4) {
+      if (rgba[offset] !== 255) throw new Error(`Province identity pixels must be opaque at pixel ${(offset - 3) / 4}`);
+    }
     return decodeProvincePixels(
-      context.getImageData(0, 0, bitmap.width, bitmap.height).data,
+      rgba,
       bitmap.width,
       bitmap.height,
     );
@@ -139,15 +244,6 @@ export function decodeProvincePixels(
   return { width, height, provinces, commanderies, provinceEdges, commanderyEdges };
 }
 
-function parseNationColor(color: string | undefined): [number, number, number] | undefined {
-  if (color == null || !/^#[0-9a-fA-F]{6}$/.test(color)) return undefined;
-  return [
-    Number.parseInt(color.slice(1, 3), 16),
-    Number.parseInt(color.slice(3, 5), 16),
-    Number.parseInt(color.slice(5, 7), 16),
-  ];
-}
-
 export function bindProvinceOwnership(
   map: ProvinceIdentityMap,
   cities: readonly IsoCityOverlay[],
@@ -158,9 +254,8 @@ export function bindProvinceOwnership(
   const conflicts = new Set<number>();
 
   for (const city of cities) {
-    if (!Number.isInteger(city.nationId) || city.nationId <= 0) continue;
+    if (!isOwnedNationVisual(city.nationId, city.nationColor)) continue;
     const rgb = parseNationColor(city.nationColor);
-    if (!rgb) continue;
 
     const mapped = mapCityToTile(city, grid, source);
     const col = Math.round(mapped.col);

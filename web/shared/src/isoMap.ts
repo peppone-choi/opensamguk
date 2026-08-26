@@ -48,8 +48,12 @@ export function fitScale(width: number, height: number, grid: GridSize): number 
 export const MAX_CSS_SCALE = 32;
 export const MAX_SCALE = MAX_CSS_SCALE;
 
+export function effectiveDpr(dpr: number): number {
+  return Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
+}
+
 export function maxScaleForDpr(dpr: number): number {
-  return MAX_CSS_SCALE * Math.max(1, dpr);
+  return MAX_CSS_SCALE * effectiveDpr(dpr);
 }
 
 export function zoomAt(

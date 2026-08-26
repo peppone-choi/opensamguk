@@ -77,6 +77,11 @@ describe('줌', () => {
         expect(zoomAt(v, 0, 0, 0.01, 1.5).scale).toBe(1.5);
         expect(maxScaleForDpr(1)).toBe(32);
         expect(maxScaleForDpr(2)).toBe(64);
+        expect(maxScaleForDpr(0.8)).toBeCloseTo(25.6, 9);
+        expect(maxScaleForDpr(0)).toBe(32);
+        expect(maxScaleForDpr(-0.8)).toBe(32);
+        expect(maxScaleForDpr(Number.NaN)).toBe(32);
+        expect(maxScaleForDpr(Number.POSITIVE_INFINITY)).toBe(32);
         expect(zoomAt(viewAt(800, 600, 1, 1, 10), 100, 80, 100, 0.5, 64).scale).toBe(64);
     });
 
@@ -156,5 +161,6 @@ describe('첫 화면 배율 — 郡 두세 개', () => {
     it('배율 상한을 넘지 않는다', () => {
         expect(scaleForSpan(800, 600, 1)).toBe(MAX_CSS_SCALE);
         expect(scaleForSpan(800, 600, 1, 64)).toBe(64);
+        expect(scaleForSpan(640, 480, 1, maxScaleForDpr(0.8))).toBeCloseTo(25.6, 9);
     });
 });

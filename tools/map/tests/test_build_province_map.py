@@ -5,6 +5,7 @@ import unittest
 import zlib
 from dataclasses import dataclass
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.map.build_province_map import (
     build_assets,
@@ -55,8 +56,9 @@ def decode_png_identities(png: bytes) -> tuple[int, int, list[int], list[int]]:
         assert raw[offset] == 0
         offset += 1
         for _ in range(width):
-            identity = decode_identity(tuple(raw[offset:offset + 3]))
-            province, commandery = identity if identity is not None else (-1, -1)
+            code = (raw[offset] << 16) | (raw[offset + 1] << 8) | raw[offset + 2]
+            province = (code & 0x0FFF) - 1 if code else -1
+            commandery = (code >> 12) - 1 if code else -1
             provinces.append(province)
             commanderies.append(commandery)
             offset += 3
@@ -114,6 +116,29 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "commandery index"):
             encode_identity(0, 255)
 
+    def test_rejects_booleans_where_canonical_integers_are_required(self):
+        for owner, seat_owner, cols, rows in [
+            ([[True, 1]], [[0, 1]], 1, 1),
+            ([[0, True]], [[0, 1]], 1, 1),
+            ([[0, 1]], [[0, 1]], True, 1),
+            ([[0, 1]], [[0, 1]], 1, False),
+        ]:
+            with self.subTest(owner=owner, seat_owner=seat_owner, cols=cols, rows=rows):
+                with self.assertRaisesRegex(ValueError, "integers"):
+                    build_from_runs(owner, seat_owner, cols, rows)
+        with self.assertRaisesRegex(ValueError, "province index"):
+            encode_identity(True, 0)
+        with self.assertRaisesRegex(ValueError, "RGB identity"):
+            decode_identity((True, 0, 0))
+
+    def test_rejects_impractical_dimensions_and_huge_rle_before_allocation(self):
+        with self.assertRaisesRegex(ValueError, "dimension"):
+            build_from_runs([], [], 4097, 1)
+        with self.assertRaisesRegex(ValueError, "cell count"):
+            build_from_runs([], [], 2048, 2049)
+        with self.assertRaisesRegex(ValueError, "exceeds"):
+            build_from_runs([[0, 10**9]], [[0, 1]], 1, 1)
+
     def test_rejects_truncated_rle_and_invalid_decoded_commandery(self):
         with self.assertRaisesRegex(ValueError, "expected 6"):
             build_from_runs(owner=[[-1, 1]], seat_owner=[[-1, 1]], cols=3, rows=2)
@@ -137,6 +162,36 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
         self.assertFalse(check_assets(result.input_path, result.output_dir, "han"))
         with self.assertRaisesRegex(ValueError, "map code"):
             build_assets(result.input_path, result.output_dir, "../han")
+
+    def test_build_independently_rejects_png_scanlines_that_do_not_match_source_grids(self):
+        correct = build_fixture(valid_fixture)
+        self.addCleanup(correct.temporary_directory.cleanup)
+        changed = {
+            **valid_fixture,
+            "owner": [[-1, 1], [1, 1], [0, 1], [2, 2], [-1, 1]],
+        }
+        temporary_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary_directory.cleanup)
+        root = Path(temporary_directory.name)
+        input_path = root / "han-tiles.json"
+        input_path.write_text(json.dumps(changed, separators=(",", ":")), encoding="utf-8")
+
+        with patch("tools.map.build_province_map._make_png", return_value=correct.png_bytes):
+            with self.assertRaisesRegex(ValueError, "round-trip"):
+                build_assets(input_path, root / "generated", "han")
+
+    def test_real_han_asset_round_trips_every_owner_and_seat_owner_cell(self):
+        source_path = Path(__file__).resolve().parents[3] / "data/map/han-tiles.json"
+        source = json.loads(source_path.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            result = build_assets(source_path, Path(temporary_directory), "han")
+            width, height, provinces, commanderies = decode_png_identities(result.png_bytes)
+
+        expected_provinces = [value for value, count in source["owner"] for _ in range(count)]
+        expected_commanderies = [value for value, count in source["seatOwner"] for _ in range(count)]
+        self.assertEqual((width, height), (768, 669))
+        self.assertEqual(provinces, expected_provinces)
+        self.assertEqual(commanderies, expected_commanderies)
 
 
 if __name__ == "__main__":

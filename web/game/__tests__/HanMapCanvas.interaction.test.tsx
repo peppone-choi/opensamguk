@@ -61,7 +61,11 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   const context = {
     canvas,
     createImageData: (width: number, height: number) => ({ data: new Uint8ClampedArray(width * height * 4) }),
-    getImageData: (_x: number, _y: number, width: number, height: number) => ({ data: new Uint8ClampedArray(width * height * 4) }),
+    getImageData: (_x: number, _y: number, width: number, height: number) => {
+      const data = new Uint8ClampedArray(width * height * 4);
+      for (let offset = 3; offset < data.length; offset += 4) data[offset] = 255;
+      return { data };
+    },
     putImageData: (image: { data: Uint8ClampedArray }) => {
       putImages.push(new Uint8ClampedArray(image.data));
       operations.push('putImageData');
@@ -140,7 +144,38 @@ function deferred<T>() {
 }
 
 function pngResponse() {
-  return { ok: true, status: 200, blob: vi.fn().mockResolvedValue(new Blob(['png'])) };
+  const u32 = (value: number) => new Uint8Array([
+    (value >>> 24) & 0xff,
+    (value >>> 16) & 0xff,
+    (value >>> 8) & 0xff,
+    value & 0xff,
+  ]);
+  const join = (...parts: Uint8Array[]) => {
+    const result = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
+    let offset = 0;
+    for (const part of parts) {
+      result.set(part, offset);
+      offset += part.length;
+    }
+    return result;
+  };
+  const chunk = (kind: string, payload?: Uint8Array) => {
+    const body = payload ?? new Uint8Array();
+    return join(
+      u32(body.length),
+      new TextEncoder().encode(kind),
+      body,
+      new Uint8Array(4),
+    );
+  };
+  const ihdr = join(u32(4), u32(3), new Uint8Array([8, 2, 0, 0, 0]));
+  const png = join(
+    new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', new Uint8Array([0x78, 0x01])),
+    chunk('IEND'),
+  );
+  return new Response(png, { status: 200, headers: { 'Content-Type': 'image/png' } });
 }
 
 describe('shared HanMapCanvas viewport interaction', () => {
@@ -361,6 +396,56 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const afterCenter = screenToCell(200, 106, after);
     expect(afterCenter[0]).toBeCloseTo(beforeCenter[0], 6);
     expect(afterCenter[1]).toBeCloseTo(beforeCenter[1], 6);
+  });
+
+  it('uses fractional DPR for wheel, button, resize, and the exact 32 CSS-pixel cap', () => {
+    Object.defineProperty(window, 'devicePixelRatio', { value: 0.8, configurable: true });
+    const views: IsoView[] = [];
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    expect(canvas.width).toBe(160);
+    const pointerCss = { x: 75, y: 53 };
+    const pointer = {
+      x: pointerCss.x * canvas.width / 200,
+      y: pointerCss.y * canvas.height / 106,
+    };
+    const pointerCell = screenToCell(pointer.x, pointer.y, views.at(-1)!);
+    for (let index = 0; index < 30; index += 1) {
+      fireEvent.wheel(canvas, { clientX: pointerCss.x, clientY: pointerCss.y, deltaY: -1 });
+    }
+    const wheelMax = views.at(-1)!;
+    expect(wheelMax.scale).toBeCloseTo(25.6, 9);
+    expect(wheelMax.scale / 0.8).toBeCloseTo(32, 9);
+    const afterWheel = screenToCell(pointer.x, pointer.y, wheelMax);
+    expect(afterWheel[0]).toBeCloseTo(pointerCell[0], 6);
+    expect(afterWheel[1]).toBeCloseTo(pointerCell[1], 6);
+
+    fireEvent.click(screen.getByRole('button', { name: '지도 축소' }));
+    const beforeButton = views.at(-1)!;
+    const centeredCell = screenToCell(canvas.width / 2, canvas.height / 2, beforeButton);
+    fireEvent.click(screen.getByRole('button', { name: '지도 확대' }));
+    const afterButton = views.at(-1)!;
+    const afterButtonCell = screenToCell(canvas.width / 2, canvas.height / 2, afterButton);
+    expect(afterButton.scale).toBeLessThanOrEqual(25.6);
+    expect(afterButtonCell[0]).toBeCloseTo(centeredCell[0], 6);
+    expect(afterButtonCell[1]).toBeCloseTo(centeredCell[1], 6);
+
+    const beforeResizeCenter = screenToCell(canvas.width / 2, canvas.height / 2, afterButton);
+    Object.defineProperty(window, 'devicePixelRatio', { value: 1.25, configurable: true });
+    fireEvent(window, new Event('resize'));
+    const afterResize = views.at(-1)!;
+    expect(afterResize.scale).toBeCloseTo(40, 9);
+    expect(afterResize.scale / 1.25).toBeCloseTo(32, 9);
+    const afterResizeCenter = screenToCell(canvas.width / 2, canvas.height / 2, afterResize);
+    expect(afterResizeCenter[0]).toBeCloseTo(beforeResizeCenter[0], 6);
+    expect(afterResizeCenter[1]).toBeCloseTo(beforeResizeCenter[1], 6);
   });
 
   it('keeps terrain when the province request rejects or dimensions mismatch', async () => {

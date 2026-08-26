@@ -3,6 +3,7 @@ import {
   bindProvinceOwnership,
   composeProvincePixels,
   decodeProvincePixels,
+  isOwnedNationVisual,
   loadProvinceIdentityMap,
   type IsoCityOverlay,
   type IsoSourceSize,
@@ -10,16 +11,60 @@ import {
 import { CHE_OVERLAYS_FIXTURE } from './fixtures/che-tiles';
 
 const SOURCE: IsoSourceSize = { width: 200, height: 120 };
+const REAL_RGB8_PNG = Uint8Array.from(Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgEGAEAAAlABJ854baAAAAAElFTkSuQmCC',
+  'base64',
+));
 
-function installSuccessfulFetch() {
-  const blob = new Blob(['png']);
-  const fetchMock = vi.fn().mockResolvedValue({
-    ok: true,
-    status: 200,
-    blob: vi.fn().mockResolvedValue(blob),
-  });
+function bytes(...parts: readonly Uint8Array[]): Uint8Array {
+  const result = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.length;
+  }
+  return result;
+}
+
+function uint32(value: number): Uint8Array {
+  return new Uint8Array([(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff]);
+}
+
+function pngChunk(kind: string, payload?: Uint8Array): Uint8Array {
+  const body = payload ?? new Uint8Array();
+  return bytes(uint32(body.length), new TextEncoder().encode(kind), body, new Uint8Array(4));
+}
+
+function provincePng({
+  width = 2,
+  height = 1,
+  bitDepth = 8,
+  colorType = 2,
+  interlace = 0,
+  extraChunks = [],
+}: {
+  width?: number;
+  height?: number;
+  bitDepth?: number;
+  colorType?: number;
+  interlace?: number;
+  extraChunks?: string[];
+} = {}): Uint8Array {
+  const ihdr = bytes(uint32(width), uint32(height), new Uint8Array([bitDepth, colorType, 0, 0, interlace]));
+  return bytes(
+    new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk('IHDR', ihdr),
+    ...extraChunks.map((kind) => pngChunk(kind, new Uint8Array([1]))),
+    pngChunk('IDAT', new Uint8Array([0x78, 0x01])),
+    pngChunk('IEND'),
+  );
+}
+
+function installSuccessfulFetch(png = provincePng(), contentType = 'image/png') {
+  const response = new Response(png, { status: 200, headers: { 'Content-Type': contentType } });
+  const fetchMock = vi.fn().mockResolvedValue(response);
   vi.stubGlobal('fetch', fetchMock);
-  return { blob, fetchMock };
+  return { fetchMock, png };
 }
 
 function installBitmap(width = 2, height = 1) {
@@ -85,6 +130,20 @@ describe('province identity map', () => {
     expect(binding.colors.get(0)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
     expect(binding.colors.get(1)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
     expect(binding.conflicts).toEqual([]);
+  });
+
+  it.each([
+    [1, '#aBc123', true],
+    [0, '#abcdef', false],
+    [-1, '#abcdef', false],
+    [Number.NaN, '#abcdef', false],
+    [Number.POSITIVE_INFINITY, '#abcdef', false],
+    [1.5, '#abcdef', false],
+    [1, 'red', false],
+    [1, '#abcd', false],
+    [1, undefined, false],
+  ])('strict ownership predicate classifies nation=%s color=%s as %s', (nationId, nationColor, expected) => {
+    expect(isOwnedNationVisual(nationId, nationColor)).toBe(expected);
   });
 
   it('keeps a province neutral after a second and third nation claim', () => {
@@ -166,34 +225,112 @@ describe('province identity image loader', () => {
   });
 
   it('fetches, decodes literal pixels, and closes the acquired bitmap', async () => {
-    const { blob, fetchMock } = installSuccessfulFetch();
-    const { bitmap, close, createBitmap } = installBitmap();
+    const { fetchMock } = installSuccessfulFetch(REAL_RGB8_PNG);
+    const { bitmap, close, createBitmap } = installBitmap(1, 1);
     const drawImage = vi.fn();
     installDecodeCanvas({
       drawImage,
       getImageData: vi.fn().mockReturnValue({
-        data: new Uint8ClampedArray([0, 16, 1, 255, 0, 0, 0, 255]),
+        data: new Uint8ClampedArray([0, 16, 1, 255]),
       }),
     } as unknown as CanvasRenderingContext2D);
 
     const map = await loadProvinceIdentityMap('/province.png');
 
     expect(fetchMock).toHaveBeenCalledWith('/province.png');
-    expect(createBitmap).toHaveBeenCalledWith(blob);
+    expect(createBitmap).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'image/png', size: expect.any(Number) }),
+      { colorSpaceConversion: 'none', premultiplyAlpha: 'none' },
+    );
     expect(drawImage).toHaveBeenCalledWith(bitmap, 0, 0);
-    expect(Array.from(map.provinces)).toEqual([0, -1]);
-    expect(Array.from(map.commanderies)).toEqual([0, -1]);
+    expect(Array.from(map.provinces)).toEqual([0]);
+    expect(Array.from(map.commanderies)).toEqual([0]);
     expect(close).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a non-OK response before acquiring a bitmap', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 503 });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 503 }));
     const createBitmap = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     vi.stubGlobal('createImageBitmap', createBitmap);
 
     await expect(loadProvinceIdentityMap('/missing.png')).rejects.toThrow('province map fetch failed: 503');
     expect(createBitmap).not.toHaveBeenCalled();
+  });
+
+  it('rejects mislabeled or non-PNG bytes before acquiring a bitmap', async () => {
+    const createBitmap = vi.fn();
+    vi.stubGlobal('createImageBitmap', createBitmap);
+
+    installSuccessfulFetch(provincePng(), 'application/octet-stream');
+    await expect(loadProvinceIdentityMap('/mislabeled.png')).rejects.toThrow(/Content-Type/);
+
+    installSuccessfulFetch(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]), 'image/png');
+    await expect(loadProvinceIdentityMap('/lossy.png')).rejects.toThrow(/signature/);
+    expect(createBitmap).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['16-bit samples', provincePng({ bitDepth: 16 }), /8-bit/],
+    ['palette samples', provincePng({ colorType: 3 }), /truecolor RGB/],
+    ['alpha samples', provincePng({ colorType: 6 }), /truecolor RGB/],
+    ['interlacing', provincePng({ interlace: 1 }), /interlaced/],
+  ])('rejects unsupported IHDR contract: %s', async (_label, png, message) => {
+    const createBitmap = vi.fn();
+    vi.stubGlobal('createImageBitmap', createBitmap);
+    installSuccessfulFetch(png);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(message);
+    expect(createBitmap).not.toHaveBeenCalled();
+  });
+
+  it.each(['PLTE', 'tRNS', 'gAMA', 'cHRM', 'sRGB', 'iCCP', 'cICP'])(
+    'rejects identity-changing PNG chunk %s before decode',
+    async (chunk) => {
+      const createBitmap = vi.fn();
+      vi.stubGlobal('createImageBitmap', createBitmap);
+      installSuccessfulFetch(provincePng({ extraChunks: [chunk] }));
+
+      await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(new RegExp(chunk));
+      expect(createBitmap).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects transparent decoded pixels and still closes the bitmap', async () => {
+    installSuccessfulFetch(provincePng({ width: 1, height: 1 }));
+    const { close } = installBitmap(1, 1);
+    installDecodeCanvas({
+      drawImage: vi.fn(),
+      getImageData: vi.fn().mockReturnValue({ data: new Uint8ClampedArray([0, 16, 1, 254]) }),
+    } as unknown as CanvasRenderingContext2D);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(/opaque/);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back only when bitmap decode options are unsupported', async () => {
+    const close = vi.fn();
+    const bitmap = { width: 2, height: 1, close };
+    const createBitmap = vi.fn()
+      .mockRejectedValueOnce(new TypeError('options unsupported'))
+      .mockResolvedValueOnce(bitmap);
+    installSuccessfulFetch();
+    vi.stubGlobal('createImageBitmap', createBitmap);
+    installDecodeCanvas({
+      drawImage: vi.fn(),
+      getImageData: vi.fn().mockReturnValue({
+        data: new Uint8ClampedArray([0, 16, 1, 255, 0, 0, 0, 255]),
+      }),
+    } as unknown as CanvasRenderingContext2D);
+
+    await loadProvinceIdentityMap('/province.png');
+
+    expect(createBitmap).toHaveBeenNthCalledWith(1, expect.any(Blob), {
+      colorSpaceConversion: 'none',
+      premultiplyAlpha: 'none',
+    });
+    expect(createBitmap).toHaveBeenNthCalledWith(2, expect.any(Blob));
+    expect(close).toHaveBeenCalledTimes(1);
   });
 
   it('closes the bitmap when the decode context is unavailable', async () => {
@@ -241,7 +378,7 @@ describe('province identity image loader', () => {
   });
 
   it('closes the bitmap when pixel decoding rejects an invalid hierarchy', async () => {
-    installSuccessfulFetch();
+    installSuccessfulFetch(provincePng({ width: 1, height: 1 }));
     const { close } = installBitmap(1, 1);
     installDecodeCanvas({
       drawImage: vi.fn(),

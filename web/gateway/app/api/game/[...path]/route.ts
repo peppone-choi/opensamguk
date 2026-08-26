@@ -37,6 +37,12 @@ export const dynamic = "force-dynamic";
 
 const encoder = new TextEncoder();
 const SSE_HEARTBEAT_MS = 25_000;
+const SAFE_RESPONSE_HEADERS = [
+  "Content-Type",
+  "Content-Length",
+  "ETag",
+  "Cache-Control",
+] as const;
 
 function isEventStream(contentType: string): boolean {
   return contentType.includes("text/event-stream");
@@ -83,6 +89,19 @@ function sseHeaders(
     Connection: "keep-alive",
     "X-Accel-Buffering": "no",
   };
+}
+
+function proxyResponseHeaders(upstream: Response): Headers {
+  const headers = new Headers();
+  for (const name of SAFE_RESPONSE_HEADERS) {
+    const value = upstream.headers.get(name);
+    if (value != null) headers.set(name, value);
+  }
+  return headers;
+}
+
+function isBodylessResponse(method: string, status: number): boolean {
+  return method === "HEAD" || status === 101 || status === 204 || status === 205 || status === 304;
 }
 
 async function streamEventSource(
@@ -174,6 +193,8 @@ async function forward(
   const target = `${base}/${path.join("/")}${search ? `?${search}` : ""}`;
   const headers: Record<string, string> = {};
   if (access) headers.Authorization = `Bearer ${access}`;
+  const ifNoneMatch = req.headers.get("if-none-match");
+  if (ifNoneMatch) headers["If-None-Match"] = ifNoneMatch;
 
   const init: RequestInit = {
     method: req.method,
@@ -202,13 +223,17 @@ async function forward(
     });
   }
 
-  const body = await upstream.text();
-  return new NextResponse(body, {
-    status: upstream.status,
-    headers: {
-      "Content-Type": contentType,
+  const responseHeaders = proxyResponseHeaders(upstream);
+  if (!responseHeaders.has("Content-Type") && !isBodylessResponse(req.method, upstream.status)) {
+    responseHeaders.set("Content-Type", "application/json");
+  }
+  return new NextResponse(
+    isBodylessResponse(req.method, upstream.status) ? null : upstream.body,
+    {
+      status: upstream.status,
+      headers: responseHeaders,
     },
-  });
+  );
 }
 
 export async function GET(

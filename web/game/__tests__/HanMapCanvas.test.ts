@@ -58,6 +58,7 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
     it('좁은 화면의 라벨 문턱은 절대 밀도값을 보존한다', () => {
         expect(labelZoomFor('COUNTY', 0.01)).toBeCloseTo(TIER2_LABEL_ZOOM.COUNTY, 6);
         expect(labelZoomFor('COUNTY', 0.02, 2)).toBeCloseTo(TIER2_LABEL_ZOOM.COUNTY * 2, 6);
+        expect(labelZoomFor('COUNTY', 0.008, 0.8)).toBeCloseTo(TIER2_LABEL_ZOOM.COUNTY * 0.8, 6);
     });
 
     it('넓고 고DPI인 화면에서도 라벨 문턱은 도달 가능하다', () => {
@@ -71,7 +72,7 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
     it('실제 격자와 郡治에서 초기·완전 줌아웃은 마커 문턱 아래다', () => {
         const viewports: [number, number][] = [[800, 600], [1280, 800], [1600, 900], [1920, 1080], [3013, 1200]];
         for (const [cssWidth, cssHeight] of viewports) {
-            for (const dpr of [1, 2]) {
+            for (const dpr of [0.8, 1, 2]) {
                 const width = cssWidth * dpr;
                 const height = cssHeight * dpr;
                 const fit = fitScale(width, height, grid);

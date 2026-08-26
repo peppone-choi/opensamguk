@@ -14,6 +14,7 @@ import {
   cellToScreen,
   centeredView,
   clampView,
+  effectiveDpr,
   fitScale,
   junSpanCells,
   maxScaleForDpr,
@@ -31,6 +32,7 @@ import {
   type ProvinceEdge,
   type ProvinceIdentityMap,
 } from './provinceMap';
+import { isOwnedNationVisual } from './nationVisual';
 
 export interface Jun {
   name: string;
@@ -179,7 +181,7 @@ export function tierZoom(table: Record<string, number>, kind: string, fit: numbe
 export function labelZoomFor(kind: string, fit: number, dpr = 1): number | undefined {
   const absolute = TIER2_LABEL_ZOOM[kind];
   if (absolute === undefined) return undefined;
-  const backingRatio = Math.max(1, dpr);
+  const backingRatio = effectiveDpr(dpr);
   const absoluteBacking = absolute * backingRatio;
   return Math.min(
     maxScaleForDpr(dpr) - 0.5 * backingRatio,
@@ -242,7 +244,8 @@ export function buildIsoScene(
     roads: [],
     cities: cities.map((city) => {
       const { col, row } = mapCityToTile(city, grid, source);
-      const owned = city.nationId !== 0 && city.nationColor != null;
+      const owned = isOwnedNationVisual(city.nationId, city.nationColor);
+      const territoryColor = owned && city.nationColor ? city.nationColor : NEUTRAL_COLOR;
       const layers = [`castle:${city.level}`];
       if (owned) layers.push('flag');
       if (city.isCapital) layers.push('capital');
@@ -255,8 +258,8 @@ export function buildIsoScene(
         ...city,
         col,
         row,
-        color: city.nationColor ?? NEUTRAL_COLOR,
-        territoryColor: city.nationColor ?? NEUTRAL_COLOR,
+        color: territoryColor,
+        territoryColor,
         iconColor: CASTLE_FILL,
         layers,
       };
@@ -412,7 +415,7 @@ function drawScene(
     const [x, y] = cellToScreen(city.col, city.row, view);
     const radius = Math.max(7, Math.min(18, 6 + city.level * 0.9));
     hits.push({ city, x, y, radius: radius + 6 });
-    const owned = city.nationId !== 0 && city.nationColor != null;
+    const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
     if (owned && city.supply === false) context.globalAlpha = 0.42;
 
@@ -678,10 +681,11 @@ export function HanMapCanvas({
     const fit = () => {
       const cssWidth = box.clientWidth || 700;
       const cssHeight = Math.round(cssWidth * 0.53);
-      const dpr = window.devicePixelRatio || 1;
+      const requestedDpr = effectiveDpr(window.devicePixelRatio);
       const previousSize = sizeRef.current;
       const previousView = viewRef.current;
-      canvas.width = Math.round(cssWidth * dpr);
+      canvas.width = Math.round(cssWidth * requestedDpr);
+      const dpr = canvas.width / cssWidth;
       canvas.height = Math.round(cssHeight * dpr);
       canvas.style.height = `${cssHeight}px`;
       sizeRef.current = { width: canvas.width, height: canvas.height, dpr };
@@ -745,10 +749,11 @@ export function HanMapCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
-    const dpr = canvas.width / (rect.width || canvas.width || 1);
+    const scaleX = canvas.width / (rect.width || canvas.width || 1);
+    const scaleY = canvas.height / (rect.height || canvas.height || 1);
     return {
-      canvasX: (event.clientX - rect.left) * dpr,
-      canvasY: (event.clientY - rect.top) * dpr,
+      canvasX: (event.clientX - rect.left) * scaleX,
+      canvasY: (event.clientY - rect.top) * scaleY,
       cssX: event.clientX - rect.left,
       cssY: event.clientY - rect.top,
     };
@@ -770,9 +775,10 @@ export function HanMapCanvas({
     if (drag && view && loadedTiles) {
       const canvas = canvasRef.current!;
       const rect = canvas.getBoundingClientRect();
-      const dpr = canvas.width / (rect.width || canvas.width || 1);
-      const dx = (event.clientX - drag.x) * dpr;
-      const dy = (event.clientY - drag.y) * dpr;
+      const scaleX = canvas.width / (rect.width || canvas.width || 1);
+      const scaleY = canvas.height / (rect.height || canvas.height || 1);
+      const dx = (event.clientX - drag.x) * scaleX;
+      const dy = (event.clientY - drag.y) * scaleY;
       if (Math.abs(dx) + Math.abs(dy) > 1) drag.moved = true;
       const { width, height } = sizeRef.current;
       updateView(clampView(

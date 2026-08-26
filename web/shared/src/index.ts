@@ -35,6 +35,7 @@ export {
   cellToScreen,
   centeredView,
   clampView,
+  effectiveDpr,
   fitScale,
   junSpanCells,
   maxScaleForDpr,
@@ -56,3 +57,4 @@ export {
   type ProvinceIdentityMap,
   type ProvinceOwnershipBinding,
 } from './provinceMap';
+export { isOwnedNationVisual } from './nationVisual';
