@@ -633,11 +633,14 @@
 - Rendering: 지형·도로·국가색·도시·깃발·수도·사건 표시는 외부 맵 아트
   없이 캔버스 팔레트로 그린다. 레거시 맵 아트는 자산 정본이 아니며,
   비-`han` 호환성은 같은 타일 스키마와 결정적 테스트 픽스처로 검증한다.
-- Province deployment: 커밋된 행정 정체성 소스는 계속
+- Province deployment: 커밋된 역사·지리 행정 정체성 소스는 계속
   `data/map/han-tiles.json` 하나다. `han-provinces.png`와
   `han-provinces.meta.json`은 그 소스에서 Docker 빌드 때 한 번 결정적으로
-  생성되어 game-api가 서빙하는 배포 파생물이며, 역사·지리 소스나 커밋
-  대상이 아니다. RGB 정수 `0`은 미소속, 그 밖의 값은
+  생성되어 런타임 이미지에 함께 패키징되는 배포 파생물이며, 역사·지리
+  소스나 커밋 대상이 아니다. game-api의 `/api/map/provinces` 엔드포인트는
+  PNG만 서빙하고, 메타데이터는 HTTP로 서빙하지 않는 패키지 검증 sidecar다.
+  따라서 `han-tiles.json`이 유일한 커밋 정본이라는 말은 런타임 파일이
+  하나뿐이라는 뜻이 아니다. RGB 정수 `0`은 미소속, 그 밖의 값은
   `((commanderyIndex + 1) << 12) | (provinceIndex + 1)`로 해석한다.
 - Province asset contract: ID 이미지는 `768×669` lossless PNG 그대로 운반하고,
   리사이즈·팔레트화·JPEG/WebP 변환·색 보정 등 픽셀 값을 바꾸는 변환을
