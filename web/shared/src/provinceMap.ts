@@ -4,10 +4,17 @@ import { isOwnedNationVisual, parseNationColor } from './nationVisual';
 
 const PROVINCE_MASK = 0x0fff;
 const PNG_SIGNATURE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-const FORBIDDEN_IDENTITY_CHUNKS = new Set([
-  'PLTE', 'tRNS', 'gAMA', 'cHRM', 'sRGB', 'iCCP', 'cICP', 'mDCV', 'cLLI', 'sBIT',
-  'acTL', 'fcTL', 'fdAT',
-]);
+const CANONICAL_PNG_CHUNKS = ['IHDR', 'IDAT', 'IEND'] as const;
+const MAX_PROVINCE_PNG_AXIS = 4096;
+const MAX_PROVINCE_PNG_CELLS = 4_194_304;
+const MAX_PROVINCE_PNG_BYTES = 16 * 1024 * 1024;
+const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, value) => {
+  let crc = value;
+  for (let bit = 0; bit < 8; bit += 1) {
+    crc = (crc >>> 1) ^ ((crc & 1) === 1 ? 0xedb88320 : 0);
+  }
+  return crc >>> 0;
+});
 
 export interface ProvinceEdge {
   x1: number;
@@ -48,18 +55,21 @@ function pngChunkName(bytes: Uint8Array, offset: number): string {
   return String.fromCharCode(bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
 }
 
+function crc32(bytes: Uint8Array, offset: number, length: number): number {
+  let crc = 0xffffffff;
+  for (let index = offset; index < offset + length; index += 1) {
+    crc = CRC32_TABLE[(crc ^ bytes[index]) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 function validateProvincePng(bytes: Uint8Array): ProvincePngShape {
   if (bytes.length < PNG_SIGNATURE.length || PNG_SIGNATURE.some((value, index) => bytes[index] !== value)) {
     throw new Error('Province identity PNG signature is invalid');
   }
 
   let offset = PNG_SIGNATURE.length;
-  let width = 0;
-  let height = 0;
-  let seenHeader = false;
-  let seenImageData = false;
-  let imageDataEnded = false;
-  let seenEnd = false;
+  const chunks: Array<{ kind: string; length: number; payloadOffset: number }> = [];
   while (offset < bytes.length) {
     if (bytes.length - offset < 12) throw new Error('Province identity PNG chunk is truncated');
     const length = readUint32(bytes, offset);
@@ -68,42 +78,42 @@ function validateProvincePng(bytes: Uint8Array): ProvincePngShape {
     if (length > bytes.length - offset - 12) throw new Error(`Province identity PNG ${kind} chunk is truncated`);
     const payloadOffset = offset + 8;
     const nextOffset = offset + 12 + length;
+    const expectedCrc = readUint32(bytes, payloadOffset + length);
+    const actualCrc = crc32(bytes, offset + 4, length + 4);
+    if (actualCrc !== expectedCrc) throw new Error(`Province identity PNG ${kind} CRC is invalid`);
 
-    if (!seenHeader && kind !== 'IHDR') throw new Error('Province identity PNG must begin with IHDR');
-    if (FORBIDDEN_IDENTITY_CHUNKS.has(kind)) {
-      throw new Error(`Province identity PNG must not contain ${kind}`);
-    }
-    if (kind === 'IHDR') {
-      if (seenHeader || length !== 13) throw new Error('Province identity PNG has an invalid IHDR');
-      width = readUint32(bytes, payloadOffset);
-      height = readUint32(bytes, payloadOffset + 4);
-      const bitDepth = bytes[payloadOffset + 8];
-      const colorType = bytes[payloadOffset + 9];
-      const compression = bytes[payloadOffset + 10];
-      const filter = bytes[payloadOffset + 11];
-      const interlace = bytes[payloadOffset + 12];
-      if (width < 1 || height < 1) throw new Error('Province identity PNG dimensions must be positive');
-      if (bitDepth !== 8) throw new Error('Province identity PNG must use 8-bit samples');
-      if (colorType !== 2) throw new Error('Province identity PNG must use truecolor RGB without alpha or palette');
-      if (compression !== 0 || filter !== 0) throw new Error('Province identity PNG uses an unsupported codec');
-      if (interlace !== 0) throw new Error('Province identity PNG must not be interlaced');
-      seenHeader = true;
-    } else if (kind === 'IDAT') {
-      if (imageDataEnded) throw new Error('Province identity PNG IDAT chunks must be consecutive');
-      seenImageData = true;
-    } else {
-      if (seenImageData) imageDataEnded = true;
-      if (kind === 'IEND') {
-        if (length !== 0 || nextOffset !== bytes.length) throw new Error('Province identity PNG has an invalid IEND');
-        seenEnd = true;
-      } else if ((bytes[offset + 4] & 0x20) === 0) {
-        throw new Error(`Province identity PNG has unsupported critical chunk ${kind}`);
-      }
-    }
+    chunks.push({ kind, length, payloadOffset });
     offset = nextOffset;
-    if (seenEnd) break;
   }
-  if (!seenHeader || !seenImageData || !seenEnd) throw new Error('Province identity PNG is incomplete');
+
+  if (chunks.length !== CANONICAL_PNG_CHUNKS.length
+    || chunks.some((chunk, index) => chunk.kind !== CANONICAL_PNG_CHUNKS[index])) {
+    throw new Error('Province identity PNG must contain exactly IHDR, IDAT, IEND');
+  }
+
+  const [header, imageData, end] = chunks;
+  if (header.length !== 13) throw new Error('Province identity PNG has an invalid IHDR');
+  if (imageData.length < 1) throw new Error('Province identity PNG has an empty IDAT');
+  if (end.length !== 0) throw new Error('Province identity PNG has an invalid IEND');
+
+  const width = readUint32(bytes, header.payloadOffset);
+  const height = readUint32(bytes, header.payloadOffset + 4);
+  const bitDepth = bytes[header.payloadOffset + 8];
+  const colorType = bytes[header.payloadOffset + 9];
+  const compression = bytes[header.payloadOffset + 10];
+  const filter = bytes[header.payloadOffset + 11];
+  const interlace = bytes[header.payloadOffset + 12];
+  if (width < 1 || height < 1) throw new Error('Province identity PNG dimensions must be positive');
+  if (width > MAX_PROVINCE_PNG_AXIS || height > MAX_PROVINCE_PNG_AXIS) {
+    throw new Error(`Province identity PNG axis exceeds ${MAX_PROVINCE_PNG_AXIS}`);
+  }
+  if (width * height > MAX_PROVINCE_PNG_CELLS) {
+    throw new Error(`Province identity PNG cell count exceeds ${MAX_PROVINCE_PNG_CELLS}`);
+  }
+  if (bitDepth !== 8) throw new Error('Province identity PNG must use 8-bit samples');
+  if (colorType !== 2) throw new Error('Province identity PNG must use truecolor RGB without alpha or palette');
+  if (compression !== 0 || filter !== 0) throw new Error('Province identity PNG uses an unsupported codec');
+  if (interlace !== 0) throw new Error('Province identity PNG must not be interlaced');
   return { width, height };
 }
 
@@ -111,6 +121,7 @@ async function createProvinceBitmap(blob: Blob): Promise<ImageBitmap> {
   try {
     return await createImageBitmap(blob, {
       colorSpaceConversion: 'none',
+      imageOrientation: 'none',
       premultiplyAlpha: 'none',
     });
   } catch (error) {
@@ -128,7 +139,20 @@ export async function loadProvinceIdentityMap(url: string): Promise<ProvinceIden
   if (contentType == null || !/^image\/png(?:\s*;.*)?$/i.test(contentType)) {
     throw new Error(`Province identity Content-Type must be image/png, received ${contentType ?? 'missing'}`);
   }
-  const pngBytes = new Uint8Array(await response.arrayBuffer());
+  const contentLength = response.headers.get('content-length');
+  if (contentLength != null) {
+    if (!/^\d+$/.test(contentLength)) throw new Error('Province identity Content-Length is invalid');
+    const declaredLength = Number(contentLength);
+    if (!Number.isSafeInteger(declaredLength)) throw new Error('Province identity Content-Length is invalid');
+    if (declaredLength > MAX_PROVINCE_PNG_BYTES) {
+      throw new Error(`Province identity Content-Length exceeds ${MAX_PROVINCE_PNG_BYTES} byte limit`);
+    }
+  }
+  const pngBuffer = await response.arrayBuffer();
+  if (pngBuffer.byteLength > MAX_PROVINCE_PNG_BYTES) {
+    throw new Error(`Province identity PNG exceeds ${MAX_PROVINCE_PNG_BYTES} byte limit`);
+  }
+  const pngBytes = new Uint8Array(pngBuffer);
   const shape = validateProvincePng(pngBytes);
   const bitmap = await createProvinceBitmap(new Blob([pngBytes], { type: 'image/png' }));
   try {

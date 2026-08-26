@@ -159,13 +159,24 @@ function pngResponse() {
     }
     return result;
   };
+  const crc32 = (value: Uint8Array) => {
+    let crc = 0xffffffff;
+    for (const byte of value) {
+      crc ^= byte;
+      for (let bit = 0; bit < 8; bit += 1) {
+        crc = (crc >>> 1) ^ ((crc & 1) === 1 ? 0xedb88320 : 0);
+      }
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  };
   const chunk = (kind: string, payload?: Uint8Array) => {
     const body = payload ?? new Uint8Array();
+    const kindBytes = new TextEncoder().encode(kind);
     return join(
       u32(body.length),
-      new TextEncoder().encode(kind),
+      kindBytes,
       body,
-      new Uint8Array(4),
+      u32(crc32(join(kindBytes, body))),
     );
   };
   const ihdr = join(u32(4), u32(3), new Uint8Array([8, 2, 0, 0, 0]));

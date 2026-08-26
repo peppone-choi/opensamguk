@@ -12,7 +12,7 @@ import { CHE_OVERLAYS_FIXTURE } from './fixtures/che-tiles';
 
 const SOURCE: IsoSourceSize = { width: 200, height: 120 };
 const REAL_RGB8_PNG = Uint8Array.from(Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgEGAEAAAlABJ854baAAAAAElFTkSuQmCC',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAD0lEQVR4AQEEAPv/AAAQAQAlABLmzoVCAAAAAElFTkSuQmCC',
   'base64',
 ));
 
@@ -30,9 +30,21 @@ function uint32(value: number): Uint8Array {
   return new Uint8Array([(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff]);
 }
 
+function crc32(value: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of value) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ ((crc & 1) === 1 ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 function pngChunk(kind: string, payload?: Uint8Array): Uint8Array {
   const body = payload ?? new Uint8Array();
-  return bytes(uint32(body.length), new TextEncoder().encode(kind), body, new Uint8Array(4));
+  const kindBytes = new TextEncoder().encode(kind);
+  return bytes(uint32(body.length), kindBytes, body, uint32(crc32(bytes(kindBytes, body))));
 }
 
 function provincePng({
@@ -240,7 +252,7 @@ describe('province identity image loader', () => {
     expect(fetchMock).toHaveBeenCalledWith('/province.png');
     expect(createBitmap).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'image/png', size: expect.any(Number) }),
-      { colorSpaceConversion: 'none', premultiplyAlpha: 'none' },
+      { colorSpaceConversion: 'none', imageOrientation: 'none', premultiplyAlpha: 'none' },
     );
     expect(drawImage).toHaveBeenCalledWith(bitmap, 0, 0);
     expect(Array.from(map.provinces)).toEqual([0]);
@@ -284,17 +296,70 @@ describe('province identity image loader', () => {
     expect(createBitmap).not.toHaveBeenCalled();
   });
 
-  it.each(['PLTE', 'tRNS', 'gAMA', 'cHRM', 'sRGB', 'iCCP', 'cICP'])(
-    'rejects identity-changing PNG chunk %s before decode',
+  it.each(['eXIf', 'vpAg'])(
+    'rejects non-canonical ancillary PNG chunk %s before decode',
     async (chunk) => {
       const createBitmap = vi.fn();
       vi.stubGlobal('createImageBitmap', createBitmap);
       installSuccessfulFetch(provincePng({ extraChunks: [chunk] }));
 
-      await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(new RegExp(chunk));
+      await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(/IHDR, IDAT, IEND/);
       expect(createBitmap).not.toHaveBeenCalled();
     },
   );
+
+  it('rejects a corrupted chunk CRC before decode', async () => {
+    const png = provincePng();
+    png[png.length - 1] ^= 0xff;
+    const createBitmap = vi.fn();
+    vi.stubGlobal('createImageBitmap', createBitmap);
+    installSuccessfulFetch(png);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(/CRC/);
+    expect(createBitmap).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['axis', 4097, 1, /axis/],
+    ['cell count', 4096, 1025, /cell/],
+  ])('rejects an oversized IHDR %s before decode', async (_label, width, height, message) => {
+    const createBitmap = vi.fn();
+    vi.stubGlobal('createImageBitmap', createBitmap);
+    installSuccessfulFetch(provincePng({ width, height }));
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(message);
+    expect(createBitmap).not.toHaveBeenCalled();
+  });
+
+  it('rejects an oversized Content-Length before reading the response body', async () => {
+    const arrayBuffer = vi.fn();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({
+        'Content-Type': 'image/png',
+        'Content-Length': String(16 * 1024 * 1024 + 1),
+      }),
+      arrayBuffer,
+    }));
+    const createBitmap = vi.fn();
+    vi.stubGlobal('createImageBitmap', createBitmap);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(/Content-Length.*limit/);
+    expect(arrayBuffer).not.toHaveBeenCalled();
+    expect(createBitmap).not.toHaveBeenCalled();
+  });
+
+  it('rejects an oversized response body without Content-Length before decode', async () => {
+    const png = new Uint8Array(16 * 1024 * 1024 + 1);
+    png.set(provincePng());
+    const createBitmap = vi.fn();
+    vi.stubGlobal('createImageBitmap', createBitmap);
+    installSuccessfulFetch(png);
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(/byte limit/);
+    expect(createBitmap).not.toHaveBeenCalled();
+  });
 
   it('rejects transparent decoded pixels and still closes the bitmap', async () => {
     installSuccessfulFetch(provincePng({ width: 1, height: 1 }));
@@ -327,6 +392,7 @@ describe('province identity image loader', () => {
 
     expect(createBitmap).toHaveBeenNthCalledWith(1, expect.any(Blob), {
       colorSpaceConversion: 'none',
+      imageOrientation: 'none',
       premultiplyAlpha: 'none',
     });
     expect(createBitmap).toHaveBeenNthCalledWith(2, expect.any(Blob));
