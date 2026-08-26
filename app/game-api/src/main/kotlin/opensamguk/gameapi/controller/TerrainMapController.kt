@@ -42,6 +42,31 @@ class TerrainMapController(
         if (!MAP_CODE.matches(mapCode)) return ResponseEntity.notFound().build()
         val configured = Path.of(mapFile)
         val path: Path = if (mapCode == "han") configured else configured.resolveSibling("$mapCode-tiles.json")
+        return servePath(path, MediaType.APPLICATION_JSON, ifNoneMatch)
+    }
+
+    @GetMapping("/provinces")
+    fun provinces(
+        @RequestParam(defaultValue = "han") mapCode: String,
+        @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) ifNoneMatch: String?,
+    ): ResponseEntity<ByteArray> = serveMapFile(mapCode, "provinces.png", MediaType.IMAGE_PNG, ifNoneMatch)
+
+    private fun serveMapFile(
+        mapCode: String,
+        fileName: String,
+        contentType: MediaType,
+        ifNoneMatch: String?,
+    ): ResponseEntity<ByteArray> {
+        if (!MAP_CODE.matches(mapCode)) return ResponseEntity.notFound().build()
+        val path = Path.of(mapFile).resolveSibling("$mapCode-$fileName")
+        return servePath(path, contentType, ifNoneMatch)
+    }
+
+    private fun servePath(
+        path: Path,
+        contentType: MediaType,
+        ifNoneMatch: String?,
+    ): ResponseEntity<ByteArray> {
         if (!Files.isRegularFile(path)) return ResponseEntity.notFound().build()
 
         val tag = "\"${Files.size(path)}-${Files.getLastModifiedTime(path).toMillis()}\""
@@ -51,7 +76,7 @@ class TerrainMapController(
         return ResponseEntity.ok()
             .eTag(tag)
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(contentType)
             .body(Files.readAllBytes(path))
     }
 

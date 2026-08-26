@@ -3,6 +3,7 @@ package opensamguk.gameapi.controller
 import java.nio.file.Files
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
@@ -78,5 +79,91 @@ class TerrainMapControllerTest {
             .andExpect(status().isNotFound)
 
         Files.deleteIfExists(f)
+    }
+
+    @Test
+    fun `province 이미지를 바이트 그대로 보내고 같은 ETag 재요청은 304 다`() {
+        val dir = Files.createTempDirectory("map-provinces")
+        val han = dir.resolve("han-tiles.json")
+        val che = dir.resolve("che-provinces.png")
+        val bytes = byteArrayOf(0x89.toByte(), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
+        Files.write(han, byteArrayOf())
+        Files.write(che, bytes)
+        val mvc = mockMvc(han.toString())
+
+        val tag = mvc.perform(get("/api/map/provinces").queryParam("mapCode", "che"))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.IMAGE_PNG))
+            .andExpect(content().bytes(bytes))
+            .andExpect(header().exists(HttpHeaders.ETAG))
+            .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "max-age=3600, public"))
+            .andReturn().response.getHeader(HttpHeaders.ETAG)!!
+
+        mvc.perform(
+            get("/api/map/provinces")
+                .queryParam("mapCode", "che")
+                .header(HttpHeaders.IF_NONE_MATCH, tag),
+        ).andExpect(status().isNotModified)
+
+        Files.deleteIfExists(che)
+        Files.deleteIfExists(han)
+        Files.deleteIfExists(dir)
+    }
+
+    @Test
+    fun `기본 province mapCode 도 설정 파일의 형제 이미지를 쓴다`() {
+        val dir = Files.createTempDirectory("map-provinces")
+        val han = dir.resolve("han-tiles.json")
+        val province = dir.resolve("han-provinces.png")
+        val bytes = byteArrayOf(0x89.toByte(), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
+        Files.write(han, byteArrayOf())
+        Files.write(province, bytes)
+
+        mockMvc(han.toString()).perform(get("/api/map/provinces"))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.IMAGE_PNG))
+            .andExpect(content().bytes(bytes))
+
+        Files.deleteIfExists(province)
+        Files.deleteIfExists(han)
+        Files.deleteIfExists(dir)
+    }
+
+    @Test
+    fun `province mapCode 경로 문자는 404 로 거절한다`() {
+        val f = Files.createTempFile("han-tiles", ".json")
+        Files.write(f, byteArrayOf())
+
+        mockMvc(f.toString()).perform(get("/api/map/provinces").queryParam("mapCode", "../secret"))
+            .andExpect(status().isNotFound)
+
+        Files.deleteIfExists(f)
+    }
+
+    @Test
+    fun `없는 province mapCode 는 404 다`() {
+        val f = Files.createTempFile("han-tiles", ".json")
+        Files.write(f, byteArrayOf())
+
+        mockMvc(f.toString()).perform(get("/api/map/provinces").queryParam("mapCode", "che"))
+            .andExpect(status().isNotFound)
+
+        Files.deleteIfExists(f)
+    }
+
+    @Test
+    fun `없는 che province 요청은 han province 로 폴백하지 않는다`() {
+        val dir = Files.createTempDirectory("map-provinces")
+        val han = dir.resolve("han-tiles.json")
+        val hanProvince = dir.resolve("han-provinces.png")
+        Files.write(han, byteArrayOf())
+        Files.write(hanProvince, byteArrayOf(0x01))
+
+        mockMvc(han.toString()).perform(get("/api/map/provinces").queryParam("mapCode", "che"))
+            .andExpect(status().isNotFound)
+
+        Files.deleteIfExists(hanProvince)
+        Files.deleteIfExists(han)
+        Files.deleteIfExists(dir)
     }
 }
