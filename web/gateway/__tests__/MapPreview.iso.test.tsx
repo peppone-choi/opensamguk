@@ -79,6 +79,10 @@ describe('MapPreview shared isometric renderer', () => {
       ? shared.props.terrainUrl('han')
       : shared.props?.terrainUrl;
     expect(url).toBe('/api/game/api/map/terrain?server=s1&mapCode=han');
+    const provinceUrl = typeof shared.props?.provinceUrl === 'function'
+      ? shared.props.provinceUrl('han')
+      : shared.props?.provinceUrl;
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?server=s1&mapCode=han');
   });
 
   it('keeps the lobby tooltip through the canvas hover callback', () => {

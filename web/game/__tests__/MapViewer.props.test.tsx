@@ -72,6 +72,10 @@ describe('MapViewer data props', () => {
     await screen.findByTestId('shared-iso-map');
     expect(mocks.mapPreview).toHaveBeenCalledTimes(1);
     expect(mocks.props?.mapCode).toBe('han');
+    const provinceUrl = typeof mocks.props?.provinceUrl === 'function'
+      ? mocks.props.provinceUrl('han')
+      : mocks.props?.provinceUrl;
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=han');
   });
 
   it('live mode merges state, owner, supply, capital and my city', async () => {

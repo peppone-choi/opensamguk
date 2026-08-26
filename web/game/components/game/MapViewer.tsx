@@ -234,6 +234,8 @@ export default function MapViewer({
     const navigationEnabled = !selectionEnabled && !(disallowClick ?? mapData != null);
     const terrainUrl = useCallback((mapCode: string) =>
         `/api/game/api/map/terrain?mapCode=${encodeURIComponent(mapCode)}`, []);
+    const provinceUrl = useCallback((mapCode: string) =>
+        `/api/game/api/map/provinces?mapCode=${encodeURIComponent(mapCode)}`, []);
     const handleMissing = useCallback(() => setTileMissing(true), []);
     const handleHover = useCallback((city: IsoCityOverlay | null, point?: IsoHoverPoint) => {
         setHoverCity(city);
@@ -288,6 +290,7 @@ export default function MapViewer({
                 <HanMapCanvas
                     mapCode={data.mapCode}
                     terrainUrl={terrainUrl}
+                    provinceUrl={provinceUrl}
                     cities={cities}
                     sourceSize={sourceSize}
                     currentCityId={currentCityId ?? liveMyCity}

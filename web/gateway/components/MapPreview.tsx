@@ -131,6 +131,9 @@ export default function MapPreview({
     const terrainUrl = useCallback((mapCode: string) => (
         `/api/game/api/map/terrain?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(mapCode)}`
     ), [serverId]);
+    const provinceUrl = useCallback((mapCode: string) => (
+        `/api/game/api/map/provinces?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(mapCode)}`
+    ), [serverId]);
     const handleMissing = useCallback(() => setTileMissing(true), []);
     const handleHover = useCallback((city: IsoCityOverlay | null, point?: { x: number; y: number }) => {
         setHoverCity(city);
@@ -158,6 +161,7 @@ export default function MapPreview({
                 <HanMapCanvas
                     mapCode={data.mapCode}
                     terrainUrl={terrainUrl}
+                    provinceUrl={provinceUrl}
                     cities={cities}
                     sourceSize={sourceSize}
                     currentCityId={currentCityId}

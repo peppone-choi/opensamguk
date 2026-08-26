@@ -63,6 +63,10 @@ describe('MapViewer shared canvas overlays', () => {
       expect.objectContaining({ id: 11, nationColor: '#ff0000', nationName: '위', state: 6, supply: true, isCapital: true }),
       expect.objectContaining({ id: 22, nationColor: '#ff0000', supply: false }),
     ]);
+    const provinceUrl = typeof shared.props?.provinceUrl === 'function'
+      ? shared.props.provinceUrl('han')
+      : shared.props?.provinceUrl;
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=han');
   });
 
   it('keeps hover tooltip content through the canvas callback', () => {
