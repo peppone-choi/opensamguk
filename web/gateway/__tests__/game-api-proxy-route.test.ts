@@ -284,33 +284,6 @@ describe('game API proxy server selection', () => {
   });
 });
 
-function sseOkResponse(chunks: string[]): Response {
-  const encoder = new TextEncoder();
-  const body = new ReadableStream<Uint8Array>({
-    start(controller) {
-      for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
-      controller.close();
-    },
-  });
-  return new Response(body, {
-    status: 200,
-    headers: { 'Content-Type': 'text/event-stream;charset=UTF-8' },
-  });
-}
-
-async function readAll(body: ReadableStream<Uint8Array> | null): Promise<string> {
-  if (!body) return '';
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let out = '';
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    out += decoder.decode(value);
-  }
-  return out;
-}
-
 describe('game API proxy SSE (/api/game/sse/turn) — #514 401 passthrough', () => {
   beforeEach(() => {
     cookieValues = { sam_access: 'expired-access' };
