@@ -651,10 +651,11 @@
 - Coordinates: `HanCityConst` 의 `(x,y)`를 타일 `(col,row)`로 돌릴 때 축별
   역변환 `col=x*cols/width`, `row=y*rows/height`를 쓴다. 단일 배율로 두
   축을 섞지 않는다(`tools/scenario/build_han_world.py` 산출식의 역).
-- Preserved: ADR-LITE-039/040의 CHGIS 격리는 그대로다. 커밋·서버 대상 CHGIS
-  파생물은 `data/map/han-tiles.json` 하나뿐이고, 원본 shapefile·`han-places.json`·
-  `terrain-grid.json`은 계속 미커밋이다. ADR-LITE-042 규칙 5의 frozen baseline도
-  삭제·약화하지 않는다.
+- Preserved: ADR-LITE-039/040의 CHGIS 격리는 그대로다. 커밋된 역사·지리
+  행정 정체성 소스는 `data/map/han-tiles.json` 하나이고,
+  `han-provinces.png`와 `han-provinces.meta.json`은 소스가 아닌 런타임 배포
+  파생물이다. 원본 shapefile·`han-places.json`·`terrain-grid.json`은 계속
+  미커밋이다. ADR-LITE-042 규칙 5의 frozen baseline도 삭제·약화하지 않는다.
 - Consequences: 세 표면의 줌·패닝·타일 표현과 도시 오버레이가 하나의
   구현으로 수렴한다. 게임·로비 래퍼는 API 로드, 제목·캡션, 라우팅,
   터치 두 번 탭 정책만 소유한다. 타일 파일이 없으면 다른 맵으로 바꾸지
