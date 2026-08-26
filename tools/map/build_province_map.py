@@ -136,12 +136,26 @@ def _terrain_mismatches(terrain: object, coverage: list[int], cells: int) -> tup
     return water_with_political_coverage, land_without_political_coverage
 
 
+def _validate_entity_indices(provinces: list[int], commanderies: list[int], cities: object, juns: object) -> None:
+    if not isinstance(cities, list):
+        raise ValueError("cities must be a list")
+    if not isinstance(juns, list):
+        raise ValueError("juns must be a list")
+    for cell, province in enumerate(provinces):
+        if province >= len(cities):
+            raise ValueError(f"province index {province} at cell {cell} is outside cities")
+    for cell, commandery in enumerate(commanderies):
+        if commandery >= len(juns):
+            raise ValueError(f"commandery index {commandery} at cell {cell} is outside juns")
+
+
 def _render_assets(source_bytes: bytes, map_data: dict) -> tuple[bytes, bytes, int, int, int, int]:
     meta = map_data.get("_meta")
     if not isinstance(meta, dict):
         raise ValueError("map data is missing _meta")
     cols, rows = meta.get("cols"), meta.get("rows")
     provinces, commanderies, pixels = build_from_runs(map_data.get("owner"), map_data.get("seatOwner"), cols, rows)
+    _validate_entity_indices(provinces, commanderies, map_data.get("cities"), map_data.get("juns"))
     terrain_water_covered, terrain_land_uncovered = _terrain_mismatches(map_data.get("terrain"), provinces, cols * rows)
     png_bytes = _make_png(cols, rows, pixels)
     metadata = {

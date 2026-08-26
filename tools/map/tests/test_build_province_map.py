@@ -69,7 +69,11 @@ def build_fixture(data: dict) -> FixtureResult:
     input_path = root / "han-tiles.json"
     output_dir = root / "generated"
     input_path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    build_assets(input_path, output_dir, "han")
+    try:
+        build_assets(input_path, output_dir, "han")
+    except Exception:
+        temporary_directory.cleanup()
+        raise
     png_path = output_dir / "han-provinces.png"
     png_bytes = png_path.read_bytes()
     _, _, provinces, commanderies = decode_png_identities(png_bytes)
@@ -115,6 +119,16 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
             build_from_runs(owner=[[-1, 1]], seat_owner=[[-1, 1]], cols=3, rows=2)
         with self.assertRaisesRegex(ValueError, "commandery index"):
             decode_identity((0x10, 0x00, 0x01))
+
+    def test_rejects_province_index_that_is_not_a_city(self):
+        fixture = {**valid_fixture, "owner": [[-1, 1], [3, 1], [1, 1], [2, 2], [-1, 1]]}
+        with self.assertRaisesRegex(ValueError, "cities"):
+            build_fixture(fixture)
+
+    def test_rejects_commandery_index_that_is_not_a_jun(self):
+        fixture = {**valid_fixture, "seatOwner": [[-1, 1], [2, 2], [1, 2], [-1, 1]]}
+        with self.assertRaisesRegex(ValueError, "juns"):
+            build_fixture(fixture)
 
     def test_check_detects_tampered_output_and_map_code_is_safe(self):
         result = build_fixture(valid_fixture)

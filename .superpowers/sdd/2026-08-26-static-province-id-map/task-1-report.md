@@ -52,6 +52,21 @@ repeatability, truncated RLE, coverage disagreement, both index limits, tamper
 detection in check mode, and safe map-code validation.  `python3 -m py_compile` on
 the two changed Python files and `git diff --check` also succeeded.
 
+## Review fix — entity-index validation
+
+Review round 1 found that the generator encoded non-negative `owner` and
+`seatOwner` values without confirming that they referenced real `cities` and `juns`.
+Two independent tests were added before the fix: a province index of 3 against the
+three-item `cities` fixture and a commandery index of 2 against the two-item `juns`
+fixture.  The initial focused run failed twice with `AssertionError: ValueError not
+raised`, proving the missing validation.
+
+The generator now requires list-shaped `cities` and `juns` fields and validates every
+expanded non-negative province/commandery value against their respective lengths
+before writing a PNG.  The fresh GREEN run completed all 7 Task 1 tests in 0.018s
+with no failures; the fixture helper now cleans a temporary directory on expected
+build errors, so this validation coverage emits no ResourceWarnings.
+
 ## Real `han` dataset
 
 ```text
@@ -81,5 +96,7 @@ province map check passed: han
   timestamps nor absolute paths.
 - `decode_identity` rejects malformed byte triplets, zero hierarchy fields, and
   commandery values outside the documented 0–254 range.
+- Expanded hierarchy IDs are additionally checked against the actual `cities` and
+  `juns` arrays, preventing identities that the runtime could not bind.
 - No later task files were changed.  The remaining integration risk is intentionally
   deferred: Tasks 2–6 must package, serve, and consume this ignored build output.
