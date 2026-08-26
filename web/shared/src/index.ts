@@ -30,12 +30,14 @@ export {
   type Jun,
 } from './HanMapCanvas';
 export {
+  MAX_CSS_SCALE,
   MAX_SCALE,
   cellToScreen,
   centeredView,
   clampView,
   fitScale,
   junSpanCells,
+  maxScaleForDpr,
   scaleForSpan,
   screenToCell,
   viewAt,
@@ -48,6 +50,7 @@ export {
   bindProvinceOwnership,
   composeProvincePixels,
   decodeProvincePixels,
+  loadProvinceIdentityMap,
   type ProvinceColor,
   type ProvinceEdge,
   type ProvinceIdentityMap,

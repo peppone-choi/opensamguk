@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     cellToScreen, screenToCell, visibleCells, fitScale, zoomAt, clampView, centeredView,
-    viewAt, scaleForSpan, junSpanCells, MAX_SCALE, type IsoView,
+    viewAt, scaleForSpan, junSpanCells, maxScaleForDpr, MAX_CSS_SCALE, type IsoView,
 } from '@/lib/isoMap';
 
 const G = { cols: 768, rows: 669 };
@@ -72,10 +72,21 @@ describe('줌', () => {
         expect(after[1]).toBeCloseTo(before[1], 6);
     });
 
-    it('배율이 하한·상한에 갇힌다', () => {
+    it('배율이 하한·CSS/DPR 상한에 갇힌다', () => {
         const v = { scale: 3, ox: 0, oy: 0 };
         expect(zoomAt(v, 0, 0, 0.01, 1.5).scale).toBe(1.5);
-        expect(zoomAt(v, 0, 0, 1000, 0.1).scale).toBe(MAX_SCALE);
+        expect(maxScaleForDpr(1)).toBe(32);
+        expect(maxScaleForDpr(2)).toBe(64);
+        expect(zoomAt(viewAt(800, 600, 1, 1, 10), 100, 80, 100, 0.5, 64).scale).toBe(64);
+    });
+
+    it('높아진 상한에서도 커서 밑 셀을 고정한다', () => {
+        const view = { scale: 20, ox: 80, oy: 40 };
+        const before = screenToCell(240, 180, view);
+        const after = zoomAt(view, 240, 180, 4, 0.5, 64);
+        const actual = screenToCell(240, 180, after);
+        expect(actual[0]).toBeCloseTo(before[0], 9);
+        expect(actual[1]).toBeCloseTo(before[1], 9);
     });
 
     it('fit 배율에서 격자 전체가 화면에 들어간다', () => {
@@ -143,6 +154,7 @@ describe('첫 화면 배율 — 郡 두세 개', () => {
     });
 
     it('배율 상한을 넘지 않는다', () => {
-        expect(scaleForSpan(800, 600, 1)).toBe(MAX_SCALE);
+        expect(scaleForSpan(800, 600, 1)).toBe(MAX_CSS_SCALE);
+        expect(scaleForSpan(800, 600, 1, 64)).toBe(64);
     });
 });

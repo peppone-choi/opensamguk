@@ -29,6 +29,30 @@ export interface ProvinceOwnershipBinding {
   conflicts: number[];
 }
 
+export async function loadProvinceIdentityMap(url: string): Promise<ProvinceIdentityMap> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`province map fetch failed: ${response.status}`);
+  const bitmap = await createImageBitmap(await response.blob());
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) {
+    bitmap.close();
+    throw new Error('province decode context unavailable');
+  }
+  try {
+    context.drawImage(bitmap, 0, 0);
+    return decodeProvincePixels(
+      context.getImageData(0, 0, bitmap.width, bitmap.height).data,
+      bitmap.width,
+      bitmap.height,
+    );
+  } finally {
+    bitmap.close();
+  }
+}
+
 function assertImageShape(rgba: Uint8ClampedArray, width: number, height: number) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
     throw new Error('Province identity dimensions must be positive integers');

@@ -45,7 +45,12 @@ export function fitScale(width: number, height: number, grid: GridSize): number 
   return Math.min(width / spanX, height / spanY);
 }
 
-export const MAX_SCALE = 14;
+export const MAX_CSS_SCALE = 32;
+export const MAX_SCALE = MAX_CSS_SCALE;
+
+export function maxScaleForDpr(dpr: number): number {
+  return MAX_CSS_SCALE * Math.max(1, dpr);
+}
 
 export function zoomAt(
   view: IsoView,
@@ -53,8 +58,9 @@ export function zoomAt(
   sy: number,
   factor: number,
   min: number,
+  max = MAX_CSS_SCALE,
 ): IsoView {
-  const scale = Math.min(MAX_SCALE, Math.max(min, view.scale * factor));
+  const scale = Math.min(max, Math.max(min, view.scale * factor));
   const ratio = scale / view.scale;
   return {
     scale,
@@ -101,8 +107,8 @@ export function viewAt(
   return { scale, ox: width / 2 - cx, oy: height / 2 - cy };
 }
 
-export function scaleForSpan(width: number, height: number, span: number): number {
-  return Math.min(MAX_SCALE, Math.min(width / (2 * span), height / span));
+export function scaleForSpan(width: number, height: number, span: number, max = MAX_CSS_SCALE): number {
+  return Math.min(max, Math.min(width / (2 * span), height / span));
 }
 
 export function junSpanCells(juns: { col: number; row: number }[]): number {

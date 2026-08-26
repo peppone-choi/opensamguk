@@ -16,10 +16,12 @@ describe('che-tiles palette render golden', () => {
     });
     expect(sceneGolden(scene)).toBe(
       'terrain:0110/1231/0110\n' +
-      'road:1,1>3,2\n' +
-      'city:11@1.000,1.000#ff0000[castle:8,aura,flag,capital,event:6,supply:on,current,name:낙양]\n' +
-      'city:22@3.000,2.000#0000ff[castle:6,aura,flag,supply:off,selected,name:허창]',
+      'city:11@1.000,1.000 territory=#ff0000 icon=#8b8172[castle:8,flag,capital,event:6,supply:on,current,name:낙양]\n' +
+      'city:22@3.000,2.000 territory=#0000ff icon=#8b8172[castle:6,flag,supply:off,selected,name:허창]',
     );
+    expect(scene.roads).toEqual([]);
+    expect(scene.cities[0].iconColor).toBe('#8b8172');
+    expect(scene.cities[0].layers).not.toContain('aura');
   });
 
   it('does not invent nation visuals for neutral cities', () => {

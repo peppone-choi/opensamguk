@@ -16,13 +16,21 @@ import {
   clampView,
   fitScale,
   junSpanCells,
-  MAX_SCALE,
+  maxScaleForDpr,
   scaleForSpan,
+  screenToCell,
   viewAt,
   zoomAt,
   type GridSize,
   type IsoView,
 } from './isoMap';
+import {
+  bindProvinceOwnership,
+  composeProvincePixels,
+  loadProvinceIdentityMap,
+  type ProvinceEdge,
+  type ProvinceIdentityMap,
+} from './provinceMap';
 
 export interface Jun {
   name: string;
@@ -96,7 +104,8 @@ export interface IsoCityOverlay {
 export interface IsoSceneCity extends IsoCityOverlay {
   col: number;
   row: number;
-  color: string;
+  territoryColor: string;
+  iconColor: string;
   layers: string[];
 }
 
@@ -124,6 +133,8 @@ export interface HanMapCanvasProps extends IsoSceneOptions {
   mapCode: string;
   tiles?: HanTiles | null;
   terrainUrl?: string | ((mapCode: string) => string);
+  provinceUrl?: string | ((mapCode: string) => string);
+  provinceMap?: ProvinceIdentityMap | null;
   cities?: readonly IsoCityOverlay[];
   sourceSize?: IsoSourceSize;
   hideCityNames?: boolean;
@@ -149,6 +160,11 @@ const TERRAIN = [
 ] as const;
 
 const NEUTRAL_COLOR = '#555555';
+const CASTLE_FILL = '#8b8172';
+const CASTLE_STROKE = '#f3dfb0';
+const PROVINCE_BORDER = 'rgba(18,20,22,0.58)';
+const COMMANDERY_BORDER_DARK = 'rgba(10,12,14,0.82)';
+const COMMANDERY_BORDER_LIGHT = 'rgba(225,210,163,0.76)';
 const DEFAULT_SOURCE: IsoSourceSize = { width: 700, height: 610 };
 export const TIER2_MARKER_ZOOM: Record<string, number> = { COUNTY: 2.19, MARQUISATE: 2.19 };
 export const TIER2_LABEL_ZOOM: Record<string, number> = { COUNTY: 5.5, MARQUISATE: 5.5 };
@@ -159,10 +175,15 @@ export function tierZoom(table: Record<string, number>, kind: string, fit: numbe
   return factor === undefined ? undefined : factor * fit;
 }
 
-export function labelZoomFor(kind: string, fit: number): number | undefined {
+export function labelZoomFor(kind: string, fit: number, dpr = 1): number | undefined {
   const absolute = TIER2_LABEL_ZOOM[kind];
   if (absolute === undefined) return undefined;
-  return Math.min(MAX_SCALE - 0.5, Math.max(absolute, tierZoom(TIER2_MARKER_ZOOM, kind, fit) ?? absolute));
+  const backingRatio = Math.max(1, dpr);
+  const absoluteBacking = absolute * backingRatio;
+  return Math.min(
+    maxScaleForDpr(dpr) - 0.5 * backingRatio,
+    Math.max(absoluteBacking, tierZoom(TIER2_MARKER_ZOOM, kind, fit) ?? absoluteBacking),
+  );
 }
 
 export function seatLabel(name: string): string {
@@ -173,12 +194,15 @@ export function labelledRegions(regions: HanTiles['regions'], minCells = 120) {
   return regions.filter((region) => region.cells >= minCells);
 }
 
-export function initialView(width: number, height: number, grid: GridSize, tiles: HanTiles): IsoView {
+export function initialView(width: number, height: number, grid: GridSize, tiles: HanTiles, dpr = 1): IsoView {
   const center = tiles.juns.find((jun) => jun.name === '河南尹' || jun.name === '하남윤') ?? tiles.juns[0];
   if (!center) return centeredView(width, height, grid);
   const span = 3 * junSpanCells(tiles.juns);
   const markerThreshold = Math.min(...Object.values(TIER2_MARKER_ZOOM)) * fitScale(width, height, grid);
-  const scale = Math.min(scaleForSpan(width, height, span), INITIAL_SCALE_MARGIN * markerThreshold);
+  const scale = Math.min(
+    scaleForSpan(width, height, span, maxScaleForDpr(dpr)),
+    INITIAL_SCALE_MARGIN * markerThreshold,
+  );
   return clampView(viewAt(width, height, center.col, center.row, scale), width, height, grid);
 }
 
@@ -211,27 +235,29 @@ export function buildIsoScene(
   source: IsoSourceSize,
   options: IsoSceneOptions,
 ): IsoScene {
-  const roads = tiles.adjacency.county.flatMap((edge) => {
-    const from = tiles.cities[edge.a];
-    const to = tiles.cities[edge.b];
-    return from && to ? [{ from: [from.col, from.row] as [number, number], to: [to.col, to.row] as [number, number] }] : [];
-  });
   const grid = { cols: tiles._meta.cols, rows: tiles._meta.rows };
   return {
     terrain: tiles.terrain,
-    roads,
+    roads: [],
     cities: cities.map((city) => {
       const { col, row } = mapCityToTile(city, grid, source);
       const owned = city.nationId !== 0 && city.nationColor != null;
       const layers = [`castle:${city.level}`];
-      if (owned) layers.push('aura', 'flag');
+      if (owned) layers.push('flag');
       if (city.isCapital) layers.push('capital');
       if ((city.state ?? 0) > 0) layers.push(`event:${city.state}`);
       layers.push(`supply:${owned && city.supply === false ? 'off' : 'on'}`);
       if (options.currentCityId === city.id) layers.push('current');
       if (options.selectedCityId === city.id) layers.push('selected');
       layers.push(`name:${city.name}`);
-      return { ...city, col, row, color: city.nationColor ?? NEUTRAL_COLOR, layers };
+      return {
+        ...city,
+        col,
+        row,
+        territoryColor: city.nationColor ?? NEUTRAL_COLOR,
+        iconColor: CASTLE_FILL,
+        layers,
+      };
     }),
   };
 }
@@ -243,7 +269,8 @@ export function sceneGolden(scene: IsoScene): string {
   }
   for (const city of scene.cities) {
     lines.push(
-      `city:${city.id}@${city.col.toFixed(3)},${city.row.toFixed(3)}${city.color}` +
+      `city:${city.id}@${city.col.toFixed(3)},${city.row.toFixed(3)}` +
+      ` territory=${city.territoryColor} icon=${city.iconColor}` +
       `[${city.layers.join(',')}]`,
     );
   }
@@ -272,6 +299,52 @@ function bakeTerrain(tiles: HanTiles): HTMLCanvasElement | null {
   return canvas;
 }
 
+interface PoliticalPaths {
+  province: Path2D;
+  commandery: Path2D;
+}
+
+function pathFromEdges(edges: readonly ProvinceEdge[]): Path2D {
+  const path = new Path2D();
+  for (const edge of edges) {
+    path.moveTo(edge.x1, edge.y1);
+    path.lineTo(edge.x2, edge.y2);
+  }
+  return path;
+}
+
+function bakePoliticalPaths(map: ProvinceIdentityMap): PoliticalPaths {
+  return {
+    province: pathFromEdges(map.provinceEdges),
+    commandery: pathFromEdges(map.commanderyEdges),
+  };
+}
+
+function bakePoliticalFill(
+  map: ProvinceIdentityMap,
+  cities: readonly IsoCityOverlay[],
+  grid: GridSize,
+  source: IsoSourceSize,
+): HTMLCanvasElement | null {
+  const canvas = document.createElement('canvas');
+  canvas.width = map.width;
+  canvas.height = map.height;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  const image = context.createImageData(map.width, map.height);
+  image.data.set(composeProvincePixels(map, bindProvinceOwnership(map, cities, grid, source)));
+  context.putImageData(image, 0, 0);
+  return canvas;
+}
+
+function matchesGrid(map: ProvinceIdentityMap | null, grid: GridSize): map is ProvinceIdentityMap {
+  return map != null
+    && map.width === grid.cols
+    && map.height === grid.rows
+    && map.provinces.length === grid.cols * grid.rows
+    && map.commanderies.length === grid.cols * grid.rows;
+}
+
 function starPath(context: CanvasRenderingContext2D, x: number, y: number, radius: number) {
   context.beginPath();
   for (let point = 0; point < 10; point += 1) {
@@ -288,9 +361,12 @@ function starPath(context: CanvasRenderingContext2D, x: number, y: number, radiu
 function drawScene(
   canvas: HTMLCanvasElement,
   terrain: HTMLCanvasElement,
+  political: HTMLCanvasElement | null,
+  paths: PoliticalPaths | null,
   scene: IsoScene,
   view: IsoView,
   hideCityNames: boolean,
+  dpr: number,
 ): { city: IsoCityOverlay; x: number; y: number; radius: number }[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
@@ -303,18 +379,20 @@ function drawScene(
   context.transform(scale, scale / 2, -scale, scale / 2, view.ox, view.oy);
   context.imageSmoothingEnabled = scale < 2;
   context.drawImage(terrain, -0.5, -0.5);
-  context.restore();
-
-  context.save();
-  context.strokeStyle = 'rgba(225, 192, 120, 0.72)';
-  context.lineWidth = Math.max(1, scale * 0.22);
-  for (const road of scene.roads) {
-    const [x1, y1] = cellToScreen(road.from[0], road.from[1], view);
-    const [x2, y2] = cellToScreen(road.to[0], road.to[1], view);
-    context.beginPath();
-    context.moveTo(x1, y1);
-    context.lineTo(x2, y2);
-    context.stroke();
+  if (political) {
+    context.imageSmoothingEnabled = false;
+    context.drawImage(political, -0.5, -0.5);
+  }
+  if (paths) {
+    context.strokeStyle = PROVINCE_BORDER;
+    context.lineWidth = dpr / scale;
+    context.stroke(paths.province);
+    context.strokeStyle = COMMANDERY_BORDER_DARK;
+    context.lineWidth = 3 * dpr / scale;
+    context.stroke(paths.commandery);
+    context.strokeStyle = COMMANDERY_BORDER_LIGHT;
+    context.lineWidth = 1.5 * dpr / scale;
+    context.stroke(paths.commandery);
   }
   context.restore();
 
@@ -327,19 +405,8 @@ function drawScene(
     context.save();
     if (owned && city.supply === false) context.globalAlpha = 0.42;
 
-    if (owned) {
-      const aura = context.createRadialGradient(x, y, 1, x, y, radius * 2.1);
-      aura.addColorStop(0, `${city.color}cc`);
-      aura.addColorStop(0.55, `${city.color}55`);
-      aura.addColorStop(1, `${city.color}00`);
-      context.fillStyle = aura;
-      context.beginPath();
-      context.arc(x, y, radius * 2.1, 0, Math.PI * 2);
-      context.fill();
-    }
-
-    context.fillStyle = owned ? city.color : NEUTRAL_COLOR;
-    context.strokeStyle = '#f3dfb0';
+    context.fillStyle = city.iconColor;
+    context.strokeStyle = CASTLE_STROKE;
     context.lineWidth = 1.5;
     context.fillRect(x - radius * 0.7, y - radius * 0.45, radius * 1.4, radius * 0.9);
     context.strokeRect(x - radius * 0.7, y - radius * 0.45, radius * 1.4, radius * 0.9);
@@ -352,7 +419,7 @@ function drawScene(
       context.moveTo(x + radius * 0.55, y - radius * 0.45);
       context.lineTo(x + radius * 0.55, y - radius * 1.65);
       context.stroke();
-      context.fillStyle = city.color;
+      context.fillStyle = city.territoryColor;
       context.beginPath();
       context.moveTo(x + radius * 0.55, y - radius * 1.6);
       context.lineTo(x + radius * 1.45, y - radius * 1.25);
@@ -423,10 +490,21 @@ function resolveTerrainUrl(
   return `/api/game/api/map/terrain?mapCode=${encodeURIComponent(mapCode)}`;
 }
 
+function resolveProvinceUrl(
+  provinceUrl: HanMapCanvasProps['provinceUrl'],
+  mapCode: string,
+): string {
+  if (typeof provinceUrl === 'function') return provinceUrl(mapCode);
+  if (typeof provinceUrl === 'string') return provinceUrl;
+  return `/api/game/api/map/provinces?mapCode=${encodeURIComponent(mapCode)}`;
+}
+
 export function HanMapCanvas({
   mapCode,
   tiles: suppliedTiles,
   terrainUrl,
+  provinceUrl,
+  provinceMap: suppliedProvinceMap,
   cities = [],
   sourceSize = DEFAULT_SOURCE,
   currentCityId,
@@ -443,13 +521,19 @@ export function HanMapCanvas({
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const terrainRef = useRef<HTMLCanvasElement | null>(null);
+  const politicalRef = useRef<HTMLCanvasElement | null>(null);
+  const politicalPathsRef = useRef<PoliticalPaths | null>(null);
   const viewRef = useRef<IsoView | null>(null);
-  const sizeRef = useRef({ width: 0, height: 0 });
+  const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<{ city: IsoCityOverlay; x: number; y: number; radius: number }[]>([]);
   const dragRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const activeCityRef = useRef<IsoCityOverlay | null>(null);
   const pointerTypeRef = useRef('mouse');
   const [loadedTiles, setLoadedTiles] = useState<HanTiles | null>(suppliedTiles ?? null);
+  const [loadedProvince, setLoadedProvince] = useState<{
+    url: string;
+    map: ProvinceIdentityMap | null;
+  }>({ url: '', map: null });
   const [missing, setMissing] = useState(false);
 
   useEffect(() => {
@@ -479,25 +563,89 @@ export function HanMapCanvas({
     };
   }, [mapCode, onMissing, suppliedTiles, terrainUrl]);
 
+  useEffect(() => {
+    if (suppliedProvinceMap !== undefined) return;
+    let alive = true;
+    const url = resolveProvinceUrl(provinceUrl, mapCode);
+    setLoadedProvince({ url, map: null });
+    loadProvinceIdentityMap(url)
+      .then((map) => {
+        if (alive) setLoadedProvince({ url, map });
+      })
+      .catch(() => {
+        if (alive) setLoadedProvince({ url, map: null });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [mapCode, provinceUrl, suppliedProvinceMap]);
+
   const scene = useMemo(
     () => loadedTiles
       ? buildIsoScene(loadedTiles, cities, sourceSize, { currentCityId, selectedCityId })
       : null,
     [cities, currentCityId, loadedTiles, selectedCityId, sourceSize],
   );
+  const provinceMap = useMemo(() => {
+    if (!loadedTiles) return null;
+    const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
+    const requestedUrl = resolveProvinceUrl(provinceUrl, mapCode);
+    const candidate = suppliedProvinceMap !== undefined
+      ? suppliedProvinceMap
+      : loadedProvince.url === requestedUrl ? loadedProvince.map : null;
+    return matchesGrid(candidate, grid) ? candidate : null;
+  }, [loadedProvince, loadedTiles, mapCode, provinceUrl, suppliedProvinceMap]);
+
+  const sceneRef = useRef<IsoScene | null>(scene);
+  const hideCityNamesRef = useRef(hideCityNames);
+  sceneRef.current = scene;
+  hideCityNamesRef.current = hideCityNames;
 
   useEffect(() => {
     terrainRef.current = loadedTiles ? bakeTerrain(loadedTiles) : null;
     viewRef.current = null;
   }, [loadedTiles]);
 
+  useEffect(() => {
+    politicalPathsRef.current = provinceMap ? bakePoliticalPaths(provinceMap) : null;
+  }, [provinceMap]);
+
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     const terrain = terrainRef.current;
     const view = viewRef.current;
-    if (!canvas || !terrain || !scene || !view) return;
-    hitRef.current = drawScene(canvas, terrain, scene, view, hideCityNames);
-  }, [hideCityNames, scene]);
+    const latestScene = sceneRef.current;
+    if (!canvas || !terrain || !latestScene || !view) return;
+    hitRef.current = drawScene(
+      canvas,
+      terrain,
+      politicalRef.current,
+      politicalPathsRef.current,
+      latestScene,
+      view,
+      hideCityNamesRef.current,
+      sizeRef.current.dpr,
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!provinceMap || !loadedTiles) {
+      politicalRef.current = null;
+      render();
+      return;
+    }
+    politicalRef.current = bakePoliticalFill(
+      provinceMap,
+      cities,
+      { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows },
+      sourceSize,
+    );
+    render();
+  }, [cities, loadedTiles, provinceMap, render, sourceSize]);
+
+  useEffect(() => {
+    render();
+  }, [hideCityNames, render, scene]);
 
   useEffect(() => {
     if (currentCityId == null) return;
@@ -513,21 +661,44 @@ export function HanMapCanvas({
       const cssWidth = box.clientWidth || 700;
       const cssHeight = Math.round(cssWidth * 0.53);
       const dpr = window.devicePixelRatio || 1;
+      const previousSize = sizeRef.current;
+      const previousView = viewRef.current;
       canvas.width = Math.round(cssWidth * dpr);
       canvas.height = Math.round(cssHeight * dpr);
       canvas.style.height = `${cssHeight}px`;
-      sizeRef.current = { width: canvas.width, height: canvas.height };
+      sizeRef.current = { width: canvas.width, height: canvas.height, dpr };
       const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
-      viewRef.current = viewRef.current
-        ? clampView(viewRef.current, canvas.width, canvas.height, grid)
-        : initialView(canvas.width, canvas.height, grid, loadedTiles);
+      if (previousView && previousSize.width > 0 && previousSize.height > 0) {
+        const [centerCol, centerRow] = screenToCell(
+          previousSize.width / 2,
+          previousSize.height / 2,
+          previousView,
+        );
+        const dprRatio = dpr / previousSize.dpr;
+        const scale = Math.min(
+          maxScaleForDpr(dpr),
+          Math.max(fitScale(canvas.width, canvas.height, grid), previousView.scale * dprRatio),
+        );
+        viewRef.current = clampView(
+          viewAt(canvas.width, canvas.height, centerCol, centerRow, scale),
+          canvas.width,
+          canvas.height,
+          grid,
+        );
+      } else {
+        viewRef.current = initialView(canvas.width, canvas.height, grid, loadedTiles, dpr);
+      }
       onViewChange?.(viewRef.current);
       render();
     };
     fit();
     const observer = new ResizeObserver(fit);
     observer.observe(box);
-    return () => observer.disconnect();
+    window.addEventListener('resize', fit);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', fit);
+    };
   }, [loadedTiles, onViewChange, render]);
 
   const updateView = useCallback((next: IsoView) => {
@@ -539,7 +710,7 @@ export function HanMapCanvas({
   const zoomBy = useCallback((factor: number, sx?: number, sy?: number) => {
     const view = viewRef.current;
     if (!view || !loadedTiles) return;
-    const { width, height } = sizeRef.current;
+    const { width, height, dpr } = sizeRef.current;
     const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
     const next = zoomAt(
       view,
@@ -547,6 +718,7 @@ export function HanMapCanvas({
       sy ?? height / 2,
       factor,
       fitScale(width, height, grid),
+      maxScaleForDpr(dpr),
     );
     updateView(clampView(next, width, height, grid));
   }, [loadedTiles, updateView]);
