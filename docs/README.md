@@ -13,7 +13,7 @@
 | 플레이어 | [사용자 매뉴얼](./user/README.md) | [첫 시작](./user/getting-started.md), [게임플레이](./user/gameplay-guide.md), [기능 안내](./user/features.md) |
 | 관리자·운영자 | [관리자 매뉴얼](./admin/README.md) | [서버 생명주기](./admin/server-lifecycle.md), [회원·게임 관리](./admin/member-and-game-management.md), [운영·복구](./admin/operations-and-recovery.md) |
 | 개발자 | [기여 가이드](./CONTRIBUTING.md) | [아키텍처](../README.md#아키텍처), [검증](./CONTRIBUTING.md#최소-검증) |
-| 게임 기획자 | [기획 문서 지도](./design/README.md) | [현재 로드맵](./design/roadmap.md), [v1/v2 경계](./design/v1-v2-boundary.md) |
+| 게임 기획자 | [기획 문서 지도](./design/README.md) | [현재 로드맵](./design/roadmap.md), [기존 코어와 현재 설계의 경계](./design/architecture-boundary.md) |
 
 ## 문서 등급
 
