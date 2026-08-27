@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""zh.wikisource(public domain) 에서 삼국지 시대 사료 코퍼스를 받는다.
+"""zh.wikisource·CText(public domain) 에서 삼국지 시대 사료 코퍼스를 받는다.
 
 받은 원문은 `$SHILIAO_HOME`(기본 `~/.shiliao`)에 떨어진다. 원문은 모두 public domain 이지만
 저장소를 사료 배포처로 쓰지 않는다 — 이 스크립트로 언제든 재현되기 때문이다.
@@ -9,15 +9,21 @@
   2. 병렬도를 올리면 위키소스가 **오류 없이 빈 응답**을 준다. 기본 4를 넘기지 말고,
      한 번 더 돌려 빠진 것을 메운다(이미 받은 파일은 건너뛴다).
 
-용법:  python3 tools/corpus/fetch_sources.py [--jobs 4]
+용법:  python3 tools/corpus/fetch_sources.py [--ctext-only] [--jobs 4]
 """
-import argparse, os, sys, time, urllib.parse, urllib.request
+import argparse, hashlib, json, os, sys, time, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 OUT = os.environ.get('SHILIAO_HOME') or ('data/corpus' if os.path.isdir('data') else os.path.expanduser('~/.shiliao'))
 UA = 'shiliao/1.0 (+https://github.com/peppone-choi/shiliao)'
 
 _D = '零一二三四五六七八九'
+CTEXT_SLUGS = ('yi', 'er', 'san', 'si', 'wu')
+
+
+class RequiredSourceFetchError(RuntimeError):
+    pass
 
 
 def cn(n):
@@ -30,6 +36,28 @@ def cn(n):
         return _D[n // 10] + '十' + (_D[n % 10] if n % 10 else '')
     tail = ('' if n % 100 >= 10 else '零') + cn(n % 100) if n % 100 else ''
     return _D[n // 100] + '百' + tail
+
+
+def safe_jobs(value):
+    jobs = int(value)
+    if not 1 <= jobs <= 4:
+        raise ValueError('--jobs must be between 1 and the safe default 4')
+    return jobs
+
+
+def _is_required_ctext_job(job):
+    title, name = job
+    return title.startswith('https://ctext.org/hou-han-shu/jun-guo-') and name in {
+        f'ctext/junguozhi/{slug}.html' for slug in CTEXT_SLUGS
+    }
+
+
+def ctext_titles():
+    for slug in CTEXT_SLUGS:
+        yield (
+            f'https://ctext.org/hou-han-shu/jun-guo-{slug}/zh',
+            f'ctext/junguozhi/{slug}.html',
+        )
 
 
 def titles():
@@ -80,6 +108,8 @@ def titles():
     # ── 병서·제도서·잡저 ──
     for t in '孫子兵法 六韜 三略 獨斷 西京雜記 博物志 潛夫論 鹽鐵論 釋名 太白陰經'.split():
         yield t, f'misc-{t}.txt'                              # 獨斷(蔡邕) = 후한 제도·의례
+    # ── CText 續漢書 郡國志 전통 한자 증인 ──
+    yield from ctext_titles()
 
 
 def fetch(job):
@@ -93,17 +123,23 @@ def fetch(job):
     ('empty', name) 으로 보고해 조용히 빈 코퍼스가 만들어지는 것을 막는다."""
     title, name = job
     path = os.path.join(OUT, name)
+    os.makedirs(os.path.dirname(path) or OUT, exist_ok=True)
     if os.path.exists(path) and os.path.getsize(path) > 0:
         return None
-    url = 'https://zh.wikisource.org/w/index.php?' + urllib.parse.urlencode(
-        {'action': 'raw', 'title': title})
+    url = title if title.startswith(('https://', 'http://')) else (
+        'https://zh.wikisource.org/w/index.php?' + urllib.parse.urlencode(
+            {'action': 'raw', 'title': title})
+    )
     req = urllib.request.Request(url, headers={'User-Agent': UA})
     saw_empty = False
+    last_error = None
     for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 body = r.read()
-        except Exception:
+            last_error = None
+        except Exception as error:
+            last_error = error
             time.sleep(1 + attempt)
             continue
         if body.startswith(b'#REDIRECT'):       # 리다이렉트 문서는 본문이 아니다 — 재시도 대상이 아니다.
@@ -115,20 +151,88 @@ def fetch(job):
         with open(path, 'wb') as f:
             f.write(body)
         return name
+    if last_error is not None and _is_required_ctext_job(job):
+        raise RequiredSourceFetchError(
+            f'required source fetch failed after 3 attempts: {name}: {last_error}'
+        ) from last_error
     return ('empty', name) if saw_empty else None
 
 
-def main():
+def _reviewed_ctext_hashes():
+    artifact = Path(__file__).resolve().parents[2] / 'data/curated/han/administrative-units.json'
+    try:
+        catalog = json.loads(artifact.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RequiredSourceFetchError(
+            f'cannot read reviewed CText snapshot contract: {artifact}: {error}'
+        ) from error
+    hashes = {}
+    for group in catalog.get('groups', []):
+        citation = group.get('traditionalTextCitation', {})
+        local_witness = citation.get('localWitness', '')
+        name = Path(local_witness).name
+        if name in {f'{slug}.html' for slug in CTEXT_SLUGS}:
+            snapshot_hash = citation.get('snapshotSha256')
+            previous = hashes.setdefault(name, snapshot_hash)
+            if previous != snapshot_hash:
+                raise RequiredSourceFetchError(
+                    f'inconsistent reviewed CText snapshot hash for {name}'
+                )
+    expected_names = {f'{slug}.html' for slug in CTEXT_SLUGS}
+    if set(hashes) != expected_names or any(
+        not isinstance(value, str) or len(value) != 64 for value in hashes.values()
+    ):
+        raise RequiredSourceFetchError('reviewed CText snapshot contract is incomplete')
+    return hashes
+
+
+def _validate_required_ctext_outputs():
+    reviewed_hashes = _reviewed_ctext_hashes()
+    for _, name in ctext_titles():
+        path = Path(OUT) / name
+        if not path.is_file() or path.stat().st_size == 0:
+            raise RequiredSourceFetchError(f'missing required CText snapshot: {path}')
+        actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+        expected_hash = reviewed_hashes[path.name]
+        if actual_hash != expected_hash:
+            raise RequiredSourceFetchError(
+                f'required CText snapshot drift: {path} '
+                f'sha256={actual_hash} expected={expected_hash}'
+            )
+    return len(reviewed_hashes)
+
+
+def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument('--jobs', type=int, default=4,
-                    help='기본 4. 올리면 위키소스가 조용히 빈 응답을 준다.')
-    a = ap.parse_args()
+    ap.add_argument('--jobs', type=safe_jobs, default=4,
+                    help='기본·최대 4. 올리면 위키소스가 조용히 빈 응답을 준다.')
+    ap.add_argument('--ctext-only', action='store_true',
+                    help='郡國志 CText 5페이지만 받고 검증한다.')
+    a = ap.parse_args(argv)
     os.makedirs(OUT, exist_ok=True)
-    jobs = list(titles())
-    with ThreadPoolExecutor(a.jobs) as ex:
-        results = list(ex.map(fetch, jobs))
+    jobs = list(ctext_titles()) if a.ctext_only else list(titles())
+    try:
+        with ThreadPoolExecutor(a.jobs) as ex:
+            results = list(ex.map(fetch, jobs))
+    except RequiredSourceFetchError as error:
+        print(str(error), file=sys.stderr)
+        return 1
     got = [r for r in results if isinstance(r, str)]
     empty = [r[1] for r in results if isinstance(r, tuple)]
+    try:
+        verified_ctext = _validate_required_ctext_outputs()
+    except RequiredSourceFetchError as error:
+        print(str(error), file=sys.stderr)
+        verified_ctext = 0
+    if a.ctext_only:
+        print(
+            f'CText 요청 {len(jobs)} · 이번에 받음 {len(got)} · '
+            f'검증 {verified_ctext}/{len(CTEXT_SLUGS)} → {OUT}',
+            file=sys.stderr,
+        )
+        if empty:
+            print(f'재시도 끝에도 빈 응답 {len(empty)}건: ' + ' '.join(empty), file=sys.stderr)
+        return 0 if verified_ctext == len(CTEXT_SLUGS) and not empty else 1
     have = len([f for f in os.listdir(OUT) if f.endswith('.txt')])
     print(f'요청 {len(jobs)} · 이번에 받음 {len(got)} · 보유 {have}권 → {OUT}', file=sys.stderr)
     if len(got) and have < len(jobs) * 0.4:
@@ -136,8 +240,8 @@ def main():
     if empty:
         print(f'재시도 끝에도 빈 응답 {len(empty)}건(문서가 없는 게 아니라 위키소스 쪽 문제): '
               + ' '.join(empty[:20]) + (' …' if len(empty) > 20 else ''), file=sys.stderr)
-        sys.exit(1)
+    return 0 if verified_ctext == len(CTEXT_SLUGS) and not empty else 1
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

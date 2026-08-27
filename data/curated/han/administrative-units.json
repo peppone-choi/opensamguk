@@ -52,9 +52,44 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-yi/zh",
-        "localWitness": "data/chgis-source/junguozhi/yi.html",
-        "snapshotSha256": "78918515718b1979e7908b5696c7b84d0103328c4db785ea3e17096d4d17a315"
+        "localWitness": "data/corpus/ctext/junguozhi/yi.html",
+        "snapshotSha256": "0a506c57bc5346925de538240bd5d6cc8119bd2eae41413a8edd1684c15c9564",
+        "locator": "n78666-n78675"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國一",
+          "section": "河南尹 (n78666-n78675)",
+          "quote": "河南尹\n二十一城，永和五年戶二十萬八千四百八十六，口百一萬八百二十七。\n雒陽\n周時號成周。有狄泉，在城中。有唐聚。有上程聚。有士鄉聚。有褚氏聚。有榮錡澗。有前亭。有圉鄉。有大解城。河南周公時所城雒邑也，春秋時謂之王城。東城門名鼎門，北城門名乾祭。又有甘城，有蒯鄉。梁故國，伯翳後。有霍陽山。有注城。熒陽有鴻溝水。有廣武城。有总亭，总叔國。有隴城。有薄亭。有敖亭。有費澤。卷\n有長城，經陽武到密。有垣雝城，或曰古衡雍。有扈城亭。原武陽武中牟\n有圃田澤。有清口水。有管城。有曲遇聚。有蔡亭。開封菀陵有棐林。有制澤。有瑣侯亭。平陰穀城瀍水出。有函谷關。緱氏有鄔聚。有轘轅關。鞏\n有尋谷水。有東訾聚，今名訾城。有坎埳聚。有黃亭。有湟水。有明谿泉。成睪有旃然水。有瓶丘聚。有漫水。有汜水。京密\n有大騩山。有梅山。有陘山。新城\n有高都城。有廣成聚。有鄤聚，古鄤氏，今名蠻中。匽師\n有尸鄉，春秋時曰尸氏。新鄭詩鄭國，祝融墟。平",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[109,\"河南尹\",1]",
+        "[109,\"河南尹\",2]",
+        "[109,\"河南尹\",3]",
+        "[109,\"河南尹\",4]",
+        "[109,\"河南尹\",5]",
+        "[109,\"河南尹\",6]",
+        "[109,\"河南尹\",7]",
+        "[109,\"河南尹\",8]",
+        "[109,\"河南尹\",9]",
+        "[109,\"河南尹\",10]",
+        "[109,\"河南尹\",11]",
+        "[109,\"河南尹\",12]",
+        "[109,\"河南尹\",13]",
+        "[109,\"河南尹\",14]",
+        "[109,\"河南尹\",15]",
+        "[109,\"河南尹\",16]",
+        "[109,\"河南尹\",17]",
+        "[109,\"河南尹\",18]",
+        "[109,\"河南尹\",19]",
+        "[109,\"河南尹\",20]",
+        "[109,\"河南尹\",21]"
+      ],
       "units": [
         {
           "sourceVolume": 109,
@@ -368,9 +403,41 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-yi/zh",
-        "localWitness": "data/chgis-source/junguozhi/yi.html",
-        "snapshotSha256": "78918515718b1979e7908b5696c7b84d0103328c4db785ea3e17096d4d17a315"
+        "localWitness": "data/corpus/ctext/junguozhi/yi.html",
+        "snapshotSha256": "0a506c57bc5346925de538240bd5d6cc8119bd2eae41413a8edd1684c15c9564",
+        "locator": "n78676-n78682"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國一",
+          "section": "河內郡 (n78676-n78682)",
+          "quote": "河內郡\n十八城，戶十五萬九千七百七十，口八十萬一千五百五十八。\n懷\n有隰城。河陽有湛城。軹有原鄉。有湨梁。波有絺城。沁水野王有太行山。有射犬聚。有邘城。溫蘇子所都。濟水出，王莽時大旱，遂枯絕。州平睾有邢丘，故邢國，周公子所封。有李城。山陽邑。有雍城。有蔡城。武德獲嘉侯國。脩武故南陽，秦始皇更名。有南陽城，陽樊、攢茅田。有小脩武聚。有隤城。共本國。淇水出。有汎亭。汲\n朝歌\n紂所都居\n，南有牧野，北有邶國，南有寧鄉。蕩陰有羑里城。林慮故隆慮，殤帝改。有鐵。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[109,\"河內郡\",1]",
+        "[109,\"河內郡\",2]",
+        "[109,\"河內郡\",3]",
+        "[109,\"河內郡\",4]",
+        "[109,\"河內郡\",5]",
+        "[109,\"河內郡\",6]",
+        "[109,\"河內郡\",7]",
+        "[109,\"河內郡\",8]",
+        "[109,\"河內郡\",9]",
+        "[109,\"河內郡\",10]",
+        "[109,\"河內郡\",11]",
+        "[109,\"河內郡\",12]",
+        "[109,\"河內郡\",13]",
+        "[109,\"河內郡\",14]",
+        "[109,\"河內郡\",15]",
+        "[109,\"河內郡\",16]",
+        "[109,\"河內郡\",17]",
+        "[109,\"河內郡\",18]"
+      ],
       "units": [
         {
           "sourceVolume": 109,
@@ -642,9 +709,43 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-yi/zh",
-        "localWitness": "data/chgis-source/junguozhi/yi.html",
-        "snapshotSha256": "78918515718b1979e7908b5696c7b84d0103328c4db785ea3e17096d4d17a315"
+        "localWitness": "data/corpus/ctext/junguozhi/yi.html",
+        "snapshotSha256": "0a506c57bc5346925de538240bd5d6cc8119bd2eae41413a8edd1684c15c9564",
+        "locator": "n78683-n78689"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國一",
+          "section": "河東郡 (n78683-n78689)",
+          "quote": "河東郡\n二十城，戶九萬三千五百四十三，口五十七萬八百三。\n安邑\n。有鐵，有鹽池。楊有高梁亭。平陽侯國。有鐵。堯都此。臨汾有董亭。汾陰\n有介山。蒲阪有雷首山。有沙丘亭。大陽有吳山，上有虞城，有下陽城，有茅津。有顛軨阪。解\n有桑泉城。有臼城。有解城。有瑕城。皮氏有耿鄉。有鐵。有冀亭。聞喜邑，本曲沃。有董池陂，古董澤。有稷山亭。有涑水。有洮水。絳邑。有翼城。永安故彘，陽嘉二年更名。有霍大山。河北詩魏國。有韓亭。猗氏垣\n有王屋山，兗水出。有壺丘亭。有邵亭。襄陵北屈有壺口山。有采桑津。蒲子濩澤侯國。有祁城山。端氏",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[109,\"河東郡\",1]",
+        "[109,\"河東郡\",2]",
+        "[109,\"河東郡\",3]",
+        "[109,\"河東郡\",4]",
+        "[109,\"河東郡\",5]",
+        "[109,\"河東郡\",6]",
+        "[109,\"河東郡\",7]",
+        "[109,\"河東郡\",8]",
+        "[109,\"河東郡\",9]",
+        "[109,\"河東郡\",10]",
+        "[109,\"河東郡\",11]",
+        "[109,\"河東郡\",12]",
+        "[109,\"河東郡\",13]",
+        "[109,\"河東郡\",14]",
+        "[109,\"河東郡\",15]",
+        "[109,\"河東郡\",16]",
+        "[109,\"河東郡\",17]",
+        "[109,\"河東郡\",18]",
+        "[109,\"河東郡\",19]",
+        "[109,\"河東郡\",20]"
+      ],
       "units": [
         {
           "sourceVolume": 109,
@@ -944,9 +1045,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-yi/zh",
-        "localWitness": "data/chgis-source/junguozhi/yi.html",
-        "snapshotSha256": "78918515718b1979e7908b5696c7b84d0103328c4db785ea3e17096d4d17a315"
+        "localWitness": "data/corpus/ctext/junguozhi/yi.html",
+        "snapshotSha256": "0a506c57bc5346925de538240bd5d6cc8119bd2eae41413a8edd1684c15c9564",
+        "locator": "n78690-n78694"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國一",
+          "section": "弘農郡 (n78690-n78694)",
+          "quote": "弘農郡\n九城，戶四萬六千八百一十五，口十九萬九千一百一十三。\n弘農\n故秦函谷關，燭水出。有枯樅山。有桃丘聚，故桃林。有務鄉。有曹陽亭。陝\n本总仲國。有焦城。有陝陌。黽池穀水出。有二崤。新安澗水出。宜陽陸渾西有总略地。盧氏有熊耳山，伊水、清水出。湖故屬京兆。有閺鄉。華陰故屬京兆。有太華山。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[109,\"弘農郡\",1]",
+        "[109,\"弘農郡\",2]",
+        "[109,\"弘農郡\",3]",
+        "[109,\"弘農郡\",4]",
+        "[109,\"弘農郡\",5]",
+        "[109,\"弘農郡\",6]",
+        "[109,\"弘農郡\",7]",
+        "[109,\"弘農郡\",8]",
+        "[109,\"弘農郡\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 109,
@@ -1092,9 +1216,33 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-yi/zh",
-        "localWitness": "data/chgis-source/junguozhi/yi.html",
-        "snapshotSha256": "78918515718b1979e7908b5696c7b84d0103328c4db785ea3e17096d4d17a315"
+        "localWitness": "data/corpus/ctext/junguozhi/yi.html",
+        "snapshotSha256": "0a506c57bc5346925de538240bd5d6cc8119bd2eae41413a8edd1684c15c9564",
+        "locator": "n78695-n78699"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國一",
+          "section": "京兆尹 (n78695-n78699)",
+          "quote": "京兆尹\n十城，戶五萬三千二百九十九，口二十八萬五千五百七十四。\n長安\n高帝所都。鎬在上林菀中。有細柳聚。有蘭池。有曲郵。有杜郵。霸陵有枳道亭。有長門亭。杜陵\n酆在西南。鄭新豐有驪山，東有鴻門亭及戲亭。有嚴城。藍田出美玉。長陵故屬馮翊。商故屬弘農。上雒侯國。有冢領山，雒水出。故屬弘農。有菟和山。有蒼野聚。陽陵故屬馮翊。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[109,\"京兆尹\",1]",
+        "[109,\"京兆尹\",2]",
+        "[109,\"京兆尹\",3]",
+        "[109,\"京兆尹\",4]",
+        "[109,\"京兆尹\",5]",
+        "[109,\"京兆尹\",6]",
+        "[109,\"京兆尹\",7]",
+        "[109,\"京兆尹\",8]",
+        "[109,\"京兆尹\",9]",
+        "[109,\"京兆尹\",10]"
+      ],
       "units": [
         {
           "sourceVolume": 109,
@@ -1254,9 +1402,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-yi/zh",
-        "localWitness": "data/chgis-source/junguozhi/yi.html",
-        "snapshotSha256": "78918515718b1979e7908b5696c7b84d0103328c4db785ea3e17096d4d17a315"
+        "localWitness": "data/corpus/ctext/junguozhi/yi.html",
+        "snapshotSha256": "0a506c57bc5346925de538240bd5d6cc8119bd2eae41413a8edd1684c15c9564",
+        "locator": "n78700-n78710"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國一",
+          "section": "左馮翊 (n78700-n78710)",
+          "quote": "左馮翊\n十三城\n，戶三萬七千九十，口十四萬五千一百九十五。\n高陵\n池陽\n雲陽\n祋\n祤\n永元九年復。頻陽萬年蓮勺重泉\n臨晉\n本大荔。有河水祠。有芮鄉。有王城。郃陽永平二年復。夏陽有梁山、龍門山。衙粟邑永元九年復。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[109,\"左馮翊\",1]",
+        "[109,\"左馮翊\",2]",
+        "[109,\"左馮翊\",3]",
+        "[109,\"左馮翊\",4]",
+        "[109,\"左馮翊\",5]",
+        "[109,\"左馮翊\",6]",
+        "[109,\"左馮翊\",7]",
+        "[109,\"左馮翊\",8]",
+        "[109,\"左馮翊\",9]",
+        "[109,\"左馮翊\",10]",
+        "[109,\"左馮翊\",11]",
+        "[109,\"左馮翊\",12]",
+        "[109,\"左馮翊\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 109,
@@ -1458,9 +1633,38 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-yi/zh",
-        "localWitness": "data/chgis-source/junguozhi/yi.html",
-        "snapshotSha256": "78918515718b1979e7908b5696c7b84d0103328c4db785ea3e17096d4d17a315"
+        "localWitness": "data/corpus/ctext/junguozhi/yi.html",
+        "snapshotSha256": "0a506c57bc5346925de538240bd5d6cc8119bd2eae41413a8edd1684c15c9564",
+        "locator": "n78711-n78721"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國一",
+          "section": "右扶風 (n78711-n78721)",
+          "quote": "右扶風\n十五城，戶萬七千三百五十二，口九萬三千九十一。\n槐里\n周曰犬丘，高帝改。安陵平陵\n茂陵\n鄠\n豐\n水出。有甘亭。郿有邰亭。武功永平八年復。有太一山，本終南。垂山，本敦物。有斜谷。陳倉汧\n有吳嶽山，本名汧，汧水出。有回城，名回中。渝麋侯國。雍\n有鐵。栒邑有豳鄉。美陽有岐山，有周城。漆有漆水。有鐵。杜陽永和二年復。\n右司隸校尉部，郡七，縣、邑、侯國百六。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[109,\"右扶風\",1]",
+        "[109,\"右扶風\",2]",
+        "[109,\"右扶風\",3]",
+        "[109,\"右扶風\",4]",
+        "[109,\"右扶風\",5]",
+        "[109,\"右扶風\",6]",
+        "[109,\"右扶風\",7]",
+        "[109,\"右扶風\",8]",
+        "[109,\"右扶風\",9]",
+        "[109,\"右扶風\",10]",
+        "[109,\"右扶風\",11]",
+        "[109,\"右扶風\",12]",
+        "[109,\"右扶風\",13]",
+        "[109,\"右扶風\",14]",
+        "[109,\"右扶風\",15]"
+      ],
       "units": [
         {
           "sourceVolume": 109,
@@ -1690,9 +1894,40 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78723-n78730"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "潁川郡 (n78723-n78730)",
+          "quote": "潁川郡\n十七城，戶二十六萬三千四百四十，口百四十三萬六千五百一十三。\n陽翟\n禹所都。有鈞臺。有高氏亭。有雍氏城。襄\n有養陰里。襄城有西不羹。有氾城。有汾丘。有魚齒山。昆陽有湛水。定陵有東不羹。舞陽邑。郾臨潁潁陽潁陰有狐宗鄉，或曰古狐人亭。有岸亭。許\n新汲\n衝陵\n春秋時曰衝。長社有長葛城。有向鄉。有蜀城，有蜀津。陽城有嵩高山，洧水、潁水出。有鐵。有負黍聚。父城有應鄉。輪氏建初四年置。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"潁川郡\",1]",
+        "[110,\"潁川郡\",2]",
+        "[110,\"潁川郡\",3]",
+        "[110,\"潁川郡\",4]",
+        "[110,\"潁川郡\",5]",
+        "[110,\"潁川郡\",6]",
+        "[110,\"潁川郡\",7]",
+        "[110,\"潁川郡\",8]",
+        "[110,\"潁川郡\",9]",
+        "[110,\"潁川郡\",10]",
+        "[110,\"潁川郡\",11]",
+        "[110,\"潁川郡\",12]",
+        "[110,\"潁川郡\",13]",
+        "[110,\"潁川郡\",14]",
+        "[110,\"潁川郡\",15]",
+        "[110,\"潁川郡\",16]",
+        "[110,\"潁川郡\",17]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -1950,9 +2185,60 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78731-n78736"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "汝南郡 (n78731-n78736)",
+          "quote": "汝南郡\n三十七城，戶四十萬四千四百四十八，口二百一十萬七百八十八。\n平輿\n有沈亭，故國，姬姓。新陽侯國。西平有鐵。有柏亭，故柏國。上蔡本蔡國。南頓本頓國。汝陰本胡國。汝陽新息國。北宜春濦強侯國。灈陽期思有蔣鄉，故蔣國。陽安\n道亭，故國。項西華細陽安城侯國。有武城亭。吳房有棠谿亭。鮦陽侯國。慎陽慎新蔡有大呂亭。安陽侯國。有江亭，故國，嬴姓。富波侯國，永元中復。宜祿永元中復。朗陵侯國。弋陽侯國。有黃亭，故黃國，嬴姓。召陵有陘亭。有安陵鄉。征羌侯國。有安陵亭。思善侯國。宋\n公國，周名郪丘，漢改為新郪，章帝建初四年徙宋公於此。有繁陽亭。褒信侯國。有賴亭，故國。原鹿侯國。定潁侯國。固始侯國。故寢也，光武中興更名。有寢丘。山桑侯國，故屬沛。有下城父聚。有垂惠聚。城父故屬沛，春秋時曰夷。有章華臺。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"汝南郡\",1]",
+        "[110,\"汝南郡\",2]",
+        "[110,\"汝南郡\",3]",
+        "[110,\"汝南郡\",4]",
+        "[110,\"汝南郡\",5]",
+        "[110,\"汝南郡\",6]",
+        "[110,\"汝南郡\",7]",
+        "[110,\"汝南郡\",8]",
+        "[110,\"汝南郡\",9]",
+        "[110,\"汝南郡\",10]",
+        "[110,\"汝南郡\",11]",
+        "[110,\"汝南郡\",12]",
+        "[110,\"汝南郡\",13]",
+        "[110,\"汝南郡\",14]",
+        "[110,\"汝南郡\",15]",
+        "[110,\"汝南郡\",16]",
+        "[110,\"汝南郡\",17]",
+        "[110,\"汝南郡\",18]",
+        "[110,\"汝南郡\",19]",
+        "[110,\"汝南郡\",20]",
+        "[110,\"汝南郡\",21]",
+        "[110,\"汝南郡\",22]",
+        "[110,\"汝南郡\",23]",
+        "[110,\"汝南郡\",24]",
+        "[110,\"汝南郡\",25]",
+        "[110,\"汝南郡\",26]",
+        "[110,\"汝南郡\",27]",
+        "[110,\"汝南郡\",28]",
+        "[110,\"汝南郡\",29]",
+        "[110,\"汝南郡\",30]",
+        "[110,\"汝南郡\",31]",
+        "[110,\"汝南郡\",32]",
+        "[110,\"汝南郡\",33]",
+        "[110,\"汝南郡\",34]",
+        "[110,\"汝南郡\",35]",
+        "[110,\"汝南郡\",36]",
+        "[110,\"汝南郡\",37]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -2490,9 +2776,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78737-n78743"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "梁國 (n78737-n78743)",
+          "quote": "梁國\n九\n城，戶八萬三千三百，口四十三萬一千二百八十三。\n下邑\n睢陽\n本宋國閼伯墟。有盧門亭。有魚門。有陽梁聚。虞有空桐地，有桐地，有桐亭。有綸城，少康邑。碭\n山出文石。蒙有蒙澤。穀熟有新城。有邳亭。衝故屬陳留。寧陵故屬陳留。有葛鄉，故葛伯國。薄故屬山陽，所都。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"梁國\",1]",
+        "[110,\"梁國\",2]",
+        "[110,\"梁國\",3]",
+        "[110,\"梁國\",4]",
+        "[110,\"梁國\",5]",
+        "[110,\"梁國\",6]",
+        "[110,\"梁國\",7]",
+        "[110,\"梁國\",8]",
+        "[110,\"梁國\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -2638,9 +2947,44 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78744-n78759"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "沛國 (n78744-n78759)",
+          "quote": "沛國\n二十一城，戶二十萬四百九十五，口二十五萬一千三百九十三。\n相\n蕭\n本\n國。沛有泗水亭。豐\n西有大澤，高祖斬白蛇於此。有枌榆亭。酇有鄍聚。穀陽譙刺史治。洨\n有垓下聚。蘄有大澤鄉，陳涉起此。銍鄲\n建平\n臨睢\n故芒\n，光武更名。竹邑侯國，故竹。公丘本膠國。龍亢\n向\n本國。符離虹太丘\n杼秋\n故屬梁國，有檀淵聚。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"沛國\",1]",
+        "[110,\"沛國\",2]",
+        "[110,\"沛國\",3]",
+        "[110,\"沛國\",4]",
+        "[110,\"沛國\",5]",
+        "[110,\"沛國\",6]",
+        "[110,\"沛國\",7]",
+        "[110,\"沛國\",8]",
+        "[110,\"沛國\",9]",
+        "[110,\"沛國\",10]",
+        "[110,\"沛國\",11]",
+        "[110,\"沛國\",12]",
+        "[110,\"沛國\",13]",
+        "[110,\"沛國\",14]",
+        "[110,\"沛國\",15]",
+        "[110,\"沛國\",16]",
+        "[110,\"沛國\",17]",
+        "[110,\"沛國\",18]",
+        "[110,\"沛國\",19]",
+        "[110,\"沛國\",20]",
+        "[110,\"沛國\",21]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -2954,9 +3298,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78760-n78768"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "陳國 (n78760-n78768)",
+          "quote": "陳國\n九城，戶十一萬二千六百五十三，口百五十四萬七千五百七十二。\n陳\n陽夏\n有\n固陵聚。寧平苦\n春秋時曰相。有賴鄉。柘新平扶樂武平\n長平\n故屬汝南。有辰亭。有赭丘城。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"陳國\",1]",
+        "[110,\"陳國\",2]",
+        "[110,\"陳國\",3]",
+        "[110,\"陳國\",4]",
+        "[110,\"陳國\",5]",
+        "[110,\"陳國\",6]",
+        "[110,\"陳國\",7]",
+        "[110,\"陳國\",8]",
+        "[110,\"陳國\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -3102,9 +3469,29 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78769-n78773"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "魯國 (n78769-n78773)",
+          "quote": "魯國\n六城，戶七萬八千四百四十七，口四十一萬一千五百九十。\n魯\n國，奄國。有大庭氏庫。有鐵。有闕里，孔子所居。有牛首亭。有五父衢。騶本邾國。蕃有南梁水。薛本國，六國時曰徐州。卞有盜泉。有郚鄉城。汶陽\n右豫州刺史部，郡、國六，縣、邑、、侯國九十九。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"魯國\",1]",
+        "[110,\"魯國\",2]",
+        "[110,\"魯國\",3]",
+        "[110,\"魯國\",4]",
+        "[110,\"魯國\",5]",
+        "[110,\"魯國\",6]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -3208,9 +3595,38 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78774-n78782"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "魏郡 (n78774-n78782)",
+          "quote": "魏郡\n十五城，戶十二萬九千三百一十，口六十九萬五千六百六。\n鄴\n有故大河。有滏水。有汙水，有汙城。有平陽城。有武城。有九侯城。繁陽內黃清河水出。有羛陽聚。有黃澤。魏元城墟，故沙鹿，有沙亭。黎陽\n陰安\n邑。館陶清淵\n平恩\n沙\n侯國。斥丘有葛。武安有鐵。曲梁侯國，故屬廣平。有雞澤。梁期",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"魏郡\",1]",
+        "[110,\"魏郡\",2]",
+        "[110,\"魏郡\",3]",
+        "[110,\"魏郡\",4]",
+        "[110,\"魏郡\",5]",
+        "[110,\"魏郡\",6]",
+        "[110,\"魏郡\",7]",
+        "[110,\"魏郡\",8]",
+        "[110,\"魏郡\",9]",
+        "[110,\"魏郡\",10]",
+        "[110,\"魏郡\",11]",
+        "[110,\"魏郡\",12]",
+        "[110,\"魏郡\",13]",
+        "[110,\"魏郡\",14]",
+        "[110,\"魏郡\",15]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -3440,9 +3856,38 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78783-n78800"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "鉅鹿郡 (n78783-n78800)",
+          "quote": "鉅鹿郡\n十五\n城，戶十萬九千五百一十七，口六十萬二千九十六。\n廮陶\n有薄落亭。鉅鹿故大鹿，有大陸澤。楊氏\n鄡\n下曲陽\n有鼓聚，故翟鼓子國。有昔陽亭。任\n南和\n廣平\n斥\n章\n廣宗曲周\n列人\n廣年\n平鄉\n南\n讀",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"鉅鹿郡\",1]",
+        "[110,\"鉅鹿郡\",2]",
+        "[110,\"鉅鹿郡\",3]",
+        "[110,\"鉅鹿郡\",4]",
+        "[110,\"鉅鹿郡\",5]",
+        "[110,\"鉅鹿郡\",6]",
+        "[110,\"鉅鹿郡\",7]",
+        "[110,\"鉅鹿郡\",8]",
+        "[110,\"鉅鹿郡\",9]",
+        "[110,\"鉅鹿郡\",10]",
+        "[110,\"鉅鹿郡\",11]",
+        "[110,\"鉅鹿郡\",12]",
+        "[110,\"鉅鹿郡\",13]",
+        "[110,\"鉅鹿郡\",14]",
+        "[110,\"鉅鹿郡\",15]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -3672,9 +4117,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78801-n78808"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "常山國 (n78801-n78808)",
+          "quote": "常山國\n十三城，戶九萬七千五百，口六十三萬一千一百八十四。\n元氏\n高邑\n故\n鄗，光武更名。刺史治。有千秋亭、五成陌，光武即位於此矣。都鄉侯國。有鐵。南行唐有石臼谷。房子贊皇山，濟水所出。平棘有塞。欒城九門靈壽衛水出。蒲吾井陘真定\n上艾\n故屬太原。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"常山國\",1]",
+        "[110,\"常山國\",2]",
+        "[110,\"常山國\",3]",
+        "[110,\"常山國\",4]",
+        "[110,\"常山國\",5]",
+        "[110,\"常山國\",6]",
+        "[110,\"常山國\",7]",
+        "[110,\"常山國\",8]",
+        "[110,\"常山國\",9]",
+        "[110,\"常山國\",10]",
+        "[110,\"常山國\",11]",
+        "[110,\"常山國\",12]",
+        "[110,\"常山國\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -3876,9 +4348,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78809-n78817"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "中山國 (n78809-n78817)",
+          "quote": "中山國\n十三城，戶九萬七千四百一十二，口六十五萬八千一百九十五。\n盧奴\n北平\n有鐵\n。母極新市\n有鮮虞亭，故國，子姓。望都\n唐\n有中人亭，有左人鄉。安國安憙本安險，章帝更名。漢昌本苦陘，章帝更名。蠡吾侯國，故屬涿。上曲陽故屬常山。恒山在西北。蒲陰本曲逆，章帝更名。有陽城。廣昌故屬代郡。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"中山國\",1]",
+        "[110,\"中山國\",2]",
+        "[110,\"中山國\",3]",
+        "[110,\"中山國\",4]",
+        "[110,\"中山國\",5]",
+        "[110,\"中山國\",6]",
+        "[110,\"中山國\",7]",
+        "[110,\"中山國\",8]",
+        "[110,\"中山國\",9]",
+        "[110,\"中山國\",10]",
+        "[110,\"中山國\",11]",
+        "[110,\"中山國\",12]",
+        "[110,\"中山國\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -4080,9 +4579,35 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78818-n78825"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "安平國 (n78818-n78825)",
+          "quote": "安平國\n十\n三城，戶九萬一千四百四十，口六十五萬五千一百一十八。\n信都\n有絳水、呼沱河。阜城故昌城。南宮扶柳下博武邑觀津\n經\n西有漳水，津名薄落津。堂陽故屬鉅鹿。武遂\n故屬河閒。饒陽故名饒，屬涿。有無蔞亭。安平故屬涿。南深國故屬涿。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"安平國\",1]",
+        "[110,\"安平國\",2]",
+        "[110,\"安平國\",3]",
+        "[110,\"安平國\",4]",
+        "[110,\"安平國\",5]",
+        "[110,\"安平國\",6]",
+        "[110,\"安平國\",7]",
+        "[110,\"安平國\",8]",
+        "[110,\"安平國\",9]",
+        "[110,\"安平國\",10]",
+        "[110,\"安平國\",11]",
+        "[110,\"安平國\",12]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -4270,9 +4795,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78826-n78830"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "河閒國 (n78826-n78830)",
+          "quote": "河閒國\n十一城，戶九萬三千七百五十四，口六十三萬四千四百二十一。\n樂成\n弓高易\n故屬涿。武垣故屬涿。中水故屬涿。鄚故屬涿。高陽故屬涿。有葛城。文安故屬勃海。束州故屬勃海。成平故屬勃海。東平舒故屬勃海。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"河閒國\",1]",
+        "[110,\"河閒國\",2]",
+        "[110,\"河閒國\",3]",
+        "[110,\"河閒國\",4]",
+        "[110,\"河閒國\",5]",
+        "[110,\"河閒國\",6]",
+        "[110,\"河閒國\",7]",
+        "[110,\"河閒國\",8]",
+        "[110,\"河閒國\",9]",
+        "[110,\"河閒國\",10]",
+        "[110,\"河閒國\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -4446,9 +4996,30 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78831-n78836"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "清河國 (n78831-n78836)",
+          "quote": "清河國\n七城，戶十二萬三千九百六十四，口七十六萬四百一十八。\n甘陵\n故厝，安帝更名。貝丘東武成鄃\n靈\n和帝永元九年復。繹幕廣川故屬信都。有棘津城。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"清河國\",1]",
+        "[110,\"清河國\",2]",
+        "[110,\"清河國\",3]",
+        "[110,\"清河國\",4]",
+        "[110,\"清河國\",5]",
+        "[110,\"清河國\",6]",
+        "[110,\"清河國\",7]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -4566,9 +5137,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78837-n78840"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "趙國 (n78837-n78840)",
+          "quote": "趙國\n五城，戶三萬二千七百一十九，口十八萬八千三百八十一。\n邯鄲\n有叢臺。易陽襄國本邢國，秦為信都，項羽更名。有檀臺。有蘇人亭。柏人中丘",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"趙國\",1]",
+        "[110,\"趙國\",2]",
+        "[110,\"趙國\",3]",
+        "[110,\"趙國\",4]",
+        "[110,\"趙國\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -4658,9 +5248,31 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-er/zh",
-        "localWitness": "data/chgis-source/junguozhi/er.html",
-        "snapshotSha256": "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545"
+        "localWitness": "data/corpus/ctext/junguozhi/er.html",
+        "snapshotSha256": "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+        "locator": "n78841-n78849"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國二",
+          "section": "勃海郡 (n78841-n78849)",
+          "quote": "勃海郡\n八城，戶十三萬二千三百八十九，口百一十萬六千五百。\n南皮\n高城\n侯國\n。重合侯國。浮陽侯國。東光武\n陽信\n延光元年復。脩故屬信都。\n右冀州刺史部，郡、國九，縣、邑、侯國百。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[110,\"勃海郡\",1]",
+        "[110,\"勃海郡\",2]",
+        "[110,\"勃海郡\",3]",
+        "[110,\"勃海郡\",4]",
+        "[110,\"勃海郡\",5]",
+        "[110,\"勃海郡\",6]",
+        "[110,\"勃海郡\",7]",
+        "[110,\"勃海郡\",8]"
+      ],
       "units": [
         {
           "sourceVolume": 110,
@@ -4792,9 +5404,40 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78851-n78866"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "陳留郡 (n78851-n78866)",
+          "quote": "陳留郡\n十七城，戶十七萬七千五百二十九，口八十六萬九千四百三十三。\n陳留\n有鳴鴈亭。浚儀本大梁。尉氏\n雍丘\n本杞國。襄邑有滑亭。有承匡城。外黃\n有葵丘聚，齊桓公會此。城中有曲棘里。有繁陽城。小黃東昏\n濟陽\n平\n丘\n有臨濟亭，田儋死此。有匡。有黃池亭。封丘有桐牢亭，或曰古蟲牢。酸棗\n長垣\n侯國。有匡城。有蒲城。有祭城。己吾有大棘鄉。有首鄉。考城\n故菑，章帝更名。故屬梁。圉\n故屬淮陽。有高陽亭。扶溝\n故屬淮陽。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"陳留郡\",1]",
+        "[111,\"陳留郡\",2]",
+        "[111,\"陳留郡\",3]",
+        "[111,\"陳留郡\",4]",
+        "[111,\"陳留郡\",5]",
+        "[111,\"陳留郡\",6]",
+        "[111,\"陳留郡\",7]",
+        "[111,\"陳留郡\",8]",
+        "[111,\"陳留郡\",9]",
+        "[111,\"陳留郡\",10]",
+        "[111,\"陳留郡\",11]",
+        "[111,\"陳留郡\",12]",
+        "[111,\"陳留郡\",13]",
+        "[111,\"陳留郡\",14]",
+        "[111,\"陳留郡\",15]",
+        "[111,\"陳留郡\",16]",
+        "[111,\"陳留郡\",17]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -5052,9 +5695,38 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78867-n78870"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "東郡 (n78867-n78870)",
+          "quote": "東郡\n十五城，戶十三萬六千八十八，口六十萬三千三百九十三。\n濮陽\n古昆吾國，春秋時曰濮。有鹹城，或曰古鹹國。有清丘。有鉏城。燕本南燕國。有雍鄉。有胙城，古胙國。有平陽亭。有瓦亭。有桃城。白馬有韋鄉。頓丘東阿有清亭。東武陽濕水出。范有秦亭。臨邑有沛廟。博平聊城有夷儀聚。有聶戚。發干樂平侯國。故清，章帝更名。陽平侯國。有莘亭。有岡成城。衛公國。本觀故國，姚姓，光武更名。有河牧城。有竿城。穀城春秋時小穀。有巂下聚。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"東郡\",1]",
+        "[111,\"東郡\",2]",
+        "[111,\"東郡\",3]",
+        "[111,\"東郡\",4]",
+        "[111,\"東郡\",5]",
+        "[111,\"東郡\",6]",
+        "[111,\"東郡\",7]",
+        "[111,\"東郡\",8]",
+        "[111,\"東郡\",9]",
+        "[111,\"東郡\",10]",
+        "[111,\"東郡\",11]",
+        "[111,\"東郡\",12]",
+        "[111,\"東郡\",13]",
+        "[111,\"東郡\",14]",
+        "[111,\"東郡\",15]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -5284,9 +5956,30 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78871-n78877"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "東平國 (n78871-n78877)",
+          "quote": "東平國\n七城，戶七萬九千一十二，口四十四萬八千二百七十。\n無鹽\n本宿國，任姓。有章城。東平陸六國時曰平陸。有闞亭。有堂陽亭。富成\n章\n壽張\n春秋曰良，漢曰壽良，光武改曰壽張。有堂聚，故聚屬東郡。須昌故屬東郡。有致密城，古中都。有陽穀城。寧陽故屬泰山。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"東平國\",1]",
+        "[111,\"東平國\",2]",
+        "[111,\"東平國\",3]",
+        "[111,\"東平國\",4]",
+        "[111,\"東平國\",5]",
+        "[111,\"東平國\",6]",
+        "[111,\"東平國\",7]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -5404,9 +6097,26 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78878-n78881"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "任城國 (n78878-n78881)",
+          "quote": "任城國\n三城，戶三萬六千四百四十二，口十九萬四千一百五十六。\n任城\n本任國。有桃聚。亢父樊",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"任城國\",1]",
+        "[111,\"任城國\",2]",
+        "[111,\"任城國\",3]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -5468,9 +6178,35 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78882-n78885"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "泰山郡 (n78882-n78885)",
+          "quote": "泰山郡\n十二城，戶八千九百二十九，口四十三萬七千三百一十七。\n奉高\n有明堂，武帝造。博有泰山廟。岱山在西北。有龜山。有龍鄉城。梁甫侯國。有菟裘聚。鉅平侯國。有亭禪山。有陽關亭。嬴有鐵。山茌侯國。萊蕪有原山，潘水出。蓋沂水出。南武陽侯國。有顓臾城。南城故屬東海。有東陽城。費侯國，故屬東海。有祊亭。有台亭。牟故國。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"泰山郡\",1]",
+        "[111,\"泰山郡\",2]",
+        "[111,\"泰山郡\",3]",
+        "[111,\"泰山郡\",4]",
+        "[111,\"泰山郡\",5]",
+        "[111,\"泰山郡\",6]",
+        "[111,\"泰山郡\",7]",
+        "[111,\"泰山郡\",8]",
+        "[111,\"泰山郡\",9]",
+        "[111,\"泰山郡\",10]",
+        "[111,\"泰山郡\",11]",
+        "[111,\"泰山郡\",12]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -5658,9 +6394,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78886-n78890"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "濟北國 (n78886-n78890)",
+          "quote": "濟北國\n五城，戶四萬五千六百八十九，口二十三萬五千八百九十七。\n盧\n有平陰城。有防門。有光里。有景茲山。有敖山。有清亭。有長城至東海。蛇丘有遂鄉。有下讙亭。有鑄鄉城。成\n本國。茌平本屬東郡。剛。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"濟北國\",1]",
+        "[111,\"濟北國\",2]",
+        "[111,\"濟北國\",3]",
+        "[111,\"濟北國\",4]",
+        "[111,\"濟北國\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -5750,9 +6505,33 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78891-n78894"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "山陽郡 (n78891-n78894)",
+          "quote": "山陽郡\n十城，戶十萬九千八百九十八，口六十萬六千九十一。\n昌邑\n刺史治。有梁丘城。有甲父亭。東緡春秋時曰緡。鉅野有大野澤。高平侯國。故橐，章帝更名。有茅鄉城。湖陸故湖陵，章帝更名。南平陽侯國。有漆亭。有閭丘亭。方與有武唐亭，魯侯觀魚臺。有泥母亭，或曰古甯母。瑕丘金鄉防東",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"山陽郡\",1]",
+        "[111,\"山陽郡\",2]",
+        "[111,\"山陽郡\",3]",
+        "[111,\"山陽郡\",4]",
+        "[111,\"山陽郡\",5]",
+        "[111,\"山陽郡\",6]",
+        "[111,\"山陽郡\",7]",
+        "[111,\"山陽郡\",8]",
+        "[111,\"山陽郡\",9]",
+        "[111,\"山陽郡\",10]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -5912,9 +6691,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78895-n78899"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "濟陰郡 (n78895-n78899)",
+          "quote": "濟陰郡\n十一城，戶十三萬三千七百一十五，口六十五萬七千五百五十四。\n定陶\n本曹國，古陶，堯所居。有三鬷亭。冤句有煮棗城。成陽有堯冢、靈臺，有雷澤。乘氏侯國。有泗水。有鹿城鄉。句陽有垂亭。鄄城離狐故屬東郡。廩丘故屬東郡。有高魚城。有運城。單父侯國，故屬山陽。成武故屬山陽。有郜城。己氏故屬梁。\n右兗州刺史部，郡、國八，縣、邑、公、侯國八十。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"濟陰郡\",1]",
+        "[111,\"濟陰郡\",2]",
+        "[111,\"濟陰郡\",3]",
+        "[111,\"濟陰郡\",4]",
+        "[111,\"濟陰郡\",5]",
+        "[111,\"濟陰郡\",6]",
+        "[111,\"濟陰郡\",7]",
+        "[111,\"濟陰郡\",8]",
+        "[111,\"濟陰郡\",9]",
+        "[111,\"濟陰郡\",10]",
+        "[111,\"濟陰郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -6088,9 +6892,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78900-n78911"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "東海郡 (n78900-n78911)",
+          "quote": "東海郡\n十三城，戶十四萬八千七百八十四，口七十萬六千四百一十六。\n郯\n本國，刺史治。蘭陵有次室亭。戚朐\n有鐵。有伊盧鄉。襄賁\n昌慮\n有藍鄉。承\n陰平\n利城\n合\n城祝其\n有羽山。春秋時曰祝其，夾谷地。厚丘贛榆本屬琅邪，建初五年復。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"東海郡\",1]",
+        "[111,\"東海郡\",2]",
+        "[111,\"東海郡\",3]",
+        "[111,\"東海郡\",4]",
+        "[111,\"東海郡\",5]",
+        "[111,\"東海郡\",6]",
+        "[111,\"東海郡\",7]",
+        "[111,\"東海郡\",8]",
+        "[111,\"東海郡\",9]",
+        "[111,\"東海郡\",10]",
+        "[111,\"東海郡\",11]",
+        "[111,\"東海郡\",12]",
+        "[111,\"東海郡\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -6292,9 +7123,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78912-n78922"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "琅邪國 (n78912-n78922)",
+          "quote": "琅邪國\n十\n三城，戶二萬八百四，口五十七萬九百六十七。\n開陽\n故屬東海，建初五年屬。東武琅邪\n東莞\n有鄆亭。有邳鄉。有公來山，或曰古浮來。西海\n諸\n莒\n本國，故屬城陽。有鐵。有崢嶸谷。東安\n故屬城陽。陽都故屬城陽。有牟臺。臨沂故屬東海。有叢亭。即丘侯國，故屬東海，春秋曰祝丘。繒侯國，故屬東海。有概亭。姑幕",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"琅邪國\",1]",
+        "[111,\"琅邪國\",2]",
+        "[111,\"琅邪國\",3]",
+        "[111,\"琅邪國\",4]",
+        "[111,\"琅邪國\",5]",
+        "[111,\"琅邪國\",6]",
+        "[111,\"琅邪國\",7]",
+        "[111,\"琅邪國\",8]",
+        "[111,\"琅邪國\",9]",
+        "[111,\"琅邪國\",10]",
+        "[111,\"琅邪國\",11]",
+        "[111,\"琅邪國\",12]",
+        "[111,\"琅邪國\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -6496,9 +7354,31 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78923-n78930"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "彭城國 (n78923-n78930)",
+          "quote": "彭城國\n八城，戶八萬六千一百七十，口四十九萬三千二十七。\n彭城\n有鐵。武原傅陽有柤水。呂\n留\n梧\n菑丘廣戚\n故屬沛國。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"彭城國\",1]",
+        "[111,\"彭城國\",2]",
+        "[111,\"彭城國\",3]",
+        "[111,\"彭城國\",4]",
+        "[111,\"彭城國\",5]",
+        "[111,\"彭城國\",6]",
+        "[111,\"彭城國\",7]",
+        "[111,\"彭城國\",8]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -6630,9 +7510,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78931-n78937"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "廣陵郡 (n78931-n78937)",
+          "quote": "廣陵郡\n十一城，戶八萬三千九百七，口四十一萬百九十。\n廣陵\n有東陵亭。江都有江水祠。高郵\n平安\n淩\n故屬泗水。東陽故屬臨淮。有長洲澤，吳王濞太倉在此。射陽故屬臨淮。鹽瀆故屬臨淮。輿侯國，故屬臨淮。堂邑故屬臨淮。有鐵。春秋時曰堂。海西故屬東海。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"廣陵郡\",1]",
+        "[111,\"廣陵郡\",2]",
+        "[111,\"廣陵郡\",3]",
+        "[111,\"廣陵郡\",4]",
+        "[111,\"廣陵郡\",5]",
+        "[111,\"廣陵郡\",6]",
+        "[111,\"廣陵郡\",7]",
+        "[111,\"廣陵郡\",8]",
+        "[111,\"廣陵郡\",9]",
+        "[111,\"廣陵郡\",10]",
+        "[111,\"廣陵郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -6806,9 +7711,40 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-san/zh",
-        "localWitness": "data/chgis-source/junguozhi/san.html",
-        "snapshotSha256": "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329"
+        "localWitness": "data/corpus/ctext/junguozhi/san.html",
+        "snapshotSha256": "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+        "locator": "n78938-n78947"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國三",
+          "section": "下邳國 (n78938-n78947)",
+          "quote": "下邳國\n十\n七城，戶十三萬六千三百八十九，口六十一萬一千八十三。\n下邳\n本屬東海。葛嶧山，本嶧陽山。有鐵。徐本國。有樓亭，或曰古蔞林。僮侯國。睢陵下相淮陰淮浦盱台\n高山潘旌\n淮陵\n取慮\n有蒲姑陂。東成曲陽侯國，故屬東海。司吾侯國，故屬東海。良成故屬東海。春秋時曰良。夏丘故屬沛。\n右徐州刺史部，郡、國五，縣、邑、侯國六十二。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[111,\"下邳國\",1]",
+        "[111,\"下邳國\",2]",
+        "[111,\"下邳國\",3]",
+        "[111,\"下邳國\",4]",
+        "[111,\"下邳國\",5]",
+        "[111,\"下邳國\",6]",
+        "[111,\"下邳國\",7]",
+        "[111,\"下邳國\",8]",
+        "[111,\"下邳國\",9]",
+        "[111,\"下邳國\",10]",
+        "[111,\"下邳國\",11]",
+        "[111,\"下邳國\",12]",
+        "[111,\"下邳國\",13]",
+        "[111,\"下邳國\",14]",
+        "[111,\"下邳國\",15]",
+        "[111,\"下邳國\",16]",
+        "[111,\"下邳國\",17]"
+      ],
       "units": [
         {
           "sourceVolume": 111,
@@ -7066,9 +8002,33 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n78949-n78955"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "濟南國 (n78949-n78955)",
+          "quote": "濟南國\n十城，戶七萬八千五百四十四，口四十五萬三千三百八。\n東平陵\n有鐵。有譚城。有天山。著於陵\n臺\n菅\n有賴亭。土鼓梁鄒鄒平東朝陽歷城有鐵。有巨里聚。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"濟南國\",1]",
+        "[112,\"濟南國\",2]",
+        "[112,\"濟南國\",3]",
+        "[112,\"濟南國\",4]",
+        "[112,\"濟南國\",5]",
+        "[112,\"濟南國\",6]",
+        "[112,\"濟南國\",7]",
+        "[112,\"濟南國\",8]",
+        "[112,\"濟南國\",9]",
+        "[112,\"濟南國\",10]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -7228,9 +8188,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n78956-n78961"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "平原郡 (n78956-n78961)",
+          "quote": "平原郡\n九城，戶十五萬五千五百八十八，口百萬二千六百五十八。\n平原\n高唐\n濕水出。般鬲\n侯國。夏時有鬲君，滅浞立少康。祝阿春秋時曰祝柯。有野井亭。樂陵濕陰安德侯國。厭次本富平，明帝更名。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"平原郡\",1]",
+        "[112,\"平原郡\",2]",
+        "[112,\"平原郡\",3]",
+        "[112,\"平原郡\",4]",
+        "[112,\"平原郡\",5]",
+        "[112,\"平原郡\",6]",
+        "[112,\"平原郡\",7]",
+        "[112,\"平原郡\",8]",
+        "[112,\"平原郡\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -7376,9 +8359,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n78962-n78967"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "樂安國 (n78962-n78967)",
+          "quote": "樂安國\n九\n城，戶七萬四千四百，口四十二萬四千七十五。\n臨濟\n本狄，安帝更名。千乘高菀樂安博昌有薄姑城。有貝中聚。有時水。蓼城侯國。利故屬齊。益\n侯國，故屬北海。壽光故屬北海。有灌亭。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"樂安國\",1]",
+        "[112,\"樂安國\",2]",
+        "[112,\"樂安國\",3]",
+        "[112,\"樂安國\",4]",
+        "[112,\"樂安國\",5]",
+        "[112,\"樂安國\",6]",
+        "[112,\"樂安國\",7]",
+        "[112,\"樂安國\",8]",
+        "[112,\"樂安國\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -7524,9 +8530,41 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n78968-n78971"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "北海國 (n78968-n78971)",
+          "quote": "北海國\n十八城，戶十五萬八千六百四十一，口八十五萬三千六百四。\n劇\n有紀亭，古紀國。營陵平壽有斟城。有寒亭，古寒國，浞封此。都昌安丘有渠丘亭。淳于永元九年復。有密鄉。平昌侯國，故屬琅邪。有蔞鄉。朱虛侯國，故屬琅邪，永初元年屬。東安平故屬菑川。六國時曰安平。有酅亭。高密侯國。昌安侯國，安帝復。夷安侯國，安帝復。膠東侯國。即墨侯國。有棠鄉。壯武安帝復。下密安帝復。拒觀陽",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"北海國\",1]",
+        "[112,\"北海國\",2]",
+        "[112,\"北海國\",3]",
+        "[112,\"北海國\",4]",
+        "[112,\"北海國\",5]",
+        "[112,\"北海國\",6]",
+        "[112,\"北海國\",7]",
+        "[112,\"北海國\",8]",
+        "[112,\"北海國\",9]",
+        "[112,\"北海國\",10]",
+        "[112,\"北海國\",11]",
+        "[112,\"北海國\",12]",
+        "[112,\"北海國\",13]",
+        "[112,\"北海國\",14]",
+        "[112,\"北海國\",15]",
+        "[112,\"北海國\",16]",
+        "[112,\"北海國\",17]",
+        "[112,\"北海國\",18]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -7798,9 +8836,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n78972-n78979"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "東萊郡 (n78972-n78979)",
+          "quote": "東萊郡\n十三城，戶十萬四千二百九十七，口四十八萬四千三百九十三。\n黃\n牟平\n惤\n侯國。曲成侯國。掖侯國。有過鄉。當利侯國。東牟侯國。昌陽盧鄉\n長廣\n故屬琅邪。黔陬侯國，故屬琅邪。有介亭。葛盧有尤涉亭。不期侯國，故屬琅邪。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"東萊郡\",1]",
+        "[112,\"東萊郡\",2]",
+        "[112,\"東萊郡\",3]",
+        "[112,\"東萊郡\",4]",
+        "[112,\"東萊郡\",5]",
+        "[112,\"東萊郡\",6]",
+        "[112,\"東萊郡\",7]",
+        "[112,\"東萊郡\",8]",
+        "[112,\"東萊郡\",9]",
+        "[112,\"東萊郡\",10]",
+        "[112,\"東萊郡\",11]",
+        "[112,\"東萊郡\",12]",
+        "[112,\"東萊郡\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -8002,9 +9067,29 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n78980-n78983"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "齊國 (n78980-n78983)",
+          "quote": "齊國\n六城，戶六萬四千四百一十五，口四十九萬一千七百六十五。\n臨菑\n本齊，刺史治。西安有棘里亭。有蘧丘里，古渠丘。昌國臨朐有三亭，古郱邑。廣般陽故屬濟南。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"齊國\",1]",
+        "[112,\"齊國\",2]",
+        "[112,\"齊國\",3]",
+        "[112,\"齊國\",4]",
+        "[112,\"齊國\",5]",
+        "[112,\"齊國\",6]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -8108,9 +9193,60 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n78984-n78998"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "南陽郡 (n78984-n78998)",
+          "quote": "南陽郡\n三十七城，戶五十二萬八千五百五十一，口二百四十三萬九千六百一十八。\n宛\n。本申伯國。有南就聚。有瓜里津。有夕陽聚。有東武亭。冠軍邑。葉有長山，曰方城。有卷城。新野\n有東鄉，故新都。有黃郵聚。章陵故舂陵，世祖更名。有上唐鄉。西鄂雉\n魯陽\n有魯山。有牛蘭累亭。犨堵陽博望舞陰邑。比陽復陽侯國。有杏聚。平氏桐柏大復山，淮水出。有宜秋聚。棘陽\n有藍鄉。有黃淳聚。湖陽邑。隨西有斷蛇丘。育陽邑。有小長安。有東陽聚。涅陽陰酇鄧\n有鄾聚。山都侯國。酈侯國。穰\n朝陽\n蔡\n陽\n侯國。安眾侯國。筑陽侯國。有涉都鄉。武當有和成聚。順陽侯國，故博山。有須聚。成都襄鄉南鄉\n丹水\n故屬弘農。有章密鄉。有三戶亭。析故屬弘農，故楚白羽邑。有武關，在縣西。有豐鄉城。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"南陽郡\",1]",
+        "[112,\"南陽郡\",2]",
+        "[112,\"南陽郡\",3]",
+        "[112,\"南陽郡\",4]",
+        "[112,\"南陽郡\",5]",
+        "[112,\"南陽郡\",6]",
+        "[112,\"南陽郡\",7]",
+        "[112,\"南陽郡\",8]",
+        "[112,\"南陽郡\",9]",
+        "[112,\"南陽郡\",10]",
+        "[112,\"南陽郡\",11]",
+        "[112,\"南陽郡\",12]",
+        "[112,\"南陽郡\",13]",
+        "[112,\"南陽郡\",14]",
+        "[112,\"南陽郡\",15]",
+        "[112,\"南陽郡\",16]",
+        "[112,\"南陽郡\",17]",
+        "[112,\"南陽郡\",18]",
+        "[112,\"南陽郡\",19]",
+        "[112,\"南陽郡\",20]",
+        "[112,\"南陽郡\",21]",
+        "[112,\"南陽郡\",22]",
+        "[112,\"南陽郡\",23]",
+        "[112,\"南陽郡\",24]",
+        "[112,\"南陽郡\",25]",
+        "[112,\"南陽郡\",26]",
+        "[112,\"南陽郡\",27]",
+        "[112,\"南陽郡\",28]",
+        "[112,\"南陽郡\",29]",
+        "[112,\"南陽郡\",30]",
+        "[112,\"南陽郡\",31]",
+        "[112,\"南陽郡\",32]",
+        "[112,\"南陽郡\",33]",
+        "[112,\"南陽郡\",34]",
+        "[112,\"南陽郡\",35]",
+        "[112,\"南陽郡\",36]",
+        "[112,\"南陽郡\",37]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -8648,9 +9784,40 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n78999-n79003"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "南郡 (n78999-n79003)",
+          "quote": "南郡\n十七城，戶十六萬二千五百七十，口七十四萬七千六百四。\n江陵\n有津鄉。巫西有白帝城。秭歸本歸國。中盧侯國。編有藍口聚。當陽華容侯國。雲夢澤在南。襄陽有阿頭山。邔\n侯國。有犁丘城。宜城侯國。鄀侯國，永平元年復。臨沮侯國。有荊山。枝江侯國。本羅國。有丹陽聚。夷道夷陵有荊門，虎牙山。州陵很山故屬武陵。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"南郡\",1]",
+        "[112,\"南郡\",2]",
+        "[112,\"南郡\",3]",
+        "[112,\"南郡\",4]",
+        "[112,\"南郡\",5]",
+        "[112,\"南郡\",6]",
+        "[112,\"南郡\",7]",
+        "[112,\"南郡\",8]",
+        "[112,\"南郡\",9]",
+        "[112,\"南郡\",10]",
+        "[112,\"南郡\",11]",
+        "[112,\"南郡\",12]",
+        "[112,\"南郡\",13]",
+        "[112,\"南郡\",14]",
+        "[112,\"南郡\",15]",
+        "[112,\"南郡\",16]",
+        "[112,\"南郡\",17]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -8908,9 +10075,37 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79004-n79013"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "江夏郡 (n79004-n79013)",
+          "quote": "江夏郡\n十四城，戶五萬八千四百三十四，口二十六萬五千四百六十四。\n西陵\n西陽\n軑\n侯國。鄳竟陵侯國。有鄖鄉。立章山，本內方。雲杜沙羡邾\n下雉\n蘄春\n侯國\n。鄂平春侯國。南新市侯國。安陸",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"江夏郡\",1]",
+        "[112,\"江夏郡\",2]",
+        "[112,\"江夏郡\",3]",
+        "[112,\"江夏郡\",4]",
+        "[112,\"江夏郡\",5]",
+        "[112,\"江夏郡\",6]",
+        "[112,\"江夏郡\",7]",
+        "[112,\"江夏郡\",8]",
+        "[112,\"江夏郡\",9]",
+        "[112,\"江夏郡\",10]",
+        "[112,\"江夏郡\",11]",
+        "[112,\"江夏郡\",12]",
+        "[112,\"江夏郡\",13]",
+        "[112,\"江夏郡\",14]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -9126,9 +10321,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79014-n79017"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "零陵郡 (n79014-n79017)",
+          "quote": "零陵郡\n十三城，戶二十一萬二千二百八十四，口百萬一千五百七十八。\n泉陵零陵\n陽朔山，湘水出。營道南有九疑山。營浦泠道洮陽都梁有路山。夫夷侯國故屬長沙。始安侯國。重安侯國，故鍾武，永建三年更名。湘鄉昭陽侯國。烝陽侯國，故屬長沙。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"零陵郡\",1]",
+        "[112,\"零陵郡\",2]",
+        "[112,\"零陵郡\",3]",
+        "[112,\"零陵郡\",4]",
+        "[112,\"零陵郡\",5]",
+        "[112,\"零陵郡\",6]",
+        "[112,\"零陵郡\",7]",
+        "[112,\"零陵郡\",8]",
+        "[112,\"零陵郡\",9]",
+        "[112,\"零陵郡\",10]",
+        "[112,\"零陵郡\",11]",
+        "[112,\"零陵郡\",12]",
+        "[112,\"零陵郡\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -9330,9 +10552,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79018-n79029"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "桂陽郡 (n79018-n79029)",
+          "quote": "桂陽郡\n十一城，戶十三萬五千二十九，口五十萬一千四百三。\n郴\n有客嶺山。便\n耒陽\n有鐵。陰山\n南平\n臨武\n桂\n陽含洭\n湞陽\n有苲領山。曲江漢寧永和元年置。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"桂陽郡\",1]",
+        "[112,\"桂陽郡\",2]",
+        "[112,\"桂陽郡\",3]",
+        "[112,\"桂陽郡\",4]",
+        "[112,\"桂陽郡\",5]",
+        "[112,\"桂陽郡\",6]",
+        "[112,\"桂陽郡\",7]",
+        "[112,\"桂陽郡\",8]",
+        "[112,\"桂陽郡\",9]",
+        "[112,\"桂陽郡\",10]",
+        "[112,\"桂陽郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -9506,9 +10753,35 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79030-n79043"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "武陵郡 (n79030-n79043)",
+          "quote": "武陵郡\n十二城，戶四萬六千六百七十二，口二十五萬九百一十三。\n臨沅\n漢壽\n故\n索，陽嘉三年更名，刺史治。孱陵\n零陽\n充\n沅陵\n先有壺頭山。辰陽酉陽遷陵\n鐔成\n沅南\n建武二十六\n年置。作唐",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"武陵郡\",1]",
+        "[112,\"武陵郡\",2]",
+        "[112,\"武陵郡\",3]",
+        "[112,\"武陵郡\",4]",
+        "[112,\"武陵郡\",5]",
+        "[112,\"武陵郡\",6]",
+        "[112,\"武陵郡\",7]",
+        "[112,\"武陵郡\",8]",
+        "[112,\"武陵郡\",9]",
+        "[112,\"武陵郡\",10]",
+        "[112,\"武陵郡\",11]",
+        "[112,\"武陵郡\",12]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -9696,9 +10969,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79044-n79056"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "長沙郡 (n79044-n79056)",
+          "quote": "長沙郡\n十三城，戶二十五萬五千八百五十四，口百五萬九千三百七十二。\n臨湘\n攸\n荼\n陵\n安城\n酃\n湘南\n侯國。衡山在東南。連道昭陵益陽下雋羅\n醴陵\n容陵\n右荊州刺史部，郡七，縣、邑、侯國百一十七。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"長沙郡\",1]",
+        "[112,\"長沙郡\",2]",
+        "[112,\"長沙郡\",3]",
+        "[112,\"長沙郡\",4]",
+        "[112,\"長沙郡\",5]",
+        "[112,\"長沙郡\",6]",
+        "[112,\"長沙郡\",7]",
+        "[112,\"長沙郡\",8]",
+        "[112,\"長沙郡\",9]",
+        "[112,\"長沙郡\",10]",
+        "[112,\"長沙郡\",11]",
+        "[112,\"長沙郡\",12]",
+        "[112,\"長沙郡\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -9900,9 +11200,37 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79057-n79065"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "九江郡 (n79057-n79065)",
+          "quote": "九江郡\n十四城，戶八萬九千四百三十六，口四十三萬二千四百二十六。\n陰陵\n壽春\n浚遒\n成德\n西曲陽\n合肥\n侯國。歷陽侯國，刺史治。當塗有馬丘聚，徐鳳反於此。全椒鍾離侯國。阜陵下蔡故屬沛。平阿故屬沛。有塗山。義成故屬沛。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"九江郡\",1]",
+        "[112,\"九江郡\",2]",
+        "[112,\"九江郡\",3]",
+        "[112,\"九江郡\",4]",
+        "[112,\"九江郡\",5]",
+        "[112,\"九江郡\",6]",
+        "[112,\"九江郡\",7]",
+        "[112,\"九江郡\",8]",
+        "[112,\"九江郡\",9]",
+        "[112,\"九江郡\",10]",
+        "[112,\"九江郡\",11]",
+        "[112,\"九江郡\",12]",
+        "[112,\"九江郡\",13]",
+        "[112,\"九江郡\",14]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -10118,9 +11446,39 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79066-n79079"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "丹陽郡 (n79066-n79079)",
+          "quote": "丹陽郡\n十六城，戶十三萬六千五百一十八，口六十三萬五百四十五。\n宛陵\n溧陽\n丹\n陽\n故鄣\n於潛\n涇\n歙\n黝\n陵陽\n蕪湖\n中江在西。秣陵南有牛渚。湖熟侯國。句容江乘春穀石城",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"丹陽郡\",1]",
+        "[112,\"丹陽郡\",2]",
+        "[112,\"丹陽郡\",3]",
+        "[112,\"丹陽郡\",4]",
+        "[112,\"丹陽郡\",5]",
+        "[112,\"丹陽郡\",6]",
+        "[112,\"丹陽郡\",7]",
+        "[112,\"丹陽郡\",8]",
+        "[112,\"丹陽郡\",9]",
+        "[112,\"丹陽郡\",10]",
+        "[112,\"丹陽郡\",11]",
+        "[112,\"丹陽郡\",12]",
+        "[112,\"丹陽郡\",13]",
+        "[112,\"丹陽郡\",14]",
+        "[112,\"丹陽郡\",15]",
+        "[112,\"丹陽郡\",16]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -10364,9 +11722,37 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79080-n79085"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "廬江郡 (n79080-n79085)",
+          "quote": "廬江郡\n十四城，戶十萬一千三百九十二，口四十二萬四千六百八十三。\n舒\n有桐鄉。雩婁侯國。尋陽南有九江，東合為大江。潛臨湖侯國。龍舒侯國。襄安晥有鐵。居巢\n侯國。六安國。蓼\n侯國。安豐有大別山。陽泉侯國。安風侯國。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"廬江郡\",1]",
+        "[112,\"廬江郡\",2]",
+        "[112,\"廬江郡\",3]",
+        "[112,\"廬江郡\",4]",
+        "[112,\"廬江郡\",5]",
+        "[112,\"廬江郡\",6]",
+        "[112,\"廬江郡\",7]",
+        "[112,\"廬江郡\",8]",
+        "[112,\"廬江郡\",9]",
+        "[112,\"廬江郡\",10]",
+        "[112,\"廬江郡\",11]",
+        "[112,\"廬江郡\",12]",
+        "[112,\"廬江郡\",13]",
+        "[112,\"廬江郡\",14]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -10582,9 +11968,37 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79086-n79099"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "會稽郡 (n79086-n79099)",
+          "quote": "會稽郡\n十四城\n，戶十二萬三千九十，口四十八萬一千一百九十六。\n山陰\n會稽山在南，上有禹冢。有浙江。鄮烏傷諸暨餘暨太末上虞\n剡\n餘姚\n句\n章\n鄞\n章安\n故\n治，閩越地，光武更名。永寧永和三年以章安縣東甌鄉為縣。東部\n侯國。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"會稽郡\",1]",
+        "[112,\"會稽郡\",2]",
+        "[112,\"會稽郡\",3]",
+        "[112,\"會稽郡\",4]",
+        "[112,\"會稽郡\",5]",
+        "[112,\"會稽郡\",6]",
+        "[112,\"會稽郡\",7]",
+        "[112,\"會稽郡\",8]",
+        "[112,\"會稽郡\",9]",
+        "[112,\"會稽郡\",10]",
+        "[112,\"會稽郡\",11]",
+        "[112,\"會稽郡\",12]",
+        "[112,\"會稽郡\",13]",
+        "[112,\"會稽郡\",14]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -10800,9 +12214,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79100-n79110"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "吳郡 (n79100-n79110)",
+          "quote": "吳郡\n十三城，戶十六萬四千一百六十四，口七十萬七百八十二。\n吳\n本國。震澤在西，後名具區澤。海鹽烏程餘杭毗陵季札所居。北江在北。丹徒\n曲阿\n由拳\n安\n富春\n陽\n羨\n邑。無錫侯國。婁",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"吳郡\",1]",
+        "[112,\"吳郡\",2]",
+        "[112,\"吳郡\",3]",
+        "[112,\"吳郡\",4]",
+        "[112,\"吳郡\",5]",
+        "[112,\"吳郡\",6]",
+        "[112,\"吳郡\",7]",
+        "[112,\"吳郡\",8]",
+        "[112,\"吳郡\",9]",
+        "[112,\"吳郡\",10]",
+        "[112,\"吳郡\",11]",
+        "[112,\"吳郡\",12]",
+        "[112,\"吳郡\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -11004,9 +12445,44 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-si/zh",
-        "localWitness": "data/chgis-source/junguozhi/si.html",
-        "snapshotSha256": "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688"
+        "localWitness": "data/corpus/ctext/junguozhi/si.html",
+        "snapshotSha256": "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+        "locator": "n79111-n79126"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國四",
+          "section": "豫章郡 (n79111-n79126)",
+          "quote": "豫章郡\n二十一城，戶四十萬六千四百九十六，口百六十六萬八千九百六。\n南昌\n建城\n新淦\n宜春\n廬\n陵\n贛\n有豫章水。雩都南野有臺領山。南城鄱陽有鄱水。黃金采。歷陵有傅昜山。餘汗鄡陽\n彭澤\n彭蠡澤在西。柴桑\n艾\n海昏\n侯國。平都侯國，故安平。石陽臨汝永元八年置。建昌永元十六年分海昏置。\n右揚州刺史部，郡六，縣、邑、侯國九十二。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[112,\"豫章郡\",1]",
+        "[112,\"豫章郡\",2]",
+        "[112,\"豫章郡\",3]",
+        "[112,\"豫章郡\",4]",
+        "[112,\"豫章郡\",5]",
+        "[112,\"豫章郡\",6]",
+        "[112,\"豫章郡\",7]",
+        "[112,\"豫章郡\",8]",
+        "[112,\"豫章郡\",9]",
+        "[112,\"豫章郡\",10]",
+        "[112,\"豫章郡\",11]",
+        "[112,\"豫章郡\",12]",
+        "[112,\"豫章郡\",13]",
+        "[112,\"豫章郡\",14]",
+        "[112,\"豫章郡\",15]",
+        "[112,\"豫章郡\",16]",
+        "[112,\"豫章郡\",17]",
+        "[112,\"豫章郡\",18]",
+        "[112,\"豫章郡\",19]",
+        "[112,\"豫章郡\",20]",
+        "[112,\"豫章郡\",21]"
+      ],
       "units": [
         {
           "sourceVolume": 112,
@@ -11320,9 +12796,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79132-n79137"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "漢中郡 (n79132-n79137)",
+          "quote": "漢中郡\n九城，戶五萬七千三百四十四，口二十六萬七千四百二。\n南鄭\n成固\n媯\n墟在西北。西城褒中沔陽有鐵。安陽錫有錫，春秋時曰錫穴。上庸本庸國。房陵",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"漢中郡\",1]",
+        "[113,\"漢中郡\",2]",
+        "[113,\"漢中郡\",3]",
+        "[113,\"漢中郡\",4]",
+        "[113,\"漢中郡\",5]",
+        "[113,\"漢中郡\",6]",
+        "[113,\"漢中郡\",7]",
+        "[113,\"漢中郡\",8]",
+        "[113,\"漢中郡\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -11468,9 +12967,37 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79138-n79154"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "巴郡 (n79138-n79154)",
+          "quote": "巴郡\n十四城，戶三十一萬六百九十一，口百八萬六千四十九。\n江州\n宕渠\n有\n鐵。朐忍閬中\n魚復\n扞水有扦關。臨江枳\n涪陵\n出丹墊江\n安漢\n平都\n充\n國\n永元二年分閬中置。宣漢\n漢昌\n永元中置。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"巴郡\",1]",
+        "[113,\"巴郡\",2]",
+        "[113,\"巴郡\",3]",
+        "[113,\"巴郡\",4]",
+        "[113,\"巴郡\",5]",
+        "[113,\"巴郡\",6]",
+        "[113,\"巴郡\",7]",
+        "[113,\"巴郡\",8]",
+        "[113,\"巴郡\",9]",
+        "[113,\"巴郡\",10]",
+        "[113,\"巴郡\",11]",
+        "[113,\"巴郡\",12]",
+        "[113,\"巴郡\",13]",
+        "[113,\"巴郡\",14]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -11686,9 +13213,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79155-n79164"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "廣漢郡 (n79155-n79164)",
+          "quote": "廣漢郡\n十一城，戶十三萬九千八百六十五，口五十萬九千四百三十八。\n雒\n州刺史治。新都綿竹什邡涪梓潼\n白水\n葭萌\n郪\n廣漢\n有沈水\n。德陽",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"廣漢郡\",1]",
+        "[113,\"廣漢郡\",2]",
+        "[113,\"廣漢郡\",3]",
+        "[113,\"廣漢郡\",4]",
+        "[113,\"廣漢郡\",5]",
+        "[113,\"廣漢郡\",6]",
+        "[113,\"廣漢郡\",7]",
+        "[113,\"廣漢郡\",8]",
+        "[113,\"廣漢郡\",9]",
+        "[113,\"廣漢郡\",10]",
+        "[113,\"廣漢郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -11862,9 +13414,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79165-n79175"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "蜀郡 (n79165-n79175)",
+          "quote": "蜀郡\n十一城，戶三十萬四百五十二，口百三十五萬四百七十六。\n成都\n郫\n江原\n繁\n廣\n都\n臨邛\n有鐵。湔氐道岷山在西徼外。汶江道八陵廣柔\n綿虒道",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"蜀郡\",1]",
+        "[113,\"蜀郡\",2]",
+        "[113,\"蜀郡\",3]",
+        "[113,\"蜀郡\",4]",
+        "[113,\"蜀郡\",5]",
+        "[113,\"蜀郡\",6]",
+        "[113,\"蜀郡\",7]",
+        "[113,\"蜀郡\",8]",
+        "[113,\"蜀郡\",9]",
+        "[113,\"蜀郡\",10]",
+        "[113,\"蜀郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -12038,9 +13615,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79176-n79185"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "犍為郡 (n79176-n79185)",
+          "quote": "犍為郡\n九城，戶十三萬七千七百一十三，口四十一萬一千三百七十八。\n武陽\n有彭亡聚。資中牛鞞南安\n有魚泣津。僰道\n江陽\n荷\n節\n南廣\n漢安",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"犍為郡\",1]",
+        "[113,\"犍為郡\",2]",
+        "[113,\"犍為郡\",3]",
+        "[113,\"犍為郡\",4]",
+        "[113,\"犍為郡\",5]",
+        "[113,\"犍為郡\",6]",
+        "[113,\"犍為郡\",7]",
+        "[113,\"犍為郡\",8]",
+        "[113,\"犍為郡\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -12186,9 +13786,39 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79186-n79208"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "牂牁郡 (n79186-n79208)",
+          "quote": "牂牁郡\n十六城，戶三萬一千五百二十三，口二十六萬七千二百五十三。\n故且蘭\n平\n夷\n鄨\n毋\n斂\n談指\n出丹。夜郎出雄黃、雌黃。同並\n談稿\n漏江\n毋\n單\n宛溫\n鐔\n封\n漏臥\n句\n町\n進乘\n西\n隨",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"牂牁郡\",1]",
+        "[113,\"牂牁郡\",2]",
+        "[113,\"牂牁郡\",3]",
+        "[113,\"牂牁郡\",4]",
+        "[113,\"牂牁郡\",5]",
+        "[113,\"牂牁郡\",6]",
+        "[113,\"牂牁郡\",7]",
+        "[113,\"牂牁郡\",8]",
+        "[113,\"牂牁郡\",9]",
+        "[113,\"牂牁郡\",10]",
+        "[113,\"牂牁郡\",11]",
+        "[113,\"牂牁郡\",12]",
+        "[113,\"牂牁郡\",13]",
+        "[113,\"牂牁郡\",14]",
+        "[113,\"牂牁郡\",15]",
+        "[113,\"牂牁郡\",16]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -12432,9 +14062,37 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79209-n79221"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "越巂郡 (n79209-n79221)",
+          "quote": "越巂郡\n十四城，戶十三萬一百二十，口六十二萬三千四百一十八。\n邛都\n南山出銅。遂久靈關道臺登出鐵。青蛉有禺同山，俗謂有金馬碧雞。卑水\n三縫\n會\n無\n出鐵。定莋\n闡\n蘇谀\n大莋\n莋秦\n姑復",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"越巂郡\",1]",
+        "[113,\"越巂郡\",2]",
+        "[113,\"越巂郡\",3]",
+        "[113,\"越巂郡\",4]",
+        "[113,\"越巂郡\",5]",
+        "[113,\"越巂郡\",6]",
+        "[113,\"越巂郡\",7]",
+        "[113,\"越巂郡\",8]",
+        "[113,\"越巂郡\",9]",
+        "[113,\"越巂郡\",10]",
+        "[113,\"越巂郡\",11]",
+        "[113,\"越巂郡\",12]",
+        "[113,\"越巂郡\",13]",
+        "[113,\"越巂郡\",14]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -12650,9 +14308,40 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79222-n79234"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "益州郡 (n79222-n79234)",
+          "quote": "益州郡\n十\n七城，戶二萬九千三十六，口十一萬八百二。\n滇池\n出鐵。有池澤。北有黑水祠。勝休俞元裝山出銅。律高石室山出錫。抛町山出銀、鉛。賁古采山出銅、錫。羊山出銀、鉛。母掇建伶穀昌牧靡味\n昆澤\n同瀨\n同\n勞\n雙柏\n出銀。連然\n梇棟\n秦臧",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"益州郡\",1]",
+        "[113,\"益州郡\",2]",
+        "[113,\"益州郡\",3]",
+        "[113,\"益州郡\",4]",
+        "[113,\"益州郡\",5]",
+        "[113,\"益州郡\",6]",
+        "[113,\"益州郡\",7]",
+        "[113,\"益州郡\",8]",
+        "[113,\"益州郡\",9]",
+        "[113,\"益州郡\",10]",
+        "[113,\"益州郡\",11]",
+        "[113,\"益州郡\",12]",
+        "[113,\"益州郡\",13]",
+        "[113,\"益州郡\",14]",
+        "[113,\"益州郡\",15]",
+        "[113,\"益州郡\",16]",
+        "[113,\"益州郡\",17]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -12910,9 +14599,31 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79235-n79238"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "永昌郡 (n79235-n79238)",
+          "quote": "永昌郡\n八城，戶二十三萬一千八百九十七，口百八十九萬七千三百四十四。\n不韋\n出鐵。巂唐比蘇楪榆邪龍雲南哀牢永平中置，故牢王國。博南永平中置。南界出金。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"永昌郡\",1]",
+        "[113,\"永昌郡\",2]",
+        "[113,\"永昌郡\",3]",
+        "[113,\"永昌郡\",4]",
+        "[113,\"永昌郡\",5]",
+        "[113,\"永昌郡\",6]",
+        "[113,\"永昌郡\",7]",
+        "[113,\"永昌郡\",8]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -13044,9 +14755,26 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79239-n79243"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "廣漢屬國 (n79239-n79243)",
+          "quote": "廣漢屬國\n戶三萬七千一百一十，口二十萬五千六百五十二。\n陰平道\n甸氐道\n剛氐道",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"廣漢屬國\",1]",
+        "[113,\"廣漢屬國\",2]",
+        "[113,\"廣漢屬國\",3]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -13108,9 +14836,27 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79244-n79249"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "蜀郡屬國 (n79244-n79249)",
+          "quote": "蜀郡屬國\n戶十一萬\n一千五百六十八，口四十七萬五千六百二十九。\n漢嘉\n故青衣，陽嘉二年改。有蒙山。嚴道有邛僰九折阪者，邛刻置。徙\n旄牛",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"蜀郡屬國\",1]",
+        "[113,\"蜀郡屬國\",2]",
+        "[113,\"蜀郡屬國\",3]",
+        "[113,\"蜀郡屬國\",4]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -13186,9 +14932,25 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79250-n79255"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "犍為屬國 (n79250-n79255)",
+          "quote": "犍為屬國\n戶七千九\n百三十八，口三萬七千一百八十七。\n朱提\n山出銀、銅。漢陽\n右益州刺史部，郡、國十二，縣、道百一十八。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"犍為屬國\",1]",
+        "[113,\"犍為屬國\",2]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -13236,9 +14998,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79256-n79267"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "隴西郡 (n79256-n79267)",
+          "quote": "隴西郡\n十一城，戶五千六百二十八，口二萬九千六百三十七。\n狄道\n安故\n氐\n道\n養水出此。首陽有鳥鼠同穴山，渭水出。大夏\n襄武\n有五雞聚。臨洮\n有西頃山。枹罕故屬金城。白石故屬金城。鄣\n河關\n故屬金城。積石山在西南，河水出。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"隴西郡\",1]",
+        "[113,\"隴西郡\",2]",
+        "[113,\"隴西郡\",3]",
+        "[113,\"隴西郡\",4]",
+        "[113,\"隴西郡\",5]",
+        "[113,\"隴西郡\",6]",
+        "[113,\"隴西郡\",7]",
+        "[113,\"隴西郡\",8]",
+        "[113,\"隴西郡\",9]",
+        "[113,\"隴西郡\",10]",
+        "[113,\"隴西郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -13412,9 +15199,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79268-n79278"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "漢陽郡 (n79268-n79278)",
+          "quote": "漢陽郡\n十\n三城，戶二萬七千四百二十三，口十三萬一百三十八。\n冀\n有朱圄山。有緹群山。有雒門聚。望恒\n阿陽\n略陽\n有街泉亭\n。勇士成紀\n隴\n州刺史治。有大阪名隴坻。豲坻聚有秦亭。豲道蘭干平襄顯親上邽故屬隴西。西故屬隴西。有嶓冢山，西漢水。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"漢陽郡\",1]",
+        "[113,\"漢陽郡\",2]",
+        "[113,\"漢陽郡\",3]",
+        "[113,\"漢陽郡\",4]",
+        "[113,\"漢陽郡\",5]",
+        "[113,\"漢陽郡\",6]",
+        "[113,\"漢陽郡\",7]",
+        "[113,\"漢陽郡\",8]",
+        "[113,\"漢陽郡\",9]",
+        "[113,\"漢陽郡\",10]",
+        "[113,\"漢陽郡\",11]",
+        "[113,\"漢陽郡\",12]",
+        "[113,\"漢陽郡\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -13616,9 +15430,30 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79279-n79289"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "武都郡 (n79279-n79289)",
+          "quote": "武都郡\n七城，戶二萬一百二，口八萬一千七百二十八。\n下辨\n武都\n道\n上祿\n故\n道\n河池\n沮\n沔水出東狼谷。羌道",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"武都郡\",1]",
+        "[113,\"武都郡\",2]",
+        "[113,\"武都郡\",3]",
+        "[113,\"武都郡\",4]",
+        "[113,\"武都郡\",5]",
+        "[113,\"武都郡\",6]",
+        "[113,\"武都郡\",7]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -13736,9 +15571,33 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79290-n79302"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "金城郡 (n79290-n79302)",
+          "quote": "金城郡\n十城，戶三千八百五十八，口萬八千九百四十七。\n允吾\n浩亹\n令居\n枝\n陽\n金城\n榆中\n臨羌\n有昆崙山。破羌\n安夷\n允街",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"金城郡\",1]",
+        "[113,\"金城郡\",2]",
+        "[113,\"金城郡\",3]",
+        "[113,\"金城郡\",4]",
+        "[113,\"金城郡\",5]",
+        "[113,\"金城郡\",6]",
+        "[113,\"金城郡\",7]",
+        "[113,\"金城郡\",8]",
+        "[113,\"金城郡\",9]",
+        "[113,\"金城郡\",10]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -13898,9 +15757,31 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79303-n79313"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "安定郡 (n79303-n79313)",
+          "quote": "安定郡\n八城，戶六千九十四，口二萬九千六十。\n臨涇\n高平\n有第一城。朝那\n烏枝\n有瓦亭，出薄落谷。三水陰盤\n彭陽\n鶉觚\n故\n屬北地。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"安定郡\",1]",
+        "[113,\"安定郡\",2]",
+        "[113,\"安定郡\",3]",
+        "[113,\"安定郡\",4]",
+        "[113,\"安定郡\",5]",
+        "[113,\"安定郡\",6]",
+        "[113,\"安定郡\",7]",
+        "[113,\"安定郡\",8]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -14032,9 +15913,29 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79314-n79321"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "北地郡 (n79314-n79321)",
+          "quote": "北地郡\n六城，戶三千一百二十二，口萬八千六百三十七。\n富平\n泥陽\n有\n五柞亭。弋居有鐵。廉\n參讀\n故屬安定。靈州",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"北地郡\",1]",
+        "[113,\"北地郡\",2]",
+        "[113,\"北地郡\",3]",
+        "[113,\"北地郡\",4]",
+        "[113,\"北地郡\",5]",
+        "[113,\"北地郡\",6]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -14111,8 +16012,8 @@
             "traditionalTextCitation": {
               "source": "Chinese Text Project",
               "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-              "localWitness": "data/chgis-source/junguozhi/wu.html",
-              "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b",
+              "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+              "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
               "line": 1492
             }
           }
@@ -14149,9 +16050,37 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79322-n79337"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "武威郡 (n79322-n79337)",
+          "quote": "武威郡\n十四城，戶萬四十二，口三萬四千二百二十六。\n姑臧\n張掖\n武威\n休屠\n揟次\n鸞鳥\n樸\n峦\n媼圍\n宣威\n倉松\n鸇陰\n故\n屬安定。租厲故屬安定。顯美故屬張掖。左騎千人官。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"武威郡\",1]",
+        "[113,\"武威郡\",2]",
+        "[113,\"武威郡\",3]",
+        "[113,\"武威郡\",4]",
+        "[113,\"武威郡\",5]",
+        "[113,\"武威郡\",6]",
+        "[113,\"武威郡\",7]",
+        "[113,\"武威郡\",8]",
+        "[113,\"武威郡\",9]",
+        "[113,\"武威郡\",10]",
+        "[113,\"武威郡\",11]",
+        "[113,\"武威郡\",12]",
+        "[113,\"武威郡\",13]",
+        "[113,\"武威郡\",14]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -14256,8 +16185,8 @@
             "traditionalTextCitation": {
               "source": "Chinese Text Project",
               "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-              "localWitness": "data/chgis-source/junguozhi/wu.html",
-              "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b",
+              "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+              "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
               "line": 1532,
               "endLine": 1536
             }
@@ -14379,9 +16308,31 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79338-n79349"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "張掖郡 (n79338-n79349)",
+          "quote": "張掖郡\n八\n城，戶六千五百五十二，口二萬六千四十。\n觻得\n昭武\n刪丹\n弱水出。氐池\n屋蘭\n日勒\n驪\n靬\n番和",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"張掖郡\",1]",
+        "[113,\"張掖郡\",2]",
+        "[113,\"張掖郡\",3]",
+        "[113,\"張掖郡\",4]",
+        "[113,\"張掖郡\",5]",
+        "[113,\"張掖郡\",6]",
+        "[113,\"張掖郡\",7]",
+        "[113,\"張掖郡\",8]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -14513,9 +16464,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79350-n79361"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "酒泉郡 (n79350-n79361)",
+          "quote": "酒泉郡\n九城，戶萬二千七百六。\n福祿\n表氏\n樂涫\n玉門\n會\n水\n沙頭\n安彌\n故\n曰緩彌。乾齊延壽",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"酒泉郡\",1]",
+        "[113,\"酒泉郡\",2]",
+        "[113,\"酒泉郡\",3]",
+        "[113,\"酒泉郡\",4]",
+        "[113,\"酒泉郡\",5]",
+        "[113,\"酒泉郡\",6]",
+        "[113,\"酒泉郡\",7]",
+        "[113,\"酒泉郡\",8]",
+        "[113,\"酒泉郡\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -14661,9 +16635,29 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79362-n79369"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "敦煌郡 (n79362-n79369)",
+          "quote": "敦煌郡\n六城，戶七百四十八，口二萬九千一百七十。\n敦煌\n古瓜州，出美瓜。冥安效穀拼泉\n廣至\n龍勒\n有玉門\n關。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"敦煌郡\",1]",
+        "[113,\"敦煌郡\",2]",
+        "[113,\"敦煌郡\",3]",
+        "[113,\"敦煌郡\",4]",
+        "[113,\"敦煌郡\",5]",
+        "[113,\"敦煌郡\",6]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -14767,9 +16761,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79370-n79377"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "張掖屬國 (n79370-n79377)",
+          "quote": "張掖屬國\n戶四千\n六百五十六，口萬六千九百五十二。\n候官\n左騎\n千人\n司馬官\n千人官。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"張掖屬國\",1]",
+        "[113,\"張掖屬國\",2]",
+        "[113,\"張掖屬國\",3]",
+        "[113,\"張掖屬國\",4]",
+        "[113,\"張掖屬國\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -14859,9 +16872,24 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79378-n79382"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "張掖居延屬國 (n79378-n79382)",
+          "quote": "張掖居延屬國\n戶一千五百六十，口四千七百三十三。\n居延\n有居延澤，古流沙。\n右涼州刺史部，郡國十二，縣、道、候官九十八。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"張掖居延屬國\",1]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -14895,9 +16923,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79383-n79393"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "上黨郡 (n79383-n79393)",
+          "quote": "上黨郡\n十三城，戶二萬六千二百二十二，口十二萬七千四百三。\n長子\n屯留\n絳水出。銅鞮\n沾\n涅\n有閼\n與聚。襄垣\n壺關\n有黎亭，故黎國。泫氏有長平亭。高都潞本國。猗氏陽阿侯國。穀遠",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"上黨郡\",1]",
+        "[113,\"上黨郡\",2]",
+        "[113,\"上黨郡\",3]",
+        "[113,\"上黨郡\",4]",
+        "[113,\"上黨郡\",5]",
+        "[113,\"上黨郡\",6]",
+        "[113,\"上黨郡\",7]",
+        "[113,\"上黨郡\",8]",
+        "[113,\"上黨郡\",9]",
+        "[113,\"上黨郡\",10]",
+        "[113,\"上黨郡\",11]",
+        "[113,\"上黨郡\",12]",
+        "[113,\"上黨郡\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -15099,9 +17154,39 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79394-n79406"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "太原郡 (n79394-n79406)",
+          "quote": "太原郡\n十\n六城，戶三萬九百二，口二十萬一百二十四。\n晉陽\n本唐國。有龍山，晉水所出。刺史治。界休有界山，有綿上聚。有千畝聚。榆次有鑿壺。中都\n于離\n茲氏\n狼孟鄔\n盂\n平陶\n京陵\n春\n秋時九京。陽曲大陵有鐵。祁慮虒陽邑有箕城。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"太原郡\",1]",
+        "[113,\"太原郡\",2]",
+        "[113,\"太原郡\",3]",
+        "[113,\"太原郡\",4]",
+        "[113,\"太原郡\",5]",
+        "[113,\"太原郡\",6]",
+        "[113,\"太原郡\",7]",
+        "[113,\"太原郡\",8]",
+        "[113,\"太原郡\",9]",
+        "[113,\"太原郡\",10]",
+        "[113,\"太原郡\",11]",
+        "[113,\"太原郡\",12]",
+        "[113,\"太原郡\",13]",
+        "[113,\"太原郡\",14]",
+        "[113,\"太原郡\",15]",
+        "[113,\"太原郡\",16]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -15345,9 +17430,33 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79407-n79420"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "上郡 (n79407-n79420)",
+          "quote": "上郡\n十\n城，戶五千一百六十九，口二萬八千五百九十九。\n膚施\n白土\n漆垣\n奢延\n雕\n陰\n楨林\n定陽\n高奴\n龜茲屬國\n候官",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"上郡\",1]",
+        "[113,\"上郡\",2]",
+        "[113,\"上郡\",3]",
+        "[113,\"上郡\",4]",
+        "[113,\"上郡\",5]",
+        "[113,\"上郡\",6]",
+        "[113,\"上郡\",7]",
+        "[113,\"上郡\",8]",
+        "[113,\"上郡\",9]",
+        "[113,\"上郡\",10]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -15518,9 +17627,36 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79421-n79436"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "西河郡 (n79421-n79436)",
+          "quote": "西河郡\n十三城，戶五千六百九十八，口二萬八百三十八。\n離石\n平定\n美稷\n樂街\n中\n陽\n皋狼\n平周\n平陸\n益蘭圜陰\n藺\n圜陽\n廣\n衍",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"西河郡\",1]",
+        "[113,\"西河郡\",2]",
+        "[113,\"西河郡\",3]",
+        "[113,\"西河郡\",4]",
+        "[113,\"西河郡\",5]",
+        "[113,\"西河郡\",6]",
+        "[113,\"西河郡\",7]",
+        "[113,\"西河郡\",8]",
+        "[113,\"西河郡\",9]",
+        "[113,\"西河郡\",10]",
+        "[113,\"西河郡\",11]",
+        "[113,\"西河郡\",12]",
+        "[113,\"西河郡\",13]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -15722,9 +17858,33 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79437-n79450"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "五原郡 (n79437-n79450)",
+          "quote": "五原郡\n十城，戶四千六百六十七，口二萬二千九百五十七。\n九原\n五原\n臨沃\n父國\n河\n除武都\n宜梁\n曼柏\n成宜\n西安陽\n北有陰\n山。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"五原郡\",1]",
+        "[113,\"五原郡\",2]",
+        "[113,\"五原郡\",3]",
+        "[113,\"五原郡\",4]",
+        "[113,\"五原郡\",5]",
+        "[113,\"五原郡\",6]",
+        "[113,\"五原郡\",7]",
+        "[113,\"五原郡\",8]",
+        "[113,\"五原郡\",9]",
+        "[113,\"五原郡\",10]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -15884,9 +18044,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79451-n79465"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "雲中郡 (n79451-n79465)",
+          "quote": "雲中郡\n十\n一城，戶五千三百五十一，口二萬六千四百三十。\n雲中\n咸陽\n箕\n陵\n沙陵\n沙南\n北輿\n武泉\n原\n陽\n定襄\n故屬定襄。成樂故屬定襄。武進故屬定襄。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"雲中郡\",1]",
+        "[113,\"雲中郡\",2]",
+        "[113,\"雲中郡\",3]",
+        "[113,\"雲中郡\",4]",
+        "[113,\"雲中郡\",5]",
+        "[113,\"雲中郡\",6]",
+        "[113,\"雲中郡\",7]",
+        "[113,\"雲中郡\",8]",
+        "[113,\"雲中郡\",9]",
+        "[113,\"雲中郡\",10]",
+        "[113,\"雲中郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -16060,9 +18245,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79466-n79470"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "定襄郡 (n79466-n79470)",
+          "quote": "定襄郡\n五\n城，戶三千一百五十三，口萬三千五百七十一。\n善無\n故屬鴈門。桐過武成駱中陵故屬鴈門。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"定襄郡\",1]",
+        "[113,\"定襄郡\",2]",
+        "[113,\"定襄郡\",3]",
+        "[113,\"定襄郡\",4]",
+        "[113,\"定襄郡\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -16152,9 +18356,37 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79471-n79485"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "鴈門郡 (n79471-n79485)",
+          "quote": "鴈門郡\n十四城，戶三萬一千八百六十二，口二十四萬九千。\n陰館\n繁畤\n樓煩\n武州\n汪陶\n劇陽\n崞\n平城\n埒\n馬邑\n鹵城\n故屬\n代郡。廣武故屬太原。有夏屋山。原平故屬太原。彊陰",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"鴈門郡\",1]",
+        "[113,\"鴈門郡\",2]",
+        "[113,\"鴈門郡\",3]",
+        "[113,\"鴈門郡\",4]",
+        "[113,\"鴈門郡\",5]",
+        "[113,\"鴈門郡\",6]",
+        "[113,\"鴈門郡\",7]",
+        "[113,\"鴈門郡\",8]",
+        "[113,\"鴈門郡\",9]",
+        "[113,\"鴈門郡\",10]",
+        "[113,\"鴈門郡\",11]",
+        "[113,\"鴈門郡\",12]",
+        "[113,\"鴈門郡\",13]",
+        "[113,\"鴈門郡\",14]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -16370,9 +18602,29 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79486-n79497"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "朔方郡 (n79486-n79497)",
+          "quote": "朔方郡\n六\n城，戶千九百八十七，口七千八百四十三。\n臨戎\n三封\n朔\n方\n沃野\n廣牧\n大城\n故屬西河。\n右并州刺史部，郡九，縣、邑、侯國九十八。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"朔方郡\",1]",
+        "[113,\"朔方郡\",2]",
+        "[113,\"朔方郡\",3]",
+        "[113,\"朔方郡\",4]",
+        "[113,\"朔方郡\",5]",
+        "[113,\"朔方郡\",6]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -16476,9 +18728,30 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79498-n79505"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "涿郡 (n79498-n79505)",
+          "quote": "涿郡\n七城，戶十萬二千二百一十八，口六十三萬三千七百五十四。\n涿\n迺\n侯國。故安易水出，雹水出。范陽侯國。良鄉\n北\n新城\n有汾水門。方城故屬廣陽。有臨鄉。有督亭。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"涿郡\",1]",
+        "[113,\"涿郡\",2]",
+        "[113,\"涿郡\",3]",
+        "[113,\"涿郡\",4]",
+        "[113,\"涿郡\",5]",
+        "[113,\"涿郡\",6]",
+        "[113,\"涿郡\",7]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -16596,9 +18869,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79506-n79510"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "廣陽郡 (n79506-n79510)",
+          "quote": "廣陽郡\n世祖省并上谷，永平\n八年復。五城，戶四萬四千五百五十，口二十八萬六百。\n薊\n本燕國。刺史治。廣陽昌平故屬上谷。軍都故屬上谷。安次故屬勃海。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"廣陽郡\",1]",
+        "[113,\"廣陽郡\",2]",
+        "[113,\"廣陽郡\",3]",
+        "[113,\"廣陽郡\",4]",
+        "[113,\"廣陽郡\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -16688,9 +18980,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79511-n79523"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "代郡 (n79511-n79523)",
+          "quote": "代郡\n十一城，戶二萬一百二十三，口十二萬六千一百八十八。\n高柳\n桑乾\n道\n人\n當城\n馬城\n班氏\n狋氏\n北\n平邑\n永元八年復。東安陽平舒代",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"代郡\",1]",
+        "[113,\"代郡\",2]",
+        "[113,\"代郡\",3]",
+        "[113,\"代郡\",4]",
+        "[113,\"代郡\",5]",
+        "[113,\"代郡\",6]",
+        "[113,\"代郡\",7]",
+        "[113,\"代郡\",8]",
+        "[113,\"代郡\",9]",
+        "[113,\"代郡\",10]",
+        "[113,\"代郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -16864,9 +19181,31 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79524-n79533"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "上谷郡 (n79524-n79533)",
+          "quote": "上谷郡\n八城，戶萬三百五十二，口五萬一千二百四。\n沮陽\n潘永元十一年復。甯\n廣甯\n居庸\n雊\n瞀\n涿鹿\n下落",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"上谷郡\",1]",
+        "[113,\"上谷郡\",2]",
+        "[113,\"上谷郡\",3]",
+        "[113,\"上谷郡\",4]",
+        "[113,\"上谷郡\",5]",
+        "[113,\"上谷郡\",6]",
+        "[113,\"上谷郡\",7]",
+        "[113,\"上谷郡\",8]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -16998,9 +19337,32 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79534-n79542"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "漁陽郡 (n79534-n79542)",
+          "quote": "漁陽郡\n九城，戶六萬八千四百五十六，口四十三萬五千七百四十。\n漁陽\n有鐵。狐奴\n潞\n雍奴\n泉\n州\n有鐵。平谷安樂傂奚獷平",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"漁陽郡\",1]",
+        "[113,\"漁陽郡\",2]",
+        "[113,\"漁陽郡\",3]",
+        "[113,\"漁陽郡\",4]",
+        "[113,\"漁陽郡\",5]",
+        "[113,\"漁陽郡\",6]",
+        "[113,\"漁陽郡\",7]",
+        "[113,\"漁陽郡\",8]",
+        "[113,\"漁陽郡\",9]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -17146,9 +19508,27 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79543-n79548"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "右北平郡 (n79543-n79548)",
+          "quote": "右北平郡\n四城，戶九千一百七十，口五萬三千四百七十五。\n土垠\n徐無\n俊靡\n無終",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"右北平郡\",1]",
+        "[113,\"右北平郡\",2]",
+        "[113,\"右北平郡\",3]",
+        "[113,\"右北平郡\",4]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -17224,9 +19604,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79549-n79555"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "遼西郡 (n79549-n79555)",
+          "quote": "遼西郡\n五城，戶萬四千一百五十，口八萬一千七百一十四。\n陽樂\n海陽\n令\n支\n有孤竹城。肥如臨渝",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"遼西郡\",1]",
+        "[113,\"遼西郡\",2]",
+        "[113,\"遼西郡\",3]",
+        "[113,\"遼西郡\",4]",
+        "[113,\"遼西郡\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -17316,9 +19715,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79556-n79568"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "遼東郡 (n79556-n79568)",
+          "quote": "遼東郡\n十一城，戶六萬四千一百五十八，口八萬一千七百一十四。\n襄平\n新昌\n無\n慮\n望平\n候城\n安巿\n平郭\n有鐵。西安平汶\n番汗\n沓氏",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"遼東郡\",1]",
+        "[113,\"遼東郡\",2]",
+        "[113,\"遼東郡\",3]",
+        "[113,\"遼東郡\",4]",
+        "[113,\"遼東郡\",5]",
+        "[113,\"遼東郡\",6]",
+        "[113,\"遼東郡\",7]",
+        "[113,\"遼東郡\",8]",
+        "[113,\"遼東郡\",9]",
+        "[113,\"遼東郡\",10]",
+        "[113,\"遼東郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -17492,9 +19916,29 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79569-n79575"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "玄菟郡 (n79569-n79575)",
+          "quote": "玄菟郡\n六城，戶一千五百九十四，口四萬三千一百六十三。\n高句驪\n遼山，遼水出。西蓋鳥上殷台\n高顯\n故屬遼東。候城\n故屬遼東。遼陽故屬遼東。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"玄菟郡\",1]",
+        "[113,\"玄菟郡\",2]",
+        "[113,\"玄菟郡\",3]",
+        "[113,\"玄菟郡\",4]",
+        "[113,\"玄菟郡\",5]",
+        "[113,\"玄菟郡\",6]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -17598,9 +20042,41 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79576-n79597"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "樂浪郡 (n79576-n79597)",
+          "quote": "樂浪郡\n十八城，戶六萬一千四百九十二，口二十五萬七千五十。\n朝鮮\n烫邯\n浿\n水\n含資\n占蟬\n遂城\n增地\n帶\n方\n駟望海冥\n列口\n長岑\n屯有\n昭\n明\n鏤方\n提奚\n渾彌\n樂都",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"樂浪郡\",1]",
+        "[113,\"樂浪郡\",2]",
+        "[113,\"樂浪郡\",3]",
+        "[113,\"樂浪郡\",4]",
+        "[113,\"樂浪郡\",5]",
+        "[113,\"樂浪郡\",6]",
+        "[113,\"樂浪郡\",7]",
+        "[113,\"樂浪郡\",8]",
+        "[113,\"樂浪郡\",9]",
+        "[113,\"樂浪郡\",10]",
+        "[113,\"樂浪郡\",11]",
+        "[113,\"樂浪郡\",12]",
+        "[113,\"樂浪郡\",13]",
+        "[113,\"樂浪郡\",14]",
+        "[113,\"樂浪郡\",15]",
+        "[113,\"樂浪郡\",16]",
+        "[113,\"樂浪郡\",17]",
+        "[113,\"樂浪郡\",18]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -17872,9 +20348,29 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79598-n79602"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "遼東屬國 (n79598-n79602)",
+          "quote": "遼東屬國\n雒陽東\n北三千二百六十里。\n昌遼\n故天遼，屬遼西。賓徒故屬遼西。徒河故屬遼西。無慮有醫無慮山。險瀆房",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"遼東屬國\",1]",
+        "[113,\"遼東屬國\",2]",
+        "[113,\"遼東屬國\",3]",
+        "[113,\"遼東屬國\",4]",
+        "[113,\"遼東屬國\",5]",
+        "[113,\"遼東屬國\",6]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -17978,9 +20474,30 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79603-n79614"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "南海郡 (n79603-n79614)",
+          "quote": "南海郡\n七城，戶七萬一千四百七十七，口二十五萬二百八十二。\n番禺\n博羅\n中宿\n龍川\n四\n會\n揭陽\n增城\n有\n勞領山。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"南海郡\",1]",
+        "[113,\"南海郡\",2]",
+        "[113,\"南海郡\",3]",
+        "[113,\"南海郡\",4]",
+        "[113,\"南海郡\",5]",
+        "[113,\"南海郡\",6]",
+        "[113,\"南海郡\",7]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -18098,9 +20615,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79615-n79629"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "蒼梧郡 (n79615-n79629)",
+          "quote": "蒼梧郡\n十一城，戶十一萬一千三百九十五，口四十六萬六千九百七十五。\n廣信\n謝沐\n高要\n封陽\n臨\n賀\n端谿\n馮乘\n富川\n荔浦\n猛\n陵\n鄣平",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"蒼梧郡\",1]",
+        "[113,\"蒼梧郡\",2]",
+        "[113,\"蒼梧郡\",3]",
+        "[113,\"蒼梧郡\",4]",
+        "[113,\"蒼梧郡\",5]",
+        "[113,\"蒼梧郡\",6]",
+        "[113,\"蒼梧郡\",7]",
+        "[113,\"蒼梧郡\",8]",
+        "[113,\"蒼梧郡\",9]",
+        "[113,\"蒼梧郡\",10]",
+        "[113,\"蒼梧郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -18274,9 +20816,34 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79630-n79643"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "鬱林郡 (n79630-n79643)",
+          "quote": "鬱林郡\n十一城。\n布山\n安廣\n阿\n林\n廣鬱\n中溜\n桂林\n潭中\n臨\n塵\n定周增食\n領方",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"鬱林郡\",1]",
+        "[113,\"鬱林郡\",2]",
+        "[113,\"鬱林郡\",3]",
+        "[113,\"鬱林郡\",4]",
+        "[113,\"鬱林郡\",5]",
+        "[113,\"鬱林郡\",6]",
+        "[113,\"鬱林郡\",7]",
+        "[113,\"鬱林郡\",8]",
+        "[113,\"鬱林郡\",9]",
+        "[113,\"鬱林郡\",10]",
+        "[113,\"鬱林郡\",11]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -18450,9 +21017,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79644-n79650"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "合浦郡 (n79644-n79650)",
+          "quote": "合浦郡\n五城，戶二萬三千一百二十一，口八萬六千六百一十七。\n合浦\n徐聞\n高涼\n臨元\n朱崖",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"合浦郡\",1]",
+        "[113,\"合浦郡\",2]",
+        "[113,\"合浦郡\",3]",
+        "[113,\"合浦郡\",4]",
+        "[113,\"合浦郡\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -18542,9 +21128,35 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79651-n79665"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "交趾郡 (n79651-n79665)",
+          "quote": "交趾郡\n十二城。\n龍編\n羸啮\n定安\n〈定〉苟\n漏\n麊泠\n曲陽\n北帶稽徐\n西于\n朱觏\n封谿\n建武十九年\n置。望海建武十九年置。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"交趾郡\",1]",
+        "[113,\"交趾郡\",2]",
+        "[113,\"交趾郡\",3]",
+        "[113,\"交趾郡\",4]",
+        "[113,\"交趾郡\",5]",
+        "[113,\"交趾郡\",6]",
+        "[113,\"交趾郡\",7]",
+        "[113,\"交趾郡\",8]",
+        "[113,\"交趾郡\",9]",
+        "[113,\"交趾郡\",10]",
+        "[113,\"交趾郡\",11]",
+        "[113,\"交趾郡\",12]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -18691,8 +21303,8 @@
             "traditionalTextCitation": {
               "source": "Chinese Text Project",
               "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-              "localWitness": "data/chgis-source/junguozhi/wu.html",
-              "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b",
+              "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+              "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
               "line": 2860
             }
           }
@@ -18743,9 +21355,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79666-n79673"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "九真郡 (n79666-n79673)",
+          "quote": "九真郡\n五城，戶四萬六千五百一十三，口二十萬九千八百九十四。\n胥浦\n居風\n咸懽\n無功\n無\n編",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"九真郡\",1]",
+        "[113,\"九真郡\",2]",
+        "[113,\"九真郡\",3]",
+        "[113,\"九真郡\",4]",
+        "[113,\"九真郡\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
@@ -18835,9 +21466,28 @@
       "traditionalTextCitation": {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
-        "snapshotSha256": "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b"
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79674-n79681"
       },
+      "evidence": [
+        {
+          "book": "後漢書",
+          "volume": "郡國五",
+          "section": "日南郡 (n79674-n79681)",
+          "quote": "日南郡\n五城，戶萬八千二百六十三，口十萬六百七十六。西卷朱吾\n盧容\n象林\n比景\n右交州刺史部，郡七，縣五十六。\n漢書地理志承秦三十六郡，縣邑數百，後稍分析，至于孝平，凡郡、國百三，縣、邑、道、侯國千五百八十七。世祖中興，惟官多役煩，乃命并合，省郡、國十，縣、邑、道、侯國四百餘所。至明帝置郡一，章帝置郡、國二，和帝置三，安帝又命屬國別領比郡者六，又所省縣漸復分置，至于孝順，凡郡、國百五，縣、邑、道、侯國千一百八十，民戶九百六十九萬八千六百三十，口四千九百一十五萬二百二十。\n贊曰：眾安后載，政洽區分；侯罷守列，民無常君。稱號遷隔，封割糾紛；略存減益，多證前聞。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "group-membership-attested",
+          "locationConfidence": "UNKNOWN"
+        }
+      ],
+      "memberCoverageIds": [
+        "[113,\"日南郡\",1]",
+        "[113,\"日南郡\",2]",
+        "[113,\"日南郡\",3]",
+        "[113,\"日南郡\",4]",
+        "[113,\"日南郡\",5]"
+      ],
       "units": [
         {
           "sourceVolume": 113,
