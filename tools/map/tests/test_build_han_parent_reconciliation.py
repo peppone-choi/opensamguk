@@ -37,6 +37,13 @@ def encode_rle(values):
     return runs
 
 
+def replace_nested(document, keys, value):
+    current = document
+    for key in keys[:-1]:
+        current = current[key]
+    current[keys[-1]] = value
+
+
 class GeneratorPresenceTest(unittest.TestCase):
     def test_cli_exposes_write_and_check_modes(self):
         result = subprocess.run(
@@ -75,6 +82,93 @@ class HanParentReconciliationTest(unittest.TestCase):
             ],
             row["approvalEvidence"]["inputs"],
         )
+
+    def test_complete_exact_approval_mapping_equals_independently_joined_selection(self):
+        selection = self.documents["data/curated/han/route-node-selection-v1.json"]
+        tile_city_ids = {
+            str(city["id"])
+            for city in self.documents["data/map/han-tiles.json"]["cities"]
+        }
+        expected = {}
+        for route_node in selection["routeNodes"]:
+            terminal = route_node["physicalPlaceRef"].rsplit(":", 1)[-1]
+            if route_node["reviewState"] == "APPROVED" and terminal in tile_city_ids:
+                expected[terminal] = {
+                    "administrativeUnitId": route_node["administrativeUnitId"],
+                    "physicalPlaceRef": route_node["physicalPlaceRef"],
+                    "routeNodeKey": route_node["routeNodeKey"],
+                }
+        actual = {
+            row["cityId"]: {
+                "administrativeUnitId": row["approvedParentAdministrativeUnitId"],
+                "physicalPlaceRef": row["approvalEvidence"]["physicalPlaceRef"],
+                "routeNodeKey": row["approvalEvidence"]["routeNodeKey"],
+            }
+            for row in self.ledger["rows"]
+            if row["decision"] == "EXACT_APPROVED"
+        }
+
+        self.assertEqual(778, len(expected))
+        self.assertEqual(expected, actual)
+
+    def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
+        mutations = [
+            ("selection schema", "data/curated/han/route-node-selection-v1.json", ("schemaVersion",), 999),
+            ("selection id", "data/curated/han/route-node-selection-v1.json", ("selectionId",), "wrong"),
+            ("selection year", "data/curated/han/route-node-selection-v1.json", ("baselineYear",), 221),
+            ("selection node class", "data/curated/han/route-node-selection-v1.json", ("routeNodes", 0, "nodeClass"), "UNKNOWN"),
+            ("selection seat role", "data/curated/han/route-node-selection-v1.json", ("routeNodes", 0, "seatRole"), "UNKNOWN"),
+            ("policy schema", "data/curated/han/route-node-review-policy-v1.json", ("schemaVersion",), 999),
+            ("policy id", "data/curated/han/route-node-review-policy-v1.json", ("policyId",), "wrong"),
+            ("policy batch state", "data/curated/han/route-node-review-policy-v1.json", ("selectionBatches", 0, "reviewState"), "UNKNOWN"),
+            ("bindings schema", "data/curated/han/administrative-place-bindings-v1.json", ("schemaVersion",), 999),
+            ("bindings id", "data/curated/han/administrative-place-bindings-v1.json", ("catalogId",), "wrong"),
+            ("bindings year", "data/curated/han/administrative-place-bindings-v1.json", ("sourceYear",), 221),
+            ("bindings join status", "data/curated/han/administrative-place-bindings-v1.json", ("administrativeUnits", 0, "joinStatus"), "UNKNOWN"),
+            ("adjudication schema", "data/curated/han/route-node-location-adjudications-v1.json", ("schemaVersion",), 999),
+            ("adjudication id", "data/curated/han/route-node-location-adjudications-v1.json", ("adjudicationSetId",), "wrong"),
+            ("adjudication state", "data/curated/han/route-node-location-adjudications-v1.json", ("adjudications", 0, "reviewState"), "UNKNOWN"),
+            ("candidate schema", "data/curated/han/route-node-selection-candidates-v1.json", ("schemaVersion",), 999),
+            ("candidate id", "data/curated/han/route-node-selection-candidates-v1.json", ("selectionId",), "wrong"),
+            ("candidate year", "data/curated/han/route-node-selection-candidates-v1.json", ("fixedYear",), 221),
+            ("candidate origin", "data/curated/han/route-node-selection-candidates-v1.json", ("candidates", 0, "origin"), "UNKNOWN"),
+            ("candidate state", "data/curated/han/route-node-selection-candidates-v1.json", ("candidates", 0, "reviewState"), "UNKNOWN"),
+            ("validation schema", "data/curated/han/route-node-validation-contract-v1.json", ("schemaVersion",), 999),
+            ("validation id", "data/curated/han/route-node-validation-contract-v1.json", ("contractId",), "wrong"),
+            ("history schema", "data/map/han-administrative-history.json", ("schemaVersion",), 999),
+            ("history years", "data/map/han-administrative-history.json", ("supportedYears",), [220]),
+            ("tile year", "data/map/han-tiles.json", ("_meta", "year"), 221),
+            ("tile kind", "data/map/han-tiles.json", ("cities", 0, "kind"), "UNKNOWN"),
+            ("external confidence", "data/map/external-places.json", ("places", 0, "conf"), "UNKNOWN"),
+            ("external kind", "data/map/external-places.json", ("places", 0, "kind"), "UNKNOWN"),
+        ]
+        for label, path, keys, value in mutations:
+            with self.subTest(label=label):
+                documents = copy.deepcopy(self.documents)
+                replace_nested(documents[path], keys, value)
+                with self.assertRaisesRegex(ValueError, "contract|enum|year|schema|identity"):
+                    self.module.build_ledger(documents, self.input_records)
+
+    def test_every_embedded_hash_edge_between_pinned_inputs_fails_closed_on_drift(self):
+        edges = [
+            ("data/curated/han/route-node-review-policy-v1.json", ("inputs", "coordinateOverlaySha256")),
+            ("data/curated/han/route-node-review-policy-v1.json", ("inputs", "candidateManifest", "sha256")),
+            ("data/curated/han/route-node-review-policy-v1.json", ("inputs", "locationAdjudications", "sha256")),
+            ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "administrativePlaceOverlay", "sha256")),
+            ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "candidate", "sha256")),
+            ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "legacyTileMap", "sha256")),
+            ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "locationAdjudications", "sha256")),
+            ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "reviewPolicy", "sha256")),
+            ("data/curated/han/route-node-location-adjudications-v1.json", ("inputOverlaySha256",)),
+            ("data/curated/han/route-node-selection-candidates-v1.json", ("provenance", "inputs", "administrativePlaceOverlay", "sha256")),
+            ("data/curated/han/route-node-selection-candidates-v1.json", ("provenance", "inputs", "legacyTileMap", "sha256")),
+        ]
+        for source_path, keys in edges:
+            with self.subTest(source_path=source_path, keys=keys):
+                documents = copy.deepcopy(self.documents)
+                replace_nested(documents[source_path], keys, "0" * 64)
+                with self.assertRaisesRegex(ValueError, "embedded input hash mismatch"):
+                    self.module.build_ledger(documents, self.input_records)
 
     def test_rows_are_exhaustive_disjoint_and_match_locked_counts(self):
         summary = self.ledger["summary"]
@@ -327,6 +421,12 @@ class HanParentReconciliationTest(unittest.TestCase):
             self.assertTrue(self.module.check_ledger(output_path=output))
             output.write_bytes(expected + b" ")
             self.assertFalse(self.module.check_ledger(output_path=output))
+
+    def test_committed_generated_artifact_is_current_and_byte_identical(self):
+        self.assertTrue(
+            self.module.check_ledger(output_path=self.module.OUTPUT),
+            "committed parent reconciliation ledger is stale or corrupt; run --write",
+        )
 
 
 if __name__ == "__main__":

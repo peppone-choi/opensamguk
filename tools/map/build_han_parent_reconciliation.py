@@ -35,6 +35,63 @@ FORBIDDEN_APPROVAL_INPUTS = (
     "nearestGeometry",
     "runtimeNumericId",
 )
+EMBEDDED_HASH_EDGES = (
+    (
+        "data/curated/han/route-node-review-policy-v1.json",
+        ("inputs", "coordinateOverlaySha256"),
+        "data/curated/han/administrative-place-bindings-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-review-policy-v1.json",
+        ("inputs", "candidateManifest", "sha256"),
+        "data/curated/han/route-node-selection-candidates-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-review-policy-v1.json",
+        ("inputs", "locationAdjudications", "sha256"),
+        "data/curated/han/route-node-location-adjudications-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-v1.json",
+        ("provenance", "inputs", "administrativePlaceOverlay", "sha256"),
+        "data/curated/han/administrative-place-bindings-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-v1.json",
+        ("provenance", "inputs", "candidate", "sha256"),
+        "data/curated/han/route-node-selection-candidates-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-v1.json",
+        ("provenance", "inputs", "legacyTileMap", "sha256"),
+        "data/map/han-tiles.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-v1.json",
+        ("provenance", "inputs", "locationAdjudications", "sha256"),
+        "data/curated/han/route-node-location-adjudications-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-v1.json",
+        ("provenance", "inputs", "reviewPolicy", "sha256"),
+        "data/curated/han/route-node-review-policy-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-location-adjudications-v1.json",
+        ("inputOverlaySha256",),
+        "data/curated/han/administrative-place-bindings-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-candidates-v1.json",
+        ("provenance", "inputs", "administrativePlaceOverlay", "sha256"),
+        "data/curated/han/administrative-place-bindings-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-candidates-v1.json",
+        ("provenance", "inputs", "legacyTileMap", "sha256"),
+        "data/map/han-tiles.json",
+    ),
+)
 
 
 def sha256(path: Path) -> str:
@@ -95,12 +152,148 @@ def terminal_physical_place_id(reference: object) -> str:
     return terminal
 
 
-def _validate_review_chain(documents: dict[str, dict]) -> None:
+def _nested(document: object, keys: tuple[str, ...], label: str) -> object:
+    current = document
+    for key in keys:
+        if not isinstance(current, dict) or key not in current:
+            raise ValueError(f"input contract missing {label}: {'.'.join(keys)}")
+        current = current[key]
+    return current
+
+
+def _require_equal(actual: object, expected: object, label: str) -> None:
+    if actual != expected:
+        raise ValueError(f"input contract mismatch for {label}: {actual!r} != {expected!r}")
+
+
+def _require_closed_enum(
+    rows: object,
+    field: str,
+    allowed: set[str],
+    label: str,
+    *,
+    optional: bool = False,
+) -> None:
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        raise ValueError(f"input contract requires object rows for {label}")
+    for row in rows:
+        if field not in row and optional:
+            continue
+        if row.get(field) not in allowed:
+            raise ValueError(f"closed enum mismatch for {label}.{field}: {row.get(field)!r}")
+
+
+def _validate_embedded_hash_edges(
+    documents: dict[str, dict], input_records: dict[str, dict]
+) -> None:
+    for path in INPUT_PATHS:
+        record = input_records.get(path)
+        if not isinstance(record, dict) or record.get("path") != path:
+            raise ValueError(f"input contract mismatch for pinned path {path}")
+        digest = record.get("sha256")
+        if not isinstance(digest, str) or len(digest) != 64 or any(
+            character not in "0123456789abcdef" for character in digest
+        ):
+            raise ValueError(f"input contract mismatch for pinned hash {path}")
+    for source_path, keys, target_path in EMBEDDED_HASH_EDGES:
+        embedded = _nested(documents[source_path], keys, source_path)
+        expected = input_records[target_path]["sha256"]
+        if embedded != expected:
+            raise ValueError(
+                "embedded input hash mismatch: "
+                f"{source_path}:{'.'.join(keys)} -> {target_path}"
+            )
+
+    policy_inputs = documents["data/curated/han/route-node-review-policy-v1.json"]["inputs"]
+    _require_equal(
+        policy_inputs.get("candidateManifest", {}).get("path"),
+        "data/curated/han/route-node-selection-candidates-v1.json",
+        "review policy candidateManifest path",
+    )
+    _require_equal(
+        policy_inputs.get("locationAdjudications", {}).get("path"),
+        "data/curated/han/route-node-location-adjudications-v1.json",
+        "review policy locationAdjudications path",
+    )
+    candidate_inputs = documents[
+        "data/curated/han/route-node-selection-candidates-v1.json"
+    ]["provenance"]["inputs"]
+    _require_equal(
+        candidate_inputs.get("administrativePlaceOverlay", {}).get("path"),
+        "data/curated/han/administrative-place-bindings-v1.json",
+        "candidate administrativePlaceOverlay path",
+    )
+    _require_equal(
+        candidate_inputs.get("legacyTileMap", {}).get("path"),
+        "data/map/han-tiles.json",
+        "candidate legacyTileMap path",
+    )
+
+
+def _validate_review_chain(
+    documents: dict[str, dict], input_records: dict[str, dict]
+) -> None:
     policy = documents["data/curated/han/route-node-review-policy-v1.json"]
     selection = documents["data/curated/han/route-node-selection-v1.json"]
+    bindings = documents["data/curated/han/administrative-place-bindings-v1.json"]
     adjudications = documents["data/curated/han/route-node-location-adjudications-v1.json"]
+    candidates = documents["data/curated/han/route-node-selection-candidates-v1.json"]
     contract = documents["data/curated/han/route-node-validation-contract-v1.json"]
     history = documents["data/map/han-administrative-history.json"]
+    tiles = documents["data/map/han-tiles.json"]
+    external = documents["data/map/external-places.json"]
+
+    _require_equal(policy.get("schemaVersion"), 1, "review policy schemaVersion")
+    _require_equal(policy.get("policyId"), "han-w0c-route-node-review-policy-v1", "review policy identity")
+    _require_equal(selection.get("schemaVersion"), 1, "selection schemaVersion")
+    _require_equal(selection.get("selectionId"), "han-route-node-selection-v1", "selection identity")
+    _require_equal(selection.get("baselineYear"), REFERENCE_YEAR, "selection baseline year")
+    _require_equal(bindings.get("schemaVersion"), 1, "bindings schemaVersion")
+    _require_equal(bindings.get("catalogId"), "hhs-junguozhi-administrative-units-v1", "bindings identity")
+    _require_equal(bindings.get("sourceYear"), REFERENCE_YEAR, "bindings source year")
+    _require_equal(adjudications.get("schemaVersion"), 1, "adjudications schemaVersion")
+    _require_equal(
+        adjudications.get("adjudicationSetId"),
+        "han-w0c-ambiguous-location-adjudications-v1",
+        "adjudications identity",
+    )
+    _require_equal(candidates.get("schemaVersion"), 1, "candidates schemaVersion")
+    _require_equal(
+        candidates.get("selectionId"),
+        "han-route-node-selection-candidates-v1",
+        "candidates identity",
+    )
+    _require_equal(candidates.get("fixedYear"), REFERENCE_YEAR, "candidates fixed year")
+    _require_equal(contract.get("schemaVersion"), 1, "validation contract schemaVersion")
+    _require_equal(
+        contract.get("contractId"),
+        "han-w0-route-node-validation-contract-v1",
+        "validation contract identity",
+    )
+    _require_equal(history.get("schemaVersion"), 1, "administrative history schemaVersion")
+    _require_equal(
+        history.get("supportedYears"),
+        [184, 190, 200, 208, 220, 234, 263, 280],
+        "administrative history supported year contract",
+    )
+    _require_equal(
+        history.get("catalogReference"),
+        "../curated/han/administrative-units.json",
+        "administrative history catalog identity",
+    )
+    _require_equal(history.get("requireCountySeats"), False, "administrative history seat contract")
+    _require_equal(tiles.get("_meta", {}).get("year"), REFERENCE_YEAR, "han tiles reference year")
+    _require_equal(
+        tiles.get("_meta", {}).get("generator"),
+        "tools/map/build_tile_grid.py",
+        "han tiles generator identity",
+    )
+    _require_equal(
+        external.get("_meta", {}).get("generator"),
+        "tools/map/build_external_places.py",
+        "external places generator identity",
+    )
+
     rows = selection.get("routeNodes")
     expected = policy.get("expectedSelection", {}).get("routeNodeCount")
     if policy.get("status") != "APPROVED" or selection.get("reviewState") != "APPROVED":
@@ -111,8 +304,108 @@ def _validate_review_chain(documents: dict[str, dict]) -> None:
         raise ValueError("every route-node selection row must be approved")
     if adjudications.get("status") != "REVIEWED":
         raise ValueError("location adjudications must be reviewed")
-    if REFERENCE_YEAR not in history.get("supportedYears", []):
-        raise ValueError("administrative history does not support reference year 220")
+    _require_equal(
+        contract.get("allowedNodeClasses"),
+        ["COUNTY_NODE", "DAO_NODE", "MARQUISATE_NODE", "TOWN_NODE"],
+        "validation contract allowed node classes",
+    )
+    _require_equal(contract.get("expectedSelectionCount"), 780, "validation contract selection count")
+    _require_equal(
+        contract.get("expectedActiveScenarioResourceCount"),
+        15,
+        "validation contract scenario count",
+    )
+    _require_equal(
+        selection.get("summary"),
+        {"approvedCount": 780, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": 780}},
+        "selection summary contract",
+    )
+    _require_equal(
+        policy.get("expectedSelection"),
+        {
+            "externalHistoricalBindingCount": 0,
+            "externalLocationClaimCount": 8,
+            "hhsAdministrativeBindingCount": 780,
+            "overlayUniqueCount": 722,
+            "polityPresenceCount": 0,
+            "remoteGateCount": 0,
+            "reviewedAmbiguousCount": 50,
+            "routeNodeCount": 780,
+            "sourcePlaceholderCount": 0,
+        },
+        "review policy expected selection contract",
+    )
+    batches = policy.get("selectionBatches")
+    if (
+        not isinstance(batches, list)
+        or len(batches) != 3
+        or not all(isinstance(row, dict) for row in batches)
+        or {
+        (row.get("batchId"), row.get("expectedCount"), row.get("reviewState"))
+        for row in batches
+        }
+        != {
+            ("w0b-overlay-unique-220", 722, "APPROVED"),
+            ("w0c-reviewed-ambiguity", 50, "APPROVED"),
+            ("w0c-hhs-external-location", 8, "APPROVED"),
+        }
+    ):
+        raise ValueError("closed enum or count mismatch for review policy selection batches")
+    _require_equal(
+        selection.get("reviewPolicy", {}).get("policyId"),
+        policy["policyId"],
+        "selection review policy identity",
+    )
+    _require_equal(
+        candidates.get("candidatePolicy", {}).get("reviewState"),
+        "PENDING",
+        "candidate policy state enum",
+    )
+    _require_equal(
+        candidates.get("candidatePolicy", {}).get("automaticSelectionCount"),
+        0,
+        "candidate policy automatic selection contract",
+    )
+    _require_equal(
+        candidates.get("provenance", {}).get("scenarioResourceCount"),
+        15,
+        "candidate scenario count contract",
+    )
+
+    _require_closed_enum(tiles.get("cities"), "kind", {"COMMANDERY", "COUNTY", "EXTERNAL_PLACE", "KINGDOM", "PROVINCE"}, "han tiles cities")
+    _require_closed_enum(external.get("places"), "conf", {"DISPUTED", "IDENTIFIED"}, "external places")
+    _require_closed_enum(external.get("places"), "kind", {"COMMANDERY", "EXTERNAL_PLACE", "KINGDOM"}, "external places")
+    _require_closed_enum(bindings.get("administrativeUnits"), "joinStatus", {"AMBIGUOUS_POINT", "NO_COORDINATE_CANDIDATE", "RESOLVED_POINT", "SOURCE_PLACEHOLDER"}, "administrative bindings")
+    _require_closed_enum(adjudications.get("adjudications"), "reviewState", {"APPROVED_FOR_SELECTION", "REJECTED_FALSE_HOMONYM"}, "location adjudications")
+    _require_closed_enum(adjudications.get("adjudications"), "rationaleCode", {"FALSE_HOMONYM_OUTSIDE_CANONICAL_GROUP", "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW", "HISTORICAL_LOCATION_CORRECTION"}, "location adjudications")
+    _require_closed_enum(candidates.get("candidates"), "origin", {"CURRENT_780", "HHS_REPLACEMENT_POOL"}, "route-node candidates")
+    _require_closed_enum(candidates.get("candidates"), "reviewState", {"PENDING"}, "route-node candidates")
+    _require_closed_enum(candidates.get("candidates"), "classification", {"EXTERNAL_OR_LATER_OR_MOVING", "HHS_AMBIGUOUS", "HHS_ATTRIBUTION_CONFLICT", "HHS_RESOLVED", "HHS_UNMAPPED"}, "route-node candidates", optional=True)
+    _require_closed_enum(candidates.get("candidates"), "overlayJoinStatus", {"AMBIGUOUS_POINT", "NO_COORDINATE_CANDIDATE", "RESOLVED_POINT", "SOURCE_PLACEHOLDER"}, "route-node candidates", optional=True)
+    _require_closed_enum(candidates.get("candidates"), "unitType", {"COUNTY", "DAO", "MARQUISATE", "TOWN"}, "route-node candidates", optional=True)
+    _require_closed_enum(rows, "nodeClass", {"COUNTY_NODE", "DAO_NODE", "MARQUISATE_NODE", "TOWN_NODE"}, "approved route-node selection")
+    _require_closed_enum(rows, "historicalBindingBasis", {"HHS_ADMINISTRATIVE_UNIT"}, "approved route-node selection")
+    _require_closed_enum(rows, "seatRole", {"COMMANDERY_SEAT", "NON_SEAT"}, "approved route-node selection")
+    _require_closed_enum(rows, "legacyDisposition", {"REPLACED", "RETAINED"}, "approved route-node selection")
+    _require_closed_enum(
+        [row.get("selectionRationale") for row in rows],
+        "method",
+        {"APPROVED_REVIEW_BATCH"},
+        "approved route-node selection rationale",
+    )
+    _require_closed_enum(
+        [row.get("selectionRationale") for row in rows],
+        "batchId",
+        {"w0b-overlay-unique-220", "w0c-hhs-external-location", "w0c-reviewed-ambiguity"},
+        "approved route-node selection rationale",
+    )
+    _require_closed_enum(
+        [row.get("locationAdjudication") for row in rows],
+        "kind",
+        {"APPROVED_LOCATION_ONLY_CLAIM", "EXPLICIT_AMBIGUITY_REVIEW", "W0B_GLOBAL_UNIQUE_220"},
+        "approved route-node location adjudication",
+    )
+    _validate_embedded_hash_edges(documents, input_records)
 
 
 def _tile_context(tiles: dict) -> dict:
@@ -493,7 +786,7 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
 def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> dict:
     if set(documents) != set(INPUT_PATHS) or set(input_records) != set(INPUT_PATHS):
         raise ValueError("ledger build requires every pinned input")
-    _validate_review_chain(documents)
+    _validate_review_chain(documents, input_records)
     tiles = _tile_context(documents["data/map/han-tiles.json"])
     selections = _selection_context(documents["data/curated/han/route-node-selection-v1.json"], tiles)
     groups_by_jun, anchors_by_jun = _jun_diagnostics(tiles, selections)
