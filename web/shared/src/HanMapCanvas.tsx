@@ -8,7 +8,6 @@ import {
   useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
 } from 'react';
 import {
   cellToScreen,
@@ -747,7 +746,7 @@ export function HanMapCanvas({
     updateView(clampView(next, width, height, grid));
   }, [loadedTiles, updateView]);
 
-  const eventPoint = (event: { clientX: number; clientY: number }) => {
+  const eventPoint = useCallback((event: { clientX: number; clientY: number }) => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
@@ -759,7 +758,19 @@ export function HanMapCanvas({
       cssX: event.clientX - rect.left,
       cssY: event.clientY - rect.top,
     };
-  };
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const point = eventPoint(event);
+      zoomBy(event.deltaY < 0 ? 1.15 : 1 / 1.15, point?.canvasX, point?.canvasY);
+    };
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => canvas.removeEventListener('wheel', handleWheel);
+  }, [eventPoint, zoomBy]);
 
   const cityAt = (x: number, y: number) => {
     for (let index = hitRef.current.length - 1; index >= 0; index -= 1) {
@@ -860,11 +871,6 @@ export function HanMapCanvas({
         role="img"
         aria-label={ariaLabel ?? (loadedTiles ? `${mapCode} 아이소 타일 지도` : '지도 불러오는 중')}
         tabIndex={0}
-        onWheel={(event: ReactWheelEvent<HTMLCanvasElement>) => {
-          event.preventDefault();
-          const point = eventPoint(event);
-          zoomBy(event.deltaY < 0 ? 1.15 : 1 / 1.15, point?.canvasX, point?.canvasY);
-        }}
         onPointerDown={(event) => {
           pointerTypeRef.current = event.pointerType || 'mouse';
           event.currentTarget.setPointerCapture(event.pointerId);
