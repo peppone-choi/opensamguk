@@ -26,6 +26,53 @@ def evidence(claim: str = "site-attested") -> dict[str, str]:
     }
 
 
+def catalog_member_id(volume: int, group: str, ordinal: int) -> str:
+    return json.dumps([volume, group, ordinal], ensure_ascii=False, separators=(",", ":"))
+
+
+def catalog_evidence(quote: str = "甲郡\n甲縣\n乙縣") -> dict[str, str]:
+    return {
+        "book": "後漢書",
+        "volume": "郡國一",
+        "section": "甲郡 (n1-n3)",
+        "quote": quote,
+        "grade": "STANDARD_HISTORY",
+        "claim": "group-membership-attested",
+        "locationConfidence": "UNKNOWN",
+    }
+
+
+def catalog_group(*, child_evidence: bool = False) -> dict[str, object]:
+    units: list[dict[str, object]] = [
+        {
+            "sourceVolume": 109,
+            "canonicalGroup": "甲郡",
+            "ordinal": 1,
+            "sourceName": "雒阳",
+            "unitType": "COUNTY",
+        },
+        {
+            "sourceVolume": 109,
+            "canonicalGroup": "甲郡",
+            "ordinal": 2,
+            "sourceName": "同名",
+            "unitType": "COUNTY",
+        },
+    ]
+    if child_evidence:
+        for child in units:
+            child["evidence"] = [evidence("administrative-unit-attested")]
+    return {
+        "sourceVolume": 109,
+        "sourceGroupName": "甲郡",
+        "canonicalGroup": "甲郡",
+        "groupType": "COMMANDERY",
+        "evidence": [catalog_evidence()],
+        "memberCoverageIds": [catalog_member_id(109, "甲郡", 1), catalog_member_id(109, "甲郡", 2)],
+        "units": units,
+    }
+
+
 def unit(
     stable_id: str,
     kind: str,
@@ -90,6 +137,31 @@ class HanProvinceModelTest(unittest.TestCase):
         path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         return path
 
+    def write_catalog_history(self, catalog: dict[str, object]) -> Path:
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        (root / "catalog.json").write_text(
+            json.dumps(catalog, ensure_ascii=False), encoding="utf-8"
+        )
+        history_path = root / "history.json"
+        history_path.write_text(
+            json.dumps(
+                {
+                    "schemaVersion": 1,
+                    "supportedYears": [184],
+                    "catalogReference": "catalog.json",
+                    "units": [],
+                    "relations": [],
+                    "seats": [],
+                    "roles": [],
+                },
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+        return history_path
+
     def test_effective_relations_switch_at_exclusive_end_year(self) -> None:
         """Removing the exclusive-end check would retain county:a in 220."""
         history = load_administrative_history(
@@ -128,7 +200,7 @@ class HanProvinceModelTest(unittest.TestCase):
         self.assertEqual(resolve_relations(history.relations, 220)["province:1"], "county:b")
 
     def test_catalog_reference_preserves_source_order_as_stable_administrative_ids(self) -> None:
-        """Replacing catalogue order with display-name keys would collapse repeated county names."""
+        """Each covered child inherits its group's reviewed evidence without display-name synthesis."""
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         root = Path(directory.name)
@@ -137,29 +209,7 @@ class HanProvinceModelTest(unittest.TestCase):
             json.dumps(
                 {
                     "catalogId": "fixture-hhs",
-                    "groups": [
-                        {
-                            "sourceVolume": 109,
-                            "sourceGroupName": "甲郡",
-                            "canonicalGroup": "甲郡",
-                            "groupType": "COMMANDERY",
-                            "evidence": [evidence("administrative-unit-attested")],
-                            "units": [
-                                {
-                                    "ordinal": 1,
-                                    "sourceName": "同名",
-                                    "unitType": "COUNTY",
-                                    "evidence": [evidence("administrative-unit-attested")],
-                                },
-                                {
-                                    "ordinal": 2,
-                                    "sourceName": "同名",
-                                    "unitType": "COUNTY",
-                                    "evidence": [evidence("administrative-unit-attested")],
-                                },
-                            ],
-                        }
-                    ],
+                    "groups": [catalog_group()],
                 },
                 ensure_ascii=False,
             ),
@@ -192,6 +242,90 @@ class HanProvinceModelTest(unittest.TestCase):
             resolve_relations(history.relations, 184)["county:hhs:109:1:2"],
             "commandery:hhs:109:1",
         )
+        self.assertEqual(history.units[0].evidence, (history.units[1].evidence[0],))
+        self.assertIs(history.units[0].evidence, history.units[1].evidence)
+        self.assertIs(history.units[0].evidence, history.units[2].evidence)
+
+    def test_catalog_reference_rejects_invalid_group_evidence_contract(self) -> None:
+        """A group witness must be one compatible passage, never a label or permissive object."""
+        cases = []
+        missing = catalog_group(child_evidence=True)
+        del missing["evidence"]
+        cases.append(("missing", missing, "exactly one"))
+        empty = catalog_group(child_evidence=True)
+        empty["evidence"] = []
+        cases.append(("empty", empty, "exactly one"))
+        duplicate = catalog_group(child_evidence=True)
+        duplicate["evidence"] = [catalog_evidence(), catalog_evidence()]
+        cases.append(("duplicate", duplicate, "exactly one"))
+        unsupported = catalog_group(child_evidence=True)
+        unsupported["evidence"] = [{**catalog_evidence(), "runtimeId": "county:hhs:109:1:1"}]
+        cases.append(("unsupported field", unsupported, "unsupported evidence field"))
+        wrong_claim = catalog_group(child_evidence=True)
+        wrong_claim["evidence"] = [{**catalog_evidence(), "claim": "site-attested"}]
+        cases.append(("wrong claim", wrong_claim, "group-membership-attested"))
+        mixed_script_label = catalog_group(child_evidence=True)
+        mixed_script_label["evidence"] = [catalog_evidence("雒阳")]
+        cases.append(("source-name quote", mixed_script_label, "reviewed group passage"))
+        runtime_label = catalog_group(child_evidence=True)
+        runtime_label["evidence"] = [catalog_evidence("commandery:hhs:109:1")]
+        cases.append(("runtime-id quote", runtime_label, "reviewed group passage"))
+
+        for case_name, group, expected_error in cases:
+            with self.subTest(case_name=case_name):
+                with self.assertRaisesRegex(ValueError, expected_error):
+                    load_administrative_history(
+                        self.write_catalog_history({"catalogId": "fixture-hhs", "groups": [group]})
+                    )
+
+    def test_catalog_reference_rejects_invalid_member_coverage(self) -> None:
+        """Coverage must be complete, unique, canonical, and confined to its source group."""
+        cases = []
+        missing = catalog_group(child_evidence=True)
+        del missing["memberCoverageIds"]
+        cases.append(("missing", missing, "memberCoverageIds"))
+        empty = catalog_group(child_evidence=True)
+        empty["memberCoverageIds"] = []
+        cases.append(("empty", empty, "missing coverage"))
+        duplicate = catalog_group(child_evidence=True)
+        duplicate["memberCoverageIds"][1] = duplicate["memberCoverageIds"][0]
+        cases.append(("duplicate", duplicate, "duplicate coverage"))
+        foreign = catalog_group(child_evidence=True)
+        foreign["memberCoverageIds"][0] = catalog_member_id(109, "乙郡", 1)
+        cases.append(("foreign", foreign, "foreign coverage"))
+        malformed = catalog_group(child_evidence=True)
+        malformed["memberCoverageIds"][0] = "[109,甲郡,1]"
+        cases.append(("malformed", malformed, "invalid coverage"))
+        noncanonical = catalog_group(child_evidence=True)
+        noncanonical["memberCoverageIds"][0] = '[109, "甲郡", 1]'
+        cases.append(("noncanonical", noncanonical, "non-canonical coverage"))
+
+        for case_name, group, expected_error in cases:
+            with self.subTest(case_name=case_name):
+                with self.assertRaisesRegex(ValueError, expected_error):
+                    load_administrative_history(
+                        self.write_catalog_history({"catalogId": "fixture-hhs", "groups": [group]})
+                    )
+
+    def test_catalog_reference_rejects_unit_identity_mismatch(self) -> None:
+        """Coverage cannot attest a child whose stored volume, group, or ordinal changes."""
+        cases = []
+        wrong_volume = catalog_group(child_evidence=True)
+        wrong_volume["units"][0]["sourceVolume"] = 110
+        cases.append(("volume", wrong_volume, "sourceVolume"))
+        wrong_group = catalog_group(child_evidence=True)
+        wrong_group["units"][0]["canonicalGroup"] = "乙郡"
+        cases.append(("group", wrong_group, "canonicalGroup"))
+        wrong_ordinal = catalog_group(child_evidence=True)
+        wrong_ordinal["units"][0]["ordinal"] = 2
+        cases.append(("ordinal", wrong_ordinal, "ordinal"))
+
+        for case_name, group, expected_error in cases:
+            with self.subTest(case_name=case_name):
+                with self.assertRaisesRegex(ValueError, expected_error):
+                    load_administrative_history(
+                        self.write_catalog_history({"catalogId": "fixture-hhs", "groups": [group]})
+                    )
 
     def test_catalog_reference_rejects_missing_explicit_evidence(self) -> None:
         """Deriving an evidence quote from sourceName would launder a catalog label as a witness."""
@@ -208,6 +342,7 @@ class HanProvinceModelTest(unittest.TestCase):
                             "sourceGroupName": "甲郡",
                             "canonicalGroup": "甲郡",
                             "groupType": "COMMANDERY",
+                            "memberCoverageIds": [],
                             "units": [],
                         }
                     ],

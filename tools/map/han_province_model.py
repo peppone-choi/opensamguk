@@ -48,6 +48,9 @@ SETTLEMENT_ROLES = frozenset(
         "IMPERIAL_CAPITAL",
     }
 )
+EVIDENCE_FIELDS = frozenset(
+    {"book", "volume", "section", "quote", "grade", "claim", "locationConfidence"}
+)
 
 
 def _require_string(value: object, field: str) -> str:
@@ -101,6 +104,11 @@ class Evidence:
     def from_json(cls, payload: object, label: str) -> "Evidence":
         if not isinstance(payload, dict):
             raise ValueError(f"{label} must be an object")
+        unsupported_fields = set(payload) - EVIDENCE_FIELDS
+        if unsupported_fields:
+            raise ValueError(
+                f"{label} has unsupported evidence field: {sorted(unsupported_fields)[0]}"
+            )
         evidence = cls(
             book=_require_string(payload.get("book"), f"{label}.book"),
             volume=_require_string(payload.get("volume"), f"{label}.volume"),
@@ -219,6 +227,82 @@ def _parse_evidence_list(
     return evidence
 
 
+def _catalog_member_id(volume: int, canonical_group: str, ordinal: int) -> str:
+    return json.dumps([volume, canonical_group, ordinal], ensure_ascii=False, separators=(",", ":"))
+
+
+def _decode_catalog_member_id(member_id: object, label: str) -> tuple[int, str, int]:
+    if not isinstance(member_id, str):
+        raise ValueError(f"{label} has invalid coverage ID")
+    try:
+        decoded = json.loads(member_id)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"{label} has invalid coverage ID") from error
+    if (
+        not isinstance(decoded, list)
+        or len(decoded) != 3
+        or not isinstance(decoded[0], int)
+        or isinstance(decoded[0], bool)
+        or not isinstance(decoded[1], str)
+        or not decoded[1]
+        or not isinstance(decoded[2], int)
+        or isinstance(decoded[2], bool)
+        or decoded[2] < 1
+    ):
+        raise ValueError(f"{label} has invalid coverage ID")
+    identity = (decoded[0], decoded[1], decoded[2])
+    if _catalog_member_id(*identity) != member_id:
+        raise ValueError(f"{label} has non-canonical coverage ID")
+    return identity
+
+
+def _validate_catalog_member_coverage(
+    raw_group: Mapping[str, Any],
+    label: str,
+    volume: int,
+    canonical_group: str,
+    expected_coverage: list[str],
+) -> None:
+    actual_coverage = raw_group.get("memberCoverageIds")
+    if not isinstance(actual_coverage, list):
+        raise ValueError(f"{label}.memberCoverageIds must be an array")
+    seen: set[str] = set()
+    for index, member_id in enumerate(actual_coverage):
+        member_label = f"{label}.memberCoverageIds[{index}]"
+        member_volume, member_group, _ = _decode_catalog_member_id(member_id, member_label)
+        if member_id in seen:
+            raise ValueError(f"{member_label} has duplicate coverage ID")
+        seen.add(member_id)
+        if member_volume != volume or member_group != canonical_group:
+            raise ValueError(f"{member_label} has foreign coverage ID")
+        if member_id not in expected_coverage:
+            raise ValueError(f"{member_label} has unknown coverage ID")
+    missing = next((member_id for member_id in expected_coverage if member_id not in seen), None)
+    if missing is not None:
+        raise ValueError(f"{label} has missing coverage ID: {missing}")
+    if actual_coverage != expected_coverage:
+        raise ValueError(f"{label}.memberCoverageIds must preserve unit insertion order")
+
+
+def _parse_catalog_group_evidence(
+    raw_group: Mapping[str, Any],
+    label: str,
+    prohibited_quotes: set[str],
+) -> tuple[Evidence, ...]:
+    raw_evidence = raw_group.get("evidence")
+    if not isinstance(raw_evidence, list) or len(raw_evidence) != 1:
+        raise ValueError(f"{label}.evidence must contain exactly one record")
+    group_evidence = _parse_evidence_list(raw_group, label, required=True)
+    evidence = group_evidence[0]
+    if evidence.book != "後漢書" or evidence.grade != "STANDARD_HISTORY":
+        raise ValueError(f"{label}.evidence must cite a standard-history 後漢書 witness")
+    if evidence.claim != "group-membership-attested":
+        raise ValueError(f"{label}.evidence.claim must be group-membership-attested")
+    if evidence.quote in prohibited_quotes:
+        raise ValueError(f"{label}.evidence.quote must be a reviewed group passage")
+    return group_evidence
+
+
 def _load_catalog_reference(
     payload: Mapping[str, Any], history_path: Path
 ) -> tuple[list[AdministrativeUnit], list[EffectiveRelation]]:
@@ -245,7 +329,43 @@ def _load_catalog_reference(
         if group_kind not in {"COMMANDERY", "KINGDOM"}:
             raise ValueError(f"{label}.groupType is unsupported: {group_kind}")
         parent_id = f"{group_kind.lower()}:hhs:{source_volume}:{group_index}"
-        group_evidence = _parse_evidence_list(raw_group, label, required=True)
+        raw_children = raw_group.get("units")
+        if not isinstance(raw_children, list):
+            raise ValueError(f"{label}.units must be an array")
+        children: list[tuple[str, str, str]] = []
+        expected_coverage: list[str] = []
+        for child_index, raw_child in enumerate(raw_children, start=1):
+            child_label = f"{label}.units[{child_index - 1}]"
+            if not isinstance(raw_child, dict):
+                raise ValueError(f"{child_label} must be an object")
+            child_volume = _require_int(raw_child.get("sourceVolume"), f"{child_label}.sourceVolume")
+            if child_volume != source_volume:
+                raise ValueError(
+                    f"{child_label}.sourceVolume must match {label}.sourceVolume"
+                )
+            child_group = _require_string(
+                raw_child.get("canonicalGroup"), f"{child_label}.canonicalGroup"
+            )
+            if child_group != canonical_name:
+                raise ValueError(
+                    f"{child_label}.canonicalGroup must match {label}.canonicalGroup"
+                )
+            ordinal = _require_int(raw_child.get("ordinal"), f"{child_label}.ordinal")
+            if ordinal != child_index:
+                raise ValueError(f"{child_label}.ordinal must preserve source insertion order")
+            source_child_name = _require_string(raw_child.get("sourceName"), f"{child_label}.sourceName")
+            subtype = _require_string(raw_child.get("unitType"), f"{child_label}.unitType")
+            child_id = f"county:hhs:{source_volume}:{group_index}:{ordinal}"
+            children.append((child_id, source_child_name, subtype))
+            expected_coverage.append(_catalog_member_id(child_volume, child_group, ordinal))
+        _validate_catalog_member_coverage(
+            raw_group, label, source_volume, canonical_name, expected_coverage
+        )
+        group_evidence = _parse_catalog_group_evidence(
+            raw_group,
+            label,
+            {source_name, canonical_name, parent_id, *(name for _, name, _ in children)},
+        )
         units.append(
             AdministrativeUnit(
                 parent_id,
@@ -257,19 +377,7 @@ def _load_catalog_reference(
                 group_evidence,
             )
         )
-        raw_children = raw_group.get("units")
-        if not isinstance(raw_children, list):
-            raise ValueError(f"{label}.units must be an array")
-        for child_index, raw_child in enumerate(raw_children, start=1):
-            child_label = f"{label}.units[{child_index - 1}]"
-            if not isinstance(raw_child, dict):
-                raise ValueError(f"{child_label} must be an object")
-            ordinal = _require_int(raw_child.get("ordinal"), f"{child_label}.ordinal")
-            if ordinal != child_index:
-                raise ValueError(f"{child_label}.ordinal must preserve source insertion order")
-            source_child_name = _require_string(raw_child.get("sourceName"), f"{child_label}.sourceName")
-            subtype = _require_string(raw_child.get("unitType"), f"{child_label}.unitType")
-            child_id = f"county:hhs:{source_volume}:{group_index}:{ordinal}"
+        for child_id, source_child_name, subtype in children:
             units.append(
                 AdministrativeUnit(
                     child_id,
@@ -278,7 +386,7 @@ def _load_catalog_reference(
                     subtype,
                     "SOURCED",
                     None,
-                    _parse_evidence_list(raw_child, child_label, required=True),
+                    group_evidence,
                 )
             )
             relations.append(EffectiveRelation(child_id, parent_id, 184, None))
