@@ -18,6 +18,7 @@ import {
   fitScale,
   junSpanCells,
   maxScaleForDpr,
+  pinchGesture,
   scaleForSpan,
   screenToCell,
   viewAt,
@@ -540,7 +541,8 @@ export function HanMapCanvas({
   const viewRef = useRef<IsoView | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<{ city: IsoCityOverlay; x: number; y: number; radius: number }[]>([]);
-  const dragRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const dragRef = useRef(new Map<number, { x: number; y: number }>());
+  const dragMovedRef = useRef(false);
   const activeCityRef = useRef<IsoCityOverlay | null>(null);
   const pointerTypeRef = useRef('mouse');
   const [loadedTiles, setLoadedTiles] = useState<HanTiles | null>(suppliedTiles ?? null);
@@ -772,23 +774,57 @@ export function HanMapCanvas({
     if (!point) return;
     const drag = dragRef.current;
     const view = viewRef.current;
-    if (drag && view && loadedTiles) {
+    const previousPoint = drag.get(event.pointerId);
+    if (previousPoint && view && loadedTiles) {
       const canvas = canvasRef.current!;
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / (rect.width || canvas.width || 1);
       const scaleY = canvas.height / (rect.height || canvas.height || 1);
-      const dx = (event.clientX - drag.x) * scaleX;
-      const dy = (event.clientY - drag.y) * scaleY;
-      if (Math.abs(dx) + Math.abs(dy) > 1) drag.moved = true;
       const { width, height } = sizeRef.current;
-      updateView(clampView(
-        { scale: view.scale, ox: view.ox + dx, oy: view.oy + dy },
-        width,
-        height,
-        { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows },
+      const currentPoint = { x: event.clientX, y: event.clientY };
+      const previous = [...drag.entries()].map(([pointerId, pointer]) => (
+        pointerId === event.pointerId ? previousPoint : pointer
       ));
-      drag.x = event.clientX;
-      drag.y = event.clientY;
+      drag.set(event.pointerId, currentPoint);
+      const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
+      if (drag.size === 1) {
+        const dx = (currentPoint.x - previousPoint.x) * scaleX;
+        const dy = (currentPoint.y - previousPoint.y) * scaleY;
+        if (Math.abs(dx) + Math.abs(dy) > 1) dragMovedRef.current = true;
+        updateView(clampView(
+          { scale: view.scale, ox: view.ox + dx, oy: view.oy + dy },
+          width,
+          height,
+          grid,
+        ));
+        return;
+      }
+      if (drag.size === 2) {
+        const current = [...drag.values()];
+        const gesture = pinchGesture(
+          previous as [{ x: number; y: number }, { x: number; y: number }],
+          current as [{ x: number; y: number }, { x: number; y: number }],
+        );
+        const previousAnchor = {
+          x: (previous[0].x + previous[1].x) / 2,
+          y: (previous[0].y + previous[1].y) / 2,
+        };
+        const dx = (gesture.anchor.x - previousAnchor.x) * scaleX;
+        const dy = (gesture.anchor.y - previousAnchor.y) * scaleY;
+        if (Math.abs(dx) + Math.abs(dy) > 1 || gesture.factor !== 1) dragMovedRef.current = true;
+        const anchorX = (gesture.anchor.x - rect.left) * scaleX;
+        const anchorY = (gesture.anchor.y - rect.top) * scaleY;
+        const panned = { scale: view.scale, ox: view.ox + dx, oy: view.oy + dy };
+        const next = zoomAt(
+          panned,
+          anchorX,
+          anchorY,
+          gesture.factor,
+          fitScale(width, height, grid),
+          maxScaleForDpr(sizeRef.current.dpr),
+        );
+        updateView(clampView(next, width, height, grid));
+      }
       return;
     }
     const city = cityAt(point.canvasX, point.canvasY);
@@ -798,11 +834,14 @@ export function HanMapCanvas({
 
   const endPointer = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     const drag = dragRef.current;
-    dragRef.current = null;
+    const moved = dragMovedRef.current;
+    drag.delete(event.pointerId);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    if (drag?.moved) return;
+    if (drag.size > 0) return;
+    dragMovedRef.current = false;
+    if (moved) return;
     const point = eventPoint(event);
     const city = point ? cityAt(point.canvasX, point.canvasY) : null;
     if (city) onCityActivate?.(city, { pointerType: pointerTypeRef.current });
@@ -829,15 +868,18 @@ export function HanMapCanvas({
         onPointerDown={(event) => {
           pointerTypeRef.current = event.pointerType || 'mouse';
           event.currentTarget.setPointerCapture(event.pointerId);
-          dragRef.current = { x: event.clientX, y: event.clientY, moved: false };
+          if (dragRef.current.size === 0) dragMovedRef.current = false;
+          else dragMovedRef.current = true;
+          dragRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
         }}
         onPointerMove={onPointerMove}
         onPointerUp={endPointer}
-        onPointerCancel={() => {
-          dragRef.current = null;
+        onPointerCancel={(event) => {
+          dragRef.current.delete(event.pointerId);
+          if (dragRef.current.size === 0) dragMovedRef.current = false;
         }}
         onPointerLeave={() => {
-          if (!dragRef.current) {
+          if (dragRef.current.size === 0) {
             activeCityRef.current = null;
             onCityHover?.(null);
           }
