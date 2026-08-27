@@ -192,11 +192,19 @@ class JwtTokenProvider @Autowired constructor(
     private fun String.toInstantOrNull(): Instant? = takeIf(String::isNotBlank)?.let(Instant::parse)
 
     override fun contribute(builder: Info.Builder) {
+        val now = clock.instant()
         builder.withDetail(
             "jwt",
             mapOf(
                 "verifier" to "rsa-audience-v1",
                 "publicKeySha256" to (publicKeyFingerprint ?: "unconfigured"),
+                "signingMode" to properties.signingMode.name,
+                "legacyAccessAccepted" to (
+                    legacyKey != null && legacyAccessAcceptUntil?.let(now::isBefore) == true
+                ),
+                "legacyRefreshAccepted" to (
+                    legacyKey != null && legacyRefreshAcceptUntil?.let(now::isBefore) == true
+                ),
             ),
         )
     }

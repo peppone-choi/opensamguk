@@ -123,6 +123,9 @@ class JwtTokenProviderTest {
         val jwt = info.build().details["jwt"] as Map<*, *>
         assertEquals("rsa-audience-v1", jwt["verifier"])
         assertEquals(GatewayJwtKeys.rsaPublicKeyFingerprint(keys.public), jwt["publicKeySha256"])
+        assertEquals("RS256", jwt["signingMode"])
+        assertEquals(false, jwt["legacyAccessAccepted"])
+        assertEquals(false, jwt["legacyRefreshAccepted"])
     }
 
     @Test
@@ -134,10 +137,13 @@ class JwtTokenProviderTest {
 
         val jwt = info.build().details["jwt"] as Map<*, *>
         assertEquals("unconfigured", jwt["publicKeySha256"])
+        assertEquals("LEGACY_HS256", jwt["signingMode"])
+        assertEquals(true, jwt["legacyAccessAccepted"])
+        assertEquals(true, jwt["legacyRefreshAccepted"])
     }
 
     @Test
-    fun `RS256 with retained legacy fallback (current production shape) boots and reports the fingerprint`() {
+    fun `RS256 with retained legacy fallback reports only current safe rollout state`() {
         // OPENSAM-220 팔로업: 2026-08-23 프로덕션 형상 — signingMode=RS256, JWT_LEGACY_SECRET/accept-until
         // 은 아직 지우지 않았다(전환창 종료 전). 이 조합에서 기동과 InfoContributor 출력이 둘 다 안전한지 고정한다.
         val provider = provider(rsaProperties().apply { includeLegacyFallback() }, now)
@@ -146,8 +152,34 @@ class JwtTokenProviderTest {
         provider.contribute(info)
 
         val jwt = info.build().details["jwt"] as Map<*, *>
-        assertEquals("rsa-audience-v1", jwt["verifier"])
-        assertEquals(GatewayJwtKeys.rsaPublicKeyFingerprint(keys.public), jwt["publicKeySha256"])
+        assertEquals(
+            setOf(
+                "verifier",
+                "publicKeySha256",
+                "signingMode",
+                "legacyAccessAccepted",
+                "legacyRefreshAccepted",
+            ),
+            jwt.keys,
+        )
+        assertEquals("RS256", jwt["signingMode"])
+        assertEquals(true, jwt["legacyAccessAccepted"])
+        assertEquals(true, jwt["legacyRefreshAccepted"])
+    }
+
+    @Test
+    fun `actuator legacy acceptance reflects the injected clock at each cutoff`() {
+        val provider = provider(
+            rsaProperties().apply { includeLegacyFallback() },
+            Instant.parse("2026-08-28T00:15:00Z"),
+        )
+        val info = Info.Builder()
+
+        provider.contribute(info)
+
+        val jwt = info.build().details["jwt"] as Map<*, *>
+        assertEquals(false, jwt["legacyAccessAccepted"])
+        assertEquals(true, jwt["legacyRefreshAccepted"])
     }
 
     private fun provider(properties: GatewayJwtProperties, instant: Instant): JwtTokenProvider =
