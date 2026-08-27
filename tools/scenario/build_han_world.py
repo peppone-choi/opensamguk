@@ -16,7 +16,7 @@
 
     python3 tools/scenario/build_han_world.py
     python3 tools/scenario/build_han_world.py --check   # 손편집 드리프트 검사
-    python3 tools/scenario/build_han_world.py --check-gate  # HanGateIndex.kt만 검사 (CI, GH #534)
+    python3 tools/scenario/build_han_world.py --check-gate  # 현재 han.json ID 기준 게이트 검사 (CI)
 
 --- 정한 규칙 (전부 파일에서 유도했다) -----------------------------------------
 level  · EXTERNAL_PLACE 治所 = '이'(4). che 가 남만·산월·오환을 그렇게 두는 것과 같다.
@@ -489,13 +489,42 @@ def build_gate_skeleton() -> dict:
     }
 
 
+def build_committed_world_gate() -> tuple[str, dict[int, list[str]], list[str]]:
+    """커밋된 han.json의 city id·郡·州를 기준으로 게이트 인덱스를 만든다.
+
+    전체 월드 3종을 다시 구울 때는 ``build_gate(sk)``가 새 정렬을 함께 적용한다.
+    반면 게이트만 검사할 때 새 CANON_105 정렬을 먼저 적용하면 아직 재생성하지 않은
+    HanCityConst/han.json과 숫자 id가 어긋난다. 따라서 독립 검사는 실제 런타임 월드의
+    id와 소속을 정본으로 삼는다.
+    """
+    tiles = json.loads(TILES.read_text(encoding="utf-8"))
+    world = json.loads(OUT_JSON.read_text(encoding="utf-8"))
+    jun_by_ch = {j["nameCh"]: i for i, j in enumerate(tiles["juns"])}
+    region_by_jun = {c["meta"]["junCh"]: c["meta"]["ju"] for c in world["cities"]}
+
+    unknown = sorted(set(region_by_jun) - set(jun_by_ch))
+    if unknown:
+        raise AssertionError(f"han.json에 han-tiles.json에 없는 郡이 있다: {unknown}")
+
+    region_of = [region_by_jun.get(j["nameCh"]) for j in tiles["juns"]]
+    by_jun, missing = gate_index(tiles, region_of)
+    index = {
+        c["id"]: by_jun[jun_by_ch[c["meta"]["junCh"]]]
+        for c in world["cities"]
+        if by_jun.get(jun_by_ch[c["meta"]["junCh"]])
+    }
+    index = dict(sorted(index.items()))
+    return kotlin_gate(index), index, missing
+
+
 def build_gate(sk: dict | None = None) -> tuple[str, dict[int, list[str]], list[str]]:
     """HanGateIndex.kt 문자열 + city-id 게이트 인덱스 + 매칭 안 된 게이트 키.
 
-    TILES·CANON_105(tools/map/build_junguozhi.py)·UNITS 만 읽는다 — 전부 tracked 라
-    CI 체크아웃에 항상 있다(`--check-gate` 가 여기에 선다, GH #534).
+    ``sk``가 있으면 전체 월드 생성 중 새 city id 정렬을 사용한다. 없으면 커밋된
+    han.json의 런타임 city id를 사용한다. 두 경로의 id 축을 섞지 않는다.
     """
-    sk = sk or build_gate_skeleton()
+    if sk is None:
+        return build_committed_world_gate()
     by_jun, missing = gate_index(sk["tiles"], sk["region_of"])
     # 縣은 소속 郡의 게이트 키를 그대로 물려받는다.
     index = {sk["id_of"][ci]: by_jun[jn] for ci, jn in sk["order"] if by_jun.get(jn)}
@@ -774,12 +803,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--check-gate", action="store_true",
-                     help="HanGateIndex.kt 드리프트만 검사한다. TILES·CANON_105·UNITS(전부 "
-                          "tracked)만 있으면 되고 JUNGUOZHI·CHE(둘 다 gitignored, ADR-LITE-039)"
-                          "는 필요 없다 — CI 가 부르는 경로(GH #534).")
+                     help="현재 han.json city id 기준으로 HanGateIndex.kt 드리프트만 검사한다. "
+                          "TILES·han.json·UNITS(전부 tracked)만 필요하고 JUNGUOZHI·CHE(둘 다 "
+                          "gitignored, ADR-LITE-039)는 필요 없다 — CI가 부르는 경로.")
     args = ap.parse_args()
     if args.check_gate:
-        for src in (TILES, CANON_SRC, UNITS):
+        for src in (TILES, OUT_JSON, UNITS):
             if not src.exists():
                 sys.exit(f"{src.relative_to(ROOT)} 가 없다.")
         gate_kt, _, _ = build_gate()
