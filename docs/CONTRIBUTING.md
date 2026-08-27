@@ -46,7 +46,7 @@ Jira를 직접 확인하지 못했다면 `Jira 상태: UNKNOWN`이라고 씁니�
 | 턴·명령 판정 | `docs/user/gameplay-guide.md` |
 | 관리자 화면/API | `docs/admin/` 전체의 관련 표 |
 | 배포·서버 생명주기 | `README.md`, `docs/admin/server-lifecycle.md`, `docs/admin/operations-and-recovery.md` |
-| 제품 정본·ADR | `docs/design/README.md`, `docs/design/roadmap.md`, `docs/design/v1-v2-boundary.md` |
+| 제품 정본·ADR | `docs/design/README.md`, `docs/design/roadmap.md`, `docs/design/architecture-boundary.md` |
 
 ## 최소 검증
 

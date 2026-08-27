@@ -79,6 +79,27 @@ Each phase = one cycle **spec → plan → adversarial review → execute → ga
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
   ```
 
+### Living documentation is part of implementation
+
+Documentation is not a tail phase. Every task must assess documentation impact before completion
+and update the affected source of truth in the same issue and PR.
+
+- `README.md` is the public front door. Keep it understandable without private conversation or
+  internal planning context; describe only verified current behavior and clearly labeled direction.
+- `V1` and `V2` are internal code, migration, and regression identifiers, not player-facing product
+  editions. Public titles and user documentation must say existing, current, or new behavior instead.
+- `docs/user/**` owns player rules, tutorials, help, and recovery guidance.
+- `docs/admin/**` owns operations, access controls, reset, backup, restore, and incident procedures.
+- `docs/design/**` and approved specs own product direction, domain language, and release gates.
+- `CLAUDE.md` changes only when a durable product, architecture, or verification invariant changes.
+- `AGENTS.md` changes only when repository structure, workflow, required verification, or document
+  ownership changes.
+- Module and tool `README.md` files change with their inputs, outputs, commands, or ownership.
+
+Do not churn unrelated documents. If no documentation is affected, record `docs-impact: none` with
+the reason in the task report. A task is incomplete when its implementation and documentation
+disagree, or when planned behavior is presented as already shipped.
+
 **Golden capture harness — `tools/php-golden/`:** the PROVEN Docker capture (MariaDB 11.4 + `php:8.3-cli`, scenario `1010` = 174 generals, NOT empty scenario_0). Quirks: `_boot.php` binds via `DB::db()`; `j_install.php` is called twice; install is **not** idempotent (fresh DB per run); dumps must be byte-identical across two runs.
 
 ## Repo conventions
