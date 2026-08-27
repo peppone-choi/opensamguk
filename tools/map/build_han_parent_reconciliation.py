@@ -166,6 +166,25 @@ def _require_equal(actual: object, expected: object, label: str) -> None:
         raise ValueError(f"input contract mismatch for {label}: {actual!r} != {expected!r}")
 
 
+def _require_exact_membership(
+    actual: object,
+    expected: set[object],
+    label: str,
+) -> None:
+    if not isinstance(actual, list):
+        raise ValueError(f"contract membership mismatch for {label}: expected an array")
+    try:
+        actual_members = set(actual)
+    except TypeError as error:
+        raise ValueError(
+            f"contract membership mismatch for {label}: members must be scalar"
+        ) from error
+    if len(actual) != len(actual_members) or actual_members != expected:
+        raise ValueError(
+            f"contract membership mismatch for {label}: {actual!r} != {expected!r}"
+        )
+
+
 def _require_closed_enum(
     rows: object,
     field: str,
@@ -271,9 +290,9 @@ def _validate_review_chain(
         "validation contract identity",
     )
     _require_equal(history.get("schemaVersion"), 1, "administrative history schemaVersion")
-    _require_equal(
+    _require_exact_membership(
         history.get("supportedYears"),
-        [184, 190, 200, 208, 220, 234, 263, 280],
+        {184, 190, 200, 208, 220, 234, 263, 280},
         "administrative history supported year contract",
     )
     _require_equal(
@@ -304,9 +323,9 @@ def _validate_review_chain(
         raise ValueError("every route-node selection row must be approved")
     if adjudications.get("status") != "REVIEWED":
         raise ValueError("location adjudications must be reviewed")
-    _require_equal(
+    _require_exact_membership(
         contract.get("allowedNodeClasses"),
-        ["COUNTY_NODE", "DAO_NODE", "MARQUISATE_NODE", "TOWN_NODE"],
+        {"COUNTY_NODE", "DAO_NODE", "MARQUISATE_NODE", "TOWN_NODE"},
         "validation contract allowed node classes",
     )
     _require_equal(contract.get("expectedSelectionCount"), 780, "validation contract selection count")

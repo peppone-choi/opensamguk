@@ -149,6 +149,33 @@ class HanParentReconciliationTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "contract|enum|year|schema|identity"):
                     self.module.build_ledger(documents, self.input_records)
 
+    def test_contract_membership_arrays_ignore_order_but_reject_duplicates(self):
+        membership_arrays = [
+            (
+                "data/map/han-administrative-history.json",
+                "supportedYears",
+            ),
+            (
+                "data/curated/han/route-node-validation-contract-v1.json",
+                "allowedNodeClasses",
+            ),
+        ]
+        for path, field in membership_arrays:
+            with self.subTest(path=path, field=field, mutation="permuted"):
+                documents = copy.deepcopy(self.documents)
+                documents[path][field] = list(reversed(documents[path][field]))
+                self.assertEqual(
+                    self.ledger,
+                    self.module.build_ledger(documents, self.input_records),
+                )
+
+            with self.subTest(path=path, field=field, mutation="duplicate"):
+                documents = copy.deepcopy(self.documents)
+                values = documents[path][field]
+                documents[path][field] = values[:-1] + [values[0]]
+                with self.assertRaisesRegex(ValueError, "contract membership mismatch"):
+                    self.module.build_ledger(documents, self.input_records)
+
     def test_every_embedded_hash_edge_between_pinned_inputs_fails_closed_on_drift(self):
         edges = [
             ("data/curated/han/route-node-review-policy-v1.json", ("inputs", "coordinateOverlaySha256")),
