@@ -41,6 +41,9 @@ if (!HTMLElement.prototype.setPointerCapture) {
 if (!HTMLElement.prototype.releasePointerCapture) {
     HTMLElement.prototype.releasePointerCapture = function releasePointerCapture(): void {};
 }
+if (!HTMLElement.prototype.hasPointerCapture) {
+    HTMLElement.prototype.hasPointerCapture = function hasPointerCapture(): boolean { return false; };
+}
 
 // Node 25 는 글로벌 localStorage 를 자체 노출하는데 `--localstorage-file` 미설정 시 메서드 없는
 // 스텁이라 jsdom 의 Storage 를 가린다 — 메모리 Storage 폴리필로 교체(MapViewer 토글 영속 테스트용).
