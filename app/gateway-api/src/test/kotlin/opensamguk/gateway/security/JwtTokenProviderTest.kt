@@ -169,17 +169,29 @@ class JwtTokenProviderTest {
 
     @Test
     fun `actuator legacy acceptance reflects the injected clock at each cutoff`() {
-        val provider = provider(
+        val accessCutoffProvider = provider(
             rsaProperties().apply { includeLegacyFallback() },
             Instant.parse("2026-08-28T00:15:00Z"),
         )
-        val info = Info.Builder()
+        val accessCutoffInfo = Info.Builder()
 
-        provider.contribute(info)
+        accessCutoffProvider.contribute(accessCutoffInfo)
 
-        val jwt = info.build().details["jwt"] as Map<*, *>
-        assertEquals(false, jwt["legacyAccessAccepted"])
-        assertEquals(true, jwt["legacyRefreshAccepted"])
+        val accessCutoffJwt = accessCutoffInfo.build().details["jwt"] as Map<*, *>
+        assertEquals(false, accessCutoffJwt["legacyAccessAccepted"])
+        assertEquals(true, accessCutoffJwt["legacyRefreshAccepted"])
+
+        val refreshCutoffProvider = provider(
+            rsaProperties().apply { includeLegacyFallback() },
+            Instant.parse("2026-09-04T00:00:00Z"),
+        )
+        val refreshCutoffInfo = Info.Builder()
+
+        refreshCutoffProvider.contribute(refreshCutoffInfo)
+
+        val refreshCutoffJwt = refreshCutoffInfo.build().details["jwt"] as Map<*, *>
+        assertEquals(false, refreshCutoffJwt["legacyAccessAccepted"])
+        assertEquals(false, refreshCutoffJwt["legacyRefreshAccepted"])
     }
 
     private fun provider(properties: GatewayJwtProperties, instant: Instant): JwtTokenProvider =
