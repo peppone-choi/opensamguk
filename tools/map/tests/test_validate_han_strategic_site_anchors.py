@@ -182,19 +182,28 @@ class StrategicSiteAnchorReviewTest(unittest.TestCase):
     def test_no_forbidden_approval_identity_or_administrative_place_can_enter(self):
         forbidden = [
             ("physicalPlaceId", "chgis:v6:cnty:70623"),
+            ("physical_place_id", 70623),
             ("administrativeUnitId", "hhs:109:漢中郡:001"),
+            ("administrative_unit_id", 109001),
+            ("placeId", 70623),
             ("nearestCityId", "70623"),
+            ("nearest_city_id", 70623),
             ("rasterOwner", "county:70623"),
+            ("raster_owner_id", 70623),
             ("cityArrayIndex", 10),
+            ("city_index", 10),
             ("junArrayIndex", 2),
             ("runtimeId", 99),
+            ("runtime_identity", 99),
+            ("route_node_key", 99),
             ("siteName", "定軍山"),
             ("displayName", "Dingjunshan"),
             ("nameCh", "定軍山"),
+            ("display_label", "Dingjunshan"),
         ]
         for field, value in forbidden:
             with self.subTest(field=field):
-                with self.assertRaisesRegex(ValueError, "forbidden"):
+                with self.assertRaisesRegex(ValueError, "undeclared|forbidden"):
                     self.validate_copy(
                         lambda ledger, _documents, _records, field=field, value=value: ledger[
                             "reviewRows"
@@ -207,6 +216,172 @@ class StrategicSiteAnchorReviewTest(unittest.TestCase):
                     {"conflictId": "bad", "kind": "OTHER", "reason": "pref:220:bad"}
                 )
             )
+
+    def test_every_ledger_object_layer_rejects_undeclared_keys(self):
+        mutations = [
+            (
+                "ledger",
+                lambda ledger, _documents, _records: ledger.update(metadata={}),
+            ),
+            (
+                "reference raster",
+                lambda ledger, _documents, _records: ledger["referenceRaster"].update(year=220),
+            ),
+            (
+                "projection",
+                lambda ledger, _documents, _records: ledger["referenceRaster"][
+                    "projection"
+                ].update(epsg=4326),
+            ),
+            (
+                "tracked input record",
+                lambda ledger, _documents, _records: ledger["trackedInputs"][
+                    "data/map/han-tiles.json"
+                ].update(contentHash="0" * 64),
+            ),
+            (
+                "path evidence source",
+                lambda ledger, _documents, _records: ledger["evidenceSources"][0].update(
+                    digest="0" * 64
+                ),
+            ),
+            (
+                "review row",
+                lambda ledger, _documents, _records: ledger["reviewRows"][0].update(
+                    physical_place_id=70623
+                ),
+            ),
+            (
+                "candidate",
+                lambda ledger, _documents, _records: ledger["reviewRows"][0]["candidates"][
+                    0
+                ].update(placeId=70623),
+            ),
+            (
+                "conflict",
+                lambda ledger, _documents, _records: ledger["reviewRows"][2]["conflicts"][
+                    0
+                ].update(administrative_unit_id=109001),
+            ),
+            (
+                "rejected claim",
+                lambda ledger, _documents, _records: ledger["reviewRows"][1][
+                    "rejectedClaims"
+                ][0].update(contentHash="0" * 64),
+            ),
+            (
+                "rejection",
+                lambda ledger, _documents, _records: (
+                    ledger["reviewRows"][0].update(
+                        reviewState="REJECTED",
+                        candidates=[],
+                        conflicts=[],
+                        rejectedClaims=[],
+                        rejection={
+                            "reason": "Review rejected this anchor.",
+                            "evidenceSourceIds": ["mian-county-locality"],
+                            "placeId": 70623,
+                        },
+                    ),
+                    ledger["reviewRows"][0].pop("selectedCandidateId"),
+                ),
+            ),
+        ]
+        for label, mutate in mutations:
+            with self.subTest(label=label):
+                with self.assertRaisesRegex(ValueError, "undeclared"):
+                    self.validate_copy(mutate)
+
+    def test_evidence_roles_fail_closed_for_candidate_use_and_approval(self):
+        self.assertEqual(
+            {
+                "TRACKED_COORDINATE_CROSSWALK": "SECONDARY_COORDINATE",
+                "TRACKED_PROJECTION_WITNESS": "PROJECTION_CONFLICT_WITNESS",
+                "OFFICIAL_LOCALITY": "AUTHORITATIVE_LOCALITY",
+                "OFFICIAL_GAZETTEER": "HISTORICAL_GEOGRAPHY",
+                "OFFICIAL_PLAN": "HISTORICAL_GEOGRAPHY",
+                "ACADEMIC_DISPUTE": "HISTORICAL_GEOGRAPHY",
+            },
+            self.module.EVIDENCE_ROLE_BY_KIND,
+        )
+        for kind in ("UNKNOWN", "SECONDARY_COORDINATE"):
+            with self.subTest(corrupt_kind=kind):
+                with self.assertRaisesRegex(ValueError, "kind mismatch"):
+                    self.validate_copy(
+                        lambda ledger, _documents, _records, kind=kind: ledger[
+                            "evidenceSources"
+                        ][0].update(kind=kind)
+                    )
+
+        cases = [
+            (
+                "official locality used as coordinate evidence",
+                lambda ledger, _documents, _records: ledger["reviewRows"][0]["candidates"][
+                    0
+                ].update(coordinateEvidenceSourceIds=["mian-county-locality"]),
+                "coordinate-capable",
+            ),
+            (
+                "projection witness used as coordinate evidence",
+                lambda ledger, _documents, _records: ledger["reviewRows"][4]["candidates"][
+                    1
+                ].update(coordinateEvidenceSourceIds=["projection-generator-witness"]),
+                "coordinate-capable",
+            ),
+            (
+                "secondary coordinate source used as placement evidence",
+                lambda ledger, _documents, _records: ledger["reviewRows"][0]["candidates"][
+                    0
+                ].update(placementEvidenceSourceIds=["tracked-coordinate-crosswalk"]),
+                "placement-capable",
+            ),
+            (
+                "projection witness used as placement evidence",
+                lambda ledger, _documents, _records: ledger["reviewRows"][4]["candidates"][
+                    1
+                ].update(placementEvidenceSourceIds=["projection-generator-witness"]),
+                "placement-capable",
+            ),
+            (
+                "approved candidate with wrong coordinate role",
+                lambda ledger, _documents, _records: (
+                    ledger["reviewRows"][0].update(
+                        reviewState="APPROVED",
+                        reviewerId="reviewer:han-sites-1",
+                        reviewedDate="2026-08-28",
+                    ),
+                    ledger["reviewRows"][0]["candidates"][0].update(
+                        coordinateEvidenceSourceIds=["mian-county-locality"]
+                    ),
+                ),
+                "coordinate-capable",
+            ),
+        ]
+        for label, mutate, message in cases:
+            with self.subTest(label=label):
+                with self.assertRaisesRegex(ValueError, message):
+                    self.validate_copy(mutate)
+
+    def test_official_url_sources_are_reference_only_exact_objects(self):
+        url_source_index = next(
+            index
+            for index, source in enumerate(self.ledger["evidenceSources"])
+            if "url" in source
+        )
+        for field, value in (
+            ("sha256", "0" * 64),
+            ("contentHash", "0" * 64),
+            ("digest", "0" * 64),
+            ("fetchedContent", "cached"),
+        ):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, "undeclared"):
+                    self.validate_copy(
+                        lambda ledger, _documents, _records,
+                        field=field, value=value: ledger["evidenceSources"][
+                            url_source_index
+                        ].update({field: value})
+                    )
 
     def test_tracked_hashes_schema_ids_and_projection_contract_fail_closed(self):
         cases = [

@@ -52,40 +52,62 @@ EXPECTED_ARRAY_SEMANTICS = {
     "rejectedClaims": "REVIEW_ORDERED",
 }
 REVIEW_STATES = {"PROPOSED", "BLOCKED", "REJECTED", "APPROVED"}
-SOURCE_KINDS = {
-    "TRACKED_COORDINATE_CROSSWALK",
-    "TRACKED_PROJECTION_WITNESS",
-    "OFFICIAL_LOCALITY",
-    "OFFICIAL_GAZETTEER",
-    "OFFICIAL_PLAN",
-    "ACADEMIC_DISPUTE",
+EVIDENCE_ROLE_BY_KIND = {
+    "TRACKED_COORDINATE_CROSSWALK": "SECONDARY_COORDINATE",
+    "TRACKED_PROJECTION_WITNESS": "PROJECTION_CONFLICT_WITNESS",
+    "OFFICIAL_LOCALITY": "AUTHORITATIVE_LOCALITY",
+    "OFFICIAL_GAZETTEER": "HISTORICAL_GEOGRAPHY",
+    "OFFICIAL_PLAN": "HISTORICAL_GEOGRAPHY",
+    "ACADEMIC_DISPUTE": "HISTORICAL_GEOGRAPHY",
 }
+SOURCE_KINDS = set(EVIDENCE_ROLE_BY_KIND)
+EVIDENCE_ROLES = set(EVIDENCE_ROLE_BY_KIND.values())
+COORDINATE_EVIDENCE_ROLES = {"SECONDARY_COORDINATE"}
+PLACEMENT_EVIDENCE_ROLES = {"AUTHORITATIVE_LOCALITY", "HISTORICAL_GEOGRAPHY"}
 CELL_BASES = {"COMMITTED_PROJECTION", "FULL_PRECISION_GENERATOR_WITNESS"}
 CONFLICT_KINDS = {"COMPETING_LOCALITY_TRADITIONS", "PROJECTION_SSO_T_BOUNDARY"}
 REJECTED_DISPOSITIONS = {"REJECTED_MALFORMED_INCONSISTENT_COORDINATE"}
-FORBIDDEN_KEYS = {
-    "name",
-    "sitename",
-    "physicalplaceid",
-    "physicalplaceref",
-    "administrativeunitid",
-    "nearestcity",
-    "nearestcityid",
-    "rasterowner",
-    "owner",
-    "ownerid",
-    "cityid",
-    "cityarrayindex",
-    "junarrayindex",
-    "runtimeid",
-    "numericcityid",
-    "hancityconst",
-    "hangateindex",
-    "routenodekey",
-}
-FORBIDDEN_KEY_MARKERS = ("name", "nearest", "owner", "runtime", "index")
-ALLOWED_CONTROL_KEYS = {"mandatoryruntimeseed"}
 FORBIDDEN_VALUE_MARKERS = ("chgis:v6:cnty:", "chgis:v6:pref:", "pref:")
+
+LEDGER_KEYS = {
+    "schemaVersion",
+    "ledgerId",
+    "referenceRaster",
+    "arraySemantics",
+    "trackedInputs",
+    "evidenceSources",
+    "reviewRows",
+}
+REFERENCE_RASTER_KEYS = {"cols", "rows", "projection"}
+TRACKED_INPUT_RECORD_KEYS = {"path", "sha256"}
+PATH_SOURCE_KEYS = {"sourceId", "kind", "path", "claim"}
+URL_SOURCE_KEYS = {"sourceId", "kind", "url", "claim"}
+CANDIDATE_KEYS = {
+    "candidateId",
+    "coordinate",
+    "rasterCell",
+    "cellBasis",
+    "coordinateEvidenceSourceIds",
+    "placementEvidenceSourceIds",
+}
+CONFLICT_KEYS = {"conflictId", "kind", "evidenceSourceIds", "reason"}
+REJECTED_CLAIM_KEYS = {
+    "claimId",
+    "rawCoordinateText",
+    "disposition",
+    "evidenceSourceIds",
+    "reason",
+}
+REJECTION_KEYS = {"reason", "evidenceSourceIds"}
+ROW_COMMON_KEYS = {
+    "siteId",
+    "reviewState",
+    "mandatoryRuntimeSeed",
+    "candidates",
+    "conflicts",
+    "rejectedClaims",
+}
+LINEAGE_SITE_IDS = {"site:yanganguan", "site:yangpingguan"}
 
 EXPECTED_SOURCES = {
     "tracked-coordinate-crosswalk": (
@@ -263,6 +285,24 @@ def _require_nonempty_string(value: object, label: str) -> str:
     return value
 
 
+def _require_exact_keys(
+    value: object,
+    required: set[str],
+    label: str,
+    optional: set[str] | None = None,
+) -> dict:
+    if not isinstance(value, dict):
+        raise ValueError(f"{label} must be an object")
+    optional_keys = set() if optional is None else optional
+    undeclared = set(value) - required - optional_keys
+    if undeclared:
+        raise ValueError(f"{label} has undeclared keys: {sorted(undeclared)}")
+    missing = required - set(value)
+    if missing:
+        raise ValueError(f"{label} is missing required keys: {sorted(missing)}")
+    return value
+
+
 def _require_unique_strings(values: object, label: str, known: set[str]) -> list[str]:
     if not isinstance(values, list) or not values:
         raise ValueError(f"{label} must be a non-empty source array")
@@ -276,19 +316,13 @@ def _require_unique_strings(values: object, label: str, known: set[str]) -> list
     return values
 
 
-def _scan_forbidden(value: object, path: str = "ledger") -> None:
+def _scan_forbidden_values(value: object, path: str = "ledger") -> None:
     if isinstance(value, dict):
         for key, nested in value.items():
-            normalized = key.casefold()
-            if normalized in FORBIDDEN_KEYS or (
-                normalized not in ALLOWED_CONTROL_KEYS
-                and any(marker in normalized for marker in FORBIDDEN_KEY_MARKERS)
-            ):
-                raise ValueError(f"forbidden approval identity field: {path}.{key}")
-            _scan_forbidden(nested, f"{path}.{key}")
+            _scan_forbidden_values(nested, f"{path}.{key}")
     elif isinstance(value, list):
         for index, nested in enumerate(value):
-            _scan_forbidden(nested, f"{path}[{index}]")
+            _scan_forbidden_values(nested, f"{path}[{index}]")
     elif isinstance(value, str) and any(marker in value.casefold() for marker in FORBIDDEN_VALUE_MARKERS):
         raise ValueError(f"forbidden administrative physical-place value: {path}")
 
@@ -300,15 +334,20 @@ def _validate_tracked_inputs(ledger: dict, records: dict[str, dict[str, str]]) -
     if set(records) != set(INPUT_PATHS):
         raise ValueError("loaded input path set mismatch")
     for path in INPUT_PATHS:
-        record = records.get(path)
-        if not isinstance(record, dict) or record.get("path") != path:
+        tracked_record = _require_exact_keys(
+            tracked.get(path), TRACKED_INPUT_RECORD_KEYS, f"trackedInputs[{path!r}]"
+        )
+        record = _require_exact_keys(
+            records.get(path), TRACKED_INPUT_RECORD_KEYS, f"loadedInputs[{path!r}]"
+        )
+        if record.get("path") != path:
             raise ValueError(f"tracked input identity mismatch: {path}")
         digest = record.get("sha256")
         if not isinstance(digest, str) or len(digest) != 64 or any(
             character not in "0123456789abcdef" for character in digest
         ):
             raise ValueError(f"tracked input hash is invalid: {path}")
-        if tracked[path] != record:
+        if tracked_record != record:
             raise ValueError(f"tracked input hash mismatch: {path}")
 
 
@@ -332,7 +371,12 @@ def _validate_projection(ledger: dict, documents: dict[str, object]) -> tuple[di
         raise ValueError("raster dimensions/reference year mismatch")
     if meta.get("projection") != EXPECTED_PROJECTION:
         raise ValueError("projection constants mismatch")
-    reference = ledger.get("referenceRaster")
+    reference = _require_exact_keys(
+        ledger.get("referenceRaster"), REFERENCE_RASTER_KEYS, "referenceRaster"
+    )
+    _require_exact_keys(
+        reference.get("projection"), set(EXPECTED_PROJECTION), "referenceRaster.projection"
+    )
     if reference != {"cols": 768, "rows": 669, "projection": EXPECTED_PROJECTION}:
         raise ValueError("ledger projection contract mismatch")
     terrain = tiles.get("terrain")
@@ -344,6 +388,9 @@ def _validate_projection(ledger: dict, documents: dict[str, object]) -> tuple[di
 
 
 def _validate_sources(ledger: dict) -> dict[str, dict]:
+    _require_exact_keys(
+        ledger.get("arraySemantics"), set(EXPECTED_ARRAY_SEMANTICS), "arraySemantics"
+    )
     if ledger.get("arraySemantics") != EXPECTED_ARRAY_SEMANTICS:
         raise ValueError("array semantics contract mismatch")
     sources = ledger.get("evidenceSources")
@@ -356,29 +403,31 @@ def _validate_sources(ledger: dict) -> dict[str, dict]:
         raise ValueError("evidence source identity set mismatch")
     by_id = {source["sourceId"]: source for source in sources}
     for source_id, (expected_kind, locator_key, expected_locator) in EXPECTED_SOURCES.items():
-        source = by_id[source_id]
+        source = _require_exact_keys(
+            by_id[source_id],
+            PATH_SOURCE_KEYS if locator_key == "path" else URL_SOURCE_KEYS,
+            f"evidenceSources[{source_id!r}]",
+        )
         if source.get("kind") not in SOURCE_KINDS or source.get("kind") != expected_kind:
             raise ValueError(f"evidence source kind mismatch: {source_id}")
+        role = EVIDENCE_ROLE_BY_KIND[source["kind"]]
+        if role not in EVIDENCE_ROLES:
+            raise ValueError(f"evidence source role mismatch: {source_id}")
         _require_nonempty_string(source.get("claim"), f"evidence source {source_id}.claim")
         if source.get(locator_key) != expected_locator:
             raise ValueError(f"evidence source locator mismatch: {source_id}")
-        other_locator = "url" if locator_key == "path" else "path"
-        if other_locator in source:
-            raise ValueError(f"evidence source has conflicting locator: {source_id}")
-        if locator_key == "url" and "sha256" in source:
-            raise ValueError(f"URL claim reference must not be hash pinned: {source_id}")
     return by_id
 
 
 def _validate_candidate(
     candidate: object,
     label: str,
-    source_ids: set[str],
+    sources_by_id: dict[str, dict],
     projection: dict,
     terrain: list[str],
 ) -> dict:
-    if not isinstance(candidate, dict):
-        raise ValueError(f"{label} must be an object")
+    candidate = _require_exact_keys(candidate, CANDIDATE_KEYS, label)
+    source_ids = set(sources_by_id)
     _require_nonempty_string(candidate.get("candidateId"), f"{label}.candidateId")
     coordinate = candidate.get("coordinate")
     if not isinstance(coordinate, list) or len(coordinate) != 2 or any(
@@ -406,16 +455,34 @@ def _validate_candidate(
         ]
         if cell != recomputed:
             raise ValueError(f"{label}.rasterCell does not recompute from committed projection")
-    _require_unique_strings(
+    coordinate_source_ids = _require_unique_strings(
         candidate.get("coordinateEvidenceSourceIds"),
         f"{label}.coordinateEvidenceSourceIds",
         source_ids,
     )
-    _require_unique_strings(
+    if any(
+        EVIDENCE_ROLE_BY_KIND[sources_by_id[source_id]["kind"]]
+        not in COORDINATE_EVIDENCE_ROLES
+        for source_id in coordinate_source_ids
+    ):
+        raise ValueError(
+            f"{label}.coordinateEvidenceSourceIds must reference coordinate-capable "
+            "secondary-coordinate evidence"
+        )
+    placement_source_ids = _require_unique_strings(
         candidate.get("placementEvidenceSourceIds"),
         f"{label}.placementEvidenceSourceIds",
         source_ids,
     )
+    if any(
+        EVIDENCE_ROLE_BY_KIND[sources_by_id[source_id]["kind"]]
+        not in PLACEMENT_EVIDENCE_ROLES
+        for source_id in placement_source_ids
+    ):
+        raise ValueError(
+            f"{label}.placementEvidenceSourceIds must reference placement-capable "
+            "authoritative locality or historical-geography evidence"
+        )
     return candidate
 
 
@@ -425,7 +492,10 @@ def _validate_conflicts(conflicts: object, label: str, source_ids: set[str]) -> 
     conflict_ids = [conflict.get("conflictId") for conflict in conflicts]
     if len(conflict_ids) != len(set(conflict_ids)):
         raise ValueError(f"duplicate conflictId in {label}")
-    for conflict in conflicts:
+    for conflict_index, conflict in enumerate(conflicts):
+        conflict = _require_exact_keys(
+            conflict, CONFLICT_KEYS, f"{label}[{conflict_index}]"
+        )
         _require_nonempty_string(conflict.get("conflictId"), f"{label}.conflictId")
         if conflict.get("kind") not in CONFLICT_KINDS:
             raise ValueError(f"{label}.kind closed enum mismatch")
@@ -442,7 +512,10 @@ def _validate_rejected_claims(claims: object, label: str, source_ids: set[str]) 
     claim_ids = [claim.get("claimId") for claim in claims]
     if len(claim_ids) != len(set(claim_ids)):
         raise ValueError(f"duplicate claimId in {label}")
-    for claim in claims:
+    for claim_index, claim in enumerate(claims):
+        claim = _require_exact_keys(
+            claim, REJECTED_CLAIM_KEYS, f"{label}[{claim_index}]"
+        )
         _require_nonempty_string(claim.get("claimId"), f"{label}.claimId")
         if claim.get("disposition") not in REJECTED_DISPOSITIONS:
             raise ValueError(f"{label}.disposition closed enum mismatch")
@@ -451,9 +524,25 @@ def _validate_rejected_claims(claims: object, label: str, source_ids: set[str]) 
         _require_unique_strings(
             claim.get("evidenceSourceIds"), f"{label}.evidenceSourceIds", source_ids
         )
-        if "correctedCoordinate" in claim:
-            raise ValueError(f"{label} must never auto-correct a rejected coordinate")
     return claims
+
+
+def _validate_review_row_keys(row: object, label: str) -> dict:
+    if not isinstance(row, dict):
+        raise ValueError(f"{label} must be an object")
+    state = row.get("reviewState")
+    if state not in REVIEW_STATES:
+        raise ValueError(f"reviewState closed enum mismatch: {state!r}")
+    required = set(ROW_COMMON_KEYS)
+    if state == "PROPOSED":
+        required.add("selectedCandidateId")
+    elif state == "APPROVED":
+        required.update({"selectedCandidateId", "reviewerId", "reviewedDate"})
+    elif state == "REJECTED":
+        required.add("rejection")
+    if row.get("siteId") in LINEAGE_SITE_IDS:
+        required.add("siteLineage")
+    return _require_exact_keys(row, required, f"{label} {state}")
 
 
 def _validate_review_state(
@@ -500,6 +589,7 @@ def _validate_review_state(
         rejection = row.get("rejection")
         if not isinstance(rejection, dict):
             raise ValueError("REJECTED requires reason and evidence")
+        _require_exact_keys(rejection, REJECTION_KEYS, "REJECTED.rejection")
         _require_nonempty_string(rejection.get("reason"), "REJECTED.reason")
         try:
             _require_unique_strings(
@@ -587,15 +677,14 @@ def validate_ledger(
     documents: dict[str, object],
     input_records: dict[str, dict[str, str]],
 ) -> None:
-    if not isinstance(ledger, dict):
-        raise ValueError("review ledger must be an object")
+    ledger = _require_exact_keys(ledger, LEDGER_KEYS, "review ledger")
     if ledger.get("schemaVersion") != 1:
         raise ValueError("review ledger schema mismatch")
     if ledger.get("ledgerId") != "han-strategic-site-anchor-review-v1":
         raise ValueError("review ledger identity mismatch")
     if set(documents) != set(INPUT_PATHS):
         raise ValueError("loaded input path set mismatch")
-    _scan_forbidden(ledger)
+    _scan_forbidden_values(ledger)
     _validate_tracked_inputs(ledger, input_records)
     projection, terrain = _validate_projection(ledger, documents)
     sources_by_id = _validate_sources(ledger)
@@ -613,6 +702,7 @@ def validate_ledger(
     all_candidate_ids = []
     for row_index, row in enumerate(rows):
         label = f"reviewRows[{row_index}]"
+        row = _validate_review_row_keys(row, label)
         candidates = row.get("candidates")
         if not isinstance(candidates, list):
             raise ValueError(f"{label}.candidates must be an array")
@@ -620,7 +710,7 @@ def validate_ledger(
             _validate_candidate(
                 candidate,
                 f"{label}.candidates[{candidate_index}]",
-                source_ids,
+                sources_by_id,
                 projection,
                 terrain,
             )

@@ -224,7 +224,7 @@
           "coordinate": [107.90836, 34.21945],
           "rasterCell": [290, 244],
           "cellBasis": "FULL_PRECISION_GENERATOR_WITNESS",
-          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk", "projection-generator-witness"],
+          "coordinateEvidenceSourceIds": ["tracked-coordinate-crosswalk"],
           "placementEvidenceSourceIds": ["wuzhang-locality"]
         }
       ],
