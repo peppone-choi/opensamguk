@@ -486,6 +486,16 @@ data class ChiefCommand(
      * AvailableCommandsController.AvailableCommand.reason 미러.
      */
     val reason: String? = null,
+    /** 동결된 public-alpha command catalog의 canonical identity/정책 메타데이터. */
+    val canonicalId: String,
+    val normalizedIntentId: String?,
+    val layer: String,
+    val sourceRing: String,
+    val authorityPolicyId: String,
+    val adapterPolicy: String,
+    val parityStatus: String,
+    val contractStatus: String,
+    val deliveryState: String,
 )
 
 /** 사령부 명령 팔레트의 1개 카테고리(휴식/인사/외교/특수/전략/기타). */

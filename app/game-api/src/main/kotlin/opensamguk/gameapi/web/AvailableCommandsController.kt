@@ -91,7 +91,9 @@ class AvailableCommandsController(
         val table = catalog
             .groupBy(
                 { it.first },
-                { (category, def) -> CommandCatalogRowFactory.create(def, results?.get(def.key), category) },
+                { (category, def) ->
+                    CommandCatalogRowFactory.create(def, results?.get(def.key), category, "GENERAL_TURN")
+                },
             )
             .map { (category, values) -> CommandCategory(category, values) }
         return ResponseEntity.ok(AvailableCommandsResponse(result = true, commandTable = table))

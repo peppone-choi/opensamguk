@@ -6,6 +6,15 @@ import opensamguk.logic.actions.GeneralActionDefinition
 
 data class CommandCatalogRow(
     val value: String,
+    val canonicalId: String,
+    val normalizedIntentId: String?,
+    val layer: String,
+    val sourceRing: String,
+    val authorityPolicyId: String,
+    val adapterPolicy: String,
+    val parityStatus: String,
+    val contractStatus: String,
+    val deliveryState: String,
     val simpleName: String,
     val title: String,
     val category: String,
@@ -22,7 +31,9 @@ object CommandCatalogRowFactory {
         definition: GeneralActionDefinition,
         result: PrecheckResult?,
         category: String,
+        sourceRing: String,
     ): CommandCatalogRow {
+        val metadata = PublicCommandCatalogIndex.requireLegacyCode(sourceRing, definition.key)
         val form = definition.formSpec.takeIf { it.fields.isNotEmpty() }
         val (possible, reason) = when (result) {
             null -> true to null
@@ -32,6 +43,15 @@ object CommandCatalogRowFactory {
         }
         return CommandCatalogRow(
             value = definition.key,
+            canonicalId = metadata.canonicalId,
+            normalizedIntentId = metadata.normalizedIntentId,
+            layer = metadata.layer,
+            sourceRing = metadata.sourceRing,
+            authorityPolicyId = metadata.authorityPolicyId,
+            adapterPolicy = metadata.adapterPolicy,
+            parityStatus = metadata.parityStatus,
+            contractStatus = metadata.contractStatus,
+            deliveryState = metadata.deliveryState,
             simpleName = definition.name,
             title = definition.name,
             category = category,
