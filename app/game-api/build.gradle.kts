@@ -13,6 +13,12 @@ kotlin { jvmToolchain(21) }
 // Docker COPY build/libs/*.jar glob stays unambiguous.
 tasks.named("jar") { enabled = false }
 
+tasks.processResources {
+    from(rootProject.file("data/commands/public-alpha-command-catalog.json")) {
+        into("command-catalog")
+    }
+}
+
 // 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 fan-out 수집해 어드민에 표시.
 // image.tag는 빌드 시 IMAGE_TAG env로 주입(없으면 dev).
 springBoot {

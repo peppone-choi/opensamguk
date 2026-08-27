@@ -191,7 +191,7 @@ class ChiefCenterController(
                 category = category,
                 values = codes.map { code ->
                     val def = defByCode.getValue(code)
-                    val row = CommandCatalogRowFactory.create(def, results?.get(code), category)
+                    val row = CommandCatalogRowFactory.create(def, results?.get(code), category, "NATION_TURN")
                     ChiefCommand(
                         value = row.value,
                         simpleName = row.simpleName,
@@ -202,6 +202,15 @@ class ChiefCenterController(
                         argType = row.argType,
                         form = row.form,
                         reason = row.reason,
+                        canonicalId = row.canonicalId,
+                        normalizedIntentId = row.normalizedIntentId,
+                        layer = row.layer,
+                        sourceRing = row.sourceRing,
+                        authorityPolicyId = row.authorityPolicyId,
+                        adapterPolicy = row.adapterPolicy,
+                        parityStatus = row.parityStatus,
+                        contractStatus = row.contractStatus,
+                        deliveryState = row.deliveryState,
                     )
                 },
             )

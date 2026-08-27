@@ -228,6 +228,15 @@ export interface AvailableCommand {
   reqArg: boolean;
   info?: string;
   argType?: CommandArgType;
+  canonicalId?: string;
+  normalizedIntentId?: string | null;
+  layer?: string;
+  sourceRing?: string;
+  authorityPolicyId?: string;
+  adapterPolicy?: string;
+  parityStatus?: string;
+  contractStatus?: string;
+  deliveryState?: string;
 }
 
 export interface AvailableCommandCategory {
@@ -946,6 +955,15 @@ export interface ChiefCommand {
   reqArg: boolean;
   argType: CommandArgType | null;
   reason?: string | null; // deny 사유(possible=false일 때) — 임파서블 명령 툴팁에 노출
+  canonicalId?: string;
+  normalizedIntentId?: string | null;
+  layer?: string;
+  sourceRing?: string;
+  authorityPolicyId?: string;
+  adapterPolicy?: string;
+  parityStatus?: string;
+  contractStatus?: string;
+  deliveryState?: string;
 }
 
 // 1개 카테고리(휴식/인사/외교/특수/전략/기타).

@@ -18,6 +18,7 @@ class CommandCatalogRowFactoryTest {
             registry.resolve("che_포상"),
             PrecheckResult.Available,
             "인사",
+            "NATION_TURN",
         )
 
         assertTrue(row.reqArg)
@@ -32,11 +33,13 @@ class CommandCatalogRowFactoryTest {
             registry.resolve("che_불가침제의"),
             PrecheckResult.Unknown(emptyList()),
             "외교",
+            "NATION_TURN",
         )
         val noArgRow = CommandCatalogRowFactory.create(
             registry.resolve("che_농지개간"),
             PrecheckResult.Unknown(emptyList()),
             "내정",
+            "GENERAL_TURN",
         )
 
         assertTrue(formRow.possible)

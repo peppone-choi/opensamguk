@@ -116,6 +116,42 @@ class AvailableCommandsControllerTest {
             .andExpect(
                 jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].argType").value("city"),
             )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].canonicalId")
+                    .value("personal.sortie.legacy.출병"),
+            )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].normalizedIntentId")
+                    .value("personal.sortie"),
+            )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].layer")
+                    .value("PERSONAL_RING"),
+            )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].sourceRing")
+                    .value("GENERAL_TURN"),
+            )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].authorityPolicyId")
+                    .value("SUBJECT_OWNER"),
+            )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].adapterPolicy")
+                    .value("PRESERVE"),
+            )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].parityStatus")
+                    .value("LOCKED"),
+            )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].contractStatus")
+                    .value("FINAL"),
+            )
+            .andExpect(
+                jsonPath("$.commandTable[*].values[?(@.value == 'che_출병')].deliveryState")
+                    .value("DOMAIN_READY"),
+            )
             // che_상업투자 has no args → reqArg false.
             .andExpect(
                 jsonPath("$.commandTable[*].values[?(@.value == 'che_상업투자')].reqArg").value(false),
