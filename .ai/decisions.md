@@ -633,13 +633,29 @@
 - Rendering: 지형·도로·국가색·도시·깃발·수도·사건 표시는 외부 맵 아트
   없이 캔버스 팔레트로 그린다. 레거시 맵 아트는 자산 정본이 아니며,
   비-`han` 호환성은 같은 타일 스키마와 결정적 테스트 픽스처로 검증한다.
+- Province deployment: 커밋된 역사·지리 행정 정체성 소스는 계속
+  `data/map/han-tiles.json` 하나다. `han-provinces.png`와
+  `han-provinces.meta.json`은 그 소스에서 Docker 빌드 때 한 번 결정적으로
+  생성되어 런타임 이미지에 함께 패키징되는 배포 파생물이며, 역사·지리
+  소스나 커밋 대상이 아니다. game-api의 `/api/map/provinces` 엔드포인트는
+  PNG만 서빙하고, 메타데이터는 HTTP로 서빙하지 않는 패키지 검증 sidecar다.
+  따라서 `han-tiles.json`이 유일한 커밋 정본이라는 말은 런타임 파일이
+  하나뿐이라는 뜻이 아니다. RGB 정수 `0`은 미소속, 그 밖의 값은
+  `((commanderyIndex + 1) << 12) | (provinceIndex + 1)`로 해석한다.
+- Province asset contract: ID 이미지는 `768×669` lossless PNG 그대로 운반하고,
+  리사이즈·팔레트화·JPEG/WebP 변환·색 보정 등 픽셀 값을 바꾸는 변환을
+  금지한다. 브라우저는 이 이미지를 정치색 원본으로 쓰지 않고, 픽셀 ID를
+  현재 도시 소유국 색에 결합해 정치 레이어를 만든다. 이미지 로드·디코드가
+  실패하면 지형과 도시 오버레이만 렌더링하며, 과거 정치 경계나 다른 맵
+  자산으로 조용히 대체하지 않는다.
 - Coordinates: `HanCityConst` 의 `(x,y)`를 타일 `(col,row)`로 돌릴 때 축별
   역변환 `col=x*cols/width`, `row=y*rows/height`를 쓴다. 단일 배율로 두
   축을 섞지 않는다(`tools/scenario/build_han_world.py` 산출식의 역).
-- Preserved: ADR-LITE-039/040의 CHGIS 격리는 그대로다. 커밋·서버 대상 CHGIS
-  파생물은 `data/map/han-tiles.json` 하나뿐이고, 원본 shapefile·`han-places.json`·
-  `terrain-grid.json`은 계속 미커밋이다. ADR-LITE-042 규칙 5의 frozen baseline도
-  삭제·약화하지 않는다.
+- Preserved: ADR-LITE-039/040의 CHGIS 격리는 그대로다. 커밋된 역사·지리
+  행정 정체성 소스는 `data/map/han-tiles.json` 하나이고,
+  `han-provinces.png`와 `han-provinces.meta.json`은 소스가 아닌 런타임 배포
+  파생물이다. 원본 shapefile·`han-places.json`·`terrain-grid.json`은 계속
+  미커밋이다. ADR-LITE-042 규칙 5의 frozen baseline도 삭제·약화하지 않는다.
 - Consequences: 세 표면의 줌·패닝·타일 표현과 도시 오버레이가 하나의
   구현으로 수렴한다. 게임·로비 래퍼는 API 로드, 제목·캡션, 라우팅,
   터치 두 번 탭 정책만 소유한다. 타일 파일이 없으면 다른 맵으로 바꾸지
@@ -647,7 +663,10 @@
 - Rollback: 문제 발생 시 이 개정 문구를 2026-08-22 본문으로 돌리고,
   `MapPreview`/`MapViewer`의 DOM·CDN 렌더 경로를 복원한 뒤 shared 캔버스는
   지도 페이지에만 제한한다. 롤백은 frozen 테스트나 CHGIS 격리 규칙을
-  삭제하는 근거가 아니다.
+  삭제하는 근거가 아니다. 정적 정치 레이어만 롤백할 때는 Docker의
+  province 생성·패키징과 game-api의 province 서빙을 중단하고 지형 전용
+  렌더링으로 돌아간다. 이 경우에도 `han-tiles.json`의 정본 지위와 커밋은
+  유지한다.
 - Approved by: 사용자(“ADR-LITE-044를 개정해 아이소 격자를 정본화”,
   “HanMapCanvas를 shared로 올려 로비에서 재사용”, 2026-08-25)
 

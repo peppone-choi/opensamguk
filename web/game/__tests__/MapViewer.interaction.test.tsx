@@ -53,8 +53,9 @@ beforeEach(() => {
 
 describe('MapViewer shared canvas overlays', () => {
   it('passes all city visuals and removes legacy DOM assets', () => {
-    render(<MapViewer mapData={MAP} currentCityId={11} selectedCityId={22} />);
-    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', 'han');
+    const mapCode = 'ha n&?';
+    render(<MapViewer mapData={{ ...MAP, mapCode }} currentCityId={11} selectedCityId={22} />);
+    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', mapCode);
     expect(document.querySelector('.map-bg')).toBeNull();
     expect(document.querySelector('.map-road')).toBeNull();
     expect(shared.props?.currentCityId).toBe(11);
@@ -63,6 +64,10 @@ describe('MapViewer shared canvas overlays', () => {
       expect.objectContaining({ id: 11, nationColor: '#ff0000', nationName: '위', state: 6, supply: true, isCapital: true }),
       expect.objectContaining({ id: 22, nationColor: '#ff0000', supply: false }),
     ]);
+    const provinceUrl = typeof shared.props?.provinceUrl === 'function'
+      ? shared.props.provinceUrl(mapCode)
+      : shared.props?.provinceUrl;
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=ha%20n%26%3F');
   });
 
   it('keeps hover tooltip content through the canvas callback', () => {
@@ -70,6 +75,44 @@ describe('MapViewer shared canvas overlays', () => {
     fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
     expect(screen.getByRole('status')).toHaveTextContent('낙양');
     expect(screen.getByRole('status')).toHaveTextContent('위');
+  });
+
+  it.each([
+    ['unknown nation', 99, []],
+    ['malformed color', 1, [{ id: 1, name: '위', color: 'red' }]],
+    ['NaN id', Number.NaN, [{ id: Number.NaN, name: '위', color: '#ff0000' }]],
+    ['infinite id', Number.POSITIVE_INFINITY, [{ id: Number.POSITIVE_INFINITY, name: '위', color: '#ff0000' }]],
+    ['fractional id', 1.5, [{ id: 1.5, name: '위', color: '#ff0000' }]],
+  ])('keeps %s visually and semantically unowned', (_label, nationId, nations) => {
+    render(<MapViewer mapData={{
+      ...MAP,
+      cities: [{ ...MAP.cities[0], nationId }],
+      nations,
+    }} />);
+
+    expect(shared.props?.cities?.[0]).toEqual(expect.objectContaining({
+      nationId,
+      nationColor: undefined,
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
+    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    expect(document.querySelector('.map-tooltip-meta')).toBeNull();
+  });
+
+  it('preserves explicit nation id zero as neutral', () => {
+    render(<MapViewer mapData={{
+      ...MAP,
+      cities: [{ ...MAP.cities[0], nationId: 0 }],
+      nations: [],
+    }} />);
+
+    expect(shared.props?.cities?.[0]).toEqual(expect.objectContaining({
+      nationId: 0,
+      nationName: '공 백 지',
+      nationColor: undefined,
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
+    expect(document.querySelector('.map-tooltip-meta')).toBeNull();
   });
 
   it('selection mode activates onCitySelect without navigation', () => {

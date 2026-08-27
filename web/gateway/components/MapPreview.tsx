@@ -1,6 +1,6 @@
 'use client';
 
-import { HanMapCanvas, type IsoCityOverlay } from '@opensamguk/ui';
+import { HanMapCanvas, isOwnedNationVisual, type IsoCityOverlay } from '@opensamguk/ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import cityRegionsData from '../config/cityRegions.json';
 
@@ -117,10 +117,11 @@ export default function MapPreview({
 
     const cities = useMemo<IsoCityOverlay[]>(() => data?.cities.map((city) => {
         const nation = nationById.get(city.nationId);
+        const owned = isOwnedNationVisual(city.nationId, nation?.color);
         return {
             ...city,
-            nationName: nation?.name,
-            nationColor: nation?.color,
+            nationName: owned ? nation?.name : undefined,
+            nationColor: owned ? nation?.color : undefined,
         };
     }) ?? [], [data, nationById]);
     const sourceSize = useMemo(() => ({
@@ -130,6 +131,9 @@ export default function MapPreview({
 
     const terrainUrl = useCallback((mapCode: string) => (
         `/api/game/api/map/terrain?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(mapCode)}`
+    ), [serverId]);
+    const provinceUrl = useCallback((mapCode: string) => (
+        `/api/game/api/map/provinces?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(mapCode)}`
     ), [serverId]);
     const handleMissing = useCallback(() => setTileMissing(true), []);
     const handleHover = useCallback((city: IsoCityOverlay | null, point?: { x: number; y: number }) => {
@@ -158,6 +162,7 @@ export default function MapPreview({
                 <HanMapCanvas
                     mapCode={data.mapCode}
                     terrainUrl={terrainUrl}
+                    provinceUrl={provinceUrl}
                     cities={cities}
                     sourceSize={sourceSize}
                     currentCityId={currentCityId}
@@ -191,7 +196,7 @@ export default function MapPreview({
                     <div className="map-preview-tooltip-name">
                         {`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} | ${levelText(hoverCity.level)}】 ${hoverCity.name}`}
                     </div>
-                    {hoverCity.nationId !== 0 && hoverCity.nationName && (
+                    {isOwnedNationVisual(hoverCity.nationId, hoverCity.nationColor) && hoverCity.nationName && (
                         <div className="map-preview-tooltip-meta">{hoverCity.nationName}</div>
                     )}
                 </div>

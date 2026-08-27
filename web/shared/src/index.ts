@@ -30,12 +30,15 @@ export {
   type Jun,
 } from './HanMapCanvas';
 export {
+  MAX_CSS_SCALE,
   MAX_SCALE,
   cellToScreen,
   centeredView,
   clampView,
+  effectiveDpr,
   fitScale,
   junSpanCells,
+  maxScaleForDpr,
   scaleForSpan,
   screenToCell,
   viewAt,
@@ -44,3 +47,14 @@ export {
   type GridSize,
   type IsoView,
 } from './isoMap';
+export {
+  bindProvinceOwnership,
+  composeProvincePixels,
+  decodeProvincePixels,
+  loadProvinceIdentityMap,
+  type ProvinceColor,
+  type ProvinceEdge,
+  type ProvinceIdentityMap,
+  type ProvinceOwnershipBinding,
+} from './provinceMap';
+export { isOwnedNationVisual } from './nationVisual';

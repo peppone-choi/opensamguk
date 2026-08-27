@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, MAX_SCALE, seatLabel,
+    expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, maxScaleForDpr, seatLabel,
     TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom, type HanTiles,
 } from '@opensamguk/ui';
 
@@ -57,12 +57,14 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
 
     it('좁은 화면의 라벨 문턱은 절대 밀도값을 보존한다', () => {
         expect(labelZoomFor('COUNTY', 0.01)).toBeCloseTo(TIER2_LABEL_ZOOM.COUNTY, 6);
+        expect(labelZoomFor('COUNTY', 0.02, 2)).toBeCloseTo(TIER2_LABEL_ZOOM.COUNTY * 2, 6);
+        expect(labelZoomFor('COUNTY', 0.008, 0.8)).toBeCloseTo(TIER2_LABEL_ZOOM.COUNTY * 0.8, 6);
     });
 
     it('넓고 고DPI인 화면에서도 라벨 문턱은 도달 가능하다', () => {
         for (const fit of [0.5575, 1.0035, 2.676, 5]) {
-            const threshold = labelZoomFor('COUNTY', fit)!;
-            expect(threshold).toBeLessThan(MAX_SCALE);
+            const threshold = labelZoomFor('COUNTY', fit, 2)!;
+            expect(threshold).toBeLessThan(maxScaleForDpr(2));
             expect(threshold).toBeGreaterThanOrEqual(tierZoom(TIER2_MARKER_ZOOM, 'COUNTY', fit)!);
         }
     });
@@ -70,13 +72,13 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
     it('실제 격자와 郡治에서 초기·완전 줌아웃은 마커 문턱 아래다', () => {
         const viewports: [number, number][] = [[800, 600], [1280, 800], [1600, 900], [1920, 1080], [3013, 1200]];
         for (const [cssWidth, cssHeight] of viewports) {
-            for (const dpr of [1, 2]) {
+            for (const dpr of [0.8, 1, 2]) {
                 const width = cssWidth * dpr;
                 const height = cssHeight * dpr;
                 const fit = fitScale(width, height, grid);
                 const markerThreshold = MIN_MARKER_K * fit;
                 expect(fit).toBeLessThan(markerThreshold);
-                expect(initialView(width, height, grid, hanTiles).scale).toBeLessThan(markerThreshold);
+                expect(initialView(width, height, grid, hanTiles, dpr).scale).toBeLessThan(markerThreshold);
             }
         }
     });

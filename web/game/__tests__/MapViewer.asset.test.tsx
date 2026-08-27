@@ -23,12 +23,15 @@ const MAP: MapPreviewResponse = {
 
 describe('MapViewer asset-independent terrain selection', () => {
   it('requests han tiles and never renders a che background or road image', () => {
+    const mapCode = 'ha n&?';
     vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
     vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
-    render(<MapViewer mapData={MAP} />);
+    render(<MapViewer mapData={{ ...MAP, mapCode }} />);
     expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
-    const url = typeof shared.props?.terrainUrl === 'function' ? shared.props.terrainUrl('han') : shared.props?.terrainUrl;
-    expect(url).toBe('/api/game/api/map/terrain?mapCode=han');
+    const url = typeof shared.props?.terrainUrl === 'function' ? shared.props.terrainUrl(mapCode) : shared.props?.terrainUrl;
+    expect(url).toBe('/api/game/api/map/terrain?mapCode=ha%20n%26%3F');
+    const provinceUrl = typeof shared.props?.provinceUrl === 'function' ? shared.props.provinceUrl(mapCode) : shared.props?.provinceUrl;
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=ha%20n%26%3F');
     expect(document.querySelector('.map-bg')).toBeNull();
     expect(document.querySelector('.map-road')).toBeNull();
     expect(document.querySelector('img[src*="/game/map/che/"]')).toBeNull();

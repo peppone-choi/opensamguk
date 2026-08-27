@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { createHash } from 'node:crypto';
 
 const registryMocks = vi.hoisted(() => ({
   getServers: vi.fn(),
@@ -171,6 +172,74 @@ describe('game API proxy server selection', () => {
     });
   });
 
+  it('proxies non-UTF8 PNG bytes and cache validators without transformation', async () => {
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGMQavgPAAI5AZJMoiAxAAAAAElFTkSuQmCC',
+      'base64',
+    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(png, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Length': String(png.byteLength),
+        ETag: '"province-v1"',
+        'Cache-Control': 'max-age=3600, public',
+        'X-Upstream-Secret': 'do-not-forward',
+      },
+    })));
+
+    const response = await GET(
+      request('/api/game/api/map/provinces?mapCode=han', {
+        headers: { 'If-None-Match': '"province-v0"' },
+      }),
+      context(['api', 'map', 'provinces']),
+    );
+    const actual = Buffer.from(await response.arrayBuffer());
+
+    expect(response.status).toBe(200);
+    expect(createHash('sha256').update(actual).digest('hex'))
+      .toBe('ba198155d75700af39a09141de621951c1f11f0dc211a5067300a3a9f9830e1d');
+    expect(actual).toEqual(png);
+    expect(response.headers.get('content-type')).toBe('image/png');
+    expect(response.headers.get('content-length')).toBe('69');
+    expect(response.headers.get('etag')).toBe('"province-v1"');
+    expect(response.headers.get('cache-control')).toBe('max-age=3600, public');
+    expect(response.headers.get('x-upstream-secret')).toBeNull();
+    expect(fetch).toHaveBeenCalledWith('http://pep-game-api/api/map/provinces?mapCode=han', {
+      method: 'GET',
+      headers: { 'If-None-Match': '"province-v0"' },
+      cache: 'no-store',
+    });
+  });
+
+  it('preserves a conditional 304 as a bodyless response with validators', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {
+      status: 304,
+      headers: {
+        ETag: '"province-v1"',
+        'Cache-Control': 'max-age=3600, public',
+      },
+    })));
+
+    const response = await GET(
+      request('/api/game/api/map/provinces?mapCode=han', {
+        headers: { 'If-None-Match': '"province-v1"' },
+      }),
+      context(['api', 'map', 'provinces']),
+    );
+
+    expect(response.status).toBe(304);
+    expect(response.body).toBeNull();
+    expect(await response.text()).toBe('');
+    expect(response.headers.get('etag')).toBe('"province-v1"');
+    expect(response.headers.get('cache-control')).toBe('max-age=3600, public');
+    expect(fetch).toHaveBeenCalledWith('http://pep-game-api/api/map/provinces?mapCode=han', {
+      method: 'GET',
+      headers: { 'If-None-Match': '"province-v1"' },
+      cache: 'no-store',
+    });
+  });
+
   // #516 review F2 — 이 route에는 본문 전달을 단언하는 테스트가 없었다: `init.body =
   // await req.text()`를 지워도 이전엔 175개 테스트가 전부 통과했다. 커맨드 POST 본문
   // 유실을 여기서 잡는다.
@@ -283,33 +352,6 @@ describe('game API proxy server selection', () => {
     expect(await response.json()).toEqual({ error: 'forbidden' });
   });
 });
-
-function sseOkResponse(chunks: string[]): Response {
-  const encoder = new TextEncoder();
-  const body = new ReadableStream<Uint8Array>({
-    start(controller) {
-      for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
-      controller.close();
-    },
-  });
-  return new Response(body, {
-    status: 200,
-    headers: { 'Content-Type': 'text/event-stream;charset=UTF-8' },
-  });
-}
-
-async function readAll(body: ReadableStream<Uint8Array> | null): Promise<string> {
-  if (!body) return '';
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let out = '';
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    out += decoder.decode(value);
-  }
-  return out;
-}
 
 describe('game API proxy SSE (/api/game/sse/turn) — #514 401 passthrough', () => {
   beforeEach(() => {

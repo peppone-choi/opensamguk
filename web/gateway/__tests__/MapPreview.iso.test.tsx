@@ -62,9 +62,10 @@ beforeEach(() => {
 
 describe('MapPreview shared isometric renderer', () => {
   it('passes the real han map code and every city overlay without CDN map nodes', () => {
-    render(<MapPreview serverId="s1" mapData={MAP} currentCityId={11} />);
+    const mapCode = 'ha n&?';
+    render(<MapPreview serverId="s 1&?" mapData={{ ...MAP, mapCode }} currentCityId={11} />);
 
-    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', 'han');
+    expect(screen.getByTestId('shared-iso-map')).toHaveAttribute('data-map-code', mapCode);
     expect(document.querySelector('.map-bg')).toBeNull();
     expect(document.querySelector('.map-road')).toBeNull();
     expect(shared.props?.currentCityId).toBe(11);
@@ -76,9 +77,13 @@ describe('MapPreview shared isometric renderer', () => {
       isCapital: true,
     });
     const url = typeof shared.props?.terrainUrl === 'function'
-      ? shared.props.terrainUrl('han')
+      ? shared.props.terrainUrl(mapCode)
       : shared.props?.terrainUrl;
-    expect(url).toBe('/api/game/api/map/terrain?server=s1&mapCode=han');
+    expect(url).toBe('/api/game/api/map/terrain?server=s%201%26%3F&mapCode=ha%20n%26%3F');
+    const provinceUrl = typeof shared.props?.provinceUrl === 'function'
+      ? shared.props.provinceUrl(mapCode)
+      : shared.props?.provinceUrl;
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?server=s%201%26%3F&mapCode=ha%20n%26%3F');
   });
 
   it('keeps the lobby tooltip through the canvas hover callback', () => {
@@ -86,5 +91,30 @@ describe('MapPreview shared isometric renderer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'hover first city' }));
     expect(screen.getByRole('status')).toHaveTextContent('낙양');
     expect(screen.getByRole('status')).toHaveTextContent('위');
+  });
+
+  it.each([
+    ['unknown nation', 2, []],
+    ['malformed color', 1, [{ id: 1, name: '표시 금지', color: 'red' }]],
+    ['NaN nation', Number.NaN, [{ id: Number.NaN, name: '표시 금지', color: '#ff0000' }]],
+    ['infinite nation', Number.POSITIVE_INFINITY, [{ id: Number.POSITIVE_INFINITY, name: '표시 금지', color: '#ff0000' }]],
+    ['fractional nation', 1.5, [{ id: 1.5, name: '표시 금지', color: '#ff0000' }]],
+    ['zero nation', 0, [{ id: 0, name: '표시 금지', color: '#ff0000' }]],
+    ['negative nation', -1, [{ id: -1, name: '표시 금지', color: '#ff0000' }]],
+  ])('keeps %s ownership neutral in canvas props and tooltip', (_label, nationId, nations) => {
+    render(<MapPreview mapData={{
+      ...MAP,
+      cities: [{ ...MAP.cities[0], nationId }],
+      nations,
+    }} />);
+
+    expect(shared.props?.cities?.[0]).toMatchObject({
+      nationId,
+      nationName: undefined,
+      nationColor: undefined,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'hover first city' }));
+    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    expect(screen.getByRole('status')).not.toHaveTextContent('표시 금지');
   });
 });

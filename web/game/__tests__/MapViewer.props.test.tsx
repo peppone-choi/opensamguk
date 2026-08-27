@@ -68,10 +68,16 @@ describe('MapViewer data props', () => {
   });
 
   it('self-fetch loads preview data', async () => {
+    const mapCode = 'ha n&?';
+    mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode });
     render(<MapViewer />);
     await screen.findByTestId('shared-iso-map');
     expect(mocks.mapPreview).toHaveBeenCalledTimes(1);
-    expect(mocks.props?.mapCode).toBe('han');
+    expect(mocks.props?.mapCode).toBe(mapCode);
+    const provinceUrl = typeof mocks.props?.provinceUrl === 'function'
+      ? mocks.props.provinceUrl(mapCode)
+      : mocks.props?.provinceUrl;
+    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=ha%20n%26%3F');
   });
 
   it('live mode merges state, owner, supply, capital and my city', async () => {
