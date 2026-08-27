@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     cellToScreen, screenToCell, visibleCells, fitScale, zoomAt, clampView, centeredView,
-    viewAt, scaleForSpan, junSpanCells, maxScaleForDpr, MAX_CSS_SCALE, type IsoView,
+    viewAt, scaleForSpan, junSpanCells, maxScaleForDpr, pinchGesture, MAX_CSS_SCALE, type IsoView,
 } from '@/lib/isoMap';
 
 const G = { cols: 768, rows: 669 };
@@ -63,6 +63,16 @@ describe('컬링', () => {
 });
 
 describe('줌', () => {
+    it('두 포인터 좌표쌍에서 확대비와 현재 중점을 뽑는다', () => {
+        const gesture = pinchGesture(
+            [{ x: 10, y: 20 }, { x: 30, y: 20 }],
+            [{ x: 15, y: 20 }, { x: 55, y: 20 }],
+        );
+
+        expect(gesture.factor).toBe(2);
+        expect(gesture.anchor).toEqual({ x: 35, y: 20 });
+    });
+
     it('커서 밑 셀이 확대 후에도 커서 밑에 남는다', () => {
         const v = { scale: 3, ox: 40, oy: 20 };
         const [before] = [screenToCell(500, 300, v)];

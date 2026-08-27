@@ -39,6 +39,7 @@ export {
   fitScale,
   junSpanCells,
   maxScaleForDpr,
+  pinchGesture,
   scaleForSpan,
   screenToCell,
   viewAt,
@@ -46,6 +47,7 @@ export {
   zoomAt,
   type GridSize,
   type IsoView,
+  type PointerPosition,
 } from './isoMap';
 export {
   bindProvinceOwnership,

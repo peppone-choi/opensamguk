@@ -381,6 +381,37 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(views.at(-1)).not.toEqual(zoomed);
   });
 
+  it('pinches around the current midpoint and keeps the remaining pointer panning after end or cancel', () => {
+    const views: IsoView[] = [];
+    render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} onViewChange={(view) => views.push({ ...view })} />);
+
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' });
+    const initial = views.at(-1)!;
+    const beforePinch = screenToCell(200, 100, initial);
+    fireEvent.pointerDown(canvas, { clientX: 60, clientY: 50, pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerDown(canvas, { clientX: 140, clientY: 50, pointerId: 2, pointerType: 'touch' });
+    fireEvent.pointerMove(canvas, { clientX: 160, clientY: 50, pointerId: 2, pointerType: 'touch' });
+
+    const pinched = views.at(-1)!;
+    expect(pinched.scale).toBeGreaterThan(initial.scale);
+    const afterPinch = screenToCell(220, 100, pinched);
+    expect(afterPinch[0]).toBeCloseTo(beforePinch[0], 6);
+    expect(afterPinch[1]).toBeCloseTo(beforePinch[1], 6);
+
+    fireEvent.pointerUp(canvas, { pointerId: 2, pointerType: 'touch' });
+    fireEvent.pointerMove(canvas, { clientX: 80, clientY: 55, pointerId: 1, pointerType: 'touch' });
+    const afterUpPan = views.at(-1)!;
+    expect(afterUpPan.scale).toBe(pinched.scale);
+    expect(afterUpPan).not.toEqual(pinched);
+
+    fireEvent.pointerDown(canvas, { clientX: 160, clientY: 50, pointerId: 2, pointerType: 'touch' });
+    fireEvent.pointerCancel(canvas, { pointerId: 2, pointerType: 'touch' });
+    fireEvent.pointerMove(canvas, { clientX: 100, clientY: 60, pointerId: 1, pointerType: 'touch' });
+    const afterCancelPan = views.at(-1)!;
+    expect(afterCancelPan.scale).toBe(afterUpPan.scale);
+    expect(afterCancelPan).not.toEqual(afterUpPan);
+  });
+
   it('preserves the centered cell and CSS zoom when DPR changes', () => {
     Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
     const views: IsoView[] = [];

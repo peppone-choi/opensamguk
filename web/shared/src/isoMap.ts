@@ -9,6 +9,32 @@ export interface GridSize {
   rows: number;
 }
 
+export interface PointerPosition {
+  x: number;
+  y: number;
+}
+
+export function pinchGesture(
+  previous: readonly [PointerPosition, PointerPosition],
+  current: readonly [PointerPosition, PointerPosition],
+): { factor: number; anchor: PointerPosition } {
+  const previousDistance = Math.hypot(
+    previous[1].x - previous[0].x,
+    previous[1].y - previous[0].y,
+  );
+  const currentDistance = Math.hypot(
+    current[1].x - current[0].x,
+    current[1].y - current[0].y,
+  );
+  return {
+    factor: previousDistance === 0 ? 1 : currentDistance / previousDistance,
+    anchor: {
+      x: (current[0].x + current[1].x) / 2,
+      y: (current[0].y + current[1].y) / 2,
+    },
+  };
+}
+
 export function cellToScreen(col: number, row: number, view: IsoView): [number, number] {
   return [
     (col - row) * view.scale + view.ox,
