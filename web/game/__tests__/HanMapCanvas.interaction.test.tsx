@@ -381,6 +381,32 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(views.at(-1)).not.toEqual(zoomed);
   });
 
+  it('prevents page scrolling while the wheel zooms the map', () => {
+    const views: IsoView[] = [];
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+
+    const canvas = screen.getByRole('img');
+    const initial = views.at(-1)!;
+    const wheel = new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 100,
+      clientY: 53,
+      deltaY: -1,
+    });
+
+    expect(canvas.dispatchEvent(wheel)).toBe(false);
+    expect(wheel.defaultPrevented).toBe(true);
+    expect(views.at(-1)!.scale).toBeGreaterThan(initial.scale);
+  });
+
   it('pinches around the current midpoint and keeps the remaining pointer panning after end or cancel', () => {
     const views: IsoView[] = [];
     render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} onViewChange={(view) => views.push({ ...view })} />);
