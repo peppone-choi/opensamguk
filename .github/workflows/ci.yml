@@ -41,12 +41,12 @@ jobs:
         # `--check` call would be permanently RED on every PR, not a real
         # gate (GH #534 investigation, 2026-08-24).
         #
-        # HanGateIndex.kt itself does NOT depend on junguozhi.json/CHE though
-        # — traced build()'s data flow and confirmed empirically (mutating
-        # junguozhi.json changes HanCityConst.kt/han.json but leaves
-        # HanGateIndex.kt byte-identical). `--check-gate` isolates exactly
-        # that: it reads only TILES/CANON_105/UNITS, all tracked, so this
-        # step runs for real on every PR instead of skipping. HanCityConst.kt
+        # HanGateIndex.kt itself does NOT depend on junguozhi.json/CHE though.
+        # `--check-gate` derives keys against the committed runtime han.json
+        # city IDs, using only TILES/han.json/UNITS (all tracked). It must not
+        # independently apply a newer CANON_105 ordering: until all three
+        # world artifacts are regenerated together, that would misalign gate
+        # IDs with HanCityConst/han.json. HanCityConst.kt
         # /han.json drift (which DOES need junguozhi.json) is still not
         # CI-gated — verify those manually before merging changes to
         # build_han_world.py or its inputs.
