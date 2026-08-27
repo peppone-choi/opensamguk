@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "sites": [
+    {
+      "id": "site:dingjunshan",
+      "name": "定軍山",
+      "kind": "MOUNTAIN_BATTLEFIELD",
+      "rank": 3,
+      "evidence": [
+        {
+          "book": "三國志",
+          "volume": "卷36",
+          "section": "蜀書六 關張馬黃趙傳",
+          "quote": "建安二十四年，於漢中定軍山擊夏侯淵。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "site-attested",
+          "locationConfidence": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "id": "site:jiange",
+      "name": "劍閣",
+      "kind": "PASS",
+      "rank": 3,
+      "evidence": [
+        {
+          "book": "三國志",
+          "volume": "卷28",
+          "section": "魏書 王毌丘諸葛鄧鍾傳",
+          "quote": "維遂東引，還守劍閣。鍾會攻維未能克。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "site-attested",
+          "locationConfidence": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "id": "site:jieting",
+      "name": "街亭",
+      "kind": "BATTLEFIELD",
+      "rank": 2,
+      "evidence": [
+        {
+          "book": "三國志",
+          "volume": "卷35",
+          "section": "蜀書五 諸葛亮傳",
+          "quote": "與郃戰于街亭。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "site-attested",
+          "locationConfidence": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "id": "site:qishan",
+      "name": "祁山",
+      "kind": "MOUNTAIN_BATTLEFIELD",
+      "rank": 2,
+      "evidence": [
+        {
+          "book": "三國志",
+          "volume": "卷33",
+          "section": "蜀書三 後主傳",
+          "quote": "六年春，亮出攻祁山，不克。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "site-attested",
+          "locationConfidence": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "id": "site:wuzhangyuan",
+      "name": "五丈原",
+      "kind": "BATTLEFIELD",
+      "rank": 3,
+      "evidence": [
+        {
+          "book": "三國志",
+          "volume": "卷35",
+          "section": "蜀書五 諸葛亮傳",
+          "quote": "十二年春，亮悉大眾由斜谷出，以流馬運，據武功五丈原，與司馬宣王對於渭南。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "site-attested",
+          "locationConfidence": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "id": "site:yanganguan",
+      "name": "陽安關",
+      "kind": "PASS",
+      "rank": 3,
+      "evidence": [
+        {
+          "book": "三國志",
+          "volume": "卷44",
+          "section": "蜀書十四 蔣琬費禕姜維傳",
+          "quote": "分護陽安關口、陰平橋頭，以防未然。",
+          "grade": "STANDARD_HISTORY",
+          "claim": "site-attested",
+          "locationConfidence": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "id": "site:yangpingguan",
+      "name": "陽平關",
+      "kind": "PASS",
+      "rank": 2,
+      "evidence": [
+        {
+          "book": "三國演義",
+          "volume": "第六十七回",
+          "section": "曹操平定漢中地 張遼威震逍遙津",
+          "quote": "漢中最險，無如陽平關。",
+          "grade": "NOVEL",
+          "claim": "alias-claim-unverified",
+          "locationConfidence": "UNKNOWN"
+        }
+      ]
+    }
+  ]
+}

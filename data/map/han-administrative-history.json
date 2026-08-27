@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "supportedYears": [184, 190, 200, 208, 220, 234, 263, 280],
+  "catalogReference": "../curated/han/administrative-units.json",
+  "requireCountySeats": false,
+  "units": [],
+  "relations": [],
+  "seats": [],
+  "roles": []
+}
