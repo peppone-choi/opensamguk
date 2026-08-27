@@ -194,6 +194,12 @@ PR에서 영향을 받는 정본을 함께 수정한다.
 
 ## 배포
 
+> **nginx 도달성 규칙:** 라이브 정본은 sibling `opensamguk-docker` 저장소의
+> `infra/nginx/nginx.conf`이다. 이 저장소의 `infra/nginx/default.conf`는 배포·마운트·로드되지
+> 않는 과거 토폴로지 참고용 파일이므로 프로덕션 라우팅 근거로 인용하지 않는다. 런타임
+> 도달성이 중요도·심각도 판정에 영향을 주면 compose 마운트, 배포 동기화 경로, 라이브
+> `nginx -T` 중 해당하는 증거를 확인한다. 확인하지 못한 도달성은 `UNKNOWN`으로 보고한다.
+
 ```bash
 # 로컬 전체 스택 (9서비스: postgres·redis·gateway-api·board-api·game-api·game-engine·web-gateway·web-game·nginx)
 docker compose up -d --build
