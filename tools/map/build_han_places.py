@@ -146,6 +146,18 @@ CAPITALS = {'雒阳县', '洛阳县', '许县', '许昌县', '成都县', '建�
 # physical records; route/scenario artifacts are evidence, never runtime authorities here.
 DUPLICATE_SUFFIX = '县縣國国郡州道邑'
 NEAR_DEG = 0.5
+EXPECTED_TRACKED_REVIEW_INPUTS = {
+    'data/curated/han/route-node-location-adjudications-v1.json': {
+        'path': 'data/curated/han/route-node-location-adjudications-v1.json',
+        'sha256': 'f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a',
+        'role': 'LOCATION_ADJUDICATION_REVIEW',
+    },
+    'data/curated/han/route-node-selection-v1.json': {
+        'path': 'data/curated/han/route-node-selection-v1.json',
+        'sha256': '3aaf7c8eb6797336518733c2e9bf9a50c3c05de303245519a7eebc01cebca744',
+        'role': 'ROUTE_NODE_SELECTION_REVIEW',
+    },
+}
 
 
 def _require_exact_keys(value, expected, where):
@@ -197,13 +209,15 @@ def validate_duplicate_adjudications(ledger):
     if not isinstance(tracked, dict) or not tracked:
         raise ValueError('ledger.trackedReviewInputs must be a non-empty object')
     for key, item in tracked.items():
-        _require_exact_keys(item, {'path', 'sha256'}, f'trackedReviewInputs[{key!r}]')
+        _require_exact_keys(item, {'path', 'sha256', 'role'}, f'trackedReviewInputs[{key!r}]')
         if not isinstance(key, str) or not key or item['path'] != key:
             raise ValueError('tracked review input key must equal its non-empty path')
         digest = item['sha256']
         if (not isinstance(digest, str) or len(digest) != 64
                 or any(ch not in '0123456789abcdef' for ch in digest)):
             raise ValueError(f'trackedReviewInputs[{key!r}].sha256 must be lowercase SHA-256')
+    if tracked != EXPECTED_TRACKED_REVIEW_INPUTS:
+        raise ValueError('ledger.trackedReviewInputs must equal the reviewed path/hash/role set')
 
     groups = ledger['adjudications']
     if not isinstance(groups, list):
@@ -213,14 +227,15 @@ def validate_duplicate_adjudications(ledger):
     for group_index, group in enumerate(groups):
         where = f'adjudications[{group_index}]'
         _require_exact_keys(
-            group, {'groupId', 'sourceName', 'reviewState', 'members'}, where
+            group, {'groupId', 'sourceNameCh', 'sourceNameFt', 'reviewState', 'members'}, where
         )
         group_id = group['groupId']
         if not isinstance(group_id, str) or not group_id or group_id in group_ids:
             raise ValueError(f'{where}.groupId must be a unique non-empty string')
         group_ids.add(group_id)
-        if not isinstance(group['sourceName'], str) or not group['sourceName']:
-            raise ValueError(f'{where}.sourceName must be a non-empty string')
+        for field in ('sourceNameCh', 'sourceNameFt'):
+            if not isinstance(group[field], str) or not group[field]:
+                raise ValueError(f'{where}.{field} must be a non-empty string')
         if group['reviewState'] != 'APPROVED_FOR_BUILD_SELECTION':
             raise ValueError(f'{where}.reviewState is not approved')
         members = group['members']
@@ -231,7 +246,7 @@ def validate_duplicate_adjudications(ledger):
             member_where = f'{where}.members[{member_index}]'
             _require_exact_keys(
                 member,
-                {'physicalPlaceId', 'sourceName', 'activeRange', 'coordinate',
+                {'physicalPlaceId', 'sourceNameCh', 'sourceNameFt', 'activeRange', 'coordinate',
                  'disposition', 'evidenceRefs'},
                 member_where,
             )
@@ -241,8 +256,9 @@ def validate_duplicate_adjudications(ledger):
                 raise ValueError(f'{member_where}.physicalPlaceId must be globally unique')
             group_member_ids.add(physical_id)
             member_ids.add(physical_id)
-            if member['sourceName'] != group['sourceName']:
-                raise ValueError(f'{member_where}.sourceName must equal group sourceName')
+            for field in ('sourceNameCh', 'sourceNameFt'):
+                if member[field] != group[field]:
+                    raise ValueError(f'{member_where}.{field} must equal group {field}')
             active = member['activeRange']
             _require_exact_keys(active, {'begYr', 'endYr'}, f'{member_where}.activeRange')
             _require_int(active['begYr'], f'{member_where}.activeRange.begYr')
@@ -260,10 +276,13 @@ def validate_duplicate_adjudications(ledger):
             if member['disposition'] == 'SELECTED':
                 selected.append(physical_id)
             evidence = member['evidenceRefs']
-            if (not isinstance(evidence, list) or not evidence
-                    or any(not isinstance(ref, str) or ref not in tracked for ref in evidence)
-                    or len(evidence) != len(set(evidence))):
-                raise ValueError(f'{member_where}.evidenceRefs must uniquely reference tracked inputs')
+            if (not isinstance(evidence, list)
+                    or any(not isinstance(ref, str) for ref in evidence)
+                    or len(evidence) != len(set(evidence))
+                    or set(evidence) != set(EXPECTED_TRACKED_REVIEW_INPUTS)):
+                raise ValueError(
+                    f'{member_where}.evidenceRefs must reference every expected review input exactly once'
+                )
         if len(selected) != 1:
             raise ValueError(f'{where} must have exactly one selected member')
         if selected[0] in selected_ids:
@@ -311,7 +330,8 @@ def _reviewed_winners(places, year, ledger):
             if not active['begYr'] <= year <= active['endYr']:
                 raise ValueError(f'{group["groupId"]}: reviewed member {physical_id} inactive at {year}')
             coordinate = member['coordinate']
-            if (row.get('nameFt') != member['sourceName']
+            if (row.get('nameCh') != member['sourceNameCh']
+                    or row.get('nameFt') != member['sourceNameFt']
                     or row.get('begYr') != active['begYr']
                     or row.get('endYr') != active['endYr']
                     or row.get('lon') != coordinate['lon']

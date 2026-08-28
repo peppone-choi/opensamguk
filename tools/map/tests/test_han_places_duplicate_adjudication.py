@@ -37,9 +37,10 @@ def source_dir():
     return next((path for path in candidates if path.is_dir()), None)
 
 
-def place(pid, name="測試縣", lon=110.0, lat=30.0, beg=0, end=500, pres="same"):
+def place(pid, name="测试县", name_ft="測試縣", lon=110.0, lat=30.0,
+          beg=0, end=500, pres="same"):
     return {
-        "id": str(pid), "nameCh": name, "nameFt": name, "namePy": "test",
+        "id": str(pid), "nameCh": name, "nameFt": name_ft, "namePy": "test",
         "typeCh": "县", "kind": "COUNTY", "level": 5, "lon": lon, "lat": lat,
         "presLoc": pres, "begYr": beg, "endYr": end,
     }
@@ -100,6 +101,11 @@ class DuplicateAdjudicationContractTest(unittest.TestCase):
             rejected = frozenset(m["physicalPlaceId"] for m in group["members"] if m["disposition"] == "REJECTED")
             pairs[group["groupId"]] = (selected[0], rejected)
         self.assertEqual(EXPECTED_PAIRS, pairs)
+        self.assertEqual(
+            {('东武城县', '東武城縣'), ('利城县', '利城縣')},
+            {(group["sourceNameCh"], group["sourceNameFt"])
+             for group in self.ledger["adjudications"]},
+        )
 
         pinned = self.ledger["trackedReviewInputs"]
         for path in (ROUTE_REVIEW_PATH, ROUTE_SELECTION_PATH):
@@ -136,12 +142,18 @@ class DuplicateAdjudicationContractTest(unittest.TestCase):
             lambda d: d["groupingContract"].update(extra=True),
             lambda d: d["trackedReviewInputs"][next(iter(d["trackedReviewInputs"]))].update(digest="0" * 64),
             lambda d: d["adjudications"][0].update(displayName="forbidden"),
+            lambda d: d["adjudications"][0].update(sourceName="legacy-alias"),
             lambda d: d["adjudications"][0]["members"][0].update(runtimeId=7),
+            lambda d: d["adjudications"][0]["members"][0].pop("sourceNameCh"),
+            lambda d: d["adjudications"][0]["members"][0].update(sourceNameFt="漂移縣"),
             lambda d: d["adjudications"][0]["members"][0]["activeRange"].update(extra=1),
             lambda d: d["adjudications"][0]["members"][0]["coordinate"].update(extra=1),
             lambda d: d.update(schemaVersion=2),
             lambda d: d.update(ledgerId="wrong"),
             lambda d: d.update(baselineYear=221),
+            lambda d: d["trackedReviewInputs"][next(iter(d["trackedReviewInputs"]))].update(
+                role="UNKNOWN_REVIEW"
+            ),
             lambda d: d["adjudications"][0].update(reviewState="PENDING"),
             lambda d: d["adjudications"][0]["members"][0].update(disposition="PENDING"),
         ]
@@ -160,6 +172,39 @@ class DuplicateAdjudicationContractTest(unittest.TestCase):
             with self.subTest(mutate=mutate), self.assertRaises(ValueError):
                 self.validate_copy(mutate)
 
+    def test_provenance_graph_rejects_bogus_redirect_missing_extra_and_hash_drift(self):
+        def redirect_all_refs_to_bogus(document):
+            bogus = "data/curated/han/bogus-review.json"
+            document["trackedReviewInputs"][bogus] = {
+                "path": bogus,
+                "sha256": "0" * 64,
+                "role": "BOGUS_REVIEW",
+            }
+            for group in document["adjudications"]:
+                for member in group["members"]:
+                    member["evidenceRefs"] = [bogus]
+
+        def add_bogus_extra_ref(document):
+            bogus = "data/curated/han/bogus-review.json"
+            document["trackedReviewInputs"][bogus] = {
+                "path": bogus,
+                "sha256": "0" * 64,
+                "role": "BOGUS_REVIEW",
+            }
+            document["adjudications"][0]["members"][0]["evidenceRefs"].append(bogus)
+
+        mutations = [
+            redirect_all_refs_to_bogus,
+            add_bogus_extra_ref,
+            lambda d: d["adjudications"][0]["members"][0]["evidenceRefs"].pop(),
+            lambda d: d["trackedReviewInputs"][next(iter(d["trackedReviewInputs"]))].update(
+                sha256="0" * 64
+            ),
+        ]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
+                self.validate_copy(mutate)
+
     def test_member_array_order_is_semantically_irrelevant(self):
         reordered = copy.deepcopy(self.ledger)
         reordered["adjudications"].reverse()
@@ -173,8 +218,11 @@ class DuplicateAdjudicationContractTest(unittest.TestCase):
         )
 
     def test_builder_has_no_route_policy_runtime_dependency(self):
-        source = (ROOT / "tools/map/build_han_places.py").read_text(encoding="utf-8")
-        self.assertNotIn("route-node-", source)
+        with mock.patch("builtins.open", wraps=open) as open_spy:
+            builder.load_duplicate_adjudications()
+        opened = [str(call.args[0]) for call in open_spy.call_args_list]
+        self.assertEqual([str(builder.DUPLICATE_ADJUDICATIONS)], opened)
+        self.assertFalse(any("route-node-" in path for path in opened))
 
 
 @unittest.skipUnless(
@@ -191,7 +239,7 @@ class DuplicateFoldingBehaviorTest(unittest.TestCase):
         group = self.ledger["adjudications"][group_index]
         for member in group["members"]:
             rows.append(place(
-                member["physicalPlaceId"], group["sourceName"],
+                member["physicalPlaceId"], group["sourceNameCh"], group["sourceNameFt"],
                 member["coordinate"]["lon"], member["coordinate"]["lat"],
                 member["activeRange"]["begYr"], member["activeRange"]["endYr"],
                 "different-present-location-" + member["physicalPlaceId"],
@@ -241,10 +289,20 @@ class DuplicateFoldingBehaviorTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.fold(base, year=999)
 
+    def test_joint_name_ch_drift_fails_even_when_name_ft_still_matches(self):
+        rows = self.adjudicated_records(0)
+        ledger = copy.deepcopy(self.ledger)
+        ledger["adjudications"] = [ledger["adjudications"][0]]
+        for row in rows:
+            row["nameCh"] = "共同漂移县"
+        with self.assertRaises(ValueError):
+            self.fold(rows, ledger=ledger)
+
     def test_extra_member_in_reviewed_real_duplicate_group_fails_closed(self):
         rows = self.adjudicated_records(0)
-        rows.append(place("99999", rows[0]["nameFt"], rows[0]["lon"] + 0.01,
-                          rows[0]["lat"] + 0.01, -100, 500, "third"))
+        rows.append(place("99999", rows[0]["nameCh"], rows[0]["nameFt"],
+                          rows[0]["lon"] + 0.01, rows[0]["lat"] + 0.01,
+                          -100, 500, "third"))
         with self.assertRaises(ValueError):
             self.fold(rows)
 

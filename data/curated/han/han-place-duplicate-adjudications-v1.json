@@ -11,22 +11,26 @@
   "trackedReviewInputs": {
     "data/curated/han/route-node-location-adjudications-v1.json": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a"
+      "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a",
+      "role": "LOCATION_ADJUDICATION_REVIEW"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "3aaf7c8eb6797336518733c2e9bf9a50c3c05de303245519a7eebc01cebca744"
+      "sha256": "3aaf7c8eb6797336518733c2e9bf9a50c3c05de303245519a7eebc01cebca744",
+      "role": "ROUTE_NODE_SELECTION_REVIEW"
     }
   },
   "adjudications": [
     {
       "groupId": "han-place-duplicate:85168-87267",
-      "sourceName": "東武城縣",
+      "sourceNameCh": "东武城县",
+      "sourceNameFt": "東武城縣",
       "reviewState": "APPROVED_FOR_BUILD_SELECTION",
       "members": [
         {
           "physicalPlaceId": "85168",
-          "sourceName": "東武城縣",
+          "sourceNameCh": "东武城县",
+          "sourceNameFt": "東武城縣",
           "activeRange": {
             "begYr": -198,
             "endYr": 419
@@ -43,7 +47,8 @@
         },
         {
           "physicalPlaceId": "87267",
-          "sourceName": "東武城縣",
+          "sourceNameCh": "东武城县",
+          "sourceNameFt": "東武城縣",
           "activeRange": {
             "begYr": -202,
             "endYr": 316
@@ -62,12 +67,14 @@
     },
     {
       "groupId": "han-place-duplicate:42901-85581",
-      "sourceName": "利城縣",
+      "sourceNameCh": "利城县",
+      "sourceNameFt": "利城縣",
       "reviewState": "APPROVED_FOR_BUILD_SELECTION",
       "members": [
         {
           "physicalPlaceId": "42901",
-          "sourceName": "利城縣",
+          "sourceNameCh": "利城县",
+          "sourceNameFt": "利城縣",
           "activeRange": {
             "begYr": 23,
             "endYr": 466
@@ -84,7 +91,8 @@
         },
         {
           "physicalPlaceId": "85581",
-          "sourceName": "利城縣",
+          "sourceNameCh": "利城县",
+          "sourceNameFt": "利城縣",
           "activeRange": {
             "begYr": 23,
             "endYr": 429
