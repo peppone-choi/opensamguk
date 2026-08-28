@@ -11,7 +11,10 @@
 EXTERNAL_PLACE는 CHGIS에 아예 없다(실측: docs/superpowers/research/
 2026-08-18-chgis-coverage-and-place-taxonomy.md). 별도 출처·별도 파일이다.
 
-usage:  python3 tools/map/build_han_places.py [--year 220] [--grid 256]
+usage:  python3 tools/map/build_han_places.py [--year 220] [--grid 768]
+
+인자를 생략한 실행은 커밋 가능한 Han 지도용 canonical 768×669 격자를 만든다.
+연구·synthetic fixture는 `--grid 256`처럼 비정본 값을 명시할 수 있다.
 
 계약(#524, 2026-08-24 실측): CHGIS TYPE_CH는 郡/國 분류 근거가 아니다 — 정본 카탈로그
 (data/curated/han/administrative-units.json, 續漢書 郡國志 기반, groups[].groupType)가
@@ -423,7 +426,10 @@ def fold_duplicate_places(places, year, ledger):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--year', type=int, default=220)
-    ap.add_argument('--grid', type=int, default=256)
+    ap.add_argument(
+        '--grid', type=int, default=768,
+        help='grid columns (canonical default: 768; other explicit values are research/synthetic only)',
+    )
     # 後漢 세계 프레임. 서 돈황(94.1E) · 동 왜 규슈(130.4E) · 남 象林/林邑(15.75N) ·
     # 북 부여(44.4N). 더 넓히면 필리핀·태국이 딸려와 중원이 쪼그라든다.
     ap.add_argument('--bbox', nargs=4, type=float, metavar=('LO_LON', 'HI_LON', 'LO_LAT', 'HI_LAT'),

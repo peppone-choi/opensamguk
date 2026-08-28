@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """후한 군현 지도의 지형 격자를 만든다 — 사료 좌표 + Natural Earth 해안선.
 
-`data/map/han-places.json` 이 저장한 등적 투영을 **역산**해 256×256 각 셀의 실제
+`data/map/han-places.json` 이 저장한 등적 투영을 **역산**해 canonical
+768×669 각 셀의 실제
 경위도를 구하고, Natural Earth(public domain) 로 바다·호수·하천을 굽는다. 그 다음
 각 육지 셀을 가장 가까운 縣에 배정(보로노이)하고, 郡治 사이의 도로를 Gabriel 그래프로
 유도한다. 인접을 손으로 적지 않는다 — 좌표가 이미 그것을 말하고 있다.
 
 산출 `data/map/terrain-grid.json` (미커밋, ADR-LITE-039):
-    terrain  256×256  0 바다 · 1 평지 · 2 산지 · 3 하천 · 4 호소
-    owner    256×250  각 셀의 縣 인덱스(-1 = 바다)
+    terrain  projection rows×cols  0 바다 · 1 평지 · 2 산지 · 3 하천 · 4 호소
+    owner    projection rows×cols  각 셀의 縣 인덱스(-1 = 바다)
     roads    郡治 간 간선 목록
 
-용법:  python3 tools/map/build_terrain_grid.py [--grid 256] [--preview]
+용법:  python3 tools/map/build_terrain_grid.py [--grid 768] [--preview]
+
+`--grid`는 새 투영을 만드는 옵션이 아니라 상류 `han-places.json`의 projection
+cols를 확인하는 계약이다. 비정본 연구 격자는 같은 값을 명시해 사용한다.
 """
 import argparse, heapq, json, math, os, sys
 from collections import Counter
@@ -692,15 +696,43 @@ def fords(terrain, roads):
     return [{'col': x, 'row': y, 'roads': c} for (x, y), c in sorted(seen.items())]
 
 
+def validate_requested_grid(places_document, requested_grid):
+    """Require the CLI grid contract to match the upstream projection exactly."""
+    if not isinstance(places_document, dict) or not isinstance(
+            places_document.get('projection'), dict):
+        raise ValueError('han-places projection object is required')
+    projection = places_document['projection']
+    cols = projection.get('cols')
+    rows = projection.get('rows')
+    if isinstance(cols, bool) or not isinstance(cols, int):
+        raise ValueError('han-places projection cols must be an integer')
+    if cols != requested_grid:
+        raise ValueError(
+            f'requested grid {requested_grid} does not match han-places projection cols {cols}'
+        )
+    if places_document.get('grid') != cols or places_document.get('cols') != cols:
+        raise ValueError('han-places grid/cols must equal projection cols')
+    if places_document.get('rows') != rows:
+        raise ValueError('han-places rows must equal projection rows')
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--grid', type=int, default=256)
+    ap.add_argument(
+        '--grid', type=int, default=768,
+        help='verify upstream grid columns (canonical default: 768; explicit alternatives are research/synthetic only)',
+    )
     ap.add_argument('--preview', action='store_true', help='PNG 미리보기도 그린다')
     a = ap.parse_args()
 
     if not os.path.exists(PLACES):
         sys.exit(f'{PLACES} 가 없다. 먼저 tools/map/build_han_places.py 를 돌려라.')
-    hp = json.load(open(PLACES))
+    with open(PLACES, encoding='utf-8') as fh:
+        hp = json.load(fh)
+    try:
+        validate_requested_grid(hp, a.grid)
+    except ValueError as exc:
+        sys.exit(str(exc))
     proj = Proj(hp['projection'])
     n, rows = proj.cols, proj.rows
 

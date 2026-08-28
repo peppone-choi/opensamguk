@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """타일 격자 패키저 — 렌더러 산출물을 프런트가 먹을 수 있는 한 파일로 굽는다.
 
-`build_terrain_grid.py` 가 만든 `data/map/terrain-grid.json`(256×256 지형·소유·지역)과
-`build_han_places.py` 의 `data/map/han-places.json`(1092 군현 좌표)을 읽어
+`build_terrain_grid.py` 가 만든 `data/map/terrain-grid.json`(768×669 지형·소유·지역)과
+`build_han_places.py` 의 `data/map/han-places.json`(군현 좌표)을 읽어
 `data/map/han-tiles.json` 을 낸다. 지형을 **유도하지 않는다** — 유도는 렌더러가 이미 했다.
 
 이 스크립트가 하는 일은 셋뿐이다.
@@ -34,6 +34,9 @@ OUT = MAP / "han-tiles.json"
 
 # 도로 비트마스크 — 이웃 4방향(N=1 E=2 S=4 W=8). 타일 16종이 서로 이어진다.
 NEI = {(0, -1): 1, (1, 0): 2, (0, 1): 4, (-1, 0): 8}
+CANONICAL_COLS = 768
+CANONICAL_ROWS = 669
+CANONICAL_YEAR = 220
 
 
 def rle(rows: list[list[int]]) -> list[list[int]]:
@@ -49,6 +52,37 @@ def rle(rows: list[list[int]]) -> list[list[int]]:
             else:
                 out.append([v, 1])
     return out
+
+
+def validate_canonical_inputs(
+        grid_document: dict, places_document: dict, *, readings_exists: bool) -> None:
+    """Validate the commit-producing CLI inputs without constraining direct fixture builds."""
+    if not readings_exists:
+        raise ValueError('readings.json is required for canonical tile materialization')
+    if not isinstance(grid_document, dict) or not isinstance(places_document, dict):
+        raise ValueError('terrain-grid and han-places documents are required')
+    grid_projection = grid_document.get('projection')
+    places_projection = places_document.get('projection')
+    if not isinstance(grid_projection, dict) or not isinstance(places_projection, dict):
+        raise ValueError('terrain-grid and han-places projection objects are required')
+    if grid_projection != places_projection:
+        raise ValueError('terrain-grid and han-places projections must match exactly')
+
+    expected_dimensions = (CANONICAL_COLS, CANONICAL_ROWS)
+    for label, document in (
+            ('terrain-grid', grid_document), ('han-places', places_document)):
+        dimensions = (document.get('cols'), document.get('rows'))
+        projection_dimensions = (
+            document['projection'].get('cols'), document['projection'].get('rows')
+        )
+        if dimensions != expected_dimensions or projection_dimensions != expected_dimensions:
+            raise ValueError(
+                f'{label} must use the canonical {CANONICAL_COLS}x{CANONICAL_ROWS} projection'
+            )
+        if document.get('grid') != CANONICAL_COLS:
+            raise ValueError(f'{label} grid must be {CANONICAL_COLS}')
+        if document.get('year') != CANONICAL_YEAR:
+            raise ValueError(f'{label} year must be {CANONICAL_YEAR}')
 
 
 def build() -> dict:
@@ -152,6 +186,14 @@ def main() -> int:
     for src in (GRID, PLACES):
         if not src.exists():
             sys.exit(f"{src.relative_to(ROOT)} 가 없다. tools/map/build_terrain_grid.py 를 먼저 돌려라.")
+    grid_document = json.loads(GRID.read_text())
+    places_document = json.loads(PLACES.read_text())
+    try:
+        validate_canonical_inputs(
+            grid_document, places_document, readings_exists=READINGS.exists()
+        )
+    except ValueError as exc:
+        sys.exit(f'canonical Han tile input contract failed: {exc}')
     blob = json.dumps(build(), ensure_ascii=False, separators=(",", ":")) + "\n"
     if args.check:
         if OUT.exists() and OUT.read_text() == blob:

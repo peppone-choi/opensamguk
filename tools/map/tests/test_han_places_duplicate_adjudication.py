@@ -59,7 +59,7 @@ class PresenceAndControlledSourceRedTest(unittest.TestCase):
             out = tmp_root / "map/han-places.json"
             out.parent.mkdir(parents=True)
             shutil.copy2(ROOT / "data/map/external-places.json", out.parent)
-            argv = ["build_han_places.py", "--year", "220", "--grid", "768", "--out", str(out)]
+            argv = ["build_han_places.py", "--year", "220", "--out", str(out)]
             with mock.patch.object(builder, "SRC", str(source_dir())), mock.patch.object(sys, "argv", argv):
                 stdout = StringIO()
                 with redirect_stdout(stdout):
