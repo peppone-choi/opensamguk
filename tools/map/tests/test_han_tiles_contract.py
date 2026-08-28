@@ -57,6 +57,20 @@ def valid_recipe():
         "inputs": inputs,
         "generators": {role: hashed_record(role) for role in GENERATOR_ROLES},
         "verifiers": {role: hashed_record(role) for role in VERIFIER_ROLES},
+        "dependencies": {
+            "NUMPY": {
+                "distributionName": "numpy",
+                "lockRole": "HAN_TILES_PYTHON_LOCK",
+            },
+            "PILLOW": {
+                "distributionName": "Pillow",
+                "lockRole": "HAN_TILES_PYTHON_LOCK",
+            },
+            "HANJA": {
+                "distributionName": "hanja",
+                "lockRole": "HAN_TILES_PYTHON_LOCK",
+            },
+        },
         "runtime": {
             "pythonImplementation": "CPython",
             "pythonVersion": "3.13.7",
@@ -123,6 +137,7 @@ def valid_contract():
         },
         "recipe": recipe,
         "recipeSha256": canonical_sha(recipe),
+        "expectedOutputs": output_records(),
     }
 
 
@@ -163,7 +178,7 @@ def output_records():
 
 
 def valid_attestation(contract):
-    outputs = output_records()
+    outputs = copy.deepcopy(contract["expectedOutputs"])
     return {
         "schemaVersion": 1,
         "attestationId": "han-tiles-build-attestation-v1",
@@ -210,10 +225,12 @@ class ContractValidationTest(unittest.TestCase):
             lambda d: d["recipe"]["inputs"]["CHGIS_PREF_DBF"].update(digest="0" * 64),
             lambda d: d["recipe"]["generators"]["BUILD_HAN_PLACES"].update(path="tool.py"),
             lambda d: d["recipe"]["verifiers"]["HAN_TILES_ORCHESTRATOR"].update(version="1"),
+            lambda d: d["recipe"]["dependencies"]["NUMPY"].update(version="2"),
             lambda d: d["recipe"]["runtime"].update(platform="macOS"),
             lambda d: d["recipe"]["runtime"]["dependencyLock"].update(url="https://example.test"),
             lambda d: d["recipe"]["runtime"]["environment"].update(home="/tmp"),
             lambda d: d["recipe"]["stages"][0].update(command="python"),
+            lambda d: d["expectedOutputs"]["HAN_PLACES"].update(digest="0" * 64),
         ]
         for index, mutate in enumerate(mutations):
             with self.subTest(layer=index):
@@ -225,11 +242,37 @@ class ContractValidationTest(unittest.TestCase):
             lambda d: d["recipe"]["inputs"].update(OTHER=hashed_record("OTHER", classification="TRACKED_REPOSITORY")),
             lambda d: d["recipe"]["generators"].update(build_han_places=d["recipe"]["generators"].pop("BUILD_HAN_PLACES")),
             lambda d: d["recipe"]["verifiers"].pop("HAN_TILES_ORCHESTRATOR"),
+            lambda d: d["recipe"]["dependencies"].pop("NUMPY"),
             lambda d: d["recipe"]["stages"][0]["inputRoles"].append("CHGIS_PREF_DBF"),
         ]
         for index, mutate in enumerate(mutations):
             with self.subTest(mutation=index):
                 self.validate_mutation(mutate, "role|stage graph")
+
+    def test_dependencies_are_closed_over_every_stage_reference(self):
+        mutations = [
+            lambda d: d["recipe"].pop("dependencies"),
+            lambda d: d["recipe"]["dependencies"].pop("NUMPY"),
+            lambda d: d["recipe"]["dependencies"].update(SCIPY={
+                "distributionName": "scipy", "lockRole": "HAN_TILES_PYTHON_LOCK",
+            }),
+            lambda d: d["recipe"]["dependencies"].update(
+                numpy=d["recipe"]["dependencies"].pop("NUMPY")
+            ),
+            lambda d: d["recipe"]["stages"][2]["dependencyRoles"].append("SCIPY"),
+            lambda d: d["recipe"]["stages"][3]["dependencyRoles"].remove("HANJA"),
+            lambda d: d["recipe"]["dependencies"]["PILLOW"].update(
+                distributionName="pillow"
+            ),
+            lambda d: d["recipe"]["dependencies"]["HANJA"].update(
+                lockRole="OTHER_LOCK"
+            ),
+        ]
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                self.validate_mutation(
+                    mutate, "dependenc|role set|stage graph|exact keys"
+                )
 
     def test_fixed_stage_order_graph_dependencies_and_arguments_reject_drift(self):
         mutations = [
@@ -311,6 +354,50 @@ class ContractValidationTest(unittest.TestCase):
                     "forbidden",
                 )
 
+    def test_expected_outputs_require_exact_roles_records_and_canonical_summaries(self):
+        mutations = [
+            lambda d: d.pop("expectedOutputs"),
+            lambda d: d["expectedOutputs"].pop("HAN_PLACES"),
+            lambda d: d["expectedOutputs"].update(EXTRA=copy.deepcopy(
+                d["expectedOutputs"]["HAN_PLACES"]
+            )),
+            lambda d: d["expectedOutputs"].update(han_places=
+                d["expectedOutputs"].pop("HAN_PLACES")
+            ),
+            lambda d: d["expectedOutputs"]["HAN_PLACES"].update(role="READINGS"),
+            lambda d: d["expectedOutputs"]["HAN_PLACES"].update(sha256="0" * 64),
+            lambda d: d["expectedOutputs"]["HAN_PLACES"].update(bytes=0),
+            lambda d: d["expectedOutputs"]["HAN_PLACES"]["summary"].update(
+                placeCount=True
+            ),
+            lambda d: d["expectedOutputs"]["HAN_TILES"]["summary"].update(year=221),
+            lambda d: d["expectedOutputs"]["TERRAIN_GRID"]["summary"].update(
+                ownerCellCount=1
+            ),
+        ]
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                self.validate_mutation(
+                    mutate,
+                    "expectedOutputs|role|sha256|bytes|summary|canonical|cell|exact keys",
+                )
+
+    def test_expected_outputs_stay_outside_recipe_hash_but_inside_contract_hash(self):
+        original = valid_contract()
+        attestation = valid_attestation(original)
+        changed = copy.deepcopy(original)
+        changed_hash = digest("reviewed-new-han-places-output")
+        changed["expectedOutputs"]["HAN_PLACES"]["sha256"] = changed_hash
+
+        self.assertEqual(original["recipeSha256"], changed["recipeSha256"])
+        self.assertNotEqual(canonical_sha(original), canonical_sha(changed))
+        self.assertTrue(contract_validator.validate_contract(changed))
+
+        for run in attestation["cleanRuns"]:
+            run["outputs"]["HAN_PLACES"]["sha256"] = changed_hash
+        with self.assertRaisesRegex(ValueError, "contractSha256"):
+            contract_validator.validate_attestation(changed, attestation)
+
 
 class AttestationValidationTest(unittest.TestCase):
     def validate_mutation(self, mutate, pattern):
@@ -320,9 +407,29 @@ class AttestationValidationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, pattern):
             contract_validator.validate_attestation(contract, attestation)
 
-    def test_valid_attestation_proves_two_identical_clean_runs(self):
+    def test_valid_attestation_accepts_two_orchestrator_produced_identical_manifests(self):
         contract = valid_contract()
         self.assertTrue(contract_validator.validate_attestation(contract, valid_attestation(contract)))
+
+    def test_identical_clean_runs_must_also_equal_contract_expected_outputs(self):
+        mutations = [
+            lambda a, _c: [
+                run["outputs"]["HAN_PLACES"].update(
+                    sha256=digest("same-but-unexpected-han-places")
+                )
+                for run in a["cleanRuns"]
+            ],
+            lambda a, _c: (
+                [
+                    run["outputs"]["HAN_TILES"]["summary"].update(cityCount=0)
+                    for run in a["cleanRuns"]
+                ],
+                a["materializedArtifact"]["summary"].update(cityCount=0),
+            ),
+        ]
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                self.validate_mutation(mutate, "expectedOutputs")
 
     def test_every_attestation_object_layer_rejects_unknown_keys(self):
         mutations = [
@@ -426,6 +533,68 @@ class AttestationValidationTest(unittest.TestCase):
                     lambda a, _c, field=field, value=value: a["cleanRuns"][0]["outputs"]["HAN_PLACES"]["summary"].update({field: value}),
                     "forbidden",
                 )
+
+
+class StrictJsonApiTest(unittest.TestCase):
+    def test_public_json_apis_accept_str_and_bytes_documents(self):
+        contract = valid_contract()
+        attestation = valid_attestation(contract)
+        contract_text = json.dumps(contract, ensure_ascii=False, separators=(",", ":"))
+        attestation_text = json.dumps(
+            attestation, ensure_ascii=False, separators=(",", ":")
+        )
+
+        self.assertTrue(contract_validator.validate_contract_json(contract_text))
+        self.assertTrue(contract_validator.validate_contract_json(contract_text.encode("utf-8")))
+        self.assertTrue(contract_validator.validate_attestation_json(
+            contract_text, attestation_text.encode("utf-8")
+        ))
+
+    def test_public_json_apis_route_every_document_through_strict_parsing(self):
+        contract = valid_contract()
+        attestation = valid_attestation(contract)
+        contract_text = json.dumps(contract, separators=(",", ":"))
+        attestation_text = json.dumps(attestation, separators=(",", ":"))
+        duplicate_contract = contract_text.replace(
+            '{"schemaVersion":1,', '{"schemaVersion":1,"schemaVersion":1,', 1
+        )
+        duplicate_attestation = attestation_text.replace(
+            '{"schemaVersion":1,', '{"schemaVersion":1,"schemaVersion":1,', 1
+        )
+
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            contract_validator.validate_contract_json(duplicate_contract)
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            contract_validator.validate_attestation_json(
+                contract_text, duplicate_attestation
+            )
+
+    def test_duplicate_keys_are_rejected_at_root_role_output_and_summary_depths(self):
+        duplicate_documents = {
+            "root-same": '{"schemaVersion":1,"schemaVersion":1}',
+            "root-different": '{"schemaVersion":1,"schemaVersion":2}',
+            "role-same": '{"expectedOutputs":{"HAN_PLACES":{},"HAN_PLACES":{}}}',
+            "role-different": (
+                '{"expectedOutputs":{"HAN_PLACES":{"role":"HAN_PLACES"},'
+                '"HAN_PLACES":{"role":"READINGS"}}}'
+            ),
+            "output-same": '{"output":{"role":"HAN_PLACES","role":"HAN_PLACES"}}',
+            "output-different": '{"output":{"role":"HAN_PLACES","role":"READINGS"}}',
+            "summary-same": '{"summary":{"cityCount":1,"cityCount":1}}',
+            "summary-different": '{"summary":{"cityCount":1,"cityCount":2}}',
+        }
+        for location, text in duplicate_documents.items():
+            with self.subTest(location=location):
+                with self.assertRaisesRegex(ValueError, "duplicate"):
+                    contract_validator.loads_json_strict(text)
+
+    def test_nonfinite_json_constants_are_rejected_at_any_depth(self):
+        for constant in ("NaN", "Infinity", "-Infinity"):
+            with self.subTest(constant=constant):
+                with self.assertRaisesRegex(ValueError, "non-finite"):
+                    contract_validator.loads_json_strict(
+                        '{"outer":{"summary":{"count":' + constant + "}}}"
+                    )
 
 
 if __name__ == "__main__":

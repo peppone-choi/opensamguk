@@ -2,7 +2,9 @@
 
 This module deliberately has no filesystem, subprocess, or source-root access.  It
 validates already-loaded JSON-compatible objects so the protected orchestrator and
-the public contract checker can share one fail-closed schema implementation.
+the public contract checker can share one fail-closed schema implementation.  An
+attestation records orchestrator-produced manifests; it is not proof that execution
+occurred, so execution and materialization remain protected-orchestrator duties.
 """
 
 from __future__ import annotations
@@ -54,6 +56,20 @@ OUTPUT_ROLES = (
     "READINGS",
     "HAN_TILES",
 )
+DEPENDENCIES = {
+    "NUMPY": {
+        "distributionName": "numpy",
+        "lockRole": "HAN_TILES_PYTHON_LOCK",
+    },
+    "PILLOW": {
+        "distributionName": "Pillow",
+        "lockRole": "HAN_TILES_PYTHON_LOCK",
+    },
+    "HANJA": {
+        "distributionName": "hanja",
+        "lockRole": "HAN_TILES_PYTHON_LOCK",
+    },
+}
 
 _STAGES = (
     {
@@ -174,6 +190,32 @@ def _canonical_bytes(value: Any) -> bytes:
         ).encode("utf-8")
     except (TypeError, ValueError) as error:
         raise ValueError("document is not canonical JSON data") from error
+
+
+def loads_json_strict(document: str | bytes) -> Any:
+    """Parse JSON while rejecting duplicate keys and non-finite constants."""
+    if not isinstance(document, (str, bytes)):
+        raise ValueError("JSON document must be str or bytes")
+
+    def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate object key: {key!r}")
+            result[key] = value
+        return result
+
+    def reject_nonfinite(constant: str) -> None:
+        raise ValueError(f"non-finite JSON constant: {constant}")
+
+    try:
+        return json.loads(
+            document,
+            object_pairs_hook=reject_duplicate_keys,
+            parse_constant=reject_nonfinite,
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("invalid JSON document") from error
 
 
 def recipe_sha256(recipe: dict[str, Any]) -> str:
@@ -307,10 +349,12 @@ def _validate_runtime(value: Any) -> dict[str, Any]:
     return runtime
 
 
-def _validate_stage_graph(value: Any) -> None:
+def _validate_stage_graph(value: Any, dependency_roles: set[str]) -> None:
     stages = _require_list(value, "recipe.stages")
     if len(stages) != len(_STAGES):
         raise ValueError("recipe stage graph must contain exactly five stages")
+    validated_stages = []
+    referenced_dependencies: set[str] = set()
     for index, (actual, expected) in enumerate(zip(stages, _STAGES)):
         stage = _require_exact_keys(
             actual,
@@ -319,6 +363,21 @@ def _validate_stage_graph(value: Any) -> None:
         )
         for field in ("inputRoles", "dependencyRoles", "argv"):
             _require_list(stage[field], f"recipe.stages[{index}].{field}")
+        if not all(isinstance(role, str) for role in stage["dependencyRoles"]):
+            raise ValueError(
+                f"recipe.stages[{index}].dependencyRoles must contain strings"
+            )
+        referenced_dependencies.update(stage["dependencyRoles"])
+        validated_stages.append(stage)
+
+    if referenced_dependencies != dependency_roles:
+        raise ValueError(
+            "recipe stage graph dependency closure mismatch: "
+            f"dangling={sorted(referenced_dependencies - dependency_roles)}, "
+            f"unused={sorted(dependency_roles - referenced_dependencies)}"
+        )
+
+    for index, (stage, expected) in enumerate(zip(validated_stages, _STAGES)):
         if stage != expected:
             raise ValueError(
                 f"recipe stage graph mismatch at index {index}: expected {expected['stageId']}"
@@ -330,7 +389,10 @@ def validate_contract(document: dict[str, Any]) -> bool:
     _reject_forbidden_fields(document, "contract")
     contract = _require_exact_keys(
         document,
-        {"schemaVersion", "contractId", "policy", "recipe", "recipeSha256"},
+        {
+            "schemaVersion", "contractId", "policy", "recipe", "recipeSha256",
+            "expectedOutputs",
+        },
         "contract",
     )
     if type(contract["schemaVersion"]) is not int or contract["schemaVersion"] != SCHEMA_VERSION:
@@ -354,7 +416,10 @@ def validate_contract(document: dict[str, Any]) -> bool:
 
     recipe = _require_exact_keys(
         contract["recipe"],
-        {"canonical", "inputs", "generators", "verifiers", "runtime", "stages"},
+        {
+            "canonical", "inputs", "generators", "verifiers", "dependencies",
+            "runtime", "stages",
+        },
         "contract.recipe",
     )
     canonical = _require_exact_keys(
@@ -387,8 +452,21 @@ def validate_contract(document: dict[str, Any]) -> bool:
         for role, value in role_map.items():
             _validate_hash_record(value, f"recipe.{section}.{role}")
 
+    dependencies = _require_exact_role_map(
+        recipe["dependencies"], tuple(DEPENDENCIES), "recipe.dependencies"
+    )
+    for role, expected in DEPENDENCIES.items():
+        record = _require_exact_keys(
+            dependencies[role], {"distributionName", "lockRole"},
+            f"recipe.dependencies.{role}",
+        )
+        if record != expected:
+            raise ValueError(
+                f"recipe.dependencies.{role} must equal {expected}"
+            )
+
     _validate_runtime(recipe["runtime"])
-    _validate_stage_graph(recipe["stages"])
+    _validate_stage_graph(recipe["stages"], set(dependencies))
 
     supplied_hash = _require_hash(contract["recipeSha256"], "contract.recipeSha256")
     expected_hash = recipe_sha256(recipe)
@@ -396,6 +474,8 @@ def validate_contract(document: dict[str, Any]) -> bool:
         raise ValueError(
             f"recipeSha256 mismatch: expected {expected_hash}, got {supplied_hash}"
         )
+
+    _validate_output_map(contract["expectedOutputs"], "contract.expectedOutputs")
     return True
 
 
@@ -424,6 +504,13 @@ def _validate_output_record(role: str, value: Any, where: str) -> dict[str, Any]
     return record
 
 
+def _validate_output_map(value: Any, where: str) -> dict[str, Any]:
+    outputs = _require_exact_role_map(value, OUTPUT_ROLES, where)
+    for role in OUTPUT_ROLES:
+        _validate_output_record(role, outputs[role], f"{where}.{role}")
+    return outputs
+
+
 def _validate_runtime_fingerprint(value: Any, contract_runtime: dict[str, Any]) -> None:
     fingerprint = _require_exact_keys(
         value,
@@ -448,7 +535,7 @@ def _validate_runtime_fingerprint(value: Any, contract_runtime: dict[str, Any]) 
 
 
 def validate_attestation(contract_document: dict[str, Any], document: dict[str, Any]) -> bool:
-    """Validate a coordinate-free attestation against its validated contract."""
+    """Validate coordinate-free orchestrator manifests against their contract."""
     validate_contract(contract_document)
     _reject_forbidden_fields(document, "attestation")
     attestation = _require_exact_keys(
@@ -498,23 +585,35 @@ def validate_attestation(contract_document: dict[str, Any], document: dict[str, 
             raise ValueError(
                 f"attestation cleanRuns[{run_index}].runOrdinal must be {expected_ordinal}"
             )
-        outputs = _require_exact_role_map(
-            run["outputs"], OUTPUT_ROLES,
-            f"attestation.cleanRuns[{run_index}].outputs",
+        outputs = _validate_output_map(
+            run["outputs"], f"attestation.cleanRuns[{run_index}].outputs"
         )
-        for role in OUTPUT_ROLES:
-            _validate_output_record(
-                role, outputs[role],
-                f"attestation.cleanRuns[{run_index}].outputs.{role}",
-            )
         validated_outputs.append(outputs)
     if validated_outputs[0] != validated_outputs[1]:
         raise ValueError("attestation clean runs differ")
+    if validated_outputs[0] != contract_document["expectedOutputs"]:
+        raise ValueError("attestation clean run outputs do not match expectedOutputs")
 
     materialized = _validate_output_record(
         "HAN_TILES", attestation["materializedArtifact"],
         "attestation.materializedArtifact",
     )
-    if materialized != validated_outputs[0]["HAN_TILES"]:
-        raise ValueError("attestation materializedArtifact does not match HAN_TILES output")
+    if materialized != contract_document["expectedOutputs"]["HAN_TILES"]:
+        raise ValueError(
+            "attestation materializedArtifact does not match expectedOutputs.HAN_TILES"
+        )
     return True
+
+
+def validate_contract_json(document: str | bytes) -> bool:
+    """Strictly parse and validate a serialized contract."""
+    return validate_contract(loads_json_strict(document))
+
+
+def validate_attestation_json(
+    contract_document: str | bytes, document: str | bytes
+) -> bool:
+    """Strictly parse and validate serialized contract and attestation documents."""
+    return validate_attestation(
+        loads_json_strict(contract_document), loads_json_strict(document)
+    )
