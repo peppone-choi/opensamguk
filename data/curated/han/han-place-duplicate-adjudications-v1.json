@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "han-place-duplicate-adjudications-v1",
+  "baselineYear": 220,
+  "groupingContract": {
+    "nameRule": "EXACT_NAME_CH",
+    "spatialRule": "EQUAL_NONEMPTY_PRESENT_LOCATION_OR_AXIS_DELTA_AT_MOST",
+    "maxCoordinateDeltaDegrees": 0.5,
+    "applicationOrder": "AFTER_REAL_GROUP_BEFORE_TEMPORAL_SPAN_FALLBACK"
+  },
+  "trackedReviewInputs": {
+    "data/curated/han/route-node-location-adjudications-v1.json": {
+      "path": "data/curated/han/route-node-location-adjudications-v1.json",
+      "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a"
+    },
+    "data/curated/han/route-node-selection-v1.json": {
+      "path": "data/curated/han/route-node-selection-v1.json",
+      "sha256": "3aaf7c8eb6797336518733c2e9bf9a50c3c05de303245519a7eebc01cebca744"
+    }
+  },
+  "adjudications": [
+    {
+      "groupId": "han-place-duplicate:85168-87267",
+      "sourceName": "東武城縣",
+      "reviewState": "APPROVED_FOR_BUILD_SELECTION",
+      "members": [
+        {
+          "physicalPlaceId": "85168",
+          "sourceName": "東武城縣",
+          "activeRange": {
+            "begYr": -198,
+            "endYr": 419
+          },
+          "coordinate": {
+            "lon": 115.84629,
+            "lat": 37.19822
+          },
+          "disposition": "SELECTED",
+          "evidenceRefs": [
+            "data/curated/han/route-node-location-adjudications-v1.json",
+            "data/curated/han/route-node-selection-v1.json"
+          ]
+        },
+        {
+          "physicalPlaceId": "87267",
+          "sourceName": "東武城縣",
+          "activeRange": {
+            "begYr": -202,
+            "endYr": 316
+          },
+          "coordinate": {
+            "lon": 115.69399,
+            "lat": 37.09271
+          },
+          "disposition": "REJECTED",
+          "evidenceRefs": [
+            "data/curated/han/route-node-location-adjudications-v1.json",
+            "data/curated/han/route-node-selection-v1.json"
+          ]
+        }
+      ]
+    },
+    {
+      "groupId": "han-place-duplicate:42901-85581",
+      "sourceName": "利城縣",
+      "reviewState": "APPROVED_FOR_BUILD_SELECTION",
+      "members": [
+        {
+          "physicalPlaceId": "42901",
+          "sourceName": "利城縣",
+          "activeRange": {
+            "begYr": 23,
+            "endYr": 466
+          },
+          "coordinate": {
+            "lon": 118.829251,
+            "lat": 34.899772
+          },
+          "disposition": "SELECTED",
+          "evidenceRefs": [
+            "data/curated/han/route-node-location-adjudications-v1.json",
+            "data/curated/han/route-node-selection-v1.json"
+          ]
+        },
+        {
+          "physicalPlaceId": "85581",
+          "sourceName": "利城縣",
+          "activeRange": {
+            "begYr": 23,
+            "endYr": 429
+          },
+          "coordinate": {
+            "lon": 118.77007,
+            "lat": 34.85399
+          },
+          "disposition": "REJECTED",
+          "evidenceRefs": [
+            "data/curated/han/route-node-location-adjudications-v1.json",
+            "data/curated/han/route-node-selection-v1.json"
+          ]
+        }
+      ]
+    }
+  ]
+}

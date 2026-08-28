@@ -30,6 +30,9 @@ from collections import Counter
 
 SRC = 'data/chgis-source'
 OUT = 'data/map/han-places.json'
+DUPLICATE_ADJUDICATIONS = os.path.join(
+    'data', 'curated', 'han', 'han-place-duplicate-adjudications-v1.json'
+)
 
 # --- DBF 리더 (의존성 없음. 좌표는 X_COOR/Y_COOR 필드에 있어 SHP는 불필요) ---
 
@@ -139,6 +142,264 @@ def classify(type_ch, name_ch, name_ft, group_kind=None):
 CAPITALS = {'雒阳县', '洛阳县', '许县', '许昌县', '成都县', '建业县', '长安县'}
 
 
+# CHGIS duplicate grouping contract. The reviewed ledger deliberately describes upstream
+# physical records; route/scenario artifacts are evidence, never runtime authorities here.
+DUPLICATE_SUFFIX = '县縣國国郡州道邑'
+NEAR_DEG = 0.5
+
+
+def _require_exact_keys(value, expected, where):
+    if not isinstance(value, dict):
+        raise ValueError(f'{where}: object required')
+    actual = set(value)
+    if actual != set(expected):
+        raise ValueError(
+            f'{where}: exact keys required; missing={sorted(set(expected) - actual)}, '
+            f'extra={sorted(actual - set(expected))}'
+        )
+
+
+def _require_int(value, where):
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f'{where}: integer required')
+
+
+def validate_duplicate_adjudications(ledger):
+    """Validate the generic, hand-reviewed upstream identity ledger fail-closed."""
+    _require_exact_keys(
+        ledger,
+        {'schemaVersion', 'ledgerId', 'baselineYear', 'groupingContract',
+         'trackedReviewInputs', 'adjudications'},
+        'ledger',
+    )
+    if ledger['schemaVersion'] != 1:
+        raise ValueError('ledger.schemaVersion must be 1')
+    if ledger['ledgerId'] != 'han-place-duplicate-adjudications-v1':
+        raise ValueError('ledger.ledgerId mismatch')
+    if ledger['baselineYear'] != 220:
+        raise ValueError('ledger.baselineYear must be 220')
+
+    contract = ledger['groupingContract']
+    _require_exact_keys(
+        contract,
+        {'nameRule', 'spatialRule', 'maxCoordinateDeltaDegrees', 'applicationOrder'},
+        'ledger.groupingContract',
+    )
+    if contract != {
+        'nameRule': 'EXACT_NAME_CH',
+        'spatialRule': 'EQUAL_NONEMPTY_PRESENT_LOCATION_OR_AXIS_DELTA_AT_MOST',
+        'maxCoordinateDeltaDegrees': NEAR_DEG,
+        'applicationOrder': 'AFTER_REAL_GROUP_BEFORE_TEMPORAL_SPAN_FALLBACK',
+    }:
+        raise ValueError('ledger.groupingContract does not match builder semantics')
+
+    tracked = ledger['trackedReviewInputs']
+    if not isinstance(tracked, dict) or not tracked:
+        raise ValueError('ledger.trackedReviewInputs must be a non-empty object')
+    for key, item in tracked.items():
+        _require_exact_keys(item, {'path', 'sha256'}, f'trackedReviewInputs[{key!r}]')
+        if not isinstance(key, str) or not key or item['path'] != key:
+            raise ValueError('tracked review input key must equal its non-empty path')
+        digest = item['sha256']
+        if (not isinstance(digest, str) or len(digest) != 64
+                or any(ch not in '0123456789abcdef' for ch in digest)):
+            raise ValueError(f'trackedReviewInputs[{key!r}].sha256 must be lowercase SHA-256')
+
+    groups = ledger['adjudications']
+    if not isinstance(groups, list):
+        raise ValueError('ledger.adjudications must be an array')
+    group_ids, member_ids, selected_ids = set(), set(), set()
+    decisions = {}
+    for group_index, group in enumerate(groups):
+        where = f'adjudications[{group_index}]'
+        _require_exact_keys(
+            group, {'groupId', 'sourceName', 'reviewState', 'members'}, where
+        )
+        group_id = group['groupId']
+        if not isinstance(group_id, str) or not group_id or group_id in group_ids:
+            raise ValueError(f'{where}.groupId must be a unique non-empty string')
+        group_ids.add(group_id)
+        if not isinstance(group['sourceName'], str) or not group['sourceName']:
+            raise ValueError(f'{where}.sourceName must be a non-empty string')
+        if group['reviewState'] != 'APPROVED_FOR_BUILD_SELECTION':
+            raise ValueError(f'{where}.reviewState is not approved')
+        members = group['members']
+        if not isinstance(members, list) or len(members) < 2:
+            raise ValueError(f'{where}.members must contain a duplicate group')
+        group_member_ids, selected = set(), []
+        for member_index, member in enumerate(members):
+            member_where = f'{where}.members[{member_index}]'
+            _require_exact_keys(
+                member,
+                {'physicalPlaceId', 'sourceName', 'activeRange', 'coordinate',
+                 'disposition', 'evidenceRefs'},
+                member_where,
+            )
+            physical_id = member['physicalPlaceId']
+            if (not isinstance(physical_id, str) or not physical_id.isdigit()
+                    or physical_id in group_member_ids or physical_id in member_ids):
+                raise ValueError(f'{member_where}.physicalPlaceId must be globally unique')
+            group_member_ids.add(physical_id)
+            member_ids.add(physical_id)
+            if member['sourceName'] != group['sourceName']:
+                raise ValueError(f'{member_where}.sourceName must equal group sourceName')
+            active = member['activeRange']
+            _require_exact_keys(active, {'begYr', 'endYr'}, f'{member_where}.activeRange')
+            _require_int(active['begYr'], f'{member_where}.activeRange.begYr')
+            _require_int(active['endYr'], f'{member_where}.activeRange.endYr')
+            if active['begYr'] > active['endYr']:
+                raise ValueError(f'{member_where}.activeRange is reversed')
+            coordinate = member['coordinate']
+            _require_exact_keys(coordinate, {'lon', 'lat'}, f'{member_where}.coordinate')
+            for axis in ('lon', 'lat'):
+                value = coordinate[axis]
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                    raise ValueError(f'{member_where}.coordinate.{axis} must be finite')
+            if member['disposition'] not in {'SELECTED', 'REJECTED'}:
+                raise ValueError(f'{member_where}.disposition is not recognized')
+            if member['disposition'] == 'SELECTED':
+                selected.append(physical_id)
+            evidence = member['evidenceRefs']
+            if (not isinstance(evidence, list) or not evidence
+                    or any(not isinstance(ref, str) or ref not in tracked for ref in evidence)
+                    or len(evidence) != len(set(evidence))):
+                raise ValueError(f'{member_where}.evidenceRefs must uniquely reference tracked inputs')
+        if len(selected) != 1:
+            raise ValueError(f'{where} must have exactly one selected member')
+        if selected[0] in selected_ids:
+            raise ValueError(f'selected physicalPlaceId {selected[0]} occurs in multiple groups')
+        selected_ids.add(selected[0])
+        decisions[group_id] = selected[0]
+    return decisions
+
+
+def load_duplicate_adjudications(path=DUPLICATE_ADJUDICATIONS):
+    with open(path, encoding='utf-8') as fh:
+        ledger = json.load(fh)
+    validate_duplicate_adjudications(ledger)
+    return ledger
+
+
+def _same_duplicate_spot(left, right):
+    return bool(
+        (left.get('presLoc') and left.get('presLoc') == right.get('presLoc'))
+        or (abs(left['lon'] - right['lon']) <= NEAR_DEG
+            and abs(left['lat'] - right['lat']) <= NEAR_DEG)
+    )
+
+
+def _reviewed_winners(places, year, ledger):
+    """Bind reviewed members to the real active duplicate components in ``places``."""
+    validate_duplicate_adjudications(ledger)
+    by_id = {}
+    for row in places:
+        physical_id = str(row['id'])
+        if physical_id in by_id:
+            raise ValueError(f'duplicate source physicalPlaceId: {physical_id}')
+        by_id[physical_id] = row
+
+    winner_by_member = {}
+    for group in ledger['adjudications']:
+        declared_ids = {member['physicalPlaceId'] for member in group['members']}
+        actual = []
+        for member in group['members']:
+            physical_id = member['physicalPlaceId']
+            row = by_id.get(physical_id)
+            if row is None:
+                raise ValueError(f'{group["groupId"]}: reviewed member {physical_id} absent')
+            active = member['activeRange']
+            if not active['begYr'] <= year <= active['endYr']:
+                raise ValueError(f'{group["groupId"]}: reviewed member {physical_id} inactive at {year}')
+            coordinate = member['coordinate']
+            if (row.get('nameFt') != member['sourceName']
+                    or row.get('begYr') != active['begYr']
+                    or row.get('endYr') != active['endYr']
+                    or row.get('lon') != coordinate['lon']
+                    or row.get('lat') != coordinate['lat']):
+                raise ValueError(f'{group["groupId"]}: reviewed member {physical_id} source drift')
+            actual.append(row)
+        source_names = {row['nameCh'] for row in actual}
+        if len(source_names) != 1:
+            raise ValueError(f'{group["groupId"]}: members are not a same-name group')
+
+        # Compute the complete real grouping component, so an omitted third candidate or a
+        # rejected record outside the selected member's component fails rather than falling back.
+        component_ids = {str(actual[0]['id'])}
+        changed = True
+        while changed:
+            changed = False
+            for candidate in places:
+                candidate_id = str(candidate['id'])
+                if candidate_id in component_ids or candidate['nameCh'] not in source_names:
+                    continue
+                if any(_same_duplicate_spot(candidate, by_id[current]) for current in component_ids):
+                    component_ids.add(candidate_id)
+                    changed = True
+        if component_ids != declared_ids:
+            raise ValueError(
+                f'{group["groupId"]}: reviewed members do not equal real duplicate group '
+                f'(declared={sorted(declared_ids)}, actual={sorted(component_ids)})'
+            )
+        selected_id = next(
+            member['physicalPlaceId'] for member in group['members']
+            if member['disposition'] == 'SELECTED'
+        )
+        for physical_id in declared_ids:
+            winner_by_member[physical_id] = selected_id
+    return winner_by_member
+
+
+def fold_duplicate_places(places, year, ledger):
+    """Fold real duplicate groups, applying reviewed identity before the legacy fallback."""
+    places = sorted(places, key=lambda p: (p['nameCh'], p['lon'], p['lat']))
+    winner_by_member = _reviewed_winners(places, year, ledger)
+
+    def stem(name):
+        return name.rstrip(DUPLICATE_SUFFIX) or name
+
+    kept, folded, ties = [], [], []
+    for p in places:
+        near = None
+        for q in kept:
+            if q['nameCh'] != p['nameCh']:
+                if (q['kind'] == 'COUNTY' and p['kind'] == 'COUNTY'
+                        and stem(q['nameCh']) == stem(p['nameCh'])
+                        and abs(q['lon'] - p['lon']) <= 0.02 and abs(q['lat'] - p['lat']) <= 0.02):
+                    loser = p if q.get('typeCh') == '县' else q
+                    if loser is q:
+                        kept[kept.index(q)] = p
+                    folded.append(loser['nameFt'])
+                    near = False
+                    break
+                continue
+            if _same_duplicate_spot(q, p):
+                near = q
+                break
+        if near is False:
+            continue
+        if near is None:
+            kept.append(p)
+            continue
+
+        reviewed_p = winner_by_member.get(str(p['id']))
+        reviewed_q = winner_by_member.get(str(near['id']))
+        if reviewed_p is not None or reviewed_q is not None:
+            if reviewed_p is None or reviewed_q is None or reviewed_p != reviewed_q:
+                raise ValueError('reviewed duplicate group conflicted with runtime grouping')
+            loser = near if str(p['id']) == reviewed_p else p
+        else:
+            # Existing deterministic fallback: retain the interval that more tightly spans year.
+            rank_p = (p['endYr'] - p['begYr'], str(p['id']))
+            rank_q = (near['endYr'] - near['begYr'], str(near['id']))
+            if rank_p[0] == rank_q[0]:
+                ties.append(f"{p['nameFt']}({near['id']}·{p['id']})")
+            loser = p if rank_q < rank_p else near
+        if loser is near:
+            kept[kept.index(near)] = p
+        folded.append(loser['nameFt'])
+    return kept, folded, ties
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--year', type=int, default=220)
@@ -186,7 +447,9 @@ def main():
     ext_path = os.path.join(os.path.dirname(args.out), 'external-places.json')
     external = []
     if os.path.exists(ext_path):
-        for e in json.load(open(ext_path))['places']:
+        with open(ext_path, encoding='utf-8') as fh:
+            external_rows = json.load(fh)['places']
+        for e in external_rows:
             if not (e['begYr'] <= args.year <= e['endYr']):
                 continue
             e.setdefault('nameCh', e['nameFt'])
@@ -195,60 +458,16 @@ def main():
 
     places = sorted(seats.values(), key=lambda p: (p['nameCh'], p['lon'], p['lat']))
 
-    # CHGIS 는 같은 縣을 시기별·비정별로 여러 번 싣는다 — 盧氏縣 이 -100~1911 과 23~1911 로
-    # 두 줄, 堂陽縣 이 -196~555 와 -144~264 로 두 줄이다. 220년 필터만으로는 둘 다 남아
-    # 지도에 같은 이름이 나란히 두 번 찍힌다. 이름이 같고 서로 붙어 있으면(또는 오늘날
-    # 비정지가 같으면) 한 점으로 접는다. 멀리 떨어진 동명은 진짜 별개라 남긴다 —
-    # 汝南 上蔡 과 豫章 上蔡 은 다른 곳이다.
-    # 어간이 같고 좌표가 같으면 같은 자리다 — CHGIS 는 彭城县 과 彭城国(侯國) 을 같은 좌표로
-    # 따로 싣는다. 둘 다 縣 등급이면 행정 단위 쪽이 군더더기라 縣 을 남긴다. 한쪽이 郡
-    # 등급이면 건드리지 않는다 — 그 점이 郡 승격의 근거다(下邳县/下邳郡).
-    SUFFIX = '县縣國国郡州道邑'
-    def stem(n):
-        return n.rstrip(SUFFIX) or n
-
-    NEAR_DEG = 0.5
-    kept, folded, ties = [], [], []
-    for p in places:
-        near = None
-        for q in kept:
-            if q['nameCh'] != p['nameCh']:
-                if (q['kind'] == 'COUNTY' and p['kind'] == 'COUNTY'
-                        and stem(q['nameCh']) == stem(p['nameCh'])
-                        and abs(q['lon'] - p['lon']) <= 0.02 and abs(q['lat'] - p['lat']) <= 0.02):
-                    loser = p if q.get('typeCh') == '县' else q
-                    if loser is q:
-                        kept[kept.index(q)] = p
-                    folded.append(loser['nameFt'])
-                    near = False
-                    break
-                continue
-            same_spot = (q.get('presLoc') and q.get('presLoc') == p.get('presLoc')) or (
-                abs(q['lon'] - p['lon']) <= NEAR_DEG and abs(q['lat'] - p['lat']) <= NEAR_DEG)
-            if same_spot:
-                near = q
-                break
-        if near is False:
-            continue          # 위에서 접었다
-        if near is None:
-            kept.append(p)
-            continue
-        # 220년을 더 좁게 감싸는 시기 조각을 남긴다. 그 시대에 더 특정된 기록이다.
-        rank_p = (p['endYr'] - p['begYr'], str(p['id']))
-        rank_q = (near['endYr'] - near['begYr'], str(near['id']))
-        if rank_p[0] == rank_q[0]:
-            ties.append(f"{p['nameFt']}({near['id']}·{p['id']})")
-        loser = p if rank_q < rank_p else near
-        if loser is near:
-            kept[kept.index(near)] = p
-        folded.append(loser['nameFt'])
+    # CHGIS 는 같은 縣을 시기별·비정별로 여러 번 싣는다. 이름이 같고 서로 붙어
+    # 있는 실제 duplicate group을 먼저 확인한 뒤, 검토된 upstream identity 선택을
+    # 기존 시기 범위 fallback보다 앞에 적용한다. 미검토 group의 기존 결정성은 그대로다.
+    ledger = load_duplicate_adjudications()
+    places, folded, ties = fold_duplicate_places(places, args.year, ledger)
     if folded:
         msg = f'  중복  붙어있는 동명 {len(folded)}곳 접음'
         if ties:
             msg += f' · 시기 동률 {len(ties)}건은 id 순으로 골랐다: {ties}'
         print(msg)
-    places = kept
-
     if not places:
         sys.exit(f'FATAL: {args.year}년 유효 치소 0건.')
 
