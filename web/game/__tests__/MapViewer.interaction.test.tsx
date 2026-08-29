@@ -21,8 +21,8 @@ vi.mock('@opensamguk/ui', async () => {
         countyName: '장안현',
         level: 9,
         nationId: city.nationId,
-        nationName: city.nationName,
-        nationColor: city.nationColor,
+        nationName: props.mapCode === 'affiliation' ? '고구려' : city.nationName,
+        nationColor: props.mapCode === 'affiliation' ? '#587480' : city.nationColor,
       } : null;
       return (
         <div data-testid="shared-iso-map" data-map-code={props.mapCode}>
@@ -124,6 +124,19 @@ describe('MapViewer shared canvas overlays', () => {
     }));
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
     expect(document.querySelector('.map-tooltip-meta')).toBeNull();
+  });
+
+  it('shows a map-only administrative affiliation without treating it as gameplay ownership', () => {
+    render(<MapViewer mapData={{
+      ...MAP,
+      mapCode: 'affiliation',
+      cities: [{ ...MAP.cities[0], nationId: 0 }],
+      nations: [],
+    }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
+
+    expect(screen.getByRole('status')).toHaveTextContent('고구려');
   });
 
   it('selection mode activates onCitySelect without navigation', () => {

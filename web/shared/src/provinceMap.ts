@@ -37,16 +37,25 @@ export interface ProvinceColor {
   rgb: [number, number, number];
 }
 
+export interface ProvinceAffiliation {
+  administrativeSystem: string;
+  name: string;
+  rgb: [number, number, number];
+}
+
 export interface ProvinceOwnershipBinding {
   colors: Map<number, ProvinceColor>;
   conflicts: number[];
   cities?: Map<number, IsoCityOverlay>;
   directProvinces?: Set<number>;
+  affiliations?: Map<number, ProvinceAffiliation>;
 }
 
 export interface CountyAdministrativeIndex {
   commanderyByProvince: Int16Array;
   commanderyByName: ReadonlyMap<string, number>;
+  administrativeSystemByProvince: readonly string[];
+  affiliationNameByProvince: readonly string[];
 }
 
 export interface ProvinceRecordDto {
@@ -90,7 +99,35 @@ export function formatProvinceTooltip(
   return `${system} · ${province.displayName}`;
 }
 
-const NEUTRAL_PROVINCE_RGB: [number, number, number] = [112, 104, 91];
+const LOCAL_ADMINISTRATION = '지방관·미확정 지배';
+const ADMINISTRATIVE_SYSTEM_RGB: Readonly<Record<string, [number, number, number]>> = {
+  HAN_COMMANDERY: [126, 119, 102],
+  AILAO: [123, 104, 80],
+  BAEKJE: [110, 104, 143],
+  BUYEO: [92, 125, 117],
+  BYEONHAN: [139, 109, 91],
+  DI: [139, 112, 79],
+  GOGURYEO: [88, 116, 128],
+  JINHAN: [136, 102, 112],
+  JUHO: [108, 123, 91],
+  MAHAN: [128, 104, 132],
+  OKJEO: [89, 126, 126],
+  QIANG: [137, 117, 78],
+  SHANYUE: [94, 125, 89],
+  TSUSHIMA: [111, 106, 139],
+  USAN: [91, 121, 139],
+  WA: [132, 99, 119],
+  WUHUAN: [122, 111, 82],
+  XIANBEI: [109, 122, 85],
+  XIONGNU: [128, 102, 79],
+  YE: [91, 124, 109],
+  YILOU: [101, 119, 98],
+  YIZHOU: [125, 106, 82],
+};
+
+function administrativeColor(system: string | undefined): [number, number, number] {
+  return ADMINISTRATIVE_SYSTEM_RGB[system ?? ''] ?? ADMINISTRATIVE_SYSTEM_RGB.HAN_COMMANDERY;
+}
 
 interface ProvincePngShape {
   width: number;
@@ -383,6 +420,8 @@ export function buildCountyAdministrativeIndex(
   return {
     commanderyByProvince,
     commanderyByName: new Map(commanderies.map((commandery, index) => [commandery.name, index])),
+    administrativeSystemByProvince: Array.from({ length: counties.length }, () => 'HAN_COMMANDERY'),
+    affiliationNameByProvince: Array.from({ length: counties.length }, () => LOCAL_ADMINISTRATION),
   };
 }
 
@@ -393,10 +432,17 @@ export function buildProvinceAdministrativeIndex(
 ): CountyAdministrativeIndex {
   const parentById = new Map(parentRegions.map((parent, index) => [parent.id, index]));
   const commanderyByProvince = new Int16Array(provinces.length);
+  const administrativeSystemByProvince = new Array<string>(provinces.length);
+  const affiliationNameByProvince = new Array<string>(provinces.length);
   commanderyByProvince.fill(-1);
   provinces.forEach((province, index) => {
     const parent = parentById.get(province.parentRegionId);
     if (parent != null) commanderyByProvince[index] = parent;
+    administrativeSystemByProvince[index] = province.administrativeSystem;
+    const parentRecord = parent == null ? undefined : parentRegions[parent];
+    affiliationNameByProvince[index] = province.administrativeSystem === 'HAN_COMMANDERY'
+      ? LOCAL_ADMINISTRATION
+      : (SYSTEM_LABELS[province.administrativeSystem] ?? parentRecord?.displayName ?? '외부 지역');
   });
   // The identity PNG remains authoritative.  A DTO hierarchy mismatch must not
   // silently redirect hover/ownership to a different parent.
@@ -410,6 +456,8 @@ export function buildProvinceAdministrativeIndex(
   return {
     commanderyByProvince,
     commanderyByName: new Map(parentRegions.map((parent, index) => [parent.displayName, index])),
+    administrativeSystemByProvince,
+    affiliationNameByProvince,
   };
 }
 
@@ -478,25 +526,32 @@ export function bindCompleteProvinceOwnership(
   const colors = new Map<number, ProvinceColor>();
   const assignedCities = new Map<number, IsoCityOverlay>();
   const directProvinces = new Set<number>();
+  const affiliations = new Map<number, ProvinceAffiliation>();
   for (const [province, shape] of geometry) {
     const centerCol = shape.colTotal / shape.cells;
     const centerRow = shape.rowTotal / shape.cells;
     const direct = directByProvince.get(province) ?? [];
     const commandery = countyIndex.commanderyByProvince[province];
-    const pool = direct.length > 0 ? direct : (samplesByCommandery.get(commandery) ?? []);
+    const matchingDirect = direct.filter((sample) => sample.commandery === commandery);
+    const pool = matchingDirect.length > 0 ? matchingDirect : (samplesByCommandery.get(commandery) ?? []);
     const selected = nearestSample(pool, centerCol, centerRow);
-    if (!selected) {
-      colors.set(province, { nationId: 0, rgb: NEUTRAL_PROVINCE_RGB });
+    if (selected && isOwnedNationVisual(selected.city.nationId, selected.city.nationColor)) {
+      assignedCities.set(province, selected.city);
+      if (matchingDirect.length > 0) directProvinces.add(province);
+      colors.set(province, { nationId: selected.city.nationId, rgb: parseNationColor(selected.city.nationColor) });
       continue;
     }
-    assignedCities.set(province, selected.city);
-    if (direct.length > 0) directProvinces.add(province);
-    colors.set(province, isOwnedNationVisual(selected.city.nationId, selected.city.nationColor)
-      ? { nationId: selected.city.nationId, rgb: parseNationColor(selected.city.nationColor) }
-      : { nationId: 0, rgb: NEUTRAL_PROVINCE_RGB });
+    const administrativeSystem = countyIndex.administrativeSystemByProvince[province] ?? 'HAN_COMMANDERY';
+    const rgb = administrativeColor(administrativeSystem);
+    colors.set(province, { nationId: 0, rgb });
+    affiliations.set(province, {
+      administrativeSystem,
+      name: countyIndex.affiliationNameByProvince[province] ?? LOCAL_ADMINISTRATION,
+      rgb,
+    });
   }
 
-  return { colors, conflicts: [], cities: assignedCities, directProvinces };
+  return { colors, conflicts: [], cities: assignedCities, directProvinces, affiliations };
 }
 
 export function composeProvincePixels(
