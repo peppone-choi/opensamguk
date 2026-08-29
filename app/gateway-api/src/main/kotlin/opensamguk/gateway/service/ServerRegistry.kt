@@ -38,6 +38,7 @@ data class ServerRegistryTransition(
     val remoteApplied: Boolean,
     val dispatched: Boolean,
     val ownerToken: String,
+    val newlyCreated: Boolean = false,
 )
 
 class ServerRegistryTransitionConflict(message: String) : IllegalStateException(message)
@@ -166,7 +167,7 @@ class ServerRegistry(
                     ownerToken,
                     leaseUntil(),
                 )
-                requireNotNull(findTransition(server.id, forUpdate = true))
+                requireNotNull(findTransition(server.id, forUpdate = true)).copy(newlyCreated = true)
             } ?: error("Server registry transition transaction returned no result")
         } catch (e: DuplicateKeyException) {
             throw ServerRegistryTransitionConflict("Another server registry transition is already pending for ${server.id}")

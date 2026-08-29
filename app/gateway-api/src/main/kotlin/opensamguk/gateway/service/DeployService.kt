@@ -856,6 +856,9 @@ class DeployService(
                 return registryUnavailable(transition.server.id)
             }
         }
+        if (transition.newlyCreated) {
+            return dispatchRemoteLifecycleOperation(transition, requestPayload)
+        }
         return when (val remote = queryRemoteLifecycleOperation(transition)) {
             RemoteLifecycleOperation.Missing -> dispatchRemoteLifecycleOperation(transition, requestPayload)
             RemoteLifecycleOperation.Unavailable -> {
@@ -988,20 +991,31 @@ class DeployService(
             val publicMessage = node.path("publicMessage").takeIf { it.isTextual }?.asText()
             if (!node.isObject || node.path("operationId").asText() != operationId ||
                 kind !in setOf("create", "close", "reset") || subjectId.isBlank() ||
-                httpStatus == null || httpStatus !in 100..599 || publicMessage == null ||
+                publicMessage == null ||
                 transition != null && (kind != transition.action.remoteKind || subjectId != transition.server.id)
             ) {
                 return@runCatching RemoteLifecycleOperation.Unavailable
             }
             when (status) {
-                "pending", "running", "recovery_required" ->
+                "pending", "running", "recovery_required" -> if (httpStatus == null || httpStatus == 0 || httpStatus in 100..599) {
                     RemoteLifecycleOperation.Pending(status, publicMessage, kind, subjectId)
-                "succeeded" -> RemoteLifecycleOperation.Succeeded(
-                    normalizedOperationResponse(operationId, kind, subjectId, status, httpStatus, publicMessage),
-                )
-                "failed", "cancelled" -> RemoteLifecycleOperation.Failed(
-                    normalizedOperationResponse(operationId, kind, subjectId, status, httpStatus, publicMessage),
-                )
+                } else {
+                    RemoteLifecycleOperation.Unavailable
+                }
+                "succeeded" -> if (httpStatus != null && httpStatus in 100..599) {
+                    RemoteLifecycleOperation.Succeeded(
+                        normalizedOperationResponse(operationId, kind, subjectId, status, httpStatus, publicMessage),
+                    )
+                } else {
+                    RemoteLifecycleOperation.Unavailable
+                }
+                "failed", "cancelled" -> if (httpStatus != null && httpStatus in 100..599) {
+                    RemoteLifecycleOperation.Failed(
+                        normalizedOperationResponse(operationId, kind, subjectId, status, httpStatus, publicMessage),
+                    )
+                } else {
+                    RemoteLifecycleOperation.Unavailable
+                }
                 else -> RemoteLifecycleOperation.Unavailable
             }
         }.getOrDefault(RemoteLifecycleOperation.Unavailable)
@@ -1018,6 +1032,18 @@ class DeployService(
             val status = node.path("operationStatus").asText()
             val publicMessage = node.path("publicMessage").takeIf { it.isTextual }?.asText()
                 ?: defaultPublicMessage(status)
+            if (response.status == 409 && status.isBlank() && node.path("id").asText() == transition.server.id) {
+                return@runCatching RemoteLifecycleOperation.Failed(
+                    normalizedOperationResponse(
+                        transition.operationId,
+                        transition.action.remoteKind,
+                        transition.server.id,
+                        "failed",
+                        response.status,
+                        "작업 id가 다른 서버 작업에 이미 사용되었습니다.",
+                    ),
+                )
+            }
             when (status) {
                 "pending", "running", "recovery_required" -> {
                     if (!node.path("ok").asBoolean(false) || node.path("id").asText() != transition.server.id) {
