@@ -64,6 +64,21 @@ describe('nickname session integration', () => {
     }));
   });
 
+  it('renders the shared wordmark in the lobby topbar brand link', () => {
+    render(
+      <AuthProvider initialUser={originalUser}>
+        <Topbar />
+      </AuthProvider>,
+    );
+
+    const brandLink = within(screen.getByRole('banner')).getByRole('link', { name: '오픈삼국' });
+    expect(brandLink).toHaveAttribute('href', '/lobby');
+    expect(within(brandLink).getByRole('img', { name: '오픈삼국' })).toHaveAttribute(
+      'src',
+      '/logo-wordmark.png',
+    );
+  });
+
   it('renders the refreshed nickname in the topbar after account mutation', async () => {
     render(<AccountPage />);
     const topbar = await screen.findByRole('banner');
