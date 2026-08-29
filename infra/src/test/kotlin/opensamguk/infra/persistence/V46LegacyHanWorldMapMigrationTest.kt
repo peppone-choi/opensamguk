@@ -16,7 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class V45LegacyHanWorldMapMigrationTest {
+class V46LegacyHanWorldMapMigrationTest {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private val gameplaySnapshots = linkedMapOf<Int, Map<String, List<Int>>>()
@@ -24,7 +24,7 @@ class V45LegacyHanWorldMapMigrationTest {
     @BeforeAll
     fun setUp() {
         check(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is required for V45LegacyHanWorldMapMigrationTest"
+            "Docker is required for V46LegacyHanWorldMapMigrationTest"
         }
         postgres = PostgreSQLContainer("postgres:16-alpine")
         postgres.start()
@@ -45,7 +45,7 @@ class V45LegacyHanWorldMapMigrationTest {
     }
 
     @Test
-    fun `V45 pins only exact 780 Han worlds and preserves unrelated JSON`() {
+    fun `V46 pins only exact 780 Han worlds and preserves unrelated JSON`() {
         seedWorld(
             worldId = 1,
             mapName = "han",
@@ -56,7 +56,7 @@ class V45LegacyHanWorldMapMigrationTest {
         seedWorld(worldId = 2, mapName = "han", cityIds = 1..774)
         seedWorld(worldId = 3, mapName = "che", cityIds = 1..94)
 
-        migrateTo("45")
+        migrateTo("46")
 
         assertEquals("han-780-v1", activeMapName(1))
         assertEquals("han", activeMapName(2))
@@ -68,13 +68,13 @@ class V45LegacyHanWorldMapMigrationTest {
     }
 
     @Test
-    fun `V45 is isolated per world and leaves gameplay identities and ng_games map unchanged`() {
+    fun `V46 is isolated per world and leaves gameplay identities and ng_games map unchanged`() {
         seedWorld(1, "han", 1..780)
         seedWorld(2, "han", 1..774)
         val identitiesBefore = gameplayIdentities(1)
         val ngMapBefore = ngGamesMap(1)
 
-        migrateTo("45")
+        migrateTo("46")
 
         assertEquals("han-780-v1", activeMapName(1))
         assertEquals("han", activeMapName(2))
@@ -83,35 +83,35 @@ class V45LegacyHanWorldMapMigrationTest {
     }
 
     @Test
-    fun `V45 fails closed for 779 Han cities`() {
+    fun `V46 fails closed for 779 Han cities`() {
         seedWorld(1, "han", 1..779)
 
-        assertFailsWith<FlywayException> { migrateTo("45") }
+        assertFailsWith<FlywayException> { migrateTo("46") }
 
         assertEquals("han", activeMapName(1))
-        assertEquals(0, successfulMigrationCount("45"))
+        assertEquals(0, successfulMigrationCount("46"))
     }
 
     @Test
-    fun `V45 fails closed for non-contiguous 780-shaped Han ids`() {
+    fun `V46 fails closed for non-contiguous 780-shaped Han ids`() {
         seedWorld(1, "han", (1..779).toList() + 781)
 
-        assertFailsWith<FlywayException> { migrateTo("45") }
+        assertFailsWith<FlywayException> { migrateTo("46") }
 
         assertEquals("han", activeMapName(1))
-        assertEquals(0, successfulMigrationCount("45"))
+        assertEquals(0, successfulMigrationCount("46"))
     }
 
     @Test
-    fun `V45 records one migration and a second migrate call is a no-op`() {
+    fun `V46 records one migration and a second migrate call is a no-op`() {
         seedWorld(1, "han", 1..780)
 
-        migrateTo("45")
+        migrateTo("46")
         val pinned = worldJson(1)
-        migrateTo("45")
+        migrateTo("46")
 
         assertEquals(pinned, worldJson(1))
-        assertEquals(1, successfulMigrationCount("45"))
+        assertEquals(1, successfulMigrationCount("46"))
     }
 
     private fun migrateTo(target: String) {

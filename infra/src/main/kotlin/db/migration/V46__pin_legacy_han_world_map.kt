@@ -6,7 +6,7 @@ import org.flywaydb.core.api.migration.BaseJavaMigration
 import org.flywaydb.core.api.migration.Context
 import java.sql.Connection
 
-class V45__pin_legacy_han_world_map : BaseJavaMigration() {
+class V46__pin_legacy_han_world_map : BaseJavaMigration() {
     override fun migrate(context: Context) {
         val connection = context.connection
         loadWorlds(connection).forEach { shape ->
@@ -16,7 +16,7 @@ class V45__pin_legacy_han_world_map : BaseJavaMigration() {
                 shape.cityCount == LEGACY_HAN_CITY_COUNT && shape.minCityId == 1 && shape.maxCityId == LEGACY_HAN_CITY_COUNT -> Unit
                 shape.cityCount == COMPATIBILITY_HAN_CITY_COUNT && shape.minCityId == 1 && shape.maxCityId == COMPATIBILITY_HAN_CITY_COUNT -> pin(connection, shape)
                 else -> throw FlywayException(
-                    "V45 cannot classify Han worldId=${shape.id}: " +
+                    "V46 cannot classify Han worldId=${shape.id}: " +
                         "cityCount=${shape.cityCount} min=${shape.minCityId} max=${shape.maxCityId}",
                 )
             }
@@ -66,7 +66,7 @@ class V45__pin_legacy_han_world_map : BaseJavaMigration() {
             statement.setString(1, MetaJson.encode(shape.config))
             statement.setString(2, MetaJson.encode(shape.meta))
             statement.setInt(3, shape.id)
-            check(statement.executeUpdate() == 1) { "V45 did not update worldId=${shape.id}" }
+            check(statement.executeUpdate() == 1) { "V46 did not update worldId=${shape.id}" }
         }
     }
 
