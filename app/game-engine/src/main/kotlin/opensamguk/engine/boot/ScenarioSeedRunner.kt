@@ -2,6 +2,7 @@ package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.EffectiveScenarioResolver
+import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.infra.seed.ScenarioJson
@@ -105,7 +106,8 @@ class SeedBootstrap(
             val scenarioNumber = scenarioNumber()
             val scenario = loadScenario()
             val mapName = scenarioMapName(scenario)
-            val cities = ScenarioJson.loadMapCities(readResource("map/$mapName.json"))
+            val mapResourceCode = MapJson.resourceCode(mapName)
+            val cities = ScenarioJson.loadMapCities(readResource("map/$mapResourceCode.json"))
             log.info(
                 // turnTerm을 함께 남긴다. 리셋 옵션이 엔진까지 도달했는지 확인할 유일한 관측점이며,
                 // 값이 항상 60으로 찍히면 RESET_TURNTERM 전달 경로가 끊긴 것이다(문서 3-A 참조).

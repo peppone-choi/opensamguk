@@ -7,6 +7,13 @@ import kotlin.test.assertTrue
 class MapJsonTest {
 
     @Test
+    fun `world v2 resolves to the committed Han gameplay resource`() {
+        assertEquals("han", MapJson.resourceCode("han-world-v2"))
+        assertEquals("han-780-v1", MapJson.resourceCode("han-780-v1"))
+        assertEquals("che", MapJson.resourceCode("che"))
+    }
+
+    @Test
     fun `map coordinates retain Han administrative metadata`() {
         val data = MapJson.loadMap(
             """

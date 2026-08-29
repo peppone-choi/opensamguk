@@ -4,6 +4,10 @@ import opensamguk.infra.persistence.MetaJson
 
 object MapJson {
 
+    /** Resolve logical map aliases to the committed gameplay resource name. */
+    fun resourceCode(mapCode: String): String =
+        if (mapCode == "han-world-v2") "han" else mapCode
+
     data class MapData(val width: Int, val height: Int, val cities: List<MapCityCoord>)
 
     data class MapCityCoord(
@@ -43,7 +47,7 @@ object MapJson {
      * 단일 로더(리소스 read + 파싱 중복 금지). 리소스 부재 시 빈 MapData(0×0) — graceful, 날조 없음.
      */
     fun loadFromClasspath(mapCode: String): MapData {
-        val resourceCode = if (mapCode == "han-world-v2") "han" else mapCode
+        val resourceCode = resourceCode(mapCode)
         val json = MapJson::class.java.classLoader.getResourceAsStream("map/$resourceCode.json")
             ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
             ?: return MapData(width = 0, height = 0, cities = emptyList())
@@ -74,7 +78,7 @@ object MapJson {
     }
 
     fun loadCityDetailsFromClasspath(mapCode: String): List<MapCityDetail> {
-        val resourceCode = if (mapCode == "han-world-v2") "han" else mapCode
+        val resourceCode = resourceCode(mapCode)
         val json = MapJson::class.java.classLoader.getResourceAsStream("map/$resourceCode.json")
             ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
             ?: return emptyList()
