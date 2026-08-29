@@ -98,6 +98,56 @@ class HanParentReconciliationTest(unittest.TestCase):
             row["approvalEvidence"]["method"],
         )
 
+    def test_weiguo_temporal_review_contains_exact_chgis_physical_witness(self):
+        temporal = self.documents[
+            "data/curated/han/administrative-temporal-adjudications-v1.json"
+        ]
+        self.assertEqual(
+            {
+                "sourceId": "chgis-cnty-dbf",
+                "snapshotSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+                "locator": "SYS_ID=85083",
+                "physicalPlaceId": "85083",
+                "nameCh": "卫国",
+                "nameFt": "衛國",
+                "typeCh": "国",
+                "begYr": 37,
+                "endYr": 265,
+                "lon": 115.11117,
+                "lat": 35.88519,
+                "gx": 422,
+                "gy": 209,
+                "junguozhiChildName": "衛",
+            },
+            temporal["adjudications"][0].get("physicalWitness"),
+        )
+
+    def test_temporal_physical_witness_is_an_exact_closed_contract(self):
+        temporal_path = "data/curated/han/administrative-temporal-adjudications-v1.json"
+        mutations = {
+            "sourceId": "fake-source",
+            "snapshotSha256": "0" * 64,
+            "locator": "SYS_ID=85084",
+            "physicalPlaceId": "85084",
+            "nameCh": "錯國",
+            "nameFt": "錯國",
+            "typeCh": "县",
+            "begYr": 38,
+            "endYr": 264,
+            "lon": 115.11118,
+            "lat": 35.88518,
+            "gx": 421,
+            "gy": 208,
+            "junguozhiChildName": "衞",
+        }
+        for field, value in mutations.items():
+            documents = copy.deepcopy(self.documents)
+            documents[temporal_path]["adjudications"][0]["physicalWitness"][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(
+                ValueError, "physical witness"
+            ):
+                self.module.build_ledger(documents, self.input_records)
+
     def test_temporal_binding_joins_catalog_binding_and_history_ids_exactly(self):
         mutations = [
             ("administrativeUnitId", "hhs:111:東郡:999"),

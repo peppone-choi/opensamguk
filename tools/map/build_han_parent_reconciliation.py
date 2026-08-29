@@ -35,7 +35,12 @@ TEMPORAL_ROOT_KEYS = {
 TEMPORAL_SOURCE_WITNESS_KEYS = {"corpusPath", "sourceUrl", "snapshotSha256"}
 TEMPORAL_ROW_KEYS = {
     "physicalPlaceRef", "administrativeUnitId", "historyChildId", "reviewState",
-    "identityEvidence", "parentIntervals", "forbiddenIdentities",
+    "physicalWitness", "identityEvidence", "parentIntervals", "forbiddenIdentities",
+}
+TEMPORAL_PHYSICAL_WITNESS_KEYS = {
+    "sourceId", "snapshotSha256", "locator", "physicalPlaceId",
+    "nameCh", "nameFt", "typeCh", "begYr", "endYr", "lon", "lat",
+    "gx", "gy", "junguozhiChildName",
 }
 TEMPORAL_IDENTITY_EVIDENCE_KEYS = {
     "corpusPath", "line", "sourceUrl", "snapshotSha256", "quote", "claim",
@@ -62,6 +67,22 @@ EXPECTED_TEMPORAL_SOURCE_WITNESSES = (
 )
 EXPECTED_TEMPORAL_REVIEWS = {
     "chgis:v6:cnty:85083": {
+        "physicalWitness": {
+            "sourceId": "chgis-cnty-dbf",
+            "snapshotSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+            "locator": "SYS_ID=85083",
+            "physicalPlaceId": "85083",
+            "nameCh": "卫国",
+            "nameFt": "衛國",
+            "typeCh": "国",
+            "begYr": 37,
+            "endYr": 265,
+            "lon": 115.11117,
+            "lat": 35.88519,
+            "gx": 422,
+            "gy": 209,
+            "junguozhiChildName": "衛",
+        },
         "identityEvidence": {
             "corpusPath": "data/corpus/hhs-111.txt",
             "line": 81,
@@ -268,6 +289,28 @@ def _validate_temporal_evidence(
     if not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise ValueError(f"{label}.snapshotSha256 has invalid hash")
     return evidence
+
+
+def _validate_temporal_physical_witness(witness: object, label: str) -> dict:
+    witness = _require_exact_keys(witness, TEMPORAL_PHYSICAL_WITNESS_KEYS, label)
+    for key in {
+        "sourceId", "snapshotSha256", "locator", "physicalPlaceId",
+        "nameCh", "nameFt", "typeCh", "junguozhiChildName",
+    }:
+        _require_nonempty_string(witness.get(key), f"{label}.{key}")
+    if not re.fullmatch(r"[0-9a-f]{64}", witness["snapshotSha256"]):
+        raise ValueError(f"{label}.snapshotSha256 has invalid hash")
+    for key in {"begYr", "endYr", "gx", "gy"}:
+        if type(witness.get(key)) is not int:
+            raise ValueError(f"{label}.{key} requires an integer")
+    for key in {"lon", "lat"}:
+        if type(witness.get(key)) is not float:
+            raise ValueError(f"{label}.{key} requires a JSON number with decimal precision")
+    if witness["begYr"] > witness["endYr"]:
+        raise ValueError(f"{label} has an invalid source active range")
+    if witness["gx"] < 0 or witness["gy"] < 0:
+        raise ValueError(f"{label} has an invalid canonical grid cell")
+    return witness
 
 
 def _require_exact_membership(
@@ -645,6 +688,7 @@ def _temporal_adjudication_context(
         physical_ref = row.get("physicalPlaceRef")
         administrative_unit_id = row.get("administrativeUnitId")
         history_child_id = row.get("historyChildId")
+        physical_witness = row.get("physicalWitness")
         evidence = row.get("identityEvidence")
         intervals = row.get("parentIntervals")
         forbidden = row.get("forbiddenIdentities")
@@ -656,6 +700,11 @@ def _temporal_adjudication_context(
             raise ValueError("temporal adjudication requires an HHS administrative stable ID")
         if not isinstance(history_child_id, str) or not HISTORY_CHILD_ID_RE.fullmatch(history_child_id):
             raise ValueError("temporal adjudication requires a history county stable ID")
+        physical_witness = _validate_temporal_physical_witness(
+            physical_witness, f"{label}.physicalWitness"
+        )
+        if physical_witness["physicalPlaceId"] != physical_ref.rsplit(":", 1)[-1]:
+            raise ValueError("temporal physical witness disagrees with physicalPlaceRef")
         catalog_identity = catalog_by_id.get(administrative_unit_id)
         binding = binding_by_id.get(administrative_unit_id)
         if catalog_identity is None or binding is None:
@@ -732,6 +781,8 @@ def _temporal_adjudication_context(
         expected_review = EXPECTED_TEMPORAL_REVIEWS.get(physical_ref)
         if expected_review is None:
             raise ValueError("temporal adjudication is absent from the exact reviewed contract")
+        if physical_witness != expected_review["physicalWitness"]:
+            raise ValueError("temporal physical witness differs from reviewed CHGIS evidence")
         if evidence != expected_review["identityEvidence"]:
             raise ValueError("temporal identity evidence quote/claim differs from reviewed evidence")
         if intervals != expected_review["parentIntervals"]:
@@ -745,6 +796,7 @@ def _temporal_adjudication_context(
             "administrativeUnitId": administrative_unit_id,
             "historyChildId": history_child_id,
             "physicalPlaceRef": physical_ref,
+            "physicalWitness": physical_witness,
             "activeParentId": active_parent,
             "parentIntervals": intervals,
             "forbiddenIdentities": forbidden,

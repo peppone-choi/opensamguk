@@ -20,6 +20,22 @@
       "administrativeUnitId": "hhs:111:東郡:014",
       "historyChildId": "county:hhs:111:24:14",
       "reviewState": "APPROVED_EXACT_TEMPORAL_BINDING",
+      "physicalWitness": {
+        "sourceId": "chgis-cnty-dbf",
+        "snapshotSha256": "e782572a2af83fa246d608ffb13729835d535f3c010eee79ce0545f5430eb616",
+        "locator": "SYS_ID=85083",
+        "physicalPlaceId": "85083",
+        "nameCh": "卫国",
+        "nameFt": "衛國",
+        "typeCh": "国",
+        "begYr": 37,
+        "endYr": 265,
+        "lon": 115.11117,
+        "lat": 35.88519,
+        "gx": 422,
+        "gy": 209,
+        "junguozhiChildName": "衛"
+      },
       "identityEvidence": {
         "corpusPath": "data/corpus/hhs-111.txt",
         "line": 81,

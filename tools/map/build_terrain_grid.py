@@ -23,8 +23,18 @@ import numpy as np
 
 try:
     from tools.map.han_place_merge_runtime import apply_reviewed_merges
+    from tools.map.han_temporal_parent_runtime import (
+        ReviewedTemporalSeedOverride,
+        apply_reviewed_temporal_parents,
+        load_reviewed_temporal_parent_context,
+    )
 except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
     from han_place_merge_runtime import apply_reviewed_merges
+    from han_temporal_parent_runtime import (
+        ReviewedTemporalSeedOverride,
+        apply_reviewed_temporal_parents,
+        load_reviewed_temporal_parent_context,
+    )
 
 PLACES = 'data/map/han-places.json'
 JUNGUO = 'data/map/junguozhi.json'
@@ -722,6 +732,97 @@ def validate_requested_grid(places_document, requested_grid):
         raise ValueError('han-places rows must equal projection rows')
 
 
+def derive_commandery_ownership(
+        *, field, places, jun_of, jun_names, junguo, proj,
+        temporal_seed_overrides=()):
+    """Build commandery Voronoi from already-reviewed physical source labels."""
+    cost = np.asarray(field)
+    if cost.ndim != 2:
+        raise ValueError('commandery ownership cost field must be two-dimensional')
+    membership = np.asarray(jun_of)
+    if (membership.ndim != 1 or len(membership) != len(places)
+            or membership.dtype.kind not in 'iu'):
+        raise ValueError('commandery membership must label every physical place')
+    if np.any(membership < 0) or np.any(membership >= len(jun_names)):
+        raise ValueError('commandery membership contains an unknown jun index')
+    if len(set(jun_names)) != len(jun_names):
+        raise ValueError('commandery names must be unique')
+
+    reviewed_by_cell, reviewed_by_child = {}, {}
+    for override in temporal_seed_overrides:
+        if not isinstance(override, ReviewedTemporalSeedOverride):
+            raise ValueError('reviewed temporal seed override has an invalid identity')
+        place_index = override.place_index
+        if not 0 <= place_index < len(places):
+            raise ValueError('reviewed temporal seed references an unknown physical place')
+        if int(membership[place_index]) != override.parent_index:
+            raise ValueError('reviewed temporal seed disagrees with pre-Dijkstra membership')
+        place = places[place_index]
+        cell = (int(place['gx']), int(place['gy']))
+        coordinate = (place.get('lon'), place.get('lat'))
+        if not all(type(value) in (int, float) for value in coordinate):
+            raise ValueError('reviewed temporal seed requires an exact physical coordinate')
+        if cell in reviewed_by_cell or override.junguozhi_child_name in reviewed_by_child:
+            raise ValueError('reviewed temporal seed identity must be unique')
+        reviewed_by_cell[cell] = override
+        reviewed_by_child[override.junguozhi_child_name] = (
+            coordinate, cell, override,
+        )
+
+    reviewed_consumed = {override.place_index: 0 for override in temporal_seed_overrides}
+
+    ambiguous = ambiguous_seeds(junguo)
+    jsrc, jlab = [], []
+    jun_name_ix = {name: index for index, name in enumerate(jun_names)}
+    for jun in junguo:
+        for county in jun['counties']:
+            if not county.get('lat') or (county['lon'], county['lat']) in ambiguous:
+                continue
+            parent_index = jun_name_ix.get(jun['name'])
+            if parent_index is None:
+                continue
+            gx, gy = proj.to_cell(county['lon'], county['lat'])
+            cell = (int(gx), int(gy))
+            reviewed = reviewed_by_child.get(county.get('name'))
+            if reviewed is not None:
+                reviewed_coordinate, reviewed_cell, override = reviewed
+                if jun.get('name') != override.initial_source_parent_name:
+                    raise ValueError(
+                        'reviewed temporal seed has a mismatched initial source parent'
+                    )
+                if (county['lon'], county['lat']) != reviewed_coordinate:
+                    raise ValueError('reviewed temporal seed has a mismatched 郡國志 coordinate')
+                if not (0 <= cell[1] < cost.shape[0] and 0 <= cell[0] < cost.shape[1]):
+                    raise ValueError('reviewed temporal seed projects outside terrain bounds')
+                if cell != reviewed_cell:
+                    raise ValueError(
+                        'reviewed temporal seed projection mismatches its physical cell'
+                    )
+                reviewed_consumed[override.place_index] += 1
+                if reviewed_consumed[override.place_index] != 1:
+                    raise ValueError('reviewed temporal seed must be consumed exactly once')
+                parent_index = override.parent_index
+            elif cell in reviewed_by_cell:
+                raise ValueError('conflicting 郡國志 identity occupies a reviewed temporal seed')
+            if 0 <= cell[1] < cost.shape[0] and 0 <= cell[0] < cost.shape[1]:
+                jsrc.append(cell)
+                jlab.append(parent_index)
+
+    if any(count != 1 for count in reviewed_consumed.values()):
+        raise ValueError('reviewed temporal seed must be consumed exactly once')
+
+    cell_lab = {}
+    for place_index, place in enumerate(places):
+        cell = (int(place['gx']), int(place['gy']))
+        cell_lab.setdefault(cell, int(membership[place_index]))
+    for cell, parent_index in zip(jsrc, jlab):
+        cell_lab[cell] = parent_index
+    src, lab = list(cell_lab), list(cell_lab.values())
+    _, raw, _ = multi_dijkstra(cost, src)
+    table = np.array(lab + [-1], dtype=np.int32)
+    return table[np.where(raw >= 0, raw, len(lab))].astype(np.int32)
+
+
 def finalize_reviewed_merge_state(
         *, terrain, places, owner, seat_owner, jun_of, hubs, jun_names,
         zhi_places, ledger=None):
@@ -787,6 +888,15 @@ def main():
         validate_requested_grid(hp, a.grid)
     except ValueError as exc:
         sys.exit(str(exc))
+    try:
+        temporal_context = load_reviewed_temporal_parent_context()
+    except ValueError as exc:
+        sys.exit(str(exc))
+    if type(hp.get('year')) is not int or hp['year'] != temporal_context.reference_year:
+        sys.exit(
+            f"han-places year {hp.get('year')!r} does not match reviewed temporal "
+            f"reference year {temporal_context.reference_year}"
+        )
     proj = Proj(hp['projection'])
     n, rows = proj.cols, proj.rows
 
@@ -854,43 +964,33 @@ def main():
     # ── 郡: 소속은 郡國志에서 읽고, 영역은 그 縣들이 가진 셀의 합집합으로 만든다 ──
     junguo = json.load(open(JUNGUO))['places'] if os.path.exists(JUNGUO) else []
     jun_of, hubs, jun_names, zhi_places = fold_to_jun(hp['places'], proj, junguo)
-    jun_name_ix = {nm: k for k, nm in enumerate(jun_names)}
+    temporal = apply_reviewed_temporal_parents(
+        places=hp['places'],
+        jun_of=jun_of,
+        jun_names=jun_names,
+        year=hp['year'],
+        context=temporal_context,
+        require_reference_year=True,
+    )
+    jun_of = temporal['junOf']
     # 郡 영역은 縣 소유를 접기만 해선 사료와 100% 안 맞는다. 郡國志가 적은 縣 좌표와
     # CHGIS 좌표가 한두 셀 어긋나면 그 縣이 이웃 郡 땅에 떨어진다. 두 좌표를 **모두**
     # 제 郡의 소스로 넣으면 그 사이가 전부 그 郡이 되어 어긋남이 사라진다.
     # 두 郡의 縣이 **똑같은** 좌표를 물고 있으면 그건 비정 실패다 — 이름으로 찾다가 한
     # 지점을 둘이 나눠 가진 것이다(常山國 真定 = 中山國 恒山). 그 점을 그대로 씨앗으로
     # 쓰면 남의 郡 한복판에 6칸짜리 위요지가 생긴다. 모르는 것을 경계로 바꾸지 않는다.
-    ambiguous = ambiguous_seeds(junguo)
-
-    jsrc, jlab = [], []
-    for jn, jun in enumerate(junguo):
-        for c in jun['counties']:
-            if not c.get('lat'):
-                continue
-            if (c['lon'], c['lat']) in ambiguous:
-                continue
-            k = jun_name_ix.get(jun['name'])
-            if k is None:
-                continue
-            gx, gy = proj.to_cell(c['lon'], c['lat'])
-            if 0 <= int(gy) < rows and 0 <= int(gx) < n:
-                jsrc.append((int(gx), int(gy)))
-                jlab.append(k)
-    # 한 칸에 두 소스가 겹치면 郡國志가 이긴다. 격자 한 칸이 5km 라 이웃 縣이 같은 칸에
-    # 떨어지는 일이 흔한데, 그때 CHGIS 추정이 사료를 덮어쓰면 안 된다.
-    cell_lab = {}
-    for (c, k) in zip([(int(x), int(y)) for x, y in pts], list(jun_of)):
-        cell_lab.setdefault(c, k)
-    for c, k in zip(jsrc, jlab):
-        cell_lab[c] = k
-    src, lab = list(cell_lab), list(cell_lab.values())
-    _, raw, _ = multi_dijkstra(field, src)
-    tbl = np.array(lab + [-1], dtype=np.int32)
-    seat_label = tbl[np.where(raw >= 0, raw, len(lab))].astype(np.int32)
-    # Raw 1,145 seeds have now all participated in Voronoi and historical folding.
-    # Apply the reviewed stable-ID transforms only at this boundary, then derive
-    # every downstream index and graph from the compact state.
+    seat_label = derive_commandery_ownership(
+        field=field,
+        places=hp['places'],
+        jun_of=jun_of,
+        jun_names=jun_names,
+        junguo=junguo,
+        proj=proj,
+        temporal_seed_overrides=temporal['seedOverrides'],
+    )
+    # All raw physical seeds have now participated in the reviewed temporal Voronoi
+    # and historical folding. Apply reviewed merge transforms at this boundary,
+    # then derive every downstream index and graph from the compact state.
     merged = finalize_reviewed_merge_state(
         terrain=terrain,
         places=hp['places'],
