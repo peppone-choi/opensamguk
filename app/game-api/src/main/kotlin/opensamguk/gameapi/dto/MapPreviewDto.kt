@@ -52,6 +52,15 @@ data class MapPreviewCity(
     val supply: Boolean,
     /** 지역(`city.region` V1 int) — 지역별 색/그룹 표시용. CityConst.regionMap의 int 키. */
     val region: Int,
+    /** 활성 맵 메타데이터의 주(州) 표시명. legacy 도시 ID 표를 사용하지 않는다. */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val regionName: String? = null,
+    /** 활성 맵 메타데이터의 상위 군·국·윤 표시명. */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val commanderyName: String? = null,
+    /** 해당 runtime 도시가 상위 군의 치소인지 여부. */
+    @get:JsonProperty("isCommanderySeat")
+    val isCommanderySeat: Boolean = false,
     /** 소속국 수도 여부(nation.capital_city_id == id) — 수도 아이콘 `event51.gif`.
      *  `@get:JsonProperty` 고정 — Kotlin boolean `isX`는 Jackson이 `x`로 직렬화하므로 명시. */
     @get:JsonProperty("isCapital")

@@ -139,7 +139,7 @@ class MapPreviewControllerTest {
                 ),
             ),
         )
-        `when`(cityRepo.findAll()).thenReturn(emptyList())
+        `when`(cityRepo.findAll()).thenReturn(listOf(city(id = 1, level = 9, nationId = 1, region = 1)))
         `when`(nationRepo.findAll()).thenReturn(emptyList())
 
         mockMvc().perform(get("/api/map/preview"))
@@ -147,6 +147,9 @@ class MapPreviewControllerTest {
             .andExpect(jsonPath("$.mapCode").value("han"))
             .andExpect(jsonPath("$.width").value(700))
             .andExpect(jsonPath("$.height").value(610))
+            .andExpect(jsonPath("$.cities[0].regionName").value("사예"))
+            .andExpect(jsonPath("$.cities[0].commanderyName").value("경조윤"))
+            .andExpect(jsonPath("$.cities[0].isCommanderySeat").value(true))
     }
 
     @Test

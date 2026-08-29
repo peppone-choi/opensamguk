@@ -40,7 +40,16 @@ export interface ProvinceColor {
 export interface ProvinceOwnershipBinding {
   colors: Map<number, ProvinceColor>;
   conflicts: number[];
+  cities?: Map<number, IsoCityOverlay>;
+  directProvinces?: Set<number>;
 }
+
+export interface CountyAdministrativeIndex {
+  commanderyByProvince: Int16Array;
+  commanderyByName: ReadonlyMap<string, number>;
+}
+
+const NEUTRAL_PROVINCE_RGB: [number, number, number] = [112, 104, 91];
 
 interface ProvincePngShape {
   width: number;
@@ -300,6 +309,126 @@ export function bindProvinceOwnership(
   }
 
   return { colors, conflicts: [...conflicts] };
+}
+
+interface ProvinceGeometry {
+  colTotal: number;
+  rowTotal: number;
+  cells: number;
+}
+
+interface CitySample {
+  city: IsoCityOverlay;
+  col: number;
+  row: number;
+  province: number;
+  commandery: number;
+}
+
+export function buildCountyAdministrativeIndex(
+  map: ProvinceIdentityMap,
+  counties: readonly { col: number; row: number }[],
+  commanderies: readonly { name: string }[],
+): CountyAdministrativeIndex {
+  const commanderyByProvince = new Int16Array(counties.length);
+  commanderyByProvince.fill(-1);
+  for (let province = 0; province < counties.length; province += 1) {
+    const county = counties[province];
+    if (!Number.isInteger(county.col) || !Number.isInteger(county.row)
+      || county.col < 0 || county.row < 0 || county.col >= map.width || county.row >= map.height) continue;
+    const index = county.row * map.width + county.col;
+    if (map.provinces[index] === province) commanderyByProvince[province] = map.commanderies[index];
+  }
+  return {
+    commanderyByProvince,
+    commanderyByName: new Map(commanderies.map((commandery, index) => [commandery.name, index])),
+  };
+}
+
+function nearestSample(samples: readonly CitySample[], centerCol: number, centerRow: number): CitySample | undefined {
+  let selected: CitySample | undefined;
+  let selectedDistance = Number.POSITIVE_INFINITY;
+  let selectedId = Number.MAX_SAFE_INTEGER;
+  for (const sample of samples) {
+    const distance = (sample.col - centerCol) ** 2 + (sample.row - centerRow) ** 2;
+    const id = Number.isSafeInteger(sample.city.id) ? sample.city.id : Number.MAX_SAFE_INTEGER;
+    if (distance < selectedDistance || (distance === selectedDistance && id < selectedId)) {
+      selected = sample;
+      selectedDistance = distance;
+      selectedId = id;
+    }
+  }
+  return selected;
+}
+
+/** Assign every land county a deterministic runtime owner without transparent conflict holes. */
+export function bindCompleteProvinceOwnership(
+  map: ProvinceIdentityMap,
+  cities: readonly IsoCityOverlay[],
+  grid: GridSize,
+  source: IsoSourceSize,
+  countyIndex: CountyAdministrativeIndex,
+): ProvinceOwnershipBinding {
+  const geometry = new Map<number, ProvinceGeometry>();
+  for (let index = 0; index < map.provinces.length; index += 1) {
+    const province = map.provinces[index];
+    if (province < 0) continue;
+    const prior = geometry.get(province) ?? { colTotal: 0, rowTotal: 0, cells: 0 };
+    prior.colTotal += index % map.width;
+    prior.rowTotal += Math.floor(index / map.width);
+    prior.cells += 1;
+    geometry.set(province, prior);
+  }
+
+  const directByProvince = new Map<number, CitySample[]>();
+  const samplesByCommandery = new Map<number, CitySample[]>();
+  for (const city of cities) {
+    const mapped = mapCityToTile(city, grid, source);
+    const col = Math.round(mapped.col);
+    const row = Math.round(mapped.row);
+    if (!Number.isFinite(col) || !Number.isFinite(row) || col < 0 || row < 0 || col >= map.width || row >= map.height) {
+      continue;
+    }
+    const index = row * map.width + col;
+    const province = map.provinces[index];
+    const commandery = city.commanderyName == null
+      ? (province >= 0 ? countyIndex.commanderyByProvince[province] : -1)
+      : (countyIndex.commanderyByName.get(city.commanderyName) ?? -1);
+    const sample = { city, col, row, province, commandery };
+    if (province >= 0) {
+      const direct = directByProvince.get(province) ?? [];
+      direct.push(sample);
+      directByProvince.set(province, direct);
+    }
+    if (commandery >= 0) {
+      const sameCommandery = samplesByCommandery.get(commandery) ?? [];
+      sameCommandery.push(sample);
+      samplesByCommandery.set(commandery, sameCommandery);
+    }
+  }
+
+  const colors = new Map<number, ProvinceColor>();
+  const assignedCities = new Map<number, IsoCityOverlay>();
+  const directProvinces = new Set<number>();
+  for (const [province, shape] of geometry) {
+    const centerCol = shape.colTotal / shape.cells;
+    const centerRow = shape.rowTotal / shape.cells;
+    const direct = directByProvince.get(province) ?? [];
+    const commandery = countyIndex.commanderyByProvince[province];
+    const pool = direct.length > 0 ? direct : (samplesByCommandery.get(commandery) ?? []);
+    const selected = nearestSample(pool, centerCol, centerRow);
+    if (!selected) {
+      colors.set(province, { nationId: 0, rgb: NEUTRAL_PROVINCE_RGB });
+      continue;
+    }
+    assignedCities.set(province, selected.city);
+    if (direct.length > 0) directProvinces.add(province);
+    colors.set(province, isOwnedNationVisual(selected.city.nationId, selected.city.nationColor)
+      ? { nationId: selected.city.nationId, rgb: parseNationColor(selected.city.nationColor) }
+      : { nationId: 0, rgb: NEUTRAL_PROVINCE_RGB });
+  }
+
+  return { colors, conflicts: [], cities: assignedCities, directProvinces };
 }
 
 export function composeProvincePixels(

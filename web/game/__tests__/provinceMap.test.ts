@@ -1,12 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   bindProvinceOwnership,
+  bindCompleteProvinceOwnership,
+  buildCountyAdministrativeIndex,
   composeProvincePixels,
   decodeProvincePixels,
   isOwnedNationVisual,
   loadProvinceIdentityMap,
   type IsoCityOverlay,
   type IsoSourceSize,
+  type ProvinceIdentityMap,
 } from '@opensamguk/ui';
 import { CHE_OVERLAYS_FIXTURE } from './fixtures/che-tiles';
 
@@ -15,6 +20,16 @@ const REAL_RGB8_PNG = Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAD0lEQVR4AQEEAPv/AAAQAQAlABLmzoVCAAAAAElFTkSuQmCC',
   'base64',
 ));
+
+function expandRle(rle: [number, number][], cells: number): Int16Array {
+  const values = new Int16Array(cells);
+  let index = 0;
+  for (const [value, count] of rle) {
+    values.fill(value, index, index + count);
+    index += count;
+  }
+  return values;
+}
 
 function bytes(...parts: readonly Uint8Array[]): Uint8Array {
   const result = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
@@ -142,6 +157,141 @@ describe('province identity map', () => {
     expect(binding.colors.get(0)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
     expect(binding.colors.get(1)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
     expect(binding.conflicts).toEqual([]);
+  });
+
+  it('fills an unmapped county from the nearest city in its commandery', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 16, 2, 255,
+      0, 32, 3, 255,
+      0, 32, 3, 255,
+    ]), 4, 1);
+    const cities: IsoCityOverlay[] = [
+      { ...CHE_OVERLAYS_FIXTURE[0], x: 0, y: 0 },
+      { ...CHE_OVERLAYS_FIXTURE[1], x: 300, y: 0 },
+    ];
+
+    const countyIndex = buildCountyAdministrativeIndex(map, [
+      { col: 0, row: 0 }, { col: 1, row: 0 }, { col: 2, row: 0 },
+    ], [{ name: 'A' }, { name: 'B' }]);
+    const binding = bindCompleteProvinceOwnership(map, cities, { cols: 4, rows: 1 }, { width: 400, height: 1 }, countyIndex);
+
+    expect(binding.colors.get(0)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
+    expect(binding.colors.get(1)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
+    expect(binding.colors.get(2)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
+    expect(binding.cities?.get(1)?.id).toBe(11);
+  });
+
+  it('resolves a shared county by centroid distance then lowest city id', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 16, 1, 255,
+    ]), 2, 1);
+    const cities: IsoCityOverlay[] = [
+      { ...CHE_OVERLAYS_FIXTURE[0], id: 20, x: 0, y: 0 },
+      { ...CHE_OVERLAYS_FIXTURE[1], id: 10, x: 100, y: 0 },
+    ];
+
+    const countyIndex = buildCountyAdministrativeIndex(map, [{ col: 0, row: 0 }], [{ name: 'A' }]);
+    const binding = bindCompleteProvinceOwnership(map, cities, { cols: 2, rows: 1 }, { width: 200, height: 1 }, countyIndex);
+
+    expect(binding.colors.get(0)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
+    expect(binding.cities?.get(0)?.id).toBe(10);
+    expect(binding.conflicts).toEqual([]);
+  });
+
+  it('assigns every one of the real Han land counties without a transparent gap', () => {
+    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
+      _meta: { cols: number; rows: number };
+      owner: [number, number][];
+      seatOwner: [number, number][];
+      cities: { col: number; row: number }[];
+      juns: { name: string }[];
+    };
+    const runtime = JSON.parse(readFileSync(resolve(process.cwd(), '../../infra/src/main/resources/map/han.json'), 'utf8')) as {
+      width: number;
+      height: number;
+      cities: { id: number; name: string; level: number; x: number; y: number; meta: { ju: string; jun: string } }[];
+    };
+    const cells = tiles._meta.cols * tiles._meta.rows;
+    const map: ProvinceIdentityMap = {
+      width: tiles._meta.cols,
+      height: tiles._meta.rows,
+      provinces: expandRle(tiles.owner, cells),
+      commanderies: expandRle(tiles.seatOwner, cells),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+    const overlays: IsoCityOverlay[] = runtime.cities.map((city) => ({
+      ...city,
+      nationId: 1,
+      nationColor: '#a83232',
+      regionName: city.meta.ju,
+      commanderyName: city.meta.jun,
+    }));
+    const countyIndex = buildCountyAdministrativeIndex(map, tiles.cities, tiles.juns);
+
+    const binding = bindCompleteProvinceOwnership(
+      map,
+      overlays,
+      { cols: tiles._meta.cols, rows: tiles._meta.rows },
+      { width: runtime.width, height: runtime.height },
+      countyIndex,
+    );
+    const landProvinces = new Set([...map.provinces].filter((province) => province >= 0));
+
+    expect(landProvinces.size).toBe(tiles.cities.length);
+    expect(binding.colors.size).toBe(landProvinces.size);
+    expect([...landProvinces].filter((province) => !binding.colors.has(province))).toEqual([]);
+    expect(binding.conflicts).toEqual([]);
+    expect([...countyIndex.commanderyByProvince].every((commandery) => commandery >= 0)).toBe(true);
+    expect(tiles.juns.filter((jun) => !runtime.cities.some((city) => city.meta.jun === jun.name))).toEqual([]);
+  });
+
+  it('uses the county coordinate as the stable commandery parent across a mixed polygon', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 32, 1, 255,
+    ]), 2, 1);
+
+    const countyIndex = buildCountyAdministrativeIndex(
+      map,
+      [{ col: 1, row: 0 }],
+      [{ name: 'A군' }, { name: 'B군' }],
+    );
+
+    expect([...countyIndex.commanderyByProvince]).toEqual([1]);
+  });
+
+  it('reconciles runtime ownership by commandery metadata and never falls back globally', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 32, 2, 255,
+      0, 48, 3, 255,
+    ]), 3, 1);
+    const countyIndex = buildCountyAdministrativeIndex(
+      map,
+      [{ col: 0, row: 0 }, { col: 1, row: 0 }, { col: 2, row: 0 }],
+      [{ name: 'A군' }, { name: 'B군' }, { name: 'C군' }],
+    );
+    const cities: IsoCityOverlay[] = [{
+      ...CHE_OVERLAYS_FIXTURE[0],
+      x: 0,
+      y: 0,
+      commanderyName: 'B군',
+    }];
+
+    const binding = bindCompleteProvinceOwnership(
+      map,
+      cities,
+      { cols: 3, rows: 1 },
+      { width: 300, height: 1 },
+      countyIndex,
+    );
+
+    expect(binding.colors.get(1)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
+    expect(binding.colors.get(2)).toEqual({ nationId: 0, rgb: [112, 104, 91] });
+    expect(binding.cities?.has(2)).toBe(false);
   });
 
   it.each([

@@ -26,11 +26,13 @@ import {
   type IsoView,
 } from './isoMap';
 import {
-  bindProvinceOwnership,
+  bindCompleteProvinceOwnership,
+  buildCountyAdministrativeIndex,
   composeProvincePixels,
   loadProvinceIdentityMap,
   type ProvinceEdge,
   type ProvinceIdentityMap,
+  type ProvinceOwnershipBinding,
 } from './provinceMap';
 import { isOwnedNationVisual } from './nationVisual';
 
@@ -98,6 +100,9 @@ export interface IsoCityOverlay {
   nationColor?: string;
   x: number;
   y: number;
+  regionName?: string;
+  commanderyName?: string;
+  isCommanderySeat?: boolean;
   state?: number;
   supply?: boolean;
   isCapital?: boolean;
@@ -128,6 +133,18 @@ export interface IsoHoverPoint {
   y: number;
 }
 
+export interface IsoCountyHover {
+  provinceId: number;
+  commanderyId: number;
+  regionName: string;
+  commanderyName: string;
+  countyName: string;
+  level: number;
+  nationId: number;
+  nationName?: string;
+  nationColor?: string;
+}
+
 export interface IsoActivation {
   pointerType: string;
 }
@@ -145,6 +162,7 @@ export interface HanMapCanvasProps extends IsoSceneOptions {
   style?: CSSProperties;
   ariaLabel?: string;
   onCityHover?: (city: IsoCityOverlay | null, point?: IsoHoverPoint) => void;
+  onCountyHover?: (county: IsoCountyHover | null, point?: IsoHoverPoint) => void;
   onCityActivate?: (city: IsoCityOverlay, activation?: IsoActivation) => void;
   onMissing?: () => void;
   onViewChange?: (view: IsoView) => void;
@@ -165,6 +183,16 @@ const TERRAIN = [
 const NEUTRAL_COLOR = '#555555';
 const CASTLE_FILL = '#8b8172';
 const CASTLE_STROKE = '#f3dfb0';
+const CITY_MARKER_URLS = {
+  county: '/map/markers/county.png',
+  commandery: '/map/markers/commandery.png',
+  capital: '/map/markers/capital.png',
+} as const;
+export const CITY_MARKER_SPECS = {
+  county: { pixelWidth: 28, pixelHeight: 32, anchorX: 14, anchorY: 30, pixelRatio: 2 },
+  commandery: { pixelWidth: 36, pixelHeight: 40, anchorX: 18, anchorY: 38, pixelRatio: 2 },
+  capital: { pixelWidth: 44, pixelHeight: 48, anchorX: 22, anchorY: 46, pixelRatio: 2 },
+} as const;
 const PROVINCE_BORDER = 'rgba(18,20,22,0.58)';
 const COMMANDERY_BORDER_DARK = 'rgba(10,12,14,0.82)';
 const COMMANDERY_BORDER_LIGHT = 'rgba(225,210,163,0.76)';
@@ -327,9 +355,7 @@ function bakePoliticalPaths(map: ProvinceIdentityMap): PoliticalPaths {
 
 function bakePoliticalFill(
   map: ProvinceIdentityMap,
-  cities: readonly IsoCityOverlay[],
-  grid: GridSize,
-  source: IsoSourceSize,
+  binding: ProvinceOwnershipBinding,
 ): HTMLCanvasElement | null {
   const canvas = document.createElement('canvas');
   canvas.width = map.width;
@@ -337,7 +363,7 @@ function bakePoliticalFill(
   const context = canvas.getContext('2d');
   if (!context) return null;
   const image = context.createImageData(map.width, map.height);
-  image.data.set(composeProvincePixels(map, bindProvinceOwnership(map, cities, grid, source)));
+  image.data.set(composeProvincePixels(map, binding));
   context.putImageData(image, 0, 0);
   return canvas;
 }
@@ -352,11 +378,32 @@ function matchesGrid(map: ProvinceIdentityMap | null, grid: GridSize): map is Pr
 
 function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
   return JSON.stringify(cities.map((city) => [
+    city.id,
     city.x,
     city.y,
     city.nationId,
     city.nationColor ?? null,
   ]));
+}
+
+type CityMarkerTier = keyof typeof CITY_MARKER_URLS;
+type CityMarkerImages = Partial<Record<CityMarkerTier, HTMLImageElement>>;
+
+export function cityMarkerDrawBox(tier: CityMarkerTier, x: number, y: number, dpr: number) {
+  const spec = CITY_MARKER_SPECS[tier];
+  const scale = dpr / spec.pixelRatio;
+  return {
+    x: x - spec.anchorX * scale,
+    y: y - spec.anchorY * scale,
+    width: spec.pixelWidth * scale,
+    height: spec.pixelHeight * scale,
+  };
+}
+
+function markerTier(city: IsoCityOverlay): CityMarkerTier {
+  if (city.isCapital) return 'capital';
+  if (city.isCommanderySeat) return 'commandery';
+  return 'county';
 }
 
 function starPath(context: CanvasRenderingContext2D, x: number, y: number, radius: number) {
@@ -381,6 +428,7 @@ function drawScene(
   view: IsoView,
   hideCityNames: boolean,
   dpr: number,
+  markerImages: CityMarkerImages,
 ): { city: IsoCityOverlay; x: number; y: number; radius: number }[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
@@ -419,13 +467,21 @@ function drawScene(
     context.save();
     if (owned && city.supply === false) context.globalAlpha = 0.42;
 
-    context.fillStyle = city.iconColor;
-    context.strokeStyle = CASTLE_STROKE;
-    context.lineWidth = 1.5;
-    context.fillRect(x - radius * 0.7, y - radius * 0.45, radius * 1.4, radius * 0.9);
-    context.strokeRect(x - radius * 0.7, y - radius * 0.45, radius * 1.4, radius * 0.9);
-    context.fillRect(x - radius * 0.5, y - radius * 0.9, radius * 0.3, radius * 0.5);
-    context.fillRect(x + radius * 0.2, y - radius * 0.9, radius * 0.3, radius * 0.5);
+    const tier = markerTier(city);
+    const marker = markerImages[tier];
+    if (marker) {
+      const box = cityMarkerDrawBox(tier, x, y, dpr);
+      context.imageSmoothingEnabled = true;
+      context.drawImage(marker, box.x, box.y, box.width, box.height);
+    } else {
+      context.fillStyle = city.iconColor;
+      context.strokeStyle = CASTLE_STROKE;
+      context.lineWidth = 1.5;
+      context.fillRect(x - radius * 0.7, y - radius * 0.45, radius * 1.4, radius * 0.9);
+      context.strokeRect(x - radius * 0.7, y - radius * 0.45, radius * 1.4, radius * 0.9);
+      context.fillRect(x - radius * 0.5, y - radius * 0.9, radius * 0.3, radius * 0.5);
+      context.fillRect(x + radius * 0.2, y - radius * 0.9, radius * 0.3, radius * 0.5);
+    }
 
     if (owned) {
       context.strokeStyle = '#e8dec5';
@@ -528,6 +584,7 @@ export function HanMapCanvas({
   style,
   ariaLabel,
   onCityHover,
+  onCountyHover,
   onCityActivate,
   onMissing,
   onViewChange,
@@ -537,6 +594,7 @@ export function HanMapCanvas({
   const terrainRef = useRef<HTMLCanvasElement | null>(null);
   const politicalRef = useRef<HTMLCanvasElement | null>(null);
   const politicalPathsRef = useRef<PoliticalPaths | null>(null);
+  const markerImagesRef = useRef<CityMarkerImages>({});
   const viewRef = useRef<IsoView | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<{ city: IsoCityOverlay; x: number; y: number; radius: number }[]>([]);
@@ -622,6 +680,32 @@ export function HanMapCanvas({
   const sourceWidth = sourceSize.width;
   const sourceHeight = sourceSize.height;
   const ownershipKey = politicalOwnershipKey(cities);
+  const countyIndex = useMemo(() => (
+    provinceMap && loadedTiles
+      ? buildCountyAdministrativeIndex(provinceMap, loadedTiles.cities, loadedTiles.juns)
+      : null
+  ), [loadedTiles?.cities, loadedTiles?.juns, provinceMap]);
+  const completeOwnership = useMemo(() => {
+    if (!provinceMap || !countyIndex || gridCols === 0 || gridRows === 0) return null;
+    return bindCompleteProvinceOwnership(
+      provinceMap,
+      ownershipCitiesRef.current,
+      { cols: gridCols, rows: gridRows },
+      { width: sourceWidth, height: sourceHeight },
+      countyIndex,
+    );
+  }, [countyIndex, gridCols, gridRows, ownershipKey, provinceMap, sourceHeight, sourceWidth]);
+  const cityById = useMemo(() => new Map(cities.map((city) => [city.id, city])), [cities]);
+  const regionByCommanderyId = useMemo(() => {
+    const regions = new Map<number, string>();
+    if (!loadedTiles || !countyIndex) return regions;
+    for (const city of cities) {
+      if (!city.commanderyName || !city.regionName) continue;
+      const commandery = countyIndex.commanderyByName.get(city.commanderyName);
+      if (commandery != null && !regions.has(commandery)) regions.set(commandery, city.regionName);
+    }
+    return regions;
+  }, [cities, countyIndex, loadedTiles?.juns]);
 
   useEffect(() => {
     terrainRef.current = loadedTiles ? bakeTerrain(loadedTiles) : null;
@@ -647,23 +731,37 @@ export function HanMapCanvas({
       view,
       hideCityNamesRef.current,
       sizeRef.current.dpr,
+      markerImagesRef.current,
     );
   }, []);
 
   useEffect(() => {
-    if (!provinceMap || gridCols === 0 || gridRows === 0) {
+    let alive = true;
+    const pending = Object.entries(CITY_MARKER_URLS).map(([tier, url]) => {
+      const image = new Image();
+      image.onload = () => {
+        if (!alive) return;
+        markerImagesRef.current[tier as CityMarkerTier] = image;
+        render();
+      };
+      image.src = url;
+      return image;
+    });
+    return () => {
+      alive = false;
+      for (const image of pending) image.onload = null;
+    };
+  }, [render]);
+
+  useEffect(() => {
+    if (!provinceMap || !completeOwnership || gridCols === 0 || gridRows === 0) {
       politicalRef.current = null;
       render();
       return;
     }
-    politicalRef.current = bakePoliticalFill(
-      provinceMap,
-      ownershipCitiesRef.current,
-      { cols: gridCols, rows: gridRows },
-      { width: sourceWidth, height: sourceHeight },
-    );
+    politicalRef.current = bakePoliticalFill(provinceMap, completeOwnership);
     render();
-  }, [gridCols, gridRows, ownershipKey, provinceMap, render, sourceHeight, sourceWidth]);
+  }, [completeOwnership, gridCols, gridRows, provinceMap, render]);
 
   useEffect(() => {
     render();
@@ -780,6 +878,35 @@ export function HanMapCanvas({
     return null;
   };
 
+  const countyAt = (x: number, y: number): IsoCountyHover | null => {
+    const view = viewRef.current;
+    if (!view || !loadedTiles || !provinceMap || !countyIndex || !completeOwnership) return null;
+    const [rawCol, rawRow] = screenToCell(x, y, view);
+    const col = Math.round(rawCol);
+    const row = Math.round(rawRow);
+    if (col < 0 || row < 0 || col >= provinceMap.width || row >= provinceMap.height) return null;
+    const index = row * provinceMap.width + col;
+    const provinceId = provinceMap.provinces[index];
+    const commanderyId = countyIndex.commanderyByProvince[provinceId];
+    if (provinceId < 0 || commanderyId < 0) return null;
+    const county = loadedTiles.cities[provinceId];
+    const commandery = loadedTiles.juns[commanderyId];
+    if (!county || !commandery) return null;
+    const assigned = completeOwnership.cities?.get(provinceId);
+    const city = assigned ? (cityById.get(assigned.id) ?? assigned) : undefined;
+    return {
+      provinceId,
+      commanderyId,
+      regionName: regionByCommanderyId.get(commanderyId) ?? city?.regionName ?? '',
+      commanderyName: commandery.name,
+      countyName: county.name,
+      level: completeOwnership.directProvinces?.has(provinceId) && city ? city.level : county.level,
+      nationId: city?.nationId ?? 0,
+      nationName: city?.nationName,
+      nationColor: city?.nationColor,
+    };
+  };
+
   const onPointerMove = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     const point = eventPoint(event);
     if (!point) return;
@@ -841,6 +968,7 @@ export function HanMapCanvas({
     const city = cityAt(point.canvasX, point.canvasY);
     activeCityRef.current = city;
     onCityHover?.(city, { x: point.cssX, y: point.cssY });
+    onCountyHover?.(countyAt(point.canvasX, point.canvasY), { x: point.cssX, y: point.cssY });
   };
 
   const endPointer = (event: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -888,6 +1016,7 @@ export function HanMapCanvas({
           if (dragRef.current.size === 0) {
             activeCityRef.current = null;
             onCityHover?.(null);
+            onCountyHover?.(null);
           }
         }}
         onFocus={() => {

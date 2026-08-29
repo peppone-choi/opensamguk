@@ -6,7 +6,15 @@ object MapJson {
 
     data class MapData(val width: Int, val height: Int, val cities: List<MapCityCoord>)
 
-    data class MapCityCoord(val id: Int, val name: String, val x: Double, val y: Double)
+    data class MapCityCoord(
+        val id: Int,
+        val name: String,
+        val x: Double,
+        val y: Double,
+        val regionName: String? = null,
+        val commanderyName: String? = null,
+        val isCommanderySeat: Boolean = false,
+    )
 
     data class MapCityDetail(
         val id: Int,
@@ -50,7 +58,16 @@ object MapJson {
             val id = (c["id"] as? Number)?.toInt() ?: return@mapNotNull null
             val x = (c["x"] as? Number)?.toDouble() ?: return@mapNotNull null
             val y = (c["y"] as? Number)?.toDouble() ?: return@mapNotNull null
-            MapCityCoord(id = id, name = c["name"] as? String ?: "", x = x, y = y)
+            val meta = c["meta"] as? Map<*, *>
+            MapCityCoord(
+                id = id,
+                name = c["name"] as? String ?: "",
+                x = x,
+                y = y,
+                regionName = (meta?.get("ju") as? String)?.takeIf { it.isNotBlank() },
+                commanderyName = (meta?.get("jun") as? String)?.takeIf { it.isNotBlank() },
+                isCommanderySeat = meta?.get("isSeat") == true,
+            )
         }
         return MapData(width = width, height = height, cities = cities)
     }

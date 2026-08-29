@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, maxScaleForDpr, seatLabel,
+    cityMarkerDrawBox, expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, maxScaleForDpr, seatLabel,
     TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom, type HanTiles,
 } from '@opensamguk/ui';
 
@@ -11,6 +11,18 @@ const hanTiles: HanTiles = JSON.parse(
 );
 const grid = { cols: hanTiles._meta.cols, rows: hanTiles._meta.rows };
 const MIN_MARKER_K = Math.min(...Object.values(TIER2_MARKER_ZOOM));
+
+describe('지도 아이콘 배율과 앵커', () => {
+    it.each([1, 1.5, 2, 3])('DPR %s에서 CSS 크기와 지점 앵커를 보존한다', (dpr) => {
+        const box = cityMarkerDrawBox('county', 100, 80, dpr);
+        const scale = dpr / 2;
+
+        expect(box.width / dpr).toBe(14);
+        expect(box.height / dpr).toBe(16);
+        expect(box.x + 14 * scale).toBe(100);
+        expect(box.y + 30 * scale).toBe(80);
+    });
+});
 
 describe('HanMapCanvas 격자 해제', () => {
     it('런렝스를 셀 배열로 되돌린다', () => {

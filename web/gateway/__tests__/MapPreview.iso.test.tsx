@@ -13,13 +13,25 @@ vi.mock('@opensamguk/ui', async () => {
     ...actual,
     HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
       shared.props = props;
+      const city = props.cities?.[0];
+      const county = city ? {
+        provinceId: 1033,
+        commanderyId: 0,
+        regionName: '사예',
+        commanderyName: '경조윤',
+        countyName: '장안현',
+        level: 9,
+        nationId: city.nationId,
+        nationName: city.nationName,
+        nationColor: city.nationColor,
+      } : null;
       return (
         <div data-testid="shared-iso-map" data-map-code={props.mapCode}>
           <button
             type="button"
-            onClick={() => props.onCityHover?.(props.cities?.[0] ?? null, { x: 30, y: 40 })}
+            onClick={() => props.onCountyHover?.(county, { x: 30, y: 40 })}
           >
-            hover first city
+            hover first county
           </button>
         </div>
       );
@@ -86,10 +98,10 @@ describe('MapPreview shared isometric renderer', () => {
     expect(provinceUrl).toBe('/api/game/api/map/provinces?server=s%201%26%3F&mapCode=ha%20n%26%3F');
   });
 
-  it('keeps the lobby tooltip through the canvas hover callback', () => {
+  it('shows the lobby region commandery and county through the polygon callback', () => {
     render(<MapPreview mapData={MAP} />);
-    fireEvent.click(screen.getByRole('button', { name: 'hover first city' }));
-    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
+    expect(screen.getByRole('status')).toHaveTextContent('【사예 | 경】 경조윤 장안현');
     expect(screen.getByRole('status')).toHaveTextContent('위');
   });
 
@@ -113,8 +125,8 @@ describe('MapPreview shared isometric renderer', () => {
       nationName: undefined,
       nationColor: undefined,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'hover first city' }));
-    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
+    expect(screen.getByRole('status')).toHaveTextContent('장안현');
     expect(screen.getByRole('status')).not.toHaveTextContent('표시 금지');
   });
 });

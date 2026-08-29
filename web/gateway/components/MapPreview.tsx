@@ -1,13 +1,11 @@
 'use client';
 
-import { HanMapCanvas, isOwnedNationVisual, type IsoCityOverlay } from '@opensamguk/ui';
+import { HanMapCanvas, isOwnedNationVisual, type IsoCityOverlay, type IsoCountyHover } from '@opensamguk/ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import cityRegionsData from '../config/cityRegions.json';
 
-const CITY_REGIONS = cityRegionsData.regions as Record<string, string>;
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
 const LEVEL_TEXT: Record<number, string> = {
-    1: '수', 2: '진', 3: '관', 4: '이', 5: '소', 6: '중', 7: '대', 8: '특',
+    1: '수', 2: '진', 3: '관', 4: '이', 5: '소', 6: '중', 7: '대', 8: '특', 9: '경', 10: '영현', 11: '장현',
 };
 
 interface MapCity {
@@ -17,6 +15,10 @@ interface MapCity {
     nationId: number;
     x: number;
     y: number;
+    region?: number;
+    regionName?: string;
+    commanderyName?: string;
+    isCommanderySeat?: boolean;
     state?: number;
     supply?: boolean;
     isCapital?: boolean;
@@ -77,7 +79,7 @@ export default function MapPreview({
     const [data, setData] = useState<MapData | null>(null);
     const [failed, setFailed] = useState(false);
     const [tileMissing, setTileMissing] = useState(false);
-    const [hoverCity, setHoverCity] = useState<IsoCityOverlay | null>(null);
+    const [hoverCounty, setHoverCounty] = useState<IsoCountyHover | null>(null);
     const [cursor, setCursor] = useState({ x: 0, y: 0 });
     const [hideCityName, setHideCityName] = useState(false);
 
@@ -136,8 +138,8 @@ export default function MapPreview({
         `/api/game/api/map/provinces?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(mapCode)}`
     ), [serverId]);
     const handleMissing = useCallback(() => setTileMissing(true), []);
-    const handleHover = useCallback((city: IsoCityOverlay | null, point?: { x: number; y: number }) => {
-        setHoverCity(city);
+    const handleCountyHover = useCallback((county: IsoCountyHover | null, point?: { x: number; y: number }) => {
+        setHoverCounty(county);
         if (point) setCursor(point);
     }, []);
 
@@ -168,7 +170,7 @@ export default function MapPreview({
                     currentCityId={currentCityId}
                     hideCityNames={hideCityName}
                     ariaLabel={`${data.mapCode} 서버 아이소 지도`}
-                    onCityHover={handleHover}
+                    onCountyHover={handleCountyHover}
                     onMissing={handleMissing}
                 />
                 <div className="map-btn-stack">
@@ -187,17 +189,17 @@ export default function MapPreview({
                     </button>
                 </div>
             </div>
-            {hoverCity && (
+            {hoverCounty && (
                 <div
                     className="map-preview-tooltip"
                     role="status"
                     style={{ left: cursor.x + 12, top: cursor.y + 16 }}
                 >
                     <div className="map-preview-tooltip-name">
-                        {`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} | ${levelText(hoverCity.level)}】 ${hoverCity.name}`}
+                        {`【${hoverCounty.regionName} | ${levelText(hoverCounty.level)}】 ${hoverCounty.commanderyName} ${hoverCounty.countyName}`}
                     </div>
-                    {isOwnedNationVisual(hoverCity.nationId, hoverCity.nationColor) && hoverCity.nationName && (
-                        <div className="map-preview-tooltip-meta">{hoverCity.nationName}</div>
+                    {isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor) && hoverCounty.nationName && (
+                        <div className="map-preview-tooltip-meta">{hoverCounty.nationName}</div>
                     )}
                 </div>
             )}

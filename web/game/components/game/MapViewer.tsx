@@ -6,22 +6,21 @@ import {
     isOwnedNationVisual,
     type IsoActivation,
     type IsoCityOverlay,
+    type IsoCountyHover,
     type IsoHoverPoint,
 } from '@opensamguk/ui';
 import { api } from '@/lib/api';
-import cityRegionsData from '@/config/cityRegions.json';
 import { useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { getMaxRelativeTechLevel } from '@/lib/utilGame';
 
-const CITY_REGIONS = cityRegionsData.regions as Record<string, string>;
 const NEUTRAL_NAME = '공 백 지';
 const DEFAULT_PHASES_PER_MONTH = 3;
 const DEFAULT_TURNS_PER_YEAR = 36;
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
 const LS_SINGLE_TAP = 'sam.toggleSingleTap';
 const LEVEL_TEXT: Record<number, string> = {
-    1: '수', 2: '진', 3: '관', 4: '이', 5: '소', 6: '중', 7: '대', 8: '특',
+    1: '수', 2: '진', 3: '관', 4: '이', 5: '소', 6: '중', 7: '대', 8: '특', 9: '경', 10: '영현', 11: '장현',
 };
 
 type MapTitleGameConst = NonNullable<GameConstResponse['gameConst']>;
@@ -164,7 +163,7 @@ export default function MapViewer({
     const [failed, setFailed] = useState(false);
     const [tileMissing, setTileMissing] = useState(false);
     const [liveMyCity, setLiveMyCity] = useState<number | null>(null);
-    const [hoverCity, setHoverCity] = useState<IsoCityOverlay | null>(null);
+    const [hoverCounty, setHoverCounty] = useState<IsoCountyHover | null>(null);
     const [cursor, setCursor] = useState<IsoHoverPoint>({ x: 0, y: 0 });
     const [hideCityNames, setHideCityNames] = useState(false);
     const [singleTap, setSingleTap] = useState(false);
@@ -238,12 +237,11 @@ export default function MapViewer({
     const provinceUrl = useCallback((mapCode: string) =>
         `/api/game/api/map/provinces?mapCode=${encodeURIComponent(mapCode)}`, []);
     const handleMissing = useCallback(() => setTileMissing(true), []);
-    const handleHover = useCallback((city: IsoCityOverlay | null, point?: IsoHoverPoint) => {
-        setHoverCity(city);
+    const handleCountyHover = useCallback((county: IsoCountyHover | null, point?: IsoHoverPoint) => {
+        setHoverCounty(county);
         if (point) setCursor(point);
     }, []);
     const activateCity = useCallback((city: IsoCityOverlay, activation?: IsoActivation) => {
-        setHoverCity(city);
         if (selectionEnabled) {
             onCitySelect?.(city.id);
             return;
@@ -298,7 +296,7 @@ export default function MapViewer({
                     selectedCityId={selectedCityId}
                     hideCityNames={hideCityNames}
                     ariaLabel={`${data.mapCode} 세계 지도`}
-                    onCityHover={handleHover}
+                    onCountyHover={handleCountyHover}
                     onCityActivate={activateCity}
                     onMissing={handleMissing}
                 />
@@ -307,11 +305,11 @@ export default function MapViewer({
                     {touchDevice && <button type="button" className={`map-toggle-singletap${singleTap ? ' active' : ''}`} aria-pressed={singleTap} onClick={toggleSingleTap}>두번 탭 해 도시 이동</button>}
                 </div>
             </div>
-            {hoverCity && (
+            {hoverCounty && (
                 <div className="map-tooltip" role="status" style={{ left: cursor.x + 12, top: cursor.y + 30 }}>
-                    <div className="map-tooltip-name">{`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} | ${LEVEL_TEXT[hoverCity.level] ?? hoverCity.level}】 ${hoverCity.name}`}</div>
-                    {isOwnedNationVisual(hoverCity.nationId, hoverCity.nationColor)
-                        && <div className="map-tooltip-meta">{hoverCity.nationName}</div>}
+                    <div className="map-tooltip-name">{`【${hoverCounty.regionName} | ${LEVEL_TEXT[hoverCounty.level] ?? hoverCounty.level}】 ${hoverCounty.commanderyName} ${hoverCounty.countyName}`}</div>
+                    {isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor)
+                        && <div className="map-tooltip-meta">{hoverCounty.nationName}</div>}
                 </div>
             )}
         </section>
