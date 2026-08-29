@@ -27,6 +27,7 @@ data class ServerDef(
 enum class ServerRegistryTransitionAction {
     CREATE,
     CLOSE,
+    RESET,
 }
 
 data class ServerRegistryTransition(
@@ -37,6 +38,7 @@ data class ServerRegistryTransition(
     val remoteApplied: Boolean,
     val dispatched: Boolean,
     val ownerToken: String,
+    val newlyCreated: Boolean = false,
 )
 
 class ServerRegistryTransitionConflict(message: String) : IllegalStateException(message)
@@ -102,16 +104,19 @@ class ServerRegistry(
         server: ServerDef,
         ownerToken: String,
         requestPayload: String = objectMapper.writeValueAsString(mapOf("id" to server.id)),
+        operationId: String? = null,
     ): ServerRegistryTransition {
         require(validateCollection(listOf(server)) != null) { "Invalid canonical server: ${server.id}" }
         require(requestPayload.isNotBlank()) { "Server registry transition request payload is required" }
+        require(operationId == null || operationIdRegex.matches(operationId)) { "Invalid server registry operation id" }
         val requestFingerprint = fingerprint(requestPayload)
         return try {
             transactions.execute {
                 val existing = findTransition(server.id, forUpdate = true)
                 if (existing != null) {
                     if (existing.action != action || existing.server != server ||
-                        existing.requestFingerprint != requestFingerprint
+                        existing.requestFingerprint != requestFingerprint ||
+                        operationId != null && existing.operationId != operationId
                     ) {
                         throw ServerRegistryTransitionConflict("Another server registry transition is already pending for ${server.id}")
                     }
@@ -137,7 +142,7 @@ class ServerRegistry(
                     server.id,
                 ) == 1L
                 if ((action == ServerRegistryTransitionAction.CREATE && registered) ||
-                    (action == ServerRegistryTransitionAction.CLOSE && !registered)
+                    (action != ServerRegistryTransitionAction.CREATE && !registered)
                 ) {
                     throw ServerRegistryTransitionConflict("Server registry already reached the requested state for ${server.id}")
                 }
@@ -157,15 +162,42 @@ class ServerRegistry(
                     server.deployProject,
                     server.generation,
                     server.scenarioCode,
-                    newOperationId(),
+                    operationId ?: newOperationId(),
                     requestFingerprint,
                     ownerToken,
                     leaseUntil(),
                 )
-                requireNotNull(findTransition(server.id, forUpdate = true))
+                requireNotNull(findTransition(server.id, forUpdate = true)).copy(newlyCreated = true)
             } ?: error("Server registry transition transaction returned no result")
         } catch (e: DuplicateKeyException) {
             throw ServerRegistryTransitionConflict("Another server registry transition is already pending for ${server.id}")
+        }
+    }
+
+    fun claimTransition(operationId: String, ownerToken: String): ServerRegistryTransition? {
+        require(operationIdRegex.matches(operationId)) { "Invalid server registry operation id" }
+        return try {
+            transactions.execute {
+                val existing = findTransitionByOperationId(operationId, forUpdate = true)
+                    ?: return@execute null
+                val claimed = jdbc.update(
+                    """
+                    UPDATE game_server_registry_transition
+                       SET owner_token = ?, lease_until = ?
+                     WHERE operation_id = ?
+                       AND lease_until <= CURRENT_TIMESTAMP
+                    """.trimIndent(),
+                    ownerToken,
+                    leaseUntil(),
+                    operationId,
+                )
+                if (claimed != 1) {
+                    throw ServerRegistryTransitionConflict("Another server registry transition is already pending for ${existing.server.id}")
+                }
+                existing.copy(ownerToken = ownerToken)
+            }
+        } catch (e: DuplicateKeyException) {
+            throw ServerRegistryTransitionConflict("Another server registry transition is already pending")
         }
     }
 
@@ -220,6 +252,19 @@ class ServerRegistry(
             when (action) {
                 ServerRegistryTransitionAction.CREATE -> registerWithinTransaction(transition.server)
                 ServerRegistryTransitionAction.CLOSE -> jdbc.update("DELETE FROM game_server WHERE server_id = ?", serverId)
+                ServerRegistryTransitionAction.RESET -> {
+                    val updated = jdbc.update(
+                        """
+                        UPDATE game_server
+                           SET generation = ?, scenario_code = ?
+                         WHERE server_id = ?
+                        """.trimIndent(),
+                        transition.server.generation,
+                        transition.server.scenarioCode,
+                        serverId,
+                    )
+                    check(updated == 1) { "RESET registry membership is missing: $serverId" }
+                }
             }
             jdbc.update("DELETE FROM game_server_registry_transition WHERE server_id = ?", serverId)
         }
@@ -285,15 +330,22 @@ class ServerRegistry(
     }
 
     private fun findTransition(serverId: String, forUpdate: Boolean = false): ServerRegistryTransition? =
+        findTransitionBy("server_id", serverId, forUpdate)
+
+    private fun findTransitionByOperationId(operationId: String, forUpdate: Boolean = false): ServerRegistryTransition? =
+        findTransitionBy("operation_id", operationId, forUpdate)
+
+    private fun findTransitionBy(column: String, value: String, forUpdate: Boolean): ServerRegistryTransition? =
         jdbc.query(
             """
-            SELECT action, display_name, game_api_url, game_engine_url, deploy_project,
+            SELECT server_id, action, display_name, game_api_url, game_engine_url, deploy_project,
                    generation, scenario_code, operation_id, request_fingerprint,
                    dispatched, remote_applied, owner_token
               FROM game_server_registry_transition
-             WHERE server_id = ?${if (forUpdate) " FOR UPDATE" else ""}
+             WHERE $column = ?${if (forUpdate) " FOR UPDATE" else ""}
             """.trimIndent(),
             { rs, _ ->
+                val serverId = rs.getString("server_id")
                 ServerRegistryTransition(
                     action = ServerRegistryTransitionAction.valueOf(rs.getString("action")),
                     server = ServerDef(
@@ -312,7 +364,7 @@ class ServerRegistry(
                     ownerToken = rs.getString("owner_token"),
                 )
             },
-            serverId,
+            value,
         ).firstOrNull()
 
     private fun leaseUntil(): Timestamp {
@@ -323,6 +375,8 @@ class ServerRegistry(
     }
 
     private fun newOperationId(): String = UUID.randomUUID().toString().replace("-", "")
+
+    private val operationIdRegex = Regex("^[a-f0-9]{32}$")
 
     private fun fingerprint(payload: String): String =
         MessageDigest.getInstance("SHA-256")

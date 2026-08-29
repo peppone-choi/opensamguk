@@ -1,11 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ConfirmModal from '@/components/ConfirmModal';
 import BoardControl from '@/components/admin/BoardControl';
 import MemberControl from '@/components/admin/MemberControl';
+import {
+    runServerLifecycleOperation,
+    type ServerLifecycleOperationStatus,
+    type ServerLifecycleResponse,
+} from '@/lib/admin-server-lifecycle';
 
 // F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포) + "회원 관리" 탭(B2f).
 // "게임 환경"(B1e)은 락(걸기/풀기 + 동결중/가동중) 부분만 우선 배선. 시간조정/봉급/운영자메시지/
@@ -76,17 +81,10 @@ interface EnvConfigResponse {
     fields: Record<string, EnvField>;
     message?: string | null;
 }
-interface ServerCreateResponse {
-    ok: boolean;
-    id?: string;
-    name?: string;
-    project?: string;
-    restartRequired?: boolean;
-    affectedServices?: string[];
-    detail?: string | null;
-    message?: string | null;
-    error?: string | null;
-}
+type ServerLifecycleViewResult =
+    | { phase: 'progress'; response: ServerLifecycleResponse }
+    | { phase: 'success'; response: ServerLifecycleResponse }
+    | { phase: 'error'; message: string };
 interface ServerResetOptions {
     generation: string;
     scenarioCode: string;
@@ -244,6 +242,15 @@ const AUTORUN_MINUTES = [
     ['3600', '60시간'],
     ['4320', '72시간'],
 ] as const;
+
+function lifecycleProgressLabel(status: ServerLifecycleOperationStatus): string {
+    if (status === 'recovery_required') return '복구 확인 중';
+    return '처리 중';
+}
+
+function lifecycleErrorMessage(error: unknown, fallback: string): string {
+    return error instanceof Error && error.message ? error.message : fallback;
+}
 
 /** 인증 프록시 GET — JSON 파싱. 비-2xx면 throw. */
 async function getJson<T>(path: string): Promise<T> {
@@ -523,7 +530,8 @@ function ServerLifecycleControl({
     const defaultScenario = serverScenario || scenarios[0]?.code || '';
     const [mode, setMode] = useState<'reset' | 'delete' | null>(null);
     const [busy, setBusy] = useState(false);
-    const [result, setResult] = useState<ServerCreateResponse | null>(null);
+    const [result, setResult] = useState<ServerLifecycleViewResult | null>(null);
+    const operationController = useRef<AbortController | null>(null);
     const [resetOptions, setResetOptions] = useState<ServerResetOptions>({
         generation: String(server.generation ?? 1),
         scenarioCode: defaultScenario,
@@ -549,6 +557,11 @@ function ServerLifecycleControl({
         }
     }, [defaultScenario, resetOptions.scenarioCode]);
 
+    useEffect(() => () => {
+        operationController.current?.abort();
+        operationController.current = null;
+    }, []);
+
     function setReset<K extends keyof ServerResetOptions>(key: K, value: ServerResetOptions[K]) {
         setResetOptions((prev) => ({ ...prev, [key]: value }));
     }
@@ -563,57 +576,83 @@ function ServerLifecycleControl({
     }
 
     async function runDelete() {
+        operationController.current?.abort();
+        const controller = new AbortController();
+        operationController.current = controller;
         setBusy(true);
         setResult(null);
         try {
-            const res = await fetch(`/api/proxy/admin/servers/${encodeURIComponent(server.id)}`, {
+            const response = await runServerLifecycleOperation({
+                url: `/api/proxy/admin/servers/${encodeURIComponent(server.id)}`,
                 method: 'DELETE',
+                signal: controller.signal,
+                onProgress: (progress) => {
+                    if (operationController.current === controller && progress.operationStatus !== 'succeeded') {
+                        setResult({ phase: 'progress', response: progress });
+                    }
+                },
             });
-            const data = (await res.json()) as ServerCreateResponse;
-            setResult(data);
-            if (res.ok && data.ok) onChanged();
-        } catch {
-            setResult({ ok: false, message: '서버 삭제 요청에 실패했습니다.' });
+            if (operationController.current !== controller) return;
+            setResult({ phase: 'success', response });
+            onChanged();
+        } catch (error) {
+            if (operationController.current === controller && !controller.signal.aborted) {
+                setResult({ phase: 'error', message: lifecycleErrorMessage(error, '서버 삭제 요청에 실패했습니다.') });
+            }
         } finally {
-            setBusy(false);
-            setMode(null);
+            if (operationController.current === controller) {
+                operationController.current = null;
+                setBusy(false);
+                setMode(null);
+            }
         }
     }
 
     async function runReset() {
         if (!resetOptions.scenarioCode) {
-            setResult({
-                ok: false,
-                message: '시나리오를 선택해야 리셋할 수 있습니다.',
-            });
+            setResult({ phase: 'error', message: '시나리오를 선택해야 리셋할 수 있습니다.' });
             setMode(null);
             return;
         }
         const generationNumber = Number.parseInt(resetOptions.generation, 10);
         if (!Number.isInteger(generationNumber) || generationNumber < 0) {
-            setResult({ ok: false, message: '기수는 0 이상의 숫자여야 합니다.' });
+            setResult({ phase: 'error', message: '기수는 0 이상의 숫자여야 합니다.' });
             setMode(null);
             return;
         }
+        operationController.current?.abort();
+        const controller = new AbortController();
+        operationController.current = controller;
         setBusy(true);
         setResult(null);
         try {
-            const res = await fetch(`/api/proxy/admin/servers/${encodeURIComponent(server.id)}/reset`, {
+            const response = await runServerLifecycleOperation({
+                url: `/api/proxy/admin/servers/${encodeURIComponent(server.id)}/reset`,
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                body: {
                     ...resetOptions,
                     confirm: `RESET ${server.id}`,
-                }),
+                },
+                signal: controller.signal,
+                onProgress: (progress) => {
+                    if (operationController.current === controller && progress.operationStatus !== 'succeeded') {
+                        setResult({ phase: 'progress', response: progress });
+                    }
+                },
             });
-            const data = (await res.json()) as ServerCreateResponse;
-            setResult(data);
-            if (res.ok && data.ok) onChanged();
-        } catch {
-            setResult({ ok: false, message: '서버 리셋 요청에 실패했습니다.' });
+            if (operationController.current !== controller) return;
+            setResult({ phase: 'success', response });
+            onChanged();
+        } catch (error) {
+            if (operationController.current === controller && !controller.signal.aborted) {
+                setResult({ phase: 'error', message: lifecycleErrorMessage(error, '서버 리셋 요청에 실패했습니다.') });
+            }
         } finally {
-            setBusy(false);
-            setMode(null);
+            if (operationController.current === controller) {
+                operationController.current = null;
+                setBusy(false);
+                setMode(null);
+            }
         }
     }
 
@@ -817,10 +856,12 @@ function ServerLifecycleControl({
                 <span className="deploy-note">리셋은 해당 서버 DB/Redis 볼륨을 초기화합니다.</span>
             </div>
             {result && (
-                <p className={`deploy-result ${result.ok ? 'ok' : 'fail'}`}>
-                    {result.ok
-                        ? `${result.name ?? result.id} 처리 완료 · ${result.project ?? ''}`
-                        : result.message || result.error || result.detail || '서버 제어 요청에 실패했습니다.'}
+                <p className={`deploy-result ${result.phase === 'success' ? 'ok' : result.phase === 'error' ? 'fail' : ''}`}>
+                    {result.phase === 'progress'
+                        ? lifecycleProgressLabel(result.response.operationStatus)
+                        : result.phase === 'success'
+                            ? result.response.publicMessage || `${result.response.name ?? result.response.id} 처리 완료`
+                            : result.message}
                 </p>
             )}
             <ConfirmModal
@@ -870,7 +911,8 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const [scenarioSeedEnabled, setScenarioSeedEnabled] = useState(true);
     const [jwtPublicKey, setJwtPublicKey] = useState('');
     const [busy, setBusy] = useState(false);
-    const [result, setResult] = useState<ServerCreateResponse | null>(null);
+    const [result, setResult] = useState<ServerLifecycleViewResult | null>(null);
+    const operationController = useRef<AbortController | null>(null);
 
     useEffect(() => {
         let alive = true;
@@ -885,7 +927,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
             .catch(() => {
                 if (alive)
                     setResult({
-                        ok: false,
+                        phase: 'error',
                         message: '시나리오 목록을 불러오지 못했습니다.',
                     });
             });
@@ -894,14 +936,22 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
         };
     }, []);
 
+    useEffect(() => () => {
+        operationController.current?.abort();
+        operationController.current = null;
+    }, []);
+
     async function createServer() {
+        operationController.current?.abort();
+        const controller = new AbortController();
+        operationController.current = controller;
         setBusy(true);
         setResult(null);
         try {
-            const res = await fetch('/api/proxy/admin/servers', {
+            const response = await runServerLifecycleOperation({
+                url: '/api/proxy/admin/servers',
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                body: {
                     id,
                     name,
                     generation,
@@ -911,15 +961,26 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                     scenarioCode,
                     scenarioSeedEnabled,
                     jwtPublicKey,
-                }),
+                },
+                signal: controller.signal,
+                onProgress: (progress) => {
+                    if (operationController.current === controller && progress.operationStatus !== 'succeeded') {
+                        setResult({ phase: 'progress', response: progress });
+                    }
+                },
             });
-            const data = (await res.json()) as ServerCreateResponse;
-            setResult(data);
-            if (res.ok && data.ok) onCreated();
-        } catch {
-            setResult({ ok: false, message: '서버 생성 요청에 실패했습니다.' });
+            if (operationController.current !== controller) return;
+            setResult({ phase: 'success', response });
+            onCreated();
+        } catch (error) {
+            if (operationController.current === controller && !controller.signal.aborted) {
+                setResult({ phase: 'error', message: lifecycleErrorMessage(error, '서버 생성 요청에 실패했습니다.') });
+            }
         } finally {
-            setBusy(false);
+            if (operationController.current === controller) {
+                operationController.current = null;
+                setBusy(false);
+            }
         }
     }
 
@@ -1032,10 +1093,12 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                 <span className="deploy-note">생성 후 gateway-api/web-gateway가 레지스트리를 다시 읽습니다.</span>
             </div>
             {result && (
-                <p className={`deploy-result ${result.ok ? 'ok' : 'fail'}`}>
-                    {result.ok
-                        ? `${result.name ?? result.id} 생성 완료 · ${result.project ?? ''}`
-                        : result.message || result.error || result.detail || '서버 생성에 실패했습니다.'}
+                <p className={`deploy-result ${result.phase === 'success' ? 'ok' : result.phase === 'error' ? 'fail' : ''}`}>
+                    {result.phase === 'progress'
+                        ? lifecycleProgressLabel(result.response.operationStatus)
+                        : result.phase === 'success'
+                            ? result.response.publicMessage || `${result.response.name ?? result.response.id} 생성 완료`
+                            : result.message}
                 </p>
             )}
         </div>

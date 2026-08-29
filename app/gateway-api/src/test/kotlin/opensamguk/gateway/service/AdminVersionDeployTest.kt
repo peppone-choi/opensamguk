@@ -5,12 +5,20 @@ import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
 import java.util.UUID
+import opensamguk.gateway.controller.AdminController
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.boot.info.BuildProperties
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 /**
  * 어드민 버전/배포 백엔드의 순수 게이트 — 네트워크에 닿지 않는 경로만 검증한다.
@@ -254,6 +262,53 @@ class AdminVersionDeployTest {
             assertTrue(request.body.contains(""""id":"s1""""))
             assertTrue(request.body.contains(""""generation":"3""""))
             assertFalse(result.body.contains("tok"))
+        }
+    }
+
+    @Test
+    fun `서버 생성은 검증된 caller operation id를 변경하지 않는다`() {
+        FakeDeployer().use { deployer ->
+            val operationId = "abcdef0123456789abcdef0123456789"
+            deployer.enqueue(
+                202,
+                """{"ok":true,"id":"s1","operationStatus":"pending"}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer(
+                """{"id":"s1","name":"통일 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1","operationId":"$operationId"}""",
+            )
+
+            assertEquals(202, result.status)
+            assertEquals(operationId, mapper.readTree(result.body).path("operationId").asText())
+            assertEquals(
+                operationId,
+                mapper.readTree(deployer.requests.single().body).path("operationId").asText(),
+            )
+        }
+    }
+
+    @Test
+    fun `ADMIN operation status route forwards the validated operation id`() {
+        FakeDeployer().use { deployer ->
+            val operationId = "fedcba9876543210fedcba9876543210"
+            val deployService = DeployService(deployer.url(), "tok", registry(), mapper)
+            @Suppress("UNCHECKED_CAST")
+            val buildPropertiesProvider = mock(ObjectProvider::class.java) as ObjectProvider<BuildProperties>
+            val controller = AdminController(
+                deployService,
+                mock(VersionService::class.java),
+                mock(AdminMemberService::class.java),
+                mock(ScenarioCatalogService::class.java),
+                buildPropertiesProvider,
+            )
+            val mockMvc = MockMvcBuilders.standaloneSetup(controller).build()
+
+            mockMvc.perform(get("/admin/servers/operations/{operationId}", operationId))
+                .andExpect(status().isNotFound)
+                .andExpect(jsonPath("$.operationId").value(operationId))
+                .andExpect(jsonPath("$.operationStatus").value("missing"))
+                .andExpect(jsonPath("$.resubmitRequired").value(false))
         }
     }
 
@@ -858,10 +913,12 @@ class AdminVersionDeployTest {
                 ),
             )
             val operationId = runCatching { mapper.readTree(requestBody).path("operationId").asText("") }.getOrDefault("")
-            val responseBody = if (operationId.isNotBlank() && exchange.requestURI.path in setOf("/servers/create", "/servers/close")) {
+            val responseBody = if (operationId.isNotBlank() && exchange.requestURI.path in setOf("/servers/create", "/servers/close", "/servers/reset")) {
                 val node = mapper.readTree(response.second).deepCopy<com.fasterxml.jackson.databind.node.ObjectNode>()
                 node.put("operationId", operationId)
-                node.put("operationStatus", if (node.path("ok").asBoolean()) "succeeded" else "failed")
+                if (!node.has("operationStatus")) {
+                    node.put("operationStatus", if (node.path("ok").asBoolean()) "succeeded" else "failed")
+                }
                 mapper.writeValueAsString(node)
             } else {
                 response.second
