@@ -157,10 +157,6 @@ export interface IsoActivation {
   pointerType: string;
 }
 
-function rgbHex(rgb: readonly [number, number, number]): string {
-  return `#${rgb.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
-}
-
 export interface HanMapCanvasProps extends IsoSceneOptions {
   mapCode: string;
   tiles?: HanTiles | null;
@@ -915,7 +911,6 @@ export function HanMapCanvas({
     if ((!provinceRecord && !county) || !commanderyName) return null;
     const assigned = completeOwnership.cities?.get(provinceId);
     const city = assigned ? (cityById.get(assigned.id) ?? assigned) : undefined;
-    const affiliation = completeOwnership.affiliations?.get(provinceId);
     return {
       provinceId,
       commanderyId,
@@ -928,8 +923,8 @@ export function HanMapCanvas({
       level: completeOwnership.directProvinces?.has(provinceId) && city
         ? city.level : (county?.level ?? city?.level ?? 5),
       nationId: city?.nationId ?? 0,
-      nationName: city?.nationName ?? affiliation?.name,
-      nationColor: city?.nationColor ?? (affiliation ? rgbHex(affiliation.rgb) : undefined),
+      nationName: city?.nationName,
+      nationColor: city?.nationColor,
     };
   };
 
