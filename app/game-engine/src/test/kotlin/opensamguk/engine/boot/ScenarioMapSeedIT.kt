@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
 import opensamguk.common.constants.GameConst
+import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.event.EventStore
@@ -562,7 +563,9 @@ class ScenarioMapSeedIT {
         }
         val deferredBirths = deferredGenerals.map { it.bornYear ?: 180 }.toSet()
         val deadGenerals = seedGenerals.filter { (it.deadYear ?: 300) <= scenario.startYear }
-        val mapCityCount = ScenarioJson.loadMapCities(readResource("map/${scenarioMapName(scenario)}.json")).size
+        val mapCityCount = ScenarioJson.loadMapCities(
+            readResource("map/${MapJson.resourceCode(scenarioMapName(scenario))}.json"),
+        ).size
         val expectedNationTurns = scenario.nations.sumOf { nation ->
             (13 - nationChiefLevel(nation.scale)) * 12
         }

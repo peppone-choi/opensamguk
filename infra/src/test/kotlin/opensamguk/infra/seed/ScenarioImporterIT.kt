@@ -81,7 +81,9 @@ class ScenarioImporterIT {
      * 맵을 `che` 로 박아두면 시나리오가 han 으로 바뀌었을 때 城 id 가 하나도 안 맞아 소유가 통째로 날아간다.
      */
     private fun mapCitiesOf(scenario: Scenario) =
-        ScenarioJson.loadMapCities(readResource("map/${scenario.map["mapName"] as? String ?: "che"}.json"))
+        ScenarioJson.loadMapCities(
+            readResource("map/${MapJson.resourceCode(scenario.map["mapName"] as? String ?: "che")}.json"),
+        )
 
     private fun newImporter(
         showImageLevel: Int = 3,
@@ -409,7 +411,10 @@ class ScenarioImporterIT {
         assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
         assertTrue(meta.contains("\"serverId\""), "meta has active serverId: $meta")
         assertTrue(meta.contains("\"ngGameId\""), "meta has active ngGameId: $meta")
-        assertTrue(meta.contains("\"map\": \"han\"") || meta.contains("\"map\":\"han\""), "meta has map=han: $meta")
+        assertTrue(
+            meta.contains("\"map\": \"han-world-v2\"") || meta.contains("\"map\":\"han-world-v2\""),
+            "meta has map=han-world-v2: $meta",
+        )
         assertTrue(meta.contains("\"unitSet\": \"han\"") || meta.contains("\"unitSet\":\"han\""), "meta has unitSet=han: $meta")
 
         // world_state.config carries entrance-gating values used by ServerBasicInfoController/FrontInfoController.
