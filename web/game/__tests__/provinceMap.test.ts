@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -279,6 +279,77 @@ describe('province identity map', () => {
     expect([...landProvinces].filter((province) => !binding.colors.has(province))).toEqual([]);
     expect(binding.conflicts).toEqual([]);
     expect([...countyIndex.commanderyByProvince].every((commandery) => commandery >= 0)).toBe(true);
+  });
+
+  it('gives all 15 scenario maps complete affiliations without cross-commandery claims', () => {
+    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
+      _meta: { cols: number; rows: number };
+      owner: [number, number][];
+      parentOwner: [number, number][];
+      provinceRecords: ProvinceRecordDto[];
+      parentRegions: ParentRegionRecordDto[];
+    };
+    const runtime = JSON.parse(readFileSync(resolve(process.cwd(), '../../infra/src/main/resources/map/han.json'), 'utf8')) as {
+      width: number;
+      height: number;
+      cities: { id: number; name: string; level: number; x: number; y: number; meta: { ju: string; jun: string } }[];
+    };
+    const scenarioDirectory = resolve(process.cwd(), '../../infra/src/main/resources/scenario');
+    const scenarioFiles = readdirSync(scenarioDirectory)
+      .filter((name) => /^scenario_(1010|1020|1021|1030|1031|1040|1041|1050|1060|1070|1080|1090|1100|1110|1120)\.json$/.test(name))
+      .sort();
+    const cells = tiles._meta.cols * tiles._meta.rows;
+    const map: ProvinceIdentityMap = {
+      width: tiles._meta.cols,
+      height: tiles._meta.rows,
+      provinces: expandRle(tiles.owner, cells),
+      commanderies: expandRle(tiles.parentOwner, cells),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+    const countyIndex = buildProvinceAdministrativeIndex(map, tiles.provinceRecords, tiles.parentRegions);
+    const landCells = [...map.provinces]
+      .map((province, index) => province >= 0 ? index : -1)
+      .filter((index) => index >= 0);
+
+    expect(scenarioFiles).toHaveLength(15);
+    for (const scenarioFile of scenarioFiles) {
+      const scenario = JSON.parse(readFileSync(resolve(scenarioDirectory, scenarioFile), 'utf8')) as {
+        nation: [string, string, unknown, unknown, unknown, unknown, unknown, number, number[]][];
+      };
+      const ownerByCity = new Map<number, { nationId: number; nationName: string; nationColor: string }>();
+      scenario.nation.forEach((nation, index) => {
+        if (nation[7] <= 0) return;
+        nation[8].forEach((cityId) => ownerByCity.set(cityId, {
+          nationId: index + 1,
+          nationName: nation[0],
+          nationColor: nation[1],
+        }));
+      });
+      const overlays: IsoCityOverlay[] = runtime.cities.map((city) => ({
+        ...city,
+        nationId: ownerByCity.get(city.id)?.nationId ?? 0,
+        nationName: ownerByCity.get(city.id)?.nationName,
+        nationColor: ownerByCity.get(city.id)?.nationColor,
+        regionName: city.meta.ju,
+        commanderyName: city.meta.jun,
+      }));
+      const binding = bindCompleteProvinceOwnership(
+        map,
+        overlays,
+        { cols: tiles._meta.cols, rows: tiles._meta.rows },
+        { width: runtime.width, height: runtime.height },
+        countyIndex,
+      );
+      const pixels = composeProvincePixels(map, binding);
+
+      expect(binding.colors.size, scenarioFile).toBe(tiles.provinceRecords.length);
+      expect([...binding.affiliations!.values()].every((affiliation) => affiliation.name.length > 0), scenarioFile).toBe(true);
+      expect(landCells.every((cell) => pixels[cell * 4 + 3] === 255), scenarioFile).toBe(true);
+      expect([...binding.cities!.entries()].every(([province, city]) => (
+        countyIndex.commanderyByName.get(city.commanderyName!) === countyIndex.commanderyByProvince[province]
+      )), scenarioFile).toBe(true);
+    }
   });
 
   it('uses the county coordinate as the stable commandery parent across a mixed polygon', () => {
