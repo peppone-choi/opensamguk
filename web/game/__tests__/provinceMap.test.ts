@@ -5,12 +5,16 @@ import {
   bindProvinceOwnership,
   bindCompleteProvinceOwnership,
   buildCountyAdministrativeIndex,
+  buildProvinceAdministrativeIndex,
   composeProvincePixels,
   decodeProvincePixels,
   isOwnedNationVisual,
   loadProvinceIdentityMap,
+  formatProvinceTooltip,
   type IsoCityOverlay,
   type IsoSourceSize,
+  type ParentRegionRecordDto,
+  type ProvinceRecordDto,
   type ProvinceIdentityMap,
 } from '@opensamguk/ui';
 import { CHE_OVERLAYS_FIXTURE } from './fixtures/che-tiles';
@@ -121,6 +125,32 @@ describe('province identity map', () => {
     vi.unstubAllGlobals();
   });
 
+  it('formats Han and external province tooltips with their own administrative systems', () => {
+    expect(formatProvinceTooltip(
+      { id: 'P1', displayName: '조선현', nameCh: '朝鮮縣', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY', parentRegionId: 'R1', cityIndex: 1, geometryBasis: 'HISTORICAL_BOUNDARY', confidence: 'REVIEWED' },
+      { id: 'R1', displayName: '낙랑군', nameCh: '樂浪郡', administrativeSystem: 'HAN_COMMANDERY' },
+    )).toBe('낙랑군 조선현');
+    expect(formatProvinceTooltip(
+      { id: 'P2', displayName: '구야국', nameCh: '狗邪國', administrativeSystem: 'BYEONHAN', kind: 'SETTLEMENT', parentRegionId: 'R2', cityIndex: 2, geometryBasis: 'HISTORICAL_SEAT_ADAPTED', confidence: 'IDENTIFIED' },
+      { id: 'R2', displayName: '변한', nameCh: '', administrativeSystem: 'BYEONHAN' },
+    )).toBe('변한 · 구야국');
+    expect(formatProvinceTooltip(
+      { id: 'P3', displayName: '국내성', nameCh: '國內城', administrativeSystem: 'GOGURYEO', kind: 'SETTLEMENT', parentRegionId: 'R3', cityIndex: 3, geometryBasis: 'HISTORICAL_SEAT_ADAPTED', confidence: 'IDENTIFIED' },
+      { id: 'R3', displayName: '고구려', nameCh: '', administrativeSystem: 'GOGURYEO' },
+    )).toBe('고구려 · 국내성');
+  });
+
+  it('indexes direct territories by explicit parent instead of city-array position', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255, 0, 16, 2, 255,
+    ]), 2, 1);
+    const index = buildProvinceAdministrativeIndex(map, [
+      { id: 'P1', displayName: 'A', nameCh: '', administrativeSystem: 'MAHAN', kind: 'SETTLEMENT', parentRegionId: 'R1', cityIndex: 0, geometryBasis: 'HISTORICAL_SEAT_ADAPTED', confidence: 'REVIEWED' },
+      { id: 'P2', displayName: '직할지', nameCh: '', administrativeSystem: 'MAHAN', kind: 'DIRECT_TERRITORY', parentRegionId: 'R1', cityIndex: null, geometryBasis: 'MODERN_ADMIN_FALLBACK', confidence: 'INFERRED' },
+    ], [{ id: 'R1', displayName: '마한', nameCh: '', administrativeSystem: 'MAHAN' }]);
+    expect(Array.from(index.commanderyByProvince)).toEqual([0, 0]);
+  });
+
   it('decodes both identities and separates province from commandery edges', () => {
     const rgba = new Uint8ClampedArray([
       0, 0, 0, 255, 0, 16, 1, 255, 0, 16, 2, 255,
@@ -204,9 +234,11 @@ describe('province identity map', () => {
     const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
       _meta: { cols: number; rows: number };
       owner: [number, number][];
-      seatOwner: [number, number][];
+      parentOwner: [number, number][];
       cities: { col: number; row: number }[];
       juns: { name: string }[];
+      provinceRecords: ProvinceRecordDto[];
+      parentRegions: ParentRegionRecordDto[];
     };
     const runtime = JSON.parse(readFileSync(resolve(process.cwd(), '../../infra/src/main/resources/map/han.json'), 'utf8')) as {
       width: number;
@@ -218,7 +250,7 @@ describe('province identity map', () => {
       width: tiles._meta.cols,
       height: tiles._meta.rows,
       provinces: expandRle(tiles.owner, cells),
-      commanderies: expandRle(tiles.seatOwner, cells),
+      commanderies: expandRle(tiles.parentOwner, cells),
       provinceEdges: [],
       commanderyEdges: [],
     };
@@ -229,7 +261,7 @@ describe('province identity map', () => {
       regionName: city.meta.ju,
       commanderyName: city.meta.jun,
     }));
-    const countyIndex = buildCountyAdministrativeIndex(map, tiles.cities, tiles.juns);
+    const countyIndex = buildProvinceAdministrativeIndex(map, tiles.provinceRecords, tiles.parentRegions);
 
     const binding = bindCompleteProvinceOwnership(
       map,
@@ -240,12 +272,11 @@ describe('province identity map', () => {
     );
     const landProvinces = new Set([...map.provinces].filter((province) => province >= 0));
 
-    expect(landProvinces.size).toBe(tiles.cities.length);
+    expect(landProvinces.size).toBe(tiles.provinceRecords.length);
     expect(binding.colors.size).toBe(landProvinces.size);
     expect([...landProvinces].filter((province) => !binding.colors.has(province))).toEqual([]);
     expect(binding.conflicts).toEqual([]);
     expect([...countyIndex.commanderyByProvince].every((commandery) => commandery >= 0)).toBe(true);
-    expect(tiles.juns.filter((jun) => !runtime.cities.some((city) => city.meta.jun === jun.name))).toEqual([]);
   });
 
   it('uses the county coordinate as the stable commandery parent across a mixed polygon', () => {

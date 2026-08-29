@@ -28,8 +28,12 @@ import {
 import {
   bindCompleteProvinceOwnership,
   buildCountyAdministrativeIndex,
+  buildProvinceAdministrativeIndex,
   composeProvincePixels,
+  formatProvinceTooltip,
   loadProvinceIdentityMap,
+  type ParentRegionRecordDto,
+  type ProvinceRecordDto,
   type ProvinceEdge,
   type ProvinceIdentityMap,
   type ProvinceOwnershipBinding,
@@ -62,8 +66,11 @@ export interface HanTiles {
   };
   terrain: string[];
   owner: [number, number][];
-  seatOwner: [number, number][];
+  seatOwner?: [number, number][];
+  parentOwner?: [number, number][];
   juns: Jun[];
+  provinceRecords?: ProvinceRecordDto[];
+  parentRegions?: ParentRegionRecordDto[];
   adjacency: { county: AdjEdge[]; commandery: AdjEdge[] };
   regions: {
     name: string;
@@ -139,6 +146,7 @@ export interface IsoCountyHover {
   regionName: string;
   commanderyName: string;
   countyName: string;
+  displayName?: string;
   level: number;
   nationId: number;
   nationName?: string;
@@ -682,9 +690,13 @@ export function HanMapCanvas({
   const ownershipKey = politicalOwnershipKey(cities);
   const countyIndex = useMemo(() => (
     provinceMap && loadedTiles
-      ? buildCountyAdministrativeIndex(provinceMap, loadedTiles.cities, loadedTiles.juns)
+      ? (loadedTiles.provinceRecords && loadedTiles.parentRegions
+        ? buildProvinceAdministrativeIndex(
+          provinceMap, loadedTiles.provinceRecords, loadedTiles.parentRegions,
+        )
+        : buildCountyAdministrativeIndex(provinceMap, loadedTiles.cities, loadedTiles.juns))
       : null
-  ), [loadedTiles?.cities, loadedTiles?.juns, provinceMap]);
+  ), [loadedTiles?.cities, loadedTiles?.juns, loadedTiles?.parentRegions, loadedTiles?.provinceRecords, provinceMap]);
   const completeOwnership = useMemo(() => {
     if (!provinceMap || !countyIndex || gridCols === 0 || gridRows === 0) return null;
     return bindCompleteProvinceOwnership(
@@ -889,18 +901,26 @@ export function HanMapCanvas({
     const provinceId = provinceMap.provinces[index];
     const commanderyId = countyIndex.commanderyByProvince[provinceId];
     if (provinceId < 0 || commanderyId < 0) return null;
-    const county = loadedTiles.cities[provinceId];
-    const commandery = loadedTiles.juns[commanderyId];
-    if (!county || !commandery) return null;
+    const provinceRecord = loadedTiles.provinceRecords?.[provinceId];
+    const parentRecord = loadedTiles.parentRegions?.[commanderyId];
+    const linkedCity = provinceRecord?.cityIndex == null
+      ? undefined : loadedTiles.cities[provinceRecord.cityIndex];
+    const county = linkedCity ?? loadedTiles.cities[provinceId];
+    const commanderyName = parentRecord?.displayName ?? loadedTiles.juns[commanderyId]?.name;
+    if ((!provinceRecord && !county) || !commanderyName) return null;
     const assigned = completeOwnership.cities?.get(provinceId);
     const city = assigned ? (cityById.get(assigned.id) ?? assigned) : undefined;
     return {
       provinceId,
       commanderyId,
       regionName: regionByCommanderyId.get(commanderyId) ?? city?.regionName ?? '',
-      commanderyName: commandery.name,
-      countyName: county.name,
-      level: completeOwnership.directProvinces?.has(provinceId) && city ? city.level : county.level,
+      commanderyName,
+      countyName: provinceRecord?.displayName ?? county!.name,
+      displayName: provinceRecord
+        ? formatProvinceTooltip(provinceRecord, parentRecord)
+        : `${commanderyName} ${county!.name}`,
+      level: completeOwnership.directProvinces?.has(provinceId) && city
+        ? city.level : (county?.level ?? city?.level ?? 5),
       nationId: city?.nationId ?? 0,
       nationName: city?.nationName,
       nationColor: city?.nationColor,
