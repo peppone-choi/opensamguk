@@ -498,6 +498,9 @@ def build_committed_world_gate() -> tuple[str, dict[int, list[str]], list[str]]:
     id와 소속을 정본으로 삼는다.
     """
     tiles = json.loads(TILES.read_text(encoding="utf-8"))
+    legacy_gameplay = tiles.get("legacyGameplay")
+    if isinstance(legacy_gameplay, dict):
+        tiles = {**tiles, **legacy_gameplay}
     world = json.loads(OUT_JSON.read_text(encoding="utf-8"))
     jun_by_ch = {j["nameCh"]: i for i, j in enumerate(tiles["juns"])}
     region_by_jun = {c["meta"]["junCh"]: c["meta"]["ju"] for c in world["cities"]}
@@ -806,7 +809,17 @@ def main() -> int:
                      help="현재 han.json city id 기준으로 HanGateIndex.kt 드리프트만 검사한다. "
                           "TILES·han.json·UNITS(전부 tracked)만 필요하고 JUNGUOZHI·CHE(둘 다 "
                           "gitignored, ADR-LITE-039)는 필요 없다 — CI가 부르는 경로.")
+    ap.add_argument("--write-gate", action="store_true",
+                    help="현재 han.json city id 기준 HanGateIndex.kt만 재생성한다.")
     args = ap.parse_args()
+    if args.write_gate:
+        for src in (TILES, OUT_JSON, UNITS):
+            if not src.exists():
+                sys.exit(f"{src.relative_to(ROOT)} 가 없다.")
+        gate_kt, _, _ = build_gate()
+        OUT_GATE.write_text(gate_kt, encoding="utf-8")
+        print(f"{OUT_GATE.relative_to(ROOT)}")
+        return 0
     if args.check_gate:
         for src in (TILES, OUT_JSON, UNITS):
             if not src.exists():

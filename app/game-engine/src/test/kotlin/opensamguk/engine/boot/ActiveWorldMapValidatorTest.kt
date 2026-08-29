@@ -51,6 +51,7 @@ class ActiveWorldMapValidatorTest {
     @Test
     fun `current 774 Han snapshot validates against current Han variant`() {
         ActiveWorldMapValidator.validate(snapshot("han", 1..774, listOf(774), listOf(1)))
+        ActiveWorldMapValidator.validate(snapshot("han-world-v2", 1..774, listOf(774), listOf(1)))
     }
 
     private fun snapshot(

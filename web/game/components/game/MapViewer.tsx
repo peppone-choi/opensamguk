@@ -307,7 +307,7 @@ export default function MapViewer({
             </div>
             {hoverCounty && (
                 <div className="map-tooltip" role="status" style={{ left: cursor.x + 12, top: cursor.y + 30 }}>
-                    <div className="map-tooltip-name">{`【${hoverCounty.regionName} | ${LEVEL_TEXT[hoverCounty.level] ?? hoverCounty.level}】 ${hoverCounty.commanderyName} ${hoverCounty.countyName}`}</div>
+                    <div className="map-tooltip-name">{`【${hoverCounty.regionName} | ${LEVEL_TEXT[hoverCounty.level] ?? hoverCounty.level}】 ${hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}`}</div>
                     {isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor)
                         && <div className="map-tooltip-meta">{hoverCounty.nationName}</div>}
                 </div>

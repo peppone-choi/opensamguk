@@ -13,6 +13,7 @@ from tools.map.build_province_map import (
     check_assets,
     decode_identity,
     encode_identity,
+    _terrain_mismatches,
 )
 
 
@@ -22,6 +23,17 @@ valid_fixture = {
     "owner": [[-1, 1], [0, 1], [1, 1], [2, 2], [-1, 1]],
     "seatOwner": [[-1, 1], [0, 2], [1, 2], [-1, 1]],
     "cities": [{}, {}, {}],
+    "juns": [{}, {}],
+}
+
+generic_fixture = {
+    "_meta": {"cols": 3, "rows": 2},
+    "terrain": ["011", "110"],
+    "owner": [[-1, 1], [0, 1], [1, 1], [2, 2], [-1, 1]],
+    "parentOwner": [[-1, 1], [0, 2], [1, 2], [-1, 1]],
+    "provinceRecords": [{}, {}, {}],
+    "parentRegions": [{}, {}],
+    "cities": [{}, {}],
     "juns": [{}, {}],
 }
 
@@ -92,6 +104,9 @@ def build_fixture(data: dict) -> FixtureResult:
 
 
 class ProvinceMapGeneratorTest(unittest.TestCase):
+    def test_lakes_are_excluded_from_required_political_coverage(self):
+        self.assertEqual(_terrain_mismatches(["0413"], [-1, -1, 0, 0], 4), (0, 0))
+
     def test_identity_codec_uses_documented_bit_layout(self):
         self.assertEqual(encode_identity(-1, -1), (0, 0, 0))
         self.assertEqual(encode_identity(0, 0), (0x00, 0x10, 0x01))
@@ -107,6 +122,14 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
         self.assertEqual(first.metadata_bytes, second.metadata_bytes)
         self.assertEqual(first.decoded_provinces, [-1, 0, 1, 2, 2, -1])
         self.assertEqual(first.decoded_commanderies, [-1, 0, 0, 1, 1, -1])
+
+    def test_generic_hierarchy_allows_direct_territory_without_city(self):
+        result = build_fixture(generic_fixture)
+        self.addCleanup(result.temporary_directory.cleanup)
+        self.assertEqual(result.decoded_provinces, [-1, 0, 1, 2, 2, -1])
+        metadata = json.loads(result.metadata_bytes)
+        self.assertEqual(metadata["codec"]["parentRegionBits"], 8)
+        self.assertNotIn("commanderyBits", metadata["codec"])
 
     def test_rejects_coverage_disagreement_and_index_overflow(self):
         with self.assertRaisesRegex(ValueError, "coverage disagreement"):
@@ -180,7 +203,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "round-trip"):
                 build_assets(input_path, root / "generated", "han")
 
-    def test_real_han_asset_round_trips_every_owner_and_seat_owner_cell(self):
+    def test_real_han_asset_round_trips_every_owner_and_parent_owner_cell(self):
         source_path = Path(__file__).resolve().parents[3] / "data/map/han-tiles.json"
         source = json.loads(source_path.read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -188,7 +211,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
             width, height, provinces, commanderies = decode_png_identities(result.png_bytes)
 
         expected_provinces = [value for value, count in source["owner"] for _ in range(count)]
-        expected_commanderies = [value for value, count in source["seatOwner"] for _ in range(count)]
+        expected_commanderies = [value for value, count in source["parentOwner"] for _ in range(count)]
         self.assertEqual((width, height), (768, 669))
         self.assertEqual(provinces, expected_provinces)
         self.assertEqual(commanderies, expected_commanderies)

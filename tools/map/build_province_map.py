@@ -222,22 +222,25 @@ def _terrain_mismatches(terrain: object, coverage: list[int], cells: int) -> tup
     flattened = "".join(terrain)
     if len(flattened) != cells or any(not isinstance(row, str) for row in terrain):
         raise ValueError(f"terrain has {len(flattened)} cells; expected {cells}")
-    water_with_political_coverage = sum(tile == "0" and identity != -1 for tile, identity in zip(flattened, coverage))
-    land_without_political_coverage = sum(tile != "0" and identity == -1 for tile, identity in zip(flattened, coverage))
+    # SEA=0 and LAKE=4 are water. Rivers remain politically owned so their
+    # narrow raster strokes do not punch artificial holes through provinces.
+    water_tiles = {"0", "4"}
+    water_with_political_coverage = sum(tile in water_tiles and identity != -1 for tile, identity in zip(flattened, coverage))
+    land_without_political_coverage = sum(tile not in water_tiles and identity == -1 for tile, identity in zip(flattened, coverage))
     return water_with_political_coverage, land_without_political_coverage
 
 
 def _validate_entity_indices(provinces: list[int], commanderies: list[int], cities: object, juns: object) -> None:
     if not isinstance(cities, list):
-        raise ValueError("cities must be a list")
+        raise ValueError("provinceRecords/cities must be a list")
     if not isinstance(juns, list):
-        raise ValueError("juns must be a list")
+        raise ValueError("parentRegions/juns must be a list")
     for cell, province in enumerate(provinces):
         if province >= len(cities):
-            raise ValueError(f"province index {province} at cell {cell} is outside cities")
+            raise ValueError(f"province index {province} at cell {cell} is outside provinceRecords/cities")
     for cell, commandery in enumerate(commanderies):
         if commandery >= len(juns):
-            raise ValueError(f"commandery index {commandery} at cell {cell} is outside juns")
+            raise ValueError(f"parent region index {commandery} at cell {cell} is outside parentRegions/juns")
 
 
 def _render_assets(source_bytes: bytes, map_data: dict) -> tuple[bytes, bytes, int, int, int, int, list[int], list[int]]:
@@ -245,15 +248,26 @@ def _render_assets(source_bytes: bytes, map_data: dict) -> tuple[bytes, bytes, i
     if not isinstance(meta, dict):
         raise ValueError("map data is missing _meta")
     cols, rows = meta.get("cols"), meta.get("rows")
-    provinces, commanderies, pixels = build_from_runs(map_data.get("owner"), map_data.get("seatOwner"), cols, rows)
-    _validate_entity_indices(provinces, commanderies, map_data.get("cities"), map_data.get("juns"))
+    generic = "provinceRecords" in map_data or "parentOwner" in map_data
+    parent_runs = map_data.get("parentOwner") if generic else map_data.get("seatOwner")
+    provinces, commanderies, pixels = build_from_runs(map_data.get("owner"), parent_runs, cols, rows)
+    _validate_entity_indices(
+        provinces, commanderies,
+        map_data.get("provinceRecords") if generic else map_data.get("cities"),
+        map_data.get("parentRegions") if generic else map_data.get("juns"),
+    )
     terrain_water_covered, terrain_land_uncovered = _terrain_mismatches(map_data.get("terrain"), provinces, cols * rows)
     png_bytes = _make_png(cols, rows, pixels)
     _verify_png_round_trip(png_bytes, provinces, commanderies, cols, rows)
     metadata = {
-        "codec": {"commanderyBits": 8, "provinceBits": PROVINCE_BITS, "zeroMeansUncovered": True},
+        "codec": {
+            ("parentRegionBits" if generic else "commanderyBits"): 8,
+            "provinceBits": PROVINCE_BITS,
+            "zeroMeansUncovered": True,
+        },
         "counts": {
-            "commanderyIdentities": len({value for value in commanderies if value >= 0}),
+            ("parentRegionIdentities" if generic else "commanderyIdentities"):
+                len({value for value in commanderies if value >= 0}),
             "coveredCells": sum(value >= 0 for value in provinces),
             "provinceIdentities": len({value for value in provinces if value >= 0}),
             "terrainLandPoliticalUncovered": terrain_land_uncovered,
@@ -271,7 +285,7 @@ def _render_assets(source_bytes: bytes, map_data: dict) -> tuple[bytes, bytes, i
         cols,
         rows,
         metadata["counts"]["provinceIdentities"],
-        metadata["counts"]["commanderyIdentities"],
+        metadata["counts"]["parentRegionIdentities" if generic else "commanderyIdentities"],
         provinces,
         commanderies,
     )

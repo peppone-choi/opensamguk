@@ -15,9 +15,12 @@ INPUT_ROLES = [
     "CTEXT_JUNGUOZHI_YI", "CTEXT_JUNGUOZHI_ER", "CTEXT_JUNGUOZHI_SAN",
     "CTEXT_JUNGUOZHI_SI", "CTEXT_JUNGUOZHI_WU",
     "NE_LAND_50M", "NE_LAKES_50M", "NE_RIVERS_50M", "NE_REGIONS_10M",
+    "MODERN_ADMIN_ADM2",
     "ADMINISTRATIVE_UNITS", "ADMINISTRATIVE_BINDINGS", "ADMINISTRATIVE_HISTORY",
     "DUPLICATE_ADJUDICATIONS", "STABLE_ID_ADJUDICATIONS",
     "MERGE_ADJUDICATIONS", "TEMPORAL_ADJUDICATIONS", "EXTERNAL_PLACES",
+    "EXTERNAL_PROVINCE_SEEDS", "EXTERNAL_ADMINISTRATIVE_SYSTEMS",
+    "PROVINCE_SHAPE_EXCEPTIONS", "MODERN_ADMIN_RECIPE",
 ]
 GENERATOR_ROLES = [
     "BUILD_HAN_PLACES", "BUILD_JUNGUOZHI", "BUILD_TERRAIN_GRID",
@@ -28,6 +31,7 @@ HELPER_ROLES = [
     "HAN_PLACE_STABLE_ID_LOADER", "HAN_PLACE_MERGE_ADJUDICATIONS",
     "HAN_PLACE_MERGE_RUNTIME", "HAN_TEMPORAL_PARENT_RUNTIME",
     "HAN_PARENT_RECONCILIATION_HELPER", "HAN_PROVINCE_MODEL",
+    "WORLD_PROVINCE_GEOMETRY", "PROVINCE_QUALITY", "EXTERNAL_PROVINCE_SYSTEMS",
     "HAN_TILES_CONTRACT_HELPER",
 ]
 OUTPUT_ROLES = ["HAN_PLACES", "JUNGUOZHI", "TERRAIN_GRID", "READINGS", "HAN_TILES"]
@@ -49,7 +53,7 @@ def hashed_record(label, **extra):
 
 
 def valid_recipe():
-    restricted = set(INPUT_ROLES[:11])
+    restricted = set(INPUT_ROLES[:12])
     inputs = {
         role: hashed_record(
             role,
@@ -121,9 +125,12 @@ def valid_recipe():
                 "stageId": "TERRAIN_GRID", "generatorRole": "BUILD_TERRAIN_GRID",
                 "inputRoles": [
                     "HAN_PLACES", "JUNGUOZHI", "NE_LAND_50M", "NE_LAKES_50M",
-                    "NE_RIVERS_50M", "NE_REGIONS_10M", "ADMINISTRATIVE_UNITS",
+                    "NE_RIVERS_50M", "NE_REGIONS_10M", "MODERN_ADMIN_ADM2",
+                    "ADMINISTRATIVE_UNITS",
                     "ADMINISTRATIVE_BINDINGS", "ADMINISTRATIVE_HISTORY",
                     "MERGE_ADJUDICATIONS", "TEMPORAL_ADJUDICATIONS",
+                    "EXTERNAL_PROVINCE_SEEDS", "EXTERNAL_ADMINISTRATIVE_SYSTEMS",
+                    "PROVINCE_SHAPE_EXCEPTIONS", "MODERN_ADMIN_RECIPE",
                 ],
                 "dependencyRoles": ["NUMPY", "PILLOW"],
                 "outputRole": "TERRAIN_GRID", "argv": ["--grid", "768"],
@@ -174,13 +181,15 @@ def summaries():
             "terrainCellCount": 513792, "ownerCellCount": 513792,
             "seatOwnerCellCount": 513792, "hubCount": 175, "regionCount": 39,
             "countyEdgeCount": 2662, "commanderyEdgeCount": 425,
+            "provinceCount": 1524, "parentRegionCount": 172,
         },
         "READINGS": {"entryCount": 2178},
         "HAN_TILES": {
             "year": 220, "cols": 768, "rows": 669,
             "cityCount": 1138, "junCount": 172, "regionCount": 38,
-            "ownerRunCount": 19898, "seatOwnerRunCount": 11554,
+            "ownerRunCount": 19898, "parentOwnerRunCount": 11554,
             "countyEdgeCount": 2649, "commanderyEdgeCount": 417,
+            "provinceCount": 1524, "parentRegionCount": 172,
         },
     }
 

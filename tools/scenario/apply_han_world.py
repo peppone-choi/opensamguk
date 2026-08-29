@@ -2,7 +2,7 @@
 """시나리오를 후한 군현 맵(han, 175郡 · 780城)으로 갈아끼운다.
 
 바꾸는 것은 네 가지뿐이다.
-  1. `map.mapName` → "han"
+  1. `map.mapName` → "han-world-v2"
   2. `nation[i][8]` (세력 보유 성) → 사료 지배표(`han_ownership.json`)가 준 郡에
      속한 城 전부. 郡을 가지면 그 郡의 縣도 함께 갖는다 — 縣은 郡의 하급 행정구역이지
      별개 세력의 땅이 아니다. 목록의 첫 城이 수도가 되므로 治所를 맨 앞에 둔다.
@@ -89,7 +89,7 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
     doc = json.loads(json.dumps(doc))            # 깊은 복사 — 원본을 건드리지 않는다
     # 맵과 병종 세트는 한 몸이다 — han 맵의 城 게이트 키(州·郡·부족 漢字)를 읽는 건
     # han 병종표뿐이라, 맵만 바꾸고 병종을 che 로 두면 지역 병종이 통째로 죽는다.
-    doc["map"] = {"mapName": "han", "unitSet": "han"}
+    doc["map"] = {"mapName": "han-world-v2", "unitSet": "han"}
 
     table = (own.get(code) or {}).get("nations") or {}
     taken: dict[int, str] = {}                   # 城 id → 세력. 중복 소유 차단.

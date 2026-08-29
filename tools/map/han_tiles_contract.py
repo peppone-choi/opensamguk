@@ -31,6 +31,7 @@ RESTRICTED_INPUT_ROLES = (
     "NE_LAKES_50M",
     "NE_RIVERS_50M",
     "NE_REGIONS_10M",
+    "MODERN_ADMIN_ADM2",
 )
 TRACKED_INPUT_ROLES = (
     "ADMINISTRATIVE_UNITS",
@@ -41,6 +42,10 @@ TRACKED_INPUT_ROLES = (
     "MERGE_ADJUDICATIONS",
     "TEMPORAL_ADJUDICATIONS",
     "EXTERNAL_PLACES",
+    "EXTERNAL_PROVINCE_SEEDS",
+    "EXTERNAL_ADMINISTRATIVE_SYSTEMS",
+    "PROVINCE_SHAPE_EXCEPTIONS",
+    "MODERN_ADMIN_RECIPE",
 )
 INPUT_ROLES = RESTRICTED_INPUT_ROLES + TRACKED_INPUT_ROLES
 GENERATOR_ROLES = (
@@ -61,6 +66,9 @@ HELPER_ROLES = (
     "HAN_TEMPORAL_PARENT_RUNTIME",
     "HAN_PARENT_RECONCILIATION_HELPER",
     "HAN_PROVINCE_MODEL",
+    "WORLD_PROVINCE_GEOMETRY",
+    "PROVINCE_QUALITY",
+    "EXTERNAL_PROVINCE_SYSTEMS",
     "HAN_TILES_CONTRACT_HELPER",
 )
 OUTPUT_ROLES = (
@@ -132,11 +140,16 @@ _STAGES = (
             "NE_LAKES_50M",
             "NE_RIVERS_50M",
             "NE_REGIONS_10M",
+            "MODERN_ADMIN_ADM2",
             "ADMINISTRATIVE_UNITS",
             "ADMINISTRATIVE_BINDINGS",
             "ADMINISTRATIVE_HISTORY",
             "MERGE_ADJUDICATIONS",
             "TEMPORAL_ADJUDICATIONS",
+            "EXTERNAL_PROVINCE_SEEDS",
+            "EXTERNAL_ADMINISTRATIVE_SYSTEMS",
+            "PROVINCE_SHAPE_EXCEPTIONS",
+            "MODERN_ADMIN_RECIPE",
         ],
         "dependencyRoles": ["NUMPY", "PILLOW"],
         "outputRole": "TERRAIN_GRID",
@@ -171,13 +184,13 @@ _SUMMARY_KEYS = {
     "TERRAIN_GRID": (
         "year", "cols", "rows", "terrainCellCount", "ownerCellCount",
         "seatOwnerCellCount", "hubCount", "regionCount", "countyEdgeCount",
-        "commanderyEdgeCount",
+        "commanderyEdgeCount", "provinceCount", "parentRegionCount",
     ),
     "READINGS": ("entryCount",),
     "HAN_TILES": (
         "year", "cols", "rows", "cityCount", "junCount", "regionCount",
-        "ownerRunCount", "seatOwnerRunCount", "countyEdgeCount",
-        "commanderyEdgeCount",
+        "ownerRunCount", "parentOwnerRunCount", "countyEdgeCount",
+        "commanderyEdgeCount", "provinceCount", "parentRegionCount",
     ),
 }
 

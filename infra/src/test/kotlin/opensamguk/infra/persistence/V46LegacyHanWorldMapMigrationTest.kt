@@ -114,6 +114,30 @@ class V46LegacyHanWorldMapMigrationTest {
         assertEquals(1, successfulMigrationCount("46"))
     }
 
+    @Test
+    fun `V47 activates current Han worlds and preserves compatibility worlds`() {
+        seedWorld(1, "han", 1..774)
+        seedWorld(2, "han", 1..780)
+        seedWorld(3, "che", 1..94)
+
+        migrateTo("47")
+
+        assertEquals("han-world-v2", activeMapName(1))
+        assertEquals("han-780-v1", activeMapName(2))
+        assertEquals("che", activeMapName(3))
+        assertEquals(0, changedGameplayIdCount())
+    }
+
+    @Test
+    fun `V47 fails closed when an unversioned Han world is not the current city shape`() {
+        seedWorld(1, "han", 1..773)
+
+        assertFailsWith<FlywayException> { migrateTo("47") }
+
+        assertEquals("han", activeMapName(1))
+        assertEquals(0, successfulMigrationCount("47"))
+    }
+
     private fun migrateTo(target: String) {
         Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)

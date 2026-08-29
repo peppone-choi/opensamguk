@@ -56,13 +56,17 @@ export {
   bindProvinceOwnership,
   bindCompleteProvinceOwnership,
   buildCountyAdministrativeIndex,
+  buildProvinceAdministrativeIndex,
   composeProvincePixels,
   decodeProvincePixels,
   loadProvinceIdentityMap,
+  formatProvinceTooltip,
   type ProvinceColor,
   type ProvinceEdge,
   type ProvinceIdentityMap,
   type ProvinceOwnershipBinding,
   type CountyAdministrativeIndex,
+  type ParentRegionRecordDto,
+  type ProvinceRecordDto,
 } from './provinceMap';
 export { isOwnedNationVisual } from './nationVisual';

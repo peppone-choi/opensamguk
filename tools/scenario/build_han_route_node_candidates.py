@@ -51,14 +51,17 @@ def serialized(document: JsonObject) -> str:
 
 
 def _included_tiles(tiles: JsonObject) -> dict[tuple[str, str, bool], JsonObject]:
-    cities = required_list(tiles, "cities")
-    juns = required_list(tiles, "juns")
+    gameplay = tiles.get("legacyGameplay", tiles)
+    if not isinstance(gameplay, dict):
+        raise CandidateContractError("legacyGameplay must be an object")
+    cities = required_list(gameplay, "cities")
+    juns = required_list(gameplay, "juns")
     meta = required_dict(tiles, "_meta")
     cols, rows = meta.get("cols"), meta.get("rows")
     if not isinstance(cols, int) or not isinstance(rows, int) or cols <= 0 or rows <= 0:
         raise CandidateContractError("tile grid dimensions are malformed")
     grid: list[int] = []
-    for run in required_list(tiles, "seatOwner"):
+    for run in required_list(gameplay, "seatOwner"):
         if not isinstance(run, list) or len(run) != 2 or not all(isinstance(value, int) for value in run):
             raise CandidateContractError("seatOwner run is malformed")
         owner, count = run
@@ -68,9 +71,18 @@ def _included_tiles(tiles: JsonObject) -> dict[tuple[str, str, bool], JsonObject
     if len(grid) != cols * rows:
         raise CandidateContractError("seatOwner grid length does not match dimensions")
     seat_of: dict[int, int] = {}
+    active_parent_names = gameplay.get("activeParentNames")
+    if active_parent_names is not None and (
+        not isinstance(active_parent_names, list)
+        or not all(isinstance(value, str) for value in active_parent_names)
+    ):
+        raise CandidateContractError("activeParentNames must be an array of strings")
+    active_parent_names = set(active_parent_names) if active_parent_names is not None else None
     for index, raw_jun in enumerate(juns):
         if not isinstance(raw_jun, dict) or not isinstance(raw_jun.get("seat"), int):
             raise CandidateContractError("commandery seat is malformed")
+        if active_parent_names is not None and raw_jun.get("nameCh") not in active_parent_names:
+            continue
         seat_index = raw_jun["seat"]
         if seat_index in seat_of or not 0 <= seat_index < len(cities):
             raise CandidateContractError("duplicate or out-of-range commandery seat")
@@ -174,7 +186,8 @@ def build_scenario_catalog(scenario_dir: Path) -> list[JsonObject]:
             raise CandidateContractError(f"duplicate or malformed scenario code: {code}")
         document = load_document(path)
         start_year, map_config = document.get("startYear"), document.get("map")
-        if not isinstance(map_config, dict) or map_config.get("mapName") != "han":
+        if (not isinstance(map_config, dict)
+                or map_config.get("mapName") not in {"han", "han-world-v2"}):
             continue
         if not isinstance(start_year, int):
             raise CandidateContractError(f"Han scenario is not dated: {path.name}")

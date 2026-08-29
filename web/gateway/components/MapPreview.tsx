@@ -196,7 +196,7 @@ export default function MapPreview({
                     style={{ left: cursor.x + 12, top: cursor.y + 16 }}
                 >
                     <div className="map-preview-tooltip-name">
-                        {`【${hoverCounty.regionName} | ${levelText(hoverCounty.level)}】 ${hoverCounty.commanderyName} ${hoverCounty.countyName}`}
+                        {`【${hoverCounty.regionName} | ${levelText(hoverCounty.level)}】 ${hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}`}
                     </div>
                     {isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor) && hoverCounty.nationName && (
                         <div className="map-preview-tooltip-meta">{hoverCounty.nationName}</div>

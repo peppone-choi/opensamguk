@@ -49,6 +49,47 @@ export interface CountyAdministrativeIndex {
   commanderyByName: ReadonlyMap<string, number>;
 }
 
+export interface ProvinceRecordDto {
+  id: string;
+  displayName: string;
+  nameCh: string;
+  administrativeSystem: string;
+  kind: string;
+  parentRegionId: string;
+  cityIndex: number | null;
+  geometryBasis: string;
+  confidence: string;
+}
+
+export interface ParentRegionRecordDto {
+  id: string;
+  displayName: string;
+  nameCh: string;
+  administrativeSystem: string;
+}
+
+const SYSTEM_LABELS: Readonly<Record<string, string>> = {
+  AILAO: '애뢰', BAEKJE: '백제', BUYEO: '부여', BYEONHAN: '변한', DI: '저',
+  GOGURYEO: '고구려', JINHAN: '진한', JUHO: '주호', MAHAN: '마한',
+  OKJEO: '옥저', QIANG: '강', SHANYUE: '산월', TSUSHIMA: '대마국',
+  USAN: '우산국', WA: '왜', WUHUAN: '오환', XIANBEI: '선비',
+  XIONGNU: '남흉노', YE: '예', YILOU: '읍루', YIZHOU: '이주',
+};
+
+export function formatProvinceTooltip(
+  province: ProvinceRecordDto,
+  parent?: ParentRegionRecordDto,
+): string {
+  if (province.administrativeSystem === 'HAN_COMMANDERY') {
+    return [parent?.displayName, province.displayName].filter(Boolean).join(' ');
+  }
+  const system = SYSTEM_LABELS[province.administrativeSystem]
+    ?? (parent?.administrativeSystem === province.administrativeSystem ? parent.displayName : undefined)
+    ?? parent?.displayName
+    ?? '외부 지역';
+  return `${system} · ${province.displayName}`;
+}
+
 const NEUTRAL_PROVINCE_RGB: [number, number, number] = [112, 104, 91];
 
 interface ProvincePngShape {
@@ -342,6 +383,33 @@ export function buildCountyAdministrativeIndex(
   return {
     commanderyByProvince,
     commanderyByName: new Map(commanderies.map((commandery, index) => [commandery.name, index])),
+  };
+}
+
+export function buildProvinceAdministrativeIndex(
+  map: ProvinceIdentityMap,
+  provinces: readonly ProvinceRecordDto[],
+  parentRegions: readonly ParentRegionRecordDto[],
+): CountyAdministrativeIndex {
+  const parentById = new Map(parentRegions.map((parent, index) => [parent.id, index]));
+  const commanderyByProvince = new Int16Array(provinces.length);
+  commanderyByProvince.fill(-1);
+  provinces.forEach((province, index) => {
+    const parent = parentById.get(province.parentRegionId);
+    if (parent != null) commanderyByProvince[index] = parent;
+  });
+  // The identity PNG remains authoritative.  A DTO hierarchy mismatch must not
+  // silently redirect hover/ownership to a different parent.
+  for (let cell = 0; cell < map.provinces.length; cell += 1) {
+    const province = map.provinces[cell];
+    if (province < 0) continue;
+    if (province >= provinces.length || commanderyByProvince[province] !== map.commanderies[cell]) {
+      throw new Error(`Province parent hierarchy mismatch at pixel ${cell}`);
+    }
+  }
+  return {
+    commanderyByProvince,
+    commanderyByName: new Map(parentRegions.map((parent, index) => [parent.displayName, index])),
   };
 }
 

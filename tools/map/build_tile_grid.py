@@ -44,6 +44,8 @@ GRID = MAP / "terrain-grid.json"
 PLACES = MAP / "han-places.json"
 READINGS = MAP / "readings.json"
 OUT = MAP / "han-tiles.json"
+LEGACY_GAMEPLAY_TILES = MAP / "han-780-v1-tiles.json"
+HAN_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 
 # 도로 비트마스크 — 이웃 4방향(N=1 E=2 S=4 W=8). 타일 16종이 서로 이어진다.
 NEI = {(0, -1): 1, (1, 0): 2, (0, 1): 4, (-1, 0): 8}
@@ -253,20 +255,28 @@ def validate_compact_grid(grid_document: dict, places: list[dict]) -> bool:
         grid_document.get('region'), 'region', rows, cols,
         lower=-1, upper=len(region_names),
     )
+    province_records = grid_document.get('provinceRecords')
+    generic = isinstance(province_records, list)
+    province_count = len(province_records) if generic else count
     _validate_grid_rows(
-        grid_document.get('owner'), 'owner', rows, cols, lower=-1, upper=count
+        grid_document.get('owner'), 'owner', rows, cols,
+        lower=-1, upper=province_count,
     )
     owner = grid_document['owner']
     owner_areas = Counter(value for row in owner for value in row if value >= 0)
-    if any(owner_areas[index] == 0 for index in range(count)):
-        raise ValueError('every compact place must own at least one owner cell')
+    if any(owner_areas[index] == 0 for index in range(province_count)):
+        raise ValueError('every province record must own at least one owner cell')
     jun_names = grid_document.get('junNames')
     hubs = grid_document.get('hubs')
     if not isinstance(jun_names, list) or not isinstance(hubs, list) or len(hubs) != len(jun_names):
         raise ValueError('hubs and junNames must have exactly matching lengths')
-    jun_count = len(jun_names)
+    parent_regions = grid_document.get('parentRegions')
+    if generic and (not isinstance(parent_regions, list) or len(parent_regions) != len(jun_names)):
+        raise ValueError('parentRegions must align with the reviewed parent catalog')
+    jun_count = len(parent_regions) if generic else len(jun_names)
+    parent_owner = grid_document.get('parentOwner') if generic else grid_document.get('seatOwner')
     _validate_grid_rows(
-        grid_document.get('seatOwner'), 'seatOwner', rows, cols,
+        parent_owner, 'parentOwner' if generic else 'seatOwner', rows, cols,
         lower=-1, upper=jun_count,
     )
 
@@ -286,7 +296,7 @@ def validate_compact_grid(grid_document: dict, places: list[dict]) -> bool:
         gx, gy = place.get('gx'), place.get('gy')
         if type(gx) is not int or type(gy) is not int or not (0 <= gx < cols and 0 <= gy < rows):
             raise ValueError(f'hubs[{jun_index}] has an invalid compact place cell')
-        if grid_document['seatOwner'][gy][gx] != jun_index:
+        if parent_owner[gy][gx] != jun_index:
             raise ValueError(f'hubs[{jun_index}] seat cell does not belong to its jun')
         checked_hubs.append(hub)
     if len(set(checked_hubs)) != len(checked_hubs):
@@ -313,12 +323,12 @@ def validate_compact_grid(grid_document: dict, places: list[dict]) -> bool:
     if not isinstance(adjacency, dict) or set(adjacency) != {'county', 'commandery'}:
         raise ValueError('adjacency must contain exactly county and commandery graphs')
     _validate_edges(
-        adjacency['county'], 'adjacency.county', count,
+        adjacency['county'], 'adjacency.county', province_count,
         _derive_adjacency(owner), commandery=False, cols=cols, rows=rows,
     )
     _validate_edges(
         adjacency['commandery'], 'adjacency.commandery', jun_count,
-        _derive_adjacency(grid_document['seatOwner']),
+        _derive_adjacency(parent_owner),
         commandery=True, cols=cols, rows=rows,
     )
     return True
@@ -399,13 +409,73 @@ def build(
     # cities/regions 어디에도 없는 22개)의 미스를 가드가 못 잡는다(critic-524 재심).
     juns = [{"name": kr(nm), "nameCh": nm, "seat": h, "col": places[h]["gx"], "row": places[h]["gy"]}
             for nm, h in zip(grid["junNames"], grid["hubs"])]
+    province_records = None
+    parent_regions = None
+    legacy_tiles = None
+    active_gameplay_parent_names = None
+    if isinstance(grid.get('provinceRecords'), list):
+        if LEGACY_GAMEPLAY_TILES.is_file():
+            legacy_tiles = json.loads(LEGACY_GAMEPLAY_TILES.read_text(encoding='utf-8'))
+            if HAN_GAMEPLAY.is_file():
+                gameplay = json.loads(HAN_GAMEPLAY.read_text(encoding='utf-8'))
+                active_gameplay_parent_names = sorted({
+                    city.get('meta', {}).get('junCh')
+                    for city in gameplay['cities']
+                    if city.get('meta', {}).get('junCh')
+                })
+                legacy_jun_by_name = {
+                    jun['nameCh']: jun for jun in legacy_tiles['juns']
+                }
+                legacy_cities_by_name = {}
+                for index, city in enumerate(legacy_tiles['cities']):
+                    legacy_cities_by_name.setdefault(city['nameCh'], []).append(index)
+                for gameplay_city in gameplay['cities']:
+                    meta = gameplay_city.get('meta', {})
+                    if meta.get('isSeat') is not True:
+                        continue
+                    legacy_jun = legacy_jun_by_name.get(meta.get('junCh'))
+                    candidates = legacy_cities_by_name.get(meta.get('nameCh'), [])
+                    if legacy_jun is None or len(candidates) != 1:
+                        continue
+                    legacy_seat = candidates[0]
+                    legacy_city = legacy_tiles['cities'][legacy_seat]
+                    legacy_jun.update(
+                        seat=legacy_seat,
+                        col=legacy_city['col'],
+                        row=legacy_city['row'],
+                    )
+        parent_regions = []
+        for index, record in enumerate(grid['parentRegions']):
+            translated = juns[index]['name'] if index < len(juns) else record['displayName']
+            parent_regions.append({**record, 'displayName': translated})
+        parent_by_id = {record['id']: record for record in parent_regions}
+        province_records = []
+        for record in grid['provinceRecords']:
+            city_index = record.get('cityIndex')
+            if city_index is not None:
+                if type(city_index) is not int or not 0 <= city_index < len(cities):
+                    raise ValueError('provinceRecords cityIndex is out of range')
+                # External canonical names are curated separately (for
+                # example, 구야국); a legacy Chinese-place reading must not
+                # overwrite them during packaging.
+                display_name = (
+                    cities[city_index]['name']
+                    if record.get('administrativeSystem') == 'HAN_COMMANDERY'
+                    else record['displayName']
+                )
+            elif record.get('kind') == 'DIRECT_TERRITORY':
+                parent = parent_by_id[record['parentRegionId']]
+                display_name = f"{parent['displayName']} 직할지"
+            else:
+                display_name = record['displayName']
+            province_records.append({**record, 'displayName': display_name})
     # readings.json 이 있는데 빠진 이름이 있으면 조용히 한자로 흘리지 않는다 — 그게 이번에
     # 커밋에 한자 70건을 밀어넣은 사고다(#524 리뷰 HIGH-1). readings.json 이 아예 없을 때는
     # 위에서 이미 경고했으니 여기서는 있는데 불완전한 경우만 잡는다.
     if (readings_supplied or READINGS.exists()) and misses:
         sys.exit(f"readings.json 에 없는 지명 {len(misses)}개: {sorted(set(misses))[:10]}… "
                   "tools/map/build_readings.py 를 다시 돌려라(hanja 패키지 필요).")
-    return {
+    output = {
         "_meta": {
             "source": f"{GRID.name} + {PLACES.name}",
             "generator": "tools/map/build_tile_grid.py",
@@ -414,7 +484,7 @@ def build(
             "year": grid["year"],
             "projection": grid["projection"],
             "terrainLegend": grid["legend"],
-            "ownerEncoding": "run-length [[placeIndex, count], …] · row-major · -1 = 바다",
+            "ownerEncoding": "run-length [[provinceIndex, count], …] · row-major · -1 = 바다",
             "counts": {"cities": len(cities), "seats": len(hubs), "regions": len(regions),
                        "adjCounty": len(grid["adjacency"]["county"]),
                        "adjCommandery": len(grid["adjacency"]["commandery"]), **kinds},
@@ -428,6 +498,29 @@ def build(
         "seatOwner": rle(grid["seatOwner"]),
         "cities": cities,
     }
+    if province_records is not None and parent_regions is not None:
+        output['provinceRecords'] = province_records
+        output['parentRegions'] = parent_regions
+        output['parentOwner'] = rle(grid['parentOwner'])
+        # Keep the full legacy route-node surface together. Its indices are a
+        # separate immutable namespace; mixing only the old seatOwner with the
+        # new city/jun arrays creates duplicate seats and invalid references.
+        if legacy_tiles is not None:
+            output['legacyGameplay'] = {
+                'cities': legacy_tiles['cities'],
+                'juns': legacy_tiles['juns'],
+                'seatOwner': legacy_tiles['seatOwner'],
+                'activeParentNames': active_gameplay_parent_names,
+            }
+        else:
+            output['legacyGameplay'] = {
+                'cities': output['cities'],
+                'juns': output['juns'],
+                'seatOwner': output['parentOwner'],
+            }
+        output['_meta']['counts']['provinces'] = len(province_records)
+        output['_meta']['counts']['parentRegions'] = len(parent_regions)
+    return output
 
 
 def main() -> int:
