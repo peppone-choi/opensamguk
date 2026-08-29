@@ -13,9 +13,20 @@ vi.mock('@opensamguk/ui', async () => {
     HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
       shared.props = props;
       const city = props.cities?.[0];
+      const county = city ? {
+        provinceId: 1033,
+        commanderyId: 0,
+        regionName: '사예',
+        commanderyName: '경조윤',
+        countyName: '장안현',
+        level: 9,
+        nationId: city.nationId,
+        nationName: city.nationName,
+        nationColor: city.nationColor,
+      } : null;
       return (
         <div data-testid="shared-iso-map" data-map-code={props.mapCode}>
-          <button type="button" onClick={() => city && props.onCityHover?.(city, { x: 20, y: 30 })}>hover city</button>
+          <button type="button" onClick={() => props.onCountyHover?.(county, { x: 20, y: 30 })}>hover county</button>
           <button type="button" onClick={() => city && props.onCityActivate?.(city, { pointerType: 'mouse' })}>activate mouse</button>
           <button type="button" onClick={() => city && props.onCityActivate?.(city, { pointerType: 'touch' })}>activate touch</button>
         </div>
@@ -70,10 +81,10 @@ describe('MapViewer shared canvas overlays', () => {
     expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=ha%20n%26%3F');
   });
 
-  it('keeps hover tooltip content through the canvas callback', () => {
+  it('shows the region commandery and county from the polygon callback', () => {
     render(<MapViewer mapData={MAP} />);
-    fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
-    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
+    expect(screen.getByRole('status')).toHaveTextContent('【사예 | 경】 경조윤 장안현');
     expect(screen.getByRole('status')).toHaveTextContent('위');
   });
 
@@ -94,8 +105,8 @@ describe('MapViewer shared canvas overlays', () => {
       nationId,
       nationColor: undefined,
     }));
-    fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
-    expect(screen.getByRole('status')).toHaveTextContent('낙양');
+    fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
+    expect(screen.getByRole('status')).toHaveTextContent('장안현');
     expect(document.querySelector('.map-tooltip-meta')).toBeNull();
   });
 
@@ -111,7 +122,7 @@ describe('MapViewer shared canvas overlays', () => {
       nationName: '공 백 지',
       nationColor: undefined,
     }));
-    fireEvent.click(screen.getByRole('button', { name: 'hover city' }));
+    fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
     expect(document.querySelector('.map-tooltip-meta')).toBeNull();
   });
 

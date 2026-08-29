@@ -109,6 +109,9 @@ class MapPreviewController(
                     state = city.state,
                     supply = city.supplyState != 0,
                     region = city.region, // V1 city.region(int) — 지역 그룹 표시용.
+                    regionName = coord.regionName,
+                    commanderyName = coord.commanderyName,
+                    isCommanderySeat = coord.isCommanderySeat,
                     isCapital = city.id in capitalIds,
                 )
             }

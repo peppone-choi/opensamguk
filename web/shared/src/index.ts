@@ -5,7 +5,9 @@ export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 export { Modal, type ModalProps } from './Modal';
 export { Table, type TableProps } from './Table';
 export {
+  CITY_MARKER_SPECS,
   HanMapCanvas,
+  cityMarkerDrawBox,
   buildIsoScene,
   expandOwner,
   initialView,
@@ -21,6 +23,7 @@ export {
   type HanMapCanvasProps,
   type HanTiles,
   type IsoCityOverlay,
+  type IsoCountyHover,
   type IsoActivation,
   type IsoHoverPoint,
   type IsoScene,
@@ -51,6 +54,8 @@ export {
 } from './isoMap';
 export {
   bindProvinceOwnership,
+  bindCompleteProvinceOwnership,
+  buildCountyAdministrativeIndex,
   composeProvincePixels,
   decodeProvincePixels,
   loadProvinceIdentityMap,
@@ -58,5 +63,6 @@ export {
   type ProvinceEdge,
   type ProvinceIdentityMap,
   type ProvinceOwnershipBinding,
+  type CountyAdministrativeIndex,
 } from './provinceMap';
 export { isOwnedNationVisual } from './nationVisual';

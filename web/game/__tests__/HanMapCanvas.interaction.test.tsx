@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   HanMapCanvas,
+  cellToScreen,
   screenToCell,
   type IsoView,
   type ProvinceIdentityMap,
@@ -12,6 +13,7 @@ interface CanvasRecord {
   context: CanvasRenderingContext2D;
   operations: string[];
   drawImages: unknown[];
+  drawImageCalls: unknown[][];
   putImages: Uint8ClampedArray[];
   strokes: string[];
   strokeWidths: { style: string; width: number }[];
@@ -36,7 +38,7 @@ const PROVINCE_MAP: ProvinceIdentityMap = {
   ]),
   commanderies: new Int16Array([
     -1, 0, 0, -1,
-    -1, 0, 1, -1,
+    -1, 0, 0, -1,
     -1, -1, -1, 1,
   ]),
   provinceEdges: [{ x1: 1.5, y1: 0.5, x2: 1.5, y2: 1.5 }],
@@ -49,6 +51,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
 
   const operations: string[] = [];
   const drawImages: unknown[] = [];
+  const drawImageCalls: unknown[][] = [];
   const putImages: Uint8ClampedArray[] = [];
   const strokes: string[] = [];
   const strokeWidths: { style: string; width: number }[] = [];
@@ -75,8 +78,10 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     save: vi.fn(),
     restore: vi.fn(),
     transform: (...values: number[]) => transforms.push(values),
-    drawImage: (source: unknown) => {
+    drawImage: (...args: unknown[]) => {
+      const [source] = args;
       drawImages.push(source);
+      drawImageCalls.push(args);
       drawSmoothing.push(context.imageSmoothingEnabled);
       operations.push('drawImage');
     },
@@ -119,6 +124,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     context,
     operations,
     drawImages,
+    drawImageCalls,
     putImages,
     strokes,
     strokeWidths,
@@ -218,6 +224,59 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('draws the county, commandery-seat, and capital marker exports for each tier', async () => {
+    class LoadedImage {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      width = 44;
+      height = 48;
+      private value = '';
+
+      set src(next: string) {
+        this.value = next;
+        queueMicrotask(() => this.onload?.());
+      }
+
+      get src() {
+        return this.value;
+      }
+    }
+    vi.stubGlobal('Image', LoadedImage);
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        cities={[
+          { ...CHE_OVERLAYS_FIXTURE[0], id: 1, isCapital: false, isCommanderySeat: false },
+          { ...CHE_OVERLAYS_FIXTURE[1], id: 2, isCapital: false, isCommanderySeat: true },
+          { ...CHE_OVERLAYS_FIXTURE[0], id: 3, x: 100, y: 60, isCapital: true, isCommanderySeat: true },
+        ]}
+        sourceSize={{ width: 200, height: 120 }}
+      />,
+    );
+
+    await waitFor(() => {
+      const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+      const sources = recordFor(canvas).drawImages
+        .filter((source): source is LoadedImage => source instanceof LoadedImage)
+        .map((source) => source.src);
+      expect(sources).toEqual(expect.arrayContaining([
+        '/map/markers/county.png',
+        '/map/markers/commandery.png',
+        '/map/markers/capital.png',
+      ]));
+      const markerWidths = recordFor(canvas).drawImageCalls
+        .filter(([source]) => source instanceof LoadedImage)
+        .map(([source, , , width]) => [(source as LoadedImage).src, width]);
+      expect(markerWidths).toEqual(expect.arrayContaining([
+        ['/map/markers/county.png', 28],
+        ['/map/markers/commandery.png', 36],
+        ['/map/markers/capital.png', 44],
+      ]));
+    });
   });
 
   it('reuses political pixels and cached borders while zooming and panning', () => {
@@ -379,6 +438,51 @@ describe('shared HanMapCanvas viewport interaction', () => {
     fireEvent.pointerDown(canvas, { clientX: 100, clientY: 100, pointerId: 1 });
     fireEvent.pointerMove(canvas, { clientX: 130, clientY: 115, pointerId: 1 });
     expect(views.at(-1)).not.toEqual(zoomed);
+  });
+
+  it('reports the county polygon under the pointer independently of marker activation', () => {
+    const views: IsoView[] = [];
+    const onCountyHover = vi.fn();
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={{
+          ...CHE_TILES_FIXTURE,
+          juns: [
+            { ...CHE_TILES_FIXTURE.juns[0], name: '경조윤' },
+            { ...CHE_TILES_FIXTURE.juns[1], name: '영천군' },
+          ],
+          cities: [
+            { ...CHE_TILES_FIXTURE.cities[0], name: '장안현', level: 8 },
+            { ...CHE_TILES_FIXTURE.cities[1], name: '허현', level: 6 },
+          ],
+        }}
+        provinceMap={PROVINCE_MAP}
+        cities={CHE_OVERLAYS_FIXTURE.map((city, index) => ({
+          ...city,
+          regionName: index === 0 ? '사예' : '예주',
+          commanderyName: index === 0 ? '경조윤' : '영천군',
+        }))}
+        sourceSize={{ width: 200, height: 120 }}
+        onCountyHover={onCountyHover}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' });
+    const [canvasX, canvasY] = cellToScreen(2, 1, views.at(-1)!);
+
+    fireEvent.pointerMove(canvas, { clientX: canvasX / 2, clientY: canvasY / 2, pointerId: 1 });
+
+    expect(onCountyHover).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        provinceId: 1,
+        commanderyId: 1,
+        regionName: '예주',
+        commanderyName: '영천군',
+        countyName: '허현',
+      }),
+      expect.any(Object),
+    );
   });
 
   it('prevents page scrolling while the wheel zooms the map', () => {

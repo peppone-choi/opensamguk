@@ -315,6 +315,10 @@ export interface MapPreviewCity {
   nationId: number;
   x: number;
   y: number;
+  region?: number;
+  regionName?: string;
+  commanderyName?: string;
+  isCommanderySeat?: boolean;
   /** 재해/사건 코드(city.state) — event<state>.gif (0=없음). */
   state: number;
   /** 보급 상태 — 깃발 f(보급)/d(미보급). */

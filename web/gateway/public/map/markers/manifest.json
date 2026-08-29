@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "pixelRatio": 2,
+  "designSha256": "e0cf304d20ca6f15df5ce0dc52c891a3cc01b98a3f4ec903d05a5387e5083d46",
+  "markers": {
+    "county": {
+      "file": "county.png",
+      "width": 28,
+      "height": 32,
+      "anchor": [
+        14,
+        30
+      ],
+      "sha256": "9d3d8a251e1c03f24abb2b9a64270eb5f2455b3fe4ba61bbca88bea5224a0e3a"
+    },
+    "commandery": {
+      "file": "commandery.png",
+      "width": 36,
+      "height": 40,
+      "anchor": [
+        18,
+        38
+      ],
+      "sha256": "4c639b4a77c906be389d20765f3719ae3f96de607bc5fba296ff80f806b8640b"
+    },
+    "capital": {
+      "file": "capital.png",
+      "width": 44,
+      "height": 48,
+      "anchor": [
+        22,
+        46
+      ],
+      "sha256": "e2b33a7f968bda750e51acfe2fc1a1461778dc182ed20e6892cebfbf11b56ed6"
+    }
+  }
+}
