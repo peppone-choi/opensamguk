@@ -50,6 +50,7 @@ class WorldSnapshotLoader(
     private val jdbc: JdbcTemplate,
     private val seedBootstrap: SeedBootstrap,
     private val worldId: WorldId,
+    private val snapshotValidator: (WorldSnapshot) -> Unit = ActiveWorldMapValidator::validate,
 ) {
     private val log = LoggerFactory.getLogger(WorldSnapshotLoader::class.java)
 
@@ -151,7 +152,7 @@ class WorldSnapshotLoader(
             accessLogs = accessLogs,
             archivedNationIds = archivedNationIds,
         )
-        ActiveWorldMapValidator.validate(snapshot)
+        snapshotValidator(snapshot)
         return snapshot
     }
 

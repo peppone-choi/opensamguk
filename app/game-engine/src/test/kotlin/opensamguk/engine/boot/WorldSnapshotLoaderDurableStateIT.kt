@@ -74,6 +74,7 @@ class WorldSnapshotLoaderDurableStateIT {
             jdbc,
             SeedBootstrap(scenarioCode = "scenario_0", seedEnabled = false, worldId = WorldId(1)),
             WorldId(1),
+            snapshotValidator = {},
         ).buildSnapshot().state
 
         assertEquals(1, (state.meta["plock"] as Number).toInt())

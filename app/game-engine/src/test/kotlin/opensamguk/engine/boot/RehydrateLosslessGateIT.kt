@@ -239,6 +239,7 @@ class RehydrateLosslessGateIT {
             worldId = worldId,
         ),
         worldId = worldId,
+        snapshotValidator = {},
     )
 
     private fun uniqueAuction(target: String, title: String, hostName: String): AuctionInfo = AuctionInfo(
