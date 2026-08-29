@@ -99,11 +99,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
 PINNED_ROUTE_KEY_REGISTRY_SHA256 = "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
 PINNED_SOURCE_WITNESS_SHA256 = "7fe27b667b4066200882f9e1815e07a6adb24d826f09e0605145041897f76ee4"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "02fbd17515347f0b86b403d70364c49eea6e5ba88a636aa6a0f45fb3cf09cf50"
-PINNED_REVIEW_POLICY_SHA256 = "cd65d9a197399d95f42e8a2e35717005d12ba429fc35a869e9e5422952d70176"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "b104927f67363da78a5dfb7ad1421296e66619abd83ecb33fe8d1cde8c5bf4fb"
+PINNED_REVIEW_POLICY_SHA256 = "ed8ec0dcf900a56fb05de1af467b4c48feb3f97bbb671aaf8c18460e7f7a420c"
 PINNED_VALIDATION_CONTRACT_SHA256 = "83c11fc237a6f03f8699a97f56326a9a6dc65990c6460482b024e7a0ee3bef66"
 PINNED_LEGACY_HAN_MAP_SHA256 = "10126205c31c61230eef5351548fd2b5cbf33b35873c80280be2118381fb2b1d"
-PINNED_LEGACY_TILE_MAP_SHA256 = "bdfd14e6e627d69bcee4c1af0f58602556389ab81891a8d3960dbcbae4867272"
+PINNED_LEGACY_TILE_MAP_SHA256 = "51cc6d68a429f2caeb066905a4add47517b23cee2b01b517d358bca550819e18"
 PINNED_REPLACEMENT_DECISION_SHA256 = "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8"
 PINNED_CONFLICT_DECISION_SHA256 = "ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7"
 EXPECTED_REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
@@ -1906,7 +1906,8 @@ def _load_scenarios(directory: Path) -> tuple[ScenarioResource, ...]:
     for path in sorted(directory.glob("scenario_*.json")):
         document = _load(path)
         map_info = document.get("map")
-        if not isinstance(map_info, dict) or map_info.get("mapName") != "han":
+        if (not isinstance(map_info, dict)
+                or map_info.get("mapName") not in {"han", "han-world-v2"}):
             continue
         match = re.fullmatch(r"scenario_(.+)\.json", path.name)
         if match is None:

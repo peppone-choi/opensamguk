@@ -44,6 +44,8 @@ GRID = MAP / "terrain-grid.json"
 PLACES = MAP / "han-places.json"
 READINGS = MAP / "readings.json"
 OUT = MAP / "han-tiles.json"
+LEGACY_GAMEPLAY_TILES = MAP / "han-780-v1-tiles.json"
+HAN_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 
 # 도로 비트마스크 — 이웃 4방향(N=1 E=2 S=4 W=8). 타일 16종이 서로 이어진다.
 NEI = {(0, -1): 1, (1, 0): 2, (0, 1): 4, (-1, 0): 8}
@@ -409,7 +411,39 @@ def build(
             for nm, h in zip(grid["junNames"], grid["hubs"])]
     province_records = None
     parent_regions = None
+    legacy_tiles = None
+    active_gameplay_parent_names = None
     if isinstance(grid.get('provinceRecords'), list):
+        if LEGACY_GAMEPLAY_TILES.is_file():
+            legacy_tiles = json.loads(LEGACY_GAMEPLAY_TILES.read_text(encoding='utf-8'))
+            if HAN_GAMEPLAY.is_file():
+                gameplay = json.loads(HAN_GAMEPLAY.read_text(encoding='utf-8'))
+                active_gameplay_parent_names = sorted({
+                    city.get('meta', {}).get('junCh')
+                    for city in gameplay['cities']
+                    if city.get('meta', {}).get('junCh')
+                })
+                legacy_jun_by_name = {
+                    jun['nameCh']: jun for jun in legacy_tiles['juns']
+                }
+                legacy_cities_by_name = {}
+                for index, city in enumerate(legacy_tiles['cities']):
+                    legacy_cities_by_name.setdefault(city['nameCh'], []).append(index)
+                for gameplay_city in gameplay['cities']:
+                    meta = gameplay_city.get('meta', {})
+                    if meta.get('isSeat') is not True:
+                        continue
+                    legacy_jun = legacy_jun_by_name.get(meta.get('junCh'))
+                    candidates = legacy_cities_by_name.get(meta.get('nameCh'), [])
+                    if legacy_jun is None or len(candidates) != 1:
+                        continue
+                    legacy_seat = candidates[0]
+                    legacy_city = legacy_tiles['cities'][legacy_seat]
+                    legacy_jun.update(
+                        seat=legacy_seat,
+                        col=legacy_city['col'],
+                        row=legacy_city['row'],
+                    )
         parent_regions = []
         for index, record in enumerate(grid['parentRegions']):
             translated = juns[index]['name'] if index < len(juns) else record['displayName']
@@ -468,7 +502,22 @@ def build(
         output['provinceRecords'] = province_records
         output['parentRegions'] = parent_regions
         output['parentOwner'] = rle(grid['parentOwner'])
-        output.pop('seatOwner', None)
+        # Keep the full legacy route-node surface together. Its indices are a
+        # separate immutable namespace; mixing only the old seatOwner with the
+        # new city/jun arrays creates duplicate seats and invalid references.
+        if legacy_tiles is not None:
+            output['legacyGameplay'] = {
+                'cities': legacy_tiles['cities'],
+                'juns': legacy_tiles['juns'],
+                'seatOwner': legacy_tiles['seatOwner'],
+                'activeParentNames': active_gameplay_parent_names,
+            }
+        else:
+            output['legacyGameplay'] = {
+                'cities': output['cities'],
+                'juns': output['juns'],
+                'seatOwner': output['parentOwner'],
+            }
         output['_meta']['counts']['provinces'] = len(province_records)
         output['_meta']['counts']['parentRegions'] = len(parent_regions)
     return output

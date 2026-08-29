@@ -65,6 +65,7 @@ NE = 'data/natural-earth'
 OUT = 'data/map/terrain-grid.json'
 MODERN_ADMIN = 'data/modern-admin/geoBoundaries-CGAZ-ADM2.geojson'
 PROVINCE_SHAPE_EXCEPTIONS = 'data/curated/map/province-shape-exceptions-v1.json'
+LEGACY_GAMEPLAY_TILES = 'data/map/han-780-v1-tiles.json'
 
 SEA, PLAIN, MOUNTAIN, RIVER, LAKE, DESERT, PLATEAU, BASIN, HILL = range(9)
 
@@ -954,6 +955,37 @@ def fold_to_jun(places, proj, junguo):
     return np.array(jun_of, dtype=np.int32), hubs, out_names, sorted(zhi)
 
 
+def align_hubs_to_legacy_gameplay(places, jun_of, hubs, jun_names,
+                                  legacy_tiles_path=LEGACY_GAMEPLAY_TILES):
+    """Keep the 774-city gameplay seat catalog stable in the v2 geometry.
+
+    Parent boundaries are rebuilt from historical ownership, but the active
+    game still uses the immutable han-780-v1 city catalog.  Reuse its reviewed
+    seat place IDs when those places remain members of the same parent; new
+    external parents retain the seat inferred by ``fold_to_jun``.
+    """
+    if not os.path.exists(legacy_tiles_path):
+        return list(hubs)
+    legacy = json.load(open(legacy_tiles_path, encoding='utf-8'))
+    legacy_cities = legacy.get('cities')
+    legacy_juns = legacy.get('juns')
+    if not isinstance(legacy_cities, list) or not isinstance(legacy_juns, list):
+        raise ValueError('legacy gameplay tiles must contain cities and juns')
+    legacy_seat_by_parent = {}
+    for jun in legacy_juns:
+        seat = jun.get('seat') if isinstance(jun, dict) else None
+        if (type(seat) is int and 0 <= seat < len(legacy_cities)
+                and isinstance(legacy_cities[seat], dict)):
+            legacy_seat_by_parent[jun.get('nameCh')] = legacy_cities[seat].get('id')
+    place_by_id = {place.get('id'): index for index, place in enumerate(places)}
+    aligned = list(hubs)
+    for parent_index, parent_name in enumerate(jun_names):
+        place_index = place_by_id.get(legacy_seat_by_parent.get(parent_name))
+        if place_index is not None and int(jun_of[place_index]) == parent_index:
+            aligned[parent_index] = place_index
+    return aligned
+
+
 def cross_by_path(cost, pts, edges, terrain):
     """인접한 두 治所를 실제로 오갈 때 강을 건너느냐로 도하를 판정한다.
 
@@ -1266,6 +1298,7 @@ def main():
         require_reference_year=True,
     )
     jun_of = temporal['junOf']
+    hubs = align_hubs_to_legacy_gameplay(hp['places'], jun_of, hubs, jun_names)
     # 郡 영역은 縣 소유를 접기만 해선 사료와 100% 안 맞는다. 郡國志가 적은 縣 좌표와
     # CHGIS 좌표가 한두 셀 어긋나면 그 縣이 이웃 郡 땅에 떨어진다. 두 좌표를 **모두**
     # 제 郡의 소스로 넣으면 그 사이가 전부 그 郡이 되어 어긋남이 사라진다.
