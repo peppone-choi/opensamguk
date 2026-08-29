@@ -140,7 +140,10 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
 
 function politicalCompositions(): number {
   return [...records.values()].flatMap((record) => record.putImages)
-    .filter((pixels) => pixels.some((value, index) => index % 4 === 3 && value === 96)).length;
+    .filter((pixels) => (
+      pixels.some((value, index) => index % 4 === 3 && value === 0)
+      && pixels.some((value, index) => index % 4 === 3 && value === 255)
+    )).length;
 }
 
 function deferred<T>() {
@@ -305,7 +308,10 @@ describe('shared HanMapCanvas viewport interaction', () => {
       record.putImages.some((pixels) => pixels.some((value, index) => index % 4 === 3 && value === 255))
     ))?.[0];
     const politicalCanvas = [...records].find(([, record]) => (
-      record.putImages.some((pixels) => pixels.some((value, index) => index % 4 === 3 && value === 96))
+      record.putImages.some((pixels) => (
+        pixels.some((value, index) => index % 4 === 3 && value === 0)
+        && pixels.some((value, index) => index % 4 === 3 && value === 255)
+      ))
     ))?.[0];
     expect(main.drawImages.slice(-2)).toEqual([terrainCanvas, politicalCanvas]);
     expect(main.drawSmoothing.slice(-2)).toEqual([false, false]);

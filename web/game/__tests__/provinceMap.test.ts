@@ -372,7 +372,7 @@ describe('province identity map', () => {
     expect(binding.conflicts).toEqual([]);
   });
 
-  it('composes only owned province pixels with the requested alpha', () => {
+  it('composes political land as exact opaque nation colors without terrain blending', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([
       0, 16, 1, 255, 0, 16, 2, 255, 0, 0, 0, 0,
     ]), 3, 1);
@@ -382,13 +382,8 @@ describe('province identity map', () => {
     ], { cols: 3, rows: 1 }, { width: 300, height: 1 });
 
     expect(Array.from(composeProvincePixels(map, binding))).toEqual([
-      255, 0, 0, 96,
-      0, 0, 255, 96,
-      0, 0, 0, 0,
-    ]);
-    expect(Array.from(composeProvincePixels(map, binding, 40))).toEqual([
-      255, 0, 0, 40,
-      0, 0, 255, 40,
+      255, 0, 0, 255,
+      0, 0, 255, 255,
       0, 0, 0, 0,
     ]);
   });
