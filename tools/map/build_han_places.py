@@ -185,7 +185,7 @@ EXPECTED_TRACKED_REVIEW_INPUTS = {
     },
     'data/curated/han/route-node-selection-v1.json': {
         'path': 'data/curated/han/route-node-selection-v1.json',
-        'sha256': '3aaf7c8eb6797336518733c2e9bf9a50c3c05de303245519a7eebc01cebca744',
+        'sha256': '21dcc9c27b0626b440a90eac39afa13886bf5ae9fdfbd5e0bc04cb5ebfe172d8',
         'role': 'ROUTE_NODE_SELECTION_REVIEW',
     },
 }
