@@ -522,7 +522,8 @@ object GenFoundFamily {
 
         // PHP `:3390-3399` — the sibling move-instead branch (only when the :3358 0.3 was false).
         if (nationChoiceMoveGate(rng)) { // :3390 nextBool(0.2)
-            val paths = ctx.cityConst.byId(ctx.selfCityId)?.path?.keys?.toList() ?: emptyList() // :3391 name-order
+            val paths = ctx.cityConst.byId(ctx.selfCityId)?.path?.keys?.toList().orEmpty() // :3391 name-order
+            if (paths.isEmpty()) return null
             val destCityID = pickNationChoiceMove(paths, rng) // :3393 choice($paths)
             val args = linkedMapOf<String, Any?>("destCityID" to destCityID)
             if (!ctx.candidateAllowed(MOVE_ACTION, args)) return null // :3394
