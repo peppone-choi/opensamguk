@@ -508,14 +508,12 @@ describe('shared HanMapCanvas viewport interaction', () => {
   });
 
   it.each([
-    ['HAN_COMMANDERY', '낙랑군', '조선현', '지방관·미확정 지배', '#7e7766'],
-    ['GOGURYEO', '고구려', '국내성', '고구려', '#587480'],
-  ])('reports an unowned %s province with its administrative affiliation', (
+    ['HAN_COMMANDERY', '낙랑군', '조선현'],
+    ['GOGURYEO', '고구려', '국내성'],
+  ])('reports an unowned %s province without an administrative affiliation', (
     administrativeSystem,
     parentName,
     countyName,
-    affiliationName,
-    affiliationColor,
   ) => {
     const views: IsoView[] = [];
     const onCountyHover = vi.fn();
@@ -562,8 +560,8 @@ describe('shared HanMapCanvas viewport interaction', () => {
       expect.objectContaining({
         countyName,
         nationId: 0,
-        nationName: affiliationName,
-        nationColor: affiliationColor,
+        nationName: undefined,
+        nationColor: undefined,
       }),
       expect.any(Object),
     );
