@@ -491,6 +491,68 @@ describe('shared HanMapCanvas viewport interaction', () => {
     );
   });
 
+  it.each([
+    ['HAN_COMMANDERY', '낙랑군', '조선현', '지방관·미확정 지배', '#7e7766'],
+    ['GOGURYEO', '고구려', '국내성', '고구려', '#587480'],
+  ])('reports an unowned %s province with its administrative affiliation', (
+    administrativeSystem,
+    parentName,
+    countyName,
+    affiliationName,
+    affiliationColor,
+  ) => {
+    const views: IsoView[] = [];
+    const onCountyHover = vi.fn();
+    const provinceMap: ProvinceIdentityMap = {
+      width: 1,
+      height: 1,
+      provinces: new Int16Array([0]),
+      commanderies: new Int16Array([0]),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+    render(
+      <HanMapCanvas
+        mapCode="han"
+        tiles={{
+          _meta: { cols: 1, rows: 1, year: 220, terrainLegend: { 1: 'PLAIN' } },
+          terrain: ['1'],
+          owner: [[0, 1]],
+          parentOwner: [[0, 1]],
+          juns: [{ name: parentName, nameCh: '', seat: 0, col: 0, row: 0 }],
+          provinceRecords: [{
+            id: 'P1', displayName: countyName, nameCh: '', administrativeSystem,
+            kind: 'SETTLEMENT', parentRegionId: 'R1', cityIndex: null,
+            geometryBasis: 'HISTORICAL_BOUNDARY', confidence: 'REVIEWED',
+          }],
+          parentRegions: [{ id: 'R1', displayName: parentName, nameCh: '', administrativeSystem }],
+          adjacency: { county: [], commandery: [] },
+          regions: [],
+          cities: [{ id: '1', name: countyName, nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+        }}
+        provinceMap={provinceMap}
+        cities={[]}
+        sourceSize={{ width: 1, height: 1 }}
+        onCountyHover={onCountyHover}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' });
+    const [canvasX, canvasY] = cellToScreen(0, 0, views.at(-1)!);
+
+    fireEvent.pointerMove(canvas, { clientX: canvasX / 2, clientY: canvasY / 2, pointerId: 1 });
+
+    expect(onCountyHover).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        countyName,
+        nationId: 0,
+        nationName: affiliationName,
+        nationColor: affiliationColor,
+      }),
+      expect.any(Object),
+    );
+  });
+
   it('prevents page scrolling while the wheel zooms the map', () => {
     const views: IsoView[] = [];
     render(
