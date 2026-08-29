@@ -79,6 +79,7 @@ class DeployService(
         "RESET_PRE_RESERVE_OPEN",
     )
     private val serverIdRegex = Regex("^[A-Za-z0-9]+$")
+    private val operationIdRegex = Regex("^[a-f0-9]{32}$")
     private val maxPublicServerIdLength = 48
     private val portRegex = Regex("^[0-9]{1,5}$")
     private val reservedPublicServerIds = setOf(
@@ -128,8 +129,13 @@ class DeployService(
 
     private sealed interface RemoteLifecycleOperation {
         data object Missing : RemoteLifecycleOperation
-        data object Pending : RemoteLifecycleOperation
         data object Unavailable : RemoteLifecycleOperation
+        data class Pending(
+            val status: String,
+            val publicMessage: String,
+            val kind: String,
+            val subjectId: String,
+        ) : RemoteLifecycleOperation
         data class Succeeded(val response: EnvProxyResponse) : RemoteLifecycleOperation
         data class Failed(val response: EnvProxyResponse) : RemoteLifecycleOperation
     }
@@ -232,8 +238,15 @@ class DeployService(
         }
         val ownerToken = UUID.randomUUID().toString()
         val requestPayload = canonicalCreateServerBody(body)
+        val operationId = requestedOperationId(body)
         val transition = try {
-            registry.beginTransition(ServerRegistryTransitionAction.CREATE, server, ownerToken, requestPayload)
+            registry.beginTransition(
+                ServerRegistryTransitionAction.CREATE,
+                server,
+                ownerToken,
+                requestPayload,
+                operationId,
+            )
         } catch (e: ServerRegistryTransitionConflict) {
             return registryConflict(server.id)
         } catch (e: Exception) {
@@ -247,13 +260,26 @@ class DeployService(
     }
 
     @Synchronized
-    fun deleteServer(serverId: String): EnvProxyResponse {
+    fun deleteServer(serverId: String, body: String = "{}"): EnvProxyResponse {
         val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
+        validateDeleteServer(body)?.let { return it }
         val ownerToken = UUID.randomUUID().toString()
-        val requestPayload = objectMapper.writeValueAsString(mapOf("id" to server.id))
+        val operationId = requestedOperationId(body)
+        val requestPayload = objectMapper.writeValueAsString(
+            buildMap<String, String> {
+                put("id", server.id)
+                operationId?.let { put("operationId", it) }
+            },
+        )
         val transition = try {
-            registry.beginTransition(ServerRegistryTransitionAction.CLOSE, server, ownerToken, requestPayload)
+            registry.beginTransition(
+                ServerRegistryTransitionAction.CLOSE,
+                server,
+                ownerToken,
+                requestPayload,
+                operationId,
+            )
         } catch (e: ServerRegistryTransitionConflict) {
             return registryConflict(server.id)
         } catch (e: Exception) {
@@ -266,11 +292,90 @@ class DeployService(
         return resumeRegistryTransition(transition, requestPayload)
     }
 
+    @Synchronized
     fun resetServer(serverId: String, body: String): EnvProxyResponse {
         val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
-        return validateResetServer(body, server.id)
-            ?: proxyServerAction(method = "POST", path = "/servers/reset", serverId = server.id, body = withServerId(body, server.id))
+        validateResetServer(body, server.id)?.let { return it }
+        val ownerToken = UUID.randomUUID().toString()
+        val requestPayload = withServerId(body, server.id)
+        val operationId = requestedOperationId(body)
+        val transition = try {
+            registry.beginTransition(
+                ServerRegistryTransitionAction.RESET,
+                resetServerDef(server, body),
+                ownerToken,
+                requestPayload,
+                operationId,
+            )
+        } catch (e: ServerRegistryTransitionConflict) {
+            return registryConflict(server.id)
+        } catch (e: Exception) {
+            log.error("game_server transition start failed action=RESET server={}", server.id, e)
+            return registryUnavailable(server.id)
+        }
+        if (transition.remoteApplied) {
+            return completeRecoveredRegistryTransition(transition)
+        }
+        return resumeRegistryTransition(transition, requestPayload)
+    }
+
+    @Synchronized
+    fun operationStatus(operationId: String): EnvProxyResponse {
+        if (!operationIdRegex.matches(operationId)) {
+            return json(400, """{"ok":false,"message":"작업 id가 올바르지 않습니다."}""")
+        }
+        if (!configured()) {
+            return json(503, """{"ok":false,"message":"배포 deployer가 설정되지 않았습니다."}""")
+        }
+        val transition = try {
+            registry.claimTransition(operationId, UUID.randomUUID().toString())
+        } catch (e: ServerRegistryTransitionConflict) {
+            return json(
+                409,
+                objectMapper.writeValueAsString(
+                    mapOf("ok" to false, "operationId" to operationId, "message" to "서버 레지스트리 작업을 다른 요청이 확인 중입니다."),
+                ),
+            )
+        } catch (e: Exception) {
+            log.error("game_server transition claim failed operation={}", operationId, e)
+            return registryUnavailable(operationId)
+        }
+        return when (val remote = queryRemoteLifecycleOperation(operationId, transition)) {
+            RemoteLifecycleOperation.Missing -> {
+                transition?.let(::releaseRegistryTransition)
+                missingOperationResponse(operationId, transition, resubmitRequired = transition != null)
+            }
+            RemoteLifecycleOperation.Unavailable -> {
+                transition?.let(::releaseRegistryTransition)
+                operationPendingResponse(
+                    operationId = operationId,
+                    transition = transition,
+                    status = "pending",
+                    publicMessage = "deployer 작업 상태를 확인하지 못했습니다. 잠시 후 다시 시도하세요.",
+                )
+            }
+            is RemoteLifecycleOperation.Pending -> {
+                transition?.let(::releaseRegistryTransition)
+                operationPendingResponse(
+                    operationId,
+                    transition,
+                    remote.status,
+                    remote.publicMessage,
+                    remote.kind,
+                    remote.subjectId,
+                )
+            }
+            is RemoteLifecycleOperation.Succeeded -> if (transition == null) {
+                remote.response
+            } else {
+                markAndCompleteRegistryTransition(transition, remote.response)
+            }
+            is RemoteLifecycleOperation.Failed -> {
+                transition?.let(::cancelRegistryTransition)
+                remote.response
+            }
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -391,36 +496,24 @@ class DeployService(
             json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "deployer 서버 종료 요청 실패: ${e.message}")))
         }
 
-    private fun proxyServerAction(method: String, path: String, serverId: String, confirm: String? = null, body: String?): EnvProxyResponse {
-        if (!configured()) {
-            return json(200, """{"ok":false,"message":"배포 deployer가 설정되지 않았습니다 (DEPLOYER_URL/TOKEN 미설정)."}""")
-        }
-        return try {
-            val uri = "${deployerBase()}$path"
-            val raw = when (method) {
-                "DELETE" -> rest.delete()
-                    .uri(uri, serverId, confirm ?: "")
-                    .header("Authorization", "Bearer $deployerToken")
-                    .retrieve()
-                    .body(String::class.java)
-                else -> rest.post()
-                    .uri(uri, serverId)
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer $deployerToken")
-                    .body(body ?: "{}")
-                    .retrieve()
-                    .body(String::class.java)
-            }
-            json(200, raw ?: "{}")
+    private fun proxyResetServer(serverId: String, body: String, operationId: String): EnvProxyResponse =
+        try {
+            val response = rest.post()
+                .uri("${deployerBase()}/servers/reset")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer $deployerToken")
+                .body(withOperationId(body, operationId))
+                .retrieve()
+                .toEntity(String::class.java)
+            json(response.statusCode.value(), response.body ?: "{}")
         } catch (e: RestClientResponseException) {
             val responseBody = e.responseBodyAsString.takeIf { it.isNotBlank() }
-                ?: """{"ok":false,"message":"deployer 서버 제어 요청 실패"}"""
+                ?: """{"ok":false,"message":"deployer 서버 리셋 요청 실패"}"""
             json(e.statusCode.value(), responseBody)
         } catch (e: Exception) {
-            log.warn("deployer 서버 제어 요청 실패", e)
-            json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "deployer 서버 제어 요청 실패: ${e.message}")))
+            log.warn("deployer 서버 리셋 요청 실패 (server={})", serverId, e)
+            json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "deployer 서버 리셋 요청 실패")))
         }
-    }
 
     private fun proxyEnv(method: String, path: String, serverId: String?, body: String?): EnvProxyResponse =
         try {
@@ -500,6 +593,7 @@ class DeployService(
             val jwtPublicKey = node.path("jwtPublicKey").asText("")
             val jwtLegacySecret = node.path("jwtLegacySecret").asText("")
             val jwtLegacyAcceptUntil = node.path("jwtLegacyAcceptUntil").asText("")
+            val operationId = node.path("operationId").asText("")
             val expectedKeys = setOf(
                 "id",
                 "name",
@@ -512,6 +606,7 @@ class DeployService(
                 "jwtPublicKey",
                 "jwtLegacySecret",
                 "jwtLegacyAcceptUntil",
+                "operationId",
             )
             val unknown = node.fieldNames().asSequence().firstOrNull { it !in expectedKeys }
             val canonicalId = id.lowercase()
@@ -547,6 +642,8 @@ class DeployService(
                     json(400, """{"ok":false,"message":"legacy JWT 비밀과 만료 시각은 함께 설정해야 합니다."}""")
                 jwtLegacyAcceptUntil.isNotBlank() && !isFutureInstant(jwtLegacyAcceptUntil) ->
                     json(400, """{"ok":false,"message":"legacy JWT 만료 시각은 미래의 ISO-8601 시각이어야 합니다."}""")
+                node.has("operationId") && (!node.path("operationId").isTextual || !operationIdRegex.matches(operationId)) ->
+                    json(400, """{"ok":false,"message":"작업 id가 올바르지 않습니다."}""")
                 else -> null
             }
         } catch (e: Exception) {
@@ -584,6 +681,7 @@ class DeployService(
                 "tournamentTrig",
                 "reserveOpen",
                 "preReserveOpen",
+                "operationId",
             )
             val unknown = node.fieldNames().asSequence().firstOrNull { it !in expectedKeys }
             val validAutorunOptions = setOf("develop", "warp", "recruit", "recruit_high", "train", "battle", "chief")
@@ -626,12 +724,31 @@ class DeployService(
                     json(400, """{"ok":false,"message":"토너먼트 자동 시작 값이 올바르지 않습니다."}""")
                 !reservation("reserveOpen") || !reservation("preReserveOpen") ->
                     json(400, """{"ok":false,"message":"예약 시간 형식이 올바르지 않습니다."}""")
+                node.has("operationId") &&
+                    (!node.path("operationId").isTextual || !operationIdRegex.matches(node.path("operationId").asText())) ->
+                    json(400, """{"ok":false,"message":"작업 id가 올바르지 않습니다."}""")
                 else -> null
             }
         } catch (e: Exception) {
             json(400, """{"ok":false,"message":"서버 리셋 요청 JSON이 올바르지 않습니다."}""")
         }
     }
+
+    private fun validateDeleteServer(body: String): EnvProxyResponse? =
+        try {
+            val node = objectMapper.readTree(body)
+            val unknown = node.fieldNames().asSequence().firstOrNull { it != "operationId" }
+            when {
+                !node.isObject || unknown != null ->
+                    json(400, """{"ok":false,"message":"허용되지 않은 서버 종료 값입니다."}""")
+                node.has("operationId") &&
+                    (!node.path("operationId").isTextual || !operationIdRegex.matches(node.path("operationId").asText())) ->
+                    json(400, """{"ok":false,"message":"작업 id가 올바르지 않습니다."}""")
+                else -> null
+            }
+        } catch (e: Exception) {
+            json(400, """{"ok":false,"message":"서버 종료 요청 JSON이 올바르지 않습니다."}""")
+        }
 
     private fun canonicalServerDefs(servers: List<ServerDef>): List<ServerDef>? {
         val canonical = ArrayList<ServerDef>(servers.size)
@@ -677,6 +794,9 @@ class DeployService(
         return objectMapper.writeValueAsString(objectNode)
     }
 
+    private fun requestedOperationId(body: String): String? =
+        objectMapper.readTree(body).path("operationId").asText("").ifBlank { null }
+
     private fun withOperationId(body: String, operationId: String): String {
         val objectNode = objectMapper.readTree(body).deepCopy<ObjectNode>()
         objectNode.put("operationId", operationId)
@@ -694,6 +814,14 @@ class DeployService(
             deployProject = defaultDeployProject(id),
             generation = node.path("generation").asText("").toIntOrNull(),
             scenarioCode = node.path("scenarioCode").asText("").ifBlank { null },
+        )
+    }
+
+    private fun resetServerDef(server: ServerDef, body: String): ServerDef {
+        val node = objectMapper.readTree(body)
+        return server.copy(
+            generation = if (node.has("generation")) node.path("generation").asText().toInt() else server.generation,
+            scenarioCode = if (node.has("scenarioCode")) node.path("scenarioCode").asText().ifBlank { null } else server.scenarioCode,
         )
     }
 
@@ -730,11 +858,25 @@ class DeployService(
         }
         return when (val remote = queryRemoteLifecycleOperation(transition)) {
             RemoteLifecycleOperation.Missing -> dispatchRemoteLifecycleOperation(transition, requestPayload)
-            RemoteLifecycleOperation.Pending,
-            RemoteLifecycleOperation.Unavailable,
-            -> {
+            RemoteLifecycleOperation.Unavailable -> {
                 releaseRegistryTransition(transition)
-                registryRepairPending(transition.server.id, remoteApplied = null)
+                operationPendingResponse(
+                    operationId = transition.operationId,
+                    transition = transition,
+                    status = "pending",
+                    publicMessage = "deployer 작업 상태를 확인하지 못했습니다. 잠시 후 다시 시도하세요.",
+                )
+            }
+            is RemoteLifecycleOperation.Pending -> {
+                releaseRegistryTransition(transition)
+                operationPendingResponse(
+                    transition.operationId,
+                    transition,
+                    remote.status,
+                    remote.publicMessage,
+                    remote.kind,
+                    remote.subjectId,
+                )
             }
             is RemoteLifecycleOperation.Succeeded -> markAndCompleteRegistryTransition(transition, remote.response)
             is RemoteLifecycleOperation.Failed -> {
@@ -755,14 +897,34 @@ class DeployService(
                 requestPayload,
                 transition.operationId,
             )
+            ServerRegistryTransitionAction.RESET -> proxyResetServer(
+                transition.server.id,
+                requestPayload,
+                transition.operationId,
+            )
         }
         return when (val remote = parsePostedLifecycleOperation(response, transition)) {
             RemoteLifecycleOperation.Missing,
-            RemoteLifecycleOperation.Pending,
             RemoteLifecycleOperation.Unavailable,
             -> {
                 releaseRegistryTransition(transition)
-                registryRepairPending(transition.server.id, remoteApplied = null)
+                operationPendingResponse(
+                    operationId = transition.operationId,
+                    transition = transition,
+                    status = "pending",
+                    publicMessage = "deployer 작업 상태를 확인하지 못했습니다. 잠시 후 다시 시도하세요.",
+                )
+            }
+            is RemoteLifecycleOperation.Pending -> {
+                releaseRegistryTransition(transition)
+                operationPendingResponse(
+                    transition.operationId,
+                    transition,
+                    remote.status,
+                    remote.publicMessage,
+                    remote.kind,
+                    remote.subjectId,
+                )
             }
             is RemoteLifecycleOperation.Succeeded -> markAndCompleteRegistryTransition(transition, remote.response)
             is RemoteLifecycleOperation.Failed -> {
@@ -773,28 +935,33 @@ class DeployService(
     }
 
     private fun queryRemoteLifecycleOperation(transition: ServerRegistryTransition): RemoteLifecycleOperation =
+        queryRemoteLifecycleOperation(transition.operationId, transition)
+
+    private fun queryRemoteLifecycleOperation(
+        operationId: String,
+        transition: ServerRegistryTransition?,
+    ): RemoteLifecycleOperation =
         try {
             val raw = rest.get()
-                .uri("${deployerBase()}/operations/{operationId}", transition.operationId)
+                .uri("${deployerBase()}/operations/{operationId}", operationId)
                 .header("Authorization", "Bearer $deployerToken")
                 .retrieve()
                 .body(String::class.java)
                 ?: return RemoteLifecycleOperation.Unavailable
-            parseQueriedLifecycleOperation(raw, transition)
+            parseQueriedLifecycleOperation(raw, operationId, transition)
         } catch (e: RestClientResponseException) {
-            if (e.statusCode.value() == 404 && isExactUnknownOperation(e.responseBodyAsString, transition.operationId)) {
+            if (e.statusCode.value() == 404 && isExactUnknownOperation(e.responseBodyAsString, operationId)) {
                 RemoteLifecycleOperation.Missing
             } else {
                 log.warn(
-                    "deployer operation query failed action={} server={} status={}",
-                    transition.action,
-                    transition.server.id,
+                    "deployer operation query failed operation={} status={}",
+                    operationId,
                     e.statusCode.value(),
                 )
                 RemoteLifecycleOperation.Unavailable
             }
         } catch (e: Exception) {
-            log.warn("deployer operation query failed action={} server={}", transition.action, transition.server.id, e)
+            log.warn("deployer operation query failed operation={}", operationId, e)
             RemoteLifecycleOperation.Unavailable
         }
 
@@ -809,37 +976,32 @@ class DeployService(
 
     private fun parseQueriedLifecycleOperation(
         body: String,
-        transition: ServerRegistryTransition,
+        operationId: String,
+        transition: ServerRegistryTransition?,
     ): RemoteLifecycleOperation =
         runCatching {
             val node = objectMapper.readTree(body)
-            if (!node.isObject || node.path("operationId").asText() != transition.operationId ||
-                node.path("kind").asText() != transition.action.remoteKind
+            val kind = node.path("kind").asText("")
+            val subjectId = node.path("subjectId").asText("")
+            val status = node.path("status").asText("")
+            val httpStatus = node.path("httpStatus").takeIf { it.canConvertToInt() }?.asInt()
+            val publicMessage = node.path("publicMessage").takeIf { it.isTextual }?.asText()
+            if (!node.isObject || node.path("operationId").asText() != operationId ||
+                kind !in setOf("create", "close", "reset") || subjectId.isBlank() ||
+                httpStatus == null || httpStatus !in 100..599 || publicMessage == null ||
+                transition != null && (kind != transition.action.remoteKind || subjectId != transition.server.id)
             ) {
                 return@runCatching RemoteLifecycleOperation.Unavailable
             }
-            when (node.path("status").asText()) {
-                "pending", "running" -> RemoteLifecycleOperation.Pending
-                "succeeded", "failed", "cancelled" -> {
-                    val result = node.path("result")
-                    if (!result.isObject) return@runCatching RemoteLifecycleOperation.Unavailable
-                    val response = json(
-                        node.path("httpStatus").takeIf { it.canConvertToInt() }?.asInt()?.takeIf { it in 100..599 } ?: 502,
-                        objectMapper.writeValueAsString(result),
-                    )
-                    if (node.path("status").asText() == "succeeded" &&
-                        isConfirmedServerSuccess(response, transition.server.id, transition.operationId)
-                    ) {
-                        RemoteLifecycleOperation.Succeeded(response)
-                    } else if (node.path("status").asText() in setOf("failed", "cancelled") &&
-                        result.path("operationId").asText() == transition.operationId &&
-                        result.path("operationStatus").asText() == node.path("status").asText()
-                    ) {
-                        RemoteLifecycleOperation.Failed(response)
-                    } else {
-                        RemoteLifecycleOperation.Unavailable
-                    }
-                }
+            when (status) {
+                "pending", "running", "recovery_required" ->
+                    RemoteLifecycleOperation.Pending(status, publicMessage, kind, subjectId)
+                "succeeded" -> RemoteLifecycleOperation.Succeeded(
+                    normalizedOperationResponse(operationId, kind, subjectId, status, httpStatus, publicMessage),
+                )
+                "failed", "cancelled" -> RemoteLifecycleOperation.Failed(
+                    normalizedOperationResponse(operationId, kind, subjectId, status, httpStatus, publicMessage),
+                )
                 else -> RemoteLifecycleOperation.Unavailable
             }
         }.getOrDefault(RemoteLifecycleOperation.Unavailable)
@@ -853,14 +1015,50 @@ class DeployService(
             if (!node.isObject || node.path("operationId").asText() != transition.operationId) {
                 return@runCatching RemoteLifecycleOperation.Unavailable
             }
-            when (node.path("operationStatus").asText()) {
-                "pending", "running" -> RemoteLifecycleOperation.Pending
+            val status = node.path("operationStatus").asText()
+            val publicMessage = node.path("publicMessage").takeIf { it.isTextual }?.asText()
+                ?: defaultPublicMessage(status)
+            when (status) {
+                "pending", "running", "recovery_required" -> {
+                    if (!node.path("ok").asBoolean(false) || node.path("id").asText() != transition.server.id) {
+                        RemoteLifecycleOperation.Unavailable
+                    } else {
+                        RemoteLifecycleOperation.Pending(
+                            status,
+                            publicMessage,
+                            transition.action.remoteKind,
+                            transition.server.id,
+                        )
+                    }
+                }
                 "succeeded" -> if (isConfirmedServerSuccess(response, transition.server.id, transition.operationId)) {
-                    RemoteLifecycleOperation.Succeeded(response)
+                    RemoteLifecycleOperation.Succeeded(
+                        normalizedOperationResponse(
+                            transition.operationId,
+                            transition.action.remoteKind,
+                            transition.server.id,
+                            status,
+                            response.status,
+                            publicMessage,
+                        ),
+                    )
                 } else {
                     RemoteLifecycleOperation.Unavailable
                 }
-                "failed", "cancelled" -> RemoteLifecycleOperation.Failed(response)
+                "failed", "cancelled" -> if (node.path("id").asText() == transition.server.id) {
+                    RemoteLifecycleOperation.Failed(
+                        normalizedOperationResponse(
+                            transition.operationId,
+                            transition.action.remoteKind,
+                            transition.server.id,
+                            status,
+                            response.status,
+                            publicMessage,
+                        ),
+                    )
+                } else {
+                    RemoteLifecycleOperation.Unavailable
+                }
                 else -> RemoteLifecycleOperation.Unavailable
             }
         }.getOrDefault(RemoteLifecycleOperation.Unavailable)
@@ -869,6 +1067,7 @@ class DeployService(
         get() = when (this) {
             ServerRegistryTransitionAction.CREATE -> "create"
             ServerRegistryTransitionAction.CLOSE -> "close"
+            ServerRegistryTransitionAction.RESET -> "reset"
         }
 
     private fun markAndCompleteRegistryTransition(
@@ -887,22 +1086,25 @@ class DeployService(
                 e,
             )
             releaseRegistryTransition(transition)
-            registryRepairPending(transition.server.id, remoteApplied = true)
+            registryRepairPending(transition, remoteApplied = true)
         }
 
     private fun completeRecoveredRegistryTransition(transition: ServerRegistryTransition): EnvProxyResponse =
         try {
             registry.completeTransition(transition.server.id, transition.action, transition.ownerToken)
-            json(
-                200,
-                objectMapper.writeValueAsString(
-                    mapOf("ok" to true, "id" to transition.server.id, "recovered" to true),
-                ),
+            normalizedOperationResponse(
+                operationId = transition.operationId,
+                kind = transition.action.remoteKind,
+                subjectId = transition.server.id,
+                status = "succeeded",
+                httpStatus = 200,
+                publicMessage = defaultPublicMessage("succeeded"),
+                recovered = true,
             )
         } catch (e: Exception) {
             log.error("game_server transition repair failed action={} server={}", transition.action, transition.server.id, e)
             releaseRegistryTransition(transition)
-            registryRepairPending(transition.server.id, remoteApplied = true)
+            registryRepairPending(transition, remoteApplied = true)
         }
 
     private fun releaseRegistryTransition(transition: ServerRegistryTransition) {
@@ -932,25 +1134,109 @@ class DeployService(
             ),
         )
 
-    private fun registryRepairPending(serverId: String, remoteApplied: Boolean?): EnvProxyResponse =
-        json(
-            202,
-            objectMapper.writeValueAsString(
-                mapOf(
-                    "ok" to false,
-                    "completed" to false,
-                    "id" to serverId,
-                    "remoteApplied" to remoteApplied,
-                    "registryApplied" to false,
-                    "retryable" to true,
-                    "message" to if (remoteApplied == true) {
-                        "deployer 작업은 반영됐지만 서버 레지스트리 복구가 필요합니다. 같은 요청을 다시 시도하세요."
-                    } else {
-                        "이전 deployer 작업 상태를 확인하지 못했습니다. 같은 요청을 다시 시도하세요."
-                    },
-                ),
-            ),
+    private fun registryRepairPending(
+        transition: ServerRegistryTransition,
+        remoteApplied: Boolean?,
+    ): EnvProxyResponse =
+        normalizedOperationResponse(
+            operationId = transition.operationId,
+            kind = transition.action.remoteKind,
+            subjectId = transition.server.id,
+            status = "recovery_required",
+            httpStatus = 202,
+            publicMessage = if (remoteApplied == true) {
+                "deployer 작업은 반영됐지만 서버 레지스트리 복구가 필요합니다. 같은 작업 id로 상태를 다시 확인하세요."
+            } else {
+                "이전 deployer 작업 상태를 확인하지 못했습니다. 같은 작업 id로 상태를 다시 확인하세요."
+            },
+            remoteApplied = remoteApplied,
+            registryApplied = false,
         )
+
+    private fun operationPendingResponse(
+        operationId: String,
+        transition: ServerRegistryTransition?,
+        status: String,
+        publicMessage: String,
+        kind: String? = transition?.action?.remoteKind,
+        subjectId: String? = transition?.server?.id,
+    ): EnvProxyResponse =
+        normalizedOperationResponse(
+            operationId = operationId,
+            kind = kind,
+            subjectId = subjectId,
+            status = status,
+            httpStatus = 202,
+            publicMessage = publicMessage,
+            remoteApplied = null,
+            registryApplied = false,
+        )
+
+    private fun missingOperationResponse(
+        operationId: String,
+        transition: ServerRegistryTransition?,
+        resubmitRequired: Boolean,
+    ): EnvProxyResponse =
+        normalizedOperationResponse(
+            operationId = operationId,
+            kind = transition?.action?.remoteKind,
+            subjectId = transition?.server?.id,
+            status = "missing",
+            httpStatus = if (resubmitRequired) 202 else 404,
+            publicMessage = if (resubmitRequired) {
+                "deployer에서 작업을 찾지 못했습니다. 같은 작업 id로 요청을 한 번 다시 전송하세요."
+            } else {
+                "deployer에서 작업을 찾지 못했습니다."
+            },
+            resubmitRequired = resubmitRequired,
+        )
+
+    private fun normalizedOperationResponse(
+        operationId: String,
+        kind: String?,
+        subjectId: String?,
+        status: String,
+        httpStatus: Int,
+        publicMessage: String,
+        remoteApplied: Boolean? = null,
+        registryApplied: Boolean? = null,
+        recovered: Boolean? = null,
+        resubmitRequired: Boolean = false,
+    ): EnvProxyResponse {
+        val terminal = status in setOf("succeeded", "failed", "cancelled")
+        val payload = linkedMapOf<String, Any?>(
+            "ok" to (status == "succeeded"),
+            "id" to subjectId,
+            "subjectId" to subjectId,
+            "operationId" to operationId,
+            "kind" to kind,
+            "status" to status,
+            "operationStatus" to status,
+            "httpStatus" to httpStatus,
+            "completed" to terminal,
+            "retryable" to !terminal,
+            "resubmitRequired" to resubmitRequired,
+            "publicMessage" to publicMessage,
+            "message" to publicMessage,
+        )
+        if (remoteApplied != null || registryApplied != null) {
+            payload["remoteApplied"] = remoteApplied
+            payload["registryApplied"] = registryApplied
+        }
+        recovered?.let { payload["recovered"] = it }
+        val gatewayStatus = if (terminal) httpStatus else if (status == "missing" && !resubmitRequired) 404 else 202
+        return json(gatewayStatus, objectMapper.writeValueAsString(payload))
+    }
+
+    private fun defaultPublicMessage(status: String): String =
+        when (status) {
+            "pending" -> "요청이 접수되었습니다."
+            "running" -> "작업을 처리 중입니다."
+            "recovery_required" -> "서버 복구 확인이 필요합니다. 운영 복구가 끝날 때까지 기다려 주세요."
+            "succeeded" -> "서버 작업이 완료되었습니다."
+            "cancelled" -> "서버 작업이 취소되었습니다."
+            else -> "서버 작업에 실패했습니다."
+        }
 
     private fun defaultDeployProject(canonicalId: String): String =
         "opensamguk-s$canonicalId"

@@ -109,8 +109,11 @@ class AdminController(
         deployService.createServer(body).toResponse()
 
     @DeleteMapping("/servers/{serverId}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun deleteServer(@PathVariable serverId: String): ResponseEntity<String> =
-        deployService.deleteServer(serverId).toResponse()
+    fun deleteServer(
+        @PathVariable serverId: String,
+        @RequestBody(required = false) body: String?,
+    ): ResponseEntity<String> =
+        deployService.deleteServer(serverId, body ?: "{}").toResponse()
 
     @PostMapping("/servers/{serverId}/reset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun resetServer(
@@ -118,6 +121,10 @@ class AdminController(
         @RequestBody(required = false) body: String?,
     ): ResponseEntity<String> =
         deployService.resetServer(serverId, body ?: "{}").toResponse()
+
+    @GetMapping("/servers/operations/{operationId}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun serverOperationStatus(@PathVariable operationId: String): ResponseEntity<String> =
+        deployService.operationStatus(operationId).toResponse()
 
     @GetMapping("/scenarios")
     fun scenarios(): ResponseEntity<ScenarioListResponse> =
