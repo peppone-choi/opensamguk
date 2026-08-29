@@ -307,10 +307,11 @@ jobs:
           fi
 
           export OPERATION_DEADLINE=$(( $(date +%s) + 1200 ))
+          CAPABILITY_RESPONSE="$(mktemp)"
           RESET_RESPONSE="$(mktemp)"
           CURL_SHIM_DIR="$(mktemp -d)"
           cleanup_operation_files() {
-            rm -f "$RESET_RESPONSE"
+            rm -f "$CAPABILITY_RESPONSE" "$RESET_RESPONSE"
             rm -rf "$CURL_SHIM_DIR"
           }
           trap cleanup_operation_files EXIT
@@ -331,6 +332,48 @@ jobs:
             'exec timeout --foreground -k 2 "$remaining" docker run --rm -i --network opensamguk-net curlimages/curl:8.10.1 "${args[@]}" --output - >"$output_file"' \
             >"$CURL_SHIM_DIR/curl"
           chmod 700 "$CURL_SHIM_DIR/curl"
+
+          echo "=== Verifying durable deployer operation capability ==="
+          if ! docker run --rm -i --network opensamguk-net curlimages/curl:8.10.1 \
+            --silent --show-error --max-redirs 0 --connect-timeout 5 --max-time 20 \
+            --request GET --output - --write-out '\n%{http_code}' --config - >"$CAPABILITY_RESPONSE" <<EOF
+          url = "http://opensamguk-deployer:9000/operations/$OPERATION_ID"
+          header = "Authorization: Bearer ${DEPLOYER_TOKEN}"
+          EOF
+          then
+            echo "ERROR: durable deployer operation capability probe failed" >&2
+            exit 1
+          fi
+          if ! OPERATION_ID="$OPERATION_ID" python3 - "$CAPABILITY_RESPONSE" <<'PY'
+          import json
+          import os
+          import sys
+
+          try:
+              raw = open(sys.argv[1], encoding="utf-8").read()
+              body, separator, http_status = raw.rpartition("\n")
+              payload = json.loads(body)
+          except (OSError, UnicodeError, json.JSONDecodeError):
+              raise SystemExit(1)
+          if separator != "\n" or http_status != "404":
+              raise SystemExit(1)
+          if not isinstance(payload, dict):
+              raise SystemExit(1)
+          if set(payload) == {"ok", "operationId", "status"}:
+              pass
+          else:
+              raise SystemExit(1)
+          if payload != {
+              "ok": False,
+              "operationId": os.environ["OPERATION_ID"],
+              "status": "not_found",
+          }:
+              raise SystemExit(1)
+          PY
+          then
+            echo "ERROR: deployer does not provide the required durable operation contract; reset was not submitted" >&2
+            exit 1
+          fi
 
           echo "=== Triggering deployer reset for $PUBLIC_SERVER ($PROJECT, $SCENARIO_CODE), operation $OPERATION_ID ==="
           if ! docker run --rm -i --network opensamguk-net curlimages/curl:8.10.1 \

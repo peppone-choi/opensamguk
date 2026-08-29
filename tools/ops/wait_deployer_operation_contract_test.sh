@@ -73,13 +73,39 @@ run_case() {
 
 run_case success_after_recovery_required \
   "{\"operationId\":\"$operation_id\",\"status\":\"pending\",\"publicMessage\":\"body-secret-1\"}
+{\"operationId\":\"$operation_id\",\"status\":\"running\",\"publicMessage\":\"body-secret-running\"}
 {\"operationId\":\"$operation_id\",\"status\":\"recovery_required\",\"publicMessage\":\"body-secret-2\"}
 {\"operationId\":\"$operation_id\",\"status\":\"succeeded\",\"publicMessage\":\"body-secret-3\"}" \
-  0 3
+  0 4
 run_case terminal_failed \
   "{\"operationId\":\"$operation_id\",\"status\":\"failed\",\"publicMessage\":\"body-secret-failed\"}" \
   1 1
 run_case malformed_response '{"operationId":"wrong","status":"succeeded","publicMessage":"body-secret-malformed"}' 1 1
+run_case malformed_json '{not-json' 1 1
 run_case missing_response '{}' 1 1
+
+python3 - "$ROOT/.github/workflows/reset-game-server.yml" <<'PY'
+from pathlib import Path
+import sys
+
+workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
+generated = workflow.find('export OPERATION_ID=')
+probe = workflow.find('/operations/$OPERATION_ID')
+exact_not_found = workflow.find('set(payload) == {"ok", "operationId", "status"}')
+mutation = workflow.find('/servers/reset')
+if min(generated, probe, exact_not_found, mutation) < 0:
+    raise SystemExit("reset workflow is missing the durable capability probe contract")
+if not (generated < probe < exact_not_found < mutation):
+    raise SystemExit("reset workflow capability probe must precede the destructive reset POST")
+for required in (
+    '--request GET',
+    'http_status != "404"',
+    '"ok": False',
+    '"status": "not_found"',
+    'deployer does not provide the required durable operation contract; reset was not submitted',
+):
+    if required not in workflow[generated:mutation]:
+        raise SystemExit(f"reset capability probe is missing fail-closed contract marker: {required}")
+PY
 
 echo "wait_deployer_operation contract tests: PASS"
