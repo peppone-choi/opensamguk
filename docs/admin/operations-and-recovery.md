@@ -49,6 +49,29 @@ reset/delete는 `blocked`이며, 관리자 화면이나 workflow의 존재를 �
 
 local unit, Testcontainers와 Docker smoke는 production 네트워크·runner·DNS·실데이터 전환을 증명하지 않습니다.
 
+## 활성 월드 지도 정체성 복구
+
+한 번 seed된 월드에서 `mapName`은 불변의 숫자 city-id 공간을 식별합니다. 생성된 도시의 수나 순서를
+바꾸려면 새 버전 지도 키를 사용합니다. 기존 월드를 새 키로 조용히 옮기거나 ordinal id 추측으로 고치지
+않습니다.
+
+`han-780-v1`는 과거 780성 한나라 월드의 호환 지도 키입니다. V45는 활성 지도 키가 `han`인 월드만
+검사하며, 정확히 `1..780`인 city-id 모양만 `han-780-v1`로 고정합니다. 정확히 `1..774`인 기존 한나라
+월드는 변경하지 않습니다. 그 밖의 city 수·최솟값·최댓값 모양은 모호하므로 fail-closed로 중단하며,
+ordinal id를 추측해 수리하지 않습니다.
+
+V45 또는 그 앱 버전을 production에 적용하기 전에는 승인된 DB backup과 restore runbook 증거가 반드시
+있어야 합니다. 적용 뒤에는 다음 네 신호를 두 번의 관측으로 확인합니다.
+
+- engine health가 `UP`
+- `successfulTicks`가 증가
+- `consecutiveFailures`가 `0`
+- public game time이 전진
+
+V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 전 DB backup을 함께 복원하는 승인된
+경로만 사용합니다. `ng_games.map`, city/gameplay id를 수동으로 바꾸거나 V45·validator 조건을 약화하지
+않습니다.
+
 ## 대표 장애 대응
 
 ### 서비스는 online인데 화면이 502
