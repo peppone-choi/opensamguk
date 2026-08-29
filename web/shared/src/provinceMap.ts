@@ -502,7 +502,6 @@ export function bindCompleteProvinceOwnership(
 export function composeProvincePixels(
   map: ProvinceIdentityMap,
   binding: ProvinceOwnershipBinding,
-  alpha = 96,
 ): Uint8ClampedArray {
   const pixels = new Uint8ClampedArray(map.width * map.height * 4);
   const conflicts = new Set(binding.conflicts);
@@ -515,7 +514,7 @@ export function composeProvincePixels(
     pixels[offset] = color.rgb[0];
     pixels[offset + 1] = color.rgb[1];
     pixels[offset + 2] = color.rgb[2];
-    pixels[offset + 3] = alpha;
+    pixels[offset + 3] = 255;
   }
   return pixels;
 }
