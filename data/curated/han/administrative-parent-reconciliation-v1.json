@@ -290,6 +290,14 @@
       "path": "data/curated/han/administrative-place-bindings-v1.json",
       "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
     },
+    "data/curated/han/administrative-temporal-adjudications-v1.json": {
+      "path": "data/curated/han/administrative-temporal-adjudications-v1.json",
+      "sha256": "9a9b817adb972aacc6b36913ad2139f3c01c6be2b08e1fbdd8673e8f829cb481"
+    },
+    "data/curated/han/administrative-units.json": {
+      "path": "data/curated/han/administrative-units.json",
+      "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
+    },
     "data/curated/han/route-node-location-adjudications-v1.json": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
       "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a"
@@ -316,7 +324,7 @@
     },
     "data/map/han-administrative-history.json": {
       "path": "data/map/han-administrative-history.json",
-      "sha256": "3adf44e8d4e3291d2dea49d7953c40b1bbe00ab8aa8c3fd24ec6a320094905f2"
+      "sha256": "3247c723d6f7fa301343585f37697bf40e3e2522ff07bb2d70e838fafd1510b8"
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
@@ -326,7 +334,7 @@
   "ledgerId": "han-administrative-parent-reconciliation-v1",
   "policy": {
     "approvalIdentityKey": "cityId",
-    "approvalRule": "APPROVED route-node selection physicalPlaceRef terminal exactly equals cities[].id",
+    "approvalRule": "reviewed exact physicalPlaceRef terminal exactly equals cities[].id",
     "diagnosticCategoriesAreNotHistoricalAdjudications": true,
     "forbiddenApprovalInputs": [
       "junName",
@@ -32571,9 +32579,23 @@
       }
     },
     {
+      "approvalEvidence": {
+        "activeParentId": "commandery:hhs:110:14",
+        "forbiddenIdentities": [
+          "hhs:111:東郡:004"
+        ],
+        "inputs": [
+          "administrativeTemporalAdjudication.reviewState",
+          "administrativeTemporalAdjudication.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "REVIEWED_TEMPORAL_ADMINISTRATIVE_ADJUDICATION",
+        "physicalPlaceRef": "chgis:v6:cnty:85083"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:111:東郡:014",
       "cellCount": 15,
       "cityId": "85083",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -32589,20 +32611,7 @@
           23
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "82304",
-            "candidateAdministrativeGroupId": "hhs-group:111:東郡",
-            "candidateAdministrativeUnitId": "hhs:111:東郡:004",
-            "squaredGridDistance": 1
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_TEMPORAL_BINDING",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:111:東郡"
@@ -47251,21 +47260,21 @@
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 20987,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 46070,
-      "EXACT_APPROVED": 199859,
-      "PROPOSED_GEOMETRIC": 65998
+      "EXACT_APPROVED": 199874,
+      "PROPOSED_GEOMETRIC": 65983
     },
     "decisionRowCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 41,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-      "EXACT_APPROVED": 778,
-      "PROPOSED_GEOMETRIC": 279
+      "EXACT_APPROVED": 779,
+      "PROPOSED_GEOMETRIC": 278
     },
     "directTerritoryReview": {
       "pendingCandidateJunCount": 26,
       "rejectedSourcedGroupJunCount": 6
     },
-    "exactApprovedCellCount": 199859,
-    "exactApprovedRowCount": 778,
+    "exactApprovedCellCount": 199874,
+    "exactApprovedRowCount": 779,
     "geometryDiagnostics": {
       "distanceTies": {
         "cellCount": 349,
@@ -47276,17 +47285,17 @@
         "rowCount": 116
       },
       "singleGroupJun": {
-        "cellCount": 45843,
-        "rowCount": 163
+        "cellCount": 45828,
+        "rowCount": 162
       },
       "uniqueNearest": {
-        "cellCount": 65649,
-        "rowCount": 274
+        "cellCount": 65634,
+        "rowCount": 273
       }
     },
     "landCellCount": 332914,
     "landOwnerRowCount": 1138,
-    "unresolvedCellCount": 133055,
-    "unresolvedRowCount": 360
+    "unresolvedCellCount": 133040,
+    "unresolvedRowCount": 359
   }
 }

@@ -83,6 +83,170 @@ class HanParentReconciliationTest(unittest.TestCase):
             row["approvalEvidence"]["inputs"],
         )
 
+    def test_weiguo_uses_reviewed_exact_binding_not_nearest_dunqiu_geometry(self):
+        """Removing the reviewed 85083 override would regress to the 頓丘 geometry proposal."""
+        row = self.rows["85083"]
+
+        self.assertEqual("EXACT_APPROVED", row["decision"])
+        self.assertEqual("hhs:111:東郡:014", row["approvedParentAdministrativeUnitId"])
+        self.assertEqual(
+            "chgis:v6:cnty:85083",
+            row["approvalEvidence"]["physicalPlaceRef"],
+        )
+        self.assertEqual(
+            "REVIEWED_TEMPORAL_ADMINISTRATIVE_ADJUDICATION",
+            row["approvalEvidence"]["method"],
+        )
+
+    def test_temporal_binding_joins_catalog_binding_and_history_ids_exactly(self):
+        mutations = [
+            ("administrativeUnitId", "hhs:111:東郡:999"),
+            ("historyChildId", "county:hhs:111:24:4"),
+            ("physicalPlaceRef", "chgis:v6:cnty:not-decimal"),
+            ("administrativeUnitId", "hhs:111:東郡:14"),
+            ("historyChildId", "county:hhs:111:24:014"),
+        ]
+        for field, value in mutations:
+            with self.subTest(field=field):
+                documents = copy.deepcopy(self.documents)
+                documents[
+                    "data/curated/han/administrative-temporal-adjudications-v1.json"
+                ]["adjudications"][0][field] = value
+                with self.assertRaisesRegex(
+                    ValueError, "catalog|binding|history|identity|stable ID"
+                ):
+                    self.module.build_ledger(documents, self.input_records)
+
+    def test_temporal_contract_rejects_schema_drift_and_weak_evidence(self):
+        temporal_path = "data/curated/han/administrative-temporal-adjudications-v1.json"
+        mutations = [
+            ("root extra", lambda document: document.update(extra=True)),
+            (
+                "row extra",
+                lambda document: document["adjudications"][0].update(extra=True),
+            ),
+            (
+                "evidence extra",
+                lambda document: document["adjudications"][0]["identityEvidence"].update(
+                    extra=True
+                ),
+            ),
+            (
+                "interval extra",
+                lambda document: document["adjudications"][0]["parentIntervals"][0].update(
+                    extra=True
+                ),
+            ),
+            (
+                "empty quote",
+                lambda document: document["adjudications"][0]["identityEvidence"].update(
+                    quote=""
+                ),
+            ),
+            (
+                "boolean line",
+                lambda document: document["adjudications"][0]["identityEvidence"].update(
+                    line=True
+                ),
+            ),
+            (
+                "invalid hash",
+                lambda document: document["adjudications"][0]["identityEvidence"].update(
+                    snapshotSha256="0"
+                ),
+            ),
+            (
+                "valid but unpinned hash",
+                lambda document: document["adjudications"][0]["identityEvidence"].update(
+                    snapshotSha256="0" * 64
+                ),
+            ),
+        ]
+        for label, mutate in mutations:
+            with self.subTest(label=label):
+                documents = copy.deepcopy(self.documents)
+                mutate(documents[temporal_path])
+                with self.assertRaisesRegex(
+                    ValueError, "schema|keys|Evidence|evidence|line|hash|nonempty|unpinned"
+                ):
+                    self.module.build_ledger(documents, self.input_records)
+
+    def test_temporal_evidence_rejects_coordinated_self_attestation(self):
+        temporal_path = "data/curated/han/administrative-temporal-adjudications-v1.json"
+        mutations = [
+            (
+                "coordinated fake witness",
+                lambda document: (
+                    document["sourceWitnesses"][1].update(
+                        corpusPath="data/corpus/fake.txt",
+                        sourceUrl="https://example.invalid/fake",
+                        snapshotSha256="0" * 64,
+                    ),
+                    document["adjudications"][0]["parentIntervals"][1].update(
+                        corpusPath="data/corpus/fake.txt",
+                        sourceUrl="https://example.invalid/fake",
+                        snapshotSha256="0" * 64,
+                        quote="fake but nonempty",
+                    ),
+                ),
+            ),
+            (
+                "generic identity claim",
+                lambda document: document["adjudications"][0]["identityEvidence"].update(
+                    claim="generic nonempty claim"
+                ),
+            ),
+            (
+                "weak identity quote",
+                lambda document: document["adjudications"][0]["identityEvidence"].update(
+                    quote="衞 fake but still names the child"
+                ),
+            ),
+        ]
+        for label, mutate in mutations:
+            with self.subTest(label=label):
+                documents = copy.deepcopy(self.documents)
+                mutate(documents[temporal_path])
+                with self.assertRaisesRegex(ValueError, "reviewed|witness|quote|claim|evidence"):
+                    self.module.build_ledger(documents, self.input_records)
+
+    def test_temporal_intervals_and_forbidden_ids_are_closed_contracts(self):
+        temporal_path = "data/curated/han/administrative-temporal-adjudications-v1.json"
+        mutations = [
+            (
+                "zero width",
+                lambda row: row["parentIntervals"][0].update(effectiveFrom=212),
+            ),
+            (
+                "gap",
+                lambda row: row["parentIntervals"][1].update(effectiveFrom=213),
+            ),
+            (
+                "empty forbidden",
+                lambda row: row.update(forbiddenIdentities=[]),
+            ),
+            (
+                "duplicate forbidden",
+                lambda row: row.update(
+                    forbiddenIdentities=["hhs:111:東郡:004", "hhs:111:東郡:004"]
+                ),
+            ),
+            (
+                "unknown forbidden",
+                lambda row: row.update(forbiddenIdentities=["hhs:111:東郡:999"]),
+            ),
+            (
+                "unrelated known forbidden",
+                lambda row: row.update(forbiddenIdentities=["hhs:111:東郡:003"]),
+            ),
+        ]
+        for label, mutate in mutations:
+            with self.subTest(label=label):
+                documents = copy.deepcopy(self.documents)
+                mutate(documents[temporal_path]["adjudications"][0])
+                with self.assertRaisesRegex(ValueError, "interval|contiguous|forbidden|identity"):
+                    self.module.build_ledger(documents, self.input_records)
+
     def test_complete_exact_approval_mapping_equals_independently_joined_selection(self):
         selection = self.documents["data/curated/han/route-node-selection-v1.json"]
         tile_city_ids = {
@@ -98,17 +262,27 @@ class HanParentReconciliationTest(unittest.TestCase):
                     "physicalPlaceRef": route_node["physicalPlaceRef"],
                     "routeNodeKey": route_node["routeNodeKey"],
                 }
+        temporal = self.documents[
+            "data/curated/han/administrative-temporal-adjudications-v1.json"
+        ]
+        for adjudication in temporal["adjudications"]:
+            terminal = adjudication["physicalPlaceRef"].rsplit(":", 1)[-1]
+            expected[terminal] = {
+                "administrativeUnitId": adjudication["administrativeUnitId"],
+                "physicalPlaceRef": adjudication["physicalPlaceRef"],
+                "routeNodeKey": None,
+            }
         actual = {
             row["cityId"]: {
                 "administrativeUnitId": row["approvedParentAdministrativeUnitId"],
                 "physicalPlaceRef": row["approvalEvidence"]["physicalPlaceRef"],
-                "routeNodeKey": row["approvalEvidence"]["routeNodeKey"],
+                "routeNodeKey": row["approvalEvidence"].get("routeNodeKey"),
             }
             for row in self.ledger["rows"]
             if row["decision"] == "EXACT_APPROVED"
         }
 
-        self.assertEqual(778, len(expected))
+        self.assertEqual(779, len(expected))
         self.assertEqual(expected, actual)
 
     def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
@@ -125,6 +299,10 @@ class HanParentReconciliationTest(unittest.TestCase):
             ("bindings id", "data/curated/han/administrative-place-bindings-v1.json", ("catalogId",), "wrong"),
             ("bindings year", "data/curated/han/administrative-place-bindings-v1.json", ("sourceYear",), 221),
             ("bindings join status", "data/curated/han/administrative-place-bindings-v1.json", ("administrativeUnits", 0, "joinStatus"), "UNKNOWN"),
+            ("temporal schema", "data/curated/han/administrative-temporal-adjudications-v1.json", ("schemaVersion",), 999),
+            ("temporal id", "data/curated/han/administrative-temporal-adjudications-v1.json", ("adjudicationSetId",), "wrong"),
+            ("temporal year", "data/curated/han/administrative-temporal-adjudications-v1.json", ("referenceYear",), 221),
+            ("temporal state", "data/curated/han/administrative-temporal-adjudications-v1.json", ("adjudications", 0, "reviewState"), "UNKNOWN"),
             ("adjudication schema", "data/curated/han/route-node-location-adjudications-v1.json", ("schemaVersion",), 999),
             ("adjudication id", "data/curated/han/route-node-location-adjudications-v1.json", ("adjudicationSetId",), "wrong"),
             ("adjudication state", "data/curated/han/route-node-location-adjudications-v1.json", ("adjudications", 0, "reviewState"), "UNKNOWN"),
@@ -209,8 +387,8 @@ class HanParentReconciliationTest(unittest.TestCase):
         self.assertEqual(332_914, sum(row["cellCount"] for row in self.ledger["rows"]))
         self.assertEqual(
             {
-                "EXACT_APPROVED": 778,
-                "PROPOSED_GEOMETRIC": 279,
+                "EXACT_APPROVED": 779,
+                "PROPOSED_GEOMETRIC": 278,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 41,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
             },
@@ -218,17 +396,17 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 199_859,
-                "PROPOSED_GEOMETRIC": 65_998,
+                "EXACT_APPROVED": 199_874,
+                "PROPOSED_GEOMETRIC": 65_983,
                 "BLOCKED_DIRECT_TERRITORY_REVIEW": 20_987,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 46_070,
             },
             dict(decision_cells),
         )
-        self.assertEqual(360, summary["unresolvedRowCount"])
-        self.assertEqual(133_055, summary["unresolvedCellCount"])
+        self.assertEqual(359, summary["unresolvedRowCount"])
+        self.assertEqual(133_040, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 163, "cellCount": 45_843},
+            {"rowCount": 162, "cellCount": 45_828},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
@@ -260,7 +438,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            {"rowCount": 274, "cellCount": 65_649},
+            {"rowCount": 273, "cellCount": 65_634},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(

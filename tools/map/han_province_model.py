@@ -454,6 +454,7 @@ def load_administrative_history(path: str | Path) -> AdministrativeHistory:
     if not isinstance(raw_relations, list):
         raise ValueError("relations must be an array")
     relations: list[EffectiveRelation] = list(catalog_relations)
+    catalog_relation_count = len(relations)
     for index, raw_relation in enumerate(raw_relations):
         label = f"relations[{index}]"
         if not isinstance(raw_relation, dict):
@@ -465,6 +466,20 @@ def load_administrative_history(path: str | Path) -> AdministrativeHistory:
         if parent_id not in units_by_id:
             raise ValueError(f"{label} references unsupported parent: {parent_id}")
         effective_from, effective_to = _range_from(raw_relation, label)
+        for relation_index in range(catalog_relation_count):
+            inherited = relations[relation_index]
+            if (
+                inherited.child_id == child_id
+                and inherited.parent_id != parent_id
+                and inherited.effective_from < effective_from
+                and inherited.effective_to is None
+            ):
+                relations[relation_index] = EffectiveRelation(
+                    inherited.child_id,
+                    inherited.parent_id,
+                    inherited.effective_from,
+                    effective_from,
+                )
         relations.append(EffectiveRelation(child_id, parent_id, effective_from, effective_to))
 
     raw_seats = payload.get("seats")

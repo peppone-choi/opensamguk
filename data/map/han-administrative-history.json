@@ -4,7 +4,14 @@
   "catalogReference": "../curated/han/administrative-units.json",
   "requireCountySeats": false,
   "units": [],
-  "relations": [],
+  "relations": [
+    {
+      "childId": "county:hhs:111:24:14",
+      "parentId": "commandery:hhs:110:14",
+      "effectiveFrom": 212,
+      "effectiveTo": null
+    }
+  ],
   "seats": [],
   "roles": []
 }

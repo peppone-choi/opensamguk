@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "adjudicationSetId": "han-administrative-temporal-adjudications-v1",
+  "referenceYear": 220,
+  "sourceWitnesses": [
+    {
+      "corpusPath": "data/corpus/hhs-111.txt",
+      "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷111",
+      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476"
+    },
+    {
+      "corpusPath": "data/corpus/sgz-01.txt",
+      "sourceUrl": "https://zh.wikisource.org/wiki/三國志/卷01",
+      "snapshotSha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d"
+    }
+  ],
+  "adjudications": [
+    {
+      "physicalPlaceRef": "chgis:v6:cnty:85083",
+      "administrativeUnitId": "hhs:111:東郡:014",
+      "historyChildId": "county:hhs:111:24:14",
+      "reviewState": "APPROVED_EXACT_TEMPORAL_BINDING",
+      "identityEvidence": {
+        "corpusPath": "data/corpus/hhs-111.txt",
+        "line": 81,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷111",
+        "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+        "quote": "〖衞〗公國。本觀故國，姚姓，光武更名。",
+        "claim": "衞公國 is the county-level HHS identity represented by CHGIS 85083 衛國"
+      },
+      "parentIntervals": [
+        {
+          "parentId": "commandery:hhs:111:24",
+          "effectiveFrom": 184,
+          "effectiveTo": 212,
+          "corpusPath": "data/corpus/hhs-111.txt",
+          "line": 51,
+          "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷111",
+          "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "quote": "東郡"
+        },
+        {
+          "parentId": "commandery:hhs:110:14",
+          "effectiveFrom": 212,
+          "effectiveTo": null,
+          "corpusPath": "data/corpus/sgz-01.txt",
+          "line": 166,
+          "sourceUrl": "https://zh.wikisource.org/wiki/三國志/卷01",
+          "snapshotSha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d",
+          "quote": "割河內之蕩陰、朝歌、林慮，東郡之衞國、頓丘、東武陽、發干…以益魏郡"
+        }
+      ],
+      "forbiddenIdentities": [
+        "hhs:111:東郡:004"
+      ]
+    }
+  ]
+}

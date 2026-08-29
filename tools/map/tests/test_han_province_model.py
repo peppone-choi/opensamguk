@@ -14,6 +14,9 @@ from tools.map.han_province_model import (
 )
 
 
+ROOT = Path(__file__).resolve().parents[3]
+
+
 def evidence(claim: str = "site-attested") -> dict[str, str]:
     return {
         "book": "三國志",
@@ -198,6 +201,23 @@ class HanProvinceModelTest(unittest.TestCase):
 
         self.assertEqual(resolve_relations(history.relations, 219)["province:1"], "county:a")
         self.assertEqual(resolve_relations(history.relations, 220)["province:1"], "county:b")
+
+    def test_weiguo_moves_from_east_commandery_to_wei_commandery_in_212(self) -> None:
+        """Keeping the inherited HHS parent forever would leave 衞 in 東郡 at 220."""
+        history = load_administrative_history(ROOT / "data/map/han-administrative-history.json")
+
+        self.assertEqual(
+            "commandery:hhs:111:24",
+            resolve_relations(history.relations, 211)["county:hhs:111:24:14"],
+        )
+        self.assertEqual(
+            "commandery:hhs:110:14",
+            resolve_relations(history.relations, 212)["county:hhs:111:24:14"],
+        )
+        self.assertEqual(
+            "commandery:hhs:110:14",
+            resolve_relations(history.relations, 220)["county:hhs:111:24:14"],
+        )
 
     def test_catalog_reference_preserves_source_order_as_stable_administrative_ids(self) -> None:
         """Each covered child inherits its group's reviewed evidence without display-name synthesis."""

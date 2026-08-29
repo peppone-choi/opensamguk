@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -18,7 +19,9 @@ INPUT_PATHS = {
         "data/map/external-places.json",
         "data/curated/han/route-node-review-policy-v1.json",
         "data/curated/han/route-node-selection-v1.json",
+        "data/curated/han/administrative-units.json",
         "data/curated/han/administrative-place-bindings-v1.json",
+        "data/curated/han/administrative-temporal-adjudications-v1.json",
         "data/curated/han/route-node-location-adjudications-v1.json",
         "data/curated/han/route-node-selection-candidates-v1.json",
         "data/curated/han/route-node-validation-contract-v1.json",
@@ -26,6 +29,72 @@ INPUT_PATHS = {
     )
 }
 REFERENCE_YEAR = 220
+TEMPORAL_ROOT_KEYS = {
+    "schemaVersion", "adjudicationSetId", "referenceYear", "sourceWitnesses", "adjudications"
+}
+TEMPORAL_SOURCE_WITNESS_KEYS = {"corpusPath", "sourceUrl", "snapshotSha256"}
+TEMPORAL_ROW_KEYS = {
+    "physicalPlaceRef", "administrativeUnitId", "historyChildId", "reviewState",
+    "identityEvidence", "parentIntervals", "forbiddenIdentities",
+}
+TEMPORAL_IDENTITY_EVIDENCE_KEYS = {
+    "corpusPath", "line", "sourceUrl", "snapshotSha256", "quote", "claim",
+}
+TEMPORAL_INTERVAL_KEYS = {
+    "parentId", "effectiveFrom", "effectiveTo", "corpusPath", "line",
+    "sourceUrl", "snapshotSha256", "quote",
+}
+PHYSICAL_PLACE_REF_RE = re.compile(r"chgis:v6:cnty:[1-9][0-9]*\Z")
+ADMINISTRATIVE_UNIT_ID_RE = re.compile(r"hhs:[0-9]+:[^:]+:[0-9]{3}\Z")
+HISTORY_CHILD_ID_RE = re.compile(r"county:hhs:[0-9]+:[1-9][0-9]*:[1-9][0-9]*\Z")
+HISTORY_PARENT_ID_RE = re.compile(r"(?:commandery|kingdom):hhs:[0-9]+:[1-9][0-9]*\Z")
+EXPECTED_TEMPORAL_SOURCE_WITNESSES = (
+    (
+        "data/corpus/hhs-111.txt",
+        "https://zh.wikisource.org/wiki/後漢書/卷111",
+        "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+    ),
+    (
+        "data/corpus/sgz-01.txt",
+        "https://zh.wikisource.org/wiki/三國志/卷01",
+        "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d",
+    ),
+)
+EXPECTED_TEMPORAL_REVIEWS = {
+    "chgis:v6:cnty:85083": {
+        "identityEvidence": {
+            "corpusPath": "data/corpus/hhs-111.txt",
+            "line": 81,
+            "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷111",
+            "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+            "quote": "〖衞〗公國。本觀故國，姚姓，光武更名。",
+            "claim": "衞公國 is the county-level HHS identity represented by CHGIS 85083 衛國",
+        },
+        "parentIntervals": [
+            {
+                "parentId": "commandery:hhs:111:24",
+                "effectiveFrom": 184,
+                "effectiveTo": 212,
+                "corpusPath": "data/corpus/hhs-111.txt",
+                "line": 51,
+                "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷111",
+                "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+                "quote": "東郡",
+            },
+            {
+                "parentId": "commandery:hhs:110:14",
+                "effectiveFrom": 212,
+                "effectiveTo": None,
+                "corpusPath": "data/corpus/sgz-01.txt",
+                "line": 166,
+                "sourceUrl": "https://zh.wikisource.org/wiki/三國志/卷01",
+                "snapshotSha256": "1001a34d5ae46667f6d9493206ed078db4d08aec2684a8d8e8f6c677dbe5fa3d",
+                "quote": "割河內之蕩陰、朝歌、林慮，東郡之衞國、頓丘、東武陽、發干…以益魏郡",
+            },
+        ],
+        "forbiddenIdentities": ["hhs:111:東郡:004"],
+    }
+}
 FORBIDDEN_APPROVAL_INPUTS = (
     "junName",
     "junArrayIndex",
@@ -166,6 +235,41 @@ def _require_equal(actual: object, expected: object, label: str) -> None:
         raise ValueError(f"input contract mismatch for {label}: {actual!r} != {expected!r}")
 
 
+def _require_exact_keys(value: object, expected: set[str], label: str) -> dict:
+    if not isinstance(value, dict) or set(value) != expected:
+        actual = sorted(value) if isinstance(value, dict) else type(value).__name__
+        raise ValueError(f"schema exact keys mismatch for {label}: {actual!r}")
+    return value
+
+
+def _require_nonempty_string(value: object, label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{label} requires a nonempty string")
+    return value
+
+
+def _validate_temporal_evidence(
+    evidence: object, expected_keys: set[str], label: str
+) -> dict:
+    evidence = _require_exact_keys(evidence, expected_keys, label)
+    for key in {"corpusPath", "sourceUrl", "snapshotSha256", "quote"} | (
+        {"claim"} if "claim" in expected_keys else set()
+    ):
+        _require_nonempty_string(evidence.get(key), f"{label}.{key}")
+    line = evidence.get("line")
+    if type(line) is not int or line <= 0:
+        raise ValueError(f"{label}.line requires a positive integer")
+    corpus_path = evidence["corpusPath"]
+    if not re.fullmatch(r"data/corpus/[a-z0-9-]+\.txt", corpus_path):
+        raise ValueError(f"{label}.corpusPath has invalid source identity")
+    if not evidence["sourceUrl"].startswith("https://"):
+        raise ValueError(f"{label}.sourceUrl has invalid source identity")
+    digest = evidence["snapshotSha256"]
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise ValueError(f"{label}.snapshotSha256 has invalid hash")
+    return evidence
+
+
 def _require_exact_membership(
     actual: object,
     expected: set[object],
@@ -255,6 +359,7 @@ def _validate_review_chain(
     policy = documents["data/curated/han/route-node-review-policy-v1.json"]
     selection = documents["data/curated/han/route-node-selection-v1.json"]
     bindings = documents["data/curated/han/administrative-place-bindings-v1.json"]
+    temporal = documents["data/curated/han/administrative-temporal-adjudications-v1.json"]
     adjudications = documents["data/curated/han/route-node-location-adjudications-v1.json"]
     candidates = documents["data/curated/han/route-node-selection-candidates-v1.json"]
     contract = documents["data/curated/han/route-node-validation-contract-v1.json"]
@@ -270,6 +375,13 @@ def _validate_review_chain(
     _require_equal(bindings.get("schemaVersion"), 1, "bindings schemaVersion")
     _require_equal(bindings.get("catalogId"), "hhs-junguozhi-administrative-units-v1", "bindings identity")
     _require_equal(bindings.get("sourceYear"), REFERENCE_YEAR, "bindings source year")
+    _require_equal(temporal.get("schemaVersion"), 1, "temporal adjudications schemaVersion")
+    _require_equal(
+        temporal.get("adjudicationSetId"),
+        "han-administrative-temporal-adjudications-v1",
+        "temporal adjudications identity",
+    )
+    _require_equal(temporal.get("referenceYear"), REFERENCE_YEAR, "temporal adjudications year")
     _require_equal(adjudications.get("schemaVersion"), 1, "adjudications schemaVersion")
     _require_equal(
         adjudications.get("adjudicationSetId"),
@@ -395,6 +507,12 @@ def _validate_review_chain(
     _require_closed_enum(external.get("places"), "conf", {"DISPUTED", "IDENTIFIED"}, "external places")
     _require_closed_enum(external.get("places"), "kind", {"COMMANDERY", "EXTERNAL_PLACE", "KINGDOM"}, "external places")
     _require_closed_enum(bindings.get("administrativeUnits"), "joinStatus", {"AMBIGUOUS_POINT", "NO_COORDINATE_CANDIDATE", "RESOLVED_POINT", "SOURCE_PLACEHOLDER"}, "administrative bindings")
+    _require_closed_enum(
+        temporal.get("adjudications"),
+        "reviewState",
+        {"APPROVED_EXACT_TEMPORAL_BINDING"},
+        "temporal adjudications",
+    )
     _require_closed_enum(adjudications.get("adjudications"), "reviewState", {"APPROVED_FOR_SELECTION", "REJECTED_FALSE_HOMONYM"}, "location adjudications")
     _require_closed_enum(adjudications.get("adjudications"), "rationaleCode", {"FALSE_HOMONYM_OUTSIDE_CANONICAL_GROUP", "GROUP_GEOGRAPHY_AND_TEMPORAL_RECORD_REVIEW", "HISTORICAL_LOCATION_CORRECTION"}, "location adjudications")
     _require_closed_enum(candidates.get("candidates"), "origin", {"CURRENT_780", "HHS_REPLACEMENT_POOL"}, "route-node candidates")
@@ -425,6 +543,215 @@ def _validate_review_chain(
         "approved route-node location adjudication",
     )
     _validate_embedded_hash_edges(documents, input_records)
+
+
+def _catalog_binding_context(catalog: dict, bindings: dict) -> tuple[dict[str, dict], set[str]]:
+    raw_groups = catalog.get("groups")
+    binding_rows = bindings.get("administrativeUnits")
+    if not isinstance(raw_groups, list) or not isinstance(binding_rows, list):
+        raise ValueError("catalog/bindings require administrative identity rows")
+    catalog_by_administrative_id = {}
+    for group_index, group in enumerate(raw_groups, start=1):
+        if not isinstance(group, dict) or not isinstance(group.get("units"), list):
+            raise ValueError("catalog group identity must be an object with units")
+        volume = group.get("sourceVolume")
+        canonical_group = group.get("canonicalGroup")
+        group_type = group.get("groupType")
+        if type(volume) is not int or not isinstance(canonical_group, str) or group_type not in {
+            "COMMANDERY", "KINGDOM"
+        }:
+            raise ValueError("catalog group identity is invalid")
+        parent_prefix = group_type.lower()
+        parent_id = f"{parent_prefix}:hhs:{volume}:{group_index}"
+        for child_index, child in enumerate(group["units"], start=1):
+            if not isinstance(child, dict):
+                raise ValueError("catalog child identity must be an object")
+            ordinal = child.get("ordinal")
+            if ordinal != child_index:
+                raise ValueError("catalog child identity ordinal mismatch")
+            identity = {
+                "sourceVolume": volume,
+                "canonicalGroup": canonical_group,
+                "ordinal": ordinal,
+            }
+            administrative_id = f"hhs:{volume}:{canonical_group}:{ordinal:03d}"
+            if administrative_id in catalog_by_administrative_id:
+                raise ValueError("duplicate catalog administrative identity")
+            catalog_by_administrative_id[administrative_id] = {
+                "identity": identity,
+                "historyChildId": f"county:hhs:{volume}:{group_index}:{ordinal}",
+                "inheritedParentId": parent_id,
+                "sourceName": child.get("sourceName"),
+                "sourceCitation": child.get("sourceCitation"),
+            }
+
+    binding_by_id = {}
+    for row in binding_rows:
+        if not isinstance(row, dict):
+            raise ValueError("binding administrative identity must be an object")
+        administrative_id = row.get("administrativeUnitId")
+        if not isinstance(administrative_id, str) or not ADMINISTRATIVE_UNIT_ID_RE.fullmatch(
+            administrative_id
+        ):
+            raise ValueError("binding administrative identity has invalid stable ID")
+        if administrative_id in binding_by_id:
+            raise ValueError("duplicate binding administrative identity")
+        binding_by_id[administrative_id] = row
+
+    return catalog_by_administrative_id, set(binding_by_id)
+
+
+def _temporal_adjudication_context(
+    document: dict, catalog: dict, bindings: dict
+) -> dict[str, dict]:
+    _require_exact_keys(document, TEMPORAL_ROOT_KEYS, "temporal adjudications root")
+    raw_witnesses = document.get("sourceWitnesses")
+    if not isinstance(raw_witnesses, list) or not raw_witnesses:
+        raise ValueError("temporal source evidence witnesses must be a nonempty array")
+    witnesses = set()
+    normalized_witnesses = []
+    for index, raw_witness in enumerate(raw_witnesses):
+        label = f"temporal sourceWitnesses[{index}]"
+        witness = _require_exact_keys(raw_witness, TEMPORAL_SOURCE_WITNESS_KEYS, label)
+        for key in TEMPORAL_SOURCE_WITNESS_KEYS:
+            _require_nonempty_string(witness.get(key), f"{label}.{key}")
+        if not re.fullmatch(r"data/corpus/[a-z0-9-]+\.txt", witness["corpusPath"]):
+            raise ValueError(f"{label}.corpusPath has invalid source identity")
+        if not witness["sourceUrl"].startswith("https://"):
+            raise ValueError(f"{label}.sourceUrl has invalid source identity")
+        if not re.fullmatch(r"[0-9a-f]{64}", witness["snapshotSha256"]):
+            raise ValueError(f"{label}.snapshotSha256 has invalid hash")
+        identity = tuple(witness[key] for key in ("corpusPath", "sourceUrl", "snapshotSha256"))
+        if identity in witnesses:
+            raise ValueError("duplicate temporal source evidence witness")
+        witnesses.add(identity)
+        normalized_witnesses.append(identity)
+    if tuple(normalized_witnesses) != EXPECTED_TEMPORAL_SOURCE_WITNESSES:
+        raise ValueError("temporal source witnesses must match the exact reviewed source contract")
+    rows = document.get("adjudications")
+    if not isinstance(rows, list) or not rows:
+        raise ValueError("temporal adjudications must contain reviewed rows")
+    catalog_by_id, known_binding_ids = _catalog_binding_context(catalog, bindings)
+    binding_by_id = {
+        row["administrativeUnitId"]: row for row in bindings["administrativeUnits"]
+    }
+    known_parent_ids = {
+        value["inheritedParentId"] for value in catalog_by_id.values()
+    }
+    by_city_id = {}
+    for row_index, row in enumerate(rows):
+        label = f"temporal adjudications[{row_index}]"
+        row = _require_exact_keys(row, TEMPORAL_ROW_KEYS, label)
+        physical_ref = row.get("physicalPlaceRef")
+        administrative_unit_id = row.get("administrativeUnitId")
+        history_child_id = row.get("historyChildId")
+        evidence = row.get("identityEvidence")
+        intervals = row.get("parentIntervals")
+        forbidden = row.get("forbiddenIdentities")
+        if not isinstance(physical_ref, str) or not PHYSICAL_PLACE_REF_RE.fullmatch(physical_ref):
+            raise ValueError("temporal adjudication requires a CHGIS county stable ID")
+        if not isinstance(administrative_unit_id, str) or not ADMINISTRATIVE_UNIT_ID_RE.fullmatch(
+            administrative_unit_id
+        ):
+            raise ValueError("temporal adjudication requires an HHS administrative stable ID")
+        if not isinstance(history_child_id, str) or not HISTORY_CHILD_ID_RE.fullmatch(history_child_id):
+            raise ValueError("temporal adjudication requires a history county stable ID")
+        catalog_identity = catalog_by_id.get(administrative_unit_id)
+        binding = binding_by_id.get(administrative_unit_id)
+        if catalog_identity is None or binding is None:
+            raise ValueError("temporal administrative identity is absent from catalog/bindings")
+        if binding.get("identity") != catalog_identity["identity"]:
+            raise ValueError("temporal administrative binding identity disagrees with catalog")
+        if history_child_id != catalog_identity["historyChildId"]:
+            raise ValueError("temporal history child identity disagrees with catalog binding")
+        evidence = _validate_temporal_evidence(
+            evidence, TEMPORAL_IDENTITY_EVIDENCE_KEYS, f"{label}.identityEvidence"
+        )
+        if tuple(
+            evidence[key] for key in ("corpusPath", "sourceUrl", "snapshotSha256")
+        ) not in witnesses:
+            raise ValueError("temporal identity evidence has an unpinned source witness")
+        citation = catalog_identity["sourceCitation"]
+        if not isinstance(citation, dict) or any(
+            evidence[key] != citation.get(key)
+            for key in ("corpusPath", "line", "sourceUrl", "snapshotSha256")
+        ):
+            raise ValueError("temporal identity evidence disagrees with catalog source witness")
+        if catalog_identity["sourceName"] not in evidence["quote"]:
+            raise ValueError("temporal identity evidence quote does not name the catalog child")
+        if not isinstance(intervals, list) or len(intervals) < 2:
+            raise ValueError("temporal adjudication requires at least two parent intervals")
+        previous_end = None
+        active_parent = None
+        for index, interval in enumerate(intervals):
+            interval = _require_exact_keys(
+                interval, TEMPORAL_INTERVAL_KEYS, f"{label}.parentIntervals[{index}]"
+            )
+            start = interval.get("effectiveFrom")
+            end = interval.get("effectiveTo")
+            if type(start) is not int or (end is not None and type(end) is not int):
+                raise ValueError("temporal parent interval requires integer bounds")
+            if end is not None and start >= end:
+                raise ValueError("temporal parent interval requires start before end")
+            if end is None and index != len(intervals) - 1:
+                raise ValueError("only the final temporal parent interval may be open")
+            if index and previous_end != start:
+                raise ValueError("temporal parent intervals must be contiguous")
+            parent_id = interval.get("parentId")
+            if not isinstance(parent_id, str) or not HISTORY_PARENT_ID_RE.fullmatch(parent_id):
+                raise ValueError("temporal parent interval has invalid parent identity")
+            if parent_id not in known_parent_ids:
+                raise ValueError("temporal parent interval has unknown catalog parent identity")
+            interval = _validate_temporal_evidence(
+                interval, TEMPORAL_INTERVAL_KEYS, f"{label}.parentIntervals[{index}]"
+            )
+            if tuple(
+                interval[key] for key in ("corpusPath", "sourceUrl", "snapshotSha256")
+            ) not in witnesses:
+                raise ValueError("temporal parent interval evidence has an unpinned source witness")
+            if start <= REFERENCE_YEAR and (end is None or REFERENCE_YEAR < end):
+                active_parent = interval["parentId"]
+            previous_end = end
+        if intervals[0]["parentId"] != catalog_identity["inheritedParentId"]:
+            raise ValueError("temporal initial parent identity disagrees with catalog binding")
+        if active_parent is None:
+            raise ValueError("temporal adjudication has no parent at the reference year")
+        if (
+            not isinstance(forbidden, list)
+            or not forbidden
+            or len(forbidden) != len(set(forbidden))
+            or any(
+                not isinstance(value, str)
+                or not ADMINISTRATIVE_UNIT_ID_RE.fullmatch(value)
+                or value not in known_binding_ids
+                or value == administrative_unit_id
+                for value in forbidden
+            )
+        ):
+            raise ValueError("temporal adjudication requires forbidden stable identities")
+        expected_review = EXPECTED_TEMPORAL_REVIEWS.get(physical_ref)
+        if expected_review is None:
+            raise ValueError("temporal adjudication is absent from the exact reviewed contract")
+        if evidence != expected_review["identityEvidence"]:
+            raise ValueError("temporal identity evidence quote/claim differs from reviewed evidence")
+        if intervals != expected_review["parentIntervals"]:
+            raise ValueError("temporal parent interval differs from reviewed evidence")
+        if forbidden != expected_review["forbiddenIdentities"]:
+            raise ValueError("temporal forbidden identities differ from reviewed identity contract")
+        city_id = physical_ref.rsplit(":", 1)[-1]
+        if city_id in by_city_id:
+            raise ValueError("duplicate temporal adjudication physical place")
+        by_city_id[city_id] = {
+            "administrativeUnitId": administrative_unit_id,
+            "historyChildId": history_child_id,
+            "physicalPlaceRef": physical_ref,
+            "activeParentId": active_parent,
+            "parentIntervals": intervals,
+            "forbiddenIdentities": forbidden,
+        }
+    if set(row["physicalPlaceRef"] for row in rows) != set(EXPECTED_TEMPORAL_REVIEWS):
+        raise ValueError("temporal adjudications must equal the exact reviewed physical-place set")
+    return by_city_id
 
 
 def _tile_context(tiles: dict) -> dict:
@@ -762,11 +1089,11 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
     expected = {
         "landOwnerRowCount": 1_138,
         "landCellCount": 332_914,
-        "exactApprovedRowCount": 778,
-        "exactApprovedCellCount": 199_859,
+        "exactApprovedRowCount": 779,
+        "exactApprovedCellCount": 199_874,
         "approvedPhysicalPlaceIdAbsentCount": 2,
-        "unresolvedRowCount": 360,
-        "unresolvedCellCount": 133_055,
+        "unresolvedRowCount": 359,
+        "unresolvedCellCount": 133_040,
         "crossSeatOwnerJunFootprintCount": 99,
         "coordinateFootprintMajorityMismatchCount": 7,
     }
@@ -775,9 +1102,9 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
             raise ValueError(f"locked reconciliation count changed: {key}={summary.get(key)} expected {value}")
     geometry = summary["geometryDiagnostics"]
     if geometry != {
-        "singleGroupJun": {"rowCount": 163, "cellCount": 45_843},
+        "singleGroupJun": {"rowCount": 162, "cellCount": 45_828},
         "multiGroupJun": {"rowCount": 116, "cellCount": 20_155},
-        "uniqueNearest": {"rowCount": 274, "cellCount": 65_649},
+        "uniqueNearest": {"rowCount": 273, "cellCount": 65_634},
         "distanceTies": {"rowCount": 5, "cellCount": 349},
     }:
         raise ValueError("locked geometry reconciliation counts changed")
@@ -808,6 +1135,24 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
     _validate_review_chain(documents, input_records)
     tiles = _tile_context(documents["data/map/han-tiles.json"])
     selections = _selection_context(documents["data/curated/han/route-node-selection-v1.json"], tiles)
+    temporal_adjudications = _temporal_adjudication_context(
+        documents["data/curated/han/administrative-temporal-adjudications-v1.json"],
+        documents["data/curated/han/administrative-units.json"],
+        documents["data/curated/han/administrative-place-bindings-v1.json"],
+    )
+    history_relations = documents["data/map/han-administrative-history.json"].get("relations")
+    if not isinstance(history_relations, list):
+        raise ValueError("administrative history relations must be an array")
+    for adjudication in temporal_adjudications.values():
+        for interval in adjudication["parentIntervals"][1:]:
+            expected_relation = {
+                "childId": adjudication["historyChildId"],
+                "parentId": interval["parentId"],
+                "effectiveFrom": interval["effectiveFrom"],
+                "effectiveTo": interval["effectiveTo"],
+            }
+            if expected_relation not in history_relations:
+                raise ValueError("temporal adjudication and administrative history relation disagree")
     groups_by_jun, anchors_by_jun = _jun_diagnostics(tiles, selections)
     binding_groups = _binding_groups(documents["data/curated/han/administrative-place-bindings-v1.json"])
     external = _external_context(
@@ -830,6 +1175,9 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
             "footprintDiagnostic": footprint,
         }
         approved = selections["matchedByCityId"].get(city_id)
+        temporal_approved = temporal_adjudications.get(city_id)
+        if approved is not None and temporal_approved is not None:
+            raise ValueError("city has competing exact approval sources")
         if approved is not None:
             row.update(
                 {
@@ -845,6 +1193,27 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
                         ],
                         "physicalPlaceRef": approved["physicalPlaceRef"],
                         "routeNodeKey": approved["routeNodeKey"],
+                    },
+                }
+            )
+        elif temporal_approved is not None:
+            row.update(
+                {
+                    "decision": "EXACT_APPROVED",
+                    "reviewState": "APPROVED_EXACT_TEMPORAL_BINDING",
+                    "approvedParentAdministrativeUnitId": temporal_approved[
+                        "administrativeUnitId"
+                    ],
+                    "approvalEvidence": {
+                        "method": "REVIEWED_TEMPORAL_ADMINISTRATIVE_ADJUDICATION",
+                        "inputs": [
+                            "administrativeTemporalAdjudication.reviewState",
+                            "administrativeTemporalAdjudication.physicalPlaceRefTerminal",
+                            "hanTiles.cities.id",
+                        ],
+                        "physicalPlaceRef": temporal_approved["physicalPlaceRef"],
+                        "activeParentId": temporal_approved["activeParentId"],
+                        "forbiddenIdentities": temporal_approved["forbiddenIdentities"],
                     },
                 }
             )
@@ -894,7 +1263,7 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
         "ledgerId": "han-administrative-parent-reconciliation-v1",
         "referenceYear": REFERENCE_YEAR,
         "policy": {
-            "approvalRule": "APPROVED route-node selection physicalPlaceRef terminal exactly equals cities[].id",
+            "approvalRule": "reviewed exact physicalPlaceRef terminal exactly equals cities[].id",
             "approvalIdentityKey": "cityId",
             "forbiddenApprovalInputs": list(FORBIDDEN_APPROVAL_INPUTS),
             "nonExactRowsNeverApproveParent": True,

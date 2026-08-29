@@ -66,13 +66,29 @@ class PresenceAndControlledSourceRedTest(unittest.TestCase):
                     builder.main()
             document = json.loads(out.read_text(encoding="utf-8"))
             indexed = {str(row["id"]): row for row in document["places"]}
-            self.assertEqual(1145, document["count"])
+            self.assertEqual(1144, document["count"])
             self.assertEqual(97, document["nudged"])
             self.assertEqual((436, 181), (indexed["85168"]["gx"], indexed["85168"]["gy"]))
             self.assertEqual((491, 230), (indexed["42901"]["gx"], indexed["42901"]["gy"]))
             self.assertEqual((490, 229), (indexed["33406"]["gx"], indexed["33406"]["gy"]))
             self.assertNotIn("87267", indexed)
             self.assertNotIn("85581", indexed)
+            self.assertNotIn("82709", indexed)
+            self.assertIn("82696", indexed)
+            for place_id in ("82687", "83034", "85083"):
+                with self.subTest(place_id=place_id):
+                    self.assertEqual(("COUNTY", 5), (indexed[place_id]["kind"], indexed[place_id]["level"]))
+            kingdom_names = {
+                "210345": "常山國", "210359": "趙國", "87534": "中山國",
+                "210496": "齊國", "210522": "北海國", "210537": "琅邪國",
+                "210769": "梁國", "210791": "陳國", "33427": "下邳國",
+                "87611": "河間國", "33425": "彭城國", "210466": "樂安國",
+            }
+            for place_id, name_ft in kingdom_names.items():
+                with self.subTest(place_id=place_id):
+                    self.assertEqual((name_ft, "KINGDOM", 6), (
+                        indexed[place_id]["nameFt"], indexed[place_id]["kind"], indexed[place_id]["level"],
+                    ))
             self.assertEqual(1, sum(str(row["id"]) == "85168" for row in document["places"]))
             self.assertEqual(1, sum(str(row["id"]) == "42901" for row in document["places"]))
 

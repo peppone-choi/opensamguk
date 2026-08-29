@@ -20,9 +20,10 @@ usage:  python3 tools/map/build_han_places.py [--year 220] [--grid 768]
 (data/curated/han/administrative-units.json, 續漢書 郡國志 기반, groups[].groupType)가
 판정자다. 실측: CHGIS dbf를 직접 읽으면 TYPE_CH='国' 하나에 진짜 KINGDOM과 마을급
 侯國(安眾/新成/征羌侯國), 屬國(犍為屬國), 심지어 이름이 '郡'인 것(樂安郡)까지 뒤섞여
-있다. 반대로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/河間/彭城 같은 진짜 KINGDOM 11개는
-CHGIS dbf에서 다년 구간(예: 常山郡 220-582년) 동안 TYPE_CH='郡'|'侯国'로 잘못 적혀
-있어 TYPE_CH만 믿으면 놓친다. `tools/map/*`의
+있다. 반대로 stable-ID 원장이 display를 國으로 승격하는 常山/趙/中山/齊/北海/琅邪/梁/陳/
+下邳/河間/樂安 11개는 CHGIS 원본 이름이 郡이다(예: 常山郡 220-582년; 樂安郡은
+TYPE_CH='国'). 彭城國은 display가 이미 國이지만 TYPE_CH='侯国'이므로 별도 stable-ID exact
+classification guard로 KINGDOM을 지켜야 한다. `tools/map/*`의
 다른 스크립트를 훑어봐도(2026-08-24) CHGIS TYPE_CH에서 KINGDOM/COMMANDERY를 직접
 재유도하는 곳은 이 파일뿐이었다 — `build_external_places.py`는 수작업 리터럴,
 `build_administrative_place_overlay.py`/`build_terrain_grid.py`는 이미 카탈로그
@@ -30,6 +31,8 @@ groupType이나 이 파일이 낸 kind를 그대로 신뢰한다.
 """
 import argparse, json, math, os, struct, sys
 from collections import Counter
+
+from han_place_stable_id_adjudications import adjudicate_record, load_adjudications
 
 SRC = 'data/chgis-source'
 OUT = 'data/map/han-places.json'
@@ -88,11 +91,10 @@ if _bad_tier_kinds:
 del _bad_tier_kinds
 
 # --- 郡/國 재판정 (#524): CHGIS TYPE_CH='国'/'侯国'/'郡'만으로는 郡·國·侯國·屬國을 구분 못
-# 한다. 실측(#524): 安眾/新成/征羌侯國(마을급 侯國)과 陳留(실제로는 COMMANDERY, 樂安은
-# TYPE_CH='国'이지만 정본 카탈로그상 KINGDOM이라 이 목록엔 안 든다)가 전부 TYPE_CH='国'
-# 하나로 뭉뚱그려지고, 거꾸로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/河間/彭城(11개)처럼
-# CHGIS dbf에서 다년 구간 동안 TYPE_CH='郡'|'侯国'로 잘못 적혀 있던 진짜 KINGDOM이
-# COMMANDERY/COUNTY로 떨어진다. 續漢書 郡國志 정본 카탈로그
+# 한다. 실측(#524): 安眾/新成/征羌侯國(마을급 侯國)과 陳留(실제로는 COMMANDERY)가
+# TYPE_CH='国'으로 뭉뚱그려진다. 거꾸로 常山/趙/中山/齊/北海/琅邪/梁/陳/下邳/河間/樂安 11개는
+# CHGIS 원본 이름의 郡을 display 國으로 승격해야 한다. 彭城國은 이미 國으로 표시되지만
+# TYPE_CH='侯国'이라 COUNTY로 떨어지지 않도록 별도 stable-ID exact guard를 둔다. 續漢書 郡國志 정본 카탈로그
 # (data/curated/han/administrative-units.json, groups[].groupType)로 되짚는다 —
 # 이름 어간이 일치하면 CHGIS 표기 대신 정본이 이긴다.
 GROUP_SUFFIX = '县縣國国郡州道邑'
@@ -104,7 +106,7 @@ def _stem(name):
 
 def _load_group_kind(path=os.path.join('data', 'curated', 'han', 'administrative-units.json')):
     if not os.path.exists(path):
-        return {}
+        raise FileNotFoundError(f'administrative-unit catalog missing: {path}')
     with open(path, encoding='utf-8') as fh:
         catalog = json.load(fh)
     idx = {}
@@ -112,6 +114,8 @@ def _load_group_kind(path=os.path.join('data', 'curated', 'han', 'administrative
         for name in (g['canonicalGroup'], g.get('sourceGroupName')):
             if name:
                 idx[_stem(name)] = g['groupType']
+    if not idx:
+        raise ValueError(f'administrative-unit catalog has no groups: {path}')
     return idx
 
 
@@ -123,7 +127,7 @@ def classify(type_ch, name_ch, name_ft, group_kind=None):
 
     #524: CHGIS TYPE_CH만으로는 郡·國·侯國·屬國을 못 가른다(郡/国/侯国 표기가 뒤섞여 있다).
     TYPE_CH가 이 넷 중 하나면 정본 카탈로그로 되짚어 override한다. 카탈로그에 없는
-    '国'/'侯国'는 마을급 侯國(안眾/新成/征羌/衛國류)로 보고 COUNTY로 둔다.
+    '国'은 이름만으로 COUNTY/KINGDOM을 추측할 수 없으므로 stable-ID 검토 원장을 요구한다.
     """
     if group_kind is None:
         group_kind = GROUP_KIND
@@ -135,9 +139,33 @@ def classify(type_ch, name_ch, name_ft, group_kind=None):
         catalog_kind = group_kind.get(_stem(name_ft or name_ch))
         if catalog_kind:
             kind, level = catalog_kind, 6
-        elif type_ch in ('国', '侯国'):
-            kind, level = 'COUNTY', 5
+        elif type_ch == '国':
+            raise ValueError(
+                f"ambiguous CHGIS TYPE_CH='国' requires stable-ID adjudication: "
+                f"{name_ft or name_ch}"
+            )
     return kind, level
+
+
+def resolve_classification(row, layer, year, stable_entries, group_kind=None):
+    """Resolve lifecycle, display identity, and tier before a row enters the build."""
+    reviewed = adjudicate_record(row, layer, year, stable_entries)
+    if reviewed is not None:
+        if not reviewed['include']:
+            return None
+        return (
+            reviewed['outputNameCh'], reviewed['outputNameFt'],
+            reviewed['kind'], reviewed['level'], reviewed['begYr'], reviewed['endYr'],
+        )
+    beg_yr = as_int(row['BEG_YR'], -9999)
+    end_yr = as_int(row['END_YR'], 9999)
+    if not (beg_yr <= year <= end_yr):
+        return None
+    classified = classify(row['TYPE_CH'], row['NAME_CH'], row['NAME_FT'], group_kind)
+    if classified is None:
+        return None
+    kind, level = classified
+    return row['NAME_CH'], row['NAME_FT'] or row['NAME_CH'], kind, level, beg_yr, end_yr
 
 # lv8 "특" = 왕조 수도. CHGIS에 수도 플래그가 없어 저작한 목록이다 — 고증 근거를 남긴다.
 #   洛陽 후한/위 수도 · 許(허창) 196~220 헌제 파천지 · 成都 촉한 221~ · 建業 오 229~
@@ -438,15 +466,14 @@ def main():
     args = ap.parse_args()
 
     seats, dropped = {}, Counter()
+    stable_entries = load_adjudications()
     for layer in ('pref', 'cnty'):
         path = f'{SRC}/v6_time_{layer}_pts_utf_wgs84.dbf'
         if not os.path.exists(path):
             sys.exit(f'FATAL: {path} 없음. CHGIS V6 Dataverse 배포본을 {SRC}/ 에 풀어라.')
         for r in read_dbf(path):
-            if not (as_int(r['BEG_YR'], -9999) <= args.year <= as_int(r['END_YR'], 9999)):
-                continue
-            classified = classify(r['TYPE_CH'], r['NAME_CH'], r['NAME_FT'])
-            if classified is None:
+            resolved = resolve_classification(r, layer, args.year, stable_entries)
+            if resolved is None:
                 dropped[r['TYPE_CH']] += 1
                 continue
             try:
@@ -454,18 +481,18 @@ def main():
             except ValueError:
                 dropped['좌표없음'] += 1
                 continue
-            kind, level = classified
-            key = (r['NAME_CH'], round(lon, 4), round(lat, 4))
+            name_ch, name_ft, kind, level, beg_yr, end_yr = resolved
+            key = (name_ch, round(lon, 4), round(lat, 4))
             prev = seats.get(key)
             # 같은 지점의 郡治 겸 縣治는 CHGIS에 두 번 실린다. 높은 등급을 남긴다.
             if prev and prev['level'] >= level:
                 continue
             seats[key] = dict(
-                id=r['SYS_ID'], nameCh=r['NAME_CH'], namePy=r['NAME_PY'],
-                nameFt=r['NAME_FT'] or r['NAME_CH'], typeCh=r['TYPE_CH'],
-                kind=kind, level=8 if r['NAME_CH'] in CAPITALS else level,
+                id=r['SYS_ID'], nameCh=name_ch, namePy=r['NAME_PY'],
+                nameFt=name_ft, typeCh=r['TYPE_CH'],
+                kind=kind, level=8 if name_ch in CAPITALS else level,
                 lon=lon, lat=lat, presLoc=r['PRES_LOC'],
-                begYr=as_int(r['BEG_YR'], -9999), endYr=as_int(r['END_YR'], 9999),
+                begYr=beg_yr, endYr=end_yr,
             )
 
     # CHGIS 밖 지점(交州 남부·한반도·소국)을 합류시킨다. 점만 찍는 게 아니라 소유 격자와

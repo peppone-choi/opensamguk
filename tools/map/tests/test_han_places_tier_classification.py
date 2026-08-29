@@ -26,19 +26,17 @@ from build_han_places import classify, GROUP_KIND  # noqa: E402
 class MisclassifiedGroupsAreFixedTest(unittest.TestCase):
     """#524에서 KINGDOM으로 오승격됐다고 보고된 侯國/屬國/郡이 더 이상 오승격되지 않는다."""
 
-    def test_village_level_marquisates_stay_county(self):
-        # TYPE_CH='国' 이지만 정본 카탈로그에 없는 마을급 侯國 — KINGDOM으로 승격 금지.
+    def test_unadjudicated_state_rows_fail_closed(self):
+        # Stable ID 원장 없이 이름만 보고 COUNTY로 추측하지 않는다.
         for name_ch, name_ft in (
             ('安众侯国', '安眾侯國'),
             ('征羌侯国', '征羌侯國'),
             ('新成侯国', '新成侯國'),
+            ('卫国', '衛國'),
         ):
             with self.subTest(name=name_ft):
-                self.assertEqual(classify('国', name_ch, name_ft), ('COUNTY', 5))
-
-    def test_unlisted_state_falls_back_to_county_not_kingdom(self):
-        # 衛國: 정본 105개 群에 아예 없다 — 최소 KINGDOM 오승격은 막는다.
-        self.assertEqual(classify('国', '卫国', '衛國'), ('COUNTY', 5))
+                with self.assertRaisesRegex(ValueError, 'stable-ID adjudication'):
+                    classify('国', name_ch, name_ft)
 
     def test_dependency_is_commandery_not_kingdom(self):
         # 犍為屬國: #507 자체 근거로도 COMMANDERY다.
@@ -99,10 +97,8 @@ class MatchingMustBeExactStemNotSubstringTest(unittest.TestCase):
         # '陳留下侯國' 는 카탈로그에 없는 가상의 마을급 侯國이다. 정확 일치는 실패해야
         # 하고, '陳留'(COMMANDERY)를 부분 문자열로 포함한다고 승격돼선 안 된다.
         fake_catalog = {'陳留': 'COMMANDERY', '陳': 'KINGDOM'}
-        self.assertEqual(
-            classify('国', '陈留下侯国', '陳留下侯國', group_kind=fake_catalog),
-            ('COUNTY', 5),
-        )
+        with self.assertRaisesRegex(ValueError, 'stable-ID adjudication'):
+            classify('国', '陈留下侯国', '陳留下侯國', group_kind=fake_catalog)
 
     def test_unrelated_commandery_named_type_code_does_not_falsely_match_a_substring_group(self):
         # 반대 방향: 정본에 없는 郡 이름이 카탈로그의 짧은 群 이름을 부분 문자열로
@@ -137,6 +133,12 @@ class CatalogIsWiredFromCommittedFile(unittest.TestCase):
         self.assertGreater(len(GROUP_KIND), 0)
         self.assertEqual(GROUP_KIND.get('樂安'), 'KINGDOM')
         self.assertEqual(GROUP_KIND.get('陳留'), 'COMMANDERY')
+
+    def test_missing_catalog_file_fails_closed(self):
+        from build_han_places import _load_group_kind
+
+        with self.assertRaisesRegex(FileNotFoundError, 'administrative-unit catalog'):
+            _load_group_kind(ROOT / 'does-not-exist.json')
 
     def test_catalog_only_ever_reports_kingdom_or_commandery(self):
         from collections import Counter
