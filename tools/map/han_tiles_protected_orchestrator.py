@@ -48,6 +48,10 @@ INPUT_RELATIVE_PATHS = {
     "MERGE_ADJUDICATIONS": "data/curated/han/han-place-merge-adjudications-v1.json",
     "TEMPORAL_ADJUDICATIONS": "data/curated/han/administrative-temporal-adjudications-v1.json",
     "EXTERNAL_PLACES": "data/map/external-places.json",
+    "EXTERNAL_PROVINCE_SEEDS": "data/curated/han/external-province-seeds-v1.json",
+    "EXTERNAL_ADMINISTRATIVE_SYSTEMS": "data/curated/han/external-administrative-systems-v1.json",
+    "PROVINCE_SHAPE_EXCEPTIONS": "data/curated/map/province-shape-exceptions-v1.json",
+    "MODERN_ADMIN_RECIPE": "data/curated/map/modern-admin-boundaries-v1.json",
 }
 GENERATOR_RELATIVE_PATHS = {
     "BUILD_HAN_PLACES": "tools/map/build_han_places.py",
@@ -63,6 +67,9 @@ HELPER_RELATIVE_PATHS = {
     "HAN_TEMPORAL_PARENT_RUNTIME": "tools/map/han_temporal_parent_runtime.py",
     "HAN_PARENT_RECONCILIATION_HELPER": "tools/map/build_han_parent_reconciliation.py",
     "HAN_PROVINCE_MODEL": "tools/map/han_province_model.py",
+    "WORLD_PROVINCE_GEOMETRY": "tools/map/world_province_geometry.py",
+    "PROVINCE_QUALITY": "tools/map/province_quality.py",
+    "EXTERNAL_PROVINCE_SYSTEMS": "tools/map/external_province_systems.py",
     "HAN_TILES_CONTRACT_HELPER": "tools/map/han_tiles_contract.py",
 }
 VERIFIER_RELATIVE_PATHS = {
@@ -438,7 +445,7 @@ def _summary(role: str, document: Any) -> dict[str, int]:
         }
     if role == "TERRAIN_GRID":
         rows, cols = document.get("rows"), document.get("cols")
-        for key in ("terrain", "owner", "seatOwner"):
+        for key in ("terrain", "owner", "seatOwner", "parentOwner"):
             _rectangular(document.get(key), rows, cols, f"TERRAIN_GRID.{key}")
         adjacency = document.get("adjacency", {})
         return {
@@ -449,6 +456,8 @@ def _summary(role: str, document: Any) -> dict[str, int]:
             "regionCount": len(document.get("regionNames", [])),
             "countyEdgeCount": len(adjacency.get("county", [])),
             "commanderyEdgeCount": len(adjacency.get("commandery", [])),
+            "provinceCount": len(document.get("provinceRecords", [])),
+            "parentRegionCount": len(document.get("parentRegions", [])),
         }
     if role == "READINGS":
         return {"entryCount": len(document)}
@@ -460,9 +469,11 @@ def _summary(role: str, document: Any) -> dict[str, int]:
         "junCount": len(document.get("juns", [])),
         "regionCount": len(document.get("regions", [])),
         "ownerRunCount": len(document.get("owner", [])),
-        "seatOwnerRunCount": len(document.get("seatOwner", [])),
+        "parentOwnerRunCount": len(document.get("parentOwner", [])),
         "countyEdgeCount": len(document.get("adjacency", {}).get("county", [])),
         "commanderyEdgeCount": len(document.get("adjacency", {}).get("commandery", [])),
+        "provinceCount": len(document.get("provinceRecords", [])),
+        "parentRegionCount": len(document.get("parentRegions", [])),
     }
 
 
@@ -517,9 +528,13 @@ def validate_semantic_outputs(documents: Mapping[str, Any]) -> bool:
         raise ValueError("HAN_TILES terrain shape mismatch")
     cities = tiles.get("cities")
     juns = tiles.get("juns")
-    if not isinstance(cities, list) or not isinstance(juns, list) or not cities or not juns:
+    provinces = tiles.get("provinceRecords")
+    parents = tiles.get("parentRegions")
+    if (not isinstance(cities, list) or not isinstance(juns, list) or not cities or not juns
+            or not isinstance(provinces, list) or not isinstance(parents, list)
+            or not provinces or not parents):
         raise ValueError("HAN_TILES city/jun roster is empty")
-    for key, upper_bound in (("owner", len(cities)), ("seatOwner", len(juns))):
+    for key, upper_bound in (("owner", len(provinces)), ("parentOwner", len(parents))):
         runs = tiles.get(key)
         if not isinstance(runs, list) or any(
             not isinstance(run, list) or len(run) != 2
@@ -533,11 +548,13 @@ def validate_semantic_outputs(documents: Mapping[str, Any]) -> bool:
     commandery = adjacency.get("commandery")
     if not isinstance(county, list) or not isinstance(commandery, list):
         raise ValueError("HAN_TILES adjacency is missing")
-    sizes = _components(len(cities), county)
+    sizes = _components(len(provinces), county)
     isolated = sum(size == 1 for size in sizes)
-    if sizes[0] / len(cities) < 0.98 or isolated >= 15 or len(sizes) >= 20:
+    # Water-separated archipelagos are legitimate disconnected province-graph
+    # components.  The gate still rejects a missing/fragmented mainland graph.
+    if sizes[0] / len(provinces) < 0.85 or isolated >= 120 or len(sizes) >= 130:
         raise ValueError("HAN_TILES county connectivity gate failed")
-    _components(len(juns), commandery)
+    _components(len(parents), commandery)
     if len(commandery) < 150:
         raise ValueError("HAN_TILES commandery adjacency gate failed")
     return True

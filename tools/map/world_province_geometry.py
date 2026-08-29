@@ -105,6 +105,12 @@ def _feature_parent(feature: Mapping[str, Any]) -> str:
 
 def _feature_mask(feature: Mapping[str, Any], projection: Any, shape: tuple[int, int]) -> np.ndarray:
     if "mask" in feature:
+        if (isinstance(feature["mask"], tuple) and len(feature["mask"]) == 2
+                and isinstance(feature["mask"][0], np.ndarray)):
+            labels, value = feature["mask"]
+            if labels.shape != shape or type(value) is not int:
+                raise ValueError("ADM2 label mask shape/value mismatch")
+            return labels == value
         mask = np.asarray(feature["mask"], dtype=bool)
         if mask.shape != shape:
             raise ValueError("ADM2 mask shape mismatch")
@@ -243,7 +249,14 @@ def build_province_geometry(
             "PRESERVE_HISTORICAL", province_id, (province_id,)
         ))
 
-    feature_rows = sorted(admin_features, key=_feature_id)
+    area_by_index = {
+        index: int(np.count_nonzero(owner == index)) for index in range(len(records))
+    }
+
+    feature_rows = sorted(
+        admin_features,
+        key=lambda feature: (int(feature.get("order", 0)), _feature_id(feature)),
+    )
     for feature in feature_rows:
         source_id = _feature_id(feature)
         parent_id = _feature_parent(feature)
@@ -259,6 +272,9 @@ def build_province_geometry(
         remaining = mask & (owner == -1)
         if contained:
             _split_mask(owner, mask, [(seed, index_by_id[seed.id]) for seed in contained])
+            for seed in contained:
+                index = index_by_id[seed.id]
+                area_by_index[index] += int(np.count_nonzero(remaining & (owner == index)))
             kind = "ASSIGN_SINGLE_SEED" if len(contained) == 1 else "SPLIT_MULTI_SEED"
             decisions.append(ProvinceAuditDecision(
                 kind, source_id, tuple(sorted(seed.id for seed in contained))
@@ -268,9 +284,19 @@ def build_province_geometry(
             index for index in sorted(_adjacent_indices(owner, mask))
             if records[index].parent_region_id == parent_id
         ]
+        merge_cap = feature.get("mergeAreaCap")
+        if merge_cap is not None:
+            if type(merge_cap) is not int or merge_cap < 1:
+                raise ValueError("ADM2 mergeAreaCap must be a positive integer")
+            zone_area = int(np.count_nonzero(remaining))
+            adjacent = [
+                index for index in adjacent
+                if area_by_index.get(index, 0) + zone_area <= merge_cap
+            ]
         if adjacent:
             selected = min(adjacent, key=lambda index: records[index].id)
             owner[remaining] = selected
+            area_by_index[selected] = area_by_index.get(selected, 0) + int(np.count_nonzero(remaining))
             decisions.append(ProvinceAuditDecision(
                 "MERGE_SEEDLESS", source_id, (records[selected].id,)
             ))
@@ -288,14 +314,85 @@ def build_province_geometry(
             index_by_id[direct_id] = len(records)
             records.append(record)
         owner[remaining] = index_by_id[direct_id]
+        area_by_index[index_by_id[direct_id]] = (
+            area_by_index.get(index_by_id[direct_id], 0) + int(np.count_nonzero(remaining))
+        )
         decisions.append(ProvinceAuditDecision(
             "CREATE_DIRECT_TERRITORY", source_id, (direct_id,)
         ))
 
+    # Processing order can leave a very small seedless coastal sliver as a
+    # direct territory before its same-parent neighbour is painted.  Collapse
+    # those artifacts after the complete surface is known; real islands with
+    # no touching same-parent neighbour remain explicit direct territories.
+    for index, record in list(enumerate(records)):
+        if record.kind != "DIRECT_TERRITORY":
+            continue
+        mask = owner == index
+        area = int(np.count_nonzero(mask))
+        if not 0 < area < 32:
+            continue
+        adjacent = [
+            candidate for candidate in sorted(_adjacent_indices(owner, mask))
+            if records[candidate].parent_region_id == record.parent_region_id
+            and records[candidate].kind != "DIRECT_TERRITORY"
+        ]
+        if not adjacent:
+            continue
+        selected = min(adjacent, key=lambda candidate: records[candidate].id)
+        owner[mask] = selected
+        decisions.append(ProvinceAuditDecision(
+            "MERGE_TINY_DIRECT", record.id, (records[selected].id,)
+        ))
+
+    # A reviewed physical seed must never disappear because its recorded point
+    # lands on a lake edge, a modern-boundary sliver, or another rasterized seed.
+    # Restore a small compact footprint from the same historical parent only.
+    for seed in sorted(seeds, key=lambda row: row.id):
+        index = index_by_id[seed.id]
+        if np.any(owner == index):
+            continue
+        candidates = []
+        for row, col in np.argwhere(land & (owner >= 0)):
+            donor = int(owner[row, col])
+            if records[donor].parent_region_id != seed.parent_region_id:
+                continue
+            candidates.append((
+                (int(row) - seed.row) ** 2 + (int(col) - seed.col) ** 2,
+                int(row), int(col), donor,
+            ))
+        donor_areas = {
+            donor: int(np.count_nonzero(owner == donor))
+            for _, _, _, donor in candidates
+        }
+        restored = 0
+        for _, row, col, donor in sorted(candidates):
+            if donor_areas[donor] <= 1:
+                continue
+            owner[row, col] = index
+            donor_areas[donor] -= 1
+            restored += 1
+            if restored == 9:
+                break
+        if restored == 0:
+            raise ValueError(f"province seed cannot receive a footprint: {seed.id}")
+        decisions.append(ProvinceAuditDecision(
+            "RESTORE_SEED_FOOTPRINT", seed.id, (seed.id,)
+        ))
+
     # Direct records are created in sorted feature order, while seed records are
     # lexical. Reindex everything once so caller input order never affects bytes.
-    sorted_records = sorted(records, key=lambda row: row.id)
-    old_by_id = index_by_id
+    live_indices = {
+        int(index) for index in np.unique(owner) if int(index) >= 0
+    }
+    sorted_records = sorted(
+        (record for index, record in enumerate(records) if index in live_indices),
+        key=lambda row: row.id,
+    )
+    old_by_id = {
+        record.id: index for index, record in enumerate(records)
+        if index in live_indices
+    }
     new_by_id = {record.id: index for index, record in enumerate(sorted_records)}
     remapped = np.full(owner.shape, -1, dtype=np.int32)
     for province_id, old_index in old_by_id.items():

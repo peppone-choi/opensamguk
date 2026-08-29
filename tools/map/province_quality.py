@@ -14,7 +14,10 @@ import numpy as np
 class ProvinceQualityPolicy:
     max_components: int = 1
     max_aspect_ratio: float = 4.0
+    min_aspect_area: int = 0
     min_fill_ratio: float = 0.20
+    min_fill_area: int = 0
+    max_area: int | None = None
     max_parent_median_ratio: float = 8.0
     corridor_max_width: int = 2
     corridor_min_length: int = 8
@@ -127,16 +130,19 @@ def measure_province_shapes(
             ))
             continue
         coordinates = np.argwhere(mask)
-        height = int(coordinates[:, 0].max() - coordinates[:, 0].min() + 1)
-        width = int(coordinates[:, 1].max() - coordinates[:, 1].min() + 1)
+        min_row, min_col = coordinates.min(axis=0)
+        max_row, max_col = coordinates.max(axis=0)
+        height = int(max_row - min_row + 1)
+        width = int(max_col - min_col + 1)
+        local = mask[min_row:max_row + 1, min_col:max_col + 1]
         aspect = max(height, width) / min(height, width)
-        perimeter = _perimeter(mask)
+        perimeter = _perimeter(local)
         compactness = 4.0 * math.pi * area / (perimeter * perimeter)
         metrics.append(ProvinceShapeMetric(
             province_id=province_id, parent_region_id=parent_id, area=area,
-            component_count=_components(mask), aspect_ratio=aspect,
+            component_count=_components(local), aspect_ratio=aspect,
             fill_ratio=area / (height * width), perimeter=perimeter,
-            compactness=compactness, corridor_length=_max_corridor(mask, 2),
+            compactness=compactness, corridor_length=_max_corridor(local, 2),
         ))
     return ProvinceQualityReport(tuple(metrics))
 
@@ -179,8 +185,9 @@ def validate_province_quality(
         checks = (
             ("empty", metric.area == 0, "has no cells"),
             ("componentCount", metric.component_count > policy.max_components, "is disconnected"),
-            ("aspectRatio", metric.aspect_ratio > policy.max_aspect_ratio, "has excessive aspect ratio"),
-            ("fillRatio", metric.area > 0 and metric.fill_ratio < policy.min_fill_ratio, "has low fill ratio"),
+            ("aspectRatio", metric.area >= policy.min_aspect_area and metric.aspect_ratio > policy.max_aspect_ratio, "has excessive aspect ratio"),
+            ("fillRatio", metric.area >= policy.min_fill_area and metric.fill_ratio < policy.min_fill_ratio, "has low fill ratio"),
+            ("absoluteArea", policy.max_area is not None and metric.area > policy.max_area, "exceeds absolute area cap"),
             ("areaOutlier", metric.area > policy.max_parent_median_ratio * medians.get(metric.parent_region_id, metric.area), "is an area outlier"),
             ("corridor", metric.corridor_length >= policy.corridor_min_length, "contains a narrow corridor"),
         )

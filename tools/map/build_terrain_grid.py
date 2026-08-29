@@ -18,7 +18,8 @@
 cols를 확인하는 계약이다. 비정본 연구 격자는 같은 값을 명시해 사용한다.
 """
 import argparse, heapq, json, math, os, sys
-from collections import Counter
+from collections import Counter, deque
+from dataclasses import asdict
 import numpy as np
 
 try:
@@ -28,6 +29,17 @@ try:
         apply_reviewed_temporal_parents,
         load_reviewed_temporal_parent_context,
     )
+    from tools.map.province_quality import (
+        ProvinceQualityPolicy,
+        measure_province_shapes,
+        validate_province_quality,
+    )
+    from tools.map.external_province_systems import load_external_province_displays
+    from tools.map.world_province_geometry import (
+        ParentRegionRecord,
+        ProvinceSeed,
+        build_province_geometry,
+    )
 except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
     from han_place_merge_runtime import apply_reviewed_merges
     from han_temporal_parent_runtime import (
@@ -35,11 +47,24 @@ except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
         apply_reviewed_temporal_parents,
         load_reviewed_temporal_parent_context,
     )
+    from province_quality import (
+        ProvinceQualityPolicy,
+        measure_province_shapes,
+        validate_province_quality,
+    )
+    from external_province_systems import load_external_province_displays
+    from world_province_geometry import (
+        ParentRegionRecord,
+        ProvinceSeed,
+        build_province_geometry,
+    )
 
 PLACES = 'data/map/han-places.json'
 JUNGUO = 'data/map/junguozhi.json'
 NE = 'data/natural-earth'
 OUT = 'data/map/terrain-grid.json'
+MODERN_ADMIN = 'data/modern-admin/geoBoundaries-CGAZ-ADM2.geojson'
+PROVINCE_SHAPE_EXCEPTIONS = 'data/curated/map/province-shape-exceptions-v1.json'
 
 SEA, PLAIN, MOUNTAIN, RIVER, LAKE, DESERT, PLATEAU, BASIN, HILL = range(9)
 
@@ -119,6 +144,274 @@ def rasterize(features, proj, bbox):
     for pts in holes:
         d.polygon(pts, fill=0)
     return np.asarray(img, dtype=bool)
+
+
+def rasterize_feature_labels(features, proj, bbox):
+    """Rasterize non-overlapping CGAZ polygons to one stable feature-index grid."""
+    from PIL import Image, ImageDraw
+    img = Image.new('I', (proj.cols, proj.rows), 0)
+    draw = ImageDraw.Draw(img)
+    holes = []
+    for feature_index, feature in enumerate(features):
+        for ring, is_hole in poly_rings(feature['geometry'], bbox):
+            gx, gy = proj.to_cell(ring[:, 0], ring[:, 1])
+            points = [(float(x), float(y)) for x, y in
+                      zip(np.clip(gx, -1e4, 1e4), np.clip(gy, -1e4, 1e4))]
+            if is_hole:
+                holes.append(points)
+            else:
+                draw.polygon(points, fill=feature_index + 1)
+    for points in holes:
+        draw.polygon(points, fill=0)
+    return np.asarray(img, dtype=np.int32) - 1
+
+
+def _zone_distances(zone_grid, seed_zones):
+    """Return deterministic adjacency distance from any zone containing a seed."""
+    zones = sorted(int(value) for value in np.unique(zone_grid) if value >= 0)
+    adjacent = {zone: set() for zone in zones}
+    for left, right in ((zone_grid[:, :-1], zone_grid[:, 1:]),
+                        (zone_grid[:-1, :], zone_grid[1:, :])):
+        pairs = np.stack((left.ravel(), right.ravel()), axis=1)
+        for a, b in np.unique(pairs, axis=0):
+            a, b = int(a), int(b)
+            if a >= 0 and b >= 0 and a != b:
+                adjacent[a].add(b)
+                adjacent[b].add(a)
+    distance = {zone: 1_000_000 for zone in zones}
+    queue = deque()
+    for zone in sorted(seed_zones):
+        if zone in distance:
+            distance[zone] = 0
+            queue.append(zone)
+    while queue:
+        zone = queue.popleft()
+        for neighbor in sorted(adjacent[zone]):
+            if distance[neighbor] > distance[zone] + 1:
+                distance[neighbor] = distance[zone] + 1
+                queue.append(neighbor)
+    return distance
+
+
+def _split_large_zones(zone_grid, max_cells=600):
+    """Split oversized fallback zones into connected, compact BFS catchments."""
+    output = np.full(zone_grid.shape, -1, dtype=np.int32)
+    provenance = []
+    next_zone = 0
+    rows, cols = zone_grid.shape
+    for source_zone in sorted(int(value) for value in np.unique(zone_grid) if value >= 0):
+        remaining = zone_grid == source_zone
+        coordinates = np.argwhere(remaining)
+        height, width = np.ptp(coordinates, axis=0) + 1
+        aspect_parts = math.ceil((max(height, width) / min(height, width)) / 4.0)
+        desired_parts = max(math.ceil(len(coordinates) / max_cells), aspect_parts)
+        local_cap = min(max_cells, math.ceil(len(coordinates) / desired_parts))
+        part = 0
+        while np.any(remaining):
+            start_row, start_col = map(int, np.argwhere(remaining)[0])
+            queue = deque([(start_row, start_col)])
+            queued = {(start_row, start_col)}
+            cells = []
+            while queue and len(cells) < local_cap:
+                row, col = queue.popleft()
+                if not remaining[row, col]:
+                    continue
+                cells.append((row, col))
+                for next_row, next_col in (
+                    (row - 1, col), (row, col - 1),
+                    (row, col + 1), (row + 1, col),
+                ):
+                    candidate = (next_row, next_col)
+                    if (0 <= next_row < rows and 0 <= next_col < cols
+                            and remaining[next_row, next_col]
+                            and candidate not in queued):
+                        queued.add(candidate)
+                        queue.append(candidate)
+            for row, col in cells:
+                output[row, col] = next_zone
+                remaining[row, col] = False
+            provenance.append((source_zone, part))
+            next_zone += 1
+            part += 1
+    return output, provenance
+
+
+def _assign_unowned_islands(parent_owner, political_land, places, jun_of):
+    """Give every disconnected land component the nearest reviewed parent polity."""
+    effective = parent_owner.copy()
+    effective[~political_land] = -1
+    missing = political_land & (effective < 0)
+    seen = np.zeros(missing.shape, dtype=bool)
+    rows, cols = missing.shape
+    sources = [
+        (int(place['gy']), int(place['gx']), int(jun_of[index]))
+        for index, place in enumerate(places)
+    ]
+    for start_row, start_col in np.argwhere(missing):
+        start_row, start_col = int(start_row), int(start_col)
+        if seen[start_row, start_col]:
+            continue
+        component = []
+        queue = deque([(start_row, start_col)])
+        seen[start_row, start_col] = True
+        while queue:
+            row, col = queue.popleft()
+            component.append((row, col))
+            for next_row, next_col in (
+                (row - 1, col - 1), (row - 1, col), (row - 1, col + 1),
+                (row, col - 1), (row, col + 1),
+                (row + 1, col - 1), (row + 1, col), (row + 1, col + 1),
+            ):
+                if (0 <= next_row < rows and 0 <= next_col < cols
+                        and missing[next_row, next_col] and not seen[next_row, next_col]):
+                    seen[next_row, next_col] = True
+                    queue.append((next_row, next_col))
+        center_row = sum(row for row, _ in component) / len(component)
+        center_col = sum(col for _, col in component) / len(component)
+        parent_index = min(
+            sources,
+            key=lambda source: (
+                (source[0] - center_row) ** 2 + (source[1] - center_col) ** 2,
+                source[2],
+            ),
+        )[2]
+        for row, col in component:
+            effective[row, col] = parent_index
+    return effective
+
+
+def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_names,
+                          seat_owner, modern_features):
+    """Intersect pinned ADM2 geometry with reviewed 220 parent ownership."""
+    labels = rasterize_feature_labels(modern_features, proj, bbox)
+    parent_count = len(jun_names)
+    political_land = (terrain != SEA) & (terrain != LAKE)
+    parent_owner = _assign_unowned_islands(
+        seat_owner, political_land, places, jun_of
+    )
+    # A zone is one modern ADM2 polygon clipped by one reviewed historical parent.
+    zone_grid = np.where(
+        political_land & (parent_owner >= 0) & (labels >= 0),
+        labels * parent_count + parent_owner,
+        -1,
+    ).astype(np.int32)
+    # Coastal simplification gaps remain geometry-derived fallback zones per parent.
+    gap_base = len(modern_features) * parent_count
+    gaps = political_land & (parent_owner >= 0) & (labels < 0)
+    zone_grid[gaps] = gap_base + parent_owner[gaps]
+    zone_grid, zone_provenance = _split_large_zones(zone_grid)
+
+    external_displays = load_external_province_displays()
+    parent_records = []
+    for parent_index, name in enumerate(jun_names):
+        members = [places[index] for index, value in enumerate(jun_of)
+                   if int(value) == parent_index]
+        systems = {
+            external_displays[member['id']].administrative_system
+            for member in members if member.get('id') in external_displays
+            and external_displays[member['id']].review_state == 'APPROVED'
+        }
+        external = bool(members) and all(member.get('kind') == 'EXTERNAL_PLACE' for member in members)
+        parent_system = next(iter(systems)) if len(systems) == 1 else (
+            'EXTERNAL_POLITY' if external else 'HAN_COMMANDERY'
+        )
+        parent_records.append(ParentRegionRecord(
+            id=f'PARENT-{parent_index:04d}', display_name=name,
+            administrative_system=parent_system,
+            name_ch=name,
+        ))
+    province_seeds = []
+    occupied_seed_cells = set()
+    for index, (place, place_id) in enumerate(zip(places, place_ids)):
+        # Jun/kingdom/province seats are parent metadata and map markers, not
+        # county-level province seeds.  Keeping both levels as seeds creates
+        # duplicate pseudo-provinces at co-located seats.
+        if place.get('kind') not in {'COUNTY', 'EXTERNAL_PLACE'}:
+            continue
+        parent_index = int(jun_of[index])
+        external = place.get('kind') == 'EXTERNAL_PLACE'
+        display = external_displays.get(place_id)
+        seed_row, seed_col = int(place['gy']), int(place['gx'])
+        if not (0 <= seed_row < zone_grid.shape[0] and 0 <= seed_col < zone_grid.shape[1]
+                and zone_grid[seed_row, seed_col] >= 0
+                and (seed_row, seed_col) not in occupied_seed_cells):
+            candidates = np.argwhere(
+                (parent_owner == parent_index) & political_land & (zone_grid >= 0)
+            )
+            candidates = [
+                cell for cell in candidates
+                if (int(cell[0]), int(cell[1])) not in occupied_seed_cells
+            ]
+            if len(candidates):
+                seed_row, seed_col = map(int, min(
+                    candidates,
+                    key=lambda cell: (
+                        (int(cell[0]) - seed_row) ** 2 + (int(cell[1]) - seed_col) ** 2,
+                        int(cell[0]), int(cell[1]),
+                    ),
+                ))
+        occupied_seed_cells.add((seed_row, seed_col))
+        province_seeds.append(ProvinceSeed(
+            id=place_id,
+            display_name=(display.canonical_name if display else
+                          place.get('nameFt') or place.get('nameCh') or place_id),
+            name_ch=(display.name_ch if display else place.get('nameCh') or ''),
+            administrative_system=(display.administrative_system if display else
+                                   'EXTERNAL_POLITY' if external else 'HAN_COMMANDERY'),
+            kind=('SETTLEMENT' if external else 'COUNTY'),
+            parent_region_id=f'PARENT-{parent_index:04d}',
+            row=seed_row, col=seed_col, city_index=index,
+            geometry_basis='HISTORICAL_SEAT_ADAPTED',
+            confidence=(display.confidence if display else 'REVIEWED'),
+        ))
+    seed_zones = {
+        int(zone_grid[seed.row, seed.col]) for seed in province_seeds
+        if 0 <= seed.row < zone_grid.shape[0] and 0 <= seed.col < zone_grid.shape[1]
+        and zone_grid[seed.row, seed.col] >= 0
+    }
+    distances = _zone_distances(zone_grid, seed_zones)
+    admin_rows = []
+    for zone in sorted(distances):
+        source_zone, part_index = zone_provenance[zone]
+        if source_zone >= gap_base:
+            parent_index = source_zone - gap_base
+            source_id = f'TERRAIN-GAP-{parent_index:04d}'
+        else:
+            feature_index, parent_index = divmod(source_zone, parent_count)
+            properties = modern_features[feature_index].get('properties') or {}
+            source_id = f"{properties.get('shapeID') or feature_index}-P{parent_index:04d}"
+        source_id = f'{source_id}-S{part_index:03d}'
+        admin_rows.append({
+            'id': source_id,
+            'parentRegionId': f'PARENT-{parent_index:04d}',
+            'mask': (zone_grid, zone),
+            'order': distances[zone],
+            'mergeAreaCap': 1100,
+        })
+    result = build_province_geometry(
+        terrain, proj, province_seeds, parent_records, admin_rows, {}
+    )
+    uncovered = political_land & (result.owner < 0)
+    if np.any(uncovered):
+        raise ValueError(f'world province build left {int(uncovered.sum())} land cells uncovered')
+    quality = measure_province_shapes(result.owner, result.province_records)
+    exception_document = json.load(open(PROVINCE_SHAPE_EXCEPTIONS))
+    validate_province_quality(
+        quality,
+        ProvinceQualityPolicy(
+            max_components=32,
+            max_aspect_ratio=5.0,
+            min_aspect_area=32,
+            min_fill_ratio=0.10,
+            min_fill_area=100,
+            max_area=1250,
+            max_parent_median_ratio=1_000.0,
+            corridor_min_length=10_000,
+        ),
+        exception_document['exceptions'],
+        map_version='han-world-v2',
+    )
+    return result, quality, parent_owner
 
 
 def stroke_lines(grid, proj, path, bbox, value, only_land=True):
@@ -1013,12 +1306,44 @@ def main():
     adj_c = merged['adjacency']['county']
     adj_m = merged['adjacency']['commandery']
 
+    if not os.path.exists(MODERN_ADMIN):
+        sys.exit(
+            f'{MODERN_ADMIN} 가 없다. tools/map/fetch_modern_admin_boundaries.py 를 먼저 돌려라.'
+        )
+    modern_features = json.load(open(MODERN_ADMIN, encoding='utf-8'))['features']
+    province_result, province_quality, parent_owner = build_world_provinces(
+        terrain=terrain, proj=proj, bbox=bbox, places=merged['places'],
+        place_ids=merged['placeIds'], jun_of=jun_of, jun_names=jun_names,
+        seat_owner=seat_label, modern_features=modern_features,
+    )
+    owner = province_result.owner.astype(np.int16)
+    seat_label = parent_owner.astype(np.int16)
+    adj_c = adjacency(owner)
+
+    province_records = [{
+        'id': record.id, 'displayName': record.display_name, 'nameCh': record.name_ch,
+        'administrativeSystem': record.administrative_system, 'kind': record.kind,
+        'parentRegionId': record.parent_region_id, 'cityIndex': record.city_index,
+        'geometryBasis': record.geometry_basis, 'confidence': record.confidence,
+    } for record in province_result.province_records]
+    parent_regions = [{
+        'id': record.id, 'displayName': record.display_name, 'nameCh': record.name_ch,
+        'administrativeSystem': record.administrative_system,
+    } for record in province_result.parent_regions]
+    province_audit = [{
+        'kind': decision.kind, 'sourceFeatureId': decision.source_feature_id,
+        'provinceIds': list(decision.province_ids),
+    } for decision in province_result.audit.decisions]
+    province_quality_rows = [asdict(metric) for metric in province_quality.metrics]
+
     legend = ['SEA', 'PLAIN', 'MOUNTAIN', 'RIVER', 'LAKE', 'DESERT', 'PLATEAU', 'BASIN', 'HILL']
     counts = {name: int((terrain == i).sum()) for i, name in enumerate(legend)}
     json.dump({
         'grid': n, 'cols': n, 'rows': rows, 'year': hp.get('year'), 'projection': hp['projection'],
         'legend': {str(i): name for i, name in enumerate(legend)},
         'counts': counts, 'terrain': terrain.tolist(), 'owner': owner.tolist(),
+        'provinceRecords': province_records, 'parentRegions': parent_regions,
+        'provinceAudit': province_audit, 'provinceQuality': province_quality_rows,
         'region': region.tolist(), 'regionNames': names,
         'placeIds': merged['placeIds'],
         'hubs': hubs, 'junOf': jun_of.tolist(), 'junNames': jun_names,
@@ -1028,6 +1353,7 @@ def main():
         # 이동 그래프. 길이 아니라 영역 인접이다 — 도로는 간선만 남겨 통행 보정에 쓴다.
         'adjacency': {'county': adj_c, 'commandery': adj_m},
         'seatOwner': seat_label.tolist(),
+        'parentOwner': parent_owner.tolist(),
         'source': 'Natural Earth 50m (public domain) + CHGIS V6 좌표(재배포 금지, ADR-LITE-039)',
     }, open(OUT, 'w'), separators=(',', ':'))
 

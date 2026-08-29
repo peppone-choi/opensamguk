@@ -85,6 +85,23 @@ class WorldProvinceGeometryTest(unittest.TestCase):
         self.assertEqual(result.province_records[0].kind, "DIRECT_TERRITORY")
         self.assertTrue(np.all(result.owner == 0))
 
+    def test_tiny_direct_sliver_merges_after_later_neighbor_is_painted(self) -> None:
+        terrain = np.ones((3, 6), dtype=np.uint8)
+        left = np.zeros_like(terrain, dtype=bool)
+        right = np.zeros_like(terrain, dtype=bool)
+        left[:, :3] = True
+        right[:, 3:] = True
+        result = build_province_geometry(
+            terrain, None, [seed("P-A", 1, 4)], PARENTS,
+            [
+                {"id": "ADM-A", "parentRegionId": "R-A", "mask": left},
+                {"id": "ADM-B", "parentRegionId": "R-A", "mask": right},
+            ], {},
+        )
+        self.assertEqual([record.id for record in result.province_records], ["P-A"])
+        self.assertTrue(np.all(result.owner == 0))
+        self.assertIn("MERGE_TINY_DIRECT", [row.kind for row in result.audit.decisions])
+
     def test_order_does_not_change_ids_or_owner(self) -> None:
         terrain = np.ones((3, 5), dtype=np.uint8)
         feature = {"id": "ADM-A", "parentRegionId": "R-A", "mask": terrain > 0}
