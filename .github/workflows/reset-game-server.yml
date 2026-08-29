@@ -247,7 +247,12 @@ jobs:
           RESET_RESERVE_OPEN="$(env_or_default RESET_RESERVE_OPEN '')"
           RESET_PRE_RESERVE_OPEN="$(env_or_default RESET_PRE_RESERVE_OPEN '')"
 
-          export PUBLIC_SERVER CONFIRM SCENARIO_CODE GENERATION TURN_TERM
+          export OPERATION_ID="$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
+          if [[ ! "$OPERATION_ID" =~ ^[a-f0-9]{32}$ ]]; then
+            echo "ERROR: failed to generate deployer operation id" >&2
+            exit 1
+          fi
+          export PUBLIC_SERVER CONFIRM SCENARIO_CODE GENERATION TURN_TERM OPERATION_ID
           export RESET_SYNC RESET_FICTION RESET_EXTEND RESET_BLOCK_GENERAL_CREATE RESET_NPCMODE RESET_SHOW_IMG_LEVEL
           export RESET_AUTORUN_USER_OPTIONS RESET_AUTORUN_USER_MINUTES RESET_JOIN_MODE RESET_TOURNAMENT_TRIG
           export RESET_RESERVE_OPEN RESET_PRE_RESERVE_OPEN
@@ -280,6 +285,7 @@ jobs:
               "tournamentTrig": os.environ["RESET_TOURNAMENT_TRIG"],
               "reserveOpen": os.environ["RESET_RESERVE_OPEN"],
               "preReserveOpen": os.environ["RESET_PRE_RESERVE_OPEN"],
+              "operationId": os.environ["OPERATION_ID"],
           }, ensure_ascii=False))
           PY
           )"
@@ -300,15 +306,74 @@ jobs:
             exit 1
           fi
 
-          echo "=== Triggering deployer reset for $PUBLIC_SERVER ($PROJECT, $SCENARIO_CODE) ==="
-          docker run --rm --network opensamguk-net curlimages/curl:8.10.1 \
-            -fsS -X POST \
-            -H "Authorization: Bearer ${DEPLOYER_TOKEN}" \
-            -H "Content-Type: application/json" \
-            --data "$BODY" \
-            http://opensamguk-deployer:9000/servers/reset \
-            | tee "$BACKUP_DIR/reset-response.json"
-          grep -q '"ok":true' "$BACKUP_DIR/reset-response.json"
+          export OPERATION_DEADLINE=$(( $(date +%s) + 1200 ))
+          RESET_RESPONSE="$(mktemp)"
+          CURL_SHIM_DIR="$(mktemp -d)"
+          cleanup_operation_files() {
+            rm -f "$RESET_RESPONSE"
+            rm -rf "$CURL_SHIM_DIR"
+          }
+          trap cleanup_operation_files EXIT
+          printf '%s\n' \
+            '#!/usr/bin/env bash' \
+            'set -euo pipefail' \
+            'output_file=""' \
+            'args=()' \
+            'while (($#)); do' \
+            '  case "$1" in' \
+            '    --output) output_file="$2"; shift 2 ;;' \
+            '    *) args+=("$1"); shift ;;' \
+            '  esac' \
+            'done' \
+            '[[ -n "$output_file" ]] || exit 2' \
+            'remaining=$((OPERATION_DEADLINE - $(date +%s)))' \
+            '((remaining > 0)) || exit 124' \
+            'exec timeout --foreground -k 2 "$remaining" docker run --rm -i --network opensamguk-net curlimages/curl:8.10.1 "${args[@]}" --output - >"$output_file"' \
+            >"$CURL_SHIM_DIR/curl"
+          chmod 700 "$CURL_SHIM_DIR/curl"
+
+          echo "=== Triggering deployer reset for $PUBLIC_SERVER ($PROJECT, $SCENARIO_CODE), operation $OPERATION_ID ==="
+          if ! docker run --rm -i --network opensamguk-net curlimages/curl:8.10.1 \
+            --silent --show-error --fail --max-redirs 0 --connect-timeout 5 --max-time 20 \
+            --request POST --header 'Content-Type: application/json' --data "$BODY" \
+            --output - --config - >"$RESET_RESPONSE" <<EOF
+          url = "http://opensamguk-deployer:9000/servers/reset"
+          header = "Authorization: Bearer ${DEPLOYER_TOKEN}"
+          EOF
+          then
+            echo "ERROR: deployer reset request failed for operation $OPERATION_ID" >&2
+            exit 1
+          fi
+          if ! OPERATION_ID="$OPERATION_ID" python3 - "$RESET_RESPONSE" <<'PY'
+          import json
+          import os
+          import sys
+
+          try:
+              with open(sys.argv[1], encoding="utf-8") as response:
+                  payload = json.load(response)
+          except (OSError, UnicodeError, json.JSONDecodeError):
+              raise SystemExit(1)
+          if not isinstance(payload, dict) or payload.get("ok") is not True:
+              raise SystemExit(1)
+          if payload.get("operationId") != os.environ["OPERATION_ID"]:
+              raise SystemExit(1)
+          if payload.get("operationStatus") not in {
+              "pending", "running", "recovery_required", "succeeded"
+          }:
+              raise SystemExit(1)
+          PY
+          then
+            echo "ERROR: deployer reset returned a malformed acceptance response for operation $OPERATION_ID" >&2
+            exit 1
+          fi
+          if ! PATH="$CURL_SHIM_DIR:$PATH" \
+            "$GITHUB_WORKSPACE/tools/ops/wait_deployer_operation.sh" \
+            "http://opensamguk-deployer:9000" "env:DEPLOYER_TOKEN" \
+            "$OPERATION_ID" "$OPERATION_DEADLINE" 5; then
+            echo "ERROR: deployer reset operation $OPERATION_ID did not complete successfully; inspect operation state and run lifecycle repair if recovery is required" >&2
+            exit 1
+          fi
 
           wait_container_recreated() {
             local container="$1"

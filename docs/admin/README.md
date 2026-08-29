@@ -1,7 +1,7 @@
 # 오픈삼국 관리자 매뉴얼
 
 > 상태: 현재 Gateway·게임 관리자 화면 기준
-> 마지막 검토: 2026-08-20
+> 마지막 검토: 2026-08-29
 
 관리 표면은 두 곳입니다.
 
@@ -30,6 +30,35 @@
 
 관리 화면의 confirm은 최종 안전 경계가 아닙니다. 운영자는 대상 서버, 현재 기수, 데이터 영향과 승인 기록을
 별도로 확인해야 합니다.
+
+## 서버 생명주기 operation 판정
+
+> 배포 상태: 아래는 현재 개발 branch에 구현된 rollout 계약입니다. production 배포·실서버
+> 검증은 아직 이 문서로 증명되지 않았으며, 배포 증거 없이 현재 운영 기능으로 간주하지 않습니다.
+
+서버 생성·리셋·삭제의 첫 응답은 작업을 내구적으로 **접수**했다는 뜻일 수 있지만, Docker 변경·런타임
+검증·Gateway registry 반영이 **완료**됐다는 뜻은 아닙니다. UI와 control workflow는 반드시 같은
+`operationId`를 조회해 `succeeded`를 확인한 뒤에만 완료로 표시합니다.
+
+| 상태 | 운영 판정 |
+|---|---|
+| `pending`, `running` | 접수/실행 중. 완료·실패 둘 다 아님 |
+| `recovery_required` | 비종료. 영속 journal을 기준으로 repair가 필요하며 일반 mutation은 fail-closed |
+| `succeeded` | 후속 검증과 registry 갱신을 진행해도 되는 유일한 성공 상태 |
+| `failed`, `cancelled` | 종료 실패. 제한된 `publicMessage`로 종료하고 성공처럼 registry를 새로 고치지 않음 |
+
+`operationId`는 확인 1회당 하나의 32자리 소문자 hex로 생성하고, 모든 재시도와 polling에서 같은 값을
+재사용합니다. 장애 에스컬레이션에는 이 ID와 서버 ID, 발생 시각만 우선 적고, HTTP 응답 본문·토큰·
+`.env`는 첨부하지 않습니다.
+
+Polling deadline이 끝나도 기저 operation이 성공했거나 실패했다는 뜻이 아닙니다. 화면은 "아직 진행
+중"과 `operationId`를 보여주고, 운영자는 같은 ID로 상태를 다시 조회합니다. 새 ID로 파괴적 요청을
+즉시 반복하지 않습니다.
+
+`recovery_required`인 경우에는 점검 marker를 닫힌 채 두고, deployer loopback의
+`POST /maintenance/repair`를 승인된 절차로 실행합니다. Repair가 런타임·데이터·공유 registry 후조건을
+다시 검증하고 같은 operation을 `succeeded`로 영속한 뒤에만 journal과 점검 장벽을 정리합니다.
+Repair가 실패하거나 `recovery_required`가 유지되면 장벽을 임의로 열지 않고 에스컬레이션합니다.
 
 ## 현재 운영 제어면
 
