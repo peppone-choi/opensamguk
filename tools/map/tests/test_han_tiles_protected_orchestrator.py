@@ -125,8 +125,11 @@ class ProtectedOrchestratorTest(unittest.TestCase):
             row["distributionName"]: lock["distributions"][role]["version"]
             for role, row in contract["recipe"]["dependencies"].items()
         }
+        runtime_platform = lock["platform"]
         blob = json.dumps(lock, sort_keys=True, separators=(",", ":")).encode()
-        self.assertTrue(orchestrator.validate_dependency_lock_bytes(blob, contract, installed))
+        self.assertTrue(orchestrator.validate_dependency_lock_bytes(
+            blob, contract, installed, runtime_platform,
+        ))
         mutations = [
             lambda d: d.update(extra=True),
             lambda d: d.update(lockType="GENERAL_RESOLVER_LOCK"),
@@ -147,7 +150,7 @@ class ProtectedOrchestratorTest(unittest.TestCase):
             with self.subTest(index=index), self.assertRaises(ValueError):
                 orchestrator.validate_dependency_lock_bytes(
                     json.dumps(changed, separators=(",", ":")).encode(),
-                    contract, installed,
+                    contract, installed, runtime_platform,
                 )
 
     def test_wheelhouse_requires_exact_reviewed_artifact_set_hashes_and_bytes(self):
