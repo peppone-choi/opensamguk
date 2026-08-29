@@ -74,6 +74,7 @@ class PrecheckFullCrossCallSiteTest {
         val routeCityId: Int? = null,
         val routeCityNationId: Int = 0,
         val cityLevel: Int = 5,
+        val cityDefense: Int = 0,
         val cityPopulation: Int = 100_000,
         val supplyState: Int = 1,            // 0 -> SuppliedCity deny
         val agri: Int = 4000,
@@ -84,6 +85,8 @@ class PrecheckFullCrossCallSiteTest {
         val crew: Int = 0,
         val atWarNationId: Int? = null,
         val nationTech: Int = 0,
+        val nationLevel: Int = 7,
+        val nationGennum: Int = 2,
         val nationGold: Int = 100_000,
         val nationRice: Int = 100_000,
         val mapName: String? = "che",
@@ -112,6 +115,7 @@ class PrecheckFullCrossCallSiteTest {
             id = f.cityId, nationId = f.cityNationId, level = f.cityLevel,
             commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
             supplyState = f.supplyState, frontState = 0, trust = 82.0,
+            defense = f.cityDefense, defenseMax = f.cityDefense,
             wall = f.wall, wallMax = f.wallMax,
             population = f.cityPopulation,
             meta = linkedMapOf(),
@@ -135,8 +139,9 @@ class PrecheckFullCrossCallSiteTest {
             )
         }
         val nation = NationReadEntity(
-            id = NATION_ID, level = 7, capitalCityId = f.cityId, tech = f.nationTech.toDouble(),
+            id = NATION_ID, level = f.nationLevel, capitalCityId = f.cityId, tech = f.nationTech.toDouble(),
             gold = f.nationGold, rice = f.nationRice,
+            meta = linkedMapOf("gennum" to f.nationGennum),
         )
         val worldState = WorldStateReadEntity(
             id = 1, scenarioCode = "scenario_2", currentYear = YEAR, currentMonth = MONTH,
@@ -178,6 +183,7 @@ class PrecheckFullCrossCallSiteTest {
             id = f.cityId, name = "c${f.cityId}", nationId = f.cityNationId, level = f.cityLevel,
             commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
             supplyState = f.supplyState, frontState = 0,
+            defence = f.cityDefense, defenceMax = f.cityDefense,
             wall = f.wall, wallMax = f.wallMax,
             population = f.cityPopulation,
             meta = linkedMapOf("trust" to 82),   // engine City has no trust column; lives in meta
@@ -195,11 +201,12 @@ class PrecheckFullCrossCallSiteTest {
                 id = NATION_ID,
                 name = "n$NATION_ID",
                 color = "#000",
-                level = 7,
+                level = f.nationLevel,
                 capitalCityId = f.cityId,
                 gold = f.nationGold,
                 rice = f.nationRice,
                 tech = f.nationTech.toDouble(),
+                meta = linkedMapOf("gennum" to f.nationGennum),
             ),
             Nation(id = 2, name = "n2", color = "#111", level = 7, capitalCityId = null),
         )
@@ -258,6 +265,39 @@ class PrecheckFullCrossCallSiteTest {
             fixture = fixture,
             argJson = """{"destCityID":421}""",
             args = linkedMapOf("destCityID" to 421),
+        )
+    }
+
+    @Test
+    fun `Han compatibility constraint dependencies agree at precheck and daemon call sites`() {
+        val fixture = Fixture(cityId = 3, destCityId = 421, mapName = "han-780-v1")
+        assertAvailableAgreement(
+            action = "che_이동",
+            fixture = fixture,
+            argJson = """{"destCityID":421}""",
+            args = linkedMapOf("destCityID" to 421),
+        )
+    }
+
+    @Test
+    fun `Han compatibility founding assault preloads the general at both call sites`() {
+        val fixture = Fixture(
+            cityNationId = 0,
+            cityLevel = 10,
+            cityDefense = 1500,
+            crew = 2999,
+            officerLevel = 12,
+            nationLevel = 0,
+            nationGennum = 2,
+            mapName = "han-780-v1",
+        )
+        assertDenyAgreement(
+            fixture = fixture,
+            reason = "수비병을 뚫을 병력이 부족합니다. (필요 3000명)",
+            constraintName = "ConstructableCity",
+            action = "che_건국",
+            argJson = """{"nationName":"촉","nationType":"che_명가","colorType":5}""",
+            args = linkedMapOf("nationName" to "촉", "nationType" to "che_명가", "colorType" to 5),
         )
     }
 

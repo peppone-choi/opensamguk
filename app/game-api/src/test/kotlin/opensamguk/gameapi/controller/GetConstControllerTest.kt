@@ -109,6 +109,23 @@ class GetConstControllerTest {
     }
 
     @Test
+    fun `compatibility world exposes all 780 historical city constants`() {
+        val world = WorldStateReadEntity(
+            id = 1,
+            scenarioCode = "scenario_1010",
+            currentYear = 184,
+            currentMonth = 1,
+            config = mapOf("mapName" to "han-780-v1"),
+        )
+
+        mockMvc(listOf(world)).perform(get("/api/const"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapName").value("han-780-v1"))
+            .andExpect(jsonPath("$.cityConst.length()").value(780))
+            .andExpect(jsonPath("$.cityConst[779].id").value(780))
+    }
+
+    @Test
     fun `seeded world without map metadata fails with its identity visible`() {
         val worldRepo = mock(WorldStateReadRepository::class.java)
         `when`(worldRepo.findAll()).thenReturn(

@@ -14,6 +14,23 @@
 - 위험한 관리자 작업은 대상 서버, 권한, 사전 조건, 결과를 확인할 수 있어야 한다.
 - 테스트나 문서를 구현 증거 대신 사용하지 않는다.
 
+## 활성 월드 지도 정체성
+
+월드가 seed된 뒤 `mapName`은 불변의 숫자 city-id 공간을 식별한다. 생성 도시의 수나 순서를 바꾸는
+변경은 반드시 새 버전 지도 키를 만든다. 기존 월드를 새 키로 조용히 이동시키지 않으며, ordinal id
+추측으로 복구하지 않는다.
+
+`han`의 현재 774성 공간과 `han-780-v1`의 호환 780성 공간은 서로 다른 불변식이다. V45 migration은
+활성 `han` 월드의 city-id 모양이 정확히 `1..780`일 때만 config/meta의 활성 지도 정체성을
+`han-780-v1`로 고정한다. 정확히 `1..774`는 no-op이고, 그 밖의 모양은 fail-closed다. migration은
+`world_state`의 지도 JSON만 보존적으로 갱신하며 `ng_games.map`이나 city·general·nation 등 gameplay
+identity를 변경하지 않는다.
+
+부팅 시 validator는 저장된 city-id 집합이 선택된 지도 변형의 정확한 집합과 일치하는지, 그리고 양수
+general city/capital 참조가 해결되는지 검증한다. 불일치는 daemon을 만들기 전에 실패한다. 따라서
+rollout은 같은 immutable SHA의 game-api와 game-engine을 함께 승격하고, backup/restore 증거와 health,
+tick, public-time 관측을 갖춘 운영 gate를 통과해야 한다.
+
 ## 경계 표
 
 | 항목 | 동결된 기존 기준선 | 승인된 전환 방향 | 아직 완료로 볼 수 없는 것 |

@@ -20,6 +20,7 @@ import opensamguk.logic.actions.military.RecruitAlgorithm
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.FOUND_ASSAULT_RATIO
 import opensamguk.logic.world.foundAssaultCrewCost
+import opensamguk.logic.world.foundingDefenseAfterCapture
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -94,13 +95,22 @@ class HanFoundAssaultTest {
     }
 
     @Test
-    fun `foundAssaultCrewCost is ceil of def times the ratio on han and zero elsewhere`() {
+    fun `foundAssaultCrewCost is ceil of def times the ratio on each Han identity and zero elsewhere`() {
         assertEquals(3000, foundAssaultCrewCost("han", 1500))
         assertEquals(2002, foundAssaultCrewCost("han", 1001), "ceil, not round")
+        assertEquals(3000, foundAssaultCrewCost("han-780-v1", 1500))
+        assertEquals(2002, foundAssaultCrewCost("han-780-v1", 1001), "ceil, not round")
         assertEquals(0, foundAssaultCrewCost("han", 0))
         assertEquals(0, foundAssaultCrewCost("che", 1500))
         assertEquals(0, foundAssaultCrewCost("miniche", 3000))
         assertEquals(0, foundAssaultCrewCost(null, 3000))
+    }
+
+    @Test
+    fun `defense selection after founding uses both Han identities only`() {
+        assertEquals(0, foundingDefenseAfterCapture("han", 1500, 0))
+        assertEquals(0, foundingDefenseAfterCapture("han-780-v1", 1500, 0))
+        assertEquals(1500, foundingDefenseAfterCapture("che", 1500, 0))
     }
 
     @Test
@@ -121,6 +131,15 @@ class HanFoundAssaultTest {
     }
 
     @Test
+    fun `Han compatibility variant applies the founding assault rule`() {
+        val g = lord(crew = 2999)
+        assertEquals(
+            "수비병을 뚫을 병력이 부족합니다. (필요 3000명)",
+            deny(constructableCity().test(ctx("han-780-v1"), view(g, neutralCity()))),
+        )
+    }
+
+    @Test
     fun `han founding spends the assault crew and wipes the garrison`() {
         val draft = GeneralActionDraft(lord(crew = 5000), neutralCity(), wanderingNation())
         val command = CheGeonguk(pipeline)
@@ -131,6 +150,17 @@ class HanFoundAssaultTest {
         assertEquals(0, draft.city.defense, "수비병 전멸")
         assertEquals(NATION_ID, draft.city.nationId, "건국은 성사된다")
         assertEquals(1, draft.nation!!.level)
+    }
+
+    @Test
+    fun `Han compatibility founding spends the assault crew and wipes the garrison`() {
+        val draft = GeneralActionDraft(lord(crew = 5000), neutralCity(), wanderingNation())
+        val command = CheGeonguk(pipeline)
+        command.resolve(resolveCtx(draft, "han-780-v1"))
+
+        assertEquals(3000, command.lastAssaultCrewCost)
+        assertEquals(2000, draft.general.crew)
+        assertEquals(0, draft.city.defense)
     }
 
     // --- che 무변 (패러티 골든 보호) ---
@@ -160,6 +190,13 @@ class HanFoundAssaultTest {
     fun `han lets a wandering-nation general recruit on a neutral city`() {
         val g = lord(crew = 0)
         val result = recruitableCity().test(ctx("han"), viewWithNation(g, neutralCity(), wanderingNation()))
+        assertTrue(result is ConstraintResult.Allow, "expected Allow but was $result")
+    }
+
+    @Test
+    fun `Han compatibility lets a wandering-nation general recruit on a neutral city`() {
+        val g = lord(crew = 0)
+        val result = recruitableCity().test(ctx("han-780-v1"), viewWithNation(g, neutralCity(), wanderingNation()))
         assertTrue(result is ConstraintResult.Allow, "expected Allow but was $result")
     }
 

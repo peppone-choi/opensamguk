@@ -88,6 +88,7 @@ internal class FullRehydrateFixtureFactory(
             worldId = worldId,
         ),
         worldId = worldId,
+        snapshotValidator = {},
     )
 }
 

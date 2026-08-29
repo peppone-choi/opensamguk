@@ -1,5 +1,6 @@
 package opensamguk.logic.ai.families
 
+import opensamguk.common.constants.CityConst.RawCity
 import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
@@ -22,8 +23,10 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.StatCalc
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.CityConstVariant
+import opensamguk.logic.world.InitCityOverrideVariant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -489,6 +492,140 @@ class GenFoundBodiesTest {
             }
         }
         assertTrue(found, "affinity==999 after a TRUE 0.3 gate → null with ONLY the nextBool(0.3) draw (PHP :3359-3361)")
+    }
+
+    private data class NationChoiceInvocation(
+        val result: ChosenCommand?,
+        val failure: Throwable?,
+        val draws: List<RecordingRng.Draw>,
+    )
+
+    private fun invokeNationChoice(
+        seed: Int,
+        seedPrefix: String,
+        cityConst: CityConstVariant,
+        selfCityId: Int,
+    ): NationChoiceInvocation {
+        val rng = RecordingRng("$seedPrefix-$seed")
+        val outcome = runCatching {
+            GenFoundFamily.do국가선택(
+                ctxOf(
+                    rng,
+                    instance(nationId = 0),
+                    selfCityId = selfCityId,
+                    cityConst = cityConst,
+                    selfNpcType = 6,
+                    nationCount = 5,
+                    notFullNationCount = 5,
+                ),
+            )(null)
+        }
+        return NationChoiceInvocation(outcome.getOrNull(), outcome.exceptionOrNull(), rng.draws.toList())
+    }
+
+    private fun assertCorruptNationChoiceContained(
+        cityConst: CityConstVariant,
+        selfCityId: Int,
+        seedPrefix: String,
+    ) {
+        var exercisedMoveBranch = false
+        val failures = mutableListOf<Throwable>()
+        val choiceDrawSeeds = mutableListOf<Int>()
+        for (seed in 0..400) {
+            val invocation = invokeNationChoice(seed, seedPrefix, cityConst, selfCityId)
+            if (invocation.draws.take(2) == listOf(
+                    RecordingRng.Draw("nextBool", 0.3),
+                    RecordingRng.Draw("nextBool", 0.2),
+                )) {
+                exercisedMoveBranch = true
+                invocation.failure?.let { failures += it }
+                if (invocation.draws.any { it.kind == "choice" }) choiceDrawSeeds += seed
+                if (invocation.failure == null) assertNull(invocation.result)
+            }
+        }
+        assertTrue(exercisedMoveBranch)
+        assertTrue(failures.isEmpty(), "invalid nation-choice movement must not throw: $failures")
+        assertTrue(choiceDrawSeeds.isEmpty(), "invalid nation-choice movement must not draw choice: $choiceDrawSeeds")
+    }
+
+    @Test
+    fun `do국가선택 missing current city never aborts the decision loop`() {
+        assertCorruptNationChoiceContained(
+            cityConst = CityConstRegistry.of("han"),
+            selfCityId = 999_999,
+            seedPrefix = "nc-missing-city",
+        )
+    }
+
+    @Test
+    fun `do국가선택 empty ordered paths never aborts the decision loop`() {
+        val emptyPathVariant = InitCityOverrideVariant(
+            mapName = "empty-path",
+            rawRows = listOf(
+                RawCity(
+                    id = 999_999,
+                    name = "empty-path-city",
+                    level = "특",
+                    population = 100,
+                    agriculture = 1,
+                    commerce = 1,
+                    security = 1,
+                    defence = 1,
+                    wall = 1,
+                    region = "하북",
+                    posX = 0,
+                    posY = 0,
+                    path = emptyList(),
+                ),
+            ),
+        )
+        assertEquals(linkedMapOf<Int, String>(), emptyPathVariant.byId(999_999)!!.path)
+        assertCorruptNationChoiceContained(
+            emptyPathVariant,
+            selfCityId = 999_999,
+            seedPrefix = "nc-empty-path",
+        )
+    }
+
+    @Test
+    fun `do국가선택 valid path preserves both gates then one choice draw`() {
+        val cityConst = CityConstRegistry.of("che")
+        val paths = cityConst.byId(1)!!.path.keys.toList()
+        assertTrue(paths.isNotEmpty())
+
+        var observedMoveBranch = false
+        for (seed in 0..400) {
+            val rng = RecordingRng("nc-valid-$seed")
+            val result = GenFoundFamily.do국가선택(
+                ctxOf(
+                    rng,
+                    instance(nationId = 0),
+                    selfCityId = 1,
+                    cityConst = cityConst,
+                    selfNpcType = 6,
+                    nationCount = 5,
+                    notFullNationCount = 5,
+                ),
+            )(null)
+            if (rng.draws.take(2) == listOf(
+                    RecordingRng.Draw("nextBool", 0.3),
+                    RecordingRng.Draw("nextBool", 0.2),
+                ) && rng.draws.size == 3) {
+                observedMoveBranch = true
+                assertEquals(
+                    listOf(
+                        RecordingRng.Draw("nextBool", 0.3),
+                        RecordingRng.Draw("nextBool", 0.2),
+                        RecordingRng.Draw("choice", -1.0),
+                    ),
+                    rng.draws,
+                    "seed=$seed paths=$paths result=$result",
+                )
+                assertEquals("che_이동", assertNotNull(result).actionCode)
+                break
+            }
+        }
+        assertTrue(observedMoveBranch)
     }
 
     // ==================================================================================================

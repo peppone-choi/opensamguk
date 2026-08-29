@@ -50,6 +50,7 @@ class WorldSnapshotLoader(
     private val jdbc: JdbcTemplate,
     private val seedBootstrap: SeedBootstrap,
     private val worldId: WorldId,
+    private val snapshotValidator: (WorldSnapshot) -> Unit = ActiveWorldMapValidator::validate,
 ) {
     private val log = LoggerFactory.getLogger(WorldSnapshotLoader::class.java)
 
@@ -139,7 +140,7 @@ class WorldSnapshotLoader(
             accessLogs.size,
             troops.size,
         )
-        return WorldSnapshot(
+        val snapshot = WorldSnapshot(
             state = state,
             worldId = worldId,
             serverId = activeServerId,
@@ -151,6 +152,8 @@ class WorldSnapshotLoader(
             accessLogs = accessLogs,
             archivedNationIds = archivedNationIds,
         )
+        snapshotValidator(snapshot)
+        return snapshot
     }
 
     private fun loadWorldState(): TurnWorldState {

@@ -71,6 +71,26 @@ class TerrainMapControllerTest {
     }
 
     @Test
+    fun `versioned compatibility mapCode serves its sibling terrain bytes`() {
+        val dir = Files.createTempDirectory("versioned-map-tiles")
+        val han = dir.resolve("han-tiles.json")
+        val compatibility = dir.resolve("han-780-v1-tiles.json")
+        val bytes = """{"map":"han-780-v1"}""".toByteArray()
+        Files.writeString(han, """{"map":"han"}""")
+        Files.write(compatibility, bytes)
+
+        mockMvc(han.toString()).perform(
+            get("/api/map/terrain").queryParam("mapCode", "han-780-v1"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().bytes(bytes))
+
+        Files.deleteIfExists(compatibility)
+        Files.deleteIfExists(han)
+        Files.deleteIfExists(dir)
+    }
+
+    @Test
     fun `mapCode 경로 문자는 404 로 거절한다`() {
         val f = Files.createTempFile("han-tiles", ".json")
         Files.writeString(f, """{"map":"han"}""")

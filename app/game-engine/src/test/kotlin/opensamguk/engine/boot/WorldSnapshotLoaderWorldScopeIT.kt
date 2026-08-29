@@ -91,6 +91,7 @@ class WorldSnapshotLoaderWorldScopeIT {
         jdbc,
         SeedBootstrap(scenarioCode = "scenario_0", seedEnabled = false, worldId = worldId),
         worldId,
+        snapshotValidator = {},
     )
 
     private fun insertTwoWorldsWithIdenticalLocalIds() {

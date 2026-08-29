@@ -1,0 +1,17 @@
+{
+  "mapName": "han-780-v1",
+  "sourceCommit": "ad75119548050e5954d813753da41aa6a30be3b3",
+  "cityCount": 780,
+  "sourceHashes": {
+    "HanCityConst.kt": "12388359f9a18a0e165621807d2fcdd8a114443081d38218162f3d0f583bde8c",
+    "HanGateIndex.kt": "c73b711f730d5434fd182c49fe51a6548d9abe6122d27c27fd334978fba7ab4b",
+    "han.json": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
+    "han-tiles.json": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
+  },
+  "committedHashes": {
+    "Han780V1CityConst.kt": "3df1952c65406ddde4f22e4462867b897b8707ad41db645c4e78fb3212a19199",
+    "Han780V1GateIndex.kt": "7c381e5d7a18948f703c79a92f7edf1b11f0782942783428e3b087da930dc732",
+    "han-780-v1.json": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
+    "han-780-v1-tiles.json": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
+  }
+}

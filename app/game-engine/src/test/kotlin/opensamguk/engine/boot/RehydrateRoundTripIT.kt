@@ -107,6 +107,7 @@ class RehydrateRoundTripIT {
                 worldId = WorldId(1),
             ),
             WorldId(1),
+            snapshotValidator = {},
         )
 
         jdbc.update(
