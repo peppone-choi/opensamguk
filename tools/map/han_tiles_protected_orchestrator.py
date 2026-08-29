@@ -39,6 +39,7 @@ INPUT_RELATIVE_PATHS = {
     "NE_LAKES_50M": "data/natural-earth/ne_50m_lakes.geojson",
     "NE_RIVERS_50M": "data/natural-earth/ne_50m_rivers_lake_centerlines.geojson",
     "NE_REGIONS_10M": "data/natural-earth/ne_10m_geography_regions_polys.geojson",
+    "MODERN_ADMIN_ADM2": "data/modern-admin/geoBoundaries-CGAZ-ADM2.geojson",
     "ADMINISTRATIVE_UNITS": "data/curated/han/administrative-units.json",
     "ADMINISTRATIVE_BINDINGS": "data/curated/han/administrative-place-bindings-v1.json",
     "ADMINISTRATIVE_HISTORY": "data/map/han-administrative-history.json",

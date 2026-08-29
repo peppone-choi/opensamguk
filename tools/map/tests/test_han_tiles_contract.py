@@ -15,6 +15,7 @@ INPUT_ROLES = [
     "CTEXT_JUNGUOZHI_YI", "CTEXT_JUNGUOZHI_ER", "CTEXT_JUNGUOZHI_SAN",
     "CTEXT_JUNGUOZHI_SI", "CTEXT_JUNGUOZHI_WU",
     "NE_LAND_50M", "NE_LAKES_50M", "NE_RIVERS_50M", "NE_REGIONS_10M",
+    "MODERN_ADMIN_ADM2",
     "ADMINISTRATIVE_UNITS", "ADMINISTRATIVE_BINDINGS", "ADMINISTRATIVE_HISTORY",
     "DUPLICATE_ADJUDICATIONS", "STABLE_ID_ADJUDICATIONS",
     "MERGE_ADJUDICATIONS", "TEMPORAL_ADJUDICATIONS", "EXTERNAL_PLACES",
@@ -49,7 +50,7 @@ def hashed_record(label, **extra):
 
 
 def valid_recipe():
-    restricted = set(INPUT_ROLES[:11])
+    restricted = set(INPUT_ROLES[:12])
     inputs = {
         role: hashed_record(
             role,
@@ -121,7 +122,8 @@ def valid_recipe():
                 "stageId": "TERRAIN_GRID", "generatorRole": "BUILD_TERRAIN_GRID",
                 "inputRoles": [
                     "HAN_PLACES", "JUNGUOZHI", "NE_LAND_50M", "NE_LAKES_50M",
-                    "NE_RIVERS_50M", "NE_REGIONS_10M", "ADMINISTRATIVE_UNITS",
+                    "NE_RIVERS_50M", "NE_REGIONS_10M", "MODERN_ADMIN_ADM2",
+                    "ADMINISTRATIVE_UNITS",
                     "ADMINISTRATIVE_BINDINGS", "ADMINISTRATIVE_HISTORY",
                     "MERGE_ADJUDICATIONS", "TEMPORAL_ADJUDICATIONS",
                 ],

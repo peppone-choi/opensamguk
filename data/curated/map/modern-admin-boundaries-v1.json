@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "dataset": "geoBoundaries",
+  "release": "6.0.0",
+  "level": "ADM2",
+  "product": "CGAZ",
+  "url": "https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/v6.0.0/releaseData/CGAZ/geoBoundariesCGAZ_ADM2.zip",
+  "sha256": "06cadadae2f1e8fab89dec62365a850b663da280df712c39c96e3c9f33a49696",
+  "license": "CC BY 4.0",
+  "attribution": "geoBoundaries Global Database, William & Mary geoLab; adapted for OpenSamguk",
+  "retrievedAt": "2026-08-29"
+}

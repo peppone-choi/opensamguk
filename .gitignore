@@ -93,3 +93,4 @@ data/map/*
 # tools/corpus/fetch_sources.py 로 언제든 재현된다. 커밋 대상은 tools/corpus/*.py 뿐이다.
 data/corpus/
 data/natural-earth/
+data/modern-admin/
