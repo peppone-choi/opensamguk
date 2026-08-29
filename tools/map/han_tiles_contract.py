@@ -34,7 +34,12 @@ RESTRICTED_INPUT_ROLES = (
 )
 TRACKED_INPUT_ROLES = (
     "ADMINISTRATIVE_UNITS",
+    "ADMINISTRATIVE_BINDINGS",
+    "ADMINISTRATIVE_HISTORY",
     "DUPLICATE_ADJUDICATIONS",
+    "STABLE_ID_ADJUDICATIONS",
+    "MERGE_ADJUDICATIONS",
+    "TEMPORAL_ADJUDICATIONS",
     "EXTERNAL_PLACES",
 )
 INPUT_ROLES = RESTRICTED_INPUT_ROLES + TRACKED_INPUT_ROLES
@@ -48,6 +53,15 @@ GENERATOR_ROLES = (
 VERIFIER_ROLES = (
     "HAN_TILES_CONTRACT_VALIDATOR",
     "HAN_TILES_ORCHESTRATOR",
+)
+HELPER_ROLES = (
+    "HAN_PLACE_STABLE_ID_LOADER",
+    "HAN_PLACE_MERGE_ADJUDICATIONS",
+    "HAN_PLACE_MERGE_RUNTIME",
+    "HAN_TEMPORAL_PARENT_RUNTIME",
+    "HAN_PARENT_RECONCILIATION_HELPER",
+    "HAN_PROVINCE_MODEL",
+    "HAN_TILES_CONTRACT_HELPER",
 )
 OUTPUT_ROLES = (
     "HAN_PLACES",
@@ -69,6 +83,11 @@ DEPENDENCIES = {
         "distributionName": "hanja",
         "lockRole": "HAN_TILES_PYTHON_LOCK",
     },
+    "PYYAML": {
+        "distributionName": "PyYAML",
+        "lockRole": "HAN_TILES_PYTHON_LOCK",
+        "requiredByRole": "HANJA",
+    },
 }
 
 _STAGES = (
@@ -80,6 +99,7 @@ _STAGES = (
             "CHGIS_COUNTY_DBF",
             "ADMINISTRATIVE_UNITS",
             "DUPLICATE_ADJUDICATIONS",
+            "STABLE_ID_ADJUDICATIONS",
             "EXTERNAL_PLACES",
         ],
         "dependencyRoles": [],
@@ -90,7 +110,6 @@ _STAGES = (
         "stageId": "JUNGUOZHI",
         "generatorRole": "BUILD_JUNGUOZHI",
         "inputRoles": [
-            "CHGIS_PREF_DBF",
             "CHGIS_COUNTY_DBF",
             "CTEXT_JUNGUOZHI_YI",
             "CTEXT_JUNGUOZHI_ER",
@@ -113,6 +132,11 @@ _STAGES = (
             "NE_LAKES_50M",
             "NE_RIVERS_50M",
             "NE_REGIONS_10M",
+            "ADMINISTRATIVE_UNITS",
+            "ADMINISTRATIVE_BINDINGS",
+            "ADMINISTRATIVE_HISTORY",
+            "MERGE_ADJUDICATIONS",
+            "TEMPORAL_ADJUDICATIONS",
         ],
         "dependencyRoles": ["NUMPY", "PILLOW"],
         "outputRole": "TERRAIN_GRID",
@@ -122,7 +146,7 @@ _STAGES = (
         "stageId": "READINGS",
         "generatorRole": "BUILD_READINGS",
         "inputRoles": ["HAN_PLACES", "JUNGUOZHI", "TERRAIN_GRID"],
-        "dependencyRoles": ["HANJA"],
+        "dependencyRoles": ["HANJA", "PYYAML"],
         "outputRole": "READINGS",
         "argv": [],
     },
@@ -417,8 +441,8 @@ def validate_contract(document: dict[str, Any]) -> bool:
     recipe = _require_exact_keys(
         contract["recipe"],
         {
-            "canonical", "inputs", "generators", "verifiers", "dependencies",
-            "runtime", "stages",
+            "canonical", "inputs", "generators", "verifiers", "helpers",
+            "dependencies", "runtime", "stages",
         },
         "contract.recipe",
     )
@@ -452,12 +476,18 @@ def validate_contract(document: dict[str, Any]) -> bool:
         for role, value in role_map.items():
             _validate_hash_record(value, f"recipe.{section}.{role}")
 
+    helpers = _require_exact_role_map(
+        recipe["helpers"], HELPER_ROLES, "recipe.helpers"
+    )
+    for role, value in helpers.items():
+        _validate_hash_record(value, f"recipe.helpers.{role}")
+
     dependencies = _require_exact_role_map(
         recipe["dependencies"], tuple(DEPENDENCIES), "recipe.dependencies"
     )
     for role, expected in DEPENDENCIES.items():
         record = _require_exact_keys(
-            dependencies[role], {"distributionName", "lockRole"},
+            dependencies[role], set(expected),
             f"recipe.dependencies.{role}",
         )
         if record != expected:

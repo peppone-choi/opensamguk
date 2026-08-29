@@ -15,13 +15,21 @@ INPUT_ROLES = [
     "CTEXT_JUNGUOZHI_YI", "CTEXT_JUNGUOZHI_ER", "CTEXT_JUNGUOZHI_SAN",
     "CTEXT_JUNGUOZHI_SI", "CTEXT_JUNGUOZHI_WU",
     "NE_LAND_50M", "NE_LAKES_50M", "NE_RIVERS_50M", "NE_REGIONS_10M",
-    "ADMINISTRATIVE_UNITS", "DUPLICATE_ADJUDICATIONS", "EXTERNAL_PLACES",
+    "ADMINISTRATIVE_UNITS", "ADMINISTRATIVE_BINDINGS", "ADMINISTRATIVE_HISTORY",
+    "DUPLICATE_ADJUDICATIONS", "STABLE_ID_ADJUDICATIONS",
+    "MERGE_ADJUDICATIONS", "TEMPORAL_ADJUDICATIONS", "EXTERNAL_PLACES",
 ]
 GENERATOR_ROLES = [
     "BUILD_HAN_PLACES", "BUILD_JUNGUOZHI", "BUILD_TERRAIN_GRID",
     "BUILD_READINGS", "BUILD_HAN_TILES",
 ]
 VERIFIER_ROLES = ["HAN_TILES_CONTRACT_VALIDATOR", "HAN_TILES_ORCHESTRATOR"]
+HELPER_ROLES = [
+    "HAN_PLACE_STABLE_ID_LOADER", "HAN_PLACE_MERGE_ADJUDICATIONS",
+    "HAN_PLACE_MERGE_RUNTIME", "HAN_TEMPORAL_PARENT_RUNTIME",
+    "HAN_PARENT_RECONCILIATION_HELPER", "HAN_PROVINCE_MODEL",
+    "HAN_TILES_CONTRACT_HELPER",
+]
 OUTPUT_ROLES = ["HAN_PLACES", "JUNGUOZHI", "TERRAIN_GRID", "READINGS", "HAN_TILES"]
 
 
@@ -57,6 +65,7 @@ def valid_recipe():
         "inputs": inputs,
         "generators": {role: hashed_record(role) for role in GENERATOR_ROLES},
         "verifiers": {role: hashed_record(role) for role in VERIFIER_ROLES},
+        "helpers": {role: hashed_record(role) for role in HELPER_ROLES},
         "dependencies": {
             "NUMPY": {
                 "distributionName": "numpy",
@@ -70,10 +79,15 @@ def valid_recipe():
                 "distributionName": "hanja",
                 "lockRole": "HAN_TILES_PYTHON_LOCK",
             },
+            "PYYAML": {
+                "distributionName": "PyYAML",
+                "lockRole": "HAN_TILES_PYTHON_LOCK",
+                "requiredByRole": "HANJA",
+            },
         },
         "runtime": {
             "pythonImplementation": "CPython",
-            "pythonVersion": "3.13.7",
+            "pythonVersion": "3.14.5",
             "dependencyLock": {
                 "role": "HAN_TILES_PYTHON_LOCK",
                 **hashed_record("HAN_TILES_PYTHON_LOCK"),
@@ -88,7 +102,8 @@ def valid_recipe():
                 "stageId": "HAN_PLACES", "generatorRole": "BUILD_HAN_PLACES",
                 "inputRoles": [
                     "CHGIS_PREF_DBF", "CHGIS_COUNTY_DBF", "ADMINISTRATIVE_UNITS",
-                    "DUPLICATE_ADJUDICATIONS", "EXTERNAL_PLACES",
+                    "DUPLICATE_ADJUDICATIONS", "STABLE_ID_ADJUDICATIONS",
+                    "EXTERNAL_PLACES",
                 ],
                 "dependencyRoles": [], "outputRole": "HAN_PLACES",
                 "argv": ["--year", "220", "--grid", "768"],
@@ -96,7 +111,7 @@ def valid_recipe():
             {
                 "stageId": "JUNGUOZHI", "generatorRole": "BUILD_JUNGUOZHI",
                 "inputRoles": [
-                    "CHGIS_PREF_DBF", "CHGIS_COUNTY_DBF", "CTEXT_JUNGUOZHI_YI",
+                    "CHGIS_COUNTY_DBF", "CTEXT_JUNGUOZHI_YI",
                     "CTEXT_JUNGUOZHI_ER", "CTEXT_JUNGUOZHI_SAN",
                     "CTEXT_JUNGUOZHI_SI", "CTEXT_JUNGUOZHI_WU", "EXTERNAL_PLACES",
                 ],
@@ -106,7 +121,9 @@ def valid_recipe():
                 "stageId": "TERRAIN_GRID", "generatorRole": "BUILD_TERRAIN_GRID",
                 "inputRoles": [
                     "HAN_PLACES", "JUNGUOZHI", "NE_LAND_50M", "NE_LAKES_50M",
-                    "NE_RIVERS_50M", "NE_REGIONS_10M",
+                    "NE_RIVERS_50M", "NE_REGIONS_10M", "ADMINISTRATIVE_UNITS",
+                    "ADMINISTRATIVE_BINDINGS", "ADMINISTRATIVE_HISTORY",
+                    "MERGE_ADJUDICATIONS", "TEMPORAL_ADJUDICATIONS",
                 ],
                 "dependencyRoles": ["NUMPY", "PILLOW"],
                 "outputRole": "TERRAIN_GRID", "argv": ["--grid", "768"],
@@ -114,7 +131,8 @@ def valid_recipe():
             {
                 "stageId": "READINGS", "generatorRole": "BUILD_READINGS",
                 "inputRoles": ["HAN_PLACES", "JUNGUOZHI", "TERRAIN_GRID"],
-                "dependencyRoles": ["HANJA"], "outputRole": "READINGS", "argv": [],
+                "dependencyRoles": ["HANJA", "PYYAML"],
+                "outputRole": "READINGS", "argv": [],
             },
             {
                 "stageId": "HAN_TILES", "generatorRole": "BUILD_HAN_TILES",
@@ -187,7 +205,7 @@ def valid_attestation(contract):
         "recipeSha256": contract["recipeSha256"],
         "sourceBundleSha256": canonical_sha(contract["recipe"]["inputs"]),
         "runtimeFingerprint": {
-            "pythonImplementation": "CPython", "pythonVersion": "3.13.7",
+            "pythonImplementation": "CPython", "pythonVersion": "3.14.5",
             "dependencyLockSha256": contract["recipe"]["runtime"]["dependencyLock"]["sha256"],
             "environment": copy.deepcopy(contract["recipe"]["runtime"]["environment"]),
         },
@@ -225,6 +243,7 @@ class ContractValidationTest(unittest.TestCase):
             lambda d: d["recipe"]["inputs"]["CHGIS_PREF_DBF"].update(digest="0" * 64),
             lambda d: d["recipe"]["generators"]["BUILD_HAN_PLACES"].update(path="tool.py"),
             lambda d: d["recipe"]["verifiers"]["HAN_TILES_ORCHESTRATOR"].update(version="1"),
+            lambda d: d["recipe"]["helpers"]["HAN_PROVINCE_MODEL"].update(path="helper.py"),
             lambda d: d["recipe"]["dependencies"]["NUMPY"].update(version="2"),
             lambda d: d["recipe"]["runtime"].update(platform="macOS"),
             lambda d: d["recipe"]["runtime"]["dependencyLock"].update(url="https://example.test"),
@@ -242,6 +261,8 @@ class ContractValidationTest(unittest.TestCase):
             lambda d: d["recipe"]["inputs"].update(OTHER=hashed_record("OTHER", classification="TRACKED_REPOSITORY")),
             lambda d: d["recipe"]["generators"].update(build_han_places=d["recipe"]["generators"].pop("BUILD_HAN_PLACES")),
             lambda d: d["recipe"]["verifiers"].pop("HAN_TILES_ORCHESTRATOR"),
+            lambda d: d["recipe"]["helpers"].pop("HAN_TEMPORAL_PARENT_RUNTIME"),
+            lambda d: d["recipe"]["inputs"].pop("ADMINISTRATIVE_HISTORY"),
             lambda d: d["recipe"]["dependencies"].pop("NUMPY"),
             lambda d: d["recipe"]["stages"][0]["inputRoles"].append("CHGIS_PREF_DBF"),
         ]
@@ -267,6 +288,9 @@ class ContractValidationTest(unittest.TestCase):
             lambda d: d["recipe"]["dependencies"]["HANJA"].update(
                 lockRole="OTHER_LOCK"
             ),
+            lambda d: d["recipe"]["dependencies"]["PYYAML"].update(
+                requiredByRole="NUMPY"
+            ),
         ]
         for index, mutate in enumerate(mutations):
             with self.subTest(mutation=index):
@@ -282,6 +306,9 @@ class ContractValidationTest(unittest.TestCase):
             lambda d: d["recipe"]["stages"][2]["inputRoles"].remove("JUNGUOZHI"),
             lambda d: d["recipe"]["stages"][2]["dependencyRoles"].remove("PILLOW"),
             lambda d: d["recipe"]["stages"][3]["dependencyRoles"].append("NUMPY"),
+            lambda d: d["recipe"]["stages"][2]["inputRoles"].remove("ADMINISTRATIVE_HISTORY"),
+            lambda d: d["recipe"]["stages"][3]["inputRoles"].remove("TERRAIN_GRID"),
+            lambda d: d["recipe"]["stages"][3]["dependencyRoles"].remove("PYYAML"),
             lambda d: d["recipe"]["stages"][0]["argv"].__setitem__(3, "256"),
         ]
         for index, mutate in enumerate(mutations):
@@ -450,7 +477,7 @@ class AttestationValidationTest(unittest.TestCase):
             lambda a, _c: a.update(contractSha256=digest("wrong-contract")),
             lambda a, _c: a.update(recipeSha256=digest("wrong-recipe")),
             lambda a, _c: a.update(sourceBundleSha256=digest("wrong-source")),
-            lambda a, _c: a["runtimeFingerprint"].update(pythonVersion="3.14.5"),
+            lambda a, _c: a["runtimeFingerprint"].update(pythonVersion="3.13.7"),
             lambda a, _c: a["runtimeFingerprint"].update(dependencyLockSha256=digest("wrong-lock")),
         ]
         for index, mutate in enumerate(mutations):
