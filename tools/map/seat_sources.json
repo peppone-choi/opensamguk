@@ -112,7 +112,7 @@
     },
     {
       "jun": "건위군",
-      "currentWrongSeat": "资中县",
+      "fixedBy": "han-world-v2 재생성 — 사료상 치소 武阳县으로 교정",
       "expectedSeat": "武阳县",
       "era": "後漢·晉 일치",
       "verdict": "U56 — 순수 선택 오류",

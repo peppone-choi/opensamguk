@@ -42,7 +42,7 @@ class TileKindSanityTest(unittest.TestCase):
         cities = json.loads(TILES.read_text())["cities"]
         kinds = Counter(c["kind"] for c in cities)
         self.assertEqual(
-            {"COUNTY": 962, "COMMANDERY": 120, "KINGDOM": 16,
+            {"COUNTY": 961, "COMMANDERY": 120, "KINGDOM": 17,
              "EXTERNAL_PLACE": 37, "PROVINCE": 3},
             dict(kinds),
             "han-tiles.json 의 등급 분포가 바뀌었다 — 아래 KINGDOM 회귀의 전제가 달라졌다",

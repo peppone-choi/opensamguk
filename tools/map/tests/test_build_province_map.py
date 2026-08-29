@@ -203,7 +203,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "round-trip"):
                 build_assets(input_path, root / "generated", "han")
 
-    def test_real_han_asset_round_trips_every_owner_and_seat_owner_cell(self):
+    def test_real_han_asset_round_trips_every_owner_and_parent_owner_cell(self):
         source_path = Path(__file__).resolve().parents[3] / "data/map/han-tiles.json"
         source = json.loads(source_path.read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -211,7 +211,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
             width, height, provinces, commanderies = decode_png_identities(result.png_bytes)
 
         expected_provinces = [value for value, count in source["owner"] for _ in range(count)]
-        expected_commanderies = [value for value, count in source["seatOwner"] for _ in range(count)]
+        expected_commanderies = [value for value, count in source["parentOwner"] for _ in range(count)]
         self.assertEqual((width, height), (768, 669))
         self.assertEqual(provinces, expected_provinces)
         self.assertEqual(commanderies, expected_commanderies)

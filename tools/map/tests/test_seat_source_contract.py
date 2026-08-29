@@ -203,7 +203,7 @@ class KnownDefectsAreStillBroken(unittest.TestCase):
             name for name, group in by_name.items()
             if any(c.get("zhi") for c in group) and any(not c.get("zhi") for c in group)
         )
-        self.assertEqual(15, len(clashing), f"동명 충돌 후보가 변했다 — U48 을 재판정해라: {clashing}")
+        self.assertEqual(17, len(clashing), f"동명 충돌 후보가 변했다 — U48 을 재판정해라: {clashing}")
 
     def test_u53_xinxing_commandery_has_no_counties(self) -> None:
         """**이 값은 결함이다.** `新興郡` 은 晉書 「統縣五」인데 판에는 소속이 **1** 이다(U53).
@@ -422,8 +422,8 @@ class SelfSeatCommanderies(unittest.TestCase):
         """
         by_kind = [j for j in self.juns if self.cities[j["seat"]].get("kind") != "COUNTY"]
         by_name = [j for j in self.juns if self.cities[j["seat"]].get("nameCh") == j.get("nameCh")]
-        self.assertEqual(60, len(by_kind), "A 유형(kind 축) 개수가 변했다 — §3.28 을 재판정해라")
-        self.assertEqual(52, len(by_name), "A 유형(이름 축) 개수가 변했다 — 繁簡 누수가 달라졌다")
+        self.assertEqual(65, len(by_kind), "A 유형(kind 축) 개수가 변했다 — §3.28 을 재판정해라")
+        self.assertEqual(55, len(by_name), "A 유형(이름 축) 개수가 변했다 — 繁簡 누수가 달라졌다")
 
     def test_non_han_polities_have_no_seat_proposition(self) -> None:
         """A 61 중 **31 은 非漢 정치체**(`EXTERNAL_PLACE`)라 「治所」 명제가 성립하지 않는다.
@@ -529,7 +529,7 @@ class CoordinateAxisTolerance(unittest.TestCase):
     def test_candidate_count_plateaus(self) -> None:
         counts = {tol: len(self._candidates(tol)) for tol in (1.0, 2.0, 5.0)}
         self.assertEqual(
-            {1.0: 8, 2.0: 10, 5.0: 10}, counts,
+            {1.0: 8, 2.0: 11, 5.0: 12}, counts,
             f"좌표 축 후보 수가 변했다 — §3.29 분류를 다시 돌려라: {counts}",
         )
 
