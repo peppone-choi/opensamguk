@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "systems": {
+    "AILAO": "애뢰",
+    "BAEKJE": "백제",
+    "BUYEO": "부여",
+    "BYEONHAN": "변한",
+    "DI": "저",
+    "GOGURYEO": "고구려",
+    "HAN_COMMANDERY": "한 군현",
+    "JINHAN": "진한",
+    "JUHO": "주호",
+    "MAHAN": "마한",
+    "OKJEO": "옥저",
+    "QIANG": "강",
+    "SHANYUE": "산월",
+    "TSUSHIMA": "대마국",
+    "USAN": "우산국",
+    "WA": "왜",
+    "WUHUAN": "오환",
+    "XIANBEI": "선비",
+    "XIONGNU": "남흉노",
+    "YE": "예",
+    "YILOU": "읍루",
+    "YIZHOU": "이주"
+  }
+}
