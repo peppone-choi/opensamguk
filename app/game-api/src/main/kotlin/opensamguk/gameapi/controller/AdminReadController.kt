@@ -15,6 +15,7 @@ import opensamguk.gameapi.dto.AdminGeneralSortOption
 import opensamguk.gameapi.dto.AdminNationStatsResponse
 import opensamguk.gameapi.dto.AdminNationStatsRow
 import opensamguk.gameapi.dto.AdminNationStatsSortOption
+import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.GameKvReadRepository
 import opensamguk.gameapi.read.AdminGeneralLogReadRepository
 import opensamguk.gameapi.read.CityReadEntity
@@ -90,15 +91,6 @@ class AdminReadController(
         return authorization.substring(7).ifBlank { null }
     }
 
-    private fun mapCodeOf(config: Map<String, Any?>, meta: Map<String, Any?>): String =
-        mapNameOf(config["map"]) ?: mapNameOf(meta["map"]) ?: "che"
-
-    private fun mapNameOf(raw: Any?): String? = when (raw) {
-        is String -> raw.takeIf { it.isNotBlank() }
-        is Map<*, *> -> (raw["mapName"] ?: raw["name"] ?: raw["code"])?.toString()?.takeIf { it.isNotBlank() }
-        else -> null
-    }
-
     private fun turnPhaseText(phase: Int): String = when (phase) {
         1 -> "상순"
         2 -> "중순"
@@ -123,7 +115,7 @@ class AdminReadController(
                 logWritable = false,
                 scenarioCode = w?.scenarioCode,
                 scenarioText = w?.let { scenarioTitle.titleOf(it.scenarioCode) ?: it.scenarioCode },
-                mapCode = w?.let { mapCodeOf(it.config, it.meta) },
+                mapCode = w?.let(ActiveWorldMap::requireName),
                 year = w?.currentYear,
                 month = w?.currentMonth,
                 turnPhase = w?.currentPhase?.takeIf { it in 1..3 },

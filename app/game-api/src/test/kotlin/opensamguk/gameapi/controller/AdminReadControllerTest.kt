@@ -98,7 +98,6 @@ class AdminReadControllerTest {
                         "starttime" to "2026-06-01 00:00:00",
                         "turnterm" to 30,
                         "mapName" to "han-780-v1",
-                        "map" to mapOf("mapName" to "han-780-v1"),
                     ),
                 ),
             ),
