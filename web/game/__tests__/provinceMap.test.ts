@@ -149,6 +149,8 @@ describe('province identity map', () => {
       { id: 'P2', displayName: '직할지', nameCh: '', administrativeSystem: 'MAHAN', kind: 'DIRECT_TERRITORY', parentRegionId: 'R1', cityIndex: null, geometryBasis: 'MODERN_ADMIN_FALLBACK', confidence: 'INFERRED' },
     ], [{ id: 'R1', displayName: '마한', nameCh: '', administrativeSystem: 'MAHAN' }]);
     expect(Array.from(index.commanderyByProvince)).toEqual([0, 0]);
+    expect(index.administrativeSystemByProvince).toEqual(['MAHAN', 'MAHAN']);
+    expect(index.affiliationNameByProvince).toEqual(['마한', '마한']);
   });
 
   it('decodes both identities and separates province from commandery edges', () => {
@@ -321,8 +323,74 @@ describe('province identity map', () => {
     );
 
     expect(binding.colors.get(1)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
-    expect(binding.colors.get(2)).toEqual({ nationId: 0, rgb: [112, 104, 91] });
+    expect(binding.colors.get(0)).toEqual({ nationId: 0, rgb: [126, 119, 102] });
+    expect(binding.colors.get(2)).toEqual({ nationId: 0, rgb: [126, 119, 102] });
     expect(binding.cities?.has(2)).toBe(false);
+    expect(binding.affiliations?.get(2)).toEqual({
+      administrativeSystem: 'HAN_COMMANDERY',
+      name: '지방관·미확정 지배',
+      rgb: [126, 119, 102],
+    });
+  });
+
+  it('does not let a city coordinate recolor a province outside its declared commandery', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 32, 2, 255,
+    ]), 2, 1);
+    const countyIndex = buildCountyAdministrativeIndex(
+      map,
+      [{ col: 0, row: 0 }, { col: 1, row: 0 }],
+      [{ name: 'A군' }, { name: 'B군' }],
+    );
+    const cities: IsoCityOverlay[] = [
+      { ...CHE_OVERLAYS_FIXTURE[0], id: 20, x: 0, y: 0, commanderyName: 'B군' },
+      { ...CHE_OVERLAYS_FIXTURE[1], id: 10, x: 100, y: 0, commanderyName: 'B군' },
+    ];
+
+    const binding = bindCompleteProvinceOwnership(
+      map,
+      cities,
+      { cols: 2, rows: 1 },
+      { width: 200, height: 1 },
+      countyIndex,
+    );
+
+    expect(binding.colors.get(0)).toEqual({ nationId: 0, rgb: [126, 119, 102] });
+    expect(binding.colors.get(1)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
+    expect(binding.cities?.has(0)).toBe(false);
+    expect(binding.directProvinces?.has(0)).toBe(false);
+  });
+
+  it('uses the non-Han political system for an unowned external province', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 32, 2, 255,
+    ]), 2, 1);
+    const provinces: ProvinceRecordDto[] = [
+      { id: 'P1', displayName: '조선현', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY', parentRegionId: 'R1', cityIndex: null, geometryBasis: 'HISTORICAL_BOUNDARY', confidence: 'REVIEWED' },
+      { id: 'P2', displayName: '국내성', nameCh: '', administrativeSystem: 'GOGURYEO', kind: 'SETTLEMENT', parentRegionId: 'R2', cityIndex: null, geometryBasis: 'HISTORICAL_BOUNDARY', confidence: 'REVIEWED' },
+    ];
+    const parents: ParentRegionRecordDto[] = [
+      { id: 'R1', displayName: '낙랑군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' },
+      { id: 'R2', displayName: '고구려', nameCh: '', administrativeSystem: 'GOGURYEO' },
+    ];
+    const binding = bindCompleteProvinceOwnership(
+      map,
+      [],
+      { cols: 2, rows: 1 },
+      { width: 200, height: 1 },
+      buildProvinceAdministrativeIndex(map, provinces, parents),
+    );
+
+    expect(binding.affiliations?.get(0)?.name).toBe('지방관·미확정 지배');
+    expect(binding.affiliations?.get(1)).toEqual({
+      administrativeSystem: 'GOGURYEO',
+      name: '고구려',
+      rgb: [88, 116, 128],
+    });
+    expect(binding.colors.get(1)).toEqual({ nationId: 0, rgb: [88, 116, 128] });
+    expect(composeProvincePixels(map, binding)[7]).toBe(255);
   });
 
   it.each([
