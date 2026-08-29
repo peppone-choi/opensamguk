@@ -81,6 +81,6 @@ class TerrainMapController(
     }
 
     private companion object {
-        val MAP_CODE = Regex("[a-z0-9_]+")
+        val MAP_CODE = Regex("[a-z0-9]+(?:[a-z0-9_-]*[a-z0-9])?")
     }
 }

@@ -139,7 +139,7 @@ class WorldSnapshotLoader(
             accessLogs.size,
             troops.size,
         )
-        return WorldSnapshot(
+        val snapshot = WorldSnapshot(
             state = state,
             worldId = worldId,
             serverId = activeServerId,
@@ -151,6 +151,8 @@ class WorldSnapshotLoader(
             accessLogs = accessLogs,
             archivedNationIds = archivedNationIds,
         )
+        ActiveWorldMapValidator.validate(snapshot)
+        return snapshot
     }
 
     private fun loadWorldState(): TurnWorldState {

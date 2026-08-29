@@ -97,7 +97,8 @@ class AdminReadControllerTest {
                         "startyear" to 180,
                         "starttime" to "2026-06-01 00:00:00",
                         "turnterm" to 30,
-                        "map" to mapOf("mapName" to "miniche_b"),
+                        "mapName" to "han-780-v1",
+                        "map" to mapOf("mapName" to "han-780-v1"),
                     ),
                 ),
             ),
@@ -112,7 +113,7 @@ class AdminReadControllerTest {
             .andExpect(jsonPath("$.msg").value("공지\t내용"))
             .andExpect(jsonPath("$.scenarioCode").value("scenario_1010"))
             .andExpect(jsonPath("$.scenarioText").value("황건적의 난"))
-            .andExpect(jsonPath("$.mapCode").value("miniche_b"))
+            .andExpect(jsonPath("$.mapCode").value("han-780-v1"))
             .andExpect(jsonPath("$.year").value(181))
             .andExpect(jsonPath("$.turnPhase").value(2))
             .andExpect(jsonPath("$.turnPhaseText").value("중순"))

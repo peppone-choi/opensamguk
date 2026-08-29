@@ -150,6 +150,29 @@ class MapPreviewControllerTest {
     }
 
     @Test
+    fun `compatibility world preview exposes all 780 historical coordinates`() {
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "scenario_1010",
+                    currentYear = 184,
+                    currentMonth = 1,
+                    config = mapOf("mapName" to "han-780-v1"),
+                ),
+            ),
+        )
+        `when`(cityRepo.findAll()).thenReturn((1..780).map { city(id = it, level = 5, nationId = 0) })
+        `when`(nationRepo.findAll()).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/map/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapCode").value("han-780-v1"))
+            .andExpect(jsonPath("$.cities.length()").value(780))
+            .andExpect(jsonPath("$.cities[779].id").value(780))
+    }
+
+    @Test
     fun `seeded preview without map metadata fails visibly`() {
         `when`(worldRepo.findAll()).thenReturn(
             listOf(WorldStateReadEntity(id = 4, scenarioCode = "scenario_broken")),
