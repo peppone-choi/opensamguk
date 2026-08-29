@@ -19,6 +19,7 @@ sys.path.insert(0, str(MAP_TOOLS))
 
 import build_terrain_grid as terrain_builder  # noqa: E402
 import build_tile_grid as tile_builder  # noqa: E402
+import han_place_merge_runtime as merge_runtime  # noqa: E402
 
 
 CANONICAL_PROJECTION = {
@@ -48,6 +49,24 @@ def places_document(projection=None, year=220):
     }
 
 
+def reviewed_places_document(projection=None, year=220):
+    document = places_document(projection, year)
+    sources = [{"id": place_id} for place_id in tile_builder.SOURCE_PLACE_IDS]
+    reviewed = [
+        {
+            **merge_runtime.REVIEWED_CATALOG_IDENTITIES["33425"],
+            "gx": 460, "gy": 242, "lon": 117.187683, "lat": 34.269634,
+        },
+        {
+            **merge_runtime.REVIEWED_CATALOG_IDENTITIES["42777"],
+            "gx": 461, "gy": 243, "lon": 117.187683, "lat": 34.269634,
+        },
+    ]
+    document["places"] = sources + reviewed
+    document["count"] = len(document["places"])
+    return document
+
+
 def terrain_document(projection=None, year=220):
     projection = copy.deepcopy(projection or CANONICAL_PROJECTION)
     return {
@@ -62,18 +81,25 @@ def terrain_document(projection=None, year=220):
 def complete_terrain_document(projection=None, year=220):
     document = terrain_document(projection, year)
     cols, rows = document["cols"], document["rows"]
+    owner = [[0] * cols for _ in range(rows)]
+    owner[243][461] = 1
     document.update(
-        legend={"0": "SEA"},
-        terrain=[[0] * cols for _ in range(rows)],
-        owner=[[-1] * cols for _ in range(rows)],
+        legend={"1": "PLAIN"},
+        terrain=[[1] * cols for _ in range(rows)],
+        owner=owner,
+        placeIds=["33425", "42777"],
         roads=[],
-        hubs=[],
-        junNames=[],
-        zhiPlaces=[],
-        seatOwner=[[-1] * cols for _ in range(rows)],
+        hubs=[1],
+        junOf=[0, 0],
+        junNames=["彭城國"],
+        zhiPlaces=[1],
+        seatOwner=[[0] * cols for _ in range(rows)],
         region=[[-1] * cols for _ in range(rows)],
         regionNames=[],
-        adjacency={"county": [], "commandery": []},
+        adjacency={
+            "county": [{"a": 0, "b": 1, "cells": 4}],
+            "commandery": [],
+        },
     )
     return document
 
@@ -217,8 +243,8 @@ class TileGridCanonicalCliContractTest(unittest.TestCase):
             readings = root / "readings.json"
             output = root / "han-tiles.json"
             grid.write_text(json.dumps(complete_terrain_document()))
-            places.write_text(json.dumps(places_document()))
-            readings.write_text("{}\n")
+            places.write_text(json.dumps(reviewed_places_document()))
+            readings.write_text(json.dumps({"彭城國": "팽성국", "彭城縣": "팽성현"}))
             with mock.patch.multiple(
                 tile_builder,
                 GRID=grid,

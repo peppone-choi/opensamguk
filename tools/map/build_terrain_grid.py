@@ -21,6 +21,11 @@ import argparse, heapq, json, math, os, sys
 from collections import Counter
 import numpy as np
 
+try:
+    from tools.map.han_place_merge_runtime import apply_reviewed_merges
+except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
+    from han_place_merge_runtime import apply_reviewed_merges
+
 PLACES = 'data/map/han-places.json'
 JUNGUO = 'data/map/junguozhi.json'
 NE = 'data/natural-earth'
@@ -498,7 +503,8 @@ def fold_to_jun(places, proj, junguo):
             # 붙이는 폴백이 郡 점을 집어가면(定襄郡 점이 이웃 郡의 縣이 되는 식) 그 郡은
             # 제 이름으로 승격될 기회를 잃고 지도에서 통째로 사라진다. 郡 자리는 아래
             # 이름 매칭 블록이 따로 잡는다.
-            cand = by_name.get(norm(c['name']))
+            cand = [i for i in by_name.get(norm(c['name']), [])
+                    if places[i].get('kind') not in SEAT_KINDS]
             pool = cand if cand else [i for i in range(len(places))
                                       if places[i].get('kind') not in SEAT_KINDS]
             ranked = sorted(
@@ -716,6 +722,54 @@ def validate_requested_grid(places_document, requested_grid):
         raise ValueError('han-places rows must equal projection rows')
 
 
+def finalize_reviewed_merge_state(
+        *, terrain, places, owner, seat_owner, jun_of, hubs, jun_names,
+        zhi_places, ledger=None):
+    """Apply stable-ID merges, then derive every graph from compact arrays."""
+    state = apply_reviewed_merges(
+        places=places,
+        owner=owner,
+        seat_owner=seat_owner,
+        jun_of=jun_of,
+        hubs=hubs,
+        jun_names=jun_names,
+        zhi_places=zhi_places,
+        ledger=ledger,
+    )
+    pts = np.array(
+        [[place['gx'], place['gy']] for place in state['places']], dtype=float
+    )
+    roads, _ = build_roads(terrain, pts, state['hubs'])
+    ford_list = fords(terrain, roads)
+
+    land_field = cost_field(terrain, LAND_COST)
+    for x, y in pts:
+        x, y = int(x), int(y)
+        if land_field[y, x] == INF:
+            land_field[y, x] = LAND_COST[PLAIN]
+    county_edges = adjacency(state['owner'])
+    commandery_edges = cross_by_path(
+        land_field,
+        pts,
+        adjacency(state['seatOwner']),
+        terrain,
+    )
+    ford_list += [
+        {'col': ford[0], 'row': ford[1], 'roads': 0}
+        for ford in (edge['ford'] for edge in commandery_edges if 'ford' in edge)
+    ]
+    state.update({
+        'pts': pts,
+        'roads': roads,
+        'fords': ford_list,
+        'adjacency': {
+            'county': county_edges,
+            'commandery': commandery_edges,
+        },
+    })
+    return state
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -834,18 +888,30 @@ def main():
     _, raw, _ = multi_dijkstra(field, src)
     tbl = np.array(lab + [-1], dtype=np.int32)
     seat_label = tbl[np.where(raw >= 0, raw, len(lab))].astype(np.int32)
-    roads, _ = build_roads(terrain, pts, hubs)
-    ford_list = fords(terrain, roads)
-
-    # 郡 인접의 도하 판정. 이동 단위가 郡이므로 여기만 실제 경로를 뽑는다.
-    land_field = cost_field(terrain, LAND_COST)
-    for (x, y) in pts:
-        x, y = int(x), int(y)
-        if land_field[y, x] == INF:
-            land_field[y, x] = LAND_COST[PLAIN]
-    adj_m = cross_by_path(land_field, pts, adjacency(seat_label), terrain)
-    ford_list += [{'col': f[0], 'row': f[1], 'roads': 0}
-                  for f in (e['ford'] for e in adj_m if 'ford' in e)]
+    # Raw 1,145 seeds have now all participated in Voronoi and historical folding.
+    # Apply the reviewed stable-ID transforms only at this boundary, then derive
+    # every downstream index and graph from the compact state.
+    merged = finalize_reviewed_merge_state(
+        terrain=terrain,
+        places=hp['places'],
+        owner=owner,
+        seat_owner=seat_label,
+        jun_of=jun_of,
+        hubs=hubs,
+        jun_names=jun_names,
+        zhi_places=zhi_places,
+    )
+    pts = merged['pts']
+    owner = merged['owner']
+    seat_label = merged['seatOwner']
+    hubs = merged['hubs']
+    jun_of = merged['junOf']
+    jun_names = merged['junNames']
+    zhi_places = merged['zhiPlaces']
+    roads = merged['roads']
+    ford_list = merged['fords']
+    adj_c = merged['adjacency']['county']
+    adj_m = merged['adjacency']['commandery']
 
     legend = ['SEA', 'PLAIN', 'MOUNTAIN', 'RIVER', 'LAKE', 'DESERT', 'PLATEAU', 'BASIN', 'HILL']
     counts = {name: int((terrain == i).sum()) for i, name in enumerate(legend)}
@@ -854,12 +920,13 @@ def main():
         'legend': {str(i): name for i, name in enumerate(legend)},
         'counts': counts, 'terrain': terrain.tolist(), 'owner': owner.tolist(),
         'region': region.tolist(), 'regionNames': names,
+        'placeIds': merged['placeIds'],
         'hubs': hubs, 'junOf': jun_of.tolist(), 'junNames': jun_names,
         # 郡國志에 이름이 실린 縣(=게임 거점 후보). 나머지 점은 배경이다.
         'zhiPlaces': zhi_places,
         'roads': roads, 'fords': ford_list,
         # 이동 그래프. 길이 아니라 영역 인접이다 — 도로는 간선만 남겨 통행 보정에 쓴다.
-        'adjacency': {'county': adjacency(owner), 'commandery': adj_m},
+        'adjacency': {'county': adj_c, 'commandery': adj_m},
         'seatOwner': seat_label.tolist(),
         'source': 'Natural Earth 50m (public domain) + CHGIS V6 좌표(재배포 금지, ADR-LITE-039)',
     }, open(OUT, 'w'), separators=(',', ':'))
@@ -867,7 +934,7 @@ def main():
     print(f'육지 {land_cells} 셀 · ' + ' · '.join(f'{k} {v}' for k, v in counts.items()),
           file=sys.stderr)
     kinds = Counter(r['kind'] for r in roads)
-    ac, am = adjacency(owner), adj_m
+    ac, am = adj_c, adj_m
     print(f'郡治 {len(hubs)} · 간선 {kinds["LAND"]} · 수로 {kinds["WATER"]} · '
           f'나루터 {len(ford_list)} · 인접 縣 {len(ac)}/郡 {len(am)} '
           f'(도하 {sum(1 for e in am if e["cross"] == "RIVER")}) → {OUT}', file=sys.stderr)
