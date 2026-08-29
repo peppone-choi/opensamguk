@@ -70,8 +70,8 @@ import kotlin.math.sqrt
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
-import opensamguk.logic.world.HAN_MAP_NAME
 import opensamguk.logic.world.foundAssaultCrewCost
+import opensamguk.logic.world.foundingDefenseAfterCapture
 import opensamguk.logic.world.isFoundableCityLevel
 
 private data class UniqueItemInfo(val name: String, val rawName: String)
@@ -2012,7 +2012,7 @@ class ReservedTurnHandler(
             conflict = postCity.conflict,
             // han 수비병 돌파로 def 를 0 으로 쓸어낸 경우만 반영. che 는 postCity.defense 가 신뢰할 수 없는
             // 합성값이므로 절대 덮어쓰지 않는다(골든 무변).
-            defense = if (activeMapName() == HAN_MAP_NAME) postCity.defense else current.defense,
+            defense = foundingDefenseAfterCapture(activeMapName(), current.defense, postCity.defense),
         )
     }
 

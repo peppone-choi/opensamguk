@@ -5,6 +5,8 @@ import opensamguk.common.constants.CityConst.RawCity
 import opensamguk.common.constants.CityInitialDetail
 import opensamguk.common.constants.HanCityConst
 import opensamguk.common.constants.HanGateIndex
+import opensamguk.common.constants.Han780V1CityConst
+import opensamguk.common.constants.Han780V1GateIndex
 
 /**
  * F6 Task FM1 — per-map CityConst variant registry, keyed by `mapName`.
@@ -52,6 +54,13 @@ const val FOUND_ASSAULT_RATIO: Double = 2.0
 
 /** [CityConstVariant.mapName] of the han map — the ONLY map the founding assault applies to. */
 const val HAN_MAP_NAME: String = "han"
+const val HAN_780_V1_MAP_NAME: String = "han-780-v1"
+
+fun isHanMapName(mapName: Any?): Boolean =
+    mapName == HAN_MAP_NAME || mapName == HAN_780_V1_MAP_NAME
+
+fun foundingDefenseAfterCapture(mapName: Any?, currentDefense: Int, postDefense: Int): Int =
+    if (isHanMapName(mapName)) postDefense else currentDefense
 
 /**
  * 건국에 필요한 돌파 병력 = `ceil(city.def * FOUND_ASSAULT_RATIO)`.
@@ -60,7 +69,7 @@ const val HAN_MAP_NAME: String = "han"
  * (패러티 골든 무변). 수비병이 없는 城(def<=0)도 0 = 판정 없음.
  */
 fun foundAssaultCrewCost(mapName: String?, cityDefense: Int): Int =
-    if (mapName != HAN_MAP_NAME || cityDefense <= 0) 0
+    if (!isHanMapName(mapName) || cityDefense <= 0) 0
     else kotlin.math.ceil(cityDefense * FOUND_ASSAULT_RATIO).toInt()
 
 sealed interface CityConstVariant {
@@ -164,7 +173,12 @@ internal class InitCityOverrideVariant(
  * region 라벨이 州 이름이라 base 의 8개 라벨 대신 자기 [regionMap] 을 쓰고,
  * 게이트 키는 같은 생성기가 낸 [HanGateIndex] 에서 온다.
  */
-internal object HanCityConstVariant : CityConstVariant {
+internal class HanCityConstVariant(
+    override val mapName: String,
+    rawRows: List<RawCity>,
+    private val gateKeysFor: (Int) -> Set<String>,
+    override val nationLevelCityThresholds: List<Int>,
+) : CityConstVariant {
     /** han.json `_meta.regions` 순서 그대로 — build_han_world.py 의 `ju_order`(1-based). */
     private val hanRegions: Map<Any, Any> = linkedMapOf<Any, Any>().apply {
         listOf(
@@ -201,10 +215,9 @@ internal object HanCityConstVariant : CityConstVariant {
                                    "secu" to 500, "def" to 1000, "wall" to 1000))
         }
 
-    private val generated = generateHanCities()
+    private val generated = generateHanCities(rawRows)
 
-    private fun generateHanCities(): CityConst.GeneratedCities {
-        val rawRows = HanCityConst.initCity
+    private fun generateHanCities(rawRows: List<RawCity>): CityConst.GeneratedCities {
         val base = CityConst.generateCities(rawRows, hanRegions, hanLevels)
         val rowsByName = rawRows.groupBy { it.name }
         val constId = LinkedHashMap<Int, CityInitialDetail>()
@@ -230,7 +243,6 @@ internal object HanCityConstVariant : CityConstVariant {
         }
         return CityConst.GeneratedCities(constId, constName, constRegion)
     }
-    override val mapName: String = "han"
     override fun all(): Map<Int, CityInitialDetail> = generated.constID
     override fun byId(id: Int): CityInitialDetail? = generated.constID[id]
     /**
@@ -270,9 +282,7 @@ internal object HanCityConstVariant : CityConstVariant {
      * 이 값을 바꿔도 che 골든은 무관하다(che 는 기본 구현을 쓴다). 어떤 테스트도 이 리스트를
      * 직접 단언하지 않는다(2026-08-24 measured, `grep -rln nationLevelCityThresholds *Test.kt` = 0건).
      */
-    override val nationLevelCityThresholds: List<Int> =
-        listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90)
-    override fun gateKeys(cityId: Int): Set<String> = HanGateIndex.keys(cityId)
+    override fun gateKeys(cityId: Int): Set<String> = gateKeysFor(cityId)
     override val buildInit: Map<String, Map<String, Int>> get() = hanBuildInit
     override val buildInitCommon: Map<String, Int> get() = CityConst.buildInitCommon
 
@@ -291,7 +301,27 @@ internal object HanCityConstVariant : CityConstVariant {
             .groupingBy { it.region }
             .eachCount()
     }
+
+    /** Current-Han facade retained for existing package-level seat callers. */
+    companion object {
+        fun all(): Map<Int, CityInitialDetail> = currentHan.all()
+        fun countsForNationLevel(level: Int): Boolean = currentHan.countsForNationLevel(level)
+        val seatCountByProvince: Map<Int, Int> get() = currentHan.seatCountByProvince
+    }
 }
+
+private val currentHan = HanCityConstVariant(
+    mapName = HAN_MAP_NAME,
+    rawRows = HanCityConst.initCity,
+    gateKeysFor = HanGateIndex::keys,
+    nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+)
+private val legacyHan = HanCityConstVariant(
+    mapName = HAN_780_V1_MAP_NAME,
+    rawRows = Han780V1CityConst.initCity,
+    gateKeysFor = Han780V1GateIndex::keys,
+    nationLevelCityThresholds = listOf(0, 1, 5, 13, 20, 28, 41, 53, 71, 91),
+)
 
 object CityConstRegistry {
     const val DEFAULT_MAP_NAME = "che"
@@ -385,7 +415,8 @@ object CityConstRegistry {
             "miniche" to miniche,
             "miniche_b" to miniche,
             "miniche_clean" to miniche,
-            "han" to HanCityConstVariant,
+            HAN_MAP_NAME to currentHan,
+            HAN_780_V1_MAP_NAME to legacyHan,
         )
     }
 

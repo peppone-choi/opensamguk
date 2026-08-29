@@ -262,6 +262,17 @@ class PrecheckFullCrossCallSiteTest {
     }
 
     @Test
+    fun `Han compatibility constraint dependencies agree at precheck and daemon call sites`() {
+        val fixture = Fixture(cityId = 3, destCityId = 421, mapName = "han-780-v1")
+        assertAvailableAgreement(
+            action = "che_이동",
+            fixture = fixture,
+            argJson = """{"destCityID":421}""",
+            args = linkedMapOf("destCityID" to 421),
+        )
+    }
+
+    @Test
     fun `Han-only population movement edge agrees at precheck and daemon call sites`() {
         val fixture = Fixture(cityId = 3, destCityId = 421, destCityNationId = NATION_ID, officerLevel = 12, mapName = "han")
         assertAvailableAgreement(

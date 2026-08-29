@@ -4,6 +4,7 @@ import opensamguk.common.constants.CityConst
 import java.security.MessageDigest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -21,6 +22,34 @@ import kotlin.test.assertTrue
  * MUST byte-match the base 94-city seed (ZERO delta).
  */
 class CityConstRegistryTest {
+
+    @Test
+    fun `legacy Han compatibility variant preserves the 780-city identity space`() {
+        val legacy = CityConstRegistry.of("han-780-v1")
+        assertEquals((1..780).toList(), legacy.all().keys.toList())
+        assertEquals(listOf(0, 1, 5, 13, 20, 28, 41, 53, 71, 91), legacy.nationLevelCityThresholds)
+    }
+
+    @Test
+    fun `legacy Han compatibility variant preserves historical numeric adjacency`() {
+        val graph = buildString {
+            for ((id, city) in CityConstRegistry.of("han-780-v1").all()) {
+                append(id).append(':').append(city.path.keys.joinToString(",")).append('\n')
+            }
+        }
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(graph.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        assertEquals("a6d9370725010714960508bee046420ea671dddd8339f9e3b8796dddd2606014", digest)
+    }
+
+    @Test
+    fun `Han family recognition includes current and compatibility keys only`() {
+        assertTrue(isHanMapName("han"))
+        assertTrue(isHanMapName("han-780-v1"))
+        assertFalse(isHanMapName("che"))
+        assertFalse(isHanMapName(null))
+    }
 
     @Test
     fun `che variant byte-matches the canonical base 94-city seed (zero delta)`() {
