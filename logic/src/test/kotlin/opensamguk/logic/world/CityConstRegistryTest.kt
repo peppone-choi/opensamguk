@@ -44,11 +44,17 @@ class CityConstRegistryTest {
     }
 
     @Test
-    fun `Han family recognition includes current and compatibility keys only`() {
+    fun `Han family recognition includes active version and compatibility keys`() {
         assertTrue(isHanMapName("han"))
+        assertTrue(isHanMapName("han-world-v2"))
         assertTrue(isHanMapName("han-780-v1"))
         assertFalse(isHanMapName("che"))
         assertFalse(isHanMapName(null))
+    }
+
+    @Test
+    fun `world v2 reuses the current 774-city gameplay catalog`() {
+        assertEquals(CityConstRegistry.of("han").all(), CityConstRegistry.of("han-world-v2").all())
     }
 
     @Test

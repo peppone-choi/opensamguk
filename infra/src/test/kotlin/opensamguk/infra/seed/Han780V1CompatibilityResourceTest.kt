@@ -7,6 +7,14 @@ import kotlin.test.assertEquals
 class Han780V1CompatibilityResourceTest {
 
     @Test
+    fun `world v2 resolves the current Han gameplay resource`() {
+        assertEquals(
+            MapJson.loadFromClasspath("han").cities,
+            MapJson.loadFromClasspath("han-world-v2").cities,
+        )
+    }
+
+    @Test
     fun `compatibility map resource is the immutable 780-city artifact`() {
         val data = MapJson.loadFromClasspath("han-780-v1")
         assertEquals((1..780).toList(), data.cities.map { it.id })

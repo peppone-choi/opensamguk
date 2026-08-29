@@ -140,7 +140,7 @@ class HanAiLifecycleReplayIT {
             world.listGenerals().maxOf { it.turnTime }.plus(1, ChronoUnit.SECONDS)
         },
     ): ReplayResult {
-        assertEquals("han", snapshot.state.config["mapName"], "scenario_1010 must exercise the Han variant")
+        assertEquals("han-world-v2", snapshot.state.config["mapName"], "scenario_1010 must exercise the active Han variant")
         assertEquals(774, snapshot.cities.size, "playable-Han evidence must use the full city graph")
         assertEquals(229, snapshot.generals.size, "playable-Han evidence must use the active NPC roster")
 

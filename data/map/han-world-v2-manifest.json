@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "mapName": "han-world-v2",
+  "effectiveYear": 220,
+  "projection": "HAN_WORLD_FRAME_V1_768x669",
+  "provinceCount": 1524,
+  "parentRegionCount": 172,
+  "coverage": {
+    "politicalLandUncovered": 0,
+    "politicallyCoveredWater": 0
+  },
+  "quality": {
+    "emptyProvinceCount": 0,
+    "maximumAreaCells": 1195,
+    "maximumComponentCount": 4,
+    "maximumLargeProvinceAspectRatio": 5.0
+  },
+  "sourceHashes": {
+    "modern-admin-boundaries-v1.json": "25c1df608ddd262f2f5074769f86cf6760ae1e326b6601cc81eb74bc376d2df0",
+    "external-province-seeds-v1.json": "7f5764af141d70911e1519b467b56dc4630e7b10d93c05b5284213cb4c0cd226",
+    "external-administrative-systems-v1.json": "be27bcaefd8879ba7570bd1f6dc5705107d1f4f10130ebd9b77260c600062092",
+    "province-shape-exceptions-v1.json": "b7c46c2f3b646246341ab135632a130e06c2131018d8bc1e8f86527604e0547a"
+  },
+  "artifactHashes": {
+    "han-world-v2-tiles.json": "ca8cb5d478e1bc49812f4cddd806f6348fc20f85d90eadf9d4369c0152548dfe",
+    "han-world-v2-provinces.png": "963aa58bcf3701b2ba2dae141749ec649a588dff5c5ff7aee0489dfddc332eed",
+    "han-world-v2-provinces.meta.json": "2e84083c0acb0d01d9b1a7fadd0aef6e84bf95f5052874443cd7e5ac4b77b015",
+    "han-world-v2-gameplay.json": "10126205c31c61230eef5351548fd2b5cbf33b35873c80280be2118381fb2b1d"
+  },
+  "compatibilityHashes": {
+    "han-780-v1-tiles.json": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d",
+    "han-780-v1.json": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
+  }
+}

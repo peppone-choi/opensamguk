@@ -55,9 +55,10 @@ const val FOUND_ASSAULT_RATIO: Double = 2.0
 /** [CityConstVariant.mapName] of the han map — the ONLY map the founding assault applies to. */
 const val HAN_MAP_NAME: String = "han"
 const val HAN_780_V1_MAP_NAME: String = "han-780-v1"
+const val HAN_WORLD_V2_MAP_NAME: String = "han-world-v2"
 
 fun isHanMapName(mapName: Any?): Boolean =
-    mapName == HAN_MAP_NAME || mapName == HAN_780_V1_MAP_NAME
+    mapName == HAN_MAP_NAME || mapName == HAN_780_V1_MAP_NAME || mapName == HAN_WORLD_V2_MAP_NAME
 
 fun foundingDefenseAfterCapture(mapName: Any?, currentDefense: Int, postDefense: Int): Int =
     if (isHanMapName(mapName)) postDefense else currentDefense
@@ -416,6 +417,7 @@ object CityConstRegistry {
             "miniche_b" to miniche,
             "miniche_clean" to miniche,
             HAN_MAP_NAME to currentHan,
+            HAN_WORLD_V2_MAP_NAME to currentHan,
             HAN_780_V1_MAP_NAME to legacyHan,
         )
     }
