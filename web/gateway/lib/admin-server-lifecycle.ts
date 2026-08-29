@@ -89,6 +89,43 @@ function waitForPoll(ms: number, signal?: AbortSignal): Promise<void> {
     });
 }
 
+async function runRequestWithinDeadline<T>(
+    request: (signal: AbortSignal) => Promise<T>,
+    deadline: number,
+    operationId: string,
+    callerSignal?: AbortSignal,
+): Promise<T> {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) throw new ServerLifecycleOperationTimeoutError(operationId);
+    if (callerSignal?.aborted) throw callerSignal.reason ?? abortError();
+
+    const requestController = new AbortController();
+    let timeout: number | undefined;
+    let onCallerAbort: (() => void) | undefined;
+    const interruption = new Promise<never>((_resolve, reject) => {
+        timeout = window.setTimeout(() => {
+            const error = new ServerLifecycleOperationTimeoutError(operationId);
+            reject(error);
+            requestController.abort(error);
+        }, remaining);
+        if (callerSignal) {
+            onCallerAbort = () => {
+                const error = callerSignal.reason ?? abortError();
+                reject(error);
+                requestController.abort(error);
+            };
+            callerSignal.addEventListener('abort', onCallerAbort, { once: true });
+        }
+    });
+
+    try {
+        return await Promise.race([request(requestController.signal), interruption]);
+    } finally {
+        if (timeout !== undefined) window.clearTimeout(timeout);
+        if (callerSignal && onCallerAbort) callerSignal.removeEventListener('abort', onCallerAbort);
+    }
+}
+
 function createOperationId(): string {
     const operationId = globalThis.crypto.randomUUID().replaceAll('-', '').toLowerCase();
     if (!OPERATION_ID_PATTERN.test(operationId)) {
@@ -143,24 +180,24 @@ export async function runServerLifecycleOperation(
     const mutationBody = JSON.stringify({ ...(input.body ?? {}), operationId });
     let resubmitted = false;
 
-    const requestMutation = async () => {
+    const requestMutation = async (signal: AbortSignal) => {
         const response = await fetch(input.url, {
             method: input.method,
             headers: { 'Content-Type': 'application/json' },
             body: mutationBody,
-            signal: input.signal,
+            signal,
         });
         return readLifecycleResponse(response, operationId);
     };
-    const requestStatus = async () => {
+    const requestStatus = async (signal: AbortSignal) => {
         const response = await fetch(`/api/proxy/admin/servers/operations/${operationId}`, {
             cache: 'no-store',
-            signal: input.signal,
+            signal,
         });
         return readLifecycleResponse(response, operationId);
     };
 
-    let current = await requestMutation();
+    let current = await runRequestWithinDeadline(requestMutation, deadline, operationId, input.signal);
     while (true) {
         input.onProgress?.(current);
 
@@ -180,7 +217,7 @@ export async function runServerLifecycleOperation(
                 );
             }
             resubmitted = true;
-            current = await requestMutation();
+            current = await runRequestWithinDeadline(requestMutation, deadline, operationId, input.signal);
             continue;
         }
 
@@ -192,6 +229,6 @@ export async function runServerLifecycleOperation(
         if (remaining <= 0) throw new ServerLifecycleOperationTimeoutError(operationId);
         await waitForPoll(Math.min(POLL_INTERVAL_MS, remaining), input.signal);
         if (Date.now() >= deadline) throw new ServerLifecycleOperationTimeoutError(operationId);
-        current = await requestStatus();
+        current = await runRequestWithinDeadline(requestStatus, deadline, operationId, input.signal);
     }
 }

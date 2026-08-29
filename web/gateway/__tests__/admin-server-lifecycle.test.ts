@@ -175,23 +175,124 @@ describe('admin server lifecycle client', () => {
         expect(progress).not.toContain('succeeded');
     });
 
-    test('aborts polling and passes the signal through the network boundary', async () => {
+    test('times out and aborts a never-settling initial mutation at the absolute deadline', async () => {
+        let requestSignal: AbortSignal | undefined;
+        vi.stubGlobal('fetch', vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
+            requestSignal = init?.signal as AbortSignal | undefined;
+            return new Promise<Response>(() => undefined);
+        }));
+        const progress: string[] = [];
+        let rejected: unknown;
+
+        void runServerLifecycleOperation({
+            url: '/api/proxy/admin/servers/pep/reset',
+            method: 'POST',
+            body: { confirm: 'RESET pep' },
+            onProgress: (result) => progress.push(result.operationStatus),
+        }).catch((error: unknown) => {
+            rejected = error;
+        });
+        await vi.advanceTimersByTimeAsync(10 * 60 * 1_000);
+
+        expect(rejected).toMatchObject({
+            name: 'ServerLifecycleOperationTimeoutError',
+            operationId: OPERATION_ID,
+            message: `서버 작업이 아직 진행 중입니다. 작업 ID: ${OPERATION_ID}`,
+        });
+        expect(requestSignal?.aborted).toBe(true);
+        expect(progress).not.toContain('succeeded');
+    });
+
+    test('times out and aborts a never-settling status request at the absolute deadline', async () => {
+        let statusSignal: AbortSignal | undefined;
+        vi.stubGlobal('fetch', vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+            if (String(url).includes('/operations/')) {
+                statusSignal = init?.signal as AbortSignal | undefined;
+                return new Promise<Response>(() => undefined);
+            }
+            return Promise.resolve(jsonResponse(202, lifecycleResponse('pending')));
+        }));
+        const progress: string[] = [];
+        let rejected: unknown;
+
+        void runServerLifecycleOperation({
+            url: '/api/proxy/admin/servers/pep/reset',
+            method: 'POST',
+            body: { confirm: 'RESET pep' },
+            onProgress: (result) => progress.push(result.operationStatus),
+        }).catch((error: unknown) => {
+            rejected = error;
+        });
+        await vi.advanceTimersByTimeAsync(10 * 60 * 1_000);
+
+        expect(rejected).toMatchObject({
+            name: 'ServerLifecycleOperationTimeoutError',
+            operationId: OPERATION_ID,
+            message: `서버 작업이 아직 진행 중입니다. 작업 ID: ${OPERATION_ID}`,
+        });
+        expect(statusSignal?.aborted).toBe(true);
+        expect(progress).toEqual(['pending']);
+    });
+
+    test('times out and aborts a never-settling bounded resubmission at the absolute deadline', async () => {
+        let mutationCount = 0;
+        let resubmitSignal: AbortSignal | undefined;
+        vi.stubGlobal('fetch', vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+            if (!String(url).includes('/operations/')) {
+                mutationCount += 1;
+                if (mutationCount === 2) {
+                    resubmitSignal = init?.signal as AbortSignal | undefined;
+                    return new Promise<Response>(() => undefined);
+                }
+                return Promise.resolve(jsonResponse(202, lifecycleResponse('pending')));
+            }
+            return Promise.resolve(jsonResponse(202, lifecycleResponse('missing', { resubmitRequired: true })));
+        }));
+        const progress: string[] = [];
+        let rejected: unknown;
+
+        void runServerLifecycleOperation({
+            url: '/api/proxy/admin/servers/pep/reset',
+            method: 'POST',
+            body: { confirm: 'RESET pep' },
+            onProgress: (result) => progress.push(result.operationStatus),
+        }).catch((error: unknown) => {
+            rejected = error;
+        });
+        await vi.advanceTimersByTimeAsync(10 * 60 * 1_000);
+
+        expect(rejected).toMatchObject({
+            name: 'ServerLifecycleOperationTimeoutError',
+            operationId: OPERATION_ID,
+            message: `서버 작업이 아직 진행 중입니다. 작업 ID: ${OPERATION_ID}`,
+        });
+        expect(resubmitSignal?.aborted).toBe(true);
+        expect(progress).toEqual(['pending', 'missing']);
+    });
+
+    test('aborts an in-flight request and propagates the caller signal through the network boundary', async () => {
         const fetchFake = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) => (
-            Promise.resolve(jsonResponse(202, lifecycleResponse('pending')))
+            new Promise<Response>(() => undefined)
         ));
         vi.stubGlobal('fetch', fetchFake);
         const controller = new AbortController();
+        let rejected: unknown;
 
-        const operation = runServerLifecycleOperation({
+        void runServerLifecycleOperation({
             url: '/api/proxy/admin/servers/pep/reset',
             method: 'POST',
             body: { confirm: 'RESET pep' },
             signal: controller.signal,
+        }).catch((error: unknown) => {
+            rejected = error;
         });
         await Promise.resolve();
+        const requestSignal = fetchFake.mock.calls[0]?.[1]?.signal as AbortSignal | undefined;
+        expect(requestSignal?.aborted).toBe(false);
         controller.abort();
+        await vi.advanceTimersByTimeAsync(0);
 
-        await expect(operation).rejects.toMatchObject({ name: 'AbortError' });
-        expect(fetchFake.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
+        expect(rejected).toMatchObject({ name: 'AbortError' });
+        expect(requestSignal?.aborted).toBe(true);
     });
 });
