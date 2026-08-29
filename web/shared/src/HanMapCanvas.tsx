@@ -395,6 +395,7 @@ function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
     city.y,
     city.nationId,
     city.nationColor ?? null,
+    city.commanderyName ?? null,
   ]));
 }
 

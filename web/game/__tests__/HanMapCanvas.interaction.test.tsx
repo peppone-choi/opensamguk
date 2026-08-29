@@ -375,6 +375,22 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(politicalCompositions()).toBe(1);
     expect(pathConstructions).toBe(2);
 
+    const reassignedCommandery = equivalentCities.map((city, index) => (
+      index === 0 ? { ...city, commanderyName: '예주' } : city
+    ));
+    rerender(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={PROVINCE_MAP}
+        cities={reassignedCommandery}
+        sourceSize={{ width: 200, height: 120 }}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    expect(politicalCompositions()).toBe(2);
+    expect(pathConstructions).toBe(2);
+
     const recolored = equivalentCities.map((city, index) => (
       index === 0 ? { ...city, nationColor: '#00ff00' } : city
     ));
@@ -388,7 +404,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    expect(politicalCompositions()).toBe(2);
+    expect(politicalCompositions()).toBe(3);
     expect(pathConstructions).toBe(2);
 
     rerender(
@@ -401,7 +417,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    expect(politicalCompositions()).toBe(3);
+    expect(politicalCompositions()).toBe(4);
     expect(pathConstructions).toBe(2);
 
     expect(main.strokes).not.toContain('rgba(225, 192, 120, 0.72)');
