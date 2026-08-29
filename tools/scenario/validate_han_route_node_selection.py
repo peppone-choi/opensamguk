@@ -98,9 +98,9 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
 )
 PINNED_ROUTE_KEY_REGISTRY_SHA256 = "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
 PINNED_SOURCE_WITNESS_SHA256 = "7fe27b667b4066200882f9e1815e07a6adb24d826f09e0605145041897f76ee4"
-PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "2ba4bcc50b4cfc8c91e230c9e5c7927a2c9e127e47b21779d0c58cc8c5f8bf6f"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "658aad965ece05af070d24d8839c718405a51c0113fe46f86fb3c8dbb9c0079f"
-PINNED_REVIEW_POLICY_SHA256 = "9902182700dbc6d569f65dca61c534787d99c7035c5cd73435866617da0f94df"
+PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "02fbd17515347f0b86b403d70364c49eea6e5ba88a636aa6a0f45fb3cf09cf50"
+PINNED_REVIEW_POLICY_SHA256 = "cd65d9a197399d95f42e8a2e35717005d12ba429fc35a869e9e5422952d70176"
 PINNED_VALIDATION_CONTRACT_SHA256 = "83c11fc237a6f03f8699a97f56326a9a6dc65990c6460482b024e7a0ee3bef66"
 PINNED_LEGACY_HAN_MAP_SHA256 = "10126205c31c61230eef5351548fd2b5cbf33b35873c80280be2118381fb2b1d"
 PINNED_LEGACY_TILE_MAP_SHA256 = "bdfd14e6e627d69bcee4c1af0f58602556389ab81891a8d3960dbcbae4867272"
@@ -181,11 +181,11 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
             _allowed_keys(_mapping(row, "catalog declared mismatch"), frozenset({"canonicalGroup", "declaredCities", "enumeratedUnits", "sourceVolume"}), "catalog declared mismatch")
     for raw_group in _rows(documents.catalog, "groups"):
         group = _mapping(raw_group, "catalog group")
-        _allowed_keys(group, frozenset({"canonicalGroup", "declaredCities", "enumeratedUnits", "groupType", "sourceCitation", "sourceGroupName", "sourceVolume", "traditionalTextCitation", "units"}), "catalog group")
+        _allowed_keys(group, frozenset({"canonicalGroup", "declaredCities", "enumeratedUnits", "evidence", "groupType", "memberCoverageIds", "sourceCitation", "sourceGroupName", "sourceVolume", "traditionalTextCitation", "units"}), "catalog group")
         if "sourceCitation" in group:
             _allowed_keys(_mapping(group.get("sourceCitation"), "catalog group sourceCitation"), frozenset({"corpusPath", "line", "snapshotSha256", "sourceUrl"}), "catalog group sourceCitation")
         if "traditionalTextCitation" in group:
-            _allowed_keys(_mapping(group.get("traditionalTextCitation"), "catalog group traditionalTextCitation"), frozenset({"localWitness", "snapshotSha256", "source", "url"}), "catalog group traditionalTextCitation")
+            _allowed_keys(_mapping(group.get("traditionalTextCitation"), "catalog group traditionalTextCitation"), frozenset({"localWitness", "locator", "snapshotSha256", "source", "url"}), "catalog group traditionalTextCitation")
         for row in _rows(group, "units"):
             unit = _mapping(row, "catalog unit")
             _allowed_keys(unit, frozenset({"canonicalGroup", "nameCorrection", "ordinal", "sourceCitation", "sourceName", "sourceNameIssue", "sourceNameStatus", "sourceVolume", "unitType"}), "catalog unit")
@@ -706,6 +706,8 @@ def _validate_catalog_citation(value: JsonValue, label: str) -> None:
             expected.add("line")
             if "endLine" in citation:
                 expected.add("endLine")
+        else:
+            expected.add("locator")
     else:
         expected = {"corpusPath", "line", "snapshotSha256", "sourceUrl"}
     _require_exact_keys(citation, expected, label)

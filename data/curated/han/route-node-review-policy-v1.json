@@ -80,10 +80,10 @@
     ]
   },
   "inputs": {
-    "administrativeCatalogSha256": "2ba4bcc50b4cfc8c91e230c9e5c7927a2c9e127e47b21779d0c58cc8c5f8bf6f",
+    "administrativeCatalogSha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "658aad965ece05af070d24d8839c718405a51c0113fe46f86fb3c8dbb9c0079f"
+      "sha256": "02fbd17515347f0b86b403d70364c49eea6e5ba88a636aa6a0f45fb3cf09cf50"
     },
     "coordinateOverlaySha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1",
     "locationAdjudications": {

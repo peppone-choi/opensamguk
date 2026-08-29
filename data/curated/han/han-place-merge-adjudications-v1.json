@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "han-place-merge-adjudications-v1",
+  "baselineYear": 220,
+  "sourceFingerprintContract": "HAN_PLACE_IDENTITY_CANONICAL_JSON_SHA256_V1",
+  "adjudications": [
+    {
+      "adjudicationId": "han-place-merge:34539-45796",
+      "decision": "APPROVED",
+      "operation": "RESEAT_WITHIN_JUN",
+      "sourcePlace": {
+        "physicalPlaceId": "34539",
+        "sourceNameCh": "宜都郡",
+        "sourceNameFt": "宜都郡",
+        "typeCh": "郡",
+        "begYr": 210,
+        "endYr": 279,
+        "kind": "COMMANDERY",
+        "level": 6,
+        "sourceRecordSha256": "1dc241265b752bdcf39e2bafb76a11cbac6985e7b9c71d8e9f96085684474edd"
+      },
+      "targetPlace": {
+        "physicalPlaceId": "45796",
+        "sourceNameCh": "夷陵县",
+        "sourceNameFt": "夷陵縣",
+        "typeCh": "县",
+        "begYr": 131,
+        "endYr": 221,
+        "kind": "COUNTY",
+        "level": 5,
+        "sourceRecordSha256": "f40f29143be6a06ad19cbd8ba5aabc2503b699e5360afed263a53e47c7ab48d4"
+      },
+      "expectedInitialSourceJunNameFt": "宜都郡",
+      "expectedInitialTargetJunNameFt": "南郡",
+      "resultJunNameFt": "宜都郡",
+      "historicalProvenance": [
+        {"role": "DECISION", "commit": "f070cf364a896b51effe26ca6c73a849fcf09f4a"}
+      ]
+    },
+    {
+      "adjudicationId": "han-place-merge:34546-45921",
+      "decision": "APPROVED",
+      "operation": "RESEAT_WITHIN_JUN",
+      "sourcePlace": {
+        "physicalPlaceId": "34546",
+        "sourceNameCh": "新城郡",
+        "sourceNameFt": "新城郡",
+        "typeCh": "郡",
+        "begYr": 220,
+        "endYr": 489,
+        "kind": "COMMANDERY",
+        "level": 6,
+        "sourceRecordSha256": "902898d0903b32e94fcca257e9264f02db5833bbaf6c78712063367399805a38"
+      },
+      "targetPlace": {
+        "physicalPlaceId": "45921",
+        "sourceNameCh": "房陵县",
+        "sourceNameFt": "房陵縣",
+        "typeCh": "县",
+        "begYr": -312,
+        "endYr": 562,
+        "kind": "COUNTY",
+        "level": 5,
+        "sourceRecordSha256": "c2c0dabd8825e62ec357acf01883cfb9352b8f1ed2b6693722e35be0b31c5d7c"
+      },
+      "expectedInitialSourceJunNameFt": "新城郡",
+      "expectedInitialTargetJunNameFt": "漢中郡",
+      "resultJunNameFt": "新城郡",
+      "historicalProvenance": [
+        {"role": "DECISION", "commit": "f070cf364a896b51effe26ca6c73a849fcf09f4a"}
+      ]
+    },
+    {
+      "adjudicationId": "han-place-merge:211278-44558",
+      "decision": "APPROVED",
+      "operation": "RESEAT_WITHIN_JUN",
+      "sourcePlace": {
+        "physicalPlaceId": "211278",
+        "sourceNameCh": "巴西郡",
+        "sourceNameFt": "巴西郡",
+        "typeCh": "郡",
+        "begYr": 201,
+        "endYr": 430,
+        "kind": "COMMANDERY",
+        "level": 6,
+        "sourceRecordSha256": "606ddc1a8b0e4e834bfdfeaec8a16fdad8f12f7c268635708ddea2a00d7e256a"
+      },
+      "targetPlace": {
+        "physicalPlaceId": "44558",
+        "sourceNameCh": "阆中县",
+        "sourceNameFt": "閬中縣",
+        "typeCh": "县",
+        "begYr": -314,
+        "endYr": 582,
+        "kind": "COUNTY",
+        "level": 5,
+        "sourceRecordSha256": "2c5587a5da79c61dfd12d13a36520d75ebaaabb5ce654ca9a2b0a39d7d263ebf"
+      },
+      "expectedInitialSourceJunNameFt": "巴西郡",
+      "expectedInitialTargetJunNameFt": "巴郡",
+      "resultJunNameFt": "巴西郡",
+      "historicalProvenance": [
+        {"role": "DECISION", "commit": "f070cf364a896b51effe26ca6c73a849fcf09f4a"}
+      ]
+    },
+    {
+      "adjudicationId": "han-place-merge:87633-87458",
+      "decision": "APPROVED",
+      "operation": "MERGE_JUN",
+      "sourcePlace": {
+        "physicalPlaceId": "87633",
+        "sourceNameCh": "北平郡",
+        "sourceNameFt": "北平郡",
+        "typeCh": "郡",
+        "begYr": 220,
+        "endYr": 264,
+        "kind": "COMMANDERY",
+        "level": 6,
+        "sourceRecordSha256": "fdf96e03ea2d1b5c237ccac702eef5ddee1864ce004ae08a8815444f3728bd43"
+      },
+      "targetPlace": {
+        "physicalPlaceId": "87458",
+        "sourceNameCh": "土垠县",
+        "sourceNameFt": "土垠縣",
+        "typeCh": "县",
+        "begYr": -201,
+        "endYr": 316,
+        "kind": "COUNTY",
+        "level": 5,
+        "sourceRecordSha256": "c09d9b44c2cafca2e7fadc5ffb949d0a27a4ff7198dba9b67557dac6bfdb606b"
+      },
+      "expectedInitialSourceJunNameFt": "北平郡",
+      "expectedInitialTargetJunNameFt": "右北平郡",
+      "resultJunNameFt": "右北平郡",
+      "historicalProvenance": [
+        {"role": "DECISION", "commit": "f070cf364a896b51effe26ca6c73a849fcf09f4a"},
+        {"role": "INDEX_CORRECTION", "commit": "808965058163c9ff4858f6a82698a2ec5271e19b"}
+      ]
+    },
+    {
+      "adjudicationId": "han-place-merge:211473-70741",
+      "decision": "APPROVED",
+      "operation": "MERGE_JUN",
+      "sourcePlace": {
+        "physicalPlaceId": "211473",
+        "sourceNameCh": "冯翊郡",
+        "sourceNameFt": "馮翊郡",
+        "typeCh": "郡",
+        "begYr": 220,
+        "endYr": 490,
+        "kind": "COMMANDERY",
+        "level": 6,
+        "sourceRecordSha256": "a7cc0a6adfe3a35e5ffbed3bc01ff3fc292983eed702d5f107864ec50994b58e"
+      },
+      "targetPlace": {
+        "physicalPlaceId": "70741",
+        "sourceNameCh": "高陆县",
+        "sourceNameFt": "高陸縣",
+        "typeCh": "县",
+        "begYr": 220,
+        "endYr": 515,
+        "kind": "COUNTY",
+        "level": 5,
+        "sourceRecordSha256": "0861f09976ba610bdf57b2dea694168f20850fc6807cad9b283d68c1217540ad"
+      },
+      "expectedInitialSourceJunNameFt": "馮翊郡",
+      "expectedInitialTargetJunNameFt": "左馮翊",
+      "resultJunNameFt": "左馮翊",
+      "historicalProvenance": [
+        {"role": "DECISION", "commit": "f070cf364a896b51effe26ca6c73a849fcf09f4a"},
+        {"role": "INDEX_CORRECTION", "commit": "808965058163c9ff4858f6a82698a2ec5271e19b"}
+      ]
+    },
+    {
+      "adjudicationId": "han-place-merge:34526-43503",
+      "decision": "APPROVED",
+      "operation": "MERGE_JUN",
+      "sourcePlace": {
+        "physicalPlaceId": "34526",
+        "sourceNameCh": "西陵郡",
+        "sourceNameFt": "西陵郡",
+        "typeCh": "郡",
+        "begYr": 214,
+        "endYr": 220,
+        "kind": "COMMANDERY",
+        "level": 6,
+        "sourceRecordSha256": "ca50d20cf211c7166357d2caf450c1e26e34fb55bc491de4d4d0bc619a7ac4f8"
+      },
+      "targetPlace": {
+        "physicalPlaceId": "43503",
+        "sourceNameCh": "西陵县",
+        "sourceNameFt": "西陵縣",
+        "typeCh": "县",
+        "begYr": 23,
+        "endYr": 501,
+        "kind": "COUNTY",
+        "level": 5,
+        "sourceRecordSha256": "793afc3a5f221570c26f4441031d10efac942fe5dd00c9675b603a00a971a110"
+      },
+      "expectedInitialSourceJunNameFt": "西陵郡",
+      "expectedInitialTargetJunNameFt": "江夏郡",
+      "resultJunNameFt": "江夏郡",
+      "historicalProvenance": [
+        {"role": "DECISION", "commit": "cfcf94a02c0529bf81cb0a9e4992a9efce1c0140"},
+        {"role": "INDEX_CORRECTION", "commit": "808965058163c9ff4858f6a82698a2ec5271e19b"}
+      ]
+    }
+  ]
+}

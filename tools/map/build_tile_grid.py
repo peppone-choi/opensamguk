@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """타일 격자 패키저 — 렌더러 산출물을 프런트가 먹을 수 있는 한 파일로 굽는다.
 
-`build_terrain_grid.py` 가 만든 `data/map/terrain-grid.json`(256×256 지형·소유·지역)과
-`build_han_places.py` 의 `data/map/han-places.json`(1092 군현 좌표)을 읽어
+`build_terrain_grid.py` 가 만든 `data/map/terrain-grid.json`(768×669 지형·소유·지역)과
+`build_han_places.py` 의 `data/map/han-places.json`(군현 좌표)을 읽어
 `data/map/han-tiles.json` 을 낸다. 지형을 **유도하지 않는다** — 유도는 렌더러가 이미 했다.
 
 이 스크립트가 하는 일은 셋뿐이다.
@@ -25,6 +25,19 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+try:
+    from tools.map.han_place_merge_runtime import (
+        REVIEWED_CATALOG_PLACE_IDS,
+        SOURCE_PLACE_IDS,
+        validate_reviewed_catalog_policy,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
+    from han_place_merge_runtime import (
+        REVIEWED_CATALOG_PLACE_IDS,
+        SOURCE_PLACE_IDS,
+        validate_reviewed_catalog_policy,
+    )
+
 ROOT = Path(__file__).resolve().parents[2]
 MAP = ROOT / "data" / "map"
 GRID = MAP / "terrain-grid.json"
@@ -34,6 +47,9 @@ OUT = MAP / "han-tiles.json"
 
 # 도로 비트마스크 — 이웃 4방향(N=1 E=2 S=4 W=8). 타일 16종이 서로 이어진다.
 NEI = {(0, -1): 1, (1, 0): 2, (0, 1): 4, (-1, 0): 8}
+CANONICAL_COLS = 768
+CANONICAL_ROWS = 669
+CANONICAL_YEAR = 220
 
 
 def rle(rows: list[list[int]]) -> list[list[int]]:
@@ -51,15 +67,284 @@ def rle(rows: list[list[int]]) -> list[list[int]]:
     return out
 
 
-def build() -> dict:
-    grid = json.loads(GRID.read_text())
-    places = json.loads(PLACES.read_text())["places"]
+def validate_canonical_inputs(
+        grid_document: dict, places_document: dict, *, readings_exists: bool) -> None:
+    """Validate the commit-producing CLI inputs without constraining direct fixture builds."""
+    if not readings_exists:
+        raise ValueError('readings.json is required for canonical tile materialization')
+    if not isinstance(grid_document, dict) or not isinstance(places_document, dict):
+        raise ValueError('terrain-grid and han-places documents are required')
+    grid_projection = grid_document.get('projection')
+    places_projection = places_document.get('projection')
+    if not isinstance(grid_projection, dict) or not isinstance(places_projection, dict):
+        raise ValueError('terrain-grid and han-places projection objects are required')
+    if grid_projection != places_projection:
+        raise ValueError('terrain-grid and han-places projections must match exactly')
+
+    expected_dimensions = (CANONICAL_COLS, CANONICAL_ROWS)
+    for label, document in (
+            ('terrain-grid', grid_document), ('han-places', places_document)):
+        dimensions = (document.get('cols'), document.get('rows'))
+        projection_dimensions = (
+            document['projection'].get('cols'), document['projection'].get('rows')
+        )
+        if dimensions != expected_dimensions or projection_dimensions != expected_dimensions:
+            raise ValueError(
+                f'{label} must use the canonical {CANONICAL_COLS}x{CANONICAL_ROWS} projection'
+            )
+        if document.get('grid') != CANONICAL_COLS:
+            raise ValueError(f'{label} grid must be {CANONICAL_COLS}')
+        if document.get('year') != CANONICAL_YEAR:
+            raise ValueError(f'{label} year must be {CANONICAL_YEAR}')
+
+
+def resolve_compact_places(grid_document: dict, places_document: dict) -> list[dict]:
+    """Resolve terrain-grid placeIds against raw places without positional joins."""
+    if not isinstance(grid_document, dict) or not isinstance(places_document, dict):
+        raise ValueError('terrain-grid and han-places documents are required')
+    raw_places = places_document.get('places')
+    place_ids = grid_document.get('placeIds')
+    if not isinstance(raw_places, list) or not isinstance(place_ids, list):
+        raise ValueError('raw places and terrain-grid placeIds arrays are required')
+
+    raw_ids = []
+    by_id = {}
+    for index, place in enumerate(raw_places):
+        if not isinstance(place, dict):
+            raise ValueError(f'places[{index}] must be an object')
+        place_id = place.get('id')
+        if not isinstance(place_id, str) or not place_id:
+            raise ValueError(f'places[{index}].id must be a nonempty string')
+        if place_id in by_id:
+            raise ValueError(f'duplicate raw physical place ID: {place_id}')
+        raw_ids.append(place_id)
+        by_id[place_id] = place
+
+    if len(set(place_ids)) != len(place_ids):
+        raise ValueError('terrain-grid placeIds must be unique')
+    if any(not isinstance(place_id, str) or not place_id for place_id in place_ids):
+        raise ValueError('terrain-grid placeIds must be nonempty strings')
+    if set(place_ids) & set(SOURCE_PLACE_IDS):
+        raise ValueError('terrain-grid placeIds contains a reviewed source ID')
+    unknown = [place_id for place_id in place_ids if place_id not in by_id]
+    if unknown:
+        raise ValueError(f'terrain-grid placeIds contains unknown IDs: {unknown[:5]}')
+
+    expected = [place_id for place_id in raw_ids if place_id not in SOURCE_PLACE_IDS]
+    if place_ids != expected:
+        raise ValueError(
+            'terrain-grid placeIds must equal raw place order minus the six reviewed sources'
+        )
+    if not set(SOURCE_PLACE_IDS) <= set(raw_ids):
+        missing = sorted(set(SOURCE_PLACE_IDS) - set(raw_ids))
+        raise ValueError(f'raw han-places is missing reviewed source IDs: {missing}')
+    missing_reviewed = set(REVIEWED_CATALOG_PLACE_IDS) - set(raw_ids)
+    if missing_reviewed:
+        raise ValueError(
+            f'raw han-places is missing reviewed catalog IDs: {sorted(missing_reviewed)}'
+        )
+    return [by_id[place_id] for place_id in place_ids]
+
+
+def _validate_grid_rows(value, label, rows, cols, *, lower=None, upper=None):
+    if not isinstance(value, list) or len(value) != rows:
+        raise ValueError(f'{label} must have exactly {rows} rows')
+    for row_index, row in enumerate(value):
+        if not isinstance(row, list) or len(row) != cols:
+            raise ValueError(f'{label}[{row_index}] must have exactly {cols} columns')
+        if lower is not None:
+            for col_index, item in enumerate(row):
+                if type(item) is not int or item < lower or item >= upper:
+                    raise ValueError(
+                        f'{label}[{row_index}][{col_index}] contains an invalid label'
+                    )
+
+
+def _derive_adjacency(labels):
+    touching = Counter()
+    rows = len(labels)
+    cols = len(labels[0]) if rows else 0
+    for row in range(rows):
+        for col in range(cols - 1):
+            a, b = labels[row][col], labels[row][col + 1]
+            if a >= 0 and b >= 0 and a != b:
+                touching[tuple(sorted((a, b)))] += 1
+    for row in range(rows - 1):
+        for col in range(cols):
+            a, b = labels[row][col], labels[row + 1][col]
+            if a >= 0 and b >= 0 and a != b:
+                touching[tuple(sorted((a, b)))] += 1
+    return [
+        {'a': a, 'b': b, 'cells': cells}
+        for (a, b), cells in sorted(touching.items()) if cells >= 3
+    ]
+
+
+def _validate_edges(edges, label, upper, expected, *, commandery, cols, rows):
+    if not isinstance(edges, list):
+        raise ValueError(f'{label} adjacency must be an array')
+    stripped = []
+    seen = set()
+    for index, edge in enumerate(edges):
+        if not isinstance(edge, dict):
+            raise ValueError(f'{label}[{index}] must be an object')
+        allowed = (
+            {'a', 'b', 'cells', 'cross'}
+            if commandery else {'a', 'b', 'cells'}
+        )
+        if commandery and edge.get('cross') == 'RIVER':
+            allowed.add('ford')
+        required = {'a', 'b', 'cells', 'cross'} if commandery else {'a', 'b', 'cells'}
+        if set(edge) != allowed or not required <= set(edge):
+            raise ValueError(f'{label}[{index}] has an invalid edge schema')
+        for endpoint in ('a', 'b'):
+            value = edge.get(endpoint)
+            if type(value) is not int or not 0 <= value < upper:
+                raise ValueError(f'{label}[{index}].{endpoint} is out of range')
+        if edge['a'] >= edge['b']:
+            raise ValueError(f'{label}[{index}] endpoints must be canonical a < b')
+        pair = (edge['a'], edge['b'])
+        if pair in seen:
+            raise ValueError(f'{label}[{index}] duplicates an adjacency pair')
+        seen.add(pair)
+        if type(edge.get('cells')) is not int or edge['cells'] <= 0:
+            raise ValueError(f'{label}[{index}].cells must be a positive integer')
+        if commandery:
+            if edge['cross'] not in {'NONE', 'LAND', 'RIVER'}:
+                raise ValueError(f'{label}[{index}].cross is invalid')
+            if edge['cross'] == 'RIVER':
+                ford = edge.get('ford')
+                if (not isinstance(ford, list) or len(ford) != 2
+                        or any(type(value) is not int for value in ford)
+                        or not (0 <= ford[0] < cols and 0 <= ford[1] < rows)):
+                    raise ValueError(f'{label}[{index}].ford is invalid')
+        stripped.append({key: edge[key] for key in ('a', 'b', 'cells')})
+    if stripped != expected:
+        raise ValueError(f'{label} does not match labels rederived from the grid')
+
+
+def validate_compact_grid(grid_document: dict, places: list[dict]) -> bool:
+    """Validate every compact array and graph index consumed by tile packaging."""
+    if not isinstance(grid_document, dict) or not isinstance(places, list):
+        raise ValueError('terrain-grid document and resolved places are required')
+    cols, rows = grid_document.get('cols'), grid_document.get('rows')
+    if type(cols) is not int or type(rows) is not int or cols <= 0 or rows <= 0:
+        raise ValueError('terrain-grid cols and rows must be positive integers')
+    count = len(places)
+    place_ids = grid_document.get('placeIds')
+    if not isinstance(place_ids, list) or len(place_ids) != count:
+        raise ValueError('placeIds length must equal the compact place count')
+
+    terrain = grid_document.get('terrain')
+    _validate_grid_rows(terrain, 'terrain', rows, cols)
+    legend = grid_document.get('legend')
+    if not isinstance(legend, dict):
+        raise ValueError('terrain legend must be an object')
+    try:
+        terrain_labels = {int(key) for key in legend}
+    except (TypeError, ValueError) as error:
+        raise ValueError('terrain legend keys must be integer strings') from error
+    if any(type(value) is not int or value not in terrain_labels for row in terrain for value in row):
+        raise ValueError('terrain contains a label absent from its legend')
+    region_names = grid_document.get('regionNames')
+    if not isinstance(region_names, list):
+        raise ValueError('regionNames must be an array')
+    _validate_grid_rows(
+        grid_document.get('region'), 'region', rows, cols,
+        lower=-1, upper=len(region_names),
+    )
+    _validate_grid_rows(
+        grid_document.get('owner'), 'owner', rows, cols, lower=-1, upper=count
+    )
+    owner = grid_document['owner']
+    owner_areas = Counter(value for row in owner for value in row if value >= 0)
+    if any(owner_areas[index] == 0 for index in range(count)):
+        raise ValueError('every compact place must own at least one owner cell')
+    jun_names = grid_document.get('junNames')
+    hubs = grid_document.get('hubs')
+    if not isinstance(jun_names, list) or not isinstance(hubs, list) or len(hubs) != len(jun_names):
+        raise ValueError('hubs and junNames must have exactly matching lengths')
+    jun_count = len(jun_names)
+    _validate_grid_rows(
+        grid_document.get('seatOwner'), 'seatOwner', rows, cols,
+        lower=-1, upper=jun_count,
+    )
+
+    jun_of = grid_document.get('junOf')
+    if not isinstance(jun_of, list) or len(jun_of) != count:
+        raise ValueError('junOf length must equal the compact place count')
+    if any(type(value) is not int or not 0 <= value < jun_count for value in jun_of):
+        if count or jun_count:
+            raise ValueError('junOf contains an out-of-range label')
+    checked_hubs = []
+    for jun_index, hub in enumerate(hubs):
+        if type(hub) is not int or not 0 <= hub < count:
+            raise ValueError(f'hubs[{jun_index}] is out of range')
+        if jun_of[hub] != jun_index:
+            raise ValueError(f'hubs[{jun_index}] is not a member of its jun')
+        place = places[hub]
+        gx, gy = place.get('gx'), place.get('gy')
+        if type(gx) is not int or type(gy) is not int or not (0 <= gx < cols and 0 <= gy < rows):
+            raise ValueError(f'hubs[{jun_index}] has an invalid compact place cell')
+        if grid_document['seatOwner'][gy][gx] != jun_index:
+            raise ValueError(f'hubs[{jun_index}] seat cell does not belong to its jun')
+        checked_hubs.append(hub)
+    if len(set(checked_hubs)) != len(checked_hubs):
+        raise ValueError('hubs must be unique')
+
+    zhi = grid_document.get('zhiPlaces')
+    if not isinstance(zhi, list):
+        raise ValueError('zhiPlaces must be an array')
+    if any(type(value) is not int or not 0 <= value < count for value in zhi):
+        raise ValueError('zhiPlaces contains an out-of-range index')
+    if len(set(zhi)) != len(zhi):
+        raise ValueError('zhiPlaces must be unique')
+
+    validate_reviewed_catalog_policy({
+        'places': places,
+        'placeIds': place_ids,
+        'hubs': hubs,
+        'junNames': jun_names,
+        'junOf': jun_of,
+        'zhiPlaces': zhi,
+    })
+
+    adjacency = grid_document.get('adjacency')
+    if not isinstance(adjacency, dict) or set(adjacency) != {'county', 'commandery'}:
+        raise ValueError('adjacency must contain exactly county and commandery graphs')
+    _validate_edges(
+        adjacency['county'], 'adjacency.county', count,
+        _derive_adjacency(owner), commandery=False, cols=cols, rows=rows,
+    )
+    _validate_edges(
+        adjacency['commandery'], 'adjacency.commandery', jun_count,
+        _derive_adjacency(grid_document['seatOwner']),
+        commandery=True, cols=cols, rows=rows,
+    )
+    return True
+
+
+def build(
+        *, grid_document: dict | None = None,
+        places_document: dict | None = None,
+        readings_document: dict | None = None) -> dict:
+    grid = grid_document if grid_document is not None else json.loads(GRID.read_text())
+    places_doc = (
+        places_document if places_document is not None else json.loads(PLACES.read_text())
+    )
+    places = resolve_compact_places(grid, places_doc)
+    validate_compact_grid(grid, places)
     cols, rows = grid["cols"], grid["rows"]
 
     # 한글 독음 사전 — tools/map/build_readings.py 산출물. 없으면 지금처럼 한자 그대로
     # 두고 경고만 낸다(폴백). 있으면 name 을 독음으로, 한자 원문은 nameCh 로 보존한다.
     readings: dict[str, str] = {}
-    if READINGS.exists():
+    readings_supplied = readings_document is not None
+    if readings_supplied:
+        if not isinstance(readings_document, dict):
+            raise ValueError('readings_document must be an object')
+        readings = readings_document
+    elif READINGS.exists():
         readings = json.loads(READINGS.read_text())
     else:
         print(f"경고: {READINGS.relative_to(ROOT)} 없음 — 지명이 한자로 남는다. "
@@ -117,7 +402,7 @@ def build() -> dict:
     # readings.json 이 있는데 빠진 이름이 있으면 조용히 한자로 흘리지 않는다 — 그게 이번에
     # 커밋에 한자 70건을 밀어넣은 사고다(#524 리뷰 HIGH-1). readings.json 이 아예 없을 때는
     # 위에서 이미 경고했으니 여기서는 있는데 불완전한 경우만 잡는다.
-    if READINGS.exists() and misses:
+    if (readings_supplied or READINGS.exists()) and misses:
         sys.exit(f"readings.json 에 없는 지명 {len(misses)}개: {sorted(set(misses))[:10]}… "
                   "tools/map/build_readings.py 를 다시 돌려라(hanja 패키지 필요).")
     return {
@@ -152,6 +437,14 @@ def main() -> int:
     for src in (GRID, PLACES):
         if not src.exists():
             sys.exit(f"{src.relative_to(ROOT)} 가 없다. tools/map/build_terrain_grid.py 를 먼저 돌려라.")
+    grid_document = json.loads(GRID.read_text())
+    places_document = json.loads(PLACES.read_text())
+    try:
+        validate_canonical_inputs(
+            grid_document, places_document, readings_exists=READINGS.exists()
+        )
+    except ValueError as exc:
+        sys.exit(f'canonical Han tile input contract failed: {exc}')
     blob = json.dumps(build(), ensure_ascii=False, separators=(",", ":")) + "\n"
     if args.check:
         if OUT.exists() and OUT.read_text() == blob:

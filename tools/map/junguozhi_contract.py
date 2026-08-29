@@ -22,6 +22,13 @@ CTEXT_VOLUME_SLUGS: Final = {
     112: "si",
     113: "wu",
 }
+CTEXT_VOLUME_TITLES: Final = {
+    109: "郡國一",
+    110: "郡國二",
+    111: "郡國三",
+    112: "郡國四",
+    113: "郡國五",
+}
 CORPUS_SHA256: Final = {
     109: "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
     110: "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
@@ -30,11 +37,11 @@ CORPUS_SHA256: Final = {
     113: "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
 }
 CTEXT_SHA256: Final = {
-    109: "78918515718b1979e7908b5696c7b84d0103328c4db785ea3e17096d4d17a315",
-    110: "924be1df57882124e4f67a37ccdaea0b58585bd6b7653b6d61baf8d1b1ba8545",
-    111: "4e8401d231cec62668d293f3a85cf11902f39942f47fe01e8982cd7c8579b329",
-    112: "77585548c019b9944e2b94394be50b8535fc221ba467a90433f1142d55576688",
-    113: "b0a86c7b530bd92924ae2b2d6dde9e38bb7bf9d26906248f9bf4434ef05e619b",
+    109: "0a506c57bc5346925de538240bd5d6cc8119bd2eae41413a8edd1684c15c9564",
+    110: "1b9288e8dcc760b7de9dc4a622a2c376417f74edcb6cc25f230035a3b9752155",
+    111: "a782851bc5f642bc7962994d8081b3829b8ae029c60fe47244f22a683ca8ef41",
+    112: "9232a8d5be75547a9f10e1fca32bb0ee487e863e40af04f7f679d5089c263f06",
+    113: "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
 }
 GUIZI_WITNESS_SHA256: Final = "8c73aa6dfa50593ddfc410d404bfe68e9df3eee8a01cfd97baad5dbd9a672ed4"
 
@@ -99,6 +106,22 @@ class TraditionalTextCitation(TypedDict):
     url: str
     localWitness: str
     snapshotSha256: str
+    locator: NotRequired[str]
+
+
+class GroupEvidence(TypedDict):
+    book: str
+    volume: str
+    section: str
+    quote: str
+    grade: str
+    claim: str
+    locationConfidence: str
+
+
+class TraditionalGroupWitness(TypedDict):
+    citation: TraditionalTextCitation
+    evidence: GroupEvidence
 
 
 class TraditionalPassageCitation(TraditionalTextCitation):
@@ -154,6 +177,8 @@ class CatalogGroup(TypedDict):
     enumeratedUnits: int
     sourceCitation: SourceCitation
     traditionalTextCitation: TraditionalTextCitation
+    evidence: list[GroupEvidence]
+    memberCoverageIds: list[str]
     units: list[CatalogUnit]
 
 
@@ -256,6 +281,15 @@ def group_type(canonical_group: str) -> str:
     raise CatalogContractError(f"unrecognized group type for canonical group: {canonical_group}")
 
 
+def stable_member_id(source_volume: int, canonical_group: str, ordinal: int) -> str:
+    """Canonical, name-independent serialization of one reviewed source identity."""
+    return json.dumps(
+        [source_volume, canonical_group, ordinal],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+
 def extract_marked_row(line: str) -> tuple[str, str] | None:
     match = re.match(r"^　　〖([^〗]+)〗(.*)$", line)
     if match is None:
@@ -302,53 +336,63 @@ def _require_snapshot(path: Path, expected_sha256: str) -> None:
         )
 
 
-def _ctext_segments(path: Path) -> list[str]:
+def _ctext_located_segments(path: Path) -> list[tuple[str, str]]:
     raw = path.read_text(encoding="utf-8", errors="replace")
     segment_pattern = re.compile(
-        r'<td class="ctext">\s*(?:<div id="comm\d+"></div>)?(.*?)</td>', re.DOTALL
+        r'<tr id="(?P<locator>n\d+)">.*?<td class="ctext">\s*'
+        r'(?:<div id="comm\d+"></div>)?(?P<body>.*?)</td>',
+        re.DOTALL,
     )
-    segments: list[str] = []
+    segments: list[tuple[str, str]] = []
     for match in segment_pattern.finditer(raw):
-        text = html.unescape(re.sub(r"<[^>]+>", "", match.group(1))).strip()
+        text = html.unescape(re.sub(r"<[^>]+>", "", match.group("body"))).strip()
         if text:
-            segments.append(text)
+            segments.append((match.group("locator"), text))
     return segments
 
 
-def _traditional_group_citations(ctext_dir: Path) -> dict[str, TraditionalTextCitation]:
-    citations: dict[str, TraditionalTextCitation] = {}
+def _ctext_segments(path: Path) -> list[str]:
+    return [text for _, text in _ctext_located_segments(path)]
+
+
+def _traditional_group_citations(ctext_dir: Path) -> dict[str, TraditionalGroupWitness]:
+    citations: dict[str, TraditionalGroupWitness] = {}
     canonical_offset = 0
     for volume in VOLUMES:
         slug = CTEXT_VOLUME_SLUGS[volume]
         path = ctext_dir / f"{slug}.html"
         _require_snapshot(path, CTEXT_SHA256[volume])
-        segments = _ctext_segments(path)
-        witnessed: list[str] = []
-        for text in segments:
+        located_segments = _ctext_located_segments(path)
+        witnessed: list[tuple[int, str]] = []
+        for index, (_, text) in enumerate(located_segments):
             if text in CANONICAL_GROUPS:
-                witnessed.append(text)
+                witnessed.append((index, text))
                 continue
             tail = text.rsplit("。", 1)[-1]
             if tail in CANONICAL_GROUPS:
-                witnessed.append(tail)
+                witnessed.append((index, tail))
         expected_count_for_volume = VOLUME_GROUP_COUNTS[volume]
         expected = CANONICAL_GROUPS[
             canonical_offset : canonical_offset + expected_count_for_volume
         ]
-        if witnessed != expected:
+        witnessed_names = [canonical_group for _, canonical_group in witnessed]
+        if witnessed_names != expected:
             divergence = next(
                 (
                     f"{index}: {actual} != {wanted}"
-                    for index, (actual, wanted) in enumerate(zip(witnessed, expected), start=1)
+                    for index, (actual, wanted) in enumerate(
+                        zip(witnessed_names, expected), start=1
+                    )
                     if actual != wanted
                 ),
                 "length only",
             )
             raise CatalogContractError(
                 f"ctext canonical group sequence mismatch in volume {volume}: "
-                f"{len(witnessed)}/{expected_count_for_volume} ({divergence})"
+                f"{len(witnessed_names)}/{expected_count_for_volume} ({divergence})"
             )
         if volume == 113:
+            segments = [text for _, text in located_segments]
             try:
                 shang_index = segments.index("上郡")
                 xihe_index = segments.index("西河郡", shang_index + 1)
@@ -359,13 +403,34 @@ def _traditional_group_citations(ctext_dir: Path) -> dict[str, TraditionalTextCi
             if "龜茲屬國" not in segments[shang_index + 1 : xihe_index]:
                 raise CatalogContractError("ctext 上郡 block is missing 龜茲屬國")
         url = f"https://ctext.org/hou-han-shu/jun-guo-{slug}/zh"
-        local_witness = f"data/chgis-source/junguozhi/{slug}.html"
-        for canonical_group in witnessed:
+        local_witness = f"data/corpus/ctext/junguozhi/{slug}.html"
+        for heading_ordinal, (start, canonical_group) in enumerate(witnessed):
+            end = (
+                witnessed[heading_ordinal + 1][0]
+                if heading_ordinal + 1 < len(witnessed)
+                else len(located_segments)
+            )
+            passage_segments = [canonical_group]
+            passage_segments.extend(text for _, text in located_segments[start + 1 : end])
+            end_locator = located_segments[end - 1][0]
+            locator = f"{located_segments[start][0]}-{end_locator}"
             citations[canonical_group] = {
-                "source": "Chinese Text Project",
-                "url": url,
-                "localWitness": local_witness,
-                "snapshotSha256": CTEXT_SHA256[volume],
+                "citation": {
+                    "source": "Chinese Text Project",
+                    "url": url,
+                    "localWitness": local_witness,
+                    "snapshotSha256": CTEXT_SHA256[volume],
+                    "locator": locator,
+                },
+                "evidence": {
+                    "book": "後漢書",
+                    "volume": CTEXT_VOLUME_TITLES[volume],
+                    "section": f"{canonical_group} ({locator})",
+                    "quote": "\n".join(passage_segments),
+                    "grade": "STANDARD_HISTORY",
+                    "claim": "group-membership-attested",
+                    "locationConfidence": "UNKNOWN",
+                },
             }
         canonical_offset += expected_count_for_volume
     return citations
@@ -503,7 +568,7 @@ def _source_name_issue(
     citation: TraditionalPassageCitation = {
         "source": "Chinese Text Project",
         "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
-        "localWitness": "data/chgis-source/junguozhi/wu.html",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
         "snapshotSha256": CTEXT_SHA256[113],
         "line": line,
     }
@@ -545,10 +610,113 @@ def _validate_source_shape(groups: list[ParsedGroup]) -> None:
         raise CatalogContractError(f"unit count mismatch: {unit_count}/{EXPECTED_UNIT_COUNT}")
 
 
+def _decode_stable_member_id(member_id: object) -> tuple[int, str, int]:
+    if not isinstance(member_id, str):
+        raise CatalogContractError("member coverage ID must be a string")
+    try:
+        decoded = json.loads(member_id)
+    except json.JSONDecodeError as error:
+        raise CatalogContractError(f"invalid member coverage ID: {member_id}") from error
+    if (
+        not isinstance(decoded, list)
+        or len(decoded) != 3
+        or not isinstance(decoded[0], int)
+        or isinstance(decoded[0], bool)
+        or not isinstance(decoded[1], str)
+        or not decoded[1]
+        or not isinstance(decoded[2], int)
+        or isinstance(decoded[2], bool)
+        or decoded[2] < 1
+    ):
+        raise CatalogContractError(f"invalid member coverage ID: {member_id}")
+    identity = (decoded[0], decoded[1], decoded[2])
+    if stable_member_id(*identity) != member_id:
+        raise CatalogContractError(f"non-canonical member coverage ID: {member_id}")
+    return identity
+
+
+def validate_catalog_evidence(catalog: Catalog, ctext_dir: Path) -> None:
+    """Prove catalog evidence and coverage against hash-verified CText snapshots."""
+    witnesses = _traditional_group_citations(ctext_dir)
+    for group in catalog["groups"]:
+        canonical_group = group["canonicalGroup"]
+        volume = group["sourceVolume"]
+        expected_witness = witnesses.get(canonical_group)
+        if expected_witness is None:
+            raise CatalogContractError(f"missing CText witness for {canonical_group}")
+
+        citation = group["traditionalTextCitation"]
+        expected_citation = expected_witness["citation"]
+        if citation.get("snapshotSha256") != expected_citation["snapshotSha256"]:
+            raise CatalogContractError(
+                f"evidence snapshot hash mismatch for {canonical_group}"
+            )
+        if citation.get("locator") != expected_citation["locator"]:
+            raise CatalogContractError(f"evidence locator mismatch for {canonical_group}")
+        if citation != expected_citation:
+            raise CatalogContractError(f"evidence citation mismatch for {canonical_group}")
+
+        evidence_records = group["evidence"]
+        if len(evidence_records) != 1:
+            raise CatalogContractError(
+                f"evidence record count mismatch for {canonical_group}: {len(evidence_records)}/1"
+            )
+        evidence = evidence_records[0]
+        expected_evidence = expected_witness["evidence"]
+        if evidence.get("quote") != expected_evidence["quote"]:
+            raise CatalogContractError(f"evidence quote mismatch for {canonical_group}")
+        if evidence.get("section") != expected_evidence["section"]:
+            raise CatalogContractError(f"evidence locator mismatch for {canonical_group}")
+        if evidence != expected_evidence:
+            raise CatalogContractError(f"evidence metadata mismatch for {canonical_group}")
+
+        expected_coverage = []
+        for unit in group["units"]:
+            if unit["sourceVolume"] != volume:
+                raise CatalogContractError(
+                    f"unit sourceVolume mismatch for {canonical_group} ordinal "
+                    f"{unit['ordinal']}: {unit['sourceVolume']} != {volume}"
+                )
+            if unit["canonicalGroup"] != canonical_group:
+                raise CatalogContractError(
+                    f"unit canonicalGroup mismatch for {canonical_group} ordinal "
+                    f"{unit['ordinal']}: {unit['canonicalGroup']} != {canonical_group}"
+                )
+            expected_coverage.append(
+                stable_member_id(volume, canonical_group, unit["ordinal"])
+            )
+        actual_coverage = group["memberCoverageIds"]
+        seen: set[str] = set()
+        for member_id in actual_coverage:
+            if member_id in seen:
+                raise CatalogContractError(
+                    f"duplicate member in evidence coverage for {canonical_group}: {member_id}"
+                )
+            seen.add(member_id)
+            member_volume, member_group, _ = _decode_stable_member_id(member_id)
+            if member_volume != volume or member_group != canonical_group:
+                raise CatalogContractError(
+                    f"foreign member in evidence coverage for {canonical_group}: {member_id}"
+                )
+            if member_id not in expected_coverage:
+                raise CatalogContractError(
+                    f"unknown member in evidence coverage for {canonical_group}: {member_id}"
+                )
+        missing = [member_id for member_id in expected_coverage if member_id not in seen]
+        if missing:
+            raise CatalogContractError(
+                f"missing member in evidence coverage for {canonical_group}: {missing[0]}"
+            )
+        if actual_coverage != expected_coverage:
+            raise CatalogContractError(
+                f"member coverage order mismatch for {canonical_group}"
+            )
+
+
 def build_catalog(corpus_dir: Path, ctext_dir: Path | None = None) -> Catalog:
     parsed_groups = parse_groups(corpus_dir)
     _validate_source_shape(parsed_groups)
-    resolved_ctext_dir = ctext_dir or corpus_dir.parent / "chgis-source" / "junguozhi"
+    resolved_ctext_dir = ctext_dir or corpus_dir / "ctext" / "junguozhi"
     traditional_citations = _traditional_group_citations(resolved_ctext_dir)
     catalog_groups: list[CatalogGroup] = []
     mismatches: list[CountMismatch] = []
@@ -613,12 +781,17 @@ def build_catalog(corpus_dir: Path, ctext_dir: Path | None = None) -> Catalog:
                     "sourceUrl": source_url,
                     "snapshotSha256": CORPUS_SHA256[volume],
                 },
-                "traditionalTextCitation": traditional_citations[canonical_group],
+                "traditionalTextCitation": traditional_citations[canonical_group]["citation"],
+                "evidence": [traditional_citations[canonical_group]["evidence"]],
+                "memberCoverageIds": [
+                    stable_member_id(volume, canonical_group, unit["ordinal"])
+                    for unit in catalog_units
+                ],
                 "units": catalog_units,
             }
         )
 
-    return {
+    catalog: Catalog = {
         "schemaVersion": 1,
         "catalogId": "hhs-junguozhi-administrative-units-v1",
         "source": {
@@ -648,6 +821,8 @@ def build_catalog(corpus_dir: Path, ctext_dir: Path | None = None) -> Catalog:
         "declaredVsEnumeratedMismatches": mismatches,
         "groups": catalog_groups,
     }
+    validate_catalog_evidence(catalog, resolved_ctext_dir)
+    return catalog
 
 
 def render_catalog(catalog: Catalog) -> str:

@@ -1,21 +1,40 @@
 #!/usr/bin/env python3
 """후한 군현 지도의 지형 격자를 만든다 — 사료 좌표 + Natural Earth 해안선.
 
-`data/map/han-places.json` 이 저장한 등적 투영을 **역산**해 256×256 각 셀의 실제
+`data/map/han-places.json` 이 저장한 등적 투영을 **역산**해 canonical
+768×669 각 셀의 실제
 경위도를 구하고, Natural Earth(public domain) 로 바다·호수·하천을 굽는다. 그 다음
 각 육지 셀을 가장 가까운 縣에 배정(보로노이)하고, 郡治 사이의 도로를 Gabriel 그래프로
 유도한다. 인접을 손으로 적지 않는다 — 좌표가 이미 그것을 말하고 있다.
 
 산출 `data/map/terrain-grid.json` (미커밋, ADR-LITE-039):
-    terrain  256×256  0 바다 · 1 평지 · 2 산지 · 3 하천 · 4 호소
-    owner    256×250  각 셀의 縣 인덱스(-1 = 바다)
+    terrain  projection rows×cols  0 바다 · 1 평지 · 2 산지 · 3 하천 · 4 호소
+    owner    projection rows×cols  각 셀의 縣 인덱스(-1 = 바다)
     roads    郡治 간 간선 목록
 
-용법:  python3 tools/map/build_terrain_grid.py [--grid 256] [--preview]
+용법:  python3 tools/map/build_terrain_grid.py [--grid 768] [--preview]
+
+`--grid`는 새 투영을 만드는 옵션이 아니라 상류 `han-places.json`의 projection
+cols를 확인하는 계약이다. 비정본 연구 격자는 같은 값을 명시해 사용한다.
 """
 import argparse, heapq, json, math, os, sys
 from collections import Counter
 import numpy as np
+
+try:
+    from tools.map.han_place_merge_runtime import apply_reviewed_merges
+    from tools.map.han_temporal_parent_runtime import (
+        ReviewedTemporalSeedOverride,
+        apply_reviewed_temporal_parents,
+        load_reviewed_temporal_parent_context,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
+    from han_place_merge_runtime import apply_reviewed_merges
+    from han_temporal_parent_runtime import (
+        ReviewedTemporalSeedOverride,
+        apply_reviewed_temporal_parents,
+        load_reviewed_temporal_parent_context,
+    )
 
 PLACES = 'data/map/han-places.json'
 JUNGUO = 'data/map/junguozhi.json'
@@ -494,7 +513,8 @@ def fold_to_jun(places, proj, junguo):
             # 붙이는 폴백이 郡 점을 집어가면(定襄郡 점이 이웃 郡의 縣이 되는 식) 그 郡은
             # 제 이름으로 승격될 기회를 잃고 지도에서 통째로 사라진다. 郡 자리는 아래
             # 이름 매칭 블록이 따로 잡는다.
-            cand = by_name.get(norm(c['name']))
+            cand = [i for i in by_name.get(norm(c['name']), [])
+                    if places[i].get('kind') not in SEAT_KINDS]
             pool = cand if cand else [i for i in range(len(places))
                                       if places[i].get('kind') not in SEAT_KINDS]
             ranked = sorted(
@@ -692,15 +712,191 @@ def fords(terrain, roads):
     return [{'col': x, 'row': y, 'roads': c} for (x, y), c in sorted(seen.items())]
 
 
+def validate_requested_grid(places_document, requested_grid):
+    """Require the CLI grid contract to match the upstream projection exactly."""
+    if not isinstance(places_document, dict) or not isinstance(
+            places_document.get('projection'), dict):
+        raise ValueError('han-places projection object is required')
+    projection = places_document['projection']
+    cols = projection.get('cols')
+    rows = projection.get('rows')
+    if isinstance(cols, bool) or not isinstance(cols, int):
+        raise ValueError('han-places projection cols must be an integer')
+    if cols != requested_grid:
+        raise ValueError(
+            f'requested grid {requested_grid} does not match han-places projection cols {cols}'
+        )
+    if places_document.get('grid') != cols or places_document.get('cols') != cols:
+        raise ValueError('han-places grid/cols must equal projection cols')
+    if places_document.get('rows') != rows:
+        raise ValueError('han-places rows must equal projection rows')
+
+
+def derive_commandery_ownership(
+        *, field, places, jun_of, jun_names, junguo, proj,
+        temporal_seed_overrides=()):
+    """Build commandery Voronoi from already-reviewed physical source labels."""
+    cost = np.asarray(field)
+    if cost.ndim != 2:
+        raise ValueError('commandery ownership cost field must be two-dimensional')
+    membership = np.asarray(jun_of)
+    if (membership.ndim != 1 or len(membership) != len(places)
+            or membership.dtype.kind not in 'iu'):
+        raise ValueError('commandery membership must label every physical place')
+    if np.any(membership < 0) or np.any(membership >= len(jun_names)):
+        raise ValueError('commandery membership contains an unknown jun index')
+    if len(set(jun_names)) != len(jun_names):
+        raise ValueError('commandery names must be unique')
+
+    reviewed_by_cell, reviewed_by_child = {}, {}
+    for override in temporal_seed_overrides:
+        if not isinstance(override, ReviewedTemporalSeedOverride):
+            raise ValueError('reviewed temporal seed override has an invalid identity')
+        place_index = override.place_index
+        if not 0 <= place_index < len(places):
+            raise ValueError('reviewed temporal seed references an unknown physical place')
+        if int(membership[place_index]) != override.parent_index:
+            raise ValueError('reviewed temporal seed disagrees with pre-Dijkstra membership')
+        place = places[place_index]
+        cell = (int(place['gx']), int(place['gy']))
+        coordinate = (place.get('lon'), place.get('lat'))
+        if not all(type(value) in (int, float) for value in coordinate):
+            raise ValueError('reviewed temporal seed requires an exact physical coordinate')
+        if cell in reviewed_by_cell or override.junguozhi_child_name in reviewed_by_child:
+            raise ValueError('reviewed temporal seed identity must be unique')
+        reviewed_by_cell[cell] = override
+        reviewed_by_child[override.junguozhi_child_name] = (
+            coordinate, cell, override,
+        )
+
+    reviewed_consumed = {override.place_index: 0 for override in temporal_seed_overrides}
+
+    ambiguous = ambiguous_seeds(junguo)
+    jsrc, jlab = [], []
+    jun_name_ix = {name: index for index, name in enumerate(jun_names)}
+    for jun in junguo:
+        for county in jun['counties']:
+            if not county.get('lat') or (county['lon'], county['lat']) in ambiguous:
+                continue
+            parent_index = jun_name_ix.get(jun['name'])
+            if parent_index is None:
+                continue
+            gx, gy = proj.to_cell(county['lon'], county['lat'])
+            cell = (int(gx), int(gy))
+            reviewed = reviewed_by_child.get(county.get('name'))
+            if reviewed is not None:
+                reviewed_coordinate, reviewed_cell, override = reviewed
+                if jun.get('name') != override.initial_source_parent_name:
+                    raise ValueError(
+                        'reviewed temporal seed has a mismatched initial source parent'
+                    )
+                if (county['lon'], county['lat']) != reviewed_coordinate:
+                    raise ValueError('reviewed temporal seed has a mismatched 郡國志 coordinate')
+                if not (0 <= cell[1] < cost.shape[0] and 0 <= cell[0] < cost.shape[1]):
+                    raise ValueError('reviewed temporal seed projects outside terrain bounds')
+                if cell != reviewed_cell:
+                    raise ValueError(
+                        'reviewed temporal seed projection mismatches its physical cell'
+                    )
+                reviewed_consumed[override.place_index] += 1
+                if reviewed_consumed[override.place_index] != 1:
+                    raise ValueError('reviewed temporal seed must be consumed exactly once')
+                parent_index = override.parent_index
+            elif cell in reviewed_by_cell:
+                raise ValueError('conflicting 郡國志 identity occupies a reviewed temporal seed')
+            if 0 <= cell[1] < cost.shape[0] and 0 <= cell[0] < cost.shape[1]:
+                jsrc.append(cell)
+                jlab.append(parent_index)
+
+    if any(count != 1 for count in reviewed_consumed.values()):
+        raise ValueError('reviewed temporal seed must be consumed exactly once')
+
+    cell_lab = {}
+    for place_index, place in enumerate(places):
+        cell = (int(place['gx']), int(place['gy']))
+        cell_lab.setdefault(cell, int(membership[place_index]))
+    for cell, parent_index in zip(jsrc, jlab):
+        cell_lab[cell] = parent_index
+    src, lab = list(cell_lab), list(cell_lab.values())
+    _, raw, _ = multi_dijkstra(cost, src)
+    table = np.array(lab + [-1], dtype=np.int32)
+    return table[np.where(raw >= 0, raw, len(lab))].astype(np.int32)
+
+
+def finalize_reviewed_merge_state(
+        *, terrain, places, owner, seat_owner, jun_of, hubs, jun_names,
+        zhi_places, ledger=None):
+    """Apply stable-ID merges, then derive every graph from compact arrays."""
+    state = apply_reviewed_merges(
+        places=places,
+        owner=owner,
+        seat_owner=seat_owner,
+        jun_of=jun_of,
+        hubs=hubs,
+        jun_names=jun_names,
+        zhi_places=zhi_places,
+        ledger=ledger,
+    )
+    pts = np.array(
+        [[place['gx'], place['gy']] for place in state['places']], dtype=float
+    )
+    roads, _ = build_roads(terrain, pts, state['hubs'])
+    ford_list = fords(terrain, roads)
+
+    land_field = cost_field(terrain, LAND_COST)
+    for x, y in pts:
+        x, y = int(x), int(y)
+        if land_field[y, x] == INF:
+            land_field[y, x] = LAND_COST[PLAIN]
+    county_edges = adjacency(state['owner'])
+    commandery_edges = cross_by_path(
+        land_field,
+        pts,
+        adjacency(state['seatOwner']),
+        terrain,
+    )
+    ford_list += [
+        {'col': ford[0], 'row': ford[1], 'roads': 0}
+        for ford in (edge['ford'] for edge in commandery_edges if 'ford' in edge)
+    ]
+    state.update({
+        'pts': pts,
+        'roads': roads,
+        'fords': ford_list,
+        'adjacency': {
+            'county': county_edges,
+            'commandery': commandery_edges,
+        },
+    })
+    return state
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--grid', type=int, default=256)
+    ap.add_argument(
+        '--grid', type=int, default=768,
+        help='verify upstream grid columns (canonical default: 768; explicit alternatives are research/synthetic only)',
+    )
     ap.add_argument('--preview', action='store_true', help='PNG 미리보기도 그린다')
     a = ap.parse_args()
 
     if not os.path.exists(PLACES):
         sys.exit(f'{PLACES} 가 없다. 먼저 tools/map/build_han_places.py 를 돌려라.')
-    hp = json.load(open(PLACES))
+    with open(PLACES, encoding='utf-8') as fh:
+        hp = json.load(fh)
+    try:
+        validate_requested_grid(hp, a.grid)
+    except ValueError as exc:
+        sys.exit(str(exc))
+    try:
+        temporal_context = load_reviewed_temporal_parent_context()
+    except ValueError as exc:
+        sys.exit(str(exc))
+    if type(hp.get('year')) is not int or hp['year'] != temporal_context.reference_year:
+        sys.exit(
+            f"han-places year {hp.get('year')!r} does not match reviewed temporal "
+            f"reference year {temporal_context.reference_year}"
+        )
     proj = Proj(hp['projection'])
     n, rows = proj.cols, proj.rows
 
@@ -768,52 +964,54 @@ def main():
     # ── 郡: 소속은 郡國志에서 읽고, 영역은 그 縣들이 가진 셀의 합집합으로 만든다 ──
     junguo = json.load(open(JUNGUO))['places'] if os.path.exists(JUNGUO) else []
     jun_of, hubs, jun_names, zhi_places = fold_to_jun(hp['places'], proj, junguo)
-    jun_name_ix = {nm: k for k, nm in enumerate(jun_names)}
+    temporal = apply_reviewed_temporal_parents(
+        places=hp['places'],
+        jun_of=jun_of,
+        jun_names=jun_names,
+        year=hp['year'],
+        context=temporal_context,
+        require_reference_year=True,
+    )
+    jun_of = temporal['junOf']
     # 郡 영역은 縣 소유를 접기만 해선 사료와 100% 안 맞는다. 郡國志가 적은 縣 좌표와
     # CHGIS 좌표가 한두 셀 어긋나면 그 縣이 이웃 郡 땅에 떨어진다. 두 좌표를 **모두**
     # 제 郡의 소스로 넣으면 그 사이가 전부 그 郡이 되어 어긋남이 사라진다.
     # 두 郡의 縣이 **똑같은** 좌표를 물고 있으면 그건 비정 실패다 — 이름으로 찾다가 한
     # 지점을 둘이 나눠 가진 것이다(常山國 真定 = 中山國 恒山). 그 점을 그대로 씨앗으로
     # 쓰면 남의 郡 한복판에 6칸짜리 위요지가 생긴다. 모르는 것을 경계로 바꾸지 않는다.
-    ambiguous = ambiguous_seeds(junguo)
-
-    jsrc, jlab = [], []
-    for jn, jun in enumerate(junguo):
-        for c in jun['counties']:
-            if not c.get('lat'):
-                continue
-            if (c['lon'], c['lat']) in ambiguous:
-                continue
-            k = jun_name_ix.get(jun['name'])
-            if k is None:
-                continue
-            gx, gy = proj.to_cell(c['lon'], c['lat'])
-            if 0 <= int(gy) < rows and 0 <= int(gx) < n:
-                jsrc.append((int(gx), int(gy)))
-                jlab.append(k)
-    # 한 칸에 두 소스가 겹치면 郡國志가 이긴다. 격자 한 칸이 5km 라 이웃 縣이 같은 칸에
-    # 떨어지는 일이 흔한데, 그때 CHGIS 추정이 사료를 덮어쓰면 안 된다.
-    cell_lab = {}
-    for (c, k) in zip([(int(x), int(y)) for x, y in pts], list(jun_of)):
-        cell_lab.setdefault(c, k)
-    for c, k in zip(jsrc, jlab):
-        cell_lab[c] = k
-    src, lab = list(cell_lab), list(cell_lab.values())
-    _, raw, _ = multi_dijkstra(field, src)
-    tbl = np.array(lab + [-1], dtype=np.int32)
-    seat_label = tbl[np.where(raw >= 0, raw, len(lab))].astype(np.int32)
-    roads, _ = build_roads(terrain, pts, hubs)
-    ford_list = fords(terrain, roads)
-
-    # 郡 인접의 도하 판정. 이동 단위가 郡이므로 여기만 실제 경로를 뽑는다.
-    land_field = cost_field(terrain, LAND_COST)
-    for (x, y) in pts:
-        x, y = int(x), int(y)
-        if land_field[y, x] == INF:
-            land_field[y, x] = LAND_COST[PLAIN]
-    adj_m = cross_by_path(land_field, pts, adjacency(seat_label), terrain)
-    ford_list += [{'col': f[0], 'row': f[1], 'roads': 0}
-                  for f in (e['ford'] for e in adj_m if 'ford' in e)]
+    seat_label = derive_commandery_ownership(
+        field=field,
+        places=hp['places'],
+        jun_of=jun_of,
+        jun_names=jun_names,
+        junguo=junguo,
+        proj=proj,
+        temporal_seed_overrides=temporal['seedOverrides'],
+    )
+    # All raw physical seeds have now participated in the reviewed temporal Voronoi
+    # and historical folding. Apply reviewed merge transforms at this boundary,
+    # then derive every downstream index and graph from the compact state.
+    merged = finalize_reviewed_merge_state(
+        terrain=terrain,
+        places=hp['places'],
+        owner=owner,
+        seat_owner=seat_label,
+        jun_of=jun_of,
+        hubs=hubs,
+        jun_names=jun_names,
+        zhi_places=zhi_places,
+    )
+    pts = merged['pts']
+    owner = merged['owner']
+    seat_label = merged['seatOwner']
+    hubs = merged['hubs']
+    jun_of = merged['junOf']
+    jun_names = merged['junNames']
+    zhi_places = merged['zhiPlaces']
+    roads = merged['roads']
+    ford_list = merged['fords']
+    adj_c = merged['adjacency']['county']
+    adj_m = merged['adjacency']['commandery']
 
     legend = ['SEA', 'PLAIN', 'MOUNTAIN', 'RIVER', 'LAKE', 'DESERT', 'PLATEAU', 'BASIN', 'HILL']
     counts = {name: int((terrain == i).sum()) for i, name in enumerate(legend)}
@@ -822,12 +1020,13 @@ def main():
         'legend': {str(i): name for i, name in enumerate(legend)},
         'counts': counts, 'terrain': terrain.tolist(), 'owner': owner.tolist(),
         'region': region.tolist(), 'regionNames': names,
+        'placeIds': merged['placeIds'],
         'hubs': hubs, 'junOf': jun_of.tolist(), 'junNames': jun_names,
         # 郡國志에 이름이 실린 縣(=게임 거점 후보). 나머지 점은 배경이다.
         'zhiPlaces': zhi_places,
         'roads': roads, 'fords': ford_list,
         # 이동 그래프. 길이 아니라 영역 인접이다 — 도로는 간선만 남겨 통행 보정에 쓴다.
-        'adjacency': {'county': adjacency(owner), 'commandery': adj_m},
+        'adjacency': {'county': adj_c, 'commandery': adj_m},
         'seatOwner': seat_label.tolist(),
         'source': 'Natural Earth 50m (public domain) + CHGIS V6 좌표(재배포 금지, ADR-LITE-039)',
     }, open(OUT, 'w'), separators=(',', ':'))
@@ -835,7 +1034,7 @@ def main():
     print(f'육지 {land_cells} 셀 · ' + ' · '.join(f'{k} {v}' for k, v in counts.items()),
           file=sys.stderr)
     kinds = Counter(r['kind'] for r in roads)
-    ac, am = adjacency(owner), adj_m
+    ac, am = adj_c, adj_m
     print(f'郡治 {len(hubs)} · 간선 {kinds["LAND"]} · 수로 {kinds["WATER"]} · '
           f'나루터 {len(ford_list)} · 인접 縣 {len(ac)}/郡 {len(am)} '
           f'(도하 {sum(1 for e in am if e["cross"] == "RIVER")}) → {OUT}', file=sys.stderr)
