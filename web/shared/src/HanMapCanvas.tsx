@@ -15,10 +15,8 @@ import {
   clampView,
   effectiveDpr,
   fitScale,
-  junSpanCells,
   maxScaleForDpr,
   pinchGesture,
-  scaleForSpan,
   screenToCell,
   viewAt,
   zoomAt,
@@ -225,7 +223,6 @@ const COMMANDERY_BORDER_LIGHT = 'rgba(225,210,163,0.76)';
 const DEFAULT_SOURCE: IsoSourceSize = { width: 700, height: 610 };
 export const TIER2_MARKER_ZOOM: Record<string, number> = { COUNTY: 2.19, MARQUISATE: 2.19 };
 export const TIER2_LABEL_ZOOM: Record<string, number> = { COUNTY: 5.5, MARQUISATE: 5.5 };
-const INITIAL_SCALE_MARGIN = 0.9;
 
 export function tierZoom(table: Record<string, number>, kind: string, fit: number): number | undefined {
   const factor = table[kind];
@@ -251,16 +248,14 @@ export function labelledRegions(regions: HanTiles['regions'], minCells = 120) {
   return regions.filter((region) => region.cells >= minCells);
 }
 
-export function initialView(width: number, height: number, grid: GridSize, tiles: HanTiles, dpr = 1): IsoView {
-  const center = tiles.juns.find((jun) => jun.name === '河南尹' || jun.name === '하남윤') ?? tiles.juns[0];
-  if (!center) return centeredView(width, height, grid);
-  const span = 3 * junSpanCells(tiles.juns);
-  const markerThreshold = Math.min(...Object.values(TIER2_MARKER_ZOOM)) * fitScale(width, height, grid);
-  const scale = Math.min(
-    scaleForSpan(width, height, span, maxScaleForDpr(dpr)),
-    INITIAL_SCALE_MARGIN * markerThreshold,
-  );
-  return clampView(viewAt(width, height, center.col, center.row, scale), width, height, grid);
+export function initialView(
+  width: number,
+  height: number,
+  grid: GridSize,
+  _tiles: HanTiles,
+  _dpr = 1,
+): IsoView {
+  return centeredView(width, height, grid);
 }
 
 export function expandOwner(rle: [number, number][], cells: number): Int16Array {

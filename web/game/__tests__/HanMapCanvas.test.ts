@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    buildIsoScene, cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
+    buildIsoScene, cellToScreen, cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
     cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
     labelZoomFor, maxScaleForDpr, seatLabel,
     TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
@@ -192,6 +192,32 @@ describe('HanMapCanvas 격자 해제', () => {
 });
 
 describe('등급 → 최소 표시 zoom 매핑', () => {
+    it.each([
+        [320, 480, 1],
+        [1000, 500, 1],
+        [1000, 500, 1.5],
+        [1000, 500, 2],
+        [1000, 500, 3],
+    ])('컨테이너 %sx%s, DPR %s에서 전체 격자를 잘리지 않게 맞춘다', (cssWidth, cssHeight, dpr) => {
+        const width = cssWidth * dpr;
+        const height = cssHeight * dpr;
+        const view = initialView(width, height, grid, hanTiles, dpr);
+        const corners = [
+            cellToScreen(0, 0, view),
+            cellToScreen(grid.cols - 1, 0, view),
+            cellToScreen(0, grid.rows - 1, view),
+            cellToScreen(grid.cols - 1, grid.rows - 1, view),
+        ];
+
+        for (const [x, y] of corners) {
+            expect(x).toBeGreaterThanOrEqual(-1e-6);
+            expect(x).toBeLessThanOrEqual(width + 1e-6);
+            expect(y).toBeGreaterThanOrEqual(-1e-6);
+            expect(y).toBeLessThanOrEqual(height + 1e-6);
+        }
+        expect(view.scale).toBeCloseTo(fitScale(width, height, grid), 9);
+    });
+
     it('마커 문턱은 fit 배수(K)를 그대로 돌려준다', () => {
         const fit = 1.0035;
         expect(tierZoom(TIER2_MARKER_ZOOM, 'COUNTY', fit)).toBeCloseTo(TIER2_MARKER_ZOOM.COUNTY * fit, 6);
