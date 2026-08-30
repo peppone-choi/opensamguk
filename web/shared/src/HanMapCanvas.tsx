@@ -191,11 +191,23 @@ const TERRAIN = [
 const NEUTRAL_COLOR = '#555555';
 const CASTLE_FILL = '#8b8172';
 const CASTLE_STROKE = '#f3dfb0';
-const CITY_MARKER_URLS = {
-  county: '/map/markers/county.png',
-  commandery: '/map/markers/commandery.png',
-  capital: '/map/markers/capital.png',
+const CITY_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
+const CITY_MARKER_URLS: Record<number, string> = Object.fromEntries(
+  CITY_LEVELS.map((level) => [level, `/city/cast_${level}.png`]),
+);
+const CITY_LEVEL_VISUAL_EXTENT: Record<number, number> = {
+  1: 42, 2: 40, 3: 44, 4: 40,
+  5: 48, 6: 52, 7: 56, 8: 60, 9: 62,
+  10: 34, 11: 27,
+};
+const CITY_LEVEL_MARKER_SPEC = {
+  pixelWidth: 64,
+  pixelHeight: 64,
+  anchorX: 32,
+  anchorY: 63,
+  pixelRatio: 2,
 } as const;
+// 구형 3-tier export 검증 계약. 새 한 지도 런타임은 CITY_LEVEL_MARKER_SPEC을 쓴다.
 export const CITY_MARKER_SPECS = {
   county: { pixelWidth: 28, pixelHeight: 32, anchorX: 14, anchorY: 30, pixelRatio: 2 },
   commandery: { pixelWidth: 36, pixelHeight: 40, anchorX: 18, anchorY: 38, pixelRatio: 2 },
@@ -395,24 +407,22 @@ function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
   ]));
 }
 
-type CityMarkerTier = keyof typeof CITY_MARKER_URLS;
-type CityMarkerImages = Partial<Record<CityMarkerTier, HTMLImageElement>>;
+type CityMarkerImages = Partial<Record<number, HTMLImageElement>>;
 
-export function cityMarkerDrawBox(tier: CityMarkerTier, x: number, y: number, dpr: number) {
-  const spec = CITY_MARKER_SPECS[tier];
+export function cityMarkerDrawBox(level: number, x: number, y: number, dpr: number) {
+  const spec = CITY_LEVEL_MARKER_SPEC;
   const scale = dpr / spec.pixelRatio;
   return {
     x: x - spec.anchorX * scale,
     y: y - spec.anchorY * scale,
     width: spec.pixelWidth * scale,
     height: spec.pixelHeight * scale,
+    visualExtent: CITY_LEVEL_VISUAL_EXTENT[level] ?? CITY_LEVEL_VISUAL_EXTENT[5],
   };
 }
 
-function markerTier(city: IsoCityOverlay): CityMarkerTier {
-  if (city.isCapital) return 'capital';
-  if (city.isCommanderySeat) return 'commandery';
-  return 'county';
+function markerLevel(city: IsoCityOverlay): number {
+  return Number.isInteger(city.level) && city.level >= 1 && city.level <= 11 ? city.level : 5;
 }
 
 function starPath(context: CanvasRenderingContext2D, x: number, y: number, radius: number) {
@@ -470,16 +480,16 @@ function drawScene(
   const hits: { city: IsoCityOverlay; x: number; y: number; radius: number }[] = [];
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
-    const radius = Math.max(7, Math.min(18, 6 + city.level * 0.9));
+    const level = markerLevel(city);
+    const radius = Math.max(7, Math.min(18, 5 + (CITY_LEVEL_VISUAL_EXTENT[level] ?? 48) * 0.2));
     hits.push({ city, x, y, radius: radius + 6 });
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
     if (owned && city.supply === false) context.globalAlpha = 0.42;
 
-    const tier = markerTier(city);
-    const marker = markerImages[tier];
+    const marker = markerImages[level];
     if (marker) {
-      const box = cityMarkerDrawBox(tier, x, y, dpr);
+      const box = cityMarkerDrawBox(level, x, y, dpr);
       context.imageSmoothingEnabled = true;
       context.drawImage(marker, box.x, box.y, box.width, box.height);
     } else {
@@ -750,11 +760,11 @@ export function HanMapCanvas({
 
   useEffect(() => {
     let alive = true;
-    const pending = Object.entries(CITY_MARKER_URLS).map(([tier, url]) => {
+    const pending = Object.entries(CITY_MARKER_URLS).map(([level, url]) => {
       const image = new Image();
       image.onload = () => {
         if (!alive) return;
-        markerImagesRef.current[tier as CityMarkerTier] = image;
+        markerImagesRef.current[Number(level)] = image;
         render();
       };
       image.src = url;

@@ -14,13 +14,22 @@ const MIN_MARKER_K = Math.min(...Object.values(TIER2_MARKER_ZOOM));
 
 describe('지도 아이콘 배율과 앵커', () => {
     it.each([1, 1.5, 2, 3])('DPR %s에서 CSS 크기와 지점 앵커를 보존한다', (dpr) => {
-        const box = cityMarkerDrawBox('county', 100, 80, dpr);
+        const box = cityMarkerDrawBox(5, 100, 80, dpr);
         const scale = dpr / 2;
 
-        expect(box.width / dpr).toBe(14);
-        expect(box.height / dpr).toBe(16);
-        expect(box.x + 14 * scale).toBe(100);
-        expect(box.y + 30 * scale).toBe(80);
+        expect(box.width / dpr).toBe(32);
+        expect(box.height / dpr).toBe(32);
+        expect(box.x + 32 * scale).toBe(100);
+        expect(box.y + 63 * scale).toBe(80);
+    });
+
+    it('군치 소는 영현보다, 영현은 장현보다 큰 실루엣을 쓴다', () => {
+        expect(cityMarkerDrawBox(5, 0, 0, 1).visualExtent).toBeGreaterThan(
+            cityMarkerDrawBox(10, 0, 0, 1).visualExtent,
+        );
+        expect(cityMarkerDrawBox(10, 0, 0, 1).visualExtent).toBeGreaterThan(
+            cityMarkerDrawBox(11, 0, 0, 1).visualExtent,
+        );
     });
 });
 
