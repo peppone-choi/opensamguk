@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
+import GeneralName from '../../../../components/game/GeneralName';
 import { api } from '../../../../lib/api';
-import { getNPCColor } from '../../../../lib/utilGame';
 import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { NpcGeneral } from '../../../../types/game';
 
@@ -107,9 +107,7 @@ export default function NpcsPage() {
   ];
   const rows = sorted.map((g) => [
     // formatName 동치: npc 타입색으로 이름 렌더.
-    <span key="name" style={{ color: getNPCColor(g.npc) ?? undefined }}>
-      {g.name}
-    </span>,
+    <GeneralName key="name" name={g.name} npcType={g.npc} />,
     g.ownerName ?? '-', // BLOCKED(owner_name 부재) → "-"
     `Lv ${g.explevel}`,
     <span key="nation" style={{ color: g.nationColor }}>

@@ -21,7 +21,7 @@ from refine_officers import load_mapping
 SCENARIO_DIRECTORY = Path(__file__).resolve().parent
 REPOSITORY_ROOT = SCENARIO_DIRECTORY.parents[1]
 REFINED_PATH = REPOSITORY_ROOT / "data/scenarios/refined/rtk14-officers.json"
-CHE_PATH = REPOSITORY_ROOT / "infra/src/main/resources/map/che.json"
+HAN_PATH = REPOSITORY_ROOT / "infra/src/main/resources/map/han.json"
 NAME_MAP_PATH = SCENARIO_DIRECTORY / "officer-name-map.tsv"
 CITY_MAP_PATH = SCENARIO_DIRECTORY / "city_map.json"
 REMAP_PATH = SCENARIO_DIRECTORY / "location-remap.yaml"
@@ -607,13 +607,13 @@ def build_pilot(
 
 def _load_inputs() -> tuple[list[dict], set[str], dict[str, str], dict[str, str], dict[int, str], dict]:
     refined = _read_json(REFINED_PATH)
-    che = _read_json(CHE_PATH)
+    che = _read_json(HAN_PATH)
     defaults = _read_json(DEFAULTS_PATH)
     if not isinstance(refined, list) or not isinstance(che, dict) or not isinstance(che.get("cities"), list) or not isinstance(defaults, dict):
         raise ValueError("pilot input files have an invalid root shape")
     che_cities = {city["name"] for city in che["cities"] if isinstance(city, dict) and isinstance(city.get("name"), str)}
     if len(che_cities) != len(che["cities"]):
-        raise ValueError("che city catalog has invalid or duplicate names")
+        raise ValueError("Han city catalog has invalid or duplicate names")
     return (
         refined,
         che_cities,

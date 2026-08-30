@@ -157,7 +157,7 @@ def _validate_root(data: dict) -> tuple[str, int, int]:
     if not isinstance(title, str) or not title.strip() or HANGUL.search(title) is None:
         raise ValueError("manifest title must be a custom Korean title")
     if (
-        data["map"] != "che"
+        data["map"] != "han-world-v2"
         or not _is_int(data["life"])
         or data["life"] != 1
         or not _is_int(data["fiction"])

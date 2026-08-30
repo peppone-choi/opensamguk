@@ -76,6 +76,8 @@ object ScenarioJson {
         val events = arr(root["events"]).map { decodeEvent(asList(it)) }
         val initialEvents = arr(root["initialEvents"]).map { decodeInitialEvent(asList(it)) }
         val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
+        val seedContract = root["seedContract"]?.let(::decodeSeedContract)
+        val imperialGeneralNames = arr(root["imperialGenerals"]).map(::strOf).toSet()
 
         val nations = arr(root["nation"]).mapIndexed { idx, raw ->
             val t = asList(raw)
@@ -103,9 +105,14 @@ object ScenarioJson {
             nationIdsByToken[nation.name] = nation.id
         }
 
-        val baseGenerals = arr(root["general"]).map { decodeGeneral(asList(it), nationIdsByToken, npcType = 2) }
-        val generalEx = arr(root["general_ex"]).map { decodeGeneral(asList(it), nationIdsByToken, npcType = 2) }
-        val generalNeutral = arr(root["general_neutral"]).map { decodeGeneral(asList(it), nationIdsByToken, npcType = 6) }
+        fun decodeRoster(key: String, defaultNpcType: Int): List<ScenarioGeneral> =
+            arr(root[key]).map {
+                val decoded = decodeGeneral(asList(it), nationIdsByToken, npcType = defaultNpcType)
+                if (decoded.name in imperialGeneralNames) decoded.copy(npcType = 7) else decoded
+            }
+        val baseGenerals = decodeRoster("general", defaultNpcType = 2)
+        val generalEx = decodeRoster("general_ex", defaultNpcType = 2)
+        val generalNeutral = decodeRoster("general_neutral", defaultNpcType = 6)
 
         // diplomacy[]: [me, you, state, remainMonths]. Empty in 1010, but decoded for completeness.
         val diplomacy = arr(root["diplomacy"]).map {
@@ -123,6 +130,7 @@ object ScenarioJson {
             startYear = startYear,
             map = map,
             const = const,
+            imperialGeneralNames = imperialGeneralNames,
             iconPath = iconPath,
             storedIcons = storedIcons,
             nations = nations,
@@ -134,6 +142,23 @@ object ScenarioJson {
             events = events,
             initialEvents = initialEvents,
             ignoreDefaultEvents = ignoreDefaultEvents,
+            seedContract = seedContract,
+        )
+    }
+
+    private fun decodeSeedContract(value: Any?): ScenarioSeedContract {
+        val contract = asMap(value)
+        val active = asMap(contract["activeGenerals"])
+        val base = intRequired(active["base"], "seedContract.activeGenerals.base")
+        val extended = intRequired(active["extended"], "seedContract.activeGenerals.extended")
+        require(base >= 0 && extended >= base) {
+            "seedContract active general counts must satisfy 0 <= base <= extended"
+        }
+        return ScenarioSeedContract(
+            activeGenerals = ActiveGeneralContract(
+                base = base,
+                extended = extended,
+            ),
         )
     }
 
@@ -310,6 +335,7 @@ data class Scenario(
     val startYear: Int,
     val map: Map<String, Any?> = emptyMap(),
     val const: Map<String, Any?> = emptyMap(),
+    val imperialGeneralNames: Set<String> = emptySet(),
     val iconPath: String = ".",
     val storedIcons: Map<String, Any?> = emptyMap(),
     val nations: List<ScenarioNation>,
@@ -321,6 +347,7 @@ data class Scenario(
     val events: List<ScenarioEvent> = emptyList(),
     val initialEvents: List<ScenarioInitialEvent> = emptyList(),
     val ignoreDefaultEvents: Boolean = false,
+    val seedContract: ScenarioSeedContract? = null,
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
         validateRtk14AddedPlacement()
@@ -344,6 +371,10 @@ data class Scenario(
         }
     }
 }
+
+data class ScenarioSeedContract(val activeGenerals: ActiveGeneralContract)
+
+data class ActiveGeneralContract(val base: Int, val extended: Int)
 
 data class ScenarioEvent(
     val target: String,

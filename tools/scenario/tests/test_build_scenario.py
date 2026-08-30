@@ -103,7 +103,7 @@ def normalized_manifest() -> dict:
         "title": "서로 맞선 세력들",
         "year_month": "190.1",
         "startYear": 190,
-        "map": "che",
+        "map": "han-world-v2",
         "life": 1,
         "fiction": 0,
         "const": {"defaultMaxGeneral": 600},
@@ -138,6 +138,7 @@ class BuildScenarioTest(unittest.TestCase):
             "life",
             "fiction",
             "map",
+            "seedContract",
             "const",
             "stored_icons",
             "nation",
@@ -146,6 +147,8 @@ class BuildScenarioTest(unittest.TestCase):
             "general_neutral",
             "diplomacy",
         ])
+        self.assertEqual(scenario["map"], {"mapName": "han-world-v2", "unitSet": "han"})
+        self.assertEqual(scenario["seedContract"], {"activeGenerals": {"base": 5, "extended": 5}})
         self.assertEqual([len(row) for row in scenario["nation"]], [9, 9])
         self.assertEqual([len(row) for row in scenario["general"]], [16, 16, 16, 16, 16])
         self.assertEqual([len(row) for row in scenario["diplomacy"]], [4, 4])
@@ -200,6 +203,25 @@ class BuildScenarioTest(unittest.TestCase):
             68,
         ])
         self.assertEqual(scenario["general_neutral"], [])
+
+    def test_seed_contract_counts_only_generals_active_at_the_scenario_start(self) -> None:
+        refined = refined_fixture()
+        refined[-2]["birth"] = 180
+
+        scenario, _ = build(
+            refined,
+            normalized_manifest(),
+            CITY_MAP,
+            REMAP,
+            NAME_MAP,
+            DEFAULTS,
+        )
+
+        self.assertEqual(5, len(scenario["general"]))
+        self.assertEqual(
+            {"activeGenerals": {"base": 4, "extended": 4}},
+            scenario["seedContract"],
+        )
 
     def test_build_requires_exactly_one_manifest_ruler_per_nation(self) -> None:
         missing_ruler = refined_fixture()
@@ -449,6 +471,16 @@ class BuildScenarioTest(unittest.TestCase):
         float_picture["general"][0][2] = 10001.0
         with self.assertRaisesRegex(ValueError, "picture"):
             validate_scenario_shape(float_picture)
+
+        float_contract = copy.deepcopy(scenario)
+        float_contract["seedContract"]["activeGenerals"]["base"] = 5.0
+        with self.assertRaisesRegex(ValueError, "base"):
+            validate_scenario_shape(float_contract)
+
+        non_list_generals = copy.deepcopy(scenario)
+        non_list_generals["general"] = None
+        with self.assertRaisesRegex(ValueError, "general"):
+            validate_scenario_shape(non_list_generals)
 
 
 if __name__ == "__main__":

@@ -29,22 +29,14 @@ import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
+import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
+import { getNPCColor } from '../../../lib/utilGame';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { TroopInfo, TroopListResponse, TroopMember } from '../../../types/game';
 
 // One open troop CommandModal spec. argType is always null (args ride extraArgs).
 type TroopModalSpec = { command: string; label: string; extraArgs?: Record<string, unknown> };
-
-// NPC name color — verbatim port of legacy utilGame/getNPCColor.ts (npc type → CSS color).
-function npcColor(npc: number): string | undefined {
-    if (npc === 6) return 'mediumaquamarine';
-    if (npc === 5) return 'darkcyan';
-    if (npc === 4) return 'deepskyblue';
-    if (npc >= 2) return 'cyan';
-    if (npc === 1) return 'skyblue';
-    return undefined;
-}
 
 // Legacy renders turnTime.slice(14, 19): the HH:mm portion of 'YYYY-MM-DD HH:mm:ss'.
 function turnHourMinute(turnTime: string): string {
@@ -72,19 +64,21 @@ function TroopMembers({
                 const color = isLeader
                     ? 'var(--gold)'
                     : sameCity
-                      ? (npcColor(member.npc) ?? 'var(--text-primary)')
+                      ? (getNPCColor(member.npc) ?? 'var(--text-primary)')
                       : 'var(--crimson)'; // troopDiffCityMemeber
                 return (
                     <span key={member.generalId}>
                         {idx !== 0 && <span style={{ color: 'var(--text-muted)' }}>, </span>}
-                        <span
+                        <GeneralName
+                            name={member.name}
+                            npcType={member.npc}
                             style={{
                                 color,
                                 fontWeight: isLeader ? 700 : 400,
                                 textDecoration: isMe ? 'underline' : undefined,
                             }}
-                        >
-                            {member.name}
+                        />
+                        <span>
                             {!isLeader && !sameCity && (
                                 <span style={{ color: 'var(--crimson)' }}> ({member.cityName})</span>
                             )}
@@ -213,8 +207,8 @@ function TroopItem({
             >
                 {/* Leader + reserved-command brief column. */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
-                    <strong style={{ fontSize: 'var(--text-sm)', color: npcColor(troop.leaderNpc) ?? 'var(--text-primary)' }}>
-                        {troop.leaderName}
+                    <strong style={{ fontSize: 'var(--text-sm)' }}>
+                        <GeneralName name={troop.leaderName} npcType={troop.leaderNpc} />
                     </strong>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                         {troop.reservedCommandBrief.map((brief, idx) => (

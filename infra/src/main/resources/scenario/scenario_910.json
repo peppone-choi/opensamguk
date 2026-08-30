@@ -2,8 +2,11 @@
   "title": "【공백지】 거울세계",
   "startYear": 180,
   "map": {
-    "mapName": "cr",
-    "unitSet": "cr"
+    "mapName": "han-world-v2",
+    "unitSet": "han"
+  },
+  "seedContract": {
+    "activeGenerals": {"base": 0, "extended": 0}
   },
   "history": [
     "<C>●</>180년 1월:<L><b>【이벤트】</b></>비슷하지만 조금 다른 곳입니다."

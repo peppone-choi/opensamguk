@@ -239,8 +239,8 @@ def main() -> int:
         summary = required_dict(document, "summary")
         if summary.get("legacyNodeCount") != 780 or summary.get("replacementPoolCount") != 1180:
             raise CandidateContractError("real candidate build must contain 780 current and 1,180 replacement rows")
-        if len(required_list(document, "scenarioCatalog")) != 15:
-            raise CandidateContractError("real candidate build must contain exactly 15 active Han scenarios")
+        if len(required_list(document, "scenarioCatalog")) != 31:
+            raise CandidateContractError("real candidate build must contain exactly 31 active Han scenarios")
         blob = serialized(document)
         if args.check:
             if args.output is None:

@@ -2,7 +2,11 @@
   "title": "【공백지】 소형β",
   "startYear": 180,
   "map": {
-    "mapName": "miniche_b"
+    "mapName": "han-world-v2",
+    "unitSet": "han"
+  },
+  "seedContract": {
+    "activeGenerals": {"base": 0, "extended": 0}
   },
   "history": [],
   "const": {

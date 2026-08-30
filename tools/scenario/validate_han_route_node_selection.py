@@ -99,11 +99,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
 PINNED_ROUTE_KEY_REGISTRY_SHA256 = "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
 PINNED_SOURCE_WITNESS_SHA256 = "7fe27b667b4066200882f9e1815e07a6adb24d826f09e0605145041897f76ee4"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "cea333c5d46e145a45bcd1a3ccfbfbdef62aacb0125e597262f0d40ffa508f9a"
-PINNED_REVIEW_POLICY_SHA256 = "9f7504478d49ca893bb6f4c712c8995230c8e3e3b243c879827bc13026307d60"
-PINNED_VALIDATION_CONTRACT_SHA256 = "83c11fc237a6f03f8699a97f56326a9a6dc65990c6460482b024e7a0ee3bef66"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "9ff55b6669495f44f6286dac28661fa9b74020b8aebdf911114c12251e54e872"
+PINNED_REVIEW_POLICY_SHA256 = "e905b44527e77bb7dd82106b1512442526b9eb3e32d2fe7e86add52d455b00cf"
+PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
 PINNED_LEGACY_HAN_MAP_SHA256 = "10126205c31c61230eef5351548fd2b5cbf33b35873c80280be2118381fb2b1d"
-PINNED_LEGACY_TILE_MAP_SHA256 = "51cc6d68a429f2caeb066905a4add47517b23cee2b01b517d358bca550819e18"
+PINNED_LEGACY_TILE_MAP_SHA256 = "d04b2aa95cb613f7d08a99b9794cbfafead34590f5f811b6eae5aa57b63a7671"
 PINNED_REPLACEMENT_DECISION_SHA256 = "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8"
 PINNED_CONFLICT_DECISION_SHA256 = "ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7"
 EXPECTED_REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
@@ -972,14 +972,14 @@ def _scenario_catalog(
     selection: dict, candidate: dict, scenarios: tuple[ScenarioResource, ...]
 ) -> dict[str, ScenarioResource]:
     if len(scenarios) != EXPECTED_SCENARIOS:
-        _fail("actual han scenario catalog must contain exactly 15 active resources")
+        _fail(f"actual han scenario catalog must contain exactly {EXPECTED_SCENARIOS} active resources")
     actual = {row.scenario_id: row for row in scenarios}
     if len(actual) != EXPECTED_SCENARIOS or len({row.resource_name for row in scenarios}) != EXPECTED_SCENARIOS:
         _fail("actual han scenario identifiers/resources must be unique")
     catalog = _mapping(selection.get("scenarioCatalog"), "scenarioCatalog")
     declared_rows = [_mapping(value, "scenario catalog row") for value in _rows(catalog, "resources")]
     if catalog.get("resourceCount") != EXPECTED_SCENARIOS or len(declared_rows) != EXPECTED_SCENARIOS:
-        _fail("selection scenario catalog must contain exactly 15 active resources")
+        _fail(f"selection scenario catalog must contain exactly {EXPECTED_SCENARIOS} active resources")
     declared = {
         _text(row, "scenarioId"): (
             _text(row, "resourceName"),
@@ -1004,7 +1004,7 @@ def _scenario_catalog(
             or len(set(candidate_codes)) != EXPECTED_SCENARIOS
             or len(set(candidate_paths)) != EXPECTED_SCENARIOS
         ):
-            _fail("candidate scenario catalog must contain 15 unique codes and resource paths")
+            _fail(f"candidate scenario catalog must contain {EXPECTED_SCENARIOS} unique codes and resource paths")
         candidate_declared = {
             _text(row, "code"): (
                 _text(row, "resourcePath"),

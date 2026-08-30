@@ -100,7 +100,7 @@ def scenario_resources() -> tuple[MODULE.ScenarioResource, ...]:
             start_year=180 + (index % 46),
             sha256=f"{index + 1:064x}",
         )
-        for index in range(15)
+        for index in range(31)
     )
 
 
@@ -305,7 +305,7 @@ def valid_documents() -> MODULE.ValidationDocuments:
             "forbiddenSelections": forbidden_selections(),
         },
         "scenarioCatalog": {
-            "resourceCount": 15,
+            "resourceCount": 31,
             "resources": [
                 {
                     "scenarioId": resource.scenario_id,
@@ -422,7 +422,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         report = MODULE.validate_documents(self.documents)
 
         self.assertEqual(COUNT, report.approved_count)
-        self.assertEqual(15, report.scenario_count)
+        self.assertEqual(31, report.scenario_count)
         self.assertEqual(HASHES["selection"], report.selection_sha256)
         self.assertEqual(HASHES["migration"], report.migration_sha256)
 
@@ -994,7 +994,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         self.documents.candidate["scenarioCatalog"].append(
             dict(self.documents.candidate["scenarioCatalog"][0])
         )
-        self.assert_invalid("15 unique codes and resource paths")
+        self.assert_invalid("31 unique codes and resource paths")
 
     def test_candidate_scenario_catalog_is_required(self) -> None:
         self.documents.candidate.pop("scenarioCatalog")
@@ -1797,7 +1797,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         self.assertIn("synthetic/internal-consistency only", result.stdout)
         self.assertNotIn("approved", result.stdout)
         self.assertIn("consistentNodes=780", result.stdout)
-        self.assertIn("scenarios=15", result.stdout)
+        self.assertIn("scenarios=31", result.stdout)
 
     def test_cli_connections_input_is_hash_pinned_and_validated(self) -> None:
         with tempfile.TemporaryDirectory() as raw_directory:
@@ -1860,7 +1860,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
 
     def test_validation_contract_is_independently_hash_pinned(self) -> None:
         self.assertEqual(
-            "83c11fc237a6f03f8699a97f56326a9a6dc65990c6460482b024e7a0ee3bef66",
+            "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973",
             hashlib.sha256(MODULE.VALIDATION_CONTRACT_PATH.read_bytes()).hexdigest(),
         )
 

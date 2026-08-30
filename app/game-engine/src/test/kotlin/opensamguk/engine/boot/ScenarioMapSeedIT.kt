@@ -79,25 +79,25 @@ class ScenarioMapSeedIT {
     }
 
     @Test
-    fun `scenario_2 seed uses miniche_b city catalog`() {
+    fun `scenario_2 seed uses Han world city catalog`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
         val bootstrap = SeedBootstrap(scenarioCode = "scenario_2", worldId = opensamguk.common.world.WorldId(1))
 
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_2 world is seeded")
-        assertEquals(78, count("city"))
+        assertEquals(774, count("city"))
         assertEquals(0, count("nation"))
         assertEquals(0, count("general"))
 
         val city = jdbc.queryForMap("SELECT name, level, pop_max, agri_max, comm_max FROM city WHERE id = 1")
-        assertEquals("낙양", city["name"].toString())
-        assertEquals(8, (city["level"] as Number).toInt())
-        assertEquals(668600, (city["pop_max"] as Number).toInt())
-        assertEquals(7800, (city["agri_max"] as Number).toInt())
-        assertEquals(8000, (city["comm_max"] as Number).toInt())
+        assertEquals("장안", city["name"].toString())
+        assertEquals(9, (city["level"] as Number).toInt())
+        assertEquals(754800, (city["pop_max"] as Number).toInt())
+        assertEquals(14000, (city["agri_max"] as Number).toInt())
+        assertEquals(14800, (city["comm_max"] as Number).toInt())
 
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"mapName\":\"miniche_b\"") || config.contains("\"mapName\": \"miniche_b\""), config)
+        assertTrue(config.contains("\"mapName\":\"han-world-v2\"") || config.contains("\"mapName\": \"han-world-v2\""), config)
     }
 
     @Test
@@ -625,7 +625,7 @@ class ScenarioMapSeedIT {
         val merged = LinkedHashMap<String, Any?>()
         merged.putAll(scenario.map)
         merged.putAll(scenario.const)
-        return merged["mapName"] as? String ?: "che"
+        return merged["mapName"] as? String ?: "han-world-v2"
     }
 
     private fun nationChiefLevel(scale: Int): Int = when (scale) {

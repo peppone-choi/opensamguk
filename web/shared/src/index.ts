@@ -7,7 +7,10 @@ export { Table, type TableProps } from './Table';
 export {
   CITY_MARKER_SPECS,
   HanMapCanvas,
+  cityFallbackHitBox,
   cityMarkerDrawBox,
+  cityMarkerHitBox,
+  cityMarkerRadius,
   buildIsoScene,
   expandOwner,
   initialView,

@@ -15,17 +15,8 @@
 
 import Gauge from './Gauge';
 import SammoBar from './SammoBar';
+import GeneralName from './GeneralName';
 import type { FrontCityInfo } from '@/lib/types';
-
-// NPC 이름 색상 — 레거시 hwe/ts/utilGame/getNPCColor.ts verbatim 포팅(npc_state → CSS color).
-function getNPCColor(npc: number): string | undefined {
-    if (npc === 6) return 'mediumaquamarine';
-    if (npc === 5) return 'darkcyan';
-    if (npc === 4) return 'deepskyblue';
-    if (npc >= 2) return 'cyan';
-    if (npc === 1) return 'skyblue';
-    return undefined;
-}
 
 function isBrightColor(hex?: string): boolean {
     if (!hex) return false;
@@ -97,8 +88,8 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
                         <div key={label} className="mcd-metric gauge-metric">
                             <div className="mcd-metric-head">{label}</div>
                             <div className="mcd-metric-body">
-                                <div className="mcd-metric-text" style={{ color: off ? getNPCColor(off.npc) : undefined }}>
-                                    {off?.name ?? '-'}
+                                <div className="mcd-metric-text">
+                                    {off ? <GeneralName name={off.name} npcType={off.npc} /> : '-'}
                                 </div>
                             </div>
                         </div>

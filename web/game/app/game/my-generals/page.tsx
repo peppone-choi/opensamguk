@@ -15,9 +15,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameTable from '../../../components/GameTable';
+import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
-import { formatRefreshScore, getNPCColor } from '../../../lib/utilGame';
+import { formatRefreshScore } from '../../../lib/utilGame';
 import { portraitUrl, onPortraitError } from '../../../lib/portrait';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { MyGeneralSummary, MyGeneralsResponse } from '../../../types/game';
@@ -152,7 +153,7 @@ export default function MyGeneralsPage() {
                 style={{ objectFit: 'contain', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
                 draggable={false}
             />,
-            <span key={`nm-${g.generalId}`} style={{ color: getNPCColor(g.npcState) ?? undefined }}>{g.name}</span>,
+            <GeneralName key={`nm-${g.generalId}`} name={g.name} npcType={g.npcState} />,
             g.officerLevelText,                 // 관직
             g.dedLevelText,                     // 계급
             g.honorText,                        // 명성

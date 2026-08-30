@@ -47,6 +47,7 @@ export interface ProvinceOwnershipBinding {
 export interface CountyAdministrativeIndex {
   commanderyByProvince: Int16Array;
   commanderyByName: ReadonlyMap<string, number>;
+  administrativeSystemByProvince: readonly string[];
 }
 
 export interface ProvinceRecordDto {
@@ -66,6 +67,7 @@ export interface ParentRegionRecordDto {
   displayName: string;
   nameCh: string;
   administrativeSystem: string;
+  aliases?: readonly string[];
 }
 
 const SYSTEM_LABELS: Readonly<Record<string, string>> = {
@@ -75,6 +77,21 @@ const SYSTEM_LABELS: Readonly<Record<string, string>> = {
   USAN: '우산국', WA: '왜', WUHUAN: '오환', XIANBEI: '선비',
   XIONGNU: '남흉노', YE: '예', YILOU: '읍루', YIZHOU: '이주',
 };
+
+const ADMINISTRATIVE_SYSTEM_RGB: Readonly<Record<string, [number, number, number]>> = {
+  HAN_COMMANDERY: [126, 119, 102],
+  AILAO: [123, 104, 80], BAEKJE: [110, 104, 143], BUYEO: [92, 125, 117],
+  BYEONHAN: [139, 109, 91], DI: [139, 112, 79], GOGURYEO: [88, 116, 128],
+  JINHAN: [136, 102, 112], JUHO: [108, 123, 91], MAHAN: [128, 104, 132],
+  OKJEO: [89, 126, 126], QIANG: [137, 117, 78], SHANYUE: [94, 125, 89],
+  TSUSHIMA: [111, 106, 139], USAN: [91, 121, 139], WA: [132, 99, 119],
+  WUHUAN: [122, 111, 82], XIANBEI: [109, 122, 85], XIONGNU: [128, 102, 79],
+  YE: [91, 124, 109], YILOU: [101, 119, 98], YIZHOU: [125, 106, 82],
+};
+
+function administrativeColor(system: string | undefined): [number, number, number] {
+  return ADMINISTRATIVE_SYSTEM_RGB[system ?? ''] ?? ADMINISTRATIVE_SYSTEM_RGB.HAN_COMMANDERY;
+}
 
 export function formatProvinceTooltip(
   province: ProvinceRecordDto,
@@ -381,6 +398,7 @@ export function buildCountyAdministrativeIndex(
   return {
     commanderyByProvince,
     commanderyByName: new Map(commanderies.map((commandery, index) => [commandery.name, index])),
+    administrativeSystemByProvince: Array.from({ length: counties.length }, () => 'HAN_COMMANDERY'),
   };
 }
 
@@ -391,10 +409,12 @@ export function buildProvinceAdministrativeIndex(
 ): CountyAdministrativeIndex {
   const parentById = new Map(parentRegions.map((parent, index) => [parent.id, index]));
   const commanderyByProvince = new Int16Array(provinces.length);
+  const administrativeSystemByProvince = new Array<string>(provinces.length);
   commanderyByProvince.fill(-1);
   provinces.forEach((province, index) => {
     const parent = parentById.get(province.parentRegionId);
     if (parent != null) commanderyByProvince[index] = parent;
+    administrativeSystemByProvince[index] = province.administrativeSystem;
   });
   // The identity PNG remains authoritative.  A DTO hierarchy mismatch must not
   // silently redirect hover/ownership to a different parent.
@@ -405,9 +425,15 @@ export function buildProvinceAdministrativeIndex(
       throw new Error(`Province parent hierarchy mismatch at pixel ${cell}`);
     }
   }
+  const commanderyByName = new Map<string, number>();
+  parentRegions.forEach((parent, index) => {
+    commanderyByName.set(parent.displayName, index);
+    parent.aliases?.forEach((alias) => commanderyByName.set(alias, index));
+  });
   return {
     commanderyByProvince,
-    commanderyByName: new Map(parentRegions.map((parent, index) => [parent.displayName, index])),
+    commanderyByName,
+    administrativeSystemByProvince,
   };
 }
 
@@ -427,7 +453,7 @@ function nearestSample(samples: readonly CitySample[], centerCol: number, center
   return selected;
 }
 
-/** Assign political color only to provinces that directly contain an owned runtime city. */
+/** Assign every land province a political or explicit neutral color without transparent holes. */
 export function bindCompleteProvinceOwnership(
   map: ProvinceIdentityMap,
   cities: readonly IsoCityOverlay[],
@@ -447,6 +473,7 @@ export function bindCompleteProvinceOwnership(
   }
 
   const directByProvince = new Map<number, CitySample[]>();
+  const samplesByCommandery = new Map<number, CitySample[]>();
   for (const city of cities) {
     const mapped = mapCityToTile(city, grid, source);
     const col = Math.round(mapped.col);
@@ -465,6 +492,11 @@ export function bindCompleteProvinceOwnership(
       direct.push(sample);
       directByProvince.set(province, direct);
     }
+    if (commandery >= 0) {
+      const sameCommandery = samplesByCommandery.get(commandery) ?? [];
+      sameCommandery.push(sample);
+      samplesByCommandery.set(commandery, sameCommandery);
+    }
   }
 
   const colors = new Map<number, ProvinceColor>();
@@ -476,11 +508,25 @@ export function bindCompleteProvinceOwnership(
     const direct = directByProvince.get(province) ?? [];
     const commandery = countyIndex.commanderyByProvince[province];
     const matchingDirect = direct.filter((sample) => sample.commandery === commandery);
-    const selected = nearestSample(matchingDirect, centerCol, centerRow);
-    if (selected && isOwnedNationVisual(selected.city.nationId, selected.city.nationColor)) {
+    const ownedDirect = matchingDirect.filter((sample) => (
+      isOwnedNationVisual(sample.city.nationId, sample.city.nationColor)
+    ));
+    const ownedCommandery = (samplesByCommandery.get(commandery) ?? []).filter((sample) => (
+      isOwnedNationVisual(sample.city.nationId, sample.city.nationColor)
+    ));
+    // A county with a direct runtime city keeps that county's exact ownership. Only geometry
+    // without a direct city may inherit from another owned county in the same commandery.
+    const pool = matchingDirect.length > 0 ? ownedDirect : ownedCommandery;
+    const selected = nearestSample(pool, centerCol, centerRow);
+    if (selected) {
       assignedCities.set(province, selected.city);
-      if (matchingDirect.length > 0) directProvinces.add(province);
-      colors.set(province, { nationId: selected.city.nationId, rgb: parseNationColor(selected.city.nationColor) });
+      if (ownedDirect.length > 0) directProvinces.add(province);
+      colors.set(province, { nationId: selected.city.nationId, rgb: parseNationColor(selected.city.nationColor!) });
+    } else {
+      colors.set(province, {
+        nationId: 0,
+        rgb: administrativeColor(countyIndex.administrativeSystemByProvince[province]),
+      });
     }
   }
 

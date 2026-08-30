@@ -41,11 +41,42 @@ SCEN = ROOT / "infra/src/main/resources/scenario"
 HAN_MAP = ROOT / "infra/src/main/resources/map/han.json"
 CHE_TO_JUN = ROOT / "tools/scenario/che_to_jun.json"
 OWNERSHIP = ROOT / "tools/scenario/han_ownership.json"
+PALETTE = ROOT / "tools/scenario/nation_symbol_colors.json"
 
 LOC_SLOT = 4          # general 튜플의 주둔 城 이름 자리
 NATION_SCALE = 7      # nation 튜플의 scale — 임포터가 nation.level 로 넣는다. 0 = 방랑군
 NATION_CITIES = 8     # nation 튜플의 보유 城 목록 자리
 GENERAL_KEYS = ("general", "general_ex", "general_neutral")
+
+# Independently audited against ScenarioImporter lifecycle rules (adult age 14,
+# death exclusive for legacy tuples, explicit appearance year inclusive).  These
+# are literals on purpose: deriving the expected count from the same import path
+# would let a truncation bug rewrite its own expectation.
+ACTIVE_GENERAL_CONTRACTS = {
+    "scenario_1010": (175, 230),
+    "scenario_1020": (231, 299),
+    "scenario_1021": (339, 339),
+    "scenario_1030": (250, 327),
+    "scenario_1031": (365, 365),
+    "scenario_1040": (250, 327),
+    "scenario_1041": (363, 363),
+    "scenario_1050": (248, 320),
+    "scenario_1060": (238, 305),
+    "scenario_1070": (252, 317),
+    "scenario_1080": (237, 302),
+    "scenario_1090": (230, 289),
+    "scenario_1100": (206, 260),
+    "scenario_1110": (196, 249),
+    "scenario_1120": (240, 309),
+}
+
+
+def validate_active_general_contracts(codes: list[str]) -> None:
+    missing_contracts = sorted(set(codes) - set(ACTIVE_GENERAL_CONTRACTS))
+    if missing_contracts:
+        raise ValueError(
+            "active-general seed contracts are missing: " + ", ".join(missing_contracts)
+        )
 
 # che 城 이름이 郡治가 아니라 특정 縣을 가리키는 경우. `che_to_jun.json` 은 郡까지만
 # 대응시켜서, 그대로 두면 그 郡의 治所로 밀려난다. 사료가 縣을 못 박는 것만 여기 적는다.
@@ -90,8 +121,52 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
     # 맵과 병종 세트는 한 몸이다 — han 맵의 城 게이트 키(州·郡·부족 漢字)를 읽는 건
     # han 병종표뿐이라, 맵만 바꾸고 병종을 che 로 두면 지역 병종이 통째로 죽는다.
     doc["map"] = {"mapName": "han-world-v2", "unitSet": "han"}
+    doc["placementBasis"] = (own.get(code) or {}).get("placementBasis", "HISTORICAL")
+    if code not in ACTIVE_GENERAL_CONTRACTS:
+        raise ValueError(f"{code}: active-general seed contract is missing")
+    base_generals, extended_generals = ACTIVE_GENERAL_CONTRACTS[code]
+    doc["seedContract"] = {
+        "activeGenerals": {"base": base_generals, "extended": extended_generals},
+    }
 
-    table = (own.get(code) or {}).get("nations") or {}
+    scenario_ownership = own.get(code) or {}
+    table = scenario_ownership.get("nations") or {}
+    nation_renames = scenario_ownership.get("nationRenames") or {}
+    general_renames = scenario_ownership.get("generalRenames") or {}
+    doc["imperialGenerals"] = list(scenario_ownership.get("imperialGenerals") or [])
+    for key in GENERAL_KEYS:
+        for general in doc.get(key) or []:
+            if len(general) > 1 and general[1] in general_renames:
+                general[1] = general_renames[general[1]]
+    existing_general_names = {
+        general[1]
+        for key in GENERAL_KEYS
+        for general in (doc.get(key) or [])
+        if len(general) > 1
+    }
+    for general in scenario_ownership.get("generalAdditions") or []:
+        if len(general) <= 1:
+            continue
+        if general[1] in existing_general_names:
+            warn.append(f"{code}: 장수 추가 '{general[1]}' 이 이미 로스터에 있어 건너뛴다")
+            continue
+        doc.setdefault("general", []).append(general)
+        existing_general_names.add(general[1])
+    general_overrides = scenario_ownership.get("generalOverrides") or {}
+    override_slots = {"officerLevel": 8}
+    for key in GENERAL_KEYS:
+        for general in doc.get(key) or []:
+            overrides = general_overrides.get(general[1]) if len(general) > 1 else None
+            for field, value in (overrides or {}).items():
+                if field not in override_slots:
+                    raise ValueError(f"{code}/{general[1]}: unsupported general override '{field}'")
+                general[override_slots[field]] = value
+    palette = json.loads(PALETTE.read_text(encoding="utf-8"))["colors"]
+    for row in doc.get("nation") or []:
+        if row and row[0] in nation_renames:
+            row[0] = nation_renames[row[0]]
+        if row and row[0] in palette:
+            row[1] = palette[row[0]]["hex"]
     taken: dict[int, str] = {}                   # 城 id → 세력. 중복 소유 차단.
     owner_of: dict[int, str] = {}
 
@@ -178,7 +253,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
 
-    for path in (HAN_MAP, CHE_TO_JUN, OWNERSHIP):
+    for path in (HAN_MAP, CHE_TO_JUN, OWNERSHIP, PALETTE):
         if not path.exists():
             print(f"없는 입력: {path.relative_to(ROOT)}", file=sys.stderr)
             return 2
@@ -189,6 +264,7 @@ def main() -> int:
     own = json.loads(OWNERSHIP.read_text(encoding="utf-8"))
 
     codes = [c for c in own if c.startswith("scenario_")]
+    validate_active_general_contracts(codes)
     drift, warns = [], []
     for code in sorted(codes):
         path = SCEN / f"{code}.json"

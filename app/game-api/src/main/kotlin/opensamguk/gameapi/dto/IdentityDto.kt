@@ -605,7 +605,7 @@ data class MyCitySummary(
     val cityId: Int,
     val name: String,
     val level: Int,
-    /** 치소 등급 한글명 = CityConst.levelMap[level] (수/진/관/이/소/중/대/특). 헤더 【지역 | 등급】. */
+    /** 치소 등급 한글명 = CityConst.levelMap[level] (수/진/관/이/소/중/대/특/경/영현/장현). */
     val levelText: String = "",
     val region: Int,
     /** 지역 한글명 = CityConst.regionMap[region] (하북/중원/…/동이). 헤더 【지역 | 등급】. */

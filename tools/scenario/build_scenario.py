@@ -29,6 +29,7 @@ ROOT_KEYS = (
     "life",
     "fiction",
     "map",
+    "seedContract",
     "const",
     "stored_icons",
     "nation",
@@ -57,6 +58,7 @@ HANGUL = re.compile(r"[가-힣]")
 KOREAN_TEXT = re.compile(r"[가-힣0-9 .,'()\-:·ㆍ]+\Z")
 OFFICER_ID_MIN = 10001
 OFFICER_ID_MAX = 11000
+ADULT_AGE = 14
 
 
 def _is_int(value: object) -> bool:
@@ -85,6 +87,20 @@ def _required_text(value: object, label: str, *, korean: bool = False) -> str:
     if korean and (HANGUL.search(text) is None or KOREAN_TEXT.fullmatch(text) is None):
         raise ValueError(f"{label} must be a Korean name or city, not a source label")
     return text
+
+
+def _active_general_count(rows: object, start_year: int) -> int:
+    if not isinstance(rows, list):
+        raise ValueError("scenario general must be a list")
+    active = 0
+    for index, row in enumerate(rows):
+        if not isinstance(row, list) or len(row) < 11:
+            raise ValueError(f"scenario general {index} lifecycle tuple is invalid")
+        birth = _required_int(row[9], f"scenario general {index} birth")
+        death = _required_int(row[10], f"scenario general {index} death")
+        if death > start_year and birth + ADULT_AGE <= start_year:
+            active += 1
+    return active
 
 
 def _string_mapping(value: object, label: str) -> dict[str, str]:
@@ -230,7 +246,7 @@ def _normalize_manifest(manifest: object, defaults: object) -> tuple[dict, list[
     start_year = _required_int(manifest["startYear"], "manifest startYear")
     life = _required_int(manifest["life"], "manifest life")
     fiction = _required_int(manifest["fiction"], "manifest fiction")
-    if start_year <= 0 or manifest["map"] != "che" or life != 1 or fiction != 0:
+    if start_year <= 0 or manifest["map"] != "han-world-v2" or life != 1 or fiction != 0:
         raise ValueError("manifest fixed scenario settings are invalid")
     const = manifest["const"]
     if not isinstance(const, dict) or set(const) != {"defaultMaxGeneral"}:
@@ -400,19 +416,27 @@ def build(
         }))
 
     general_rows.sort(key=lambda row: row[0])
+    general_tuples = [tuple_row for _, tuple_row, _ in general_rows]
+    active_general_count = _active_general_count(general_tuples, header["startYear"])
     scenario = {
         "title": header["title"],
         "startYear": header["startYear"],
         "life": 1,
         "fiction": 0,
-        "map": {"mapName": "che"},
+        "map": {"mapName": "han-world-v2", "unitSet": "han"},
+        "seedContract": {
+            "activeGenerals": {
+                "base": active_general_count,
+                "extended": active_general_count,
+            },
+        },
         "const": {"defaultMaxGeneral": 600},
         "stored_icons": {".": {
             str(officer_id): f"{officer_id}.png"
             for officer_id, _, _ in general_rows
         }},
         "nation": nation_tuples,
-        "general": [tuple_row for _, tuple_row, _ in general_rows],
+        "general": general_tuples,
         "general_ex": [],
         "general_neutral": [],
         "diplomacy": diplomacy,
@@ -440,14 +464,34 @@ def validate_scenario_shape(scenario: dict) -> None:
     _required_int(scenario["startYear"], "scenario startYear")
     if _required_int(scenario["life"], "scenario life") != 1 or _required_int(scenario["fiction"], "scenario fiction") != 0:
         raise ValueError("scenario life or fiction is invalid")
-    if not isinstance(scenario["map"], dict) or tuple(scenario["map"]) != ("mapName",) or scenario["map"]["mapName"] != "che":
+    if (
+        not isinstance(scenario["map"], dict)
+        or tuple(scenario["map"]) != ("mapName", "unitSet")
+        or scenario["map"] != {"mapName": "han-world-v2", "unitSet": "han"}
+    ):
         raise ValueError("scenario map is invalid")
+    if not isinstance(scenario["nation"], list) or not isinstance(scenario["general"], list):
+        raise ValueError("scenario nation and general must be lists")
+    seed_contract = scenario["seedContract"]
+    if (
+        not isinstance(seed_contract, dict)
+        or tuple(seed_contract) != ("activeGenerals",)
+        or not isinstance(seed_contract["activeGenerals"], dict)
+        or tuple(seed_contract["activeGenerals"]) != ("base", "extended")
+    ):
+        raise ValueError("scenario active general seed contract is invalid")
+    contract_base = _required_int(
+        seed_contract["activeGenerals"]["base"],
+        "scenario active general seed contract base",
+    )
+    contract_extended = _required_int(
+        seed_contract["activeGenerals"]["extended"],
+        "scenario active general seed contract extended",
+    )
     if not isinstance(scenario["const"], dict) or tuple(scenario["const"]) != ("defaultMaxGeneral",):
         raise ValueError("scenario const is invalid")
     if _required_int(scenario["const"]["defaultMaxGeneral"], "scenario defaultMaxGeneral") != 600:
         raise ValueError("scenario map or const is invalid")
-    if not isinstance(scenario["nation"], list) or not isinstance(scenario["general"], list):
-        raise ValueError("scenario nation and general must be lists")
     if scenario["general_ex"] != [] or scenario["general_neutral"] != [] or not isinstance(scenario["diplomacy"], list):
         raise ValueError("scenario general roster sections are invalid")
 
@@ -498,6 +542,9 @@ def validate_scenario_shape(scenario: dict) -> None:
     if picture_ids != sorted(picture_ids) or len(picture_ids) != len(set(picture_ids)):
         raise ValueError("scenario general rows must have stable, ascending picture ids")
     expected_icon_keys = [str(picture_id) for picture_id in picture_ids]
+    active_general_count = _active_general_count(scenario["general"], scenario["startYear"])
+    if contract_base != active_general_count or contract_extended != active_general_count:
+        raise ValueError("scenario active general seed contract is invalid")
     if list(icon_map) != expected_icon_keys or any(icon_map[key] != f"{key}.png" for key in expected_icon_keys):
         raise ValueError("scenario stored_icons must map each stable id to its serving copy")
     diplomacy_rows: dict[tuple[int, int], tuple[int, int]] = {}

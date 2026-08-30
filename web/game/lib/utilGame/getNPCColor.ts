@@ -1,7 +1,10 @@
 // legacy hwe/ts/utilGame/getNPCColor.ts 충실 포팅 — NPC 타입별 표시 색.
 export function getNPCColor(
   npcType: number,
-): 'skyblue' | 'cyan' | 'deepskyblue' | 'darkcyan' | 'mediumaquamarine' | undefined {
+): 'skyblue' | 'cyan' | 'deepskyblue' | 'darkcyan' | 'mediumaquamarine' | 'gold' | undefined {
+  if (npcType == 7) {
+    return 'gold';
+  }
   if (npcType == 6) {
     return 'mediumaquamarine';
   }

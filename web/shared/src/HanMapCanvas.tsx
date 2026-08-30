@@ -191,11 +191,23 @@ const TERRAIN = [
 const NEUTRAL_COLOR = '#555555';
 const CASTLE_FILL = '#8b8172';
 const CASTLE_STROKE = '#f3dfb0';
-const CITY_MARKER_URLS = {
-  county: '/map/markers/county.png',
-  commandery: '/map/markers/commandery.png',
-  capital: '/map/markers/capital.png',
+const CITY_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
+const CITY_MARKER_URLS: Record<number, string> = Object.fromEntries(
+  CITY_LEVELS.map((level) => [level, `/city/cast_${level}.png`]),
+);
+const CITY_LEVEL_VISUAL_EXTENT: Record<number, number> = {
+  1: 42, 2: 40, 3: 44, 4: 40,
+  5: 48, 6: 52, 7: 56, 8: 60, 9: 62,
+  10: 34, 11: 27,
+};
+const CITY_LEVEL_MARKER_SPEC = {
+  pixelWidth: 64,
+  pixelHeight: 64,
+  anchorX: 32,
+  anchorY: 63,
+  pixelRatio: 2,
 } as const;
+// 구형 3-tier export 검증 계약. 새 한 지도 런타임은 CITY_LEVEL_MARKER_SPEC을 쓴다.
 export const CITY_MARKER_SPECS = {
   county: { pixelWidth: 28, pixelHeight: 32, anchorX: 14, anchorY: 30, pixelRatio: 2 },
   commandery: { pixelWidth: 36, pixelHeight: 40, anchorX: 18, anchorY: 38, pixelRatio: 2 },
@@ -395,24 +407,47 @@ function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
   ]));
 }
 
-type CityMarkerTier = keyof typeof CITY_MARKER_URLS;
-type CityMarkerImages = Partial<Record<CityMarkerTier, HTMLImageElement>>;
+type CityMarkerImages = Partial<Record<number, HTMLImageElement>>;
 
-export function cityMarkerDrawBox(tier: CityMarkerTier, x: number, y: number, dpr: number) {
-  const spec = CITY_MARKER_SPECS[tier];
+export function cityMarkerDrawBox(level: number, x: number, y: number, dpr: number) {
+  const spec = CITY_LEVEL_MARKER_SPEC;
   const scale = dpr / spec.pixelRatio;
   return {
     x: x - spec.anchorX * scale,
     y: y - spec.anchorY * scale,
     width: spec.pixelWidth * scale,
     height: spec.pixelHeight * scale,
+    visualExtent: CITY_LEVEL_VISUAL_EXTENT[level] ?? CITY_LEVEL_VISUAL_EXTENT[5],
   };
 }
 
-function markerTier(city: IsoCityOverlay): CityMarkerTier {
-  if (city.isCapital) return 'capital';
-  if (city.isCommanderySeat) return 'commandery';
-  return 'county';
+export function cityMarkerHitBox(level: number, x: number, y: number, dpr: number) {
+  const box = cityMarkerDrawBox(level, x, y, dpr);
+  const padding = 6 * dpr;
+  return {
+    left: box.x - padding,
+    top: box.y - padding,
+    right: box.x + box.width + padding,
+    bottom: box.y + box.height + padding,
+  };
+}
+
+export function cityMarkerRadius(level: number, dpr: number): number {
+  const cssRadius = Math.max(7, Math.min(18, 5 + (CITY_LEVEL_VISUAL_EXTENT[level] ?? 48) * 0.2));
+  return cssRadius * dpr;
+}
+
+export function cityFallbackHitBox(x: number, y: number, radius: number) {
+  return {
+    left: x - radius * 0.7,
+    top: y - radius * 0.9,
+    right: x + radius * 0.7,
+    bottom: y + radius * 0.45,
+  };
+}
+
+function markerLevel(city: IsoCityOverlay): number {
+  return Number.isInteger(city.level) && city.level >= 1 && city.level <= 11 ? city.level : 5;
 }
 
 function starPath(context: CanvasRenderingContext2D, x: number, y: number, radius: number) {
@@ -438,7 +473,7 @@ function drawScene(
   hideCityNames: boolean,
   dpr: number,
   markerImages: CityMarkerImages,
-): { city: IsoCityOverlay; x: number; y: number; radius: number }[] {
+): { city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
   const width = canvas.width;
@@ -467,19 +502,22 @@ function drawScene(
   }
   context.restore();
 
-  const hits: { city: IsoCityOverlay; x: number; y: number; radius: number }[] = [];
+  const hits: { city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[] = [];
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
-    const radius = Math.max(7, Math.min(18, 6 + city.level * 0.9));
-    hits.push({ city, x, y, radius: radius + 6 });
+    const level = markerLevel(city);
+    const radius = cityMarkerRadius(level, dpr);
+    const marker = markerImages[level];
+    hits.push({
+      city,
+      ...(marker ? cityMarkerHitBox(level, x, y, dpr) : cityFallbackHitBox(x, y, radius)),
+    });
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
     if (owned && city.supply === false) context.globalAlpha = 0.42;
 
-    const tier = markerTier(city);
-    const marker = markerImages[tier];
     if (marker) {
-      const box = cityMarkerDrawBox(tier, x, y, dpr);
+      const box = cityMarkerDrawBox(level, x, y, dpr);
       context.imageSmoothingEnabled = true;
       context.drawImage(marker, box.x, box.y, box.width, box.height);
     } else {
@@ -606,7 +644,7 @@ export function HanMapCanvas({
   const markerImagesRef = useRef<CityMarkerImages>({});
   const viewRef = useRef<IsoView | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
-  const hitRef = useRef<{ city: IsoCityOverlay; x: number; y: number; radius: number }[]>([]);
+  const hitRef = useRef<{ city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[]>([]);
   const dragRef = useRef(new Map<number, { x: number; y: number }>());
   const dragMovedRef = useRef(false);
   const activeCityRef = useRef<IsoCityOverlay | null>(null);
@@ -750,11 +788,11 @@ export function HanMapCanvas({
 
   useEffect(() => {
     let alive = true;
-    const pending = Object.entries(CITY_MARKER_URLS).map(([tier, url]) => {
+    const pending = Object.entries(CITY_MARKER_URLS).map(([level, url]) => {
       const image = new Image();
       image.onload = () => {
         if (!alive) return;
-        markerImagesRef.current[tier as CityMarkerTier] = image;
+        markerImagesRef.current[Number(level)] = image;
         render();
       };
       image.src = url;
@@ -886,7 +924,7 @@ export function HanMapCanvas({
   const cityAt = (x: number, y: number) => {
     for (let index = hitRef.current.length - 1; index >= 0; index -= 1) {
       const hit = hitRef.current[index];
-      if (Math.hypot(hit.x - x, hit.y - y) <= hit.radius) return hit.city;
+      if (x >= hit.left && x <= hit.right && y >= hit.top && y <= hit.bottom) return hit.city;
     }
     return null;
   };

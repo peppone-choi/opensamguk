@@ -47,6 +47,12 @@ OUT = MAP / "han-tiles.json"
 LEGACY_GAMEPLAY_TILES = MAP / "han-780-v1-tiles.json"
 HAN_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 
+# 220년 정본 군국명과 시나리오 시기명이 다른 같은 행정 권역.
+# 소유권 바인딩에서만 별칭으로 해석하고 지도 표시명은 220년 정본을 유지한다.
+PARENT_TEMPORAL_ALIASES = {
+    '甘陵郡': ['신성후국'],  # 新成侯國 → 甘陵郡
+}
+
 # 도로 비트마스크 — 이웃 4방향(N=1 E=2 S=4 W=8). 타일 16종이 서로 이어진다.
 NEI = {(0, -1): 1, (1, 0): 2, (0, 1): 4, (-1, 0): 8}
 CANONICAL_COLS = 768
@@ -67,6 +73,71 @@ def rle(rows: list[list[int]]) -> list[list[int]]:
             else:
                 out.append([v, 1])
     return out
+
+
+def resolve_province_record_names(
+        records: list[dict], parent_regions: list[dict], cities: list[dict],
+        parent_seats: list[int]) -> list[dict]:
+    """Replace Chinese geometry placeholder labels with the parent commandery name.
+
+    A modern ADM2 fragment is geometry provenance, not a historical administrative
+    unit. Chinese background fragments remain non-city geometry and inherit their
+    sourced commandery label instead of inventing a county or exposing "direct territory".
+    """
+    parent_index = {parent['id']: index for index, parent in enumerate(parent_regions)}
+    for record in records:
+        city_index = record.get('cityIndex')
+        if city_index is None:
+            continue
+        if type(city_index) is not int or not 0 <= city_index < len(cities):
+            raise ValueError('provinceRecords cityIndex is out of range')
+
+    resolved = []
+    for record in records:
+        city_index = record.get('cityIndex')
+        if city_index is not None:
+            if type(city_index) is not int or not 0 <= city_index < len(cities):
+                raise ValueError('provinceRecords cityIndex is out of range')
+            display_name = (
+                cities[city_index]['name']
+                if record.get('administrativeSystem') == 'HAN_COMMANDERY'
+                else record['displayName']
+            )
+            resolved.append({**record, 'displayName': display_name})
+            continue
+
+        if (record.get('kind') == 'DIRECT_TERRITORY'
+                and record.get('administrativeSystem') == 'HAN_COMMANDERY'):
+            parent_id = record['parentRegionId']
+            index = parent_index.get(parent_id)
+            if index is None or index >= len(parent_seats):
+                raise ValueError(f'Chinese direct territory has no parent seat: {record["id"]}')
+            parent = parent_regions[index]
+            city_index = parent_seats[index]
+            if type(city_index) is not int or not 0 <= city_index < len(cities):
+                raise ValueError(f'Chinese direct territory has invalid parent seat: {record["id"]}')
+            resolved.append({
+                **record,
+                'displayName': parent['displayName'],
+                'nameCh': parent['nameCh'],
+            })
+            continue
+
+        if record.get('kind') == 'DIRECT_TERRITORY':
+            parent_id = record['parentRegionId']
+            index = parent_index.get(parent_id)
+            if index is None:
+                raise ValueError(f'direct territory has no parent: {record["id"]}')
+            parent = parent_regions[index]
+            resolved.append({
+                **record,
+                'displayName': parent['displayName'],
+                'nameCh': parent['nameCh'],
+            })
+            continue
+
+        resolved.append(dict(record))
+    return resolved
 
 
 def validate_canonical_inputs(
@@ -178,7 +249,7 @@ def _derive_adjacency(labels):
                 touching[tuple(sorted((a, b)))] += 1
     return [
         {'a': a, 'b': b, 'cells': cells}
-        for (a, b), cells in sorted(touching.items()) if cells >= 3
+        for (a, b), cells in sorted(touching.items())
     ]
 
 
@@ -447,28 +518,14 @@ def build(
         parent_regions = []
         for index, record in enumerate(grid['parentRegions']):
             translated = juns[index]['name'] if index < len(juns) else record['displayName']
-            parent_regions.append({**record, 'displayName': translated})
-        parent_by_id = {record['id']: record for record in parent_regions}
-        province_records = []
-        for record in grid['provinceRecords']:
-            city_index = record.get('cityIndex')
-            if city_index is not None:
-                if type(city_index) is not int or not 0 <= city_index < len(cities):
-                    raise ValueError('provinceRecords cityIndex is out of range')
-                # External canonical names are curated separately (for
-                # example, 구야국); a legacy Chinese-place reading must not
-                # overwrite them during packaging.
-                display_name = (
-                    cities[city_index]['name']
-                    if record.get('administrativeSystem') == 'HAN_COMMANDERY'
-                    else record['displayName']
-                )
-            elif record.get('kind') == 'DIRECT_TERRITORY':
-                parent = parent_by_id[record['parentRegionId']]
-                display_name = f"{parent['displayName']} 직할지"
-            else:
-                display_name = record['displayName']
-            province_records.append({**record, 'displayName': display_name})
+            resolved = {**record, 'displayName': translated}
+            aliases = PARENT_TEMPORAL_ALIASES.get(record['nameCh'])
+            if aliases:
+                resolved['aliases'] = aliases
+            parent_regions.append(resolved)
+        province_records = resolve_province_record_names(
+            grid['provinceRecords'], parent_regions, cities, [jun['seat'] for jun in juns],
+        )
     # readings.json 이 있는데 빠진 이름이 있으면 조용히 한자로 흘리지 않는다 — 그게 이번에
     # 커밋에 한자 70건을 밀어넣은 사고다(#524 리뷰 HIGH-1). readings.json 이 아예 없을 때는
     # 위에서 이미 경고했으니 여기서는 있는데 불완전한 경우만 잡는다.

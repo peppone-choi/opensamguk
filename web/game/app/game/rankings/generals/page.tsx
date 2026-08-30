@@ -14,8 +14,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
+import GeneralName from '../../../../components/game/GeneralName';
 import { api } from '../../../../lib/api';
-import { formatRefreshScore, getNPCColor } from '../../../../lib/utilGame';
+import { formatRefreshScore } from '../../../../lib/utilGame';
 import { portraitUrl, onPortraitError } from '../../../../lib/portrait';
 import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { PublicGeneral } from '../../../../types/game';
@@ -145,7 +146,7 @@ export default function GeneralsListPage() {
                 draggable={false}
             />,
             // 이름 — PHP formatName(name, npc): NPC 타입별 색(getNPCColor).
-            <span key={`nm-${g.generalId}`} style={{ color: getNPCColor(g.npc) ?? undefined }}>{g.name}</span>,
+            <GeneralName key={`nm-${g.generalId}`} name={g.name} npcType={g.npc} />,
             `${g.age}세`,                       // 연령
             g.personalText,                     // 성격
             `${g.specialDomesticText} / ${g.specialWarText}`, // 특기(내정 / 전투)

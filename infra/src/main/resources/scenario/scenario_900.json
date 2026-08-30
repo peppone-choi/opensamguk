@@ -2,8 +2,11 @@
   "title": "【공백지】 충차전",
   "startYear": 180,
   "map": {
-    "mapName": "che",
-    "unitSet": "siegetank"
+    "mapName": "han-world-v2",
+    "unitSet": "han"
+  },
+  "seedContract": {
+    "activeGenerals": {"base": 0, "extended": 0}
   },
   "stat": {
     "chiefMin": 9

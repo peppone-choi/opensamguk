@@ -2,8 +2,11 @@
   "title": "【공백지】 다병종",
   "startYear": 180,
   "map": {
-    "mapName": "miniche",
-    "unitSet": "event_more_crewtype"
+    "mapName": "han-world-v2",
+    "unitSet": "han"
+  },
+  "seedContract": {
+    "activeGenerals": {"base": 0, "extended": 0}
   },
   "history": [],
   "const": {

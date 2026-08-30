@@ -1,6 +1,13 @@
 {
   "title": "【공백지】 이벤트 클래식",
   "startYear": 180,
+  "map": {
+    "mapName": "han-world-v2",
+    "unitSet": "han"
+  },
+  "seedContract": {
+    "activeGenerals": {"base": 0, "extended": 0}
+  },
   "history": [
     "<C>●</>180년 1월:<L><b>【공백지】</b></>예전 지도에서 장비를 많이 가지고 즐겨보는 이벤트 깃수"
   ],

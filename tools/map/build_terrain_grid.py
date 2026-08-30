@@ -740,14 +740,16 @@ def thin(roads, cap={'MAIN': 4, 'WATER': 3, 'LOCAL': 2}, local_cost=900):
     return kept
 
 
-def adjacency(label, seats=3):
+def adjacency(label, min_shared_edges=1):
     """소유 격자에서 인접을 뽑는다. 이동은 길이 아니라 영역 인접으로 판정한다 —
     治所를 길로 다 이으면 델로네 그물이 되고, 그건 후한의 도로망이 아니라 삼각분할이다.
 
-    `seats` 칸 미만 맞닿은 쌍은 버린다. 모서리 한 칸 스치는 건 경계 잡음이지 국경이 아니다.
+    공유한 격자변이 하나라도 있으면 인접한다. 육상 이동의 정본은 별도 육로가
+    아니라 이 프로빈스 접경 그래프이므로 짧은 경계를 잡음으로 제거하지 않는다.
+    郡 요약 그래프처럼 보조 산출물은 호출자가 더 큰 최소값을 지정할 수 있다.
     """
     return [{'a': a, 'b': b, 'cells': n}
-            for (a, b), n in sorted(touching_pairs(label).items()) if n >= seats]
+            for (a, b), n in sorted(touching_pairs(label).items()) if n >= min_shared_edges]
 
 
 def ambiguous_seeds(junguo):
@@ -1006,6 +1008,23 @@ def cross_by_path(cost, pts, edges, terrain):
     return edges
 
 
+def derive_world_adjacency(terrain, pts, owner, parent_owner):
+    """Derive both movement summaries from the final province ownership grids."""
+    land_field = cost_field(terrain, LAND_COST)
+    for x, y in pts:
+        x, y = int(x), int(y)
+        if land_field[y, x] == INF:
+            land_field[y, x] = LAND_COST[PLAIN]
+    county_edges = adjacency(owner, min_shared_edges=1)
+    commandery_edges = cross_by_path(
+        land_field,
+        pts,
+        adjacency(parent_owner, min_shared_edges=1),
+        terrain,
+    )
+    return county_edges, commandery_edges
+
+
 def _boundary_cells(label):
     """라벨이 갈리는 자리와 그 셀 좌표. 어느 지형 위에서 갈리는지 봐야 도하를 알 수 있다."""
     h, w = label.shape
@@ -1168,17 +1187,8 @@ def finalize_reviewed_merge_state(
     roads, _ = build_roads(terrain, pts, state['hubs'])
     ford_list = fords(terrain, roads)
 
-    land_field = cost_field(terrain, LAND_COST)
-    for x, y in pts:
-        x, y = int(x), int(y)
-        if land_field[y, x] == INF:
-            land_field[y, x] = LAND_COST[PLAIN]
-    county_edges = adjacency(state['owner'])
-    commandery_edges = cross_by_path(
-        land_field,
-        pts,
-        adjacency(state['seatOwner']),
-        terrain,
+    county_edges, commandery_edges = derive_world_adjacency(
+        terrain, pts, state['owner'], state['seatOwner'],
     )
     ford_list += [
         {'col': ford[0], 'row': ford[1], 'roads': 0}
@@ -1351,7 +1361,14 @@ def main():
     )
     owner = province_result.owner.astype(np.int16)
     seat_label = parent_owner.astype(np.int16)
-    adj_c = adjacency(owner)
+    adj_c, adj_m = derive_world_adjacency(
+        terrain, pts, owner, seat_label,
+    )
+    ford_list = fords(terrain, roads)
+    ford_list += [
+        {'col': ford[0], 'row': ford[1], 'roads': 0}
+        for ford in (edge['ford'] for edge in adj_m if 'ford' in edge)
+    ]
 
     province_records = [{
         'id': record.id, 'displayName': record.display_name, 'nameCh': record.name_ch,

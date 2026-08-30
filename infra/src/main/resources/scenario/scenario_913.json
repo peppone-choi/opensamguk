@@ -2,7 +2,11 @@
   "title": "【공백지】 무한대흥 ",
   "startYear": 180,
   "map": {
-    "mapName": "miniche"
+    "mapName": "han-world-v2",
+    "unitSet": "han"
+  },
+  "seedContract": {
+    "activeGenerals": {"base": 0, "extended": 0}
   },
   "history": [
     "<C>●</>180년 1월:<L><b>【이벤트】</b></>많은 제한치가 더 높게 풀려있습니다."

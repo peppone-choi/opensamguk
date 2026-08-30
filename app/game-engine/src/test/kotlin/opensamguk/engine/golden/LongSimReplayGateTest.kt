@@ -895,7 +895,7 @@ class LongSimReplayGateTest {
             .filter { it.name == "RegNPC" || it.name == "RegNeutralNPC" }
             .map { it.args[1].jsonPrimitive.content }
 
-        assertEquals(1, adultNames.count { it == "소제1" })
+        assertEquals(1, adultNames.count { it == "유변" })
         assertEquals(1, adultNames.count { it == "유벽" })
     }
 

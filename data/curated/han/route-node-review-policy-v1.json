@@ -10,20 +10,6 @@
     "routeNodeCount": 780,
     "sourcePlaceholderCount": 0
   },
-  "reviewDecisionAnchors": {
-    "historicalConflictDecisionSet": {
-      "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
-      "assignmentSha256": "ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
-      "reviewState": "APPROVED",
-      "rowCount": 21
-    },
-    "replacementDecisionSet": {
-      "anchor": "replacementDecisionSet:639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8",
-      "assignmentSha256": "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8",
-      "reviewState": "APPROVED",
-      "rowCount": 101
-    }
-  },
   "forbiddenSelections": {
     "canonicalNames": [
       "流求",
@@ -83,7 +69,7 @@
     "administrativeCatalogSha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "cea333c5d46e145a45bcd1a3ccfbfbdef62aacb0125e597262f0d40ffa508f9a"
+      "sha256": "9ff55b6669495f44f6286dac28661fa9b74020b8aebdf911114c12251e54e872"
     },
     "coordinateOverlaySha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1",
     "locationAdjudications": {
@@ -286,16 +272,30 @@
   },
   "policyId": "han-w0c-route-node-review-policy-v1",
   "reviewAuthority": "user-blanket-approval-2026-08-22",
+  "reviewDecisionAnchors": {
+    "historicalConflictDecisionSet": {
+      "anchor": "historicalConflictDecisionSet:ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
+      "assignmentSha256": "ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7",
+      "reviewState": "APPROVED",
+      "rowCount": 21
+    },
+    "replacementDecisionSet": {
+      "anchor": "replacementDecisionSet:639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8",
+      "assignmentSha256": "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8",
+      "reviewState": "APPROVED",
+      "rowCount": 101
+    }
+  },
   "reviewedAt": "2026-08-22",
   "reviewedBy": "codex-w0c-root",
   "scenarioActivationPolicy": {
     "chgisBindingRule": "W0 pins reviewed place identity only; runtime lifecycle is not derived here",
-    "expectedScenarioCount": 15,
+    "expectedScenarioCount": 31,
     "externalLocationClaimRule": "W0 pins reviewed external place identity only; runtime lifecycle is not derived here",
-    "note": "780은 reviewed route-node identity 집합이며 scenario catalog은 15개 active Han resource의 파일 해시만 고정한다.",
+    "note": "780은 reviewed route-node identity 집합이며 scenario catalog은 31개 active Han resource의 파일 해시만 고정한다.",
     "routeNodeSelectionIs220Baseline": true,
     "runtimeEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
-    "scenarioScope": "all tracked scenario resources whose map.mapName is han"
+    "scenarioScope": "all tracked scenario resources whose map.mapName is han or han-world-v2"
   },
   "schemaVersion": 1,
   "selectionBatches": [

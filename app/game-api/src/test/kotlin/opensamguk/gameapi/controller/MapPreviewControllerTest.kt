@@ -226,7 +226,7 @@ class MapPreviewControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.year").value(0))
             .andExpect(jsonPath("$.month").value(0))
-            .andExpect(jsonPath("$.mapCode").value("che"))
+            .andExpect(jsonPath("$.mapCode").value("han-world-v2"))
             .andExpect(jsonPath("$.cities.length()").value(0))
             .andExpect(jsonPath("$.nations.length()").value(0))
     }

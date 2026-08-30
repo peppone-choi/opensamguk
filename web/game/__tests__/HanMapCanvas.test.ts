@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    cityMarkerDrawBox, expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, maxScaleForDpr, seatLabel,
+    cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
+    expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, maxScaleForDpr, seatLabel,
     TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom, type HanTiles,
 } from '@opensamguk/ui';
 
@@ -14,13 +15,43 @@ const MIN_MARKER_K = Math.min(...Object.values(TIER2_MARKER_ZOOM));
 
 describe('지도 아이콘 배율과 앵커', () => {
     it.each([1, 1.5, 2, 3])('DPR %s에서 CSS 크기와 지점 앵커를 보존한다', (dpr) => {
-        const box = cityMarkerDrawBox('county', 100, 80, dpr);
+        const box = cityMarkerDrawBox(5, 100, 80, dpr);
         const scale = dpr / 2;
 
-        expect(box.width / dpr).toBe(14);
-        expect(box.height / dpr).toBe(16);
-        expect(box.x + 14 * scale).toBe(100);
-        expect(box.y + 30 * scale).toBe(80);
+        expect(box.width / dpr).toBe(32);
+        expect(box.height / dpr).toBe(32);
+        expect(box.x + 32 * scale).toBe(100);
+        expect(box.y + 63 * scale).toBe(80);
+    });
+
+    it('군치 소는 영현보다, 영현은 장현보다 큰 실루엣을 쓴다', () => {
+        expect(cityMarkerDrawBox(5, 0, 0, 1).visualExtent).toBeGreaterThan(
+            cityMarkerDrawBox(10, 0, 0, 1).visualExtent,
+        );
+        expect(cityMarkerDrawBox(10, 0, 0, 1).visualExtent).toBeGreaterThan(
+            cityMarkerDrawBox(11, 0, 0, 1).visualExtent,
+        );
+    });
+
+    it('히트 영역이 위쪽 포인터를 포함한 전체 마커를 덮는다', () => {
+        const draw = cityMarkerDrawBox(5, 100, 80, 2);
+        const hit = cityMarkerHitBox(5, 100, 80, 2);
+
+        expect(hit.left).toBeLessThan(draw.x);
+        expect(hit.top).toBeLessThan(draw.y);
+        expect(hit.right).toBeGreaterThan(draw.x + draw.width);
+        expect(hit.bottom).toBeGreaterThan(draw.y + draw.height);
+    });
+
+    it('fallback 마커와 히트 영역은 DPR에 맞춰 같은 비율로 커진다', () => {
+        const radius1 = cityMarkerRadius(5, 1);
+        const radius2 = cityMarkerRadius(5, 2);
+        const hit1 = cityFallbackHitBox(100, 80, radius1);
+        const hit2 = cityFallbackHitBox(200, 160, radius2);
+
+        expect(radius2).toBe(radius1 * 2);
+        expect(hit2.right - hit2.left).toBe((hit1.right - hit1.left) * 2);
+        expect(hit2.bottom - hit2.top).toBe((hit1.bottom - hit1.top) * 2);
     });
 });
 

@@ -66,7 +66,7 @@ def manifest_fixture() -> dict:
         "title": "서로 맞선 세력들",
         "year_month": "190.1",
         "startYear": 190,
-        "map": "che",
+        "map": "han-world-v2",
         "life": 1,
         "fiction": 0,
         "const": {"defaultMaxGeneral": 600},
