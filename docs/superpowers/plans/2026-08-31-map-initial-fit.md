@@ -107,7 +107,7 @@ Run game and gateway map consumer tests plus the full focused shared-map suite. 
 
 Run game and gateway type checks, game and gateway production builds, and `git diff --check`.
 
-- [ ] **Step 3: Review and create the PR**
+- [x] **Step 3: Review and create the PR**
 
 Request an independent code review, address verified findings with RED→GREEN tests, push the branch, and create one PR.
 
