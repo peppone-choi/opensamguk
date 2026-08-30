@@ -29,6 +29,7 @@ import opensamguk.logic.ai.GeneralAiContext
 import opensamguk.logic.ai.GeneralAiDoBodies
 import opensamguk.logic.ai.GeneralAiFactory
 import opensamguk.logic.ai.GeneralAiInput
+import opensamguk.logic.ai.GeneralAI
 import opensamguk.logic.ai.ExternalSqlRandSelector
 import opensamguk.logic.ai.NationAiInput
 import opensamguk.logic.ai.NationPassHooks
@@ -441,8 +442,9 @@ class AiTurnAdapter(
         // (3) the F-BRIDGE candidate gate over the FULL-mode WorldStateViewAdapter.
         val envMap = commandEnvMap(state, year, month)
         val verdictHook = candidateVerdictHook(generalId, general.cityId, nationId, envMap)
+        val logicCity = world.getCityById(general.cityId)?.let { PerTurnOverlay.toLogicCity(it) }
         val candidateAllowedHook: (String, Map<String, Any?>) -> Boolean =
-            { code, args -> verdictHook(code, args) is CandidateVerdict.Allow }
+            { code, args -> logicCity != null && verdictHook(code, args) is CandidateVerdict.Allow }
 
         val recordGeneralKv: (Int, String, Any?) -> Unit = ::recordGeneralDelta
 
@@ -454,7 +456,6 @@ class AiTurnAdapter(
         // F-FACADE — fed the REAL self-excluded PK-ascending nation generals + the FULL PK-ascending city table.
         val worldView = buildWorldView(nationId, generalId, instance, nationPolicy, cityConst)
 
-        val logicCity = world.getCityById(general.cityId)?.let { PerTurnOverlay.toLogicCity(it) }
         val ctx = buildGeneralContext(
             general = general,
             rng = rng,
@@ -482,10 +483,20 @@ class AiTurnAdapter(
         )
 
         val input = buildGeneralAiInput(general, generalPolicy, nationPolicy, year, month, rng)
-        return ai.chooseGeneralTurn(
-            reservedCommand = ChosenCommand(reserved.actionCode, ReservedTurnHandler.decodeArgs(reserved.argJson)),
-            input = input,
-        )
+        val reservedCommand = ChosenCommand(reserved.actionCode, ReservedTurnHandler.decodeArgs(reserved.argJson))
+        val chosen = ai.chooseGeneralTurn(reservedCommand = reservedCommand, input = input)
+        // A cityless general may still run the pre-loop AI branches, but every replacement command needs
+        // the common city-backed resolve draft. Keep an actual reserved rest instead of emitting a command
+        // that the handler can only reject back to rest.
+        return if (
+            logicCity == null &&
+            reservedCommand.actionCode == GeneralAI.REST_COMMAND &&
+            chosen.actionCode != GeneralAI.REST_COMMAND
+        ) {
+            reservedCommand.copy(reason = "도시없음")
+        } else {
+            chosen
+        }
     }
 
     /**

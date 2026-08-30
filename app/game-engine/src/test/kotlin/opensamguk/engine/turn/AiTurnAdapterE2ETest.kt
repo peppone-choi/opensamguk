@@ -181,6 +181,33 @@ class AiTurnAdapterE2ETest {
         assertEquals(10, world.getCityById(17)!!.nationId, "resolved founding claims the neutral city")
     }
 
+    @Test fun `a cityless wandering NPC ruler keeps its reserved rest without evaluating city candidates`() {
+        val ruler = general(id = 1334, nationId = 21, cityId = 0, officerLevel = 12, npcState = 2)
+        val wandering = nation(id = 21, capital = 0).copy(
+            name = "wandering",
+            level = 1,
+            gold = 100_000,
+            rice = 100_000,
+            meta = linkedMapOf("gennum" to 1),
+        )
+        val world = worldWith(listOf(ruler), cities = emptyList(), nations = listOf(wandering))
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+
+        val chosen = adapter.chooseGeneralTurn(1334, ReservedTurn("휴식", ""))
+
+        assertEquals("휴식", chosen.actionCode)
+
+        val handler = ReservedTurnHandler(
+            world, registry, FIXTURE_HIDDEN_SEED, START_YEAR,
+            aiHook = { gid, reserved -> adapter.chooseGeneralTurn(gid, reserved) },
+        )
+        val outcome = handler.handle(1334, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+
+        assertFalse(outcome.fellBack)
+        assertEquals("휴식", outcome.definition.key)
+        assertNull(outcome.denyReason)
+    }
+
     @Test fun `a wandering NPC ruler founds from a han county through the active map seam`() {
         val han = CityConstRegistry.of("han")
         val county = han.all().values.first { it.level >= 10 }
