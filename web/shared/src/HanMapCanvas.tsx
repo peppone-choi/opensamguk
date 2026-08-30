@@ -975,7 +975,20 @@ export function HanMapCanvas({
     const observer = new ResizeObserver(fit);
     observer.observe(box);
     window.addEventListener('resize', fit);
+    let dprQuery: MediaQueryList | null = null;
+    const handleDprChange = () => {
+      dprQuery?.removeEventListener('change', handleDprChange);
+      fit();
+      listenForDprChange();
+    };
+    const listenForDprChange = () => {
+      if (typeof window.matchMedia !== 'function') return;
+      dprQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+      dprQuery.addEventListener('change', handleDprChange);
+    };
+    listenForDprChange();
     return () => {
+      dprQuery?.removeEventListener('change', handleDprChange);
       observer.disconnect();
       window.removeEventListener('resize', fit);
     };

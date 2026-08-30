@@ -736,6 +736,45 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(afterCenter[1]).toBeCloseTo(beforeCenter[1], 6);
   });
 
+  it('refits when DPR changes without a window or container resize', () => {
+    Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+    let resolutionListener: ((event: MediaQueryListEvent) => void) | undefined;
+    const removeEventListener = vi.fn();
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn((_type, listener) => {
+        if (query.startsWith('(resolution:')) {
+          resolutionListener = listener as (event: MediaQueryListEvent) => void;
+        }
+      }),
+      removeEventListener,
+      dispatchEvent: vi.fn(),
+    }));
+
+    const { unmount } = render(
+      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} />,
+    );
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    expect(canvas.width).toBe(200);
+    expect(resolutionListener).toBeTypeOf('function');
+
+    Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+    act(() => resolutionListener!(new Event('change') as MediaQueryListEvent));
+
+    expect(canvas.width).toBe(400);
+    expect(canvas.height).toBe(212);
+    expect(window.matchMedia).toHaveBeenCalledWith('(resolution: 2dppx)');
+    expect(removeEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+
+    removeEventListener.mockClear();
+    unmount();
+    expect(removeEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+  });
+
   it('uses fractional DPR for wheel, button, resize, and the exact 32 CSS-pixel cap', () => {
     Object.defineProperty(window, 'devicePixelRatio', { value: 0.8, configurable: true });
     const views: IsoView[] = [];
