@@ -253,9 +253,9 @@ describe('shared HanMapCanvas viewport interaction', () => {
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
         cities={[
-          { ...CHE_OVERLAYS_FIXTURE[0], id: 1, isCapital: false, isCommanderySeat: false },
-          { ...CHE_OVERLAYS_FIXTURE[1], id: 2, isCapital: false, isCommanderySeat: true },
-          { ...CHE_OVERLAYS_FIXTURE[0], id: 3, x: 100, y: 60, isCapital: true, isCommanderySeat: true },
+          { ...CHE_OVERLAYS_FIXTURE[0], id: 1, level: 11, isCapital: false, isCommanderySeat: false },
+          { ...CHE_OVERLAYS_FIXTURE[1], id: 2, level: 5, isCapital: false, isCommanderySeat: true },
+          { ...CHE_OVERLAYS_FIXTURE[0], id: 3, level: 9, x: 100, y: 60, isCapital: true, isCommanderySeat: true },
         ]}
         sourceSize={{ width: 200, height: 120 }}
       />,
@@ -267,17 +267,17 @@ describe('shared HanMapCanvas viewport interaction', () => {
         .filter((source): source is LoadedImage => source instanceof LoadedImage)
         .map((source) => source.src);
       expect(sources).toEqual(expect.arrayContaining([
-        '/map/markers/county.png',
-        '/map/markers/commandery.png',
-        '/map/markers/capital.png',
+        '/city/cast_11.png',
+        '/city/cast_5.png',
+        '/city/cast_9.png',
       ]));
       const markerWidths = recordFor(canvas).drawImageCalls
         .filter(([source]) => source instanceof LoadedImage)
         .map(([source, , , width]) => [(source as LoadedImage).src, width]);
       expect(markerWidths).toEqual(expect.arrayContaining([
-        ['/map/markers/county.png', 28],
-        ['/map/markers/commandery.png', 36],
-        ['/map/markers/capital.png', 44],
+        ['/city/cast_11.png', 64],
+        ['/city/cast_5.png', 64],
+        ['/city/cast_9.png', 64],
       ]));
     });
   });
