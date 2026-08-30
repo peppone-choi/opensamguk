@@ -32,6 +32,99 @@ class ScenarioJsonTest {
     }
 
     @Test
+    fun `scenario seed contract decodes literal base and extended active rosters`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "contract",
+              "startYear": 181,
+              "map": {"mapName": "che"},
+              "const": {},
+              "seedContract": {"activeGenerals": {"base": 174, "extended": 229}},
+              "nation": [],
+              "general": [],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(174, scenario.seedContract?.activeGenerals?.base)
+        assertEquals(229, scenario.seedContract?.activeGenerals?.extended)
+    }
+
+    @Test
+    fun `scenario importer rejects an active roster smaller than its JSON contract`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "truncated",
+              "startYear": 181,
+              "map": {"mapName": "che"},
+              "const": {},
+              "seedContract": {"activeGenerals": {"base": 1, "extended": 2}},
+              "nation": [],
+              "general": [[1,"Only",null,0,null,1,1,1,0,160,220,null,null]],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val error = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(scenario, emptyList()).validateSeedContract()
+        }
+        assertTrue(error.message.orEmpty().contains("expected 2 active generals, decoded 1"))
+    }
+
+    @Test
+    fun `Han world scenario cannot seed without an active roster contract`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "uncontracted Han scenario",
+              "startYear": 181,
+              "map": {"mapName": "han-world-v2"},
+              "const": {},
+              "nation": [],
+              "general": [],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val error = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(scenario, emptyList()).validateSeedContract()
+        }
+        assertTrue(error.message.orEmpty().contains("requires seedContract.activeGenerals"))
+    }
+
+    @Test
+    fun `all Han scenarios satisfy both committed active roster contracts`() {
+        val codes = listOf(
+            "1010", "1020", "1021", "1030", "1031", "1040", "1041", "1050",
+            "1060", "1070", "1080", "1090", "1100", "1110", "1120",
+        )
+
+        for (code in codes) {
+            val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_$code.json"))
+            ScenarioImporter(
+                scenario = scenario,
+                cities = emptyList(),
+                scenarioCode = "scenario_$code",
+                extendedGeneral = false,
+            ).validateSeedContract()
+            ScenarioImporter(
+                scenario = scenario,
+                cities = emptyList(),
+                scenarioCode = "scenario_$code",
+                extendedGeneral = true,
+            ).validateSeedContract()
+        }
+    }
+
+    @Test
     fun `enriched roster retains every RTK14 source officer when legacy extensions are disabled`() {
         fun sourceTuple(officerNumber: Int) =
             "[0,\"RTK$officerNumber\",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,$officerNumber,\"남\",60,41,5,\"유가\",false,false]"

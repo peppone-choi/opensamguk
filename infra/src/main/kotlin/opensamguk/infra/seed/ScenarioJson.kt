@@ -76,6 +76,7 @@ object ScenarioJson {
         val events = arr(root["events"]).map { decodeEvent(asList(it)) }
         val initialEvents = arr(root["initialEvents"]).map { decodeInitialEvent(asList(it)) }
         val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
+        val seedContract = root["seedContract"]?.let(::decodeSeedContract)
 
         val nations = arr(root["nation"]).mapIndexed { idx, raw ->
             val t = asList(raw)
@@ -134,6 +135,23 @@ object ScenarioJson {
             events = events,
             initialEvents = initialEvents,
             ignoreDefaultEvents = ignoreDefaultEvents,
+            seedContract = seedContract,
+        )
+    }
+
+    private fun decodeSeedContract(value: Any?): ScenarioSeedContract {
+        val contract = asMap(value)
+        val active = asMap(contract["activeGenerals"])
+        val base = intRequired(active["base"], "seedContract.activeGenerals.base")
+        val extended = intRequired(active["extended"], "seedContract.activeGenerals.extended")
+        require(base >= 0 && extended >= base) {
+            "seedContract active general counts must satisfy 0 <= base <= extended"
+        }
+        return ScenarioSeedContract(
+            activeGenerals = ActiveGeneralContract(
+                base = base,
+                extended = extended,
+            ),
         )
     }
 
@@ -321,6 +339,7 @@ data class Scenario(
     val events: List<ScenarioEvent> = emptyList(),
     val initialEvents: List<ScenarioInitialEvent> = emptyList(),
     val ignoreDefaultEvents: Boolean = false,
+    val seedContract: ScenarioSeedContract? = null,
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
         validateRtk14AddedPlacement()
@@ -344,6 +363,10 @@ data class Scenario(
         }
     }
 }
+
+data class ScenarioSeedContract(val activeGenerals: ActiveGeneralContract)
+
+data class ActiveGeneralContract(val base: Int, val extended: Int)
 
 data class ScenarioEvent(
     val target: String,

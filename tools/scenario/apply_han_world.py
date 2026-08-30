@@ -47,6 +47,28 @@ NATION_SCALE = 7      # nation 튜플의 scale — 임포터가 nation.level 로
 NATION_CITIES = 8     # nation 튜플의 보유 城 목록 자리
 GENERAL_KEYS = ("general", "general_ex", "general_neutral")
 
+# Independently audited against ScenarioImporter lifecycle rules (adult age 14,
+# death exclusive for legacy tuples, explicit appearance year inclusive).  These
+# are literals on purpose: deriving the expected count from the same import path
+# would let a truncation bug rewrite its own expectation.
+ACTIVE_GENERAL_CONTRACTS = {
+    "scenario_1010": (174, 229),
+    "scenario_1020": (231, 299),
+    "scenario_1021": (339, 339),
+    "scenario_1030": (250, 327),
+    "scenario_1031": (365, 365),
+    "scenario_1040": (250, 327),
+    "scenario_1041": (363, 363),
+    "scenario_1050": (248, 320),
+    "scenario_1060": (238, 305),
+    "scenario_1070": (252, 317),
+    "scenario_1080": (237, 302),
+    "scenario_1090": (230, 289),
+    "scenario_1100": (206, 260),
+    "scenario_1110": (196, 249),
+    "scenario_1120": (240, 309),
+}
+
 # che 城 이름이 郡治가 아니라 특정 縣을 가리키는 경우. `che_to_jun.json` 은 郡까지만
 # 대응시켜서, 그대로 두면 그 郡의 治所로 밀려난다. 사료가 縣을 못 박는 것만 여기 적는다.
 CITY_OVERRIDE = {
@@ -90,6 +112,12 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
     # 맵과 병종 세트는 한 몸이다 — han 맵의 城 게이트 키(州·郡·부족 漢字)를 읽는 건
     # han 병종표뿐이라, 맵만 바꾸고 병종을 che 로 두면 지역 병종이 통째로 죽는다.
     doc["map"] = {"mapName": "han-world-v2", "unitSet": "han"}
+    if code not in ACTIVE_GENERAL_CONTRACTS:
+        raise ValueError(f"{code}: active-general seed contract is missing")
+    base_generals, extended_generals = ACTIVE_GENERAL_CONTRACTS[code]
+    doc["seedContract"] = {
+        "activeGenerals": {"base": base_generals, "extended": extended_generals},
+    }
 
     table = (own.get(code) or {}).get("nations") or {}
     taken: dict[int, str] = {}                   # 城 id → 세력. 중복 소유 차단.

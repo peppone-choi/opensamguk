@@ -10939,5 +10939,11 @@
   "map": {
     "mapName": "han-world-v2",
     "unitSet": "han"
+  },
+  "seedContract": {
+    "activeGenerals": {
+      "base": 250,
+      "extended": 327
+    }
   }
 }

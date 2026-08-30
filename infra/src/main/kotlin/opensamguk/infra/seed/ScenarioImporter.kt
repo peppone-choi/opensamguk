@@ -113,6 +113,7 @@ class ScenarioImporter(
     ): ImportCounts {
         val startYear = scenario.startYear
         validateSeedGeneralLifecycles()
+        validateSeedContract()
 
         val worldId = insertWorldState(jdbc, startYear, expectedWorldId)
 
@@ -424,6 +425,22 @@ class ScenarioImporter(
             require(appearanceYear <= deathYear) {
                 "scenario general ${general.name} has appearanceYear=$appearanceYear after deathYear=$deathYear"
             }
+        }
+    }
+
+    internal fun validateSeedContract() {
+        val contract = scenario.seedContract?.activeGenerals
+        if (contract == null) {
+            require(scenarioMapConfig()["mapName"] != "han-world-v2") {
+                "$scenarioCode requires seedContract.activeGenerals for han-world-v2"
+            }
+            return
+        }
+        val expected = if (extendedGeneral) contract.extended else contract.base
+        val actual = buildGenerals(scenario.startYear).size
+        require(actual == expected) {
+            "$scenarioCode expected $expected active generals, decoded $actual " +
+                "(extendedGeneral=$extendedGeneral)"
         }
     }
 
