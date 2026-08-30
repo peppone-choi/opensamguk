@@ -22,6 +22,7 @@ interface CanvasRecord {
   drawSmoothing: boolean[];
   radialGradients: unknown[];
   gradientFills: unknown[];
+  globalAlphas: number[];
 }
 
 const records = new Map<HTMLCanvasElement, CanvasRecord>();
@@ -60,6 +61,8 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   const drawSmoothing: boolean[] = [];
   const radialGradients: unknown[] = [];
   const gradientFills: unknown[] = [];
+  const globalAlphas: number[] = [1];
+  let globalAlpha = 1;
   const gradient = { addColorStop: vi.fn() };
   const context = {
     canvas,
@@ -118,8 +121,14 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     font: '',
     textAlign: 'start',
     textBaseline: 'alphabetic',
-    globalAlpha: 1,
   } as unknown as CanvasRenderingContext2D;
+  Object.defineProperty(context, 'globalAlpha', {
+    get: () => globalAlpha,
+    set: (value: number) => {
+      globalAlpha = value;
+      globalAlphas.push(value);
+    },
+  });
   const record = {
     context,
     operations,
@@ -133,6 +142,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     drawSmoothing,
     radialGradients,
     gradientFills,
+    globalAlphas,
   };
   records.set(canvas, record);
   return record;
@@ -275,9 +285,9 @@ describe('shared HanMapCanvas viewport interaction', () => {
         .filter(([source]) => source instanceof LoadedImage)
         .map(([source, , , width]) => [(source as LoadedImage).src, width]);
       expect(markerWidths).toEqual(expect.arrayContaining([
-        ['/city/cast_11.png', 64],
-        ['/city/cast_5.png', 64],
-        ['/city/cast_9.png', 64],
+        ['/city/cast_11.png', 96],
+        ['/city/cast_5.png', 96],
+        ['/city/cast_9.png', 96],
       ]));
     });
   });
@@ -360,6 +370,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     );
     expect(politicalCompositions()).toBe(1);
     expect(pathConstructions).toBe(2);
+    expect(main.globalAlphas).not.toContain(0.42);
 
     const equivalentCities = markerOnly.map((city) => ({ ...city }));
     rerender(

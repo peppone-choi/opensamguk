@@ -409,21 +409,28 @@ function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
 
 type CityMarkerImages = Partial<Record<number, HTMLImageElement>>;
 
-export function cityMarkerDrawBox(level: number, x: number, y: number, dpr: number) {
+export function cityMarkerZoomStep(scale: number, dpr: number): 1 | 1.5 | 2 {
+  const cssTileScale = scale / effectiveDpr(dpr);
+  if (cssTileScale >= 16) return 2;
+  if (cssTileScale >= 10) return 1.5;
+  return 1;
+}
+
+export function cityMarkerDrawBox(level: number, x: number, y: number, dpr: number, zoom = 1) {
   const spec = CITY_LEVEL_MARKER_SPEC;
-  const scale = dpr / spec.pixelRatio;
+  const scale = dpr * zoom / spec.pixelRatio;
   return {
     x: x - spec.anchorX * scale,
     y: y - spec.anchorY * scale,
     width: spec.pixelWidth * scale,
     height: spec.pixelHeight * scale,
-    visualExtent: CITY_LEVEL_VISUAL_EXTENT[level] ?? CITY_LEVEL_VISUAL_EXTENT[5],
+    visualExtent: (CITY_LEVEL_VISUAL_EXTENT[level] ?? CITY_LEVEL_VISUAL_EXTENT[5]) * zoom,
   };
 }
 
-export function cityMarkerHitBox(level: number, x: number, y: number, dpr: number) {
-  const box = cityMarkerDrawBox(level, x, y, dpr);
-  const padding = 6 * dpr;
+export function cityMarkerHitBox(level: number, x: number, y: number, dpr: number, zoom = 1) {
+  const box = cityMarkerDrawBox(level, x, y, dpr, zoom);
+  const padding = 6 * dpr * zoom;
   return {
     left: box.x - padding,
     top: box.y - padding,
@@ -435,6 +442,32 @@ export function cityMarkerHitBox(level: number, x: number, y: number, dpr: numbe
 export function cityMarkerRadius(level: number, dpr: number): number {
   const cssRadius = Math.max(7, Math.min(18, 5 + (CITY_LEVEL_VISUAL_EXTENT[level] ?? 48) * 0.2));
   return cssRadius * dpr;
+}
+
+export function flagClothPoints(
+  x: number,
+  y: number,
+  radius: number,
+  supplied: boolean,
+  phase: number,
+): [number, number][] {
+  const poleX = x + radius * 0.55;
+  const top = y - radius * 1.6;
+  if (!supplied) {
+    return [
+      [poleX, top],
+      [poleX + radius * 0.42, top + radius * 0.45],
+      [poleX + radius * 0.28, top + radius * 1.05],
+      [poleX, top + radius * 0.76],
+    ];
+  }
+  const wave = [-0.12, 0.08, -0.04][((phase % 3) + 3) % 3] * radius;
+  return [
+    [poleX, top],
+    [poleX + radius * 0.9, top + radius * 0.25 + wave],
+    [poleX + radius * 0.86, top + radius * 0.7 - wave * 0.5],
+    [poleX, top + radius * 0.65],
+  ];
 }
 
 export function cityFallbackHitBox(x: number, y: number, radius: number) {
@@ -473,6 +506,7 @@ function drawScene(
   hideCityNames: boolean,
   dpr: number,
   markerImages: CityMarkerImages,
+  flagPhase: number,
 ): { city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
@@ -506,19 +540,19 @@ function drawScene(
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
     const level = markerLevel(city);
-    const radius = cityMarkerRadius(level, dpr);
+    const markerZoom = cityMarkerZoomStep(scale, dpr);
+    const radius = cityMarkerRadius(level, dpr) * markerZoom;
     const marker = markerImages[level];
     hits.push({
       city,
-      ...(marker ? cityMarkerHitBox(level, x, y, dpr) : cityFallbackHitBox(x, y, radius)),
+      ...(marker ? cityMarkerHitBox(level, x, y, dpr, markerZoom) : cityFallbackHitBox(x, y, radius)),
     });
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
-    if (owned && city.supply === false) context.globalAlpha = 0.42;
 
     if (marker) {
-      const box = cityMarkerDrawBox(level, x, y, dpr);
-      context.imageSmoothingEnabled = true;
+      const box = cityMarkerDrawBox(level, x, y, dpr, markerZoom);
+      context.imageSmoothingEnabled = false;
       context.drawImage(marker, box.x, box.y, box.width, box.height);
     } else {
       context.fillStyle = city.iconColor;
@@ -537,10 +571,10 @@ function drawScene(
       context.lineTo(x + radius * 0.55, y - radius * 1.65);
       context.stroke();
       context.fillStyle = city.territoryColor;
+      const cloth = flagClothPoints(x, y, radius, city.supply !== false, flagPhase);
       context.beginPath();
-      context.moveTo(x + radius * 0.55, y - radius * 1.6);
-      context.lineTo(x + radius * 1.45, y - radius * 1.25);
-      context.lineTo(x + radius * 0.55, y - radius * 0.9);
+      context.moveTo(...cloth[0]);
+      for (const point of cloth.slice(1)) context.lineTo(...point);
       context.closePath();
       context.fill();
     }
@@ -642,6 +676,7 @@ export function HanMapCanvas({
   const politicalRef = useRef<HTMLCanvasElement | null>(null);
   const politicalPathsRef = useRef<PoliticalPaths | null>(null);
   const markerImagesRef = useRef<CityMarkerImages>({});
+  const flagPhaseRef = useRef(0);
   const viewRef = useRef<IsoView | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<{ city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[]>([]);
@@ -783,6 +818,7 @@ export function HanMapCanvas({
       hideCityNamesRef.current,
       sizeRef.current.dpr,
       markerImagesRef.current,
+      flagPhaseRef.current,
     );
   }, []);
 
@@ -817,6 +853,22 @@ export function HanMapCanvas({
   useEffect(() => {
     render();
   }, [hideCityNames, render, scene]);
+
+  useEffect(() => {
+    const hasWavingFlag = scene?.cities.some((city) => (
+      isOwnedNationVisual(city.nationId, city.nationColor) && city.supply !== false
+    )) ?? false;
+    const reducedMotion = typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    flagPhaseRef.current = 0;
+    render();
+    if (!hasWavingFlag || reducedMotion) return;
+    const timer = window.setInterval(() => {
+      flagPhaseRef.current = (flagPhaseRef.current + 1) % 3;
+      render();
+    }, 240);
+    return () => window.clearInterval(timer);
+  }, [render, scene]);
 
   useEffect(() => {
     if (currentCityId == null) return;

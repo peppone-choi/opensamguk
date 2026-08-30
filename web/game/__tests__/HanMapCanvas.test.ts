@@ -3,7 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
     cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
-    expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, maxScaleForDpr, seatLabel,
+    cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
+    labelZoomFor, maxScaleForDpr, seatLabel,
     TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom, type HanTiles,
 } from '@opensamguk/ui';
 
@@ -52,6 +53,32 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect(radius2).toBe(radius1 * 2);
         expect(hit2.right - hit2.left).toBe((hit1.right - hit1.left) * 2);
         expect(hit2.bottom - hit2.top).toBe((hit1.bottom - hit1.top) * 2);
+    });
+
+    it('지도 확대에 맞춰 마커와 히트 영역이 단계적으로 함께 커진다', () => {
+        expect(cityMarkerZoomStep(8, 2)).toBe(1);
+        expect(cityMarkerZoomStep(20, 2)).toBe(1.5);
+        expect(cityMarkerZoomStep(32, 2)).toBe(2);
+
+        const normal = cityMarkerDrawBox(5, 100, 80, 2, 1);
+        const zoomed = cityMarkerDrawBox(5, 100, 80, 2, 2);
+        const normalHit = cityMarkerHitBox(5, 100, 80, 2, 1);
+        const zoomedHit = cityMarkerHitBox(5, 100, 80, 2, 2);
+        expect(zoomed.width).toBe(normal.width * 2);
+        expect(zoomed.height).toBe(normal.height * 2);
+        expect(zoomedHit.right - zoomedHit.left).toBeGreaterThan(normalHit.right - normalHit.left);
+        expect(zoomedHit.bottom - zoomedHit.top).toBeGreaterThan(normalHit.bottom - normalHit.top);
+    });
+});
+
+describe('보급 깃발 형태', () => {
+    it('보급 중인 깃발은 3프레임으로 펀럭이고 보급 단절 깃발은 항상 축 늘어진다', () => {
+        const waving = [0, 1, 2].map((phase) => flagClothPoints(100, 80, 20, true, phase));
+        expect(new Set(waving.map((points) => JSON.stringify(points))).size).toBe(3);
+
+        const drooped = [0, 1, 2].map((phase) => flagClothPoints(100, 80, 20, false, phase));
+        expect(new Set(drooped.map((points) => JSON.stringify(points))).size).toBe(1);
+        expect(drooped[0][2][1]).toBeGreaterThan(waving[0][2][1]);
     });
 });
 
