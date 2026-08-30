@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   HanMapCanvas,
   cellToScreen,
+  initialView,
   screenToCell,
   type IsoView,
   type ProvinceIdentityMap,
@@ -28,6 +29,8 @@ interface CanvasRecord {
 const records = new Map<HTMLCanvasElement, CanvasRecord>();
 let pathConstructions = 0;
 const pathRecords: { moves: number[][]; lines: number[][] }[] = [];
+let measuredWidth = 200;
+let measuredHeight = 106;
 
 const PROVINCE_MAP: ProvinceIdentityMap = {
   width: 4,
@@ -213,12 +216,20 @@ describe('shared HanMapCanvas viewport interaction', () => {
     records.clear();
     pathConstructions = 0;
     pathRecords.length = 0;
+    measuredWidth = 200;
+    measuredHeight = 106;
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function getContext(this: HTMLCanvasElement) {
       return recordFor(this).context;
     });
-    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(200);
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => measuredWidth);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => measuredHeight);
     vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockReturnValue({
-      x: 0, y: 0, left: 0, top: 0, right: 200, bottom: 106, width: 200, height: 106, toJSON: () => ({}),
+      x: 0, y: 0, left: 0, top: 0,
+      get right() { return measuredWidth; },
+      get bottom() { return measuredHeight; },
+      get width() { return measuredWidth; },
+      get height() { return measuredHeight; },
+      toJSON: () => ({}),
     });
     Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
     Object.defineProperty(globalThis, 'Path2D', {
@@ -237,6 +248,68 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it.each([1, 1.5, 2, 3])('fits the complete grid to the measured CSS box at DPR %s', (dpr) => {
+    measuredWidth = 320;
+    measuredHeight = 480;
+    Object.defineProperty(window, 'devicePixelRatio', { value: dpr, configurable: true });
+    const views: IsoView[] = [];
+
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    expect(canvas.width).toBe(Math.round(320 * dpr));
+    expect(canvas.height).toBe(Math.round(480 * dpr));
+    expect(canvas.style.height).toBe('480px');
+    expect(views.at(-1)!.scale).toBeCloseTo(initialView(
+      canvas.width,
+      canvas.height,
+      { cols: CHE_TILES_FIXTURE._meta.cols, rows: CHE_TILES_FIXTURE._meta.rows },
+      CHE_TILES_FIXTURE,
+      dpr,
+    ).scale, 9);
+  });
+
+  it('refits an untouched view when the measured container changes', () => {
+    measuredWidth = 320;
+    measuredHeight = 480;
+    Object.defineProperty(window, 'devicePixelRatio', { value: 1.5, configurable: true });
+    const views: IsoView[] = [];
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+
+    measuredWidth = 1000;
+    measuredHeight = 500;
+    fireEvent(window, new Event('resize'));
+
+    expect(canvas.width).toBe(1500);
+    expect(canvas.height).toBe(750);
+    const view = views.at(-1)!;
+    expect(view.scale).toBeCloseTo(initialView(
+      1500,
+      750,
+      { cols: CHE_TILES_FIXTURE._meta.cols, rows: CHE_TILES_FIXTURE._meta.rows },
+      CHE_TILES_FIXTURE,
+      1.5,
+    ).scale, 9);
+    const center = screenToCell(750, 375, view);
+    expect(center[0]).toBeCloseTo((CHE_TILES_FIXTURE._meta.cols - 1) / 2, 9);
+    expect(center[1]).toBeCloseTo((CHE_TILES_FIXTURE._meta.rows - 1) / 2, 9);
   });
 
   it('draws the county, commandery-seat, and capital marker exports for each tier', async () => {
@@ -285,9 +358,9 @@ describe('shared HanMapCanvas viewport interaction', () => {
         .filter(([source]) => source instanceof LoadedImage)
         .map(([source, , , width]) => [(source as LoadedImage).src, width]);
       expect(markerWidths).toEqual(expect.arrayContaining([
-        ['/city/cast_11.png', 96],
-        ['/city/cast_5.png', 96],
-        ['/city/cast_9.png', 96],
+        ['/city/cast_11.png', 128],
+        ['/city/cast_5.png', 128],
+        ['/city/cast_9.png', 128],
       ]));
     });
   });

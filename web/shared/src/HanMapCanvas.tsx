@@ -11,7 +11,6 @@ import {
 } from 'react';
 import {
   cellToScreen,
-  centeredView,
   clampView,
   effectiveDpr,
   fitScale,
@@ -253,9 +252,10 @@ export function initialView(
   height: number,
   grid: GridSize,
   _tiles: HanTiles,
-  _dpr = 1,
+  dpr = 1,
 ): IsoView {
-  return centeredView(width, height, grid);
+  const scale = Math.min(fitScale(width, height, grid), maxScaleForDpr(dpr) * 0.9);
+  return viewAt(width, height, (grid.cols - 1) / 2, (grid.rows - 1) / 2, scale);
 }
 
 export function expandOwner(rle: [number, number][], cells: number): Int16Array {
@@ -714,6 +714,7 @@ export function HanMapCanvas({
   const markerImagesRef = useRef<CityMarkerImages>({});
   const flagPhaseRef = useRef(0);
   const viewRef = useRef<IsoView | null>(null);
+  const userModifiedViewRef = useRef(false);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<{ city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[]>([]);
   const dragRef = useRef(new Map<number, { x: number; y: number }>());
@@ -845,6 +846,7 @@ export function HanMapCanvas({
   useEffect(() => {
     terrainRef.current = loadedTiles ? bakeTerrain(loadedTiles) : null;
     viewRef.current = null;
+    userModifiedViewRef.current = false;
   }, [loadedTiles]);
 
   useEffect(() => {
@@ -931,7 +933,7 @@ export function HanMapCanvas({
     if (!box || !canvas || !loadedTiles || !terrainRef.current) return;
     const fit = () => {
       const cssWidth = box.clientWidth || 700;
-      const cssHeight = Math.round(cssWidth * 0.53);
+      const cssHeight = box.clientHeight || Math.round(cssWidth * 0.53);
       const requestedDpr = effectiveDpr(window.devicePixelRatio);
       const previousSize = sizeRef.current;
       const previousView = viewRef.current;
@@ -941,7 +943,12 @@ export function HanMapCanvas({
       canvas.style.height = `${cssHeight}px`;
       sizeRef.current = { width: canvas.width, height: canvas.height, dpr };
       const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
-      if (previousView && previousSize.width > 0 && previousSize.height > 0) {
+      if (
+        userModifiedViewRef.current
+        && previousView
+        && previousSize.width > 0
+        && previousSize.height > 0
+      ) {
         const [centerCol, centerRow] = screenToCell(
           previousSize.width / 2,
           previousSize.height / 2,
@@ -975,6 +982,7 @@ export function HanMapCanvas({
   }, [loadedTiles, onViewChange, render]);
 
   const updateView = useCallback((next: IsoView) => {
+    userModifiedViewRef.current = true;
     viewRef.current = next;
     onViewChange?.(next);
     render();
@@ -1151,7 +1159,7 @@ export function HanMapCanvas({
     <div
       ref={boxRef}
       className={`os-iso-map ${className}`.trim()}
-      style={{ position: 'relative', width: '100%', ...style }}
+      style={{ position: 'relative', width: '100%', height: '100%', ...style }}
     >
       <canvas
         ref={canvasRef}
