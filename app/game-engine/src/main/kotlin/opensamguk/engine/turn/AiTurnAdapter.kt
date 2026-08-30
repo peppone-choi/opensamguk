@@ -1544,7 +1544,9 @@ class AiTurnAdapter(
             val amount = GenDomesticFamily.tradeAmount(relGold, relRice, deathRate, maxAmount, throwawayRng)
             if (amount >= minAmount) {
                 val args = linkedMapOf<String, Any?>("buyRice" to true, "amount" to amount) // :2436-2439
-                if (candidateAllowedHookForTrade(general, args)) return ChosenCommand(GenDomesticFamily.TRADE_ACTION, args)
+                if (candidateAllowedHookForTrade(general, logicCity, args)) {
+                    return ChosenCommand(GenDomesticFamily.TRADE_ACTION, args)
+                }
             }
         }
 
@@ -1560,7 +1562,9 @@ class AiTurnAdapter(
             val amount = GenDomesticFamily.tradeAmount(relRice, relGold, deathRate, maxAmount, throwawayRng)
             if (amount >= minAmount) {
                 val args = linkedMapOf<String, Any?>("buyRice" to false, "amount" to amount) // :2467-2470
-                if (candidateAllowedHookForTrade(general, args)) return ChosenCommand(GenDomesticFamily.TRADE_ACTION, args)
+                if (candidateAllowedHookForTrade(general, logicCity, args)) {
+                    return ChosenCommand(GenDomesticFamily.TRADE_ACTION, args)
+                }
             }
         }
 
@@ -1817,7 +1821,12 @@ class AiTurnAdapter(
     }
 
     /** The F-BRIDGE trade gate (the acting general's canonical ctx), reused by [tradeDecision]. */
-    private fun candidateAllowedHookForTrade(general: TurnGeneral, args: Map<String, Any?>): Boolean {
+    private fun candidateAllowedHookForTrade(
+        general: TurnGeneral,
+        logicCity: opensamguk.logic.domain.City?,
+        args: Map<String, Any?>,
+    ): Boolean {
+        if (logicCity == null) return false
         val state = world.getState()
         val envMap = WorldEnvBuilder.commandEnvMap(
             state.currentYear,

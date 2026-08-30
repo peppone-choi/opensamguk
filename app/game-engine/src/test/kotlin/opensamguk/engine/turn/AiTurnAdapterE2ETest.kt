@@ -208,6 +208,40 @@ class AiTurnAdapterE2ETest {
         assertNull(outcome.denyReason)
     }
 
+    @Test fun `a cityless NPC cannot reach the full trade candidate gate when merchant checks are ignored`() {
+        val state = baseState().copy(
+            meta = linkedMapOf("npc_general_policy" to linkedMapOf("priority" to listOf("금쌀구매"))),
+        )
+        val ruler = general(
+            id = 1334,
+            nationId = 21,
+            cityId = 0,
+            officerLevel = 12,
+            npcState = 2,
+        ).copy(gold = 500_000, rice = 1_000)
+        val wandering = nation(id = 21, capital = 0).copy(
+            name = "wandering",
+            level = 1,
+            gold = 100_000,
+            rice = 100_000,
+            meta = linkedMapOf("gennum" to 1),
+        )
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state,
+                listOf(ruler),
+                cities = emptyList(),
+                nations = listOf(wandering),
+                worldId = opensamguk.common.world.WorldId(state.id),
+            ),
+        )
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+
+        val chosen = adapter.chooseGeneralTurn(1334, ReservedTurn("휴식", ""))
+
+        assertEquals("휴식", chosen.actionCode)
+    }
+
     @Test fun `a wandering NPC ruler founds from a han county through the active map seam`() {
         val han = CityConstRegistry.of("han")
         val county = han.all().values.first { it.level >= 10 }
