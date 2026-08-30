@@ -432,6 +432,20 @@ export function cityMarkerHitBox(level: number, x: number, y: number, dpr: numbe
   };
 }
 
+export function cityMarkerRadius(level: number, dpr: number): number {
+  const cssRadius = Math.max(7, Math.min(18, 5 + (CITY_LEVEL_VISUAL_EXTENT[level] ?? 48) * 0.2));
+  return cssRadius * dpr;
+}
+
+export function cityFallbackHitBox(x: number, y: number, radius: number) {
+  return {
+    left: x - radius * 0.7,
+    top: y - radius * 0.9,
+    right: x + radius * 0.7,
+    bottom: y + radius * 0.45,
+  };
+}
+
 function markerLevel(city: IsoCityOverlay): number {
   return Number.isInteger(city.level) && city.level >= 1 && city.level <= 11 ? city.level : 5;
 }
@@ -492,13 +506,16 @@ function drawScene(
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
     const level = markerLevel(city);
-    const radius = Math.max(7, Math.min(18, 5 + (CITY_LEVEL_VISUAL_EXTENT[level] ?? 48) * 0.2));
-    hits.push({ city, ...cityMarkerHitBox(level, x, y, dpr) });
+    const radius = cityMarkerRadius(level, dpr);
+    const marker = markerImages[level];
+    hits.push({
+      city,
+      ...(marker ? cityMarkerHitBox(level, x, y, dpr) : cityFallbackHitBox(x, y, radius)),
+    });
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
     if (owned && city.supply === false) context.globalAlpha = 0.42;
 
-    const marker = markerImages[level];
     if (marker) {
       const box = cityMarkerDrawBox(level, x, y, dpr);
       context.imageSmoothingEnabled = true;

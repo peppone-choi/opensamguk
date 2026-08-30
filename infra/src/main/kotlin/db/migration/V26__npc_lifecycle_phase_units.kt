@@ -132,7 +132,11 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
     ).use { statement ->
         statement.executeQuery().use { rs ->
             buildSet {
-                while (rs.next()) rs.getString("name")?.let(::add)
+                while (rs.next()) {
+                    rs.getString("name")?.let { name ->
+                        add(LEGACY_IMPERIAL_NAMES[name] ?: name)
+                    }
+                }
             }
         }
     }

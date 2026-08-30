@@ -94,7 +94,8 @@ class V26NpcLifecycleMigrationTest {
             """.trimIndent(),
             String::class.java,
         )
-        assertEquals(listOf("유변", "유협").sorted(), deferredNames.sorted())
+        assertEquals(listOf("소제1", "유협").sorted(), deferredNames.sorted())
+        assertFalse(deferredNames.contains("유변"), "legacy 소제1 event must suppress duplicate canonical 유변")
         assertTrue(jdbc.queryForObject("SELECT (meta ->> 'gennum')::integer = 1 FROM nation WHERE id = 1", Boolean::class.java) == true)
     }
 
@@ -127,6 +128,12 @@ class V26NpcLifecycleMigrationTest {
         jdbc.update("INSERT INTO select_pool (unique_name, general_id, info) VALUES ('미성년', 1002, '{}')")
         jdbc.update(
             "INSERT INTO event (id, target_code, priority, condition, action) VALUES (500, 'Month', 0, '[]', '[]')",
+        )
+        jdbc.update(
+            """
+            INSERT INTO event (id, target_code, priority, condition, action)
+            VALUES (501, 'Month', 1000, '[]', '[["RegNPC", 1, "소제1"]]')
+            """.trimIndent(),
         )
         jdbc.update("INSERT INTO general_turn (general_id, turn_idx, action_code) VALUES (1002, 0, '휴식')")
         jdbc.update("INSERT INTO rank_data (general_id, type) VALUES (1002, 'leadership')")
