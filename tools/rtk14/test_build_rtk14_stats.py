@@ -59,6 +59,21 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             workflow.index("- name: Materialize RTK14 scenario stats for image build"),
         )
 
+    def test_deploy_validates_materialized_rosters_with_runtime_importer(self):
+        workflow = (
+            Path(__file__).resolve().parents[2] / ".github" / "workflows" / "deploy.yml"
+        ).read_text(encoding="utf-8")
+
+        materialize = workflow.index("- name: Materialize RTK14 scenario stats for image build")
+        validate = workflow.index("- name: Validate materialized scenario seed contracts")
+        image_build = workflow.index("- name: Build + push game-engine image")
+        self.assertLess(materialize, validate)
+        self.assertLess(validate, image_build)
+        self.assertIn(
+            "opensamguk.infra.seed.ScenarioJsonTest.every committed runtime scenario uses the canonical Han world contract",
+            workflow[validate:image_build],
+        )
+
     def test_source_rows_round_trip_all_contract_columns(self):
         rows = source_rows()
 
@@ -212,6 +227,34 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         self.assertEqual(1000, second_audit["representedSourceRows"])
         self.assertEqual([], second_audit["missingSourceIds"])
 
+    def test_enrichment_refreshes_seed_contract_for_materialized_roster(self):
+        rtk = b._source_rows_to_rtk(source_rows())
+        scenario = {
+            "startYear": 180,
+            "seedContract": {"activeGenerals": {"base": 1, "extended": 2}},
+            "general": [],
+            "general_ex": [
+                legacy_tuple("장수12", leadership=42, strength=43, intel=44, birth=112, death=180),
+                legacy_tuple("검토전용", leadership=67, strength=63, intel=61, birth=150, death=220),
+            ],
+        }
+
+        enriched, audit = b.enrich_scenario(
+            scenario,
+            rtk,
+            unmatched_overrides={
+                "검토전용": {
+                    "politics": 71,
+                    "charm": 44,
+                    "rationale": "Active legacy-only extended-row fixture.",
+                },
+            },
+        )
+
+        expected = {"base": 51, "extended": 52}
+        self.assertEqual({"activeGenerals": expected}, enriched["seedContract"])
+        self.assertEqual(expected, audit["activeGeneralContract"])
+
     def test_manual_override_preserves_runtime_first_three_stats_without_source_id(self):
         rtk = b._source_rows_to_rtk(source_rows())
         scenario = {"startYear": 220, "general": [legacy_tuple("유약", leadership=67, strength=63, intel=61, birth=206, death=260)], "general_ex": []}
@@ -262,7 +305,7 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         expected_names = {
             "강경", "건석", "곽씨", "관로", "교국로", "교현", "길평", "낙준", "남두", "단경", "독발수기능", "루반", "반임",
             "변장", "부동", "북궁백옥", "사마준", "사마휘", "사의관", "송건", "아들노숙", "악신", "예형", "우길", "원사",
-            "원혁", "유약", "유총", "이리", "장량", "주한", "지양군", "진복", "진온", "허소", "헌제", "화타", "황승언", "휴고",
+            "원혁", "유굉", "유변", "유약", "유총", "유협", "이리", "장량", "주한", "지양군", "진복", "진온", "허소", "헌제", "화타", "황승언", "휴고",
         }
         self.assertEqual(expected_names, set(b.UNMATCHED_OVERRIDES))
         self.assertTrue(all(
