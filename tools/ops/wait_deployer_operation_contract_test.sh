@@ -106,6 +106,46 @@ for required in (
 ):
     if required not in workflow[generated:mutation]:
         raise SystemExit(f"reset capability probe is missing fail-closed contract marker: {required}")
+
+for required in (
+    "create_backup:",
+    'default: true',
+    'type: boolean',
+    'INPUT_CREATE_BACKUP: ${{ inputs.create_backup }}',
+    'CREATE_BACKUP="$INPUT_CREATE_BACKUP"',
+    'if [[ "$CREATE_BACKUP" == "true" ]]; then',
+    'Backup explicitly disabled for $PUBLIC_SERVER',
+):
+    if required not in workflow:
+        raise SystemExit(f"reset workflow is missing optional-backup contract marker: {required}")
+
+backup_guards = []
+offset = 0
+while True:
+    found = workflow.find('if [[ "$CREATE_BACKUP" == "true" ]]; then', offset)
+    if found < 0:
+        break
+    backup_guards.append(found)
+    offset = found + 1
+if len(backup_guards) != 3:
+    raise SystemExit(f"reset workflow expected 3 create-backup guards, found {len(backup_guards)}")
+
+env_guard, data_guard, completion_guard = backup_guards
+backup_dir = workflow.find('BACKUP_DIR="$HOME/opensamguk-backups/${PUBLIC_SERVER}/${TS}"')
+env_copy = workflow.find('sudo cp "$ENV_FILE" "$BACKUP_DIR/${PUBLIC_SERVER}.env"')
+scenario_export = workflow.find('if [[ -n "${RTK14_STATS_JSON_B64:-}" ]]')
+pg_dump = workflow.find('pg_dump -U')
+redis_save = workflow.find('redis-cli SAVE')
+redis_copy = workflow.find('docker cp "${REDIS_CONTAINER}:/data" "$BACKUP_DIR/redis-data"')
+backup_disabled = workflow.find('Backup explicitly disabled for $PUBLIC_SERVER')
+if min(backup_dir, env_copy, scenario_export, pg_dump, redis_save, redis_copy, backup_disabled) < 0:
+    raise SystemExit("reset workflow optional-backup branch is incomplete")
+if not (env_guard < backup_dir < env_copy < scenario_export < data_guard):
+    raise SystemExit("reset workflow must guard the backup directory and environment-file copy")
+if not (data_guard < pg_dump < redis_save < redis_copy < backup_disabled < completion_guard):
+    raise SystemExit("reset workflow must guard PostgreSQL and Redis backup mutations before the no-backup branch")
+if 'else\n            echo "=== Backup explicitly disabled for $PUBLIC_SERVER ==="\n          fi' not in workflow:
+    raise SystemExit("reset workflow no-backup branch must be the alternative to guarded data backups")
 PY
 
 echo "wait_deployer_operation contract tests: PASS"

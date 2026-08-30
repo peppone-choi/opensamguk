@@ -103,6 +103,9 @@ jobs:
       - name: Verify deploy service inventory contract
         if: '!cancelled()'
         run: python3 tools/ops/test_deploy_service_inventory_contract.py
+      - name: Verify game-server reset workflow contract
+        if: '!cancelled()'
+        run: bash tools/ops/wait_deployer_operation_contract_test.sh
       - name: Verify local compose service graph
         if: '!cancelled()'
         run: docker compose --env-file .env.example config --quiet
