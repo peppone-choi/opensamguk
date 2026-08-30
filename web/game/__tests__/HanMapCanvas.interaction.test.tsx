@@ -28,6 +28,8 @@ interface CanvasRecord {
 const records = new Map<HTMLCanvasElement, CanvasRecord>();
 let pathConstructions = 0;
 const pathRecords: { moves: number[][]; lines: number[][] }[] = [];
+let containerWidth = 200;
+let containerHeight = 0;
 
 const PROVINCE_MAP: ProvinceIdentityMap = {
   width: 4,
@@ -213,10 +215,13 @@ describe('shared HanMapCanvas viewport interaction', () => {
     records.clear();
     pathConstructions = 0;
     pathRecords.length = 0;
+    containerWidth = 200;
+    containerHeight = 0;
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function getContext(this: HTMLCanvasElement) {
       return recordFor(this).context;
     });
-    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(200);
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => containerWidth);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => containerHeight);
     vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0, y: 0, left: 0, top: 0, right: 200, bottom: 106, width: 200, height: 106, toJSON: () => ({}),
     });
@@ -238,6 +243,28 @@ describe('shared HanMapCanvas viewport interaction', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
+
+  it.each([1, 1.5, 2, 3])(
+    'uses the rendered 320x240 container for the initial canvas at DPR %s',
+    (dpr) => {
+      containerWidth = 320;
+      containerHeight = 240;
+      Object.defineProperty(window, 'devicePixelRatio', { value: dpr, configurable: true });
+
+      render(
+        <HanMapCanvas
+          mapCode="che"
+          tiles={CHE_TILES_FIXTURE}
+          provinceMap={null}
+        />,
+      );
+
+      const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+      expect(canvas.width).toBe(320 * dpr);
+      expect(canvas.height).toBe(240 * dpr);
+      expect(canvas.style.height).toBe('240px');
+    },
+  );
 
   it('draws the county, commandery-seat, and capital marker exports for each tier', async () => {
     class LoadedImage {

@@ -11,14 +11,11 @@ import {
 } from 'react';
 import {
   cellToScreen,
-  centeredView,
   clampView,
   effectiveDpr,
   fitScale,
-  junSpanCells,
   maxScaleForDpr,
   pinchGesture,
-  scaleForSpan,
   screenToCell,
   viewAt,
   zoomAt,
@@ -225,7 +222,7 @@ const COMMANDERY_BORDER_LIGHT = 'rgba(225,210,163,0.76)';
 const DEFAULT_SOURCE: IsoSourceSize = { width: 700, height: 610 };
 export const TIER2_MARKER_ZOOM: Record<string, number> = { COUNTY: 2.19, MARQUISATE: 2.19 };
 export const TIER2_LABEL_ZOOM: Record<string, number> = { COUNTY: 5.5, MARQUISATE: 5.5 };
-const INITIAL_SCALE_MARGIN = 0.9;
+const INITIAL_FIT_PADDING_CSS = 36;
 
 export function tierZoom(table: Record<string, number>, kind: string, fit: number): number | undefined {
   const factor = table[kind];
@@ -251,16 +248,18 @@ export function labelledRegions(regions: HanTiles['regions'], minCells = 120) {
   return regions.filter((region) => region.cells >= minCells);
 }
 
-export function initialView(width: number, height: number, grid: GridSize, tiles: HanTiles, dpr = 1): IsoView {
-  const center = tiles.juns.find((jun) => jun.name === '河南尹' || jun.name === '하남윤') ?? tiles.juns[0];
-  if (!center) return centeredView(width, height, grid);
-  const span = 3 * junSpanCells(tiles.juns);
-  const markerThreshold = Math.min(...Object.values(TIER2_MARKER_ZOOM)) * fitScale(width, height, grid);
-  const scale = Math.min(
-    scaleForSpan(width, height, span, maxScaleForDpr(dpr)),
-    INITIAL_SCALE_MARGIN * markerThreshold,
+export function initialView(width: number, height: number, grid: GridSize, _tiles: HanTiles, dpr = 1): IsoView {
+  const padding = INITIAL_FIT_PADDING_CSS * effectiveDpr(dpr);
+  const innerWidth = Math.max(1, width - padding * 2);
+  const innerHeight = Math.max(1, height - padding * 2);
+  const scale = Math.min(maxScaleForDpr(dpr), fitScale(innerWidth, innerHeight, grid));
+  return viewAt(
+    width,
+    height,
+    (grid.cols - 1) / 2,
+    (grid.rows - 1) / 2,
+    scale,
   );
-  return clampView(viewAt(width, height, center.col, center.row, scale), width, height, grid);
 }
 
 export function expandOwner(rle: [number, number][], cells: number): Int16Array {
@@ -936,7 +935,7 @@ export function HanMapCanvas({
     if (!box || !canvas || !loadedTiles || !terrainRef.current) return;
     const fit = () => {
       const cssWidth = box.clientWidth || 700;
-      const cssHeight = Math.round(cssWidth * 0.53);
+      const cssHeight = box.clientHeight || Math.round(cssWidth * 0.53);
       const requestedDpr = effectiveDpr(window.devicePixelRatio);
       const previousSize = sizeRef.current;
       const previousView = viewRef.current;
@@ -1156,7 +1155,7 @@ export function HanMapCanvas({
     <div
       ref={boxRef}
       className={`os-iso-map ${className}`.trim()}
-      style={{ position: 'relative', width: '100%', ...style }}
+      style={{ position: 'relative', width: '100%', height: '100%', ...style }}
     >
       <canvas
         ref={canvasRef}
