@@ -189,7 +189,7 @@ describe('province identity map', () => {
     expect(binding.conflicts).toEqual([]);
   });
 
-  it('fills an unmapped province from the nearest owned city in its commandery', () => {
+  it('does not spread one occupied settlement across an unmapped province in the same commandery', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([
       0, 16, 1, 255,
       0, 16, 2, 255,
@@ -207,12 +207,13 @@ describe('province identity map', () => {
     const binding = bindCompleteProvinceOwnership(map, cities, { cols: 4, rows: 1 }, { width: 400, height: 1 }, countyIndex);
 
     expect(binding.colors.get(0)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
-    expect(binding.colors.get(1)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
+    expect(binding.colors.has(1)).toBe(false);
     expect(binding.colors.get(2)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
-    expect(binding.cities?.get(1)?.id).toBe(11);
+    expect(binding.cities?.has(1)).toBe(false);
+    expect(Array.from(composeProvincePixels(map, binding).slice(4, 8))).toEqual([0, 0, 0, 0]);
   });
 
-  it('skips a nearer unowned county when filling geometry without a direct city', () => {
+  it('keeps geometry without a direct city blank even when its commandery has an owner', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([
       0, 16, 1, 255,
       0, 16, 2, 255,
@@ -236,9 +237,9 @@ describe('province identity map', () => {
       countyIndex,
     );
 
-    expect(binding.colors.get(0)?.nationId).toBe(0);
-    expect(binding.colors.get(1)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
-    expect(binding.cities?.get(1)?.id).toBe(20);
+    expect(binding.colors.has(0)).toBe(false);
+    expect(binding.colors.has(1)).toBe(false);
+    expect(binding.cities?.has(1)).toBe(false);
   });
 
   it('resolves a shared county by centroid distance then lowest city id', () => {
@@ -259,7 +260,7 @@ describe('province identity map', () => {
     expect(binding.conflicts).toEqual([]);
   });
 
-  it('colors every real Han province from its commandery ownership', () => {
+  it('colors only provinces with a direct owned runtime city', () => {
     const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
       _meta: { cols: number; rows: number };
       owner: [number, number][];
@@ -306,14 +307,14 @@ describe('province identity map', () => {
     const landProvinces = new Set([...map.provinces].filter((province) => province >= 0));
 
     expect(landProvinces.size).toBe(tiles.provinceRecords.length);
-    expect(binding.colors.size).toBe(landProvinces.size);
-    expect([...binding.colors.values()].every((color) => color.nationId === 0 || color.nationId === 1)).toBe(true);
+    expect(binding.colors.size).toBeLessThan(landProvinces.size);
+    expect([...binding.colors.values()].every((color) => color.nationId === 1)).toBe(true);
     expect([...binding.colors.values()].some((color) => color.nationId === 1)).toBe(true);
     expect(binding.conflicts).toEqual([]);
     expect([...countyIndex.commanderyByProvince].every((commandery) => commandery >= 0)).toBe(true);
   });
 
-  it('renders all 15 scenario borders without transparent land or cross-commandery claims', () => {
+  it('renders all 15 scenarios without inferred ownership or cross-commandery claims', () => {
     const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
       _meta: { cols: number; rows: number };
       owner: [number, number][];
@@ -375,8 +376,9 @@ describe('province identity map', () => {
       );
       const pixels = composeProvincePixels(map, binding);
 
-      expect(binding.colors.size, scenarioFile).toBe(tiles.provinceRecords.length);
-      expect(landCells.every((cell) => pixels[cell * 4 + 3] === 255), scenarioFile).toBe(true);
+      expect(binding.colors.size, scenarioFile).toBeLessThanOrEqual(ownerByCity.size);
+      expect(landCells.some((cell) => pixels[cell * 4 + 3] === 0), scenarioFile).toBe(true);
+      expect([...binding.colors.keys()].every((province) => binding.directProvinces?.has(province)), scenarioFile).toBe(true);
       expect([...binding.cities!.entries()].every(([province, city]) => (
         countyIndex.commanderyByName.get(city.commanderyName!) === countyIndex.commanderyByProvince[province]
       )), scenarioFile).toBe(true);
@@ -445,9 +447,9 @@ describe('province identity map', () => {
       countyIndex,
     );
 
-    expect(binding.colors.get(0)?.nationId).toBe(0);
+    expect(binding.colors.has(0)).toBe(false);
     expect(binding.colors.get(1)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
-    expect(binding.colors.get(2)?.nationId).toBe(0);
+    expect(binding.colors.has(2)).toBe(false);
     expect(binding.cities?.has(2)).toBe(false);
   });
 
@@ -474,13 +476,35 @@ describe('province identity map', () => {
       countyIndex,
     );
 
-    expect(binding.colors.get(0)?.nationId).toBe(0);
+    expect(binding.colors.has(0)).toBe(false);
     expect(binding.colors.get(1)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
     expect(binding.cities?.has(0)).toBe(false);
     expect(binding.directProvinces?.has(0)).toBe(false);
   });
 
-  it('renders unowned Han and external provinces with opaque neutral colors', () => {
+  it('does not claim the sampled province when a declared commandery cannot be resolved', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+    ]), 1, 1);
+    const countyIndex = buildCountyAdministrativeIndex(
+      map,
+      [{ col: 0, row: 0 }],
+      [{ name: 'A군' }],
+    );
+
+    const binding = bindCompleteProvinceOwnership(
+      map,
+      [{ ...CHE_OVERLAYS_FIXTURE[0], x: 0, y: 0, commanderyName: '미등록군' }],
+      { cols: 1, rows: 1 },
+      { width: 1, height: 1 },
+      countyIndex,
+    );
+
+    expect(binding.colors.size).toBe(0);
+    expect(binding.cities?.size).toBe(0);
+  });
+
+  it('leaves unowned Han and external provinces transparent in the political layer', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([
       0, 16, 1, 255,
       0, 32, 2, 255,
@@ -501,9 +525,8 @@ describe('province identity map', () => {
       buildProvinceAdministrativeIndex(map, provinces, parents),
     );
 
-    expect(binding.colors.get(0)).toEqual({ nationId: 0, rgb: [126, 119, 102] });
-    expect(binding.colors.get(1)).toEqual({ nationId: 0, rgb: [88, 116, 128] });
-    expect([...composeProvincePixels(map, binding)].filter((_, index) => index % 4 === 3)).toEqual([255, 255]);
+    expect(binding.colors.size).toBe(0);
+    expect([...composeProvincePixels(map, binding)].filter((_, index) => index % 4 === 3)).toEqual([0, 0]);
   });
 
   it.each([

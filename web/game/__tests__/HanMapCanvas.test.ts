@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
     buildIsoScene, cellToScreen, cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
     cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
-    labelZoomFor, maxScaleForDpr, seatLabel,
+    labelZoomFor, maxScaleForDpr, provinceAtScreenPoint, screenBoxInsideProvince, seatLabel,
     TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
     type CountyAdministrativeIndex, type HanTiles, type IsoSceneOptions, type ProvinceIdentityMap,
 } from '@opensamguk/ui';
@@ -50,7 +50,11 @@ describe('지도 아이콘 배율과 앵커', () => {
             options,
         );
 
-        expect({ col: scene.cities[0].col, row: scene.cities[0].row }).toEqual({ col: 2, row: 0 });
+        expect({
+            col: scene.cities[0].col,
+            row: scene.cities[0].row,
+            provinceId: scene.cities[0].provinceId,
+        }).toEqual({ col: 2, row: 0, provinceId: 1 });
     });
 
     it('미리 계산한 기준점을 사용해 선택 상태 변경 시 지형을 다시 탐색하지 않는다', () => {
@@ -99,6 +103,66 @@ describe('지도 아이콘 배율과 앵커', () => {
 
         expect({ col: scene.cities[0].col, row: scene.cities[0].row }).toEqual({ col: 1.5, row: 1.5 });
         expect({ x: scene.cities[0].x, y: scene.cities[0].y }).toEqual({ x: 30, y: 30 });
+    });
+
+    it('다른 군의 육지에 찍힌 기준점은 선언한 군의 현 프로빈스로 옮긴다', () => {
+        const provinceMap: ProvinceIdentityMap = {
+            width: 3,
+            height: 1,
+            provinces: new Int16Array([0, -1, 1]),
+            commanderies: new Int16Array([1, -1, 0]),
+            provinceEdges: [],
+            commanderyEdges: [],
+        };
+        const countyIndex: CountyAdministrativeIndex = {
+            commanderyByProvince: new Int16Array([1, 0]),
+            commanderyByName: new Map([['A군', 0]]),
+            administrativeSystemByProvince: ['', ''],
+        };
+        const tiles = {
+            _meta: { cols: 3, rows: 1, year: 220, terrainLegend: {} },
+            terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
+        } satisfies HanTiles;
+
+        const scene = buildIsoScene(
+            tiles,
+            [{ id: 1, name: 'A현', level: 5, nationId: 1, x: 0, y: 0, commanderyName: 'A군' }],
+            { width: 2, height: 1 },
+            { markerPlacement: { provinceMap, countyIndex } },
+        );
+
+        expect(scene.cities[0]).toMatchObject({ col: 2, row: 0, provinceId: 1 });
+    });
+
+    it('아이콘·hitbox·도시명 box는 같은 현 프로빈스 내부일 때만 유효하다', () => {
+        const provinceMap: ProvinceIdentityMap = {
+            width: 3,
+            height: 3,
+            provinces: new Int16Array([
+                -1, 0, -1,
+                0, 0, 0,
+                -1, 0, -1,
+            ]),
+            commanderies: new Int16Array(9),
+            provinceEdges: [],
+            commanderyEdges: [],
+        };
+        const view = { scale: 20, ox: 100, oy: 50 };
+        const [centerX, centerY] = cellToScreen(1, 1, view);
+
+        expect(provinceAtScreenPoint(provinceMap, view, centerX, centerY)).toBe(0);
+        expect(screenBoxInsideProvince(provinceMap, 0, view, {
+            left: centerX - 3,
+            top: centerY - 2,
+            right: centerX + 3,
+            bottom: centerY + 2,
+        })).toBe(true);
+        expect(screenBoxInsideProvince(provinceMap, 0, view, {
+            left: centerX - 30,
+            top: centerY - 20,
+            right: centerX + 30,
+            bottom: centerY + 20,
+        })).toBe(false);
     });
 
     it.each([1, 1.5, 2, 3])('DPR %s에서 CSS 크기와 지점 앵커를 보존한다', (dpr) => {

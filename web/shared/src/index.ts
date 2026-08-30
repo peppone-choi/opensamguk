@@ -19,7 +19,9 @@ export {
   labelledRegions,
   labelZoomFor,
   mapCityToTile,
+  provinceAtScreenPoint,
   sceneGolden,
+  screenBoxInsideProvince,
   seatLabel,
   tierZoom,
   TIER2_LABEL_ZOOM,
@@ -70,8 +72,10 @@ export {
   type ProvinceEdge,
   type ProvinceIdentityMap,
   type ProvinceOwnershipBinding,
+  type ProvincePlacement,
   type CountyAdministrativeIndex,
   type ParentRegionRecordDto,
   type ProvinceRecordDto,
+  resolveProvincePlacement,
 } from './provinceMap';
 export { isOwnedNationVisual } from './nationVisual';

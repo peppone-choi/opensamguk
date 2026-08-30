@@ -50,6 +50,12 @@ export interface CountyAdministrativeIndex {
   administrativeSystemByProvince: readonly string[];
 }
 
+export interface ProvincePlacement {
+  col: number;
+  row: number;
+  provinceId: number;
+}
+
 export interface ProvinceRecordDto {
   id: string;
   displayName: string;
@@ -77,21 +83,6 @@ const SYSTEM_LABELS: Readonly<Record<string, string>> = {
   USAN: '우산국', WA: '왜', WUHUAN: '오환', XIANBEI: '선비',
   XIONGNU: '남흉노', YE: '예', YILOU: '읍루', YIZHOU: '이주',
 };
-
-const ADMINISTRATIVE_SYSTEM_RGB: Readonly<Record<string, [number, number, number]>> = {
-  HAN_COMMANDERY: [126, 119, 102],
-  AILAO: [123, 104, 80], BAEKJE: [110, 104, 143], BUYEO: [92, 125, 117],
-  BYEONHAN: [139, 109, 91], DI: [139, 112, 79], GOGURYEO: [88, 116, 128],
-  JINHAN: [136, 102, 112], JUHO: [108, 123, 91], MAHAN: [128, 104, 132],
-  OKJEO: [89, 126, 126], QIANG: [137, 117, 78], SHANYUE: [94, 125, 89],
-  TSUSHIMA: [111, 106, 139], USAN: [91, 121, 139], WA: [132, 99, 119],
-  WUHUAN: [122, 111, 82], XIANBEI: [109, 122, 85], XIONGNU: [128, 102, 79],
-  YE: [91, 124, 109], YILOU: [101, 119, 98], YIZHOU: [125, 106, 82],
-};
-
-function administrativeColor(system: string | undefined): [number, number, number] {
-  return ADMINISTRATIVE_SYSTEM_RGB[system ?? ''] ?? ADMINISTRATIVE_SYSTEM_RGB.HAN_COMMANDERY;
-}
 
 export function formatProvinceTooltip(
   province: ProvinceRecordDto,
@@ -453,7 +444,42 @@ function nearestSample(samples: readonly CitySample[], centerCol: number, center
   return selected;
 }
 
-/** Assign every land province a political or explicit neutral color without transparent holes. */
+/** Resolve a map point to one province, correcting only into its declared parent region. */
+export function resolveProvincePlacement(
+  map: ProvinceIdentityMap,
+  countyIndex: CountyAdministrativeIndex,
+  col: number,
+  row: number,
+  commandery: number | undefined,
+): ProvincePlacement | undefined {
+  const sampleCol = Math.round(col);
+  const sampleRow = Math.round(row);
+  if (sampleCol >= 0 && sampleRow >= 0 && sampleCol < map.width && sampleRow < map.height) {
+    const provinceId = map.provinces[sampleRow * map.width + sampleCol];
+    if (provinceId >= 0 && (commandery === undefined
+      || countyIndex.commanderyByProvince[provinceId] === commandery)) {
+      return { col, row, provinceId };
+    }
+  }
+  if (commandery === undefined) return undefined;
+
+  let best: (ProvincePlacement & { distance: number }) | undefined;
+  for (let candidateRow = 0; candidateRow < map.height; candidateRow += 1) {
+    for (let candidateCol = 0; candidateCol < map.width; candidateCol += 1) {
+      const provinceId = map.provinces[candidateRow * map.width + candidateCol];
+      if (provinceId < 0 || countyIndex.commanderyByProvince[provinceId] !== commandery) continue;
+      const distance = (candidateCol - col) ** 2 + (candidateRow - row) ** 2;
+      if (!best || distance < best.distance
+        || (distance === best.distance && (candidateRow < best.row
+          || (candidateRow === best.row && candidateCol < best.col)))) {
+        best = { col: candidateCol, row: candidateRow, provinceId, distance };
+      }
+    }
+  }
+  return best && { col: best.col, row: best.row, provinceId: best.provinceId };
+}
+
+/** Bind political color only to county provinces with a directly placed live owner. */
 export function bindCompleteProvinceOwnership(
   map: ProvinceIdentityMap,
   cities: readonly IsoCityOverlay[],
@@ -473,30 +499,27 @@ export function bindCompleteProvinceOwnership(
   }
 
   const directByProvince = new Map<number, CitySample[]>();
-  const samplesByCommandery = new Map<number, CitySample[]>();
   for (const city of cities) {
     const mapped = mapCityToTile(city, grid, source);
-    const col = Math.round(mapped.col);
-    const row = Math.round(mapped.row);
-    if (!Number.isFinite(col) || !Number.isFinite(row) || col < 0 || row < 0 || col >= map.width || row >= map.height) {
-      continue;
-    }
-    const index = row * map.width + col;
-    const province = map.provinces[index];
     const commandery = city.commanderyName == null
-      ? (province >= 0 ? countyIndex.commanderyByProvince[province] : -1)
-      : (countyIndex.commanderyByName.get(city.commanderyName) ?? -1);
-    const sample = { city, col, row, province, commandery };
-    if (province >= 0) {
-      const direct = directByProvince.get(province) ?? [];
-      direct.push(sample);
-      directByProvince.set(province, direct);
-    }
-    if (commandery >= 0) {
-      const sameCommandery = samplesByCommandery.get(commandery) ?? [];
-      sameCommandery.push(sample);
-      samplesByCommandery.set(commandery, sameCommandery);
-    }
+      ? undefined
+      : countyIndex.commanderyByName.get(city.commanderyName);
+    if (city.commanderyName != null && commandery === undefined) continue;
+    const placement = resolveProvincePlacement(
+      map, countyIndex, mapped.col, mapped.row, commandery,
+    );
+    if (!placement) continue;
+    const resolvedCommandery = countyIndex.commanderyByProvince[placement.provinceId];
+    const sample = {
+      city,
+      col: placement.col,
+      row: placement.row,
+      province: placement.provinceId,
+      commandery: resolvedCommandery,
+    };
+    const direct = directByProvince.get(placement.provinceId) ?? [];
+    direct.push(sample);
+    directByProvince.set(placement.provinceId, direct);
   }
 
   const colors = new Map<number, ProvinceColor>();
@@ -511,23 +534,16 @@ export function bindCompleteProvinceOwnership(
     const ownedDirect = matchingDirect.filter((sample) => (
       isOwnedNationVisual(sample.city.nationId, sample.city.nationColor)
     ));
-    const ownedCommandery = (samplesByCommandery.get(commandery) ?? []).filter((sample) => (
-      isOwnedNationVisual(sample.city.nationId, sample.city.nationColor)
-    ));
-    // A county with a direct runtime city keeps that county's exact ownership. Only geometry
-    // without a direct city may inherit from another owned county in the same commandery.
-    const pool = matchingDirect.length > 0 ? ownedDirect : ownedCommandery;
-    const selected = nearestSample(pool, centerCol, centerRow);
-    if (selected) {
-      assignedCities.set(province, selected.city);
-      if (ownedDirect.length > 0) directProvinces.add(province);
-      colors.set(province, { nationId: selected.city.nationId, rgb: parseNationColor(selected.city.nationColor!) });
-    } else {
-      colors.set(province, {
-        nationId: 0,
-        rgb: administrativeColor(countyIndex.administrativeSystemByProvince[province]),
-      });
+    const directCity = nearestSample(matchingDirect, centerCol, centerRow);
+    if (directCity) {
+      assignedCities.set(province, directCity.city);
+      directProvinces.add(province);
     }
+    const owned = nearestSample(ownedDirect, centerCol, centerRow);
+    if (owned) colors.set(province, {
+      nationId: owned.city.nationId,
+      rgb: parseNationColor(owned.city.nationColor!),
+    });
   }
 
   return { colors, conflicts: [], cities: assignedCities, directProvinces };
