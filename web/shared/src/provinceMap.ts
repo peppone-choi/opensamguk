@@ -508,12 +508,20 @@ export function bindCompleteProvinceOwnership(
     const direct = directByProvince.get(province) ?? [];
     const commandery = countyIndex.commanderyByProvince[province];
     const matchingDirect = direct.filter((sample) => sample.commandery === commandery);
-    const pool = matchingDirect.length > 0 ? matchingDirect : (samplesByCommandery.get(commandery) ?? []);
+    const ownedDirect = matchingDirect.filter((sample) => (
+      isOwnedNationVisual(sample.city.nationId, sample.city.nationColor)
+    ));
+    const ownedCommandery = (samplesByCommandery.get(commandery) ?? []).filter((sample) => (
+      isOwnedNationVisual(sample.city.nationId, sample.city.nationColor)
+    ));
+    // A county with a direct runtime city keeps that county's exact ownership. Only geometry
+    // without a direct city may inherit from another owned county in the same commandery.
+    const pool = matchingDirect.length > 0 ? ownedDirect : ownedCommandery;
     const selected = nearestSample(pool, centerCol, centerRow);
-    if (selected && isOwnedNationVisual(selected.city.nationId, selected.city.nationColor)) {
+    if (selected) {
       assignedCities.set(province, selected.city);
-      if (matchingDirect.length > 0) directProvinces.add(province);
-      colors.set(province, { nationId: selected.city.nationId, rgb: parseNationColor(selected.city.nationColor) });
+      if (ownedDirect.length > 0) directProvinces.add(province);
+      colors.set(province, { nationId: selected.city.nationId, rgb: parseNationColor(selected.city.nationColor!) });
     } else {
       colors.set(province, {
         nationId: 0,

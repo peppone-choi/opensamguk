@@ -19,6 +19,8 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
         self.assertTrue(chinese)
         self.assertFalse(any("직할" in record["displayName"] for record in chinese))
         self.assertTrue(all(record["nameCh"] for record in chinese))
+        self.assertTrue(all(record["kind"] != "DIRECT_TERRITORY" for record in chinese))
+        self.assertTrue(all(record["cityIndex"] is not None for record in chinese))
 
     def test_committed_player_labels_contain_no_review_placeholders(self) -> None:
         root = Path(__file__).resolve().parents[3]
@@ -59,8 +61,8 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
 
         self.assertEqual(resolved[1]["displayName"], "낙양현")
         self.assertEqual(resolved[1]["nameCh"], "雒陽縣")
-        self.assertIsNone(resolved[1]["cityIndex"])
-        self.assertEqual(resolved[1]["kind"], "DIRECT_TERRITORY")
+        self.assertEqual(resolved[1]["cityIndex"], 0)
+        self.assertEqual(resolved[1]["kind"], "COUNTY")
 
     def test_parent_without_county_uses_its_real_seat_county(self) -> None:
         cities = [{"name": "조선현", "nameCh": "朝鮮縣"}]
@@ -78,7 +80,8 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
         resolved = resolve_province_record_names(records, parents, cities, [0])
 
         self.assertEqual(resolved[0]["displayName"], "조선현")
-        self.assertIsNone(resolved[0]["cityIndex"])
+        self.assertEqual(resolved[0]["cityIndex"], 0)
+        self.assertEqual(resolved[0]["kind"], "COUNTY")
         self.assertNotIn("직할", resolved[0]["displayName"])
 
     def test_external_direct_fragment_uses_its_real_parent_name(self) -> None:

@@ -81,8 +81,8 @@ def resolve_province_record_names(
     """Replace Chinese geometry placeholder labels with the real commandery-seat county.
 
     A modern ADM2 fragment is geometry provenance, not a historical administrative
-    unit. It retains that provenance and its null city linkage, while displaying the
-    commandery's sourced seat county instead of inventing a "direct territory" name.
+    unit. Chinese fragments are deterministically attached to the commandery's sourced
+    seat county instead of inventing a "direct territory" administrative unit.
     """
     parent_index = {parent['id']: index for index, parent in enumerate(parent_regions)}
     for record in records:
@@ -120,6 +120,8 @@ def resolve_province_record_names(
                 **record,
                 'displayName': city['name'],
                 'nameCh': city['nameCh'],
+                'kind': 'COUNTY',
+                'cityIndex': city_index,
             })
             continue
 

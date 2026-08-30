@@ -94,7 +94,7 @@ class V26NpcLifecycleMigrationTest {
             """.trimIndent(),
             String::class.java,
         )
-        assertEquals(listOf("소제1", "헌제").sorted(), deferredNames.sorted())
+        assertEquals(listOf("유변", "유협").sorted(), deferredNames.sorted())
         assertTrue(jdbc.queryForObject("SELECT (meta ->> 'gennum')::integer = 1 FROM nation WHERE id = 1", Boolean::class.java) == true)
     }
 

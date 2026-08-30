@@ -421,6 +421,17 @@ export function cityMarkerDrawBox(level: number, x: number, y: number, dpr: numb
   };
 }
 
+export function cityMarkerHitBox(level: number, x: number, y: number, dpr: number) {
+  const box = cityMarkerDrawBox(level, x, y, dpr);
+  const padding = 6 * dpr;
+  return {
+    left: box.x - padding,
+    top: box.y - padding,
+    right: box.x + box.width + padding,
+    bottom: box.y + box.height + padding,
+  };
+}
+
 function markerLevel(city: IsoCityOverlay): number {
   return Number.isInteger(city.level) && city.level >= 1 && city.level <= 11 ? city.level : 5;
 }
@@ -448,7 +459,7 @@ function drawScene(
   hideCityNames: boolean,
   dpr: number,
   markerImages: CityMarkerImages,
-): { city: IsoCityOverlay; x: number; y: number; radius: number }[] {
+): { city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
   const width = canvas.width;
@@ -477,12 +488,12 @@ function drawScene(
   }
   context.restore();
 
-  const hits: { city: IsoCityOverlay; x: number; y: number; radius: number }[] = [];
+  const hits: { city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[] = [];
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
     const level = markerLevel(city);
     const radius = Math.max(7, Math.min(18, 5 + (CITY_LEVEL_VISUAL_EXTENT[level] ?? 48) * 0.2));
-    hits.push({ city, x, y, radius: radius + 6 });
+    hits.push({ city, ...cityMarkerHitBox(level, x, y, dpr) });
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
     if (owned && city.supply === false) context.globalAlpha = 0.42;
@@ -616,7 +627,7 @@ export function HanMapCanvas({
   const markerImagesRef = useRef<CityMarkerImages>({});
   const viewRef = useRef<IsoView | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
-  const hitRef = useRef<{ city: IsoCityOverlay; x: number; y: number; radius: number }[]>([]);
+  const hitRef = useRef<{ city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[]>([]);
   const dragRef = useRef(new Map<number, { x: number; y: number }>());
   const dragMovedRef = useRef(false);
   const activeCityRef = useRef<IsoCityOverlay | null>(null);
@@ -896,7 +907,7 @@ export function HanMapCanvas({
   const cityAt = (x: number, y: number) => {
     for (let index = hitRef.current.length - 1; index >= 0; index -= 1) {
       const hit = hitRef.current[index];
-      if (Math.hypot(hit.x - x, hit.y - y) <= hit.radius) return hit.city;
+      if (x >= hit.left && x <= hit.right && y >= hit.top && y <= hit.bottom) return hit.city;
     }
     return null;
   };

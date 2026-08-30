@@ -78,4 +78,17 @@ class ImperialSuccessionTest {
 
         assertEquals(ImperialSuccessionDecision(null, ImperialSuccessionSource.VACANCY), result)
     }
+
+    @Test
+    fun `candidate order is isolated from later caller mutations`() {
+        val candidates = mutableListOf(2, 3)
+        val state = line(designatedHeir = null, dynasticCandidates = candidates)
+        candidates.clear()
+
+        assertEquals(listOf(2, 3), state.dynasticCandidateIds)
+        assertEquals(
+            ImperialSuccessionDecision(2, ImperialSuccessionSource.DYNASTIC),
+            ImperialSuccession.chooseSuccessor(state, null, listOf(candidate(2), candidate(3))),
+        )
+    }
 }

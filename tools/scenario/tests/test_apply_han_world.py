@@ -15,6 +15,10 @@ SPEC.loader.exec_module(apply_han_world)
 
 
 class HanWorldOwnershipOverrideTest(unittest.TestCase):
+    def test_active_general_contracts_are_preflighted_before_rewrite(self) -> None:
+        with self.assertRaisesRegex(ValueError, "scenario_missing"):
+            apply_han_world.validate_active_general_contracts(["scenario_1010", "scenario_missing"])
+
     def test_yellow_turban_han_faction_is_he_jins_practical_control(self) -> None:
         by_jun, id_of, seat_of = apply_han_world.load_world()
         che2jun = {
@@ -77,6 +81,34 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             roster_names = {row[1] for key in apply_han_world.GENERAL_KEYS for row in rewritten.get(key, [])}
             self.assertTrue(set(emperor_names) <= roster_names)
             self.assertNotIn("헌제", roster_names)
+
+    def test_if_scenario_preserves_its_own_placement_basis(self) -> None:
+        by_jun, id_of, seat_of = apply_han_world.load_world()
+        che2jun = {
+            key: value["jun"]
+            for key, value in json.loads(apply_han_world.CHE_TO_JUN.read_text(encoding="utf-8"))["map"].items()
+        }
+        ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
+        document = json.loads((apply_han_world.SCEN / "scenario_1120.json").read_text(encoding="utf-8"))
+
+        rewritten, _ = apply_han_world.rewrite(
+            document, "scenario_1120", by_jun, id_of, seat_of, che2jun, ownership,
+        )
+        nations = {row[0]: row for row in rewritten["nation"]}
+
+        self.assertEqual("IF_SCENARIO", rewritten["placementBasis"])
+        self.assertEqual(
+            {city for jun in ["우북평군", "발해군", "팽성국", "평원군", "북해국", "패국", "하간국", "거록군"] for city in by_jun[jun]},
+            set(nations["공손찬"][apply_han_world.NATION_CITIES]),
+        )
+        self.assertIn(id_of["중모"], set(nations["원소"][apply_han_world.NATION_CITIES]))
+        self.assertIn(id_of["낙양"], set(nations["원술"][apply_han_world.NATION_CITIES]))
+        self.assertIn(48, set(nations["원술"][apply_han_world.NATION_CITIES]))
+        self.assertNotIn(id_of["중모"], set(nations["원술"][apply_han_world.NATION_CITIES]))
+        self.assertEqual(
+            set(by_jun["하남윤"]) - {id_of["중모"]},
+            set(nations["원술"][apply_han_world.NATION_CITIES]) & set(by_jun["하남윤"]),
+        )
 
     def test_every_historical_faction_has_a_reviewed_symbol_color(self) -> None:
         palette = json.loads(apply_han_world.PALETTE.read_text(encoding="utf-8"))["colors"]

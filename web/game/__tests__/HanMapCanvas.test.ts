@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    cityMarkerDrawBox, expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, maxScaleForDpr, seatLabel,
+    cityMarkerDrawBox, cityMarkerHitBox, expandOwner, fitScale, initialView, labelledRegions, labelZoomFor, maxScaleForDpr, seatLabel,
     TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom, type HanTiles,
 } from '@opensamguk/ui';
 
@@ -30,6 +30,16 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect(cityMarkerDrawBox(10, 0, 0, 1).visualExtent).toBeGreaterThan(
             cityMarkerDrawBox(11, 0, 0, 1).visualExtent,
         );
+    });
+
+    it('히트 영역이 위쪽 포인터를 포함한 전체 마커를 덮는다', () => {
+        const draw = cityMarkerDrawBox(5, 100, 80, 2);
+        const hit = cityMarkerHitBox(5, 100, 80, 2);
+
+        expect(hit.left).toBeLessThan(draw.x);
+        expect(hit.top).toBeLessThan(draw.y);
+        expect(hit.right).toBeGreaterThan(draw.x + draw.width);
+        expect(hit.bottom).toBeGreaterThan(draw.y + draw.height);
     });
 });
 

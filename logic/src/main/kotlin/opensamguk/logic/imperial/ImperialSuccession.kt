@@ -43,13 +43,15 @@ enum class ImperialRecognition {
     REJECTED,
 }
 
-data class ImperialLineState(
+class ImperialLineState(
     val code: String,
     val status: ImperialLineStatus,
     val holderGeneralId: Int?,
     val designatedHeirGeneralId: Int?,
-    val dynasticCandidateIds: List<Int>,
-)
+    dynasticCandidateIds: List<Int>,
+) {
+    val dynasticCandidateIds: List<Int> = dynasticCandidateIds.toList()
+}
 
 data class ImperialCandidate(
     val generalId: Int,

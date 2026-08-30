@@ -104,7 +104,7 @@ class ScenarioImporterIT {
         showImageLevel: Int = 3,
         extendedGeneral: Boolean = true,
     ): ScenarioImporter {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010_che.json"))
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_mapless_legacy.json"))
         val cities = mapCitiesOf(scenario)
         return ScenarioImporter(
             scenario = scenario,

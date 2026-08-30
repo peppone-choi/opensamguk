@@ -42,7 +42,7 @@ import kotlin.test.assertTrue
 /**
  * F1b boot/tick gate — proves the FULL fresh-DB → playable-world path end-to-end:
  *  1. fresh Postgres + Flyway baseline,
- *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (229 active generals / 24 cities / 2 nations),
+ *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / 774 cities / 2 nations),
  *  3. [WorldSnapshotLoader.buildSnapshot] materializes the [opensamguk.engine.turn.WorldSnapshot],
  *  4. an [InMemoryTurnWorld] is constructed from it and a [TurnDaemonLifecycle] tick ADVANCES the turn
  *     loop (the seeded ring is all 휴식 → each due general resolves the rest no-op) GREEN, no exception,
@@ -102,13 +102,13 @@ class ScenarioBootIT {
 
         // 2. seed
         assertTrue(bootstrap.ensureSeeded(jdbc), "first ensureSeeded seeds the fresh world")
-        assertEquals(229, count("general"))
+        assertEquals(230, count("general"))
         assertEquals(774, count("city")) // han 풀맵: 점유 710 + 공백지 64 = 774
         assertEquals(2, count("nation"))
 
         // 3. load snapshot → 4. build the in-memory world
         val snapshot = loader.buildSnapshot()
-        assertEquals(229, snapshot.generals.size)
+        assertEquals(230, snapshot.generals.size)
         assertEquals(774, snapshot.cities.size) // han 풀맵: 점유 710 + 공백지 64 = 774
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
@@ -180,7 +180,7 @@ class ScenarioBootIT {
 
         // 5. second seed is a no-op (emptiness gate).
         assertTrue(!bootstrap.ensureSeeded(jdbc), "second ensureSeeded is a no-op")
-        assertEquals(229, count("general"), "no duplicate generals after second seed")
+        assertEquals(230, count("general"), "no duplicate generals after second seed")
     }
 
     @Test
@@ -344,7 +344,7 @@ class ScenarioBootIT {
             eventStore = eventStore,
         )
 
-        assertEquals(0, countWhere("general", "name = 'ⓝ소제1'"))
+        assertEquals(0, countWhere("general", "name = 'ⓝ유변'"))
         dispatcher.run(
             EventTarget.MONTH,
             contextFactory = contextFactory,
@@ -352,7 +352,8 @@ class ScenarioBootIT {
         )
 
         assertEquals(20, world.listGenerals().count { it.name.startsWith("ⓝ") && it.age == 14 })
-        assertFalse(eventStore.allRows().any { row -> row.actions.any { it.args.any { arg -> arg.toString().contains("소제1") } } })
+        assertTrue(world.listGenerals().any { it.name == "ⓝ유변" && it.age == 14 && it.npcState == 2 })
+        assertFalse(eventStore.allRows().any { row -> row.actions.any { it.args.any { arg -> arg.toString().contains("유변") } } })
 
         val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
         val dataSource = DriverManagerDataSource().apply {
@@ -367,13 +368,13 @@ class ScenarioBootIT {
         ).flush(payload)
 
         val appearedId = jdbc.queryForObject(
-            "SELECT id FROM general WHERE world_id = 1 AND name = 'ⓝ소제1'",
+            "SELECT id FROM general WHERE world_id = 1 AND name = 'ⓝ유변'",
             Int::class.java,
         )!!
         assertEquals(30, countWhere("general_turn", "general_id = $appearedId"))
         assertEquals(37, countWhere("rank_data", "general_id = $appearedId"))
-        assertEquals(0, countWhere("event", "action::text LIKE '%소제1%'"))
-        assertTrue(loader.buildSnapshot().generals.any { it.id == appearedId && it.name == "ⓝ소제1" })
+        assertEquals(0, countWhere("event", "action::text LIKE '%유변%'"))
+        assertTrue(loader.buildSnapshot().generals.any { it.id == appearedId && it.name == "ⓝ유변" })
     }
 
     @Test

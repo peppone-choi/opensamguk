@@ -70,6 +70,14 @@ ACTIVE_GENERAL_CONTRACTS = {
     "scenario_1120": (240, 309),
 }
 
+
+def validate_active_general_contracts(codes: list[str]) -> None:
+    missing_contracts = sorted(set(codes) - set(ACTIVE_GENERAL_CONTRACTS))
+    if missing_contracts:
+        raise ValueError(
+            "active-general seed contracts are missing: " + ", ".join(missing_contracts)
+        )
+
 # che 城 이름이 郡治가 아니라 특정 縣을 가리키는 경우. `che_to_jun.json` 은 郡까지만
 # 대응시켜서, 그대로 두면 그 郡의 治所로 밀려난다. 사료가 縣을 못 박는 것만 여기 적는다.
 CITY_OVERRIDE = {
@@ -113,6 +121,7 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
     # 맵과 병종 세트는 한 몸이다 — han 맵의 城 게이트 키(州·郡·부족 漢字)를 읽는 건
     # han 병종표뿐이라, 맵만 바꾸고 병종을 che 로 두면 지역 병종이 통째로 죽는다.
     doc["map"] = {"mapName": "han-world-v2", "unitSet": "han"}
+    doc["placementBasis"] = (own.get(code) or {}).get("placementBasis", "HISTORICAL")
     if code not in ACTIVE_GENERAL_CONTRACTS:
         raise ValueError(f"{code}: active-general seed contract is missing")
     base_generals, extended_generals = ACTIVE_GENERAL_CONTRACTS[code]
@@ -251,6 +260,7 @@ def main() -> int:
     own = json.loads(OWNERSHIP.read_text(encoding="utf-8"))
 
     codes = [c for c in own if c.startswith("scenario_")]
+    validate_active_general_contracts(codes)
     drift, warns = [], []
     for code in sorted(codes):
         path = SCEN / f"{code}.json"

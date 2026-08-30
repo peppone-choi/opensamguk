@@ -212,6 +212,35 @@ describe('province identity map', () => {
     expect(binding.cities?.get(1)?.id).toBe(11);
   });
 
+  it('skips a nearer unowned county when filling geometry without a direct city', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 16, 2, 255,
+      0, 16, 3, 255,
+    ]), 3, 1);
+    const cities: IsoCityOverlay[] = [
+      { ...CHE_OVERLAYS_FIXTURE[0], id: 10, x: 0, y: 0, nationId: 0, nationColor: '#000000' },
+      { ...CHE_OVERLAYS_FIXTURE[1], id: 20, x: 200, y: 0, nationId: 2, nationColor: '#0000ff' },
+    ];
+    const countyIndex = buildCountyAdministrativeIndex(
+      map,
+      [{ col: 0, row: 0 }, { col: 1, row: 0 }, { col: 2, row: 0 }],
+      [{ name: 'A군' }],
+    );
+
+    const binding = bindCompleteProvinceOwnership(
+      map,
+      cities,
+      { cols: 3, rows: 1 },
+      { width: 300, height: 1 },
+      countyIndex,
+    );
+
+    expect(binding.colors.get(0)?.nationId).toBe(0);
+    expect(binding.colors.get(1)).toEqual({ nationId: 2, rgb: [0, 0, 255] });
+    expect(binding.cities?.get(1)?.id).toBe(20);
+  });
+
   it('resolves a shared county by centroid distance then lowest city id', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([
       0, 16, 1, 255,

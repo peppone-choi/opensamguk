@@ -8,6 +8,7 @@ export {
   CITY_MARKER_SPECS,
   HanMapCanvas,
   cityMarkerDrawBox,
+  cityMarkerHitBox,
   buildIsoScene,
   expandOwner,
   initialView,

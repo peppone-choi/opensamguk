@@ -40,7 +40,8 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
         val candidates = scenario.seedGenerals(world.extendedGeneral)
             .groupBy { ScenarioKey(it.name, it.nationId, it.bornYear ?: DEFAULT_BIRTH_YEAR) }
         val matched = underage.map { row ->
-            val matches = candidates[ScenarioKey(row.name, row.nationId, row.bornYear)].orEmpty()
+            val canonicalName = LEGACY_IMPERIAL_NAMES[row.name] ?: row.name
+            val matches = candidates[ScenarioKey(canonicalName, row.nationId, row.bornYear)].orEmpty()
             if (matches.size != 1) {
                 throw FlywayException(
                     "V26 cannot safely defer general id=${row.id} name=${row.name}: " +
@@ -230,6 +231,7 @@ class V26__npc_lifecycle_phase_units : BaseJavaMigration() {
     private data class ScenarioKey(val name: String, val nationId: Int, val bornYear: Int)
 
     companion object {
+        private val LEGACY_IMPERIAL_NAMES = mapOf("소제1" to "유변", "헌제" to "유협")
         private const val DEFAULT_BIRTH_YEAR = 180
     }
 }
