@@ -100,13 +100,17 @@ private val BOOMING_RATE: Map<Int, Double> = mapOf(1 to 0.0, 4 to 0.25, 7 to 0.2
 /** One log triple `[title, stateCode, body]` (PHP `$rng->choice` element). */
 private data class LogTriple(val title: String, val stateCode: Int, val body: String)
 
-/** disaster (bad) text list per month (RaiseDisaster.php:71-94), verbatim. */
+/**
+ * disaster (bad) text list per month (RaiseDisaster.php:71-94).
+ * Product divergence: state 9 is a generic city-level 민란. 황건적 is a proper faction/태평도
+ * identity and 도적 is a nation type, so neither belongs in a reusable city disaster state.
+ */
 private val DISASTER_TEXT: Map<Int, List<LogTriple>> = mapOf(
     1 to listOf(
         LogTriple("<M><b>【재난】</b></>", 4, "역병이 발생하여 도시가 황폐해지고 있습니다."),
         LogTriple("<M><b>【재난】</b></>", 5, "지진으로 피해가 속출하고 있습니다."),
         LogTriple("<M><b>【재난】</b></>", 3, "추위가 풀리지 않아 얼어죽는 백성들이 늘어나고 있습니다."),
-        LogTriple("<M><b>【재난】</b></>", 9, "황건적이 출현해 도시를 습격하고 있습니다."),
+        LogTriple("<M><b>【재난】</b></>", 9, "민란이 일어나 관아와 도시가 혼란에 빠졌습니다."),
     ),
     4 to listOf(
         LogTriple("<M><b>【재난】</b></>", 7, "홍수로 인해 피해가 급증하고 있습니다."),
@@ -122,7 +126,7 @@ private val DISASTER_TEXT: Map<Int, List<LogTriple>> = mapOf(
         LogTriple("<M><b>【재난】</b></>", 3, "혹한으로 도시가 황폐해지고 있습니다."),
         LogTriple("<M><b>【재난】</b></>", 5, "지진으로 피해가 속출하고 있습니다."),
         LogTriple("<M><b>【재난】</b></>", 3, "눈이 많이 쌓여 도시가 황폐해지고 있습니다."),
-        LogTriple("<M><b>【재난】</b></>", 9, "황건적이 출현해 도시를 습격하고 있습니다."),
+        LogTriple("<M><b>【재난】</b></>", 9, "민란이 일어나 관아와 도시가 혼란에 빠졌습니다."),
     ),
 )
 

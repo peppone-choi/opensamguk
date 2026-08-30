@@ -135,6 +135,27 @@ class RaiseDisasterTest {
         }
     }
 
+    @Test
+    fun `state 9 is a generic civil uprising rather than a Yellow Turban or bandit faction`() {
+        val scripted = object : RandUtil(LiteHashDrbg(serializeSeed(HIDDEN_SEED, "state9-test"))) {
+            override fun nextBool(prob: Double): Boolean = prob > 0.0
+            override fun <T> choice(items: List<T>): T = items.last()
+        }
+
+        val r = raiseDisaster(
+            listOf(city(1, 0, secu = 0, secuMax = 1000)),
+            year = 200,
+            month = 1,
+            startYear = 181,
+            rng = scripted,
+        )
+
+        assertEquals(9, r.stateCode)
+        assertTrue(r.logLine!!.contains("민란"))
+        assertTrue(!r.logLine!!.contains("황건"))
+        assertTrue(!r.logLine!!.contains("도적"))
+    }
+
     // ── 재난(bad) branch: affectRatio uncapped (capped=false) — trust*ratio 무캡의 근거 ──
     // RaiseDisaster.php:122-135: affectRatio = 0.8 + valueFit(secu/secu_max/0.8,0,1)*0.15,
     //   trust => trust * affectRatio (NO least()). 정수 스탯과 SAME affectRatio.
