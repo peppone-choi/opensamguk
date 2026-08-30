@@ -5,9 +5,9 @@ import type { CSSProperties } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
+import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
-import { getNPCColor } from '../../../lib/utilGame';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { IntakeOutcome } from '../../../lib/types';
 import type { MyBossGeneralSummary, MyBossOfficerSlot, MyBossResponse } from '../../../types/game';
@@ -54,14 +54,9 @@ function parseSlotKey(value: string): { officerLevel: number; cityId: number } |
   return { officerLevel: parsedLevel, cityId: parsedCity };
 }
 
-function GeneralName({ name, npcState }: { name: string; npcState: number }) {
-  const color = getNPCColor(npcState);
-  return <span style={{ color: color ?? undefined }}>{name}</span>;
-}
-
 function AssignedName({ slot }: { slot: MyBossOfficerSlot }) {
   if (slot.assignedName == null) return <span className="text-muted">공석</span>;
-  return <GeneralName name={slot.assignedName} npcState={slot.assignedNpcState ?? 0} />;
+  return <GeneralName name={slot.assignedName} npcType={slot.assignedNpcState ?? 0} />;
 }
 
 export default function MyBossPage() {
@@ -420,7 +415,7 @@ export default function MyBossPage() {
                 {roster.map((g) => (
                   <tr key={g.generalId}>
                     <td style={tdStyle}>
-                      <GeneralName name={g.name} npcState={g.npcState} />
+                      <GeneralName name={g.name} npcType={g.npcState} />
                     </td>
                     <td style={tdStyle}>{g.officerLevelText}</td>
                     <td style={tdStyle}>{g.cityName ?? '-'}</td>
@@ -464,7 +459,7 @@ function PermissionPicker({
           {candidates.map((g) => (
             <label key={g.generalId} style={{ display: 'inline-flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
               <input type="checkbox" checked={selected.includes(g.generalId)} disabled={disabled} onChange={(e) => onChange(g.generalId, e.target.checked)} />
-              <GeneralName name={g.name} npcState={g.npcState} />
+              <GeneralName name={g.name} npcType={g.npcState} />
             </label>
           ))}
         </div>

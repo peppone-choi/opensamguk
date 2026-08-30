@@ -7,12 +7,10 @@ import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import Gauge from '../../../components/game/Gauge';
 import SammoBar from '../../../components/game/SammoBar';
+import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import type { CityDetailResponse, CityGeneralRow } from '../../../types/game';
-import {
-    formatInjury,
-    getNPCColor,
-} from '../../../lib/utilGame';
+import { formatInjury } from '../../../lib/utilGame';
 import { useServerGameUrl } from '../../../lib/serverGameUrl';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
@@ -42,8 +40,7 @@ function StatCell({ value, injury }: { value: number; injury: number }) {
 
 // 장수명 셀 — NPC색(getNPCColor) 적용. 비-NPC는 기본색.
 function NameSpan({ name, npc }: { name: string; npc: number }) {
-    const color = getNPCColor(npc);
-    return <span style={color ? { color } : undefined}>{name}</span>;
+    return <GeneralName name={name} npcType={npc} />;
 }
 
 // 도시선택 relation → 한글(b_currentCity.php: 공백지/본국/타국).

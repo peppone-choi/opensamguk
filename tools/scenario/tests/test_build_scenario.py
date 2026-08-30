@@ -103,7 +103,7 @@ def normalized_manifest() -> dict:
         "title": "서로 맞선 세력들",
         "year_month": "190.1",
         "startYear": 190,
-        "map": "che",
+        "map": "han-world-v2",
         "life": 1,
         "fiction": 0,
         "const": {"defaultMaxGeneral": 600},
@@ -138,6 +138,7 @@ class BuildScenarioTest(unittest.TestCase):
             "life",
             "fiction",
             "map",
+            "seedContract",
             "const",
             "stored_icons",
             "nation",
@@ -146,6 +147,8 @@ class BuildScenarioTest(unittest.TestCase):
             "general_neutral",
             "diplomacy",
         ])
+        self.assertEqual(scenario["map"], {"mapName": "han-world-v2", "unitSet": "han"})
+        self.assertEqual(scenario["seedContract"], {"activeGenerals": {"base": 5, "extended": 5}})
         self.assertEqual([len(row) for row in scenario["nation"]], [9, 9])
         self.assertEqual([len(row) for row in scenario["general"]], [16, 16, 16, 16, 16])
         self.assertEqual([len(row) for row in scenario["diplomacy"]], [4, 4])

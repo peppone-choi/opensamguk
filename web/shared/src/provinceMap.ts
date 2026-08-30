@@ -67,6 +67,7 @@ export interface ParentRegionRecordDto {
   displayName: string;
   nameCh: string;
   administrativeSystem: string;
+  aliases?: readonly string[];
 }
 
 const SYSTEM_LABELS: Readonly<Record<string, string>> = {
@@ -424,9 +425,14 @@ export function buildProvinceAdministrativeIndex(
       throw new Error(`Province parent hierarchy mismatch at pixel ${cell}`);
     }
   }
+  const commanderyByName = new Map<string, number>();
+  parentRegions.forEach((parent, index) => {
+    commanderyByName.set(parent.displayName, index);
+    parent.aliases?.forEach((alias) => commanderyByName.set(alias, index));
+  });
   return {
     commanderyByProvince,
-    commanderyByName: new Map(parentRegions.map((parent, index) => [parent.displayName, index])),
+    commanderyByName,
     administrativeSystemByProvince,
   };
 }

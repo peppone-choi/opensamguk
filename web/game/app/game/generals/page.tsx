@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameTable from '../../../components/GameTable';
+import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import { formatRefreshScore } from '../../../lib/utilGame';
@@ -21,16 +22,6 @@ import type { PublicGeneral } from '../../../types/game';
 //    아니라 버킷을 쓰는 이유는 레거시가 버킷 경계에서 동일하게 묶기 때문(경계마다 발산 방지).
 //  - READ-ONLY this wave (no mutation wiring). Verbatim Korean headers from GeneralList.vue.
 //  - EMPTY-SAFE: empty array renders an empty table, never crashes.
-
-// NPC name color — verbatim port of legacy utilGame/getNPCColor.ts (npc type → CSS color).
-function npcColor(npc: number): string | undefined {
-    if (npc === 6) return 'mediumaquamarine';
-    if (npc === 5) return 'darkcyan';
-    if (npc === 4) return 'deepskyblue';
-    if (npc >= 2) return 'cyan';
-    if (npc === 1) return 'skyblue';
-    return undefined;
-}
 
 // 무소속 (nationId 0) is rendered as a neutral-color group; everyone else by their nation.
 const NO_NATION = 0;
@@ -274,9 +265,7 @@ export default function GeneralsPage() {
             draggable={false}
         />,
         // 장수명 (npc 색상)
-        <span key={`n-${g.generalId}`} style={{ color: npcColor(g.npc) }}>
-            {g.name}
-        </span>,
+        <GeneralName key={`n-${g.generalId}`} name={g.name} npcType={g.npc} />,
         // 연령 — "{age}세" (a_genList.php:189)
         `${g.age}세`,
         // 성격 — personalText (a_genList.php:190 displayCharInfo)

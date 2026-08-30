@@ -1,9 +1,9 @@
 """han-tiles.json 의 `adjacency.county` 를 **다른 축**에서 재유도해 대조한다.
 
 `adjacency.county` 는 `owner`(城 소유 격자, 런렝스) 에서 완전히 결정된다 —
-4-이웃으로 서로 다른 소유자가 맞닿은 격자변을 세고, 양끝이 바다(-1)가 아니고
-공유 변이 3 이상인 쌍만 남긴다. 이 규칙은 origin/main 의 커밋본에 대해
-2,661 간선 전량이 **cells 값까지** 정확히 재현되는 걸 실측해 확정했다.
+4-이웃으로 서로 다른 소유자가 맞닿은 격자변을 세고, 양끝이 바다(-1)가 아닌
+모든 쌍을 남긴다. 공유 변이 하나라도 있으면 두 프로빈스는 실제로 맞닿아 있고,
+육상 이동은 별도의 육로가 아니라 이 접경 그래프를 그대로 사용한다.
 
 **왜 필요한가.** #548 의 郡 phantom 노드 병합에서 삭제된 城의 간선·격자 소유가
 「흡수하는 郡의 *jun 인덱스*」로 재지정됐다 — city 인덱스여야 하는 자리다.
@@ -28,7 +28,7 @@ from pathlib import Path
 
 TILES = Path(__file__).resolve().parents[3] / "data" / "map" / "han-tiles.json"
 
-MIN_SHARED_CELLS = 3
+MIN_SHARED_CELLS = 1
 
 
 def derive_county_adjacency(tiles: dict) -> dict[frozenset, int]:
@@ -58,7 +58,7 @@ class TestCountyAdjacencyIsDerivableFromOwnerGrid(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.tiles = json.loads(TILES.read_text())
-        cls.names = [c["nameCh"] for c in cls.tiles["cities"]]
+        cls.names = [c["nameCh"] for c in cls.tiles["provinceRecords"]]
         cls.committed = {frozenset((e["a"], e["b"])): e["cells"]
                          for e in cls.tiles["adjacency"]["county"]}
         cls.derived = derive_county_adjacency(cls.tiles)

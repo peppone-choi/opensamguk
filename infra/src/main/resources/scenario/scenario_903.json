@@ -2,11 +2,15 @@
   "title": "【공백지】 영웅전설",
   "startYear": 180,
   "map": {
-    "mapName": "miniche",
+    "mapName": "han-world-v2",
+    "unitSet": "han",
     "targetGeneralPool": "SPoolUnderU30",
     "generalPoolAllowOption": [
       "ego"
     ]
+  },
+  "seedContract": {
+    "activeGenerals": {"base": 0, "extended": 0}
   },
   "history": [
     "<C>●</>180년 1월:<L><b>【이벤트】</b></>29기까지 내로라 하는 모든 장수들이 모였다!"

@@ -10,25 +10,57 @@ import kotlin.test.assertTrue
 class ScenarioJsonTest {
 
     @Test
-    fun `scenario_1 preserves miniche map metadata`() {
+    fun `scenario_1 uses the canonical Han world contract`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1.json"))
 
-        assertEquals("miniche", scenario.map["mapName"])
+        assertEquals("han-world-v2", scenario.map["mapName"])
+        assertEquals("han", scenario.map["unitSet"])
         assertEquals(0, scenario.const["joinRuinedNPCProp"])
     }
 
     @Test
-    fun `scenario_2 preserves miniche_b map metadata`() {
+    fun `scenario_2 uses the canonical Han world contract`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
 
-        assertEquals("miniche_b", scenario.map["mapName"])
+        assertEquals("han-world-v2", scenario.map["mapName"])
+        assertEquals("han", scenario.map["unitSet"])
     }
 
     @Test
-    fun `source scenario_1010 preserves its pre-materialization 678-general baseline`() {
+    fun `every committed runtime scenario uses the canonical Han world contract`() {
+        val codes = listOf(
+            "0", "1", "2", "900", "901", "902", "903", "905", "906", "908",
+            "910", "911", "912", "913", "914", "9200",
+            "1010", "1020", "1021", "1030", "1031", "1040", "1041", "1050",
+            "1060", "1070", "1080", "1090", "1100", "1110", "1120",
+        )
+
+        for (code in codes) {
+            val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_$code.json"))
+            assertEquals("han-world-v2", scenario.map["mapName"], "scenario_$code mapName")
+            assertEquals("han", scenario.map["unitSet"], "scenario_$code unitSet")
+            ScenarioImporter(
+                scenario = scenario,
+                cities = emptyList(),
+                scenarioCode = "scenario_$code",
+                extendedGeneral = false,
+            ).validateSeedContract()
+            ScenarioImporter(
+                scenario = scenario,
+                cities = emptyList(),
+                scenarioCode = "scenario_$code",
+                extendedGeneral = true,
+            ).validateSeedContract()
+        }
+    }
+
+    @Test
+    fun `scenario_1010 keeps the full source roster plus the explicit emperor`() {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
 
-        assertEquals(678, scenario.generals.size)
+        assertEquals(679, scenario.generals.size)
+        assertEquals(setOf("유굉"), scenario.imperialGeneralNames)
+        assertEquals(7, scenario.generals.single { it.name == "유굉" }.npcType)
     }
 
     @Test
@@ -363,6 +395,29 @@ class ScenarioJsonTest {
         assertEquals("대사", scenario.generalNeutral.single().rawTuple[13])
         assertEquals(71, scenario.generalNeutral.single().politics)
         assertEquals(72, scenario.generalNeutral.single().charm)
+    }
+
+    @Test
+    fun `imperial general is decoded as protected npc type seven`() {
+        val json = """
+            {
+              "title": "imperial",
+              "startYear": 181,
+              "imperialGenerals": ["영제"],
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [["하진", "#fff", 0, 0, "", 0, "유가", 1, ["낙양"]]],
+              "general": [[1,"영제",null,"하진",null,20,11,48,0,156,189,null,null]],
+              "general_ex": [],
+              "general_neutral": [],
+              "diplomacy": []
+            }
+        """.trimIndent()
+
+        val scenario = ScenarioJson.loadScenario(json)
+
+        assertEquals(setOf("영제"), scenario.imperialGeneralNames)
+        assertEquals(7, scenario.baseGenerals.single().npcType)
     }
 
     @Test

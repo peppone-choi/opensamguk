@@ -14,7 +14,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 TILES = ROOT / "data/map/han-tiles.json"
 
-# 현재 커밋본 실측(main 76f06ccc, 2026-08-24 재측정): 城 1138 · 縣 간선 2649 ·
+# 프로빈스는 공유 변이 하나라도 있으면 인접한다. 이하 문턱은 손상 방지용
+# 보수적 최저선이며 정확한 간선 집합은 test_han_tiles_adjacency_matches_owner.py 가
+# owner 격자에서 재유도해 검사한다. 기존 커밋본 실측: 城 1138 · 縣 간선 2649 ·
 # 12 성분 · 최대 1124/1138(98.8%) · 고립 10. 郡 172 · 郡 간선 417.
 # (#548 이 郡治 phantom 노드를 병합해 1145→1138 로 줄었다.) 재생성본(1230 간선)은
 # 356 성분 · 최대 660(57.6%) · 고립 321 로 셋 다 큰 폭으로 위반한다.

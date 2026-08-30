@@ -262,6 +262,10 @@ describe('province identity map', () => {
       commanderyName: city.meta.jun,
     }));
     const countyIndex = buildProvinceAdministrativeIndex(map, tiles.provinceRecords, tiles.parentRegions);
+    expect(
+      runtime.cities.every((city) => countyIndex.commanderyByName.has(city.meta.jun)),
+      'every runtime commandery name must resolve directly or through a reviewed temporal alias',
+    ).toBe(true);
 
     const binding = bindCompleteProvinceOwnership(
       map,
@@ -363,6 +367,27 @@ describe('province identity map', () => {
     );
 
     expect([...countyIndex.commanderyByProvince]).toEqual([1]);
+  });
+
+  it('resolves temporal commandery aliases to the same province parent', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+    ]), 1, 1);
+    const index = buildProvinceAdministrativeIndex(
+      map,
+      [{
+        id: 'P1', displayName: '감릉현', nameCh: '甘陵縣', administrativeSystem: 'HAN_COMMANDERY',
+        kind: 'COUNTY', parentRegionId: 'R1', cityIndex: 0,
+        geometryBasis: 'HISTORICAL_SEAT_ADAPTED', confidence: 'REVIEWED',
+      }],
+      [{
+        id: 'R1', displayName: '감릉군', nameCh: '甘陵郡',
+        administrativeSystem: 'HAN_COMMANDERY', aliases: ['신성후국'],
+      }],
+    );
+
+    expect(index.commanderyByName.get('감릉군')).toBe(0);
+    expect(index.commanderyByName.get('신성후국')).toBe(0);
   });
 
   it('reconciles runtime ownership by commandery metadata and never falls back globally', () => {

@@ -6,7 +6,7 @@
     "TOWN_NODE"
   ],
   "contractId": "han-w0-route-node-validation-contract-v1",
-  "expectedActiveScenarioResourceCount": 15,
+  "expectedActiveScenarioResourceCount": 31,
   "expectedForbiddenSelections": {
     "canonicalNames": [
       "流求",

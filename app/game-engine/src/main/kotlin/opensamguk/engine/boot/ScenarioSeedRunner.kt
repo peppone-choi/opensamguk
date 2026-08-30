@@ -168,7 +168,7 @@ class SeedBootstrap(
         val merged = LinkedHashMap<String, Any?>()
         merged.putAll(scenario.map)
         merged.putAll(scenario.const)
-        return merged["mapName"] as? String ?: "che"
+        return merged["mapName"] as? String ?: "han-world-v2"
     }
 
     internal companion object {

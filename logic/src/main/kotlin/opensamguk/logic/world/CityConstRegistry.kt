@@ -191,10 +191,7 @@ internal class HanCityConstVariant(
         }
     }
 
-    /**
-     * che 8등급 위에 '경'(京, 9)을 하나 더 얹는다 — 낙양·장안 딱 두 곳뿐인 京師 등급이다.
-     * 패러티 상수인 [CityConst.levelMap] 은 건드리지 않고 이 변형만 자기 표를 쓴다.
-     */
+    /** Han-only generation view; the shared table also exposes these labels to API readers. */
     private val hanLevels: Map<Any, Any> =
         LinkedHashMap<Any, Any>(CityConst.levelMap).apply {
             put("경", 9); put(9, "경")

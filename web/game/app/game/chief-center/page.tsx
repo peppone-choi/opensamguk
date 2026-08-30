@@ -24,6 +24,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
+import GeneralName from '../../../components/game/GeneralName';
 import CommandModal from '../../../components/CommandModal';
 import ChiefCommandReserve, { type ChiefReserveLaunch } from '../../../components/game/ChiefCommandReserve';
 import { api } from '../../../lib/api';
@@ -35,16 +36,6 @@ import type { GameCityConstItem } from '../../../lib/types';
 
 // Legacy [12, 10, 8, 6, 11, 9, 7, 5] — preserved verbatim for parity of the post grid order.
 const CHIEF_LEVEL_ORDER = [12, 10, 8, 6, 11, 9, 7, 5];
-
-// Mirrors legacy hwe/ts/utilGame/getNPCColor.ts byte-for-byte.
-function getNPCColor(npcType: number): string | undefined {
-    if (npcType === 6) return 'mediumaquamarine';
-    if (npcType === 5) return 'darkcyan';
-    if (npcType === 4) return 'deepskyblue';
-    if (npcType >= 2) return 'cyan';
-    if (npcType === 1) return 'skyblue';
-    return undefined;
-}
 
 // BottomItem.vue: `(officer?.turnTime ?? "  -  ").slice(-5)` — last 5 chars (HH:mm).
 function shortTurnTime(turnTime: string | null): string {
@@ -69,7 +60,6 @@ function ChiefPostCard({
     postFilter: (turnObj: TurnObj) => TurnObj;
 }) {
     const name = post ? (post.name ?? '-') : '-';
-    const nameColor = getNPCColor(post?.npcType ?? 0);
     // legacy PageChiefCenter.vue: officer.turn.map(postFilterNationCommand) — che_발령 예약 brief를
     // 《부대명》【도시명】로 발령으로 후처리(dest가 부대장일 때만). 양 브랜치(편집/read-only) 공유.
     const turns = (post?.reservedTurns ?? []).map((t) => {
@@ -99,17 +89,15 @@ function ChiefPostCard({
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                         {post?.officerLevelText ?? ''}
                     </span>
-                    <strong
-                        style={{
-                            fontSize: 'var(--text-base)',
-                            color: nameColor ?? 'var(--text-primary)',
-                            textDecoration: isMe ? 'underline' : undefined,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        {name}
+                    <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <GeneralName
+                            name={name}
+                            npcType={post?.npcType ?? 0}
+                            style={{
+                                fontSize: 'var(--text-base)',
+                                textDecoration: isMe ? 'underline' : undefined,
+                            }}
+                        />
                     </strong>
                 </div>
                 {post?.turnTime != null && (

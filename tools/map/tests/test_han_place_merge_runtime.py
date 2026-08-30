@@ -433,7 +433,7 @@ class TerrainGraphRederivationTest(ReviewedMergeTransformTest):
             for edge in result["adjacency"]["commandery"]
         ]
         self.assertEqual(
-            terrain_builder.adjacency(result["seatOwner"]),
+            terrain_builder.adjacency(result["seatOwner"], min_shared_edges=3),
             commandery_without_cross,
         )
         self.assertTrue(result["adjacency"]["county"])

@@ -6,9 +6,9 @@ import GameCard from '../../../components/GameCard';
 import GameTable from '../../../components/GameTable';
 import StatusBadge from '../../../components/StatusBadge';
 import CommandModal from '../../../components/CommandModal';
+import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
-import { getNPCColor } from '../../../lib/utilGame';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type {
@@ -122,12 +122,12 @@ export default function TournamentPage() {
     const groupHeaders = ['순', '장수', abilityLabel, '경', '승', '무', '패', '점', '득'];
     const groupRow = (e: TournamentEntrant) => [
         e.groupRank,
-        <span
+        <GeneralName
             key={`g-${e.generalId}-${e.stage}-${e.groupNo}`}
-            style={{ color: e.promoted ? 'var(--gold)' : getNPCColor(e.npc) }}
-        >
-            {e.generalName}
-        </span>,
+            name={e.generalName}
+            npcType={e.npc}
+            style={{ color: e.promoted ? 'var(--gold)' : undefined }}
+        />,
         formatNumber(e.ability),
         formatNumber(e.games),
         formatNumber(e.win),

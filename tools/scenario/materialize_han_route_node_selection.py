@@ -166,8 +166,8 @@ def _verify_hash(label: str, expected: JsonValue, path: Path) -> str:
 
 def _scenario_resources(candidate: JsonObject, scenario_dir: Path) -> list[JsonObject]:
     expected_rows = rows(candidate, "scenarioCatalog")
-    if len(expected_rows) != 15:
-        raise MaterializationContractError("candidate must pin exactly 15 active scenario resources")
+    if len(expected_rows) != 31:
+        raise MaterializationContractError("candidate must pin exactly 31 active scenario resources")
     expected_names = {Path(text(row, "resourcePath")).name for row in expected_rows}
     actual_names: set[str] = set()
     for path in scenario_dir.glob("scenario_*.json"):
@@ -287,7 +287,7 @@ def main() -> int:
         arguments.selection_output.write_text(selection_blob, encoding="utf-8")
         arguments.migration_output.write_text(migration_blob, encoding="utf-8")
         summary = obj(result.migration, "summary")
-        print(f"approved=780 scenarios=15 replacements={summary['routeNodeReplacementCount']} "
+        print(f"approved=780 scenarios=31 replacements={summary['routeNodeReplacementCount']} "
               f"bindingCorrections={summary['historicalBindingCorrectionCount']}")
         return 0
     except (OSError, json.JSONDecodeError, MaterializationContractError) as error:

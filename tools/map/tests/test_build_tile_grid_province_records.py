@@ -20,6 +20,17 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
         self.assertFalse(any("직할" in record["displayName"] for record in chinese))
         self.assertTrue(all(record["nameCh"] for record in chinese))
 
+    def test_committed_player_labels_contain_no_review_placeholders(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        tiles = json.loads((root / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        forbidden = ("직할지", "(비정)", "(추정)", " 일대")
+        invalid = [
+            record["displayName"] for record in tiles["provinceRecords"]
+            if any(token in record["displayName"] for token in forbidden)
+        ]
+
+        self.assertEqual([], invalid)
+
     def test_chinese_direct_fragment_uses_real_same_parent_county_name(self) -> None:
         cities = [
             {"name": "낙양현", "nameCh": "雒陽縣"},
@@ -68,6 +79,24 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
 
         self.assertEqual(resolved[0]["displayName"], "조선현")
         self.assertIsNone(resolved[0]["cityIndex"])
+        self.assertNotIn("직할", resolved[0]["displayName"])
+
+    def test_external_direct_fragment_uses_its_real_parent_name(self) -> None:
+        parents = [{
+            "id": "PARENT-0", "displayName": "우환", "nameCh": "烏桓",
+            "administrativeSystem": "WUHUAN",
+        }]
+        records = [{
+            "id": "DIRECT-0", "displayName": "烏桓 직할지", "nameCh": "",
+            "administrativeSystem": "WUHUAN", "kind": "DIRECT_TERRITORY",
+            "parentRegionId": "PARENT-0", "cityIndex": None,
+            "geometryBasis": "MODERN_ADMIN_FALLBACK", "confidence": "INFERRED",
+        }]
+
+        resolved = resolve_province_record_names(records, parents, [], [])
+
+        self.assertEqual(resolved[0]["displayName"], "우환")
+        self.assertEqual(resolved[0]["nameCh"], "烏桓")
         self.assertNotIn("직할", resolved[0]["displayName"])
 
 

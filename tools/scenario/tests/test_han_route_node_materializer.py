@@ -34,7 +34,7 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
 
         self.assertEqual(780, len(result.selection["routeNodes"]))
         self.assertEqual(780, len(result.migration["rows"]))
-        self.assertEqual(15, result.selection["scenarioCatalog"]["resourceCount"])
+        self.assertEqual(31, result.selection["scenarioCatalog"]["resourceCount"])
         self.assertEqual(101, result.migration["summary"]["routeNodeReplacementCount"])
         self.assertEqual(25, result.migration["summary"]["historicalBindingCorrectionCount"])
         self.assertEqual(1, result.migration["summary"]["physicalPlaceCorrectionCount"])

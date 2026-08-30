@@ -79,6 +79,7 @@ describe('단순 버킷/맵 포매터', () => {
   });
 
   it('getNPCColor', () => {
+    expect(getNPCColor(7)).toBe('gold');
     expect(getNPCColor(6)).toBe('mediumaquamarine');
     expect(getNPCColor(2)).toBe('cyan');
     expect(getNPCColor(1)).toBe('skyblue');

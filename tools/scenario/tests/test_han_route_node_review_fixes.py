@@ -18,17 +18,19 @@ SPEC.loader.exec_module(MODULE)
 
 
 class HanRouteNodeReviewFixesTest(unittest.TestCase):
-    def test_real_active_scenario_catalog_is_exactly_the_product_15(self) -> None:
+    def test_real_active_scenario_catalog_contains_every_product_scenario(self) -> None:
         inputs = MODULE.default_inputs()
         candidate = json.loads(inputs.candidate.read_text(encoding="utf-8"))
         resources = candidate["scenarioCatalog"]
         expected_codes = {
+            "0", "1", "2", "900", "901", "902", "903", "905", "906", "908",
+            "910", "911", "912", "913", "914", "9200",
             "1010", "1020", "1021", "1030", "1031", "1040", "1041", "1050",
             "1060", "1070", "1080", "1090", "1100", "1110", "1120",
         }
 
         self.assertEqual(expected_codes, {row["code"] for row in resources})
-        self.assertEqual(15, len(resources))
+        self.assertEqual(31, len(resources))
         for row in resources:
             path = ROOT / row["resourcePath"]
             self.assertEqual(row["resourceSha256"], MODULE._digest(path), row["code"])
@@ -37,8 +39,8 @@ class HanRouteNodeReviewFixesTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw_directory:
             inputs = MODULE.copy_default_inputs(Path(raw_directory))
 
-            self.assertEqual(15, len(list(inputs.scenario_dir.glob("scenario_*.json"))))
-            self.assertFalse((inputs.scenario_dir / "scenario_912.json").exists())
+            self.assertEqual(31, len(list(inputs.scenario_dir.glob("scenario_*.json"))))
+            self.assertTrue((inputs.scenario_dir / "scenario_912.json").exists())
 
             extra = json.loads(next(inputs.scenario_dir.glob("scenario_*.json")).read_text(encoding="utf-8"))
             (inputs.scenario_dir / "scenario_9999.json").write_text(

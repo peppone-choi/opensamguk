@@ -83,7 +83,7 @@
     "administrativeCatalogSha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "cea333c5d46e145a45bcd1a3ccfbfbdef62aacb0125e597262f0d40ffa508f9a"
+      "sha256": "f6522636296dd45ff53b1845935e4bc63ac8388b62ff8b65558480c76d516f3f"
     },
     "coordinateOverlaySha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1",
     "locationAdjudications": {
@@ -290,12 +290,12 @@
   "reviewedBy": "codex-w0c-root",
   "scenarioActivationPolicy": {
     "chgisBindingRule": "W0 pins reviewed place identity only; runtime lifecycle is not derived here",
-    "expectedScenarioCount": 15,
+    "expectedScenarioCount": 31,
     "externalLocationClaimRule": "W0 pins reviewed external place identity only; runtime lifecycle is not derived here",
-    "note": "780은 reviewed route-node identity 집합이며 scenario catalog은 15개 active Han resource의 파일 해시만 고정한다.",
+    "note": "780은 reviewed route-node identity 집합이며 scenario catalog은 31개 active Han resource의 파일 해시만 고정한다.",
     "routeNodeSelectionIs220Baseline": true,
     "runtimeEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
-    "scenarioScope": "all tracked scenario resources whose map.mapName is han"
+    "scenarioScope": "all tracked scenario resources whose map.mapName is han or han-world-v2"
   },
   "schemaVersion": 1,
   "selectionBatches": [

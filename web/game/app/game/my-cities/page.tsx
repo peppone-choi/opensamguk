@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
+import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
-import { getNPCColor } from '../../../lib/utilGame';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { MyCitiesResponse, MyCitySummary, MyCityGeneralName, MyNationDetailResponse } from '../../../types/game';
 
@@ -21,8 +21,7 @@ function newColor(color: string): string {
 
 // formatName 동치: npc 타입색으로 이름 렌더(공석 "-"는 그대로). PHP formatName($name, $npc).
 function GenName({ name, npc }: { name: string; npc: number }) {
-    const color = getNPCColor(npc);
-    return <span style={{ color: color ?? undefined }}>{name}</span>;
+    return <GeneralName name={name} npcType={npc} />;
 }
 
 const labelStyle: React.CSSProperties = {

@@ -21,7 +21,10 @@ object CityConst {
         "동이" to 8, 8 to "동이",
     )
 
-    /** PHP $levelMap (lines 25-34): bidirectional label<->int. lv4='이', lv5='소' (project memory). */
+    /**
+     * PHP $levelMap (lines 25-34) plus Han-world ranks. Levels 9-11 do not alter che cities;
+     * they make the Han variant's 京 and 後漢 百官志 county ranks visible to shared API readers.
+     */
     val levelMap: Map<Any, Any> = linkedMapOf(
         "수" to 1, 1 to "수",
         "진" to 2, 2 to "진",
@@ -31,6 +34,9 @@ object CityConst {
         "중" to 6, 6 to "중",
         "대" to 7, 7 to "대",
         "특" to 8, 8 to "특",
+        "경" to 9, 9 to "경",
+        "영현" to 10, 10 to "영현",
+        "장현" to 11, 11 to "장현",
     )
 
     /**

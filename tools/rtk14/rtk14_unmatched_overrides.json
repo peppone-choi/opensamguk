@@ -196,6 +196,21 @@
       "politics": 43,
       "charm": 46,
       "rationale": "Manual martial minor-profile estimate: modest explicit values rather than a neutral fallback."
+    },
+    "유굉": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed Eastern Han imperial extra: ceremonial authority with limited autonomous administration."
+    },
+    "유변": {
+      "politics": 55,
+      "charm": 66,
+      "rationale": "Reviewed Eastern Han imperial extra: child sovereign with ceremonial standing."
+    },
+    "유협": {
+      "politics": 60,
+      "charm": 75,
+      "rationale": "Reviewed Eastern Han imperial extra: ceremonial authority raises appeal more than autonomous administration."
     }
   },
   "collisionOverrides": {

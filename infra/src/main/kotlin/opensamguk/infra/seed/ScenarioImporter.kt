@@ -172,8 +172,8 @@ class ScenarioImporter(
         val tickSeconds = turnTerm * 60
         val ts = Timestamp.from(installTime.toInstant())
         val mapConfig = scenarioMapConfig()
-        val mapName = mapConfig["mapName"] as? String ?: "che"
-        val unitSet = mapConfig["unitSet"] as? String ?: "che"
+        val mapName = mapConfig["mapName"] as? String ?: "han"
+        val unitSet = mapConfig["unitSet"] as? String ?: "han"
         // meta keys consumed by EngineEventConfig.monthlyPipeline: hiddenSeed/startYear/startTime.
         val meta = jsonObject(
             "hiddenSeed" to hiddenSeed,
@@ -248,7 +248,7 @@ class ScenarioImporter(
         "isunited" to 0,
         "init_year" to startYear,
         "init_month" to SEED_START_MONTH,
-        "map_theme" to (scenarioMapConfig()["mapName"] ?: "che"),
+        "map_theme" to (scenarioMapConfig()["mapName"] ?: "han"),
         "season" to 1,
         "msg" to "공지사항",
         "maxgeneral" to GameConst.defaultMaxGeneral,
@@ -267,8 +267,8 @@ class ScenarioImporter(
         val merged = LinkedHashMap<String, Any?>()
         merged.putAll(scenario.map)
         merged.putAll(scenario.const)
-        if (merged["mapName"] !is String) merged["mapName"] = "che"
-        if (merged["unitSet"] !is String) merged["unitSet"] = "che"
+        if (merged["mapName"] !is String) merged["mapName"] = "han"
+        if (merged["unitSet"] !is String) merged["unitSet"] = "han"
         return merged
     }
 
@@ -617,6 +617,7 @@ class ScenarioImporter(
             meta["rtk14_total"] = general.total
             meta["rtk14_ideology"] = general.ideology
         }
+        if (general.npcType == IMPERIAL_NPC_TYPE) meta["imperial"] = true
         if (general.text != null) meta["npcmsg"] = general.text
         return meta
     }
@@ -1035,8 +1036,11 @@ class ScenarioImporter(
             4 to "ⓖ",
             5 to "㉥",
             6 to "ⓤ",
+            // 황제는 인물명을 변조하지 않고 npcType=7 + 전용 이미지 배지로 표시한다.
+            7 to "",
             9 to "ⓞ",
         )
+        private const val IMPERIAL_NPC_TYPE = 7
 
         /** GeneralAi/reserved ring capacity (= common GameConst.maxTurn). */
         const val MAX_GENERAL_TURNS = 30

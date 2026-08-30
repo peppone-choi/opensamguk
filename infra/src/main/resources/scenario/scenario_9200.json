@@ -4,7 +4,11 @@
   "life": 1,
   "fiction": 0,
   "map": {
-    "mapName": "miniche_b"
+    "mapName": "han-world-v2",
+    "unitSet": "han"
+  },
+  "seedContract": {
+    "activeGenerals": {"base": 2, "extended": 2}
   },
   "const": {
     "defaultMaxGeneral": 600

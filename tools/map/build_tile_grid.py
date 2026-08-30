@@ -47,6 +47,12 @@ OUT = MAP / "han-tiles.json"
 LEGACY_GAMEPLAY_TILES = MAP / "han-780-v1-tiles.json"
 HAN_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 
+# 220년 정본 군국명과 시나리오 시기명이 다른 같은 행정 권역.
+# 소유권 바인딩에서만 별칭으로 해석하고 지도 표시명은 220년 정본을 유지한다.
+PARENT_TEMPORAL_ALIASES = {
+    '甘陵郡': ['신성후국'],  # 新成侯國 → 甘陵郡
+}
+
 # 도로 비트마스크 — 이웃 4방향(N=1 E=2 S=4 W=8). 타일 16종이 서로 이어진다.
 NEI = {(0, -1): 1, (1, 0): 2, (0, 1): 4, (-1, 0): 8}
 CANONICAL_COLS = 768
@@ -114,6 +120,19 @@ def resolve_province_record_names(
                 **record,
                 'displayName': city['name'],
                 'nameCh': city['nameCh'],
+            })
+            continue
+
+        if record.get('kind') == 'DIRECT_TERRITORY':
+            parent_id = record['parentRegionId']
+            index = parent_index.get(parent_id)
+            if index is None:
+                raise ValueError(f'direct territory has no parent: {record["id"]}')
+            parent = parent_regions[index]
+            resolved.append({
+                **record,
+                'displayName': parent['displayName'],
+                'nameCh': parent['nameCh'],
             })
             continue
 
@@ -230,7 +249,7 @@ def _derive_adjacency(labels):
                 touching[tuple(sorted((a, b)))] += 1
     return [
         {'a': a, 'b': b, 'cells': cells}
-        for (a, b), cells in sorted(touching.items()) if cells >= 3
+        for (a, b), cells in sorted(touching.items())
     ]
 
 
@@ -499,7 +518,11 @@ def build(
         parent_regions = []
         for index, record in enumerate(grid['parentRegions']):
             translated = juns[index]['name'] if index < len(juns) else record['displayName']
-            parent_regions.append({**record, 'displayName': translated})
+            resolved = {**record, 'displayName': translated}
+            aliases = PARENT_TEMPORAL_ALIASES.get(record['nameCh'])
+            if aliases:
+                resolved['aliases'] = aliases
+            parent_regions.append(resolved)
         province_records = resolve_province_record_names(
             grid['provinceRecords'], parent_regions, cities, [jun['seat'] for jun in juns],
         )

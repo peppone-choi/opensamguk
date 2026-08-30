@@ -740,14 +740,16 @@ def thin(roads, cap={'MAIN': 4, 'WATER': 3, 'LOCAL': 2}, local_cost=900):
     return kept
 
 
-def adjacency(label, seats=3):
+def adjacency(label, min_shared_edges=1):
     """소유 격자에서 인접을 뽑는다. 이동은 길이 아니라 영역 인접으로 판정한다 —
     治所를 길로 다 이으면 델로네 그물이 되고, 그건 후한의 도로망이 아니라 삼각분할이다.
 
-    `seats` 칸 미만 맞닿은 쌍은 버린다. 모서리 한 칸 스치는 건 경계 잡음이지 국경이 아니다.
+    공유한 격자변이 하나라도 있으면 인접한다. 육상 이동의 정본은 별도 육로가
+    아니라 이 프로빈스 접경 그래프이므로 짧은 경계를 잡음으로 제거하지 않는다.
+    郡 요약 그래프처럼 보조 산출물은 호출자가 더 큰 최소값을 지정할 수 있다.
     """
     return [{'a': a, 'b': b, 'cells': n}
-            for (a, b), n in sorted(touching_pairs(label).items()) if n >= seats]
+            for (a, b), n in sorted(touching_pairs(label).items()) if n >= min_shared_edges]
 
 
 def ambiguous_seeds(junguo):
@@ -1173,11 +1175,11 @@ def finalize_reviewed_merge_state(
         x, y = int(x), int(y)
         if land_field[y, x] == INF:
             land_field[y, x] = LAND_COST[PLAIN]
-    county_edges = adjacency(state['owner'])
+    county_edges = adjacency(state['owner'], min_shared_edges=1)
     commandery_edges = cross_by_path(
         land_field,
         pts,
-        adjacency(state['seatOwner']),
+        adjacency(state['seatOwner'], min_shared_edges=3),
         terrain,
     )
     ford_list += [
@@ -1351,7 +1353,7 @@ def main():
     )
     owner = province_result.owner.astype(np.int16)
     seat_label = parent_owner.astype(np.int16)
-    adj_c = adjacency(owner)
+    adj_c = adjacency(owner, min_shared_edges=1)
 
     province_records = [{
         'id': record.id, 'displayName': record.display_name, 'nameCh': record.name_ch,

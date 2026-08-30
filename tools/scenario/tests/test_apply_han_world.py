@@ -15,6 +15,88 @@ SPEC.loader.exec_module(apply_han_world)
 
 
 class HanWorldOwnershipOverrideTest(unittest.TestCase):
+    def test_yellow_turban_han_faction_is_he_jins_practical_control(self) -> None:
+        by_jun, id_of, seat_of = apply_han_world.load_world()
+        che2jun = {
+            key: value["jun"]
+            for key, value in json.loads(apply_han_world.CHE_TO_JUN.read_text(encoding="utf-8"))["map"].items()
+        }
+        ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
+        source = ownership["scenario_1010"]
+        expected_juns = {
+            "하남윤", "하내군", "하동군", "홍농군", "경조윤", "좌풍익", "우부풍",
+            "광양군", "하간국", "태원군", "발해군", "상당군",
+        }
+
+        self.assertEqual(set(source["nations"]["후한"]["juns"]), expected_juns)
+
+        document = json.loads(
+            (apply_han_world.SCEN / "scenario_1010.json").read_text(encoding="utf-8")
+        )
+        rewritten, _ = apply_han_world.rewrite(
+            document, "scenario_1010", by_jun, id_of, seat_of, che2jun, ownership,
+        )
+        nations = {row[0]: row for row in rewritten["nation"]}
+        self.assertIn("후한", nations)
+        self.assertEqual(
+            set(nations["후한"][apply_han_world.NATION_CITIES]),
+            {city for jun in expected_juns for city in by_jun[jun]},
+        )
+        self.assertEqual(nations["후한"][1], "#B82020")
+        self.assertEqual(nations["황건적"][1], "#E78C11")
+        names = {row[1] for key in apply_han_world.GENERAL_KEYS for row in rewritten.get(key, [])}
+        self.assertIn("유굉", names)
+        self.assertIn("유변", names)
+        self.assertIn("유협", names)
+        self.assertNotIn("소제1", names)
+        self.assertNotIn("헌제", names)
+        self.assertEqual(rewritten["imperialGenerals"], ["유굉"])
+        roster = {row[1]: row for key in apply_han_world.GENERAL_KEYS for row in rewritten.get(key, [])}
+        self.assertEqual(roster["유굉"][8], 12)
+        self.assertEqual(roster["하진"][8], 11)
+
+    def test_imperial_roster_uses_personal_names_for_each_start_date(self) -> None:
+        by_jun, id_of, seat_of = apply_han_world.load_world()
+        che2jun = {
+            key: value["jun"]
+            for key, value in json.loads(apply_han_world.CHE_TO_JUN.read_text(encoding="utf-8"))["map"].items()
+        }
+        ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
+        expected = {
+            "scenario_1020": ["유협"],
+            "scenario_1041": ["유협", "원술"],
+            "scenario_1100": ["조비", "유선"],
+            "scenario_1110": ["조예", "유선"],
+        }
+        for code, emperor_names in expected.items():
+            document = json.loads((apply_han_world.SCEN / f"{code}.json").read_text(encoding="utf-8"))
+            rewritten, _ = apply_han_world.rewrite(
+                document, code, by_jun, id_of, seat_of, che2jun, ownership,
+            )
+            self.assertEqual(rewritten["imperialGenerals"], emperor_names)
+            roster_names = {row[1] for key in apply_han_world.GENERAL_KEYS for row in rewritten.get(key, [])}
+            self.assertTrue(set(emperor_names) <= roster_names)
+            self.assertNotIn("헌제", roster_names)
+
+    def test_every_historical_faction_has_a_reviewed_symbol_color(self) -> None:
+        palette = json.loads(apply_han_world.PALETTE.read_text(encoding="utf-8"))["colors"]
+        by_jun, id_of, seat_of = apply_han_world.load_world()
+        che2jun = {
+            key: value["jun"]
+            for key, value in json.loads(apply_han_world.CHE_TO_JUN.read_text(encoding="utf-8"))["map"].items()
+        }
+        ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
+
+        for code in sorted(key for key in ownership if key.startswith("scenario_")):
+            document = json.loads((apply_han_world.SCEN / f"{code}.json").read_text(encoding="utf-8"))
+            rewritten, _ = apply_han_world.rewrite(
+                document, code, by_jun, id_of, seat_of, che2jun, ownership,
+            )
+            for row in rewritten["nation"]:
+                with self.subTest(code=code, nation=row[0]):
+                    self.assertIn(row[0], palette)
+                    self.assertEqual(row[1], palette[row[0]]["hex"])
+
     def test_all_scenario_borders_are_sourced_disjoint_and_use_known_cities(self) -> None:
         by_jun, id_of, seat_of = apply_han_world.load_world()
         che2jun = {
@@ -46,7 +128,7 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
 
     def test_all_scenarios_materialize_literal_active_general_contracts(self) -> None:
         expected = {
-            "scenario_1010": (174, 229), "scenario_1020": (231, 299),
+            "scenario_1010": (175, 230), "scenario_1020": (231, 299),
             "scenario_1021": (339, 339), "scenario_1030": (250, 327),
             "scenario_1031": (365, 365), "scenario_1040": (250, 327),
             "scenario_1041": (363, 363), "scenario_1050": (248, 320),

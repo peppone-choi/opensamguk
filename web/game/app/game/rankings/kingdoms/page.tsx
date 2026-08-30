@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameCard from '../../../../components/GameCard';
+import GeneralName from '../../../../components/game/GeneralName';
 import { api } from '../../../../lib/api';
-import { getNPCColor } from '../../../../lib/utilGame';
 import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { KingdomRoster, KingdomRosterGeneral } from '../../../../types/game';
 
@@ -37,8 +37,7 @@ function newColor(color: string): string {
 
 // formatName 동치: npc 타입색으로 이름 렌더(공석 "-"는 그대로).
 function GenName({ g }: { g: KingdomRosterGeneral }) {
-  const color = getNPCColor(g.npc);
-  return <span style={{ color: color ?? undefined }}>{g.name}</span>;
+  return <GeneralName name={g.name} npcType={g.npc} />;
 }
 
 export default function KingdomsPage() {

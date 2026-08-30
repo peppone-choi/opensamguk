@@ -29,6 +29,7 @@ ROOT_KEYS = (
     "life",
     "fiction",
     "map",
+    "seedContract",
     "const",
     "stored_icons",
     "nation",
@@ -230,7 +231,7 @@ def _normalize_manifest(manifest: object, defaults: object) -> tuple[dict, list[
     start_year = _required_int(manifest["startYear"], "manifest startYear")
     life = _required_int(manifest["life"], "manifest life")
     fiction = _required_int(manifest["fiction"], "manifest fiction")
-    if start_year <= 0 or manifest["map"] != "che" or life != 1 or fiction != 0:
+    if start_year <= 0 or manifest["map"] != "han-world-v2" or life != 1 or fiction != 0:
         raise ValueError("manifest fixed scenario settings are invalid")
     const = manifest["const"]
     if not isinstance(const, dict) or set(const) != {"defaultMaxGeneral"}:
@@ -405,7 +406,10 @@ def build(
         "startYear": header["startYear"],
         "life": 1,
         "fiction": 0,
-        "map": {"mapName": "che"},
+        "map": {"mapName": "han-world-v2", "unitSet": "han"},
+        "seedContract": {
+            "activeGenerals": {"base": len(general_rows), "extended": len(general_rows)},
+        },
         "const": {"defaultMaxGeneral": 600},
         "stored_icons": {".": {
             str(officer_id): f"{officer_id}.png"
@@ -440,8 +444,24 @@ def validate_scenario_shape(scenario: dict) -> None:
     _required_int(scenario["startYear"], "scenario startYear")
     if _required_int(scenario["life"], "scenario life") != 1 or _required_int(scenario["fiction"], "scenario fiction") != 0:
         raise ValueError("scenario life or fiction is invalid")
-    if not isinstance(scenario["map"], dict) or tuple(scenario["map"]) != ("mapName",) or scenario["map"]["mapName"] != "che":
+    if (
+        not isinstance(scenario["map"], dict)
+        or tuple(scenario["map"]) != ("mapName", "unitSet")
+        or scenario["map"] != {"mapName": "han-world-v2", "unitSet": "han"}
+    ):
         raise ValueError("scenario map is invalid")
+    seed_contract = scenario["seedContract"]
+    if (
+        not isinstance(seed_contract, dict)
+        or tuple(seed_contract) != ("activeGenerals",)
+        or not isinstance(seed_contract["activeGenerals"], dict)
+        or tuple(seed_contract["activeGenerals"]) != ("base", "extended")
+        or seed_contract["activeGenerals"] != {
+            "base": len(scenario["general"]),
+            "extended": len(scenario["general"]),
+        }
+    ):
+        raise ValueError("scenario active general seed contract is invalid")
     if not isinstance(scenario["const"], dict) or tuple(scenario["const"]) != ("defaultMaxGeneral",):
         raise ValueError("scenario const is invalid")
     if _required_int(scenario["const"]["defaultMaxGeneral"], "scenario defaultMaxGeneral") != 600:

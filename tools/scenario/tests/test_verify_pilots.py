@@ -205,7 +205,8 @@ def fixture() -> tuple[dict, dict, list[dict], dict, set[str]]:
         "startYear": 190,
         "life": 1,
         "fiction": 0,
-        "map": {"mapName": "che"},
+        "map": {"mapName": "han-world-v2", "unitSet": "han"},
+        "seedContract": {"activeGenerals": {"base": 249, "extended": 249}},
         "const": {"defaultMaxGeneral": 600},
         "stored_icons": {".": {str(row[2]): f"{row[2]}.png" for row in tuples}},
         "nation": nations,
@@ -259,6 +260,7 @@ class VerifyPilotsTest(unittest.TestCase):
         scenario, report, refined, manifest, che_cities = fixture()
         scenario["general"].pop()
         scenario["stored_icons"]["."].popitem()
+        scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
         report["officers"].pop()
 
         errors = verify(scenario, report, refined, manifest, che_cities)
