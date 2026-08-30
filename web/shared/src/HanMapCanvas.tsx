@@ -134,6 +134,7 @@ export interface IsoScene {
 export interface IsoSceneOptions {
   currentCityId?: number | null;
   selectedCityId?: number | null;
+  markerPositions?: ReadonlyMap<number, { col: number; row: number }>;
   markerPlacement?: {
     provinceMap: ProvinceIdentityMap;
     countyIndex: CountyAdministrativeIndex;
@@ -330,7 +331,8 @@ export function buildIsoScene(
     terrain: tiles.terrain,
     roads: [],
     cities: cities.map((city) => {
-      const { col, row } = cityMarkerTile(city, grid, source, options.markerPlacement);
+      const { col, row } = options.markerPositions?.get(city.id)
+        ?? cityMarkerTile(city, grid, source, options.markerPlacement);
       const owned = isOwnedNationVisual(city.nationId, city.nationColor);
       const territoryColor = owned && city.nationColor ? city.nationColor : NEUTRAL_COLOR;
       const layers = [`castle:${city.level}`];
@@ -798,15 +800,24 @@ export function HanMapCanvas({
         : buildCountyAdministrativeIndex(provinceMap, loadedTiles.cities, loadedTiles.juns))
       : null
   ), [loadedTiles?.cities, loadedTiles?.juns, loadedTiles?.parentRegions, loadedTiles?.provinceRecords, provinceMap]);
+  const markerPositions = useMemo(() => {
+    if (!loadedTiles) return undefined;
+    const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
+    const placement = provinceMap && countyIndex ? { provinceMap, countyIndex } : undefined;
+    return new Map(cities.map((city) => [
+      city.id,
+      cityMarkerTile(city, grid, sourceSize, placement),
+    ]));
+  }, [cities, countyIndex, loadedTiles, provinceMap, sourceSize]);
   const scene = useMemo(
     () => loadedTiles
       ? buildIsoScene(loadedTiles, cities, sourceSize, {
         currentCityId,
         selectedCityId,
-        markerPlacement: provinceMap && countyIndex ? { provinceMap, countyIndex } : undefined,
+        markerPositions,
       })
       : null,
-    [cities, countyIndex, currentCityId, loadedTiles, provinceMap, selectedCityId, sourceSize],
+    [cities, currentCityId, loadedTiles, markerPositions, selectedCityId, sourceSize],
   );
   const sceneRef = useRef<IsoScene | null>(scene);
   const hideCityNamesRef = useRef(hideCityNames);

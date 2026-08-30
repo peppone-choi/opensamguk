@@ -53,6 +53,54 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect({ col: scene.cities[0].col, row: scene.cities[0].row }).toEqual({ col: 2, row: 0 });
     });
 
+    it('미리 계산한 기준점을 사용해 선택 상태 변경 시 지형을 다시 탐색하지 않는다', () => {
+        const tiles = {
+            _meta: { cols: 5, rows: 3, year: 220, terrainLegend: {} },
+            terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
+        } satisfies HanTiles;
+        const options = {
+            markerPositions: new Map([[1, { col: 2, row: 0 }]]),
+        } as IsoSceneOptions & { markerPositions: ReadonlyMap<number, { col: number; row: number }> };
+
+        const scene = buildIsoScene(
+            tiles,
+            [{ id: 1, name: '해안현', level: 5, nationId: 1, x: 40, y: 40, commanderyName: 'A군' }],
+            { width: 100, height: 60 },
+            options,
+        );
+
+        expect({ col: scene.cities[0].col, row: scene.cities[0].row }).toEqual({ col: 2, row: 0 });
+    });
+
+    it('이미 육지인 소수 좌표와 역사 좌표는 그대로 보존한다', () => {
+        const provinces = new Int16Array(15).fill(-1);
+        provinces[2 * 5 + 2] = 0;
+        const provinceMap: ProvinceIdentityMap = {
+            width: 5,
+            height: 3,
+            provinces,
+            commanderies: new Int16Array(15),
+            provinceEdges: [],
+            commanderyEdges: [],
+        };
+        const countyIndex: CountyAdministrativeIndex = {
+            commanderyByProvince: new Int16Array([0]),
+            commanderyByName: new Map([['A군', 0]]),
+            administrativeSystemByProvince: [''],
+        };
+        const tiles = {
+            _meta: { cols: 5, rows: 3, year: 220, terrainLegend: {} },
+            terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
+        } satisfies HanTiles;
+        const city = { id: 1, name: '내륙현', level: 5, nationId: 1, x: 30, y: 30, commanderyName: 'A군' };
+        const scene = buildIsoScene(tiles, [city], { width: 100, height: 60 }, {
+            markerPlacement: { provinceMap, countyIndex },
+        });
+
+        expect({ col: scene.cities[0].col, row: scene.cities[0].row }).toEqual({ col: 1.5, row: 1.5 });
+        expect({ x: scene.cities[0].x, y: scene.cities[0].y }).toEqual({ x: 30, y: 30 });
+    });
+
     it.each([1, 1.5, 2, 3])('DPR %s에서 CSS 크기와 지점 앵커를 보존한다', (dpr) => {
         const box = cityMarkerDrawBox(5, 100, 80, dpr);
         const scale = dpr / 2;
