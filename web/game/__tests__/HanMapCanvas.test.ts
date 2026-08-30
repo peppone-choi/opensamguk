@@ -203,10 +203,10 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
         const height = cssHeight * dpr;
         const view = initialView(width, height, grid, hanTiles, dpr);
         const corners = [
-            cellToScreen(0, 0, view),
-            cellToScreen(grid.cols - 1, 0, view),
-            cellToScreen(0, grid.rows - 1, view),
-            cellToScreen(grid.cols - 1, grid.rows - 1, view),
+            cellToScreen(-0.5, -0.5, view),
+            cellToScreen(grid.cols - 0.5, -0.5, view),
+            cellToScreen(-0.5, grid.rows - 0.5, view),
+            cellToScreen(grid.cols - 0.5, grid.rows - 0.5, view),
         ];
 
         for (const [x, y] of corners) {
