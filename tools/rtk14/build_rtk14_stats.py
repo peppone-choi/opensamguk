@@ -638,6 +638,54 @@ def _new_general(source, name):
     ]
 
 
+def _tuple_int(arr, index, default=None):
+    value = arr[index] if len(arr) > index else None
+    return value if type(value) is int else default
+
+
+def _active_at_start(arr, start_year):
+    death = _tuple_int(arr, 10, 300)
+    appearance = _tuple_int(arr, 16)
+    if appearance is not None:
+        return appearance <= start_year <= death
+    birth = _tuple_int(arr, 9, 180)
+    return death > start_year and birth + 14 <= start_year
+
+
+def _materialized_active_general_contract(scenario):
+    start_year = _scenario_start_year(scenario)
+    general = scenario.get("general") if isinstance(scenario.get("general"), list) else []
+    general_ex = scenario.get("general_ex") if isinstance(scenario.get("general_ex"), list) else []
+    general_neutral = (
+        scenario.get("general_neutral")
+        if isinstance(scenario.get("general_neutral"), list)
+        else []
+    )
+
+    def is_rtk14_added(arr):
+        return isinstance(arr, list) and len(arr) > 23 and arr[23] is True
+
+    def has_officer_number(arr):
+        return isinstance(arr, list) and len(arr) > 17 and type(arr[17]) is int
+
+    legacy_base = [arr for arr in general if isinstance(arr, list) and not is_rtk14_added(arr)]
+    added_base = [arr for arr in general if isinstance(arr, list) and is_rtk14_added(arr)]
+    legacy_neutral = [
+        arr for arr in general_neutral if isinstance(arr, list) and not is_rtk14_added(arr)
+    ]
+    source_extended = [arr for arr in general_ex if has_officer_number(arr)]
+    all_extended = [arr for arr in general_ex if isinstance(arr, list)]
+
+    def active_count(rows):
+        return sum(_active_at_start(arr, start_year) for arr in rows)
+
+    common = legacy_base + legacy_neutral + added_base
+    return {
+        "base": active_count(common + source_extended),
+        "extended": active_count(common + all_extended),
+    }
+
+
 def _runtime_names(scenario):
     names = set()
     base_names = set()
@@ -845,6 +893,11 @@ def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_over
     audit["matchedExistingRows"] = stats["matched"]
     audit["runtimeNameDuplicates"] = runtime_name_duplicates
     audit["nameCollisions"] = name_collisions
+    active_general_contract = None
+    if "seedContract" in enriched:
+        active_general_contract = _materialized_active_general_contract(enriched)
+        enriched["seedContract"] = {"activeGenerals": active_general_contract}
+    audit["activeGeneralContract"] = active_general_contract
     return enriched, audit
 
 
@@ -882,6 +935,7 @@ def _inactive_detail(schema, status):
         "addedGeneralNeutral": 0,
         "runtimeNameDuplicates": [],
         "nameCollisions": [],
+        "activeGeneralContract": None,
         "counts": _empty_assignment_stats(),
     }
 
@@ -1018,6 +1072,7 @@ def build_all(scenario_dir, out_dir, rtk, dry_run=False):
             "addedGeneralNeutral": detail["addedGeneralNeutral"],
             "runtimeNameDuplicates": detail["runtimeNameDuplicates"],
             "nameCollisions": detail["nameCollisions"],
+            "activeGeneralContract": detail["activeGeneralContract"],
         })
     return {
         "schemaVersion": 3,

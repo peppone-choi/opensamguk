@@ -147,6 +147,11 @@ jobs:
 
           echo "RTK14 scenario enrichment completed for ${scenario_count} scenario file(s)."
 
+      - name: Validate materialized scenario seed contracts
+        run: >-
+          ./gradlew :infra:test --no-daemon
+          --tests 'opensamguk.infra.seed.ScenarioJsonTest.every committed runtime scenario uses the canonical Han world contract'
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
