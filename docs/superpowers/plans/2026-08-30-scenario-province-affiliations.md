@@ -1,5 +1,9 @@
 # Scenario Province Affiliations Implementation Plan
 
+> Historical plan. Its opaque-fill and inherited-ownership requirements were
+> superseded on 2026-08-31 by direct county-province ownership with transparent
+> unowned provinces. Do not use those requirements for new implementation work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give every land province a historically scoped display affiliation, prevent cross-commandery recoloring, and correct Wei's 225/228 New City counties.

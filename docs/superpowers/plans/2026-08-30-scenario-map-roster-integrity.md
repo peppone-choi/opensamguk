@@ -1,5 +1,9 @@
 # Scenario Map and Roster Integrity Implementation Plan
 
+> Historical plan. Its opaque-fill and same-parent inheritance requirements were
+> superseded on 2026-08-31 by direct county-province ownership with transparent
+> unowned provinces. Do not use those requirements for new implementation work.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make every scenario's political map follow its dated ownership source without visual holes, expose real county names everywhere in China, and reject scenario seeds whose active NPC roster differs from the committed JSON contract.

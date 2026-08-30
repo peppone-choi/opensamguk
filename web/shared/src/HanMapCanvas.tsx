@@ -29,6 +29,7 @@ import {
   composeProvincePixels,
   formatProvinceTooltip,
   loadProvinceIdentityMap,
+  resolveProvincePlacement,
   type ParentRegionRecordDto,
   type CountyAdministrativeIndex,
   type ProvinceRecordDto,
@@ -120,6 +121,7 @@ export interface IsoSceneCity extends IsoCityOverlay {
   territoryColor: string;
   iconColor: string;
   layers: string[];
+  provinceId?: number;
 }
 
 export interface IsoScene {
@@ -128,10 +130,19 @@ export interface IsoScene {
   cities: IsoSceneCity[];
 }
 
+interface CityHitBox {
+  city: IsoCityOverlay;
+  provinceId?: number;
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
 export interface IsoSceneOptions {
   currentCityId?: number | null;
   selectedCityId?: number | null;
-  markerPositions?: ReadonlyMap<number, { col: number; row: number }>;
+  markerPositions?: ReadonlyMap<number, { col: number; row: number; provinceId?: number }>;
   markerPlacement?: {
     provinceMap: ProvinceIdentityMap;
     countyIndex: CountyAdministrativeIndex;
@@ -286,33 +297,19 @@ function cityMarkerTile(
   grid: GridSize,
   source: IsoSourceSize,
   placement?: IsoSceneOptions['markerPlacement'],
-): { col: number; row: number } {
+): { col: number; row: number; provinceId?: number } {
   const mapped = mapCityToTile(city, grid, source);
-  if (!placement || !city.commanderyName) return mapped;
+  if (!placement) return mapped;
 
   const { provinceMap, countyIndex } = placement;
-  const sampleCol = Math.round(mapped.col);
-  const sampleRow = Math.round(mapped.row);
-  if (sampleCol < 0 || sampleRow < 0 || sampleCol >= provinceMap.width || sampleRow >= provinceMap.height) {
-    return mapped;
-  }
-  if (provinceMap.provinces[sampleRow * provinceMap.width + sampleCol] >= 0) return mapped;
-
-  const commandery = countyIndex.commanderyByName.get(city.commanderyName);
-  if (commandery == null) return mapped;
-  let best: { col: number; row: number; distance: number } | null = null;
-  for (let row = 0; row < provinceMap.height; row += 1) {
-    for (let col = 0; col < provinceMap.width; col += 1) {
-      const province = provinceMap.provinces[row * provinceMap.width + col];
-      if (province < 0 || countyIndex.commanderyByProvince[province] !== commandery) continue;
-      const distance = (col - mapped.col) ** 2 + (row - mapped.row) ** 2;
-      if (!best || distance < best.distance
-        || (distance === best.distance && (row < best.row || (row === best.row && col < best.col)))) {
-        best = { col, row, distance };
-      }
-    }
-  }
-  return best ? { col: best.col, row: best.row } : mapped;
+  const commandery = city.commanderyName == null
+    ? undefined
+    : countyIndex.commanderyByName.get(city.commanderyName);
+  if (city.commanderyName != null && commandery === undefined) return mapped;
+  const resolved = resolveProvincePlacement(
+    provinceMap, countyIndex, mapped.col, mapped.row, commandery,
+  );
+  return resolved ?? mapped;
 }
 
 export function buildIsoScene(
@@ -326,8 +323,9 @@ export function buildIsoScene(
     terrain: tiles.terrain,
     roads: [],
     cities: cities.map((city) => {
-      const { col, row } = options.markerPositions?.get(city.id)
+      const markerPosition = options.markerPositions?.get(city.id)
         ?? cityMarkerTile(city, grid, source, options.markerPlacement);
+      const { col, row } = markerPosition;
       const owned = isOwnedNationVisual(city.nationId, city.nationColor);
       const territoryColor = owned && city.nationColor ? city.nationColor : NEUTRAL_COLOR;
       const layers = [`castle:${city.level}`];
@@ -342,6 +340,7 @@ export function buildIsoScene(
         ...city,
         col,
         row,
+        provinceId: markerPosition.provinceId,
         color: territoryColor,
         territoryColor,
         iconColor: CASTLE_FILL,
@@ -407,6 +406,27 @@ function bakePoliticalPaths(map: ProvinceIdentityMap): PoliticalPaths {
     province: pathFromEdges(map.provinceEdges),
     commandery: pathFromEdges(map.commanderyEdges),
   };
+}
+
+function bakeProvinceClipPaths(
+  map: ProvinceIdentityMap,
+  placements: ReadonlyMap<number, { provinceId?: number }>,
+): ReadonlyMap<number, Path2D> {
+  const provinceIds = new Set(
+    [...placements.values()]
+      .map((placement) => placement.provinceId)
+      .filter((provinceId): provinceId is number => provinceId !== undefined && provinceId >= 0),
+  );
+  const paths = new Map<number, Path2D>();
+  for (const provinceId of provinceIds) paths.set(provinceId, new Path2D());
+  for (let index = 0; index < map.provinces.length; index += 1) {
+    const path = paths.get(map.provinces[index]);
+    if (!path) continue;
+    const col = index % map.width;
+    const row = Math.floor(index / map.width);
+    path.rect(col - 0.5, row - 0.5, 1, 1);
+  }
+  return paths;
 }
 
 function bakePoliticalFill(
@@ -515,6 +535,35 @@ export function cityFallbackHitBox(x: number, y: number, radius: number) {
   };
 }
 
+export function provinceAtScreenPoint(
+  map: ProvinceIdentityMap,
+  view: IsoView,
+  x: number,
+  y: number,
+): number {
+  const [rawCol, rawRow] = screenToCell(x, y, view);
+  const col = Math.round(rawCol);
+  const row = Math.round(rawRow);
+  if (col < 0 || row < 0 || col >= map.width || row >= map.height) return -1;
+  return map.provinces[row * map.width + col];
+}
+
+export function screenBoxInsideProvince(
+  map: ProvinceIdentityMap,
+  provinceId: number,
+  view: IsoView,
+  box: { left: number; top: number; right: number; bottom: number },
+): boolean {
+  if (provinceId < 0 || ![box.left, box.top, box.right, box.bottom].every(Number.isFinite)
+    || box.right < box.left || box.bottom < box.top) return false;
+  for (let y = Math.floor(box.top); y <= Math.ceil(box.bottom); y += 1) {
+    for (let x = Math.floor(box.left); x <= Math.ceil(box.right); x += 1) {
+      if (provinceAtScreenPoint(map, view, x, y) !== provinceId) return false;
+    }
+  }
+  return true;
+}
+
 function markerLevel(city: IsoCityOverlay): number {
   return Number.isInteger(city.level) && city.level >= 1 && city.level <= 11 ? city.level : 5;
 }
@@ -537,13 +586,15 @@ function drawScene(
   terrain: HTMLCanvasElement,
   political: HTMLCanvasElement | null,
   paths: PoliticalPaths | null,
+  provinceMap: ProvinceIdentityMap | null,
+  provinceClips: ReadonlyMap<number, Path2D>,
   scene: IsoScene,
   view: IsoView,
   hideCityNames: boolean,
   dpr: number,
   markerImages: CityMarkerImages,
   flagPhase: number,
-): { city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[] {
+): CityHitBox[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
   const width = canvas.width;
@@ -572,7 +623,7 @@ function drawScene(
   }
   context.restore();
 
-  const hits: { city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[] = [];
+  const hits: CityHitBox[] = [];
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
     const level = markerLevel(city);
@@ -581,10 +632,17 @@ function drawScene(
     const marker = markerImages[level];
     hits.push({
       city,
+      provinceId: city.provinceId,
       ...(marker ? cityMarkerHitBox(level, x, y, dpr, markerZoom) : cityFallbackHitBox(x, y, radius)),
     });
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
+    const provinceClip = city.provinceId === undefined ? undefined : provinceClips.get(city.provinceId);
+    if (provinceClip) {
+      context.transform(scale, scale / 2, -scale, scale / 2, view.ox, view.oy);
+      context.clip(provinceClip);
+      context.setTransform(1, 0, 0, 1, 0, 0);
+    }
 
     if (marker) {
       const box = cityMarkerDrawBox(level, x, y, dpr, markerZoom);
@@ -613,6 +671,12 @@ function drawScene(
       for (const point of cloth.slice(1)) context.lineTo(...point);
       context.closePath();
       context.fill();
+      context.strokeStyle = '#21180f';
+      context.lineWidth = Math.max(2, 1.5 * dpr);
+      context.stroke();
+      context.strokeStyle = 'rgba(255,244,208,0.92)';
+      context.lineWidth = Math.max(1, 0.55 * dpr);
+      context.stroke();
     }
 
     if (city.isCapital) {
@@ -654,14 +718,27 @@ function drawScene(
     }
 
     if (!hideCityNames) {
-      context.textAlign = 'left';
+      const fontSize = Math.max(10, Math.min(16, scale * 2.2));
+      const labelX = x;
+      const labelY = y + radius * 1.2;
+      context.textAlign = 'center';
       context.textBaseline = 'alphabetic';
-      context.font = `bold ${Math.max(10, Math.min(16, scale * 2.2))}px sans-serif`;
+      context.font = `bold ${fontSize}px sans-serif`;
       context.lineWidth = 3;
       context.strokeStyle = 'rgba(0,0,0,0.8)';
       context.fillStyle = '#fff';
-      context.strokeText(city.name, x + radius * 0.65, y + radius * 1.2);
-      context.fillText(city.name, x + radius * 0.65, y + radius * 1.2);
+      const labelWidth = context.measureText(city.name).width + 4 * dpr;
+      const labelBox = {
+        left: labelX - labelWidth / 2,
+        top: labelY - fontSize - 2 * dpr,
+        right: labelX + labelWidth / 2,
+        bottom: labelY + fontSize * 0.25 + 2 * dpr,
+      };
+      if (city.provinceId === undefined || !provinceMap
+        || screenBoxInsideProvince(provinceMap, city.provinceId, view, labelBox)) {
+        context.strokeText(city.name, labelX, labelY);
+        context.fillText(city.name, labelX, labelY);
+      }
     }
     context.restore();
   }
@@ -711,12 +788,14 @@ export function HanMapCanvas({
   const terrainRef = useRef<HTMLCanvasElement | null>(null);
   const politicalRef = useRef<HTMLCanvasElement | null>(null);
   const politicalPathsRef = useRef<PoliticalPaths | null>(null);
+  const provinceMapRef = useRef<ProvinceIdentityMap | null>(null);
+  const provinceClipsRef = useRef<ReadonlyMap<number, Path2D>>(new Map());
   const markerImagesRef = useRef<CityMarkerImages>({});
   const flagPhaseRef = useRef(0);
   const viewRef = useRef<IsoView | null>(null);
   const userModifiedViewRef = useRef(false);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
-  const hitRef = useRef<{ city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[]>([]);
+  const hitRef = useRef<CityHitBox[]>([]);
   const dragRef = useRef(new Map<number, { x: number; y: number }>());
   const dragMovedRef = useRef(false);
   const activeCityRef = useRef<IsoCityOverlay | null>(null);
@@ -805,6 +884,11 @@ export function HanMapCanvas({
       cityMarkerTile(city, grid, sourceSize, placement),
     ]));
   }, [cities, countyIndex, loadedTiles, provinceMap, sourceSize]);
+  const provinceClips = useMemo(() => (
+    provinceMap && markerPositions
+      ? bakeProvinceClipPaths(provinceMap, markerPositions)
+      : new Map<number, Path2D>()
+  ), [markerPositions, provinceMap]);
   const scene = useMemo(
     () => loadedTiles
       ? buildIsoScene(loadedTiles, cities, sourceSize, {
@@ -819,6 +903,8 @@ export function HanMapCanvas({
   const hideCityNamesRef = useRef(hideCityNames);
   const ownershipCitiesRef = useRef(cities);
   sceneRef.current = scene;
+  provinceMapRef.current = provinceMap;
+  provinceClipsRef.current = provinceClips;
   hideCityNamesRef.current = hideCityNames;
   ownershipCitiesRef.current = cities;
   const completeOwnership = useMemo(() => {
@@ -864,6 +950,8 @@ export function HanMapCanvas({
       terrain,
       politicalRef.current,
       politicalPathsRef.current,
+      provinceMapRef.current,
+      provinceClipsRef.current,
       latestScene,
       view,
       hideCityNamesRef.current,
@@ -1046,7 +1134,12 @@ export function HanMapCanvas({
   const cityAt = (x: number, y: number) => {
     for (let index = hitRef.current.length - 1; index >= 0; index -= 1) {
       const hit = hitRef.current[index];
-      if (x >= hit.left && x <= hit.right && y >= hit.top && y <= hit.bottom) return hit.city;
+      if (x < hit.left || x > hit.right || y < hit.top || y > hit.bottom) continue;
+      const view = viewRef.current;
+      const map = provinceMapRef.current;
+      if (hit.provinceId !== undefined && map && view
+        && provinceAtScreenPoint(map, view, x, y) !== hit.provinceId) continue;
+      return hit.city;
     }
     return null;
   };
