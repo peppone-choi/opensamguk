@@ -1008,6 +1008,23 @@ def cross_by_path(cost, pts, edges, terrain):
     return edges
 
 
+def derive_world_adjacency(terrain, pts, owner, parent_owner):
+    """Derive both movement summaries from the final province ownership grids."""
+    land_field = cost_field(terrain, LAND_COST)
+    for x, y in pts:
+        x, y = int(x), int(y)
+        if land_field[y, x] == INF:
+            land_field[y, x] = LAND_COST[PLAIN]
+    county_edges = adjacency(owner, min_shared_edges=1)
+    commandery_edges = cross_by_path(
+        land_field,
+        pts,
+        adjacency(parent_owner, min_shared_edges=1),
+        terrain,
+    )
+    return county_edges, commandery_edges
+
+
 def _boundary_cells(label):
     """라벨이 갈리는 자리와 그 셀 좌표. 어느 지형 위에서 갈리는지 봐야 도하를 알 수 있다."""
     h, w = label.shape
@@ -1170,17 +1187,8 @@ def finalize_reviewed_merge_state(
     roads, _ = build_roads(terrain, pts, state['hubs'])
     ford_list = fords(terrain, roads)
 
-    land_field = cost_field(terrain, LAND_COST)
-    for x, y in pts:
-        x, y = int(x), int(y)
-        if land_field[y, x] == INF:
-            land_field[y, x] = LAND_COST[PLAIN]
-    county_edges = adjacency(state['owner'], min_shared_edges=1)
-    commandery_edges = cross_by_path(
-        land_field,
-        pts,
-        adjacency(state['seatOwner'], min_shared_edges=3),
-        terrain,
+    county_edges, commandery_edges = derive_world_adjacency(
+        terrain, pts, state['owner'], state['seatOwner'],
     )
     ford_list += [
         {'col': ford[0], 'row': ford[1], 'roads': 0}
@@ -1353,7 +1361,14 @@ def main():
     )
     owner = province_result.owner.astype(np.int16)
     seat_label = parent_owner.astype(np.int16)
-    adj_c = adjacency(owner, min_shared_edges=1)
+    adj_c, adj_m = derive_world_adjacency(
+        terrain, pts, owner, seat_label,
+    )
+    ford_list = fords(terrain, roads)
+    ford_list += [
+        {'col': ford[0], 'row': ford[1], 'roads': 0}
+        for ford in (edge['ford'] for edge in adj_m if 'ford' in edge)
+    ]
 
     province_records = [{
         'id': record.id, 'displayName': record.display_name, 'nameCh': record.name_ch,

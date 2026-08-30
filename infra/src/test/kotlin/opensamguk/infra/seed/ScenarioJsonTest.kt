@@ -110,6 +110,35 @@ class ScenarioJsonTest {
     }
 
     @Test
+    fun `removing one eligible general fails the pre-write seed contract check`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "one row removed",
+              "startYear": 181,
+              "map": {"mapName": "han-world-v2"},
+              "const": {},
+              "seedContract": {"activeGenerals": {"base": 2, "extended": 2}},
+              "nation": [],
+              "general": [[1,"남은장수",null,0,null,1,1,1,0,160,220,null,null]],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        val error = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(
+                scenario = scenario,
+                cities = emptyList(),
+                extendedGeneral = false,
+            ).validateSeedContract()
+        }
+
+        assertTrue(error.message.orEmpty().contains("expected 2 active generals, decoded 1"))
+    }
+
+    @Test
     fun `Han world scenario cannot seed without an active roster contract`() {
         val scenario = ScenarioJson.loadScenario(
             """

@@ -145,9 +145,13 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
         if len(general) > 1
     }
     for general in scenario_ownership.get("generalAdditions") or []:
-        if len(general) > 1 and general[1] not in existing_general_names:
-            doc.setdefault("general", []).append(general)
-            existing_general_names.add(general[1])
+        if len(general) <= 1:
+            continue
+        if general[1] in existing_general_names:
+            warn.append(f"{code}: 장수 추가 '{general[1]}' 이 이미 로스터에 있어 건너뛴다")
+            continue
+        doc.setdefault("general", []).append(general)
+        existing_general_names.add(general[1])
     general_overrides = scenario_ownership.get("generalOverrides") or {}
     override_slots = {"officerLevel": 8}
     for key in GENERAL_KEYS:

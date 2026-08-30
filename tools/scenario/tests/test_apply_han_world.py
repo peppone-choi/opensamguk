@@ -110,6 +110,19 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             set(nations["원술"][apply_han_world.NATION_CITIES]) & set(by_jun["하남윤"]),
         )
 
+    def test_duplicate_general_addition_is_reported(self) -> None:
+        by_jun, id_of, seat_of = apply_han_world.load_world()
+        ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
+        document = json.loads((apply_han_world.SCEN / "scenario_1120.json").read_text(encoding="utf-8"))
+        duplicate = next(row for row in document["general"] if len(row) > 1)
+        ownership["scenario_1120"]["generalAdditions"] = [duplicate]
+
+        _, warnings = apply_han_world.rewrite(
+            document, "scenario_1120", by_jun, id_of, seat_of, {}, ownership,
+        )
+
+        self.assertTrue(any(duplicate[1] in warning and "이미" in warning for warning in warnings))
+
     def test_every_historical_faction_has_a_reviewed_symbol_color(self) -> None:
         palette = json.loads(apply_han_world.PALETTE.read_text(encoding="utf-8"))["colors"]
         by_jun, id_of, seat_of = apply_han_world.load_world()

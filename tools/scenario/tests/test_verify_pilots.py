@@ -284,6 +284,7 @@ class VerifyPilotsTest(unittest.TestCase):
         row = scenario["general"][0]
         officer_id = row[2]
         row[10] = scenario["startYear"]
+        scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
         report["importer_eligible_total"] = len(scenario["general"]) - 1
         report["importer_lifecycle"] = {
             "roster_total": len(scenario["general"]),
@@ -306,6 +307,7 @@ class VerifyPilotsTest(unittest.TestCase):
         row = scenario["general"][0]
         officer_id = row[2]
         row[9] = scenario["startYear"] - 13
+        scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
         report["importer_eligible_total"] = len(scenario["general"]) - 1
         report["importer_lifecycle"] = {
             "roster_total": len(scenario["general"]),
@@ -327,6 +329,7 @@ class VerifyPilotsTest(unittest.TestCase):
         scenario, report, refined, manifest, che_cities = fixture()
         row = scenario["general"][0]
         row[10] = scenario["startYear"]
+        scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
         report["importer_lifecycle"] = {
             "roster_total": len(scenario["general"]),
             "active_at_start": len(scenario["general"]) - 1,
@@ -347,6 +350,7 @@ class VerifyPilotsTest(unittest.TestCase):
         scenario, report, refined, manifest, che_cities = fixture()
         row = scenario["general"][0]
         row[10] = scenario["startYear"]
+        scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
         report["importer_eligible_total"] = len(scenario["general"]) - 1
         report["importer_lifecycle"] = {
             "roster_total": len(scenario["general"]),
@@ -363,6 +367,7 @@ class VerifyPilotsTest(unittest.TestCase):
         scenario, report, refined, manifest, che_cities = fixture()
         row = scenario["general"][0]
         row[10] = scenario["startYear"]
+        scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
         report["importer_eligible_total"] = len(scenario["general"]) - 1
         report["seed_readiness"] = {
             "importer_ruler_gap_nation_ids": [row[3]],

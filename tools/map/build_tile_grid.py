@@ -78,11 +78,11 @@ def rle(rows: list[list[int]]) -> list[list[int]]:
 def resolve_province_record_names(
         records: list[dict], parent_regions: list[dict], cities: list[dict],
         parent_seats: list[int]) -> list[dict]:
-    """Replace Chinese geometry placeholder labels with the real commandery-seat county.
+    """Replace Chinese geometry placeholder labels with the parent commandery name.
 
     A modern ADM2 fragment is geometry provenance, not a historical administrative
-    unit. Chinese fragments are deterministically attached to the commandery's sourced
-    seat county instead of inventing a "direct territory" administrative unit.
+    unit. Chinese background fragments remain non-city geometry and inherit their
+    sourced commandery label instead of inventing a county or exposing "direct territory".
     """
     parent_index = {parent['id']: index for index, parent in enumerate(parent_regions)}
     for record in records:
@@ -112,16 +112,14 @@ def resolve_province_record_names(
             index = parent_index.get(parent_id)
             if index is None or index >= len(parent_seats):
                 raise ValueError(f'Chinese direct territory has no parent seat: {record["id"]}')
+            parent = parent_regions[index]
             city_index = parent_seats[index]
             if type(city_index) is not int or not 0 <= city_index < len(cities):
                 raise ValueError(f'Chinese direct territory has invalid parent seat: {record["id"]}')
-            city = cities[city_index]
             resolved.append({
                 **record,
-                'displayName': city['name'],
-                'nameCh': city['nameCh'],
-                'kind': 'COUNTY',
-                'cityIndex': city_index,
+                'displayName': parent['displayName'],
+                'nameCh': parent['nameCh'],
             })
             continue
 

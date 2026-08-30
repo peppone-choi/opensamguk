@@ -19,8 +19,9 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
         self.assertTrue(chinese)
         self.assertFalse(any("직할" in record["displayName"] for record in chinese))
         self.assertTrue(all(record["nameCh"] for record in chinese))
-        self.assertTrue(all(record["kind"] != "DIRECT_TERRITORY" for record in chinese))
-        self.assertTrue(all(record["cityIndex"] is not None for record in chinese))
+        counties = [record for record in chinese if record["kind"] == "COUNTY"]
+        self.assertTrue(counties)
+        self.assertTrue(all(record["cityIndex"] is not None for record in counties))
 
     def test_committed_player_labels_contain_no_review_placeholders(self) -> None:
         root = Path(__file__).resolve().parents[3]
@@ -33,10 +34,10 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
 
         self.assertEqual([], invalid)
 
-    def test_chinese_direct_fragment_uses_real_same_parent_county_name(self) -> None:
+    def test_chinese_direct_fragment_uses_parent_commandery_name_without_becoming_a_county(self) -> None:
         cities = [
-            {"name": "낙양현", "nameCh": "雒陽縣"},
-            {"name": "평현", "nameCh": "平縣"},
+            {"name": "낙양현", "nameCh": "雒陽縣", "row": 0, "col": 0},
+            {"name": "평현", "nameCh": "平縣", "row": 0, "col": 4},
         ]
         parents = [{
             "id": "PARENT-0", "displayName": "하남윤", "nameCh": "河南尹",
@@ -50,6 +51,12 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
                 "geometryBasis": "HISTORICAL_SEAT_ADAPTED", "confidence": "REVIEWED",
             },
             {
+                "id": "COUNTY-1", "displayName": "평현", "nameCh": "平縣",
+                "administrativeSystem": "HAN_COMMANDERY", "kind": "COUNTY",
+                "parentRegionId": "PARENT-0", "cityIndex": 1,
+                "geometryBasis": "HISTORICAL_SEAT_ADAPTED", "confidence": "REVIEWED",
+            },
+            {
                 "id": "DIRECT-0", "displayName": "하남윤 직할지", "nameCh": "",
                 "administrativeSystem": "HAN_COMMANDERY", "kind": "DIRECT_TERRITORY",
                 "parentRegionId": "PARENT-0", "cityIndex": None,
@@ -59,12 +66,12 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
 
         resolved = resolve_province_record_names(records, parents, cities, [0])
 
-        self.assertEqual(resolved[1]["displayName"], "낙양현")
-        self.assertEqual(resolved[1]["nameCh"], "雒陽縣")
-        self.assertEqual(resolved[1]["cityIndex"], 0)
-        self.assertEqual(resolved[1]["kind"], "COUNTY")
+        self.assertEqual(resolved[2]["displayName"], "하남윤")
+        self.assertEqual(resolved[2]["nameCh"], "河南尹")
+        self.assertIsNone(resolved[2]["cityIndex"])
+        self.assertEqual(resolved[2]["kind"], "DIRECT_TERRITORY")
 
-    def test_parent_without_county_uses_its_real_seat_county(self) -> None:
+    def test_parent_without_county_uses_its_real_commandery_name(self) -> None:
         cities = [{"name": "조선현", "nameCh": "朝鮮縣"}]
         parents = [{
             "id": "PARENT-0", "displayName": "낙랑군", "nameCh": "樂浪郡",
@@ -79,9 +86,10 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
 
         resolved = resolve_province_record_names(records, parents, cities, [0])
 
-        self.assertEqual(resolved[0]["displayName"], "조선현")
-        self.assertEqual(resolved[0]["cityIndex"], 0)
-        self.assertEqual(resolved[0]["kind"], "COUNTY")
+        self.assertEqual(resolved[0]["displayName"], "낙랑군")
+        self.assertEqual(resolved[0]["nameCh"], "樂浪郡")
+        self.assertIsNone(resolved[0]["cityIndex"])
+        self.assertEqual(resolved[0]["kind"], "DIRECT_TERRITORY")
         self.assertNotIn("직할", resolved[0]["displayName"])
 
     def test_external_direct_fragment_uses_its_real_parent_name(self) -> None:
