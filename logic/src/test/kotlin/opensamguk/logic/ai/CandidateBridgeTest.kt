@@ -257,6 +257,45 @@ class CandidateBridgeTest {
         )
     }
 
+    @Test fun `a cityless chief confiscation candidate is denied without aborting the turn`() {
+        val citylessChief = general(id = 1136, cityId = 0)
+        val target = general(id = 3, cityId = 6)
+        val staged = view(
+            generals = mapOf(1136 to citylessChief, 3 to target),
+            cities = mapOf(6 to city(id = 6)),
+        )
+        val raw = linkedMapOf<String, Any?>(
+            "isGold" to true,
+            "amount" to 1_000,
+            "destGeneralID" to 3,
+        )
+
+        val verdict = candidateVerdict(
+            "che_몰수",
+            raw,
+            ctx(actorId = 1136, cityId = 0, destGeneralId = 3),
+            staged,
+            resolve,
+        )
+
+        assertEquals(
+            CandidateVerdict.Deny(
+                reason = CANDIDATE_UNAVAILABLE_REASON,
+                canonicalArgs = raw,
+            ),
+            verdict,
+        )
+        assertFalse(
+            candidateAllowed(
+                "che_몰수",
+                raw,
+                ctx(actorId = 1136, cityId = 0, destGeneralId = 3),
+                staged,
+                resolve,
+            ),
+        )
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // (6) the gate-EXEMPT reason list (G14): do집합/do요양 + 사망/재야유저/do예약턴 BYPASS the gate.
     // ─────────────────────────────────────────────────────────────────────────────────────────────
