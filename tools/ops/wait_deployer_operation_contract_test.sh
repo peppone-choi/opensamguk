@@ -106,6 +106,27 @@ for required in (
 ):
     if required not in workflow[generated:mutation]:
         raise SystemExit(f"reset capability probe is missing fail-closed contract marker: {required}")
+
+for required in (
+    "create_backup:",
+    'default: true',
+    'type: boolean',
+    'INPUT_CREATE_BACKUP: ${{ inputs.create_backup }}',
+    'CREATE_BACKUP="$INPUT_CREATE_BACKUP"',
+    'if [[ "$CREATE_BACKUP" == "true" ]]; then',
+    'Backup explicitly disabled for $PUBLIC_SERVER',
+):
+    if required not in workflow:
+        raise SystemExit(f"reset workflow is missing optional-backup contract marker: {required}")
+
+backup_guard = workflow.find('if [[ "$CREATE_BACKUP" == "true" ]]; then')
+backup_dir = workflow.find('BACKUP_DIR="$HOME/opensamguk-backups/${PUBLIC_SERVER}/${TS}"')
+pg_dump = workflow.find('pg_dump -U')
+backup_disabled = workflow.find('Backup explicitly disabled for $PUBLIC_SERVER')
+if min(backup_guard, backup_dir, pg_dump, backup_disabled) < 0:
+    raise SystemExit("reset workflow optional-backup branch is incomplete")
+if not (backup_guard < backup_dir < pg_dump < backup_disabled):
+    raise SystemExit("reset workflow must guard every backup mutation before the no-backup branch")
 PY
 
 echo "wait_deployer_operation contract tests: PASS"

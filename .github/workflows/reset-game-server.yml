@@ -13,6 +13,11 @@ on:
         required: true
         default: "RESET pep"
         type: string
+      create_backup:
+        description: "Back up the environment, PostgreSQL, and Redis before reset"
+        required: true
+        default: true
+        type: boolean
       scenario_code:
         description: "Scenario code to seed after reset"
         required: true
@@ -49,12 +54,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Backup, reset, and verify selected game server
+      - name: Reset and verify selected game server
         shell: bash
         env:
           RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
           INPUT_SERVER: ${{ inputs.server }}
           INPUT_CONFIRM: ${{ inputs.confirm }}
+          INPUT_CREATE_BACKUP: ${{ inputs.create_backup }}
           INPUT_SCENARIO_CODE: ${{ inputs.scenario_code }}
           INPUT_GENERATION: ${{ inputs.generation }}
           INPUT_TURN_TERM: ${{ inputs.turn_term }}
@@ -72,6 +78,7 @@ jobs:
           SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"
           RAW_SERVER="$INPUT_SERVER"
           CONFIRM="$INPUT_CONFIRM"
+          CREATE_BACKUP="$INPUT_CREATE_BACKUP"
           SCENARIO_CODE="$INPUT_SCENARIO_CODE"
           GENERATION_INPUT="$INPUT_GENERATION"
           TURN_TERM_INPUT="$INPUT_TURN_TERM"
@@ -95,6 +102,10 @@ jobs:
           fi
           if [[ "$CONFIRM" != "RESET $PUBLIC_SERVER" ]]; then
             echo "Confirmation must be exactly: RESET $PUBLIC_SERVER (canonical lowercase server id)" >&2
+            exit 2
+          fi
+          if [[ "$CREATE_BACKUP" != "true" && "$CREATE_BACKUP" != "false" ]]; then
+            echo "Invalid create_backup value: $CREATE_BACKUP" >&2
             exit 2
           fi
           if [[ ! "$SCENARIO_CODE" =~ ^[A-Za-z0-9_.:-]+$ ]]; then
@@ -159,9 +170,12 @@ jobs:
           esac
 
           TS="$(date -u +%Y%m%dT%H%M%SZ)"
-          BACKUP_DIR="$HOME/opensamguk-backups/${PUBLIC_SERVER}/${TS}"
-          mkdir -p "$BACKUP_DIR"
-          sudo cp "$ENV_FILE" "$BACKUP_DIR/${PUBLIC_SERVER}.env"
+          BACKUP_DIR=""
+          if [[ "$CREATE_BACKUP" == "true" ]]; then
+            BACKUP_DIR="$HOME/opensamguk-backups/${PUBLIC_SERVER}/${TS}"
+            mkdir -p "$BACKUP_DIR"
+            sudo cp "$ENV_FILE" "$BACKUP_DIR/${PUBLIC_SERVER}.env"
+          fi
 
           if [[ -n "${RTK14_STATS_JSON_B64:-}" ]]; then
             rm -rf "$SCENARIO_OUTPUT_DIR"
@@ -204,28 +218,32 @@ jobs:
             fi
           fi
 
-          echo "=== Backup destination: $BACKUP_DIR ==="
-          PG_CONTAINER="${INTERNAL_SERVER}-game-postgres"
-          REDIS_CONTAINER="${INTERNAL_SERVER}-game-redis"
-          if docker ps -a --format '{{.Names}}' | grep -qx "$PG_CONTAINER"; then
-            echo "=== Backing up PostgreSQL with pg_dump ==="
-            docker exec "$PG_CONTAINER" sh -c 'pg_dump -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}"' \
-              | gzip > "$BACKUP_DIR/${PUBLIC_SERVER}-postgres.sql.gz"
-            docker exec "$PG_CONTAINER" sh -c 'psql -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}" -tAc "
-              select concat('\''world_state='\'', count(*)) from world_state
-              union all select concat('\''city='\'', count(*)) from city
-              union all select concat('\''nation='\'', count(*)) from nation
-              union all select concat('\''general='\'', count(*)) from general;
-            "' | tee "$BACKUP_DIR/${PUBLIC_SERVER}-row-counts.txt"
+          if [[ "$CREATE_BACKUP" == "true" ]]; then
+            echo "=== Backup destination: $BACKUP_DIR ==="
+            PG_CONTAINER="${INTERNAL_SERVER}-game-postgres"
+            REDIS_CONTAINER="${INTERNAL_SERVER}-game-redis"
+            if docker ps -a --format '{{.Names}}' | grep -qx "$PG_CONTAINER"; then
+              echo "=== Backing up PostgreSQL with pg_dump ==="
+              docker exec "$PG_CONTAINER" sh -c 'pg_dump -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}"' \
+                | gzip > "$BACKUP_DIR/${PUBLIC_SERVER}-postgres.sql.gz"
+              docker exec "$PG_CONTAINER" sh -c 'psql -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}" -tAc "
+                select concat('\''world_state='\'', count(*)) from world_state
+                union all select concat('\''city='\'', count(*)) from city
+                union all select concat('\''nation='\'', count(*)) from nation
+                union all select concat('\''general='\'', count(*)) from general;
+              "' | tee "$BACKUP_DIR/${PUBLIC_SERVER}-row-counts.txt"
+            else
+              echo "PostgreSQL container not found; skipping pg_dump"
+            fi
+            if docker ps -a --format '{{.Names}}' | grep -qx "$REDIS_CONTAINER"; then
+              echo "=== Backing up Redis data directory ==="
+              docker exec "$REDIS_CONTAINER" redis-cli SAVE >/dev/null || true
+              docker cp "${REDIS_CONTAINER}:/data" "$BACKUP_DIR/redis-data" || true
+            else
+              echo "Redis container not found; skipping Redis backup"
+            fi
           else
-            echo "PostgreSQL container not found; skipping pg_dump"
-          fi
-          if docker ps -a --format '{{.Names}}' | grep -qx "$REDIS_CONTAINER"; then
-            echo "=== Backing up Redis data directory ==="
-            docker exec "$REDIS_CONTAINER" redis-cli SAVE >/dev/null || true
-            docker cp "${REDIS_CONTAINER}:/data" "$BACKUP_DIR/redis-data" || true
-          else
-            echo "Redis container not found; skipping Redis backup"
+            echo "=== Backup explicitly disabled for $PUBLIC_SERVER ==="
           fi
 
           set -a
@@ -529,4 +547,8 @@ jobs:
                   time.sleep(5)
           PY
 
-          echo "=== Reset complete; backup retained at $BACKUP_DIR ==="
+          if [[ "$CREATE_BACKUP" == "true" ]]; then
+            echo "=== Reset complete; backup retained at $BACKUP_DIR ==="
+          else
+            echo "=== Reset complete; no backup was created ==="
+          fi
