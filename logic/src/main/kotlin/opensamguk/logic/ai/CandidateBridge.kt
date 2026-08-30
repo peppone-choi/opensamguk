@@ -44,6 +44,9 @@ import opensamguk.logic.constraints.evaluateConstraints
 /** PHP `'인자가 올바르지 않습니다.'` — the `isArgValid()==false` deny reason (BaseCommand.php:379). */
 const val INVALID_ARG_REASON: String = "인자가 올바르지 않습니다."
 
+/** FULL evaluation could not materialize a required live entity; matches the execution fallback. */
+const val CANDIDATE_UNAVAILABLE_REASON: String = "처리할 수 없습니다."
+
 /**
  * The gate-EXEMPT `do<한글>` reasons (G14): these are built+returned DIRECTLY by the dispatcher and
  * NEVER pass through `candidateAllowed`.
@@ -116,8 +119,10 @@ fun candidateVerdict(
     return when (result) {
         ConstraintResult.Allow -> CandidateVerdict.Allow(canonical)
         is ConstraintResult.Deny -> CandidateVerdict.Deny(result.reason, canonical)
-        is ConstraintResult.Unknown ->
-            error("FULL candidate gate returned Unknown for $actionCode: ${result.missing}")
+        // The execution paths treat FULL Unknown as an unavailable command and fall back safely.
+        // The AI selection gate must make the same decision: a stale or cityless candidate is rejected,
+        // but it must not abort the entire monthly turn.
+        is ConstraintResult.Unknown -> CandidateVerdict.Deny(CANDIDATE_UNAVAILABLE_REASON, canonical)
     }
 }
 
