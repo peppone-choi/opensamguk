@@ -33,6 +33,7 @@ import {
   formatProvinceTooltip,
   loadProvinceIdentityMap,
   type ParentRegionRecordDto,
+  type CountyAdministrativeIndex,
   type ProvinceRecordDto,
   type ProvinceEdge,
   type ProvinceIdentityMap,
@@ -133,6 +134,10 @@ export interface IsoScene {
 export interface IsoSceneOptions {
   currentCityId?: number | null;
   selectedCityId?: number | null;
+  markerPlacement?: {
+    provinceMap: ProvinceIdentityMap;
+    countyIndex: CountyAdministrativeIndex;
+  };
 }
 
 export interface IsoHoverPoint {
@@ -280,6 +285,40 @@ export function mapCityToTile(
   };
 }
 
+function cityMarkerTile(
+  city: IsoCityOverlay,
+  grid: GridSize,
+  source: IsoSourceSize,
+  placement?: IsoSceneOptions['markerPlacement'],
+): { col: number; row: number } {
+  const mapped = mapCityToTile(city, grid, source);
+  if (!placement || !city.commanderyName) return mapped;
+
+  const { provinceMap, countyIndex } = placement;
+  const sampleCol = Math.round(mapped.col);
+  const sampleRow = Math.round(mapped.row);
+  if (sampleCol < 0 || sampleRow < 0 || sampleCol >= provinceMap.width || sampleRow >= provinceMap.height) {
+    return mapped;
+  }
+  if (provinceMap.provinces[sampleRow * provinceMap.width + sampleCol] >= 0) return mapped;
+
+  const commandery = countyIndex.commanderyByName.get(city.commanderyName);
+  if (commandery == null) return mapped;
+  let best: { col: number; row: number; distance: number } | null = null;
+  for (let row = 0; row < provinceMap.height; row += 1) {
+    for (let col = 0; col < provinceMap.width; col += 1) {
+      const province = provinceMap.provinces[row * provinceMap.width + col];
+      if (province < 0 || countyIndex.commanderyByProvince[province] !== commandery) continue;
+      const distance = (col - mapped.col) ** 2 + (row - mapped.row) ** 2;
+      if (!best || distance < best.distance
+        || (distance === best.distance && (row < best.row || (row === best.row && col < best.col)))) {
+        best = { col, row, distance };
+      }
+    }
+  }
+  return best ? { col: best.col, row: best.row } : mapped;
+}
+
 export function buildIsoScene(
   tiles: HanTiles,
   cities: readonly IsoCityOverlay[],
@@ -291,7 +330,7 @@ export function buildIsoScene(
     terrain: tiles.terrain,
     roads: [],
     cities: cities.map((city) => {
-      const { col, row } = mapCityToTile(city, grid, source);
+      const { col, row } = cityMarkerTile(city, grid, source, options.markerPlacement);
       const owned = isOwnedNationVisual(city.nationId, city.nationColor);
       const territoryColor = owned && city.nationColor ? city.nationColor : NEUTRAL_COLOR;
       const layers = [`castle:${city.level}`];
@@ -735,12 +774,6 @@ export function HanMapCanvas({
     };
   }, [mapCode, provinceUrl, suppliedProvinceMap]);
 
-  const scene = useMemo(
-    () => loadedTiles
-      ? buildIsoScene(loadedTiles, cities, sourceSize, { currentCityId, selectedCityId })
-      : null,
-    [cities, currentCityId, loadedTiles, selectedCityId, sourceSize],
-  );
   const provinceMap = useMemo(() => {
     if (!loadedTiles) return null;
     const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
@@ -751,12 +784,6 @@ export function HanMapCanvas({
     return matchesGrid(candidate, grid) ? candidate : null;
   }, [loadedProvince, loadedTiles, mapCode, provinceUrl, suppliedProvinceMap]);
 
-  const sceneRef = useRef<IsoScene | null>(scene);
-  const hideCityNamesRef = useRef(hideCityNames);
-  const ownershipCitiesRef = useRef(cities);
-  sceneRef.current = scene;
-  hideCityNamesRef.current = hideCityNames;
-  ownershipCitiesRef.current = cities;
   const gridCols = loadedTiles?._meta.cols ?? 0;
   const gridRows = loadedTiles?._meta.rows ?? 0;
   const sourceWidth = sourceSize.width;
@@ -771,6 +798,22 @@ export function HanMapCanvas({
         : buildCountyAdministrativeIndex(provinceMap, loadedTiles.cities, loadedTiles.juns))
       : null
   ), [loadedTiles?.cities, loadedTiles?.juns, loadedTiles?.parentRegions, loadedTiles?.provinceRecords, provinceMap]);
+  const scene = useMemo(
+    () => loadedTiles
+      ? buildIsoScene(loadedTiles, cities, sourceSize, {
+        currentCityId,
+        selectedCityId,
+        markerPlacement: provinceMap && countyIndex ? { provinceMap, countyIndex } : undefined,
+      })
+      : null,
+    [cities, countyIndex, currentCityId, loadedTiles, provinceMap, selectedCityId, sourceSize],
+  );
+  const sceneRef = useRef<IsoScene | null>(scene);
+  const hideCityNamesRef = useRef(hideCityNames);
+  const ownershipCitiesRef = useRef(cities);
+  sceneRef.current = scene;
+  hideCityNamesRef.current = hideCityNames;
+  ownershipCitiesRef.current = cities;
   const completeOwnership = useMemo(() => {
     if (!provinceMap || !countyIndex || gridCols === 0 || gridRows === 0) return null;
     return bindCompleteProvinceOwnership(
