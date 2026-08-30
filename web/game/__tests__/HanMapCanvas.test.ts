@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    buildIsoScene, cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
-    cellToScreen, cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
+    buildIsoScene, cellToScreen, cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
+    cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
     labelZoomFor, maxScaleForDpr, seatLabel,
     TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
     type CountyAdministrativeIndex, type HanTiles, type IsoSceneOptions, type ProvinceIdentityMap,
@@ -192,6 +192,32 @@ describe('HanMapCanvas 격자 해제', () => {
 });
 
 describe('등급 → 최소 표시 zoom 매핑', () => {
+    it.each([
+        [320, 480, 1],
+        [1000, 500, 1],
+        [1000, 500, 1.5],
+        [1000, 500, 2],
+        [1000, 500, 3],
+    ])('컨테이너 %sx%s, DPR %s에서 전체 격자를 잘리지 않게 맞춘다', (cssWidth, cssHeight, dpr) => {
+        const width = cssWidth * dpr;
+        const height = cssHeight * dpr;
+        const view = initialView(width, height, grid, hanTiles, dpr);
+        const corners = [
+            cellToScreen(-0.5, -0.5, view),
+            cellToScreen(grid.cols - 0.5, -0.5, view),
+            cellToScreen(-0.5, grid.rows - 0.5, view),
+            cellToScreen(grid.cols - 0.5, grid.rows - 0.5, view),
+        ];
+
+        for (const [x, y] of corners) {
+            expect(x).toBeGreaterThanOrEqual(-1e-6);
+            expect(x).toBeLessThanOrEqual(width + 1e-6);
+            expect(y).toBeGreaterThanOrEqual(-1e-6);
+            expect(y).toBeLessThanOrEqual(height + 1e-6);
+        }
+        expect(view.scale).toBeCloseTo(fitScale(width, height, grid), 9);
+    });
+
     it('마커 문턱은 fit 배수(K)를 그대로 돌려준다', () => {
         const fit = 1.0035;
         expect(tierZoom(TIER2_MARKER_ZOOM, 'COUNTY', fit)).toBeCloseTo(TIER2_MARKER_ZOOM.COUNTY * fit, 6);
@@ -235,33 +261,6 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
                 const markerThreshold = MIN_MARKER_K * fit;
                 expect(fit).toBeLessThan(markerThreshold);
                 expect(initialView(width, height, grid, hanTiles, dpr).scale).toBeLessThan(markerThreshold);
-            }
-        }
-    });
-
-    it.each([
-        [360, 640],
-        [768, 540],
-        [1280, 720],
-        [1920, 1080],
-    ])('초기 fit은 %sx%s 컨테이너에서 전체 han 지형을 안전 여백 안에 둔다', (cssWidth, cssHeight) => {
-        for (const dpr of [1, 1.5, 2, 3]) {
-            const width = cssWidth * dpr;
-            const height = cssHeight * dpr;
-            const padding = 32 * dpr;
-            const view = initialView(width, height, grid, hanTiles, dpr);
-            const corners = [
-                cellToScreen(0, 0, view),
-                cellToScreen(grid.cols - 1, 0, view),
-                cellToScreen(0, grid.rows - 1, view),
-                cellToScreen(grid.cols - 1, grid.rows - 1, view),
-            ];
-
-            for (const [x, y] of corners) {
-                expect(x).toBeGreaterThanOrEqual(padding);
-                expect(x).toBeLessThanOrEqual(width - padding);
-                expect(y).toBeGreaterThanOrEqual(padding);
-                expect(y).toBeLessThanOrEqual(height - padding);
             }
         }
     });

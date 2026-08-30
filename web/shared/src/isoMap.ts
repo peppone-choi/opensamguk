@@ -66,7 +66,7 @@ export function visibleCells(width: number, height: number, view: IsoView, grid:
 }
 
 export function fitScale(width: number, height: number, grid: GridSize): number {
-  const spanX = grid.cols + grid.rows - 2;
+  const spanX = grid.cols + grid.rows;
   const spanY = spanX / 2;
   return Math.min(width / spanX, height / spanY);
 }

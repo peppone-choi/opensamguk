@@ -222,7 +222,6 @@ const COMMANDERY_BORDER_LIGHT = 'rgba(225,210,163,0.76)';
 const DEFAULT_SOURCE: IsoSourceSize = { width: 700, height: 610 };
 export const TIER2_MARKER_ZOOM: Record<string, number> = { COUNTY: 2.19, MARQUISATE: 2.19 };
 export const TIER2_LABEL_ZOOM: Record<string, number> = { COUNTY: 5.5, MARQUISATE: 5.5 };
-const INITIAL_FIT_PADDING_CSS = 36;
 
 export function tierZoom(table: Record<string, number>, kind: string, fit: number): number | undefined {
   const factor = table[kind];
@@ -248,18 +247,15 @@ export function labelledRegions(regions: HanTiles['regions'], minCells = 120) {
   return regions.filter((region) => region.cells >= minCells);
 }
 
-export function initialView(width: number, height: number, grid: GridSize, _tiles: HanTiles, dpr = 1): IsoView {
-  const padding = INITIAL_FIT_PADDING_CSS * effectiveDpr(dpr);
-  const innerWidth = Math.max(1, width - padding * 2);
-  const innerHeight = Math.max(1, height - padding * 2);
-  const scale = Math.min(maxScaleForDpr(dpr), fitScale(innerWidth, innerHeight, grid));
-  return viewAt(
-    width,
-    height,
-    (grid.cols - 1) / 2,
-    (grid.rows - 1) / 2,
-    scale,
-  );
+export function initialView(
+  width: number,
+  height: number,
+  grid: GridSize,
+  _tiles: HanTiles,
+  dpr = 1,
+): IsoView {
+  const scale = Math.min(fitScale(width, height, grid), maxScaleForDpr(dpr) * 0.9);
+  return viewAt(width, height, (grid.cols - 1) / 2, (grid.rows - 1) / 2, scale);
 }
 
 export function expandOwner(rle: [number, number][], cells: number): Int16Array {
@@ -718,6 +714,7 @@ export function HanMapCanvas({
   const markerImagesRef = useRef<CityMarkerImages>({});
   const flagPhaseRef = useRef(0);
   const viewRef = useRef<IsoView | null>(null);
+  const userModifiedViewRef = useRef(false);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<{ city: IsoCityOverlay; left: number; top: number; right: number; bottom: number }[]>([]);
   const dragRef = useRef(new Map<number, { x: number; y: number }>());
@@ -849,6 +846,7 @@ export function HanMapCanvas({
   useEffect(() => {
     terrainRef.current = loadedTiles ? bakeTerrain(loadedTiles) : null;
     viewRef.current = null;
+    userModifiedViewRef.current = false;
   }, [loadedTiles]);
 
   useEffect(() => {
@@ -945,7 +943,12 @@ export function HanMapCanvas({
       canvas.style.height = `${cssHeight}px`;
       sizeRef.current = { width: canvas.width, height: canvas.height, dpr };
       const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
-      if (previousView && previousSize.width > 0 && previousSize.height > 0) {
+      if (
+        userModifiedViewRef.current
+        && previousView
+        && previousSize.width > 0
+        && previousSize.height > 0
+      ) {
         const [centerCol, centerRow] = screenToCell(
           previousSize.width / 2,
           previousSize.height / 2,
@@ -972,13 +975,27 @@ export function HanMapCanvas({
     const observer = new ResizeObserver(fit);
     observer.observe(box);
     window.addEventListener('resize', fit);
+    let dprQuery: MediaQueryList | null = null;
+    const handleDprChange = () => {
+      dprQuery?.removeEventListener('change', handleDprChange);
+      fit();
+      listenForDprChange();
+    };
+    const listenForDprChange = () => {
+      if (typeof window.matchMedia !== 'function') return;
+      dprQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+      dprQuery.addEventListener('change', handleDprChange);
+    };
+    listenForDprChange();
     return () => {
+      dprQuery?.removeEventListener('change', handleDprChange);
       observer.disconnect();
       window.removeEventListener('resize', fit);
     };
   }, [loadedTiles, onViewChange, render]);
 
   const updateView = useCallback((next: IsoView) => {
+    userModifiedViewRef.current = true;
     viewRef.current = next;
     onViewChange?.(next);
     render();
