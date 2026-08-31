@@ -324,6 +324,26 @@ scenarioCode, auditKind, provinceIds, evidenceIds, rationale, reviewState=APPROV
 
 An allowlist entry suppresses only the named audit finding. It does not create ownership.
 
+### 8.6 Visual coherence audit
+
+“Natural” political boundaries come from coherent reviewed claims and the existing province
+geometry, not from paint smoothing. For every owner and `UNOWNED` component, the audit reports:
+
+- isolated one-province components;
+- one-province owner spikes whose edge-neighbours all have one different owner;
+- alternating owner sequences along the province graph;
+- perimeter-to-area outliers relative to other components in the same scenario;
+- narrow connectors whose removal splits a component;
+- small internal components completely enclosed by one other owner.
+
+An isolated province, spike, enclave, or narrow connector fails unless its winning direct claim or
+an exact approved allowlist entry explains it. The ratio reports are review signals rather than
+automatic ownership rules: no threshold may rewrite a historically supported boundary.
+
+The materializer must not run raster morphology, majority voting, nearest-neighbour fill, polygon
+simplification that changes province identity, or colour interpolation. A failed coherence audit is
+fixed in the authored claim, province geometry source, or explicit allowlist and then regenerated.
+
 ## 9. Review artifacts
 
 The tool produces one overview and 15 full-resolution PNGs under a report output directory. These
@@ -337,6 +357,12 @@ Every image uses:
 - province borders at review resolution;
 - a legend with nation name, province count, and unowned count;
 - scenario code, title, effective date, source artifact hash, and audit result.
+
+Political fill uses one flat, muted scenario colour per nation at fixed opacity over the canonical
+terrain. Province edges remain legible at review scale; parent-region edges are stronger but do not
+hide province boundaries. Texture may vary luminance inside a province by a small fixed amount, but
+must not change hue, imply another owner, cross a boundary, or reduce text contrast. Labels and
+symbols are clipped or anchored to their own province and may not cover audit markers.
 
 The overview uses identical map bounds and scale for all scenarios. A browser-visible gallery links
 the overview, individual PNGs, claim rows, and audit findings so visual review can lead back to
@@ -456,6 +482,8 @@ At minimum, fixtures pin:
 
 - all 15 review maps render from the generated artifact, never from runtime city samples;
 - no single- or multi-province rat-bite hole lacks a visible audit record;
+- no unexplained isolated owner speck, alternating checkerboard run, ownership spike, or narrow
+  connector remains;
 - unowned areas are visually distinct and expose no nation name;
 - split parent regions are visible and match the parent-split report;
 - the browser gallery opens every full-resolution PNG and its evidence trace;
