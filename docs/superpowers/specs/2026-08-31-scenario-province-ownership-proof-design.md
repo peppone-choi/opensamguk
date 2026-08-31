@@ -174,6 +174,11 @@ Every claim has `claimId`, `claimKind`, `ownerNationKey` or `UNOWNED`, `evidence
 and an explicit target.
 
 ```text
+SCENARIO_BASELINE_UNOWNED
+  A required scenario-wide reviewed policy starts every catalog province as unowned. Its rationale
+  states that legal title, neighbouring colour, and missing evidence do not create effective
+  control. Positive claims replace this baseline; the baseline is not evidence of non-existence.
+
 PROVINCE_DIRECT
   A source or reviewed placement names an exact county/province.
 
@@ -204,7 +209,8 @@ effective control unless the scenario policy expressly uses that title as the pl
 Materialization applies claims in this fixed order:
 
 ```text
-ADMIN_REGION_CONTROL / TEMPORAL_CARRY
+SCENARIO_BASELINE_UNOWNED
+  -> ADMIN_REGION_CONTROL / TEMPORAL_CARRY
   -> PROVINCE_DIRECT / UNOWNED_EXPLICIT
   -> IF_SCENARIO explicit changes
 ```
@@ -213,8 +219,9 @@ Later tiers may override earlier tiers only when the overriding claim names `ove
 Two claims at the same tier assigning different owners are an error. Source array order, JSON map
 order, nation order, and renderer order never resolve a conflict.
 
-All unassigned provinces fail materialization. `UNOWNED` is a positive reviewed result, not the
-absence of data.
+Every scenario must have exactly one `SCENARIO_BASELINE_UNOWNED` claim. A province untouched by a
+positive claim retains that reviewed result. Missing or duplicate baselines fail materialization;
+`UNOWNED` is therefore explicit policy, not an absent row or renderer fallback.
 
 ## 6. Generated ownership artifact
 
