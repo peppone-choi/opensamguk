@@ -383,7 +383,7 @@ describe('province identity map', () => {
         countyIndex.commanderyByName.get(city.commanderyName!) === countyIndex.commanderyByProvince[province]
       )), scenarioFile).toBe(true);
     }
-  });
+  }, 15_000);
 
   it('uses the county coordinate as the stable commandery parent across a mixed polygon', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([

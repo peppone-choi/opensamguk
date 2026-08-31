@@ -1,5 +1,13 @@
 {
   "schemaVersion": 1,
   "mapVersion": "han-world-v2",
-  "exceptions": []
+  "exceptions": [
+    {
+      "provinceId": "X057",
+      "metric": "fillRatio",
+      "reason": "The reviewed Ryukyu polity occupies a disconnected island chain, so its bounding box is mostly sea.",
+      "evidence": "han-world-v2 parent PARENT-0149 (流求), Natural Earth coastline, reviewed external seed X057",
+      "effectiveMapVersion": "han-world-v2"
+    }
+  ]
 }

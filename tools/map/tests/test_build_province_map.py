@@ -107,6 +107,9 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
     def test_lakes_are_excluded_from_required_political_coverage(self):
         self.assertEqual(_terrain_mismatches(["0413"], [-1, -1, 0, 0], 4), (0, 0))
 
+    def test_out_of_scope_cells_are_excluded_from_political_coverage(self):
+        self.assertEqual(_terrain_mismatches(["091"], [-1, -1, 0], 3), (0, 0))
+
     def test_identity_codec_uses_documented_bit_layout(self):
         self.assertEqual(encode_identity(-1, -1), (0, 0, 0))
         self.assertEqual(encode_identity(0, 0), (0x00, 0x10, 0x01))

@@ -5,7 +5,7 @@ import {
     buildIsoScene, cellToScreen, cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
     cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
     labelZoomFor, maxScaleForDpr, provinceAtScreenPoint, screenBoxInsideProvince, seatLabel,
-    TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
+    terrainColorFor, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
     type CountyAdministrativeIndex, type HanTiles, type IsoSceneOptions, type ProvinceIdentityMap,
 } from '@opensamguk/ui';
 
@@ -14,6 +14,13 @@ const hanTiles: HanTiles = JSON.parse(
 );
 const grid = { cols: hanTiles._meta.cols, rows: hanTiles._meta.rows };
 const MIN_MARKER_K = Math.min(...Object.values(TIER2_MARKER_ZOOM));
+
+describe('비플레이 지형', () => {
+    it('OUT_OF_SCOPE는 검은색이고 알 수 없는 코드는 바다색으로 대체한다', () => {
+        expect(terrainColorFor(9)).toBe('#000000');
+        expect(terrainColorFor(99)).toBe('#1d3f5c');
+    });
+});
 
 describe('지도 아이콘 배율과 앵커', () => {
     it('바다에 놓인 도시 기준점은 가장 가까운 같은 군의 육지 셀로 옮긴다', () => {

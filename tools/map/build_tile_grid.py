@@ -541,7 +541,7 @@ def build(
             "year": grid["year"],
             "projection": grid["projection"],
             "terrainLegend": grid["legend"],
-            "ownerEncoding": "run-length [[provinceIndex, count], …] · row-major · -1 = 바다",
+            "ownerEncoding": "run-length [[provinceIndex, count], …] · row-major · -1 = 바다·비플레이 영역",
             "counts": {"cities": len(cities), "seats": len(hubs), "regions": len(regions),
                        "adjCounty": len(grid["adjacency"]["county"]),
                        "adjCommandery": len(grid["adjacency"]["commandery"]), **kinds},

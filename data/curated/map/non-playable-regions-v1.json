@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "mapVersion": "han-world-v2",
+  "maximumEvidenceDistanceCells": 48,
+  "evidenceDistanceExemptParentRegionIds": [
+    "PARENT-0102",
+    "PARENT-0103",
+    "PARENT-0104",
+    "PARENT-0149"
+  ],
+  "evidenceDistanceBasis": "현·외부 거점·군국치로부터 48셀(약 225km) 밖인 셀 중 지도 바깥 경계와 연결된 외곽만 비허용 후보로 삼는다. 기록 거점이 든 프로빈스는 반드시 보존하고, 나머지는 프로빈스 면적의 과반이 후보일 때만 프로빈스 전체를 비플레이로 분리한다. 플레이 권역 내부에 둘러싸인 구멍은 유지하고, 유구는 제품 범위 예외로 전체 유지한다.",
+  "exclusions": [
+    {
+      "id": "philippines-south-of-21n",
+      "parentRegionId": "PARENT-0123",
+      "southOfLatitude": 21.0,
+      "terrain": "OUT_OF_SCOPE",
+      "reason": "이주(夷洲) 씨앗의 최근 군국 보간이 필리핀 제도까지 확장되어 현 프로빈스로 물질화되는 것을 금지한다.",
+      "evidence": "han-world-v2 국외 권역 정책: 대만의 이주 거점은 보존하되, 21°N 이남 필리핀 제도는 시나리오 현·군국 배치 대상에서 제외한다."
+    }
+  ]
+}

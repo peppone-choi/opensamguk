@@ -200,7 +200,12 @@ const TERRAIN = [
   '#8a7f5c',
   '#7a7050',
   '#6f7a4e',
+  '#000000',
 ] as const;
+
+export function terrainColorFor(value: number | string): string {
+  return TERRAIN[Number(value)] ?? TERRAIN[0];
+}
 
 const NEUTRAL_COLOR = '#555555';
 const CASTLE_FILL = '#8b8172';
@@ -375,7 +380,7 @@ function bakeTerrain(tiles: HanTiles): HTMLCanvasElement | null {
   for (let row = 0; row < tiles._meta.rows; row += 1) {
     const terrainRow = tiles.terrain[row] ?? '';
     for (let col = 0; col < tiles._meta.cols; col += 1) {
-      const color = TERRAIN[Number(terrainRow[col])] ?? TERRAIN[0];
+      const color = terrainColorFor(terrainRow[col]);
       const offset = (row * tiles._meta.cols + col) * 4;
       image.data[offset] = Number.parseInt(color.slice(1, 3), 16);
       image.data[offset + 1] = Number.parseInt(color.slice(3, 5), 16);
@@ -1322,7 +1327,7 @@ export function HanMapCanvas({
           background: TERRAIN[0],
         }}
       />
-      <div className="os-iso-map__controls" style={{ position: 'absolute', right: 8, bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className="os-iso-map__controls" style={{ position: 'absolute', left: 8, bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <button type="button" aria-label="지도 확대" onClick={() => zoomBy(1.4)}>+</button>
         <button type="button" aria-label="지도 축소" onClick={() => zoomBy(1 / 1.4)}>−</button>
       </div>

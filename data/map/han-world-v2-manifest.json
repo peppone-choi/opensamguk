@@ -11,20 +11,23 @@
   },
   "quality": {
     "emptyProvinceCount": 0,
-    "maximumAreaCells": 1195,
-    "maximumComponentCount": 4,
-    "maximumLargeProvinceAspectRatio": 5.0
+    "minimumAreaCells": 8,
+    "medianAreaCells": 171,
+    "maximumAreaCells": 349,
+    "maximumComponentCount": 7,
+    "maximumLargeProvinceAspectRatio": 3.571429
   },
   "sourceHashes": {
     "modern-admin-boundaries-v1.json": "25c1df608ddd262f2f5074769f86cf6760ae1e326b6601cc81eb74bc376d2df0",
     "external-province-seeds-v1.json": "7f5764af141d70911e1519b467b56dc4630e7b10d93c05b5284213cb4c0cd226",
     "external-administrative-systems-v1.json": "be27bcaefd8879ba7570bd1f6dc5705107d1f4f10130ebd9b77260c600062092",
-    "province-shape-exceptions-v1.json": "b7c46c2f3b646246341ab135632a130e06c2131018d8bc1e8f86527604e0547a"
+    "province-shape-exceptions-v1.json": "ff50932aef22c4add7b2ccbbf427f6063568b0667153d1e62ddf0d0b2fa86e37",
+    "non-playable-regions-v1.json": "572c9c109be189aaa8279d9d793ff567c6a739dae0e542ab3356e59fa79aedfb"
   },
   "artifactHashes": {
-    "han-world-v2-tiles.json": "51cc6d68a429f2caeb066905a4add47517b23cee2b01b517d358bca550819e18",
-    "han-world-v2-provinces.png": "963aa58bcf3701b2ba2dae141749ec649a588dff5c5ff7aee0489dfddc332eed",
-    "han-world-v2-provinces.meta.json": "0921d92cb064783c3271f317e47ff07fe07a4c72f52205181cc0d5c459ae70b2",
+    "han-world-v2-tiles.json": "e76d070090ec69b8dc16cbbcb5da64a5deb56ee204c65eadc86f6fede1b6d9c4",
+    "han-world-v2-provinces.png": "f28fdb483b7d987a74a90c48cc8e00c7f962a1a4046efb890b2c6fac88c81fb8",
+    "han-world-v2-provinces.meta.json": "8a069108f686afa8962bc7c74eb0493c249392f954c28764e5719194e6b21b9a",
     "han-world-v2-gameplay.json": "10126205c31c61230eef5351548fd2b5cbf33b35873c80280be2118381fb2b1d"
   },
   "compatibilityHashes": {
