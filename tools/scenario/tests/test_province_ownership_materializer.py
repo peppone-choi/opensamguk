@@ -17,7 +17,11 @@ from tools.scenario.province_ownership_materializer import (
     materialize_all,
     materialize_scenario,
 )
-from tools.scenario.build_scenario_province_ownership import canonical_bytes, generate_document
+from tools.scenario.build_scenario_province_ownership import (
+    canonical_bytes,
+    generate_document,
+    runtime_scenario_catalog,
+)
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -132,11 +136,9 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
             (ROOT / "data/curated/han/scenario-province-claims-v1.json").read_text(encoding="utf-8")
         )
         scenario_catalog = {
-            code: {
-                "nations": json.loads(
-                    (ROOT / f"data/extracted/scenario/scenario_{code}.json").read_text(encoding="utf-8")
-                )["nations"]
-            }
+            code: runtime_scenario_catalog(json.loads(
+                (ROOT / f"infra/src/main/resources/scenario/scenario_{code}.json").read_text(encoding="utf-8")
+            ))
             for code in raw["activeScenarioCodes"]
         }
         parsed = parse_ownership_document(

@@ -188,8 +188,8 @@ class ScenarioImporterIT {
         assertEquals(2, count("nation"))
         assertEquals(774, count("city"))
         // 실효 지배지만 시나리오 소유로 칠하고, 나머지는 공백지로 둔다.
-        assertEquals(555, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
-        assertEquals(115, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
+        assertEquals(547, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        assertEquals(123, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
         assertEquals(104, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
         // 서성(id 75, 소도시) 은 1010 지배표에 없는 郡이라 공백지다: pop 100000·wall 2000·trust 50.

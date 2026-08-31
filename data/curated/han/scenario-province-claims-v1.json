@@ -34,7 +34,8 @@
       "work": "OpenSamguk reviewed scenario placement",
       "section": "scenario 1010 / 후한",
       "locator": "effective year 184",
-      "excerpt": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 군현 맵에서는 사예 7군과 북방의 광양군·하간국·태원군·발해군·상당군만 완군 단위로 배정한다. 이는 후한의 법적 105군을 칠한 것이 아니라 하진 중앙 세력의 실효 지배를 보수적으로 표현한 게임 판도다."
+      "excerpt": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 220년 군국 분할에서 황건의 직접 반란 기사가 없는 제북·장릉·광평·장락·장무 현역은 지방 관부가 유지된 후한 조정권으로 둔다. 후대 군명은 현역을 가리키는 맵 alias이지 184년 행정군이라는 주장이 아니다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hhs-008.txt"
     },
     {
       "evidenceId": "S1010-N002-PLACEMENT-EVIDENCE",
@@ -42,7 +43,8 @@
       "work": "後漢書 / 資治通鑑",
       "section": "scenario 1010 / 황건적",
       "locator": "effective year 184",
-      "excerpt": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」"
+      "excerpt": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」. 감릉은 국왕을 집잡아 호응했다는 직접 기사에 따라 황건적으로 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hhs-008.txt"
     },
     {
       "evidenceId": "S1020-BASELINE-EVIDENCE",
@@ -90,7 +92,8 @@
       "work": "三國志",
       "section": "scenario 1020 / 유언",
       "locator": "effective year 190",
-      "excerpt": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 한중군은 장로에게 분리"
+      "excerpt": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 탕거·강양·재동·문산은 현행 맵의 후대 분할 현역으로서 유언의 익주 통제에 포함한다. 한중군은 장로에게 분리",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
     },
     {
       "evidenceId": "S1020-N006-PLACEMENT-EVIDENCE",
@@ -98,7 +101,8 @@
       "work": "三國志 / 資治通鑑",
       "section": "scenario 1020 / 원술",
       "locator": "effective year 190",
-      "excerpt": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」"
+      "excerpt": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」. 220년 맵의 장릉 현역은 당시 남양 남부에 해당하므로 원술의 남양 지배에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
     },
     {
       "evidenceId": "S1020-N007-PLACEMENT-EVIDENCE",
@@ -114,7 +118,8 @@
       "work": "三國志 / 後漢書 / 華陽國志",
       "section": "scenario 1020 / 도겸",
       "locator": "effective year 190",
-      "excerpt": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
+      "excerpt": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 현행 맵의 이성 현역은 당시 서주 북부 군현의 후대 분할이므로 도겸 세력에 포함한다. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-08.txt"
     },
     {
       "evidenceId": "S1020-N009-PLACEMENT-EVIDENCE",
@@ -138,7 +143,8 @@
       "work": "後漢書 / 資治通鑑",
       "section": "scenario 1020 / 한복",
       "locator": "effective year 190",
-      "excerpt": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소)"
+      "excerpt": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
     },
     {
       "evidenceId": "S1020-N012-PLACEMENT-EVIDENCE",
@@ -213,6 +219,15 @@
       "excerpt": "後漢書 卷074A 원소유표열전 「初平元年，紹遂以勃海起兵，與從弟後將軍術、冀州牧韓馥、豫州刺史孔伷…同時俱起…紹與王匡屯河內，伷屯穎川，馥屯鄴」 / 資治通鑑 卷059 초평원년 동문 — 孔伷의 위치를 짚는 유일한 기사는 190년 潁川 주둔이다"
     },
     {
+      "evidenceId": "S1020-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1020 interior continuity / 유언",
+      "locator": "effective year 190",
+      "excerpt": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
       "evidenceId": "S1021-BASELINE-EVIDENCE",
       "sourceType": "PROJECT_POLICY",
       "work": "OpenSamguk scenario placement policy",
@@ -266,7 +281,8 @@
       "work": "三國志",
       "section": "scenario 1021 / 유언",
       "locator": "effective year 190",
-      "excerpt": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 한중군은 장로에게 분리"
+      "excerpt": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 탕거·강양·재동·문산은 현행 맵의 후대 분할 현역으로서 유언의 익주 통제에 포함한다. 한중군은 장로에게 분리",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
     },
     {
       "evidenceId": "S1021-N007-PLACEMENT-EVIDENCE",
@@ -274,7 +290,8 @@
       "work": "三國志 / 資治通鑑",
       "section": "scenario 1021 / 원술",
       "locator": "effective year 190",
-      "excerpt": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」"
+      "excerpt": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」. 220년 맵의 장릉 현역은 당시 남양 남부에 해당하므로 원술의 남양 지배에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
     },
     {
       "evidenceId": "S1021-N008-PLACEMENT-EVIDENCE",
@@ -282,7 +299,8 @@
       "work": "三國志 / 後漢書 / 華陽國志",
       "section": "scenario 1021 / 도겸",
       "locator": "effective year 190",
-      "excerpt": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
+      "excerpt": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 현행 맵의 이성 현역은 당시 서주 북부 군현의 후대 분할이므로 도겸 세력에 포함한다. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-08.txt"
     },
     {
       "evidenceId": "S1021-N009-PLACEMENT-EVIDENCE",
@@ -314,7 +332,8 @@
       "work": "後漢書 / 資治通鑑",
       "section": "scenario 1021 / 한복",
       "locator": "effective year 190",
-      "excerpt": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소)"
+      "excerpt": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
     },
     {
       "evidenceId": "S1021-N013-PLACEMENT-EVIDENCE",
@@ -395,6 +414,15 @@
       "section": "scenario 1021 / 유총",
       "locator": "effective year 190",
       "excerpt": "後漢書 卷008 영제기 注 「陳愍王寵」 — 유총은 陳王이므로 陳國"
+    },
+    {
+      "evidenceId": "S1021-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1021 interior continuity / 유언",
+      "locator": "effective year 190",
+      "excerpt": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
     },
     {
       "evidenceId": "S1030-BASELINE-EVIDENCE",
@@ -571,6 +599,60 @@
       "section": "scenario 1030 / 공주",
       "locator": "effective year 194",
       "excerpt": "三國志 卷38 촉서 허정전 「(靖)…奔伷。伷卒，依揚州刺史陳禕」 — 孔伷는 190/191년에 죽어 194년에는 세력이 없다. 공백으로 둔다."
+    },
+    {
+      "evidenceId": "S1030-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1030 interior continuity / 유언",
+      "locator": "effective year 194",
+      "excerpt": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1030-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1030 interior continuity / 유언",
+      "locator": "effective year 194",
+      "excerpt": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1030-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1030 interior continuity / 도겸",
+      "locator": "effective year 194",
+      "excerpt": "三國志 卷08의 徐州刺史·徐州牧 기사에 따라 후대 이성군 현역을 도겸의 서주 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-08.txt"
+    },
+    {
+      "evidenceId": "S1030-CONTINUITY-004-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1030 interior continuity / 여포",
+      "locator": "effective year 194",
+      "excerpt": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-07.txt"
+    },
+    {
+      "evidenceId": "S1030-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1030 interior continuity / 원소",
+      "locator": "effective year 194",
+      "excerpt": "三國志 卷06의 「紹遂領冀州牧」에 따라 후대 광평·장락 현역을 원소의 기주 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1030-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1030 topology allowlist 1",
+      "locator": "effective year 194",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
     },
     {
       "evidenceId": "S1031-BASELINE-EVIDENCE",
@@ -773,6 +855,60 @@
       "excerpt": "三國志 卷01 위서 무제기 건안원년 「汝南、潁川黃巾何儀、劉辟、黃邵、何曼等，眾各數萬，初應袁術，又附孫堅」 — 여남 황건 유벽"
     },
     {
+      "evidenceId": "S1031-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1031 interior continuity / 유장",
+      "locator": "effective year 195",
+      "excerpt": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉璋이 승계한 巴郡·益州 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1031-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1031 interior continuity / 유장",
+      "locator": "effective year 195",
+      "excerpt": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1031-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1031 interior continuity / 화흠",
+      "locator": "effective year 195",
+      "excerpt": "三國志 卷13의 豫章太守 화흠 기사와 당시 예장 남부 현역을 근거로 후대 여릉 현역을 화흠 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-13.txt"
+    },
+    {
+      "evidenceId": "S1031-CONTINUITY-004-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1031 interior continuity / 여포",
+      "locator": "effective year 195",
+      "excerpt": "三國志 卷07의 연주 군현 호응 기사로 노국 현역을 여포에게 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-07.txt"
+    },
+    {
+      "evidenceId": "S1031-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1031 interior continuity / 원소",
+      "locator": "effective year 195",
+      "excerpt": "三國志 卷06의 원소 領冀州牧 기사에 따른 기주 현역 배정이다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1031-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1031 topology allowlist 1",
+      "locator": "effective year 195",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
+    },
+    {
       "evidenceId": "S1040-BASELINE-EVIDENCE",
       "sourceType": "PROJECT_POLICY",
       "work": "OpenSamguk scenario placement policy",
@@ -899,6 +1035,60 @@
       "section": "scenario 1040 / 장양",
       "locator": "effective year 196",
       "excerpt": "三國志 卷08 위서 장양전 「楊遂以所將攻上黨太守於壺關，不下，略諸縣」·「袁紹至河內，楊與紹合，復與匈奴單于於夫羅屯漳水」·「卓以楊為建義將軍、河內太守」·「楊還野王」 / 資治通鑑 卷060 초평2년 「董卓以楊為建義將軍、河內太守」"
+    },
+    {
+      "evidenceId": "S1040-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1040 interior continuity / 유장",
+      "locator": "effective year 196",
+      "excerpt": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉璋의 巴郡·益州 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1040-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1040 interior continuity / 유장",
+      "locator": "effective year 196",
+      "excerpt": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1040-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1040 interior continuity / 손책",
+      "locator": "effective year 196",
+      "excerpt": "三國志 卷46의 손책 강동 평정 기사에 따라 196년 현재 후대 신도군 현역을 손책에게 배정한다. 신도군 설치 시점을 196년으로 옮긴 것은 아니다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-46.txt"
+    },
+    {
+      "evidenceId": "S1040-CONTINUITY-004-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1040 interior continuity / 조조",
+      "locator": "effective year 196",
+      "excerpt": "三國志 卷01의 조조 연주 통제·황제 봉영 기사에 따라 노국 현역을 조조에게 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"
+    },
+    {
+      "evidenceId": "S1040-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1040 interior continuity / 원소",
+      "locator": "effective year 196",
+      "excerpt": "三國志 卷06의 원소 領冀州牧 기사에 따른 기주 현역 배정이다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1040-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1040 topology allowlist 1",
+      "locator": "effective year 196",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
     },
     {
       "evidenceId": "S1041-BASELINE-EVIDENCE",
@@ -1069,6 +1259,78 @@
       "excerpt": "三國志 卷01 위서 무제기 건안5년 「汝南降賊劉辟等叛應紹，略許下」 — 여남 황건 유벽"
     },
     {
+      "evidenceId": "S1041-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1041 interior continuity / 유장",
+      "locator": "effective year 197",
+      "excerpt": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉璋의 巴郡·益州 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1041-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1041 interior continuity / 유장",
+      "locator": "effective year 197",
+      "excerpt": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1041-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1041 interior continuity / 손책",
+      "locator": "effective year 197",
+      "excerpt": "三國志 卷46의 손책 강동 평정 기사에 따라 후대 신도 현역을 손책에게 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-46.txt"
+    },
+    {
+      "evidenceId": "S1041-CONTINUITY-004-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1041 interior continuity / 화흠",
+      "locator": "effective year 197",
+      "excerpt": "三國志 卷13의 豫章太守 화흠 기사에 따라 후대 여릉 현역을 예장 통제권에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-13.txt"
+    },
+    {
+      "evidenceId": "S1041-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1041 interior continuity / 조조",
+      "locator": "effective year 197",
+      "excerpt": "三國志 卷01의 조조 연주 통제 기사에 따라 노국 현역을 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"
+    },
+    {
+      "evidenceId": "S1041-CONTINUITY-006-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1041 interior continuity / 장수",
+      "locator": "effective year 197",
+      "excerpt": "三國志 卷10의 「張繡在南陽」에 따라 남양 남부의 후대 장릉 현역을 장수에게 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-10.txt"
+    },
+    {
+      "evidenceId": "S1041-CONTINUITY-007-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1041 interior continuity / 원소",
+      "locator": "effective year 197",
+      "excerpt": "三國志 卷06의 원소 領冀州牧 기사에 따른 기주 현역 배정이다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1041-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1041 topology allowlist 1",
+      "locator": "effective year 197",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
+    },
+    {
       "evidenceId": "S1050-BASELINE-EVIDENCE",
       "sourceType": "PROJECT_POLICY",
       "work": "OpenSamguk scenario placement policy",
@@ -1147,6 +1409,69 @@
       "section": "scenario 1050 / 공손도",
       "locator": "effective year 200",
       "excerpt": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
+    },
+    {
+      "evidenceId": "S1050-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1050 interior continuity / 유장",
+      "locator": "effective year 200",
+      "excerpt": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 201년 직전 부릉 현역을 劉璋의 巴郡·益州 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1050-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1050 interior continuity / 유장",
+      "locator": "effective year 200",
+      "excerpt": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1050-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1050 interior continuity / 손책",
+      "locator": "effective year 200",
+      "excerpt": "三國志 卷46의 손책 강동 평정 기사에 따라 후대 신도·여릉 현역을 손책에게 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-46.txt"
+    },
+    {
+      "evidenceId": "S1050-CONTINUITY-004-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1050 interior continuity / 조조",
+      "locator": "effective year 200",
+      "excerpt": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"
+    },
+    {
+      "evidenceId": "S1050-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1050 interior continuity / 원소",
+      "locator": "effective year 200",
+      "excerpt": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1050-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "晉書",
+      "section": "scenario 1050 topology allowlist 1",
+      "locator": "effective year 200",
+      "excerpt": "晉書 卷14은 영제 말 정양·운중·오원·삭방·상군의 유리·분산과 위 황초원년 태행 북쪽 방기를 기록한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"
+    },
+    {
+      "evidenceId": "S1050-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1050 topology allowlist 2",
+      "locator": "effective year 200",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
     },
     {
       "evidenceId": "S1060-BASELINE-EVIDENCE",
@@ -1235,6 +1560,78 @@
       "section": "scenario 1060 / 공손도",
       "locator": "effective year 202",
       "excerpt": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1060 interior continuity / 유장",
+      "locator": "effective year 202",
+      "excerpt": "華陽國志 卷一 巴志 「涪陵謝本白璋…後遂為涪陵郡」에 따라 建安六年 이후 부릉군을 설치한 劉璋에게 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1060 interior continuity / 유장",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1060 interior continuity / 손권",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷47의 손권 강동 승계와 오군 운영 기사에 따라 후대 신도·여릉 현역을 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-004-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1060 interior continuity / 조조",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1060 interior continuity / 원상",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-006-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1060 interior continuity / 원담",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷06의 원담 청주 통제 기사에 따라 청주 북부의 후대 낙릉 현역을 원담에게 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1060-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "晉書",
+      "section": "scenario 1060 topology allowlist 1",
+      "locator": "effective year 202",
+      "excerpt": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"
+    },
+    {
+      "evidenceId": "S1060-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1060 topology allowlist 2",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
     },
     {
       "evidenceId": "S1070-BASELINE-EVIDENCE",
@@ -1333,6 +1730,60 @@
       "excerpt": "三國志 卷32 촉서 선주전 「(先主)…南征四郡。武陵太守金旋、長沙太守韓玄、桂陽太守趙範、零陵太守劉度皆降」·「琦病死，羣下推先主為荊州牧，治公安」 / 華陽國志 卷六 동문 — 「武陵太守金旋」"
     },
     {
+      "evidenceId": "S1070-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1070 interior continuity / 유장",
+      "locator": "effective year 207",
+      "excerpt": "華陽國志 卷一 巴志 「涪陵謝本白璋…後遂為涪陵郡」에 따라 부릉군을 설치한 劉璋의 益州 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1070-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1070 interior continuity / 유장",
+      "locator": "effective year 207",
+      "excerpt": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1070-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1070 interior continuity / 손권",
+      "locator": "effective year 207",
+      "excerpt": "三國志 卷47의 손권 강동 통제 기사에 따라 신도·여릉 현역을 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"
+    },
+    {
+      "evidenceId": "S1070-CONTINUITY-004-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1070 interior continuity / 조조",
+      "locator": "effective year 207",
+      "excerpt": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"
+    },
+    {
+      "evidenceId": "S1070-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "晉書",
+      "section": "scenario 1070 topology allowlist 1",
+      "locator": "effective year 207",
+      "excerpt": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"
+    },
+    {
+      "evidenceId": "S1070-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1070 topology allowlist 2",
+      "locator": "effective year 207",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
+    },
+    {
       "evidenceId": "S1080-BASELINE-EVIDENCE",
       "sourceType": "PROJECT_POLICY",
       "work": "OpenSamguk scenario placement policy",
@@ -1397,6 +1848,60 @@
       "excerpt": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
     },
     {
+      "evidenceId": "S1080-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1080 interior continuity / 유장",
+      "locator": "effective year 213",
+      "excerpt": "華陽國志 卷一 巴志 「涪陵謝本白璋…後遂為涪陵郡」에 따라 부릉군을 설치한 劉璋의 益州 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1080-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1080 interior continuity / 유장",
+      "locator": "effective year 213",
+      "excerpt": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1080-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1080 interior continuity / 손권",
+      "locator": "effective year 213",
+      "excerpt": "三國志 卷47의 손권 강동 통제 기사에 따라 신도·여릉 현역을 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"
+    },
+    {
+      "evidenceId": "S1080-CONTINUITY-004-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1080 interior continuity / 조조",
+      "locator": "effective year 213",
+      "excerpt": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 211년 조조 통제 현역을 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"
+    },
+    {
+      "evidenceId": "S1080-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "晉書",
+      "section": "scenario 1080 topology allowlist 1",
+      "locator": "effective year 213",
+      "excerpt": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"
+    },
+    {
+      "evidenceId": "S1080-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1080 topology allowlist 2",
+      "locator": "effective year 213",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
+    },
+    {
       "evidenceId": "S1090-BASELINE-EVIDENCE",
       "sourceType": "PROJECT_POLICY",
       "work": "OpenSamguk scenario placement policy",
@@ -1437,6 +1942,60 @@
       "excerpt": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
     },
     {
+      "evidenceId": "S1090-CONTINUITY-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1090 interior continuity / 유비",
+      "locator": "effective year 219",
+      "excerpt": "三國志 卷32의 유비 익주 평정·군현 승계와 晉書 卷14의 촉 설치군 목록을 대조한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-32.txt"
+    },
+    {
+      "evidenceId": "S1090-CONTINUITY-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1090 interior continuity / 손권",
+      "locator": "effective year 219",
+      "excerpt": "三國志 卷47·60의 신도·한창 설치와 오의 기춘 회복 기사를 따라 223년 손권 통제로 배정한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-60.txt"
+    },
+    {
+      "evidenceId": "S1090-CONTINUITY-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志 / 晉書",
+      "section": "scenario 1090 interior continuity / 조조",
+      "locator": "effective year 219",
+      "excerpt": "三國志 조위 본기·열전과 晉書 卷14·15의 위 설치군·계승 목록을 대조해 223년 위 조정 통제 현역으로 배정한다. 시나리오 실행 세력명은 조조이지만 연도 판정은 위 승계권을 따른다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"
+    },
+    {
+      "evidenceId": "S1090-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "晉書",
+      "section": "scenario 1090 topology allowlist 1",
+      "locator": "effective year 219",
+      "excerpt": "晉書 卷14의 북방 5군 유리·분산·황초원년 방기 기사에 따라 직접 군현 소유색을 주지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"
+    },
+    {
+      "evidenceId": "S1090-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1090 topology allowlist 2",
+      "locator": "effective year 219",
+      "excerpt": "三國志 卷15·16의 서강 초무·호강교위 기사에 따라 서강을 위의 한식 군현 소유색으로 합치지 않는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-15.txt"
+    },
+    {
+      "evidenceId": "S1090-ALLOWLIST-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1090 topology allowlist 3",
+      "locator": "effective year 219",
+      "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
+    },
+    {
       "evidenceId": "S1100-BASELINE-EVIDENCE",
       "sourceType": "PROJECT_POLICY",
       "work": "OpenSamguk scenario placement policy",
@@ -1447,34 +2006,34 @@
     {
       "evidenceId": "S1100-N001-PLACEMENT-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
-      "work": "三國志",
+      "work": "三國志 / 晉書",
       "section": "scenario 1100 / 조비",
       "locator": "effective year 225",
-      "excerpt": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷40 촉서 유봉전 「魏文帝…合房陵、上庸、西城三郡為新城郡，以達領新城太守」(220) — 신성군 창설 / 三國志 卷02 위서 문제기 황초원년 — 조비 즉위"
+      "excerpt": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 조조가 장악한 중원·기주를 위가 승계 / 三國志 卷02 문제기 — 광평군 설치와 조비 즉위 / 三國志 卷23 상요전 — 양안의 위 귀속 / 三國志 卷27 왕기전·卷28 장특전 — 동완·이성의 위 관할 / 三國志 卷30 — 광위·서평의 위 통치 / 晉書 卷14·15 地理志 — 양·노·낙평·낙릉·남향·신평·감릉·장무·장릉·장락의 위대 군국 계승 관계 / 三國志 卷40 유봉전 「魏文帝…合房陵、上庸、西城三郡為新城郡」 — 신성군 창설"
     },
     {
       "evidenceId": "S1100-N002-PLACEMENT-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
-      "work": "三國志 / 資治通鑑",
+      "work": "三國志 / 晉書 / 資治通鑑",
       "section": "scenario 1100 / 손권",
       "locator": "effective year 225",
-      "excerpt": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 관우전 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
+      "excerpt": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
     },
     {
       "evidenceId": "S1100-N003-PLACEMENT-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志 / 華陽國志",
-      "section": "scenario 1100 / 유비",
+      "section": "scenario 1100 / 유선",
       "locator": "effective year 225",
-      "excerpt": "三國志 卷32 촉서 선주전 「先主復領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정 / 三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 三國志 卷43 촉서 여개전(呂凱) — 영창군은 呂凱·王伉이 경계를 닫고 지켜 반란에 가담하지 않았다(권/전 확인, 원문 구절은 코퍼스에서 미인용) / 三國志 卷33 촉서 후주전 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년이므로 그 이전 시나리오에서 촉에 주지 않았다 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 三國志 卷41 촉서 양홍전 「先主既稱尊號，征吳不克，還住永安」 — 永安(魚復·白帝城)은 촉의 동쪽 관문이다"
+      "excerpt": "三國志 卷33 後主傳 「三年夏四月，先主殂於永安宮。五月，後主襲位於成都」 — 225년 군주는 劉禪 / 三國志 卷43 呂凱傳 「凱與府丞蜀郡王伉帥厲吏民，閉境拒闓」 및 「雍闓、高定逼其東北，而凱等守義不與交通」 — 영창군은 도로가 끊긴 채 촉에 충성 / 華陽國志 巴志 「宕渠郡，蜀先主置…郡建九年省」 — 225년에는 폐지되어 巴西로 환속된 탕거 현역이므로 촉 소유 / 華陽國志 蜀志 「江陽郡…建安八年置郡」 및 三國志 卷32 「平定郡縣…江州、江陽」 — 강양은 유비의 익주 평정 뒤 촉 소유 / 華陽國志 蜀志 「先主定蜀，陳震為都尉，因易郡名為汶山太守」 — 문산은 촉의 군 / 三國志 卷33 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년 / 華陽國志 卷一 巴志 — 고릉군(뒤의 巴東)은 益州 소속이며 治所 魚復=白帝城 / 三國志 卷41 楊洪傳 「先主既稱尊號，征吳不克，還住永安」 — 永安은 촉의 동쪽 관문"
     },
     {
       "evidenceId": "S1100-N004-PLACEMENT-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
-      "work": "三國志 / 華陽國志",
-      "section": "scenario 1100 / 맹획",
+      "work": "三國志 / 資治通鑑",
+      "section": "scenario 1100 / 남중 반란군",
       "locator": "effective year 225",
-      "excerpt": "三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 華陽國志 卷四 남중지 — 益州(建寧)·越巂·牂柯 3군의 반란과 남중 이민족 연합"
+      "excerpt": "三國志 卷33 後主傳 건흥원년 「益州郡有大姓雍闓反…越巂夷王高定亦背叛」 및 「牂柯太守朱褒擁郡反」 — 직접 반란권은 益州·越巂·牂柯 / 三國志 卷43 李恢傳 「高定恣睢於越巂，雍闓跋扈於建寧，朱褒反叛於牂牁」 / 資治通鑑 卷70 — 孟獲은 雍闓의 지시로 諸夷를 선동하고 옹개 사후 잔여 병력을 거둔 후기 지휘자. 남만(哀牢)은 이 세 군의 정치 소유권으로 합치지 않는다"
     },
     {
       "evidenceId": "S1100-N005-PLACEMENT-EVIDENCE",
@@ -1483,6 +2042,39 @@
       "section": "scenario 1100 / 공손공",
       "locator": "effective year 225",
       "excerpt": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
+    },
+    {
+      "evidenceId": "S1100-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1100 interior continuity / 유선",
+      "locator": "effective year 225",
+      "excerpt": "華陽國志 卷一 巴志의 부릉군 위치·연혁과 촉한 통치 기록에 따라, 劉備 사후 이를 승계한 劉禪의 촉령으로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1100-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "晉書 / 資治通鑑",
+      "section": "scenario 1100 topology allowlist 1",
+      "locator": "effective year 225",
+      "excerpt": "晉書 卷14 地理志: 靈帝末 定襄·雲中·五原·朔方·上郡이 유리·분산되었고, 魏 黃初元年에는 陘嶺 이북을 모두 버렸다. 資治通鑑 卷69은 雲中·五原 동쪽이 鮮卑庭이었다고 기록한다."
+    },
+    {
+      "evidenceId": "S1100-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1100 topology allowlist 2",
+      "locator": "effective year 225",
+      "excerpt": "三國志 卷15·16은 위 조정이 西羌을 별도 집단으로 초무·교섭하고 護羌校尉로 다스렸음을 기록한다. 군현 직접 소유색으로 병합하지 않는다."
+    },
+    {
+      "evidenceId": "S1100-ALLOWLIST-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1100 topology allowlist 3",
+      "locator": "effective year 225",
+      "excerpt": "三國志 卷55 「諸山越不賔」 및 단양의 산월 토벌 기록: 225년에도 산월은 오의 일반 군현 소유권과 구별되는 미복속 집단이다."
     },
     {
       "evidenceId": "S1110-BASELINE-EVIDENCE",
@@ -1495,18 +2087,18 @@
     {
       "evidenceId": "S1110-N001-PLACEMENT-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
-      "work": "三國志",
+      "work": "三國志 / 晉書",
       "section": "scenario 1110 / 조예",
       "locator": "effective year 228",
-      "excerpt": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷03 위서 명제기 태화2년 — 사마의가 新城을 쳐 孟達을 참하여 228년 신성군은 위나라 소유 / 三國志 卷03 위서 명제기"
+      "excerpt": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 조조가 장악한 중원·기주를 위가 승계 / 三國志 卷02 문제기 — 광평군 설치 / 三國志 卷23 상요전 — 양안의 위 귀속 / 三國志 卷27 왕기전·卷28 장특전 — 동완·이성의 위 관할 / 三國志 卷30 — 광위·서평의 위 통치 / 晉書 卷14·15 地理志 — 양·노·낙평·낙릉·남향·신평·감릉·장무·장릉·장락의 위대 군국 계승 관계 / 三國志 卷03 명제기 태화2년 — 사마의가 신성을 평정하여 228년 위 소유"
     },
     {
       "evidenceId": "S1110-N002-PLACEMENT-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
-      "work": "三國志 / 資治通鑑",
+      "work": "三國志 / 晉書 / 資治通鑑",
       "section": "scenario 1110 / 손권",
       "locator": "effective year 228",
-      "excerpt": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 관우전 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
+      "excerpt": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
     },
     {
       "evidenceId": "S1110-N003-PLACEMENT-EVIDENCE",
@@ -1514,7 +2106,7 @@
       "work": "三國志 / 華陽國志",
       "section": "scenario 1110 / 유선",
       "locator": "effective year 228",
-      "excerpt": "三國志 卷32 촉서 선주전 「先主復領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정 / 三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 三國志 卷33 촉서 후주전 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년이므로 그 이전 시나리오에서 촉에 주지 않았다 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 三國志 卷41 촉서 양홍전 「先主既稱尊號，征吳不克，還住永安」 — 永安(魚復·白帝城)은 촉의 동쪽 관문이다"
+      "excerpt": "三國志 卷33 後主傳 건흥3년 「丞相亮南征四郡，四郡皆平」 — 228년 남중은 유선 조정에 복귀 / 華陽國志 巴志 「宕渠郡，蜀先主置…郡建九年省」 — 폐지된 탕거 현역은 巴西로 환속된 촉 소유 / 華陽國志 蜀志 「江陽郡…建安八年置郡」 및 三國志 卷32 「平定郡縣…江州、江陽」 — 강양은 촉 소유 / 華陽國志 蜀志 「先主定蜀，陳震為都尉，因易郡名為汶山太守」 — 문산은 촉의 군 / 三國志 卷33 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 무도·음평 획득은 229년 / 華陽國志 巴志 — 고릉군(뒤의 巴東)은 益州 소속 / 三國志 卷41 楊洪傳 「先主既稱尊號，征吳不克，還住永安」 — 永安은 촉의 동쪽 관문"
     },
     {
       "evidenceId": "S1110-N004-PLACEMENT-EVIDENCE",
@@ -1523,6 +2115,39 @@
       "section": "scenario 1110 / 공손공",
       "locator": "effective year 228",
       "excerpt": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
+    },
+    {
+      "evidenceId": "S1110-CONTINUITY-001-EVIDENCE",
+      "sourceType": "CHRONICLE",
+      "work": "華陽國志",
+      "section": "scenario 1110 interior continuity / 유선",
+      "locator": "effective year 228",
+      "excerpt": "華陽國志 卷一 巴志의 부릉군 위치·연혁과 촉한 통치 기록에 따라 劉禪의 촉령으로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1110-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "晉書 / 資治通鑑",
+      "section": "scenario 1110 topology allowlist 1",
+      "locator": "effective year 228",
+      "excerpt": "晉書 卷14 地理志: 靈帝末 定襄·雲中·五原·朔方·上郡이 유리·분산되었고, 魏 黃初元年에는 陘嶺 이북을 모두 버렸다. 資治通鑑 卷69은 雲中·五原 동쪽이 鮮卑庭이었다고 기록한다."
+    },
+    {
+      "evidenceId": "S1110-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1110 topology allowlist 2",
+      "locator": "effective year 228",
+      "excerpt": "三國志 卷15·16은 위 조정이 西羌을 별도 집단으로 초무·교섭하고 護羌校尉로 다스렸음을 기록한다. 군현 직접 소유색으로 병합하지 않는다."
+    },
+    {
+      "evidenceId": "S1110-ALLOWLIST-003-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1110 topology allowlist 3",
+      "locator": "effective year 228",
+      "excerpt": "三國志 卷55 「諸山越不賔」 및 단양의 산월 토벌 기록: 228년에도 산월은 오의 일반 군현 소유권과 구별되는 미복속 집단이다."
     },
     {
       "evidenceId": "S1120-BASELINE-EVIDENCE",
@@ -1635,6 +2260,51 @@
       "section": "scenario 1120 / 장연",
       "locator": "effective year 191",
       "excerpt": "IF 시나리오 원본 배치: 장연"
+    },
+    {
+      "evidenceId": "S1120-CONTINUITY-001-EVIDENCE",
+      "sourceType": "IF_DESIGN",
+      "work": "OpenSamguk IF scenario design",
+      "section": "scenario 1120 interior continuity / 유언",
+      "locator": "effective year 191",
+      "excerpt": "IF_SCENARIO 배치: 華陽國志 卷一 巴志가 부릉 현역을 巴 남부로 특정하므로, 유언의 익주 통제를 IF 분기에서도 이 현역까지 일관되게 적용한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1120-CONTINUITY-002-EVIDENCE",
+      "sourceType": "IF_DESIGN",
+      "work": "OpenSamguk IF scenario design",
+      "section": "scenario 1120 interior continuity / 원술",
+      "locator": "effective year 191",
+      "excerpt": "IF_SCENARIO 배치: 원술의 남양 배치를 220년 맵 분할에서 장릉 현역까지 일관되게 적용한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1120-CONTINUITY-003-EVIDENCE",
+      "sourceType": "IF_DESIGN",
+      "work": "OpenSamguk IF scenario design",
+      "section": "scenario 1120 interior continuity / 유표",
+      "locator": "effective year 191",
+      "excerpt": "IF_SCENARIO 배치: 유표의 형주 통제를 원본 IF 변경 규칙에 따라 의도 현역에 적용한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
+    },
+    {
+      "evidenceId": "S1120-CONTINUITY-004-EVIDENCE",
+      "sourceType": "IF_DESIGN",
+      "work": "OpenSamguk IF scenario design",
+      "section": "scenario 1120 interior continuity / 유언",
+      "locator": "effective year 191",
+      "excerpt": "IF_SCENARIO 배치: 유언의 익주 통제를 후대 문산 현역에도 일관되게 적용한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
+    },
+    {
+      "evidenceId": "S1120-CONTINUITY-005-EVIDENCE",
+      "sourceType": "IF_DESIGN",
+      "work": "OpenSamguk IF scenario design",
+      "section": "scenario 1120 interior continuity / 공손찬",
+      "locator": "effective year 191",
+      "excerpt": "IF_SCENARIO 배치: 공손찬의 하북 확장 분기를 후대 장무 현역에도 적용해 내부 공백을 막는다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-08.txt"
     }
   ],
   "scenarios": [
@@ -1646,18 +2316,20 @@
         {
           "nationKey": "S1010-N001",
           "scenarioNationName": "후한",
+          "displayNationName": "후한",
           "placementEvidenceIds": [
             "S1010-N001-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 군현 맵에서는 사예 7군과 북방의 광양군·하간국·태원군·발해군·상당군만 완군 단위로 배정한다. 이는 후한의 법적 105군을 칠한 것이 아니라 하진 중앙 세력의 실효 지배를 보수적으로 표현한 게임 판도다."
+          "placementRationale": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 220년 군국 분할에서 황건의 직접 반란 기사가 없는 제북·장릉·광평·장락·장무 현역은 지방 관부가 유지된 후한 조정권으로 둔다. 후대 군명은 현역을 가리키는 맵 alias이지 184년 행정군이라는 주장이 아니다."
         },
         {
           "nationKey": "S1010-N002",
           "scenarioNationName": "황건적",
+          "displayNationName": "황건적",
           "placementEvidenceIds": [
             "S1010-N002-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」"
+          "placementRationale": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」. 감릉은 국왕을 집잡아 호응했다는 직접 기사에 따라 황건적으로 배정한다."
         }
       ],
       "claims": [
@@ -1691,7 +2363,12 @@
               "PARENT-0018",
               "PARENT-0079",
               "PARENT-0021",
-              "PARENT-0078"
+              "PARENT-0078",
+              "PARENT-0027",
+              "PARENT-0158",
+              "PARENT-0131",
+              "PARENT-0167",
+              "PARENT-0157"
             ]
           },
           "evidenceIds": [
@@ -1700,7 +2377,7 @@
           "overridesClaimIds": [
             "S1010-BASELINE"
           ],
-          "rationale": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 군현 맵에서는 사예 7군과 북방의 광양군·하간국·태원군·발해군·상당군만 완군 단위로 배정한다. 이는 후한의 법적 105군을 칠한 것이 아니라 하진 중앙 세력의 실효 지배를 보수적으로 표현한 게임 판도다."
+          "rationale": "게임 세력 표기는 명목상 후한 영토가 아니라 황제 유굉과 대장군 하진이 이끄는 낙양 조정이 실제로 동원·방어할 수 있는 중앙 거점권으로 잡는다. 원본 94성 시나리오의 후한 14성(낙양·계·역경·진양·남피·호관·호로·사곡·함곡·사수·하내·장안·홍농·완)을 설계 증거로 삼되, 현행 220년 군국 분할에서 황건의 직접 반란 기사가 없는 제북·장릉·광평·장락·장무 현역은 지방 관부가 유지된 후한 조정권으로 둔다. 후대 군명은 현역을 가리키는 맵 alias이지 184년 행정군이라는 주장이 아니다."
         },
         {
           "claimId": "S1010-N002-ADMIN",
@@ -1715,7 +2392,8 @@
               "PARENT-0041",
               "PARENT-0023",
               "PARENT-0017",
-              "PARENT-0019"
+              "PARENT-0019",
+              "PARENT-0154"
             ]
           },
           "evidenceIds": [
@@ -1724,7 +2402,7 @@
           "overridesClaimIds": [
             "S1010-BASELINE"
           ],
-          "rationale": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」"
+          "rationale": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」. 감릉은 국왕을 집잡아 호응했다는 직접 기사에 따라 황건적으로 배정한다."
         }
       ],
       "auditAllowlist": []
@@ -1737,6 +2415,7 @@
         {
           "nationKey": "S1020-N001",
           "scenarioNationName": "동탁",
+          "displayNationName": "동탁",
           "placementEvidenceIds": [
             "S1020-N001-PLACEMENT-EVIDENCE"
           ],
@@ -1745,6 +2424,7 @@
         {
           "nationKey": "S1020-N002",
           "scenarioNationName": "원소",
+          "displayNationName": "원소",
           "placementEvidenceIds": [
             "S1020-N002-PLACEMENT-EVIDENCE"
           ],
@@ -1753,6 +2433,7 @@
         {
           "nationKey": "S1020-N003",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1020-N003-PLACEMENT-EVIDENCE"
           ],
@@ -1761,6 +2442,7 @@
         {
           "nationKey": "S1020-N004",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1020-N004-PLACEMENT-EVIDENCE"
           ],
@@ -1769,22 +2451,25 @@
         {
           "nationKey": "S1020-N005",
           "scenarioNationName": "유언",
+          "displayNationName": "유언",
           "placementEvidenceIds": [
             "S1020-N005-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 한중군은 장로에게 분리"
+          "placementRationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 탕거·강양·재동·문산은 현행 맵의 후대 분할 현역으로서 유언의 익주 통제에 포함한다. 한중군은 장로에게 분리"
         },
         {
           "nationKey": "S1020-N006",
           "scenarioNationName": "원술",
+          "displayNationName": "원술",
           "placementEvidenceIds": [
             "S1020-N006-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」"
+          "placementRationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」. 220년 맵의 장릉 현역은 당시 남양 남부에 해당하므로 원술의 남양 지배에 포함한다."
         },
         {
           "nationKey": "S1020-N007",
           "scenarioNationName": "손견",
+          "displayNationName": "손견",
           "placementEvidenceIds": [
             "S1020-N007-PLACEMENT-EVIDENCE"
           ],
@@ -1793,14 +2478,16 @@
         {
           "nationKey": "S1020-N008",
           "scenarioNationName": "도겸",
+          "displayNationName": "도겸",
           "placementEvidenceIds": [
             "S1020-N008-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
+          "placementRationale": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 현행 맵의 이성 현역은 당시 서주 북부 군현의 후대 분할이므로 도겸 세력에 포함한다. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
         },
         {
           "nationKey": "S1020-N009",
           "scenarioNationName": "공손찬",
+          "displayNationName": "공손찬",
           "placementEvidenceIds": [
             "S1020-N009-PLACEMENT-EVIDENCE"
           ],
@@ -1809,6 +2496,7 @@
         {
           "nationKey": "S1020-N010",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1020-N010-PLACEMENT-EVIDENCE"
           ],
@@ -1817,14 +2505,16 @@
         {
           "nationKey": "S1020-N011",
           "scenarioNationName": "한복",
+          "displayNationName": "한복",
           "placementEvidenceIds": [
             "S1020-N011-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소)"
+          "placementRationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다."
         },
         {
           "nationKey": "S1020-N012",
           "scenarioNationName": "유우",
+          "displayNationName": "유우",
           "placementEvidenceIds": [
             "S1020-N012-PLACEMENT-EVIDENCE"
           ],
@@ -1833,6 +2523,7 @@
         {
           "nationKey": "S1020-N013",
           "scenarioNationName": "유대",
+          "displayNationName": "유대",
           "placementEvidenceIds": [
             "S1020-N013-PLACEMENT-EVIDENCE"
           ],
@@ -1841,6 +2532,7 @@
         {
           "nationKey": "S1020-N014",
           "scenarioNationName": "장양",
+          "displayNationName": "장양",
           "placementEvidenceIds": [
             "S1020-N014-PLACEMENT-EVIDENCE"
           ],
@@ -1849,6 +2541,7 @@
         {
           "nationKey": "S1020-N015",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1020-N015-PLACEMENT-EVIDENCE"
           ],
@@ -1857,6 +2550,7 @@
         {
           "nationKey": "S1020-N016",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1020-N016-PLACEMENT-EVIDENCE"
           ],
@@ -1865,6 +2559,7 @@
         {
           "nationKey": "S1020-N017",
           "scenarioNationName": "공융",
+          "displayNationName": "공융",
           "placementEvidenceIds": [
             "S1020-N017-PLACEMENT-EVIDENCE"
           ],
@@ -1873,6 +2568,7 @@
         {
           "nationKey": "S1020-N018",
           "scenarioNationName": "장연",
+          "displayNationName": "장연",
           "placementEvidenceIds": [
             "S1020-N018-PLACEMENT-EVIDENCE"
           ],
@@ -1881,6 +2577,7 @@
         {
           "nationKey": "S1020-N019",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1020-N019-PLACEMENT-EVIDENCE"
           ],
@@ -1889,6 +2586,7 @@
         {
           "nationKey": "S1020-N020",
           "scenarioNationName": "공주",
+          "displayNationName": "공주",
           "placementEvidenceIds": [
             "S1020-N020-PLACEMENT-EVIDENCE"
           ],
@@ -2002,7 +2700,11 @@
               "PARENT-0063",
               "PARENT-0064",
               "PARENT-0065",
-              "PARENT-0129"
+              "PARENT-0129",
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
             ]
           },
           "evidenceIds": [
@@ -2011,7 +2713,7 @@
           "overridesClaimIds": [
             "S1020-BASELINE"
           ],
-          "rationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 한중군은 장로에게 분리"
+          "rationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 탕거·강양·재동·문산은 현행 맵의 후대 분할 현역으로서 유언의 익주 통제에 포함한다. 한중군은 장로에게 분리"
         },
         {
           "claimId": "S1020-N006-ADMIN",
@@ -2019,7 +2721,8 @@
           "ownerNationKey": "S1020-N006",
           "target": {
             "parentRegionIds": [
-              "PARENT-0041"
+              "PARENT-0041",
+              "PARENT-0158"
             ]
           },
           "evidenceIds": [
@@ -2028,7 +2731,7 @@
           "overridesClaimIds": [
             "S1020-BASELINE"
           ],
-          "rationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」"
+          "rationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」. 220년 맵의 장릉 현역은 당시 남양 남부에 해당하므로 원술의 남양 지배에 포함한다."
         },
         {
           "claimId": "S1020-N007-ADMIN",
@@ -2056,7 +2759,8 @@
               "PARENT-0030",
               "PARENT-0034",
               "PARENT-0032",
-              "PARENT-0031"
+              "PARENT-0031",
+              "PARENT-0110"
             ]
           },
           "evidenceIds": [
@@ -2065,7 +2769,7 @@
           "overridesClaimIds": [
             "S1020-BASELINE"
           ],
-          "rationale": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
+          "rationale": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 현행 맵의 이성 현역은 당시 서주 북부 군현의 후대 분할이므로 도겸 세력에 포함한다. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
         },
         {
           "claimId": "S1020-N009-ADMIN",
@@ -2096,7 +2800,9 @@
               "PARENT-0017",
               "PARENT-0018",
               "PARENT-0019",
-              "PARENT-0020"
+              "PARENT-0020",
+              "PARENT-0131",
+              "PARENT-0167"
             ]
           },
           "evidenceIds": [
@@ -2105,7 +2811,7 @@
           "overridesClaimIds": [
             "S1020-BASELINE"
           ],
-          "rationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소)"
+          "rationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다."
         },
         {
           "claimId": "S1020-N012-ADMIN",
@@ -2265,6 +2971,23 @@
             "S1020-BASELINE"
           ],
           "rationale": "後漢書 卷074A 원소유표열전 「初平元年，紹遂以勃海起兵，與從弟後將軍術、冀州牧韓馥、豫州刺史孔伷…同時俱起…紹與王匡屯河內，伷屯穎川，馥屯鄴」 / 資治通鑑 卷059 초평원년 동문 — 孔伷의 위치를 짚는 유일한 기사는 190년 潁川 주둔이다"
+        },
+        {
+          "claimId": "S1020-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1020-N005",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1020-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1020-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다."
         }
       ],
       "auditAllowlist": []
@@ -2277,6 +3000,7 @@
         {
           "nationKey": "S1021-N001",
           "scenarioNationName": "동탁",
+          "displayNationName": "동탁",
           "placementEvidenceIds": [
             "S1021-N001-PLACEMENT-EVIDENCE"
           ],
@@ -2285,6 +3009,7 @@
         {
           "nationKey": "S1021-N002",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1021-N002-PLACEMENT-EVIDENCE"
           ],
@@ -2293,6 +3018,7 @@
         {
           "nationKey": "S1021-N003",
           "scenarioNationName": "유대",
+          "displayNationName": "유대",
           "placementEvidenceIds": [
             "S1021-N003-PLACEMENT-EVIDENCE"
           ],
@@ -2301,6 +3027,7 @@
         {
           "nationKey": "S1021-N004",
           "scenarioNationName": "공손찬",
+          "displayNationName": "공손찬",
           "placementEvidenceIds": [
             "S1021-N004-PLACEMENT-EVIDENCE"
           ],
@@ -2309,6 +3036,7 @@
         {
           "nationKey": "S1021-N005",
           "scenarioNationName": "장양",
+          "displayNationName": "장양",
           "placementEvidenceIds": [
             "S1021-N005-PLACEMENT-EVIDENCE"
           ],
@@ -2317,30 +3045,34 @@
         {
           "nationKey": "S1021-N006",
           "scenarioNationName": "유언",
+          "displayNationName": "유언",
           "placementEvidenceIds": [
             "S1021-N006-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 한중군은 장로에게 분리"
+          "placementRationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 탕거·강양·재동·문산은 현행 맵의 후대 분할 현역으로서 유언의 익주 통제에 포함한다. 한중군은 장로에게 분리"
         },
         {
           "nationKey": "S1021-N007",
           "scenarioNationName": "원술",
+          "displayNationName": "원술",
           "placementEvidenceIds": [
             "S1021-N007-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」"
+          "placementRationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」. 220년 맵의 장릉 현역은 당시 남양 남부에 해당하므로 원술의 남양 지배에 포함한다."
         },
         {
           "nationKey": "S1021-N008",
           "scenarioNationName": "도겸",
+          "displayNationName": "도겸",
           "placementEvidenceIds": [
             "S1021-N008-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
+          "placementRationale": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 현행 맵의 이성 현역은 당시 서주 북부 군현의 후대 분할이므로 도겸 세력에 포함한다. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
         },
         {
           "nationKey": "S1021-N009",
           "scenarioNationName": "진온",
+          "displayNationName": "진온",
           "placementEvidenceIds": [
             "S1021-N009-PLACEMENT-EVIDENCE"
           ],
@@ -2349,6 +3081,7 @@
         {
           "nationKey": "S1021-N010",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1021-N010-PLACEMENT-EVIDENCE"
           ],
@@ -2357,6 +3090,7 @@
         {
           "nationKey": "S1021-N011",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1021-N011-PLACEMENT-EVIDENCE"
           ],
@@ -2365,14 +3099,16 @@
         {
           "nationKey": "S1021-N012",
           "scenarioNationName": "한복",
+          "displayNationName": "한복",
           "placementEvidenceIds": [
             "S1021-N012-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소)"
+          "placementRationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다."
         },
         {
           "nationKey": "S1021-N013",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1021-N013-PLACEMENT-EVIDENCE"
           ],
@@ -2381,6 +3117,7 @@
         {
           "nationKey": "S1021-N014",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1021-N014-PLACEMENT-EVIDENCE"
           ],
@@ -2389,6 +3126,7 @@
         {
           "nationKey": "S1021-N015",
           "scenarioNationName": "왕광",
+          "displayNationName": "왕광",
           "placementEvidenceIds": [
             "S1021-N015-PLACEMENT-EVIDENCE"
           ],
@@ -2397,6 +3135,7 @@
         {
           "nationKey": "S1021-N016",
           "scenarioNationName": "유우",
+          "displayNationName": "유우",
           "placementEvidenceIds": [
             "S1021-N016-PLACEMENT-EVIDENCE"
           ],
@@ -2405,6 +3144,7 @@
         {
           "nationKey": "S1021-N017",
           "scenarioNationName": "원소",
+          "displayNationName": "원소",
           "placementEvidenceIds": [
             "S1021-N017-PLACEMENT-EVIDENCE"
           ],
@@ -2413,6 +3153,7 @@
         {
           "nationKey": "S1021-N018",
           "scenarioNationName": "사섭",
+          "displayNationName": "사섭",
           "placementEvidenceIds": [
             "S1021-N018-PLACEMENT-EVIDENCE"
           ],
@@ -2421,6 +3162,7 @@
         {
           "nationKey": "S1021-N019",
           "scenarioNationName": "공융",
+          "displayNationName": "공융",
           "placementEvidenceIds": [
             "S1021-N019-PLACEMENT-EVIDENCE"
           ],
@@ -2429,6 +3171,7 @@
         {
           "nationKey": "S1021-N020",
           "scenarioNationName": "한수",
+          "displayNationName": "한수",
           "placementEvidenceIds": [
             "S1021-N020-PLACEMENT-EVIDENCE"
           ],
@@ -2437,6 +3180,7 @@
         {
           "nationKey": "S1021-N021",
           "scenarioNationName": "공주",
+          "displayNationName": "공주",
           "placementEvidenceIds": [
             "S1021-N021-PLACEMENT-EVIDENCE"
           ],
@@ -2445,6 +3189,7 @@
         {
           "nationKey": "S1021-N022",
           "scenarioNationName": "유총",
+          "displayNationName": "유총",
           "placementEvidenceIds": [
             "S1021-N022-PLACEMENT-EVIDENCE"
           ],
@@ -2555,7 +3300,11 @@
               "PARENT-0063",
               "PARENT-0064",
               "PARENT-0065",
-              "PARENT-0129"
+              "PARENT-0129",
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
             ]
           },
           "evidenceIds": [
@@ -2564,7 +3313,7 @@
           "overridesClaimIds": [
             "S1021-BASELINE"
           ],
-          "rationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 한중군은 장로에게 분리"
+          "rationale": "三國志 卷31 촉서 유이목전(유언) 「(焉)…領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정. 탕거·강양·재동·문산은 현행 맵의 후대 분할 현역으로서 유언의 익주 통제에 포함한다. 한중군은 장로에게 분리"
         },
         {
           "claimId": "S1021-N007-ADMIN",
@@ -2572,7 +3321,8 @@
           "ownerNationKey": "S1021-N007",
           "target": {
             "parentRegionIds": [
-              "PARENT-0041"
+              "PARENT-0041",
+              "PARENT-0158"
             ]
           },
           "evidenceIds": [
@@ -2581,7 +3331,7 @@
           "overridesClaimIds": [
             "S1021-BASELINE"
           ],
-          "rationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」"
+          "rationale": "資治通鑑 卷059 초평원년 「(堅)前到魯陽，與袁術合兵…術由是得據南陽」 / 三國志 卷06 원술전 「南陽戶口數百萬，而術奢淫肆欲」. 220년 맵의 장릉 현역은 당시 남양 남부에 해당하므로 원술의 남양 지배에 포함한다."
         },
         {
           "claimId": "S1021-N008-ADMIN",
@@ -2592,7 +3342,8 @@
               "PARENT-0030",
               "PARENT-0034",
               "PARENT-0032",
-              "PARENT-0031"
+              "PARENT-0031",
+              "PARENT-0110"
             ]
           },
           "evidenceIds": [
@@ -2601,7 +3352,7 @@
           "overridesClaimIds": [
             "S1021-BASELINE"
           ],
-          "rationale": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
+          "rationale": "三國志 卷08 위서 도겸전 「拜謙徐州刺史」 / 華陽國志 卷六 유선주지 「徐州牧陶謙，表先主為豫州刺史」 — 「徐州牧」 명시. 현행 맵의 이성 현역은 당시 서주 북부 군현의 후대 분할이므로 도겸 세력에 포함한다. 다만 廣陵은 張超가 별도로 領有(後漢書 卷074上 「廣陵太守張超」)하므로 제외"
         },
         {
           "claimId": "S1021-N009-ADMIN",
@@ -2650,7 +3401,9 @@
               "PARENT-0017",
               "PARENT-0018",
               "PARENT-0019",
-              "PARENT-0020"
+              "PARENT-0020",
+              "PARENT-0131",
+              "PARENT-0167"
             ]
           },
           "evidenceIds": [
@@ -2659,7 +3412,7 @@
           "overridesClaimIds": [
             "S1021-BASELINE"
           ],
-          "rationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소)"
+          "rationale": "資治通鑑 卷059 초평원년 「冀州牧韓馥留鄴，給其軍糧」 / 後漢書 卷074上 「冀州牧韓馥」 — 「冀州牧」 명시이므로 州 단위 배정(발해군은 원소). 광평·장락은 현행 220년 맵의 후대 분할 현역으로 한복의 기주 통제에 포함한다."
         },
         {
           "claimId": "S1021-N013-ADMIN",
@@ -2839,6 +3592,23 @@
             "S1021-BASELINE"
           ],
           "rationale": "後漢書 卷008 영제기 注 「陳愍王寵」 — 유총은 陳王이므로 陳國"
+        },
+        {
+          "claimId": "S1021-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1021-N006",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1021-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1021-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다."
         }
       ],
       "auditAllowlist": []
@@ -2851,6 +3621,7 @@
         {
           "nationKey": "S1030-N001",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1030-N001-PLACEMENT-EVIDENCE"
           ],
@@ -2859,6 +3630,7 @@
         {
           "nationKey": "S1030-N002",
           "scenarioNationName": "원소",
+          "displayNationName": "원소",
           "placementEvidenceIds": [
             "S1030-N002-PLACEMENT-EVIDENCE"
           ],
@@ -2867,6 +3639,7 @@
         {
           "nationKey": "S1030-N003",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1030-N003-PLACEMENT-EVIDENCE"
           ],
@@ -2875,6 +3648,7 @@
         {
           "nationKey": "S1030-N004",
           "scenarioNationName": "유언",
+          "displayNationName": "유언",
           "placementEvidenceIds": [
             "S1030-N004-PLACEMENT-EVIDENCE"
           ],
@@ -2883,6 +3657,7 @@
         {
           "nationKey": "S1030-N005",
           "scenarioNationName": "이각",
+          "displayNationName": "이각",
           "placementEvidenceIds": [
             "S1030-N005-PLACEMENT-EVIDENCE"
           ],
@@ -2891,6 +3666,7 @@
         {
           "nationKey": "S1030-N006",
           "scenarioNationName": "원술",
+          "displayNationName": "원술",
           "placementEvidenceIds": [
             "S1030-N006-PLACEMENT-EVIDENCE"
           ],
@@ -2899,6 +3675,7 @@
         {
           "nationKey": "S1030-N007",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1030-N007-PLACEMENT-EVIDENCE"
           ],
@@ -2907,6 +3684,7 @@
         {
           "nationKey": "S1030-N008",
           "scenarioNationName": "여포",
+          "displayNationName": "여포",
           "placementEvidenceIds": [
             "S1030-N008-PLACEMENT-EVIDENCE"
           ],
@@ -2915,6 +3693,7 @@
         {
           "nationKey": "S1030-N009",
           "scenarioNationName": "손책",
+          "displayNationName": "손책",
           "placementEvidenceIds": [
             "S1030-N009-PLACEMENT-EVIDENCE"
           ],
@@ -2923,6 +3702,7 @@
         {
           "nationKey": "S1030-N010",
           "scenarioNationName": "공손찬",
+          "displayNationName": "공손찬",
           "placementEvidenceIds": [
             "S1030-N010-PLACEMENT-EVIDENCE"
           ],
@@ -2931,6 +3711,7 @@
         {
           "nationKey": "S1030-N011",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1030-N011-PLACEMENT-EVIDENCE"
           ],
@@ -2939,6 +3720,7 @@
         {
           "nationKey": "S1030-N012",
           "scenarioNationName": "도겸",
+          "displayNationName": "도겸",
           "placementEvidenceIds": [
             "S1030-N012-PLACEMENT-EVIDENCE"
           ],
@@ -2947,6 +3729,7 @@
         {
           "nationKey": "S1030-N013",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1030-N013-PLACEMENT-EVIDENCE"
           ],
@@ -2955,6 +3738,7 @@
         {
           "nationKey": "S1030-N014",
           "scenarioNationName": "유요",
+          "displayNationName": "유요",
           "placementEvidenceIds": [
             "S1030-N014-PLACEMENT-EVIDENCE"
           ],
@@ -2963,6 +3747,7 @@
         {
           "nationKey": "S1030-N015",
           "scenarioNationName": "장양",
+          "displayNationName": "장양",
           "placementEvidenceIds": [
             "S1030-N015-PLACEMENT-EVIDENCE"
           ],
@@ -2971,6 +3756,7 @@
         {
           "nationKey": "S1030-N016",
           "scenarioNationName": "왕랑",
+          "displayNationName": "왕랑",
           "placementEvidenceIds": [
             "S1030-N016-PLACEMENT-EVIDENCE"
           ],
@@ -2979,6 +3765,7 @@
         {
           "nationKey": "S1030-N017",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1030-N017-PLACEMENT-EVIDENCE"
           ],
@@ -2987,6 +3774,7 @@
         {
           "nationKey": "S1030-N018",
           "scenarioNationName": "장연",
+          "displayNationName": "장연",
           "placementEvidenceIds": [
             "S1030-N018-PLACEMENT-EVIDENCE"
           ],
@@ -2995,6 +3783,7 @@
         {
           "nationKey": "S1030-N019",
           "scenarioNationName": "공융",
+          "displayNationName": "공융",
           "placementEvidenceIds": [
             "S1030-N019-PLACEMENT-EVIDENCE"
           ],
@@ -3003,6 +3792,7 @@
         {
           "nationKey": "S1030-N020",
           "scenarioNationName": "엄백호",
+          "displayNationName": "엄백호",
           "placementEvidenceIds": [
             "S1030-N020-PLACEMENT-EVIDENCE"
           ],
@@ -3011,6 +3801,7 @@
         {
           "nationKey": "S1030-N021",
           "scenarioNationName": "공주",
+          "displayNationName": "공주",
           "placementEvidenceIds": [
             "S1030-N021-PLACEMENT-EVIDENCE"
           ],
@@ -3415,9 +4206,111 @@
             "S1030-BASELINE"
           ],
           "rationale": "資治通鑑 卷062 한기54 건안원년 「孫策將取會稽，吳人嚴白虎等眾各萬餘人，處處屯聚」 / 三國志 卷46 오서 손파로토역전 동문 — 吳郡 일대의 宗帥이며 正式 太守가 아니고, 「處處屯聚」라 고정 治所가 없다"
+        },
+        {
+          "claimId": "S1030-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1030-N004",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1030-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1030-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
+        },
+        {
+          "claimId": "S1030-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1030-N004",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1030-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1030-BASELINE"
+          ],
+          "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
+        },
+        {
+          "claimId": "S1030-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1030-N012",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0110"
+            ]
+          },
+          "evidenceIds": [
+            "S1030-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1030-BASELINE"
+          ],
+          "rationale": "三國志 卷08의 徐州刺史·徐州牧 기사에 따라 후대 이성군 현역을 도겸의 서주 통제에 포함한다."
+        },
+        {
+          "claimId": "S1030-CONTINUITY-004",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1030-N008",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0012"
+            ]
+          },
+          "evidenceIds": [
+            "S1030-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1030-BASELINE"
+          ],
+          "rationale": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다."
+        },
+        {
+          "claimId": "S1030-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1030-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0131",
+              "PARENT-0167"
+            ]
+          },
+          "evidenceIds": [
+            "S1030-CONTINUITY-005-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1030-BASELINE"
+          ],
+          "rationale": "三國志 卷06의 「紹遂領冀州牧」에 따라 후대 광평·장락 현역을 원소의 기주 통제에 포함한다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1030,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1030-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1031,
@@ -3427,6 +4320,7 @@
         {
           "nationKey": "S1031-N001",
           "scenarioNationName": "이각",
+          "displayNationName": "이각",
           "placementEvidenceIds": [
             "S1031-N001-PLACEMENT-EVIDENCE"
           ],
@@ -3435,6 +4329,7 @@
         {
           "nationKey": "S1031-N002",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1031-N002-PLACEMENT-EVIDENCE"
           ],
@@ -3443,6 +4338,7 @@
         {
           "nationKey": "S1031-N003",
           "scenarioNationName": "여포",
+          "displayNationName": "여포",
           "placementEvidenceIds": [
             "S1031-N003-PLACEMENT-EVIDENCE"
           ],
@@ -3451,6 +4347,7 @@
         {
           "nationKey": "S1031-N004",
           "scenarioNationName": "공손찬",
+          "displayNationName": "공손찬",
           "placementEvidenceIds": [
             "S1031-N004-PLACEMENT-EVIDENCE"
           ],
@@ -3459,6 +4356,7 @@
         {
           "nationKey": "S1031-N005",
           "scenarioNationName": "장양",
+          "displayNationName": "장양",
           "placementEvidenceIds": [
             "S1031-N005-PLACEMENT-EVIDENCE"
           ],
@@ -3467,6 +4365,7 @@
         {
           "nationKey": "S1031-N006",
           "scenarioNationName": "유장",
+          "displayNationName": "유장",
           "placementEvidenceIds": [
             "S1031-N006-PLACEMENT-EVIDENCE"
           ],
@@ -3475,6 +4374,7 @@
         {
           "nationKey": "S1031-N007",
           "scenarioNationName": "원술",
+          "displayNationName": "원술",
           "placementEvidenceIds": [
             "S1031-N007-PLACEMENT-EVIDENCE"
           ],
@@ -3483,6 +4383,7 @@
         {
           "nationKey": "S1031-N008",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1031-N008-PLACEMENT-EVIDENCE"
           ],
@@ -3491,6 +4392,7 @@
         {
           "nationKey": "S1031-N009",
           "scenarioNationName": "유요",
+          "displayNationName": "유요",
           "placementEvidenceIds": [
             "S1031-N009-PLACEMENT-EVIDENCE"
           ],
@@ -3499,6 +4401,7 @@
         {
           "nationKey": "S1031-N010",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1031-N010-PLACEMENT-EVIDENCE"
           ],
@@ -3507,6 +4410,7 @@
         {
           "nationKey": "S1031-N011",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1031-N011-PLACEMENT-EVIDENCE"
           ],
@@ -3515,6 +4419,7 @@
         {
           "nationKey": "S1031-N012",
           "scenarioNationName": "엄백호",
+          "displayNationName": "엄백호",
           "placementEvidenceIds": [
             "S1031-N012-PLACEMENT-EVIDENCE"
           ],
@@ -3523,6 +4428,7 @@
         {
           "nationKey": "S1031-N013",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1031-N013-PLACEMENT-EVIDENCE"
           ],
@@ -3531,6 +4437,7 @@
         {
           "nationKey": "S1031-N014",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1031-N014-PLACEMENT-EVIDENCE"
           ],
@@ -3539,6 +4446,7 @@
         {
           "nationKey": "S1031-N015",
           "scenarioNationName": "장연",
+          "displayNationName": "장연",
           "placementEvidenceIds": [
             "S1031-N015-PLACEMENT-EVIDENCE"
           ],
@@ -3547,6 +4455,7 @@
         {
           "nationKey": "S1031-N016",
           "scenarioNationName": "화흠",
+          "displayNationName": "화흠",
           "placementEvidenceIds": [
             "S1031-N016-PLACEMENT-EVIDENCE"
           ],
@@ -3555,6 +4464,7 @@
         {
           "nationKey": "S1031-N017",
           "scenarioNationName": "원소",
+          "displayNationName": "원소",
           "placementEvidenceIds": [
             "S1031-N017-PLACEMENT-EVIDENCE"
           ],
@@ -3563,6 +4473,7 @@
         {
           "nationKey": "S1031-N018",
           "scenarioNationName": "사섭",
+          "displayNationName": "사섭",
           "placementEvidenceIds": [
             "S1031-N018-PLACEMENT-EVIDENCE"
           ],
@@ -3571,6 +4482,7 @@
         {
           "nationKey": "S1031-N019",
           "scenarioNationName": "공융",
+          "displayNationName": "공융",
           "placementEvidenceIds": [
             "S1031-N019-PLACEMENT-EVIDENCE"
           ],
@@ -3579,6 +4491,7 @@
         {
           "nationKey": "S1031-N020",
           "scenarioNationName": "한수",
+          "displayNationName": "한수",
           "placementEvidenceIds": [
             "S1031-N020-PLACEMENT-EVIDENCE"
           ],
@@ -3587,6 +4500,7 @@
         {
           "nationKey": "S1031-N021",
           "scenarioNationName": "왕랑",
+          "displayNationName": "왕랑",
           "placementEvidenceIds": [
             "S1031-N021-PLACEMENT-EVIDENCE"
           ],
@@ -3595,6 +4509,7 @@
         {
           "nationKey": "S1031-N022",
           "scenarioNationName": "유총",
+          "displayNationName": "유총",
           "placementEvidenceIds": [
             "S1031-N022-PLACEMENT-EVIDENCE"
           ],
@@ -3603,6 +4518,7 @@
         {
           "nationKey": "S1031-N023",
           "scenarioNationName": "손책",
+          "displayNationName": "손책",
           "placementEvidenceIds": [
             "S1031-N023-PLACEMENT-EVIDENCE"
           ],
@@ -3611,6 +4527,7 @@
         {
           "nationKey": "S1031-N024",
           "scenarioNationName": "유벽",
+          "displayNationName": "유벽",
           "placementEvidenceIds": [
             "S1031-N024-PLACEMENT-EVIDENCE"
           ],
@@ -4084,9 +5001,111 @@
             "S1031-BASELINE"
           ],
           "rationale": "三國志 卷01 위서 무제기 건안원년 「汝南、潁川黃巾何儀、劉辟、黃邵、何曼等，眾各數萬，初應袁術，又附孫堅」 — 여남 황건 유벽"
+        },
+        {
+          "claimId": "S1031-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1031-N006",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1031-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1031-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉璋이 승계한 巴郡·益州 통제에 포함한다."
+        },
+        {
+          "claimId": "S1031-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1031-N006",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1031-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1031-BASELINE"
+          ],
+          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+        },
+        {
+          "claimId": "S1031-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1031-N016",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0133"
+            ]
+          },
+          "evidenceIds": [
+            "S1031-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1031-BASELINE"
+          ],
+          "rationale": "三國志 卷13의 豫章太守 화흠 기사와 당시 예장 남부 현역을 근거로 후대 여릉 현역을 화흠 통제에 포함한다."
+        },
+        {
+          "claimId": "S1031-CONTINUITY-004",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1031-N003",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0012"
+            ]
+          },
+          "evidenceIds": [
+            "S1031-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1031-BASELINE"
+          ],
+          "rationale": "三國志 卷07의 연주 군현 호응 기사로 노국 현역을 여포에게 배정한다."
+        },
+        {
+          "claimId": "S1031-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1031-N017",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0131",
+              "PARENT-0167"
+            ]
+          },
+          "evidenceIds": [
+            "S1031-CONTINUITY-005-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1031-BASELINE"
+          ],
+          "rationale": "三國志 卷06의 원소 領冀州牧 기사에 따른 기주 현역 배정이다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1031,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1031-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1040,
@@ -4096,6 +5115,7 @@
         {
           "nationKey": "S1040-N001",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1040-N001-PLACEMENT-EVIDENCE"
           ],
@@ -4104,6 +5124,7 @@
         {
           "nationKey": "S1040-N002",
           "scenarioNationName": "원소",
+          "displayNationName": "원소",
           "placementEvidenceIds": [
             "S1040-N002-PLACEMENT-EVIDENCE"
           ],
@@ -4112,6 +5133,7 @@
         {
           "nationKey": "S1040-N003",
           "scenarioNationName": "손책",
+          "displayNationName": "손책",
           "placementEvidenceIds": [
             "S1040-N003-PLACEMENT-EVIDENCE"
           ],
@@ -4120,6 +5142,7 @@
         {
           "nationKey": "S1040-N004",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1040-N004-PLACEMENT-EVIDENCE"
           ],
@@ -4128,6 +5151,7 @@
         {
           "nationKey": "S1040-N005",
           "scenarioNationName": "유장",
+          "displayNationName": "유장",
           "placementEvidenceIds": [
             "S1040-N005-PLACEMENT-EVIDENCE"
           ],
@@ -4136,6 +5160,7 @@
         {
           "nationKey": "S1040-N006",
           "scenarioNationName": "원술",
+          "displayNationName": "원술",
           "placementEvidenceIds": [
             "S1040-N006-PLACEMENT-EVIDENCE"
           ],
@@ -4144,6 +5169,7 @@
         {
           "nationKey": "S1040-N007",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1040-N007-PLACEMENT-EVIDENCE"
           ],
@@ -4152,6 +5178,7 @@
         {
           "nationKey": "S1040-N008",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1040-N008-PLACEMENT-EVIDENCE"
           ],
@@ -4160,6 +5187,7 @@
         {
           "nationKey": "S1040-N009",
           "scenarioNationName": "여포",
+          "displayNationName": "여포",
           "placementEvidenceIds": [
             "S1040-N009-PLACEMENT-EVIDENCE"
           ],
@@ -4168,6 +5196,7 @@
         {
           "nationKey": "S1040-N010",
           "scenarioNationName": "이각",
+          "displayNationName": "이각",
           "placementEvidenceIds": [
             "S1040-N010-PLACEMENT-EVIDENCE"
           ],
@@ -4176,6 +5205,7 @@
         {
           "nationKey": "S1040-N011",
           "scenarioNationName": "공손찬",
+          "displayNationName": "공손찬",
           "placementEvidenceIds": [
             "S1040-N011-PLACEMENT-EVIDENCE"
           ],
@@ -4184,6 +5214,7 @@
         {
           "nationKey": "S1040-N012",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1040-N012-PLACEMENT-EVIDENCE"
           ],
@@ -4192,6 +5223,7 @@
         {
           "nationKey": "S1040-N013",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1040-N013-PLACEMENT-EVIDENCE"
           ],
@@ -4200,6 +5232,7 @@
         {
           "nationKey": "S1040-N014",
           "scenarioNationName": "장연",
+          "displayNationName": "장연",
           "placementEvidenceIds": [
             "S1040-N014-PLACEMENT-EVIDENCE"
           ],
@@ -4208,6 +5241,7 @@
         {
           "nationKey": "S1040-N015",
           "scenarioNationName": "장양",
+          "displayNationName": "장양",
           "placementEvidenceIds": [
             "S1040-N015-PLACEMENT-EVIDENCE"
           ],
@@ -4534,9 +5568,111 @@
             "S1040-BASELINE"
           ],
           "rationale": "三國志 卷08 위서 장양전 「楊遂以所將攻上黨太守於壺關，不下，略諸縣」·「袁紹至河內，楊與紹合，復與匈奴單于於夫羅屯漳水」·「卓以楊為建義將軍、河內太守」·「楊還野王」 / 資治通鑑 卷060 초평2년 「董卓以楊為建義將軍、河內太守」"
+        },
+        {
+          "claimId": "S1040-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1040-N005",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1040-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1040-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉璋의 巴郡·益州 통제에 포함한다."
+        },
+        {
+          "claimId": "S1040-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1040-N005",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1040-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1040-BASELINE"
+          ],
+          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+        },
+        {
+          "claimId": "S1040-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1040-N003",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0141"
+            ]
+          },
+          "evidenceIds": [
+            "S1040-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1040-BASELINE"
+          ],
+          "rationale": "三國志 卷46의 손책 강동 평정 기사에 따라 196년 현재 후대 신도군 현역을 손책에게 배정한다. 신도군 설치 시점을 196년으로 옮긴 것은 아니다."
+        },
+        {
+          "claimId": "S1040-CONTINUITY-004",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1040-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0012"
+            ]
+          },
+          "evidenceIds": [
+            "S1040-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1040-BASELINE"
+          ],
+          "rationale": "三國志 卷01의 조조 연주 통제·황제 봉영 기사에 따라 노국 현역을 조조에게 배정한다."
+        },
+        {
+          "claimId": "S1040-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1040-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0131",
+              "PARENT-0167"
+            ]
+          },
+          "evidenceIds": [
+            "S1040-CONTINUITY-005-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1040-BASELINE"
+          ],
+          "rationale": "三國志 卷06의 원소 領冀州牧 기사에 따른 기주 현역 배정이다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1040,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1040-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1041,
@@ -4546,6 +5682,7 @@
         {
           "nationKey": "S1041-N001",
           "scenarioNationName": "이각",
+          "displayNationName": "이각",
           "placementEvidenceIds": [
             "S1041-N001-PLACEMENT-EVIDENCE"
           ],
@@ -4554,6 +5691,7 @@
         {
           "nationKey": "S1041-N002",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1041-N002-PLACEMENT-EVIDENCE"
           ],
@@ -4562,6 +5700,7 @@
         {
           "nationKey": "S1041-N003",
           "scenarioNationName": "여포",
+          "displayNationName": "여포",
           "placementEvidenceIds": [
             "S1041-N003-PLACEMENT-EVIDENCE"
           ],
@@ -4570,6 +5709,7 @@
         {
           "nationKey": "S1041-N004",
           "scenarioNationName": "공손찬",
+          "displayNationName": "공손찬",
           "placementEvidenceIds": [
             "S1041-N004-PLACEMENT-EVIDENCE"
           ],
@@ -4578,6 +5718,7 @@
         {
           "nationKey": "S1041-N005",
           "scenarioNationName": "장수",
+          "displayNationName": "장수",
           "placementEvidenceIds": [
             "S1041-N005-PLACEMENT-EVIDENCE"
           ],
@@ -4586,6 +5727,7 @@
         {
           "nationKey": "S1041-N006",
           "scenarioNationName": "유장",
+          "displayNationName": "유장",
           "placementEvidenceIds": [
             "S1041-N006-PLACEMENT-EVIDENCE"
           ],
@@ -4594,6 +5736,7 @@
         {
           "nationKey": "S1041-N007",
           "scenarioNationName": "중",
+          "displayNationName": "중",
           "placementEvidenceIds": [
             "S1041-N007-PLACEMENT-EVIDENCE"
           ],
@@ -4602,6 +5745,7 @@
         {
           "nationKey": "S1041-N008",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1041-N008-PLACEMENT-EVIDENCE"
           ],
@@ -4610,6 +5754,7 @@
         {
           "nationKey": "S1041-N009",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1041-N009-PLACEMENT-EVIDENCE"
           ],
@@ -4618,6 +5763,7 @@
         {
           "nationKey": "S1041-N010",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1041-N010-PLACEMENT-EVIDENCE"
           ],
@@ -4626,6 +5772,7 @@
         {
           "nationKey": "S1041-N011",
           "scenarioNationName": "엄백호",
+          "displayNationName": "엄백호",
           "placementEvidenceIds": [
             "S1041-N011-PLACEMENT-EVIDENCE"
           ],
@@ -4634,6 +5781,7 @@
         {
           "nationKey": "S1041-N012",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1041-N012-PLACEMENT-EVIDENCE"
           ],
@@ -4642,6 +5790,7 @@
         {
           "nationKey": "S1041-N013",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1041-N013-PLACEMENT-EVIDENCE"
           ],
@@ -4650,6 +5799,7 @@
         {
           "nationKey": "S1041-N014",
           "scenarioNationName": "장연",
+          "displayNationName": "장연",
           "placementEvidenceIds": [
             "S1041-N014-PLACEMENT-EVIDENCE"
           ],
@@ -4658,6 +5808,7 @@
         {
           "nationKey": "S1041-N015",
           "scenarioNationName": "화흠",
+          "displayNationName": "화흠",
           "placementEvidenceIds": [
             "S1041-N015-PLACEMENT-EVIDENCE"
           ],
@@ -4666,6 +5817,7 @@
         {
           "nationKey": "S1041-N016",
           "scenarioNationName": "원소",
+          "displayNationName": "원소",
           "placementEvidenceIds": [
             "S1041-N016-PLACEMENT-EVIDENCE"
           ],
@@ -4674,6 +5826,7 @@
         {
           "nationKey": "S1041-N017",
           "scenarioNationName": "사섭",
+          "displayNationName": "사섭",
           "placementEvidenceIds": [
             "S1041-N017-PLACEMENT-EVIDENCE"
           ],
@@ -4682,6 +5835,7 @@
         {
           "nationKey": "S1041-N018",
           "scenarioNationName": "한수",
+          "displayNationName": "한수",
           "placementEvidenceIds": [
             "S1041-N018-PLACEMENT-EVIDENCE"
           ],
@@ -4690,6 +5844,7 @@
         {
           "nationKey": "S1041-N019",
           "scenarioNationName": "손책",
+          "displayNationName": "손책",
           "placementEvidenceIds": [
             "S1041-N019-PLACEMENT-EVIDENCE"
           ],
@@ -4698,6 +5853,7 @@
         {
           "nationKey": "S1041-N020",
           "scenarioNationName": "유벽",
+          "displayNationName": "유벽",
           "placementEvidenceIds": [
             "S1041-N020-PLACEMENT-EVIDENCE"
           ],
@@ -5091,9 +6247,145 @@
             "S1041-BASELINE"
           ],
           "rationale": "三國志 卷01 위서 무제기 건안5년 「汝南降賊劉辟等叛應紹，略許下」 — 여남 황건 유벽"
+        },
+        {
+          "claimId": "S1041-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1041-N006",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1041-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1041-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉璋의 巴郡·益州 통제에 포함한다."
+        },
+        {
+          "claimId": "S1041-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1041-N006",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1041-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1041-BASELINE"
+          ],
+          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+        },
+        {
+          "claimId": "S1041-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1041-N019",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0141"
+            ]
+          },
+          "evidenceIds": [
+            "S1041-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1041-BASELINE"
+          ],
+          "rationale": "三國志 卷46의 손책 강동 평정 기사에 따라 후대 신도 현역을 손책에게 배정한다."
+        },
+        {
+          "claimId": "S1041-CONTINUITY-004",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1041-N015",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0133"
+            ]
+          },
+          "evidenceIds": [
+            "S1041-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1041-BASELINE"
+          ],
+          "rationale": "三國志 卷13의 豫章太守 화흠 기사에 따라 후대 여릉 현역을 예장 통제권에 포함한다."
+        },
+        {
+          "claimId": "S1041-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1041-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0012"
+            ]
+          },
+          "evidenceIds": [
+            "S1041-CONTINUITY-005-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1041-BASELINE"
+          ],
+          "rationale": "三國志 卷01의 조조 연주 통제 기사에 따라 노국 현역을 배정한다."
+        },
+        {
+          "claimId": "S1041-CONTINUITY-006",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1041-N005",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0158"
+            ]
+          },
+          "evidenceIds": [
+            "S1041-CONTINUITY-006-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1041-BASELINE"
+          ],
+          "rationale": "三國志 卷10의 「張繡在南陽」에 따라 남양 남부의 후대 장릉 현역을 장수에게 배정한다."
+        },
+        {
+          "claimId": "S1041-CONTINUITY-007",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1041-N016",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0131",
+              "PARENT-0167"
+            ]
+          },
+          "evidenceIds": [
+            "S1041-CONTINUITY-007-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1041-BASELINE"
+          ],
+          "rationale": "三國志 卷06의 원소 領冀州牧 기사에 따른 기주 현역 배정이다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1041,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1041-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1050,
@@ -5103,6 +6395,7 @@
         {
           "nationKey": "S1050-N001",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1050-N001-PLACEMENT-EVIDENCE"
           ],
@@ -5111,6 +6404,7 @@
         {
           "nationKey": "S1050-N002",
           "scenarioNationName": "손책",
+          "displayNationName": "손책",
           "placementEvidenceIds": [
             "S1050-N002-PLACEMENT-EVIDENCE"
           ],
@@ -5119,6 +6413,7 @@
         {
           "nationKey": "S1050-N003",
           "scenarioNationName": "원소",
+          "displayNationName": "원소",
           "placementEvidenceIds": [
             "S1050-N003-PLACEMENT-EVIDENCE"
           ],
@@ -5127,6 +6422,7 @@
         {
           "nationKey": "S1050-N004",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1050-N004-PLACEMENT-EVIDENCE"
           ],
@@ -5135,6 +6431,7 @@
         {
           "nationKey": "S1050-N005",
           "scenarioNationName": "유장",
+          "displayNationName": "유장",
           "placementEvidenceIds": [
             "S1050-N005-PLACEMENT-EVIDENCE"
           ],
@@ -5143,6 +6440,7 @@
         {
           "nationKey": "S1050-N006",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1050-N006-PLACEMENT-EVIDENCE"
           ],
@@ -5151,6 +6449,7 @@
         {
           "nationKey": "S1050-N007",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1050-N007-PLACEMENT-EVIDENCE"
           ],
@@ -5159,6 +6458,7 @@
         {
           "nationKey": "S1050-N008",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1050-N008-PLACEMENT-EVIDENCE"
           ],
@@ -5167,6 +6467,7 @@
         {
           "nationKey": "S1050-N009",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1050-N009-PLACEMENT-EVIDENCE"
           ],
@@ -5393,9 +6694,134 @@
             "S1050-BASELINE"
           ],
           "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
+        },
+        {
+          "claimId": "S1050-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1050-N005",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1050-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1050-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 201년 직전 부릉 현역을 劉璋의 巴郡·益州 통제에 포함한다."
+        },
+        {
+          "claimId": "S1050-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1050-N005",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1050-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1050-BASELINE"
+          ],
+          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+        },
+        {
+          "claimId": "S1050-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1050-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0141",
+              "PARENT-0133"
+            ]
+          },
+          "evidenceIds": [
+            "S1050-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1050-BASELINE"
+          ],
+          "rationale": "三國志 卷46의 손책 강동 평정 기사에 따라 후대 신도·여릉 현역을 손책에게 배정한다."
+        },
+        {
+          "claimId": "S1050-CONTINUITY-004",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1050-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0009",
+              "PARENT-0110",
+              "PARENT-0012",
+              "PARENT-0158",
+              "PARENT-0113"
+            ]
+          },
+          "evidenceIds": [
+            "S1050-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1050-BASELINE"
+          ],
+          "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
+        },
+        {
+          "claimId": "S1050-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1050-N003",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0131",
+              "PARENT-0167",
+              "PARENT-0106",
+              "PARENT-0107",
+              "PARENT-0157"
+            ]
+          },
+          "evidenceIds": [
+            "S1050-CONTINUITY-005-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1050-BASELINE"
+          ],
+          "rationale": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1050,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "95125",
+            "95676",
+            "95698",
+            "DIRECT-PARENT-0138-877c5fc0e884"
+          ],
+          "evidenceIds": [
+            "S1050-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "晉書 卷14은 영제 말 정양·운중·오원·삭방·상군의 유리·분산과 위 황초원년 태행 북쪽 방기를 기록한다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1050,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1050-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1060,
@@ -5405,6 +6831,7 @@
         {
           "nationKey": "S1060-N001",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1060-N001-PLACEMENT-EVIDENCE"
           ],
@@ -5413,6 +6840,7 @@
         {
           "nationKey": "S1060-N002",
           "scenarioNationName": "손권",
+          "displayNationName": "손권",
           "placementEvidenceIds": [
             "S1060-N002-PLACEMENT-EVIDENCE"
           ],
@@ -5421,6 +6849,7 @@
         {
           "nationKey": "S1060-N003",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1060-N003-PLACEMENT-EVIDENCE"
           ],
@@ -5429,6 +6858,7 @@
         {
           "nationKey": "S1060-N004",
           "scenarioNationName": "유장",
+          "displayNationName": "유장",
           "placementEvidenceIds": [
             "S1060-N004-PLACEMENT-EVIDENCE"
           ],
@@ -5437,6 +6867,7 @@
         {
           "nationKey": "S1060-N005",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1060-N005-PLACEMENT-EVIDENCE"
           ],
@@ -5445,6 +6876,7 @@
         {
           "nationKey": "S1060-N006",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1060-N006-PLACEMENT-EVIDENCE"
           ],
@@ -5453,6 +6885,7 @@
         {
           "nationKey": "S1060-N007",
           "scenarioNationName": "원상",
+          "displayNationName": "원상",
           "placementEvidenceIds": [
             "S1060-N007-PLACEMENT-EVIDENCE"
           ],
@@ -5461,6 +6894,7 @@
         {
           "nationKey": "S1060-N008",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1060-N008-PLACEMENT-EVIDENCE"
           ],
@@ -5469,6 +6903,7 @@
         {
           "nationKey": "S1060-N009",
           "scenarioNationName": "원담",
+          "displayNationName": "원담",
           "placementEvidenceIds": [
             "S1060-N009-PLACEMENT-EVIDENCE"
           ],
@@ -5477,6 +6912,7 @@
         {
           "nationKey": "S1060-N010",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1060-N010-PLACEMENT-EVIDENCE"
           ],
@@ -5737,9 +7173,150 @@
             "S1060-BASELINE"
           ],
           "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문"
+        },
+        {
+          "claimId": "S1060-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N004",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵謝本白璋…後遂為涪陵郡」에 따라 建安六年 이후 부릉군을 설치한 劉璋에게 배정한다."
+        },
+        {
+          "claimId": "S1060-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N004",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+        },
+        {
+          "claimId": "S1060-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0141",
+              "PARENT-0133"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "三國志 卷47의 손권 강동 승계와 오군 운영 기사에 따라 후대 신도·여릉 현역을 배정한다."
+        },
+        {
+          "claimId": "S1060-CONTINUITY-004",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0009",
+              "PARENT-0110",
+              "PARENT-0012",
+              "PARENT-0158",
+              "PARENT-0113"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
+        },
+        {
+          "claimId": "S1060-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N007",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0131",
+              "PARENT-0167",
+              "PARENT-0106",
+              "PARENT-0157"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-005-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다."
+        },
+        {
+          "claimId": "S1060-CONTINUITY-006",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N009",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0107"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-006-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "三國志 卷06의 원담 청주 통제 기사에 따라 청주 북부의 후대 낙릉 현역을 원담에게 배정한다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1060,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "95125",
+            "95676",
+            "95698",
+            "DIRECT-PARENT-0138-877c5fc0e884"
+          ],
+          "evidenceIds": [
+            "S1060-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1060,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1060-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1070,
@@ -5749,6 +7326,7 @@
         {
           "nationKey": "S1070-N001",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1070-N001-PLACEMENT-EVIDENCE"
           ],
@@ -5757,6 +7335,7 @@
         {
           "nationKey": "S1070-N002",
           "scenarioNationName": "손권",
+          "displayNationName": "손권",
           "placementEvidenceIds": [
             "S1070-N002-PLACEMENT-EVIDENCE"
           ],
@@ -5765,6 +7344,7 @@
         {
           "nationKey": "S1070-N003",
           "scenarioNationName": "유장",
+          "displayNationName": "유장",
           "placementEvidenceIds": [
             "S1070-N003-PLACEMENT-EVIDENCE"
           ],
@@ -5773,6 +7353,7 @@
         {
           "nationKey": "S1070-N004",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1070-N004-PLACEMENT-EVIDENCE"
           ],
@@ -5781,6 +7362,7 @@
         {
           "nationKey": "S1070-N005",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1070-N005-PLACEMENT-EVIDENCE"
           ],
@@ -5789,6 +7371,7 @@
         {
           "nationKey": "S1070-N006",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1070-N006-PLACEMENT-EVIDENCE"
           ],
@@ -5797,6 +7380,7 @@
         {
           "nationKey": "S1070-N007",
           "scenarioNationName": "한현",
+          "displayNationName": "한현",
           "placementEvidenceIds": [
             "S1070-N007-PLACEMENT-EVIDENCE"
           ],
@@ -5805,6 +7389,7 @@
         {
           "nationKey": "S1070-N008",
           "scenarioNationName": "조범",
+          "displayNationName": "조범",
           "placementEvidenceIds": [
             "S1070-N008-PLACEMENT-EVIDENCE"
           ],
@@ -5813,6 +7398,7 @@
         {
           "nationKey": "S1070-N009",
           "scenarioNationName": "유도",
+          "displayNationName": "유도",
           "placementEvidenceIds": [
             "S1070-N009-PLACEMENT-EVIDENCE"
           ],
@@ -5821,6 +7407,7 @@
         {
           "nationKey": "S1070-N010",
           "scenarioNationName": "공손강",
+          "displayNationName": "공손강",
           "placementEvidenceIds": [
             "S1070-N010-PLACEMENT-EVIDENCE"
           ],
@@ -5829,6 +7416,7 @@
         {
           "nationKey": "S1070-N011",
           "scenarioNationName": "금선",
+          "displayNationName": "금선",
           "placementEvidenceIds": [
             "S1070-N011-PLACEMENT-EVIDENCE"
           ],
@@ -6108,9 +7696,120 @@
             "S1070-BASELINE"
           ],
           "rationale": "三國志 卷32 촉서 선주전 「(先主)…南征四郡。武陵太守金旋、長沙太守韓玄、桂陽太守趙範、零陵太守劉度皆降」·「琦病死，羣下推先主為荊州牧，治公安」 / 華陽國志 卷六 동문 — 「武陵太守金旋」"
+        },
+        {
+          "claimId": "S1070-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1070-N003",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1070-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1070-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵謝本白璋…後遂為涪陵郡」에 따라 부릉군을 설치한 劉璋의 益州 통제에 포함한다."
+        },
+        {
+          "claimId": "S1070-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1070-N003",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1070-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1070-BASELINE"
+          ],
+          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+        },
+        {
+          "claimId": "S1070-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1070-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0141",
+              "PARENT-0133"
+            ]
+          },
+          "evidenceIds": [
+            "S1070-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1070-BASELINE"
+          ],
+          "rationale": "三國志 卷47의 손권 강동 통제 기사에 따라 신도·여릉 현역을 배정한다."
+        },
+        {
+          "claimId": "S1070-CONTINUITY-004",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1070-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0009",
+              "PARENT-0110",
+              "PARENT-0012",
+              "PARENT-0158",
+              "PARENT-0105",
+              "PARENT-0131",
+              "PARENT-0167",
+              "PARENT-0106",
+              "PARENT-0107",
+              "PARENT-0113",
+              "PARENT-0154",
+              "PARENT-0157"
+            ]
+          },
+          "evidenceIds": [
+            "S1070-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1070-BASELINE"
+          ],
+          "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1070,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "95125",
+            "95676",
+            "95698",
+            "DIRECT-PARENT-0138-877c5fc0e884"
+          ],
+          "evidenceIds": [
+            "S1070-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1070,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1070-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1080,
@@ -6120,6 +7819,7 @@
         {
           "nationKey": "S1080-N001",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1080-N001-PLACEMENT-EVIDENCE"
           ],
@@ -6128,6 +7828,7 @@
         {
           "nationKey": "S1080-N002",
           "scenarioNationName": "손권",
+          "displayNationName": "손권",
           "placementEvidenceIds": [
             "S1080-N002-PLACEMENT-EVIDENCE"
           ],
@@ -6136,6 +7837,7 @@
         {
           "nationKey": "S1080-N003",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1080-N003-PLACEMENT-EVIDENCE"
           ],
@@ -6144,6 +7846,7 @@
         {
           "nationKey": "S1080-N004",
           "scenarioNationName": "유장",
+          "displayNationName": "유장",
           "placementEvidenceIds": [
             "S1080-N004-PLACEMENT-EVIDENCE"
           ],
@@ -6152,6 +7855,7 @@
         {
           "nationKey": "S1080-N005",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1080-N005-PLACEMENT-EVIDENCE"
           ],
@@ -6160,6 +7864,7 @@
         {
           "nationKey": "S1080-N006",
           "scenarioNationName": "마초",
+          "displayNationName": "마초",
           "placementEvidenceIds": [
             "S1080-N006-PLACEMENT-EVIDENCE"
           ],
@@ -6168,6 +7873,7 @@
         {
           "nationKey": "S1080-N007",
           "scenarioNationName": "공손공",
+          "displayNationName": "공손공",
           "placementEvidenceIds": [
             "S1080-N007-PLACEMENT-EVIDENCE"
           ],
@@ -6377,9 +8083,120 @@
             "S1080-BASELINE"
           ],
           "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
+        },
+        {
+          "claimId": "S1080-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1080-N004",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1080-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1080-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵謝本白璋…後遂為涪陵郡」에 따라 부릉군을 설치한 劉璋의 益州 통제에 포함한다."
+        },
+        {
+          "claimId": "S1080-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1080-N004",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0144",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1080-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1080-BASELINE"
+          ],
+          "rationale": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다."
+        },
+        {
+          "claimId": "S1080-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1080-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0141",
+              "PARENT-0133"
+            ]
+          },
+          "evidenceIds": [
+            "S1080-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1080-BASELINE"
+          ],
+          "rationale": "三國志 卷47의 손권 강동 통제 기사에 따라 신도·여릉 현역을 배정한다."
+        },
+        {
+          "claimId": "S1080-CONTINUITY-004",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1080-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0009",
+              "PARENT-0110",
+              "PARENT-0012",
+              "PARENT-0158",
+              "PARENT-0105",
+              "PARENT-0131",
+              "PARENT-0167",
+              "PARENT-0106",
+              "PARENT-0107",
+              "PARENT-0113",
+              "PARENT-0154",
+              "PARENT-0157"
+            ]
+          },
+          "evidenceIds": [
+            "S1080-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1080-BASELINE"
+          ],
+          "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 211년 조조 통제 현역을 배정한다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1080,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "95125",
+            "95676",
+            "95698",
+            "DIRECT-PARENT-0138-877c5fc0e884"
+          ],
+          "evidenceIds": [
+            "S1080-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1080,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1080-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1090,
@@ -6389,6 +8206,7 @@
         {
           "nationKey": "S1090-N001",
           "scenarioNationName": "조조",
+          "displayNationName": "조조",
           "placementEvidenceIds": [
             "S1090-N001-PLACEMENT-EVIDENCE"
           ],
@@ -6397,6 +8215,7 @@
         {
           "nationKey": "S1090-N002",
           "scenarioNationName": "손권",
+          "displayNationName": "손권",
           "placementEvidenceIds": [
             "S1090-N002-PLACEMENT-EVIDENCE"
           ],
@@ -6405,6 +8224,7 @@
         {
           "nationKey": "S1090-N003",
           "scenarioNationName": "유비",
+          "displayNationName": "유비",
           "placementEvidenceIds": [
             "S1090-N003-PLACEMENT-EVIDENCE"
           ],
@@ -6413,6 +8233,7 @@
         {
           "nationKey": "S1090-N004",
           "scenarioNationName": "공손공",
+          "displayNationName": "공손공",
           "placementEvidenceIds": [
             "S1090-N004-PLACEMENT-EVIDENCE"
           ],
@@ -6604,9 +8425,119 @@
             "S1090-BASELINE"
           ],
           "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
+        },
+        {
+          "claimId": "S1090-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1090-N003",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150",
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1090-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1090-BASELINE"
+          ],
+          "rationale": "三國志 卷32의 유비 익주 평정·군현 승계와 晉書 卷14의 촉 설치군 목록을 대조한다."
+        },
+        {
+          "claimId": "S1090-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1090-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0141",
+              "PARENT-0146",
+              "PARENT-0159"
+            ]
+          },
+          "evidenceIds": [
+            "S1090-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1090-BASELINE"
+          ],
+          "rationale": "三國志 卷47·60의 신도·한창 설치와 오의 기춘 회복 기사를 따라 223년 손권 통제로 배정한다."
+        },
+        {
+          "claimId": "S1090-CONTINUITY-003",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1090-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0009",
+              "PARENT-0110",
+              "PARENT-0012",
+              "PARENT-0158",
+              "PARENT-0162",
+              "PARENT-0105",
+              "PARENT-0131",
+              "PARENT-0167",
+              "PARENT-0106",
+              "PARENT-0107",
+              "PARENT-0113",
+              "PARENT-0132",
+              "PARENT-0140",
+              "PARENT-0154",
+              "PARENT-0157"
+            ]
+          },
+          "evidenceIds": [
+            "S1090-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1090-BASELINE"
+          ],
+          "rationale": "三國志 조위 본기·열전과 晉書 卷14·15의 위 설치군·계승 목록을 대조해 223년 위 조정 통제 현역으로 배정한다. 시나리오 실행 세력명은 조조이지만 연도 판정은 위 승계권을 따른다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1090,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "95125",
+            "95676",
+            "95698",
+            "DIRECT-PARENT-0138-877c5fc0e884"
+          ],
+          "evidenceIds": [
+            "S1090-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "晉書 卷14의 북방 5군 유리·분산·황초원년 방기 기사에 따라 직접 군현 소유색을 주지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1090,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X058"
+          ],
+          "evidenceIds": [
+            "S1090-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "三國志 卷15·16의 서강 초무·호강교위 기사에 따라 서강을 위의 한식 군현 소유색으로 합치지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1090,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1090-ALLOWLIST-003-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1100,
@@ -6616,38 +8547,43 @@
         {
           "nationKey": "S1100-N001",
           "scenarioNationName": "조비",
+          "displayNationName": "조비",
           "placementEvidenceIds": [
             "S1100-N001-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷40 촉서 유봉전 「魏文帝…合房陵、上庸、西城三郡為新城郡，以達領新城太守」(220) — 신성군 창설 / 三國志 卷02 위서 문제기 황초원년 — 조비 즉위"
+          "placementRationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 조조가 장악한 중원·기주를 위가 승계 / 三國志 卷02 문제기 — 광평군 설치와 조비 즉위 / 三國志 卷23 상요전 — 양안의 위 귀속 / 三國志 卷27 왕기전·卷28 장특전 — 동완·이성의 위 관할 / 三國志 卷30 — 광위·서평의 위 통치 / 晉書 卷14·15 地理志 — 양·노·낙평·낙릉·남향·신평·감릉·장무·장릉·장락의 위대 군국 계승 관계 / 三國志 卷40 유봉전 「魏文帝…合房陵、上庸、西城三郡為新城郡」 — 신성군 창설"
         },
         {
           "nationKey": "S1100-N002",
           "scenarioNationName": "손권",
+          "displayNationName": "손권",
           "placementEvidenceIds": [
             "S1100-N002-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 관우전 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
+          "placementRationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
         },
         {
           "nationKey": "S1100-N003",
-          "scenarioNationName": "유비",
+          "scenarioNationName": "유선",
+          "displayNationName": "유선",
           "placementEvidenceIds": [
             "S1100-N003-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷32 촉서 선주전 「先主復領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정 / 三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 三國志 卷43 촉서 여개전(呂凱) — 영창군은 呂凱·王伉이 경계를 닫고 지켜 반란에 가담하지 않았다(권/전 확인, 원문 구절은 코퍼스에서 미인용) / 三國志 卷33 촉서 후주전 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년이므로 그 이전 시나리오에서 촉에 주지 않았다 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 三國志 卷41 촉서 양홍전 「先主既稱尊號，征吳不克，還住永安」 — 永安(魚復·白帝城)은 촉의 동쪽 관문이다"
+          "placementRationale": "三國志 卷33 後主傳 「三年夏四月，先主殂於永安宮。五月，後主襲位於成都」 — 225년 군주는 劉禪 / 三國志 卷43 呂凱傳 「凱與府丞蜀郡王伉帥厲吏民，閉境拒闓」 및 「雍闓、高定逼其東北，而凱等守義不與交通」 — 영창군은 도로가 끊긴 채 촉에 충성 / 華陽國志 巴志 「宕渠郡，蜀先主置…郡建九年省」 — 225년에는 폐지되어 巴西로 환속된 탕거 현역이므로 촉 소유 / 華陽國志 蜀志 「江陽郡…建安八年置郡」 및 三國志 卷32 「平定郡縣…江州、江陽」 — 강양은 유비의 익주 평정 뒤 촉 소유 / 華陽國志 蜀志 「先主定蜀，陳震為都尉，因易郡名為汶山太守」 — 문산은 촉의 군 / 三國志 卷33 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년 / 華陽國志 卷一 巴志 — 고릉군(뒤의 巴東)은 益州 소속이며 治所 魚復=白帝城 / 三國志 卷41 楊洪傳 「先主既稱尊號，征吳不克，還住永安」 — 永安은 촉의 동쪽 관문"
         },
         {
           "nationKey": "S1100-N004",
-          "scenarioNationName": "맹획",
+          "scenarioNationName": "남중 반란군",
+          "displayNationName": "남중 반란군",
           "placementEvidenceIds": [
             "S1100-N004-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 華陽國志 卷四 남중지 — 益州(建寧)·越巂·牂柯 3군의 반란과 남중 이민족 연합"
+          "placementRationale": "三國志 卷33 後主傳 건흥원년 「益州郡有大姓雍闓反…越巂夷王高定亦背叛」 및 「牂柯太守朱褒擁郡反」 — 직접 반란권은 益州·越巂·牂柯 / 三國志 卷43 李恢傳 「高定恣睢於越巂，雍闓跋扈於建寧，朱褒反叛於牂牁」 / 資治通鑑 卷70 — 孟獲은 雍闓의 지시로 諸夷를 선동하고 옹개 사후 잔여 병력을 거둔 후기 지휘자. 남만(哀牢)은 이 세 군의 정치 소유권으로 합치지 않는다"
         },
         {
           "nationKey": "S1100-N005",
           "scenarioNationName": "공손공",
+          "displayNationName": "공손공",
           "placementEvidenceIds": [
             "S1100-N005-PLACEMENT-EVIDENCE"
           ],
@@ -6740,7 +8676,23 @@
               "PARENT-0074",
               "PARENT-0075",
               "PARENT-0076",
-              "PARENT-0077"
+              "PARENT-0077",
+              "PARENT-0009",
+              "PARENT-0012",
+              "PARENT-0110",
+              "PARENT-0105",
+              "PARENT-0106",
+              "PARENT-0107",
+              "PARENT-0113",
+              "PARENT-0131",
+              "PARENT-0132",
+              "PARENT-0140",
+              "PARENT-0154",
+              "PARENT-0157",
+              "PARENT-0158",
+              "PARENT-0162",
+              "PARENT-0167",
+              "PARENT-0168"
             ]
           },
           "evidenceIds": [
@@ -6749,7 +8701,7 @@
           "overridesClaimIds": [
             "S1100-BASELINE"
           ],
-          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷40 촉서 유봉전 「魏文帝…合房陵、上庸、西城三郡為新城郡，以達領新城太守」(220) — 신성군 창설 / 三國志 卷02 위서 문제기 황초원년 — 조비 즉위"
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 조조가 장악한 중원·기주를 위가 승계 / 三國志 卷02 문제기 — 광평군 설치와 조비 즉위 / 三國志 卷23 상요전 — 양안의 위 귀속 / 三國志 卷27 왕기전·卷28 장특전 — 동완·이성의 위 관할 / 三國志 卷30 — 광위·서평의 위 통치 / 晉書 卷14·15 地理志 — 양·노·낙평·낙릉·남향·신평·감릉·장무·장릉·장락의 위대 군국 계승 관계 / 三國志 卷40 유봉전 「魏文帝…合房陵、上庸、西城三郡為新城郡」 — 신성군 창설"
         },
         {
           "claimId": "S1100-N001-DIRECT",
@@ -6769,7 +8721,7 @@
             "S1100-N001-ADMIN",
             "S1100-N003-ADMIN"
           ],
-          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷40 촉서 유봉전 「魏文帝…合房陵、上庸、西城三郡為新城郡，以達領新城太守」(220) — 신성군 창설 / 三國志 卷02 위서 문제기 황초원년 — 조비 즉위"
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 조조가 장악한 중원·기주를 위가 승계 / 三國志 卷02 문제기 — 광평군 설치와 조비 즉위 / 三國志 卷23 상요전 — 양안의 위 귀속 / 三國志 卷27 왕기전·卷28 장특전 — 동완·이성의 위 관할 / 三國志 卷30 — 광위·서평의 위 통치 / 晉書 卷14·15 地理志 — 양·노·낙평·낙릉·남향·신평·감릉·장무·장릉·장락의 위대 군국 계승 관계 / 三國志 卷40 유봉전 「魏文帝…合房陵、上庸、西城三郡為新城郡」 — 신성군 창설"
         },
         {
           "claimId": "S1100-N002-ADMIN",
@@ -6797,7 +8749,11 @@
               "PARENT-0101",
               "PARENT-0102",
               "PARENT-0103",
-              "PARENT-0104"
+              "PARENT-0104",
+              "PARENT-0141",
+              "PARENT-0146",
+              "PARENT-0159",
+              "PARENT-0145"
             ]
           },
           "evidenceIds": [
@@ -6806,7 +8762,7 @@
           "overridesClaimIds": [
             "S1100-BASELINE"
           ],
-          "rationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 관우전 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
+          "rationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
         },
         {
           "claimId": "S1100-N003-ADMIN",
@@ -6823,6 +8779,9 @@
               "PARENT-0119",
               "PARENT-0054",
               "PARENT-0062",
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0148",
               "PARENT-0063",
               "PARENT-0064",
               "PARENT-0065"
@@ -6834,7 +8793,7 @@
           "overridesClaimIds": [
             "S1100-BASELINE"
           ],
-          "rationale": "三國志 卷32 촉서 선주전 「先主復領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정 / 三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 三國志 卷43 촉서 여개전(呂凱) — 영창군은 呂凱·王伉이 경계를 닫고 지켜 반란에 가담하지 않았다(권/전 확인, 원문 구절은 코퍼스에서 미인용) / 三國志 卷33 촉서 후주전 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년이므로 그 이전 시나리오에서 촉에 주지 않았다 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 三國志 卷41 촉서 양홍전 「先主既稱尊號，征吳不克，還住永安」 — 永安(魚復·白帝城)은 촉의 동쪽 관문이다"
+          "rationale": "三國志 卷33 後主傳 「三年夏四月，先主殂於永安宮。五月，後主襲位於成都」 — 225년 군주는 劉禪 / 三國志 卷43 呂凱傳 「凱與府丞蜀郡王伉帥厲吏民，閉境拒闓」 및 「雍闓、高定逼其東北，而凱等守義不與交通」 — 영창군은 도로가 끊긴 채 촉에 충성 / 華陽國志 巴志 「宕渠郡，蜀先主置…郡建九年省」 — 225년에는 폐지되어 巴西로 환속된 탕거 현역이므로 촉 소유 / 華陽國志 蜀志 「江陽郡…建安八年置郡」 및 三國志 卷32 「平定郡縣…江州、江陽」 — 강양은 유비의 익주 평정 뒤 촉 소유 / 華陽國志 蜀志 「先主定蜀，陳震為都尉，因易郡名為汶山太守」 — 문산은 촉의 군 / 三國志 卷33 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년 / 華陽國志 卷一 巴志 — 고릉군(뒤의 巴東)은 益州 소속이며 治所 魚復=白帝城 / 三國志 卷41 楊洪傳 「先主既稱尊號，征吳不克，還住永安」 — 永安은 촉의 동쪽 관문"
         },
         {
           "claimId": "S1100-N004-ADMIN",
@@ -6844,8 +8803,7 @@
             "parentRegionIds": [
               "PARENT-0061",
               "PARENT-0060",
-              "PARENT-0059",
-              "PARENT-0118"
+              "PARENT-0059"
             ]
           },
           "evidenceIds": [
@@ -6854,7 +8812,7 @@
           "overridesClaimIds": [
             "S1100-BASELINE"
           ],
-          "rationale": "三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 華陽國志 卷四 남중지 — 益州(建寧)·越巂·牂柯 3군의 반란과 남중 이민족 연합"
+          "rationale": "三國志 卷33 後主傳 건흥원년 「益州郡有大姓雍闓反…越巂夷王高定亦背叛」 및 「牂柯太守朱褒擁郡反」 — 직접 반란권은 益州·越巂·牂柯 / 三國志 卷43 李恢傳 「高定恣睢於越巂，雍闓跋扈於建寧，朱褒反叛於牂牁」 / 資治通鑑 卷70 — 孟獲은 雍闓의 지시로 諸夷를 선동하고 옹개 사후 잔여 병력을 거둔 후기 지휘자. 남만(哀牢)은 이 세 군의 정치 소유권으로 합치지 않는다"
         },
         {
           "claimId": "S1100-N005-ADMIN",
@@ -6875,9 +8833,66 @@
             "S1100-BASELINE"
           ],
           "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
+        },
+        {
+          "claimId": "S1100-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1100-N003",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1100-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1100-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志의 부릉군 위치·연혁과 촉한 통치 기록에 따라, 劉備 사후 이를 승계한 劉禪의 촉령으로 둔다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1100,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "95125",
+            "95676",
+            "95698",
+            "DIRECT-PARENT-0138-877c5fc0e884"
+          ],
+          "evidenceIds": [
+            "S1100-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "晉書 卷14 地理志: 靈帝末 定襄·雲中·五原·朔方·上郡이 유리·분산되었고, 魏 黃初元年에는 陘嶺 이북을 모두 버렸다. 資治通鑑 卷69은 雲中·五原 동쪽이 鮮卑庭이었다고 기록한다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1100,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X058"
+          ],
+          "evidenceIds": [
+            "S1100-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "三國志 卷15·16은 위 조정이 西羌을 별도 집단으로 초무·교섭하고 護羌校尉로 다스렸음을 기록한다. 군현 직접 소유색으로 병합하지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1100,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1100-ALLOWLIST-003-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55 「諸山越不賔」 및 단양의 산월 토벌 기록: 225년에도 산월은 오의 일반 군현 소유권과 구별되는 미복속 집단이다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1110,
@@ -6887,30 +8902,34 @@
         {
           "nationKey": "S1110-N001",
           "scenarioNationName": "조예",
+          "displayNationName": "조예",
           "placementEvidenceIds": [
             "S1110-N001-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷03 위서 명제기 태화2년 — 사마의가 新城을 쳐 孟達을 참하여 228년 신성군은 위나라 소유 / 三國志 卷03 위서 명제기"
+          "placementRationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 조조가 장악한 중원·기주를 위가 승계 / 三國志 卷02 문제기 — 광평군 설치 / 三國志 卷23 상요전 — 양안의 위 귀속 / 三國志 卷27 왕기전·卷28 장특전 — 동완·이성의 위 관할 / 三國志 卷30 — 광위·서평의 위 통치 / 晉書 卷14·15 地理志 — 양·노·낙평·낙릉·남향·신평·감릉·장무·장릉·장락의 위대 군국 계승 관계 / 三國志 卷03 명제기 태화2년 — 사마의가 신성을 평정하여 228년 위 소유"
         },
         {
           "nationKey": "S1110-N002",
           "scenarioNationName": "손권",
+          "displayNationName": "손권",
           "placementEvidenceIds": [
             "S1110-N002-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 관우전 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
+          "placementRationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
         },
         {
           "nationKey": "S1110-N003",
           "scenarioNationName": "유선",
+          "displayNationName": "유선",
           "placementEvidenceIds": [
             "S1110-N003-PLACEMENT-EVIDENCE"
           ],
-          "placementRationale": "三國志 卷32 촉서 선주전 「先主復領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정 / 三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 三國志 卷33 촉서 후주전 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년이므로 그 이전 시나리오에서 촉에 주지 않았다 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 三國志 卷41 촉서 양홍전 「先主既稱尊號，征吳不克，還住永安」 — 永安(魚復·白帝城)은 촉의 동쪽 관문이다"
+          "placementRationale": "三國志 卷33 後主傳 건흥3년 「丞相亮南征四郡，四郡皆平」 — 228년 남중은 유선 조정에 복귀 / 華陽國志 巴志 「宕渠郡，蜀先主置…郡建九年省」 — 폐지된 탕거 현역은 巴西로 환속된 촉 소유 / 華陽國志 蜀志 「江陽郡…建安八年置郡」 및 三國志 卷32 「平定郡縣…江州、江陽」 — 강양은 촉 소유 / 華陽國志 蜀志 「先主定蜀，陳震為都尉，因易郡名為汶山太守」 — 문산은 촉의 군 / 三國志 卷33 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 무도·음평 획득은 229년 / 華陽國志 巴志 — 고릉군(뒤의 巴東)은 益州 소속 / 三國志 卷41 楊洪傳 「先主既稱尊號，征吳不克，還住永安」 — 永安은 촉의 동쪽 관문"
         },
         {
           "nationKey": "S1110-N004",
           "scenarioNationName": "공손공",
+          "displayNationName": "공손공",
           "placementEvidenceIds": [
             "S1110-N004-PLACEMENT-EVIDENCE"
           ],
@@ -7003,7 +9022,23 @@
               "PARENT-0074",
               "PARENT-0075",
               "PARENT-0076",
-              "PARENT-0077"
+              "PARENT-0077",
+              "PARENT-0009",
+              "PARENT-0012",
+              "PARENT-0110",
+              "PARENT-0105",
+              "PARENT-0106",
+              "PARENT-0107",
+              "PARENT-0113",
+              "PARENT-0131",
+              "PARENT-0132",
+              "PARENT-0140",
+              "PARENT-0154",
+              "PARENT-0157",
+              "PARENT-0158",
+              "PARENT-0162",
+              "PARENT-0167",
+              "PARENT-0168"
             ]
           },
           "evidenceIds": [
@@ -7012,7 +9047,7 @@
           "overridesClaimIds": [
             "S1110-BASELINE"
           ],
-          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷03 위서 명제기 태화2년 — 사마의가 新城을 쳐 孟達을 참하여 228년 신성군은 위나라 소유 / 三國志 卷03 위서 명제기"
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 조조가 장악한 중원·기주를 위가 승계 / 三國志 卷02 문제기 — 광평군 설치 / 三國志 卷23 상요전 — 양안의 위 귀속 / 三國志 卷27 왕기전·卷28 장특전 — 동완·이성의 위 관할 / 三國志 卷30 — 광위·서평의 위 통치 / 晉書 卷14·15 地理志 — 양·노·낙평·낙릉·남향·신평·감릉·장무·장릉·장락의 위대 군국 계승 관계 / 三國志 卷03 명제기 태화2년 — 사마의가 신성을 평정하여 228년 위 소유"
         },
         {
           "claimId": "S1110-N001-DIRECT",
@@ -7032,7 +9067,7 @@
             "S1110-N001-ADMIN",
             "S1110-N003-ADMIN"
           ],
-          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 三國志 卷03 위서 명제기 태화2년 — 사마의가 新城을 쳐 孟達을 참하여 228년 신성군은 위나라 소유 / 三國志 卷03 위서 명제기"
+          "rationale": "三國志 卷10 위서 순욱전 「九年，太祖拔鄴，領冀州牧」 — 조조가 장악한 중원·기주를 위가 승계 / 三國志 卷02 문제기 — 광평군 설치 / 三國志 卷23 상요전 — 양안의 위 귀속 / 三國志 卷27 왕기전·卷28 장특전 — 동완·이성의 위 관할 / 三國志 卷30 — 광위·서평의 위 통치 / 晉書 卷14·15 地理志 — 양·노·낙평·낙릉·남향·신평·감릉·장무·장릉·장락의 위대 군국 계승 관계 / 三國志 卷03 명제기 태화2년 — 사마의가 신성을 평정하여 228년 위 소유"
         },
         {
           "claimId": "S1110-N002-ADMIN",
@@ -7060,7 +9095,11 @@
               "PARENT-0101",
               "PARENT-0102",
               "PARENT-0103",
-              "PARENT-0104"
+              "PARENT-0104",
+              "PARENT-0141",
+              "PARENT-0146",
+              "PARENT-0159",
+              "PARENT-0145"
             ]
           },
           "evidenceIds": [
@@ -7069,7 +9108,7 @@
           "overridesClaimIds": [
             "S1110-BASELINE"
           ],
-          "rationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 관우전 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷49 오서 사섭전 「建安十五年，孫權遣步騭為交州刺史。騭到，燮率兄弟奉承節度」 / 三國志 卷60 여대전 「延康元年，代步騭為交州刺史」"
+          "rationale": "資治通鑑 卷068 건안24년 「權以呂蒙為南郡太守…以陸遜領宜都太守」 / 三國志 卷36 關羽傳 「權已據江陵，盡虜羽士眾妻子」 — 219년 말 형주 전역 오나라 귀속 / 三國志 卷60 賀齊傳·資治通鑑 卷65 「權乃分其地為新都郡，以齊為太守」 — 신도군은 208년부터 손권 소유 / 三國志 卷47 孫權傳·資治通鑑 卷66 「分長沙為漢昌郡…魯肅為漢昌太守」 — 한창군은 210년부터 손권 소유 / 資治通鑑 卷70 「吳賀齊襲蘄春，虜太守晉宗以歸」 — 223년 기춘 점령 / 晉書 卷15 地理志 — 오가 비릉전농교위를 설치하여 직접 경영 / 三國志 卷49 士燮傳·卷60 呂岱傳 — 교주 통제"
         },
         {
           "claimId": "S1110-N003-ADMIN",
@@ -7089,6 +9128,9 @@
               "PARENT-0061",
               "PARENT-0060",
               "PARENT-0059",
+              "PARENT-0125",
+              "PARENT-0147",
+              "PARENT-0148",
               "PARENT-0063",
               "PARENT-0064",
               "PARENT-0065"
@@ -7100,7 +9142,7 @@
           "overridesClaimIds": [
             "S1110-BASELINE"
           ],
-          "rationale": "三國志 卷32 촉서 선주전 「先主復領益州牧」 — 「領益州牧」 명시이므로 益州 단위 배정 / 三國志 卷33 촉서 후주전 건흥3년 「丞相亮南征四郡，四郡皆平。改益州郡為建寧郡，分建寧、永昌郡為雲南郡，又分建寧、牂柯為興古郡」 — 반란 4군은 益州·永昌·越巂·牂柯 / 三國志 卷33 촉서 후주전 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 촉이 무도를 얻은 것은 229년이므로 그 이전 시나리오에서 촉에 주지 않았다 / 華陽國志 卷一 巴志 「益州牧劉璋，以墊江以上為巴郡，江南龐羲為太守，治安漢。〔璋更〕以江州至臨江為永寧郡，朐忍至魚復為固陵郡，巴遂分矣」·「建安六年，魚復蹇胤白璋，爭巴名。璋乃改永寧為巴郡，以固陵為巴東」 — 고릉군은 劉璋이 194년 巴郡을 쪼개 세운 益州 소속 郡(朐忍～魚復, 治 魚復=白帝城), 201년 巴東으로 개칭. 맵 타일 좌표(奉節 白帝城)도 이쪽이다. 魏氏春秋의 吳 固陵郡(219, 巫·秭歸)은 동명이군이며 이 타일이 아니다 / 三國志 卷41 촉서 양홍전 「先主既稱尊號，征吳不克，還住永安」 — 永安(魚復·白帝城)은 촉의 동쪽 관문이다"
+          "rationale": "三國志 卷33 後主傳 건흥3년 「丞相亮南征四郡，四郡皆平」 — 228년 남중은 유선 조정에 복귀 / 華陽國志 巴志 「宕渠郡，蜀先主置…郡建九年省」 — 폐지된 탕거 현역은 巴西로 환속된 촉 소유 / 華陽國志 蜀志 「江陽郡…建安八年置郡」 및 三國志 卷32 「平定郡縣…江州、江陽」 — 강양은 촉 소유 / 華陽國志 蜀志 「先主定蜀，陳震為都尉，因易郡名為汶山太守」 — 문산은 촉의 군 / 三國志 卷33 건흥7년 「亮遣陳式攻武都、陰平，遂克定二郡」 — 무도·음평 획득은 229년 / 華陽國志 巴志 — 고릉군(뒤의 巴東)은 益州 소속 / 三國志 卷41 楊洪傳 「先主既稱尊號，征吳不克，還住永安」 — 永安은 촉의 동쪽 관문"
         },
         {
           "claimId": "S1110-N004-ADMIN",
@@ -7121,9 +9163,66 @@
             "S1110-BASELINE"
           ],
           "rationale": "三國志 卷08 위서 공손도전 「分遼東郡為遼西中遼郡，置太守。越海收東萊諸縣，置營州刺史。自立為遼東侯、平州牧」 / 後漢書 卷074下·資治通鑑 卷059 초평원년 동문 / 三國志 卷30 위서 동이전 韓조 「建安中，公孫康分屯有縣以南荒地爲帶方郡，遣公孫模、張敞等收集遺民」 — 屯有縣은 낙랑군 소속이므로 낙랑·대방 지배 근거"
+        },
+        {
+          "claimId": "S1110-CONTINUITY-001",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1110-N003",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1110-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1110-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志의 부릉군 위치·연혁과 촉한 통치 기록에 따라 劉禪의 촉령으로 둔다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1110,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "95125",
+            "95676",
+            "95698",
+            "DIRECT-PARENT-0138-877c5fc0e884"
+          ],
+          "evidenceIds": [
+            "S1110-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "晉書 卷14 地理志: 靈帝末 定襄·雲中·五原·朔方·上郡이 유리·분산되었고, 魏 黃初元年에는 陘嶺 이북을 모두 버렸다. 資治通鑑 卷69은 雲中·五原 동쪽이 鮮卑庭이었다고 기록한다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1110,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X058"
+          ],
+          "evidenceIds": [
+            "S1110-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "三國志 卷15·16은 위 조정이 西羌을 별도 집단으로 초무·교섭하고 護羌校尉로 다스렸음을 기록한다. 군현 직접 소유색으로 병합하지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1110,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "X061"
+          ],
+          "evidenceIds": [
+            "S1110-ALLOWLIST-003-EVIDENCE"
+          ],
+          "rationale": "三國志 卷55 「諸山越不賔」 및 단양의 산월 토벌 기록: 228년에도 산월은 오의 일반 군현 소유권과 구별되는 미복속 집단이다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1120,
@@ -7133,6 +9232,7 @@
         {
           "nationKey": "S1120-N001",
           "scenarioNationName": "원소",
+          "displayNationName": "원소",
           "placementEvidenceIds": [
             "S1120-N001-PLACEMENT-EVIDENCE"
           ],
@@ -7141,6 +9241,7 @@
         {
           "nationKey": "S1120-N002",
           "scenarioNationName": "공손찬",
+          "displayNationName": "공손찬",
           "placementEvidenceIds": [
             "S1120-N002-PLACEMENT-EVIDENCE"
           ],
@@ -7149,6 +9250,7 @@
         {
           "nationKey": "S1120-N003",
           "scenarioNationName": "동탁",
+          "displayNationName": "동탁",
           "placementEvidenceIds": [
             "S1120-N003-PLACEMENT-EVIDENCE"
           ],
@@ -7157,6 +9259,7 @@
         {
           "nationKey": "S1120-N004",
           "scenarioNationName": "원술",
+          "displayNationName": "원술",
           "placementEvidenceIds": [
             "S1120-N004-PLACEMENT-EVIDENCE"
           ],
@@ -7165,6 +9268,7 @@
         {
           "nationKey": "S1120-N005",
           "scenarioNationName": "유언",
+          "displayNationName": "유언",
           "placementEvidenceIds": [
             "S1120-N005-PLACEMENT-EVIDENCE"
           ],
@@ -7173,6 +9277,7 @@
         {
           "nationKey": "S1120-N006",
           "scenarioNationName": "마등",
+          "displayNationName": "마등",
           "placementEvidenceIds": [
             "S1120-N006-PLACEMENT-EVIDENCE"
           ],
@@ -7181,6 +9286,7 @@
         {
           "nationKey": "S1120-N007",
           "scenarioNationName": "유표",
+          "displayNationName": "유표",
           "placementEvidenceIds": [
             "S1120-N007-PLACEMENT-EVIDENCE"
           ],
@@ -7189,6 +9295,7 @@
         {
           "nationKey": "S1120-N008",
           "scenarioNationName": "장로",
+          "displayNationName": "장로",
           "placementEvidenceIds": [
             "S1120-N008-PLACEMENT-EVIDENCE"
           ],
@@ -7197,6 +9304,7 @@
         {
           "nationKey": "S1120-N009",
           "scenarioNationName": "유우",
+          "displayNationName": "유우",
           "placementEvidenceIds": [
             "S1120-N009-PLACEMENT-EVIDENCE"
           ],
@@ -7205,6 +9313,7 @@
         {
           "nationKey": "S1120-N010",
           "scenarioNationName": "공손도",
+          "displayNationName": "공손도",
           "placementEvidenceIds": [
             "S1120-N010-PLACEMENT-EVIDENCE"
           ],
@@ -7213,6 +9322,7 @@
         {
           "nationKey": "S1120-N011",
           "scenarioNationName": "장양",
+          "displayNationName": "장양",
           "placementEvidenceIds": [
             "S1120-N011-PLACEMENT-EVIDENCE"
           ],
@@ -7221,6 +9331,7 @@
         {
           "nationKey": "S1120-N012",
           "scenarioNationName": "공주",
+          "displayNationName": "공주",
           "placementEvidenceIds": [
             "S1120-N012-PLACEMENT-EVIDENCE"
           ],
@@ -7229,6 +9340,7 @@
         {
           "nationKey": "S1120-N013",
           "scenarioNationName": "장연",
+          "displayNationName": "장연",
           "placementEvidenceIds": [
             "S1120-N013-PLACEMENT-EVIDENCE"
           ],
@@ -7506,6 +9618,91 @@
             "S1120-BASELINE"
           ],
           "rationale": "IF 시나리오 원본 배치: 장연"
+        },
+        {
+          "claimId": "S1120-CONTINUITY-001",
+          "claimKind": "IF_SCENARIO",
+          "ownerNationKey": "S1120-N005",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1120-CONTINUITY-001-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1120-BASELINE"
+          ],
+          "rationale": "IF_SCENARIO 배치: 華陽國志 卷一 巴志가 부릉 현역을 巴 남부로 특정하므로, 유언의 익주 통제를 IF 분기에서도 이 현역까지 일관되게 적용한다."
+        },
+        {
+          "claimId": "S1120-CONTINUITY-002",
+          "claimKind": "IF_SCENARIO",
+          "ownerNationKey": "S1120-N004",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0158"
+            ]
+          },
+          "evidenceIds": [
+            "S1120-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1120-BASELINE"
+          ],
+          "rationale": "IF_SCENARIO 배치: 원술의 남양 배치를 220년 맵 분할에서 장릉 현역까지 일관되게 적용한다."
+        },
+        {
+          "claimId": "S1120-CONTINUITY-003",
+          "claimKind": "IF_SCENARIO",
+          "ownerNationKey": "S1120-N007",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0126"
+            ]
+          },
+          "evidenceIds": [
+            "S1120-CONTINUITY-003-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1120-BASELINE"
+          ],
+          "rationale": "IF_SCENARIO 배치: 유표의 형주 통제를 원본 IF 변경 규칙에 따라 의도 현역에 적용한다."
+        },
+        {
+          "claimId": "S1120-CONTINUITY-004",
+          "claimKind": "IF_SCENARIO",
+          "ownerNationKey": "S1120-N005",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0148"
+            ]
+          },
+          "evidenceIds": [
+            "S1120-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1120-BASELINE"
+          ],
+          "rationale": "IF_SCENARIO 배치: 유언의 익주 통제를 후대 문산 현역에도 일관되게 적용한다."
+        },
+        {
+          "claimId": "S1120-CONTINUITY-005",
+          "claimKind": "IF_SCENARIO",
+          "ownerNationKey": "S1120-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0157"
+            ]
+          },
+          "evidenceIds": [
+            "S1120-CONTINUITY-005-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1120-BASELINE"
+          ],
+          "rationale": "IF_SCENARIO 배치: 공손찬의 하북 확장 분기를 후대 장무 현역에도 적용해 내부 공백을 막는다."
         }
       ],
       "auditAllowlist": []

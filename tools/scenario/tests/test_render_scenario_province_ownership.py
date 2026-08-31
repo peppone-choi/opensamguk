@@ -5,6 +5,7 @@ import unittest
 from tools.scenario.province_ownership_materializer import ProvinceAssignment
 from tools.scenario.render_scenario_province_ownership import (
     OUTSIDE_RGB,
+    WATER_RGB,
     UNOWNED_RGB,
     nation_fill_rgb,
     render_map,
@@ -28,6 +29,24 @@ def assignment(province_id: str, owner_id: int | None) -> ProvinceAssignment:
 
 
 class RenderScenarioProvinceOwnershipTest(unittest.TestCase):
+    def test_renderer_distinguishes_water_from_non_playable_black(self):
+        map_doc = {
+            "_meta": {
+                "cols": 3,
+                "rows": 1,
+                "terrainLegend": {"0": "SEA", "4": "LAKE", "9": "OUT_OF_SCOPE"},
+            },
+            "terrain": ["049"],
+            "owner": [[-1, 3]],
+            "provinceRecords": [],
+        }
+
+        image = render_map(map_doc, (), {}, scale=1, draw_borders=False)
+
+        self.assertEqual(WATER_RGB, image.getpixel((0, 0))[:3])
+        self.assertEqual(WATER_RGB, image.getpixel((1, 0))[:3])
+        self.assertEqual(OUTSIDE_RGB, image.getpixel((2, 0))[:3])
+
     def test_renderer_uses_black_outside_and_neutral_unowned(self):
         map_doc = {
             "_meta": {"cols": 3, "rows": 1},

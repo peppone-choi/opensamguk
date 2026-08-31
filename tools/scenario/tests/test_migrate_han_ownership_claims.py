@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 import unittest
 from pathlib import Path
 
@@ -34,7 +35,7 @@ class MigrateHanOwnershipClaimsTest(unittest.TestCase):
 
         self.assertEqual(15, len(curated["scenarios"]))
         self.assertEqual(187, sum(len(s["nationRefs"]) for s in curated["scenarios"]))
-        self.assertEqual(1091, count_parent_grants(curated))
+        self.assertEqual(1299, count_parent_grants(curated))
         self.assertEqual(6, count_direct_grants(curated))
         self.assertEqual(
             legacy_political_view(self.legacy),
@@ -46,6 +47,44 @@ class MigrateHanOwnershipClaimsTest(unittest.TestCase):
         second = migrate(self.legacy, self.map_doc)
 
         self.assertEqual(canonical_bytes(first), canonical_bytes(second))
+
+    def test_source_url_is_preserved_on_migrated_evidence(self):
+        legacy = deepcopy(self.legacy)
+        first_nation = next(iter(legacy["scenario_1010"]["nations"].values()))
+        first_nation["sourceUrl"] = "https://zh.wikisource.org/wiki/example"
+
+        curated = migrate(legacy, self.map_doc)
+        evidence = next(
+            row for row in curated["evidence"]
+            if row["evidenceId"] == "S1010-N001-PLACEMENT-EVIDENCE"
+        )
+
+        self.assertEqual("https://zh.wikisource.org/wiki/example", evidence["url"])
+
+    def test_interior_continuity_assignment_becomes_evidenced_admin_claim(self):
+        legacy = deepcopy(self.legacy)
+        legacy["_interiorContinuity"] = {
+            "assignments": [{
+                "scenarioCode": 1010,
+                "nation": "후한",
+                "juns": ["제북국"],
+                "basis": "Reviewed interior continuity.",
+                "sourceUrl": "https://zh.wikisource.org/wiki/example",
+            }],
+            "allowlists": [],
+        }
+
+        curated = migrate(legacy, self.map_doc)
+        scenario = next(row for row in curated["scenarios"] if row["scenarioCode"] == 1010)
+        claim = next(row for row in scenario["claims"] if row["claimId"] == "S1010-CONTINUITY-001")
+        evidence = next(
+            row for row in curated["evidence"]
+            if row["evidenceId"] == "S1010-CONTINUITY-001-EVIDENCE"
+        )
+
+        self.assertEqual("S1010-N001", claim["ownerNationKey"])
+        self.assertEqual(["PARENT-0027"], claim["target"]["parentRegionIds"])
+        self.assertEqual("https://zh.wikisource.org/wiki/example", evidence["url"])
 
     def test_every_scenario_has_one_baseline_and_stable_nation_keys(self):
         curated = migrate(self.legacy, self.map_doc)
@@ -89,6 +128,26 @@ class MigrateHanOwnershipClaimsTest(unittest.TestCase):
         }
 
         self.assertTrue({"82749", "45934", "45921", "44356"}.issubset(direct_targets))
+
+    def test_nation_rename_exposes_runtime_and_reviewed_display_name(self):
+        curated = migrate(self.legacy, self.map_doc)
+        scenario = next(row for row in curated["scenarios"] if row["scenarioCode"] == 1100)
+        refs = {row["displayNationName"]: row for row in scenario["nationRefs"]}
+
+        self.assertEqual("유선", refs["유선"]["scenarioNationName"])
+        self.assertEqual("남중 반란군", refs["남중 반란군"]["scenarioNationName"])
+
+    def test_reviewed_holes_migrate_as_exact_evidenced_allowlist_entries(self):
+        curated = migrate(self.legacy, self.map_doc)
+        scenario = next(row for row in curated["scenarios"] if row["scenarioCode"] == 1100)
+
+        self.assertEqual(3, len(scenario["auditAllowlist"]))
+        self.assertEqual(
+            ["95125", "95676", "95698", "DIRECT-PARENT-0138-877c5fc0e884"],
+            scenario["auditAllowlist"][0]["provinceIds"],
+        )
+        self.assertTrue(all(row["reviewState"] == "APPROVED" for row in scenario["auditAllowlist"]))
+        self.assertTrue(all(row["evidenceIds"] for row in scenario["auditAllowlist"]))
 
 
 if __name__ == "__main__":

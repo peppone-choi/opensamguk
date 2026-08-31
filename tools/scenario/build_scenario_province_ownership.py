@@ -26,6 +26,7 @@ from tools.scenario.province_ownership_materializer import (
 OUTPUT_RELATIVE = Path("data/map/han-scenario-province-ownership-v1.json")
 CLAIMS_RELATIVE = Path("data/curated/han/scenario-province-claims-v1.json")
 MAP_RELATIVE = Path("data/map/han-tiles.json")
+SCENARIO_RELATIVE = Path("infra/src/main/resources/scenario")
 
 
 def canonical_bytes(document: Mapping[str, Any]) -> bytes:
@@ -56,13 +57,23 @@ def _assignment_row(row: ProvinceAssignment) -> dict[str, Any]:
     }
 
 
+def runtime_scenario_catalog(document: Mapping[str, Any]) -> dict[str, Any]:
+    """Resolve nation IDs from the scenario files that are actually seeded."""
+    return {
+        "nations": [
+            {"id": index, "name": row[0], "color": row[1]}
+            for index, row in enumerate(document["nation"], start=1)
+        ]
+    }
+
+
 def generate_document(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
     claims_path = root / CLAIMS_RELATIVE
     map_path = root / MAP_RELATIVE
     raw = _load(claims_path)
     map_doc = _load(map_path)
     scenario_documents = {
-        code: _load(root / f"data/extracted/scenario/scenario_{code}.json")
+        code: _load(root / SCENARIO_RELATIVE / f"scenario_{code}.json")
         for code in raw["activeScenarioCodes"]
     }
     parsed = parse_ownership_document(
@@ -71,7 +82,7 @@ def generate_document(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
             "provinceIds": [row["id"] for row in map_doc["provinceRecords"]],
             "parentRegionIds": [row["id"] for row in map_doc["parentRegions"]],
         },
-        {code: {"nations": document["nations"]} for code, document in scenario_documents.items()},
+        {code: runtime_scenario_catalog(document) for code, document in scenario_documents.items()},
     )
     catalog = tuple(
         ProvinceCatalogEntry(row["id"], row["parentRegionId"])
@@ -80,7 +91,7 @@ def generate_document(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
     materialized = materialize_all(parsed, catalog)
     scenario_hash_input = canonical_bytes({
         str(code): _sha256(
-            (root / f"data/extracted/scenario/scenario_{code}.json").read_bytes()
+            (root / SCENARIO_RELATIVE / f"scenario_{code}.json").read_bytes()
         )
         for code in sorted(scenario_documents)
     })

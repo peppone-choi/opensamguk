@@ -66,6 +66,10 @@ def _source_type_and_work(basis: str, placement_basis: str) -> tuple[str, str]:
 
 def migrate(legacy: Mapping[str, Any], map_doc: Mapping[str, Any]) -> dict[str, Any]:
     parent_name_to_id, _, province_name_to_ids = _map_indexes(map_doc)
+    known_province_ids = {row["id"] for row in map_doc["provinceRecords"]}
+    continuity = legacy.get("_interiorContinuity") or {}
+    continuity_assignments = list(continuity.get("assignments") or [])
+    continuity_allowlists = list(continuity.get("allowlists") or [])
     scenarios: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
     active_codes: list[int] = []
@@ -87,26 +91,32 @@ def migrate(legacy: Mapping[str, Any], map_doc: Mapping[str, Any]) -> dict[str, 
 
         nations = list((scenario.get("nations") or {}).items())
         nation_refs: list[dict[str, Any]] = []
+        nation_key_by_name: dict[str, str] = {}
         pending: list[dict[str, Any]] = []
         admin_claim_by_parent: dict[str, list[str]] = {}
         for index, (nation_name, nation) in enumerate(nations, start=1):
             nation_key = f"S{code}-N{index:03d}"
+            nation_key_by_name[nation_name] = nation_key
             evidence_id = f"{nation_key}-PLACEMENT-EVIDENCE"
             basis = str(nation.get("basis") or "").strip()
             if not basis:
                 raise OwnershipContractError("NATION_WITHOUT_BASIS", scenario_code=code, nation=nation_name)
             source_type, work = _source_type_and_work(basis, placement_basis)
-            evidence.append({
+            evidence_row = {
                 "evidenceId": evidence_id,
                 "sourceType": source_type,
                 "work": work,
                 "section": f"scenario {code} / {nation_name}",
                 "locator": f"effective year {scenario['startYear']}",
                 "excerpt": basis,
-            })
+            }
+            if isinstance(nation.get("sourceUrl"), str):
+                evidence_row["url"] = nation["sourceUrl"]
+            evidence.append(evidence_row)
             nation_refs.append({
                 "nationKey": nation_key,
                 "scenarioNationName": nation_name,
+                "displayNationName": nation_name,
                 "placementEvidenceIds": [evidence_id],
                 "placementRationale": basis,
             })
@@ -162,6 +172,56 @@ def migrate(legacy: Mapping[str, Any], map_doc: Mapping[str, Any]) -> dict[str, 
                     "legacyGrantKind": "PROVINCE_DIRECT",
                 })
 
+        scenario_continuity = [
+            row for row in continuity_assignments if row.get("scenarioCode") == code
+        ]
+        for index, row in enumerate(scenario_continuity, start=1):
+            nation_name = str(row.get("nation") or "")
+            nation_key = nation_key_by_name.get(nation_name)
+            if nation_key is None:
+                raise OwnershipContractError(
+                    "UNKNOWN_CONTINUITY_NATION", scenario_code=code, nation=nation_name,
+                )
+            basis = str(row.get("basis") or "").strip()
+            if not basis:
+                raise OwnershipContractError(
+                    "CONTINUITY_WITHOUT_BASIS", scenario_code=code, continuity_index=index,
+                )
+            parent_ids: list[str] = []
+            for parent_name in row.get("juns") or []:
+                parent_id = parent_name_to_id.get(parent_name)
+                if parent_id is None:
+                    raise OwnershipContractError(
+                        "UNKNOWN_PARENT_REGION",
+                        scenario_code=code,
+                        nation=nation_name,
+                        parent_region=parent_name,
+                    )
+                parent_ids.append(parent_id)
+            evidence_id = f"S{code}-CONTINUITY-{index:03d}-EVIDENCE"
+            source_type, work = _source_type_and_work(basis, placement_basis)
+            evidence_row = {
+                "evidenceId": evidence_id,
+                "sourceType": source_type,
+                "work": work,
+                "section": f"scenario {code} interior continuity / {nation_name}",
+                "locator": f"effective year {scenario['startYear']}",
+                "excerpt": basis,
+            }
+            if isinstance(row.get("sourceUrl"), str):
+                evidence_row["url"] = row["sourceUrl"]
+            evidence.append(evidence_row)
+            pending.append({
+                "claimId": f"S{code}-CONTINUITY-{index:03d}",
+                "claimKind": "IF_SCENARIO" if placement_basis == "IF_SCENARIO" else "ADMIN_REGION_CONTROL",
+                "ownerNationKey": nation_key,
+                "target": {"parentRegionIds": parent_ids},
+                "evidenceIds": [evidence_id],
+                "overridesClaimIds": [baseline_claim_id],
+                "rationale": basis,
+                "legacyGrantKind": "ADMIN_REGION_CONTROL",
+            })
+
         province_parent = {row["id"]: row["parentRegionId"] for row in map_doc["provinceRecords"]}
         for claim in pending:
             if claim["legacyGrantKind"] != "PROVINCE_DIRECT":
@@ -185,13 +245,52 @@ def migrate(legacy: Mapping[str, Any], map_doc: Mapping[str, Any]) -> dict[str, 
         for claim in pending:
             claim.pop("legacyGrantKind")
             claims.append(claim)
+
+        audit_allowlist: list[dict[str, Any]] = []
+        scenario_allowlists = [
+            *(scenario.get("auditAllowlist") or []),
+            *(row for row in continuity_allowlists if row.get("scenarioCode") == code),
+        ]
+        for index, row in enumerate(scenario_allowlists, start=1):
+            basis = str(row.get("basis") or "").strip()
+            if not basis:
+                raise OwnershipContractError(
+                    "ALLOWLIST_WITHOUT_BASIS", scenario_code=code, allowlist_index=index,
+                )
+            province_ids = list(row.get("provinceIds") or [])
+            unknown_ids = sorted(set(province_ids) - known_province_ids)
+            if unknown_ids:
+                raise OwnershipContractError(
+                    "UNKNOWN_PROVINCE", scenario_code=code, province_id=unknown_ids[0],
+                )
+            evidence_id = f"S{code}-ALLOWLIST-{index:03d}-EVIDENCE"
+            source_type, work = _source_type_and_work(basis, placement_basis)
+            evidence_row = {
+                "evidenceId": evidence_id,
+                "sourceType": source_type,
+                "work": work,
+                "section": f"scenario {code} topology allowlist {index}",
+                "locator": f"effective year {scenario['startYear']}",
+                "excerpt": basis,
+            }
+            if isinstance(row.get("sourceUrl"), str):
+                evidence_row["url"] = row["sourceUrl"]
+            evidence.append(evidence_row)
+            audit_allowlist.append({
+                "scenarioCode": code,
+                "auditKind": row["auditKind"],
+                "provinceIds": province_ids,
+                "evidenceIds": [evidence_id],
+                "rationale": basis,
+                "reviewState": "APPROVED",
+            })
         scenarios.append({
             "scenarioCode": code,
             "effectiveYear": scenario["startYear"],
             "placementBasis": placement_basis,
             "nationRefs": nation_refs,
             "claims": claims,
-            "auditAllowlist": [],
+            "auditAllowlist": audit_allowlist,
         })
 
     return {
@@ -219,6 +318,10 @@ def legacy_political_view(legacy: Mapping[str, Any]) -> dict[str, Any]:
                 for nation_name, nation in (scenario.get("nations") or {}).items()
             },
         }
+    for row in (legacy.get("_interiorContinuity") or {}).get("assignments") or []:
+        scenario = result[f"scenario_{row['scenarioCode']}"]
+        juns = scenario["nations"][row["nation"]]["juns"]
+        juns.extend(name for name in row.get("juns") or [] if name not in juns)
     return result
 
 
@@ -246,7 +349,7 @@ def project_legacy_political_view(curated: Mapping[str, Any], map_doc: Mapping[s
                     juns.extend(parent_id_to_name[value] for value in claim["target"]["parentRegionIds"])
                 if "provinceIds" in claim["target"]:
                     cities.extend(province_id_to_name[value] for value in claim["target"]["provinceIds"])
-            nation_rows[nation_ref["scenarioNationName"]] = {
+            nation_rows[nation_ref.get("displayNationName", nation_ref["scenarioNationName"])] = {
                 "juns": juns,
                 "cities": cities,
                 "basis": nation_ref["placementRationale"],

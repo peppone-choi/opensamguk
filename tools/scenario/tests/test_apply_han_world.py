@@ -29,7 +29,8 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
         source = ownership["scenario_1010"]
         expected_juns = {
             "하남윤", "하내군", "하동군", "홍농군", "경조윤", "좌풍익", "우부풍",
-            "광양군", "하간국", "태원군", "발해군", "상당군",
+            "광양군", "하간국", "태원군", "발해군", "상당군", "제북국",
+            "광평군", "장락군", "장무군", "장릉군",
         }
 
         self.assertEqual(set(source["nations"]["후한"]["juns"]), expected_juns)
@@ -222,6 +223,69 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
                     for nation, cities in cities_by_nation.items()
                     if nation != wei_name
                 ))
+
+    def test_225_nanzhong_uses_liu_shan_rebel_coalition_and_keeps_ailao_unowned(self) -> None:
+        by_jun, id_of, seat_of = apply_han_world.load_world()
+        che2jun = {
+            key: value["jun"]
+            for key, value in json.loads(apply_han_world.CHE_TO_JUN.read_text(encoding="utf-8"))["map"].items()
+        }
+        ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
+        source = ownership["scenario_1100"]
+
+        self.assertEqual(source["nationRenames"], {"유비": "유선", "맹획": "남중 반란군"})
+        self.assertEqual(
+            source["nations"]["남중 반란군"]["juns"],
+            ["익주군", "월휴군", "장가군"],
+        )
+        self.assertTrue(
+            {"탕거군", "강양군", "문산군"}
+            <= set(source["nations"]["유선"]["juns"])
+        )
+        self.assertTrue(
+            {"탕거군", "강양군", "문산군"}
+            <= set(ownership["scenario_1110"]["nations"]["유선"]["juns"])
+        )
+        for code in ("scenario_1100", "scenario_1110"):
+            self.assertTrue(
+                {"신도군", "한창군", "기춘군", "비릉전농교위"}
+                <= set(ownership[code]["nations"]["손권"]["juns"])
+            )
+            wei = "조비" if code == "scenario_1100" else "조예"
+            self.assertTrue(
+                {
+                    "양국", "노국", "이성군", "동완군", "낙평군", "낙릉군",
+                    "남향군", "광평군", "광위군", "신평군", "감릉군",
+                    "장무군", "장릉군", "서평군", "장락군", "양안군",
+                }
+                <= set(ownership[code]["nations"][wei]["juns"])
+            )
+        self.assertNotIn(
+            "남만",
+            {
+                jun
+                for nation in source["nations"].values()
+                for jun in nation.get("juns", [])
+            },
+        )
+
+        document = json.loads(
+            (apply_han_world.SCEN / "scenario_1100.json").read_text(encoding="utf-8")
+        )
+        rewritten, warnings = apply_han_world.rewrite(
+            document, "scenario_1100", by_jun, id_of, seat_of, che2jun, ownership,
+        )
+        nations = {row[0]: row for row in rewritten["nation"]}
+        self.assertIn("유선", nations)
+        self.assertIn("남중 반란군", nations)
+        self.assertNotIn("유비", nations)
+        self.assertNotIn("맹획", nations)
+        self.assertNotIn(id_of["남만"], nations["남중 반란군"][apply_han_world.NATION_CITIES])
+        self.assertFalse(any(
+            id_of["남만"] in row[apply_han_world.NATION_CITIES]
+            for row in rewritten["nation"]
+        ))
+        self.assertFalse(any("감릉군" in warning for warning in warnings))
 
 
 if __name__ == "__main__":

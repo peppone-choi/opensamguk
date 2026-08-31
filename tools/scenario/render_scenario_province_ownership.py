@@ -21,6 +21,7 @@ from tools.scenario.province_ownership_materializer import ProvinceAssignment
 
 
 OUTSIDE_RGB = (0, 0, 0)
+WATER_RGB = (24, 55, 72)
 UNOWNED_RGB = (48, 52, 50)
 BORDER_RGB = (20, 22, 21)
 
@@ -65,8 +66,21 @@ def render_map(
     ]
     image = Image.new("RGB", (cols * scale, rows * scale), OUTSIDE_RGB)
     draw = ImageDraw.Draw(image)
+    terrain = map_doc.get("terrain")
+    terrain_legend = {
+        int(key): value for key, value in map_doc.get("_meta", {}).get("terrainLegend", {}).items()
+    }
     for position, province_index in enumerate(grid):
         if province_index < 0:
+            if terrain is not None:
+                row, col = divmod(position, cols)
+                terrain_name = terrain_legend.get(int(terrain[row][col]))
+                if terrain_name in {"SEA", "LAKE"}:
+                    left, top = col * scale, row * scale
+                    draw.rectangle(
+                        (left, top, left + scale - 1, top + scale - 1),
+                        fill=WATER_RGB,
+                    )
             continue
         row, col = divmod(position, cols)
         left, top = col * scale, row * scale
@@ -125,9 +139,9 @@ def render_gallery(output_dir: Path, *, scale: int = 3) -> None:
     for scenario in ownership["scenarios"]:
         code = scenario["scenarioCode"]
         source = json.loads(
-            (ROOT / f"data/extracted/scenario/scenario_{code}.json").read_text(encoding="utf-8")
+            (ROOT / f"infra/src/main/resources/scenario/scenario_{code}.json").read_text(encoding="utf-8")
         )
-        colors = {row["id"]: row["color"] for row in source["nations"]}
+        colors = {index: row[1] for index, row in enumerate(source["nation"], start=1)}
         rows = tuple(_assignment(row) for row in scenario["assignments"])
         image = render_map(map_doc, rows, colors, scale=scale)
         filename = f"scenario-{code}.png"

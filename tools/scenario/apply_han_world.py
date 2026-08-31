@@ -39,9 +39,15 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SCEN = ROOT / "infra/src/main/resources/scenario"
 HAN_MAP = ROOT / "infra/src/main/resources/map/han.json"
+HAN_TILES = ROOT / "data/map/han-tiles.json"
 CHE_TO_JUN = ROOT / "tools/scenario/che_to_jun.json"
 OWNERSHIP = ROOT / "tools/scenario/han_ownership.json"
 PALETTE = ROOT / "tools/scenario/nation_symbol_colors.json"
+
+
+def canonical_parent_names() -> frozenset[str]:
+    document = json.loads(HAN_TILES.read_text(encoding="utf-8"))
+    return frozenset(row["displayName"] for row in document["parentRegions"])
 
 LOC_SLOT = 4          # general 튜플의 주둔 城 이름 자리
 NATION_SCALE = 7      # nation 튜플의 scale — 임포터가 nation.level 로 넣는다. 0 = 방랑군
@@ -162,6 +168,7 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
                     raise ValueError(f"{code}/{general[1]}: unsupported general override '{field}'")
                 general[override_slots[field]] = value
     palette = json.loads(PALETTE.read_text(encoding="utf-8"))["colors"]
+    province_only_parents = canonical_parent_names() - by_jun.keys()
     for row in doc.get("nation") or []:
         if row and row[0] in nation_renames:
             row[0] = nation_renames[row[0]]
@@ -201,6 +208,11 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
         for jun in (juns or []):
             group = by_jun.get(jun)
             if group is None:
+                # The canonical province map contains parent regions that have no
+                # legacy city row. Their political colour comes from the province
+                # ownership artifact; the old city tuple cannot represent them.
+                if jun in province_only_parents:
+                    continue
                 warn.append(f"{code}/{nation}: 郡 '{jun}' 이 새 맵에 없다 — 건너뛴다")
                 continue
             for city in group:
@@ -253,7 +265,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
 
-    for path in (HAN_MAP, CHE_TO_JUN, OWNERSHIP, PALETTE):
+    for path in (HAN_MAP, HAN_TILES, CHE_TO_JUN, OWNERSHIP, PALETTE):
         if not path.exists():
             print(f"없는 입력: {path.relative_to(ROOT)}", file=sys.stderr)
             return 2
