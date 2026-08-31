@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "mapId": "han-world-v2",
+  "unitSet": "han",
+  "activeScenarioCodes": [1010],
+  "evidence": [
+    {
+      "evidenceId": "POLICY-UNOWNED",
+      "sourceType": "PROJECT_POLICY",
+      "work": "OpenSamguk scenario placement policy",
+      "section": "effective control",
+      "locator": "scenario 1010 baseline",
+      "excerpt": "A province remains unowned until a reviewed positive claim assigns effective control."
+    },
+    {
+      "evidenceId": "HIST-P1",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "魏書",
+      "locator": "fixture county claim",
+      "excerpt": "Fixture evidence for province P-1."
+    }
+  ],
+  "scenarios": [
+    {
+      "scenarioCode": 1010,
+      "effectiveYear": 184,
+      "placementBasis": "HISTORICAL",
+      "nationRefs": [
+        {
+          "nationKey": "S1010-HAN",
+          "scenarioNationName": "후한"
+        }
+      ],
+      "claims": [
+        {
+          "claimId": "S1010-BASELINE",
+          "claimKind": "SCENARIO_BASELINE_UNOWNED",
+          "ownerNationKey": null,
+          "target": {"allProvinces": true},
+          "evidenceIds": ["POLICY-UNOWNED"],
+          "overridesClaimIds": [],
+          "rationale": "Only reviewed effective-control claims create ownership."
+        },
+        {
+          "claimId": "S1010-P1",
+          "claimKind": "PROVINCE_DIRECT",
+          "ownerNationKey": "S1010-HAN",
+          "target": {"provinceIds": ["P-1"]},
+          "evidenceIds": ["HIST-P1"],
+          "overridesClaimIds": ["S1010-BASELINE"],
+          "rationale": "The fixture source names the exact county."
+        }
+      ],
+      "auditAllowlist": []
+    }
+  ]
+}
