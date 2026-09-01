@@ -6,6 +6,7 @@ import {
   cityFallbackHitBox,
   cityMarkerRadius,
   initialView,
+  overviewCityVisualBox,
   provinceAtScreenPoint,
   screenToCell,
   type IsoView,
@@ -21,7 +22,10 @@ interface CanvasRecord {
   putImages: Uint8ClampedArray[];
   strokes: string[];
   strokeWidths: { style: string; width: number }[];
+  strokeJoins: string[];
   fillRects: string[];
+  fillRectCalls: { style: string; values: number[] }[];
+  fills: string[];
   transforms: number[][];
   drawSmoothing: boolean[];
   radialGradients: unknown[];
@@ -29,6 +33,9 @@ interface CanvasRecord {
   globalAlphas: number[];
   clips: number;
   fillTexts: string[];
+  fillTextCalls: { value: string; font: string; lineWidth: number; x: number; y: number }[];
+  arcs: number[][];
+  strokeRects: { style: string; values: number[] }[];
 }
 
 const records = new Map<HTMLCanvasElement, CanvasRecord>();
@@ -63,7 +70,10 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   const putImages: Uint8ClampedArray[] = [];
   const strokes: string[] = [];
   const strokeWidths: { style: string; width: number }[] = [];
+  const strokeJoins: string[] = [];
   const fillRects: string[] = [];
+  const fillRectCalls: { style: string; values: number[] }[] = [];
+  const fills: string[] = [];
   const transforms: number[][] = [];
   const drawSmoothing: boolean[] = [];
   const radialGradients: unknown[] = [];
@@ -71,6 +81,9 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   const globalAlphas: number[] = [1];
   let clips = 0;
   const fillTexts: string[] = [];
+  const fillTextCalls: { value: string; font: string; lineWidth: number; x: number; y: number }[] = [];
+  const arcs: number[][] = [];
+  const strokeRects: { style: string; values: number[] }[] = [];
   let globalAlpha = 1;
   const gradient = { addColorStop: vi.fn() };
   const context = {
@@ -106,30 +119,37 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
       const style = String(context.strokeStyle);
       strokes.push(style);
       strokeWidths.push({ style, width: context.lineWidth });
+      strokeJoins.push(context.lineJoin);
       operations.push(`stroke:${style}`);
     },
     fill: () => {
+      fills.push(String(context.fillStyle));
       if (context.fillStyle === gradient) gradientFills.push(gradient);
     },
-    fillRect: () => {
+    fillRect: (...values: number[]) => {
       const style = String(context.fillStyle);
       fillRects.push(style);
+      fillRectCalls.push({ style, values });
       operations.push(`fillRect:${style}`);
     },
-    strokeRect: vi.fn(),
-    arc: vi.fn(),
+    strokeRect: (...values: number[]) => strokeRects.push({ style: String(context.strokeStyle), values }),
+    arc: (...values: number[]) => arcs.push(values),
     closePath: vi.fn(),
     createRadialGradient: () => {
       radialGradients.push(gradient);
       return gradient;
     },
-    fillText: (value: string) => { fillTexts.push(value); },
+    fillText: (value: string, x: number, y: number) => {
+      fillTexts.push(value);
+      fillTextCalls.push({ value, font: context.font, lineWidth: context.lineWidth, x, y });
+    },
     strokeText: vi.fn(),
     measureText: (value: string) => ({ width: value.length * 12 }),
     imageSmoothingEnabled: true,
     strokeStyle: '',
     fillStyle: '',
     lineWidth: 1,
+    lineJoin: 'miter',
     font: '',
     textAlign: 'start',
     textBaseline: 'alphabetic',
@@ -149,7 +169,10 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     putImages,
     strokes,
     strokeWidths,
+    strokeJoins,
     fillRects,
+    fillRectCalls,
+    fills,
     transforms,
     drawSmoothing,
     radialGradients,
@@ -157,6 +180,9 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     globalAlphas,
     get clips() { return clips; },
     fillTexts,
+    fillTextCalls,
+    arcs,
+    strokeRects,
   };
   records.set(canvas, record);
   return record;
@@ -372,9 +398,9 @@ describe('shared HanMapCanvas viewport interaction', () => {
         .filter(([source]) => source instanceof LoadedImage)
         .map(([source, , , width]) => [(source as LoadedImage).src, width]);
       expect(markerWidths).toEqual(expect.arrayContaining([
-        ['/city/cast_11.png', 128],
-        ['/city/cast_5.png', 128],
-        ['/city/cast_9.png', 128],
+        ['/city/cast_11.png', 96],
+        ['/city/cast_5.png', 96],
+        ['/city/cast_9.png', 96],
       ]));
     });
   });
@@ -526,7 +552,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(main.fillRects).not.toContain('#0000ff');
     expect(main.radialGradients).toHaveLength(0);
     expect(main.gradientFills).toHaveLength(0);
-    expect(main.clips).toBeGreaterThan(0);
+    expect(main.clips).toBe(0);
     expect(main.strokes).toContain('#21180f');
     expect(main.strokes).toContain('rgba(255,244,208,0.92)');
 
@@ -548,6 +574,126 @@ describe('shared HanMapCanvas viewport interaction', () => {
       .toBeCloseTo(6 / scale, 9);
     expect(main.strokeWidths.findLast(({ style }) => style === 'rgba(225,210,163,0.76)')?.width)
       .toBeCloseTo(3 / scale, 9);
+  });
+
+  it('renders a boundary city from the province interior with its canonical label and no clip', () => {
+    const views: IsoView[] = [];
+    const provinceMap: ProvinceIdentityMap = {
+      width: 7,
+      height: 7,
+      provinces: new Int16Array(49).fill(0),
+      commanderies: new Int16Array(49).fill(0),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+    const tiles = {
+      _meta: { cols: 7, rows: 7, year: 220, terrainLegend: { 1: 'PLAIN' } },
+      terrain: Array(7).fill('1111111'), owner: [[0, 49]] as [number, number][],
+      parentOwner: [[0, 49]] as [number, number][],
+      juns: [{ name: 'A군', nameCh: '', seat: 0, col: 0, row: 0 }],
+      provinceRecords: [{
+        id: 'P1', displayName: '정본현', nameCh: '', administrativeSystem: 'HAN_COMMANDERY',
+        kind: 'COUNTY', parentRegionId: 'R1', cityIndex: 0,
+        geometryBasis: 'HISTORICAL_BOUNDARY', confidence: 'REVIEWED',
+      }],
+      parentRegions: [{ id: 'R1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
+      adjacency: { county: [], commandery: [] }, regions: [],
+      cities: [{ id: '1', name: '정본현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+    };
+    render(
+      <HanMapCanvas
+        mapCode="han"
+        tiles={tiles}
+        provinceMap={provinceMap}
+        cities={[{
+          ...CHE_OVERLAYS_FIXTURE[0], id: 1, name: '런타임의 아주 긴 주석 이름',
+          x: 0, y: 0, commanderyName: 'A군',
+        }]}
+        sourceSize={{ width: 7, height: 7 }}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+
+    for (let step = 0; step < 5; step += 1) {
+      fireEvent.click(screen.getByRole('button', { name: '지도 확대' }));
+    }
+
+    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' }) as HTMLCanvasElement;
+    const main = recordFor(canvas);
+    const castle = main.fillRectCalls.find(({ style }) => style === '#8b8172');
+    const [expectedX, expectedY] = cellToScreen(3, 3, views.at(-1)!);
+
+    expect(castle).toBeDefined();
+    expect(castle!.values[0] + castle!.values[2] / 2).toBeCloseTo(expectedX, 6);
+    expect(main.clips).toBe(0);
+    expect(main.fillTexts).toContain('정본현');
+    expect(main.fillTexts).not.toContain('런타임의 아주 긴 주석 이름');
+    const label = main.fillTextCalls.find(({ value }) => value === '정본현');
+    expect(Number.parseFloat(label!.font.match(/([\d.]+)px/)![1]) / 2).toBeGreaterThanOrEqual(11);
+  });
+
+  it('uses a contained overview glyph with all state channels when even the 16px marker cannot fit', () => {
+    const views: IsoView[] = [];
+    const onCityActivate = vi.fn();
+    const provinceMap: ProvinceIdentityMap = {
+      width: 1,
+      height: 1,
+      provinces: new Int16Array([0]),
+      commanderies: new Int16Array([0]),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+    render(
+      <HanMapCanvas
+        mapCode="han"
+        tiles={{
+          _meta: { cols: 1, rows: 1, year: 220, terrainLegend: { 1: 'PLAIN' } },
+          terrain: ['1'], owner: [[0, 1]], parentOwner: [[0, 1]],
+          juns: [{ name: 'A군', nameCh: '', seat: 0, col: 0, row: 0 }],
+          provinceRecords: [{
+            id: 'P1', displayName: '소현', nameCh: '', administrativeSystem: 'HAN_COMMANDERY',
+            kind: 'COUNTY', parentRegionId: 'R1', cityIndex: 0,
+            geometryBasis: 'HISTORICAL_BOUNDARY', confidence: 'REVIEWED',
+          }],
+          parentRegions: [{ id: 'R1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
+          adjacency: { county: [], commandery: [] }, regions: [],
+          cities: [{ id: '1', name: '소현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+        }}
+        provinceMap={provinceMap}
+        cities={[{ ...CHE_OVERLAYS_FIXTURE[0], id: 1, x: 0, y: 0, commanderyName: 'A군', supply: false }]}
+        currentCityId={1}
+        selectedCityId={1}
+        onCityActivate={onCityActivate}
+        onViewChange={(view) => views.push({ ...view })}
+        sourceSize={{ width: 1, height: 1 }}
+      />,
+    );
+
+    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' }) as HTMLCanvasElement;
+    const main = recordFor(canvas);
+    expect(main.fillRects).not.toContain('#8b8172');
+    expect(main.fills).toContain('#8b8172');
+    expect(main.fills).toContain('#ffd84f');
+    expect(main.fills).toContain('#b72f2f');
+    expect(main.strokes).toContain('#ffffff');
+    expect(main.strokeRects.some(({ style }) => style === '#ffd84f')).toBe(true);
+    expect(main.strokeJoins).toContain('bevel');
+    expect(main.clips).toBe(0);
+
+    const view = views.at(-1)!;
+    const [x, y] = cellToScreen(0, 0, view);
+    const box = overviewCityVisualBox(x, y, view.scale, 2, 0);
+    const hitX = box.right - (box.right - box.left) * 0.05;
+    fireEvent.pointerDown(canvas, {
+      clientX: hitX / 2, clientY: y / 2, pointerId: 1, pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(canvas, {
+      clientX: hitX / 2, clientY: y / 2, pointerId: 1, pointerType: 'mouse',
+    });
+    expect(onCityActivate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1 }),
+      { pointerType: 'mouse' },
+    );
   });
 
   it('changes the view for zoom controls and pointer panning', () => {

@@ -6,6 +6,7 @@ import {
   bindCompleteProvinceOwnership,
   buildCountyAdministrativeIndex,
   buildProvinceAdministrativeIndex,
+  buildProvinceVisualAnchors,
   composeProvincePixels,
   decodeProvincePixels,
   isOwnedNationVisual,
@@ -138,6 +139,37 @@ describe('province identity map', () => {
       { id: 'P3', displayName: '국내성', nameCh: '國內城', administrativeSystem: 'GOGURYEO', kind: 'SETTLEMENT', parentRegionId: 'R3', cityIndex: 3, geometryBasis: 'HISTORICAL_SEAT_ADAPTED', confidence: 'IDENTIFIED' },
       { id: 'R3', displayName: '고구려', nameCh: '', administrativeSystem: 'GOGURYEO' },
     )).toBe('고구려 · 국내성');
+  });
+
+  it('moves a boundary seat to the deepest deterministic cell of the same province', () => {
+    const map: ProvinceIdentityMap = {
+      width: 5,
+      height: 5,
+      provinces: new Int16Array(25).fill(0),
+      commanderies: new Int16Array(25).fill(0),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+
+    const anchors = buildProvinceVisualAnchors(map, new Map([[0, { col: 0, row: 0 }]]));
+
+    expect(anchors[0]).toEqual({ provinceId: 0, col: 2, row: 2, clearance: 2 });
+  });
+
+  it('breaks equal-clearance anchor ties by seat distance, then row and column', () => {
+    const map: ProvinceIdentityMap = {
+      width: 7,
+      height: 3,
+      provinces: new Int16Array(21).fill(0),
+      commanderies: new Int16Array(21).fill(0),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+
+    expect(buildProvinceVisualAnchors(map, new Map([[0, { col: 4.7, row: 1 }]]))[0])
+      .toEqual({ provinceId: 0, col: 5, row: 1, clearance: 1 });
+    expect(buildProvinceVisualAnchors(map, new Map([[0, { col: 3.5, row: 1 }]]))[0])
+      .toEqual({ provinceId: 0, col: 3, row: 1, clearance: 1 });
   });
 
   it('indexes direct territories by explicit parent instead of city-array position', () => {

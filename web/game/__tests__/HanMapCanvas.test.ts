@@ -2,9 +2,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    buildIsoScene, cellToScreen, cityFallbackHitBox, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
+    buildIsoScene, cellToScreen, cityFallbackHitBox, cityLabelMetrics, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
     cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
-    labelZoomFor, maxScaleForDpr, provinceAtScreenPoint, screenBoxInsideProvince, seatLabel,
+    labelZoomFor, maxScaleForDpr, overviewCityVisualBox, provinceAtScreenPoint,
+    screenBoxInsideProvince, screenBoxInsideVisualClearance, seatLabel,
     terrainColorFor, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
     type CountyAdministrativeIndex, type HanTiles, type IsoSceneOptions, type ProvinceIdentityMap,
 } from '@opensamguk/ui';
@@ -23,6 +24,20 @@ describe('비플레이 지형', () => {
 });
 
 describe('지도 아이콘 배율과 앵커', () => {
+    it('미리 계산한 여유 거리로 화면 box 포함 여부를 상수 시간에 판정한다', () => {
+        const view = { scale: 0.5, ox: 100, oy: 80 };
+        const [x, y] = cellToScreen(20, 30, view);
+        const overview = overviewCityVisualBox(x, y, view.scale, 1, 0);
+
+        expect(screenBoxInsideVisualClearance(20, 30, 0, view, overview)).toBe(true);
+        expect(screenBoxInsideVisualClearance(20, 30, 0, view, {
+            left: x - view.scale,
+            top: y - view.scale / 2,
+            right: x + view.scale,
+            bottom: y + view.scale / 2,
+        })).toBe(false);
+    });
+
     it('바다에 놓인 도시 기준점은 가장 가까운 같은 군의 육지 셀로 옮긴다', () => {
         const provinces = new Int16Array(15).fill(-1);
         provinces[1 * 5 + 2] = 0; // 더 가까워도 다른 군인 육지
@@ -172,14 +187,33 @@ describe('지도 아이콘 배율과 앵커', () => {
         })).toBe(false);
     });
 
-    it.each([1, 1.5, 2, 3])('DPR %s에서 CSS 크기와 지점 앵커를 보존한다', (dpr) => {
-        const box = cityMarkerDrawBox(5, 100, 80, dpr);
-        const scale = dpr / 2;
+    it.each([1, 1.5, 2, 3])('DPR %s에서 16/24/32/48 CSS px 단계와 지점 앵커를 보존한다', (dpr) => {
+        for (const [zoom, cssSize] of [[0.5, 16], [0.75, 24], [1, 32], [1.5, 48]] as const) {
+            const box = cityMarkerDrawBox(5, 100, 80, dpr, zoom);
+            const scale = dpr * zoom / 2;
 
-        expect(box.width / dpr).toBe(32);
-        expect(box.height / dpr).toBe(32);
-        expect(box.x + 32 * scale).toBe(100);
-        expect(box.y + 63 * scale).toBe(80);
+            expect(box.width / dpr).toBe(cssSize);
+            expect(box.height / dpr).toBe(cssSize);
+            expect(box.x + 32 * scale).toBe(100);
+            expect(box.y + 63 * scale).toBe(80);
+        }
+    });
+
+    it.each([1, 1.5, 2, 3])('DPR %s에서 동일한 CSS 확대는 동일한 마커 LOD를 선택한다', (dpr) => {
+        expect(cityMarkerZoomStep(3 * dpr, dpr)).toBe(0.5);
+        expect(cityMarkerZoomStep(6 * dpr, dpr)).toBe(0.75);
+        expect(cityMarkerZoomStep(12 * dpr, dpr)).toBe(1);
+        expect(cityMarkerZoomStep(20 * dpr, dpr)).toBe(1.5);
+    });
+
+    it.each([1, 1.5, 2, 3])('DPR %s에서 도시명은 최소 11 CSS px와 같은 외곽선을 보존한다', (dpr) => {
+        const minimum = cityLabelMetrics(2 * dpr, dpr);
+        const maximum = cityLabelMetrics(20 * dpr, dpr);
+
+        expect(minimum.fontSize / dpr).toBe(11);
+        expect(minimum.strokeWidth / dpr).toBe(2.5);
+        expect(maximum.fontSize / dpr).toBe(14);
+        expect(maximum.strokeWidth / dpr).toBe(2.5);
     });
 
     it('군치 소는 영현보다, 영현은 장현보다 큰 실루엣을 쓴다', () => {
@@ -213,16 +247,17 @@ describe('지도 아이콘 배율과 앵커', () => {
     });
 
     it('지도 확대에 맞춰 마커와 히트 영역이 단계적으로 함께 커진다', () => {
-        expect(cityMarkerZoomStep(8, 2)).toBe(1);
-        expect(cityMarkerZoomStep(20, 2)).toBe(1.5);
-        expect(cityMarkerZoomStep(32, 2)).toBe(2);
+        expect(cityMarkerZoomStep(6, 2)).toBe(0.5);
+        expect(cityMarkerZoomStep(12, 2)).toBe(0.75);
+        expect(cityMarkerZoomStep(24, 2)).toBe(1);
+        expect(cityMarkerZoomStep(40, 2)).toBe(1.5);
 
-        const normal = cityMarkerDrawBox(5, 100, 80, 2, 1);
-        const zoomed = cityMarkerDrawBox(5, 100, 80, 2, 2);
-        const normalHit = cityMarkerHitBox(5, 100, 80, 2, 1);
-        const zoomedHit = cityMarkerHitBox(5, 100, 80, 2, 2);
-        expect(zoomed.width).toBe(normal.width * 2);
-        expect(zoomed.height).toBe(normal.height * 2);
+        const normal = cityMarkerDrawBox(5, 100, 80, 2, 0.5);
+        const zoomed = cityMarkerDrawBox(5, 100, 80, 2, 1.5);
+        const normalHit = cityMarkerHitBox(5, 100, 80, 2, 0.5);
+        const zoomedHit = cityMarkerHitBox(5, 100, 80, 2, 1.5);
+        expect(zoomed.width).toBe(normal.width * 3);
+        expect(zoomed.height).toBe(normal.height * 3);
         expect(zoomedHit.right - zoomedHit.left).toBeGreaterThan(normalHit.right - normalHit.left);
         expect(zoomedHit.bottom - zoomedHit.top).toBeGreaterThan(normalHit.bottom - normalHit.top);
     });

@@ -26,6 +26,7 @@ import {
   bindCompleteProvinceOwnership,
   buildCountyAdministrativeIndex,
   buildProvinceAdministrativeIndex,
+  buildProvinceVisualAnchors,
   composeProvincePixels,
   formatProvinceTooltip,
   loadProvinceIdentityMap,
@@ -122,12 +123,22 @@ export interface IsoSceneCity extends IsoCityOverlay {
   iconColor: string;
   layers: string[];
   provinceId?: number;
+  visualClearance?: number;
+  mapLabel: string;
+  provinceKind?: string;
 }
 
 export interface IsoScene {
   terrain: string[];
   roads: { from: [number, number]; to: [number, number] }[];
   cities: IsoSceneCity[];
+}
+
+interface IsoMarkerPosition {
+  col: number;
+  row: number;
+  provinceId?: number;
+  visualClearance?: number;
 }
 
 interface CityHitBox {
@@ -142,7 +153,8 @@ interface CityHitBox {
 export interface IsoSceneOptions {
   currentCityId?: number | null;
   selectedCityId?: number | null;
-  markerPositions?: ReadonlyMap<number, { col: number; row: number; provinceId?: number }>;
+  markerPositions?: ReadonlyMap<number, IsoMarkerPosition>;
+  provinceRecords?: readonly ProvinceRecordDto[];
   markerPlacement?: {
     provinceMap: ProvinceIdentityMap;
     countyIndex: CountyAdministrativeIndex;
@@ -302,7 +314,7 @@ function cityMarkerTile(
   grid: GridSize,
   source: IsoSourceSize,
   placement?: IsoSceneOptions['markerPlacement'],
-): { col: number; row: number; provinceId?: number } {
+): IsoMarkerPosition {
   const mapped = mapCityToTile(city, grid, source);
   if (!placement) return mapped;
 
@@ -332,6 +344,9 @@ export function buildIsoScene(
         ?? cityMarkerTile(city, grid, source, options.markerPlacement);
       const { col, row } = markerPosition;
       const owned = isOwnedNationVisual(city.nationId, city.nationColor);
+      const provinceRecord = markerPosition.provinceId === undefined
+        ? undefined
+        : options.provinceRecords?.[markerPosition.provinceId];
       const territoryColor = owned && city.nationColor ? city.nationColor : NEUTRAL_COLOR;
       const layers = [`castle:${city.level}`];
       if (owned) layers.push('flag');
@@ -346,6 +361,9 @@ export function buildIsoScene(
         col,
         row,
         provinceId: markerPosition.provinceId,
+        visualClearance: markerPosition.visualClearance,
+        mapLabel: provinceRecord?.displayName ?? city.name,
+        provinceKind: provinceRecord?.kind,
         color: territoryColor,
         territoryColor,
         iconColor: CASTLE_FILL,
@@ -413,27 +431,6 @@ function bakePoliticalPaths(map: ProvinceIdentityMap): PoliticalPaths {
   };
 }
 
-function bakeProvinceClipPaths(
-  map: ProvinceIdentityMap,
-  placements: ReadonlyMap<number, { provinceId?: number }>,
-): ReadonlyMap<number, Path2D> {
-  const provinceIds = new Set(
-    [...placements.values()]
-      .map((placement) => placement.provinceId)
-      .filter((provinceId): provinceId is number => provinceId !== undefined && provinceId >= 0),
-  );
-  const paths = new Map<number, Path2D>();
-  for (const provinceId of provinceIds) paths.set(provinceId, new Path2D());
-  for (let index = 0; index < map.provinces.length; index += 1) {
-    const path = paths.get(map.provinces[index]);
-    if (!path) continue;
-    const col = index % map.width;
-    const row = Math.floor(index / map.width);
-    path.rect(col - 0.5, row - 0.5, 1, 1);
-  }
-  return paths;
-}
-
 function bakePoliticalFill(
   map: ProvinceIdentityMap,
   binding: ProvinceOwnershipBinding,
@@ -470,11 +467,25 @@ function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
 
 type CityMarkerImages = Partial<Record<number, HTMLImageElement>>;
 
-export function cityMarkerZoomStep(scale: number, dpr: number): 1 | 1.5 | 2 {
+export type CityMarkerZoom = 0.5 | 0.75 | 1 | 1.5;
+
+export function cityMarkerZoomStep(scale: number, dpr: number): CityMarkerZoom {
   const cssTileScale = scale / effectiveDpr(dpr);
-  if (cssTileScale >= 16) return 2;
-  if (cssTileScale >= 10) return 1.5;
-  return 1;
+  if (cssTileScale >= 16) return 1.5;
+  if (cssTileScale >= 10) return 1;
+  if (cssTileScale >= 4) return 0.75;
+  return 0.5;
+}
+
+export function cityLabelMetrics(scale: number, dpr: number) {
+  const backingRatio = effectiveDpr(dpr);
+  const cssTileScale = scale / backingRatio;
+  const cssFontSize = Math.max(11, Math.min(14, 10 + cssTileScale * 0.25));
+  return {
+    cssFontSize,
+    fontSize: cssFontSize * backingRatio,
+    strokeWidth: 2.5 * backingRatio,
+  };
 }
 
 export function cityMarkerDrawBox(level: number, x: number, y: number, dpr: number, zoom = 1) {
@@ -569,6 +580,33 @@ export function screenBoxInsideProvince(
   return true;
 }
 
+/**
+ * Constant-work containment proof for a box centered on a visual anchor.
+ * The anchor clearance is the Chebyshev cell distance to the province edge,
+ * so an affine screen-space rectangle is safe when all four inverse-mapped
+ * corners remain inside that guaranteed same-province cell square.
+ */
+export function screenBoxInsideVisualClearance(
+  anchorCol: number,
+  anchorRow: number,
+  clearance: number,
+  view: IsoView,
+  box: { left: number; top: number; right: number; bottom: number },
+): boolean {
+  if (clearance < 0 || !Number.isFinite(clearance)
+    || ![box.left, box.top, box.right, box.bottom].every(Number.isFinite)
+    || box.right < box.left || box.bottom < box.top) return false;
+  const safeRadius = clearance + 0.5 - 1e-6;
+  return [
+    [box.left, box.top], [box.right, box.top],
+    [box.left, box.bottom], [box.right, box.bottom],
+  ].every(([x, y]) => {
+    const [col, row] = screenToCell(x, y, view);
+    return Math.abs(col - anchorCol) <= safeRadius
+      && Math.abs(row - anchorRow) <= safeRadius;
+  });
+}
+
 function markerLevel(city: IsoCityOverlay): number {
   return Number.isInteger(city.level) && city.level >= 1 && city.level <= 11 ? city.level : 5;
 }
@@ -586,13 +624,197 @@ function starPath(context: CanvasRenderingContext2D, x: number, y: number, radiu
   context.closePath();
 }
 
+const CITY_MARKER_ZOOM_STEPS: readonly CityMarkerZoom[] = [1.5, 1, 0.75, 0.5];
+
+function detailedCityVisualBox(
+  city: IsoSceneCity,
+  level: number,
+  x: number,
+  y: number,
+  dpr: number,
+  zoom: CityMarkerZoom,
+) {
+  const marker = cityMarkerDrawBox(level, x, y, dpr, zoom);
+  const radius = cityMarkerRadius(level, dpr) * zoom;
+  const bounds = {
+    left: marker.x,
+    top: marker.y,
+    right: marker.x + marker.width,
+    bottom: marker.y + marker.height,
+  };
+  const include = (left: number, top: number, right: number, bottom: number) => {
+    bounds.left = Math.min(bounds.left, left);
+    bounds.top = Math.min(bounds.top, top);
+    bounds.right = Math.max(bounds.right, right);
+    bounds.bottom = Math.max(bounds.bottom, bottom);
+  };
+  const strokePadding = 2 * dpr;
+  if (isOwnedNationVisual(city.nationId, city.nationColor)) {
+    const cloth = flagClothPoints(x, y, radius, city.supply !== false, 0);
+    include(
+      Math.min(...cloth.map(([px]) => px)) - strokePadding,
+      Math.min(y - radius * 1.65, ...cloth.map(([, py]) => py)) - strokePadding,
+      Math.max(x + radius * 0.55, ...cloth.map(([px]) => px)) + strokePadding,
+      Math.max(y - radius * 0.45, ...cloth.map(([, py]) => py)) + strokePadding,
+    );
+  }
+  if (city.isCapital) {
+    const starRadius = Math.max(4, radius * 0.42);
+    include(
+      x + radius * 1.2 - starRadius - dpr,
+      y - radius * 1.8 - starRadius - dpr,
+      x + radius * 1.2 + starRadius + dpr,
+      y - radius * 1.8 + starRadius + dpr,
+    );
+  }
+  if ((city.state ?? 0) > 0) {
+    const badgeRadius = Math.max(5, radius * 0.42);
+    include(
+      x - radius * 1.05 - badgeRadius,
+      y - radius * 0.9 - badgeRadius,
+      x - radius * 1.05 + badgeRadius,
+      y - radius * 0.9 + badgeRadius,
+    );
+  }
+  if (city.layers.includes('current')) {
+    include(
+      x - radius * 1.35 - strokePadding,
+      y - radius * 1.35 - strokePadding,
+      x + radius * 1.35 + strokePadding,
+      y + radius * 1.35 + strokePadding,
+    );
+  }
+  if (city.layers.includes('selected')) {
+    include(
+      x - radius - strokePadding,
+      y - radius - strokePadding,
+      x + radius + strokePadding,
+      y + radius + strokePadding,
+    );
+  }
+  return bounds;
+}
+
+function containedCityMarkerZoom(
+  city: IsoSceneCity,
+  level: number,
+  x: number,
+  y: number,
+  requested: CityMarkerZoom,
+  dpr: number,
+  view: IsoView,
+): CityMarkerZoom | undefined {
+  if (city.provinceId === undefined || city.visualClearance === undefined) return requested;
+  for (const zoom of CITY_MARKER_ZOOM_STEPS) {
+    if (zoom > requested) continue;
+    if (screenBoxInsideVisualClearance(
+      city.col,
+      city.row,
+      city.visualClearance,
+      view,
+      detailedCityVisualBox(city, level, x, y, dpr, zoom),
+    )) return zoom;
+  }
+  return undefined;
+}
+
+export function overviewCityVisualBox(
+  x: number,
+  y: number,
+  scale: number,
+  _dpr: number,
+  clearance: number,
+) {
+  const safeRadius = Math.max(0, clearance + 0.5 - 1e-3);
+  const horizontal = safeRadius * scale * 0.72;
+  const vertical = safeRadius * scale * 0.28;
+  return {
+    left: x - horizontal,
+    top: y - vertical,
+    right: x + horizontal,
+    bottom: y + vertical,
+  };
+}
+
+function drawOverviewCityGlyph(
+  context: CanvasRenderingContext2D,
+  city: IsoSceneCity,
+  x: number,
+  y: number,
+  scale: number,
+  dpr: number,
+) {
+  const box = overviewCityVisualBox(x, y, scale, dpr, city.visualClearance ?? 0);
+  const horizontal = (box.right - box.left) / 2;
+  const vertical = (box.bottom - box.top) / 2;
+  const detail = Math.min(horizontal, vertical);
+  const stroke = Math.max(detail * 0.08, Math.min(dpr, detail * 0.2));
+  const pathHorizontal = Math.max(0, horizontal - stroke / 2);
+  const pathVertical = Math.max(0, vertical - stroke / 2);
+  context.lineJoin = 'bevel';
+  context.beginPath();
+  context.moveTo(x, y - pathVertical);
+  context.lineTo(x + pathHorizontal, y);
+  context.lineTo(x, y + pathVertical);
+  context.lineTo(x - pathHorizontal, y);
+  context.closePath();
+  context.fillStyle = CASTLE_FILL;
+  context.fill();
+  context.strokeStyle = CASTLE_STROKE;
+  context.lineWidth = stroke;
+  context.stroke();
+
+  if (isOwnedNationVisual(city.nationId, city.nationColor)) {
+    context.beginPath();
+    const flagTop = y - pathVertical * 0.72;
+    context.moveTo(x, flagTop);
+    context.lineTo(x + pathHorizontal * 0.45, flagTop + (city.supply === false ? pathVertical * 0.45 : 0));
+    context.lineTo(x, y - pathVertical * 0.08);
+    context.closePath();
+    context.fillStyle = city.territoryColor;
+    context.fill();
+    context.strokeStyle = '#21180f';
+    context.lineWidth = stroke;
+    context.stroke();
+  }
+  if (city.isCapital) {
+    context.beginPath();
+    context.arc(x + pathHorizontal * 0.38, y, detail * 0.18, 0, Math.PI * 2);
+    context.fillStyle = '#ffd84f';
+    context.fill();
+  }
+  if ((city.state ?? 0) > 0) {
+    context.beginPath();
+    context.arc(x - pathHorizontal * 0.38, y, detail * 0.18, 0, Math.PI * 2);
+    context.fillStyle = '#b72f2f';
+    context.fill();
+  }
+  if (city.layers.includes('current')) {
+    context.beginPath();
+    context.arc(x, y, detail * 0.58, 0, Math.PI * 2);
+    context.strokeStyle = '#ffffff';
+    context.lineWidth = stroke;
+    context.stroke();
+  }
+  if (city.layers.includes('selected')) {
+    context.strokeStyle = '#ffd84f';
+    context.lineWidth = stroke;
+    context.strokeRect(
+      x - pathHorizontal * 0.82,
+      y - pathVertical * 0.82,
+      pathHorizontal * 1.64,
+      pathVertical * 1.64,
+    );
+  }
+  return box;
+}
+
 function drawScene(
   canvas: HTMLCanvasElement,
   terrain: HTMLCanvasElement,
   political: HTMLCanvasElement | null,
   paths: PoliticalPaths | null,
   provinceMap: ProvinceIdentityMap | null,
-  provinceClips: ReadonlyMap<number, Path2D>,
   scene: IsoScene,
   view: IsoView,
   hideCityNames: boolean,
@@ -605,6 +827,9 @@ function drawScene(
   const width = canvas.width;
   const height = canvas.height;
   const scale = view.scale;
+  const fittedScale = provinceMap
+    ? fitScale(width, height, { cols: provinceMap.width, rows: provinceMap.height })
+    : 0;
   context.setTransform(1, 0, 0, 1, 0, 0);
   context.clearRect(0, 0, width, height);
   context.save();
@@ -632,28 +857,33 @@ function drawScene(
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
     const level = markerLevel(city);
-    const markerZoom = cityMarkerZoomStep(scale, dpr);
-    const radius = cityMarkerRadius(level, dpr) * markerZoom;
+    const requestedMarkerZoom = cityMarkerZoomStep(scale, dpr);
+    const markerZoom = containedCityMarkerZoom(
+      city, level, x, y, requestedMarkerZoom, dpr, view,
+    );
+    const radius = cityMarkerRadius(level, dpr) * (markerZoom ?? 0.5);
     const marker = markerImages[level];
-    hits.push({
-      city,
-      provinceId: city.provinceId,
-      ...(marker ? cityMarkerHitBox(level, x, y, dpr, markerZoom) : cityFallbackHitBox(x, y, radius)),
-    });
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
-    const provinceClip = city.provinceId === undefined ? undefined : provinceClips.get(city.provinceId);
-    if (provinceClip) {
-      context.transform(scale, scale / 2, -scale, scale / 2, view.ox, view.oy);
-      context.clip(provinceClip);
-      context.setTransform(1, 0, 0, 1, 0, 0);
-    }
 
-    if (marker) {
+    if (markerZoom === undefined) {
+      const overviewBox = drawOverviewCityGlyph(context, city, x, y, scale, dpr);
+      hits.push({ city, provinceId: city.provinceId, ...overviewBox });
+    } else if (marker) {
+      hits.push({
+        city,
+        provinceId: city.provinceId,
+        ...cityMarkerHitBox(level, x, y, dpr, markerZoom),
+      });
       const box = cityMarkerDrawBox(level, x, y, dpr, markerZoom);
       context.imageSmoothingEnabled = false;
       context.drawImage(marker, box.x, box.y, box.width, box.height);
     } else {
+      hits.push({
+        city,
+        provinceId: city.provinceId,
+        ...cityFallbackHitBox(x, y, radius),
+      });
       context.fillStyle = city.iconColor;
       context.strokeStyle = CASTLE_STROKE;
       context.lineWidth = 1.5;
@@ -663,7 +893,7 @@ function drawScene(
       context.fillRect(x + radius * 0.2, y - radius * 0.9, radius * 0.3, radius * 0.5);
     }
 
-    if (owned) {
+    if (markerZoom !== undefined && owned) {
       context.strokeStyle = '#e8dec5';
       context.beginPath();
       context.moveTo(x + radius * 0.55, y - radius * 0.45);
@@ -684,7 +914,7 @@ function drawScene(
       context.stroke();
     }
 
-    if (city.isCapital) {
+    if (markerZoom !== undefined && city.isCapital) {
       starPath(context, x + radius * 1.2, y - radius * 1.8, Math.max(4, radius * 0.42));
       context.fillStyle = '#ffd84f';
       context.fill();
@@ -692,7 +922,7 @@ function drawScene(
       context.stroke();
     }
 
-    if ((city.state ?? 0) > 0) {
+    if (markerZoom !== undefined && (city.state ?? 0) > 0) {
       const badgeX = x - radius * 1.05;
       const badgeY = y - radius * 0.9;
       context.fillStyle = '#b72f2f';
@@ -706,7 +936,7 @@ function drawScene(
       context.fillText(String(city.state), badgeX, badgeY);
     }
 
-    if (city.layers.includes('current')) {
+    if (markerZoom !== undefined && city.layers.includes('current')) {
       context.save();
       context.globalAlpha = Math.floor(Date.now() / 500) % 2 === 0 ? 1 : 0.3;
       context.strokeStyle = '#ffffff';
@@ -716,33 +946,41 @@ function drawScene(
       context.stroke();
       context.restore();
     }
-    if (city.layers.includes('selected')) {
+    if (markerZoom !== undefined && city.layers.includes('selected')) {
       context.strokeStyle = '#ffd84f';
       context.lineWidth = 3;
       context.strokeRect(x - radius, y - radius, radius * 2, radius * 2);
     }
 
     if (!hideCityNames) {
-      const fontSize = Math.max(10, Math.min(16, scale * 2.2));
+      const labelKind = city.provinceKind === 'SETTLEMENT' ? 'COUNTY' : city.provinceKind;
+      const labelThreshold = labelKind ? labelZoomFor(labelKind, fittedScale, dpr) : undefined;
+      const labelVisibleAtZoom = labelThreshold === undefined || scale >= labelThreshold;
+      const metrics = cityLabelMetrics(scale, dpr);
       const labelX = x;
-      const labelY = y + radius * 1.2;
       context.textAlign = 'center';
       context.textBaseline = 'alphabetic';
-      context.font = `bold ${fontSize}px sans-serif`;
-      context.lineWidth = 3;
+      context.font = `bold ${metrics.fontSize}px sans-serif`;
+      context.lineWidth = metrics.strokeWidth;
       context.strokeStyle = 'rgba(0,0,0,0.8)';
       context.fillStyle = '#fff';
-      const labelWidth = context.measureText(city.name).width + 4 * dpr;
-      const labelBox = {
-        left: labelX - labelWidth / 2,
-        top: labelY - fontSize - 2 * dpr,
-        right: labelX + labelWidth / 2,
-        bottom: labelY + fontSize * 0.25 + 2 * dpr,
-      };
-      if (city.provinceId === undefined || !provinceMap
-        || screenBoxInsideProvince(provinceMap, city.provinceId, view, labelBox)) {
-        context.strokeText(city.name, labelX, labelY);
-        context.fillText(city.name, labelX, labelY);
+      const labelWidth = context.measureText(city.mapLabel).width + 4 * dpr;
+      const labelYs = [y + radius * 1.2, y - radius * 1.8, y + metrics.fontSize * 0.35];
+      const labelY = labelVisibleAtZoom ? labelYs.find((candidateY) => {
+        const labelBox = {
+          left: labelX - labelWidth / 2,
+          top: candidateY - metrics.fontSize - 2 * dpr,
+          right: labelX + labelWidth / 2,
+          bottom: candidateY + metrics.fontSize * 0.25 + 2 * dpr,
+        };
+        return city.provinceId === undefined || city.visualClearance === undefined
+          || screenBoxInsideVisualClearance(
+            city.col, city.row, city.visualClearance, view, labelBox,
+          );
+      }) : undefined;
+      if (labelY !== undefined) {
+        context.strokeText(city.mapLabel, labelX, labelY);
+        context.fillText(city.mapLabel, labelX, labelY);
       }
     }
     context.restore();
@@ -794,7 +1032,6 @@ export function HanMapCanvas({
   const politicalRef = useRef<HTMLCanvasElement | null>(null);
   const politicalPathsRef = useRef<PoliticalPaths | null>(null);
   const provinceMapRef = useRef<ProvinceIdentityMap | null>(null);
-  const provinceClipsRef = useRef<ReadonlyMap<number, Path2D>>(new Map());
   const markerImagesRef = useRef<CityMarkerImages>({});
   const flagPhaseRef = useRef(0);
   const viewRef = useRef<IsoView | null>(null);
@@ -880,7 +1117,7 @@ export function HanMapCanvas({
         : buildCountyAdministrativeIndex(provinceMap, loadedTiles.cities, loadedTiles.juns))
       : null
   ), [loadedTiles?.cities, loadedTiles?.juns, loadedTiles?.parentRegions, loadedTiles?.provinceRecords, provinceMap]);
-  const markerPositions = useMemo(() => {
+  const canonicalMarkerPositions = useMemo(() => {
     if (!loadedTiles) return undefined;
     const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
     const placement = provinceMap && countyIndex ? { provinceMap, countyIndex } : undefined;
@@ -889,17 +1126,34 @@ export function HanMapCanvas({
       cityMarkerTile(city, grid, sourceSize, placement),
     ]));
   }, [cities, countyIndex, loadedTiles, provinceMap, sourceSize]);
-  const provinceClips = useMemo(() => (
-    provinceMap && markerPositions
-      ? bakeProvinceClipPaths(provinceMap, markerPositions)
-      : new Map<number, Path2D>()
-  ), [markerPositions, provinceMap]);
+  const markerPositions = useMemo(() => {
+    if (!canonicalMarkerPositions || !provinceMap) return canonicalMarkerPositions;
+    const preferredByProvince = new Map<number, { col: number; row: number }>();
+    for (const city of [...cities].sort((left, right) => left.id - right.id)) {
+      const placement = canonicalMarkerPositions.get(city.id);
+      if (placement?.provinceId === undefined || preferredByProvince.has(placement.provinceId)) continue;
+      preferredByProvince.set(placement.provinceId, { col: placement.col, row: placement.row });
+    }
+    const anchors = buildProvinceVisualAnchors(provinceMap, preferredByProvince);
+    return new Map([...canonicalMarkerPositions].map(([cityId, placement]) => {
+      const anchor = placement.provinceId === undefined ? undefined : anchors[placement.provinceId];
+      return [cityId, anchor
+        ? {
+          col: anchor.col,
+          row: anchor.row,
+          provinceId: placement.provinceId,
+          visualClearance: anchor.clearance,
+        }
+        : placement];
+    }));
+  }, [canonicalMarkerPositions, cities, provinceMap]);
   const scene = useMemo(
     () => loadedTiles
       ? buildIsoScene(loadedTiles, cities, sourceSize, {
         currentCityId,
         selectedCityId,
         markerPositions,
+        provinceRecords: loadedTiles.provinceRecords,
       })
       : null,
     [cities, currentCityId, loadedTiles, markerPositions, selectedCityId, sourceSize],
@@ -909,7 +1163,6 @@ export function HanMapCanvas({
   const ownershipCitiesRef = useRef(cities);
   sceneRef.current = scene;
   provinceMapRef.current = provinceMap;
-  provinceClipsRef.current = provinceClips;
   hideCityNamesRef.current = hideCityNames;
   ownershipCitiesRef.current = cities;
   const completeOwnership = useMemo(() => {
@@ -956,7 +1209,6 @@ export function HanMapCanvas({
       politicalRef.current,
       politicalPathsRef.current,
       provinceMapRef.current,
-      provinceClipsRef.current,
       latestScene,
       view,
       hideCityNamesRef.current,
