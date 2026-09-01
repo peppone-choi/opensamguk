@@ -107,6 +107,25 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "owner references a missing province record"):
             module.build_ledger(documents, input_records)
 
+    def test_province_kind_and_city_linkage_form_a_closed_contract(self):
+        module = load_module()
+        mutations = [
+            ("linked direct territory", "200012", "kind", "DIRECT_TERRITORY"),
+            ("unlinked county", "DIRECT-PARENT-0046-2cbec5a2711d", "kind", "COUNTY"),
+            ("unknown kind", "200012", "kind", "UNKNOWN"),
+        ]
+        for label, province_id, field, value in mutations:
+            with self.subTest(label=label):
+                documents, input_records = module.load_inputs()
+                province = next(
+                    row
+                    for row in documents["data/map/han-tiles.json"]["provinceRecords"]
+                    if row["id"] == province_id
+                )
+                province[field] = value
+                with self.assertRaisesRegex(ValueError, "province kind|DIRECT_TERRITORY"):
+                    module.build_ledger(documents, input_records)
+
 
 @unittest.skipUnless(MODULE_PATH.exists(), "generator is intentionally absent during RED")
 class HanParentReconciliationTest(unittest.TestCase):

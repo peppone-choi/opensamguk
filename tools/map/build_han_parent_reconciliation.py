@@ -871,14 +871,19 @@ def _tile_context(tiles: dict) -> dict:
         if parent_id not in parent_index_by_id:
             raise ValueError(f'province {province["id"]} references a missing parent region')
         province_parent_indices[index] = parent_index_by_id[parent_id]
+        kind = province.get("kind")
+        if kind not in {"COUNTY", "SETTLEMENT", "DIRECT_TERRITORY"}:
+            raise ValueError(f'province {province["id"]} has an invalid province kind')
         city_index = province.get("cityIndex")
         if city_index is None:
-            if province.get("kind") != "DIRECT_TERRITORY":
+            if kind != "DIRECT_TERRITORY":
                 raise ValueError("only DIRECT_TERRITORY provinces may omit cityIndex")
             direct_territory_indices.add(index)
         elif type(city_index) is not int or not 0 <= city_index < len(cities):
             raise ValueError(f'province {province["id"]} has an invalid cityIndex')
         else:
+            if kind == "DIRECT_TERRITORY":
+                raise ValueError("DIRECT_TERRITORY provinces must omit cityIndex")
             if city_index in linked_city_indices:
                 raise ValueError("a city may link to only one canonical province")
             linked_city_indices.add(city_index)
