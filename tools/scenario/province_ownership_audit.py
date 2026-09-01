@@ -74,10 +74,13 @@ def topology_from_map(map_doc: Mapping[str, Any]) -> ProvinceTopology:
             exterior.add(ids[province_index])
     parent_rows = map_doc.get("parentRegions", [])
     parent_ids = [row["id"] for row in parent_rows]
+    commandery_edges = map_doc["adjacency"].get("commandery", [])
     if not parent_ids:
+        if commandery_edges:
+            raise ValueError("commandery adjacency requires an explicit parentRegions order")
         parent_ids = sorted({row["parentRegionId"] for row in records})
     parent_graph = {parent_id: set() for parent_id in parent_ids}
-    for edge in map_doc["adjacency"].get("commandery", []):
+    for edge in commandery_edges:
         left, right = parent_ids[edge["a"]], parent_ids[edge["b"]]
         parent_graph[left].add(right)
         parent_graph[right].add(left)

@@ -199,6 +199,12 @@ def migrate(legacy: Mapping[str, Any], map_doc: Mapping[str, Any]) -> dict[str, 
                     )
                 parent_ids.append(parent_id)
             province_ids = list(row.get("provinceIds") or [])
+            if parent_ids and province_ids:
+                raise OwnershipContractError(
+                    "AMBIGUOUS_CONTINUITY_TARGET",
+                    scenario_code=code,
+                    nation=nation_name,
+                )
             unknown_province_ids = sorted(set(province_ids) - known_province_ids)
             if unknown_province_ids:
                 raise OwnershipContractError(

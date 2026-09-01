@@ -105,6 +105,22 @@ class MigrateHanOwnershipClaimsTest(unittest.TestCase):
         self.assertEqual("PROVINCE_DIRECT", claim["claimKind"])
         self.assertEqual({"provinceIds": ["70523"]}, claim["target"])
 
+    def test_interior_continuity_rejects_mixed_parent_and_province_targets(self):
+        legacy = deepcopy(self.legacy)
+        legacy["_interiorContinuity"] = {
+            "assignments": [{
+                "scenarioCode": 1010,
+                "nation": "후한",
+                "juns": ["제북국"],
+                "provinceIds": ["70523"],
+                "basis": "Ambiguous mixed target.",
+            }],
+            "allowlists": [],
+        }
+
+        with self.assertRaisesRegex(ValueError, "AMBIGUOUS_CONTINUITY_TARGET"):
+            migrate(legacy, self.map_doc)
+
     def test_every_scenario_has_one_baseline_and_stable_nation_keys(self):
         curated = migrate(self.legacy, self.map_doc)
 

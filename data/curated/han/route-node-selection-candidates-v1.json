@@ -27802,7 +27802,7 @@
       },
       "legacyTileMap": {
         "path": "data/map/han-tiles.json",
-        "sha256": "2f57d96f05943842aa38fe59ab7038860f4da41d55c2e9020d03f59bdf39073a"
+        "sha256": "d2f919778cd0a61b0206762578f92ef7b20261774a6346bc7554f1b90d46f221"
       }
     },
     "scenarioResourceCount": 31

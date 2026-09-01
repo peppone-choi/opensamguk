@@ -6,11 +6,25 @@ from pathlib import Path
 
 import numpy as np
 
-from tools.map.rebalance_han_tiles import adapt_historical_city_seeds
+from tools.map.rebalance_han_tiles import adapt_historical_city_seeds, jun_seat_coordinates
 from tools.map.province_quality import balanced_parent_labels
 
 
 class RebalanceHanTilesTest(unittest.TestCase):
+    def test_commandery_adjacency_uses_relocated_seat_city_coordinates(self):
+        document = {
+            "juns": [
+                {"seat": 1, "row": 90, "col": 91},
+                {"seat": 0, "row": 80, "col": 81},
+            ],
+        }
+        relocated_cities = [
+            {"row": 10, "col": 11},
+            {"row": 20, "col": 21},
+        ]
+
+        self.assertEqual([(21, 20), (11, 10)], jun_seat_coordinates(document, relocated_cities))
+
     def test_tracked_adjacency_counts_match_metadata(self):
         root = Path(__file__).resolve().parents[3]
         document = json.loads(

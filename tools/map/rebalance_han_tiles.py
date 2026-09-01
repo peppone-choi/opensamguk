@@ -31,6 +31,14 @@ TILES = ROOT / "data" / "map" / "han-tiles.json"
 NON_PLAYABLE_REGIONS = ROOT / "data" / "curated" / "map" / "non-playable-regions-v1.json"
 
 
+def jun_seat_coordinates(document: dict, cities: list[dict]) -> list[tuple[int, int]]:
+    """Return commandery path endpoints from the adjusted seat-city SSoT."""
+    return [
+        (int(cities[jun["seat"]]["col"]), int(cities[jun["seat"]]["row"]))
+        for jun in document["juns"]
+    ]
+
+
 def expand_rle(runs: list[list[int]], rows: int, cols: int) -> np.ndarray:
     values = np.empty(rows * cols, dtype=np.int32)
     offset = 0
@@ -229,7 +237,7 @@ def rebalance_document(document: dict) -> tuple[dict, tuple]:
     } for row in result.province_records]
     county_adjacency, commandery_adjacency = derive_world_adjacency(
         terrain,
-        [(int(jun["col"]), int(jun["row"])) for jun in document["juns"]],
+        jun_seat_coordinates(document, cities),
         result.owner,
         balanced_parents,
     )

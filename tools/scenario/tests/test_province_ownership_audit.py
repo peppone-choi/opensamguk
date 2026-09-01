@@ -66,10 +66,22 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
             for row in map_doc["parentRegions"]
             if row["displayName"] in {"하동군", "동완군", "파양군"}
         }
+        claims = json.loads(
+            (ROOT / "data/curated/han/scenario-province-claims-v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        nation_names = {
+            row["scenarioCode"]: {
+                nation["nationKey"]: nation["displayNationName"]
+                for nation in row["nationRefs"]
+            }
+            for row in claims["scenarios"]
+        }
         expected = {
-            1050: {"하동군": "S1050-N001", "동완군": "S1050-N001", "파양군": "S1050-N002"},
-            1060: {"하동군": "S1060-N001", "동완군": "S1060-N001", "파양군": "S1060-N002"},
-            1070: {"파양군": "S1070-N002"},
+            1050: {"하동군": "조조", "동완군": "조조", "파양군": "손책"},
+            1060: {"하동군": "조조", "동완군": "조조", "파양군": "손권"},
+            1070: {"파양군": "손권"},
         }
         province_ids = {
             name: {
@@ -86,7 +98,13 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
         failures = {}
         for code, commanderies in expected.items():
             for name, owner_key in commanderies.items():
-                actual = {by_code[code][province_id]["ownerNationKey"] for province_id in province_ids[name]}
+                actual = {
+                    nation_names[code].get(
+                        by_code[code][province_id]["ownerNationKey"],
+                        str(by_code[code][province_id]["ownerNationKey"]),
+                    )
+                    for province_id in province_ids[name]
+                }
                 if actual != {owner_key}:
                     failures[(code, name)] = sorted(str(value) for value in actual)
 
@@ -315,6 +333,23 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
         self.assertEqual({"A": {"B"}, "B": {"A"}}, topology.graph)
         self.assertEqual({"A": 2, "B": 2}, topology.province_areas)
         self.assertEqual(frozenset({"A", "B"}), topology.exterior_province_ids)
+
+    def test_commandery_adjacency_requires_explicit_parent_region_order(self):
+        map_doc = {
+            "_meta": {"cols": 2, "rows": 1},
+            "provinceRecords": [
+                {"id": "A", "parentRegionId": "P2"},
+                {"id": "B", "parentRegionId": "P1"},
+            ],
+            "adjacency": {
+                "county": [{"a": 0, "b": 1, "cells": 1}],
+                "commandery": [{"a": 0, "b": 1, "cells": 1}],
+            },
+            "owner": [[0, 1], [1, 1]],
+        }
+
+        with self.assertRaisesRegex(ValueError, "explicit parentRegions order"):
+            topology_from_map(map_doc)
 
     def test_internal_void_contact_counts_as_playable_exterior(self):
         map_doc = {
