@@ -123,6 +123,7 @@ export interface IsoSceneCity extends IsoCityOverlay {
   iconColor: string;
   layers: string[];
   provinceId?: number;
+  visualClearance?: number;
   mapLabel: string;
   provinceKind?: string;
 }
@@ -131,6 +132,13 @@ export interface IsoScene {
   terrain: string[];
   roads: { from: [number, number]; to: [number, number] }[];
   cities: IsoSceneCity[];
+}
+
+interface IsoMarkerPosition {
+  col: number;
+  row: number;
+  provinceId?: number;
+  visualClearance?: number;
 }
 
 interface CityHitBox {
@@ -145,7 +153,7 @@ interface CityHitBox {
 export interface IsoSceneOptions {
   currentCityId?: number | null;
   selectedCityId?: number | null;
-  markerPositions?: ReadonlyMap<number, { col: number; row: number; provinceId?: number }>;
+  markerPositions?: ReadonlyMap<number, IsoMarkerPosition>;
   provinceRecords?: readonly ProvinceRecordDto[];
   markerPlacement?: {
     provinceMap: ProvinceIdentityMap;
@@ -306,7 +314,7 @@ function cityMarkerTile(
   grid: GridSize,
   source: IsoSourceSize,
   placement?: IsoSceneOptions['markerPlacement'],
-): { col: number; row: number; provinceId?: number } {
+): IsoMarkerPosition {
   const mapped = mapCityToTile(city, grid, source);
   if (!placement) return mapped;
 
@@ -353,6 +361,7 @@ export function buildIsoScene(
         col,
         row,
         provinceId: markerPosition.provinceId,
+        visualClearance: markerPosition.visualClearance,
         mapLabel: provinceRecord?.displayName ?? city.name,
         provinceKind: provinceRecord?.kind,
         color: territoryColor,
@@ -571,6 +580,33 @@ export function screenBoxInsideProvince(
   return true;
 }
 
+/**
+ * Constant-work containment proof for a box centered on a visual anchor.
+ * The anchor clearance is the Chebyshev cell distance to the province edge,
+ * so an affine screen-space rectangle is safe when all four inverse-mapped
+ * corners remain inside that guaranteed same-province cell square.
+ */
+export function screenBoxInsideVisualClearance(
+  anchorCol: number,
+  anchorRow: number,
+  clearance: number,
+  view: IsoView,
+  box: { left: number; top: number; right: number; bottom: number },
+): boolean {
+  if (clearance < 0 || !Number.isFinite(clearance)
+    || ![box.left, box.top, box.right, box.bottom].every(Number.isFinite)
+    || box.right < box.left || box.bottom < box.top) return false;
+  const safeRadius = clearance + 0.5 - 1e-6;
+  return [
+    [box.left, box.top], [box.right, box.top],
+    [box.left, box.bottom], [box.right, box.bottom],
+  ].every(([x, y]) => {
+    const [col, row] = screenToCell(x, y, view);
+    return Math.abs(col - anchorCol) <= safeRadius
+      && Math.abs(row - anchorRow) <= safeRadius;
+  });
+}
+
 function markerLevel(city: IsoCityOverlay): number {
   return Number.isInteger(city.level) && city.level >= 1 && city.level <= 11 ? city.level : 5;
 }
@@ -666,20 +702,38 @@ function containedCityMarkerZoom(
   y: number,
   requested: CityMarkerZoom,
   dpr: number,
-  provinceMap: ProvinceIdentityMap | null,
   view: IsoView,
 ): CityMarkerZoom | undefined {
-  if (city.provinceId === undefined || !provinceMap) return requested;
+  if (city.provinceId === undefined || city.visualClearance === undefined) return requested;
   for (const zoom of CITY_MARKER_ZOOM_STEPS) {
     if (zoom > requested) continue;
-    if (screenBoxInsideProvince(
-      provinceMap,
-      city.provinceId,
+    if (screenBoxInsideVisualClearance(
+      city.col,
+      city.row,
+      city.visualClearance,
       view,
       detailedCityVisualBox(city, level, x, y, dpr, zoom),
     )) return zoom;
   }
   return undefined;
+}
+
+export function overviewCityVisualBox(
+  x: number,
+  y: number,
+  scale: number,
+  _dpr: number,
+  clearance: number,
+) {
+  const safeRadius = Math.max(0, clearance + 0.5 - 1e-3);
+  const horizontal = safeRadius * scale * 0.72;
+  const vertical = safeRadius * scale * 0.28;
+  return {
+    left: x - horizontal,
+    top: y - vertical,
+    right: x + horizontal,
+    bottom: y + vertical,
+  };
 }
 
 function drawOverviewCityGlyph(
@@ -690,21 +744,69 @@ function drawOverviewCityGlyph(
   scale: number,
   dpr: number,
 ) {
-  const horizontal = Math.max(0.5, scale * 0.32);
-  const vertical = Math.max(0.35, scale * 0.16);
+  const box = overviewCityVisualBox(x, y, scale, dpr, city.visualClearance ?? 0);
+  const horizontal = (box.right - box.left) / 2;
+  const vertical = (box.bottom - box.top) / 2;
+  const detail = Math.min(horizontal, vertical);
+  const stroke = Math.max(detail * 0.08, Math.min(dpr, detail * 0.2));
+  const pathHorizontal = Math.max(0, horizontal - stroke / 2);
+  const pathVertical = Math.max(0, vertical - stroke / 2);
+  context.lineJoin = 'bevel';
   context.beginPath();
-  context.moveTo(x, y - vertical);
-  context.lineTo(x + horizontal, y);
-  context.lineTo(x, y + vertical);
-  context.lineTo(x - horizontal, y);
+  context.moveTo(x, y - pathVertical);
+  context.lineTo(x + pathHorizontal, y);
+  context.lineTo(x, y + pathVertical);
+  context.lineTo(x - pathHorizontal, y);
   context.closePath();
   context.fillStyle = CASTLE_FILL;
   context.fill();
-  context.strokeStyle = city.layers.includes('selected')
-    ? '#ffd84f'
-    : city.layers.includes('current') ? '#ffffff' : CASTLE_STROKE;
-  context.lineWidth = Math.max(0.5, Math.min(dpr, scale * 0.08));
+  context.strokeStyle = CASTLE_STROKE;
+  context.lineWidth = stroke;
   context.stroke();
+
+  if (isOwnedNationVisual(city.nationId, city.nationColor)) {
+    context.beginPath();
+    const flagTop = y - pathVertical * 0.72;
+    context.moveTo(x, flagTop);
+    context.lineTo(x + pathHorizontal * 0.45, flagTop + (city.supply === false ? pathVertical * 0.45 : 0));
+    context.lineTo(x, y - pathVertical * 0.08);
+    context.closePath();
+    context.fillStyle = city.territoryColor;
+    context.fill();
+    context.strokeStyle = '#21180f';
+    context.lineWidth = stroke;
+    context.stroke();
+  }
+  if (city.isCapital) {
+    context.beginPath();
+    context.arc(x + pathHorizontal * 0.38, y, detail * 0.18, 0, Math.PI * 2);
+    context.fillStyle = '#ffd84f';
+    context.fill();
+  }
+  if ((city.state ?? 0) > 0) {
+    context.beginPath();
+    context.arc(x - pathHorizontal * 0.38, y, detail * 0.18, 0, Math.PI * 2);
+    context.fillStyle = '#b72f2f';
+    context.fill();
+  }
+  if (city.layers.includes('current')) {
+    context.beginPath();
+    context.arc(x, y, detail * 0.58, 0, Math.PI * 2);
+    context.strokeStyle = '#ffffff';
+    context.lineWidth = stroke;
+    context.stroke();
+  }
+  if (city.layers.includes('selected')) {
+    context.strokeStyle = '#ffd84f';
+    context.lineWidth = stroke;
+    context.strokeRect(
+      x - pathHorizontal * 0.82,
+      y - pathVertical * 0.82,
+      pathHorizontal * 1.64,
+      pathVertical * 1.64,
+    );
+  }
+  return box;
 }
 
 function drawScene(
@@ -757,27 +859,31 @@ function drawScene(
     const level = markerLevel(city);
     const requestedMarkerZoom = cityMarkerZoomStep(scale, dpr);
     const markerZoom = containedCityMarkerZoom(
-      city, level, x, y, requestedMarkerZoom, dpr, provinceMap, view,
+      city, level, x, y, requestedMarkerZoom, dpr, view,
     );
     const radius = cityMarkerRadius(level, dpr) * (markerZoom ?? 0.5);
     const marker = markerImages[level];
-    hits.push({
-      city,
-      provinceId: city.provinceId,
-      ...(markerZoom !== undefined && marker
-        ? cityMarkerHitBox(level, x, y, dpr, markerZoom)
-        : cityFallbackHitBox(x, y, radius)),
-    });
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
 
     if (markerZoom === undefined) {
-      drawOverviewCityGlyph(context, city, x, y, scale, dpr);
+      const overviewBox = drawOverviewCityGlyph(context, city, x, y, scale, dpr);
+      hits.push({ city, provinceId: city.provinceId, ...overviewBox });
     } else if (marker) {
+      hits.push({
+        city,
+        provinceId: city.provinceId,
+        ...cityMarkerHitBox(level, x, y, dpr, markerZoom),
+      });
       const box = cityMarkerDrawBox(level, x, y, dpr, markerZoom);
       context.imageSmoothingEnabled = false;
       context.drawImage(marker, box.x, box.y, box.width, box.height);
     } else {
+      hits.push({
+        city,
+        provinceId: city.provinceId,
+        ...cityFallbackHitBox(x, y, radius),
+      });
       context.fillStyle = city.iconColor;
       context.strokeStyle = CASTLE_STROKE;
       context.lineWidth = 1.5;
@@ -867,8 +973,10 @@ function drawScene(
           right: labelX + labelWidth / 2,
           bottom: candidateY + metrics.fontSize * 0.25 + 2 * dpr,
         };
-        return city.provinceId === undefined || !provinceMap
-          || screenBoxInsideProvince(provinceMap, city.provinceId, view, labelBox);
+        return city.provinceId === undefined || city.visualClearance === undefined
+          || screenBoxInsideVisualClearance(
+            city.col, city.row, city.visualClearance, view, labelBox,
+          );
       }) : undefined;
       if (labelY !== undefined) {
         context.strokeText(city.mapLabel, labelX, labelY);
@@ -1030,7 +1138,12 @@ export function HanMapCanvas({
     return new Map([...canonicalMarkerPositions].map(([cityId, placement]) => {
       const anchor = placement.provinceId === undefined ? undefined : anchors[placement.provinceId];
       return [cityId, anchor
-        ? { col: anchor.col, row: anchor.row, provinceId: placement.provinceId }
+        ? {
+          col: anchor.col,
+          row: anchor.row,
+          provinceId: placement.provinceId,
+          visualClearance: anchor.clearance,
+        }
         : placement];
     }));
   }, [canonicalMarkerPositions, cities, provinceMap]);

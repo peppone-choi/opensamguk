@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import {
     buildIsoScene, cellToScreen, cityFallbackHitBox, cityLabelMetrics, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
     cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
-    labelZoomFor, maxScaleForDpr, provinceAtScreenPoint, screenBoxInsideProvince, seatLabel,
+    labelZoomFor, maxScaleForDpr, overviewCityVisualBox, provinceAtScreenPoint,
+    screenBoxInsideProvince, screenBoxInsideVisualClearance, seatLabel,
     terrainColorFor, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
     type CountyAdministrativeIndex, type HanTiles, type IsoSceneOptions, type ProvinceIdentityMap,
 } from '@opensamguk/ui';
@@ -23,6 +24,20 @@ describe('비플레이 지형', () => {
 });
 
 describe('지도 아이콘 배율과 앵커', () => {
+    it('미리 계산한 여유 거리로 화면 box 포함 여부를 상수 시간에 판정한다', () => {
+        const view = { scale: 0.5, ox: 100, oy: 80 };
+        const [x, y] = cellToScreen(20, 30, view);
+        const overview = overviewCityVisualBox(x, y, view.scale, 1, 0);
+
+        expect(screenBoxInsideVisualClearance(20, 30, 0, view, overview)).toBe(true);
+        expect(screenBoxInsideVisualClearance(20, 30, 0, view, {
+            left: x - view.scale,
+            top: y - view.scale / 2,
+            right: x + view.scale,
+            bottom: y + view.scale / 2,
+        })).toBe(false);
+    });
+
     it('바다에 놓인 도시 기준점은 가장 가까운 같은 군의 육지 셀로 옮긴다', () => {
         const provinces = new Int16Array(15).fill(-1);
         provinces[1 * 5 + 2] = 0; // 더 가까워도 다른 군인 육지

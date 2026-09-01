@@ -6,6 +6,7 @@ import {
   cityFallbackHitBox,
   cityMarkerRadius,
   initialView,
+  overviewCityVisualBox,
   provinceAtScreenPoint,
   screenToCell,
   type IsoView,
@@ -21,6 +22,7 @@ interface CanvasRecord {
   putImages: Uint8ClampedArray[];
   strokes: string[];
   strokeWidths: { style: string; width: number }[];
+  strokeJoins: string[];
   fillRects: string[];
   fillRectCalls: { style: string; values: number[] }[];
   fills: string[];
@@ -32,6 +34,8 @@ interface CanvasRecord {
   clips: number;
   fillTexts: string[];
   fillTextCalls: { value: string; font: string; lineWidth: number; x: number; y: number }[];
+  arcs: number[][];
+  strokeRects: { style: string; values: number[] }[];
 }
 
 const records = new Map<HTMLCanvasElement, CanvasRecord>();
@@ -66,6 +70,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   const putImages: Uint8ClampedArray[] = [];
   const strokes: string[] = [];
   const strokeWidths: { style: string; width: number }[] = [];
+  const strokeJoins: string[] = [];
   const fillRects: string[] = [];
   const fillRectCalls: { style: string; values: number[] }[] = [];
   const fills: string[] = [];
@@ -77,6 +82,8 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   let clips = 0;
   const fillTexts: string[] = [];
   const fillTextCalls: { value: string; font: string; lineWidth: number; x: number; y: number }[] = [];
+  const arcs: number[][] = [];
+  const strokeRects: { style: string; values: number[] }[] = [];
   let globalAlpha = 1;
   const gradient = { addColorStop: vi.fn() };
   const context = {
@@ -112,6 +119,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
       const style = String(context.strokeStyle);
       strokes.push(style);
       strokeWidths.push({ style, width: context.lineWidth });
+      strokeJoins.push(context.lineJoin);
       operations.push(`stroke:${style}`);
     },
     fill: () => {
@@ -124,8 +132,8 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
       fillRectCalls.push({ style, values });
       operations.push(`fillRect:${style}`);
     },
-    strokeRect: vi.fn(),
-    arc: vi.fn(),
+    strokeRect: (...values: number[]) => strokeRects.push({ style: String(context.strokeStyle), values }),
+    arc: (...values: number[]) => arcs.push(values),
     closePath: vi.fn(),
     createRadialGradient: () => {
       radialGradients.push(gradient);
@@ -141,6 +149,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     strokeStyle: '',
     fillStyle: '',
     lineWidth: 1,
+    lineJoin: 'miter',
     font: '',
     textAlign: 'start',
     textBaseline: 'alphabetic',
@@ -160,6 +169,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     putImages,
     strokes,
     strokeWidths,
+    strokeJoins,
     fillRects,
     fillRectCalls,
     fills,
@@ -171,6 +181,8 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     get clips() { return clips; },
     fillTexts,
     fillTextCalls,
+    arcs,
+    strokeRects,
   };
   records.set(canvas, record);
   return record;
@@ -620,7 +632,9 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(Number.parseFloat(label!.font.match(/([\d.]+)px/)![1]) / 2).toBeGreaterThanOrEqual(11);
   });
 
-  it('uses a contained overview glyph when even the 16px detailed marker cannot fit', () => {
+  it('uses a contained overview glyph with all state channels when even the 16px marker cannot fit', () => {
+    const views: IsoView[] = [];
+    const onCityActivate = vi.fn();
     const provinceMap: ProvinceIdentityMap = {
       width: 1,
       height: 1,
@@ -646,7 +660,11 @@ describe('shared HanMapCanvas viewport interaction', () => {
           cities: [{ id: '1', name: '소현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
         }}
         provinceMap={provinceMap}
-        cities={[{ ...CHE_OVERLAYS_FIXTURE[0], id: 1, x: 0, y: 0, commanderyName: 'A군' }]}
+        cities={[{ ...CHE_OVERLAYS_FIXTURE[0], id: 1, x: 0, y: 0, commanderyName: 'A군', supply: false }]}
+        currentCityId={1}
+        selectedCityId={1}
+        onCityActivate={onCityActivate}
+        onViewChange={(view) => views.push({ ...view })}
         sourceSize={{ width: 1, height: 1 }}
       />,
     );
@@ -655,7 +673,27 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const main = recordFor(canvas);
     expect(main.fillRects).not.toContain('#8b8172');
     expect(main.fills).toContain('#8b8172');
+    expect(main.fills).toContain('#ffd84f');
+    expect(main.fills).toContain('#b72f2f');
+    expect(main.strokes).toContain('#ffffff');
+    expect(main.strokeRects.some(({ style }) => style === '#ffd84f')).toBe(true);
+    expect(main.strokeJoins).toContain('bevel');
     expect(main.clips).toBe(0);
+
+    const view = views.at(-1)!;
+    const [x, y] = cellToScreen(0, 0, view);
+    const box = overviewCityVisualBox(x, y, view.scale, 2, 0);
+    const hitX = box.right - (box.right - box.left) * 0.05;
+    fireEvent.pointerDown(canvas, {
+      clientX: hitX / 2, clientY: y / 2, pointerId: 1, pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(canvas, {
+      clientX: hitX / 2, clientY: y / 2, pointerId: 1, pointerType: 'mouse',
+    });
+    expect(onCityActivate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1 }),
+      { pointerType: 'mouse' },
+    );
   });
 
   it('changes the view for zoom controls and pointer panning', () => {
