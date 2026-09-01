@@ -883,9 +883,17 @@ def _tile_context(tiles: dict) -> dict:
                 raise ValueError("a city may link to only one canonical province")
             linked_city_indices.add(city_index)
             province_city_indices[index] = city_index
-    province_land_counts = Counter(value for value in owner if value >= 0)
-    if any(index >= len(province_records) for index in province_land_counts):
+    if any(value < -1 or value >= len(province_records) for value in owner):
         raise ValueError("owner references a missing province record")
+    for province_index, city_index in province_city_indices.items():
+        city = cities[city_index]
+        coordinate_owner = owner[city["row"] * cols + city["col"]]
+        if coordinate_owner != province_index:
+            raise ValueError(
+                f'province {province_records[province_index]["id"]} city coordinate '
+                "does not belong to its canonical province"
+            )
+    province_land_counts = Counter(value for value in owner if value >= 0)
     if set(province_land_counts) != set(range(len(province_records))):
         raise ValueError("every province record must own at least one land cell")
     if any(value < -1 or value >= len(parent_regions) for value in parent_owner):

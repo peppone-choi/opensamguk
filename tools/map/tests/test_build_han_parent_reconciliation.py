@@ -85,6 +85,28 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate province record id"):
             module.build_ledger(documents, input_records)
 
+    def test_linked_city_coordinate_must_belong_to_its_canonical_province(self):
+        module = load_module()
+        documents, input_records = module.load_inputs()
+        provinces = documents["data/map/han-tiles.json"]["provinceRecords"]
+        first = next(row for row in provinces if row["id"] == "200012")
+        second = next(row for row in provinces if row["id"] == "87073")
+        first["cityIndex"], second["cityIndex"] = second["cityIndex"], first["cityIndex"]
+
+        with self.assertRaisesRegex(ValueError, "city coordinate.*canonical province"):
+            module.build_ledger(documents, input_records)
+
+    def test_owner_rejects_negative_values_outside_the_closed_namespace(self):
+        module = load_module()
+        documents, input_records = module.load_inputs()
+        tiles = documents["data/map/han-tiles.json"]
+        owner = expand_rle(tiles["owner"])
+        owner[next(index for index, value in enumerate(owner) if value >= 0)] = -2
+        tiles["owner"] = encode_rle(owner)
+
+        with self.assertRaisesRegex(ValueError, "owner references a missing province record"):
+            module.build_ledger(documents, input_records)
+
 
 @unittest.skipUnless(MODULE_PATH.exists(), "generator is intentionally absent during RED")
 class HanParentReconciliationTest(unittest.TestCase):
