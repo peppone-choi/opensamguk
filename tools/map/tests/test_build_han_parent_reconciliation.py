@@ -59,14 +59,39 @@ class GeneratorPresenceTest(unittest.TestCase):
         self.assertIn("--check", result.stdout)
 
 
+class HanParentReconciliationProvinceV2Test(unittest.TestCase):
+    def test_current_v2_artifact_regenerates_from_province_parent_links(self):
+        """Treating owner values as city indexes must fail this province-v2 contract."""
+        module = load_module()
+        documents, input_records = module.load_inputs()
+
+        ledger = module.build_ledger(documents, input_records)
+
+        self.assertEqual(1_524, ledger["summary"]["provinceRecordCount"])
+        self.assertEqual(998, ledger["summary"]["cityLinkedProvinceCount"])
+        self.assertEqual(526, ledger["summary"]["directTerritoryProvinceCount"])
+        self.assertEqual(227_349, ledger["summary"]["landCellCount"])
+        self.assertEqual(120_193, ledger["summary"]["directTerritoryCellCount"])
+        self.assertEqual(781, ledger["summary"]["exactApprovedRowCount"])
+        self.assertEqual([], ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
+
+    def test_duplicate_stable_province_id_fails_closed(self):
+        module = load_module()
+        documents, input_records = module.load_inputs()
+        documents["data/map/han-tiles.json"]["provinceRecords"][1]["id"] = documents[
+            "data/map/han-tiles.json"
+        ]["provinceRecords"][0]["id"]
+
+        with self.assertRaisesRegex(ValueError, "duplicate province record id"):
+            module.build_ledger(documents, input_records)
+
+
 @unittest.skipUnless(MODULE_PATH.exists(), "generator is intentionally absent during RED")
 class HanParentReconciliationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.module = load_module()
         cls.documents, cls.input_records = cls.module.load_inputs()
-        if "provinceRecords" in cls.documents["data/map/han-tiles.json"]:
-            raise unittest.SkipTest("legacy city-owner reconciliation is pinned to the pre-v2 tile artifact")
         cls.ledger = cls.module.build_ledger(cls.documents, cls.input_records)
         cls.rows = {row["cityId"]: row for row in cls.ledger["rows"]}
 
@@ -334,7 +359,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             if row["decision"] == "EXACT_APPROVED"
         }
 
-        self.assertEqual(779, len(expected))
+        self.assertEqual(781, len(expected))
         self.assertEqual(expected, actual)
 
     def test_contract_versions_ids_years_and_closed_enums_fail_closed(self):
@@ -427,7 +452,9 @@ class HanParentReconciliationTest(unittest.TestCase):
             with self.subTest(path=path):
                 documents = copy.deepcopy(self.documents)
                 replace_nested(documents[path], keys, 15)
-                with self.assertRaisesRegex(ValueError, "scenario count contract"):
+                with self.assertRaisesRegex(
+                    ValueError, "scenario count contract|validation contract scenario count"
+                ):
                     self.module.build_ledger(documents, self.input_records)
 
     def test_every_embedded_hash_edge_between_pinned_inputs_fails_closed_on_drift(self):
@@ -460,65 +487,70 @@ class HanParentReconciliationTest(unittest.TestCase):
 
         self.assertEqual(1_138, len(self.ledger["rows"]))
         self.assertEqual(1_138, len(self.rows))
-        self.assertEqual(332_914, sum(row["cellCount"] for row in self.ledger["rows"]))
+        self.assertEqual(107_156, sum(row["cellCount"] for row in self.ledger["rows"]))
+        self.assertEqual(227_349, summary["landCellCount"])
+        self.assertEqual(
+            summary["landCellCount"],
+            summary["cityLinkedCellCount"] + summary["directTerritoryCellCount"],
+        )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 779,
-                "PROPOSED_GEOMETRIC": 278,
-                "BLOCKED_DIRECT_TERRITORY_REVIEW": 41,
+                "EXACT_APPROVED": 781,
+                "PROPOSED_GEOMETRIC": 284,
+                "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
             },
             dict(decisions),
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 199_874,
-                "PROPOSED_GEOMETRIC": 65_983,
-                "BLOCKED_DIRECT_TERRITORY_REVIEW": 20_987,
-                "BLOCKED_EXTERNAL_POLITY_REVIEW": 46_070,
+                "EXACT_APPROVED": 80_910,
+                "PROPOSED_GEOMETRIC": 18_204,
+                "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_711,
+                "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
             },
             dict(decision_cells),
         )
-        self.assertEqual(359, summary["unresolvedRowCount"])
-        self.assertEqual(133_040, summary["unresolvedCellCount"])
+        self.assertEqual(357, summary["unresolvedRowCount"])
+        self.assertEqual(26_246, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 162, "cellCount": 45_828},
+            {"rowCount": 194, "cellCount": 10_161},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 116, "cellCount": 20_155},
+            {"rowCount": 90, "cellCount": 8_043},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
-    def test_geometry_retains_all_five_exact_distance_ties(self):
+    def test_geometry_retains_all_three_v2_parent_distance_ties(self):
         tied = {
             row["cityId"]: row
             for row in self.ledger["rows"]
             if row.get("geometryDiagnostic", {}).get("distanceTie")
         }
 
-        self.assertEqual({"210872", "70647", "41305", "32054", "X008"}, set(tied))
-        self.assertEqual(349, sum(row["cellCount"] for row in tied.values()))
+        self.assertEqual({"210170", "45113", "87625"}, set(tied))
+        self.assertEqual(69, sum(row["cellCount"] for row in tied.values()))
         self.assertEqual(
-            {"87111", "87128"},
+            {"95318", "95341"},
             {
                 candidate["anchorCityId"]
-                for candidate in tied["X008"]["geometryDiagnostic"]["nearestCandidates"]
+                for candidate in tied["210170"]["geometryDiagnostic"]["nearestCandidates"]
             },
         )
         self.assertEqual(
-            [20, 20],
+            [2, 2],
             [
                 candidate["squaredGridDistance"]
-                for candidate in tied["X008"]["geometryDiagnostic"]["nearestCandidates"]
+                for candidate in tied["210170"]["geometryDiagnostic"]["nearestCandidates"]
             ],
         )
         self.assertEqual(
-            {"rowCount": 273, "cellCount": 65_634},
+            {"rowCount": 281, "cellCount": 18_135},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(
-            {"rowCount": 5, "cellCount": 349},
+            {"rowCount": 3, "cellCount": 69},
             self.ledger["summary"]["geometryDiagnostics"]["distanceTies"],
         )
         for row in self.ledger["rows"]:
@@ -534,21 +566,28 @@ class HanParentReconciliationTest(unittest.TestCase):
                 ),
             )
 
-    def test_cross_jun_footprints_and_coordinate_majority_mismatches_are_surfaced(self):
+    def test_v2_footprints_follow_one_parent_and_surface_unlinked_seats(self):
         cross_jun = [row for row in self.ledger["rows"] if row["footprintDiagnostic"]["crossJun"]]
         mismatches = [
             row
             for row in self.ledger["rows"]
-            if not row["footprintDiagnostic"]["coordinateMatchesFootprintMajority"]
+            if row["footprintDiagnostic"]["coordinateMatchesFootprintMajority"] is False
+        ]
+        unlinked = [
+            row
+            for row in self.ledger["rows"]
+            if not row["footprintDiagnostic"]["hasProvinceFootprint"]
         ]
 
-        self.assertEqual(99, len(cross_jun))
-        self.assertEqual(
-            {"95125", "95280", "45796", "44320", "41374", "211231", "210791"},
-            {row["cityId"] for row in mismatches},
+        self.assertEqual([], cross_jun)
+        self.assertEqual([], mismatches)
+        self.assertEqual(140, len(unlinked))
+        self.assertTrue(
+            all(
+                row["footprintDiagnostic"]["coordinateMatchesFootprintMajority"] is None
+                for row in unlinked
+            )
         )
-        self.assertEqual(7, len(mismatches))
-        self.assertTrue(all(row["footprintDiagnostic"]["diagnosticOnly"] for row in cross_jun))
 
     def test_non_exact_rows_never_carry_approved_parent_or_forbidden_approval_inputs(self):
         forbidden = {
@@ -571,22 +610,8 @@ class HanParentReconciliationTest(unittest.TestCase):
             self.assertNotIn("legacyCityId", row)
             self.assertNotIn("numericCityId", row)
 
-    def test_two_approved_physical_ids_absent_from_tiles_are_preserved_separately(self):
-        self.assertEqual(
-            [
-                {
-                    "administrativeUnitId": "hhs:110:清河國:003",
-                    "physicalPlaceRef": "chgis:v6:cnty:85168",
-                    "terminalPhysicalPlaceId": "85168",
-                },
-                {
-                    "administrativeUnitId": "hhs:111:東海郡:009",
-                    "physicalPlaceRef": "chgis:v6:cnty:42901",
-                    "terminalPhysicalPlaceId": "42901",
-                },
-            ],
-            self.ledger["approvedPhysicalPlaceIdsAbsentFromTiles"],
-        )
+    def test_every_approved_physical_id_is_present_in_v2_tiles(self):
+        self.assertEqual([], self.ledger["approvedPhysicalPlaceIdsAbsentFromTiles"])
 
     def test_external_pending_and_disputed_candidates_remain_blocked(self):
         rows = [
@@ -607,14 +632,14 @@ class HanParentReconciliationTest(unittest.TestCase):
         ]
 
         self.assertEqual(40, len(rows))
-        self.assertEqual({"211791", "87125"}, without_exact_external_candidate)
+        self.assertEqual({"87125"}, without_exact_external_candidate)
         self.assertTrue(disputed)
         self.assertTrue(
             all(row["externalReview"]["reviewState"] == "PENDING_EXTERNAL_POLITY_REVIEW" for row in rows)
         )
         self.assertTrue(all("approvedParentAdministrativeUnitId" not in row for row in rows))
 
-    def test_direct_territory_is_rejected_under_six_already_sourced_hhs_groups(self):
+    def test_direct_territory_is_rejected_under_five_already_sourced_hhs_groups(self):
         rows = [
             row
             for row in self.ledger["rows"]
@@ -628,7 +653,7 @@ class HanParentReconciliationTest(unittest.TestCase):
         ]
 
         self.assertEqual(
-            {"廣漢屬國", "張掖屬國", "上郡", "西河郡", "定襄郡", "朔方郡"},
+            {"廣漢屬國", "張掖屬國", "西河郡", "定襄郡", "朔方郡"},
             {row["seatJunDiagnostic"]["nameCh"] for row in rejected},
         )
         self.assertTrue(
@@ -636,7 +661,7 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertTrue(all("approvedParentAdministrativeUnitId" not in row for row in rows))
         self.assertEqual(
-            {"rejectedSourcedGroupJunCount": 6, "pendingCandidateJunCount": 26},
+            {"rejectedSourcedGroupJunCount": 5, "pendingCandidateJunCount": 17},
             self.ledger["summary"]["directTerritoryReview"],
         )
 
@@ -666,13 +691,13 @@ class HanParentReconciliationTest(unittest.TestCase):
         documents = copy.deepcopy(self.documents)
         tiles = documents["data/map/han-tiles.json"]
         old_cities = tiles["cities"]
-        old_owner = expand_rle(tiles["owner"])
         reordered_cities = list(reversed(old_cities))
         new_index_by_id = {str(city["id"]): index for index, city in enumerate(reordered_cities)}
         tiles["cities"] = reordered_cities
-        tiles["owner"] = encode_rle(
-            [-1 if index < 0 else new_index_by_id[str(old_cities[index]["id"])] for index in old_owner]
-        )
+        for province in tiles["provinceRecords"]:
+            old_index = province.get("cityIndex")
+            if old_index is not None:
+                province["cityIndex"] = new_index_by_id[str(old_cities[old_index]["id"])]
 
         for path, key in [
             ("data/map/external-places.json", "places"),

@@ -814,14 +814,24 @@ def _tile_context(tiles: dict) -> dict:
     meta = tiles.get("_meta")
     cities = tiles.get("cities")
     juns = tiles.get("juns")
-    if not isinstance(meta, dict) or not isinstance(cities, list) or not isinstance(juns, list):
-        raise ValueError("han tiles must contain _meta, cities, and juns")
+    province_records = tiles.get("provinceRecords")
+    parent_regions = tiles.get("parentRegions")
+    if (
+        not isinstance(meta, dict)
+        or not isinstance(cities, list)
+        or not isinstance(juns, list)
+        or not isinstance(province_records, list)
+        or not isinstance(parent_regions, list)
+    ):
+        raise ValueError(
+            "han tiles must contain _meta, cities, juns, provinceRecords, and parentRegions"
+        )
     cols, rows = meta.get("cols"), meta.get("rows")
     if type(cols) is not int or type(rows) is not int or cols <= 0 or rows <= 0:
         raise ValueError("han tile dimensions must be positive integers")
     cells = cols * rows
     owner = expand_rle(tiles.get("owner"), cells, "owner")
-    seat_owner = expand_rle(tiles.get("seatOwner"), cells, "seatOwner")
+    parent_owner = expand_rle(tiles.get("parentOwner"), cells, "parentOwner")
     city_by_id = {}
     city_index_by_id = {}
     for index, city in enumerate(cities):
@@ -835,29 +845,81 @@ def _tile_context(tiles: dict) -> dict:
             raise ValueError(f"city {city_id} has an invalid coordinate")
         city_by_id[city_id] = city
         city_index_by_id[city_id] = index
-    land_counts = Counter(value for value in owner if value >= 0)
-    if any(index >= len(cities) for index in land_counts):
-        raise ValueError("owner references a missing city")
-    if set(land_counts) != set(range(len(cities))):
-        raise ValueError("every city must own at least one land cell")
-    if any(value < -1 or value >= len(juns) for value in seat_owner):
-        raise ValueError("seatOwner references a missing jun")
-    if any((owner_value == -1) != (seat_value == -1) for owner_value, seat_value in zip(owner, seat_owner)):
-        raise ValueError("owner and seatOwner coverage disagree")
+    if len(parent_regions) != len(juns):
+        raise ValueError("parentRegions and juns must preserve the same parent index namespace")
+    parent_index_by_id = {}
+    for index, parent in enumerate(parent_regions):
+        if not isinstance(parent, dict) or not isinstance(parent.get("id"), str):
+            raise ValueError("every parent region requires a stable string id")
+        if parent["id"] in parent_index_by_id:
+            raise ValueError(f'duplicate parent region id: {parent["id"]}')
+        if not isinstance(juns[index], dict) or parent.get("nameCh") != juns[index].get("nameCh"):
+            raise ValueError("parentRegions and juns must preserve matching parent identities")
+        parent_index_by_id[parent["id"]] = index
+    province_city_indices = {}
+    province_parent_indices = {}
+    linked_city_indices = set()
+    direct_territory_indices = set()
+    seen_province_ids = set()
+    for index, province in enumerate(province_records):
+        if not isinstance(province, dict) or not isinstance(province.get("id"), str):
+            raise ValueError("every province record requires a stable string id")
+        if province["id"] in seen_province_ids:
+            raise ValueError(f'duplicate province record id: {province["id"]}')
+        seen_province_ids.add(province["id"])
+        parent_id = province.get("parentRegionId")
+        if parent_id not in parent_index_by_id:
+            raise ValueError(f'province {province["id"]} references a missing parent region')
+        province_parent_indices[index] = parent_index_by_id[parent_id]
+        city_index = province.get("cityIndex")
+        if city_index is None:
+            if province.get("kind") != "DIRECT_TERRITORY":
+                raise ValueError("only DIRECT_TERRITORY provinces may omit cityIndex")
+            direct_territory_indices.add(index)
+        elif type(city_index) is not int or not 0 <= city_index < len(cities):
+            raise ValueError(f'province {province["id"]} has an invalid cityIndex')
+        else:
+            if city_index in linked_city_indices:
+                raise ValueError("a city may link to only one canonical province")
+            linked_city_indices.add(city_index)
+            province_city_indices[index] = city_index
+    province_land_counts = Counter(value for value in owner if value >= 0)
+    if any(index >= len(province_records) for index in province_land_counts):
+        raise ValueError("owner references a missing province record")
+    if set(province_land_counts) != set(range(len(province_records))):
+        raise ValueError("every province record must own at least one land cell")
+    if any(value < -1 or value >= len(parent_regions) for value in parent_owner):
+        raise ValueError("parentOwner references a missing parent region")
+    if any(
+        (province_index == -1) != (parent_index == -1)
+        for province_index, parent_index in zip(owner, parent_owner)
+    ):
+        raise ValueError("owner and parentOwner coverage disagree")
+    for province_index, parent_index in zip(owner, parent_owner):
+        if province_index >= 0 and province_parent_indices[province_index] != parent_index:
+            raise ValueError("provinceRecords parentRegionId disagrees with parentOwner")
+    land_counts = Counter()
     footprints = defaultdict(Counter)
-    for owner_index, jun_index in zip(owner, seat_owner):
-        if owner_index >= 0:
-            footprints[owner_index][jun_index] += 1
+    for province_index, parent_index in zip(owner, parent_owner):
+        city_index = province_city_indices.get(province_index)
+        if city_index is not None:
+            land_counts[city_index] += 1
+            footprints[city_index][parent_index] += 1
     return {
         "cols": cols,
         "rows": rows,
         "cities": cities,
         "juns": juns,
+        "provinceRecords": province_records,
+        "parentRegions": parent_regions,
         "owner": owner,
-        "seatOwner": seat_owner,
+        "parentOwner": parent_owner,
         "cityById": city_by_id,
         "cityIndexById": city_index_by_id,
         "landCounts": land_counts,
+        "provinceLandCounts": province_land_counts,
+        "linkedCityIndices": linked_city_indices,
+        "directTerritoryIndices": direct_territory_indices,
         "footprints": footprints,
     }
 
@@ -901,7 +963,7 @@ def _jun_diagnostics(tiles: dict, selections: dict) -> tuple[dict, dict]:
     anchors_by_jun = defaultdict(list)
     for city_id, selection in selections["matchedByCityId"].items():
         city = tiles["cityById"][city_id]
-        jun_index = tiles["seatOwner"][city["row"] * tiles["cols"] + city["col"]]
+        jun_index = tiles["parentOwner"][city["row"] * tiles["cols"] + city["col"]]
         if jun_index < 0:
             raise ValueError(f"approved city {city_id} coordinate is not on land")
         parent_ref = selection.get("parentRef")
@@ -978,7 +1040,7 @@ def _external_context(external: dict, candidates: dict) -> dict:
 
 
 def _seat_jun_diagnostic(city: dict, tiles: dict, groups_by_jun: dict) -> tuple[int, dict]:
-    jun_index = tiles["seatOwner"][city["row"] * tiles["cols"] + city["col"]]
+    jun_index = tiles["parentOwner"][city["row"] * tiles["cols"] + city["col"]]
     if jun_index < 0:
         raise ValueError(f'city {city["id"]} coordinate is not on political land')
     jun = tiles["juns"][jun_index]
@@ -994,6 +1056,15 @@ def _seat_jun_diagnostic(city: dict, tiles: dict, groups_by_jun: dict) -> tuple[
 
 def _footprint_diagnostic(city_index: int, coordinate_jun: int, tiles: dict) -> dict:
     distribution = tiles["footprints"][city_index]
+    if not distribution:
+        return {
+            "diagnosticOnly": True,
+            "hasProvinceFootprint": False,
+            "crossJun": False,
+            "coordinateMatchesFootprintMajority": None,
+            "majorityJunArrayIndices": [],
+            "junDistribution": [],
+        }
     maximum = max(distribution.values())
     majority = sorted(index for index, count in distribution.items() if count == maximum)
     rows = []
@@ -1009,6 +1080,7 @@ def _footprint_diagnostic(city_index: int, coordinate_jun: int, tiles: dict) -> 
     rows.sort(key=lambda row: (str(row["nameCh"]), row["junArrayIndex"]))
     return {
         "diagnosticOnly": True,
+        "hasProvinceFootprint": True,
         "crossJun": len(distribution) > 1,
         "coordinateMatchesFootprintMajority": coordinate_jun in majority,
         "majorityJunArrayIndices": majority,
@@ -1094,7 +1166,9 @@ def _direct_territory_jun_reviews(
     return reviews
 
 
-def _summary(rows: list[dict], absent: list[dict], direct_jun_reviews: list[dict]) -> dict:
+def _summary(
+    rows: list[dict], absent: list[dict], direct_jun_reviews: list[dict], tiles: dict
+) -> dict:
     decision_counts = Counter(row["decision"] for row in rows)
     decision_cells = Counter()
     for row in rows:
@@ -1114,9 +1188,18 @@ def _summary(rows: list[dict], absent: list[dict], direct_jun_reviews: list[dict
         for row in direct_jun_reviews
         if row["reviewState"] == "PENDING_DIRECT_TERRITORY_REVIEW"
     ]
+    city_linked_cells = sum(row["cellCount"] for row in rows)
+    direct_territory_cells = sum(
+        tiles["provinceLandCounts"][index] for index in tiles["directTerritoryIndices"]
+    )
     return {
         "landOwnerRowCount": len(rows),
-        "landCellCount": sum(row["cellCount"] for row in rows),
+        "provinceRecordCount": len(tiles["provinceRecords"]),
+        "cityLinkedProvinceCount": len(tiles["linkedCityIndices"]),
+        "directTerritoryProvinceCount": len(tiles["directTerritoryIndices"]),
+        "landCellCount": sum(tiles["provinceLandCounts"].values()),
+        "cityLinkedCellCount": city_linked_cells,
+        "directTerritoryCellCount": direct_territory_cells,
         "decisionRowCounts": dict(sorted(decision_counts.items())),
         "decisionCellCounts": dict(sorted(decision_cells.items())),
         "exactApprovedRowCount": decision_counts["EXACT_APPROVED"],
@@ -1134,9 +1217,12 @@ def _summary(rows: list[dict], absent: list[dict], direct_jun_reviews: list[dict
             "rejectedSourcedGroupJunCount": len(rejected_juns),
             "pendingCandidateJunCount": len(pending_juns),
         },
-        "crossSeatOwnerJunFootprintCount": sum(row["footprintDiagnostic"]["crossJun"] for row in rows),
+        "crossParentRegionFootprintCount": sum(
+            row["footprintDiagnostic"]["crossJun"] for row in rows
+        ),
         "coordinateFootprintMajorityMismatchCount": sum(
-            not row["footprintDiagnostic"]["coordinateMatchesFootprintMajority"] for row in rows
+            row["footprintDiagnostic"]["coordinateMatchesFootprintMajority"] is False
+            for row in rows
         ),
     }
 
@@ -1144,43 +1230,45 @@ def _summary(rows: list[dict], absent: list[dict], direct_jun_reviews: list[dict
 def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
     expected = {
         "landOwnerRowCount": 1_138,
-        "landCellCount": 332_914,
-        "exactApprovedRowCount": 779,
-        "exactApprovedCellCount": 199_874,
-        "approvedPhysicalPlaceIdAbsentCount": 2,
-        "unresolvedRowCount": 359,
-        "unresolvedCellCount": 133_040,
-        "crossSeatOwnerJunFootprintCount": 99,
-        "coordinateFootprintMajorityMismatchCount": 7,
+        "provinceRecordCount": 1_524,
+        "cityLinkedProvinceCount": 998,
+        "directTerritoryProvinceCount": 526,
+        "landCellCount": 227_349,
+        "cityLinkedCellCount": 107_156,
+        "directTerritoryCellCount": 120_193,
+        "exactApprovedRowCount": 781,
+        "exactApprovedCellCount": 80_910,
+        "approvedPhysicalPlaceIdAbsentCount": 0,
+        "unresolvedRowCount": 357,
+        "unresolvedCellCount": 26_246,
+        "crossParentRegionFootprintCount": 0,
+        "coordinateFootprintMajorityMismatchCount": 0,
     }
     for key, value in expected.items():
         if summary.get(key) != value:
             raise ValueError(f"locked reconciliation count changed: {key}={summary.get(key)} expected {value}")
     geometry = summary["geometryDiagnostics"]
     if geometry != {
-        "singleGroupJun": {"rowCount": 162, "cellCount": 45_828},
-        "multiGroupJun": {"rowCount": 116, "cellCount": 20_155},
-        "uniqueNearest": {"rowCount": 273, "cellCount": 65_634},
-        "distanceTies": {"rowCount": 5, "cellCount": 349},
+        "singleGroupJun": {"rowCount": 194, "cellCount": 10_161},
+        "multiGroupJun": {"rowCount": 90, "cellCount": 8_043},
+        "uniqueNearest": {"rowCount": 281, "cellCount": 18_135},
+        "distanceTies": {"rowCount": 3, "cellCount": 69},
     }:
         raise ValueError("locked geometry reconciliation counts changed")
-    if summary["decisionRowCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 41:
+    if summary["decisionRowCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 33:
         raise ValueError("locked direct-territory blocker row count changed")
-    if summary["decisionCellCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 20_987:
+    if summary["decisionCellCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 1_711:
         raise ValueError("locked direct-territory blocker cell count changed")
     if summary["decisionRowCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW") != 40:
         raise ValueError("locked external-polity blocker row count changed")
-    if summary["decisionCellCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW") != 46_070:
+    if summary["decisionCellCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW") != 6_331:
         raise ValueError("locked external-polity blocker cell count changed")
     if summary["directTerritoryReview"] != {
-        "rejectedSourcedGroupJunCount": 6,
-        "pendingCandidateJunCount": 26,
+        "rejectedSourcedGroupJunCount": 5,
+        "pendingCandidateJunCount": 17,
     }:
         raise ValueError("locked direct-territory review split changed")
-    expected_absent = [
-        ("hhs:110:清河國:003", "85168"),
-        ("hhs:111:東海郡:009", "42901"),
-    ]
+    expected_absent = []
     if [(row["administrativeUnitId"], row["terminalPhysicalPlaceId"]) for row in absent] != expected_absent:
         raise ValueError("approved physical-place IDs absent from tiles changed")
 
@@ -1226,7 +1314,7 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
         footprint = _footprint_diagnostic(city_index, jun_index, tiles)
         row = {
             "cityId": city_id,
-            "cellCount": tiles["landCounts"][city_index],
+            "cellCount": tiles["landCounts"].get(city_index, 0),
             "seatJunDiagnostic": seat_jun,
             "footprintDiagnostic": footprint,
         }
@@ -1312,7 +1400,7 @@ def build_ledger(documents: dict[str, dict], input_records: dict[str, dict]) -> 
                     }
                 )
         rows.append(row)
-    summary = _summary(rows, selections["absent"], direct_jun_reviews)
+    summary = _summary(rows, selections["absent"], direct_jun_reviews, tiles)
     _assert_locked_contract(summary, selections["absent"])
     return {
         "schemaVersion": 1,
