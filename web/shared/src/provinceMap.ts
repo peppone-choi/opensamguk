@@ -56,6 +56,10 @@ export interface ProvincePlacement {
   provinceId: number;
 }
 
+export interface ProvinceVisualAnchor extends ProvincePlacement {
+  clearance: number;
+}
+
 export interface ProvinceRecordDto {
   id: string;
   displayName: string;
@@ -442,6 +446,92 @@ function nearestSample(samples: readonly CitySample[], centerCol: number, center
     }
   }
   return selected;
+}
+
+const VISUAL_ANCHOR_NEIGHBORS = [
+  [-1, -1], [0, -1], [1, -1],
+  [-1, 0], [1, 0],
+  [-1, 1], [0, 1], [1, 1],
+] as const;
+
+/**
+ * Find a deterministic deep-interior display point for each province.
+ * These points are presentation-only and never replace the canonical seat used
+ * by ownership, adjacency, commands, or replay.
+ */
+export function buildProvinceVisualAnchors(
+  map: ProvinceIdentityMap,
+  preferredByProvince: ReadonlyMap<number, { col: number; row: number }> = new Map(),
+): readonly (ProvinceVisualAnchor | undefined)[] {
+  const distance = new Int16Array(map.provinces.length);
+  distance.fill(-1);
+  const queue = new Int32Array(map.provinces.length);
+  let head = 0;
+  let tail = 0;
+  let maximumProvinceId = -1;
+
+  for (let index = 0; index < map.provinces.length; index += 1) {
+    const provinceId = map.provinces[index];
+    if (provinceId < 0) continue;
+    maximumProvinceId = Math.max(maximumProvinceId, provinceId);
+    const col = index % map.width;
+    const row = Math.floor(index / map.width);
+    const boundary = VISUAL_ANCHOR_NEIGHBORS.some(([deltaCol, deltaRow]) => {
+      const candidateCol = col + deltaCol;
+      const candidateRow = row + deltaRow;
+      return candidateCol < 0 || candidateRow < 0
+        || candidateCol >= map.width || candidateRow >= map.height
+        || map.provinces[candidateRow * map.width + candidateCol] !== provinceId;
+    });
+    if (boundary) {
+      distance[index] = 0;
+      queue[tail] = index;
+      tail += 1;
+    }
+  }
+
+  while (head < tail) {
+    const index = queue[head];
+    head += 1;
+    const provinceId = map.provinces[index];
+    const col = index % map.width;
+    const row = Math.floor(index / map.width);
+    for (const [deltaCol, deltaRow] of VISUAL_ANCHOR_NEIGHBORS) {
+      const candidateCol = col + deltaCol;
+      const candidateRow = row + deltaRow;
+      if (candidateCol < 0 || candidateRow < 0
+        || candidateCol >= map.width || candidateRow >= map.height) continue;
+      const candidateIndex = candidateRow * map.width + candidateCol;
+      if (map.provinces[candidateIndex] !== provinceId || distance[candidateIndex] >= 0) continue;
+      distance[candidateIndex] = distance[index] + 1;
+      queue[tail] = candidateIndex;
+      tail += 1;
+    }
+  }
+
+  const anchors: Array<ProvinceVisualAnchor | undefined> = Array(maximumProvinceId + 1);
+  const preferredDistances = new Float64Array(maximumProvinceId + 1);
+  preferredDistances.fill(Number.POSITIVE_INFINITY);
+  for (let index = 0; index < map.provinces.length; index += 1) {
+    const provinceId = map.provinces[index];
+    if (provinceId < 0) continue;
+    const col = index % map.width;
+    const row = Math.floor(index / map.width);
+    const clearance = distance[index];
+    const preferred = preferredByProvince.get(provinceId);
+    const preferredDistance = preferred
+      ? (col - preferred.col) ** 2 + (row - preferred.row) ** 2
+      : 0;
+    const current = anchors[provinceId];
+    if (!current || clearance > current.clearance
+      || (clearance === current.clearance && preferredDistance < preferredDistances[provinceId])
+      || (clearance === current.clearance && preferredDistance === preferredDistances[provinceId]
+        && (row < current.row || (row === current.row && col < current.col)))) {
+      anchors[provinceId] = { provinceId, col, row, clearance };
+      preferredDistances[provinceId] = preferredDistance;
+    }
+  }
+  return anchors;
 }
 
 /** Resolve a map point to one province, correcting only into its declared parent region. */
