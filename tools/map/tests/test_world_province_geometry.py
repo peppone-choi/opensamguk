@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -8,7 +9,9 @@ from tools.map.world_province_geometry import (
     ParentRegionRecord,
     ProvinceSeed,
     build_province_geometry,
+    rebalance_province_areas,
 )
+from tools.map.province_quality import balanced_parent_labels, measure_province_shapes
 
 
 def seed(identifier: str, row: int, col: int, parent: str = "R-A") -> ProvinceSeed:
@@ -31,6 +34,107 @@ PARENTS = (ParentRegionRecord("R-A", "A", "EXTERNAL_POLITY"),)
 
 
 class WorldProvinceGeometryTest(unittest.TestCase):
+    def test_minimum_footprint_growth_does_not_rescan_grid_per_label(self):
+        mask = np.ones((40, 40), dtype=bool)
+        original_argwhere = np.argwhere
+        calls = 0
+
+        def counted_argwhere(values):
+            nonlocal calls
+            calls += 1
+            return original_argwhere(values)
+
+        with patch("tools.map.province_quality.np.argwhere", side_effect=counted_argwhere):
+            labels, _ = balanced_parent_labels(
+                mask, 50, minimum_anchor_area=8,
+            )
+
+        self.assertGreaterEqual(int(np.bincount(labels[mask]).min()), 8)
+        self.assertLess(calls, 1_000)
+
+    def test_balancing_does_not_anchor_a_province_on_tiny_island_fragment(self):
+        mask = np.zeros((12, 24), dtype=bool)
+        mask[1:11, 1:21] = True
+        mask[1, 22:24] = True
+        mask[2, 23] = True
+
+        labels, anchors = balanced_parent_labels(
+            mask, 3, minimum_anchor_area=8,
+        )
+
+        self.assertTrue(all(col <= 20 for _, col in anchors))
+        self.assertGreaterEqual(int(np.bincount(labels[mask]).min()), 8)
+
+    def test_balancing_guarantees_floor_and_fixed_count_for_tiny_outer_parent(self) -> None:
+        terrain = np.ones((8, 20), dtype=np.uint8)
+        parents = (
+            ParentRegionRecord("R-A", "A", "EXTERNAL_POLITY"),
+            ParentRegionRecord("R-B", "B", "EXTERNAL_POLITY"),
+        )
+        seeds = [seed("P-A", 0, 0, "R-A"), seed("P-B", 4, 10, "R-B")]
+        parent_owner = np.ones_like(terrain, dtype=np.int32)
+        parent_owner[0, 0] = 0
+        initial = build_province_geometry(
+            terrain,
+            None,
+            seeds,
+            parents,
+            [
+                {"id": "ADM-A", "parentRegionId": "R-A", "mask": parent_owner == 0},
+                {"id": "ADM-B", "parentRegionId": "R-B", "mask": parent_owner == 1},
+            ],
+            {},
+        )
+
+        result, balanced_parents = rebalance_province_areas(
+            initial, seeds, parent_owner, total_provinces=4, minimum_area=8,
+        )
+        report = measure_province_shapes(result.owner, result.province_records)
+
+        self.assertEqual(4, len(result.province_records))
+        self.assertGreaterEqual(min(metric.area for metric in report.metrics), 8)
+        self.assertGreaterEqual(int(np.count_nonzero(balanced_parents == 0)), 8)
+        self.assertIn("BALANCE_PARENT_AREAS", [row.kind for row in result.audit.decisions])
+
+    def test_balancing_enforces_absolute_maximum_without_splitting_provinces(self) -> None:
+        terrain = np.ones((20, 20), dtype=np.uint8)
+        seeds = [seed("P-A", 5, 5), seed("P-B", 15, 15)]
+        parent_owner = np.zeros_like(terrain, dtype=np.int32)
+        initial = build_province_geometry(
+            terrain, None, seeds, PARENTS,
+            [{"id": "ADM-A", "parentRegionId": "R-A", "mask": terrain > 0}], {},
+        )
+
+        result, _ = rebalance_province_areas(
+            initial, seeds, parent_owner,
+            total_provinces=2, minimum_area=8, maximum_area=210,
+        )
+        report = measure_province_shapes(result.owner, result.province_records)
+
+        self.assertLessEqual(max(metric.area for metric in report.metrics), 210)
+        self.assertLessEqual(max(metric.component_count for metric in report.metrics), 1)
+
+    def test_balancing_keeps_every_historical_seed_inside_its_province(self) -> None:
+        terrain = np.ones((10, 30), dtype=np.uint8)
+        seeds = [seed("P-A", 1, 1), seed("P-B", 2, 2), seed("P-C", 8, 28)]
+        parent_owner = np.zeros_like(terrain, dtype=np.int32)
+        initial = build_province_geometry(
+            terrain, None, seeds, PARENTS,
+            [{"id": "ADM-A", "parentRegionId": "R-A", "mask": terrain > 0}], {},
+        )
+
+        result, _ = rebalance_province_areas(
+            initial, seeds, parent_owner,
+            total_provinces=3, minimum_area=8,
+        )
+
+        self.assertEqual(
+            [result.index_of(item.id) for item in seeds],
+            [int(result.owner[item.row, item.col]) for item in seeds],
+        )
+        report = measure_province_shapes(result.owner, result.province_records)
+        self.assertGreaterEqual(min(metric.area for metric in report.metrics), 8)
+
     def test_historical_mask_wins_over_modern_polygon(self) -> None:
         terrain = np.ones((4, 6), dtype=np.uint8)
         historical = np.zeros_like(terrain, dtype=bool)

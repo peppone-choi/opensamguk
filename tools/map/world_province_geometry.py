@@ -16,6 +16,19 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 
+try:
+    from tools.map.province_quality import (
+        allocate_parent_province_counts,
+        balanced_parent_labels,
+        repair_label_connectivity,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
+    from province_quality import (
+        allocate_parent_province_counts,
+        balanced_parent_labels,
+        repair_label_connectivity,
+    )
+
 
 @dataclass(frozen=True)
 class ProvinceSeed:
@@ -77,6 +90,283 @@ class ProvinceBuildResult:
             if record.id == province_id:
                 return index
         raise KeyError(province_id)
+
+
+def rebalance_province_areas(
+    result: ProvinceBuildResult,
+    seeds: Sequence[ProvinceSeed],
+    parent_owner: np.ndarray,
+    *,
+    total_provinces: int,
+    minimum_area: int,
+    maximum_area: int | None = None,
+    maximum_historical_reach: int = 80,
+) -> tuple[ProvinceBuildResult, np.ndarray]:
+    """Replace order-dependent fallback merges with a balanced parent partition."""
+    parent_owner = np.asarray(parent_owner)
+    if parent_owner.shape != result.owner.shape:
+        raise ValueError("parent owner shape must match province owner shape")
+    parent_ids = {parent.id for parent in result.parent_regions}
+    seed_by_id = {seed.id: seed for seed in seeds}
+    historical_by_parent: dict[str, list[ProvinceRecord]] = {
+        parent_id: [] for parent_id in parent_ids
+    }
+    for record in result.province_records:
+        if record.kind != "DIRECT_TERRITORY":
+            historical_by_parent[record.parent_region_id].append(record)
+    required_cells = {
+        parent.id: max(1, len(historical_by_parent[parent.id])) * minimum_area
+        for parent in result.parent_regions
+    }
+    balanced_parent_owner = parent_owner.copy()
+    area_by_index = {
+        index: int(np.count_nonzero(balanced_parent_owner == index))
+        for index in range(len(result.parent_regions))
+    }
+    rows, cols = balanced_parent_owner.shape
+    for parent_index, parent in enumerate(result.parent_regions):
+        required = required_cells[parent.id]
+        while area_by_index[parent_index] < required:
+            candidates = []
+            for row, col in np.argwhere(balanced_parent_owner == parent_index):
+                for next_row, next_col in _neighbors(int(row), int(col), rows, cols):
+                    donor = int(balanced_parent_owner[next_row, next_col])
+                    if donor < 0 or donor == parent_index:
+                        continue
+                    donor_parent = result.parent_regions[donor]
+                    if area_by_index[donor] <= required_cells[donor_parent.id]:
+                        continue
+                    candidates.append((next_row, next_col, donor))
+            if not candidates:
+                raise ValueError(f"cannot guarantee minimum province area for {parent.id}")
+            row, col, donor = min(candidates)
+            balanced_parent_owner[row, col] = parent_index
+            area_by_index[parent_index] += 1
+            area_by_index[donor] -= 1
+
+    areas = {
+        parent.id: int(np.count_nonzero(balanced_parent_owner == index))
+        for index, parent in enumerate(result.parent_regions)
+    }
+    if any(area == 0 for area in areas.values()):
+        raise ValueError("every parent region must own at least one cell")
+    counts = allocate_parent_province_counts(
+        areas,
+        {parent_id: len(historical_by_parent[parent_id]) for parent_id in areas},
+        total_provinces=total_provinces,
+    )
+
+    local_rows: list[tuple[np.ndarray, list[ProvinceRecord]]] = []
+    for parent_index, parent in enumerate(result.parent_regions):
+        mask = balanced_parent_owner == parent_index
+        historical = sorted(historical_by_parent[parent.id], key=lambda row: row.id)
+        fixed_anchors = tuple(
+            (seed_by_id[record.id].row, seed_by_id[record.id].col)
+            for record in historical
+        )
+        try:
+            labels, anchors = balanced_parent_labels(
+                mask,
+                counts[parent.id],
+                fixed_anchors=fixed_anchors,
+                minimum_anchor_area=minimum_area,
+            )
+        except ValueError as error:
+            raise ValueError(f"{parent.id}: {error}") from error
+        available = set(range(len(anchors)))
+        record_by_label: dict[int, ProvinceRecord] = {
+            label: record for label, record in enumerate(historical)
+        }
+        cells_by_label = [np.argwhere(labels == label) for label in range(len(anchors))]
+        distances = {}
+        for record in historical:
+            seed = seed_by_id[record.id]
+            distances[record.id] = [
+                int(np.max(
+                    (cells[:, 0] - seed.row) ** 2 + (cells[:, 1] - seed.col) ** 2
+                ))
+                for cells in cells_by_label
+            ]
+
+        def match_with_limit(limit: int) -> dict[str, int] | None:
+            label_to_record: dict[int, str] = {}
+
+            def place(record_id: str, seen: set[int]) -> bool:
+                candidates = sorted(
+                    (distance, label)
+                    for label, distance in enumerate(distances[record_id])
+                    if distance <= limit
+                )
+                for _, label in candidates:
+                    if label in seen:
+                        continue
+                    seen.add(label)
+                    previous = label_to_record.get(label)
+                    if previous is None or place(previous, seen):
+                        label_to_record[label] = record_id
+                        return True
+                return False
+
+            for record in historical:
+                if not place(record.id, set()):
+                    return None
+            return {record_id: label for label, record_id in label_to_record.items()}
+
+        if historical and len(record_by_label) != len(historical):
+            limits = sorted({distance for rows in distances.values() for distance in rows})
+            low, high = 0, len(limits) - 1
+            assignment = None
+            while low <= high:
+                middle = (low + high) // 2
+                candidate = match_with_limit(limits[middle])
+                if candidate is None:
+                    low = middle + 1
+                else:
+                    assignment = candidate
+                    high = middle - 1
+            if assignment is None:
+                raise ValueError(f"cannot place all historical seeds in {parent.id}")
+            for record in historical:
+                record_by_label[assignment[record.id]] = record
+        available -= set(record_by_label)
+        if len(record_by_label) != len(historical):
+            raise ValueError(f"cannot place all historical seeds in {parent.id}")
+        for ordinal, label in enumerate(sorted(available)):
+            digest = hashlib.sha256(
+                f"{parent.id}:balanced:{ordinal}".encode("utf-8")
+            ).hexdigest()[:12]
+            record_by_label[label] = ProvinceRecord(
+                id=f"DIRECT-{parent.id}-{digest}",
+                display_name=parent.display_name,
+                name_ch=parent.name_ch,
+                administrative_system=parent.administrative_system,
+                kind="DIRECT_TERRITORY",
+                parent_region_id=parent.id,
+                city_index=None,
+                geometry_basis="BALANCED_PARENT_PARTITION",
+                confidence="INFERRED",
+            )
+        grid_rows, grid_cols = np.indices(labels.shape)
+        for label, record in sorted(record_by_label.items()):
+            if record.kind == "DIRECT_TERRITORY":
+                continue
+            seed = seed_by_id[record.id]
+            distant = np.argwhere(
+                (labels == label)
+                & (((grid_rows - seed.row) ** 2
+                    + (grid_cols - seed.col) ** 2)
+                   > maximum_historical_reach ** 2)
+            )
+            for row, col in distant:
+                candidates = []
+                for candidate, candidate_record in record_by_label.items():
+                    if candidate == label:
+                        continue
+                    if candidate_record.kind != "DIRECT_TERRITORY":
+                        candidate_seed = seed_by_id[candidate_record.id]
+                        if ((candidate_seed.row - int(row)) ** 2
+                                + (candidate_seed.col - int(col)) ** 2
+                                > maximum_historical_reach ** 2):
+                            continue
+                    anchor_row, anchor_col = anchors[candidate]
+                    candidates.append((
+                        (anchor_row - int(row)) ** 2 + (anchor_col - int(col)) ** 2,
+                        candidate,
+                    ))
+                if not candidates:
+                    raise ValueError(
+                        f"cannot keep {record.id} within historical reach contract"
+                    )
+                labels[int(row), int(col)] = min(candidates)[1]
+        fixed_anchor_by_label = {
+            label: (seed_by_id[record.id].row, seed_by_id[record.id].col)
+            for label, record in record_by_label.items()
+            if record.kind != "DIRECT_TERRITORY"
+        }
+        labels = repair_label_connectivity(
+            labels,
+            mask,
+            len(anchors),
+            fixed_anchor_by_label=fixed_anchor_by_label,
+        )
+        def component_count(grid: np.ndarray, label: int) -> int:
+            unseen = grid == label
+            count = 0
+            for start_row, start_col in np.argwhere(unseen):
+                if not unseen[start_row, start_col]:
+                    continue
+                count += 1
+                unseen[start_row, start_col] = False
+                pending = [(int(start_row), int(start_col))]
+                while pending:
+                    row, col = pending.pop()
+                    for next_row, next_col in _neighbors(row, col, rows, cols):
+                        if unseen[next_row, next_col]:
+                            unseen[next_row, next_col] = False
+                            pending.append((next_row, next_col))
+            return count
+
+        area_counts = np.bincount(labels[mask], minlength=len(anchors))
+        if int(area_counts.min()) < minimum_area:
+            raise ValueError(f"minimum anchor footprint was lost in {parent.id}")
+
+        if maximum_area is not None:
+            while int(area_counts.max()) > maximum_area:
+                donor = int(np.argmax(area_counts))
+                donor_components = component_count(labels, donor)
+                candidates = []
+                for row, col in np.argwhere(labels == donor):
+                    if (int(row), int(col)) == fixed_anchor_by_label.get(donor):
+                        continue
+                    for next_row, next_col in _neighbors(int(row), int(col), rows, cols):
+                        recipient = int(labels[next_row, next_col])
+                        if recipient < 0 or recipient == donor:
+                            continue
+                        if area_counts[recipient] >= maximum_area:
+                            continue
+                        recipient_record = record_by_label[recipient]
+                        if recipient_record.kind != "DIRECT_TERRITORY":
+                            recipient_seed = seed_by_id[recipient_record.id]
+                            if ((recipient_seed.row - int(row)) ** 2
+                                    + (recipient_seed.col - int(col)) ** 2
+                                    > maximum_historical_reach ** 2):
+                                continue
+                        candidates.append((
+                            int(area_counts[recipient]), int(row), int(col), recipient,
+                        ))
+                moved = False
+                for _, row, col, recipient in sorted(set(candidates)):
+                    labels[row, col] = recipient
+                    if component_count(labels, donor) <= donor_components:
+                        area_counts[donor] -= 1
+                        area_counts[recipient] += 1
+                        moved = True
+                        break
+                    labels[row, col] = donor
+                if not moved:
+                    raise ValueError(
+                        f"cannot enforce maximum province area in {parent.id}"
+                    )
+        local_rows.append((labels, [record_by_label[index] for index in range(len(anchors))]))
+
+    records = sorted(
+        (record for _, rows in local_rows for record in rows), key=lambda row: row.id,
+    )
+    index_by_id = {record.id: index for index, record in enumerate(records)}
+    owner = np.full(result.owner.shape, -1, dtype=np.int32)
+    decisions = list(result.audit.decisions)
+    for parent, (labels, rows) in zip(result.parent_regions, local_rows):
+        for local_index, record in enumerate(rows):
+            owner[labels == local_index] = index_by_id[record.id]
+        decisions.append(ProvinceAuditDecision(
+            "BALANCE_PARENT_AREAS", parent.id, tuple(sorted(record.id for record in rows)),
+        ))
+    return ProvinceBuildResult(
+        owner=owner,
+        province_records=tuple(records),
+        parent_regions=result.parent_regions,
+        audit=ProvinceAudit(tuple(decisions)),
+    ), balanced_parent_owner
 
 
 def _record(seed: ProvinceSeed) -> ProvinceRecord:

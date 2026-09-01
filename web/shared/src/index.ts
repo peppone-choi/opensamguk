@@ -23,6 +23,7 @@ export {
   sceneGolden,
   screenBoxInsideProvince,
   seatLabel,
+  terrainColorFor,
   tierZoom,
   TIER2_LABEL_ZOOM,
   TIER2_MARKER_ZOOM,

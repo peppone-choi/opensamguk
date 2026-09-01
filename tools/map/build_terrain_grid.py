@@ -35,10 +35,15 @@ try:
         validate_province_quality,
     )
     from tools.map.external_province_systems import load_external_province_displays
+    from tools.map.non_playable_regions import (
+        apply_non_playable_regions,
+        load_non_playable_policy,
+    )
     from tools.map.world_province_geometry import (
         ParentRegionRecord,
         ProvinceSeed,
         build_province_geometry,
+        rebalance_province_areas,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
     from han_place_merge_runtime import apply_reviewed_merges
@@ -53,10 +58,12 @@ except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
         validate_province_quality,
     )
     from external_province_systems import load_external_province_displays
+    from non_playable_regions import apply_non_playable_regions, load_non_playable_policy
     from world_province_geometry import (
         ParentRegionRecord,
         ProvinceSeed,
         build_province_geometry,
+        rebalance_province_areas,
     )
 
 PLACES = 'data/map/han-places.json'
@@ -65,9 +72,10 @@ NE = 'data/natural-earth'
 OUT = 'data/map/terrain-grid.json'
 MODERN_ADMIN = 'data/modern-admin/geoBoundaries-CGAZ-ADM2.geojson'
 PROVINCE_SHAPE_EXCEPTIONS = 'data/curated/map/province-shape-exceptions-v1.json'
+NON_PLAYABLE_REGIONS = 'data/curated/map/non-playable-regions-v1.json'
 LEGACY_GAMEPLAY_TILES = 'data/map/han-780-v1-tiles.json'
 
-SEA, PLAIN, MOUNTAIN, RIVER, LAKE, DESERT, PLATEAU, BASIN, HILL = range(9)
+SEA, PLAIN, MOUNTAIN, RIVER, LAKE, DESERT, PLATEAU, BASIN, HILL, OUT_OF_SCOPE = range(10)
 
 # 1급(郡治) 치소 kind. 郡/國은 같은 lv6 치소다 — 郡國志 卷113 「凡郡、國百五」.
 # 尹·翊·風(三輔)은 郡의 장관 관직명일 뿐이라 COMMANDERY 로 합류한다(卷117 百官志
@@ -290,6 +298,15 @@ def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_na
     parent_owner = _assign_unowned_islands(
         seat_owner, political_land, places, jun_of
     )
+    parent_region_ids = [f'PARENT-{index:04d}' for index in range(len(jun_names))]
+    evidence_cells = {region_id: [] for region_id in parent_region_ids}
+    for index, place in enumerate(places):
+        if place.get('kind') not in {'COUNTY', 'EXTERNAL_PLACE', *SEAT_KINDS}:
+            continue
+        parent_index = int(jun_of[index])
+        evidence_cells[parent_region_ids[parent_index]].append(
+            (int(place['gy']), int(place['gx']))
+        )
     # A zone is one modern ADM2 polygon clipped by one reviewed historical parent.
     zone_grid = np.where(
         political_land & (parent_owner >= 0) & (labels >= 0),
@@ -392,6 +409,26 @@ def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_na
     result = build_province_geometry(
         terrain, proj, province_seeds, parent_records, admin_rows, {}
     )
+    result, parent_owner = rebalance_province_areas(
+        result, province_seeds, parent_owner,
+        total_provinces=1524, minimum_area=8, maximum_area=620,
+    )
+    excluded = apply_non_playable_regions(
+        terrain,
+        parent_owner,
+        parent_region_ids,
+        proj,
+        load_non_playable_policy(NON_PLAYABLE_REGIONS),
+        out_of_scope_value=OUT_OF_SCOPE,
+        evidence_cells_by_parent=evidence_cells,
+        province_owner=result.owner,
+    )
+    result.owner[excluded] = -1
+    result, parent_owner = rebalance_province_areas(
+        result, province_seeds, parent_owner,
+        total_provinces=1524, minimum_area=8, maximum_area=620,
+    )
+    political_land = (terrain != SEA) & (terrain != LAKE) & (terrain != OUT_OF_SCOPE)
     uncovered = political_land & (result.owner < 0)
     if np.any(uncovered):
         raise ValueError(f'world province build left {int(uncovered.sum())} land cells uncovered')
@@ -405,8 +442,10 @@ def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_na
             min_aspect_area=32,
             min_fill_ratio=0.10,
             min_fill_area=100,
-            max_area=1250,
-            max_parent_median_ratio=1_000.0,
+            min_area=8,
+            max_area=620,
+            min_parent_median_ratio=0.40,
+            max_parent_median_ratio=2.0,
             corridor_min_length=10_000,
         ),
         exception_document['exceptions'],
@@ -1386,7 +1425,10 @@ def main():
     } for decision in province_result.audit.decisions]
     province_quality_rows = [asdict(metric) for metric in province_quality.metrics]
 
-    legend = ['SEA', 'PLAIN', 'MOUNTAIN', 'RIVER', 'LAKE', 'DESERT', 'PLATEAU', 'BASIN', 'HILL']
+    legend = [
+        'SEA', 'PLAIN', 'MOUNTAIN', 'RIVER', 'LAKE', 'DESERT', 'PLATEAU',
+        'BASIN', 'HILL', 'OUT_OF_SCOPE',
+    ]
     counts = {name: int((terrain == i).sum()) for i, name in enumerate(legend)}
     json.dump({
         'grid': n, 'cols': n, 'rows': rows, 'year': hp.get('year'), 'projection': hp['projection'],
@@ -1419,11 +1461,17 @@ def main():
         preview(terrain, pts, hubs, roads, seat_label)
 
 
+def terrain_preview_palette():
+    """Return the complete RGB palette used by the optional terrain preview."""
+    return {SEA: (38, 62, 92), PLAIN: (126, 143, 92), MOUNTAIN: (108, 96, 84),
+            RIVER: (74, 122, 158), LAKE: (60, 100, 140), DESERT: (196, 178, 130),
+            PLATEAU: (150, 132, 104), BASIN: (140, 152, 104), HILL: (132, 130, 92),
+            OUT_OF_SCOPE: (0, 0, 0)}
+
+
 def preview(terrain, pts, hubs, roads, seat_label=None):
     from PIL import Image, ImageDraw
-    pal = {SEA: (38, 62, 92), PLAIN: (126, 143, 92), MOUNTAIN: (108, 96, 84),
-           RIVER: (74, 122, 158), LAKE: (60, 100, 140), DESERT: (196, 178, 130),
-           PLATEAU: (150, 132, 104), BASIN: (140, 152, 104), HILL: (132, 130, 92)}
+    pal = terrain_preview_palette()
     scale = 4
     rows, n = terrain.shape
     img = Image.new('RGB', (n, rows))

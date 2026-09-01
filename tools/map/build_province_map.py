@@ -222,11 +222,12 @@ def _terrain_mismatches(terrain: object, coverage: list[int], cells: int) -> tup
     flattened = "".join(terrain)
     if len(flattened) != cells or any(not isinstance(row, str) for row in terrain):
         raise ValueError(f"terrain has {len(flattened)} cells; expected {cells}")
-    # SEA=0 and LAKE=4 are water. Rivers remain politically owned so their
+    # SEA=0 and LAKE=4 are water; OUT_OF_SCOPE=9 is intentionally non-political.
+    # Rivers remain politically owned so their
     # narrow raster strokes do not punch artificial holes through provinces.
-    water_tiles = {"0", "4"}
-    water_with_political_coverage = sum(tile in water_tiles and identity != -1 for tile, identity in zip(flattened, coverage))
-    land_without_political_coverage = sum(tile not in water_tiles and identity == -1 for tile, identity in zip(flattened, coverage))
+    non_political_tiles = {"0", "4", "9"}
+    water_with_political_coverage = sum(tile in non_political_tiles and identity != -1 for tile, identity in zip(flattened, coverage))
+    land_without_political_coverage = sum(tile not in non_political_tiles and identity == -1 for tile, identity in zip(flattened, coverage))
     return water_with_political_coverage, land_without_political_coverage
 
 

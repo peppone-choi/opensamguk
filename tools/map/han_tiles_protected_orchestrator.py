@@ -51,6 +51,7 @@ INPUT_RELATIVE_PATHS = {
     "EXTERNAL_PROVINCE_SEEDS": "data/curated/han/external-province-seeds-v1.json",
     "EXTERNAL_ADMINISTRATIVE_SYSTEMS": "data/curated/han/external-administrative-systems-v1.json",
     "PROVINCE_SHAPE_EXCEPTIONS": "data/curated/map/province-shape-exceptions-v1.json",
+    "NON_PLAYABLE_REGIONS": "data/curated/map/non-playable-regions-v1.json",
     "MODERN_ADMIN_RECIPE": "data/curated/map/modern-admin-boundaries-v1.json",
 }
 GENERATOR_RELATIVE_PATHS = {
@@ -69,6 +70,7 @@ HELPER_RELATIVE_PATHS = {
     "HAN_PROVINCE_MODEL": "tools/map/han_province_model.py",
     "WORLD_PROVINCE_GEOMETRY": "tools/map/world_province_geometry.py",
     "PROVINCE_QUALITY": "tools/map/province_quality.py",
+    "NON_PLAYABLE_REGIONS_HELPER": "tools/map/non_playable_regions.py",
     "EXTERNAL_PROVINCE_SYSTEMS": "tools/map/external_province_systems.py",
     "HAN_TILES_CONTRACT_HELPER": "tools/map/han_tiles_contract.py",
 }

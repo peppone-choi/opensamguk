@@ -565,6 +565,17 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(views.at(-1)).not.toEqual(zoomed);
   });
 
+  it('축소 버튼을 우하단 도시명 토글과 겹치지 않게 좌하단에 고정한다', () => {
+    const { container } = render(
+      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} />,
+    );
+
+    const controls = container.querySelector<HTMLElement>('.os-iso-map__controls');
+    expect(controls?.style.left).toBe('8px');
+    expect(controls?.style.right).toBe('');
+    expect(controls?.style.bottom).toBe('8px');
+  });
+
   it('reports the county polygon under the pointer independently of marker activation', () => {
     const views: IsoView[] = [];
     const onCountyHover = vi.fn();

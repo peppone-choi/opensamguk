@@ -115,7 +115,8 @@ class ProtectedOrchestratorTest(unittest.TestCase):
                 "STABLE_ID_ADJUDICATIONS", "MERGE_ADJUDICATIONS",
                 "TEMPORAL_ADJUDICATIONS", "EXTERNAL_PLACES",
                 "EXTERNAL_PROVINCE_SEEDS", "EXTERNAL_ADMINISTRATIVE_SYSTEMS",
-                "PROVINCE_SHAPE_EXCEPTIONS", "MODERN_ADMIN_RECIPE",
+                "PROVINCE_SHAPE_EXCEPTIONS", "NON_PLAYABLE_REGIONS",
+                "MODERN_ADMIN_RECIPE",
             },
             set(han_tiles_contract.TRACKED_INPUT_ROLES),
         )

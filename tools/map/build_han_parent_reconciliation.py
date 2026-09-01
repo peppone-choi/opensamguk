@@ -484,9 +484,13 @@ def _validate_review_chain(
         "validation contract allowed node classes",
     )
     _require_equal(contract.get("expectedSelectionCount"), 780, "validation contract selection count")
+    scenario_catalog = candidates.get("scenarioCatalog")
+    if not isinstance(scenario_catalog, list) or not scenario_catalog:
+        raise ValueError("input contract mismatch for candidate scenario count contract")
+    scenario_resource_count = len(scenario_catalog)
     _require_equal(
         contract.get("expectedActiveScenarioResourceCount"),
-        15,
+        scenario_resource_count,
         "validation contract scenario count",
     )
     _require_equal(
@@ -542,7 +546,7 @@ def _validate_review_chain(
     )
     _require_equal(
         candidates.get("provenance", {}).get("scenarioResourceCount"),
-        15,
+        scenario_resource_count,
         "candidate scenario count contract",
     )
 

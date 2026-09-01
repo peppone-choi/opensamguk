@@ -406,6 +406,30 @@ class HanParentReconciliationTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "contract membership mismatch"):
                     self.module.build_ledger(documents, self.input_records)
 
+    def test_scenario_resource_count_is_shared_by_contract_and_candidate_catalog(self):
+        contract_path = "data/curated/han/route-node-validation-contract-v1.json"
+        candidates_path = "data/curated/han/route-node-selection-candidates-v1.json"
+        candidates = self.documents[candidates_path]
+
+        self.assertEqual(
+            len(candidates["scenarioCatalog"]),
+            candidates["provenance"]["scenarioResourceCount"],
+        )
+        self.assertEqual(
+            len(candidates["scenarioCatalog"]),
+            self.documents[contract_path]["expectedActiveScenarioResourceCount"],
+        )
+
+        for path, keys in (
+            (contract_path, ("expectedActiveScenarioResourceCount",)),
+            (candidates_path, ("provenance", "scenarioResourceCount")),
+        ):
+            with self.subTest(path=path):
+                documents = copy.deepcopy(self.documents)
+                replace_nested(documents[path], keys, 15)
+                with self.assertRaisesRegex(ValueError, "scenario count contract"):
+                    self.module.build_ledger(documents, self.input_records)
+
     def test_every_embedded_hash_edge_between_pinned_inputs_fails_closed_on_drift(self):
         edges = [
             ("data/curated/han/route-node-review-policy-v1.json", ("inputs", "coordinateOverlaySha256")),

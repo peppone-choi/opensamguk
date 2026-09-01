@@ -27802,7 +27802,7 @@
       },
       "legacyTileMap": {
         "path": "data/map/han-tiles.json",
-        "sha256": "d04b2aa95cb613f7d08a99b9794cbfafead34590f5f811b6eae5aa57b63a7671"
+        "sha256": "d2f919778cd0a61b0206762578f92ef7b20261774a6346bc7554f1b90d46f221"
       }
     },
     "scenarioResourceCount": 31
@@ -27901,19 +27901,19 @@
     {
       "code": "1010",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1010.json",
-      "resourceSha256": "a2f0849f2f457405a7d438bdc95b79a274b3f3e91b52ad145a8351e1545ed38d",
+      "resourceSha256": "cf674b5f5c6c1298df0ab89796ec4223dcba45666fb93e81d3a48744a29820cd",
       "startYear": 181
     },
     {
       "code": "1020",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1020.json",
-      "resourceSha256": "260bf368402364fb8c08cb93dc13786b3ad7e0d1776172414e93e0cff5aba9ae",
+      "resourceSha256": "2698d91ffdbc22745b0c846b1d0594d592193a2c9ac39cb495dfd84e03998254",
       "startYear": 187
     },
     {
       "code": "1021",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1021.json",
-      "resourceSha256": "ba41e27c19f359e417772b1046575d20939fc755306fdc5517aaf7591b523802",
+      "resourceSha256": "919dccc94af5cf7416e03feb240f6ddc84d5d44f184abd4a347e91b35a5505b9",
       "startYear": 187
     },
     {
@@ -27973,13 +27973,13 @@
     {
       "code": "1100",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
-      "resourceSha256": "a5750b5f1a6ce911f996798f60ef59b81490f2c3a26e8dd0561128d7c4494ba9",
+      "resourceSha256": "dc5185e8dec8dc656f56fc53835007d1a86b194d7ad88d0acb8cba2fb8acb011",
       "startYear": 222
     },
     {
       "code": "1110",
       "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
-      "resourceSha256": "33a00be879ec02de74d192bc1189059900287183b04fa0488bb8265e91c22933",
+      "resourceSha256": "ac74b8c1f598100e37c8c8ab4459d9c001bd90b4ede3b1009a68840bc59e45db",
       "startYear": 225
     },
     {
