@@ -470,11 +470,25 @@ function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
 
 type CityMarkerImages = Partial<Record<number, HTMLImageElement>>;
 
-export function cityMarkerZoomStep(scale: number, dpr: number): 1 | 1.5 | 2 {
+export type CityMarkerZoom = 0.5 | 0.75 | 1 | 1.5;
+
+export function cityMarkerZoomStep(scale: number, dpr: number): CityMarkerZoom {
   const cssTileScale = scale / effectiveDpr(dpr);
-  if (cssTileScale >= 16) return 2;
-  if (cssTileScale >= 10) return 1.5;
-  return 1;
+  if (cssTileScale >= 16) return 1.5;
+  if (cssTileScale >= 10) return 1;
+  if (cssTileScale >= 4) return 0.75;
+  return 0.5;
+}
+
+export function cityLabelMetrics(scale: number, dpr: number) {
+  const backingRatio = effectiveDpr(dpr);
+  const cssTileScale = scale / backingRatio;
+  const cssFontSize = Math.max(11, Math.min(14, 10 + cssTileScale * 0.25));
+  return {
+    cssFontSize,
+    fontSize: cssFontSize * backingRatio,
+    strokeWidth: 2.5 * backingRatio,
+  };
 }
 
 export function cityMarkerDrawBox(level: number, x: number, y: number, dpr: number, zoom = 1) {
