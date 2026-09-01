@@ -56,6 +56,88 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
         }
         self.assertEqual({}, {code: ids for code, ids in failures.items() if ids})
 
+    def test_attested_commandery_continuity_is_not_left_unowned(self):
+        map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        ownership = json.loads(
+            (ROOT / "data/map/han-scenario-province-ownership-v1.json").read_text(encoding="utf-8")
+        )
+        parent_ids = {
+            row["displayName"]: row["id"]
+            for row in map_doc["parentRegions"]
+            if row["displayName"] in {"하동군", "동완군", "파양군"}
+        }
+        expected = {
+            1050: {"하동군": "S1050-N001", "동완군": "S1050-N001", "파양군": "S1050-N002"},
+            1060: {"하동군": "S1060-N001", "동완군": "S1060-N001", "파양군": "S1060-N002"},
+            1070: {"파양군": "S1070-N002"},
+        }
+        province_ids = {
+            name: {
+                row["id"] for row in map_doc["provinceRecords"]
+                if row["parentRegionId"] == parent_id
+            }
+            for name, parent_id in parent_ids.items()
+        }
+        by_code = {
+            row["scenarioCode"]: {item["provinceId"]: item for item in row["assignments"]}
+            for row in ownership["scenarios"]
+        }
+
+        failures = {}
+        for code, commanderies in expected.items():
+            for name, owner_key in commanderies.items():
+                actual = {by_code[code][province_id]["ownerNationKey"] for province_id in province_ids[name]}
+                if actual != {owner_key}:
+                    failures[(code, name)] = sorted(str(value) for value in actual)
+
+        self.assertEqual({}, failures)
+
+    def test_guangling_is_not_projected_from_tao_qian_before_zhao_yu(self):
+        map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        ownership = json.loads(
+            (ROOT / "data/map/han-scenario-province-ownership-v1.json").read_text(encoding="utf-8")
+        )
+        claims = json.loads(
+            (ROOT / "data/curated/han/scenario-province-claims-v1.json").read_text(encoding="utf-8")
+        )
+        guangling_parent = next(
+            row["id"] for row in map_doc["parentRegions"]
+            if row["displayName"] == "광릉군"
+        )
+        guangling_ids = {
+            row["id"] for row in map_doc["provinceRecords"]
+            if row["parentRegionId"] == guangling_parent
+        }
+        nation_names = {
+            row["scenarioCode"]: {
+                nation["nationKey"]: nation["displayNationName"]
+                for nation in row["nationRefs"]
+            }
+            for row in claims["scenarios"]
+        }
+        by_code = {
+            row["scenarioCode"]: [
+                assignment for assignment in row["assignments"]
+                if assignment["provinceId"] in guangling_ids
+            ]
+            for row in ownership["scenarios"]
+            if row["scenarioCode"] in {1020, 1021, 1030}
+        }
+
+        for code in (1020, 1021):
+            self.assertEqual(
+                {None},
+                {row["ownerNationKey"] for row in by_code[code]},
+                f"{code} 광릉은 광릉태수 장초의 독립 연합군 관할이다.",
+            )
+        self.assertEqual(
+            {"도겸"},
+            {
+                nation_names[1030][row["ownerNationKey"]]
+                for row in by_code[1030]
+            },
+        )
+
     def test_all_active_scenarios_have_no_unreviewed_interior_holes(self):
         map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
         raw = json.loads(
@@ -90,6 +172,9 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
                 exterior_province_ids=topology.exterior_province_ids,
                 allowlist=parsed.scenarios[code].audit_allowlist,
                 province_areas=topology.province_areas,
+                parent_by_province=topology.parent_by_province,
+                parent_graph=topology.parent_graph,
+                han_commandery_parent_ids=topology.han_commandery_parent_ids,
             )
             holes = [
                 row.province_ids
@@ -120,6 +205,26 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
 
         self.assertNotIn("UNALLOWLISTED_HOLE", {error.code for error in audit.errors})
 
+    def test_unowned_commandery_between_same_owner_regions_is_reviewed_even_at_exterior(self):
+        graph = {
+            "A1": {"U1"}, "U1": {"A1", "U2", "A2"},
+            "U2": {"U1"}, "A2": {"U1"},
+        }
+        rows = tuple(assignment(pid, None if pid.startswith("U") else "A") for pid in graph)
+
+        audit = audit_assignments(
+            rows,
+            graph,
+            exterior_province_ids=frozenset({"U2"}),
+            parent_by_province={"A1": "PA", "A2": "PB", "U1": "PU", "U2": "PU"},
+            parent_graph={"PA": {"PU"}, "PU": {"PA", "PB"}, "PB": {"PU"}},
+            han_commandery_parent_ids=frozenset({"PA", "PB", "PU"}),
+        )
+
+        candidate = [row for row in audit.review_findings if row.code == "UNOWNED_COMMANDERY_REVIEW"]
+        self.assertEqual([("U1", "U2")], [row.province_ids for row in candidate])
+        self.assertEqual("A", candidate[0].owner_nation_key)
+
     def test_isolated_owner_speck_requires_direct_evidence_or_allowlist(self):
         graph = {"A1": {"A2", "B"}, "A2": {"A1", "B"}, "B": {"A1", "A2", "S"}, "S": {"B"}}
         rows = (
@@ -141,6 +246,21 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
         audit = audit_assignments(rows, graph)
 
         self.assertFalse(audit.errors)
+
+    def test_large_owner_graph_does_not_depend_on_python_recursion_depth(self):
+        graph = {
+            str(index): {
+                neighbour for neighbour in (str(index - 1), str(index + 1))
+                if 0 <= int(neighbour) < 1200
+            }
+            for index in range(1200)
+        }
+        rows = tuple(assignment(province_id, "A") for province_id in graph)
+
+        audit = audit_assignments(rows, graph)
+
+        self.assertFalse(audit.errors)
+        self.assertEqual(1198, audit.metrics["articulationProvinceCount"])
 
     def test_allowlist_match_is_exact_not_owner_wide(self):
         graph = {"A1": {"A2", "B"}, "A2": {"A1", "B"}, "B": {"A1", "A2", "S"}, "S": {"B"}}

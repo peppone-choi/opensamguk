@@ -47,6 +47,14 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hhs-008.txt"
     },
     {
+      "evidenceId": "S1010-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "PROJECT_POLICY",
+      "work": "OpenSamguk reviewed scenario placement",
+      "section": "scenario 1010 topology allowlist 1",
+      "locator": "effective year 184",
+      "excerpt": "정본 판정: 부평의 행정 소속은 확인되지만 184년 이 현의 실효 지배 주체를 특정하는 직접 기록은 없다. 주변 후한 현의 정치색으로 보간하지 않고 명시적 미소유로 둔다."
+    },
+    {
       "evidenceId": "S1020-BASELINE-EVIDENCE",
       "sourceType": "PROJECT_POLICY",
       "work": "OpenSamguk scenario placement policy",
@@ -226,6 +234,22 @@
       "locator": "effective year 190",
       "excerpt": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다.",
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
+    },
+    {
+      "evidenceId": "S1020-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "PROJECT_POLICY",
+      "work": "OpenSamguk reviewed scenario placement",
+      "section": "scenario 1020 topology allowlist 1",
+      "locator": "effective year 190",
+      "excerpt": "정본 판정: 190년 부평의 실효 지배가 동탁에게 있었다는 직접 기록은 없다. 장안·경조권 현들 사이에 있다는 공간 관계를 소유 근거로 쓰지 않는다."
+    },
+    {
+      "evidenceId": "S1020-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "PROJECT_POLICY",
+      "work": "OpenSamguk reviewed scenario placement",
+      "section": "scenario 1020 topology allowlist 2",
+      "locator": "effective year 190",
+      "excerpt": "정본 판정: 음산의 계양군 소속은 손견의 190년 실효 점유를 증명하지 않는다. 인접한 계양 현의 시나리오 색을 투영하지 않고 미소유로 둔다."
     },
     {
       "evidenceId": "S1021-BASELINE-EVIDENCE",
@@ -425,6 +449,22 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
     },
     {
+      "evidenceId": "S1021-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "PROJECT_POLICY",
+      "work": "OpenSamguk reviewed scenario placement",
+      "section": "scenario 1021 topology allowlist 1",
+      "locator": "effective year 190",
+      "excerpt": "정본 판정: 190년 부평의 실효 지배 주체를 특정할 사료가 없다. 동탁령 현에 둘러싸였다는 기하를 소유 근거로 쓰지 않는다."
+    },
+    {
+      "evidenceId": "S1021-ALLOWLIST-002-EVIDENCE",
+      "sourceType": "PROJECT_POLICY",
+      "work": "OpenSamguk reviewed scenario placement",
+      "section": "scenario 1021 topology allowlist 2",
+      "locator": "effective year 190",
+      "excerpt": "정본 판정: 양천의 여강군 소속은 양주자사 진온의 현 직접 소유를 증명하지 않는다. 성덕·수춘 사이의 내부공백이라는 이유로 보간하지 않는다."
+    },
+    {
       "evidenceId": "S1030-BASELINE-EVIDENCE",
       "sourceType": "PROJECT_POLICY",
       "work": "OpenSamguk scenario placement policy",
@@ -602,6 +642,15 @@
     },
     {
       "evidenceId": "S1030-CONTINUITY-001-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1030 interior continuity / 도겸",
+      "locator": "effective year 194",
+      "excerpt": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다.",
+      "url": "https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%9C%8B%E5%BF%97/%E5%8D%B708"
+    },
+    {
+      "evidenceId": "S1030-CONTINUITY-002-EVIDENCE",
       "sourceType": "CHRONICLE",
       "work": "華陽國志",
       "section": "scenario 1030 interior continuity / 유언",
@@ -610,7 +659,7 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"
     },
     {
-      "evidenceId": "S1030-CONTINUITY-002-EVIDENCE",
+      "evidenceId": "S1030-CONTINUITY-003-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志 / 晉書",
       "section": "scenario 1030 interior continuity / 유언",
@@ -619,7 +668,7 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"
     },
     {
-      "evidenceId": "S1030-CONTINUITY-003-EVIDENCE",
+      "evidenceId": "S1030-CONTINUITY-004-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志",
       "section": "scenario 1030 interior continuity / 도겸",
@@ -628,7 +677,7 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-08.txt"
     },
     {
-      "evidenceId": "S1030-CONTINUITY-004-EVIDENCE",
+      "evidenceId": "S1030-CONTINUITY-005-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志",
       "section": "scenario 1030 interior continuity / 여포",
@@ -637,7 +686,7 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-07.txt"
     },
     {
-      "evidenceId": "S1030-CONTINUITY-005-EVIDENCE",
+      "evidenceId": "S1030-CONTINUITY-006-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志",
       "section": "scenario 1030 interior continuity / 원소",
@@ -1440,6 +1489,15 @@
     {
       "evidenceId": "S1050-CONTINUITY-004-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1050 interior continuity / 손책",
+      "locator": "effective year 200",
+      "excerpt": "三國志 卷54의 「還定豫章」으로 건안4년(199) 손책의 예장 평정을 확인하고, 三國志 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해 분군 전 파양 현역을 예장 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-54.txt"
+    },
+    {
+      "evidenceId": "S1050-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
       "work": "三國志 / 晉書",
       "section": "scenario 1050 interior continuity / 조조",
       "locator": "effective year 200",
@@ -1447,7 +1505,25 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"
     },
     {
-      "evidenceId": "S1050-CONTINUITY-005-EVIDENCE",
+      "evidenceId": "S1050-CONTINUITY-006-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1050 interior continuity / 조조",
+      "locator": "effective year 200",
+      "excerpt": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-13.txt"
+    },
+    {
+      "evidenceId": "S1050-CONTINUITY-007-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1050 interior continuity / 조조",
+      "locator": "effective year 200",
+      "excerpt": "三國志 卷18 장패전의 「太祖以霸為瑯邪相，敦利城、禮東莞…割青、徐二州，委之於霸」에 따라 여포 패망 후 동완 현역을 조조-장패 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-18.txt"
+    },
+    {
+      "evidenceId": "S1050-CONTINUITY-008-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志 / 晉書",
       "section": "scenario 1050 interior continuity / 원소",
@@ -1591,6 +1667,15 @@
     {
       "evidenceId": "S1060-CONTINUITY-004-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1060 interior continuity / 손권",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷54의 손책 예장 평정과 卷47의 손권 승계·건안15년 「分豫章為鄱陽郡」을 대조해, 202년의 후대 파양 현역을 손권의 예장 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
       "work": "三國志 / 晉書",
       "section": "scenario 1060 interior continuity / 조조",
       "locator": "effective year 202",
@@ -1598,7 +1683,25 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"
     },
     {
-      "evidenceId": "S1060-CONTINUITY-005-EVIDENCE",
+      "evidenceId": "S1060-CONTINUITY-006-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1060 interior continuity / 조조",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-13.txt"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-007-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1060 interior continuity / 조조",
+      "locator": "effective year 202",
+      "excerpt": "三國志 卷18 장패전의 동완태수 윤례 임명과 「割青、徐二州，委之於霸」 기사에 따라 동완 현역의 조조측 통제를 계속 적용한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-18.txt"
+    },
+    {
+      "evidenceId": "S1060-CONTINUITY-008-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志",
       "section": "scenario 1060 interior continuity / 원상",
@@ -1607,7 +1710,7 @@
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"
     },
     {
-      "evidenceId": "S1060-CONTINUITY-006-EVIDENCE",
+      "evidenceId": "S1060-CONTINUITY-009-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志",
       "section": "scenario 1060 interior continuity / 원담",
@@ -1759,6 +1862,15 @@
     {
       "evidenceId": "S1070-CONTINUITY-004-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
+      "work": "三國志",
+      "section": "scenario 1070 interior continuity / 손권",
+      "locator": "effective year 207",
+      "excerpt": "三國志 卷54의 예장 평정과 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해, 207년 분군 전 파양 현역을 손권의 예장 통제에 포함한다.",
+      "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"
+    },
+    {
+      "evidenceId": "S1070-CONTINUITY-005-EVIDENCE",
+      "sourceType": "STANDARD_HISTORY",
       "work": "三國志 / 晉書",
       "section": "scenario 1070 interior continuity / 조조",
       "locator": "effective year 207",
@@ -1885,18 +1997,26 @@
     },
     {
       "evidenceId": "S1080-ALLOWLIST-001-EVIDENCE",
+      "sourceType": "PROJECT_POLICY",
+      "work": "OpenSamguk reviewed scenario placement",
+      "section": "scenario 1080 topology allowlist 1",
+      "locator": "effective year 213",
+      "excerpt": "정본 판정: 관중 평정 기록만으로 213년 부평 현의 직접 실효 소유를 확정할 수 없다. 주변 조조령 현의 색을 투영하지 않고 미소유로 둔다."
+    },
+    {
+      "evidenceId": "S1080-ALLOWLIST-002-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "晉書",
-      "section": "scenario 1080 topology allowlist 1",
+      "section": "scenario 1080 topology allowlist 2",
       "locator": "effective year 213",
       "excerpt": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.",
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/js-014.txt"
     },
     {
-      "evidenceId": "S1080-ALLOWLIST-002-EVIDENCE",
+      "evidenceId": "S1080-ALLOWLIST-003-EVIDENCE",
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志",
-      "section": "scenario 1080 topology allowlist 2",
+      "section": "scenario 1080 topology allowlist 3",
       "locator": "effective year 213",
       "excerpt": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
       "url": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"
@@ -2405,7 +2525,20 @@
           "rationale": "後漢書 卷008 영제기 중평원년 「二月，鉅鹿人張角自稱黃天…同日反叛」·「安平、甘陵人各執其王以應之」(注: 安平王續、甘陵王忠) / 卷071 황보숭전 「嵩與角弟梁戰於廣宗」·「又進擊東郡黃巾卜己於倉亭」·「乘勝進討汝南、陳國黃巾，追波才於陽翟，擊彭脫於西華…三郡悉平」 / 靈帝紀 「南陽黃巾張曼成攻殺郡守褚貢」·資治通鑑 卷058 「張曼成屯宛下百餘日」. 감릉은 국왕을 집잡아 호응했다는 직접 기사에 따라 황건적으로 배정한다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1010,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "70523"
+          ],
+          "evidenceIds": [
+            "S1010-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "정본 판정: 부평의 행정 소속은 확인되지만 184년 이 현의 실효 지배 주체를 특정하는 직접 기록은 없다. 주변 후한 현의 정치색으로 보간하지 않고 명시적 미소유로 둔다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1020,
@@ -2990,7 +3123,32 @@
           "rationale": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1020,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "70523"
+          ],
+          "evidenceIds": [
+            "S1020-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "정본 판정: 190년 부평의 실효 지배가 동탁에게 있었다는 직접 기록은 없다. 장안·경조권 현들 사이에 있다는 공간 관계를 소유 근거로 쓰지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1020,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "41838"
+          ],
+          "evidenceIds": [
+            "S1020-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "정본 판정: 음산의 계양군 소속은 손견의 190년 실효 점유를 증명하지 않는다. 인접한 계양 현의 시나리오 색을 투영하지 않고 미소유로 둔다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1021,
@@ -3611,7 +3769,32 @@
           "rationale": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다."
         }
       ],
-      "auditAllowlist": []
+      "auditAllowlist": [
+        {
+          "scenarioCode": 1021,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "70523"
+          ],
+          "evidenceIds": [
+            "S1021-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "정본 판정: 190년 부평의 실효 지배 주체를 특정할 사료가 없다. 동탁령 현에 둘러싸였다는 기하를 소유 근거로 쓰지 않는다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1021,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
+            "43337"
+          ],
+          "evidenceIds": [
+            "S1021-ALLOWLIST-002-EVIDENCE"
+          ],
+          "rationale": "정본 판정: 양천의 여강군 소속은 양주자사 진온의 현 직접 소유를 증명하지 않는다. 성덕·수춘 사이의 내부공백이라는 이유로 보간하지 않는다.",
+          "reviewState": "APPROVED"
+        }
+      ]
     },
     {
       "scenarioCode": 1030,
@@ -4210,10 +4393,10 @@
         {
           "claimId": "S1030-CONTINUITY-001",
           "claimKind": "ADMIN_REGION_CONTROL",
-          "ownerNationKey": "S1030-N004",
+          "ownerNationKey": "S1030-N012",
           "target": {
             "parentRegionIds": [
-              "PARENT-0150"
+              "PARENT-0033"
             ]
           },
           "evidenceIds": [
@@ -4222,10 +4405,27 @@
           "overridesClaimIds": [
             "S1030-BASELINE"
           ],
-          "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "claimId": "S1030-CONTINUITY-002",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1030-N004",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0150"
+            ]
+          },
+          "evidenceIds": [
+            "S1030-CONTINUITY-002-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1030-BASELINE"
+          ],
+          "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
+        },
+        {
+          "claimId": "S1030-CONTINUITY-003",
           "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1030-N004",
           "target": {
@@ -4237,7 +4437,7 @@
             ]
           },
           "evidenceIds": [
-            "S1030-CONTINUITY-002-EVIDENCE"
+            "S1030-CONTINUITY-003-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1030-BASELINE"
@@ -4245,7 +4445,7 @@
           "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
         },
         {
-          "claimId": "S1030-CONTINUITY-003",
+          "claimId": "S1030-CONTINUITY-004",
           "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1030-N012",
           "target": {
@@ -4254,7 +4454,7 @@
             ]
           },
           "evidenceIds": [
-            "S1030-CONTINUITY-003-EVIDENCE"
+            "S1030-CONTINUITY-004-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1030-BASELINE"
@@ -4262,7 +4462,7 @@
           "rationale": "三國志 卷08의 徐州刺史·徐州牧 기사에 따라 후대 이성군 현역을 도겸의 서주 통제에 포함한다."
         },
         {
-          "claimId": "S1030-CONTINUITY-004",
+          "claimId": "S1030-CONTINUITY-005",
           "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1030-N008",
           "target": {
@@ -4271,7 +4471,7 @@
             ]
           },
           "evidenceIds": [
-            "S1030-CONTINUITY-004-EVIDENCE"
+            "S1030-CONTINUITY-005-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1030-BASELINE"
@@ -4279,7 +4479,7 @@
           "rationale": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다."
         },
         {
-          "claimId": "S1030-CONTINUITY-005",
+          "claimId": "S1030-CONTINUITY-006",
           "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1030-N002",
           "target": {
@@ -4289,7 +4489,7 @@
             ]
           },
           "evidenceIds": [
-            "S1030-CONTINUITY-005-EVIDENCE"
+            "S1030-CONTINUITY-006-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1030-BASELINE"
@@ -6753,6 +6953,23 @@
         {
           "claimId": "S1050-CONTINUITY-004",
           "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1050-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0166"
+            ]
+          },
+          "evidenceIds": [
+            "S1050-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1050-BASELINE"
+          ],
+          "rationale": "三國志 卷54의 「還定豫章」으로 건안4년(199) 손책의 예장 평정을 확인하고, 三國志 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해 분군 전 파양 현역을 예장 통제에 포함한다."
+        },
+        {
+          "claimId": "S1050-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1050-N001",
           "target": {
             "parentRegionIds": [
@@ -6764,7 +6981,7 @@
             ]
           },
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1050-BASELINE"
@@ -6772,7 +6989,41 @@
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
         },
         {
-          "claimId": "S1050-CONTINUITY-005",
+          "claimId": "S1050-CONTINUITY-006",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1050-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0002"
+            ]
+          },
+          "evidenceIds": [
+            "S1050-CONTINUITY-006-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1050-BASELINE"
+          ],
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
+        },
+        {
+          "claimId": "S1050-CONTINUITY-007",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1050-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0105"
+            ]
+          },
+          "evidenceIds": [
+            "S1050-CONTINUITY-007-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1050-BASELINE"
+          ],
+          "rationale": "三國志 卷18 장패전의 「太祖以霸為瑯邪相，敦利城、禮東莞…割青、徐二州，委之於霸」에 따라 여포 패망 후 동완 현역을 조조-장패 통제에 포함한다."
+        },
+        {
+          "claimId": "S1050-CONTINUITY-008",
           "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1050-N003",
           "target": {
@@ -6785,7 +7036,7 @@
             ]
           },
           "evidenceIds": [
-            "S1050-CONTINUITY-005-EVIDENCE"
+            "S1050-CONTINUITY-008-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1050-BASELINE"
@@ -7232,6 +7483,23 @@
         {
           "claimId": "S1060-CONTINUITY-004",
           "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0166"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "三國志 卷54의 손책 예장 평정과 卷47의 손권 승계·건안15년 「分豫章為鄱陽郡」을 대조해, 202년의 후대 파양 현역을 손권의 예장 통제에 포함한다."
+        },
+        {
+          "claimId": "S1060-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1060-N001",
           "target": {
             "parentRegionIds": [
@@ -7243,7 +7511,7 @@
             ]
           },
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1060-BASELINE"
@@ -7251,7 +7519,41 @@
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
         },
         {
-          "claimId": "S1060-CONTINUITY-005",
+          "claimId": "S1060-CONTINUITY-006",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0002"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-006-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
+        },
+        {
+          "claimId": "S1060-CONTINUITY-007",
+          "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1060-N001",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0105"
+            ]
+          },
+          "evidenceIds": [
+            "S1060-CONTINUITY-007-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1060-BASELINE"
+          ],
+          "rationale": "三國志 卷18 장패전의 동완태수 윤례 임명과 「割青、徐二州，委之於霸」 기사에 따라 동완 현역의 조조측 통제를 계속 적용한다."
+        },
+        {
+          "claimId": "S1060-CONTINUITY-008",
           "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1060-N007",
           "target": {
@@ -7263,7 +7565,7 @@
             ]
           },
           "evidenceIds": [
-            "S1060-CONTINUITY-005-EVIDENCE"
+            "S1060-CONTINUITY-008-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1060-BASELINE"
@@ -7271,7 +7573,7 @@
           "rationale": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다."
         },
         {
-          "claimId": "S1060-CONTINUITY-006",
+          "claimId": "S1060-CONTINUITY-009",
           "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1060-N009",
           "target": {
@@ -7280,7 +7582,7 @@
             ]
           },
           "evidenceIds": [
-            "S1060-CONTINUITY-006-EVIDENCE"
+            "S1060-CONTINUITY-009-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1060-BASELINE"
@@ -7755,6 +8057,23 @@
         {
           "claimId": "S1070-CONTINUITY-004",
           "claimKind": "ADMIN_REGION_CONTROL",
+          "ownerNationKey": "S1070-N002",
+          "target": {
+            "parentRegionIds": [
+              "PARENT-0166"
+            ]
+          },
+          "evidenceIds": [
+            "S1070-CONTINUITY-004-EVIDENCE"
+          ],
+          "overridesClaimIds": [
+            "S1070-BASELINE"
+          ],
+          "rationale": "三國志 卷54의 예장 평정과 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해, 207년 분군 전 파양 현역을 손권의 예장 통제에 포함한다."
+        },
+        {
+          "claimId": "S1070-CONTINUITY-005",
+          "claimKind": "ADMIN_REGION_CONTROL",
           "ownerNationKey": "S1070-N001",
           "target": {
             "parentRegionIds": [
@@ -7773,7 +8092,7 @@
             ]
           },
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "overridesClaimIds": [
             "S1070-BASELINE"
@@ -8173,13 +8492,25 @@
           "scenarioCode": 1080,
           "auditKind": "UNALLOWLISTED_HOLE",
           "provinceIds": [
+            "70523"
+          ],
+          "evidenceIds": [
+            "S1080-ALLOWLIST-001-EVIDENCE"
+          ],
+          "rationale": "정본 판정: 관중 평정 기록만으로 213년 부평 현의 직접 실효 소유를 확정할 수 없다. 주변 조조령 현의 색을 투영하지 않고 미소유로 둔다.",
+          "reviewState": "APPROVED"
+        },
+        {
+          "scenarioCode": 1080,
+          "auditKind": "UNALLOWLISTED_HOLE",
+          "provinceIds": [
             "95125",
             "95676",
             "95698",
             "DIRECT-PARENT-0138-877c5fc0e884"
           ],
           "evidenceIds": [
-            "S1080-ALLOWLIST-001-EVIDENCE"
+            "S1080-ALLOWLIST-002-EVIDENCE"
           ],
           "rationale": "晉書 卷14의 북방 5군 유리·분산 기사에 따라 직접 군현 소유색을 주지 않는다.",
           "reviewState": "APPROVED"
@@ -8191,7 +8522,7 @@
             "X061"
           ],
           "evidenceIds": [
-            "S1080-ALLOWLIST-002-EVIDENCE"
+            "S1080-ALLOWLIST-003-EVIDENCE"
           ],
           "rationale": "三國志 卷55의 「諸山越不賔」에 따라 산월을 별도 미복속 집단으로 둔다.",
           "reviewState": "APPROVED"

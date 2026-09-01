@@ -1461,11 +1461,17 @@ def main():
         preview(terrain, pts, hubs, roads, seat_label)
 
 
+def terrain_preview_palette():
+    """Return the complete RGB palette used by the optional terrain preview."""
+    return {SEA: (38, 62, 92), PLAIN: (126, 143, 92), MOUNTAIN: (108, 96, 84),
+            RIVER: (74, 122, 158), LAKE: (60, 100, 140), DESERT: (196, 178, 130),
+            PLATEAU: (150, 132, 104), BASIN: (140, 152, 104), HILL: (132, 130, 92),
+            OUT_OF_SCOPE: (0, 0, 0)}
+
+
 def preview(terrain, pts, hubs, roads, seat_label=None):
     from PIL import Image, ImageDraw
-    pal = {SEA: (38, 62, 92), PLAIN: (126, 143, 92), MOUNTAIN: (108, 96, 84),
-           RIVER: (74, 122, 158), LAKE: (60, 100, 140), DESERT: (196, 178, 130),
-           PLATEAU: (150, 132, 104), BASIN: (140, 152, 104), HILL: (132, 130, 92)}
+    pal = terrain_preview_palette()
     scale = 4
     rows, n = terrain.shape
     img = Image.new('RGB', (n, rows))

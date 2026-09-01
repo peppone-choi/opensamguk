@@ -134,7 +134,7 @@ authored source.
       "sourceType": "STANDARD_HISTORY",
       "work": "三國志",
       "section": "魏書七 張邈傳",
-      "locator": "興平元年兆州叛迎呂布",
+      "locator": "興平元年兗州叛迎呂布",
       "excerpt": "郡縣皆應，唯鄄城、東阿、范為太祖守。",
       "url": "https://ctext.org/text.pl?if=gb&node=602269"
     }
@@ -478,7 +478,7 @@ At minimum, fixtures pin:
 
 - 194 Yanzhou: Juancheng, Fan, and Dong'e remain Cao Cao while the reviewed surrounding claims
   resolve to Lü Bu or explicit unowned results;
-- Huang Turban scenario: Later Han represents effective court control, not legal title over the
+- Yellow Turban scenario: Later Han represents effective court control, not legal title over the
   entire empire; country name and ruler identity remain separate;
 - scenario 1100 and 1110: Shangyong and Fangling use explicit county claims rather than inheriting
   Hanzhong's owner;

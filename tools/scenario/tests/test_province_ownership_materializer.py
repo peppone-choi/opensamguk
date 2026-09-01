@@ -116,6 +116,82 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
             by_id["JUANCHENG"].claim_trace,
         )
 
+    def test_every_same_specificity_claim_must_override_the_previous_winner(self):
+        first = claim(
+            "A-LU-YANZHOU",
+            "ADMIN_REGION_CONTROL",
+            "LU",
+            parents=("YANZHOU",),
+            overrides=("BASE",),
+        )
+        missing_edge = claim(
+            "Z-LU-YANZHOU",
+            "ADMIN_REGION_CONTROL",
+            "LU",
+            parents=("YANZHOU",),
+        )
+
+        with self.assertRaisesRegex(OwnershipContractError, "MISSING_OVERRIDE_EDGE"):
+            materialize_scenario(document((BASELINE, first, missing_edge)), 1030, CATALOG)
+
+    def test_same_specificity_claims_require_one_explicit_override_chain(self):
+        first = claim(
+            "A-LU-YANZHOU",
+            "ADMIN_REGION_CONTROL",
+            "LU",
+            parents=("YANZHOU",),
+            overrides=("BASE",),
+        )
+        ambiguous = claim(
+            "Z-LU-YANZHOU",
+            "ADMIN_REGION_CONTROL",
+            "LU",
+            parents=("YANZHOU",),
+            overrides=("BASE",),
+        )
+
+        with self.assertRaisesRegex(OwnershipContractError, "AMBIGUOUS_OVERRIDE_CHAIN"):
+            materialize_scenario(document((BASELINE, first, ambiguous)), 1030, CATALOG)
+
+        chained = TerritoryClaim(
+            **{
+                **ambiguous.__dict__,
+                "overrides_claim_ids": ("A-LU-YANZHOU",),
+            }
+        )
+        rows = materialize_scenario(document((chained, BASELINE, first)), 1030, CATALOG)
+        by_id = {row.province_id: row for row in rows}
+        self.assertEqual(
+            ("A-LU-YANZHOU", "Z-LU-YANZHOU"),
+            by_id["JUANCHENG"].claim_trace,
+        )
+
+    def test_temporal_carry_replaces_its_source_at_the_source_claim_tier(self):
+        source = claim(
+            "CAO-JUANCHENG",
+            "PROVINCE_DIRECT",
+            "CAO",
+            provinces=("JUANCHENG",),
+            overrides=("BASE",),
+        )
+        carry = TerritoryClaim(
+            **{
+                **source.__dict__,
+                "claim_id": "CAO-JUANCHENG-CARRY",
+                "claim_kind": "TEMPORAL_CARRY",
+                "inherits_claim_id": source.claim_id,
+                "effective_from": 194,
+                "effective_to": 194,
+            }
+        )
+
+        rows = materialize_scenario(document((BASELINE, source, carry)), 1030, CATALOG)
+        by_id = {row.province_id: row for row in rows}
+
+        self.assertEqual("CAO-JUANCHENG-CARRY", by_id["JUANCHENG"].winning_claim_id)
+        self.assertEqual("TEMPORAL_CARRY", by_id["JUANCHENG"].basis_type)
+        self.assertEqual(("CAO-JUANCHENG-CARRY",), by_id["JUANCHENG"].claim_trace)
+
     def test_cross_tier_override_must_name_the_winning_claim(self):
         broad = claim("LU-YANZHOU", "ADMIN_REGION_CONTROL", "LU", parents=("YANZHOU",), overrides=("BASE",))
         direct = claim("CAO-JUANCHENG", "PROVINCE_DIRECT", "CAO", provinces=("JUANCHENG",), overrides=("BASE",))

@@ -35,10 +35,10 @@ class MigrateHanOwnershipClaimsTest(unittest.TestCase):
 
         self.assertEqual(15, len(curated["scenarios"]))
         self.assertEqual(187, sum(len(s["nationRefs"]) for s in curated["scenarios"]))
-        self.assertEqual(1299, count_parent_grants(curated))
+        self.assertEqual(1307, count_parent_grants(curated))
         self.assertEqual(6, count_direct_grants(curated))
         self.assertEqual(
-            legacy_political_view(self.legacy),
+            legacy_political_view(self.legacy, self.map_doc),
             project_legacy_political_view(curated, self.map_doc),
         )
 
@@ -85,6 +85,25 @@ class MigrateHanOwnershipClaimsTest(unittest.TestCase):
         self.assertEqual("S1010-N001", claim["ownerNationKey"])
         self.assertEqual(["PARENT-0027"], claim["target"]["parentRegionIds"])
         self.assertEqual("https://zh.wikisource.org/wiki/example", evidence["url"])
+
+    def test_interior_continuity_can_target_exact_province_ids(self):
+        legacy = deepcopy(self.legacy)
+        legacy["_interiorContinuity"] = {
+            "assignments": [{
+                "scenarioCode": 1010,
+                "nation": "후한",
+                "provinceIds": ["70523"],
+                "basis": "Reviewed county-level continuity.",
+            }],
+            "allowlists": [],
+        }
+
+        curated = migrate(legacy, self.map_doc)
+        scenario = next(row for row in curated["scenarios"] if row["scenarioCode"] == 1010)
+        claim = next(row for row in scenario["claims"] if row["claimId"] == "S1010-CONTINUITY-001")
+
+        self.assertEqual("PROVINCE_DIRECT", claim["claimKind"])
+        self.assertEqual({"provinceIds": ["70523"]}, claim["target"])
 
     def test_every_scenario_has_one_baseline_and_stable_nation_keys(self):
         curated = migrate(self.legacy, self.map_doc)

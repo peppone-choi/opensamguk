@@ -159,10 +159,24 @@ def rebalance_province_areas(
     local_rows: list[tuple[np.ndarray, list[ProvinceRecord]]] = []
     for parent_index, parent in enumerate(result.parent_regions):
         mask = balanced_parent_owner == parent_index
-        labels, anchors = balanced_parent_labels(mask, counts[parent.id])
         historical = sorted(historical_by_parent[parent.id], key=lambda row: row.id)
+        fixed_anchors = tuple(
+            (seed_by_id[record.id].row, seed_by_id[record.id].col)
+            for record in historical
+        )
+        try:
+            labels, anchors = balanced_parent_labels(
+                mask,
+                counts[parent.id],
+                fixed_anchors=fixed_anchors,
+                minimum_anchor_area=minimum_area,
+            )
+        except ValueError as error:
+            raise ValueError(f"{parent.id}: {error}") from error
         available = set(range(len(anchors)))
-        record_by_label: dict[int, ProvinceRecord] = {}
+        record_by_label: dict[int, ProvinceRecord] = {
+            label: record for label, record in enumerate(historical)
+        }
         cells_by_label = [np.argwhere(labels == label) for label in range(len(anchors))]
         distances = {}
         for record in historical:
@@ -198,7 +212,7 @@ def rebalance_province_areas(
                     return None
             return {record_id: label for label, record_id in label_to_record.items()}
 
-        if historical:
+        if historical and len(record_by_label) != len(historical):
             limits = sorted({distance for rows in distances.values() for distance in rows})
             low, high = 0, len(limits) - 1
             assignment = None
@@ -213,9 +227,8 @@ def rebalance_province_areas(
             if assignment is None:
                 raise ValueError(f"cannot place all historical seeds in {parent.id}")
             for record in historical:
-                label = assignment[record.id]
-                record_by_label[label] = record
-                available.remove(label)
+                record_by_label[assignment[record.id]] = record
+        available -= set(record_by_label)
         if len(record_by_label) != len(historical):
             raise ValueError(f"cannot place all historical seeds in {parent.id}")
         for ordinal, label in enumerate(sorted(available)):
@@ -265,31 +278,46 @@ def rebalance_province_areas(
                         f"cannot keep {record.id} within historical reach contract"
                     )
                 labels[int(row), int(col)] = min(candidates)[1]
-        labels = repair_label_connectivity(labels, mask, len(anchors))
-        if maximum_area is not None:
-            def component_count(grid: np.ndarray, label: int) -> int:
-                unseen = grid == label
-                count = 0
-                for start_row, start_col in np.argwhere(unseen):
-                    if not unseen[start_row, start_col]:
-                        continue
-                    count += 1
-                    unseen[start_row, start_col] = False
-                    pending = [(int(start_row), int(start_col))]
-                    while pending:
-                        row, col = pending.pop()
-                        for next_row, next_col in _neighbors(row, col, rows, cols):
-                            if unseen[next_row, next_col]:
-                                unseen[next_row, next_col] = False
-                                pending.append((next_row, next_col))
-                return count
+        fixed_anchor_by_label = {
+            label: (seed_by_id[record.id].row, seed_by_id[record.id].col)
+            for label, record in record_by_label.items()
+            if record.kind != "DIRECT_TERRITORY"
+        }
+        labels = repair_label_connectivity(
+            labels,
+            mask,
+            len(anchors),
+            fixed_anchor_by_label=fixed_anchor_by_label,
+        )
+        def component_count(grid: np.ndarray, label: int) -> int:
+            unseen = grid == label
+            count = 0
+            for start_row, start_col in np.argwhere(unseen):
+                if not unseen[start_row, start_col]:
+                    continue
+                count += 1
+                unseen[start_row, start_col] = False
+                pending = [(int(start_row), int(start_col))]
+                while pending:
+                    row, col = pending.pop()
+                    for next_row, next_col in _neighbors(row, col, rows, cols):
+                        if unseen[next_row, next_col]:
+                            unseen[next_row, next_col] = False
+                            pending.append((next_row, next_col))
+            return count
 
-            area_counts = np.bincount(labels[mask], minlength=len(anchors))
+        area_counts = np.bincount(labels[mask], minlength=len(anchors))
+        if int(area_counts.min()) < minimum_area:
+            raise ValueError(f"minimum anchor footprint was lost in {parent.id}")
+
+        if maximum_area is not None:
             while int(area_counts.max()) > maximum_area:
                 donor = int(np.argmax(area_counts))
                 donor_components = component_count(labels, donor)
                 candidates = []
                 for row, col in np.argwhere(labels == donor):
+                    if (int(row), int(col)) == fixed_anchor_by_label.get(donor):
+                        continue
                     for next_row, next_col in _neighbors(int(row), int(col), rows, cols):
                         recipient = int(labels[next_row, next_col])
                         if recipient < 0 or recipient == donor:

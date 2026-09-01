@@ -198,6 +198,19 @@ def migrate(legacy: Mapping[str, Any], map_doc: Mapping[str, Any]) -> dict[str, 
                         parent_region=parent_name,
                     )
                 parent_ids.append(parent_id)
+            province_ids = list(row.get("provinceIds") or [])
+            unknown_province_ids = sorted(set(province_ids) - known_province_ids)
+            if unknown_province_ids:
+                raise OwnershipContractError(
+                    "UNKNOWN_PROVINCE",
+                    scenario_code=code,
+                    nation=nation_name,
+                    province_ids=unknown_province_ids,
+                )
+            if not parent_ids and not province_ids:
+                raise OwnershipContractError(
+                    "EMPTY_CONTINUITY_TARGET", scenario_code=code, nation=nation_name,
+                )
             evidence_id = f"S{code}-CONTINUITY-{index:03d}-EVIDENCE"
             source_type, work = _source_type_and_work(basis, placement_basis)
             evidence_row = {
@@ -211,15 +224,24 @@ def migrate(legacy: Mapping[str, Any], map_doc: Mapping[str, Any]) -> dict[str, 
             if isinstance(row.get("sourceUrl"), str):
                 evidence_row["url"] = row["sourceUrl"]
             evidence.append(evidence_row)
+            target = {}
+            if parent_ids:
+                target["parentRegionIds"] = parent_ids
+            if province_ids:
+                target["provinceIds"] = province_ids
             pending.append({
                 "claimId": f"S{code}-CONTINUITY-{index:03d}",
-                "claimKind": "IF_SCENARIO" if placement_basis == "IF_SCENARIO" else "ADMIN_REGION_CONTROL",
+                "claimKind": (
+                    "IF_SCENARIO" if placement_basis == "IF_SCENARIO"
+                    else "PROVINCE_DIRECT" if province_ids
+                    else "ADMIN_REGION_CONTROL"
+                ),
                 "ownerNationKey": nation_key,
-                "target": {"parentRegionIds": parent_ids},
+                "target": target,
                 "evidenceIds": [evidence_id],
                 "overridesClaimIds": [baseline_claim_id],
                 "rationale": basis,
-                "legacyGrantKind": "ADMIN_REGION_CONTROL",
+                "legacyGrantKind": "PROVINCE_DIRECT" if province_ids else "ADMIN_REGION_CONTROL",
             })
 
         province_parent = {row["id"]: row["parentRegionId"] for row in map_doc["provinceRecords"]}
@@ -303,7 +325,9 @@ def migrate(legacy: Mapping[str, Any], map_doc: Mapping[str, Any]) -> dict[str, 
     }
 
 
-def legacy_political_view(legacy: Mapping[str, Any]) -> dict[str, Any]:
+def legacy_political_view(
+    legacy: Mapping[str, Any], map_doc: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for scenario_key, scenario in _scenario_rows(legacy):
         result[scenario_key] = {
@@ -320,8 +344,25 @@ def legacy_political_view(legacy: Mapping[str, Any]) -> dict[str, Any]:
         }
     for row in (legacy.get("_interiorContinuity") or {}).get("assignments") or []:
         scenario = result[f"scenario_{row['scenarioCode']}"]
-        juns = scenario["nations"][row["nation"]]["juns"]
+        nation = scenario["nations"][row["nation"]]
+        juns = nation["juns"]
         juns.extend(name for name in row.get("juns") or [] if name not in juns)
+        if row.get("provinceIds"):
+            if map_doc is None:
+                raise ValueError("map document is required for province continuity projection")
+            name_by_id = {
+                item["id"]: (
+                    item["displayName"][:-1]
+                    if item["displayName"].endswith("현") else item["displayName"]
+                )
+                for item in map_doc["provinceRecords"]
+            }
+            cities = nation["cities"]
+            cities.extend(
+                name_by_id[province_id]
+                for province_id in row["provinceIds"]
+                if name_by_id[province_id] not in cities
+            )
     return result
 
 

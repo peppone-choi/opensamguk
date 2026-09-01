@@ -25,6 +25,7 @@
   "_interiorContinuity": {
     "policy": "220년 군국 분할을 공통 지도 형상으로 쓰므로, 시나리오 연도에 해당 군이 아직 없었더라도 그 현역을 당시의 주·군 통치권에 배정한다. 단순 인접색 보간은 금지하고, 본문 직위·점령·승계 기사로 주체를 검증한 행만 쓴다.",
     "assignments": [
+      {"scenarioCode": 1030, "nation": "도겸", "juns": ["광릉군"], "basis": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다.", "sourceUrl": "https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%9C%8B%E5%BF%97/%E5%8D%B708"},
       {"scenarioCode": 1020, "nation": "유언", "juns": ["부릉군"], "basis": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"},
       {"scenarioCode": 1021, "nation": "유언", "juns": ["부릉군"], "basis": "華陽國志 卷一 巴志는 涪陵을 巴의 남쪽 경계로 적고 建安六年(201) 劉璋 때 별도 郡이 되었다고 한다. 190년에는 후대 부릉 현역이 巴郡을 포함한 劉焉의 益州 통제 안에 있다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"},
       {"scenarioCode": 1030, "nation": "유언", "juns": ["부릉군"], "basis": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/hyg-%E4%B8%80.txt"},
@@ -63,17 +64,24 @@
 
       {"scenarioCode": 1050, "nation": "유장", "juns": ["탕거군", "강양군", "재동군", "문산군"], "basis": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"},
       {"scenarioCode": 1050, "nation": "손책", "juns": ["신도군", "여릉군"], "basis": "三國志 卷46의 손책 강동 평정 기사에 따라 후대 신도·여릉 현역을 손책에게 배정한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-46.txt"},
+      {"scenarioCode": 1050, "nation": "손책", "juns": ["파양군"], "basis": "三國志 卷54의 「還定豫章」으로 건안4년(199) 손책의 예장 평정을 확인하고, 三國志 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해 분군 전 파양 현역을 예장 통제에 포함한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-54.txt"},
       {"scenarioCode": 1050, "nation": "조조", "juns": ["양국", "이성군", "노국", "장릉군", "남향군"], "basis": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"},
+      {"scenarioCode": 1050, "nation": "조조", "juns": ["하동군"], "basis": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-13.txt"},
+      {"scenarioCode": 1050, "nation": "조조", "juns": ["동완군"], "basis": "三國志 卷18 장패전의 「太祖以霸為瑯邪相，敦利城、禮東莞…割青、徐二州，委之於霸」에 따라 여포 패망 후 동완 현역을 조조-장패 통제에 포함한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-18.txt"},
       {"scenarioCode": 1050, "nation": "원소", "juns": ["광평군", "장락군", "낙평군", "낙릉군", "장무군"], "basis": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"},
 
       {"scenarioCode": 1060, "nation": "유장", "juns": ["탕거군", "강양군", "재동군", "문산군"], "basis": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"},
       {"scenarioCode": 1060, "nation": "손권", "juns": ["신도군", "여릉군"], "basis": "三國志 卷47의 손권 강동 승계와 오군 운영 기사에 따라 후대 신도·여릉 현역을 배정한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"},
+      {"scenarioCode": 1060, "nation": "손권", "juns": ["파양군"], "basis": "三國志 卷54의 손책 예장 평정과 卷47의 손권 승계·건안15년 「分豫章為鄱陽郡」을 대조해, 202년의 후대 파양 현역을 손권의 예장 통제에 포함한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"},
       {"scenarioCode": 1060, "nation": "조조", "juns": ["양국", "이성군", "노국", "장릉군", "남향군"], "basis": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"},
+      {"scenarioCode": 1060, "nation": "조조", "juns": ["하동군"], "basis": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-13.txt"},
+      {"scenarioCode": 1060, "nation": "조조", "juns": ["동완군"], "basis": "三國志 卷18 장패전의 동완태수 윤례 임명과 「割青、徐二州，委之於霸」 기사에 따라 동완 현역의 조조측 통제를 계속 적용한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-18.txt"},
       {"scenarioCode": 1060, "nation": "원상", "juns": ["광평군", "장락군", "낙평군", "장무군"], "basis": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"},
       {"scenarioCode": 1060, "nation": "원담", "juns": ["낙릉군"], "basis": "三國志 卷06의 원담 청주 통제 기사에 따라 청주 북부의 후대 낙릉 현역을 원담에게 배정한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-06.txt"},
 
       {"scenarioCode": 1070, "nation": "유장", "juns": ["탕거군", "강양군", "재동군", "문산군"], "basis": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"},
       {"scenarioCode": 1070, "nation": "손권", "juns": ["신도군", "여릉군"], "basis": "三國志 卷47의 손권 강동 통제 기사에 따라 신도·여릉 현역을 배정한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"},
+      {"scenarioCode": 1070, "nation": "손권", "juns": ["파양군"], "basis": "三國志 卷54의 예장 평정과 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해, 207년 분군 전 파양 현역을 손권의 예장 통제에 포함한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-47.txt"},
       {"scenarioCode": 1070, "nation": "조조", "juns": ["양국", "이성군", "노국", "장릉군", "동완군", "광평군", "장락군", "낙평군", "낙릉군", "남향군", "감릉군", "장무군"], "basis": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-01.txt"},
 
       {"scenarioCode": 1080, "nation": "유장", "juns": ["탕거군", "강양군", "재동군", "문산군"], "basis": "三國志 卷31의 유장 領益州牧 승계와 晉書 卷14의 촉 설치군 목록을 결합한다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-31.txt"},
@@ -90,6 +98,12 @@
       {"scenarioCode": 1120, "nation": "공손찬", "juns": ["장무군"], "basis": "IF_SCENARIO 배치: 공손찬의 하북 확장 분기를 후대 장무 현역에도 적용해 내부 공백을 막는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-08.txt"}
     ],
     "allowlists": [
+      {"scenarioCode": 1010, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["70523"], "basis": "정본 판정: 부평의 행정 소속은 확인되지만 184년 이 현의 실효 지배 주체를 특정하는 직접 기록은 없다. 주변 후한 현의 정치색으로 보간하지 않고 명시적 미소유로 둔다."},
+      {"scenarioCode": 1020, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["70523"], "basis": "정본 판정: 190년 부평의 실효 지배가 동탁에게 있었다는 직접 기록은 없다. 장안·경조권 현들 사이에 있다는 공간 관계를 소유 근거로 쓰지 않는다."},
+      {"scenarioCode": 1020, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["41838"], "basis": "정본 판정: 음산의 계양군 소속은 손견의 190년 실효 점유를 증명하지 않는다. 인접한 계양 현의 시나리오 색을 투영하지 않고 미소유로 둔다."},
+      {"scenarioCode": 1021, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["70523"], "basis": "정본 판정: 190년 부평의 실효 지배 주체를 특정할 사료가 없다. 동탁령 현에 둘러싸였다는 기하를 소유 근거로 쓰지 않는다."},
+      {"scenarioCode": 1021, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["43337"], "basis": "정본 판정: 양천의 여강군 소속은 양주자사 진온의 현 직접 소유를 증명하지 않는다. 성덕·수춘 사이의 내부공백이라는 이유로 보간하지 않는다."},
+      {"scenarioCode": 1080, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["70523"], "basis": "정본 판정: 관중 평정 기록만으로 213년 부평 현의 직접 실효 소유를 확정할 수 없다. 주변 조조령 현의 색을 투영하지 않고 미소유로 둔다."},
       {"scenarioCode": 1030, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
       {"scenarioCode": 1031, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},
       {"scenarioCode": 1040, "auditKind": "UNALLOWLISTED_HOLE", "provinceIds": ["X061"], "basis": "三國志 卷55의 「諸山越不賔」에 따라 산월을 한식 군현 소유색으로 합치지 않는다.", "sourceUrl": "https://github.com/peppone-choi/shiliao/blob/main/corpus/sgz-55.txt"},

@@ -91,6 +91,85 @@ class ProvinceOwnershipContractTest(unittest.TestCase):
         with self.assertRaisesRegex(OwnershipContractError, "IF_CLAIM_IN_HISTORICAL_SCENARIO"):
             parse_ownership_document(raw, catalog(), scenarios())
 
+    def test_temporal_carry_requires_a_known_inherited_claim_and_bounded_interval(self):
+        raw = fixture()
+        carry = copy.deepcopy(raw["scenarios"][0]["claims"][1])
+        carry.update({
+            "claimId": "S1010-P1-CARRY",
+            "claimKind": "TEMPORAL_CARRY",
+            "inheritsClaimId": "S1010-P1",
+            "effectiveFrom": 184,
+            "effectiveTo": 185,
+        })
+        raw["scenarios"][0]["claims"].append(carry)
+
+        parsed = parse_ownership_document(raw, catalog(), scenarios())
+        parsed_carry = parsed.scenarios[1010].claims[-1]
+        self.assertEqual("S1010-P1", parsed_carry.inherits_claim_id)
+        self.assertEqual((184, 185), (parsed_carry.effective_from, parsed_carry.effective_to))
+
+        for field, value, error in (
+            ("inheritsClaimId", "S1010-MISSING", "INVALID_TEMPORAL_CARRY"),
+            ("effectiveFrom", 186, "INVALID_EFFECTIVE_INTERVAL"),
+        ):
+            with self.subTest(field=field):
+                invalid = copy.deepcopy(raw)
+                invalid["scenarios"][0]["claims"][-1][field] = value
+                with self.assertRaisesRegex(OwnershipContractError, error):
+                    parse_ownership_document(invalid, catalog(), scenarios())
+
+    def test_temporal_carry_preserves_provenance_and_covers_the_scenario_year(self):
+        raw = fixture()
+        carry = copy.deepcopy(raw["scenarios"][0]["claims"][1])
+        carry.update({
+            "claimId": "S1010-P1-CARRY",
+            "claimKind": "TEMPORAL_CARRY",
+            "inheritsClaimId": "S1010-P1",
+            "effectiveFrom": 184,
+            "effectiveTo": 185,
+        })
+        raw["scenarios"][0]["nationRefs"].append({
+            "nationKey": "S1010-OTHER",
+            "scenarioNationName": "황건적",
+        })
+        raw["scenarios"][0]["claims"].append(carry)
+
+        mutations = (
+            ("year", lambda doc: doc["scenarios"][0].update(effectiveYear=183)),
+            ("owner", lambda doc: doc["scenarios"][0]["claims"][-1].update(ownerNationKey="S1010-OTHER")),
+            ("target", lambda doc: doc["scenarios"][0]["claims"][-1].update(target={"provinceIds": ["P-2"]})),
+            ("evidence", lambda doc: doc["scenarios"][0]["claims"][-1].update(evidenceIds=["POLICY-UNOWNED"])),
+        )
+        for label, mutate in mutations:
+            with self.subTest(label=label):
+                invalid = copy.deepcopy(raw)
+                mutate(invalid)
+                with self.assertRaisesRegex(OwnershipContractError, "INVALID_TEMPORAL_CARRY"):
+                    parse_ownership_document(invalid, catalog(), {1010: {"nations": [
+                        {"id": 1, "name": "후한"},
+                        {"id": 2, "name": "황건적"},
+                    ]}})
+
+    def test_temporal_carry_chain_must_be_acyclic(self):
+        raw = fixture()
+        first = copy.deepcopy(raw["scenarios"][0]["claims"][1])
+        first.update({
+            "claimId": "S1010-CARRY-A",
+            "claimKind": "TEMPORAL_CARRY",
+            "inheritsClaimId": "S1010-CARRY-B",
+            "effectiveFrom": 184,
+            "effectiveTo": 185,
+        })
+        second = copy.deepcopy(first)
+        second.update({
+            "claimId": "S1010-CARRY-B",
+            "inheritsClaimId": "S1010-CARRY-A",
+        })
+        raw["scenarios"][0]["claims"].extend((first, second))
+
+        with self.assertRaisesRegex(OwnershipContractError, "TEMPORAL_CARRY_CYCLE"):
+            parse_ownership_document(raw, catalog(), scenarios())
+
     def test_allowlist_cannot_use_wildcard_province_ids(self):
         raw = fixture()
         raw["scenarios"][0]["auditAllowlist"] = [{

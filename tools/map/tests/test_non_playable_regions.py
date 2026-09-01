@@ -10,6 +10,7 @@ from tools.map.non_playable_regions import (
     _smooth_blocked_provinces,
     apply_non_playable_regions,
 )
+from tools.map.build_terrain_grid import OUT_OF_SCOPE, terrain_preview_palette
 
 
 class ProjectionStub:
@@ -18,6 +19,9 @@ class ProjectionStub:
 
 
 class NonPlayableRegionsTest(unittest.TestCase):
+    def test_preview_palette_renders_out_of_scope_as_black(self) -> None:
+        self.assertEqual((0, 0, 0), terrain_preview_palette()[OUT_OF_SCOPE])
+
     def test_smooths_one_province_black_spike_but_keeps_explicit_exclusion(self) -> None:
         provinces = np.full((5, 5), 2, dtype=np.int32)
         provinces[1:4, 0:2] = 0

@@ -4,9 +4,9 @@
   "unitSet": "han",
   "generatorPolicyVersion": 1,
   "sources": {
-    "claimsSha256": "3a88b862c8a7477865d27f3b676758dd7dbadac2336f47133598ed5460b76b14",
-    "mapSha256": "e76d070090ec69b8dc16cbbcb5da64a5deb56ee204c65eadc86f6fede1b6d9c4",
-    "scenarioCatalogSha256": "9353664051dabcbea99d89fa95b41884df694ca7b9afbff7a19fc5a0d4d41c1c"
+    "claimsSha256": "90e3d91b43f1a5f67ca9eea3dc7f0671aa3226a6a0b9733f346a5888b001fe4b",
+    "mapSha256": "2f57d96f05943842aa38fe59ab7038860f4da41d55c2e9020d03f59bdf39073a",
+    "scenarioCatalogSha256": "40c9943ce30a2d29dee5a742ef86bd10b80f5d910bda498f94274b037ba3f2b3"
   },
   "scenarios": [
     {
@@ -78003,13 +78003,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-001",
+          "winningClaimId": "S1030-CONTINUITY-002",
           "claimTrace": [
-            "S1030-CONTINUITY-001"
+            "S1030-CONTINUITY-002"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-001-EVIDENCE"
+            "S1030-CONTINUITY-002-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
@@ -78020,13 +78020,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-002",
+          "winningClaimId": "S1030-CONTINUITY-003",
           "claimTrace": [
-            "S1030-CONTINUITY-002"
+            "S1030-CONTINUITY-003"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-002-EVIDENCE"
+            "S1030-CONTINUITY-003-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
@@ -78663,19 +78663,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "40556",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
@@ -81179,138 +81179,138 @@
         {
           "scenarioCode": 1030,
           "provinceId": "42681",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
           "provinceId": "42687",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
           "provinceId": "42695",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
           "provinceId": "42698",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
           "provinceId": "42702",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
           "provinceId": "42714",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
           "provinceId": "42737",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
           "provinceId": "42739",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
@@ -81553,19 +81553,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "42844",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
@@ -81726,13 +81726,13 @@
           "ownerNationId": 12,
           "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-003",
+          "winningClaimId": "S1030-CONTINUITY-004",
           "claimTrace": [
-            "S1030-CONTINUITY-003"
+            "S1030-CONTINUITY-004"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-003-EVIDENCE"
+            "S1030-CONTINUITY-004-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷08의 徐州刺史·徐州牧 기사에 따라 후대 이성군 현역을 도겸의 서주 통제에 포함한다."
@@ -81757,19 +81757,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "42917",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 12,
+          "ownerNationKey": "S1030-N012",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-CONTINUITY-001",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-CONTINUITY-001"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-CONTINUITY-001-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷08은 흥평 원년(194)까지 도겸을 徐州牧으로 기록하고 광릉태수 조욱과의 지휘 관계를 적는다. 같은 해 조조의 침공으로 동해서·낭야 일부가 흔들린 사실은 별도 현 소유권으로 처리한다."
         },
         {
           "scenarioCode": 1030,
@@ -84140,13 +84140,13 @@
           "ownerNationId": 8,
           "ownerNationKey": "S1030-N008",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-004",
+          "winningClaimId": "S1030-CONTINUITY-005",
           "claimTrace": [
-            "S1030-CONTINUITY-004"
+            "S1030-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-004-EVIDENCE"
+            "S1030-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다."
@@ -84208,13 +84208,13 @@
           "ownerNationId": 8,
           "ownerNationKey": "S1030-N008",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-004",
+          "winningClaimId": "S1030-CONTINUITY-005",
           "claimTrace": [
-            "S1030-CONTINUITY-004"
+            "S1030-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-004-EVIDENCE"
+            "S1030-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다."
@@ -84225,13 +84225,13 @@
           "ownerNationId": 8,
           "ownerNationKey": "S1030-N008",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-004",
+          "winningClaimId": "S1030-CONTINUITY-005",
           "claimTrace": [
-            "S1030-CONTINUITY-004"
+            "S1030-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-004-EVIDENCE"
+            "S1030-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다."
@@ -84242,13 +84242,13 @@
           "ownerNationId": 8,
           "ownerNationKey": "S1030-N008",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-004",
+          "winningClaimId": "S1030-CONTINUITY-005",
           "claimTrace": [
-            "S1030-CONTINUITY-004"
+            "S1030-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-004-EVIDENCE"
+            "S1030-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다."
@@ -84446,13 +84446,13 @@
           "ownerNationId": 8,
           "ownerNationKey": "S1030-N008",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-004",
+          "winningClaimId": "S1030-CONTINUITY-005",
           "claimTrace": [
-            "S1030-CONTINUITY-004"
+            "S1030-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-004-EVIDENCE"
+            "S1030-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다."
@@ -90634,13 +90634,13 @@
           "ownerNationId": 8,
           "ownerNationKey": "S1030-N008",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-004",
+          "winningClaimId": "S1030-CONTINUITY-005",
           "claimTrace": [
-            "S1030-CONTINUITY-004"
+            "S1030-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-004-EVIDENCE"
+            "S1030-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷07의 「迎布為充州牧…郡縣皆應」에 따라 연주 동부의 노국 현역을 여포 통제에 포함한다."
@@ -91212,13 +91212,13 @@
           "ownerNationId": 2,
           "ownerNationKey": "S1030-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-005",
+          "winningClaimId": "S1030-CONTINUITY-006",
           "claimTrace": [
-            "S1030-CONTINUITY-005"
+            "S1030-CONTINUITY-006"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-005-EVIDENCE"
+            "S1030-CONTINUITY-006-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 「紹遂領冀州牧」에 따라 후대 광평·장락 현역을 원소의 기주 통제에 포함한다."
@@ -91637,13 +91637,13 @@
           "ownerNationId": 2,
           "ownerNationKey": "S1030-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-005",
+          "winningClaimId": "S1030-CONTINUITY-006",
           "claimTrace": [
-            "S1030-CONTINUITY-005"
+            "S1030-CONTINUITY-006"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-005-EVIDENCE"
+            "S1030-CONTINUITY-006-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 「紹遂領冀州牧」에 따라 후대 광평·장락 현역을 원소의 기주 통제에 포함한다."
@@ -93728,13 +93728,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-002",
+          "winningClaimId": "S1030-CONTINUITY-003",
           "claimTrace": [
-            "S1030-CONTINUITY-002"
+            "S1030-CONTINUITY-003"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-002-EVIDENCE"
+            "S1030-CONTINUITY-003-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
@@ -93745,13 +93745,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-002",
+          "winningClaimId": "S1030-CONTINUITY-003",
           "claimTrace": [
-            "S1030-CONTINUITY-002"
+            "S1030-CONTINUITY-003"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-002-EVIDENCE"
+            "S1030-CONTINUITY-003-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
@@ -93779,13 +93779,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-002",
+          "winningClaimId": "S1030-CONTINUITY-003",
           "claimTrace": [
-            "S1030-CONTINUITY-002"
+            "S1030-CONTINUITY-003"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-002-EVIDENCE"
+            "S1030-CONTINUITY-003-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
@@ -102262,13 +102262,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-002",
+          "winningClaimId": "S1030-CONTINUITY-003",
           "claimTrace": [
-            "S1030-CONTINUITY-002"
+            "S1030-CONTINUITY-003"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-002-EVIDENCE"
+            "S1030-CONTINUITY-003-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
@@ -102279,13 +102279,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-002",
+          "winningClaimId": "S1030-CONTINUITY-003",
           "claimTrace": [
-            "S1030-CONTINUITY-002"
+            "S1030-CONTINUITY-003"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-002-EVIDENCE"
+            "S1030-CONTINUITY-003-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷31의 領益州牧 기사와 晉書 卷14의 촉 설치군 목록을 결합해, 194년 현재 유언의 익주 통제 현역을 배정한다."
@@ -102296,13 +102296,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-001",
+          "winningClaimId": "S1030-CONTINUITY-002",
           "claimTrace": [
-            "S1030-CONTINUITY-001"
+            "S1030-CONTINUITY-002"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-001-EVIDENCE"
+            "S1030-CONTINUITY-002-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
@@ -102313,13 +102313,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-001",
+          "winningClaimId": "S1030-CONTINUITY-002",
           "claimTrace": [
-            "S1030-CONTINUITY-001"
+            "S1030-CONTINUITY-002"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-001-EVIDENCE"
+            "S1030-CONTINUITY-002-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
@@ -102330,13 +102330,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-001",
+          "winningClaimId": "S1030-CONTINUITY-002",
           "claimTrace": [
-            "S1030-CONTINUITY-001"
+            "S1030-CONTINUITY-002"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-001-EVIDENCE"
+            "S1030-CONTINUITY-002-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
@@ -102347,13 +102347,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-001",
+          "winningClaimId": "S1030-CONTINUITY-002",
           "claimTrace": [
-            "S1030-CONTINUITY-001"
+            "S1030-CONTINUITY-002"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-001-EVIDENCE"
+            "S1030-CONTINUITY-002-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
@@ -102364,13 +102364,13 @@
           "ownerNationId": 4,
           "ownerNationKey": "S1030-N004",
           "controllerCityId": null,
-          "winningClaimId": "S1030-CONTINUITY-001",
+          "winningClaimId": "S1030-CONTINUITY-002",
           "claimTrace": [
-            "S1030-CONTINUITY-001"
+            "S1030-CONTINUITY-002"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-CONTINUITY-001-EVIDENCE"
+            "S1030-CONTINUITY-002-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "華陽國志 卷一 巴志 「涪陵郡，巴之南鄙」 및 建安六年 분군 기사에 따라, 분군 전 부릉 현역을 劉焉의 巴郡·益州 통제에 포함한다."
@@ -183309,36 +183309,36 @@
         {
           "scenarioCode": 1050,
           "provinceId": "41165",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1050-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-004",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 「還定豫章」으로 건안4년(199) 손책의 예장 평정을 확인하고, 三國志 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해 분군 전 파양 현역을 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "41170",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1050-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-004",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 「還定豫章」으로 건안4년(199) 손책의 예장 평정을 확인하고, 三國志 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해 분군 전 파양 현역을 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1050,
@@ -183377,53 +183377,53 @@
         {
           "scenarioCode": 1050,
           "provinceId": "41195",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1050-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-004",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 「還定豫章」으로 건안4년(199) 손책의 예장 평정을 확인하고, 三國志 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해 분군 전 파양 현역을 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "41198",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1050-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-004",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 「還定豫章」으로 건안4년(199) 손책의 예장 평정을 확인하고, 三國志 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해 분군 전 파양 현역을 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "41202",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1050-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-004",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 「還定豫章」으로 건안4년(199) 손책의 예장 평정을 확인하고, 三國志 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해 분군 전 파양 현역을 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1050,
@@ -185080,13 +185080,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -185267,13 +185267,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -185386,13 +185386,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -187800,13 +187800,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -187868,13 +187868,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -187885,13 +187885,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -187902,13 +187902,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -188106,13 +188106,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -188820,13 +188820,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -190690,13 +190690,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -190707,13 +190707,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -190724,13 +190724,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -190809,13 +190809,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -192832,13 +192832,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -194172,19 +194172,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "85634",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-007",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-007"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-007-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷18 장패전의 「太祖以霸為瑯邪相，敦利城、禮東莞…割青、徐二州，委之於霸」에 따라 여포 패망 후 동완 현역을 조조-장패 통제에 포함한다."
         },
         {
           "scenarioCode": 1050,
@@ -194294,13 +194294,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -194872,13 +194872,13 @@
           "ownerNationId": 3,
           "ownerNationKey": "S1050-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-005",
+          "winningClaimId": "S1050-CONTINUITY-008",
           "claimTrace": [
-            "S1050-CONTINUITY-005"
+            "S1050-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-005-EVIDENCE"
+            "S1050-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다."
@@ -195297,13 +195297,13 @@
           "ownerNationId": 3,
           "ownerNationKey": "S1050-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-005",
+          "winningClaimId": "S1050-CONTINUITY-008",
           "claimTrace": [
-            "S1050-CONTINUITY-005"
+            "S1050-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-005-EVIDENCE"
+            "S1050-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다."
@@ -196637,121 +196637,121 @@
         {
           "scenarioCode": 1050,
           "provinceId": "95218",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95230",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95249",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95255",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95280",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95285",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95291",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
@@ -196895,13 +196895,13 @@
           "ownerNationId": 3,
           "ownerNationKey": "S1050-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-005",
+          "winningClaimId": "S1050-CONTINUITY-008",
           "claimTrace": [
-            "S1050-CONTINUITY-005"
+            "S1050-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-005-EVIDENCE"
+            "S1050-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다."
@@ -196909,155 +196909,155 @@
         {
           "scenarioCode": 1050,
           "provinceId": "95401",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95415",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95423",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95427",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95443",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95470",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95478",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95482",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95495",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
@@ -197232,19 +197232,19 @@
         {
           "scenarioCode": 1050,
           "provinceId": "95667",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
@@ -197317,36 +197317,36 @@
         {
           "scenarioCode": 1050,
           "provinceId": "95716",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
           "provinceId": "95724",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-BASELINE",
+          "winningClaimId": "S1050-CONTINUITY-006",
           "claimTrace": [
-            "S1050-BASELINE"
+            "S1050-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-BASELINE-EVIDENCE"
+            "S1050-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전의 「太祖在官渡，與袁紹相持，繇送馬二千餘匹給軍」과 조조의 「關右平定」 평가에 따라 200년 하동을 조정-조조측 실효 통제로 둔다."
         },
         {
           "scenarioCode": 1050,
@@ -204120,13 +204120,13 @@
           "ownerNationId": 3,
           "ownerNationKey": "S1050-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-005",
+          "winningClaimId": "S1050-CONTINUITY-008",
           "claimTrace": [
-            "S1050-CONTINUITY-005"
+            "S1050-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-005-EVIDENCE"
+            "S1050-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다."
@@ -204681,13 +204681,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1050-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-004",
+          "winningClaimId": "S1050-CONTINUITY-005",
           "claimTrace": [
-            "S1050-CONTINUITY-004"
+            "S1050-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-004-EVIDENCE"
+            "S1050-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조해 해당 현역을 조조에게 배정한다."
@@ -206381,13 +206381,13 @@
           "ownerNationId": 3,
           "ownerNationKey": "S1050-N003",
           "controllerCityId": null,
-          "winningClaimId": "S1050-CONTINUITY-005",
+          "winningClaimId": "S1050-CONTINUITY-008",
           "claimTrace": [
-            "S1050-CONTINUITY-005"
+            "S1050-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1050-CONTINUITY-005-EVIDENCE"
+            "S1050-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 冀·青·幽·並州 통제 기사와 晉書 卷14의 위 설치군 현역을 대조한다."
@@ -209224,36 +209224,36 @@
         {
           "scenarioCode": 1060,
           "provinceId": "41165",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1060-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-004",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 손책 예장 평정과 卷47의 손권 승계·건안15년 「分豫章為鄱陽郡」을 대조해, 202년의 후대 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "41170",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1060-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-004",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 손책 예장 평정과 卷47의 손권 승계·건안15년 「分豫章為鄱陽郡」을 대조해, 202년의 후대 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1060,
@@ -209292,53 +209292,53 @@
         {
           "scenarioCode": 1060,
           "provinceId": "41195",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1060-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-004",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 손책 예장 평정과 卷47의 손권 승계·건안15년 「分豫章為鄱陽郡」을 대조해, 202년의 후대 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "41198",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1060-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-004",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 손책 예장 평정과 卷47의 손권 승계·건안15년 「分豫章為鄱陽郡」을 대조해, 202년의 후대 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "41202",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1060-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-004",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 손책 예장 평정과 卷47의 손권 승계·건안15년 「分豫章為鄱陽郡」을 대조해, 202년의 후대 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1060,
@@ -210995,13 +210995,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -211182,13 +211182,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -211301,13 +211301,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -213715,13 +213715,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -213783,13 +213783,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -213800,13 +213800,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -213817,13 +213817,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -214021,13 +214021,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -214735,13 +214735,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -216605,13 +216605,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -216622,13 +216622,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -216639,13 +216639,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -216724,13 +216724,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -218748,13 +218748,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -220088,19 +220088,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "85634",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-007",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-007"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-007-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷18 장패전의 동완태수 윤례 임명과 「割青、徐二州，委之於霸」 기사에 따라 동완 현역의 조조측 통제를 계속 적용한다."
         },
         {
           "scenarioCode": 1060,
@@ -220210,13 +220210,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -220788,13 +220788,13 @@
           "ownerNationId": 7,
           "ownerNationKey": "S1060-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-005",
+          "winningClaimId": "S1060-CONTINUITY-008",
           "claimTrace": [
-            "S1060-CONTINUITY-005"
+            "S1060-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-005-EVIDENCE"
+            "S1060-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다."
@@ -221213,13 +221213,13 @@
           "ownerNationId": 7,
           "ownerNationKey": "S1060-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-005",
+          "winningClaimId": "S1060-CONTINUITY-008",
           "claimTrace": [
-            "S1060-CONTINUITY-005"
+            "S1060-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-005-EVIDENCE"
+            "S1060-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다."
@@ -222553,121 +222553,121 @@
         {
           "scenarioCode": 1060,
           "provinceId": "95218",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95230",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95249",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95255",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95280",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95285",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95291",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
@@ -222811,13 +222811,13 @@
           "ownerNationId": 7,
           "ownerNationKey": "S1060-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-005",
+          "winningClaimId": "S1060-CONTINUITY-008",
           "claimTrace": [
-            "S1060-CONTINUITY-005"
+            "S1060-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-005-EVIDENCE"
+            "S1060-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다."
@@ -222825,155 +222825,155 @@
         {
           "scenarioCode": 1060,
           "provinceId": "95401",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95415",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95423",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95427",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95443",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95470",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95478",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95482",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95495",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
@@ -223148,19 +223148,19 @@
         {
           "scenarioCode": 1060,
           "provinceId": "95667",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
@@ -223233,36 +223233,36 @@
         {
           "scenarioCode": 1060,
           "provinceId": "95716",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
           "provinceId": "95724",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 1,
+          "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-BASELINE",
+          "winningClaimId": "S1060-CONTINUITY-006",
           "claimTrace": [
-            "S1060-BASELINE"
+            "S1060-CONTINUITY-006"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-BASELINE-EVIDENCE"
+            "S1060-CONTINUITY-006-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷13 종요전은 202년 원상이 보낸 골원이 하동을 침공했고 종요·마등측이 이를 격파했다고 기록한다. 침공군인 원상이 아니라 조조-종요측 통제로 둔다."
         },
         {
           "scenarioCode": 1060,
@@ -230036,13 +230036,13 @@
           "ownerNationId": 9,
           "ownerNationKey": "S1060-N009",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-006",
+          "winningClaimId": "S1060-CONTINUITY-009",
           "claimTrace": [
-            "S1060-CONTINUITY-006"
+            "S1060-CONTINUITY-009"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-006-EVIDENCE"
+            "S1060-CONTINUITY-009-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원담 청주 통제 기사에 따라 청주 북부의 후대 낙릉 현역을 원담에게 배정한다."
@@ -230597,13 +230597,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1060-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-004",
+          "winningClaimId": "S1060-CONTINUITY-005",
           "claimTrace": [
-            "S1060-CONTINUITY-004"
+            "S1060-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-004-EVIDENCE"
+            "S1060-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 연·예·서주 평정 기사와 晉書 卷14·15의 후대 행정 계승을 대조한다."
@@ -232297,13 +232297,13 @@
           "ownerNationId": 7,
           "ownerNationKey": "S1060-N007",
           "controllerCityId": null,
-          "winningClaimId": "S1060-CONTINUITY-005",
+          "winningClaimId": "S1060-CONTINUITY-008",
           "claimTrace": [
-            "S1060-CONTINUITY-005"
+            "S1060-CONTINUITY-008"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1060-CONTINUITY-005-EVIDENCE"
+            "S1060-CONTINUITY-008-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷06의 원소 사후 원상의 기주 승계 기사에 따라 기주·병주 현역을 배정한다."
@@ -235140,36 +235140,36 @@
         {
           "scenarioCode": 1070,
           "provinceId": "41165",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1070-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-CONTINUITY-004",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 예장 평정과 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해, 207년 분군 전 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1070,
           "provinceId": "41170",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1070-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-CONTINUITY-004",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 예장 평정과 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해, 207년 분군 전 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1070,
@@ -235208,53 +235208,53 @@
         {
           "scenarioCode": 1070,
           "provinceId": "41195",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1070-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-CONTINUITY-004",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 예장 평정과 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해, 207년 분군 전 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1070,
           "provinceId": "41198",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1070-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-CONTINUITY-004",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 예장 평정과 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해, 207년 분군 전 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1070,
           "provinceId": "41202",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1070-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1070-BASELINE",
+          "winningClaimId": "S1070-CONTINUITY-004",
           "claimTrace": [
-            "S1070-BASELINE"
+            "S1070-CONTINUITY-004"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-BASELINE-EVIDENCE"
+            "S1070-CONTINUITY-004-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷54의 예장 평정과 卷47의 건안15년 「分豫章為鄱陽郡」을 대조해, 207년 분군 전 파양 현역을 손권의 예장 통제에 포함한다."
         },
         {
           "scenarioCode": 1070,
@@ -236911,13 +236911,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -237098,13 +237098,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -237217,13 +237217,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -239631,13 +239631,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -239699,13 +239699,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -239716,13 +239716,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -239733,13 +239733,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -239937,13 +239937,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -240651,13 +240651,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -242521,13 +242521,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -242538,13 +242538,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -242555,13 +242555,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -242640,13 +242640,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -244663,13 +244663,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -246006,13 +246006,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -246125,13 +246125,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -246703,13 +246703,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -247128,13 +247128,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -248726,13 +248726,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -255951,13 +255951,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -256512,13 +256512,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -258178,13 +258178,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."
@@ -258212,13 +258212,13 @@
           "ownerNationId": 1,
           "ownerNationKey": "S1070-N001",
           "controllerCityId": null,
-          "winningClaimId": "S1070-CONTINUITY-004",
+          "winningClaimId": "S1070-CONTINUITY-005",
           "claimTrace": [
-            "S1070-CONTINUITY-004"
+            "S1070-CONTINUITY-005"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1070-CONTINUITY-004-EVIDENCE"
+            "S1070-CONTINUITY-005-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
           "rationale": "三國志 卷01의 조조 하북·중원 평정 기사와 晉書 卷14·15의 위 설치군·계승 목록을 대조해 208년 조조 통제 현역을 배정한다."

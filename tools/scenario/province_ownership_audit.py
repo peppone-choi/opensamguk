@@ -33,6 +33,9 @@ class ProvinceTopology:
     graph: Mapping[str, set[str]]
     exterior_province_ids: frozenset[str]
     province_areas: Mapping[str, int]
+    parent_by_province: Mapping[str, str]
+    parent_graph: Mapping[str, set[str]]
+    han_commandery_parent_ids: frozenset[str]
 
 
 def topology_from_map(map_doc: Mapping[str, Any]) -> ProvinceTopology:
@@ -69,7 +72,28 @@ def topology_from_map(map_doc: Mapping[str, Any]) -> ProvinceTopology:
         neighbours = (position - 1, position + 1, position - cols, position + cols)
         if any(owner_grid[neighbour] < 0 for neighbour in neighbours):
             exterior.add(ids[province_index])
-    return ProvinceTopology(graph, frozenset(exterior), areas)
+    parent_rows = map_doc.get("parentRegions", [])
+    parent_ids = [row["id"] for row in parent_rows]
+    if not parent_ids:
+        parent_ids = sorted({row["parentRegionId"] for row in records})
+    parent_graph = {parent_id: set() for parent_id in parent_ids}
+    for edge in map_doc["adjacency"].get("commandery", []):
+        left, right = parent_ids[edge["a"]], parent_ids[edge["b"]]
+        parent_graph[left].add(right)
+        parent_graph[right].add(left)
+    parent_by_province = {row["id"]: row["parentRegionId"] for row in records}
+    han_commandery_parent_ids = frozenset(
+        row["id"] for row in parent_rows
+        if row["administrativeSystem"] == "HAN_COMMANDERY"
+    )
+    return ProvinceTopology(
+        graph,
+        frozenset(exterior),
+        areas,
+        parent_by_province,
+        parent_graph,
+        han_commandery_parent_ids,
+    )
 
 
 def _components(nodes: set[str], graph: Mapping[str, set[str]]) -> list[tuple[str, ...]]:
@@ -98,28 +122,43 @@ def _articulation_points(nodes: set[str], graph: Mapping[str, set[str]]) -> set[
     result: set[str] = set()
     clock = 0
 
-    def visit(node: str) -> None:
-        nonlocal clock
+    for root in sorted(nodes):
+        if root in discovery:
+            continue
+        parent[root] = None
         clock += 1
-        discovery[node] = low[node] = clock
-        children = 0
-        for neighbour in sorted(graph.get(node, set()) & nodes):
-            if neighbour not in discovery:
-                parent[neighbour] = node
-                children += 1
-                visit(neighbour)
-                low[node] = min(low[node], low[neighbour])
-                if parent.get(node) is None and children > 1:
-                    result.add(node)
-                if parent.get(node) is not None and low[neighbour] >= discovery[node]:
-                    result.add(node)
-            elif neighbour != parent.get(node):
-                low[node] = min(low[node], discovery[neighbour])
+        discovery[root] = low[root] = clock
+        # Each frame holds node, ordered neighbours, next index, and DFS-tree child count.
+        stack: list[list[Any]] = [[root, sorted(graph.get(root, set()) & nodes), 0, 0]]
+        while stack:
+            node, neighbours, next_index, child_count = stack[-1]
+            if next_index < len(neighbours):
+                neighbour = neighbours[next_index]
+                stack[-1][2] += 1
+                if neighbour not in discovery:
+                    stack[-1][3] += 1
+                    parent[neighbour] = node
+                    clock += 1
+                    discovery[neighbour] = low[neighbour] = clock
+                    stack.append([
+                        neighbour,
+                        sorted(graph.get(neighbour, set()) & nodes),
+                        0,
+                        0,
+                    ])
+                elif neighbour != parent.get(node):
+                    low[node] = min(low[node], discovery[neighbour])
+                continue
 
-    for node in sorted(nodes):
-        if node not in discovery:
-            parent[node] = None
-            visit(node)
+            stack.pop()
+            ancestor = parent.get(node)
+            if ancestor is None:
+                if child_count > 1:
+                    result.add(node)
+                continue
+            low[ancestor] = min(low[ancestor], low[node])
+            if parent.get(ancestor) is not None and low[node] >= discovery[ancestor]:
+                result.add(ancestor)
     return result
 
 
@@ -138,6 +177,9 @@ def audit_assignments(
     exterior_province_ids: frozenset[str] = frozenset(),
     allowlist: Sequence[AuditAllowlistEntry] = (),
     province_areas: Mapping[str, int] | None = None,
+    parent_by_province: Mapping[str, str] | None = None,
+    parent_graph: Mapping[str, set[str]] | None = None,
+    han_commandery_parent_ids: frozenset[str] = frozenset(),
 ) -> ScenarioOwnershipAudit:
     errors: list[AuditFinding] = []
     allowed: list[AuditFinding] = []
@@ -173,6 +215,36 @@ def audit_assignments(
                 "An interior unowned component is bounded by one owner.",
             )
             (allowed if _is_allowed(finding, allowlist) else errors).append(finding)
+
+    commandery_review_count = 0
+    if parent_by_province is not None and parent_graph is not None:
+        provinces_by_parent: dict[str, set[str]] = {}
+        for province_id, parent_id in parent_by_province.items():
+            provinces_by_parent.setdefault(parent_id, set()).add(province_id)
+        owner_by_parent: dict[str, str | None] = {}
+        for parent_id, province_ids in provinces_by_parent.items():
+            owners = {owner_by_id[province_id] for province_id in province_ids}
+            owner_by_parent[parent_id] = next(iter(owners)) if len(owners) == 1 else None
+        for parent_id in sorted(han_commandery_parent_ids):
+            province_ids = provinces_by_parent.get(parent_id, set())
+            if not province_ids or any(owner_by_id[province_id] is not None for province_id in province_ids):
+                continue
+            neighbouring_owners = [
+                owner_by_parent.get(neighbour)
+                for neighbour in parent_graph.get(parent_id, set())
+            ]
+            candidates = {
+                owner for owner in neighbouring_owners
+                if owner is not None and neighbouring_owners.count(owner) >= 2
+            }
+            for owner in sorted(candidates):
+                commandery_review_count += 1
+                review.append(AuditFinding(
+                    "UNOWNED_COMMANDERY_REVIEW",
+                    tuple(sorted(province_ids)),
+                    owner,
+                    "An unowned Han commandery borders at least two commanderies held by one owner.",
+                ))
 
     owners = sorted({owner for owner in owner_by_id.values() if owner is not None})
     articulation_count = 0
@@ -231,6 +303,7 @@ def audit_assignments(
         "politicalBoundaryEdgeCount": boundary_edges,
         "ownedAreaCells": owned_area,
         "boundaryEdgesPerOwnedArea": 0.0 if owned_area == 0 else boundary_edges / owned_area,
+        "unownedCommanderyReviewCount": commandery_review_count,
     }
     return ScenarioOwnershipAudit(
         tuple(sorted(errors, key=lambda row: (row.code, row.province_ids))),

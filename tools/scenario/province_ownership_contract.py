@@ -58,6 +58,9 @@ class TerritoryClaim:
     evidence_ids: tuple[str, ...]
     overrides_claim_ids: tuple[str, ...]
     rationale: str
+    inherits_claim_id: str | None = None
+    effective_from: int | None = None
+    effective_to: int | None = None
 
 
 @dataclass(frozen=True)
@@ -168,6 +171,7 @@ def _resolve_nations(
 def _parse_claims(
     rows: object,
     scenario_code: int,
+    effective_year: int,
     placement_basis: str,
     nation_ids: Mapping[str, int],
     evidence: Mapping[str, Evidence],
@@ -192,6 +196,35 @@ def _parse_claims(
             raise OwnershipContractError("UNKNOWN_CLAIM_KIND", claim_id=claim_id, claim_kind=claim_kind)
         if claim_kind == "IF_SCENARIO" and placement_basis != "IF_SCENARIO":
             raise OwnershipContractError("IF_CLAIM_IN_HISTORICAL_SCENARIO", claim_id=claim_id)
+        inherits_claim_id = None
+        effective_from = None
+        effective_to = None
+        if claim_kind == "TEMPORAL_CARRY":
+            inherits_claim_id = _text(
+                row.get("inheritsClaimId"),
+                f"claim[{claim_id}].inheritsClaimId",
+            )
+            if inherits_claim_id not in known_claim_ids or inherits_claim_id == claim_id:
+                raise OwnershipContractError(
+                    "INVALID_TEMPORAL_CARRY",
+                    claim_id=claim_id,
+                    inherits_claim_id=inherits_claim_id,
+                )
+            effective_from = _integer(
+                row.get("effectiveFrom"),
+                f"claim[{claim_id}].effectiveFrom",
+            )
+            effective_to = _integer(
+                row.get("effectiveTo"),
+                f"claim[{claim_id}].effectiveTo",
+            )
+            if effective_from > effective_to:
+                raise OwnershipContractError(
+                    "INVALID_EFFECTIVE_INTERVAL",
+                    claim_id=claim_id,
+                    effective_from=effective_from,
+                    effective_to=effective_to,
+                )
         raw_owner = row.get("ownerNationKey")
         owner_nation_key = None if raw_owner is None else _text(raw_owner, f"claim[{claim_id}].ownerNationKey")
         if claim_kind in {"SCENARIO_BASELINE_UNOWNED", "UNOWNED_EXPLICIT"}:
@@ -237,9 +270,56 @@ def _parse_claims(
             evidence_ids=evidence_refs,
             overrides_claim_ids=overrides,
             rationale=_text(row.get("rationale"), f"claim[{claim_id}].rationale"),
+            inherits_claim_id=inherits_claim_id,
+            effective_from=effective_from,
+            effective_to=effective_to,
         ))
 
-    return tuple(result)
+    claims = tuple(result)
+    by_id = {claim.claim_id: claim for claim in claims}
+
+    def provenance_fingerprint(claim: TerritoryClaim) -> tuple[object, ...]:
+        return (
+            claim.owner_nation_key,
+            claim.province_ids,
+            claim.parent_region_ids,
+            claim.all_provinces,
+            claim.evidence_ids,
+        )
+
+    for claim in claims:
+        if claim.claim_kind != "TEMPORAL_CARRY":
+            continue
+        if not claim.effective_from <= effective_year <= claim.effective_to:
+            raise OwnershipContractError(
+                "INVALID_TEMPORAL_CARRY",
+                claim_id=claim.claim_id,
+                effective_year=effective_year,
+            )
+        inherited = by_id[claim.inherits_claim_id]
+        if provenance_fingerprint(claim) != provenance_fingerprint(inherited):
+            raise OwnershipContractError(
+                "INVALID_TEMPORAL_CARRY",
+                claim_id=claim.claim_id,
+                inherits_claim_id=inherited.claim_id,
+            )
+
+    for claim in claims:
+        if claim.claim_kind != "TEMPORAL_CARRY":
+            continue
+        seen: set[str] = set()
+        cursor = claim
+        while cursor.claim_kind == "TEMPORAL_CARRY":
+            if cursor.claim_id in seen:
+                raise OwnershipContractError(
+                    "TEMPORAL_CARRY_CYCLE",
+                    claim_id=claim.claim_id,
+                    cycle_claim_id=cursor.claim_id,
+                )
+            seen.add(cursor.claim_id)
+            cursor = by_id[cursor.inherits_claim_id]
+
+    return claims
 
 
 def _parse_allowlist(
@@ -307,12 +387,14 @@ def parse_ownership_document(
         if placement_basis not in PLACEMENT_BASES:
             raise OwnershipContractError("UNKNOWN_PLACEMENT_BASIS", scenario_code=scenario_code)
         nation_ids = _resolve_nations(row.get("nationRefs"), scenario_code, scenario_catalog)
+        effective_year = _integer(row.get("effectiveYear"), f"scenario[{scenario_code}].effectiveYear")
         claims = _parse_claims(
-            row.get("claims"), scenario_code, placement_basis, nation_ids, evidence, provinces, parents,
+            row.get("claims"), scenario_code, effective_year, placement_basis,
+            nation_ids, evidence, provinces, parents,
         )
         scenarios[scenario_code] = ScenarioClaims(
             scenario_code=scenario_code,
-            effective_year=_integer(row.get("effectiveYear"), f"scenario[{scenario_code}].effectiveYear"),
+            effective_year=effective_year,
             placement_basis=placement_basis,
             nation_ids=nation_ids,
             claims=claims,
