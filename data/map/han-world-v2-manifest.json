@@ -4,6 +4,8 @@
   "effectiveYear": 220,
   "projection": "HAN_WORLD_FRAME_V1_768x669",
   "provinceCount": 1524,
+  "jurisdictionCount": 1020,
+  "commanderyCount": 172,
   "parentRegionCount": 172,
   "coverage": {
     "politicalLandUncovered": 0,
@@ -22,6 +24,7 @@
     "external-province-seeds-v1.json": "7f5764af141d70911e1519b467b56dc4630e7b10d93c05b5284213cb4c0cd226",
     "external-administrative-systems-v1.json": "be27bcaefd8879ba7570bd1f6dc5705107d1f4f10130ebd9b77260c600062092",
     "province-shape-exceptions-v1.json": "ff50932aef22c4add7b2ccbbf427f6063568b0667153d1e62ddf0d0b2fa86e37",
+    "jurisdiction-seat-recoveries-v1.json": "85f780c91dc5dcc5f0431018a93bffa3064e690e88d58528dfdc0f33a2035a1d",
     "non-playable-regions-v1.json": "572c9c109be189aaa8279d9d793ff567c6a739dae0e542ab3356e59fa79aedfb"
   },
   "artifactHashes": {

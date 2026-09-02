@@ -47,6 +47,7 @@ TRACKED_INPUT_ROLES = (
     "PROVINCE_SHAPE_EXCEPTIONS",
     "NON_PLAYABLE_REGIONS",
     "MODERN_ADMIN_RECIPE",
+    "JURISDICTION_SEAT_RECOVERIES",
 )
 INPUT_ROLES = RESTRICTED_INPUT_ROLES + TRACKED_INPUT_ROLES
 GENERATOR_ROLES = (
@@ -168,7 +169,10 @@ _STAGES = (
     {
         "stageId": "HAN_TILES",
         "generatorRole": "BUILD_HAN_TILES",
-        "inputRoles": ["HAN_PLACES", "TERRAIN_GRID", "READINGS"],
+        "inputRoles": [
+            "HAN_PLACES", "TERRAIN_GRID", "READINGS",
+            "JURISDICTION_SEAT_RECOVERIES",
+        ],
         "dependencyRoles": [],
         "outputRole": "HAN_TILES",
         "argv": [],
@@ -193,6 +197,7 @@ _SUMMARY_KEYS = {
         "year", "cols", "rows", "cityCount", "junCount", "regionCount",
         "ownerRunCount", "parentOwnerRunCount", "countyEdgeCount",
         "commanderyEdgeCount", "provinceCount", "parentRegionCount",
+        "jurisdictionCount", "commanderyCount",
     ),
 }
 

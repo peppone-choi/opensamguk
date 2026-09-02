@@ -8,20 +8,39 @@ from tools.map.build_tile_grid import resolve_province_record_names
 
 
 class ProvinceRecordNameResolutionTest(unittest.TestCase):
-    def test_committed_chinese_provinces_all_expose_real_county_names(self) -> None:
+    def test_committed_chinese_spatial_provinces_resolve_to_real_county_jurisdictions(self) -> None:
         root = Path(__file__).resolve().parents[3]
         tiles = json.loads((root / "data/map/han-tiles.json").read_text(encoding="utf-8"))
         chinese = [
             record for record in tiles["provinceRecords"]
             if record["administrativeSystem"] == "HAN_COMMANDERY"
         ]
+        jurisdictions = {
+            record["id"]: record for record in tiles["jurisdictionRecords"]
+        }
 
         self.assertTrue(chinese)
         self.assertFalse(any("직할" in record["displayName"] for record in chinese))
         self.assertTrue(all(record["nameCh"] for record in chinese))
-        counties = [record for record in chinese if record["kind"] == "COUNTY"]
-        self.assertTrue(counties)
-        self.assertTrue(all(record["cityIndex"] is not None for record in counties))
+        self.assertTrue(all(record["kind"] == "SPATIAL_PROVINCE" for record in chinese))
+        self.assertTrue(all(record["jurisdictionId"] in jurisdictions for record in chinese))
+        chinese_jurisdictions = {
+            jurisdictions[record["jurisdictionId"]]["id"] for record in chinese
+        }
+        self.assertTrue(chinese_jurisdictions)
+        self.assertTrue(all(
+            jurisdictions[jurisdiction_id]["displayName"]
+            for jurisdiction_id in chinese_jurisdictions
+        ))
+        self.assertTrue(all(
+            jurisdictions[jurisdiction_id]["nameCh"]
+            for jurisdiction_id in chinese_jurisdictions
+        ))
+        self.assertTrue(all(
+            jurisdictions[jurisdiction_id]["kind"]
+            in {"COUNTY", "MARQUISATE", "EXTERNAL_SETTLEMENT"}
+            for jurisdiction_id in chinese_jurisdictions
+        ))
 
     def test_committed_player_labels_contain_no_review_placeholders(self) -> None:
         root = Path(__file__).resolve().parents[3]

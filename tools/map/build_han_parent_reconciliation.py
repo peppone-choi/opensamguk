@@ -9,6 +9,11 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
+try:
+    from tools.map.world_province_geometry import validate_materialized_hierarchy
+except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
+    from world_province_geometry import validate_materialized_hierarchy
+
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "data/curated/han/administrative-parent-reconciliation-v1.json"
@@ -815,17 +820,24 @@ def _tile_context(tiles: dict) -> dict:
     cities = tiles.get("cities")
     juns = tiles.get("juns")
     province_records = tiles.get("provinceRecords")
+    jurisdiction_records = tiles.get("jurisdictionRecords")
+    commandery_records = tiles.get("commanderyRecords")
     parent_regions = tiles.get("parentRegions")
     if (
         not isinstance(meta, dict)
         or not isinstance(cities, list)
         or not isinstance(juns, list)
         or not isinstance(province_records, list)
+        or not isinstance(jurisdiction_records, list)
+        or not isinstance(commandery_records, list)
         or not isinstance(parent_regions, list)
     ):
         raise ValueError(
-            "han tiles must contain _meta, cities, juns, provinceRecords, and parentRegions"
+            "han tiles must contain the complete province/jurisdiction/commandery hierarchy"
         )
+    validate_materialized_hierarchy(
+        province_records, jurisdiction_records, commandery_records
+    )
     cols, rows = meta.get("cols"), meta.get("rows")
     if type(cols) is not int or type(rows) is not int or cols <= 0 or rows <= 0:
         raise ValueError("han tile dimensions must be positive integers")
@@ -856,6 +868,24 @@ def _tile_context(tiles: dict) -> dict:
         if not isinstance(juns[index], dict) or parent.get("nameCh") != juns[index].get("nameCh"):
             raise ValueError("parentRegions and juns must preserve matching parent identities")
         parent_index_by_id[parent["id"]] = index
+    jurisdiction_by_id = {}
+    for jurisdiction in jurisdiction_records:
+        if not isinstance(jurisdiction, dict) or not isinstance(jurisdiction.get("id"), str):
+            raise ValueError("every jurisdiction record requires a stable string id")
+        if jurisdiction["id"] in jurisdiction_by_id:
+            raise ValueError(f'duplicate jurisdiction record id: {jurisdiction["id"]}')
+        if jurisdiction.get("commanderyId") not in parent_index_by_id:
+            raise ValueError("jurisdiction references a missing commandery")
+        jurisdiction_by_id[jurisdiction["id"]] = jurisdiction
+    commandery_by_id = {}
+    for commandery in commandery_records:
+        if not isinstance(commandery, dict) or not isinstance(commandery.get("id"), str):
+            raise ValueError("every commandery record requires a stable string id")
+        if commandery["id"] in commandery_by_id:
+            raise ValueError(f'duplicate commandery record id: {commandery["id"]}')
+        commandery_by_id[commandery["id"]] = commandery
+    if set(commandery_by_id) != set(parent_index_by_id):
+        raise ValueError("commandery records must exactly cover parent regions")
     province_city_indices = {}
     province_parent_indices = {}
     linked_city_indices = set()
@@ -872,18 +902,20 @@ def _tile_context(tiles: dict) -> dict:
             raise ValueError(f'province {province["id"]} references a missing parent region')
         province_parent_indices[index] = parent_index_by_id[parent_id]
         kind = province.get("kind")
-        if kind not in {"COUNTY", "SETTLEMENT", "DIRECT_TERRITORY"}:
+        if kind != "SPATIAL_PROVINCE":
             raise ValueError(f'province {province["id"]} has an invalid province kind')
+        jurisdiction_id = province.get("jurisdictionId")
+        jurisdiction = jurisdiction_by_id.get(jurisdiction_id)
+        if jurisdiction is None:
+            raise ValueError(f'province {province["id"]} references a missing jurisdiction')
+        if jurisdiction.get("commanderyId") != parent_id:
+            raise ValueError(f'province {province["id"]} crosses its commandery jurisdiction')
         city_index = province.get("cityIndex")
         if city_index is None:
-            if kind != "DIRECT_TERRITORY":
-                raise ValueError("only DIRECT_TERRITORY provinces may omit cityIndex")
             direct_territory_indices.add(index)
         elif type(city_index) is not int or not 0 <= city_index < len(cities):
             raise ValueError(f'province {province["id"]} has an invalid cityIndex')
         else:
-            if kind == "DIRECT_TERRITORY":
-                raise ValueError("DIRECT_TERRITORY provinces must omit cityIndex")
             if city_index in linked_city_indices:
                 raise ValueError("a city may link to only one canonical province")
             linked_city_indices.add(city_index)

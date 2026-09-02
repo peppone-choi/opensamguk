@@ -321,11 +321,19 @@ def audit_transition_debt(document: dict[str, Any]) -> TransitionDebtAudit:
     provinces = _require_rows(document, "provinceRecords")
     parents = _require_rows(document, "parentRegions")
     cities = _require_rows(document, "cities")
-    county_parents = {
-        row.get("parentRegionId")
-        for row in provinces
-        if row.get("kind") == "COUNTY" and isinstance(row.get("parentRegionId"), str)
-    }
+    materialized_jurisdictions = document.get("jurisdictionRecords")
+    if isinstance(materialized_jurisdictions, list):
+        county_parents = {
+            row.get("commanderyId")
+            for row in materialized_jurisdictions
+            if isinstance(row, dict) and isinstance(row.get("commanderyId"), str)
+        }
+    else:
+        county_parents = {
+            row.get("parentRegionId")
+            for row in provinces
+            if row.get("kind") == "COUNTY" and isinstance(row.get("parentRegionId"), str)
+        }
     parent_ids = {
         row.get("id")
         for row in parents
