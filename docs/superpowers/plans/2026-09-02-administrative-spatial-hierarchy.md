@@ -4,7 +4,7 @@
 
 **Goal:** 1,524개 공간 프로빈스, 현, 172개 군국을 서로 다른 정본 계층으로 물질화하고 군치·현치 중복 없이 소비할 수 있는 계약을 만든다.
 
-**Architecture:** 기존 산출물을 즉시 삭제하지 않고 `jurisdictionRecords`와 역할 기반 `settlementRecords`를 병행 생성한다. 공간 프로빈스는 `jurisdictionId`로 현에 연결하고 군국 기하는 현의 합집합으로만 유도한다. Python 생성기와 계약을 먼저 고정한 뒤 JVM/API와 웹을 순차 전환한다.
+**Architecture:** 기존 산출물을 즉시 삭제하지 않고 `jurisdictionRecords`, `commanderyRecords`, 역할 기반 `settlementRecords`를 병행 생성한다. 공간 프로빈스는 `jurisdictionId`로 현에 연결하고 군국 기하는 현의 합집합으로만 유도한다. 레거시 `parentRegions`는 군국 전환 입력으로만 쓰고 새 소비자는 사용하지 않는다. Python 생성기와 계약을 먼저 고정한 뒤 JVM/API와 웹을 순차 전환한다.
 
 **Tech Stack:** Python 3 unittest, JSON 생성기, Kotlin/Jackson/JUnit, TypeScript/React/Vitest/Canvas
 
@@ -17,8 +17,10 @@
 - 현은 최소 한 공간 프로빈스를 가지며 큰 현은 여러 공간 프로빈스를 가질 수 있다.
 - 정치색은 직접 공간 프로빈스 소유권만 사용하고 상위 군국에서 보간하지 않는다.
 - `DIRECT_TERRITORY`는 최종 산출물에서 0개여야 하며 같은 군국의 실제 현으로만 전환한다.
+- 모든 공간 프로빈스는 최소 8셀을 유지하며, 작은/가느다란 경계 프로빈스도 표시 footprint를 내부에 둘 수 있어야 한다.
 - 기록된 현을 증명할 수 없는 내부 조각은 인접 실제 현에 흡수하고, 비플레이 축소는 외곽에서만 허용한다.
 - 플레이 가능 육지에 둘러싸인 검은 비플레이 고립 성분은 0개여야 한다.
+- 폭 1~2셀로 깊이 3셀 이상 파고드는 검은 육지 tendril은 0개여야 한다.
 - 물리적 현치 하나당 아이콘·이름·깃발은 각각 하나만 렌더링한다.
 
 ---
@@ -62,7 +64,7 @@ Expected: `ModuleNotFoundError: tools.map.administrative_spatial_hierarchy`.
 
 - [x] **Step 3: 최소 감사기 구현**
 
-`HierarchyAudit`에 `province_count`, `jurisdiction_count`, `parent_count`, `unassigned_province_ids`, `direct_territory_ids`, `duplicate_seat_place_ids`, `enclosed_non_playable_land_components`를 담고 다음을 거부한다: 알 수 없는 현/군국 ID, 프로빈스 0개 현, 현 0개 군국, 같은 현의 복수 군국, 미귀속 플레이 프로빈스, `DIRECT_TERRITORY`, 별도 군국 기하 ID, 플레이 육지에 둘러싸인 검은 고립 성분. 기본 CLI는 현 정본의 부채를 비파괴적으로 출력하고 `--strict`는 Task 2 물질화 뒤 CI 필수 경로로 승격한다.
+`HierarchyAudit`에 수량, owner namespace/coverage, 미귀속·직할, 중복·누락 현치, 검은 고립 성분과 좁은 외곽 침투 성분을 담는다. 알 수 없는 ID, 닫히지 않은 enum, 프로빈스 0개 현, 현 0개 군국, 같은 현의 복수 군국, 미귀속 플레이 프로빈스, `DIRECT_TERRITORY`, 별도 군국 기하 ID를 거부한다. 기본 CLI는 현 정본의 부채를 비파괴적으로 출력하고 `--strict`는 Task 2 물질화 뒤 1,524/172 수량과 함께 CI 필수 경로로 승격한다.
 
 - [x] **Step 4: 단위·기존 계약 실행**
 
@@ -70,7 +72,7 @@ Run: `python3 -m unittest tools.map.tests.test_administrative_spatial_hierarchy 
 
 Run: `python3 tools/map/administrative_spatial_hierarchy.py`
 
-Expected: tests PASS; 감사 출력은 1,524 provinces, 172 parents, 526 direct territories, 52 parents without county, 0 enclosed non-playable land components를 보고한다.
+Expected: tests PASS; 감사 출력은 1,524 provinces, 172 parents, 526 direct territories, 52 parents without county, 0 enclosed non-playable land components와 넓은 외곽에 붙은 국소 폭까지 포함한 narrow tendril 5개를 보고한다. tendril 5개는 Task 2에서 판정·제거할 전환 부채다.
 
 - [x] **Step 5: 커밋**
 
@@ -92,7 +94,7 @@ git commit -m "test(map): define administrative spatial hierarchy"
 
 **Interfaces:**
 - Consumes: `assign_province_jurisdictions(owner, province_records, parent_regions, cities)`.
-- Produces: `provinceRecords[].jurisdictionId`, `jurisdictionRecords[]`, 귀속의 `assignmentBasis`와 `assignmentConfidence`.
+- Produces: `provinceRecords[].jurisdictionId`, `jurisdictionRecords[]`, `commanderyRecords[]`, 귀속의 `assignmentBasis`와 `assignmentConfidence`.
 
 - [ ] **Step 1: 결정성 실패 테스트 작성**
 
@@ -184,41 +186,69 @@ git commit -m "feat(map): fold administrative seats into settlement roles"
 ### Task 4: JVM/API 계층 전달
 
 **Files:**
+- Create: `infra/src/main/resources/db/migration/V46__province_control.sql` (구현 시 main의 다음 미사용 번호 재확인)
+- Create: `infra/src/main/kotlin/opensamguk/infra/entity/ProvinceControlEntity.kt`
+- Create: `infra/src/main/kotlin/opensamguk/infra/persistence/ProvinceControlRepository.kt`
+- Create: `app/game-api/src/main/kotlin/opensamguk/gameapi/read/ProvinceControlReadRepository.kt`
+- Create: `infra/src/main/kotlin/opensamguk/infra/seed/ProvinceOwnershipJson.kt`
+- Create: `infra/src/test/kotlin/opensamguk/infra/seed/ProvinceOwnershipJsonTest.kt`
 - Modify: `infra/src/main/kotlin/opensamguk/infra/seed/MapJson.kt`
 - Modify: `infra/src/test/kotlin/opensamguk/infra/seed/MapJsonTest.kt`
+- Modify: `infra/src/main/kotlin/opensamguk/infra/seed/ScenarioImporter.kt`
+- Modify: `infra/src/test/kotlin/opensamguk/infra/seed/ScenarioImporterIT.kt`
+- Modify: `app/game-engine/src/main/kotlin/opensamguk/engine/turn/ChangeRecorder.kt`
+- Modify: `app/game-engine/src/main/kotlin/opensamguk/engine/world/WorldActionContext.kt`
+- Modify: `infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt`
 - Modify: `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/MapPreviewDto.kt`
 - Modify: `app/game-api/src/main/kotlin/opensamguk/gameapi/controller/MapPreviewController.kt`
 - Modify: `app/game-api/src/test/kotlin/opensamguk/gameapi/controller/MapPreviewControllerTest.kt`
 - Modify: `infra/src/main/resources/map/han.json`
+- Create: `infra/src/main/resources/map/han-scenario-province-ownership-v1.json`
+- Create: `tools/scenario/runtime_province_fill_audit.py`
+- Create: `tools/scenario/tests/test_runtime_province_fill_audit.py`
 
 **Interfaces:**
-- Produces: `MapPreviewCity.jurisdictionId`, `MapPreviewCity.parentRegionId`, `MapPreviewCity.settlementRoles`.
-- Preserves: existing `provinceId` for direct spatial ownership and replay compatibility.
+- Consumes: `data/map/han-scenario-province-ownership-v1.json`의 현재 scenarioCode 1,524개 assignment.
+- Packages: 위 artifact를 classpath resource에 byte-identical 복사하고 SHA-256 계약으로 drift를 거부한다.
+- Persists: `province_control(world_id, province_record_id, province_index, nation_id, controller_city_id, revision, updated_at)`; PK `(world_id, province_record_id)`, unique `(world_id, province_index)`, FK `world_id -> world_state(id) ON DELETE CASCADE`, `nation_id=0`은 명시적 미소유.
+- Produces: runtime province-control SSoT, `MapPreviewResponse.provinces[] { provinceRecordId: String, provinceIndex: Int, nationId, controllerCityId, revision }`, `MapPreviewCity.jurisdictionId`, `MapPreviewCity.commanderyId`, `MapPreviewCity.settlementRoles`.
+- Preserves: `MapCity.provinceId`는 레거시 `provinceIndex: Int`로 마커 위치·현치 연결에만 사용하고 정치색 소스로 사용하지 않는다. API의 안정 ID는 항상 `provinceRecordId: String`으로 별도 명명한다.
+- Normalizes: classpath resource stem `scenario_1010`은 정확히 numeric scenario code `1010`으로 변환하며 bare `"1010"` resource code는 거부한다.
+- Materializes: `controllerCityId`는 `han.json cities[].provinceId: Int`가 가리키는 현치 공간 프로빈스에만 기록한다. 현재 정본 assignment의 null을 군국 단위로 추정하지 않는다. 도시가 없는 나머지 공간 프로빈스는 null을 유지한다.
+- Mutates: 도시 점령/공백지화가 일어나는 `ChangeRecorder`와 `WorldActionContext` 경로는 그 도시의 현치 공간 프로빈스 하나만 같은 flush payload에서 변경한다. 같은 현의 나머지 프로빈스는 공간 이동/점령 이벤트가 직접 바꿀 때까지 보존한다. replay에는 안정 `provinceRecordId`, 이전/이후 `nationId`, revision을 포함한다.
 
 - [ ] **Step 1: DTO 실패 테스트 작성**
 
-Map fixture의 한 물리적 현치에 현치·군국치 역할을 함께 넣고 API 응답 도시가 한 행이며 `settlementRoles == ["COUNTY_SEAT", "COMMANDERY_SEAT"]`인지 검증한다.
+Map fixture의 한 물리적 현치에 현치·군국치 역할을 함께 넣고 API 응답 도시가 한 행이며 `settlementRoles == ["COUNTY_SEAT", "COMMANDERY_SEAT"]`인지 검증한다. 별도 시나리오 fixture에서 runtime 도시가 없는 소유 프로빈스도 `MapPreviewResponse.provinces`에 포함되고, 미소유 프로빈스는 `nationId=0`이며 인접 군국색으로 보간되지 않는지 검증한다. 로더 테스트는 `scenario_1010 -> 1010`, integer `provinceIndex -> String provinceRecordId`, 1,524행 완전성을 고정한다.
+
+통합 테스트는 새 월드 시드, `DELETE FROM world_state` cascade 후 같은 configured world ID 재시드, 도시 점령, 주둔군 소멸에 따른 공백지화, replay 재적용을 각각 검증한다. 분할 현 fixture에서 현치 프로빈스 점령은 그 한 프로빈스만 변경하고 같은 현의 비현치 프로빈스를 바꾸지 않아야 한다. 모든 경우 API의 province owner와 city owner가 정의된 통제 규칙에 따라 일치해야 하며 다른 현·군국으로 소유색을 보간하지 않는다.
 
 - [ ] **Step 2: 실패 확인**
 
-Run: `./gradlew :infra:test --tests opensamguk.infra.seed.MapJsonTest :app:game-api:test --tests opensamguk.gameapi.controller.MapPreviewControllerTest`
+Run: `./gradlew :infra:test --tests opensamguk.infra.seed.ProvinceOwnershipJsonTest --tests opensamguk.infra.seed.MapJsonTest --tests opensamguk.infra.seed.ScenarioImporterIT :app:game-api:test --tests opensamguk.gameapi.controller.MapPreviewControllerTest`
 
 Expected: 새 필드 assertion failure.
 
 - [ ] **Step 3: 로더와 DTO 구현**
 
-MapJson에서 정본 계층 ID와 역할을 읽고 API에 전달한다. 좌표 또는 이름으로 조인하지 않고 안정 ID만 사용한다.
+MapJson에서 정본 계층 ID와 역할을 읽고 API에 전달한다. `ProvinceOwnershipJson`은 numeric scenario code로 정확한 1,524행을 고르고 안정 ID를 map index에 검증한다. ScenarioImporter는 빈 월드 생성 트랜잭션에서 1,524개 assignment를 `province_control`에 batch insert한다. reset 정리는 importer 책임이 아니다. `world_state` 삭제 시 FK cascade가 해당 월드의 province-control을 제거하고, 실제 `ScenarioSeedCoordinator.importFresh` 경로가 빈 월드에 다시 시드하는 통합 테스트로 생명주기를 고정한다. 백업/기존 상태 복원은 하지 않는다.
+
+`ProvinceControlRepository`는 월드 단위 read와 revision 조건부 batch update를 제공한다. `ChangeRecorder`가 도시 소유권 diff와 province-control diff를 함께 만들고 `JdbcFlushExecutor`가 같은 트랜잭션에서 적용한다. replay fixture는 동일 입력으로 province rows와 revision이 byte-equivalent하게 재현됨을 검증한다. API는 `ProvinceControlReadRepository`에서 직접 읽으며 좌표·도시 이름·군국 대표색으로 조인하거나 보간하지 않는다.
 
 - [ ] **Step 4: JVM 검증**
 
 Run: `./gradlew :infra:test :app:game-api:test`
 
-Expected: PASS.
+Run: `python3 -m unittest tools.scenario.tests.test_province_ownership_audit tools.scenario.tests.test_province_ownership_materializer tools.scenario.tests.test_runtime_province_fill_audit -v`
+
+Run: `python3 tools/scenario/runtime_province_fill_audit.py --summary`
+
+Expected: JVM/Python PASS. repository golden은 구현 전 진단의 시나리오별 54~623 missing-owned와 extra/mismatch/unmapped 수치를 15개 전부 고정한다. API/web 전환 완료 게이트는 모든 시나리오에서 `missingOwned == extraRuntime == ownerMismatches == ownedCitiesWithoutProvinceIndex == 0`이다. 의도된 예외는 ID·근거·reviewState가 있는 allowlist 없이는 허용하지 않으며, 근거 있는 canonical unowned는 missing-owned에 포함하지 않는다.
 
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add infra app/game-api
+git add infra app/game-api app/game-engine tools/scenario
 git commit -m "feat(api): expose map administrative hierarchy"
 ```
 
@@ -234,12 +264,14 @@ git commit -m "feat(api): expose map administrative hierarchy"
 - Modify: `web/game/__tests__/MapViewer.interaction.test.tsx`
 
 **Interfaces:**
-- Consumes: `jurisdictionRecords`, `parentRegions`, `settlementRecords`, direct province ownership.
-- Produces: independent `commandery` and `county` boundary/label layers; one marker/hitbox/flag per settlement.
+- Consumes: `jurisdictionRecords`, `commanderyRecords`, `settlementRecords`, `MapPreviewResponse.provinces` direct ownership.
+- Produces: independent `commandery` and `county` boundary/label layers; one marker/hitbox/flag per settlement; `placeContainedOverlay(provincePath, requestedBounds, zoom, dpr)`의 결정적 내부 배치/LOD 보류 결과.
 
 - [ ] **Step 1: 렌더 실패 테스트 작성**
 
 같은 `seatPlaceId`에 `COUNTY_SEAT`와 `COMMANDERY_SEAT` 역할을 준 fixture를 렌더해 `drawImage` 1회, 깃발 path 1회, 현명 1회인지 검증한다. 기본 fit에서는 군국 경계만, 확대 임계값 뒤에는 현 경계와 현명이 추가되는지도 검증한다.
+
+별도의 작고 경계에 붙은 최소 8셀 프로빈스 fixture에서 16/24/32/48px 아이콘, 도시명 text metrics bounds, 깃발 애니메이션 3프레임의 합집합 bounds, 최소 44px 포인터 hitbox를 계산한다. zoom 단계와 DPR 1/1.5/2/3 각각에서 표시된 네 footprint의 모든 모서리와 경계 교차가 정확한 `provinceRecordId` path 내부인지 검증한다. 들어가지 않는 LOD에서는 네 요소가 모두 표시 보류되고 다음 적합 LOD에서 같은 결정적 anchor로 나타나야 한다. 다른 현으로 이동시키거나 clip으로 보이는 부분만 감추는 fallback은 금지한다.
 
 - [ ] **Step 2: 실패 확인**
 
@@ -249,7 +281,7 @@ Expected: duplicated marker/layer assertions fail.
 
 - [ ] **Step 3: 계층별 scene과 LOD 구현**
 
-`seatPlaceId`로 마커를 한 번만 만들고 역할 배지를 합성한다. `paths.commandery`와 `paths.province`의 표시 조건을 분리하고 군국명과 현명을 서로 다른 라벨 컬렉션에서 그린다.
+`seatPlaceId`로 마커를 한 번만 만들고 역할 배지를 합성한다. `paths.commandery`와 `paths.province`의 표시 조건을 분리하고 군국명과 현명을 서로 다른 라벨 컬렉션에서 그린다. 정치색은 `MapPreviewResponse.provinces`만 사용하며 `cities`는 색칠 입력에서 제거한다. 프로빈스 내부 최대 여유점과 screen-space bounds 교차 검사를 이용해 아이콘·텍스트·깃발·hitbox를 한 묶음으로 배치한다. 묶음 전체가 들어가지 않으면 해당 LOD에서 전부 보류하되 hover·검색·선택으로 현 정보는 계속 접근 가능하게 한다.
 
 - [ ] **Step 4: 웹 검증**
 

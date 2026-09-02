@@ -21,35 +21,46 @@ def fixture_document() -> dict:
                 "id": "P1",
                 "kind": "SPATIAL_PROVINCE",
                 "jurisdictionId": "COUNTY-A",
-                "parentRegionId": "R1",
             },
             {
                 "id": "P2",
                 "kind": "SPATIAL_PROVINCE",
                 "jurisdictionId": "COUNTY-B",
-                "parentRegionId": "R1",
             },
         ],
         "jurisdictionRecords": [
             {
                 "id": "COUNTY-A",
                 "kind": "COUNTY",
-                "parentRegionId": "R1",
+                "commanderyId": "R1",
                 "seatPlaceId": "SEAT-A",
                 "provinceIds": ["P1"],
             },
             {
                 "id": "COUNTY-B",
                 "kind": "COUNTY",
-                "parentRegionId": "R1",
+                "commanderyId": "R1",
                 "seatPlaceId": "SEAT-B",
                 "provinceIds": ["P2"],
             },
         ],
+        "commanderyRecords": [{
+            "id": "R1",
+            "displayName": "A군",
+            "kind": "COMMANDERY",
+            "seatJurisdictionId": "COUNTY-A",
+            "jurisdictionIds": ["COUNTY-A", "COUNTY-B"],
+        }],
         "parentRegions": [{"id": "R1", "displayName": "A군"}],
         "settlementRecords": [
-            {"id": "S1", "seatPlaceId": "SEAT-A", "jurisdictionId": "COUNTY-A"},
-            {"id": "S2", "seatPlaceId": "SEAT-B", "jurisdictionId": "COUNTY-B"},
+            {
+                "id": "S1", "seatPlaceId": "SEAT-A", "jurisdictionId": "COUNTY-A",
+                "col": 0, "row": 0, "roles": ["COUNTY_SEAT", "COMMANDERY_SEAT"],
+            },
+            {
+                "id": "S2", "seatPlaceId": "SEAT-B", "jurisdictionId": "COUNTY-B",
+                "col": 0, "row": 1, "roles": ["COUNTY_SEAT"],
+            },
         ],
     }
 
@@ -81,7 +92,7 @@ class AdministrativeSpatialHierarchyTest(unittest.TestCase):
 
         self.assertEqual(2, audit.province_count)
         self.assertEqual(2, audit.jurisdiction_count)
-        self.assertEqual(1, audit.parent_count)
+        self.assertEqual(1, audit.commandery_count)
         self.assertEqual((), audit.unassigned_province_ids)
         self.assertEqual((), audit.direct_territory_ids)
         self.assertEqual((), audit.duplicate_seat_place_ids)
@@ -119,10 +130,14 @@ class AdministrativeSpatialHierarchyTest(unittest.TestCase):
 
     def test_rejects_a_cross_commandery_province_binding(self):
         document = fixture_document()
-        document["parentRegions"].append({"id": "R2", "displayName": "B군"})
-        document["jurisdictionRecords"][1]["parentRegionId"] = "R2"
+        document["commanderyRecords"].append({
+            "id": "R2", "displayName": "B군", "kind": "COMMANDERY",
+            "seatJurisdictionId": "COUNTY-B", "jurisdictionIds": ["COUNTY-B"],
+        })
+        document["jurisdictionRecords"][1]["commanderyId"] = "R2"
+        document["settlementRecords"][1]["roles"].append("COMMANDERY_SEAT")
 
-        with self.assertRaisesRegex(ValueError, "province P2 parent R1 disagrees"):
+        with self.assertRaisesRegex(ValueError, "jurisdiction COUNTY-B belongs to multiple commanderies"):
             validate_hierarchy(document)
 
     def test_rejects_a_county_without_a_spatial_province(self):
@@ -130,7 +145,7 @@ class AdministrativeSpatialHierarchyTest(unittest.TestCase):
         document["jurisdictionRecords"].append({
             "id": "COUNTY-C",
             "kind": "COUNTY",
-            "parentRegionId": "R1",
+            "commanderyId": "R1",
             "seatPlaceId": "SEAT-C",
             "provinceIds": [],
         })
@@ -144,6 +159,9 @@ class AdministrativeSpatialHierarchyTest(unittest.TestCase):
             "id": "S3",
             "seatPlaceId": "SEAT-A",
             "jurisdictionId": "COUNTY-A",
+            "col": 0,
+            "row": 0,
+            "roles": ["COUNTY_SEAT"],
         })
 
         audit = audit_hierarchy(document)
@@ -167,6 +185,8 @@ class AdministrativeSpatialHierarchyTest(unittest.TestCase):
         document["_meta"].update(cols=3, rows=3)
         document["terrain"] = ["000", "011", "011"]
         document["owner"] = [[-1, 5], [0, 2], [1, 2]]
+        document["settlementRecords"][0].update(col=2, row=1)
+        document["settlementRecords"][1].update(col=1, row=2)
 
         self.assertEqual(0, validate_hierarchy(document).enclosed_non_playable_land_components)
 
@@ -179,8 +199,159 @@ class AdministrativeSpatialHierarchyTest(unittest.TestCase):
         )
         document["terrain"] = ["111", "141", "111"]
         document["owner"] = [[0, 4], [-1, 1], [1, 4]]
+        document["settlementRecords"][1].update(col=2, row=1)
 
         self.assertEqual(0, validate_hierarchy(document).enclosed_non_playable_land_components)
+
+    def test_rejects_owner_geometry_outside_the_province_namespace(self):
+        document = fixture_document()
+        document["owner"] = [[99, 6]]
+
+        with self.assertRaisesRegex(ValueError, "owner references unknown province index 99"):
+            validate_hierarchy(document)
+
+    def test_rejects_a_province_record_without_geometry_cells(self):
+        document = fixture_document()
+        document["owner"] = [[0, 4], [-1, 2]]
+
+        with self.assertRaisesRegex(ValueError, "province P2 has no owner cell"):
+            validate_hierarchy(document)
+
+    def test_strict_counts_pin_the_han_baseline(self):
+        with self.assertRaisesRegex(ValueError, "province count 2 does not match 1524"):
+            validate_hierarchy(
+                fixture_document(),
+                expected_province_count=1524,
+                expected_commandery_count=172,
+            )
+
+    def test_rejects_a_province_below_the_configured_minimum_cell_area(self):
+        with self.assertRaisesRegex(ValueError, "province P1 has 2 cells; minimum is 3"):
+            validate_hierarchy(fixture_document(), expected_min_province_cells=3)
+
+    def test_rejects_a_commandery_disguised_as_a_jurisdiction(self):
+        document = fixture_document()
+        document["jurisdictionRecords"][0]["kind"] = "COMMANDERY"
+
+        with self.assertRaisesRegex(ValueError, "jurisdiction COUNTY-A has invalid kind COMMANDERY"):
+            validate_hierarchy(document)
+
+    def test_rejects_a_missing_or_orphaned_county_seat(self):
+        missing = fixture_document()
+        missing["jurisdictionRecords"][0]["seatPlaceId"] = "NO-SUCH-SEAT"
+        with self.assertRaisesRegex(ValueError, "jurisdiction COUNTY-A seat NO-SUCH-SEAT is missing"):
+            validate_hierarchy(missing)
+
+        orphan = fixture_document()
+        orphan["settlementRecords"][0]["jurisdictionId"] = "UNKNOWN"
+        with self.assertRaisesRegex(ValueError, "settlement S1 references unknown jurisdiction UNKNOWN"):
+            validate_hierarchy(orphan)
+
+    def test_rejects_duplicate_county_seats_and_invalid_roles(self):
+        duplicate = fixture_document()
+        duplicate["jurisdictionRecords"][1]["seatPlaceId"] = "SEAT-A"
+        with self.assertRaisesRegex(ValueError, "seat SEAT-A is assigned to multiple jurisdictions"):
+            validate_hierarchy(duplicate)
+
+        invalid_role = fixture_document()
+        invalid_role["settlementRecords"][0]["roles"] = ["COMMANDERY"]
+        with self.assertRaisesRegex(ValueError, "settlement S1 has invalid role COMMANDERY"):
+            validate_hierarchy(invalid_role)
+
+    def test_rejects_a_narrow_black_land_tendril_from_the_map_edge(self):
+        document = fixture_document()
+        document["_meta"].update(cols=5, rows=5)
+        document["terrain"] = ["11111"] * 5
+        owner = [0] * 25
+        for index in (2, 7, 12):
+            owner[index] = -1
+        runs = []
+        for value in owner:
+            if runs and runs[-1][0] == value:
+                runs[-1][1] += 1
+            else:
+                runs.append([value, 1])
+        document["owner"] = runs
+
+        audit = audit_hierarchy(document)
+        self.assertEqual(1, audit.narrow_non_playable_land_tendrils)
+        with self.assertRaisesRegex(ValueError, "narrow non-playable land tendril"):
+            validate_hierarchy(document)
+
+    def test_rejects_a_two_cell_wide_black_land_tendril(self):
+        document = fixture_document()
+        document["_meta"].update(cols=5, rows=5)
+        document["terrain"] = ["11111"] * 5
+        owner = [0] * 25
+        for index in (1, 2, 6, 7, 11, 12):
+            owner[index] = -1
+        runs = []
+        for value in owner:
+            if runs and runs[-1][0] == value:
+                runs[-1][1] += 1
+            else:
+                runs.append([value, 1])
+        document["owner"] = runs
+
+        self.assertEqual(1, audit_hierarchy(document).narrow_non_playable_land_tendrils)
+
+    def test_rejects_a_two_cell_tendril_attached_to_a_broad_exterior(self):
+        document = fixture_document()
+        document["_meta"].update(cols=7, rows=7)
+        document["terrain"] = ["1111111"] * 7
+        owner = [0] * 49
+        for index in range(7):
+            owner[index] = -1
+        for row in (1, 2, 3):
+            for col in (2, 3):
+                owner[row * 7 + col] = -1
+        owner[40] = 1
+        runs = []
+        for value in owner:
+            if runs and runs[-1][0] == value:
+                runs[-1][1] += 1
+            else:
+                runs.append([value, 1])
+        document["owner"] = runs
+        document["settlementRecords"][1].update(col=5, row=5)
+
+        self.assertEqual(1, audit_hierarchy(document).narrow_non_playable_land_tendrils)
+
+    def test_rejects_a_settlement_on_unowned_land(self):
+        document = fixture_document()
+        document["settlementRecords"][1].update(col=1, row=1)
+
+        with self.assertRaisesRegex(
+            ValueError, "settlement S2 is outside jurisdiction COUNTY-B"
+        ):
+            validate_hierarchy(document)
+
+    def test_rejects_a_settlement_inside_another_county(self):
+        document = fixture_document()
+        document["settlementRecords"][1].update(col=1, row=0)
+
+        with self.assertRaisesRegex(
+            ValueError, "settlement S2 is outside jurisdiction COUNTY-B"
+        ):
+            validate_hierarchy(document)
+
+    def test_requires_county_and_commandery_seat_roles(self):
+        county = fixture_document()
+        county["settlementRecords"][1]["roles"] = ["PORT"]
+        with self.assertRaisesRegex(ValueError, "jurisdiction COUNTY-B seat lacks COUNTY_SEAT"):
+            validate_hierarchy(county)
+
+        commandery = fixture_document()
+        commandery["settlementRecords"][0]["roles"] = ["COUNTY_SEAT"]
+        with self.assertRaisesRegex(ValueError, "commandery R1 seat lacks COMMANDERY_SEAT"):
+            validate_hierarchy(commandery)
+
+    def test_rejects_commandery_seat_role_on_a_non_seat_county(self):
+        document = fixture_document()
+        document["settlementRecords"][1]["roles"] = ["COUNTY_SEAT", "COMMANDERY_SEAT"]
+
+        with self.assertRaisesRegex(ValueError, "jurisdiction COUNTY-B is not a commandery seat"):
+            validate_hierarchy(document)
 
 
 if __name__ == "__main__":

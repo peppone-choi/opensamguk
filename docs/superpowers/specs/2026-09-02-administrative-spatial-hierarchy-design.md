@@ -2,21 +2,22 @@
 
 ## 결정
 
-OpenSamguk의 지도·행정·게임플레이 계층을 다음 네 종류로 분리한다.
+OpenSamguk의 지도·행정·게임플레이 계층을 다음 세 종류로 분리한다.
 
 1. `SpatialProvince`: 이동, 인접성, 점령, 보급 판정의 최소 공간 단위다.
 2. `County`: 현·후국 등 최하위 행정 단위다. 이름, 현치, 인구·내정 값을 가진다.
 3. `Commandery`: 군·국·윤 등 기본 플레이와 명령 집계 단위다.
-4. `ProvinceRegion`: 주 등 상위 표시·감찰 단위다. 공간 프로빈스를 직접 소유하지 않는다.
+
+주는 이 3계층의 일부가 아닌 후속 상위 표시·감찰 레이어다. 주가 공간 프로빈스나 현을 직접 소유하지 않으며, 이번 전환에서 `parentRegions`라는 모호한 이름으로 군국과 주를 겸하게 만들지 않는다.
 
 `SpatialProvince`와 `County`는 같은 개념이 아니다. 큰 현을 일정한 크기의 공간 프로빈스 여러 개로 나눌 수 있고, 작은 현도 최소 한 개의 공간 프로빈스를 가져야 한다. `Commandery` 전용 폴리곤을 중첩 생성하지 않는다. 군국의 기하는 소속 현의 공간 프로빈스 합집합이다.
 
 ## 정본 관계
 
 ```text
-ProvinceRegion 1 ── N Commandery 1 ── N County 1 ── N SpatialProvince
-                                      │
-                                      └── 1 Settlement(seat)
+Commandery 1 ── N County 1 ── N SpatialProvince
+                 │
+                 └── 1 Settlement(seat)
 ```
 
 - 한 현은 정확히 한 군국에 속한다.
@@ -33,7 +34,6 @@ ProvinceRegion 1 ── N Commandery 1 ── N County 1 ── N SpatialProvinc
 ```text
 SpatialProvinceRecord {
   id: string
-  parentRegionId: string
   jurisdictionId: string
   administrativeSystem: string
   geometryBasis: string
@@ -45,7 +45,7 @@ JurisdictionRecord {
   displayName: string
   nameCh: string
   kind: COUNTY | MARQUISATE | EXTERNAL_SETTLEMENT
-  parentRegionId: string
+  commanderyId: string
   seatPlaceId: string
   provinceIds: string[]
 }
@@ -55,7 +55,6 @@ CommanderyRecord {
   displayName: string
   nameCh: string
   kind: COMMANDERY | KINGDOM | METROPOLITAN
-  upperRegionId: string | null
   seatJurisdictionId: string
   jurisdictionIds: string[]
 }
@@ -70,7 +69,7 @@ SettlementRecord {
 }
 ```
 
-기존 `provinceRecords.kind=COUNTY|DIRECT_TERRITORY|SETTLEMENT`와 `cities.kind=COUNTY|COMMANDERY|KINGDOM|PROVINCE|EXTERNAL_PLACE`는 전환 입력으로만 취급한다. 새 렌더러·API·명령 코드는 이 서로 다른 종류를 한 배열의 동급 도시로 해석하지 않는다.
+기존 `provinceRecords.kind=COUNTY|DIRECT_TERRITORY|SETTLEMENT`, `parentRegions`, `cities.kind=COUNTY|COMMANDERY|KINGDOM|PROVINCE|EXTERNAL_PLACE`는 전환 입력으로만 취급한다. 새 정본은 `commanderyRecords`라는 이름을 사용하며 렌더러·API·명령 코드는 서로 다른 종류를 한 배열의 동급 도시로 해석하지 않는다.
 
 ## 현재 데이터의 해석과 교정
 
@@ -99,10 +98,18 @@ SettlementRecord {
 ## 소유권과 통제
 
 - 시나리오 소유권의 정본 키는 `SpatialProvinceRecord.id`다.
+- `data/map/han-scenario-province-ownership-v1.json`의 1,524개 직접 assignment를 시나리오 importer가 runtime province-control SSoT로 시드한다.
+- 지도 API와 정치색 레이어는 runtime 도시 좌표나 `cities[].provinceId`로 영토색을 만들지 않고 runtime province-control만 소비한다.
 - 현 통제는 소속 공간 프로빈스의 직접 소유권과 현치 점유를 함께 사용해 계산한다.
 - 군국 통제는 소속 현 통제의 집계이며, 아래 공간 프로빈스에 색을 역전파하지 않는다.
 - 군국 통제와 현/공간 프로빈스 직접 소유권이 다르면 둘 다 보존하고 툴팁·명령 preview·AI·replay에 표시한다.
 - 여포의 연주 기습처럼 일부 현만 남는 상황은 공간 프로빈스 직접 소유권으로 표현한다.
+- 도시 점령은 그 도시의 `provinceIndex`가 가리키는 현치 공간 프로빈스 하나만 변경한다. 같은 현의 나머지 공간 프로빈스는 이동·점령 이벤트가 직접 바꿀 때까지 기존 소유자를 유지한다.
+- `controllerCityId`는 `han.json cities[].provinceId`를 안정 ID로 변환해 현치 공간 프로빈스에만 물질화한다. 도시와 연결되지 않은 공간 프로빈스는 null이며, null을 인접 도시·현·군국으로 채우지 않는다.
+
+2026-09-02 main은 정본 ownership artifact를 API/웹에서 소비하지 않고 runtime 도시 774개 중 `provinceId`가 있는 743개만 정치색 후보로 사용한다. 여기서 `MapCity.provinceId`는 안정 ID가 아니라 `provinceIndex: Int`이며 반드시 `han-tiles.json provinceRecords[provinceIndex].id`를 통해 `provinceRecordId: String`으로 변환해야 한다. 시나리오 리소스 이름도 `normalizeScenarioResourceCode("scenario_1010") -> 1010`처럼 정규화하고 문자열 `"1010"`을 암묵 허용하지 않는다.
+
+`python3 tools/scenario/runtime_province_fill_audit.py --summary`로 현재 웹의 실제 색칠 조인(시나리오 `nation[][8]`에 소유된 도시만 대상)을 재현하면 15개 시나리오에서 정본 소유 프로빈스 중 54~623개가 화면에서 빠진다. 이 런타임 전달 누락은 근거 있는 무소유 allowlist와 별개이며 반드시 제거한다. 진단은 누락뿐 아니라 정본상 미소유인데 칠해진 프로빈스, runtime/정본 소유자 불일치, 소유 도시의 province index 누락도 각각 보고한다.
 
 ## 명령과 이동
 
@@ -125,11 +132,16 @@ SettlementRecord {
 
 - 모든 플레이 가능 공간 프로빈스는 비어 있지 않은 `jurisdictionId`를 가져야 한다.
 - `DIRECT_TERRITORY`와 군국 직할 프로빈스는 정본 산출물에서 0개여야 한다.
+- `owner`의 모든 비음수 값은 존재하는 공간 프로빈스 배열 인덱스여야 하고 모든 공간 프로빈스는 최소 8셀을 가져야 한다. 면적만 충족한 가느다란 형태는 허용하지 않고 표시 footprint의 내부 배치 가능성도 별도 검증한다.
+- 정본 `han`은 공간 프로빈스 1,524개와 군국 172개를 유지한다.
+- 공간 프로빈스 kind는 `SPATIAL_PROVINCE`, 현급 관할 kind는 `COUNTY|MARQUISATE|EXTERNAL_SETTLEMENT`, 군국 kind는 `COMMANDERY|KINGDOM|METROPOLITAN`만 허용한다.
+- 모든 현급 관할의 `seatPlaceId`는 정확히 한 `SettlementRecord`에 존재하고 그 settlement는 같은 `jurisdictionId`를 역참조해야 한다.
 - 비플레이 육지의 모든 연결 성분은 지도 외곽 비플레이 영역과 연결되어야 한다. 내륙의 검은 고립 성분은 0개여야 한다.
+- 외곽과 폭 1~2셀의 단순 경로로만 연결된 깊이 3셀 이상의 검은 육지 침투 성분은 0개여야 한다.
 - 모든 현은 최소 한 공간 프로빈스와 정확히 한 현치를 가진다.
 - 모든 군국은 최소 한 현과 정확히 한 군국치를 가진다.
 - 하나의 `seatPlaceId`는 하나의 물리적 마커만 만든다.
-- 지도 아이콘, 이름, 깃발의 anchor와 hitbox는 해당 공간 프로빈스 안에 있어야 한다.
+- 지도 아이콘, 이름, 깃발의 anchor와 전체 화면 footprint 및 hitbox는 해당 공간 프로빈스 안에 있어야 한다. 현재 zoom에서 온전히 들어가지 않으면 경계를 넘겨 그리지 않고 다음 표시 LOD까지 보류한다.
 - 시나리오 정치색은 직접 공간 프로빈스 소유권만 칠한다.
 - 전환 결과는 생성기, 시드 JSON, JVM importer, API DTO, 웹 렌더러에서 같은 ID 관계를 검증한다.
 
