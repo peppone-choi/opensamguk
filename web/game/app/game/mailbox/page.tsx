@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
@@ -77,6 +77,10 @@ export default function MailboxPage() {
     const [messages, setMessages] = useState<MailboxMessage[]>([]);
     const [scope, setScope] = useState<MailboxScope>('private');
     const [identity, setIdentity] = useState<{ generalId: number | null; nationId: number }>({ generalId: null, nationId: 0 });
+    const mailboxViewKey = `${scope}:${identity.generalId ?? 'none'}:${identity.nationId}`;
+    const mailboxViewKeyRef = useRef(mailboxViewKey);
+    mailboxViewKeyRef.current = mailboxViewKey;
+    const messageRequestRef = useRef(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -92,15 +96,24 @@ export default function MailboxPage() {
     const [contacts, setContacts] = useState<Array<{ mailbox: number; name: string; general: Array<[number, string, number]> }>>([]);
 
     const fetchMessages = useCallback(async () => {
+        const requestedViewKey = `${scope}:${identity.generalId ?? 'none'}:${identity.nationId}`;
+        // 비동기 발송 결과가 뒤늦게 이전 탭의 callback을 호출해도 현재 목록을 덮지 않는다.
+        if (mailboxViewKeyRef.current !== requestedViewKey) return;
+        const requestId = ++messageRequestRef.current;
+        const isCurrentView = () =>
+            mailboxViewKeyRef.current === requestedViewKey && messageRequestRef.current === requestId;
         setLoading(true);
         try {
             const mailboxId = mailboxIdForScope(scope, identity);
             if (mailboxId == null) {
-                setMessages([]);
-                setError(scope === 'national' ? '소속 국가가 없습니다.' : '장수 정보가 없습니다.');
+                if (isCurrentView()) {
+                    setMessages([]);
+                    setError(scope === 'national' ? '소속 국가가 없습니다.' : '장수 정보가 없습니다.');
+                }
                 return;
             }
             const data = await api.mailboxRecent<MailboxEnvelope>();
+            if (!isCurrentView()) return;
             const section = data[scope];
             setMessages(section.map((item) => fromArrayItem(item, mailboxId)));
             if ((scope === 'private' || scope === 'diplomacy') && identity.generalId != null) {
@@ -109,9 +122,9 @@ export default function MailboxPage() {
             }
             setError('');
         } catch {
-            setError('메일함을 불러올 수 없습니다.');
+            if (isCurrentView()) setError('메일함을 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (isCurrentView()) setLoading(false);
         }
     }, [identity, scope]);
 

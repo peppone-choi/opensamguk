@@ -146,6 +146,7 @@ describe('MailboxPage command reservation', () => {
 
         // 엔진 결과를 기다리는 동안 읽기 탭을 바꿔도 발송 시점의 개인 수신자 확인을 잃지 않는다.
         fireEvent.click(screen.getByRole('button', { name: '전체' }));
+        await waitFor(() => expect(mocks.mailboxRecent).toHaveBeenCalledTimes(2));
 
         if (resolveResult === undefined) throw new Error('result resolver was not initialized');
         resolveResult({
@@ -160,6 +161,7 @@ describe('MailboxPage command reservation', () => {
         });
 
         expect(await screen.findByText('관우 (7)에게 서신을 발송했습니다.')).toBeInTheDocument();
+        expect(mocks.mailboxRecent).toHaveBeenCalledTimes(2);
     });
 
     it('개인 수신자 미선택과 자기 자신을 화면에서 차단한다', async () => {
