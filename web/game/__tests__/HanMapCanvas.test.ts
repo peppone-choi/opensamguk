@@ -3,8 +3,9 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
     buildIsoScene, cellToScreen, cityFallbackHitBox, cityLabelMetrics, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
-    cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialView, labelledRegions,
+    cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialFocusedView, initialView, labelledRegions,
     labelZoomFor, maxScaleForDpr, overviewCityVisualBox, provinceAtScreenPoint,
+    completeJurisdictionOverlays,
     screenBoxInsideProvince, screenBoxInsideVisualClearance, seatLabel,
     terrainColorFor, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
     type CountyAdministrativeIndex, type HanTiles, type IsoSceneOptions, type ProvinceIdentityMap,
@@ -190,6 +191,121 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect(scene.cities[0]).toMatchObject({ col: 2, row: 0, provinceId: 1, mapLabel: '장안현' });
     });
 
+    it('공간 프로빈스의 옛 군 이름 대신 소속 현급 관할명을 표시한다', () => {
+        const tiles = {
+            _meta: { cols: 1, rows: 1, year: 220, terrainLegend: {} },
+            terrain: ['1'], owner: [[0, 1]] as [number, number][],
+            juns: [{ name: '무릉군', nameCh: '武陵郡', seat: 0, col: 0, row: 0 }],
+            provinceRecords: [{
+                id: 'DIRECT-PARENT-1-A', displayName: '무릉군', nameCh: '武陵郡',
+                administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE',
+                parentRegionId: 'PARENT-1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST',
+                jurisdictionId: 'COUNTY-1',
+            }],
+            jurisdictionRecords: [{
+                id: 'COUNTY-1', displayName: '임원현', nameCh: '臨沅縣', kind: 'COUNTY',
+                commanderyId: 'PARENT-1', seatPlaceId: 'COUNTY-1', provinceIds: ['DIRECT-PARENT-1-A'],
+            }],
+            parentRegions: [{
+                id: 'PARENT-1', displayName: '무릉군', nameCh: '武陵郡',
+                administrativeSystem: 'HAN_COMMANDERY',
+            }],
+            adjacency: { county: [], commandery: [] }, regions: [], cities: [],
+        } satisfies HanTiles;
+
+        const scene = buildIsoScene(
+            tiles,
+            [{ id: 1, name: '런타임 이름', level: 5, nationId: 0, x: 0, y: 0, provinceId: 0 }],
+            { width: 1, height: 1 },
+            {
+                markerPositions: new Map([[1, { col: 0, row: 0, provinceId: 0 }]]),
+                provinceRecords: tiles.provinceRecords,
+                jurisdictionRecords: tiles.jurisdictionRecords,
+            },
+        );
+
+        expect(scene.cities[0]).toMatchObject({
+            mapLabel: '임원현',
+            provinceKind: 'COUNTY',
+        });
+    });
+
+    it('런타임 도시가 없는 공백 현급 관할에도 중립 비상호작용 마커를 보충한다', () => {
+        const tiles = {
+            _meta: { cols: 2, rows: 1, year: 220, terrainLegend: {} },
+            terrain: ['11'], owner: [[0, 1], [1, 1]] as [number, number][],
+            juns: [{ name: 'A군', nameCh: '', seat: 0, col: 0, row: 0 }],
+            provinceRecords: [
+                { id: 'P1', displayName: 'A현', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'R1', cityIndex: 0, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J1' },
+                { id: 'P2', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'R1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J2' },
+            ],
+            jurisdictionRecords: [
+                { id: 'J1', displayName: 'A현', nameCh: '', kind: 'COUNTY', commanderyId: 'R1', seatPlaceId: 'P1', provinceIds: ['P1'] },
+                { id: 'J2', displayName: 'B현', nameCh: '', kind: 'COUNTY', commanderyId: 'R1', seatPlaceId: 'P2', provinceIds: ['P2'] },
+            ],
+            commanderyRecords: [
+                { id: 'R1', displayName: 'A군', nameCh: '', kind: 'COMMANDERY', seatJurisdictionId: 'J2', jurisdictionIds: ['J1', 'J2'] },
+            ],
+            parentRegions: [{ id: 'R1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
+            adjacency: { county: [], commandery: [] }, regions: [],
+            cities: [{ id: 'P1', name: 'A현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+        } satisfies HanTiles;
+
+        const overlays = completeJurisdictionOverlays(
+            tiles,
+            [{ id: 10, name: 'A현', level: 5, nationId: 1, nationColor: '#aa0000', x: 0, y: 0 }],
+            [
+                { provinceId: 0, col: 0, row: 0, clearance: 0 },
+                { provinceId: 1, col: 1, row: 0, clearance: 0 },
+            ],
+            { width: 2, height: 1 },
+            'COUNTY',
+            new Map([[10, { provinceId: 0 }]]),
+        );
+
+        expect(overlays).toHaveLength(2);
+        expect(overlays[0]).toMatchObject({ id: 10, nationId: 1, jurisdictionId: 'J1' });
+        expect(overlays[1]).toMatchObject({
+            name: 'B현', nationId: 0, provinceId: 1, jurisdictionId: 'J2', interactive: false,
+        });
+
+        const commandery = completeJurisdictionOverlays(
+            tiles,
+            overlays,
+            [
+                { provinceId: 0, col: 0, row: 0, clearance: 0 },
+                { provinceId: 1, col: 1, row: 0, clearance: 0 },
+            ],
+            { width: 2, height: 1 },
+            'COMMANDERY',
+        );
+        expect(commandery).toHaveLength(1);
+        expect(commandery[0]).toMatchObject({
+            name: 'A군', nationId: 0, provinceId: 1, jurisdictionId: 'J2',
+            administrativeKind: 'COMMANDERY', interactive: false,
+        });
+
+        const currentSeat = completeJurisdictionOverlays(
+            tiles,
+            [{ id: 20, name: 'B현', level: 5, nationId: 2, nationColor: '#0000aa', x: 1, y: 0 }],
+            [
+                { provinceId: 0, col: 0, row: 0, clearance: 0 },
+                { provinceId: 1, col: 1, row: 0, clearance: 0 },
+            ],
+            { width: 2, height: 1 },
+            'COMMANDERY',
+            new Map([[20, { provinceId: 1 }]]),
+            20,
+        );
+        expect(currentSeat[0]).toMatchObject({
+            id: 20,
+            name: 'A군',
+            mapLabel: 'A군 · B현',
+            provinceId: 1,
+            jurisdictionId: 'J2',
+        });
+    });
+
     it('같은 현 프로빈스에 겹친 수도와 현 마커는 수도 하나만 그린다', () => {
         const tiles = {
             _meta: { cols: 1, rows: 1, year: 220, terrainLegend: {} },
@@ -355,6 +471,26 @@ describe('HanMapCanvas 격자 해제', () => {
 });
 
 describe('등급 → 최소 표시 zoom 매핑', () => {
+    it.each([1, 1.5, 2, 3])('DPR %s에서 현재 현을 중앙에 두고 현명이 보이는 배율로 시작한다', (dpr) => {
+        const width = 1000 * dpr;
+        const height = 500 * dpr;
+        const current = { col: 180, row: 240 };
+        const fit = initialView(width, height, grid, hanTiles, dpr);
+        const focused = initialFocusedView(width, height, grid, hanTiles, dpr, current);
+        const [x, y] = cellToScreen(current.col, current.row, focused);
+
+        expect(focused.scale).toBeGreaterThan(fit.scale);
+        expect(focused.scale).toBeGreaterThanOrEqual(labelZoomFor('COUNTY', fit.scale, dpr)!);
+        expect(x).toBeCloseTo(width / 2, 6);
+        expect(y).toBeCloseTo(height / 2, 6);
+    });
+
+    it('현재 현이 없으면 전체 지도를 맞추는 기존 초기값을 유지한다', () => {
+        expect(initialFocusedView(1000, 500, grid, hanTiles, 1)).toEqual(
+            initialView(1000, 500, grid, hanTiles, 1),
+        );
+    });
+
     it.each([
         [320, 480, 1],
         [1000, 500, 1],

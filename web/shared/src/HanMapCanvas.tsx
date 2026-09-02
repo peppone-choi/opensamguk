@@ -31,12 +31,15 @@ import {
   formatProvinceTooltip,
   loadProvinceIdentityMap,
   resolveProvincePlacement,
+  type CommanderyRecordDto,
   type ParentRegionRecordDto,
+  type JurisdictionRecordDto,
   type CountyAdministrativeIndex,
   type ProvinceRecordDto,
   type ProvinceEdge,
   type ProvinceIdentityMap,
   type ProvinceOwnershipBinding,
+  type ProvinceVisualAnchor,
 } from './provinceMap';
 import { isOwnedNationVisual } from './nationVisual';
 
@@ -70,6 +73,8 @@ export interface HanTiles {
   parentOwner?: [number, number][];
   juns: Jun[];
   provinceRecords?: ProvinceRecordDto[];
+  jurisdictionRecords?: JurisdictionRecordDto[];
+  commanderyRecords?: CommanderyRecordDto[];
   parentRegions?: ParentRegionRecordDto[];
   adjacency: { county: AdjEdge[]; commandery: AdjEdge[] };
   regions: {
@@ -115,6 +120,10 @@ export interface IsoCityOverlay {
   state?: number;
   supply?: boolean;
   isCapital?: boolean;
+  jurisdictionId?: string;
+  interactive?: boolean;
+  mapLabel?: string;
+  administrativeKind?: 'COUNTY' | 'EXTERNAL_SETTLEMENT' | 'COMMANDERY';
 }
 
 export interface IsoSceneCity extends IsoCityOverlay {
@@ -157,6 +166,7 @@ export interface IsoSceneOptions {
   selectedCityId?: number | null;
   markerPositions?: ReadonlyMap<number, IsoMarkerPosition>;
   provinceRecords?: readonly ProvinceRecordDto[];
+  jurisdictionRecords?: readonly JurisdictionRecordDto[];
   markerPlacement?: {
     provinceMap: ProvinceIdentityMap;
     countyIndex: CountyAdministrativeIndex;
@@ -252,7 +262,11 @@ const COMMANDERY_BORDER_DARK = 'rgba(10,12,14,0.82)';
 const COMMANDERY_BORDER_LIGHT = 'rgba(225,210,163,0.76)';
 const DEFAULT_SOURCE: IsoSourceSize = { width: 700, height: 610 };
 export const TIER2_MARKER_ZOOM: Record<string, number> = { COUNTY: 2.19, MARQUISATE: 2.19 };
-export const TIER2_LABEL_ZOOM: Record<string, number> = { COUNTY: 5.5, MARQUISATE: 5.5 };
+export const TIER2_LABEL_ZOOM: Record<string, number> = {
+  COUNTY: 5.5,
+  EXTERNAL_SETTLEMENT: 5.5,
+  MARQUISATE: 5.5,
+};
 
 export function tierZoom(table: Record<string, number>, kind: string, fit: number): number | undefined {
   const factor = table[kind];
@@ -287,6 +301,21 @@ export function initialView(
 ): IsoView {
   const scale = Math.min(fitScale(width, height, grid), maxScaleForDpr(dpr) * 0.9);
   return viewAt(width, height, (grid.cols - 1) / 2, (grid.rows - 1) / 2, scale);
+}
+
+export function initialFocusedView(
+  width: number,
+  height: number,
+  grid: GridSize,
+  tiles: HanTiles,
+  dpr = 1,
+  current?: { col: number; row: number },
+): IsoView {
+  const fitted = initialView(width, height, grid, tiles, dpr);
+  if (!current) return fitted;
+  const labelScale = labelZoomFor('COUNTY', fitted.scale, dpr) ?? fitted.scale;
+  const scale = Math.min(maxScaleForDpr(dpr) * 0.9, Math.max(fitted.scale, labelScale));
+  return viewAt(width, height, current.col, current.row, scale);
 }
 
 export function expandOwner(rle: [number, number][], cells: number): Int16Array {
@@ -353,6 +382,9 @@ export function buildIsoScene(
   options: IsoSceneOptions,
 ): IsoScene {
   const grid = { cols: tiles._meta.cols, rows: tiles._meta.rows };
+  const jurisdictionById = new Map(
+    options.jurisdictionRecords?.map((record) => [record.id, record]) ?? [],
+  );
   const sceneCities = cities.map((city) => {
     const markerPosition = options.markerPositions?.get(city.id)
       ?? cityMarkerTile(city, grid, source, options.markerPlacement);
@@ -361,6 +393,11 @@ export function buildIsoScene(
     const provinceRecord = markerPosition.provinceId === undefined
       ? undefined
       : options.provinceRecords?.[markerPosition.provinceId];
+    const jurisdiction = city.jurisdictionId
+      ? jurisdictionById.get(city.jurisdictionId)
+      : provinceRecord?.jurisdictionId
+        ? jurisdictionById.get(provinceRecord.jurisdictionId)
+        : undefined;
     const territoryColor = owned && city.nationColor ? city.nationColor : NEUTRAL_COLOR;
     const layers = [`castle:${city.level}`];
     if (owned) layers.push('flag');
@@ -376,8 +413,8 @@ export function buildIsoScene(
       row,
       provinceId: markerPosition.provinceId,
       visualClearance: markerPosition.visualClearance,
-      mapLabel: provinceRecord?.displayName ?? city.name,
-      provinceKind: provinceRecord?.kind,
+      mapLabel: city.mapLabel ?? jurisdiction?.displayName ?? provinceRecord?.displayName ?? city.name,
+      provinceKind: city.administrativeKind ?? jurisdiction?.kind ?? provinceRecord?.kind,
       color: territoryColor,
       territoryColor,
       iconColor: CASTLE_FILL,
@@ -422,6 +459,117 @@ export function buildIsoScene(
     roads: [],
     cities: [...markerByProvince.values(), ...unbound].sort((left, right) => left.id - right.id),
   };
+}
+
+export function completeJurisdictionOverlays(
+  tiles: HanTiles,
+  runtimeCities: readonly IsoCityOverlay[],
+  anchors: readonly (ProvinceVisualAnchor | undefined)[],
+  source: IsoSourceSize,
+  layer: 'COUNTY' | 'COMMANDERY' = 'COUNTY',
+  resolvedPositions?: ReadonlyMap<number, { provinceId?: number }>,
+  currentCityId?: number | null,
+): IsoCityOverlay[] {
+  const jurisdictions = tiles.jurisdictionRecords;
+  const provinces = tiles.provinceRecords;
+  if (!jurisdictions || !provinces) return [...runtimeCities];
+
+  const provinceIndexById = new Map(provinces.map((province, index) => [province.id, index]));
+  const parentById = new Map(tiles.parentRegions?.map((parent) => [parent.id, parent]) ?? []);
+  const locatedRuntimeCities = runtimeCities.map((city) => {
+    const provinceId = city.provinceId ?? resolvedPositions?.get(city.id)?.provinceId;
+    return provinceId === city.provinceId ? city : { ...city, provinceId };
+  });
+  if (layer === 'COMMANDERY') {
+    return (tiles.parentRegions ?? []).flatMap((parent, parentIndex): IsoCityOverlay[] => {
+      const commandery = tiles.commanderyRecords?.find((record) => record.id === parent.id);
+      const seatJurisdiction = commandery
+        ? jurisdictions.find((jurisdiction) => jurisdiction.id === commandery.seatJurisdictionId)
+        : undefined;
+      const parentProvinceIndexes = provinces.flatMap((province, provinceIndex) => (
+        province.parentRegionId === parent.id ? [provinceIndex] : []
+      ));
+      const seatMemberIndexes = seatJurisdiction?.provinceIds
+        .map((provinceId) => provinceIndexById.get(provinceId))
+        .filter((provinceIndex): provinceIndex is number => provinceIndex !== undefined) ?? [];
+      const canonicalSeatIndex = seatJurisdiction
+        ? provinceIndexById.get(seatJurisdiction.seatPlaceId)
+        : undefined;
+      const legacySeatCityIndex = commandery ? undefined : tiles.juns[parentIndex]?.seat;
+      const provinceId = (
+        canonicalSeatIndex !== undefined
+        && seatMemberIndexes.includes(canonicalSeatIndex)
+        && anchors[canonicalSeatIndex] !== undefined
+          ? canonicalSeatIndex
+          : undefined
+      ) ?? seatMemberIndexes.find((candidate) => anchors[candidate] !== undefined)
+        ?? parentProvinceIndexes.find((candidate) => (
+          legacySeatCityIndex !== undefined && provinces[candidate]?.cityIndex === legacySeatCityIndex
+        ))
+        ?? parentProvinceIndexes.find((candidate) => anchors[candidate] !== undefined);
+      if (provinceId === undefined) return [];
+      const anchor = anchors[provinceId];
+      if (!anchor) return [];
+      const runtime = locatedRuntimeCities.find((city) => city.provinceId === provinceId);
+      const isCurrentSeat = runtime?.id === currentCityId;
+      const jurisdictionId = provinces[provinceId]?.jurisdictionId;
+      const seatLabel = seatJurisdiction?.displayName
+        ?? jurisdictions.find((jurisdiction) => jurisdiction.id === jurisdictionId)?.displayName;
+      return [{
+        ...(runtime ?? {
+          id: -(100_000 + parentIndex),
+          level: 8,
+          nationId: 0,
+          interactive: false,
+        }),
+        name: parent.displayName,
+        mapLabel: isCurrentSeat && seatLabel
+          ? `${parent.displayName} · ${seatLabel}`
+          : parent.displayName,
+        administrativeKind: 'COMMANDERY',
+        x: anchor.col * source.width / tiles._meta.cols,
+        y: anchor.row * source.height / tiles._meta.rows,
+        provinceId,
+        jurisdictionId,
+      }];
+    });
+  }
+  const represented = new Set<string>();
+  const enriched = locatedRuntimeCities.map((city) => {
+    const jurisdictionId = city.jurisdictionId
+      ?? (city.provinceId === undefined ? undefined : provinces[city.provinceId]?.jurisdictionId);
+    if (jurisdictionId) represented.add(jurisdictionId);
+    return jurisdictionId === city.jurisdictionId ? city : { ...city, jurisdictionId };
+  });
+
+  const synthetic = jurisdictions.flatMap((jurisdiction, index): IsoCityOverlay[] => {
+    if (represented.has(jurisdiction.id)) return [];
+    const memberIndexes = jurisdiction.provinceIds
+      .map((provinceId) => provinceIndexById.get(provinceId))
+      .filter((provinceIndex): provinceIndex is number => provinceIndex !== undefined);
+    const seatIndex = provinceIndexById.get(jurisdiction.seatPlaceId);
+    const provinceId = seatIndex !== undefined && memberIndexes.includes(seatIndex)
+      ? seatIndex
+      : memberIndexes.find((candidate) => provinces[candidate]?.cityIndex != null) ?? memberIndexes[0];
+    if (provinceId === undefined) return [];
+    const anchor = anchors[provinceId];
+    if (!anchor) return [];
+    const tileCityIndex = provinces[provinceId]?.cityIndex;
+    const tileCity = tileCityIndex == null ? undefined : tiles.cities[tileCityIndex];
+    return [{
+      id: -(index + 1),
+      name: jurisdiction.displayName,
+      level: tileCity?.level ?? 5,
+      nationId: 0,
+      x: anchor.col * source.width / tiles._meta.cols,
+      y: anchor.row * source.height / tiles._meta.rows,
+      commanderyName: parentById.get(jurisdiction.commanderyId)?.displayName,
+      provinceId,
+      jurisdictionId: jurisdiction.id,
+      interactive: false,
+    }];
+  });
+  return [...enriched, ...synthetic];
 }
 
 export function sceneGolden(scene: IsoScene): string {
@@ -1100,6 +1248,7 @@ export function HanMapCanvas({
     map: ProvinceIdentityMap | null;
   }>({ url: '', map: null });
   const [missing, setMissing] = useState(false);
+  const [administrativeLayer, setAdministrativeLayer] = useState<'COUNTY' | 'COMMANDERY'>('COUNTY');
 
   useEffect(() => {
     if (suppliedTiles !== undefined) {
@@ -1186,17 +1335,36 @@ export function HanMapCanvas({
       cityMarkerTile(city, grid, sourceSize, placement),
     ]));
   }, [cities, countyIndex, loadedTiles, provinceMap, sourceSize]);
-  const markerPositions = useMemo(() => {
-    if (!canonicalMarkerPositions || !provinceMap) return canonicalMarkerPositions;
+  const provinceAnchors = useMemo(() => {
+    if (!canonicalMarkerPositions || !provinceMap) return undefined;
     const preferredByProvince = new Map<number, { col: number; row: number }>();
     for (const city of [...cities].sort((left, right) => left.id - right.id)) {
       const placement = canonicalMarkerPositions.get(city.id);
       if (placement?.provinceId === undefined || preferredByProvince.has(placement.provinceId)) continue;
       preferredByProvince.set(placement.provinceId, { col: placement.col, row: placement.row });
     }
-    const anchors = buildProvinceVisualAnchors(provinceMap, preferredByProvince);
-    return new Map([...canonicalMarkerPositions].map(([cityId, placement]) => {
-      const anchor = placement.provinceId === undefined ? undefined : anchors[placement.provinceId];
+    return buildProvinceVisualAnchors(provinceMap, preferredByProvince);
+  }, [canonicalMarkerPositions, cities, provinceMap]);
+  const displayCities = useMemo(() => {
+    if (!loadedTiles || !provinceAnchors) return [...cities];
+    const overlays = completeJurisdictionOverlays(
+      loadedTiles,
+      cities,
+      provinceAnchors,
+      sourceSize,
+      administrativeLayer,
+      canonicalMarkerPositions,
+      currentCityId,
+    );
+    if (administrativeLayer !== 'COMMANDERY' || currentCityId == null
+      || overlays.some((city) => city.id === currentCityId)) return overlays;
+    const current = cities.find((city) => city.id === currentCityId);
+    return current ? [...overlays, { ...current, administrativeKind: 'COUNTY' as const }] : overlays;
+  }, [administrativeLayer, canonicalMarkerPositions, cities, currentCityId, loadedTiles, provinceAnchors, sourceSize]);
+  const markerPositions = useMemo(() => {
+    if (!canonicalMarkerPositions || !provinceAnchors) return canonicalMarkerPositions;
+    const result = new Map([...canonicalMarkerPositions].map(([cityId, placement]) => {
+      const anchor = placement.provinceId === undefined ? undefined : provinceAnchors[placement.provinceId];
       return [cityId, anchor
         ? {
           col: anchor.col,
@@ -1204,19 +1372,31 @@ export function HanMapCanvas({
           provinceId: placement.provinceId,
           visualClearance: anchor.clearance,
         }
-        : placement];
+        : placement] as const;
     }));
-  }, [canonicalMarkerPositions, cities, provinceMap]);
+    for (const city of displayCities) {
+      if (result.has(city.id) || city.provinceId === undefined) continue;
+      const anchor = provinceAnchors[city.provinceId];
+      if (anchor) result.set(city.id, {
+        col: anchor.col,
+        row: anchor.row,
+        provinceId: city.provinceId,
+        visualClearance: anchor.clearance,
+      });
+    }
+    return result;
+  }, [canonicalMarkerPositions, displayCities, provinceAnchors]);
   const scene = useMemo(
     () => loadedTiles
-      ? buildIsoScene(loadedTiles, cities, sourceSize, {
+      ? buildIsoScene(loadedTiles, displayCities, sourceSize, {
         currentCityId,
         selectedCityId,
         markerPositions,
         provinceRecords: loadedTiles.provinceRecords,
+        jurisdictionRecords: loadedTiles.jurisdictionRecords,
       })
       : null,
-    [cities, currentCityId, loadedTiles, markerPositions, selectedCityId, sourceSize],
+    [currentCityId, displayCities, loadedTiles, markerPositions, selectedCityId, sourceSize],
   );
   const sceneRef = useRef<IsoScene | null>(scene);
   const hideCityNamesRef = useRef(hideCityNames);
@@ -1371,7 +1551,15 @@ export function HanMapCanvas({
           grid,
         );
       } else {
-        viewRef.current = initialView(canvas.width, canvas.height, grid, loadedTiles, dpr);
+        const currentPosition = currentCityId == null ? undefined : markerPositions?.get(currentCityId);
+        viewRef.current = initialFocusedView(
+          canvas.width,
+          canvas.height,
+          grid,
+          loadedTiles,
+          dpr,
+          currentPosition,
+        );
       }
       onViewChange?.(viewRef.current);
       render();
@@ -1397,7 +1585,7 @@ export function HanMapCanvas({
       observer.disconnect();
       window.removeEventListener('resize', fit);
     };
-  }, [loadedTiles, onViewChange, render]);
+  }, [currentCityId, loadedTiles, markerPositions, onViewChange, render]);
 
   const updateView = useCallback((next: IsoView) => {
     userModifiedViewRef.current = true;
@@ -1474,6 +1662,9 @@ export function HanMapCanvas({
     if (provinceId < 0 || commanderyId < 0) return null;
     const provinceRecord = loadedTiles.provinceRecords?.[provinceId];
     const parentRecord = loadedTiles.parentRegions?.[commanderyId];
+    const jurisdictionRecord = provinceRecord?.jurisdictionId == null
+      ? undefined
+      : loadedTiles.jurisdictionRecords?.find((record) => record.id === provinceRecord.jurisdictionId);
     const linkedCity = provinceRecord?.cityIndex == null
       ? undefined : loadedTiles.cities[provinceRecord.cityIndex];
     const county = linkedCity ?? loadedTiles.cities[provinceId];
@@ -1486,9 +1677,12 @@ export function HanMapCanvas({
       commanderyId,
       regionName: regionByCommanderyId.get(commanderyId) ?? city?.regionName ?? '',
       commanderyName,
-      countyName: provinceRecord?.displayName ?? county!.name,
+      countyName: jurisdictionRecord?.displayName ?? provinceRecord?.displayName ?? county!.name,
       displayName: provinceRecord
-        ? formatProvinceTooltip(provinceRecord, parentRecord)
+        ? formatProvinceTooltip(
+          jurisdictionRecord ? { ...provinceRecord, displayName: jurisdictionRecord.displayName } : provinceRecord,
+          parentRecord,
+        )
         : `${commanderyName} ${county!.name}`,
       level: completeOwnership.directProvinces?.has(provinceId) && city
         ? city.level : (county?.level ?? city?.level ?? 5),
@@ -1574,7 +1768,7 @@ export function HanMapCanvas({
     if (moved) return;
     const point = eventPoint(event);
     const city = point ? cityAt(point.canvasX, point.canvasY) : null;
-    if (city) onCityActivate?.(city, { pointerType: pointerTypeRef.current });
+    if (city && city.interactive !== false) onCityActivate?.(city, { pointerType: pointerTypeRef.current });
   };
 
   if (missing) return null;
@@ -1626,7 +1820,9 @@ export function HanMapCanvas({
             onCityHover?.(scene.cities[nextIndex]);
             return;
           }
-          if ((event.key === 'Enter' || event.key === ' ') && activeCityRef.current) {
+          if ((event.key === 'Enter' || event.key === ' ')
+            && activeCityRef.current
+            && activeCityRef.current.interactive !== false) {
             event.preventDefault();
             onCityActivate?.(activeCityRef.current, { pointerType: 'keyboard' });
           }
@@ -1643,6 +1839,41 @@ export function HanMapCanvas({
         <button type="button" aria-label="지도 확대" onClick={() => zoomBy(1.4)}>+</button>
         <button type="button" aria-label="지도 축소" onClick={() => zoomBy(1 / 1.4)}>−</button>
       </div>
+      {loadedTiles?.jurisdictionRecords?.length && loadedTiles.parentRegions?.length ? (
+        <div
+          className="os-iso-map__administrative-layers"
+          role="group"
+          aria-label="도시 행정 레이어"
+          style={{
+            position: 'absolute',
+            left: 8,
+            top: 8,
+            display: 'flex',
+            gap: 4,
+            padding: 3,
+            border: '1px solid rgba(232,222,197,0.72)',
+            borderRadius: 4,
+            background: 'rgba(20,18,15,0.86)',
+          }}
+        >
+          <button
+            type="button"
+            aria-label="현급 도시 레이어"
+            aria-pressed={administrativeLayer === 'COUNTY'}
+            onClick={() => setAdministrativeLayer('COUNTY')}
+          >
+            현
+          </button>
+          <button
+            type="button"
+            aria-label="군국급 도시 레이어"
+            aria-pressed={administrativeLayer === 'COMMANDERY'}
+            onClick={() => setAdministrativeLayer('COMMANDERY')}
+          >
+            군국
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

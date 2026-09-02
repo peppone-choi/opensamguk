@@ -70,6 +70,28 @@ export interface ProvinceRecordDto {
   cityIndex: number | null;
   geometryBasis: string;
   confidence: string;
+  jurisdictionId?: string;
+  assignmentBasis?: string;
+  assignmentConfidence?: string;
+}
+
+export interface JurisdictionRecordDto {
+  id: string;
+  displayName: string;
+  nameCh: string;
+  kind: string;
+  commanderyId: string;
+  seatPlaceId: string;
+  provinceIds: readonly string[];
+}
+
+export interface CommanderyRecordDto {
+  id: string;
+  displayName: string;
+  nameCh: string;
+  kind: string;
+  seatJurisdictionId: string;
+  jurisdictionIds: readonly string[];
 }
 
 export interface ParentRegionRecordDto {

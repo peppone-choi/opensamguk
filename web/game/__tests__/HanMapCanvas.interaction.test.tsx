@@ -738,6 +738,58 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(controls?.style.bottom).toBe('8px');
   });
 
+  it('현급과 군국급 도시 레이어를 서로 전환한다', () => {
+    const tiles = {
+      ...CHE_TILES_FIXTURE,
+      parentRegions: [
+        { id: 'P1', displayName: '사예', nameCh: '司隸', administrativeSystem: 'HAN_COMMANDERY' },
+        { id: 'P2', displayName: '예주', nameCh: '豫州', administrativeSystem: 'HAN_COMMANDERY' },
+      ],
+      provinceRecords: [
+        {
+          id: 'A', displayName: '예전 군급 이름', nameCh: '甲', administrativeSystem: 'HAN_COMMANDERY',
+          kind: 'SPATIAL_PROVINCE', parentRegionId: 'P1', cityIndex: 0,
+          geometryBasis: 'fixture', confidence: 'high', jurisdictionId: 'J1',
+        },
+        {
+          id: 'B', displayName: '예전 군급 이름', nameCh: '乙', administrativeSystem: 'HAN_COMMANDERY',
+          kind: 'SPATIAL_PROVINCE', parentRegionId: 'P2', cityIndex: 1,
+          geometryBasis: 'fixture', confidence: 'high', jurisdictionId: 'J2',
+        },
+      ],
+      jurisdictionRecords: [
+        { id: 'J1', displayName: '낙양현', nameCh: '雒陽', kind: 'COUNTY', commanderyId: 'P1', seatPlaceId: 'A', provinceIds: ['A'] },
+        { id: 'J2', displayName: '허현', nameCh: '許', kind: 'COUNTY', commanderyId: 'P2', seatPlaceId: 'B', provinceIds: ['B'] },
+      ],
+    };
+    render(
+      <HanMapCanvas
+        mapCode="han"
+        tiles={tiles}
+        provinceMap={{
+          ...PROVINCE_MAP,
+          commanderies: new Int16Array([
+            -1, 0, 0, -1,
+            -1, 0, 1, -1,
+            -1, -1, -1, 1,
+          ]),
+        }}
+        cities={CHE_OVERLAYS_FIXTURE.map((city, provinceId) => ({ ...city, provinceId }))}
+        sourceSize={{ width: 200, height: 120 }}
+      />,
+    );
+
+    const county = screen.getByRole('button', { name: '현급 도시 레이어' });
+    const commandery = screen.getByRole('button', { name: '군국급 도시 레이어' });
+    expect(county).toHaveAttribute('aria-pressed', 'true');
+    expect(commandery).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(commandery);
+
+    expect(county).toHaveAttribute('aria-pressed', 'false');
+    expect(commandery).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('reports the county polygon under the pointer independently of marker activation', () => {
     const views: IsoView[] = [];
     const onCountyHover = vi.fn();
