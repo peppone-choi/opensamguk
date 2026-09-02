@@ -1299,10 +1299,10 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
         "cityLinkedCellCount": 107_156,
         "directTerritoryCellCount": 120_193,
         "exactApprovedRowCount": 781,
-        "exactApprovedCellCount": 80_910,
+        "exactApprovedCellCount": 80_913,
         "approvedPhysicalPlaceIdAbsentCount": 0,
         "unresolvedRowCount": 357,
-        "unresolvedCellCount": 26_246,
+        "unresolvedCellCount": 26_243,
         "crossParentRegionFootprintCount": 0,
         "coordinateFootprintMajorityMismatchCount": 0,
     }
@@ -1311,9 +1311,9 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
             raise ValueError(f"locked reconciliation count changed: {key}={summary.get(key)} expected {value}")
     geometry = summary["geometryDiagnostics"]
     if geometry != {
-        "singleGroupJun": {"rowCount": 194, "cellCount": 10_161},
+        "singleGroupJun": {"rowCount": 194, "cellCount": 10_158},
         "multiGroupJun": {"rowCount": 90, "cellCount": 8_043},
-        "uniqueNearest": {"rowCount": 281, "cellCount": 18_135},
+        "uniqueNearest": {"rowCount": 281, "cellCount": 18_132},
         "distanceTies": {"rowCount": 3, "cellCount": 69},
     }:
         raise ValueError("locked geometry reconciliation counts changed")
