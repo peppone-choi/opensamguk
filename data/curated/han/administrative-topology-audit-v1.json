@@ -1,0 +1,3695 @@
+{
+  "schemaVersion": 1,
+  "auditId": "han-administrative-topology-audit-v1",
+  "referenceYear": 220,
+  "grid": {
+    "rows": 669,
+    "cols": 768,
+    "connectivity": "FOUR_NEIGHBOR"
+  },
+  "policy": {
+    "candidateOnly": true,
+    "disconnected": "same administrative ID has more than one four-neighbor cell component",
+    "fullyEnclosed": "component touches neither outside nor negative owner and has exactly one surrounding administrative ID",
+    "singleJurisdiction": "commanderyRecords.jurisdictionIds contains exactly one ID",
+    "noAutomaticRepair": true
+  },
+  "counts": {
+    "province": 1524,
+    "jurisdiction": 1020,
+    "commandery": 172
+  },
+  "provinceTopology": {
+    "minimumCellCount": 8,
+    "belowMinimumCount": 0,
+    "belowMinimum": [],
+    "disconnectedCount": 32,
+    "disconnected": [
+      {
+        "id": "40426",
+        "displayName": "누현",
+        "componentCellCounts": [
+          101,
+          39
+        ]
+      },
+      {
+        "id": "40740",
+        "displayName": "무현",
+        "componentCellCounts": [
+          30,
+          7
+        ]
+      },
+      {
+        "id": "40957",
+        "displayName": "파구현",
+        "componentCellCounts": [
+          174,
+          1
+        ]
+      },
+      {
+        "id": "41145",
+        "displayName": "시상현",
+        "componentCellCounts": [
+          72,
+          3
+        ]
+      },
+      {
+        "id": "41194",
+        "displayName": "교양현",
+        "componentCellCounts": [
+          188,
+          28
+        ]
+      },
+      {
+        "id": "43057",
+        "displayName": "합비현",
+        "componentCellCounts": [
+          137,
+          1
+        ]
+      },
+      {
+        "id": "43423",
+        "displayName": "악현",
+        "componentCellCounts": [
+          130,
+          1
+        ]
+      },
+      {
+        "id": "43497",
+        "displayName": "주릉현",
+        "componentCellCounts": [
+          82,
+          5
+        ]
+      },
+      {
+        "id": "70620",
+        "displayName": "서도현",
+        "componentCellCounts": [
+          88,
+          1
+        ]
+      },
+      {
+        "id": "70741",
+        "displayName": "고륙현",
+        "componentCellCounts": [
+          64,
+          3
+        ]
+      },
+      {
+        "id": "83166",
+        "displayName": "양안현",
+        "componentCellCounts": [
+          15,
+          1
+        ]
+      },
+      {
+        "id": "85202",
+        "displayName": "영현",
+        "componentCellCounts": [
+          32,
+          1
+        ]
+      },
+      {
+        "id": "85337",
+        "displayName": "동무현",
+        "componentCellCounts": [
+          50,
+          3
+        ]
+      },
+      {
+        "id": "85634",
+        "displayName": "동완현",
+        "componentCellCounts": [
+          47,
+          1
+        ]
+      },
+      {
+        "id": "87273",
+        "displayName": "조강현",
+        "componentCellCounts": [
+          26,
+          11
+        ]
+      },
+      {
+        "id": "95729",
+        "displayName": "양아현",
+        "componentCellCounts": [
+          52,
+          1
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0102-ce418dfe67e6",
+        "displayName": "교지군",
+        "componentCellCounts": [
+          218,
+          4,
+          2
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0116-8a985f732c47",
+        "displayName": "고자미동국",
+        "componentCellCounts": [
+          119,
+          22,
+          2,
+          1,
+          1
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0123-3cc3049ada17",
+        "displayName": "이주",
+        "componentCellCounts": [
+          171,
+          15
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0130-23501b7ffcdd",
+        "displayName": "대방군",
+        "componentCellCounts": [
+          192,
+          7
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0156-a12c90338d9b",
+        "displayName": "목지국",
+        "componentCellCounts": [
+          181,
+          9
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0164-22953cab254f",
+        "displayName": "벽비리국",
+        "componentCellCounts": [
+          174,
+          14
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0165-40276a394699",
+        "displayName": "야마일국",
+        "componentCellCounts": [
+          207,
+          41
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0165-5c3c53f4ab2e",
+        "displayName": "야마일국",
+        "componentCellCounts": [
+          374,
+          7
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0165-719d56a5aadf",
+        "displayName": "야마일국",
+        "componentCellCounts": [
+          345,
+          9
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0165-ca0e4ceb7e91",
+        "displayName": "야마일국",
+        "componentCellCounts": [
+          216,
+          6
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0169-eba33ce69960",
+        "displayName": "고량군",
+        "componentCellCounts": [
+          212,
+          16
+        ]
+      },
+      {
+        "id": "X035",
+        "displayName": "우산국",
+        "componentCellCounts": [
+          14,
+          9
+        ]
+      },
+      {
+        "id": "X051",
+        "displayName": "일대국",
+        "componentCellCounts": [
+          239,
+          4
+        ]
+      },
+      {
+        "id": "X052",
+        "displayName": "말로국",
+        "componentCellCounts": [
+          20,
+          15,
+          8,
+          1,
+          1
+        ]
+      },
+      {
+        "id": "X055",
+        "displayName": "야마일국",
+        "componentCellCounts": [
+          28,
+          19
+        ]
+      },
+      {
+        "id": "X057",
+        "displayName": "유구 (후대 명칭)",
+        "componentCellCounts": [
+          71,
+          42,
+          19,
+          12,
+          11
+        ]
+      }
+    ],
+    "fullyEnclosedCount": 15,
+    "fullyEnclosed": [
+      {
+        "id": "40111",
+        "displayName": "해창현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "40088"
+        ],
+        "surroundingDisplayNames": [
+          "부춘현"
+        ]
+      },
+      {
+        "id": "40957",
+        "displayName": "파구현",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "41142"
+        ],
+        "surroundingDisplayNames": [
+          "영수현"
+        ]
+      },
+      {
+        "id": "41323",
+        "displayName": "유현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "41314"
+        ],
+        "surroundingDisplayNames": [
+          "안오현"
+        ]
+      },
+      {
+        "id": "41980",
+        "displayName": "영포현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "41996"
+        ],
+        "surroundingDisplayNames": [
+          "영도현"
+        ]
+      },
+      {
+        "id": "42008",
+        "displayName": "부이후국",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "42019"
+        ],
+        "surroundingDisplayNames": [
+          "소양현"
+        ]
+      },
+      {
+        "id": "44234",
+        "displayName": "포산현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "44244"
+        ],
+        "surroundingDisplayNames": [
+          "중류현"
+        ]
+      },
+      {
+        "id": "45525",
+        "displayName": "곡창현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "45527"
+        ],
+        "surroundingDisplayNames": [
+          "곤택현"
+        ]
+      },
+      {
+        "id": "45949",
+        "displayName": "무릉현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "45934"
+        ],
+        "surroundingDisplayNames": [
+          "상용현"
+        ]
+      },
+      {
+        "id": "70741",
+        "displayName": "고륙현",
+        "componentCellCount": 3,
+        "surroundingIds": [
+          "70735"
+        ],
+        "surroundingDisplayNames": [
+          "음반현"
+        ]
+      },
+      {
+        "id": "70952",
+        "displayName": "유미현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70920"
+        ],
+        "surroundingDisplayNames": [
+          "진창현"
+        ]
+      },
+      {
+        "id": "85525",
+        "displayName": "염차현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "85531"
+        ],
+        "surroundingDisplayNames": [
+          "양신현"
+        ]
+      },
+      {
+        "id": "85634",
+        "displayName": "동완현",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "85640"
+        ],
+        "surroundingDisplayNames": [
+          "양도현"
+        ]
+      },
+      {
+        "id": "87436",
+        "displayName": "노현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "DIRECT-PARENT-0091-9246053b7692"
+        ],
+        "surroundingDisplayNames": [
+          "어양군"
+        ]
+      },
+      {
+        "id": "95729",
+        "displayName": "양아현",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "95724"
+        ],
+        "surroundingDisplayNames": [
+          "호택현"
+        ]
+      },
+      {
+        "id": "DIRECT-PARENT-0148-9cee1dedcd80",
+        "displayName": "문산군",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "44401"
+        ],
+        "surroundingDisplayNames": [
+          "광도현"
+        ]
+      }
+    ]
+  },
+  "jurisdictionTopology": {
+    "disconnectedCount": 34,
+    "disconnected": [
+      {
+        "id": "40426",
+        "displayName": "누현",
+        "componentCellCounts": [
+          101,
+          39
+        ]
+      },
+      {
+        "id": "40740",
+        "displayName": "무현",
+        "componentCellCounts": [
+          30,
+          7
+        ]
+      },
+      {
+        "id": "40957",
+        "displayName": "파구현",
+        "componentCellCounts": [
+          174,
+          1
+        ]
+      },
+      {
+        "id": "41145",
+        "displayName": "시상현",
+        "componentCellCounts": [
+          72,
+          3
+        ]
+      },
+      {
+        "id": "41194",
+        "displayName": "교양현",
+        "componentCellCounts": [
+          188,
+          28
+        ]
+      },
+      {
+        "id": "42277",
+        "displayName": "임윤현",
+        "componentCellCounts": [
+          450,
+          16
+        ]
+      },
+      {
+        "id": "42444",
+        "displayName": "주애현",
+        "componentCellCounts": [
+          406,
+          374
+        ]
+      },
+      {
+        "id": "42524",
+        "displayName": "합포현",
+        "componentCellCounts": [
+          728,
+          67
+        ]
+      },
+      {
+        "id": "43057",
+        "displayName": "합비현",
+        "componentCellCounts": [
+          137,
+          1
+        ]
+      },
+      {
+        "id": "43423",
+        "displayName": "악현",
+        "componentCellCounts": [
+          130,
+          1
+        ]
+      },
+      {
+        "id": "43497",
+        "displayName": "주릉현",
+        "componentCellCounts": [
+          82,
+          5
+        ]
+      },
+      {
+        "id": "70523",
+        "displayName": "부평현",
+        "componentCellCounts": [
+          323,
+          43
+        ]
+      },
+      {
+        "id": "70613",
+        "displayName": "이양현",
+        "componentCellCounts": [
+          317,
+          310
+        ]
+      },
+      {
+        "id": "70620",
+        "displayName": "서도현",
+        "componentCellCounts": [
+          88,
+          1
+        ]
+      },
+      {
+        "id": "70741",
+        "displayName": "고륙현",
+        "componentCellCounts": [
+          64,
+          3
+        ]
+      },
+      {
+        "id": "83166",
+        "displayName": "양안현",
+        "componentCellCounts": [
+          15,
+          1
+        ]
+      },
+      {
+        "id": "85202",
+        "displayName": "영현",
+        "componentCellCounts": [
+          32,
+          1
+        ]
+      },
+      {
+        "id": "85337",
+        "displayName": "동무현",
+        "componentCellCounts": [
+          50,
+          3
+        ]
+      },
+      {
+        "id": "85634",
+        "displayName": "동완현",
+        "componentCellCounts": [
+          47,
+          1
+        ]
+      },
+      {
+        "id": "87273",
+        "displayName": "조강현",
+        "componentCellCounts": [
+          26,
+          11
+        ]
+      },
+      {
+        "id": "95729",
+        "displayName": "양아현",
+        "componentCellCounts": [
+          52,
+          1
+        ]
+      },
+      {
+        "id": "JURISDICTION-PARENT-0102-SEAT",
+        "displayName": "용편현",
+        "componentCellCounts": [
+          1801,
+          4,
+          2
+        ]
+      },
+      {
+        "id": "JURISDICTION-PARENT-0130-SEAT",
+        "displayName": "대방현",
+        "componentCellCounts": [
+          589,
+          7
+        ]
+      },
+      {
+        "id": "X035",
+        "displayName": "우산국",
+        "componentCellCounts": [
+          14,
+          9
+        ]
+      },
+      {
+        "id": "X040",
+        "displayName": "목지국",
+        "componentCellCounts": [
+          371,
+          9
+        ]
+      },
+      {
+        "id": "X041",
+        "displayName": "벽비리국",
+        "componentCellCounts": [
+          550,
+          14
+        ]
+      },
+      {
+        "id": "X046",
+        "displayName": "고자미동국",
+        "componentCellCounts": [
+          222,
+          22,
+          2,
+          1,
+          1
+        ]
+      },
+      {
+        "id": "X051",
+        "displayName": "일대국",
+        "componentCellCounts": [
+          480,
+          248,
+          4
+        ]
+      },
+      {
+        "id": "X052",
+        "displayName": "말로국",
+        "componentCellCounts": [
+          20,
+          15,
+          8,
+          1,
+          1
+        ]
+      },
+      {
+        "id": "X053",
+        "displayName": "이도국",
+        "componentCellCounts": [
+          363,
+          6
+        ]
+      },
+      {
+        "id": "X054",
+        "displayName": "노국",
+        "componentCellCounts": [
+          1105,
+          41,
+          9
+        ]
+      },
+      {
+        "id": "X055",
+        "displayName": "야마일국",
+        "componentCellCounts": [
+          374,
+          28,
+          19,
+          7
+        ]
+      },
+      {
+        "id": "X056",
+        "displayName": "이주",
+        "componentCellCounts": [
+          1311,
+          15
+        ]
+      },
+      {
+        "id": "X057",
+        "displayName": "유구 (후대 명칭)",
+        "componentCellCounts": [
+          71,
+          42,
+          19,
+          12,
+          11
+        ]
+      }
+    ],
+    "fullyEnclosedCount": 14,
+    "fullyEnclosed": [
+      {
+        "id": "40111",
+        "displayName": "해창현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "40088"
+        ],
+        "surroundingDisplayNames": [
+          "부춘현"
+        ],
+        "commanderyId": "PARENT-0052",
+        "surroundingCommanderyId": "PARENT-0052",
+        "sameCommandery": true
+      },
+      {
+        "id": "40957",
+        "displayName": "파구현",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "41142"
+        ],
+        "surroundingDisplayNames": [
+          "영수현"
+        ],
+        "commanderyId": "PARENT-0133",
+        "surroundingCommanderyId": "PARENT-0053",
+        "sameCommandery": false
+      },
+      {
+        "id": "41323",
+        "displayName": "유현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "41314"
+        ],
+        "surroundingDisplayNames": [
+          "안오현"
+        ],
+        "commanderyId": "PARENT-0049",
+        "surroundingCommanderyId": "PARENT-0049",
+        "sameCommandery": true
+      },
+      {
+        "id": "41980",
+        "displayName": "영포현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "41996"
+        ],
+        "surroundingDisplayNames": [
+          "영도현"
+        ],
+        "commanderyId": "PARENT-0044",
+        "surroundingCommanderyId": "PARENT-0044",
+        "sameCommandery": true
+      },
+      {
+        "id": "42008",
+        "displayName": "부이후국",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "42019"
+        ],
+        "surroundingDisplayNames": [
+          "소양현"
+        ],
+        "commanderyId": "PARENT-0044",
+        "surroundingCommanderyId": "PARENT-0044",
+        "sameCommandery": true
+      },
+      {
+        "id": "44234",
+        "displayName": "포산현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "44244"
+        ],
+        "surroundingDisplayNames": [
+          "중류현"
+        ],
+        "commanderyId": "PARENT-0100",
+        "surroundingCommanderyId": "PARENT-0100",
+        "sameCommandery": true
+      },
+      {
+        "id": "45525",
+        "displayName": "곡창현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "45527"
+        ],
+        "surroundingDisplayNames": [
+          "곤택현"
+        ],
+        "commanderyId": "PARENT-0061",
+        "surroundingCommanderyId": "PARENT-0061",
+        "sameCommandery": true
+      },
+      {
+        "id": "45949",
+        "displayName": "무릉현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "45934"
+        ],
+        "surroundingDisplayNames": [
+          "상용현"
+        ],
+        "commanderyId": "PARENT-0054",
+        "surroundingCommanderyId": "PARENT-0054",
+        "sameCommandery": true
+      },
+      {
+        "id": "70741",
+        "displayName": "고륙현",
+        "componentCellCount": 3,
+        "surroundingIds": [
+          "70735"
+        ],
+        "surroundingDisplayNames": [
+          "음반현"
+        ],
+        "commanderyId": "PARENT-0005",
+        "surroundingCommanderyId": "PARENT-0004",
+        "sameCommandery": false
+      },
+      {
+        "id": "70952",
+        "displayName": "유미현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "70920"
+        ],
+        "surroundingDisplayNames": [
+          "진창현"
+        ],
+        "commanderyId": "PARENT-0006",
+        "surroundingCommanderyId": "PARENT-0006",
+        "sameCommandery": true
+      },
+      {
+        "id": "85525",
+        "displayName": "염차현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "85531"
+        ],
+        "surroundingDisplayNames": [
+          "양신현"
+        ],
+        "commanderyId": "PARENT-0036",
+        "surroundingCommanderyId": "PARENT-0036",
+        "sameCommandery": true
+      },
+      {
+        "id": "85634",
+        "displayName": "동완현",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "85640"
+        ],
+        "surroundingDisplayNames": [
+          "양도현"
+        ],
+        "commanderyId": "PARENT-0105",
+        "surroundingCommanderyId": "PARENT-0031",
+        "sameCommandery": false
+      },
+      {
+        "id": "95729",
+        "displayName": "양아현",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "95724"
+        ],
+        "surroundingDisplayNames": [
+          "호택현"
+        ],
+        "commanderyId": "PARENT-0078",
+        "surroundingCommanderyId": "PARENT-0002",
+        "sameCommandery": false
+      },
+      {
+        "id": "JURISDICTION-PARENT-0148-SEAT",
+        "displayName": "문산현",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "44401"
+        ],
+        "surroundingDisplayNames": [
+          "광도현"
+        ],
+        "commanderyId": "PARENT-0148",
+        "surroundingCommanderyId": "PARENT-0057",
+        "sameCommandery": false
+      }
+    ]
+  },
+  "commanderyTopology": {
+    "disconnectedCount": 47,
+    "disconnected": [
+      {
+        "id": "PARENT-0000",
+        "displayName": "하남윤",
+        "componentCellCounts": [
+          271,
+          133
+        ]
+      },
+      {
+        "id": "PARENT-0005",
+        "displayName": "좌풍익",
+        "componentCellCounts": [
+          765,
+          3
+        ]
+      },
+      {
+        "id": "PARENT-0010",
+        "displayName": "패국",
+        "componentCellCounts": [
+          716,
+          17
+        ]
+      },
+      {
+        "id": "PARENT-0012",
+        "displayName": "노국",
+        "componentCellCounts": [
+          101,
+          19
+        ]
+      },
+      {
+        "id": "PARENT-0013",
+        "displayName": "위군",
+        "componentCellCounts": [
+          658,
+          14
+        ]
+      },
+      {
+        "id": "PARENT-0014",
+        "displayName": "거록군",
+        "componentCellCounts": [
+          165,
+          128
+        ]
+      },
+      {
+        "id": "PARENT-0019",
+        "displayName": "청하국",
+        "componentCellCounts": [
+          204,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0022",
+        "displayName": "진류군",
+        "componentCellCounts": [
+          425,
+          19
+        ]
+      },
+      {
+        "id": "PARENT-0023",
+        "displayName": "동군",
+        "componentCellCounts": [
+          250,
+          170
+        ]
+      },
+      {
+        "id": "PARENT-0027",
+        "displayName": "제북국",
+        "componentCellCounts": [
+          100,
+          35,
+          26
+        ]
+      },
+      {
+        "id": "PARENT-0028",
+        "displayName": "산양군",
+        "componentCellCounts": [
+          193,
+          33
+        ]
+      },
+      {
+        "id": "PARENT-0031",
+        "displayName": "낭사국",
+        "componentCellCounts": [
+          602,
+          3
+        ]
+      },
+      {
+        "id": "PARENT-0033",
+        "displayName": "광릉군",
+        "componentCellCounts": [
+          1492,
+          68
+        ]
+      },
+      {
+        "id": "PARENT-0034",
+        "displayName": "하비국",
+        "componentCellCounts": [
+          390,
+          231,
+          81,
+          9
+        ]
+      },
+      {
+        "id": "PARENT-0036",
+        "displayName": "평원군",
+        "componentCellCounts": [
+          399,
+          127,
+          36
+        ]
+      },
+      {
+        "id": "PARENT-0038",
+        "displayName": "북해국",
+        "componentCellCounts": [
+          606,
+          105,
+          100,
+          13
+        ]
+      },
+      {
+        "id": "PARENT-0039",
+        "displayName": "동래군",
+        "componentCellCounts": [
+          754,
+          74
+        ]
+      },
+      {
+        "id": "PARENT-0042",
+        "displayName": "남군",
+        "componentCellCounts": [
+          1597,
+          336,
+          5
+        ]
+      },
+      {
+        "id": "PARENT-0043",
+        "displayName": "강하군",
+        "componentCellCounts": [
+          2070,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0045",
+        "displayName": "계양군",
+        "componentCellCounts": [
+          1669,
+          48
+        ]
+      },
+      {
+        "id": "PARENT-0048",
+        "displayName": "구강군",
+        "componentCellCounts": [
+          868,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0050",
+        "displayName": "여강군",
+        "componentCellCounts": [
+          1526,
+          38
+        ]
+      },
+      {
+        "id": "PARENT-0051",
+        "displayName": "회계군",
+        "componentCellCounts": [
+          3234,
+          30,
+          27,
+          7
+        ]
+      },
+      {
+        "id": "PARENT-0052",
+        "displayName": "오군",
+        "componentCellCounts": [
+          1346,
+          39
+        ]
+      },
+      {
+        "id": "PARENT-0053",
+        "displayName": "예장군",
+        "componentCellCounts": [
+          6980,
+          72,
+          28,
+          9,
+          3
+        ]
+      },
+      {
+        "id": "PARENT-0055",
+        "displayName": "파군",
+        "componentCellCounts": [
+          3551,
+          81
+        ]
+      },
+      {
+        "id": "PARENT-0071",
+        "displayName": "북지군",
+        "componentCellCounts": [
+          2736,
+          633,
+          43
+        ]
+      },
+      {
+        "id": "PARENT-0078",
+        "displayName": "상당군",
+        "componentCellCounts": [
+          750,
+          67,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0079",
+        "displayName": "태원군",
+        "componentCellCounts": [
+          763,
+          104
+        ]
+      },
+      {
+        "id": "PARENT-0101",
+        "displayName": "합포군",
+        "componentCellCounts": [
+          1199,
+          1102,
+          67
+        ]
+      },
+      {
+        "id": "PARENT-0102",
+        "displayName": "교지군",
+        "componentCellCounts": [
+          1801,
+          4,
+          2
+        ]
+      },
+      {
+        "id": "PARENT-0105",
+        "displayName": "동완군",
+        "componentCellCounts": [
+          47,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0108",
+        "displayName": "우산국",
+        "componentCellCounts": [
+          14,
+          9
+        ]
+      },
+      {
+        "id": "PARENT-0116",
+        "displayName": "고자미동국",
+        "componentCellCounts": [
+          222,
+          22,
+          2,
+          1,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0123",
+        "displayName": "이주",
+        "componentCellCounts": [
+          1311,
+          15
+        ]
+      },
+      {
+        "id": "PARENT-0130",
+        "displayName": "대방군",
+        "componentCellCounts": [
+          589,
+          7
+        ]
+      },
+      {
+        "id": "PARENT-0133",
+        "displayName": "여릉군",
+        "componentCellCounts": [
+          530,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0147",
+        "displayName": "강양군",
+        "componentCellCounts": [
+          304,
+          260
+        ]
+      },
+      {
+        "id": "PARENT-0149",
+        "displayName": "유구",
+        "componentCellCounts": [
+          71,
+          42,
+          19,
+          12,
+          11
+        ]
+      },
+      {
+        "id": "PARENT-0153",
+        "displayName": "구야국",
+        "componentCellCounts": [
+          110,
+          42
+        ]
+      },
+      {
+        "id": "PARENT-0156",
+        "displayName": "목지국",
+        "componentCellCounts": [
+          371,
+          9
+        ]
+      },
+      {
+        "id": "PARENT-0162",
+        "displayName": "서평군",
+        "componentCellCounts": [
+          88,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0164",
+        "displayName": "벽비리국",
+        "componentCellCounts": [
+          550,
+          14
+        ]
+      },
+      {
+        "id": "PARENT-0165",
+        "displayName": "야마일국",
+        "componentCellCounts": [
+          1479,
+          611,
+          480,
+          41,
+          28,
+          20,
+          19,
+          15,
+          9,
+          8,
+          7,
+          6,
+          4,
+          1,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0167",
+        "displayName": "장락군",
+        "componentCellCounts": [
+          26,
+          11
+        ]
+      },
+      {
+        "id": "PARENT-0168",
+        "displayName": "양안군",
+        "componentCellCounts": [
+          15,
+          1
+        ]
+      },
+      {
+        "id": "PARENT-0169",
+        "displayName": "고량군",
+        "componentCellCounts": [
+          941,
+          16
+        ]
+      }
+    ],
+    "fullyEnclosedCount": 15,
+    "fullyEnclosed": [
+      {
+        "id": "PARENT-0005",
+        "displayName": "좌풍익",
+        "componentCellCount": 3,
+        "surroundingIds": [
+          "PARENT-0004"
+        ],
+        "surroundingDisplayNames": [
+          "경조윤"
+        ]
+      },
+      {
+        "id": "PARENT-0045",
+        "displayName": "계양군",
+        "componentCellCount": 48,
+        "surroundingIds": [
+          "PARENT-0047"
+        ],
+        "surroundingDisplayNames": [
+          "장사군"
+        ]
+      },
+      {
+        "id": "PARENT-0050",
+        "displayName": "여강군",
+        "componentCellCount": 38,
+        "surroundingIds": [
+          "PARENT-0048"
+        ],
+        "surroundingDisplayNames": [
+          "구강군"
+        ]
+      },
+      {
+        "id": "PARENT-0078",
+        "displayName": "상당군",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "PARENT-0002"
+        ],
+        "surroundingDisplayNames": [
+          "하동군"
+        ]
+      },
+      {
+        "id": "PARENT-0101",
+        "displayName": "합포군",
+        "componentCellCount": 67,
+        "surroundingIds": [
+          "PARENT-0169"
+        ],
+        "surroundingDisplayNames": [
+          "고량군"
+        ]
+      },
+      {
+        "id": "PARENT-0105",
+        "displayName": "동완군",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "PARENT-0031"
+        ],
+        "surroundingDisplayNames": [
+          "낭사국"
+        ]
+      },
+      {
+        "id": "PARENT-0126",
+        "displayName": "의도군",
+        "componentCellCount": 111,
+        "surroundingIds": [
+          "PARENT-0042"
+        ],
+        "surroundingDisplayNames": [
+          "남군"
+        ]
+      },
+      {
+        "id": "PARENT-0127",
+        "displayName": "산월",
+        "componentCellCount": 76,
+        "surroundingIds": [
+          "PARENT-0049"
+        ],
+        "surroundingDisplayNames": [
+          "단양군"
+        ]
+      },
+      {
+        "id": "PARENT-0133",
+        "displayName": "여릉군",
+        "componentCellCount": 530,
+        "surroundingIds": [
+          "PARENT-0053"
+        ],
+        "surroundingDisplayNames": [
+          "예장군"
+        ]
+      },
+      {
+        "id": "PARENT-0133",
+        "displayName": "여릉군",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "PARENT-0053"
+        ],
+        "surroundingDisplayNames": [
+          "예장군"
+        ]
+      },
+      {
+        "id": "PARENT-0144",
+        "displayName": "재동군",
+        "componentCellCount": 46,
+        "surroundingIds": [
+          "PARENT-0056"
+        ],
+        "surroundingDisplayNames": [
+          "광한군"
+        ]
+      },
+      {
+        "id": "PARENT-0148",
+        "displayName": "문산군",
+        "componentCellCount": 8,
+        "surroundingIds": [
+          "PARENT-0057"
+        ],
+        "surroundingDisplayNames": [
+          "촉군"
+        ]
+      },
+      {
+        "id": "PARENT-0158",
+        "displayName": "장릉군",
+        "componentCellCount": 20,
+        "surroundingIds": [
+          "PARENT-0041"
+        ],
+        "surroundingDisplayNames": [
+          "남양군"
+        ]
+      },
+      {
+        "id": "PARENT-0167",
+        "displayName": "장락군",
+        "componentCellCount": 11,
+        "surroundingIds": [
+          "PARENT-0017"
+        ],
+        "surroundingDisplayNames": [
+          "안평국"
+        ]
+      },
+      {
+        "id": "PARENT-0168",
+        "displayName": "양안군",
+        "componentCellCount": 1,
+        "surroundingIds": [
+          "PARENT-0008"
+        ],
+        "surroundingDisplayNames": [
+          "여남군"
+        ]
+      }
+    ]
+  },
+  "singleJurisdictionCommanderyCount": 73,
+  "singleJurisdictionCommanderies": [
+    {
+      "id": "PARENT-0063",
+      "displayName": "광한속국",
+      "nameCh": "廣漢屬國",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "96006",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 251,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79239-n79243"
+      },
+      "sourceEnumeratedUnitCount": 3,
+      "sourceUnitNames": [
+        "阴平道",
+        "甸氐道",
+        "刚氐道"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "阴平道",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "甸氐道",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "刚氐道",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 3
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "阴平道",
+        "甸氐道",
+        "刚氐道"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0065",
+      "displayName": "건위속국",
+      "nameCh": "犍為屬國",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "45453",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 269,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79250-n79255"
+      },
+      "sourceEnumeratedUnitCount": 2,
+      "sourceUnitNames": [
+        "朱提",
+        "汉阳"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "朱提",
+          "ordinal": 1,
+          "joinStatus": "RESOLVED_POINT",
+          "physicalPlaceId": "chgis:v6:cnty:45453",
+          "currentJurisdictionId": "45453",
+          "currentCommanderyId": "PARENT-0065"
+        },
+        {
+          "sourceName": "汉阳",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 1,
+        "RESOLVED_POINT": 1
+      },
+      "sourceResolvedPhysicalPlaceIds": [
+        "chgis:v6:cnty:45453"
+      ],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "汉阳"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0072",
+      "displayName": "무위군",
+      "nameCh": "武威郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "70609",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 400,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79322-n79337"
+      },
+      "sourceEnumeratedUnitCount": 14,
+      "sourceUnitNames": [
+        "姑臧",
+        "张掖",
+        "武威",
+        "休屠",
+        "揟次",
+        "鸾鸟",
+        "朴[B459]",
+        "媪围",
+        "宣威",
+        "仓松",
+        "鹯阴",
+        "租厉",
+        "显美",
+        "左骑"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "姑臧",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "张掖",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "武威",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "休屠",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "揟次",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "鸾鸟",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "朴[B459]",
+          "ordinal": 7,
+          "joinStatus": "SOURCE_PLACEHOLDER"
+        },
+        {
+          "sourceName": "媪围",
+          "ordinal": 8,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "宣威",
+          "ordinal": 9,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "仓松",
+          "ordinal": 10,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "鹯阴",
+          "ordinal": 11,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "租厉",
+          "ordinal": 12,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "显美",
+          "ordinal": 13,
+          "joinStatus": "RESOLVED_POINT",
+          "physicalPlaceId": "chgis:v6:cnty:70609",
+          "currentJurisdictionId": "70609",
+          "currentCommanderyId": "PARENT-0072"
+        },
+        {
+          "sourceName": "左骑",
+          "ordinal": 14,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 12,
+        "RESOLVED_POINT": 1,
+        "SOURCE_PLACEHOLDER": 1
+      },
+      "sourceResolvedPhysicalPlaceIds": [
+        "chgis:v6:cnty:70609"
+      ],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "姑臧",
+        "张掖",
+        "武威",
+        "休屠",
+        "揟次",
+        "鸾鸟",
+        "媪围",
+        "宣威",
+        "仓松",
+        "鹯阴",
+        "租厉",
+        "左骑"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0076",
+      "displayName": "장액속국",
+      "nameCh": "張掖屬國",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0076-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 482,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79370-n79377"
+      },
+      "sourceEnumeratedUnitCount": 5,
+      "sourceUnitNames": [
+        "候官",
+        "左骑",
+        "千人",
+        "司马官",
+        "千人官"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "候官",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "左骑",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "千人",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "司马官",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "千人官",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 5
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "候官",
+        "左骑",
+        "千人",
+        "司马官",
+        "千人官"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0077",
+      "displayName": "장액거연속국",
+      "nameCh": "張掖居延屬國",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "70500",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 494,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79378-n79382"
+      },
+      "sourceEnumeratedUnitCount": 1,
+      "sourceUnitNames": [
+        "居延"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "居延",
+          "ordinal": 1,
+          "joinStatus": "RESOLVED_POINT",
+          "physicalPlaceId": "chgis:v6:cnty:70500",
+          "currentJurisdictionId": "70500",
+          "currentCommanderyId": "PARENT-0077"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "RESOLVED_POINT": 1
+      },
+      "sourceResolvedPhysicalPlaceIds": [
+        "chgis:v6:cnty:70500"
+      ],
+      "sourceUnitsWithoutCoordinateCandidate": [],
+      "requiresMissingCountyReview": false
+    },
+    {
+      "id": "PARENT-0080",
+      "displayName": "상군",
+      "nameCh": "上郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "70418",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 563,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79407-n79420"
+      },
+      "sourceEnumeratedUnitCount": 10,
+      "sourceUnitNames": [
+        "肤施",
+        "白土",
+        "漆垣",
+        "奢延",
+        "雕阴",
+        "桢林",
+        "定阳",
+        "高奴",
+        "龟兹属国",
+        "候官"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "肤施",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "白土",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "漆垣",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "奢延",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "雕阴",
+          "ordinal": 5,
+          "joinStatus": "RESOLVED_POINT",
+          "physicalPlaceId": "chgis:v6:cnty:70418",
+          "currentJurisdictionId": "70418",
+          "currentCommanderyId": "PARENT-0080"
+        },
+        {
+          "sourceName": "桢林",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "定阳",
+          "ordinal": 7,
+          "joinStatus": "RESOLVED_POINT",
+          "physicalPlaceId": "chgis:v6:cnty:40624",
+          "currentJurisdictionId": "40624",
+          "currentCommanderyId": "PARENT-0051"
+        },
+        {
+          "sourceName": "高奴",
+          "ordinal": 8,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "龟兹属国",
+          "ordinal": 9,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "候官",
+          "ordinal": 10,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 8,
+        "RESOLVED_POINT": 2
+      },
+      "sourceResolvedPhysicalPlaceIds": [
+        "chgis:v6:cnty:40624",
+        "chgis:v6:cnty:70418"
+      ],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "肤施",
+        "白土",
+        "漆垣",
+        "奢延",
+        "桢林",
+        "高奴",
+        "龟兹属国",
+        "候官"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0081",
+      "displayName": "서하군",
+      "nameCh": "西河郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0081-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 585,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79421-n79436"
+      },
+      "sourceEnumeratedUnitCount": 13,
+      "sourceUnitNames": [
+        "离石",
+        "平定",
+        "美稷",
+        "乐街",
+        "中阳",
+        "皋狼",
+        "平周",
+        "平陆",
+        "益兰",
+        "圜阴",
+        "蔺",
+        "圜阳",
+        "广衍"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "离石",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "平定",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "美稷",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "乐街",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "中阳",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "皋狼",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "平周",
+          "ordinal": 7,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "平陆",
+          "ordinal": 8,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "益兰",
+          "ordinal": 9,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "圜阴",
+          "ordinal": 10,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "蔺",
+          "ordinal": 11,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "圜阳",
+          "ordinal": 12,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "广衍",
+          "ordinal": 13,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 13
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "离石",
+        "平定",
+        "美稷",
+        "乐街",
+        "中阳",
+        "皋狼",
+        "平周",
+        "平陆",
+        "益兰",
+        "圜阴",
+        "蔺",
+        "圜阳",
+        "广衍"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0082",
+      "displayName": "오원군",
+      "nameCh": "五原郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "95698",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 613,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79437-n79450"
+      },
+      "sourceEnumeratedUnitCount": 10,
+      "sourceUnitNames": [
+        "九原",
+        "五原",
+        "临沃",
+        "文国",
+        "河阴",
+        "武都",
+        "宜梁",
+        "曼柏",
+        "成宜",
+        "西安阳"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "九原",
+          "ordinal": 1,
+          "joinStatus": "RESOLVED_POINT",
+          "physicalPlaceId": "chgis:v6:cnty:95698",
+          "currentJurisdictionId": "95698",
+          "currentCommanderyId": "PARENT-0082"
+        },
+        {
+          "sourceName": "五原",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "临沃",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "文国",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "河阴",
+          "ordinal": 5,
+          "joinStatus": "RESOLVED_POINT",
+          "physicalPlaceId": "chgis:v6:cnty:82880",
+          "currentJurisdictionId": "82880",
+          "currentCommanderyId": "PARENT-0000"
+        },
+        {
+          "sourceName": "武都",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "宜梁",
+          "ordinal": 7,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "曼柏",
+          "ordinal": 8,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "成宜",
+          "ordinal": 9,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "西安阳",
+          "ordinal": 10,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 8,
+        "RESOLVED_POINT": 2
+      },
+      "sourceResolvedPhysicalPlaceIds": [
+        "chgis:v6:cnty:82880",
+        "chgis:v6:cnty:95698"
+      ],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "五原",
+        "临沃",
+        "文国",
+        "武都",
+        "宜梁",
+        "曼柏",
+        "成宜",
+        "西安阳"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0084",
+      "displayName": "정양군",
+      "nameCh": "定襄郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0084-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 659,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79466-n79470"
+      },
+      "sourceEnumeratedUnitCount": 5,
+      "sourceUnitNames": [
+        "善无",
+        "桐过",
+        "武成",
+        "骆",
+        "中陵"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "善无",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "桐过",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "武成",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "骆",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "中陵",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 5
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "善无",
+        "桐过",
+        "武成",
+        "骆",
+        "中陵"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0086",
+      "displayName": "삭방군",
+      "nameCh": "朔方郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0086-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 701,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79486-n79497"
+      },
+      "sourceEnumeratedUnitCount": 6,
+      "sourceUnitNames": [
+        "临戎",
+        "三封",
+        "朔方",
+        "沃野",
+        "广牧",
+        "大城"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "临戎",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "三封",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "朔方",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "沃野",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "广牧",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "大城",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 6
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "临戎",
+        "三封",
+        "朔方",
+        "沃野",
+        "广牧",
+        "大城"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0088",
+      "displayName": "광양군",
+      "nameCh": "廣陽郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "87407",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 734,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79506-n79510"
+      },
+      "sourceEnumeratedUnitCount": 5,
+      "sourceUnitNames": [
+        "蓟",
+        "广阳",
+        "昌平",
+        "军都",
+        "安次"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "蓟",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "广阳",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "昌平",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "军都",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "安次",
+          "ordinal": 5,
+          "joinStatus": "RESOLVED_POINT",
+          "physicalPlaceId": "chgis:v6:cnty:87407",
+          "currentJurisdictionId": "87407",
+          "currentCommanderyId": "PARENT-0088"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 4,
+        "RESOLVED_POINT": 1
+      },
+      "sourceResolvedPhysicalPlaceIds": [
+        "chgis:v6:cnty:87407"
+      ],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "蓟",
+        "广阳",
+        "昌平",
+        "军都"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0091",
+      "displayName": "어양군",
+      "nameCh": "漁陽郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "87436",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 788,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79534-n79542"
+      },
+      "sourceEnumeratedUnitCount": 9,
+      "sourceUnitNames": [
+        "渔阳",
+        "狐奴",
+        "潞",
+        "雍奴",
+        "泉州",
+        "平谷",
+        "安乐",
+        "傂奚",
+        "犷平"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "渔阳",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "狐奴",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "潞",
+          "ordinal": 3,
+          "joinStatus": "AMBIGUOUS_POINT"
+        },
+        {
+          "sourceName": "雍奴",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "泉州",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "平谷",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "安乐",
+          "ordinal": 7,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "傂奚",
+          "ordinal": 8,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "犷平",
+          "ordinal": 9,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "AMBIGUOUS_POINT": 1,
+        "NO_COORDINATE_CANDIDATE": 8
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "渔阳",
+        "狐奴",
+        "雍奴",
+        "泉州",
+        "平谷",
+        "安乐",
+        "傂奚",
+        "犷平"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0094",
+      "displayName": "요동군",
+      "nameCh": "遼東郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0094-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 830,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79556-n79568"
+      },
+      "sourceEnumeratedUnitCount": 11,
+      "sourceUnitNames": [
+        "襄平",
+        "新昌",
+        "无虑",
+        "望平",
+        "候城",
+        "安市",
+        "平郭",
+        "西安平",
+        "汶",
+        "番汗",
+        "沓氏"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "襄平",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "新昌",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "无虑",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "望平",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "候城",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "安市",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "平郭",
+          "ordinal": 7,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "西安平",
+          "ordinal": 8,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "汶",
+          "ordinal": 9,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "番汗",
+          "ordinal": 10,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "沓氏",
+          "ordinal": 11,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 11
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "襄平",
+        "新昌",
+        "无虑",
+        "望平",
+        "候城",
+        "安市",
+        "平郭",
+        "西安平",
+        "汶",
+        "番汗",
+        "沓氏"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0095",
+      "displayName": "현도군",
+      "nameCh": "玄菟郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0095-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 854,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79569-n79575"
+      },
+      "sourceEnumeratedUnitCount": 6,
+      "sourceUnitNames": [
+        "高句骊",
+        "西盖马",
+        "上殷台",
+        "高显",
+        "候城",
+        "辽阳"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "高句骊",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "西盖马",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "上殷台",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "高显",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "候城",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "辽阳",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 6
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "高句骊",
+        "西盖马",
+        "上殷台",
+        "高显",
+        "候城",
+        "辽阳"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0096",
+      "displayName": "낙랑군",
+      "nameCh": "樂浪郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0096-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 868,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79576-n79597"
+      },
+      "sourceEnumeratedUnitCount": 18,
+      "sourceUnitNames": [
+        "朝鲜",
+        "𧦦邯",
+        "浿水",
+        "含资",
+        "占蝉",
+        "遂城",
+        "增地",
+        "带方",
+        "驷望",
+        "海冥",
+        "列口",
+        "长岑",
+        "屯有",
+        "昭明",
+        "镂方",
+        "提奚",
+        "浑弥",
+        "乐都"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "朝鲜",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "𧦦邯",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "浿水",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "含资",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "占蝉",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "遂城",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "增地",
+          "ordinal": 7,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "带方",
+          "ordinal": 8,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "驷望",
+          "ordinal": 9,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "海冥",
+          "ordinal": 10,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "列口",
+          "ordinal": 11,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "长岑",
+          "ordinal": 12,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "屯有",
+          "ordinal": 13,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "昭明",
+          "ordinal": 14,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "镂方",
+          "ordinal": 15,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "提奚",
+          "ordinal": 16,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "浑弥",
+          "ordinal": 17,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "乐都",
+          "ordinal": 18,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 18
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "朝鲜",
+        "𧦦邯",
+        "浿水",
+        "含资",
+        "占蝉",
+        "遂城",
+        "增地",
+        "带方",
+        "驷望",
+        "海冥",
+        "列口",
+        "长岑",
+        "屯有",
+        "昭明",
+        "镂方",
+        "提奚",
+        "浑弥",
+        "乐都"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0097",
+      "displayName": "요동속국",
+      "nameCh": "遼東屬國",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0097-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 906,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79598-n79602"
+      },
+      "sourceEnumeratedUnitCount": 6,
+      "sourceUnitNames": [
+        "昌辽",
+        "宾徒",
+        "徒河",
+        "无虑",
+        "险渎",
+        "房"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "昌辽",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "宾徒",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "徒河",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "无虑",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "险渎",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "房",
+          "ordinal": 6,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 6
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "昌辽",
+        "宾徒",
+        "徒河",
+        "无虑",
+        "险渎",
+        "房"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0102",
+      "displayName": "교지군",
+      "nameCh": "交趾郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0102-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 999,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79651-n79665"
+      },
+      "sourceEnumeratedUnitCount": 12,
+      "sourceUnitNames": [
+        "龙编",
+        "羸𨻻",
+        "安定",
+        "苟漏",
+        "麋泠",
+        "曲阳",
+        "北带",
+        "稽徐",
+        "西于",
+        "朱[B42B]",
+        "封谿",
+        "望海"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "龙编",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "羸𨻻",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "安定",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "苟漏",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "麋泠",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "曲阳",
+          "ordinal": 6,
+          "joinStatus": "AMBIGUOUS_POINT"
+        },
+        {
+          "sourceName": "北带",
+          "ordinal": 7,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "稽徐",
+          "ordinal": 8,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "西于",
+          "ordinal": 9,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "朱[B42B]",
+          "ordinal": 10,
+          "joinStatus": "SOURCE_PLACEHOLDER"
+        },
+        {
+          "sourceName": "封谿",
+          "ordinal": 11,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "望海",
+          "ordinal": 12,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "AMBIGUOUS_POINT": 1,
+        "NO_COORDINATE_CANDIDATE": 10,
+        "SOURCE_PLACEHOLDER": 1
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "龙编",
+        "羸𨻻",
+        "安定",
+        "苟漏",
+        "麋泠",
+        "北带",
+        "稽徐",
+        "西于",
+        "封谿",
+        "望海"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0103",
+      "displayName": "구진군",
+      "nameCh": "九真郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0103-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 1025,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79666-n79673"
+      },
+      "sourceEnumeratedUnitCount": 5,
+      "sourceUnitNames": [
+        "胥浦",
+        "居风",
+        "咸懽",
+        "无功",
+        "无编"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "胥浦",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "居风",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "咸懽",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "无功",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "无编",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 5
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "胥浦",
+        "居风",
+        "咸懽",
+        "无功",
+        "无编"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0104",
+      "displayName": "일남군",
+      "nameCh": "日南郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0104-SEAT",
+      "sourceGroupMatch": true,
+      "sourceVolume": 113,
+      "sourceCitation": {
+        "corpusPath": "data/corpus/hhs-113.txt",
+        "line": 1037,
+        "sourceUrl": "https://zh.wikisource.org/wiki/後漢書/卷113",
+        "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
+      },
+      "traditionalTextCitation": {
+        "source": "Chinese Text Project",
+        "url": "https://ctext.org/hou-han-shu/jun-guo-wu/zh",
+        "localWitness": "data/corpus/ctext/junguozhi/wu.html",
+        "snapshotSha256": "10578772fa84c99d2737375b37ac10d1503181dcfd142e11c275e0ce720886fa",
+        "locator": "n79674-n79681"
+      },
+      "sourceEnumeratedUnitCount": 5,
+      "sourceUnitNames": [
+        "西卷",
+        "朱吾",
+        "卢容",
+        "象林",
+        "比景"
+      ],
+      "sourceUnits": [
+        {
+          "sourceName": "西卷",
+          "ordinal": 1,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "朱吾",
+          "ordinal": 2,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "卢容",
+          "ordinal": 3,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "象林",
+          "ordinal": 4,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        },
+        {
+          "sourceName": "比景",
+          "ordinal": 5,
+          "joinStatus": "NO_COORDINATE_CANDIDATE"
+        }
+      ],
+      "sourceBindingStatusCounts": {
+        "NO_COORDINATE_CANDIDATE": 5
+      },
+      "sourceResolvedPhysicalPlaceIds": [],
+      "sourceUnitsWithoutCoordinateCandidate": [
+        "西卷",
+        "朱吾",
+        "卢容",
+        "象林",
+        "比景"
+      ],
+      "requiresMissingCountyReview": true
+    },
+    {
+      "id": "PARENT-0105",
+      "displayName": "동완군",
+      "nameCh": "東莞郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "85634",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0106",
+      "displayName": "낙평군",
+      "nameCh": "樂平郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "95375",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0107",
+      "displayName": "낙릉군",
+      "nameCh": "樂陵郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0107-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0108",
+      "displayName": "우산국",
+      "nameCh": "于山國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X035",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0109",
+      "displayName": "백제국",
+      "nameCh": "伯濟國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X042",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0110",
+      "displayName": "이성군",
+      "nameCh": "利城郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "42901",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0112",
+      "displayName": "졸본",
+      "nameCh": "卒本",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X029",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0113",
+      "displayName": "남향군",
+      "nameCh": "南鄉郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0113-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0114",
+      "displayName": "흉노",
+      "nameCh": "南匈奴",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X064",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0115",
+      "displayName": "고령가야",
+      "nameCh": "古寧伽耶",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X049",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0116",
+      "displayName": "고자미동국",
+      "nameCh": "古資彌凍國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X046",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0117",
+      "displayName": "소문국",
+      "nameCh": "召文國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X034",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0118",
+      "displayName": "남만",
+      "nameCh": "哀牢",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X060",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0119",
+      "displayName": "고릉군",
+      "nameCh": "固陵郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "44482",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0120",
+      "displayName": "국내성",
+      "nameCh": "國內城",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X028",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0121",
+      "displayName": "대가야",
+      "nameCh": "大伽耶",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X047",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0122",
+      "displayName": "부여",
+      "nameCh": "夫餘",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X036",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0123",
+      "displayName": "이주",
+      "nameCh": "夷洲",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X056",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0124",
+      "displayName": "안야국",
+      "nameCh": "安邪國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X031",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0125",
+      "displayName": "탕거군",
+      "nameCh": "宕渠郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "200197",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0126",
+      "displayName": "의도군",
+      "nameCh": "宜都郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "45796",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0127",
+      "displayName": "산월",
+      "nameCh": "山越",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X061",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0128",
+      "displayName": "주호",
+      "nameCh": "州胡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X043",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0130",
+      "displayName": "대방군",
+      "nameCh": "帶方郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0130-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0131",
+      "displayName": "광평군",
+      "nameCh": "廣平郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "87159",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0132",
+      "displayName": "광위군",
+      "nameCh": "廣魏郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0132-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0134",
+      "displayName": "익양군",
+      "nameCh": "弋陽郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "82553",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0135",
+      "displayName": "실직국",
+      "nameCh": "悉直國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X032",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0136",
+      "displayName": "압독국",
+      "nameCh": "押督國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X033",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0137",
+      "displayName": "사로국",
+      "nameCh": "斯盧國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X044",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0138",
+      "displayName": "신흥군",
+      "nameCh": "新興郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0138-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0140",
+      "displayName": "신평군",
+      "nameCh": "新平郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0140-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0142",
+      "displayName": "성산가야",
+      "nameCh": "星山伽耶",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X048",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0143",
+      "displayName": "동옥저",
+      "nameCh": "東沃沮",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X037",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0144",
+      "displayName": "재동군",
+      "nameCh": "梓潼郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "96107",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0145",
+      "displayName": "비릉전농교위",
+      "nameCh": "毗陵典農校尉",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0145-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0148",
+      "displayName": "문산군",
+      "nameCh": "汶山郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0148-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0149",
+      "displayName": "유구",
+      "nameCh": "流求",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X057",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0150",
+      "displayName": "부릉군",
+      "nameCh": "涪陵郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "200176",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0151",
+      "displayName": "예",
+      "nameCh": "濊",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X038",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0152",
+      "displayName": "오환",
+      "nameCh": "烏桓",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X062",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0154",
+      "displayName": "감릉군",
+      "nameCh": "甘陵郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0154-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0155",
+      "displayName": "저",
+      "nameCh": "白馬氐",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X059",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0156",
+      "displayName": "목지국",
+      "nameCh": "目支國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X040",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0157",
+      "displayName": "장무군",
+      "nameCh": "章武郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0157-SEAT",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0158",
+      "displayName": "장릉군",
+      "nameCh": "章陵郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "45713",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0159",
+      "displayName": "기춘군",
+      "nameCh": "蘄春郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "43542",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0161",
+      "displayName": "서성군",
+      "nameCh": "西城郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "200069",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0162",
+      "displayName": "서평군",
+      "nameCh": "西平郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "70620",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0163",
+      "displayName": "강",
+      "nameCh": "西羌",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "X058",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0164",
+      "displayName": "벽비리국",
+      "nameCh": "辟卑離國",
+      "kind": "KINGDOM",
+      "jurisdictionId": "X041",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0167",
+      "displayName": "장락군",
+      "nameCh": "長樂郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "87273",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0168",
+      "displayName": "양안군",
+      "nameCh": "陽安郡",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "83166",
+      "sourceGroupMatch": false
+    },
+    {
+      "id": "PARENT-0171",
+      "displayName": "구자속국",
+      "nameCh": "龜茲屬國",
+      "kind": "COMMANDERY",
+      "jurisdictionId": "JURISDICTION-PARENT-0171-SEAT",
+      "sourceGroupMatch": false
+    }
+  ],
+  "ethnicAdministrativeCoexistence": [
+    {
+      "ethnicRegionId": "X060",
+      "ethnicNameCh": "哀牢",
+      "administrativeCountyId": "80004",
+      "administrativeCountyNameCh": "哀牢县",
+      "decision": "DISTINCT_AXES_NO_AUTOMATIC_REPLACEMENT"
+    }
+  ],
+  "inputs": {
+    "hanTiles": {
+      "sha256": "2b11c8824650a809377187efa16b3d89e28f272262cf247e86fe13c03454f9c1"
+    },
+    "administrativeUnits": {
+      "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
+    },
+    "administrativePlaceBindings": {
+      "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
+    }
+  }
+}
