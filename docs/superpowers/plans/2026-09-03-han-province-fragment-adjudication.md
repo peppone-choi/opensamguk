@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.11+, `unittest`, NumPy, existing `tools.map.build_terrain_grid` adjacency derivation.
 
-**Spec:** `/Users/apple/.codex/attachments/4ab6c615-4525-4e28-b283-e924858b7ea8/goal-objective.md`
+**Adjudication criteria:** Repair only exact, seatless and anchor-free secondary components that are fully enclosed by one target province, touch no negative terrain, and preserve the eight-cell minimum. Defer every maritime, lacustrine, multi-neighbor, anchor-bearing, or historically unsupported case with explicit evidence rather than inferring a fill.
 
 ## Global Constraints
 

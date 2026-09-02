@@ -345,8 +345,6 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
                 str(TILES),
                 "--ledger",
                 str(LEDGER),
-                "--output",
-                str(TILES),
                 "--check",
             ],
             cwd=ROOT,
