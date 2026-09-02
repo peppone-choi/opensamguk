@@ -2,6 +2,9 @@ package opensamguk.gameapi.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import opensamguk.gameapi.read.CommanderyControlProjection
+import opensamguk.gameapi.read.JurisdictionOwnershipProjection
+import opensamguk.gameapi.read.ProvinceOccupancyProjection
 
 /**
  * World-map snapshot for the gateway lobby `MapPreview` (P7 read API).
@@ -29,6 +32,12 @@ data class MapPreviewResponse(
     val height: Int,
     val cities: List<MapPreviewCity>,
     val nations: List<MapPreviewNation>,
+    /** 시나리오 정본의 원자 공간 프로빈스 직접 점유. 배열 인덱스로 도시 소유권을 재구성하지 않는다. */
+    val provinceOccupancy: List<ProvinceOccupancyProjection> = emptyList(),
+    /** 현치 소유자를 현 구성 프로빈스 전체에 투영할 현의 정치 소유권. */
+    val jurisdictionOwnership: List<JurisdictionOwnershipProjection> = emptyList(),
+    /** 현 소유권과 별도로 계산된 군국 통제권. */
+    val commanderyControl: List<CommanderyControlProjection> = emptyList(),
     /**
      * 시나리오 개시 연도 — legacy 맵 페이로드 필드(func_map.php:68,158 `startyear`).
      * 연월 타이틀 초반 3년 색상 게이트(P1-060)의 소비 원천. world config의 `startyear`

@@ -6,6 +6,8 @@ import opensamguk.gameapi.dto.MapPreviewNation
 import opensamguk.gameapi.dto.MapPreviewResponse
 import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.LiveCityOwnership
+import opensamguk.gameapi.read.MapAdministrativeOwnership
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -42,6 +44,7 @@ class MapPreviewController(
     private val nationReadRepository: NationReadRepository,
     private val worldStateReadRepository: WorldStateReadRepository,
     private val nationEnvReadRepository: NationEnvReadRepository,
+    private val mapAdministrativeOwnership: MapAdministrativeOwnership,
     private val objectMapper: ObjectMapper,
 ) {
 
@@ -118,6 +121,23 @@ class MapPreviewController(
             }
             .sortedBy { it.id }
 
+        val administrativeOwnership = if (mapCode == "han" || mapCode == "han-world-v2") {
+            mapAdministrativeOwnership.project(
+                scenarioCode = world.scenarioCode,
+                liveCities = cities.mapNotNull { city ->
+                    city.provinceId?.let { provinceIndex ->
+                        LiveCityOwnership(
+                            cityId = city.id,
+                            provinceIndex = provinceIndex,
+                            nationId = city.nationId,
+                        )
+                    }
+                },
+            )
+        } else {
+            null
+        }
+
         val nations = allNations
             .filter { it.id != 0 } // neutral (nationId 0) has no entry
             .map {
@@ -150,6 +170,9 @@ class MapPreviewController(
             height = mapData.height,
             cities = cities,
             nations = nations,
+            provinceOccupancy = administrativeOwnership?.provinceOccupancy.orEmpty(),
+            jurisdictionOwnership = administrativeOwnership?.jurisdictionOwnership.orEmpty(),
+            commanderyControl = administrativeOwnership?.commanderyControl.orEmpty(),
             startYear = startYear,
         )
     }
