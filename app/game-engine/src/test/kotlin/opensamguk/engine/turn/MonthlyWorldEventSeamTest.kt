@@ -9,10 +9,13 @@ import opensamguk.logic.event.EventTarget
 import opensamguk.logic.event.WorldActions
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.ProcessIncomeContext
+import opensamguk.logic.world.SpatialSupplyNetwork
+import opensamguk.logic.world.UpdateCitySupplyContext
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.assertSame
 
 /**
  * 월간 world-event 디스패치 seam — prod 턴 동결(매 월경계
@@ -120,6 +123,26 @@ class MonthlyWorldEventSeamTest {
         factoryFor(world())(env)
         assertEquals(startYear, (env["startyear"] as Number).toInt(), "소문자 startyear (PHP 정본)")
         assertEquals(startYear, (env["startYear"] as Number).toInt(), "camelCase startYear (관행)")
+    }
+
+    @Test
+    fun `factory threads the spatial supply snapshot into UpdateCitySupply`() {
+        val network = SpatialSupplyNetwork(
+            provinceOwners = intArrayOf(1),
+            provinceAdjacency = listOf(intArrayOf()),
+            cityProvinceIndices = mapOf(5 to 0),
+        )
+        val ctx = WorldEventContextFactory.create(
+            world = world(),
+            recorder = ChangeRecorder(),
+            pipeline = pipeline,
+            hiddenSeed = hiddenSeed,
+            startYear = startYear,
+            eventStore = EventStore.withDefaults(),
+            spatialSupplyNetworkProvider = { network },
+        )(mutableMapOf("year" to 190, "month" to 7)) as UpdateCitySupplyContext
+
+        assertSame(network, ctx.spatialSupplyNetwork())
     }
 
     @Test

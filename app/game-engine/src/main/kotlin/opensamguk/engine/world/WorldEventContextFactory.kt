@@ -18,6 +18,7 @@ import opensamguk.logic.world.AssignGeneralSpecialityAction
 import opensamguk.logic.world.BlockScoutAction
 import opensamguk.logic.world.InvaderEndingContext
 import opensamguk.logic.world.MergeInheritWorld
+import opensamguk.logic.world.SpatialSupplyNetwork
 import opensamguk.logic.world.RaiseDisasterAction
 import opensamguk.logic.world.UnblockScoutAction
 
@@ -58,6 +59,7 @@ object WorldEventContextFactory {
         inheritanceRepository: InheritanceRepository? = null,
         lockGame: () -> Boolean = { false },
         unlockGame: () -> Unit = {},
+        spatialSupplyNetworkProvider: () -> SpatialSupplyNetwork? = { null },
         // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼져 있으면 null(= v1 프로덕션 기본값).
         v2CityLedger: V2CityLedgerStore? = null,
     ): (MutableMap<String, Any?>) -> EventActionContext {
@@ -91,6 +93,7 @@ object WorldEventContextFactory {
                 inheritanceRepository = inheritanceRepository,
                 lockGame = lockGame,
                 unlockGame = unlockGame,
+                spatialSupplyNetworkProvider = spatialSupplyNetworkProvider,
                 v2CityLedger = v2CityLedger,
             )
 

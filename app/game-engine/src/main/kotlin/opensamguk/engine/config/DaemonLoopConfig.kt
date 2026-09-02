@@ -41,6 +41,7 @@ import opensamguk.infra.read.MessageRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.infra.read.StatisticSnapshotReader
+import opensamguk.infra.seed.MapJson
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
@@ -54,6 +55,8 @@ import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.util.numberFormat
 import opensamguk.engine.world.WorldEventContextFactory
+import opensamguk.engine.world.HanSpatialSupplyProvider
+import opensamguk.engine.world.SpatialSupplyCity
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.EventTarget
@@ -63,6 +66,8 @@ import opensamguk.logic.tick.CheckStatistic
 import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.MonthlyClock
 import opensamguk.logic.tick.CheckStatisticCalculator
+import opensamguk.logic.world.ActiveWorldMap
+import opensamguk.logic.world.SpatialSupplyNetwork
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
 import org.springframework.beans.factory.annotation.Value
@@ -211,6 +216,7 @@ class DaemonLoopConfig {
         commandInboxRepository: CommandInboxRepository,
         commandOutboxRelay: CommandOutboxRelay,
         daemonPauseGate: DaemonPauseGate,
+        hanSpatialSupplyProvider: HanSpatialSupplyProvider,
         // OPENSAM-151 — v2 도시 원장. V2SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
         v2CityLedgerProvider: ObjectProvider<opensamguk.engine.v2.V2CityLedgerStore>,
@@ -245,6 +251,18 @@ class DaemonLoopConfig {
         val scenario = (state.meta["scenario"] as? Number)?.toInt()
             ?: System.getenv("SCENARIO_CODE")?.removePrefix("scenario_")?.toIntOrNull()
             ?: 0
+        val activeMapName = ActiveWorldMap.requireName(state.config, state.meta)
+        val spatialSupplyNetworkProvider = createSpatialSupplyNetworkProvider(
+            activeMapName = activeMapName,
+            mapData = if (activeMapName == "han" || activeMapName == "han-world-v2") {
+                MapJson.loadFromClasspath(activeMapName)
+            } else {
+                MapJson.MapData(0, 0, emptyList())
+            },
+            scenarioCode = scenario,
+            liveCityNations = { world.listCities().map { it.id to it.nationId } },
+            loadNetwork = hanSpatialSupplyProvider::network,
+        )
 
         var nextMessageId = messageRepository.findMaxId()
         var nextAuctionId = auctionRepository.findMaxId()
@@ -277,6 +295,7 @@ class DaemonLoopConfig {
             inheritanceRepository = inheritanceRepository,
             lockGame = durableGameLock::tryLock,
             unlockGame = durableGameLock::unlock,
+            spatialSupplyNetworkProvider = spatialSupplyNetworkProvider,
             v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
         )
 
@@ -717,4 +736,44 @@ class DaemonLoopConfig {
         expRes.plainLog?.let { ctx.addActionLog(it) }
         dedRes.plainLog?.let { ctx.addActionLog(it) }
     }
+}
+
+internal fun createSpatialSupplyNetworkProvider(
+    activeMapName: String,
+    mapData: MapJson.MapData,
+    scenarioCode: Int,
+    liveCityNations: () -> List<Pair<Int, Int>>,
+    loadNetwork: (Int, List<SpatialSupplyCity>) -> SpatialSupplyNetwork,
+): () -> SpatialSupplyNetwork? {
+    if (activeMapName != "han" && activeMapName != "han-world-v2") return { null }
+
+    val mapCityIds = mapData.cities.map { it.id }
+    check(mapCityIds.isNotEmpty()) { "Han map resource contains no runtime cities" }
+    check(mapCityIds.toSet().size == mapCityIds.size) { "Han map resource contains duplicate runtime city ids" }
+    val provinceByCityId = mapData.cities.mapNotNull { city ->
+        city.provinceId?.let { provinceIndex ->
+            check(provinceIndex >= 0) { "Han city ${city.id} has invalid province index $provinceIndex" }
+            city.id to provinceIndex
+        }
+    }.toMap()
+    check(provinceByCityId.isNotEmpty()) { "Han map resource contains no spatial city mappings" }
+
+    fun snapshot(): SpatialSupplyNetwork {
+        val liveCities = liveCityNations()
+        val liveCityIds = liveCities.map(Pair<Int, Int>::first)
+        check(liveCityIds.toSet().size == liveCityIds.size) { "Runtime contains duplicate city ids" }
+        check(liveCityIds.toSet() == mapCityIds.toSet()) {
+            "Han map/runtime city ids differ: map=${mapCityIds.size}, runtime=${liveCityIds.size}"
+        }
+        val nationByCityId = liveCities.toMap()
+        return loadNetwork(
+            scenarioCode,
+            provinceByCityId.map { (cityId, provinceIndex) ->
+                SpatialSupplyCity(cityId, provinceIndex, nationByCityId.getValue(cityId))
+            },
+        )
+    }
+
+    snapshot()
+    return { snapshot() }
 }
