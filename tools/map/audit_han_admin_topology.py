@@ -318,8 +318,11 @@ def audit_document(document: dict, units_document: dict, bindings_document: dict
     provinces = _require_records(document, "provinceRecords")
     jurisdictions = _require_records(document, "jurisdictionRecords")
     commanderies = _require_records(document, "commanderyRecords")
+    province_by_id = {row["id"]: row for row in provinces}
     jurisdiction_by_id = {row["id"]: row for row in jurisdictions}
     commandery_by_id = {row["id"]: row for row in commanderies}
+    if len(province_by_id) != len(provinces):
+        raise ValueError("provinceRecords contains duplicate IDs")
     if len(jurisdiction_by_id) != len(jurisdictions):
         raise ValueError("jurisdictionRecords contains duplicate IDs")
     if len(commandery_by_id) != len(commanderies):

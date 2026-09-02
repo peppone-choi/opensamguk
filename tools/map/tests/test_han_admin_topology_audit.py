@@ -89,6 +89,14 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         }
         self.assertEqual(["J-B"], enclosed[("J-A", 1)]["surroundingIds"])
 
+    def test_rejects_duplicate_spatial_province_ids(self) -> None:
+        document = synthetic_document()
+        duplicate = copy.deepcopy(document["provinceRecords"][0])
+        document["provinceRecords"].append(duplicate)
+
+        with self.assertRaisesRegex(ValueError, "provinceRecords contains duplicate IDs"):
+            audit_document(document, {"groups": []}, {"administrativeUnits": []})
+
     def test_single_jurisdiction_commandery_includes_source_and_binding_evidence(self) -> None:
         units = {
             "groups": [{
