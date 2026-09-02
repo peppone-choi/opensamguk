@@ -341,6 +341,14 @@ class CommandWireMapperTest {
         assertEquals("private", read.messageType)
         assertEquals(42, read.msgID)
 
+        val missingRecipient = CommandWireMapper.toCommand(
+            "sendMessage",
+            10,
+            "r",
+            """{"text":"수신자 없음"}""",
+        ) as TurnDaemonCommand.SendMessage
+        assertEquals(0, missingRecipient.mailbox)
+
         assertTrue(CommandWireMapper.toCommand("vacation", 10, "r", "{}") is TurnDaemonCommand.Vacation)
 
         val invader = CommandWireMapper.toCommand(

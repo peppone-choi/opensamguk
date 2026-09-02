@@ -350,9 +350,9 @@ object CommandWireMapper {
             // ── W6a 메시지 — 발송/삭제. mailbox 라우팅(9999 공개/>=9000 국가/<9000 개인)은 엔진이 적용. ──
             "sendMessage" -> TurnDaemonCommand.SendMessage(
                 requestId = requestId, generalId = generalId,
-                // PHP SendMessage::validateArgs: mailbox 부재 시 Message::MAILBOX_PUBLIC(9999). (required라 실제 부재
-                // 불가지만, faithful 기본값.) 9999=공개/>=9000=국가/<9000=개인 라우팅은 엔진 핸들러가 적용.
-                mailbox = args.int("mailbox") ?: 9999,
+                // mailbox는 required. 누락을 공개 서신(9999)으로 승격시키지 않고 0으로 넘겨
+                // 엔진이 fail-closed 거부한다. 9999=공개/>=9000=국가/<9000=개인.
+                mailbox = args.int("mailbox") ?: 0,
                 text = args.str("text") ?: "",
             )
             "deleteMessage" -> TurnDaemonCommand.DeleteMessage(

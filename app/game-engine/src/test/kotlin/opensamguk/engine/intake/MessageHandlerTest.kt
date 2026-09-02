@@ -152,6 +152,20 @@ class MessageHandlerTest {
         assertTrue(recorder.dirtyGeneralIds().isEmpty())
     }
 
+    @Test
+    fun `send to a foreign nation mailbox is denied without diplomacy permission`() {
+        val me = general(1, "유비", 1)
+        val world = world(listOf(me))
+        val recorder = ChangeRecorder()
+
+        val res = handler(world, recorder).handleSend(
+            TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 9002, text = "권한 없는 외교"),
+        )
+
+        assertEquals("외교 권한이 없습니다.", (res as SendMessageResult).reason)
+        assertTrue(recorder.createdMessages().isEmpty())
+    }
+
     // ── SEND: diplomacy (타국 — receiver + sender 2행, 상대국 수뇌 newmsg=1) ─────────────────────────
 
     @Test
@@ -182,6 +196,42 @@ class MessageHandlerTest {
         assertEquals(1, world.getGeneralById(2)!!.meta["newmsg"])
     }
 
+    @Test
+    fun `send diplomacy permits an unpenalized lord without fabricated permission meta`() {
+        val lord = general(1, "유비", 1, officerLevel = 12)
+        val caocao = general(2, "조조", 2, officerLevel = 12)
+        val world = world(listOf(lord, caocao))
+        val recorder = ChangeRecorder()
+
+        val res = handler(world, recorder).handleSend(
+            TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 9002, text = "군주 외교"),
+        )
+
+        assertTrue((res as SendMessageResult).ok)
+        assertEquals("diplomacy", res.msgType)
+        assertEquals(9002, recorder.createdMessages().first().mailbox)
+    }
+
+    @Test
+    fun `send diplomacy denies a lord whose secret permission is clamped by penalty`() {
+        val penalizedLord = general(
+            1,
+            "유비",
+            1,
+            officerLevel = 12,
+            meta = mapOf("penalty" to mapOf("noTopSecret" to true)),
+        )
+        val world = world(listOf(penalizedLord))
+        val recorder = ChangeRecorder()
+
+        val res = handler(world, recorder).handleSend(
+            TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 9002, text = "징계 중 외교"),
+        )
+
+        assertEquals("외교 권한이 없습니다.", (res as SendMessageResult).reason)
+        assertTrue(recorder.createdMessages().isEmpty())
+    }
+
     // ── SEND: private (receiver + sender 2행, 수신자 newmsg=1) ───────────────────────────────────────
 
     @Test
@@ -196,6 +246,8 @@ class MessageHandlerTest {
         )
         assertTrue((res as SendMessageResult).ok)
         assertEquals("private", res.msgType)
+        assertEquals(7, res.recipientId)
+        assertEquals("관우", res.recipientName)
         val rows = recorder.createdMessages()
         assertEquals(2, rows.size)
         assertEquals(7, rows[0].mailbox) // receiver 메일함 = 상대 generalID.
@@ -203,6 +255,10 @@ class MessageHandlerTest {
         assertEquals("private", rows[0].type)
         assertEquals(1, rows[0].srcId)
         assertEquals(7, rows[0].destId)
+        @Suppress("UNCHECKED_CAST")
+        val storedDest = bodyOf(rows[0].bodyJson)["dest"] as Map<String, Any?>
+        assertEquals(7, (storedDest["id"] as Number).toInt())
+        assertEquals("관우", storedDest["name"])
         // 수신자(7) newmsg=1.
         assertEquals(1, world.getGeneralById(7)!!.meta["newmsg"])
         assertTrue(recorder.dirtyGeneralIds().contains(7))
@@ -218,6 +274,38 @@ class MessageHandlerTest {
         )
         assertEquals("존재하지 않는 유저입니다.", (res as SendMessageResult).reason)
         assertTrue(recorder.createdMessages().isEmpty())
+    }
+
+    @Test
+    fun `send private denied when recipient is the sender`() {
+        val me = general(1, "유비", 1)
+        val world = world(listOf(me))
+        val recorder = ChangeRecorder()
+
+        val res = handler(world, recorder).handleSend(
+            TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 1, text = "자기 자신에게"),
+        )
+
+        assertEquals("자기 자신에게는 개인 서신을 보낼 수 없습니다.", (res as SendMessageResult).reason)
+        assertTrue(recorder.createdMessages().isEmpty())
+        assertTrue(recorder.generalPatches().isEmpty())
+        assertNull(world.getGeneralById(1)!!.meta["lastMsg"])
+    }
+
+    @Test
+    fun `send private denied when recipient is not a playable contact`() {
+        val me = general(1, "유비", 1)
+        val hidden = general(7, "숨겨진장수", 1, npcState = 2)
+        val world = world(listOf(me, hidden))
+        val recorder = ChangeRecorder()
+
+        val res = handler(world, recorder).handleSend(
+            TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 7, text = "숨겨진 대상"),
+        )
+
+        assertEquals("수신할 수 없는 장수입니다.", (res as SendMessageResult).reason)
+        assertTrue(recorder.createdMessages().isEmpty())
+        assertTrue(recorder.generalPatches().isEmpty())
     }
 
     @Test
@@ -263,7 +351,7 @@ class MessageHandlerTest {
     }
 
     @Test
-    fun `private send uses envelope time and persists lastMsg before an invalid destination`() {
+    fun `private send rejects an invalid destination without persisting lastMsg`() {
         val sentAt = t0.plusSeconds(60)
         val me = general(
             1,
@@ -283,8 +371,8 @@ class MessageHandlerTest {
         )
 
         assertEquals("존재하지 않는 유저입니다.", (res as SendMessageResult).reason)
-        assertEquals(sentAt.epochSecond, world.getGeneralById(1)!!.meta["lastMsg"])
-        assertEquals(sentAt.epochSecond, recorder.generalPatches().single().meta["lastMsg"])
+        assertEquals(sentAt.minusSeconds(3).epochSecond, world.getGeneralById(1)!!.meta["lastMsg"])
+        assertTrue(recorder.generalPatches().isEmpty())
         assertTrue(recorder.createdMessages().isEmpty())
     }
 
@@ -370,14 +458,15 @@ class MessageHandlerTest {
     }
 
     @Test
-    fun `send denied with unknown error for non-positive mailbox`() {
+    fun `send denied with a clear reason for a missing mailbox`() {
         val me = general(1, "유비", 1)
         val world = world(listOf(me))
         val recorder = ChangeRecorder()
         val res = handler(world, recorder).handleSend(
             TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 0, text = "x"),
         )
-        assertEquals("알 수 없는 에러입니다.", (res as SendMessageResult).reason)
+        assertEquals("발송 대상이 없습니다.", (res as SendMessageResult).reason)
+        assertTrue(recorder.createdMessages().isEmpty())
     }
 
     // ── DELETE ──────────────────────────────────────────────────────────────────────────────────

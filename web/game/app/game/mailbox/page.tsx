@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
@@ -77,6 +77,10 @@ export default function MailboxPage() {
     const [messages, setMessages] = useState<MailboxMessage[]>([]);
     const [scope, setScope] = useState<MailboxScope>('private');
     const [identity, setIdentity] = useState<{ generalId: number | null; nationId: number }>({ generalId: null, nationId: 0 });
+    const mailboxViewKey = `${scope}:${identity.generalId ?? 'none'}:${identity.nationId}`;
+    const mailboxViewKeyRef = useRef(mailboxViewKey);
+    mailboxViewKeyRef.current = mailboxViewKey;
+    const messageRequestRef = useRef(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -84,21 +88,32 @@ export default function MailboxPage() {
     const [pendingId, setPendingId] = useState<number | null>(null);
     // 서신 발송 폼 상태
     const [sendText, setSendText] = useState<string>('');
-    // 발송 대상 mailbox id: 9999=전체, 9000+nationId=국가, generalId=개인 (현재 scope 연동)
-    const [sendMailbox, setSendMailbox] = useState<number>(MAILBOX_PUBLIC);
+    // 개인 수신자는 메일함 읽기 scope와 분리한 명시적 상태다.
+    const [recipientSearch, setRecipientSearch] = useState('');
+    const [privateRecipientId, setPrivateRecipientId] = useState<number | null>(null);
+    const [diplomacyMailbox, setDiplomacyMailbox] = useState<number | null>(null);
     const [sending, setSending] = useState(false);
-    const [contacts, setContacts] = useState<Array<{ mailbox: number; name: string; general: Array<[number, string, unknown]> }>>([]);
+    const [contacts, setContacts] = useState<Array<{ mailbox: number; name: string; general: Array<[number, string, number]> }>>([]);
 
     const fetchMessages = useCallback(async () => {
+        const requestedViewKey = `${scope}:${identity.generalId ?? 'none'}:${identity.nationId}`;
+        // 비동기 발송 결과가 뒤늦게 이전 탭의 callback을 호출해도 현재 목록을 덮지 않는다.
+        if (mailboxViewKeyRef.current !== requestedViewKey) return;
+        const requestId = ++messageRequestRef.current;
+        const isCurrentView = () =>
+            mailboxViewKeyRef.current === requestedViewKey && messageRequestRef.current === requestId;
         setLoading(true);
         try {
             const mailboxId = mailboxIdForScope(scope, identity);
             if (mailboxId == null) {
-                setMessages([]);
-                setError(scope === 'national' ? '소속 국가가 없습니다.' : '장수 정보가 없습니다.');
+                if (isCurrentView()) {
+                    setMessages([]);
+                    setError(scope === 'national' ? '소속 국가가 없습니다.' : '장수 정보가 없습니다.');
+                }
                 return;
             }
             const data = await api.mailboxRecent<MailboxEnvelope>();
+            if (!isCurrentView()) return;
             const section = data[scope];
             setMessages(section.map((item) => fromArrayItem(item, mailboxId)));
             if ((scope === 'private' || scope === 'diplomacy') && identity.generalId != null) {
@@ -107,9 +122,9 @@ export default function MailboxPage() {
             }
             setError('');
         } catch {
-            setError('메일함을 불러올 수 없습니다.');
+            if (isCurrentView()) setError('메일함을 불러올 수 없습니다.');
         } finally {
-            setLoading(false);
+            if (isCurrentView()) setLoading(false);
         }
     }, [identity, scope]);
 
@@ -140,7 +155,7 @@ export default function MailboxPage() {
     }, []);
 
     useEffect(() => {
-        api.contacts<{ nation: Array<{ mailbox: number; name: string; general: Array<[number, string, unknown]> }> }>()
+        api.contacts<{ nation: Array<{ mailbox: number; name: string; general: Array<[number, string, number]> }> }>()
             .then((result) => setContacts(result.nation))
             .catch(() => setContacts([]));
     }, []);
@@ -170,14 +185,50 @@ export default function MailboxPage() {
             setTimeout(() => setToast(''), TOAST_DURATION_MS);
             return;
         }
+        const sendScope = scope;
+        const mailbox = sendMailbox;
+        const intendedRecipient = selectedPrivateRecipient;
+        if (mailbox == null) {
+            setToast(sendScope === 'private' ? '수신 장수를 선택하세요.' : '발송 대상을 선택하세요.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            return;
+        }
+        if (sendScope === 'private' && intendedRecipient == null) {
+            setToast('수신 장수를 다시 선택하세요.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            return;
+        }
+        if (sendScope === 'private' && mailbox === generalId) {
+            setToast('자기 자신에게는 개인 서신을 보낼 수 없습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            return;
+        }
         setSending(true);
         try {
             const out = await submitCommandAndAwaitResult(() =>
-                api.commands.sendMessage({ mailbox: sendMailbox, text }, generalId));
+                api.commands.sendMessage({ mailbox, text }, generalId));
             if (out.status === 'applied') {
-                setToast('서신을 발송했습니다.');
-                setSendText('');
-                fetchMessages();
+                const recipientId = out.result.result.recipientId;
+                const recipientName = out.result.result.recipientName;
+                const msgType = out.result.result.msgType;
+                if (sendScope === 'private') {
+                    if (
+                        intendedRecipient == null
+                        || msgType !== 'private'
+                        || recipientId !== intendedRecipient.id
+                        || recipientName !== intendedRecipient.name
+                    ) {
+                        setToast('서신은 처리되었지만 수신자 확인에 실패했습니다.');
+                    } else {
+                        setToast(`${recipientName} (${recipientId})에게 서신을 발송했습니다.`);
+                        setSendText('');
+                        fetchMessages();
+                    }
+                } else {
+                    setToast('서신을 발송했습니다.');
+                    setSendText('');
+                    fetchMessages();
+                }
             } else if (out.status === 'rejected') {
                 setToast(out.reason ?? '서신을 보낼 수 없습니다.');
             } else {
@@ -321,14 +372,32 @@ export default function MailboxPage() {
         setTimeout(() => setToast(''), TOAST_DURATION_MS);
     }
 
-    // scope 전환 시 발송 대상 mailbox도 연동 갱신
-    useEffect(() => {
-        const id = mailboxIdForScope(scope, identity);
-        setSendMailbox(id ?? MAILBOX_PUBLIC);
-    }, [scope, identity]);
-
     const messageName = (msg: MailboxMessage) => msg.srcTarget?.name || String(msg.src);
     const sendTextTooLong = countHtmlCodePoints(sendText.trim()) > MESSAGE_TEXT_MAX_CODE_POINTS;
+    const privateRecipients = contacts.flatMap(group => group.general.map(([id, name]) => ({
+        id,
+        name,
+        nation: group.name,
+    }))).filter(recipient => recipient.id !== identity.generalId);
+    const normalizedSearch = recipientSearch.trim().toLocaleLowerCase('ko-KR');
+    const filteredPrivateRecipients = privateRecipients.filter(recipient =>
+        normalizedSearch.length === 0
+        || recipient.name.toLocaleLowerCase('ko-KR').includes(normalizedSearch)
+        || String(recipient.id).includes(normalizedSearch)
+        || recipient.nation.toLocaleLowerCase('ko-KR').includes(normalizedSearch));
+    const selectedPrivateRecipient = privateRecipients.find(recipient => recipient.id === privateRecipientId) ?? null;
+    const canSendDiplomacy = contacts.some(group => group.general.some(([id, , flags]) =>
+        id === identity.generalId && (flags & 4) === 4));
+    const sendMailbox = scope === 'private'
+        ? privateRecipientId
+        : scope === 'public'
+            ? MAILBOX_PUBLIC
+            : scope === 'national'
+                ? (identity.nationId > 0 ? MAILBOX_NATIONAL_BASE + identity.nationId : null)
+                : diplomacyMailbox;
+    const hasValidSendTarget = sendMailbox != null
+        && (scope !== 'private' || (selectedPrivateRecipient != null && sendMailbox !== identity.generalId))
+        && (scope !== 'diplomacy' || canSendDiplomacy);
     const messageTime = (value: string) => {
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return value;
@@ -384,29 +453,55 @@ export default function MailboxPage() {
                 <p style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-xs)' }}>서신 발송</p>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', flexWrap: 'wrap', alignItems: 'center' }}>
                     <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>대상</label>
-                    <select
-                        value={sendMailbox}
-                        onChange={e => setSendMailbox(Number(e.target.value))}
-                        disabled={sending || identity.generalId == null}
-                        style={{ fontSize: 'var(--text-sm)', padding: '2px var(--space-xs)', background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-                    >
-                        {/* 개인 수신함(현재 장수 본인)은 항상 표시 */}
-                        {identity.generalId != null && identity.generalId > 0 && (
-                            <option value={identity.generalId}>개인</option>
-                        )}
-                        {/* 국가 수신함: nationId > 0 인 경우만 */}
-                        {identity.nationId > 0 && (
-                            <option value={MAILBOX_NATIONAL_BASE + identity.nationId}>국가</option>
-                        )}
-                        <option value={MAILBOX_PUBLIC}>전체</option>
-                        {contacts.map((group) => (
-                            <optgroup key={group.mailbox} label={group.name}>
-                                <option value={group.mailbox}>{group.name} 서신함</option>
-                                {group.general.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-                            </optgroup>
-                        ))}
-                    </select>
+                    {scope === 'private' && (
+                        <>
+                            <input
+                                aria-label="수신 장수 검색"
+                                type="search"
+                                value={recipientSearch}
+                                onChange={event => setRecipientSearch(event.target.value)}
+                                placeholder="장수 이름·ID·국가 검색"
+                                disabled={sending || identity.generalId == null}
+                            />
+                            <select
+                                aria-label="개인 수신 장수"
+                                value={privateRecipientId ?? ''}
+                                onChange={event => {
+                                    setPrivateRecipientId(event.target.value ? Number(event.target.value) : null);
+                                    if (event.target.value) setRecipientSearch('');
+                                }}
+                                disabled={sending || identity.generalId == null}
+                                style={{ fontSize: 'var(--text-sm)', padding: '2px var(--space-xs)', background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                            >
+                                <option value="">수신 장수를 선택하세요</option>
+                                {filteredPrivateRecipients.map(recipient => (
+                                    <option key={recipient.id} value={recipient.id}>{recipient.name}</option>
+                                ))}
+                            </select>
+                        </>
+                    )}
+                    {scope === 'national' && <span>자국 서신함</span>}
+                    {scope === 'public' && <span>전체 서신함</span>}
+                    {scope === 'diplomacy' && !canSendDiplomacy && <span>외교 권한이 없습니다.</span>}
+                    {scope === 'diplomacy' && canSendDiplomacy && (
+                        <select
+                            aria-label="외교 수신 국가"
+                            value={diplomacyMailbox ?? ''}
+                            onChange={event => setDiplomacyMailbox(event.target.value ? Number(event.target.value) : null)}
+                            disabled={sending || identity.generalId == null}
+                        >
+                            <option value="">수신 국가를 선택하세요</option>
+                            {contacts.filter(group => group.mailbox !== MAILBOX_NATIONAL_BASE + identity.nationId && group.mailbox > MAILBOX_NATIONAL_BASE).map(group => (
+                                <option key={group.mailbox} value={group.mailbox}>{group.name}</option>
+                            ))}
+                        </select>
+                    )}
                 </div>
+                {scope === 'private' && selectedPrivateRecipient && (
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 'var(--space-xs)' }}>
+                        수신자: {selectedPrivateRecipient.name} ({selectedPrivateRecipient.id})
+                    </p>
+                )}
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <RichTextEditor
@@ -420,7 +515,7 @@ export default function MailboxPage() {
                     <button
                         type="button"
                         onClick={handleSend}
-                        disabled={sending || !sendText.trim() || sendTextTooLong || identity.generalId == null}
+                        disabled={sending || !sendText.trim() || sendTextTooLong || identity.generalId == null || !hasValidSendTarget}
                         style={{ whiteSpace: 'nowrap' }}
                     >
                         {sending ? '발송 중...' : '발송'}
