@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import heapq
+import json
 import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
@@ -90,6 +91,387 @@ class ProvinceBuildResult:
             if record.id == province_id:
                 return index
         raise KeyError(province_id)
+
+
+@dataclass(frozen=True)
+class JurisdictionAssignmentResult:
+    province_records: tuple[dict[str, Any], ...]
+    jurisdiction_records: tuple[dict[str, Any], ...]
+    commandery_records: tuple[dict[str, Any], ...]
+
+
+JURISDICTION_RECOVERY_SOURCE_REPOSITORY = "https://github.com/peppone-choi/shiliao"
+JURISDICTION_RECOVERY_SOURCE_REVISION = "1330cfe46186bc159184a361467563dd3339b38f"
+JURISDICTION_RECOVERY_EVIDENCE_SHA256 = (
+    "05cb0fa944a9dfe153f5514b03fc8bbc0df74ff4a548a99b4fa2e03a616e005b"
+)
+
+
+def validate_jurisdiction_recovery_document(document: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """Accept only the recovery evidence reviewed at the pinned shiliao revision."""
+    if document.get("schemaVersion") != 1 or document.get("artifactId") != (
+        "han-jurisdiction-seat-recoveries-v1"
+    ):
+        raise ValueError("jurisdiction recovery document identity is invalid")
+    if document.get("sourceRepository") != JURISDICTION_RECOVERY_SOURCE_REPOSITORY:
+        raise ValueError("jurisdiction recovery source repository is invalid")
+    if document.get("sourceRevision") != JURISDICTION_RECOVERY_SOURCE_REVISION:
+        raise ValueError("jurisdiction recovery source revision is invalid")
+    recoveries = document.get("recoveries")
+    if not isinstance(recoveries, list):
+        raise ValueError("jurisdiction recovery rows are missing")
+    evidence_blob = json.dumps(
+        recoveries, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    if hashlib.sha256(evidence_blob).hexdigest() != JURISDICTION_RECOVERY_EVIDENCE_SHA256:
+        raise ValueError("jurisdiction recovery evidence digest is invalid")
+    return recoveries
+
+
+def validate_materialized_hierarchy(
+    province_records: Sequence[Mapping[str, Any]],
+    jurisdiction_records: Sequence[Mapping[str, Any]],
+    commandery_records: Sequence[Mapping[str, Any]],
+) -> bool:
+    """Validate unique IDs and exact forward/inverse hierarchy membership."""
+    def records_by_id(records: Sequence[Mapping[str, Any]], label: str) -> dict[str, Mapping[str, Any]]:
+        result: dict[str, Mapping[str, Any]] = {}
+        for record in records:
+            record_id = record.get("id")
+            if not isinstance(record_id, str) or not record_id:
+                raise ValueError(f"every {label} record requires a stable string id")
+            if record_id in result:
+                raise ValueError(f"duplicate {label} record id: {record_id}")
+            result[record_id] = record
+        return result
+
+    provinces = records_by_id(province_records, "province")
+    jurisdictions = records_by_id(jurisdiction_records, "jurisdiction")
+    commanderies = records_by_id(commandery_records, "commandery")
+    inverse_provinces: dict[str, list[str]] = {record_id: [] for record_id in jurisdictions}
+    for province_id, province in provinces.items():
+        jurisdiction_id = province.get("jurisdictionId")
+        jurisdiction = jurisdictions.get(jurisdiction_id)
+        if jurisdiction is None:
+            raise ValueError(f"province references a missing jurisdiction: {province_id}")
+        if jurisdiction.get("commanderyId") != province.get("parentRegionId"):
+            raise ValueError(f"province crosses its commandery jurisdiction: {province_id}")
+        inverse_provinces[jurisdiction_id].append(province_id)
+    for jurisdiction_id, jurisdiction in jurisdictions.items():
+        expected = sorted(inverse_provinces[jurisdiction_id])
+        if not expected or jurisdiction.get("provinceIds") != expected:
+            raise ValueError(f"jurisdiction province inverse membership mismatch: {jurisdiction_id}")
+
+    inverse_jurisdictions: dict[str, list[str]] = {record_id: [] for record_id in commanderies}
+    for jurisdiction_id, jurisdiction in jurisdictions.items():
+        commandery_id = jurisdiction.get("commanderyId")
+        if commandery_id not in commanderies:
+            raise ValueError(f"jurisdiction references a missing commandery: {jurisdiction_id}")
+        inverse_jurisdictions[commandery_id].append(jurisdiction_id)
+    for commandery_id, commandery in commanderies.items():
+        expected = sorted(inverse_jurisdictions[commandery_id])
+        if not expected or commandery.get("jurisdictionIds") != expected:
+            raise ValueError(f"commandery jurisdiction inverse membership mismatch: {commandery_id}")
+        if commandery.get("seatJurisdictionId") not in expected:
+            raise ValueError(f"commandery seat jurisdiction is not a member: {commandery_id}")
+    return True
+
+
+def infer_commandery_kind(
+    parent: Mapping[str, Any], seat_city: Mapping[str, Any]
+) -> str:
+    """Infer one canonical parent-unit kind from its name and reviewed seat."""
+    name_ch = str(parent.get("nameCh", ""))
+    if name_ch.endswith("屬國"):
+        return "COMMANDERY"
+    if seat_city.get("kind") == "KINGDOM" or name_ch.endswith("國"):
+        return "KINGDOM"
+    if name_ch.endswith("尹"):
+        return "METROPOLITAN"
+    return "COMMANDERY"
+
+
+def assign_province_jurisdictions(
+    owner: Sequence[Sequence[int]],
+    province_records: Sequence[Mapping[str, Any]],
+    parent_regions: Sequence[Mapping[str, Any]],
+    cities: Sequence[Mapping[str, Any]],
+    parent_seats: Sequence[int] | None = None,
+    jurisdiction_recoveries: Sequence[Mapping[str, Any]] = (),
+) -> JurisdictionAssignmentResult:
+    """Bind direct spatial fragments to a county inside the same parent."""
+    rows = [list(row) for row in owner]
+    cols = len(rows[0]) if rows else 0
+    if any(len(row) != cols for row in rows):
+        raise ValueError("owner rows must have equal length")
+
+    candidates_by_parent: dict[str, list[int]] = {}
+    for index, record in enumerate(province_records):
+        if record.get("kind") in {"COUNTY", "SETTLEMENT"}:
+            candidates_by_parent.setdefault(str(record.get("parentRegionId")), []).append(index)
+
+    city_ids = {
+        city.get("id")
+        for city in cities
+        if isinstance(city.get("id"), str) and city.get("id")
+    }
+    recovery_by_parent: dict[str, Mapping[str, Any]] = {}
+    external_recovery_parent_ids: set[str] = set()
+    for recovery in jurisdiction_recoveries:
+        parent_id = recovery.get("parentRegionId")
+        jurisdiction_id = recovery.get("jurisdictionId")
+        if not isinstance(parent_id, str) or not parent_id:
+            raise ValueError("jurisdiction recovery has no parentRegionId")
+        if parent_id in recovery_by_parent:
+            raise ValueError(f"duplicate jurisdiction recovery for parent: {parent_id}")
+        if not isinstance(jurisdiction_id, str) or not jurisdiction_id:
+            raise ValueError(f"jurisdiction recovery has no stable ID: {parent_id}")
+        if recovery.get("reviewState") != "REVIEWED":
+            raise ValueError(f"jurisdiction recovery is not reviewed: {parent_id}")
+        if recovery.get("kind") not in {"COUNTY", "MARQUISATE", "EXTERNAL_SETTLEMENT"}:
+            raise ValueError(f"jurisdiction recovery has invalid kind: {parent_id}")
+        if recovery.get("seatPlaceId") not in city_ids:
+            raise ValueError(f"jurisdiction recovery has unknown seat place: {parent_id}")
+        citation = recovery.get("sourceCitation")
+        if (
+            not isinstance(citation, Mapping)
+            or not isinstance(citation.get("corpusPath"), str)
+            or not citation.get("corpusPath")
+            or type(citation.get("line")) is not int
+            or citation["line"] <= 0
+            or not isinstance(citation.get("quote"), str)
+            or not citation.get("quote")
+        ):
+            raise ValueError(f"jurisdiction recovery has invalid source citation: {parent_id}")
+        recovery_by_parent[parent_id] = recovery
+    for parent_index, parent in enumerate(parent_regions):
+        parent_id = parent.get("id")
+        if (
+            not isinstance(parent_id, str)
+            or candidates_by_parent.get(parent_id)
+            or parent_id in recovery_by_parent
+            or parent.get("administrativeSystem") == "HAN_COMMANDERY"
+        ):
+            continue
+        seat_index = (
+            parent_seats[parent_index]
+            if parent_seats is not None and parent_index < len(parent_seats)
+            else None
+        )
+        if type(seat_index) is not int or not 0 <= seat_index < len(cities):
+            raise ValueError(f"external parent has no valid seat city: {parent_id}")
+        seat = cities[seat_index]
+        seat_place_id = seat.get("id")
+        if not isinstance(seat_place_id, str) or not seat_place_id:
+            raise ValueError(f"external parent seat has no stable place ID: {parent_id}")
+        recovery_by_parent[parent_id] = {
+            "parentRegionId": parent_id,
+            "jurisdictionId": f"JURISDICTION-{parent_id}-SEAT",
+            "displayName": seat.get("name") or parent.get("displayName", ""),
+            "nameCh": seat.get("nameCh") or parent.get("nameCh", ""),
+            "kind": "EXTERNAL_SETTLEMENT",
+            "seatPlaceId": seat_place_id,
+        }
+        external_recovery_parent_ids.add(parent_id)
+
+    direct_boundaries: dict[int, dict[int, int]] = {}
+    cells_by_label: dict[int, list[tuple[int, int]]] = {}
+    for row_index, row in enumerate(rows):
+        for col_index, label in enumerate(row):
+            if type(label) is not int or label < 0:
+                continue
+            if label >= len(province_records):
+                raise ValueError("owner contains an out-of-range province index")
+            cells_by_label.setdefault(label, []).append((row_index, col_index))
+            if province_records[label].get("kind") != "DIRECT_TERRITORY":
+                continue
+            for next_row, next_col in (
+                (row_index - 1, col_index),
+                (row_index + 1, col_index),
+                (row_index, col_index - 1),
+                (row_index, col_index + 1),
+            ):
+                if not (0 <= next_row < len(rows) and 0 <= next_col < cols):
+                    continue
+                neighbour = rows[next_row][next_col]
+                if neighbour == label or neighbour < 0:
+                    continue
+                if neighbour >= len(province_records):
+                    raise ValueError("owner contains an out-of-range province index")
+                if (
+                    province_records[neighbour].get("parentRegionId")
+                    != province_records[label].get("parentRegionId")
+                    or province_records[neighbour].get("kind")
+                    not in {"COUNTY", "SETTLEMENT"}
+                ):
+                    continue
+                counts = direct_boundaries.setdefault(label, {})
+                counts[neighbour] = counts.get(neighbour, 0) + 1
+
+    resolved = []
+    for index, source in enumerate(province_records):
+        record = dict(source)
+        if record.get("kind") != "DIRECT_TERRITORY":
+            record["jurisdictionId"] = record["id"]
+            record["assignmentBasis"] = "HISTORICAL_SEAT"
+            record["assignmentConfidence"] = record.get("confidence", "REVIEWED")
+            resolved.append(record)
+            continue
+        parent_id = str(record.get("parentRegionId"))
+        candidates = candidates_by_parent.get(parent_id, [])
+        if not candidates:
+            recovery = recovery_by_parent.get(parent_id)
+            if recovery is None:
+                raise ValueError(f"parent has no county jurisdiction: {parent_id}")
+            record["jurisdictionId"] = recovery["jurisdictionId"]
+            record["assignmentBasis"] = (
+                "EXISTING_EXTERNAL_PARENT_SEAT"
+                if parent_id in external_recovery_parent_ids
+                else "REVIEWED_PARENT_SEAT_RECOVERY"
+            )
+            record["assignmentConfidence"] = "REVIEWED"
+            resolved.append(record)
+            continue
+        boundary_counts = direct_boundaries.get(index, {})
+        fragment_cells = cells_by_label.get(index, [])
+        if not fragment_cells:
+            raise ValueError(f"direct territory has no geometry: {record['id']}")
+
+        def seat_distance(candidate: int) -> int:
+            city_index = province_records[candidate].get("cityIndex")
+            if type(city_index) is not int or not 0 <= city_index < len(cities):
+                raise ValueError(
+                    f"county has no valid seat city: {province_records[candidate]['id']}"
+                )
+            seat = cities[city_index]
+            seat_row, seat_col = seat.get("row"), seat.get("col")
+            if type(seat_row) is not int or type(seat_col) is not int:
+                raise ValueError(
+                    f"county seat has no valid grid cell: {province_records[candidate]['id']}"
+                )
+            return min(
+                abs(row - seat_row) + abs(col - seat_col)
+                for row, col in fragment_cells
+            )
+
+        touching = [candidate for candidate in candidates if candidate in boundary_counts]
+        if touching:
+            selected = min(
+                touching,
+                key=lambda candidate: (
+                    -boundary_counts[candidate],
+                    seat_distance(candidate),
+                    str(province_records[candidate]["id"]),
+                ),
+            )
+            assignment_basis = "MAX_SHARED_BOUNDARY"
+        else:
+            distances = []
+            for candidate in candidates:
+                distance = seat_distance(candidate)
+                distances.append((distance, str(province_records[candidate]["id"]), candidate))
+            _, _, selected = min(distances)
+            assignment_basis = "NEAREST_SEAT_WITHIN_PARENT"
+        record["jurisdictionId"] = province_records[selected]["id"]
+        record["assignmentBasis"] = assignment_basis
+        record["assignmentConfidence"] = "INFERRED"
+        resolved.append(record)
+
+    for record in resolved:
+        record["kind"] = "SPATIAL_PROVINCE"
+
+    province_ids_by_jurisdiction: dict[str, list[str]] = {}
+    for record in resolved:
+        province_ids_by_jurisdiction.setdefault(record["jurisdictionId"], []).append(record["id"])
+
+    jurisdiction_records = []
+    for source in province_records:
+        if source.get("kind") not in {"COUNTY", "SETTLEMENT"}:
+            continue
+        city_index = source.get("cityIndex")
+        if type(city_index) is not int or not 0 <= city_index < len(cities):
+            raise ValueError(f"jurisdiction has no valid seat city: {source['id']}")
+        city = cities[city_index]
+        seat_place_id = city.get("id")
+        if not isinstance(seat_place_id, str) or not seat_place_id:
+            raise ValueError(f"jurisdiction seat has no stable place ID: {source['id']}")
+        jurisdiction_records.append({
+            "id": source["id"],
+            "displayName": source["displayName"],
+            "nameCh": source.get("nameCh", ""),
+            "kind": "COUNTY" if source.get("kind") == "COUNTY" else "EXTERNAL_SETTLEMENT",
+            "commanderyId": source["parentRegionId"],
+            "seatPlaceId": seat_place_id,
+            "provinceIds": sorted(province_ids_by_jurisdiction[source["id"]]),
+        })
+    for recovery in recovery_by_parent.values():
+        jurisdiction_id = recovery["jurisdictionId"]
+        province_ids = province_ids_by_jurisdiction.get(jurisdiction_id)
+        if not province_ids:
+            raise ValueError(
+                f"jurisdiction recovery does not own a spatial province: {jurisdiction_id}"
+            )
+        jurisdiction_records.append({
+            "id": jurisdiction_id,
+            "displayName": recovery["displayName"],
+            "nameCh": recovery["nameCh"],
+            "kind": recovery["kind"],
+            "commanderyId": recovery["parentRegionId"],
+            "seatPlaceId": recovery["seatPlaceId"],
+            "provinceIds": sorted(province_ids),
+        })
+    jurisdiction_records.sort(key=lambda record: record["id"])
+
+    jurisdiction_by_parent: dict[str, list[str]] = {}
+    for jurisdiction in jurisdiction_records:
+        jurisdiction_by_parent.setdefault(jurisdiction["commanderyId"], []).append(jurisdiction["id"])
+    commandery_records = []
+    for parent_index, parent in enumerate(parent_regions):
+        parent_id = parent.get("id")
+        jurisdiction_ids = sorted(jurisdiction_by_parent.get(parent_id, []))
+        if not jurisdiction_ids:
+            raise ValueError(f"parent has no county jurisdiction: {parent_id}")
+        seat_index = (
+            parent_seats[parent_index]
+            if parent_seats is not None and parent_index < len(parent_seats)
+            else None
+        )
+        if type(seat_index) is not int or not 0 <= seat_index < len(cities):
+            raise ValueError(f"parent has no valid seat city: {parent_id}")
+        seat = cities[seat_index]
+        seat_row, seat_col = seat.get("row"), seat.get("col")
+        if (
+            type(seat_row) is not int
+            or type(seat_col) is not int
+            or not 0 <= seat_row < len(rows)
+            or not 0 <= seat_col < cols
+        ):
+            raise ValueError(f"parent seat has no valid grid cell: {parent_id}")
+        seat_label = rows[seat_row][seat_col]
+        if type(seat_label) is not int or not 0 <= seat_label < len(resolved):
+            raise ValueError(f"parent seat is outside playable province geometry: {parent_id}")
+        seat_province = resolved[seat_label]
+        if seat_province.get("parentRegionId") != parent_id:
+            raise ValueError(f"parent seat is inside another parent region: {parent_id}")
+        seat_jurisdiction_id = seat_province["jurisdictionId"]
+        if seat_jurisdiction_id not in jurisdiction_ids:
+            raise ValueError(f"parent seat has an invalid jurisdiction: {parent_id}")
+        name_ch = parent.get("nameCh", "")
+        parent_kind = parent.get("kind")
+        if parent_kind not in {"COMMANDERY", "KINGDOM", "METROPOLITAN"}:
+            parent_kind = infer_commandery_kind(parent, seat)
+        commandery_records.append({
+            "id": parent_id,
+            "displayName": parent.get("displayName", ""),
+            "nameCh": name_ch,
+            "kind": parent_kind,
+            "seatJurisdictionId": seat_jurisdiction_id,
+            "jurisdictionIds": jurisdiction_ids,
+        })
+    commandery_records.sort(key=lambda record: record["id"])
+    return JurisdictionAssignmentResult(
+        tuple(resolved), tuple(jurisdiction_records), tuple(commandery_records)
+    )
 
 
 def rebalance_province_areas(

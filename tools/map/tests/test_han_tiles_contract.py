@@ -21,6 +21,7 @@ INPUT_ROLES = [
     "MERGE_ADJUDICATIONS", "TEMPORAL_ADJUDICATIONS", "EXTERNAL_PLACES",
     "EXTERNAL_PROVINCE_SEEDS", "EXTERNAL_ADMINISTRATIVE_SYSTEMS",
     "PROVINCE_SHAPE_EXCEPTIONS", "NON_PLAYABLE_REGIONS", "MODERN_ADMIN_RECIPE",
+    "JURISDICTION_SEAT_RECOVERIES",
 ]
 GENERATOR_ROLES = [
     "BUILD_HAN_PLACES", "BUILD_JUNGUOZHI", "BUILD_TERRAIN_GRID",
@@ -143,7 +144,10 @@ def valid_recipe():
             },
             {
                 "stageId": "HAN_TILES", "generatorRole": "BUILD_HAN_TILES",
-                "inputRoles": ["HAN_PLACES", "TERRAIN_GRID", "READINGS"],
+                "inputRoles": [
+                    "HAN_PLACES", "TERRAIN_GRID", "READINGS",
+                    "JURISDICTION_SEAT_RECOVERIES",
+                ],
                 "dependencyRoles": [], "outputRole": "HAN_TILES", "argv": [],
             },
         ],
@@ -190,6 +194,7 @@ def summaries():
             "ownerRunCount": 19898, "parentOwnerRunCount": 11554,
             "countyEdgeCount": 2649, "commanderyEdgeCount": 417,
             "provinceCount": 1524, "parentRegionCount": 172,
+            "jurisdictionCount": 1020, "commanderyCount": 172,
         },
     }
 

@@ -23,8 +23,10 @@ from typing import Any, Mapping
 
 try:
     from tools.map import han_tiles_contract
+    from tools.map.world_province_geometry import validate_materialized_hierarchy
 except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
     import han_tiles_contract
+    from world_province_geometry import validate_materialized_hierarchy
 
 
 INPUT_RELATIVE_PATHS = {
@@ -53,6 +55,7 @@ INPUT_RELATIVE_PATHS = {
     "PROVINCE_SHAPE_EXCEPTIONS": "data/curated/map/province-shape-exceptions-v1.json",
     "NON_PLAYABLE_REGIONS": "data/curated/map/non-playable-regions-v1.json",
     "MODERN_ADMIN_RECIPE": "data/curated/map/modern-admin-boundaries-v1.json",
+    "JURISDICTION_SEAT_RECOVERIES": "data/curated/han/jurisdiction-seat-recoveries-v1.json",
 }
 GENERATOR_RELATIVE_PATHS = {
     "BUILD_HAN_PLACES": "tools/map/build_han_places.py",
@@ -476,6 +479,8 @@ def _summary(role: str, document: Any) -> dict[str, int]:
         "commanderyEdgeCount": len(document.get("adjacency", {}).get("commandery", [])),
         "provinceCount": len(document.get("provinceRecords", [])),
         "parentRegionCount": len(document.get("parentRegions", [])),
+        "jurisdictionCount": len(document.get("jurisdictionRecords", [])),
+        "commanderyCount": len(document.get("commanderyRecords", [])),
     }
 
 
@@ -536,6 +541,11 @@ def validate_semantic_outputs(documents: Mapping[str, Any]) -> bool:
             or not isinstance(provinces, list) or not isinstance(parents, list)
             or not provinces or not parents):
         raise ValueError("HAN_TILES city/jun roster is empty")
+    jurisdictions = tiles.get("jurisdictionRecords")
+    commanderies = tiles.get("commanderyRecords")
+    if not isinstance(jurisdictions, list) or not isinstance(commanderies, list):
+        raise ValueError("HAN_TILES materialized hierarchy is missing")
+    validate_materialized_hierarchy(provinces, jurisdictions, commanderies)
     for key, upper_bound in (("owner", len(provinces)), ("parentOwner", len(parents))):
         runs = tiles.get(key)
         if not isinstance(runs, list) or any(

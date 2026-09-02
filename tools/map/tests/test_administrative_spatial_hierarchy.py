@@ -87,6 +87,15 @@ class AdministrativeSpatialHierarchyTest(unittest.TestCase):
         self.assertEqual(("R2",), debt.parents_without_county_ids)
         self.assertEqual({"COMMANDERY": 1, "COUNTY": 1, "PROVINCE": 1}, debt.city_kind_counts)
 
+    def test_transition_audit_reads_materialized_jurisdictions_when_present(self):
+        document = fixture_document()
+        document["cities"] = []
+
+        debt = audit_transition_debt(document)
+
+        self.assertEqual((), debt.direct_territory_ids)
+        self.assertEqual((), debt.parents_without_county_ids)
+
     def test_accepts_counties_with_one_or_more_spatial_provinces(self):
         audit = validate_hierarchy(fixture_document())
 

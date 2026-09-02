@@ -26,6 +26,19 @@ from collections import Counter
 from pathlib import Path
 
 try:
+    from tools.map.world_province_geometry import (
+        assign_province_jurisdictions,
+        infer_commandery_kind,
+        validate_jurisdiction_recovery_document,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
+    from world_province_geometry import (
+        assign_province_jurisdictions,
+        infer_commandery_kind,
+        validate_jurisdiction_recovery_document,
+    )
+
+try:
     from tools.map.han_place_merge_runtime import (
         REVIEWED_CATALOG_PLACE_IDS,
         SOURCE_PLACE_IDS,
@@ -46,6 +59,9 @@ READINGS = MAP / "readings.json"
 OUT = MAP / "han-tiles.json"
 LEGACY_GAMEPLAY_TILES = MAP / "han-780-v1-tiles.json"
 HAN_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
+JURISDICTION_RECOVERIES = (
+    ROOT / "data" / "curated" / "han" / "jurisdiction-seat-recoveries-v1.json"
+)
 
 # 220년 정본 군국명과 시나리오 시기명이 다른 같은 행정 권역.
 # 소유권 바인딩에서만 별칭으로 해석하고 지도 표시명은 220년 정본을 유지한다.
@@ -408,7 +424,8 @@ def validate_compact_grid(grid_document: dict, places: list[dict]) -> bool:
 def build(
         *, grid_document: dict | None = None,
         places_document: dict | None = None,
-        readings_document: dict | None = None) -> dict:
+        readings_document: dict | None = None,
+        jurisdiction_recoveries_document: dict | None = None) -> dict:
     grid = grid_document if grid_document is not None else json.loads(GRID.read_text())
     places_doc = (
         places_document if places_document is not None else json.loads(PLACES.read_text())
@@ -482,6 +499,8 @@ def build(
             for nm, h in zip(grid["junNames"], grid["hubs"])]
     province_records = None
     parent_regions = None
+    jurisdiction_records = None
+    commandery_records = None
     legacy_tiles = None
     active_gameplay_parent_names = None
     if isinstance(grid.get('provinceRecords'), list):
@@ -518,7 +537,9 @@ def build(
         parent_regions = []
         for index, record in enumerate(grid['parentRegions']):
             translated = juns[index]['name'] if index < len(juns) else record['displayName']
-            resolved = {**record, 'displayName': translated}
+            seat_kind = cities[juns[index]['seat']]['kind'] if index < len(juns) else None
+            commandery_kind = infer_commandery_kind(record, {'kind': seat_kind})
+            resolved = {**record, 'displayName': translated, 'kind': commandery_kind}
             aliases = PARENT_TEMPORAL_ALIASES.get(record['nameCh'])
             if aliases:
                 resolved['aliases'] = aliases
@@ -526,6 +547,20 @@ def build(
         province_records = resolve_province_record_names(
             grid['provinceRecords'], parent_regions, cities, [jun['seat'] for jun in juns],
         )
+        recoveries_document = jurisdiction_recoveries_document
+        if recoveries_document is None:
+            recoveries_document = json.loads(JURISDICTION_RECOVERIES.read_text(encoding='utf-8'))
+        if not isinstance(recoveries_document, dict):
+            raise ValueError('jurisdiction recovery document must be an object')
+        recoveries = validate_jurisdiction_recovery_document(recoveries_document)
+        assigned = assign_province_jurisdictions(
+            grid['owner'], province_records, parent_regions, cities,
+            parent_seats=[jun['seat'] for jun in juns],
+            jurisdiction_recoveries=recoveries,
+        )
+        province_records = list(assigned.province_records)
+        jurisdiction_records = list(assigned.jurisdiction_records)
+        commandery_records = list(assigned.commandery_records)
     # readings.json 이 있는데 빠진 이름이 있으면 조용히 한자로 흘리지 않는다 — 그게 이번에
     # 커밋에 한자 70건을 밀어넣은 사고다(#524 리뷰 HIGH-1). readings.json 이 아예 없을 때는
     # 위에서 이미 경고했으니 여기서는 있는데 불완전한 경우만 잡는다.
@@ -557,6 +592,8 @@ def build(
     }
     if province_records is not None and parent_regions is not None:
         output['provinceRecords'] = province_records
+        output['jurisdictionRecords'] = jurisdiction_records
+        output['commanderyRecords'] = commandery_records
         output['parentRegions'] = parent_regions
         output['parentOwner'] = rle(grid['parentOwner'])
         # Keep the full legacy route-node surface together. Its indices are a
@@ -576,6 +613,8 @@ def build(
                 'seatOwner': output['parentOwner'],
             }
         output['_meta']['counts']['provinces'] = len(province_records)
+        output['_meta']['counts']['jurisdictions'] = len(jurisdiction_records)
+        output['_meta']['counts']['commanderies'] = len(commandery_records)
         output['_meta']['counts']['parentRegions'] = len(parent_regions)
     return output
 

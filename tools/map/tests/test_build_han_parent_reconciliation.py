@@ -107,11 +107,11 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "owner references a missing province record"):
             module.build_ledger(documents, input_records)
 
-    def test_province_kind_and_city_linkage_form_a_closed_contract(self):
+    def test_spatial_province_kind_and_jurisdiction_linkage_form_a_closed_contract(self):
         module = load_module()
         mutations = [
-            ("linked direct territory", "200012", "kind", "DIRECT_TERRITORY"),
-            ("unlinked county", "DIRECT-PARENT-0046-2cbec5a2711d", "kind", "COUNTY"),
+            ("legacy direct territory", "200012", "kind", "DIRECT_TERRITORY"),
+            ("legacy county", "DIRECT-PARENT-0046-2cbec5a2711d", "kind", "COUNTY"),
             ("unknown kind", "200012", "kind", "UNKNOWN"),
         ]
         for label, province_id, field, value in mutations:
@@ -123,8 +123,15 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
                     if row["id"] == province_id
                 )
                 province[field] = value
-                with self.assertRaisesRegex(ValueError, "province kind|DIRECT_TERRITORY"):
+                with self.assertRaisesRegex(ValueError, "province kind"):
                     module.build_ledger(documents, input_records)
+
+        documents, input_records = module.load_inputs()
+        documents["data/map/han-tiles.json"]["provinceRecords"][0][
+            "jurisdictionId"
+        ] = "MISSING-JURISDICTION"
+        with self.assertRaisesRegex(ValueError, "missing jurisdiction"):
+            module.build_ledger(documents, input_records)
 
 
 @unittest.skipUnless(MODULE_PATH.exists(), "generator is intentionally absent during RED")

@@ -116,7 +116,7 @@ class ProtectedOrchestratorTest(unittest.TestCase):
                 "TEMPORAL_ADJUDICATIONS", "EXTERNAL_PLACES",
                 "EXTERNAL_PROVINCE_SEEDS", "EXTERNAL_ADMINISTRATIVE_SYSTEMS",
                 "PROVINCE_SHAPE_EXCEPTIONS", "NON_PLAYABLE_REGIONS",
-                "MODERN_ADMIN_RECIPE",
+                "MODERN_ADMIN_RECIPE", "JURISDICTION_SEAT_RECOVERIES",
             },
             set(han_tiles_contract.TRACKED_INPUT_ROLES),
         )
@@ -310,13 +310,17 @@ class ProtectedOrchestratorTest(unittest.TestCase):
             lambda d: d["owner"][0].__setitem__(1, 1),
             lambda d: d["adjacency"].update(county=[]),
             lambda d: d["adjacency"].update(commandery=[]),
+            lambda d: d["provinceRecords"].append(copy.deepcopy(d["provinceRecords"][0])),
+            lambda d: d["jurisdictionRecords"][0]["provinceIds"].append("NO-SUCH-PROVINCE"),
+            lambda d: d["commanderyRecords"][0]["jurisdictionIds"].clear(),
+            lambda d: d["commanderyRecords"][0].update(seatJurisdictionId="NO-SUCH-JURISDICTION"),
         ]
         for index, mutate in enumerate(mutations):
             changed = copy.deepcopy(tiles)
             mutate(changed)
             documents["HAN_TILES"] = changed
             with self.subTest(index=index), self.assertRaisesRegex(
-                ValueError, "RLE|connectivity|commandery"
+                ValueError, "RLE|connectivity|commandery|province|jurisdiction|seat"
             ):
                 orchestrator.validate_semantic_outputs(documents)
 
