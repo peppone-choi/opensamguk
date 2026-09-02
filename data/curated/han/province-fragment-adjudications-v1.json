@@ -1,0 +1,84 @@
+{
+  "contractId": "han-province-fragment-adjudications-v1",
+  "sourceRevision": "138bd4fd1b495c749e13d59e07560975b16b5bc8",
+  "scope": "Technical spatial-grid adjudication only; deferred entries are not assertions of historical legitimacy.",
+  "minimumProvinceArea": 8,
+  "inputOwnerSha256": "44a61f66ae45212819c22d9a0077ae7cdccb020818adca444a5bcc39b564072d",
+  "outputOwnerSha256": "30c914c84ba25273fffada212cdd88873bb1c24a242aa72415bc1043202e79a0",
+  "seatOwnerSha256": "53078e16e3c7ad14d51165cf3baaea693efa28a9501747cfbd3d4963a11c9f76",
+  "reassignments": [
+    {
+      "sourceProvinceId": "70741",
+      "targetProvinceId": "70735",
+      "cells": [[306, 241], [307, 241], [308, 241]],
+      "classification": "INLAND_FULLY_ENCLOSED_FRAGMENT",
+      "evidence": {
+        "componentCellCount": 3,
+        "terrainClasses": ["MOUNTAIN"],
+        "surroundingProvinceIds": ["70735"],
+        "containsSourceSeat": false,
+        "touchesNegative": false
+      },
+      "reason": "Seatless disconnected component is fully enclosed by exactly one target province and touches neither SEA nor OUT_OF_SCOPE."
+    },
+    {
+      "sourceProvinceId": "85634",
+      "targetProvinceId": "85640",
+      "cells": [[487, 211]],
+      "classification": "INLAND_FULLY_ENCLOSED_FRAGMENT",
+      "evidence": {
+        "componentCellCount": 1,
+        "terrainClasses": ["PLAIN"],
+        "surroundingProvinceIds": ["85640"],
+        "containsSourceSeat": false,
+        "touchesNegative": false
+      },
+      "reason": "Seatless disconnected component is fully enclosed by exactly one target province and touches neither SEA nor OUT_OF_SCOPE."
+    },
+    {
+      "sourceProvinceId": "95729",
+      "targetProvinceId": "95724",
+      "cells": [[368, 212]],
+      "classification": "INLAND_FULLY_ENCLOSED_FRAGMENT",
+      "evidence": {
+        "componentCellCount": 1,
+        "terrainClasses": ["MOUNTAIN"],
+        "surroundingProvinceIds": ["95724"],
+        "containsSourceSeat": false,
+        "touchesNegative": false
+      },
+      "reason": "Seatless disconnected component is fully enclosed by exactly one target province and touches neither SEA nor OUT_OF_SCOPE."
+    }
+  ],
+  "deferred": [
+    {"provinceId":"40426","displayName":"누현","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[101,39],"cellSetSha256":"0aa86b55628f2550e59598b990b0b3d9ef0c6d4bf1951bc664fef0e4e3ba1e5b","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"40740","displayName":"무현","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[30,7],"cellSetSha256":"673d12587649fdf66554d3658c9cd88bfd54c54aedcd32029f7a853e9fd101a9","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"40957","displayName":"파구현","classification":"ANCHOR_CONTAINING_REVIEW_REQUIRED","componentCellCounts":[174,1],"cellSetSha256":"0be78e6b148a10a1fee512ca3bfab61d94c45b9c815c137f9052181adec26161","secondaryNegativeBoundaryTypes":[],"secondarySurroundingProvinceIds":["41142"],"containedRuntimePlaceIds":["32540"],"reason":"The enclosed component contains the runtime 庐陵郡 place anchor; retain until the commandery anchor and historical seat are adjudicated together."},
+    {"provinceId":"41145","displayName":"시상현","classification":"LACUSTRINE_REVIEW_REQUIRED","componentCellCounts":[72,3],"cellSetSha256":"945b4291aabba615906dea43123c3930b430a810386a39f7ba3aee6f8d168d54","secondaryNegativeBoundaryTypes":["LAKE"],"secondarySurroundingProvinceIds":["41256"],"reason":"At least one secondary component touches a LAKE boundary; retain pending shoreline and historical-boundary adjudication."},
+    {"provinceId":"41194","displayName":"교양현","classification":"LACUSTRINE_REVIEW_REQUIRED","componentCellCounts":[188,28],"cellSetSha256":"2b4323f8042a5f5f8a89b29211428d251a223eff693b922f4778d10a21c2556f","secondaryNegativeBoundaryTypes":["LAKE"],"secondarySurroundingProvinceIds":["41165","41170"],"reason":"At least one secondary component touches a LAKE boundary; retain pending shoreline and historical-boundary adjudication."},
+    {"provinceId":"43057","displayName":"합비현","classification":"LACUSTRINE_REVIEW_REQUIRED","componentCellCounts":[137,1],"cellSetSha256":"aea7ffd954496d17bfb72911b8b8302948070bbf2022339b8a3c468dc9ddabec","secondaryNegativeBoundaryTypes":["LAKE"],"secondarySurroundingProvinceIds":["43138"],"reason":"At least one secondary component touches a LAKE boundary; retain pending shoreline and historical-boundary adjudication."},
+    {"provinceId":"43423","displayName":"악현","classification":"LACUSTRINE_REVIEW_REQUIRED","componentCellCounts":[130,1],"cellSetSha256":"7637c02cb64b7917e6681c5627aefc79311474a58b6073aa0fd230bc86c3eaf0","secondaryNegativeBoundaryTypes":["LAKE"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component touches a LAKE boundary; retain pending shoreline and historical-boundary adjudication."},
+    {"provinceId":"43497","displayName":"주릉현","classification":"LACUSTRINE_REVIEW_REQUIRED","componentCellCounts":[82,5],"cellSetSha256":"349427fb0b6ff4868ca2666dd4dc998c9f9486c55a6ba755d9a83482ae993643","secondaryNegativeBoundaryTypes":["LAKE"],"secondarySurroundingProvinceIds":["43423"],"reason":"At least one secondary component touches a LAKE boundary; retain pending shoreline and historical-boundary adjudication."},
+    {"provinceId":"70620","displayName":"서도현","classification":"INLAND_MULTI_NEIGHBOR_REVIEW_REQUIRED","componentCellCounts":[88,1],"cellSetSha256":"aa894c42482b9d9cfb0297a757ae8e6dcceeee5f65ff8b0b0d63564de2113b0c","secondaryNegativeBoundaryTypes":[],"secondarySurroundingProvinceIds":["DIRECT-PARENT-0069-eb4131eb3c19","X058"],"reason":"Disconnected inland component is not fully enclosed by one province; retain pending historical and coordinate adjudication."},
+    {"provinceId":"83166","displayName":"양안현","classification":"INLAND_MULTI_NEIGHBOR_REVIEW_REQUIRED","componentCellCounts":[15,1],"cellSetSha256":"14ac65a54c426cc4dc0f5358d0bc6e6d0db756c3173d714b834b959a428b070d","secondaryNegativeBoundaryTypes":[],"secondarySurroundingProvinceIds":["83170","83171"],"reason":"Disconnected inland component is not fully enclosed by one province; retain pending historical and coordinate adjudication."},
+    {"provinceId":"85202","displayName":"영현","classification":"INLAND_MULTI_NEIGHBOR_REVIEW_REQUIRED","componentCellCounts":[32,1],"cellSetSha256":"13afaf3b9d30f464b9b507da0aed66894e0941b370148ad5e97a778dc8e9788f","secondaryNegativeBoundaryTypes":[],"secondarySurroundingProvinceIds":["45022","45123","45332"],"reason":"Disconnected inland component is not fully enclosed by one province; retain pending historical and coordinate adjudication."},
+    {"provinceId":"85337","displayName":"동무현","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[50,3],"cellSetSha256":"d88776ad93b7c3b32288e55265bdfe176d99baf43f024120cec9845dcccf8b93","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":["85386","85481"],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"87273","displayName":"조강현","classification":"ANCHOR_CONTAINING_REVIEW_REQUIRED","componentCellCounts":[26,11],"cellSetSha256":"496c88331ed5ea9f4198409a21b259771a4097eb41b72509dab674e0359b014b","secondaryNegativeBoundaryTypes":[],"secondarySurroundingProvinceIds":["87206","87566","87591"],"containedRuntimePlaceIds":["210314"],"reason":"The secondary inland component contains runtime place 210314; retain pending place-anchor and historical boundary review."},
+    {"provinceId":"DIRECT-PARENT-0102-ce418dfe67e6","displayName":"교지군","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[218,4,2],"cellSetSha256":"152153e3404422aaf5cc96597b1b77c50cf755059d4901cf46cb9467091bb599","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0116-8a985f732c47","displayName":"고자미동국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[119,22,2,1,1],"cellSetSha256":"e48e866ba0fa08a83fda37bd175c1d5d363985e1251c943b4a3bd67dc5e643ba","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":["DIRECT-PARENT-0164-3b5b11446871"],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0123-3cc3049ada17","displayName":"이주","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[171,15],"cellSetSha256":"20722e4f6cc0cae8f2a2e1279b421bb16a35e08106ca28beafa9325f1b3532f4","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0130-23501b7ffcdd","displayName":"대방군","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[192,7],"cellSetSha256":"cde133a32fdb2e926f65c6463316259747a78e9283a3b174215ce27582c0043c","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0156-a12c90338d9b","displayName":"목지국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[181,9],"cellSetSha256":"7813deadfa57cf50ef4040cd487ed18d35e1f638a96eded8b935e9dd162660a6","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0164-22953cab254f","displayName":"벽비리국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[174,14],"cellSetSha256":"534b856eac358cc3ee79611604d74e1ea6bc64909a55f3b8ccbbb462c6bd721f","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0165-40276a394699","displayName":"야마일국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[207,41],"cellSetSha256":"ff409c5b1a330e162367c14edb7dfc144b67bf7549099d964c894aa3b644fc0a","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0165-5c3c53f4ab2e","displayName":"야마일국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[374,7],"cellSetSha256":"4564155eaaa429f75ec61a963c6e9bd16fc2475007e48b6b3850b4108a10cf73","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0165-719d56a5aadf","displayName":"야마일국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[345,9],"cellSetSha256":"98b45a0dd400e5168015ba0d5d4e7c01c478d386b8c7f4f58429df50f812e630","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0165-ca0e4ceb7e91","displayName":"야마일국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[216,6],"cellSetSha256":"e9accf930a598f6de213ba095f5ef1e104f5aaf63a1477cefdb8b5641cdefa38","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"DIRECT-PARENT-0169-eba33ce69960","displayName":"고량군","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[212,16],"cellSetSha256":"e38fd4e22f08dab84eac7b52973535d420f850beab57fad65e8ad9fc96a2edb5","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"X035","displayName":"우산국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[14,9],"cellSetSha256":"07baddaddcb9e1b4d786b9331c8b3459239ddec9d7da9e7079bafd9a7e5f032b","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"X051","displayName":"일대국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[239,4],"cellSetSha256":"d3b78e4f8eccae87e79aee1cbdd669b2f1e7609508bbd7775bcd427cdb7e9873","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"X052","displayName":"말로국","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[20,15,8,1,1],"cellSetSha256":"1857346967b7b2e6598a85ced18ce9b6eca1b29ef1d6fc0a29229a6409ec05d0","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."},
+    {"provinceId":"X055","displayName":"야마일국","classification":"ANCHOR_CONTAINING_REVIEW_REQUIRED","componentCellCounts":[28,19],"cellSetSha256":"d6a06a21b8ed27cfdd0b2d19bcec92ad3db9dd208ad613c21b66b69e6cb83567","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"containedRuntimePlaceIds":["X055"],"reason":"The secondary maritime component contains runtime place X055; retain pending place-anchor and island adjudication."},
+    {"provinceId":"X057","displayName":"유구 (후대 명칭)","classification":"MARITIME_REVIEW_REQUIRED","componentCellCounts":[71,42,19,12,11],"cellSetSha256":"20ca07a2d0b2d95a62f95318dc0ce12a89a8afe64b50d52b774a3b47d345319f","secondaryNegativeBoundaryTypes":["SEA"],"secondarySurroundingProvinceIds":[],"reason":"At least one secondary component is separated at a SEA boundary; retain pending island/coastal source adjudication."}
+  ]
+}

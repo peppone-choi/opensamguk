@@ -23,7 +23,7 @@
     "minimumCellCount": 8,
     "belowMinimumCount": 0,
     "belowMinimum": [],
-    "disconnectedCount": 32,
+    "disconnectedCount": 29,
     "disconnected": [
       {
         "id": "40426",
@@ -98,14 +98,6 @@
         ]
       },
       {
-        "id": "70741",
-        "displayName": "고륙현",
-        "componentCellCounts": [
-          64,
-          3
-        ]
-      },
-      {
         "id": "83166",
         "displayName": "양안현",
         "componentCellCounts": [
@@ -130,27 +122,11 @@
         ]
       },
       {
-        "id": "85634",
-        "displayName": "동완현",
-        "componentCellCounts": [
-          47,
-          1
-        ]
-      },
-      {
         "id": "87273",
         "displayName": "조강현",
         "componentCellCounts": [
           26,
           11
-        ]
-      },
-      {
-        "id": "95729",
-        "displayName": "양아현",
-        "componentCellCounts": [
-          52,
-          1
         ]
       },
       {
@@ -292,7 +268,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 15,
+    "fullyEnclosedCount": 12,
     "fullyEnclosed": [
       {
         "id": "40111",
@@ -383,17 +359,6 @@
         ]
       },
       {
-        "id": "70741",
-        "displayName": "고륙현",
-        "componentCellCount": 3,
-        "surroundingIds": [
-          "70735"
-        ],
-        "surroundingDisplayNames": [
-          "음반현"
-        ]
-      },
-      {
         "id": "70952",
         "displayName": "유미현",
         "componentCellCount": 8,
@@ -416,17 +381,6 @@
         ]
       },
       {
-        "id": "85634",
-        "displayName": "동완현",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "85640"
-        ],
-        "surroundingDisplayNames": [
-          "양도현"
-        ]
-      },
-      {
         "id": "87436",
         "displayName": "노현",
         "componentCellCount": 8,
@@ -435,17 +389,6 @@
         ],
         "surroundingDisplayNames": [
           "어양군"
-        ]
-      },
-      {
-        "id": "95729",
-        "displayName": "양아현",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "95724"
-        ],
-        "surroundingDisplayNames": [
-          "호택현"
         ]
       },
       {
@@ -462,7 +405,7 @@
     ]
   },
   "jurisdictionTopology": {
-    "disconnectedCount": 34,
+    "disconnectedCount": 31,
     "disconnected": [
       {
         "id": "40426",
@@ -577,14 +520,6 @@
         ]
       },
       {
-        "id": "70741",
-        "displayName": "고륙현",
-        "componentCellCounts": [
-          64,
-          3
-        ]
-      },
-      {
         "id": "83166",
         "displayName": "양안현",
         "componentCellCounts": [
@@ -609,27 +544,11 @@
         ]
       },
       {
-        "id": "85634",
-        "displayName": "동완현",
-        "componentCellCounts": [
-          47,
-          1
-        ]
-      },
-      {
         "id": "87273",
         "displayName": "조강현",
         "componentCellCounts": [
           26,
           11
-        ]
-      },
-      {
-        "id": "95729",
-        "displayName": "양아현",
-        "componentCellCounts": [
-          52,
-          1
         ]
       },
       {
@@ -751,7 +670,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 14,
+    "fullyEnclosedCount": 11,
     "fullyEnclosed": [
       {
         "id": "40111",
@@ -866,20 +785,6 @@
         "sameCommandery": true
       },
       {
-        "id": "70741",
-        "displayName": "고륙현",
-        "componentCellCount": 3,
-        "surroundingIds": [
-          "70735"
-        ],
-        "surroundingDisplayNames": [
-          "음반현"
-        ],
-        "commanderyId": "PARENT-0005",
-        "surroundingCommanderyId": "PARENT-0004",
-        "sameCommandery": false
-      },
-      {
         "id": "70952",
         "displayName": "유미현",
         "componentCellCount": 8,
@@ -908,34 +813,6 @@
         "sameCommandery": true
       },
       {
-        "id": "85634",
-        "displayName": "동완현",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "85640"
-        ],
-        "surroundingDisplayNames": [
-          "양도현"
-        ],
-        "commanderyId": "PARENT-0105",
-        "surroundingCommanderyId": "PARENT-0031",
-        "sameCommandery": false
-      },
-      {
-        "id": "95729",
-        "displayName": "양아현",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "95724"
-        ],
-        "surroundingDisplayNames": [
-          "호택현"
-        ],
-        "commanderyId": "PARENT-0078",
-        "surroundingCommanderyId": "PARENT-0002",
-        "sameCommandery": false
-      },
-      {
         "id": "JURISDICTION-PARENT-0148-SEAT",
         "displayName": "문산현",
         "componentCellCount": 8,
@@ -952,7 +829,7 @@
     ]
   },
   "commanderyTopology": {
-    "disconnectedCount": 47,
+    "disconnectedCount": 45,
     "disconnected": [
       {
         "id": "PARENT-0000",
@@ -960,14 +837,6 @@
         "componentCellCounts": [
           271,
           133
-        ]
-      },
-      {
-        "id": "PARENT-0005",
-        "displayName": "좌풍익",
-        "componentCellCounts": [
-          765,
-          3
         ]
       },
       {
@@ -1047,7 +916,7 @@
         "id": "PARENT-0031",
         "displayName": "낭사국",
         "componentCellCounts": [
-          602,
+          603,
           3
         ]
       },
@@ -1188,8 +1057,7 @@
         "displayName": "상당군",
         "componentCellCounts": [
           750,
-          67,
-          1
+          67
         ]
       },
       {
@@ -1216,14 +1084,6 @@
           1801,
           4,
           2
-        ]
-      },
-      {
-        "id": "PARENT-0105",
-        "displayName": "동완군",
-        "componentCellCounts": [
-          47,
-          1
         ]
       },
       {
@@ -1366,19 +1226,8 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 15,
+    "fullyEnclosedCount": 12,
     "fullyEnclosed": [
-      {
-        "id": "PARENT-0005",
-        "displayName": "좌풍익",
-        "componentCellCount": 3,
-        "surroundingIds": [
-          "PARENT-0004"
-        ],
-        "surroundingDisplayNames": [
-          "경조윤"
-        ]
-      },
       {
         "id": "PARENT-0045",
         "displayName": "계양군",
@@ -1402,17 +1251,6 @@
         ]
       },
       {
-        "id": "PARENT-0078",
-        "displayName": "상당군",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "PARENT-0002"
-        ],
-        "surroundingDisplayNames": [
-          "하동군"
-        ]
-      },
-      {
         "id": "PARENT-0101",
         "displayName": "합포군",
         "componentCellCount": 67,
@@ -1421,17 +1259,6 @@
         ],
         "surroundingDisplayNames": [
           "고량군"
-        ]
-      },
-      {
-        "id": "PARENT-0105",
-        "displayName": "동완군",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "PARENT-0031"
-        ],
-        "surroundingDisplayNames": [
-          "낭사국"
         ]
       },
       {
@@ -3683,7 +3510,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "2b11c8824650a809377187efa16b3d89e28f272262cf247e86fe13c03454f9c1"
+      "sha256": "ba930d4931f489859b0e2b9c0d01dadf0d51a70363941fdee4b1da346f2fd53b"
     },
     "administrativeUnits": {
       "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"

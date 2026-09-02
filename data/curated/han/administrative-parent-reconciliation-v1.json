@@ -240,7 +240,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "2b11c8824650a809377187efa16b3d89e28f272262cf247e86fe13c03454f9c1"
+      "sha256": "ba930d4931f489859b0e2b9c0d01dadf0d51a70363941fdee4b1da346f2fd53b"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -25238,7 +25238,7 @@
         "routeNodeKey": "e29774a0-b6bb-4924-abf9-9df58aae0534"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:安定郡:006",
-      "cellCount": 55,
+      "cellCount": 58,
       "cityId": "70735",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -25248,7 +25248,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 55,
+            "cellCount": 58,
             "junArrayIndex": 4,
             "nameCh": "京兆尹"
           }
@@ -25269,7 +25269,7 @@
       }
     },
     {
-      "cellCount": 67,
+      "cellCount": 64,
       "cityId": "70741",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -25279,7 +25279,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 67,
+            "cellCount": 64,
             "junArrayIndex": 5,
             "nameCh": "左馮翊"
           }
@@ -35187,7 +35187,7 @@
         "routeNodeKey": "7497b546-ba6e-4d39-9919-93717a6b556b"
       },
       "approvedParentAdministrativeUnitId": "hhs:111:琅邪國:004",
-      "cellCount": 48,
+      "cellCount": 47,
       "cityId": "85634",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -35197,7 +35197,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 48,
+            "cellCount": 47,
             "junArrayIndex": 105,
             "nameCh": "東莞郡"
           }
@@ -35269,7 +35269,7 @@
         "routeNodeKey": "83c0e403-0721-459a-bfd5-ac538d2b6fcb"
       },
       "approvedParentAdministrativeUnitId": "hhs:111:琅邪國:009",
-      "cellCount": 42,
+      "cellCount": 43,
       "cityId": "85640",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -35279,7 +35279,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 42,
+            "cellCount": 43,
             "junArrayIndex": 31,
             "nameCh": "琅邪國"
           }
@@ -43121,7 +43121,7 @@
         "routeNodeKey": "a9817ebf-c5b7-48ff-bfb6-fdd27fc7ef19"
       },
       "approvedParentAdministrativeUnitId": "hhs:109:河東郡:019",
-      "cellCount": 78,
+      "cellCount": 79,
       "cityId": "95724",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -43131,7 +43131,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 78,
+            "cellCount": 79,
             "junArrayIndex": 2,
             "nameCh": "河東郡"
           }
@@ -43162,7 +43162,7 @@
         "routeNodeKey": "f821cd25-bdcd-4e9f-affa-b06a19c759f4"
       },
       "approvedParentAdministrativeUnitId": "hhs:113:上黨郡:012",
-      "cellCount": 53,
+      "cellCount": 52,
       "cityId": "95729",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -43172,7 +43172,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 53,
+            "cellCount": 52,
             "junArrayIndex": 78,
             "nameCh": "上黨郡"
           }
@@ -46640,8 +46640,8 @@
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 1711,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-      "EXACT_APPROVED": 80910,
-      "PROPOSED_GEOMETRIC": 18204
+      "EXACT_APPROVED": 80913,
+      "PROPOSED_GEOMETRIC": 18201
     },
     "decisionRowCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
@@ -46655,7 +46655,7 @@
       "pendingCandidateJunCount": 17,
       "rejectedSourcedGroupJunCount": 5
     },
-    "exactApprovedCellCount": 80910,
+    "exactApprovedCellCount": 80913,
     "exactApprovedRowCount": 781,
     "geometryDiagnostics": {
       "distanceTies": {
@@ -46667,18 +46667,18 @@
         "rowCount": 90
       },
       "singleGroupJun": {
-        "cellCount": 10161,
+        "cellCount": 10158,
         "rowCount": 194
       },
       "uniqueNearest": {
-        "cellCount": 18135,
+        "cellCount": 18132,
         "rowCount": 281
       }
     },
     "landCellCount": 227349,
     "landOwnerRowCount": 1138,
     "provinceRecordCount": 1524,
-    "unresolvedCellCount": 26246,
+    "unresolvedCellCount": 26243,
     "unresolvedRowCount": 357
   }
 }
