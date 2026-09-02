@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
     buildIsoScene, buildProvinceVisualAnchors, cellToScreen, cityFallbackHitBox, cityLabelMetrics, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
     cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialFocusedView, initialView, labelledRegions,
-    labelZoomFor, maxScaleForDpr, overviewCityVisualBox, provinceAtScreenPoint,
+    labelZoomFor, maxScaleForDpr, overviewCityVisualBox, provinceAtScreenPoint, provinceLayerRuntimeCities,
     completeJurisdictionOverlays,
     screenBoxInsideProvince, screenBoxInsideVisualClearance, seatLabel,
     terrainColorFor, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
@@ -371,6 +371,28 @@ describe('지도 아이콘 배율과 앵커', () => {
             null,
             provinceMap,
         )).not.toThrow();
+
+        const provinceCities = provinceLayerRuntimeCities(runtime.cities);
+        expect(runtime.cities.filter((city) => city.provinceId === undefined)).toHaveLength(31);
+        expect(provinceCities).toHaveLength(runtime.cities.length - 31);
+        expect(provinceCities.every((city) => city.provinceId !== undefined)).toBe(true);
+        expect(provinceCities.some((city) => city.id === 199)).toBe(false);
+        expect(provinceCities.some((city) => city.id === 200)).toBe(true);
+        const scenePositions = new Map(runtime.cities.map((city) => [city.id, {
+            col: city.x * hanTiles._meta.cols / runtime.width,
+            row: city.y * hanTiles._meta.rows / runtime.height,
+            provinceId: city.provinceId ?? 691,
+        }]));
+        const scene = buildIsoScene(hanTiles, provinceCities, {
+            width: runtime.width,
+            height: runtime.height,
+        }, {
+            markerPositions: scenePositions,
+            provinceRecords: hanTiles.provinceRecords,
+            jurisdictionRecords: hanTiles.jurisdictionRecords,
+        });
+        expect(scene.cities.some((city) => city.id === 199)).toBe(false);
+        expect(scene.cities.filter((city) => city.provinceId === 691)).toHaveLength(1);
     });
 
     it('실제 정본에서 1020개 현과 172개 군국 마커를 각각 한 번만 만든다', () => {

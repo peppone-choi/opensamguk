@@ -22,6 +22,7 @@ export {
   labelledRegions,
   labelZoomFor,
   mapCityToTile,
+  provinceLayerRuntimeCities,
   overviewCityVisualBox,
   provinceAtScreenPoint,
   sceneGolden,

@@ -362,6 +362,16 @@ export function mapCityToTile(
   };
 }
 
+export function provinceLayerRuntimeCities(
+  cities: readonly IsoCityOverlay[],
+): IsoCityOverlay[] {
+  return cities.filter((city) => (
+    city.provinceId !== undefined
+    && Number.isInteger(city.provinceId)
+    && city.provinceId >= 0
+  ));
+}
+
 function cityMarkerTile(
   city: IsoCityOverlay,
   grid: GridSize,
@@ -1377,7 +1387,7 @@ export function HanMapCanvas({
       : undefined;
     return new Map(cities.map((city) => [
       city.id,
-      cityMarkerTile(city, grid, sourceSize, placement),
+      cityMarkerTile(city, grid, sourceSize, city.provinceId === undefined ? undefined : placement),
     ]));
   }, [cities, countyIndex, loadedTiles, provinceMap, sourceSize]);
   const provinceAnchors = useMemo(() => {
@@ -1391,7 +1401,7 @@ export function HanMapCanvas({
     return buildProvinceVisualAnchors(provinceMap, preferredByProvince);
   }, [canonicalMarkerPositions, cities, provinceMap]);
   const displayCities = useMemo(() => {
-    if (administrativeLayer === 'PROVINCE') return [...cities];
+    if (administrativeLayer === 'PROVINCE') return provinceLayerRuntimeCities(cities);
     if (!loadedTiles || !provinceAnchors) return [...cities];
     const overlays = completeJurisdictionOverlays(
       loadedTiles,
