@@ -32,6 +32,48 @@ data class SupplyCity(val id: Int, val nationId: Int)
 data class SupplyCapital(val capitalCityId: Int, val nationId: Int)
 
 /**
+ * Runtime snapshot used by the Han spatial supply traversal.
+ *
+ * Province indices are the canonical `provinceRecords[]` indices. Adjacency is symmetric and kept
+ * in canonical edge order; ownership is the direct spatial occupancy for the current scenario and
+ * turn. Cities absent from [cityProvinceIndices] are legacy runtime cities and never become spatial
+ * bridge nodes.
+ */
+data class SpatialSupplyNetwork(
+    val provinceOwners: IntArray,
+    val provinceAdjacency: List<IntArray>,
+    val cityProvinceIndices: Map<Int, Int>,
+) {
+    init {
+        require(provinceOwners.size == provinceAdjacency.size) {
+            "Spatial supply owner/adjacency size mismatch: ${provinceOwners.size}/${provinceAdjacency.size}"
+        }
+        provinceAdjacency.forEachIndexed { provinceIndex, neighbors ->
+            require(neighbors.toSet().size == neighbors.size) {
+                "Spatial supply province $provinceIndex has duplicate adjacency"
+            }
+            neighbors.forEach { neighbor ->
+                require(neighbor in provinceOwners.indices && neighbor != provinceIndex) {
+                    "Spatial supply province $provinceIndex has invalid neighbor $neighbor"
+                }
+            }
+        }
+        provinceAdjacency.forEachIndexed { provinceIndex, neighbors ->
+            neighbors.forEach { neighbor ->
+                require(provinceIndex in provinceAdjacency[neighbor]) {
+                    "Spatial supply adjacency is asymmetric: $provinceIndex -> $neighbor"
+                }
+            }
+        }
+        cityProvinceIndices.forEach { (cityId, provinceIndex) ->
+            require(provinceIndex in provinceOwners.indices) {
+                "Spatial supply city $cityId has invalid province index $provinceIndex"
+            }
+        }
+    }
+}
+
+/**
  * Multi-source FIFO BFS over the active CityConst.path adjacency (PHP `UpdateCitySupply.php:17-58`).
  *
  * @param cities owned cities (nation != 0); the caller supplies them in ASCENDING id order (anchor #1).
@@ -92,6 +134,59 @@ fun computeSuppliedCitiesOrdered(
 }
 
 /**
+ * Compute city supply through the canonical spatial-province graph.
+ *
+ * Mapped cities are supplied only when their own-nation occupied province is reachable from a
+ * same-nation capital province. Unmapped legacy cities retain the historical CityConst result, but
+ * that result is never allowed to supply a mapped city and therefore cannot bridge two spatial
+ * territories.
+ */
+fun computeSuppliedCitiesWithSpatialNetwork(
+    cities: List<SupplyCity>,
+    capitals: List<SupplyCapital>,
+    cityConst: CityConstVariant,
+    spatialNetwork: SpatialSupplyNetwork,
+): Set<Int> {
+    val ownedNation = cities.associate { it.id to it.nationId }
+    val reached = BooleanArray(spatialNetwork.provinceOwners.size)
+    val queue = ArrayDeque<Int>()
+
+    for (capital in capitals) {
+        if (ownedNation[capital.capitalCityId] != capital.nationId) continue
+        val provinceIndex = spatialNetwork.cityProvinceIndices[capital.capitalCityId] ?: continue
+        if (spatialNetwork.provinceOwners[provinceIndex] != capital.nationId) continue
+        if (reached[provinceIndex]) continue
+        reached[provinceIndex] = true
+        queue.addLast(provinceIndex)
+    }
+
+    while (queue.isNotEmpty()) {
+        val provinceIndex = queue.removeFirst()
+        val nationId = spatialNetwork.provinceOwners[provinceIndex]
+        for (neighbor in spatialNetwork.provinceAdjacency[provinceIndex]) {
+            if (reached[neighbor]) continue
+            if (spatialNetwork.provinceOwners[neighbor] != nationId) continue
+            reached[neighbor] = true
+            queue.addLast(neighbor)
+        }
+    }
+
+    val supplied = LinkedHashSet<Int>()
+    for (city in cities) {
+        val provinceIndex = spatialNetwork.cityProvinceIndices[city.id] ?: continue
+        if (spatialNetwork.provinceOwners[provinceIndex] == city.nationId && reached[provinceIndex]) {
+            supplied += city.id
+        }
+    }
+
+    val legacySupplied = computeSuppliedCitiesOrdered(cities, capitals, cityConst)
+    for (cityId in legacySupplied) {
+        if (cityId !in spatialNetwork.cityProvinceIndices) supplied += cityId
+    }
+    return supplied
+}
+
+/**
  * The result of [applyCitySupply]: the mutated city + general snapshots (same iteration order as the
  * inputs), the neutralized (lost) city ids (first-seen = ascending city id), and the byte-exact 고립
  * global-history log lines (one per lost city, in lost-city iteration order).
@@ -138,10 +233,13 @@ fun applyCitySupply(
     cityConst: CityConstVariant,
     year: Int,
     month: Int,
+    spatialSupplyNetwork: SpatialSupplyNetwork? = null,
 ): CitySupplyResult {
     // The BFS reads ONLY owned cities (nation != 0), iterated in ASCENDING id order (anchor #1).
     val ownedCities = cities.filter { it.nationId != 0 }.map { SupplyCity(it.id, it.nationId) }
-    val suppliedSet = computeSuppliedCities(ownedCities, capitals, cityConst)
+    val suppliedSet = spatialSupplyNetwork?.let {
+        computeSuppliedCitiesWithSpatialNetwork(ownedCities, capitals, cityConst, it)
+    } ?: computeSuppliedCities(ownedCities, capitals, cityConst)
 
     // Step 1 — net supply: nation==0 → supplied; nation!=0 → supplied iff in the BFS set.
     fun isSupplied(c: City): Boolean = if (c.nationId == 0) true else c.id in suppliedSet
@@ -238,6 +336,7 @@ interface UpdateCitySupplyContext : EventActionContext {
     fun generals(): List<General>
     fun capitals(): List<SupplyCapital>
     fun cityConst(): CityConstVariant
+    fun spatialSupplyNetwork(): SpatialSupplyNetwork? = null
     fun year(): Int
     fun month(): Int
     /** Apply the mutated cities/generals to the world and push the isolated logs. */
@@ -259,6 +358,7 @@ class UpdateCitySupplyAction : EventAction {
             uctx.cityConst(),
             uctx.year(),
             uctx.month(),
+            uctx.spatialSupplyNetwork(),
         )
         uctx.applyCitySupply(result)
     }

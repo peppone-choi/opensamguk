@@ -120,6 +120,7 @@ import opensamguk.logic.world.ScenarioStartEventContext
 import opensamguk.logic.world.SpecialityHelper
 import opensamguk.logic.world.SpecialityGeneral
 import opensamguk.logic.world.SpecialityWorldView
+import opensamguk.logic.world.SpatialSupplyNetwork
 import opensamguk.logic.world.SupplyCapital
 import opensamguk.logic.world.UnblockScoutWorldView
 import opensamguk.logic.world.UpdateCitySupplyContext
@@ -151,6 +152,7 @@ class WorldActionContext(
     private val ambientPhpRandom: PhpMt19937 = PhpMt19937.ambient(),
     private val lockGame: () -> Boolean = { false },
     private val unlockGame: () -> Unit = {},
+    private val spatialSupplyNetworkProvider: () -> SpatialSupplyNetwork? = { null },
     // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼진 프로덕션에서는 null이고, 그 상태에서
     // V2ProcessCityIncome leaf가 돌면 fail-closed로 죽는다(무음 no-op이면 수입이 통째로 사라진다).
     private val v2CityLedger: V2CityLedgerStore? = null,
@@ -270,6 +272,9 @@ class WorldActionContext(
     /** [UpdateCitySupplyContext], [UpdateNationLevelContext]. */
     override fun cityConst(): CityConstVariant =
         activeCityConst()
+
+    override fun spatialSupplyNetwork(): SpatialSupplyNetwork? =
+        spatialSupplyNetworkProvider()
 
     /** [UpdateNationLevelContext], [ProvideNPCTroopLeaderContext]. */
     override fun nations(): List<opensamguk.logic.domain.Nation> =

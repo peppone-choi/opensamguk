@@ -97,6 +97,28 @@ class UpdateCitySupplyLossTest {
     }
 
     @Test
+    fun `spatial non-seat corridor supplies a city that the legacy city graph cannot reach`() {
+        val result = applyCitySupply(
+            cities = listOf(city(1, 1), city(3, 1)),
+            generals = emptyList(),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            year = 200,
+            month = 1,
+            spatialSupplyNetwork = SpatialSupplyNetwork(
+                provinceOwners = intArrayOf(1, 1, 1),
+                provinceAdjacency = listOf(intArrayOf(1), intArrayOf(0, 2), intArrayOf(1)),
+                cityProvinceIndices = mapOf(1 to 0, 3 to 2),
+            ),
+        )
+
+        val remote = result.cities.first { it.id == 3 }
+        assertEquals(1, remote.supplyState)
+        assertEquals(1000, remote.population)
+        assertEquals(100.0, remote.trust, 1e-9)
+    }
+
+    @Test
     fun `unsupplied general decays crew atmos train 5 percent (phpRound, int columns)`() {
         // nation 1: capital 1 supplied; city 3 isolated. general in city 3 decays.
         val gSupplied = general(10, 1, cityId = 1, crew = 1000, atmos = 100.0, train = 100.0)

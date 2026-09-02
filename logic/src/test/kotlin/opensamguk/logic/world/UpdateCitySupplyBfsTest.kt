@@ -24,6 +24,23 @@ import kotlin.test.assertTrue
  */
 class UpdateCitySupplyBfsTest {
 
+    private fun spatialNetwork(
+        owners: List<Int>,
+        edges: List<Pair<Int, Int>>,
+        cityProvinces: Map<Int, Int>,
+    ): SpatialSupplyNetwork {
+        val adjacency = List(owners.size) { mutableListOf<Int>() }
+        for ((a, b) in edges) {
+            adjacency[a] += b
+            adjacency[b] += a
+        }
+        return SpatialSupplyNetwork(
+            provinceOwners = owners.toIntArray(),
+            provinceAdjacency = adjacency.map { it.toIntArray() },
+            cityProvinceIndices = cityProvinces,
+        )
+    }
+
     // A tiny synthetic 5-city line variant: 1—2—3—4—5 (symmetric adjacency, insertion-ordered).
     private fun lineConst(): CityConstVariant {
         val rows = listOf(
@@ -143,5 +160,85 @@ class UpdateCitySupplyBfsTest {
         // pin: the 'che' base byId matches the GREEN CityConst base (zero delta).
         val baseNode: CityInitialDetail = CityConst.byId(1)!!
         assertEquals(baseNode.path.keys.toList(), che.byId(1)!!.path.keys.toList())
+    }
+
+    @Test
+    fun `non-seat spatial provinces connect two owned cities without a CityConst edge`() {
+        val supplied = computeSuppliedCitiesWithSpatialNetwork(
+            cities = listOf(SupplyCity(1, 1), SupplyCity(3, 1)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            spatialNetwork = spatialNetwork(
+                owners = listOf(1, 1, 1),
+                edges = listOf(0 to 1, 1 to 2),
+                cityProvinces = mapOf(1 to 0, 3 to 2),
+            ),
+        )
+
+        assertEquals(setOf(1, 3), supplied)
+    }
+
+    @Test
+    fun `enemy occupied spatial province blocks the supply corridor`() {
+        val supplied = computeSuppliedCitiesWithSpatialNetwork(
+            cities = listOf(SupplyCity(1, 1), SupplyCity(3, 1)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            spatialNetwork = spatialNetwork(
+                owners = listOf(1, 2, 1),
+                edges = listOf(0 to 1, 1 to 2),
+                cityProvinces = mapOf(1 to 0, 3 to 2),
+            ),
+        )
+
+        assertEquals(setOf(1), supplied)
+    }
+
+    @Test
+    fun `same-owner spatial detour bypasses a blocked province`() {
+        val supplied = computeSuppliedCitiesWithSpatialNetwork(
+            cities = listOf(SupplyCity(1, 1), SupplyCity(3, 1)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            spatialNetwork = spatialNetwork(
+                owners = listOf(1, 2, 1, 1),
+                edges = listOf(0 to 1, 1 to 2, 0 to 3, 3 to 2),
+                cityProvinces = mapOf(1 to 0, 3 to 2),
+            ),
+        )
+
+        assertEquals(setOf(1, 3), supplied)
+    }
+
+    @Test
+    fun `unmapped legacy city keeps CityConst supply without becoming a spatial node`() {
+        val supplied = computeSuppliedCitiesWithSpatialNetwork(
+            cities = listOf(SupplyCity(1, 1), SupplyCity(2, 1)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            spatialNetwork = spatialNetwork(
+                owners = listOf(1),
+                edges = emptyList(),
+                cityProvinces = mapOf(1 to 0),
+            ),
+        )
+
+        assertEquals(setOf(1, 2), supplied)
+    }
+
+    @Test
+    fun `unmapped legacy capital cannot supply a mapped city through the city graph`() {
+        val supplied = computeSuppliedCitiesWithSpatialNetwork(
+            cities = listOf(SupplyCity(1, 1), SupplyCity(2, 1)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            spatialNetwork = spatialNetwork(
+                owners = listOf(1),
+                edges = emptyList(),
+                cityProvinces = mapOf(2 to 0),
+            ),
+        )
+
+        assertEquals(setOf(1), supplied)
     }
 }
