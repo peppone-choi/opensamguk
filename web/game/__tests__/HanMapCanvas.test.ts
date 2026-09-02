@@ -156,6 +156,63 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect(scene.cities[0]).toMatchObject({ col: 2, row: 0, provinceId: 1 });
     });
 
+    it('명시된 현 프로빈스 ID를 좌표 추정보다 우선한다', () => {
+        const provinceMap: ProvinceIdentityMap = {
+            width: 3,
+            height: 1,
+            provinces: new Int16Array([0, -1, 1]),
+            commanderies: new Int16Array([0, -1, 0]),
+            provinceEdges: [],
+            commanderyEdges: [],
+        };
+        const countyIndex: CountyAdministrativeIndex = {
+            // 장안현의 220년 상위 군이 runtime 시나리오 군과 달라도 직접 현 ID가 우선한다.
+            commanderyByProvince: new Int16Array([0, 1]),
+            commanderyByName: new Map([['A군', 0]]),
+            administrativeSystemByProvince: ['', ''],
+        };
+        const tiles = {
+            _meta: { cols: 3, rows: 1, year: 220, terrainLegend: {} },
+            terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
+            provinceRecords: [
+                { id: 'P0', displayName: '오현', nameCh: '誤縣', parentRegionId: 'A', kind: 'COUNTY', administrativeSystem: 'HAN_COMMANDERY', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST' },
+                { id: 'P1', displayName: '장안현', nameCh: '長安縣', parentRegionId: 'A', kind: 'COUNTY', administrativeSystem: 'HAN_COMMANDERY', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST' },
+            ],
+        } satisfies HanTiles;
+
+        const scene = buildIsoScene(
+            tiles,
+            [{ id: 1, name: '장안', level: 9, nationId: 1, x: 0, y: 0, provinceId: 1, commanderyName: 'A군' }],
+            { width: 2, height: 1 },
+            { markerPlacement: { provinceMap, countyIndex }, provinceRecords: tiles.provinceRecords },
+        );
+
+        expect(scene.cities[0]).toMatchObject({ col: 2, row: 0, provinceId: 1, mapLabel: '장안현' });
+    });
+
+    it('같은 현 프로빈스에 겹친 수도와 현 마커는 수도 하나만 그린다', () => {
+        const tiles = {
+            _meta: { cols: 1, rows: 1, year: 220, terrainLegend: {} },
+            terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
+        } satisfies HanTiles;
+        const scene = buildIsoScene(tiles, [
+            { id: 10, name: '군치', level: 8, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, isCapital: true },
+            { id: 11, name: '현', level: 10, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, provinceId: 4 },
+        ], { width: 1, height: 1 }, {
+            currentCityId: 10,
+            selectedCityId: 10,
+            markerPositions: new Map([
+                [10, { col: 0, row: 0, provinceId: 4 }],
+                [11, { col: 0, row: 0, provinceId: 4 }],
+            ]),
+        });
+
+        expect(scene.cities).toHaveLength(1);
+        expect(scene.cities[0]).toMatchObject({ id: 11, provinceId: 4, isCapital: true });
+        expect(scene.cities[0].layers.filter((layer) => layer === 'flag')).toHaveLength(1);
+        expect(scene.cities[0].layers).toEqual(expect.arrayContaining(['capital', 'current', 'selected']));
+    });
+
     it('아이콘·hitbox·도시명 box는 같은 현 프로빈스 내부일 때만 유효하다', () => {
         const provinceMap: ProvinceIdentityMap = {
             width: 3,

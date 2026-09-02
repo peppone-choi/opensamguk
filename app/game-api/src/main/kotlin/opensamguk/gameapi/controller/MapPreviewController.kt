@@ -112,6 +112,7 @@ class MapPreviewController(
                     regionName = coord.regionName,
                     commanderyName = coord.commanderyName,
                     isCommanderySeat = coord.isCommanderySeat,
+                    provinceId = coord.provinceId,
                     isCapital = city.id in capitalIds,
                 )
             }

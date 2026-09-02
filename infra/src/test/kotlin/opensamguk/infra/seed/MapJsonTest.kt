@@ -25,6 +25,7 @@ class MapJsonTest {
                 "name": "장안",
                 "x": 280,
                 "y": 221,
+                "provinceId": 503,
                 "meta": {
                   "ju": "사예",
                   "jun": "경조윤",
@@ -40,5 +41,6 @@ class MapJsonTest {
         assertEquals("사예", city.regionName)
         assertEquals("경조윤", city.commanderyName)
         assertTrue(city.isCommanderySeat)
+        assertEquals(503, city.provinceId)
     }
 }

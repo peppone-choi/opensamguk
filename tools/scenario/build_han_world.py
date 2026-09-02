@@ -679,6 +679,11 @@ def build() -> tuple[dict, str, str, dict]:
 
     out_cities = []
     raw_rows = []
+    province_id_by_city_index = {
+        record["cityIndex"]: province_id
+        for province_id, record in enumerate(tiles.get("provinceRecords", []))
+        if record.get("cityIndex") is not None
+    }
     for ci, jn in order:
         cid = id_of[ci]
         lv = level_at(ci, jn)
@@ -687,7 +692,7 @@ def build() -> tuple[dict, str, str, dict]:
         x = round(cities[ci]["col"] * WIDTH / cols)
         y = round(cities[ci]["row"] * HEIGHT / tiles["_meta"]["rows"])
         links = sorted(id_of[b] for b in conn[ci])
-        out_cities.append({
+        out_city = {
             "id": cid, "name": names[ci], "x": x, "y": y,
             "level": LEVEL_ID[lv], "region": ju_order.index(region_of[jn]) + 1,
             "max": dict(mx),
@@ -696,7 +701,11 @@ def build() -> tuple[dict, str, str, dict]:
             "meta": {"jun": juns[jn]["name"], "junCh": juns[jn]["nameCh"],
                      "ju": region_of[jn], "seat": cities[juns[jn]["seat"]]["name"],
                      "nameCh": cities[ci]["nameCh"], "isSeat": ci == juns[jn]["seat"]},
-        })
+            "physicalPlaceId": cities[ci]["id"],
+        }
+        if ci in province_id_by_city_index:
+            out_city["provinceId"] = province_id_by_city_index[ci]
+        out_cities.append(out_city)
         raw_rows.append((cid, names[ci], lv,
                          [mx[k] // 100 for k in STAT_KEYS],
                          region_of[jn], x, y,

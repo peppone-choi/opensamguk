@@ -18,6 +18,8 @@ object MapJson {
         val regionName: String? = null,
         val commanderyName: String? = null,
         val isCommanderySeat: Boolean = false,
+        /** Canonical han-tiles provinceRecords array index. Null means not yet historically adjudicated. */
+        val provinceId: Int? = null,
     )
 
     data class MapCityDetail(
@@ -72,6 +74,7 @@ object MapJson {
                 regionName = (meta?.get("ju") as? String)?.takeIf { it.isNotBlank() },
                 commanderyName = (meta?.get("jun") as? String)?.takeIf { it.isNotBlank() },
                 isCommanderySeat = meta?.get("isSeat") == true,
+                provinceId = intOrNull(c["provinceId"]),
             )
         }
         return MapData(width = width, height = height, cities = cities)

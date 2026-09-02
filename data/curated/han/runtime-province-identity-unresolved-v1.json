@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "han-runtime-province-identity-unresolved-v1",
+  "policy": {
+    "forbidNearestGeometryAssignment": true,
+    "resolutionRequirement": "reviewed county-seat physicalPlaceId with a canonical province footprint"
+  },
+  "summary": {
+    "runtimeCities": 774,
+    "bound": 743,
+    "unresolved": 31
+  },
+  "rows": [
+    {
+      "runtimeCityId": 199,
+      "runtimeName": "감릉군",
+      "physicalPlaceId": "210369",
+      "commanderyName": "청하국",
+      "commanderyNameCh": "清河國",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 204,
+      "runtimeName": "장무군",
+      "physicalPlaceId": "87628",
+      "commanderyName": "장무군",
+      "commanderyNameCh": "章武郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 221,
+      "runtimeName": "장락군",
+      "physicalPlaceId": "210314",
+      "commanderyName": "장락군",
+      "commanderyNameCh": "長樂郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 310,
+      "runtimeName": "이성",
+      "physicalPlaceId": "85581",
+      "commanderyName": "이성군",
+      "commanderyNameCh": "利城郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 382,
+      "runtimeName": "낙릉군",
+      "physicalPlaceId": "210487",
+      "commanderyName": "낙릉군",
+      "commanderyNameCh": "樂陵郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 409,
+      "runtimeName": "남향군",
+      "physicalPlaceId": "210962",
+      "commanderyName": "남향군",
+      "commanderyNameCh": "南鄉郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 433,
+      "runtimeName": "고릉군",
+      "physicalPlaceId": "210974",
+      "commanderyName": "고릉군",
+      "commanderyNameCh": "固陵郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 436,
+      "runtimeName": "신성후국",
+      "physicalPlaceId": "82709",
+      "commanderyName": "신성후국",
+      "commanderyNameCh": "新成侯國",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 531,
+      "runtimeName": "여릉군",
+      "physicalPlaceId": "32540",
+      "commanderyName": "여릉군",
+      "commanderyNameCh": "廬陵郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 532,
+      "runtimeName": "신도군",
+      "physicalPlaceId": "32221",
+      "commanderyName": "신도군",
+      "commanderyNameCh": "新都郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 546,
+      "runtimeName": "비릉전농교위",
+      "physicalPlaceId": "32365",
+      "commanderyName": "비릉전농교위",
+      "commanderyNameCh": "毗陵典農校尉",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 587,
+      "runtimeName": "문산군",
+      "physicalPlaceId": "211064",
+      "commanderyName": "문산군",
+      "commanderyNameCh": "汶山郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 588,
+      "runtimeName": "부릉군",
+      "physicalPlaceId": "211010",
+      "commanderyName": "부릉군",
+      "commanderyNameCh": "涪陵郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 627,
+      "runtimeName": "광위군",
+      "physicalPlaceId": "211782",
+      "commanderyName": "광위군",
+      "commanderyNameCh": "廣魏郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 629,
+      "runtimeName": "장액속국",
+      "physicalPlaceId": "X027",
+      "commanderyName": "장액속국",
+      "commanderyNameCh": "張掖屬國",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 641,
+      "runtimeName": "신평군",
+      "physicalPlaceId": "211738",
+      "commanderyName": "신평군",
+      "commanderyNameCh": "新平郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 647,
+      "runtimeName": "서평군",
+      "physicalPlaceId": "211841",
+      "commanderyName": "서평군",
+      "commanderyNameCh": "西平郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 662,
+      "runtimeName": "상군",
+      "physicalPlaceId": "X022",
+      "commanderyName": "상군",
+      "commanderyNameCh": "上郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 689,
+      "runtimeName": "정양군",
+      "physicalPlaceId": "X024",
+      "commanderyName": "정양군",
+      "commanderyNameCh": "定襄郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 690,
+      "runtimeName": "신흥군",
+      "physicalPlaceId": "210009",
+      "commanderyName": "신흥군",
+      "commanderyNameCh": "新興郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 691,
+      "runtimeName": "삭방군",
+      "physicalPlaceId": "X011",
+      "commanderyName": "삭방군",
+      "commanderyNameCh": "朔方郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 692,
+      "runtimeName": "서하군",
+      "physicalPlaceId": "X023",
+      "commanderyName": "서하군",
+      "commanderyNameCh": "西河郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 699,
+      "runtimeName": "구자속국",
+      "physicalPlaceId": "X026",
+      "commanderyName": "구자속국",
+      "commanderyNameCh": "龜茲屬國",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 712,
+      "runtimeName": "대방군",
+      "physicalPlaceId": "X004",
+      "commanderyName": "대방군",
+      "commanderyNameCh": "帶方郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 714,
+      "runtimeName": "낙랑군",
+      "physicalPlaceId": "X003",
+      "commanderyName": "낙랑군",
+      "commanderyNameCh": "樂浪郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 722,
+      "runtimeName": "현도군",
+      "physicalPlaceId": "X006",
+      "commanderyName": "현도군",
+      "commanderyNameCh": "玄菟郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 723,
+      "runtimeName": "요동속국",
+      "physicalPlaceId": "X007",
+      "commanderyName": "요동속국",
+      "commanderyNameCh": "遼東屬國",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 724,
+      "runtimeName": "요동군",
+      "physicalPlaceId": "X005",
+      "commanderyName": "요동군",
+      "commanderyNameCh": "遼東郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 729,
+      "runtimeName": "구진군",
+      "physicalPlaceId": "X001",
+      "commanderyName": "구진군",
+      "commanderyNameCh": "九真郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 730,
+      "runtimeName": "교지군",
+      "physicalPlaceId": "X000",
+      "commanderyName": "교지군",
+      "commanderyNameCh": "交趾郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    },
+    {
+      "runtimeCityId": 739,
+      "runtimeName": "일남군",
+      "physicalPlaceId": "X002",
+      "commanderyName": "일남군",
+      "commanderyNameCh": "日南郡",
+      "reason": "COMMANDERY_POINT_HAS_NO_COUNTY_PROVINCE_FOOTPRINT"
+    }
+  ]
+}
