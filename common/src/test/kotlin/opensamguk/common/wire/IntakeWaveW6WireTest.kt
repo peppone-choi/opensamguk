@@ -98,7 +98,14 @@ class IntakeWaveW6WireTest {
 
     @Test
     fun `single-type message result selectors route SendMessageResult and DeleteMessageResult`() {
-        val sendOk = SendMessageResult(ok = true, generalId = 10, msgType = "public", msgID = 100)
+        val sendOk = SendMessageResult(
+            ok = true,
+            generalId = 10,
+            msgType = "private",
+            msgID = 100,
+            recipientId = 7,
+            recipientName = "관우",
+        )
         val rSendOk = resRoundTrip(sendOk)
         assertIs<SendMessageResult>(rSendOk)
         assertEquals(sendOk, rSendOk)

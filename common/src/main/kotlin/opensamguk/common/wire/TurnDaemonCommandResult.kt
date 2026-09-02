@@ -545,6 +545,8 @@ data class SendMessageResult(
     val generalId: Int,
     val msgType: String? = null,   // public|national|diplomacy|private
     val msgID: Int? = null,
+    val recipientId: Int? = null,
+    val recipientName: String? = null,
     val reason: String? = null,
 ) : TurnDaemonCommandResult()
 

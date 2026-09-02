@@ -85,8 +85,11 @@ class MessageHandler(
 
         // ── 국가/외교 메시지 (mailbox >= MAILBOX_NATIONAL) ──
         if (mailbox >= MAILBOX_NATIONAL) {
-            // PHP: permission<4 → destNationID=자국; else destNationID = mailbox - 9000.
-            val destNationId = if (permission < 4) me.nationId else mailbox - MAILBOX_NATIONAL
+            val destNationId = mailbox - MAILBOX_NATIONAL
+            // 외교권이 없는 요청의 타국 mailbox를 자국 국가 서신으로 조용히 재해석하지 않는다.
+            if (permission < 4 && destNationId != me.nationId) {
+                return fail(c.generalId, "외교 권한이 없습니다.")
+            }
 
             if (destNationId == me.nationId) {
                 val msgId = sendNational(src, c.text, sentAt)
@@ -107,16 +110,23 @@ class MessageHandler(
             if (penalty["no_send_private_msg"] == true || penalty["NoSendPrivateMsg"] == true) {
                 return fail(c.generalId, "개인 메세지를 보낼 수 없습니다.")
             }
+            // 수신자 계약을 throttle 상태 변경보다 먼저 검증한다. 잘못된 ID가 lastMsg를
+            // 갱신하거나 자기 메일함에 개인 서신을 생성하면 안 된다.
+            val destGeneral = world.getGeneralById(mailbox)
+                ?: return fail(c.generalId, "존재하지 않는 유저입니다.")
+            if (destGeneral.id == me.id) {
+                return fail(c.generalId, "자기 자신에게는 개인 서신을 보낼 수 없습니다.")
+            }
+            if (destGeneral.npcState >= 2) {
+                return fail(c.generalId, "수신할 수 없는 장수입니다.")
+            }
+
             val msgMinInterval = (penalty["send_private_msg_delay"] as? Number)?.toInt()
                 ?: (penalty["SendPrivateMsgDelay"] as? Number)?.toInt() ?: 2
             if (privateMsgInterval(me, sentAt) < msgMinInterval) {
                 return fail(c.generalId, "개인메세지는 ${msgMinInterval}초당 1건만 보낼 수 있습니다!")
             }
             persistLastMsg(me, sentAt)
-
-            // PHP genPrivateMessage: dest general 존재 → '존재하지 않는 유저입니다.'.
-            val destGeneral = world.getGeneralById(mailbox)
-                ?: return fail(c.generalId, "존재하지 않는 유저입니다.")
             // PHP: $destPermission = checkSecretPermission($destUser, false);
             //      if ($permission==4 && $destPermission==4 && $destUser['nation'] != $src->nationID)
             //        '외교권자끼리는 메시지를 보낼 수 없습니다.'.
@@ -136,11 +146,11 @@ class MessageHandler(
                 icon = iconOf(destGeneral),
             )
             val msgId = sendPrivate(src, dest, c.text, sentAt)
-            return ok(c.generalId, "private", msgId)
+            return ok(c.generalId, "private", msgId, dest.generalId, dest.generalName)
         }
 
-        // PHP: return '알 수 없는 에러입니다.' (mailbox <= 0).
-        return fail(c.generalId, "알 수 없는 에러입니다.")
+        // required mailbox 누락/비정상 주소는 공개 서신으로 승격하지 않고 명시적으로 거부한다.
+        return fail(c.generalId, "발송 대상이 없습니다.")
     }
 
     // ── DeleteMessage.php::launch → Message::deleteMsg ───────────────────────────────────────────
@@ -496,17 +506,37 @@ class MessageHandler(
     private fun penaltyOf(g: TurnGeneral): Map<String, Any?> =
         (g.meta["penalty"] as? Map<String, Any?>) ?: emptyMap()
 
-    /**
-     * PHP checkSecretPermission: 외교관(ambassador)/감사관(auditor) = 4. opensamguk은 외교권 enum 컬럼이
-     * 없어 meta["permission"]로 운반한다(부재 시 0 = 외교권자 아님 — faithful, fabricate 아님).
-     * 'ambassador'/'auditor' 문자열 또는 정수 4 모두 4로 본다.
-     */
+    /** ContactController flags와 동일한 checkSecretPermission 계약. */
     private fun secretPermission(g: TurnGeneral): Int {
-        return when (val p = g.meta["permission"]) {
-            is Number -> p.toInt()
-            "ambassador", "auditor" -> 4
+        if (g.nationId == 0 || g.officerLevel == 0) return -1
+
+        val penalty = penaltyOf(g)
+        if (phpTruthy(penalty["noChief"])) return 0
+        val secretMax = when {
+            phpTruthy(penalty["noTopSecret"]) -> 1
+            phpTruthy(penalty["noChief"]) -> 1
+            phpTruthy(penalty["noAmbassador"]) -> 2
+            else -> 4
+        }
+        val permission = g.meta["permission"]
+        val secretMin = when {
+            g.officerLevel == 12 -> 4
+            permission == "ambassador" -> 4
+            permission == "auditor" -> 3
+            permission is Number -> permission.toInt()
+            g.officerLevel >= 5 -> 2
+            g.officerLevel > 1 -> 1
             else -> 0
         }
+        return minOf(secretMin, secretMax)
+    }
+
+    private fun phpTruthy(value: Any?): Boolean = when (value) {
+        null, false -> false
+        is Boolean -> value
+        is Number -> value.toDouble() != 0.0
+        is String -> value.isNotEmpty() && value != "0"
+        else -> true
     }
 
     private fun privateMsgInterval(g: TurnGeneral, sentAt: Instant): Int {
@@ -542,8 +572,20 @@ class MessageHandler(
 
     // ── 결과 헬퍼 ─────────────────────────────────────────────────────────────────────────────────
 
-    private fun ok(generalId: Int, msgType: String, msgId: Int): TurnDaemonCommandResult =
-        SendMessageResult(ok = true, generalId = generalId, msgType = msgType, msgID = msgId)
+    private fun ok(
+        generalId: Int,
+        msgType: String,
+        msgId: Int,
+        recipientId: Int? = null,
+        recipientName: String? = null,
+    ): TurnDaemonCommandResult = SendMessageResult(
+        ok = true,
+        generalId = generalId,
+        msgType = msgType,
+        msgID = msgId,
+        recipientId = recipientId,
+        recipientName = recipientName,
+    )
 
     private fun fail(generalId: Int, reason: String): TurnDaemonCommandResult =
         SendMessageResult(ok = false, generalId = generalId, reason = reason)
