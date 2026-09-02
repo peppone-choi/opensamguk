@@ -38,6 +38,10 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             [
                 sys.executable,
                 str(ROOT / "tools/scenario/build_han_route_node_candidates.py"),
+                "--han",
+                str(inputs.han),
+                "--tiles",
+                str(inputs.tiles),
                 "--output",
                 str(inputs.candidate),
                 "--check",

@@ -29,8 +29,9 @@ classification guard로 KINGDOM을 지켜야 한다. `tools/map/*`의
 `build_administrative_place_overlay.py`/`build_terrain_grid.py`는 이미 카탈로그
 groupType이나 이 파일이 낸 kind를 그대로 신뢰한다.
 """
-import argparse, json, math, os, struct, sys
+import argparse, hashlib, json, math, os, struct, sys
 from collections import Counter
+from pathlib import Path
 
 from han_place_stable_id_adjudications import adjudicate_record, load_adjudications
 
@@ -39,6 +40,7 @@ OUT = 'data/map/han-places.json'
 DUPLICATE_ADJUDICATIONS = os.path.join(
     'data', 'curated', 'han', 'han-place-duplicate-adjudications-v1.json'
 )
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 # --- DBF 리더 (의존성 없음. 좌표는 X_COOR/Y_COOR 필드에 있어 SHP는 불필요) ---
 
@@ -249,6 +251,15 @@ def validate_duplicate_adjudications(ledger):
             raise ValueError(f'trackedReviewInputs[{key!r}].sha256 must be lowercase SHA-256')
     if tracked != EXPECTED_TRACKED_REVIEW_INPUTS:
         raise ValueError('ledger.trackedReviewInputs must equal the reviewed path/hash/role set')
+    for relative, item in tracked.items():
+        path = REPOSITORY_ROOT / relative
+        if not path.is_file():
+            raise ValueError(f'trackedReviewInputs[{relative!r}] actual file is missing')
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != item['sha256']:
+            raise ValueError(
+                f'trackedReviewInputs[{relative!r}] actual file SHA-256 mismatch'
+            )
 
     groups = ledger['adjudications']
     if not isinstance(groups, list):
