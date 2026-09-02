@@ -406,9 +406,16 @@ export function buildIsoScene(
       ? city
       : prior;
     const other = selected === city ? prior : city;
-    markerByProvince.set(city.provinceId, other?.isCapital && !selected.isCapital
-      ? { ...selected, isCapital: true, layers: [...selected.layers, 'capital'] }
-      : selected);
+    const representativeLayers = ['capital', 'current', 'selected']
+      .filter((layer) => selected.layers.includes(layer) || other?.layers.includes(layer));
+    markerByProvince.set(city.provinceId, {
+      ...selected,
+      isCapital: selected.isCapital || other?.isCapital,
+      layers: [
+        ...selected.layers.filter((layer) => !representativeLayers.includes(layer)),
+        ...representativeLayers,
+      ],
+    });
   }
   return {
     terrain: tiles.terrain,

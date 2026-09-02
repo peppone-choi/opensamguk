@@ -199,6 +199,8 @@ describe('지도 아이콘 배율과 앵커', () => {
             { id: 10, name: '군치', level: 8, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, isCapital: true },
             { id: 11, name: '현', level: 10, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, provinceId: 4 },
         ], { width: 1, height: 1 }, {
+            currentCityId: 10,
+            selectedCityId: 10,
             markerPositions: new Map([
                 [10, { col: 0, row: 0, provinceId: 4 }],
                 [11, { col: 0, row: 0, provinceId: 4 }],
@@ -208,6 +210,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect(scene.cities).toHaveLength(1);
         expect(scene.cities[0]).toMatchObject({ id: 11, provinceId: 4, isCapital: true });
         expect(scene.cities[0].layers.filter((layer) => layer === 'flag')).toHaveLength(1);
+        expect(scene.cities[0].layers).toEqual(expect.arrayContaining(['capital', 'current', 'selected']));
     });
 
     it('아이콘·hitbox·도시명 box는 같은 현 프로빈스 내부일 때만 유효하다', () => {
