@@ -421,7 +421,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     );
 
     expect(politicalCompositions()).toBe(1);
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
     expect(fetchMock).not.toHaveBeenCalled();
     const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
     const main = recordFor(canvas);
@@ -441,6 +441,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(pathRecords
       .filter((record) => record.rects.length === 0)
       .map(({ moves, lines }) => ({ moves, lines }))).toEqual([
+      { moves: [[1.5, 0.5]], lines: [[1.5, 1.5]] },
       { moves: [[1.5, 0.5]], lines: [[1.5, 1.5]] },
       { moves: [[1.5, 0.5]], lines: [[1.5, 1.5]] },
     ]);
@@ -466,7 +467,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     fireEvent.pointerMove(canvas, { clientX: 103, clientY: 52, pointerId: 1 });
     expect(main.drawImages.length).toBeGreaterThan(initialDraws);
     expect(politicalCompositions()).toBe(1);
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
 
     const markerOnly = CHE_OVERLAYS_FIXTURE.map((city, index) => (
       index === 0
@@ -484,7 +485,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
     expect(politicalCompositions()).toBe(1);
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
     expect(main.globalAlphas).not.toContain(0.42);
 
     const equivalentCities = markerOnly.map((city) => ({ ...city }));
@@ -499,7 +500,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
     expect(politicalCompositions()).toBe(1);
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
 
     const reboundProvince = equivalentCities.map((city, index) => (
       index === 0 ? { ...city, provinceId: 1 } : city
@@ -515,7 +516,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
     expect(politicalCompositions()).toBe(2);
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
 
     const reassignedCommandery = equivalentCities.map((city, index) => (
       index === 0 ? { ...city, commanderyName: '예주' } : city
@@ -531,7 +532,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
     expect(politicalCompositions()).toBe(3);
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
 
     const recolored = equivalentCities.map((city, index) => (
       index === 0 ? { ...city, nationColor: '#00ff00' } : city
@@ -547,7 +548,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
     expect(politicalCompositions()).toBe(4);
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
 
     rerender(
       <HanMapCanvas
@@ -560,7 +561,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
     expect(politicalCompositions()).toBe(5);
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
 
     expect(main.strokes).not.toContain('rgba(225, 192, 120, 0.72)');
     expect(main.fillRects).toContain('#8b8172');
@@ -575,20 +576,18 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const frame = main.operations.slice(main.operations.lastIndexOf('clearRect'));
     const terrain = frame.indexOf('drawImage');
     const political = frame.indexOf('drawImage', terrain + 1);
-    const province = frame.indexOf('stroke:rgba(18,20,22,0.58)');
+    const jurisdiction = frame.indexOf('stroke:rgba(18,20,22,0.58)');
     const commanderyDark = frame.indexOf('stroke:rgba(10,12,14,0.82)');
     const commanderyLight = frame.indexOf('stroke:rgba(225,210,163,0.76)');
     const castle = frame.indexOf('fillRect:#8b8172');
-    const order = [terrain, political, province, commanderyDark, commanderyLight, castle];
+    const order = [terrain, political, jurisdiction, castle];
     expect(order.every((index) => index >= 0)).toBe(true);
     expect(order).toEqual([...order].sort((a, b) => a - b));
+    expect(commanderyDark).toBe(-1);
+    expect(commanderyLight).toBe(-1);
 
     const scale = views.at(-1)!.scale;
     expect(main.strokeWidths.findLast(({ style }) => style === 'rgba(18,20,22,0.58)')?.width)
-      .toBeCloseTo(2 / scale, 9);
-    expect(main.strokeWidths.findLast(({ style }) => style === 'rgba(10,12,14,0.82)')?.width)
-      .toBeCloseTo(6 / scale, 9);
-    expect(main.strokeWidths.findLast(({ style }) => style === 'rgba(225,210,163,0.76)')?.width)
       .toBeCloseTo(3 / scale, 9);
   });
 
@@ -738,7 +737,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(controls?.style.bottom).toBe('8px');
   });
 
-  it('현급과 군국급 도시 레이어를 서로 전환한다', () => {
+  it('프로빈스 현 군국 세 레이어를 명시적으로 전환한다', () => {
     const tiles = {
       ...CHE_TILES_FIXTURE,
       parentRegions: [
@@ -779,8 +778,10 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
 
+    const province = screen.getByRole('button', { name: '프로빈스 지역 레이어' });
     const county = screen.getByRole('button', { name: '현급 도시 레이어' });
     const commandery = screen.getByRole('button', { name: '군국급 도시 레이어' });
+    expect(province).toHaveAttribute('aria-pressed', 'false');
     expect(county).toHaveAttribute('aria-pressed', 'true');
     expect(commandery).toHaveAttribute('aria-pressed', 'false');
 
@@ -788,6 +789,11 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
     expect(county).toHaveAttribute('aria-pressed', 'false');
     expect(commandery).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(province);
+
+    expect(province).toHaveAttribute('aria-pressed', 'true');
+    expect(commandery).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('reports the county polygon under the pointer independently of marker activation', () => {
@@ -1182,12 +1188,12 @@ describe('shared HanMapCanvas viewport interaction', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/second'));
 
     await act(async () => { second.resolve(pngResponse()); });
-    await waitFor(() => expect(politicalPathConstructions()).toBe(2));
+    await waitFor(() => expect(politicalPathConstructions()).toBe(3));
     expect(secondClose).toHaveBeenCalledTimes(1);
 
     await act(async () => { first.resolve(pngResponse()); });
     await waitFor(() => expect(firstClose).toHaveBeenCalledTimes(1));
-    expect(politicalPathConstructions()).toBe(2);
+    expect(politicalPathConstructions()).toBe(3);
   });
 
   it('ignores a province completion after unmount while still closing its bitmap', async () => {

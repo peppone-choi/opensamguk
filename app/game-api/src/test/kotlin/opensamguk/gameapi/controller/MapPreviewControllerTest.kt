@@ -3,9 +3,14 @@ package opensamguk.gameapi.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.AdministrativeOwnershipSnapshot
+import opensamguk.gameapi.read.CommanderyControlProjection
+import opensamguk.gameapi.read.JurisdictionOwnershipProjection
+import opensamguk.gameapi.read.MapAdministrativeOwnership
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.ProvinceOccupancyProjection
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.entity.NationEnvEntity
@@ -32,10 +37,13 @@ class MapPreviewControllerTest {
     private val nationRepo = mock(NationReadRepository::class.java)
     private val worldRepo = mock(WorldStateReadRepository::class.java)
     private val nationEnv = mock(NationEnvReadRepository::class.java)
+    private val administrativeOwnership = mock(MapAdministrativeOwnership::class.java)
     private val objectMapper = ObjectMapper()
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(MapPreviewController(cityRepo, nationRepo, worldRepo, nationEnv, objectMapper)).build()
+        MockMvcBuilders.standaloneSetup(
+            MapPreviewController(cityRepo, nationRepo, worldRepo, nationEnv, administrativeOwnership, objectMapper),
+        ).build()
 
     private fun city(id: Int, level: Int, nationId: Int, region: Int = 0) =
         CityReadEntity(id = id, nationId = nationId, level = level, region = region)
@@ -141,6 +149,14 @@ class MapPreviewControllerTest {
         )
         `when`(cityRepo.findAll()).thenReturn(listOf(city(id = 1, level = 9, nationId = 1, region = 1)))
         `when`(nationRepo.findAll()).thenReturn(emptyList())
+        `when`(administrativeOwnership.project("scenario_1010", listOf(opensamguk.gameapi.read.LiveCityOwnership(1, 503, 1))))
+            .thenReturn(
+                AdministrativeOwnershipSnapshot(
+                    provinceOccupancy = listOf(ProvinceOccupancyProjection("P503", 503, 1)),
+                    jurisdictionOwnership = listOf(JurisdictionOwnershipProjection("J503", 1)),
+                    commanderyControl = listOf(CommanderyControlProjection("C12", 1)),
+                ),
+            )
 
         mockMvc().perform(get("/api/map/preview"))
             .andExpect(status().isOk)
@@ -151,6 +167,13 @@ class MapPreviewControllerTest {
             .andExpect(jsonPath("$.cities[0].commanderyName").value("경조윤"))
             .andExpect(jsonPath("$.cities[0].isCommanderySeat").value(true))
             .andExpect(jsonPath("$.cities[0].provinceId").value(503))
+            .andExpect(jsonPath("$.provinceOccupancy[0].provinceRecordId").value("P503"))
+            .andExpect(jsonPath("$.provinceOccupancy[0].provinceIndex").value(503))
+            .andExpect(jsonPath("$.provinceOccupancy[0].nationId").value(1))
+            .andExpect(jsonPath("$.jurisdictionOwnership[0].jurisdictionId").value("J503"))
+            .andExpect(jsonPath("$.jurisdictionOwnership[0].nationId").value(1))
+            .andExpect(jsonPath("$.commanderyControl[0].commanderyId").value("C12"))
+            .andExpect(jsonPath("$.commanderyControl[0].nationId").value(1))
     }
 
     @Test
@@ -183,7 +206,14 @@ class MapPreviewControllerTest {
         )
 
         val failure = assertThrows<IllegalStateException> {
-            MapPreviewController(cityRepo, nationRepo, worldRepo, nationEnv, objectMapper).preview()
+            MapPreviewController(
+                cityRepo,
+                nationRepo,
+                worldRepo,
+                nationEnv,
+                administrativeOwnership,
+                objectMapper,
+            ).preview()
         }
 
         assertTrue(failure.message.orEmpty().contains("id=4 scenario=scenario_broken has no active mapName"))

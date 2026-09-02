@@ -229,6 +229,23 @@ export default function MapViewer({
         width: data?.width || 700,
         height: data?.height || 610,
     }), [data?.height, data?.width]);
+    const administrativeOwnership = useMemo(() => ({
+        provinceOccupancy: (data?.provinceOccupancy ?? []).map((owner) => ({
+            ...owner,
+            nationColor: nationById.get(owner.nationId)?.color,
+            nationName: nationById.get(owner.nationId)?.name,
+        })),
+        jurisdictionOwnership: (data?.jurisdictionOwnership ?? []).map((owner) => ({
+            ...owner,
+            nationColor: nationById.get(owner.nationId)?.color,
+            nationName: nationById.get(owner.nationId)?.name,
+        })),
+        commanderyControl: (data?.commanderyControl ?? []).map((owner) => ({
+            ...owner,
+            nationColor: nationById.get(owner.nationId)?.color,
+            nationName: nationById.get(owner.nationId)?.name,
+        })),
+    }), [data?.commanderyControl, data?.jurisdictionOwnership, data?.provinceOccupancy, nationById]);
 
     const selectionEnabled = onCitySelect != null;
     const navigationEnabled = !selectionEnabled && !(disallowClick ?? mapData != null);
@@ -291,6 +308,8 @@ export default function MapViewer({
                     terrainUrl={terrainUrl}
                     provinceUrl={provinceUrl}
                     cities={cities}
+                    administrativeOwnership={administrativeOwnership.provinceOccupancy.length > 0
+                        ? administrativeOwnership : undefined}
                     sourceSize={sourceSize}
                     currentCityId={currentCityId ?? liveMyCity}
                     selectedCityId={selectedCityId}
@@ -308,6 +327,12 @@ export default function MapViewer({
             {hoverCounty && (
                 <div className="map-tooltip" role="status" style={{ left: cursor.x + 12, top: cursor.y + 30 }}>
                     <div className="map-tooltip-name">{`【${hoverCounty.regionName} | ${LEVEL_TEXT[hoverCounty.level] ?? hoverCounty.level}】 ${hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}`}</div>
+                    {hoverCounty.hierarchyPath && <div className="map-tooltip-meta">{hoverCounty.hierarchyPath}</div>}
+                    {hoverCounty.provinceOccupantNationName && <div className="map-tooltip-meta">공간 점유: {hoverCounty.provinceOccupantNationName}</div>}
+                    {hoverCounty.jurisdictionOwnerNationName && <div className="map-tooltip-meta">현 소유: {hoverCounty.jurisdictionOwnerNationName}</div>}
+                    {hoverCounty.commanderyControllerNationName && <div className="map-tooltip-meta">군국 통제: {hoverCounty.commanderyControllerNationName}</div>}
+                    {hoverCounty.provinceJurisdictionMismatch && <div className="map-tooltip-meta">공간 점유와 현 소유가 다릅니다.</div>}
+                    {hoverCounty.jurisdictionCommanderyMismatch && <div className="map-tooltip-meta">현 소유와 군국 통제가 다릅니다.</div>}
                     {hoverCounty.nationName
                         && (isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor)
                             || hoverCounty.nationName !== NEUTRAL_NAME)

@@ -2,13 +2,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-    buildIsoScene, cellToScreen, cityFallbackHitBox, cityLabelMetrics, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
+    buildIsoScene, buildProvinceVisualAnchors, cellToScreen, cityFallbackHitBox, cityLabelMetrics, cityMarkerDrawBox, cityMarkerHitBox, cityMarkerRadius,
     cityMarkerZoomStep, expandOwner, fitScale, flagClothPoints, initialFocusedView, initialView, labelledRegions,
-    labelZoomFor, maxScaleForDpr, overviewCityVisualBox, provinceAtScreenPoint,
+    labelZoomFor, maxScaleForDpr, overviewCityVisualBox, provinceAtScreenPoint, provinceLayerRuntimeCities,
     completeJurisdictionOverlays,
     screenBoxInsideProvince, screenBoxInsideVisualClearance, seatLabel,
     terrainColorFor, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
-    type CountyAdministrativeIndex, type HanTiles, type IsoSceneOptions, type ProvinceIdentityMap,
+    type CountyAdministrativeIndex, type HanTiles, type IsoCityOverlay, type IsoSceneOptions, type ProvinceIdentityMap,
 } from '@opensamguk/ui';
 
 const hanTiles: HanTiles = JSON.parse(
@@ -253,7 +253,7 @@ describe('지도 아이콘 배율과 앵커', () => {
 
         const overlays = completeJurisdictionOverlays(
             tiles,
-            [{ id: 10, name: 'A현', level: 5, nationId: 1, nationColor: '#aa0000', x: 0, y: 0 }],
+            [{ id: 10, name: 'A현', level: 5, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, provinceId: 0 }],
             [
                 { provinceId: 0, col: 0, row: 0, clearance: 0 },
                 { provinceId: 1, col: 1, row: 0, clearance: 0 },
@@ -287,7 +287,7 @@ describe('지도 아이콘 배율과 앵커', () => {
 
         const currentSeat = completeJurisdictionOverlays(
             tiles,
-            [{ id: 20, name: 'B현', level: 5, nationId: 2, nationColor: '#0000aa', x: 1, y: 0 }],
+            [{ id: 20, name: 'B현', level: 5, nationId: 2, nationColor: '#0000aa', x: 1, y: 0, provinceId: 1 }],
             [
                 { provinceId: 0, col: 0, row: 0, clearance: 0 },
                 { provinceId: 1, col: 1, row: 0, clearance: 0 },
@@ -304,6 +304,145 @@ describe('지도 아이콘 배율과 앵커', () => {
             provinceId: 1,
             jurisdictionId: 'J2',
         });
+    });
+
+    it('같은 jurisdictionId에 런타임 도시가 두 개면 임의로 숨기지 않고 계약 오류로 파실한다', () => {
+        const tiles = {
+            _meta: { cols: 2, rows: 1, year: 220, terrainLegend: {} },
+            terrain: ['11'], owner: [[0, 1], [1, 1]] as [number, number][],
+            juns: [{ name: 'A군', nameCh: '', seat: 0, col: 0, row: 0 }],
+            provinceRecords: [
+                { id: 'P1', displayName: 'A-1', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'R1', cityIndex: 0, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J1' },
+                { id: 'P2', displayName: 'A-2', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'R1', cityIndex: 1, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J1' },
+            ],
+            jurisdictionRecords: [
+                { id: 'J1', displayName: '노현', nameCh: '潞縣', kind: 'COUNTY', commanderyId: 'R1', seatPlaceId: 'P1', provinceIds: ['P1', 'P2'] },
+            ],
+            parentRegions: [{ id: 'R1', displayName: '어양군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
+            adjacency: { county: [], commandery: [] }, regions: [],
+            cities: [
+                { id: 'P1', name: '노현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0 },
+                { id: 'P2', name: '노현', nameCh: '', level: 5, kind: 'COUNTY', seat: false, col: 1, row: 0 },
+            ],
+        } satisfies HanTiles;
+
+        expect(() => completeJurisdictionOverlays(
+            tiles,
+            [
+                { id: 10, name: '노현', level: 5, nationId: 1, x: 0, y: 0, provinceId: 0 },
+                { id: 11, name: '노현', level: 5, nationId: 1, x: 1, y: 0, provinceId: 1 },
+            ],
+            [
+                { provinceId: 0, col: 0, row: 0, clearance: 0 },
+                { provinceId: 1, col: 1, row: 0, clearance: 0 },
+            ],
+            { width: 2, height: 1 },
+            'COUNTY',
+            new Map([[10, { provinceId: 0 }], [11, { provinceId: 1 }]]),
+        )).toThrow('Runtime cities 10, 11 resolve to the same jurisdiction J1');
+    });
+
+    it('표시용 fallback 프로빈스를 런타임 도시의 행정 신원으로 승격하지 않는다', () => {
+        const runtime = JSON.parse(
+            readFileSync(resolve(__dirname, '../../../infra/src/main/resources/map/han.json'), 'utf8'),
+        ) as { width: number; height: number; cities: IsoCityOverlay[] };
+        const cells = hanTiles._meta.cols * hanTiles._meta.rows;
+        const provinceMap: ProvinceIdentityMap = {
+            width: hanTiles._meta.cols,
+            height: hanTiles._meta.rows,
+            provinces: expandOwner(hanTiles.owner, cells),
+            commanderies: expandOwner(hanTiles.parentOwner!, cells),
+            provinceEdges: [],
+            commanderyEdges: [],
+        };
+        const anchors = buildProvinceVisualAnchors(provinceMap);
+        const fallbackPositions = new Map(runtime.cities.map((city) => [
+            city.id,
+            { provinceId: city.provinceId ?? 691 },
+        ]));
+
+        expect(() => completeJurisdictionOverlays(
+            hanTiles,
+            runtime.cities,
+            anchors,
+            { width: runtime.width, height: runtime.height },
+            'COUNTY',
+            fallbackPositions,
+            null,
+            provinceMap,
+        )).not.toThrow();
+
+        const provinceCities = provinceLayerRuntimeCities(runtime.cities);
+        expect(runtime.cities.filter((city) => city.provinceId === undefined)).toHaveLength(31);
+        expect(provinceCities).toHaveLength(runtime.cities.length - 31);
+        expect(provinceCities.every((city) => city.provinceId !== undefined)).toBe(true);
+        expect(provinceCities.some((city) => city.id === 199)).toBe(false);
+        expect(provinceCities.some((city) => city.id === 200)).toBe(true);
+        const scenePositions = new Map(runtime.cities.map((city) => [city.id, {
+            col: city.x * hanTiles._meta.cols / runtime.width,
+            row: city.y * hanTiles._meta.rows / runtime.height,
+            provinceId: city.provinceId ?? 691,
+        }]));
+        const scene = buildIsoScene(hanTiles, provinceCities, {
+            width: runtime.width,
+            height: runtime.height,
+        }, {
+            markerPositions: scenePositions,
+            provinceRecords: hanTiles.provinceRecords,
+            jurisdictionRecords: hanTiles.jurisdictionRecords,
+        });
+        expect(scene.cities.some((city) => city.id === 199)).toBe(false);
+        expect(scene.cities.filter((city) => city.provinceId === 691)).toHaveLength(1);
+    });
+
+    it('실제 정본에서 1020개 현과 172개 군국 마커를 각각 한 번만 만든다', () => {
+        const runtime = JSON.parse(
+            readFileSync(resolve(__dirname, '../../../infra/src/main/resources/map/han.json'), 'utf8'),
+        ) as { width: number; height: number; cities: IsoCityOverlay[] };
+        const cells = hanTiles._meta.cols * hanTiles._meta.rows;
+        const provinceMap: ProvinceIdentityMap = {
+            width: hanTiles._meta.cols,
+            height: hanTiles._meta.rows,
+            provinces: expandOwner(hanTiles.owner, cells),
+            commanderies: expandOwner(hanTiles.parentOwner!, cells),
+            provinceEdges: [],
+            commanderyEdges: [],
+        };
+        const anchors = buildProvinceVisualAnchors(provinceMap);
+        const positions = new Map(runtime.cities.flatMap((city) => (
+            city.provinceId === undefined ? [] : [[city.id, { provinceId: city.provinceId }] as const]
+        )));
+
+        const jurisdictions = completeJurisdictionOverlays(
+            hanTiles,
+            runtime.cities,
+            anchors,
+            { width: runtime.width, height: runtime.height },
+            'COUNTY',
+            positions,
+            null,
+            provinceMap,
+        );
+        expect(jurisdictions).toHaveLength(1_020);
+        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_020);
+        expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
+        expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
+            name: '노현',
+            commanderyName: '어양군',
+        });
+
+        const commanderies = completeJurisdictionOverlays(
+            hanTiles,
+            runtime.cities,
+            anchors,
+            { width: runtime.width, height: runtime.height },
+            'COMMANDERY',
+            positions,
+            null,
+            provinceMap,
+        );
+        expect(commanderies).toHaveLength(172);
+        expect(new Set(commanderies.map((city) => city.name)).size).toBe(172);
     });
 
     it('같은 현 프로빈스에 겹친 수도와 현 마커는 수도 하나만 그린다', () => {

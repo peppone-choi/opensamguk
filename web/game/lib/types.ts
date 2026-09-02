@@ -349,6 +349,9 @@ export interface MapPreviewResponse {
   height: number;
   cities: MapPreviewCity[];
   nations: MapPreviewNation[];
+  provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
+  jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
+  commanderyControl?: { commanderyId: string; nationId: number }[];
 }
 
 // ── in-game world map (game-api WorldMapResponse / WorldMapDto.kt — GET /api/map) ─

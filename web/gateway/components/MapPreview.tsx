@@ -43,6 +43,9 @@ export interface MapData {
     height: number;
     cities: MapCity[];
     nations: MapNation[];
+    provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
+    jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
+    commanderyControl?: { commanderyId: string; nationId: number }[];
 }
 
 export interface MapPreviewProps {
@@ -131,6 +134,23 @@ export default function MapPreview({
         width: data?.width || 700,
         height: data?.height || 610,
     }), [data?.height, data?.width]);
+    const administrativeOwnership = useMemo(() => ({
+        provinceOccupancy: (data?.provinceOccupancy ?? []).map((owner) => ({
+            ...owner,
+            nationColor: nationById.get(owner.nationId)?.color,
+            nationName: nationById.get(owner.nationId)?.name,
+        })),
+        jurisdictionOwnership: (data?.jurisdictionOwnership ?? []).map((owner) => ({
+            ...owner,
+            nationColor: nationById.get(owner.nationId)?.color,
+            nationName: nationById.get(owner.nationId)?.name,
+        })),
+        commanderyControl: (data?.commanderyControl ?? []).map((owner) => ({
+            ...owner,
+            nationColor: nationById.get(owner.nationId)?.color,
+            nationName: nationById.get(owner.nationId)?.name,
+        })),
+    }), [data?.commanderyControl, data?.jurisdictionOwnership, data?.provinceOccupancy, nationById]);
 
     const terrainUrl = useCallback((mapCode: string) => (
         `/api/game/api/map/terrain?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(mapCode)}`
@@ -167,6 +187,8 @@ export default function MapPreview({
                     terrainUrl={terrainUrl}
                     provinceUrl={provinceUrl}
                     cities={cities}
+                    administrativeOwnership={administrativeOwnership.provinceOccupancy.length > 0
+                        ? administrativeOwnership : undefined}
                     sourceSize={sourceSize}
                     currentCityId={currentCityId}
                     hideCityNames={hideCityName}
@@ -199,6 +221,12 @@ export default function MapPreview({
                     <div className="map-preview-tooltip-name">
                         {`【${hoverCounty.regionName} | ${levelText(hoverCounty.level)}】 ${hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}`}
                     </div>
+                    {hoverCounty.hierarchyPath && <div className="map-preview-tooltip-meta">{hoverCounty.hierarchyPath}</div>}
+                    {hoverCounty.provinceOccupantNationName && <div className="map-preview-tooltip-meta">공간 점유: {hoverCounty.provinceOccupantNationName}</div>}
+                    {hoverCounty.jurisdictionOwnerNationName && <div className="map-preview-tooltip-meta">현 소유: {hoverCounty.jurisdictionOwnerNationName}</div>}
+                    {hoverCounty.commanderyControllerNationName && <div className="map-preview-tooltip-meta">군국 통제: {hoverCounty.commanderyControllerNationName}</div>}
+                    {hoverCounty.provinceJurisdictionMismatch && <div className="map-preview-tooltip-meta">공간 점유와 현 소유가 다릅니다.</div>}
+                    {hoverCounty.jurisdictionCommanderyMismatch && <div className="map-preview-tooltip-meta">현 소유와 군국 통제가 다릅니다.</div>}
                     {isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor) && hoverCounty.nationName && (
                         <div className="map-preview-tooltip-meta">{hoverCounty.nationName}</div>
                     )}
