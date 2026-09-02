@@ -1375,6 +1375,9 @@ export function HanMapCanvas({
   ), [loadedTiles?.cities, loadedTiles?.juns, loadedTiles?.jurisdictionRecords, loadedTiles?.parentRegions, loadedTiles?.provinceRecords, provinceMap]);
   const canonicalMarkerPositions = useMemo(() => {
     if (!loadedTiles) return undefined;
+    const hasCanonicalHierarchy = Boolean(
+      loadedTiles.provinceRecords && loadedTiles.jurisdictionRecords,
+    );
     const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
     const preferredByProvince = new Map<number, { col: number; row: number }>();
     loadedTiles.provinceRecords?.forEach((record, provinceId) => {
@@ -1387,7 +1390,12 @@ export function HanMapCanvas({
       : undefined;
     return new Map(cities.map((city) => [
       city.id,
-      cityMarkerTile(city, grid, sourceSize, city.provinceId === undefined ? undefined : placement),
+      cityMarkerTile(
+        city,
+        grid,
+        sourceSize,
+        hasCanonicalHierarchy && city.provinceId === undefined ? undefined : placement,
+      ),
     ]));
   }, [cities, countyIndex, loadedTiles, provinceMap, sourceSize]);
   const provinceAnchors = useMemo(() => {
@@ -1401,7 +1409,11 @@ export function HanMapCanvas({
     return buildProvinceVisualAnchors(provinceMap, preferredByProvince);
   }, [canonicalMarkerPositions, cities, provinceMap]);
   const displayCities = useMemo(() => {
-    if (administrativeLayer === 'PROVINCE') return provinceLayerRuntimeCities(cities);
+    if (administrativeLayer === 'PROVINCE') {
+      return loadedTiles?.provinceRecords && loadedTiles.jurisdictionRecords
+        ? provinceLayerRuntimeCities(cities)
+        : [...cities];
+    }
     if (!loadedTiles || !provinceAnchors) return [...cities];
     const overlays = completeJurisdictionOverlays(
       loadedTiles,
