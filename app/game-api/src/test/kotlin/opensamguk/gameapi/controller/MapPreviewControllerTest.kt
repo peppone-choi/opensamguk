@@ -150,6 +150,7 @@ class MapPreviewControllerTest {
             .andExpect(jsonPath("$.cities[0].regionName").value("사예"))
             .andExpect(jsonPath("$.cities[0].commanderyName").value("경조윤"))
             .andExpect(jsonPath("$.cities[0].isCommanderySeat").value(true))
+            .andExpect(jsonPath("$.cities[0].provinceId").value(503))
     }
 
     @Test

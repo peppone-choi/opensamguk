@@ -374,6 +374,7 @@ interface CitySample {
   row: number;
   province: number;
   commandery: number;
+  explicit: boolean;
 }
 
 export function buildCountyAdministrativeIndex(
@@ -437,6 +438,14 @@ function nearestSample(samples: readonly CitySample[], centerCol: number, center
   let selectedDistance = Number.POSITIVE_INFINITY;
   let selectedId = Number.MAX_SAFE_INTEGER;
   for (const sample of samples) {
+    if (selected && sample.explicit !== selected.explicit) {
+      if (sample.explicit) {
+        selected = sample;
+        selectedDistance = (sample.col - centerCol) ** 2 + (sample.row - centerRow) ** 2;
+        selectedId = Number.isSafeInteger(sample.city.id) ? sample.city.id : Number.MAX_SAFE_INTEGER;
+      }
+      continue;
+    }
     const distance = (sample.col - centerCol) ** 2 + (sample.row - centerRow) ** 2;
     const id = Number.isSafeInteger(sample.city.id) ? sample.city.id : Number.MAX_SAFE_INTEGER;
     if (distance < selectedDistance || (distance === selectedDistance && id < selectedId)) {
@@ -595,9 +604,12 @@ export function bindCompleteProvinceOwnership(
       ? undefined
       : countyIndex.commanderyByName.get(city.commanderyName);
     if (city.commanderyName != null && commandery === undefined) continue;
-    const placement = resolveProvincePlacement(
-      map, countyIndex, mapped.col, mapped.row, commandery,
-    );
+    const explicitProvince = city.provinceId;
+    const placement = explicitProvince !== undefined
+      && explicitProvince >= 0
+      && explicitProvince < countyIndex.commanderyByProvince.length
+      ? { col: mapped.col, row: mapped.row, provinceId: explicitProvince }
+      : resolveProvincePlacement(map, countyIndex, mapped.col, mapped.row, commandery);
     if (!placement) continue;
     const resolvedCommandery = countyIndex.commanderyByProvince[placement.provinceId];
     const sample = {
@@ -606,6 +618,7 @@ export function bindCompleteProvinceOwnership(
       row: placement.row,
       province: placement.provinceId,
       commandery: resolvedCommandery,
+      explicit: city.provinceId === placement.provinceId,
     };
     const direct = directByProvince.get(placement.provinceId) ?? [];
     direct.push(sample);

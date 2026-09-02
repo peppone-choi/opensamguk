@@ -110,6 +110,8 @@ export interface IsoCityOverlay {
   regionName?: string;
   commanderyName?: string;
   isCommanderySeat?: boolean;
+  /** Canonical `provinceRecords[]` identity. Coordinates are presentation fallback only. */
+  provinceId?: number;
   state?: number;
   supply?: boolean;
   isCapital?: boolean;
@@ -158,6 +160,7 @@ export interface IsoSceneOptions {
   markerPlacement?: {
     provinceMap: ProvinceIdentityMap;
     countyIndex: CountyAdministrativeIndex;
+    preferredByProvince?: ReadonlyMap<number, { col: number; row: number }>;
   };
 }
 
@@ -318,11 +321,25 @@ function cityMarkerTile(
   const mapped = mapCityToTile(city, grid, source);
   if (!placement) return mapped;
 
-  const { provinceMap, countyIndex } = placement;
+  const { provinceMap, countyIndex, preferredByProvince } = placement;
   const commandery = city.commanderyName == null
     ? undefined
     : countyIndex.commanderyByName.get(city.commanderyName);
   if (city.commanderyName != null && commandery === undefined) return mapped;
+  if (city.provinceId !== undefined
+    && city.provinceId >= 0
+    && city.provinceId < countyIndex.commanderyByProvince.length) {
+    const preferred = preferredByProvince?.get(city.provinceId);
+    if (preferred) return { ...preferred, provinceId: city.provinceId };
+    for (let index = 0; index < provinceMap.provinces.length; index += 1) {
+      if (provinceMap.provinces[index] !== city.provinceId) continue;
+      return {
+        col: index % provinceMap.width,
+        row: Math.floor(index / provinceMap.width),
+        provinceId: city.provinceId,
+      };
+    }
+  }
   const resolved = resolveProvincePlacement(
     provinceMap, countyIndex, mapped.col, mapped.row, commandery,
   );
@@ -336,40 +353,61 @@ export function buildIsoScene(
   options: IsoSceneOptions,
 ): IsoScene {
   const grid = { cols: tiles._meta.cols, rows: tiles._meta.rows };
+  const sceneCities = cities.map((city) => {
+    const markerPosition = options.markerPositions?.get(city.id)
+      ?? cityMarkerTile(city, grid, source, options.markerPlacement);
+    const { col, row } = markerPosition;
+    const owned = isOwnedNationVisual(city.nationId, city.nationColor);
+    const provinceRecord = markerPosition.provinceId === undefined
+      ? undefined
+      : options.provinceRecords?.[markerPosition.provinceId];
+    const territoryColor = owned && city.nationColor ? city.nationColor : NEUTRAL_COLOR;
+    const layers = [`castle:${city.level}`];
+    if (owned) layers.push('flag');
+    if (city.isCapital) layers.push('capital');
+    if ((city.state ?? 0) > 0) layers.push(`event:${city.state}`);
+    layers.push(`supply:${owned && city.supply === false ? 'off' : 'on'}`);
+    if (options.currentCityId === city.id) layers.push('current');
+    if (options.selectedCityId === city.id) layers.push('selected');
+    layers.push(`name:${city.name}`);
+    return {
+      ...city,
+      col,
+      row,
+      provinceId: markerPosition.provinceId,
+      visualClearance: markerPosition.visualClearance,
+      mapLabel: provinceRecord?.displayName ?? city.name,
+      provinceKind: provinceRecord?.kind,
+      color: territoryColor,
+      territoryColor,
+      iconColor: CASTLE_FILL,
+      layers,
+    };
+  });
+  const markerByProvince = new Map<number, IsoSceneCity>();
+  const unbound: IsoSceneCity[] = [];
+  const priority = (city: IsoSceneCity): number => (
+    (city.isCapital ? 1000 : 0)
+    + (city.isCommanderySeat ? 100 : 0)
+    + (city.level >= 5 && city.level <= 9 ? 10 : 0)
+    + (options.currentCityId === city.id ? 2 : 0)
+    + (options.selectedCityId === city.id ? 1 : 0)
+  );
+  for (const city of sceneCities) {
+    if (city.provinceId === undefined) {
+      unbound.push(city);
+      continue;
+    }
+    const prior = markerByProvince.get(city.provinceId);
+    if (!prior || priority(city) > priority(prior)
+      || (priority(city) === priority(prior) && city.id < prior.id)) {
+      markerByProvince.set(city.provinceId, city);
+    }
+  }
   return {
     terrain: tiles.terrain,
     roads: [],
-    cities: cities.map((city) => {
-      const markerPosition = options.markerPositions?.get(city.id)
-        ?? cityMarkerTile(city, grid, source, options.markerPlacement);
-      const { col, row } = markerPosition;
-      const owned = isOwnedNationVisual(city.nationId, city.nationColor);
-      const provinceRecord = markerPosition.provinceId === undefined
-        ? undefined
-        : options.provinceRecords?.[markerPosition.provinceId];
-      const territoryColor = owned && city.nationColor ? city.nationColor : NEUTRAL_COLOR;
-      const layers = [`castle:${city.level}`];
-      if (owned) layers.push('flag');
-      if (city.isCapital) layers.push('capital');
-      if ((city.state ?? 0) > 0) layers.push(`event:${city.state}`);
-      layers.push(`supply:${owned && city.supply === false ? 'off' : 'on'}`);
-      if (options.currentCityId === city.id) layers.push('current');
-      if (options.selectedCityId === city.id) layers.push('selected');
-      layers.push(`name:${city.name}`);
-      return {
-        ...city,
-        col,
-        row,
-        provinceId: markerPosition.provinceId,
-        visualClearance: markerPosition.visualClearance,
-        mapLabel: provinceRecord?.displayName ?? city.name,
-        provinceKind: provinceRecord?.kind,
-        color: territoryColor,
-        territoryColor,
-        iconColor: CASTLE_FILL,
-        layers,
-      };
-    }),
+    cities: [...markerByProvince.values(), ...unbound].sort((left, right) => left.id - right.id),
   };
 }
 
@@ -1120,7 +1158,15 @@ export function HanMapCanvas({
   const canonicalMarkerPositions = useMemo(() => {
     if (!loadedTiles) return undefined;
     const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
-    const placement = provinceMap && countyIndex ? { provinceMap, countyIndex } : undefined;
+    const preferredByProvince = new Map<number, { col: number; row: number }>();
+    loadedTiles.provinceRecords?.forEach((record, provinceId) => {
+      if (record.cityIndex == null) return;
+      const city = loadedTiles.cities[record.cityIndex];
+      if (city) preferredByProvince.set(provinceId, { col: city.col, row: city.row });
+    });
+    const placement = provinceMap && countyIndex
+      ? { provinceMap, countyIndex, preferredByProvince }
+      : undefined;
     return new Map(cities.map((city) => [
       city.id,
       cityMarkerTile(city, grid, sourceSize, placement),

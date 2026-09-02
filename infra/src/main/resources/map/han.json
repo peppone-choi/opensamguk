@@ -19,7 +19,14 @@
       "유주",
       "교주",
       "동이"
-    ]
+    ],
+    "provinceIdentity": {
+      "method": "EXACT_LEGACY_SOURCE_ROW_PHYSICAL_PLACE_ID",
+      "provinceRecordSource": "data/map/han-tiles.json provinceRecords[]",
+      "bound": 743,
+      "unresolved": 31,
+      "unresolvedLedger": "data/curated/han/runtime-province-identity-unresolved-v1.json"
+    }
   },
   "width": 700,
   "height": 610,
@@ -63,7 +70,9 @@
         "seat": "장안현",
         "nameCh": "长安县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70623",
+      "provinceId": 503
     },
     {
       "id": 2,
@@ -105,7 +114,9 @@
         "seat": "장안현",
         "nameCh": "上洛县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200094",
+      "provinceId": 10
     },
     {
       "id": 3,
@@ -146,7 +157,9 @@
         "seat": "장안현",
         "nameCh": "商县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200092",
+      "provinceId": 9
     },
     {
       "id": 4,
@@ -184,7 +197,9 @@
         "seat": "장안현",
         "nameCh": "新丰县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70726",
+      "provinceId": 513
     },
     {
       "id": 5,
@@ -220,7 +235,9 @@
         "seat": "장안현",
         "nameCh": "杜陵",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70633",
+      "provinceId": 505
     },
     {
       "id": 6,
@@ -257,7 +274,9 @@
         "seat": "장안현",
         "nameCh": "蓝田县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70749",
+      "provinceId": 517
     },
     {
       "id": 7,
@@ -296,7 +315,9 @@
         "seat": "장안현",
         "nameCh": "郑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70427",
+      "provinceId": 476
     },
     {
       "id": 8,
@@ -331,7 +352,9 @@
         "seat": "장안현",
         "nameCh": "霸城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70647",
+      "provinceId": 508
     },
     {
       "id": 9,
@@ -375,7 +398,9 @@
         "seat": "시평현",
         "nameCh": "始平县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70715",
+      "provinceId": 512
     },
     {
       "id": 10,
@@ -413,7 +438,9 @@
         "seat": "시평현",
         "nameCh": "栒邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70415",
+      "provinceId": 474
     },
     {
       "id": 11,
@@ -450,7 +477,9 @@
         "seat": "시평현",
         "nameCh": "武功县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70249",
+      "provinceId": 467
     },
     {
       "id": 12,
@@ -488,7 +517,9 @@
         "seat": "시평현",
         "nameCh": "郿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70930",
+      "provinceId": 521
     },
     {
       "id": 13,
@@ -525,7 +556,9 @@
         "seat": "시평현",
         "nameCh": "鄠县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70747",
+      "provinceId": 516
     },
     {
       "id": 14,
@@ -562,7 +595,9 @@
         "seat": "시평현",
         "nameCh": "陈仓县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70920",
+      "provinceId": 520
     },
     {
       "id": 15,
@@ -603,7 +638,9 @@
         "seat": "고륙현",
         "nameCh": "高陆县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70741",
+      "provinceId": 515
     },
     {
       "id": 16,
@@ -642,7 +679,9 @@
         "seat": "고륙현",
         "nameCh": "临晋县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70296",
+      "provinceId": 468
     },
     {
       "id": 17,
@@ -681,7 +720,9 @@
         "seat": "고륙현",
         "nameCh": "云阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70764",
+      "provinceId": 518
     },
     {
       "id": 18,
@@ -720,7 +761,9 @@
         "seat": "고륙현",
         "nameCh": "夏阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70312",
+      "provinceId": 470
     },
     {
       "id": 19,
@@ -756,7 +799,9 @@
         "seat": "고륙현",
         "nameCh": "池阳",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70671",
+      "provinceId": 509
     },
     {
       "id": 20,
@@ -795,7 +840,9 @@
         "seat": "고륙현",
         "nameCh": "粟邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70340",
+      "provinceId": 473
     },
     {
       "id": 21,
@@ -834,7 +881,9 @@
         "seat": "고륙현",
         "nameCh": "郃阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70307",
+      "provinceId": 469
     },
     {
       "id": 22,
@@ -877,7 +926,9 @@
         "seat": "홍농현",
         "nameCh": "弘农县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "83053",
+      "provinceId": 652
     },
     {
       "id": 23,
@@ -918,7 +969,9 @@
         "seat": "홍농현",
         "nameCh": "华阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70324",
+      "provinceId": 471
     },
     {
       "id": 24,
@@ -957,7 +1010,9 @@
         "seat": "홍농현",
         "nameCh": "卢氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83180",
+      "provinceId": 665
     },
     {
       "id": 25,
@@ -996,7 +1051,9 @@
         "seat": "홍농현",
         "nameCh": "宜阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82871",
+      "provinceId": 632
     },
     {
       "id": 26,
@@ -1035,7 +1092,9 @@
         "seat": "홍농현",
         "nameCh": "湖县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70628",
+      "provinceId": 504
     },
     {
       "id": 27,
@@ -1074,7 +1133,9 @@
         "seat": "홍농현",
         "nameCh": "陆浑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82936",
+      "provinceId": 637
     },
     {
       "id": 28,
@@ -1113,7 +1174,9 @@
         "seat": "홍농현",
         "nameCh": "陕县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83046",
+      "provinceId": 651
     },
     {
       "id": 29,
@@ -1155,7 +1218,9 @@
         "seat": "홍농현",
         "nameCh": "黾池县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82922",
+      "provinceId": 636
     },
     {
       "id": 30,
@@ -1205,7 +1270,9 @@
         "seat": "회현",
         "nameCh": "怀县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82506",
+      "provinceId": 586
     },
     {
       "id": 31,
@@ -1242,7 +1309,9 @@
         "seat": "회현",
         "nameCh": "共县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82275",
+      "provinceId": 566
     },
     {
       "id": 32,
@@ -1279,7 +1348,9 @@
         "seat": "회현",
         "nameCh": "山阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82502",
+      "provinceId": 584
     },
     {
       "id": 33,
@@ -1317,7 +1388,9 @@
         "seat": "회현",
         "nameCh": "州县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82489",
+      "provinceId": 580
     },
     {
       "id": 34,
@@ -1357,7 +1430,9 @@
         "seat": "회현",
         "nameCh": "朝歌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82269",
+      "provinceId": 565
     },
     {
       "id": 35,
@@ -1398,7 +1473,9 @@
         "seat": "회현",
         "nameCh": "林虑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82216",
+      "provinceId": 558
     },
     {
       "id": 36,
@@ -1434,7 +1511,9 @@
         "seat": "회현",
         "nameCh": "武德县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82503",
+      "provinceId": 585
     },
     {
       "id": 37,
@@ -1473,7 +1552,9 @@
         "seat": "회현",
         "nameCh": "汲县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82254",
+      "provinceId": 562
     },
     {
       "id": 38,
@@ -1511,7 +1592,9 @@
         "seat": "회현",
         "nameCh": "沁水县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82501",
+      "provinceId": 583
     },
     {
       "id": 39,
@@ -1550,7 +1633,9 @@
         "seat": "회현",
         "nameCh": "河阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82512",
+      "provinceId": 587
     },
     {
       "id": 40,
@@ -1587,7 +1672,9 @@
         "seat": "회현",
         "nameCh": "波县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82493",
+      "provinceId": 581
     },
     {
       "id": 41,
@@ -1626,7 +1713,9 @@
         "seat": "회현",
         "nameCh": "温县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82520",
+      "provinceId": 589
     },
     {
       "id": 42,
@@ -1666,7 +1755,9 @@
         "seat": "회현",
         "nameCh": "荡阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82207",
+      "provinceId": 557
     },
     {
       "id": 43,
@@ -1703,7 +1794,9 @@
         "seat": "회현",
         "nameCh": "获嘉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82260",
+      "provinceId": 563
     },
     {
       "id": 44,
@@ -1741,7 +1834,9 @@
         "seat": "회현",
         "nameCh": "轵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82494",
+      "provinceId": 582
     },
     {
       "id": 45,
@@ -1779,7 +1874,9 @@
         "seat": "회현",
         "nameCh": "野王县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82487",
+      "provinceId": 579
     },
     {
       "id": 46,
@@ -1828,7 +1925,9 @@
         "seat": "낙양현",
         "nameCh": "雒阳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82828",
+      "provinceId": 626
     },
     {
       "id": 47,
@@ -1867,7 +1966,9 @@
         "seat": "낙양현",
         "nameCh": "中牟县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44356",
+      "provinceId": 314
     },
     {
       "id": 48,
@@ -1903,7 +2004,9 @@
         "seat": "낙양현",
         "nameCh": "京县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44384",
+      "provinceId": 316
     },
     {
       "id": 49,
@@ -1941,7 +2044,9 @@
         "seat": "낙양현",
         "nameCh": "偃师县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82846",
+      "provinceId": 630
     },
     {
       "id": 50,
@@ -1980,7 +2085,9 @@
         "seat": "낙양현",
         "nameCh": "卷县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82523",
+      "provinceId": 590
     },
     {
       "id": 51,
@@ -2019,7 +2126,9 @@
         "seat": "낙양현",
         "nameCh": "原武县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82531",
+      "provinceId": 592
     },
     {
       "id": 52,
@@ -2056,7 +2165,9 @@
         "seat": "낙양현",
         "nameCh": "密县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82458",
+      "provinceId": 576
     },
     {
       "id": 53,
@@ -2095,7 +2206,9 @@
         "seat": "낙양현",
         "nameCh": "开封县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44320",
+      "provinceId": 306
     },
     {
       "id": 54,
@@ -2132,7 +2245,9 @@
         "seat": "낙양현",
         "nameCh": "新郑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82461",
+      "provinceId": 577
     },
     {
       "id": 55,
@@ -2168,7 +2283,9 @@
         "seat": "낙양현",
         "nameCh": "河南县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82830",
+      "provinceId": 627
     },
     {
       "id": 56,
@@ -2205,7 +2322,9 @@
         "seat": "낙양현",
         "nameCh": "河阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82880",
+      "provinceId": 633
     },
     {
       "id": 57,
@@ -2243,7 +2362,9 @@
         "seat": "낙양현",
         "nameCh": "缑氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82852",
+      "provinceId": 631
     },
     {
       "id": 58,
@@ -2283,7 +2404,9 @@
         "seat": "낙양현",
         "nameCh": "谷城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82843",
+      "provinceId": 629
     },
     {
       "id": 59,
@@ -2323,7 +2446,9 @@
         "seat": "낙양현",
         "nameCh": "阳武县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82525",
+      "provinceId": 591
     },
     {
       "id": 60,
@@ -2372,7 +2497,9 @@
         "seat": "안읍현",
         "nameCh": "安邑县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "95291",
+      "provinceId": 901
     },
     {
       "id": 61,
@@ -2412,7 +2539,9 @@
         "seat": "안읍현",
         "nameCh": "临汾县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95427",
+      "provinceId": 914
     },
     {
       "id": 62,
@@ -2450,7 +2579,9 @@
         "seat": "안읍현",
         "nameCh": "北屈县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95401",
+      "provinceId": 911
     },
     {
       "id": 63,
@@ -2489,7 +2620,9 @@
         "seat": "안읍현",
         "nameCh": "大阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95280",
+      "provinceId": 899
     },
     {
       "id": 64,
@@ -2526,7 +2659,9 @@
         "seat": "안읍현",
         "nameCh": "平阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95415",
+      "provinceId": 912
     },
     {
       "id": 65,
@@ -2565,7 +2700,9 @@
         "seat": "안읍현",
         "nameCh": "永安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95218",
+      "provinceId": 895
     },
     {
       "id": 66,
@@ -2603,7 +2740,9 @@
         "seat": "안읍현",
         "nameCh": "汾阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95470",
+      "provinceId": 916
     },
     {
       "id": 67,
@@ -2644,7 +2783,9 @@
         "seat": "안읍현",
         "nameCh": "河北县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95285",
+      "provinceId": 900
     },
     {
       "id": 68,
@@ -2683,7 +2824,9 @@
         "seat": "안읍현",
         "nameCh": "皮氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95230",
+      "provinceId": 896
     },
     {
       "id": 69,
@@ -2724,7 +2867,9 @@
         "seat": "안읍현",
         "nameCh": "端氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95716",
+      "provinceId": 935
     },
     {
       "id": 70,
@@ -2762,7 +2907,9 @@
         "seat": "안읍현",
         "nameCh": "绛邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95423",
+      "provinceId": 913
     },
     {
       "id": 71,
@@ -2802,7 +2949,9 @@
         "seat": "안읍현",
         "nameCh": "蒲坂县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95495",
+      "provinceId": 919
     },
     {
       "id": 72,
@@ -2842,7 +2991,9 @@
         "seat": "안읍현",
         "nameCh": "襄陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95443",
+      "provinceId": 915
     },
     {
       "id": 73,
@@ -2880,7 +3031,9 @@
         "seat": "안읍현",
         "nameCh": "解县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95482",
+      "provinceId": 918
     },
     {
       "id": 74,
@@ -2917,7 +3070,9 @@
         "seat": "안읍현",
         "nameCh": "闻喜县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95249",
+      "provinceId": 897
     },
     {
       "id": 75,
@@ -2953,7 +3108,9 @@
         "seat": "서성현",
         "nameCh": "西城县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "200069",
+      "provinceId": 7
     },
     {
       "id": 76,
@@ -2990,7 +3147,9 @@
         "seat": "익양현",
         "nameCh": "弋阳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82553",
+      "provinceId": 593
     },
     {
       "id": 77,
@@ -3035,7 +3194,9 @@
         "seat": "하읍현",
         "nameCh": "下邑县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "42856",
+      "provinceId": 226
     },
     {
       "id": 78,
@@ -3073,7 +3234,9 @@
         "seat": "하읍현",
         "nameCh": "宁陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82085",
+      "provinceId": 547
     },
     {
       "id": 79,
@@ -3114,7 +3277,9 @@
         "seat": "하읍현",
         "nameCh": "已氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85047",
+      "provinceId": 671
     },
     {
       "id": 80,
@@ -3150,7 +3315,9 @@
         "seat": "하읍현",
         "nameCh": "睢阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82072",
+      "provinceId": 545
     },
     {
       "id": 81,
@@ -3189,7 +3356,9 @@
         "seat": "하읍현",
         "nameCh": "砀县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42794",
+      "provinceId": 215
     },
     {
       "id": 82,
@@ -3227,7 +3396,9 @@
         "seat": "하읍현",
         "nameCh": "蒙县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82082",
+      "provinceId": 546
     },
     {
       "id": 83,
@@ -3265,7 +3436,9 @@
         "seat": "하읍현",
         "nameCh": "虞县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82150",
+      "provinceId": 552
     },
     {
       "id": 84,
@@ -3320,7 +3493,9 @@
         "seat": "평여현",
         "nameCh": "平舆县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "83172",
+      "provinceId": 662
     },
     {
       "id": 85,
@@ -3358,7 +3533,9 @@
         "seat": "평여현",
         "nameCh": "上蔡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83175",
+      "provinceId": 664
     },
     {
       "id": 86,
@@ -3396,7 +3573,9 @@
         "seat": "평여현",
         "nameCh": "南顿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82040",
+      "provinceId": 539
     },
     {
       "id": 87,
@@ -3435,7 +3614,9 @@
         "seat": "평여현",
         "nameCh": "原鹿侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43325",
+      "provinceId": 262
     },
     {
       "id": 88,
@@ -3474,7 +3655,9 @@
         "seat": "평여현",
         "nameCh": "吴房县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83171",
+      "provinceId": 661
     },
     {
       "id": 89,
@@ -3512,7 +3695,9 @@
         "seat": "평여현",
         "nameCh": "城父县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43348",
+      "provinceId": 266
     },
     {
       "id": 90,
@@ -3550,7 +3735,9 @@
         "seat": "평여현",
         "nameCh": "安城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83099",
+      "provinceId": 653
     },
     {
       "id": 91,
@@ -3589,7 +3776,9 @@
         "seat": "평여현",
         "nameCh": "安阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83169",
+      "provinceId": 659
     },
     {
       "id": 92,
@@ -3628,7 +3817,9 @@
         "seat": "평여현",
         "nameCh": "宋公国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43366",
+      "provinceId": 267
     },
     {
       "id": 93,
@@ -3668,7 +3859,9 @@
         "seat": "평여현",
         "nameCh": "富波侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43324",
+      "provinceId": 261
     },
     {
       "id": 94,
@@ -3707,7 +3900,9 @@
         "seat": "평여현",
         "nameCh": "山桑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43375",
+      "provinceId": 268
     },
     {
       "id": 95,
@@ -3747,7 +3942,9 @@
         "seat": "평여현",
         "nameCh": "慎县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43328",
+      "provinceId": 263
     },
     {
       "id": 96,
@@ -3786,7 +3983,9 @@
         "seat": "평여현",
         "nameCh": "慎阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83168",
+      "provinceId": 658
     },
     {
       "id": 97,
@@ -3827,7 +4026,9 @@
         "seat": "평여현",
         "nameCh": "新息县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82588",
+      "provinceId": 599
     },
     {
       "id": 98,
@@ -3867,7 +4068,9 @@
         "seat": "평여현",
         "nameCh": "新蔡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83173",
+      "provinceId": 663
     },
     {
       "id": 99,
@@ -3906,7 +4109,9 @@
         "seat": "평여현",
         "nameCh": "朗陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83170",
+      "provinceId": 660
     },
     {
       "id": 100,
@@ -3944,7 +4149,9 @@
         "seat": "평여현",
         "nameCh": "汝阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82015",
+      "provinceId": 536
     },
     {
       "id": 101,
@@ -3985,7 +4192,9 @@
         "seat": "평여현",
         "nameCh": "汝阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43318",
+      "provinceId": 260
     },
     {
       "id": 102,
@@ -4023,7 +4232,9 @@
         "seat": "평여현",
         "nameCh": "褒信县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82594",
+      "provinceId": 600
     },
     {
       "id": 103,
@@ -4062,7 +4273,9 @@
         "seat": "평여현",
         "nameCh": "西华县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82026",
+      "provinceId": 537
     },
     {
       "id": 104,
@@ -4102,7 +4315,9 @@
         "seat": "평여현",
         "nameCh": "西平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83167",
+      "provinceId": 657
     },
     {
       "id": 105,
@@ -4143,7 +4358,9 @@
         "seat": "평여현",
         "nameCh": "项县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82047",
+      "provinceId": 540
     },
     {
       "id": 106,
@@ -4192,7 +4409,9 @@
         "seat": "상현",
         "nameCh": "相县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "43224",
+      "provinceId": 252
     },
     {
       "id": 107,
@@ -4233,7 +4452,9 @@
         "seat": "상현",
         "nameCh": "丰县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42805",
+      "provinceId": 216
     },
     {
       "id": 108,
@@ -4270,7 +4491,9 @@
         "seat": "상현",
         "nameCh": "义成县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43186",
+      "provinceId": 246
     },
     {
       "id": 109,
@@ -4308,7 +4531,9 @@
         "seat": "상현",
         "nameCh": "公丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45294",
+      "provinceId": 395
     },
     {
       "id": 110,
@@ -4347,7 +4572,9 @@
         "seat": "상현",
         "nameCh": "杼秋县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42791",
+      "provinceId": 214
     },
     {
       "id": 111,
@@ -4385,7 +4612,9 @@
         "seat": "상현",
         "nameCh": "沛县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42807",
+      "provinceId": 217
     },
     {
       "id": 112,
@@ -4424,7 +4653,9 @@
         "seat": "상현",
         "nameCh": "洨县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43232",
+      "provinceId": 254
     },
     {
       "id": 113,
@@ -4462,7 +4693,9 @@
         "seat": "상현",
         "nameCh": "竹邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43196",
+      "provinceId": 248
     },
     {
       "id": 114,
@@ -4502,7 +4735,9 @@
         "seat": "상현",
         "nameCh": "符离县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43203",
+      "provinceId": 249
     },
     {
       "id": 115,
@@ -4541,7 +4776,9 @@
         "seat": "상현",
         "nameCh": "萧县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42782",
+      "provinceId": 213
     },
     {
       "id": 116,
@@ -4580,7 +4817,9 @@
         "seat": "상현",
         "nameCh": "蕲县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43210",
+      "provinceId": 250
     },
     {
       "id": 117,
@@ -4619,7 +4858,9 @@
         "seat": "상현",
         "nameCh": "虹县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43243",
+      "provinceId": 256
     },
     {
       "id": 118,
@@ -4659,7 +4900,9 @@
         "seat": "상현",
         "nameCh": "酇县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82128",
+      "provinceId": 551
     },
     {
       "id": 119,
@@ -4698,7 +4941,9 @@
         "seat": "상현",
         "nameCh": "銍县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43221",
+      "provinceId": 251
     },
     {
       "id": 120,
@@ -4737,7 +4982,9 @@
         "seat": "상현",
         "nameCh": "龙亢县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43182",
+      "provinceId": 245
     },
     {
       "id": 121,
@@ -4787,7 +5034,9 @@
         "seat": "양적현",
         "nameCh": "阳翟县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82455",
+      "provinceId": 575
     },
     {
       "id": 122,
@@ -4825,7 +5074,9 @@
         "seat": "양적현",
         "nameCh": "临颍县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83024",
+      "provinceId": 645
     },
     {
       "id": 123,
@@ -4865,7 +5116,9 @@
         "seat": "양적현",
         "nameCh": "定陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82803",
+      "provinceId": 623
     },
     {
       "id": 124,
@@ -4904,7 +5157,9 @@
         "seat": "양적현",
         "nameCh": "新汲县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82061",
+      "provinceId": 543
     },
     {
       "id": 125,
@@ -4942,7 +5197,9 @@
         "seat": "양적현",
         "nameCh": "昆阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82807",
+      "provinceId": 624
     },
     {
       "id": 126,
@@ -4980,7 +5237,9 @@
         "seat": "양적현",
         "nameCh": "父城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82994",
+      "provinceId": 641
     },
     {
       "id": 127,
@@ -5018,7 +5277,9 @@
         "seat": "양적현",
         "nameCh": "舞阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82792",
+      "provinceId": 622
     },
     {
       "id": 128,
@@ -5057,7 +5318,9 @@
         "seat": "양적현",
         "nameCh": "襄城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83031",
+      "provinceId": 647
     },
     {
       "id": 129,
@@ -5095,7 +5358,9 @@
         "seat": "양적현",
         "nameCh": "许县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83011",
+      "provinceId": 643
     },
     {
       "id": 130,
@@ -5134,7 +5399,9 @@
         "seat": "양적현",
         "nameCh": "轮氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82901",
+      "provinceId": 635
     },
     {
       "id": 131,
@@ -5173,7 +5440,9 @@
         "seat": "양적현",
         "nameCh": "郾县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83036",
+      "provinceId": 649
     },
     {
       "id": 132,
@@ -5210,7 +5479,9 @@
         "seat": "양적현",
         "nameCh": "长社县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83039",
+      "provinceId": 650
     },
     {
       "id": 133,
@@ -5247,7 +5518,9 @@
         "seat": "양적현",
         "nameCh": "阳城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82893",
+      "provinceId": 634
     },
     {
       "id": 134,
@@ -5284,7 +5557,9 @@
         "seat": "양적현",
         "nameCh": "颍阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83017",
+      "provinceId": 644
     },
     {
       "id": 135,
@@ -5322,7 +5597,9 @@
         "seat": "양적현",
         "nameCh": "颍阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83009",
+      "provinceId": 642
     },
     {
       "id": 136,
@@ -5365,7 +5642,9 @@
         "seat": "진현",
         "nameCh": "陈县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82003",
+      "provinceId": 534
     },
     {
       "id": 137,
@@ -5404,7 +5683,9 @@
         "seat": "진현",
         "nameCh": "扶乐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82063",
+      "provinceId": 544
     },
     {
       "id": 138,
@@ -5442,7 +5723,9 @@
         "seat": "진현",
         "nameCh": "新平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82008",
+      "provinceId": 535
     },
     {
       "id": 139,
@@ -5480,7 +5763,9 @@
         "seat": "진현",
         "nameCh": "柘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82167",
+      "provinceId": 554
     },
     {
       "id": 140,
@@ -5518,7 +5803,9 @@
         "seat": "진현",
         "nameCh": "武平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82102",
+      "provinceId": 550
     },
     {
       "id": 141,
@@ -5557,7 +5844,9 @@
         "seat": "진현",
         "nameCh": "苦县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82091",
+      "provinceId": 549
     },
     {
       "id": 142,
@@ -5596,7 +5885,9 @@
         "seat": "진현",
         "nameCh": "长平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82032",
+      "provinceId": 538
     },
     {
       "id": 143,
@@ -5635,7 +5926,9 @@
         "seat": "진현",
         "nameCh": "阳夏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82053",
+      "provinceId": 541
     },
     {
       "id": 144,
@@ -5672,7 +5965,9 @@
         "seat": "양안현",
         "nameCh": "阳安县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "83166",
+      "provinceId": 656
     },
     {
       "id": 145,
@@ -5711,7 +6006,9 @@
         "seat": "노현",
         "nameCh": "鲁县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45180",
+      "provinceId": 375
     },
     {
       "id": 146,
@@ -5748,7 +6045,9 @@
         "seat": "노현",
         "nameCh": "卞县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45199",
+      "provinceId": 379
     },
     {
       "id": 147,
@@ -5784,7 +6083,9 @@
         "seat": "노현",
         "nameCh": "汶阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45290",
+      "provinceId": 393
     },
     {
       "id": 148,
@@ -5820,7 +6121,9 @@
         "seat": "노현",
         "nameCh": "蕃县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45203",
+      "provinceId": 380
     },
     {
       "id": 149,
@@ -5858,7 +6161,9 @@
         "seat": "노현",
         "nameCh": "薛县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45210",
+      "provinceId": 381
     },
     {
       "id": 150,
@@ -5903,7 +6208,9 @@
         "seat": "노노현",
         "nameCh": "卢奴县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87211",
+      "provinceId": 803
     },
     {
       "id": 151,
@@ -5943,7 +6250,9 @@
         "seat": "노노현",
         "nameCh": "上曲阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87096",
+      "provinceId": 781
     },
     {
       "id": 152,
@@ -5982,7 +6291,9 @@
         "seat": "노노현",
         "nameCh": "北平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87253",
+      "provinceId": 815
     },
     {
       "id": 153,
@@ -6021,7 +6332,9 @@
         "seat": "노노현",
         "nameCh": "唐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87250",
+      "provinceId": 814
     },
     {
       "id": 154,
@@ -6058,7 +6371,9 @@
         "seat": "노노현",
         "nameCh": "安喜县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87549",
+      "provinceId": 867
     },
     {
       "id": 155,
@@ -6095,7 +6410,9 @@
         "seat": "노노현",
         "nameCh": "安国县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87226",
+      "provinceId": 807
     },
     {
       "id": 156,
@@ -6137,7 +6454,9 @@
         "seat": "노노현",
         "nameCh": "广昌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87428",
+      "provinceId": 845
     },
     {
       "id": 157,
@@ -6174,7 +6493,9 @@
         "seat": "노노현",
         "nameCh": "望都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87247",
+      "provinceId": 813
     },
     {
       "id": 158,
@@ -6212,7 +6533,9 @@
         "seat": "노노현",
         "nameCh": "蒲阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87100",
+      "provinceId": 782
     },
     {
       "id": 159,
@@ -6250,7 +6573,9 @@
         "seat": "노노현",
         "nameCh": "蠡吾县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87322",
+      "provinceId": 829
     },
     {
       "id": 160,
@@ -6291,7 +6616,9 @@
         "seat": "남피현",
         "nameCh": "南皮县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87076",
+      "provinceId": 778
     },
     {
       "id": 161,
@@ -6330,7 +6657,9 @@
         "seat": "남피현",
         "nameCh": "东光县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87384",
+      "provinceId": 835
     },
     {
       "id": 162,
@@ -6369,7 +6698,9 @@
         "seat": "남피현",
         "nameCh": "浮阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87382",
+      "provinceId": 834
     },
     {
       "id": 163,
@@ -6407,7 +6738,9 @@
         "seat": "남피현",
         "nameCh": "重合县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85536",
+      "provinceId": 738
     },
     {
       "id": 164,
@@ -6446,7 +6779,9 @@
         "seat": "남피현",
         "nameCh": "阳信县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85531",
+      "provinceId": 737
     },
     {
       "id": 165,
@@ -6483,7 +6818,9 @@
         "seat": "남피현",
         "nameCh": "高城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87393",
+      "provinceId": 837
     },
     {
       "id": 166,
@@ -6530,7 +6867,9 @@
         "seat": "하박현",
         "nameCh": "下博县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87203",
+      "provinceId": 800
     },
     {
       "id": 167,
@@ -6568,7 +6907,9 @@
         "seat": "하박현",
         "nameCh": "南宫县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87209",
+      "provinceId": 802
     },
     {
       "id": 168,
@@ -6607,7 +6948,9 @@
         "seat": "하박현",
         "nameCh": "堂阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87188",
+      "provinceId": 797
     },
     {
       "id": 169,
@@ -6645,7 +6988,9 @@
         "seat": "하박현",
         "nameCh": "扶柳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87569",
+      "provinceId": 869
     },
     {
       "id": 170,
@@ -6683,7 +7028,9 @@
         "seat": "하박현",
         "nameCh": "武遂县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87616",
+      "provinceId": 874
     },
     {
       "id": 171,
@@ -6720,7 +7067,9 @@
         "seat": "하박현",
         "nameCh": "武邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87206",
+      "provinceId": 801
     },
     {
       "id": 172,
@@ -6757,7 +7106,9 @@
         "seat": "하박현",
         "nameCh": "经县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87189",
+      "provinceId": 798
     },
     {
       "id": 173,
@@ -6794,7 +7145,9 @@
         "seat": "하박현",
         "nameCh": "观津县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87575",
+      "provinceId": 870
     },
     {
       "id": 174,
@@ -6832,7 +7185,9 @@
         "seat": "하박현",
         "nameCh": "阜城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87591",
+      "provinceId": 872
     },
     {
       "id": 175,
@@ -6869,7 +7224,9 @@
         "seat": "하박현",
         "nameCh": "饶阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87355",
+      "provinceId": 832
     },
     {
       "id": 176,
@@ -6913,7 +7270,9 @@
         "seat": "원씨현",
         "nameCh": "元氏县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87217",
+      "provinceId": 804
     },
     {
       "id": 177,
@@ -6953,7 +7312,9 @@
         "seat": "원씨현",
         "nameCh": "上艾县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95374",
+      "provinceId": 909
     },
     {
       "id": 178,
@@ -6989,7 +7350,9 @@
         "seat": "원씨현",
         "nameCh": "九门县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87236",
+      "provinceId": 809
     },
     {
       "id": 179,
@@ -7028,7 +7391,9 @@
         "seat": "원씨현",
         "nameCh": "井陉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87093",
+      "provinceId": 780
     },
     {
       "id": 180,
@@ -7068,7 +7433,9 @@
         "seat": "원씨현",
         "nameCh": "南行唐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87244",
+      "provinceId": 812
     },
     {
       "id": 181,
@@ -7107,7 +7474,9 @@
         "seat": "원씨현",
         "nameCh": "平棘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87233",
+      "provinceId": 808
     },
     {
       "id": 182,
@@ -7146,7 +7515,9 @@
         "seat": "원씨현",
         "nameCh": "房子县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87220",
+      "provinceId": 805
     },
     {
       "id": 183,
@@ -7183,7 +7554,9 @@
         "seat": "원씨현",
         "nameCh": "灵寿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87240",
+      "provinceId": 810
     },
     {
       "id": 184,
@@ -7218,7 +7591,9 @@
         "seat": "원씨현",
         "nameCh": "真定县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "88410",
+      "provinceId": 880
     },
     {
       "id": 185,
@@ -7256,7 +7631,9 @@
         "seat": "원씨현",
         "nameCh": "蒲吾县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87241",
+      "provinceId": 811
     },
     {
       "id": 186,
@@ -7295,7 +7672,9 @@
         "seat": "원씨현",
         "nameCh": "高邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87024",
+      "provinceId": 771
     },
     {
       "id": 187,
@@ -7331,7 +7710,9 @@
         "seat": "광평현",
         "nameCh": "广平县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87159",
+      "provinceId": 791
     },
     {
       "id": 188,
@@ -7368,7 +7749,9 @@
         "seat": "낙평현",
         "nameCh": "乐平县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "95375",
+      "provinceId": 910
     },
     {
       "id": 189,
@@ -7413,7 +7796,9 @@
         "seat": "낙성현",
         "nameCh": "乐成县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87279",
+      "provinceId": 817
     },
     {
       "id": 190,
@@ -7451,7 +7836,9 @@
         "seat": "낙성현",
         "nameCh": "东平舒县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87405",
+      "provinceId": 839
     },
     {
       "id": 191,
@@ -7488,7 +7875,9 @@
         "seat": "낙성현",
         "nameCh": "中水县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87356",
+      "provinceId": 833
     },
     {
       "id": 192,
@@ -7525,7 +7914,9 @@
         "seat": "낙성현",
         "nameCh": "弓高县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87619",
+      "provinceId": 875
     },
     {
       "id": 193,
@@ -7564,7 +7955,9 @@
         "seat": "낙성현",
         "nameCh": "成平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87400",
+      "provinceId": 838
     },
     {
       "id": 194,
@@ -7604,7 +7997,9 @@
         "seat": "낙성현",
         "nameCh": "文安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200012",
+      "provinceId": 0
     },
     {
       "id": 195,
@@ -7642,7 +8037,9 @@
         "seat": "낙성현",
         "nameCh": "束州县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87410",
+      "provinceId": 841
     },
     {
       "id": 196,
@@ -7680,7 +8077,9 @@
         "seat": "낙성현",
         "nameCh": "武垣县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87073",
+      "provinceId": 777
     },
     {
       "id": 197,
@@ -7718,7 +8117,9 @@
         "seat": "낙성현",
         "nameCh": "鄚县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87326",
+      "provinceId": 830
     },
     {
       "id": 198,
@@ -7755,7 +8156,9 @@
         "seat": "낙성현",
         "nameCh": "高阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87286",
+      "provinceId": 819
     },
     {
       "id": 199,
@@ -7795,7 +8198,8 @@
         "seat": "감릉군",
         "nameCh": "甘陵郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "210369"
     },
     {
       "id": 200,
@@ -7834,7 +8238,9 @@
         "seat": "감릉군",
         "nameCh": "灵县（零县）",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85202",
+      "provinceId": 691
     },
     {
       "id": 201,
@@ -7870,7 +8276,9 @@
         "seat": "감릉군",
         "nameCh": "绎幕县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45157",
+      "provinceId": 373
     },
     {
       "id": 202,
@@ -7907,7 +8315,9 @@
         "seat": "감릉군",
         "nameCh": "贝丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45337",
+      "provinceId": 403
     },
     {
       "id": 203,
@@ -7943,7 +8353,9 @@
         "seat": "감릉군",
         "nameCh": "鄃侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45153",
+      "provinceId": 372
     },
     {
       "id": 204,
@@ -7981,7 +8393,8 @@
         "seat": "장무군",
         "nameCh": "章武郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87628"
     },
     {
       "id": 205,
@@ -8021,7 +8434,9 @@
         "seat": "감단현",
         "nameCh": "邯郸县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87010",
+      "provinceId": 768
     },
     {
       "id": 206,
@@ -8059,7 +8474,9 @@
         "seat": "감단현",
         "nameCh": "中丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87223",
+      "provinceId": 806
     },
     {
       "id": 207,
@@ -8096,7 +8513,9 @@
         "seat": "감단현",
         "nameCh": "易阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87036",
+      "provinceId": 772
     },
     {
       "id": 208,
@@ -8134,7 +8553,9 @@
         "seat": "감단현",
         "nameCh": "柏人县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87015",
+      "provinceId": 770
     },
     {
       "id": 209,
@@ -8171,7 +8592,9 @@
         "seat": "감단현",
         "nameCh": "襄国县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87012",
+      "provinceId": 769
     },
     {
       "id": 210,
@@ -8218,7 +8641,9 @@
         "seat": "영도현",
         "nameCh": "廮陶县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87061",
+      "provinceId": 775
     },
     {
       "id": 211,
@@ -8256,7 +8681,9 @@
         "seat": "영도현",
         "nameCh": "下曲阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87178",
+      "provinceId": 795
     },
     {
       "id": 212,
@@ -8292,7 +8719,9 @@
         "seat": "영도현",
         "nameCh": "任县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87177",
+      "provinceId": 794
     },
     {
       "id": 213,
@@ -8330,7 +8759,9 @@
         "seat": "영도현",
         "nameCh": "列人县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87494",
+      "provinceId": 857
     },
     {
       "id": 214,
@@ -8367,7 +8798,9 @@
         "seat": "영도현",
         "nameCh": "南和县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87491",
+      "provinceId": 856
     },
     {
       "id": 215,
@@ -8404,7 +8837,9 @@
         "seat": "영도현",
         "nameCh": "平乡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87510",
+      "provinceId": 862
     },
     {
       "id": 216,
@@ -8442,7 +8877,9 @@
         "seat": "영도현",
         "nameCh": "广宗县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87200",
+      "provinceId": 799
     },
     {
       "id": 217,
@@ -8479,7 +8916,9 @@
         "seat": "영도현",
         "nameCh": "广年县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87513",
+      "provinceId": 863
     },
     {
       "id": 218,
@@ -8515,7 +8954,9 @@
         "seat": "영도현",
         "nameCh": "曲周县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87499",
+      "provinceId": 859
     },
     {
       "id": 219,
@@ -8551,7 +8992,9 @@
         "seat": "영도현",
         "nameCh": "杨氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87173",
+      "provinceId": 793
     },
     {
       "id": 220,
@@ -8589,7 +9032,9 @@
         "seat": "영도현",
         "nameCh": "鄡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87183",
+      "provinceId": 796
     },
     {
       "id": 221,
@@ -8625,7 +9070,8 @@
         "seat": "장락군",
         "nameCh": "长乐郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "210314"
     },
     {
       "id": 222,
@@ -8675,7 +9121,9 @@
         "seat": "업현",
         "nameCh": "邺县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82196",
+      "provinceId": 556
     },
     {
       "id": 223,
@@ -8713,7 +9161,9 @@
         "seat": "업현",
         "nameCh": "元城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87158",
+      "provinceId": 790
     },
     {
       "id": 224,
@@ -8751,7 +9201,9 @@
         "seat": "업현",
         "nameCh": "内黄县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82244",
+      "provinceId": 560
     },
     {
       "id": 225,
@@ -8789,7 +9241,9 @@
         "seat": "업현",
         "nameCh": "平恩县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85186",
+      "provinceId": 690
     },
     {
       "id": 226,
@@ -8827,7 +9281,9 @@
         "seat": "업현",
         "nameCh": "斥丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87154",
+      "provinceId": 788
     },
     {
       "id": 227,
@@ -8863,7 +9319,9 @@
         "seat": "업현",
         "nameCh": "曲梁县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87505",
+      "provinceId": 860
     },
     {
       "id": 228,
@@ -8898,7 +9356,9 @@
         "seat": "업현",
         "nameCh": "梁期县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87310",
+      "provinceId": 825
     },
     {
       "id": 229,
@@ -8938,7 +9398,9 @@
         "seat": "업현",
         "nameCh": "武安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82228",
+      "provinceId": 559
     },
     {
       "id": 230,
@@ -8976,7 +9438,9 @@
         "seat": "업현",
         "nameCh": "涉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87150",
+      "provinceId": 787
     },
     {
       "id": 231,
@@ -9015,7 +9479,9 @@
         "seat": "업현",
         "nameCh": "清渊县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85165",
+      "provinceId": 688
     },
     {
       "id": 232,
@@ -9054,7 +9520,9 @@
         "seat": "업현",
         "nameCh": "繁阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82247",
+      "provinceId": 561
     },
     {
       "id": 233,
@@ -9092,7 +9560,9 @@
         "seat": "업현",
         "nameCh": "阴安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87166",
+      "provinceId": 792
     },
     {
       "id": 234,
@@ -9131,7 +9601,9 @@
         "seat": "업현",
         "nameCh": "馆陶县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45350",
+      "provinceId": 405
     },
     {
       "id": 235,
@@ -9171,7 +9643,9 @@
         "seat": "업현",
         "nameCh": "魏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87157",
+      "provinceId": 789
     },
     {
       "id": 236,
@@ -9210,7 +9684,9 @@
         "seat": "업현",
         "nameCh": "黎阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82316",
+      "provinceId": 570
     },
     {
       "id": 237,
@@ -9247,7 +9723,9 @@
         "seat": "임성현",
         "nameCh": "任城县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85155",
+      "provinceId": 686
     },
     {
       "id": 238,
@@ -9284,7 +9762,9 @@
         "seat": "임성현",
         "nameCh": "亢父县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85131",
+      "provinceId": 682
     },
     {
       "id": 239,
@@ -9321,7 +9801,9 @@
         "seat": "임성현",
         "nameCh": "樊县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45178",
+      "provinceId": 374
     },
     {
       "id": 240,
@@ -9363,7 +9845,9 @@
         "seat": "창읍현",
         "nameCh": "昌邑县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85133",
+      "provinceId": 683
     },
     {
       "id": 241,
@@ -9399,7 +9883,9 @@
         "seat": "창읍현",
         "nameCh": "南平阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45188",
+      "provinceId": 376
     },
     {
       "id": 242,
@@ -9439,7 +9925,9 @@
         "seat": "창읍현",
         "nameCh": "方与县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85147",
+      "provinceId": 685
     },
     {
       "id": 243,
@@ -9479,7 +9967,9 @@
         "seat": "창읍현",
         "nameCh": "湖陆县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85146",
+      "provinceId": 684
     },
     {
       "id": 244,
@@ -9517,7 +10007,9 @@
         "seat": "창읍현",
         "nameCh": "瑕丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45269",
+      "provinceId": 390
     },
     {
       "id": 245,
@@ -9554,7 +10046,9 @@
         "seat": "창읍현",
         "nameCh": "金乡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85158",
+      "provinceId": 687
     },
     {
       "id": 246,
@@ -9592,7 +10086,9 @@
         "seat": "창읍현",
         "nameCh": "高平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45198",
+      "provinceId": 378
     },
     {
       "id": 247,
@@ -9632,7 +10128,9 @@
         "seat": "무염현",
         "nameCh": "无盐县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85681",
+      "provinceId": 762
     },
     {
       "id": 248,
@@ -9669,7 +10167,9 @@
         "seat": "무염현",
         "nameCh": "东平陆县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45243",
+      "provinceId": 388
     },
     {
       "id": 249,
@@ -9706,7 +10206,9 @@
         "seat": "무염현",
         "nameCh": "寿张县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45258",
+      "provinceId": 389
     },
     {
       "id": 250,
@@ -9743,7 +10245,9 @@
         "seat": "무염현",
         "nameCh": "须昌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85685",
+      "provinceId": 763
     },
     {
       "id": 251,
@@ -9790,7 +10294,9 @@
         "seat": "연현",
         "nameCh": "燕县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82289",
+      "provinceId": 568
     },
     {
       "id": 252,
@@ -9828,7 +10334,9 @@
         "seat": "연현",
         "nameCh": "东武阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85093",
+      "provinceId": 678
     },
     {
       "id": 253,
@@ -9866,7 +10374,9 @@
         "seat": "연현",
         "nameCh": "东阿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45303",
+      "provinceId": 398
     },
     {
       "id": 254,
@@ -9904,7 +10414,9 @@
         "seat": "연현",
         "nameCh": "临邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45123",
+      "provinceId": 368
     },
     {
       "id": 255,
@@ -9943,7 +10455,9 @@
         "seat": "연현",
         "nameCh": "博平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45326",
+      "provinceId": 401
     },
     {
       "id": 256,
@@ -9981,7 +10495,9 @@
         "seat": "연현",
         "nameCh": "白马县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82320",
+      "provinceId": 571
     },
     {
       "id": 257,
@@ -10018,7 +10534,9 @@
         "seat": "연현",
         "nameCh": "聊城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45295",
+      "provinceId": 396
     },
     {
       "id": 258,
@@ -10057,7 +10575,9 @@
         "seat": "연현",
         "nameCh": "谷城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85692",
+      "provinceId": 765
     },
     {
       "id": 259,
@@ -10094,7 +10614,9 @@
         "seat": "연현",
         "nameCh": "阳平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45339",
+      "provinceId": 404
     },
     {
       "id": 260,
@@ -10130,7 +10652,9 @@
         "seat": "연현",
         "nameCh": "顿丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82304",
+      "provinceId": 569
     },
     {
       "id": 261,
@@ -10174,7 +10698,9 @@
         "seat": "봉고현",
         "nameCh": "奉高县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85697",
+      "provinceId": 766
     },
     {
       "id": 262,
@@ -10214,7 +10740,9 @@
         "seat": "봉고현",
         "nameCh": "南城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85596",
+      "provinceId": 744
     },
     {
       "id": 263,
@@ -10252,7 +10780,9 @@
         "seat": "봉고현",
         "nameCh": "南武阳侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85610",
+      "provinceId": 746
     },
     {
       "id": 264,
@@ -10288,7 +10818,9 @@
         "seat": "봉고현",
         "nameCh": "博县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85653",
+      "provinceId": 755
     },
     {
       "id": 265,
@@ -10326,7 +10858,9 @@
         "seat": "봉고현",
         "nameCh": "嬴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85677",
+      "provinceId": 761
     },
     {
       "id": 266,
@@ -10362,7 +10896,9 @@
         "seat": "봉고현",
         "nameCh": "梁甫县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85666",
+      "provinceId": 756
     },
     {
       "id": 267,
@@ -10400,7 +10936,9 @@
         "seat": "봉고현",
         "nameCh": "牟县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85676",
+      "provinceId": 760
     },
     {
       "id": 268,
@@ -10441,7 +10979,9 @@
         "seat": "봉고현",
         "nameCh": "盖县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85642",
+      "provinceId": 753
     },
     {
       "id": 269,
@@ -10478,7 +11018,9 @@
         "seat": "봉고현",
         "nameCh": "茬县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45127",
+      "provinceId": 370
     },
     {
       "id": 270,
@@ -10518,7 +11060,9 @@
         "seat": "봉고현",
         "nameCh": "莱芜县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45053",
+      "provinceId": 354
     },
     {
       "id": 271,
@@ -10556,7 +11100,9 @@
         "seat": "봉고현",
         "nameCh": "费县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85602",
+      "provinceId": 745
     },
     {
       "id": 272,
@@ -10597,7 +11143,9 @@
         "seat": "노현",
         "nameCh": "卢县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45098",
+      "provinceId": 359
     },
     {
       "id": 273,
@@ -10635,7 +11183,9 @@
         "seat": "노현",
         "nameCh": "刚县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45285",
+      "provinceId": 392
     },
     {
       "id": 274,
@@ -10674,7 +11224,9 @@
         "seat": "노현",
         "nameCh": "茌平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45332",
+      "provinceId": 402
     },
     {
       "id": 275,
@@ -10713,7 +11265,9 @@
         "seat": "노현",
         "nameCh": "蛇丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85671",
+      "provinceId": 758
     },
     {
       "id": 276,
@@ -10757,7 +11311,9 @@
         "seat": "정도현",
         "nameCh": "定陶县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85058",
+      "provinceId": 672
     },
     {
       "id": 277,
@@ -10795,7 +11351,9 @@
         "seat": "정도현",
         "nameCh": "乘氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85002",
+      "provinceId": 666
     },
     {
       "id": 278,
@@ -10833,7 +11391,9 @@
         "seat": "정도현",
         "nameCh": "冤句县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85013",
+      "provinceId": 667
     },
     {
       "id": 279,
@@ -10873,7 +11433,9 @@
         "seat": "정도현",
         "nameCh": "单父县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85024",
+      "provinceId": 669
     },
     {
       "id": 280,
@@ -10912,7 +11474,9 @@
         "seat": "정도현",
         "nameCh": "句阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85017",
+      "provinceId": 668
     },
     {
       "id": 281,
@@ -10948,7 +11512,9 @@
         "seat": "정도현",
         "nameCh": "廪丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85075",
+      "provinceId": 676
     },
     {
       "id": 282,
@@ -10986,7 +11552,9 @@
         "seat": "정도현",
         "nameCh": "成武县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85115",
+      "provinceId": 681
     },
     {
       "id": 283,
@@ -11023,7 +11591,9 @@
         "seat": "정도현",
         "nameCh": "成阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85067",
+      "provinceId": 675
     },
     {
       "id": 284,
@@ -11060,7 +11630,9 @@
         "seat": "정도현",
         "nameCh": "鄄城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85065",
+      "provinceId": 674
     },
     {
       "id": 285,
@@ -11107,7 +11679,9 @@
         "seat": "진류현",
         "nameCh": "陈留县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "44324",
+      "provinceId": 307
     },
     {
       "id": 286,
@@ -11147,7 +11721,9 @@
         "seat": "진류현",
         "nameCh": "圉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44342",
+      "provinceId": 312
     },
     {
       "id": 287,
@@ -11185,7 +11761,9 @@
         "seat": "진류현",
         "nameCh": "外黄县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44335",
+      "provinceId": 310
     },
     {
       "id": 288,
@@ -11224,7 +11802,9 @@
         "seat": "진류현",
         "nameCh": "封丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82323",
+      "provinceId": 572
     },
     {
       "id": 289,
@@ -11261,7 +11841,9 @@
         "seat": "진류현",
         "nameCh": "尉氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44332",
+      "provinceId": 309
     },
     {
       "id": 290,
@@ -11297,7 +11879,9 @@
         "seat": "진류현",
         "nameCh": "小黄县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44337",
+      "provinceId": 311
     },
     {
       "id": 291,
@@ -11336,7 +11920,9 @@
         "seat": "진류현",
         "nameCh": "扶沟县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82058",
+      "provinceId": 542
     },
     {
       "id": 292,
@@ -11375,7 +11961,9 @@
         "seat": "진류현",
         "nameCh": "济阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44379",
+      "provinceId": 315
     },
     {
       "id": 293,
@@ -11415,7 +12003,9 @@
         "seat": "진류현",
         "nameCh": "浚仪县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44392",
+      "provinceId": 318
     },
     {
       "id": 294,
@@ -11454,7 +12044,9 @@
         "seat": "진류현",
         "nameCh": "考城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82331",
+      "provinceId": 573
     },
     {
       "id": 295,
@@ -11492,7 +12084,9 @@
         "seat": "진류현",
         "nameCh": "襄邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82160",
+      "provinceId": 553
     },
     {
       "id": 296,
@@ -11531,7 +12125,9 @@
         "seat": "진류현",
         "nameCh": "酸枣县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82282",
+      "provinceId": 567
     },
     {
       "id": 297,
@@ -11569,7 +12165,9 @@
         "seat": "진류현",
         "nameCh": "雍丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44326",
+      "provinceId": 308
     },
     {
       "id": 298,
@@ -11614,7 +12212,9 @@
         "seat": "하비현",
         "nameCh": "下邳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "42821",
+      "provinceId": 220
     },
     {
       "id": 299,
@@ -11653,7 +12253,9 @@
         "seat": "하비현",
         "nameCh": "下相县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42847",
+      "provinceId": 224
     },
     {
       "id": 300,
@@ -11694,7 +12296,9 @@
         "seat": "하비현",
         "nameCh": "僮县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43249",
+      "provinceId": 257
     },
     {
       "id": 301,
@@ -11735,7 +12339,9 @@
         "seat": "하비현",
         "nameCh": "取虑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42862",
+      "provinceId": 228
     },
     {
       "id": 302,
@@ -11774,7 +12380,9 @@
         "seat": "하비현",
         "nameCh": "司吾侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42852",
+      "provinceId": 225
     },
     {
       "id": 303,
@@ -11814,7 +12422,9 @@
         "seat": "하비현",
         "nameCh": "夏丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43235",
+      "provinceId": 255
     },
     {
       "id": 304,
@@ -11851,7 +12461,9 @@
         "seat": "하비현",
         "nameCh": "徐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43252",
+      "provinceId": 258
     },
     {
       "id": 305,
@@ -11889,7 +12501,9 @@
         "seat": "하비현",
         "nameCh": "淮浦县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42760",
+      "provinceId": 210
     },
     {
       "id": 306,
@@ -11929,7 +12543,9 @@
         "seat": "하비현",
         "nameCh": "淮阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42746",
+      "provinceId": 209
     },
     {
       "id": 307,
@@ -11967,7 +12583,9 @@
         "seat": "하비현",
         "nameCh": "淮陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43284",
+      "provinceId": 259
     },
     {
       "id": 308,
@@ -12005,7 +12623,9 @@
         "seat": "하비현",
         "nameCh": "睢陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42860",
+      "provinceId": 227
     },
     {
       "id": 309,
@@ -12042,7 +12662,9 @@
         "seat": "하비현",
         "nameCh": "良成县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42829",
+      "provinceId": 221
     },
     {
       "id": 310,
@@ -12079,7 +12701,8 @@
         "seat": "이성현",
         "nameCh": "利城县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85581"
     },
     {
       "id": 311,
@@ -12123,7 +12746,9 @@
         "seat": "광릉현",
         "nameCh": "广陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "42687",
+      "provinceId": 202
     },
     {
       "id": 312,
@@ -12164,7 +12789,9 @@
         "seat": "광릉현",
         "nameCh": "堂邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40556",
+      "provinceId": 53
     },
     {
       "id": 313,
@@ -12202,7 +12829,9 @@
         "seat": "광릉현",
         "nameCh": "射阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42737",
+      "provinceId": 207
     },
     {
       "id": 314,
@@ -12240,7 +12869,9 @@
         "seat": "광릉현",
         "nameCh": "平安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42695",
+      "provinceId": 203
     },
     {
       "id": 315,
@@ -12277,7 +12908,9 @@
         "seat": "광릉현",
         "nameCh": "江都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42681",
+      "provinceId": 201
     },
     {
       "id": 316,
@@ -12315,7 +12948,9 @@
         "seat": "광릉현",
         "nameCh": "海西县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42917",
+      "provinceId": 235
     },
     {
       "id": 317,
@@ -12354,7 +12989,9 @@
         "seat": "광릉현",
         "nameCh": "淩县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42844",
+      "provinceId": 223
     },
     {
       "id": 318,
@@ -12392,7 +13029,9 @@
         "seat": "광릉현",
         "nameCh": "盐渎县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42739",
+      "provinceId": 208
     },
     {
       "id": 319,
@@ -12431,7 +13070,9 @@
         "seat": "광릉현",
         "nameCh": "舆国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42698",
+      "provinceId": 204
     },
     {
       "id": 320,
@@ -12470,7 +13111,9 @@
         "seat": "광릉현",
         "nameCh": "高邮县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42714",
+      "provinceId": 206
     },
     {
       "id": 321,
@@ -12509,7 +13152,9 @@
         "seat": "팽성현",
         "nameCh": "彭城县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "42777",
+      "provinceId": 211
     },
     {
       "id": 322,
@@ -12547,7 +13192,9 @@
         "seat": "팽성현",
         "nameCh": "傅阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45239",
+      "provinceId": 387
     },
     {
       "id": 323,
@@ -12585,7 +13232,9 @@
         "seat": "팽성현",
         "nameCh": "吕县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42778",
+      "provinceId": 212
     },
     {
       "id": 324,
@@ -12624,7 +13273,9 @@
         "seat": "팽성현",
         "nameCh": "武原县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42832",
+      "provinceId": 222
     },
     {
       "id": 325,
@@ -12661,7 +13312,9 @@
         "seat": "팽성현",
         "nameCh": "留县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42818",
+      "provinceId": 219
     },
     {
       "id": 326,
@@ -12704,7 +13357,9 @@
         "seat": "난릉현",
         "nameCh": "兰陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45219",
+      "provinceId": 384
     },
     {
       "id": 327,
@@ -12742,7 +13397,9 @@
         "seat": "난릉현",
         "nameCh": "厚丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42913",
+      "provinceId": 234
     },
     {
       "id": 328,
@@ -12778,7 +13435,9 @@
         "seat": "난릉현",
         "nameCh": "戚县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45216",
+      "provinceId": 383
     },
     {
       "id": 329,
@@ -12816,7 +13475,9 @@
         "seat": "난릉현",
         "nameCh": "承县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45224",
+      "provinceId": 385
     },
     {
       "id": 330,
@@ -12854,7 +13515,9 @@
         "seat": "난릉현",
         "nameCh": "昌虑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45213",
+      "provinceId": 382
     },
     {
       "id": 331,
@@ -12892,7 +13555,9 @@
         "seat": "난릉현",
         "nameCh": "朐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42869",
+      "provinceId": 229
     },
     {
       "id": 332,
@@ -12930,7 +13595,9 @@
         "seat": "난릉현",
         "nameCh": "襄贲县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85588",
+      "provinceId": 741
     },
     {
       "id": 333,
@@ -12967,7 +13634,9 @@
         "seat": "난릉현",
         "nameCh": "赣榆县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42888",
+      "provinceId": 231
     },
     {
       "id": 334,
@@ -13004,7 +13673,9 @@
         "seat": "동완현",
         "nameCh": "东莞县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85634",
+      "provinceId": 750
     },
     {
       "id": 335,
@@ -13048,7 +13719,9 @@
         "seat": "개양현",
         "nameCh": "开阳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85594",
+      "provinceId": 743
     },
     {
       "id": 336,
@@ -13086,7 +13759,9 @@
         "seat": "개양현",
         "nameCh": "东安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85637",
+      "provinceId": 751
     },
     {
       "id": 337,
@@ -13126,7 +13801,9 @@
         "seat": "개양현",
         "nameCh": "东武县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85337",
+      "provinceId": 711
     },
     {
       "id": 338,
@@ -13162,7 +13839,9 @@
         "seat": "개양현",
         "nameCh": "临沂县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85589",
+      "provinceId": 742
     },
     {
       "id": 339,
@@ -13199,7 +13878,9 @@
         "seat": "개양현",
         "nameCh": "即丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85577",
+      "provinceId": 740
     },
     {
       "id": 340,
@@ -13238,7 +13919,9 @@
         "seat": "개양현",
         "nameCh": "姑幕县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85353",
+      "provinceId": 714
     },
     {
       "id": 341,
@@ -13277,7 +13960,9 @@
         "seat": "개양현",
         "nameCh": "琅邪县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85344",
+      "provinceId": 712
     },
     {
       "id": 342,
@@ -13316,7 +14001,9 @@
         "seat": "개양현",
         "nameCh": "缯县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45234",
+      "provinceId": 386
     },
     {
       "id": 343,
@@ -13355,7 +14042,9 @@
         "seat": "개양현",
         "nameCh": "莒县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85619",
+      "provinceId": 748
     },
     {
       "id": 344,
@@ -13394,7 +14083,9 @@
         "seat": "개양현",
         "nameCh": "诸县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85350",
+      "provinceId": 713
     },
     {
       "id": 345,
@@ -13432,7 +14123,9 @@
         "seat": "개양현",
         "nameCh": "阳都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85640",
+      "provinceId": 752
     },
     {
       "id": 346,
@@ -13481,7 +14174,9 @@
         "seat": "극현",
         "nameCh": "剧县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85272",
+      "provinceId": 703
     },
     {
       "id": 347,
@@ -13520,7 +14215,9 @@
         "seat": "극현",
         "nameCh": "下密县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85468",
+      "provinceId": 730
     },
     {
       "id": 348,
@@ -13556,7 +14253,9 @@
         "seat": "극현",
         "nameCh": "东安平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85217",
+      "provinceId": 693
     },
     {
       "id": 349,
@@ -13594,7 +14293,9 @@
         "seat": "극현",
         "nameCh": "即墨县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85459",
+      "provinceId": 728
     },
     {
       "id": 350,
@@ -13634,7 +14335,9 @@
         "seat": "극현",
         "nameCh": "夷安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85491",
+      "provinceId": 733
     },
     {
       "id": 351,
@@ -13673,7 +14376,9 @@
         "seat": "극현",
         "nameCh": "安丘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85325",
+      "provinceId": 709
     },
     {
       "id": 352,
@@ -13711,7 +14416,9 @@
         "seat": "극현",
         "nameCh": "平寿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85466",
+      "provinceId": 729
     },
     {
       "id": 353,
@@ -13748,7 +14455,9 @@
         "seat": "극현",
         "nameCh": "昌安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85312",
+      "provinceId": 708
     },
     {
       "id": 354,
@@ -13788,7 +14497,9 @@
         "seat": "극현",
         "nameCh": "朱虚县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85300",
+      "provinceId": 707
     },
     {
       "id": 355,
@@ -13827,7 +14538,9 @@
         "seat": "극현",
         "nameCh": "胶东县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85454",
+      "provinceId": 727
     },
     {
       "id": 356,
@@ -13865,7 +14578,9 @@
         "seat": "극현",
         "nameCh": "营陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85292",
+      "provinceId": 706
     },
     {
       "id": 357,
@@ -13903,7 +14618,9 @@
         "seat": "극현",
         "nameCh": "西平昌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45107",
+      "provinceId": 361
     },
     {
       "id": 358,
@@ -13941,7 +14658,9 @@
         "seat": "극현",
         "nameCh": "都昌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85478",
+      "provinceId": 731
     },
     {
       "id": 359,
@@ -13979,7 +14698,9 @@
         "seat": "극현",
         "nameCh": "高密县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85496",
+      "provinceId": 734
     },
     {
       "id": 360,
@@ -14022,7 +14743,9 @@
         "seat": "평원현",
         "nameCh": "平原县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45100",
+      "provinceId": 360
     },
     {
       "id": 361,
@@ -14060,7 +14783,9 @@
         "seat": "평원현",
         "nameCh": "乐陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85553",
+      "provinceId": 739
     },
     {
       "id": 362,
@@ -14097,7 +14822,9 @@
         "seat": "평원현",
         "nameCh": "厌次县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85525",
+      "provinceId": 736
     },
     {
       "id": 363,
@@ -14134,7 +14861,9 @@
         "seat": "평원현",
         "nameCh": "祝阿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45121",
+      "provinceId": 366
     },
     {
       "id": 364,
@@ -14173,7 +14902,9 @@
         "seat": "평원현",
         "nameCh": "般县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45146",
+      "provinceId": 371
     },
     {
       "id": 365,
@@ -14211,7 +14942,9 @@
         "seat": "평원현",
         "nameCh": "高唐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45087",
+      "provinceId": 358
     },
     {
       "id": 366,
@@ -14247,7 +14980,9 @@
         "seat": "평원현",
         "nameCh": "鬲县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45124",
+      "provinceId": 369
     },
     {
       "id": 367,
@@ -14290,7 +15025,9 @@
         "seat": "황현",
         "nameCh": "黄县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85371",
+      "provinceId": 715
     },
     {
       "id": 368,
@@ -14327,7 +15064,9 @@
         "seat": "황현",
         "nameCh": "东牟县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85410",
+      "provinceId": 724
     },
     {
       "id": 369,
@@ -14365,7 +15104,9 @@
         "seat": "황현",
         "nameCh": "卢乡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85386",
+      "provinceId": 720
     },
     {
       "id": 370,
@@ -14403,7 +15144,9 @@
         "seat": "황현",
         "nameCh": "当利县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85441",
+      "provinceId": 725
     },
     {
       "id": 371,
@@ -14442,7 +15185,9 @@
         "seat": "황현",
         "nameCh": "掖县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200036",
+      "provinceId": 2
     },
     {
       "id": 372,
@@ -14478,7 +15223,9 @@
         "seat": "황현",
         "nameCh": "昌阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85381",
+      "provinceId": 718
     },
     {
       "id": 373,
@@ -14514,7 +15261,9 @@
         "seat": "황현",
         "nameCh": "曲成（城）县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85448",
+      "provinceId": 726
     },
     {
       "id": 374,
@@ -14551,7 +15300,9 @@
         "seat": "황현",
         "nameCh": "牟平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85401",
+      "provinceId": 723
     },
     {
       "id": 375,
@@ -14587,7 +15338,9 @@
         "seat": "황현",
         "nameCh": "长广县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85388",
+      "provinceId": 721
     },
     {
       "id": 376,
@@ -14625,7 +15378,9 @@
         "seat": "황현",
         "nameCh": "黔陬县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85481",
+      "provinceId": 732
     },
     {
       "id": 377,
@@ -14665,7 +15420,9 @@
         "seat": "임제현",
         "nameCh": "临济县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85254",
+      "provinceId": 699
     },
     {
       "id": 378,
@@ -14701,7 +15458,9 @@
         "seat": "임제현",
         "nameCh": "利县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85240",
+      "provinceId": 696
     },
     {
       "id": 379,
@@ -14736,7 +15495,9 @@
         "seat": "임제현",
         "nameCh": "千乘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85256",
+      "provinceId": 700
     },
     {
       "id": 380,
@@ -14774,7 +15535,9 @@
         "seat": "임제현",
         "nameCh": "寿光县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85268",
+      "provinceId": 702
     },
     {
       "id": 381,
@@ -14811,7 +15574,9 @@
         "seat": "임제현",
         "nameCh": "益侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85280",
+      "provinceId": 704
     },
     {
       "id": 382,
@@ -14850,7 +15615,8 @@
         "seat": "낙릉군",
         "nameCh": "乐陵郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "210487"
     },
     {
       "id": 383,
@@ -14893,7 +15659,9 @@
         "seat": "동평릉현",
         "nameCh": "东平陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45020",
+      "provinceId": 348
     },
     {
       "id": 384,
@@ -14931,7 +15699,9 @@
         "seat": "동평릉현",
         "nameCh": "东朝阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200026",
+      "provinceId": 1
     },
     {
       "id": 385,
@@ -14968,7 +15738,9 @@
         "seat": "동평릉현",
         "nameCh": "于陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45118",
+      "provinceId": 364
     },
     {
       "id": 386,
@@ -15003,7 +15775,9 @@
         "seat": "동평릉현",
         "nameCh": "土鼓县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45049",
+      "provinceId": 353
     },
     {
       "id": 387,
@@ -15040,7 +15814,9 @@
         "seat": "동평릉현",
         "nameCh": "梁邹县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45038",
+      "provinceId": 352
     },
     {
       "id": 388,
@@ -15078,7 +15854,9 @@
         "seat": "동평릉현",
         "nameCh": "菅县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45028",
+      "provinceId": 350
     },
     {
       "id": 389,
@@ -15115,7 +15893,9 @@
         "seat": "동평릉현",
         "nameCh": "著县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45076",
+      "provinceId": 357
     },
     {
       "id": 390,
@@ -15153,7 +15933,9 @@
         "seat": "동평릉현",
         "nameCh": "邹平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45036",
+      "provinceId": 351
     },
     {
       "id": 391,
@@ -15191,7 +15973,9 @@
         "seat": "서안현",
         "nameCh": "西安县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "85222",
+      "provinceId": 694
     },
     {
       "id": 392,
@@ -15230,7 +16014,9 @@
         "seat": "서안현",
         "nameCh": "临朐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45064",
+      "provinceId": 356
     },
     {
       "id": 393,
@@ -15267,7 +16053,9 @@
         "seat": "서안현",
         "nameCh": "广县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "85216",
+      "provinceId": 692
     },
     {
       "id": 394,
@@ -15305,7 +16093,9 @@
         "seat": "서안현",
         "nameCh": "昌国县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45058",
+      "provinceId": 355
     },
     {
       "id": 395,
@@ -15344,7 +16134,9 @@
         "seat": "서안현",
         "nameCh": "般阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45117",
+      "provinceId": 363
     },
     {
       "id": 396,
@@ -15391,7 +16183,9 @@
         "seat": "강릉현",
         "nameCh": "江陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "43676",
+      "provinceId": 285
     },
     {
       "id": 397,
@@ -15429,7 +16223,9 @@
         "seat": "강릉현",
         "nameCh": "临沮县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45783",
+      "provinceId": 442
     },
     {
       "id": 398,
@@ -15468,7 +16264,9 @@
         "seat": "강릉현",
         "nameCh": "华容县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43711",
+      "provinceId": 287
     },
     {
       "id": 399,
@@ -15506,7 +16304,9 @@
         "seat": "강릉현",
         "nameCh": "夷道县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43730",
+      "provinceId": 290
     },
     {
       "id": 400,
@@ -15544,7 +16344,9 @@
         "seat": "강릉현",
         "nameCh": "宜城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45676",
+      "provinceId": 431
     },
     {
       "id": 401,
@@ -15581,7 +16383,9 @@
         "seat": "강릉현",
         "nameCh": "州陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43497",
+      "provinceId": 276
     },
     {
       "id": 402,
@@ -15618,7 +16422,9 @@
         "seat": "강릉현",
         "nameCh": "巫县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44493",
+      "provinceId": 330
     },
     {
       "id": 403,
@@ -15658,7 +16464,9 @@
         "seat": "강릉현",
         "nameCh": "当阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45776",
+      "provinceId": 441
     },
     {
       "id": 404,
@@ -15695,7 +16503,9 @@
         "seat": "강릉현",
         "nameCh": "枝江县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43720",
+      "provinceId": 288
     },
     {
       "id": 405,
@@ -15732,7 +16542,9 @@
         "seat": "강릉현",
         "nameCh": "秭归县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45809",
+      "provinceId": 444
     },
     {
       "id": 406,
@@ -15771,7 +16583,9 @@
         "seat": "강릉현",
         "nameCh": "编县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45764",
+      "provinceId": 440
     },
     {
       "id": 407,
@@ -15808,7 +16622,9 @@
         "seat": "강릉현",
         "nameCh": "邔县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45671",
+      "provinceId": 430
     },
     {
       "id": 408,
@@ -15849,7 +16665,9 @@
         "seat": "강릉현",
         "nameCh": "鄀县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45685",
+      "provinceId": 432
     },
     {
       "id": 409,
@@ -15886,7 +16704,8 @@
         "seat": "남향군",
         "nameCh": "南乡郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "210962"
     },
     {
       "id": 410,
@@ -15944,7 +16763,9 @@
         "seat": "완현",
         "nameCh": "宛县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82612",
+      "provinceId": 602
     },
     {
       "id": 411,
@@ -15982,7 +16803,9 @@
         "seat": "완현",
         "nameCh": "冠军县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82708",
+      "provinceId": 616
     },
     {
       "id": 412,
@@ -16020,7 +16843,9 @@
         "seat": "완현",
         "nameCh": "博望县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82632",
+      "provinceId": 604
     },
     {
       "id": 413,
@@ -16059,7 +16884,9 @@
         "seat": "완현",
         "nameCh": "叶县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82811",
+      "provinceId": 625
     },
     {
       "id": 414,
@@ -16099,7 +16926,9 @@
         "seat": "완현",
         "nameCh": "堵阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82783",
+      "provinceId": 621
     },
     {
       "id": 415,
@@ -16134,7 +16963,9 @@
         "seat": "완현",
         "nameCh": "山都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45663",
+      "provinceId": 429
     },
     {
       "id": 416,
@@ -16173,7 +17004,9 @@
         "seat": "완현",
         "nameCh": "平氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82683",
+      "provinceId": 611
     },
     {
       "id": 417,
@@ -16211,7 +17044,9 @@
         "seat": "완현",
         "nameCh": "新野县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82749",
+      "provinceId": 617
     },
     {
       "id": 418,
@@ -16249,7 +17084,9 @@
         "seat": "완현",
         "nameCh": "朝阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82700",
+      "provinceId": 615
     },
     {
       "id": 419,
@@ -16290,7 +17127,9 @@
         "seat": "완현",
         "nameCh": "析县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82763",
+      "provinceId": 619
     },
     {
       "id": 420,
@@ -16329,7 +17168,9 @@
         "seat": "완현",
         "nameCh": "棘阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82755",
+      "provinceId": 618
     },
     {
       "id": 421,
@@ -16367,7 +17208,9 @@
         "seat": "완현",
         "nameCh": "武当县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45755",
+      "provinceId": 439
     },
     {
       "id": 422,
@@ -16406,7 +17249,9 @@
         "seat": "완현",
         "nameCh": "比阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82650",
+      "provinceId": 608
     },
     {
       "id": 423,
@@ -16443,7 +17288,9 @@
         "seat": "완현",
         "nameCh": "湖阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82644",
+      "provinceId": 607
     },
     {
       "id": 424,
@@ -16483,7 +17330,9 @@
         "seat": "완현",
         "nameCh": "犨县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82975",
+      "provinceId": 639
     },
     {
       "id": 425,
@@ -16520,7 +17369,9 @@
         "seat": "완현",
         "nameCh": "穰县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82696",
+      "provinceId": 614
     },
     {
       "id": 426,
@@ -16558,7 +17409,9 @@
         "seat": "완현",
         "nameCh": "育阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82620",
+      "provinceId": 603
     },
     {
       "id": 427,
@@ -16598,7 +17451,9 @@
         "seat": "완현",
         "nameCh": "舞阴县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82657",
+      "provinceId": 609
     },
     {
       "id": 428,
@@ -16635,7 +17490,9 @@
         "seat": "완현",
         "nameCh": "西鄂县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82633",
+      "provinceId": 605
     },
     {
       "id": 429,
@@ -16674,7 +17531,9 @@
         "seat": "완현",
         "nameCh": "郦县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82774",
+      "provinceId": 620
     },
     {
       "id": 430,
@@ -16714,7 +17573,9 @@
         "seat": "완현",
         "nameCh": "随县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43618",
+      "provinceId": 284
     },
     {
       "id": 431,
@@ -16755,7 +17616,9 @@
         "seat": "완현",
         "nameCh": "雉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82635",
+      "provinceId": 606
     },
     {
       "id": 432,
@@ -16794,7 +17657,9 @@
         "seat": "완현",
         "nameCh": "鲁阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82971",
+      "provinceId": 638
     },
     {
       "id": 433,
@@ -16830,7 +17695,8 @@
         "seat": "고릉군",
         "nameCh": "固陵郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "210974"
     },
     {
       "id": 434,
@@ -16867,7 +17733,9 @@
         "seat": "이릉현",
         "nameCh": "夷陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45796",
+      "provinceId": 443
     },
     {
       "id": 435,
@@ -16903,7 +17771,9 @@
         "seat": "방릉현",
         "nameCh": "房陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45921",
+      "provinceId": 446
     },
     {
       "id": 436,
@@ -16944,7 +17814,8 @@
         "seat": "신성후국",
         "nameCh": "新成侯国",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "82709"
     },
     {
       "id": 437,
@@ -16988,7 +17859,9 @@
         "seat": "침현",
         "nameCh": "郴县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "41682",
+      "provinceId": 139
     },
     {
       "id": 438,
@@ -17024,7 +17897,9 @@
         "seat": "침현",
         "nameCh": "临武县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41829",
+      "provinceId": 156
     },
     {
       "id": 439,
@@ -17062,7 +17937,9 @@
         "seat": "침현",
         "nameCh": "便县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41689",
+      "provinceId": 140
     },
     {
       "id": 440,
@@ -17101,7 +17978,9 @@
         "seat": "침현",
         "nameCh": "南平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41821",
+      "provinceId": 155
     },
     {
       "id": 441,
@@ -17140,7 +18019,9 @@
         "seat": "침현",
         "nameCh": "曲江县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42238",
+      "provinceId": 188
     },
     {
       "id": 442,
@@ -17178,7 +18059,9 @@
         "seat": "침현",
         "nameCh": "汉宁县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41691",
+      "provinceId": 141
     },
     {
       "id": 443,
@@ -17215,7 +18098,9 @@
         "seat": "침현",
         "nameCh": "浈阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42256",
+      "provinceId": 189
     },
     {
       "id": 444,
@@ -17254,7 +18139,9 @@
         "seat": "침현",
         "nameCh": "耒阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41850",
+      "provinceId": 160
     },
     {
       "id": 445,
@@ -17293,7 +18180,9 @@
         "seat": "침현",
         "nameCh": "阴山县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41838",
+      "provinceId": 157
     },
     {
       "id": 446,
@@ -17337,7 +18226,9 @@
         "seat": "임원현",
         "nameCh": "临沅县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "41906",
+      "provinceId": 165
     },
     {
       "id": 447,
@@ -17376,7 +18267,9 @@
         "seat": "임원현",
         "nameCh": "作唐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41950",
+      "provinceId": 168
     },
     {
       "id": 448,
@@ -17414,7 +18307,9 @@
         "seat": "임원현",
         "nameCh": "汉寿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41901",
+      "provinceId": 164
     },
     {
       "id": 449,
@@ -17452,7 +18347,9 @@
         "seat": "임원현",
         "nameCh": "沅南县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41907",
+      "provinceId": 166
     },
     {
       "id": 450,
@@ -17493,7 +18390,9 @@
         "seat": "임원현",
         "nameCh": "沅陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41795",
+      "provinceId": 153
     },
     {
       "id": 451,
@@ -17535,7 +18434,9 @@
         "seat": "임원현",
         "nameCh": "辰阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41804",
+      "provinceId": 154
     },
     {
       "id": 452,
@@ -17574,7 +18475,9 @@
         "seat": "임원현",
         "nameCh": "迁陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42047",
+      "provinceId": 179
     },
     {
       "id": 453,
@@ -17612,7 +18515,9 @@
         "seat": "임원현",
         "nameCh": "酉阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42049",
+      "provinceId": 180
     },
     {
       "id": 454,
@@ -17651,7 +18556,9 @@
         "seat": "임원현",
         "nameCh": "镡成县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41886",
+      "provinceId": 163
     },
     {
       "id": 455,
@@ -17689,7 +18596,9 @@
         "seat": "임원현",
         "nameCh": "零阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41935",
+      "provinceId": 167
     },
     {
       "id": 456,
@@ -17734,7 +18643,9 @@
         "seat": "서릉현",
         "nameCh": "西陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "43503",
+      "provinceId": 277
     },
     {
       "id": 457,
@@ -17773,7 +18684,9 @@
         "seat": "서릉현",
         "nameCh": "下雉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43446",
+      "provinceId": 273
     },
     {
       "id": 458,
@@ -17811,7 +18724,9 @@
         "seat": "서릉현",
         "nameCh": "云杜县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43483",
+      "provinceId": 275
     },
     {
       "id": 459,
@@ -17850,7 +18765,9 @@
         "seat": "서릉현",
         "nameCh": "南新市县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43584",
+      "provinceId": 280
     },
     {
       "id": 460,
@@ -17888,7 +18805,9 @@
         "seat": "서릉현",
         "nameCh": "安陆县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43602",
+      "provinceId": 282
     },
     {
       "id": 461,
@@ -17928,7 +18847,9 @@
         "seat": "서릉현",
         "nameCh": "平春县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83158",
+      "provinceId": 654
     },
     {
       "id": 462,
@@ -17967,7 +18888,9 @@
         "seat": "서릉현",
         "nameCh": "竟陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43595",
+      "provinceId": 281
     },
     {
       "id": 463,
@@ -18004,7 +18927,9 @@
         "seat": "서릉현",
         "nameCh": "西阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82563",
+      "provinceId": 594
     },
     {
       "id": 464,
@@ -18043,7 +18968,9 @@
         "seat": "서릉현",
         "nameCh": "轪县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82570",
+      "provinceId": 595
     },
     {
       "id": 465,
@@ -18078,7 +19005,9 @@
         "seat": "서릉현",
         "nameCh": "鄂县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43423",
+      "provinceId": 271
     },
     {
       "id": 466,
@@ -18119,7 +19048,9 @@
         "seat": "서릉현",
         "nameCh": "鄳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "83164",
+      "provinceId": 655
     },
     {
       "id": 467,
@@ -18155,7 +19086,9 @@
         "seat": "한창현",
         "nameCh": "汉昌县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "42093",
+      "provinceId": 182
     },
     {
       "id": 468,
@@ -18192,7 +19125,9 @@
         "seat": "장릉현",
         "nameCh": "章陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45713",
+      "provinceId": 435
     },
     {
       "id": 469,
@@ -18228,7 +19163,9 @@
         "seat": "기춘현",
         "nameCh": "蕲春县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "43542",
+      "provinceId": 279
     },
     {
       "id": 470,
@@ -18263,7 +19200,9 @@
         "seat": "양양현",
         "nameCh": "襄阳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45651",
+      "provinceId": 427
     },
     {
       "id": 471,
@@ -18309,7 +19248,9 @@
         "seat": "임상현",
         "nameCh": "临湘县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "41716",
+      "provinceId": 142
     },
     {
       "id": 472,
@@ -18348,7 +19289,9 @@
         "seat": "임상현",
         "nameCh": "下隽县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43441",
+      "provinceId": 272
     },
     {
       "id": 473,
@@ -18386,7 +19329,9 @@
         "seat": "임상현",
         "nameCh": "安城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40934",
+      "provinceId": 93
     },
     {
       "id": 474,
@@ -18426,7 +19371,9 @@
         "seat": "임상현",
         "nameCh": "容陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41781",
+      "provinceId": 152
     },
     {
       "id": 475,
@@ -18465,7 +19412,9 @@
         "seat": "임상현",
         "nameCh": "攸县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41761",
+      "provinceId": 147
     },
     {
       "id": 476,
@@ -18505,7 +19454,9 @@
         "seat": "임상현",
         "nameCh": "昭陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42013",
+      "provinceId": 176
     },
     {
       "id": 477,
@@ -18545,7 +19496,9 @@
         "seat": "임상현",
         "nameCh": "湘南县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41779",
+      "provinceId": 151
     },
     {
       "id": 478,
@@ -18584,7 +19537,9 @@
         "seat": "임상현",
         "nameCh": "益阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41755",
+      "provinceId": 146
     },
     {
       "id": 479,
@@ -18623,7 +19578,9 @@
         "seat": "임상현",
         "nameCh": "罗县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41775",
+      "provinceId": 149
     },
     {
       "id": 480,
@@ -18665,7 +19622,9 @@
         "seat": "임상현",
         "nameCh": "连道县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41776",
+      "provinceId": 150
     },
     {
       "id": 481,
@@ -18705,7 +19664,9 @@
         "seat": "임상현",
         "nameCh": "酃县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41877",
+      "provinceId": 161
     },
     {
       "id": 482,
@@ -18744,7 +19705,9 @@
         "seat": "임상현",
         "nameCh": "醴陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41725",
+      "provinceId": 143
     },
     {
       "id": 483,
@@ -18792,7 +19755,9 @@
         "seat": "천릉현",
         "nameCh": "泉陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "41958",
+      "provinceId": 170
     },
     {
       "id": 484,
@@ -18831,7 +19796,9 @@
         "seat": "천릉현",
         "nameCh": "夫夷侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42008",
+      "provinceId": 175
     },
     {
       "id": 485,
@@ -18870,7 +19837,9 @@
         "seat": "천릉현",
         "nameCh": "始安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43738",
+      "provinceId": 291
     },
     {
       "id": 486,
@@ -18908,7 +19877,9 @@
         "seat": "천릉현",
         "nameCh": "昭阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42019",
+      "provinceId": 178
     },
     {
       "id": 487,
@@ -18946,7 +19917,9 @@
         "seat": "천릉현",
         "nameCh": "泠道县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41955",
+      "provinceId": 169
     },
     {
       "id": 488,
@@ -18984,7 +19957,9 @@
         "seat": "천릉현",
         "nameCh": "洮阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43770",
+      "provinceId": 293
     },
     {
       "id": 489,
@@ -19022,7 +19997,9 @@
         "seat": "천릉현",
         "nameCh": "湘乡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41740",
+      "provinceId": 145
     },
     {
       "id": 490,
@@ -19061,7 +20038,9 @@
         "seat": "천릉현",
         "nameCh": "烝阳侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41882",
+      "provinceId": 162
     },
     {
       "id": 491,
@@ -19100,7 +20079,9 @@
         "seat": "천릉현",
         "nameCh": "营浦县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41980",
+      "provinceId": 173
     },
     {
       "id": 492,
@@ -19139,7 +20120,9 @@
         "seat": "천릉현",
         "nameCh": "营道县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41996",
+      "provinceId": 174
     },
     {
       "id": 493,
@@ -19179,7 +20162,9 @@
         "seat": "천릉현",
         "nameCh": "都梁县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42017",
+      "provinceId": 177
     },
     {
       "id": 494,
@@ -19216,7 +20201,9 @@
         "seat": "천릉현",
         "nameCh": "重安侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41841",
+      "provinceId": 158
     },
     {
       "id": 495,
@@ -19258,7 +20245,9 @@
         "seat": "천릉현",
         "nameCh": "零陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43769",
+      "provinceId": 292
     },
     {
       "id": 496,
@@ -19306,7 +20295,9 @@
         "seat": "완릉현",
         "nameCh": "宛陵县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "41302",
+      "provinceId": 123
     },
     {
       "id": 497,
@@ -19345,7 +20336,9 @@
         "seat": "완릉현",
         "nameCh": "句容县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40533",
+      "provinceId": 52
     },
     {
       "id": 498,
@@ -19380,7 +20373,9 @@
         "seat": "완릉현",
         "nameCh": "故鄣县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40161",
+      "provinceId": 37
     },
     {
       "id": 499,
@@ -19417,7 +20412,9 @@
         "seat": "완릉현",
         "nameCh": "於潜县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40100",
+      "provinceId": 31
     },
     {
       "id": 500,
@@ -19455,7 +20452,9 @@
         "seat": "완릉현",
         "nameCh": "春榖县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41374",
+      "provinceId": 137
     },
     {
       "id": 501,
@@ -19492,7 +20491,9 @@
         "seat": "완릉현",
         "nameCh": "歙县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41319",
+      "provinceId": 129
     },
     {
       "id": 502,
@@ -19530,7 +20531,9 @@
         "seat": "완릉현",
         "nameCh": "江乘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40528",
+      "provinceId": 51
     },
     {
       "id": 503,
@@ -19565,7 +20568,9 @@
         "seat": "완릉현",
         "nameCh": "泾县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41313",
+      "provinceId": 127
     },
     {
       "id": 504,
@@ -19601,7 +20606,9 @@
         "seat": "완릉현",
         "nameCh": "湖熟县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40512",
+      "provinceId": 49
     },
     {
       "id": 505,
@@ -19638,7 +20645,9 @@
         "seat": "완릉현",
         "nameCh": "溧阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40581",
+      "provinceId": 56
     },
     {
       "id": 506,
@@ -19676,7 +20685,9 @@
         "seat": "완릉현",
         "nameCh": "石城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41341",
+      "provinceId": 133
     },
     {
       "id": 507,
@@ -19714,7 +20725,9 @@
         "seat": "완릉현",
         "nameCh": "芜湖县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41366",
+      "provinceId": 136
     },
     {
       "id": 508,
@@ -19754,7 +20767,9 @@
         "seat": "완릉현",
         "nameCh": "陵阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41347",
+      "provinceId": 134
     },
     {
       "id": 509,
@@ -19792,7 +20807,9 @@
         "seat": "완릉현",
         "nameCh": "黝县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41323",
+      "provinceId": 130
     },
     {
       "id": 510,
@@ -19830,7 +20847,9 @@
         "seat": "합비현",
         "nameCh": "合肥县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "43057",
+      "provinceId": 238
     },
     {
       "id": 511,
@@ -19872,7 +20891,9 @@
         "seat": "오현",
         "nameCh": "吴县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "40404",
+      "provinceId": 44
     },
     {
       "id": 512,
@@ -19909,7 +20930,9 @@
         "seat": "오현",
         "nameCh": "丹徒县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40565",
+      "provinceId": 54
     },
     {
       "id": 513,
@@ -19946,7 +20969,9 @@
         "seat": "오현",
         "nameCh": "乌程县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40126",
+      "provinceId": 33
     },
     {
       "id": 514,
@@ -19984,7 +21009,9 @@
         "seat": "오현",
         "nameCh": "娄县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40426",
+      "provinceId": 45
     },
     {
       "id": 515,
@@ -20022,7 +21049,9 @@
         "seat": "오현",
         "nameCh": "富春县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40088",
+      "provinceId": 29
     },
     {
       "id": 516,
@@ -20059,7 +21088,9 @@
         "seat": "오현",
         "nameCh": "无锡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40444",
+      "provinceId": 46
     },
     {
       "id": 517,
@@ -20096,7 +21127,9 @@
         "seat": "오현",
         "nameCh": "曲阿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40573",
+      "provinceId": 55
     },
     {
       "id": 518,
@@ -20133,7 +21166,9 @@
         "seat": "오현",
         "nameCh": "海盐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40070",
+      "provinceId": 26
     },
     {
       "id": 519,
@@ -20171,7 +21206,9 @@
         "seat": "오현",
         "nameCh": "由拳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40052",
+      "provinceId": 25
     },
     {
       "id": 520,
@@ -20206,7 +21243,9 @@
         "seat": "이주",
         "nameCh": "夷洲",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X056",
+      "provinceId": 1515
     },
     {
       "id": 521,
@@ -20243,7 +21282,9 @@
         "seat": "산월",
         "nameCh": "山越",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X061",
+      "provinceId": 1520
     },
     {
       "id": 522,
@@ -20287,7 +21328,9 @@
         "seat": "하채현",
         "nameCh": "下蔡县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "43187",
+      "provinceId": 247
     },
     {
       "id": 523,
@@ -20325,7 +21368,9 @@
         "seat": "하채현",
         "nameCh": "六安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43138",
+      "provinceId": 242
     },
     {
       "id": 524,
@@ -20363,7 +21408,9 @@
         "seat": "하채현",
         "nameCh": "安丰县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82575",
+      "provinceId": 596
     },
     {
       "id": 525,
@@ -20403,7 +21450,9 @@
         "seat": "하채현",
         "nameCh": "安风县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43379",
+      "provinceId": 269
     },
     {
       "id": 526,
@@ -20442,7 +21491,9 @@
         "seat": "하채현",
         "nameCh": "寻阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41256",
+      "provinceId": 122
     },
     {
       "id": 527,
@@ -20481,7 +21532,9 @@
         "seat": "하채현",
         "nameCh": "居巢县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43032",
+      "provinceId": 237
     },
     {
       "id": 528,
@@ -20520,7 +21573,9 @@
         "seat": "하채현",
         "nameCh": "蓼县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82581",
+      "provinceId": 598
     },
     {
       "id": 529,
@@ -20557,7 +21612,9 @@
         "seat": "하채현",
         "nameCh": "阳泉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43337",
+      "provinceId": 264
     },
     {
       "id": 530,
@@ -20595,7 +21652,9 @@
         "seat": "하채현",
         "nameCh": "雩娄县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "82606",
+      "provinceId": 601
     },
     {
       "id": 531,
@@ -20630,7 +21689,8 @@
         "seat": "여릉군",
         "nameCh": "庐陵郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "32540"
     },
     {
       "id": 532,
@@ -20666,7 +21726,8 @@
         "seat": "신도군",
         "nameCh": "新都郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "32221"
     },
     {
       "id": 533,
@@ -20716,7 +21777,9 @@
         "seat": "산음현",
         "nameCh": "山阴县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "40758",
+      "provinceId": 72
     },
     {
       "id": 534,
@@ -20752,7 +21815,9 @@
         "seat": "산음현",
         "nameCh": "上虞县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40772",
+      "provinceId": 74
     },
     {
       "id": 535,
@@ -20787,7 +21852,9 @@
         "seat": "산음현",
         "nameCh": "乌伤县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40719",
+      "provinceId": 67
     },
     {
       "id": 536,
@@ -20823,7 +21890,9 @@
         "seat": "산음현",
         "nameCh": "余姚县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40785",
+      "provinceId": 77
     },
     {
       "id": 537,
@@ -20859,7 +21928,9 @@
         "seat": "산음현",
         "nameCh": "余暨县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40781",
+      "provinceId": 76
     },
     {
       "id": 538,
@@ -20896,7 +21967,9 @@
         "seat": "산음현",
         "nameCh": "剡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40767",
+      "provinceId": 73
     },
     {
       "id": 539,
@@ -20931,7 +22004,9 @@
         "seat": "산음현",
         "nameCh": "太末县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40638",
+      "provinceId": 60
     },
     {
       "id": 540,
@@ -20967,7 +22042,9 @@
         "seat": "산음현",
         "nameCh": "永县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40377",
+      "provinceId": 43
     },
     {
       "id": 541,
@@ -21003,7 +22080,9 @@
         "seat": "산음현",
         "nameCh": "永宁县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40697",
+      "provinceId": 64
     },
     {
       "id": 542,
@@ -21039,7 +22118,9 @@
         "seat": "산음현",
         "nameCh": "章安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40655",
+      "provinceId": 62
     },
     {
       "id": 543,
@@ -21076,7 +22157,9 @@
         "seat": "산음현",
         "nameCh": "诸暨县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40791",
+      "provinceId": 78
     },
     {
       "id": 544,
@@ -21113,7 +22196,9 @@
         "seat": "산음현",
         "nameCh": "鄞县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40755",
+      "provinceId": 71
     },
     {
       "id": 545,
@@ -21149,7 +22234,9 @@
         "seat": "산음현",
         "nameCh": "鄮县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40740",
+      "provinceId": 70
     },
     {
       "id": 546,
@@ -21185,7 +22272,8 @@
         "seat": "비릉전농교위",
         "nameCh": "毗陵典农校尉",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "32365"
     },
     {
       "id": 547,
@@ -21220,7 +22308,9 @@
         "seat": "유구",
         "nameCh": "流求",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X057",
+      "provinceId": 1516
     },
     {
       "id": 548,
@@ -21271,7 +22361,9 @@
         "seat": "남창현",
         "nameCh": "南昌县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "41092",
+      "provinceId": 101
     },
     {
       "id": 549,
@@ -21307,7 +22399,9 @@
         "seat": "남창현",
         "nameCh": "临汝县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40996",
+      "provinceId": 100
     },
     {
       "id": 550,
@@ -21343,7 +22437,9 @@
         "seat": "남창현",
         "nameCh": "南城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40980",
+      "provinceId": 99
     },
     {
       "id": 551,
@@ -21382,7 +22478,9 @@
         "seat": "남창현",
         "nameCh": "南野县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40878",
+      "provinceId": 85
     },
     {
       "id": 552,
@@ -21420,7 +22518,9 @@
         "seat": "남창현",
         "nameCh": "历陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41244",
+      "provinceId": 121
     },
     {
       "id": 553,
@@ -21458,7 +22558,9 @@
         "seat": "남창현",
         "nameCh": "宜春县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40965",
+      "provinceId": 98
     },
     {
       "id": 554,
@@ -21496,7 +22598,9 @@
         "seat": "남창현",
         "nameCh": "平都侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40906",
+      "provinceId": 90
     },
     {
       "id": 555,
@@ -21533,7 +22637,9 @@
         "seat": "남창현",
         "nameCh": "建城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41217",
+      "provinceId": 118
     },
     {
       "id": 556,
@@ -21569,7 +22675,9 @@
         "seat": "남창현",
         "nameCh": "建昌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41127",
+      "provinceId": 105
     },
     {
       "id": 557,
@@ -21605,7 +22713,9 @@
         "seat": "남창현",
         "nameCh": "彭泽县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41154",
+      "provinceId": 110
     },
     {
       "id": 558,
@@ -21641,7 +22751,9 @@
         "seat": "남창현",
         "nameCh": "新淦县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40944",
+      "provinceId": 95
     },
     {
       "id": 559,
@@ -21679,7 +22791,9 @@
         "seat": "남창현",
         "nameCh": "柴桑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41145",
+      "provinceId": 109
     },
     {
       "id": 560,
@@ -21715,7 +22829,9 @@
         "seat": "남창현",
         "nameCh": "海昏侯国",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41136",
+      "provinceId": 107
     },
     {
       "id": 561,
@@ -21752,7 +22868,9 @@
         "seat": "남창현",
         "nameCh": "石阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40886",
+      "provinceId": 87
     },
     {
       "id": 562,
@@ -21789,7 +22907,9 @@
         "seat": "남창현",
         "nameCh": "艾县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41130",
+      "provinceId": 106
     },
     {
       "id": 563,
@@ -21825,7 +22945,9 @@
         "seat": "남창현",
         "nameCh": "赣县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40830",
+      "provinceId": 81
     },
     {
       "id": 564,
@@ -21863,7 +22985,9 @@
         "seat": "남창현",
         "nameCh": "雩都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "40835",
+      "provinceId": 82
     },
     {
       "id": 565,
@@ -21899,7 +23023,9 @@
         "seat": "파양현",
         "nameCh": "鄱阳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "41165",
+      "provinceId": 111
     },
     {
       "id": 566,
@@ -21937,7 +23063,9 @@
         "seat": "남만",
         "nameCh": "哀牢",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X060",
+      "provinceId": 1519
     },
     {
       "id": 567,
@@ -21975,7 +23103,9 @@
         "seat": "탕거현",
         "nameCh": "宕渠县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "200197",
+      "provinceId": 15
     },
     {
       "id": 568,
@@ -22010,7 +23140,9 @@
         "seat": "낭중현",
         "nameCh": "阆中县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "44558",
+      "provinceId": 338
     },
     {
       "id": 569,
@@ -22053,7 +23185,9 @@
         "seat": "강주현",
         "nameCh": "江州县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "44662",
+      "provinceId": 344
     },
     {
       "id": 570,
@@ -22090,7 +23224,9 @@
         "seat": "강주현",
         "nameCh": "临江县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44537",
+      "provinceId": 335
     },
     {
       "id": 571,
@@ -22127,7 +23263,9 @@
         "seat": "강주현",
         "nameCh": "安汉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44553",
+      "provinceId": 337
     },
     {
       "id": 572,
@@ -22163,7 +23301,9 @@
         "seat": "강주현",
         "nameCh": "宣汉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "96259",
+      "provinceId": 947
     },
     {
       "id": 573,
@@ -22202,7 +23342,9 @@
         "seat": "강주현",
         "nameCh": "平都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44539",
+      "provinceId": 336
     },
     {
       "id": 574,
@@ -22238,7 +23380,9 @@
         "seat": "강주현",
         "nameCh": "朐忍县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44496",
+      "provinceId": 331
     },
     {
       "id": 575,
@@ -22276,7 +23420,9 @@
         "seat": "강주현",
         "nameCh": "枳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44671",
+      "provinceId": 345
     },
     {
       "id": 576,
@@ -22313,7 +23459,9 @@
         "seat": "강주현",
         "nameCh": "汉昌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44580",
+      "provinceId": 341
     },
     {
       "id": 577,
@@ -22350,7 +23498,9 @@
         "seat": "광무현",
         "nameCh": "广武县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "96006",
+      "provinceId": 938
     },
     {
       "id": 578,
@@ -22389,7 +23539,9 @@
         "seat": "낙현",
         "nameCh": "雒县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "44428",
+      "provinceId": 325
     },
     {
       "id": 579,
@@ -22428,7 +23580,9 @@
         "seat": "낙현",
         "nameCh": "什邡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44422",
+      "provinceId": 324
     },
     {
       "id": 580,
@@ -22465,7 +23619,9 @@
         "seat": "낙현",
         "nameCh": "新都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44416",
+      "provinceId": 323
     },
     {
       "id": 581,
@@ -22503,7 +23659,9 @@
         "seat": "낙현",
         "nameCh": "绵竹县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "96137",
+      "provinceId": 944
     },
     {
       "id": 582,
@@ -22543,7 +23701,9 @@
         "seat": "낙현",
         "nameCh": "郪县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "96341",
+      "provinceId": 948
     },
     {
       "id": 583,
@@ -22579,7 +23739,9 @@
         "seat": "재동현",
         "nameCh": "梓潼县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "96107",
+      "provinceId": 942
     },
     {
       "id": 584,
@@ -22616,7 +23778,9 @@
         "seat": "불위현",
         "nameCh": "不韦县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45445",
+      "provinceId": 411
     },
     {
       "id": 585,
@@ -22651,7 +23815,9 @@
         "seat": "불위현",
         "nameCh": "博南县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45437",
+      "provinceId": 410
     },
     {
       "id": 586,
@@ -22687,7 +23853,9 @@
         "seat": "강양현",
         "nameCh": "江阳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "96023",
+      "provinceId": 939
     },
     {
       "id": 587,
@@ -22725,7 +23893,8 @@
         "seat": "문산군",
         "nameCh": "汶山郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "211064"
     },
     {
       "id": 588,
@@ -22763,7 +23932,8 @@
         "seat": "부릉군",
         "nameCh": "涪陵郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "211010"
     },
     {
       "id": 589,
@@ -22807,7 +23977,9 @@
         "seat": "남정현",
         "nameCh": "南郑县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70983",
+      "provinceId": 523
     },
     {
       "id": 590,
@@ -22843,7 +24015,9 @@
         "seat": "남정현",
         "nameCh": "上庸县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45934",
+      "provinceId": 448
     },
     {
       "id": 591,
@@ -22882,7 +24056,9 @@
         "seat": "남정현",
         "nameCh": "安阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200433",
+      "provinceId": 24
     },
     {
       "id": 592,
@@ -22918,7 +24094,9 @@
         "seat": "남정현",
         "nameCh": "成固县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200050",
+      "provinceId": 5
     },
     {
       "id": 593,
@@ -22955,7 +24133,9 @@
         "seat": "남정현",
         "nameCh": "沔阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "71101",
+      "provinceId": 527
     },
     {
       "id": 594,
@@ -22992,7 +24172,9 @@
         "seat": "남정현",
         "nameCh": "褒中县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200048",
+      "provinceId": 4
     },
     {
       "id": 595,
@@ -23030,7 +24212,9 @@
         "seat": "남정현",
         "nameCh": "锡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200080",
+      "provinceId": 8
     },
     {
       "id": 596,
@@ -23071,7 +24255,9 @@
         "seat": "고차란현",
         "nameCh": "故且兰县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "99034",
+      "provinceId": 956
     },
     {
       "id": 597,
@@ -23109,7 +24295,9 @@
         "seat": "고차란현",
         "nameCh": "夜郎县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "99004",
+      "provinceId": 955
     },
     {
       "id": 598,
@@ -23146,7 +24334,9 @@
         "seat": "고차란현",
         "nameCh": "谈指县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "99336",
+      "provinceId": 958
     },
     {
       "id": 599,
@@ -23184,7 +24374,9 @@
         "seat": "고차란현",
         "nameCh": "谈稿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "99341",
+      "provinceId": 959
     },
     {
       "id": 600,
@@ -23220,7 +24412,9 @@
         "seat": "고차란현",
         "nameCh": "鄨县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "99350",
+      "provinceId": 960
     },
     {
       "id": 601,
@@ -23257,7 +24451,9 @@
         "seat": "주제현",
         "nameCh": "朱提县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45453",
+      "provinceId": 412
     },
     {
       "id": 602,
@@ -23296,7 +24492,9 @@
         "seat": "자중현",
         "nameCh": "资中县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "96423",
+      "provinceId": 952
     },
     {
       "id": 603,
@@ -23334,7 +24532,9 @@
         "seat": "자중현",
         "nameCh": "僰道县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200326",
+      "provinceId": 23
     },
     {
       "id": 604,
@@ -23371,7 +24571,9 @@
         "seat": "자중현",
         "nameCh": "南广县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200169",
+      "provinceId": 11
     },
     {
       "id": 605,
@@ -23407,7 +24609,9 @@
         "seat": "자중현",
         "nameCh": "汉安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "96424",
+      "provinceId": 953
     },
     {
       "id": 606,
@@ -23444,7 +24648,9 @@
         "seat": "자중현",
         "nameCh": "牛鞞县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44468",
+      "provinceId": 328
     },
     {
       "id": 607,
@@ -23481,7 +24687,9 @@
         "seat": "쌍백현",
         "nameCh": "双柏县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "45572",
+      "provinceId": 424
     },
     {
       "id": 608,
@@ -23525,7 +24733,9 @@
         "seat": "성도현",
         "nameCh": "成都县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "44394",
+      "provinceId": 319
     },
     {
       "id": 609,
@@ -23564,7 +24774,9 @@
         "seat": "성도현",
         "nameCh": "临邛县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44445",
+      "provinceId": 326
     },
     {
       "id": 610,
@@ -23601,7 +24813,9 @@
         "seat": "성도현",
         "nameCh": "江原县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44409",
+      "provinceId": 322
     },
     {
       "id": 611,
@@ -23641,7 +24855,9 @@
         "seat": "성도현",
         "nameCh": "汶江道",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200253",
+      "provinceId": 16
     },
     {
       "id": 612,
@@ -23680,7 +24896,9 @@
         "seat": "성도현",
         "nameCh": "繁县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44448",
+      "provinceId": 327
     },
     {
       "id": 613,
@@ -23718,7 +24936,9 @@
         "seat": "성도현",
         "nameCh": "绵虒道",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200261",
+      "provinceId": 17
     },
     {
       "id": 614,
@@ -23757,7 +24977,9 @@
         "seat": "성도현",
         "nameCh": "郫县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44398",
+      "provinceId": 320
     },
     {
       "id": 615,
@@ -23794,7 +25016,9 @@
         "seat": "한가현",
         "nameCh": "汉嘉县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "96382",
+      "provinceId": 950
     },
     {
       "id": 616,
@@ -23831,7 +25055,9 @@
         "seat": "한가현",
         "nameCh": "严道县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "96358",
+      "provinceId": 949
     },
     {
       "id": 617,
@@ -23867,7 +25093,9 @@
         "seat": "한가현",
         "nameCh": "徙县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "96383",
+      "provinceId": 951
     },
     {
       "id": 618,
@@ -23905,7 +25133,9 @@
         "seat": "공도현",
         "nameCh": "邛都县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "200269",
+      "provinceId": 18
     },
     {
       "id": 619,
@@ -23942,7 +25172,9 @@
         "seat": "공도현",
         "nameCh": "遂久县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "45412",
+      "provinceId": 409
     },
     {
       "id": 620,
@@ -23979,7 +25211,9 @@
         "seat": "공도현",
         "nameCh": "阐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "200289",
+      "provinceId": 22
     },
     {
       "id": 621,
@@ -24015,7 +25249,9 @@
         "seat": "공도현",
         "nameCh": "青蛉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "80467",
+      "provinceId": 530
     },
     {
       "id": 622,
@@ -24058,7 +25294,9 @@
         "seat": "부평현",
         "nameCh": "富平县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70523",
+      "provinceId": 479
     },
     {
       "id": 623,
@@ -24095,7 +25333,9 @@
         "seat": "부평현",
         "nameCh": "廉县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70610",
+      "provinceId": 496
     },
     {
       "id": 624,
@@ -24132,7 +25372,9 @@
         "seat": "부평현",
         "nameCh": "弋居县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70614",
+      "provinceId": 498
     },
     {
       "id": 625,
@@ -24170,7 +25412,9 @@
         "seat": "부평현",
         "nameCh": "泥阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70613",
+      "provinceId": 497
     },
     {
       "id": 626,
@@ -24206,7 +25450,9 @@
         "seat": "조나현",
         "nameCh": "朝那县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70178",
+      "provinceId": 464
     },
     {
       "id": 627,
@@ -24241,7 +25487,8 @@
         "seat": "광위군",
         "nameCh": "广魏郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "211782"
     },
     {
       "id": 628,
@@ -24279,7 +25526,9 @@
         "seat": "거연현",
         "nameCh": "居延县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70500",
+      "provinceId": 478
     },
     {
       "id": 629,
@@ -24317,7 +25566,8 @@
         "seat": "장액속국",
         "nameCh": "張掖屬國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X027"
     },
     {
       "id": 630,
@@ -24358,7 +25608,9 @@
         "seat": "역득현",
         "nameCh": "觻得县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70600",
+      "provinceId": 487
     },
     {
       "id": 631,
@@ -24398,7 +25650,9 @@
         "seat": "역득현",
         "nameCh": "删丹县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70605",
+      "provinceId": 491
     },
     {
       "id": 632,
@@ -24437,7 +25691,9 @@
         "seat": "역득현",
         "nameCh": "屋兰县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70603",
+      "provinceId": 489
     },
     {
       "id": 633,
@@ -24478,7 +25734,9 @@
         "seat": "역득현",
         "nameCh": "日勒县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70604",
+      "provinceId": 490
     },
     {
       "id": 634,
@@ -24518,7 +25776,9 @@
         "seat": "역득현",
         "nameCh": "昭武县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70601",
+      "provinceId": 488
     },
     {
       "id": 635,
@@ -24559,7 +25819,9 @@
         "seat": "역득현",
         "nameCh": "氐池县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70606",
+      "provinceId": 492
     },
     {
       "id": 636,
@@ -24596,7 +25858,9 @@
         "seat": "역득현",
         "nameCh": "番和县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70608",
+      "provinceId": 494
     },
     {
       "id": 637,
@@ -24633,7 +25897,9 @@
         "seat": "돈황현",
         "nameCh": "敦煌县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70594",
+      "provinceId": 481
     },
     {
       "id": 638,
@@ -24671,7 +25937,9 @@
         "seat": "돈황현",
         "nameCh": "冥安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70597",
+      "provinceId": 484
     },
     {
       "id": 639,
@@ -24708,7 +25976,9 @@
         "seat": "돈황현",
         "nameCh": "效谷县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70595",
+      "provinceId": 482
     },
     {
       "id": 640,
@@ -24749,7 +26019,9 @@
         "seat": "돈황현",
         "nameCh": "龙勒县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70596",
+      "provinceId": 483
     },
     {
       "id": 641,
@@ -24786,7 +26058,8 @@
         "seat": "신평군",
         "nameCh": "新平郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "211738"
     },
     {
       "id": 642,
@@ -24822,7 +26095,9 @@
         "seat": "현미현",
         "nameCh": "显美县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70609",
+      "provinceId": 495
     },
     {
       "id": 643,
@@ -24858,7 +26133,9 @@
         "seat": "저현",
         "nameCh": "沮县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "200064",
+      "provinceId": 6
     },
     {
       "id": 644,
@@ -24898,7 +26175,9 @@
         "seat": "기현",
         "nameCh": "冀县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70040",
+      "provinceId": 454
     },
     {
       "id": 645,
@@ -24934,7 +26213,9 @@
         "seat": "기현",
         "nameCh": "西县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70060",
+      "provinceId": 455
     },
     {
       "id": 646,
@@ -24969,7 +26250,9 @@
         "seat": "저",
         "nameCh": "白馬氐",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X059",
+      "provinceId": 1518
     },
     {
       "id": 647,
@@ -25006,7 +26289,8 @@
         "seat": "서평군",
         "nameCh": "西平郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "211841"
     },
     {
       "id": 648,
@@ -25043,7 +26327,9 @@
         "seat": "강",
         "nameCh": "西羌",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X058",
+      "provinceId": 1517
     },
     {
       "id": 649,
@@ -25078,7 +26364,9 @@
         "seat": "옥문현",
         "nameCh": "玉门县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70599",
+      "provinceId": 486
     },
     {
       "id": 650,
@@ -25117,7 +26405,9 @@
         "seat": "금성현",
         "nameCh": "金城县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70098",
+      "provinceId": 457
     },
     {
       "id": 651,
@@ -25156,7 +26446,9 @@
         "seat": "금성현",
         "nameCh": "临羌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70617",
+      "provinceId": 499
     },
     {
       "id": 652,
@@ -25194,7 +26486,9 @@
         "seat": "금성현",
         "nameCh": "安夷县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70619",
+      "provinceId": 501
     },
     {
       "id": 653,
@@ -25232,7 +26526,9 @@
         "seat": "금성현",
         "nameCh": "榆中县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70104",
+      "provinceId": 458
     },
     {
       "id": 654,
@@ -25275,7 +26571,9 @@
         "seat": "금성현",
         "nameCh": "破羌县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70618",
+      "provinceId": 500
     },
     {
       "id": 655,
@@ -25317,7 +26615,9 @@
         "seat": "적도현",
         "nameCh": "狄道县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "70110",
+      "provinceId": 459
     },
     {
       "id": 656,
@@ -25356,7 +26656,9 @@
         "seat": "적도현",
         "nameCh": "临洮县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70079",
+      "provinceId": 456
     },
     {
       "id": 657,
@@ -25393,7 +26695,9 @@
         "seat": "적도현",
         "nameCh": "枹罕县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70126",
+      "provinceId": 461
     },
     {
       "id": 658,
@@ -25432,7 +26736,9 @@
         "seat": "적도현",
         "nameCh": "白石县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70131",
+      "provinceId": 462
     },
     {
       "id": 659,
@@ -25471,7 +26777,9 @@
         "seat": "적도현",
         "nameCh": "襄武县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70005",
+      "provinceId": 451
     },
     {
       "id": 660,
@@ -25509,7 +26817,9 @@
         "seat": "적도현",
         "nameCh": "鄣县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70032",
+      "provinceId": 452
     },
     {
       "id": 661,
@@ -25548,7 +26858,9 @@
         "seat": "적도현",
         "nameCh": "首阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "70117",
+      "provinceId": 460
     },
     {
       "id": 662,
@@ -25584,7 +26896,8 @@
         "seat": "상군",
         "nameCh": "上郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X022"
     },
     {
       "id": 663,
@@ -25630,7 +26943,9 @@
         "seat": "장자현",
         "nameCh": "长子县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "95323",
+      "provinceId": 904
     },
     {
       "id": 664,
@@ -25667,7 +26982,9 @@
         "seat": "장자현",
         "nameCh": "壶关县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95318",
+      "provinceId": 903
     },
     {
       "id": 665,
@@ -25704,7 +27021,9 @@
         "seat": "장자현",
         "nameCh": "屯留县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95341",
+      "provinceId": 906
     },
     {
       "id": 666,
@@ -25741,7 +27060,9 @@
         "seat": "장자현",
         "nameCh": "沾县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95369",
+      "provinceId": 908
     },
     {
       "id": 667,
@@ -25778,7 +27099,9 @@
         "seat": "장자현",
         "nameCh": "泫氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95709",
+      "provinceId": 934
     },
     {
       "id": 668,
@@ -25819,7 +27142,9 @@
         "seat": "장자현",
         "nameCh": "涅县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95521",
+      "provinceId": 922
     },
     {
       "id": 669,
@@ -25857,7 +27182,9 @@
         "seat": "장자현",
         "nameCh": "潞县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95335",
+      "provinceId": 905
     },
     {
       "id": 670,
@@ -25898,7 +27225,9 @@
         "seat": "장자현",
         "nameCh": "穀远县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95509",
+      "provinceId": 921
     },
     {
       "id": 671,
@@ -25937,7 +27266,9 @@
         "seat": "장자현",
         "nameCh": "襄垣县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95349",
+      "provinceId": 907
     },
     {
       "id": 672,
@@ -25976,7 +27307,9 @@
         "seat": "장자현",
         "nameCh": "铜鞮县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95502",
+      "provinceId": 920
     },
     {
       "id": 673,
@@ -26013,7 +27346,9 @@
         "seat": "장자현",
         "nameCh": "阳阿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95729",
+      "provinceId": 937
     },
     {
       "id": 674,
@@ -26053,7 +27388,9 @@
         "seat": "장자현",
         "nameCh": "高都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95699",
+      "provinceId": 933
     },
     {
       "id": 675,
@@ -26091,7 +27428,9 @@
         "seat": "구원현",
         "nameCh": "九原县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "95698",
+      "provinceId": 932
     },
     {
       "id": 676,
@@ -26129,7 +27468,9 @@
         "seat": "흉노",
         "nameCh": "南匈奴",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X064",
+      "provinceId": 1523
     },
     {
       "id": 677,
@@ -26177,7 +27518,9 @@
         "seat": "계휴현",
         "nameCh": "界休县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "95152",
+      "provinceId": 892
     },
     {
       "id": 678,
@@ -26215,7 +27558,9 @@
         "seat": "계휴현",
         "nameCh": "中都县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95168",
+      "provinceId": 893
     },
     {
       "id": 679,
@@ -26254,7 +27599,9 @@
         "seat": "계휴현",
         "nameCh": "京陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95172",
+      "provinceId": 894
     },
     {
       "id": 680,
@@ -26293,7 +27640,9 @@
         "seat": "계휴현",
         "nameCh": "大陵县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95604",
+      "provinceId": 925
     },
     {
       "id": 681,
@@ -26334,7 +27683,9 @@
         "seat": "계휴현",
         "nameCh": "榆次县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95646",
+      "provinceId": 929
     },
     {
       "id": 682,
@@ -26372,7 +27723,9 @@
         "seat": "계휴현",
         "nameCh": "狼孟县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95641",
+      "provinceId": 928
     },
     {
       "id": 683,
@@ -26411,7 +27764,9 @@
         "seat": "계휴현",
         "nameCh": "盂县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95627",
+      "provinceId": 926
     },
     {
       "id": 684,
@@ -26449,7 +27804,9 @@
         "seat": "계휴현",
         "nameCh": "祁县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95585",
+      "provinceId": 923
     },
     {
       "id": 685,
@@ -26489,7 +27846,9 @@
         "seat": "계휴현",
         "nameCh": "虑虒县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95134",
+      "provinceId": 890
     },
     {
       "id": 686,
@@ -26527,7 +27886,9 @@
         "seat": "계휴현",
         "nameCh": "邬县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95145",
+      "provinceId": 891
     },
     {
       "id": 687,
@@ -26565,7 +27926,9 @@
         "seat": "계휴현",
         "nameCh": "阳曲县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95629",
+      "provinceId": 927
     },
     {
       "id": 688,
@@ -26603,7 +27966,9 @@
         "seat": "계휴현",
         "nameCh": "阳邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95591",
+      "provinceId": 924
     },
     {
       "id": 689,
@@ -26639,7 +28004,8 @@
         "seat": "정양군",
         "nameCh": "定襄郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X024"
     },
     {
       "id": 690,
@@ -26679,7 +28045,8 @@
         "seat": "신흥군",
         "nameCh": "新兴郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "210009"
     },
     {
       "id": 691,
@@ -26718,7 +28085,8 @@
         "seat": "삭방군",
         "nameCh": "朔方郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X011"
     },
     {
       "id": 692,
@@ -26761,7 +28129,8 @@
         "seat": "서하군",
         "nameCh": "西河郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X023"
     },
     {
       "id": 693,
@@ -26800,7 +28169,9 @@
         "seat": "운중현",
         "nameCh": "云中县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "95125",
+      "provinceId": 888
     },
     {
       "id": 694,
@@ -26840,7 +28211,9 @@
         "seat": "운중현",
         "nameCh": "定襄县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95676",
+      "provinceId": 931
     },
     {
       "id": 695,
@@ -26879,7 +28252,9 @@
         "seat": "극양현",
         "nameCh": "剧阳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "95093",
+      "provinceId": 886
     },
     {
       "id": 696,
@@ -26917,7 +28292,9 @@
         "seat": "극양현",
         "nameCh": "原平县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95126",
+      "provinceId": 889
     },
     {
       "id": 697,
@@ -26955,7 +28332,9 @@
         "seat": "극양현",
         "nameCh": "平城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95016",
+      "provinceId": 882
     },
     {
       "id": 698,
@@ -26995,7 +28374,9 @@
         "seat": "극양현",
         "nameCh": "广武县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95096",
+      "provinceId": 887
     },
     {
       "id": 699,
@@ -27034,7 +28415,8 @@
         "seat": "구자속국",
         "nameCh": "龜茲屬國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X026"
     },
     {
       "id": 700,
@@ -27073,7 +28455,9 @@
         "seat": "저양현",
         "nameCh": "沮阳县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87111",
+      "provinceId": 783
     },
     {
       "id": 701,
@@ -27110,7 +28494,9 @@
         "seat": "저양현",
         "nameCh": "下洛县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87638",
+      "provinceId": 878
     },
     {
       "id": 702,
@@ -27148,7 +28534,9 @@
         "seat": "저양현",
         "nameCh": "涿鹿县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87128",
+      "provinceId": 786
     },
     {
       "id": 703,
@@ -27186,7 +28574,9 @@
         "seat": "저양현",
         "nameCh": "潘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87118",
+      "provinceId": 784
     },
     {
       "id": 704,
@@ -27225,7 +28615,9 @@
         "seat": "대현",
         "nameCh": "代县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87421",
+      "provinceId": 842
     },
     {
       "id": 705,
@@ -27262,7 +28654,9 @@
         "seat": "대현",
         "nameCh": "北平邑县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95010",
+      "provinceId": 881
     },
     {
       "id": 706,
@@ -27300,7 +28694,9 @@
         "seat": "대현",
         "nameCh": "平舒县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95031",
+      "provinceId": 883
     },
     {
       "id": 707,
@@ -27338,7 +28734,9 @@
         "seat": "대현",
         "nameCh": "当城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87425",
+      "provinceId": 844
     },
     {
       "id": 708,
@@ -27376,7 +28774,9 @@
         "seat": "대현",
         "nameCh": "狋氏县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "95070",
+      "provinceId": 885
     },
     {
       "id": 709,
@@ -27416,7 +28816,9 @@
         "seat": "토은현",
         "nameCh": "土垠县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87458",
+      "provinceId": 849
     },
     {
       "id": 710,
@@ -27454,7 +28856,9 @@
         "seat": "토은현",
         "nameCh": "俊靡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87453",
+      "provinceId": 847
     },
     {
       "id": 711,
@@ -27491,7 +28895,9 @@
         "seat": "토은현",
         "nameCh": "徐无县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87456",
+      "provinceId": 848
     },
     {
       "id": 712,
@@ -27527,7 +28933,8 @@
         "seat": "대방군",
         "nameCh": "帶方郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X004"
     },
     {
       "id": 713,
@@ -27565,7 +28972,9 @@
         "seat": "안차현",
         "nameCh": "安次县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87407",
+      "provinceId": 840
     },
     {
       "id": 714,
@@ -27605,7 +29014,8 @@
         "seat": "낙랑군",
         "nameCh": "樂浪郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X003"
     },
     {
       "id": 715,
@@ -27643,7 +29053,9 @@
         "seat": "탁현",
         "nameCh": "涿县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87307",
+      "provinceId": 823
     },
     {
       "id": 716,
@@ -27681,7 +29093,9 @@
         "seat": "탁현",
         "nameCh": "故安县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87318",
+      "provinceId": 827
     },
     {
       "id": 717,
@@ -27719,7 +29133,9 @@
         "seat": "탁현",
         "nameCh": "方城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87308",
+      "provinceId": 824
     },
     {
       "id": 718,
@@ -27756,7 +29172,9 @@
         "seat": "탁현",
         "nameCh": "良乡县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87336",
+      "provinceId": 831
     },
     {
       "id": 719,
@@ -27792,7 +29210,9 @@
         "seat": "탁현",
         "nameCh": "范阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87295",
+      "provinceId": 820
     },
     {
       "id": 720,
@@ -27830,7 +29250,9 @@
         "seat": "노현",
         "nameCh": "潞县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87436",
+      "provinceId": 846
     },
     {
       "id": 721,
@@ -27870,7 +29292,9 @@
         "seat": "오환",
         "nameCh": "烏桓",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X062",
+      "provinceId": 1521
     },
     {
       "id": 722,
@@ -27908,7 +29332,8 @@
         "seat": "현도군",
         "nameCh": "玄菟郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X006"
     },
     {
       "id": 723,
@@ -27947,7 +29372,8 @@
         "seat": "요동속국",
         "nameCh": "遼東屬國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X007"
     },
     {
       "id": 724,
@@ -27984,7 +29410,8 @@
         "seat": "요동군",
         "nameCh": "遼東郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X005"
     },
     {
       "id": 725,
@@ -28021,7 +29448,9 @@
         "seat": "비여현",
         "nameCh": "肥如县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "87476",
+      "provinceId": 853
     },
     {
       "id": 726,
@@ -28059,7 +29488,9 @@
         "seat": "비여현",
         "nameCh": "临渝县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87469",
+      "provinceId": 851
     },
     {
       "id": 727,
@@ -28096,7 +29527,9 @@
         "seat": "비여현",
         "nameCh": "海阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "87468",
+      "provinceId": 850
     },
     {
       "id": 728,
@@ -28133,7 +29566,9 @@
         "seat": "선비",
         "nameCh": "鮮卑",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X063",
+      "provinceId": 1522
     },
     {
       "id": 729,
@@ -28170,7 +29605,8 @@
         "seat": "구진군",
         "nameCh": "九真郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X001"
     },
     {
       "id": 730,
@@ -28206,7 +29642,8 @@
         "seat": "교지군",
         "nameCh": "交趾郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X000"
     },
     {
       "id": 731,
@@ -28246,7 +29683,9 @@
         "seat": "번옹현",
         "nameCh": "番禺县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "42193",
+      "provinceId": 186
     },
     {
       "id": 732,
@@ -28284,7 +29723,9 @@
         "seat": "번옹현",
         "nameCh": "博罗县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42171",
+      "provinceId": 184
     },
     {
       "id": 733,
@@ -28324,7 +29765,9 @@
         "seat": "번옹현",
         "nameCh": "增城县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42212",
+      "provinceId": 187
     },
     {
       "id": 734,
@@ -28362,7 +29805,9 @@
         "seat": "번옹현",
         "nameCh": "揭阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42147",
+      "provinceId": 183
     },
     {
       "id": 735,
@@ -28402,7 +29847,9 @@
         "seat": "번옹현",
         "nameCh": "龙川县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42184",
+      "provinceId": 185
     },
     {
       "id": 736,
@@ -28439,7 +29886,9 @@
         "seat": "합포현",
         "nameCh": "合浦县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "42524",
+      "provinceId": 199
     },
     {
       "id": 737,
@@ -28474,7 +29923,9 @@
         "seat": "합포현",
         "nameCh": "徐闻县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42424",
+      "provinceId": 197
     },
     {
       "id": 738,
@@ -28509,7 +29960,9 @@
         "seat": "합포현",
         "nameCh": "朱崖县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42444",
+      "provinceId": 198
     },
     {
       "id": 739,
@@ -28544,7 +29997,8 @@
         "seat": "일남군",
         "nameCh": "日南郡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X002"
     },
     {
       "id": 740,
@@ -28584,7 +30038,9 @@
         "seat": "광신현",
         "nameCh": "广信县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "44147",
+      "provinceId": 301
     },
     {
       "id": 741,
@@ -28624,7 +30080,9 @@
         "seat": "광신현",
         "nameCh": "冯乘县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41975",
+      "provinceId": 172
     },
     {
       "id": 742,
@@ -28663,7 +30121,9 @@
         "seat": "광신현",
         "nameCh": "富川县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43916",
+      "provinceId": 296
     },
     {
       "id": 743,
@@ -28699,7 +30159,9 @@
         "seat": "광신현",
         "nameCh": "封阳县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43930",
+      "provinceId": 298
     },
     {
       "id": 744,
@@ -28738,7 +30200,9 @@
         "seat": "광신현",
         "nameCh": "荔浦县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43932",
+      "provinceId": 299
     },
     {
       "id": 745,
@@ -28779,7 +30243,9 @@
         "seat": "광신현",
         "nameCh": "谢沐县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "41960",
+      "provinceId": 171
     },
     {
       "id": 746,
@@ -28815,7 +30281,9 @@
         "seat": "광신현",
         "nameCh": "高要县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "42266",
+      "provinceId": 191
     },
     {
       "id": 747,
@@ -28851,7 +30319,9 @@
         "seat": "고량현",
         "nameCh": "高凉县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "42300",
+      "provinceId": 194
     },
     {
       "id": 748,
@@ -28892,7 +30362,9 @@
         "seat": "포산현",
         "nameCh": "布山县",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "44234",
+      "provinceId": 304
     },
     {
       "id": 749,
@@ -28930,7 +30402,9 @@
         "seat": "포산현",
         "nameCh": "中溜县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44244",
+      "provinceId": 305
     },
     {
       "id": 750,
@@ -28967,7 +30441,9 @@
         "seat": "포산현",
         "nameCh": "安广县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43860",
+      "provinceId": 295
     },
     {
       "id": 751,
@@ -29007,7 +30483,9 @@
         "seat": "포산현",
         "nameCh": "潭中县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "43783",
+      "provinceId": 294
     },
     {
       "id": 752,
@@ -29046,7 +30524,9 @@
         "seat": "포산현",
         "nameCh": "领方县",
         "isSeat": false
-      }
+      },
+      "physicalPlaceId": "44055",
+      "provinceId": 300
     },
     {
       "id": 753,
@@ -29081,7 +30561,9 @@
         "seat": "우산국",
         "nameCh": "于山國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X035",
+      "provinceId": 1494
     },
     {
       "id": 754,
@@ -29120,7 +30602,9 @@
         "seat": "백제국",
         "nameCh": "伯濟國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X042",
+      "provinceId": 1501
     },
     {
       "id": 755,
@@ -29155,7 +30639,9 @@
         "seat": "북옥저",
         "nameCh": "北沃沮",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X030",
+      "provinceId": 1489
     },
     {
       "id": 756,
@@ -29194,7 +30680,9 @@
         "seat": "졸본",
         "nameCh": "卒本",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X029",
+      "provinceId": 1488
     },
     {
       "id": 757,
@@ -29234,7 +30722,9 @@
         "seat": "고령가야",
         "nameCh": "古寧伽耶",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X049",
+      "provinceId": 1508
     },
     {
       "id": 758,
@@ -29270,7 +30760,9 @@
         "seat": "고자미동국",
         "nameCh": "古資彌凍國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X046",
+      "provinceId": 1505
     },
     {
       "id": 759,
@@ -29309,7 +30801,9 @@
         "seat": "소문국",
         "nameCh": "召文國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X034",
+      "provinceId": 1493
     },
     {
       "id": 760,
@@ -29348,7 +30842,9 @@
         "seat": "국내성",
         "nameCh": "國內城",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X028",
+      "provinceId": 1487
     },
     {
       "id": 761,
@@ -29386,7 +30882,9 @@
         "seat": "대가야",
         "nameCh": "大伽耶",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X047",
+      "provinceId": 1506
     },
     {
       "id": 762,
@@ -29424,7 +30922,9 @@
         "seat": "부여",
         "nameCh": "夫餘",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X036",
+      "provinceId": 1495
     },
     {
       "id": 763,
@@ -29462,7 +30962,9 @@
         "seat": "안야국",
         "nameCh": "安邪國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X031",
+      "provinceId": 1490
     },
     {
       "id": 764,
@@ -29497,7 +30999,9 @@
         "seat": "주호",
         "nameCh": "州胡",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X043",
+      "provinceId": 1502
     },
     {
       "id": 765,
@@ -29535,7 +31039,9 @@
         "seat": "실직국",
         "nameCh": "悉直國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X032",
+      "provinceId": 1491
     },
     {
       "id": 766,
@@ -29574,7 +31080,9 @@
         "seat": "압독국",
         "nameCh": "押督國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X033",
+      "provinceId": 1492
     },
     {
       "id": 767,
@@ -29611,7 +31119,9 @@
         "seat": "사로국",
         "nameCh": "斯盧國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X044",
+      "provinceId": 1503
     },
     {
       "id": 768,
@@ -29650,7 +31160,9 @@
         "seat": "성산가야",
         "nameCh": "星山伽耶",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X048",
+      "provinceId": 1507
     },
     {
       "id": 769,
@@ -29686,7 +31198,9 @@
         "seat": "동옥저",
         "nameCh": "東沃沮",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X037",
+      "provinceId": 1496
     },
     {
       "id": 770,
@@ -29724,7 +31238,9 @@
         "seat": "예",
         "nameCh": "濊",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X038",
+      "provinceId": 1497
     },
     {
       "id": 771,
@@ -29762,7 +31278,9 @@
         "seat": "구야국",
         "nameCh": "狗邪國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X045",
+      "provinceId": 1504
     },
     {
       "id": 772,
@@ -29800,7 +31318,9 @@
         "seat": "목지국",
         "nameCh": "目支國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X040",
+      "provinceId": 1499
     },
     {
       "id": 773,
@@ -29839,7 +31359,9 @@
         "seat": "벽비리국",
         "nameCh": "辟卑離國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X041",
+      "provinceId": 1500
     },
     {
       "id": 774,
@@ -29874,7 +31396,9 @@
         "seat": "야마일국",
         "nameCh": "邪馬壹國",
         "isSeat": true
-      }
+      },
+      "physicalPlaceId": "X055",
+      "provinceId": 1514
     }
   ]
 }

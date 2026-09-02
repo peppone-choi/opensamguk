@@ -274,6 +274,32 @@ describe('province identity map', () => {
     expect(binding.cities?.has(1)).toBe(false);
   });
 
+  it('binds ownership to an explicit province identity instead of the legacy coordinate', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 16, 2, 255,
+    ]), 2, 1);
+    const countyIndex = buildCountyAdministrativeIndex(
+      map,
+      [{ col: 0, row: 0 }, { col: 1, row: 0 }],
+      [{ name: 'A군' }, { name: 'B군' }],
+    );
+    const city: IsoCityOverlay = {
+      ...CHE_OVERLAYS_FIXTURE[0],
+      x: 0,
+      y: 0,
+      provinceId: 1,
+      commanderyName: 'A군',
+    };
+
+    const binding = bindCompleteProvinceOwnership(
+      map, [city], { cols: 2, rows: 1 }, { width: 200, height: 1 }, countyIndex,
+    );
+
+    expect(binding.colors.has(0)).toBe(false);
+    expect(binding.colors.get(1)).toEqual({ nationId: 1, rgb: [255, 0, 0] });
+  });
+
   it('resolves a shared county by centroid distance then lowest city id', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([
       0, 16, 1, 255,
@@ -305,7 +331,7 @@ describe('province identity map', () => {
     const runtime = JSON.parse(readFileSync(resolve(process.cwd(), '../../infra/src/main/resources/map/han.json'), 'utf8')) as {
       width: number;
       height: number;
-      cities: { id: number; name: string; level: number; x: number; y: number; meta: { ju: string; jun: string } }[];
+      cities: { id: number; name: string; level: number; x: number; y: number; provinceId?: number; meta: { ju: string; jun: string } }[];
     };
     const cells = tiles._meta.cols * tiles._meta.rows;
     const map: ProvinceIdentityMap = {
@@ -412,7 +438,8 @@ describe('province identity map', () => {
       expect(landCells.some((cell) => pixels[cell * 4 + 3] === 0), scenarioFile).toBe(true);
       expect([...binding.colors.keys()].every((province) => binding.directProvinces?.has(province)), scenarioFile).toBe(true);
       expect([...binding.cities!.entries()].every(([province, city]) => (
-        countyIndex.commanderyByName.get(city.commanderyName!) === countyIndex.commanderyByProvince[province]
+        city.provinceId === province
+        || countyIndex.commanderyByName.get(city.commanderyName!) === countyIndex.commanderyByProvince[province]
       )), scenarioFile).toBe(true);
     }
   }, 15_000);

@@ -19,6 +19,7 @@ interface MapCity {
     regionName?: string;
     commanderyName?: string;
     isCommanderySeat?: boolean;
+    provinceId?: number;
     state?: number;
     supply?: boolean;
     isCapital?: boolean;
