@@ -197,7 +197,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         } satisfies HanTiles;
         const scene = buildIsoScene(tiles, [
             { id: 10, name: '군치', level: 8, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, isCapital: true },
-            { id: 11, name: '현', level: 10, nationId: 1, nationColor: '#aa0000', x: 0, y: 0 },
+            { id: 11, name: '현', level: 10, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, provinceId: 4 },
         ], { width: 1, height: 1 }, {
             markerPositions: new Map([
                 [10, { col: 0, row: 0, provinceId: 4 }],
@@ -206,7 +206,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         });
 
         expect(scene.cities).toHaveLength(1);
-        expect(scene.cities[0]).toMatchObject({ id: 10, provinceId: 4, isCapital: true });
+        expect(scene.cities[0]).toMatchObject({ id: 11, provinceId: 4, isCapital: true });
         expect(scene.cities[0].layers.filter((layer) => layer === 'flag')).toHaveLength(1);
     });
 

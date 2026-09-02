@@ -386,8 +386,10 @@ export function buildIsoScene(
   });
   const markerByProvince = new Map<number, IsoSceneCity>();
   const unbound: IsoSceneCity[] = [];
+  const declaredProvinceByCity = new Map(cities.map((city) => [city.id, city.provinceId]));
   const priority = (city: IsoSceneCity): number => (
-    (city.isCapital ? 1000 : 0)
+    (declaredProvinceByCity.get(city.id) === city.provinceId ? 10000 : 0)
+    + (city.isCapital ? 1000 : 0)
     + (city.isCommanderySeat ? 100 : 0)
     + (city.level >= 5 && city.level <= 9 ? 10 : 0)
     + (options.currentCityId === city.id ? 2 : 0)
@@ -399,10 +401,14 @@ export function buildIsoScene(
       continue;
     }
     const prior = markerByProvince.get(city.provinceId);
-    if (!prior || priority(city) > priority(prior)
-      || (priority(city) === priority(prior) && city.id < prior.id)) {
-      markerByProvince.set(city.provinceId, city);
-    }
+    const selected = !prior || priority(city) > priority(prior)
+      || (priority(city) === priority(prior) && city.id < prior.id)
+      ? city
+      : prior;
+    const other = selected === city ? prior : city;
+    markerByProvince.set(city.provinceId, other?.isCapital && !selected.isCapital
+      ? { ...selected, isCapital: true, layers: [...selected.layers, 'capital'] }
+      : selected);
   }
   return {
     terrain: tiles.terrain,
@@ -500,6 +506,7 @@ function politicalOwnershipKey(cities: readonly IsoCityOverlay[]): string {
     city.nationId,
     city.nationColor ?? null,
     city.commanderyName ?? null,
+    city.provinceId ?? null,
   ]));
 }
 
