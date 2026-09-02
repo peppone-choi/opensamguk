@@ -512,11 +512,13 @@ class HanParentReconciliationTest(unittest.TestCase):
             ("data/curated/han/route-node-review-policy-v1.json", ("inputs", "locationAdjudications", "sha256")),
             ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "administrativePlaceOverlay", "sha256")),
             ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "candidate", "sha256")),
+            ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "legacyHanMap", "sha256")),
             ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "legacyTileMap", "sha256")),
             ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "locationAdjudications", "sha256")),
             ("data/curated/han/route-node-selection-v1.json", ("provenance", "inputs", "reviewPolicy", "sha256")),
             ("data/curated/han/route-node-location-adjudications-v1.json", ("inputOverlaySha256",)),
             ("data/curated/han/route-node-selection-candidates-v1.json", ("provenance", "inputs", "administrativePlaceOverlay", "sha256")),
+            ("data/curated/han/route-node-selection-candidates-v1.json", ("provenance", "inputs", "legacyHanMap", "sha256")),
             ("data/curated/han/route-node-selection-candidates-v1.json", ("provenance", "inputs", "legacyTileMap", "sha256")),
         ]
         for source_path, keys in edges:

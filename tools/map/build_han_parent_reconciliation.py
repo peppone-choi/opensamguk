@@ -21,6 +21,8 @@ INPUT_PATHS = {
     path: ROOT / path
     for path in (
         "data/map/han-tiles.json",
+        "data/map/han-780-v1-tiles.json",
+        "infra/src/main/resources/map/han-780-v1.json",
         "data/map/external-places.json",
         "data/curated/han/route-node-review-policy-v1.json",
         "data/curated/han/route-node-selection-v1.json",
@@ -158,8 +160,13 @@ EMBEDDED_HASH_EDGES = (
     ),
     (
         "data/curated/han/route-node-selection-v1.json",
+        ("provenance", "inputs", "legacyHanMap", "sha256"),
+        "infra/src/main/resources/map/han-780-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-v1.json",
         ("provenance", "inputs", "legacyTileMap", "sha256"),
-        "data/map/han-tiles.json",
+        "data/map/han-780-v1-tiles.json",
     ),
     (
         "data/curated/han/route-node-selection-v1.json",
@@ -183,8 +190,13 @@ EMBEDDED_HASH_EDGES = (
     ),
     (
         "data/curated/han/route-node-selection-candidates-v1.json",
+        ("provenance", "inputs", "legacyHanMap", "sha256"),
+        "infra/src/main/resources/map/han-780-v1.json",
+    ),
+    (
+        "data/curated/han/route-node-selection-candidates-v1.json",
         ("provenance", "inputs", "legacyTileMap", "sha256"),
-        "data/map/han-tiles.json",
+        "data/map/han-780-v1-tiles.json",
     ),
 )
 
@@ -395,8 +407,13 @@ def _validate_embedded_hash_edges(
         "candidate administrativePlaceOverlay path",
     )
     _require_equal(
+        candidate_inputs.get("legacyHanMap", {}).get("path"),
+        "infra/src/main/resources/map/han-780-v1.json",
+        "candidate legacyHanMap path",
+    )
+    _require_equal(
         candidate_inputs.get("legacyTileMap", {}).get("path"),
-        "data/map/han-tiles.json",
+        "data/map/han-780-v1-tiles.json",
         "candidate legacyTileMap path",
     )
 

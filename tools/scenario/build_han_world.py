@@ -47,6 +47,12 @@ from collections import Counter, defaultdict, deque
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+try:
+    from tools.map.build_tile_grid import CANONICAL_PLACE_NAME_NORMALIZATIONS
+except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
+    sys.path.insert(0, str(ROOT))
+    from tools.map.build_tile_grid import CANONICAL_PLACE_NAME_NORMALIZATIONS
+
 TILES = ROOT / "data" / "map" / "han-tiles.json"
 JUNGUOZHI = ROOT / "data" / "map" / "junguozhi.json"
 CANON_SRC = ROOT / "tools" / "map" / "build_junguozhi.py"
@@ -351,6 +357,17 @@ def build_seat_of(juns: list[dict]) -> dict[int, int]:
     return seat_of
 
 
+def stable_city_sort_name(city: dict) -> str:
+    """런타임 city id 정렬에 쓰는 변경 불가 원천 표기.
+
+    플레이어에게 보이는 ``nameCh``는 검토된 정규명으로 고치되, 이미 배포된 city id는
+    그 수정 전 CHGIS 원천 표기의 정렬 순서를 유지한다. 물리 place id가 없는 항목이나
+    정규화 대상이 아닌 항목은 현재 표기를 그대로 쓴다.
+    """
+    normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(str(city.get("id")))
+    return normalization["sourceNameCh"] if normalization else city["nameCh"]
+
+
 def gate_index(tiles: dict, region_of: list[str]) -> tuple[dict[int, list[str]], list[str]]:
     """**郡 인덱스** → 게이트 키 집합, 그리고 지도에서 못 찾은 게이트 키 목록.
 
@@ -479,7 +496,7 @@ def build_gate_skeleton() -> dict:
     order = sorted(included, key=lambda t: (ju_order.index(region_of[t[1]]),
                                             juns[t[1]]["nameCh"],
                                             0 if t[0] == juns[t[1]]["seat"] else 1,
-                                            cities[t[0]]["nameCh"]))
+                                            stable_city_sort_name(cities[t[0]])))
     id_of = {ci: n + 1 for n, (ci, _) in enumerate(order)}
 
     return {
@@ -586,6 +603,9 @@ def build() -> tuple[dict, str, str, dict]:
     # 縣·侯國·邑·道는 縣급 행정단위라 꼬리를 뗀다. 治所가 EXTERNAL_PLACE 인 곳
     # (于山國·伯濟國 …)은 나라 이름 자체라 건드리지 않는다.
     def base_name(ci: int) -> str:
+        normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(str(cities[ci].get("id")))
+        if normalization and isinstance(normalization.get("runtimeName"), str):
+            return normalization["runtimeName"]
         n = cities[ci]["name"]
         if cities[ci]["kind"] != "COUNTY":
             return n

@@ -27797,12 +27797,12 @@
         "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
       },
       "legacyHanMap": {
-        "path": "infra/src/main/resources/map/han.json",
-        "sha256": "fce2514cc1905a2be3ea3fc9123dc5a809cb6c1f561191a22cd0a2f1a090924a"
+        "path": "infra/src/main/resources/map/han-780-v1.json",
+        "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
       },
       "legacyTileMap": {
-        "path": "data/map/han-tiles.json",
-          "sha256": "45a6c4d82d7a5e72263dab8acbf6c2bef53f5f6a60c84c274c7bc0cab65a5b8e"
+        "path": "data/map/han-780-v1-tiles.json",
+        "sha256": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
       }
     },
     "scenarioResourceCount": 31

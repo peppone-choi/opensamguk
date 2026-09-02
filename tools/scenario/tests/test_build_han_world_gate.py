@@ -14,6 +14,18 @@ SPEC.loader.exec_module(build_han_world)
 
 
 class CommittedWorldGateTest(unittest.TestCase):
+    def test_stable_city_sort_name_uses_reviewed_source_spelling(self) -> None:
+        """표시명 정규화가 기존 런타임 city id 순서를 바꾸면 안 된다."""
+        canonical = {"id": "85448", "nameCh": "曲成县"}
+        unrelated = {"id": "99999", "nameCh": "曲城县"}
+
+        self.assertEqual("曲成（城）县", build_han_world.stable_city_sort_name(canonical))
+        self.assertEqual("曲城县", build_han_world.stable_city_sort_name(unrelated))
+        self.assertLess(
+            build_han_world.stable_city_sort_name(unrelated),
+            build_han_world.stable_city_sort_name(canonical),
+        )
+
     def test_default_gate_build_preserves_committed_world_city_ids(self) -> None:
         """게이트 전용 빌드는 배포 중인 han.json의 ID·소속을 따라야 한다.
 
