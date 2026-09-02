@@ -47,7 +47,12 @@ class HanSpatialSupplyProvider(
             }
         }
         cityByJurisdiction.forEach { (jurisdictionId, city) ->
-            owners[canonical.jurisdictionSeatProvince.getValue(jurisdictionId)] = city.nationId
+            val seatProvinceIndex = canonical.jurisdictionSeatProvince.getValue(jurisdictionId)
+            check(seatProvinceIndex == city.provinceIndex) {
+                "Runtime city ${city.cityId} province ${city.provinceIndex} is not seat province " +
+                    "$seatProvinceIndex of jurisdiction $jurisdictionId"
+            }
+            owners[seatProvinceIndex] = city.nationId
         }
 
         return SpatialSupplyNetwork(

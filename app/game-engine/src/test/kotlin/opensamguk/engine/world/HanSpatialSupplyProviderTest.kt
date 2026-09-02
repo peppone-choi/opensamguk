@@ -182,13 +182,31 @@ class HanSpatialSupplyProviderTest {
 
     @Test
     fun `later network snapshots are isolated from adjacency mutation`() {
-        val first = provider().network(1020, emptyList())
+        val provider = provider()
+        val first = provider.network(1020, emptyList())
         val originalNeighbor = first.provinceAdjacency.first { it.isNotEmpty() }.first()
         first.provinceAdjacency.first { it.isNotEmpty() }[0] = 0
 
-        val second = provider().network(1020, emptyList())
+        val second = provider.network(1020, emptyList())
 
         assertEquals(originalNeighbor, second.provinceAdjacency.first { it.isNotEmpty() }.first())
+    }
+
+    @Test
+    fun `runtime city must map to its canonical jurisdiction seat province`() {
+        val root = mapper.readTree(Path(mapPath).toFile())
+        val lu = root.path("jurisdictionRecords").single { it.path("id").asText() == "87436" }
+        val provinceIds = root.path("provinceRecords").map { it.path("id").asText() }
+        val nonSeatProvince = lu.path("provinceIds")
+            .map { provinceIds.indexOf(it.asText()) }
+            .first { it != 846 }
+
+        assertFailsWith<IllegalStateException> {
+            provider().network(
+                1020,
+                listOf(SpatialSupplyCity(cityId = 720, provinceIndex = nonSeatProvince, nationId = 12)),
+            )
+        }
     }
 
     @Test
