@@ -212,15 +212,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "6677c770b7b9344f7b4055857bd032ed3dbfc591ff1ccf5fd4a01933ef4bf838"
+      "sha256": "bafe93d83445f16f0e4bbe0d57ac431d0262509b628977991d4beeca6e897d18"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "a9578f7bb55b9eb49fbdf758fd681c812de1771e4d633015eea9d05f19f5a588"
+      "sha256": "7752264edddada537d9a8c949104ff07c0af2dd1b114009d35a0acb865f36f10"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "955f22a18e484dd1f1019c6ffbebb3de5915a00920f355e545a069a3e1913985"
+      "sha256": "413f964e49aa89228c69635e666ae9edbe852c6c565b8fa31b710c6690626dce"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
