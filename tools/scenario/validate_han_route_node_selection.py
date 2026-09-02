@@ -32,8 +32,8 @@ DEFAULT_SELECTION = ROOT / "data/curated/han/route-node-selection-v1.json"
 DEFAULT_MIGRATION = ROOT / "data/curated/han/route-node-migration-v1.json"
 DEFAULT_SCENARIOS = ROOT / "infra/src/main/resources/scenario"
 PROVENANCE_DEPENDENCIES = {
-    "legacyHanMap": Path("infra/src/main/resources/map/han.json"),
-    "legacyTileMap": Path("data/map/han-tiles.json"),
+    "legacyHanMap": Path("infra/src/main/resources/map/han-780-v1.json"),
+    "legacyTileMap": Path("data/map/han-780-v1-tiles.json"),
     "locationAdjudications": Path("data/curated/han/route-node-location-adjudications-v1.json"),
     "reviewPolicy": Path("data/curated/han/route-node-review-policy-v1.json"),
     "routeNodeKeyRegistry": Path("data/curated/han/route-node-key-registry-v1.json"),
@@ -99,11 +99,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
 PINNED_ROUTE_KEY_REGISTRY_SHA256 = "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
 PINNED_SOURCE_WITNESS_SHA256 = "7fe27b667b4066200882f9e1815e07a6adb24d826f09e0605145041897f76ee4"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "b56ea13236e8889e040e748facb5d3d82c89ad6aa8aa90ae716902b1fd6235c0"
-PINNED_REVIEW_POLICY_SHA256 = "07cce8c9787def781a0f145007a278f46075b94c92021d432b4c3c68595f1c3a"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "e2b5467eb33838337c8273ef5ace6fe718c9512f5b7cd650921c685c4e23d799"
+PINNED_REVIEW_POLICY_SHA256 = "edc0e97cf3648a85deab59864a0e400694ae3b1c9ba2f25c88ed909e228f2646"
 PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
-PINNED_LEGACY_HAN_MAP_SHA256 = "fce2514cc1905a2be3ea3fc9123dc5a809cb6c1f561191a22cd0a2f1a090924a"
-PINNED_LEGACY_TILE_MAP_SHA256 = "45a6c4d82d7a5e72263dab8acbf6c2bef53f5f6a60c84c274c7bc0cab65a5b8e"
+PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
+PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
 PINNED_REPLACEMENT_DECISION_SHA256 = "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8"
 PINNED_CONFLICT_DECISION_SHA256 = "ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7"
 EXPECTED_REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"

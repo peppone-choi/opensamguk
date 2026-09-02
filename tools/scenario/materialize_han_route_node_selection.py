@@ -60,8 +60,8 @@ def default_inputs() -> MaterializerInputs:
         adjudications=CURATED / "route-node-location-adjudications-v1.json",
         source_claims=CURATED / "route-node-source-claims-v1.json",
         key_registry=CURATED / "route-node-key-registry-v1.json",
-        han=ROOT / "infra/src/main/resources/map/han.json",
-        tiles=ROOT / "data/map/han-tiles.json",
+        han=ROOT / "infra/src/main/resources/map/han-780-v1.json",
+        tiles=ROOT / "data/map/han-780-v1-tiles.json",
         scenario_dir=SCENARIOS,
         source_witness=SOURCE_WITNESS,
     )

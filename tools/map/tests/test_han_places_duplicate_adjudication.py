@@ -129,6 +129,20 @@ class DuplicateAdjudicationContractTest(unittest.TestCase):
             self.assertEqual(relative, pinned[relative]["path"])
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), pinned[relative]["sha256"])
 
+    def test_validator_rejects_tracked_review_file_content_drift(self):
+        with tempfile.TemporaryDirectory() as raw_directory:
+            root = Path(raw_directory)
+            for relative in builder.EXPECTED_TRACKED_REVIEW_INPUTS:
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes((ROOT / relative).read_bytes())
+            first = root / next(iter(builder.EXPECTED_TRACKED_REVIEW_INPUTS))
+            first.write_bytes(first.read_bytes() + b"\n")
+
+            with mock.patch.object(builder, "REPOSITORY_ROOT", root):
+                with self.assertRaisesRegex(ValueError, "actual file SHA-256 mismatch"):
+                    builder.validate_duplicate_adjudications(self.ledger)
+
         review = json.loads(ROUTE_REVIEW_PATH.read_text(encoding="utf-8"))
         review_pairs = {
             (row["selectedPhysicalPlaceId"].split(":")[-1], frozenset(

@@ -241,7 +241,7 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         return {k: v for k, v in by.items() if len(v) > 1}
 
     def test_u57_han_tiles_korean_names_collide(self) -> None:
-        """han-tiles.json 1144 노드에서 한글명 **91개가 205노드**에 겹치고, **73개는 nameCh 가 실제로 다르다**.
+        """han-tiles.json 1138 노드에서 한글명 **92개가 209노드**에 겹치고, **75개는 nameCh 가 실제로 다르다**.
 
         73 은 「표기만 다른 같은 곳」이 아니라 **서로 다른 縣이 같은 한글명을 쓰는** 건수다
         (임강현 `临江县`/`临羌县`, 경현 `京县`/`泾县`/`经县`, 신도현 `信都县`/`新都县` …).
@@ -249,15 +249,15 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         dup = self._collisions([c["name"] for c in self.cities])
         nodes = sum(len(v) for v in dup.values())
         different = {k: v for k, v in dup.items() if len({self.cities[i].get("nameCh") for i in v}) > 1}
-        self.assertEqual(91, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
-        self.assertEqual(205, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(92, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(209, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
         self.assertEqual(
-            73, len(different),
+            75, len(different),
             f"nameCh 가 실제로 다른 충돌 수가 변했다 — U57 을 재판정해라: {sorted(different)}",
         )
 
     def test_u57_han_json_city_names_collide(self) -> None:
-        """han.json 780 城에서 城名 **57개가 127노드**에 겹친다.
+        """han.json 774 城에서 城名 **57개가 127노드**에 겹친다.
 
         `han_ownership.json` 이 城名도 키로 쓸 수 있다고 스스로 적어놨다(`_comment`).
         실측(2026-08-24) 현재 그 파일의 `cities[]` 항목은 **1건**이고 겹치는 이름은 **0건**이라 무해하다 —
@@ -268,7 +268,7 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         self.assertEqual(127, sum(len(v) for v in dup.values()), "han.json 城名 충돌 노드 수가 변했다")
 
     def test_ownership_city_names_are_unambiguous(self) -> None:
-        """`han_ownership.json` 이 참조하는 城名은 han.json 780 안에서 유일해야 한다.
+        """`han_ownership.json` 이 참조하는 城名은 han.json 774 안에서 유일해야 한다.
 
         **이건 R48 이 아니라 진짜 게이트다** — 위 두 개와 달리 「현재 상태 고정」이 아니라
         「이 조건이 깨지면 안 된다」를 지킨다. 겹치는 이름을 쓰면 어느 城인지 정해지지 않는다.

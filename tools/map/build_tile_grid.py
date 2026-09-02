@@ -20,7 +20,9 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -74,6 +76,125 @@ NEI = {(0, -1): 1, (1, 0): 2, (0, 1): 4, (-1, 0): 8}
 CANONICAL_COLS = 768
 CANONICAL_ROWS = 669
 CANONICAL_YEAR = 220
+
+# CHGIS v6 preserves a handful of source-editor annotations in place names.  They
+# are useful provenance, but they are not player-facing county names.  Stable
+# physical IDs keep these corrections independent from array order, coordinates,
+# or translated text.  The observed source pair is part of the contract: an
+# upstream change must be reviewed instead of being silently rewritten.
+CANONICAL_PLACE_NAME_NORMALIZATIONS = {
+    "82175": {
+        "sourceName": "[부언]현",
+        "sourceNameCh": "[阝焉]县",
+        "displayName": "언현",
+        "nameCh": "鄢县",
+    },
+    "85202": {
+        "sourceName": "영현（영현）",
+        "sourceNameCh": "灵县（零县）",
+        "displayName": "영현",
+        "nameCh": "灵县",
+        "runtimeSourceName": "영현（영현）",
+        "runtimePreviousName": "영",
+        "runtimeName": "청하국 영",
+        "runtimeCityId": 200,
+        "runtimeCityConstRowIds": [199, 200, 255, 274, 360, 365],
+        "runtimeSourceOccurrences": 6,
+        "runtimeCanonicalOccurrences": 6,
+    },
+    "85376": {
+        "sourceName": "[건궁현]（심궁현，수궁현）후국",
+        "sourceNameCh": "[巾弓玄]（忄弓玄，扌弓玄）侯国",
+        "displayName": "견후국",
+        "nameCh": "㡉侯国",
+    },
+    "85377": {
+        "sourceName": "[건궁현]현",
+        "sourceNameCh": "[巾弓玄]县",
+        "displayName": "견현",
+        "nameCh": "㡉县",
+    },
+    "85448": {
+        "sourceName": "곡성（성）현",
+        "sourceNameCh": "曲成（城）县",
+        "displayName": "곡성현",
+        "nameCh": "曲成县",
+        "runtimeSourceName": "곡성（성）",
+        "runtimePreviousName": "곡성",
+        "runtimeName": "동래군 곡성",
+        "runtimeCityId": 373,
+        "runtimeCityConstRowIds": [367, 371, 373],
+        "runtimeSourceOccurrences": 3,
+        "runtimeCanonicalOccurrences": 3,
+    },
+}
+SOURCE_ANNOTATION_PATTERN = re.compile(r"[\[\]（）()]")
+
+
+def _normalizable_collections(document: dict) -> list[tuple[str, list[dict], str]]:
+    collections: list[tuple[str, list[dict], str]] = []
+    for key, display_key in (
+            ("cities", "name"),
+            ("provinceRecords", "displayName"),
+            ("jurisdictionRecords", "displayName")):
+        rows = document.get(key)
+        if isinstance(rows, list):
+            collections.append((key, rows, display_key))
+    legacy = document.get("legacyGameplay")
+    if isinstance(legacy, dict) and isinstance(legacy.get("cities"), list):
+        collections.append(("legacyGameplay.cities", legacy["cities"], "name"))
+    return collections
+
+
+def normalize_han_place_names(document: dict) -> dict:
+    """Apply reviewed stable-ID name corrections to every materialized view."""
+    result = copy.deepcopy(document)
+    for collection_name, rows, display_key in _normalizable_collections(result):
+        for row in rows:
+            place_id = str(row.get("id", ""))
+            normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(place_id)
+            if normalization is None:
+                continue
+            actual = (row.get(display_key), row.get("nameCh"))
+            source = (normalization["sourceName"], normalization["sourceNameCh"])
+            canonical = (normalization["displayName"], normalization["nameCh"])
+            if actual not in {source, canonical}:
+                raise ValueError(
+                    f"{place_id} source name drift in {collection_name}: {actual!r}"
+                )
+            row[display_key], row["nameCh"] = canonical
+    validate_han_place_names(result)
+    return result
+
+
+def validate_han_place_names(document: dict) -> None:
+    """Reject CHGIS source annotations from Han county-level display names."""
+    failures: list[str] = []
+    for collection_name, rows, display_key in _normalizable_collections(document):
+        for row in rows:
+            is_han_county = (
+                row.get("kind") in {"COUNTY", "MARQUISATE"}
+                or (
+                    row.get("kind") == "SPATIAL_PROVINCE"
+                    and row.get("administrativeSystem") == "HAN_COMMANDERY"
+                )
+            )
+            # Small unit fixtures may omit kind; they still exercise the public
+            # validator and therefore remain subject to the same text contract.
+            if row.get("kind") is None:
+                is_han_county = True
+            if not is_han_county:
+                continue
+            display_name, name_ch = row.get(display_key), row.get("nameCh")
+            if any(
+                isinstance(value, str) and SOURCE_ANNOTATION_PATTERN.search(value)
+                for value in (display_name, name_ch)
+            ):
+                failures.append(f"{collection_name}:{row.get('id')}")
+    if failures:
+        raise ValueError(
+            "Han county name contains a source annotation: " + ", ".join(failures)
+        )
 
 
 def rle(rows: list[list[int]]) -> list[list[int]]:
@@ -616,7 +737,7 @@ def build(
         output['_meta']['counts']['jurisdictions'] = len(jurisdiction_records)
         output['_meta']['counts']['commanderies'] = len(commandery_records)
         output['_meta']['counts']['parentRegions'] = len(parent_regions)
-    return output
+    return normalize_han_place_names(output)
 
 
 def main() -> int:

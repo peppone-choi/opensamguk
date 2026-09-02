@@ -212,15 +212,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "07cce8c9787def781a0f145007a278f46075b94c92021d432b4c3c68595f1c3a"
+      "sha256": "edc0e97cf3648a85deab59864a0e400694ae3b1c9ba2f25c88ed909e228f2646"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "b56ea13236e8889e040e748facb5d3d82c89ad6aa8aa90ae716902b1fd6235c0"
+      "sha256": "e2b5467eb33838337c8273ef5ace6fe718c9512f5b7cd650921c685c4e23d799"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "ab486cd7fed88912046a34780c44a40cb97db57934a6a305f9670890edeacb73"
+      "sha256": "58b94d077a2d6e3a1201777958d5b6afbac80cb00370bc411de77e804d6d295c"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -230,13 +230,21 @@
       "path": "data/map/external-places.json",
       "sha256": "9674a6dc6cc2ddb45e3c93822849cef7700a51e49e512798321b6c7e0d874e62"
     },
+    "data/map/han-780-v1-tiles.json": {
+      "path": "data/map/han-780-v1-tiles.json",
+      "sha256": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
+    },
     "data/map/han-administrative-history.json": {
       "path": "data/map/han-administrative-history.json",
       "sha256": "3247c723d6f7fa301343585f37697bf40e3e2522ff07bb2d70e838fafd1510b8"
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "45a6c4d82d7a5e72263dab8acbf6c2bef53f5f6a60c84c274c7bc0cab65a5b8e"
+      "sha256": "2b11c8824650a809377187efa16b3d89e28f272262cf247e86fe13c03454f9c1"
+    },
+    "infra/src/main/resources/map/han-780-v1.json": {
+      "path": "infra/src/main/resources/map/han-780-v1.json",
+      "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
     }
   },
   "ledgerId": "han-administrative-parent-reconciliation-v1",

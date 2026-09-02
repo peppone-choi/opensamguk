@@ -29,6 +29,30 @@ def repin_policy_input(inputs: MODULE.MaterializerInputs, key: str, path: Path) 
 
 
 class HanRouteNodeMaterializerTest(unittest.TestCase):
+    def test_approved_780_candidates_use_reproducible_frozen_inputs(self) -> None:
+        inputs = MODULE.default_inputs()
+
+        self.assertEqual("han-780-v1.json", inputs.han.name)
+        self.assertEqual("han-780-v1-tiles.json", inputs.tiles.name)
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "tools/scenario/build_han_route_node_candidates.py"),
+                "--han",
+                str(inputs.han),
+                "--tiles",
+                str(inputs.tiles),
+                "--output",
+                str(inputs.candidate),
+                "--check",
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+
     def test_real_approved_ledgers_materialize_exact_contract(self) -> None:
         result = MODULE.materialize(MODULE.default_inputs())
 

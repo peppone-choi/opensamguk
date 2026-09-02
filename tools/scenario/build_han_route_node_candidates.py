@@ -34,8 +34,8 @@ from han_route_node_candidates import (
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "data/curated/han/administrative-units.json"
 OVERLAY = ROOT / "data/curated/han/administrative-place-bindings-v1.json"
-TILES = ROOT / "data/map/han-tiles.json"
-HAN = ROOT / "infra/src/main/resources/map/han.json"
+TILES = ROOT / "data/map/han-780-v1-tiles.json"
+HAN = ROOT / "infra/src/main/resources/map/han-780-v1.json"
 SCENARIOS = ROOT / "infra/src/main/resources/scenario"
 
 
