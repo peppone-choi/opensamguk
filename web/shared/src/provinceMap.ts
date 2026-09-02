@@ -48,6 +48,34 @@ export interface CountyAdministrativeIndex {
   commanderyByProvince: Int16Array;
   commanderyByName: ReadonlyMap<string, number>;
   administrativeSystemByProvince: readonly string[];
+  jurisdictionByProvince?: Int16Array;
+  jurisdictionById?: ReadonlyMap<string, number>;
+  commanderyById?: ReadonlyMap<string, number>;
+  jurisdictionEdges?: readonly ProvinceEdge[];
+}
+
+export type AdministrativeLayer = 'PROVINCE' | 'JURISDICTION' | 'COMMANDERY';
+
+export interface AdministrativeOwnershipData {
+  provinceOccupancy: readonly {
+    provinceRecordId: string;
+    provinceIndex: number;
+    nationId: number;
+    nationColor?: string;
+    nationName?: string;
+  }[];
+  jurisdictionOwnership: readonly {
+    jurisdictionId: string;
+    nationId: number;
+    nationColor?: string;
+    nationName?: string;
+  }[];
+  commanderyControl: readonly {
+    commanderyId: string;
+    nationId: number;
+    nationColor?: string;
+    nationName?: string;
+  }[];
 }
 
 export interface ProvincePlacement {
@@ -424,6 +452,7 @@ export function buildProvinceAdministrativeIndex(
   map: ProvinceIdentityMap,
   provinces: readonly ProvinceRecordDto[],
   parentRegions: readonly ParentRegionRecordDto[],
+  jurisdictions: readonly JurisdictionRecordDto[] = [],
 ): CountyAdministrativeIndex {
   const parentById = new Map(parentRegions.map((parent, index) => [parent.id, index]));
   const commanderyByProvince = new Int16Array(provinces.length);
@@ -444,15 +473,139 @@ export function buildProvinceAdministrativeIndex(
     }
   }
   const commanderyByName = new Map<string, number>();
+  const commanderyById = new Map<string, number>();
   parentRegions.forEach((parent, index) => {
+    commanderyById.set(parent.id, index);
     commanderyByName.set(parent.displayName, index);
     parent.aliases?.forEach((alias) => commanderyByName.set(alias, index));
   });
+  const jurisdictionById = new Map(jurisdictions.map((jurisdiction, index) => [jurisdiction.id, index]));
+  const jurisdictionByProvince = new Int16Array(provinces.length);
+  jurisdictionByProvince.fill(-1);
+  if (jurisdictions.length > 0) {
+    provinces.forEach((province, provinceIndex) => {
+      const jurisdiction = province.jurisdictionId == null
+        ? undefined : jurisdictionById.get(province.jurisdictionId);
+      if (jurisdiction === undefined) {
+        throw new Error(`Province ${province.id} has no canonical jurisdiction`);
+      }
+      jurisdictionByProvince[provinceIndex] = jurisdiction;
+    });
+    jurisdictions.forEach((jurisdiction, jurisdictionIndex) => {
+      for (const provinceId of jurisdiction.provinceIds) {
+        const provinceIndex = provinces.findIndex((province) => province.id === provinceId);
+        if (provinceIndex < 0 || jurisdictionByProvince[provinceIndex] !== jurisdictionIndex) {
+          throw new Error(`Jurisdiction ${jurisdiction.id} has inconsistent province ${provinceId}`);
+        }
+      }
+    });
+  }
+  const jurisdictionEdges: ProvinceEdge[] = [];
+  if (jurisdictions.length > 0) {
+    for (let y = 0; y < map.height; y += 1) {
+      for (let x = 0; x < map.width; x += 1) {
+        const index = y * map.width + x;
+        const province = map.provinces[index];
+        if (province < 0) continue;
+        const jurisdiction = jurisdictionByProvince[province];
+        if (x + 1 < map.width) {
+          const nextProvince = map.provinces[index + 1];
+          if (nextProvince >= 0 && jurisdiction !== jurisdictionByProvince[nextProvince]) {
+            jurisdictionEdges.push({ x1: x + 0.5, y1: y - 0.5, x2: x + 0.5, y2: y + 0.5 });
+          }
+        }
+        if (y + 1 < map.height) {
+          const nextProvince = map.provinces[index + map.width];
+          if (nextProvince >= 0 && jurisdiction !== jurisdictionByProvince[nextProvince]) {
+            jurisdictionEdges.push({ x1: x - 0.5, y1: y + 0.5, x2: x + 0.5, y2: y + 0.5 });
+          }
+        }
+      }
+    }
+  }
   return {
     commanderyByProvince,
     commanderyByName,
+    commanderyById,
     administrativeSystemByProvince,
+    jurisdictionByProvince,
+    jurisdictionById,
+    jurisdictionEdges,
   };
+}
+
+function uniqueOwnershipById<T>(
+  entries: readonly T[],
+  id: (entry: T) => string,
+  label: string,
+): ReadonlyMap<string, T> {
+  const result = new Map<string, T>();
+  for (const entry of entries) {
+    const key = id(entry);
+    if (result.has(key)) throw new Error(`Duplicate ${label} ownership ${key}`);
+    result.set(key, entry);
+  }
+  return result;
+}
+
+/** Bind each layer only from its own canonical ownership field. */
+export function bindAdministrativeOwnership(
+  map: ProvinceIdentityMap,
+  index: CountyAdministrativeIndex,
+  provinces: readonly ProvinceRecordDto[],
+  ownership: AdministrativeOwnershipData,
+  layer: AdministrativeLayer,
+): ProvinceOwnershipBinding {
+  if (map.provinces.some((province) => province >= provinces.length)) {
+    throw new Error('Province identity map references an unknown province record');
+  }
+  const colors = new Map<number, ProvinceColor>();
+  const putColor = (provinceIndex: number, nationId: number, nationColor?: string) => {
+    if (!isOwnedNationVisual(nationId, nationColor)) return;
+    colors.set(provinceIndex, { nationId, rgb: parseNationColor(nationColor) });
+  };
+
+  if (layer === 'PROVINCE') {
+    if (ownership.provinceOccupancy.length !== provinces.length) {
+      throw new Error(`Province ownership covers ${ownership.provinceOccupancy.length}, expected ${provinces.length}`);
+    }
+    const seen = new Set<number>();
+    for (const owner of ownership.provinceOccupancy) {
+      if (seen.has(owner.provinceIndex)) throw new Error(`Duplicate province ownership ${owner.provinceIndex}`);
+      seen.add(owner.provinceIndex);
+      if (provinces[owner.provinceIndex]?.id !== owner.provinceRecordId) {
+        throw new Error(`Province ownership identity mismatch at ${owner.provinceIndex}`);
+      }
+      putColor(owner.provinceIndex, owner.nationId, owner.nationColor);
+    }
+  } else if (layer === 'JURISDICTION') {
+    const jurisdictionByOwnerId = uniqueOwnershipById(
+      ownership.jurisdictionOwnership, (owner) => owner.jurisdictionId, 'jurisdiction',
+    );
+    if (index.jurisdictionById == null
+      || jurisdictionByOwnerId.size !== index.jurisdictionById.size) {
+      throw new Error('Jurisdiction ownership coverage mismatch');
+    }
+    provinces.forEach((province, provinceIndex) => {
+      const owner = province.jurisdictionId == null
+        ? undefined : jurisdictionByOwnerId.get(province.jurisdictionId);
+      if (!owner) throw new Error(`Missing jurisdiction ownership for ${province.jurisdictionId ?? province.id}`);
+      putColor(provinceIndex, owner.nationId, owner.nationColor);
+    });
+  } else {
+    const commanderyByOwnerId = uniqueOwnershipById(
+      ownership.commanderyControl, (owner) => owner.commanderyId, 'commandery',
+    );
+    if (index.commanderyById == null || commanderyByOwnerId.size !== index.commanderyById.size) {
+      throw new Error('Commandery control coverage mismatch');
+    }
+    provinces.forEach((province, provinceIndex) => {
+      const owner = commanderyByOwnerId.get(province.parentRegionId);
+      if (!owner) throw new Error(`Missing commandery control for ${province.parentRegionId}`);
+      putColor(provinceIndex, owner.nationId, owner.nationColor);
+    });
+  }
+  return { colors, conflicts: [] };
 }
 
 function nearestSample(samples: readonly CitySample[], centerCol: number, centerRow: number): CitySample | undefined {

@@ -68,6 +68,7 @@ export {
 } from './isoMap';
 export {
   bindProvinceOwnership,
+  bindAdministrativeOwnership,
   bindCompleteProvinceOwnership,
   buildCountyAdministrativeIndex,
   buildProvinceAdministrativeIndex,
@@ -83,6 +84,8 @@ export {
   type ProvincePlacement,
   type ProvinceVisualAnchor,
   type CountyAdministrativeIndex,
+  type AdministrativeLayer,
+  type AdministrativeOwnershipData,
   type CommanderyRecordDto,
   type ParentRegionRecordDto,
   type JurisdictionRecordDto,

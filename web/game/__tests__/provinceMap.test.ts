@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   bindProvinceOwnership,
+  bindAdministrativeOwnership,
   bindCompleteProvinceOwnership,
   buildCountyAdministrativeIndex,
   buildProvinceAdministrativeIndex,
@@ -197,6 +198,79 @@ describe('province identity map', () => {
     expect(map.commanderyEdges).not.toContainEqual({ x1: 1.5, y1: -0.5, x2: 1.5, y2: 0.5 });
     expect(map.commanderyEdges).toContainEqual({ x1: 0.5, y1: 0.5, x2: 1.5, y2: 0.5 });
     expect(map.provinceEdges).not.toContainEqual({ x1: 0.5, y1: -0.5, x2: 0.5, y2: 0.5 });
+  });
+
+  it('derives merged jurisdiction edges from stable jurisdiction ids', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 16, 2, 255,
+      0, 16, 3, 255,
+    ]), 3, 1);
+    const provinces: ProvinceRecordDto[] = [
+      { id: 'P1', displayName: 'A-1', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'C1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J1' },
+      { id: 'P2', displayName: 'A-2', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'C1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J1' },
+      { id: 'P3', displayName: 'B-1', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'C1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J2' },
+    ];
+    const index = buildProvinceAdministrativeIndex(
+      map,
+      provinces,
+      [{ id: 'C1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
+      [
+        { id: 'J1', displayName: 'A현', nameCh: '', kind: 'COUNTY', commanderyId: 'C1', seatPlaceId: 'P1', provinceIds: ['P1', 'P2'] },
+        { id: 'J2', displayName: 'B현', nameCh: '', kind: 'COUNTY', commanderyId: 'C1', seatPlaceId: 'P3', provinceIds: ['P3'] },
+      ],
+    );
+
+    expect(Array.from(index.jurisdictionByProvince!)).toEqual([0, 0, 1]);
+    expect(index.jurisdictionEdges).not.toContainEqual({ x1: 0.5, y1: -0.5, x2: 0.5, y2: 0.5 });
+    expect(index.jurisdictionEdges).toContainEqual({ x1: 1.5, y1: -0.5, x2: 1.5, y2: 0.5 });
+  });
+
+  it('colors province, jurisdiction, and commandery layers from separate ownership fields', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 16, 1, 255,
+      0, 16, 2, 255,
+      0, 16, 3, 255,
+    ]), 3, 1);
+    const provinces: ProvinceRecordDto[] = [
+      { id: 'P1', displayName: 'A-1', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'C1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J1' },
+      { id: 'P2', displayName: 'A-2', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'C1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J1' },
+      { id: 'P3', displayName: 'B-1', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'C1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J2' },
+    ];
+    const jurisdictions = [
+      { id: 'J1', displayName: 'A현', nameCh: '', kind: 'COUNTY', commanderyId: 'C1', seatPlaceId: 'P1', provinceIds: ['P1', 'P2'] },
+      { id: 'J2', displayName: 'B현', nameCh: '', kind: 'COUNTY', commanderyId: 'C1', seatPlaceId: 'P3', provinceIds: ['P3'] },
+    ];
+    const index = buildProvinceAdministrativeIndex(
+      map,
+      provinces,
+      [{ id: 'C1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
+      jurisdictions,
+    );
+    const ownership = {
+      provinceOccupancy: [
+        { provinceRecordId: 'P1', provinceIndex: 0, nationId: 1, nationColor: '#ff0000' },
+        { provinceRecordId: 'P2', provinceIndex: 1, nationId: 2, nationColor: '#0000ff' },
+        { provinceRecordId: 'P3', provinceIndex: 2, nationId: 0 },
+      ],
+      jurisdictionOwnership: [
+        { jurisdictionId: 'J1', nationId: 1, nationColor: '#ff0000' },
+        { jurisdictionId: 'J2', nationId: 2, nationColor: '#0000ff' },
+      ],
+      commanderyControl: [
+        { commanderyId: 'C1', nationId: 2, nationColor: '#0000ff' },
+      ],
+    };
+
+    expect(bindAdministrativeOwnership(map, index, provinces, ownership, 'PROVINCE').colors)
+      .toEqual(new Map([
+        [0, { nationId: 1, rgb: [255, 0, 0] }],
+        [1, { nationId: 2, rgb: [0, 0, 255] }],
+      ]));
+    expect([...bindAdministrativeOwnership(map, index, provinces, ownership, 'JURISDICTION').colors.keys()])
+      .toEqual([0, 1, 2]);
+    expect([...bindAdministrativeOwnership(map, index, provinces, ownership, 'COMMANDERY').colors.values()])
+      .toEqual(Array.from({ length: 3 }, () => ({ nationId: 2, rgb: [0, 0, 255] })));
   });
 
   it('rejects malformed RGBA and covered pixels with a missing hierarchy identity', () => {
@@ -443,6 +517,91 @@ describe('province identity map', () => {
       )), scenarioFile).toBe(true);
     }
   }, 15_000);
+
+  it('audits all 15 canonical scenario province colors for missing excess and out-of-scope pixels', () => {
+    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
+      _meta: { cols: number; rows: number };
+      owner: [number, number][];
+      parentOwner: [number, number][];
+      provinceRecords: ProvinceRecordDto[];
+      jurisdictionRecords: { id: string; displayName: string; nameCh: string; kind: string; commanderyId: string; seatPlaceId: string; provinceIds: string[] }[];
+      parentRegions: ParentRegionRecordDto[];
+    };
+    const canonical = JSON.parse(
+      readFileSync(resolve(process.cwd(), '../../data/map/han-scenario-province-ownership-v1.json'), 'utf8'),
+    ) as {
+      scenarios: { scenarioCode: number; assignments: { provinceId: string; ownerNationId: number | null; basisType: string; evidenceIds: string[] }[] }[];
+    };
+    const allowlist = JSON.parse(
+      readFileSync(resolve(process.cwd(), '../../data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json'), 'utf8'),
+    ) as { entries: { scenarioCode: number; jurisdictionId: string; ownerNationIds: number[]; evidenceIds: string[] }[] };
+    const cells = tiles._meta.cols * tiles._meta.rows;
+    const map: ProvinceIdentityMap = {
+      width: tiles._meta.cols,
+      height: tiles._meta.rows,
+      provinces: expandRle(tiles.owner, cells),
+      commanderies: expandRle(tiles.parentOwner, cells),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+    const index = buildProvinceAdministrativeIndex(
+      map, tiles.provinceRecords, tiles.parentRegions, tiles.jurisdictionRecords,
+    );
+    const provinceIndexById = new Map(tiles.provinceRecords.map((province, provinceIndex) => [province.id, provinceIndex]));
+    const allowedConflictKeys = new Set(allowlist.entries.map((entry) => `${entry.scenarioCode}:${entry.jurisdictionId}`));
+    const observedConflictKeys = new Set<string>();
+
+    expect(canonical.scenarios).toHaveLength(15);
+    for (const scenario of canonical.scenarios) {
+      expect(scenario.assignments).toHaveLength(1_524);
+      const ownership = {
+        provinceOccupancy: scenario.assignments.map((assignment) => {
+          const provinceIndex = provinceIndexById.get(assignment.provinceId)!;
+          const nationId = assignment.ownerNationId ?? 0;
+          const colorValue = ((nationId * 2_654_435_761) >>> 0) & 0xffffff;
+          return {
+            provinceRecordId: assignment.provinceId,
+            provinceIndex,
+            nationId,
+            nationColor: nationId > 0 ? `#${colorValue.toString(16).padStart(6, '0')}` : undefined,
+          };
+        }),
+        jurisdictionOwnership: [],
+        commanderyControl: [],
+      };
+      const binding = bindAdministrativeOwnership(map, index, tiles.provinceRecords, ownership, 'PROVINCE');
+      const expectedOwned = new Set(ownership.provinceOccupancy
+        .filter((owner) => owner.nationId > 0)
+        .map((owner) => owner.provinceIndex));
+      expect(new Set(binding.colors.keys()), `scenario ${scenario.scenarioCode}`).toEqual(expectedOwned);
+      const pixels = composeProvincePixels(map, binding);
+      let firstAlphaMismatch = -1;
+      for (let cell = 0; cell < map.provinces.length; cell += 1) {
+        const province = map.provinces[cell];
+        const expectedAlpha = province >= 0 && expectedOwned.has(province) ? 255 : 0;
+        if (pixels[cell * 4 + 3] !== expectedAlpha) {
+          firstAlphaMismatch = cell;
+          break;
+        }
+      }
+      expect(firstAlphaMismatch, `scenario ${scenario.scenarioCode}`).toBe(-1);
+
+      const assignmentByProvince = new Map(scenario.assignments.map((assignment) => [assignment.provinceId, assignment]));
+      for (const jurisdiction of tiles.jurisdictionRecords) {
+        const assignments = jurisdiction.provinceIds.map((provinceId) => assignmentByProvince.get(provinceId)!);
+        const owners = new Set(assignments.map((assignment) => assignment.ownerNationId ?? 0));
+        if (owners.size <= 1) continue;
+        const key = `${scenario.scenarioCode}:${jurisdiction.id}`;
+        observedConflictKeys.add(key);
+        const allowance = allowlist.entries.find((entry) => `${entry.scenarioCode}:${entry.jurisdictionId}` === key);
+        expect(allowance, key).toBeDefined();
+        expect(new Set(allowance!.ownerNationIds), key).toEqual(owners);
+        const evidence = new Set(assignments.flatMap((assignment) => assignment.evidenceIds));
+        expect(allowance!.evidenceIds.every((evidenceId) => evidence.has(evidenceId)), key).toBe(true);
+      }
+    }
+    expect(observedConflictKeys).toEqual(allowedConflictKeys);
+  }, 30_000);
 
   it('uses the county coordinate as the stable commandery parent across a mixed polygon', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([

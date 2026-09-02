@@ -23,6 +23,10 @@ vi.mock('@opensamguk/ui', async () => {
         nationId: city.nationId,
         nationName: city.nationName,
         nationColor: city.nationColor,
+        ...(props.administrativeOwnership ? {
+          hierarchyPath: '공간 낙양 → 낙양현 → 하남윤',
+          ownershipMismatch: true,
+        } : {}),
       } : null;
       return (
         <div data-testid="shared-iso-map" data-map-code={props.mapCode}>
@@ -86,6 +90,25 @@ describe('MapViewer shared canvas overlays', () => {
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
     expect(screen.getByRole('status')).toHaveTextContent('【사예 | 경】 경조윤 장안현');
     expect(screen.getByRole('status')).toHaveTextContent('위');
+  });
+
+  it('투영 소유권을 색과 함께 전달하고 전체 계층과 통제 불일치를 표시한다', () => {
+    render(<MapViewer mapData={{
+      ...MAP,
+      provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1 }],
+      jurisdictionOwnership: [{ jurisdictionId: 'J1', nationId: 1 }],
+      commanderyControl: [{ commanderyId: 'C1', nationId: 2 }],
+      nations: [...MAP.nations, { id: 2, name: '한', color: '#0000ff' }],
+    }} />);
+
+    expect(shared.props?.administrativeOwnership).toEqual({
+      provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1, nationColor: '#ff0000', nationName: '위' }],
+      jurisdictionOwnership: [{ jurisdictionId: 'J1', nationId: 1, nationColor: '#ff0000', nationName: '위' }],
+      commanderyControl: [{ commanderyId: 'C1', nationId: 2, nationColor: '#0000ff', nationName: '한' }],
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
+    expect(screen.getByRole('status')).toHaveTextContent('공간 낙양 → 낙양현 → 하남윤');
+    expect(screen.getByRole('status')).toHaveTextContent('현 소유권과 군국 통제권이 다릅니다.');
   });
 
   it.each([
