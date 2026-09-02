@@ -28,13 +28,12 @@
 **Files:**
 - Create: `tools/map/administrative_spatial_hierarchy.py`
 - Create: `tools/map/tests/test_administrative_spatial_hierarchy.py`
-- Modify: `tools/map/han_tiles_contract.py`
 
 **Interfaces:**
 - Consumes: `han-tiles.json`의 `owner`, `provinceRecords`, `parentRegions`, `cities`.
-- Produces: `audit_hierarchy(document) -> HierarchyAudit`와 fail-closed `validate_hierarchy(document) -> None`.
+- Produces: `audit_hierarchy(document) -> HierarchyAudit`, fail-closed `validate_hierarchy(document) -> HierarchyAudit`, 현재 전환 부채를 읽는 `audit_transition_debt(document) -> TransitionDebtAudit`, 기본 감사/`--strict` CLI.
 
-- [ ] **Step 1: 실패 테스트 작성**
+- [x] **Step 1: 실패 테스트 작성**
 
 ```python
 def test_rejects_a_playable_province_without_jurisdiction(self):
@@ -55,26 +54,28 @@ def test_rejects_an_enclosed_non_playable_land_hole(self):
         validate_hierarchy(document)
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `python3 -m unittest tools.map.tests.test_administrative_spatial_hierarchy -v`
 
 Expected: `ModuleNotFoundError: tools.map.administrative_spatial_hierarchy`.
 
-- [ ] **Step 3: 최소 감사기 구현**
+- [x] **Step 3: 최소 감사기 구현**
 
-`HierarchyAudit`에 `province_count`, `jurisdiction_count`, `parent_count`, `unassigned_province_ids`, `direct_territory_ids`, `duplicate_seat_place_ids`, `enclosed_non_playable_land_components`를 담고 다음을 거부한다: 알 수 없는 현/군국 ID, 프로빈스 0개 현, 현 0개 군국, 같은 현의 복수 군국, 미귀속 플레이 프로빈스, `DIRECT_TERRITORY`, 별도 군국 기하 ID, 플레이 육지에 둘러싸인 검은 고립 성분.
+`HierarchyAudit`에 `province_count`, `jurisdiction_count`, `parent_count`, `unassigned_province_ids`, `direct_territory_ids`, `duplicate_seat_place_ids`, `enclosed_non_playable_land_components`를 담고 다음을 거부한다: 알 수 없는 현/군국 ID, 프로빈스 0개 현, 현 0개 군국, 같은 현의 복수 군국, 미귀속 플레이 프로빈스, `DIRECT_TERRITORY`, 별도 군국 기하 ID, 플레이 육지에 둘러싸인 검은 고립 성분. 기본 CLI는 현 정본의 부채를 비파괴적으로 출력하고 `--strict`는 Task 2 물질화 뒤 CI 필수 경로로 승격한다.
 
-- [ ] **Step 4: 단위·기존 계약 실행**
+- [x] **Step 4: 단위·기존 계약 실행**
 
 Run: `python3 -m unittest tools.map.tests.test_administrative_spatial_hierarchy tools.map.tests.test_han_tiles_contract -v`
 
-Expected: PASS.
+Run: `python3 tools/map/administrative_spatial_hierarchy.py`
 
-- [ ] **Step 5: 커밋**
+Expected: tests PASS; 감사 출력은 1,524 provinces, 172 parents, 526 direct territories, 52 parents without county, 0 enclosed non-playable land components를 보고한다.
+
+- [x] **Step 5: 커밋**
 
 ```bash
-git add tools/map/administrative_spatial_hierarchy.py tools/map/tests/test_administrative_spatial_hierarchy.py tools/map/han_tiles_contract.py
+git add tools/map/administrative_spatial_hierarchy.py tools/map/tests/test_administrative_spatial_hierarchy.py docs/superpowers/plans/2026-09-02-administrative-spatial-hierarchy.md
 git commit -m "test(map): define administrative spatial hierarchy"
 ```
 
@@ -83,6 +84,7 @@ git commit -m "test(map): define administrative spatial hierarchy"
 **Files:**
 - Modify: `tools/map/build_tile_grid.py`
 - Modify: `tools/map/world_province_geometry.py`
+- Modify: `tools/map/han_tiles_contract.py`
 - Create: `tools/map/tests/test_materialize_province_jurisdictions.py`
 - Modify: `tools/map/tests/test_build_tile_grid_province_records.py`
 - Modify: `data/map/han-tiles.json`
