@@ -317,6 +317,31 @@ class AdministrativeSpatialHierarchyTest(unittest.TestCase):
 
         self.assertEqual(1, audit_hierarchy(document).narrow_non_playable_land_tendrils)
 
+    def test_internal_lake_does_not_truncate_a_black_land_tendril(self):
+        document = fixture_document()
+        document["_meta"].update(
+            cols=5,
+            rows=5,
+            terrainLegend={"0": "SEA", "1": "PLAIN", "4": "LAKE"},
+        )
+        terrain = [list("11111") for _ in range(5)]
+        terrain[2][3] = "4"
+        document["terrain"] = ["".join(row) for row in terrain]
+        owner = [0] * 25
+        for index in (2, 7, 12, 13):
+            owner[index] = -1
+        owner[24] = 1
+        runs = []
+        for value in owner:
+            if runs and runs[-1][0] == value:
+                runs[-1][1] += 1
+            else:
+                runs.append([value, 1])
+        document["owner"] = runs
+        document["settlementRecords"][1].update(col=4, row=4)
+
+        self.assertEqual(1, audit_hierarchy(document).narrow_non_playable_land_tendrils)
+
     def test_rejects_a_settlement_on_unowned_land(self):
         document = fixture_document()
         document["settlementRecords"][1].update(col=1, row=1)

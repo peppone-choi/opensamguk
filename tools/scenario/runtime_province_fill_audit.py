@@ -56,7 +56,10 @@ def _owned_city_nations(scenario: Mapping[str, Any]) -> dict[int, str]:
         if len(nation) <= 8:
             raise ValueError("scenario nation is missing its city array at index 8")
         nation_name = str(nation[0])
-        for raw_city_id in nation[8]:
+        city_ids = nation[8]
+        if not isinstance(city_ids, Sequence) or isinstance(city_ids, (str, bytes)):
+            raise ValueError("scenario nation city array at index 8 must be an array")
+        for raw_city_id in city_ids:
             city_id = int(raw_city_id)
             previous = result.setdefault(city_id, nation_name)
             if previous != nation_name:
@@ -115,20 +118,31 @@ def audit_runtime_fill(
     owned_without_index.extend(set(city_nation) - map_city_ids)
 
     canonical_owner_by_province: dict[str, str] = {}
+    canonical_owner_key_by_province: dict[str, str | None] = {}
     for assignment in ownership.get("assignments", []):
         assignment_code = assignment.get("scenarioCode")
         if assignment_code is not None and int(assignment_code) != scenario_code:
             raise ValueError(
                 f"ownership assignment scenario {assignment_code} does not match {scenario_code}"
             )
-        owner_key = assignment.get("ownerNationKey")
-        if owner_key is None:
-            continue
         province_record_id = str(assignment["provinceId"])
         if province_record_id not in province_record_id_set:
             raise ValueError(f"ownership references unknown province record {province_record_id}")
+        raw_owner_key = assignment.get("ownerNationKey")
+        owner_key = str(raw_owner_key) if raw_owner_key is not None else None
+        if province_record_id in canonical_owner_key_by_province:
+            previous_owner_key = canonical_owner_key_by_province[province_record_id]
+            if previous_owner_key != owner_key:
+                raise ValueError(
+                    f"conflicting canonical owners for province {province_record_id}: "
+                    f"{previous_owner_key}, {owner_key}"
+                )
+        else:
+            canonical_owner_key_by_province[province_record_id] = owner_key
+        if owner_key is None:
+            continue
         try:
-            owner_name = nation_name_by_key[str(owner_key)]
+            owner_name = nation_name_by_key[owner_key]
         except KeyError as error:
             raise ValueError(f"unknown canonical nation key {owner_key}") from error
         canonical_owner_by_province[province_record_id] = owner_name

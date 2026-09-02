@@ -96,6 +96,29 @@ def _non_playable_land_topology(document: dict[str, Any]) -> tuple[int, int]:
     water_codes = {
         str(code) for code, label in legend.items() if label in {"SEA", "LAKE"}
     }
+    water = {
+        index
+        for index in unowned
+        if terrain[index // cols][index % cols] in water_codes
+    }
+    exterior_water: set[int] = set()
+    water_queue: deque[int] = deque()
+    for index in water:
+        row, col = divmod(index, cols)
+        if row in (0, rows - 1) or col in (0, cols - 1):
+            exterior_water.add(index)
+            water_queue.append(index)
+    while water_queue:
+        index = water_queue.popleft()
+        row, col = divmod(index, cols)
+        for drow, dcol in ((-1, 0), (0, 1), (1, 0), (0, -1)):
+            next_row, next_col = row + drow, col + dcol
+            if not (0 <= next_row < rows and 0 <= next_col < cols):
+                continue
+            next_index = next_row * cols + next_col
+            if next_index in water and next_index not in exterior_water:
+                exterior_water.add(next_index)
+                water_queue.append(next_index)
 
     outside: set[int] = set()
     queue: deque[int] = deque()
@@ -156,7 +179,7 @@ def _non_playable_land_topology(document: dict[str, Any]) -> tuple[int, int]:
         if row in (0, rows - 1) or col in (0, cols - 1):
             return True
         return any(
-            terrain[next_row][next_col] in water_codes
+            next_row * cols + next_col in exterior_water
             for next_row, next_col in (
                 (row - 1, col), (row, col + 1), (row + 1, col), (row, col - 1)
             )

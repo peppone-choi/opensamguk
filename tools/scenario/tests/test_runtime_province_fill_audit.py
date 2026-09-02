@@ -95,6 +95,31 @@ class RuntimeProvinceFillAuditTest(unittest.TestCase):
                 nation_name_by_key={"A": "세력A"},
             )
 
+    def test_rejects_a_string_instead_of_a_nation_city_array(self):
+        with self.assertRaisesRegex(ValueError, "city array at index 8 must be an array"):
+            audit_runtime_fill(
+                scenario_code=1010,
+                tiles={"provinceRecords": [{"id": "P-A"}]},
+                map_resource={"cities": [{"id": 10, "provinceId": 0}]},
+                scenario={"nation": [["세력A", "", 0, 0, "", 0, "", 0, "10"]]},
+                ownership={"assignments": [{"provinceId": "P-A", "ownerNationKey": "A"}]},
+                nation_name_by_key={"A": "세력A"},
+            )
+
+    def test_rejects_conflicting_canonical_owners_for_one_province(self):
+        with self.assertRaisesRegex(ValueError, "conflicting canonical owners for province P-A"):
+            audit_runtime_fill(
+                scenario_code=1010,
+                tiles={"provinceRecords": [{"id": "P-A"}]},
+                map_resource={"cities": [{"id": 10, "provinceId": 0}]},
+                scenario={"nation": [["세력A", "", 0, 0, "", 0, "", 0, [10]]]},
+                ownership={"assignments": [
+                    {"provinceId": "P-A", "ownerNationKey": "A"},
+                    {"provinceId": "P-A", "ownerNationKey": "B"},
+                ]},
+                nation_name_by_key={"A": "세력A", "B": "세력B"},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
