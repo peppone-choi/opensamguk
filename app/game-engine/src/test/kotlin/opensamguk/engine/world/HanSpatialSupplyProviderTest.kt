@@ -74,6 +74,23 @@ class HanSpatialSupplyProviderTest {
         val cityConst = ActiveWorldMap.requireVariant(mapOf("mapName" to "han"), emptyMap())
         val scenarioCodes = mapper.readTree(Path(ownershipPath).toFile()).path("scenarios")
             .map { it.path("scenarioCode").asInt() }
+        val expectedSupplyAudit = mapOf(
+            1010 to Triple(224, 127, 97),
+            1020 to Triple(390, 352, 38),
+            1021 to Triple(385, 353, 32),
+            1030 to Triple(471, 388, 83),
+            1031 to Triple(500, 392, 108),
+            1040 to Triple(485, 472, 13),
+            1041 to Triple(520, 505, 15),
+            1050 to Triple(606, 603, 3),
+            1060 to Triple(606, 601, 5),
+            1070 to Triple(628, 621, 7),
+            1080 to Triple(651, 645, 6),
+            1090 to Triple(686, 677, 9),
+            1100 to Triple(706, 697, 9),
+            1110 to Triple(706, 699, 7),
+            1120 to Triple(271, 203, 68),
+        )
 
         for (scenarioCode in scenarioCodes) {
             val scenario = ScenarioJson.loadScenario(
@@ -104,6 +121,11 @@ class HanSpatialSupplyProviderTest {
                 capitals = capitals,
                 cityConst = cityConst,
                 spatialNetwork = network,
+            )
+            assertEquals(
+                expectedSupplyAudit.getValue(scenarioCode),
+                Triple(ownedCities.size, supplied.size, ownedCities.size - supplied.size),
+                "scenario $scenarioCode owned/supplied/blocked mapped city audit",
             )
             capitals.filter { it.capitalCityId in cityProvinceById }.forEach { capital ->
                 assertTrue(
@@ -158,12 +180,60 @@ class HanSpatialSupplyProviderTest {
         assertMalformedOwnershipRejected(duplicateAssignment.toString())
     }
 
+    @Test
+    fun `later network snapshots are isolated from adjacency mutation`() {
+        val first = provider().network(1020, emptyList())
+        val originalNeighbor = first.provinceAdjacency.first { it.isNotEmpty() }.first()
+        first.provinceAdjacency.first { it.isNotEmpty() }[0] = 0
+
+        val second = provider().network(1020, emptyList())
+
+        assertEquals(originalNeighbor, second.provinceAdjacency.first { it.isNotEmpty() }.first())
+    }
+
+    @Test
+    fun `topology parser rejects malformed jurisdiction membership`() {
+        val duplicateJurisdiction = mapper.readTree(Path(mapPath).toFile())
+        val duplicateRecords = duplicateJurisdiction.path("jurisdictionRecords") as ArrayNode
+        duplicateRecords.add(duplicateRecords.first())
+        assertMalformedMapRejected(duplicateJurisdiction.toString())
+
+        val unknownMember = mapper.readTree(Path(mapPath).toFile())
+        val unknownProvinceIds = unknownMember.path("jurisdictionRecords").first().path("provinceIds") as ArrayNode
+        unknownProvinceIds.set(0, mapper.nodeFactory.textNode("UNKNOWN-PROVINCE"))
+        assertMalformedMapRejected(unknownMember.toString())
+
+        val mismatchedMember = mapper.readTree(Path(mapPath).toFile())
+        val jurisdictions = mismatchedMember.path("jurisdictionRecords")
+        val foreignProvinceId = jurisdictions[1].path("provinceIds").first().asText()
+        val firstProvinceIds = jurisdictions[0].path("provinceIds") as ArrayNode
+        firstProvinceIds.set(0, mapper.nodeFactory.textNode(foreignProvinceId))
+        assertMalformedMapRejected(mismatchedMember.toString())
+
+        val missingMember = mapper.readTree(Path(mapPath).toFile())
+        val incompleteProvinceIds = missingMember.path("jurisdictionRecords").first().path("provinceIds") as ArrayNode
+        incompleteProvinceIds.remove(0)
+        assertMalformedMapRejected(missingMember.toString())
+    }
+
     private fun assertMalformedOwnershipRejected(json: String) {
         val malformed = createTempFile("han-spatial-supply-", ".json")
         try {
             malformed.toFile().writeText(json)
             assertFailsWith<IllegalStateException> {
                 HanSpatialSupplyProvider(mapper, mapPath, malformed.toString()).network(1020, emptyList())
+            }
+        } finally {
+            malformed.deleteIfExists()
+        }
+    }
+
+    private fun assertMalformedMapRejected(json: String) {
+        val malformed = createTempFile("han-spatial-map-", ".json")
+        try {
+            malformed.toFile().writeText(json)
+            assertFailsWith<IllegalStateException> {
+                HanSpatialSupplyProvider(mapper, malformed.toString(), ownershipPath).network(1020, emptyList())
             }
         } finally {
             malformed.deleteIfExists()

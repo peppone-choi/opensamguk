@@ -241,4 +241,25 @@ class UpdateCitySupplyBfsTest {
 
         assertEquals(setOf(1), supplied)
     }
+
+    @Test
+    fun `multiple nations traverse only their own spatial components`() {
+        val supplied = computeSuppliedCitiesWithSpatialNetwork(
+            cities = listOf(
+                SupplyCity(1, 1),
+                SupplyCity(2, 1),
+                SupplyCity(3, 2),
+                SupplyCity(4, 2),
+            ),
+            capitals = listOf(SupplyCapital(1, 1), SupplyCapital(3, 2)),
+            cityConst = lineConst(),
+            spatialNetwork = spatialNetwork(
+                owners = listOf(1, 1, 2, 2, 2),
+                edges = listOf(0 to 1, 1 to 2, 2 to 3),
+                cityProvinces = mapOf(1 to 0, 2 to 1, 3 to 2, 4 to 4),
+            ),
+        )
+
+        assertEquals(setOf(1, 2, 3), supplied)
+    }
 }

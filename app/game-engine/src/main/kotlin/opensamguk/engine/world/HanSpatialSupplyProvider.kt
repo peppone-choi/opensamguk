@@ -52,7 +52,7 @@ class HanSpatialSupplyProvider(
 
         return SpatialSupplyNetwork(
             provinceOwners = owners,
-            provinceAdjacency = canonical.adjacency,
+            provinceAdjacency = canonical.adjacency.map(IntArray::clone),
             cityProvinceIndices = liveCities.associate { it.cityId to it.provinceIndex },
         )
     }
@@ -69,9 +69,36 @@ class HanSpatialSupplyProvider(
         val provinceIndexById = provinceIds.withIndex().associate { it.value to it.index }
         val provinceJurisdictions = provinces.map { it.requiredText("jurisdictionId") }
         val ownerGrid by lazy { decodeOwnerGrid(mapRoot, provinces.size) }
-        val seatPlaces = mapRoot.requiredArray("cities").associateBy { it.requiredText("id") }
+        val seatPlaceRecords = mapRoot.requiredArray("cities")
+        requireUnique(seatPlaceRecords.map { it.requiredText("id") }, "seat place")
+        val seatPlaces = seatPlaceRecords.associateBy { it.requiredText("id") }
 
-        val jurisdictionSeatProvince = mapRoot.requiredArray("jurisdictionRecords").associate { jurisdiction ->
+        val jurisdictionRecords = mapRoot.requiredArray("jurisdictionRecords")
+        val jurisdictionIds = jurisdictionRecords.map { it.requiredText("id") }
+        requireUnique(jurisdictionIds, "jurisdiction")
+        val jurisdictionByProvinceId = linkedMapOf<String, String>()
+        jurisdictionRecords.forEach { jurisdiction ->
+            val jurisdictionId = jurisdiction.requiredText("id")
+            val memberIds = jurisdiction.requiredArray("provinceIds").map(JsonNode::asText)
+            requireUnique(memberIds, "jurisdiction $jurisdictionId province")
+            memberIds.forEach { provinceId ->
+                val provinceIndex = provinceIndexById[provinceId]
+                    ?: error("Jurisdiction $jurisdictionId references unknown province $provinceId")
+                check(provinceJurisdictions[provinceIndex] == jurisdictionId) {
+                    "Jurisdiction $jurisdictionId contains province $provinceId assigned to ${provinceJurisdictions[provinceIndex]}"
+                }
+                val previous = jurisdictionByProvinceId.putIfAbsent(provinceId, jurisdictionId)
+                check(previous == null) {
+                    "Province $provinceId belongs to both $previous and $jurisdictionId"
+                }
+            }
+        }
+        check(jurisdictionByProvinceId.keys == provinceIndexById.keys) {
+            val missing = provinceIndexById.keys - jurisdictionByProvinceId.keys
+            "Jurisdiction membership does not cover canonical provinces; missing: ${missing.sorted().joinToString()}"
+        }
+
+        val jurisdictionSeatProvince = jurisdictionRecords.associate { jurisdiction ->
             val jurisdictionId = jurisdiction.requiredText("id")
             val seatPlaceId = jurisdiction.requiredText("seatPlaceId")
             val provinceIdsInJurisdiction = jurisdiction.requiredArray("provinceIds").map(JsonNode::asText)
@@ -92,7 +119,6 @@ class HanSpatialSupplyProvider(
             }
             jurisdictionId to provinceIndexById.getValue(seatProvinceId)
         }
-        requireUnique(jurisdictionSeatProvince.keys.toList(), "jurisdiction")
         provinceJurisdictions.forEachIndexed { provinceIndex, jurisdictionId ->
             check(jurisdictionId in jurisdictionSeatProvince) {
                 "Province ${provinceIds[provinceIndex]} references unknown jurisdiction $jurisdictionId"
