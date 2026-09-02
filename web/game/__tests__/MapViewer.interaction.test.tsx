@@ -25,6 +25,11 @@ vi.mock('@opensamguk/ui', async () => {
         nationColor: city.nationColor,
         ...(props.administrativeOwnership ? {
           hierarchyPath: '공간 낙양 → 낙양현 → 하남윤',
+          provinceOccupantNationName: '위',
+          jurisdictionOwnerNationName: '한',
+          commanderyControllerNationName: '조',
+          provinceJurisdictionMismatch: true,
+          jurisdictionCommanderyMismatch: true,
           ownershipMismatch: true,
         } : {}),
       } : null;
@@ -108,7 +113,11 @@ describe('MapViewer shared canvas overlays', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
     expect(screen.getByRole('status')).toHaveTextContent('공간 낙양 → 낙양현 → 하남윤');
-    expect(screen.getByRole('status')).toHaveTextContent('현 소유권과 군국 통제권이 다릅니다.');
+    expect(screen.getByRole('status')).toHaveTextContent('공간 점유: 위');
+    expect(screen.getByRole('status')).toHaveTextContent('현 소유: 한');
+    expect(screen.getByRole('status')).toHaveTextContent('군국 통제: 조');
+    expect(screen.getByRole('status')).toHaveTextContent('공간 점유와 현 소유가 다릅니다.');
+    expect(screen.getByRole('status')).toHaveTextContent('현 소유와 군국 통제가 다릅니다.');
   });
 
   it.each([

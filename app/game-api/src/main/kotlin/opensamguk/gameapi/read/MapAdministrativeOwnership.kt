@@ -60,7 +60,8 @@ class MapAdministrativeOwnership(
         liveCities: List<LiveCityOwnership>,
     ): AdministrativeOwnershipSnapshot {
         val canonical = canonicalData()
-        val numericScenarioCode = scenarioCode.removePrefix("scenario_").toIntOrNull()
+        val numericScenarioCode = Regex("^(?:scenario_)?([1-9][0-9]*)$").matchEntire(scenarioCode)
+            ?.groupValues?.get(1)?.toIntOrNull()
             ?: error("Unsupported Han scenario code: $scenarioCode")
         val directOwners = canonical.scenarioOwners[numericScenarioCode]
             ?: error("No canonical province ownership for scenario $numericScenarioCode")
@@ -105,13 +106,8 @@ class MapAdministrativeOwnership(
                 .map(jurisdictionOwners::getValue)
                 .groupingBy { it }
                 .eachCount()
-            val highestCount = ownerCounts.values.maxOrNull() ?: 0
-            val tiedOwners = ownerCounts.filterValues { it == highestCount }.keys
             val seatOwner = jurisdictionOwners.getValue(commandery.seatJurisdictionId)
-            val controller = when {
-                seatOwner in tiedOwners -> seatOwner
-                else -> tiedOwners.minOrNull() ?: 0
-            }
+            val controller = resolveCommanderyController(ownerCounts, seatOwner)
             CommanderyControlProjection(commandery.id, controller)
         }
 
@@ -396,4 +392,13 @@ class MapAdministrativeOwnership(
     )
 
     private data class CachedCanonicalData(val signature: CanonicalSignature, val data: CanonicalData)
+}
+
+internal fun resolveCommanderyController(ownerCounts: Map<Int, Int>, seatOwner: Int): Int {
+    val highestCount = ownerCounts.values.maxOrNull() ?: 0
+    val tiedOwners = ownerCounts.filterValues { it == highestCount }.keys
+    return when {
+        seatOwner in tiedOwners -> seatOwner
+        else -> tiedOwners.filter { it > 0 }.minOrNull() ?: 0
+    }
 }

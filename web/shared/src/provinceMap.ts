@@ -298,22 +298,42 @@ function assertImageShape(rgba: Uint8ClampedArray, width: number, height: number
   }
 }
 
-function addTransitionEdges(
-  provinceEdges: ProvinceEdge[],
-  commanderyEdges: ProvinceEdge[],
-  fromProvince: number,
-  fromCommandery: number,
-  toProvince: number,
-  toCommandery: number,
-  edge: ProvinceEdge,
-) {
-  if (fromProvince < 0 || toProvince < 0) return;
-  if (fromCommandery !== toCommandery) {
-    provinceEdges.push(edge);
-    commanderyEdges.push(edge);
-  } else if (fromProvince !== toProvince) {
-    provinceEdges.push(edge);
+function deriveIdentityEdges(
+  identities: Int16Array,
+  width: number,
+  height: number,
+): ProvinceEdge[] {
+  const edges: ProvinceEdge[] = [];
+  const addIfBoundary = (from: number, to: number, edge: ProvinceEdge) => {
+    if ((from >= 0 || to >= 0) && from !== to) edges.push(edge);
+  };
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      const identity = identities[index];
+      if (x === 0 && identity >= 0) {
+        edges.push({ x1: -0.5, y1: y - 0.5, x2: -0.5, y2: y + 0.5 });
+      }
+      if (y === 0 && identity >= 0) {
+        edges.push({ x1: x - 0.5, y1: -0.5, x2: x + 0.5, y2: -0.5 });
+      }
+      if (x + 1 < width) {
+        addIfBoundary(identity, identities[index + 1], {
+          x1: x + 0.5, y1: y - 0.5, x2: x + 0.5, y2: y + 0.5,
+        });
+      } else if (identity >= 0) {
+        edges.push({ x1: x + 0.5, y1: y - 0.5, x2: x + 0.5, y2: y + 0.5 });
+      }
+      if (y + 1 < height) {
+        addIfBoundary(identity, identities[index + width], {
+          x1: x - 0.5, y1: y + 0.5, x2: x + 0.5, y2: y + 0.5,
+        });
+      } else if (identity >= 0) {
+        edges.push({ x1: x - 0.5, y1: y + 0.5, x2: x + 0.5, y2: y + 0.5 });
+      }
+    }
   }
+  return edges;
 }
 
 export function decodeProvincePixels(
@@ -343,37 +363,8 @@ export function decodeProvincePixels(
     commanderies[index] = commandery;
   }
 
-  const provinceEdges: ProvinceEdge[] = [];
-  const commanderyEdges: ProvinceEdge[] = [];
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const index = y * width + x;
-      if (x + 1 < width) {
-        const next = index + 1;
-        addTransitionEdges(
-          provinceEdges,
-          commanderyEdges,
-          provinces[index],
-          commanderies[index],
-          provinces[next],
-          commanderies[next],
-          { x1: x + 0.5, y1: y - 0.5, x2: x + 0.5, y2: y + 0.5 },
-        );
-      }
-      if (y + 1 < height) {
-        const next = index + width;
-        addTransitionEdges(
-          provinceEdges,
-          commanderyEdges,
-          provinces[index],
-          commanderies[index],
-          provinces[next],
-          commanderies[next],
-          { x1: x - 0.5, y1: y + 0.5, x2: x + 0.5, y2: y + 0.5 },
-        );
-      }
-    }
-  }
+  const provinceEdges = deriveIdentityEdges(provinces, width, height);
+  const commanderyEdges = deriveIdentityEdges(commanderies, width, height);
 
   return { width, height, provinces, commanderies, provinceEdges, commanderyEdges };
 }
@@ -500,28 +491,15 @@ export function buildProvinceAdministrativeIndex(
       }
     });
   }
-  const jurisdictionEdges: ProvinceEdge[] = [];
+  let jurisdictionEdges: ProvinceEdge[] = [];
   if (jurisdictions.length > 0) {
-    for (let y = 0; y < map.height; y += 1) {
-      for (let x = 0; x < map.width; x += 1) {
-        const index = y * map.width + x;
-        const province = map.provinces[index];
-        if (province < 0) continue;
-        const jurisdiction = jurisdictionByProvince[province];
-        if (x + 1 < map.width) {
-          const nextProvince = map.provinces[index + 1];
-          if (nextProvince >= 0 && jurisdiction !== jurisdictionByProvince[nextProvince]) {
-            jurisdictionEdges.push({ x1: x + 0.5, y1: y - 0.5, x2: x + 0.5, y2: y + 0.5 });
-          }
-        }
-        if (y + 1 < map.height) {
-          const nextProvince = map.provinces[index + map.width];
-          if (nextProvince >= 0 && jurisdiction !== jurisdictionByProvince[nextProvince]) {
-            jurisdictionEdges.push({ x1: x - 0.5, y1: y + 0.5, x2: x + 0.5, y2: y + 0.5 });
-          }
-        }
-      }
+    const jurisdictionCells = new Int16Array(map.provinces.length);
+    jurisdictionCells.fill(-1);
+    for (let index = 0; index < map.provinces.length; index += 1) {
+      const province = map.provinces[index];
+      if (province >= 0) jurisdictionCells[index] = jurisdictionByProvince[province];
     }
+    jurisdictionEdges = deriveIdentityEdges(jurisdictionCells, map.width, map.height);
   }
   return {
     commanderyByProvince,

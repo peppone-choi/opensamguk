@@ -13,6 +13,22 @@ class MapAdministrativeOwnershipTest {
     lateinit var tempDir: Path
 
     @Test
+    fun `commandery tie fallback prefers the lowest positive owner over neutral`() {
+        assertEquals(1, resolveCommanderyController(mapOf(0 to 2, 1 to 2, 2 to 1), seatOwner = 2))
+        assertEquals(0, resolveCommanderyController(mapOf(0 to 2), seatOwner = 0))
+    }
+
+    @Test
+    fun `scenario code accepts only canonical decimal or scenario prefix`() {
+        val projection = fixtureProjection()
+        listOf("+1010", "01010", "scenario_01010", "che_1010").forEach { malformed ->
+            assertThrows<IllegalStateException> { projection.project(malformed, emptyList()) }
+        }
+        projection.project("1010", emptyList())
+        projection.project("scenario_1010", emptyList())
+    }
+
+    @Test
     fun `projects direct spatial ownership without choosing a representative province color`() {
         val projection = fixtureProjection().project(
             scenarioCode = "scenario_1010",

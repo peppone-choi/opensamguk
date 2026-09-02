@@ -194,8 +194,13 @@ export interface IsoCountyHover {
   commanderyNameCh?: string;
   hierarchyPath?: string;
   provinceOccupantNationId?: number;
+  provinceOccupantNationName?: string;
   jurisdictionOwnerNationId?: number;
+  jurisdictionOwnerNationName?: string;
   commanderyControllerNationId?: number;
+  commanderyControllerNationName?: string;
+  provinceJurisdictionMismatch?: boolean;
+  jurisdictionCommanderyMismatch?: boolean;
   ownershipMismatch?: boolean;
   regionName: string;
   commanderyName: string;
@@ -488,7 +493,7 @@ export function completeJurisdictionOverlays(
   anchors: readonly (ProvinceVisualAnchor | undefined)[],
   source: IsoSourceSize,
   layer: 'COUNTY' | 'COMMANDERY' = 'COUNTY',
-  resolvedPositions?: ReadonlyMap<number, { provinceId?: number }>,
+  _resolvedPositions?: ReadonlyMap<number, { provinceId?: number }>,
   currentCityId?: number | null,
   provinceMap?: ProvinceIdentityMap | null,
 ): IsoCityOverlay[] {
@@ -498,10 +503,9 @@ export function completeJurisdictionOverlays(
 
   const provinceIndexById = new Map(provinces.map((province, index) => [province.id, index]));
   const parentById = new Map(tiles.parentRegions?.map((parent) => [parent.id, parent]) ?? []);
-  const locatedRuntimeCities = runtimeCities.map((city) => {
-    const provinceId = city.provinceId ?? resolvedPositions?.get(city.id)?.provinceId;
-    return provinceId === city.provinceId ? city : { ...city, provinceId };
-  });
+  // Coordinate recovery is presentation-only. Administrative identity is valid
+  // only when the runtime payload carries an explicit canonical provinceId.
+  const locatedRuntimeCities = runtimeCities;
   const seatProvinceIndex = (jurisdiction: JurisdictionRecordDto): number => {
     const memberIndexes = jurisdiction.provinceIds
       .map((provinceId) => provinceIndexById.get(provinceId))
@@ -1358,7 +1362,7 @@ export function HanMapCanvas({
         )
         : buildCountyAdministrativeIndex(provinceMap, loadedTiles.cities, loadedTiles.juns))
       : null
-  ), [loadedTiles?.cities, loadedTiles?.juns, loadedTiles?.parentRegions, loadedTiles?.provinceRecords, provinceMap]);
+  ), [loadedTiles?.cities, loadedTiles?.juns, loadedTiles?.jurisdictionRecords, loadedTiles?.parentRegions, loadedTiles?.provinceRecords, provinceMap]);
   const canonicalMarkerPositions = useMemo(() => {
     if (!loadedTiles) return undefined;
     const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
@@ -1752,6 +1756,13 @@ export function HanMapCanvas({
       ? administrativeOwnerIndex.commandery.get(parentRecord.id) : undefined;
     const displayedOwner = administrativeLayer === 'PROVINCE'
       ? provinceOwner : administrativeLayer === 'JURISDICTION' ? jurisdictionOwner : commanderyOwner;
+    const provinceJurisdictionMismatch = provinceOwner != null && jurisdictionOwner != null
+      && provinceOwner.nationId !== jurisdictionOwner.nationId;
+    const jurisdictionCommanderyMismatch = jurisdictionOwner != null && commanderyOwner != null
+      && jurisdictionOwner.nationId !== commanderyOwner.nationId;
+    const ownerName = (owner: { nationId: number; nationName?: string } | undefined) => (
+      owner ? (owner.nationName ?? (owner.nationId === 0 ? '미소유' : `세력 ${owner.nationId}`)) : undefined
+    );
     return {
       provinceId,
       commanderyId,
@@ -1765,10 +1776,14 @@ export function HanMapCanvas({
         ? `${provinceRecord.displayName} → ${jurisdictionRecord.displayName} → ${parentRecord.displayName}`
         : undefined,
       provinceOccupantNationId: provinceOwner?.nationId,
+      provinceOccupantNationName: ownerName(provinceOwner),
       jurisdictionOwnerNationId: jurisdictionOwner?.nationId,
+      jurisdictionOwnerNationName: ownerName(jurisdictionOwner),
       commanderyControllerNationId: commanderyOwner?.nationId,
-      ownershipMismatch: jurisdictionOwner != null && commanderyOwner != null
-        && jurisdictionOwner.nationId !== commanderyOwner.nationId,
+      commanderyControllerNationName: ownerName(commanderyOwner),
+      provinceJurisdictionMismatch,
+      jurisdictionCommanderyMismatch,
+      ownershipMismatch: provinceJurisdictionMismatch || jurisdictionCommanderyMismatch,
       regionName: regionByCommanderyId.get(commanderyId) ?? city?.regionName ?? '',
       commanderyName,
       countyName: jurisdictionRecord?.displayName ?? provinceRecord?.displayName ?? county!.name,

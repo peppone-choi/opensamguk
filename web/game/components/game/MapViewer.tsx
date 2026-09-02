@@ -328,9 +328,11 @@ export default function MapViewer({
                 <div className="map-tooltip" role="status" style={{ left: cursor.x + 12, top: cursor.y + 30 }}>
                     <div className="map-tooltip-name">{`【${hoverCounty.regionName} | ${LEVEL_TEXT[hoverCounty.level] ?? hoverCounty.level}】 ${hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}`}</div>
                     {hoverCounty.hierarchyPath && <div className="map-tooltip-meta">{hoverCounty.hierarchyPath}</div>}
-                    {hoverCounty.ownershipMismatch && (
-                        <div className="map-tooltip-meta">현 소유권과 군국 통제권이 다릅니다.</div>
-                    )}
+                    {hoverCounty.provinceOccupantNationName && <div className="map-tooltip-meta">공간 점유: {hoverCounty.provinceOccupantNationName}</div>}
+                    {hoverCounty.jurisdictionOwnerNationName && <div className="map-tooltip-meta">현 소유: {hoverCounty.jurisdictionOwnerNationName}</div>}
+                    {hoverCounty.commanderyControllerNationName && <div className="map-tooltip-meta">군국 통제: {hoverCounty.commanderyControllerNationName}</div>}
+                    {hoverCounty.provinceJurisdictionMismatch && <div className="map-tooltip-meta">공간 점유와 현 소유가 다릅니다.</div>}
+                    {hoverCounty.jurisdictionCommanderyMismatch && <div className="map-tooltip-meta">현 소유와 군국 통제가 다릅니다.</div>}
                     {hoverCounty.nationName
                         && (isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor)
                             || hoverCounty.nationName !== NEUTRAL_NAME)

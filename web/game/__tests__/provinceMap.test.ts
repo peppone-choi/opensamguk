@@ -197,7 +197,34 @@ describe('province identity map', () => {
     expect(map.provinceEdges).toContainEqual({ x1: 1.5, y1: -0.5, x2: 1.5, y2: 0.5 });
     expect(map.commanderyEdges).not.toContainEqual({ x1: 1.5, y1: -0.5, x2: 1.5, y2: 0.5 });
     expect(map.commanderyEdges).toContainEqual({ x1: 0.5, y1: 0.5, x2: 1.5, y2: 0.5 });
-    expect(map.provinceEdges).not.toContainEqual({ x1: 0.5, y1: -0.5, x2: 0.5, y2: 0.5 });
+    expect(map.provinceEdges).toContainEqual({ x1: 0.5, y1: -0.5, x2: 0.5, y2: 0.5 });
+  });
+
+  it('closes playable province and commandery outlines against map edges and OUT_OF_SCOPE holes', () => {
+    const map = decodeProvincePixels(new Uint8ClampedArray([
+      0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255,
+      0, 0, 0, 255, 0, 16, 1, 255, 0, 0, 0, 255,
+      0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255,
+    ]), 3, 3);
+    const closed = [
+      { x1: 0.5, y1: 0.5, x2: 1.5, y2: 0.5 },
+      { x1: 1.5, y1: 0.5, x2: 1.5, y2: 1.5 },
+      { x1: 0.5, y1: 1.5, x2: 1.5, y2: 1.5 },
+      { x1: 0.5, y1: 0.5, x2: 0.5, y2: 1.5 },
+    ];
+    expect(map.provinceEdges).toEqual(expect.arrayContaining(closed));
+    expect(map.commanderyEdges).toEqual(expect.arrayContaining(closed));
+
+    const corner = decodeProvincePixels(new Uint8ClampedArray([0, 16, 1, 255]), 1, 1);
+    expect(corner.provinceEdges).toHaveLength(4);
+    expect(corner.commanderyEdges).toHaveLength(4);
+    const county = buildProvinceAdministrativeIndex(
+      corner,
+      [{ id: 'P1', displayName: 'A', nameCh: '', administrativeSystem: 'HAN_COMMANDERY', kind: 'SPATIAL_PROVINCE', parentRegionId: 'C1', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST', jurisdictionId: 'J1' }],
+      [{ id: 'C1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
+      [{ id: 'J1', displayName: 'A현', nameCh: '', kind: 'COUNTY', commanderyId: 'C1', seatPlaceId: 'P1', provinceIds: ['P1'] }],
+    );
+    expect(county.jurisdictionEdges).toHaveLength(4);
   });
 
   it('derives merged jurisdiction edges from stable jurisdiction ids', () => {
@@ -525,7 +552,9 @@ describe('province identity map', () => {
       parentOwner: [number, number][];
       provinceRecords: ProvinceRecordDto[];
       jurisdictionRecords: { id: string; displayName: string; nameCh: string; kind: string; commanderyId: string; seatPlaceId: string; provinceIds: string[] }[];
+      commanderyRecords: { id: string; seatJurisdictionId: string; jurisdictionIds: string[] }[];
       parentRegions: ParentRegionRecordDto[];
+      cities: { id: string; col: number; row: number }[];
     };
     const canonical = JSON.parse(
       readFileSync(resolve(process.cwd(), '../../data/map/han-scenario-province-ownership-v1.json'), 'utf8'),
@@ -550,6 +579,10 @@ describe('province identity map', () => {
     const provinceIndexById = new Map(tiles.provinceRecords.map((province, provinceIndex) => [province.id, provinceIndex]));
     const allowedConflictKeys = new Set(allowlist.entries.map((entry) => `${entry.scenarioCode}:${entry.jurisdictionId}`));
     const observedConflictKeys = new Set<string>();
+    const colorFor = (nationId: number) => {
+      const colorValue = ((nationId * 2_654_435_761) >>> 0) & 0xffffff;
+      return nationId > 0 ? `#${colorValue.toString(16).padStart(6, '0')}` : undefined;
+    };
 
     expect(canonical.scenarios).toHaveLength(15);
     for (const scenario of canonical.scenarios) {
@@ -558,17 +591,46 @@ describe('province identity map', () => {
         provinceOccupancy: scenario.assignments.map((assignment) => {
           const provinceIndex = provinceIndexById.get(assignment.provinceId)!;
           const nationId = assignment.ownerNationId ?? 0;
-          const colorValue = ((nationId * 2_654_435_761) >>> 0) & 0xffffff;
           return {
             provinceRecordId: assignment.provinceId,
             provinceIndex,
             nationId,
-            nationColor: nationId > 0 ? `#${colorValue.toString(16).padStart(6, '0')}` : undefined,
+            nationColor: colorFor(nationId),
           };
         }),
-        jurisdictionOwnership: [],
-        commanderyControl: [],
+        jurisdictionOwnership: [] as { jurisdictionId: string; nationId: number; nationColor?: string }[],
+        commanderyControl: [] as { commanderyId: string; nationId: number; nationColor?: string }[],
       };
+      const directOwnerByProvince = new Map(ownership.provinceOccupancy
+        .map((owner) => [owner.provinceRecordId, owner.nationId]));
+      const jurisdictionOwnerById = new Map<string, number>();
+      for (const jurisdiction of tiles.jurisdictionRecords) {
+        let seatProvinceId = jurisdiction.provinceIds.includes(jurisdiction.seatPlaceId)
+          ? jurisdiction.seatPlaceId : undefined;
+        if (!seatProvinceId) {
+          const seat = tiles.cities.find((city) => city.id === jurisdiction.seatPlaceId)!;
+          const seatProvince = map.provinces[Math.round(seat.row) * map.width + Math.round(seat.col)];
+          seatProvinceId = tiles.provinceRecords[seatProvince]?.id;
+        }
+        expect(jurisdiction.provinceIds, `${scenario.scenarioCode}:${jurisdiction.id}:seat`).toContain(seatProvinceId);
+        const nationId = directOwnerByProvince.get(seatProvinceId!)!;
+        jurisdictionOwnerById.set(jurisdiction.id, nationId);
+        ownership.jurisdictionOwnership.push({ jurisdictionId: jurisdiction.id, nationId, nationColor: colorFor(nationId) });
+      }
+      for (const commandery of tiles.commanderyRecords) {
+        const counts = new Map<number, number>();
+        commandery.jurisdictionIds.forEach((jurisdictionId) => {
+          const owner = jurisdictionOwnerById.get(jurisdictionId)!;
+          counts.set(owner, (counts.get(owner) ?? 0) + 1);
+        });
+        const highest = Math.max(...counts.values());
+        const tied = [...counts].filter(([, count]) => count === highest).map(([owner]) => owner);
+        const seatOwner = jurisdictionOwnerById.get(commandery.seatJurisdictionId)!;
+        const nationId = tied.includes(seatOwner)
+          ? seatOwner : (tied.filter((owner) => owner > 0).sort((a, b) => a - b)[0] ?? 0);
+        ownership.commanderyControl.push({ commanderyId: commandery.id, nationId, nationColor: colorFor(nationId) });
+      }
+
       const binding = bindAdministrativeOwnership(map, index, tiles.provinceRecords, ownership, 'PROVINCE');
       const expectedOwned = new Set(ownership.provinceOccupancy
         .filter((owner) => owner.nationId > 0)
@@ -585,6 +647,29 @@ describe('province identity map', () => {
         }
       }
       expect(firstAlphaMismatch, `scenario ${scenario.scenarioCode}`).toBe(-1);
+
+      for (const layer of ['JURISDICTION', 'COMMANDERY'] as const) {
+        const layered = bindAdministrativeOwnership(map, index, tiles.provinceRecords, ownership, layer);
+        const expected = new Set<number>();
+        tiles.provinceRecords.forEach((province, provinceIndex) => {
+          const nationId = layer === 'JURISDICTION'
+            ? jurisdictionOwnerById.get(province.jurisdictionId!)!
+            : ownership.commanderyControl[index.commanderyByProvince[provinceIndex]]?.nationId;
+          if (nationId > 0) expected.add(provinceIndex);
+        });
+        expect(new Set(layered.colors.keys()), `${scenario.scenarioCode}:${layer}`).toEqual(expected);
+        const layerPixels = composeProvincePixels(map, layered);
+        let firstLayerAlphaMismatch = -1;
+        for (let cell = 0; cell < map.provinces.length; cell += 1) {
+          const province = map.provinces[cell];
+          const expectedAlpha = province >= 0 && expected.has(province) ? 255 : 0;
+          if (layerPixels[cell * 4 + 3] !== expectedAlpha) {
+            firstLayerAlphaMismatch = cell;
+            break;
+          }
+        }
+        expect(firstLayerAlphaMismatch, `${scenario.scenarioCode}:${layer}`).toBe(-1);
+      }
 
       const assignmentByProvince = new Map(scenario.assignments.map((assignment) => [assignment.provinceId, assignment]));
       for (const jurisdiction of tiles.jurisdictionRecords) {

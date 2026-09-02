@@ -253,7 +253,7 @@ describe('지도 아이콘 배율과 앵커', () => {
 
         const overlays = completeJurisdictionOverlays(
             tiles,
-            [{ id: 10, name: 'A현', level: 5, nationId: 1, nationColor: '#aa0000', x: 0, y: 0 }],
+            [{ id: 10, name: 'A현', level: 5, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, provinceId: 0 }],
             [
                 { provinceId: 0, col: 0, row: 0, clearance: 0 },
                 { provinceId: 1, col: 1, row: 0, clearance: 0 },
@@ -287,7 +287,7 @@ describe('지도 아이콘 배율과 앵커', () => {
 
         const currentSeat = completeJurisdictionOverlays(
             tiles,
-            [{ id: 20, name: 'B현', level: 5, nationId: 2, nationColor: '#0000aa', x: 1, y: 0 }],
+            [{ id: 20, name: 'B현', level: 5, nationId: 2, nationColor: '#0000aa', x: 1, y: 0, provinceId: 1 }],
             [
                 { provinceId: 0, col: 0, row: 0, clearance: 0 },
                 { provinceId: 1, col: 1, row: 0, clearance: 0 },
@@ -329,8 +329,8 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect(() => completeJurisdictionOverlays(
             tiles,
             [
-                { id: 10, name: '노현', level: 5, nationId: 1, x: 0, y: 0 },
-                { id: 11, name: '노현', level: 5, nationId: 1, x: 1, y: 0 },
+                { id: 10, name: '노현', level: 5, nationId: 1, x: 0, y: 0, provinceId: 0 },
+                { id: 11, name: '노현', level: 5, nationId: 1, x: 1, y: 0, provinceId: 1 },
             ],
             [
                 { provinceId: 0, col: 0, row: 0, clearance: 0 },
@@ -340,6 +340,37 @@ describe('지도 아이콘 배율과 앵커', () => {
             'COUNTY',
             new Map([[10, { provinceId: 0 }], [11, { provinceId: 1 }]]),
         )).toThrow('Runtime cities 10, 11 resolve to the same jurisdiction J1');
+    });
+
+    it('표시용 fallback 프로빈스를 런타임 도시의 행정 신원으로 승격하지 않는다', () => {
+        const runtime = JSON.parse(
+            readFileSync(resolve(__dirname, '../../../infra/src/main/resources/map/han.json'), 'utf8'),
+        ) as { width: number; height: number; cities: IsoCityOverlay[] };
+        const cells = hanTiles._meta.cols * hanTiles._meta.rows;
+        const provinceMap: ProvinceIdentityMap = {
+            width: hanTiles._meta.cols,
+            height: hanTiles._meta.rows,
+            provinces: expandOwner(hanTiles.owner, cells),
+            commanderies: expandOwner(hanTiles.parentOwner!, cells),
+            provinceEdges: [],
+            commanderyEdges: [],
+        };
+        const anchors = buildProvinceVisualAnchors(provinceMap);
+        const fallbackPositions = new Map(runtime.cities.map((city) => [
+            city.id,
+            { provinceId: city.provinceId ?? 691 },
+        ]));
+
+        expect(() => completeJurisdictionOverlays(
+            hanTiles,
+            runtime.cities,
+            anchors,
+            { width: runtime.width, height: runtime.height },
+            'COUNTY',
+            fallbackPositions,
+            null,
+            provinceMap,
+        )).not.toThrow();
     });
 
     it('실제 정본에서 1020개 현과 172개 군국 마커를 각각 한 번만 만든다', () => {
