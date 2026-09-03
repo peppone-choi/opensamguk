@@ -54,14 +54,26 @@ def portrait_fingerprint(row):
     return hashlib.sha256(json.dumps(values, separators=(",", ":")).encode()).hexdigest()
 
 
-def write_portrait_contract(directory, rows):
+def write_portrait_contract(directory, rows, identities=None):
+    identities = identities or {}
     registry = directory / "officer-id-registry.tsv"
     name_map = directory / "officer-name-map.tsv"
     with registry.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
         writer.writerow(("id", "stable_key", "fingerprint_sha256", "name_kanji", "name_reading"))
         for row in rows:
-            writer.writerow((10000 + row["number"], f"key-{row['number']}", portrait_fingerprint(row), f"漢{row['number']}", f"reading-{row['number']}"))
+            name_kanji, name_reading, page_key = identities.get(
+                row["number"], (f"漢{row['number']}", f"reading-{row['number']}", f"page-{row['number']}"),
+            )
+            identity = {
+                "name_kanji": name_kanji,
+                "name_reading": name_reading,
+                "page_key": page_key,
+            }
+            stable_key = hashlib.sha256(
+                json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            writer.writerow((10000 + row["number"], stable_key, portrait_fingerprint(row), name_kanji, name_reading))
     with name_map.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
         writer.writerow(("id", "name_korean"))
@@ -74,10 +86,11 @@ def write_portrait_join_overrides(directory, rows):
     overrides = directory / "name-join-overrides.tsv"
     with overrides.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
-        writer.writerow(("name_kanji", "name_reading", "officer_number", "name_korean"))
+        writer.writerow(("name_kanji", "name_reading", "page_key", "officer_number", "name_korean"))
         for row in rows:
             writer.writerow((
-                row["name_kanji"], row["name_reading"], row["officer_number"], row["name_korean"],
+                row["name_kanji"], row["name_reading"], row["page_key"],
+                row["officer_number"], row["name_korean"],
             ))
     return overrides
 
@@ -151,10 +164,14 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         drifted_rows[1]["total"] += 1
         with TemporaryDirectory() as td:
             directory = Path(td)
-            registry, name_map = write_portrait_contract(directory, contract_rows)
+            registry, name_map = write_portrait_contract(directory, contract_rows, identities={
+                1: ("同名", "same-reading", "page-1"),
+                2: ("同名", "same-reading", "page-2"),
+            })
             overrides = write_portrait_join_overrides(directory, [{
-                "name_kanji": "漢2",
-                "name_reading": "reading-2",
+                "name_kanji": "同名",
+                "name_reading": "same-reading",
+                "page_key": "page-2",
                 "officer_number": 2,
                 "name_korean": contract_rows[1]["name"],
             }])
@@ -173,6 +190,7 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             overrides = write_portrait_join_overrides(directory, [{
                 "name_kanji": "漢1",
                 "name_reading": "reading-1",
+                "page_key": "page-1",
                 "officer_number": 1,
                 "name_korean": "다른장수",
             }])
@@ -182,6 +200,7 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             overrides = write_portrait_join_overrides(directory, [{
                 "name_kanji": "없는한자",
                 "name_reading": "없는음",
+                "page_key": "없는페이지",
                 "officer_number": 1,
                 "name_korean": rows[0]["name"],
             }])
