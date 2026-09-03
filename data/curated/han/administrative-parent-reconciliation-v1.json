@@ -240,7 +240,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "ba930d4931f489859b0e2b9c0d01dadf0d51a70363941fdee4b1da346f2fd53b"
+      "sha256": "2c1cb2af31e278527d8041f0162b8da837d65b33dc1e0e204c61221f71e08819"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -7815,7 +7815,7 @@
       }
     },
     {
-      "cellCount": 175,
+      "cellCount": 174,
       "cityId": "40957",
       "decision": "BLOCKED_DIRECT_TERRITORY_REVIEW",
       "directTerritoryReview": {
@@ -7830,7 +7830,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 175,
+            "cellCount": 174,
             "junArrayIndex": 133,
             "nameCh": "廬陵郡"
           }
@@ -8329,7 +8329,7 @@
       }
     },
     {
-      "cellCount": 204,
+      "cellCount": 205,
       "cityId": "41142",
       "decision": "PROPOSED_GEOMETRIC",
       "footprintDiagnostic": {
@@ -8339,7 +8339,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 204,
+            "cellCount": 205,
             "junArrayIndex": 53,
             "nameCh": "豫章郡"
           }
@@ -37969,7 +37969,7 @@
       }
     },
     {
-      "cellCount": 37,
+      "cellCount": 26,
       "cityId": "87273",
       "decision": "BLOCKED_DIRECT_TERRITORY_REVIEW",
       "directTerritoryReview": {
@@ -37984,7 +37984,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 37,
+            "cellCount": 26,
             "junArrayIndex": 167,
             "nameCh": "長樂郡"
           }
@@ -40244,7 +40244,7 @@
         "routeNodeKey": "32af5ad5-fabe-4608-9440-600f585d9c74"
       },
       "approvedParentAdministrativeUnitId": "hhs:110:安平國:001",
-      "cellCount": 21,
+      "cellCount": 30,
       "cityId": "87566",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -40254,7 +40254,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 21,
+            "cellCount": 30,
             "junArrayIndex": 17,
             "nameCh": "安平國"
           }
@@ -40412,7 +40412,7 @@
         "routeNodeKey": "fcd00125-bd04-47c9-a266-d5f73f4eff82"
       },
       "approvedParentAdministrativeUnitId": "hhs:110:安平國:002",
-      "cellCount": 23,
+      "cellCount": 25,
       "cityId": "87591",
       "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
@@ -40422,7 +40422,7 @@
         "hasProvinceFootprint": true,
         "junDistribution": [
           {
-            "cellCount": 23,
+            "cellCount": 25,
             "junArrayIndex": 17,
             "nameCh": "安平國"
           }
@@ -46638,10 +46638,10 @@
     "coordinateFootprintMajorityMismatchCount": 0,
     "crossParentRegionFootprintCount": 0,
     "decisionCellCounts": {
-      "BLOCKED_DIRECT_TERRITORY_REVIEW": 1711,
+      "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-      "EXACT_APPROVED": 80913,
-      "PROPOSED_GEOMETRIC": 18201
+      "EXACT_APPROVED": 80924,
+      "PROPOSED_GEOMETRIC": 18202
     },
     "decisionRowCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
@@ -46655,7 +46655,7 @@
       "pendingCandidateJunCount": 17,
       "rejectedSourcedGroupJunCount": 5
     },
-    "exactApprovedCellCount": 80913,
+    "exactApprovedCellCount": 80924,
     "exactApprovedRowCount": 781,
     "geometryDiagnostics": {
       "distanceTies": {
@@ -46663,7 +46663,7 @@
         "rowCount": 3
       },
       "multiGroupJun": {
-        "cellCount": 8043,
+        "cellCount": 8044,
         "rowCount": 90
       },
       "singleGroupJun": {
@@ -46671,14 +46671,14 @@
         "rowCount": 194
       },
       "uniqueNearest": {
-        "cellCount": 18132,
+        "cellCount": 18133,
         "rowCount": 281
       }
     },
     "landCellCount": 227349,
     "landOwnerRowCount": 1138,
     "provinceRecordCount": 1524,
-    "unresolvedCellCount": 26243,
+    "unresolvedCellCount": 26232,
     "unresolvedRowCount": 357
   }
 }

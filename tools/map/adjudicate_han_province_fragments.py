@@ -235,26 +235,63 @@ def _component_evidence(
     }
 
 
-def _validate_ledger(ledger: dict) -> list[dict]:
+def _valid_digest(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _validate_cells(value: object, field: str) -> list[list[int]]:
+    if (
+        not isinstance(value, list)
+        or not value
+        or any(
+            not isinstance(cell, list)
+            or len(cell) != 2
+            or any(type(coordinate) is not int for coordinate in cell)
+            for cell in value
+        )
+    ):
+        raise ValueError(f"{field} must be nonempty [col, row] pairs")
+    if len({(cell[1], cell[0]) for cell in value}) != len(value):
+        raise ValueError(f"{field} contains duplicates")
+    return value
+
+
+def _validate_ledger(ledger: dict) -> tuple[list[dict], list[dict], list[dict]]:
     if ledger.get("contractId") != "han-province-fragment-adjudications-v1":
         raise ValueError("unexpected fragment adjudication contractId")
     minimum = ledger.get("minimumProvinceArea")
     if type(minimum) is not int or minimum <= 0:
         raise ValueError("minimumProvinceArea must be a positive integer")
-    for field in ("inputOwnerSha256", "outputOwnerSha256", "seatOwnerSha256"):
-        value = ledger.get(field)
-        if (
-            not isinstance(value, str)
-            or len(value) != 64
-            or any(character not in "0123456789abcdef" for character in value)
-        ):
+    for field in (
+        "inputOwnerSha256",
+        "outputOwnerSha256",
+        "inputCitiesSha256",
+        "outputCitiesSha256",
+        "inputJunsSha256",
+        "outputJunsSha256",
+        "seatOwnerSha256",
+    ):
+        if not _valid_digest(ledger.get(field)):
             raise ValueError(f"{field} must be a lowercase SHA-256 digest")
     decisions = ledger.get("reassignments")
+    anchored = ledger.get("anchoredReassignments")
     deferred = ledger.get("deferred")
+    preservations = ledger.get("preservations")
     if not isinstance(decisions, list) or not all(isinstance(row, dict) for row in decisions):
         raise ValueError("reassignments must be an array of objects")
+    if not isinstance(anchored, list) or not all(isinstance(row, dict) for row in anchored):
+        raise ValueError("anchoredReassignments must be an array of objects")
     if not isinstance(deferred, list) or not all(isinstance(row, dict) for row in deferred):
         raise ValueError("deferred must be an array of objects")
+    if not isinstance(preservations, list) or not all(isinstance(row, dict) for row in preservations):
+        raise ValueError("preservations must be an array of objects")
+    pre_applied = ledger.get("preAppliedReassignmentCount")
+    if type(pre_applied) is not int or not 0 <= pre_applied <= len(decisions):
+        raise ValueError("preAppliedReassignmentCount must index the reassignments prefix")
     allowed_deferred = {
         "ANCHOR_CONTAINING_REVIEW_REQUIRED",
         "MARITIME_REVIEW_REQUIRED",
@@ -292,18 +329,7 @@ def _validate_ledger(ledger: dict) -> list[dict]:
     for index, decision in enumerate(decisions):
         if decision.get("classification") != "INLAND_FULLY_ENCLOSED_FRAGMENT":
             raise ValueError(f"reassignments[{index}] has an unsupported classification")
-        cells = decision.get("cells")
-        if (
-            not isinstance(cells, list)
-            or not cells
-            or any(
-                not isinstance(cell, list)
-                or len(cell) != 2
-                or any(type(value) is not int for value in cell)
-                for cell in cells
-            )
-        ):
-            raise ValueError(f"reassignments[{index}].cells must be nonempty [col, row] pairs")
+        cells = _validate_cells(decision.get("cells"), f"reassignments[{index}].cells")
         coordinates = {(cell[1], cell[0]) for cell in cells}
         if len(coordinates) != len(cells):
             raise ValueError(f"reassignments[{index}].cells contains duplicates")
@@ -313,7 +339,92 @@ def _validate_ledger(ledger: dict) -> list[dict]:
         seen_cells.update(coordinates)
         if not isinstance(decision.get("evidence"), dict):
             raise ValueError(f"reassignments[{index}].evidence must be an object")
-    return decisions
+    anchored_sources: set[str] = set()
+    for index, decision in enumerate(anchored):
+        if decision.get("classification") != "COMMANDERY_ANCHOR_NORMALIZATION":
+            raise ValueError(f"anchoredReassignments[{index}] has an unsupported classification")
+        if decision.get("assignmentMethod") != "NEAREST_TARGET_SEAT_EUCLIDEAN_SQUARED":
+            raise ValueError(f"anchoredReassignments[{index}] has an unsupported assignmentMethod")
+        source_id = decision.get("sourceProvinceId")
+        if not isinstance(source_id, str) or not source_id or source_id in anchored_sources:
+            raise ValueError(f"anchoredReassignments[{index}] has an invalid sourceProvinceId")
+        anchored_sources.add(source_id)
+        if not isinstance(decision.get("anchorPlaceId"), str) or not decision["anchorPlaceId"]:
+            raise ValueError(f"anchoredReassignments[{index}] has an invalid anchorPlaceId")
+        for field in ("anchorFrom", "anchorTo"):
+            value = decision.get(field)
+            if (
+                not isinstance(value, list)
+                or len(value) != 2
+                or any(type(coordinate) is not int for coordinate in value)
+            ):
+                raise ValueError(f"anchoredReassignments[{index}].{field} must be [col, row]")
+        component_cells = _validate_cells(
+            decision.get("componentCells"),
+            f"anchoredReassignments[{index}].componentCells",
+        )
+        component_coordinates = {(cell[1], cell[0]) for cell in component_cells}
+        overlap = seen_cells & component_coordinates
+        if overlap:
+            raise ValueError(f"anchoredReassignments[{index}].componentCells overlaps another decision")
+        seen_cells.update(component_coordinates)
+        targets = decision.get("allowedTargetProvinceIds")
+        if (
+            not isinstance(targets, list)
+            or not targets
+            or any(not isinstance(target, str) or not target for target in targets)
+            or len(set(targets)) != len(targets)
+            or targets != sorted(targets)
+        ):
+            raise ValueError(
+                f"anchoredReassignments[{index}].allowedTargetProvinceIds must be sorted unique IDs"
+            )
+        assignments = decision.get("targetAssignments")
+        if not isinstance(assignments, list) or not assignments:
+            raise ValueError(f"anchoredReassignments[{index}].targetAssignments must be nonempty")
+        assigned: set[tuple[int, int]] = set()
+        for assignment_index, assignment in enumerate(assignments):
+            if not isinstance(assignment, dict) or assignment.get("targetProvinceId") not in targets:
+                raise ValueError(
+                    f"anchoredReassignments[{index}].targetAssignments[{assignment_index}] has an invalid target"
+                )
+            cells = _validate_cells(
+                assignment.get("cells"),
+                f"anchoredReassignments[{index}].targetAssignments[{assignment_index}].cells",
+            )
+            coordinates = {(cell[1], cell[0]) for cell in cells}
+            if assigned & coordinates:
+                raise ValueError(f"anchoredReassignments[{index}] assigns a cell twice")
+            assigned.update(coordinates)
+        if assigned != component_coordinates:
+            raise ValueError(f"anchoredReassignments[{index}] must assign the exact componentCells")
+        if not isinstance(decision.get("evidence"), dict):
+            raise ValueError(f"anchoredReassignments[{index}].evidence must be an object")
+        if not isinstance(decision.get("reason"), str) or not decision["reason"].strip():
+            raise ValueError(f"anchoredReassignments[{index}].reason must be nonempty")
+    preservation_ids: set[str] = set()
+    for index, row in enumerate(preservations):
+        province_id = row.get("provinceId")
+        if not isinstance(province_id, str) or not province_id or province_id in preservation_ids:
+            raise ValueError(f"preservations[{index}] has an invalid provinceId")
+        preservation_ids.add(province_id)
+        if row.get("classification") != "MARITIME_ANCHORED_COMPONENT_PRESERVED":
+            raise ValueError(f"preservations[{index}] has an unsupported classification")
+        counts = row.get("componentCellCounts")
+        if (
+            not isinstance(counts, list)
+            or len(counts) < 2
+            or any(type(value) is not int or value <= 0 for value in counts)
+            or counts != sorted(counts, reverse=True)
+        ):
+            raise ValueError(f"preservations[{index}].componentCellCounts must be descending")
+        if not _valid_digest(row.get("cellSetSha256")):
+            raise ValueError(f"preservations[{index}].cellSetSha256 must be a SHA-256 digest")
+        if not isinstance(row.get("reason"), str) or not row["reason"].strip():
+            raise ValueError(f"preservations[{index}].reason must be nonempty")
+    if deferred_ids & preservation_ids:
+        raise ValueError("a province cannot be both deferred and preserved")
+    return decisions, anchored, preservations
 
 
 def _seat_for(record: dict, cities: list[dict]) -> tuple[int, int] | None:
@@ -346,6 +457,48 @@ def _jun_seat_coordinates(document: dict) -> list[tuple[int, int]]:
     return result
 
 
+def _city_index_by_id(cities: list[dict]) -> dict[str, int]:
+    result: dict[str, int] = {}
+    for index, city in enumerate(cities):
+        place_id = city.get("id")
+        if not isinstance(place_id, str) or not place_id:
+            raise ValueError(f"cities[{index}] has an invalid ID")
+        if place_id in result:
+            raise ValueError(f"cities contains duplicate ID {place_id}")
+        result[place_id] = index
+    return result
+
+
+def _nearest_target_partition(
+    component: set[tuple[int, int]],
+    target_ids: list[str],
+    province_index_by_id: dict[str, int],
+    provinces: list[dict],
+    cities: list[dict],
+) -> dict[str, set[tuple[int, int]]]:
+    target_seats: dict[str, tuple[int, int]] = {}
+    for target_id in target_ids:
+        target_index = province_index_by_id.get(target_id)
+        if target_index is None:
+            raise ValueError(f"anchor decision references unknown target province {target_id}")
+        seat = _seat_for(provinces[target_index], cities)
+        if seat is None:
+            raise ValueError(f"anchor target province {target_id} has no canonical seat")
+        target_seats[target_id] = seat
+    result = {target_id: set() for target_id in target_ids}
+    for row, col in component:
+        selected = min(
+            target_ids,
+            key=lambda target_id: (
+                (row - target_seats[target_id][0]) ** 2
+                + (col - target_seats[target_id][1]) ** 2,
+                target_id,
+            ),
+        )
+        result[selected].add((row, col))
+    return {target_id: cells for target_id, cells in result.items() if cells}
+
+
 def materialize_document(document: dict, ledger: dict) -> dict:
     """Return an idempotently patched copy after validating every decision."""
     updated = copy.deepcopy(document)
@@ -355,34 +508,48 @@ def materialize_document(document: dict, ledger: dict) -> dict:
     rows, cols = meta.get("rows"), meta.get("cols")
     if type(rows) is not int or type(cols) is not int or rows <= 0 or cols <= 0:
         raise ValueError("rows and cols must be positive integers")
-    decisions = _validate_ledger(ledger)
+    decisions, anchored_decisions, preservations = _validate_ledger(ledger)
     provinces, province_index_by_id = _require_unique_records(updated, "provinceRecords")
     parents, parent_index_by_id = _require_unique_records(updated, "parentRegions")
     province_ids = [row["id"] for row in provinces]
     cities = updated.get("cities")
     if not isinstance(cities, list) or not all(isinstance(row, dict) for row in cities):
         raise ValueError("cities must be an array of objects")
+    city_index_by_id = _city_index_by_id(cities)
     place_anchors: list[tuple[tuple[int, int], str]] = []
     for index, city in enumerate(cities):
         row, col = city.get("row"), city.get("col")
         if type(row) is not int or type(col) is not int:
             raise ValueError(f"cities[{index}] has invalid coordinates")
-        place_id = city.get("id")
-        if not isinstance(place_id, str) or not place_id:
-            raise ValueError(f"cities[{index}] has an invalid ID")
+        place_id = city["id"]
         place_anchors.append(((row, col), place_id))
+    juns = updated.get("juns")
+    if not isinstance(juns, list) or not all(isinstance(row, dict) for row in juns):
+        raise ValueError("juns must be an array of objects")
     owner = expand_rle(updated.get("owner"), rows, cols)
     parent_owner = expand_rle(updated.get("parentOwner"), rows, cols)
     terrain, terrain_legend = _terrain_grid(updated, rows, cols)
     if _json_digest(updated.get("seatOwner")) != ledger["seatOwnerSha256"]:
         raise ValueError("seatOwner digest disagrees with the adjudication ledger")
     owner_digest = _grid_digest(owner)
-    if owner_digest == ledger["inputOwnerSha256"]:
+    cities_digest = _json_digest(cities)
+    juns_digest = _json_digest(juns)
+    input_state = (
+        owner_digest == ledger["inputOwnerSha256"]
+        and cities_digest == ledger["inputCitiesSha256"]
+        and juns_digest == ledger["inputJunsSha256"]
+    )
+    output_state = (
+        owner_digest == ledger["outputOwnerSha256"]
+        and cities_digest == ledger["outputCitiesSha256"]
+        and juns_digest == ledger["outputJunsSha256"]
+    )
+    if input_state:
         state = "input"
-    elif owner_digest == ledger["outputOwnerSha256"]:
+    elif output_state:
         state = "output"
     else:
-        raise ValueError("owner grid is neither the adjudicated input nor output state")
+        raise ValueError("owner, cities, and juns are neither the adjudicated input nor output state")
 
     parent_index_by_province: list[int] = []
     for province in provinces:
@@ -392,7 +559,7 @@ def materialize_document(document: dict, ledger: dict) -> dict:
         parent_index_by_province.append(parent_index_by_id[parent_id])
 
     pending: list[tuple[dict, int, int, set[tuple[int, int]]]] = []
-    for decision in decisions:
+    for decision_index, decision in enumerate(decisions):
         source_id = decision.get("sourceProvinceId")
         target_id = decision.get("targetProvinceId")
         if source_id not in province_index_by_id or target_id not in province_index_by_id:
@@ -403,7 +570,9 @@ def materialize_document(document: dict, ledger: dict) -> dict:
         if any(not (0 <= row < rows and 0 <= col < cols) for row, col in coordinates):
             raise ValueError("fragment decision contains an out-of-range cell")
         values = {owner[row][col] for row, col in coordinates}
-        if state == "output" and values == {target_index}:
+        if values == {target_index} and (
+            state == "output" or decision_index < ledger["preAppliedReassignmentCount"]
+        ):
             target_parent = parent_index_by_province[target_index]
             if any(parent_owner[row][col] != target_parent for row, col in coordinates):
                 raise ValueError("parentOwner disagrees with the adjudicated target province")
@@ -452,8 +621,142 @@ def materialize_document(document: dict, ledger: dict) -> dict:
             owner[row][col] = target_index
             parent_owner[row][col] = target_parent
 
+    if anchored_decisions:
+        jurisdiction_records, jurisdiction_index_by_id = _require_unique_records(
+            updated, "jurisdictionRecords"
+        )
+        commandery_records, commandery_index_by_id = _require_unique_records(
+            updated, "commanderyRecords"
+        )
+        for decision in anchored_decisions:
+            source_id = decision["sourceProvinceId"]
+            source_index = province_index_by_id.get(source_id)
+            if source_index is None:
+                raise ValueError(f"anchor decision references unknown source province {source_id}")
+            source = provinces[source_index]
+            jurisdiction_id = source.get("jurisdictionId")
+            jurisdiction_index = jurisdiction_index_by_id.get(jurisdiction_id)
+            if jurisdiction_index is None:
+                raise ValueError(f"anchor source {source_id} has no canonical jurisdiction")
+            jurisdiction = jurisdiction_records[jurisdiction_index]
+            commandery_id = jurisdiction.get("commanderyId")
+            commandery_index = commandery_index_by_id.get(commandery_id)
+            if commandery_index is None:
+                raise ValueError(f"anchor source {source_id} has no canonical commandery")
+            commandery = commandery_records[commandery_index]
+            if commandery.get("seatJurisdictionId") != jurisdiction_id:
+                raise ValueError(
+                    f"anchor source {source_id} disagrees with commandery seatJurisdictionId"
+                )
+            seat_place_id = jurisdiction.get("seatPlaceId")
+            seat_city_index = city_index_by_id.get(seat_place_id)
+            anchor_city_index = city_index_by_id.get(decision["anchorPlaceId"])
+            if seat_city_index is None or anchor_city_index is None:
+                raise ValueError(f"anchor source {source_id} references an unknown place")
+            if decision["anchorPlaceId"] == seat_place_id:
+                raise ValueError("commandery anchor must be distinct from the jurisdiction seat place")
+            anchor_city = cities[anchor_city_index]
+            if anchor_city.get("kind") != "COMMANDERY":
+                raise ValueError(f"anchor place {decision['anchorPlaceId']} is not a commandery marker")
+            seat_city = cities[seat_city_index]
+            canonical_to = [seat_city.get("col"), seat_city.get("row")]
+            if canonical_to != decision["anchorTo"]:
+                raise ValueError(f"anchor source {source_id} canonical seat coordinates drifted")
+            source_parent_id = source.get("parentRegionId")
+            parent_index = parent_index_by_id.get(source_parent_id)
+            if parent_index is None or parent_index >= len(juns):
+                raise ValueError(f"anchor source {source_id} has no aligned jun")
+            if juns[parent_index].get("seat") != anchor_city_index:
+                raise ValueError(f"anchor source {source_id} jun seat is not the commandery marker")
+            coordinates = {
+                (cell[1], cell[0]) for cell in decision["componentCells"]
+            }
+            target_by_coordinate = {
+                (cell[1], cell[0]): assignment["targetProvinceId"]
+                for assignment in decision["targetAssignments"]
+                for cell in assignment["cells"]
+            }
+            if state == "output":
+                for coordinate, target_id in target_by_coordinate.items():
+                    target_index = province_index_by_id[target_id]
+                    if owner[coordinate[0]][coordinate[1]] != target_index:
+                        raise ValueError("anchor target assignment drifted in output state")
+                if [anchor_city.get("col"), anchor_city.get("row")] != decision["anchorTo"]:
+                    raise ValueError("commandery anchor output coordinates drifted")
+                if [juns[parent_index].get("col"), juns[parent_index].get("row")] != decision["anchorTo"]:
+                    raise ValueError("jun anchor output coordinates drifted")
+                continue
+            if [anchor_city.get("col"), anchor_city.get("row")] != decision["anchorFrom"]:
+                raise ValueError("commandery anchor input coordinates drifted")
+            if any(not (0 <= row < rows and 0 <= col < cols) for row, col in coordinates):
+                raise ValueError("anchor component contains an out-of-range cell")
+            if {owner[row][col] for row, col in coordinates} != {source_index}:
+                raise ValueError("anchor cells do not identify the source province")
+            component = _component(owner, source_index, min(coordinates))
+            if component != coordinates:
+                raise ValueError("anchor cells do not identify the exact source component")
+            source_parent = parent_index_by_province[source_index]
+            if any(parent_owner[row][col] != source_parent for row, col in component):
+                raise ValueError("parentOwner disagrees with the anchor source component")
+            actual_component = _component_evidence(
+                component=component,
+                owner=owner,
+                terrain=terrain,
+                terrain_legend=terrain_legend,
+                province_ids=province_ids,
+                source_seat=(int(seat_city["row"]), int(seat_city["col"])),
+            )
+            contained_place_ids = sorted(
+                place_id for coordinate, place_id in place_anchors if coordinate in component
+            )
+            actual_evidence = {
+                "sourceComponentCellCount": actual_component["componentCellCount"],
+                "terrainClasses": actual_component["terrainClasses"],
+                "surroundingProvinceIds": actual_component["surroundingProvinceIds"],
+                "containsJurisdictionSeat": actual_component["containsSourceSeat"],
+                "containedRuntimePlaceIds": contained_place_ids,
+                "commanderyId": commandery_id,
+                "seatJurisdictionId": jurisdiction_id,
+                "canonicalSeatPlaceId": seat_place_id,
+            }
+            if actual_component["touchesNegative"]:
+                raise ValueError("anchor source component touches negative terrain")
+            if actual_evidence != decision["evidence"]:
+                raise ValueError(
+                    f"anchor evidence drift for {source_id}: expected {decision['evidence']!r}, "
+                    f"got {actual_evidence!r}"
+                )
+            if actual_evidence["containsJurisdictionSeat"]:
+                raise ValueError("anchor component contains the canonical jurisdiction seat")
+            if contained_place_ids != [decision["anchorPlaceId"]]:
+                raise ValueError("anchor component must contain exactly its reviewed commandery marker")
+            if decision["allowedTargetProvinceIds"] != actual_component["surroundingProvinceIds"]:
+                raise ValueError("anchor allowed targets disagree with surrounding provinces")
+            expected_partition = _nearest_target_partition(
+                component,
+                decision["allowedTargetProvinceIds"],
+                province_index_by_id,
+                provinces,
+                cities,
+            )
+            actual_partition: dict[str, set[tuple[int, int]]] = {}
+            for coordinate, target_id in target_by_coordinate.items():
+                actual_partition.setdefault(target_id, set()).add(coordinate)
+            if actual_partition != expected_partition:
+                raise ValueError("anchor component target assignments do not match the nearest target seat")
+            for coordinate, target_id in target_by_coordinate.items():
+                target_index = province_index_by_id[target_id]
+                owner[coordinate[0]][coordinate[1]] = target_index
+                parent_owner[coordinate[0]][coordinate[1]] = parent_index_by_province[target_index]
+            anchor_city["col"], anchor_city["row"] = decision["anchorTo"]
+            juns[parent_index]["col"], juns[parent_index]["row"] = decision["anchorTo"]
+
     if _grid_digest(owner) != ledger["outputOwnerSha256"]:
         raise ValueError("materialized owner grid disagrees with outputOwnerSha256")
+    if _json_digest(cities) != ledger["outputCitiesSha256"]:
+        raise ValueError("materialized cities disagree with outputCitiesSha256")
+    if _json_digest(juns) != ledger["outputJunsSha256"]:
+        raise ValueError("materialized juns disagree with outputJunsSha256")
 
     areas = Counter(value for row in owner for value in row if value >= 0)
     minimum = ledger["minimumProvinceArea"]
@@ -471,20 +774,26 @@ def materialize_document(document: dict, ledger: dict) -> dict:
         if len(components) > 1:
             actual_deferred[province["id"]] = components
     ledger_deferred = {row["provinceId"]: row for row in ledger["deferred"]}
-    if set(actual_deferred) != set(ledger_deferred):
-        missing = sorted(set(actual_deferred) - set(ledger_deferred))
-        extra = sorted(set(ledger_deferred) - set(actual_deferred))
+    ledger_preserved = {row["provinceId"]: row for row in preservations}
+    reviewed_disconnected = set(ledger_deferred) | set(ledger_preserved)
+    if set(actual_deferred) != reviewed_disconnected:
+        missing = sorted(set(actual_deferred) - reviewed_disconnected)
+        extra = sorted(reviewed_disconnected - set(actual_deferred))
         raise ValueError(
             f"deferred ledger does not match disconnected provinces: missing={missing}, extra={extra}"
         )
     for province_id, components in actual_deferred.items():
-        deferred = ledger_deferred[province_id]
+        deferred = ledger_deferred.get(province_id)
+        preservation = ledger_preserved.get(province_id)
+        reviewed = deferred or preservation
+        assert reviewed is not None
         province_index = province_index_by_id[province_id]
         actual_counts = [len(component) for component in components]
-        if deferred["componentCellCounts"] != actual_counts:
-            raise ValueError(f"deferred component counts drift for {province_id}")
-        if deferred["cellSetSha256"] != _cell_set_digest(components):
-            raise ValueError(f"deferred cell fingerprint drift for {province_id}")
+        category = "deferred" if deferred else "preservation"
+        if reviewed["componentCellCounts"] != actual_counts:
+            raise ValueError(f"{category} component counts drift for {province_id}")
+        if reviewed["cellSetSha256"] != _cell_set_digest(components):
+            raise ValueError(f"{category} cell fingerprint drift for {province_id}")
         actual_evidence = _deferred_evidence(
             components=components,
             owner=owner,
@@ -494,7 +803,23 @@ def materialize_document(document: dict, ledger: dict) -> dict:
             province_index=province_index,
             place_anchors=place_anchors,
         )
-        if deferred["classification"] != actual_evidence["classification"]:
+        if preservation:
+            jurisdiction_records = updated.get("jurisdictionRecords")
+            matching_jurisdictions = [
+                row for row in jurisdiction_records or []
+                if isinstance(row, dict) and row.get("id") == provinces[province_index].get("jurisdictionId")
+            ]
+            if (
+                actual_evidence["classification"] != "ANCHOR_CONTAINING_REVIEW_REQUIRED"
+                or "SEA" not in actual_evidence["secondaryNegativeBoundaryTypes"]
+                or min(actual_counts) < minimum
+                or provinces[province_index].get("administrativeSystem") == "HAN_COMMANDERY"
+                or len(matching_jurisdictions) != 1
+                or matching_jurisdictions[0].get("kind") == "COUNTY"
+                or actual_evidence["containedRuntimePlaceIds"] != [province_id]
+            ):
+                raise ValueError(f"preservation contract drift for {province_id}")
+        elif deferred["classification"] != actual_evidence["classification"]:
             raise ValueError(
                 f"deferred classification drift for {province_id}: "
                 f"expected {deferred['classification']}, "
@@ -504,12 +829,12 @@ def materialize_document(document: dict, ledger: dict) -> dict:
             "secondaryNegativeBoundaryTypes",
             "secondarySurroundingProvinceIds",
         ):
-            if deferred.get(field) != actual_evidence[field]:
-                raise ValueError(f"deferred {field} drift for {province_id}")
-        if deferred.get("containedRuntimePlaceIds", []) != actual_evidence[
+            if reviewed.get(field) != actual_evidence[field]:
+                raise ValueError(f"{category} {field} drift for {province_id}")
+        if reviewed.get("containedRuntimePlaceIds", []) != actual_evidence[
             "containedRuntimePlaceIds"
         ]:
-            raise ValueError(f"deferred containedRuntimePlaceIds drift for {province_id}")
+            raise ValueError(f"{category} containedRuntimePlaceIds drift for {province_id}")
     for row in range(rows):
         for col in range(cols):
             province_index = owner[row][col]

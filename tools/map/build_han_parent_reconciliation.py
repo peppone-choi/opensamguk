@@ -1299,10 +1299,10 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
         "cityLinkedCellCount": 107_156,
         "directTerritoryCellCount": 120_193,
         "exactApprovedRowCount": 781,
-        "exactApprovedCellCount": 80_913,
+        "exactApprovedCellCount": 80_924,
         "approvedPhysicalPlaceIdAbsentCount": 0,
         "unresolvedRowCount": 357,
-        "unresolvedCellCount": 26_243,
+        "unresolvedCellCount": 26_232,
         "crossParentRegionFootprintCount": 0,
         "coordinateFootprintMajorityMismatchCount": 0,
     }
@@ -1312,14 +1312,14 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
     geometry = summary["geometryDiagnostics"]
     if geometry != {
         "singleGroupJun": {"rowCount": 194, "cellCount": 10_158},
-        "multiGroupJun": {"rowCount": 90, "cellCount": 8_043},
-        "uniqueNearest": {"rowCount": 281, "cellCount": 18_132},
+        "multiGroupJun": {"rowCount": 90, "cellCount": 8_044},
+        "uniqueNearest": {"rowCount": 281, "cellCount": 18_133},
         "distanceTies": {"rowCount": 3, "cellCount": 69},
     }:
         raise ValueError("locked geometry reconciliation counts changed")
     if summary["decisionRowCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 33:
         raise ValueError("locked direct-territory blocker row count changed")
-    if summary["decisionCellCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 1_711:
+    if summary["decisionCellCounts"].get("BLOCKED_DIRECT_TERRITORY_REVIEW") != 1_699:
         raise ValueError("locked direct-territory blocker cell count changed")
     if summary["decisionRowCounts"].get("BLOCKED_EXTERNAL_POLITY_REVIEW") != 40:
         raise ValueError("locked external-polity blocker row count changed")

@@ -47,6 +47,12 @@ def cell_set_digest(cells: list[list[int]]) -> str:
     ).hexdigest()
 
 
+def json_digest(value: object) -> str:
+    return hashlib.sha256(
+        json.dumps(value, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
 def synthetic_document() -> dict:
     rows = cols = 7
     owner = [-1] * (rows * cols)
@@ -114,9 +120,14 @@ def synthetic_ledger() -> dict:
         "minimumProvinceArea": 1,
         "inputOwnerSha256": grid_digest(owner),
         "outputOwnerSha256": grid_digest(patched_owner),
+        "inputCitiesSha256": json_digest(document["cities"]),
+        "outputCitiesSha256": json_digest(document["cities"]),
+        "inputJunsSha256": json_digest(document["juns"]),
+        "outputJunsSha256": json_digest(document["juns"]),
         "seatOwnerSha256": hashlib.sha256(
             json.dumps(document["seatOwner"], separators=(",", ":")).encode("utf-8")
         ).hexdigest(),
+        "preAppliedReassignmentCount": 0,
         "reassignments": [
             {
                 "sourceProvinceId": "P-SOURCE",
@@ -133,6 +144,179 @@ def synthetic_ledger() -> dict:
             }
         ],
         "deferred": [],
+        "anchoredReassignments": [],
+        "preservations": [],
+    }
+
+
+def synthetic_anchor_document() -> dict:
+    document = synthetic_document()
+    document["cities"].append(
+        {
+            "id": "COMMANDERY-SOURCE",
+            "nameCh": "甲郡",
+            "kind": "COMMANDERY",
+            "col": 4,
+            "row": 4,
+        }
+    )
+    document["juns"][0] = {"seat": 2, "col": 4, "row": 4}
+    document["jurisdictionRecords"] = [
+        {
+            "id": "J-SOURCE",
+            "commanderyId": "C-SOURCE",
+            "seatPlaceId": "P-SOURCE",
+            "provinceIds": ["P-SOURCE"],
+        },
+        {
+            "id": "J-TARGET",
+            "commanderyId": "C-TARGET",
+            "seatPlaceId": "P-TARGET",
+            "provinceIds": ["P-TARGET"],
+        },
+    ]
+    document["commanderyRecords"] = [
+        {"id": "C-SOURCE", "seatJurisdictionId": "J-SOURCE"},
+        {"id": "C-TARGET", "seatJurisdictionId": "J-TARGET"},
+    ]
+    return document
+
+
+def synthetic_anchor_ledger() -> dict:
+    document = synthetic_anchor_document()
+    owner = expand_rle(document["owner"], 7, 7)
+    patched_owner = copy.deepcopy(owner)
+    patched_owner[4][4] = 1
+    patched_cities = copy.deepcopy(document["cities"])
+    patched_cities[2]["col"] = 1
+    patched_cities[2]["row"] = 1
+    patched_juns = copy.deepcopy(document["juns"])
+    patched_juns[0]["col"] = 1
+    patched_juns[0]["row"] = 1
+    return {
+        "contractId": "han-province-fragment-adjudications-v1",
+        "minimumProvinceArea": 1,
+        "inputOwnerSha256": grid_digest(owner),
+        "outputOwnerSha256": grid_digest(patched_owner),
+        "inputCitiesSha256": json_digest(document["cities"]),
+        "outputCitiesSha256": json_digest(patched_cities),
+        "inputJunsSha256": json_digest(document["juns"]),
+        "outputJunsSha256": json_digest(patched_juns),
+        "seatOwnerSha256": json_digest(document["seatOwner"]),
+        "preAppliedReassignmentCount": 0,
+        "reassignments": [],
+        "anchoredReassignments": [
+            {
+                "sourceProvinceId": "P-SOURCE",
+                "anchorPlaceId": "COMMANDERY-SOURCE",
+                "anchorFrom": [4, 4],
+                "anchorTo": [1, 1],
+                "componentCells": [[4, 4]],
+                "allowedTargetProvinceIds": ["P-TARGET"],
+                "targetAssignments": [
+                    {"targetProvinceId": "P-TARGET", "cells": [[4, 4]]}
+                ],
+                "classification": "COMMANDERY_ANCHOR_NORMALIZATION",
+                "assignmentMethod": "NEAREST_TARGET_SEAT_EUCLIDEAN_SQUARED",
+                "evidence": {
+                    "sourceComponentCellCount": 1,
+                    "terrainClasses": ["PLAIN"],
+                    "surroundingProvinceIds": ["P-TARGET"],
+                    "containsJurisdictionSeat": False,
+                    "containedRuntimePlaceIds": ["COMMANDERY-SOURCE"],
+                    "commanderyId": "C-SOURCE",
+                    "seatJurisdictionId": "J-SOURCE",
+                    "canonicalSeatPlaceId": "P-SOURCE",
+                },
+                "reason": "The commandery marker created a detached cell away from its canonical county seat.",
+            }
+        ],
+        "deferred": [],
+        "preservations": [],
+    }
+
+
+def synthetic_maritime_document() -> dict:
+    rows = cols = 7
+    owner = [[-1] * cols for _ in range(rows)]
+    terrain = [[0] * cols for _ in range(rows)]
+    for row, col in ((1, 1), (1, 2), (2, 1), (2, 2), (4, 4), (4, 5), (5, 4), (5, 5)):
+        owner[row][col] = 0
+        terrain[row][col] = 1
+    flat = [value for row in owner for value in row]
+    return {
+        "_meta": {
+            "rows": rows,
+            "cols": cols,
+            "terrainLegend": {"0": "SEA", "1": "PLAIN", "9": "OUT_OF_SCOPE"},
+            "counts": {"adjCounty": 0, "adjCommandery": 0},
+        },
+        "terrain": ["".join(str(value) for value in row) for row in terrain],
+        "owner": rle(flat),
+        "parentOwner": rle(flat),
+        "seatOwner": [[0, rows * cols]],
+        "adjacency": {"county": [], "commandery": []},
+        "provinceRecords": [
+            {
+                "id": "X-SOURCE",
+                "displayName": "해상국",
+                "administrativeSystem": "WA",
+                "parentRegionId": "C-SOURCE",
+                "jurisdictionId": "J-SOURCE",
+                "cityIndex": 0,
+            }
+        ],
+        "parentRegions": [{"id": "C-SOURCE", "displayName": "해상국"}],
+        "jurisdictionRecords": [
+            {
+                "id": "J-SOURCE",
+                "kind": "EXTERNAL_SETTLEMENT",
+                "commanderyId": "C-SOURCE",
+                "seatPlaceId": "X-SOURCE",
+                "provinceIds": ["X-SOURCE"],
+            }
+        ],
+        "commanderyRecords": [
+            {"id": "C-SOURCE", "seatJurisdictionId": "J-SOURCE"}
+        ],
+        "cities": [
+            {"id": "X-SOURCE", "nameCh": "海上國", "kind": "EXTERNAL_PLACE", "col": 4, "row": 4}
+        ],
+        "juns": [{"seat": 0, "col": 4, "row": 4}],
+    }
+
+
+def synthetic_maritime_ledger() -> dict:
+    document = synthetic_maritime_document()
+    owner = expand_rle(document["owner"], 7, 7)
+    return {
+        "contractId": "han-province-fragment-adjudications-v1",
+        "minimumProvinceArea": 1,
+        "inputOwnerSha256": grid_digest(owner),
+        "outputOwnerSha256": grid_digest(owner),
+        "inputCitiesSha256": json_digest(document["cities"]),
+        "outputCitiesSha256": json_digest(document["cities"]),
+        "inputJunsSha256": json_digest(document["juns"]),
+        "outputJunsSha256": json_digest(document["juns"]),
+        "seatOwnerSha256": json_digest(document["seatOwner"]),
+        "preAppliedReassignmentCount": 0,
+        "reassignments": [],
+        "anchoredReassignments": [],
+        "deferred": [],
+        "preservations": [
+            {
+                "provinceId": "X-SOURCE",
+                "classification": "MARITIME_ANCHORED_COMPONENT_PRESERVED",
+                "componentCellCounts": [4, 4],
+                "cellSetSha256": cell_set_digest(
+                    [[1, 1], [2, 1], [1, 2], [2, 2], [4, 4], [5, 4], [4, 5], [5, 5]]
+                ),
+                "secondaryNegativeBoundaryTypes": ["SEA"],
+                "secondarySurroundingProvinceIds": [],
+                "containedRuntimePlaceIds": ["X-SOURCE"],
+                "reason": "Both sea-separated polity components exceed the minimum area.",
+            }
+        ],
     }
 
 
@@ -149,6 +333,10 @@ def pin_ledger_to_document(ledger: dict, document: dict) -> None:
             patched_owner[row][col] = target_index
     ledger["inputOwnerSha256"] = grid_digest(owner)
     ledger["outputOwnerSha256"] = grid_digest(patched_owner)
+    ledger["inputCitiesSha256"] = json_digest(document["cities"])
+    ledger["outputCitiesSha256"] = json_digest(document["cities"])
+    ledger["inputJunsSha256"] = json_digest(document["juns"])
+    ledger["outputJunsSha256"] = json_digest(document["juns"])
 
 
 class HanProvinceFragmentMaterializerTest(unittest.TestCase):
@@ -198,9 +386,12 @@ class HanProvinceFragmentMaterializerTest(unittest.TestCase):
         document["cities"].append(
             {"id": "COMMANDERY-MARKER", "nameCh": "丙郡", "col": 4, "row": 4}
         )
+        ledger = synthetic_ledger()
+        ledger["inputCitiesSha256"] = json_digest(document["cities"])
+        ledger["outputCitiesSha256"] = json_digest(document["cities"])
 
         with self.assertRaisesRegex(ValueError, "runtime place anchor"):
-            materialize_document(document, synthetic_ledger())
+            materialize_document(document, ledger)
 
     def test_rejects_negative_contact_even_when_the_ledger_claims_none(self) -> None:
         document = synthetic_document()
@@ -334,6 +525,85 @@ class HanProvinceFragmentMaterializerTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "deferred classification drift"):
             materialize_document(document, ledger)
 
+    def test_normalizes_a_commandery_anchor_and_partitions_its_component(self) -> None:
+        document = synthetic_anchor_document()
+        before_seat_owner = copy.deepcopy(document["seatOwner"])
+
+        patched = materialize_document(document, synthetic_anchor_ledger())
+        owner = expand_rle(patched["owner"], 7, 7)
+        parent_owner = expand_rle(patched["parentOwner"], 7, 7)
+
+        self.assertEqual(1, owner[4][4])
+        self.assertEqual(1, parent_owner[4][4])
+        self.assertEqual((1, 1), (patched["cities"][2]["col"], patched["cities"][2]["row"]))
+        self.assertEqual((1, 1), (patched["juns"][0]["col"], patched["juns"][0]["row"]))
+        self.assertEqual(before_seat_owner, patched["seatOwner"])
+        self.assertEqual(patched, materialize_document(patched, synthetic_anchor_ledger()))
+
+    def test_rejects_anchor_normalization_when_the_canonical_seat_drifts(self) -> None:
+        document = synthetic_anchor_document()
+        document["commanderyRecords"][0]["seatJurisdictionId"] = "J-TARGET"
+        ledger = synthetic_anchor_ledger()
+        ledger["inputCitiesSha256"] = json_digest(document["cities"])
+        ledger["inputJunsSha256"] = json_digest(document["juns"])
+
+        with self.assertRaisesRegex(ValueError, "seatJurisdictionId"):
+            materialize_document(document, ledger)
+
+    def test_rejects_anchor_target_partition_that_is_not_nearest_to_seat(self) -> None:
+        document = synthetic_anchor_document()
+        document["provinceRecords"].append(
+            {
+                "id": "P-OTHER",
+                "displayName": "기타현",
+                "parentRegionId": "C-TARGET",
+                "jurisdictionId": "J-OTHER",
+                "cityIndex": 3,
+            }
+        )
+        document["cities"].append(
+            {"id": "P-OTHER", "nameCh": "丙县", "col": 5, "row": 4}
+        )
+        document["jurisdictionRecords"].append(
+            {
+                "id": "J-OTHER",
+                "commanderyId": "C-TARGET",
+                "seatPlaceId": "P-OTHER",
+                "provinceIds": ["P-OTHER"],
+            }
+        )
+        owner = expand_rle(document["owner"], 7, 7)
+        owner[4][5] = 2
+        document["owner"] = rle([value for row in owner for value in row])
+        ledger = synthetic_anchor_ledger()
+        decision = ledger["anchoredReassignments"][0]
+        decision["allowedTargetProvinceIds"] = ["P-OTHER", "P-TARGET"]
+        decision["evidence"]["surroundingProvinceIds"] = ["P-OTHER", "P-TARGET"]
+        decision["targetAssignments"] = [
+            {"targetProvinceId": "P-TARGET", "cells": [[4, 4]]}
+        ]
+        ledger["inputOwnerSha256"] = grid_digest(owner)
+        ledger["inputCitiesSha256"] = json_digest(document["cities"])
+        ledger["inputJunsSha256"] = json_digest(document["juns"])
+
+        with self.assertRaisesRegex(ValueError, "nearest target seat"):
+            materialize_document(document, ledger)
+
+    def test_preserves_an_exact_anchored_maritime_polity(self) -> None:
+        document = synthetic_maritime_document()
+        ledger = synthetic_maritime_ledger()
+
+        self.assertEqual(document, materialize_document(document, ledger))
+
+    def test_rejects_maritime_preservation_when_sea_evidence_drifts(self) -> None:
+        document = synthetic_maritime_document()
+        terrain = [list(row) for row in document["terrain"]]
+        terrain[3][4] = "9"
+        document["terrain"] = ["".join(row) for row in terrain]
+
+        with self.assertRaisesRegex(ValueError, "preservation .* drift"):
+            materialize_document(document, synthetic_maritime_ledger())
+
 
 class HanProvinceFragmentCanonicalTest(unittest.TestCase):
     def test_canonical_map_matches_the_adjudication_ledger(self) -> None:
@@ -373,16 +643,24 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
             self.assertTrue(all(
                 owner[row][col] == target_index for col, row in decision["cells"]
             ))
-        self.assertEqual(29, len(ledger["deferred"]))
+        self.assertEqual(26, len(ledger["deferred"]))
         self.assertEqual(
             {
                 "MARITIME_REVIEW_REQUIRED": 18,
                 "LACUSTRINE_REVIEW_REQUIRED": 5,
                 "INLAND_MULTI_NEIGHBOR_REVIEW_REQUIRED": 3,
-                "ANCHOR_CONTAINING_REVIEW_REQUIRED": 3,
             },
             dict(Counter(row["classification"] for row in ledger["deferred"])),
         )
+        self.assertEqual(2, len(ledger["anchoredReassignments"]))
+        self.assertEqual(
+            ["X055"], [row["provinceId"] for row in ledger["preservations"]]
+        )
+        city_by_id = {city["id"]: city for city in tiles["cities"]}
+        self.assertEqual((423, 386), (city_by_id["32540"]["col"], city_by_id["32540"]["row"]))
+        self.assertEqual((435, 174), (city_by_id["210314"]["col"], city_by_id["210314"]["row"]))
+        self.assertEqual(ledger["outputCitiesSha256"], json_digest(tiles["cities"]))
+        self.assertEqual(ledger["outputJunsSha256"], json_digest(tiles["juns"]))
         self.assertEqual(
             ledger["seatOwnerSha256"],
             hashlib.sha256(
