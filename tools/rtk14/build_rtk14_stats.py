@@ -345,6 +345,18 @@ def _portrait_fingerprint(source):
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _portrait_stable_key(name_kanji, name_reading, page_key):
+    identity = {
+        "name_kanji": name_kanji,
+        "name_reading": name_reading or "",
+        "page_key": page_key,
+    }
+    if not all(isinstance(value, str) and value for value in (name_kanji, page_key)):
+        raise ValueError("portrait identity requires name_kanji and page_key")
+    encoded = json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _read_tsv(path):
     with open(path, encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle, delimiter="\t"))
@@ -361,25 +373,25 @@ def attach_portrait_ids(
     expected_ids = set(range(PORTRAIT_ID_MIN, PORTRAIT_ID_MAX + 1))
 
     registry_by_fingerprint = {}
-    registry_by_identity = {}
+    registry_by_stable_key = {}
     registry_ids = set()
     for row in registry_rows:
         try:
             stable_id = int(row["id"])
+            stable_key = row["stable_key"]
             fingerprint = row["fingerprint_sha256"]
-            identity = (row["name_kanji"], row["name_reading"])
         except (KeyError, TypeError, ValueError) as error:
             raise ValueError("portrait registry row is invalid") from error
         if (
             stable_id in registry_ids
+            or stable_key in registry_by_stable_key
             or fingerprint in registry_by_fingerprint
-            or identity in registry_by_identity
-            or not all(identity)
+            or not stable_key
         ):
-            raise ValueError("portrait registry IDs, fingerprints, and identities must be unique")
+            raise ValueError("portrait registry IDs, stable keys, and fingerprints must be unique")
         registry_ids.add(stable_id)
+        registry_by_stable_key[stable_key] = row
         registry_by_fingerprint[fingerprint] = stable_id
-        registry_by_identity[identity] = stable_id
     if registry_ids != expected_ids:
         raise ValueError(f"portrait registry IDs must be exactly {PORTRAIT_ID_MIN}..{PORTRAIT_ID_MAX}")
 
@@ -405,16 +417,22 @@ def attach_portrait_ids(
             try:
                 source_number = int(row["officer_number"])
                 korean_name = row["name_korean"]
-                identity = (row["name_kanji"], row["name_reading"])
+                name_kanji = row["name_kanji"]
+                name_reading = row["name_reading"]
+                page_key = row["page_key"]
             except (KeyError, TypeError, ValueError) as error:
                 raise ValueError("portrait reviewed identity override row is invalid") from error
             if not 1 <= source_number <= 1000 or source_number in reviewed_id_by_source_number:
                 raise ValueError("portrait reviewed identity override officer numbers must be unique in 1..1000")
-            stable_id = registry_by_identity.get(identity)
-            if stable_id is None:
+            stable_key = _portrait_stable_key(name_kanji, name_reading, page_key)
+            registry_row = registry_by_stable_key.get(stable_key)
+            if registry_row is None:
                 raise ValueError(
-                    f"portrait reviewed registry identity does not exist: {identity[0]} / {identity[1]}"
+                    f"portrait reviewed registry identity does not exist: {name_kanji} / {name_reading} / {page_key}"
                 )
+            if registry_row["name_kanji"] != name_kanji or registry_row["name_reading"] != name_reading:
+                raise ValueError("portrait reviewed registry identity disagrees with its stable key")
+            stable_id = int(registry_row["id"])
             if not korean_name or names_by_id[stable_id] != korean_name:
                 raise ValueError(
                     f"portrait reviewed identity override Korean name does not match stable ID {stable_id}"

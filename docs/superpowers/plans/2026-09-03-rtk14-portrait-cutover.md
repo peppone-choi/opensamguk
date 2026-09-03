@@ -4,7 +4,7 @@
 
 **Goal:** Route every production-materialized RTK14 officer to the matching `opensamguk-images/portraits/rtk14/serving/portrait/<stable-id>.png` asset without name guessing or legacy-picture reuse.
 
-**Architecture:** Keep `RTK14_STATS_JSON_B64` and generated 1,000-row scenarios untracked. During materialization, join each source officer to the committed stable officer registry using a reviewed kanji/reading override where one exists, otherwise an exact unique Korean name, and require the seven-field fingerprint to disambiguate duplicate Korean names. Write `<stable-id>.png` into the scenario picture field. Both web clients recognize only the reserved `10001..11000` band and resolve it to the RTK14 serving directory; legacy account icons and managed uploads keep their existing behavior.
+**Architecture:** Keep `RTK14_STATS_JSON_B64` and generated 1,000-row scenarios untracked. During materialization, join each source officer to the committed stable officer registry using a reviewed kanji/reading/page-key override where one exists, otherwise an exact unique Korean name, and require the seven-field fingerprint to disambiguate duplicate Korean names. Write `<stable-id>.png` into the scenario picture field. Both web clients recognize only the reserved `10001..11000` band and resolve it to the RTK14 serving directory; legacy account icons and managed uploads keep their existing behavior.
 
 **Tech Stack:** Python 3 standard library, Kotlin scenario importer contract, TypeScript, React, Vitest, pnpm, GitHub Actions.
 
@@ -49,7 +49,7 @@
 
 - [x] **Step 1: Write failing tests** proving a source fingerprint maps to the stable ID, the Korean name must agree, and missing/duplicate/drifting registry rows fail closed.
 - [x] **Step 2: Run the focused Python suite and verify RED** for the missing join API and unchanged picture fields.
-- [x] **Step 3: Implement the standard-library TSV loader and identity join.** Require registry and Korean name-map IDs to be exactly `10001..11000`; apply reviewed kanji/reading overrides first, exact unique Korean names second, and the seven-field SHA-256 fingerprint only to disambiguate duplicate Korean names.
+- [x] **Step 3: Implement the standard-library TSV loader and identity join.** Require registry and Korean name-map IDs to be exactly `10001..11000`; apply reviewed kanji/reading/page-key stable identities first, exact unique Korean names second, and the seven-field SHA-256 fingerprint only to disambiguate duplicate Korean names.
 - [x] **Step 4: Set matched and appended tuple picture fields** to `<portraitId>.png` while preserving source-number lifecycle metadata at tuple index 17.
 - [x] **Step 5: Invoke the join in the CLI before `build_all`** for both XLSX and JSON source modes; keep `--dump-rtk-source-json` free of the derived `portraitId` field.
 - [x] **Step 6: Run the focused Python suite and verify GREEN.**
