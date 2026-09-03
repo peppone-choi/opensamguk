@@ -28,6 +28,9 @@ jobs:
       - name: Verify scenario data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
+      - name: Verify RTK14 scenario materializer contracts
+        if: '!cancelled()'
+        run: python3 -m unittest tools/rtk14/test_build_rtk14_stats.py
       # tools/agent-system/ no longer holds the agent harness checker, but it
       # does hold check_test_xml.py — the guard the jvm job below calls to fail
       # the build when Docker-gated IT silently skip (#517). Its tests must keep

@@ -1,4 +1,6 @@
 import copy
+import csv
+import hashlib
 import json
 import os
 import sys
@@ -44,11 +46,85 @@ def source_rows():
     return [source_row(number) for number in range(1, 1001)]
 
 
+def portrait_fingerprint(row):
+    values = [
+        row["birth"], row["death"], row["L"], row["S"], row["I"],
+        row["politics"], row["charm"],
+    ]
+    return hashlib.sha256(json.dumps(values, separators=(",", ":")).encode()).hexdigest()
+
+
+def write_portrait_contract(directory, rows):
+    registry = directory / "officer-id-registry.tsv"
+    name_map = directory / "officer-name-map.tsv"
+    with registry.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
+        writer.writerow(("id", "stable_key", "fingerprint_sha256", "name_kanji", "name_reading"))
+        for row in rows:
+            writer.writerow((10000 + row["number"], f"key-{row['number']}", portrait_fingerprint(row), f"漢{row['number']}", f"reading-{row['number']}"))
+    with name_map.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
+        writer.writerow(("id", "name_korean"))
+        for row in rows:
+            writer.writerow((10000 + row["number"], row["name"]))
+    return registry, name_map
+
+
 def legacy_tuple(name, leadership=1, strength=2, intel=3, birth=150, death=220):
     return [777, name, "portrait", 7, "city", leadership, strength, intel, 9, birth, death, "ego", "special", "text"]
 
 
 class Rtk14StatsBuilderTest(unittest.TestCase):
+    def test_portrait_registry_joins_every_source_by_unique_fingerprint_and_name(self):
+        rows = source_rows()
+        rtk = b._source_rows_to_rtk(rows)
+        with TemporaryDirectory() as td:
+            registry, name_map = write_portrait_contract(Path(td), rows)
+
+            b.attach_portrait_ids(rtk, registry, name_map)
+
+        self.assertEqual(10001, rtk["장수1"][0]["portraitId"])
+        self.assertEqual(11000, rtk["장수1000"][0]["portraitId"])
+        self.assertEqual(rows, b.rtk_to_source_rows(rtk))
+
+    def test_portrait_registry_picture_replaces_legacy_and_default_without_changing_source_number(self):
+        rows = source_rows()
+        rtk = b._source_rows_to_rtk(rows)
+        with TemporaryDirectory() as td:
+            registry, name_map = write_portrait_contract(Path(td), rows)
+            b.attach_portrait_ids(rtk, registry, name_map)
+
+        scenario = {
+            "startYear": 180,
+            "general": [legacy_tuple("장수1", leadership=31, strength=32, intel=33, birth=101, death=169)],
+            "general_ex": [],
+        }
+        enriched, _ = b.enrich_scenario(scenario, rtk)
+
+        self.assertEqual("10001.png", enriched["general"][0][2])
+        self.assertEqual(1, enriched["general"][0][17])
+        added = next(row for row in enriched["general"] if row[17] == 1000)
+        self.assertEqual("11000.png", added[2])
+        self.assertEqual(1000, added[17])
+
+    def test_portrait_registry_fails_closed_on_name_or_identity_drift(self):
+        rows = source_rows()
+        with TemporaryDirectory() as td:
+            directory = Path(td)
+            registry, name_map = write_portrait_contract(directory, rows)
+            name_lines = name_map.read_text(encoding="utf-8").splitlines()
+            name_lines[1] = "10001\t다른장수"
+            name_map.write_text("\n".join(name_lines) + "\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "Korean name"):
+                b.attach_portrait_ids(b._source_rows_to_rtk(rows), registry, name_map)
+
+            registry, name_map = write_portrait_contract(directory, rows)
+            registry_lines = registry.read_text(encoding="utf-8").splitlines()
+            registry.write_text("\n".join(registry_lines[:-1]) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "10001..11000"):
+                b.attach_portrait_ids(b._source_rows_to_rtk(rows), registry, name_map)
+
     def test_deploy_tests_classpath_baseline_before_materializing_image_rosters(self):
         workflow = (
             Path(__file__).resolve().parents[2] / ".github" / "workflows" / "deploy.yml"

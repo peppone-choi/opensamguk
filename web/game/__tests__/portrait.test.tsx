@@ -2,7 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_PORTRAIT, PORTRAIT_CDN, onPortraitError, portraitUrl } from '@/lib/portrait';
+import {
+    DEFAULT_PORTRAIT,
+    PORTRAIT_CDN,
+    RTK14_PORTRAIT_CDN,
+    onPortraitError,
+    portraitUrl,
+} from '@/lib/portrait';
 
 describe('game portrait helper', () => {
     it.each([null, undefined, ''])('uses the default for missing picture value %j', (picture) => {
@@ -12,6 +18,14 @@ describe('game portrait helper', () => {
     it('adds jpg to a bare shared portrait code (imgsvr=0)', () => {
         expect(portraitUrl('1001', 0)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
     });
+
+    it.each(['10001', '10001.png', '11000', '11000.png'])(
+        'routes stable RTK14 officer portrait %s to the canonical serving directory',
+        (picture) => {
+            const officerId = picture.replace(/\.png$/, '');
+            expect(portraitUrl(picture, 0)).toBe(`${RTK14_PORTRAIT_CDN}/${officerId}.png`);
+        },
+    );
 
     it('preserves a supported canonical extension (imgsvr=0)', () => {
         expect(portraitUrl('portrait.webp', 0)).toBe(`${PORTRAIT_CDN}/portrait.webp`);

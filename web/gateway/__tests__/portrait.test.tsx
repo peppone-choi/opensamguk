@@ -2,7 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_PORTRAIT, PORTRAIT_CDN, onPortraitError, portraitUrl } from '@/lib/portrait';
+import {
+    DEFAULT_PORTRAIT,
+    PORTRAIT_CDN,
+    RTK14_PORTRAIT_CDN,
+    onPortraitError,
+    portraitUrl,
+} from '@/lib/portrait';
 
 describe('gateway portrait helper', () => {
     it.each([null, '', '   '])('uses the default for missing picture value %j', (picture) => {
@@ -49,6 +55,14 @@ describe('gateway portrait helper', () => {
     it.each([undefined, null, 0])('keeps the shared-CDN path when imgsvr is falsy (%j)', (imgsvr) => {
         expect(portraitUrl('1001', imgsvr)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
     });
+
+    it.each(['10001', '10001.png', '11000', '11000.png'])(
+        'routes stable RTK14 officer portrait %s to the canonical serving directory',
+        (picture) => {
+            const officerId = picture.replace(/\.png$/, '');
+            expect(portraitUrl(picture, 0)).toBe(`${RTK14_PORTRAIT_CDN}/${officerId}.png`);
+        },
+    );
 
     it('trims surrounding whitespace before the whitelist check', () => {
         expect(portraitUrl('  1001  ', 0)).toBe(`${PORTRAIT_CDN}/1001.jpg`);
