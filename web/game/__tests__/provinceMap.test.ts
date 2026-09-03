@@ -10,6 +10,7 @@ import {
   buildProvinceVisualAnchors,
   composeProvincePixels,
   decodeProvincePixels,
+  formatCompactMapTooltipMeta,
   isOwnedNationVisual,
   loadProvinceIdentityMap,
   formatProvinceTooltip,
@@ -26,6 +27,33 @@ const REAL_RGB8_PNG = Uint8Array.from(Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAD0lEQVR4AQEEAPv/AAAQAQAlABLmzoVCAAAAAElFTkSuQmCC',
   'base64',
 ));
+
+describe('compact map tooltip metadata', () => {
+  it('shows the active layer owner once when all ownership levels agree', () => {
+    expect(formatCompactMapTooltipMeta({
+      hierarchyPath: '낙양 → 낙양현 → 하남윤',
+      displayedOwnerName: '위',
+    })).toBe('낙양 → 낙양현 → 하남윤 · 위');
+  });
+
+  it('keeps all conflicting owners in one compact row', () => {
+    expect(formatCompactMapTooltipMeta({
+      hierarchyPath: '낙양 → 낙양현 → 하남윤',
+      displayedOwnerName: '한',
+      ownershipMismatch: true,
+      provinceOccupantNationName: '위',
+      jurisdictionOwnerNationName: '한',
+      commanderyControllerNationName: '조',
+    })).toBe('낙양 → 낙양현 → 하남윤 · 공간: 위 / 현: 한 / 군국: 조');
+  });
+
+  it('preserves an explicit unowned active layer', () => {
+    expect(formatCompactMapTooltipMeta({
+      hierarchyPath: '낙양 → 낙양현 → 하남윤',
+      displayedOwnerName: '미소유',
+    })).toBe('낙양 → 낙양현 → 하남윤 · 미소유');
+  });
+});
 
 function expandRle(rle: [number, number][], cells: number): Int16Array {
   const values = new Int16Array(cells);

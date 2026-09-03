@@ -93,4 +93,8 @@ export {
   type ProvinceRecordDto,
   resolveProvincePlacement,
 } from './provinceMap';
-export { isOwnedNationVisual } from './nationVisual';
+export {
+  formatCompactMapTooltipMeta,
+  isOwnedNationVisual,
+  type CompactMapTooltipMetaInput,
+} from './nationVisual';

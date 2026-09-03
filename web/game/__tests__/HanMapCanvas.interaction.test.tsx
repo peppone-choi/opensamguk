@@ -963,6 +963,75 @@ describe('shared HanMapCanvas viewport interaction', () => {
     );
   });
 
+  it('reports an explicit unowned administrative layer without falling back to the runtime city owner', () => {
+    const views: IsoView[] = [];
+    const onCountyHover = vi.fn();
+    const provinceMap: ProvinceIdentityMap = {
+      width: 1,
+      height: 1,
+      provinces: new Int16Array([0]),
+      commanderies: new Int16Array([0]),
+      provinceEdges: [],
+      commanderyEdges: [],
+    };
+    render(
+      <HanMapCanvas
+        mapCode="han"
+        tiles={{
+          _meta: { cols: 1, rows: 1, year: 220, terrainLegend: { 1: 'PLAIN' } },
+          terrain: ['1'],
+          owner: [[0, 1]],
+          parentOwner: [[0, 1]],
+          juns: [{ name: '하남윤', nameCh: '河南尹', seat: 0, col: 0, row: 0 }],
+          provinceRecords: [{
+            id: 'P1', displayName: '낙양', nameCh: '雒陽', administrativeSystem: 'HAN_COMMANDERY',
+            kind: 'COUNTY', parentRegionId: 'C1', cityIndex: 0,
+            geometryBasis: 'HISTORICAL_BOUNDARY', confidence: 'REVIEWED', jurisdictionId: 'J1',
+          }],
+          jurisdictionRecords: [{
+            id: 'J1', displayName: '낙양현', nameCh: '雒陽縣', kind: 'COUNTY',
+            commanderyId: 'C1', seatPlaceId: 'P1', provinceIds: ['P1'],
+          }],
+          commanderyRecords: [{
+            id: 'C1', displayName: '하남윤', nameCh: '河南尹', kind: 'COMMANDERY',
+            seatJurisdictionId: 'J1', jurisdictionIds: ['J1'],
+          }],
+          parentRegions: [{ id: 'C1', displayName: '하남윤', nameCh: '河南尹', administrativeSystem: 'HAN_COMMANDERY' }],
+          adjacency: { county: [], commandery: [] },
+          regions: [],
+          cities: [{ id: '1', name: '낙양현', nameCh: '雒陽縣', level: 8, kind: 'COUNTY', seat: true, col: 0, row: 0 }],
+        }}
+        provinceMap={provinceMap}
+        cities={[{
+          id: 1, name: '낙양', level: 8, nationId: 1, nationName: '위', nationColor: '#ff0000',
+          x: 0, y: 0, provinceId: 0,
+        }]}
+        administrativeOwnership={{
+          provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 0 }],
+          jurisdictionOwnership: [{ jurisdictionId: 'J1', nationId: 0 }],
+          commanderyControl: [{ commanderyId: 'C1', nationId: 0 }],
+        }}
+        sourceSize={{ width: 1, height: 1 }}
+        onCountyHover={onCountyHover}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' });
+    const [canvasX, canvasY] = cellToScreen(0, 0, views.at(-1)!);
+
+    fireEvent.pointerMove(canvas, { clientX: canvasX / 2, clientY: canvasY / 2, pointerId: 1 });
+
+    expect(onCountyHover).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        nationId: 0,
+        nationName: '미소유',
+        nationColor: undefined,
+        displayedOwnerNationName: '미소유',
+      }),
+      expect.any(Object),
+    );
+  });
+
   it('prevents page scrolling while the wheel zooms the map', () => {
     const views: IsoView[] = [];
     render(

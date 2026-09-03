@@ -1,6 +1,12 @@
 'use client';
 
-import { HanMapCanvas, isOwnedNationVisual, type IsoCityOverlay, type IsoCountyHover } from '@opensamguk/ui';
+import {
+    formatCompactMapTooltipMeta,
+    HanMapCanvas,
+    isOwnedNationVisual,
+    type IsoCityOverlay,
+    type IsoCountyHover,
+} from '@opensamguk/ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
@@ -179,6 +185,18 @@ export default function MapPreview({
         );
     }
 
+    const legacyHoverOwnerName = hoverCounty?.nationName
+        && isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor)
+        ? hoverCounty.nationName : undefined;
+    const hoverMeta = formatCompactMapTooltipMeta({
+        hierarchyPath: hoverCounty?.hierarchyPath,
+        displayedOwnerName: hoverCounty?.displayedOwnerNationName ?? legacyHoverOwnerName,
+        ownershipMismatch: hoverCounty?.ownershipMismatch,
+        provinceOccupantNationName: hoverCounty?.provinceOccupantNationName,
+        jurisdictionOwnerNationName: hoverCounty?.jurisdictionOwnerNationName,
+        commanderyControllerNationName: hoverCounty?.commanderyControllerNationName,
+    });
+
     return (
         <div className={`map-preview${hideCityName ? ' hide-cityname' : ''}`} aria-label="서버 지도 프리뷰">
             <div className="map-preview-canvas">
@@ -221,15 +239,7 @@ export default function MapPreview({
                     <div className="map-preview-tooltip-name">
                         {`【${hoverCounty.regionName} | ${levelText(hoverCounty.level)}】 ${hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}`}
                     </div>
-                    {hoverCounty.hierarchyPath && <div className="map-preview-tooltip-meta">{hoverCounty.hierarchyPath}</div>}
-                    {hoverCounty.provinceOccupantNationName && <div className="map-preview-tooltip-meta">공간 점유: {hoverCounty.provinceOccupantNationName}</div>}
-                    {hoverCounty.jurisdictionOwnerNationName && <div className="map-preview-tooltip-meta">현 소유: {hoverCounty.jurisdictionOwnerNationName}</div>}
-                    {hoverCounty.commanderyControllerNationName && <div className="map-preview-tooltip-meta">군국 통제: {hoverCounty.commanderyControllerNationName}</div>}
-                    {hoverCounty.provinceJurisdictionMismatch && <div className="map-preview-tooltip-meta">공간 점유와 현 소유가 다릅니다.</div>}
-                    {hoverCounty.jurisdictionCommanderyMismatch && <div className="map-preview-tooltip-meta">현 소유와 군국 통제가 다릅니다.</div>}
-                    {isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor) && hoverCounty.nationName && (
-                        <div className="map-preview-tooltip-meta">{hoverCounty.nationName}</div>
-                    )}
+                    {hoverMeta && <div className="map-preview-tooltip-meta">{hoverMeta}</div>}
                 </div>
             )}
             <div className="map-preview-cap">
