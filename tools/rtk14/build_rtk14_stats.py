@@ -370,6 +370,7 @@ def attach_portrait_ids(rtk, registry_path=DEFAULT_PORTRAIT_REGISTRY, name_map_p
         raise ValueError(f"portrait registry IDs must be exactly {PORTRAIT_ID_MIN}..{PORTRAIT_ID_MAX}")
 
     names_by_id = {}
+    ids_by_korean_name = defaultdict(list)
     for row in name_rows:
         try:
             stable_id = int(row["id"])
@@ -379,19 +380,26 @@ def attach_portrait_ids(rtk, registry_path=DEFAULT_PORTRAIT_REGISTRY, name_map_p
         if stable_id in names_by_id or not korean_name:
             raise ValueError("portrait Korean name map IDs must be unique and named")
         names_by_id[stable_id] = korean_name
+        ids_by_korean_name[korean_name].append(stable_id)
     if set(names_by_id) != expected_ids:
         raise ValueError(f"portrait Korean name map IDs must be exactly {PORTRAIT_ID_MIN}..{PORTRAIT_ID_MAX}")
 
     portrait_id_by_source_number = {}
     for source in source_rows(rtk):
-        fingerprint = _portrait_fingerprint(source)
-        stable_id = registry_by_fingerprint.get(fingerprint)
-        if stable_id is None:
-            raise ValueError(f"RTK source officer {source['number']} has no portrait registry fingerprint")
-        if names_by_id[stable_id] != source["name"]:
+        candidate_ids = ids_by_korean_name.get(source["name"], [])
+        if not candidate_ids:
             raise ValueError(
-                f"RTK source officer {source['number']} Korean name does not match portrait stable ID {stable_id}"
+                f"RTK source officer {source['number']} Korean name has no portrait stable ID: {source['name']}"
             )
+        if len(candidate_ids) == 1:
+            stable_id = candidate_ids[0]
+        else:
+            stable_id = registry_by_fingerprint.get(_portrait_fingerprint(source))
+            if stable_id not in candidate_ids:
+                raise ValueError(
+                    f"RTK source officer {source['number']} duplicate Korean name has no matching fingerprint: "
+                    f"{source['name']}"
+                )
         portrait_id_by_source_number[source["number"]] = stable_id
     if (
         len(portrait_id_by_source_number) != len(expected_ids)
