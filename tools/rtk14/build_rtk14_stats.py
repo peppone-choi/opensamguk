@@ -49,6 +49,7 @@ OVERRIDE_PATH = Path(__file__).with_name("rtk14_unmatched_overrides.json")
 SCENARIO_TOOL_DIR = Path(__file__).resolve().parents[1] / "scenario"
 DEFAULT_PORTRAIT_REGISTRY = SCENARIO_TOOL_DIR / "officer-id-registry.tsv"
 DEFAULT_PORTRAIT_NAME_MAP = SCENARIO_TOOL_DIR / "officer-name-map.tsv"
+DEFAULT_PORTRAIT_JOIN_OVERRIDES = SCENARIO_TOOL_DIR / "name-join-overrides.tsv"
 STAT_MIN = 1
 STAT_MAX = 100
 OVERRIDE_SCHEMA_VERSION = 2
@@ -349,23 +350,36 @@ def _read_tsv(path):
         return list(csv.DictReader(handle, delimiter="\t"))
 
 
-def attach_portrait_ids(rtk, registry_path=DEFAULT_PORTRAIT_REGISTRY, name_map_path=DEFAULT_PORTRAIT_NAME_MAP):
+def attach_portrait_ids(
+    rtk,
+    registry_path=DEFAULT_PORTRAIT_REGISTRY,
+    name_map_path=DEFAULT_PORTRAIT_NAME_MAP,
+    join_overrides_path=None,
+):
     registry_rows = _read_tsv(registry_path)
     name_rows = _read_tsv(name_map_path)
     expected_ids = set(range(PORTRAIT_ID_MIN, PORTRAIT_ID_MAX + 1))
 
     registry_by_fingerprint = {}
+    registry_by_identity = {}
     registry_ids = set()
     for row in registry_rows:
         try:
             stable_id = int(row["id"])
             fingerprint = row["fingerprint_sha256"]
+            identity = (row["name_kanji"], row["name_reading"])
         except (KeyError, TypeError, ValueError) as error:
             raise ValueError("portrait registry row is invalid") from error
-        if stable_id in registry_ids or fingerprint in registry_by_fingerprint:
-            raise ValueError("portrait registry IDs and fingerprints must be unique")
+        if (
+            stable_id in registry_ids
+            or fingerprint in registry_by_fingerprint
+            or identity in registry_by_identity
+            or not all(identity)
+        ):
+            raise ValueError("portrait registry IDs, fingerprints, and identities must be unique")
         registry_ids.add(stable_id)
         registry_by_fingerprint[fingerprint] = stable_id
+        registry_by_identity[identity] = stable_id
     if registry_ids != expected_ids:
         raise ValueError(f"portrait registry IDs must be exactly {PORTRAIT_ID_MIN}..{PORTRAIT_ID_MAX}")
 
@@ -384,8 +398,41 @@ def attach_portrait_ids(rtk, registry_path=DEFAULT_PORTRAIT_REGISTRY, name_map_p
     if set(names_by_id) != expected_ids:
         raise ValueError(f"portrait Korean name map IDs must be exactly {PORTRAIT_ID_MIN}..{PORTRAIT_ID_MAX}")
 
+    reviewed_id_by_source_number = {}
+    reviewed_name_by_source_number = {}
+    if join_overrides_path is not None:
+        for row in _read_tsv(join_overrides_path):
+            try:
+                source_number = int(row["officer_number"])
+                korean_name = row["name_korean"]
+                identity = (row["name_kanji"], row["name_reading"])
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError("portrait reviewed identity override row is invalid") from error
+            if not 1 <= source_number <= 1000 or source_number in reviewed_id_by_source_number:
+                raise ValueError("portrait reviewed identity override officer numbers must be unique in 1..1000")
+            stable_id = registry_by_identity.get(identity)
+            if stable_id is None:
+                raise ValueError(
+                    f"portrait reviewed registry identity does not exist: {identity[0]} / {identity[1]}"
+                )
+            if not korean_name or names_by_id[stable_id] != korean_name:
+                raise ValueError(
+                    f"portrait reviewed identity override Korean name does not match stable ID {stable_id}"
+                )
+            reviewed_id_by_source_number[source_number] = stable_id
+            reviewed_name_by_source_number[source_number] = korean_name
+
     portrait_id_by_source_number = {}
     for source in source_rows(rtk):
+        reviewed_id = reviewed_id_by_source_number.get(source["number"])
+        if reviewed_id is not None:
+            if source["name"] != reviewed_name_by_source_number[source["number"]]:
+                raise ValueError(
+                    f"RTK source officer {source['number']} Korean name disagrees with reviewed identity override: "
+                    f"{source['name']}"
+                )
+            portrait_id_by_source_number[source["number"]] = reviewed_id
+            continue
         candidate_ids = ids_by_korean_name.get(source["name"], [])
         if not candidate_ids:
             raise ValueError(
@@ -1208,6 +1255,7 @@ def main():
     ap.add_argument("--report-json")
     ap.add_argument("--portrait-registry", default=str(DEFAULT_PORTRAIT_REGISTRY))
     ap.add_argument("--portrait-name-map", default=str(DEFAULT_PORTRAIT_NAME_MAP))
+    ap.add_argument("--portrait-join-overrides", default=str(DEFAULT_PORTRAIT_JOIN_OVERRIDES))
     a = ap.parse_args()
 
     rtk = read_rtk14(a.xlsx) if a.xlsx else read_rtk14_source_json(a.rtk_source_json)
@@ -1219,7 +1267,7 @@ def main():
         print(f"wrote RTK source JSON rows={len(source_rows(rtk))} -> {out}")
         return
 
-    attach_portrait_ids(rtk, a.portrait_registry, a.portrait_name_map)
+    attach_portrait_ids(rtk, a.portrait_registry, a.portrait_name_map, a.portrait_join_overrides)
     report = build_all(a.scenario_dir, a.out_dir, rtk, dry_run=a.dry_run)
     if a.report_json:
         write_report(report, a.report_json)

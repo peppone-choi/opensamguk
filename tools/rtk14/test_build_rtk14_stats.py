@@ -70,6 +70,18 @@ def write_portrait_contract(directory, rows):
     return registry, name_map
 
 
+def write_portrait_join_overrides(directory, rows):
+    overrides = directory / "name-join-overrides.tsv"
+    with overrides.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
+        writer.writerow(("name_kanji", "name_reading", "officer_number", "name_korean"))
+        for row in rows:
+            writer.writerow((
+                row["name_kanji"], row["name_reading"], row["officer_number"], row["name_korean"],
+            ))
+    return overrides
+
+
 def legacy_tuple(name, leadership=1, strength=2, intel=3, birth=150, death=220):
     return [777, name, "portrait", 7, "city", leadership, strength, intel, 9, birth, death, "ego", "special", "text"]
 
@@ -130,6 +142,51 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "duplicate Korean name"):
                 b.attach_portrait_ids(b._source_rows_to_rtk(drifted_rows), registry, name_map)
+
+    def test_portrait_registry_uses_reviewed_identity_override_for_duplicate_name_stat_drift(self):
+        contract_rows = source_rows()
+        contract_rows[1]["name"] = contract_rows[0]["name"]
+        drifted_rows = copy.deepcopy(contract_rows)
+        drifted_rows[1]["L"] += 1
+        drifted_rows[1]["total"] += 1
+        with TemporaryDirectory() as td:
+            directory = Path(td)
+            registry, name_map = write_portrait_contract(directory, contract_rows)
+            overrides = write_portrait_join_overrides(directory, [{
+                "name_kanji": "漢2",
+                "name_reading": "reading-2",
+                "officer_number": 2,
+                "name_korean": contract_rows[1]["name"],
+            }])
+
+            mapping = b.attach_portrait_ids(
+                b._source_rows_to_rtk(drifted_rows), registry, name_map, overrides,
+            )
+
+        self.assertEqual(10002, mapping[2])
+
+    def test_portrait_registry_fails_closed_on_invalid_reviewed_identity_override(self):
+        rows = source_rows()
+        with TemporaryDirectory() as td:
+            directory = Path(td)
+            registry, name_map = write_portrait_contract(directory, rows)
+            overrides = write_portrait_join_overrides(directory, [{
+                "name_kanji": "漢1",
+                "name_reading": "reading-1",
+                "officer_number": 1,
+                "name_korean": "다른장수",
+            }])
+            with self.assertRaisesRegex(ValueError, "Korean name"):
+                b.attach_portrait_ids(b._source_rows_to_rtk(rows), registry, name_map, overrides)
+
+            overrides = write_portrait_join_overrides(directory, [{
+                "name_kanji": "없는한자",
+                "name_reading": "없는음",
+                "officer_number": 1,
+                "name_korean": rows[0]["name"],
+            }])
+            with self.assertRaisesRegex(ValueError, "registry identity"):
+                b.attach_portrait_ids(b._source_rows_to_rtk(rows), registry, name_map, overrides)
 
     def test_portrait_registry_fails_closed_on_name_or_identity_drift(self):
         rows = source_rows()
