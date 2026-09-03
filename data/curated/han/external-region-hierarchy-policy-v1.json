@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "policyId": "han-external-region-hierarchy-policy-v1",
+  "referenceYear": 220,
+  "constraints": {
+    "macroRegionsAreDisplayHierarchyNotPoliticalOwnership": true,
+    "politicalOwnershipSeparate": true,
+    "recruitmentEligibilitySeparate": true,
+    "noPanEthnicKoreanPeninsulaUmbrella": true,
+    "noDirectionalUmbrellaForNamedNorthernOrWesternPeoples": true,
+    "jurisdictionLabelsUseAttestedPolitySettlementOrPeopleNames": true
+  },
+  "macroRegions": [
+    {
+      "id": "WESTERN-REGIONS-HAN-ADMINISTRATION",
+      "displayName": "구자속국",
+      "classification": "HAN_FRONTIER_ADMINISTRATION",
+      "geographicScope": "WESTERN_REGIONS",
+      "jurisdictionIds": ["JURISDICTION-PARENT-0171-SEAT"]
+    },
+    {
+      "id": "GOGURYEO",
+      "displayName": "고구려",
+      "classification": "POLITY",
+      "geographicScope": "KOREAN_PENINSULA",
+      "jurisdictionIds": ["X028", "X029"]
+    },
+    {
+      "id": "OKJEO",
+      "displayName": "옥저",
+      "classification": "PEOPLE_REGION",
+      "geographicScope": "KOREAN_PENINSULA",
+      "jurisdictionIds": ["X030", "X037"]
+    },
+    {
+      "id": "YILOU",
+      "displayName": "읍루",
+      "classification": "PEOPLE_REGION",
+      "geographicScope": "NORTHEAST_ASIA",
+      "jurisdictionIds": ["X039"]
+    },
+    {
+      "id": "BUYEO",
+      "displayName": "부여",
+      "classification": "POLITY",
+      "geographicScope": "NORTHEAST_ASIA",
+      "jurisdictionIds": ["X036"]
+    },
+    {
+      "id": "YE",
+      "displayName": "예",
+      "classification": "PEOPLE_REGION",
+      "geographicScope": "KOREAN_PENINSULA",
+      "jurisdictionIds": ["X038"]
+    },
+    {
+      "id": "MAHAN",
+      "displayName": "마한",
+      "classification": "CONFEDERATION_REGION",
+      "geographicScope": "KOREAN_PENINSULA",
+      "jurisdictionIds": ["X040", "X041", "X042"]
+    },
+    {
+      "id": "JINHAN",
+      "displayName": "진한",
+      "classification": "CONFEDERATION_REGION",
+      "geographicScope": "KOREAN_PENINSULA",
+      "jurisdictionIds": ["X032", "X033", "X034", "X044", "X049"]
+    },
+    {
+      "id": "BYEONHAN",
+      "displayName": "변한",
+      "classification": "CONFEDERATION_REGION",
+      "geographicScope": "KOREAN_PENINSULA",
+      "jurisdictionIds": ["X031", "X045", "X046", "X047", "X048"]
+    },
+    {
+      "id": "USAN",
+      "displayName": "우산국",
+      "classification": "ISLAND_POLITY",
+      "geographicScope": "KOREAN_PENINSULA",
+      "jurisdictionIds": ["X035"]
+    },
+    {
+      "id": "JUHO",
+      "displayName": "주호",
+      "classification": "ISLAND_PEOPLE_REGION",
+      "geographicScope": "KOREAN_PENINSULA",
+      "jurisdictionIds": ["X043"]
+    },
+    {
+      "id": "WA",
+      "displayName": "왜",
+      "classification": "POLITY_NETWORK",
+      "geographicScope": "JAPANESE_ARCHIPELAGO",
+      "jurisdictionIds": ["X050", "X051", "X052", "X053", "X054", "X055"]
+    },
+    {
+      "id": "YIZHOU",
+      "displayName": "이주",
+      "classification": "ISLAND_REGION",
+      "geographicScope": "TAIWAN",
+      "jurisdictionIds": ["X056"]
+    },
+    {
+      "id": "RYUKYU-REVIEW",
+      "displayName": "유구",
+      "classification": "ANACHRONISTIC_NAME_REQUIRES_REVIEW",
+      "geographicScope": "RYUKYU_ISLANDS",
+      "jurisdictionIds": ["X057"]
+    },
+    {
+      "id": "QIANG",
+      "displayName": "강",
+      "classification": "PEOPLE_REGION",
+      "geographicScope": "NORTHWEST_FRONTIER",
+      "jurisdictionIds": ["X058"]
+    },
+    {
+      "id": "DI",
+      "displayName": "저",
+      "classification": "PEOPLE_REGION",
+      "geographicScope": "NORTHWEST_FRONTIER",
+      "jurisdictionIds": ["X059"]
+    },
+    {
+      "id": "NANMAN",
+      "displayName": "남만",
+      "classification": "GAMEPLAY_MACRO_REGION",
+      "geographicScope": "SOUTHWEST_FRONTIER",
+      "jurisdictionIds": ["X060"]
+    },
+    {
+      "id": "SHANYUE",
+      "displayName": "산월",
+      "classification": "PEOPLE_REGION",
+      "geographicScope": "SOUTHEAST_HIGHLANDS",
+      "jurisdictionIds": ["X061"]
+    },
+    {
+      "id": "WUHUAN",
+      "displayName": "오환",
+      "classification": "PEOPLE_POLITY",
+      "geographicScope": "NORTHERN_FRONTIER",
+      "jurisdictionIds": ["X062"]
+    },
+    {
+      "id": "XIANBEI",
+      "displayName": "선비",
+      "classification": "PEOPLE_POLITY",
+      "geographicScope": "NORTHERN_FRONTIER",
+      "jurisdictionIds": ["X063"]
+    },
+    {
+      "id": "SOUTHERN-XIONGNU",
+      "displayName": "남흉노",
+      "classification": "PEOPLE_POLITY",
+      "geographicScope": "NORTHERN_FRONTIER",
+      "jurisdictionIds": ["X064"]
+    }
+  ],
+  "sourceBackedCandidates": [
+    {
+      "id": "SHAN",
+      "displayName": "선국",
+      "nameCh": "撣國",
+      "proposedMacroRegionId": "NANMAN",
+      "activation": "INACTIVE_COORDINATE_AND_SCOPE_REVIEW_REQUIRED",
+      "sourceCitation": {
+        "source": "後漢書 卷86 南蠻西南夷列傳",
+        "corpusPath": "corpus/hhs-086.txt",
+        "lines": [90, 92],
+        "url": "https://zh.wikisource.org/zh-hant/%E5%BE%8C%E6%BC%A2%E6%9B%B8/%E5%8D%B786"
+      }
+    },
+    {
+      "id": "YEDIAO",
+      "displayName": "엽조국",
+      "nameCh": "葉調國",
+      "proposedMacroRegionId": "NANMAN",
+      "activation": "INACTIVE_COORDINATE_AND_SCOPE_REVIEW_REQUIRED",
+      "sourceCitation": {
+        "source": "後漢書 卷86 南蠻西南夷列傳",
+        "corpusPath": "corpus/hhs-086.txt",
+        "line": 38,
+        "url": "https://zh.wikisource.org/zh-hant/%E5%BE%8C%E6%BC%A2%E6%9B%B8/%E5%8D%B786"
+      }
+    },
+    {
+      "id": "LINYI",
+      "displayName": "임읍",
+      "nameCh": "林邑",
+      "proposedMacroRegionId": "NANMAN",
+      "activation": "INACTIVE_COORDINATE_AND_SCOPE_REVIEW_REQUIRED",
+      "sourceCitation": {
+        "source": "三國志 卷60 呂岱傳",
+        "corpusPath": "corpus/sgz-60.txt",
+        "line": 51,
+        "url": "https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%9C%8B%E5%BF%97/%E5%8D%B760"
+      }
+    },
+    {
+      "id": "FUNAN",
+      "displayName": "부남",
+      "nameCh": "扶南",
+      "proposedMacroRegionId": "NANMAN",
+      "activation": "INACTIVE_COORDINATE_AND_SCOPE_REVIEW_REQUIRED",
+      "sourceCitation": {
+        "source": "三國志 卷60 呂岱傳",
+        "corpusPath": "corpus/sgz-60.txt",
+        "line": 51,
+        "url": "https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%9C%8B%E5%BF%97/%E5%8D%B760"
+      }
+    },
+    {
+      "id": "TANGMING",
+      "displayName": "당명",
+      "nameCh": "堂明",
+      "proposedMacroRegionId": "NANMAN",
+      "activation": "INACTIVE_COORDINATE_AND_SCOPE_REVIEW_REQUIRED",
+      "sourceCitation": {
+        "source": "三國志 卷60 呂岱傳",
+        "corpusPath": "corpus/sgz-60.txt",
+        "line": 51,
+        "url": "https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%9C%8B%E5%BF%97/%E5%8D%B760"
+      }
+    }
+  ],
+  "webReferences": [
+    {
+      "title": "국립중앙박물관 고조선·부여·삼한 전시 해설",
+      "url": "https://www.museum.go.kr/MUSEUM/contents/M0201030400.do?schM=list&showHallId=760&showroomCode=DM0048",
+      "use": "삼한이 다수 소국으로 구성되었다는 현대 연구기관 설명"
+    },
+    {
+      "title": "국사편찬위원회 사료로 본 한국사: 삼한의 사회와 문화",
+      "url": "https://contents.history.go.kr/front/hm/view.do?levelId=hm_003_0080",
+      "use": "三國志 東夷傳의 마한·진한·변한 및 소국 구조 대조"
+    }
+  ]
+}
