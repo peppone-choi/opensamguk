@@ -107,6 +107,30 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         self.assertEqual("11000.png", added[2])
         self.assertEqual(1000, added[17])
 
+    def test_portrait_registry_uses_an_exact_unique_korean_name_when_stats_drift(self):
+        contract_rows = source_rows()
+        drifted_rows = copy.deepcopy(contract_rows)
+        drifted_rows[27]["L"] += 1
+        drifted_rows[27]["total"] += 1
+        with TemporaryDirectory() as td:
+            registry, name_map = write_portrait_contract(Path(td), contract_rows)
+
+            mapping = b.attach_portrait_ids(b._source_rows_to_rtk(drifted_rows), registry, name_map)
+
+        self.assertEqual(10028, mapping[28])
+
+    def test_portrait_registry_requires_fingerprint_for_a_duplicate_korean_name(self):
+        contract_rows = source_rows()
+        contract_rows[1]["name"] = contract_rows[0]["name"]
+        drifted_rows = copy.deepcopy(contract_rows)
+        drifted_rows[1]["L"] += 1
+        drifted_rows[1]["total"] += 1
+        with TemporaryDirectory() as td:
+            registry, name_map = write_portrait_contract(Path(td), contract_rows)
+
+            with self.assertRaisesRegex(ValueError, "duplicate Korean name"):
+                b.attach_portrait_ids(b._source_rows_to_rtk(drifted_rows), registry, name_map)
+
     def test_portrait_registry_fails_closed_on_name_or_identity_drift(self):
         rows = source_rows()
         with TemporaryDirectory() as td:
