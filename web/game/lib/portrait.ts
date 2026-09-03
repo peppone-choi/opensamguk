@@ -18,6 +18,9 @@ import { IMAGE_CDN_BASE } from './constants';
 /** 공유 초상 CDN 디렉터리. */
 export const PORTRAIT_CDN = `${IMAGE_CDN_BASE}/icons`;
 
+/** RTK14 안정 장수 ID(10001-11000) 초상의 정본 서빙 디렉터리. */
+export const RTK14_PORTRAIT_CDN = `${IMAGE_CDN_BASE}/portraits/rtk14/serving/portrait`;
+
 /** 초상이 없거나 경로가 깨졌을 때의 기본 이미지(검증: icons/default.jpg 200). */
 export const DEFAULT_PORTRAIT = `${PORTRAIT_CDN}/default.jpg`;
 
@@ -25,6 +28,8 @@ const HAS_EXT = /\.(jpg|jpeg|png|gif|webp)$/i;
 
 /** 공유 CDN 초상 파일명: 영숫자/밑줄/하이픈 + 선택적 지원 확장자. 경로 구분자·상위 이동은 거부. */
 const SHARED_ICON = /^[A-Za-z0-9_-]+(\.(jpg|jpeg|png|gif|webp))?$/i;
+
+const RTK14_PORTRAIT = /^(\d{5})(?:\.png)?$/;
 
 /** gateway-api canonical managed 파일명(LocalProfileIconStorage MANAGED_FILE): 8자리 hex + 관리 확장자. */
 const MANAGED_ICON = /^[0-9a-f]{8}\.(avif|webp|jpg|png|gif)$/;
@@ -45,6 +50,13 @@ export function portraitUrl(picture?: string | null, imageServer?: number | null
     if (imageServer) {
         // 서버 로컬 업로드 — canonical managed 파일명이면 같은 출처 /d_pic/, 아니면 폴백(날조 금지).
         return MANAGED_ICON.test(normalizedPicture) ? `/d_pic/${normalizedPicture}` : DEFAULT_PORTRAIT;
+    }
+    const rtk14Match = RTK14_PORTRAIT.exec(normalizedPicture);
+    if (rtk14Match) {
+        const officerId = Number(rtk14Match[1]);
+        if (officerId >= 10001 && officerId <= 11000) {
+            return `${RTK14_PORTRAIT_CDN}/${officerId}.png`;
+        }
     }
     // 공유 CDN — 화이트리스트 밖 값(경로 주입·traversal 포함)은 폴백.
     if (!SHARED_ICON.test(normalizedPicture)) return DEFAULT_PORTRAIT;

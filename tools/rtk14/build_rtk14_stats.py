@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 import argparse
 import copy
+import csv
+import hashlib
 import json
 import re
 import shutil
@@ -44,9 +46,14 @@ XLSX_HEADERS = {
     "주의": "ideology",
 }
 OVERRIDE_PATH = Path(__file__).with_name("rtk14_unmatched_overrides.json")
+SCENARIO_TOOL_DIR = Path(__file__).resolve().parents[1] / "scenario"
+DEFAULT_PORTRAIT_REGISTRY = SCENARIO_TOOL_DIR / "officer-id-registry.tsv"
+DEFAULT_PORTRAIT_NAME_MAP = SCENARIO_TOOL_DIR / "officer-name-map.tsv"
 STAT_MIN = 1
 STAT_MAX = 100
 OVERRIDE_SCHEMA_VERSION = 2
+PORTRAIT_ID_MIN = 10001
+PORTRAIT_ID_MAX = 11000
 
 
 def base_name(name):
@@ -323,6 +330,81 @@ def source_rows(rtk):
     return rtk_to_source_rows(rtk)
 
 
+def _portrait_fingerprint(source):
+    values = [
+        source["birth"],
+        source["death"],
+        source["L"],
+        source["S"],
+        source["I"],
+        source["politics"],
+        source["charm"],
+    ]
+    encoded = json.dumps(values, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _read_tsv(path):
+    with open(path, encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle, delimiter="\t"))
+
+
+def attach_portrait_ids(rtk, registry_path=DEFAULT_PORTRAIT_REGISTRY, name_map_path=DEFAULT_PORTRAIT_NAME_MAP):
+    registry_rows = _read_tsv(registry_path)
+    name_rows = _read_tsv(name_map_path)
+    expected_ids = set(range(PORTRAIT_ID_MIN, PORTRAIT_ID_MAX + 1))
+
+    registry_by_fingerprint = {}
+    registry_ids = set()
+    for row in registry_rows:
+        try:
+            stable_id = int(row["id"])
+            fingerprint = row["fingerprint_sha256"]
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError("portrait registry row is invalid") from error
+        if stable_id in registry_ids or fingerprint in registry_by_fingerprint:
+            raise ValueError("portrait registry IDs and fingerprints must be unique")
+        registry_ids.add(stable_id)
+        registry_by_fingerprint[fingerprint] = stable_id
+    if registry_ids != expected_ids:
+        raise ValueError(f"portrait registry IDs must be exactly {PORTRAIT_ID_MIN}..{PORTRAIT_ID_MAX}")
+
+    names_by_id = {}
+    for row in name_rows:
+        try:
+            stable_id = int(row["id"])
+            korean_name = row["name_korean"]
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError("portrait Korean name map row is invalid") from error
+        if stable_id in names_by_id or not korean_name:
+            raise ValueError("portrait Korean name map IDs must be unique and named")
+        names_by_id[stable_id] = korean_name
+    if set(names_by_id) != expected_ids:
+        raise ValueError(f"portrait Korean name map IDs must be exactly {PORTRAIT_ID_MIN}..{PORTRAIT_ID_MAX}")
+
+    portrait_id_by_source_number = {}
+    for source in source_rows(rtk):
+        fingerprint = _portrait_fingerprint(source)
+        stable_id = registry_by_fingerprint.get(fingerprint)
+        if stable_id is None:
+            raise ValueError(f"RTK source officer {source['number']} has no portrait registry fingerprint")
+        if names_by_id[stable_id] != source["name"]:
+            raise ValueError(
+                f"RTK source officer {source['number']} Korean name does not match portrait stable ID {stable_id}"
+            )
+        portrait_id_by_source_number[source["number"]] = stable_id
+    if (
+        len(portrait_id_by_source_number) != len(expected_ids)
+        or set(portrait_id_by_source_number.values()) != expected_ids
+    ):
+        raise ValueError("RTK source must map exactly 1000 portrait identities")
+
+    for candidates in rtk.values():
+        for source in candidates:
+            source["portraitId"] = portrait_id_by_source_number[source["number"]]
+    return portrait_id_by_source_number
+
+
 def read_rtk14_source_json(path):
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
@@ -582,6 +664,8 @@ def _legacy_active_at_start(entry, start_year):
 def _apply_source(arr, source, rtk14_added, legacy_active_at_start):
     while len(arr) <= 24:
         arr.append(None)
+    if "portraitId" in source:
+        arr[2] = f"{source['portraitId']}.png"
     arr[5] = source["L"]
     arr[6] = source["S"]
     arr[7] = source["I"]
@@ -612,7 +696,7 @@ def _new_general(source, name):
     return [
         0,
         name,
-        None,
+        f"{source['portraitId']}.png" if "portraitId" in source else None,
         0,
         None,
         source["L"],
@@ -792,6 +876,15 @@ def _verify_roster(
 def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_overrides=None, unmatched_overrides=None):
     enriched = copy.deepcopy(scenario)
     sources = source_rows(rtk)
+    portrait_ids = {
+        source["number"]: source["portraitId"]
+        for candidates in rtk.values()
+        for source in candidates
+        if "portraitId" in source
+    }
+    for source in sources:
+        if source["number"] in portrait_ids:
+            source["portraitId"] = portrait_ids[source["number"]]
     source_by_id = {row["number"]: row for row in sources}
     entries = read_devsam(enriched)
     start_year = _scenario_start_year(enriched)
@@ -1105,6 +1198,8 @@ def main():
     ap.add_argument("--out-dir", default="infra/src/main/resources/rtk14-scenarios.local")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--report-json")
+    ap.add_argument("--portrait-registry", default=str(DEFAULT_PORTRAIT_REGISTRY))
+    ap.add_argument("--portrait-name-map", default=str(DEFAULT_PORTRAIT_NAME_MAP))
     a = ap.parse_args()
 
     rtk = read_rtk14(a.xlsx) if a.xlsx else read_rtk14_source_json(a.rtk_source_json)
@@ -1116,6 +1211,7 @@ def main():
         print(f"wrote RTK source JSON rows={len(source_rows(rtk))} -> {out}")
         return
 
+    attach_portrait_ids(rtk, a.portrait_registry, a.portrait_name_map)
     report = build_all(a.scenario_dir, a.out_dir, rtk, dry_run=a.dry_run)
     if a.report_json:
         write_report(report, a.report_json)
