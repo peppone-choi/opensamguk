@@ -128,6 +128,9 @@ jobs:
             --out-dir "$staging_dir" \
             > "$diagnostics" 2>&1; then
             echo "ERROR: RTK14 scenario enrichment failed." >&2
+            # The builder's fail-closed errors identify only contract fields
+            # (officer number/name/stable ID), never the secret source payload.
+            sed -n '1,120p' "$diagnostics" >&2
             exit 1
           fi
 
