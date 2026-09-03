@@ -170,13 +170,13 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
 
         self.assertEqual(0, result.returncode, result.stderr or result.stdout)
         snapshot = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
-        self.assertEqual(29, snapshot["provinceTopology"]["disconnectedCount"])
-        self.assertEqual(12, snapshot["provinceTopology"]["fullyEnclosedCount"])
+        self.assertEqual(27, snapshot["provinceTopology"]["disconnectedCount"])
+        self.assertEqual(11, snapshot["provinceTopology"]["fullyEnclosedCount"])
         self.assertEqual(0, snapshot["provinceTopology"]["belowMinimumCount"])
-        self.assertEqual(31, snapshot["jurisdictionTopology"]["disconnectedCount"])
-        self.assertEqual(11, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
-        self.assertEqual(45, snapshot["commanderyTopology"]["disconnectedCount"])
-        self.assertEqual(12, snapshot["commanderyTopology"]["fullyEnclosedCount"])
+        self.assertEqual(29, snapshot["jurisdictionTopology"]["disconnectedCount"])
+        self.assertEqual(10, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
+        self.assertEqual(43, snapshot["commanderyTopology"]["disconnectedCount"])
+        self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
         self.assertEqual(73, snapshot["singleJurisdictionCommanderyCount"])
 
     def test_check_fails_closed_when_snapshot_or_input_drifts(self) -> None:

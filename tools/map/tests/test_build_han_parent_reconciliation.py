@@ -554,21 +554,21 @@ class HanParentReconciliationTest(unittest.TestCase):
         )
         self.assertEqual(
             {
-                "EXACT_APPROVED": 80_913,
-                "PROPOSED_GEOMETRIC": 18_201,
-                "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_711,
+                "EXACT_APPROVED": 80_924,
+                "PROPOSED_GEOMETRIC": 18_202,
+                "BLOCKED_DIRECT_TERRITORY_REVIEW": 1_699,
                 "BLOCKED_EXTERNAL_POLITY_REVIEW": 6_331,
             },
             dict(decision_cells),
         )
         self.assertEqual(357, summary["unresolvedRowCount"])
-        self.assertEqual(26_243, summary["unresolvedCellCount"])
+        self.assertEqual(26_232, summary["unresolvedCellCount"])
         self.assertEqual(
             {"rowCount": 194, "cellCount": 10_158},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 90, "cellCount": 8_043},
+            {"rowCount": 90, "cellCount": 8_044},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
@@ -596,7 +596,7 @@ class HanParentReconciliationTest(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            {"rowCount": 281, "cellCount": 18_132},
+            {"rowCount": 281, "cellCount": 18_133},
             self.ledger["summary"]["geometryDiagnostics"]["uniqueNearest"],
         )
         self.assertEqual(

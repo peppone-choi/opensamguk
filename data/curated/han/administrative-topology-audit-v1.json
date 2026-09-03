@@ -23,7 +23,7 @@
     "minimumCellCount": 8,
     "belowMinimumCount": 0,
     "belowMinimum": [],
-    "disconnectedCount": 29,
+    "disconnectedCount": 27,
     "disconnected": [
       {
         "id": "40426",
@@ -39,14 +39,6 @@
         "componentCellCounts": [
           30,
           7
-        ]
-      },
-      {
-        "id": "40957",
-        "displayName": "파구현",
-        "componentCellCounts": [
-          174,
-          1
         ]
       },
       {
@@ -119,14 +111,6 @@
         "componentCellCounts": [
           50,
           3
-        ]
-      },
-      {
-        "id": "87273",
-        "displayName": "조강현",
-        "componentCellCounts": [
-          26,
-          11
         ]
       },
       {
@@ -268,7 +252,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 12,
+    "fullyEnclosedCount": 11,
     "fullyEnclosed": [
       {
         "id": "40111",
@@ -279,17 +263,6 @@
         ],
         "surroundingDisplayNames": [
           "부춘현"
-        ]
-      },
-      {
-        "id": "40957",
-        "displayName": "파구현",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "41142"
-        ],
-        "surroundingDisplayNames": [
-          "영수현"
         ]
       },
       {
@@ -405,7 +378,7 @@
     ]
   },
   "jurisdictionTopology": {
-    "disconnectedCount": 31,
+    "disconnectedCount": 29,
     "disconnected": [
       {
         "id": "40426",
@@ -421,14 +394,6 @@
         "componentCellCounts": [
           30,
           7
-        ]
-      },
-      {
-        "id": "40957",
-        "displayName": "파구현",
-        "componentCellCounts": [
-          174,
-          1
         ]
       },
       {
@@ -541,14 +506,6 @@
         "componentCellCounts": [
           50,
           3
-        ]
-      },
-      {
-        "id": "87273",
-        "displayName": "조강현",
-        "componentCellCounts": [
-          26,
-          11
         ]
       },
       {
@@ -670,7 +627,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 11,
+    "fullyEnclosedCount": 10,
     "fullyEnclosed": [
       {
         "id": "40111",
@@ -685,20 +642,6 @@
         "commanderyId": "PARENT-0052",
         "surroundingCommanderyId": "PARENT-0052",
         "sameCommandery": true
-      },
-      {
-        "id": "40957",
-        "displayName": "파구현",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "41142"
-        ],
-        "surroundingDisplayNames": [
-          "영수현"
-        ],
-        "commanderyId": "PARENT-0133",
-        "surroundingCommanderyId": "PARENT-0053",
-        "sameCommandery": false
       },
       {
         "id": "41323",
@@ -829,7 +772,7 @@
     ]
   },
   "commanderyTopology": {
-    "disconnectedCount": 45,
+    "disconnectedCount": 43,
     "disconnected": [
       {
         "id": "PARENT-0000",
@@ -1028,7 +971,7 @@
         "id": "PARENT-0053",
         "displayName": "예장군",
         "componentCellCounts": [
-          6980,
+          6981,
           72,
           28,
           9,
@@ -1122,14 +1065,6 @@
         ]
       },
       {
-        "id": "PARENT-0133",
-        "displayName": "여릉군",
-        "componentCellCounts": [
-          530,
-          1
-        ]
-      },
-      {
         "id": "PARENT-0147",
         "displayName": "강양군",
         "componentCellCounts": [
@@ -1202,14 +1137,6 @@
         ]
       },
       {
-        "id": "PARENT-0167",
-        "displayName": "장락군",
-        "componentCellCounts": [
-          26,
-          11
-        ]
-      },
-      {
         "id": "PARENT-0168",
         "displayName": "양안군",
         "componentCellCounts": [
@@ -1226,7 +1153,7 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 12,
+    "fullyEnclosedCount": 10,
     "fullyEnclosed": [
       {
         "id": "PARENT-0045",
@@ -1295,17 +1222,6 @@
         ]
       },
       {
-        "id": "PARENT-0133",
-        "displayName": "여릉군",
-        "componentCellCount": 1,
-        "surroundingIds": [
-          "PARENT-0053"
-        ],
-        "surroundingDisplayNames": [
-          "예장군"
-        ]
-      },
-      {
         "id": "PARENT-0144",
         "displayName": "재동군",
         "componentCellCount": 46,
@@ -1336,17 +1252,6 @@
         ],
         "surroundingDisplayNames": [
           "남양군"
-        ]
-      },
-      {
-        "id": "PARENT-0167",
-        "displayName": "장락군",
-        "componentCellCount": 11,
-        "surroundingIds": [
-          "PARENT-0017"
-        ],
-        "surroundingDisplayNames": [
-          "안평국"
         ]
       },
       {
@@ -3510,7 +3415,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "ba930d4931f489859b0e2b9c0d01dadf0d51a70363941fdee4b1da346f2fd53b"
+      "sha256": "2c1cb2af31e278527d8041f0162b8da837d65b33dc1e0e204c61221f71e08819"
     },
     "administrativeUnits": {
       "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
