@@ -26,6 +26,7 @@ vi.mock('@opensamguk/ui', async () => {
         nationColor: city.nationColor,
         ...(props.administrativeOwnership ? {
           hierarchyPath: '공간 낙양 → 낙양현 → 하남윤',
+          displayedOwnerNationName: '한',
           provinceOccupantNationName: '위',
           jurisdictionOwnerNationName: '한',
           commanderyControllerNationName: '조',
@@ -114,7 +115,7 @@ describe('MapPreview shared isometric renderer', () => {
     expect(screen.getByRole('status')).toHaveTextContent('위');
   });
 
-  it('게이트웨이에서도 3계층 소유권과 불일치를 전달·표시한다', () => {
+  it('게이트웨이에서도 소유권을 전달하고 기본 툴팁은 계층 경로와 현재 레이어 소유자만 표시한다', () => {
     render(<MapPreview mapData={{
       ...MAP,
       provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1 }],
@@ -133,10 +134,12 @@ describe('MapPreview shared isometric renderer', () => {
       commanderyControl: [{ commanderyId: 'C1', nationId: 3, nationColor: '#00ff00', nationName: '조' }],
     });
     fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
-    expect(screen.getByRole('status')).toHaveTextContent('공간 낙양 → 낙양현 → 하남윤');
-    expect(screen.getByRole('status')).toHaveTextContent('공간 점유: 위');
-    expect(screen.getByRole('status')).toHaveTextContent('현 소유: 한');
-    expect(screen.getByRole('status')).toHaveTextContent('군국 통제: 조');
+    expect(document.querySelectorAll('.map-preview-tooltip-meta')).toHaveLength(1);
+    expect(document.querySelector('.map-preview-tooltip-meta')).toHaveTextContent('공간 낙양 → 낙양현 → 하남윤 · 공간: 위 / 현: 한 / 군국: 조');
+    expect(screen.getByRole('status')).not.toHaveTextContent('공간 점유:');
+    expect(screen.getByRole('status')).not.toHaveTextContent('현 소유:');
+    expect(screen.getByRole('status')).not.toHaveTextContent('군국 통제:');
+    expect(screen.getByRole('status')).not.toHaveTextContent('다릅니다.');
   });
 
   it.each([

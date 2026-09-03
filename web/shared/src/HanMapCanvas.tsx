@@ -199,6 +199,7 @@ export interface IsoCountyHover {
   jurisdictionOwnerNationName?: string;
   commanderyControllerNationId?: number;
   commanderyControllerNationName?: string;
+  displayedOwnerNationName?: string;
   provinceJurisdictionMismatch?: boolean;
   jurisdictionCommanderyMismatch?: boolean;
   ownershipMismatch?: boolean;
@@ -1803,6 +1804,7 @@ export function HanMapCanvas({
       jurisdictionOwnerNationName: ownerName(jurisdictionOwner),
       commanderyControllerNationId: commanderyOwner?.nationId,
       commanderyControllerNationName: ownerName(commanderyOwner),
+      displayedOwnerNationName: ownerName(displayedOwner),
       provinceJurisdictionMismatch,
       jurisdictionCommanderyMismatch,
       ownershipMismatch: provinceJurisdictionMismatch || jurisdictionCommanderyMismatch,
@@ -1818,8 +1820,8 @@ export function HanMapCanvas({
       level: completeOwnership.directProvinces?.has(provinceId) && city
         ? city.level : (county?.level ?? city?.level ?? 5),
       nationId: displayedOwner?.nationId ?? city?.nationId ?? 0,
-      nationName: displayedOwner?.nationName ?? city?.nationName,
-      nationColor: displayedOwner?.nationColor ?? city?.nationColor,
+      nationName: displayedOwner ? ownerName(displayedOwner) : city?.nationName,
+      nationColor: displayedOwner ? displayedOwner.nationColor : city?.nationColor,
     };
   };
 
