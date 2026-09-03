@@ -20,10 +20,6 @@ const DEFAULT_PHASES_PER_MONTH = 3;
 const DEFAULT_TURNS_PER_YEAR = 36;
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
 const LS_SINGLE_TAP = 'sam.toggleSingleTap';
-const LEVEL_TEXT: Record<number, string> = {
-    1: '수', 2: '진', 3: '관', 4: '이', 5: '소', 6: '중', 7: '대', 8: '특', 9: '경', 10: '영현', 11: '장현',
-};
-
 type MapTitleGameConst = NonNullable<GameConstResponse['gameConst']>;
 
 export function seasonOf(month: number): string {
@@ -339,7 +335,7 @@ export default function MapViewer({
             </div>
             {hoverCounty && (
                 <div className="map-tooltip" role="status" style={{ left: cursor.x + 12, top: cursor.y + 30 }}>
-                    <div className="map-tooltip-name">{`【${hoverCounty.regionName} | ${LEVEL_TEXT[hoverCounty.level] ?? hoverCounty.level}】 ${hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}`}</div>
+                    <div className="map-tooltip-name">{hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}</div>
                     {hoverMeta && <div className="map-tooltip-meta">{hoverMeta}</div>}
                 </div>
             )}

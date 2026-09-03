@@ -1811,12 +1811,14 @@ export function HanMapCanvas({
       regionName: regionByCommanderyId.get(commanderyId) ?? city?.regionName ?? '',
       commanderyName,
       countyName: jurisdictionRecord?.displayName ?? provinceRecord?.displayName ?? county!.name,
-      displayName: provinceRecord
-        ? formatProvinceTooltip(
-          jurisdictionRecord ? { ...provinceRecord, displayName: jurisdictionRecord.displayName } : provinceRecord,
-          parentRecord,
-        )
-        : `${commanderyName} ${county!.name}`,
+      displayName: administrativeLayer === 'COMMANDERY'
+        ? commanderyName
+        : provinceRecord
+          ? formatProvinceTooltip(
+            jurisdictionRecord ? { ...provinceRecord, displayName: jurisdictionRecord.displayName } : provinceRecord,
+            parentRecord,
+          )
+          : `${commanderyName} ${county!.name}`,
       level: completeOwnership.directProvinces?.has(provinceId) && city
         ? city.level : (county?.level ?? city?.level ?? 5),
       nationId: displayedOwner?.nationId ?? city?.nationId ?? 0,

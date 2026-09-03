@@ -94,11 +94,13 @@ describe('MapViewer shared canvas overlays', () => {
   it('shows the region commandery and county from the polygon callback', () => {
     render(<MapViewer mapData={MAP} />);
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
-    expect(screen.getByRole('status')).toHaveTextContent('【사예 | 경】 경조윤 장안현');
+    expect(screen.getByRole('status')).toHaveTextContent('경조윤 장안현');
+    expect(screen.getByRole('status')).not.toHaveTextContent('사예');
+    expect(screen.getByRole('status')).not.toHaveTextContent('【');
     expect(screen.getByRole('status')).toHaveTextContent('위');
   });
 
-  it('투영 소유권을 전달하고 기본 툴팁은 계층 경로와 현재 레이어 소유자만 한 줄로 표시한다', () => {
+  it('투영 소유권을 전달하고 툴팁은 소유자 정보만 한 줄로 표시한다', () => {
     render(<MapViewer mapData={{
       ...MAP,
       provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1 }],
@@ -114,7 +116,8 @@ describe('MapViewer shared canvas overlays', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
     expect(document.querySelectorAll('.map-tooltip-meta')).toHaveLength(1);
-    expect(document.querySelector('.map-tooltip-meta')).toHaveTextContent('공간 낙양 → 낙양현 → 하남윤 · 공간: 위 / 현: 위 / 군국: 한');
+    expect(document.querySelector('.map-tooltip-meta')).toHaveTextContent('공간: 위 / 현: 위 / 군국: 한');
+    expect(document.querySelector('.map-tooltip-meta')).not.toHaveTextContent('→');
     expect(screen.getByRole('status')).not.toHaveTextContent('공간 점유:');
     expect(screen.getByRole('status')).not.toHaveTextContent('현 소유:');
     expect(screen.getByRole('status')).not.toHaveTextContent('군국 통제:');

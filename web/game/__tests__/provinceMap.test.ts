@@ -33,7 +33,7 @@ describe('compact map tooltip metadata', () => {
     expect(formatCompactMapTooltipMeta({
       hierarchyPath: '낙양 → 낙양현 → 하남윤',
       displayedOwnerName: '위',
-    })).toBe('낙양 → 낙양현 → 하남윤 · 위');
+    })).toBe('위');
   });
 
   it('keeps all conflicting owners in one compact row', () => {
@@ -44,14 +44,14 @@ describe('compact map tooltip metadata', () => {
       provinceOccupantNationName: '위',
       jurisdictionOwnerNationName: '한',
       commanderyControllerNationName: '조',
-    })).toBe('낙양 → 낙양현 → 하남윤 · 공간: 위 / 현: 한 / 군국: 조');
+    })).toBe('공간: 위 / 현: 한 / 군국: 조');
   });
 
   it('preserves an explicit unowned active layer', () => {
     expect(formatCompactMapTooltipMeta({
       hierarchyPath: '낙양 → 낙양현 → 하남윤',
       displayedOwnerName: '미소유',
-    })).toBe('낙양 → 낙양현 → 하남윤 · 미소유');
+    })).toBe('미소유');
   });
 });
 
