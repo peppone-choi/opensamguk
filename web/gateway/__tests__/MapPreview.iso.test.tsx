@@ -111,7 +111,9 @@ describe('MapPreview shared isometric renderer', () => {
   it('shows the lobby region commandery and county through the polygon callback', () => {
     render(<MapPreview mapData={MAP} />);
     fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
-    expect(screen.getByRole('status')).toHaveTextContent('【사예 | 경】 경조윤 장안현');
+    expect(screen.getByRole('status')).toHaveTextContent('경조윤 장안현');
+    expect(screen.getByRole('status')).not.toHaveTextContent('사예');
+    expect(screen.getByRole('status')).not.toHaveTextContent('【');
     expect(screen.getByRole('status')).toHaveTextContent('위');
   });
 
@@ -135,7 +137,8 @@ describe('MapPreview shared isometric renderer', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
     expect(document.querySelectorAll('.map-preview-tooltip-meta')).toHaveLength(1);
-    expect(document.querySelector('.map-preview-tooltip-meta')).toHaveTextContent('공간 낙양 → 낙양현 → 하남윤 · 공간: 위 / 현: 한 / 군국: 조');
+    expect(document.querySelector('.map-preview-tooltip-meta')).toHaveTextContent('공간: 위 / 현: 한 / 군국: 조');
+    expect(document.querySelector('.map-preview-tooltip-meta')).not.toHaveTextContent('→');
     expect(screen.getByRole('status')).not.toHaveTextContent('공간 점유:');
     expect(screen.getByRole('status')).not.toHaveTextContent('현 소유:');
     expect(screen.getByRole('status')).not.toHaveTextContent('군국 통제:');

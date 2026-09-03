@@ -10,10 +10,6 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
-const LEVEL_TEXT: Record<number, string> = {
-    1: '수', 2: '진', 3: '관', 4: '이', 5: '소', 6: '중', 7: '대', 8: '특', 9: '경', 10: '영현', 11: '장현',
-};
-
 interface MapCity {
     id: number;
     name: string;
@@ -70,10 +66,6 @@ export function seasonOf(month: number): string {
     if (month <= 6) return 'summer';
     if (month <= 9) return 'fall';
     return 'winter';
-}
-
-function levelText(level: number): string {
-    return LEVEL_TEXT[level] ?? String(level);
 }
 
 export default function MapPreview({
@@ -237,7 +229,7 @@ export default function MapPreview({
                     style={{ left: cursor.x + 12, top: cursor.y + 16 }}
                 >
                     <div className="map-preview-tooltip-name">
-                        {`【${hoverCounty.regionName} | ${levelText(hoverCounty.level)}】 ${hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}`}
+                        {hoverCounty.displayName ?? `${hoverCounty.commanderyName} ${hoverCounty.countyName}`}
                     </div>
                     {hoverMeta && <div className="map-preview-tooltip-meta">{hoverMeta}</div>}
                 </div>

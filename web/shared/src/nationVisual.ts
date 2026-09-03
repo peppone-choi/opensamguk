@@ -27,7 +27,6 @@ export interface CompactMapTooltipMetaInput {
 }
 
 export function formatCompactMapTooltipMeta({
-  hierarchyPath,
   displayedOwnerName,
   ownershipMismatch = false,
   provinceOccupantNationName,
@@ -42,8 +41,5 @@ export function formatCompactMapTooltipMeta({
   const ownerSummary = ownershipMismatch && conflictingOwners.length > 0
     ? conflictingOwners.join(' / ')
     : displayedOwnerName;
-  const parts = [hierarchyPath?.trim(), ownerSummary?.trim()].filter(
-    (part): part is string => Boolean(part),
-  );
-  return parts.length > 0 ? parts.join(' · ') : undefined;
+  return ownerSummary?.trim() || undefined;
 }

@@ -738,6 +738,8 @@ describe('shared HanMapCanvas viewport interaction', () => {
   });
 
   it('프로빈스 현 군국 세 레이어를 명시적으로 전환한다', () => {
+    const views: IsoView[] = [];
+    const onCountyHover = vi.fn();
     const tiles = {
       ...CHE_TILES_FIXTURE,
       parentRegions: [
@@ -775,6 +777,8 @@ describe('shared HanMapCanvas viewport interaction', () => {
         }}
         cities={CHE_OVERLAYS_FIXTURE.map((city, provinceId) => ({ ...city, provinceId }))}
         sourceSize={{ width: 200, height: 120 }}
+        onCountyHover={onCountyHover}
+        onViewChange={(view) => views.push({ ...view })}
       />,
     );
 
@@ -789,6 +793,14 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
     expect(county).toHaveAttribute('aria-pressed', 'false');
     expect(commandery).toHaveAttribute('aria-pressed', 'true');
+
+    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' });
+    const [canvasX, canvasY] = cellToScreen(2, 1, views.at(-1)!);
+    fireEvent.pointerMove(canvas, { clientX: canvasX / 2, clientY: canvasY / 2, pointerId: 1 });
+    expect(onCountyHover).toHaveBeenLastCalledWith(
+      expect.objectContaining({ countyName: '허현', displayName: '예주' }),
+      expect.any(Object),
+    );
 
     fireEvent.click(province);
 
