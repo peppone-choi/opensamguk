@@ -7,6 +7,9 @@ from pathlib import Path
 from unittest import mock
 
 from tools.map.materialize_province_jurisdictions import _commandery_kind, materialize_document
+import numpy as np
+
+from tools.map.build_terrain_grid import touching_pairs
 from tools.map.world_province_geometry import (
     assign_province_jurisdictions,
     validate_jurisdiction_recovery_document,
@@ -14,6 +17,240 @@ from tools.map.world_province_geometry import (
 
 
 class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
+    def test_committed_qingzhou_parent_adjudications_match_220_sources(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        document = json.loads(
+            (root / "data/map/han-tiles.json").read_text(encoding="utf-8")
+        )
+        jurisdictions = {
+            record["id"]: record["commanderyId"]
+            for record in document["jurisdictionRecords"]
+        }
+
+        self.assertEqual(
+            {
+                "45107": "PARENT-0036",  # 西平昌縣 → 平原郡
+                "85385": "PARENT-0038",  # 挺縣 → 北海國
+                "85505": "PARENT-0039",  # 不其縣 → 東萊郡
+                "85706": "PARENT-0036",  # 安德縣 → 平原郡
+            },
+            {key: jurisdictions[key] for key in ("45107", "85385", "85505", "85706")},
+        )
+
+    @staticmethod
+    def parent_adjudication_fixture() -> dict:
+        """3x2 grid, three commanderies; J-A (P-A, P-B) is a non-seat county of C-OLD."""
+        return {
+            "_meta": {
+                "cols": 3, "rows": 2, "terrainLegend": {"1": "PLAIN"},
+                "counts": {"provinces": 5, "adjCounty": 6, "adjCommandery": 2},
+            },
+            "terrain": ["111", "111"],
+            # row0: P-OLD P-A P-NEW · row1: P-FAR P-B P-NEW
+            "owner": [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [2, 1]],
+            # C-OLD=0 C-NEW=1 C-FAR=2
+            "parentOwner": [[0, 2], [1, 1], [2, 1], [0, 1], [1, 1]],
+            "adjacency": {
+                "county": [
+                    {"a": 0, "b": 1, "cells": 1}, {"a": 0, "b": 3, "cells": 1},
+                    {"a": 1, "b": 2, "cells": 1}, {"a": 1, "b": 4, "cells": 1},
+                    {"a": 2, "b": 4, "cells": 1}, {"a": 3, "b": 4, "cells": 1},
+                ],
+                "commandery": [
+                    {"a": 0, "b": 1, "cells": 2, "cross": "LAND"},
+                    {"a": 0, "b": 2, "cells": 2, "cross": "LAND"},
+                ],
+            },
+            "provinceRecords": [
+                {
+                    "id": "P-OLD", "displayName": "구군 지역", "nameCh": "舊郡區",
+                    "kind": "SPATIAL_PROVINCE", "jurisdictionId": "J-OLD",
+                    "parentRegionId": "C-OLD",
+                },
+                {
+                    "id": "P-A", "displayName": "갑 지역", "nameCh": "甲區",
+                    "kind": "SPATIAL_PROVINCE", "jurisdictionId": "J-A",
+                    "parentRegionId": "C-OLD",
+                },
+                {
+                    "id": "P-NEW", "displayName": "신군 지역", "nameCh": "新郡區",
+                    "kind": "SPATIAL_PROVINCE", "jurisdictionId": "J-NEW",
+                    "parentRegionId": "C-NEW",
+                },
+                {
+                    "id": "P-FAR", "displayName": "원군 지역", "nameCh": "遠郡區",
+                    "kind": "SPATIAL_PROVINCE", "jurisdictionId": "J-FAR",
+                    "parentRegionId": "C-FAR",
+                },
+                {
+                    "id": "P-B", "displayName": "을 지역", "nameCh": "乙區",
+                    "kind": "SPATIAL_PROVINCE", "jurisdictionId": "J-A",
+                    "parentRegionId": "C-OLD",
+                },
+            ],
+            "jurisdictionRecords": [
+                {
+                    "id": "J-OLD", "displayName": "구군치현", "nameCh": "舊治縣",
+                    "kind": "COUNTY", "commanderyId": "C-OLD",
+                    "seatPlaceId": "OLD-SEAT", "provinceIds": ["P-OLD"],
+                },
+                {
+                    "id": "J-A", "displayName": "갑현", "nameCh": "甲縣",
+                    "kind": "COUNTY", "commanderyId": "C-OLD",
+                    "seatPlaceId": "PLACE-A", "provinceIds": ["P-A", "P-B"],
+                },
+                {
+                    "id": "J-NEW", "displayName": "신군치현", "nameCh": "新治縣",
+                    "kind": "COUNTY", "commanderyId": "C-NEW",
+                    "seatPlaceId": "NEW-SEAT", "provinceIds": ["P-NEW"],
+                },
+                {
+                    "id": "J-FAR", "displayName": "원군치현", "nameCh": "遠治縣",
+                    "kind": "COUNTY", "commanderyId": "C-FAR",
+                    "seatPlaceId": "FAR-SEAT", "provinceIds": ["P-FAR"],
+                },
+            ],
+            "commanderyRecords": [
+                {
+                    "id": "C-OLD", "displayName": "구군", "nameCh": "舊郡",
+                    "kind": "COMMANDERY", "seatJurisdictionId": "J-OLD",
+                    "jurisdictionIds": ["J-A", "J-OLD"],
+                },
+                {
+                    "id": "C-NEW", "displayName": "신군", "nameCh": "新郡",
+                    "kind": "COMMANDERY", "seatJurisdictionId": "J-NEW",
+                    "jurisdictionIds": ["J-NEW"],
+                },
+                {
+                    "id": "C-FAR", "displayName": "원군", "nameCh": "遠郡",
+                    "kind": "COMMANDERY", "seatJurisdictionId": "J-FAR",
+                    "jurisdictionIds": ["J-FAR"],
+                },
+            ],
+            "parentRegions": [
+                {"id": "C-OLD", "displayName": "구군", "nameCh": "舊郡"},
+                {"id": "C-NEW", "displayName": "신군", "nameCh": "新郡"},
+                {"id": "C-FAR", "displayName": "원군", "nameCh": "遠郡"},
+            ],
+            "juns": [{"seat": 0}, {"seat": 1}, {"seat": 2}],
+            "cities": [
+                {"id": "OLD-SEAT", "row": 0, "col": 0},
+                {"id": "NEW-SEAT", "row": 0, "col": 2},
+                {"id": "FAR-SEAT", "row": 1, "col": 0},
+            ],
+        }
+
+    @staticmethod
+    def parent_adjudication_ledger(**overrides: object) -> dict:
+        row = {
+            "jurisdictionId": "J-A",
+            "jurisdictionNameCh": "甲縣",
+            "fromCommanderyId": "C-OLD",
+            "fromCommanderyNameCh": "舊郡",
+            "toCommanderyId": "C-NEW",
+            "toCommanderyNameCh": "新郡",
+            "reviewState": "APPROVED_EXACT_PARENT",
+            "evidenceRefs": ["test:evidence"],
+        }
+        row.update(overrides)
+        return {
+            "schemaVersion": 1,
+            "ledgerId": "han-jurisdiction-commandery-adjudications-v1",
+            "referenceYear": 220,
+            "adjudications": [row],
+        }
+
+    def materialize_with_ledger(self, document: dict, ledger: dict) -> dict:
+        with mock.patch(
+            "tools.map.materialize_province_jurisdictions.validate_jurisdiction_recovery_document",
+            return_value=[],
+        ):
+            return materialize_document(
+                document, {"recoveries": []}, parent_adjudications_document=ledger,
+            )
+
+    def test_reviewed_parent_adjudication_reparents_the_whole_jurisdiction(self) -> None:
+        document = self.parent_adjudication_fixture()
+
+        result = self.materialize_with_ledger(document, self.parent_adjudication_ledger())
+
+        jurisdictions = {record["id"]: record for record in result["jurisdictionRecords"]}
+        self.assertEqual("C-NEW", jurisdictions["J-A"]["commanderyId"])
+        self.assertEqual(
+            {"C-NEW"},
+            {
+                record["parentRegionId"]
+                for record in result["provinceRecords"]
+                if record["jurisdictionId"] == "J-A"
+            },
+        )
+        commanderies = {record["id"]: record for record in result["commanderyRecords"]}
+        self.assertEqual(["J-OLD"], commanderies["C-OLD"]["jurisdictionIds"])
+        self.assertEqual(["J-A", "J-NEW"], commanderies["C-NEW"]["jurisdictionIds"])
+        # Every cell of P-A and P-B now carries C-NEW; nothing else moved.
+        self.assertEqual([[0, 1], [1, 2], [2, 1], [1, 2]], result["parentOwner"])
+        self.assertEqual(document["owner"], result["owner"])
+        self.assertEqual(document["adjacency"]["county"], result["adjacency"]["county"])
+        # The commandery graph is re-derived: shared edges recounted, the crossing
+        # verdict of a surviving pair preserved, a newly touching pair derived.
+        self.assertEqual(
+            [
+                {"a": 0, "b": 1, "cells": 1, "cross": "LAND"},
+                {"a": 0, "b": 2, "cells": 1, "cross": "LAND"},
+                {"a": 1, "b": 2, "cells": 1, "cross": "LAND"},
+            ],
+            result["adjacency"]["commandery"],
+        )
+        self.assertEqual(3, result["_meta"]["counts"]["adjCommandery"])
+        self.assertEqual(6, result["_meta"]["counts"]["adjCounty"])
+        # Idempotent: re-materializing the result with the same ledger is a fixed point.
+        self.assertEqual(result, self.materialize_with_ledger(result, self.parent_adjudication_ledger()))
+
+    def test_parent_adjudication_refuses_to_move_a_commandery_seat(self) -> None:
+        document = self.parent_adjudication_fixture()
+        ledger = self.parent_adjudication_ledger(jurisdictionId="J-OLD", jurisdictionNameCh="舊治縣")
+
+        with self.assertRaisesRegex(ValueError, "seat"):
+            self.materialize_with_ledger(document, ledger)
+
+    def test_parent_adjudication_refuses_name_drift_and_unknown_current_parent(self) -> None:
+        for overrides, pattern in (
+            ({"jurisdictionNameCh": "錯縣"}, "name drift"),
+            ({"fromCommanderyNameCh": "錯郡"}, "name drift"),
+            ({"toCommanderyNameCh": "錯郡"}, "name drift"),
+            ({"fromCommanderyId": "C-FAR", "fromCommanderyNameCh": "遠郡"}, "current parent"),
+        ):
+            with self.subTest(overrides=overrides), self.assertRaisesRegex(ValueError, pattern):
+                self.materialize_with_ledger(
+                    self.parent_adjudication_fixture(),
+                    self.parent_adjudication_ledger(**overrides),
+                )
+
+    def test_committed_parent_owner_and_commandery_graph_follow_the_materialized_parents(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        tiles = json.loads((root / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        cols, rows = tiles["_meta"]["cols"], tiles["_meta"]["rows"]
+
+        def expand(runs: list[list[int]]) -> np.ndarray:
+            values = np.repeat([run[0] for run in runs], [run[1] for run in runs])
+            self.assertEqual(cols * rows, values.size)
+            return values.reshape(rows, cols)
+
+        owner = expand(tiles["owner"])
+        parent_owner = expand(tiles["parentOwner"])
+        parent_index = {row["id"]: index for index, row in enumerate(tiles["parentRegions"])}
+        parent_of_province = np.array([
+            parent_index[row["parentRegionId"]] for row in tiles["provinceRecords"]
+        ])
+        expected = np.where(owner >= 0, parent_of_province[np.maximum(owner, 0)], -1)
+        stale = np.argwhere(parent_owner != expected)
+        self.assertEqual(0, len(stale), f"parentOwner disagrees with provinceRecords at {stale[:5].tolist()}")
+
+        edges = {(edge["a"], edge["b"]): edge["cells"] for edge in tiles["adjacency"]["commandery"]}
+        self.assertEqual(dict(touching_pairs(parent_owner)), edges)
+        self.assertEqual(len(edges), tiles["_meta"]["counts"]["adjCommandery"])
+        self.assertEqual(len(tiles["adjacency"]["county"]), tiles["_meta"]["counts"]["adjCounty"])
+
     def test_recovery_evidence_is_bound_to_the_reviewed_corpus_revision_and_rows(self) -> None:
         root = Path(__file__).resolve().parents[3]
         document = json.loads((

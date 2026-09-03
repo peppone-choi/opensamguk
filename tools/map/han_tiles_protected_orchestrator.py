@@ -56,6 +56,7 @@ INPUT_RELATIVE_PATHS = {
     "NON_PLAYABLE_REGIONS": "data/curated/map/non-playable-regions-v1.json",
     "MODERN_ADMIN_RECIPE": "data/curated/map/modern-admin-boundaries-v1.json",
     "JURISDICTION_SEAT_RECOVERIES": "data/curated/han/jurisdiction-seat-recoveries-v1.json",
+    "JURISDICTION_PARENT_ADJUDICATIONS": "data/curated/han/jurisdiction-commandery-adjudications-v1.json",
 }
 GENERATOR_RELATIVE_PATHS = {
     "BUILD_HAN_PLACES": "tools/map/build_han_places.py",

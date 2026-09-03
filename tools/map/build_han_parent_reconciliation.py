@@ -1311,8 +1311,10 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
             raise ValueError(f"locked reconciliation count changed: {key}={summary.get(key)} expected {value}")
     geometry = summary["geometryDiagnostics"]
     if geometry != {
-        "singleGroupJun": {"rowCount": 194, "cellCount": 10_158},
-        "multiGroupJun": {"rowCount": 90, "cellCount": 8_044},
+        # 청주 4縣 재판정(data/curated/han/jurisdiction-commandery-adjudications-v1.json) 뒤 東萊郡·北海國 jun 이 단일 郡國志
+        # 그룹으로 정리되어 5행 185셀이 multi→single 로 옮겨갔다. 결정 수는 그대로다.
+        "singleGroupJun": {"rowCount": 199, "cellCount": 10_343},
+        "multiGroupJun": {"rowCount": 85, "cellCount": 7_859},
         "uniqueNearest": {"rowCount": 281, "cellCount": 18_133},
         "distanceTies": {"rowCount": 3, "cellCount": 69},
     }:

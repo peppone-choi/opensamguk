@@ -74,13 +74,19 @@ class HanSpatialSupplyProviderTest {
         val cityConst = ActiveWorldMap.requireVariant(mapOf("mapName" to "han"), emptyMap())
         val scenarioCodes = mapper.readTree(Path(ownershipPath).toFile()).path("scenarios")
             .map { it.path("scenarioCode").asInt() }
+        // 청주 4縣 재판정(data/curated/han/jurisdiction-commandery-adjudications-v1.json: 45107 西平昌·85706 安德 → 平原郡, 85385 挺 → 北海國,
+        // 85505 不其 → 東萊郡) 뒤 정본 소유권이 군국 보유자를 따라가면서, 平原郡 한가운데에
+        // 北海國 색으로 서 있던 西平昌·安德 두 프로빈스 벽이 사라졌다. 그래서 平原郡 보유 세력의
+        // 冀州→靑州 보급 회랑이 열린다: 1020 +2(363·365), 1030 +10(160–165·361·362·364·366),
+        // 1031 +58(150–175·200–236·360·363·365), 1040 +10. 소유 도시 수와 나머지 11개 시나리오는
+        // 그대로다. 근거·diff: docs/superpowers/plans/2026-09-03-han-jurisdiction-parent-adjudication.md
         val expectedSupplyAudit = mapOf(
             1010 to Triple(224, 127, 97),
-            1020 to Triple(390, 352, 38),
+            1020 to Triple(390, 354, 36),
             1021 to Triple(385, 353, 32),
-            1030 to Triple(471, 388, 83),
-            1031 to Triple(500, 392, 108),
-            1040 to Triple(485, 472, 13),
+            1030 to Triple(471, 398, 73),
+            1031 to Triple(500, 450, 50),
+            1040 to Triple(485, 482, 3),
             1041 to Triple(520, 505, 15),
             1050 to Triple(606, 603, 3),
             1060 to Triple(606, 601, 5),

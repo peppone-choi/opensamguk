@@ -11,6 +11,7 @@ from typing import Any
 
 try:
     from tools.map.world_province_geometry import (
+        apply_jurisdiction_parent_adjudications,
         assign_province_jurisdictions,
         infer_commandery_kind,
         validate_jurisdiction_recovery_document,
@@ -18,6 +19,7 @@ try:
     )
 except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
     from world_province_geometry import (
+        apply_jurisdiction_parent_adjudications,
         assign_province_jurisdictions,
         infer_commandery_kind,
         validate_jurisdiction_recovery_document,
@@ -28,6 +30,9 @@ except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
 ROOT = Path(__file__).resolve().parents[2]
 TILES = ROOT / "data" / "map" / "han-tiles.json"
 RECOVERIES = ROOT / "data" / "curated" / "han" / "jurisdiction-seat-recoveries-v1.json"
+PARENT_ADJUDICATIONS = (
+    ROOT / "data" / "curated" / "han" / "jurisdiction-commandery-adjudications-v1.json"
+)
 
 
 def _commandery_kind(parent: dict, seat_city: dict) -> str:
@@ -53,7 +58,12 @@ def _expand_owner(runs: Any, cols: int, rows: int) -> list[list[int]]:
     return [values[offset:offset + cols] for offset in range(0, len(values), cols)]
 
 
-def materialize_document(document: dict, recoveries_document: dict) -> dict:
+def materialize_document(
+    document: dict,
+    recoveries_document: dict,
+    *,
+    parent_adjudications_document: dict[str, Any] | None = None,
+) -> dict:
     if not isinstance(document, dict) or not isinstance(recoveries_document, dict):
         raise ValueError("tile and recovery documents must be objects")
     result = copy.deepcopy(document)
@@ -137,6 +147,8 @@ def materialize_document(document: dict, recoveries_document: dict) -> dict:
                 continue
             for key in ("displayName", "nameCh", "kind", "seatPlaceId"):
                 jurisdiction[key] = recovery[key]
+        if parent_adjudications_document is not None:
+            apply_jurisdiction_parent_adjudications(result, parent_adjudications_document)
         validate_materialized_hierarchy(provinces, jurisdictions, commanderies)
         return result
 
@@ -161,6 +173,8 @@ def materialize_document(document: dict, recoveries_document: dict) -> dict:
     result["provinceRecords"] = list(assigned.province_records)
     result["jurisdictionRecords"] = list(assigned.jurisdiction_records)
     result["commanderyRecords"] = list(assigned.commandery_records)
+    if parent_adjudications_document is not None:
+        apply_jurisdiction_parent_adjudications(result, parent_adjudications_document)
     validate_materialized_hierarchy(
         result["provinceRecords"], result["jurisdictionRecords"], result["commanderyRecords"]
     )
@@ -179,8 +193,13 @@ def main() -> int:
     args = parser.parse_args()
     document = json.loads(TILES.read_text(encoding="utf-8"))
     recoveries = json.loads(RECOVERIES.read_text(encoding="utf-8"))
+    parent_adjudications = json.loads(PARENT_ADJUDICATIONS.read_text(encoding="utf-8"))
     blob = json.dumps(
-        materialize_document(document, recoveries),
+        materialize_document(
+            document,
+            recoveries,
+            parent_adjudications_document=parent_adjudications,
+        ),
         ensure_ascii=False,
         separators=(",", ":"),
     ) + "\n"

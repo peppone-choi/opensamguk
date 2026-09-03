@@ -5,7 +5,7 @@
   "generatorPolicyVersion": 1,
   "sources": {
     "claimsSha256": "90e3d91b43f1a5f67ca9eea3dc7f0671aa3226a6a0b9733f346a5888b001fe4b",
-    "mapSha256": "2c1cb2af31e278527d8041f0162b8da837d65b33dc1e0e204c61221f71e08819",
+    "mapSha256": "6e7507bc110e37738a77f49c598762a3691465574a839775b6e66d244a8ea9d7",
     "scenarioCatalogSha256": "40c9943ce30a2d29dee5a742ef86bd10b80f5d910bda498f94274b037ba3f2b3"
   },
   "scenarios": [
@@ -32069,19 +32069,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "45107",
-          "ownerNationId": 17,
-          "ownerNationKey": "S1020-N017",
+          "ownerNationId": 16,
+          "ownerNationKey": "S1020-N016",
           "controllerCityId": null,
-          "winningClaimId": "S1020-N017-ADMIN",
+          "winningClaimId": "S1020-N016-ADMIN",
           "claimTrace": [
-            "S1020-N017-ADMIN"
+            "S1020-N016-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-N017-PLACEMENT-EVIDENCE"
+            "S1020-N016-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "rationale": "三國志 卷32 촉서 선주전 「試守平原令，後領平原相」"
         },
         {
           "scenarioCode": 1020,
@@ -38155,19 +38155,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "85385",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 17,
+          "ownerNationKey": "S1020-N017",
           "controllerCityId": null,
-          "winningClaimId": "S1020-BASELINE",
+          "winningClaimId": "S1020-N017-ADMIN",
           "claimTrace": [
-            "S1020-BASELINE"
+            "S1020-N017-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-BASELINE-EVIDENCE"
+            "S1020-N017-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
         },
         {
           "scenarioCode": 1020,
@@ -38427,19 +38427,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "85505",
-          "ownerNationId": 17,
-          "ownerNationKey": "S1020-N017",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1020-N017-ADMIN",
+          "winningClaimId": "S1020-BASELINE",
           "claimTrace": [
-            "S1020-N017-ADMIN"
+            "S1020-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1020-N017-PLACEMENT-EVIDENCE"
+            "S1020-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1020,
@@ -38971,19 +38971,19 @@
         {
           "scenarioCode": 1020,
           "provinceId": "85706",
-          "ownerNationId": 17,
-          "ownerNationKey": "S1020-N017",
+          "ownerNationId": 16,
+          "ownerNationKey": "S1020-N016",
           "controllerCityId": null,
-          "winningClaimId": "S1020-N017-ADMIN",
+          "winningClaimId": "S1020-N016-ADMIN",
           "claimTrace": [
-            "S1020-N017-ADMIN"
+            "S1020-N016-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1020-N017-PLACEMENT-EVIDENCE"
+            "S1020-N016-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "rationale": "三國志 卷32 촉서 선주전 「試守平原令，後領平原相」"
         },
         {
           "scenarioCode": 1020,
@@ -57984,19 +57984,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "45107",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1021-N019",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1021-N019-ADMIN",
+          "winningClaimId": "S1021-BASELINE",
           "claimTrace": [
-            "S1021-N019-ADMIN"
+            "S1021-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1021-N019-PLACEMENT-EVIDENCE"
+            "S1021-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1021,
@@ -64070,19 +64070,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "85385",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 19,
+          "ownerNationKey": "S1021-N019",
           "controllerCityId": null,
-          "winningClaimId": "S1021-BASELINE",
+          "winningClaimId": "S1021-N019-ADMIN",
           "claimTrace": [
-            "S1021-BASELINE"
+            "S1021-N019-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1021-BASELINE-EVIDENCE"
+            "S1021-N019-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
         },
         {
           "scenarioCode": 1021,
@@ -64342,19 +64342,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "85505",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1021-N019",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1021-N019-ADMIN",
+          "winningClaimId": "S1021-BASELINE",
           "claimTrace": [
-            "S1021-N019-ADMIN"
+            "S1021-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1021-N019-PLACEMENT-EVIDENCE"
+            "S1021-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1021,
@@ -64886,19 +64886,19 @@
         {
           "scenarioCode": 1021,
           "provinceId": "85706",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1021-N019",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1021-N019-ADMIN",
+          "winningClaimId": "S1021-BASELINE",
           "claimTrace": [
-            "S1021-N019-ADMIN"
+            "S1021-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1021-N019-PLACEMENT-EVIDENCE"
+            "S1021-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1021,
@@ -83899,19 +83899,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "45107",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1030-N019",
+          "ownerNationId": 2,
+          "ownerNationKey": "S1030-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1030-N019-ADMIN",
+          "winningClaimId": "S1030-N002-ADMIN",
           "claimTrace": [
-            "S1030-N019-ADMIN"
+            "S1030-N002-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-N019-PLACEMENT-EVIDENCE"
+            "S1030-N002-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "rationale": "三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정"
         },
         {
           "scenarioCode": 1030,
@@ -89985,19 +89985,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "85385",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 19,
+          "ownerNationKey": "S1030-N019",
           "controllerCityId": null,
-          "winningClaimId": "S1030-BASELINE",
+          "winningClaimId": "S1030-N019-ADMIN",
           "claimTrace": [
-            "S1030-BASELINE"
+            "S1030-N019-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-BASELINE-EVIDENCE"
+            "S1030-N019-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
         },
         {
           "scenarioCode": 1030,
@@ -90257,19 +90257,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "85505",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1030-N019",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1030-N019-ADMIN",
+          "winningClaimId": "S1030-BASELINE",
           "claimTrace": [
-            "S1030-N019-ADMIN"
+            "S1030-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1030-N019-PLACEMENT-EVIDENCE"
+            "S1030-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1030,
@@ -90801,19 +90801,19 @@
         {
           "scenarioCode": 1030,
           "provinceId": "85706",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1030-N019",
+          "ownerNationId": 2,
+          "ownerNationKey": "S1030-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1030-N019-ADMIN",
+          "winningClaimId": "S1030-N002-ADMIN",
           "claimTrace": [
-            "S1030-N019-ADMIN"
+            "S1030-N002-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1030-N019-PLACEMENT-EVIDENCE"
+            "S1030-N002-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "rationale": "三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정"
         },
         {
           "scenarioCode": 1030,
@@ -109814,19 +109814,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "45107",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1031-N019",
+          "ownerNationId": 17,
+          "ownerNationKey": "S1031-N017",
           "controllerCityId": null,
-          "winningClaimId": "S1031-N019-ADMIN",
+          "winningClaimId": "S1031-N017-ADMIN",
           "claimTrace": [
-            "S1031-N019-ADMIN"
+            "S1031-N017-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-N019-PLACEMENT-EVIDENCE"
+            "S1031-N017-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "rationale": "三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정"
         },
         {
           "scenarioCode": 1031,
@@ -115900,19 +115900,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "85385",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 19,
+          "ownerNationKey": "S1031-N019",
           "controllerCityId": null,
-          "winningClaimId": "S1031-BASELINE",
+          "winningClaimId": "S1031-N019-ADMIN",
           "claimTrace": [
-            "S1031-BASELINE"
+            "S1031-N019-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-BASELINE-EVIDENCE"
+            "S1031-N019-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
         },
         {
           "scenarioCode": 1031,
@@ -116172,19 +116172,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "85505",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1031-N019",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1031-N019-ADMIN",
+          "winningClaimId": "S1031-BASELINE",
           "claimTrace": [
-            "S1031-N019-ADMIN"
+            "S1031-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1031-N019-PLACEMENT-EVIDENCE"
+            "S1031-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1031,
@@ -116716,19 +116716,19 @@
         {
           "scenarioCode": 1031,
           "provinceId": "85706",
-          "ownerNationId": 19,
-          "ownerNationKey": "S1031-N019",
+          "ownerNationId": 17,
+          "ownerNationKey": "S1031-N017",
           "controllerCityId": null,
-          "winningClaimId": "S1031-N019-ADMIN",
+          "winningClaimId": "S1031-N017-ADMIN",
           "claimTrace": [
-            "S1031-N019-ADMIN"
+            "S1031-N017-ADMIN"
           ],
           "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1031-N019-PLACEMENT-EVIDENCE"
+            "S1031-N017-PLACEMENT-EVIDENCE"
           ],
           "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷12 위서 최모서하형포사마전 「(融)…累遷北軍中候、虎賁中郎將、北海相」 / 華陽國志 卷六 「北海相魯國孔融」"
+          "rationale": "三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정"
         },
         {
           "scenarioCode": 1031,
@@ -135729,19 +135729,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "45107",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1040-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1040-BASELINE",
+          "winningClaimId": "S1040-N002-ADMIN",
           "claimTrace": [
-            "S1040-BASELINE"
+            "S1040-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-BASELINE-EVIDENCE"
+            "S1040-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정"
         },
         {
           "scenarioCode": 1040,
@@ -142631,19 +142631,19 @@
         {
           "scenarioCode": 1040,
           "provinceId": "85706",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1040-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1040-BASELINE",
+          "winningClaimId": "S1040-N002-ADMIN",
           "claimTrace": [
-            "S1040-BASELINE"
+            "S1040-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1040-BASELINE-EVIDENCE"
+            "S1040-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정"
         },
         {
           "scenarioCode": 1040,
@@ -167730,19 +167730,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "85385",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 16,
+          "ownerNationKey": "S1041-N016",
           "controllerCityId": null,
-          "winningClaimId": "S1041-BASELINE",
+          "winningClaimId": "S1041-N016-ADMIN",
           "claimTrace": [
-            "S1041-BASELINE"
+            "S1041-N016-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "ADMIN_REGION_CONTROL",
           "evidenceIds": [
-            "S1041-BASELINE-EVIDENCE"
+            "S1041-N016-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "ADMIN_SCOPE",
+          "rationale": "三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 後漢書 卷070 공융전 — 196년 袁譚이 北海를 쳐 孔融이 달아났다"
         },
         {
           "scenarioCode": 1041,
@@ -168002,19 +168002,19 @@
         {
           "scenarioCode": 1041,
           "provinceId": "85505",
-          "ownerNationId": 16,
-          "ownerNationKey": "S1041-N016",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1041-N016-ADMIN",
+          "winningClaimId": "S1041-BASELINE",
           "claimTrace": [
-            "S1041-N016-ADMIN"
+            "S1041-BASELINE"
           ],
-          "basisType": "ADMIN_REGION_CONTROL",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1041-N016-PLACEMENT-EVIDENCE"
+            "S1041-BASELINE-EVIDENCE"
           ],
-          "confidence": "ADMIN_SCOPE",
-          "rationale": "三國志 卷06 위서 원소전 「馥遂避位…紹遂領冀州牧」 — 「領冀州牧」 명시이므로 冀州 단위 배정 / 後漢書 卷070 공융전 — 196년 袁譚이 北海를 쳐 孔融이 달아났다"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1041,
@@ -375056,19 +375056,19 @@
         {
           "scenarioCode": 1120,
           "provinceId": "85385",
-          "ownerNationId": null,
-          "ownerNationKey": null,
+          "ownerNationId": 2,
+          "ownerNationKey": "S1120-N002",
           "controllerCityId": null,
-          "winningClaimId": "S1120-BASELINE",
+          "winningClaimId": "S1120-N002-ADMIN",
           "claimTrace": [
-            "S1120-BASELINE"
+            "S1120-N002-ADMIN"
           ],
-          "basisType": "SCENARIO_BASELINE_UNOWNED",
+          "basisType": "IF_SCENARIO",
           "evidenceIds": [
-            "S1120-BASELINE-EVIDENCE"
+            "S1120-N002-PLACEMENT-EVIDENCE"
           ],
-          "confidence": "EXPLICIT_UNOWNED",
-          "rationale": "Only reviewed effective-control claims create ownership."
+          "confidence": "IF",
+          "rationale": "IF 시나리오 원본 배치: 공손찬"
         },
         {
           "scenarioCode": 1120,
@@ -375328,19 +375328,19 @@
         {
           "scenarioCode": 1120,
           "provinceId": "85505",
-          "ownerNationId": 2,
-          "ownerNationKey": "S1120-N002",
+          "ownerNationId": null,
+          "ownerNationKey": null,
           "controllerCityId": null,
-          "winningClaimId": "S1120-N002-ADMIN",
+          "winningClaimId": "S1120-BASELINE",
           "claimTrace": [
-            "S1120-N002-ADMIN"
+            "S1120-BASELINE"
           ],
-          "basisType": "IF_SCENARIO",
+          "basisType": "SCENARIO_BASELINE_UNOWNED",
           "evidenceIds": [
-            "S1120-N002-PLACEMENT-EVIDENCE"
+            "S1120-BASELINE-EVIDENCE"
           ],
-          "confidence": "IF",
-          "rationale": "IF 시나리오 원본 배치: 공손찬"
+          "confidence": "EXPLICIT_UNOWNED",
+          "rationale": "Only reviewed effective-control claims create ownership."
         },
         {
           "scenarioCode": 1120,

@@ -564,11 +564,11 @@ class HanParentReconciliationTest(unittest.TestCase):
         self.assertEqual(357, summary["unresolvedRowCount"])
         self.assertEqual(26_232, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 194, "cellCount": 10_158},
+            {"rowCount": 199, "cellCount": 10_343},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 90, "cellCount": 8_044},
+            {"rowCount": 85, "cellCount": 7_859},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 

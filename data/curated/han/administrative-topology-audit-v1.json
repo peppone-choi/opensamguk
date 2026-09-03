@@ -1728,7 +1728,7 @@
     ]
   },
   "commanderyTopology": {
-    "disconnectedCount": 43,
+    "disconnectedCount": 42,
     "disconnected": [
       {
         "id": "PARENT-0000",
@@ -2167,53 +2167,17 @@
         ]
       },
       {
-        "id": "PARENT-0036",
-        "displayName": "평원군",
-        "componentCellCounts": [
-          399,
-          127,
-          36
-        ],
-        "components": [
-          {
-            "cellCount": 399,
-            "memberIds": [
-              "200038",
-              "45124",
-              "45146",
-              "85525",
-              "85531",
-              "85553"
-            ]
-          },
-          {
-            "cellCount": 127,
-            "memberIds": [
-              "45022",
-              "45087",
-              "45121"
-            ]
-          },
-          {
-            "cellCount": 36,
-            "memberIds": [
-              "45100"
-            ]
-          }
-        ]
-      },
-      {
         "id": "PARENT-0038",
         "displayName": "북해국",
         "componentCellCounts": [
-          606,
-          105,
-          100,
+          549,
+          168,
+          48,
           13
         ],
         "components": [
           {
-            "cellCount": 606,
+            "cellCount": 549,
             "memberIds": [
               "85292",
               "85312",
@@ -2224,24 +2188,22 @@
               "85468",
               "85478",
               "85491",
-              "85496",
-              "85505"
+              "85496"
             ]
           },
           {
-            "cellCount": 105,
+            "cellCount": 168,
             "memberIds": [
+              "85385",
               "85393",
               "85454"
             ]
           },
           {
-            "cellCount": 100,
+            "cellCount": 48,
             "memberIds": [
-              "45107",
               "85217",
-              "85272",
-              "85706"
+              "85272"
             ]
           },
           {
@@ -2256,31 +2218,37 @@
         "id": "PARENT-0039",
         "displayName": "동래군",
         "componentCellCounts": [
-          754,
-          74
+          421,
+          270,
+          131
         ],
         "components": [
           {
-            "cellCount": 754,
+            "cellCount": 421,
             "memberIds": [
               "200036",
               "85371",
               "85376",
               "85377",
-              "85381",
-              "85385",
-              "85388",
-              "85401",
-              "85410",
               "85441",
               "85448"
             ]
           },
           {
-            "cellCount": 74,
+            "cellCount": 270,
+            "memberIds": [
+              "85381",
+              "85388",
+              "85401",
+              "85410"
+            ]
+          },
+          {
+            "cellCount": 131,
             "memberIds": [
               "85386",
-              "85481"
+              "85481",
+              "85505"
             ]
           }
         ]
@@ -5500,8 +5468,8 @@
       "SOURCE_PLACEHOLDER": 3
     },
     "resolvedCurrentJurisdictionCount": 722,
-    "sourceParentMatchCount": 676,
-    "sourceParentMismatchCount": 46,
+    "sourceParentMatchCount": 679,
+    "sourceParentMismatchCount": 43,
     "noCoordinateCandidateCount": 400,
     "resolvedPlaceAbsentCount": 0,
     "sourceGroups": [
@@ -6136,12 +6104,11 @@
           "RESOLVED_POINT": 16
         },
         "resolvedCurrentJurisdictionCount": 16,
-        "sourceParentMatchCount": 15,
-        "sourceParentMismatchCount": 1,
+        "sourceParentMatchCount": 16,
+        "sourceParentMismatchCount": 0,
         "resolvedPlaceAbsentCount": 0,
         "currentCommanderyIds": [
-          "PARENT-0038",
-          "PARENT-0039"
+          "PARENT-0038"
         ]
       },
       {
@@ -6207,12 +6174,11 @@
           "RESOLVED_POINT": 8
         },
         "resolvedCurrentJurisdictionCount": 8,
-        "sourceParentMatchCount": 7,
-        "sourceParentMismatchCount": 1,
+        "sourceParentMatchCount": 8,
+        "sourceParentMismatchCount": 0,
         "resolvedPlaceAbsentCount": 0,
         "currentCommanderyIds": [
-          "PARENT-0036",
-          "PARENT-0038"
+          "PARENT-0036"
         ]
       },
       {
@@ -6256,11 +6222,10 @@
           "RESOLVED_POINT": 10
         },
         "resolvedCurrentJurisdictionCount": 10,
-        "sourceParentMatchCount": 9,
-        "sourceParentMismatchCount": 1,
+        "sourceParentMatchCount": 10,
+        "sourceParentMismatchCount": 0,
         "resolvedPlaceAbsentCount": 0,
         "currentCommanderyIds": [
-          "PARENT-0038",
           "PARENT-0039"
         ]
       },
@@ -7409,18 +7374,6 @@
         "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
       },
       {
-        "sourceName": "挺",
-        "sourceCommanderyNameCh": "北海國",
-        "sourceVolume": 112,
-        "ordinal": 17,
-        "currentJurisdictionId": "85385",
-        "currentJurisdictionDisplayName": "정현",
-        "currentCommanderyId": "PARENT-0039",
-        "currentCommanderyDisplayName": "동래군",
-        "currentCommanderyNameCh": "東萊郡",
-        "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
-      },
-      {
         "sourceName": "襄陽",
         "sourceCommanderyNameCh": "南郡",
         "sourceVolume": 112,
@@ -7478,30 +7431,6 @@
         "currentCommanderyId": "PARENT-0054",
         "currentCommanderyDisplayName": "한중군",
         "currentCommanderyNameCh": "漢中郡",
-        "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
-      },
-      {
-        "sourceName": "安德",
-        "sourceCommanderyNameCh": "平原郡",
-        "sourceVolume": 112,
-        "ordinal": 8,
-        "currentJurisdictionId": "85706",
-        "currentJurisdictionDisplayName": "안덕현",
-        "currentCommanderyId": "PARENT-0038",
-        "currentCommanderyDisplayName": "북해국",
-        "currentCommanderyNameCh": "北海國",
-        "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
-      },
-      {
-        "sourceName": "不其",
-        "sourceCommanderyNameCh": "東萊郡",
-        "sourceVolume": 112,
-        "ordinal": 13,
-        "currentJurisdictionId": "85505",
-        "currentJurisdictionDisplayName": "불기현",
-        "currentCommanderyId": "PARENT-0038",
-        "currentCommanderyDisplayName": "북해국",
-        "currentCommanderyNameCh": "北海國",
         "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW"
       },
       {
@@ -8210,12 +8139,12 @@
         "currentCommanderyDisplayName": "평원군",
         "currentCommanderyNameCh": "平原郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 10,
+        "currentJurisdictionCount": 12,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 9,
         "sourceResolvedCurrentJurisdictionCount": 8,
-        "sourceParentMismatchCount": 1
+        "sourceParentMismatchCount": 0
       },
       {
         "currentCommanderyId": "PARENT-0037",
@@ -8234,12 +8163,12 @@
         "currentCommanderyDisplayName": "북해국",
         "currentCommanderyNameCh": "北海國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 18,
+        "currentJurisdictionCount": 16,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 18,
         "sourceResolvedCurrentJurisdictionCount": 16,
-        "sourceParentMismatchCount": 1
+        "sourceParentMismatchCount": 0
       },
       {
         "currentCommanderyId": "PARENT-0039",
@@ -8251,7 +8180,7 @@
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 13,
         "sourceResolvedCurrentJurisdictionCount": 10,
-        "sourceParentMismatchCount": 1
+        "sourceParentMismatchCount": 0
       },
       {
         "currentCommanderyId": "PARENT-0040",
@@ -9923,7 +9852,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "2c1cb2af31e278527d8041f0162b8da837d65b33dc1e0e204c61221f71e08819"
+      "sha256": "6e7507bc110e37738a77f49c598762a3691465574a839775b6e66d244a8ea9d7"
     },
     "administrativeUnits": {
       "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"

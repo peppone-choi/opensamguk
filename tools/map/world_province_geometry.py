@@ -1075,3 +1075,282 @@ def build_province_geometry(
         parent_regions=tuple(sorted(parent_regions, key=lambda row: row.id)),
         audit=ProvinceAudit(tuple(decisions)),
     )
+
+
+# ---------------------------------------------------------------------------
+# Reviewed parent (commandery) adjudications
+#
+# A county's parent commandery is a historical judgment, not a geometric one.
+# The ledger moves a whole jurisdiction — every spatial province bound to it —
+# under a different parent, and every parent-bearing surface of the artifact is
+# re-derived from that single fact: provinceRecords.parentRegionId, the
+# commandery back-references, the parentOwner grid, and the commandery
+# adjacency graph. The same function runs inside the protected generator and
+# the materializer so a full regeneration cannot silently drop the review.
+# ---------------------------------------------------------------------------
+
+PARENT_ADJUDICATION_LEDGER_ID = "han-jurisdiction-commandery-adjudications-v1"
+PARENT_ADJUDICATION_REFERENCE_YEAR = 220
+PARENT_ADJUDICATION_REVIEW_STATE = "APPROVED_EXACT_PARENT"
+_PARENT_ADJUDICATION_DOCUMENT_KEYS = frozenset({
+    "schemaVersion", "ledgerId", "referenceYear", "adjudications",
+})
+_PARENT_ADJUDICATION_ROW_KEYS = frozenset({
+    "jurisdictionId", "jurisdictionNameCh",
+    "fromCommanderyId", "fromCommanderyNameCh",
+    "toCommanderyId", "toCommanderyNameCh",
+    "reviewState", "evidenceRefs",
+})
+_PARENT_ADJUDICATION_STRING_KEYS = _PARENT_ADJUDICATION_ROW_KEYS - {"evidenceRefs"}
+
+
+def validate_jurisdiction_parent_adjudication_document(document: Any) -> list[dict[str, Any]]:
+    """Fail closed on anything but an approved, evidenced, non-trivial ledger."""
+    if not isinstance(document, Mapping) or set(document) != _PARENT_ADJUDICATION_DOCUMENT_KEYS:
+        raise ValueError("parent adjudication document has invalid keys")
+    if document["schemaVersion"] != 1:
+        raise ValueError("parent adjudication schemaVersion must be 1")
+    if document["ledgerId"] != PARENT_ADJUDICATION_LEDGER_ID:
+        raise ValueError("parent adjudication ledgerId mismatch")
+    if document["referenceYear"] != PARENT_ADJUDICATION_REFERENCE_YEAR:
+        raise ValueError("parent adjudication referenceYear must be 220")
+    rows = document["adjudications"]
+    if not isinstance(rows, list):
+        raise ValueError("parent adjudications must be an array")
+    seen: set[str] = set()
+    for index, row in enumerate(rows):
+        if not isinstance(row, Mapping) or set(row) != _PARENT_ADJUDICATION_ROW_KEYS:
+            raise ValueError(f"parent adjudications[{index}] has invalid keys")
+        if any(
+            not isinstance(row[key], str) or not row[key]
+            for key in _PARENT_ADJUDICATION_STRING_KEYS
+        ):
+            raise ValueError(f"parent adjudications[{index}] has an invalid string")
+        if row["reviewState"] != PARENT_ADJUDICATION_REVIEW_STATE:
+            raise ValueError(f"parent adjudications[{index}] is not approved")
+        if row["fromCommanderyId"] == row["toCommanderyId"]:
+            raise ValueError(f"parent adjudications[{index}] does not change parent")
+        evidence = row["evidenceRefs"]
+        if (
+            not isinstance(evidence, list)
+            or not evidence
+            or any(not isinstance(ref, str) or not ref for ref in evidence)
+        ):
+            raise ValueError(f"parent adjudications[{index}] requires evidence")
+        jurisdiction_id = row["jurisdictionId"]
+        if jurisdiction_id in seen:
+            raise ValueError(f"duplicate parent adjudication: {jurisdiction_id}")
+        seen.add(jurisdiction_id)
+    return [dict(row) for row in rows]
+
+
+def _expand_runs(runs: Any, rows: int, cols: int, label: str) -> np.ndarray:
+    if not isinstance(runs, list) or not runs:
+        raise ValueError(f"{label} must be a non-empty run-length array")
+    values: list[int] = []
+    counts: list[int] = []
+    for index, run in enumerate(runs):
+        if (
+            not isinstance(run, list)
+            or len(run) != 2
+            or type(run[0]) is not int
+            or type(run[1]) is not int
+            or run[1] <= 0
+        ):
+            raise ValueError(f"{label}[{index}] must be [integer, positive count]")
+        values.append(run[0])
+        counts.append(run[1])
+    if sum(counts) != rows * cols:
+        raise ValueError(f"{label} run length does not match rows * cols")
+    return np.repeat(np.asarray(values, dtype=np.int64), counts).reshape(rows, cols)
+
+
+def _encode_runs(grid: np.ndarray) -> list[list[int]]:
+    """Row-major run-length encoding; runs merge across row boundaries."""
+    flat = np.asarray(grid, dtype=np.int64).ravel()
+    if flat.size == 0:
+        return []
+    starts = np.concatenate(([0], np.flatnonzero(np.diff(flat)) + 1))
+    lengths = np.diff(np.append(starts, flat.size))
+    return [[int(flat[start]), int(length)] for start, length in zip(starts, lengths)]
+
+
+def _terrain_array(document: Mapping[str, Any], rows: int, cols: int) -> np.ndarray:
+    raw_rows = document.get("terrain")
+    if not isinstance(raw_rows, list) or len(raw_rows) != rows:
+        raise ValueError("terrain must contain exactly rows strings")
+    terrain = np.zeros((rows, cols), dtype=np.int8)
+    for index, raw in enumerate(raw_rows):
+        if not isinstance(raw, str) or len(raw) != cols or not raw.isdigit():
+            raise ValueError(f"terrain[{index}] must contain exactly {cols} class digits")
+        terrain[index] = [int(value) for value in raw]
+    return terrain
+
+
+def _jun_seat_points(document: Mapping[str, Any]) -> list[tuple[int, int]]:
+    cities = document.get("cities")
+    juns = document.get("juns")
+    if not isinstance(cities, list) or not isinstance(juns, list):
+        raise ValueError("cities and juns must be arrays")
+    points: list[tuple[int, int]] = []
+    for index, jun in enumerate(juns):
+        seat = jun.get("seat") if isinstance(jun, Mapping) else None
+        if type(seat) is not int or not 0 <= seat < len(cities):
+            raise ValueError(f"juns[{index}].seat is invalid")
+        city = cities[seat]
+        col, row = city.get("col"), city.get("row")
+        if type(col) is not int or type(row) is not int:
+            raise ValueError(f"juns[{index}] seat city has invalid coordinates")
+        points.append((col, row))
+    return points
+
+
+def _rederive_parent_surfaces(document: dict[str, Any]) -> None:
+    """Recompute parentOwner and the commandery graph from owner + parentRegionId.
+
+    Shared edges are recounted from the grid. A pair that still touches keeps its
+    crossing verdict and ford (they are a function of the two seats, not of the
+    boundary). A pair that stops touching is dropped. A pair that newly touches is
+    judged by the same seat-to-seat path the terrain generator uses.
+
+    Precondition: the incoming ``adjacency.commandery`` must already be canonical
+    for the current seats and terrain — the carry-over does not re-judge surviving
+    pairs. ``adjudicate_han_province_fragments.py --check`` (full re-derivation,
+    byte-identical) is the gate that proves the committed graph satisfies it.
+    """
+    try:
+        from tools.map import build_terrain_grid as terrain_builder
+    except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
+        import build_terrain_grid as terrain_builder  # type: ignore[no-redef]
+
+    meta = document.get("_meta")
+    if not isinstance(meta, Mapping):
+        raise ValueError("parent adjudication requires _meta")
+    cols, rows = meta.get("cols"), meta.get("rows")
+    if type(cols) is not int or type(rows) is not int or cols <= 0 or rows <= 0:
+        raise ValueError("parent adjudication requires positive cols and rows")
+    provinces = document["provinceRecords"]
+    parents = document.get("parentRegions")
+    if not isinstance(parents, list):
+        raise ValueError("parent adjudication requires parentRegions")
+    parent_index: dict[str, int] = {}
+    for index, parent in enumerate(parents):
+        parent_id = parent.get("id") if isinstance(parent, Mapping) else None
+        if not isinstance(parent_id, str) or not parent_id or parent_id in parent_index:
+            raise ValueError(f"parentRegions[{index}] has an invalid or duplicate id")
+        parent_index[parent_id] = index
+    parent_of_province: list[int] = []
+    for province in provinces:
+        parent_id = province.get("parentRegionId")
+        if parent_id not in parent_index:
+            raise ValueError(f"province references an unknown parent: {province.get('id')}")
+        parent_of_province.append(parent_index[parent_id])
+    if "parentOwner" not in document:
+        raise ValueError("parent adjudication requires a parentOwner grid")
+    owner = _expand_runs(document.get("owner"), rows, cols, "owner")
+    if int(owner.max()) >= len(provinces):
+        raise ValueError("owner contains an out-of-range province index")
+    lookup = np.asarray(parent_of_province, dtype=np.int64)
+    parent_owner = np.where(owner >= 0, lookup[np.maximum(owner, 0)], -1)
+    document["parentOwner"] = _encode_runs(parent_owner)
+
+    adjacency = document.get("adjacency")
+    if (
+        not isinstance(adjacency, Mapping)
+        or not isinstance(adjacency.get("county"), list)
+        or not isinstance(adjacency.get("commandery"), list)
+    ):
+        raise ValueError("parent adjudication requires county and commandery adjacency")
+    existing: dict[tuple[int, int], Mapping[str, Any]] = {}
+    for edge in adjacency["commandery"]:
+        a, b = edge.get("a"), edge.get("b")
+        if type(a) is not int or type(b) is not int or not a < b or (a, b) in existing:
+            raise ValueError("commandery adjacency has an invalid or duplicate edge")
+        existing[(a, b)] = edge
+    merged: list[dict[str, Any]] = []
+    fresh: list[dict[str, Any]] = []
+    for (a, b), cells in sorted(terrain_builder.touching_pairs(parent_owner).items()):
+        edge = existing.get((int(a), int(b)))
+        if edge is None:
+            fresh.append({"a": int(a), "b": int(b), "cells": int(cells)})
+        else:
+            merged.append({**edge, "cells": int(cells)})
+    if fresh:
+        terrain = _terrain_array(document, rows, cols)
+        points = _jun_seat_points(document)
+        land_field = terrain_builder.cost_field(terrain, terrain_builder.LAND_COST)
+        for x, y in points:
+            if land_field[y, x] == terrain_builder.INF:
+                land_field[y, x] = terrain_builder.LAND_COST[terrain_builder.PLAIN]
+        terrain_builder.cross_by_path(land_field, points, fresh, terrain)
+        merged.extend(fresh)
+    merged.sort(key=lambda edge: (edge["a"], edge["b"]))
+    document["adjacency"] = {**adjacency, "commandery": merged}
+    counts = meta.get("counts")
+    if not isinstance(counts, dict):
+        raise ValueError("_meta.counts must be an object")
+    counts["adjCounty"] = len(adjacency["county"])
+    counts["adjCommandery"] = len(merged)
+
+
+def apply_jurisdiction_parent_adjudications(
+    document: dict[str, Any], adjudications_document: Any,
+) -> list[str]:
+    """Re-parent reviewed jurisdictions in place; returns the moved jurisdiction IDs.
+
+    Idempotent: a jurisdiction already under its approved parent is accepted as
+    long as it is under exactly the ledger's source or target. Anything else —
+    unknown IDs, name drift, a third parent, or a commandery seat — fails closed.
+    """
+    rows = validate_jurisdiction_parent_adjudication_document(adjudications_document)
+    jurisdictions = document.get("jurisdictionRecords")
+    commanderies = document.get("commanderyRecords")
+    provinces = document.get("provinceRecords")
+    if not all(isinstance(value, list) for value in (jurisdictions, commanderies, provinces)):
+        raise ValueError("parent adjudication requires materialized hierarchy arrays")
+    jurisdiction_by_id = {row.get("id"): row for row in jurisdictions}
+    commandery_by_id = {row.get("id"): row for row in commanderies}
+    if len(jurisdiction_by_id) != len(jurisdictions) or len(commandery_by_id) != len(commanderies):
+        raise ValueError("parent adjudication requires unique hierarchy ids")
+    seat_owner = {
+        row.get("seatJurisdictionId"): row.get("id")
+        for row in commanderies
+        if isinstance(row.get("seatJurisdictionId"), str)
+    }
+    moved: list[str] = []
+    for row in rows:
+        jurisdiction_id = row["jurisdictionId"]
+        jurisdiction = jurisdiction_by_id.get(jurisdiction_id)
+        if jurisdiction is None:
+            raise ValueError(f"parent adjudication has unknown jurisdiction: {jurisdiction_id}")
+        if jurisdiction.get("nameCh") != row["jurisdictionNameCh"]:
+            raise ValueError(f"parent adjudication jurisdiction name drift: {jurisdiction_id}")
+        source = commandery_by_id.get(row["fromCommanderyId"])
+        target = commandery_by_id.get(row["toCommanderyId"])
+        if source is None or target is None:
+            raise ValueError(f"parent adjudication has unknown commandery: {jurisdiction_id}")
+        if source.get("nameCh") != row["fromCommanderyNameCh"]:
+            raise ValueError(f"parent adjudication source name drift: {jurisdiction_id}")
+        if target.get("nameCh") != row["toCommanderyNameCh"]:
+            raise ValueError(f"parent adjudication target name drift: {jurisdiction_id}")
+        if jurisdiction_id in seat_owner:
+            raise ValueError(
+                "parent adjudication moves a commandery seat jurisdiction: "
+                f"{jurisdiction_id} (seat of {seat_owner[jurisdiction_id]})"
+            )
+        current = jurisdiction.get("commanderyId")
+        if current not in {source["id"], target["id"]}:
+            raise ValueError(f"parent adjudication current parent drift: {jurisdiction_id}")
+        jurisdiction["commanderyId"] = target["id"]
+        for province in provinces:
+            if province.get("jurisdictionId") == jurisdiction_id:
+                province["parentRegionId"] = target["id"]
+        moved.append(jurisdiction_id)
+    for commandery in commanderies:
+        commandery["jurisdictionIds"] = sorted(
+            jurisdiction["id"]
+            for jurisdiction in jurisdictions
+            if jurisdiction.get("commanderyId") == commandery.get("id")
+        )
+    _rederive_parent_surfaces(document)
+    return moved
