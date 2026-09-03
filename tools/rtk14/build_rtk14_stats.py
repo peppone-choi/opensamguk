@@ -393,7 +393,10 @@ def attach_portrait_ids(rtk, registry_path=DEFAULT_PORTRAIT_REGISTRY, name_map_p
                 f"RTK source officer {source['number']} Korean name does not match portrait stable ID {stable_id}"
             )
         portrait_id_by_source_number[source["number"]] = stable_id
-    if len(portrait_id_by_source_number) != len(expected_ids):
+    if (
+        len(portrait_id_by_source_number) != len(expected_ids)
+        or set(portrait_id_by_source_number.values()) != expected_ids
+    ):
         raise ValueError("RTK source must map exactly 1000 portrait identities")
 
     for candidates in rtk.values():

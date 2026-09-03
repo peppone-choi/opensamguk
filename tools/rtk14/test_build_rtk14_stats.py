@@ -125,6 +125,16 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "10001..11000"):
                 b.attach_portrait_ids(b._source_rows_to_rtk(rows), registry, name_map)
 
+    def test_portrait_registry_rejects_duplicate_stable_id_assignment(self):
+        contract_rows = source_rows()
+        duplicate_identity_rows = copy.deepcopy(contract_rows)
+        duplicate_identity_rows[1] = {**duplicate_identity_rows[0], "number": 2}
+        with TemporaryDirectory() as td:
+            registry, name_map = write_portrait_contract(Path(td), contract_rows)
+
+            with self.assertRaisesRegex(ValueError, "exactly 1000 portrait identities"):
+                b.attach_portrait_ids(b._source_rows_to_rtk(duplicate_identity_rows), registry, name_map)
+
     def test_deploy_tests_classpath_baseline_before_materializing_image_rosters(self):
         workflow = (
             Path(__file__).resolve().parents[2] / ".github" / "workflows" / "deploy.yml"
