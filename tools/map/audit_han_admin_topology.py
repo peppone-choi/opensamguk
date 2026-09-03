@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -22,6 +23,9 @@ DEFAULT_TILES = ROOT / "data" / "map" / "han-tiles.json"
 DEFAULT_UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 DEFAULT_BINDINGS = (
     ROOT / "data" / "curated" / "han" / "administrative-place-bindings-v1.json"
+)
+DEFAULT_EXTERNAL_POLICY = (
+    ROOT / "data" / "curated" / "han" / "external-region-hierarchy-policy-v1.json"
 )
 DEFAULT_OUTPUT = (
     ROOT / "data" / "curated" / "han" / "administrative-topology-audit-v1.json"
@@ -70,6 +74,7 @@ def _component_inventory(
     labels_by_province: list[str],
     names_by_id: dict[str, str],
     parent_by_id: dict[str, str] | None = None,
+    members_by_province: list[str] | None = None,
 ) -> dict:
     rows, cols = len(grid), len(grid[0])
     seen: set[tuple[int, int]] = set()
@@ -88,10 +93,13 @@ def _component_inventory(
             cell_count = 0
             touches_outside = False
             surrounding_ids: set[str] = set()
+            member_ids: set[str] = set()
 
             while stack:
                 current_row, current_col = stack.pop()
                 cell_count += 1
+                if members_by_province is not None:
+                    member_ids.add(members_by_province[grid[current_row][current_col]])
                 for delta_row, delta_col in ((-1, 0), (1, 0), (0, -1), (0, 1)):
                     neighbor_row = current_row + delta_row
                     neighbor_col = current_col + delta_col
@@ -115,6 +123,7 @@ def _component_inventory(
 
             components_by_id[label].append({
                 "cellCount": cell_count,
+                "memberIds": sorted(member_ids),
                 "touchesOutside": touches_outside,
                 "surroundingIds": sorted(surrounding_ids),
             })
@@ -131,6 +140,10 @@ def _component_inventory(
                 "id": record_id,
                 "displayName": names_by_id[record_id],
                 "componentCellCounts": [row["cellCount"] for row in components],
+                "components": [
+                    {"cellCount": row["cellCount"], "memberIds": row["memberIds"]}
+                    for row in components
+                ],
             })
         for component in components:
             if not component["touchesOutside"] and len(component["surroundingIds"]) == 1:
@@ -284,7 +297,298 @@ def _single_commandery_inventory(
     return result
 
 
-def validate_ailao_layers(document: dict) -> None:
+def _historical_parent_census(
+    units_document: dict,
+    bindings_document: dict,
+    jurisdiction_by_id: dict[str, dict],
+    commandery_by_id: dict[str, dict],
+) -> dict:
+    groups = _require_records(units_document, "groups")
+    bindings = _binding_index(bindings_document)
+    binding_status_counts: Counter[str] = Counter()
+    mismatch_rows: list[dict] = []
+    source_group_rows: list[dict] = []
+    source_unit_count = 0
+    resolved_current_count = 0
+    parent_match_count = 0
+    no_coordinate_count = 0
+    resolved_place_absent_count = 0
+
+    for group in sorted(
+        groups,
+        key=lambda row: (row.get("sourceVolume", 0), row.get("canonicalGroup", "")),
+    ):
+        canonical_group = group.get("canonicalGroup")
+        source_volume = group.get("sourceVolume")
+        source_units = group.get("units")
+        if not isinstance(canonical_group, str) or type(source_volume) is not int:
+            raise ValueError("administrative source group identity is invalid")
+        if not isinstance(source_units, list) or not all(isinstance(row, dict) for row in source_units):
+            raise ValueError(f"source group {canonical_group} units must be an array")
+        group_status_counts: Counter[str] = Counter()
+        group_current_commandery_ids: set[str] = set()
+        group_match_count = 0
+        group_mismatch_count = 0
+        group_absent_count = 0
+
+        for unit in source_units:
+            source_unit_count += 1
+            key = (unit.get("sourceVolume"), unit.get("canonicalGroup"), unit.get("ordinal"))
+            binding = bindings.get(key)
+            if binding is None:
+                raise ValueError(f"missing administrative binding for {key}")
+            status = binding.get("joinStatus")
+            if not isinstance(status, str):
+                raise ValueError(f"binding {key} joinStatus must be a string")
+            binding_status_counts[status] += 1
+            group_status_counts[status] += 1
+            if status == "NO_COORDINATE_CANDIDATE":
+                no_coordinate_count += 1
+
+            selected = binding.get("selectedCandidate")
+            physical_place_id = selected.get("physicalPlaceId") if isinstance(selected, dict) else None
+            if not isinstance(physical_place_id, str):
+                continue
+            jurisdiction_id = physical_place_id.rsplit(":", 1)[-1]
+            jurisdiction = jurisdiction_by_id.get(jurisdiction_id)
+            if jurisdiction is None:
+                resolved_place_absent_count += 1
+                group_absent_count += 1
+                continue
+            commandery = commandery_by_id[jurisdiction["commanderyId"]]
+            resolved_current_count += 1
+            group_current_commandery_ids.add(commandery["id"])
+            if commandery.get("nameCh") == canonical_group:
+                parent_match_count += 1
+                group_match_count += 1
+                continue
+            group_mismatch_count += 1
+            mismatch_rows.append({
+                "sourceName": unit.get("sourceName"),
+                "sourceCommanderyNameCh": canonical_group,
+                "sourceVolume": source_volume,
+                "ordinal": unit.get("ordinal"),
+                "currentJurisdictionId": jurisdiction_id,
+                "currentJurisdictionDisplayName": jurisdiction.get("displayName"),
+                "currentCommanderyId": commandery["id"],
+                "currentCommanderyDisplayName": commandery.get("displayName"),
+                "currentCommanderyNameCh": commandery.get("nameCh"),
+                "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW",
+            })
+
+        source_group_rows.append({
+            "sourceCommanderyNameCh": canonical_group,
+            "sourceVolume": source_volume,
+            "sourceUnitCount": len(source_units),
+            "bindingStatusCounts": dict(sorted(group_status_counts.items())),
+            "resolvedCurrentJurisdictionCount": group_match_count + group_mismatch_count,
+            "sourceParentMatchCount": group_match_count,
+            "sourceParentMismatchCount": group_mismatch_count,
+            "resolvedPlaceAbsentCount": group_absent_count,
+            "currentCommanderyIds": sorted(group_current_commandery_ids),
+        })
+
+    mismatch_rows.sort(
+        key=lambda row: (
+            row["sourceVolume"],
+            row["sourceCommanderyNameCh"],
+            row["ordinal"],
+            row["currentJurisdictionId"],
+        )
+    )
+    source_group_by_name = {
+        row["sourceCommanderyNameCh"]: row for row in source_group_rows
+    }
+    current_commandery_rows: list[dict] = []
+    source_linked_current_count = 0
+    for commandery in sorted(commandery_by_id.values(), key=lambda row: row["id"]):
+        jurisdiction_ids = commandery.get("jurisdictionIds")
+        if not isinstance(jurisdiction_ids, list):
+            raise ValueError(f"commandery {commandery.get('id')} jurisdictionIds must be an array")
+        source_group = source_group_by_name.get(commandery.get("nameCh"))
+        row = {
+            "currentCommanderyId": commandery["id"],
+            "currentCommanderyDisplayName": commandery.get("displayName"),
+            "currentCommanderyNameCh": commandery.get("nameCh"),
+            "kind": commandery.get("kind"),
+            "currentJurisdictionCount": len(jurisdiction_ids),
+            "classification": "CURRENT_ONLY_REQUIRES_PERIOD_OR_EXTERNAL_REVIEW",
+        }
+        if source_group is not None:
+            source_linked_current_count += 1
+            row.update({
+                "classification": "SOURCE_GROUP_MATCH",
+                "sourceVolume": source_group["sourceVolume"],
+                "sourceEnumeratedUnitCount": source_group["sourceUnitCount"],
+                "sourceResolvedCurrentJurisdictionCount": source_group[
+                    "resolvedCurrentJurisdictionCount"
+                ],
+                "sourceParentMismatchCount": source_group["sourceParentMismatchCount"],
+            })
+        current_commandery_rows.append(row)
+    return {
+        "policy": {
+            "mismatchClassification": "candidate only; period change or data error must be source-reviewed",
+            "noAutomaticReparenting": True,
+        },
+        "sourceGroupCount": len(source_group_rows),
+        "sourceUnitCount": source_unit_count,
+        "bindingStatusCounts": dict(sorted(binding_status_counts.items())),
+        "resolvedCurrentJurisdictionCount": resolved_current_count,
+        "sourceParentMatchCount": parent_match_count,
+        "sourceParentMismatchCount": len(mismatch_rows),
+        "noCoordinateCandidateCount": no_coordinate_count,
+        "resolvedPlaceAbsentCount": resolved_place_absent_count,
+        "sourceGroups": source_group_rows,
+        "sourceParentMismatches": mismatch_rows,
+        "currentCommanderyCount": len(current_commandery_rows),
+        "sourceLinkedCurrentCommanderyCount": source_linked_current_count,
+        "currentOnlyCommanderyCount": len(current_commandery_rows) - source_linked_current_count,
+        "currentCommanderies": current_commandery_rows,
+    }
+
+
+def _external_region_hierarchy(document: dict, policy_document: dict) -> dict:
+    jurisdictions = _require_records(document, "jurisdictionRecords")
+    macro_regions = _require_records(policy_document, "macroRegions")
+    constraints = policy_document.get("constraints")
+    if not isinstance(constraints, dict):
+        raise ValueError("external region policy constraints must be an object")
+    if constraints.get("politicalOwnershipSeparate") is not True:
+        raise ValueError("external region policy must keep political ownership separate")
+    if constraints.get("recruitmentEligibilitySeparate") is not True:
+        raise ValueError("external region policy must keep recruitment eligibility separate")
+
+    external_ids = {
+        row["id"]
+        for row in jurisdictions
+        if row.get("kind") in {"EXTERNAL_PLACE", "EXTERNAL_SETTLEMENT"}
+    }
+    assigned: dict[str, str] = {}
+    region_rows: list[dict] = []
+    for region in macro_regions:
+        region_id = region.get("id")
+        display_name = region.get("displayName")
+        jurisdiction_ids = region.get("jurisdictionIds")
+        if not isinstance(region_id, str) or not isinstance(display_name, str):
+            raise ValueError("external macro region identity is invalid")
+        if not isinstance(jurisdiction_ids, list) or not all(
+            isinstance(value, str) for value in jurisdiction_ids
+        ):
+            raise ValueError(f"external macro region {region_id} jurisdictionIds must be strings")
+        if (
+            constraints.get("noPanEthnicKoreanPeninsulaUmbrella") is True
+            and region.get("geographicScope") == "KOREAN_PENINSULA"
+            and display_name in {"동이", "東夷"}
+        ):
+            raise ValueError("동이 같은 범칭을 한반도 상위 지도명으로 사용할 수 없다")
+        if (
+            constraints.get("noDirectionalUmbrellaForNamedNorthernOrWesternPeoples") is True
+            and region.get("geographicScope")
+            in {"NORTHERN_FRONTIER", "NORTHWEST_FRONTIER"}
+            and display_name in {"북방", "서방", "서역"}
+        ):
+            raise ValueError(
+                f"{display_name} 방향 범칭 대신 강·저·흉노·선비·오환 같은 실명 집단을 사용해야 한다"
+            )
+        for jurisdiction_id in jurisdiction_ids:
+            if jurisdiction_id in assigned:
+                raise ValueError(
+                    f"external jurisdiction {jurisdiction_id} appears in multiple macro regions"
+                )
+            assigned[jurisdiction_id] = region_id
+        region_rows.append({
+            "id": region_id,
+            "displayName": display_name,
+            "classification": region.get("classification"),
+            "geographicScope": region.get("geographicScope"),
+            "jurisdictionIds": jurisdiction_ids,
+        })
+
+    unknown = sorted(set(assigned) - external_ids)
+    uncovered = sorted(external_ids - set(assigned))
+    if unknown:
+        raise ValueError(f"external region policy references unknown jurisdictions: {unknown}")
+    if uncovered:
+        raise ValueError(f"external region policy leaves jurisdictions uncovered: {uncovered}")
+    candidates = policy_document.get("sourceBackedCandidates")
+    if not isinstance(candidates, list) or not all(isinstance(row, dict) for row in candidates):
+        raise ValueError("sourceBackedCandidates must be an array of objects")
+    return {
+        "policyId": policy_document.get("policyId"),
+        "referenceYear": policy_document.get("referenceYear"),
+        "politicalOwnershipSeparate": True,
+        "recruitmentEligibilitySeparate": True,
+        "externalJurisdictionCount": len(external_ids),
+        "coveredJurisdictionCount": len(assigned),
+        "uncoveredJurisdictionIds": uncovered,
+        "macroRegionCount": len(region_rows),
+        "macroRegions": region_rows,
+        "sourceBackedCandidateCount": len(candidates),
+        "sourceBackedCandidates": candidates,
+    }
+
+
+def _jurisdiction_name_audit(
+    jurisdictions: list[dict],
+    commandery_by_id: dict[str, dict],
+) -> dict:
+    annotations: list[dict] = []
+    repeated_suffixes: list[dict] = []
+    by_parent_and_name: dict[tuple[str, str], list[dict]] = defaultdict(list)
+    annotation_pattern = re.compile(r"[\[\]（）()【】]")
+    repeated_suffix_pattern = re.compile(r"(?:현현|군군|국국)$")
+
+    for jurisdiction in jurisdictions:
+        jurisdiction_id = jurisdiction["id"]
+        display_name = jurisdiction.get("displayName")
+        name_ch = jurisdiction.get("nameCh")
+        commandery_id = jurisdiction.get("commanderyId")
+        if not isinstance(display_name, str) or not isinstance(name_ch, str):
+            raise ValueError(f"jurisdiction {jurisdiction_id} names must be strings")
+        if annotation_pattern.search(display_name) or annotation_pattern.search(name_ch):
+            annotations.append({
+                "jurisdictionId": jurisdiction_id,
+                "displayName": display_name,
+                "nameCh": name_ch,
+                "commanderyId": commandery_id,
+            })
+        if repeated_suffix_pattern.search(display_name) or re.search(r"(?:县县|郡郡|國國|国国)$", name_ch):
+            repeated_suffixes.append({
+                "jurisdictionId": jurisdiction_id,
+                "displayName": display_name,
+                "nameCh": name_ch,
+                "commanderyId": commandery_id,
+            })
+        by_parent_and_name[(commandery_id, name_ch)].append(jurisdiction)
+
+    duplicates: list[dict] = []
+    for (commandery_id, name_ch), rows in sorted(by_parent_and_name.items()):
+        if len(rows) < 2:
+            continue
+        commandery = commandery_by_id[commandery_id]
+        duplicates.append({
+            "commanderyId": commandery_id,
+            "commanderyDisplayName": commandery.get("displayName"),
+            "nameCh": name_ch,
+            "displayNames": sorted({row["displayName"] for row in rows}),
+            "jurisdictionIds": sorted(row["id"] for row in rows),
+            "classification": "SAME_COMMANDERY_NAME_COLLISION_REQUIRES_REVIEW",
+        })
+
+    annotations.sort(key=lambda row: row["jurisdictionId"])
+    repeated_suffixes.sort(key=lambda row: row["jurisdictionId"])
+    return {
+        "sourceAnnotationCount": len(annotations),
+        "sourceAnnotations": annotations,
+        "repeatedAdministrativeSuffixCount": len(repeated_suffixes),
+        "repeatedAdministrativeSuffixes": repeated_suffixes,
+        "sameCommanderyCanonicalNameDuplicateCount": len(duplicates),
+        "sameCommanderyCanonicalNameDuplicates": duplicates,
+    }
+
+
+def validate_ailao_layers(document: dict) -> dict:
     cities = _require_records(document, "cities")
     jurisdictions = _require_records(document, "jurisdictionRecords")
     commanderies = _require_records(document, "commanderyRecords")
@@ -311,9 +615,31 @@ def validate_ailao_layers(document: dict) -> None:
         or ethnic_jurisdiction.get("commanderyId") == county_jurisdiction.get("commanderyId")
     ):
         raise ValueError("哀牢 ethnic region and 哀牢县 administrative county must remain distinct")
+    return {
+        "ethnicRegionId": "X060",
+        "ethnicNameCh": "哀牢",
+        "administrativeCountyId": "80004",
+        "administrativeCountyNameCh": "哀牢县",
+        "decision": "SAME_LINEAGE_DO_NOT_RENDER_AS_PEERS",
+        "recommendedMacroRegionDisplayName": "남만",
+        "recommendedJurisdictionDisplayName": "애뢰",
+        "politicalOwnershipSeparate": True,
+        "recruitmentEligibilitySeparate": True,
+        "evidence": {
+            "source": "後漢書 卷86 南蠻西南夷列傳",
+            "corpusPath": "corpus/hhs-086.txt",
+            "line": 84,
+            "summary": "永平十二年 哀牢王內屬後 그 땅에 哀牢·博南 두 현을 두고 永昌郡을 설치했다.",
+        },
+    }
 
 
-def audit_document(document: dict, units_document: dict, bindings_document: dict) -> dict:
+def audit_document(
+    document: dict,
+    units_document: dict,
+    bindings_document: dict,
+    external_policy_document: dict | None = None,
+) -> dict:
     rows, cols, grid = _decode_owner(document)
     provinces = _require_records(document, "provinceRecords")
     jurisdictions = _require_records(document, "jurisdictionRecords")
@@ -344,13 +670,14 @@ def audit_document(document: dict, units_document: dict, bindings_document: dict
     city_ids = {row.get("id") for row in _require_records(document, "cities")}
     jurisdiction_ids = {row.get("id") for row in jurisdictions}
     ailao_ids_present = {"X060", "80004"} & (city_ids | jurisdiction_ids)
-    ailao_validated = bool(ailao_ids_present)
-    if ailao_validated:
-        validate_ailao_layers(document)
+    ailao_lineage: dict | None = None
+    if ailao_ids_present:
+        ailao_lineage = validate_ailao_layers(document)
     province_topology = _component_inventory(
         grid,
         [row["id"] for row in provinces],
         {row["id"]: row["displayName"] for row in provinces},
+        members_by_province=[row["id"] for row in provinces],
     )
     province_cell_counts = Counter(
         province_index
@@ -381,15 +708,24 @@ def audit_document(document: dict, units_document: dict, bindings_document: dict
         jurisdiction_labels,
         {row["id"]: row["displayName"] for row in jurisdictions},
         {row["id"]: row["commanderyId"] for row in jurisdictions},
+        [row["id"] for row in provinces],
     )
     commandery_topology = _component_inventory(
         grid,
         commandery_labels,
         {row["id"]: row["displayName"] for row in commanderies},
+        members_by_province=jurisdiction_labels,
     )
     single_commanderies = _single_commandery_inventory(
         commanderies, units_document, bindings_document, jurisdiction_by_id
     )
+    historical_parent_census = _historical_parent_census(
+        units_document,
+        bindings_document,
+        jurisdiction_by_id,
+        commandery_by_id,
+    )
+    jurisdiction_name_audit = _jurisdiction_name_audit(jurisdictions, commandery_by_id)
     return {
         "schemaVersion": 1,
         "auditId": "han-administrative-topology-audit-v1",
@@ -412,16 +748,22 @@ def audit_document(document: dict, units_document: dict, bindings_document: dict
         "commanderyTopology": commandery_topology,
         "singleJurisdictionCommanderyCount": len(single_commanderies),
         "singleJurisdictionCommanderies": single_commanderies,
-        "ethnicAdministrativeCoexistence": ([{
-                "ethnicRegionId": "X060",
-                "ethnicNameCh": "哀牢",
-                "administrativeCountyId": "80004",
-                "administrativeCountyNameCh": "哀牢县",
-                "decision": "DISTINCT_AXES_NO_AUTOMATIC_REPLACEMENT",
-            }]
-            if ailao_validated
-            else []
+        "historicalParentCensus": historical_parent_census,
+        "jurisdictionNameAudit": jurisdiction_name_audit,
+        "externalRegionHierarchy": (
+            _external_region_hierarchy(document, external_policy_document)
+            if external_policy_document is not None
+            else {
+                "externalJurisdictionCount": 0,
+                "coveredJurisdictionCount": 0,
+                "uncoveredJurisdictionIds": [],
+                "macroRegionCount": 0,
+                "macroRegions": [],
+                "sourceBackedCandidateCount": 0,
+                "sourceBackedCandidates": [],
+            }
         ),
+        "ethnicAdministrativeCoexistence": [ailao_lineage] if ailao_lineage else [],
     }
 
 
@@ -436,13 +778,27 @@ def _render(document: dict) -> str:
     return json.dumps(document, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
 
 
-def materialize(tiles: Path, units: Path, bindings: Path) -> dict:
-    result = audit_document(_load(tiles), _load(units), _load(bindings))
+def materialize(
+    tiles: Path,
+    units: Path,
+    bindings: Path,
+    external_policy: Path | None = None,
+) -> dict:
+    result = audit_document(
+        _load(tiles),
+        _load(units),
+        _load(bindings),
+        _load(external_policy) if external_policy is not None else None,
+    )
     result["inputs"] = {
         "hanTiles": {"sha256": _sha256(tiles)},
         "administrativeUnits": {"sha256": _sha256(units)},
         "administrativePlaceBindings": {"sha256": _sha256(bindings)},
     }
+    if external_policy is not None:
+        result["inputs"]["externalRegionHierarchyPolicy"] = {
+            "sha256": _sha256(external_policy)
+        }
     return result
 
 
@@ -451,6 +807,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--tiles", type=Path, default=DEFAULT_TILES)
     parser.add_argument("--units", type=Path, default=DEFAULT_UNITS)
     parser.add_argument("--bindings", type=Path, default=DEFAULT_BINDINGS)
+    parser.add_argument("--external-policy", type=Path, default=DEFAULT_EXTERNAL_POLICY)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--check", action="store_true")
     return parser.parse_args(argv)
@@ -459,7 +816,12 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
 def main(argv: Iterable[str] | None = None) -> int:
     args = parse_args(argv)
     try:
-        result = materialize(args.tiles.resolve(), args.units.resolve(), args.bindings.resolve())
+        result = materialize(
+            args.tiles.resolve(),
+            args.units.resolve(),
+            args.bindings.resolve(),
+            args.external_policy.resolve(),
+        )
         rendered = _render(result)
         if args.check:
             if not args.output.exists() or args.output.read_text(encoding="utf-8") != rendered:

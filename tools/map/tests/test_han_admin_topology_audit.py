@@ -23,6 +23,7 @@ from audit_han_admin_topology import (  # noqa: E402
 TILES = ROOT / "data" / "map" / "han-tiles.json"
 UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 BINDINGS = ROOT / "data" / "curated" / "han" / "administrative-place-bindings-v1.json"
+EXTERNAL_POLICY = ROOT / "data" / "curated" / "han" / "external-region-hierarchy-policy-v1.json"
 SNAPSHOT = ROOT / "data" / "curated" / "han" / "administrative-topology-audit-v1.json"
 
 
@@ -75,6 +76,23 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
 
         disconnected = {row["id"]: row for row in result["jurisdictionTopology"]["disconnected"]}
         self.assertEqual([3, 1], disconnected["J-A"]["componentCellCounts"])
+        self.assertEqual(
+            [
+                {"cellCount": 3, "memberIds": ["P-A"]},
+                {"cellCount": 1, "memberIds": ["P-A"]},
+            ],
+            disconnected["J-A"]["components"],
+        )
+        commandery_disconnected = {
+            row["id"]: row for row in result["commanderyTopology"]["disconnected"]
+        }
+        self.assertEqual(
+            [
+                {"cellCount": 3, "memberIds": ["J-A"]},
+                {"cellCount": 1, "memberIds": ["J-A"]},
+            ],
+            commandery_disconnected["C-A"]["components"],
+        )
         province_disconnected = {row["id"]: row for row in result["provinceTopology"]["disconnected"]}
         self.assertEqual([3, 1], province_disconnected["P-A"]["componentCellCounts"])
         province_enclosed = {
@@ -123,7 +141,7 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         self.assertEqual(["丁"], commandery["sourceUnitsWithoutCoordinateCandidate"])
         self.assertEqual([], result["ethnicAdministrativeCoexistence"])
 
-    def test_ailao_ethnic_region_and_county_must_remain_distinct(self) -> None:
+    def test_ailao_ethnic_region_and_county_are_reported_as_same_lineage(self) -> None:
         document = synthetic_document()
         document["cities"] = [
             {"id": "X060", "name": "남만", "nameCh": "哀牢", "kind": "EXTERNAL_PLACE"},
@@ -138,7 +156,13 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
             {"id": "C-COUNTY", "displayName": "영창군", "nameCh": "永昌郡", "kind": "COMMANDERY", "jurisdictionIds": ["80004"]},
         ])
 
-        validate_ailao_layers(document)
+        lineage = validate_ailao_layers(document)
+
+        self.assertEqual("SAME_LINEAGE_DO_NOT_RENDER_AS_PEERS", lineage["decision"])
+        self.assertEqual("남만", lineage["recommendedMacroRegionDisplayName"])
+        self.assertEqual("애뢰", lineage["recommendedJurisdictionDisplayName"])
+        self.assertTrue(lineage["politicalOwnershipSeparate"])
+        self.assertTrue(lineage["recruitmentEligibilitySeparate"])
 
         merged = copy.deepcopy(document)
         merged["jurisdictionRecords"] = [row for row in merged["jurisdictionRecords"] if row["id"] != "80004"]
@@ -152,6 +176,125 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "哀牢.*哀牢县"):
             validate_ailao_layers(dangling)
 
+    def test_historical_parent_census_reports_every_resolved_binding(self) -> None:
+        units = {
+            "groups": [{
+                "canonicalGroup": "乙郡",
+                "sourceVolume": 112,
+                "units": [
+                    {"sourceVolume": 112, "canonicalGroup": "乙郡", "ordinal": 1, "sourceName": "甲"},
+                    {"sourceVolume": 112, "canonicalGroup": "乙郡", "ordinal": 2, "sourceName": "丁"},
+                ],
+            }],
+        }
+        bindings = {
+            "administrativeUnits": [
+                {"identity": {"sourceVolume": 112, "canonicalGroup": "乙郡", "ordinal": 1}, "joinStatus": "RESOLVED_POINT", "selectedCandidate": {"physicalPlaceId": "chgis:v6:cnty:J-A"}},
+                {"identity": {"sourceVolume": 112, "canonicalGroup": "乙郡", "ordinal": 2}, "joinStatus": "NO_COORDINATE_CANDIDATE"},
+            ],
+        }
+
+        result = audit_document(synthetic_document(), units, bindings)
+        census = result["historicalParentCensus"]
+
+        self.assertEqual(2, census["sourceUnitCount"])
+        self.assertEqual(1, census["resolvedCurrentJurisdictionCount"])
+        self.assertEqual(1, census["sourceParentMismatchCount"])
+        self.assertEqual(1, census["noCoordinateCandidateCount"])
+        self.assertEqual(3, census["currentCommanderyCount"])
+        self.assertEqual(1, census["sourceLinkedCurrentCommanderyCount"])
+        self.assertEqual(
+            ["C-A", "C-B", "C-C"],
+            [row["currentCommanderyId"] for row in census["currentCommanderies"]],
+        )
+        self.assertEqual(
+            {
+                "sourceName": "甲",
+                "sourceCommanderyNameCh": "乙郡",
+                "sourceVolume": 112,
+                "ordinal": 1,
+                "currentJurisdictionId": "J-A",
+                "currentJurisdictionDisplayName": "가현",
+                "currentCommanderyId": "C-A",
+                "currentCommanderyDisplayName": "가군",
+                "currentCommanderyNameCh": "甲郡",
+                "classification": "SOURCE_PARENT_MISMATCH_REQUIRES_PERIOD_REVIEW",
+            },
+            census["sourceParentMismatches"][0],
+        )
+
+    def test_jurisdiction_name_audit_reports_same_parent_duplicates_and_editor_markup(self) -> None:
+        document = synthetic_document()
+        document["jurisdictionRecords"].append({
+            "id": "J-A2",
+            "displayName": "가현",
+            "nameCh": "甲县",
+            "commanderyId": "C-A",
+            "provinceIds": [],
+        })
+        document["jurisdictionRecords"][0]["displayName"] = "[가현]현"
+
+        result = audit_document(document, {"groups": []}, {"administrativeUnits": []})
+        audit = result["jurisdictionNameAudit"]
+
+        self.assertEqual(1, audit["sourceAnnotationCount"])
+        self.assertEqual(["J-A"], [row["jurisdictionId"] for row in audit["sourceAnnotations"]])
+        self.assertEqual(1, audit["sameCommanderyCanonicalNameDuplicateCount"])
+        self.assertEqual(["J-A", "J-A2"], audit["sameCommanderyCanonicalNameDuplicates"][0]["jurisdictionIds"])
+
+    def test_external_region_policy_covers_every_external_jurisdiction_once(self) -> None:
+        policy = {
+            "schemaVersion": 1,
+            "policyId": "test",
+            "referenceYear": 220,
+            "constraints": {
+                "politicalOwnershipSeparate": True,
+                "recruitmentEligibilitySeparate": True,
+                "noPanEthnicKoreanPeninsulaUmbrella": True,
+            },
+            "macroRegions": [{
+                "id": "KOREA-MAHAN",
+                "displayName": "마한",
+                "classification": "CONFEDERATION",
+                "geographicScope": "KOREAN_PENINSULA",
+                "jurisdictionIds": ["X-A"],
+            }],
+            "sourceBackedCandidates": [],
+        }
+        document = synthetic_document()
+        document["jurisdictionRecords"].append({
+            "id": "X-A",
+            "displayName": "백제국",
+            "nameCh": "伯濟國",
+            "kind": "EXTERNAL_SETTLEMENT",
+            "commanderyId": "C-A",
+            "provinceIds": [],
+        })
+
+        result = audit_document(document, {"groups": []}, {"administrativeUnits": []}, policy)
+
+        self.assertEqual(1, result["externalRegionHierarchy"]["coveredJurisdictionCount"])
+        self.assertEqual([], result["externalRegionHierarchy"]["uncoveredJurisdictionIds"])
+
+        bad = copy.deepcopy(policy)
+        bad["macroRegions"][0]["displayName"] = "동이"
+        with self.assertRaisesRegex(ValueError, "동이.*한반도"):
+            audit_document(document, {"groups": []}, {"administrativeUnits": []}, bad)
+
+        directional = copy.deepcopy(policy)
+        directional["constraints"]["noDirectionalUmbrellaForNamedNorthernOrWesternPeoples"] = True
+        directional["macroRegions"][0].update({
+            "displayName": "북방",
+            "geographicScope": "NORTHERN_FRONTIER",
+        })
+        with self.assertRaisesRegex(ValueError, "북방.*실명 집단"):
+            audit_document(
+                document,
+                {"groups": []},
+                {"administrativeUnits": []},
+                directional,
+            )
+
     def test_canonical_snapshot_is_current_and_complete(self) -> None:
         result = subprocess.run(
             [
@@ -160,6 +303,7 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
                 "--tiles", str(TILES),
                 "--units", str(UNITS),
                 "--bindings", str(BINDINGS),
+                "--external-policy", str(EXTERNAL_POLICY),
                 "--output", str(SNAPSHOT),
                 "--check",
             ],
@@ -178,6 +322,14 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         self.assertEqual(43, snapshot["commanderyTopology"]["disconnectedCount"])
         self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
         self.assertEqual(73, snapshot["singleJurisdictionCommanderyCount"])
+        self.assertEqual(172, snapshot["historicalParentCensus"]["currentCommanderyCount"])
+        self.assertEqual(38, snapshot["externalRegionHierarchy"]["coveredJurisdictionCount"])
+        self.assertEqual([], snapshot["externalRegionHierarchy"]["uncoveredJurisdictionIds"])
+        self.assertGreater(snapshot["historicalParentCensus"]["sourceParentMismatchCount"], 0)
+        self.assertEqual(
+            "SAME_LINEAGE_DO_NOT_RENDER_AS_PEERS",
+            snapshot["ethnicAdministrativeCoexistence"][0]["decision"],
+        )
 
     def test_check_fails_closed_when_snapshot_or_input_drifts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -213,7 +365,12 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
             second_root = Path(second)
             first_paths: list[Path] = []
             second_paths: list[Path] = []
-            for source, name in ((TILES, "tiles.json"), (UNITS, "units.json"), (BINDINGS, "bindings.json")):
+            for source, name in (
+                (TILES, "tiles.json"),
+                (UNITS, "units.json"),
+                (BINDINGS, "bindings.json"),
+                (EXTERNAL_POLICY, "external-policy.json"),
+            ):
                 payload = source.read_bytes()
                 first_path = first_root / name
                 second_path = second_root / name
@@ -227,7 +384,7 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
 
         self.assertEqual(first_result, second_result)
         self.assertEqual(
-            materialize(TILES, UNITS, BINDINGS),
+            materialize(TILES, UNITS, BINDINGS, EXTERNAL_POLICY),
             first_result,
         )
         self.assertNotIn("path", first_result["inputs"]["hanTiles"])
