@@ -29,12 +29,14 @@ from pathlib import Path
 
 try:
     from tools.map.world_province_geometry import (
+        apply_jurisdiction_parent_adjudications,
         assign_province_jurisdictions,
         infer_commandery_kind,
         validate_jurisdiction_recovery_document,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
     from world_province_geometry import (
+        apply_jurisdiction_parent_adjudications,
         assign_province_jurisdictions,
         infer_commandery_kind,
         validate_jurisdiction_recovery_document,
@@ -63,6 +65,9 @@ LEGACY_GAMEPLAY_TILES = MAP / "han-780-v1-tiles.json"
 HAN_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 JURISDICTION_RECOVERIES = (
     ROOT / "data" / "curated" / "han" / "jurisdiction-seat-recoveries-v1.json"
+)
+JURISDICTION_PARENT_ADJUDICATIONS = (
+    ROOT / "data" / "curated" / "han" / "jurisdiction-commandery-adjudications-v1.json"
 )
 
 # 220년 정본 군국명과 시나리오 시기명이 다른 같은 행정 권역.
@@ -546,7 +551,8 @@ def build(
         *, grid_document: dict | None = None,
         places_document: dict | None = None,
         readings_document: dict | None = None,
-        jurisdiction_recoveries_document: dict | None = None) -> dict:
+        jurisdiction_recoveries_document: dict | None = None,
+        jurisdiction_parent_adjudications_document: dict | None = None) -> dict:
     grid = grid_document if grid_document is not None else json.loads(GRID.read_text())
     places_doc = (
         places_document if places_document is not None else json.loads(PLACES.read_text())
@@ -711,12 +717,17 @@ def build(
         "seatOwner": rle(grid["seatOwner"]),
         "cities": cities,
     }
+    adjudications_document = None
     if province_records is not None and parent_regions is not None:
         output['provinceRecords'] = province_records
         output['jurisdictionRecords'] = jurisdiction_records
         output['commanderyRecords'] = commandery_records
         output['parentRegions'] = parent_regions
         output['parentOwner'] = rle(grid['parentOwner'])
+        adjudications_document = jurisdiction_parent_adjudications_document
+        if adjudications_document is None:
+            adjudications_document = json.loads(
+                JURISDICTION_PARENT_ADJUDICATIONS.read_text(encoding='utf-8'))
         # Keep the full legacy route-node surface together. Its indices are a
         # separate immutable namespace; mixing only the old seatOwner with the
         # new city/jun arrays creates duplicate seats and invalid references.
@@ -731,13 +742,22 @@ def build(
             output['legacyGameplay'] = {
                 'cities': output['cities'],
                 'juns': output['juns'],
+                # Pre-adjudication by construction: the ledger is applied to the
+                # normalized artifact below, after this legacy-shaped copy is taken.
                 'seatOwner': output['parentOwner'],
             }
         output['_meta']['counts']['provinces'] = len(province_records)
         output['_meta']['counts']['jurisdictions'] = len(jurisdiction_records)
         output['_meta']['counts']['commanderies'] = len(commandery_records)
         output['_meta']['counts']['parentRegions'] = len(parent_regions)
-    return normalize_han_place_names(output)
+    result = normalize_han_place_names(output)
+    if adjudications_document is not None:
+        # Reviewed parent moves are applied to the assembled, name-normalized
+        # artifact — the same shape the materializer patches — so a full
+        # regeneration re-derives parentOwner and the commandery graph from the
+        # same ledger and a rebuild cannot drop the review.
+        apply_jurisdiction_parent_adjudications(result, adjudications_document)
+    return result
 
 
 def main() -> int:

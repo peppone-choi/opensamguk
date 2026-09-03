@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "han-jurisdiction-commandery-adjudications-v1",
+  "referenceYear": 220,
+  "adjudications": [
+    {
+      "jurisdictionId": "45107",
+      "jurisdictionNameCh": "西平昌县",
+      "fromCommanderyId": "PARENT-0038",
+      "fromCommanderyNameCh": "北海國",
+      "toCommanderyId": "PARENT-0036",
+      "toCommanderyNameCh": "平原郡",
+      "reviewState": "APPROVED_EXACT_PARENT",
+      "evidenceRefs": [
+        "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_45107#part-of-206-221",
+        "shiliao:後漢書/卷042 光武十王列傳「但削祝阿、隰陰、東朝陽、安德、西平昌五縣」(齊國에서 깎아낸 縣 — 安德·西平昌 은 平原 쪽 縣)",
+        "shiliao:晉書/卷014 地理志上 平原國「平原　高唐　茌平　博平　聊城　安德　西平昌　般　鬲」",
+        "shiliao:讀史方輿紀要/卷031 濟南府「漢置平昌縣，屬平原郡。後漢曰西平昌縣，晉、宋因之」",
+        "shiliao:宋書/卷036 州郡志 校勘記「續漢志無西平昌」(後漢書 郡國志 에는 西平昌 항목이 없어 郡國志 직접 인용 불가)",
+        "shiliao:後漢書/卷112 郡國志 靑州 — 北海國 縣 목록에 西平昌 없음 (「樂安國，高帝西平昌置」는 글자 일치 오탐)"
+      ]
+    },
+    {
+      "jurisdictionId": "85385",
+      "jurisdictionNameCh": "挺县",
+      "fromCommanderyId": "PARENT-0039",
+      "fromCommanderyNameCh": "東萊郡",
+      "toCommanderyId": "PARENT-0038",
+      "toCommanderyNameCh": "北海國",
+      "reviewState": "APPROVED_EXACT_PARENT",
+      "evidenceRefs": [
+        "data/curated/han/route-node-selection-v1.json#physicalPlaceRef=chgis:v6:cnty:85385",
+        "https://zh.wikisource.org/wiki/後漢書/卷112#北海國",
+        "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_85385",
+        "shiliao:後漢書/卷112 郡國志 靑州 北海國 縣 목록「挺，」(地道記 注)",
+        "shiliao:讀史方輿紀要/卷036 萊州府「挺城，縣南七里。漢置挺縣，屬膠東國。後漢屬北海國。晉屬長廣郡」"
+      ]
+    },
+    {
+      "jurisdictionId": "85505",
+      "jurisdictionNameCh": "不其县",
+      "fromCommanderyId": "PARENT-0038",
+      "fromCommanderyNameCh": "北海國",
+      "toCommanderyId": "PARENT-0039",
+      "toCommanderyNameCh": "東萊郡",
+      "reviewState": "APPROVED_EXACT_PARENT",
+      "evidenceRefs": [
+        "data/curated/han/route-node-selection-v1.json#physicalPlaceRef=chgis:v6:cnty:85505",
+        "https://zh.wikisource.org/wiki/後漢書/卷112#東萊郡",
+        "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_85505",
+        "shiliao:後漢書/卷112 郡國志 靑州 東萊郡 縣 목록「不其，侯國，故屬琅邪」",
+        "shiliao:讀史方輿紀要/卷002 兩漢三國「又長廣郡，建安五年魏武分東萊郡置，治不其縣」(원문은 {{YL|建安五年}} 마크업; 색인 검색은 「魏武分東萊郡置，治不其縣」로) — 220 년 기준 東萊郡 계열, 北海國 아님"
+      ]
+    },
+    {
+      "jurisdictionId": "85706",
+      "jurisdictionNameCh": "安德县",
+      "fromCommanderyId": "PARENT-0038",
+      "fromCommanderyNameCh": "北海國",
+      "toCommanderyId": "PARENT-0036",
+      "toCommanderyNameCh": "平原郡",
+      "reviewState": "APPROVED_EXACT_PARENT",
+      "evidenceRefs": [
+        "data/curated/han/route-node-selection-v1.json#physicalPlaceRef=chgis:v6:cnty:85706",
+        "https://zh.wikisource.org/wiki/後漢書/卷112#平原郡",
+        "https://tgaz.fudan.edu.cn/tgaz/placename/hvd_85706",
+        "shiliao:後漢書/卷112 郡國志 靑州 平原郡 縣 목록「安德，侯國」",
+        "shiliao:後漢書/卷042 光武十王列傳「但削祝阿、隰陰、東朝陽、安德、西平昌五縣」",
+        "shiliao:晉書/卷014 地理志上 平原國「平原　高唐　茌平　博平　聊城　安德　西平昌　般　鬲」"
+      ]
+    }
+  ]
+}

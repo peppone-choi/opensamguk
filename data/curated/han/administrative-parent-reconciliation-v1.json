@@ -240,7 +240,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "2c1cb2af31e278527d8041f0162b8da837d65b33dc1e0e204c61221f71e08819"
+      "sha256": "6e7507bc110e37738a77f49c598762a3691465574a839775b6e66d244a8ea9d7"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -381,7 +381,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -1955,7 +1954,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "85371",
@@ -1968,7 +1967,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -1991,7 +1989,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "85466",
@@ -2004,9 +2002,7 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -18861,12 +18857,12 @@
         "junDistribution": [
           {
             "cellCount": 26,
-            "junArrayIndex": 38,
-            "nameCh": "北海國"
+            "junArrayIndex": 36,
+            "nameCh": "平原郡"
           }
         ],
         "majorityJunArrayIndices": [
-          38
+          36
         ]
       },
       "geometryDiagnostic": {
@@ -18885,13 +18881,12 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:110:勃海郡",
+          "hhs-group:112:平原郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 38,
-        "nameCh": "北海國"
+        "junArrayIndex": 36,
+        "nameCh": "平原郡"
       }
     },
     {
@@ -32807,9 +32802,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -33223,9 +33216,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -33350,9 +33341,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -33393,9 +33382,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -33436,9 +33423,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -33479,9 +33464,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -33522,9 +33505,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -33729,7 +33710,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -33760,7 +33740,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "85371",
@@ -33773,7 +33753,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -33804,7 +33783,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "85371",
@@ -33817,7 +33796,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -33859,7 +33837,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -33890,23 +33867,22 @@
         "junDistribution": [
           {
             "cellCount": 63,
-            "junArrayIndex": 39,
-            "nameCh": "東萊郡"
+            "junArrayIndex": 38,
+            "nameCh": "北海國"
           }
         ],
         "majorityJunArrayIndices": [
-          39
+          38
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 39,
-        "nameCh": "東萊郡"
+        "junArrayIndex": 38,
+        "nameCh": "北海國"
       }
     },
     {
@@ -33943,7 +33919,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -33985,7 +33960,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -34027,9 +34001,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -34070,7 +34042,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -34112,7 +34083,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -34154,7 +34124,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -34185,7 +34154,7 @@
       "geometryDiagnostic": {
         "diagnosticOnly": true,
         "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
+        "groupCardinality": "SINGLE_GROUP_JUN",
         "nearestCandidates": [
           {
             "anchorCityId": "200036",
@@ -34198,7 +34167,6 @@
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -34240,9 +34208,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -34283,9 +34249,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -34326,9 +34290,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -34369,9 +34331,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -34412,9 +34372,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -34455,7 +34413,6 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
@@ -34497,9 +34454,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -34540,9 +34495,7 @@
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:112:北海國"
         ],
         "diagnosticOnly": true,
         "junArrayIndex": 38,
@@ -34572,24 +34525,22 @@
         "junDistribution": [
           {
             "cellCount": 57,
-            "junArrayIndex": 38,
-            "nameCh": "北海國"
+            "junArrayIndex": 39,
+            "nameCh": "東萊郡"
           }
         ],
         "majorityJunArrayIndices": [
-          38
+          39
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
           "hhs-group:112:東萊郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 38,
-        "nameCh": "北海國"
+        "junArrayIndex": 39,
+        "nameCh": "東萊郡"
       }
     },
     {
@@ -35906,24 +35857,23 @@
         "junDistribution": [
           {
             "cellCount": 26,
-            "junArrayIndex": 38,
-            "nameCh": "北海國"
+            "junArrayIndex": 36,
+            "nameCh": "平原郡"
           }
         ],
         "majorityJunArrayIndices": [
-          38
+          36
         ]
       },
       "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:112:北海國",
-          "hhs-group:112:平原郡",
-          "hhs-group:112:東萊郡"
+          "hhs-group:110:勃海郡",
+          "hhs-group:112:平原郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 38,
-        "nameCh": "北海國"
+        "junArrayIndex": 36,
+        "nameCh": "平原郡"
       }
     },
     {
@@ -46663,12 +46613,12 @@
         "rowCount": 3
       },
       "multiGroupJun": {
-        "cellCount": 8044,
-        "rowCount": 90
+        "cellCount": 7859,
+        "rowCount": 85
       },
       "singleGroupJun": {
-        "cellCount": 10158,
-        "rowCount": 194
+        "cellCount": 10343,
+        "rowCount": 199
       },
       "uniqueNearest": {
         "cellCount": 18133,
