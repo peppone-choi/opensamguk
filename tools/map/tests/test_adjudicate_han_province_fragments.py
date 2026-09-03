@@ -540,6 +540,60 @@ class HanProvinceFragmentMaterializerTest(unittest.TestCase):
         self.assertEqual(before_seat_owner, patched["seatOwner"])
         self.assertEqual(patched, materialize_document(patched, synthetic_anchor_ledger()))
 
+    def test_refreshes_place_anchor_coordinates_before_deferred_component_audit(self) -> None:
+        document = synthetic_anchor_document()
+        source_main = {(1, 1), (1, 2), (2, 1), (2, 2)}
+        target_main = {(1, 4), (1, 5), (1, 6), (2, 4), (2, 5), (2, 6)}
+        target_ring = {(4, 5), (5, 4), (5, 6), (6, 5)}
+        anchor_from = (5, 5)
+        owner = [[-1] * 7 for _ in range(7)]
+        terrain = [[0] * 7 for _ in range(7)]
+        for row, col in source_main | {anchor_from}:
+            owner[row][col] = 0
+            terrain[row][col] = 1
+        for row, col in target_main | target_ring:
+            owner[row][col] = 1
+            terrain[row][col] = 1
+        document["owner"] = rle([value for row in owner for value in row])
+        document["parentOwner"] = copy.deepcopy(document["owner"])
+        document["terrain"] = ["".join(str(value) for value in row) for row in terrain]
+        document["cities"][2]["col"], document["cities"][2]["row"] = (5, 5)
+        document["juns"][0]["col"], document["juns"][0]["row"] = (5, 5)
+        patched_owner = copy.deepcopy(owner)
+        patched_owner[5][5] = 1
+        patched_cities = copy.deepcopy(document["cities"])
+        patched_cities[2]["col"], patched_cities[2]["row"] = (1, 1)
+        patched_juns = copy.deepcopy(document["juns"])
+        patched_juns[0]["col"], patched_juns[0]["row"] = (1, 1)
+        ledger = synthetic_anchor_ledger()
+        decision = ledger["anchoredReassignments"][0]
+        decision["anchorFrom"] = [5, 5]
+        decision["componentCells"] = [[5, 5]]
+        decision["targetAssignments"][0]["cells"] = [[5, 5]]
+        ledger["inputOwnerSha256"] = grid_digest(owner)
+        ledger["outputOwnerSha256"] = grid_digest(patched_owner)
+        ledger["inputCitiesSha256"] = json_digest(document["cities"])
+        ledger["outputCitiesSha256"] = json_digest(patched_cities)
+        ledger["inputJunsSha256"] = json_digest(document["juns"])
+        ledger["outputJunsSha256"] = json_digest(patched_juns)
+        target_cells = [[col, row] for row, col in target_main | target_ring | {anchor_from}]
+        ledger["deferred"] = [
+            {
+                "provinceId": "P-TARGET",
+                "classification": "MARITIME_REVIEW_REQUIRED",
+                "componentCellCounts": [6, 5],
+                "cellSetSha256": cell_set_digest(target_cells),
+                "secondaryNegativeBoundaryTypes": ["OUT_OF_MAP", "SEA"],
+                "secondarySurroundingProvinceIds": [],
+                "containedRuntimePlaceIds": [],
+                "reason": "Keep the synthetic sea-boundary component under review.",
+            }
+        ]
+
+        patched = materialize_document(document, ledger)
+
+        self.assertEqual((1, 1), (patched["cities"][2]["col"], patched["cities"][2]["row"]))
+
     def test_rejects_anchor_normalization_when_the_canonical_seat_drifts(self) -> None:
         document = synthetic_anchor_document()
         document["commanderyRecords"][0]["seatJurisdictionId"] = "J-TARGET"

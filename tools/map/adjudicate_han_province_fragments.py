@@ -750,6 +750,10 @@ def materialize_document(document: dict, ledger: dict) -> dict:
                 parent_owner[coordinate[0]][coordinate[1]] = parent_index_by_province[target_index]
             anchor_city["col"], anchor_city["row"] = decision["anchorTo"]
             juns[parent_index]["col"], juns[parent_index]["row"] = decision["anchorTo"]
+            place_anchors[anchor_city_index] = (
+                (anchor_city["row"], anchor_city["col"]),
+                decision["anchorPlaceId"],
+            )
 
     if _grid_digest(owner) != ledger["outputOwnerSha256"]:
         raise ValueError("materialized owner grid disagrees with outputOwnerSha256")
