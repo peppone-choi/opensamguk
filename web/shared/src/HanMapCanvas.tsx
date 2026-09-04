@@ -217,6 +217,8 @@ export interface IsoActivation {
   pointerType: string;
 }
 
+export type InitialFocusProfile = 'current-city-close';
+
 export interface HanMapCanvasProps extends IsoSceneOptions {
   mapCode: string;
   tiles?: HanTiles | null;
@@ -226,6 +228,7 @@ export interface HanMapCanvasProps extends IsoSceneOptions {
   cities?: readonly IsoCityOverlay[];
   administrativeOwnership?: AdministrativeOwnershipData;
   sourceSize?: IsoSourceSize;
+  initialFocus?: InitialFocusProfile;
   hideCityNames?: boolean;
   className?: string;
   style?: CSSProperties;
@@ -332,11 +335,14 @@ export function initialFocusedView(
   tiles: HanTiles,
   dpr = 1,
   current?: { col: number; row: number },
+  profile?: InitialFocusProfile,
 ): IsoView {
   const fitted = initialView(width, height, grid, tiles, dpr);
   if (!current) return fitted;
-  const labelScale = labelZoomFor('COUNTY', fitted.scale, dpr) ?? fitted.scale;
-  const scale = Math.min(maxScaleForDpr(dpr) * 0.9, Math.max(fitted.scale, labelScale));
+  const targetScale = profile === 'current-city-close'
+    ? 10 * effectiveDpr(dpr)
+    : labelZoomFor('COUNTY', fitted.scale, dpr) ?? fitted.scale;
+  const scale = Math.min(maxScaleForDpr(dpr) * 0.9, Math.max(fitted.scale, targetScale));
   return viewAt(width, height, current.col, current.row, scale);
 }
 
@@ -1035,13 +1041,6 @@ function drawOverviewCityGlyph(
     context.fillStyle = '#b72f2f';
     context.fill();
   }
-  if (city.layers.includes('current')) {
-    context.beginPath();
-    context.arc(x, y, detail * 0.58, 0, Math.PI * 2);
-    context.strokeStyle = '#ffffff';
-    context.lineWidth = stroke;
-    context.stroke();
-  }
   if (city.layers.includes('selected')) {
     context.strokeStyle = '#ffd84f';
     context.lineWidth = stroke;
@@ -1053,6 +1052,82 @@ function drawOverviewCityGlyph(
     );
   }
   return box;
+}
+
+function drawCurrentLocationOverlay(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  markerRadius: number,
+  dpr: number,
+  phase: number,
+) {
+  const ratio = effectiveDpr(dpr);
+  const radius = Math.max(markerRadius, 7 * ratio);
+  const haloRadius = radius * 1.35 + phase * 0.75 * ratio;
+  const chevronCenterY = y - haloRadius - 7 * ratio;
+  const chipCenterY = y - haloRadius - 28 * ratio;
+  const chipText = '내 위치';
+
+  context.save();
+  context.lineJoin = 'round';
+  context.lineCap = 'round';
+
+  context.beginPath();
+  context.arc(x, y, haloRadius, 0, Math.PI * 2);
+  context.strokeStyle = 'rgba(18,12,6,0.92)';
+  context.lineWidth = 6 * ratio;
+  context.stroke();
+
+  context.beginPath();
+  context.arc(x, y, haloRadius, 0, Math.PI * 2);
+  context.strokeStyle = '#ffffff';
+  context.lineWidth = 3.5 * ratio;
+  context.stroke();
+
+  context.beginPath();
+  context.arc(x, y, haloRadius, 0, Math.PI * 2);
+  context.globalAlpha = phase === 0 ? 0.86 : 1;
+  context.strokeStyle = '#ffd84f';
+  context.lineWidth = 1.5 * ratio;
+  context.stroke();
+  context.globalAlpha = 1;
+
+  context.beginPath();
+  context.moveTo(x - 6 * ratio, chevronCenterY + 4 * ratio);
+  context.lineTo(x, chevronCenterY - 4 * ratio);
+  context.lineTo(x + 6 * ratio, chevronCenterY + 4 * ratio);
+  context.lineTo(x, chevronCenterY + 1 * ratio);
+  context.closePath();
+  context.fillStyle = '#ffd84f';
+  context.fill();
+  context.strokeStyle = 'rgba(18,12,6,0.92)';
+  context.lineWidth = 2 * ratio;
+  context.stroke();
+
+  context.font = `bold ${10 * ratio}px sans-serif`;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  const chipWidth = context.measureText(chipText).width + 10 * ratio;
+  const chipHeight = 16 * ratio;
+  context.fillStyle = 'rgba(18,12,6,0.92)';
+  context.fillRect(
+    x - chipWidth / 2,
+    chipCenterY - chipHeight / 2,
+    chipWidth,
+    chipHeight,
+  );
+  context.strokeStyle = '#ffd84f';
+  context.lineWidth = ratio;
+  context.strokeRect(
+    x - chipWidth / 2,
+    chipCenterY - chipHeight / 2,
+    chipWidth,
+    chipHeight,
+  );
+  context.fillStyle = '#ffffff';
+  context.fillText(chipText, x, chipCenterY);
+  context.restore();
 }
 
 function drawScene(
@@ -1067,6 +1142,7 @@ function drawScene(
   dpr: number,
   markerImages: CityMarkerImages,
   flagPhase: number,
+  selfLocationPhase: number,
   administrativeLayer: AdministrativeLayer,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
@@ -1123,6 +1199,13 @@ function drawScene(
     if (markerZoom === undefined) {
       const overviewBox = drawOverviewCityGlyph(context, city, x, y, scale, dpr);
       hits.push({ city, provinceId: city.provinceId, ...overviewBox });
+      if (city.layers.includes('current')) {
+        const detail = Math.min(
+          (overviewBox.right - overviewBox.left) / 2,
+          (overviewBox.bottom - overviewBox.top) / 2,
+        );
+        drawCurrentLocationOverlay(context, x, y, detail, dpr, selfLocationPhase);
+      }
     } else if (marker) {
       hits.push({
         city,
@@ -1191,14 +1274,7 @@ function drawScene(
     }
 
     if (markerZoom !== undefined && city.layers.includes('current')) {
-      context.save();
-      context.globalAlpha = Math.floor(Date.now() / 500) % 2 === 0 ? 1 : 0.3;
-      context.strokeStyle = '#ffffff';
-      context.lineWidth = 3;
-      context.beginPath();
-      context.arc(x, y, radius * 1.35, 0, Math.PI * 2);
-      context.stroke();
-      context.restore();
+      drawCurrentLocationOverlay(context, x, y, radius, dpr, selfLocationPhase);
     }
     if (markerZoom !== undefined && city.layers.includes('selected')) {
       context.strokeStyle = '#ffd84f';
@@ -1269,6 +1345,7 @@ export function HanMapCanvas({
   cities = [],
   administrativeOwnership,
   sourceSize = DEFAULT_SOURCE,
+  initialFocus,
   currentCityId,
   selectedCityId,
   hideCityNames = false,
@@ -1289,8 +1366,10 @@ export function HanMapCanvas({
   const provinceMapRef = useRef<ProvinceIdentityMap | null>(null);
   const markerImagesRef = useRef<CityMarkerImages>({});
   const flagPhaseRef = useRef(0);
+  const selfLocationPhaseRef = useRef(0);
   const viewRef = useRef<IsoView | null>(null);
   const userModifiedViewRef = useRef(false);
+  const initialFocusAppliedRef = useRef(false);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<CityHitBox[]>([]);
   const dragRef = useRef(new Map<number, { x: number; y: number }>());
@@ -1530,7 +1609,8 @@ export function HanMapCanvas({
     terrainRef.current = loadedTiles ? bakeTerrain(loadedTiles) : null;
     viewRef.current = null;
     userModifiedViewRef.current = false;
-  }, [loadedTiles]);
+    initialFocusAppliedRef.current = false;
+  }, [loadedTiles, mapCode]);
 
   useEffect(() => {
     politicalPathsRef.current = provinceMap ? bakePoliticalPaths(provinceMap, countyIndex) : null;
@@ -1554,6 +1634,7 @@ export function HanMapCanvas({
       sizeRef.current.dpr,
       markerImagesRef.current,
       flagPhaseRef.current,
+      selfLocationPhaseRef.current,
       administrativeLayer,
     );
   }, [administrativeLayer]);
@@ -1594,23 +1675,26 @@ export function HanMapCanvas({
     const hasWavingFlag = scene?.cities.some((city) => (
       isOwnedNationVisual(city.nationId, city.nationColor) && city.supply !== false
     )) ?? false;
+    const hasCurrentLocation = scene?.cities.some((city) => city.layers.includes('current')) ?? false;
     const reducedMotion = typeof window.matchMedia === 'function'
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     flagPhaseRef.current = 0;
+    selfLocationPhaseRef.current = 0;
     render();
-    if (!hasWavingFlag || reducedMotion) return;
-    const timer = window.setInterval(() => {
+    if (reducedMotion) return;
+    const flagTimer = hasWavingFlag ? window.setInterval(() => {
       flagPhaseRef.current = (flagPhaseRef.current + 1) % 3;
       render();
-    }, 240);
-    return () => window.clearInterval(timer);
+    }, 240) : undefined;
+    const selfLocationTimer = hasCurrentLocation ? window.setInterval(() => {
+      selfLocationPhaseRef.current = selfLocationPhaseRef.current === 0 ? 1 : 0;
+      render();
+    }, 1_200) : undefined;
+    return () => {
+      if (flagTimer !== undefined) window.clearInterval(flagTimer);
+      if (selfLocationTimer !== undefined) window.clearInterval(selfLocationTimer);
+    };
   }, [render, scene]);
-
-  useEffect(() => {
-    if (currentCityId == null) return;
-    const timer = window.setInterval(render, 500);
-    return () => window.clearInterval(timer);
-  }, [currentCityId, render]);
 
   useEffect(() => {
     const box = boxRef.current;
@@ -1628,7 +1712,19 @@ export function HanMapCanvas({
       canvas.style.height = `${cssHeight}px`;
       sizeRef.current = { width: canvas.width, height: canvas.height, dpr };
       const grid = { cols: loadedTiles._meta.cols, rows: loadedTiles._meta.rows };
-      if (
+      const currentPosition = currentCityId == null ? undefined : markerPositions?.get(currentCityId);
+      const sameViewport = previousView
+        && previousSize.width === canvas.width
+        && previousSize.height === canvas.height
+        && previousSize.dpr === dpr;
+      const shouldApplyFirstCurrentFocus = !userModifiedViewRef.current
+        && !initialFocusAppliedRef.current
+        && currentPosition !== undefined;
+      let viewChanged = true;
+      if (sameViewport && !shouldApplyFirstCurrentFocus) {
+        viewRef.current = previousView;
+        viewChanged = false;
+      } else if (
         userModifiedViewRef.current
         && previousView
         && previousSize.width > 0
@@ -1651,7 +1747,6 @@ export function HanMapCanvas({
           grid,
         );
       } else {
-        const currentPosition = currentCityId == null ? undefined : markerPositions?.get(currentCityId);
         viewRef.current = initialFocusedView(
           canvas.width,
           canvas.height,
@@ -1659,9 +1754,11 @@ export function HanMapCanvas({
           loadedTiles,
           dpr,
           currentPosition,
+          initialFocus,
         );
+        if (currentPosition !== undefined) initialFocusAppliedRef.current = true;
       }
-      onViewChange?.(viewRef.current);
+      if (viewChanged) onViewChange?.(viewRef.current);
       render();
     };
     fit();
@@ -1685,7 +1782,7 @@ export function HanMapCanvas({
       observer.disconnect();
       window.removeEventListener('resize', fit);
     };
-  }, [currentCityId, loadedTiles, markerPositions, onViewChange, render]);
+  }, [currentCityId, initialFocus, loadedTiles, mapCode, markerPositions, onViewChange, render]);
 
   const updateView = useCallback((next: IsoView) => {
     userModifiedViewRef.current = true;

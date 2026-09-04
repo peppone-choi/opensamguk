@@ -9,6 +9,7 @@ import {
     type IsoCityOverlay,
     type IsoCountyHover,
     type IsoHoverPoint,
+    type InitialFocusProfile,
 } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { useServerGameUrl } from '@/lib/serverGameUrl';
@@ -100,6 +101,7 @@ export interface MapViewerProps {
     isDetailMap?: boolean;
     disallowClick?: boolean;
     currentCityId?: number | null;
+    initialFocus?: InitialFocusProfile;
     live?: boolean;
     showMe?: 0 | 1;
     refreshKey?: number;
@@ -147,6 +149,7 @@ export default function MapViewer({
     mapData,
     disallowClick,
     currentCityId,
+    initialFocus,
     live = false,
     showMe = 1,
     refreshKey = 0,
@@ -321,6 +324,7 @@ export default function MapViewer({
                         ? administrativeOwnership : undefined}
                     sourceSize={sourceSize}
                     currentCityId={currentCityId ?? liveMyCity}
+                    initialFocus={initialFocus}
                     selectedCityId={selectedCityId}
                     hideCityNames={hideCityNames}
                     ariaLabel={`${data.mapCode} 세계 지도`}

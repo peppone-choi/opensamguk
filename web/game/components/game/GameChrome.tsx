@@ -136,7 +136,14 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
 
       <div className="ingame-board">
         <div className="ib-map">
-          <MapViewer live showMe={1} refreshKey={refreshKey} currentCityId={city?.id ?? null} gameConst={constData?.gameConst} />
+          <MapViewer
+            live
+            showMe={1}
+            refreshKey={refreshKey}
+            currentCityId={city?.id ?? null}
+            initialFocus="current-city-close"
+            gameConst={constData?.gameConst}
+          />
         </div>
 
         <div className="ib-reserved">

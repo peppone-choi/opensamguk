@@ -26,6 +26,8 @@ interface CanvasRecord {
   fillRects: string[];
   fillRectCalls: { style: string; values: number[] }[];
   fills: string[];
+  moveCalls: number[][];
+  lineCalls: number[][];
   transforms: number[][];
   drawSmoothing: boolean[];
   radialGradients: unknown[];
@@ -33,7 +35,7 @@ interface CanvasRecord {
   globalAlphas: number[];
   clips: number;
   fillTexts: string[];
-  fillTextCalls: { value: string; font: string; lineWidth: number; x: number; y: number }[];
+  fillTextCalls: { value: string; font: string; style: string; lineWidth: number; x: number; y: number }[];
   arcs: number[][];
   strokeRects: { style: string; values: number[] }[];
 }
@@ -74,6 +76,8 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   const fillRects: string[] = [];
   const fillRectCalls: { style: string; values: number[] }[] = [];
   const fills: string[] = [];
+  const moveCalls: number[][] = [];
+  const lineCalls: number[][] = [];
   const transforms: number[][] = [];
   const drawSmoothing: boolean[] = [];
   const radialGradients: unknown[] = [];
@@ -81,7 +85,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
   const globalAlphas: number[] = [1];
   let clips = 0;
   const fillTexts: string[] = [];
-  const fillTextCalls: { value: string; font: string; lineWidth: number; x: number; y: number }[] = [];
+  const fillTextCalls: { value: string; font: string; style: string; lineWidth: number; x: number; y: number }[] = [];
   const arcs: number[][] = [];
   const strokeRects: { style: string; values: number[] }[] = [];
   let globalAlpha = 1;
@@ -113,8 +117,8 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     beginPath: vi.fn(),
     rect: vi.fn(),
     clip: () => { clips += 1; },
-    moveTo: vi.fn(),
-    lineTo: vi.fn(),
+    moveTo: (...values: number[]) => moveCalls.push(values),
+    lineTo: (...values: number[]) => lineCalls.push(values),
     stroke: () => {
       const style = String(context.strokeStyle);
       strokes.push(style);
@@ -141,7 +145,14 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     },
     fillText: (value: string, x: number, y: number) => {
       fillTexts.push(value);
-      fillTextCalls.push({ value, font: context.font, lineWidth: context.lineWidth, x, y });
+      fillTextCalls.push({
+        value,
+        font: context.font,
+        style: String(context.fillStyle),
+        lineWidth: context.lineWidth,
+        x,
+        y,
+      });
     },
     strokeText: vi.fn(),
     measureText: (value: string) => ({ width: value.length * 12 }),
@@ -173,6 +184,8 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     fillRects,
     fillRectCalls,
     fills,
+    moveCalls,
+    lineCalls,
     transforms,
     drawSmoothing,
     radialGradients,
@@ -287,6 +300,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -350,6 +364,97 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const center = screenToCell(750, 375, view);
     expect(center[0]).toBeCloseTo((CHE_TILES_FIXTURE._meta.cols - 1) / 2, 9);
     expect(center[1]).toBeCloseTo((CHE_TILES_FIXTURE._meta.rows - 1) / 2, 9);
+  });
+
+  it('applies close focus once when the first current city appears', () => {
+    const views: IsoView[] = [];
+    const cities = CHE_OVERLAYS_FIXTURE.map((city) => ({ ...city }));
+    const { rerender } = render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        cities={cities}
+        initialFocus="current-city-close"
+        sourceSize={{ width: 200, height: 120 }}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    const initial = views.at(-1)!;
+
+    rerender(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        cities={cities}
+        currentCityId={11}
+        initialFocus="current-city-close"
+        sourceSize={{ width: 200, height: 120 }}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+
+    const focused = views.at(-1)!;
+    const current = { col: 1, row: 1 };
+    const [x, y] = cellToScreen(current.col, current.row, focused);
+    expect(focused).not.toEqual(initial);
+    expect(focused.scale).toBeGreaterThanOrEqual(20);
+    expect(x).toBeCloseTo(200, 9);
+    expect(y).toBeCloseTo(106, 9);
+  });
+
+  it('does not reapply initial focus when polling replaces equivalent city references', () => {
+    const views: IsoView[] = [];
+    const props = {
+      mapCode: 'che',
+      tiles: CHE_TILES_FIXTURE,
+      provinceMap: null,
+      currentCityId: 11,
+      initialFocus: 'current-city-close' as const,
+      sourceSize: { width: 200, height: 120 },
+      onViewChange: (view: IsoView) => views.push({ ...view }),
+    };
+    const { rerender } = render(
+      <HanMapCanvas {...props} cities={CHE_OVERLAYS_FIXTURE.map((city) => ({ ...city }))} />,
+    );
+    const focused = views.at(-1)!;
+    const focusEvents = views.length;
+
+    rerender(
+      <HanMapCanvas {...props} cities={CHE_OVERLAYS_FIXTURE.map((city) => ({ ...city }))} />,
+    );
+
+    expect(views).toHaveLength(focusEvents);
+    expect(views.at(-1)).toEqual(focused);
+  });
+
+  it('refits an untouched close focus when the viewport actually resizes', () => {
+    const views: IsoView[] = [];
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        cities={CHE_OVERLAYS_FIXTURE}
+        currentCityId={11}
+        initialFocus="current-city-close"
+        sourceSize={{ width: 200, height: 120 }}
+        onViewChange={(view) => views.push({ ...view })}
+      />,
+    );
+    const initialEvents = views.length;
+
+    measuredWidth = 320;
+    measuredHeight = 180;
+    fireEvent(window, new Event('resize'));
+
+    expect(views).toHaveLength(initialEvents + 1);
+    const resized = views.at(-1)!;
+    const [x, y] = cellToScreen(1, 1, resized);
+    expect(resized.scale).toBeGreaterThanOrEqual(20);
+    expect(x).toBeCloseTo(320, 9);
+    expect(y).toBeCloseTo(180, 9);
   });
 
   it('draws the county, commandery-seat, and capital marker exports for each tier', async () => {
@@ -647,6 +752,66 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(Number.parseFloat(label!.font.match(/([\d.]+)px/)![1]) / 2).toBeGreaterThanOrEqual(11);
   });
 
+  it('draws a high-contrast current-location overlay independently from selection and hit targets', () => {
+    const onCityActivate = vi.fn();
+    const views: IsoView[] = [];
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        cities={[
+          {
+            ...CHE_OVERLAYS_FIXTURE[0],
+            nationId: 0,
+            nationColor: undefined,
+            state: 0,
+            isCapital: false,
+          },
+          CHE_OVERLAYS_FIXTURE[1],
+        ]}
+        currentCityId={11}
+        selectedCityId={22}
+        onCityActivate={onCityActivate}
+        onViewChange={(view) => views.push({ ...view })}
+        sourceSize={{ width: 200, height: 120 }}
+      />,
+    );
+
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const main = recordFor(canvas);
+    const selfLabel = main.fillTextCalls.findLast(({ value }) => value === '내 위치');
+
+    expect(main.strokes).toContain('rgba(18,12,6,0.92)');
+    expect(main.strokes).toContain('#ffffff');
+    expect(main.strokes).toContain('#ffd84f');
+    expect(main.fills).toContain('#ffd84f');
+    expect(selfLabel).toMatchObject({ value: '내 위치', style: '#ffffff' });
+    const [selectedX, selectedY] = cellToScreen(3, 2, views.at(-1)!);
+    const selectedRect = main.strokeRects.find(({ style, values: [left, top, width, height] }) => (
+      style === '#ffd84f'
+      && Math.abs(left + width / 2 - selectedX) < 1e-6
+      && Math.abs(top + height / 2 - selectedY) < 1e-6
+      && Math.abs(width - height) < 1e-6
+    ));
+    expect(selectedRect).toBeDefined();
+    expect(main.lineCalls.length).toBeGreaterThan(0);
+
+    fireEvent.pointerDown(canvas, {
+      clientX: selfLabel!.x / 2,
+      clientY: selfLabel!.y / 2,
+      pointerId: 1,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(canvas, {
+      clientX: selfLabel!.x / 2,
+      clientY: selfLabel!.y / 2,
+      pointerId: 1,
+      pointerType: 'mouse',
+    });
+    expect(onCityActivate).not.toHaveBeenCalled();
+  });
+
   it('uses a contained overview glyph with all state channels when even the 16px marker cannot fit', () => {
     const views: IsoView[] = [];
     const onCityActivate = vi.fn();
@@ -691,6 +856,9 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(main.fills).toContain('#ffd84f');
     expect(main.fills).toContain('#b72f2f');
     expect(main.strokes).toContain('#ffffff');
+    expect(main.strokes).toContain('rgba(18,12,6,0.92)');
+    expect(main.strokes).toContain('#ffd84f');
+    expect(main.fillTexts).toContain('내 위치');
     expect(main.strokeRects.some(({ style }) => style === '#ffd84f')).toBe(true);
     expect(main.strokeJoins).toContain('bevel');
     expect(main.clips).toBe(0);
@@ -709,6 +877,96 @@ describe('shared HanMapCanvas viewport interaction', () => {
       expect.objectContaining({ id: 1 }),
       { pointerType: 'mouse' },
     );
+  });
+
+  it('omits the self-location overlay when the current city is absent', () => {
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        cities={CHE_OVERLAYS_FIXTURE}
+        currentCityId={999}
+        sourceSize={{ width: 200, height: 120 }}
+      />,
+    );
+
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    expect(recordFor(canvas).fillTexts).not.toContain('내 위치');
+  });
+
+  it('keeps the full self-location overlay static when reduced motion is requested', () => {
+    vi.useFakeTimers();
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        cities={[{ ...CHE_OVERLAYS_FIXTURE[0], nationId: 0, nationColor: undefined }]}
+        currentCityId={11}
+        sourceSize={{ width: 200, height: 120 }}
+      />,
+    );
+
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const main = recordFor(canvas);
+    const initialFrames = main.operations.filter((operation) => operation === 'clearRect').length;
+    expect(main.fillTexts).toContain('내 위치');
+
+    act(() => vi.advanceTimersByTime(2_400));
+
+    expect(main.operations.filter((operation) => operation === 'clearRect')).toHaveLength(initialFrames);
+    expect(main.fillTexts).toContain('내 위치');
+  });
+
+  it('redraws only on the approved slow self-location phase in normal motion', () => {
+    vi.useFakeTimers();
+    const intervals: number[] = [];
+    const nativeSetInterval = window.setInterval.bind(window);
+    vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, timeout?: number) => {
+      intervals.push(timeout ?? 0);
+      return nativeSetInterval(handler, timeout);
+    }) as typeof window.setInterval);
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    render(
+      <HanMapCanvas
+        mapCode="che"
+        tiles={CHE_TILES_FIXTURE}
+        provinceMap={null}
+        cities={[{ ...CHE_OVERLAYS_FIXTURE[0], nationId: 0, nationColor: undefined }]}
+        currentCityId={11}
+        sourceSize={{ width: 200, height: 120 }}
+      />,
+    );
+
+    expect(intervals).toContain(1_200);
+    expect(intervals).not.toContain(500);
+    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const main = recordFor(canvas);
+    const initialFrames = main.operations.filter((operation) => operation === 'clearRect').length;
+
+    act(() => vi.advanceTimersByTime(1_200));
+
+    expect(main.operations.filter((operation) => operation === 'clearRect')).toHaveLength(initialFrames + 1);
   });
 
   it('changes the view for zoom controls and pointer panning', () => {

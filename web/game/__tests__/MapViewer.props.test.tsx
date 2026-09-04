@@ -87,6 +87,11 @@ describe('MapViewer data props', () => {
     expect(mocks.props?.currentCityId).toBe(11);
   });
 
+  it('forwards the optional initial focus profile unchanged', () => {
+    render(<MapViewer mapData={MAP} initialFocus="current-city-close" />);
+    expect(mocks.props?.initialFocus).toBe('current-city-close');
+  });
+
   it('empty and failed previews remain fail-visible', async () => {
     const { unmount } = render(<MapViewer mapData={{ ...MAP, cities: [] }} />);
     expect(screen.getByText('지도 데이터 준비 중입니다.')).toBeInTheDocument();

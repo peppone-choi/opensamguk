@@ -138,6 +138,7 @@ describe('GameChrome main map', () => {
         showMe?: number;
         refreshKey?: number;
         currentCityId?: number | null;
+        initialFocus?: string;
         disallowClick?: boolean;
       },
     ];
@@ -146,6 +147,7 @@ describe('GameChrome main map', () => {
       showMe: 1,
       refreshKey: 7,
       currentCityId: 11,
+      initialFocus: 'current-city-close',
     });
     expect(props.disallowClick).not.toBe(true);
   });

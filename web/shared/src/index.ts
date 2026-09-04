@@ -35,6 +35,7 @@ export {
   TIER2_MARKER_ZOOM,
   type AdjEdge,
   type HanMapCanvasProps,
+  type InitialFocusProfile,
   type HanTiles,
   type IsoCityOverlay,
   type CityMarkerZoom,
