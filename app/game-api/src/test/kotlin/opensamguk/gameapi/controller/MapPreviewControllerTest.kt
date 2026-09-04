@@ -200,6 +200,35 @@ class MapPreviewControllerTest {
     }
 
     @Test
+    fun `world v2 preview exposes runtime Licheng as interactive city 781`() {
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(
+                WorldStateReadEntity(
+                    id = 1, scenarioCode = "scenario_1050", currentYear = 200, currentMonth = 1,
+                    config = mapOf("mapName" to "han-world-v2"),
+                ),
+            ),
+        )
+        `when`(cityRepo.findAll()).thenReturn(listOf(city(id = 781, level = 11, nationId = 1, region = 6)))
+        `when`(nationRepo.findAll()).thenReturn(emptyList())
+        `when`(
+            administrativeOwnership.project(
+                "scenario_1050",
+                listOf(opensamguk.gameapi.read.LiveCityOwnership(781, 349, 1)),
+            ),
+        ).thenReturn(AdministrativeOwnershipSnapshot(emptyList(), emptyList(), emptyList()))
+
+        mockMvc().perform(get("/api/map/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapCode").value("han-world-v2"))
+            .andExpect(jsonPath("$.cities.length()").value(1))
+            .andExpect(jsonPath("$.cities[0].id").value(781))
+            .andExpect(jsonPath("$.cities[0].name").value("역성"))
+            .andExpect(jsonPath("$.cities[0].commanderyName").value("제남국"))
+            .andExpect(jsonPath("$.cities[0].provinceId").value(349))
+    }
+
+    @Test
     fun `seeded preview without map metadata fails visibly`() {
         `when`(worldRepo.findAll()).thenReturn(
             listOf(WorldStateReadEntity(id = 4, scenarioCode = "scenario_broken")),

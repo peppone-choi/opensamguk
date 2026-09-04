@@ -165,6 +165,18 @@ class V2CityTransportRulesTest {
     }
 
     @Test
+    fun `han world v2 노에서 역성 수송은 서버 경로로 통과한다`() {
+        val h = handler(listOf(273, 781), mapName = "han-world-v2")
+        lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 273, goldDelta = 10_000)
+
+        val result = h.handle(
+            CityTransport(generalId = 10, fromCityId = 273, toCityId = 781, gold = 100),
+        )
+
+        assertTrue(result.ok, reasonOf(result) ?: "")
+    }
+
+    @Test
     fun `인접하지 않은 도시로는 deny 이고 원장은 그대로다`() {
         val (a, b) = adjacentPair()
         val far = (1..80).first { it != a && it != b && CalcCityDistance.calcCityDistance(a, it) != 1 }

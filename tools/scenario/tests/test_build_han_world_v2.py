@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 import unittest
+from collections import defaultdict, deque
 from pathlib import Path
 
 
@@ -46,6 +47,28 @@ class HanWorldV2Test(unittest.TestCase):
         )
 
         self.assertEqual([(273, 781, 6)], edges)
+
+        province_index = {
+            str(row["id"]): index for index, row in enumerate(tiles["provinceRecords"])
+        }
+        graph: dict[int, list[int]] = defaultdict(list)
+        for edge in tiles["adjacency"]["county"]:
+            graph[edge["a"]].append(edge["b"])
+            graph[edge["b"]].append(edge["a"])
+        source, destination = province_index["45180"], province_index["45022"]
+        queue = deque([(source, 0)])
+        visited = {source}
+        distance = None
+        while queue:
+            current, hops = queue.popleft()
+            if current == destination:
+                distance = hops
+                break
+            for neighbor in graph[current]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, hops + 1))
+        self.assertEqual(4, distance)
 
     def test_committed_v2_is_the_reviewed_selection_with_canonical_licheng_edge(self) -> None:
         selection = json.loads(

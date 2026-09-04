@@ -59,6 +59,7 @@
         "nameCh": "长安",
         "isSeat": true
       },
+      "provinceId": 503,
       "spatialProvinceId": "70623",
       "spatialProvinceIndex": 503,
       "routeNodeKey": "52d45a23-a251-4442-b58c-c884462a4acb",
@@ -104,6 +105,7 @@
         "nameCh": "猗氏",
         "isSeat": false
       },
+      "provinceId": 917,
       "spatialProvinceId": "95478",
       "spatialProvinceIndex": 917,
       "routeNodeKey": "afc23703-d422-45b9-bf59-13e87eeeeb9d",
@@ -147,6 +149,7 @@
         "nameCh": "商",
         "isSeat": false
       },
+      "provinceId": 9,
       "spatialProvinceId": "200092",
       "spatialProvinceIndex": 9,
       "routeNodeKey": "7afa60bd-a79b-4ad2-b104-b644f4055bac",
@@ -189,6 +192,7 @@
         "nameCh": "新丰",
         "isSeat": false
       },
+      "provinceId": 513,
       "spatialProvinceId": "70726",
       "spatialProvinceIndex": 513,
       "routeNodeKey": "1fe8ec41-f662-4be5-aa9f-5641cdebfe92",
@@ -232,6 +236,7 @@
         "nameCh": "杜陵",
         "isSeat": false
       },
+      "provinceId": 505,
       "spatialProvinceId": "70633",
       "spatialProvinceIndex": 505,
       "routeNodeKey": "0982929d-148d-4bc7-b184-436795631375",
@@ -272,6 +277,7 @@
         "nameCh": "蓝田",
         "isSeat": false
       },
+      "provinceId": 517,
       "spatialProvinceId": "70749",
       "spatialProvinceIndex": 517,
       "routeNodeKey": "43b6c6d7-42e9-4151-9220-12b093173dc1",
@@ -316,6 +322,7 @@
         "nameCh": "郑",
         "isSeat": false
       },
+      "provinceId": 476,
       "spatialProvinceId": "70427",
       "spatialProvinceIndex": 476,
       "routeNodeKey": "fe3caf3e-b53a-41cf-9a76-b7f3d483fd09",
@@ -362,6 +369,7 @@
         "nameCh": "垣",
         "isSeat": false
       },
+      "provinceId": 898,
       "spatialProvinceId": "95255",
       "spatialProvinceIndex": 898,
       "routeNodeKey": "ced18041-3cd9-4c4e-99f6-0beb19d24c6d",
@@ -407,6 +415,7 @@
         "nameCh": "濩泽",
         "isSeat": false
       },
+      "provinceId": 936,
       "spatialProvinceId": "95724",
       "spatialProvinceIndex": 936,
       "routeNodeKey": "a9817ebf-c5b7-48ff-bfb6-fdd27fc7ef19",
@@ -452,6 +461,7 @@
         "nameCh": "栒邑",
         "isSeat": false
       },
+      "provinceId": 474,
       "spatialProvinceId": "70415",
       "spatialProvinceIndex": 474,
       "routeNodeKey": "afb0142a-f8ae-4da7-be37-405bf7cb0c7c",
@@ -496,6 +506,7 @@
         "nameCh": "武功",
         "isSeat": false
       },
+      "provinceId": 467,
       "spatialProvinceId": "70249",
       "spatialProvinceIndex": 467,
       "routeNodeKey": "df85ad5c-72d1-46cd-9a86-6a5eb8d530e4",
@@ -541,6 +552,7 @@
         "nameCh": "郿",
         "isSeat": false
       },
+      "provinceId": 521,
       "spatialProvinceId": "70930",
       "spatialProvinceIndex": 521,
       "routeNodeKey": "f65340ef-48e8-476d-8b2c-7179ca56cbf8",
@@ -586,6 +598,7 @@
         "nameCh": "鄠",
         "isSeat": false
       },
+      "provinceId": 516,
       "spatialProvinceId": "70747",
       "spatialProvinceIndex": 516,
       "routeNodeKey": "e29f7a86-f0f8-4975-afa3-4de611b0a5cb",
@@ -630,6 +643,7 @@
         "nameCh": "陈仓",
         "isSeat": false
       },
+      "provinceId": 520,
       "spatialProvinceId": "70920",
       "spatialProvinceIndex": 520,
       "routeNodeKey": "437aea46-c6f5-456e-85e8-f7796c2a20e2",
@@ -670,6 +684,7 @@
         "nameCh": "新安",
         "isSeat": false
       },
+      "provinceId": 61,
       "spatialProvinceId": "40645",
       "spatialProvinceIndex": 61,
       "routeNodeKey": "7eda3ea1-bd96-4d9e-9af3-0898ce67a6d1",
@@ -714,6 +729,7 @@
         "nameCh": "临晋",
         "isSeat": false
       },
+      "provinceId": 468,
       "spatialProvinceId": "70296",
       "spatialProvinceIndex": 468,
       "routeNodeKey": "b8d08267-d807-416c-b128-4bc60af363d2",
@@ -755,6 +771,7 @@
         "nameCh": "云阳",
         "isSeat": false
       },
+      "provinceId": 518,
       "spatialProvinceId": "70764",
       "spatialProvinceIndex": 518,
       "routeNodeKey": "e55240cc-369e-4599-be41-1d75f9a434f0",
@@ -800,6 +817,7 @@
         "nameCh": "夏阳",
         "isSeat": false
       },
+      "provinceId": 470,
       "spatialProvinceId": "70312",
       "spatialProvinceIndex": 470,
       "routeNodeKey": "6e3b43ba-5d31-41e3-a228-2f506f2a411f",
@@ -843,6 +861,7 @@
         "nameCh": "池阳",
         "isSeat": false
       },
+      "provinceId": 509,
       "spatialProvinceId": "70671",
       "spatialProvinceIndex": 509,
       "routeNodeKey": "cc27a4e0-9129-4c8e-9189-d47de1423ca5",
@@ -887,6 +906,7 @@
         "nameCh": "粟邑",
         "isSeat": false
       },
+      "provinceId": 473,
       "spatialProvinceId": "70340",
       "spatialProvinceIndex": 473,
       "routeNodeKey": "692cb4e4-fe0a-419f-accc-a104e98c0151",
@@ -932,6 +952,7 @@
         "nameCh": "郃阳",
         "isSeat": false
       },
+      "provinceId": 469,
       "spatialProvinceId": "70307",
       "spatialProvinceIndex": 469,
       "routeNodeKey": "23b204fa-c179-4b23-88f3-f41fec46bbd5",
@@ -976,6 +997,7 @@
         "nameCh": "弘农",
         "isSeat": true
       },
+      "provinceId": 652,
       "spatialProvinceId": "83053",
       "spatialProvinceIndex": 652,
       "routeNodeKey": "eb7ef688-bf14-4787-a15a-3ae693058bfd",
@@ -1020,6 +1042,7 @@
         "nameCh": "华阴",
         "isSeat": false
       },
+      "provinceId": 471,
       "spatialProvinceId": "70324",
       "spatialProvinceIndex": 471,
       "routeNodeKey": "06c3422f-04c6-405e-a597-22e4911cd222",
@@ -1065,6 +1088,7 @@
         "nameCh": "卢氏",
         "isSeat": false
       },
+      "provinceId": 665,
       "spatialProvinceId": "83180",
       "spatialProvinceIndex": 665,
       "routeNodeKey": "74d5666d-89db-4c51-b80f-afee41d684bf",
@@ -1110,6 +1134,7 @@
         "nameCh": "宜阳",
         "isSeat": false
       },
+      "provinceId": 632,
       "spatialProvinceId": "82871",
       "spatialProvinceIndex": 632,
       "routeNodeKey": "4d3e3d24-f34c-4970-97bc-abc044a8ea00",
@@ -1155,6 +1180,7 @@
         "nameCh": "湖",
         "isSeat": false
       },
+      "provinceId": 504,
       "spatialProvinceId": "70628",
       "spatialProvinceIndex": 504,
       "routeNodeKey": "6a0173b9-244b-4830-a379-bb16972cd152",
@@ -1199,6 +1225,7 @@
         "nameCh": "陆浑",
         "isSeat": false
       },
+      "provinceId": 637,
       "spatialProvinceId": "82936",
       "spatialProvinceIndex": 637,
       "routeNodeKey": "1b339402-f36f-421c-894e-29cda5ddc2c2",
@@ -1245,6 +1272,7 @@
         "nameCh": "陕",
         "isSeat": false
       },
+      "provinceId": 651,
       "spatialProvinceId": "83046",
       "spatialProvinceIndex": 651,
       "routeNodeKey": "0a5f91e8-4ff7-4e8f-a610-2cd6c15f06c4",
@@ -1290,6 +1318,7 @@
         "nameCh": "黾池",
         "isSeat": false
       },
+      "provinceId": 636,
       "spatialProvinceId": "82922",
       "spatialProvinceIndex": 636,
       "routeNodeKey": "58c0b6e6-0975-4638-9799-f321474c2899",
@@ -1334,6 +1363,7 @@
         "nameCh": "怀",
         "isSeat": true
       },
+      "provinceId": 586,
       "spatialProvinceId": "82506",
       "spatialProvinceIndex": 586,
       "routeNodeKey": "4486834a-e6e9-48bf-84a7-5e5e996222f3",
@@ -1378,6 +1408,7 @@
         "nameCh": "共",
         "isSeat": false
       },
+      "provinceId": 566,
       "spatialProvinceId": "82275",
       "spatialProvinceIndex": 566,
       "routeNodeKey": "03a8489c-18c0-4143-b4fa-bac1758b8fdf",
@@ -1424,6 +1455,7 @@
         "nameCh": "山阳",
         "isSeat": false
       },
+      "provinceId": 584,
       "spatialProvinceId": "82502",
       "spatialProvinceIndex": 584,
       "routeNodeKey": "6fd41f5b-dbe3-4bdb-a239-3e8e78391334",
@@ -1466,6 +1498,7 @@
         "nameCh": "州",
         "isSeat": false
       },
+      "provinceId": 580,
       "spatialProvinceId": "82489",
       "spatialProvinceIndex": 580,
       "routeNodeKey": "d1d65baf-332b-4e58-8a96-79414c5b4985",
@@ -1509,6 +1542,7 @@
         "nameCh": "朝歌",
         "isSeat": false
       },
+      "provinceId": 565,
       "spatialProvinceId": "82269",
       "spatialProvinceIndex": 565,
       "routeNodeKey": "a6309213-340a-4855-b576-b9c035c2f06d",
@@ -1554,6 +1588,7 @@
         "nameCh": "林虑",
         "isSeat": false
       },
+      "provinceId": 558,
       "spatialProvinceId": "82216",
       "spatialProvinceIndex": 558,
       "routeNodeKey": "94e0b565-96df-469d-9da2-a1be1d7c8162",
@@ -1597,6 +1632,7 @@
         "nameCh": "武德",
         "isSeat": false
       },
+      "provinceId": 585,
       "spatialProvinceId": "82503",
       "spatialProvinceIndex": 585,
       "routeNodeKey": "2352c6ef-1779-4100-8a3f-8998e4fdc685",
@@ -1640,6 +1676,7 @@
         "nameCh": "汲",
         "isSeat": false
       },
+      "provinceId": 562,
       "spatialProvinceId": "82254",
       "spatialProvinceIndex": 562,
       "routeNodeKey": "a472f8ac-5206-4a3f-a0eb-453e12655362",
@@ -1685,6 +1722,7 @@
         "nameCh": "沁水",
         "isSeat": false
       },
+      "provinceId": 583,
       "spatialProvinceId": "82501",
       "spatialProvinceIndex": 583,
       "routeNodeKey": "7c898d64-f55a-4ef2-97d4-c61b4f51d11f",
@@ -1728,6 +1766,7 @@
         "nameCh": "河阳",
         "isSeat": false
       },
+      "provinceId": 587,
       "spatialProvinceId": "82512",
       "spatialProvinceIndex": 587,
       "routeNodeKey": "f3586b19-8fcf-47e6-97ee-6199865ad1d9",
@@ -1774,6 +1813,7 @@
         "nameCh": "波",
         "isSeat": false
       },
+      "provinceId": 581,
       "spatialProvinceId": "82493",
       "spatialProvinceIndex": 581,
       "routeNodeKey": "9cfe0e2e-903b-40b5-8b0c-2925225770ba",
@@ -1817,6 +1857,7 @@
         "nameCh": "温",
         "isSeat": false
       },
+      "provinceId": 589,
       "spatialProvinceId": "82520",
       "spatialProvinceIndex": 589,
       "routeNodeKey": "0a89a5a2-6f4e-42cb-af9d-ffe3b9e7d885",
@@ -1862,6 +1903,7 @@
         "nameCh": "荡阴",
         "isSeat": false
       },
+      "provinceId": 557,
       "spatialProvinceId": "82207",
       "spatialProvinceIndex": 557,
       "routeNodeKey": "da7b7c96-7d2c-47b0-9224-003c86375d02",
@@ -1906,6 +1948,7 @@
         "nameCh": "获嘉",
         "isSeat": false
       },
+      "provinceId": 563,
       "spatialProvinceId": "82260",
       "spatialProvinceIndex": 563,
       "routeNodeKey": "0f4837da-e88b-4fc2-a4ed-318800d5a19d",
@@ -1950,6 +1993,7 @@
         "nameCh": "轵",
         "isSeat": false
       },
+      "provinceId": 582,
       "spatialProvinceId": "82494",
       "spatialProvinceIndex": 582,
       "routeNodeKey": "c8bbff8b-aa6f-42f8-811b-56bf5d5701ff",
@@ -1994,6 +2038,7 @@
         "nameCh": "野王",
         "isSeat": false
       },
+      "provinceId": 579,
       "spatialProvinceId": "82487",
       "spatialProvinceIndex": 579,
       "routeNodeKey": "7e5b9a27-492b-4cc3-ada1-87e6ba093b2b",
@@ -2036,6 +2081,7 @@
         "nameCh": "雒阳",
         "isSeat": true
       },
+      "provinceId": 626,
       "spatialProvinceId": "82828",
       "spatialProvinceIndex": 626,
       "routeNodeKey": "95dcceea-a362-4086-bf36-43718bfcc84b",
@@ -2080,6 +2126,7 @@
         "nameCh": "中牟",
         "isSeat": false
       },
+      "provinceId": 314,
       "spatialProvinceId": "44356",
       "spatialProvinceIndex": 314,
       "routeNodeKey": "35340e48-7cb8-4d7d-8362-66620e4138d3",
@@ -2124,6 +2171,7 @@
         "nameCh": "京",
         "isSeat": false
       },
+      "provinceId": 316,
       "spatialProvinceId": "44384",
       "spatialProvinceIndex": 316,
       "routeNodeKey": "b655ae09-1392-423c-b872-a01925ac03c4",
@@ -2167,6 +2215,7 @@
         "nameCh": "长陵",
         "isSeat": false
       },
+      "provinceId": 510,
       "spatialProvinceId": "70674",
       "spatialProvinceIndex": 510,
       "routeNodeKey": "a2e35886-7e7c-4fa1-90d0-6c623133ccbb",
@@ -2211,6 +2260,7 @@
         "nameCh": "卷",
         "isSeat": false
       },
+      "provinceId": 590,
       "spatialProvinceId": "82523",
       "spatialProvinceIndex": 590,
       "routeNodeKey": "50ce2158-5fd8-44db-8b1f-d07b8708175b",
@@ -2255,6 +2305,7 @@
         "nameCh": "原武",
         "isSeat": false
       },
+      "provinceId": 592,
       "spatialProvinceId": "82531",
       "spatialProvinceIndex": 592,
       "routeNodeKey": "fc9fb827-d963-4e41-818e-6cdf8e18a4fd",
@@ -2299,6 +2350,7 @@
         "nameCh": "密",
         "isSeat": false
       },
+      "provinceId": 576,
       "spatialProvinceId": "82458",
       "spatialProvinceIndex": 576,
       "routeNodeKey": "a7a6b438-8a97-4468-b7c4-f60a184df9f2",
@@ -2344,6 +2396,7 @@
         "nameCh": "开封",
         "isSeat": false
       },
+      "provinceId": 306,
       "spatialProvinceId": "44320",
       "spatialProvinceIndex": 306,
       "routeNodeKey": "c8df56d4-2af2-4870-a432-a8ff112b0283",
@@ -2386,6 +2439,7 @@
         "nameCh": "新郑",
         "isSeat": false
       },
+      "provinceId": 577,
       "spatialProvinceId": "82461",
       "spatialProvinceIndex": 577,
       "routeNodeKey": "ece4488e-79ab-47d4-a659-eb4c87b55405",
@@ -2428,6 +2482,7 @@
         "nameCh": "河南",
         "isSeat": false
       },
+      "provinceId": 627,
       "spatialProvinceId": "82830",
       "spatialProvinceIndex": 627,
       "routeNodeKey": "7198c454-0f1c-4cdb-aba9-35ebbd2fb2f3",
@@ -2471,6 +2526,7 @@
         "nameCh": "河阴",
         "isSeat": false
       },
+      "provinceId": 633,
       "spatialProvinceId": "82880",
       "spatialProvinceIndex": 633,
       "routeNodeKey": "492e17ac-cdf2-46d9-9d15-41f1e107163b",
@@ -2514,6 +2570,7 @@
         "nameCh": "缑氏",
         "isSeat": false
       },
+      "provinceId": 631,
       "spatialProvinceId": "82852",
       "spatialProvinceIndex": 631,
       "routeNodeKey": "7886aa30-6903-4ec4-b143-5629f953d7e1",
@@ -2559,6 +2616,7 @@
         "nameCh": "穀城",
         "isSeat": false
       },
+      "provinceId": 629,
       "spatialProvinceId": "82843",
       "spatialProvinceIndex": 629,
       "routeNodeKey": "18948489-ffda-4ee4-be52-929ce565fbd7",
@@ -2602,6 +2660,7 @@
         "nameCh": "阳武",
         "isSeat": false
       },
+      "provinceId": 591,
       "spatialProvinceId": "82525",
       "spatialProvinceIndex": 591,
       "routeNodeKey": "9990e7df-5467-45ee-9cdb-9f5f1248d013",
@@ -2646,6 +2705,7 @@
         "nameCh": "安邑",
         "isSeat": true
       },
+      "provinceId": 901,
       "spatialProvinceId": "95291",
       "spatialProvinceIndex": 901,
       "routeNodeKey": "cd994971-382b-49ef-9bec-b0d6baa3a416",
@@ -2690,6 +2750,7 @@
         "nameCh": "临汾",
         "isSeat": false
       },
+      "provinceId": 914,
       "spatialProvinceId": "95427",
       "spatialProvinceIndex": 914,
       "routeNodeKey": "818bf3da-d91c-4845-8626-faf54d204911",
@@ -2732,6 +2793,7 @@
         "nameCh": "北屈",
         "isSeat": false
       },
+      "provinceId": 911,
       "spatialProvinceId": "95401",
       "spatialProvinceIndex": 911,
       "routeNodeKey": "4d851712-3e3d-471b-86a5-16b2cb844190",
@@ -2776,6 +2838,7 @@
         "nameCh": "大阳",
         "isSeat": false
       },
+      "provinceId": 899,
       "spatialProvinceId": "95280",
       "spatialProvinceIndex": 899,
       "routeNodeKey": "00df86bc-846a-4d9a-a878-5335b765753d",
@@ -2819,6 +2882,7 @@
         "nameCh": "平阳",
         "isSeat": false
       },
+      "provinceId": 912,
       "spatialProvinceId": "95415",
       "spatialProvinceIndex": 912,
       "routeNodeKey": "37fd0aa2-644c-4daf-838d-219db134d12e",
@@ -2864,6 +2928,7 @@
         "nameCh": "永安",
         "isSeat": false
       },
+      "provinceId": 895,
       "spatialProvinceId": "95218",
       "spatialProvinceIndex": 895,
       "routeNodeKey": "6eb0121e-600b-4e1d-9ca8-3d6353be21da",
@@ -2911,6 +2976,7 @@
         "nameCh": "汾阴",
         "isSeat": false
       },
+      "provinceId": 916,
       "spatialProvinceId": "95470",
       "spatialProvinceIndex": 916,
       "routeNodeKey": "7c23c360-bf40-4e6c-b159-eec551ff7fc8",
@@ -2955,6 +3021,7 @@
         "nameCh": "河北",
         "isSeat": false
       },
+      "provinceId": 900,
       "spatialProvinceId": "95285",
       "spatialProvinceIndex": 900,
       "routeNodeKey": "e36686dd-08b4-4566-a99c-31d00418d8bd",
@@ -2996,6 +3063,7 @@
         "nameCh": "皮氏",
         "isSeat": false
       },
+      "provinceId": 896,
       "spatialProvinceId": "95230",
       "spatialProvinceIndex": 896,
       "routeNodeKey": "128ac00b-e24a-4e07-963a-fc66aaf167e7",
@@ -3039,6 +3107,7 @@
         "nameCh": "端氏",
         "isSeat": false
       },
+      "provinceId": 935,
       "spatialProvinceId": "95716",
       "spatialProvinceIndex": 935,
       "routeNodeKey": "e7cdefa5-6d89-45a9-b5c2-f4f0f5960e88",
@@ -3081,6 +3150,7 @@
         "nameCh": "万年",
         "isSeat": false
       },
+      "provinceId": 507,
       "spatialProvinceId": "70643",
       "spatialProvinceIndex": 507,
       "routeNodeKey": "34a3794b-0fc5-4fb1-b51c-14ad930a0a8c",
@@ -3124,6 +3194,7 @@
         "nameCh": "重泉",
         "isSeat": false
       },
+      "provinceId": 472,
       "spatialProvinceId": "70333",
       "spatialProvinceIndex": 472,
       "routeNodeKey": "bd937056-4d90-4999-8bdc-fa94eff2221b",
@@ -3167,6 +3238,7 @@
         "nameCh": "襄陵",
         "isSeat": false
       },
+      "provinceId": 915,
       "spatialProvinceId": "95443",
       "spatialProvinceIndex": 915,
       "routeNodeKey": "9b922312-8b8c-430c-a211-5cd05db11def",
@@ -3211,6 +3283,7 @@
         "nameCh": "解",
         "isSeat": false
       },
+      "provinceId": 918,
       "spatialProvinceId": "95482",
       "spatialProvinceIndex": 918,
       "routeNodeKey": "1960d8cb-02ea-4469-812d-ece86d8303b8",
@@ -3255,6 +3328,7 @@
         "nameCh": "闻喜",
         "isSeat": false
       },
+      "provinceId": 897,
       "spatialProvinceId": "95249",
       "spatialProvinceIndex": 897,
       "routeNodeKey": "68d7c449-9d09-4f3b-b72c-037a15af5896",
@@ -3297,6 +3371,7 @@
         "nameCh": "西城",
         "isSeat": false
       },
+      "provinceId": 7,
       "spatialProvinceId": "200069",
       "spatialProvinceIndex": 7,
       "routeNodeKey": "71b22bd8-b022-4b55-a0da-b67e3573c50f",
@@ -3340,6 +3415,7 @@
         "nameCh": "槐里",
         "isSeat": true
       },
+      "provinceId": 511,
       "spatialProvinceId": "70707",
       "spatialProvinceIndex": 511,
       "routeNodeKey": "c80098f9-602e-468a-8830-e215f5cd0ca5",
@@ -3383,6 +3459,7 @@
         "nameCh": "弋陽",
         "isSeat": false
       },
+      "provinceId": 593,
       "spatialProvinceId": "82553",
       "spatialProvinceIndex": 593,
       "routeNodeKey": "e53c01b0-5b7d-4653-8d73-ce91a7ed88fb",
@@ -3426,6 +3503,7 @@
         "nameCh": "下邑",
         "isSeat": true
       },
+      "provinceId": 226,
       "spatialProvinceId": "42856",
       "spatialProvinceIndex": 226,
       "routeNodeKey": "c7f88ca5-1518-40a8-842a-0b18d1edf013",
@@ -3468,6 +3546,7 @@
         "nameCh": "寧陵",
         "isSeat": false
       },
+      "provinceId": 547,
       "spatialProvinceId": "82085",
       "spatialProvinceIndex": 547,
       "routeNodeKey": "0a3c57e6-dd94-49e1-8325-35c6497f8948",
@@ -3508,6 +3587,7 @@
         "nameCh": "漆",
         "isSeat": false
       },
+      "provinceId": 466,
       "spatialProvinceId": "70203",
       "spatialProvinceIndex": 466,
       "routeNodeKey": "7823bbb5-cec6-4df0-92ef-38f15eed7f8e",
@@ -3553,6 +3633,7 @@
         "nameCh": "睢陽",
         "isSeat": false
       },
+      "provinceId": 545,
       "spatialProvinceId": "82072",
       "spatialProvinceIndex": 545,
       "routeNodeKey": "a70823c7-e83f-4742-a72f-af7399395fc8",
@@ -3597,6 +3678,7 @@
         "nameCh": "期思",
         "isSeat": false
       },
+      "provinceId": 597,
       "spatialProvinceId": "82578",
       "spatialProvinceIndex": 597,
       "routeNodeKey": "1f95b054-1638-460d-b6f2-cbafda3ce650",
@@ -3640,6 +3722,7 @@
         "nameCh": "蒙",
         "isSeat": false
       },
+      "provinceId": 546,
       "spatialProvinceId": "82082",
       "spatialProvinceIndex": 546,
       "routeNodeKey": "89601e12-e691-40ee-aa48-ff1eff671855",
@@ -3684,6 +3767,7 @@
         "nameCh": "虞",
         "isSeat": false
       },
+      "provinceId": 552,
       "spatialProvinceId": "82150",
       "spatialProvinceIndex": 552,
       "routeNodeKey": "e96810a9-29c4-4410-b9a0-f5cdf8f2976b",
@@ -3729,6 +3813,7 @@
         "nameCh": "平輿",
         "isSeat": true
       },
+      "provinceId": 662,
       "spatialProvinceId": "83172",
       "spatialProvinceIndex": 662,
       "routeNodeKey": "a52d24f4-4d20-4b5a-a481-41ece118c51a",
@@ -3773,6 +3858,7 @@
         "nameCh": "上蔡",
         "isSeat": false
       },
+      "provinceId": 664,
       "spatialProvinceId": "83175",
       "spatialProvinceIndex": 664,
       "routeNodeKey": "d8e9aa32-aea1-4844-af7a-40bf072ceccb",
@@ -3817,6 +3903,7 @@
         "nameCh": "南頓",
         "isSeat": false
       },
+      "provinceId": 539,
       "spatialProvinceId": "82040",
       "spatialProvinceIndex": 539,
       "routeNodeKey": "8494792c-3f90-41b8-a3a1-a236fbf19948",
@@ -3861,6 +3948,7 @@
         "nameCh": "原鹿",
         "isSeat": false
       },
+      "provinceId": 262,
       "spatialProvinceId": "43325",
       "spatialProvinceIndex": 262,
       "routeNodeKey": "caf7dc13-83bc-4f6b-9e56-9907235ca704",
@@ -3905,6 +3993,7 @@
         "nameCh": "吳房",
         "isSeat": false
       },
+      "provinceId": 661,
       "spatialProvinceId": "83171",
       "spatialProvinceIndex": 661,
       "routeNodeKey": "fe6dafaa-d6c9-4f06-a047-bd84af602392",
@@ -3947,6 +4036,7 @@
         "nameCh": "城父",
         "isSeat": false
       },
+      "provinceId": 266,
       "spatialProvinceId": "43348",
       "spatialProvinceIndex": 266,
       "routeNodeKey": "a6d10b1c-8c6c-46ec-aecd-4107329d4416",
@@ -3991,6 +4081,7 @@
         "nameCh": "安城",
         "isSeat": false
       },
+      "provinceId": 653,
       "spatialProvinceId": "83099",
       "spatialProvinceIndex": 653,
       "routeNodeKey": "97cdb5de-d571-4d70-a959-392061f08e2d",
@@ -4034,6 +4125,7 @@
         "nameCh": "安陽",
         "isSeat": false
       },
+      "provinceId": 659,
       "spatialProvinceId": "83169",
       "spatialProvinceIndex": 659,
       "routeNodeKey": "39d015d1-1357-4e1c-86c6-58b1919b3d9d",
@@ -4078,6 +4170,7 @@
         "nameCh": "征羌",
         "isSeat": false
       },
+      "provinceId": 648,
       "spatialProvinceId": "83034",
       "spatialProvinceIndex": 648,
       "routeNodeKey": "16ac585d-007a-4a38-ace7-c0a1b591c6a7",
@@ -4121,6 +4214,7 @@
         "nameCh": "富波",
         "isSeat": false
       },
+      "provinceId": 261,
       "spatialProvinceId": "43324",
       "spatialProvinceIndex": 261,
       "routeNodeKey": "d9450344-eb53-4eb7-9e37-8a369873ad38",
@@ -4164,6 +4258,7 @@
         "nameCh": "山桑",
         "isSeat": false
       },
+      "provinceId": 268,
       "spatialProvinceId": "43375",
       "spatialProvinceIndex": 268,
       "routeNodeKey": "b8544c92-02fa-4ca0-8a1d-e05994d18644",
@@ -4208,6 +4303,7 @@
         "nameCh": "谷陽",
         "isSeat": false
       },
+      "provinceId": 253,
       "spatialProvinceId": "43226",
       "spatialProvinceIndex": 253,
       "routeNodeKey": "9e4222d1-a93d-4e7b-9f27-5a9b31137dd6",
@@ -4253,6 +4349,7 @@
         "nameCh": "譙",
         "isSeat": false
       },
+      "provinceId": 265,
       "spatialProvinceId": "43340",
       "spatialProvinceIndex": 265,
       "routeNodeKey": "83b16721-1d8b-4ebf-9ca5-ca015b7fce78",
@@ -4297,6 +4394,7 @@
         "nameCh": "新息",
         "isSeat": false
       },
+      "provinceId": 599,
       "spatialProvinceId": "82588",
       "spatialProvinceIndex": 599,
       "routeNodeKey": "229584a6-36f7-4590-b7c6-3078b393b8d5",
@@ -4342,6 +4440,7 @@
         "nameCh": "新蔡",
         "isSeat": false
       },
+      "provinceId": 663,
       "spatialProvinceId": "83173",
       "spatialProvinceIndex": 663,
       "routeNodeKey": "b53da68c-e89a-4081-a73b-637b0ccd5916",
@@ -4382,6 +4481,7 @@
         "nameCh": "建平",
         "isSeat": false
       },
+      "provinceId": 40,
       "spatialProvinceId": "40236",
       "spatialProvinceIndex": 40,
       "routeNodeKey": "f020801c-97d9-4937-b592-16854c7bdc51",
@@ -4426,6 +4526,7 @@
         "nameCh": "汝陽",
         "isSeat": false
       },
+      "provinceId": 536,
       "spatialProvinceId": "82015",
       "spatialProvinceIndex": 536,
       "routeNodeKey": "ee7019e9-4486-4fe3-a0aa-3856f8e1db45",
@@ -4469,6 +4570,7 @@
         "nameCh": "汝陰",
         "isSeat": false
       },
+      "provinceId": 260,
       "spatialProvinceId": "43318",
       "spatialProvinceIndex": 260,
       "routeNodeKey": "c1c71423-9ab3-4fb2-b669-c35274f80735",
@@ -4513,6 +4615,7 @@
         "nameCh": "斥章",
         "isSeat": false
       },
+      "provinceId": 858,
       "spatialProvinceId": "87495",
       "spatialProvinceIndex": 858,
       "routeNodeKey": "e031a1b5-2316-4ca8-9ad5-77cdf13b3a64",
@@ -4564,6 +4667,7 @@
         "nameCh": "西華",
         "isSeat": false
       },
+      "provinceId": 537,
       "spatialProvinceId": "82026",
       "spatialProvinceIndex": 537,
       "routeNodeKey": "0d4035f7-3fcc-4603-848f-9b6eb00670ea",
@@ -4609,6 +4713,7 @@
         "nameCh": "西平",
         "isSeat": false
       },
+      "provinceId": 657,
       "spatialProvinceId": "83167",
       "spatialProvinceIndex": 657,
       "routeNodeKey": "ba31c308-352d-442f-9d3f-9939d52912eb",
@@ -4653,6 +4758,7 @@
         "nameCh": "項",
         "isSeat": false
       },
+      "provinceId": 540,
       "spatialProvinceId": "82047",
       "spatialProvinceIndex": 540,
       "routeNodeKey": "ea797cf1-25f7-428f-89e9-247d9c080877",
@@ -4697,6 +4803,7 @@
         "nameCh": "相",
         "isSeat": true
       },
+      "provinceId": 252,
       "spatialProvinceId": "43224",
       "spatialProvinceIndex": 252,
       "routeNodeKey": "5564d4b9-21c6-44b0-9480-6e9e9c89c17b",
@@ -4742,6 +4849,7 @@
         "nameCh": "豐",
         "isSeat": false
       },
+      "provinceId": 216,
       "spatialProvinceId": "42805",
       "spatialProvinceIndex": 216,
       "routeNodeKey": "cedfbcdc-fe8a-4ef4-99c9-fb6fdfa3cb11",
@@ -4786,6 +4894,7 @@
         "nameCh": "義成",
         "isSeat": false
       },
+      "provinceId": 246,
       "spatialProvinceId": "43186",
       "spatialProvinceIndex": 246,
       "routeNodeKey": "cda6cef1-a3c8-4239-9e1f-a118131e58ab",
@@ -4827,6 +4936,7 @@
         "nameCh": "公丘",
         "isSeat": false
       },
+      "provinceId": 395,
       "spatialProvinceId": "45294",
       "spatialProvinceIndex": 395,
       "routeNodeKey": "defe8936-20bf-4db5-acbf-d9f030b8426a",
@@ -4872,6 +4982,7 @@
         "nameCh": "杼秋",
         "isSeat": false
       },
+      "provinceId": 214,
       "spatialProvinceId": "42791",
       "spatialProvinceIndex": 214,
       "routeNodeKey": "c4e5f754-7428-468e-854a-1159e8899b96",
@@ -4916,6 +5027,7 @@
         "nameCh": "沛",
         "isSeat": false
       },
+      "provinceId": 217,
       "spatialProvinceId": "42807",
       "spatialProvinceIndex": 217,
       "routeNodeKey": "e6a78e4a-00a9-4406-bc93-746a8cebab25",
@@ -4961,6 +5073,7 @@
         "nameCh": "洨",
         "isSeat": false
       },
+      "provinceId": 254,
       "spatialProvinceId": "43232",
       "spatialProvinceIndex": 254,
       "routeNodeKey": "9adc1be5-d78b-47eb-9ac9-fb9f13d971b7",
@@ -5005,6 +5118,7 @@
         "nameCh": "竹邑",
         "isSeat": false
       },
+      "provinceId": 248,
       "spatialProvinceId": "43196",
       "spatialProvinceIndex": 248,
       "routeNodeKey": "b47d00cb-69f6-42be-9c12-af9a7a6027b6",
@@ -5050,6 +5164,7 @@
         "nameCh": "符離",
         "isSeat": false
       },
+      "provinceId": 249,
       "spatialProvinceId": "43203",
       "spatialProvinceIndex": 249,
       "routeNodeKey": "70667b54-741c-40fa-8cc6-9bcd2192fcad",
@@ -5096,6 +5211,7 @@
         "nameCh": "蕭",
         "isSeat": false
       },
+      "provinceId": 213,
       "spatialProvinceId": "42782",
       "spatialProvinceIndex": 213,
       "routeNodeKey": "1a7338d8-f40f-4ea3-a47e-7bcba66321d8",
@@ -5143,6 +5259,7 @@
         "nameCh": "蘄",
         "isSeat": false
       },
+      "provinceId": 250,
       "spatialProvinceId": "43210",
       "spatialProvinceIndex": 250,
       "routeNodeKey": "9dc283f8-ec1e-4502-a589-a0ee6986f75b",
@@ -5187,6 +5304,7 @@
         "nameCh": "虹",
         "isSeat": false
       },
+      "provinceId": 256,
       "spatialProvinceId": "43243",
       "spatialProvinceIndex": 256,
       "routeNodeKey": "693d91cd-cf2c-4085-a3b1-1a3f49234cf7",
@@ -5232,6 +5350,7 @@
         "nameCh": "酇",
         "isSeat": false
       },
+      "provinceId": 551,
       "spatialProvinceId": "82128",
       "spatialProvinceIndex": 551,
       "routeNodeKey": "b4d422d6-ab45-4954-98ab-2cb5acf4589f",
@@ -5277,6 +5396,7 @@
         "nameCh": "銍",
         "isSeat": false
       },
+      "provinceId": 251,
       "spatialProvinceId": "43221",
       "spatialProvinceIndex": 251,
       "routeNodeKey": "6a933584-20ac-4b1d-ae13-7a45a33d9d45",
@@ -5320,6 +5440,7 @@
         "nameCh": "龍亢",
         "isSeat": false
       },
+      "provinceId": 245,
       "spatialProvinceId": "43182",
       "spatialProvinceIndex": 245,
       "routeNodeKey": "935e2603-8806-4968-a80c-a6c4e586f385",
@@ -5364,6 +5485,7 @@
         "nameCh": "陽翟",
         "isSeat": true
       },
+      "provinceId": 575,
       "spatialProvinceId": "82455",
       "spatialProvinceIndex": 575,
       "routeNodeKey": "13d9ad46-4dee-4adc-bdd5-efa9a31bf185",
@@ -5407,6 +5529,7 @@
         "nameCh": "臨潁",
         "isSeat": false
       },
+      "provinceId": 645,
       "spatialProvinceId": "83024",
       "spatialProvinceIndex": 645,
       "routeNodeKey": "e112f422-bd15-4a47-86f3-b59b0992054a",
@@ -5451,6 +5574,7 @@
         "nameCh": "定陵",
         "isSeat": false
       },
+      "provinceId": 623,
       "spatialProvinceId": "82803",
       "spatialProvinceIndex": 623,
       "routeNodeKey": "7b28af78-4f9f-4a78-84af-e144960f7cd0",
@@ -5495,6 +5619,7 @@
         "nameCh": "新汲",
         "isSeat": false
       },
+      "provinceId": 543,
       "spatialProvinceId": "82061",
       "spatialProvinceIndex": 543,
       "routeNodeKey": "1ac75fae-f3c6-4a20-aa48-f315687e751c",
@@ -5540,6 +5665,7 @@
         "nameCh": "昆陽",
         "isSeat": false
       },
+      "provinceId": 624,
       "spatialProvinceId": "82807",
       "spatialProvinceIndex": 624,
       "routeNodeKey": "d30e9612-178c-41a9-9755-4775b6c5d953",
@@ -5585,6 +5711,7 @@
         "nameCh": "父城",
         "isSeat": false
       },
+      "provinceId": 641,
       "spatialProvinceId": "82994",
       "spatialProvinceIndex": 641,
       "routeNodeKey": "5bde8245-c692-4220-9df5-ef8e1afc5b62",
@@ -5628,6 +5755,7 @@
         "nameCh": "舞陽",
         "isSeat": false
       },
+      "provinceId": 622,
       "spatialProvinceId": "82792",
       "spatialProvinceIndex": 622,
       "routeNodeKey": "55d27b7a-b6b3-4846-ac6c-68468c38a23d",
@@ -5672,6 +5800,7 @@
         "nameCh": "襄城",
         "isSeat": false
       },
+      "provinceId": 647,
       "spatialProvinceId": "83031",
       "spatialProvinceIndex": 647,
       "routeNodeKey": "dd4db1aa-b822-4416-8e26-a227c272d9c3",
@@ -5715,6 +5844,7 @@
         "nameCh": "許",
         "isSeat": false
       },
+      "provinceId": 643,
       "spatialProvinceId": "83011",
       "spatialProvinceIndex": 643,
       "routeNodeKey": "8dfe5f56-bc53-4e20-b591-445336b56e17",
@@ -5757,6 +5887,7 @@
         "nameCh": "輪氏",
         "isSeat": false
       },
+      "provinceId": 635,
       "spatialProvinceId": "82901",
       "spatialProvinceIndex": 635,
       "routeNodeKey": "eca0fd12-7d7a-4836-a52e-208032b81d2a",
@@ -5801,6 +5932,7 @@
         "nameCh": "郾",
         "isSeat": false
       },
+      "provinceId": 649,
       "spatialProvinceId": "83036",
       "spatialProvinceIndex": 649,
       "routeNodeKey": "f110496c-573a-4191-a805-c813b8632ba0",
@@ -5844,6 +5976,7 @@
         "nameCh": "長社",
         "isSeat": false
       },
+      "provinceId": 650,
       "spatialProvinceId": "83039",
       "spatialProvinceIndex": 650,
       "routeNodeKey": "14829bce-c1be-4782-b5e9-4a694a597291",
@@ -5887,6 +6020,7 @@
         "nameCh": "陽城",
         "isSeat": false
       },
+      "provinceId": 634,
       "spatialProvinceId": "82893",
       "spatialProvinceIndex": 634,
       "routeNodeKey": "ae6ebfb8-4cdd-47e3-a8b4-3af9a518f686",
@@ -5929,6 +6063,7 @@
         "nameCh": "潁陽",
         "isSeat": false
       },
+      "provinceId": 644,
       "spatialProvinceId": "83017",
       "spatialProvinceIndex": 644,
       "routeNodeKey": "13eb651e-ddaa-4c64-bb97-e48adb0048b1",
@@ -5973,6 +6108,7 @@
         "nameCh": "潁陰",
         "isSeat": false
       },
+      "provinceId": 642,
       "spatialProvinceId": "83009",
       "spatialProvinceIndex": 642,
       "routeNodeKey": "b5f02849-a50f-4b76-80a1-87232d7053de",
@@ -6018,6 +6154,7 @@
         "nameCh": "陳",
         "isSeat": true
       },
+      "provinceId": 534,
       "spatialProvinceId": "82003",
       "spatialProvinceIndex": 534,
       "routeNodeKey": "dde9b595-5a4d-4b14-aeba-8c93126b496f",
@@ -6063,6 +6200,7 @@
         "nameCh": "扶樂",
         "isSeat": false
       },
+      "provinceId": 544,
       "spatialProvinceId": "82063",
       "spatialProvinceIndex": 544,
       "routeNodeKey": "66958586-8060-46bd-b4e9-6139ea6f73a5",
@@ -6107,6 +6245,7 @@
         "nameCh": "新平",
         "isSeat": false
       },
+      "provinceId": 535,
       "spatialProvinceId": "82008",
       "spatialProvinceIndex": 535,
       "routeNodeKey": "aa41efdb-dc87-4944-ba45-74876890baa5",
@@ -6151,6 +6290,7 @@
         "nameCh": "柘",
         "isSeat": false
       },
+      "provinceId": 554,
       "spatialProvinceId": "82167",
       "spatialProvinceIndex": 554,
       "routeNodeKey": "8f946baa-f346-40d6-bff6-ecde6dadd01d",
@@ -6196,6 +6336,7 @@
         "nameCh": "武平",
         "isSeat": false
       },
+      "provinceId": 550,
       "spatialProvinceId": "82102",
       "spatialProvinceIndex": 550,
       "routeNodeKey": "e2404294-5582-4daa-8aab-901e466bd3c5",
@@ -6239,6 +6380,7 @@
         "nameCh": "苦",
         "isSeat": false
       },
+      "provinceId": 549,
       "spatialProvinceId": "82091",
       "spatialProvinceIndex": 549,
       "routeNodeKey": "a1e698b9-e9da-4c2b-ae44-38500f2bb25c",
@@ -6281,6 +6423,7 @@
         "nameCh": "長平",
         "isSeat": false
       },
+      "provinceId": 538,
       "spatialProvinceId": "82032",
       "spatialProvinceIndex": 538,
       "routeNodeKey": "fda38869-0577-44a6-95a6-0b18366a9e88",
@@ -6326,6 +6469,7 @@
         "nameCh": "陽夏",
         "isSeat": false
       },
+      "provinceId": 541,
       "spatialProvinceId": "82053",
       "spatialProvinceIndex": 541,
       "routeNodeKey": "741715be-3784-43a6-bd27-21902d5a012b",
@@ -6367,6 +6511,7 @@
         "nameCh": "陽安",
         "isSeat": false
       },
+      "provinceId": 656,
       "spatialProvinceId": "83166",
       "spatialProvinceIndex": 656,
       "routeNodeKey": "9854f6e4-d69c-4811-9fc3-0ec6feb55f33",
@@ -6410,6 +6555,7 @@
         "nameCh": "毋極",
         "isSeat": false
       },
+      "provinceId": 866,
       "spatialProvinceId": "87543",
       "spatialProvinceIndex": 866,
       "routeNodeKey": "93e16e7a-6a5a-4c94-9c8a-7d6e88cfd8c8",
@@ -6452,6 +6598,7 @@
         "nameCh": "卞",
         "isSeat": false
       },
+      "provinceId": 379,
       "spatialProvinceId": "45199",
       "spatialProvinceIndex": 379,
       "routeNodeKey": "ac27bd89-ae94-4111-82aa-0087e7a63feb",
@@ -6493,6 +6640,7 @@
         "nameCh": "汶陽",
         "isSeat": false
       },
+      "provinceId": 393,
       "spatialProvinceId": "45290",
       "spatialProvinceIndex": 393,
       "routeNodeKey": "a4300f20-e71a-447f-bc7c-f38e3ffd2d4a",
@@ -6536,6 +6684,7 @@
         "nameCh": "蕃",
         "isSeat": false
       },
+      "provinceId": 380,
       "spatialProvinceId": "45203",
       "spatialProvinceIndex": 380,
       "routeNodeKey": "1a09244e-4bf4-453a-a821-040092f180b9",
@@ -6579,6 +6728,7 @@
         "nameCh": "薛",
         "isSeat": false
       },
+      "provinceId": 381,
       "spatialProvinceId": "45210",
       "spatialProvinceIndex": 381,
       "routeNodeKey": "1b1ee529-b35f-4c15-9610-0aa4b6a1a947",
@@ -6624,6 +6774,7 @@
         "nameCh": "盧奴",
         "isSeat": true
       },
+      "provinceId": 803,
       "spatialProvinceId": "87211",
       "spatialProvinceIndex": 803,
       "routeNodeKey": "909ba91f-7746-477b-a7eb-aa69b054f276",
@@ -6668,6 +6819,7 @@
         "nameCh": "上曲陽",
         "isSeat": false
       },
+      "provinceId": 781,
       "spatialProvinceId": "87096",
       "spatialProvinceIndex": 781,
       "routeNodeKey": "cd587df8-566b-4070-a9a6-0cec632fe09b",
@@ -6711,6 +6863,7 @@
         "nameCh": "北平",
         "isSeat": false
       },
+      "provinceId": 815,
       "spatialProvinceId": "87253",
       "spatialProvinceIndex": 815,
       "routeNodeKey": "622fa41a-4df5-4d01-b7b5-caef06b0bb60",
@@ -6756,6 +6909,7 @@
         "nameCh": "唐",
         "isSeat": false
       },
+      "provinceId": 814,
       "spatialProvinceId": "87250",
       "spatialProvinceIndex": 814,
       "routeNodeKey": "2ffce750-3e00-473d-8b58-474747b6b875",
@@ -6800,6 +6954,7 @@
         "nameCh": "新市",
         "isSeat": false
       },
+      "provinceId": 865,
       "spatialProvinceId": "87542",
       "spatialProvinceIndex": 865,
       "routeNodeKey": "1a853a2a-c143-42f4-8e06-5a88e4df50f3",
@@ -6841,6 +6996,7 @@
         "nameCh": "安國",
         "isSeat": false
       },
+      "provinceId": 807,
       "spatialProvinceId": "87226",
       "spatialProvinceIndex": 807,
       "routeNodeKey": "f93129fa-c5fe-480e-9948-06370bb8fdba",
@@ -6885,6 +7041,7 @@
         "nameCh": "廣昌",
         "isSeat": false
       },
+      "provinceId": 845,
       "spatialProvinceId": "87428",
       "spatialProvinceIndex": 845,
       "routeNodeKey": "2cf5c9c0-822c-4fbc-9c9a-66ac3cecef48",
@@ -6927,6 +7084,7 @@
         "nameCh": "望都",
         "isSeat": false
       },
+      "provinceId": 813,
       "spatialProvinceId": "87247",
       "spatialProvinceIndex": 813,
       "routeNodeKey": "39c72862-16c0-4e50-890a-63bd35b5dd60",
@@ -6974,6 +7132,7 @@
         "nameCh": "蒲陰",
         "isSeat": false
       },
+      "provinceId": 782,
       "spatialProvinceId": "87100",
       "spatialProvinceIndex": 782,
       "routeNodeKey": "2f157cac-34ef-4c40-9455-d547f74ccbbb",
@@ -7017,6 +7176,7 @@
         "nameCh": "蠡吾",
         "isSeat": false
       },
+      "provinceId": 829,
       "spatialProvinceId": "87322",
       "spatialProvinceIndex": 829,
       "routeNodeKey": "49362e52-8ded-4275-aeff-93b643a9d328",
@@ -7059,6 +7219,7 @@
         "nameCh": "南皮",
         "isSeat": true
       },
+      "provinceId": 778,
       "spatialProvinceId": "87076",
       "spatialProvinceIndex": 778,
       "routeNodeKey": "47a89bd3-6aed-44c5-a113-78f28fa43314",
@@ -7102,6 +7263,7 @@
         "nameCh": "東光",
         "isSeat": false
       },
+      "provinceId": 835,
       "spatialProvinceId": "87384",
       "spatialProvinceIndex": 835,
       "routeNodeKey": "4391c73b-fa19-432e-ad28-ab829c00aaa3",
@@ -7146,6 +7308,7 @@
         "nameCh": "浮陽",
         "isSeat": false
       },
+      "provinceId": 834,
       "spatialProvinceId": "87382",
       "spatialProvinceIndex": 834,
       "routeNodeKey": "ba6c90df-6f58-4fbd-998d-7871547d1e02",
@@ -7187,6 +7350,7 @@
         "nameCh": "重合",
         "isSeat": false
       },
+      "provinceId": 738,
       "spatialProvinceId": "85536",
       "spatialProvinceIndex": 738,
       "routeNodeKey": "a686d221-08c1-4e31-847c-5adffa486370",
@@ -7230,6 +7394,7 @@
         "nameCh": "陽信",
         "isSeat": false
       },
+      "provinceId": 737,
       "spatialProvinceId": "85531",
       "spatialProvinceIndex": 737,
       "routeNodeKey": "f1425249-3599-4fb1-9dda-d52226ff6d5d",
@@ -7273,6 +7438,7 @@
         "nameCh": "高城",
         "isSeat": false
       },
+      "provinceId": 837,
       "spatialProvinceId": "87393",
       "spatialProvinceIndex": 837,
       "routeNodeKey": "4d6eabee-1ca5-4e81-a951-eecda990b0ad",
@@ -7318,6 +7484,7 @@
         "nameCh": "下博",
         "isSeat": false
       },
+      "provinceId": 800,
       "spatialProvinceId": "87203",
       "spatialProvinceIndex": 800,
       "routeNodeKey": "5f414052-5ac8-437c-abae-3b9f20ba7efa",
@@ -7363,6 +7530,7 @@
         "nameCh": "南宮",
         "isSeat": false
       },
+      "provinceId": 802,
       "spatialProvinceId": "87209",
       "spatialProvinceIndex": 802,
       "routeNodeKey": "6e7b008a-8248-427b-9ddd-429fbc49e8dd",
@@ -7404,6 +7572,7 @@
         "nameCh": "堂陽",
         "isSeat": false
       },
+      "provinceId": 797,
       "spatialProvinceId": "87188",
       "spatialProvinceIndex": 797,
       "routeNodeKey": "522c2487-072f-4aaa-b5ef-491773cdb05b",
@@ -7448,6 +7617,7 @@
         "nameCh": "扶柳",
         "isSeat": false
       },
+      "provinceId": 869,
       "spatialProvinceId": "87569",
       "spatialProvinceIndex": 869,
       "routeNodeKey": "d9ddadbb-b2f2-4097-94cd-42c31399784b",
@@ -7493,6 +7663,7 @@
         "nameCh": "武遂",
         "isSeat": false
       },
+      "provinceId": 874,
       "spatialProvinceId": "87616",
       "spatialProvinceIndex": 874,
       "routeNodeKey": "87dc79b8-c30e-4540-bef4-fe506250d10c",
@@ -7538,6 +7709,7 @@
         "nameCh": "武邑",
         "isSeat": false
       },
+      "provinceId": 801,
       "spatialProvinceId": "87206",
       "spatialProvinceIndex": 801,
       "routeNodeKey": "e7e58150-815b-4682-941c-9fcb985996f1",
@@ -7581,6 +7753,7 @@
         "nameCh": "信都",
         "isSeat": true
       },
+      "provinceId": 868,
       "spatialProvinceId": "87566",
       "spatialProvinceIndex": 868,
       "routeNodeKey": "32af5ad5-fabe-4608-9440-600f585d9c74",
@@ -7624,6 +7797,7 @@
         "nameCh": "觀津",
         "isSeat": false
       },
+      "provinceId": 870,
       "spatialProvinceId": "87575",
       "spatialProvinceIndex": 870,
       "routeNodeKey": "3c27c3a4-7939-4363-bb5d-d5d330289dfd",
@@ -7669,6 +7843,7 @@
         "nameCh": "阜城",
         "isSeat": false
       },
+      "provinceId": 872,
       "spatialProvinceId": "87591",
       "spatialProvinceIndex": 872,
       "routeNodeKey": "fcd00125-bd04-47c9-a266-d5f73f4eff82",
@@ -7714,6 +7889,7 @@
         "nameCh": "饒陽",
         "isSeat": false
       },
+      "provinceId": 832,
       "spatialProvinceId": "87355",
       "spatialProvinceIndex": 832,
       "routeNodeKey": "f6c51f8c-469e-41a3-8353-21680f2f1898",
@@ -7758,6 +7934,7 @@
         "nameCh": "元氏",
         "isSeat": true
       },
+      "provinceId": 804,
       "spatialProvinceId": "87217",
       "spatialProvinceIndex": 804,
       "routeNodeKey": "6fb85d00-0e8b-4e9c-9a78-2f4a80e7827a",
@@ -7801,6 +7978,7 @@
         "nameCh": "上艾",
         "isSeat": false
       },
+      "provinceId": 909,
       "spatialProvinceId": "95374",
       "spatialProvinceIndex": 909,
       "routeNodeKey": "8f3e704c-105e-45a7-95fe-92051daded23",
@@ -7844,6 +8022,7 @@
         "nameCh": "九門",
         "isSeat": false
       },
+      "provinceId": 809,
       "spatialProvinceId": "87236",
       "spatialProvinceIndex": 809,
       "routeNodeKey": "6eaeeb01-8599-48f2-899e-18f1f6845072",
@@ -7889,6 +8068,7 @@
         "nameCh": "井陘",
         "isSeat": false
       },
+      "provinceId": 780,
       "spatialProvinceId": "87093",
       "spatialProvinceIndex": 780,
       "routeNodeKey": "e961be3d-fd94-402d-b19a-0ad01982e673",
@@ -7934,6 +8114,7 @@
         "nameCh": "南行唐",
         "isSeat": false
       },
+      "provinceId": 812,
       "spatialProvinceId": "87244",
       "spatialProvinceIndex": 812,
       "routeNodeKey": "a1bbc85f-12d4-4708-8f78-32bb8ae79266",
@@ -7977,6 +8158,7 @@
         "nameCh": "平棘",
         "isSeat": false
       },
+      "provinceId": 808,
       "spatialProvinceId": "87233",
       "spatialProvinceIndex": 808,
       "routeNodeKey": "f7271b03-4769-4bd6-a353-2ec1230eeeee",
@@ -8021,6 +8203,7 @@
         "nameCh": "房子",
         "isSeat": false
       },
+      "provinceId": 805,
       "spatialProvinceId": "87220",
       "spatialProvinceIndex": 805,
       "routeNodeKey": "a3548bde-51d5-4e7c-a86d-2d24bf78c2e5",
@@ -8064,6 +8247,7 @@
         "nameCh": "靈壽",
         "isSeat": false
       },
+      "provinceId": 810,
       "spatialProvinceId": "87240",
       "spatialProvinceIndex": 810,
       "routeNodeKey": "671aac1a-0d7c-48fd-8b12-6f801fadd4a3",
@@ -8108,6 +8292,7 @@
         "nameCh": "安平",
         "isSeat": false
       },
+      "provinceId": 776,
       "spatialProvinceId": "87064",
       "spatialProvinceIndex": 776,
       "routeNodeKey": "9107049f-5f65-48c8-959b-3f3f5bce8b24",
@@ -8152,6 +8337,7 @@
         "nameCh": "蒲吾",
         "isSeat": false
       },
+      "provinceId": 811,
       "spatialProvinceId": "87241",
       "spatialProvinceIndex": 811,
       "routeNodeKey": "0eaac373-4a7b-4a0b-87bf-fd74272100c1",
@@ -8196,6 +8382,7 @@
         "nameCh": "高邑",
         "isSeat": false
       },
+      "provinceId": 771,
       "spatialProvinceId": "87024",
       "spatialProvinceIndex": 771,
       "routeNodeKey": "f042652a-762c-496c-b1e9-611d011791aa",
@@ -8237,6 +8424,7 @@
         "nameCh": "廣平",
         "isSeat": false
       },
+      "provinceId": 791,
       "spatialProvinceId": "87159",
       "spatialProvinceIndex": 791,
       "routeNodeKey": "4092ddae-2e98-402a-8e10-cdf32d80b642",
@@ -8280,6 +8468,7 @@
         "nameCh": "東武城",
         "isSeat": false
       },
+      "provinceId": 689,
       "spatialProvinceId": "85168",
       "spatialProvinceIndex": 689,
       "routeNodeKey": "cfbff085-220e-4b24-a53d-672506143e7f",
@@ -8324,6 +8513,7 @@
         "nameCh": "樂成",
         "isSeat": true
       },
+      "provinceId": 817,
       "spatialProvinceId": "87279",
       "spatialProvinceIndex": 817,
       "routeNodeKey": "abb96187-033b-400a-8067-2ef873a672d1",
@@ -8366,6 +8556,7 @@
         "nameCh": "東平舒",
         "isSeat": false
       },
+      "provinceId": 839,
       "spatialProvinceId": "87405",
       "spatialProvinceIndex": 839,
       "routeNodeKey": "43196fce-2283-4e45-bfd3-b99642992063",
@@ -8410,6 +8601,7 @@
         "nameCh": "中水",
         "isSeat": false
       },
+      "provinceId": 833,
       "spatialProvinceId": "87356",
       "spatialProvinceIndex": 833,
       "routeNodeKey": "b7d9dfec-32c6-41d6-a11f-f8543feabf8c",
@@ -8454,6 +8646,7 @@
         "nameCh": "弓高",
         "isSeat": false
       },
+      "provinceId": 875,
       "spatialProvinceId": "87619",
       "spatialProvinceIndex": 875,
       "routeNodeKey": "33264c92-d51c-4d0d-8ffb-a3eda2debc52",
@@ -8497,6 +8690,7 @@
         "nameCh": "成平",
         "isSeat": false
       },
+      "provinceId": 838,
       "spatialProvinceId": "87400",
       "spatialProvinceIndex": 838,
       "routeNodeKey": "dd24c22b-743d-45ad-88dd-cda4ebeb26a6",
@@ -8539,6 +8733,7 @@
         "nameCh": "文安",
         "isSeat": false
       },
+      "provinceId": 0,
       "spatialProvinceId": "200012",
       "spatialProvinceIndex": 0,
       "routeNodeKey": "51c90518-6320-4569-aa3d-6d371ec3b8b9",
@@ -8583,6 +8778,7 @@
         "nameCh": "束州",
         "isSeat": false
       },
+      "provinceId": 841,
       "spatialProvinceId": "87410",
       "spatialProvinceIndex": 841,
       "routeNodeKey": "d0da2211-5c6b-45ca-96b4-95535c5dee08",
@@ -8626,6 +8822,7 @@
         "nameCh": "武垣",
         "isSeat": false
       },
+      "provinceId": 777,
       "spatialProvinceId": "87073",
       "spatialProvinceIndex": 777,
       "routeNodeKey": "474238de-6896-4822-b3a7-7b05fbb411e6",
@@ -8668,6 +8865,7 @@
         "nameCh": "鄚",
         "isSeat": false
       },
+      "provinceId": 830,
       "spatialProvinceId": "87326",
       "spatialProvinceIndex": 830,
       "routeNodeKey": "579cf854-66c6-40d8-ab5d-adc86f2ceef4",
@@ -8711,6 +8909,7 @@
         "nameCh": "高陽",
         "isSeat": false
       },
+      "provinceId": 819,
       "spatialProvinceId": "87286",
       "spatialProvinceIndex": 819,
       "routeNodeKey": "4502dab7-b55e-499c-a075-186405e03692",
@@ -8754,6 +8953,7 @@
         "nameCh": "廣川",
         "isSeat": false
       },
+      "provinceId": 871,
       "spatialProvinceId": "87577",
       "spatialProvinceIndex": 871,
       "routeNodeKey": "dc86e454-6f5e-4784-99cd-fd45d228a3e5",
@@ -8797,6 +8997,7 @@
         "nameCh": "章武",
         "isSeat": false
       },
+      "provinceId": 818,
       "spatialProvinceId": "87283",
       "spatialProvinceIndex": 818,
       "routeNodeKey": "55f88510-1e11-4ff9-8cdc-436fa2453627",
@@ -8842,6 +9043,7 @@
         "nameCh": "繹幕",
         "isSeat": false
       },
+      "provinceId": 373,
       "spatialProvinceId": "45157",
       "spatialProvinceIndex": 373,
       "routeNodeKey": "f65cf053-87a2-4f61-893e-89a1b1a0fd20",
@@ -8888,6 +9090,7 @@
         "nameCh": "貝丘",
         "isSeat": false
       },
+      "provinceId": 403,
       "spatialProvinceId": "45337",
       "spatialProvinceIndex": 403,
       "routeNodeKey": "a35dd5ac-28e0-47d4-a5ad-9c7d24ad6794",
@@ -8931,6 +9134,7 @@
         "nameCh": "鄃",
         "isSeat": false
       },
+      "provinceId": 372,
       "spatialProvinceId": "45153",
       "spatialProvinceIndex": 372,
       "routeNodeKey": "e6ada60c-2761-4690-be38-5adced0113d9",
@@ -8975,6 +9179,7 @@
         "nameCh": "范",
         "isSeat": false
       },
+      "provinceId": 679,
       "spatialProvinceId": "85103",
       "spatialProvinceIndex": 679,
       "routeNodeKey": "a6f06c59-ada9-4250-a3c6-7b8625ff4456",
@@ -9022,6 +9227,7 @@
         "nameCh": "邯鄲",
         "isSeat": true
       },
+      "provinceId": 768,
       "spatialProvinceId": "87010",
       "spatialProvinceIndex": 768,
       "routeNodeKey": "599b14c2-847b-4360-b204-2d0d415efa80",
@@ -9066,6 +9272,7 @@
         "nameCh": "中丘",
         "isSeat": false
       },
+      "provinceId": 806,
       "spatialProvinceId": "87223",
       "spatialProvinceIndex": 806,
       "routeNodeKey": "78209f9d-437f-4bb0-97cc-1bc6ab853612",
@@ -9111,6 +9318,7 @@
         "nameCh": "易陽",
         "isSeat": false
       },
+      "provinceId": 772,
       "spatialProvinceId": "87036",
       "spatialProvinceIndex": 772,
       "routeNodeKey": "0b62e2e2-cf66-496e-b3be-621072f02245",
@@ -9154,6 +9362,7 @@
         "nameCh": "柏人",
         "isSeat": false
       },
+      "provinceId": 770,
       "spatialProvinceId": "87015",
       "spatialProvinceIndex": 770,
       "routeNodeKey": "24786b33-a975-436a-aa02-84604d39bde7",
@@ -9198,6 +9407,7 @@
         "nameCh": "襄國",
         "isSeat": false
       },
+      "provinceId": 769,
       "spatialProvinceId": "87012",
       "spatialProvinceIndex": 769,
       "routeNodeKey": "f69fb5e2-cb13-43e9-8301-08b700f8bb7f",
@@ -9243,6 +9453,7 @@
         "nameCh": "樂平",
         "isSeat": false
       },
+      "provinceId": 399,
       "spatialProvinceId": "45318",
       "spatialProvinceIndex": 399,
       "routeNodeKey": "a337e0db-327d-4b18-84a6-f10818cb5fe0",
@@ -9285,6 +9496,7 @@
         "nameCh": "下曲陽",
         "isSeat": false
       },
+      "provinceId": 795,
       "spatialProvinceId": "87178",
       "spatialProvinceIndex": 795,
       "routeNodeKey": "2b46f0dc-4f65-42b6-b503-7ef0150d2317",
@@ -9329,6 +9541,7 @@
         "nameCh": "任",
         "isSeat": false
       },
+      "provinceId": 794,
       "spatialProvinceId": "87177",
       "spatialProvinceIndex": 794,
       "routeNodeKey": "ef00f50f-4a70-429f-8e8d-6f5dfca116a4",
@@ -9375,6 +9588,7 @@
         "nameCh": "列人",
         "isSeat": false
       },
+      "provinceId": 857,
       "spatialProvinceId": "87494",
       "spatialProvinceIndex": 857,
       "routeNodeKey": "61b7143d-c2b9-4d47-8583-170782bd1c2e",
@@ -9416,6 +9630,7 @@
         "nameCh": "南和",
         "isSeat": false
       },
+      "provinceId": 856,
       "spatialProvinceId": "87491",
       "spatialProvinceIndex": 856,
       "routeNodeKey": "3509d30a-149f-4eb9-b69a-6b9243aca2e1",
@@ -9458,6 +9673,7 @@
         "nameCh": "平鄉",
         "isSeat": false
       },
+      "provinceId": 862,
       "spatialProvinceId": "87510",
       "spatialProvinceIndex": 862,
       "routeNodeKey": "1a0a4099-f25e-4219-9294-a611460d0ad8",
@@ -9502,6 +9718,7 @@
         "nameCh": "廣宗",
         "isSeat": false
       },
+      "provinceId": 799,
       "spatialProvinceId": "87200",
       "spatialProvinceIndex": 799,
       "routeNodeKey": "7e5811a9-a20c-4ab7-9162-1aad492a5364",
@@ -9547,6 +9764,7 @@
         "nameCh": "廣年",
         "isSeat": false
       },
+      "provinceId": 863,
       "spatialProvinceId": "87513",
       "spatialProvinceIndex": 863,
       "routeNodeKey": "67841ccc-122c-4385-ab4c-ce1aa8cd4331",
@@ -9592,6 +9810,7 @@
         "nameCh": "曲周",
         "isSeat": false
       },
+      "provinceId": 859,
       "spatialProvinceId": "87499",
       "spatialProvinceIndex": 859,
       "routeNodeKey": "c8ea0ad3-2301-4b13-8f68-d9629d89f624",
@@ -9634,6 +9853,7 @@
         "nameCh": "楊氏",
         "isSeat": false
       },
+      "provinceId": 793,
       "spatialProvinceId": "87173",
       "spatialProvinceIndex": 793,
       "routeNodeKey": "3a555882-3dd0-4abd-afdb-3bccd732933e",
@@ -9677,6 +9897,7 @@
         "nameCh": "鄡",
         "isSeat": false
       },
+      "provinceId": 796,
       "spatialProvinceId": "87183",
       "spatialProvinceIndex": 796,
       "routeNodeKey": "a93e7299-18a2-45e4-9041-0c8373186510",
@@ -9719,6 +9940,7 @@
         "nameCh": "章",
         "isSeat": false
       },
+      "provinceId": 764,
       "spatialProvinceId": "85691",
       "spatialProvinceIndex": 764,
       "routeNodeKey": "9e7fbb06-be64-4e36-b2cc-42301521d60b",
@@ -9762,6 +9984,7 @@
         "nameCh": "鄴",
         "isSeat": true
       },
+      "provinceId": 556,
       "spatialProvinceId": "82196",
       "spatialProvinceIndex": 556,
       "routeNodeKey": "893e5306-80a6-4fd4-b5be-110c3bdcc7d2",
@@ -9807,6 +10030,7 @@
         "nameCh": "元城",
         "isSeat": false
       },
+      "provinceId": 790,
       "spatialProvinceId": "87158",
       "spatialProvinceIndex": 790,
       "routeNodeKey": "c8dae76f-c0c7-4860-87ed-95d02de4782e",
@@ -9851,6 +10075,7 @@
         "nameCh": "內黃",
         "isSeat": false
       },
+      "provinceId": 560,
       "spatialProvinceId": "82244",
       "spatialProvinceIndex": 560,
       "routeNodeKey": "d679faa8-334e-478e-bb9a-b5680312a5ed",
@@ -9896,6 +10121,7 @@
         "nameCh": "平恩",
         "isSeat": false
       },
+      "provinceId": 690,
       "spatialProvinceId": "85186",
       "spatialProvinceIndex": 690,
       "routeNodeKey": "48ad3c2f-b38c-41f1-8e8f-9bee1d459c95",
@@ -9942,6 +10168,7 @@
         "nameCh": "斥丘",
         "isSeat": false
       },
+      "provinceId": 788,
       "spatialProvinceId": "87154",
       "spatialProvinceIndex": 788,
       "routeNodeKey": "99e1c2d5-dd43-4410-96b3-53bb7c1273c3",
@@ -9986,6 +10213,7 @@
         "nameCh": "曲梁",
         "isSeat": false
       },
+      "provinceId": 860,
       "spatialProvinceId": "87505",
       "spatialProvinceIndex": 860,
       "routeNodeKey": "b8f95436-a188-45c9-9b5c-de48518e841f",
@@ -10029,6 +10257,7 @@
         "nameCh": "梁期",
         "isSeat": false
       },
+      "provinceId": 825,
       "spatialProvinceId": "87310",
       "spatialProvinceIndex": 825,
       "routeNodeKey": "deced8b1-a7a8-47b7-9de9-11701b4788a3",
@@ -10070,6 +10299,7 @@
         "nameCh": "武安",
         "isSeat": false
       },
+      "provinceId": 559,
       "spatialProvinceId": "82228",
       "spatialProvinceIndex": 559,
       "routeNodeKey": "3ecdad36-2aaa-4c70-94c8-283ce3185697",
@@ -10113,6 +10343,7 @@
         "nameCh": "成",
         "isSeat": false
       },
+      "provinceId": 394,
       "spatialProvinceId": "45291",
       "spatialProvinceIndex": 394,
       "routeNodeKey": "7d0c9dd4-ce4f-4ca1-8579-1a63ddf0cdeb",
@@ -10156,6 +10387,7 @@
         "nameCh": "清淵",
         "isSeat": false
       },
+      "provinceId": 688,
       "spatialProvinceId": "85165",
       "spatialProvinceIndex": 688,
       "routeNodeKey": "1e74001c-b5c3-4d47-bd03-4147a2ca3e45",
@@ -10198,6 +10430,7 @@
         "nameCh": "繁陽",
         "isSeat": false
       },
+      "provinceId": 561,
       "spatialProvinceId": "82247",
       "spatialProvinceIndex": 561,
       "routeNodeKey": "78079944-24e1-4689-84d2-d1cc7add7c22",
@@ -10242,6 +10475,7 @@
         "nameCh": "陰安",
         "isSeat": false
       },
+      "provinceId": 792,
       "spatialProvinceId": "87166",
       "spatialProvinceIndex": 792,
       "routeNodeKey": "01317d5f-0ed5-48b9-8d9b-7809a1ce8c3a",
@@ -10286,6 +10520,7 @@
         "nameCh": "館陶",
         "isSeat": false
       },
+      "provinceId": 405,
       "spatialProvinceId": "45350",
       "spatialProvinceIndex": 405,
       "routeNodeKey": "86390a2e-9852-4813-8f13-f5369011726c",
@@ -10329,6 +10564,7 @@
         "nameCh": "魏",
         "isSeat": false
       },
+      "provinceId": 789,
       "spatialProvinceId": "87157",
       "spatialProvinceIndex": 789,
       "routeNodeKey": "95f5e887-072a-4515-acc1-0b7720e23dc2",
@@ -10375,6 +10611,7 @@
         "nameCh": "黎陽",
         "isSeat": false
       },
+      "provinceId": 570,
       "spatialProvinceId": "82316",
       "spatialProvinceIndex": 570,
       "routeNodeKey": "51562b99-7549-45ac-b2f7-cd8540cdf75d",
@@ -10418,6 +10655,7 @@
         "nameCh": "任城",
         "isSeat": true
       },
+      "provinceId": 686,
       "spatialProvinceId": "85155",
       "spatialProvinceIndex": 686,
       "routeNodeKey": "408d37db-231f-44cb-8849-6bac39988b74",
@@ -10461,6 +10699,7 @@
         "nameCh": "亢父",
         "isSeat": false
       },
+      "provinceId": 682,
       "spatialProvinceId": "85131",
       "spatialProvinceIndex": 682,
       "routeNodeKey": "552230a0-7081-4f82-9c02-1e3e0c7cb148",
@@ -10504,6 +10743,7 @@
         "nameCh": "樊",
         "isSeat": false
       },
+      "provinceId": 374,
       "spatialProvinceId": "45178",
       "spatialProvinceIndex": 374,
       "routeNodeKey": "07fdddc5-f551-44e0-a42b-ca60118269f5",
@@ -10547,6 +10787,7 @@
         "nameCh": "昌邑",
         "isSeat": true
       },
+      "provinceId": 683,
       "spatialProvinceId": "85133",
       "spatialProvinceIndex": 683,
       "routeNodeKey": "fc62994c-a42d-4c99-8b30-e29d77a023fd",
@@ -10589,6 +10830,7 @@
         "nameCh": "南平陽",
         "isSeat": false
       },
+      "provinceId": 376,
       "spatialProvinceId": "45188",
       "spatialProvinceIndex": 376,
       "routeNodeKey": "5d0a7e89-f7ea-4018-bcc1-193484884c80",
@@ -10635,6 +10877,7 @@
         "nameCh": "方與",
         "isSeat": false
       },
+      "provinceId": 685,
       "spatialProvinceId": "85147",
       "spatialProvinceIndex": 685,
       "routeNodeKey": "9fb736a5-047b-49de-82aa-a6d5e4838bbe",
@@ -10680,6 +10923,7 @@
         "nameCh": "湖陸",
         "isSeat": false
       },
+      "provinceId": 684,
       "spatialProvinceId": "85146",
       "spatialProvinceIndex": 684,
       "routeNodeKey": "903b59d8-2167-4cd5-b2c7-eed99320c6e2",
@@ -10722,6 +10966,7 @@
         "nameCh": "瑕丘",
         "isSeat": false
       },
+      "provinceId": 390,
       "spatialProvinceId": "45269",
       "spatialProvinceIndex": 390,
       "routeNodeKey": "cca5ebc6-7853-4a6a-9676-2e4d100220bc",
@@ -10765,6 +11010,7 @@
         "nameCh": "利城",
         "isSeat": false
       },
+      "provinceId": 233,
       "spatialProvinceId": "42901",
       "spatialProvinceIndex": 233,
       "routeNodeKey": "e99dc86a-117e-4435-9749-0a11a3e829c7",
@@ -10808,6 +11054,7 @@
         "nameCh": "高平",
         "isSeat": false
       },
+      "provinceId": 378,
       "spatialProvinceId": "45198",
       "spatialProvinceIndex": 378,
       "routeNodeKey": "20e7e845-384e-4e9d-8032-b1f20fbca066",
@@ -10853,6 +11100,7 @@
         "nameCh": "無鹽",
         "isSeat": true
       },
+      "provinceId": 762,
       "spatialProvinceId": "85681",
       "spatialProvinceIndex": 762,
       "routeNodeKey": "97a27a9f-1d59-4fa8-b3af-17efbda73ae0",
@@ -10896,6 +11144,7 @@
         "nameCh": "東平陸",
         "isSeat": false
       },
+      "provinceId": 388,
       "spatialProvinceId": "45243",
       "spatialProvinceIndex": 388,
       "routeNodeKey": "ccf6fd19-219b-4338-8039-d7efb90bd99c",
@@ -10939,6 +11188,7 @@
         "nameCh": "壽張",
         "isSeat": false
       },
+      "provinceId": 389,
       "spatialProvinceId": "45258",
       "spatialProvinceIndex": 389,
       "routeNodeKey": "d7954a3c-36a9-4fa9-beed-27e5371ff4db",
@@ -10984,6 +11234,7 @@
         "nameCh": "須昌",
         "isSeat": false
       },
+      "provinceId": 763,
       "spatialProvinceId": "85685",
       "spatialProvinceIndex": 763,
       "routeNodeKey": "6882d5e0-172e-46e6-b824-2cc9456c5788",
@@ -11027,6 +11278,7 @@
         "nameCh": "燕",
         "isSeat": false
       },
+      "provinceId": 568,
       "spatialProvinceId": "82289",
       "spatialProvinceIndex": 568,
       "routeNodeKey": "3031bb13-9f26-40d2-b3c0-3975accb9ef4",
@@ -11070,6 +11322,7 @@
         "nameCh": "東武陽",
         "isSeat": false
       },
+      "provinceId": 678,
       "spatialProvinceId": "85093",
       "spatialProvinceIndex": 678,
       "routeNodeKey": "abc2c431-bb52-4a65-add9-e9e00e20738f",
@@ -11114,6 +11367,7 @@
         "nameCh": "東阿",
         "isSeat": false
       },
+      "provinceId": 398,
       "spatialProvinceId": "45303",
       "spatialProvinceIndex": 398,
       "routeNodeKey": "2a8abc7d-c218-4ea6-b105-2444a2a2ef59",
@@ -11157,6 +11411,7 @@
         "nameCh": "臨邑",
         "isSeat": false
       },
+      "provinceId": 368,
       "spatialProvinceId": "45123",
       "spatialProvinceIndex": 368,
       "routeNodeKey": "3bb9bd80-ed08-4294-8bf1-c87fff18e4e5",
@@ -11201,6 +11456,7 @@
         "nameCh": "博平",
         "isSeat": false
       },
+      "provinceId": 401,
       "spatialProvinceId": "45326",
       "spatialProvinceIndex": 401,
       "routeNodeKey": "4147e108-172b-4236-9c36-30fbc7a7ffee",
@@ -11244,6 +11500,7 @@
         "nameCh": "白馬",
         "isSeat": false
       },
+      "provinceId": 571,
       "spatialProvinceId": "82320",
       "spatialProvinceIndex": 571,
       "routeNodeKey": "abb04895-5b8d-4a1f-94e2-8f4cb9721be6",
@@ -11290,6 +11547,7 @@
         "nameCh": "聊城",
         "isSeat": false
       },
+      "provinceId": 396,
       "spatialProvinceId": "45295",
       "spatialProvinceIndex": 396,
       "routeNodeKey": "577b13f8-bd65-499d-8ee3-7af90cba37f3",
@@ -11334,6 +11592,7 @@
         "nameCh": "穀城",
         "isSeat": false
       },
+      "provinceId": 765,
       "spatialProvinceId": "85692",
       "spatialProvinceIndex": 765,
       "routeNodeKey": "61e57ae0-8e04-4452-9b36-0a932df004e8",
@@ -11378,6 +11637,7 @@
         "nameCh": "陽平",
         "isSeat": false
       },
+      "provinceId": 404,
       "spatialProvinceId": "45339",
       "spatialProvinceIndex": 404,
       "routeNodeKey": "b7f8a01c-c399-430d-8f5b-a540530fb43a",
@@ -11423,6 +11683,7 @@
         "nameCh": "頓丘",
         "isSeat": false
       },
+      "provinceId": 569,
       "spatialProvinceId": "82304",
       "spatialProvinceIndex": 569,
       "routeNodeKey": "391a5b41-61ae-4228-8f19-ab904c767090",
@@ -11466,6 +11727,7 @@
         "nameCh": "祝其",
         "isSeat": false
       },
+      "provinceId": 232,
       "spatialProvinceId": "42896",
       "spatialProvinceIndex": 232,
       "routeNodeKey": "6536a065-b0e5-4db9-a776-e726f7d358db",
@@ -11510,6 +11772,7 @@
         "nameCh": "南城",
         "isSeat": false
       },
+      "provinceId": 744,
       "spatialProvinceId": "85596",
       "spatialProvinceIndex": 744,
       "routeNodeKey": "5710c050-33fb-4d51-8116-a8fd1523e36b",
@@ -11554,6 +11817,7 @@
         "nameCh": "南武陽",
         "isSeat": false
       },
+      "provinceId": 746,
       "spatialProvinceId": "85610",
       "spatialProvinceIndex": 746,
       "routeNodeKey": "61292a34-badf-40f2-ad10-18f973ad60da",
@@ -11598,6 +11862,7 @@
         "nameCh": "博",
         "isSeat": false
       },
+      "provinceId": 755,
       "spatialProvinceId": "85653",
       "spatialProvinceIndex": 755,
       "routeNodeKey": "5a954a4a-d447-406d-a465-1f45caf9e826",
@@ -11642,6 +11907,7 @@
         "nameCh": "嬴",
         "isSeat": false
       },
+      "provinceId": 761,
       "spatialProvinceId": "85677",
       "spatialProvinceIndex": 761,
       "routeNodeKey": "19af5aad-8467-4b51-a018-17251747ba98",
@@ -11686,6 +11952,7 @@
         "nameCh": "梁甫",
         "isSeat": false
       },
+      "provinceId": 756,
       "spatialProvinceId": "85666",
       "spatialProvinceIndex": 756,
       "routeNodeKey": "b7df6638-2484-4512-a5f2-305d3c5ec6cc",
@@ -11728,6 +11995,7 @@
         "nameCh": "牟",
         "isSeat": false
       },
+      "provinceId": 760,
       "spatialProvinceId": "85676",
       "spatialProvinceIndex": 760,
       "routeNodeKey": "ff49687a-ad91-412c-ab6e-535137605fbb",
@@ -11773,6 +12041,7 @@
         "nameCh": "蓋",
         "isSeat": false
       },
+      "provinceId": 753,
       "spatialProvinceId": "85642",
       "spatialProvinceIndex": 753,
       "routeNodeKey": "a0a7b698-a2d3-413e-bb76-fec2f04b643e",
@@ -11816,6 +12085,7 @@
         "nameCh": "廣戚",
         "isSeat": false
       },
+      "provinceId": 218,
       "spatialProvinceId": "42817",
       "spatialProvinceIndex": 218,
       "routeNodeKey": "73bb961d-88c8-49f4-b1a1-4798f73014aa",
@@ -11861,6 +12131,7 @@
         "nameCh": "萊蕪",
         "isSeat": false
       },
+      "provinceId": 354,
       "spatialProvinceId": "45053",
       "spatialProvinceIndex": 354,
       "routeNodeKey": "a766135b-449b-4b50-9e7a-e2d3fb173460",
@@ -11905,6 +12176,7 @@
         "nameCh": "費",
         "isSeat": false
       },
+      "provinceId": 745,
       "spatialProvinceId": "85602",
       "spatialProvinceIndex": 745,
       "routeNodeKey": "90a16ccc-79a2-40fa-addc-7fb3be80cf9c",
@@ -11949,6 +12221,7 @@
         "nameCh": "盧",
         "isSeat": true
       },
+      "provinceId": 359,
       "spatialProvinceId": "45098",
       "spatialProvinceIndex": 359,
       "routeNodeKey": "4b672dd1-da8c-4ea8-b386-c942b0514127",
@@ -11991,6 +12264,7 @@
         "nameCh": "剛",
         "isSeat": false
       },
+      "provinceId": 392,
       "spatialProvinceId": "45285",
       "spatialProvinceIndex": 392,
       "routeNodeKey": "e7df1efd-5982-414f-9e32-b332733dc0c7",
@@ -12033,6 +12307,7 @@
         "nameCh": "茌平",
         "isSeat": false
       },
+      "provinceId": 402,
       "spatialProvinceId": "45332",
       "spatialProvinceIndex": 402,
       "routeNodeKey": "b786725d-c746-46af-9824-279810a1c51e",
@@ -12076,6 +12351,7 @@
         "nameCh": "蛇丘",
         "isSeat": false
       },
+      "provinceId": 758,
       "spatialProvinceId": "85671",
       "spatialProvinceIndex": 758,
       "routeNodeKey": "69161c43-8ead-41a3-a188-4b11bbfb16bb",
@@ -12119,6 +12395,7 @@
         "nameCh": "定陶",
         "isSeat": true
       },
+      "provinceId": 672,
       "spatialProvinceId": "85058",
       "spatialProvinceIndex": 672,
       "routeNodeKey": "be055091-a477-409d-afbc-557f6a644e3b",
@@ -12163,6 +12440,7 @@
         "nameCh": "乘氏",
         "isSeat": false
       },
+      "provinceId": 666,
       "spatialProvinceId": "85002",
       "spatialProvinceIndex": 666,
       "routeNodeKey": "970a0697-61ac-4087-a3a5-2c9d3487fa5c",
@@ -12207,6 +12485,7 @@
         "nameCh": "冤句",
         "isSeat": false
       },
+      "provinceId": 667,
       "spatialProvinceId": "85013",
       "spatialProvinceIndex": 667,
       "routeNodeKey": "f8b0ccaf-4e3c-4c0b-b061-a63d4fe2783b",
@@ -12251,6 +12530,7 @@
         "nameCh": "單父",
         "isSeat": false
       },
+      "provinceId": 669,
       "spatialProvinceId": "85024",
       "spatialProvinceIndex": 669,
       "routeNodeKey": "d9e66db5-822b-487c-b621-2b75baf84f80",
@@ -12295,6 +12575,7 @@
         "nameCh": "句陽",
         "isSeat": false
       },
+      "provinceId": 668,
       "spatialProvinceId": "85017",
       "spatialProvinceIndex": 668,
       "routeNodeKey": "6decce50-0e13-497f-b45e-911027f69852",
@@ -12338,6 +12619,7 @@
         "nameCh": "廩丘",
         "isSeat": false
       },
+      "provinceId": 676,
       "spatialProvinceId": "85075",
       "spatialProvinceIndex": 676,
       "routeNodeKey": "ce3d7d56-c8a6-4cc3-980f-2be56e711401",
@@ -12382,6 +12664,7 @@
         "nameCh": "成武",
         "isSeat": false
       },
+      "provinceId": 681,
       "spatialProvinceId": "85115",
       "spatialProvinceIndex": 681,
       "routeNodeKey": "405e50fc-6ccb-4ef5-9c6c-6e21da965c00",
@@ -12424,6 +12707,7 @@
         "nameCh": "成陽",
         "isSeat": false
       },
+      "provinceId": 675,
       "spatialProvinceId": "85067",
       "spatialProvinceIndex": 675,
       "routeNodeKey": "ccf3dedf-8769-4fba-a0c4-c47f9ccbd0a5",
@@ -12466,6 +12750,7 @@
         "nameCh": "鄄城",
         "isSeat": false
       },
+      "provinceId": 674,
       "spatialProvinceId": "85065",
       "spatialProvinceIndex": 674,
       "routeNodeKey": "a18114c0-eb8f-4b6b-ae19-5238628f9b50",
@@ -12510,6 +12795,7 @@
         "nameCh": "陳留",
         "isSeat": true
       },
+      "provinceId": 307,
       "spatialProvinceId": "44324",
       "spatialProvinceIndex": 307,
       "routeNodeKey": "baf25a51-68f6-4490-91bd-8561ae4c8f95",
@@ -12555,6 +12841,7 @@
         "nameCh": "圉",
         "isSeat": false
       },
+      "provinceId": 312,
       "spatialProvinceId": "44342",
       "spatialProvinceIndex": 312,
       "routeNodeKey": "b95ddf04-e010-4f71-91e2-5d0e14119421",
@@ -12599,6 +12886,7 @@
         "nameCh": "外黃",
         "isSeat": false
       },
+      "provinceId": 310,
       "spatialProvinceId": "44335",
       "spatialProvinceIndex": 310,
       "routeNodeKey": "89b75615-c054-4318-abd0-4f8d0efbefc2",
@@ -12644,6 +12932,7 @@
         "nameCh": "封丘",
         "isSeat": false
       },
+      "provinceId": 572,
       "spatialProvinceId": "82323",
       "spatialProvinceIndex": 572,
       "routeNodeKey": "aef957c4-e381-402e-9659-200323908a53",
@@ -12688,6 +12977,7 @@
         "nameCh": "尉氏",
         "isSeat": false
       },
+      "provinceId": 309,
       "spatialProvinceId": "44332",
       "spatialProvinceIndex": 309,
       "routeNodeKey": "8f4cf5f1-2b1b-4210-8e35-8eca96318e91",
@@ -12733,6 +13023,7 @@
         "nameCh": "小黃",
         "isSeat": false
       },
+      "provinceId": 311,
       "spatialProvinceId": "44337",
       "spatialProvinceIndex": 311,
       "routeNodeKey": "fb8894eb-e330-4494-bb5c-e0267fcf4fcf",
@@ -12777,6 +13068,7 @@
         "nameCh": "扶溝",
         "isSeat": false
       },
+      "provinceId": 542,
       "spatialProvinceId": "82058",
       "spatialProvinceIndex": 542,
       "routeNodeKey": "5249a2ae-04b6-4c51-ac77-d5d51ac1af1d",
@@ -12822,6 +13114,7 @@
         "nameCh": "濟陽",
         "isSeat": false
       },
+      "provinceId": 315,
       "spatialProvinceId": "44379",
       "spatialProvinceIndex": 315,
       "routeNodeKey": "fd3bd5cc-c198-41ba-bca2-bdab35679793",
@@ -12868,6 +13161,7 @@
         "nameCh": "浚儀",
         "isSeat": false
       },
+      "provinceId": 318,
       "spatialProvinceId": "44392",
       "spatialProvinceIndex": 318,
       "routeNodeKey": "c0446a48-e09b-42fd-bb8f-cdf465a9c4fc",
@@ -12913,6 +13207,7 @@
         "nameCh": "考城",
         "isSeat": false
       },
+      "provinceId": 573,
       "spatialProvinceId": "82331",
       "spatialProvinceIndex": 573,
       "routeNodeKey": "52fcb5d7-a149-4c95-a015-cc202b41a597",
@@ -12958,6 +13253,7 @@
         "nameCh": "襄邑",
         "isSeat": false
       },
+      "provinceId": 553,
       "spatialProvinceId": "82160",
       "spatialProvinceIndex": 553,
       "routeNodeKey": "144eee1f-2566-4e55-94c1-95cb92a0e4e0",
@@ -13001,6 +13297,7 @@
         "nameCh": "酸棗",
         "isSeat": false
       },
+      "provinceId": 567,
       "spatialProvinceId": "82282",
       "spatialProvinceIndex": 567,
       "routeNodeKey": "317b9aee-518f-4117-a9e9-3bfdff2656d0",
@@ -13046,6 +13343,7 @@
         "nameCh": "雍丘",
         "isSeat": false
       },
+      "provinceId": 308,
       "spatialProvinceId": "44326",
       "spatialProvinceIndex": 308,
       "routeNodeKey": "1db00caa-359a-4fd6-afef-cb8e438c446a",
@@ -13090,6 +13388,7 @@
         "nameCh": "下邳",
         "isSeat": true
       },
+      "provinceId": 220,
       "spatialProvinceId": "42821",
       "spatialProvinceIndex": 220,
       "routeNodeKey": "ed5ead9a-cfb3-4126-8ad2-369963f27534",
@@ -13134,6 +13433,7 @@
         "nameCh": "下相",
         "isSeat": false
       },
+      "provinceId": 224,
       "spatialProvinceId": "42847",
       "spatialProvinceIndex": 224,
       "routeNodeKey": "c8ee0a91-d255-4b01-a78f-14733a6a1747",
@@ -13178,6 +13478,7 @@
         "nameCh": "僮",
         "isSeat": false
       },
+      "provinceId": 257,
       "spatialProvinceId": "43249",
       "spatialProvinceIndex": 257,
       "routeNodeKey": "efcc0566-b906-4dc4-ab17-65bce2e24972",
@@ -13224,6 +13525,7 @@
         "nameCh": "取慮",
         "isSeat": false
       },
+      "provinceId": 228,
       "spatialProvinceId": "42862",
       "spatialProvinceIndex": 228,
       "routeNodeKey": "070116c2-1531-4c27-8ded-84202a6c45eb",
@@ -13269,6 +13571,7 @@
         "nameCh": "司吾",
         "isSeat": false
       },
+      "provinceId": 225,
       "spatialProvinceId": "42852",
       "spatialProvinceIndex": 225,
       "routeNodeKey": "5c4b052c-b167-47bf-bd5d-a0458635ddb4",
@@ -13312,6 +13615,7 @@
         "nameCh": "夏丘",
         "isSeat": false
       },
+      "provinceId": 255,
       "spatialProvinceId": "43235",
       "spatialProvinceIndex": 255,
       "routeNodeKey": "0a0c8d77-03cf-4137-80d6-643fa59fb9d3",
@@ -13350,6 +13654,7 @@
         "nameCh": "徐",
         "isSeat": false
       },
+      "provinceId": 258,
       "spatialProvinceId": "43252",
       "spatialProvinceIndex": 258,
       "routeNodeKey": "7fd6fa9f-3589-4e83-8a9d-49cd7d206fc9",
@@ -13393,6 +13698,7 @@
         "nameCh": "淮浦",
         "isSeat": false
       },
+      "provinceId": 210,
       "spatialProvinceId": "42760",
       "spatialProvinceIndex": 210,
       "routeNodeKey": "062542ea-4549-4997-850d-1b4769e885eb",
@@ -13437,6 +13743,7 @@
         "nameCh": "淮陰",
         "isSeat": false
       },
+      "provinceId": 209,
       "spatialProvinceId": "42746",
       "spatialProvinceIndex": 209,
       "routeNodeKey": "eb3d5c80-cb4e-4fc2-a06d-4a82c65f3a01",
@@ -13480,6 +13787,7 @@
         "nameCh": "淮陵",
         "isSeat": false
       },
+      "provinceId": 259,
       "spatialProvinceId": "43284",
       "spatialProvinceIndex": 259,
       "routeNodeKey": "2bdd3d6a-f06c-4af6-89f1-5b4527e8336e",
@@ -13523,6 +13831,7 @@
         "nameCh": "睢陵",
         "isSeat": false
       },
+      "provinceId": 227,
       "spatialProvinceId": "42860",
       "spatialProvinceIndex": 227,
       "routeNodeKey": "85fba1aa-f1de-4a9f-ae7e-7e52f0bed70f",
@@ -13568,6 +13877,7 @@
         "nameCh": "良成",
         "isSeat": false
       },
+      "provinceId": 221,
       "spatialProvinceId": "42829",
       "spatialProvinceIndex": 221,
       "routeNodeKey": "d3df905a-1903-4a49-b2f7-6fe086215364",
@@ -13612,6 +13922,7 @@
         "nameCh": "曲陽",
         "isSeat": false
       },
+      "provinceId": 230,
       "spatialProvinceId": "42878",
       "spatialProvinceIndex": 230,
       "routeNodeKey": "c80fdc04-7796-4029-8551-5b848f298962",
@@ -13654,6 +13965,7 @@
         "nameCh": "廣陵",
         "isSeat": true
       },
+      "provinceId": 202,
       "spatialProvinceId": "42687",
       "spatialProvinceIndex": 202,
       "routeNodeKey": "6cd0a1e3-0adf-4272-a8ba-bb5de9df8a17",
@@ -13697,6 +14009,7 @@
         "nameCh": "堂邑",
         "isSeat": false
       },
+      "provinceId": 53,
       "spatialProvinceId": "40556",
       "spatialProvinceIndex": 53,
       "routeNodeKey": "aaf87e02-c6c9-47cf-831e-e8a53e2822f3",
@@ -13743,6 +14056,7 @@
         "nameCh": "射陽",
         "isSeat": false
       },
+      "provinceId": 207,
       "spatialProvinceId": "42737",
       "spatialProvinceIndex": 207,
       "routeNodeKey": "a40f53a1-7ffb-41c6-a7b3-d165916e727b",
@@ -13786,6 +14100,7 @@
         "nameCh": "平安",
         "isSeat": false
       },
+      "provinceId": 203,
       "spatialProvinceId": "42695",
       "spatialProvinceIndex": 203,
       "routeNodeKey": "c9b2ad95-5046-40fa-a4e6-c648d6c91048",
@@ -13827,6 +14142,7 @@
         "nameCh": "江都",
         "isSeat": false
       },
+      "provinceId": 201,
       "spatialProvinceId": "42681",
       "spatialProvinceIndex": 201,
       "routeNodeKey": "276fdffd-fb69-4af7-82e5-0018fb2199ce",
@@ -13868,6 +14184,7 @@
         "nameCh": "海西",
         "isSeat": false
       },
+      "provinceId": 235,
       "spatialProvinceId": "42917",
       "spatialProvinceIndex": 235,
       "routeNodeKey": "4e6bfa27-573f-41a1-a0d1-45a57a95407b",
@@ -13912,6 +14229,7 @@
         "nameCh": "淩",
         "isSeat": false
       },
+      "provinceId": 223,
       "spatialProvinceId": "42844",
       "spatialProvinceIndex": 223,
       "routeNodeKey": "2a34f3bf-1ebe-4637-bf06-149bb0ac95d6",
@@ -13952,6 +14270,7 @@
         "nameCh": "鹽瀆",
         "isSeat": false
       },
+      "provinceId": 208,
       "spatialProvinceId": "42739",
       "spatialProvinceIndex": 208,
       "routeNodeKey": "8b67194e-156c-4c60-81f5-50f3e580595b",
@@ -13996,6 +14315,7 @@
         "nameCh": "安德",
         "isSeat": false
       },
+      "provinceId": 767,
       "spatialProvinceId": "85706",
       "spatialProvinceIndex": 767,
       "routeNodeKey": "8253a922-7f6b-4bc3-b5ca-f447d162ae61",
@@ -14040,6 +14360,7 @@
         "nameCh": "樂安",
         "isSeat": false
       },
+      "provinceId": 698,
       "spatialProvinceId": "85249",
       "spatialProvinceIndex": 698,
       "routeNodeKey": "c1e8dcb6-bf39-4ece-894a-6681431b80f1",
@@ -14083,6 +14404,7 @@
         "nameCh": "彭城",
         "isSeat": true
       },
+      "provinceId": 211,
       "spatialProvinceId": "42777",
       "spatialProvinceIndex": 211,
       "routeNodeKey": "84956006-1ac0-45d6-92aa-f4e6eb3c6b64",
@@ -14128,6 +14450,7 @@
         "nameCh": "傅陽",
         "isSeat": false
       },
+      "provinceId": 387,
       "spatialProvinceId": "45239",
       "spatialProvinceIndex": 387,
       "routeNodeKey": "9cbc4ec2-305a-4c22-9274-e157661eb93f",
@@ -14173,6 +14496,7 @@
         "nameCh": "呂",
         "isSeat": false
       },
+      "provinceId": 212,
       "spatialProvinceId": "42778",
       "spatialProvinceIndex": 212,
       "routeNodeKey": "69b6a4d7-8cf6-42fb-9352-dc62a1b03bcd",
@@ -14215,6 +14539,7 @@
         "nameCh": "武原",
         "isSeat": false
       },
+      "provinceId": 222,
       "spatialProvinceId": "42832",
       "spatialProvinceIndex": 222,
       "routeNodeKey": "0cb6a51d-7fdd-4c83-beeb-c478e32af6c3",
@@ -14259,6 +14584,7 @@
         "nameCh": "留",
         "isSeat": false
       },
+      "provinceId": 219,
       "spatialProvinceId": "42818",
       "spatialProvinceIndex": 219,
       "routeNodeKey": "4153fe1d-7c12-489e-be07-c4f293236acc",
@@ -14302,6 +14628,7 @@
         "nameCh": "蘭陵",
         "isSeat": false
       },
+      "provinceId": 384,
       "spatialProvinceId": "45219",
       "spatialProvinceIndex": 384,
       "routeNodeKey": "512c4d22-ac06-4c7d-b607-b42154b9bfca",
@@ -14346,6 +14673,7 @@
         "nameCh": "厚丘",
         "isSeat": false
       },
+      "provinceId": 234,
       "spatialProvinceId": "42913",
       "spatialProvinceIndex": 234,
       "routeNodeKey": "c9b0e82a-425e-47e2-ac74-da81792509bb",
@@ -14393,6 +14721,7 @@
         "nameCh": "戚",
         "isSeat": false
       },
+      "provinceId": 383,
       "spatialProvinceId": "45216",
       "spatialProvinceIndex": 383,
       "routeNodeKey": "84be9c6a-6910-4e1d-ab7f-7b8afa05779f",
@@ -14439,6 +14768,7 @@
         "nameCh": "承",
         "isSeat": false
       },
+      "provinceId": 385,
       "spatialProvinceId": "45224",
       "spatialProvinceIndex": 385,
       "routeNodeKey": "13e38289-f6a3-47ac-824e-32546f7d1a85",
@@ -14481,6 +14811,7 @@
         "nameCh": "昌慮",
         "isSeat": false
       },
+      "provinceId": 382,
       "spatialProvinceId": "45213",
       "spatialProvinceIndex": 382,
       "routeNodeKey": "7dc9a24e-737b-49f0-98ec-3e77cde70ea3",
@@ -14524,6 +14855,7 @@
         "nameCh": "朐",
         "isSeat": false
       },
+      "provinceId": 229,
       "spatialProvinceId": "42869",
       "spatialProvinceIndex": 229,
       "routeNodeKey": "e41c3e19-1d15-4244-8bb8-e02f8749bb9a",
@@ -14569,6 +14901,7 @@
         "nameCh": "襄賁",
         "isSeat": false
       },
+      "provinceId": 741,
       "spatialProvinceId": "85588",
       "spatialProvinceIndex": 741,
       "routeNodeKey": "21a3b626-f8b7-4434-8631-4f818a36c5ed",
@@ -14614,6 +14947,7 @@
         "nameCh": "博昌",
         "isSeat": false
       },
+      "provinceId": 697,
       "spatialProvinceId": "85241",
       "spatialProvinceIndex": 697,
       "routeNodeKey": "1a9ee70f-9b5a-4f28-b8ee-7c4822b922e3",
@@ -14659,6 +14993,7 @@
         "nameCh": "東莞",
         "isSeat": false
       },
+      "provinceId": 750,
       "spatialProvinceId": "85634",
       "spatialProvinceIndex": 750,
       "routeNodeKey": "7497b546-ba6e-4d39-9919-93717a6b556b",
@@ -14702,6 +15037,7 @@
         "nameCh": "開陽",
         "isSeat": true
       },
+      "provinceId": 743,
       "spatialProvinceId": "85594",
       "spatialProvinceIndex": 743,
       "routeNodeKey": "30090d3f-cd1d-4c35-aa9b-beb22afb0724",
@@ -14746,6 +15082,7 @@
         "nameCh": "東安",
         "isSeat": false
       },
+      "provinceId": 751,
       "spatialProvinceId": "85637",
       "spatialProvinceIndex": 751,
       "routeNodeKey": "cc38b9b7-ef3e-423b-b163-9905ea060865",
@@ -14790,6 +15127,7 @@
         "nameCh": "東武",
         "isSeat": false
       },
+      "provinceId": 711,
       "spatialProvinceId": "85337",
       "spatialProvinceIndex": 711,
       "routeNodeKey": "f17d2b12-65fd-4ff7-9196-db07b3ade8b2",
@@ -14832,6 +15170,7 @@
         "nameCh": "臨沂",
         "isSeat": false
       },
+      "provinceId": 742,
       "spatialProvinceId": "85589",
       "spatialProvinceIndex": 742,
       "routeNodeKey": "d4729852-e93f-4a0d-965f-52315b6ecc5c",
@@ -14876,6 +15215,7 @@
         "nameCh": "淳於",
         "isSeat": false
       },
+      "provinceId": 710,
       "spatialProvinceId": "85333",
       "spatialProvinceIndex": 710,
       "routeNodeKey": "402bcc95-501e-4826-93b6-61a5f034f7ec",
@@ -14920,6 +15260,7 @@
         "nameCh": "姑幕",
         "isSeat": false
       },
+      "provinceId": 714,
       "spatialProvinceId": "85353",
       "spatialProvinceIndex": 714,
       "routeNodeKey": "d4d73d71-5cad-4d1b-9f41-cc35c26eec6f",
@@ -14962,6 +15303,7 @@
         "nameCh": "琅邪",
         "isSeat": false
       },
+      "provinceId": 712,
       "spatialProvinceId": "85344",
       "spatialProvinceIndex": 712,
       "routeNodeKey": "9c771812-a77f-4f1d-861e-647757703df9",
@@ -15005,6 +15347,7 @@
         "nameCh": "繒",
         "isSeat": false
       },
+      "provinceId": 386,
       "spatialProvinceId": "45234",
       "spatialProvinceIndex": 386,
       "routeNodeKey": "e2455911-39af-4167-b9c0-45cdb092012c",
@@ -15049,6 +15392,7 @@
         "nameCh": "莒",
         "isSeat": false
       },
+      "provinceId": 748,
       "spatialProvinceId": "85619",
       "spatialProvinceIndex": 748,
       "routeNodeKey": "02a87c0f-b392-41c7-a6d4-74830cb36ec4",
@@ -15093,6 +15437,7 @@
         "nameCh": "諸",
         "isSeat": false
       },
+      "provinceId": 713,
       "spatialProvinceId": "85350",
       "spatialProvinceIndex": 713,
       "routeNodeKey": "78fcbf95-90ae-46b7-8d6b-d2ee466c854b",
@@ -15136,6 +15481,7 @@
         "nameCh": "陽都",
         "isSeat": false
       },
+      "provinceId": 752,
       "spatialProvinceId": "85640",
       "spatialProvinceIndex": 752,
       "routeNodeKey": "83c0e403-0721-459a-bfd5-ac538d2b6fcb",
@@ -15180,6 +15526,7 @@
         "nameCh": "劇",
         "isSeat": true
       },
+      "provinceId": 703,
       "spatialProvinceId": "85272",
       "spatialProvinceIndex": 703,
       "routeNodeKey": "e46c566b-5cc8-4853-8777-6f4ddc0b1730",
@@ -15223,6 +15570,7 @@
         "nameCh": "下密",
         "isSeat": false
       },
+      "provinceId": 730,
       "spatialProvinceId": "85468",
       "spatialProvinceIndex": 730,
       "routeNodeKey": "573b4a58-e4c2-45fe-94c2-6dafa9f046a5",
@@ -15266,6 +15614,7 @@
         "nameCh": "東安平",
         "isSeat": false
       },
+      "provinceId": 693,
       "spatialProvinceId": "85217",
       "spatialProvinceIndex": 693,
       "routeNodeKey": "19c655b9-05b1-454a-a831-a9e4a9dcd59b",
@@ -15309,6 +15658,7 @@
         "nameCh": "即墨",
         "isSeat": false
       },
+      "provinceId": 728,
       "spatialProvinceId": "85459",
       "spatialProvinceIndex": 728,
       "routeNodeKey": "5a4544f3-39bd-49a6-9d81-1698a9df0c14",
@@ -15354,6 +15704,7 @@
         "nameCh": "夷安",
         "isSeat": false
       },
+      "provinceId": 733,
       "spatialProvinceId": "85491",
       "spatialProvinceIndex": 733,
       "routeNodeKey": "00b5ede1-c0b8-4d04-8dcf-5ea3899e7522",
@@ -15401,6 +15752,7 @@
         "nameCh": "安丘",
         "isSeat": false
       },
+      "provinceId": 709,
       "spatialProvinceId": "85325",
       "spatialProvinceIndex": 709,
       "routeNodeKey": "5228a3f4-1a03-4394-b52d-73a411dd9a5a",
@@ -15443,6 +15795,7 @@
         "nameCh": "平壽",
         "isSeat": false
       },
+      "provinceId": 729,
       "spatialProvinceId": "85466",
       "spatialProvinceIndex": 729,
       "routeNodeKey": "5a4f78ea-1c30-465c-a259-4562344bd455",
@@ -15488,6 +15841,7 @@
         "nameCh": "昌安",
         "isSeat": false
       },
+      "provinceId": 708,
       "spatialProvinceId": "85312",
       "spatialProvinceIndex": 708,
       "routeNodeKey": "e9be09cf-f029-454e-9513-3efd52e09102",
@@ -15529,6 +15883,7 @@
         "nameCh": "朱虛",
         "isSeat": false
       },
+      "provinceId": 707,
       "spatialProvinceId": "85300",
       "spatialProvinceIndex": 707,
       "routeNodeKey": "30096e9f-62a4-4b8b-937d-a0f9c7ec0ab3",
@@ -15571,6 +15926,7 @@
         "nameCh": "膠東",
         "isSeat": false
       },
+      "provinceId": 727,
       "spatialProvinceId": "85454",
       "spatialProvinceIndex": 727,
       "routeNodeKey": "ff6d3f8a-e98c-4263-9bac-211659207afa",
@@ -15615,6 +15971,7 @@
         "nameCh": "營陵",
         "isSeat": false
       },
+      "provinceId": 706,
       "spatialProvinceId": "85292",
       "spatialProvinceIndex": 706,
       "routeNodeKey": "3be4fd78-7fb5-45e9-9481-2baa2c76cfaf",
@@ -15658,6 +16015,7 @@
         "nameCh": "挺",
         "isSeat": false
       },
+      "provinceId": 719,
       "spatialProvinceId": "85385",
       "spatialProvinceIndex": 719,
       "routeNodeKey": "a39da1fa-1459-44d8-8a6f-c1f9584bddec",
@@ -15702,6 +16060,7 @@
         "nameCh": "都昌",
         "isSeat": false
       },
+      "provinceId": 731,
       "spatialProvinceId": "85478",
       "spatialProvinceIndex": 731,
       "routeNodeKey": "67651466-50b7-446f-896f-9797e3ae1842",
@@ -15747,6 +16106,7 @@
         "nameCh": "高密",
         "isSeat": false
       },
+      "provinceId": 734,
       "spatialProvinceId": "85496",
       "spatialProvinceIndex": 734,
       "routeNodeKey": "46520ad5-e11c-4f69-aacd-e60f595d95c3",
@@ -15790,6 +16150,7 @@
         "nameCh": "平原",
         "isSeat": true
       },
+      "provinceId": 360,
       "spatialProvinceId": "45100",
       "spatialProvinceIndex": 360,
       "routeNodeKey": "886db2cb-749d-4261-ae4d-a812036be524",
@@ -15833,6 +16194,7 @@
         "nameCh": "樂陵",
         "isSeat": false
       },
+      "provinceId": 739,
       "spatialProvinceId": "85553",
       "spatialProvinceIndex": 739,
       "routeNodeKey": "49507131-3611-489d-96fd-773b0067b62c",
@@ -15873,6 +16235,7 @@
         "nameCh": "厭次",
         "isSeat": false
       },
+      "provinceId": 736,
       "spatialProvinceId": "85525",
       "spatialProvinceIndex": 736,
       "routeNodeKey": "027c4253-abf8-45da-a0c1-cf1a4690c175",
@@ -15915,6 +16278,7 @@
         "nameCh": "祝阿",
         "isSeat": false
       },
+      "provinceId": 366,
       "spatialProvinceId": "45121",
       "spatialProvinceIndex": 366,
       "routeNodeKey": "98cf4040-c0b0-4b8c-9575-d6427d0b92ef",
@@ -15959,6 +16323,7 @@
         "nameCh": "般",
         "isSeat": false
       },
+      "provinceId": 371,
       "spatialProvinceId": "45146",
       "spatialProvinceIndex": 371,
       "routeNodeKey": "75ca0912-ba1d-4436-ab32-c2a72b40b714",
@@ -16003,6 +16368,7 @@
         "nameCh": "高唐",
         "isSeat": false
       },
+      "provinceId": 358,
       "spatialProvinceId": "45087",
       "spatialProvinceIndex": 358,
       "routeNodeKey": "a78db00d-0ba2-4c5d-8e50-6d85bd122985",
@@ -16046,6 +16412,7 @@
         "nameCh": "鬲",
         "isSeat": false
       },
+      "provinceId": 369,
       "spatialProvinceId": "45124",
       "spatialProvinceIndex": 369,
       "routeNodeKey": "9fd7534a-3066-4f3e-8eeb-deae2b9f6ca0",
@@ -16089,6 +16456,7 @@
         "nameCh": "黃",
         "isSeat": true
       },
+      "provinceId": 715,
       "spatialProvinceId": "85371",
       "spatialProvinceIndex": 715,
       "routeNodeKey": "25bb435c-00f8-4118-9a00-dedd0ef02e47",
@@ -16131,6 +16499,7 @@
         "nameCh": "東牟",
         "isSeat": false
       },
+      "provinceId": 724,
       "spatialProvinceId": "85410",
       "spatialProvinceIndex": 724,
       "routeNodeKey": "a434d07f-0321-448f-b088-30ade37fe3d9",
@@ -16175,6 +16544,7 @@
         "nameCh": "盧鄉",
         "isSeat": false
       },
+      "provinceId": 720,
       "spatialProvinceId": "85386",
       "spatialProvinceIndex": 720,
       "routeNodeKey": "a27ad48c-5269-4bfa-a639-73c50fa48f6b",
@@ -16218,6 +16588,7 @@
         "nameCh": "當利",
         "isSeat": false
       },
+      "provinceId": 725,
       "spatialProvinceId": "85441",
       "spatialProvinceIndex": 725,
       "routeNodeKey": "061fa965-769a-435f-aaa8-45bb738641b5",
@@ -16260,6 +16631,7 @@
         "nameCh": "掖",
         "isSeat": false
       },
+      "provinceId": 2,
       "spatialProvinceId": "200036",
       "spatialProvinceIndex": 2,
       "routeNodeKey": "204444d0-f162-4fde-9d6f-6617d5af0490",
@@ -16301,6 +16673,7 @@
         "nameCh": "昌陽",
         "isSeat": false
       },
+      "provinceId": 718,
       "spatialProvinceId": "85381",
       "spatialProvinceIndex": 718,
       "routeNodeKey": "9a12dbc6-11d8-44d5-9e70-bd6c05cb0753",
@@ -16344,6 +16717,7 @@
         "nameCh": "觀陽",
         "isSeat": false
       },
+      "provinceId": 722,
       "spatialProvinceId": "85393",
       "spatialProvinceIndex": 722,
       "routeNodeKey": "59016f82-4dd4-414f-a341-b7667973184d",
@@ -16387,6 +16761,7 @@
         "nameCh": "牟平",
         "isSeat": false
       },
+      "provinceId": 723,
       "spatialProvinceId": "85401",
       "spatialProvinceIndex": 723,
       "routeNodeKey": "5fbe7b29-8406-4d31-9378-58e074edc61f",
@@ -16430,6 +16805,7 @@
         "nameCh": "長廣",
         "isSeat": false
       },
+      "provinceId": 721,
       "spatialProvinceId": "85388",
       "spatialProvinceIndex": 721,
       "routeNodeKey": "7549ce01-1d34-4c18-9914-7c13a9a43d14",
@@ -16472,6 +16848,7 @@
         "nameCh": "黔陬",
         "isSeat": false
       },
+      "provinceId": 732,
       "spatialProvinceId": "85481",
       "spatialProvinceIndex": 732,
       "routeNodeKey": "195a00c3-7970-4526-8570-4594c98271c6",
@@ -16517,6 +16894,7 @@
         "nameCh": "臨濟",
         "isSeat": true
       },
+      "provinceId": 699,
       "spatialProvinceId": "85254",
       "spatialProvinceIndex": 699,
       "routeNodeKey": "41e07979-a422-4732-9f6a-f5ed33b24e5a",
@@ -16560,6 +16938,7 @@
         "nameCh": "利",
         "isSeat": false
       },
+      "provinceId": 696,
       "spatialProvinceId": "85240",
       "spatialProvinceIndex": 696,
       "routeNodeKey": "7585f509-29b7-41a2-8b0e-9f301573fda3",
@@ -16602,6 +16981,7 @@
         "nameCh": "千乘",
         "isSeat": false
       },
+      "provinceId": 700,
       "spatialProvinceId": "85256",
       "spatialProvinceIndex": 700,
       "routeNodeKey": "5ddfab84-d180-43f4-8602-53ef34836d04",
@@ -16645,6 +17025,7 @@
         "nameCh": "壽光",
         "isSeat": false
       },
+      "provinceId": 702,
       "spatialProvinceId": "85268",
       "spatialProvinceIndex": 702,
       "routeNodeKey": "b6efb3dd-045d-4294-896d-e5e25a76bce8",
@@ -16688,6 +17069,7 @@
         "nameCh": "益",
         "isSeat": false
       },
+      "provinceId": 704,
       "spatialProvinceId": "85280",
       "spatialProvinceIndex": 704,
       "routeNodeKey": "7d8006d2-4105-437f-b31e-f00c7d1afd56",
@@ -16730,6 +17112,7 @@
         "nameCh": "不其",
         "isSeat": false
       },
+      "provinceId": 735,
       "spatialProvinceId": "85505",
       "spatialProvinceIndex": 735,
       "routeNodeKey": "7ca1728b-6cb1-48c2-b471-3a5b934d76c2",
@@ -16774,6 +17157,7 @@
         "nameCh": "東平陵",
         "isSeat": true
       },
+      "provinceId": 348,
       "spatialProvinceId": "45020",
       "spatialProvinceIndex": 348,
       "routeNodeKey": "5783b684-de3e-486c-b3d9-6f9416a1542d",
@@ -16818,6 +17202,7 @@
         "nameCh": "東朝陽",
         "isSeat": false
       },
+      "provinceId": 1,
       "spatialProvinceId": "200026",
       "spatialProvinceIndex": 1,
       "routeNodeKey": "e334023b-ad81-4d1f-bb10-7f5d3cf5b816",
@@ -16862,6 +17247,7 @@
         "nameCh": "於陵",
         "isSeat": false
       },
+      "provinceId": 364,
       "spatialProvinceId": "45118",
       "spatialProvinceIndex": 364,
       "routeNodeKey": "a3716d2f-9989-4af9-805d-eda7eb294981",
@@ -16905,6 +17291,7 @@
         "nameCh": "土鼓",
         "isSeat": false
       },
+      "provinceId": 353,
       "spatialProvinceId": "45049",
       "spatialProvinceIndex": 353,
       "routeNodeKey": "8b37daf5-e6ea-4396-9dfd-43986c4a00bc",
@@ -16949,6 +17336,7 @@
         "nameCh": "梁鄒",
         "isSeat": false
       },
+      "provinceId": 352,
       "spatialProvinceId": "45038",
       "spatialProvinceIndex": 352,
       "routeNodeKey": "cdf746b1-7eaa-410e-a971-c62ec76f8391",
@@ -16992,6 +17380,7 @@
         "nameCh": "菅",
         "isSeat": false
       },
+      "provinceId": 350,
       "spatialProvinceId": "45028",
       "spatialProvinceIndex": 350,
       "routeNodeKey": "a434c985-10fa-4f11-a449-085beee88a6d",
@@ -17036,6 +17425,7 @@
         "nameCh": "著",
         "isSeat": false
       },
+      "provinceId": 357,
       "spatialProvinceId": "45076",
       "spatialProvinceIndex": 357,
       "routeNodeKey": "558c8ff7-10ff-49f2-acaf-99b978697d68",
@@ -17078,6 +17468,7 @@
         "nameCh": "鄒平",
         "isSeat": false
       },
+      "provinceId": 351,
       "spatialProvinceId": "45036",
       "spatialProvinceIndex": 351,
       "routeNodeKey": "d86301c5-de43-42b1-a354-07a2430aa164",
@@ -17121,6 +17512,7 @@
         "nameCh": "西安",
         "isSeat": false
       },
+      "provinceId": 694,
       "spatialProvinceId": "85222",
       "spatialProvinceIndex": 694,
       "routeNodeKey": "6bcc12c8-c178-455e-b7b9-139c17472e84",
@@ -17164,6 +17556,7 @@
         "nameCh": "臨朐",
         "isSeat": false
       },
+      "provinceId": 356,
       "spatialProvinceId": "45064",
       "spatialProvinceIndex": 356,
       "routeNodeKey": "23d85bfc-84ac-4171-b36b-a0df0fe4b427",
@@ -17207,6 +17600,7 @@
         "nameCh": "廣",
         "isSeat": false
       },
+      "provinceId": 692,
       "spatialProvinceId": "85216",
       "spatialProvinceIndex": 692,
       "routeNodeKey": "28a0dccc-2891-4b54-9b6e-7b46a04ce5fa",
@@ -17251,6 +17645,7 @@
         "nameCh": "昌國",
         "isSeat": false
       },
+      "provinceId": 355,
       "spatialProvinceId": "45058",
       "spatialProvinceIndex": 355,
       "routeNodeKey": "6ca83929-1c84-41da-bcac-e027ef7e7f57",
@@ -17294,6 +17689,7 @@
         "nameCh": "般陽",
         "isSeat": false
       },
+      "provinceId": 363,
       "spatialProvinceId": "45117",
       "spatialProvinceIndex": 363,
       "routeNodeKey": "2b7f83c3-50b1-4179-8302-5c2132aa2f5f",
@@ -17337,6 +17733,7 @@
         "nameCh": "江陵",
         "isSeat": true
       },
+      "provinceId": 285,
       "spatialProvinceId": "43676",
       "spatialProvinceIndex": 285,
       "routeNodeKey": "3572d96e-b4e5-4fbb-8fbe-e49ce5270199",
@@ -17379,6 +17776,7 @@
         "nameCh": "臨沮",
         "isSeat": false
       },
+      "provinceId": 442,
       "spatialProvinceId": "45783",
       "spatialProvinceIndex": 442,
       "routeNodeKey": "3128bf4a-188b-4080-9fc2-210e1239bf05",
@@ -17422,6 +17820,7 @@
         "nameCh": "華容",
         "isSeat": false
       },
+      "provinceId": 287,
       "spatialProvinceId": "43711",
       "spatialProvinceIndex": 287,
       "routeNodeKey": "54643e34-412b-4b4c-a959-168b5c6f8fa8",
@@ -17464,6 +17863,7 @@
         "nameCh": "夷道",
         "isSeat": false
       },
+      "provinceId": 290,
       "spatialProvinceId": "43730",
       "spatialProvinceIndex": 290,
       "routeNodeKey": "0c18f624-a462-4cf8-9887-04e36eac68e2",
@@ -17504,6 +17904,7 @@
         "nameCh": "夷陵",
         "isSeat": false
       },
+      "provinceId": 443,
       "spatialProvinceId": "45796",
       "spatialProvinceIndex": 443,
       "routeNodeKey": "871ae00b-cbe0-4447-9828-e925ffb24781",
@@ -17549,6 +17950,7 @@
         "nameCh": "宜城",
         "isSeat": false
       },
+      "provinceId": 431,
       "spatialProvinceId": "45676",
       "spatialProvinceIndex": 431,
       "routeNodeKey": "8b22f903-6998-4a0c-a13a-b9b702e4ac0e",
@@ -17591,6 +17993,7 @@
         "nameCh": "州陵",
         "isSeat": false
       },
+      "provinceId": 276,
       "spatialProvinceId": "43497",
       "spatialProvinceIndex": 276,
       "routeNodeKey": "450c98e1-da0c-45c6-a2ac-bed52262f2b9",
@@ -17632,6 +18035,7 @@
         "nameCh": "巫",
         "isSeat": false
       },
+      "provinceId": 330,
       "spatialProvinceId": "44493",
       "spatialProvinceIndex": 330,
       "routeNodeKey": "9c4080da-3ee0-42da-98d8-6cfd0a2fee02",
@@ -17675,6 +18079,7 @@
         "nameCh": "當陽",
         "isSeat": false
       },
+      "provinceId": 441,
       "spatialProvinceId": "45776",
       "spatialProvinceIndex": 441,
       "routeNodeKey": "e6b6e535-4fed-4920-b6a3-274c2499a324",
@@ -17720,6 +18125,7 @@
         "nameCh": "枝江",
         "isSeat": false
       },
+      "provinceId": 288,
       "spatialProvinceId": "43720",
       "spatialProvinceIndex": 288,
       "routeNodeKey": "48de33e3-cf15-4688-8dde-9bdb43960db6",
@@ -17760,6 +18166,7 @@
         "nameCh": "秭歸",
         "isSeat": false
       },
+      "provinceId": 444,
       "spatialProvinceId": "45809",
       "spatialProvinceIndex": 444,
       "routeNodeKey": "4a076688-cdc8-4d3a-88d1-9ea2dfdbcc6a",
@@ -17803,6 +18210,7 @@
         "nameCh": "編",
         "isSeat": false
       },
+      "provinceId": 440,
       "spatialProvinceId": "45764",
       "spatialProvinceIndex": 440,
       "routeNodeKey": "3339fe28-7bcd-461b-b98d-8609bd9f851c",
@@ -17847,6 +18255,7 @@
         "nameCh": "邔",
         "isSeat": false
       },
+      "provinceId": 430,
       "spatialProvinceId": "45671",
       "spatialProvinceIndex": 430,
       "routeNodeKey": "f6093f49-1064-49d0-93ab-a0345fe222c5",
@@ -17892,6 +18301,7 @@
         "nameCh": "鄀",
         "isSeat": false
       },
+      "provinceId": 432,
       "spatialProvinceId": "45685",
       "spatialProvinceIndex": 432,
       "routeNodeKey": "4d629cd6-8ef0-46e6-a811-3ce3c02b8750",
@@ -17936,6 +18346,7 @@
         "nameCh": "陰",
         "isSeat": false
       },
+      "provinceId": 438,
       "spatialProvinceId": "45751",
       "spatialProvinceIndex": 438,
       "routeNodeKey": "d358524f-b821-44d3-93ec-30d184d9de1e",
@@ -17982,6 +18393,7 @@
         "nameCh": "宛",
         "isSeat": true
       },
+      "provinceId": 602,
       "spatialProvinceId": "82612",
       "spatialProvinceIndex": 602,
       "routeNodeKey": "fa9554ef-8d8b-4348-963f-d047506e31df",
@@ -18024,6 +18436,7 @@
         "nameCh": "冠軍",
         "isSeat": false
       },
+      "provinceId": 616,
       "spatialProvinceId": "82708",
       "spatialProvinceIndex": 616,
       "routeNodeKey": "e932a0dd-a1b4-4f39-bf53-62e0569eaf32",
@@ -18067,6 +18480,7 @@
         "nameCh": "博望",
         "isSeat": false
       },
+      "provinceId": 604,
       "spatialProvinceId": "82632",
       "spatialProvinceIndex": 604,
       "routeNodeKey": "e78c2712-746a-4e48-a8ee-13f54de7ea9d",
@@ -18113,6 +18527,7 @@
         "nameCh": "叶",
         "isSeat": false
       },
+      "provinceId": 625,
       "spatialProvinceId": "82811",
       "spatialProvinceIndex": 625,
       "routeNodeKey": "043730cc-7b81-4835-b517-c6e4ca5ce59b",
@@ -18157,6 +18572,7 @@
         "nameCh": "堵陽",
         "isSeat": false
       },
+      "provinceId": 621,
       "spatialProvinceId": "82783",
       "spatialProvinceIndex": 621,
       "routeNodeKey": "0e37f553-4933-49e7-9dd8-53afc63bea2e",
@@ -18200,6 +18616,7 @@
         "nameCh": "山都",
         "isSeat": false
       },
+      "provinceId": 429,
       "spatialProvinceId": "45663",
       "spatialProvinceIndex": 429,
       "routeNodeKey": "7c4dac0e-218f-4221-bd2f-7cb1fb5ee78c",
@@ -18243,6 +18660,7 @@
         "nameCh": "平氏",
         "isSeat": false
       },
+      "provinceId": 611,
       "spatialProvinceId": "82683",
       "spatialProvinceIndex": 611,
       "routeNodeKey": "957ec790-3860-48d5-8fbf-66ad184b6b62",
@@ -18288,6 +18706,7 @@
         "nameCh": "新野",
         "isSeat": false
       },
+      "provinceId": 617,
       "spatialProvinceId": "82749",
       "spatialProvinceIndex": 617,
       "routeNodeKey": "704ff246-964b-4828-ab10-318e7a5d9f62",
@@ -18333,6 +18752,7 @@
         "nameCh": "朝陽",
         "isSeat": false
       },
+      "provinceId": 615,
       "spatialProvinceId": "82700",
       "spatialProvinceIndex": 615,
       "routeNodeKey": "6ae5fabc-5818-4743-b52c-e79172471fa8",
@@ -18376,6 +18796,7 @@
         "nameCh": "析",
         "isSeat": false
       },
+      "provinceId": 619,
       "spatialProvinceId": "82763",
       "spatialProvinceIndex": 619,
       "routeNodeKey": "2c42e978-bfe9-4e00-bb41-9f39e4172f78",
@@ -18423,6 +18844,7 @@
         "nameCh": "棘陽",
         "isSeat": false
       },
+      "provinceId": 618,
       "spatialProvinceId": "82755",
       "spatialProvinceIndex": 618,
       "routeNodeKey": "c0e71408-e860-4d16-8008-9223de2a5940",
@@ -18463,6 +18885,7 @@
         "nameCh": "武當",
         "isSeat": false
       },
+      "provinceId": 439,
       "spatialProvinceId": "45755",
       "spatialProvinceIndex": 439,
       "routeNodeKey": "0f92415b-31cc-45d6-ba1e-9776a26995cc",
@@ -18507,6 +18930,7 @@
         "nameCh": "比陽",
         "isSeat": false
       },
+      "provinceId": 608,
       "spatialProvinceId": "82650",
       "spatialProvinceIndex": 608,
       "routeNodeKey": "b63a8b5a-6342-4fea-9aec-bc664a8b5c50",
@@ -18552,6 +18976,7 @@
         "nameCh": "湖陽",
         "isSeat": false
       },
+      "provinceId": 607,
       "spatialProvinceId": "82644",
       "spatialProvinceIndex": 607,
       "routeNodeKey": "d187790d-f00d-4dc0-8299-e0eb13d59bbc",
@@ -18597,6 +19022,7 @@
         "nameCh": "犨",
         "isSeat": false
       },
+      "provinceId": 639,
       "spatialProvinceId": "82975",
       "spatialProvinceIndex": 639,
       "routeNodeKey": "bb464e3e-811f-445f-a533-24091de69991",
@@ -18643,6 +19069,7 @@
         "nameCh": "穰",
         "isSeat": false
       },
+      "provinceId": 614,
       "spatialProvinceId": "82696",
       "spatialProvinceIndex": 614,
       "routeNodeKey": "550d4f6d-fff1-454f-a202-620ad3b1541d",
@@ -18689,6 +19116,7 @@
         "nameCh": "育陽",
         "isSeat": false
       },
+      "provinceId": 603,
       "spatialProvinceId": "82620",
       "spatialProvinceIndex": 603,
       "routeNodeKey": "53867ef7-d2ec-4b0b-98dc-8352b7fbb267",
@@ -18734,6 +19162,7 @@
         "nameCh": "舞陰",
         "isSeat": false
       },
+      "provinceId": 609,
       "spatialProvinceId": "82657",
       "spatialProvinceIndex": 609,
       "routeNodeKey": "777fab70-8897-482e-bc80-0e0d7a65e730",
@@ -18780,6 +19209,7 @@
         "nameCh": "西鄂",
         "isSeat": false
       },
+      "provinceId": 605,
       "spatialProvinceId": "82633",
       "spatialProvinceIndex": 605,
       "routeNodeKey": "90d4544c-c409-49ef-a468-3769fe50fac7",
@@ -18824,6 +19254,7 @@
         "nameCh": "酈",
         "isSeat": false
       },
+      "provinceId": 620,
       "spatialProvinceId": "82774",
       "spatialProvinceIndex": 620,
       "routeNodeKey": "30b133b2-d44f-4d8a-9ff8-2107f97985bd",
@@ -18869,6 +19300,7 @@
         "nameCh": "隨",
         "isSeat": false
       },
+      "provinceId": 284,
       "spatialProvinceId": "43618",
       "spatialProvinceIndex": 284,
       "routeNodeKey": "ba186445-56a5-48e0-a2dc-7f22a3589434",
@@ -18914,6 +19346,7 @@
         "nameCh": "雉",
         "isSeat": false
       },
+      "provinceId": 606,
       "spatialProvinceId": "82635",
       "spatialProvinceIndex": 606,
       "routeNodeKey": "24fb662f-d276-4192-8e49-620c514a8b7b",
@@ -18958,6 +19391,7 @@
         "nameCh": "魯陽",
         "isSeat": false
       },
+      "provinceId": 638,
       "spatialProvinceId": "82971",
       "spatialProvinceIndex": 638,
       "routeNodeKey": "0a24fabf-f2f0-4f06-8550-54662afc431c",
@@ -19002,6 +19436,7 @@
         "nameCh": "鄧",
         "isSeat": false
       },
+      "provinceId": 428,
       "spatialProvinceId": "45654",
       "spatialProvinceIndex": 428,
       "routeNodeKey": "5a60f4be-d298-4ea3-a88c-61899b6fa495",
@@ -19045,6 +19480,7 @@
         "nameCh": "蔡陽",
         "isSeat": false
       },
+      "provinceId": 434,
       "spatialProvinceId": "45707",
       "spatialProvinceIndex": 434,
       "routeNodeKey": "16192e40-91fb-488d-af22-cf3a983cab13",
@@ -19088,6 +19524,7 @@
         "nameCh": "安眾",
         "isSeat": false
       },
+      "provinceId": 612,
       "spatialProvinceId": "82687",
       "spatialProvinceIndex": 612,
       "routeNodeKey": "76dc3b71-e026-469b-945e-5df9bec61c2c",
@@ -19130,6 +19567,7 @@
         "nameCh": "築陽",
         "isSeat": false
       },
+      "provinceId": 436,
       "spatialProvinceId": "45727",
       "spatialProvinceIndex": 436,
       "routeNodeKey": "9b74790d-e30d-4113-9f6e-79025e08056c",
@@ -19175,6 +19613,7 @@
         "nameCh": "郴",
         "isSeat": true
       },
+      "provinceId": 139,
       "spatialProvinceId": "41682",
       "spatialProvinceIndex": 139,
       "routeNodeKey": "50760be4-6356-47bf-941d-af549a5d2a88",
@@ -19219,6 +19658,7 @@
         "nameCh": "臨武",
         "isSeat": false
       },
+      "provinceId": 156,
       "spatialProvinceId": "41829",
       "spatialProvinceIndex": 156,
       "routeNodeKey": "a832b057-8812-4214-8ea1-a8041f0f1726",
@@ -19263,6 +19703,7 @@
         "nameCh": "便",
         "isSeat": false
       },
+      "provinceId": 140,
       "spatialProvinceId": "41689",
       "spatialProvinceIndex": 140,
       "routeNodeKey": "ef8138c6-f740-4ca2-b743-199f29e43908",
@@ -19309,6 +19750,7 @@
         "nameCh": "南平",
         "isSeat": false
       },
+      "provinceId": 155,
       "spatialProvinceId": "41821",
       "spatialProvinceIndex": 155,
       "routeNodeKey": "828be105-b995-4ed0-93fa-7d96d4eebe54",
@@ -19353,6 +19795,7 @@
         "nameCh": "曲江",
         "isSeat": false
       },
+      "provinceId": 188,
       "spatialProvinceId": "42238",
       "spatialProvinceIndex": 188,
       "routeNodeKey": "d1737563-82a6-4300-b331-7a53472d8334",
@@ -19395,6 +19838,7 @@
         "nameCh": "漢寧",
         "isSeat": false
       },
+      "provinceId": 141,
       "spatialProvinceId": "41691",
       "spatialProvinceIndex": 141,
       "routeNodeKey": "8e6982eb-4d64-4f5e-a3fa-67e987742994",
@@ -19436,6 +19880,7 @@
         "nameCh": "湞陽",
         "isSeat": false
       },
+      "provinceId": 189,
       "spatialProvinceId": "42256",
       "spatialProvinceIndex": 189,
       "routeNodeKey": "4612332c-8b55-4fad-8e05-9e9f8879d638",
@@ -19481,6 +19926,7 @@
         "nameCh": "耒陽",
         "isSeat": false
       },
+      "provinceId": 160,
       "spatialProvinceId": "41850",
       "spatialProvinceIndex": 160,
       "routeNodeKey": "6085a3da-fd0b-4e0f-bf63-a661939466b2",
@@ -19522,6 +19968,7 @@
         "nameCh": "陰山",
         "isSeat": false
       },
+      "provinceId": 157,
       "spatialProvinceId": "41838",
       "spatialProvinceIndex": 157,
       "routeNodeKey": "e6333be0-22f2-4a66-9f09-bcc92170d857",
@@ -19566,6 +20013,7 @@
         "nameCh": "臨沅",
         "isSeat": true
       },
+      "provinceId": 165,
       "spatialProvinceId": "41906",
       "spatialProvinceIndex": 165,
       "routeNodeKey": "46941ee4-e21f-4dae-9c7d-0bbe219f4ef8",
@@ -19609,6 +20057,7 @@
         "nameCh": "作唐",
         "isSeat": false
       },
+      "provinceId": 168,
       "spatialProvinceId": "41950",
       "spatialProvinceIndex": 168,
       "routeNodeKey": "2081b1d6-542c-4517-99ae-9d6d8375da97",
@@ -19652,6 +20101,7 @@
         "nameCh": "漢壽",
         "isSeat": false
       },
+      "provinceId": 164,
       "spatialProvinceId": "41901",
       "spatialProvinceIndex": 164,
       "routeNodeKey": "214bc0e6-5420-496c-a13d-8182c83af1be",
@@ -19696,6 +20146,7 @@
         "nameCh": "沅南",
         "isSeat": false
       },
+      "provinceId": 166,
       "spatialProvinceId": "41907",
       "spatialProvinceIndex": 166,
       "routeNodeKey": "cd1382c3-5e03-4c6f-909b-85c355b480c0",
@@ -19740,6 +20191,7 @@
         "nameCh": "沅陵",
         "isSeat": false
       },
+      "provinceId": 153,
       "spatialProvinceId": "41795",
       "spatialProvinceIndex": 153,
       "routeNodeKey": "d3c07f67-718a-40d2-aa36-1ff72302fa61",
@@ -19784,6 +20236,7 @@
         "nameCh": "辰陽",
         "isSeat": false
       },
+      "provinceId": 154,
       "spatialProvinceId": "41804",
       "spatialProvinceIndex": 154,
       "routeNodeKey": "e7d144a6-4961-4ba9-96c3-c8e069789a7e",
@@ -19828,6 +20281,7 @@
         "nameCh": "遷陵",
         "isSeat": false
       },
+      "provinceId": 179,
       "spatialProvinceId": "42047",
       "spatialProvinceIndex": 179,
       "routeNodeKey": "aac57703-e384-4e46-b50c-9743e344d2f7",
@@ -19870,6 +20324,7 @@
         "nameCh": "酉陽",
         "isSeat": false
       },
+      "provinceId": 180,
       "spatialProvinceId": "42049",
       "spatialProvinceIndex": 180,
       "routeNodeKey": "1fe2337b-8707-4b74-ac4c-9da98303deac",
@@ -19912,6 +20367,7 @@
         "nameCh": "鐔成",
         "isSeat": false
       },
+      "provinceId": 163,
       "spatialProvinceId": "41886",
       "spatialProvinceIndex": 163,
       "routeNodeKey": "008f672d-94e9-48d7-a80f-ea758f70cb9e",
@@ -19956,6 +20412,7 @@
         "nameCh": "零陽",
         "isSeat": false
       },
+      "provinceId": 167,
       "spatialProvinceId": "41935",
       "spatialProvinceIndex": 167,
       "routeNodeKey": "d9a18735-49e5-4ed1-b9ba-a1119ec80695",
@@ -19999,6 +20456,7 @@
         "nameCh": "西陵",
         "isSeat": true
       },
+      "provinceId": 277,
       "spatialProvinceId": "43503",
       "spatialProvinceIndex": 277,
       "routeNodeKey": "fb41331f-1f64-4280-934a-609a4452d14f",
@@ -20042,6 +20500,7 @@
         "nameCh": "下雉",
         "isSeat": false
       },
+      "provinceId": 273,
       "spatialProvinceId": "43446",
       "spatialProvinceIndex": 273,
       "routeNodeKey": "804ec7cf-2267-4c58-9217-4776dbc9d1d1",
@@ -20085,6 +20544,7 @@
         "nameCh": "雲杜",
         "isSeat": false
       },
+      "provinceId": 275,
       "spatialProvinceId": "43483",
       "spatialProvinceIndex": 275,
       "routeNodeKey": "c7165123-2a6c-491b-a319-482827a2e074",
@@ -20129,6 +20589,7 @@
         "nameCh": "南新市",
         "isSeat": false
       },
+      "provinceId": 280,
       "spatialProvinceId": "43584",
       "spatialProvinceIndex": 280,
       "routeNodeKey": "551235be-36d4-4159-810a-bddce3e25d48",
@@ -20172,6 +20633,7 @@
         "nameCh": "安陸",
         "isSeat": false
       },
+      "provinceId": 282,
       "spatialProvinceId": "43602",
       "spatialProvinceIndex": 282,
       "routeNodeKey": "e8339cdd-6bb1-430f-8bea-cd2e792fa15c",
@@ -20216,6 +20678,7 @@
         "nameCh": "平春",
         "isSeat": false
       },
+      "provinceId": 654,
       "spatialProvinceId": "83158",
       "spatialProvinceIndex": 654,
       "routeNodeKey": "7d5750e1-1812-48f6-a2ea-f683570f08c1",
@@ -20259,6 +20722,7 @@
         "nameCh": "竟陵",
         "isSeat": false
       },
+      "provinceId": 281,
       "spatialProvinceId": "43595",
       "spatialProvinceIndex": 281,
       "routeNodeKey": "6f307ba4-59a7-4b96-bf4d-4db1013ad605",
@@ -20306,6 +20770,7 @@
         "nameCh": "西陽",
         "isSeat": false
       },
+      "provinceId": 594,
       "spatialProvinceId": "82563",
       "spatialProvinceIndex": 594,
       "routeNodeKey": "fce0a31d-2f9b-4d09-a6fd-8b5d35ccb54e",
@@ -20351,6 +20816,7 @@
         "nameCh": "軑",
         "isSeat": false
       },
+      "provinceId": 595,
       "spatialProvinceId": "82570",
       "spatialProvinceIndex": 595,
       "routeNodeKey": "2fa3aaa8-e24a-48ae-865d-14bc77cae2ad",
@@ -20396,6 +20862,7 @@
         "nameCh": "鄂",
         "isSeat": false
       },
+      "provinceId": 271,
       "spatialProvinceId": "43423",
       "spatialProvinceIndex": 271,
       "routeNodeKey": "adb5e1ff-eb3a-44a0-859b-5118d4838345",
@@ -20440,6 +20907,7 @@
         "nameCh": "鄳",
         "isSeat": false
       },
+      "provinceId": 655,
       "spatialProvinceId": "83164",
       "spatialProvinceIndex": 655,
       "routeNodeKey": "ddbd9b8b-8222-4bb2-b3bf-6ac2e9f084fe",
@@ -20480,6 +20948,7 @@
         "nameCh": "南鄉",
         "isSeat": false
       },
+      "provinceId": 525,
       "spatialProvinceId": "71022",
       "spatialProvinceIndex": 525,
       "routeNodeKey": "84ea5e4f-dca1-4fce-80f9-11dcd333b3dc",
@@ -20522,6 +20991,7 @@
         "nameCh": "章陵",
         "isSeat": false
       },
+      "provinceId": 435,
       "spatialProvinceId": "45713",
       "spatialProvinceIndex": 435,
       "routeNodeKey": "92ed47e2-5116-4d15-b477-0286c62d851e",
@@ -20566,6 +21036,7 @@
         "nameCh": "蘄春",
         "isSeat": false
       },
+      "provinceId": 279,
       "spatialProvinceId": "43542",
       "spatialProvinceIndex": 279,
       "routeNodeKey": "a4f03904-a127-4d3a-aea1-5d823d1e989f",
@@ -20608,6 +21079,7 @@
         "nameCh": "襄陽",
         "isSeat": false
       },
+      "provinceId": 427,
       "spatialProvinceId": "45651",
       "spatialProvinceIndex": 427,
       "routeNodeKey": "53e2dd77-f20e-479f-b36d-deb05da87db3",
@@ -20654,6 +21126,7 @@
         "nameCh": "沙羨",
         "isSeat": false
       },
+      "provinceId": 270,
       "spatialProvinceId": "43421",
       "spatialProvinceIndex": 270,
       "routeNodeKey": "983e7060-3734-4ec8-a7d6-9a1dd2962fd8",
@@ -20699,6 +21172,7 @@
         "nameCh": "臨湘",
         "isSeat": true
       },
+      "provinceId": 142,
       "spatialProvinceId": "41716",
       "spatialProvinceIndex": 142,
       "routeNodeKey": "03701303-81e1-4fee-9ee6-d0b5c14dbecf",
@@ -20741,6 +21215,7 @@
         "nameCh": "下雋",
         "isSeat": false
       },
+      "provinceId": 272,
       "spatialProvinceId": "43441",
       "spatialProvinceIndex": 272,
       "routeNodeKey": "c81ce3c3-1089-4e5c-b335-f30ebe897d19",
@@ -20782,6 +21257,7 @@
         "nameCh": "安城",
         "isSeat": false
       },
+      "provinceId": 93,
       "spatialProvinceId": "40934",
       "spatialProvinceIndex": 93,
       "routeNodeKey": "6b9ad1a1-bc9e-49f8-857f-563e476b180a",
@@ -20826,6 +21302,7 @@
         "nameCh": "容陵",
         "isSeat": false
       },
+      "provinceId": 152,
       "spatialProvinceId": "41781",
       "spatialProvinceIndex": 152,
       "routeNodeKey": "162a606b-8784-4406-a1d5-79582ea14153",
@@ -20870,6 +21347,7 @@
         "nameCh": "攸",
         "isSeat": false
       },
+      "provinceId": 147,
       "spatialProvinceId": "41761",
       "spatialProvinceIndex": 147,
       "routeNodeKey": "f5d2f244-c41d-4409-b83f-1a8df42c238b",
@@ -20914,6 +21392,7 @@
         "nameCh": "昭陵",
         "isSeat": false
       },
+      "provinceId": 176,
       "spatialProvinceId": "42013",
       "spatialProvinceIndex": 176,
       "routeNodeKey": "39d2bdd9-1c85-4528-9029-f613966caef4",
@@ -20959,6 +21438,7 @@
         "nameCh": "湘南",
         "isSeat": false
       },
+      "provinceId": 151,
       "spatialProvinceId": "41779",
       "spatialProvinceIndex": 151,
       "routeNodeKey": "560a5b8e-4e7c-4168-becd-df79a6ed9ef8",
@@ -21001,6 +21481,7 @@
         "nameCh": "益陽",
         "isSeat": false
       },
+      "provinceId": 146,
       "spatialProvinceId": "41755",
       "spatialProvinceIndex": 146,
       "routeNodeKey": "2f01bbe1-69eb-4589-9e9e-4d19171da8fc",
@@ -21044,6 +21525,7 @@
         "nameCh": "羅",
         "isSeat": false
       },
+      "provinceId": 149,
       "spatialProvinceId": "41775",
       "spatialProvinceIndex": 149,
       "routeNodeKey": "b202cfe3-47ee-473e-a992-991ddcf5c9f4",
@@ -21086,6 +21568,7 @@
         "nameCh": "連道",
         "isSeat": false
       },
+      "provinceId": 150,
       "spatialProvinceId": "41776",
       "spatialProvinceIndex": 150,
       "routeNodeKey": "90c673ba-9eb9-4c91-832a-04c57262f62a",
@@ -21131,6 +21614,7 @@
         "nameCh": "酃",
         "isSeat": false
       },
+      "provinceId": 161,
       "spatialProvinceId": "41877",
       "spatialProvinceIndex": 161,
       "routeNodeKey": "1714a401-1fa5-44f3-9005-a7c2f7da5477",
@@ -21173,6 +21657,7 @@
         "nameCh": "醴陵",
         "isSeat": false
       },
+      "provinceId": 143,
       "spatialProvinceId": "41725",
       "spatialProvinceIndex": 143,
       "routeNodeKey": "f2742549-6825-4b61-b5c0-06b6413ffb5e",
@@ -21219,6 +21704,7 @@
         "nameCh": "泉陵",
         "isSeat": true
       },
+      "provinceId": 170,
       "spatialProvinceId": "41958",
       "spatialProvinceIndex": 170,
       "routeNodeKey": "698e3949-79d4-4683-a66d-46435df8b469",
@@ -21259,6 +21745,7 @@
         "nameCh": "夫夷",
         "isSeat": false
       },
+      "provinceId": 175,
       "spatialProvinceId": "42008",
       "spatialProvinceIndex": 175,
       "routeNodeKey": "ac748bb0-86b2-498e-8928-136417303555",
@@ -21303,6 +21790,7 @@
         "nameCh": "始安",
         "isSeat": false
       },
+      "provinceId": 291,
       "spatialProvinceId": "43738",
       "spatialProvinceIndex": 291,
       "routeNodeKey": "dfab77da-165d-4b54-9e64-189f9c8aade8",
@@ -21350,6 +21838,7 @@
         "nameCh": "昭陽",
         "isSeat": false
       },
+      "provinceId": 178,
       "spatialProvinceId": "42019",
       "spatialProvinceIndex": 178,
       "routeNodeKey": "1dcf8fdf-4eef-40a2-8e5d-575432a8dab3",
@@ -21394,6 +21883,7 @@
         "nameCh": "泠道",
         "isSeat": false
       },
+      "provinceId": 169,
       "spatialProvinceId": "41955",
       "spatialProvinceIndex": 169,
       "routeNodeKey": "e61c5936-3d36-4f56-8dc9-b3a5b7e4200c",
@@ -21438,6 +21928,7 @@
         "nameCh": "洮陽",
         "isSeat": false
       },
+      "provinceId": 293,
       "spatialProvinceId": "43770",
       "spatialProvinceIndex": 293,
       "routeNodeKey": "96d2c198-526a-4f08-910a-242e072810d2",
@@ -21484,6 +21975,7 @@
         "nameCh": "湘鄉",
         "isSeat": false
       },
+      "provinceId": 145,
       "spatialProvinceId": "41740",
       "spatialProvinceIndex": 145,
       "routeNodeKey": "ad4735a4-a766-432c-a305-4014428e6713",
@@ -21528,6 +22020,7 @@
         "nameCh": "烝陽",
         "isSeat": false
       },
+      "provinceId": 162,
       "spatialProvinceId": "41882",
       "spatialProvinceIndex": 162,
       "routeNodeKey": "780d23ba-5ed0-4785-8bc4-8882f81df0fd",
@@ -21568,6 +22061,7 @@
         "nameCh": "營浦",
         "isSeat": false
       },
+      "provinceId": 173,
       "spatialProvinceId": "41980",
       "spatialProvinceIndex": 173,
       "routeNodeKey": "b89a2653-42bf-4278-bd0c-68223dc5c2a6",
@@ -21615,6 +22109,7 @@
         "nameCh": "營道",
         "isSeat": false
       },
+      "provinceId": 174,
       "spatialProvinceId": "41996",
       "spatialProvinceIndex": 174,
       "routeNodeKey": "107666a9-c39e-4b5c-aa16-f4fe028a3b7e",
@@ -21659,6 +22154,7 @@
         "nameCh": "都梁",
         "isSeat": false
       },
+      "provinceId": 177,
       "spatialProvinceId": "42017",
       "spatialProvinceIndex": 177,
       "routeNodeKey": "c73d52cc-b6d1-4daf-a14c-a027d3db3e8b",
@@ -21704,6 +22200,7 @@
         "nameCh": "重安",
         "isSeat": false
       },
+      "provinceId": 158,
       "spatialProvinceId": "41841",
       "spatialProvinceIndex": 158,
       "routeNodeKey": "5402b103-11c4-427b-918c-233096f0ec4b",
@@ -21746,6 +22243,7 @@
         "nameCh": "零陵",
         "isSeat": false
       },
+      "provinceId": 292,
       "spatialProvinceId": "43769",
       "spatialProvinceIndex": 292,
       "routeNodeKey": "21d0093d-af7a-4ca5-8a7b-b7c1f5e4180f",
@@ -21789,6 +22287,7 @@
         "nameCh": "宛陵",
         "isSeat": true
       },
+      "provinceId": 123,
       "spatialProvinceId": "41302",
       "spatialProvinceIndex": 123,
       "routeNodeKey": "9fc42dd7-5ca1-4245-892d-b5e01885cea2",
@@ -21833,6 +22332,7 @@
         "nameCh": "句容",
         "isSeat": false
       },
+      "provinceId": 52,
       "spatialProvinceId": "40533",
       "spatialProvinceIndex": 52,
       "routeNodeKey": "c68abf85-53eb-40f6-a34a-2eb14c4bdea2",
@@ -21873,6 +22373,7 @@
         "nameCh": "故鄣",
         "isSeat": false
       },
+      "provinceId": 37,
       "spatialProvinceId": "40161",
       "spatialProvinceIndex": 37,
       "routeNodeKey": "f10d5f6c-7a79-4bda-a152-c971e885d7e5",
@@ -21911,6 +22412,7 @@
         "nameCh": "於潛",
         "isSeat": false
       },
+      "provinceId": 31,
       "spatialProvinceId": "40100",
       "spatialProvinceIndex": 31,
       "routeNodeKey": "ea4068b4-c4a9-4434-b628-2419580a8e91",
@@ -21954,6 +22456,7 @@
         "nameCh": "春穀",
         "isSeat": false
       },
+      "provinceId": 137,
       "spatialProvinceId": "41374",
       "spatialProvinceIndex": 137,
       "routeNodeKey": "0125c16a-59c0-4ff3-b31e-87ee3a4ea16d",
@@ -21994,6 +22497,7 @@
         "nameCh": "歙",
         "isSeat": false
       },
+      "provinceId": 129,
       "spatialProvinceId": "41319",
       "spatialProvinceIndex": 129,
       "routeNodeKey": "284e639c-baa3-40b3-8135-c5ba3096957a",
@@ -22037,6 +22541,7 @@
         "nameCh": "江乘",
         "isSeat": false
       },
+      "provinceId": 51,
       "spatialProvinceId": "40528",
       "spatialProvinceIndex": 51,
       "routeNodeKey": "982d95cc-09fd-4a8e-a83a-6f3d00cdadbc",
@@ -22079,6 +22584,7 @@
         "nameCh": "涇",
         "isSeat": false
       },
+      "provinceId": 127,
       "spatialProvinceId": "41313",
       "spatialProvinceIndex": 127,
       "routeNodeKey": "427e54da-da0a-4537-a779-8a97455ea0c7",
@@ -22123,6 +22629,7 @@
         "nameCh": "湖熟",
         "isSeat": false
       },
+      "provinceId": 49,
       "spatialProvinceId": "40512",
       "spatialProvinceIndex": 49,
       "routeNodeKey": "2b3dd141-05f7-44cc-a4fd-1397d657ff5f",
@@ -22166,6 +22673,7 @@
         "nameCh": "溧陽",
         "isSeat": false
       },
+      "provinceId": 56,
       "spatialProvinceId": "40581",
       "spatialProvinceIndex": 56,
       "routeNodeKey": "33d81872-7ca3-4abb-aaf5-098963780627",
@@ -22208,6 +22716,7 @@
         "nameCh": "石城",
         "isSeat": false
       },
+      "provinceId": 133,
       "spatialProvinceId": "41341",
       "spatialProvinceIndex": 133,
       "routeNodeKey": "40f0cb01-1f27-4b6e-b380-b0aabfaa4818",
@@ -22254,6 +22763,7 @@
         "nameCh": "蕪湖",
         "isSeat": false
       },
+      "provinceId": 136,
       "spatialProvinceId": "41366",
       "spatialProvinceIndex": 136,
       "routeNodeKey": "da85fd43-df62-4e25-87e3-4d54731ca2b5",
@@ -22295,6 +22805,7 @@
         "nameCh": "陵陽",
         "isSeat": false
       },
+      "provinceId": 134,
       "spatialProvinceId": "41347",
       "spatialProvinceIndex": 134,
       "routeNodeKey": "05b2be45-2010-4802-a900-de09530d1c54",
@@ -22333,6 +22844,7 @@
         "nameCh": "黝",
         "isSeat": false
       },
+      "provinceId": 130,
       "spatialProvinceId": "41323",
       "spatialProvinceIndex": 130,
       "routeNodeKey": "f1dfb17a-79eb-4232-8813-5bd43d80703e",
@@ -22377,6 +22889,7 @@
         "nameCh": "合肥",
         "isSeat": false
       },
+      "provinceId": 238,
       "spatialProvinceId": "43057",
       "spatialProvinceIndex": 238,
       "routeNodeKey": "ebef36ba-3cd6-4d66-94a8-6fd646d66734",
@@ -22422,6 +22935,7 @@
         "nameCh": "邾",
         "isSeat": false
       },
+      "provinceId": 278,
       "spatialProvinceId": "43506",
       "spatialProvinceIndex": 278,
       "routeNodeKey": "6e3264d7-22a7-4009-84e1-e40d2c30463e",
@@ -22465,6 +22979,7 @@
         "nameCh": "丹徒",
         "isSeat": false
       },
+      "provinceId": 54,
       "spatialProvinceId": "40565",
       "spatialProvinceIndex": 54,
       "routeNodeKey": "9a39f20f-00bb-45b4-8f00-955f177e5191",
@@ -22507,6 +23022,7 @@
         "nameCh": "烏程",
         "isSeat": false
       },
+      "provinceId": 33,
       "spatialProvinceId": "40126",
       "spatialProvinceIndex": 33,
       "routeNodeKey": "c7b51250-cddd-4169-a1cc-851e25558fdb",
@@ -22547,6 +23063,7 @@
         "nameCh": "婁",
         "isSeat": false
       },
+      "provinceId": 45,
       "spatialProvinceId": "40426",
       "spatialProvinceIndex": 45,
       "routeNodeKey": "86c2db5f-e48f-476e-af63-996ea5912f58",
@@ -22589,6 +23106,7 @@
         "nameCh": "富春",
         "isSeat": false
       },
+      "provinceId": 29,
       "spatialProvinceId": "40088",
       "spatialProvinceIndex": 29,
       "routeNodeKey": "0a3a93a0-1cc7-4c06-9625-d2db328fa787",
@@ -22629,6 +23147,7 @@
         "nameCh": "無錫",
         "isSeat": false
       },
+      "provinceId": 46,
       "spatialProvinceId": "40444",
       "spatialProvinceIndex": 46,
       "routeNodeKey": "7c480bd7-2552-47c0-8f01-ae1c5b2101ba",
@@ -22672,6 +23191,7 @@
         "nameCh": "曲阿",
         "isSeat": false
       },
+      "provinceId": 55,
       "spatialProvinceId": "40573",
       "spatialProvinceIndex": 55,
       "routeNodeKey": "1b08414b-373c-4232-bfde-1f23de3b5ec9",
@@ -22713,6 +23233,7 @@
         "nameCh": "海鹽",
         "isSeat": false
       },
+      "provinceId": 26,
       "spatialProvinceId": "40070",
       "spatialProvinceIndex": 26,
       "routeNodeKey": "68ca2e52-f841-41a3-a21e-b9189a700522",
@@ -22755,6 +23276,7 @@
         "nameCh": "由拳",
         "isSeat": false
       },
+      "provinceId": 25,
       "spatialProvinceId": "40052",
       "spatialProvinceIndex": 25,
       "routeNodeKey": "2c8b9564-034a-4000-8a1e-aab9231a1c12",
@@ -22799,6 +23321,7 @@
         "nameCh": "桂陽",
         "isSeat": false
       },
+      "provinceId": 200,
       "spatialProvinceId": "42604",
       "spatialProvinceIndex": 200,
       "routeNodeKey": "3846b77c-5c75-4841-b301-fb6e44d6ef2d",
@@ -22842,6 +23365,7 @@
         "nameCh": "含洭",
         "isSeat": false
       },
+      "provinceId": 190,
       "spatialProvinceId": "42264",
       "spatialProvinceIndex": 190,
       "routeNodeKey": "1d1299bf-b88c-4123-b208-e8e1a52d9fc1",
@@ -22886,6 +23410,7 @@
         "nameCh": "下蔡",
         "isSeat": false
       },
+      "provinceId": 247,
       "spatialProvinceId": "43187",
       "spatialProvinceIndex": 247,
       "routeNodeKey": "b12d7db7-8243-4b12-9316-80cd28cbf476",
@@ -22932,6 +23457,7 @@
         "nameCh": "六安",
         "isSeat": false
       },
+      "provinceId": 242,
       "spatialProvinceId": "43138",
       "spatialProvinceIndex": 242,
       "routeNodeKey": "f020a6f4-26dd-424a-902c-e7254b9728cf",
@@ -22978,6 +23504,7 @@
         "nameCh": "安豐",
         "isSeat": false
       },
+      "provinceId": 596,
       "spatialProvinceId": "82575",
       "spatialProvinceIndex": 596,
       "routeNodeKey": "3b686a01-620d-4800-bcee-ec4fca0ab6da",
@@ -23023,6 +23550,7 @@
         "nameCh": "安風",
         "isSeat": false
       },
+      "provinceId": 269,
       "spatialProvinceId": "43379",
       "spatialProvinceIndex": 269,
       "routeNodeKey": "ae22204d-ccc1-49ad-ad58-3159c72e897c",
@@ -23068,6 +23596,7 @@
         "nameCh": "尋陽",
         "isSeat": false
       },
+      "provinceId": 122,
       "spatialProvinceId": "41256",
       "spatialProvinceIndex": 122,
       "routeNodeKey": "02f9009f-3fe5-4df1-b939-0b332559fd67",
@@ -23111,6 +23640,7 @@
         "nameCh": "居巢",
         "isSeat": false
       },
+      "provinceId": 237,
       "spatialProvinceId": "43032",
       "spatialProvinceIndex": 237,
       "routeNodeKey": "cd2048f5-430c-48f4-996b-922f12bd8d56",
@@ -23155,6 +23685,7 @@
         "nameCh": "蓼",
         "isSeat": false
       },
+      "provinceId": 598,
       "spatialProvinceId": "82581",
       "spatialProvinceIndex": 598,
       "routeNodeKey": "224d698a-f199-45a6-97b5-0b9a06726c63",
@@ -23196,6 +23727,7 @@
         "nameCh": "陽泉",
         "isSeat": false
       },
+      "provinceId": 264,
       "spatialProvinceId": "43337",
       "spatialProvinceIndex": 264,
       "routeNodeKey": "8afad902-9c5a-4bfe-9e1d-ed2eaa1c6c35",
@@ -23241,6 +23773,7 @@
         "nameCh": "雩婁",
         "isSeat": false
       },
+      "provinceId": 601,
       "spatialProvinceId": "82606",
       "spatialProvinceIndex": 601,
       "routeNodeKey": "4b3944e1-1844-40a3-98a1-ca63f146f993",
@@ -23284,6 +23817,7 @@
         "nameCh": "孱陵",
         "isSeat": false
       },
+      "provinceId": 286,
       "spatialProvinceId": "43696",
       "spatialProvinceIndex": 286,
       "routeNodeKey": "da1cd1f6-86ac-40c5-9393-d806dff0232f",
@@ -23328,6 +23862,7 @@
         "nameCh": "充",
         "isSeat": false
       },
+      "provinceId": 181,
       "spatialProvinceId": "42073",
       "spatialProvinceIndex": 181,
       "routeNodeKey": "f9ecff2d-e089-4cc0-9388-79b0ca5188cd",
@@ -23371,6 +23906,7 @@
         "nameCh": "山陰",
         "isSeat": true
       },
+      "provinceId": 72,
       "spatialProvinceId": "40758",
       "spatialProvinceIndex": 72,
       "routeNodeKey": "72a5d28b-a0cc-4a47-ba13-c24bbc505e76",
@@ -23412,6 +23948,7 @@
         "nameCh": "上虞",
         "isSeat": false
       },
+      "provinceId": 74,
       "spatialProvinceId": "40772",
       "spatialProvinceIndex": 74,
       "routeNodeKey": "387ef91e-0317-4116-bd72-946fa1f73d6a",
@@ -23452,6 +23989,7 @@
         "nameCh": "烏傷",
         "isSeat": false
       },
+      "provinceId": 67,
       "spatialProvinceId": "40719",
       "spatialProvinceIndex": 67,
       "routeNodeKey": "2d9d37e7-55a2-46ab-93cd-7a0930bc0e55",
@@ -23493,6 +24031,7 @@
         "nameCh": "餘姚",
         "isSeat": false
       },
+      "provinceId": 77,
       "spatialProvinceId": "40785",
       "spatialProvinceIndex": 77,
       "routeNodeKey": "f07f227b-2608-4c72-a7fd-ea9b9c3fdd8b",
@@ -23534,6 +24073,7 @@
         "nameCh": "餘暨",
         "isSeat": false
       },
+      "provinceId": 76,
       "spatialProvinceId": "40781",
       "spatialProvinceIndex": 76,
       "routeNodeKey": "f39093ef-56fc-457e-a1a3-adcec2267725",
@@ -23574,6 +24114,7 @@
         "nameCh": "剡",
         "isSeat": false
       },
+      "provinceId": 73,
       "spatialProvinceId": "40767",
       "spatialProvinceIndex": 73,
       "routeNodeKey": "56a5acb5-e7f3-4813-beb4-b9b12227f229",
@@ -23616,6 +24157,7 @@
         "nameCh": "太末",
         "isSeat": false
       },
+      "provinceId": 60,
       "spatialProvinceId": "40638",
       "spatialProvinceIndex": 60,
       "routeNodeKey": "6c23dd8d-9c5e-4cb4-9f8d-6af42de83358",
@@ -23661,6 +24203,7 @@
         "nameCh": "壽春",
         "isSeat": false
       },
+      "provinceId": 243,
       "spatialProvinceId": "43153",
       "spatialProvinceIndex": 243,
       "routeNodeKey": "985c7f90-17b6-499c-9df4-637222b43d75",
@@ -23702,6 +24245,7 @@
         "nameCh": "永寧",
         "isSeat": false
       },
+      "provinceId": 64,
       "spatialProvinceId": "40697",
       "spatialProvinceIndex": 64,
       "routeNodeKey": "549a58cd-3d3c-4e84-bd83-3e2705fb649c",
@@ -23743,6 +24287,7 @@
         "nameCh": "章安",
         "isSeat": false
       },
+      "provinceId": 62,
       "spatialProvinceId": "40655",
       "spatialProvinceIndex": 62,
       "routeNodeKey": "bf44aeb6-f28d-43af-ae1a-3cddba5dc5de",
@@ -23784,6 +24329,7 @@
         "nameCh": "諸暨",
         "isSeat": false
       },
+      "provinceId": 78,
       "spatialProvinceId": "40791",
       "spatialProvinceIndex": 78,
       "routeNodeKey": "8f84bd29-9978-4879-a0c9-9fe53aea7501",
@@ -23824,6 +24370,7 @@
         "nameCh": "鄞",
         "isSeat": false
       },
+      "provinceId": 71,
       "spatialProvinceId": "40755",
       "spatialProvinceIndex": 71,
       "routeNodeKey": "19ac6f90-f05c-4bce-9b21-2b6f4b75123e",
@@ -23862,6 +24409,7 @@
         "nameCh": "鄮",
         "isSeat": false
       },
+      "provinceId": 70,
       "spatialProvinceId": "40740",
       "spatialProvinceIndex": 70,
       "routeNodeKey": "8cdeb3ac-8959-4240-8526-706543a8a57b",
@@ -23906,6 +24454,7 @@
         "nameCh": "成德",
         "isSeat": false
       },
+      "provinceId": 239,
       "spatialProvinceId": "43121",
       "spatialProvinceIndex": 239,
       "routeNodeKey": "71e4a978-1ee2-41d0-8c53-45dbfaf4080d",
@@ -23953,6 +24502,7 @@
         "nameCh": "西曲陽",
         "isSeat": false
       },
+      "provinceId": 240,
       "spatialProvinceId": "43130",
       "spatialProvinceIndex": 240,
       "routeNodeKey": "85953693-7ede-4aac-95a0-dc3b4497373e",
@@ -23996,6 +24546,7 @@
         "nameCh": "南昌",
         "isSeat": true
       },
+      "provinceId": 101,
       "spatialProvinceId": "41092",
       "spatialProvinceIndex": 101,
       "routeNodeKey": "4a52522a-e812-4174-af5c-25228b69b29a",
@@ -24037,6 +24588,7 @@
         "nameCh": "臨汝",
         "isSeat": false
       },
+      "provinceId": 100,
       "spatialProvinceId": "40996",
       "spatialProvinceIndex": 100,
       "routeNodeKey": "7fad5a16-c120-4c00-b9fe-87044351b2b3",
@@ -24078,6 +24630,7 @@
         "nameCh": "南城",
         "isSeat": false
       },
+      "provinceId": 99,
       "spatialProvinceId": "40980",
       "spatialProvinceIndex": 99,
       "routeNodeKey": "f163f145-9b88-41f7-9195-40dec89d63d3",
@@ -24120,6 +24673,7 @@
         "nameCh": "南野",
         "isSeat": false
       },
+      "provinceId": 85,
       "spatialProvinceId": "40878",
       "spatialProvinceIndex": 85,
       "routeNodeKey": "3dbbd043-bfd9-416f-b6a6-d861e3c9d0a0",
@@ -24161,6 +24715,7 @@
         "nameCh": "歷陵",
         "isSeat": false
       },
+      "provinceId": 121,
       "spatialProvinceId": "41244",
       "spatialProvinceIndex": 121,
       "routeNodeKey": "3b26b4e1-9cf8-442f-b422-ac9a1b54e3d0",
@@ -24203,6 +24758,7 @@
         "nameCh": "宜春",
         "isSeat": false
       },
+      "provinceId": 98,
       "spatialProvinceId": "40965",
       "spatialProvinceIndex": 98,
       "routeNodeKey": "94c46fff-8099-4b16-95a9-d8926a60862c",
@@ -24245,6 +24801,7 @@
         "nameCh": "平都",
         "isSeat": false
       },
+      "provinceId": 90,
       "spatialProvinceId": "40906",
       "spatialProvinceIndex": 90,
       "routeNodeKey": "f4c8fefc-d467-4ab5-8514-1c2d4ff1c7db",
@@ -24283,6 +24840,7 @@
         "nameCh": "建城",
         "isSeat": false
       },
+      "provinceId": 118,
       "spatialProvinceId": "41217",
       "spatialProvinceIndex": 118,
       "routeNodeKey": "4966cc2f-94c2-4fc1-95f7-5f76d7870b17",
@@ -24325,6 +24883,7 @@
         "nameCh": "建昌",
         "isSeat": false
       },
+      "provinceId": 105,
       "spatialProvinceId": "41127",
       "spatialProvinceIndex": 105,
       "routeNodeKey": "bae81da6-3295-4d2e-90ed-4d8cbf68fc4e",
@@ -24368,6 +24927,7 @@
         "nameCh": "彭澤",
         "isSeat": false
       },
+      "provinceId": 110,
       "spatialProvinceId": "41154",
       "spatialProvinceIndex": 110,
       "routeNodeKey": "a616a95f-ae21-46f4-bce7-ed52826d2508",
@@ -24410,6 +24970,7 @@
         "nameCh": "新淦",
         "isSeat": false
       },
+      "provinceId": 95,
       "spatialProvinceId": "40944",
       "spatialProvinceIndex": 95,
       "routeNodeKey": "39bc6f4f-a7e0-4a8b-8bc7-2ce2c2f15071",
@@ -24451,6 +25012,7 @@
         "nameCh": "柴桑",
         "isSeat": false
       },
+      "provinceId": 109,
       "spatialProvinceId": "41145",
       "spatialProvinceIndex": 109,
       "routeNodeKey": "18255745-5810-4f42-9db0-7f17faa601d2",
@@ -24498,6 +25060,7 @@
         "nameCh": "平阿",
         "isSeat": false
       },
+      "provinceId": 244,
       "spatialProvinceId": "43181",
       "spatialProvinceIndex": 244,
       "routeNodeKey": "5abe6699-a2c8-4eeb-86f4-3db3e8751f25",
@@ -24542,6 +25105,7 @@
         "nameCh": "石陽",
         "isSeat": false
       },
+      "provinceId": 87,
       "spatialProvinceId": "40886",
       "spatialProvinceIndex": 87,
       "routeNodeKey": "c0d083be-4789-443a-8f8c-444700a56f6d",
@@ -24583,6 +25147,7 @@
         "nameCh": "艾",
         "isSeat": false
       },
+      "provinceId": 106,
       "spatialProvinceId": "41130",
       "spatialProvinceIndex": 106,
       "routeNodeKey": "440b081b-d36c-48ca-bf75-af6495352f21",
@@ -24626,6 +25191,7 @@
         "nameCh": "贛",
         "isSeat": false
       },
+      "provinceId": 81,
       "spatialProvinceId": "40830",
       "spatialProvinceIndex": 81,
       "routeNodeKey": "d220b5a0-6708-4293-b9de-fbc05e450507",
@@ -24666,6 +25232,7 @@
         "nameCh": "雩都",
         "isSeat": false
       },
+      "provinceId": 82,
       "spatialProvinceId": "40835",
       "spatialProvinceIndex": 82,
       "routeNodeKey": "c5a4a8e5-efd4-488a-adf4-96519afb89ef",
@@ -24708,6 +25275,7 @@
         "nameCh": "鄱陽",
         "isSeat": false
       },
+      "provinceId": 111,
       "spatialProvinceId": "41165",
       "spatialProvinceIndex": 111,
       "routeNodeKey": "2893153b-c3e2-4122-a0b2-ae94d3d4f36c",
@@ -24753,6 +25321,7 @@
         "nameCh": "丹陽",
         "isSeat": false
       },
+      "provinceId": 138,
       "spatialProvinceId": "41377",
       "spatialProvinceIndex": 138,
       "routeNodeKey": "da551cf6-0920-43a8-82ef-db974abf7a24",
@@ -24797,6 +25366,7 @@
         "nameCh": "宕渠",
         "isSeat": false
       },
+      "provinceId": 15,
       "spatialProvinceId": "200197",
       "spatialProvinceIndex": 15,
       "routeNodeKey": "e946922e-ad06-4ad4-97dc-31313cf53d55",
@@ -24839,6 +25409,7 @@
         "nameCh": "皖",
         "isSeat": false
       },
+      "provinceId": 236,
       "spatialProvinceId": "43000",
       "spatialProvinceIndex": 236,
       "routeNodeKey": "f5e53ef0-71a5-4fa0-8c6f-f7f501060cdd",
@@ -24882,6 +25453,7 @@
         "nameCh": "江州",
         "isSeat": true
       },
+      "provinceId": 344,
       "spatialProvinceId": "44662",
       "spatialProvinceIndex": 344,
       "routeNodeKey": "03b3277e-4fd3-4ef3-93fb-8e8427bbb488",
@@ -24927,6 +25499,7 @@
         "nameCh": "临江",
         "isSeat": false
       },
+      "provinceId": 335,
       "spatialProvinceId": "44537",
       "spatialProvinceIndex": 335,
       "routeNodeKey": "2e964d9e-881b-41d9-b85c-137c0f0242c4",
@@ -24969,6 +25542,7 @@
         "nameCh": "安汉",
         "isSeat": false
       },
+      "provinceId": 337,
       "spatialProvinceId": "44553",
       "spatialProvinceIndex": 337,
       "routeNodeKey": "4e35a9b8-82d7-4095-a157-058afbbf6459",
@@ -25012,6 +25586,7 @@
         "nameCh": "宣汉",
         "isSeat": false
       },
+      "provinceId": 947,
       "spatialProvinceId": "96259",
       "spatialProvinceIndex": 947,
       "routeNodeKey": "c40177d0-56e0-4d32-aee0-5af66b79727a",
@@ -25053,6 +25628,7 @@
         "nameCh": "平都",
         "isSeat": false
       },
+      "provinceId": 336,
       "spatialProvinceId": "44539",
       "spatialProvinceIndex": 336,
       "routeNodeKey": "1c7a0c46-be48-454b-b08e-07914f9ae41a",
@@ -25094,6 +25670,7 @@
         "nameCh": "朐忍",
         "isSeat": false
       },
+      "provinceId": 331,
       "spatialProvinceId": "44496",
       "spatialProvinceIndex": 331,
       "routeNodeKey": "9dc2aeab-45d9-4947-835c-64dc23b2181a",
@@ -25136,6 +25713,7 @@
         "nameCh": "枳",
         "isSeat": false
       },
+      "provinceId": 345,
       "spatialProvinceId": "44671",
       "spatialProvinceIndex": 345,
       "routeNodeKey": "83167b9e-6089-41b7-b43a-02782d23a982",
@@ -25178,6 +25756,7 @@
         "nameCh": "汉昌",
         "isSeat": false
       },
+      "provinceId": 341,
       "spatialProvinceId": "44580",
       "spatialProvinceIndex": 341,
       "routeNodeKey": "6943bbb8-d81f-43e3-87ab-40fe0bef645a",
@@ -25220,6 +25799,7 @@
         "nameCh": "阆中",
         "isSeat": false
       },
+      "provinceId": 338,
       "spatialProvinceId": "44558",
       "spatialProvinceIndex": 338,
       "routeNodeKey": "fe79d462-5ec3-4af7-be6f-6cf1d80869d5",
@@ -25262,6 +25842,7 @@
         "nameCh": "句章",
         "isSeat": false
       },
+      "provinceId": 69,
       "spatialProvinceId": "40736",
       "spatialProvinceIndex": 69,
       "routeNodeKey": "7af2bda9-f332-45d7-9bc6-3220c5cc534e",
@@ -25308,6 +25889,7 @@
         "nameCh": "雒",
         "isSeat": true
       },
+      "provinceId": 325,
       "spatialProvinceId": "44428",
       "spatialProvinceIndex": 325,
       "routeNodeKey": "60071180-7867-4039-8cf8-f71cab8a3760",
@@ -25353,6 +25935,7 @@
         "nameCh": "什邡",
         "isSeat": false
       },
+      "provinceId": 324,
       "spatialProvinceId": "44422",
       "spatialProvinceIndex": 324,
       "routeNodeKey": "70acbcf2-aa14-4f31-ab40-0e96b0151d5b",
@@ -25396,6 +25979,7 @@
         "nameCh": "新都",
         "isSeat": false
       },
+      "provinceId": 323,
       "spatialProvinceId": "44416",
       "spatialProvinceIndex": 323,
       "routeNodeKey": "6fa27494-7684-45fa-9276-bdff7a74752d",
@@ -25443,6 +26027,7 @@
         "nameCh": "绵竹",
         "isSeat": false
       },
+      "provinceId": 944,
       "spatialProvinceId": "96137",
       "spatialProvinceIndex": 944,
       "routeNodeKey": "dba50524-06f0-446d-9a2c-52c8481688d9",
@@ -25489,6 +26074,7 @@
         "nameCh": "郪",
         "isSeat": false
       },
+      "provinceId": 948,
       "spatialProvinceId": "96341",
       "spatialProvinceIndex": 948,
       "routeNodeKey": "4385c3db-8457-46a7-8bb8-b5b4f92acae1",
@@ -25531,6 +26117,7 @@
         "nameCh": "梓潼",
         "isSeat": false
       },
+      "provinceId": 942,
       "spatialProvinceId": "96107",
       "spatialProvinceIndex": 942,
       "routeNodeKey": "0a775f6d-c4c9-40c7-9455-5b2c968a5e49",
@@ -25571,6 +26158,7 @@
         "nameCh": "不韦",
         "isSeat": true
       },
+      "provinceId": 411,
       "spatialProvinceId": "45445",
       "spatialProvinceIndex": 411,
       "routeNodeKey": "37bbc0b5-0817-4f41-b00c-5dad2b8c19bb",
@@ -25612,6 +26200,7 @@
         "nameCh": "博南",
         "isSeat": false
       },
+      "provinceId": 410,
       "spatialProvinceId": "45437",
       "spatialProvinceIndex": 410,
       "routeNodeKey": "cfff7dd3-9340-4907-99b2-488456738c1b",
@@ -25653,6 +26242,7 @@
         "nameCh": "江阳",
         "isSeat": false
       },
+      "provinceId": 939,
       "spatialProvinceId": "96023",
       "spatialProvinceIndex": 939,
       "routeNodeKey": "1bdb6789-0d17-4604-afa2-07e26f811233",
@@ -25697,6 +26287,7 @@
         "nameCh": "陽羨",
         "isSeat": false
       },
+      "provinceId": 48,
       "spatialProvinceId": "40463",
       "spatialProvinceIndex": 48,
       "routeNodeKey": "4cdb82b4-8e74-40b0-a847-95ada1814292",
@@ -25738,6 +26329,7 @@
         "nameCh": "鄡陽",
         "isSeat": false
       },
+      "provinceId": 114,
       "spatialProvinceId": "41194",
       "spatialProvinceIndex": 114,
       "routeNodeKey": "5a065e18-584f-4450-9b49-d6e9598934d2",
@@ -25781,6 +26373,7 @@
         "nameCh": "南郑",
         "isSeat": true
       },
+      "provinceId": 523,
       "spatialProvinceId": "70983",
       "spatialProvinceIndex": 523,
       "routeNodeKey": "e6fea090-5000-4e90-9605-0c6daad348b1",
@@ -25823,6 +26416,7 @@
         "nameCh": "上庸",
         "isSeat": false
       },
+      "provinceId": 448,
       "spatialProvinceId": "45934",
       "spatialProvinceIndex": 448,
       "routeNodeKey": "4d7ed6ee-8669-4cb1-ab0e-6fbd9a1dd903",
@@ -25865,6 +26459,7 @@
         "nameCh": "安阳",
         "isSeat": false
       },
+      "provinceId": 24,
       "spatialProvinceId": "200433",
       "spatialProvinceIndex": 24,
       "routeNodeKey": "f4f3a7f6-5755-4f1f-bf5e-5c3b55d3670e",
@@ -25908,6 +26503,7 @@
         "nameCh": "成固",
         "isSeat": false
       },
+      "provinceId": 5,
       "spatialProvinceId": "200050",
       "spatialProvinceIndex": 5,
       "routeNodeKey": "c0346a27-508c-448b-9118-dee71259e574",
@@ -25950,6 +26546,7 @@
         "nameCh": "房陵",
         "isSeat": false
       },
+      "provinceId": 446,
       "spatialProvinceId": "45921",
       "spatialProvinceIndex": 446,
       "routeNodeKey": "39e39713-37f3-46ef-87bd-708ff5ad92ac",
@@ -25991,6 +26588,7 @@
         "nameCh": "沔阳",
         "isSeat": false
       },
+      "provinceId": 527,
       "spatialProvinceId": "71101",
       "spatialProvinceIndex": 527,
       "routeNodeKey": "6ebbb56b-f49e-42b6-a5d2-5c84fd802181",
@@ -26032,6 +26630,7 @@
         "nameCh": "鱼复",
         "isSeat": false
       },
+      "provinceId": 329,
       "spatialProvinceId": "44482",
       "spatialProvinceIndex": 329,
       "routeNodeKey": "2c321e42-bd48-47a7-a599-37ae9732b951",
@@ -26074,6 +26673,7 @@
         "nameCh": "锡",
         "isSeat": false
       },
+      "provinceId": 8,
       "spatialProvinceId": "200080",
       "spatialProvinceIndex": 8,
       "routeNodeKey": "7ae0def6-2c67-44ac-9c19-35ff9f8adb24",
@@ -26114,6 +26714,7 @@
         "nameCh": "故且兰",
         "isSeat": true
       },
+      "provinceId": 956,
       "spatialProvinceId": "99034",
       "spatialProvinceIndex": 956,
       "routeNodeKey": "d941ade0-e682-4772-83b4-bae52675ffd3",
@@ -26155,6 +26756,7 @@
         "nameCh": "夜郎",
         "isSeat": false
       },
+      "provinceId": 955,
       "spatialProvinceId": "99004",
       "spatialProvinceIndex": 955,
       "routeNodeKey": "d59ba844-af2c-4e7e-9830-9951db518b73",
@@ -26195,6 +26797,7 @@
         "nameCh": "谈指",
         "isSeat": false
       },
+      "provinceId": 958,
       "spatialProvinceId": "99336",
       "spatialProvinceIndex": 958,
       "routeNodeKey": "66c3ca87-e3ad-4c84-8b11-c60c36987ec5",
@@ -26238,6 +26841,7 @@
         "nameCh": "垫江",
         "isSeat": false
       },
+      "provinceId": 346,
       "spatialProvinceId": "44679",
       "spatialProvinceIndex": 346,
       "routeNodeKey": "944f3eda-1b4c-4e96-bed7-f5e4fa58191a",
@@ -26276,6 +26880,7 @@
         "nameCh": "鄨",
         "isSeat": false
       },
+      "provinceId": 960,
       "spatialProvinceId": "99350",
       "spatialProvinceIndex": 960,
       "routeNodeKey": "5d0793ed-f024-49fb-b789-236a4ac808a7",
@@ -26314,6 +26919,7 @@
         "nameCh": "朱提",
         "isSeat": true
       },
+      "provinceId": 412,
       "spatialProvinceId": "45453",
       "spatialProvinceIndex": 412,
       "routeNodeKey": "d17a061b-e3eb-4c51-98d5-9781179a8e3b",
@@ -26357,6 +26963,7 @@
         "nameCh": "资中",
         "isSeat": false
       },
+      "provinceId": 952,
       "spatialProvinceId": "96423",
       "spatialProvinceIndex": 952,
       "routeNodeKey": "907cfd0e-e37d-4029-8b9c-df7683c43ad1",
@@ -26398,6 +27005,7 @@
         "nameCh": "僰道",
         "isSeat": false
       },
+      "provinceId": 23,
       "spatialProvinceId": "200326",
       "spatialProvinceIndex": 23,
       "routeNodeKey": "5f6e590b-e0fb-4bdc-8fb1-10855ffe45da",
@@ -26438,6 +27046,7 @@
         "nameCh": "南广",
         "isSeat": false
       },
+      "provinceId": 11,
       "spatialProvinceId": "200169",
       "spatialProvinceIndex": 11,
       "routeNodeKey": "8456bb30-8ee8-4490-8d6b-4128c9310b00",
@@ -26482,6 +27091,7 @@
         "nameCh": "汉安",
         "isSeat": false
       },
+      "provinceId": 953,
       "spatialProvinceId": "96424",
       "spatialProvinceIndex": 953,
       "routeNodeKey": "b02a9a19-32a0-4a2d-be0c-0f3dc8fbeef2",
@@ -26527,6 +27137,7 @@
         "nameCh": "牛鞞",
         "isSeat": false
       },
+      "provinceId": 328,
       "spatialProvinceId": "44468",
       "spatialProvinceIndex": 328,
       "routeNodeKey": "d24d1198-8b89-481d-957a-8006a26100cc",
@@ -26567,6 +27178,7 @@
         "nameCh": "双柏",
         "isSeat": false
       },
+      "provinceId": 424,
       "spatialProvinceId": "45572",
       "spatialProvinceIndex": 424,
       "routeNodeKey": "26607c3c-b5f3-4f09-a74f-4e87c3cb9704",
@@ -26608,6 +27220,7 @@
         "nameCh": "成都",
         "isSeat": true
       },
+      "provinceId": 319,
       "spatialProvinceId": "44394",
       "spatialProvinceIndex": 319,
       "routeNodeKey": "277be9fc-73cb-4102-825b-fcd36a39acfd",
@@ -26654,6 +27267,7 @@
         "nameCh": "临邛",
         "isSeat": false
       },
+      "provinceId": 326,
       "spatialProvinceId": "44445",
       "spatialProvinceIndex": 326,
       "routeNodeKey": "e7ec8a19-7795-4de1-883d-6ea0a215e726",
@@ -26695,6 +27309,7 @@
         "nameCh": "江原",
         "isSeat": false
       },
+      "provinceId": 322,
       "spatialProvinceId": "44409",
       "spatialProvinceIndex": 322,
       "routeNodeKey": "8b9f3cc7-e0ea-4e1a-b292-8d5ec8ac0f20",
@@ -26737,6 +27352,7 @@
         "nameCh": "涪",
         "isSeat": false
       },
+      "provinceId": 943,
       "spatialProvinceId": "96113",
       "spatialProvinceIndex": 943,
       "routeNodeKey": "5cd8fddd-997b-498e-b265-17f3eeb0f4b5",
@@ -26782,6 +27398,7 @@
         "nameCh": "繁",
         "isSeat": false
       },
+      "provinceId": 327,
       "spatialProvinceId": "44448",
       "spatialProvinceIndex": 327,
       "routeNodeKey": "6440ea92-2b2e-46f0-aae5-b451cfb34833",
@@ -26825,6 +27442,7 @@
         "nameCh": "德阳",
         "isSeat": false
       },
+      "provinceId": 945,
       "spatialProvinceId": "96145",
       "spatialProvinceIndex": 945,
       "routeNodeKey": "10c3d070-c410-4e20-a1fc-590515b76eed",
@@ -26867,6 +27485,7 @@
         "nameCh": "郫",
         "isSeat": false
       },
+      "provinceId": 320,
       "spatialProvinceId": "44398",
       "spatialProvinceIndex": 320,
       "routeNodeKey": "d32115be-3178-4d63-a6b6-9526ceab2486",
@@ -26909,6 +27528,7 @@
         "nameCh": "汉嘉",
         "isSeat": true
       },
+      "provinceId": 950,
       "spatialProvinceId": "96382",
       "spatialProvinceIndex": 950,
       "routeNodeKey": "34270f77-5ef4-44e4-a686-54099aff795f",
@@ -26951,6 +27571,7 @@
         "nameCh": "严道",
         "isSeat": false
       },
+      "provinceId": 949,
       "spatialProvinceId": "96358",
       "spatialProvinceIndex": 949,
       "routeNodeKey": "11af04e9-191c-49e5-9a19-9436856d2dec",
@@ -26992,6 +27613,7 @@
         "nameCh": "徙",
         "isSeat": false
       },
+      "provinceId": 951,
       "spatialProvinceId": "96383",
       "spatialProvinceIndex": 951,
       "routeNodeKey": "d6f284d3-5db5-4abd-b7a4-4af7d5bffb55",
@@ -27033,6 +27655,7 @@
         "nameCh": "邛都",
         "isSeat": true
       },
+      "provinceId": 18,
       "spatialProvinceId": "200269",
       "spatialProvinceIndex": 18,
       "routeNodeKey": "8eb08269-f90e-4e2e-80a4-7c3f23f4f405",
@@ -27071,6 +27694,7 @@
         "nameCh": "遂久",
         "isSeat": false
       },
+      "provinceId": 409,
       "spatialProvinceId": "45412",
       "spatialProvinceIndex": 409,
       "routeNodeKey": "7abbb0ed-699e-4639-85c7-89390cdbe33a",
@@ -27112,6 +27736,7 @@
         "nameCh": "阐",
         "isSeat": false
       },
+      "provinceId": 22,
       "spatialProvinceId": "200289",
       "spatialProvinceIndex": 22,
       "routeNodeKey": "9124f62b-ec99-4d58-90b7-5e1ab36e0b30",
@@ -27150,6 +27775,7 @@
         "nameCh": "青蛉",
         "isSeat": false
       },
+      "provinceId": 530,
       "spatialProvinceId": "80467",
       "spatialProvinceIndex": 530,
       "routeNodeKey": "dc7edf87-95b4-4687-8478-c226f66bfe4e",
@@ -27190,6 +27816,7 @@
         "nameCh": "富平",
         "isSeat": true
       },
+      "provinceId": 480,
       "spatialProvinceId": "70524",
       "spatialProvinceIndex": 480,
       "routeNodeKey": "7dad3381-1eaa-4ff4-924c-ed3f631ca977",
@@ -27231,6 +27858,7 @@
         "nameCh": "廉",
         "isSeat": false
       },
+      "provinceId": 496,
       "spatialProvinceId": "70610",
       "spatialProvinceIndex": 496,
       "routeNodeKey": "094ad9e2-4c7e-46a8-b239-456a7c88a7da",
@@ -27271,6 +27899,7 @@
         "nameCh": "弋居",
         "isSeat": false
       },
+      "provinceId": 498,
       "spatialProvinceId": "70614",
       "spatialProvinceIndex": 498,
       "routeNodeKey": "19546f65-6a29-4613-9dc3-9ad63ab99acd",
@@ -27309,6 +27938,7 @@
         "nameCh": "泥阳",
         "isSeat": false
       },
+      "provinceId": 497,
       "spatialProvinceId": "70613",
       "spatialProvinceIndex": 497,
       "routeNodeKey": "e59753a9-2704-4b70-86ec-ec1931cf1c12",
@@ -27347,6 +27977,7 @@
         "nameCh": "朝那",
         "isSeat": false
       },
+      "provinceId": 464,
       "spatialProvinceId": "70178",
       "spatialProvinceIndex": 464,
       "routeNodeKey": "188a966d-c6ff-4180-a39d-81442b7adb09",
@@ -27393,6 +28024,7 @@
         "nameCh": "广都",
         "isSeat": false
       },
+      "provinceId": 321,
       "spatialProvinceId": "44401",
       "spatialProvinceIndex": 321,
       "routeNodeKey": "264e99ca-a73f-45bc-a39f-b7cd3c8a13f6",
@@ -27431,6 +28063,7 @@
         "nameCh": "居延",
         "isSeat": true
       },
+      "provinceId": 478,
       "spatialProvinceId": "70500",
       "spatialProvinceIndex": 478,
       "routeNodeKey": "1cdb08eb-47ee-4749-9e7a-4e1c4ed1f433",
@@ -27472,6 +28105,7 @@
         "nameCh": "广柔",
         "isSeat": false
       },
+      "provinceId": 941,
       "spatialProvinceId": "96055",
       "spatialProvinceIndex": 941,
       "routeNodeKey": "3e01c5da-23a3-47b5-ae93-e494db02d895",
@@ -27514,6 +28148,7 @@
         "nameCh": "觻得",
         "isSeat": true
       },
+      "provinceId": 487,
       "spatialProvinceId": "70600",
       "spatialProvinceIndex": 487,
       "routeNodeKey": "61f2bcf2-6b36-4328-90a1-305b381158f3",
@@ -27556,6 +28191,7 @@
         "nameCh": "删丹",
         "isSeat": false
       },
+      "provinceId": 491,
       "spatialProvinceId": "70605",
       "spatialProvinceIndex": 491,
       "routeNodeKey": "4b365444-6c30-42cd-9795-81b8689028b5",
@@ -27599,6 +28235,7 @@
         "nameCh": "屋兰",
         "isSeat": false
       },
+      "provinceId": 489,
       "spatialProvinceId": "70603",
       "spatialProvinceIndex": 489,
       "routeNodeKey": "c927f9c7-7fba-4b08-a705-9685c828cbcb",
@@ -27643,6 +28280,7 @@
         "nameCh": "日勒",
         "isSeat": false
       },
+      "provinceId": 490,
       "spatialProvinceId": "70604",
       "spatialProvinceIndex": 490,
       "routeNodeKey": "15cd374b-b22a-4828-b1dc-5fd2f0013268",
@@ -27686,6 +28324,7 @@
         "nameCh": "昭武",
         "isSeat": false
       },
+      "provinceId": 488,
       "spatialProvinceId": "70601",
       "spatialProvinceIndex": 488,
       "routeNodeKey": "02e153b9-2230-4f6e-9bb2-eb0595498a01",
@@ -27727,6 +28366,7 @@
         "nameCh": "氐池",
         "isSeat": false
       },
+      "provinceId": 492,
       "spatialProvinceId": "70606",
       "spatialProvinceIndex": 492,
       "routeNodeKey": "601f6c95-3b41-4c75-b412-739fe40e414b",
@@ -27769,6 +28409,7 @@
         "nameCh": "番和",
         "isSeat": false
       },
+      "provinceId": 494,
       "spatialProvinceId": "70608",
       "spatialProvinceIndex": 494,
       "routeNodeKey": "3a24d701-830a-48b1-a5a2-95c8e19a6713",
@@ -27810,6 +28451,7 @@
         "nameCh": "敦煌",
         "isSeat": true
       },
+      "provinceId": 481,
       "spatialProvinceId": "70594",
       "spatialProvinceIndex": 481,
       "routeNodeKey": "e72ade13-c5c8-4e2b-a80c-4c9573a8b372",
@@ -27850,6 +28492,7 @@
         "nameCh": "冥安",
         "isSeat": false
       },
+      "provinceId": 484,
       "spatialProvinceId": "70597",
       "spatialProvinceIndex": 484,
       "routeNodeKey": "246f85b2-e08f-4911-9e11-9a434265ca39",
@@ -27890,6 +28533,7 @@
         "nameCh": "效穀",
         "isSeat": false
       },
+      "provinceId": 482,
       "spatialProvinceId": "70595",
       "spatialProvinceIndex": 482,
       "routeNodeKey": "0289044e-7990-4fc3-ada7-0f26b55ad7fd",
@@ -27930,6 +28574,7 @@
         "nameCh": "龙勒",
         "isSeat": false
       },
+      "provinceId": 483,
       "spatialProvinceId": "70596",
       "spatialProvinceIndex": 483,
       "routeNodeKey": "3ba8b11a-8276-4017-a580-a31d8f9f6d7d",
@@ -27973,6 +28618,7 @@
         "nameCh": "武阳",
         "isSeat": true
       },
+      "provinceId": 946,
       "spatialProvinceId": "96181",
       "spatialProvinceIndex": 946,
       "routeNodeKey": "f8fed597-59a2-4916-9a99-863fccdef7b3",
@@ -28014,6 +28660,7 @@
         "nameCh": "显美",
         "isSeat": false
       },
+      "provinceId": 495,
       "spatialProvinceId": "70609",
       "spatialProvinceIndex": 495,
       "routeNodeKey": "ea6ac9a6-a214-4e92-8200-5c297bff7bbb",
@@ -28056,6 +28703,7 @@
         "nameCh": "沮",
         "isSeat": false
       },
+      "provinceId": 6,
       "spatialProvinceId": "200064",
       "spatialProvinceIndex": 6,
       "routeNodeKey": "d04059b2-1d80-46ea-a2e3-fcb3122c1907",
@@ -28096,6 +28744,7 @@
         "nameCh": "冀",
         "isSeat": true
       },
+      "provinceId": 454,
       "spatialProvinceId": "70040",
       "spatialProvinceIndex": 454,
       "routeNodeKey": "12566341-fd00-4750-8d54-38a5818d8cfb",
@@ -28138,6 +28787,7 @@
         "nameCh": "西",
         "isSeat": false
       },
+      "provinceId": 455,
       "spatialProvinceId": "70060",
       "spatialProvinceIndex": 455,
       "routeNodeKey": "382c7876-b449-4860-8336-c32de226e19d",
@@ -28181,6 +28831,7 @@
         "nameCh": "南安",
         "isSeat": false
       },
+      "provinceId": 84,
       "spatialProvinceId": "40871",
       "spatialProvinceIndex": 84,
       "routeNodeKey": "998fae9b-f218-461a-94d4-6d67cb11b584",
@@ -28219,6 +28870,7 @@
         "nameCh": "符节",
         "isSeat": false
       },
+      "provinceId": 940,
       "spatialProvinceId": "96030",
       "spatialProvinceIndex": 940,
       "routeNodeKey": "c5349abf-7779-426e-8eab-9d86be9962d8",
@@ -28260,6 +28912,7 @@
         "nameCh": "毋敛",
         "isSeat": false
       },
+      "provinceId": 957,
       "spatialProvinceId": "99041",
       "spatialProvinceIndex": 957,
       "routeNodeKey": "adb68f6e-481e-44d8-9ac8-06ab8db947e4",
@@ -28301,6 +28954,7 @@
         "nameCh": "玉门",
         "isSeat": false
       },
+      "provinceId": 486,
       "spatialProvinceId": "70599",
       "spatialProvinceIndex": 486,
       "routeNodeKey": "333e08bc-69f3-4a17-97d0-1a4e4c6b5e02",
@@ -28343,6 +28997,7 @@
         "nameCh": "金城",
         "isSeat": false
       },
+      "provinceId": 457,
       "spatialProvinceId": "70098",
       "spatialProvinceIndex": 457,
       "routeNodeKey": "69dcd085-2659-4e17-9738-48dc59c63b84",
@@ -28381,6 +29036,7 @@
         "nameCh": "临羌",
         "isSeat": false
       },
+      "provinceId": 499,
       "spatialProvinceId": "70617",
       "spatialProvinceIndex": 499,
       "routeNodeKey": "5ab31053-f146-4fee-b9b4-e4cd1490a1f8",
@@ -28424,6 +29080,7 @@
         "nameCh": "安夷",
         "isSeat": false
       },
+      "provinceId": 501,
       "spatialProvinceId": "70619",
       "spatialProvinceIndex": 501,
       "routeNodeKey": "65345916-d8c8-412d-a9bc-6bdbee828434",
@@ -28465,6 +29122,7 @@
         "nameCh": "榆中",
         "isSeat": false
       },
+      "provinceId": 458,
       "spatialProvinceId": "70104",
       "spatialProvinceIndex": 458,
       "routeNodeKey": "a0fa9354-c6bd-4206-a8d9-ccc42371ace7",
@@ -28505,6 +29163,7 @@
         "nameCh": "破羌",
         "isSeat": false
       },
+      "provinceId": 500,
       "spatialProvinceId": "70618",
       "spatialProvinceIndex": 500,
       "routeNodeKey": "bd1b3047-9c18-4753-90c0-e9f11a84abaa",
@@ -28549,6 +29208,7 @@
         "nameCh": "狄道",
         "isSeat": true
       },
+      "provinceId": 459,
       "spatialProvinceId": "70110",
       "spatialProvinceIndex": 459,
       "routeNodeKey": "bc4c45a1-d696-4bd2-be48-d3b141734de2",
@@ -28593,6 +29253,7 @@
         "nameCh": "临洮",
         "isSeat": false
       },
+      "provinceId": 456,
       "spatialProvinceId": "70079",
       "spatialProvinceIndex": 456,
       "routeNodeKey": "800d0eab-a469-4dfa-bc65-aacba1a01ed6",
@@ -28635,6 +29296,7 @@
         "nameCh": "枹罕",
         "isSeat": false
       },
+      "provinceId": 461,
       "spatialProvinceId": "70126",
       "spatialProvinceIndex": 461,
       "routeNodeKey": "a7146aa5-3e53-4833-ba07-3b9dac48d167",
@@ -28677,6 +29339,7 @@
         "nameCh": "白石",
         "isSeat": false
       },
+      "provinceId": 462,
       "spatialProvinceId": "70131",
       "spatialProvinceIndex": 462,
       "routeNodeKey": "2a0624e6-4d5c-4e1b-a089-faccbf1d536c",
@@ -28718,6 +29381,7 @@
         "nameCh": "襄武",
         "isSeat": false
       },
+      "provinceId": 451,
       "spatialProvinceId": "70005",
       "spatialProvinceIndex": 451,
       "routeNodeKey": "82fff896-3368-425f-b014-e7f347f36b47",
@@ -28760,6 +29424,7 @@
         "nameCh": "鄣",
         "isSeat": false
       },
+      "provinceId": 452,
       "spatialProvinceId": "70032",
       "spatialProvinceIndex": 452,
       "routeNodeKey": "e0833aa2-b4c9-43c8-9cb5-0749bde03ebe",
@@ -28802,6 +29467,7 @@
         "nameCh": "首阳",
         "isSeat": false
       },
+      "provinceId": 460,
       "spatialProvinceId": "70117",
       "spatialProvinceIndex": 460,
       "routeNodeKey": "146d66e5-a1b3-4d01-a686-7b09f01d83e4",
@@ -28843,6 +29509,7 @@
         "nameCh": "毋单",
         "isSeat": false
       },
+      "provinceId": 533,
       "spatialProvinceId": "80627",
       "spatialProvinceIndex": 533,
       "routeNodeKey": "501d2cf9-467b-4aba-b085-e1a3cad1214b",
@@ -28889,6 +29556,7 @@
         "nameCh": "长子",
         "isSeat": true
       },
+      "provinceId": 904,
       "spatialProvinceId": "95323",
       "spatialProvinceIndex": 904,
       "routeNodeKey": "bf447d0d-f619-4579-bfc9-e72ca1dbcd4c",
@@ -28933,6 +29601,7 @@
         "nameCh": "壶关",
         "isSeat": false
       },
+      "provinceId": 903,
       "spatialProvinceId": "95318",
       "spatialProvinceIndex": 903,
       "routeNodeKey": "9da33073-976e-4d13-b1e2-23460a509d32",
@@ -28977,6 +29646,7 @@
         "nameCh": "屯留",
         "isSeat": false
       },
+      "provinceId": 906,
       "spatialProvinceId": "95341",
       "spatialProvinceIndex": 906,
       "routeNodeKey": "02345658-a060-4416-b4bb-059c53b204ee",
@@ -29020,6 +29690,7 @@
         "nameCh": "沾",
         "isSeat": false
       },
+      "provinceId": 908,
       "spatialProvinceId": "95369",
       "spatialProvinceIndex": 908,
       "routeNodeKey": "8461d0ed-0382-4dd3-8050-bdac5eea418b",
@@ -29065,6 +29736,7 @@
         "nameCh": "泫氏",
         "isSeat": false
       },
+      "provinceId": 934,
       "spatialProvinceId": "95709",
       "spatialProvinceIndex": 934,
       "routeNodeKey": "83be0e1e-46c8-476f-bb71-55852fedec8c",
@@ -29109,6 +29781,7 @@
         "nameCh": "涅",
         "isSeat": false
       },
+      "provinceId": 922,
       "spatialProvinceId": "95521",
       "spatialProvinceIndex": 922,
       "routeNodeKey": "04027180-1282-48cf-b526-d9eb284c1141",
@@ -29153,6 +29826,7 @@
         "nameCh": "潞",
         "isSeat": false
       },
+      "provinceId": 905,
       "spatialProvinceId": "95335",
       "spatialProvinceIndex": 905,
       "routeNodeKey": "06b77f31-41be-4d76-a64f-c99c9decceec",
@@ -29197,6 +29871,7 @@
         "nameCh": "穀远",
         "isSeat": false
       },
+      "provinceId": 921,
       "spatialProvinceId": "95509",
       "spatialProvinceIndex": 921,
       "routeNodeKey": "971fd2b1-81b2-41d6-a836-6e95c06e8a87",
@@ -29240,6 +29915,7 @@
         "nameCh": "襄垣",
         "isSeat": false
       },
+      "provinceId": 907,
       "spatialProvinceId": "95349",
       "spatialProvinceIndex": 907,
       "routeNodeKey": "6cc33727-a67b-42e2-b297-8539bc593db3",
@@ -29285,6 +29961,7 @@
         "nameCh": "铜鞮",
         "isSeat": false
       },
+      "provinceId": 920,
       "spatialProvinceId": "95502",
       "spatialProvinceIndex": 920,
       "routeNodeKey": "5c0eade1-0877-4112-b21b-b1f8bd64e47d",
@@ -29329,6 +30006,7 @@
         "nameCh": "阳阿",
         "isSeat": false
       },
+      "provinceId": 937,
       "spatialProvinceId": "95729",
       "spatialProvinceIndex": 937,
       "routeNodeKey": "f821cd25-bdcd-4e9f-affa-b06a19c759f4",
@@ -29373,6 +30051,7 @@
         "nameCh": "高都",
         "isSeat": false
       },
+      "provinceId": 933,
       "spatialProvinceId": "95699",
       "spatialProvinceIndex": 933,
       "routeNodeKey": "3ccf1fec-e052-47a2-95b2-a73bea4e24dc",
@@ -29416,6 +30095,7 @@
         "nameCh": "九原",
         "isSeat": true
       },
+      "provinceId": 932,
       "spatialProvinceId": "95698",
       "spatialProvinceIndex": 932,
       "routeNodeKey": "7680a822-ad7c-4296-9db8-d88ca14c2ded",
@@ -29459,6 +30139,7 @@
         "nameCh": "宛温",
         "isSeat": false
       },
+      "provinceId": 422,
       "spatialProvinceId": "45532",
       "spatialProvinceIndex": 422,
       "routeNodeKey": "ee1eb89a-9786-49fb-aac1-6ced9d84d67e",
@@ -29502,6 +30183,7 @@
         "nameCh": "界休",
         "isSeat": false
       },
+      "provinceId": 892,
       "spatialProvinceId": "95152",
       "spatialProvinceIndex": 892,
       "routeNodeKey": "4aeb0fea-621e-4755-93ae-1a75bc691e81",
@@ -29547,6 +30229,7 @@
         "nameCh": "中都",
         "isSeat": false
       },
+      "provinceId": 893,
       "spatialProvinceId": "95168",
       "spatialProvinceIndex": 893,
       "routeNodeKey": "fabe0846-d632-49dd-843d-d156daec5849",
@@ -29591,6 +30274,7 @@
         "nameCh": "京陵",
         "isSeat": false
       },
+      "provinceId": 894,
       "spatialProvinceId": "95172",
       "spatialProvinceIndex": 894,
       "routeNodeKey": "dc99f2b5-59cd-44cf-bf7e-278154b6e145",
@@ -29635,6 +30319,7 @@
         "nameCh": "大陵",
         "isSeat": false
       },
+      "provinceId": 925,
       "spatialProvinceId": "95604",
       "spatialProvinceIndex": 925,
       "routeNodeKey": "a77a1707-cffd-4daf-bcda-38769fafc04d",
@@ -29680,6 +30365,7 @@
         "nameCh": "榆次",
         "isSeat": false
       },
+      "provinceId": 929,
       "spatialProvinceId": "95646",
       "spatialProvinceIndex": 929,
       "routeNodeKey": "2dce6651-d1c6-497c-8d56-7f30b7fd90ac",
@@ -29726,6 +30412,7 @@
         "nameCh": "狼孟",
         "isSeat": false
       },
+      "provinceId": 928,
       "spatialProvinceId": "95641",
       "spatialProvinceIndex": 928,
       "routeNodeKey": "03675f34-0604-4b54-8eac-26236efcbca0",
@@ -29769,6 +30456,7 @@
         "nameCh": "盂",
         "isSeat": false
       },
+      "provinceId": 926,
       "spatialProvinceId": "95627",
       "spatialProvinceIndex": 926,
       "routeNodeKey": "7edeb5b9-fad2-4dd6-9656-d700f395ac52",
@@ -29812,6 +30500,7 @@
         "nameCh": "祁",
         "isSeat": false
       },
+      "provinceId": 923,
       "spatialProvinceId": "95585",
       "spatialProvinceIndex": 923,
       "routeNodeKey": "67d3d169-9934-440e-962a-acda8736ee20",
@@ -29857,6 +30546,7 @@
         "nameCh": "虑虒",
         "isSeat": false
       },
+      "provinceId": 890,
       "spatialProvinceId": "95134",
       "spatialProvinceIndex": 890,
       "routeNodeKey": "f72b9d86-ad32-4d55-bc44-79e10e56c42b",
@@ -29903,6 +30593,7 @@
         "nameCh": "邬",
         "isSeat": false
       },
+      "provinceId": 891,
       "spatialProvinceId": "95145",
       "spatialProvinceIndex": 891,
       "routeNodeKey": "7729eb57-3909-4c94-8223-23d78d590416",
@@ -29946,6 +30637,7 @@
         "nameCh": "阳曲",
         "isSeat": false
       },
+      "provinceId": 927,
       "spatialProvinceId": "95629",
       "spatialProvinceIndex": 927,
       "routeNodeKey": "c97c3f40-63a4-43ae-b59f-f5412c149f49",
@@ -29990,6 +30682,7 @@
         "nameCh": "阳邑",
         "isSeat": false
       },
+      "provinceId": 924,
       "spatialProvinceId": "95591",
       "spatialProvinceIndex": 924,
       "routeNodeKey": "a2a7d7c0-823d-4a27-9ad3-0b368a0c4a8f",
@@ -30033,6 +30726,7 @@
         "nameCh": "镡封",
         "isSeat": false
       },
+      "provinceId": 421,
       "spatialProvinceId": "45530",
       "spatialProvinceIndex": 421,
       "routeNodeKey": "4ebc0366-8a25-4386-bd1a-685839f96fcd",
@@ -30076,6 +30770,7 @@
         "nameCh": "漏卧",
         "isSeat": false
       },
+      "provinceId": 529,
       "spatialProvinceId": "80284",
       "spatialProvinceIndex": 529,
       "routeNodeKey": "63d546b1-64b0-4617-96f2-09427d0d7c3f",
@@ -30116,6 +30811,7 @@
         "nameCh": "句町",
         "isSeat": false
       },
+      "provinceId": 12,
       "spatialProvinceId": "200170",
       "spatialProvinceIndex": 12,
       "routeNodeKey": "cc3a3b1f-4486-4df3-a918-f19123bb4c7d",
@@ -30157,6 +30853,7 @@
         "nameCh": "台登",
         "isSeat": false
       },
+      "provinceId": 19,
       "spatialProvinceId": "200279",
       "spatialProvinceIndex": 19,
       "routeNodeKey": "4b809756-237e-4e43-afc7-c46a4de25151",
@@ -30199,6 +30896,7 @@
         "nameCh": "云中",
         "isSeat": true
       },
+      "provinceId": 888,
       "spatialProvinceId": "95125",
       "spatialProvinceIndex": 888,
       "routeNodeKey": "fe8649c2-dfcf-4328-8bd6-6cf2644e0351",
@@ -30245,6 +30943,7 @@
         "nameCh": "定襄",
         "isSeat": false
       },
+      "provinceId": 931,
       "spatialProvinceId": "95676",
       "spatialProvinceIndex": 931,
       "routeNodeKey": "3e001fad-ec51-46e0-850c-2a8bc51b2554",
@@ -30287,6 +30986,7 @@
         "nameCh": "剧阳",
         "isSeat": false
       },
+      "provinceId": 886,
       "spatialProvinceId": "95093",
       "spatialProvinceIndex": 886,
       "routeNodeKey": "c7937c9c-f885-4b59-8b82-64d47f896f1f",
@@ -30331,6 +31031,7 @@
         "nameCh": "原平",
         "isSeat": false
       },
+      "provinceId": 889,
       "spatialProvinceId": "95126",
       "spatialProvinceIndex": 889,
       "routeNodeKey": "8defb376-e683-4624-a491-1a8596f6c9ad",
@@ -30371,6 +31072,7 @@
         "nameCh": "平城",
         "isSeat": false
       },
+      "provinceId": 882,
       "spatialProvinceId": "95016",
       "spatialProvinceIndex": 882,
       "routeNodeKey": "21188824-d67d-4e64-99ee-73d2246af001",
@@ -30412,6 +31114,7 @@
         "nameCh": "广武",
         "isSeat": false
       },
+      "provinceId": 887,
       "spatialProvinceId": "95096",
       "spatialProvinceIndex": 887,
       "routeNodeKey": "42ae7068-3dd1-4846-84e5-fc3dcd4d4b8d",
@@ -30488,6 +31191,7 @@
         "nameCh": "沮阳",
         "isSeat": true
       },
+      "provinceId": 783,
       "spatialProvinceId": "87111",
       "spatialProvinceIndex": 783,
       "routeNodeKey": "51b1f6b2-7dc2-4393-b1a5-5135a31c7f6f",
@@ -30530,6 +31234,7 @@
         "nameCh": "滇池",
         "isSeat": true
       },
+      "provinceId": 414,
       "spatialProvinceId": "45514",
       "spatialProvinceIndex": 414,
       "routeNodeKey": "48e657cf-ab61-4e3a-9a1b-9d0a5b795bed",
@@ -30573,6 +31278,7 @@
         "nameCh": "涿鹿",
         "isSeat": false
       },
+      "provinceId": 786,
       "spatialProvinceId": "87128",
       "spatialProvinceIndex": 786,
       "routeNodeKey": "a121af35-1d4e-4eed-9428-d0fc5ef0a073",
@@ -30617,6 +31323,7 @@
         "nameCh": "潘",
         "isSeat": false
       },
+      "provinceId": 784,
       "spatialProvinceId": "87118",
       "spatialProvinceIndex": 784,
       "routeNodeKey": "bce02e44-ba57-4214-adaf-e3840d63854e",
@@ -30662,6 +31369,7 @@
         "nameCh": "代",
         "isSeat": false
       },
+      "provinceId": 842,
       "spatialProvinceId": "87421",
       "spatialProvinceIndex": 842,
       "routeNodeKey": "4dd2e40f-d223-479f-8b9b-290b2d118fd9",
@@ -30704,6 +31412,7 @@
         "nameCh": "北平邑",
         "isSeat": false
       },
+      "provinceId": 881,
       "spatialProvinceId": "95010",
       "spatialProvinceIndex": 881,
       "routeNodeKey": "901fd524-c886-4b8f-afcf-c8e4a3c0a027",
@@ -30748,6 +31457,7 @@
         "nameCh": "平舒",
         "isSeat": false
       },
+      "provinceId": 883,
       "spatialProvinceId": "95031",
       "spatialProvinceIndex": 883,
       "routeNodeKey": "d3c68fa9-9869-43d9-8f0c-289b3c1e10d8",
@@ -30791,6 +31501,7 @@
         "nameCh": "当城",
         "isSeat": false
       },
+      "provinceId": 844,
       "spatialProvinceId": "87425",
       "spatialProvinceIndex": 844,
       "routeNodeKey": "2c906714-c13b-4597-bbc5-f934ed857e74",
@@ -30834,6 +31545,7 @@
         "nameCh": "狋氏",
         "isSeat": false
       },
+      "provinceId": 885,
       "spatialProvinceId": "95070",
       "spatialProvinceIndex": 885,
       "routeNodeKey": "3b282cd3-68cd-4915-9709-a87abe2f17ef",
@@ -30875,6 +31587,7 @@
         "nameCh": "贲古",
         "isSeat": false
       },
+      "provinceId": 425,
       "spatialProvinceId": "45603",
       "spatialProvinceIndex": 425,
       "routeNodeKey": "878625d3-9571-43e2-a3bd-0c2a99267649",
@@ -30918,6 +31631,7 @@
         "nameCh": "土垠",
         "isSeat": true
       },
+      "provinceId": 849,
       "spatialProvinceId": "87458",
       "spatialProvinceIndex": 849,
       "routeNodeKey": "6a4b82a3-24a4-4580-8a6c-36920d0e0548",
@@ -30958,6 +31672,7 @@
         "nameCh": "俊靡",
         "isSeat": false
       },
+      "provinceId": 847,
       "spatialProvinceId": "87453",
       "spatialProvinceIndex": 847,
       "routeNodeKey": "4b009e42-9e0b-44c9-bd2a-9288d57b7753",
@@ -31000,6 +31715,7 @@
         "nameCh": "徐无",
         "isSeat": false
       },
+      "provinceId": 848,
       "spatialProvinceId": "87456",
       "spatialProvinceIndex": 848,
       "routeNodeKey": "da8f89cb-6a47-4939-bf49-876029b4dea5",
@@ -31044,6 +31760,7 @@
         "nameCh": "建伶",
         "isSeat": false
       },
+      "provinceId": 420,
       "spatialProvinceId": "45529",
       "spatialProvinceIndex": 420,
       "routeNodeKey": "b5cacd18-437e-496b-a906-5ad2f070b178",
@@ -31086,6 +31803,7 @@
         "nameCh": "安次",
         "isSeat": false
       },
+      "provinceId": 840,
       "spatialProvinceId": "87407",
       "spatialProvinceIndex": 840,
       "routeNodeKey": "c46b99f4-74fc-41fa-8a2a-7d8cafa36f43",
@@ -31166,6 +31884,7 @@
         "nameCh": "涿",
         "isSeat": true
       },
+      "provinceId": 823,
       "spatialProvinceId": "87307",
       "spatialProvinceIndex": 823,
       "routeNodeKey": "f4654f19-0d6b-4a03-b1fa-32d4976c981d",
@@ -31210,6 +31929,7 @@
         "nameCh": "故安",
         "isSeat": false
       },
+      "provinceId": 827,
       "spatialProvinceId": "87318",
       "spatialProvinceIndex": 827,
       "routeNodeKey": "c1f72d3b-1e5f-4429-8700-5af9669dc37e",
@@ -31253,6 +31973,7 @@
         "nameCh": "方城",
         "isSeat": false
       },
+      "provinceId": 824,
       "spatialProvinceId": "87308",
       "spatialProvinceIndex": 824,
       "routeNodeKey": "aa8e8224-7514-4ddc-b1c5-25adedd3f204",
@@ -31297,6 +32018,7 @@
         "nameCh": "良乡",
         "isSeat": false
       },
+      "provinceId": 831,
       "spatialProvinceId": "87336",
       "spatialProvinceIndex": 831,
       "routeNodeKey": "47735408-b8eb-4b2a-b8a6-4083c10b3914",
@@ -31340,6 +32062,7 @@
         "nameCh": "范阳",
         "isSeat": false
       },
+      "provinceId": 820,
       "spatialProvinceId": "87295",
       "spatialProvinceIndex": 820,
       "routeNodeKey": "c11f189a-1823-4f0e-8359-08d04e46f5d7",
@@ -31378,6 +32101,7 @@
         "nameCh": "潞",
         "isSeat": false
       },
+      "provinceId": 846,
       "spatialProvinceId": "87436",
       "spatialProvinceIndex": 846,
       "routeNodeKey": "3881e995-d40e-4fa7-87e1-ec2934954be2",
@@ -31418,6 +32142,7 @@
         "nameCh": "穀昌",
         "isSeat": false
       },
+      "provinceId": 417,
       "spatialProvinceId": "45525",
       "spatialProvinceIndex": 417,
       "routeNodeKey": "b5b2ff1b-873b-4d7c-b675-95a9d19fa0f6",
@@ -31568,6 +32293,7 @@
         "nameCh": "肥如",
         "isSeat": false
       },
+      "provinceId": 853,
       "spatialProvinceId": "87476",
       "spatialProvinceIndex": 853,
       "routeNodeKey": "0bb2f813-8adf-4f77-9abc-ff3e3cbc732e",
@@ -31608,6 +32334,7 @@
         "nameCh": "临渝",
         "isSeat": false
       },
+      "provinceId": 851,
       "spatialProvinceId": "87469",
       "spatialProvinceIndex": 851,
       "routeNodeKey": "c417a578-c9be-4e71-87dc-de78440cdc66",
@@ -31650,6 +32377,7 @@
         "nameCh": "海阳",
         "isSeat": false
       },
+      "provinceId": 850,
       "spatialProvinceId": "87468",
       "spatialProvinceIndex": 850,
       "routeNodeKey": "fa75c1ef-5e9b-4359-82df-5051dcce8d51",
@@ -31694,6 +32422,7 @@
         "nameCh": "牧靡",
         "isSeat": false
       },
+      "provinceId": 416,
       "spatialProvinceId": "45522",
       "spatialProvinceIndex": 416,
       "routeNodeKey": "d6655ff1-fa80-44a9-9398-35b9f6659e29",
@@ -31808,6 +32537,7 @@
         "nameCh": "番禺",
         "isSeat": true
       },
+      "provinceId": 186,
       "spatialProvinceId": "42193",
       "spatialProvinceIndex": 186,
       "routeNodeKey": "f789d94d-f776-45a4-ba92-327bffa2e129",
@@ -31849,6 +32579,7 @@
         "nameCh": "博罗",
         "isSeat": false
       },
+      "provinceId": 184,
       "spatialProvinceId": "42171",
       "spatialProvinceIndex": 184,
       "routeNodeKey": "55f7a532-c6d7-4ee6-b11a-55e893ff6a33",
@@ -31891,6 +32622,7 @@
         "nameCh": "增城",
         "isSeat": false
       },
+      "provinceId": 187,
       "spatialProvinceId": "42212",
       "spatialProvinceIndex": 187,
       "routeNodeKey": "dbbc0965-bcc8-4037-91a0-b8fd0a148530",
@@ -31931,6 +32663,7 @@
         "nameCh": "揭阳",
         "isSeat": false
       },
+      "provinceId": 183,
       "spatialProvinceId": "42147",
       "spatialProvinceIndex": 183,
       "routeNodeKey": "09a476f0-6953-4e81-8cb2-20b1310ba268",
@@ -31973,6 +32706,7 @@
         "nameCh": "龙川",
         "isSeat": false
       },
+      "provinceId": 185,
       "spatialProvinceId": "42184",
       "spatialProvinceIndex": 185,
       "routeNodeKey": "f2aa8ccb-5437-4ea6-9ce0-bf555ca70a44",
@@ -32013,6 +32747,7 @@
         "nameCh": "合浦",
         "isSeat": true
       },
+      "provinceId": 199,
       "spatialProvinceId": "42524",
       "spatialProvinceIndex": 199,
       "routeNodeKey": "c0bd7205-274a-42d2-ad26-3829d27dda56",
@@ -32053,6 +32788,7 @@
         "nameCh": "徐闻",
         "isSeat": false
       },
+      "provinceId": 197,
       "spatialProvinceId": "42424",
       "spatialProvinceIndex": 197,
       "routeNodeKey": "09ae709d-be73-4108-8b54-7bcd4ff1b239",
@@ -32093,6 +32829,7 @@
         "nameCh": "朱崖",
         "isSeat": false
       },
+      "provinceId": 198,
       "spatialProvinceId": "42444",
       "spatialProvinceIndex": 198,
       "routeNodeKey": "8a5cb89f-3f90-4b40-a840-bf60927f8319",
@@ -32171,6 +32908,7 @@
         "nameCh": "广信",
         "isSeat": true
       },
+      "provinceId": 301,
       "spatialProvinceId": "44147",
       "spatialProvinceIndex": 301,
       "routeNodeKey": "e27a4243-03bb-4845-b176-fcb51261afa6",
@@ -32216,6 +32954,7 @@
         "nameCh": "冯乘",
         "isSeat": false
       },
+      "provinceId": 172,
       "spatialProvinceId": "41975",
       "spatialProvinceIndex": 172,
       "routeNodeKey": "a32621ff-ace1-40df-a27e-aa8ba42e49b2",
@@ -32261,6 +33000,7 @@
         "nameCh": "富川",
         "isSeat": false
       },
+      "provinceId": 296,
       "spatialProvinceId": "43916",
       "spatialProvinceIndex": 296,
       "routeNodeKey": "b70f6080-31cf-4ad4-aa73-b8afb7e384a6",
@@ -32305,6 +33045,7 @@
         "nameCh": "封阳",
         "isSeat": false
       },
+      "provinceId": 298,
       "spatialProvinceId": "43930",
       "spatialProvinceIndex": 298,
       "routeNodeKey": "db3373a5-9366-4e99-8c38-02b8f1276a02",
@@ -32348,6 +33089,7 @@
         "nameCh": "荔浦",
         "isSeat": false
       },
+      "provinceId": 299,
       "spatialProvinceId": "43932",
       "spatialProvinceIndex": 299,
       "routeNodeKey": "e87796c2-e797-4a1a-8e05-ace627743598",
@@ -32392,6 +33134,7 @@
         "nameCh": "谢沐",
         "isSeat": false
       },
+      "provinceId": 171,
       "spatialProvinceId": "41960",
       "spatialProvinceIndex": 171,
       "routeNodeKey": "5c9c5528-d1cc-4295-af9d-ba076eb03dca",
@@ -32434,6 +33177,7 @@
         "nameCh": "高要",
         "isSeat": false
       },
+      "provinceId": 191,
       "spatialProvinceId": "42266",
       "spatialProvinceIndex": 191,
       "routeNodeKey": "4cd6b9ef-38bc-4a47-836e-ef9ac85f59ef",
@@ -32475,6 +33219,7 @@
         "nameCh": "高凉",
         "isSeat": false
       },
+      "provinceId": 194,
       "spatialProvinceId": "42300",
       "spatialProvinceIndex": 194,
       "routeNodeKey": "89688f0f-d3c8-4db1-843c-b90b85573f89",
@@ -32515,6 +33260,7 @@
         "nameCh": "布山",
         "isSeat": true
       },
+      "provinceId": 304,
       "spatialProvinceId": "44234",
       "spatialProvinceIndex": 304,
       "routeNodeKey": "bc4c159d-377f-4dfe-983e-31cb973a2f82",
@@ -32557,6 +33303,7 @@
         "nameCh": "中溜",
         "isSeat": false
       },
+      "provinceId": 305,
       "spatialProvinceId": "44244",
       "spatialProvinceIndex": 305,
       "routeNodeKey": "e0062d7d-dd70-45cc-a2b3-d1f5f5e30820",
@@ -32597,6 +33344,7 @@
         "nameCh": "安广",
         "isSeat": false
       },
+      "provinceId": 295,
       "spatialProvinceId": "43860",
       "spatialProvinceIndex": 295,
       "routeNodeKey": "79de5f2e-d901-40a9-91d8-494a348f5beb",
@@ -32635,6 +33383,7 @@
         "nameCh": "潭中",
         "isSeat": false
       },
+      "provinceId": 294,
       "spatialProvinceId": "43783",
       "spatialProvinceIndex": 294,
       "routeNodeKey": "6db8d985-7ae7-48aa-8163-46a85573242a",
@@ -32673,6 +33422,7 @@
         "nameCh": "领方",
         "isSeat": false
       },
+      "provinceId": 300,
       "spatialProvinceId": "44055",
       "spatialProvinceIndex": 300,
       "routeNodeKey": "d997a90a-4d58-4853-b5ba-ca6084ae372e",
@@ -32715,6 +33465,7 @@
         "nameCh": "味",
         "isSeat": false
       },
+      "provinceId": 418,
       "spatialProvinceId": "45526",
       "spatialProvinceIndex": 418,
       "routeNodeKey": "91849fa8-4d9f-4aff-9916-f75aa566ea87",
@@ -32760,6 +33511,7 @@
         "nameCh": "昆泽",
         "isSeat": false
       },
+      "provinceId": 419,
       "spatialProvinceId": "45527",
       "spatialProvinceIndex": 419,
       "routeNodeKey": "a74b8d4b-0019-445a-90dc-d6740ac32c53",
@@ -32802,6 +33554,7 @@
         "nameCh": "同濑",
         "isSeat": false
       },
+      "provinceId": 531,
       "spatialProvinceId": "80573",
       "spatialProvinceIndex": 531,
       "routeNodeKey": "be68f106-ec35-4edb-a9f2-f193cc12ff53",
@@ -32846,6 +33599,7 @@
         "nameCh": "同劳",
         "isSeat": false
       },
+      "provinceId": 532,
       "spatialProvinceId": "80574",
       "spatialProvinceIndex": 532,
       "routeNodeKey": "1fe8bcbc-7b1b-4b3d-897b-58db0740bed6",
@@ -32889,6 +33643,7 @@
         "nameCh": "连然",
         "isSeat": false
       },
+      "provinceId": 415,
       "spatialProvinceId": "45519",
       "spatialProvinceIndex": 415,
       "routeNodeKey": "d6cb798c-3cec-4359-ac74-8c6a5d039931",
@@ -32930,6 +33685,7 @@
         "nameCh": "比苏",
         "isSeat": false
       },
+      "provinceId": 407,
       "spatialProvinceId": "45380",
       "spatialProvinceIndex": 407,
       "routeNodeKey": "3e62e07d-f24d-4586-bc03-0b7307eb9831",
@@ -32970,6 +33726,7 @@
         "nameCh": "楪榆",
         "isSeat": false
       },
+      "provinceId": 426,
       "spatialProvinceId": "45629",
       "spatialProvinceIndex": 426,
       "routeNodeKey": "45ed5240-4b9c-47fb-bb08-abe3d8eb8847",
@@ -33010,6 +33767,7 @@
         "nameCh": "云南",
         "isSeat": false
       },
+      "provinceId": 406,
       "spatialProvinceId": "45372",
       "spatialProvinceIndex": 406,
       "routeNodeKey": "cb61c428-020b-407e-b659-4d79afc6db4e",
@@ -33048,6 +33806,7 @@
         "nameCh": "哀牢",
         "isSeat": false
       },
+      "provinceId": 528,
       "spatialProvinceId": "80004",
       "spatialProvinceIndex": 528,
       "routeNodeKey": "f88a3af7-0cab-41f9-9dda-b96724db5365",
@@ -33093,6 +33852,7 @@
         "nameCh": "故道",
         "isSeat": false
       },
+      "provinceId": 526,
       "spatialProvinceId": "71057",
       "spatialProvinceIndex": 526,
       "routeNodeKey": "74cc6de3-d167-4c89-948c-67b7c4f4d94a",
@@ -33135,6 +33895,7 @@
         "nameCh": "阴盘",
         "isSeat": false
       },
+      "provinceId": 514,
       "spatialProvinceId": "70735",
       "spatialProvinceIndex": 514,
       "routeNodeKey": "e29774a0-b6bb-4924-abf9-9df58aae0534",
@@ -33178,6 +33939,7 @@
         "nameCh": "骊靬",
         "isSeat": false
       },
+      "provinceId": 493,
       "spatialProvinceId": "70607",
       "spatialProvinceIndex": 493,
       "routeNodeKey": "53552783-818b-4715-935c-252fe6925bba",
@@ -33218,6 +33980,7 @@
         "nameCh": "延寿",
         "isSeat": false
       },
+      "provinceId": 477,
       "spatialProvinceId": "70459",
       "spatialProvinceIndex": 477,
       "routeNodeKey": "414813a4-2c4d-471d-8ff5-dcb80623321e",
@@ -33259,6 +34022,7 @@
         "nameCh": "雕阴",
         "isSeat": false
       },
+      "provinceId": 475,
       "spatialProvinceId": "70418",
       "spatialProvinceIndex": 475,
       "routeNodeKey": "2fe78265-db66-4289-ba17-a855e227ca5d",
@@ -33300,6 +34064,7 @@
         "nameCh": "定阳",
         "isSeat": false
       },
+      "provinceId": 59,
       "spatialProvinceId": "40624",
       "spatialProvinceIndex": 59,
       "routeNodeKey": "56c81b2a-dd95-4620-8fd0-faa8d1360700",
@@ -33344,6 +34109,7 @@
         "nameCh": "逎",
         "isSeat": false
       },
+      "provinceId": 826,
       "spatialProvinceId": "87316",
       "spatialProvinceIndex": 826,
       "routeNodeKey": "2c2ad9f6-d843-4d19-9204-4a9c59a46e6d",
@@ -33387,6 +34153,7 @@
         "nameCh": "北新城",
         "isSeat": false
       },
+      "provinceId": 864,
       "spatialProvinceId": "87538",
       "spatialProvinceIndex": 864,
       "routeNodeKey": "e919233a-3427-4d55-90b4-98fb274e9470",
@@ -33430,6 +34197,7 @@
         "nameCh": "令支",
         "isSeat": false
       },
+      "provinceId": 852,
       "spatialProvinceId": "87473",
       "spatialProvinceIndex": 852,
       "routeNodeKey": "37b9a6ac-80e7-4b8b-a134-e646141adc25",
@@ -33471,6 +34239,7 @@
         "nameCh": "四会",
         "isSeat": false
       },
+      "provinceId": 192,
       "spatialProvinceId": "42269",
       "spatialProvinceIndex": 192,
       "routeNodeKey": "a27c3335-6a69-4c15-8d53-f064becb75fa",
@@ -33514,6 +34283,7 @@
         "nameCh": "临贺",
         "isSeat": false
       },
+      "provinceId": 297,
       "spatialProvinceId": "43923",
       "spatialProvinceIndex": 297,
       "routeNodeKey": "edb88812-d1eb-4742-8c08-db36cf10d6fd",
@@ -33557,6 +34327,7 @@
         "nameCh": "猛陵",
         "isSeat": false
       },
+      "provinceId": 302,
       "spatialProvinceId": "44151",
       "spatialProvinceIndex": 302,
       "routeNodeKey": "8faa49d8-1f61-478d-9c17-fd663dbb0a12",
@@ -33597,6 +34368,7 @@
         "nameCh": "阿林",
         "isSeat": false
       },
+      "provinceId": 303,
       "spatialProvinceId": "44214",
       "spatialProvinceIndex": 303,
       "routeNodeKey": "0c5ddca1-362c-4877-a825-a40c81d9b473",
@@ -33640,6 +34412,7 @@
         "nameCh": "歷城",
         "isSeat": false
       },
+      "provinceId": 349,
       "spatialProvinceId": "45022",
       "spatialProvinceIndex": 349,
       "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef",

@@ -7,11 +7,9 @@ import kotlin.test.assertEquals
 class Han780V1CompatibilityResourceTest {
 
     @Test
-    fun `world v2 resolves the current Han gameplay resource`() {
-        assertEquals(
-            MapJson.loadFromClasspath("han").cities,
-            MapJson.loadFromClasspath("han-world-v2").cities,
-        )
+    fun `world v2 resolves its reviewed 781 city resource`() {
+        val v2 = MapJson.loadFromClasspath("han-world-v2")
+        assertEquals((1..781).toList(), v2.cities.map { it.id })
     }
 
     @Test

@@ -953,6 +953,7 @@ def build_v2() -> tuple[str, str, str, str]:
         province = province_by_city_index.get(city_index_by_place[place])
         if province is not None:
             province_index, province_record = province
+            out["provinceId"] = province_index
             out["spatialProvinceId"] = str(province_record["id"])
             out["spatialProvinceIndex"] = province_index
         out["connections"] = sorted(connections[cid])

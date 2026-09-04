@@ -7,8 +7,8 @@ import kotlin.test.assertTrue
 class MapJsonTest {
 
     @Test
-    fun `world v2 resolves to the committed Han gameplay resource`() {
-        assertEquals("han", MapJson.resourceCode("han-world-v2"))
+    fun `world v2 resolves to its own committed gameplay resource`() {
+        assertEquals("han-world-v2", MapJson.resourceCode("han-world-v2"))
         assertEquals("han-780-v1", MapJson.resourceCode("han-780-v1"))
         assertEquals("che", MapJson.resourceCode("che"))
     }

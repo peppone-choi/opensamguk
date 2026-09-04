@@ -120,4 +120,14 @@ class CalcCityDistanceTest {
         assertTrue(595 in CalcCityDistance.nearCity(3, 1, han))
         assertTrue(CityConstRegistry.of("che").byId(419) == null)
     }
+
+    @Test
+    fun `world v2 Lu and Licheng are reciprocal one hop without changing che`() {
+        val v2 = CityConstRegistry.of("han-world-v2")
+        assertEquals(1, CalcCityDistance.calcCityDistance(273, 781, cityConst = v2))
+        assertEquals(1, CalcCityDistance.calcCityDistance(781, 273, cityConst = v2))
+        assertTrue(781 in CalcCityDistance.nearCity(273, 1, v2))
+        assertTrue(273 in CalcCityDistance.nearCity(781, 1, v2))
+        assertEquals(setOf(9, 18, 70, 78, 80), CalcCityDistance.nearCity(1, 1))
+    }
 }

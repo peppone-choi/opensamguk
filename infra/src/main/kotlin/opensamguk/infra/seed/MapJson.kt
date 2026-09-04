@@ -5,8 +5,7 @@ import opensamguk.infra.persistence.MetaJson
 object MapJson {
 
     /** Resolve logical map aliases to the committed gameplay resource name. */
-    fun resourceCode(mapCode: String): String =
-        if (mapCode == "han-world-v2") "han" else mapCode
+    fun resourceCode(mapCode: String): String = mapCode
 
     data class MapData(val width: Int, val height: Int, val cities: List<MapCityCoord>)
 
