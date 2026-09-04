@@ -970,6 +970,19 @@ def fold_to_jun(places, proj, junguo):
         # 治所를 다른 郡에 뺏겼으면(遼東屬國 治 昌遼가 遼東郡에 먹히는 식) 이 郡은 縣이
         # 하나도 없어 통째로 지워진다. 그때는 CHGIS/외부 점이 유일한 근거다.
         if k in seat_of and jun_of[seat_of[k]] == k:
+            seat_place = places[seat_of[k]]
+            # A named administrative representative at the exact source
+            # coordinates of its proven county seat is the same historical
+            # location. Keep its parent without promoting it to another hub;
+            # nearest-point fallback can otherwise steal it for a co-located
+            # unrelated parent. A proximity-inferred county is not proof.
+            if (seat_place.get('kind') == 'COUNTY'
+                    and norm(seat_place.get('nameFt') or seat_place.get('nameCh'))
+                    == norm(junguo[k].get('seat'))
+                    and pl['lon'] == seat_place['lon']
+                    and pl['lat'] == seat_place['lat']):
+                jun_of[i] = k
+                continue
             # 제 郡이 아니라고 판정했다고 **독립 郡**으로 승격시키면 안 된다. 아래 소국
             # 승격 규칙이 그걸 하려 들기 때문에 여기서 표시해 둔다 — 이 점은 그냥
             # 가장 가까운 郡에 흡수된다.
