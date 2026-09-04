@@ -161,6 +161,43 @@ because every probe is required to name the rule it expects.
 The four new rule tests were run against the pre-fix gate, where all eleven subTests fail. A test
 written after the fix proves nothing until it has been seen failing.
 
+### Task 3e: The second question a gate has to answer
+
+A red probe asks *does the gate refuse bad data?* — and the 42 probes say yes. It does not
+ask the other question: *would CI notice if the rule were removed?* Those are different, and
+the second is the durable one. The probe suite is a review instrument; CI runs the tests. A
+rule with no test is a rule a later change can delete with the build green, which is how a
+gate quietly stops gating.
+
+Review found exactly that on this gate: `overruledArgument must be a non-empty string` was
+live on nine committed UPHELD rows, and both halves of the guard could be deleted with the
+suite at 54/54. The corrected-row rule beside it has a test, but it only fires when the
+review state starts with `CORRECTED_BY_`, so the other nine rows were covered by nothing.
+
+`tools/map/mutation_sweep.py` makes the question mechanical: every `raise` and every
+`errors.append` in a module is replaced with `pass` in turn, in a throwaway copy of `tools/`
+with `data/` symlinked, and the suite runs against each mutant.
+
+    python3 tools/map/mutation_sweep.py tools/map/audit_territory_disconnections.py \
+        --tests 'test_territory*.py'
+
+First sweep: **55/62 killed**. The seven survivors were the input-shape guards — RLE runs
+not a list / malformed run / wrong length, terrain length, ledger not an object,
+`adjudications` not an array, a row not an object. Every one is live and refuses bad input;
+none of them was tested. `MalformedInputTest` now covers them, and the sweep is 62/62.
+
+One survivor was worth more than its test. `_expand`'s `must be RLE runs` guard cannot be
+distinguished by any JSON document: a string, mapping or number in `owner` is refused either
+way, because the per-run rule one line below catches the same input. Only a non-list
+*sequence of valid runs* separates them, and `json.load` never produces one. So it is pinned
+at the helper, where the contract it states is the thing under test, rather than through a
+document that cannot reach it. Reaching 62/62 by writing a document-level test for a state
+no document can be in would have been coverage theatre.
+
+The sweep is deliberately **not** a CI step: it re-runs the whole suite once per rule. It
+belongs in review of a gate change — including the follow-up PRs, which add rules to this
+same gate.
+
 ### Task 4: What this ledger is deliberately not wired into
 
 - It is **not** a generator input, so it is not registered in `han_tiles_protected_orchestrator.py`'s role table. The generator never reads it, and a row can never change a cell.

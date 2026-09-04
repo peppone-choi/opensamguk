@@ -339,6 +339,27 @@ class CheckTest(unittest.TestCase):
             [e for e in result["errors"] if "PARENT" in e or "COMMANDERY" in e], [],
         )
 
+    def test_unit_mismatch_is_reported(self):
+        """A row names a component by componentKey, and the unit it claims is checked
+        against the one the grid computed. Deleting the comparison left the suite green:
+        a row keyed C1#1 could declare itself a JURISDICTION, or another unit's id, and
+        still be counted as that component's adjudication."""
+        for field, wrong in (("unitKind", "JURISDICTION"), ("unitId", "C2")):
+            with self.subTest(field):
+                ledger = self.full_ledger()
+                ledger["adjudications"][0][field] = wrong
+                result = audit.check(_document(), ledger)
+                self.assertIn("UNIT_MISMATCH C1#1", " ".join(result["errors"]))
+
+    def test_proposed_parent_name_must_match_the_id_it_carries(self):
+        """The id and the name are two readings of one claim. Unchecked, a row could
+        carry a real commandery id under another commandery's name, and every reader
+        downstream would follow the name."""
+        result = audit.check(
+            _document(), self._misassigned({"nameCh": "甲郡", "commanderyId": "C2"})
+        )
+        self.assertIn("PROPOSED_PARENT_NAME_MISMATCH", " ".join(result["errors"]))
+
     def test_name_drift_is_reported(self):
         """The names are the half of a row a human actually reads. Leaving them
         uncompared meant a row could label the right component with another one's
@@ -474,6 +495,30 @@ class CheckTest(unittest.TestCase):
         ]}
         row = _row(review=review, overruledArgument="[철회] 최초에는 형상 결함으로 보았다.")
         self.assertEqual(len(audit.validate_ledger(_ledger([row]))), 1)
+
+    def test_overruled_argument_must_hold_text_on_any_review_state(self):
+        """The corrected-row rule only fires when the state starts with CORRECTED_BY_, but
+        nine committed rows are UPHELD and carry an overruledArgument holding the challenge
+        that lost. Only the separate non-empty-string rule covers those, and mutation
+        testing showed it could be deleted with the suite still green."""
+        for label, value in (("blank", "   "), ("empty", ""), ("not a string", 123)):
+            with self.subTest(label):
+                row = _row(overruledArgument=value)
+                self.assertEqual(row["review"]["state"], "UPHELD")
+                with self.assertRaisesRegex(ValueError, "overruledArgument must be a non-empty string"):
+                    audit.validate_ledger(_ledger([row]))
+
+    def test_upheld_row_may_carry_the_challenge_that_lost(self):
+        row = _row(overruledArgument="[기각된 반박] 이 조각을 WATER_SEPARATED 로 보자는 주장.")
+        self.assertEqual(audit.validate_ledger(_ledger([row]))[0]["componentKey"], "C1#1")
+
+    def test_committed_upheld_rows_keep_their_rejected_challenge(self):
+        rows = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))["adjudications"]
+        upheld = [r for r in rows
+                  if "overruledArgument" in r and not r["review"]["state"].startswith("CORRECTED_BY_")]
+        self.assertTrue(upheld, "no non-corrected row carries an overruledArgument any more")
+        for row in upheld:
+            self.assertTrue(row["overruledArgument"].strip(), row["componentKey"])
 
     def test_every_row_must_carry_a_review_block(self):
         """`review` was an optional key, and the whole vote and tally validation sat behind
@@ -617,6 +662,76 @@ class CheckTest(unittest.TestCase):
         self.assertEqual(document, before)
 
 
+class MalformedInputTest(unittest.TestCase):
+    """The guards that refuse a grid or a ledger that is the wrong shape.
+
+    A mutation sweep — every `raise` and `errors.append` in the gate replaced with `pass`
+    in turn — killed 55 of 62 rules. These seven survived: each is live and refuses bad
+    input, but nothing in CI noticed when it was removed, so a later change could delete
+    one and stay green.
+    """
+
+    def test_grid_runs_must_be_well_formed_rle(self):
+        for label, owner in (
+            ("not a list", "aab.ee"),
+            ("run is not a pair", [[0, 1, 1]]),
+            ("run count is zero", [[0, 0]] + _rle(_grid(["aab.ee", "abcd..", "..dddf", "......"]))),
+            ("run value is not an int", [["0", 1]]),
+            ("too short", [[0, 2]]),
+            ("too long", _rle(_grid(["aab.ee", "abcd..", "..dddf", "......"])) + [[0, 3]]),
+        ):
+            with self.subTest(label):
+                document = _document()
+                document["owner"] = owner
+                with self.assertRaises(ValueError):
+                    audit.inventory(document)
+
+    def test_rle_runs_must_be_a_list(self):
+        """The one rule in the gate that no JSON document can distinguish.
+
+        A string, mapping or number in `owner` is refused either way — with the guard it
+        fails as "must be RLE runs", without it the per-run rule below catches the same
+        input a line later. Only a non-list *sequence of valid runs* tells the two apart,
+        and `json.load` never produces one. So it is pinned at the helper instead, where
+        the contract it states — runs are a list — is the thing under test.
+        """
+        runs = _rle(_grid(["aab.ee", "abcd..", "..dddf", "......"]))
+        self.assertEqual(len(audit._expand(runs, 24, "owner")), 24)
+        with self.assertRaisesRegex(ValueError, "must be RLE runs"):
+            audit._expand(tuple(runs), 24, "owner")
+
+    def test_terrain_must_cover_the_whole_grid(self):
+        document = _document()
+        document["terrain"] = document["terrain"][:-1]
+        with self.assertRaisesRegex(ValueError, "terrain length"):
+            audit.inventory(document)
+
+    def test_ledger_document_shape_is_checked(self):
+        for label, doc in (
+            ("a list", [{"schemaVersion": 1}]),
+            ("a string", "ledger"),
+            ("a number", 1),
+        ):
+            with self.subTest(label), self.assertRaisesRegex(ValueError, "ledger must be an object"):
+                audit.validate_ledger(doc)
+
+    def test_adjudications_must_be_an_array(self):
+        for label, rows in (("a mapping", {"C1#1": {}}), ("a string", "rows"), ("absent", None)):
+            with self.subTest(label):
+                ledger = _ledger([])
+                if rows is None:
+                    ledger.pop("adjudications")
+                else:
+                    ledger["adjudications"] = rows
+                with self.assertRaisesRegex(ValueError, "adjudications must be an array"):
+                    audit.validate_ledger(ledger)
+
+    def test_each_row_must_be_an_object(self):
+        for label, row in (("a string", "C1#1"), ("a list", ["C1#1"]), ("null", None)):
+            with self.subTest(label), self.assertRaisesRegex(ValueError, "must be an object"):
+                audit.validate_ledger(_ledger([row]))
+
+
 class ValidationLayerTest(unittest.TestCase):
     """Negative cases for the type/enum/identity rules. Without these the whole layer
     could be deleted rule by rule with the suite staying green, because the committed
@@ -642,6 +757,21 @@ class ValidationLayerTest(unittest.TestCase):
         ("confidence", None, {"confidence": "VERY_HIGH"}, "confidence is unknown"),
         ("effectiveFrom as string", None, {"effectiveFrom": "220"}, "integer year"),
         ("evidenceRefs empty", None, {"evidenceRefs": []}, "non-empty string array"),
+        ("ifRules missing a rule", {"ifRules": {"EXCLAVE_KEEP": "d"}}, None, "ifRules"),
+        ("ifRules with a blank description",
+         {"ifRules": {rule: "" for rule in audit.IF_RULES}}, None, "ifRules"),
+        ("ifRules not a mapping", {"ifRules": ["EXCLAVE_KEEP"]}, None, "ifRules"),
+        ("review not an object", None, {"review": "UPHELD"}, "review must be an object"),
+        ("review votes not a list", None,
+         {"review": {"state": "UPHELD", "votes": {}}}, "votes must be a non-empty array"),
+        ("vote missing a key", None,
+         {"review": {"state": "UPHELD", "votes": [{"lens": "L", "refuted": False}]}}, "votes"),
+        ("vote refuted not a boolean", None,
+         {"review": {"state": "UPHELD",
+                     "votes": [{"lens": "L", "refuted": "false", "reason": "r"}]}}, "votes"),
+        ("vote reason blank", None,
+         {"review": {"state": "UPHELD",
+                     "votes": [{"lens": "L", "refuted": False, "reason": "  "}]}}, "votes"),
         ("proposedParent id type", None, {
             "verdict": "PARENT_MISASSIGNMENT",
             "ifRule": "MISASSIGNMENT_PENDING_PARENT_LEDGER",
