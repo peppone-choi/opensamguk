@@ -27,6 +27,12 @@ DECISIONS = {
 }
 PROTECT_DECISIONS = {"PROTECT_GEOMETRY_DEFECT", "PROTECT_PARENT_MISASSIGNMENT"}
 UPHOLD_DECISIONS = {"UPHOLD_WATER_ROUTE_ONLY", "UPHOLD_HISTORICAL_EXCLAVE"}
+SOURCE_VERDICT_BY_DECISION = {
+    "PROTECT_GEOMETRY_DEFECT": "GEOMETRY_DEFECT",
+    "PROTECT_PARENT_MISASSIGNMENT": "PARENT_MISASSIGNMENT",
+    "UPHOLD_WATER_ROUTE_ONLY": "WATER_SEPARATED",
+    "UPHOLD_HISTORICAL_EXCLAVE": "HISTORICAL_EXCLAVE",
+}
 VERDICTS = (
     "BOTH_SUPPLIED",
     "CITY_ONLY_PROTECTED",
@@ -140,6 +146,12 @@ def audit_documents(
         decision = decision_row.get("decision")
         if decision not in DECISIONS:
             errors.append(f"{prefix} has unknown decision {decision!r}")
+        rationale = decision_row.get("rationale")
+        if not isinstance(rationale, str) or not rationale.strip():
+            errors.append(f"{prefix} is missing rationale")
+        expected = decision_row.get("expectedCurrentReachability")
+        if expected != "CITY_ONLY":
+            errors.append(f"{prefix} expectedCurrentReachability must be CITY_ONLY")
         source_key = decision_row.get("sourceLedgerRow")
         if not isinstance(source_key, str) or not source_key:
             errors.append(f"{prefix} is missing sourceLedgerRow")
@@ -162,6 +174,12 @@ def audit_documents(
                 or province.get("jurisdictionId") not in source.get("memberIds", [])
             ):
                 errors.append(f"{prefix} sourceLedgerRow does not cover its jurisdiction component")
+            if source and decision in SOURCE_VERDICT_BY_DECISION and (
+                source.get("verdict") != SOURCE_VERDICT_BY_DECISION[decision]
+            ):
+                errors.append(
+                    f"{prefix} decision {decision} does not match source verdict {source.get('verdict')!r}"
+                )
         start, end = decision_row.get("effectiveScenarioFrom"), decision_row.get("effectiveScenarioTo")
         if not isinstance(start, int) or not isinstance(end, int) or start > end:
             errors.append(f"{prefix} has invalid effective scenario range")
@@ -260,23 +278,29 @@ def audit_documents(
             if _active_decisions([decision_row], scenario_code, city_id) and (scenario_code, city_id) not in city_only_keys:
                 errors.append(f"stale decision[{index}]: scenario {scenario_code} city {city_id} is no longer city-only")
 
-    ever_owned = {
-        city_id
-        for scenario in scenarios.values()
-        for city_id, nation_id in _scenario_runtime(scenario)[0].items()
-        if nation_id != 0
-    }
+    owned_scenarios_by_city: dict[int, list[int]] = {}
+    for scenario_code, scenario in scenarios.items():
+        for city_id, nation_id in _scenario_runtime(scenario)[0].items():
+            if nation_id != 0:
+                owned_scenarios_by_city.setdefault(city_id, []).append(scenario_code)
     for city_id, city in runtime_by_id.items():
         province_index = city.get("provinceId")
         if (
-            city_id in ever_owned
+            city_id in owned_scenarios_by_city
             and isinstance(province_index, int)
             and province_index in province_adjacency
             and not province_adjacency[province_index]
         ):
-            has_policy = any(row.get("runtimeCityId") == city_id for row in ledger_rows)
-            if not has_policy:
-                errors.append(f"degree-zero city province: city {city_id} province {province_index} has no protection")
+            for scenario_code in sorted(owned_scenarios_by_city[city_id]):
+                active_protection = [
+                    row for row in _active_decisions(ledger_rows, scenario_code, city_id)
+                    if row.get("decision") in PROTECT_DECISIONS
+                ]
+                if len(active_protection) != 1:
+                    errors.append(
+                        f"degree-zero city province: city {city_id} province {province_index} "
+                        f"scenario {scenario_code} has no active protection"
+                    )
 
     return AuditResult(
         errors=sorted(set(errors)),

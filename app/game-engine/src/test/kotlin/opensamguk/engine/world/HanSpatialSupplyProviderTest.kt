@@ -26,13 +26,16 @@ class HanSpatialSupplyProviderTest {
     private val ownershipPath = "../../data/map/han-scenario-province-ownership-v1.json"
     private val allowlistPath = "../../data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json"
     private val ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json"
+    private val sourceLedgerPath = "../../data/curated/han/territory-disconnection-adjudications-v1.json"
     private val runtimeMapPath = "../../infra/src/main/resources/map/han.json"
 
     private fun provider() = HanSpatialSupplyProvider(mapper, mapPath, ownershipPath)
 
     @Test
     fun `reviewed active fallback policies are attached to the spatial network`() {
-        val loader = HanSupplyDisconnectionPolicyLoader(mapper, ledgerPath, mapPath, runtimeMapPath)
+        val loader = HanSupplyDisconnectionPolicyLoader(
+            mapper, ledgerPath, mapPath, runtimeMapPath, sourceLedgerPath,
+        )
         val provider = HanSpatialSupplyProvider(mapper, mapPath, ownershipPath, loader)
         val liveCities = MapJson.loadFromClasspath("han").cities.mapNotNull { city ->
             city.provinceId?.let { SpatialSupplyCity(city.id, it, 0) }
@@ -98,7 +101,9 @@ class HanSpatialSupplyProviderTest {
             mapper,
             mapPath,
             ownershipPath,
-            HanSupplyDisconnectionPolicyLoader(mapper, ledgerPath, mapPath, runtimeMapPath),
+            HanSupplyDisconnectionPolicyLoader(
+                mapper, ledgerPath, mapPath, runtimeMapPath, sourceLedgerPath,
+            ),
         )
 
         for (scenarioCode in scenarioCodes) {

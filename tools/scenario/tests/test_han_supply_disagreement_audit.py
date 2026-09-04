@@ -33,6 +33,8 @@ def fixture():
         "jurisdictionId": "J1",
         "decision": "PROTECT_GEOMETRY_DEFECT",
         "sourceLedgerRow": "R0@10:10",
+        "rationale": "Reviewed geometry defect remains protected.",
+        "expectedCurrentReachability": "CITY_ONLY",
         "effectiveScenarioFrom": 1010,
         "effectiveScenarioTo": 1010,
     }]}
@@ -71,6 +73,20 @@ class HanSupplyDisagreementAuditTest(unittest.TestCase):
         result = self.audit(lambda *docs: docs[4]["decisions"][0].pop("sourceLedgerRow"))
         self.assertTrue(any("sourceLedgerRow" in error for error in result.errors))
 
+    def test_missing_rationale_and_expected_reachability_fail_closed(self):
+        def mutate(*docs):
+            docs[4]["decisions"][0].pop("rationale")
+            docs[4]["decisions"][0].pop("expectedCurrentReachability")
+        result = self.audit(mutate)
+        self.assertTrue(any("rationale" in error for error in result.errors))
+        self.assertTrue(any("expectedCurrentReachability" in error for error in result.errors))
+
+    def test_decision_must_match_source_ledger_verdict(self):
+        result = self.audit(
+            lambda *docs: docs[4]["decisions"][0].update(decision="UPHOLD_HISTORICAL_EXCLAVE")
+        )
+        self.assertTrue(any("does not match source verdict" in error for error in result.errors))
+
     def test_unclassified_city_only_mismatch_fails_closed(self):
         result = self.audit(lambda *docs: docs[4].update(decisions=[]))
         self.assertTrue(any("unclassified city-only" in error for error in result.errors))
@@ -88,6 +104,52 @@ class HanSupplyDisagreementAuditTest(unittest.TestCase):
             runtime_map["cities"].append({"id": 3, "physicalPlaceId": "P3", "provinceId": 3, "connections": []})
             ownership["scenarios"][0]["assignments"].append({"provinceId": "PR3", "ownerNationId": 0})
             scenarios[1010]["nation"][0][8].append(3)
+        result = self.audit(mutate)
+        self.assertTrue(any("degree-zero city province" in error for error in result.errors))
+
+    def test_degree_zero_protection_must_be_active_for_the_owned_scenario(self):
+        def mutate(*docs):
+            tiles, runtime_map, ownership, scenarios, ledger, source = docs
+            tiles["provinceRecords"].append({"id": "PR3", "jurisdictionId": "J3", "parentRegionId": "R2"})
+            runtime_map["cities"].append({"id": 3, "physicalPlaceId": "P3", "provinceId": 3, "connections": []})
+            ownership["scenarios"][0]["assignments"].append({"provinceId": "PR3", "ownerNationId": 0})
+            scenarios[1010]["nation"][0][8].append(3)
+            source["adjudications"].append({
+                "componentKey": "R2@1:1", "unitId": "R2", "memberIds": ["J3"],
+                "verdict": "GEOMETRY_DEFECT",
+            })
+            ledger["decisions"].append({
+                "runtimeCityId": 3,
+                "physicalPlaceId": "P3",
+                "jurisdictionId": "J3",
+                "decision": "PROTECT_GEOMETRY_DEFECT",
+                "sourceLedgerRow": "R2@1:1",
+                "effectiveScenarioFrom": 1020,
+                "effectiveScenarioTo": 1020,
+            })
+        result = self.audit(mutate)
+        self.assertTrue(any("degree-zero city province" in error for error in result.errors))
+
+    def test_degree_zero_uphold_is_not_protection(self):
+        def mutate(*docs):
+            tiles, runtime_map, ownership, scenarios, ledger, source = docs
+            tiles["provinceRecords"].append({"id": "PR3", "jurisdictionId": "J3", "parentRegionId": "R2"})
+            runtime_map["cities"].append({"id": 3, "physicalPlaceId": "P3", "provinceId": 3, "connections": []})
+            ownership["scenarios"][0]["assignments"].append({"provinceId": "PR3", "ownerNationId": 0})
+            scenarios[1010]["nation"][0][8].append(3)
+            source["adjudications"].append({
+                "componentKey": "R2@1:1", "unitId": "R2", "memberIds": ["J3"],
+                "verdict": "HISTORICAL_EXCLAVE",
+            })
+            ledger["decisions"].append({
+                "runtimeCityId": 3,
+                "physicalPlaceId": "P3",
+                "jurisdictionId": "J3",
+                "decision": "UPHOLD_HISTORICAL_EXCLAVE",
+                "sourceLedgerRow": "R2@1:1",
+                "effectiveScenarioFrom": 1010,
+                "effectiveScenarioTo": 1010,
+            })
         result = self.audit(mutate)
         self.assertTrue(any("degree-zero city province" in error for error in result.errors))
 

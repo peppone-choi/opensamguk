@@ -15,7 +15,9 @@ class HanSupplyDisconnectionPolicyLoader(
     @Value("\${HAN_SUPPLY_DISCONNECTION_LEDGER_FILE:data/curated/han/supply-disconnection-adjudications-v1.json}")
     private val ledgerPath: String,
     @Value("\${HAN_MAP_FILE:data/map/han-tiles.json}") private val mapPath: String,
-    @Value("\${HAN_RUNTIME_MAP_FILE:data/map/han.json}") private val runtimeMapPath: String,
+    @Value("\${HAN_RUNTIME_MAP_FILE:classpath:map/han.json}") private val runtimeMapPath: String,
+    @Value("\${HAN_SUPPLY_SOURCE_LEDGER_FILE:data/curated/han/territory-disconnection-adjudications-v1.json}")
+    private val sourceLedgerPath: String,
 ) {
     @Volatile
     private var cached: CanonicalPolicies? = null
@@ -45,16 +47,22 @@ class HanSupplyDisconnectionPolicyLoader(
 
     private fun loadCanonical(): CanonicalPolicies {
         try {
-            val tiles = objectMapper.readTree(Path.of(mapPath).toFile())
+            val tiles = readTree(mapPath)
             val provinces = tiles.requiredArray("provinceRecords")
             val jurisdictionIds = tiles.requiredArray("jurisdictionRecords")
                 .map { it.requiredText("id") }.toSet()
-            val runtimeCities = objectMapper.readTree(Path.of(runtimeMapPath).toFile())
+            val runtimeCities = readTree(runtimeMapPath)
                 .requiredArray("cities")
             val runtimeById = runtimeCities.associateBy { it.requiredInt("id") }
             check(runtimeById.size == runtimeCities.size) { "Han runtime map contains duplicate city ids" }
 
-            val root = objectMapper.readTree(Path.of(ledgerPath).toFile())
+            val sourceRoot = readTree(sourceLedgerPath)
+            check(sourceRoot.requiredInt("schemaVersion") == 1) { "Han source ledger schemaVersion must be 1" }
+            val sourceRows = sourceRoot.requiredArray("adjudications")
+            val sourceByKey = sourceRows.associateBy { it.requiredText("componentKey") }
+            check(sourceByKey.size == sourceRows.size) { "Han source ledger contains duplicate component keys" }
+
+            val root = readTree(ledgerPath)
             check(root.requiredInt("schemaVersion") == 1) { "Han supply ledger schemaVersion must be 1" }
             val rows = root.requiredArray("decisions").mapIndexed { index, node ->
                 val cityId = node.requiredInt("runtimeCityId")
@@ -78,6 +86,18 @@ class HanSupplyDisconnectionPolicyLoader(
                 val decisionText = node.requiredText("decision")
                 val decision = runCatching { SupplyDisconnectionDecision.valueOf(decisionText) }
                     .getOrElse { error("Han supply ledger city $cityId has unknown decision $decisionText") }
+                val sourceLedgerRow = node.requiredText("sourceLedgerRow")
+                val source = sourceByKey[sourceLedgerRow]
+                    ?: error("Han supply ledger city $cityId references unknown sourceLedgerRow $sourceLedgerRow")
+                val expectedSourceVerdict = SOURCE_VERDICT_BY_DECISION.getValue(decision)
+                check(source.requiredText("verdict") == expectedSourceVerdict) {
+                    "Han supply ledger city $cityId decision $decision does not match source verdict " +
+                        source.requiredText("verdict")
+                }
+                node.requiredText("rationale")
+                check(node.requiredText("expectedCurrentReachability") == "CITY_ONLY") {
+                    "Han supply ledger city $cityId expectedCurrentReachability must be CITY_ONLY"
+                }
                 val effectiveFrom = node.requiredInt("effectiveScenarioFrom")
                 val effectiveTo = node.requiredInt("effectiveScenarioTo")
                 check(effectiveFrom <= effectiveTo) {
@@ -87,7 +107,7 @@ class HanSupplyDisconnectionPolicyLoader(
                     cityId = cityId,
                     provinceIndex = provinceIndex,
                     decision = decision,
-                    sourceLedgerRow = node.requiredText("sourceLedgerRow"),
+                    sourceLedgerRow = sourceLedgerRow,
                     effectiveFrom = effectiveFrom,
                     effectiveTo = effectiveTo,
                 )
@@ -98,6 +118,17 @@ class HanSupplyDisconnectionPolicyLoader(
         } catch (error: Exception) {
             throw IllegalStateException("Invalid Han supply disconnection ledger", error)
         }
+    }
+
+    private fun readTree(location: String): JsonNode {
+        if (!location.startsWith("classpath:")) {
+            return objectMapper.readTree(Path.of(location).toFile())
+        }
+        val resourcePath = location.removePrefix("classpath:").removePrefix("/")
+        val stream = Thread.currentThread().contextClassLoader.getResourceAsStream(resourcePath)
+            ?: javaClass.classLoader.getResourceAsStream(resourcePath)
+            ?: error("Missing classpath resource $resourcePath")
+        return stream.use(objectMapper::readTree)
     }
 
     private fun JsonNode.requiredArray(field: String): List<JsonNode> {
@@ -128,4 +159,13 @@ class HanSupplyDisconnectionPolicyLoader(
     )
 
     private data class CanonicalPolicies(val rows: List<PolicyRow>)
+
+    private companion object {
+        val SOURCE_VERDICT_BY_DECISION = mapOf(
+            SupplyDisconnectionDecision.PROTECT_GEOMETRY_DEFECT to "GEOMETRY_DEFECT",
+            SupplyDisconnectionDecision.PROTECT_PARENT_MISASSIGNMENT to "PARENT_MISASSIGNMENT",
+            SupplyDisconnectionDecision.UPHOLD_WATER_ROUTE_ONLY to "WATER_SEPARATED",
+            SupplyDisconnectionDecision.UPHOLD_HISTORICAL_EXCLAVE to "HISTORICAL_EXCLAVE",
+        )
+    }
 }
