@@ -25,6 +25,7 @@ class HanSpatialSupplyProvider(
     @Value("\${HAN_MAP_FILE:data/map/han-tiles.json}") private val mapPath: String,
     @Value("\${HAN_SCENARIO_PROVINCE_OWNERSHIP_FILE:data/map/han-scenario-province-ownership-v1.json}")
     private val ownershipPath: String,
+    private val policyLoader: HanSupplyDisconnectionPolicyLoader? = null,
 ) {
     @Volatile
     private var cached: CanonicalSpatialSupply? = null
@@ -59,6 +60,10 @@ class HanSpatialSupplyProvider(
             provinceOwners = owners,
             provinceAdjacency = canonical.adjacency.map(IntArray::clone),
             cityProvinceIndices = liveCities.associate { it.cityId to it.provinceIndex },
+            fallbackPolicies = policyLoader?.load(
+                scenarioCode,
+                liveCities.associate { it.cityId to it.provinceIndex },
+            ).orEmpty(),
         )
     }
 
