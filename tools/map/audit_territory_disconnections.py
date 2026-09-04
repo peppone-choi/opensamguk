@@ -28,6 +28,20 @@ DEFAULT_LEDGER = (
     ROOT / "data" / "curated" / "han" / "territory-disconnection-adjudications-v1.json"
 )
 
+COMPONENT_KEY = re.compile(r"^[A-Za-z0-9_-]+@(0|[1-9][0-9]*):(0|[1-9][0-9]*)$")
+r"""``unit@col:row`` — the unit plus its fragment's topmost-leftmost cell.
+
+Pinned as a rule because the old positional form ``unit#rank`` is still what a
+human reaches for, and a hand-written ``PARENT-0053#2`` would otherwise be accepted
+as a plain string and then simply fail to match any component — reported as one
+STALE_ROW, indistinguishable from a fragment that was legitimately repaired away.
+
+Each coordinate is a canonical decimal: ``0``, or a nonzero digit followed by digits.
+``\d+`` would also admit ``C1@05:02``, which reads as the same cell a human meant but is
+not the string :func:`_anchor` emits, so it would clear this door and then land as that
+very same ambiguous STALE_ROW. Leading zeros are refused here rather than downstream.
+"""
+
 LEDGER_ID = "han-territory-disconnection-adjudications-v1"
 REFERENCE_YEAR = 220
 VERDICTS = frozenset({
@@ -193,6 +207,24 @@ def _boundary(cells: list[int], grid: list[int], terrain: str, legend: Mapping[s
     return land, negative
 
 
+def _anchor(cells: list[int], cols: int) -> str:
+    """The component's topmost-leftmost cell, as ``col:row``.
+
+    This is the component's identity. It is a function of that component's own cells and
+    nothing else, which is the whole point: the previous key was ``f"{unit}#{rank}"`` with
+    rank an index into the unit's components sorted by size, so repairing one fragment
+    renumbered every smaller sibling onto its neighbour's key. The gate still reported
+    drift, but the obvious repair — make the row match the grid — moved a fragment's
+    sourced rationale onto a different piece of land, silently.
+
+    Uniqueness is by construction: components of one unit are disjoint, so no two of them
+    share a minimum cell. The anchor moves only when the fragment's own top-left corner
+    changes, and CELL_DRIFT / MEMBER_DRIFT / NAME_DRIFT already speak for content changes.
+    """
+    lowest = min(cells)
+    return f"{lowest % cols}:{lowest // cols}"
+
+
 def inventory(document: Mapping) -> list[dict]:
     """Every secondary component of every disconnected commandery and county."""
     meta = document["_meta"]
@@ -231,7 +263,7 @@ def inventory(document: Mapping) -> list[dict]:
             rows_out.append({
                 "unitKind": "COMMANDERY", "unitId": cid,
                 "unitNameCh": commanderies[cid].get("nameCh"),
-                "componentKey": f"{cid}#{rank}", "cellCount": len(cells),
+                "componentKey": f"{cid}@{_anchor(cells, cols)}", "cellCount": len(cells),
                 "memberIds": members,
                 "memberNamesCh": [jurisdictions[j].get("nameCh") for j in members],
                 "holdsSeat": holds_seat,
@@ -247,7 +279,7 @@ def inventory(document: Mapping) -> list[dict]:
             rows_out.append({
                 "unitKind": "JURISDICTION", "unitId": jid,
                 "unitNameCh": jurisdictions[jid].get("nameCh"),
-                "componentKey": f"{jid}#{rank}", "cellCount": len(cells),
+                "componentKey": f"{jid}@{_anchor(cells, cols)}", "cellCount": len(cells),
                 "memberIds": sorted({provinces[owner[i]]["id"] for i in cells}),
                 "memberNamesCh": [
                     rec.get("nameCh") for rec in sorted(
@@ -324,6 +356,10 @@ def validate_ledger(document: object) -> list[dict]:
         for key in ("unitId", "unitNameCh", "componentKey", "rationale"):
             if not isinstance(row[key], str) or not row[key]:
                 raise ValueError(f"{label}.{key} must be a non-empty string")
+        if not COMPONENT_KEY.match(row["componentKey"]):
+            raise ValueError(
+                f"{label}.componentKey {row['componentKey']!r} is not unit@col:row"
+            )
         for field, text in _row_text(row):
             found = MACHINE_LOCAL_PATH.search(text)
             if found:
