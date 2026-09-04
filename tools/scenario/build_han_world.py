@@ -921,6 +921,8 @@ def build_v2() -> tuple[str, str, str, str]:
         physical = cities_by_place[place]
         if cid <= 780:
             out = copy.deepcopy(legacy_by_id[cid])
+            if node.get("legacyDisposition") == "REPLACED":
+                out["name"] = physical["name"].removesuffix("현")
         else:
             jurisdiction = jurisdiction_by_id[place]
             parent = parent_by_id[jurisdiction["commanderyId"]]

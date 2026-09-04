@@ -6,7 +6,7 @@ import json
 import subprocess
 import sys
 import unittest
-from collections import defaultdict, deque
+from collections import Counter, defaultdict, deque
 from pathlib import Path
 
 
@@ -19,6 +19,58 @@ SPEC.loader.exec_module(build_han_world)
 
 
 class HanWorldV2Test(unittest.TestCase):
+    def test_replaced_nodes_derive_visible_names_from_selected_physical_identity(self) -> None:
+        selection = json.loads(
+            (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
+        )["routeNodes"]
+        tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+        legacy = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-780-v1.json").read_text()
+        )
+        world = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-world-v2.json").read_text()
+        )
+        physical_by_id = {str(city["id"]): city for city in tiles["cities"]}
+        legacy_by_id = {city["id"]: city for city in legacy["cities"]}
+        world_by_id = {city["id"]: city for city in world["cities"]}
+
+        base_names: dict[int, str] = {}
+        for node in selection:
+            city_id = node["numericCityId"]
+            if node.get("legacyDisposition") == "REPLACED" or city_id > 780:
+                place_id = node["physicalPlaceRef"].rsplit(":", 1)[-1]
+                base_names[city_id] = physical_by_id[place_id]["name"].removesuffix("현")
+            else:
+                base_names[city_id] = legacy_by_id[city_id]["name"]
+        base_counts = Counter(base_names.values())
+        expected_names = {
+            node["numericCityId"]: (
+                f'{base_names[node["numericCityId"]]}({node["parentName"]})'
+                if base_counts[base_names[node["numericCityId"]]] > 1
+                else base_names[node["numericCityId"]]
+            )
+            for node in selection
+        }
+        qualified_counts = Counter(expected_names.values())
+        expected_names = {
+            city_id: f"{name}#{city_id}" if qualified_counts[name] > 1 else name
+            for city_id, name in expected_names.items()
+        }
+
+        replaced = [node for node in selection if node.get("legacyDisposition") == "REPLACED"]
+        self.assertEqual(101, len(replaced))
+        for node in replaced:
+            city_id = node["numericCityId"]
+            self.assertEqual(expected_names[city_id], world_by_id[city_id]["name"], node)
+        self.assertEqual("수춘", world_by_id[543]["name"])
+
+        retained = [node for node in selection if node.get("legacyDisposition") == "RETAINED"]
+        for node in retained:
+            city_id = node["numericCityId"]
+            self.assertEqual(expected_names[city_id], world_by_id[city_id]["name"], node)
+            for field in ("level", "max", "initial"):
+                self.assertEqual(legacy_by_id[city_id][field], world_by_id[city_id][field], node)
+
     def test_county_adjacency_endpoints_are_spatial_province_indices(self) -> None:
         tiles = {
             "cities": [
