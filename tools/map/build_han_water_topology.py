@@ -42,6 +42,19 @@ CONFIDENCE = {"EXACT", "REVIEWED", "INFERRED"}
 SEASONS = {"ALWAYS", "SEASONAL", "CLOSED"}
 RISK_BANDS = {"LOW", "MEDIUM", "HIGH"}
 EXPECTED_TERRAIN = {"RIVER_REACH": 3, "LAKE_BASIN": 4, "COASTAL_SEA": 0}
+TERRITORY_SOURCE_PATH = "data/curated/han/territory-disconnection-adjudications-v1.json"
+RIVER_BARRIER_SOURCE_PATH = "data/curated/han/river-barrier-adjudications-v1.json"
+RIVER_CROSSING_SOURCE_PATH = "data/curated/han/river-crossing-adjudications-v1.json"
+SOURCE_TYPE_BY_PATH = {
+    TERRITORY_SOURCE_PATH: "TERRITORY_DISCONNECTION",
+    RIVER_BARRIER_SOURCE_PATH: "RIVER_BARRIER",
+    RIVER_CROSSING_SOURCE_PATH: "RIVER_CROSSING",
+}
+SOURCE_PREFIX_BY_TYPE = {
+    "TERRITORY_DISCONNECTION": "territory-disconnection:",
+    "RIVER_BARRIER": "river-barrier:",
+    "RIVER_CROSSING": "river-crossing:",
+}
 
 ROOT_KEYS = {
     "schemaVersion", "ledgerId", "topologyRevision", "base", "sourceCatalog",
@@ -149,15 +162,22 @@ def _source_refs(value: Any, known_sources: set[str], where: str) -> list[str]:
     return sorted(refs)
 
 
-def _validate_sources(value: Any) -> tuple[list[dict], dict[str, set[str]]]:
+def _validate_sources(
+    value: Any,
+) -> tuple[list[dict], dict[str, set[str]], dict[str, set[str]], dict[str, str]]:
     sources = []
     for index, raw in enumerate(_array(value, "sourceCatalog")):
         source = _object(raw, f"sourceCatalog[{index}]", SOURCE_KEYS)
         source_id = _string(source["sourceId"], f"sourceCatalog[{index}].sourceId")
         selector = _object(source["selector"], f"sourceCatalog[{index}].selector", {"componentKey"})
         _string(selector["componentKey"], f"sourceCatalog[{index}].selector.componentKey")
-        if source["path"] != "data/curated/han/territory-disconnection-adjudications-v1.json":
-            raise ValueError("water sourceCatalog must cite the tracked disconnection dossier")
+        source_type = SOURCE_TYPE_BY_PATH.get(source["path"])
+        if source_type is None:
+            raise ValueError("water sourceCatalog has an unsupported source type")
+        if not source_id.startswith(SOURCE_PREFIX_BY_TYPE[source_type]):
+            raise ValueError(
+                f"sourceCatalog[{index}] sourceId does not match source type {source_type}"
+            )
         if source["reviewState"] != "UPHELD":
             raise ValueError(f"sourceCatalog evidence must be UPHELD: {source_id}")
         _string(source["claim"], f"sourceCatalog[{index}].claim")
@@ -180,10 +200,16 @@ def _validate_sources(value: Any) -> tuple[list[dict], dict[str, set[str]]]:
         })
     ids = [source["sourceId"] for source in sources]
     _unique(ids, "sourceId")
-    return sorted(sources, key=lambda row: row["sourceId"]), {
-        source["sourceId"]: {source["unitId"], *source["memberIds"]}
-        for source in sources
-    }
+    ordered = sorted(sources, key=lambda row: row["sourceId"])
+    return (
+        ordered,
+        {
+            source["sourceId"]: {source["unitId"], *source["memberIds"]}
+            for source in sources
+        },
+        {source["sourceId"]: set(source["memberIds"]) for source in sources},
+        {source["sourceId"]: SOURCE_TYPE_BY_PATH[source["path"]] for source in sources},
+    )
 
 
 def _validate_land_source_coverage(
@@ -246,6 +272,69 @@ def _cells_touch_any_land(cells: set[tuple[int, int]], owner: list[list[int]]) -
         for row, col in cells
         for delta_row, delta_col in ((-1, 0), (1, 0), (0, -1), (0, 1))
     )
+
+
+def _owner_identity_sets(province_records: list[dict]) -> list[set[str]]:
+    return [
+        {
+            identity
+            for identity in (
+                record.get("id"), record.get("jurisdictionId")
+            )
+            if isinstance(identity, str) and identity
+        }
+        for record in province_records
+    ]
+
+
+def _cells_touch_cited_members(
+    cells: set[tuple[int, int]],
+    source_refs: list[str],
+    source_members: dict[str, set[str]],
+    owner: list[list[int]],
+    owner_identities: list[set[str]],
+) -> bool:
+    rows, cols = len(owner), len(owner[0])
+    touched_identities: set[str] = set()
+    for row, col in cells:
+        for delta_row, delta_col in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            adjacent_row, adjacent_col = row + delta_row, col + delta_col
+            if not (0 <= adjacent_row < rows and 0 <= adjacent_col < cols):
+                continue
+            owner_index = owner[adjacent_row][adjacent_col]
+            if 0 <= owner_index < len(owner_identities):
+                touched_identities.update(owner_identities[owner_index])
+    return all(touched_identities & source_members[source_ref] for source_ref in source_refs)
+
+
+def _land_owners_are_adjacent(
+    first_land_id: str,
+    second_land_id: str,
+    owner: list[list[int]],
+    province_index_by_id: dict[str, int],
+) -> bool:
+    first_owner = province_index_by_id[first_land_id]
+    second_owner = province_index_by_id[second_land_id]
+    rows, cols = len(owner), len(owner[0])
+    return any(
+        owner[row][col] == first_owner
+        and (
+            (row + 1 < rows and owner[row + 1][col] == second_owner)
+            or (col + 1 < cols and owner[row][col + 1] == second_owner)
+            or (row > 0 and owner[row - 1][col] == second_owner)
+            or (col > 0 and owner[row][col - 1] == second_owner)
+        )
+        for row in range(rows)
+        for col in range(cols)
+    )
+
+
+def _require_source_type(
+    source_refs: list[str], source_types: dict[str, str], expected: str, where: str
+) -> None:
+    actual = {source_types[source_ref] for source_ref in source_refs}
+    if actual != {expected}:
+        raise ValueError(f"{where} requires exact {expected} source type, got {sorted(actual)}")
 
 
 def _encode_cells(cells: set[tuple[int, int]]) -> list[dict[str, int]]:
@@ -453,12 +542,40 @@ def build_water_topology(
     validate_water_overlay_base(tiles, tiles_bytes, ledger["base"])
     land_ids = list(ledger["base"]["landProvinceIds"])
     land_id_set = set(land_ids)
-    sources, source_coverage = _validate_sources(ledger["sourceCatalog"])
+    sources, source_coverage, source_members, source_types = _validate_sources(
+        ledger["sourceCatalog"]
+    )
     source_ids = set(source_coverage)
     del sources
 
+    blocker_rows: list[dict] = []
+    for index, raw in enumerate(_array(ledger["activationBlockers"], "activationBlockers")):
+        row = _object(raw, f"activationBlockers[{index}]", BLOCKER_KEYS)
+        if row["status"] != "BLOCKED":
+            raise ValueError("activation blocker status must be BLOCKED")
+        required = _array(row["requiredEvidence"], f"activationBlockers[{index}].requiredEvidence")
+        if not required or any(not isinstance(item, str) or not item for item in required):
+            raise ValueError("activation blocker requires an evidence checklist")
+        blocker_rows.append({
+            "feature": _string(row["feature"], f"activationBlockers[{index}].feature"),
+            "status": "BLOCKED",
+            "code": _string(row["code"], f"activationBlockers[{index}].code"),
+            "requiredEvidence": sorted(required),
+        })
+    blocker_codes = {row["code"] for row in blocker_rows}
+    raw_barriers = _array(ledger["barrierAdjudications"], "barrierAdjudications")
+    raw_edges = _array(ledger["edgeAdjudications"], "edgeAdjudications")
+    if "NO_REVIEWED_RIVER_CROSSING_EVIDENCE" in blocker_codes and (
+        raw_barriers
+        or any(isinstance(row, dict) and row.get("mode") in CROSSING_MODES for row in raw_edges)
+    ):
+        raise ValueError(
+            "river activation blocker forbids executable river barriers and crossings"
+        )
+
     terrain = tiles["terrain"]
     owner = _decode_owner(tiles)
+    owner_identities = _owner_identity_sets(tiles["provinceRecords"])
     province_index_by_id = {
         province["id"]: index for index, province in enumerate(tiles["provinceRecords"])
     }
@@ -505,6 +622,12 @@ def build_water_topology(
         cells = _cells_from_runs(geometry["cellRuns"])
         if zone["kind"] == "COASTAL_SEA" and not _cells_touch_any_land(cells, owner):
             raise ValueError(f"coastal water zone {stable_key} must touch a decoded owner boundary")
+        if zone["kind"] in {"COASTAL_SEA", "LAKE_BASIN"} and not _cells_touch_cited_members(
+            cells, refs, source_members, owner, owner_identities
+        ):
+            raise ValueError(
+                f"water zone {stable_key} geometry must touch every cited source member boundary"
+            )
         zones_by_key[stable_key] = zone_row
         zone_cells_by_key[stable_key] = cells
         zone_rows.append(zone)
@@ -513,7 +636,7 @@ def build_water_topology(
     barrier_rows: list[dict] = []
     barriers_by_key: dict[str, dict] = {}
     boundary_keys: set[tuple[str, str]] = set()
-    for index, raw in enumerate(_array(ledger["barrierAdjudications"], "barrierAdjudications")):
+    for index, raw in enumerate(raw_barriers):
         row = _object(raw, f"barrierAdjudications[{index}]", BARRIER_KEYS)
         stable_key = _stable_key(row["stableKey"], f"barrierAdjudications[{index}].stableKey")
         if stable_key in barriers_by_key:
@@ -529,7 +652,12 @@ def build_water_topology(
         if row["status"] != "APPROVED" or row["confidence"] not in {"EXACT", "REVIEWED"}:
             raise ValueError(f"river barrier {stable_key} must be approved and evidence-reviewed")
         refs = _source_refs(row["sourceRefs"], source_ids, f"barrierAdjudications[{index}].sourceRefs")
+        _require_source_type(refs, source_types, "RIVER_BARRIER", f"river barrier {stable_key}")
         _validate_land_source_coverage({first, second}, refs, source_coverage, f"river barrier {stable_key}")
+        if not _land_owners_are_adjacent(first, second, owner, province_index_by_id):
+            raise ValueError(
+                f"river barrier {stable_key} endpoints are not decoded owner-grid adjacent"
+            )
         barriers_by_key[stable_key] = row
         barrier_rows.append({
             "id": f"river-barrier:{stable_key}",
@@ -541,7 +669,7 @@ def build_water_topology(
 
     validated_edges: list[dict] = []
     edge_rows: list[dict] = []
-    for index, raw in enumerate(_array(ledger["edgeAdjudications"], "edgeAdjudications")):
+    for index, raw in enumerate(raw_edges):
         row = _object(raw, f"edgeAdjudications[{index}]", EDGE_KEYS)
         stable_key = _stable_key(row["stableKey"], f"edgeAdjudications[{index}].stableKey")
         mode = row["mode"]
@@ -565,6 +693,8 @@ def build_water_topology(
         if type(row["supplyAllowed"]) is not bool:
             raise ValueError(f"edge {stable_key}.supplyAllowed must be boolean")
         refs = _source_refs(row["sourceRefs"], source_ids, f"edge {stable_key}.sourceRefs")
+        if mode in CROSSING_MODES:
+            _require_source_type(refs, source_types, "RIVER_CROSSING", f"crossing {stable_key}")
         land_endpoints = {
             endpoint["id"] for endpoint in (edge["from"], edge["to"])
             if endpoint["kind"] == "LAND_PROVINCE"
@@ -573,6 +703,10 @@ def build_water_topology(
         # Mode validation uses adjudication stable keys, before IDs are materialized.
         mode_edge = {**row, "stableKey": stable_key}
         _validate_edge_modes(mode_edge, zones_by_key, barriers_by_key)
+        if mode in {"LAND", *CROSSING_MODES} and not _land_owners_are_adjacent(
+            mode_edge["from"]["id"], mode_edge["to"]["id"], owner, province_index_by_id
+        ):
+            raise ValueError(f"edge {stable_key} endpoints are not decoded owner-grid adjacent")
         if mode in {"EMBARK", "DISEMBARK"}:
             land_endpoint = next(
                 endpoint for endpoint in (mode_edge["from"], mode_edge["to"])
@@ -652,21 +786,6 @@ def build_water_topology(
             "status": row["status"],
             "blockerCode": _string(row["blockerCode"], f"route candidate {stable_key}.blockerCode"),
             "sourceRefs": refs,
-        })
-
-    blocker_rows: list[dict] = []
-    for index, raw in enumerate(_array(ledger["activationBlockers"], "activationBlockers")):
-        row = _object(raw, f"activationBlockers[{index}]", BLOCKER_KEYS)
-        if row["status"] != "BLOCKED":
-            raise ValueError("activation blocker status must be BLOCKED")
-        required = _array(row["requiredEvidence"], f"activationBlockers[{index}].requiredEvidence")
-        if not required or any(not isinstance(item, str) or not item for item in required):
-            raise ValueError("activation blocker requires an evidence checklist")
-        blocker_rows.append({
-            "feature": _string(row["feature"], f"activationBlockers[{index}].feature"),
-            "status": "BLOCKED",
-            "code": _string(row["code"], f"activationBlockers[{index}].code"),
-            "requiredEvidence": sorted(required),
         })
 
     artifact = {

@@ -43,10 +43,16 @@ def base_document() -> dict:
     }
 
 
-def source(source_id: str, component_key: str, unit_id: str, member_ids: list[str]) -> dict:
+def source(
+    source_id: str,
+    component_key: str,
+    unit_id: str,
+    member_ids: list[str],
+    path: str = "data/curated/han/territory-disconnection-adjudications-v1.json",
+) -> dict:
     return {
         "sourceId": source_id,
-        "path": "data/curated/han/territory-disconnection-adjudications-v1.json",
+        "path": path,
         "selector": {"componentKey": component_key},
         "claim": f"reviewed evidence for {component_key}",
         "reviewState": "UPHELD",
@@ -238,16 +244,29 @@ class HanWaterTopologyBuilderTest(unittest.TestCase):
             self.build(ledger)
 
         ledger = valid_ledger(self.builder)
+        barrier_source_id = "river-barrier:P2-P3"
+        crossing_source_id = "river-crossing:P2-P3"
+        ledger["sourceCatalog"].extend([
+            source(
+                barrier_source_id, "P2-P3", "P2", ["P2", "P3"],
+                "data/curated/han/river-barrier-adjudications-v1.json",
+            ),
+            source(
+                crossing_source_id, "P2-P3", "P2", ["P2", "P3"],
+                "data/curated/han/river-crossing-adjudications-v1.json",
+            ),
+        ])
+        ledger["activationBlockers"] = []
         ledger["barrierAdjudications"] = [{
-            "stableKey": "river-p1-p2", "firstLandProvinceId": "P1",
-            "secondLandProvinceId": "P2", "sourceRefs": [source_id],
+            "stableKey": "river-p2-p3", "firstLandProvinceId": "P2",
+            "secondLandProvinceId": "P3", "sourceRefs": [barrier_source_id],
             "confidence": "REVIEWED", "status": "APPROVED",
         }]
         ledger["edgeAdjudications"] = [
             edge(
-                "unapproved-ford", "FORD", "LAND_PROVINCE", "P1",
-                "LAND_PROVINCE", "P2", source_id,
-                barrierStableKey="river-p1-p2", status="CANDIDATE",
+                "unapproved-ford", "FORD", "LAND_PROVINCE", "P2",
+                "LAND_PROVINCE", "P3", crossing_source_id,
+                barrierStableKey="river-p2-p3", status="CANDIDATE",
             )
         ]
         with self.assertRaisesRegex(ValueError, "unapproved crossing"):
@@ -293,26 +312,38 @@ class HanWaterTopologyBuilderTest(unittest.TestCase):
 
     def test_reviewed_crossing_requires_and_materializes_its_exact_barrier(self):
         ledger = valid_ledger(self.builder)
-        source_id = ledger["sourceCatalog"][0]["sourceId"]
+        barrier_source_id = "river-barrier:P2-P3"
+        crossing_source_id = "river-crossing:P2-P3"
+        ledger["sourceCatalog"].extend([
+            source(
+                barrier_source_id, "P2-P3", "P2", ["P2", "P3"],
+                "data/curated/han/river-barrier-adjudications-v1.json",
+            ),
+            source(
+                crossing_source_id, "P2-P3", "P2", ["P2", "P3"],
+                "data/curated/han/river-crossing-adjudications-v1.json",
+            ),
+        ])
+        ledger["activationBlockers"] = []
         crossing = edge(
-            "reviewed-ford", "FORD", "LAND_PROVINCE", "P1",
-            "LAND_PROVINCE", "P2", source_id,
-            barrierStableKey="river-p1-p2",
+            "reviewed-ford", "FORD", "LAND_PROVINCE", "P2",
+            "LAND_PROVINCE", "P3", crossing_source_id,
+            barrierStableKey="river-p2-p3",
         )
         ledger["edgeAdjudications"] = [crossing]
         with self.assertRaisesRegex(ValueError, "requires a reviewed river barrier"):
             self.build(ledger)
 
         ledger["barrierAdjudications"] = [{
-            "stableKey": "river-p1-p2", "firstLandProvinceId": "P1",
-            "secondLandProvinceId": "P2", "sourceRefs": [source_id],
+            "stableKey": "river-p2-p3", "firstLandProvinceId": "P2",
+            "secondLandProvinceId": "P3", "sourceRefs": [barrier_source_id],
             "confidence": "REVIEWED", "status": "APPROVED",
         }]
         artifact = self.build(ledger)
-        self.assertEqual("river-barrier:river-p1-p2", artifact["riverBarriers"][0]["id"])
+        self.assertEqual("river-barrier:river-p2-p3", artifact["riverBarriers"][0]["id"])
         self.assertEqual("traversal-edge:reviewed-ford", artifact["traversalEdges"][0]["id"])
         self.assertEqual(
-            "river-barrier:river-p1-p2", artifact["traversalEdges"][0]["barrierId"]
+            "river-barrier:river-p2-p3", artifact["traversalEdges"][0]["barrierId"]
         )
 
     def test_per_tile_zone_ids_and_open_sea_geometry_are_forbidden(self):
@@ -357,13 +388,77 @@ class HanWaterTopologyBuilderTest(unittest.TestCase):
 
     def test_coastal_zone_must_touch_a_decoded_land_owner_boundary(self):
         base = base_document()
-        base["owner"] = [[-1, 24]]
+        base["owner"] = [[1, 1], [-1, 1], [2, 4], [1, 1], [-1, 17]]
         base_bytes = canonical_bytes(base)
         ledger = valid_ledger(self.builder)
         ledger["base"] = self.builder.water_overlay_base_binding(base, base_bytes)
 
         with self.assertRaisesRegex(ValueError, "coastal.*owner boundary|shoreline"):
             self.builder.build_water_topology(base, base_bytes, ledger)
+
+    def test_production_coastal_geometry_must_touch_its_cited_component_members(self):
+        tiles, tiles_bytes, ledger, _ = self.builder.load_inputs()
+        coast = next(
+            row for row in ledger["zoneAdjudications"] if row["kind"] == "COASTAL_SEA"
+        )
+        coast["geometrySelector"] = {
+            "kind": "CELL_RANGES", "terrainCode": 0,
+            "cellRuns": [{"row": 51, "startCol": 731, "endCol": 732}],
+            "expectedCellCount": 2,
+        }
+
+        with self.assertRaisesRegex(ValueError, "source.*member.*boundary|cited.*boundary"):
+            self.builder.build_water_topology(tiles, tiles_bytes, ledger)
+
+    def test_production_nonadjacent_land_edge_is_rejected_from_decoded_owner_grid(self):
+        tiles, tiles_bytes, ledger, _ = self.builder.load_inputs()
+        dry_edge = edge(
+            "invalid-dry-shortcut", "LAND", "LAND_PROVINCE", "42524",
+            "LAND_PROVINCE", "42444", "territory-disconnection:42524@367:500",
+        )
+        dry_edge["sourceRefs"] = [
+            "territory-disconnection:42524@367:500",
+            "territory-disconnection:PARENT-0101@340:544",
+        ]
+        ledger["edgeAdjudications"] = [dry_edge]
+
+        with self.assertRaisesRegex(ValueError, "decoded.*adjacent|owner.*adjacent"):
+            self.builder.build_water_topology(tiles, tiles_bytes, ledger)
+
+    def test_river_activation_blocker_rejects_any_executable_barrier_or_crossing(self):
+        tiles, tiles_bytes, ledger, _ = self.builder.load_inputs()
+        refs = [
+            "territory-disconnection:42524@367:500",
+            "territory-disconnection:PARENT-0101@340:544",
+        ]
+        ledger["barrierAdjudications"] = [{
+            "stableKey": "invalid-coastal-as-river",
+            "firstLandProvinceId": "42524", "secondLandProvinceId": "42444",
+            "sourceRefs": refs, "confidence": "REVIEWED", "status": "APPROVED",
+        }]
+        ford = edge(
+            "invalid-ford-across-sea", "FORD", "LAND_PROVINCE", "42524",
+            "LAND_PROVINCE", "42444", refs[0],
+            barrierStableKey="invalid-coastal-as-river",
+        )
+        ford["sourceRefs"] = refs
+        ledger["edgeAdjudications"] = [ford]
+
+        with self.assertRaisesRegex(ValueError, "activation blocker|river activation"):
+            self.builder.build_water_topology(tiles, tiles_bytes, ledger)
+
+    def test_coastal_disconnection_source_cannot_masquerade_as_river_evidence(self):
+        ledger = valid_ledger(self.builder)
+        ledger["activationBlockers"] = []
+        coast_source = ledger["sourceCatalog"][1]["sourceId"]
+        ledger["barrierAdjudications"] = [{
+            "stableKey": "invalid-coastal-as-river",
+            "firstLandProvinceId": "P1", "secondLandProvinceId": "P2",
+            "sourceRefs": [coast_source], "confidence": "REVIEWED", "status": "APPROVED",
+        }]
+
+        with self.assertRaisesRegex(ValueError, "RIVER_BARRIER|source type"):
+            self.build(ledger)
 
     def test_zone_without_legal_edge_requires_explicit_isolation_adjudication(self):
         ledger = valid_ledger(self.builder)
