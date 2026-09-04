@@ -1,0 +1,867 @@
+{
+  "schemaVersion": 1,
+  "registryId": "han-commandery-id-registry-v1",
+  "nextOrdinal": 172,
+  "entries": [
+    {
+      "identity": "河南尹",
+      "commanderyId": "PARENT-0000",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "河內郡",
+      "commanderyId": "PARENT-0001",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "河東郡",
+      "commanderyId": "PARENT-0002",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "弘農郡",
+      "commanderyId": "PARENT-0003",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "京兆尹",
+      "commanderyId": "PARENT-0004",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "左馮翊",
+      "commanderyId": "PARENT-0005",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "右扶風",
+      "commanderyId": "PARENT-0006",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "潁川郡",
+      "commanderyId": "PARENT-0007",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "汝南郡",
+      "commanderyId": "PARENT-0008",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "梁國",
+      "commanderyId": "PARENT-0009",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "沛國",
+      "commanderyId": "PARENT-0010",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "陳國",
+      "commanderyId": "PARENT-0011",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "魯國",
+      "commanderyId": "PARENT-0012",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "魏郡",
+      "commanderyId": "PARENT-0013",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "鉅鹿郡",
+      "commanderyId": "PARENT-0014",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "常山國",
+      "commanderyId": "PARENT-0015",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "中山國",
+      "commanderyId": "PARENT-0016",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "安平國",
+      "commanderyId": "PARENT-0017",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "河閒國",
+      "commanderyId": "PARENT-0018",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "清河國",
+      "commanderyId": "PARENT-0019",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "趙國",
+      "commanderyId": "PARENT-0020",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "勃海郡",
+      "commanderyId": "PARENT-0021",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "陳留郡",
+      "commanderyId": "PARENT-0022",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "東郡",
+      "commanderyId": "PARENT-0023",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "東平國",
+      "commanderyId": "PARENT-0024",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "任城國",
+      "commanderyId": "PARENT-0025",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "泰山郡",
+      "commanderyId": "PARENT-0026",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "濟北國",
+      "commanderyId": "PARENT-0027",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "山陽郡",
+      "commanderyId": "PARENT-0028",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "濟陰郡",
+      "commanderyId": "PARENT-0029",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "東海郡",
+      "commanderyId": "PARENT-0030",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "琅邪國",
+      "commanderyId": "PARENT-0031",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "彭城國",
+      "commanderyId": "PARENT-0032",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "廣陵郡",
+      "commanderyId": "PARENT-0033",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "下邳國",
+      "commanderyId": "PARENT-0034",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "濟南國",
+      "commanderyId": "PARENT-0035",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "平原郡",
+      "commanderyId": "PARENT-0036",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "樂安國",
+      "commanderyId": "PARENT-0037",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "北海國",
+      "commanderyId": "PARENT-0038",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "東萊郡",
+      "commanderyId": "PARENT-0039",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "齊國",
+      "commanderyId": "PARENT-0040",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "南陽郡",
+      "commanderyId": "PARENT-0041",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "南郡",
+      "commanderyId": "PARENT-0042",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "江夏郡",
+      "commanderyId": "PARENT-0043",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "零陵郡",
+      "commanderyId": "PARENT-0044",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "桂陽郡",
+      "commanderyId": "PARENT-0045",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "武陵郡",
+      "commanderyId": "PARENT-0046",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "長沙郡",
+      "commanderyId": "PARENT-0047",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "九江郡",
+      "commanderyId": "PARENT-0048",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "丹陽郡",
+      "commanderyId": "PARENT-0049",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "廬江郡",
+      "commanderyId": "PARENT-0050",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "會稽郡",
+      "commanderyId": "PARENT-0051",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "吳郡",
+      "commanderyId": "PARENT-0052",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "豫章郡",
+      "commanderyId": "PARENT-0053",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "漢中郡",
+      "commanderyId": "PARENT-0054",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "巴郡",
+      "commanderyId": "PARENT-0055",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "廣漢郡",
+      "commanderyId": "PARENT-0056",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "蜀郡",
+      "commanderyId": "PARENT-0057",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "犍為郡",
+      "commanderyId": "PARENT-0058",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "牂牁郡",
+      "commanderyId": "PARENT-0059",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "越巂郡",
+      "commanderyId": "PARENT-0060",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "益州郡",
+      "commanderyId": "PARENT-0061",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "永昌郡",
+      "commanderyId": "PARENT-0062",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "廣漢屬國",
+      "commanderyId": "PARENT-0063",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "蜀郡屬國",
+      "commanderyId": "PARENT-0064",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "犍為屬國",
+      "commanderyId": "PARENT-0065",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "隴西郡",
+      "commanderyId": "PARENT-0066",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "漢陽郡",
+      "commanderyId": "PARENT-0067",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "武都郡",
+      "commanderyId": "PARENT-0068",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "金城郡",
+      "commanderyId": "PARENT-0069",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "安定郡",
+      "commanderyId": "PARENT-0070",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "北地郡",
+      "commanderyId": "PARENT-0071",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "武威郡",
+      "commanderyId": "PARENT-0072",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "張掖郡",
+      "commanderyId": "PARENT-0073",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "酒泉郡",
+      "commanderyId": "PARENT-0074",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "敦煌郡",
+      "commanderyId": "PARENT-0075",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "張掖屬國",
+      "commanderyId": "PARENT-0076",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "張掖居延屬國",
+      "commanderyId": "PARENT-0077",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "上黨郡",
+      "commanderyId": "PARENT-0078",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "太原郡",
+      "commanderyId": "PARENT-0079",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "上郡",
+      "commanderyId": "PARENT-0080",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "西河郡",
+      "commanderyId": "PARENT-0081",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "五原郡",
+      "commanderyId": "PARENT-0082",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "雲中郡",
+      "commanderyId": "PARENT-0083",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "定襄郡",
+      "commanderyId": "PARENT-0084",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "鴈門郡",
+      "commanderyId": "PARENT-0085",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "朔方郡",
+      "commanderyId": "PARENT-0086",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "涿郡",
+      "commanderyId": "PARENT-0087",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "廣陽郡",
+      "commanderyId": "PARENT-0088",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "代郡",
+      "commanderyId": "PARENT-0089",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "上谷郡",
+      "commanderyId": "PARENT-0090",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "漁陽郡",
+      "commanderyId": "PARENT-0091",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "右北平郡",
+      "commanderyId": "PARENT-0092",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "遼西郡",
+      "commanderyId": "PARENT-0093",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "遼東郡",
+      "commanderyId": "PARENT-0094",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "玄菟郡",
+      "commanderyId": "PARENT-0095",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "樂浪郡",
+      "commanderyId": "PARENT-0096",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "遼東屬國",
+      "commanderyId": "PARENT-0097",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "南海郡",
+      "commanderyId": "PARENT-0098",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "蒼梧郡",
+      "commanderyId": "PARENT-0099",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "鬱林郡",
+      "commanderyId": "PARENT-0100",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "合浦郡",
+      "commanderyId": "PARENT-0101",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "交趾郡",
+      "commanderyId": "PARENT-0102",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "九真郡",
+      "commanderyId": "PARENT-0103",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "日南郡",
+      "commanderyId": "PARENT-0104",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "東莞郡",
+      "commanderyId": "PARENT-0105",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "樂平郡",
+      "commanderyId": "PARENT-0106",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "樂陵郡",
+      "commanderyId": "PARENT-0107",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "于山國",
+      "commanderyId": "PARENT-0108",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "伯濟國",
+      "commanderyId": "PARENT-0109",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "利城郡",
+      "commanderyId": "PARENT-0110",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "北沃沮",
+      "commanderyId": "PARENT-0111",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "卒本",
+      "commanderyId": "PARENT-0112",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "南鄉郡",
+      "commanderyId": "PARENT-0113",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "南匈奴",
+      "commanderyId": "PARENT-0114",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "古寧伽耶",
+      "commanderyId": "PARENT-0115",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "古資彌凍國",
+      "commanderyId": "PARENT-0116",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "召文國",
+      "commanderyId": "PARENT-0117",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "哀牢",
+      "commanderyId": "PARENT-0118",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "固陵郡",
+      "commanderyId": "PARENT-0119",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "國內城",
+      "commanderyId": "PARENT-0120",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "大伽耶",
+      "commanderyId": "PARENT-0121",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "夫餘",
+      "commanderyId": "PARENT-0122",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "夷洲",
+      "commanderyId": "PARENT-0123",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "安邪國",
+      "commanderyId": "PARENT-0124",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "宕渠郡",
+      "commanderyId": "PARENT-0125",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "宜都郡",
+      "commanderyId": "PARENT-0126",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "山越",
+      "commanderyId": "PARENT-0127",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "州胡",
+      "commanderyId": "PARENT-0128",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "巴西郡",
+      "commanderyId": "PARENT-0129",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "帶方郡",
+      "commanderyId": "PARENT-0130",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "廣平郡",
+      "commanderyId": "PARENT-0131",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "廣魏郡",
+      "commanderyId": "PARENT-0132",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "廬陵郡",
+      "commanderyId": "PARENT-0133",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "弋陽郡",
+      "commanderyId": "PARENT-0134",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "悉直國",
+      "commanderyId": "PARENT-0135",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "押督國",
+      "commanderyId": "PARENT-0136",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "斯盧國",
+      "commanderyId": "PARENT-0137",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "新興郡",
+      "commanderyId": "PARENT-0138",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "新城郡",
+      "commanderyId": "PARENT-0139",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "新平郡",
+      "commanderyId": "PARENT-0140",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "新都郡",
+      "commanderyId": "PARENT-0141",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "星山伽耶",
+      "commanderyId": "PARENT-0142",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "東沃沮",
+      "commanderyId": "PARENT-0143",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "梓潼郡",
+      "commanderyId": "PARENT-0144",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "毗陵典農校尉",
+      "commanderyId": "PARENT-0145",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "漢昌郡",
+      "commanderyId": "PARENT-0146",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "江陽郡",
+      "commanderyId": "PARENT-0147",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "汶山郡",
+      "commanderyId": "PARENT-0148",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "流求",
+      "commanderyId": "PARENT-0149",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "涪陵郡",
+      "commanderyId": "PARENT-0150",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "濊",
+      "commanderyId": "PARENT-0151",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "烏桓",
+      "commanderyId": "PARENT-0152",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "狗邪國",
+      "commanderyId": "PARENT-0153",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "甘陵郡",
+      "commanderyId": "PARENT-0154",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "白馬氐",
+      "commanderyId": "PARENT-0155",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "目支國",
+      "commanderyId": "PARENT-0156",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "章武郡",
+      "commanderyId": "PARENT-0157",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "章陵郡",
+      "commanderyId": "PARENT-0158",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "蘄春郡",
+      "commanderyId": "PARENT-0159",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "襄陽郡",
+      "commanderyId": "PARENT-0160",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "西城郡",
+      "commanderyId": "PARENT-0161",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "西平郡",
+      "commanderyId": "PARENT-0162",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "西羌",
+      "commanderyId": "PARENT-0163",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "辟卑離國",
+      "commanderyId": "PARENT-0164",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "邪馬壹國",
+      "commanderyId": "PARENT-0165",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "鄱陽郡",
+      "commanderyId": "PARENT-0166",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "長樂郡",
+      "commanderyId": "PARENT-0167",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "陽安郡",
+      "commanderyId": "PARENT-0168",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "高涼郡",
+      "commanderyId": "PARENT-0169",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "鮮卑",
+      "commanderyId": "PARENT-0170",
+      "status": "ACTIVE"
+    },
+    {
+      "identity": "龜茲屬國",
+      "commanderyId": "PARENT-0171",
+      "status": "ACTIVE"
+    }
+  ]
+}

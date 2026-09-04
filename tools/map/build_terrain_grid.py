@@ -74,8 +74,72 @@ MODERN_ADMIN = 'data/modern-admin/geoBoundaries-CGAZ-ADM2.geojson'
 PROVINCE_SHAPE_EXCEPTIONS = 'data/curated/map/province-shape-exceptions-v1.json'
 NON_PLAYABLE_REGIONS = 'data/curated/map/non-playable-regions-v1.json'
 LEGACY_GAMEPLAY_TILES = 'data/map/han-780-v1-tiles.json'
+COMMANDERY_ID_REGISTRY = 'data/curated/han/commandery-id-registry-v1.json'
 
 SEA, PLAIN, MOUNTAIN, RIVER, LAKE, DESERT, PLATEAU, BASIN, HILL, OUT_OF_SCOPE = range(10)
+
+
+def load_commandery_id_registry(document, current_identities):
+    """Resolve the current commandery roster through the append-only ID registry."""
+    if not isinstance(document, dict) or set(document) != {
+        'schemaVersion', 'registryId', 'nextOrdinal', 'entries',
+    }:
+        raise ValueError('commandery ID registry has an invalid exact schema')
+    if document['schemaVersion'] != 1 or document['registryId'] != 'han-commandery-id-registry-v1':
+        raise ValueError('commandery ID registry identity/version mismatch')
+    next_ordinal = document['nextOrdinal']
+    if type(next_ordinal) is not int or next_ordinal < 0:
+        raise ValueError('commandery ID registry nextOrdinal must be a non-negative integer')
+    entries = document['entries']
+    if not isinstance(entries, list):
+        raise ValueError('commandery ID registry entries must be an array')
+
+    identities = []
+    commandery_ids = []
+    ordinals = []
+    active = {}
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or set(entry) != {'identity', 'commanderyId', 'status'}:
+            raise ValueError(f'commandery ID registry entry[{index}] has an invalid exact schema')
+        identity = entry['identity']
+        commandery_id = entry['commanderyId']
+        status = entry['status']
+        if not isinstance(identity, str) or not identity.strip():
+            raise ValueError(f'commandery ID registry entry[{index}] has invalid identity')
+        if not isinstance(commandery_id, str) or not commandery_id.startswith('PARENT-'):
+            raise ValueError(f'commandery ID registry entry[{index}] has invalid commandery ID')
+        suffix = commandery_id.removeprefix('PARENT-')
+        if len(suffix) != 4 or not suffix.isdigit():
+            raise ValueError(f'commandery ID registry entry[{index}] has invalid commandery ID')
+        if status not in {'ACTIVE', 'RETIRED'}:
+            raise ValueError(f'commandery ID registry entry[{index}] has invalid status')
+        identities.append(identity)
+        commandery_ids.append(commandery_id)
+        ordinals.append(int(suffix))
+        if status == 'ACTIVE':
+            active[identity] = commandery_id
+    if len(identities) != len(set(identities)):
+        raise ValueError('commandery ID registry contains duplicate identity')
+    if len(commandery_ids) != len(set(commandery_ids)):
+        raise ValueError('commandery ID registry contains duplicate commandery ID or retired-ID reuse')
+    if sorted(ordinals) != list(range(next_ordinal)):
+        raise ValueError('commandery ID registry issued IDs must be contiguous; never-issued IDs cannot be skipped')
+    if not isinstance(current_identities, list) or any(
+        not isinstance(identity, str) or not identity for identity in current_identities
+    ):
+        raise ValueError('current commandery identities must be an array of non-empty strings')
+    if len(current_identities) != len(set(current_identities)):
+        raise ValueError('current commandery roster contains duplicate identity')
+    retired_current = sorted(set(current_identities) & (set(identities) - set(active)))
+    if retired_current:
+        raise ValueError(f'commandery ID registry has retired current identity: {retired_current}')
+    missing = sorted(set(current_identities) - set(identities))
+    if missing:
+        raise ValueError(f'commandery ID registry is missing current identity: {missing}')
+    stale_active = sorted(set(active) - set(current_identities))
+    if stale_active:
+        raise ValueError(f'commandery ID registry active identity is absent from current roster: {stale_active}')
+    return {identity: active[identity] for identity in current_identities}
 
 # 1급(郡治) 치소 kind. 郡/國은 같은 lv6 치소다 — 郡國志 卷113 「凡郡、國百五」.
 # 尹·翊·風(三輔)은 郡의 장관 관직명일 뿐이라 COMMANDERY 로 합류한다(卷117 百官志
@@ -290,7 +354,7 @@ def _assign_unowned_islands(parent_owner, political_land, places, jun_of):
 
 
 def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_names,
-                          seat_owner, modern_features):
+                          seat_owner, modern_features, commandery_id_by_name):
     """Intersect pinned ADM2 geometry with reviewed 220 parent ownership."""
     labels = rasterize_feature_labels(modern_features, proj, bbox)
     parent_count = len(jun_names)
@@ -298,7 +362,7 @@ def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_na
     parent_owner = _assign_unowned_islands(
         seat_owner, political_land, places, jun_of
     )
-    parent_region_ids = [f'PARENT-{index:04d}' for index in range(len(jun_names))]
+    parent_region_ids = [commandery_id_by_name[name] for name in jun_names]
     evidence_cells = {region_id: [] for region_id in parent_region_ids}
     for index, place in enumerate(places):
         if place.get('kind') not in {'COUNTY', 'EXTERNAL_PLACE', *SEAT_KINDS}:
@@ -334,7 +398,7 @@ def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_na
             'EXTERNAL_POLITY' if external else 'HAN_COMMANDERY'
         )
         parent_records.append(ParentRegionRecord(
-            id=f'PARENT-{parent_index:04d}', display_name=name,
+            id=parent_region_ids[parent_index], display_name=name,
             administrative_system=parent_system,
             name_ch=name,
         ))
@@ -377,7 +441,7 @@ def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_na
             administrative_system=(display.administrative_system if display else
                                    'EXTERNAL_POLITY' if external else 'HAN_COMMANDERY'),
             kind=('SETTLEMENT' if external else 'COUNTY'),
-            parent_region_id=f'PARENT-{parent_index:04d}',
+            parent_region_id=parent_region_ids[parent_index],
             row=seed_row, col=seed_col, city_index=index,
             geometry_basis='HISTORICAL_SEAT_ADAPTED',
             confidence=(display.confidence if display else 'REVIEWED'),
@@ -401,7 +465,7 @@ def build_world_provinces(terrain, proj, bbox, places, place_ids, jun_of, jun_na
         source_id = f'{source_id}-S{part_index:03d}'
         admin_rows.append({
             'id': source_id,
-            'parentRegionId': f'PARENT-{parent_index:04d}',
+            'parentRegionId': parent_region_ids[parent_index],
             'mask': (zone_grid, zone),
             'order': distances[zone],
             'mergeAreaCap': 1100,
@@ -1387,6 +1451,10 @@ def main():
     ford_list = merged['fords']
     adj_c = merged['adjacency']['county']
     adj_m = merged['adjacency']['commandery']
+    commandery_id_by_name = load_commandery_id_registry(
+        json.load(open(COMMANDERY_ID_REGISTRY, encoding='utf-8')),
+        list(jun_names),
+    )
 
     if not os.path.exists(MODERN_ADMIN):
         sys.exit(
@@ -1397,6 +1465,7 @@ def main():
         terrain=terrain, proj=proj, bbox=bbox, places=merged['places'],
         place_ids=merged['placeIds'], jun_of=jun_of, jun_names=jun_names,
         seat_owner=seat_label, modern_features=modern_features,
+        commandery_id_by_name=commandery_id_by_name,
     )
     owner = province_result.owner.astype(np.int16)
     seat_label = parent_owner.astype(np.int16)
