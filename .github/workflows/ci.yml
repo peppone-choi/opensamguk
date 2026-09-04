@@ -25,6 +25,13 @@ jobs:
       - name: Verify Han map data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
+      # Every disconnected commandery/county piece in han-tiles.json must have a
+      # reviewed row (exclave / island / grid defect / misassignment) with the
+      # evidence its verdict needs. The ledger never moves cells; it only records
+      # what may stay and what a later parent-ledger PR has to fix.
+      - name: Verify Han territory disconnection ledger
+        if: '!cancelled()'
+        run: python3 tools/map/audit_territory_disconnections.py --check
       - name: Verify scenario data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
