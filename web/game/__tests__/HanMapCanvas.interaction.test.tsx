@@ -13,6 +13,7 @@ import {
   type ProvinceIdentityMap,
 } from '@opensamguk/ui';
 import { CHE_OVERLAYS_FIXTURE, CHE_TILES_FIXTURE } from './fixtures/che-tiles';
+import { STRATEGIC_BINDING, STRATEGIC_TOPOLOGY } from './fixtures/strategic-topology';
 
 interface CanvasRecord {
   context: CanvasRenderingContext2D;
@@ -302,6 +303,51 @@ describe('shared HanMapCanvas viewport interaction', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it('shows isolated water independently with keyboard controls and no invented ports', () => {
+    const views: IsoView[] = [];
+    const tiles = { ...CHE_TILES_FIXTURE, terrain: ['0110', '1231', '0114'],
+      _meta: { ...CHE_TILES_FIXTURE._meta, terrainLegend: { ...CHE_TILES_FIXTURE._meta.terrainLegend, 4: 'LAKE' } } };
+    render(<HanMapCanvas mapCode="han-world-v3" tiles={tiles} provinceMap={null}
+      onViewChange={view => views.push(view)}
+      {...{ tilesSha256: STRATEGIC_BINDING.baseTilesSha256, strategicTopology: STRATEGIC_TOPOLOGY }} />);
+    expect(screen.getByRole('button', { name: '수역 레이어' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /water-zone:lake/ })).toBeInTheDocument();
+    expect(screen.getAllByText(/통제 정보 비공개/)).toHaveLength(2);
+    expect(screen.getAllByText(/검토된 연결 없음/)).toHaveLength(2);
+    expect(screen.queryByRole('button', { name: /항구/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /water-zone:lake/ }));
+    const [x, y] = cellToScreen(3, 2, views.at(-1)!);
+    expect(x).toBeCloseTo(200);
+    expect(y).toBeCloseTo(106);
+    fireEvent.click(screen.getByRole('button', { name: '수역 레이어' }));
+    expect(screen.getByRole('button', { name: '수역 레이어' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('does not rebake water geometry or reset the camera across a pending control refresh', () => {
+    const tiles = { ...CHE_TILES_FIXTURE, terrain: ['0110', '1231', '0114'],
+      _meta: { ...CHE_TILES_FIXTURE._meta, terrainLegend: { ...CHE_TILES_FIXTURE._meta.terrainLegend, 4: 'LAKE' } } };
+    const views: IsoView[] = [];
+    const props = { mapCode: 'han-world-v3', tiles, tilesSha256: STRATEGIC_BINDING.baseTilesSha256,
+      provinceMap: null, onViewChange: (view: IsoView) => views.push(view) };
+    const { rerender } = render(<HanMapCanvas {...props} strategicTopology={STRATEGIC_TOPOLOGY} />);
+    fireEvent.click(screen.getByRole('button', { name: '지도 확대' }));
+    const before = views.at(-1);
+    const bakedPaths = pathRecords.length;
+    rerender(<HanMapCanvas {...props} />);
+    rerender(<HanMapCanvas {...props} strategicTopology={{ ...STRATEGIC_TOPOLOGY, controlVisibility: 'VISIBLE' }} />);
+    expect(pathRecords).toHaveLength(bakedPaths);
+    expect(views.at(-1)).toEqual(before);
+    expect(screen.getAllByText('확인되지 않음')).toHaveLength(2);
+  });
+
+  it('hides strategic overlays when the terrain byte identity does not match', () => {
+    render(<HanMapCanvas mapCode="han-world-v3" tiles={CHE_TILES_FIXTURE} provinceMap={null}
+      {...{ tilesSha256: 'f'.repeat(64), strategicTopology: STRATEGIC_TOPOLOGY }} />);
+    expect(screen.getByRole('status')).toHaveTextContent(/수역.*일치하지/);
+    expect(screen.queryByRole('button', { name: '수역 레이어' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img')).toBeInTheDocument();
   });
 
   it.each([1, 1.5, 2, 3])('fits the complete grid to the measured CSS box at DPR %s', (dpr) => {

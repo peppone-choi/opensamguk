@@ -10,9 +10,14 @@ import {
     type IsoCountyHover,
     type IsoHoverPoint,
     type InitialFocusProfile,
+    sameStrategicBinding,
+    validStrategicBinding,
+    type StrategicMapSnapshot,
+    type StrategicMapRoute,
+    type StrategicTopologyBinding,
 } from '@opensamguk/ui';
 import { api } from '@/lib/api';
-import { useServerGameUrl } from '@/lib/serverGameUrl';
+import { readServerCookie, useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { getMaxRelativeTechLevel } from '@/lib/utilGame';
 
@@ -107,6 +112,8 @@ export interface MapViewerProps {
     refreshKey?: number;
     gameConst?: MapTitleGameConst | null;
     selectedCityId?: number | null;
+    selectedServerRoute?: StrategicMapRoute | null;
+    onStrategicBindingChange?: (binding: StrategicTopologyBinding | null) => void;
     onCitySelect?: (cityId: number) => void;
     onNavigate?: (href: string) => void;
 }
@@ -155,6 +162,8 @@ export default function MapViewer({
     refreshKey = 0,
     gameConst,
     selectedCityId,
+    selectedServerRoute,
+    onStrategicBindingChange,
     onCitySelect,
     onNavigate,
 }: MapViewerProps = {}) {
@@ -168,6 +177,11 @@ export default function MapViewer({
     const [hideCityNames, setHideCityNames] = useState(false);
     const [singleTap, setSingleTap] = useState(false);
     const [touchDevice, setTouchDevice] = useState(false);
+    const [strategicTopology, setStrategicTopology] = useState<StrategicMapSnapshot | null>(null);
+    const [strategicError, setStrategicError] = useState<string | null>(null);
+    const strategicCache = useRef<{ server: string | undefined; snapshot: StrategicMapSnapshot } | null>(null);
+    const bindingCallback = useRef(onStrategicBindingChange);
+    bindingCallback.current = onStrategicBindingChange;
     const touchArmedId = useRef<number | null>(null);
     const dataRef = useRef<MapPreviewResponse | null>(data);
 
@@ -181,31 +195,87 @@ export default function MapViewer({
             setFailed(false);
             setTileMissing(false);
             setLiveMyCity(null);
+            setStrategicTopology(null);
+            setStrategicError(null);
+            bindingCallback.current?.(null);
             return;
         }
         let active = true;
+        const controller = new AbortController();
+        const requestServer = readServerCookie();
+        if (strategicCache.current && strategicCache.current.server !== requestServer) {
+            strategicCache.current = null;
+            bindingCallback.current?.(null);
+        }
+        const serverUnchanged = () => {
+            if (readServerCookie() === requestServer) return true;
+            strategicCache.current = null;
+            setStrategicTopology(null);
+            setStrategicError('서버가 변경되어 이전 수역 응답을 표시하지 않습니다. 지도를 갱신해주세요.');
+            bindingCallback.current?.(null);
+            return false;
+        };
         const hadData = dataRef.current != null;
         setFailed(false);
         setTileMissing(false);
-        api.mapPreview()
+        setStrategicTopology(null);
+        api.mapPreview(controller.signal)
             .then(async (preview) => {
                 if (!live) return { data: preview, myCity: null };
                 try {
-                    return mergeLive(preview, await api.worldMap(0, showMe));
+                    const world = await api.worldMap(0, showMe);
+                    return world.mapName === preview.mapCode ? mergeLive(preview, world) : { data: preview, myCity: null };
                 } catch {
                     return { data: preview, myCity: null };
                 }
             })
-            .then((result) => {
-                if (!active) return;
+            .then(async (result) => {
+                if (!active || !serverUnchanged()) return;
                 setData(result.data);
                 setLiveMyCity(result.myCity);
+                const binding = result.data.strategicTopology;
+                if (result.data.mapCode !== 'han-world-v3') {
+                    setStrategicTopology(null);
+                    setStrategicError(null);
+                    strategicCache.current = null;
+                    bindingCallback.current?.(null);
+                    return;
+                }
+                const cached = strategicCache.current && strategicCache.current.server === requestServer
+                    && sameStrategicBinding(binding, strategicCache.current.snapshot.binding)
+                    ? strategicCache.current.snapshot : null;
+                setStrategicTopology(null); // Do not show stale dynamic control while refreshing.
+                try {
+                    if (!binding) throw new Error('missing binding');
+                    const response = await api.strategicTopology(cached?.binding.topologyHash, controller.signal);
+                    if (!active || !serverUnchanged()) return;
+                    if (!sameStrategicBinding(binding, response.binding)) throw new Error('binding mismatch');
+                    const topology = cached?.topology ?? response.topology;
+                    if (!topology) throw new Error('missing topology');
+                    const snapshot = { ...response, topology };
+                    strategicCache.current = { server: requestServer, snapshot };
+                    setStrategicTopology(snapshot);
+                    setStrategicError(null);
+                    bindingCallback.current?.(binding);
+                } catch {
+                    if (active) {
+                        setStrategicTopology(null);
+                        setStrategicError('수역 데이터가 지도와 일치하지 않거나 불러올 수 없습니다.');
+                        bindingCallback.current?.(null);
+                    }
+                }
             })
             .catch(() => {
+                if (active) {
+                    setStrategicTopology(null);
+                    bindingCallback.current?.(null);
+                    if (!serverUnchanged()) return;
+                    if (dataRef.current?.mapCode === 'han-world-v3') setStrategicError('수역 데이터를 갱신하지 못했습니다.');
+                }
                 if (active && !hadData) setFailed(true);
             });
-        return () => { active = false; };
-    }, [live, mapData, refreshKey, showMe]);
+        return () => { active = false; controller.abort(); };
+    }, [cityBaseHref, live, mapData, refreshKey, showMe]);
 
     useEffect(() => {
         setHideCityNames(window.localStorage.getItem(LS_HIDE_CITYNAME) === 'yes');
@@ -249,8 +319,13 @@ export default function MapViewer({
 
     const selectionEnabled = onCitySelect != null;
     const navigationEnabled = !selectionEnabled && !(disallowClick ?? mapData != null);
+    // This cache key triggers a new fetch when the immutable base changes. The response's strong
+    // ETag, never the requested hash, remains the byte identity checked by HanMapCanvas.
+    const terrainBaseHash = data?.mapCode === 'han-world-v3' && data.strategicTopology
+        && validStrategicBinding(data.strategicTopology) ? data.strategicTopology.baseTilesSha256 : null;
     const terrainUrl = useCallback((mapCode: string) =>
-        `/api/game/api/map/terrain?mapCode=${encodeURIComponent(mapCode)}`, []);
+        `/api/game/api/map/terrain?mapCode=${encodeURIComponent(mapCode)}`
+        + (mapCode === 'han-world-v3' && terrainBaseHash ? `&baseTilesSha256=${terrainBaseHash}` : ''), [terrainBaseHash]);
     const provinceUrl = useCallback((mapCode: string) =>
         `/api/game/api/map/provinces?mapCode=${encodeURIComponent(mapCode)}`, []);
     const handleMissing = useCallback(() => setTileMissing(true), []);
@@ -326,12 +401,17 @@ export default function MapViewer({
                     currentCityId={currentCityId ?? liveMyCity}
                     initialFocus={initialFocus}
                     selectedCityId={selectedCityId}
+                    strategicTopology={strategicTopology ?? undefined}
+                    selectedServerRoute={mapData == null && selectedServerRoute?.serverId === readServerCookie()
+                        && selectedServerRoute?.worldId === strategicTopology?.binding.worldId ? selectedServerRoute : undefined}
+                    currentServerId={readServerCookie()}
                     hideCityNames={hideCityNames}
                     ariaLabel={`${data.mapCode} 세계 지도`}
                     onCountyHover={handleCountyHover}
                     onCityActivate={activateCity}
                     onMissing={handleMissing}
                 />
+                {strategicError && <p role="status">{strategicError}</p>}
                 <div className="map-btn-stack">
                     <button type="button" className={`map-toggle-cityname${hideCityNames ? ' active' : ''}`} aria-pressed={hideCityNames} onClick={toggleCityNames}>도시명 표기</button>
                     {touchDevice && <button type="button" className={`map-toggle-singletap${singleTap ? ' active' : ''}`} aria-pressed={singleTap} onClick={toggleSingleTap}>두번 탭 해 도시 이동</button>}

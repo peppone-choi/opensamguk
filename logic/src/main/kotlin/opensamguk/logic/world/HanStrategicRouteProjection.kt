@@ -21,6 +21,7 @@ class HanStrategicRouteProjection(
     val topology: StrategicTopologySnapshot,
     bindings: List<HanStrategicRouteBinding>,
     activationBlockerCodes: Set<String> = emptySet(),
+    val presentation: StrategicMapPresentation? = null,
 ) {
     val activationBlockerCodes: Set<String> = Collections.unmodifiableSet(activationBlockerCodes.toSortedSet())
     val bindingsByCityId: Map<Int, HanStrategicRouteBinding>

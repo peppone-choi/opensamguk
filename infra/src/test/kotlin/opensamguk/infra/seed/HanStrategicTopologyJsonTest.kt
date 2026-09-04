@@ -21,6 +21,25 @@ class HanStrategicTopologyJsonTest {
     private val root = Path.of("..").toAbsolutePath().normalize()
 
     @Test
+    fun `validated presentation exposes exact isolated water cells without inferred connections`() {
+        val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
+        val json = mapper.valueToTree<JsonNode>(loaded)
+        val presentation = json.path("presentation")
+        assertEquals(768, presentation.path("cols").asInt())
+        assertEquals(669, presentation.path("rows").asInt())
+        assertEquals("ab66e941d530ac5ccc43712a0e360352fbcd7e55f7580584e6b6a75053e6197f",
+            presentation.path("baseTilesSha256").asText())
+        assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
+        assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
+            presentation.path("zoneConnections").fields().asSequence().map { it.value.asText() }.toList())
+        val coast = presentation.path("geometries")[0].path("cellRuns")
+        assertEquals(1, coast.size())
+        assertEquals(543, coast[0].path("row").asInt())
+        assertEquals(305, coast[0].path("startCol").asInt())
+        assertEquals(351, coast[0].path("endCol").asInt())
+    }
+
+    @Test
     fun `committed topology keeps stable land identities and resolves Lu to Licheng over dry ground`() {
         val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
         val topology = loaded.topology

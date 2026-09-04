@@ -1,4 +1,5 @@
 export { Brand, type BrandProps, type BrandSize } from './Brand';
+export * from './strategicMap';
 export { Button, type ButtonProps, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';

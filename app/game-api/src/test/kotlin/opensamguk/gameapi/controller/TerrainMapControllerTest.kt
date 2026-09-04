@@ -18,6 +18,34 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
  */
 class TerrainMapControllerTest {
 
+    @Test
+    fun `V3 terrain ETag pins exact bytes even when file size and timestamp are unchanged`() {
+        val dir = Files.createTempDirectory("v3-terrain-hash")
+        val canonical = dir.resolve("han-tiles.json")
+        val v3 = dir.resolve("han-world-v3-tiles.json")
+        val first = "{\"v\":1}".toByteArray()
+        val second = "{\"v\":2}".toByteArray()
+        try {
+            Files.write(v3, first)
+            val timestamp = Files.getLastModifiedTime(v3)
+            val expected = "\"sha256-" + java.security.MessageDigest.getInstance("SHA-256")
+                .digest(first).joinToString("") { "%02x".format(it) } + "\""
+            val mvc = mockMvc(canonical.toString())
+            mvc.perform(get("/api/map/terrain").queryParam("mapCode", "han-world-v3"))
+                .andExpect(status().isOk)
+                .andExpect(header().string(HttpHeaders.ETAG, expected))
+            Files.write(v3, second)
+            Files.setLastModifiedTime(v3, timestamp)
+            mvc.perform(get("/api/map/terrain").queryParam("mapCode", "han-world-v3")
+                .header(HttpHeaders.IF_NONE_MATCH, expected))
+                .andExpect(status().isOk)
+                .andExpect(content().bytes(second))
+        } finally {
+            Files.deleteIfExists(v3)
+            Files.deleteIfExists(dir)
+        }
+    }
+
     private fun mockMvc(file: String): MockMvc =
         MockMvcBuilders.standaloneSetup(TerrainMapController(file)).build()
 

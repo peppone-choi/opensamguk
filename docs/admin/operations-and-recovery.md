@@ -111,6 +111,23 @@ V49는 세계별 `water_zone_control` 빈 테이블을 추가합니다. V3 부�
 - 기존 legacy full-rehydrate 서명만으로 수역의 DB roundtrip이나 replay를 검증했다고 간주하지 않습니다.
   수역 전용 PostgreSQL 복구·CAS rollback 검증을 배포 전에 별도로 실행해야 합니다.
 
+### Han V3 수역 표시와 경로 미리보기
+
+`GET /api/map/strategic-topology`는 process world에 묶인 읽기 전용 조회입니다. 일반 요청은 수역 통제
+SQL을 조회하지 않고 `REDACTED`를 반환합니다. 현재 검증된 `ROLE_ADMIN`만 실시간 통제를 읽으며,
+정찰/FOW 정책이 확정되기 전까지 국가 소속만으로 조회 권한을 넓히지 않습니다.
+
+- 지도 binding은 world ID, topology revision/hash, 원본 tile SHA와 크기를 포함합니다.
+  기존 `worldMap.version = 0`을 수역 revision으로 사용하지 않습니다.
+- 같은 topology hash를 알고 있는 요청에는 정적 도형을 생략할 수 있지만, 통제 응답은 `no-store`입니다.
+  클라이언트 캐시는 서버·세계·전체 binding으로 격리합니다.
+- 지형 바이트 SHA가 다르면 수역과 경로를 표시하지 않습니다. 수역 산출물 장애는 별도 조회에서
+  409로 차단하며 기존 육상 preview를 제거하지 않습니다.
+- 수송 미리보기의 전체 경로는 요청 당시 서버와 응답 world ID를 보존합니다. 새 클라이언트는
+  제출에 `expectedWorldId`를 보내고, 불일치는 예약 전에 422로 거절합니다. 기존 클라이언트의
+  생략 호환성은 남아 있으므로 이를 모든 과거 요청의 world pin 보장으로 해석하지 않습니다.
+- 이 UI는 항구·도하·함대를 생성하지 않습니다. 통제 공개 범위와 실제 물길 활성화는 별도 검토 대상입니다.
+
 ### 서비스는 online인데 화면이 502
 
 nginx 정적 upstream의 stale DNS, 대상 container health와 포트를 확인합니다. shared 서비스 변경 뒤 nginx를

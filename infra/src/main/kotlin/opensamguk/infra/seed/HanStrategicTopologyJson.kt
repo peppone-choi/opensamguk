@@ -168,7 +168,16 @@ object HanStrategicTopologyJson {
             val topology = StrategicTopologySnapshot(revision, landIds.toSet(), zones,
                 dryEdges.filter { setOf(it.from, it.to) !in explicitKeys } + typedEdges, barriers,
                 hashes + ("dryLandProjectionPolicy" to sha("dry-v1:4-neighbour:both-dry:PLAIN,MOUNTAIN,DESERT,PLATEAU,BASIN,HILL:cost=1:capacity=2147483647:supply=true".toByteArray())))
-            return HanStrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds), blockers)
+            val presentation = StrategicMapPresentation(cols, rows, hashes.getValue(TILES),
+                geometries.toSortedMap().map { (id, geometry) ->
+                    StrategicWaterGeometry(id, geometry.row.integer("terrainCode"), geometry.cells.size,
+                        geometry.row.array("cellRuns").map { run ->
+                            StrategicCellRun(run.integer("row"), run.integer("startCol"), run.integer("endCol"))
+                        })
+                },
+                water.array("waterZones").sortedBy { it.text("id") }.associate { it.text("id") to it.text("connectionStatus") },
+            )
+            return HanStrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds), blockers, presentation)
         } catch (e: IllegalArgumentException) {
             throw e
         } catch (e: Exception) {

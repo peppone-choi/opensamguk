@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.dto.MapPreviewCity
 import opensamguk.gameapi.dto.MapPreviewNation
 import opensamguk.gameapi.dto.MapPreviewResponse
+import opensamguk.gameapi.dto.StrategicTopologyBinding
 import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.LiveCityOwnership
@@ -11,7 +12,9 @@ import opensamguk.gameapi.read.MapAdministrativeOwnership
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.StrategicTopologyReadSource
 import opensamguk.infra.seed.MapJson
+import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -46,7 +49,9 @@ class MapPreviewController(
     private val nationEnvReadRepository: NationEnvReadRepository,
     private val mapAdministrativeOwnership: MapAdministrativeOwnership,
     private val objectMapper: ObjectMapper,
+    private val strategicSource: StrategicTopologyReadSource = StrategicTopologyReadSource(),
 ) {
+    private val log = LoggerFactory.getLogger(MapPreviewController::class.java)
 
     /** 시나리오가 맵을 특정하지 못할 때의 기본 맵 코드. dims/coords는 `map/<code>.json`에서 읽는다
      *  (하드코딩 X) — 좌표는 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) native 700×500 표시 전용 값. 프론트 transform이 캔버스 폭에
@@ -174,7 +179,19 @@ class MapPreviewController(
             jurisdictionOwnership = administrativeOwnership?.jurisdictionOwnership.orEmpty(),
             commanderyControl = administrativeOwnership?.commanderyControl.orEmpty(),
             startYear = startYear,
+            strategicTopology = if (mapCode == "han-world-v3") optionalStrategicBinding(world.id) else null,
         )
+    }
+
+    /** Invalid optional water data hides that layer; it cannot erase the validated land preview. */
+    private fun optionalStrategicBinding(worldId: Int): StrategicTopologyBinding? = try {
+        strategicSource.binding(worldId)
+    } catch (error: IllegalArgumentException) {
+        log.warn("Han V3 strategic layer unavailable for world {}", worldId, error)
+        null
+    } catch (error: IllegalStateException) {
+        log.warn("Han V3 strategic layer unavailable for world {}", worldId, error)
+        null
     }
 
     /** Decode `map/<code>.json` (committed, on the classpath via `:infra`) → 표시 dims + id→좌표.

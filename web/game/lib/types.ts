@@ -337,6 +337,7 @@ export interface MapPreviewNation {
 }
 
 export interface MapPreviewResponse {
+  strategicTopology?: import('@opensamguk/ui').StrategicTopologyBinding | null;
   serverName: string;
   /** 시나리오 시작 연도 — W0-2b(MapPreviewDto.startYear, optional). 초반 3년 색상/기술등급 툴팁(P1-060) 소비 예정. */
   startYear?: number;

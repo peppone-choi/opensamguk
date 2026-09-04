@@ -293,13 +293,28 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 
 - Create: `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/StrategicTopologyDto.kt`
 - Create: `app/game-api/src/main/kotlin/opensamguk/gameapi/controller/MapStrategicTopologyController.kt`
+- Create: `app/game-api/src/main/kotlin/opensamguk/gameapi/read/WaterControlReadRepository.kt`
+- Create: `app/game-api/src/main/kotlin/opensamguk/gameapi/read/StrategicTopologyReadSource.kt`
 - Create: `app/game-api/src/test/kotlin/opensamguk/gameapi/controller/MapStrategicTopologyControllerTest.kt`
-- Modify: `web/game/lib/api/types.ts`
-- Modify: `web/game/lib/api/client.ts`
+- Modify: `infra/src/main/kotlin/opensamguk/infra/seed/HanStrategicTopologyJson.kt` and its tests
+- Create: `logic/src/main/kotlin/opensamguk/logic/world/StrategicMapPresentation.kt`
+- Modify: `logic/src/main/kotlin/opensamguk/logic/world/HanStrategicRouteProjection.kt`
+- Modify: `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/MapPreviewDto.kt`
+- Modify: `app/game-api/src/main/kotlin/opensamguk/gameapi/controller/MapPreviewController.kt` and its tests
+- Modify: `app/game-api/src/main/kotlin/opensamguk/gameapi/controller/TerrainMapController.kt` and its tests
+- Modify: `web/game/lib/types.ts`
+- Modify: `web/game/lib/api.ts`
+- Modify: `web/game/lib/serverGameUrl.ts` (export the existing cookie reader only)
+- Create: `web/shared/src/strategicMap.ts`
+- Modify: `web/shared/src/index.ts`
 - Modify: `web/shared/src/HanMapCanvas.tsx`
 - Modify: `web/game/components/game/MapViewer.tsx`
 - Modify: `web/game/__tests__/HanMapCanvas.interaction.test.tsx`
 - Modify: `web/game/__tests__/MapViewer.props.test.tsx`
+- Modify: `web/game/components/v2/CityTransportForm.tsx`, its route tests, and `web/game/lib/v2/cityTransport.ts`
+- Modify: `app/game-api/src/main/kotlin/opensamguk/gameapi/v2/V2CityTransportController.kt` and its tests
+- Create: `web/game/__tests__/strategicMap.test.ts`
+- Create: `web/game/__tests__/fixtures/strategic-topology.ts`
 
 **Step 1: Red-test revision-consistent read models**
 
@@ -307,14 +322,52 @@ The endpoint returns topology revision/hash, zones, typed edges, barrier/crossin
 dynamic control. Reject artifact/control revision mismatch. Do not add water zones to
 `provinceOccupancy`.
 
-Canvas tests cover independent layers for river barrier, ford/bridge/ferry, navigable reach, lake,
-coast, port, blockade, and selected server-resolved route. Political land color remains unchanged.
+The frozen Han V2 map is excluded: only `han-world-v3` gets the optional preview topology binding.
+Use the shared validated loader's immutable geometry, never an independent unvalidated JSON reader.
+The binding includes process world, topology revision/hash, and exact base tile SHA. The legacy world
+map's `version = 0` is not a revision token. V3 terrain uses a strong byte-SHA ETag; legacy responses
+keep their existing cache contract.
+
+Until water scouting/FOW has an approved policy, only an authenticated `ROLE_ADMIN` receives live
+control. Public/ordinary-player requests do not query control SQL and return `REDACTED` with unknown
+states. The UI distinguishes "통제 정보 비공개" from an administrator's absent row, "확인되지 않음".
+Neither land ownership nor nation participation implies visibility. Control SQL is read-only and
+always scoped to the configured process world, using the shared strict row codec and snapshot.
+
+Canvas tests cover the approved lake/coast geometry, independent control markers, and selected
+server-resolved paths. River barriers, crossings and port metadata remain explicit empty arrays for
+this artifact; no point/line is fabricated for an unreviewed candidate. Political land color remains
+unchanged. A later reviewed artifact needs its own crossing/port rendering fixtures before activation.
 
 **Step 2: Implement API and presentation**
 
 Use a dedicated topology endpoint so the live ownership preview is not duplicated. `MapViewer`
 fetches both and renders only matching revisions. Route preview displays mode, turns/cost, capacity,
 season/blockade, and landing transitions from the server path; it never runs a separate BFS.
+
+The production artifact currently contains exactly two isolated zones (83 lake cells, 47 reviewed
+coastal cells), zero reviewed water edges, zero barriers and zero ports. Render only those cells;
+blocked route candidates are not ports or traversable lines. Cost is not an invented turn estimate,
+and convoy capacity is not a troop count. Route input is an external server-preview prop; the existing
+v2-sandbox command endpoint/frontend gates are not widened.
+
+The existing sandbox transport form is the production route producer: retain the full server path,
+the response world ID, and the server captured before requesting it. Pass that scoped route to the
+actual map consumer; never retag it with a newer binding. Discard it after input/server/world changes
+or stale asynchronous completion. Echo `expectedWorldId` at submission and reject mismatch before
+reservation, while retaining explicit legacy `route:null` compatibility.
+
+Cache static projection by full topology hash and world identity, refresh control through the existing
+turn refresh signal, and reject stale async results. Supplied historical maps never fetch today's
+control. Memoized water/control layers must not modify political pixels or reset the camera on a
+control refresh. Add keyboard-accessible zone inspection, non-color-only control markers, and static
+reduced-motion behavior. Strategic failures remain visible while the land map stays usable.
+
+Use the preview's validated base SHA as the V3 terrain request cache key so a new base artifact can
+recover without remounting. Still authenticate the returned bytes with the strong response ETag.
+Ordinary control refreshes preserve this URL and do not rebuild terrain or water geometry. The map
+route is scoped to the preview's original server and world; the actual v2-lab consumer clears it on
+input/source/world changes and never copies a later map binding onto an old path.
 
 **Step 3: Verify visible behavior and commit**
 

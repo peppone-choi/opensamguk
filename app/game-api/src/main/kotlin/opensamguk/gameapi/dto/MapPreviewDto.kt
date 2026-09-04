@@ -45,6 +45,8 @@ data class MapPreviewResponse(
      */
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val startYear: Int? = null,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val strategicTopology: StrategicTopologyBinding? = null,
 )
 
 data class MapPreviewCity(

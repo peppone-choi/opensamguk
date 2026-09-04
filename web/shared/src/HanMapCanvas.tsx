@@ -45,6 +45,11 @@ import {
   type AdministrativeOwnershipData,
 } from './provinceMap';
 import { isOwnedNationVisual } from './nationVisual';
+import {
+  buildStrategicMapScene, validStrategicBinding, validatedWaterControls, waterControlLabel,
+  strategicModeLabel, strategicZoneLabel, strategicCapacityLabel, serverRoutePoints,
+  type StrategicMapSnapshot, type StrategicMapRoute, type StrategicMapScene, type StrategicWaterControl,
+} from './strategicMap';
 
 export interface Jun {
   name: string;
@@ -222,6 +227,11 @@ export type InitialFocusProfile = 'current-city-close';
 export interface HanMapCanvasProps extends IsoSceneOptions {
   mapCode: string;
   tiles?: HanTiles | null;
+  /** Strong byte identity for explicitly supplied, already-validated terrain. */
+  tilesSha256?: string;
+  strategicTopology?: StrategicMapSnapshot;
+  selectedServerRoute?: StrategicMapRoute | null;
+  currentServerId?: string;
   terrainUrl?: string | ((mapCode: string) => string);
   provinceUrl?: string | ((mapCode: string) => string);
   provinceMap?: ProvinceIdentityMap | null;
@@ -1144,6 +1154,8 @@ function drawScene(
   flagPhase: number,
   selfLocationPhase: number,
   administrativeLayer: AdministrativeLayer,
+  strategic: { scene: StrategicMapScene; controls: ReadonlyMap<string, StrategicWaterControl>;
+    visible: boolean; route: readonly { col: number; row: number }[] | null } | null,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
@@ -1162,6 +1174,21 @@ function drawScene(
   if (political) {
     context.imageSmoothingEnabled = false;
     context.drawImage(political, -0.5, -0.5);
+  }
+  if (strategic?.visible) {
+    for (const shape of strategic.scene.zones) {
+      context.fillStyle = shape.zone.kind === 'COASTAL_SEA' ? 'rgba(49,190,222,0.42)' : 'rgba(73,131,248,0.42)';
+      context.fill(shape.fill);
+      const control = strategic.controls.get(shape.zone.id);
+      context.strokeStyle = control?.status === 'BLOCKED' ? '#ff8686'
+        : control?.status === 'CONTESTED' ? '#ffc35c' : '#b6e8ff';
+      context.lineWidth = 1.5 * dpr / scale;
+      context.stroke(shape.outline);
+      if (control?.status !== 'OPEN') {
+        context.lineWidth = 0.7 * dpr / scale;
+        context.stroke(shape.hatch);
+      }
+    }
   }
   if (paths) {
     if (administrativeLayer === 'PROVINCE') {
@@ -1182,6 +1209,19 @@ function drawScene(
     }
   }
   context.restore();
+
+  if (strategic?.route) {
+    context.save();
+    context.strokeStyle = '#fff178';
+    context.lineWidth = 3 * dpr;
+    context.beginPath();
+    strategic.route.forEach((point, index) => {
+      const [x, y] = cellToScreen(point.col, point.row, view);
+      if (index === 0) context.moveTo(x, y); else context.lineTo(x, y);
+    });
+    context.stroke();
+    context.restore();
+  }
 
   const hits: CityHitBox[] = [];
   for (const city of scene.cities) {
@@ -1339,6 +1379,10 @@ function resolveProvinceUrl(
 export function HanMapCanvas({
   mapCode,
   tiles: suppliedTiles,
+  tilesSha256,
+  strategicTopology,
+  selectedServerRoute,
+  currentServerId,
   terrainUrl,
   provinceUrl,
   provinceMap: suppliedProvinceMap,
@@ -1377,6 +1421,9 @@ export function HanMapCanvas({
   const activeCityRef = useRef<IsoCityOverlay | null>(null);
   const pointerTypeRef = useRef('mouse');
   const [loadedTiles, setLoadedTiles] = useState<HanTiles | null>(suppliedTiles ?? null);
+  const [terrainIdentity, setTerrainIdentity] = useState<{ mapCode: string; hash: string | null } | null>(null);
+  const [showWater, setShowWater] = useState(true);
+  const [inspectedWater, setInspectedWater] = useState<string | null>(null);
   const [loadedProvince, setLoadedProvince] = useState<{
     url: string;
     map: ProvinceIdentityMap | null;
@@ -1388,17 +1435,23 @@ export function HanMapCanvas({
     if (suppliedTiles !== undefined) {
       setLoadedTiles(suppliedTiles);
       setMissing(suppliedTiles == null);
+      setTerrainIdentity({ mapCode, hash: tilesSha256 ?? null });
       return;
     }
     let alive = true;
     setMissing(false);
+    setTerrainIdentity(null);
     fetch(resolveTerrainUrl(terrainUrl, mapCode))
       .then((response) => {
         if (!response.ok) throw new Error(`terrain fetch failed: ${response.status}`);
-        return response.json() as Promise<HanTiles>;
+        const hash = /^"sha256-([a-f0-9]{64})"$/.exec(response.headers?.get('etag') ?? '')?.[1] ?? null;
+        return (response.json() as Promise<HanTiles>).then(tiles => ({ tiles, hash }));
       })
-      .then((nextTiles) => {
-        if (alive) setLoadedTiles(nextTiles);
+      .then(({ tiles, hash }) => {
+        if (alive) {
+          setLoadedTiles(tiles);
+          setTerrainIdentity({ mapCode, hash });
+        }
       })
       .catch(() => {
         if (!alive) return;
@@ -1409,7 +1462,7 @@ export function HanMapCanvas({
     return () => {
       alive = false;
     };
-  }, [mapCode, onMissing, suppliedTiles, terrainUrl]);
+  }, [mapCode, onMissing, suppliedTiles, terrainUrl, tilesSha256]);
 
   useEffect(() => {
     if (suppliedProvinceMap !== undefined) return;
@@ -1488,6 +1541,41 @@ export function HanMapCanvas({
     }
     return buildProvinceVisualAnchors(provinceMap, preferredByProvince);
   }, [canonicalMarkerPositions, cities, provinceMap]);
+  const strategicSceneCache = useRef<{ hash: string; tiles: HanTiles; scene: StrategicMapScene } | null>(null);
+  const strategicScene = useMemo(() => {
+    if (!strategicTopology || !loadedTiles) return null;
+    try {
+      const binding = strategicTopology.binding;
+      if (mapCode !== 'han-world-v3' || !validStrategicBinding(binding)
+        || binding.cols !== loadedTiles._meta.cols || binding.rows !== loadedTiles._meta.rows
+        || terrainIdentity?.mapCode !== mapCode || terrainIdentity.hash !== binding.baseTilesSha256) return null;
+      const cached = strategicSceneCache.current;
+      if (cached?.hash === binding.topologyHash && cached.tiles === loadedTiles) return cached.scene;
+      const scene = buildStrategicMapScene(strategicTopology.topology, loadedTiles);
+      strategicSceneCache.current = { hash: binding.topologyHash, tiles: loadedTiles, scene };
+      return scene;
+    } catch { return null; }
+  }, [loadedTiles, mapCode, strategicTopology?.binding.topologyHash, strategicTopology?.topology, terrainIdentity]);
+  const strategicControls = useMemo(() => {
+    try { return strategicTopology ? validatedWaterControls(strategicTopology) : null; }
+    catch { return null; }
+  }, [strategicTopology]);
+  const routeAnchors = useMemo(() => {
+    const result = new Map<string, { col: number; row: number }>();
+    loadedTiles?.provinceRecords?.forEach((record, index) => {
+      const anchor = provinceAnchors?.[index];
+      if (anchor) result.set(`land:${record.id}`, anchor);
+    });
+    for (const shape of strategicScene?.zones ?? []) result.set(`water:${shape.zone.id}`, shape.anchor);
+    return result;
+  }, [loadedTiles?.provinceRecords, provinceAnchors, strategicScene]);
+  const selectedRoutePoints = useMemo(() => selectedServerRoute && strategicTopology && strategicScene
+    ? serverRoutePoints(selectedServerRoute, strategicTopology.binding, strategicScene, routeAnchors, currentServerId) : null,
+  [selectedServerRoute, strategicTopology?.binding, strategicScene, routeAnchors, currentServerId]);
+  const strategicRef = useRef<Parameters<typeof drawScene>[13]>(null);
+  strategicRef.current = strategicScene && strategicControls ? {
+    scene: strategicScene, controls: strategicControls, visible: showWater, route: selectedRoutePoints,
+  } : null;
   const displayCities = useMemo(() => {
     if (administrativeLayer === 'PROVINCE') {
       return loadedTiles?.provinceRecords && loadedTiles.jurisdictionRecords
@@ -1636,6 +1724,7 @@ export function HanMapCanvas({
       flagPhaseRef.current,
       selfLocationPhaseRef.current,
       administrativeLayer,
+      strategicRef.current,
     );
   }, [administrativeLayer]);
 
@@ -1669,7 +1758,7 @@ export function HanMapCanvas({
 
   useEffect(() => {
     render();
-  }, [hideCityNames, render, scene]);
+  }, [hideCityNames, render, scene, strategicScene, strategicControls, showWater, selectedRoutePoints]);
 
   useEffect(() => {
     const hasWavingFlag = scene?.cities.some((city) => (
@@ -1834,6 +1923,7 @@ export function HanMapCanvas({
   }, [eventPoint, zoomBy]);
 
   const cityAt = (x: number, y: number) => {
+    if (waterAt(x, y)) return null;
     for (let index = hitRef.current.length - 1; index >= 0; index -= 1) {
       const hit = hitRef.current[index];
       if (x < hit.left || x > hit.right || y < hit.top || y > hit.bottom) continue;
@@ -1844,6 +1934,14 @@ export function HanMapCanvas({
       return hit.city;
     }
     return null;
+  };
+
+  const waterAt = (x: number, y: number) => {
+    if (!showWater || !strategicScene || !strategicControls || !viewRef.current || !loadedTiles) return null;
+    const [rawCol, rawRow] = screenToCell(x, y, viewRef.current);
+    const col = Math.round(rawCol); const row = Math.round(rawRow);
+    if (col < 0 || row < 0 || col >= loadedTiles._meta.cols || row >= loadedTiles._meta.rows) return null;
+    return strategicScene.byCell.get(row * loadedTiles._meta.cols + col) ?? null;
   };
 
   const countyAt = (x: number, y: number): IsoCountyHover | null => {
@@ -1999,6 +2097,8 @@ export function HanMapCanvas({
     dragMovedRef.current = false;
     if (moved) return;
     const point = eventPoint(event);
+    const water = point ? waterAt(point.canvasX, point.canvasY) : null;
+    if (water) { setInspectedWater(water.id); return; }
     const city = point ? cityAt(point.canvasX, point.canvasY) : null;
     if (city && city.interactive !== false) onCityActivate?.(city, { pointerType: pointerTypeRef.current });
   };
@@ -2067,6 +2167,38 @@ export function HanMapCanvas({
           background: TERRAIN[0],
         }}
       />
+      {strategicTopology && (!strategicScene || !strategicControls) && terrainIdentity && (
+        <p role="status" style={{ position: 'absolute', right: 8, bottom: 8, background: '#211f1b', color: '#fff' }}>
+          수역 데이터가 지도와 일치하지 않아 표시하지 않습니다.
+        </p>
+      )}
+      {strategicScene && strategicControls && strategicTopology && (
+        <section aria-label="수역 정보" style={{ position: 'absolute', right: 8, bottom: 8, maxWidth: 'min(260px, 65%)',
+          maxHeight: '45%', overflow: 'auto', padding: 6, background: 'rgba(20,24,30,0.92)', color: '#eef5ff', fontSize: 12 }}>
+          <button type="button" aria-label="수역 레이어" aria-pressed={showWater} onClick={() => setShowWater(value => !value)}>수역</button>
+          <div>통행 가능 여부는 수송 조건을 포함한 서버 경로 판정에 따릅니다.</div>
+          <ul style={{ paddingLeft: 16, margin: '4px 0' }}>
+            {strategicScene.zones.map(shape => <li key={shape.zone.id}>
+              <button type="button" title={shape.zone.id} aria-pressed={inspectedWater === shape.zone.id} onClick={() => {
+                setInspectedWater(shape.zone.id);
+                const view = viewRef.current;
+                if (view) updateView(viewAt(sizeRef.current.width, sizeRef.current.height,
+                  shape.anchor.col, shape.anchor.row, Math.max(view.scale, 8 * sizeRef.current.dpr)));
+              }}>{strategicZoneLabel(shape.zone)}</button>
+              <div>{waterControlLabel(strategicControls.get(shape.zone.id)!, strategicTopology.controlVisibility)}</div>
+              {strategicTopology.controlVisibility === 'VISIBLE' && strategicControls.get(shape.zone.id)?.controllingNationId &&
+                <div>통제 국가 #{strategicControls.get(shape.zone.id)!.controllingNationId}</div>}
+              {strategicTopology.controlVisibility === 'VISIBLE' && Boolean(strategicControls.get(shape.zone.id)?.contestingNationIds.length) &&
+                <div>경합 국가 {strategicControls.get(shape.zone.id)!.contestingNationIds.map(id => `#${id}`).join(', ')}</div>}
+              <div>{shape.zone.connectionStatus === 'ISOLATED_NO_REVIEWED_CONNECTION' ? '검토된 연결 없음' : '검토된 연결 있음'}</div>
+            </li>)}
+          </ul>
+          {strategicTopology.topology.ports.length === 0 && <div>검토된 항구·상륙 지점 없음</div>}
+          {selectedServerRoute && <p role="status">{selectedRoutePoints
+            ? `서버 경로: ${selectedServerRoute.modes.map(strategicModeLabel).join(' → ')} · 비용 ${selectedServerRoute.totalCost} · ${strategicCapacityLabel(selectedServerRoute.capacity, selectedServerRoute.modes)}`
+            : '서버 경로가 현재 지도와 일치하지 않아 표시하지 않습니다.'}</p>}
+        </section>
+      )}
       <div className="os-iso-map__controls" style={{ position: 'absolute', left: 8, bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <button type="button" aria-label="지도 확대" onClick={() => zoomBy(1.4)}>+</button>
         <button type="button" aria-label="지도 축소" onClick={() => zoomBy(1 / 1.4)}>−</button>

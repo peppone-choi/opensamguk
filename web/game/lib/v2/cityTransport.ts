@@ -1,16 +1,10 @@
-export interface StrategicTransportPath {
-    nodeKeys: string[];
-    edgeIds: string[];
-    modes: string[];
-    totalCost: number;
-    capacity: number;
-    topologyRevision: string;
-    topologyHash: string;
-    pathHash: string;
-}
+import type { StrategicMapRoute } from '@opensamguk/ui';
+
+export type StrategicTransportPath = Omit<StrategicMapRoute, 'worldId' | 'serverId'>;
 
 export interface TransportRoutePreview {
     status: 'AVAILABLE' | 'BLOCKED';
+    worldId: number;
     code?: string;
     reason?: string;
     route?: StrategicTransportPath | null;
@@ -21,14 +15,25 @@ export function transportRoutePins(preview: TransportRoutePreview): {
     topologyRevision?: string;
     routePathHash?: string;
 } {
-    if (preview.status !== 'AVAILABLE') {
-        throw new Error(preview.reason || '수송 경로를 사용할 수 없습니다.');
+    if (!preview || preview.status !== 'AVAILABLE') {
+        throw new Error(preview?.reason || '수송 경로를 사용할 수 없습니다.');
+    }
+    if (!Number.isSafeInteger(preview.worldId) || preview.worldId <= 0 || preview.worldId > 2147483647) {
+        throw new Error('경로 확인 응답이 올바르지 않습니다.');
     }
     if (preview.route === null) return {}; // Explicit legacy response only.
     const route = preview.route;
     if (!route || typeof route.topologyRevision !== 'string' || !route.topologyRevision.trim()
-        || typeof route.pathHash !== 'string' || !route.pathHash.trim()
-        || !Array.isArray(route.modes) || !Number.isSafeInteger(route.totalCost)) {
+        || typeof route.pathHash !== 'string' || !/^[a-f0-9]{64}$/.test(route.pathHash)
+        || typeof route.topologyHash !== 'string' || !/^[a-f0-9]{64}$/.test(route.topologyHash)
+        || !Array.isArray(route.nodeKeys) || route.nodeKeys.length < 2
+        || route.nodeKeys.some(key => typeof key !== 'string' || !key.trim())
+        || !Array.isArray(route.edgeIds) || route.edgeIds.length !== route.nodeKeys.length - 1
+        || route.edgeIds.some(key => typeof key !== 'string' || !key.trim())
+        || !Array.isArray(route.modes) || route.modes.length !== route.edgeIds.length
+        || route.modes.some(mode => !Object.hasOwn(modeLabels, mode))
+        || !Number.isSafeInteger(route.totalCost) || route.totalCost < 0
+        || !Number.isSafeInteger(route.capacity) || route.capacity <= 0) {
         throw new Error('경로 확인 응답이 올바르지 않습니다.');
     }
     return { topologyRevision: route.topologyRevision, routePathHash: route.pathHash };

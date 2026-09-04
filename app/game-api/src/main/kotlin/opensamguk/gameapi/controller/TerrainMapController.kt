@@ -42,7 +42,7 @@ class TerrainMapController(
         if (!MAP_CODE.matches(mapCode)) return ResponseEntity.notFound().build()
         val configured = Path.of(mapFile)
         val path: Path = if (mapCode == "han") configured else configured.resolveSibling("$mapCode-tiles.json")
-        return servePath(path, MediaType.APPLICATION_JSON, ifNoneMatch)
+        return servePath(path, MediaType.APPLICATION_JSON, ifNoneMatch, strongHash = mapCode == "han-world-v3")
     }
 
     @GetMapping("/provinces")
@@ -66,10 +66,15 @@ class TerrainMapController(
         path: Path,
         contentType: MediaType,
         ifNoneMatch: String?,
+        strongHash: Boolean = false,
     ): ResponseEntity<ByteArray> {
         if (!Files.isRegularFile(path)) return ResponseEntity.notFound().build()
 
-        val tag = "\"${Files.size(path)}-${Files.getLastModifiedTime(path).toMillis()}\""
+        // V3 topology consumers must compare the exact bytes they receive, not file metadata.
+        val exactBytes = if (strongHash) Files.readAllBytes(path) else null
+        val tag = if (exactBytes != null) "\"sha256-${java.security.MessageDigest.getInstance("SHA-256")
+            .digest(exactBytes).joinToString("") { "%02x".format(it) }}\""
+        else "\"${Files.size(path)}-${Files.getLastModifiedTime(path).toMillis()}\""
         if (ifNoneMatch == tag) {
             return ResponseEntity.status(304).eTag(tag).build()
         }
@@ -77,7 +82,7 @@ class TerrainMapController(
             .eTag(tag)
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
             .contentType(contentType)
-            .body(Files.readAllBytes(path))
+            .body(exactBytes ?: Files.readAllBytes(path))
     }
 
     private companion object {

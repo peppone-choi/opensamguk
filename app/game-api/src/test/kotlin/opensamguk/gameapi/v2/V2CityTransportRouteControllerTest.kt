@@ -3,6 +3,7 @@ package opensamguk.gameapi.v2
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.logic.v2.command.V2CityTransportArgs
 import opensamguk.logic.v2.command.V2CommandAvailability
@@ -27,7 +28,7 @@ class V2CityTransportRouteControllerTest {
     private val reserve = mock(CommandReserveService::class.java)
     private val resolver = mock(GeneralResolver::class.java)
     private val precheck = mock(V2CommandPrecheckService::class.java)
-    private val controller = V2CityTransportController(reserve, resolver, precheck)
+    private val controller = V2CityTransportController(reserve, resolver, precheck, GameApiProcessWorld(8))
     private val args = V2CityTransportArgs(1, 2, 100, 0, 0, null)
     private val json = """{"fromCityId":1,"toCityId":2,"gold":100}"""
 
@@ -51,6 +52,7 @@ class V2CityTransportRouteControllerTest {
             .contentType(MediaType.APPLICATION_JSON).content(json))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("AVAILABLE"))
+            .andExpect(jsonPath("$.worldId").value(8))
             .andExpect(jsonPath("$.route.nodeKeys[0]").value("land:a"))
             .andExpect(jsonPath("$.route.edgeIds[0]").value("dry:ab"))
             .andExpect(jsonPath("$.route.modes[0]").value("LAND"))
@@ -75,7 +77,7 @@ class V2CityTransportRouteControllerTest {
     fun `preview returns domain denial without enqueue and malformed amounts never query state`() {
         val blocked = V2CityTransportRoutePreview("BLOCKED", "NO_LAND_CONNECTION", "연결된 육로가 없습니다.")
         `when`(precheck.previewTransport(10, args)).thenReturn(blocked)
-        assertEquals(blocked, controller.route(11, 10, json).body)
+        assertEquals(blocked.copy(worldId = 8), controller.route(11, 10, json).body)
         assertEquals("INVALID_ARGUMENTS", controller.route(11, 10, """{"fromCityId":1,"toCityId":2,"gold":"100"}""").body?.code)
         verifyNoInteractions(reserve)
     }
@@ -88,6 +90,7 @@ class V2CityTransportRouteControllerTest {
         val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
         val body = mapper.readTree(mapper.writeValueAsString(response.body))
         assertEquals("AVAILABLE", body["status"].asText())
+        assertEquals(8, body["worldId"].asInt())
         assertTrue(body.has("route"))
         assertTrue(body["route"].isNull)
         verifyNoInteractions(reserve)
@@ -99,5 +102,23 @@ class V2CityTransportRouteControllerTest {
         `when`(precheck.precheck(10, available)).thenReturn(V2CommandAvailability.Blocked("ROUTE_PATH_HASH_STALE", "경로가 변경되었습니다."))
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, controller.transport(11, 10, json).statusCode)
         verifyNoInteractions(reserve)
+    }
+
+    @Test
+    fun `transport rejects a route preview from another world before state reads or reserve`() {
+        for (worldId in listOf(0, -1, 9)) {
+            assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, controller.transport(11, 10, json, worldId).statusCode)
+        }
+        verifyNoInteractions(precheck, reserve)
+    }
+
+    @Test
+    fun `matching preview world preserves accepted not applied acknowledgement`() {
+        val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, args)
+        `when`(precheck.precheck(10, available)).thenReturn(available)
+        `when`(reserve.reserveForOwner(10, "v2CityTransport", 0, json, 11))
+            .thenReturn(CommandReserveService.ReserveResult("request-world-8", 0))
+        assertEquals(HttpStatus.ACCEPTED, controller.transport(11, 10, json, 8).statusCode)
+        verify(reserve).reserveForOwner(10, "v2CityTransport", 0, json, 11)
     }
 }

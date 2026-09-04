@@ -118,7 +118,8 @@ class V2CanonicalCommandControllerTest {
         )
         `when`(contextual.precheck(7, available)).thenReturn(available)
 
-        val response = V2CityTransportController(reserve, resolver, contextual).transport(11, 7, args)
+        val response = V2CityTransportController(reserve, resolver, contextual,
+            opensamguk.gameapi.config.GameApiProcessWorld(1)).transport(11, 7, args)
         val body = response.body as IntakeAcceptedResponse
 
         assertEquals(HttpStatus.ACCEPTED, response.statusCode)

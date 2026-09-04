@@ -3,14 +3,16 @@ import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
+import { STRATEGIC_BINDING, STRATEGIC_TOPOLOGY } from './fixtures/strategic-topology';
 
 const mocks = vi.hoisted(() => ({
   mapPreview: vi.fn(),
   worldMap: vi.fn(),
+  strategicTopology: vi.fn(),
   props: null as ComponentProps<typeof HanMapCanvasType> | null,
 }));
 
-vi.mock('@/lib/api', () => ({ api: { mapPreview: mocks.mapPreview, worldMap: mocks.worldMap } }));
+vi.mock('@/lib/api', () => ({ api: { mapPreview: mocks.mapPreview, worldMap: mocks.worldMap, strategicTopology: mocks.strategicTopology } }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
   return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
@@ -34,9 +36,11 @@ const WORLD: WorldMapResponse = {
 };
 
 beforeEach(() => {
+  document.cookie = 'sam_server=; Max-Age=0; path=/';
   mocks.props = null;
   mocks.mapPreview.mockReset().mockResolvedValue(MAP);
   mocks.worldMap.mockReset().mockResolvedValue(WORLD);
+  mocks.strategicTopology.mockReset().mockResolvedValue(STRATEGIC_TOPOLOGY);
   vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
   vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
   Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 0 });
@@ -60,6 +64,71 @@ describe('MapViewer pure title contracts', () => {
 });
 
 describe('MapViewer data props', () => {
+  it('requests fresh terrain only when the V3 base byte pin changes, not during control refresh', async () => {
+    mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
+    const { rerender } = render(<MapViewer />);
+    await waitFor(() => expect(mocks.props?.strategicTopology).toEqual(STRATEGIC_TOPOLOGY));
+    const firstUrl = mocks.props?.terrainUrl as (mapCode: string) => string;
+    expect(firstUrl('han-world-v3')).toContain(`baseTilesSha256=${STRATEGIC_BINDING.baseTilesSha256}`);
+    rerender(<MapViewer refreshKey={1} />);
+    await waitFor(() => expect(mocks.strategicTopology).toHaveBeenCalledTimes(2));
+    expect(mocks.props?.terrainUrl).toBe(firstUrl);
+    const nextBinding = { ...STRATEGIC_BINDING, baseTilesSha256: 'e'.repeat(64), topologyHash: 'f'.repeat(64) };
+    mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: nextBinding });
+    mocks.strategicTopology.mockResolvedValue({ ...STRATEGIC_TOPOLOGY, binding: nextBinding });
+    rerender(<MapViewer refreshKey={2} />);
+    await waitFor(() => expect(mocks.props?.strategicTopology?.binding).toEqual(nextBinding));
+    expect((mocks.props?.terrainUrl as (mapCode: string) => string)('han-world-v3'))
+      .toContain(`baseTilesSha256=${nextBinding.baseTilesSha256}`);
+  });
+
+  it('immediately hides old control and clears the route binding if a refresh fails', async () => {
+    const onBinding = vi.fn();
+    mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
+    const { rerender } = render(<MapViewer onStrategicBindingChange={onBinding} />);
+    await waitFor(() => expect(mocks.props?.strategicTopology).toEqual(STRATEGIC_TOPOLOGY));
+    mocks.mapPreview.mockRejectedValueOnce(new Error('offline'));
+    rerender(<MapViewer refreshKey={1} onStrategicBindingChange={onBinding} />);
+    expect(mocks.props?.strategicTopology).toBeUndefined();
+    await waitFor(() => expect(onBinding).toHaveBeenLastCalledWith(null));
+    expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('수역 데이터를 갱신하지 못했습니다.');
+  });
+
+  it('drops a topology response if the proxy server cookie changed while it was pending', async () => {
+    document.cookie = 'sam_server=pep; path=/';
+    let finish!: (value: typeof STRATEGIC_TOPOLOGY) => void;
+    mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
+    mocks.strategicTopology.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    render(<MapViewer />);
+    await waitFor(() => expect(finish).toBeTypeOf('function'));
+    document.cookie = 'sam_server=other; path=/';
+    finish(STRATEGIC_TOPOLOGY);
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/서버.*변경/));
+    expect(mocks.props?.strategicTopology).toBeUndefined();
+  });
+  it('fetches the matching V3 topology and redacted control without changing map ownership', async () => {
+    mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
+    render(<MapViewer />);
+    await waitFor(() => expect(mocks.props).toMatchObject({ strategicTopology: STRATEGIC_TOPOLOGY }));
+    expect(mocks.props?.cities?.[0].nationColor).toBe('#ff0000');
+  });
+
+  it('does not mix mismatched topology with the visible land map', async () => {
+    mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
+    mocks.strategicTopology.mockResolvedValueOnce({ ...STRATEGIC_TOPOLOGY,
+      binding: { ...STRATEGIC_BINDING, topologyHash: 'd'.repeat(64) } });
+    render(<MapViewer />);
+    expect(await screen.findByText(/수역.*일치하지/)).toBeInTheDocument();
+    expect(mocks.props?.cities?.[0].id).toBe(11);
+    expect(mocks.props).not.toHaveProperty('strategicTopology', STRATEGIC_TOPOLOGY);
+  });
+
+  it('never loads current control over an explicitly supplied historical map', () => {
+    render(<MapViewer mapData={{ ...MAP, mapCode: 'han-world-v3' }} />);
+    expect(mocks.strategicTopology).not.toHaveBeenCalled();
+  });
+
   it('mapData skips self-fetch and renders the title above the shared canvas', () => {
     render(<MapViewer mapData={MAP} />);
     expect(screen.getByText('200년 5월 상순')).toBeInTheDocument();
