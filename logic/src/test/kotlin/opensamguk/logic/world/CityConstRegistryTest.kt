@@ -53,8 +53,20 @@ class CityConstRegistryTest {
     }
 
     @Test
-    fun `world v2 reuses the current 774-city gameplay catalog`() {
-        assertEquals(CityConstRegistry.of("han").all(), CityConstRegistry.of("han-world-v2").all())
+    fun `world v2 exposes reviewed 781 identity catalog and Licheng edge`() {
+        val v2 = CityConstRegistry.of("han-world-v2")
+        assertEquals((1..781).toList(), v2.all().keys.toList())
+        assertTrue(v2.byId(273)!!.path.containsKey(781))
+        assertTrue(v2.byId(781)!!.path.containsKey(273))
+        val graph = buildString {
+            for ((id, city) in v2.all()) {
+                append(id).append(':').append(city.path.keys.joinToString(",")).append('\n')
+            }
+        }
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(graph.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        assertEquals("59232774d1bbdb0a9141ee96688c8997d398745ca97291a299174f1a4c7cdfe7", digest)
     }
 
     @Test

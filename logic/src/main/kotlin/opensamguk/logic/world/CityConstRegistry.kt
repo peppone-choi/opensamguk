@@ -7,6 +7,8 @@ import opensamguk.common.constants.HanCityConst
 import opensamguk.common.constants.HanGateIndex
 import opensamguk.common.constants.Han780V1CityConst
 import opensamguk.common.constants.Han780V1GateIndex
+import opensamguk.common.constants.HanWorldV2CityConst
+import opensamguk.common.constants.HanWorldV2GateIndex
 
 /**
  * F6 Task FM1 — per-map CityConst variant registry, keyed by `mapName`.
@@ -320,6 +322,12 @@ private val legacyHan = HanCityConstVariant(
     gateKeysFor = Han780V1GateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 13, 20, 28, 41, 53, 71, 91),
 )
+private val hanWorldV2 = HanCityConstVariant(
+    mapName = HAN_WORLD_V2_MAP_NAME,
+    rawRows = HanWorldV2CityConst.initCity,
+    gateKeysFor = HanWorldV2GateIndex::keys,
+    nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+)
 
 object CityConstRegistry {
     const val DEFAULT_MAP_NAME = "che"
@@ -414,7 +422,7 @@ object CityConstRegistry {
             "miniche_b" to miniche,
             "miniche_clean" to miniche,
             HAN_MAP_NAME to currentHan,
-            HAN_WORLD_V2_MAP_NAME to currentHan,
+            HAN_WORLD_V2_MAP_NAME to hanWorldV2,
             HAN_780_V1_MAP_NAME to legacyHan,
         )
     }
