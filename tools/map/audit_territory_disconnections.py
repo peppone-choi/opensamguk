@@ -28,13 +28,18 @@ DEFAULT_LEDGER = (
     ROOT / "data" / "curated" / "han" / "territory-disconnection-adjudications-v1.json"
 )
 
-COMPONENT_KEY = re.compile(r"^[A-Za-z0-9_-]+@(\d+):(\d+)$")
-"""``unit@col:row`` — the unit plus its fragment's topmost-leftmost cell.
+COMPONENT_KEY = re.compile(r"^[A-Za-z0-9_-]+@(0|[1-9][0-9]*):(0|[1-9][0-9]*)$")
+r"""``unit@col:row`` — the unit plus its fragment's topmost-leftmost cell.
 
 Pinned as a rule because the old positional form ``unit#rank`` is still what a
 human reaches for, and a hand-written ``PARENT-0053#2`` would otherwise be accepted
 as a plain string and then simply fail to match any component — reported as one
 STALE_ROW, indistinguishable from a fragment that was legitimately repaired away.
+
+Each coordinate is a canonical decimal: ``0``, or a nonzero digit followed by digits.
+``\d+`` would also admit ``C1@05:02``, which reads as the same cell a human meant but is
+not the string :func:`_anchor` emits, so it would clear this door and then land as that
+very same ambiguous STALE_ROW. Leading zeros are refused here rather than downstream.
 """
 
 LEDGER_ID = "han-territory-disconnection-adjudications-v1"

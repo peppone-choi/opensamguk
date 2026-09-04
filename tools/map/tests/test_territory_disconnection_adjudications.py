@@ -748,6 +748,12 @@ class CheckTest(unittest.TestCase):
         it reaches the grid comparison and comes back as one STALE_ROW — the same report a
         fragment gets when it is legitimately repaired away. The reader cannot tell a typo
         from a finished repair, so the key format is checked at the door instead.
+
+        The zero-padded cases are the same trap wearing the answer's clothes: ``C1@05:02``
+        names the cell the writer meant, but :func:`_anchor` emits ``C1@5:2``, so the two
+        strings never compare equal and the row goes stale for a reason that looks like a
+        repair. A key that is one canonical string per cell is what makes STALE_ROW mean
+        something.
         """
         for label, key in (
             ("positional", "C1#1"),
@@ -757,6 +763,10 @@ class CheckTest(unittest.TestCase):
             ("non-numeric", "C1@a:b"),
             ("trailing text", "C1@5:2x"),
             ("negative", "C1@-5:2"),
+            ("leading zero col", "C1@05:2"),
+            ("leading zero row", "C1@5:02"),
+            ("leading zero both", "C1@05:02"),
+            ("padded zero", "C1@00:0"),
         ):
             with self.subTest(label):
                 with self.assertRaises(ValueError) as caught:
