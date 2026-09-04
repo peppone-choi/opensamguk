@@ -443,6 +443,8 @@ class UpdateNationLevelAction : EventAction {
         // 3축 맵에서만 필요한 州별 郡治 분포. che 에서는 계산조차 하지 않는다.
         val seatsByNationProvince: Map<Int, Map<Int, Int>> =
             if (cc.supportsThreeAxisRank) seatsByNationProvince(ownership, cc) else emptyMap()
+        val nationsWithAnyCity: Set<Int> =
+            if (cc.supportsThreeAxisRank) ownership.asSequence().map { it.second }.toSet() else emptySet()
 
         for (nation in world.nations()) {
             val cityCnt = cityCounts[nation.id] ?: 0
@@ -460,6 +462,9 @@ class UpdateNationLevelAction : EventAction {
             }
 
             // ── han 3축(爵·官·天子) ──
+            // 郡治가 0개인 호족과 도시 자체가 없는 방랑군을 구분한다.
+            if (nation.level == 0 && nation.id !in nationsWithAnyCity) continue
+
             val seatsByProvince = seatsByNationProvince[nation.id] ?: emptyMap()
             val legitimacy = NationRank.legitimacyOf(
                 nation.name,
