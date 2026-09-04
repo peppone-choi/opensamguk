@@ -1,5 +1,15 @@
 # Han Supply Disconnection Safety Design
 
+> **V3 compatibility amendment (2026-09-05):** Preserve persisted `han`/`han-world-v2` as
+> the 774-city domain and its schema-1 ledger. The new 781-city `han-world-v3` uses a separate
+> schema-2 ledger keyed by runtime ID + physicalPlaceRef + routeNodeKey + jurisdiction.
+> Never copy old numeric policy IDs into V3. A reviewed geometry defect may disconnect both
+> graphs: an exact `BOTH_UNSUPPLIED` expectation with a `PROTECT_*` decision yields
+> `BOTH_UNSUPPLIED_PROTECTED`; it is not a fabricated movement/supply edge. An expectation
+> mismatch never applies the policy. Unclassified CITY_ONLY remains runtime-safe/CI-red.
+> Current V3 policy covers physical 43252 and 40740 only, in their explicit scenario ranges.
+> The audit rejects scenarios from a different city-ID domain before evaluating numeric IDs.
+
 ## Status and scope
 
 This design protects owned Han cities from becoming neutral because an incomplete or defective

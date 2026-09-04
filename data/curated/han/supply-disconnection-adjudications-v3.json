@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "ledgerId": "han-supply-disconnection-adjudications-v3",
+  "worldVersion": "han-world-v3",
+  "decisions": [
+    {
+      "runtimeCityId": 305,
+      "physicalPlaceRef": "chgis:v6:cnty:43252",
+      "routeNodeKey": "7fd6fa9f-3589-4e83-8a9d-49cd7d206fc9",
+      "jurisdictionId": "43252",
+      "decision": "PROTECT_GEOMETRY_DEFECT",
+      "sourceLedgerRow": "PARENT-0034@480:266",
+      "rationale": "The reviewed source classifies the degree-zero 徐縣 spatial province as a modern-lake geometry defect, so the V3 route identity remains supply-protected without inventing an edge.",
+      "expectedCurrentReachability": "BOTH_UNSUPPLIED",
+      "effectiveScenarioFrom": 1020,
+      "effectiveScenarioTo": 1110
+    },
+    {
+      "runtimeCityId": 548,
+      "physicalPlaceRef": "chgis:v6:cnty:40740",
+      "routeNodeKey": "8cdeb3ac-8959-4240-8526-706543a8a57b",
+      "jurisdictionId": "40740",
+      "decision": "PROTECT_GEOMETRY_DEFECT",
+      "sourceLedgerRow": "PARENT-0051@549:331",
+      "rationale": "The reviewed source classifies the degree-zero 鄮縣 spatial province as a displaced-island geometry defect, so the V3 route identity remains supply-protected without inventing an edge.",
+      "expectedCurrentReachability": "BOTH_UNSUPPLIED",
+      "effectiveScenarioFrom": 1030,
+      "effectiveScenarioTo": 1110
+    }
+  ]
+}

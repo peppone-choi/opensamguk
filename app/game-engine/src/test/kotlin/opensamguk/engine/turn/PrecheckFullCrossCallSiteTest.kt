@@ -269,8 +269,8 @@ class PrecheckFullCrossCallSiteTest {
     }
 
     @Test
-    fun `Han world v2 Lu to Licheng is allowed by PRECHECK and FULL`() {
-        val fixture = Fixture(cityId = 273, destCityId = 781, mapName = "han-world-v2")
+    fun `Han world v3 Lu to Licheng is allowed by PRECHECK and FULL`() {
+        val fixture = Fixture(cityId = 273, destCityId = 781, mapName = "han-world-v3")
         assertAvailableAgreement(
             action = "che_이동",
             fixture = fixture,

@@ -4,7 +4,7 @@
   "life": 1,
   "fiction": 0,
   "map": {
-    "mapName": "han-world-v2",
+    "mapName": "han-world-v3",
     "unitSet": "han"
   },
   "seedContract": {
@@ -25,7 +25,7 @@
       "중립",
       1,
       [
-        "낙양"
+        46
       ]
     ],
     [
@@ -38,7 +38,7 @@
       "중립",
       1,
       [
-        "장안"
+        1
       ]
     ]
   ],
@@ -48,7 +48,7 @@
       "동탁",
       10001,
       "동탁",
-      "낙양",
+      46,
       90,
       90,
       90,
@@ -64,7 +64,7 @@
       "원소",
       10002,
       "원소",
-      "장안",
+      1,
       85,
       75,
       75,
@@ -333,5 +333,6 @@
         "MergeInheritPointRank"
       ]
     ]
-  ]
+  ],
+  "cityIdentityVersion": "han-world-v3"
 }

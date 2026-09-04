@@ -13,11 +13,23 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 TILES_PATH = ROOT / "data/map/han-tiles.json"
-RUNTIME_MAP_PATH = ROOT / "infra/src/main/resources/map/han.json"
 OWNERSHIP_PATH = ROOT / "data/map/han-scenario-province-ownership-v1.json"
-LEDGER_PATH = ROOT / "data/curated/han/supply-disconnection-adjudications-v1.json"
 SOURCE_LEDGER_PATH = ROOT / "data/curated/han/territory-disconnection-adjudications-v1.json"
 SCENARIO_DIR = ROOT / "infra/src/main/resources/scenario"
+DOMAIN_PATHS = {
+    "han": (
+        ROOT / "infra/src/main/resources/map/han.json",
+        ROOT / "data/curated/han/supply-disconnection-adjudications-v1.json",
+    ),
+    "han-world-v2": (
+        ROOT / "infra/src/main/resources/map/han.json",
+        ROOT / "data/curated/han/supply-disconnection-adjudications-v1.json",
+    ),
+    "han-world-v3": (
+        ROOT / "infra/src/main/resources/map/han-world-v3.json",
+        ROOT / "data/curated/han/supply-disconnection-adjudications-v3.json",
+    ),
+}
 
 DECISIONS = {
     "PROTECT_GEOMETRY_DEFECT",
@@ -37,6 +49,7 @@ VERDICTS = (
     "BOTH_SUPPLIED",
     "CITY_ONLY_PROTECTED",
     "SPATIAL_ONLY_SUPPLIED",
+    "BOTH_UNSUPPLIED_PROTECTED",
     "BOTH_UNSUPPLIED",
     "SPATIAL_CUT_UPHELD",
 )
@@ -102,6 +115,18 @@ def audit_documents(
     rows: list[dict[str, Any]] = []
     summaries: dict[int, dict[str, int]] = {}
 
+    runtime_domain = runtime_map.get("_meta", {}).get("map", "han")
+    compatible_domains = {"han", "han-world-v2"} if runtime_domain in {"han", "han-world-v2"} else {runtime_domain}
+    for code, scenario in sorted(scenarios.items()):
+        scenario_domain = scenario.get("map", {}).get("mapName", runtime_domain)
+        if scenario_domain not in compatible_domains:
+            errors.append(
+                f"scenario {code} mapName {scenario_domain!r} does not match runtime map {runtime_domain!r}"
+            )
+    if errors:
+        # Numeric IDs in distinct world versions may identify entirely different places.
+        return AuditResult(errors=errors, rows=[], summaries={})
+
     provinces = tiles.get("provinceRecords", [])
     province_index_by_id = {row.get("id"): index for index, row in enumerate(provinces)}
     if len(province_index_by_id) != len(provinces):
@@ -135,10 +160,15 @@ def audit_documents(
         row.get("componentKey"): row for row in source_ledger.get("adjudications", [])
         if isinstance(row.get("componentKey"), str)
     }
+    ledger_schema = ledger.get("schemaVersion")
     ledger_rows = ledger.get("decisions", [])
-    if ledger.get("schemaVersion") != 1 or not isinstance(ledger_rows, list):
-        errors.append("ledger must use schemaVersion 1 and a decisions array")
+    if ledger_schema not in {1, 2} or not isinstance(ledger_rows, list):
+        errors.append("ledger must use schemaVersion 1 or 2 and a decisions array")
         ledger_rows = []
+    if ledger_schema == 2 and ledger.get("worldVersion") != runtime_domain:
+        errors.append(
+            f"ledger worldVersion {ledger.get('worldVersion')!r} does not match runtime map {runtime_domain!r}"
+        )
 
     scenario_codes = sorted(scenarios)
     for index, decision_row in enumerate(ledger_rows):
@@ -150,8 +180,9 @@ def audit_documents(
         if not isinstance(rationale, str) or not rationale.strip():
             errors.append(f"{prefix} is missing rationale")
         expected = decision_row.get("expectedCurrentReachability")
-        if expected != "CITY_ONLY":
-            errors.append(f"{prefix} expectedCurrentReachability must be CITY_ONLY")
+        required_expected = "BOTH_UNSUPPLIED" if ledger_schema == 2 else "CITY_ONLY"
+        if expected != required_expected:
+            errors.append(f"{prefix} expectedCurrentReachability must be {required_expected}")
         source_key = decision_row.get("sourceLedgerRow")
         if not isinstance(source_key, str) or not source_key:
             errors.append(f"{prefix} is missing sourceLedgerRow")
@@ -161,7 +192,12 @@ def audit_documents(
         if city is None:
             errors.append(f"{prefix} references unknown runtime city")
             continue
-        if decision_row.get("physicalPlaceId") != city.get("physicalPlaceId"):
+        if ledger_schema == 2:
+            if decision_row.get("physicalPlaceRef") != city.get("physicalPlaceRef"):
+                errors.append(f"{prefix} physicalPlaceRef drift")
+            if decision_row.get("routeNodeKey") != city.get("routeNodeKey"):
+                errors.append(f"{prefix} routeNodeKey drift")
+        elif decision_row.get("physicalPlaceId") != city.get("physicalPlaceId"):
             errors.append(f"{prefix} physicalPlaceId drift")
         province_index = city.get("provinceId")
         if isinstance(province_index, int) and province_index in province_adjacency:
@@ -193,7 +229,7 @@ def audit_documents(
     ownership_by_scenario = {
         row.get("scenarioCode"): row for row in ownership.get("scenarios", [])
     }
-    city_only_keys: set[tuple[int, int]] = set()
+    used_policy_keys: set[tuple[int, int]] = set()
     for scenario_code in scenario_codes:
         scenario = scenarios[scenario_code]
         owner_by_city, capitals = _scenario_runtime(scenario)
@@ -241,42 +277,65 @@ def audit_documents(
             by_city, by_spatial = city_id in city_supplied, city_id in spatial_supplied
             active = _active_decisions(ledger_rows, scenario_code, city_id)
             policy = active[0] if len(active) == 1 else None
+            raw_reachability = (
+                "BOTH_SUPPLIED" if by_city and by_spatial else
+                "CITY_ONLY" if by_city else
+                "SPATIAL_ONLY" if by_spatial else
+                "BOTH_UNSUPPLIED"
+            )
+            applied_policy = (
+                policy if policy and policy.get("expectedCurrentReachability") == raw_reachability else None
+            )
             if by_city and by_spatial:
                 verdict = "BOTH_SUPPLIED"
             elif by_city:
-                city_only_keys.add((scenario_code, city_id))
-                if policy and policy.get("decision") in UPHOLD_DECISIONS:
+                if applied_policy and applied_policy.get("decision") in UPHOLD_DECISIONS:
                     verdict = "SPATIAL_CUT_UPHELD"
                 else:
                     verdict = "CITY_ONLY_PROTECTED"
-                if policy is None:
+                if applied_policy is None:
                     errors.append(f"unclassified city-only mismatch: scenario {scenario_code} city {city_id}")
             elif by_spatial:
                 verdict = "SPATIAL_ONLY_SUPPLIED"
             else:
-                verdict = "BOTH_UNSUPPLIED"
+                verdict = (
+                    "BOTH_UNSUPPLIED_PROTECTED"
+                    if applied_policy and applied_policy.get("decision") in PROTECT_DECISIONS
+                    else "BOTH_UNSUPPLIED"
+                )
             counts[verdict] += 1
-            if by_city != by_spatial:
+            if applied_policy and (
+                verdict in {"CITY_ONLY_PROTECTED", "SPATIAL_CUT_UPHELD", "BOTH_UNSUPPLIED_PROTECTED"}
+            ):
+                used_policy_keys.add((scenario_code, city_id))
+            if by_city != by_spatial or verdict == "BOTH_UNSUPPLIED_PROTECTED":
                 city = runtime_by_id[city_id]
                 province = provinces[city["provinceId"]]
                 rows.append({
                     "scenarioCode": scenario_code,
                     "runtimeCityId": city_id,
                     "physicalPlaceId": city.get("physicalPlaceId"),
+                    "physicalPlaceRef": city.get("physicalPlaceRef"),
+                    "routeNodeKey": city.get("routeNodeKey"),
                     "jurisdictionId": province.get("jurisdictionId"),
                     "cityGraphSupplied": by_city,
                     "spatialGraphSupplied": by_spatial,
                     "verdict": verdict,
-                    "decision": policy.get("decision") if policy else None,
-                    "sourceLedgerRow": policy.get("sourceLedgerRow") if policy else None,
+                    "decision": applied_policy.get("decision") if applied_policy else None,
+                    "sourceLedgerRow": applied_policy.get("sourceLedgerRow") if applied_policy else None,
                 })
         summaries[scenario_code] = {verdict: counts[verdict] for verdict in VERDICTS}
 
     for index, decision_row in enumerate(ledger_rows):
         city_id = decision_row.get("runtimeCityId")
         for scenario_code in scenario_codes:
-            if _active_decisions([decision_row], scenario_code, city_id) and (scenario_code, city_id) not in city_only_keys:
-                errors.append(f"stale decision[{index}]: scenario {scenario_code} city {city_id} is no longer city-only")
+            if _active_decisions([decision_row], scenario_code, city_id) and (
+                scenario_code, city_id
+            ) not in used_policy_keys:
+                errors.append(
+                    f"stale decision[{index}]: scenario {scenario_code} city {city_id} "
+                    f"does not match {decision_row.get('expectedCurrentReachability')}"
+                )
 
     owned_scenarios_by_city: dict[int, list[int]] = {}
     for scenario_code, scenario in scenarios.items():
@@ -295,6 +354,10 @@ def audit_documents(
                 active_protection = [
                     row for row in _active_decisions(ledger_rows, scenario_code, city_id)
                     if row.get("decision") in PROTECT_DECISIONS
+                    and (
+                        ledger_schema != 2
+                        or row.get("expectedCurrentReachability") == "BOTH_UNSUPPLIED"
+                    )
                 ]
                 if len(active_protection) != 1:
                     errors.append(
@@ -313,7 +376,8 @@ def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def audit_repository() -> AuditResult:
+def audit_repository(map_name: str = "han-world-v3") -> AuditResult:
+    runtime_map_path, ledger_path = DOMAIN_PATHS[map_name]
     ownership = _load_json(OWNERSHIP_PATH)
     scenario_codes = sorted(row["scenarioCode"] for row in ownership["scenarios"])
     scenarios = {
@@ -321,20 +385,21 @@ def audit_repository() -> AuditResult:
     }
     return audit_documents(
         _load_json(TILES_PATH),
-        _load_json(RUNTIME_MAP_PATH),
+        _load_json(runtime_map_path),
         ownership,
         scenarios,
-        _load_json(LEDGER_PATH),
+        _load_json(ledger_path),
         _load_json(SOURCE_LEDGER_PATH),
     )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--map", choices=sorted(DOMAIN_PATHS), default="han-world-v3")
     parser.add_argument("--check", action="store_true", help="exit non-zero on any audit error")
     parser.add_argument("--json", action="store_true", help="print deterministic JSON inventory")
     args = parser.parse_args()
-    result = audit_repository()
+    result = audit_repository(args.map)
     payload = {"summaries": result.summaries, "rows": result.rows, "errors": result.errors}
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))

@@ -334,4 +334,60 @@ class UpdateCitySupplyBfsTest {
         assertEquals(SupplyReachabilityVerdict.BOTH_UNSUPPLIED, evaluation.rows.single { it.cityId == 3 }.verdict)
         assertEquals(setOf(1, 2), evaluation.suppliedCityIds)
     }
+
+    @Test
+    fun `exact protect policy preserves a reviewed degree-zero city while uphold does not`() {
+        val base = spatialNetwork(
+            owners = listOf(1, 1, 1),
+            edges = emptyList(),
+            cityProvinces = mapOf(1 to 0, 4 to 1, 5 to 2),
+        )
+        val policies = mapOf(
+            4 to SupplyFallbackPolicy(
+                SupplyDisconnectionDecision.PROTECT_GEOMETRY_DEFECT,
+                "PARENT-0034@480:266",
+                SupplyReachabilityExpectation.BOTH_UNSUPPLIED,
+            ),
+            5 to SupplyFallbackPolicy(
+                SupplyDisconnectionDecision.UPHOLD_HISTORICAL_EXCLAVE,
+                "PARENT-0036@459:189",
+                SupplyReachabilityExpectation.BOTH_UNSUPPLIED,
+            ),
+        )
+
+        val evaluation = evaluateSupplyReachability(
+            cities = listOf(SupplyCity(1, 1), SupplyCity(4, 1), SupplyCity(5, 1)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            spatialNetwork = base.copy(fallbackPolicies = policies),
+        )
+
+        assertEquals(
+            SupplyReachabilityVerdict.BOTH_UNSUPPLIED_PROTECTED,
+            evaluation.rows.single { it.cityId == 4 }.verdict,
+        )
+        assertEquals(
+            SupplyReachabilityVerdict.BOTH_UNSUPPLIED,
+            evaluation.rows.single { it.cityId == 5 }.verdict,
+        )
+        assertEquals(setOf(1, 4), evaluation.suppliedCityIds)
+
+        val stalePolicy = evaluateSupplyReachability(
+            cities = listOf(SupplyCity(1, 1), SupplyCity(4, 1)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            spatialNetwork = base.copy(
+                fallbackPolicies = mapOf(
+                    4 to policies.getValue(4).copy(
+                        expectedCurrentReachability = SupplyReachabilityExpectation.CITY_ONLY,
+                    ),
+                ),
+            ),
+        )
+        assertEquals(
+            SupplyReachabilityVerdict.BOTH_UNSUPPLIED,
+            stalePolicy.rows.single { it.cityId == 4 }.verdict,
+        )
+        assertEquals(setOf(1), stalePolicy.suppliedCityIds)
+    }
 }

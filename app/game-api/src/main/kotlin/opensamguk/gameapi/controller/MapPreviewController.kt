@@ -121,7 +121,7 @@ class MapPreviewController(
             }
             .sortedBy { it.id }
 
-        val administrativeOwnership = if (mapCode == "han" || mapCode == "han-world-v2") {
+        val administrativeOwnership = if (mapCode in setOf("han", "han-world-v2", "han-world-v3")) {
             mapAdministrativeOwnership.project(
                 scenarioCode = world.scenarioCode,
                 liveCities = cities.mapNotNull { city ->

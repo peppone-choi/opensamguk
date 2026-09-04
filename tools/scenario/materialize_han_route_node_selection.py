@@ -172,7 +172,7 @@ def _scenario_resources(candidate: JsonObject, scenario_dir: Path) -> list[JsonO
     actual_names: set[str] = set()
     for path in scenario_dir.glob("scenario_*.json"):
         map_info = _load(path).get("map")
-        if isinstance(map_info, dict) and map_info.get("mapName") in {"han", "han-world-v2"}:
+        if isinstance(map_info, dict) and map_info.get("mapName") in {"han", "han-world-v2", "han-world-v3"}:
             actual_names.add(path.name)
     if actual_names != expected_names:
         raise MaterializationContractError("scenario resource set drift")
@@ -188,7 +188,7 @@ def _scenario_resources(candidate: JsonObject, scenario_dir: Path) -> list[JsonO
             raise MaterializationContractError("scenario hash drift")
         payload = _load(path)
         start_year = number(expected, "startYear")
-        if (obj(payload, "map").get("mapName") not in {"han", "han-world-v2"}
+        if (obj(payload, "map").get("mapName") not in {"han", "han-world-v2", "han-world-v3"}
                 or payload.get("startYear") != start_year):
             raise MaterializationContractError("scenario resource metadata drift")
         seen.add(scenario_id)

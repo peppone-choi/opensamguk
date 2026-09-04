@@ -254,7 +254,7 @@ class DaemonLoopConfig {
         val activeMapName = ActiveWorldMap.requireName(state.config, state.meta)
         val spatialSupplyNetworkProvider = createSpatialSupplyNetworkProvider(
             activeMapName = activeMapName,
-            mapData = if (activeMapName == "han" || activeMapName == "han-world-v2") {
+            mapData = if (activeMapName in setOf("han", "han-world-v2", "han-world-v3")) {
                 MapJson.loadFromClasspath(activeMapName)
             } else {
                 MapJson.MapData(0, 0, emptyList())
@@ -743,13 +743,14 @@ internal fun createSpatialSupplyNetworkProvider(
     mapData: MapJson.MapData,
     scenarioCode: Int,
     liveCityNations: () -> List<Pair<Int, Int>>,
-    loadNetwork: (Int, List<SpatialSupplyCity>) -> SpatialSupplyNetwork,
+    loadNetwork: (String, Int, List<SpatialSupplyCity>) -> SpatialSupplyNetwork,
 ): () -> SpatialSupplyNetwork? {
-    if (activeMapName != "han" && activeMapName != "han-world-v2") return { null }
+    if (activeMapName !in setOf("han", "han-world-v2", "han-world-v3")) return { null }
 
     val mapCityIds = mapData.cities.map { it.id }
     check(mapCityIds.isNotEmpty()) { "Han map resource contains no runtime cities" }
     check(mapCityIds.toSet().size == mapCityIds.size) { "Han map resource contains duplicate runtime city ids" }
+    val mapCityById = mapData.cities.associateBy { it.id }
     val provinceByCityId = mapData.cities.mapNotNull { city ->
         city.provinceId?.let { provinceIndex ->
             check(provinceIndex >= 0) { "Han city ${city.id} has invalid province index $provinceIndex" }
@@ -767,9 +768,17 @@ internal fun createSpatialSupplyNetworkProvider(
         }
         val nationByCityId = liveCities.toMap()
         return loadNetwork(
+            activeMapName,
             scenarioCode,
             provinceByCityId.map { (cityId, provinceIndex) ->
-                SpatialSupplyCity(cityId, provinceIndex, nationByCityId.getValue(cityId))
+                val mapCity = mapCityById.getValue(cityId)
+                SpatialSupplyCity(
+                    cityId,
+                    provinceIndex,
+                    nationByCityId.getValue(cityId),
+                    mapCity.physicalPlaceRef,
+                    mapCity.routeNodeKey,
+                )
             },
         )
     }

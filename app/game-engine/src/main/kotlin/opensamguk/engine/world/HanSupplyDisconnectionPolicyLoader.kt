@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.logic.world.SupplyDisconnectionDecision
 import opensamguk.logic.world.SupplyFallbackPolicy
+import opensamguk.logic.world.SupplyReachabilityExpectation
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.nio.file.Path
@@ -18,12 +19,55 @@ class HanSupplyDisconnectionPolicyLoader(
     @Value("\${HAN_RUNTIME_MAP_FILE:classpath:map/han.json}") private val runtimeMapPath: String,
     @Value("\${HAN_SUPPLY_SOURCE_LEDGER_FILE:data/curated/han/territory-disconnection-adjudications-v1.json}")
     private val sourceLedgerPath: String,
+    @Value("\${HAN_WORLD_V3_SUPPLY_DISCONNECTION_LEDGER_FILE:data/curated/han/supply-disconnection-adjudications-v3.json}")
+    private val v3LedgerPath: String = "data/curated/han/supply-disconnection-adjudications-v3.json",
+    @Value("\${HAN_WORLD_V3_RUNTIME_MAP_FILE:classpath:map/han-world-v3.json}")
+    private val v3RuntimeMapPath: String = "classpath:map/han-world-v3.json",
 ) {
-    @Volatile
-    private var cached: CanonicalPolicies? = null
+    private val cached = linkedMapOf<String, CanonicalPolicies>()
 
     fun load(scenarioCode: Int, liveCityProvinceIndices: Map<Int, Int>): Map<Int, SupplyFallbackPolicy> {
-        val canonical = canonical()
+        val canonical = canonical("han")
+        return loadActive(canonical, scenarioCode) { row ->
+            val liveProvince = liveCityProvinceIndices[row.cityId]
+                ?: error("Han supply ledger active city ${row.cityId} is absent from live spatial mapping")
+            check(liveProvince == row.provinceIndex) {
+                "Han supply ledger city ${row.cityId} live province drift: $liveProvince != ${row.provinceIndex}"
+            }
+        }
+    }
+
+    fun load(
+        activeMapName: String,
+        scenarioCode: Int,
+        liveCities: List<SpatialSupplyCity>,
+    ): Map<Int, SupplyFallbackPolicy> {
+        val canonical = canonical(activeMapName)
+        val liveById = liveCities.associateBy { it.cityId }
+        check(liveById.size == liveCities.size) { "Runtime contains duplicate city ids" }
+        return loadActive(canonical, scenarioCode) { row ->
+            val live = liveById[row.cityId]
+                ?: error("Han supply ledger active city ${row.cityId} is absent from live spatial mapping")
+            check(live.provinceIndex == row.provinceIndex) {
+                "Han supply ledger city ${row.cityId} live province drift: " +
+                    "${live.provinceIndex} != ${row.provinceIndex}"
+            }
+            if (canonical.schemaVersion == 2) {
+                check(live.physicalPlaceRef == row.physicalPlaceRef) {
+                    "Han supply ledger city ${row.cityId} live physicalPlaceRef drift"
+                }
+                check(live.routeNodeKey == row.routeNodeKey) {
+                    "Han supply ledger city ${row.cityId} live routeNodeKey drift"
+                }
+            }
+        }
+    }
+
+    private fun loadActive(
+        canonical: CanonicalPolicies,
+        scenarioCode: Int,
+        validateLive: (PolicyRow) -> Unit,
+    ): Map<Int, SupplyFallbackPolicy> {
         val active = canonical.rows.filter { scenarioCode in it.effectiveFrom..it.effectiveTo }
         val duplicates = active.groupingBy { it.cityId }.eachCount().filterValues { it > 1 }.keys
         check(duplicates.isEmpty()) {
@@ -31,27 +75,38 @@ class HanSupplyDisconnectionPolicyLoader(
         }
         val result = linkedMapOf<Int, SupplyFallbackPolicy>()
         for (row in active.sortedBy { it.cityId }) {
-            val liveProvince = liveCityProvinceIndices[row.cityId]
-                ?: error("Han supply ledger active city ${row.cityId} is absent from live spatial mapping")
-            check(liveProvince == row.provinceIndex) {
-                "Han supply ledger city ${row.cityId} live province drift: $liveProvince != ${row.provinceIndex}"
-            }
-            result[row.cityId] = SupplyFallbackPolicy(row.decision, row.sourceLedgerRow)
+            validateLive(row)
+            result[row.cityId] = SupplyFallbackPolicy(
+                row.decision,
+                row.sourceLedgerRow,
+                row.expectedCurrentReachability,
+            )
         }
         return result
     }
 
-    private fun canonical(): CanonicalPolicies = cached ?: synchronized(this) {
-        cached ?: loadCanonical().also { cached = it }
+    private fun canonical(activeMapName: String): CanonicalPolicies = synchronized(cached) {
+        cached.getOrPut(activeMapName) { loadCanonical(activeMapName) }
     }
 
-    private fun loadCanonical(): CanonicalPolicies {
+    private fun loadCanonical(activeMapName: String): CanonicalPolicies {
         try {
+            val (activeLedgerPath, activeRuntimeMapPath, schemaVersion) = when (activeMapName) {
+                "han", "han-world-v2" -> Triple(ledgerPath, runtimeMapPath, 1)
+                "han-world-v3" -> Triple(v3LedgerPath, v3RuntimeMapPath, 2)
+                else -> error("Unsupported Han supply policy map $activeMapName")
+            }
             val tiles = readTree(mapPath)
             val provinces = tiles.requiredArray("provinceRecords")
             val jurisdictionIds = tiles.requiredArray("jurisdictionRecords")
                 .map { it.requiredText("id") }.toSet()
-            val runtimeCities = readTree(runtimeMapPath)
+            val runtimeRoot = readTree(activeRuntimeMapPath)
+            if (schemaVersion == 2) {
+                check(runtimeRoot.path("_meta").requiredText("map") == activeMapName) {
+                    "Han V3 runtime map domain drift"
+                }
+            }
+            val runtimeCities = runtimeRoot
                 .requiredArray("cities")
             val runtimeById = runtimeCities.associateBy { it.requiredInt("id") }
             check(runtimeById.size == runtimeCities.size) { "Han runtime map contains duplicate city ids" }
@@ -62,15 +117,40 @@ class HanSupplyDisconnectionPolicyLoader(
             val sourceByKey = sourceRows.associateBy { it.requiredText("componentKey") }
             check(sourceByKey.size == sourceRows.size) { "Han source ledger contains duplicate component keys" }
 
-            val root = readTree(ledgerPath)
-            check(root.requiredInt("schemaVersion") == 1) { "Han supply ledger schemaVersion must be 1" }
+            val root = readTree(activeLedgerPath)
+            check(root.requiredInt("schemaVersion") == schemaVersion) {
+                "Han supply ledger schemaVersion must be $schemaVersion for $activeMapName"
+            }
+            if (schemaVersion == 2) {
+                check(root.requiredText("worldVersion") == activeMapName) {
+                    "Han supply ledger worldVersion must be $activeMapName"
+                }
+            }
             val rows = root.requiredArray("decisions").mapIndexed { index, node ->
                 val cityId = node.requiredInt("runtimeCityId")
                 val runtime = runtimeById[cityId]
                     ?: error("Han supply ledger decision[$index] references unknown runtime city $cityId")
-                val physicalPlaceId = node.requiredText("physicalPlaceId")
-                check(runtime.requiredText("physicalPlaceId") == physicalPlaceId) {
-                    "Han supply ledger city $cityId physicalPlaceId drift"
+                val physicalPlaceRef = if (schemaVersion == 2) {
+                    node.requiredText("physicalPlaceRef").also { expected ->
+                        check(runtime.requiredText("physicalPlaceRef") == expected) {
+                            "Han supply ledger city $cityId physicalPlaceRef drift"
+                        }
+                    }
+                } else {
+                    "chgis:v6:cnty:${node.requiredText("physicalPlaceId").also { expected ->
+                        check(runtime.requiredText("physicalPlaceId") == expected) {
+                            "Han supply ledger city $cityId physicalPlaceId drift"
+                        }
+                    }}"
+                }
+                val routeNodeKey = if (schemaVersion == 2) {
+                    node.requiredText("routeNodeKey").also { expected ->
+                        check(runtime.requiredText("routeNodeKey") == expected) {
+                            "Han supply ledger city $cityId routeNodeKey drift"
+                        }
+                    }
+                } else {
+                    null
                 }
                 val provinceIndex = runtime.requiredInt("provinceId")
                 check(provinceIndex in provinces.indices) {
@@ -106,9 +186,11 @@ class HanSupplyDisconnectionPolicyLoader(
                         source.requiredText("verdict")
                 }
                 node.requiredText("rationale")
-                check(node.requiredText("expectedCurrentReachability") == "CITY_ONLY") {
-                    "Han supply ledger city $cityId expectedCurrentReachability must be CITY_ONLY"
+                val requiredReachability = if (schemaVersion == 2) "BOTH_UNSUPPLIED" else "CITY_ONLY"
+                check(node.requiredText("expectedCurrentReachability") == requiredReachability) {
+                    "Han supply ledger city $cityId expectedCurrentReachability must be $requiredReachability"
                 }
+                val expectedCurrentReachability = SupplyReachabilityExpectation.valueOf(requiredReachability)
                 val effectiveFrom = node.requiredInt("effectiveScenarioFrom")
                 val effectiveTo = node.requiredInt("effectiveScenarioTo")
                 check(effectiveFrom <= effectiveTo) {
@@ -117,13 +199,16 @@ class HanSupplyDisconnectionPolicyLoader(
                 PolicyRow(
                     cityId = cityId,
                     provinceIndex = provinceIndex,
+                    physicalPlaceRef = physicalPlaceRef,
+                    routeNodeKey = routeNodeKey,
                     decision = decision,
                     sourceLedgerRow = sourceLedgerRow,
+                    expectedCurrentReachability = expectedCurrentReachability,
                     effectiveFrom = effectiveFrom,
                     effectiveTo = effectiveTo,
                 )
             }
-            return CanonicalPolicies(rows)
+            return CanonicalPolicies(schemaVersion, rows)
         } catch (error: IllegalStateException) {
             throw error
         } catch (error: Exception) {
@@ -163,13 +248,16 @@ class HanSupplyDisconnectionPolicyLoader(
     private data class PolicyRow(
         val cityId: Int,
         val provinceIndex: Int,
+        val physicalPlaceRef: String,
+        val routeNodeKey: String?,
         val decision: SupplyDisconnectionDecision,
         val sourceLedgerRow: String,
+        val expectedCurrentReachability: SupplyReachabilityExpectation,
         val effectiveFrom: Int,
         val effectiveTo: Int,
     )
 
-    private data class CanonicalPolicies(val rows: List<PolicyRow>)
+    private data class CanonicalPolicies(val schemaVersion: Int, val rows: List<PolicyRow>)
 
     private companion object {
         val SOURCE_VERDICT_BY_DECISION = mapOf(

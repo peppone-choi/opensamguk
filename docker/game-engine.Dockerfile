@@ -15,6 +15,7 @@ COPY --from=build /src/app/game-engine/build/libs/*.jar app.jar
 COPY data/map/han-tiles.json /app/data/map/han-tiles.json
 COPY data/map/han-scenario-province-ownership-v1.json /app/data/map/han-scenario-province-ownership-v1.json
 COPY data/curated/han/supply-disconnection-adjudications-v1.json /app/data/curated/han/supply-disconnection-adjudications-v1.json
+COPY data/curated/han/supply-disconnection-adjudications-v3.json /app/data/curated/han/supply-disconnection-adjudications-v3.json
 COPY data/curated/han/territory-disconnection-adjudications-v1.json /app/data/curated/han/territory-disconnection-adjudications-v1.json
 ENV JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 EXPOSE 8082

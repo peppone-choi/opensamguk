@@ -64,10 +64,10 @@ UNITS = ROOT / "data" / "unitset" / "units.json"
 OUT_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 OUT_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanCityConst.kt"
 OUT_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanGateIndex.kt"
-OUT_V2_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v2.json"
-OUT_V2_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanWorldV2CityConst.kt"
-OUT_V2_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanWorldV2GateIndex.kt"
-OUT_V2_MANIFEST = ROOT / "data" / "map" / "han-world-v2-manifest-v1.json"
+OUT_V3_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"
+OUT_V3_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanWorldV3CityConst.kt"
+OUT_V3_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanWorldV3GateIndex.kt"
+OUT_V3_MANIFEST = ROOT / "data" / "map" / "han-world-v3-manifest-v1.json"
 SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
 MIGRATION = ROOT / "data" / "curated" / "han" / "route-node-migration-v1.json"
 LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-780-v1.json"
@@ -561,6 +561,19 @@ def build_gate(sk: dict | None = None) -> tuple[str, dict[int, list[str]], list[
     return kotlin_gate(index), index, missing
 
 
+def runtime_place_name(city: dict) -> str:
+    normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(str(city.get("id")))
+    if normalization and isinstance(normalization.get("runtimeName"), str):
+        return normalization["runtimeName"]
+    name = city["name"]
+    if city.get("kind") != "COUNTY":
+        return name
+    for tail in ("후국", "현", "국", "읍", "도"):
+        if name.endswith(tail) and len(name) > len(tail):
+            return name[:-len(tail)]
+    return name
+
+
 def build() -> tuple[dict, str, str, dict]:
     sk = build_gate_skeleton()
     tiles, juns, cities = sk["tiles"], sk["juns"], sk["cities"]
@@ -612,16 +625,7 @@ def build() -> tuple[dict, str, str, dict]:
     # 縣·侯國·邑·道는 縣급 행정단위라 꼬리를 뗀다. 治所가 EXTERNAL_PLACE 인 곳
     # (于山國·伯濟國 …)은 나라 이름 자체라 건드리지 않는다.
     def base_name(ci: int) -> str:
-        normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(str(cities[ci].get("id")))
-        if normalization and isinstance(normalization.get("runtimeName"), str):
-            return normalization["runtimeName"]
-        n = cities[ci]["name"]
-        if cities[ci]["kind"] != "COUNTY":
-            return n
-        for tail in ("후국", "현", "국", "읍", "도"):
-            if n.endswith(tail) and len(n) > len(tail):
-                return n[:-len(tail)]
-        return n
+        return runtime_place_name(cities[ci])
 
     # 이름은 사료 그대로 둔다. 서로 다른 漢字가 같은 한글 독음이 되는 城이 여럿이지만
     # (零陵郡 零陵縣·梁國 寧陵縣이 둘 다 '영릉'), 시나리오·엔진·DB 는 城을 **id** 로 가리킨다.
@@ -789,7 +793,7 @@ def kotlin(rows, object_name: str = "HanCityConst", target: str = "han") -> str:
         "import opensamguk.common.constants.CityConst.RawCity\n"
         "\n"
         "/**\n"
-        f" * GENERATED — `python3 tools/scenario/build_han_world.py{' --target han-world-v2' if target == 'han-world-v2' else ''}` 산출물이다. 손으로 고치지 마라.\n"
+        f" * GENERATED — `python3 tools/scenario/build_han_world.py{' --target han-world-v3' if target == 'han-world-v3' else ''}` 산출물이다. 손으로 고치지 마라.\n"
         " * 고칠 것이 있으면 생성기를 고치고 다시 돌려라(`--check` 가 드리프트를 잡는다).\n"
         " *\n"
         " * 續漢書 郡國志 + CHGIS 격자에서 만든 'han' 지도 — 郡治와 郡國志에 실린 縣이 다 城이다.\n"
@@ -865,7 +869,7 @@ def _sha256_path(path: Path) -> str:
     return _sha256_bytes(path.read_bytes())
 
 
-def build_v2() -> tuple[str, str, str, str]:
+def build_v3() -> tuple[str, str, str, str]:
     selection = json.loads(SELECTION.read_text(encoding="utf-8"))
     migration = json.loads(MIGRATION.read_text(encoding="utf-8"))
     tiles = json.loads(TILES.read_text(encoding="utf-8"))
@@ -873,7 +877,7 @@ def build_v2() -> tuple[str, str, str, str]:
     skeleton = build_gate_skeleton()
     nodes = sorted(selection["routeNodes"], key=lambda row: row["numericCityId"])
     if [row["numericCityId"] for row in nodes] != list(range(1, 782)):
-        raise AssertionError("han-world-v2 selection must be the contiguous IDs 1..781")
+        raise AssertionError("han-world-v3 selection must be the contiguous IDs 1..781")
 
     cities_by_place = {str(row["id"]): row for row in tiles["cities"]}
     city_index_by_place = {str(row["id"]): index for index, row in enumerate(tiles["cities"])}
@@ -922,14 +926,14 @@ def build_v2() -> tuple[str, str, str, str]:
         if cid <= 780:
             out = copy.deepcopy(legacy_by_id[cid])
             if node.get("legacyDisposition") == "REPLACED":
-                out["name"] = physical["name"].removesuffix("현")
+                out["name"] = runtime_place_name(physical)
         else:
             jurisdiction = jurisdiction_by_id[place]
             parent = parent_by_id[jurisdiction["commanderyId"]]
             out = copy.deepcopy(legacy_jinan)
             out.update({
                 "id": cid,
-                "name": physical["name"].removesuffix("현"),
+                "name": runtime_place_name(physical),
                 "x": round(physical["col"] * WIDTH / tiles["_meta"]["cols"]),
                 "y": round(physical["row"] * HEIGHT / tiles["_meta"]["rows"]),
                 "meta": {
@@ -977,7 +981,7 @@ def build_v2() -> tuple[str, str, str, str]:
         if qualified_counts[row["name"]] > 1:
             row["name"] = f'{row["name"]}#{row["id"]}'
     if len({row["name"] for row in out_cities}) != len(out_cities):
-        raise AssertionError("han-world-v2 runtime names must be unique")
+        raise AssertionError("han-world-v3 runtime names must be unique")
 
     # Resolve path names only after every stable numeric identity exists.
     out_cities_by_id = {row["id"]: row for row in out_cities}
@@ -992,29 +996,29 @@ def build_v2() -> tuple[str, str, str, str]:
     ]
     doc = {
         "_meta": {
-            "map": "han-world-v2",
+            "map": "han-world-v3",
             "source": "reviewed route-node selection projected through canonical spatial-province adjacency",
-            "generator": "tools/scenario/build_han_world.py --target han-world-v2",
+            "generator": "tools/scenario/build_han_world.py --target han-world-v3",
             "regions": legacy["_meta"]["regions"],
         },
         "width": legacy["width"], "height": legacy["height"], "cities": out_cities,
     }
     blob = json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
-    kt = kotlin(raw_rows, "HanWorldV2CityConst", "han-world-v2")
+    kt = kotlin(raw_rows, "HanWorldV3CityConst", "han-world-v3")
 
     gate_by_jun, _ = gate_index(skeleton["tiles"], skeleton["region_of"])
     jun_index = {row["nameCh"]: i for i, row in enumerate(skeleton["juns"])}
-    gate_index_v2 = {
+    gate_index_v3 = {
         node["numericCityId"]: gate_by_jun[jun_index[node["parentName"]]]
         for node in nodes
         if node["parentName"] in jun_index and gate_by_jun.get(jun_index[node["parentName"]])
     }
-    gate = kotlin_gate(gate_index_v2, "HanWorldV2GateIndex")
+    gate = kotlin_gate(gate_index_v3, "HanWorldV3GateIndex")
 
     manifest = {
         "schemaVersion": 1,
-        "manifestId": "han-world-v2-manifest-v1",
-        "worldVersion": "han-world-v2",
+        "manifestId": "han-world-v3-manifest-v1",
+        "worldVersion": "han-world-v3",
         "inputs": {
             "selectionSha256": _sha256_path(SELECTION),
             "migrationSha256": _sha256_path(MIGRATION),
@@ -1075,7 +1079,7 @@ def summary(stats: dict) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
-    ap.add_argument("--target", choices=("han-world-v2",))
+    ap.add_argument("--target", choices=("han-world-v3",))
     ap.add_argument("--check-gate", action="store_true",
                      help="현재 han.json city id 기준으로 HanGateIndex.kt 드리프트만 검사한다. "
                           "TILES·han.json·UNITS(전부 tracked)만 필요하고 JUNGUOZHI·CHE(둘 다 "
@@ -1083,16 +1087,16 @@ def main() -> int:
     ap.add_argument("--write-gate", action="store_true",
                     help="현재 han.json city id 기준 HanGateIndex.kt만 재생성한다.")
     args = ap.parse_args()
-    if args.target == "han-world-v2":
+    if args.target == "han-world-v3":
         if args.check_gate or args.write_gate:
-            ap.error("--target han-world-v2 cannot be combined with gate-only modes")
+            ap.error("--target han-world-v3 cannot be combined with gate-only modes")
         for src in (TILES, SELECTION, MIGRATION, LEGACY_780_JSON, UNITS, CANON_SRC):
             if not src.exists():
                 sys.exit(f"{src.relative_to(ROOT)} 가 없다.")
-        blob, kt, gate, manifest = build_v2()
+        blob, kt, gate, manifest = build_v3()
         outputs = (
-            (OUT_V2_JSON, blob), (OUT_V2_KT, kt),
-            (OUT_V2_GATE, gate), (OUT_V2_MANIFEST, manifest),
+            (OUT_V3_JSON, blob), (OUT_V3_KT, kt),
+            (OUT_V3_GATE, gate), (OUT_V3_MANIFEST, manifest),
         )
         if args.check:
             drift = [path.relative_to(ROOT) for path, want in outputs
@@ -1100,7 +1104,7 @@ def main() -> int:
             if drift:
                 print("드리프트: " + ", ".join(str(path) for path in drift))
                 return 1
-            print("드리프트 없음 (han-world-v2).")
+            print("드리프트 없음 (han-world-v3).")
             return 0
         for path, content in outputs:
             path.write_text(content, encoding="utf-8")

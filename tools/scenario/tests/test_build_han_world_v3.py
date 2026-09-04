@@ -18,7 +18,7 @@ build_han_world = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(build_han_world)
 
 
-class HanWorldV2Test(unittest.TestCase):
+class HanWorldV3Test(unittest.TestCase):
     def test_replaced_nodes_derive_visible_names_from_selected_physical_identity(self) -> None:
         selection = json.loads(
             (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
@@ -28,7 +28,7 @@ class HanWorldV2Test(unittest.TestCase):
             (ROOT / "infra/src/main/resources/map/han-780-v1.json").read_text()
         )
         world = json.loads(
-            (ROOT / "infra/src/main/resources/map/han-world-v2.json").read_text()
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
         )
         physical_by_id = {str(city["id"]): city for city in tiles["cities"]}
         legacy_by_id = {city["id"]: city for city in legacy["cities"]}
@@ -39,7 +39,15 @@ class HanWorldV2Test(unittest.TestCase):
             city_id = node["numericCityId"]
             if node.get("legacyDisposition") == "REPLACED" or city_id > 780:
                 place_id = node["physicalPlaceRef"].rsplit(":", 1)[-1]
-                base_names[city_id] = physical_by_id[place_id]["name"].removesuffix("현")
+                physical_name = physical_by_id[place_id]["name"]
+                base_names[city_id] = next(
+                    (
+                        physical_name.removesuffix(tail)
+                        for tail in ("후국", "현", "국", "읍", "도")
+                        if physical_name.endswith(tail) and len(physical_name) > len(tail)
+                    ),
+                    physical_name,
+                )
             else:
                 base_names[city_id] = legacy_by_id[city_id]["name"]
         base_counts = Counter(base_names.values())
@@ -63,6 +71,10 @@ class HanWorldV2Test(unittest.TestCase):
             city_id = node["numericCityId"]
             self.assertEqual(expected_names[city_id], world_by_id[city_id]["name"], node)
         self.assertEqual("수춘", world_by_id[543]["name"])
+        self.assertEqual(
+            {93: "정강", 211: "낙평", 311: "곡양(下邳國)", 437: "안중"},
+            {city_id: world_by_id[city_id]["name"] for city_id in (93, 211, 311, 437)},
+        )
 
         retained = [node for node in selection if node.get("legacyDisposition") == "RETAINED"]
         for node in retained:
@@ -122,15 +134,15 @@ class HanWorldV2Test(unittest.TestCase):
                     queue.append((neighbor, hops + 1))
         self.assertEqual(4, distance)
 
-    def test_committed_v2_is_the_reviewed_selection_with_canonical_licheng_edge(self) -> None:
+    def test_committed_v3_is_the_reviewed_selection_with_canonical_licheng_edge(self) -> None:
         selection = json.loads(
             (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
         )
         world = json.loads(
-            (ROOT / "infra/src/main/resources/map/han-world-v2.json").read_text()
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
         )
         manifest = json.loads(
-            (ROOT / "data/map/han-world-v2-manifest-v1.json").read_text()
+            (ROOT / "data/map/han-world-v3-manifest-v1.json").read_text()
         )
         expected = sorted(
             (
@@ -179,16 +191,16 @@ class HanWorldV2Test(unittest.TestCase):
         )
         self.assertEqual(6, edge["sharedBoundaryCells"])
         output_paths = {
-            "worldJsonSha256": ROOT / "infra/src/main/resources/map/han-world-v2.json",
-            "cityConstSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/HanWorldV2CityConst.kt",
-            "gateIndexSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/HanWorldV2GateIndex.kt",
+            "worldJsonSha256": ROOT / "infra/src/main/resources/map/han-world-v3.json",
+            "cityConstSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt",
+            "gateIndexSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3GateIndex.kt",
         }
         for field, path in output_paths.items():
             self.assertEqual(
                 manifest["outputs"][field], hashlib.sha256(path.read_bytes()).hexdigest()
             )
 
-    def test_v2_check_is_separate_and_legacy_artifacts_remain_pinned(self) -> None:
+    def test_v3_check_is_separate_and_legacy_artifacts_remain_pinned(self) -> None:
         expected = {
             "infra/src/main/resources/map/han.json": "5f97f8c9269a0cff44839b55dd9e57e6d830003709df3d4618e4d1a79f76ed61",
             "infra/src/main/resources/map/han-780-v1.json": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
@@ -196,7 +208,7 @@ class HanWorldV2Test(unittest.TestCase):
         for rel, digest in expected.items():
             self.assertEqual(digest, hashlib.sha256((ROOT / rel).read_bytes()).hexdigest())
         result = subprocess.run(
-            [sys.executable, str(MODULE_PATH), "--target", "han-world-v2", "--check"],
+            [sys.executable, str(MODULE_PATH), "--target", "han-world-v3", "--check"],
             cwd=ROOT,
             text=True,
             capture_output=True,

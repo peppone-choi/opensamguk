@@ -196,13 +196,14 @@ def audit_repository(root: Path) -> list[RuntimeProvinceFillAudit]:
         normalized_code = normalize_scenario_code(resource_path.stem)
         scenario = _load_json(resource_path)
         map_name = scenario.get("map", {}).get("mapName")
-        if map_name not in {"han", "han-world-v2"}:
+        if map_name not in {"han", "han-world-v2", "han-world-v3"}:
             raise ValueError(
                 f"scenario {scenario_code} references unsupported map resource {map_name!r}"
             )
         if map_name not in map_resources:
+            resource_name = "han" if map_name == "han-world-v2" else map_name
             map_resources[map_name] = _load_json(
-                root / f"infra/src/main/resources/map/{map_name}.json"
+                root / f"infra/src/main/resources/map/{resource_name}.json"
             )
         map_resource = map_resources[map_name]
         claims = claims_by_code[normalized_code]

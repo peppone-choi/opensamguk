@@ -97,7 +97,7 @@ class ScenarioMapSeedIT {
         assertEquals(14800, (city["comm_max"] as Number).toInt())
 
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"mapName\":\"han-world-v2\"") || config.contains("\"mapName\": \"han-world-v2\""), config)
+        assertTrue(config.contains("\"mapName\":\"han-world-v3\"") || config.contains("\"mapName\": \"han-world-v3\""), config)
     }
 
     @Test

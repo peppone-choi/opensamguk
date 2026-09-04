@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""시나리오를 후한 군현 맵(han, 175郡 · 780城)으로 갈아끼운다.
+"""시나리오를 후한 군현 맵으로 투영한다(legacy 774 / 명시적 V3 781 도시).
 
 바꾸는 것은 네 가지뿐이다.
-  1. `map.mapName` → "han-world-v2"
+  1. `map.mapName` → legacy "han-world-v2" / --map 지정 시 "han-world-v3"
   2. `nation[i][8]` (세력 보유 성) → 사료 지배표(`han_ownership.json`)가 준 郡에
      속한 城 전부. 郡을 가지면 그 郡의 縣도 함께 갖는다 — 縣은 郡의 하급 행정구역이지
      별개 세력의 땅이 아니다. 목록의 첫 城이 수도가 되므로 治所를 맨 앞에 둔다.
@@ -40,8 +40,8 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SCEN = ROOT / "infra/src/main/resources/scenario"
 HAN_MAP = ROOT / "infra/src/main/resources/map/han.json"
-HAN_V2_MAP = ROOT / "infra/src/main/resources/map/han-world-v2.json"
-HAN_V2_MANIFEST = ROOT / "data/map/han-world-v2-manifest-v1.json"
+HAN_V3_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
+HAN_V3_MANIFEST = ROOT / "data/map/han-world-v3-manifest-v1.json"
 HAN_TILES = ROOT / "data/map/han-tiles.json"
 ROUTE_SELECTION = ROOT / "data/curated/han/route-node-selection-v1.json"
 ROUTE_MIGRATION = ROOT / "data/curated/han/route-node-migration-v1.json"
@@ -102,8 +102,8 @@ def _sha256(path: pathlib.Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _load_verified_v2_world() -> dict:
-    manifest = json.loads(HAN_V2_MANIFEST.read_text(encoding="utf-8"))
+def _load_verified_v3_world() -> dict:
+    manifest = json.loads(HAN_V3_MANIFEST.read_text(encoding="utf-8"))
     expected_inputs = {
         "selectionSha256": ROUTE_SELECTION,
         "migrationSha256": ROUTE_MIGRATION,
@@ -111,10 +111,10 @@ def _load_verified_v2_world() -> dict:
     }
     for field, path in expected_inputs.items():
         if manifest["inputs"].get(field) != _sha256(path):
-            raise ValueError(f"han-world-v2 manifest input hash mismatch: {field}")
-    if manifest["outputs"].get("worldJsonSha256") != _sha256(HAN_V2_MAP):
-        raise ValueError("han-world-v2 manifest output hash mismatch: worldJsonSha256")
-    world = json.loads(HAN_V2_MAP.read_text(encoding="utf-8"))
+            raise ValueError(f"han-world-v3 manifest input hash mismatch: {field}")
+    if manifest["outputs"].get("worldJsonSha256") != _sha256(HAN_V3_MAP):
+        raise ValueError("han-world-v3 manifest output hash mismatch: worldJsonSha256")
+    world = json.loads(HAN_V3_MAP.read_text(encoding="utf-8"))
     manifest_nodes = {
         (row["routeNodeKey"], row["numericCityId"], row["physicalPlaceRef"])
         for row in manifest["routeNodes"]
@@ -124,7 +124,7 @@ def _load_verified_v2_world() -> dict:
         for row in world["cities"]
     }
     if manifest_nodes != world_nodes or len(world_nodes) != 781:
-        raise ValueError("han-world-v2 manifest route-node set mismatch")
+        raise ValueError("han-world-v3 manifest route-node set mismatch")
     return world
 
 
@@ -182,8 +182,8 @@ def build_physical_id_migration(
 def load_world(map_name: str = "han") -> tuple[dict[str, list[int]], dict[str, int], dict[str, int]]:
     """郡 한글명 → 그 郡의 城 id 전부(治所가 맨 앞), 城 이름 → id, 郡 → 治所 id."""
     cities = (
-        _load_verified_v2_world()["cities"]
-        if map_name == "han-world-v2"
+        _load_verified_v3_world()["cities"]
+        if map_name == "han-world-v3"
         else json.loads(HAN_MAP.read_text(encoding="utf-8"))["cities"]
     )
     by_jun: dict[str, list[int]] = {}
@@ -216,12 +216,26 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
             city_id_migration: dict[int, int] | None = None) -> tuple[dict, list[str]]:
     warn: list[str] = []
     doc = json.loads(json.dumps(doc))            # 깊은 복사 — 원본을 건드리지 않는다
-    already_v2 = doc.get("cityIdentityVersion") == "han-world-v2"
+    # b2c795a2 already projected these 15 resources into the 781-node identity
+    # domain, but (before persisted-world compatibility was discovered) labelled
+    # that domain han-world-v2.  V2 here is therefore a one-time transitional
+    # resource marker, not permission to apply the 774→781 projection again.
+    # Persisted V2 worlds are never passed through this NEW_WORLD_ONLY generator.
+    already_migrated = doc.get("cityIdentityVersion") in {
+        "han-world-v2", "han-world-v3",
+    }
+    if city_id_migration is None and (
+        already_migrated or doc.get("map", {}).get("mapName") == "han-world-v3"
+    ):
+        raise ValueError(f"{code}: migrated city identity requires --map han-world-v3")
     # 맵과 병종 세트는 한 몸이다 — han 맵의 城 게이트 키(州·郡·부족 漢字)를 읽는 건
     # han 병종표뿐이라, 맵만 바꾸고 병종을 che 로 두면 지역 병종이 통째로 죽는다.
-    doc["map"] = {"mapName": "han-world-v2", "unitSet": "han"}
+    doc["map"] = {
+        "mapName": "han-world-v3" if city_id_migration is not None else "han-world-v2",
+        "unitSet": "han",
+    }
     if city_id_migration is not None:
-        doc["cityIdentityVersion"] = "han-world-v2"
+        doc["cityIdentityVersion"] = "han-world-v3"
     doc["placementBasis"] = (own.get(code) or {}).get("placementBasis", "HISTORICAL")
     if code not in ACTIVE_GENERAL_CONTRACTS:
         raise ValueError(f"{code}: active-general seed contract is missing")
@@ -335,7 +349,7 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
             # 대응표는 che **이름**만 알아서, id 를 다시 먹이면 못 찾고 주둔지를 통째로 비운다.
             if isinstance(old, int) or (isinstance(old, str) and old.isdigit()):
                 old_id = int(old)
-                if city_id_migration is not None and not already_v2:
+                if city_id_migration is not None and not already_migrated:
                     if old_id not in city_id_migration:
                         raise ValueError(f"{code}: unknown old numeric city ID {old_id}")
                     old_id = city_id_migration[old_id]
@@ -363,12 +377,12 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
-    ap.add_argument("--map", choices=("han-world-v2",))
+    ap.add_argument("--map", choices=("han-world-v3",))
     args = ap.parse_args()
 
     inputs = [HAN_MAP, HAN_TILES, CHE_TO_JUN, OWNERSHIP, PALETTE]
-    if args.map == "han-world-v2":
-        inputs += [HAN_V2_MAP, HAN_V2_MANIFEST, ROUTE_SELECTION, ROUTE_MIGRATION, ROUTE_CANDIDATES]
+    if args.map == "han-world-v3":
+        inputs += [HAN_V3_MAP, HAN_V3_MANIFEST, ROUTE_SELECTION, ROUTE_MIGRATION, ROUTE_CANDIDATES]
     for path in inputs:
         if not path.exists():
             print(f"없는 입력: {path.relative_to(ROOT)}", file=sys.stderr)
@@ -376,9 +390,9 @@ def main() -> int:
 
     by_jun, id_of, seat_of = load_world(args.map or "han")
     city_id_migration = None
-    if args.map == "han-world-v2":
+    if args.map == "han-world-v3":
         old_cities = json.loads(HAN_MAP.read_text(encoding="utf-8"))["cities"]
-        new_cities = _load_verified_v2_world()["cities"]
+        new_cities = _load_verified_v3_world()["cities"]
         candidates = json.loads(ROUTE_CANDIDATES.read_text(encoding="utf-8"))["candidates"]
         migration_rows = json.loads(ROUTE_MIGRATION.read_text(encoding="utf-8"))["rows"]
         city_id_migration = build_physical_id_migration(

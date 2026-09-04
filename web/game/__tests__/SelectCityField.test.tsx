@@ -24,7 +24,7 @@ describe('SelectCityField', () => {
   it('shows one-hop Licheng from server city constants and submits stable id 781', async () => {
     const onChange = vi.fn();
     mocks.mapPreview.mockResolvedValue({
-      serverName: 'test', year: 200, month: 1, mapCode: 'han-world-v2', width: 700, height: 610,
+      serverName: 'test', year: 200, month: 1, mapCode: 'han-world-v3', width: 700, height: 610,
       cities: [
         { id: 273, name: '노', level: 5, nationId: 1, x: 411, y: 180, state: 0, supply: true, isCapital: false },
         { id: 781, name: '역성', level: 11, nationId: 1, x: 413, y: 175, state: 0, supply: true, isCapital: false },

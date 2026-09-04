@@ -165,8 +165,8 @@ class V2CityTransportRulesTest {
     }
 
     @Test
-    fun `han world v2 노에서 역성 수송은 서버 경로로 통과한다`() {
-        val h = handler(listOf(273, 781), mapName = "han-world-v2")
+    fun `han world v3 노에서 역성 수송은 서버 경로로 통과한다`() {
+        val h = handler(listOf(273, 781), mapName = "han-world-v3")
         lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 273, goldDelta = 10_000)
 
         val result = h.handle(

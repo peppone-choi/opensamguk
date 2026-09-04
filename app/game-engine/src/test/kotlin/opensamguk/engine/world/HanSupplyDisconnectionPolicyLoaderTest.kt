@@ -2,8 +2,8 @@ package opensamguk.engine.world
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.logic.world.SupplyDisconnectionDecision
-import java.nio.file.Files
-import kotlin.io.path.Path
+import opensamguk.logic.world.SupplyReachabilityExpectation
+import opensamguk.infra.seed.MapJson
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.writeText
 import kotlin.test.Test
@@ -189,5 +189,81 @@ class HanSupplyDisconnectionPolicyLoaderTest {
         )
 
         assertEquals(emptyMap(), loader.load(1020, emptyMap()))
+    }
+
+    @Test
+    fun `world v3 policies bind runtime physical and route identities while v2 stays legacy`() {
+        val loader = HanSupplyDisconnectionPolicyLoader(
+            objectMapper = mapper,
+            ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json",
+            mapPath = "../../data/map/han-tiles.json",
+            runtimeMapPath = "../../infra/src/main/resources/map/han.json",
+            sourceLedgerPath = "../../data/curated/han/territory-disconnection-adjudications-v1.json",
+            v3LedgerPath = "../../data/curated/han/supply-disconnection-adjudications-v3.json",
+            v3RuntimeMapPath = "../../infra/src/main/resources/map/han-world-v3.json",
+        )
+        val liveCities = MapJson.loadFromClasspath("han-world-v3").cities.mapNotNull { city ->
+            city.provinceId?.let {
+                SpatialSupplyCity(
+                    cityId = city.id,
+                    provinceIndex = it,
+                    nationId = 0,
+                    physicalPlaceRef = city.physicalPlaceRef,
+                    routeNodeKey = city.routeNodeKey,
+                )
+            }
+        }
+
+        val policies = loader.load("han-world-v3", 1030, liveCities)
+
+        assertEquals(listOf(305, 548), policies.keys.toList())
+        assertEquals(
+            SupplyDisconnectionDecision.PROTECT_GEOMETRY_DEFECT,
+            policies.getValue(305).decision,
+        )
+        assertEquals(
+            SupplyReachabilityExpectation.BOTH_UNSUPPLIED,
+            policies.getValue(305).expectedCurrentReachability,
+        )
+        assertEquals(
+            SupplyDisconnectionDecision.PROTECT_GEOMETRY_DEFECT,
+            policies.getValue(548).decision,
+        )
+        assertEquals(null, policies[364], "Zhu-a has no supply policy")
+
+        val wrongRoute = liveCities.map { city ->
+            if (city.cityId == 305) city.copy(routeNodeKey = "wrong-route") else city
+        }
+        assertFailsWith<IllegalStateException> {
+            loader.load("han-world-v3", 1030, wrongRoute)
+        }
+        val wrongPhysicalPlace = liveCities.map { city ->
+            if (city.cityId == 305) city.copy(physicalPlaceRef = "chgis:v6:cnty:WRONG") else city
+        }
+        assertFailsWith<IllegalStateException> {
+            loader.load("han-world-v3", 1030, wrongPhysicalPlace)
+        }
+        val wrongRuntimeId = liveCities.map { city ->
+            if (city.cityId == 305) city.copy(cityId = 9999) else city
+        }
+        assertFailsWith<IllegalStateException> {
+            loader.load("han-world-v3", 1030, wrongRuntimeId)
+        }
+        val wrongProvince = liveCities.map { city ->
+            if (city.cityId == 305) city.copy(provinceIndex = 0) else city
+        }
+        assertFailsWith<IllegalStateException> {
+            loader.load("han-world-v3", 1030, wrongProvince)
+        }
+
+        val legacyLive = MapJson.loadFromClasspath("han-world-v2").cities.mapNotNull { city ->
+            city.provinceId?.let {
+                SpatialSupplyCity(city.id, it, 0, city.physicalPlaceRef, city.routeNodeKey)
+            }
+        }
+        assertEquals(
+            loader.load("han", 1030, legacyLive),
+            loader.load("han-world-v2", 1030, legacyLive),
+        )
     }
 }

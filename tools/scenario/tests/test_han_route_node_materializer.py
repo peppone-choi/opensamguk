@@ -36,7 +36,7 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
         nodes = result.selection["routeNodes"]
         migration = result.migration
 
-        self.assertEqual("han-world-v2", result.selection["worldVersion"])
+        self.assertEqual("han-world-v3", result.selection["worldVersion"])
         self.assertEqual(781, len(nodes))
         self.assertEqual(list(range(1, 782)), sorted(row["numericCityId"] for row in nodes))
         legacy_triples = [

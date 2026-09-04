@@ -25,7 +25,7 @@ class RuntimeProvinceFillAuditTest(unittest.TestCase):
             for row in audit_repository(root)
         ]
 
-        # 모든 active Han scenario는 han-world-v2를 쓰므로 실행 채색 부채도
+        # 모든 active Han scenario는 new-world-only han-world-v3를 쓰므로 실행 채색 부채도
         # 각 scenario의 mapName이 가리키는 781-node resource로 계산한다.
         # legacy han.json의 774-node 배열로 해석하면 동일 numeric ID가 다른
         # physical place를 가리키는 대량의 가짜 mismatch가 생긴다.

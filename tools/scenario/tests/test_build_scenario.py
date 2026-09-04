@@ -8,7 +8,7 @@ from pathlib import Path
 SCENARIO_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCENARIO_DIR))
 
-from build_scenario import build, dump_scenario, validate_scenario_shape
+from build_scenario import build as build_scenario, dump_scenario, validate_scenario_shape
 
 
 DEFAULTS = {
@@ -34,6 +34,11 @@ NAME_MAP = {
     10005: "재야",
     10999: "무시",
 }
+CITY_IDS = {"가": 101, "낙양": 46, "북평": 55, "패": 333, "북 평·2": 334}
+
+
+def build(*args, **kwargs):
+    return build_scenario(*args, **kwargs, runtime_city_ids=CITY_IDS)
 
 
 def scenario_row(status: str | None, location: str | None, faction: str | None) -> dict:
@@ -103,7 +108,7 @@ def normalized_manifest() -> dict:
         "title": "서로 맞선 세력들",
         "year_month": "190.1",
         "startYear": 190,
-        "map": "han-world-v2",
+        "map": "han-world-v3",
         "life": 1,
         "fiction": 0,
         "const": {"defaultMaxGeneral": 600},
@@ -122,6 +127,50 @@ def normalized_manifest() -> dict:
 
 
 class BuildScenarioTest(unittest.TestCase):
+    def test_runtime_city_projection_is_independent_of_mapping_order(self) -> None:
+        ordered, _ = build_scenario(
+            refined_fixture(), normalized_manifest(), CITY_MAP, REMAP, NAME_MAP, DEFAULTS,
+            runtime_city_ids=CITY_IDS,
+        )
+        reversed_mapping, _ = build_scenario(
+            refined_fixture(), normalized_manifest(), CITY_MAP, REMAP, NAME_MAP, DEFAULTS,
+            runtime_city_ids=dict(reversed(list(CITY_IDS.items()))),
+        )
+        self.assertEqual(dump_scenario(ordered), dump_scenario(reversed_mapping))
+        self.assertEqual([101, 46, 55, 101, 55], [row[4] for row in ordered["general"]])
+
+    def test_runtime_city_projection_rejects_missing_and_colliding_ids(self) -> None:
+        missing = dict(CITY_IDS)
+        missing.pop("북평")
+        colliding = {**CITY_IDS, "북평": 46}
+        for city_ids, message in ((missing, "missing.*북평"), (colliding, "unique")):
+            with self.subTest(city_ids=city_ids):
+                with self.assertRaisesRegex(ValueError, message):
+                    build_scenario(
+                        refined_fixture(), normalized_manifest(), CITY_MAP, REMAP, NAME_MAP, DEFAULTS,
+                        runtime_city_ids=city_ids,
+                    )
+
+    def test_runtime_city_projection_rejects_invalid_numeric_identity(self) -> None:
+        for invalid in (True, 1.0, 0, -1, "55"):
+            with self.subTest(invalid=invalid):
+                with self.assertRaisesRegex(ValueError, "runtime city id"):
+                    build_scenario(
+                        refined_fixture(), normalized_manifest(), CITY_MAP, REMAP, NAME_MAP, DEFAULTS,
+                        runtime_city_ids={**CITY_IDS, "북평": invalid},
+                    )
+
+    def test_v3_shape_rejects_city_name_tokens(self) -> None:
+        scenario, _ = build(
+            refined_fixture(), normalized_manifest(), CITY_MAP, REMAP, NAME_MAP, DEFAULTS,
+        )
+        for key, field in (("nation", 8), ("general", 4)):
+            with self.subTest(key=key):
+                broken = copy.deepcopy(scenario)
+                broken[key][0][field] = ["낙양"] if key == "nation" else "낙양"
+                with self.assertRaisesRegex(ValueError, "city"):
+                    validate_scenario_shape(broken)
+
     def test_build_emits_decoder_tuples_with_stable_officer_mapping(self) -> None:
         scenario, report = build(
             refined_fixture(),
@@ -138,6 +187,7 @@ class BuildScenarioTest(unittest.TestCase):
             "life",
             "fiction",
             "map",
+            "cityIdentityVersion",
             "seedContract",
             "const",
             "stored_icons",
@@ -147,19 +197,20 @@ class BuildScenarioTest(unittest.TestCase):
             "general_neutral",
             "diplomacy",
         ])
-        self.assertEqual(scenario["map"], {"mapName": "han-world-v2", "unitSet": "han"})
+        self.assertEqual(scenario["map"], {"mapName": "han-world-v3", "unitSet": "han"})
+        self.assertEqual(scenario["cityIdentityVersion"], "han-world-v3")
         self.assertEqual(scenario["seedContract"], {"activeGenerals": {"base": 5, "extended": 5}})
         self.assertEqual([len(row) for row in scenario["nation"]], [9, 9])
         self.assertEqual([len(row) for row in scenario["general"]], [16, 16, 16, 16, 16])
         self.assertEqual([len(row) for row in scenario["diplomacy"]], [4, 4])
         self.assertEqual(scenario["nation"], [
-            ["가", "#8B0000", 6000, 6000, "", 550, "중립", 3, ["가"]],
-            ["나", "#8B0000", 6000, 6000, "", 550, "중립", 3, ["낙양"]],
+            ["가", "#8B0000", 6000, 6000, "", 550, "중립", 3, [101]],
+            ["나", "#8B0000", 6000, 6000, "", 550, "중립", 3, [46]],
         ])
         self.assertEqual([row[1] for row in scenario["general"]], ["가", "가나", "나", "나다", "재야"])
         self.assertEqual([row[2] for row in scenario["general"]], [10001, 10002, 10003, 10004, 10005])
         self.assertEqual([row[3] for row in scenario["general"]], [1, 1, 2, 1, 0])
-        self.assertEqual([row[4] for row in scenario["general"]], ["가", "낙양", "북평", "가", "북평"])
+        self.assertEqual([row[4] for row in scenario["general"]], [101, 46, 55, 101, 55])
         self.assertEqual([row[8] for row in scenario["general"]], [12, 4, 12, 0, 0])
         self.assertTrue(all(row[0] == 0 for row in scenario["general"]))
         self.assertEqual(scenario["stored_icons"], {".": {
@@ -189,7 +240,7 @@ class BuildScenarioTest(unittest.TestCase):
             "재야",
             10005,
             0,
-            "북평",
+            55,
             64,
             65,
             66,
@@ -369,7 +420,7 @@ class BuildScenarioTest(unittest.TestCase):
         self.assertEqual(scenario["title"], "서로: 맞선 세력들")
         self.assertEqual(scenario["nation"][0][0], "가-국 2")
         self.assertEqual(scenario["general"][0][1], "가 2·호")
-        self.assertEqual(scenario["general"][2][4], "북 평·2")
+        self.assertEqual(scenario["general"][2][4], 334)
 
     def test_dump_is_utf8_ordered_and_byte_identical_for_repeated_and_shuffled_inputs(self) -> None:
         first, first_report = build(

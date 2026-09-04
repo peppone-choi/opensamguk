@@ -200,12 +200,12 @@ class MapPreviewControllerTest {
     }
 
     @Test
-    fun `world v2 preview exposes runtime Licheng as interactive city 781`() {
+    fun `world v3 preview exposes runtime Licheng as interactive city 781`() {
         `when`(worldRepo.findAll()).thenReturn(
             listOf(
                 WorldStateReadEntity(
                     id = 1, scenarioCode = "scenario_1050", currentYear = 200, currentMonth = 1,
-                    config = mapOf("mapName" to "han-world-v2"),
+                    config = mapOf("mapName" to "han-world-v3"),
                 ),
             ),
         )
@@ -220,7 +220,7 @@ class MapPreviewControllerTest {
 
         mockMvc().perform(get("/api/map/preview"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.mapCode").value("han-world-v2"))
+            .andExpect(jsonPath("$.mapCode").value("han-world-v3"))
             .andExpect(jsonPath("$.cities.length()").value(1))
             .andExpect(jsonPath("$.cities[0].id").value(781))
             .andExpect(jsonPath("$.cities[0].name").value("역성"))

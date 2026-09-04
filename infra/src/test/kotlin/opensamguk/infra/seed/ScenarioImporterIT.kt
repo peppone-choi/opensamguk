@@ -121,6 +121,25 @@ class ScenarioImporterIT {
         return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
     }
 
+    @Test
+    fun `scenario 9200 seeds stable V3 ownership capitals and general locations`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_9200.json"))
+
+        ScenarioImporter(
+            scenario = scenario,
+            cities = mapCitiesOf(scenario),
+            scenarioCode = "scenario_9200",
+        ).importAll(jdbc, canonicalWorldId)
+
+        assertEquals(1, jdbc.queryForObject("SELECT nation_id FROM city WHERE id = 46", Int::class.java))
+        assertEquals(2, jdbc.queryForObject("SELECT nation_id FROM city WHERE id = 1", Int::class.java))
+        assertEquals(46, jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE name = '동탁'", Int::class.java))
+        assertEquals(1, jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE name = '원소'", Int::class.java))
+        assertEquals(46, jdbc.queryForObject("SELECT city_id FROM general WHERE name = '동탁'", Int::class.java))
+        assertEquals(1, jdbc.queryForObject("SELECT city_id FROM general WHERE name = '원소'", Int::class.java))
+    }
+
     private fun newImporter2(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
         val cities = mapCitiesOf(scenario)
@@ -402,8 +421,8 @@ class ScenarioImporterIT {
         assertTrue(meta.contains("\"serverId\""), "meta has active serverId: $meta")
         assertTrue(meta.contains("\"ngGameId\""), "meta has active ngGameId: $meta")
         assertTrue(
-            meta.contains("\"map\": \"han-world-v2\"") || meta.contains("\"map\":\"han-world-v2\""),
-            "meta has map=han-world-v2: $meta",
+            meta.contains("\"map\": \"han-world-v3\"") || meta.contains("\"map\":\"han-world-v3\""),
+            "meta has map=han-world-v3: $meta",
         )
         assertTrue(meta.contains("\"unitSet\": \"han\"") || meta.contains("\"unitSet\":\"han\""), "meta has unitSet=han: $meta")
 
@@ -1637,7 +1656,7 @@ class ScenarioImporterIT {
         assertEquals(14800, soi(city["comm_max"]))
 
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"mapName\":\"han-world-v2\"") || config.contains("\"mapName\": \"han-world-v2\""), config)
+        assertTrue(config.contains("\"mapName\":\"han-world-v3\"") || config.contains("\"mapName\": \"han-world-v3\""), config)
     }
 
     @Test

@@ -7,8 +7,8 @@ import opensamguk.common.constants.HanCityConst
 import opensamguk.common.constants.HanGateIndex
 import opensamguk.common.constants.Han780V1CityConst
 import opensamguk.common.constants.Han780V1GateIndex
-import opensamguk.common.constants.HanWorldV2CityConst
-import opensamguk.common.constants.HanWorldV2GateIndex
+import opensamguk.common.constants.HanWorldV3CityConst
+import opensamguk.common.constants.HanWorldV3GateIndex
 
 /**
  * F6 Task FM1 — per-map CityConst variant registry, keyed by `mapName`.
@@ -58,9 +58,11 @@ const val FOUND_ASSAULT_RATIO: Double = 2.0
 const val HAN_MAP_NAME: String = "han"
 const val HAN_780_V1_MAP_NAME: String = "han-780-v1"
 const val HAN_WORLD_V2_MAP_NAME: String = "han-world-v2"
+const val HAN_WORLD_V3_MAP_NAME: String = "han-world-v3"
 
 fun isHanMapName(mapName: Any?): Boolean =
-    mapName == HAN_MAP_NAME || mapName == HAN_780_V1_MAP_NAME || mapName == HAN_WORLD_V2_MAP_NAME
+    mapName == HAN_MAP_NAME || mapName == HAN_780_V1_MAP_NAME ||
+        mapName == HAN_WORLD_V2_MAP_NAME || mapName == HAN_WORLD_V3_MAP_NAME
 
 fun foundingDefenseAfterCapture(mapName: Any?, currentDefense: Int, postDefense: Int): Int =
     if (isHanMapName(mapName)) postDefense else currentDefense
@@ -322,10 +324,10 @@ private val legacyHan = HanCityConstVariant(
     gateKeysFor = Han780V1GateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 13, 20, 28, 41, 53, 71, 91),
 )
-private val hanWorldV2 = HanCityConstVariant(
-    mapName = HAN_WORLD_V2_MAP_NAME,
-    rawRows = HanWorldV2CityConst.initCity,
-    gateKeysFor = HanWorldV2GateIndex::keys,
+private val hanWorldV3 = HanCityConstVariant(
+    mapName = HAN_WORLD_V3_MAP_NAME,
+    rawRows = HanWorldV3CityConst.initCity,
+    gateKeysFor = HanWorldV3GateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
 )
 
@@ -422,7 +424,8 @@ object CityConstRegistry {
             "miniche_b" to miniche,
             "miniche_clean" to miniche,
             HAN_MAP_NAME to currentHan,
-            HAN_WORLD_V2_MAP_NAME to hanWorldV2,
+            HAN_WORLD_V2_MAP_NAME to currentHan,
+            HAN_WORLD_V3_MAP_NAME to hanWorldV3,
             HAN_780_V1_MAP_NAME to legacyHan,
         )
     }

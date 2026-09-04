@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "map": "han-world-v2",
+    "map": "han-world-v3",
     "source": "reviewed route-node selection projected through canonical spatial-province adjacency",
-    "generator": "tools/scenario/build_han_world.py --target han-world-v2",
+    "generator": "tools/scenario/build_han_world.py --target han-world-v3",
     "regions": [
       "사예",
       "예주",
@@ -4134,7 +4134,7 @@
     },
     {
       "id": 93,
-      "name": "정강후국",
+      "name": "정강",
       "x": 373,
       "y": 242,
       "level": 10,
@@ -4267,7 +4267,7 @@
     },
     {
       "id": 96,
-      "name": "곡양",
+      "name": "곡양(沛國)",
       "x": 424,
       "y": 242,
       "level": 10,
@@ -9416,7 +9416,7 @@
     },
     {
       "id": 211,
-      "name": "낙평후국",
+      "name": "낙평",
       "x": 396,
       "y": 180,
       "level": 6,
@@ -13886,7 +13886,7 @@
     },
     {
       "id": 311,
-      "name": "곡양후국",
+      "name": "곡양(下邳國)",
       "x": 454,
       "y": 228,
       "level": 5,
@@ -19489,7 +19489,7 @@
     },
     {
       "id": 437,
-      "name": "안중후국",
+      "name": "안중",
       "x": 337,
       "y": 253,
       "level": 5,

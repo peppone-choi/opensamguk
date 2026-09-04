@@ -47,19 +47,24 @@ class CityConstRegistryTest {
     fun `Han family recognition includes active version and compatibility keys`() {
         assertTrue(isHanMapName("han"))
         assertTrue(isHanMapName("han-world-v2"))
+        assertTrue(isHanMapName("han-world-v3"))
         assertTrue(isHanMapName("han-780-v1"))
         assertFalse(isHanMapName("che"))
         assertFalse(isHanMapName(null))
     }
 
     @Test
-    fun `world v2 exposes reviewed 781 identity catalog and Licheng edge`() {
+    fun `persisted world v2 stays frozen while world v3 exposes reviewed 781 identities`() {
         val v2 = CityConstRegistry.of("han-world-v2")
-        assertEquals((1..781).toList(), v2.all().keys.toList())
-        assertTrue(v2.byId(273)!!.path.containsKey(781))
-        assertTrue(v2.byId(781)!!.path.containsKey(273))
+        assertEquals(CityConstRegistry.of("han").all(), v2.all())
+        assertEquals((1..774).toList(), v2.all().keys.toList())
+
+        val v3 = CityConstRegistry.of("han-world-v3")
+        assertEquals((1..781).toList(), v3.all().keys.toList())
+        assertTrue(v3.byId(273)!!.path.containsKey(781))
+        assertTrue(v3.byId(781)!!.path.containsKey(273))
         val graph = buildString {
-            for ((id, city) in v2.all()) {
+            for ((id, city) in v3.all()) {
                 append(id).append(':').append(city.path.keys.joinToString(",")).append('\n')
             }
         }

@@ -5,12 +5,14 @@
 > 盧–歷城 edge. Run independent review and `superpowers:verification-before-completion` before issue
 > updates.
 
+> **Compatibility amendment (2026-09-05):** V47 already assigned `han-world-v2` to persisted 774-city worlds. Preserve that alias and `han` as 774; the new reviewed 781-city identity domain is `han-world-v3` (NEW_WORLD_ONLY). No existing database world is relabelled or reseeded. `han-780-v1` is unchanged. The existing spatial geometry/ownership map ID `han-world-v2` is a separate shared artifact version and remains unchanged; it is not the runtime city-ID domain. All new-runtime V3 references below reflect this correction. Retired scenario 9200 is only an ID-validated fixture, not a newly supported live scenario.
+
 **Goal:** Make commandery and runtime route-node identities append-only, bind/reparent 歷城 correctly,
-materialize it as a new Han V2 runtime node without renumbering existing nodes, and derive the valid
+materialize it as a new Han V3 runtime node without renumbering existing nodes, and derive the valid
 盧縣 `45098` ↔ 歷城縣 `45022` move from canonical spatial adjacency.
 
 **Architecture:** Introduce registries for stable commandery and route-node identities. Build the new
-`han-world-v2` runtime map from reviewed route-node selection rather than sorted array positions.
+`han-world-v3` runtime map from reviewed route-node selection rather than sorted array positions.
 Translate spatial-province adjacency through explicit province/place/route-node maps; never compare
 province ordinals with city ordinals. Existing legacy artifacts stay addressable and unchanged.
 
@@ -105,7 +107,7 @@ fix(map): bind Licheng to Jinan commandery
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 ```
 
-## Task 3: Append 歷城 to the reviewed Han V2 route-node registry
+## Task 3: Append 歷城 to the reviewed Han V3 route-node registry
 
 **Files:**
 
@@ -124,13 +126,13 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 
 **Step 1: Red-test append-only expansion**
 
-The new V2 selection is explicitly allowed to grow from 780 to 781 by this approved movement work.
+The new V3 selection is explicitly allowed to grow from 780 to 781 by this approved movement work.
 Do not retire an unrelated node and do not reuse a key or numeric slot. Tests require:
 
 - all existing route-node UUIDs and numeric IDs remain unchanged;
 - 歷城 receives a new opaque UUID and numeric ID `781`;
 - physical place is exactly `45022`;
-- numeric IDs are unique `1..781` for `han-world-v2`;
+- numeric IDs are unique `1..781` for `han-world-v3`;
 - legacy `han-780-v1` remains exact and byte-identical;
 - route-node migration declares this as a new-world appended identity, not an in-place reinterpretation
   of an old numeric city.
@@ -157,17 +159,17 @@ feat(map): append Licheng as a stable route node
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 ```
 
-## Task 4: Fix world generation index domains and build `han-world-v2`
+## Task 4: Fix world generation index domains and build `han-world-v3`
 
 **Files:**
 
 - Modify: `tools/scenario/build_han_world.py`
-- Create: `tools/scenario/tests/test_build_han_world_v2.py`
+- Create: `tools/scenario/tests/test_build_han_world_v3.py`
 - Modify: `tools/scenario/tests/test_build_han_world_gate.py`
-- Create: `data/map/han-world-v2-manifest-v1.json`
-- Create: `infra/src/main/resources/map/han-world-v2.json`
-- Create: `common/src/main/kotlin/opensamguk/common/constants/HanWorldV2CityConst.kt`
-- Create: `common/src/main/kotlin/opensamguk/common/constants/HanWorldV2GateIndex.kt`
+- Create: `data/map/han-world-v3-manifest-v1.json`
+- Create: `infra/src/main/resources/map/han-world-v3.json`
+- Create: `common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt`
+- Create: `common/src/main/kotlin/opensamguk/common/constants/HanWorldV3GateIndex.kt`
 - Modify: `logic/src/main/kotlin/opensamguk/logic/world/CityConstRegistry.kt`
 - Modify: `logic/src/test/kotlin/opensamguk/logic/world/CityConstRegistryTest.kt`
 
@@ -194,39 +196,39 @@ routeNodeKey -> physicalPlaceId -> physical city index
 Translate each county adjacency endpoint through the inverse stable province map before creating
 route-node connections. Do not compare province and city integer array positions.
 
-Generate `han-world-v2` from the reviewed 781-node selection. Keep:
+Generate `han-world-v3` from the reviewed 781-node selection. Keep:
 
-- `han` → current 774-node compatibility map;
+- `han` and `han-world-v2` → current 774-node compatibility map;
 - `han-780-v1` → immutable recovery map;
-- `han-world-v2` → reviewed stable 781-node map.
+- `han-world-v3` → reviewed stable 781-node map.
 
-Add a V2-specific CLI path to `build_han_world.py`, such as
-`--target han-world-v2 [--check]`, with separate output constants. The existing no-target
+Add a V3-specific CLI path to `build_han_world.py`, such as
+`--target han-world-v3 [--check]`, with separate output constants. The existing no-target
 `--check`/`--check-gate` behavior must continue checking only the compatibility `han` artifact.
-The V2 path reads the selection, migration, map, and generated outputs and writes a manifest that
+The V3 path reads the selection, migration, map, and generated outputs and writes a manifest that
 pins all of their SHA-256 hashes plus the exact route-node key/numeric/physical-place triples.
 
 **Step 3: Generate Kotlin constants and registry routing**
 
-Follow existing generated-constant conventions. `CityConstRegistry.of("han-world-v2")` returns the new
+Follow existing generated-constant conventions. `CityConstRegistry.of("han-world-v3")` returns the new
 map; existing names and hashes remain unchanged.
 
 **Step 4: Verify and commit**
 
 ```bash
-python3 -m unittest tools.scenario.tests.test_build_han_world_v2
+python3 -m unittest tools.scenario.tests.test_build_han_world_v3
 python3 -m unittest tools.scenario.tests.test_build_han_world_gate
 python3 tools/scenario/build_han_world.py --check
-python3 tools/scenario/build_han_world.py --target han-world-v2 --check
+python3 tools/scenario/build_han_world.py --target han-world-v3 --check
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test :logic:test \
   --tests 'opensamguk.logic.world.CityConstRegistryTest' --no-daemon
 ```
 
-`test_build_han_world_v2.py` must independently assert compatibility `han` remains the same 774-node
-hash, `han-780-v1` remains byte-identical, V2 is exactly 781 reviewed nodes, and the selection,
+`test_build_han_world_v3.py` must independently assert compatibility `han` remains the same 774-node
+hash, `han-780-v1` remains byte-identical, V3 is exactly 781 reviewed nodes, and the selection,
 migration, JSON, Kotlin constants, gate index, and manifest hashes agree. A passing legacy
-`--check-gate` is not V2 proof. Extend `test_build_han_world_gate.py` only to prove its existing
-compatibility behavior did not silently switch to the V2 artifact.
+`--check-gate` is not V3 proof. Extend `test_build_han_world_gate.py` only to prove its existing
+compatibility behavior did not silently switch to the V3 artifact.
 
 ```text
 fix(map): derive Han routes across stable identity domains
@@ -249,7 +251,7 @@ Construct the bijection:
 
 ```text
 old runtime id -> old physicalPlaceId
-physicalPlaceId -> reviewed han-world-v2 numeric id
+physicalPlaceId -> reviewed han-world-v3 numeric id
 ```
 
 Reject unknown old IDs, duplicate physical places, and removed nodes without an explicit migration.
@@ -260,9 +262,9 @@ Translate every nation/general/capital/city reference by physical identity for a
 歷城's initial owner from canonical spatial province ownership. Do not infer owner from nearby city
 color. Preserve insertion order and deterministic JSON/Kotlin output.
 
-Add an explicit V2 map input/CLI path, such as `--map han-world-v2`, so the current hard-coded
-`infra/src/main/resources/map/han.json` remains the compatibility default while V2 scenario output
-loads `infra/src/main/resources/map/han-world-v2.json` and verifies its manifest. Never silently make
+Add an explicit V3 map input/CLI path, such as `--map han-world-v3`, so the current hard-coded
+`infra/src/main/resources/map/han.json` remains the compatibility default while V3 scenario output
+loads `infra/src/main/resources/map/han-world-v3.json` and verifies its manifest. Never silently make
 the legacy `--check` consume a different map.
 
 **Step 3: Verify all references and commit**
@@ -276,7 +278,7 @@ and the only append is `45022 -> 781` with owner taken from the exact scenario p
 
 ```bash
 python3 -m unittest tools.scenario.tests.test_apply_han_world
-python3 tools/scenario/apply_han_world.py --map han-world-v2 --check
+python3 tools/scenario/apply_han_world.py --map han-world-v3 --check
 ```
 
 ```text
@@ -304,7 +306,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 
 **Step 1: Red-test the real regression end to end**
 
-Under active map `han-world-v2`:
+Under active map `han-world-v3`:
 
 - 盧縣 → 歷城 is reciprocal distance 1;
 - API PRECHECK and engine FULL both Allow;
@@ -315,7 +317,7 @@ Under active map `han-world-v2`:
 
 **Step 2: Keep one server authority**
 
-The generated `han-world-v2` path is a projection of canonical spatial adjacency. API precheck and
+The generated `han-world-v3` path is a projection of canonical spatial adjacency. API precheck and
 engine consume the same registry/path. The browser may render server-provided reachable destinations
 but must not derive an alternate graph from overlay markers.
 
@@ -354,15 +356,15 @@ python3 tools/map/build_han_parent_reconciliation.py --check
 python3 tools/map/audit_territory_disconnections.py --check
 python3 tools/scenario/build_scenario_province_ownership.py --check
 python3 tools/scenario/build_han_world.py --check
-python3 tools/scenario/build_han_world.py --target han-world-v2 --check
-python3 tools/scenario/apply_han_world.py --map han-world-v2 --check
+python3 tools/scenario/build_han_world.py --target han-world-v3 --check
+python3 tools/scenario/apply_han_world.py --map han-world-v3 --check
 python3 -m unittest discover -s tools/map/tests -p 'test_*.py'
 python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build --no-daemon
 cd web/game && pnpm typecheck && pnpm test && pnpm build
 ```
 
-Confirm exact 1,524/1,020/172 land hierarchy, unchanged legacy artifact hashes, reviewed 781-node V2
+Confirm exact 1,524/1,020/172 land hierarchy, unchanged legacy artifact hashes, reviewed 781-node V3
 set, no dangling scenario references, and PRECHECK/FULL equality. Request independent review focused
 on ID reuse, array-domain confusion, scenario migration, accidental 魯–歷城 adjacency, and hidden full-build
 drift.

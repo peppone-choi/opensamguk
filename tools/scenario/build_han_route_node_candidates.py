@@ -187,7 +187,7 @@ def build_scenario_catalog(scenario_dir: Path) -> list[JsonObject]:
         document = load_document(path)
         start_year, map_config = document.get("startYear"), document.get("map")
         if (not isinstance(map_config, dict)
-                or map_config.get("mapName") not in {"han", "han-world-v2"}):
+                or map_config.get("mapName") not in {"han", "han-world-v2", "han-world-v3"}):
             continue
         if not isinstance(start_year, int):
             raise CandidateContractError(f"Han scenario is not dated: {path.name}")

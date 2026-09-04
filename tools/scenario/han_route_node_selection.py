@@ -546,14 +546,14 @@ def build_outputs(
         "routeNodeKeySource": "opaque UUID literals from route-node-key-registry-v1; never derived from numeric id, HHS identity, physical place, or claim",
     }:
         raise MaterializationContractError("numeric assignment policy drift")
-    selection: JsonObject = {"schemaVersion": 1, "selectionId": "han-route-node-selection-v1", "worldVersion": "han-world-v2", "reviewState": "APPROVED", "baselineYear": 220,
+    selection: JsonObject = {"schemaVersion": 1, "selectionId": "han-route-node-selection-v1", "worldVersion": "han-world-v3", "reviewState": "APPROVED", "baselineYear": 220,
                              "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT", "scenarioCatalog": {"resourceCount": len(scenarios), "resources": list[JsonValue](scenarios)},
                              "reviewPolicy": {"policyId": text(policy, "policyId"), "forbiddenSelections": forbidden,
                                               "reviewDecisionAnchors": decision_anchors,
                                               "numericCityIdChangeAllowed": False,
                                               "legacyAttributionCorrections": [number(row, "oldCityId") for row in rows(policy, "legacyAttributionCorrections")]},
                              "provenance": provenance, "summary": {"approvedCount": 781, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": 781}}, "routeNodes": route_nodes}
-    migration: JsonObject = {"schemaVersion": 1, "migrationId": "han-route-node-migration-v1", "mode": "NEW_WORLD_ONLY", "targetWorldVersion": "han-world-v2", "sourceSelectionId": "han-route-node-selection-v1",
+    migration: JsonObject = {"schemaVersion": 1, "migrationId": "han-route-node-migration-v1", "mode": "NEW_WORLD_ONLY", "targetWorldVersion": "han-world-v3", "sourceSelectionId": "han-route-node-selection-v1",
                              "referenceInventory": {"mutable": MUTABLE_REFERENCES, "immutableAudit": IMMUTABLE_AUDIT_REFERENCES,
                                                     "derivedReseed": DERIVED_RESEED_REFERENCES,
                                                     "unknownPayloadPolicy": "REJECT_UNKNOWN", "inPlaceRewrite": False},

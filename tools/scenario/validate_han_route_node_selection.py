@@ -41,7 +41,7 @@ PROVENANCE_DEPENDENCIES = {
 VALIDATION_CONTRACT_PATH = ROOT / "data/curated/han/route-node-validation-contract-v1.json"
 VALIDATION_CONTRACT = json.loads(VALIDATION_CONTRACT_PATH.read_text(encoding="utf-8"))
 LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
-WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v2": 781}
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 781}
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
 NODE_CLASS_BY_UNIT_TYPE = {
@@ -100,8 +100,8 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
 PINNED_ROUTE_KEY_REGISTRY_SHA256 = "2f4f4e7bec26ee6192029e90043c0beecd9c67b150acbfccf86e2f03757a32de"
 PINNED_SOURCE_WITNESS_SHA256 = "7fe27b667b4066200882f9e1815e07a6adb24d826f09e0605145041897f76ee4"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "09d872b456de36aac40a30fb3f363329f988efcaf4e65aa96641aecedb9f7940"
-PINNED_REVIEW_POLICY_SHA256 = "891fcce20066e0987943cd052fa8b20736c24606b22f85a9468380fe0d37c4a8"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670"
+PINNED_REVIEW_POLICY_SHA256 = "5f029472a237308bf419726d85753e0389ad8e5512be1e9235df94e4522dab83"
 PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -1989,7 +1989,7 @@ def _load_scenarios(directory: Path) -> tuple[ScenarioResource, ...]:
         document = _load(path)
         map_info = document.get("map")
         if (not isinstance(map_info, dict)
-                or map_info.get("mapName") not in {"han", "han-world-v2"}):
+                or map_info.get("mapName") not in {"han", "han-world-v2", "han-world-v3"}):
             continue
         match = re.fullmatch(r"scenario_(.+)\.json", path.name)
         if match is None:

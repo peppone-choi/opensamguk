@@ -11,6 +11,8 @@ data class SpatialSupplyCity(
     val cityId: Int,
     val provinceIndex: Int,
     val nationId: Int,
+    val physicalPlaceRef: String? = null,
+    val routeNodeKey: String? = null,
 )
 
 /**
@@ -31,6 +33,12 @@ class HanSpatialSupplyProvider(
     private var cached: CanonicalSpatialSupply? = null
 
     fun network(
+        scenarioCode: Int,
+        liveCities: List<SpatialSupplyCity>,
+    ): SpatialSupplyNetwork = network("han", scenarioCode, liveCities)
+
+    fun network(
+        activeMapName: String,
         scenarioCode: Int,
         liveCities: List<SpatialSupplyCity>,
     ): SpatialSupplyNetwork {
@@ -61,8 +69,9 @@ class HanSpatialSupplyProvider(
             provinceAdjacency = canonical.adjacency.map(IntArray::clone),
             cityProvinceIndices = liveCities.associate { it.cityId to it.provinceIndex },
             fallbackPolicies = policyLoader?.load(
+                activeMapName,
                 scenarioCode,
-                liveCities.associate { it.cityId to it.provinceIndex },
+                liveCities,
             ).orEmpty(),
         )
     }

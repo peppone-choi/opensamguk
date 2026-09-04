@@ -497,7 +497,7 @@ def _validate_review_chain(
     legacy_count = contract.get("expectedSelectionCount")
     if (
         not isinstance(rows, list)
-        or selection.get("worldVersion") != "han-world-v2"
+        or selection.get("worldVersion") != "han-world-v3"
         or legacy_count != 780
         or expected != legacy_count + 1
         or len(rows) != expected

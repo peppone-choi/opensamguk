@@ -8,7 +8,7 @@ package opensamguk.common.constants
  * han 병종의 ReqRegions(보유 판정) / ForbidRegions(주둔지 판정) 해석에 쓴다.
  * che 는 이 표를 쓰지 않으며(빈 집합), 기존 regionIdByName 경로 그대로 돈다.
  */
-object HanWorldV2GateIndex {
+object HanWorldV3GateIndex {
     val keysByCityId: Map<Int, Set<String>> = mapOf(
         1 to setOf("司隸"),
         2 to setOf("司隸", "河東"),

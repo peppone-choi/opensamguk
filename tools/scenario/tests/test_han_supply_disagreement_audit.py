@@ -1,7 +1,7 @@
 import copy
 import unittest
 
-from tools.scenario.audit_han_supply_disagreements import audit_documents
+from tools.scenario.audit_han_supply_disagreements import audit_documents, audit_repository
 
 
 def fixture():
@@ -58,6 +58,22 @@ class HanSupplyDisagreementAuditTest(unittest.TestCase):
     def test_unknown_decision_fails_closed(self):
         result = self.audit(lambda *docs: docs[4]["decisions"][0].update(decision="GUESS"))
         self.assertTrue(any("unknown decision" in error for error in result.errors))
+
+    def test_different_scenario_identity_domain_is_rejected_before_numeric_audit(self):
+        result = self.audit(
+            lambda *docs: docs[3][1010].update(map={"mapName": "han-world-v3"})
+        )
+        self.assertEqual([
+            "scenario 1010 mapName 'han-world-v3' does not match runtime map 'han'"
+        ], result.errors)
+        self.assertEqual([], result.rows)
+        self.assertEqual({}, result.summaries)
+
+    def test_frozen_v2_scenarios_share_the_legacy_han_identity_domain(self):
+        result = self.audit(
+            lambda *docs: docs[3][1010].update(map={"mapName": "han-world-v2"})
+        )
+        self.assertEqual([], result.errors)
 
     def test_overlapping_effective_ranges_fail_closed(self):
         def mutate(*docs):
@@ -161,6 +177,140 @@ class HanSupplyDisagreementAuditTest(unittest.TestCase):
             ownership["scenarios"][0]["assignments"].append({"provinceId": "PR3", "ownerNationId": 0})
         result = self.audit(mutate)
         self.assertFalse(any("degree-zero city province: city 3" in error for error in result.errors))
+
+    def test_v3_degree_zero_protect_is_bound_by_runtime_physical_and_route_identity(self):
+        def mutate(*docs):
+            tiles, runtime_map, ownership, scenarios, ledger, source = docs
+            tiles["provinceRecords"].append(
+                {"id": "P3", "jurisdictionId": "J3", "parentRegionId": "R2"}
+            )
+            runtime_map["_meta"] = {"map": "han-world-v3"}
+            runtime_map["cities"].append({
+                "id": 3,
+                "physicalPlaceRef": "chgis:v6:cnty:P3",
+                "routeNodeKey": "route-3",
+                "provinceId": 3,
+                "connections": [],
+            })
+            ownership["scenarios"][0]["assignments"].append(
+                {"provinceId": "P3", "ownerNationId": 0}
+            )
+            ownership["scenarios"][0]["assignments"][2]["ownerNationId"] = 1
+            scenarios[1010]["nation"][0][8].append(3)
+            source["adjudications"].append({
+                "componentKey": "R2@1:1",
+                "unitId": "R2",
+                "memberIds": ["J3"],
+                "verdict": "GEOMETRY_DEFECT",
+            })
+            ledger.clear()
+            ledger.update({
+                "schemaVersion": 2,
+                "worldVersion": "han-world-v3",
+                "decisions": [{
+                    "runtimeCityId": 3,
+                    "physicalPlaceRef": "chgis:v6:cnty:P3",
+                    "routeNodeKey": "route-3",
+                    "jurisdictionId": "J3",
+                    "decision": "PROTECT_GEOMETRY_DEFECT",
+                    "sourceLedgerRow": "R2@1:1",
+                    "rationale": "Reviewed degree-zero geometry defect remains protected.",
+                    "expectedCurrentReachability": "BOTH_UNSUPPLIED",
+                    "effectiveScenarioFrom": 1010,
+                    "effectiveScenarioTo": 1010,
+                }],
+            })
+
+        result = self.audit(mutate)
+
+        self.assertEqual([], result.errors)
+        protected = [row for row in result.rows if row["runtimeCityId"] == 3]
+        self.assertEqual(1, len(protected))
+        self.assertEqual("BOTH_UNSUPPLIED_PROTECTED", protected[0]["verdict"])
+
+    def test_v3_route_identity_drift_fails_closed(self):
+        def mutate(*docs):
+            _tiles, runtime_map, _ownership, _scenarios, ledger, _source = docs
+            runtime_map["_meta"] = {"map": "han-world-v3"}
+            runtime_map["cities"][1].update(
+                physicalPlaceRef="chgis:v6:cnty:P2", routeNodeKey="route-2"
+            )
+            ledger.update(schemaVersion=2, worldVersion="han-world-v3")
+            ledger["decisions"][0].pop("physicalPlaceId")
+            ledger["decisions"][0].update(
+                physicalPlaceRef="chgis:v6:cnty:P2",
+                routeNodeKey="wrong-route",
+            )
+
+        result = self.audit(mutate)
+        self.assertTrue(any("routeNodeKey drift" in error for error in result.errors))
+
+    def test_v3_policy_is_stale_when_raw_reachability_changes_from_its_declared_class(self):
+        def mutate(*docs):
+            tiles, runtime_map, ownership, scenarios, ledger, source = docs
+            tiles["provinceRecords"].append(
+                {"id": "P3", "jurisdictionId": "J3", "parentRegionId": "R2"}
+            )
+            runtime_map["_meta"] = {"map": "han-world-v3"}
+            runtime_map["cities"][0]["connections"].append(3)
+            runtime_map["cities"].append({
+                "id": 3,
+                "physicalPlaceRef": "chgis:v6:cnty:P3",
+                "routeNodeKey": "route-3",
+                "provinceId": 3,
+                "connections": [1],
+            })
+            ownership["scenarios"][0]["assignments"].append(
+                {"provinceId": "P3", "ownerNationId": 0}
+            )
+            ownership["scenarios"][0]["assignments"][2]["ownerNationId"] = 1
+            scenarios[1010]["nation"][0][8].append(3)
+            source["adjudications"].append({
+                "componentKey": "R2@1:1",
+                "unitId": "R2",
+                "memberIds": ["J3"],
+                "verdict": "GEOMETRY_DEFECT",
+            })
+            ledger.clear()
+            ledger.update({
+                "schemaVersion": 2,
+                "worldVersion": "han-world-v3",
+                "decisions": [{
+                    "runtimeCityId": 3,
+                    "physicalPlaceRef": "chgis:v6:cnty:P3",
+                    "routeNodeKey": "route-3",
+                    "jurisdictionId": "J3",
+                    "decision": "PROTECT_GEOMETRY_DEFECT",
+                    "sourceLedgerRow": "R2@1:1",
+                    "rationale": "Reviewed degree-zero geometry defect remains protected.",
+                    "expectedCurrentReachability": "BOTH_UNSUPPLIED",
+                    "effectiveScenarioFrom": 1010,
+                    "effectiveScenarioTo": 1010,
+                }],
+            })
+
+        result = self.audit(mutate)
+
+        self.assertTrue(any("does not match BOTH_UNSUPPLIED" in error for error in result.errors))
+        city = next(row for row in result.rows if row["runtimeCityId"] == 3)
+        self.assertEqual("CITY_ONLY_PROTECTED", city["verdict"])
+        self.assertEqual(None, city["decision"])
+
+    def test_committed_v3_domain_has_only_reviewed_degree_zero_protections(self):
+        result = audit_repository("han-world-v3")
+
+        self.assertEqual([], result.errors)
+        self.assertEqual(15, len(result.summaries))
+        protected = {
+            (row["runtimeCityId"], row.get("physicalPlaceRef"), row["verdict"])
+            for row in result.rows
+            if row.get("decision") == "PROTECT_GEOMETRY_DEFECT"
+        }
+        self.assertEqual({
+            (305, "chgis:v6:cnty:43252", "BOTH_UNSUPPLIED_PROTECTED"),
+            (548, "chgis:v6:cnty:40740", "BOTH_UNSUPPLIED_PROTECTED"),
+        }, protected)
+        self.assertFalse(any(row["runtimeCityId"] == 364 and row.get("decision") for row in result.rows))
 
 
 if __name__ == "__main__":

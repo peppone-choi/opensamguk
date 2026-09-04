@@ -37,9 +37,9 @@ class CommittedWorldGateTest(unittest.TestCase):
 
         self.assertEqual(["冀州"], index[150])
 
-    def test_default_cli_does_not_silently_check_world_v2(self) -> None:
+    def test_default_cli_does_not_silently_check_world_v3(self) -> None:
         self.assertEqual("han.json", build_han_world.OUT_JSON.name)
-        self.assertNotEqual(build_han_world.OUT_JSON, build_han_world.OUT_V2_JSON)
+        self.assertNotEqual(build_han_world.OUT_JSON, build_han_world.OUT_V3_JSON)
 
 
 if __name__ == "__main__":

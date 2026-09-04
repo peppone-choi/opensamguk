@@ -29,6 +29,7 @@ ROOT_KEYS = (
     "life",
     "fiction",
     "map",
+    "cityIdentityVersion",
     "seedContract",
     "const",
     "stored_icons",
@@ -246,7 +247,7 @@ def _normalize_manifest(manifest: object, defaults: object) -> tuple[dict, list[
     start_year = _required_int(manifest["startYear"], "manifest startYear")
     life = _required_int(manifest["life"], "manifest life")
     fiction = _required_int(manifest["fiction"], "manifest fiction")
-    if start_year <= 0 or manifest["map"] != "han-world-v2" or life != 1 or fiction != 0:
+    if start_year <= 0 or manifest["map"] != "han-world-v3" or life != 1 or fiction != 0:
         raise ValueError("manifest fixed scenario settings are invalid")
     const = manifest["const"]
     if not isinstance(const, dict) or set(const) != {"defaultMaxGeneral"}:
@@ -295,7 +296,7 @@ def _resolve_city(
     return _required_text(city, f"resolved city for officer {officer_id}", korean=True)
 
 
-def _general_tuple(record: dict, row: dict, name: str, nation_id: int, city: str, officer_id: int) -> list[object]:
+def _general_tuple(record: dict, row: dict, name: str, nation_id: int, city: int, officer_id: int) -> list[object]:
     status = row["status"]
     rank = RANK_BY_STATUS[status]
     if "v1_rank" in row and row["v1_rank"] != rank:
@@ -327,6 +328,8 @@ def build(
     remap: dict[str, str],
     name_map: dict[int, str],
     defaults: dict,
+    *,
+    runtime_city_ids: dict[str, int],
 ) -> tuple[dict, dict]:
     if not isinstance(refined, list):
         raise ValueError("refined input must be a list")
@@ -337,6 +340,21 @@ def build(
     names_by_id = _name_mapping(name_map)
     header, nation_tuples, nation_ids, owned_cities, relocations, diplomacy = _normalize_manifest(manifest, defaults)
     known_cities = owned_cities | set(normalized_city_map.values()) | set(normalized_remap.values())
+    if not isinstance(runtime_city_ids, dict) or not runtime_city_ids:
+        raise ValueError("runtime_city_ids must be a non-empty reviewed V3 city mapping")
+    normalized_runtime_city_ids: dict[str, int] = {}
+    for city_name, city_id in runtime_city_ids.items():
+        name = _required_text(city_name, "runtime city name", korean=True)
+        normalized_runtime_city_ids[name] = _required_int(city_id, f"runtime city id for {name}")
+        if normalized_runtime_city_ids[name] <= 0:
+            raise ValueError(f"runtime city id for {name} must be positive")
+    if len(set(normalized_runtime_city_ids.values())) != len(normalized_runtime_city_ids):
+        raise ValueError("runtime_city_ids must map names to unique V3 city ids")
+    missing_runtime_cities = sorted(known_cities - set(normalized_runtime_city_ids))
+    if missing_runtime_cities:
+        raise ValueError(f"V3 runtime city mapping is missing {missing_runtime_cities}")
+    for nation_tuple in nation_tuples:
+        nation_tuple[8] = [normalized_runtime_city_ids[city] for city in nation_tuple[8]]
 
     matching: list[tuple[int, dict, dict]] = []
     seen_ids: set[int] = set()
@@ -388,12 +406,14 @@ def build(
             raise ValueError(f"refined officer {officer_id} requires an exact Korean name mapping")
         city = _resolve_city(row.get("location"), normalized_city_map, normalized_remap, known_cities, officer_id)
         if status == NEUTRAL_STATUS:
-            tuple_row = _general_tuple(record, row, mapped_name, 0, city, officer_id)
+            tuple_row = _general_tuple(
+                record, row, mapped_name, 0, normalized_runtime_city_ids[city], officer_id
+            )
             general_rows.append((officer_id, tuple_row, {
                 "id": officer_id,
                 "kind": "unaffiliated",
                 "nation_id": 0,
-                "city": city,
+                "city": normalized_runtime_city_ids[city],
                 "officer_level": tuple_row[8],
                 "picture_id": officer_id,
             }))
@@ -405,12 +425,14 @@ def build(
             raise ValueError(f"refined officer {officer_id} has an unknown active faction")
         if status == "君主" and officer_id != lord_id:
             raise ValueError("each nation must have exactly one manifest ruler")
-        tuple_row = _general_tuple(record, row, mapped_name, nation_ids[lord_id], city, officer_id)
+        tuple_row = _general_tuple(
+            record, row, mapped_name, nation_ids[lord_id], normalized_runtime_city_ids[city], officer_id
+        )
         general_rows.append((officer_id, tuple_row, {
             "id": officer_id,
             "kind": "affiliated",
             "nation_id": nation_ids[lord_id],
-            "city": city,
+            "city": normalized_runtime_city_ids[city],
             "officer_level": tuple_row[8],
             "picture_id": officer_id,
         }))
@@ -423,7 +445,8 @@ def build(
         "startYear": header["startYear"],
         "life": 1,
         "fiction": 0,
-        "map": {"mapName": "han-world-v2", "unitSet": "han"},
+        "map": {"mapName": "han-world-v3", "unitSet": "han"},
+        "cityIdentityVersion": "han-world-v3",
         "seedContract": {
             "activeGenerals": {
                 "base": active_general_count,
@@ -467,7 +490,8 @@ def validate_scenario_shape(scenario: dict) -> None:
     if (
         not isinstance(scenario["map"], dict)
         or tuple(scenario["map"]) != ("mapName", "unitSet")
-        or scenario["map"] != {"mapName": "han-world-v2", "unitSet": "han"}
+        or scenario["map"] != {"mapName": "han-world-v3", "unitSet": "han"}
+        or scenario["cityIdentityVersion"] != "han-world-v3"
     ):
         raise ValueError("scenario map is invalid")
     if not isinstance(scenario["nation"], list) or not isinstance(scenario["general"], list):
@@ -500,7 +524,7 @@ def validate_scenario_shape(scenario: dict) -> None:
         raise ValueError("scenario stored_icons is invalid")
     icon_map = stored_icons["."]
 
-    city_owner: dict[str, int] = {}
+    city_owner: dict[int, int] = {}
     for nation_id, tuple_row in enumerate(scenario["nation"], start=1):
         if not isinstance(tuple_row, list) or len(tuple_row) != 9:
             raise ValueError("scenario nation tuple must contain exactly 9 values")
@@ -514,10 +538,10 @@ def validate_scenario_shape(scenario: dict) -> None:
         if not isinstance(tuple_row[8], list) or not tuple_row[8]:
             raise ValueError("scenario nation cities must be a non-empty list")
         for city in tuple_row[8]:
-            city_name = _required_text(city, f"nation {nation_id} city", korean=True)
-            if city_name in city_owner:
+            city_id = _required_int(city, f"nation {nation_id} city")
+            if city_id <= 0 or city_id in city_owner:
                 raise ValueError("scenario nation cities must not overlap")
-            city_owner[city_name] = nation_id
+            city_owner[city_id] = nation_id
 
     def validate_general(tuple_row: object) -> int:
         if not isinstance(tuple_row, list) or len(tuple_row) != 16:
@@ -528,7 +552,8 @@ def validate_scenario_shape(scenario: dict) -> None:
         nation_id = _required_int(tuple_row[3], "general nation id")
         if nation_id < 0 or nation_id > len(scenario["nation"]):
             raise ValueError("general nation id is outside the scenario nation range")
-        _required_text(tuple_row[4], "general located city", korean=True)
+        if _required_int(tuple_row[4], "general located city") <= 0:
+            raise ValueError("general located city must be a positive V3 city id")
         for index, label in ((5, "leadership"), (6, "strength"), (7, "intelligence"), (8, "officer level"), (9, "birth"), (10, "death"), (14, "politics"), (15, "charm")):
             _required_int(tuple_row[index], f"general {label}")
         if tuple_row[8] not in {0, 4, 12}:

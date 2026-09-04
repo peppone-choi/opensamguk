@@ -1,5 +1,11 @@
 # Han Supply Disconnection Safety Implementation Plan
 
+> **Implemented V3 amendment:** See the matching design's compatibility amendment. Legacy
+> `han`/`han-world-v2` uses the unchanged schema-1 policy; `han-world-v3` uses the explicit
+> schema-2 identity-bound policy and adds `BOTH_UNSUPPLIED_PROTECTED` for reviewed geometry
+> defects. The repository CI audit targets V3's 15 current scenario templates. A legacy audit
+> may not consume those V3 numeric IDs; frozen-world compatibility is covered separately.
+
 > **For Codex:** Execute with `superpowers:test-driven-development`. Do not attempt county-anchor,
 > coastline, or lake-mask geometry repair in this task. Run independent review and
 > `superpowers:verification-before-completion` before issue updates or completion claims.

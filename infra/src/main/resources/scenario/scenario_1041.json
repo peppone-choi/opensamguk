@@ -11151,7 +11151,7 @@
     ]
   ],
   "map": {
-    "mapName": "han-world-v2",
+    "mapName": "han-world-v3",
     "unitSet": "han"
   },
   "seedContract": {
@@ -11165,5 +11165,5 @@
     "원술"
   ],
   "placementBasis": "HISTORICAL",
-  "cityIdentityVersion": "han-world-v2"
+  "cityIdentityVersion": "han-world-v3"
 }
