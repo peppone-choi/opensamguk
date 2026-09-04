@@ -330,7 +330,7 @@ class UpdateCitySupplyBfsTest {
             ),
         )
 
-        assertEquals(SupplyReachabilityVerdict.CITY_ONLY_PROTECTED, evaluation.rows.single { it.cityId == 2 }.verdict)
+        assertTrue(evaluation.rows.none { it.cityId == 2 }, "unmapped legacy cities are not canonical spatial disagreements")
         assertEquals(SupplyReachabilityVerdict.BOTH_UNSUPPLIED, evaluation.rows.single { it.cityId == 3 }.verdict)
         assertEquals(setOf(1, 2), evaluation.suppliedCityIds)
     }

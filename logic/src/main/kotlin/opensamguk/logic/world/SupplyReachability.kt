@@ -65,6 +65,7 @@ fun evaluateSupplyReachability(
     val spatialSupplied = computeSpatiallySuppliedCities(cities, capitals, spatialNetwork)
 
     val rows = cities.asSequence()
+        .filter { it.id in mappedIds }
         .map { it.id }
         .distinct()
         .sorted()
@@ -90,7 +91,8 @@ fun evaluateSupplyReachability(
     return SupplyReachabilityEvaluation(
         suppliedCityIds = rows.asSequence()
             .filter { it.verdict !in destructive }
-            .mapTo(linkedSetOf()) { it.cityId },
+            .mapTo(linkedSetOf()) { it.cityId }
+            .also { it += legacyCitySupplied },
         rows = rows,
     )
 }
