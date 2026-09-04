@@ -93,6 +93,7 @@ def _ledger(rows: list[dict]) -> dict:
             "noRepresentativeColorFill": True,
         },
         "ifRules": {rule: f"{rule} description" for rule in sorted(audit.IF_RULES)},
+        "reviewStates": {state: f"{state} description" for state in sorted(audit.REVIEW_STATES)},
         "adjudications": rows,
     }
 
@@ -107,6 +108,11 @@ def _row(**overrides: object) -> dict:
         "evidenceRefs": ["map:han-tiles owner grid - P-f is cut off by 丙县"],
         "rationale": "test",
         "defectNote": "P-f",
+        "memberNamesCh": ["甲县"],
+        "review": {
+            "state": "UPHELD",
+            "votes": [{"lens": "geometry", "refuted": False, "reason": "test"}],
+        },
     }
     row.update(overrides)
     return row
@@ -116,6 +122,7 @@ ISLAND = dict(
     unitId="C2", unitNameCh="乙郡", componentKey="C2#1", cellCount=2, memberIds=["J4"],
     holdsSeat=False, verdict="WATER_SEPARATED", confidence="HIGH", ifRule="WATER_ROUTE_ONLY",
     evidenceRefs=["map:han-tiles terrain - component touches SEA only"], defectNote=None,
+    memberNamesCh=["丁县"],
 )
 COUNTY_PIECE = dict(
     unitKind="JURISDICTION", unitId="J1", unitNameCh="甲县", componentKey="J1#1", cellCount=1,
@@ -468,12 +475,68 @@ class CheckTest(unittest.TestCase):
         row = _row(review=review, overruledArgument="[철회] 최초에는 형상 결함으로 보았다.")
         self.assertEqual(len(audit.validate_ledger(_ledger([row]))), 1)
 
-    def test_overruled_argument_needs_a_review_to_explain_it(self):
-        """The field records an argument some lens lost. With no review block beside it
-        there is no record of who argued it or how the vote went."""
+    def test_every_row_must_carry_a_review_block(self):
+        """`review` was an optional key, and the whole vote and tally validation sat behind
+        `if review is not None`. A row that simply omitted the field skipped all of it, so
+        the ledger could carry an unjudged row — including one holding an overruledArgument
+        with no record of who argued it or how the vote went."""
         row = _row(overruledArgument="[기각된 도전] 소속이 틀렸다는 주장.")
-        with self.assertRaisesRegex(ValueError, "overruledArgument"):
+        row.pop("review")
+        with self.assertRaisesRegex(ValueError, "invalid keys"):
             audit.validate_ledger(_ledger([row]))
+
+    def test_every_row_must_name_its_member_counties(self):
+        """`memberNamesCh` was optional and the drift comparison was guarded by
+        `field in row`, so a row that dropped the field silently lost its own county-name
+        check — exactly the mislabelling the comparison exists to catch."""
+        row = _row()
+        row.pop("memberNamesCh")
+        with self.assertRaisesRegex(ValueError, "invalid keys"):
+            audit.validate_ledger(_ledger([row]))
+
+    def test_member_names_must_label_each_member_id(self):
+        for label, names in (
+            ("short by one", []),
+            ("padded", ["甲县", "架空县"]),
+            ("blank entry", [""]),
+            ("not a list", "甲县"),
+        ):
+            with self.subTest(label), self.assertRaisesRegex(ValueError, "memberNamesCh"):
+                audit.validate_ledger(_ledger([_row(memberNamesCh=names)]))
+
+    def test_ledger_must_declare_exactly_the_known_review_states(self):
+        """The legend was read as `set(legend) if isinstance(legend, Mapping) else None`,
+        so a ledger that omitted or malformed `reviewStates` turned the declaration check
+        off entirely instead of failing."""
+        for label, legend in (
+            ("missing", None),
+            ("not a mapping", ["UPHELD"]),
+            ("short a state", {s: "d" for s in sorted(audit.REVIEW_STATES)[1:]}),
+            ("extra state", {**{s: "d" for s in audit.REVIEW_STATES}, "MADE_UP": "d"}),
+            ("blank description", {s: "" for s in audit.REVIEW_STATES}),
+        ):
+            with self.subTest(label):
+                doc = _ledger([_row()])
+                if legend is None:
+                    doc.pop("reviewStates")
+                else:
+                    doc["reviewStates"] = legend
+                with self.assertRaisesRegex(ValueError, "reviewStates"):
+                    audit.validate_ledger(doc)
+
+    def test_committed_ledger_declares_every_review_state(self):
+        doc = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))
+        self.assertEqual(set(doc["reviewStates"]), audit.REVIEW_STATES)
+        self.assertTrue(all(isinstance(v, str) and v for v in doc["reviewStates"].values()))
+
+    def test_committed_rows_all_carry_review_and_member_names(self):
+        rows = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))["adjudications"]
+        self.assertTrue(rows)
+        for row in rows:
+            self.assertIsInstance(row.get("review"), dict, row["componentKey"])
+            self.assertEqual(
+                len(row["memberNamesCh"]), len(row["memberIds"]), row["componentKey"]
+            )
 
     def test_review_state_must_match_the_vote_tally(self):
         """The state is a claim about the votes sitting next to it. Unchecked, the ledger

@@ -109,10 +109,14 @@ WATER_BOUNDARY_ALLOWED = WATER_TERRAIN | {"OUT_OF_SCOPE"}
 ROW_KEYS = frozenset({
     "unitKind", "unitId", "unitNameCh", "componentKey", "cellCount", "memberIds",
     "holdsSeat", "verdict", "confidence", "effectiveFrom", "effectiveTo", "ifRule",
-    "evidenceRefs", "rationale",
+    "evidenceRefs", "rationale", "memberNamesCh", "review",
 })
+# `memberNamesCh` and `review` were optional here once. Both were load-bearing, and being
+# optional made the checks that read them skippable: a row that omitted `memberNamesCh`
+# lost the county-name drift comparison, and one that omitted `review` lost every vote and
+# tally rule at once. A row nobody reviewed is not adjudicated, so both are required.
 OPTIONAL_ROW_KEYS = frozenset({
-    "memberNamesCh", "proposedParent", "defectNote", "review", "searched",
+    "proposedParent", "defectNote", "searched",
     "fragmentLedgerRef", "followUp", "overruledArgument",
 })
 
@@ -302,9 +306,12 @@ def validate_ledger(document: object) -> list[dict]:
     rows = document.get("adjudications")
     if not isinstance(rows, list):
         raise ValueError("ledger adjudications must be an array")
+    review_states = document.get("reviewStates")
+    if not isinstance(review_states, Mapping) or set(review_states) != REVIEW_STATES or not all(
+        isinstance(v, str) and v for v in review_states.values()
+    ):
+        raise ValueError("ledger reviewStates must describe exactly the known review states")
     seen: set[str] = set()
-    legend = document.get("reviewStates")
-    declared_states = set(legend) if isinstance(legend, Mapping) else None
     for index, row in enumerate(rows):
         label = f"adjudications[{index}]"
         if not isinstance(row, Mapping):
@@ -330,6 +337,13 @@ def validate_ledger(document: object) -> list[dict]:
             isinstance(m, str) and m for m in row["memberIds"]
         ) or row["memberIds"] != sorted(set(row["memberIds"])):
             raise ValueError(f"{label}.memberIds must be a sorted, unique, non-empty string array")
+        if not isinstance(row["memberNamesCh"], list) or not all(
+            isinstance(n, str) and n for n in row["memberNamesCh"]
+        ) or len(row["memberNamesCh"]) != len(row["memberIds"]):
+            raise ValueError(
+                f"{label}.memberNamesCh must be a string array naming each of the "
+                f"{len(row['memberIds'])} memberIds"
+            )
         if not isinstance(row["holdsSeat"], bool):
             raise ValueError(f"{label}.holdsSeat must be a boolean")
         if row["verdict"] not in VERDICTS:
@@ -392,47 +406,42 @@ def validate_ledger(document: object) -> list[dict]:
             isinstance(row.get("searched"), list) and row["searched"]
         ):
             raise ValueError(f"{label} (UNKNOWN) must record what was searched")
-        review = row.get("review")
-        if review is not None:
-            if not isinstance(review, Mapping):
-                raise ValueError(f"{label}.review must be an object")
-            if review.get("state") not in REVIEW_STATES:
-                raise ValueError(f"{label}.review.state is unknown: {review.get('state')!r}")
-            if declared_states is not None and review["state"] not in declared_states:
+        review = row["review"]
+        if not isinstance(review, Mapping):
+            raise ValueError(f"{label}.review must be an object")
+        if review.get("state") not in REVIEW_STATES:
+            raise ValueError(f"{label}.review.state is unknown: {review.get('state')!r}")
+        votes = review.get("votes")
+        if not isinstance(votes, list) or not votes:
+            raise ValueError(f"{label}.review.votes must be a non-empty array")
+        for i, vote in enumerate(votes):
+            if not isinstance(vote, Mapping) or not VOTE_KEYS <= set(vote):
                 raise ValueError(
-                    f"{label}.review.state {review['state']!r} is not declared in reviewStates"
+                    f"{label}.review.votes[{i}] needs {sorted(VOTE_KEYS)}"
                 )
-            votes = review.get("votes")
-            if not isinstance(votes, list) or not votes:
-                raise ValueError(f"{label}.review.votes must be a non-empty array")
-            for i, vote in enumerate(votes):
-                if not isinstance(vote, Mapping) or not VOTE_KEYS <= set(vote):
-                    raise ValueError(
-                        f"{label}.review.votes[{i}] needs {sorted(VOTE_KEYS)}"
-                    )
-                if not isinstance(vote["refuted"], bool):
-                    raise ValueError(f"{label}.review.votes[{i}].refuted must be a boolean")
-                for key in ("lens", "reason"):
-                    if not isinstance(vote[key], str) or not vote[key].strip():
-                        raise ValueError(f"{label}.review.votes[{i}].{key} must be a non-empty string")
-            # The state is a claim about the votes printed right beside it. Left uncompared,
-            # the ledger carried two TIEBREAK_RESOLVED rows every lens had upheld, a
-            # CORRECTED_BY_2_REFUTERS with three refuters, and an INHERITED row that had in
-            # fact been judged on its own votes and overturned.
-            refuted = sum(1 for vote in votes if vote["refuted"])
-            state, tally = review["state"], f"{refuted} of {len(votes)} refuted"
-            if state == "CORRECTED_BY_2_REFUTERS" and refuted != 2:
-                raise ValueError(f"{label}.review.state says 2 refuters but {tally}")
-            if state == "CORRECTED_BY_3_REFUTERS" and refuted != 3:
-                raise ValueError(f"{label}.review.state says 3 refuters but {tally}")
-            if state in ("UPHELD", "INHERITED") and refuted * 2 > len(votes):
-                raise ValueError(f"{label}.review.state is {state} but {tally}")
-            if state == "TIEBREAK_RESOLVED" and not refuted:
-                raise ValueError(
-                    f"{label}.review.state is {state} but {tally} — no split to break"
-                )
+            if not isinstance(vote["refuted"], bool):
+                raise ValueError(f"{label}.review.votes[{i}].refuted must be a boolean")
+            for key in ("lens", "reason"):
+                if not isinstance(vote[key], str) or not vote[key].strip():
+                    raise ValueError(f"{label}.review.votes[{i}].{key} must be a non-empty string")
+        # The state is a claim about the votes printed right beside it. Left uncompared,
+        # the ledger carried two TIEBREAK_RESOLVED rows every lens had upheld, a
+        # CORRECTED_BY_2_REFUTERS with three refuters, and an INHERITED row that had in
+        # fact been judged on its own votes and overturned.
+        refuted = sum(1 for vote in votes if vote["refuted"])
+        state, tally = review["state"], f"{refuted} of {len(votes)} refuted"
+        if state == "CORRECTED_BY_2_REFUTERS" and refuted != 2:
+            raise ValueError(f"{label}.review.state says 2 refuters but {tally}")
+        if state == "CORRECTED_BY_3_REFUTERS" and refuted != 3:
+            raise ValueError(f"{label}.review.state says 3 refuters but {tally}")
+        if state in ("UPHELD", "INHERITED") and refuted * 2 > len(votes):
+            raise ValueError(f"{label}.review.state is {state} but {tally}")
+        if state == "TIEBREAK_RESOLVED" and not refuted:
+            raise ValueError(
+                f"{label}.review.state is {state} but {tally} — no split to break"
+            )
         overruled = row.get("overruledArgument")
-        corrected = bool(review) and str(review.get("state", "")).startswith("CORRECTED_BY_")
+        corrected = str(review.get("state", "")).startswith("CORRECTED_BY_")
         if corrected and not (isinstance(overruled, str) and overruled.strip()):
             # Without this the losing argument stays in `rationale`, where it reads as the
             # row's position. On PARENT-0169#1 that made the row say 「사료 근거는 없으므로
@@ -444,13 +453,6 @@ def validate_ledger(document: object) -> list[dict]:
             )
         if overruled is not None and not (isinstance(overruled, str) and overruled.strip()):
             raise ValueError(f"{label}.overruledArgument must be a non-empty string")
-        if overruled is not None and review is None:
-            # The field holds an argument some lens lost — the original one on a corrected
-            # row, the rejected challenge on an upheld one. With no review beside it there
-            # is no record of who argued it or how the vote went.
-            raise ValueError(
-                f"{label} has an overruledArgument but no review block to explain it"
-            )
         if REFUTATION_DELIMITER in row["rationale"]:
             raise ValueError(
                 f"{label}.rationale still contains the refutation delimiter "
@@ -488,8 +490,10 @@ def check(document: Mapping, ledger: Mapping) -> dict:
             errors.append(f"SEAT_DRIFT {key}")
         # The names are what a human reads; leaving them uncompared let a row label the
         # right component with another one's commandery and counties.
+        # Both fields are required row keys, so read them directly: guarding this with
+        # `field in row` let a row drop memberNamesCh and skip its own county-name check.
         for field in ("unitNameCh", "memberNamesCh"):
-            if field in row and comp[field] != row[field]:
+            if comp[field] != row[field]:
                 errors.append(
                     f"NAME_DRIFT {key}.{field}: grid {comp[field]!r} != ledger {row[field]!r}"
                 )
