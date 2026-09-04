@@ -215,6 +215,42 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "owner boundary|touch"):
             self.audit.validate_artifact(tiles, tiles_bytes, adjudications, artifact)
 
+    def test_bypass_artifact_territory_source_cannot_authorize_water_access(self):
+        for mode, from_node, to_node in (
+            (
+                "EMBARK",
+                {"kind": "LAND_PROVINCE", "id": "42444"},
+                {"kind": "WATER_ZONE", "id": "water-zone:coastal-qiongzhou-strait"},
+            ),
+            (
+                "DISEMBARK",
+                {"kind": "WATER_ZONE", "id": "water-zone:coastal-qiongzhou-strait"},
+                {"kind": "LAND_PROVINCE", "id": "42444"},
+            ),
+        ):
+            with self.subTest(mode=mode):
+                tiles, tiles_bytes, adjudications, _ = self.builder.load_inputs()
+                artifact = self.builder.build_water_topology(tiles, tiles_bytes, adjudications)
+                coast = next(
+                    row for row in artifact["waterZones"] if row["kind"] == "COASTAL_SEA"
+                )
+                coast["connectionStatus"] = "CONNECTED"
+                artifact["traversalEdges"] = [{
+                    "id": f"traversal-edge:invalid-{mode.lower()}",
+                    "from": from_node, "to": to_node, "mode": mode,
+                    "directed": False, "movementCost": 1, "capacity": 1,
+                    "riskBand": "LOW", "seasonalAvailability": "ALWAYS",
+                    "supplyAllowed": False,
+                    "sourceRefs": ["territory-disconnection:PARENT-0101@340:544"],
+                    "confidence": "REVIEWED", "barrierId": None,
+                    "directionPairKey": None,
+                }]
+
+                with self.assertRaisesRegex(ValueError, "PORT_OR_LANDING|source type"):
+                    self.audit.validate_artifact(
+                        tiles, tiles_bytes, adjudications, artifact
+                    )
+
     def test_blocked_route_land_endpoints_require_source_coverage(self):
         tiles, tiles_bytes, adjudications, _ = self.builder.load_inputs()
         artifact = self.builder.build_water_topology(tiles, tiles_bytes, adjudications)

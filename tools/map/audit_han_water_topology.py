@@ -465,6 +465,10 @@ def validate_artifact(
                 raise ValueError(
                     f"traversalEdges[{index}] land endpoint does not touch the water zone owner boundary"
                 )
+            _require_source_type(
+                edge["sourceRefs"], source_types, "PORT_OR_LANDING",
+                f"traversalEdges[{index}]",
+            )
     for index, row in enumerate(routes):
         route = _object(row, f"routeCandidates[{index}]", ROUTE_KEYS)
         if route.get("viaWaterZoneId") not in zone_id_set:

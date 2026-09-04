@@ -514,6 +514,46 @@ class HanWaterTopologyBuilderTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source coverage"):
             self.build(ledger)
 
+    def test_territory_disconnection_cannot_authorize_embark_or_disembark(self):
+        for mode, from_kind, from_id, to_kind, to_id in (
+            ("EMBARK", "LAND_PROVINCE", "P1", "WATER_ZONE", "coastal-test-strait"),
+            ("DISEMBARK", "WATER_ZONE", "coastal-test-strait", "LAND_PROVINCE", "P1"),
+        ):
+            with self.subTest(mode=mode):
+                ledger = valid_ledger(self.builder)
+                ledger["zoneAdjudications"][1]["connectionStatus"] = "CONNECTED"
+                coast_source = ledger["sourceCatalog"][1]["sourceId"]
+                ledger["edgeAdjudications"] = [edge(
+                    f"invalid-{mode.lower()}", mode, from_kind, from_id,
+                    to_kind, to_id, coast_source,
+                )]
+
+                with self.assertRaisesRegex(ValueError, "PORT_OR_LANDING|source type"):
+                    self.build(ledger)
+
+    def test_exact_port_or_landing_source_authorizes_water_access(self):
+        ledger = valid_ledger(self.builder)
+        ledger["zoneAdjudications"][1]["connectionStatus"] = "CONNECTED"
+        access_source = "port-or-landing:coastal-p1"
+        ledger["sourceCatalog"].append(source(
+            access_source, "coastal-p1", "P1", ["P1"],
+            "data/curated/han/port-or-landing-adjudications-v1.json",
+        ))
+        ledger["edgeAdjudications"] = [edge(
+            "reviewed-p1-embark", "EMBARK", "LAND_PROVINCE", "P1",
+            "WATER_ZONE", "coastal-test-strait", access_source,
+        )]
+
+        try:
+            artifact = self.build(ledger)
+        except ValueError as error:
+            self.fail(f"dedicated port-or-landing evidence was rejected: {error}")
+
+        self.assertEqual(
+            "traversal-edge:reviewed-p1-embark",
+            artifact["traversalEdges"][0]["id"],
+        )
+
     def test_committed_outputs_are_byte_identical_to_a_fresh_render(self):
         artifact_bytes, manifest_bytes = self.builder.render_outputs()
         self.assertTrue(self.builder.OUTPUT.is_file(), "water topology artifact is not materialized")

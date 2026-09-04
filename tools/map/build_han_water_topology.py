@@ -45,15 +45,18 @@ EXPECTED_TERRAIN = {"RIVER_REACH": 3, "LAKE_BASIN": 4, "COASTAL_SEA": 0}
 TERRITORY_SOURCE_PATH = "data/curated/han/territory-disconnection-adjudications-v1.json"
 RIVER_BARRIER_SOURCE_PATH = "data/curated/han/river-barrier-adjudications-v1.json"
 RIVER_CROSSING_SOURCE_PATH = "data/curated/han/river-crossing-adjudications-v1.json"
+PORT_OR_LANDING_SOURCE_PATH = "data/curated/han/port-or-landing-adjudications-v1.json"
 SOURCE_TYPE_BY_PATH = {
     TERRITORY_SOURCE_PATH: "TERRITORY_DISCONNECTION",
     RIVER_BARRIER_SOURCE_PATH: "RIVER_BARRIER",
     RIVER_CROSSING_SOURCE_PATH: "RIVER_CROSSING",
+    PORT_OR_LANDING_SOURCE_PATH: "PORT_OR_LANDING",
 }
 SOURCE_PREFIX_BY_TYPE = {
     "TERRITORY_DISCONNECTION": "territory-disconnection:",
     "RIVER_BARRIER": "river-barrier:",
     "RIVER_CROSSING": "river-crossing:",
+    "PORT_OR_LANDING": "port-or-landing:",
 }
 
 ROOT_KEYS = {
@@ -723,6 +726,9 @@ def build_water_topology(
                 raise ValueError(
                     f"edge {stable_key} land endpoint does not touch the water zone owner boundary"
                 )
+            _require_source_type(
+                refs, source_types, "PORT_OR_LANDING", f"water access edge {stable_key}"
+            )
         validated_edges.append(mode_edge)
         edge_rows.append({
             "id": f"traversal-edge:{stable_key}",
