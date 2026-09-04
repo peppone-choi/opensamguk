@@ -131,6 +131,36 @@ neither changes the row: no source puts 臨允 in 高涼郡's county list (宋�
 平定·安寧·羅州·西鞏·禽鄉; 晉書 統縣三 = 安寧·高涼·思平), while 後漢書 卷113 郡國志 lists 临元
 (=臨允) among 合浦郡's 五城 and 宋書 says 「臨允令，漢舊縣，屬合浦」.
 
+### Task 3d: The rules the gate could be told to skip
+
+Review on PR #624 found two rules that ran only when the data they inspect happened to be
+present, so the ledger could switch them off. Thirty-two mutations had already been proved red,
+and none of them was of this shape — every one broke a value, none removed the thing a rule
+reads.
+
+| Hole | Before | After |
+|---|---|---|
+| `reviewStates` | `set(legend) if isinstance(legend, Mapping) else None`, and the row check was guarded by `declared_states is not None`. A ledger that dropped or malformed the legend stopped checking that a row's review state is one the ledger declares. | Validated exactly like `ifRules`: a non-empty `Mapping` whose keys are exactly `REVIEW_STATES`, every value a non-empty string. The row-level comparison is then redundant and is removed. |
+| `memberNamesCh` | Optional key, and the drift comparison sat behind `field in row`. A row that omitted the field lost its own county-name check — the mislabelling that comparison exists to catch. | Required key, with the array rule the other required arrays have: one non-empty string per `memberId`, in step with it. |
+| `review` (not reported; found while fixing the other two) | Optional key. Every vote rule and the state-vs-tally comparison lived under `if review is not None`, so a row with no review skipped all of them at once. | Required key. A row nobody judged is not adjudicated. |
+
+Two rules disappear as a consequence, both because they became unreachable rather than because
+they were relaxed: the row-level legend comparison (subsumed by the document-level check) and
+`overruledArgument`-without-`review` (the missing-key check reports that case now).
+
+The probe suite grew 32 → 40 and all 40 are red. The eight new ones are the legend missing,
+short, extra, blank-valued and not-a-mapping, and a row dropping `review`, dropping
+`memberNamesCh`, or naming the wrong number of counties.
+
+One existing probe had gone quietly green and is repaired here: `MEMBER_DRIFT` appended an id to
+`memberIds`, which now trips the `memberNamesCh` length rule first, so it had stopped proving
+anything about drift. It appends a name as well. **The check had shifted along with the thing it
+checks** — the failure mode a red probe suite exists to make visible, and it only showed up
+because every probe is required to name the rule it expects.
+
+The four new rule tests were run against the pre-fix gate, where all eleven subTests fail. A test
+written after the fix proves nothing until it has been seen failing.
+
 ### Task 4: What this ledger is deliberately not wired into
 
 - It is **not** a generator input, so it is not registered in `han_tiles_protected_orchestrator.py`'s role table. The generator never reads it, and a row can never change a cell.
