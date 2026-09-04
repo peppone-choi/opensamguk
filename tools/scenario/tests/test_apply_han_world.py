@@ -15,6 +15,123 @@ SPEC.loader.exec_module(apply_han_world)
 
 
 class HanWorldOwnershipOverrideTest(unittest.TestCase):
+    def test_numeric_city_migration_uses_physical_identity_and_explicit_replacements(self) -> None:
+        old = [
+            {"id": 1, "physicalPlaceId": "same"},
+            {"id": 2, "physicalPlaceId": "retired"},
+        ]
+        new = [
+            {"id": 7, "physicalPlaceRef": "chgis:v6:cnty:same"},
+            {"id": 8, "physicalPlaceRef": "chgis:v6:cnty:replacement"},
+        ]
+        candidates = [{"origin": "CURRENT_780", "legacyCityId": 22, "legacyTileId": "retired"}]
+        migration = [{
+            "oldCityId": 22, "newCityId": 8,
+            "disposition": "REPLACED_UNRELATED_NODE",
+        }]
+
+        self.assertEqual(
+            {1: 7, 2: 8},
+            apply_han_world.build_physical_id_migration(old, new, candidates, migration),
+        )
+
+    def test_numeric_city_migration_rejects_unknown_removed_and_duplicate_places(self) -> None:
+        with self.assertRaisesRegex(ValueError, "explicit migration"):
+            apply_han_world.build_physical_id_migration(
+                [{"id": 1, "physicalPlaceId": "removed"}],
+                [{"id": 1, "physicalPlaceRef": "chgis:v6:cnty:new"}],
+                [], [],
+            )
+        with self.assertRaisesRegex(ValueError, "duplicate physical"):
+            apply_han_world.build_physical_id_migration(
+                [{"id": 1, "physicalPlaceId": "p"}, {"id": 2, "physicalPlaceId": "p"}],
+                [{"id": 1, "physicalPlaceRef": "chgis:v6:cnty:p"}],
+                [], [],
+            )
+
+    def test_world_v2_loader_verifies_manifest_and_has_all_781_nodes(self) -> None:
+        by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v2")
+        self.assertEqual(781, len({city for group in by_jun.values() for city in group}))
+        self.assertIn(781, by_jun["제남국"])
+
+    def test_all_15_scenarios_migrate_references_and_licheng_owner_from_source(self) -> None:
+        self.assertEqual(15, len(apply_han_world.ACTIVE_GENERAL_CONTRACTS))
+        by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v2")
+        known = set(range(1, 782))
+        ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
+        che2jun = {
+            key: value["jun"]
+            for key, value in json.loads(
+                apply_han_world.CHE_TO_JUN.read_text(encoding="utf-8")
+            )["map"].items()
+        }
+        old = json.loads(apply_han_world.HAN_MAP.read_text(encoding="utf-8"))["cities"]
+        new = json.loads(apply_han_world.HAN_V2_MAP.read_text(encoding="utf-8"))["cities"]
+        candidates = json.loads(
+            apply_han_world.ROUTE_CANDIDATES.read_text(encoding="utf-8")
+        )["candidates"]
+        migration_doc = json.loads(
+            apply_han_world.ROUTE_MIGRATION.read_text(encoding="utf-8")
+        )
+        migration = apply_han_world.build_physical_id_migration(
+            old, new, candidates, migration_doc["rows"]
+        )
+        self.assertEqual(774, len(migration))
+        selection_by_id = {
+            row["numericCityId"]: row
+            for row in json.loads(
+                apply_han_world.ROUTE_SELECTION.read_text(encoding="utf-8")
+            )["routeNodes"]
+        }
+        self.assertEqual(780, len(migration_doc["rows"]))
+        for row in migration_doc["rows"]:
+            self.assertEqual(row["oldCityId"], row["newCityId"])
+            self.assertEqual(
+                row["routeNodeKey"], selection_by_id[row["newCityId"]]["routeNodeKey"]
+            )
+        self.assertEqual(
+            [{
+                "administrativeUnitId": "hhs:112:濟南國:010",
+                "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+                "newCityId": 781,
+                "physicalPlaceRef": "chgis:v6:cnty:45022",
+                "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef",
+            }],
+            migration_doc["appendedRows"],
+        )
+
+        for code in sorted(apply_han_world.ACTIVE_GENERAL_CONTRACTS):
+            with self.subTest(code=code):
+                raw = json.loads(
+                    (apply_han_world.SCEN / f"{code}.json").read_text(encoding="utf-8")
+                )
+                rewritten, _ = apply_han_world.rewrite(
+                    raw, code, by_jun, id_of, seat_of, che2jun, ownership, migration
+                )
+                self.assertEqual("han-world-v2", rewritten["cityIdentityVersion"])
+                nation_rows = {row[0]: row for row in rewritten["nation"]}
+                all_claims = [
+                    city
+                    for row in nation_rows.values()
+                    for city in row[apply_han_world.NATION_CITIES]
+                ]
+                self.assertTrue(set(all_claims) <= known)
+                for key in apply_han_world.GENERAL_KEYS:
+                    for general in rewritten.get(key) or []:
+                        self.assertTrue(general[4] is None or general[4] in known)
+                expected_owner = next(
+                    (
+                        nation for nation, source in ownership[code]["nations"].items()
+                        if "제남국" in (source.get("juns") or [])
+                    ),
+                    None,
+                )
+                actual_owner = next(
+                    (nation for nation, row in nation_rows.items() if 781 in row[apply_han_world.NATION_CITIES]),
+                    None,
+                )
+                self.assertEqual(expected_owner, actual_owner)
+
     def test_active_general_contracts_are_preflighted_before_rewrite(self) -> None:
         with self.assertRaisesRegex(ValueError, "scenario_missing"):
             apply_han_world.validate_active_general_contracts(["scenario_1010", "scenario_missing"])
