@@ -349,8 +349,48 @@ open class JdbcFlushExecutor(
             if (payload.cityLedgerV2Upserts.isNotEmpty()) {
                 cityLedgerV2UpsertMany(payload.worldId, payload.cityLedgerV2Upserts)
             }
+            if (payload.waterControlWrites.isNotEmpty()) {
+                waterControlWriteMany(payload.worldId, payload.waterControlWrites)
+            }
             null
         }
+    }
+
+    /** Typed campaign-only writes share the world fence and all resource deltas' transaction. */
+    private fun waterControlWriteMany(worldId: WorldId, rows: WaterControlWriteBatch) {
+        rows.forEach { row ->
+            val state = row.state
+            val params = MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("water_zone_id", state.waterZoneId)
+                .addValue("topology_revision", state.topologyRevision)
+                .addValue("topology_hash", state.topologyHash)
+                .addValue("controlling_nation_id", state.controllingNationId)
+                .addValue("contesting_nation_ids", MetaJson.encode(state.contestingNationIds))
+                .addValue("blockade_state", state.blockadeState.name)
+                .addValue("revision", state.revision)
+                .addValue("expected_revision", row.expectedRevision)
+            val sql = if (row.expectedRevision == null) {
+                """
+                INSERT INTO water_zone_control (world_id, water_zone_id, topology_revision, topology_hash,
+                    controlling_nation_id, contesting_nation_ids, blockade_state, revision)
+                VALUES (:world_id, :water_zone_id, :topology_revision, :topology_hash,
+                    :controlling_nation_id, CAST(:contesting_nation_ids AS jsonb), :blockade_state, :revision)
+                ON CONFLICT (world_id, water_zone_id) DO NOTHING
+                """.trimIndent()
+            } else {
+                """
+                UPDATE water_zone_control SET controlling_nation_id = :controlling_nation_id,
+                    contesting_nation_ids = CAST(:contesting_nation_ids AS jsonb), blockade_state = :blockade_state,
+                    revision = :revision
+                WHERE world_id = :world_id AND water_zone_id = :water_zone_id
+                    AND topology_revision = :topology_revision AND topology_hash = :topology_hash
+                    AND revision = :expected_revision
+                """.trimIndent()
+            }
+            if (jdbc.update(sql, params) != 1) throw StaleWaterControlException(worldId.value, state.waterZoneId, row.expectedRevision)
+        }
+        lastOps.add(FlushExecOp("water_zone_control", FlushVerb.UPDATE, rows.size))
     }
 
     // --- step 1 ---------------------------------------------------------------------------------
@@ -2451,6 +2491,7 @@ data class FlushPayload(
     // 후행 기본값 필드. v1 경로는 이 리스트를 채우지 않으므로 v2 step이 미진입한다 ⇒ v1 SQL 0.
     // v1 델타와 **같은** [transactionTemplate] 안에서 커밋된다 (두 번째 DataSource·풀 없음).
     val cityLedgerV2Upserts: List<CityLedgerV2UpsertRow> = emptyList(), // step-14 v2_city_ledger UPSERT
+    val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
 )
 
 data class GeneralTurnPullRow(

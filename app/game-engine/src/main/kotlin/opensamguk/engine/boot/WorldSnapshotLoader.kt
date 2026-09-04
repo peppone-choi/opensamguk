@@ -16,6 +16,11 @@ import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.persistence.MetaJson
+import opensamguk.infra.persistence.WaterControlRowCodec
+import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.logic.world.ActiveWorldMap
+import opensamguk.logic.world.StrategicTopologySnapshot
+import opensamguk.logic.world.WaterControlSnapshot
 import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.ResultSet
@@ -51,6 +56,7 @@ class WorldSnapshotLoader(
     private val seedBootstrap: SeedBootstrap,
     private val worldId: WorldId,
     private val snapshotValidator: (WorldSnapshot) -> Unit = ActiveWorldMapValidator::validate,
+    private val waterTopologyLoader: () -> StrategicTopologySnapshot = { HanStrategicTopologyJson.loadDefault().topology },
 ) {
     private val log = LoggerFactory.getLogger(WorldSnapshotLoader::class.java)
 
@@ -151,9 +157,24 @@ class WorldSnapshotLoader(
             diplomacy = diplomacy,
             accessLogs = accessLogs,
             archivedNationIds = archivedNationIds,
+            waterControlSnapshot = loadWaterControlSnapshot(state),
         )
         snapshotValidator(snapshot)
         return snapshot
+    }
+
+    private fun loadWaterControlSnapshot(state: TurnWorldState): WaterControlSnapshot? {
+        // Small historical test snapshots may omit map identity; the production map validator still rejects them.
+        val hasMap = listOf(state.config, state.meta).any { it.containsKey("mapName") || it.containsKey("map") }
+        if (!hasMap || ActiveWorldMap.requireName(state.config, state.meta) != "han-world-v3") return null
+        val topology = waterTopologyLoader()
+        val rows = jdbc.query(
+            "SELECT water_zone_id, topology_revision, topology_hash, controlling_nation_id, " +
+                "contesting_nation_ids, blockade_state, revision FROM water_zone_control WHERE world_id = ? ORDER BY water_zone_id",
+            { rs, _ -> WaterControlRowCodec.decode(rs) }, worldId.value,
+        )
+        // Always validate, even when an injected map validator permits a reduced test fixture.
+        return WaterControlSnapshot.fromTopology(topology, rows)
     }
 
     private fun loadWorldState(): TurnWorldState {

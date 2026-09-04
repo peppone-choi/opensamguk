@@ -93,6 +93,24 @@ V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 �
 
 이 절은 배포/DB 전환 명령이나 승인을 대신하지 않습니다.
 
+### Han V3 수역 상태와 보급 복구
+
+V49는 세계별 `water_zone_control` 빈 테이블을 추가합니다. V3 부팅은 실제 snapshot loader에서
+해당 세계의 행만 읽고 지형 버전·해시·수역 ID를 검증합니다. 행 없음은 미확인이며 육지 소유권에서
+통제를 만들지 않습니다. V2 저장 세계는 수역 테이블을 조회하지 않습니다.
+
+- V901을 이미 적용한 실험 DB는 낮은 버전 V49의 별도 업그레이드 검증이 필요합니다.
+  `outOfOrder` 전역 활성화, Flyway history repair, DB reset으로 이 단계를 건너뛰지 않습니다.
+- 수역 변경은 daemon recorder와 기존 JDBC transaction으로만 저장합니다. 한 틱의 여러 변경은
+  최초 기대 revision과 최종 상태로 합칩니다. 전송 오류 재시도는 보존한 동일 payload를 사용합니다.
+- `StaleWaterControlException`은 재로드가 필요한 동시 수정 충돌입니다. 동일 명령을 계속 재시도하거나
+  revision 값을 수동으로 올리지 말고 기존 격리·재로드 절차를 따릅니다.
+- 수운 보급은 명시된 통과 허가·가용 용량과 자국 수역 통제, 계절 조건을 모두 요구합니다.
+  현재 실제 함대 용량 공급자는 없으므로 정적 간선 capacity만으로 수운을 열지 않습니다.
+- 기존 두 그래프의 보급 안전 판정을 유지합니다. 수역 통제 변경은 토지 소유권을 직접 바꾸지 않습니다.
+- 기존 legacy full-rehydrate 서명만으로 수역의 DB roundtrip이나 replay를 검증했다고 간주하지 않습니다.
+  수역 전용 PostgreSQL 복구·CAS rollback 검증을 배포 전에 별도로 실행해야 합니다.
+
 ### 서비스는 online인데 화면이 502
 
 nginx 정적 upstream의 stale DNS, 대상 container health와 포트를 확인합니다. shared 서비스 변경 뒤 nginx를

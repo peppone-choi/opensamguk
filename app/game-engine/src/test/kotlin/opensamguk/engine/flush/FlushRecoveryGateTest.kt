@@ -3,6 +3,8 @@ package opensamguk.engine.flush
 import opensamguk.common.world.WorldId
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.StaleWorldWriterException
+import opensamguk.infra.persistence.StaleWaterControlException
+import org.springframework.transaction.TransactionSystemException
 import org.springframework.dao.QueryTimeoutException
 import java.sql.SQLException
 import java.util.concurrent.TimeoutException
@@ -15,6 +17,14 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FlushRecoveryGateTest {
+
+    @Test
+    fun `water CAS inside transient transaction wrapper requires reload not blind retry`() {
+        val stale = StaleWaterControlException(1, "lake", 2L)
+        assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, FlushRecoveryGate.classify(stale))
+        assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED,
+            FlushRecoveryGate.classify(TransactionSystemException("rollback", stale)))
+    }
 
     private fun payload(): FlushPayload =
         // test helper lives in infra test sources — not on main classpath.

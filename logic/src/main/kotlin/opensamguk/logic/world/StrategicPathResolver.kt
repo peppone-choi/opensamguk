@@ -66,6 +66,25 @@ sealed interface StrategicPathResult {
 
 object StrategicPathResolver {
 
+    /** Multi-source supply traversal shares the executable path graph, never diagnostic links. */
+    fun reachableNodes(
+        topology: StrategicTopologySnapshot,
+        sources: Set<StrategicNodeRef>,
+        state: StrategicEdgeStateSnapshot,
+        requiredCapacity: Int,
+        nodeAllowed: (StrategicNodeRef) -> Boolean,
+        edgeAllowed: (TraversalEdge) -> Boolean,
+    ): Set<StrategicNodeRef> {
+        require(requiredCapacity > 0)
+        require(state.topologyRevision == topology.topologyRevision && state.topologyHash == topology.contentHash) {
+            "Supply topology state is stale"
+        }
+        val edgeIds = topology.traversalEdges.mapTo(hashSetOf(), TraversalEdge::id)
+        require(state.edgeStates.keys.all { it in edgeIds }) { "Supply state contains unknown edges" }
+        require(sources.all(topology::containsNode)) { "Supply source is outside topology" }
+        return SearchGraph(topology, state, requiredCapacity).reachableNodes(sources, nodeAllowed, edgeAllowed)
+    }
+
     fun resolve(
         topology: StrategicTopologySnapshot,
         request: StrategicPathRequest,
@@ -170,6 +189,27 @@ object StrategicPathResolver {
             }
             mutable.values.forEach { steps -> steps.sortBy { it.edge.id } }
             mutable.mapValues { (_, steps) -> steps.toList() }
+        }
+
+        fun reachableNodes(
+            sources: Set<StrategicNodeRef>,
+            nodeAllowed: (StrategicNodeRef) -> Boolean,
+            edgeAllowed: (TraversalEdge) -> Boolean,
+        ): Set<StrategicNodeRef> {
+            val reached = linkedSetOf<StrategicNodeRef>()
+            val queue = ArrayDeque<StrategicNodeRef>()
+            sources.sortedBy { it.canonicalKey }.filter(nodeAllowed).forEach {
+                if (reached.add(it)) queue += it
+            }
+            while (queue.isNotEmpty()) {
+                val current = queue.removeFirst()
+                for (step in adjacency[current.canonicalKey].orEmpty()) {
+                    if (step.diagnosticOnly || !edgeAllowed(step.edge) || !nodeAllowed(step.to)) continue
+                    if (!isUsable(step.edge, SearchOptions())) continue
+                    if (reached.add(step.to)) queue += step.to
+                }
+            }
+            return Collections.unmodifiableSet(reached)
         }
 
         fun findPath(

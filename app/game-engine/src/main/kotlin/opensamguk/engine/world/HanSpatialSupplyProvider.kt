@@ -3,9 +3,17 @@ package opensamguk.engine.world
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.logic.world.SpatialSupplyNetwork
+import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.StrategicNodeRef
+import opensamguk.logic.world.StrategicSupplyNetwork
+import opensamguk.logic.world.TraversalMode
+import opensamguk.logic.world.WaterControlSnapshot
+import opensamguk.infra.seed.HanStrategicTopologyJson
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.nio.file.Path
+import java.nio.file.Files
+import java.security.MessageDigest
 
 data class SpatialSupplyCity(
     val cityId: Int,
@@ -41,8 +49,27 @@ class HanSpatialSupplyProvider(
         activeMapName: String,
         scenarioCode: Int,
         liveCities: List<SpatialSupplyCity>,
+        waterControl: WaterControlSnapshot? = null,
+        strategicProjection: HanStrategicRouteProjection? = null,
     ): SpatialSupplyNetwork {
         val canonical = canonical()
+        val strategic = if (activeMapName == "han-world-v3") {
+            val projection = strategicProjection ?: HanStrategicTopologyJson.loadDefault()
+            require(projection.topology.artifactHashes["data/map/han-tiles.json"] == canonical.baseSha256) {
+                "Supply ownership and strategic topology base hashes differ"
+            }
+            liveCities.forEach { city ->
+                val binding = projection.bindingsByCityId[city.cityId]
+                require(binding != null && binding.landProvinceId == canonical.provinceIds.getOrNull(city.provinceIndex) &&
+                    binding.physicalPlaceRef == city.physicalPlaceRef && binding.routeNodeKey == city.routeNodeKey) {
+                    "Supply runtime city ${city.cityId} identity does not match approved V3 topology"
+                }
+            }
+            StrategicSupplyNetwork(projection.topology, canonical.provinceIds, waterControl)
+        } else {
+            require(waterControl == null && strategicProjection == null) { "Legacy supply cannot consume V3 water state" }
+            null
+        }
         val owners = canonical.scenarioOwners[scenarioCode]?.clone()
             ?: error("No canonical province ownership for scenario $scenarioCode")
 
@@ -66,13 +93,24 @@ class HanSpatialSupplyProvider(
 
         return SpatialSupplyNetwork(
             provinceOwners = owners,
-            provinceAdjacency = canonical.adjacency.map(IntArray::clone),
+            provinceAdjacency = if (strategic == null) canonical.adjacency.map(IntArray::clone) else {
+                val indices = canonical.provinceIds.withIndex().associate { it.value to it.index }
+                val adjacency = List(indices.size) { mutableListOf<Int>() }
+                strategic.topology.traversalEdges.filter { it.mode == TraversalMode.LAND }.forEach { edge ->
+                    val a = indices.getValue((edge.from as StrategicNodeRef.LandProvince).id)
+                    val b = indices.getValue((edge.to as StrategicNodeRef.LandProvince).id)
+                    adjacency[a] += b
+                    adjacency[b] += a
+                }
+                adjacency.map { it.sorted().toIntArray() }
+            },
             cityProvinceIndices = liveCities.associate { it.cityId to it.provinceIndex },
             fallbackPolicies = policyLoader?.load(
                 activeMapName,
                 scenarioCode,
                 liveCities,
             ).orEmpty(),
+            strategicSupply = strategic,
         )
     }
 
@@ -81,7 +119,8 @@ class HanSpatialSupplyProvider(
     }
 
     private fun loadCanonical(): CanonicalSpatialSupply {
-        val mapRoot = objectMapper.readTree(Path.of(mapPath).toFile())
+        val mapBytes = Files.readAllBytes(Path.of(mapPath))
+        val mapRoot = objectMapper.readTree(mapBytes)
         val provinces = mapRoot.requiredArray("provinceRecords")
         val provinceIds = provinces.map { it.requiredText("id") }
         requireUnique(provinceIds, "province record")
@@ -182,6 +221,8 @@ class HanSpatialSupplyProvider(
             }
 
         return CanonicalSpatialSupply(
+            provinceIds = provinceIds,
+            baseSha256 = MessageDigest.getInstance("SHA-256").digest(mapBytes).joinToString("") { "%02x".format(it) },
             provinceJurisdictions = provinceJurisdictions,
             jurisdictionSeatProvince = jurisdictionSeatProvince,
             adjacency = validatedAdjacency,
@@ -233,6 +274,8 @@ class HanSpatialSupplyProvider(
     }
 
     private data class CanonicalSpatialSupply(
+        val provinceIds: List<String>,
+        val baseSha256: String,
         val provinceJurisdictions: List<String>,
         val jurisdictionSeatProvince: Map<String, Int>,
         val adjacency: List<IntArray>,

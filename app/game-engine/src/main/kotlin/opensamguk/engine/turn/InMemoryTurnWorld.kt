@@ -2,6 +2,8 @@ package opensamguk.engine.turn
 
 import opensamguk.common.world.WorldId
 import opensamguk.logic.domain.NationTurn
+import opensamguk.logic.world.ActiveWorldMap
+import opensamguk.logic.world.WaterControlSnapshot
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -24,10 +26,16 @@ data class WorldSnapshot(
     val archivedNationIds: List<Int> = emptyList(),
     val serverId: String? = state.serverId,
     val worldId: WorldId,
+    val waterControlSnapshot: WaterControlSnapshot? = null,
 ) {
     init {
         require(state.id == worldId.value) {
             "WorldSnapshot state.id=${state.id} must equal worldId=${worldId.value}"
+        }
+        if (waterControlSnapshot != null) {
+            require(ActiveWorldMap.requireName(state.config, state.meta) == "han-world-v3") {
+                "Water control is only supported by the explicit Han V3 map"
+            }
         }
     }
 }
@@ -90,6 +98,7 @@ class InMemoryTurnWorld(
     // 액추에이터/어드민 HTTP 스레드가 데몬 스레드의 `state = state.copy(...)`와 동시에 읽는다.
     // [TurnWorldState]는 불변 data class라 torn object는 없지만, @Volatile 없이는 가시성 보장이 없다.
     @Volatile private var state: TurnWorldState
+    @Volatile private var waterControl: WaterControlSnapshot? = snapshot.waterControlSnapshot
     private val serverId: String?
 
     /**
@@ -135,6 +144,17 @@ class InMemoryTurnWorld(
     }
 
     fun getState(): TurnWorldState = state
+
+    /** Immutable read projection; legacy worlds have no water state, absent V3 rows stay unknown. */
+    fun waterControlSnapshot(): WaterControlSnapshot? = waterControl
+
+    /** Only ChangeRecorder calls this; it remains the sole dirty source. */
+    internal fun applyWaterControlDirtyFree(snapshot: WaterControlSnapshot) {
+        val current = requireNotNull(waterControl) { "World has no water topology" }
+        require(snapshot.topologyRevision == current.topologyRevision && snapshot.topologyHash == current.topologyHash &&
+            snapshot.knownWaterZoneIds == current.knownWaterZoneIds) { "Cannot replace a world's immutable water topology" }
+        waterControl = snapshot
+    }
     fun archiveServerId(): String? = serverId
 
     /**

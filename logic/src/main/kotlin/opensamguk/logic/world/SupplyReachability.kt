@@ -123,6 +123,9 @@ private fun computeSpatiallySuppliedCities(
     capitals: List<SupplyCapital>,
     spatialNetwork: SpatialSupplyNetwork,
 ): Set<Int> {
+    spatialNetwork.strategicSupply?.let {
+        return it.suppliedCities(cities, capitals, spatialNetwork.provinceOwners, spatialNetwork.cityProvinceIndices)
+    }
     val ownedNation = cities.associate { it.id to it.nationId }
     val reached = BooleanArray(spatialNetwork.provinceOwners.size)
     val queue = ArrayDeque<Int>()

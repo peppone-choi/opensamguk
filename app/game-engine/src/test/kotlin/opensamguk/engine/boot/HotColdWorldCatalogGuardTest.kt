@@ -11,6 +11,16 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class HotColdWorldCatalogGuardTest {
+    @Test
+    fun `water control boot scan is world scoped bounded hot state`() {
+        val entry = HotColdCatalog.snapshotAccesses.single { it.methodName == "loadWaterControlSnapshot" }
+        assertEquals("water_zone_control", entry.relation)
+        assertEquals(DataTemperature.ALWAYS_HOT, entry.temperature)
+        assertEquals(AccessBound.HOT_ENTITY_SET, entry.bound)
+        assertTrue(entry.ordering.contains("world_id"))
+        assertTrue(entry.ordering.contains("water_zone_id"))
+    }
+
     private fun source(path: String): String = listOf(
         File(path),
         File("app/game-engine/$path"),

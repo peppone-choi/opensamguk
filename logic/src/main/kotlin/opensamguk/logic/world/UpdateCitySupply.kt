@@ -44,10 +44,14 @@ data class SpatialSupplyNetwork(
     val provinceAdjacency: List<IntArray>,
     val cityProvinceIndices: Map<Int, Int>,
     val fallbackPolicies: Map<Int, SupplyFallbackPolicy> = emptyMap(),
+    val strategicSupply: StrategicSupplyNetwork? = null,
 ) {
     init {
         require(provinceOwners.size == provinceAdjacency.size) {
             "Spatial supply owner/adjacency size mismatch: ${provinceOwners.size}/${provinceAdjacency.size}"
+        }
+        require(strategicSupply == null || strategicSupply.provinceIds.size == provinceOwners.size) {
+            "Strategic supply province domain size mismatch"
         }
         provinceAdjacency.forEachIndexed { provinceIndex, neighbors ->
             require(neighbors.toSet().size == neighbors.size) {

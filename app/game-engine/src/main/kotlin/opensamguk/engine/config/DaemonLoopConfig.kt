@@ -261,7 +261,9 @@ class DaemonLoopConfig {
             },
             scenarioCode = scenario,
             liveCityNations = { world.listCities().map { it.id to it.nationId } },
-            loadNetwork = hanSpatialSupplyProvider::network,
+            loadNetwork = { mapName, scenarioCode, liveCities ->
+                hanSpatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot())
+            },
         )
 
         var nextMessageId = messageRepository.findMaxId()
