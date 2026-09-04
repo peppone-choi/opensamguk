@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "data/curated/han/administrative-units.json"
 CHGIS_COUNTY_DBF = ROOT / "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf"
+BINDINGS = ROOT / "data/curated/han/administrative-place-bindings-v1.json"
 OUT = ROOT / "data/map/administrative-place-overlay.json"
 SOURCE_YEAR = 220
 JOIN_STATUSES = (
@@ -313,6 +314,88 @@ def candidates_for_unit(unit: dict, name_index: dict[str, list[tuple[dict, str]]
     return sorted(candidates, key=lambda row: (row["chgisSysId"], row["recordIndex"]))
 
 
+def reviewed_physical_places(document: dict | None, catalog: dict) -> dict[str, str]:
+    """Return exact reviewed unit-to-place joins; unresolved rows remain automatic."""
+    if document is None:
+        return {}
+    if set(document) != {"schemaVersion", "catalogId", "sourceYear", "administrativeUnits"}:
+        raise ValueError("reviewed bindings have invalid root keys")
+    if document["schemaVersion"] != 1 or document["catalogId"] != catalog["catalogId"]:
+        raise ValueError("reviewed bindings identity mismatch")
+    if document["sourceYear"] != SOURCE_YEAR:
+        raise ValueError("reviewed bindings source year mismatch")
+    rows = document["administrativeUnits"]
+    if not isinstance(rows, list):
+        raise ValueError("reviewed bindings administrativeUnits must be an array")
+    catalog_identities = {
+        administrative_unit_id(unit): {
+            "sourceVolume": unit["sourceVolume"],
+            "canonicalGroup": unit["canonicalGroup"],
+            "ordinal": unit["ordinal"],
+        }
+        for group in catalog["groups"]
+        for unit in group["units"]
+    }
+    resolved: dict[str, str] = {}
+    seen_units: set[str] = set()
+    seen_places: set[str] = set()
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise ValueError(f"reviewed bindings[{index}] must be an object")
+        status = row.get("joinStatus")
+        if status not in JOIN_STATUSES:
+            raise ValueError(f"reviewed bindings[{index}] has invalid joinStatus")
+        unit_id = row.get("administrativeUnitId")
+        if (
+            not isinstance(unit_id, str)
+            or unit_id not in catalog_identities
+            or row.get("identity") != catalog_identities[unit_id]
+            or unit_id in seen_units
+        ):
+            raise ValueError(f"reviewed bindings[{index}] has invalid or duplicate identity")
+        seen_units.add(unit_id)
+        if status != "RESOLVED_POINT":
+            continue
+        selected = row.get("selectedCandidate")
+        if (
+            row.get("candidateCount") != 1
+            or not isinstance(selected, dict)
+            or set(selected) != {"physicalPlaceId"}
+        ):
+            raise ValueError(f"reviewed bindings[{index}] has invalid resolved join")
+        place_id = selected["physicalPlaceId"]
+        if not isinstance(place_id, str) or not place_id.startswith("chgis:v6:cnty:"):
+            raise ValueError(f"reviewed bindings[{index}] has invalid physicalPlaceId")
+        if place_id in seen_places:
+            raise ValueError(f"duplicate resolved reviewed physical place: {place_id}")
+        seen_places.add(place_id)
+        resolved[unit_id] = place_id
+    if seen_units != set(catalog_identities):
+        raise ValueError("reviewed bindings do not cover the exact catalog identity set")
+    return resolved
+
+
+def apply_reviewed_candidate(
+    unit: dict,
+    candidates: list[dict],
+    reviewed_place_id: str | None,
+    active_by_place_id: dict[str, dict],
+) -> list[dict]:
+    if reviewed_place_id is None:
+        return candidates
+    record = active_by_place_id.get(reviewed_place_id)
+    if record is None:
+        raise ValueError(
+            f"reviewed binding references an absent active CHGIS place: {reviewed_place_id}"
+        )
+    candidate_ids = {candidate["physicalPlaceId"] for candidate in candidates}
+    if candidate_ids and reviewed_place_id not in candidate_ids:
+        raise ValueError(
+            f"reviewed binding conflicts with name candidates: {administrative_unit_id(unit)}"
+        )
+    return [candidate_payload(record, ["REVIEWED_BINDING"], match_names(unit))]
+
+
 def administrative_unit_id(unit: dict) -> str:
     return f'hhs:{unit["sourceVolume"]}:{unit["canonicalGroup"]}:{unit["ordinal"]:03d}'
 
@@ -363,17 +446,33 @@ def unit_payload(unit: dict, candidates: list[dict], candidate_users: dict[str, 
     return row
 
 
-def build_overlay(catalog: dict, records: list[dict], source_year: int = SOURCE_YEAR) -> dict:
+def build_overlay(
+    catalog: dict,
+    records: list[dict],
+    source_year: int = SOURCE_YEAR,
+    *,
+    reviewed_bindings: dict | None = None,
+) -> dict:
     if source_year != SOURCE_YEAR:
         raise ValueError("source year must be exactly 220")
     validate_catalog(catalog)
     validate_active_records(records, source_year)
     name_index = build_name_index(records, source_year)
+    reviewed = reviewed_physical_places(reviewed_bindings, catalog)
+    active_by_place_id = {
+        physical_place_id(record): record for record in active_records(records, source_year)
+    }
     matched_units = []
     candidate_users = defaultdict(list)
     for group in catalog["groups"]:
         for unit in group["units"]:
             candidates = candidates_for_unit(unit, name_index)
+            candidates = apply_reviewed_candidate(
+                unit,
+                candidates,
+                reviewed.get(administrative_unit_id(unit)),
+                active_by_place_id,
+            )
             matched_units.append((unit, candidates))
             for candidate in candidates:
                 candidate_users[candidate["physicalPlaceId"]].append(administrative_unit_id(unit))
@@ -393,6 +492,10 @@ def build_overlay(catalog: dict, records: list[dict], source_year: int = SOURCE_
             "chgisFields": ["NAME_CH", "NAME_FT"],
             "temporalPredicate": "BEG_YR <= sourceYear <= END_YR",
             "namePredicate": "NFC exact match on the original or one-suffix-removed CHGIS name",
+            "reviewedBindingPolicy": (
+                "an exact reviewed administrativeUnitId/physicalPlaceId pair may select an active "
+                "CHGIS record; a conflicting name candidate fails closed"
+            ),
             "ambiguityPolicy": (
                 "a unit has multiple candidate records or one physical place is used by multiple "
                 "administrative units; no coordinate is selected"
@@ -409,12 +512,18 @@ def build_overlay(catalog: dict, records: list[dict], source_year: int = SOURCE_
     }
 
 
-def build_document(catalog_path: Path, dbf_path: Path) -> dict:
+def build_document(catalog_path: Path, dbf_path: Path, reviewed_bindings_path: Path = BINDINGS) -> dict:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     if catalog.get("expectedGroupCount") != 105 or catalog.get("expectedUnitCount") != 1180:
         raise ValueError("W0 catalog must declare exactly 105 groups and 1,180 units")
     records, field_names = read_dbf(dbf_path, SOURCE_YEAR)
-    document = build_overlay(catalog, records, SOURCE_YEAR)
+    reviewed_bindings = json.loads(reviewed_bindings_path.read_text(encoding="utf-8"))
+    document = build_overlay(
+        catalog,
+        records,
+        SOURCE_YEAR,
+        reviewed_bindings=reviewed_bindings,
+    )
     active_count = len(records)
     document["provenance"] = {
         "catalogPath": source_label(catalog_path),
@@ -422,6 +531,8 @@ def build_document(catalog_path: Path, dbf_path: Path) -> dict:
         "chgisDbfPath": source_label(dbf_path),
         "chgisDbfSha256": sha256(dbf_path),
         "chgisDbfFields": field_names,
+        "reviewedBindingsPath": source_label(reviewed_bindings_path),
+        "reviewedBindingsSha256": sha256(reviewed_bindings_path),
         "activeRecordCount": active_count,
         "generator": "tools/map/build_administrative_place_overlay.py",
         "redistribution": "generated coordinate overlay remains gitignored under ADR-LITE-039",
@@ -437,13 +548,16 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--catalog", type=Path, default=CATALOG)
     parser.add_argument("--chgis-dbf", type=Path, default=CHGIS_COUNTY_DBF)
+    parser.add_argument("--reviewed-bindings", type=Path, default=BINDINGS)
     parser.add_argument("--out", type=Path, default=OUT)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     try:
         out = assert_untracked(args.out)
         dbf_path = assert_untracked(args.chgis_dbf)
-        document = build_document(args.catalog.resolve(), dbf_path)
+        document = build_document(
+            args.catalog.resolve(), dbf_path, args.reviewed_bindings.resolve()
+        )
         blob = serialized(document)
         if args.check:
             if not out.exists() or out.read_text(encoding="utf-8") != blob:

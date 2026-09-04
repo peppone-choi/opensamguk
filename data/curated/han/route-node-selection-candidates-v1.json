@@ -27794,7 +27794,7 @@
       },
       "administrativePlaceOverlay": {
         "path": "data/curated/han/administrative-place-bindings-v1.json",
-        "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
+        "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
       },
       "legacyHanMap": {
         "path": "infra/src/main/resources/map/han-780-v1.json",

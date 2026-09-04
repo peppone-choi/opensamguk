@@ -8,6 +8,7 @@ become explicitly named direct territory.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import heapq
 import json
@@ -1308,6 +1309,15 @@ def apply_jurisdiction_parent_adjudications(
     provinces = document.get("provinceRecords")
     if not all(isinstance(value, list) for value in (jurisdictions, commanderies, provinces)):
         raise ValueError("parent adjudication requires materialized hierarchy arrays")
+    adjacency = document.get("adjacency")
+    if not isinstance(adjacency, Mapping) or not isinstance(adjacency.get("county"), list):
+        raise ValueError("parent adjudication requires county adjacency")
+    immutable_geometry = {
+        "owner": copy.deepcopy(document.get("owner")),
+        "terrain": copy.deepcopy(document.get("terrain")),
+        "cities": copy.deepcopy(document.get("cities")),
+        "countyAdjacency": copy.deepcopy(adjacency["county"]),
+    }
     jurisdiction_by_id = {row.get("id"): row for row in jurisdictions}
     commandery_by_id = {row.get("id"): row for row in commanderies}
     if len(jurisdiction_by_id) != len(jurisdictions) or len(commandery_by_id) != len(commanderies):
@@ -1353,4 +1363,11 @@ def apply_jurisdiction_parent_adjudications(
             if jurisdiction.get("commanderyId") == commandery.get("id")
         )
     _rederive_parent_surfaces(document)
+    if immutable_geometry != {
+        "owner": document.get("owner"),
+        "terrain": document.get("terrain"),
+        "cities": document.get("cities"),
+        "countyAdjacency": document["adjacency"]["county"],
+    }:
+        raise AssertionError("parent adjudication changed immutable land geometry")
     return moved

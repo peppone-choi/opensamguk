@@ -158,6 +158,17 @@ class HanParentReconciliationTest(unittest.TestCase):
             row["approvalEvidence"]["inputs"],
         )
 
+    def test_licheng_reconciliation_diagnostic_uses_corrected_jinan_parent(self):
+        row = self.rows["45022"]
+
+        self.assertEqual("PROPOSED_GEOMETRIC", row["decision"])
+        self.assertEqual(
+            [{"cellCount": 39, "junArrayIndex": 35, "nameCh": "濟南國"}],
+            row["footprintDiagnostic"]["junDistribution"],
+        )
+        self.assertEqual([35], row["footprintDiagnostic"]["majorityJunArrayIndices"])
+        self.assertEqual("濟南國", row["seatJunDiagnostic"]["nameCh"])
+
     def test_weiguo_uses_reviewed_exact_binding_not_nearest_dunqiu_geometry(self):
         """Removing the reviewed 85083 override would regress to the 頓丘 geometry proposal."""
         row = self.rows["85083"]
@@ -564,11 +575,11 @@ class HanParentReconciliationTest(unittest.TestCase):
         self.assertEqual(357, summary["unresolvedRowCount"])
         self.assertEqual(26_232, summary["unresolvedCellCount"])
         self.assertEqual(
-            {"rowCount": 199, "cellCount": 10_343},
+            {"rowCount": 200, "cellCount": 10_382},
             summary["geometryDiagnostics"]["singleGroupJun"],
         )
         self.assertEqual(
-            {"rowCount": 85, "cellCount": 7_859},
+            {"rowCount": 84, "cellCount": 7_820},
             summary["geometryDiagnostics"]["multiGroupJun"],
         )
 
