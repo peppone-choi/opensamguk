@@ -22,6 +22,10 @@ export interface SelectOption {
 
 export interface SearchableSelectProps {
     options: SelectOption[];
+    /** Shortlist rendered before the user types. Omit to keep the full option list. */
+    defaultOptions?: SelectOption[];
+    /** Maximum number of matching rows to render at once. */
+    resultLimit?: number;
     value: number | null;
     onChange: (value: number) => void;
     placeholder?: string;
@@ -33,6 +37,8 @@ export interface SearchableSelectProps {
 
 export default function SearchableSelect({
     options,
+    defaultOptions,
+    resultLimit,
     value,
     onChange,
     placeholder = '검색',
@@ -41,10 +47,13 @@ export default function SearchableSelect({
 }: SearchableSelectProps) {
     const [query, setQuery] = useState('');
 
-    const filtered = useMemo(
-        () => options.filter((o) => matchesQuery(o.searchText ?? o.label, query)),
-        [options, query],
+    const matched = useMemo(
+        () => query.trim() === ''
+            ? (defaultOptions ?? options)
+            : options.filter((o) => matchesQuery(o.searchText ?? o.label, query)),
+        [defaultOptions, options, query],
     );
+    const filtered = resultLimit == null ? matched : matched.slice(0, resultLimit);
 
     return (
         <div className="cmd-select">
@@ -80,6 +89,11 @@ export default function SearchableSelect({
                     ))
                 )}
             </div>
+            {matched.length > filtered.length && (
+                <div className="cmd-select-summary" aria-live="polite">
+                    {matched.length}개 중 {filtered.length}개 표시
+                </div>
+            )}
         </div>
     );
 }
