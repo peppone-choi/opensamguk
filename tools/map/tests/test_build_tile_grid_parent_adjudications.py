@@ -202,7 +202,15 @@ class GeneratorParentAdjudicationTest(unittest.TestCase):
         rows = validate_jurisdiction_parent_adjudication_document(
             json.loads(LEDGER.read_text(encoding="utf-8"))
         )
-        self.assertEqual(4, len(rows))
+        self.assertEqual(5, len(rows))
+        self.assertEqual(
+            ("45022", "PARENT-0036", "PARENT-0035"),
+            (
+                rows[0]["jurisdictionId"],
+                rows[0]["fromCommanderyId"],
+                rows[0]["toCommanderyId"],
+            ),
+        )
 
 
 if __name__ == "__main__":
