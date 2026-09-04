@@ -1,5 +1,12 @@
 # Water Transport and Naval Strategic Topology Implementation Plan
 
+> **Compatibility amendment:** Execute new Han runtime integration against
+> `han-world-v3` (781), not persisted `han-world-v2` (774). Wave 1's land node type
+> must use exact string spatial IDs when the Wave 3 loader is added. Wave 2's
+> reviewed geometry is rebound to Track C's exact base hash only after confirming
+> terrain/owner grids and the land ID set are unchanged. No new port/crossing is
+> authorized by this hash refresh.
+
 > **For Codex:** Execute each wave with `superpowers:test-driven-development`. Stop at explicit
 > dependency gates rather than placing temporary naval logic in game-engine. Run independent review
 > and `superpowers:verification-before-completion` at every wave boundary.

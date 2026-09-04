@@ -1,5 +1,10 @@
 # Water Transport and Naval Strategic Topology Design
 
+> **Compatibility amendment:** New-runtime references to Han V2 below now mean
+> `han-world-v3` (781 stable route nodes). Persisted `han-world-v2` remains the frozen
+> 774-city alias. Land node identity is the exact string `SpatialProvinceRecord.id`,
+> never its array position. The existing geometry artifact version is independent.
+
 - Date: 2026-09-05
 - Status: **APPROVED — hybrid water-zone direction confirmed by the user on 2026-09-05**
 - Scope: Han strategic water topology, crossings, transport, supply, naval engagement handoff
