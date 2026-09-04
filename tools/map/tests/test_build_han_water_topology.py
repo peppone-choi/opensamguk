@@ -33,18 +33,25 @@ def base_document() -> dict:
                 "0": "SEA", "1": "PLAIN", "3": "RIVER", "4": "LAKE",
             },
         },
-        "terrain": ["111111", "143311", "100001", "111111"],
+        "terrain": ["141111", "143311", "100001", "111111"],
+        "owner": [
+            [1, 1], [-1, 1], [2, 4],
+            [1, 1], [-1, 3], [2, 2],
+            [1, 1], [-1, 4], [2, 1], [0, 6],
+        ],
         "provinceRecords": [{"id": "P3"}, {"id": "P1"}, {"id": "P2"}],
     }
 
 
-def source(source_id: str, component_key: str) -> dict:
+def source(source_id: str, component_key: str, unit_id: str, member_ids: list[str]) -> dict:
     return {
         "sourceId": source_id,
         "path": "data/curated/han/territory-disconnection-adjudications-v1.json",
         "selector": {"componentKey": component_key},
         "claim": f"reviewed evidence for {component_key}",
         "reviewState": "UPHELD",
+        "unitId": unit_id,
+        "memberIds": member_ids,
     }
 
 
@@ -64,6 +71,7 @@ def zone(
         "depthBand": None,
         "seasonalAvailability": "ALWAYS",
         "status": "APPROVED",
+        "connectionStatus": "ISOLATED_NO_REVIEWED_CONNECTION",
     }
 
 
@@ -79,8 +87,8 @@ def valid_ledger(builder) -> dict:
         "topologyRevision": "han-water-topology-v1",
         "base": binding,
         "sourceCatalog": [
-            source(lake_source, "LAKE-1"),
-            source(coast_source, "COAST-1"),
+            source(lake_source, "LAKE-1", "P3", ["P1", "P2", "P3"]),
+            source(coast_source, "COAST-1", "COAST-UNIT", ["P1", "P2"]),
         ],
         "zoneAdjudications": [
             zone(
@@ -88,7 +96,7 @@ def valid_ledger(builder) -> dict:
                 "LAKE_BASIN",
                 {
                     "kind": "TERRAIN_COMPONENT", "terrainCode": 4,
-                    "seedRow": 1, "seedCol": 1, "expectedCellCount": 1,
+                    "seedRow": 1, "seedCol": 1, "expectedCellCount": 2,
                 },
                 lake_source,
             ),
@@ -258,6 +266,8 @@ class HanWaterTopologyBuilderTest(unittest.TestCase):
                 "seedRow": 1, "seedCol": 2, "expectedCellCount": 2,
             }, source_id),
         ])
+        ledger["zoneAdjudications"][-2]["connectionStatus"] = "CONNECTED"
+        ledger["zoneAdjudications"][-1]["connectionStatus"] = "CONNECTED"
         ledger["edgeAdjudications"] = [
             edge(
                 "river-down", "RIVER_DOWN", "WATER_ZONE", "river-upper",
@@ -319,6 +329,96 @@ class HanWaterTopologyBuilderTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "deep-sea|CELL_RANGES"):
             self.build(ledger)
 
+    def test_single_cell_named_zone_cannot_masquerade_as_a_waterbody(self):
+        ledger = valid_ledger(self.builder)
+        ledger["zoneAdjudications"][0]["stableKey"] = "lake-r1-c1"
+        ledger["zoneAdjudications"][0]["geometrySelector"] = {
+            "kind": "CELL_RANGES", "terrainCode": 4,
+            "cellRuns": [{"row": 1, "startCol": 1, "endCol": 1}],
+            "expectedCellCount": 1,
+        }
+
+        with self.assertRaisesRegex(ValueError, "minimum component|per-water-tile"):
+            self.build(ledger)
+
+    def test_reviewed_cell_ranges_must_form_one_connected_waterbody(self):
+        ledger = valid_ledger(self.builder)
+        ledger["zoneAdjudications"][1]["geometrySelector"] = {
+            "kind": "CELL_RANGES", "terrainCode": 0,
+            "cellRuns": [
+                {"row": 2, "startCol": 1, "endCol": 1},
+                {"row": 2, "startCol": 4, "endCol": 4},
+            ],
+            "expectedCellCount": 2,
+        }
+
+        with self.assertRaisesRegex(ValueError, "connected waterbody"):
+            self.build(ledger)
+
+    def test_coastal_zone_must_touch_a_decoded_land_owner_boundary(self):
+        base = base_document()
+        base["owner"] = [[-1, 24]]
+        base_bytes = canonical_bytes(base)
+        ledger = valid_ledger(self.builder)
+        ledger["base"] = self.builder.water_overlay_base_binding(base, base_bytes)
+
+        with self.assertRaisesRegex(ValueError, "coastal.*owner boundary|shoreline"):
+            self.builder.build_water_topology(base, base_bytes, ledger)
+
+    def test_zone_without_legal_edge_requires_explicit_isolation_adjudication(self):
+        ledger = valid_ledger(self.builder)
+        del ledger["zoneAdjudications"][0]["connectionStatus"]
+
+        with self.assertRaisesRegex(ValueError, "explicit isolation|connectionStatus"):
+            self.build(ledger)
+
+    def test_blocked_route_candidate_is_not_a_legal_zone_connection(self):
+        ledger = valid_ledger(self.builder)
+        for row in ledger["zoneAdjudications"]:
+            row["connectionStatus"] = "ISOLATED_NO_REVIEWED_CONNECTION"
+        ledger["zoneAdjudications"][1]["connectionStatus"] = "CONNECTED"
+
+        with self.assertRaisesRegex(ValueError, "legal traversal edge"):
+            self.build(ledger)
+
+    def test_blocked_route_endpoints_must_be_covered_by_exact_source_members(self):
+        ledger = valid_ledger(self.builder)
+        unrelated_source = "territory-disconnection:OTHER-1"
+        ledger["sourceCatalog"].append(
+            source(unrelated_source, "OTHER-1", "P3", ["P3"])
+        )
+        ledger["routeCandidates"][0]["sourceRefs"] = [unrelated_source]
+
+        with self.assertRaisesRegex(ValueError, "source coverage"):
+            self.build(ledger)
+
+    def test_approved_land_water_edge_must_touch_decoded_owner_boundary(self):
+        ledger = valid_ledger(self.builder)
+        lake_source = ledger["sourceCatalog"][0]["sourceId"]
+        ledger["zoneAdjudications"][0]["connectionStatus"] = "CONNECTED"
+        ledger["edgeAdjudications"] = [edge(
+            "p3-lake-embark", "EMBARK", "LAND_PROVINCE", "P3",
+            "WATER_ZONE", "lake-test-basin", lake_source,
+        )]
+
+        with self.assertRaisesRegex(ValueError, "owner boundary|touch"):
+            self.build(ledger)
+
+    def test_approved_edge_land_endpoint_requires_related_source_member(self):
+        ledger = valid_ledger(self.builder)
+        unrelated_source = "territory-disconnection:OTHER-1"
+        ledger["sourceCatalog"].append(
+            source(unrelated_source, "OTHER-1", "P3", ["P3"])
+        )
+        ledger["zoneAdjudications"][1]["connectionStatus"] = "CONNECTED"
+        ledger["edgeAdjudications"] = [edge(
+            "p1-coast-embark", "EMBARK", "LAND_PROVINCE", "P1",
+            "WATER_ZONE", "coastal-test-strait", unrelated_source,
+        )]
+
+        with self.assertRaisesRegex(ValueError, "source coverage"):
+            self.build(ledger)
+
     def test_committed_outputs_are_byte_identical_to_a_fresh_render(self):
         artifact_bytes, manifest_bytes = self.builder.render_outputs()
         self.assertTrue(self.builder.OUTPUT.is_file(), "water topology artifact is not materialized")
@@ -329,6 +429,13 @@ class HanWaterTopologyBuilderTest(unittest.TestCase):
             hashlib.sha256(artifact_bytes).hexdigest(),
             json.loads(manifest_bytes)["files"]["waterTopology"]["sha256"],
         )
+
+    def test_duplicate_route_candidate_stable_ids_are_rejected(self):
+        ledger = valid_ledger(self.builder)
+        ledger["routeCandidates"].append(copy.deepcopy(ledger["routeCandidates"][0]))
+
+        with self.assertRaisesRegex(ValueError, "duplicate route candidate"):
+            self.build(ledger)
 
     def test_cli_exposes_write_and_check(self):
         result = subprocess.run(

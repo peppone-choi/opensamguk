@@ -24,7 +24,7 @@ ARTIFACT_KEYS = {
 GEOMETRY_KEYS = {"id", "kind", "terrainCode", "waterScope", "cellRuns", "cellCount"}
 ZONE_KEYS = {
     "id", "kind", "geometryRef", "sourceRefs", "confidence", "flowDirection",
-    "depthBand", "seasonalAvailability",
+    "depthBand", "seasonalAvailability", "connectionStatus",
 }
 BARRIER_KEYS = {
     "id", "firstLandProvinceId", "secondLandProvinceId", "sourceRefs", "confidence",
@@ -66,7 +66,20 @@ def _unique(values: list[str], where: str) -> None:
         raise ValueError(f"duplicate {where}")
 
 
-def _validate_source_catalog(adjudications: dict) -> set[str]:
+def _cells_are_connected(cells: set[tuple[int, int]]) -> bool:
+    pending = [next(iter(cells))]
+    seen = {pending[0]}
+    while pending:
+        row, col = pending.pop()
+        for delta_row, delta_col in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            neighbor = (row + delta_row, col + delta_col)
+            if neighbor in cells and neighbor not in seen:
+                seen.add(neighbor)
+                pending.append(neighbor)
+    return seen == cells
+
+
+def _validate_source_catalog(adjudications: dict) -> dict[str, set[str]]:
     dossier_bytes = DOSSIER.read_bytes()
     dossier = _object(loads_json_strict(dossier_bytes), "territory disconnection dossier")
     rows = _array(dossier.get("adjudications"), "territory disconnection adjudications")
@@ -95,18 +108,57 @@ def _validate_source_catalog(adjudications: dict) -> set[str]:
             raise ValueError(f"sourceCatalog[{index}] evidence is not review-UPHELD")
         if source.get("reviewState") != review["state"]:
             raise ValueError(f"sourceCatalog[{index}] reviewState disagrees with its evidence row")
+        if source.get("unitId") != matches[0].get("unitId"):
+            raise ValueError(f"sourceCatalog[{index}] unitId disagrees with its evidence row")
+        member_ids = source.get("memberIds")
+        if (
+            not isinstance(member_ids, list)
+            or member_ids != sorted(matches[0].get("memberIds", []))
+        ):
+            raise ValueError(f"sourceCatalog[{index}] memberIds disagree with its evidence row")
         source_ids.append(source_id)
     _unique(source_ids, "sourceCatalog sourceId")
-    return set(source_ids)
+    return {
+        source["sourceId"]: {source["unitId"], *source["memberIds"]}
+        for source in adjudications["sourceCatalog"]
+    }
 
 
-def _validate_source_refs(rows: list, known_sources: set[str], collection: str) -> None:
+def _validate_source_refs(rows: list, known_sources: dict[str, set[str]], collection: str) -> None:
     for index, row in enumerate(rows):
         refs = row.get("sourceRefs")
         if not isinstance(refs, list) or not refs or any(not isinstance(ref, str) for ref in refs):
             raise ValueError(f"{collection}[{index}].sourceRefs must be non-empty")
-        if len(refs) != len(set(refs)) or set(refs) - known_sources:
+        if len(refs) != len(set(refs)) or set(refs) - set(known_sources):
             raise ValueError(f"{collection}[{index}].sourceRefs are duplicate or unknown")
+
+
+def _validate_land_source_coverage(
+    land_endpoints: set[str], refs: list[str], source_coverage: dict[str, set[str]], where: str
+) -> None:
+    if not isinstance(refs, list) or not refs or set(refs) - set(source_coverage):
+        raise ValueError(f"{where}.sourceRefs are empty or unknown")
+    covered = set().union(*(source_coverage[ref] for ref in refs))
+    missing = sorted(land_endpoints - covered)
+    if missing:
+        raise ValueError(f"{where} land endpoints lack exact source coverage: {missing}")
+
+
+def _land_touches_cells(
+    land_id: str,
+    cells: set[tuple[int, int]],
+    owner: list[list[int]],
+    province_index_by_id: dict[str, int],
+) -> bool:
+    expected_owner = province_index_by_id[land_id]
+    rows, cols = len(owner), len(owner[0])
+    return any(
+        0 <= row + delta_row < rows
+        and 0 <= col + delta_col < cols
+        and owner[row + delta_row][col + delta_col] == expected_owner
+        for row, col in cells
+        for delta_row, delta_col in ((-1, 0), (1, 0), (0, -1), (0, 1))
+    )
 
 
 def validate_artifact(
@@ -124,12 +176,19 @@ def validate_artifact(
     if artifact.get("landProvinceIds") != adjudications.get("base", {}).get("landProvinceIds"):
         raise ValueError("artifact landProvinceIds disagree with pinned land IDs")
 
-    known_sources = _validate_source_catalog(adjudications)
+    source_coverage = _validate_source_catalog(adjudications)
+    known_sources = source_coverage
     terrain = tiles["terrain"]
     row_count, col_count = len(terrain), len(terrain[0])
+    owner = builder._decode_owner(tiles)
+    province_index_by_id = {
+        province["id"]: index for index, province in enumerate(tiles["provinceRecords"])
+    }
+    land_id_set = set(artifact["landProvinceIds"])
 
     geometries = _array(artifact["geometryComponents"], "geometryComponents")
     geometry_ids: list[str] = []
+    geometry_cells_by_id: dict[str, set[tuple[int, int]]] = {}
     for index, raw in enumerate(geometries):
         geometry = _object(raw, f"geometryComponents[{index}]", GEOMETRY_KEYS)
         geometry_id = geometry.get("id")
@@ -141,7 +200,12 @@ def validate_artifact(
             raise ValueError(f"geometryComponents[{index}].waterScope creates a forbidden deep-sea shortcut")
         terrain_code = geometry.get("terrainCode")
         cell_count = geometry.get("cellCount")
-        if type(terrain_code) is not int or type(cell_count) is not int or cell_count < 1:
+        if type(terrain_code) is not int or type(cell_count) is not int or cell_count < 2:
+            if cell_count == 1:
+                raise ValueError(
+                    f"geometryComponents[{index}] minimum component is two cells; "
+                    "per-water-tile nodes are forbidden"
+                )
             raise ValueError(f"geometryComponents[{index}] has invalid terrainCode or cellCount")
         cells: set[tuple[int, int]] = set()
         for run_index, raw_run in enumerate(_array(geometry.get("cellRuns"), f"geometryComponents[{index}].cellRuns")):
@@ -159,7 +223,10 @@ def validate_artifact(
                 cells.add((row, col))
         if len(cells) != cell_count:
             raise ValueError(f"geometryComponents[{index}] cellCount mismatch")
+        if not _cells_are_connected(cells):
+            raise ValueError(f"geometryComponents[{index}] must form one connected waterbody")
         geometry_ids.append(geometry_id)
+        geometry_cells_by_id[geometry_id] = cells
     _unique(geometry_ids, "geometry ID")
     geometry_id_set = set(geometry_ids)
 
@@ -172,6 +239,17 @@ def validate_artifact(
             raise ValueError(f"waterZones[{index}].id creates a forbidden per-water-tile node")
         if zone.get("geometryRef") not in geometry_id_set:
             raise ValueError(f"waterZones[{index}] has a dangling geometryRef")
+        if zone.get("connectionStatus") not in {
+            "CONNECTED", "ISOLATED_NO_REVIEWED_CONNECTION",
+        }:
+            raise ValueError(f"waterZones[{index}] lacks an explicit isolation adjudication")
+        if (
+            zone.get("kind") == "COASTAL_SEA"
+            and not builder._cells_touch_any_land(
+                geometry_cells_by_id[zone["geometryRef"]], owner
+            )
+        ):
+            raise ValueError(f"coastal waterZones[{index}] must touch a decoded owner boundary")
         zone_ids.append(zone_id)
     _unique(zone_ids, "water zone ID")
     zone_id_set = set(zone_ids)
@@ -182,20 +260,73 @@ def validate_artifact(
     routes = _array(artifact["routeCandidates"], "routeCandidates")
     blockers = _array(artifact["activationBlockers"], "activationBlockers")
     for index, row in enumerate(barriers):
-        _object(row, f"riverBarriers[{index}]", BARRIER_KEYS)
+        barrier = _object(row, f"riverBarriers[{index}]", BARRIER_KEYS)
+        endpoints = {barrier.get("firstLandProvinceId"), barrier.get("secondLandProvinceId")}
+        if None in endpoints or not endpoints <= land_id_set:
+            raise ValueError(f"riverBarriers[{index}] has an unknown land endpoint")
+        _validate_land_source_coverage(
+            endpoints, barrier["sourceRefs"], source_coverage, f"riverBarriers[{index}]"
+        )
+    incident_zone_ids: set[str] = set()
     for index, row in enumerate(edges):
-        _object(row, f"traversalEdges[{index}]", EDGE_KEYS)
+        edge = _object(row, f"traversalEdges[{index}]", EDGE_KEYS)
+        endpoints = []
+        for endpoint_name in ("from", "to"):
+            endpoint = _object(
+                edge.get(endpoint_name), f"traversalEdges[{index}].{endpoint_name}", {"kind", "id"}
+            )
+            if endpoint["kind"] == "LAND_PROVINCE":
+                if endpoint["id"] not in land_id_set:
+                    raise ValueError(f"traversalEdges[{index}] has an unknown land endpoint")
+            elif endpoint["kind"] == "WATER_ZONE":
+                if endpoint["id"] not in zone_id_set:
+                    raise ValueError(f"traversalEdges[{index}] has an unknown water endpoint")
+                incident_zone_ids.add(endpoint["id"])
+            else:
+                raise ValueError(f"traversalEdges[{index}] has an invalid endpoint kind")
+            endpoints.append(endpoint)
+        land_endpoints = {
+            endpoint["id"] for endpoint in endpoints if endpoint["kind"] == "LAND_PROVINCE"
+        }
+        _validate_land_source_coverage(
+            land_endpoints, edge["sourceRefs"], source_coverage, f"traversalEdges[{index}]"
+        )
+        if edge.get("mode") in {"EMBARK", "DISEMBARK"}:
+            land_endpoint = next(endpoint for endpoint in endpoints if endpoint["kind"] == "LAND_PROVINCE")
+            water_endpoint = next(endpoint for endpoint in endpoints if endpoint["kind"] == "WATER_ZONE")
+            water_zone = next(zone for zone in zones if zone["id"] == water_endpoint["id"])
+            if not _land_touches_cells(
+                land_endpoint["id"], geometry_cells_by_id[water_zone["geometryRef"]],
+                owner, province_index_by_id,
+            ):
+                raise ValueError(
+                    f"traversalEdges[{index}] land endpoint does not touch the water zone owner boundary"
+                )
     for index, row in enumerate(routes):
         route = _object(row, f"routeCandidates[{index}]", ROUTE_KEYS)
         if route.get("viaWaterZoneId") not in zone_id_set:
             raise ValueError(f"routeCandidates[{index}] has a dangling water endpoint")
         if route.get("status") != "BLOCKED_PENDING_REVIEW":
             raise ValueError(f"routeCandidates[{index}] must remain blocked pending review")
+        land_endpoints = {route.get("fromLandProvinceId"), route.get("toLandProvinceId")}
+        if None in land_endpoints or not land_endpoints <= land_id_set:
+            raise ValueError(f"routeCandidates[{index}] has an unknown land endpoint")
+        _validate_land_source_coverage(
+            land_endpoints, route["sourceRefs"], source_coverage, f"routeCandidates[{index}]"
+        )
+    _unique([row["id"] for row in routes], "route candidate ID")
     for index, row in enumerate(blockers):
         _object(row, f"activationBlockers[{index}]", BLOCKER_KEYS)
     _validate_source_refs(barriers, known_sources, "riverBarriers")
     _validate_source_refs(edges, known_sources, "traversalEdges")
     _validate_source_refs(routes, known_sources, "routeCandidates")
+    _unique([row["id"] for row in edges], "traversal edge ID")
+    for index, zone in enumerate(zones):
+        has_legal_edge = zone["id"] in incident_zone_ids
+        if zone["connectionStatus"] == "CONNECTED" and not has_legal_edge:
+            raise ValueError(f"waterZones[{index}] claims CONNECTED without a legal traversal edge")
+        if zone["connectionStatus"] == "ISOLATED_NO_REVIEWED_CONNECTION" and has_legal_edge:
+            raise ValueError(f"waterZones[{index}] claims explicit isolation but has a legal traversal edge")
 
 
 def audit_documents(
@@ -259,11 +390,19 @@ def _summary(result: dict) -> str:
     counts = result["counts"]
     activation = result["activation"]
     blocker_codes = ",".join(activation["blockerCodes"]) or "none"
+    zone_kinds = ",".join(
+        f"{kind}:{count}" for kind, count in sorted(result["zoneKinds"].items())
+    ) or "none"
+    edge_modes = ",".join(
+        f"{mode}:{count}" for mode, count in sorted(result["edgeModes"].items())
+    ) or "none"
     return (
         f"landProvinceIds={counts['landProvinceIds']} "
         f"waterZones={counts['waterZones']} "
+        f"zoneKinds={zone_kinds} "
         f"riverBarriers={counts['riverBarriers']} "
         f"traversalEdges={counts['traversalEdges']} "
+        f"edgeModes={edge_modes} "
         f"evidenceSources={counts['evidenceSources']} "
         f"riverCrossingReady={str(activation['riverCrossingReady']).lower()} "
         f"blockerCodes={blocker_codes}"

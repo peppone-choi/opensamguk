@@ -48,10 +48,13 @@ ROOT_KEYS = {
     "zoneAdjudications", "barrierAdjudications", "edgeAdjudications",
     "routeCandidates", "activationBlockers",
 }
-SOURCE_KEYS = {"sourceId", "path", "selector", "claim", "reviewState"}
+SOURCE_KEYS = {
+    "sourceId", "path", "selector", "claim", "reviewState", "unitId", "memberIds",
+}
 ZONE_KEYS = {
     "stableKey", "kind", "geometrySelector", "sourceRefs", "confidence",
     "flowDirection", "depthBand", "seasonalAvailability", "status",
+    "connectionStatus",
 }
 BARRIER_KEYS = {
     "stableKey", "firstLandProvinceId", "secondLandProvinceId", "sourceRefs",
@@ -146,7 +149,7 @@ def _source_refs(value: Any, known_sources: set[str], where: str) -> list[str]:
     return sorted(refs)
 
 
-def _validate_sources(value: Any) -> tuple[list[dict], set[str]]:
+def _validate_sources(value: Any) -> tuple[list[dict], dict[str, set[str]]]:
     sources = []
     for index, raw in enumerate(_array(value, "sourceCatalog")):
         source = _object(raw, f"sourceCatalog[{index}]", SOURCE_KEYS)
@@ -158,16 +161,91 @@ def _validate_sources(value: Any) -> tuple[list[dict], set[str]]:
         if source["reviewState"] != "UPHELD":
             raise ValueError(f"sourceCatalog evidence must be UPHELD: {source_id}")
         _string(source["claim"], f"sourceCatalog[{index}].claim")
+        unit_id = _string(source["unitId"], f"sourceCatalog[{index}].unitId")
+        member_ids = _array(source["memberIds"], f"sourceCatalog[{index}].memberIds")
+        if (
+            not member_ids
+            or any(not isinstance(member_id, str) or not member_id for member_id in member_ids)
+            or len(member_ids) != len(set(member_ids))
+        ):
+            raise ValueError(f"sourceCatalog[{index}].memberIds must contain unique physical IDs")
         sources.append({
             "sourceId": source_id,
             "path": source["path"],
             "selector": {"componentKey": selector["componentKey"]},
             "claim": source["claim"],
             "reviewState": source["reviewState"],
+            "unitId": unit_id,
+            "memberIds": sorted(member_ids),
         })
     ids = [source["sourceId"] for source in sources]
     _unique(ids, "sourceId")
-    return sorted(sources, key=lambda row: row["sourceId"]), set(ids)
+    return sorted(sources, key=lambda row: row["sourceId"]), {
+        source["sourceId"]: {source["unitId"], *source["memberIds"]}
+        for source in sources
+    }
+
+
+def _validate_land_source_coverage(
+    land_endpoints: set[str], source_refs: list[str], source_coverage: dict[str, set[str]], where: str
+) -> None:
+    covered = set().union(*(source_coverage[source_ref] for source_ref in source_refs))
+    missing = sorted(land_endpoints - covered)
+    if missing:
+        raise ValueError(f"{where} land endpoints lack exact source coverage: {missing}")
+
+
+def _decode_owner(tiles: dict) -> list[list[int]]:
+    rows, cols = tiles["_meta"]["rows"], tiles["_meta"]["cols"]
+    values: list[int] = []
+    for index, run in enumerate(_array(tiles.get("owner"), "han-tiles owner")):
+        if (
+            not isinstance(run, list) or len(run) != 2
+            or type(run[0]) is not int or type(run[1]) is not int or run[1] < 1
+        ):
+            raise ValueError(f"han-tiles owner[{index}] must be [integer, positive count]")
+        values.extend([run[0]] * run[1])
+    if len(values) != rows * cols:
+        raise ValueError("han-tiles owner RLE length does not match dimensions")
+    return [values[offset:offset + cols] for offset in range(0, len(values), cols)]
+
+
+def _cells_from_runs(runs: list[dict]) -> set[tuple[int, int]]:
+    return {
+        (run["row"], col)
+        for run in runs
+        for col in range(run["startCol"], run["endCol"] + 1)
+    }
+
+
+def _land_touches_zone(
+    land_id: str,
+    zone_key: str,
+    owner: list[list[int]],
+    province_index_by_id: dict[str, int],
+    zone_cells_by_key: dict[str, set[tuple[int, int]]],
+) -> bool:
+    expected_owner = province_index_by_id[land_id]
+    cells = zone_cells_by_key[zone_key]
+    rows, cols = len(owner), len(owner[0])
+    return any(
+        0 <= row + delta_row < rows
+        and 0 <= col + delta_col < cols
+        and owner[row + delta_row][col + delta_col] == expected_owner
+        for row, col in cells
+        for delta_row, delta_col in ((-1, 0), (1, 0), (0, -1), (0, 1))
+    )
+
+
+def _cells_touch_any_land(cells: set[tuple[int, int]], owner: list[list[int]]) -> bool:
+    rows, cols = len(owner), len(owner[0])
+    return any(
+        0 <= row + delta_row < rows
+        and 0 <= col + delta_col < cols
+        and owner[row + delta_row][col + delta_col] >= 0
+        for row, col in cells
+        for delta_row, delta_col in ((-1, 0), (1, 0), (0, -1), (0, 1))
+    )
 
 
 def _encode_cells(cells: set[tuple[int, int]]) -> list[dict[str, int]]:
@@ -210,6 +288,19 @@ def _terrain_component(
                 cells.add(candidate)
                 pending.append(candidate)
     return cells
+
+
+def _cells_are_connected(cells: set[tuple[int, int]]) -> bool:
+    pending = [next(iter(cells))]
+    seen = {pending[0]}
+    while pending:
+        row, col = pending.pop()
+        for delta_row, delta_col in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            neighbor = (row + delta_row, col + delta_col)
+            if neighbor in cells and neighbor not in seen:
+                seen.add(neighbor)
+                pending.append(neighbor)
+    return seen == cells
 
 
 def _geometry(
@@ -256,6 +347,10 @@ def _geometry(
         raise ValueError(
             f"{where} geometry cell count mismatch: expected {expected_count}, got {len(cells)}"
         )
+    if len(cells) < 2:
+        raise ValueError(f"{where} minimum component is two cells; per-water-tile nodes are forbidden")
+    if not _cells_are_connected(cells):
+        raise ValueError(f"{where} cell ranges must form one connected waterbody")
     stable_key = zone["stableKey"]
     geometry_id = f"geometry:{stable_key}"
     scope = "REVIEWED_STRAIT" if kind == "COASTAL_SEA" else (
@@ -358,13 +453,19 @@ def build_water_topology(
     validate_water_overlay_base(tiles, tiles_bytes, ledger["base"])
     land_ids = list(ledger["base"]["landProvinceIds"])
     land_id_set = set(land_ids)
-    sources, source_ids = _validate_sources(ledger["sourceCatalog"])
+    sources, source_coverage = _validate_sources(ledger["sourceCatalog"])
+    source_ids = set(source_coverage)
     del sources
 
     terrain = tiles["terrain"]
+    owner = _decode_owner(tiles)
+    province_index_by_id = {
+        province["id"]: index for index, province in enumerate(tiles["provinceRecords"])
+    }
     zone_rows: list[dict] = []
     geometry_rows: list[dict] = []
     zones_by_key: dict[str, dict] = {}
+    zone_cells_by_key: dict[str, set[tuple[int, int]]] = {}
     for index, raw in enumerate(_array(ledger["zoneAdjudications"], "zoneAdjudications")):
         zone_row = _object(raw, f"zoneAdjudications[{index}]", ZONE_KEYS)
         stable_key = _stable_key(zone_row["stableKey"], f"zoneAdjudications[{index}].stableKey")
@@ -389,12 +490,23 @@ def build_water_topology(
             "flowDirection": zone_row["flowDirection"],
             "depthBand": zone_row["depthBand"],
             "seasonalAvailability": zone_row["seasonalAvailability"],
+            "connectionStatus": zone_row["connectionStatus"],
         }
         if zone["flowDirection"] is not None and not isinstance(zone["flowDirection"], str):
             raise ValueError(f"water zone {stable_key} flowDirection must be string or null")
         if zone["depthBand"] not in {None, "SHALLOW", "MEDIUM", "DEEP"}:
             raise ValueError(f"water zone {stable_key} has invalid depthBand")
+        if zone["connectionStatus"] not in {
+            "CONNECTED", "ISOLATED_NO_REVIEWED_CONNECTION",
+        }:
+            raise ValueError(
+                f"water zone {stable_key} requires an explicit isolation or connected adjudication"
+            )
+        cells = _cells_from_runs(geometry["cellRuns"])
+        if zone["kind"] == "COASTAL_SEA" and not _cells_touch_any_land(cells, owner):
+            raise ValueError(f"coastal water zone {stable_key} must touch a decoded owner boundary")
         zones_by_key[stable_key] = zone_row
+        zone_cells_by_key[stable_key] = cells
         zone_rows.append(zone)
         geometry_rows.append(geometry)
 
@@ -417,6 +529,7 @@ def build_water_topology(
         if row["status"] != "APPROVED" or row["confidence"] not in {"EXACT", "REVIEWED"}:
             raise ValueError(f"river barrier {stable_key} must be approved and evidence-reviewed")
         refs = _source_refs(row["sourceRefs"], source_ids, f"barrierAdjudications[{index}].sourceRefs")
+        _validate_land_source_coverage({first, second}, refs, source_coverage, f"river barrier {stable_key}")
         barriers_by_key[stable_key] = row
         barrier_rows.append({
             "id": f"river-barrier:{stable_key}",
@@ -452,9 +565,30 @@ def build_water_topology(
         if type(row["supplyAllowed"]) is not bool:
             raise ValueError(f"edge {stable_key}.supplyAllowed must be boolean")
         refs = _source_refs(row["sourceRefs"], source_ids, f"edge {stable_key}.sourceRefs")
+        land_endpoints = {
+            endpoint["id"] for endpoint in (edge["from"], edge["to"])
+            if endpoint["kind"] == "LAND_PROVINCE"
+        }
+        _validate_land_source_coverage(land_endpoints, refs, source_coverage, f"edge {stable_key}")
         # Mode validation uses adjudication stable keys, before IDs are materialized.
         mode_edge = {**row, "stableKey": stable_key}
         _validate_edge_modes(mode_edge, zones_by_key, barriers_by_key)
+        if mode in {"EMBARK", "DISEMBARK"}:
+            land_endpoint = next(
+                endpoint for endpoint in (mode_edge["from"], mode_edge["to"])
+                if endpoint["kind"] == "LAND_PROVINCE"
+            )
+            water_endpoint = next(
+                endpoint for endpoint in (mode_edge["from"], mode_edge["to"])
+                if endpoint["kind"] == "WATER_ZONE"
+            )
+            if not _land_touches_zone(
+                land_endpoint["id"], water_endpoint["id"], owner,
+                province_index_by_id, zone_cells_by_key,
+            ):
+                raise ValueError(
+                    f"edge {stable_key} land endpoint does not touch the water zone owner boundary"
+                )
         validated_edges.append(mode_edge)
         edge_rows.append({
             "id": f"traversal-edge:{stable_key}",
@@ -475,6 +609,23 @@ def build_water_topology(
     _unique([row["stableKey"] for row in validated_edges], "traversal edge stableKey")
     _validate_flow_pairs(validated_edges)
 
+    incident_zone_keys = {
+        endpoint["id"]
+        for edge in validated_edges
+        for endpoint in (edge["from"], edge["to"])
+        if endpoint["kind"] == "WATER_ZONE"
+    }
+    for stable_key, zone in zones_by_key.items():
+        has_legal_edge = stable_key in incident_zone_keys
+        if zone["connectionStatus"] == "CONNECTED" and not has_legal_edge:
+            raise ValueError(
+                f"water zone {stable_key} claims CONNECTED without a legal traversal edge"
+            )
+        if zone["connectionStatus"] == "ISOLATED_NO_REVIEWED_CONNECTION" and has_legal_edge:
+            raise ValueError(
+                f"water zone {stable_key} claims explicit isolation but has a legal traversal edge"
+            )
+
     route_rows: list[dict] = []
     for index, raw in enumerate(_array(ledger["routeCandidates"], "routeCandidates")):
         row = _object(raw, f"routeCandidates[{index}]", ROUTE_KEYS)
@@ -488,6 +639,10 @@ def build_water_topology(
         if row["mode"] not in {"COASTAL", "LAKE", "RIVER_UP", "RIVER_DOWN"}:
             raise ValueError(f"route candidate {stable_key} has invalid mode")
         refs = _source_refs(row["sourceRefs"], source_ids, f"routeCandidates[{index}].sourceRefs")
+        _validate_land_source_coverage(
+            {row["fromLandProvinceId"], row["toLandProvinceId"]},
+            refs, source_coverage, f"route candidate {stable_key}",
+        )
         route_rows.append({
             "id": f"route-candidate:{stable_key}",
             "fromLandProvinceId": row["fromLandProvinceId"],
@@ -531,6 +686,7 @@ def build_water_topology(
     _unique([row["id"] for row in artifact["geometryComponents"]], "geometry ID")
     _unique([row["id"] for row in artifact["riverBarriers"]], "river barrier ID")
     _unique([row["id"] for row in artifact["traversalEdges"]], "traversal edge ID")
+    _unique([row["id"] for row in artifact["routeCandidates"]], "route candidate ID")
     validate_water_overlay_document(tiles, tiles_bytes, artifact)
     return artifact
 
