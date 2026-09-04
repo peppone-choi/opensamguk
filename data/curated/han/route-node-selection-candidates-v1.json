@@ -18503,7 +18503,10 @@
       "candidateKey": "replacement:hhs:112:濟南國:010",
       "canonicalGroup": "濟南國",
       "origin": "HHS_REPLACEMENT_POOL",
-      "overlayJoinStatus": "NO_COORDINATE_CANDIDATE",
+      "overlayJoinStatus": "RESOLVED_POINT",
+      "physicalPlaceRefs": [
+        "chgis:v6:cnty:45022"
+      ],
       "reviewState": "PENDING",
       "sourceName": "歷城",
       "sourceNameStatus": "SOURCE_LITERAL",

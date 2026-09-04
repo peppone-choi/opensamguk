@@ -212,15 +212,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "db501611ecca8d247509ec584f4b04d91ca101f6c8c44d21b17585f681a4e3eb"
+      "sha256": "f4c6d868d875aa303bac5595942618906c249a7222c05ac28388b1f21cb88046"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "85fc3c7c52f89b1d569d8b5e42c277e2df0fc325cc258305d0f0b159bff2ea5a"
+      "sha256": "a638ae9f07b6b0b2777f4971e127c0c791d6333008a5b53c49a7b92db0815de4"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "499b79ae2d5b94717cf0b46c6e2b7ddcabee8a50c0223f1f0e5496fb6d000cf1"
+      "sha256": "07f5f598e5609b9b58c1607d0d6e63e0be56bbb2103e298256f8170a307bc1b8"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -18349,9 +18349,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:45022",
+        "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:112:濟南國:010",
       "cellCount": 39,
       "cityId": "45022",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -18368,20 +18379,7 @@
           35
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "SINGLE_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "45076",
-            "candidateAdministrativeGroupId": "hhs-group:112:濟南國",
-            "candidateAdministrativeUnitId": "hhs:112:濟南國:002",
-            "squaredGridDistance": 65
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
           "hhs-group:112:濟南國"
@@ -46589,14 +46587,14 @@
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-      "EXACT_APPROVED": 80924,
-      "PROPOSED_GEOMETRIC": 18202
+      "EXACT_APPROVED": 80963,
+      "PROPOSED_GEOMETRIC": 18163
     },
     "decisionRowCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-      "EXACT_APPROVED": 781,
-      "PROPOSED_GEOMETRIC": 284
+      "EXACT_APPROVED": 782,
+      "PROPOSED_GEOMETRIC": 283
     },
     "directTerritoryCellCount": 120193,
     "directTerritoryProvinceCount": 526,
@@ -46604,8 +46602,8 @@
       "pendingCandidateJunCount": 17,
       "rejectedSourcedGroupJunCount": 5
     },
-    "exactApprovedCellCount": 80924,
-    "exactApprovedRowCount": 781,
+    "exactApprovedCellCount": 80963,
+    "exactApprovedRowCount": 782,
     "geometryDiagnostics": {
       "distanceTies": {
         "cellCount": 69,
@@ -46616,18 +46614,18 @@
         "rowCount": 84
       },
       "singleGroupJun": {
-        "cellCount": 10382,
-        "rowCount": 200
+        "cellCount": 10343,
+        "rowCount": 199
       },
       "uniqueNearest": {
-        "cellCount": 18133,
-        "rowCount": 281
+        "cellCount": 18094,
+        "rowCount": 280
       }
     },
     "landCellCount": 227349,
     "landOwnerRowCount": 1138,
     "provinceRecordCount": 1524,
-    "unresolvedCellCount": 26232,
-    "unresolvedRowCount": 357
+    "unresolvedCellCount": 26193,
+    "unresolvedRowCount": 356
   }
 }

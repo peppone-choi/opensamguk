@@ -10,7 +10,7 @@
         "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
       },
       "candidate": {
-        "sha256": "85fc3c7c52f89b1d569d8b5e42c277e2df0fc325cc258305d0f0b159bff2ea5a"
+        "sha256": "a638ae9f07b6b0b2777f4971e127c0c791d6333008a5b53c49a7b92db0815de4"
       },
       "externalClaims": {
         "sha256": "bdc84f732351962632b5e14306b60821d2436526f35ebc6c9fc6c46ca829266e"
@@ -25,10 +25,10 @@
         "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
       },
       "reviewPolicy": {
-        "sha256": "db501611ecca8d247509ec584f4b04d91ca101f6c8c44d21b17585f681a4e3eb"
+        "sha256": "f4c6d868d875aa303bac5595942618906c249a7222c05ac28388b1f21cb88046"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
+        "sha256": "2f4f4e7bec26ee6192029e90043c0beecd9c67b150acbfccf86e2f03757a32de"
       }
     }
   },
@@ -24948,6 +24948,33 @@
         "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       }
+    },
+    {
+      "administrativeUnitId": "hhs:112:濟南國:010",
+      "canonicalName": "歷城",
+      "displayName": "歷城",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 781,
+      "parentName": "濟南國",
+      "parentRef": "hhs-group:112:濟南國",
+      "physicalPlaceRef": "chgis:v6:cnty:45022",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w0b-overlay-unique-220",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w0b-overlay-unique-220"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
@@ -25176,9 +25203,10 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 780,
+    "approvedCount": 781,
     "historicalBindingCounts": {
-      "HHS_ADMINISTRATIVE_UNIT": 780
+      "HHS_ADMINISTRATIVE_UNIT": 781
     }
-  }
+  },
+  "worldVersion": "han-world-v2"
 }

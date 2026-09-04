@@ -494,7 +494,14 @@ def _validate_review_chain(
     expected = policy.get("expectedSelection", {}).get("routeNodeCount")
     if policy.get("status") != "APPROVED" or selection.get("reviewState") != "APPROVED":
         raise ValueError("route-node selection review chain is not approved")
-    if not isinstance(rows, list) or expected != len(rows) or contract.get("expectedSelectionCount") != len(rows):
+    legacy_count = contract.get("expectedSelectionCount")
+    if (
+        not isinstance(rows, list)
+        or selection.get("worldVersion") != "han-world-v2"
+        or legacy_count != 780
+        or expected != legacy_count + 1
+        or len(rows) != expected
+    ):
         raise ValueError("route-node selection count contract mismatch")
     if any(not isinstance(row, dict) or row.get("reviewState") != "APPROVED" for row in rows):
         raise ValueError("every route-node selection row must be approved")
@@ -517,7 +524,7 @@ def _validate_review_chain(
     )
     _require_equal(
         selection.get("summary"),
-        {"approvedCount": 780, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": 780}},
+        {"approvedCount": 781, "historicalBindingCounts": {"HHS_ADMINISTRATIVE_UNIT": 781}},
         "selection summary contract",
     )
     _require_equal(
@@ -525,12 +532,12 @@ def _validate_review_chain(
         {
             "externalHistoricalBindingCount": 0,
             "externalLocationClaimCount": 8,
-            "hhsAdministrativeBindingCount": 780,
-            "overlayUniqueCount": 722,
+            "hhsAdministrativeBindingCount": 781,
+            "overlayUniqueCount": 723,
             "polityPresenceCount": 0,
             "remoteGateCount": 0,
             "reviewedAmbiguousCount": 50,
-            "routeNodeCount": 780,
+            "routeNodeCount": 781,
             "sourcePlaceholderCount": 0,
         },
         "review policy expected selection contract",
@@ -545,7 +552,7 @@ def _validate_review_chain(
         for row in batches
         }
         != {
-            ("w0b-overlay-unique-220", 722, "APPROVED"),
+            ("w0b-overlay-unique-220", 723, "APPROVED"),
             ("w0c-reviewed-ambiguity", 50, "APPROVED"),
             ("w0c-hhs-external-location", 8, "APPROVED"),
         }
@@ -592,7 +599,7 @@ def _validate_review_chain(
     _require_closed_enum(rows, "nodeClass", {"COUNTY_NODE", "DAO_NODE", "MARQUISATE_NODE", "TOWN_NODE"}, "approved route-node selection")
     _require_closed_enum(rows, "historicalBindingBasis", {"HHS_ADMINISTRATIVE_UNIT"}, "approved route-node selection")
     _require_closed_enum(rows, "seatRole", {"COMMANDERY_SEAT", "NON_SEAT"}, "approved route-node selection")
-    _require_closed_enum(rows, "legacyDisposition", {"REPLACED", "RETAINED"}, "approved route-node selection")
+    _require_closed_enum(rows, "legacyDisposition", {"REPLACED", "RETAINED"}, "approved route-node selection", optional=True)
     _require_closed_enum(
         [row.get("selectionRationale") for row in rows],
         "method",
@@ -1298,11 +1305,11 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
         "landCellCount": 227_349,
         "cityLinkedCellCount": 107_156,
         "directTerritoryCellCount": 120_193,
-        "exactApprovedRowCount": 781,
-        "exactApprovedCellCount": 80_924,
+        "exactApprovedRowCount": 782,
+        "exactApprovedCellCount": 80_963,
         "approvedPhysicalPlaceIdAbsentCount": 0,
-        "unresolvedRowCount": 357,
-        "unresolvedCellCount": 26_232,
+        "unresolvedRowCount": 356,
+        "unresolvedCellCount": 26_193,
         "crossParentRegionFootprintCount": 0,
         "coordinateFootprintMajorityMismatchCount": 0,
     }
@@ -1314,9 +1321,9 @@ def _assert_locked_contract(summary: dict, absent: list[dict]) -> None:
         # 청주 4縣 재판정(data/curated/han/jurisdiction-commandery-adjudications-v1.json) 뒤 東萊郡·北海國 jun 이 단일 郡國志
         # 그룹으로 정리되어 5행 185셀이 multi→single 로 옮겨갔다. 歷城 39셀을 平原郡에서
         # 濟南國으로 재판정하면 해당 1행만 multi→single 로 추가 이동하고 결정 수는 그대로다.
-        "singleGroupJun": {"rowCount": 200, "cellCount": 10_382},
+        "singleGroupJun": {"rowCount": 199, "cellCount": 10_343},
         "multiGroupJun": {"rowCount": 84, "cellCount": 7_820},
-        "uniqueNearest": {"rowCount": 281, "cellCount": 18_133},
+        "uniqueNearest": {"rowCount": 280, "cellCount": 18_094},
         "distanceTies": {"rowCount": 3, "cellCount": 69},
     }:
         raise ValueError("locked geometry reconciliation counts changed")

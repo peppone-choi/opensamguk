@@ -2,12 +2,12 @@
   "expectedSelection": {
     "externalHistoricalBindingCount": 0,
     "externalLocationClaimCount": 8,
-    "hhsAdministrativeBindingCount": 780,
-    "overlayUniqueCount": 722,
+    "hhsAdministrativeBindingCount": 781,
+    "overlayUniqueCount": 723,
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 780,
+    "routeNodeCount": 781,
     "sourcePlaceholderCount": 0
   },
   "forbiddenSelections": {
@@ -69,7 +69,7 @@
     "administrativeCatalogSha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "85fc3c7c52f89b1d569d8b5e42c277e2df0fc325cc258305d0f0b159bff2ea5a"
+      "sha256": "a638ae9f07b6b0b2777f4971e127c0c791d6333008a5b53c49a7b92db0815de4"
     },
     "coordinateOverlaySha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec",
     "locationAdjudications": {
@@ -82,7 +82,7 @@
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
+      "sha256": "2f4f4e7bec26ee6192029e90043c0beecd9c67b150acbfccf86e2f03757a32de"
     }
   },
   "legacyAttributionCorrections": [
@@ -264,6 +264,9 @@
     "unknownPayloadRewriteAllowed": false
   },
   "numericAssignmentPolicy": {
+    "appendOnlyNewWorldNodeAllowed": true,
+    "appendOnlyNumericIdStart": 781,
+    "legacyNumericIdsImmutableThrough": 780,
     "numericCityIdChangeAllowed": false,
     "replacementNodeOrder": "W0-A sourceVolume, canonicalGroup source order, ordinal",
     "replacementNodesUseRetiredSlotsInAscendingOrder": true,
@@ -302,7 +305,7 @@
     {
       "batchId": "w0b-overlay-unique-220",
       "criteria": "W0-B joinStatus == RESOLVED_POINT and selected physicalPlaceId is globally unique",
-      "expectedCount": 722,
+      "expectedCount": 723,
       "reviewState": "APPROVED",
       "selectionRationale": "W0-A identity와 220년 CHGIS exact-name 전역 일대일 물리점이 모두 있는 행정단위를 전수 승인한다. 이 승인은 도로·중요도·거리 순위를 뜻하지 않는다."
     },

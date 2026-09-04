@@ -287,7 +287,7 @@ def main() -> int:
         arguments.selection_output.write_text(selection_blob, encoding="utf-8")
         arguments.migration_output.write_text(migration_blob, encoding="utf-8")
         summary = obj(result.migration, "summary")
-        print(f"approved=780 scenarios=31 replacements={summary['routeNodeReplacementCount']} "
+        print(f"approved={len(result.selection['routeNodes'])} scenarios=31 replacements={summary['routeNodeReplacementCount']} "
               f"bindingCorrections={summary['historicalBindingCorrectionCount']}")
         return 0
     except (OSError, json.JSONDecodeError, MaterializationContractError) as error:

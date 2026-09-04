@@ -426,6 +426,42 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         self.assertEqual(HASHES["selection"], report.selection_sha256)
         self.assertEqual(HASHES["migration"], report.migration_sha256)
 
+    def test_production_v2_append_is_versioned_and_fail_closed(self) -> None:
+        documents = real_documents()
+        report = MODULE.validate_documents(documents)
+
+        self.assertEqual(781, report.approved_count)
+        append = documents.migration["appendedRows"]
+        self.assertEqual(1, len(append))
+        self.assertEqual(781, append[0]["newCityId"])
+        self.assertEqual("APPENDED_NEW_WORLD_IDENTITY", append[0]["disposition"])
+
+        for mutate, pattern in (
+            (
+                lambda current: current.migration["appendedRows"][0].__setitem__(
+                    "newCityId", 780
+                ),
+                "next never-issued",
+            ),
+            (
+                lambda current: current.selection["routeNodes"][-1].__setitem__(
+                    "legacyCityId", 781
+                ),
+                "legacyCityId values",
+            ),
+            (
+                lambda current: current.route_key_registry["keys"][-1].__setitem__(
+                    "numericCityId", 782
+                ),
+                "next never-issued",
+            ),
+        ):
+            with self.subTest(pattern=pattern):
+                current = real_documents()
+                mutate(current)
+                with self.assertRaisesRegex(MODULE.SelectionContractError, pattern):
+                    MODULE.validate_documents(current)
+
     def test_selection_and_migration_ids_are_canonical_after_coherent_rehash(self) -> None:
         mutations = (
             (
@@ -476,7 +512,11 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
 
     def test_pinned_same_node_corrections_reject_a_coherent_legacy_slot_swap(self) -> None:
         documents = real_documents()
-        nodes = {row["legacyCityId"]: row for row in documents.selection["routeNodes"]}
+        nodes = {
+            row["legacyCityId"]: row
+            for row in documents.selection["routeNodes"]
+            if "legacyCityId" in row
+        }
         first, second = nodes[704], nodes[720]
         for field in ("numericCityId", "legacyCityId", "legacyNodeFingerprint"):
             first[field], second[field] = second[field], first[field]

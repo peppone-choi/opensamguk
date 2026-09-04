@@ -18,6 +18,18 @@ SPEC.loader.exec_module(MODULE)
 
 
 class HanRouteNodeReviewFixesTest(unittest.TestCase):
+    def test_committed_candidate_promotes_licheng_from_unmapped_to_resolved(self) -> None:
+        candidate = json.loads(MODULE.default_inputs().candidate.read_text(encoding="utf-8"))
+        row = next(
+            value
+            for value in candidate["candidates"]
+            if value.get("candidateKey") == "replacement:hhs:112:濟南國:010"
+        )
+
+        self.assertEqual("RESOLVED_POINT", row["overlayJoinStatus"])
+        self.assertEqual(["chgis:v6:cnty:45022"], row["physicalPlaceRefs"])
+        self.assertEqual("PENDING", row["reviewState"])
+
     def test_real_active_scenario_catalog_contains_every_product_scenario(self) -> None:
         inputs = MODULE.default_inputs()
         candidate = json.loads(inputs.candidate.read_text(encoding="utf-8"))
