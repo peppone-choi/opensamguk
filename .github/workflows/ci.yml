@@ -32,6 +32,9 @@ jobs:
       - name: Verify Han territory disconnection ledger
         if: '!cancelled()'
         run: python3 tools/map/audit_territory_disconnections.py --check
+      - name: Verify Han supply disagreements (fail closed)
+        if: '!cancelled()'
+        run: python3 tools/scenario/audit_han_supply_disagreements.py --check
       - name: Verify scenario data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'

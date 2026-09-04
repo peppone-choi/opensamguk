@@ -10,6 +10,11 @@ import opensamguk.logic.event.WorldActions
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.ProcessIncomeContext
 import opensamguk.logic.world.SpatialSupplyNetwork
+import opensamguk.logic.world.CitySupplyResult
+import opensamguk.logic.world.SupplyDisconnectionDecision
+import opensamguk.logic.world.SupplyFallbackPolicy
+import opensamguk.logic.world.SupplyReachabilityRow
+import opensamguk.logic.world.SupplyReachabilityVerdict
 import opensamguk.logic.world.UpdateCitySupplyContext
 import java.time.Instant
 import kotlin.test.Test
@@ -143,6 +148,37 @@ class MonthlyWorldEventSeamTest {
         )(mutableMapOf("year" to 190, "month" to 7)) as UpdateCitySupplyContext
 
         assertSame(network, ctx.spatialSupplyNetwork())
+    }
+
+    @Test
+    fun `monthly supply diagnostics expose stable structured rows without player history`() {
+        val env = mutableMapOf<String, Any?>("year" to 190, "month" to 7)
+        val w = world()
+        val ctx = factoryFor(w)(env) as UpdateCitySupplyContext
+        ctx.applyCitySupply(
+            CitySupplyResult(
+                cities = emptyList(), generals = emptyList(), lostCityIds = emptyList(), isolatedLogs = emptyList(),
+                reachabilityRows = listOf(
+                    SupplyReachabilityRow(
+                        9, true, false, SupplyReachabilityVerdict.CITY_ONLY_PROTECTED, null,
+                    ),
+                    SupplyReachabilityRow(
+                        3, true, false, SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD,
+                        SupplyFallbackPolicy(
+                            SupplyDisconnectionDecision.UPHOLD_WATER_ROUTE_ONLY,
+                            "PARENT-0101@340:544",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        val diagnostics = env["supplyReachabilityDiagnostics"] as List<Map<String, Any?>>
+        assertEquals(listOf(3, 9), diagnostics.map { it["cityId"] })
+        assertEquals("PARENT-0101@340:544", diagnostics[0]["sourceLedgerRow"])
+        assertEquals(null, diagnostics[1]["decision"])
+        assertTrue(w.peekLogs().isEmpty(), "internal supply diagnostics must not become player history")
     }
 
     @Test
