@@ -832,7 +832,9 @@ export async function pollCommandResultResponse(
 ): Promise<CommandResultResponse | null> {
     let lastPending: CommandResultPending | null = null;
     for (let attempt = 0; attempt < COMMAND_RESULT_POLL_ATTEMPTS; attempt += 1) {
-        await new Promise<void>(resolve => setTimeout(resolve, COMMAND_RESULT_POLL_INTERVAL_MS));
+        if (attempt > 0) {
+            await new Promise<void>(resolve => setTimeout(resolve, COMMAND_RESULT_POLL_INTERVAL_MS));
+        }
         if (signal?.aborted) return lastPending;
         const result = await api.commandResult(requestId).catch(error => {
             if (error instanceof Error) return null;

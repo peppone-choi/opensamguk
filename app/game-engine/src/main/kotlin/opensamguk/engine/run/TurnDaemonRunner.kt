@@ -56,12 +56,12 @@ data class TurnDaemonDiagnostics(
  * [TurnRunService] into a RUNNING turn loop.
  *
  * **What it does.** On Spring [SmartLifecycle.start] it spins a single dedicated daemon thread that:
- *  1. resolves the next run time (`lastTurnTime + tickSeconds`, the world's own cadence — project
- *     default 1 real hour = 1 game turn, configurable via the seeded `turnterm`/`tick_seconds`),
- *  2. waits (interruptibly) until that instant arrives,
- *  3. calls [TurnRunService.runTick] ONCE — which drains the Redis command stream, runs the
- *     per-general + nation + monthly passes, and flushes EXACTLY ONCE at the clean turn boundary
- *     (the P2 contract; runTick owns drain+flush — this runner NEVER flushes mid-pass),
+ *  1. resolves the next world boundary and the earliest strict per-general deadline,
+ *  2. waits (interruptibly) until the earlier instant arrives, while an overdue world boundary
+ *     always takes catch-up priority,
+ *  3. calls [TurnRunService.runTick] for a world boundary or
+ *     [TurnRunService.runDueGeneralTurns] for a personal deadline. Both drain immediate intake and flush
+ *     exactly once; only the world path runs monthly hooks and advances the world clock,
  *  4. loops.
  *
  * **Enable gate (`opensamguk.daemon.enabled`, default true).** [isAutoStartup] returns this flag, so:
@@ -87,7 +87,7 @@ class TurnDaemonRunner(
     private val pauseGate: DaemonPauseGate,
     @Value("\${opensamguk.daemon.enabled:true}") private val daemonEnabled: Boolean,
     /** How long [opensamguk.engine.redis.RedisCommandStream] blocks per read (also caps the wake latency). */
-    @Value("\${opensamguk.daemon.idle-poll-ms:1000}") private val idlePollMs: Long,
+    @Value("\${opensamguk.daemon.idle-poll-ms:250}") private val idlePollMs: Long,
 ) : SmartLifecycle {
 
     private val log = LoggerFactory.getLogger(TurnDaemonRunner::class.java)
@@ -264,28 +264,43 @@ class TurnDaemonRunner(
                     Thread.sleep(idlePollMs)
                     continue
                 }
-                val nextRun = activeService.nextRunTime()
+                val nextWorldRun = activeService.nextRunTime()
                 val now = Instant.now()
-                if (now.isBefore(nextRun)) {
-                    if (activeService.runIntakeCommands(blockMs = 1) > 0) {
-                        continue
-                    }
-                    // Next turn not yet due — wait (interruptibly), bounded by idlePollMs so a shutdown
-                    // or a clock change is observed promptly. No tick, no flush while idle.
-                    val waitMs = minOf(Duration.between(now, nextRun).toMillis(), idlePollMs).coerceAtLeast(1)
-                    Thread.sleep(waitMs)
+                if (!now.isBefore(nextWorldRun)) {
+                    // World catch-up has priority so personal turns cannot leapfrog month/phase boundaries.
+                    lastTickStartedAt = Instant.now()
+                    val result = activeService.runTick(nextWorldRun)
+                    lastTickCompletedAt = Instant.now()
+                    successfulTicks.incrementAndGet()
+                    consecutiveFailures.set(0)
+                    log.debug(
+                        "tick at {} — generals={} cities={} logs={}",
+                        result.turnCompletedAt, result.flushedGenerals, result.flushedCities, result.flushedLogs,
+                    )
                     continue
                 }
-                // Due: drain the command stream + advance the turn(s) + flush ONCE at the boundary.
-                lastTickStartedAt = Instant.now()
-                val result = activeService.runTick(nextRun)
-                lastTickCompletedAt = Instant.now()
-                successfulTicks.incrementAndGet()
-                consecutiveFailures.set(0)
-                log.debug(
-                    "tick at {} — generals={} cities={} logs={}",
-                    result.turnCompletedAt, result.flushedGenerals, result.flushedCities, result.flushedLogs,
-                )
+
+                val nextGeneralRun = activeService.nextGeneralRunTime()
+                if (nextGeneralRun != null && !now.isBefore(nextGeneralRun)) {
+                    val result = activeService.runDueGeneralTurns(now)
+                    log.debug(
+                        "general deadline at {} — handled={} generals={} cities={} logs={}",
+                        now, result.handled.size, result.flushedGenerals, result.flushedCities, result.flushedLogs,
+                    )
+                    continue
+                }
+
+                if (activeService.runIntakeCommands(blockMs = 1) > 0) {
+                    continue
+                }
+                // No deadline is due. Observe intake/clock changes within idlePollMs without busy-spinning.
+                val nextDeadline = if (nextGeneralRun != null && nextGeneralRun.isBefore(nextWorldRun)) {
+                    nextGeneralRun
+                } else {
+                    nextWorldRun
+                }
+                val waitMs = minOf(Duration.between(Instant.now(), nextDeadline).toMillis(), idlePollMs).coerceAtLeast(1)
+                Thread.sleep(waitMs)
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
                 break

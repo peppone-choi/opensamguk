@@ -220,6 +220,9 @@ open class TurnRunService(
     /** The next due run time (`lastTurnTime + tickSeconds`); the daemon loop waits until this arrives. */
     open fun nextRunTime(): Instant = lifecycle.nextRunTime()
 
+    /** The first instant at which any general can pass the lifecycle's strict due gate. */
+    open fun nextGeneralRunTime(): Instant? = lifecycle.nextGeneralRunTime()
+
     open fun clockSnapshot(): TurnClockSnapshot {
         val state = world.getState()
         val phase = state.currentPhase.coerceIn(1, 3)
@@ -244,21 +247,45 @@ open class TurnRunService(
 
         val state = world.getState()
         val base = buildFlushPayload()
-        val worldState = base.worldStateUpdate.toMutableMap()
-        worldState["id"] = state.id
-        worldState["current_year"] = state.currentYear
-        worldState["current_month"] = state.currentMonth
-        worldState["current_phase"] = state.currentPhase
-        worldState["last_turn_time"] = state.lastTurnTime.toString()
-        worldState["max_nation_id"] = (state.meta["maxNationId"] as? Number)?.toInt() ?: 0
-        worldState["max_general_id"] = (state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
-        applyWriterFence(worldState, state)
+        val worldState = currentWorldStateUpdate(base.worldStateUpdate, state)
         val commandResults = intakeResults.toCommandResultRows(committedWorldVersion = state.worldVersion + 1)
         val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
         flushWithGeneration(payload)
         acknowledgeClaimedWakes(claimed)
         publishCommandResults(commandResults)
         return claimed.size
+    }
+
+    /**
+     * Execute every general strictly due at [executionAsOf] without advancing the global world clock.
+     * Immediate intake is dispatched first, matching [runTick], and both effects share one flush.
+     */
+    open fun runDueGeneralTurns(executionAsOf: Instant): TickResult {
+        recoveryGate.requireIntakeOrTickAllowed("general turn")
+        commandOutboxRelay?.publishPending()
+        val claimed = claimExecutableEnvelopes(commandBlockMs)
+        val intakeResults = commandDispatcher?.dispatchEnvelopes(claimed.map { it.envelope }).orEmpty()
+        val cohort = lifecycle.snapshotGeneralDrainCohort()
+        val handled = lifecycle.runTick(executionAsOf, cohort)
+        val state = world.getState()
+        val base = buildFlushPayload()
+        val worldState = currentWorldStateUpdate(base.worldStateUpdate, state)
+        val committedWorldVersion = state.worldVersion + 1
+        val commandResults =
+            intakeResults.toCommandResultRows(committedWorldVersion) +
+                handled.toExecutionCommandResultRows(committedWorldVersion)
+        val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
+        flushWithGeneration(payload)
+        acknowledgeClaimedWakes(claimed)
+        publishCommandResults(commandResults)
+        return TickResult(
+            handled = handled,
+            flushedGenerals = payload.updatedGenerals.size,
+            flushedCities = payload.updatedCities.size,
+            flushedLogs = payload.logEntries.size,
+            turnCompletedAt = executionAsOf.toString(),
+            lastTurnTime = state.lastTurnTime.toString(),
+        )
     }
 
     open fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
@@ -484,6 +511,7 @@ open class TurnRunService(
         val ws = payload.worldStateUpdate
         val runTimeStr = ws["last_turn_time"] as? String ?: return
         val runTime = Instant.parse(runTimeStr)
+        if (runTime == previousTurnTime) return
         val year = (ws["current_year"] as? Number)?.toInt() ?: return
         val month = (ws["current_month"] as? Number)?.toInt() ?: return
         val phase = (ws["current_phase"] as? Number)?.toInt() ?: 1
@@ -540,6 +568,20 @@ open class TurnRunService(
     private fun applyWriterFence(worldState: MutableMap<String, Any?>, state: TurnWorldState) {
         worldState["expected_world_version"] = state.worldVersion
         worldState["writer_epoch"] = state.writerEpoch
+    }
+
+    private fun currentWorldStateUpdate(
+        base: Map<String, Any?>,
+        state: TurnWorldState,
+    ): MutableMap<String, Any?> = base.toMutableMap().apply {
+        this["id"] = state.id
+        this["current_year"] = state.currentYear
+        this["current_month"] = state.currentMonth
+        this["current_phase"] = state.currentPhase
+        this["last_turn_time"] = state.lastTurnTime.toString()
+        this["max_nation_id"] = (state.meta["maxNationId"] as? Number)?.toInt() ?: 0
+        this["max_general_id"] = (state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
+        applyWriterFence(this, state)
     }
 
     private fun buildFlushPayload(): FlushPayload {
