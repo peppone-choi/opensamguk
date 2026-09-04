@@ -99,6 +99,28 @@ class UpdateNationLevelThreeAxisTest {
     // ── 3축 경로 ──────────────────────────────────────────────────────────────────────────────
 
     @Test
+    fun `han에서 보유 도시가 없는 레벨 0 세력은 방랑군으로 남는다`() {
+        val world = FakeWorld(han, listOf(nation(level = 0)), ownership = emptyList())
+
+        UpdateNationLevelAction().run(world)
+
+        assertTrue(world.levelUps.isEmpty())
+        assertTrue(world.rankUpdates.isEmpty())
+    }
+
+    @Test
+    fun `han에서 현성만 하나 보유한 레벨 0 세력은 호족이 된다`() {
+        val county = han.all().values.first { !han.countsForNationLevel(it.level) }
+        val world = FakeWorld(han, listOf(nation(level = 0)), ownership = listOf(county.id to 1))
+
+        UpdateNationLevelAction().run(world)
+
+        assertEquals(1, world.levelUps.size)
+        assertEquals(1, world.levelUps[0].nation.level)
+        assertTrue(world.rankUpdates.isEmpty())
+    }
+
+    @Test
     fun `han 에서 레벨업하면 meta 에 3축이 실린다`() {
         val seats = hanSeatIds(provinces = 3, perProvince = 2)
         val world = FakeWorld(han, listOf(nation(level = 0)), seats.map { it to 1 })
