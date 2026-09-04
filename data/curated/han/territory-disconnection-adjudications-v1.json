@@ -1503,6 +1503,67 @@
     },
     {
       "unitKind": "COMMANDERY",
+      "unitId": "PARENT-0036",
+      "unitNameCh": "平原郡",
+      "componentKey": "PARENT-0036@459:189",
+      "cellCount": 39,
+      "memberIds": [
+        "45121"
+      ],
+      "memberNamesCh": [
+        "祝阿县"
+      ],
+      "holdsSeat": false,
+      "verdict": "HISTORICAL_EXCLAVE",
+      "confidence": "MEDIUM",
+      "effectiveFrom": null,
+      "effectiveTo": null,
+      "ifRule": "EXCLAVE_KEEP",
+      "evidenceRefs": [
+        "shiliao:後漢書/卷112 郡國志 靑州 平原郡「祝阿，春秋時曰祝柯」",
+        "shiliao:後漢書/卷042 光武十王列傳 濟南安王康「三十年，以平原之祝阿、安德、朝陽、平昌、隰陰、重丘六縣益濟南國」",
+        "shiliao:後漢書/卷042 光武十王列傳 濟南安王康「但削祝阿、隰陰、東朝陽、安德、西平昌五縣」及「建初八年，肅宗復還所削地」",
+        "shiliao:讀史方輿紀要/卷031 山東二 濟南府 禹城縣「漢置祝阿縣，屬平原郡…後漢亦爲祝阿縣。晉改屬濟南郡」",
+        "chgis:hvd_45121 latLon 36.65294,116.92590",
+        "map:data/map/han-tiles.json PARENT-0036@459:189 is 39 cells at col 455–462 / row 189–196; its land boundary is PARENT-0035 濟南國 20 edges and PARENT-0026 泰山郡 12 edges, with no negative or water boundary",
+        "map:data/map/han-tiles.json projection decodes the component cell centres to 116.872972–117.252139E / 36.475062–36.803430N, centroid 117.060472E / 36.635036N"
+      ],
+      "rationale": "《後漢書》卷112의 후한 행정 목록은 平原郡 九城 안에 祝阿를 직접 싣는다. 卷42는 建武30년(54)에 平原의 祝阿 등 六縣을 濟南國에 더했다가 明帝가 祝阿를 포함한 五縣을 삭감하고 建初8년(83)에 그 삭감지를 濟南王에게 돌려준 봉지 변동을 기록한다. 따라서 卷42만으로 220년 소속을 확정할 수는 없지만, 그보다 뒤 시점의 郡國志가 祝阿를 平原郡에 다시 올리고 《讀史方輿紀要》도 後漢에는 平原郡, 晉에는 濟南郡으로 바뀌었다고 정리하므로 기준연도 220의 平原郡 귀속이 가장 정합적이다. 지도에서도 祝阿 39셀은 하나의 일관된 육지 조각이고 경계가 濟南國 20·泰山郡 12 공유변으로만 둘러싸이며 물·비소유 경계가 없다. CHGIS 표지점 116.92590E/36.65294N도 조각 안에 들어가므로 표지점이나 폴리곤의 명백한 변위가 아니라 平原郡의 육상 월경지로 보존한다. 다만 83년 이후 平原으로 돌아온 정확한 연도와 고대 경계 형상은 사료에 명시되지 않고, 래스터는 현재 커밋의 단절만 증명하므로 confidence는 MEDIUM이다.",
+      "review": {
+        "state": "UPHELD",
+        "judgedBy": "root/chronology + verify-water-wave2-final/source+geography",
+        "originalVerdict": "HISTORICAL_EXCLAVE",
+        "voteCount": 3,
+        "unavailableVerifiers": 0,
+        "votes": [
+          {
+            "lens": "source",
+            "refuted": false,
+            "reason": "[reviewer: verify-water-wave2-final/source] 반박하지 않는다. 卷42의 이력은 明帝의 삭감과 83년 복귀까지 포함하므로 그 기사만으로 220년 소속을 고정할 수 없다. 그러나 더 뒤 행정 목록인 卷112가 平原郡 九城에 祝阿를 직접 싣고, 《讀史方輿紀要》卷31도 後漢 平原·晉 濟南의 전속 순서를 적으므로 後漢 말과 220년에는 平原郡으로 보는 것이 가장 정합적이다. 83년 이후 재전속 시점과 경계 형상이 명시되지 않았으므로 MEDIUM이 타당하다."
+          },
+          {
+            "lens": "geography",
+            "refuted": false,
+            "reason": "[reviewer: verify-water-wave2-final/geography] 반박하지 않는다. PARENT-0036@459:189는 祝阿 하나로 이루어진 일관된 39셀 조각이며 경계는 濟南國 20·泰山郡 12, 물·비소유 경계는 0이다. 최근접 平原郡 본체와도 濟南國 육지 5셀이 사이에 있어 WATER_SEPARATED가 아니다. 표지점 116.92590E/36.65294N은 歷城·茌·高唐과의 배치에 맞고 조각 안에 있으므로 표지점 또는 폴리곤 변위라는 GEOMETRY_DEFECT 근거도 없다. 다만 래스터는 커밋된 지도에서의 육상 월경지만 증명하며 정확한 고대 경계는 source 렌즈에 의존하므로 HISTORICAL_EXCLAVE / MEDIUM을 유지한다."
+          },
+          {
+            "lens": "chronology",
+            "refuted": false,
+            "reason": "[reviewer: root/chronology] 반박하지 않는다. 卷42는 54년 平原 六縣의 濟南 편입, 明帝의 五縣 삭감, 83년 삭감지 복귀라는 왕국 봉지 변동을 보여 주므로 그것만으로 220년 귀속은 확정할 수 없다. 그러나 더 뒤 행정 목록 卷112가 祝阿를 平原郡 九城에 직접 싣고 《讀史方輿紀要》卷31이 後漢 平原·晉 濟南의 전속을 정리하므로 220년 平原 귀속이 가장 정합적이다. 83년 이후 재전속 시점은 명시되지 않아 MEDIUM이 타당하며 chronology는 HISTORICAL_EXCLAVE를 반박하지 않는다."
+          }
+        ]
+      },
+      "searched": [
+        "祝阿 --book 後漢書",
+        "三十年以平原之祝阿安德朝陽平昌隰陰重丘六縣益濟南國",
+        "但削祝阿隰陰東朝陽安德西平昌五縣",
+        "建初八年肅宗復還所削地",
+        "祝阿縣 --book 讀史方輿紀要",
+        "han-tiles parentOwner 4-연결 component PARENT-0036@459:189 boundary and projection decode"
+      ]
+    },
+    {
+      "unitKind": "COMMANDERY",
       "unitId": "PARENT-0038",
       "unitNameCh": "北海國",
       "componentKey": "PARENT-0038@498:182",
