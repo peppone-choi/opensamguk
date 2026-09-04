@@ -49,11 +49,12 @@ Expose the earliest general execution deadline from the in-memory world. The dea
 
 Keep `runTick(worldBoundary)` as the only world-clock-advancing operation. Add a general-only entry point that:
 
+- claims and dispatches executable immediate-intake envelopes before the general pass, matching the existing full-tick ordering;
 - snapshots the general drain cohort;
 - runs `TurnDaemonLifecycle.runTick(executionAsOf, cohort)`;
 - builds a normal daemon flush payload with the current year, month, phase, and `lastTurnTime` unchanged;
-- applies the existing writer fence and command-result rows;
-- flushes through `flushWithGeneration`, publishes settled command results, and leaves the world clock untouched.
+- applies the existing writer fence and combines immediate-intake plus reserved-execution command-result rows;
+- flushes through `flushWithGeneration`, acknowledges claimed wakes, publishes settled command results, and leaves the world clock untouched.
 
 The general-only path does not run monthly, tournament, or auction hooks and does not publish the coarse `turnCompleted` event. Reserved execution results continue to produce their existing command-settled realtime signal.
 
@@ -89,6 +90,7 @@ At 250 ms, an idle engine performs at most roughly four observation loops per se
 
 - A failed general-only flush enters the existing `FLUSH_RETRY` or `RELOAD_REQUIRED` state; the runner does not process intake, another general drain, or a world tick until recovery.
 - The retained payload for a general-only flush carries the unchanged world clock. Retrying it must not emit `turnCompleted`.
+- Retained-payload clock application treats `payload.last_turn_time == current lastTurnTime` as a non-clock batch and returns without calendar mutation or `turnCompleted` publication.
 - A restart with overdue world boundaries catches those boundaries up before executing later personal deadlines.
 - Pause semantics remain unchanged: immediate intake may drain while paused, but neither world ticks nor reserved general turns execute.
 
