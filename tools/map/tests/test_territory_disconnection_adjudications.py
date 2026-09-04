@@ -82,6 +82,85 @@ def _document() -> dict:
     }
 
 
+def _sibling_document() -> dict:
+    """One commandery with a body and three disconnected pieces of 3, 2 and 1 cells.
+
+    ``a`` is the seat county's body; ``b``/``c``/``d`` are three separate counties of the
+    same commandery, each stranded on its own by ``e`` (the other commandery) and sea::
+
+        aaaa.....
+        aaaa.....
+        eeeeeeeee
+        bbbeccede
+        eeeeeeeee
+
+    Every county is itself connected, so the only judged components are commandery-level.
+    That is what makes this fixture able to say something about component *keys* alone.
+    """
+    rows = [
+        "aaaa.....",
+        "aaaa.....",
+        "eeeeeeeee",
+        "bbbeccede",
+        "eeeeeeeee",
+    ]
+    owner = _grid(rows)
+    terrain = ["".join("0" if ch == "." else "1" for ch in row) for row in rows]
+    provinces = [
+        {"id": "P-a", "nameCh": "甲鄉", "jurisdictionId": "J1", "parentRegionId": "C1"},
+        {"id": "P-b", "nameCh": "乙鄉", "jurisdictionId": "J2", "parentRegionId": "C1"},
+        {"id": "P-c", "nameCh": "丙鄉", "jurisdictionId": "J3", "parentRegionId": "C1"},
+        {"id": "P-d", "nameCh": "丁鄉", "jurisdictionId": "J4", "parentRegionId": "C1"},
+        {"id": "P-e", "nameCh": "戊鄉", "jurisdictionId": "J5", "parentRegionId": "C2"},
+    ]
+    parent_ids = ["C1", "C2"]
+    parent_owner = [-1 if o < 0 else parent_ids.index(provinces[o]["parentRegionId"]) for o in owner]
+    return {
+        "_meta": {"cols": 9, "rows": 5, "terrainLegend": {"0": "SEA", "1": "PLAIN"}},
+        "terrain": terrain,
+        "owner": _rle(owner),
+        "parentOwner": _rle(parent_owner),
+        "provinceRecords": provinces,
+        "jurisdictionRecords": [
+            {"id": "J1", "nameCh": "甲县", "commanderyId": "C1"},
+            {"id": "J2", "nameCh": "乙县", "commanderyId": "C1"},
+            {"id": "J3", "nameCh": "丙县", "commanderyId": "C1"},
+            {"id": "J4", "nameCh": "丁县", "commanderyId": "C1"},
+            {"id": "J5", "nameCh": "戊县", "commanderyId": "C2"},
+        ],
+        "commanderyRecords": [
+            {"id": "C1", "nameCh": "甲郡", "seatJurisdictionId": "J1"},
+            {"id": "C2", "nameCh": "乙郡", "seatJurisdictionId": "J5"},
+        ],
+        "parentRegions": [{"id": "C1"}, {"id": "C2"}],
+    }
+
+
+def _reparent(document: dict, jurisdiction_id: str, commandery_id: str) -> dict:
+    """Move one county to another commandery and re-derive parentOwner, as the materializer does."""
+    moved = copy.deepcopy(document)
+    for record in moved["jurisdictionRecords"]:
+        if record["id"] == jurisdiction_id:
+            record["commanderyId"] = commandery_id
+    for province in moved["provinceRecords"]:
+        if province["jurisdictionId"] == jurisdiction_id:
+            province["parentRegionId"] = commandery_id
+    parent_ids = [row["id"] for row in moved["parentRegions"]]
+    owner = audit._expand(moved["owner"], moved["_meta"]["cols"] * moved["_meta"]["rows"], "owner")
+    moved["parentOwner"] = _rle([
+        -1 if o < 0 else parent_ids.index(moved["provinceRecords"][o]["parentRegionId"])
+        for o in owner
+    ])
+    return moved
+
+
+def _identity(document: dict) -> dict:
+    """componentKey -> the land it names, as (unit, cell count, member counties)."""
+    return {
+        row["componentKey"]: (row["unitId"], row["cellCount"], tuple(row["memberIds"]))
+        for row in audit.inventory(document)
+    }
+
 def _ledger(rows: list[dict]) -> dict:
     return {
         "schemaVersion": 1,
@@ -101,7 +180,7 @@ def _ledger(rows: list[dict]) -> dict:
 def _row(**overrides: object) -> dict:
     row = {
         "unitKind": "COMMANDERY", "unitId": "C1", "unitNameCh": "甲郡",
-        "componentKey": "C1#1", "cellCount": 1, "memberIds": ["J1"], "holdsSeat": True,
+        "componentKey": "C1@5:2", "cellCount": 1, "memberIds": ["J1"], "holdsSeat": True,
         "verdict": "GEOMETRY_DEFECT", "confidence": "MEDIUM",
         "effectiveFrom": None, "effectiveTo": None,
         "ifRule": "DEFECT_PRESERVE_PENDING_GEOMETRY_PR",
@@ -119,13 +198,13 @@ def _row(**overrides: object) -> dict:
 
 
 ISLAND = dict(
-    unitId="C2", unitNameCh="乙郡", componentKey="C2#1", cellCount=2, memberIds=["J4"],
+    unitId="C2", unitNameCh="乙郡", componentKey="C2@4:0", cellCount=2, memberIds=["J4"],
     holdsSeat=False, verdict="WATER_SEPARATED", confidence="HIGH", ifRule="WATER_ROUTE_ONLY",
     evidenceRefs=["map:han-tiles terrain - component touches SEA only"], defectNote=None,
     memberNamesCh=["丁县"],
 )
 COUNTY_PIECE = dict(
-    unitKind="JURISDICTION", unitId="J1", unitNameCh="甲县", componentKey="J1#1", cellCount=1,
+    unitKind="JURISDICTION", unitId="J1", unitNameCh="甲县", componentKey="J1@5:2", cellCount=1,
     memberIds=["P-f"], memberNamesCh=["己鄉"], holdsSeat=False,
 )
 
@@ -135,24 +214,24 @@ class InventoryTest(unittest.TestCase):
         rows = audit.inventory(_document())
         keys = {(r["componentKey"], r["cellCount"], tuple(r["memberIds"]), r["holdsSeat"]) for r in rows}
         self.assertEqual(keys, {
-            ("C1#1", 1, ("J1",), True),        # P-f: seat county's second piece
-            ("C2#1", 2, ("J4",), False),       # island county
-            ("J1#1", 1, ("P-f",), False),      # county-level split
+            ("C1@5:2", 1, ("J1",), True),        # P-f: seat county's second piece
+            ("C2@4:0", 2, ("J4",), False),       # island county
+            ("J1@5:2", 1, ("P-f",), False),      # county-level split
         })
         by_key = {r["componentKey"]: r for r in rows}
-        self.assertEqual(by_key["C1#1"]["landNeighbourIds"], ["C2"])
-        self.assertEqual(by_key["C2#1"]["landNeighbourIds"], [])
-        self.assertEqual(by_key["C2#1"]["negativeBoundary"], {"SEA": 3})
+        self.assertEqual(by_key["C1@5:2"]["landNeighbourIds"], ["C2"])
+        self.assertEqual(by_key["C2@4:0"]["landNeighbourIds"], [])
+        self.assertEqual(by_key["C2@4:0"]["negativeBoundary"], {"SEA": 3})
 
     def test_seatless_largest_piece_is_judged_and_seat_piece_is_the_body(self):
         document = _document()
         document["commanderyRecords"][0]["seatJurisdictionId"] = "J2"  # seat moves to 1-cell 乙县
         keys = {r["componentKey"] for r in audit.inventory(document)}
         # C1 pieces: {a,b,c} rank 0 holds the seat now → body; {f} rank 1 judged.
-        self.assertEqual(keys, {"C1#1", "C2#1", "J1#1"})
+        self.assertEqual(keys, {"C1@5:2", "C2@4:0", "J1@5:2"})
         document["commanderyRecords"][0]["seatJurisdictionId"] = None
         keys = {r["componentKey"] for r in audit.inventory(document)}
-        self.assertEqual(keys, {"C1#1", "C2#1", "J1#1"}, "no seat → largest piece is the body")
+        self.assertEqual(keys, {"C1@5:2", "C2@4:0", "J1@5:2"}, "no seat → largest piece is the body")
 
     def test_seat_in_a_smaller_piece_makes_the_larger_piece_the_judged_one(self):
         """The branch the seat rule exists for. Every seat value the sibling test tries
@@ -160,7 +239,7 @@ class InventoryTest(unittest.TestCase):
         rule was never actually exercised: 甲县 owns both the body and the cut-off cell.
 
         Give the cut-off cell its own county 戊县 and seat C1 there, and the body has to
-        move to the smaller piece — the larger blob becomes the judged component C1#0.
+        move to the smaller piece — the larger blob becomes the judged component C1@0:0.
         """
         document = _document()
         for province in document["provinceRecords"]:
@@ -171,14 +250,14 @@ class InventoryTest(unittest.TestCase):
         )
         self.assertEqual(
             {r["componentKey"] for r in audit.inventory(document)},
-            {"C1#1", "C2#1"},
+            {"C1@5:2", "C2@4:0"},
             "seat still in the big blob → the 1-cell piece is judged",
         )
         document["commanderyRecords"][0]["seatJurisdictionId"] = "J5"
         judged = {r["componentKey"]: r for r in audit.inventory(document)}
-        self.assertEqual(set(judged), {"C1#0", "C2#1"})
-        self.assertEqual(judged["C1#0"]["cellCount"], 6)
-        self.assertFalse(judged["C1#0"]["holdsSeat"])
+        self.assertEqual(set(judged), {"C1@0:0", "C2@4:0"})
+        self.assertEqual(judged["C1@0:0"]["cellCount"], 6)
+        self.assertFalse(judged["C1@0:0"]["holdsSeat"])
 
 
 class CheckTest(unittest.TestCase):
@@ -200,11 +279,11 @@ class CheckTest(unittest.TestCase):
         ledger["adjudications"].pop(1)
         errors = audit.check(_document(), ledger)["errors"]
         self.assertEqual(len(errors), 1)
-        self.assertTrue(errors[0].startswith("UNADJUDICATED C2#1"), errors)
+        self.assertTrue(errors[0].startswith("UNADJUDICATED C2@4:0"), errors)
 
     def test_stale_row_and_drift_are_reported(self):
         ledger = self.full_ledger()
-        ledger["adjudications"].append(_row(componentKey="C1#9", cellCount=3))
+        ledger["adjudications"].append(_row(componentKey="C1@9:9", cellCount=3))
         ledger["adjudications"][0]["cellCount"] = 2
         ledger["adjudications"][1]["memberIds"] = ["J3"]
         errors = audit.check(_document(), ledger)["errors"]
@@ -342,14 +421,14 @@ class CheckTest(unittest.TestCase):
     def test_unit_mismatch_is_reported(self):
         """A row names a component by componentKey, and the unit it claims is checked
         against the one the grid computed. Deleting the comparison left the suite green:
-        a row keyed C1#1 could declare itself a JURISDICTION, or another unit's id, and
+        a row keyed C1@5:2 could declare itself a JURISDICTION, or another unit's id, and
         still be counted as that component's adjudication."""
         for field, wrong in (("unitKind", "JURISDICTION"), ("unitId", "C2")):
             with self.subTest(field):
                 ledger = self.full_ledger()
                 ledger["adjudications"][0][field] = wrong
                 result = audit.check(_document(), ledger)
-                self.assertIn("UNIT_MISMATCH C1#1", " ".join(result["errors"]))
+                self.assertIn("UNIT_MISMATCH C1@5:2", " ".join(result["errors"]))
 
     def test_proposed_parent_name_must_match_the_id_it_carries(self):
         """The id and the name are two readings of one claim. Unchecked, a row could
@@ -510,7 +589,7 @@ class CheckTest(unittest.TestCase):
 
     def test_upheld_row_may_carry_the_challenge_that_lost(self):
         row = _row(overruledArgument="[기각된 반박] 이 조각을 WATER_SEPARATED 로 보자는 주장.")
-        self.assertEqual(audit.validate_ledger(_ledger([row]))[0]["componentKey"], "C1#1")
+        self.assertEqual(audit.validate_ledger(_ledger([row]))[0]["componentKey"], "C1@5:2")
 
     def test_committed_upheld_rows_keep_their_rejected_challenge(self):
         rows = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))["adjudications"]
@@ -662,6 +741,36 @@ class CheckTest(unittest.TestCase):
         self.assertEqual(document, before)
 
 
+    def test_component_key_must_be_anchor_form(self):
+        """The old positional form must be refused outright, not merely go unmatched.
+
+        A hand-written ``PARENT-0053#2`` is a perfectly good string, so without this rule
+        it reaches the grid comparison and comes back as one STALE_ROW — the same report a
+        fragment gets when it is legitimately repaired away. The reader cannot tell a typo
+        from a finished repair, so the key format is checked at the door instead.
+        """
+        for label, key in (
+            ("positional", "C1#1"),
+            ("bare unit", "C1"),
+            ("no unit", "@5:2"),
+            ("one coordinate", "C1@5"),
+            ("non-numeric", "C1@a:b"),
+            ("trailing text", "C1@5:2x"),
+            ("negative", "C1@-5:2"),
+        ):
+            with self.subTest(label):
+                with self.assertRaises(ValueError) as caught:
+                    audit.validate_ledger(_ledger([_row(componentKey=key)]))
+                self.assertIn("unit@col:row", str(caught.exception))
+
+    def test_committed_ledger_uses_anchor_keys(self):
+        ledger = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))
+        keys = [row["componentKey"] for row in ledger["adjudications"]]
+        offenders = [k for k in keys if not audit.COMPONENT_KEY.match(k)]
+        self.assertEqual(offenders, [], f"{len(offenders)} rows still carry a positional key")
+        self.assertEqual(len(set(keys)), len(keys))
+
+
 class MalformedInputTest(unittest.TestCase):
     """The guards that refuse a grid or a ledger that is the wrong shape.
 
@@ -716,7 +825,7 @@ class MalformedInputTest(unittest.TestCase):
                 audit.validate_ledger(doc)
 
     def test_adjudications_must_be_an_array(self):
-        for label, rows in (("a mapping", {"C1#1": {}}), ("a string", "rows"), ("absent", None)):
+        for label, rows in (("a mapping", {"C1@5:2": {}}), ("a string", "rows"), ("absent", None)):
             with self.subTest(label):
                 ledger = _ledger([])
                 if rows is None:
@@ -727,7 +836,7 @@ class MalformedInputTest(unittest.TestCase):
                     audit.validate_ledger(ledger)
 
     def test_each_row_must_be_an_object(self):
-        for label, row in (("a string", "C1#1"), ("a list", ["C1#1"]), ("null", None)):
+        for label, row in (("a string", "C1@5:2"), ("a list", ["C1@5:2"]), ("null", None)):
             with self.subTest(label), self.assertRaisesRegex(ValueError, "must be an object"):
                 audit.validate_ledger(_ledger([row]))
 
@@ -877,6 +986,45 @@ class CommittedDataTest(unittest.TestCase):
                     any(r.startswith(("shiliao:", "chgis:")) for r in row["evidenceRefs"]),
                     row["componentKey"],
                 )
+
+
+class ComponentIdentityTest(unittest.TestCase):
+    """A component key must name a piece of land, not a position in a sorted list.
+
+    Rows carry per-fragment evidence. If repairing fragment B renumbers fragment C onto
+    B's old key, the gate reports drift on rows nobody touched, and the natural repair —
+    "make the row match the grid" — moves C's sourced rationale onto D's land. The
+    corruption is silent because every rule still passes afterwards.
+    """
+
+    def test_repairing_one_fragment_must_not_relabel_its_siblings(self):
+        before = _identity(_sibling_document())
+        after = _identity(_reparent(_sibling_document(), "J2", "C2"))
+        relabelled = {
+            key: (before[key], after[key])
+            for key in before
+            if key in after and before[key] != after[key]
+        }
+        self.assertEqual(
+            relabelled, {},
+            "repairing 乙县 renamed the surviving keys onto other fragments: "
+            + "; ".join(f"{k} was {b} now {a}" for k, (b, a) in sorted(relabelled.items())),
+        )
+
+    def test_repairing_one_fragment_retires_exactly_that_fragments_key(self):
+        before = _identity(_sibling_document())
+        after = _identity(_reparent(_sibling_document(), "J2", "C2"))
+        retired = {key: before[key] for key in set(before) - set(after)}
+        self.assertEqual(
+            [members for _, _, members in retired.values()], [("J2",)],
+            f"expected only 乙县's own key to retire, got {retired}",
+        )
+        self.assertEqual(set(after) - set(before), set(), "no fragment was created")
+
+    def test_keys_are_unique_across_the_committed_grid(self):
+        rows = audit.inventory(json.loads(audit.DEFAULT_TILES.read_text(encoding="utf-8")))
+        keys = [row["componentKey"] for row in rows]
+        self.assertEqual(len(set(keys)), len(keys), "component keys collide on the shipped grid")
 
 
 if __name__ == "__main__":
