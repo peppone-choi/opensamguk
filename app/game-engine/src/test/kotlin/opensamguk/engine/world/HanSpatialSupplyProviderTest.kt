@@ -149,18 +149,19 @@ class HanSpatialSupplyProviderTest {
     }
 
     @Test
-    fun `Yuyang Lu seven provinces remain direct spatial supply inputs`() {
+    fun `changed Yuyang Lu live owner overrides only its seat province`() {
         val root = mapper.readTree(Path(mapPath).toFile())
         val lu = root.path("jurisdictionRecords").single { it.path("id").asText() == "87436" }
         val provinceIds = root.path("provinceRecords").map { it.path("id").asText() }
         val indices = lu.path("provinceIds").map { provinceIds.indexOf(it.asText()) }
         val network = provider().network(
             1020,
-            listOf(SpatialSupplyCity(cityId = 720, provinceIndex = 846, nationId = 12)),
+            listOf(SpatialSupplyCity(cityId = 720, provinceIndex = 846, nationId = 77)),
         )
 
         assertEquals(7, indices.size)
-        assertEquals(setOf(12), indices.map { network.provinceOwners[it] }.toSet())
+        assertEquals(77, network.provinceOwners[846])
+        assertEquals(setOf(12), indices.filter { it != 846 }.map { network.provinceOwners[it] }.toSet())
     }
 
     @Test

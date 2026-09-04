@@ -89,6 +89,17 @@ class HanSupplyDisconnectionPolicyLoader(
                 val sourceLedgerRow = node.requiredText("sourceLedgerRow")
                 val source = sourceByKey[sourceLedgerRow]
                     ?: error("Han supply ledger city $cityId references unknown sourceLedgerRow $sourceLedgerRow")
+                val parentRegionId = provinces[provinceIndex].requiredText("parentRegionId")
+                val sourceMemberIds = source.requiredArray("memberIds").map { member ->
+                    check(member.isTextual && member.asText().isNotBlank()) {
+                        "Han source ledger row $sourceLedgerRow has invalid memberId"
+                    }
+                    member.asText()
+                }
+                check(source.requiredText("unitId") == parentRegionId && jurisdictionId in sourceMemberIds) {
+                    "Han supply ledger city $cityId sourceLedgerRow $sourceLedgerRow does not cover " +
+                        "parent $parentRegionId jurisdiction $jurisdictionId"
+                }
                 val expectedSourceVerdict = SOURCE_VERDICT_BY_DECISION.getValue(decision)
                 check(source.requiredText("verdict") == expectedSourceVerdict) {
                     "Han supply ledger city $cityId decision $decision does not match source verdict " +

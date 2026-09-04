@@ -21,8 +21,8 @@ class HanSupplyDisconnectionPolicyLoaderTest {
         val sourceLedgerPath = dir.resolve("source-ledger.json")
         map.writeText(
             """{"provinceRecords":[
-              {"id":"PR0","jurisdictionId":"J0"},
-              {"id":"PR1","jurisdictionId":"J1"}
+              {"id":"PR0","jurisdictionId":"J0","parentRegionId":"R0"},
+              {"id":"PR1","jurisdictionId":"J1","parentRegionId":"R0"}
             ],"jurisdictionRecords":[{"id":"J0"},{"id":"J1"}]}""",
         )
         runtime.writeText(
@@ -33,8 +33,10 @@ class HanSupplyDisconnectionPolicyLoaderTest {
         )
         sourceLedgerPath.writeText(
             """{"schemaVersion":1,"adjudications":[
-              {"componentKey":"R0@1:1","verdict":"GEOMETRY_DEFECT"},
-              {"componentKey":"WATER@1:1","verdict":"WATER_SEPARATED"}
+              {"componentKey":"R0@1:1","unitId":"R0","memberIds":["J1"],"verdict":"GEOMETRY_DEFECT"},
+              {"componentKey":"WATER@1:1","unitId":"R0","memberIds":["J1"],"verdict":"WATER_SEPARATED"},
+              {"componentKey":"OTHER-PARENT@9:9","unitId":"R9","memberIds":["J1"],"verdict":"HISTORICAL_EXCLAVE"},
+              {"componentKey":"OTHER-MEMBER@9:9","unitId":"R0","memberIds":["J9"],"verdict":"HISTORICAL_EXCLAVE"}
             ]}""",
         )
         ledgerPath.writeText(ledger)
@@ -118,6 +120,34 @@ class HanSupplyDisconnectionPolicyLoaderTest {
     fun `arbitrary upheld policy without reviewed provenance fails startup`() {
         assertFailsWith<IllegalStateException> {
             fixture(ledger(row(decision = "UPHOLD_HISTORICAL_EXCLAVE"))).load(1020, mapOf(2 to 1))
+        }
+    }
+
+    @Test
+    fun `upheld policy source parent must match the city province parent`() {
+        assertFailsWith<IllegalStateException> {
+            fixture(
+                ledger(
+                    row(
+                        decision = "UPHOLD_HISTORICAL_EXCLAVE",
+                        sourceLedgerRow = "OTHER-PARENT@9:9",
+                    ),
+                ),
+            ).load(1020, mapOf(2 to 1))
+        }
+    }
+
+    @Test
+    fun `upheld policy source members must contain the city jurisdiction`() {
+        assertFailsWith<IllegalStateException> {
+            fixture(
+                ledger(
+                    row(
+                        decision = "UPHOLD_HISTORICAL_EXCLAVE",
+                        sourceLedgerRow = "OTHER-MEMBER@9:9",
+                    ),
+                ),
+            ).load(1020, mapOf(2 to 1))
         }
     }
 
