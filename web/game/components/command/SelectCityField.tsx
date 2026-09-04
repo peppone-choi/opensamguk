@@ -8,7 +8,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
-import type { FrontInfoResponse, GameCityConstItem, GameConstResponse, MapPreviewResponse } from '@/lib/types';
+import type {
+    FrontInfoResponse,
+    GameCityConstItem,
+    GameConstResponse,
+    MapPreviewCity,
+    MapPreviewResponse,
+} from '@/lib/types';
 import MapViewer from '../game/MapViewer';
 import SearchableSelect, { type SelectOption } from './SearchableSelect';
 
@@ -28,11 +34,18 @@ interface DistanceRow {
     cities: GameCityConstItem[];
 }
 
-function cityDistanceLimit(commandKey?: string, commandName?: string): number {
+function cityDistancePolicy(commandKey?: string, commandName?: string): { hardLimit: number; guideLimit: number } {
     const token = `${commandKey ?? ''} ${commandName ?? ''}`;
-    if (/이동|출병/.test(token)) return 1;
-    if (/강행|첩보|화계/.test(token)) return 3;
-    return 0;
+    if (/이동/.test(token)) return { hardLimit: 1, guideLimit: 1 };
+    if (/강행/.test(token)) return { hardLimit: 3, guideLimit: 3 };
+    if (/첩보|화계/.test(token)) return { hardLimit: 0, guideLimit: 3 };
+    return { hardLimit: 0, guideLimit: 0 };
+}
+
+function cityPath(city: MapPreviewCity): string {
+    return [city.regionName, city.commanderyName, city.name]
+        .filter((part, index, parts): part is string => Boolean(part) && parts.indexOf(part) === index)
+        .join(' › ');
 }
 
 function distanceRows(cityConst: GameCityConstItem[], currentCityId: number | null, maxDistance: number): DistanceRow[] {
@@ -83,22 +96,87 @@ export default function SelectCityField({ commandKey, commandName, value, onChan
         };
     }, []);
 
-    const options: SelectOption[] = useMemo(
-        () =>
-            (data?.cities ?? []).map((c) => ({
-                value: c.id,
-                label: c.name,
-                info: LEVEL_TEXT[c.level] ?? String(c.level),
-                searchText: c.name,
-            })),
-        [data],
-    );
     const currentCityId = frontInfo?.general.cityId ?? null;
-    const maxDistance = cityDistanceLimit(commandKey, commandName);
+    const ownNationId = frontInfo?.general.nationId ?? null;
+    const { hardLimit, guideLimit } = cityDistancePolicy(commandKey, commandName);
     const nearbyRows = useMemo(
-        () => distanceRows(constData?.cityConst ?? [], currentCityId, maxDistance),
-        [constData, currentCityId, maxDistance],
+        () => distanceRows(constData?.cityConst ?? [], currentCityId, guideLimit),
+        [constData, currentCityId, guideLimit],
     );
+    const distanceByCity = useMemo(() => new Map(
+        nearbyRows.flatMap((row) => row.cities.map((city) => [city.id, row.distance] as const)),
+    ), [nearbyRows]);
+    const commandToken = `${commandKey ?? ''} ${commandName ?? ''}`;
+    const candidateCities = useMemo(() => {
+        const cities = data?.cities ?? [];
+        if (hardLimit > 0) {
+            return cities.filter((city) => (distanceByCity.get(city.id) ?? Number.POSITIVE_INFINITY) <= hardLimit);
+        }
+        if (/화계/.test(commandToken) && ownNationId != null) {
+            return cities.filter((city) => city.nationId !== 0 && city.nationId !== ownNationId);
+        }
+        if (/첩보/.test(commandToken) && ownNationId != null) {
+            return cities.filter((city) => city.nationId !== ownNationId);
+        }
+        if (/천도/.test(commandToken) && ownNationId != null) {
+            return cities.filter((city) => city.nationId === ownNationId);
+        }
+        return cities;
+    }, [commandToken, data, distanceByCity, hardLimit, ownNationId]);
+    const options: SelectOption[] = useMemo(() => {
+        const nationById = new Map((data?.nations ?? []).map((nation) => [nation.id, nation.name]));
+        return candidateCities.map((city) => {
+            const distance = distanceByCity.get(city.id);
+            const territory = city.nationId === 0
+                ? '공백지'
+                : city.nationId === ownNationId
+                    ? '아국령'
+                    : (nationById.get(city.nationId) ?? `국가 ${city.nationId}`);
+            const info = [
+                LEVEL_TEXT[city.level] ?? String(city.level),
+                city.id === currentCityId ? '현재' : null,
+                distance == null ? null : `${distance}칸`,
+                territory,
+                city.isCapital ? '수도' : null,
+                city.isCommanderySeat ? '군치' : null,
+            ].filter(Boolean).join(' · ');
+            const label = cityPath(city);
+            return {
+                value: city.id,
+                label,
+                info,
+                searchText: `${label} ${city.name} ${city.regionName ?? ''} ${city.commanderyName ?? ''} ${city.id}`,
+            };
+        });
+    }, [candidateCities, currentCityId, data, distanceByCity, ownNationId]);
+    const defaultOptions = useMemo(() => {
+        if (hardLimit > 0) return options;
+        const cityById = new Map(candidateCities.map((city) => [city.id, city]));
+        const adjacentIds = new Set(distanceRows(constData?.cityConst ?? [], currentCityId, 1)
+            .flatMap((row) => row.cities.map((city) => city.id)));
+        const priority = (option: SelectOption): number => {
+            const city = cityById.get(option.value);
+            if (option.value === value) return 0;
+            if (option.value === currentCityId) return 1;
+            if (adjacentIds.has(option.value)) return 2;
+            if (city?.nationId === ownNationId && city.isCapital) return 3;
+            if (city?.nationId === ownNationId && city.isCommanderySeat) return 4;
+            if (city?.nationId === ownNationId) return 5;
+            if (city?.isCapital) return 6;
+            if (city?.isCommanderySeat) return 7;
+            return 8;
+        };
+        return [...options]
+            .sort((left, right) => priority(left) - priority(right) || left.label.localeCompare(right.label, 'ko'))
+            .slice(0, 20);
+    }, [candidateCities, constData, currentCityId, hardLimit, options, ownNationId, value]);
+    const candidateCityIds = useMemo(() => new Set(candidateCities.map((city) => city.id)), [candidateCities]);
+    const candidateNearbyRows = useMemo(() => nearbyRows
+        .map((row) => ({ ...row, cities: row.cities.filter((city) => candidateCityIds.has(city.id)) }))
+        .filter((row) => row.cities.length > 0), [candidateCityIds, nearbyRows]);
+    const selectCandidate = (cityId: number) => {
+        if (candidateCityIds.has(cityId)) onChange(cityId);
+    };
 
     return (
         <div className="cmd-city-field">
@@ -108,21 +186,23 @@ export default function SelectCityField({ commandKey, commandName, value, onChan
                     isDetailMap={false}
                     currentCityId={currentCityId}
                     selectedCityId={value}
-                    onCitySelect={onChange}
+                    onCitySelect={selectCandidate}
                     gameConst={constData?.gameConst}
                 />
             )}
             <SearchableSelect
                 options={options}
+                defaultOptions={defaultOptions}
+                resultLimit={30}
                 value={value}
                 onChange={onChange}
-                placeholder="도시 선택 (초성 검색)"
-                loading={!data && !failed}
+                placeholder="현 검색 (주·군·현·초성·ID)"
+                loading={(!data || (guideLimit > 0 && !constData)) && !failed}
                 emptyText={failed ? '도시 목록을 불러올 수 없습니다.' : '선택 가능한 도시가 없습니다.'}
             />
-            {nearbyRows.length > 0 && (
+            {candidateNearbyRows.length > 0 && (
                 <div className="cmd-city-distance">
-                    {nearbyRows.map((row) => (
+                    {candidateNearbyRows.map((row) => (
                         <div key={row.distance} className={`cmd-city-distance-row d${row.distance}`}>
                             <span>{row.distance}칸 떨어진 도시:</span>
                             <div>
@@ -131,7 +211,7 @@ export default function SelectCityField({ commandKey, commandName, value, onChan
                                         key={city.id}
                                         type="button"
                                         className={value === city.id ? 'selected' : ''}
-                                        onClick={() => onChange(city.id)}
+                                        onClick={() => selectCandidate(city.id)}
                                     >
                                         {city.name}
                                     </button>
