@@ -53,6 +53,17 @@ class UpdateCitySupplyBfsTest {
         return InitCityOverrideVariant("line5", rows)
     }
 
+    private fun verdictConst(): CityConstVariant {
+        val rows = listOf(
+            RawCity(1, "A", "특", 100, 1, 1, 1, 1, 1, "하북", 0, 0, listOf("B", "C")),
+            RawCity(2, "B", "특", 100, 1, 1, 1, 1, 1, "하북", 0, 0, listOf("A")),
+            RawCity(3, "C", "특", 100, 1, 1, 1, 1, 1, "하북", 0, 0, listOf("A")),
+            RawCity(4, "D", "특", 100, 1, 1, 1, 1, 1, "하북", 0, 0, emptyList()),
+            RawCity(5, "E", "특", 100, 1, 1, 1, 1, 1, "하북", 0, 0, emptyList()),
+        )
+        return InitCityOverrideVariant("verdict5", rows)
+    }
+
     @Test
     fun `a 3-city chain from one capital - all supplied`() {
         // nation 1 owns cities 1,2,3 (a chain); capital = city 1, level>0.
@@ -260,6 +271,67 @@ class UpdateCitySupplyBfsTest {
             ),
         )
 
-        assertEquals(setOf(1, 2, 3), supplied)
+        assertEquals(setOf(1, 2, 3, 4), supplied)
+    }
+
+    @Test
+    fun `dual reachability verdicts protect mismatches unless a reviewed cut is upheld`() {
+        val network = spatialNetwork(
+            owners = listOf(1, 1, 1, 1, 1),
+            edges = listOf(0 to 3),
+            cityProvinces = mapOf(1 to 0, 2 to 1, 3 to 2, 4 to 3, 5 to 4),
+        ).copy(
+            fallbackPolicies = mapOf(
+                2 to SupplyFallbackPolicy(
+                    SupplyDisconnectionDecision.PROTECT_GEOMETRY_DEFECT,
+                    "PARENT-0000@401:224",
+                ),
+                3 to SupplyFallbackPolicy(
+                    SupplyDisconnectionDecision.UPHOLD_HISTORICAL_EXCLAVE,
+                    "PARENT-0099@1:1",
+                ),
+            ),
+        )
+
+        val evaluation = evaluateSupplyReachability(
+            cities = listOf(
+                SupplyCity(5, 1), SupplyCity(3, 1), SupplyCity(1, 1),
+                SupplyCity(4, 1), SupplyCity(2, 1),
+            ),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = verdictConst(),
+            spatialNetwork = network,
+        )
+
+        assertContentEquals(listOf(1, 2, 3, 4, 5), evaluation.rows.map { it.cityId })
+        assertContentEquals(
+            listOf(
+                SupplyReachabilityVerdict.BOTH_SUPPLIED,
+                SupplyReachabilityVerdict.CITY_ONLY_PROTECTED,
+                SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD,
+                SupplyReachabilityVerdict.SPATIAL_ONLY_SUPPLIED,
+                SupplyReachabilityVerdict.BOTH_UNSUPPLIED,
+            ),
+            evaluation.rows.map { it.verdict },
+        )
+        assertEquals(setOf(1, 2, 4), evaluation.suppliedCityIds)
+    }
+
+    @Test
+    fun `unreviewed city-only mismatch is runtime protected and an unmapped city never bridges provinces`() {
+        val evaluation = evaluateSupplyReachability(
+            cities = listOf(SupplyCity(1, 1), SupplyCity(2, 1), SupplyCity(3, 1)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(),
+            spatialNetwork = spatialNetwork(
+                owners = listOf(1, 1),
+                edges = emptyList(),
+                cityProvinces = mapOf(1 to 0, 3 to 1),
+            ),
+        )
+
+        assertEquals(SupplyReachabilityVerdict.CITY_ONLY_PROTECTED, evaluation.rows.single { it.cityId == 2 }.verdict)
+        assertEquals(SupplyReachabilityVerdict.BOTH_UNSUPPLIED, evaluation.rows.single { it.cityId == 3 }.verdict)
+        assertEquals(setOf(1, 2), evaluation.suppliedCityIds)
     }
 }
