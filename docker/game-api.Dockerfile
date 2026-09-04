@@ -39,6 +39,12 @@ COPY data/map/han-tiles.json /app/data/map/han-world-v3-tiles.json
 COPY data/map/han-scenario-province-ownership-v1.json /app/data/map/han-scenario-province-ownership-v1.json
 COPY data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json /app/data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json
 COPY data/map/han-780-v1-tiles.json /app/data/map/han-780-v1-tiles.json
+COPY data/map/han-world-v3-manifest-v1.json /app/data/map/han-world-v3-manifest-v1.json
+COPY data/map/han-water-topology-v1.json /app/data/map/han-water-topology-v1.json
+COPY data/map/han-strategic-topology-manifest-v1.json /app/data/map/han-strategic-topology-manifest-v1.json
+COPY data/curated/han/route-node-selection-v1.json /app/data/curated/han/route-node-selection-v1.json
+COPY data/curated/han/route-node-migration-v1.json /app/data/curated/han/route-node-migration-v1.json
+COPY data/curated/han/water-topology-adjudications-v1.json /app/data/curated/han/water-topology-adjudications-v1.json
 COPY --from=build /src/build/generated-map/ /app/data/map/
 ENV JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 EXPOSE 8081

@@ -9,13 +9,25 @@ import kotlin.test.assertNotEquals
 class StrategicPathResolverTest {
 
     @Test
+    fun `reviewed barrier gives crossing denial even when dry projection omits the land edge`() {
+        val topology = topology(
+            edges = emptyList(),
+            barriers = listOf(RiverBarrier("river", "1", "2", listOf("review:river"), EvidenceConfidence.REVIEWED)),
+        )
+        assertEquals(
+            PathDenialCode.RIVER_CROSSING_REQUIRED,
+            assertIs<StrategicPathResult.Denied>(resolve(topology, land(1), land(2))).code,
+        )
+    }
+
+    @Test
     fun `dry land resolves but a reviewed river barrier requires an active crossing`() {
         val landEdge = edge("land-1-2", land(1), land(2), TraversalMode.LAND)
         val dry = topology(edges = listOf(landEdge))
         val dryPath = assertIs<StrategicPathResult.Resolved>(resolve(dry, land(1), land(2)))
         assertEquals(listOf("land-1-2"), dryPath.path.edgeIds)
 
-        val barrier = RiverBarrier("river-1-2", 1, 2, listOf("review:river"), EvidenceConfidence.REVIEWED)
+        val barrier = RiverBarrier("river-1-2", "1", "2", listOf("review:river"), EvidenceConfidence.REVIEWED)
         val blocked = topology(edges = listOf(landEdge), barriers = listOf(barrier))
         assertEquals(
             PathDenialCode.RIVER_CROSSING_REQUIRED,
@@ -225,7 +237,7 @@ class StrategicPathResolverTest {
                 edge("barred-road", land(1), land(2), TraversalMode.LAND, capacity = 10),
                 edge("irrelevant-low-capacity", land(1), land(3), TraversalMode.LAND, capacity = 1),
             ),
-            barriers = listOf(RiverBarrier("river", 1, 2, listOf("review:river"), EvidenceConfidence.REVIEWED)),
+            barriers = listOf(RiverBarrier("river", "1", "2", listOf("review:river"), EvidenceConfidence.REVIEWED)),
         )
 
         assertEquals(
@@ -250,7 +262,7 @@ class StrategicPathResolverTest {
 
     @Test
     fun `inactive crossings and statically closed water routes stay unavailable`() {
-        val barrier = RiverBarrier("river", 1, 2, listOf("review:river"), EvidenceConfidence.REVIEWED)
+        val barrier = RiverBarrier("river", "1", "2", listOf("review:river"), EvidenceConfidence.REVIEWED)
         listOf(TraversalMode.FORD, TraversalMode.BRIDGE, TraversalMode.FERRY).forEach { mode ->
             val topology = topology(
                 edges = listOf(
@@ -321,7 +333,7 @@ class StrategicPathResolverTest {
         barriers: List<RiverBarrier> = emptyList(),
     ) = StrategicTopologySnapshot(
         topologyRevision = "test-v1",
-        landProvinceIds = landIds,
+        landProvinceIds = landIds.map(Int::toString).toSet(),
         waterZones = zones,
         traversalEdges = edges,
         riverBarriers = barriers,
@@ -360,6 +372,6 @@ class StrategicPathResolverTest {
         confidence = EvidenceConfidence.REVIEWED,
     )
 
-    private fun land(id: Int) = StrategicNodeRef.LandProvince(id)
+    private fun land(id: Int) = StrategicNodeRef.LandProvince(id.toString())
     private fun water(id: String) = StrategicNodeRef.WaterZone(id)
 }

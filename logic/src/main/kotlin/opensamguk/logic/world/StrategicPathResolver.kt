@@ -155,6 +155,19 @@ object StrategicPathResolver {
                     mutable.getOrPut(edge.to.canonicalKey) { mutableListOf() }.add(Step(edge, edge.from))
                 }
             }
+            // Diagnostic-only links explain a missing reviewed crossing even when the dry-land
+            // projection correctly omits that boundary. They are never executable path edges.
+            topology.riverBarriers.sortedBy(RiverBarrier::id).forEach { barrier ->
+                val first = StrategicNodeRef.LandProvince(barrier.firstLandProvinceId)
+                val second = StrategicNodeRef.LandProvince(barrier.secondLandProvinceId)
+                val diagnostic = TraversalEdge(
+                    "diagnostic-barrier:${barrier.id}", first, second, TraversalMode.LAND,
+                    false, 1, Int.MAX_VALUE, RiskBand.LOW, SeasonalAvailability.ALWAYS,
+                    false, barrier.sourceRefs, barrier.confidence,
+                )
+                mutable.getOrPut(first.canonicalKey) { mutableListOf() }.add(Step(diagnostic, second, true))
+                mutable.getOrPut(second.canonicalKey) { mutableListOf() }.add(Step(diagnostic, first, true))
+            }
             mutable.values.forEach { steps -> steps.sortBy { it.edge.id } }
             mutable.mapValues { (_, steps) -> steps.toList() }
         }
@@ -182,6 +195,7 @@ object StrategicPathResolver {
                 if (current.node == to) return current
 
                 for (step in adjacency[current.node.canonicalKey].orEmpty()) {
+                    if (step.diagnosticOnly && !options.ignoreBarriers) continue
                     if (!isUsable(step.edge, options)) continue
                     val available = availableCapacity(step.edge)
                     val candidate = SearchState(
@@ -206,6 +220,7 @@ object StrategicPathResolver {
             while (queue.isNotEmpty()) {
                 val current = queue.removeFirst()
                 for (step in adjacency[current.canonicalKey].orEmpty()) {
+                    if (step.diagnosticOnly) continue
                     if (step.to !is StrategicNodeRef.LandProvince || step.edge.mode == TraversalMode.EMBARK) continue
                     if (!isUsable(step.edge, SearchOptions())) continue
                     if (reachableLand.add(step.to.canonicalKey)) queue += step.to
@@ -239,7 +254,7 @@ object StrategicPathResolver {
         }
     }
 
-    private data class Step(val edge: TraversalEdge, val to: StrategicNodeRef)
+    private data class Step(val edge: TraversalEdge, val to: StrategicNodeRef, val diagnosticOnly: Boolean = false)
     private data class Best(val cost: Long, val edgeIds: List<String>)
 
     private data class SearchState(
@@ -261,10 +276,8 @@ object StrategicPathResolver {
     private fun TraversalEdge.crossesBarrier(barrierKeys: Set<String>): Boolean {
         val fromLand = from as? StrategicNodeRef.LandProvince ?: return false
         val toLand = to as? StrategicNodeRef.LandProvince ?: return false
-        return boundaryKey(fromLand.id, toLand.id) in barrierKeys
+        return strategicLandBoundaryKey(fromLand.id, toLand.id) in barrierKeys
     }
-
-    private fun boundaryKey(a: Int, b: Int): String = listOf(a, b).sorted().joinToString(":")
 
     private fun compareEdgeIdSequences(first: List<String>, second: List<String>): Int {
         val shared = minOf(first.size, second.size)

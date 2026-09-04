@@ -11,6 +11,11 @@ import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.logic.world.CalcCityDistance
+import opensamguk.logic.world.*
+import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.v2.command.resolveImmediateCityTransportRoute
+import opensamguk.infra.seed.HanStrategicTopologyJson
+import java.nio.file.Path
 import org.mockito.Mockito
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.time.Instant
@@ -113,6 +118,7 @@ class V2CityTransportRulesTest {
 
     private fun handler(
         cityIds: List<Int>, crew: Int = 2000, nationId: Int = 1, mapName: String? = "che",
+        loadTopology: () -> HanStrategicRouteProjection = { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") },
     ): V2CityTransportHandler {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
@@ -139,7 +145,7 @@ class V2CityTransportRulesTest {
         val ledger = V2CityLedgerStore(Mockito.mock(NamedParameterJdbcTemplate::class.java))
         val recorder = ChangeRecorder()
         lastWorld = world; lastRecorder = recorder; lastLedger = ledger
-        return V2CityTransportHandler(world, recorder, ledger)
+        return V2CityTransportHandler(world, recorder, ledger, loadTopology)
     }
 
     private fun reasonOf(result: opensamguk.common.wire.TurnDaemonCommandResult) =
@@ -165,7 +171,7 @@ class V2CityTransportRulesTest {
     }
 
     @Test
-    fun `han world v3 노에서 역성 수송은 서버 경로로 통과한다`() {
+    fun `han world v3 노에서 역성 수송도 경로 pin 없이는 거절하고 원장을 보존한다`() {
         val h = handler(listOf(273, 781), mapName = "han-world-v3")
         lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 273, goldDelta = 10_000)
 
@@ -173,7 +179,129 @@ class V2CityTransportRulesTest {
             CityTransport(generalId = 10, fromCityId = 273, toCityId = 781, gold = 100),
         )
 
-        assertTrue(result.ok, reasonOf(result) ?: "")
+        assertFalse(result.ok)
+        assertEquals("TOPOLOGY_REVISION_REQUIRED", (result as CommandLifecycleResult).code)
+        assertEquals(10_000L, lastLedger.entry(lastWorld.worldId, 273).gold)
+        assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+    }
+
+    @Test
+    fun `real V3 Lu Licheng pinned route applies both ledgers and does not move escort`() {
+        val load = { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
+        val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
+            V2CityTransportArgs(273, 781, 100, 0, 0, null), load,
+        )).path
+        assertEquals(listOf("land:45098", "land:45022"), route.nodeKeys)
+        val h = handler(listOf(273, 781), mapName = "han-world-v3", loadTopology = load)
+        lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 273, goldDelta = 1000, riceDelta = 1000, garrisonDelta = 1000)
+        val result = h.handle(CityTransport(
+            generalId = 10, fromCityId = 273, toCityId = 781, gold = 100, rice = 200, garrison = 300,
+            topologyRevision = route.topologyRevision, routePathHash = route.pathHash,
+        ))
+        assertTrue(result.ok, reasonOf(result))
+        assertEquals(V2CityLedgerEntry(900, 800, 700), lastLedger.entry(lastWorld.worldId, 273))
+        assertEquals(V2CityLedgerEntry(100, 200, 300), lastLedger.entry(lastWorld.worldId, 781))
+        assertEquals(2, lastRecorder.cityLedgerV2Upserts().size)
+        assertEquals(273, lastWorld.getGeneralById(10)?.cityId)
+    }
+
+    @Test
+    fun `legacy Han persisted V2 and che transports never require strategic artifacts or pins`() {
+        listOf("han", "han-780-v1", "han-world-v2", "che").forEach { mapName ->
+            val map = CityConstRegistry.of(mapName)
+            val pair = map.all().keys.firstNotNullOf { from ->
+                map.all().keys.firstOrNull { to -> CalcCityDistance.calcCityDistance(from, to, cityConst = map) == 1 }
+                    ?.let { to -> from to to }
+            }
+            val h = handler(listOf(pair.first, pair.second), mapName = mapName,
+                loadTopology = { error("legacy must not load topology") })
+            lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), pair.first, goldDelta = 1000)
+            val result = h.handle(CityTransport(generalId = 10, fromCityId = pair.first, toCityId = pair.second, gold = 100))
+            assertTrue(result.ok, "$mapName: ${reasonOf(result)}")
+            assertEquals(900L, lastLedger.entry(lastWorld.worldId, pair.first).gold)
+            assertEquals(100L, lastLedger.entry(lastWorld.worldId, pair.second).gold)
+        }
+    }
+
+    @Test
+    fun `V3 stale topology or changed path rejects without any ledger delta`() {
+        val projection = testProjection()
+        val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
+            V2CityTransportArgs(1, 2, 100, 0, 0, null), { projection },
+        )).path
+        listOf(
+            "old" to route.pathHash to "TOPOLOGY_REVISION_STALE",
+            route.topologyRevision to "old-path" to "ROUTE_PATH_HASH_STALE",
+        ).forEach { (pins, code) ->
+            val h = handler(listOf(1, 2), mapName = "han-world-v3", loadTopology = { projection })
+            lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 1, goldDelta = 1000)
+            val result = assertIs<CommandLifecycleResult>(h.handle(CityTransport(
+                generalId = 10, fromCityId = 1, toCityId = 2, gold = 100,
+                topologyRevision = pins.first, routePathHash = pins.second,
+            )))
+            assertEquals(code, result.code)
+            assertFalse(result.ok)
+            assertEquals(1000L, lastLedger.entry(lastWorld.worldId, 1).gold)
+            assertEquals(0L, lastLedger.entry(lastWorld.worldId, 2).gold)
+            assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+        }
+    }
+
+    @Test
+    fun `V3 multi-hop land and ferry cannot become instantaneous transfer`() {
+        listOf(
+            testProjection(multiHop = true) to "ROUTE_REQUIRES_MULTI_TURN",
+            testProjection(mode = TraversalMode.FERRY) to "TRANSPORT_MODE_UNSUPPORTED",
+        ).forEach { (projection, code) ->
+            val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
+                V2CityTransportArgs(1, 2, 100, 0, 0, null), { projection },
+            )).path
+            val h = handler(listOf(1, 2), mapName = "han-world-v3", loadTopology = { projection })
+            lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 1, goldDelta = 1000)
+            val result = assertIs<CommandLifecycleResult>(h.handle(CityTransport(
+                generalId = 10, fromCityId = 1, toCityId = 2, gold = 100,
+                topologyRevision = route.topologyRevision, routePathHash = route.pathHash,
+            )))
+            assertEquals(code, result.code)
+            assertFalse(result.ok)
+            assertEquals(1000L, lastLedger.entry(lastWorld.worldId, 1).gold)
+            assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+        }
+    }
+
+    @Test
+    fun `missing V3 artifacts and unknown bindings cannot fall back to adjacent CityConst`() {
+        val incomplete = testProjection().let { HanStrategicRouteProjection(it.topology, it.bindingsByCityId.values.take(1)) }
+        val cases: List<Pair<() -> HanStrategicRouteProjection, String>> = listOf(
+            { error("missing topology") } to "TOPOLOGY_STATE_INVALID",
+            { incomplete } to "UNKNOWN_NODE",
+        )
+        cases.forEach { (load, code) ->
+            val h = handler(listOf(1, 2), mapName = "han-world-v3", loadTopology = load)
+            lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 1, goldDelta = 1000)
+            val result = assertIs<CommandLifecycleResult>(h.handle(CityTransport(
+                generalId = 10, fromCityId = 1, toCityId = 2, gold = 100,
+                topologyRevision = "test-v3", routePathHash = "old",
+            )))
+            assertEquals(code, result.code)
+            assertFalse(result.ok)
+            assertEquals(1000L, lastLedger.entry(lastWorld.worldId, 1).gold)
+            assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+        }
+    }
+
+    private fun testProjection(multiHop: Boolean = false, mode: TraversalMode = TraversalMode.LAND): HanStrategicRouteProjection {
+        fun edge(id: String, from: String, to: String) = TraversalEdge(
+            id, StrategicNodeRef.LandProvince(from), StrategicNodeRef.LandProvince(to), mode, false,
+            1, 1000, RiskBand.LOW, SeasonalAvailability.ALWAYS, true, listOf("reviewed:test"), EvidenceConfidence.EXACT,
+        )
+        return HanStrategicRouteProjection(
+            StrategicTopologySnapshot("test-v3", setOf("a", "b", "c"), emptyList(),
+                if (multiHop) listOf(edge("ac", "a", "c"), edge("cb", "c", "b")) else listOf(edge("ab", "a", "b")),
+                emptyList(), mapOf("fixture" to "abc")),
+            listOf(HanStrategicRouteBinding(1, "route:a", "physical:a", "a"),
+                HanStrategicRouteBinding(2, "route:b", "physical:b", "b")),
+        )
     }
 
     @Test

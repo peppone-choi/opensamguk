@@ -74,6 +74,25 @@ V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 �
 
 ## 대표 장애 대응
 
+### Han V3 신규 세계와 V2 저장 세계 구분
+
+`han`과 `han-world-v2`는 기존 774개 도시의 ID 공간입니다. V47의 V2 명칭을 새 도시 원장으로
+재해석하지 않습니다. `han-world-v3`는 검토된 781개 route node를 사용하는 **신규 세계 전용** 지도입니다.
+역사 시나리오 15개의 새 템플릿이 V3를 가리켜도, 이미 저장된 V2 세계는 그 템플릿으로 재시드하지 않습니다.
+
+- 기존 `han-780-v1` 호환 자산과 V45/V47 migration을 수정하지 않습니다.
+- 숫자 ID 수만 맞추거나 `mapName`만 바꾸는 수동 전환은 금지합니다. 지점의 physical ref와 stable
+  route key까지 달라질 수 있습니다. 운영 세계의 V3 전환·reset은 별도 승인과 복구 계획이 필요합니다.
+- V3 배포 후보는 `build_han_world.py --target han-world-v3 --check`,
+  `apply_han_world.py --map han-world-v3 --check`,
+  `audit_han_supply_disagreements.py --map han-world-v3 --check`를 모두 통과해야 합니다.
+- 공급 보호 원장은 지도별로 구분합니다. V3 원장을 legacy 숫자 ID에 적용하거나 반대로 적용하지 않습니다.
+- 수역 overlay는 정확한 land tile SHA와 manifest에 묶입니다. 해시 불일치를 건너뛰지 말고 동일한
+  검토 산출물 세트로 되돌립니다. 현재 항구·강 통과점 근거가 없어 실행 가능한 수운 간선은 없으며,
+  수역이 보인다는 이유만으로 항행·수전이 활성화된 것으로 해석하지 않습니다.
+
+이 절은 배포/DB 전환 명령이나 승인을 대신하지 않습니다.
+
 ### 서비스는 online인데 화면이 502
 
 nginx 정적 upstream의 stale DNS, 대상 container health와 포트를 확인합니다. shared 서비스 변경 뒤 nginx를

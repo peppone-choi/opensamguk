@@ -8,6 +8,22 @@ import opensamguk.common.wire.CommandLifecycleResult
 
 class V2CommandRegistryTest {
     @Test
+    fun `transport accepts additive topology pins and rejects malformed pins`() {
+        val base = mapOf("fromCityId" to 1, "toCityId" to 2, "gold" to 1)
+        val available = assertIs<V2CommandAvailability.Available>(V2CommandRegistry.precheck("v2CityTransport", base + mapOf(
+            "topologyRevision" to "han-v3:abc", "routePathHash" to "path:123",
+        )))
+        val args = assertIs<V2CityTransportArgs>(available.args)
+        assertEquals("han-v3:abc", args.topologyRevision)
+        assertEquals("path:123", args.routePathHash)
+        listOf("", " ", 12, null).forEach { invalid ->
+            listOf("topologyRevision", "routePathHash").forEach { key ->
+                assertTrue(V2CommandRegistry.precheck("v2CityTransport", base + (key to invalid)) is V2CommandAvailability.Blocked)
+            }
+        }
+    }
+
+    @Test
     fun `registered commands expose the complete canonical schema`() {
         val schemas = V2CommandRegistry.schemas
 

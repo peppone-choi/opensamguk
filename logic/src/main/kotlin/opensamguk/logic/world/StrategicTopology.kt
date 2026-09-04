@@ -37,9 +37,9 @@ enum class RiskBand { LOW, MEDIUM, HIGH }
 sealed interface StrategicNodeRef {
     val canonicalKey: String
 
-    data class LandProvince(val id: Int) : StrategicNodeRef {
+    data class LandProvince(val id: String) : StrategicNodeRef {
         init {
-            require(id >= 0) { "Land province id must be non-negative: $id" }
+            require(id.isNotBlank()) { "Land province id must not be blank" }
         }
 
         override val canonicalKey: String = "land:$id"
@@ -108,13 +108,16 @@ data class TraversalEdge(
 
 data class RiverBarrier(
     val id: String,
-    val firstLandProvinceId: Int,
-    val secondLandProvinceId: Int,
+    val firstLandProvinceId: String,
+    val secondLandProvinceId: String,
     val sourceRefs: List<String>,
     val confidence: EvidenceConfidence,
 ) {
     init {
         require(id.isNotBlank()) { "River barrier id must not be blank" }
+        require(firstLandProvinceId.isNotBlank() && secondLandProvinceId.isNotBlank()) {
+            "River barrier $id requires stable land province ids"
+        }
         require(firstLandProvinceId != secondLandProvinceId) { "River barrier $id cannot be a self boundary" }
         require(sourceRefs.isNotEmpty() && sourceRefs.none(String::isBlank)) {
             "River barrier $id requires source references"
@@ -122,19 +125,19 @@ data class RiverBarrier(
     }
 
     val canonicalBoundaryKey: String =
-        listOf(firstLandProvinceId, secondLandProvinceId).sorted().joinToString(":")
+        strategicLandBoundaryKey(firstLandProvinceId, secondLandProvinceId)
 }
 
 class StrategicTopologySnapshot(
     topologyRevision: String,
-    landProvinceIds: Set<Int>,
+    landProvinceIds: Set<String>,
     waterZones: List<WaterZoneRecord>,
     traversalEdges: List<TraversalEdge>,
     riverBarriers: List<RiverBarrier>,
     artifactHashes: Map<String, String>,
 ) {
     val topologyRevision: String = topologyRevision
-    val landProvinceIds: Set<Int> = Collections.unmodifiableSet(LinkedHashSet(landProvinceIds))
+    val landProvinceIds: Set<String> = Collections.unmodifiableSet(LinkedHashSet(landProvinceIds))
     val waterZones: List<WaterZoneRecord> = Collections.unmodifiableList(
         waterZones.map { it.copy(sourceRefs = immutableList(it.sourceRefs)) },
     )
@@ -148,7 +151,7 @@ class StrategicTopologySnapshot(
 
     init {
         require(topologyRevision.isNotBlank()) { "Topology revision must not be blank" }
-        require(landProvinceIds.all { it >= 0 }) { "Land province ids must be non-negative" }
+        require(landProvinceIds.none(String::isBlank)) { "Land province ids must not be blank" }
         require(artifactHashes.isNotEmpty() && artifactHashes.all { it.key.isNotBlank() && it.value.isNotBlank() }) {
             "Topology must pin at least one named artifact hash"
         }
@@ -198,7 +201,7 @@ class StrategicTopologySnapshot(
         token("revision")
         token(topologyRevision)
         token("land")
-        strings(landProvinceIds.sorted().map(Int::toString))
+        strings(landProvinceIds.sorted())
         artifactHashes.toSortedMap().forEach { (name, hash) ->
             token("artifact")
             token(name)
@@ -301,3 +304,6 @@ class StrategicTopologySnapshot(
         override fun toString(): String = value.toString()
     }
 }
+
+internal fun strategicLandBoundaryKey(first: String, second: String): String =
+    listOf(first, second).sorted().joinToString("") { "${it.length}:$it" }

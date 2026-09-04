@@ -17,6 +17,17 @@ import kotlin.test.assertTrue
  */
 class V2CityTransportWireTest {
 
+    @Test
+    fun `V3 topology pins survive the daemon wire without reusing numeric route revision`() {
+        val decoded = WireJson.decodeFromString<TurnDaemonCommand>(
+            """{"type":"v2CityTransport","generalId":7,"fromCityId":5,"toCityId":6,"gold":1,"routeRevision":9,"topologyRevision":"han-v3:abc","routePathHash":"path:123"}""",
+        )
+        val encoded = WireJson.parseToJsonElement(WireJson.encodeToString(TurnDaemonCommand.serializer(), decoded)).jsonObject
+        assertEquals("han-v3:abc", encoded["topologyRevision"]?.jsonPrimitive?.content)
+        assertEquals("path:123", encoded["routePathHash"]?.jsonPrimitive?.content)
+        assertEquals("9", encoded["routeRevision"]?.jsonPrimitive?.content)
+    }
+
     private val sample = CityTransport(
         requestId = "req-1",
         generalId = 7,

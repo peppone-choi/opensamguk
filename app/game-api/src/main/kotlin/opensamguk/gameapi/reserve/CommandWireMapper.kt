@@ -172,6 +172,8 @@ object CommandWireMapper {
                 garrison = args.garrison,
                 routeRevision = args.routeRevision,
                 expiresAt = expiresAt,
+                topologyRevision = args.topologyRevision,
+                routePathHash = args.routePathHash,
             )
         }
     }
@@ -481,6 +483,7 @@ object CommandWireMapper {
                 gold = args.long("gold") ?: 0L, rice = args.long("rice") ?: 0L,
                 garrison = args.int("garrison") ?: 0,
                 routeRevision = args.long("routeRevision"), expiresAt = expiresAt,
+                topologyRevision = args.str("topologyRevision"), routePathHash = args.str("routePathHash"),
             )
             else -> null
         }

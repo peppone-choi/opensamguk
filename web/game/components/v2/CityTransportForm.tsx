@@ -12,6 +12,10 @@ import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
 import CityLedgerPanel from './CityLedgerPanel';
 import type { IntakeOutcome } from '../../lib/types';
+import {
+    transportRoutePins, transportRouteSummary,
+    type TransportRoutePreview,
+} from '../../lib/v2/cityTransport';
 
 type Outcome = { kind: 'applied' | 'rejected' | 'pending'; message: string };
 
@@ -24,30 +28,37 @@ export default function CityTransportForm() {
     const [garrison, setGarrison] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [outcome, setOutcome] = useState<Outcome | null>(null);
+    const [routeSummary, setRouteSummary] = useState<string | null>(null);
     // OPENSAM-155 (R6) — 수송은 두 도시를 동시에 움직이므로 양쪽 원장을 같이 보여준다.
     const [ledgerRefresh, setLedgerRefresh] = useState(0);
 
     async function handleSubmit() {
         const nums = [generalId, fromCityId, toCityId].map(Number);
-        if (nums.some(n => !Number.isFinite(n))) {
+        if (nums.some(n => !Number.isSafeInteger(n) || n <= 0 || n > 2147483647)) {
             setOutcome({ kind: 'rejected', message: '장수 ID / 출발 도시 / 도착 도시를 올바르게 입력해주세요.' });
             return;
         }
         const [gid, from, to] = nums;
         const amounts = { gold: Number(gold || 0), rice: Number(rice || 0), garrison: Number(garrison || 0) };
-        if (Object.values(amounts).some(n => !Number.isFinite(n) || n < 0)) {
+        if (Object.values(amounts).some(n => !Number.isSafeInteger(n) || n < 0)) {
             setOutcome({ kind: 'rejected', message: '수송량은 0 이상의 숫자여야 합니다.' });
             return;
         }
 
         setSubmitting(true);
         setOutcome(null);
+        setRouteSummary(null);
         try {
+            const payload = { fromCityId: from, toCityId: to, ...amounts };
+            const preview = await api.post<TransportRoutePreview>(
+                `/api/v2/city-transport/route?generalId=${gid}`, payload,
+            );
+            const routePins = transportRoutePins(preview);
+            if (preview.route) setRouteSummary(transportRouteSummary(preview.route));
             const result = await submitCommandAndAwaitResult(() =>
                 api.post<IntakeOutcome>(`/api/v2/city-transport?generalId=${gid}`, {
-                    fromCityId: from,
-                    toCityId: to,
-                    ...amounts,
+                    ...payload,
+                    ...routePins,
                 }),
             );
             if (result.status === 'applied') {
@@ -70,7 +81,10 @@ export default function CityTransportForm() {
     const field = (label: string, value: string, set: (v: string) => void) => (
         <label key={label}>
             {label}
-            <input type="number" value={value} onChange={e => set(e.target.value)} />
+            <input type="number" disabled={submitting} value={value} onChange={e => {
+                set(e.target.value);
+                setRouteSummary(null);
+            }} />
         </label>
     );
 
@@ -90,6 +104,7 @@ export default function CityTransportForm() {
                     {submitting ? '처리 중...' : '수송'}
                 </button>
             </div>
+            {routeSummary && <p>{routeSummary}</p>}
             {outcome && (
                 <p
                     role="status"

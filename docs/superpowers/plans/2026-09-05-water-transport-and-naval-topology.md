@@ -220,6 +220,31 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 
 ## Wave 4: Water-aware supply and runtime control
 
+### Execution notes after the V3 compatibility review
+
+- Use V3 only for the new runtime integration. The ordinary V3 campaign needs the control table,
+  so append baseline `V49__create_water_zone_control.sql` after Kotlin V48, not a sandbox-only V902.
+  Create an empty table; never seed/backfill water nation ownership or alter saved world map names.
+- An existing sandbox DB that already applied V901 has a lower-version migration upgrade gate.
+  Verify/report it separately; do not set global `outOfOrder`, repair history, or reset that DB.
+  This implementation is not approval to deploy across that gate.
+- Pin each immutable control state/snapshot to both topology revision and content hash, plus the
+  exact string water-zone ID. An absent state is unknown/uncontrolled, not implicitly OPEN.
+- Consume explicit, validated control assessments. Do not derive water ownership from nearby land,
+  or invent a fleet adapter before the battle foundation exists. First explicit state has revision 1.
+- Recorder writes retain the **first** expected persisted revision when multiple changes in one
+  tick coalesce. Carry immutable typed deltas through DatabaseHooks and the existing JDBC transaction;
+  require exactly one affected row. Retry the retained payload, clear only after successful flush,
+  and classify CAS mismatch as reload-required rather than blindly retrying.
+- Restore only through the actual `boot/WorldSnapshotLoader`; the superseded `RehydrateService`
+  must remain unwired. Validate restored zone/pins before publishing the world snapshot.
+- Supply can use only explicitly `supplyAllowed` edges with live permission/capacity, matching
+  control, and open seasonal state. Unknown water state/capacity is not a transport grant. Preserve
+  the dual-evidence destructive-supply gate and before/after audit.
+- Read-only baseline measurement: replacing 4,161 raw province borders with 4,117 dry borders yields
+  zero new supply cuts and zero supply audit errors across the current 15 V3 scenarios. This does
+  not authorize future barriers/ports or prove arbitrary future battle states safe.
+
 **Files:**
 
 - Create: `logic/src/main/kotlin/opensamguk/logic/world/WaterControlState.kt`
