@@ -91,6 +91,10 @@ class TurnDaemonLifecycle(
         return state.lastTurnTime.plus(Duration.ofSeconds(state.tickSeconds.toLong()))
     }
 
+    /** The first instant at which the strict `turnTime < runTime` gate can select any general. */
+    fun nextGeneralRunTime(): Instant? =
+        world.listGenerals().minOfOrNull { it.turnTime }?.plusNanos(1)
+
     /**
      * The generals due at [runTime], in deterministic order (ascending `turnTime`, then ascending id).
      *

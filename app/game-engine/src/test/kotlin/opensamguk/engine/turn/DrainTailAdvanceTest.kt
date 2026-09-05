@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -330,6 +331,25 @@ class DrainTailAdvanceTest {
         assertTrue(lc.dueGenerals(t0).isEmpty(), "turnTime == boundary는 STRICT `<`로 due 아님 (BUG #6 fix)")
         // 경계가 t0보다 STRICT 미래면 due다.
         assertTrue(lc.dueGenerals(t0.plusSeconds(1)).any { it.id == 1 }, "turnTime < boundary면 due")
+    }
+
+    @Test
+    fun `next general run time is one nanosecond after the earliest strict turn time`() {
+        val early = t0.plusSeconds(5)
+        val late = t0.plusSeconds(9)
+        val lc = lifecycle(
+            world(
+                gen(id = 1, turnTime = late),
+                gen(id = 2, turnTime = early),
+            ),
+        )
+
+        assertEquals(early.plusNanos(1), lc.nextGeneralRunTime())
+    }
+
+    @Test
+    fun `next general run time is absent when the world has no generals`() {
+        assertNull(lifecycle(world()).nextGeneralRunTime())
     }
 
     @Test

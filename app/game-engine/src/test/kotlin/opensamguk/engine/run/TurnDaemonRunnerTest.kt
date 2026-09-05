@@ -166,6 +166,73 @@ class TurnDaemonRunnerTest {
         }
     }
 
+    @Test
+    fun `runner drains a due general before a future world boundary`() {
+        val generalLatch = CountDownLatch(1)
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            initialNextRun = Instant.now().plusSeconds(60),
+            initialNextGeneralRun = Instant.now().minusMillis(1),
+            generalDrainLatch = generalLatch,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), daemonEnabled = true, idlePollMs = 250)
+
+        runner.start()
+        try {
+            assertTrue(generalLatch.await(3, TimeUnit.SECONDS), "personal deadline drives a general-only drain")
+            assertEquals(1, svc.generalDrains.get())
+            assertEquals(0, svc.ticks.get(), "the future world boundary does not advance")
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `runner prioritizes an overdue world boundary over a due general`() {
+        val order = mutableListOf<String>()
+        val worldLatch = CountDownLatch(1)
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            latch = worldLatch,
+            initialNextRun = Instant.now().minusSeconds(1),
+            initialNextGeneralRun = Instant.now().minusSeconds(2),
+            callOrder = order,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), daemonEnabled = true, idlePollMs = 250)
+
+        runner.start()
+        try {
+            assertTrue(worldLatch.await(3, TimeUnit.SECONDS), "overdue world boundary is processed")
+            assertEquals("world", order.first(), "world catch-up must precede a later personal drain")
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `paused runner does not drain a due general until resumed`() {
+        val generalLatch = CountDownLatch(1)
+        val gate = DaemonPauseGate()
+        assertTrue(gate.lock())
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            initialNextRun = Instant.now().plusSeconds(60),
+            initialNextGeneralRun = Instant.now().minusSeconds(1),
+            generalDrainLatch = generalLatch,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, gate, daemonEnabled = true, idlePollMs = 10)
+
+        runner.start()
+        try {
+            Thread.sleep(120)
+            assertEquals(0, svc.generalDrains.get(), "pause blocks personal reserved turns")
+            assertTrue(gate.unlock())
+            assertTrue(generalLatch.await(3, TimeUnit.SECONDS), "resume admits the pending personal turn")
+        } finally {
+            runner.stop()
+        }
+    }
+
     // ── B1b — pause(동결) 게이트: 동결 중 틱 미진행, 해제 후 재개 ──────────────────────────────────────
     @Test
     fun `paused runner skips ticks until resumed`() {
@@ -299,10 +366,14 @@ class TurnDaemonRunnerTest {
         private val latch: CountDownLatch? = null,
         private val intakeDrains: AtomicInteger? = null,
         private val intakeLatch: CountDownLatch? = null,
+        val generalDrains: AtomicInteger = AtomicInteger(),
+        private val generalDrainLatch: CountDownLatch? = null,
+        private val callOrder: MutableList<String>? = null,
         private val failTicks: Boolean = false,
         /** `Error`를 던져 루프 스레드를 통째로 죽인다 — loop()의 `catch (e: Exception)`이 못 잡는다. */
         private val killLoopWithError: Boolean = false,
         initialNextRun: Instant = Instant.now().minusSeconds(5),
+        initialNextGeneralRun: Instant? = null,
     ) : TurnRunService(
         world = stubWorld(),
         commandStream = RedisCommandStream(StringRedisTemplate(), "che:test", WorldId(1), startId = "0"),
@@ -313,9 +384,12 @@ class TurnDaemonRunnerTest {
     ) {
         // Past ⇒ due now; after the first tick push it far out so the loop idles (one observable drive).
         @Volatile private var next: Instant = initialNextRun
+        @Volatile private var nextGeneral: Instant? = initialNextGeneralRun
         private val pendingIntakeDrains = AtomicInteger(if (intakeDrains == null) 0 else 1)
 
         override fun nextRunTime(): Instant = next
+
+        override fun nextGeneralRunTime(): Instant? = nextGeneral
 
         override fun runIntakeCommands(blockMs: Long): Int {
             val counter = intakeDrains ?: return 0
@@ -328,6 +402,7 @@ class TurnDaemonRunnerTest {
         }
 
         override fun runTick(runTime: Instant): TickResult {
+            callOrder?.add("world")
             ticks.incrementAndGet()
             if (killLoopWithError) {
                 throw StackOverflowError("simulated JVM Error — loop() does not catch Error")
@@ -344,6 +419,21 @@ class TurnDaemonRunnerTest {
                 flushedLogs = 0,
                 turnCompletedAt = runTime.toString(),
                 lastTurnTime = runTime.toString(),
+            )
+        }
+
+        override fun runDueGeneralTurns(executionAsOf: Instant): TickResult {
+            callOrder?.add("general")
+            generalDrains.incrementAndGet()
+            nextGeneral = executionAsOf.plusSeconds(60)
+            generalDrainLatch?.countDown()
+            return TickResult(
+                handled = emptyList(),
+                flushedGenerals = 0,
+                flushedCities = 0,
+                flushedLogs = 0,
+                turnCompletedAt = executionAsOf.toString(),
+                lastTurnTime = next.toString(),
             )
         }
 

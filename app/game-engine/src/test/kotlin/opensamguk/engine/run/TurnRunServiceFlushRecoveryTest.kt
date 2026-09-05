@@ -11,6 +11,7 @@ import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.LifecycleEnv
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
@@ -32,6 +33,8 @@ import opensamguk.logic.world.WaterBlockadeState
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.clearInvocations
+import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.dao.QueryTimeoutException
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -60,6 +63,7 @@ class TurnRunServiceFlushRecoveryTest {
         val service: TurnRunService,
         val world: InMemoryTurnWorld,
         val recorder: ChangeRecorder,
+        val realtimeTemplate: StringRedisTemplate,
     )
 
     @Test
@@ -98,6 +102,57 @@ class TurnRunServiceFlushRecoveryTest {
         assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, service.recoverySnapshot().mode)
         assertFailsWith<IllegalStateException> { service.retryRetainedFlush() }
         assertFailsWith<IllegalStateException> { service.runIntakeCommands(1) }
+    }
+
+    @Test
+    fun `general-only drain flushes the due general without advancing the world clock`() {
+        val payloads = mutableListOf<FlushPayload>()
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) {
+                payloads += payload
+            }
+        }
+        val fixture = newFixture(flush, withDueGeneral = true)
+        val t0 = Instant.parse("0200-01-01T00:00:00Z")
+        clearInvocations(fixture.realtimeTemplate)
+
+        val result = fixture.service.runDueGeneralTurns(t0)
+
+        assertEquals(1, result.handled.size)
+        assertEquals(t0, fixture.world.getState().lastTurnTime)
+        assertEquals(t0.plusSeconds(3_599), fixture.world.getGeneralById(10)?.turnTime)
+        assertEquals(t0.toString(), payloads.single().worldStateUpdate["last_turn_time"])
+        assertEquals(200, payloads.single().worldStateUpdate["current_year"])
+        assertEquals(1, payloads.single().worldStateUpdate["current_month"])
+        assertEquals(1, payloads.single().worldStateUpdate["current_phase"])
+        verifyNoInteractions(fixture.realtimeTemplate)
+    }
+
+    @Test
+    fun `general-only retained flush retry does not publish or advance the world clock`() {
+        val calls = AtomicInteger(0)
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) {
+                if (calls.incrementAndGet() == 1) {
+                    throw QueryTimeoutException("flush timeout")
+                }
+            }
+        }
+        val fixture = newFixture(flush, withDueGeneral = true)
+        val t0 = Instant.parse("0200-01-01T00:00:00Z")
+        clearInvocations(fixture.realtimeTemplate)
+
+        assertFailsWith<QueryTimeoutException> {
+            fixture.service.runDueGeneralTurns(t0)
+        }
+        assertEquals(t0, fixture.world.getState().lastTurnTime)
+
+        assertTrue(fixture.service.retryRetainedFlush())
+
+        assertEquals(2, calls.get())
+        assertEquals(t0, fixture.world.getState().lastTurnTime)
+        assertEquals(t0.plusSeconds(3_600), fixture.service.nextRunTime())
+        verifyNoInteractions(fixture.realtimeTemplate)
     }
 
     @Test
@@ -348,6 +403,7 @@ class TurnRunServiceFlushRecoveryTest {
                             dedication = 0,
                             officerLevel = 1,
                             turnTime = t0.minusSeconds(1),
+                            meta = linkedMapOf("killturn" to 5),
                         ),
                     )
                 } else {
@@ -376,6 +432,15 @@ class TurnRunServiceFlushRecoveryTest {
         val lifecycle = TurnDaemonLifecycle(
             world = world,
             handler = handler,
+            lifecycleEnvOf = { state, date ->
+                LifecycleEnv(
+                    baselineKillturn = 0,
+                    year = state.currentYear,
+                    month = state.currentMonth,
+                    turnTerm = state.tickSeconds / 60,
+                    turnTimeHm = date,
+                )
+            },
             pullNationTurnOf = { nationId, officerLevel ->
                 handler.recorder.recordNationTurnPull(nationId, officerLevel)
             },
@@ -398,7 +463,7 @@ class TurnRunServiceFlushRecoveryTest {
             commandInboxRepository = commandInboxRepository,
             commandOutboxRelay = commandOutboxRelay,
         )
-        return Fixture(service, world, handler.recorder)
+        return Fixture(service, world, handler.recorder, redis)
     }
 
     private fun wakeEnvelope(messageId: String, requestId: String): RedisCommandStream.WakeEnvelope =
