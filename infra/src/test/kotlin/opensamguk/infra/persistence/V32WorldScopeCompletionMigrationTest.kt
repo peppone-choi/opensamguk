@@ -472,6 +472,7 @@ class V32WorldScopeCompletionMigrationTest {
             "troop" to "PRIMARY KEY (world_id, troop_leader)",
             "ng_auction_bid" to "PRIMARY KEY (world_id, no)",
             "general_owner" to "PRIMARY KEY (world_id, general_id)",
+            "water_zone_control" to "PRIMARY KEY (world_id, water_zone_id)",
         )
         specialPrimaryKeys.forEach { (table, expected) -> assertConstraint(table, "p", expected) }
 
@@ -527,7 +528,8 @@ class V32WorldScopeCompletionMigrationTest {
     }
 
     private fun assertWorldForeignKey(table: String) {
-        assertForeignKey(table, "FOREIGN KEY (world_id) REFERENCES world_state(id)")
+        val deleteAction = if (table == "water_zone_control") " ON DELETE CASCADE" else ""
+        assertForeignKey(table, "FOREIGN KEY (world_id) REFERENCES world_state(id)$deleteAction")
     }
 
     private fun assertForeignKey(table: String, expected: String) {
@@ -650,6 +652,7 @@ class V32WorldScopeCompletionMigrationTest {
             "command_inbox",
             "command_result",
             "command_outbox",
+            "water_zone_control",
         )
         private val v32WorldOwnedTables = firstCohort + remainingWorldTables
         private val worldOwnedTables = v32WorldOwnedTables + postV32WorldTables

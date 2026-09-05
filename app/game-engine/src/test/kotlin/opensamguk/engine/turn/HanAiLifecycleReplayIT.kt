@@ -5,6 +5,7 @@ import opensamguk.common.world.WorldId
 import opensamguk.engine.boot.SeedBootstrap
 import opensamguk.engine.boot.WorldSnapshotLoader
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
+import opensamguk.infra.seed.HanStrategicTopologyJson
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
@@ -21,6 +22,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import java.security.MessageDigest
+import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -60,7 +62,8 @@ class HanAiLifecycleReplayIT {
         jdbc = JdbcTemplate(dataSource)
         val bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", worldId = WorldId(1))
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh database must seed scenario_1010")
-        loader = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1))
+        val topology = HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3").topology
+        loader = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1), waterTopologyLoader = { topology })
     }
 
     @AfterAll
@@ -141,7 +144,9 @@ class HanAiLifecycleReplayIT {
         },
     ): ReplayResult {
         assertEquals("han-world-v3", snapshot.state.config["mapName"], "scenario_1010 must exercise the new-world-only Han variant")
-        assertEquals(774, snapshot.cities.size, "playable-Han evidence must use the full city graph")
+        assertEquals(781, snapshot.cities.size, "playable-Han evidence must use the full V3 city graph")
+        assertEquals((1..781).toSet(), snapshot.cities.map { it.id }.toSet())
+        assertEquals("역성", snapshot.cities.single { it.id == 781 }.name)
         assertEquals(230, snapshot.generals.size, "playable-Han evidence must use the active NPC roster")
 
         val world = InMemoryTurnWorld(snapshot)

@@ -85,7 +85,7 @@ class ScenarioMapSeedIT {
         val bootstrap = SeedBootstrap(scenarioCode = "scenario_2", worldId = opensamguk.common.world.WorldId(1))
 
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_2 world is seeded")
-        assertEquals(774, count("city"))
+        assertEquals(774, count("city")) // scenario_2 remains the legacy V2 compatibility template.
         assertEquals(0, count("nation"))
         assertEquals(0, count("general"))
 
@@ -97,7 +97,7 @@ class ScenarioMapSeedIT {
         assertEquals(14800, (city["comm_max"] as Number).toInt())
 
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"mapName\":\"han-world-v3\"") || config.contains("\"mapName\": \"han-world-v3\""), config)
+        assertTrue(config.contains("\"mapName\":\"han-world-v2\"") || config.contains("\"mapName\": \"han-world-v2\""), config)
     }
 
     @Test
