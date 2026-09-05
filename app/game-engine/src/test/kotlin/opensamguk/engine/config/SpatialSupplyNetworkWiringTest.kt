@@ -3,6 +3,7 @@ package opensamguk.engine.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.engine.world.HanSpatialSupplyProvider
 import opensamguk.engine.world.HanSupplyDisconnectionPolicyLoader
+import opensamguk.infra.seed.HanStrategicTopologyJson
 import opensamguk.infra.seed.MapJson
 import opensamguk.logic.world.SpatialSupplyNetwork
 import java.nio.file.Path
@@ -123,6 +124,7 @@ class SpatialSupplyNetworkWiringTest {
             loader,
         )
         val mapData = MapJson.loadFromClasspath("han-world-v3")
+        val projection = HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3")
         val scenarioCodes = mapper.readTree(
             Path.of("../../data/map/han-scenario-province-ownership-v1.json").toFile(),
         ).path("scenarios").map { it.path("scenarioCode").asInt() }
@@ -134,7 +136,9 @@ class SpatialSupplyNetworkWiringTest {
                 mapData = mapData,
                 scenarioCode = scenarioCode,
                 liveCityNations = { mapData.cities.map { it.id to 0 } },
-                loadNetwork = spatial::network,
+                loadNetwork = { mapName, scenario, cities ->
+                    spatial.network(mapName, scenario, cities, strategicProjection = projection)
+                },
             )()
             val expectedPolicies = buildSet {
                 if (scenarioCode in 1020..1110) add(305)
