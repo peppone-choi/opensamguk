@@ -1,4 +1,13 @@
 {
+  "appendedRows": [
+    {
+      "administrativeUnitId": "hhs:112:濟南國:010",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 781,
+      "physicalPlaceRef": "chgis:v6:cnty:45022",
+      "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef"
+    }
+  ],
   "migrationId": "han-route-node-migration-v1",
   "mode": "NEW_WORLD_ONLY",
   "referenceInventory": {
@@ -5521,10 +5530,11 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "e2b5467eb33838337c8273ef5ace6fe718c9512f5b7cd650921c685c4e23d799",
+  "sourceCandidateSha256": "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "58b94d077a2d6e3a1201777958d5b6afbac80cb00370bc411de77e804d6d295c",
+  "sourceSelectionSha256": "e029b935eb43489115d55ed100d6e85fb4a01bad7aef26b6c3fa98b0a41b6e05",
   "summary": {
+    "appendedIdentityCount": 1,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,
@@ -5533,5 +5543,6 @@
     "routeNodeReplacementCount": 101,
     "rowCount": 780,
     "seatRoleChangeCount": 102
-  }
+  },
+  "targetWorldVersion": "han-world-v3"
 }

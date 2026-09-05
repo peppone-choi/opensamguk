@@ -1,6 +1,13 @@
 package opensamguk.engine.turn
 
 import opensamguk.engine.flush.DeltaGenerationSession
+import opensamguk.common.world.WorldId
+import opensamguk.infra.persistence.WaterControlWriteBatch
+import opensamguk.infra.persistence.WaterControlWriteRow
+import opensamguk.logic.world.WaterControlAssessment
+import opensamguk.logic.world.WaterControlChangeResult
+import opensamguk.logic.world.WaterControlDenialCode
+import opensamguk.logic.world.projectWaterControl
 
 import java.time.Instant
 import opensamguk.infra.persistence.EventInsertRow
@@ -175,6 +182,8 @@ class ChangeRecorder(
      * v1 경로에서는 비어 있고, 비면 v2 flush step이 미진입한다.
      */
     private val cityLedgerV2Upserts = linkedMapOf<Int, CityLedgerV2Upsert>()
+    private val waterControlWrites = linkedMapOf<String, WaterControlWriteRow>()
+    private var waterControlWorldId: WorldId? = null
 
     /** 프로필 아이콘 채널 (OPENSAM-94) — general.picture/image_server 전용 컬럼 UPDATE 의도. */
     private val profileIconUpdates = mutableListOf<ProfileIconUpdate>()
@@ -243,6 +252,7 @@ class ChangeRecorder(
             auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
             bettingInserts.isNotEmpty() ||
             cityLedgerV2Upserts.isNotEmpty() ||
+            waterControlWrites.isNotEmpty() ||
             profileIconUpdates.isNotEmpty() ||
             boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() ||
             votePollInserts.isNotEmpty() || voteInserts.isNotEmpty() ||
@@ -702,6 +712,30 @@ class ChangeRecorder(
         cityLedgerV2Upserts[cityId] = CityLedgerV2Upsert(columns)
     }
 
+    /** Explicit daemon assessment only; no boot/scenario/shore ownership producer. */
+    fun applyWaterControlAssessment(
+        world: InMemoryTurnWorld,
+        expectedRevision: Long?,
+        assessment: WaterControlAssessment,
+    ): WaterControlChangeResult {
+        gateMutation("applyWaterControlAssessment")
+        val before = world.waterControlSnapshot()
+            ?: return WaterControlChangeResult.Denied(WaterControlDenialCode.UNSUPPORTED_WORLD)
+        check(waterControlWorldId == null || waterControlWorldId == world.worldId) { "Recorder cannot mix water writes from different worlds" }
+        val result = projectWaterControl(before, expectedRevision, assessment)
+        if (result is WaterControlChangeResult.Changed) {
+            val existing = waterControlWrites[assessment.waterZoneId]
+            // A nullable first expected revision means INSERT, and must not become revision 1 on coalescing.
+            val persistedExpected = if (existing != null) existing.expectedRevision else result.expectedRevision
+            val write = WaterControlWriteRow(persistedExpected, result.state)
+            val after = before.withState(result.state)
+            world.applyWaterControlDirtyFree(after)
+            waterControlWorldId = world.worldId
+            waterControlWrites[assessment.waterZoneId] = write
+        }
+        return result
+    }
+
     /**
      * OPENSAM-94 프로필 아이콘 UPDATE 기록 — general.picture/image_server 전용 컬럼. columns는
      * `id`/`user_id`/`picture`/`image_server` (flush WHERE가 id+user_id+npc_state=0 predicate 재-단언).
@@ -749,6 +783,15 @@ class ChangeRecorder(
 
     /** 기록된 v2 도시 원장 UPSERT (OPENSAM-150 R1 flush 소스), 최초 기록 순서대로. */
     fun cityLedgerV2Upserts(): List<CityLedgerV2Upsert> = cityLedgerV2Upserts.values.toList()
+
+    fun waterControlWrites(): WaterControlWriteBatch = WaterControlWriteBatch(waterControlWrites.values.toList())
+
+    fun waterControlWritesFor(worldId: WorldId): WaterControlWriteBatch {
+        check(waterControlWorldId == null || waterControlWorldId == worldId) {
+            "Cannot flush water control recorded for worldId=$waterControlWorldId as worldId=$worldId"
+        }
+        return waterControlWrites()
+    }
 
     /** 기록된 프로필 아이콘 UPDATE (OPENSAM-94 flush 소스), emit 순서대로. */
     fun profileIconUpdates(): List<ProfileIconUpdate> = profileIconUpdates.toList()
@@ -862,6 +905,8 @@ class ChangeRecorder(
         auctionBidInserts.clear()
         bettingInserts.clear()
         cityLedgerV2Upserts.clear()
+        waterControlWrites.clear()
+        waterControlWorldId = null
         profileIconUpdates.clear()
         boardPostInserts.clear()
         boardCommentInserts.clear()

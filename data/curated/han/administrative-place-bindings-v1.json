@@ -5742,13 +5742,16 @@
     },
     {
       "administrativeUnitId": "hhs:112:濟南國:010",
-      "candidateCount": 0,
+      "candidateCount": 1,
       "identity": {
         "canonicalGroup": "濟南國",
         "ordinal": 10,
         "sourceVolume": 112
       },
-      "joinStatus": "NO_COORDINATE_CANDIDATE"
+      "joinStatus": "RESOLVED_POINT",
+      "selectedCandidate": {
+        "physicalPlaceId": "chgis:v6:cnty:45022"
+      }
     },
     {
       "administrativeUnitId": "hhs:112:平原郡:001",

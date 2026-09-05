@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -17,6 +18,67 @@ from tools.map.world_province_geometry import (
 
 
 class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
+    def test_committed_licheng_identity_chain_is_reviewed_without_moving_geometry(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        tiles = json.loads((root / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        bindings = json.loads(
+            (root / "data/curated/han/administrative-place-bindings-v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        binding = next(
+            row
+            for row in bindings["administrativeUnits"]
+            if row["administrativeUnitId"] == "hhs:112:濟南國:010"
+        )
+        self.assertEqual("RESOLVED_POINT", binding["joinStatus"])
+        self.assertEqual(
+            "chgis:v6:cnty:45022",
+            binding["selectedCandidate"]["physicalPlaceId"],
+        )
+
+        jurisdictions = {row["id"]: row for row in tiles["jurisdictionRecords"]}
+        commanderies = {row["id"]: row for row in tiles["commanderyRecords"]}
+        cities = {row["id"]: row for row in tiles["cities"]}
+        licheng = jurisdictions["45022"]
+        self.assertEqual("PARENT-0035", licheng["commanderyId"])
+        self.assertEqual(
+            {"PARENT-0035"},
+            {
+                row["parentRegionId"]
+                for row in tiles["provinceRecords"]
+                if row["jurisdictionId"] == "45022"
+            },
+        )
+        self.assertIn("45022", commanderies["PARENT-0035"]["jurisdictionIds"])
+        self.assertNotIn("45022", commanderies["PARENT-0036"]["jurisdictionIds"])
+        self.assertNotEqual("45022", commanderies["PARENT-0035"]["seatJurisdictionId"])
+        self.assertFalse(cities["45022"]["zhi"])
+        self.assertEqual(1_524, len(tiles["provinceRecords"]))
+        self.assertEqual(1_020, len(tiles["jurisdictionRecords"]))
+        self.assertEqual(172, len(tiles["commanderyRecords"]))
+        geometry_hashes = {
+            key: hashlib.sha256(
+                json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()
+            ).hexdigest()
+            for key, value in {
+                "terrain": tiles["terrain"],
+                "owner": tiles["owner"],
+                "cities": tiles["cities"],
+                "countyAdjacency": tiles["adjacency"]["county"],
+            }.items()
+        }
+        self.assertEqual(
+            {
+                "terrain": "89fb2257769e218a76a13e8a876a53242800e0ba76abee74fdc29973dd8c2a04",
+                "owner": "7d531ec7c0ce708ab1f7a5768e540b0c3fb8b0398217c50a10248a6f5f494109",
+                "cities": "6abb179dfcf50e57367501dea48549a6c6553b54cdd67b91aa4f3ba56b37411a",
+                "countyAdjacency": "a6d4b32cdcdd68cfcb0c42bea8227666c9fc544b84692d801ec7b4fa0bfdea0d",
+            },
+            geometry_hashes,
+        )
+
     def test_committed_qingzhou_parent_adjudications_match_220_sources(self) -> None:
         root = Path(__file__).resolve().parents[3]
         document = json.loads(

@@ -43,10 +43,15 @@ data class SpatialSupplyNetwork(
     val provinceOwners: IntArray,
     val provinceAdjacency: List<IntArray>,
     val cityProvinceIndices: Map<Int, Int>,
+    val fallbackPolicies: Map<Int, SupplyFallbackPolicy> = emptyMap(),
+    val strategicSupply: StrategicSupplyNetwork? = null,
 ) {
     init {
         require(provinceOwners.size == provinceAdjacency.size) {
             "Spatial supply owner/adjacency size mismatch: ${provinceOwners.size}/${provinceAdjacency.size}"
+        }
+        require(strategicSupply == null || strategicSupply.provinceIds.size == provinceOwners.size) {
+            "Strategic supply province domain size mismatch"
         }
         provinceAdjacency.forEachIndexed { provinceIndex, neighbors ->
             require(neighbors.toSet().size == neighbors.size) {
@@ -68,6 +73,11 @@ data class SpatialSupplyNetwork(
         cityProvinceIndices.forEach { (cityId, provinceIndex) ->
             require(provinceIndex in provinceOwners.indices) {
                 "Spatial supply city $cityId has invalid province index $provinceIndex"
+            }
+        }
+        fallbackPolicies.keys.forEach { cityId ->
+            require(cityId in cityProvinceIndices) {
+                "Spatial supply fallback policy references unmapped city $cityId"
             }
         }
     }
@@ -147,43 +157,7 @@ fun computeSuppliedCitiesWithSpatialNetwork(
     cityConst: CityConstVariant,
     spatialNetwork: SpatialSupplyNetwork,
 ): Set<Int> {
-    val ownedNation = cities.associate { it.id to it.nationId }
-    val reached = BooleanArray(spatialNetwork.provinceOwners.size)
-    val queue = ArrayDeque<Int>()
-
-    for (capital in capitals) {
-        if (ownedNation[capital.capitalCityId] != capital.nationId) continue
-        val provinceIndex = spatialNetwork.cityProvinceIndices[capital.capitalCityId] ?: continue
-        if (spatialNetwork.provinceOwners[provinceIndex] != capital.nationId) continue
-        if (reached[provinceIndex]) continue
-        reached[provinceIndex] = true
-        queue.addLast(provinceIndex)
-    }
-
-    while (queue.isNotEmpty()) {
-        val provinceIndex = queue.removeFirst()
-        val nationId = spatialNetwork.provinceOwners[provinceIndex]
-        for (neighbor in spatialNetwork.provinceAdjacency[provinceIndex]) {
-            if (reached[neighbor]) continue
-            if (spatialNetwork.provinceOwners[neighbor] != nationId) continue
-            reached[neighbor] = true
-            queue.addLast(neighbor)
-        }
-    }
-
-    val supplied = LinkedHashSet<Int>()
-    for (city in cities) {
-        val provinceIndex = spatialNetwork.cityProvinceIndices[city.id] ?: continue
-        if (spatialNetwork.provinceOwners[provinceIndex] == city.nationId && reached[provinceIndex]) {
-            supplied += city.id
-        }
-    }
-
-    val legacySupplied = computeSuppliedCitiesOrdered(cities, capitals, cityConst)
-    for (cityId in legacySupplied) {
-        if (cityId !in spatialNetwork.cityProvinceIndices) supplied += cityId
-    }
-    return supplied
+    return evaluateSupplyReachability(cities, capitals, cityConst, spatialNetwork).suppliedCityIds
 }
 
 /**
@@ -199,6 +173,7 @@ data class CitySupplyResult(
     val generals: List<General>,
     val lostCityIds: List<Int>,
     val isolatedLogs: List<String>,
+    val reachabilityRows: List<SupplyReachabilityRow> = emptyList(),
 )
 
 /**
@@ -237,9 +212,11 @@ fun applyCitySupply(
 ): CitySupplyResult {
     // The BFS reads ONLY owned cities (nation != 0), iterated in ASCENDING id order (anchor #1).
     val ownedCities = cities.filter { it.nationId != 0 }.map { SupplyCity(it.id, it.nationId) }
-    val suppliedSet = spatialSupplyNetwork?.let {
-        computeSuppliedCitiesWithSpatialNetwork(ownedCities, capitals, cityConst, it)
-    } ?: computeSuppliedCities(ownedCities, capitals, cityConst)
+    val reachability = spatialSupplyNetwork?.let {
+        evaluateSupplyReachability(ownedCities, capitals, cityConst, it)
+    }
+    val suppliedSet = reachability?.suppliedCityIds
+        ?: computeSuppliedCities(ownedCities, capitals, cityConst)
 
     // Step 1 — net supply: nation==0 → supplied; nation!=0 → supplied iff in the BFS set.
     fun isSupplied(c: City): Boolean = if (c.nationId == 0) true else c.id in suppliedSet
@@ -294,7 +271,7 @@ fun applyCitySupply(
     val isolatedLogs = lostCities.map { HistoryTokens.isolatedCity(cityConst.byId(it.id)?.name ?: "") }
 
     if (lostCitySet.isEmpty()) {
-        return CitySupplyResult(decayedCities, decayedGenerals, lostCityIds, isolatedLogs)
+        return CitySupplyResult(decayedCities, decayedGenerals, lostCityIds, isolatedLogs, reachability?.rows.orEmpty())
     }
 
     // 4a — officer reset: officer_level=1, officer_city=0 WHERE officer_city IN lostIds (unconditional).
@@ -320,7 +297,7 @@ fun applyCitySupply(
         }
     }
 
-    return CitySupplyResult(finalCities, finalGenerals, lostCityIds, isolatedLogs)
+    return CitySupplyResult(finalCities, finalGenerals, lostCityIds, isolatedLogs, reachability?.rows.orEmpty())
 }
 
 /** Set a single meta key (insertion-order-preserving), like [opensamguk.logic.domain.withMeta]. */

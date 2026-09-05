@@ -17,6 +17,10 @@ RUN python3 tools/map/build_province_map.py \
     --output-dir build/generated-map \
     --map-code han-world-v2 \
  && python3 tools/map/build_province_map.py \
+    --input data/map/han-tiles.json \
+    --output-dir build/generated-map \
+    --map-code han-world-v3 \
+ && python3 tools/map/build_province_map.py \
     --input data/map/han-780-v1-tiles.json \
     --output-dir build/generated-map \
     --map-code han-780-v1
@@ -31,9 +35,16 @@ COPY --from=build /src/app/game-api/build/libs/*.jar app.jar
 # 내리고 싶으면 이 한 줄을 지우면 되고, 그러면 /api/map/terrain 이 404 로 폴백한다.
 COPY data/map/han-tiles.json /app/data/map/han-tiles.json
 COPY data/map/han-tiles.json /app/data/map/han-world-v2-tiles.json
+COPY data/map/han-tiles.json /app/data/map/han-world-v3-tiles.json
 COPY data/map/han-scenario-province-ownership-v1.json /app/data/map/han-scenario-province-ownership-v1.json
 COPY data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json /app/data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json
 COPY data/map/han-780-v1-tiles.json /app/data/map/han-780-v1-tiles.json
+COPY data/map/han-world-v3-manifest-v1.json /app/data/map/han-world-v3-manifest-v1.json
+COPY data/map/han-water-topology-v1.json /app/data/map/han-water-topology-v1.json
+COPY data/map/han-strategic-topology-manifest-v1.json /app/data/map/han-strategic-topology-manifest-v1.json
+COPY data/curated/han/route-node-selection-v1.json /app/data/curated/han/route-node-selection-v1.json
+COPY data/curated/han/route-node-migration-v1.json /app/data/curated/han/route-node-migration-v1.json
+COPY data/curated/han/water-topology-adjudications-v1.json /app/data/curated/han/water-topology-adjudications-v1.json
 COPY --from=build /src/build/generated-map/ /app/data/map/
 ENV JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 EXPOSE 8081

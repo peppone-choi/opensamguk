@@ -126,6 +126,7 @@ import opensamguk.logic.world.UnblockScoutWorldView
 import opensamguk.logic.world.UpdateCitySupplyContext
 import opensamguk.logic.world.UpdateNationLevelContext
 import opensamguk.logic.world.WarIncomeNation
+import org.slf4j.LoggerFactory
 
 /**
  * P6 / Task 4 — The engine-side unified adapter that implements ALL richer-context interfaces the
@@ -188,6 +189,7 @@ class WorldActionContext(
         private val INVADER_TURNTERM_CANDIDATES = listOf(1, 2, 5, 10, 20, 30, 60, 120)
         private val SEOUL_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
         private val PHP_DATETIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        private val LOGGER = LoggerFactory.getLogger(WorldActionContext::class.java)
     }
 
     private var bufferedUnificationHistoryLogIndex: Int? = null
@@ -625,6 +627,41 @@ class WorldActionContext(
             .map { SupplyCapital(it.capitalCityId ?: 0, it.id) }
 
     override fun applyCitySupply(result: CitySupplyResult) {
+        val diagnostics = result.reachabilityRows.sortedBy { it.cityId }.map { row ->
+            linkedMapOf<String, Any?>(
+                "cityId" to row.cityId,
+                "cityGraphSupplied" to row.cityGraphSupplied,
+                "spatialGraphSupplied" to row.spatialGraphSupplied,
+                "verdict" to row.verdict.name,
+                "decision" to row.policy?.decision?.name,
+                "sourceLedgerRow" to row.policy?.sourceLedgerRow,
+            )
+        }
+        env["supplyReachabilityDiagnostics"] = diagnostics
+        result.reachabilityRows.sortedBy { it.cityId }.forEach { row ->
+            if (row.cityGraphSupplied == row.spatialGraphSupplied) return@forEach
+            val policy = row.policy
+            if (policy == null) {
+                LOGGER.warn(
+                    "supply_reachability_unclassified cityId={} cityGraphSupplied={} spatialGraphSupplied={} verdict={}",
+                    row.cityId,
+                    row.cityGraphSupplied,
+                    row.spatialGraphSupplied,
+                    row.verdict,
+                )
+            } else {
+                LOGGER.info(
+                    "supply_reachability_reviewed cityId={} cityGraphSupplied={} spatialGraphSupplied={} " +
+                        "verdict={} decision={} sourceLedgerRow={}",
+                    row.cityId,
+                    row.cityGraphSupplied,
+                    row.spatialGraphSupplied,
+                    row.verdict,
+                    policy.decision,
+                    policy.sourceLedgerRow,
+                )
+            }
+        }
         for (postLogic in result.cities) {
             val pre = world.getCityById(postLogic.id) ?: continue
             val preLogic = PerTurnOverlay.toLogicCity(pre)

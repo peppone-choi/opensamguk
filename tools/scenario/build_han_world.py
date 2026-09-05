@@ -39,6 +39,8 @@ name   · 縣급 이름에서 끝의 '현'·'후국'·'국'·'읍'·'도'를 뗀
 from __future__ import annotations
 
 import argparse
+import copy
+import hashlib
 import json
 import re
 import statistics
@@ -62,6 +64,13 @@ UNITS = ROOT / "data" / "unitset" / "units.json"
 OUT_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 OUT_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanCityConst.kt"
 OUT_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanGateIndex.kt"
+OUT_V3_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"
+OUT_V3_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanWorldV3CityConst.kt"
+OUT_V3_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanWorldV3GateIndex.kt"
+OUT_V3_MANIFEST = ROOT / "data" / "map" / "han-world-v3-manifest-v1.json"
+SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
+MIGRATION = ROOT / "data" / "curated" / "han" / "route-node-migration-v1.json"
+LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-780-v1.json"
 
 WIDTH = 700           # che.json 의 표시 폭을 그대로 쓴다.
 HEIGHT = 610          # 700 * 669/768 반올림 — 격자 비율 유지.
@@ -412,7 +421,7 @@ def gate_index(tiles: dict, region_of: list[str]) -> tuple[dict[int, list[str]],
     return {jn: sorted(v) for jn, v in sorted(keys.items())}, missing
 
 
-def kotlin_gate(index: dict[int, list[str]]) -> str:
+def kotlin_gate(index: dict[int, list[str]], object_name: str = "HanGateIndex") -> str:
     rows = "\n".join(
         f'        {cid} to setOf({", ".join(chr(34) + k + chr(34) for k in ks)}),'
         for cid, ks in index.items()
@@ -428,7 +437,7 @@ def kotlin_gate(index: dict[int, list[str]]) -> str:
         " * han 병종의 ReqRegions(보유 판정) / ForbidRegions(주둔지 판정) 해석에 쓴다.\n"
         " * che 는 이 표를 쓰지 않으며(빈 집합), 기존 regionIdByName 경로 그대로 돈다.\n"
         " */\n"
-        "object HanGateIndex {\n"
+        f"object {object_name} {{\n"
         "    val keysByCityId: Map<Int, Set<String>> = mapOf(\n"
         + rows + "\n"
         "    )\n"
@@ -552,6 +561,19 @@ def build_gate(sk: dict | None = None) -> tuple[str, dict[int, list[str]], list[
     return kotlin_gate(index), index, missing
 
 
+def runtime_place_name(city: dict) -> str:
+    normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(str(city.get("id")))
+    if normalization and isinstance(normalization.get("runtimeName"), str):
+        return normalization["runtimeName"]
+    name = city["name"]
+    if city.get("kind") != "COUNTY":
+        return name
+    for tail in ("후국", "현", "국", "읍", "도"):
+        if name.endswith(tail) and len(name) > len(tail):
+            return name[:-len(tail)]
+    return name
+
+
 def build() -> tuple[dict, str, str, dict]:
     sk = build_gate_skeleton()
     tiles, juns, cities = sk["tiles"], sk["juns"], sk["cities"]
@@ -603,16 +625,7 @@ def build() -> tuple[dict, str, str, dict]:
     # 縣·侯國·邑·道는 縣급 행정단위라 꼬리를 뗀다. 治所가 EXTERNAL_PLACE 인 곳
     # (于山國·伯濟國 …)은 나라 이름 자체라 건드리지 않는다.
     def base_name(ci: int) -> str:
-        normalization = CANONICAL_PLACE_NAME_NORMALIZATIONS.get(str(cities[ci].get("id")))
-        if normalization and isinstance(normalization.get("runtimeName"), str):
-            return normalization["runtimeName"]
-        n = cities[ci]["name"]
-        if cities[ci]["kind"] != "COUNTY":
-            return n
-        for tail in ("후국", "현", "국", "읍", "도"):
-            if n.endswith(tail) and len(n) > len(tail):
-                return n[:-len(tail)]
-        return n
+        return runtime_place_name(cities[ci])
 
     # 이름은 사료 그대로 둔다. 서로 다른 漢字가 같은 한글 독음이 되는 城이 여럿이지만
     # (零陵郡 零陵縣·梁國 寧陵縣이 둘 다 '영릉'), 시나리오·엔진·DB 는 城을 **id** 로 가리킨다.
@@ -768,7 +781,7 @@ def build() -> tuple[dict, str, str, dict]:
     return doc, kotlin(raw_rows), gate_kt, stats
 
 
-def kotlin(rows) -> str:
+def kotlin(rows, object_name: str = "HanCityConst", target: str = "han") -> str:
     body = []
     for cid, name, lv, stats, region, x, y, path in rows:
         p = ", ".join(f'"{n}"' for n in path)
@@ -780,7 +793,7 @@ def kotlin(rows) -> str:
         "import opensamguk.common.constants.CityConst.RawCity\n"
         "\n"
         "/**\n"
-        " * GENERATED — `python3 tools/scenario/build_han_world.py` 산출물이다. 손으로 고치지 마라.\n"
+        f" * GENERATED — `python3 tools/scenario/build_han_world.py{' --target han-world-v3' if target == 'han-world-v3' else ''}` 산출물이다. 손으로 고치지 마라.\n"
         " * 고칠 것이 있으면 생성기를 고치고 다시 돌려라(`--check` 가 드리프트를 잡는다).\n"
         " *\n"
         " * 續漢書 郡國志 + CHGIS 격자에서 만든 'han' 지도 — 郡治와 郡國志에 실린 縣이 다 城이다.\n"
@@ -789,12 +802,244 @@ def kotlin(rows) -> str:
         " * (generateCities 가 regionMap/levelMap 의 getValue 로 라벨을 푼다). 배선은 이 파일의\n"
         " * 소관이 아니다 — HanCityConstVariant 가 한다.\n"
         " */\n"
-        "object HanCityConst {\n"
+        f"object {object_name} {{\n"
         "    val initCity: List<RawCity> = listOf(\n"
         + "\n".join(body) + "\n"
         "    )\n"
         "}\n"
     )
+
+
+def project_county_adjacency(
+    tiles: dict, route_id_by_physical_id: dict[str, int]
+) -> list[tuple[int, int, int]]:
+    """Project canonical county boundaries into route-node IDs.
+
+    ``adjacency.county`` endpoints index ``provinceRecords``.  They never index
+    ``cities``; keeping that domain transition explicit prevents coincidentally
+    equal array ordinals from creating a false route.
+    """
+    provinces = tiles.get("provinceRecords")
+    if not isinstance(provinces, list):
+        raise AssertionError("provinceRecords must be an array")
+    cities = tiles.get("cities")
+    if not isinstance(cities, list):
+        raise AssertionError("cities must be an array")
+    projected: dict[tuple[int, int], int] = {}
+    for edge in tiles.get("adjacency", {}).get("county", []):
+        a_index, b_index = edge.get("a"), edge.get("b")
+        if not isinstance(a_index, int) or not isinstance(b_index, int):
+            raise AssertionError("county adjacency endpoints must be integer province indices")
+        if not (0 <= a_index < len(provinces) and 0 <= b_index < len(provinces)):
+            raise AssertionError("county adjacency endpoint is outside provinceRecords")
+        endpoint_places = []
+        for province_index in (a_index, b_index):
+            province = provinces[province_index]
+            city_index = province.get("cityIndex")
+            if isinstance(city_index, int):
+                if not 0 <= city_index < len(cities):
+                    raise AssertionError("spatial province seat cityIndex is out of bounds")
+                endpoint_places.append(str(cities[city_index]["id"]))
+            else:
+                # Synthetic/external spatial provinces have no physical city row;
+                # their stable province ID is the only available endpoint identity.
+                endpoint_places.append(str(province["id"]))
+        a_place, b_place = endpoint_places
+        if a_place not in route_id_by_physical_id or b_place not in route_id_by_physical_id:
+            continue
+        a = route_id_by_physical_id[a_place]
+        b = route_id_by_physical_id[b_place]
+        if a == b:
+            continue
+        pair = tuple(sorted((a, b)))
+        cells = edge.get("cells")
+        if not isinstance(cells, int) or cells <= 0:
+            raise AssertionError("county adjacency cells must be a positive integer")
+        if pair in projected:
+            raise AssertionError(f"duplicate county adjacency projection: {pair}")
+        projected[pair] = cells
+    return [(a, b, projected[(a, b)]) for a, b in sorted(projected)]
+
+
+def _sha256_bytes(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
+
+
+def _sha256_path(path: Path) -> str:
+    return _sha256_bytes(path.read_bytes())
+
+
+def build_v3() -> tuple[str, str, str, str]:
+    selection = json.loads(SELECTION.read_text(encoding="utf-8"))
+    migration = json.loads(MIGRATION.read_text(encoding="utf-8"))
+    tiles = json.loads(TILES.read_text(encoding="utf-8"))
+    legacy = json.loads(LEGACY_780_JSON.read_text(encoding="utf-8"))
+    skeleton = build_gate_skeleton()
+    nodes = sorted(selection["routeNodes"], key=lambda row: row["numericCityId"])
+    if [row["numericCityId"] for row in nodes] != list(range(1, 782)):
+        raise AssertionError("han-world-v3 selection must be the contiguous IDs 1..781")
+
+    cities_by_place = {str(row["id"]): row for row in tiles["cities"]}
+    city_index_by_place = {str(row["id"]): index for index, row in enumerate(tiles["cities"])}
+    province_by_city_index = {
+        row["cityIndex"]: (index, row)
+        for index, row in enumerate(tiles["provinceRecords"])
+        if isinstance(row.get("cityIndex"), int)
+    }
+    jun_by_name_ch = {row["nameCh"]: row for row in skeleton["juns"]}
+    region_by_parent = {
+        row["nameCh"]: skeleton["region_of"][index]
+        for index, row in enumerate(skeleton["juns"])
+    }
+    seat_name_by_parent = {
+        node["parentName"]: cities_by_place[node["physicalPlaceRef"].rsplit(":", 1)[-1]]["name"]
+        for node in nodes
+        if node["seatRole"] == "COMMANDERY_SEAT"
+    }
+    route_by_place: dict[str, int] = {}
+    for node in nodes:
+        place = node["physicalPlaceRef"].rsplit(":", 1)[-1]
+        if place in route_by_place:
+            raise AssertionError(f"duplicate selected physical place: {place}")
+        if place not in cities_by_place:
+            raise AssertionError(f"selected physical place is absent from han-tiles: {place}")
+        route_by_place[place] = node["numericCityId"]
+
+    edges = project_county_adjacency(tiles, route_by_place)
+    connections: dict[int, set[int]] = defaultdict(set)
+    for a, b, _ in edges:
+        connections[a].add(b)
+        connections[b].add(a)
+
+    legacy_by_id = {row["id"]: row for row in legacy["cities"]}
+    legacy_jinan = next(
+        row for row in legacy["cities"]
+        if row["meta"]["junCh"] == "濟南國" and not row["meta"]["isSeat"]
+    )
+    parent_by_id = {row["id"]: row for row in tiles["parentRegions"]}
+    jurisdiction_by_id = {str(row["id"]): row for row in tiles["jurisdictionRecords"]}
+    out_cities: list[dict] = []
+    for node in nodes:
+        cid = node["numericCityId"]
+        place = node["physicalPlaceRef"].rsplit(":", 1)[-1]
+        physical = cities_by_place[place]
+        if cid <= 780:
+            out = copy.deepcopy(legacy_by_id[cid])
+            if node.get("legacyDisposition") == "REPLACED":
+                out["name"] = runtime_place_name(physical)
+        else:
+            jurisdiction = jurisdiction_by_id[place]
+            parent = parent_by_id[jurisdiction["commanderyId"]]
+            out = copy.deepcopy(legacy_jinan)
+            out.update({
+                "id": cid,
+                "name": runtime_place_name(physical),
+                "x": round(physical["col"] * WIDTH / tiles["_meta"]["cols"]),
+                "y": round(physical["row"] * HEIGHT / tiles["_meta"]["rows"]),
+                "meta": {
+                    "jun": parent["displayName"], "junCh": parent["nameCh"],
+                    "ju": legacy_jinan["meta"]["ju"], "seat": "동평릉현",
+                    "nameCh": physical["nameCh"], "isSeat": False,
+                },
+            })
+        out["x"] = round(physical["col"] * WIDTH / tiles["_meta"]["cols"])
+        out["y"] = round(physical["row"] * HEIGHT / tiles["_meta"]["rows"])
+        parent_ch = node["parentName"]
+        parent = jun_by_name_ch.get(parent_ch)
+        region_name = region_by_parent.get(parent_ch, out["meta"]["ju"])
+        out["region"] = legacy["_meta"]["regions"].index(region_name) + 1
+        out["meta"] = {
+            "jun": parent["name"] if parent else parent_ch,
+            "junCh": parent_ch,
+            "ju": region_name,
+            "seat": seat_name_by_parent.get(parent_ch, out["meta"].get("seat")),
+            "nameCh": node["canonicalName"],
+            "isSeat": node["seatRole"] == "COMMANDERY_SEAT",
+        }
+        province = province_by_city_index.get(city_index_by_place[place])
+        if province is not None:
+            province_index, province_record = province
+            out["provinceId"] = province_index
+            out["spatialProvinceId"] = str(province_record["id"])
+            out["spatialProvinceIndex"] = province_index
+        out["connections"] = sorted(connections[cid])
+        out["routeNodeKey"] = node["routeNodeKey"]
+        out["physicalPlaceRef"] = node["physicalPlaceRef"]
+        out["administrativeUnitId"] = node["administrativeUnitId"]
+        out_cities.append(out)
+
+    # RawCity resolves paths by display name.  Qualify only collisions so the
+    # generated Kotlin graph cannot silently redirect an edge to the last row
+    # with the same Korean reading.
+    name_counts = Counter(row["name"] for row in out_cities)
+    node_by_id = {row["numericCityId"]: row for row in nodes}
+    for row in out_cities:
+        if name_counts[row["name"]] > 1:
+            row["name"] = f'{row["name"]}({node_by_id[row["id"]]["parentName"]})'
+    qualified_counts = Counter(row["name"] for row in out_cities)
+    for row in out_cities:
+        if qualified_counts[row["name"]] > 1:
+            row["name"] = f'{row["name"]}#{row["id"]}'
+    if len({row["name"] for row in out_cities}) != len(out_cities):
+        raise AssertionError("han-world-v3 runtime names must be unique")
+
+    # Resolve path names only after every stable numeric identity exists.
+    out_cities_by_id = {row["id"]: row for row in out_cities}
+    raw_rows = [
+        (
+            row["id"], row["name"], LEVELS[row["level"] - 1],
+            [row["max"][key] // 100 for key in STAT_KEYS],
+            legacy["_meta"]["regions"][row["region"] - 1], row["x"], row["y"],
+            [out_cities_by_id[n]["name"] for n in row["connections"]],
+        )
+        for row in out_cities
+    ]
+    doc = {
+        "_meta": {
+            "map": "han-world-v3",
+            "source": "reviewed route-node selection projected through canonical spatial-province adjacency",
+            "generator": "tools/scenario/build_han_world.py --target han-world-v3",
+            "regions": legacy["_meta"]["regions"],
+        },
+        "width": legacy["width"], "height": legacy["height"], "cities": out_cities,
+    }
+    blob = json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
+    kt = kotlin(raw_rows, "HanWorldV3CityConst", "han-world-v3")
+
+    gate_by_jun, _ = gate_index(skeleton["tiles"], skeleton["region_of"])
+    jun_index = {row["nameCh"]: i for i, row in enumerate(skeleton["juns"])}
+    gate_index_v3 = {
+        node["numericCityId"]: gate_by_jun[jun_index[node["parentName"]]]
+        for node in nodes
+        if node["parentName"] in jun_index and gate_by_jun.get(jun_index[node["parentName"]])
+    }
+    gate = kotlin_gate(gate_index_v3, "HanWorldV3GateIndex")
+
+    manifest = {
+        "schemaVersion": 1,
+        "manifestId": "han-world-v3-manifest-v1",
+        "worldVersion": "han-world-v3",
+        "inputs": {
+            "selectionSha256": _sha256_path(SELECTION),
+            "migrationSha256": _sha256_path(MIGRATION),
+            "hanTilesSha256": _sha256_path(TILES),
+            "legacy780Sha256": _sha256_path(LEGACY_780_JSON),
+        },
+        "outputs": {
+            "worldJsonSha256": _sha256_bytes(blob.encode()),
+            "cityConstSha256": _sha256_bytes(kt.encode()),
+            "gateIndexSha256": _sha256_bytes(gate.encode()),
+        },
+        "routeNodes": [
+            {key: node[key] for key in ("routeNodeKey", "numericCityId", "physicalPlaceRef")}
+            for node in nodes
+        ],
+        "countyAdjacency": [
+            {"a": a, "b": b, "sharedBoundaryCells": cells} for a, b, cells in edges
+        ],
+    }
+    manifest_blob = json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
+    return blob, kt, gate, manifest_blob
 
 
 def summary(stats: dict) -> None:
@@ -834,6 +1079,7 @@ def summary(stats: dict) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--target", choices=("han-world-v3",))
     ap.add_argument("--check-gate", action="store_true",
                      help="현재 han.json city id 기준으로 HanGateIndex.kt 드리프트만 검사한다. "
                           "TILES·han.json·UNITS(전부 tracked)만 필요하고 JUNGUOZHI·CHE(둘 다 "
@@ -841,6 +1087,29 @@ def main() -> int:
     ap.add_argument("--write-gate", action="store_true",
                     help="현재 han.json city id 기준 HanGateIndex.kt만 재생성한다.")
     args = ap.parse_args()
+    if args.target == "han-world-v3":
+        if args.check_gate or args.write_gate:
+            ap.error("--target han-world-v3 cannot be combined with gate-only modes")
+        for src in (TILES, SELECTION, MIGRATION, LEGACY_780_JSON, UNITS, CANON_SRC):
+            if not src.exists():
+                sys.exit(f"{src.relative_to(ROOT)} 가 없다.")
+        blob, kt, gate, manifest = build_v3()
+        outputs = (
+            (OUT_V3_JSON, blob), (OUT_V3_KT, kt),
+            (OUT_V3_GATE, gate), (OUT_V3_MANIFEST, manifest),
+        )
+        if args.check:
+            drift = [path.relative_to(ROOT) for path, want in outputs
+                     if not path.exists() or path.read_text(encoding="utf-8") != want]
+            if drift:
+                print("드리프트: " + ", ".join(str(path) for path in drift))
+                return 1
+            print("드리프트 없음 (han-world-v3).")
+            return 0
+        for path, content in outputs:
+            path.write_text(content, encoding="utf-8")
+        print(" · ".join(str(path.relative_to(ROOT)) for path, _ in outputs))
+        return 0
     if args.write_gate:
         for src in (TILES, OUT_JSON, UNITS):
             if not src.exists():

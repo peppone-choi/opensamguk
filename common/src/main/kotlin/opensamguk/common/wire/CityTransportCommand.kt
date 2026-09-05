@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
  * 파일명으로 드러낸다(R4 리뷰 §7이 같은 사안을 기록했다).
  *
  * @property fromCityId 출발 도시. 명령을 낸 장수가 **현재 있는 도시**여야 한다.
- * @property toCityId 도착 도시. `CalcCityDistance`로 잰 **인접 1홉**만 허용한다.
+ * @property toCityId 도착 도시. V3는 검증된 strategic LAND 1구간, 기존 맵은 CityConst 인접 1홉만 허용한다.
  * @property gold 수송할 금 · @property rice 병량 · @property garrison 도시병사. 셋 다 0 이상이며 합이 0이면 거절.
  */
 @Serializable
@@ -27,6 +27,8 @@ data class CityTransport(
     val garrison: Int = 0,
     val routeRevision: Long? = null,
     val expiresAt: String? = null,
+    val topologyRevision: String? = null,
+    val routePathHash: String? = null,
 ) : TurnDaemonCommand() {
     override val type: String get() = "v2CityTransport"
 }

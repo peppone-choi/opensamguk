@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import shutil
@@ -29,6 +30,60 @@ def repin_policy_input(inputs: MODULE.MaterializerInputs, key: str, path: Path) 
 
 
 class HanRouteNodeMaterializerTest(unittest.TestCase):
+    def test_licheng_is_an_append_only_v2_node_and_legacy_identities_are_unchanged(self) -> None:
+        inputs = MODULE.default_inputs()
+        result = MODULE.materialize(inputs)
+        nodes = result.selection["routeNodes"]
+        migration = result.migration
+
+        self.assertEqual("han-world-v3", result.selection["worldVersion"])
+        self.assertEqual(781, len(nodes))
+        self.assertEqual(list(range(1, 782)), sorted(row["numericCityId"] for row in nodes))
+        legacy_triples = [
+            [
+                row["numericCityId"],
+                row["routeNodeKey"],
+                row["administrativeUnitId"],
+                row["physicalPlaceRef"],
+            ]
+            for row in nodes
+            if row["numericCityId"] <= 780
+        ]
+        self.assertEqual(
+            "ac92503a8de9a53c684944495bc471e77c2557e8914d8fbed54cf520f7c6096a",
+            hashlib.sha256(
+                json.dumps(legacy_triples, ensure_ascii=False, separators=(",", ":")).encode()
+            ).hexdigest(),
+        )
+        licheng = next(
+            row for row in nodes if row["administrativeUnitId"] == "hhs:112:濟南國:010"
+        )
+        self.assertEqual(781, licheng["numericCityId"])
+        self.assertEqual("chgis:v6:cnty:45022", licheng["physicalPlaceRef"])
+        self.assertNotIn("legacyCityId", licheng)
+        self.assertNotIn("legacyNodeFingerprint", licheng)
+        self.assertNotIn("legacyDisposition", licheng)
+        self.assertEqual(
+            [{
+                "newCityId": 781,
+                "routeNodeKey": licheng["routeNodeKey"],
+                "administrativeUnitId": "hhs:112:濟南國:010",
+                "physicalPlaceRef": "chgis:v6:cnty:45022",
+                "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+            }],
+            migration["appendedRows"],
+        )
+        self.assertEqual(780, len(migration["rows"]))
+        self.assertEqual(1, migration["summary"]["appendedIdentityCount"])
+        self.assertEqual(
+            "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
+            MODULE._digest(inputs.han),
+        )
+        self.assertEqual(
+            "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d",
+            MODULE._digest(inputs.tiles),
+        )
+
     def test_approved_780_candidates_use_reproducible_frozen_inputs(self) -> None:
         inputs = MODULE.default_inputs()
 
@@ -56,7 +111,7 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
     def test_real_approved_ledgers_materialize_exact_contract(self) -> None:
         result = MODULE.materialize(MODULE.default_inputs())
 
-        self.assertEqual(780, len(result.selection["routeNodes"]))
+        self.assertEqual(781, len(result.selection["routeNodes"]))
         self.assertEqual(780, len(result.migration["rows"]))
         self.assertEqual(31, result.selection["scenarioCatalog"]["resourceCount"])
         self.assertEqual(101, result.migration["summary"]["routeNodeReplacementCount"])

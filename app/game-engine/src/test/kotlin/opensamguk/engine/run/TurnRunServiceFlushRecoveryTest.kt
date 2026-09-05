@@ -18,6 +18,7 @@ import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
+import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
 import opensamguk.infra.persistence.CommandResultRepository
@@ -25,6 +26,10 @@ import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.persistence.StaleWorldWriterException
+import opensamguk.infra.persistence.StaleWaterControlException
+import opensamguk.logic.world.WaterControlSnapshot
+import opensamguk.logic.world.WaterControlAssessment
+import opensamguk.logic.world.WaterBlockadeState
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.mockito.Mockito.mock
@@ -44,6 +49,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.test.assertSame
 
 /**
  * OPENSAM-132 — real [TurnRunService] recovery entry points (not free-standing gate only).
@@ -56,8 +62,47 @@ class TurnRunServiceFlushRecoveryTest {
     private data class Fixture(
         val service: TurnRunService,
         val world: InMemoryTurnWorld,
+        val recorder: ChangeRecorder,
         val realtimeTemplate: StringRedisTemplate,
     )
+
+    @Test
+    fun `water flush retry preserves exact coalesced CAS payload and clears only after commit`() {
+        val payloads = mutableListOf<FlushPayload>()
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) {
+                payloads += payload
+                if (payloads.size == 1) throw QueryTimeoutException("rolled back")
+            }
+        }
+        val control = WaterControlSnapshot("r1", "a".repeat(64), setOf("lake"))
+        val (service, world, recorder) = newFixture(flush, waterControlSnapshot = control)
+        recorder.applyWaterControlAssessment(world, null,
+            WaterControlAssessment("r1", control.topologyHash, "lake", 3L, emptyList(), WaterBlockadeState.OPEN))
+        recorder.applyWaterControlAssessment(world, 1,
+            WaterControlAssessment("r1", control.topologyHash, "lake", 3L, emptyList(), WaterBlockadeState.BLOCKED))
+        assertFailsWith<QueryTimeoutException> { service.runTick(Instant.parse("0200-01-01T01:00:00Z")) }
+        assertTrue(recorder.isDirty)
+        assertEquals(null, payloads.single().waterControlWrites.single().expectedRevision)
+        assertEquals(2L, payloads.single().waterControlWrites.single().state.revision)
+        assertFailsWith<IllegalStateException> { service.runTick(Instant.parse("0200-01-01T02:00:00Z")) }
+        assertTrue(service.retryRetainedFlush())
+        assertSame(payloads.first(), payloads.last())
+        assertTrue(recorder.waterControlWrites().isEmpty())
+        assertEquals(2L, world.waterControlSnapshot()!!.stateFor("lake")!!.revision)
+    }
+
+    @Test
+    fun `water CAS failure on production run path requires reload and rejects retained retry`() {
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) { throw StaleWaterControlException(1, "lake", null) }
+        }
+        val (service, _) = newFixture(flush)
+        assertFailsWith<StaleWaterControlException> { service.runTick(Instant.parse("0200-01-01T01:00:00Z")) }
+        assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, service.recoverySnapshot().mode)
+        assertFailsWith<IllegalStateException> { service.retryRetainedFlush() }
+        assertFailsWith<IllegalStateException> { service.runIntakeCommands(1) }
+    }
 
     @Test
     fun `general-only drain flushes the due general without advancing the world clock`() {
@@ -326,6 +371,7 @@ class TurnRunServiceFlushRecoveryTest {
         commandOutboxRelay: CommandOutboxRelay? = null,
         withDueGeneral: Boolean = false,
         reservedTurn: ReservedTurn = ReservedTurn("휴식", ""),
+        waterControlSnapshot: WaterControlSnapshot? = null,
     ): Fixture {
         val t0 = Instant.parse("0200-01-01T00:00:00Z")
         val world = InMemoryTurnWorld(
@@ -338,7 +384,7 @@ class TurnRunServiceFlushRecoveryTest {
                     lastTurnTime = t0,
                     worldVersion = 0L,
                     writerEpoch = 1L,
-                    config = linkedMapOf("mapName" to "che"),
+                    config = linkedMapOf("mapName" to if (waterControlSnapshot == null) "che" else "han-world-v3"),
                     meta = mapOf(
                         "startYear" to 200,
                         "startTime" to "0200-01-01T00:00:00Z",
@@ -374,6 +420,7 @@ class TurnRunServiceFlushRecoveryTest {
                     emptyList()
                 },
                 worldId = WorldId(1),
+                waterControlSnapshot = waterControlSnapshot,
             ),
         )
         val handler = ReservedTurnHandler(
@@ -416,7 +463,7 @@ class TurnRunServiceFlushRecoveryTest {
             commandInboxRepository = commandInboxRepository,
             commandOutboxRelay = commandOutboxRelay,
         )
-        return Fixture(service, world, redis)
+        return Fixture(service, world, handler.recorder, redis)
     }
 
     private fun wakeEnvelope(messageId: String, requestId: String): RedisCommandStream.WakeEnvelope =

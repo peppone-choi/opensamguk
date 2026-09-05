@@ -18,6 +18,7 @@ from audit_han_admin_topology import (  # noqa: E402
     materialize,
     validate_ailao_layers,
 )
+from build_administrative_place_overlay import build_overlay  # noqa: E402
 
 
 TILES = ROOT / "data" / "map" / "han-tiles.json"
@@ -71,6 +72,84 @@ def synthetic_document() -> dict:
 
 
 class HanAdminTopologyAuditTest(unittest.TestCase):
+    def test_reviewed_binding_selects_an_existing_physical_place_without_name_inference(self) -> None:
+        catalog = {
+            "schemaVersion": 1,
+            "catalogId": "fixture",
+            "expectedGroupCount": 1,
+            "expectedUnitCount": 1,
+            "detectedGroupCount": 1,
+            "detectedUnitCount": 1,
+            "groups": [{
+                "sourceVolume": 112,
+                "canonicalGroup": "濟南國",
+                "units": [{
+                    "sourceVolume": 112,
+                    "canonicalGroup": "濟南國",
+                    "ordinal": 1,
+                    "sourceName": "歷城",
+                    "sourceNameStatus": "SOURCE_LITERAL",
+                    "unitType": "COUNTY",
+                    "sourceCitation": {"corpusPath": "fixture", "line": 1},
+                }],
+            }],
+        }
+        records = [{
+            "recordIndex": 1,
+            "SYS_ID": "45022",
+            "NAME_CH": "历城县",
+            "NAME_FT": "",
+            "X_COOR": 117.00031,
+            "Y_COOR": 36.64912,
+            "BEG_YR": 100,
+            "END_YR": 300,
+            "PRES_LOC": "fixture",
+        }]
+        reviewed = {
+            "schemaVersion": 1,
+            "catalogId": "fixture",
+            "sourceYear": 220,
+            "administrativeUnits": [{
+                "administrativeUnitId": "hhs:112:濟南國:001",
+                "candidateCount": 1,
+                "identity": {"sourceVolume": 112, "canonicalGroup": "濟南國", "ordinal": 1},
+                "joinStatus": "RESOLVED_POINT",
+                "selectedCandidate": {"physicalPlaceId": "chgis:v6:cnty:45022"},
+            }],
+        }
+
+        result = build_overlay(catalog, records, reviewed_bindings=reviewed)
+
+        row = result["administrativeUnits"][0]
+        self.assertEqual("RESOLVED_POINT", row["joinStatus"])
+        self.assertEqual("chgis:v6:cnty:45022", row["selectedCandidate"]["physicalPlaceId"])
+
+    def test_committed_licheng_binding_matches_the_corrected_current_parent(self) -> None:
+        result = materialize(TILES, UNITS, BINDINGS, EXTERNAL_POLICY)
+        census = result["historicalParentCensus"]
+        mismatch_ids = {
+            (
+                row["sourceVolume"],
+                row["sourceCommanderyNameCh"],
+                row["ordinal"],
+                row["currentJurisdictionId"],
+            )
+            for row in census["sourceParentMismatches"]
+        }
+
+        self.assertNotIn((112, "濟南國", 10, "45022"), mismatch_ids)
+        jinan = next(
+            row
+            for row in census["sourceGroups"]
+            if row["sourceVolume"] == 112 and row["sourceCommanderyNameCh"] == "濟南國"
+        )
+        self.assertEqual(
+            {"NO_COORDINATE_CANDIDATE": 1, "RESOLVED_POINT": 9},
+            jinan["bindingStatusCounts"],
+        )
+        self.assertEqual(9, jinan["resolvedCurrentJurisdictionCount"])
+        self.assertEqual(9, jinan["sourceParentMatchCount"])
+
     def test_detects_disconnected_and_fully_enclosed_components(self) -> None:
         result = audit_document(synthetic_document(), {"groups": []}, {"administrativeUnits": []})
 
@@ -321,7 +400,9 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         self.assertEqual(10, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
         # 43→42: 청주 4縣 재판정(data/curated/han/jurisdiction-commandery-adjudications-v1.json)으로 西平昌(45107)·安德(85706)이
         # 平原郡(PARENT-0036)에 붙으면서 平原郡의 세 조각(399·127·36셀)이 한 면으로 이어졌다.
-        self.assertEqual(42, snapshot["commanderyTopology"]["disconnectedCount"])
+        # 歷城의 39셀을 濟南國으로 재판정하면 셀을 옮기지 않고도
+        # 平原郡의 45121 footprint가 나머지 군에서 분리된 기존 격자 사실이 드러난다.
+        self.assertEqual(43, snapshot["commanderyTopology"]["disconnectedCount"])
         self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
         self.assertEqual(73, snapshot["singleJurisdictionCommanderyCount"])
         self.assertEqual(172, snapshot["historicalParentCensus"]["currentCommanderyCount"])

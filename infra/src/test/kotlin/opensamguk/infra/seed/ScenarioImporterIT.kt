@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the seed counts (`world_state`=1, `nation`=2, `city`=774[소유710+공백지64], `general`=229,
+ * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=781, `general`=230,
  * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
  * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
@@ -114,11 +114,30 @@ class ScenarioImporterIT {
         )
     }
 
-    // 빼섭(2번째 서버)용 scenario_1030 군웅할거. cities는 che 풀맵 공용(맵 바운드, 시나리오 무관).
+    // Scenario 1030 shares the versioned Han catalog declared by its mapName.
     private fun newImporter1030(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1030.json"))
         val cities = mapCitiesOf(scenario)
         return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
+    }
+
+    @Test
+    fun `scenario 9200 seeds stable V3 ownership capitals and general locations`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_9200.json"))
+
+        ScenarioImporter(
+            scenario = scenario,
+            cities = mapCitiesOf(scenario),
+            scenarioCode = "scenario_9200",
+        ).importAll(jdbc, canonicalWorldId)
+
+        assertEquals(1, jdbc.queryForObject("SELECT nation_id FROM city WHERE id = 46", Int::class.java))
+        assertEquals(2, jdbc.queryForObject("SELECT nation_id FROM city WHERE id = 1", Int::class.java))
+        assertEquals(46, jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE name = '동탁'", Int::class.java))
+        assertEquals(1, jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE name = '원소'", Int::class.java))
+        assertEquals(46, jdbc.queryForObject("SELECT city_id FROM general WHERE name = 'ⓝ동탁'", Int::class.java))
+        assertEquals(1, jdbc.queryForObject("SELECT city_id FROM general WHERE name = 'ⓝ원소'", Int::class.java))
     }
 
     private fun newImporter2(): ScenarioImporter {
@@ -136,8 +155,8 @@ class ScenarioImporterIT {
         assertEquals(1, counts.worldState)
         assertTrue(counts.gameEnv > 0)
         assertEquals(2, counts.nation)
-        // han 풀맵 774城 = 소유 710(후한 606 + 황건적 104) + 공백지 64(nation_id=0).
-        assertEquals(774, counts.city)
+        // V3 projects scenario ownership through stable place identities: Han 122, Yellow 114, neutral 545.
+        assertEquals(781, counts.city)
         assertEquals(230, counts.general)
         assertEquals(230 * 30, counts.generalTurn)
         assertEquals(230 * 37, counts.rankData)
@@ -186,11 +205,13 @@ class ScenarioImporterIT {
             ),
         )
         assertEquals(2, count("nation"))
-        assertEquals(774, count("city"))
+        assertEquals(781, count("city"))
+        assertEquals((1..781).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
+        assertEquals("역성", jdbc.queryForObject("SELECT name FROM city WHERE id = 781 AND nation_id = 0", String::class.java))
         // 실효 지배지만 시나리오 소유로 칠하고, 나머지는 공백지로 둔다.
-        assertEquals(547, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
-        assertEquals(123, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
-        assertEquals(104, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
+        assertEquals(545, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        assertEquals(122, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
+        assertEquals(114, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
         // 서성(id 75, 소도시) 은 1010 지배표에 없는 郡이라 공백지다: pop 100000·wall 2000·trust 50.
         val sd = jdbc.queryForMap("SELECT pop, wall, trust FROM city WHERE id = 75")
@@ -402,8 +423,8 @@ class ScenarioImporterIT {
         assertTrue(meta.contains("\"serverId\""), "meta has active serverId: $meta")
         assertTrue(meta.contains("\"ngGameId\""), "meta has active ngGameId: $meta")
         assertTrue(
-            meta.contains("\"map\": \"han-world-v2\"") || meta.contains("\"map\":\"han-world-v2\""),
-            "meta has map=han-world-v2: $meta",
+            meta.contains("\"map\": \"han-world-v3\"") || meta.contains("\"map\":\"han-world-v3\""),
+            "meta has map=han-world-v3: $meta",
         )
         assertTrue(meta.contains("\"unitSet\": \"han\"") || meta.contains("\"unitSet\":\"han\""), "meta has unitSet=han: $meta")
 
@@ -1571,14 +1592,14 @@ class ScenarioImporterIT {
 
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)            // 군웅할거 21세력
-        assertEquals(774, counts.city)             // han 풀맵 774城(소유+공백지) — 맵 공용
+        assertEquals(781, counts.city)             // Versioned Han V3 catalog, owned and neutral cities.
         assertEquals(327, counts.general)
         assertEquals(counts.general * 30, counts.generalTurn)
         assertEquals(counts.general * 37, counts.rankData)
         assertEquals(1, counts.ngGames)
 
         assertEquals(21, count("nation"))
-        assertEquals(774, count("city"))
+        assertEquals(781, count("city"))
         assertTrue(count("diplomacy") > 0, "diplomacy seeded for 21 nations")
 
         // ── 도시 소유 정합 (보급-동결 버그 회귀 게이트) ──
@@ -1615,7 +1636,7 @@ class ScenarioImporterIT {
     }
 
     @Test
-    fun `importAll seeds scenario_2 with Han world city catalog`() {
+    fun `importAll seeds scenario_2 with the frozen Han V2 city catalog`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         val counts = newImporter2().importAll(jdbc, canonicalWorldId)
@@ -1628,6 +1649,7 @@ class ScenarioImporterIT {
         assertEquals(0, counts.rankData)
         assertEquals(1, counts.ngGames)
         assertEquals(774, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        assertEquals((1..774).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
 
         val city = jdbc.queryForMap("SELECT name, level, pop_max, agri_max, comm_max FROM city WHERE id = 1")
         assertEquals("장안", sso(city["name"]))

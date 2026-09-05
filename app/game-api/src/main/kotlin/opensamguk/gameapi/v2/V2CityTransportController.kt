@@ -1,6 +1,7 @@
 package opensamguk.gameapi.v2
 
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.infra.v2.V2SandboxGate
@@ -15,6 +16,36 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.world.ResolvedStrategicPath
+import com.fasterxml.jackson.annotation.JsonInclude
+
+data class V2CityTransportRoutePreview(
+    val status: String,
+    val code: String? = null,
+    val reason: String? = null,
+    @get:JsonInclude(JsonInclude.Include.ALWAYS)
+    val route: V2CityTransportRoute? = null,
+    val worldId: Int? = null,
+)
+
+data class V2CityTransportRoute(
+    val nodeKeys: List<String>,
+    val edgeIds: List<String>,
+    val modes: List<String>,
+    val totalCost: Long,
+    val capacity: Int,
+    val topologyRevision: String,
+    val topologyHash: String,
+    val pathHash: String,
+) {
+    companion object {
+        fun from(path: ResolvedStrategicPath): V2CityTransportRoute = V2CityTransportRoute(
+            path.nodeKeys, path.edgeIds, path.modes.map { it.name }, path.totalCost, path.capacity,
+            path.topologyRevision, path.topologyHash, path.pathHash,
+        )
+    }
+}
 
 /**
  * OPENSAM-154 (v2 R5) — v2 도시 자원 수송 인테이크 엔드포인트. **v2 샌드박스 전용, 새 파일**
@@ -28,13 +59,40 @@ import opensamguk.logic.v2.command.V2CommandAvailability
 class V2CityTransportController(
     private val reserve: CommandReserveService,
     private val resolver: GeneralResolver,
+    private val contextual: V2CommandPrecheckService,
+    processWorld: GameApiProcessWorld,
 ) {
+    private val worldId = processWorld.worldId.value
+    /** Read-only authoritative preview; never reserves a command or changes a ledger. */
+    @PostMapping("/route")
+    fun route(
+        @AuthenticationPrincipal userId: Long?,
+        @RequestParam generalId: Int,
+        @RequestBody(required = false) argJson: String? = null,
+    ): ResponseEntity<V2CityTransportRoutePreview> {
+        if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+        if (generalId != resolver.resolveGeneralId(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        val available = validateLegacyV2Arguments("v2CityTransport", argJson)
+        val preview = when (available) {
+            is V2CommandAvailability.Available -> contextual.previewTransport(generalId, available.args as V2CityTransportArgs)
+            is V2CommandAvailability.Blocked -> V2CityTransportRoutePreview("BLOCKED", available.code, available.reason)
+            is V2CommandAvailability.NeedsInput -> V2CityTransportRoutePreview("BLOCKED", "INVALID_ARGUMENTS", "수송 인자가 부족합니다.")
+            is V2CommandAvailability.Unknown -> V2CityTransportRoutePreview("BLOCKED", available.code, "수송 명령을 찾을 수 없습니다.")
+        }
+        return ResponseEntity.ok(preview.copy(worldId = worldId))
+    }
+
     /** `POST /api/v2/city-transport?generalId=` — `{fromCityId, toCityId, gold, rice, garrison}` 본문. */
     @PostMapping
     fun transport(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam generalId: Int,
         @RequestBody(required = false) argJson: String? = null,
+        @RequestParam(required = false) expectedWorldId: Int? = null,
     ): ResponseEntity<Any> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
@@ -42,8 +100,17 @@ class V2CityTransportController(
         if (generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
+        // A proxy server may be reset to another world with the same immutable topology.
+        // Optional only for existing clients; scoped preview consumers must echo the origin.
+        if (expectedWorldId != null && expectedWorldId != worldId) {
+            return V2CommandAvailability.Blocked(
+                "ROUTE_WORLD_STALE", "세계가 변경되었습니다. 수송 경로를 다시 확인해주세요.",
+            ).legacyError("v2CityTransport")
+        }
         val availability = validateLegacyV2Arguments("v2CityTransport", argJson)
         if (availability !is V2CommandAvailability.Available) return availability.legacyError("v2CityTransport")
+        val checked = contextual.precheck(generalId, availability)
+        if (checked !is V2CommandAvailability.Available) return checked.legacyError("v2CityTransport")
         val reserved = reserve.reserveForOwner(
             generalId = generalId,
             actionCode = "v2CityTransport",

@@ -32,6 +32,20 @@ jobs:
       - name: Verify Han territory disconnection ledger
         if: '!cancelled()'
         run: python3 tools/map/audit_territory_disconnections.py --check
+      - name: Verify Han supply disagreements (fail closed)
+        if: '!cancelled()'
+        run: python3 tools/scenario/audit_han_supply_disagreements.py --map han-world-v3 --check
+      - name: Verify reviewed Han route candidate regeneration
+        if: '!cancelled()'
+        run: python3 tools/scenario/build_han_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check
+      - name: Verify new-world Han V3 artifacts
+        if: '!cancelled()'
+        run: python3 tools/scenario/build_han_world.py --target han-world-v3 --check
+      - name: Verify reviewed Han water topology (activation remains evidence-gated)
+        if: '!cancelled()'
+        run: |
+          python3 tools/map/build_han_water_topology.py --check
+          python3 tools/map/audit_han_water_topology.py --check
       - name: Verify scenario data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
@@ -103,7 +117,7 @@ jobs:
         run: python3 tools/scenario/validate_han_route_node_selection.py
       - name: Verify Han world scenario materialization
         if: '!cancelled()'
-        run: python3 tools/scenario/apply_han_world.py --check
+        run: python3 tools/scenario/apply_han_world.py --map han-world-v3 --check
       - name: Verify v2 sandbox compose contract
         if: '!cancelled()'
         run: bash tools/ops/v2_sandbox_compose_contract_test.sh

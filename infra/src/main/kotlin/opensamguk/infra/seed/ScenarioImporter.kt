@@ -431,8 +431,8 @@ class ScenarioImporter(
     internal fun validateSeedContract() {
         val contract = scenario.seedContract?.activeGenerals
         if (contract == null) {
-            require(scenarioMapConfig()["mapName"] != "han-world-v2") {
-                "$scenarioCode requires seedContract.activeGenerals for han-world-v2"
+            require(scenarioMapConfig()["mapName"] !in setOf("han-world-v2", "han-world-v3")) {
+                "$scenarioCode requires seedContract.activeGenerals for a versioned Han world"
             }
             return
         }

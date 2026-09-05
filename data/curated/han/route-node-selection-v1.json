@@ -7,10 +7,10 @@
         "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
       },
       "administrativePlaceOverlay": {
-        "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
+        "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
       },
       "candidate": {
-        "sha256": "e2b5467eb33838337c8273ef5ace6fe718c9512f5b7cd650921c685c4e23d799"
+        "sha256": "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670"
       },
       "externalClaims": {
         "sha256": "bdc84f732351962632b5e14306b60821d2436526f35ebc6c9fc6c46ca829266e"
@@ -22,13 +22,13 @@
         "sha256": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
       },
       "locationAdjudications": {
-        "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a"
+        "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
       },
       "reviewPolicy": {
-        "sha256": "edc0e97cf3648a85deab59864a0e400694ae3b1c9ba2f25c88ed909e228f2646"
+        "sha256": "5f029472a237308bf419726d85753e0389ad8e5512be1e9235df94e4522dab83"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
+        "sha256": "2f4f4e7bec26ee6192029e90043c0beecd9c67b150acbfccf86e2f03757a32de"
       }
     }
   },
@@ -24948,6 +24948,33 @@
         "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       }
+    },
+    {
+      "administrativeUnitId": "hhs:112:濟南國:010",
+      "canonicalName": "歷城",
+      "displayName": "歷城",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "W0B_GLOBAL_UNIQUE_220"
+      },
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 781,
+      "parentName": "濟南國",
+      "parentRef": "hhs-group:112:濟南國",
+      "physicalPlaceRef": "chgis:v6:cnty:45022",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w0b-overlay-unique-220",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w0b-overlay-unique-220"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
@@ -25063,112 +25090,112 @@
         "resourceName": "scenario_1010.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1010.json",
         "scenarioId": "1010",
-        "sha256": "cf674b5f5c6c1298df0ab89796ec4223dcba45666fb93e81d3a48744a29820cd",
+        "sha256": "f300cb8e828d524369a95dfeafda367a6dab95b9604a54ba2b6ce375b0208467",
         "startYear": 181
       },
       {
         "resourceName": "scenario_1020.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1020.json",
         "scenarioId": "1020",
-        "sha256": "2698d91ffdbc22745b0c846b1d0594d592193a2c9ac39cb495dfd84e03998254",
+        "sha256": "0752cf56f8e7a4c015dec76f326a6b0fc136016096cd7f6385fd23b04e8e8ffb",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1021.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1021.json",
         "scenarioId": "1021",
-        "sha256": "919dccc94af5cf7416e03feb240f6ddc84d5d44f184abd4a347e91b35a5505b9",
+        "sha256": "8dcd43a6625a5b7be19eee36c224754b41f0163e2121dcfdc06456825ba9f968",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1030.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1030.json",
         "scenarioId": "1030",
-        "sha256": "767eee079181b0c2f63044c8cb92e8d84d38d7018288da013e722eb37c6c3d83",
+        "sha256": "cac58a97ff9c5983983929744c8832bc124473a270d258c914bff6123c454be7",
         "startYear": 191
       },
       {
         "resourceName": "scenario_1031.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1031.json",
         "scenarioId": "1031",
-        "sha256": "89e19cb13a27639873454a6ff083de15c82605f662547c1600798ebf89b79329",
+        "sha256": "2c36ae3dd5cb2c75ba6c617f12249b491973ad45482692a3fadc17145a78d89f",
         "startYear": 192
       },
       {
         "resourceName": "scenario_1040.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1040.json",
         "scenarioId": "1040",
-        "sha256": "5f506fda985bba96ae52ed9542d1b5e480e1a74d8a8daea5737982d9cf3e0e0a",
+        "sha256": "a757816ed737f277b2297c56d1862dbf5bc93a2949e214a032263a39785d0954",
         "startYear": 193
       },
       {
         "resourceName": "scenario_1041.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1041.json",
         "scenarioId": "1041",
-        "sha256": "b649d84c4f531c1aaa9d5dca6ef5728cf7146f144f115d3e801d4c4832fefe6a",
+        "sha256": "deb80fae8b750be02fbb33af2f02c8e83fccf3531d5f6576892d66942f3738ec",
         "startYear": 194
       },
       {
         "resourceName": "scenario_1050.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
         "scenarioId": "1050",
-        "sha256": "a30e37cd5ecd70e77dcd35511d86793baab049ecf4862b4bad49fb743830f0cf",
+        "sha256": "3a94aa2ef45981008332a3cc0d988b726641283a29089b5e0709c026c635ec55",
         "startYear": 197
       },
       {
         "resourceName": "scenario_1060.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
         "scenarioId": "1060",
-        "sha256": "abfa1f3c7a744faaccb663ee5b3c5954cfc5882857bc57e554baf29000a51427",
+        "sha256": "5a39b17a83b36401916656839f3a014dd42dc75e9cfca769733d6e4289f8c79f",
         "startYear": 199
       },
       {
         "resourceName": "scenario_1070.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
         "scenarioId": "1070",
-        "sha256": "25775130a9ea9be1969655e5398732a6bacbc097c21cd44d77d70a69e0fd5abc",
+        "sha256": "6ac19f7bd1d53c85073f672d11a4931c6e02b7492ded6b7d6cbf5a7e8bf811ba",
         "startYear": 204
       },
       {
         "resourceName": "scenario_1080.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
         "scenarioId": "1080",
-        "sha256": "2612c2b9de071680d4c5403d8451c483e9fef8cb17825e8e5e53674eb29862b8",
+        "sha256": "fd92e08859451b63980b08261d5a22d489ddd11acf2d9f7e6262e802f15a7804",
         "startYear": 210
       },
       {
         "resourceName": "scenario_1090.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
         "scenarioId": "1090",
-        "sha256": "1e153ea5d4342e3ea9773cfc5725c1e24fe77652c16a3a71df738911e9076124",
+        "sha256": "6672648bbe65ba48cdc3167b05bdb05fecfc03920d3222d414605162ba832bab",
         "startYear": 216
       },
       {
         "resourceName": "scenario_1100.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
         "scenarioId": "1100",
-        "sha256": "dc5185e8dec8dc656f56fc53835007d1a86b194d7ad88d0acb8cba2fb8acb011",
+        "sha256": "6081a905f67190943a8d709ac3236136be328e9f8bd9134e04b094ffe608ae70",
         "startYear": 222
       },
       {
         "resourceName": "scenario_1110.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
         "scenarioId": "1110",
-        "sha256": "ac74b8c1f598100e37c8c8ab4459d9c001bd90b4ede3b1009a68840bc59e45db",
+        "sha256": "25e0bc726eb4cfb65157dec3a06581cd90f2d919f99f66aad1fde4101373e6ac",
         "startYear": 225
       },
       {
         "resourceName": "scenario_1120.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1120.json",
         "scenarioId": "1120",
-        "sha256": "fdf48447c31670dcd5acd461341ca0f6965e054510a97aec2e8e38dff9366d77",
+        "sha256": "abec6e5fca03d8c859c784db8d32d2a9b78e3df74ee19320e43508511aa1ec72",
         "startYear": 188
       },
       {
         "resourceName": "scenario_9200.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_9200.json",
         "scenarioId": "9200",
-        "sha256": "fbce7350fa2c5630d66b72d45ffdbeb0936aa0ab692db16a62728906829162e6",
+        "sha256": "8ae2d6d496973cea56f898d4cec272ba348f7f6d57a98ed596d769d531eac7c7",
         "startYear": 190
       }
     ]
@@ -25176,9 +25203,10 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 780,
+    "approvedCount": 781,
     "historicalBindingCounts": {
-      "HHS_ADMINISTRATIVE_UNIT": 780
+      "HHS_ADMINISTRATIVE_UNIT": 781
     }
-  }
+  },
+  "worldVersion": "han-world-v3"
 }

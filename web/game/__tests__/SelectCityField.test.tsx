@@ -154,3 +154,34 @@ describe('SelectCityField county-scale selection', () => {
     expect(fireChange).toHaveBeenCalledWith(505);
   });
 });
+
+describe('SelectCityField', () => {
+  it('shows one-hop Licheng from server city constants and submits stable id 781', async () => {
+    const onChange = vi.fn();
+    mocks.mapPreview.mockResolvedValue({
+      serverName: 'test', year: 200, month: 1, mapCode: 'han-world-v3', width: 700, height: 610,
+      cities: [
+        { id: 273, name: '노', level: 5, nationId: 1, x: 411, y: 180, state: 0, supply: true, isCapital: false },
+        { id: 781, name: '역성', level: 11, nationId: 1, x: 413, y: 175, state: 0, supply: true, isCapital: false },
+      ],
+      nations: [],
+    });
+    mocks.gameConst.mockResolvedValue({
+      result: true,
+      cityConst: [
+        { id: 273, name: '노', path: { 781: '역성' } },
+        { id: 781, name: '역성', path: { 273: '노' } },
+      ],
+    });
+    mocks.frontInfo.mockResolvedValue({ general: { cityId: 273 } });
+
+    render(
+      <SelectCityField commandKey="che_이동" value={null} onChange={onChange} />,
+    );
+
+    const button = await screen.findByRole('option', { name: /역성/ });
+    expect(button?.textContent).toContain('역성');
+    fireEvent.click(button);
+    expect(onChange).toHaveBeenCalledWith(781);
+  });
+});

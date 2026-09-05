@@ -7,8 +7,9 @@ import kotlin.test.assertTrue
 class MapJsonTest {
 
     @Test
-    fun `world v2 resolves to the committed Han gameplay resource`() {
+    fun `persisted world v2 aliases han while new world v3 has its own resource`() {
         assertEquals("han", MapJson.resourceCode("han-world-v2"))
+        assertEquals("han-world-v3", MapJson.resourceCode("han-world-v3"))
         assertEquals("han-780-v1", MapJson.resourceCode("han-780-v1"))
         assertEquals("che", MapJson.resourceCode("che"))
     }
@@ -26,6 +27,8 @@ class MapJsonTest {
                 "x": 280,
                 "y": 221,
                 "provinceId": 503,
+                "physicalPlaceRef": "chgis:v6:cnty:70623",
+                "routeNodeKey": "route-changan",
                 "meta": {
                   "ju": "사예",
                   "jun": "경조윤",
@@ -42,5 +45,7 @@ class MapJsonTest {
         assertEquals("경조윤", city.commanderyName)
         assertTrue(city.isCommanderySeat)
         assertEquals(503, city.provinceId)
+        assertEquals("chgis:v6:cnty:70623", city.physicalPlaceRef)
+        assertEquals("route-changan", city.routeNodeKey)
     }
 }

@@ -196,7 +196,7 @@
   "inputs": {
     "data/curated/han/administrative-place-bindings-v1.json": {
       "path": "data/curated/han/administrative-place-bindings-v1.json",
-      "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
+      "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
     },
     "data/curated/han/administrative-temporal-adjudications-v1.json": {
       "path": "data/curated/han/administrative-temporal-adjudications-v1.json",
@@ -208,19 +208,19 @@
     },
     "data/curated/han/route-node-location-adjudications-v1.json": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a"
+      "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "edc0e97cf3648a85deab59864a0e400694ae3b1c9ba2f25c88ed909e228f2646"
+      "sha256": "5f029472a237308bf419726d85753e0389ad8e5512be1e9235df94e4522dab83"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "e2b5467eb33838337c8273ef5ace6fe718c9512f5b7cd650921c685c4e23d799"
+      "sha256": "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "58b94d077a2d6e3a1201777958d5b6afbac80cb00370bc411de77e804d6d295c"
+      "sha256": "e029b935eb43489115d55ed100d6e85fb4a01bad7aef26b6c3fa98b0a41b6e05"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -240,7 +240,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "6e7507bc110e37738a77f49c598762a3691465574a839775b6e66d244a8ea9d7"
+      "sha256": "ab66e941d530ac5ccc43712a0e360352fbcd7e55f7580584e6b6a75053e6197f"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -18349,9 +18349,20 @@
       }
     },
     {
+      "approvalEvidence": {
+        "inputs": [
+          "routeNodeSelection.reviewState",
+          "routeNodeSelection.physicalPlaceRefTerminal",
+          "hanTiles.cities.id"
+        ],
+        "method": "EXACT_APPROVED_SELECTION_PHYSICAL_ID",
+        "physicalPlaceRef": "chgis:v6:cnty:45022",
+        "routeNodeKey": "f1aae98e-ead0-49f7-b4da-e427277a66ef"
+      },
+      "approvedParentAdministrativeUnitId": "hhs:112:濟南國:010",
       "cellCount": 39,
       "cityId": "45022",
-      "decision": "PROPOSED_GEOMETRIC",
+      "decision": "EXACT_APPROVED",
       "footprintDiagnostic": {
         "coordinateMatchesFootprintMajority": true,
         "crossJun": false,
@@ -18360,36 +18371,22 @@
         "junDistribution": [
           {
             "cellCount": 39,
-            "junArrayIndex": 36,
-            "nameCh": "平原郡"
+            "junArrayIndex": 35,
+            "nameCh": "濟南國"
           }
         ],
         "majorityJunArrayIndices": [
-          36
+          35
         ]
       },
-      "geometryDiagnostic": {
-        "diagnosticOnly": true,
-        "distanceTie": false,
-        "groupCardinality": "MULTI_GROUP_JUN",
-        "nearestCandidates": [
-          {
-            "anchorCityId": "45121",
-            "candidateAdministrativeGroupId": "hhs-group:112:平原郡",
-            "candidateAdministrativeUnitId": "hhs:112:平原郡:005",
-            "squaredGridDistance": 9
-          }
-        ]
-      },
-      "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
+      "reviewState": "APPROVED_EXACT_SELECTION_JOIN",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:110:勃海郡",
-          "hhs-group:112:平原郡"
+          "hhs-group:112:濟南國"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 36,
-        "nameCh": "平原郡"
+        "junArrayIndex": 35,
+        "nameCh": "濟南國"
       }
     },
     {
@@ -46590,14 +46587,14 @@
     "decisionCellCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 1699,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 6331,
-      "EXACT_APPROVED": 80924,
-      "PROPOSED_GEOMETRIC": 18202
+      "EXACT_APPROVED": 80963,
+      "PROPOSED_GEOMETRIC": 18163
     },
     "decisionRowCounts": {
       "BLOCKED_DIRECT_TERRITORY_REVIEW": 33,
       "BLOCKED_EXTERNAL_POLITY_REVIEW": 40,
-      "EXACT_APPROVED": 781,
-      "PROPOSED_GEOMETRIC": 284
+      "EXACT_APPROVED": 782,
+      "PROPOSED_GEOMETRIC": 283
     },
     "directTerritoryCellCount": 120193,
     "directTerritoryProvinceCount": 526,
@@ -46605,30 +46602,30 @@
       "pendingCandidateJunCount": 17,
       "rejectedSourcedGroupJunCount": 5
     },
-    "exactApprovedCellCount": 80924,
-    "exactApprovedRowCount": 781,
+    "exactApprovedCellCount": 80963,
+    "exactApprovedRowCount": 782,
     "geometryDiagnostics": {
       "distanceTies": {
         "cellCount": 69,
         "rowCount": 3
       },
       "multiGroupJun": {
-        "cellCount": 7859,
-        "rowCount": 85
+        "cellCount": 7820,
+        "rowCount": 84
       },
       "singleGroupJun": {
         "cellCount": 10343,
         "rowCount": 199
       },
       "uniqueNearest": {
-        "cellCount": 18133,
-        "rowCount": 281
+        "cellCount": 18094,
+        "rowCount": 280
       }
     },
     "landCellCount": 227349,
     "landOwnerRowCount": 1138,
     "provinceRecordCount": 1524,
-    "unresolvedCellCount": 26232,
-    "unresolvedRowCount": 357
+    "unresolvedCellCount": 26193,
+    "unresolvedRowCount": 356
   }
 }

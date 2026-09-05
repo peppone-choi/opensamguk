@@ -433,7 +433,9 @@ export const api = {
     gameConst: () => get<GameConstResponse>('/api/const'),
 
     // World map snapshot (F2 Wave 4 MapViewer) — same endpoint the gateway lobby MapPreview consumes.
-    mapPreview: () => get<MapPreviewResponse>('/api/map/preview'),
+    mapPreview: (signal?: AbortSignal) => get<MapPreviewResponse>('/api/map/preview', signal),
+    strategicTopology: (knownTopologyHash?: string, signal?: AbortSignal) =>
+        get<import('@opensamguk/ui').StrategicMapResponse>(`/api/map/strategic-topology${knownTopologyHash ? `?knownTopologyHash=${encodeURIComponent(knownTopologyHash)}` : ''}`, signal),
     // In-game world map (W9) — fog 포함(spyList/shownByGeneralList/myCity/myNation). 좌표는 없으므로
     // MapPreview와 id로 머지해 렌더한다. neutralView/showMe 인자(기본 showMe=1로 내 도시 노출).
     worldMap: (neutralView = 0, showMe = 1) =>

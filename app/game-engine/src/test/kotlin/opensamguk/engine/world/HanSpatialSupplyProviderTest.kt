@@ -9,7 +9,8 @@ import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.SupplyCapital
 import opensamguk.logic.world.SupplyCity
-import opensamguk.logic.world.computeSuppliedCitiesWithSpatialNetwork
+import opensamguk.logic.world.SupplyReachabilityVerdict
+import opensamguk.logic.world.evaluateSupplyReachability
 import kotlin.io.path.Path
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteIfExists
@@ -24,8 +25,30 @@ class HanSpatialSupplyProviderTest {
     private val mapPath = "../../data/map/han-tiles.json"
     private val ownershipPath = "../../data/map/han-scenario-province-ownership-v1.json"
     private val allowlistPath = "../../data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json"
+    private val ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json"
+    private val sourceLedgerPath = "../../data/curated/han/territory-disconnection-adjudications-v1.json"
+    private val runtimeMapPath = "../../infra/src/main/resources/map/han.json"
 
     private fun provider() = HanSpatialSupplyProvider(mapper, mapPath, ownershipPath)
+
+    @Test
+    fun `reviewed active fallback policies are attached to the spatial network`() {
+        val loader = HanSupplyDisconnectionPolicyLoader(
+            mapper, ledgerPath, mapPath, runtimeMapPath, sourceLedgerPath,
+        )
+        val provider = HanSpatialSupplyProvider(mapper, mapPath, ownershipPath, loader)
+        val liveCities = MapJson.loadFromClasspath("han").cities.mapNotNull { city ->
+            city.provinceId?.let { SpatialSupplyCity(city.id, it, 0) }
+        }
+
+        val network = provider.network(1020, liveCities)
+
+        assertEquals(
+            opensamguk.logic.world.SupplyDisconnectionDecision.PROTECT_GEOMETRY_DEFECT,
+            network.fallbackPolicies.getValue(47).decision,
+        )
+        assertTrue(164 !in network.fallbackPolicies, "unclassified rows stay runtime-protected without a guessed policy")
+    }
 
     @Test
     fun `canonical Han topology exposes 1524 provinces and 4161 symmetric edges`() {
@@ -74,28 +97,13 @@ class HanSpatialSupplyProviderTest {
         val cityConst = ActiveWorldMap.requireVariant(mapOf("mapName" to "han"), emptyMap())
         val scenarioCodes = mapper.readTree(Path(ownershipPath).toFile()).path("scenarios")
             .map { it.path("scenarioCode").asInt() }
-        // 청주 4縣 재판정(data/curated/han/jurisdiction-commandery-adjudications-v1.json: 45107 西平昌·85706 安德 → 平原郡, 85385 挺 → 北海國,
-        // 85505 不其 → 東萊郡) 뒤 정본 소유권이 군국 보유자를 따라가면서, 平原郡 한가운데에
-        // 北海國 색으로 서 있던 西平昌·安德 두 프로빈스 벽이 사라졌다. 그래서 平原郡 보유 세력의
-        // 冀州→靑州 보급 회랑이 열린다: 1020 +2(363·365), 1030 +10(160–165·361·362·364·366),
-        // 1031 +58(150–175·200–236·360·363·365), 1040 +10. 소유 도시 수와 나머지 11개 시나리오는
-        // 그대로다. 근거·diff: docs/superpowers/plans/2026-09-03-han-jurisdiction-parent-adjudication.md
-        val expectedSupplyAudit = mapOf(
-            1010 to Triple(224, 127, 97),
-            1020 to Triple(390, 354, 36),
-            1021 to Triple(385, 353, 32),
-            1030 to Triple(471, 398, 73),
-            1031 to Triple(500, 450, 50),
-            1040 to Triple(485, 482, 3),
-            1041 to Triple(520, 505, 15),
-            1050 to Triple(606, 603, 3),
-            1060 to Triple(606, 601, 5),
-            1070 to Triple(628, 621, 7),
-            1080 to Triple(651, 645, 6),
-            1090 to Triple(686, 677, 9),
-            1100 to Triple(706, 697, 9),
-            1110 to Triple(706, 699, 7),
-            1120 to Triple(271, 203, 68),
+        val reviewedProvider = HanSpatialSupplyProvider(
+            mapper,
+            mapPath,
+            ownershipPath,
+            HanSupplyDisconnectionPolicyLoader(
+                mapper, ledgerPath, mapPath, runtimeMapPath, sourceLedgerPath,
+            ),
         )
 
         for (scenarioCode in scenarioCodes) {
@@ -108,7 +116,7 @@ class HanSpatialSupplyProviderTest {
             val liveCities = cityProvinceById.map { (cityId, provinceIndex) ->
                 SpatialSupplyCity(cityId, provinceIndex, ownerByCity[cityId] ?: 0)
             }
-            val network = provider().network(scenarioCode, liveCities)
+            val network = reviewedProvider.network(scenarioCode, liveCities)
             liveCities.forEach { city ->
                 assertEquals(
                     city.nationId,
@@ -122,20 +130,18 @@ class HanSpatialSupplyProviderTest {
             val capitals = scenario.nations.filter { it.scale > 0 }.mapNotNull { nation ->
                 nation.cities.firstOrNull()?.toInt()?.let { SupplyCapital(it, nation.id) }
             }
-            val supplied = computeSuppliedCitiesWithSpatialNetwork(
+            val evaluation = evaluateSupplyReachability(
                 cities = ownedCities,
                 capitals = capitals,
                 cityConst = cityConst,
                 spatialNetwork = network,
             )
-            assertEquals(
-                expectedSupplyAudit.getValue(scenarioCode),
-                Triple(ownedCities.size, supplied.size, ownedCities.size - supplied.size),
-                "scenario $scenarioCode owned/supplied/blocked mapped city audit",
-            )
+            assertEquals(ownedCities.map { it.id }.sorted(), evaluation.rows.map { it.cityId })
+            evaluation.rows.filter { it.verdict == SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD }
+                .forEach { row -> assertTrue(row.policy?.upholdsSpatialCut == true) }
             capitals.filter { it.capitalCityId in cityProvinceById }.forEach { capital ->
                 assertTrue(
-                    capital.capitalCityId in supplied,
+                    capital.capitalCityId in evaluation.suppliedCityIds,
                     "scenario $scenarioCode mapped capital ${capital.capitalCityId} is not supplied",
                 )
             }
@@ -143,18 +149,19 @@ class HanSpatialSupplyProviderTest {
     }
 
     @Test
-    fun `Yuyang Lu seven provinces remain direct spatial supply inputs`() {
+    fun `changed Yuyang Lu live owner overrides only its seat province`() {
         val root = mapper.readTree(Path(mapPath).toFile())
         val lu = root.path("jurisdictionRecords").single { it.path("id").asText() == "87436" }
         val provinceIds = root.path("provinceRecords").map { it.path("id").asText() }
         val indices = lu.path("provinceIds").map { provinceIds.indexOf(it.asText()) }
         val network = provider().network(
             1020,
-            listOf(SpatialSupplyCity(cityId = 720, provinceIndex = 846, nationId = 12)),
+            listOf(SpatialSupplyCity(cityId = 720, provinceIndex = 846, nationId = 77)),
         )
 
         assertEquals(7, indices.size)
-        assertEquals(setOf(12), indices.map { network.provinceOwners[it] }.toSet())
+        assertEquals(77, network.provinceOwners[846])
+        assertEquals(setOf(12), indices.filter { it != 846 }.map { network.provinceOwners[it] }.toSet())
     }
 
     @Test

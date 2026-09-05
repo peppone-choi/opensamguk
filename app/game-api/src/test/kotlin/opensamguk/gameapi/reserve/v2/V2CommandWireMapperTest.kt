@@ -78,7 +78,7 @@ class V2CommandWireMapperTest {
             code = "v2CityTransport",
             generalId = 42,
             requestId = "req-v2-tr",
-            argJson = """{"fromCityId":5,"toCityId":6,"gold":1000,"rice":500,"garrison":300,"routeRevision":9}""",
+            argJson = """{"fromCityId":5,"toCityId":6,"gold":1000,"rice":500,"garrison":300,"routeRevision":9,"topologyRevision":"v3:abc","routePathHash":"path:123"}""",
             expiresAt = "0200-01-01T01:00:00Z",
         )
         assertTrue(CommandWireMapper.isIntakeCommand("v2CityTransport"))
@@ -90,6 +90,8 @@ class V2CommandWireMapperTest {
         assertEquals(500L, tr.rice)
         assertEquals(300, tr.garrison)
         assertEquals(9, tr.routeRevision)
+        assertEquals("v3:abc", tr.topologyRevision)
+        assertEquals("path:123", tr.routePathHash)
         assertEquals("0200-01-01T01:00:00Z", tr.expiresAt)
     }
 
@@ -109,7 +111,7 @@ class V2CommandWireMapperTest {
     fun `canonical mapper uses validated typed args without reparsing json`() {
         val command = CommandWireMapper.toV2Command(
             schema = V2CommandRegistry.cityTransportSchema,
-            args = V2CityTransportArgs(5, 6, 1000, 500, 300, 9),
+            args = V2CityTransportArgs(5, 6, 1000, 500, 300, 9, "v3:abc", "path:123"),
             generalId = 42,
             requestId = "typed-1",
             expiresAt = "0200-01-01T01:00:00Z",
@@ -120,5 +122,7 @@ class V2CommandWireMapperTest {
         assertEquals(6, transport.toCityId)
         assertEquals(1000, transport.gold)
         assertEquals(9, transport.routeRevision)
+        assertEquals("v3:abc", transport.topologyRevision)
+        assertEquals("path:123", transport.routePathHash)
     }
 }

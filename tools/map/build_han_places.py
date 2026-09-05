@@ -182,12 +182,12 @@ NEAR_DEG = 0.5
 EXPECTED_TRACKED_REVIEW_INPUTS = {
     'data/curated/han/route-node-location-adjudications-v1.json': {
         'path': 'data/curated/han/route-node-location-adjudications-v1.json',
-        'sha256': 'f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a',
+        'sha256': 'bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23',
         'role': 'LOCATION_ADJUDICATION_REVIEW',
     },
     'data/curated/han/route-node-selection-v1.json': {
         'path': 'data/curated/han/route-node-selection-v1.json',
-        'sha256': '58b94d077a2d6e3a1201777958d5b6afbac80cb00370bc411de77e804d6d295c',
+        'sha256': 'e029b935eb43489115d55ed100d6e85fb4a01bad7aef26b6c3fa98b0a41b6e05',
         'role': 'ROUTE_NODE_SELECTION_REVIEW',
     },
 }

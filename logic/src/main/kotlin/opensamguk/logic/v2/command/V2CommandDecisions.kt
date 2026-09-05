@@ -2,6 +2,9 @@ package opensamguk.logic.v2.command
 
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.world.StrategicPathResult
+import opensamguk.logic.world.TraversalMode
+import opensamguk.logic.world.PathDenialCode
 
 const val V2_GARRISON_GOLD_PER_CREW: Double = 0.09
 const val V2_TRANSPORT_MAX_GOLD: Long = 50_000
@@ -95,6 +98,8 @@ data class V2CityTransportContext(
     val fromGold: Long,
     val fromRice: Long,
     val fromGarrison: Int,
+    val requiresStrategicRoute: Boolean = false,
+    val strategicRoute: StrategicPathResult? = null,
 )
 
 sealed interface V2CityTransportDecision {
@@ -128,7 +133,31 @@ fun decideCityTransport(args: V2CityTransportArgs, context: V2CityTransportConte
     if (args.gold == 0L && args.rice == 0L && args.garrison == 0) {
         return V2CityTransportDecision.Denied("TRANSPORT_AMOUNT_EMPTY", "수송할 자원을 지정해야 합니다.")
     }
-    if (context.hopDistance != 1) {
+    if (context.requiresStrategicRoute) {
+        val path = when (val route = context.strategicRoute) {
+            null -> return V2CityTransportDecision.Denied("TOPOLOGY_STATE_INVALID", "수송 지형 정보를 확인할 수 없습니다.")
+            is StrategicPathResult.Denied -> return V2CityTransportDecision.Denied(route.code.name, route.code.transportReason())
+            is StrategicPathResult.Resolved -> route.path
+        }
+        if (args.topologyRevision.isNullOrBlank()) {
+            return V2CityTransportDecision.Denied("TOPOLOGY_REVISION_REQUIRED", "서버에서 수송 경로를 먼저 확인해야 합니다.")
+        }
+        if (args.routePathHash.isNullOrBlank()) {
+            return V2CityTransportDecision.Denied("ROUTE_PATH_HASH_REQUIRED", "확인한 수송 경로 식별값이 필요합니다.")
+        }
+        if (args.topologyRevision != path.topologyRevision) {
+            return V2CityTransportDecision.Denied("TOPOLOGY_REVISION_STALE", "지도 정보가 변경되었습니다. 수송 경로를 다시 확인하세요.")
+        }
+        if (args.routePathHash != path.pathHash) {
+            return V2CityTransportDecision.Denied("ROUTE_PATH_HASH_STALE", "수송 경로가 변경되었습니다. 경로를 다시 확인하세요.")
+        }
+        if (path.modes.any { it != TraversalMode.LAND }) {
+            return V2CityTransportDecision.Denied("TRANSPORT_MODE_UNSUPPORTED", "도하·수운은 다턴 수송이 구현되기 전에는 사용할 수 없습니다.")
+        }
+        if (path.edgeIds.size != 1 || path.modes.size != 1 || path.nodeKeys.size != 2) {
+            return V2CityTransportDecision.Denied("ROUTE_REQUIRES_MULTI_TURN", "즉시 수송은 육로 한 구간만 가능합니다. 다턴 수송은 아직 지원하지 않습니다.")
+        }
+    } else if (context.hopDistance != 1) {
         return V2CityTransportDecision.Denied("ROUTE_NOT_ADJACENT", "인접한 도시로만 수송할 수 있습니다.")
     }
     if (escortCrew < V2_TRANSPORT_MIN_ESCORT_CREW) {
@@ -147,4 +176,15 @@ fun decideCityTransport(args: V2CityTransportArgs, context: V2CityTransportConte
     if (context.fromRice < args.rice) return V2CityTransportDecision.Denied("CITY_RICE_INSUFFICIENT", "도시의 병량이 부족합니다.")
     if (context.fromGarrison < args.garrison) return V2CityTransportDecision.Denied("CITY_GARRISON_INSUFFICIENT", "도시의 병사가 부족합니다.")
     return V2CityTransportDecision.Applied(args.gold, args.rice, args.garrison)
+}
+
+private fun PathDenialCode.transportReason(): String = when (this) {
+    PathDenialCode.NO_LAND_CONNECTION -> "연결된 육로가 없습니다."
+    PathDenialCode.RIVER_CROSSING_REQUIRED -> "강을 건널 수 있는 검증된 통과점이 필요합니다."
+    PathDenialCode.NO_EMBARK_POINT -> "승선 또는 하선할 수 있는 지점이 없습니다."
+    PathDenialCode.NO_TRANSPORT_CAPACITY -> "수송 경로의 가용 용량이 부족합니다."
+    PathDenialCode.WATERWAY_BLOCKED -> "물길이 봉쇄되었거나 현재 통행할 수 없습니다."
+    PathDenialCode.TOPOLOGY_REVISION_STALE -> "지도 정보가 변경되었습니다. 수송 경로를 다시 확인하세요."
+    PathDenialCode.TOPOLOGY_STATE_INVALID -> "수송 지형 정보 검증에 실패했습니다."
+    PathDenialCode.UNKNOWN_NODE -> "출발지 또는 도착지가 수송 지도에 연결되지 않았습니다."
 }

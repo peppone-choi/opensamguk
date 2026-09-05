@@ -13,6 +13,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.GeneralTurnSlotWriteRow
+import opensamguk.infra.seed.HanStrategicTopologyJson
 import opensamguk.logic.event.EventCondition
 import opensamguk.logic.event.EventTarget
 import opensamguk.logic.actions.CommandRegistry
@@ -33,6 +34,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.temporal.ChronoUnit
+import java.nio.file.Path
 import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -42,7 +44,7 @@ import kotlin.test.assertTrue
 /**
  * F1b boot/tick gate — proves the FULL fresh-DB → playable-world path end-to-end:
  *  1. fresh Postgres + Flyway baseline,
- *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / 774 cities / 2 nations),
+ *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (230 active generals / 781 V3 cities / 2 nations),
  *  3. [WorldSnapshotLoader.buildSnapshot] materializes the [opensamguk.engine.turn.WorldSnapshot],
  *  4. an [InMemoryTurnWorld] is constructed from it and a [TurnDaemonLifecycle] tick ADVANCES the turn
  *     loop (the seeded ring is all 휴식 → each due general resolves the rest no-op) GREEN, no exception,
@@ -87,7 +89,9 @@ class ScenarioBootIT {
         jdbc = JdbcTemplate(dataSource)
         named = NamedParameterJdbcTemplate(dataSource)
         bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", worldId = opensamguk.common.world.WorldId(1))
-        loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1))
+        val topology = HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3").topology
+        loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1),
+            waterTopologyLoader = { topology })
     }
 
     @AfterAll
@@ -103,13 +107,16 @@ class ScenarioBootIT {
         // 2. seed
         assertTrue(bootstrap.ensureSeeded(jdbc), "first ensureSeeded seeds the fresh world")
         assertEquals(230, count("general"))
-        assertEquals(774, count("city")) // han 풀맵: 점유 710 + 공백지 64 = 774
+        assertEquals(781, count("city")) // New V3 roster; legacy saved-world rosters remain unchanged.
         assertEquals(2, count("nation"))
 
         // 3. load snapshot → 4. build the in-memory world
         val snapshot = loader.buildSnapshot()
         assertEquals(230, snapshot.generals.size)
-        assertEquals(774, snapshot.cities.size) // han 풀맵: 점유 710 + 공백지 64 = 774
+        assertEquals("han-world-v3", snapshot.state.config["mapName"])
+        assertEquals(781, snapshot.cities.size)
+        assertEquals((1..781).toSet(), snapshot.cities.map { it.id }.toSet())
+        assertEquals("역성", snapshot.cities.single { it.id == 781 }.name)
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)

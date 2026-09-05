@@ -1,3 +1,13 @@
+"""Build V3 pilots only after their source-city aliases have physical evidence.
+
+The reviewed alias document must declare ``worldVersion: han-world-v3`` and a
+``bindings`` list of ``alias``, ``physicalPlaceRef``, ``reviewState: APPROVED``,
+and non-empty ``sourceRefs``. Display-name uniqueness and commandery seats do
+not establish an alias: e.g. pilot 長沙 is not 潁川郡 長社縣. The default review
+document is intentionally absent until that evidence has been adjudicated.
+Generation therefore remains blocked even when private refined inputs exist.
+"""
+
 import argparse
 import csv
 import hashlib
@@ -21,7 +31,8 @@ from refine_officers import load_mapping
 SCENARIO_DIRECTORY = Path(__file__).resolve().parent
 REPOSITORY_ROOT = SCENARIO_DIRECTORY.parents[1]
 REFINED_PATH = REPOSITORY_ROOT / "data/scenarios/refined/rtk14-officers.json"
-HAN_PATH = REPOSITORY_ROOT / "infra/src/main/resources/map/han.json"
+HAN_V3_PATH = REPOSITORY_ROOT / "infra/src/main/resources/map/han-world-v3.json"
+PILOT_CITY_BINDINGS_PATH = REPOSITORY_ROOT / "data/curated/han/pilot-city-bindings-v1.json"
 NAME_MAP_PATH = SCENARIO_DIRECTORY / "officer-name-map.tsv"
 CITY_MAP_PATH = SCENARIO_DIRECTORY / "city_map.json"
 REMAP_PATH = SCENARIO_DIRECTORY / "location-remap.yaml"
@@ -295,6 +306,7 @@ def _verify_representatives(
     expectation: dict,
     source_by_id: dict[int, tuple[dict, dict]],
     general_by_id: dict[int, list[object]],
+    runtime_city_ids: dict[str, int],
     errors: list[str],
 ) -> None:
     for officer_id, name, status, faction, location, city, nation_id, level in expectation["representatives"]:
@@ -321,8 +333,12 @@ def _verify_representatives(
             errors.append(
                 f"representative {officer_id}: runtime nation expected {nation_id}, got {emitted[3]!r}"
             )
-        if emitted[4] != city:
-            errors.append(f"representative {officer_id}: emitted city expected {city}, got {emitted[4]!r}")
+        expected_city_id = runtime_city_ids.get(city)
+        if emitted[4] != expected_city_id:
+            errors.append(
+                f"representative {officer_id}: emitted city expected {city}/{expected_city_id}, "
+                f"got {emitted[4]!r}"
+            )
         if emitted[8] != level:
             errors.append(f"representative {officer_id}: level expected {level}, got {emitted[8]!r}")
 
@@ -376,6 +392,7 @@ def _representative_evidence(
     city_map: dict[str, str],
     remap: dict[str, str],
     che_cities: set[str],
+    runtime_city_ids: dict[str, int],
 ) -> list[dict]:
     result: list[dict] = []
     for officer_id, _, _, _, _, expected_city, _, _ in expectation["representatives"]:
@@ -391,6 +408,7 @@ def _representative_evidence(
             "source_faction": source_row.get("faction"),
             "source_location": source_row.get("location"),
             "mapped_city": mapped_city,
+            "runtime_city_id": runtime_city_ids[mapped_city] if mapped_city is not None else None,
             "runtime_nation_id": emitted[3] if emitted is not None else None,
             "officer_level": emitted[8] if emitted is not None else None,
             "emitted": emitted is not None,
@@ -404,6 +422,7 @@ def _verify_report_representatives(
     source_by_id: dict[int, tuple[dict, dict]],
     general_by_id: dict[int, list[object]],
     che_cities: set[str],
+    runtime_city_ids: dict[str, int],
     errors: list[str],
 ) -> None:
     try:
@@ -414,6 +433,7 @@ def _verify_report_representatives(
             load_mapping(CITY_MAP_PATH),
             load_mapping(REMAP_PATH),
             che_cities,
+            runtime_city_ids,
         )
     except (KeyError, OSError, ValueError) as error:
         errors.append(f"report representatives: cannot derive expected evidence: {error}")
@@ -427,7 +447,14 @@ def _city_overlap_count(scenario: dict) -> int:
     return len(cities) - len(set(cities))
 
 
-def verify(scenario: dict, report: dict, refined: list[dict], manifest: dict, che_cities: set[str]) -> list[str]:
+def verify(
+    scenario: dict,
+    report: dict,
+    refined: list[dict],
+    manifest: dict,
+    che_cities: set[str],
+    runtime_city_ids: dict[str, int],
+) -> list[str]:
     errors: list[str] = []
     if not isinstance(manifest, dict):
         return ["manifest: expected an object"]
@@ -451,6 +478,14 @@ def verify(scenario: dict, report: dict, refined: list[dict], manifest: dict, ch
         return [*errors, "refined input: expected a list"]
     if not isinstance(che_cities, set) or not all(isinstance(city, str) for city in che_cities):
         return [*errors, "che cities: expected a set of city names"]
+    if (
+        not isinstance(runtime_city_ids, dict)
+        or set(runtime_city_ids) != che_cities
+        or not all(_is_int(city_id) and city_id > 0 for city_id in runtime_city_ids.values())
+        or len(set(runtime_city_ids.values())) != len(runtime_city_ids)
+    ):
+        return [*errors, "runtime city ids: expected an exact unique V3 projection"]
+    known_runtime_city_ids = set(runtime_city_ids.values())
 
     source_by_id = _matching_rows(refined, expectation["year_month"], errors)
     general_by_id = _general_rows(scenario)
@@ -479,11 +514,11 @@ def verify(scenario: dict, report: dict, refined: list[dict], manifest: dict, ch
 
     for nation in scenario["nation"]:
         for city in nation[8]:
-            if city not in che_cities:
-                errors.append(f"city catalog: nation city {city!r} is not in che")
+            if city not in known_runtime_city_ids:
+                errors.append(f"city catalog: nation city id {city!r} is not in V3")
     for officer_id, row in general_by_id.items():
-        if row[4] not in che_cities:
-            errors.append(f"city catalog: general {officer_id} city {row[4]!r} is not in che")
+        if row[4] not in known_runtime_city_ids:
+            errors.append(f"city catalog: general {officer_id} city id {row[4]!r} is not in V3")
         source = source_by_id.get(officer_id)
         if source is None:
             errors.append(f"cross reference: general {officer_id} has no refined source row")
@@ -510,8 +545,10 @@ def verify(scenario: dict, report: dict, refined: list[dict], manifest: dict, ch
 
     _verify_report_officers(report, general_by_id, errors)
     _verify_runtime_nations(scenario, source_by_id, errors)
-    _verify_representatives(expectation, source_by_id, general_by_id, errors)
-    _verify_report_representatives(report, expectation, source_by_id, general_by_id, che_cities, errors)
+    _verify_representatives(expectation, source_by_id, general_by_id, runtime_city_ids, errors)
+    _verify_report_representatives(
+        report, expectation, source_by_id, general_by_id, che_cities, runtime_city_ids, errors
+    )
 
     if _is_full_refined(refined):
         source_counts = dict(Counter(row.get("status") for _, row in source_by_id.values()))
@@ -547,6 +584,7 @@ def _pilot_report(
     che_cities: set[str],
     city_map: dict[str, str],
     remap: dict[str, str],
+    runtime_city_ids: dict[str, int],
 ) -> dict:
     expectation = PILOT_EXPECTATIONS[manifest["code"]]
     errors: list[str] = []
@@ -577,6 +615,7 @@ def _pilot_report(
         city_map,
         remap,
         che_cities,
+        runtime_city_ids,
     )
     report["scenario_sha256"] = hashlib.sha256(dump_scenario(scenario)).hexdigest()
     return report
@@ -594,48 +633,129 @@ def build_pilot(
     remap: dict[str, str],
     name_map: dict[int, str],
     defaults: dict,
+    runtime_city_ids: dict[str, int],
 ) -> tuple[dict, dict, dict]:
     raw_manifest = load_manifest(manifest_path)
     manifest = validate_manifest(raw_manifest, refined, che_cities)
-    scenario, base_report = build(refined, manifest, city_map, remap, name_map, defaults)
-    report = _pilot_report(scenario, base_report, refined, manifest, che_cities, city_map, remap)
-    errors = verify(scenario, report, refined, manifest, che_cities)
+    scenario, base_report = build(
+        refined,
+        manifest,
+        city_map,
+        remap,
+        name_map,
+        defaults,
+        runtime_city_ids=runtime_city_ids,
+    )
+    report = _pilot_report(
+        scenario, base_report, refined, manifest, che_cities, city_map, remap, runtime_city_ids
+    )
+    errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
     if errors:
         raise ValueError("pilot verification failed: " + "; ".join(errors))
     return scenario, report, manifest
 
 
-def _load_inputs() -> tuple[list[dict], set[str], dict[str, str], dict[str, str], dict[int, str], dict]:
+def build_runtime_city_ids(world: dict, bindings: dict, required_aliases: set[str]) -> dict[str, int]:
+    """Resolve reviewed physical aliases without consulting display names."""
+    if (
+        not isinstance(world, dict)
+        or not isinstance(world.get("_meta"), dict)
+        or world["_meta"].get("map") != "han-world-v3"
+        or not isinstance(world.get("cities"), list)
+        or not world["cities"]
+        or not isinstance(bindings, dict)
+        or bindings.get("worldVersion") != "han-world-v3"
+        or not isinstance(bindings.get("bindings"), list)
+    ):
+        raise ValueError("pilot city bindings require a V3 world and binding document")
+    if not isinstance(required_aliases, set) or not required_aliases or not all(
+        isinstance(alias, str) and alias.strip() for alias in required_aliases
+    ):
+        raise ValueError("pilot city bindings require a non-empty alias set")
+    by_place: dict[str, int] = {}
+    city_ids: set[int] = set()
+    for city in world["cities"]:
+        if not isinstance(city, dict) or not _is_int(city.get("id")) or city["id"] <= 0 or city["id"] in city_ids:
+            raise ValueError("V3 world has duplicate or invalid numeric city ids")
+        place = city.get("physicalPlaceRef")
+        if not isinstance(place, str) or not place.strip() or place in by_place:
+            raise ValueError("V3 world has duplicate or invalid physical city references")
+        by_place[place] = city["id"]
+        city_ids.add(city["id"])
+    aliases: dict[str, int] = {}
+    used_places: set[str] = set()
+    for binding in bindings["bindings"]:
+        if not isinstance(binding, dict):
+            raise ValueError("pilot city alias requires approved physical evidence")
+        alias, place = binding.get("alias"), binding.get("physicalPlaceRef")
+        sources = binding.get("sourceRefs")
+        if (
+            not isinstance(alias, str) or not alias.strip()
+            or not isinstance(place, str) or not place.strip()
+            or binding.get("reviewState") != "APPROVED"
+            or not isinstance(sources, list) or not sources
+            or not all(isinstance(source, str) and source.strip() for source in sources)
+        ):
+            raise ValueError("pilot city alias requires approved physical evidence")
+        if alias in aliases or place in used_places:
+            raise ValueError(f"duplicate pilot alias or physical city: {alias}")
+        if place not in by_place:
+            raise ValueError(f"pilot city alias {alias} has unknown physical reference: {place}")
+        aliases[alias] = by_place[place]
+        used_places.add(place)
+    missing = sorted(required_aliases - aliases.keys())
+    if missing:
+        raise ValueError(f"reviewed physical pilot city aliases are missing: {missing}")
+    return {alias: aliases[alias] for alias in sorted(required_aliases)}
+
+
+def _load_inputs(city_bindings_path: Path | None = None) -> tuple[list[dict], set[str], dict[str, str], dict[str, str], dict[int, str], dict, dict[str, int]]:
+    bindings_path = city_bindings_path or PILOT_CITY_BINDINGS_PATH
+    if not bindings_path.is_file():
+        raise ValueError(
+            "reviewed physical city bindings are required for V3 pilots; "
+            f"adjudicate aliases in {bindings_path} before generation"
+        )
+    city_map = load_mapping(CITY_MAP_PATH)
+    remap = load_mapping(REMAP_PATH)
+    city_aliases = set(city_map.values()) | set(remap.values())
+    for expectation in PILOT_EXPECTATIONS.values():
+        for relocation in expectation["city_relocations"]:
+            city_aliases.update((relocation["source_city"], relocation["assigned_city"]))
+    runtime_city_ids = build_runtime_city_ids(
+        _read_json(HAN_V3_PATH), _read_json(bindings_path), city_aliases
+    )
     refined = _read_json(REFINED_PATH)
-    che = _read_json(HAN_PATH)
     defaults = _read_json(DEFAULTS_PATH)
-    if not isinstance(refined, list) or not isinstance(che, dict) or not isinstance(che.get("cities"), list) or not isinstance(defaults, dict):
+    if not isinstance(refined, list) or not isinstance(defaults, dict):
         raise ValueError("pilot input files have an invalid root shape")
-    che_cities = {city["name"] for city in che["cities"] if isinstance(city, dict) and isinstance(city.get("name"), str)}
-    if len(che_cities) != len(che["cities"]):
-        raise ValueError("Han city catalog has invalid or duplicate names")
     return (
         refined,
-        che_cities,
-        load_mapping(CITY_MAP_PATH),
-        load_mapping(REMAP_PATH),
+        city_aliases,
+        city_map,
+        remap,
         _load_name_map(NAME_MAP_PATH),
         defaults,
+        runtime_city_ids,
     )
 
 
-def generate_pilots(output_directory: Path = OUTPUT_DIRECTORY, report_directory: Path = REPORT_DIRECTORY) -> list[dict]:
-    refined, che_cities, city_map, remap, name_map, defaults = _load_inputs()
+def generate_pilots(
+    output_directory: Path = OUTPUT_DIRECTORY,
+    report_directory: Path = REPORT_DIRECTORY,
+    city_bindings_path: Path | None = None,
+) -> list[dict]:
+    refined, che_cities, city_map, remap, name_map, defaults, runtime_city_ids = _load_inputs(city_bindings_path)
     output_directory.mkdir(parents=True, exist_ok=True)
     report_directory.mkdir(parents=True, exist_ok=True)
     generated: list[dict] = []
     for code in sorted(PILOT_EXPECTATIONS):
         manifest_path = MANIFEST_DIRECTORY / f"{code}.yaml"
         first_scenario, first_report, _ = build_pilot(
-            manifest_path, refined, che_cities, city_map, remap, name_map, defaults
+            manifest_path, refined, che_cities, city_map, remap, name_map, defaults, runtime_city_ids
         )
         second_scenario, second_report, _ = build_pilot(
-            manifest_path, refined, che_cities, city_map, remap, name_map, defaults
+            manifest_path, refined, che_cities, city_map, remap, name_map, defaults, runtime_city_ids
         )
         scenario_bytes = dump_scenario(first_scenario)
         report_bytes = dump_report(first_report)
@@ -666,9 +786,10 @@ def main(arguments: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate and verify deterministic RTK14 pilot scenarios.")
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIRECTORY)
     parser.add_argument("--report-dir", type=Path, default=REPORT_DIRECTORY)
+    parser.add_argument("--city-bindings", type=Path, help="reviewed physical alias document for V3 pilots")
     args = parser.parse_args(arguments)
     try:
-        generated = generate_pilots(args.output_dir, args.report_dir)
+        generated = generate_pilots(args.output_dir, args.report_dir, args.city_bindings)
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"pilot generation failed: {error}")
         return 1

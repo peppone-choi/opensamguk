@@ -610,6 +610,26 @@ describe('HanMapCanvas 격자 해제', () => {
 });
 
 describe('등급 → 최소 표시 zoom 매핑', () => {
+    it.each([1, 1.5, 2, 3])('DPR %s에서 메인 지도 close focus는 현재 현을 CSS 10배로 중앙에 둔다', (dpr) => {
+        const width = 1000 * dpr;
+        const height = 500 * dpr;
+        const current = { col: 180, row: 240 };
+        const focused = initialFocusedView(
+            width,
+            height,
+            grid,
+            hanTiles,
+            dpr,
+            current,
+            'current-city-close',
+        );
+        const [x, y] = cellToScreen(current.col, current.row, focused);
+
+        expect(focused.scale).toBe(10 * dpr);
+        expect(x).toBeCloseTo(width / 2, 6);
+        expect(y).toBeCloseTo(height / 2, 6);
+    });
+
     it.each([1, 1.5, 2, 3])('DPR %s에서 현재 현을 중앙에 두고 현명이 보이는 배율로 시작한다', (dpr) => {
         const width = 1000 * dpr;
         const height = 500 * dpr;
@@ -628,6 +648,15 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
         expect(initialFocusedView(1000, 500, grid, hanTiles, 1)).toEqual(
             initialView(1000, 500, grid, hanTiles, 1),
         );
+        expect(initialFocusedView(
+            1000,
+            500,
+            grid,
+            hanTiles,
+            1,
+            undefined,
+            'current-city-close',
+        )).toEqual(initialView(1000, 500, grid, hanTiles, 1));
     });
 
     it.each([

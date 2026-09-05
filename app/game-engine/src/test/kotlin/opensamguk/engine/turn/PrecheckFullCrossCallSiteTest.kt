@@ -269,6 +269,17 @@ class PrecheckFullCrossCallSiteTest {
     }
 
     @Test
+    fun `Han world v3 Lu to Licheng is allowed by PRECHECK and FULL`() {
+        val fixture = Fixture(cityId = 273, destCityId = 781, mapName = "han-world-v3")
+        assertAvailableAgreement(
+            action = "che_이동",
+            fixture = fixture,
+            argJson = """{"destCityID":781}""",
+            args = linkedMapOf("destCityID" to 781),
+        )
+    }
+
+    @Test
     fun `Han compatibility constraint dependencies agree at precheck and daemon call sites`() {
         val fixture = Fixture(cityId = 3, destCityId = 421, mapName = "han-780-v1")
         assertAvailableAgreement(

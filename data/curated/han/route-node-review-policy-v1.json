@@ -2,12 +2,12 @@
   "expectedSelection": {
     "externalHistoricalBindingCount": 0,
     "externalLocationClaimCount": 8,
-    "hhsAdministrativeBindingCount": 780,
-    "overlayUniqueCount": 722,
+    "hhsAdministrativeBindingCount": 781,
+    "overlayUniqueCount": 723,
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "reviewedAmbiguousCount": 50,
-    "routeNodeCount": 780,
+    "routeNodeCount": 781,
     "sourcePlaceholderCount": 0
   },
   "forbiddenSelections": {
@@ -69,12 +69,12 @@
     "administrativeCatalogSha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "e2b5467eb33838337c8273ef5ace6fe718c9512f5b7cd650921c685c4e23d799"
+      "sha256": "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670"
     },
-    "coordinateOverlaySha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1",
+    "coordinateOverlaySha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec",
     "locationAdjudications": {
       "path": "data/curated/han/route-node-location-adjudications-v1.json",
-      "sha256": "f1c6c39607bbb8e48db3cf8a885a09594fbf01d983451005b74915e6d406af1a"
+      "sha256": "bdbd0a7bf4d530ed4243a41fcef8ac74dcfcd6096fc5dcf4e4807cc821914b23"
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
@@ -82,7 +82,7 @@
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
+      "sha256": "2f4f4e7bec26ee6192029e90043c0beecd9c67b150acbfccf86e2f03757a32de"
     }
   },
   "legacyAttributionCorrections": [
@@ -264,6 +264,9 @@
     "unknownPayloadRewriteAllowed": false
   },
   "numericAssignmentPolicy": {
+    "appendOnlyNewWorldNodeAllowed": true,
+    "appendOnlyNumericIdStart": 781,
+    "legacyNumericIdsImmutableThrough": 780,
     "numericCityIdChangeAllowed": false,
     "replacementNodeOrder": "W0-A sourceVolume, canonicalGroup source order, ordinal",
     "replacementNodesUseRetiredSlotsInAscendingOrder": true,
@@ -295,14 +298,14 @@
     "note": "780은 reviewed route-node identity 집합이며 scenario catalog은 31개 active Han resource의 파일 해시만 고정한다.",
     "routeNodeSelectionIs220Baseline": true,
     "runtimeEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
-    "scenarioScope": "all tracked scenario resources whose map.mapName is han or han-world-v2"
+    "scenarioScope": "all tracked scenario resources whose map.mapName is han, frozen han-world-v2, or new-world-only han-world-v3"
   },
   "schemaVersion": 1,
   "selectionBatches": [
     {
       "batchId": "w0b-overlay-unique-220",
       "criteria": "W0-B joinStatus == RESOLVED_POINT and selected physicalPlaceId is globally unique",
-      "expectedCount": 722,
+      "expectedCount": 723,
       "reviewState": "APPROVED",
       "selectionRationale": "W0-A identity와 220년 CHGIS exact-name 전역 일대일 물리점이 모두 있는 행정단위를 전수 승인한다. 이 승인은 도로·중요도·거리 순위를 뜻하지 않는다."
     },

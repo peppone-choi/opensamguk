@@ -2,11 +2,13 @@ import copy
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 SCENARIO_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCENARIO_DIR))
 
+import verify_pilots
 from verify_pilots import verify
 
 
@@ -141,7 +143,7 @@ def representative_rows() -> list[dict]:
     ]
 
 
-def fixture() -> tuple[dict, dict, list[dict], dict, set[str]]:
+def fixture() -> tuple[dict, dict, list[dict], dict, set[str], dict[str, int]]:
     nation_by_lord = {lord_id: index for index, lord_id in enumerate(LORD_IDS, start=1)}
     output_ids = set(LORD_IDS) | {10146, 10174}
     for officer_id in range(10001, 11001):
@@ -205,7 +207,8 @@ def fixture() -> tuple[dict, dict, list[dict], dict, set[str]]:
         "startYear": 190,
         "life": 1,
         "fiction": 0,
-        "map": {"mapName": "han-world-v2", "unitSet": "han"},
+        "map": {"mapName": "han-world-v3", "unitSet": "han"},
+        "cityIdentityVersion": "han-world-v3",
         "seedContract": {"activeGenerals": {"base": 249, "extended": 249}},
         "const": {"defaultMaxGeneral": 600},
         "stored_icons": {".": {str(row[2]): f"{row[2]}.png" for row in tuples}},
@@ -248,8 +251,17 @@ def fixture() -> tuple[dict, dict, list[dict], dict, set[str]]:
         ],
     }
     manifest = {"code": "scenario_3190", "year_month": "190.1"}
-    che_cities = {f"도시{index}" for index in range(1, 22)} | {"진류", "남피", "평원", "사수", "장사"}
-    return scenario, report, refined, manifest, che_cities
+    che_cities = {f"도시{index}" for index in range(1, 22)} | {"진류", "남피", "평원", "사수", "장사", "오"}
+    runtime_city_ids = {name: index for index, name in enumerate(sorted(che_cities), start=1)}
+    for nation_row in scenario["nation"]:
+        nation_row[8] = [runtime_city_ids[name] for name in nation_row[8]]
+    for general_row in scenario["general"]:
+        general_row[4] = runtime_city_ids[general_row[4]]
+    for officer in report["officers"]:
+        officer["city"] = runtime_city_ids[officer["city"]]
+    for representative in report["representatives"]:
+        representative["runtime_city_id"] = runtime_city_ids[representative["mapped_city"]]
+    return scenario, report, refined, manifest, che_cities, runtime_city_ids
 
 
 class VerifyPilotsTest(unittest.TestCase):
@@ -257,30 +269,30 @@ class VerifyPilotsTest(unittest.TestCase):
         self.assertEqual(verify(*fixture()), [])
 
     def test_exact_active_count_gate_rejects_missing_affiliated_general(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         scenario["general"].pop()
         scenario["stored_icons"]["."].popitem()
         scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
         report["officers"].pop()
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("affiliated count:") for error in errors), errors)
 
     def test_death_after_start_remains_importer_eligible(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         scenario["general"][0][10] = scenario["startYear"] + 1
 
-        self.assertEqual(verify(scenario, report, refined, manifest, che_cities), [])
+        self.assertEqual(verify(scenario, report, refined, manifest, che_cities, runtime_city_ids), [])
 
     def test_adult_age_at_start_remains_importer_eligible(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         scenario["general"][0][9] = scenario["startYear"] - 14
 
-        self.assertEqual(verify(scenario, report, refined, manifest, che_cities), [])
+        self.assertEqual(verify(scenario, report, refined, manifest, che_cities, runtime_city_ids), [])
 
     def test_death_at_start_remains_emitted_but_reduces_importer_eligible_total(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         row = scenario["general"][0]
         officer_id = row[2]
         row[10] = scenario["startYear"]
@@ -300,10 +312,10 @@ class VerifyPilotsTest(unittest.TestCase):
 
         self.assertIn(row, scenario["general"])
         self.assertTrue(any(officer["id"] == officer_id for officer in report["officers"]))
-        self.assertEqual(verify(scenario, report, refined, manifest, che_cities), [])
+        self.assertEqual(verify(scenario, report, refined, manifest, che_cities, runtime_city_ids), [])
 
     def test_underage_general_remains_emitted_but_reduces_importer_eligible_total(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         row = scenario["general"][0]
         officer_id = row[2]
         row[9] = scenario["startYear"] - 13
@@ -323,10 +335,10 @@ class VerifyPilotsTest(unittest.TestCase):
 
         self.assertIn(row, scenario["general"])
         self.assertTrue(any(officer["id"] == officer_id for officer in report["officers"]))
-        self.assertEqual(verify(scenario, report, refined, manifest, che_cities), [])
+        self.assertEqual(verify(scenario, report, refined, manifest, che_cities, runtime_city_ids), [])
 
     def test_stale_importer_eligible_total_is_rejected(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         row = scenario["general"][0]
         row[10] = scenario["startYear"]
         scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
@@ -342,12 +354,12 @@ class VerifyPilotsTest(unittest.TestCase):
             "reason": "pending v2 PHP postBuild promotion parity",
         }
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("report importer_eligible_total:") for error in errors), errors)
 
     def test_seed_readiness_gate_rejects_unreported_effective_ruler_gap(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         row = scenario["general"][0]
         row[10] = scenario["startYear"]
         scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
@@ -359,12 +371,12 @@ class VerifyPilotsTest(unittest.TestCase):
             "dead_at_start": 1,
         }
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("report seed_readiness:") for error in errors), errors)
 
     def test_importer_lifecycle_gate_rejects_stale_boundary_breakdown(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         row = scenario["general"][0]
         row[10] = scenario["startYear"]
         scenario["seedContract"]["activeGenerals"] = {"base": 248, "extended": 248}
@@ -375,61 +387,149 @@ class VerifyPilotsTest(unittest.TestCase):
             "reason": "pending v2 PHP postBuild promotion parity",
         }
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("report importer_lifecycle:") for error in errors), errors)
 
     def test_representative_gate_rejects_stable_id_city_mismatch(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         row = next(row for row in scenario["general"] if row[2] == 10405)
-        row[4] = "도시1"
+        row[4] = runtime_city_ids["도시1"]
         report_row = next(row for row in report["officers"] if row["id"] == 10405)
-        report_row["city"] = "도시1"
+        report_row["city"] = runtime_city_ids["도시1"]
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("representative 10405:") for error in errors), errors)
 
     def test_representative_report_gate_rejects_stale_evidence(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         representative = next(row for row in report["representatives"] if row["id"] == 10405)
         representative["mapped_city"] = "도시1"
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("report representatives:") for error in errors), errors)
 
     def test_representative_report_gate_rejects_malformed_evidence(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         report["representatives"][0] = {"id": 10071}
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("report representatives:") for error in errors), errors)
 
     def test_unresolved_location_gate_rejects_nonempty_report(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         report["unresolved_locations"] = ["알수없음"]
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("unresolved locations:") for error in errors), errors)
 
     def test_korean_fallback_gate_rejects_nonempty_report(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         report["korean_name_fallbacks"] = [{"id": 10001, "name": "fallback"}]
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("Korean name fallbacks:") for error in errors), errors)
 
     def test_tuple_schema_gate_rejects_wrong_general_tuple_length(self) -> None:
-        scenario, report, refined, manifest, che_cities = fixture()
+        scenario, report, refined, manifest, che_cities, runtime_city_ids = fixture()
         scenario["general"][0] = scenario["general"][0][:-1]
 
-        errors = verify(scenario, report, refined, manifest, che_cities)
+        errors = verify(scenario, report, refined, manifest, che_cities, runtime_city_ids)
 
         self.assertTrue(any(error.startswith("scenario schema:") for error in errors), errors)
+
+
+class PilotPhysicalCityBindingsTest(unittest.TestCase):
+    def fixture(self) -> tuple[dict, dict]:
+        world = {
+            "_meta": {"map": "han-world-v3"},
+            "cities": [
+                {"id": 1, "name": "장안", "physicalPlaceRef": "chgis:v6:cnty:70623"},
+                {"id": 46, "name": "낙양", "physicalPlaceRef": "chgis:v6:cnty:82828"},
+                {"id": 99, "name": "장안", "physicalPlaceRef": "chgis:v6:cnty:other"},
+            ],
+        }
+        bindings = {
+            "worldVersion": "han-world-v3",
+            "bindings": [
+                {
+                    "alias": "장안",
+                    "physicalPlaceRef": "chgis:v6:cnty:70623",
+                    "reviewState": "APPROVED",
+                    "sourceRefs": ["reviewed-alias:長安縣/京兆尹"],
+                },
+                {
+                    "alias": "낙양",
+                    "physicalPlaceRef": "chgis:v6:cnty:82828",
+                    "reviewState": "APPROVED",
+                    "sourceRefs": ["reviewed-alias:雒陽縣/河南尹"],
+                },
+            ],
+        }
+        return world, bindings
+
+    def test_reviewed_physical_binding_ignores_duplicate_names_and_roster_order(self) -> None:
+        world, bindings = self.fixture()
+        self.assertEqual(
+            {"낙양": 46, "장안": 1},
+            verify_pilots.build_runtime_city_ids(world, bindings, {"낙양", "장안"}),
+        )
+        world["cities"].reverse()
+        bindings["bindings"].reverse()
+        self.assertEqual(
+            {"낙양": 46, "장안": 1},
+            verify_pilots.build_runtime_city_ids(world, bindings, {"낙양", "장안"}),
+        )
+
+    def test_missing_binding_does_not_fall_back_to_a_matching_city_name(self) -> None:
+        world, bindings = self.fixture()
+        bindings["bindings"].pop()
+        with self.assertRaisesRegex(ValueError, "missing.*낙양"):
+            verify_pilots.build_runtime_city_ids(world, bindings, {"낙양", "장안"})
+
+    def test_unreviewed_or_unproven_alias_is_rejected(self) -> None:
+        for field, value in (("reviewState", "PENDING"), ("sourceRefs", []), ("sourceRefs", [" "])):
+            with self.subTest(field=field, value=value):
+                world, bindings = self.fixture()
+                bindings["bindings"][0][field] = value
+                with self.assertRaisesRegex(ValueError, "approved physical evidence"):
+                    verify_pilots.build_runtime_city_ids(world, bindings, {"낙양", "장안"})
+
+    def test_unknown_physical_reference_cannot_be_replaced_by_same_name(self) -> None:
+        world, bindings = self.fixture()
+        bindings["bindings"][0]["physicalPlaceRef"] = "chgis:v6:cnty:missing"
+        with self.assertRaisesRegex(ValueError, "unknown physical"):
+            verify_pilots.build_runtime_city_ids(world, bindings, {"낙양", "장안"})
+
+    def test_alias_and_physical_identity_collisions_are_rejected(self) -> None:
+        for field in ("alias", "physicalPlaceRef"):
+            with self.subTest(field=field):
+                world, bindings = self.fixture()
+                bindings["bindings"][1][field] = bindings["bindings"][0][field]
+                with self.assertRaisesRegex(ValueError, "duplicate"):
+                    verify_pilots.build_runtime_city_ids(world, bindings, {"낙양", "장안"})
+
+    def test_world_identity_version_and_numeric_ids_are_validated(self) -> None:
+        world, bindings = self.fixture()
+        world["_meta"]["map"] = "han-world-v2"
+        with self.assertRaisesRegex(ValueError, "V3"):
+            verify_pilots.build_runtime_city_ids(world, bindings, {"낙양", "장안"})
+        for city_id in (0, True, 1.0, 46):
+            with self.subTest(city_id=city_id):
+                world, bindings = self.fixture()
+                world["cities"][0]["id"] = city_id
+                with self.assertRaisesRegex(ValueError, "numeric city"):
+                    verify_pilots.build_runtime_city_ids(world, bindings, {"낙양", "장안"})
+
+    def test_default_inputs_are_blocked_before_private_refined_data_without_alias_review(self) -> None:
+        with patch.object(verify_pilots, "PILOT_CITY_BINDINGS_PATH", Path("missing-reviewed-pilot-aliases.json")):
+            with self.assertRaisesRegex(ValueError, "reviewed physical city bindings are required"):
+                verify_pilots._load_inputs()
 
 
 if __name__ == "__main__":

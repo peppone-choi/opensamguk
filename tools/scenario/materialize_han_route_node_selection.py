@@ -172,7 +172,7 @@ def _scenario_resources(candidate: JsonObject, scenario_dir: Path) -> list[JsonO
     actual_names: set[str] = set()
     for path in scenario_dir.glob("scenario_*.json"):
         map_info = _load(path).get("map")
-        if isinstance(map_info, dict) and map_info.get("mapName") in {"han", "han-world-v2"}:
+        if isinstance(map_info, dict) and map_info.get("mapName") in {"han", "han-world-v2", "han-world-v3"}:
             actual_names.add(path.name)
     if actual_names != expected_names:
         raise MaterializationContractError("scenario resource set drift")
@@ -188,7 +188,7 @@ def _scenario_resources(candidate: JsonObject, scenario_dir: Path) -> list[JsonO
             raise MaterializationContractError("scenario hash drift")
         payload = _load(path)
         start_year = number(expected, "startYear")
-        if (obj(payload, "map").get("mapName") not in {"han", "han-world-v2"}
+        if (obj(payload, "map").get("mapName") not in {"han", "han-world-v2", "han-world-v3"}
                 or payload.get("startYear") != start_year):
             raise MaterializationContractError("scenario resource metadata drift")
         seen.add(scenario_id)
@@ -287,7 +287,7 @@ def main() -> int:
         arguments.selection_output.write_text(selection_blob, encoding="utf-8")
         arguments.migration_output.write_text(migration_blob, encoding="utf-8")
         summary = obj(result.migration, "summary")
-        print(f"approved=780 scenarios=31 replacements={summary['routeNodeReplacementCount']} "
+        print(f"approved={len(result.selection['routeNodes'])} scenarios=31 replacements={summary['routeNodeReplacementCount']} "
               f"bindingCorrections={summary['historicalBindingCorrectionCount']}")
         return 0
     except (OSError, json.JSONDecodeError, MaterializationContractError) as error:

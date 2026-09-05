@@ -1728,7 +1728,7 @@
     ]
   },
   "commanderyTopology": {
-    "disconnectedCount": 42,
+    "disconnectedCount": 43,
     "disconnected": [
       {
         "id": "PARENT-0000",
@@ -2162,6 +2162,37 @@
             "cellCount": 9,
             "memberIds": [
               "43252"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "PARENT-0036",
+        "displayName": "평원군",
+        "componentCellCounts": [
+          536,
+          39
+        ],
+        "components": [
+          {
+            "cellCount": 536,
+            "memberIds": [
+              "200038",
+              "45087",
+              "45100",
+              "45107",
+              "45124",
+              "45146",
+              "85525",
+              "85531",
+              "85553",
+              "85706"
+            ]
+          },
+          {
+            "cellCount": 39,
+            "memberIds": [
+              "45121"
             ]
           }
         ]
@@ -5463,14 +5494,14 @@
     "sourceUnitCount": 1180,
     "bindingStatusCounts": {
       "AMBIGUOUS_POINT": 55,
-      "NO_COORDINATE_CANDIDATE": 400,
-      "RESOLVED_POINT": 722,
+      "NO_COORDINATE_CANDIDATE": 399,
+      "RESOLVED_POINT": 723,
       "SOURCE_PLACEHOLDER": 3
     },
-    "resolvedCurrentJurisdictionCount": 722,
-    "sourceParentMatchCount": 679,
+    "resolvedCurrentJurisdictionCount": 723,
+    "sourceParentMatchCount": 680,
     "sourceParentMismatchCount": 43,
-    "noCoordinateCandidateCount": 400,
+    "noCoordinateCandidateCount": 399,
     "resolvedPlaceAbsentCount": 0,
     "sourceGroups": [
       {
@@ -6300,11 +6331,11 @@
         "sourceVolume": 112,
         "sourceUnitCount": 10,
         "bindingStatusCounts": {
-          "NO_COORDINATE_CANDIDATE": 2,
-          "RESOLVED_POINT": 8
+          "NO_COORDINATE_CANDIDATE": 1,
+          "RESOLVED_POINT": 9
         },
-        "resolvedCurrentJurisdictionCount": 8,
-        "sourceParentMatchCount": 8,
+        "resolvedCurrentJurisdictionCount": 9,
+        "sourceParentMatchCount": 9,
         "sourceParentMismatchCount": 0,
         "resolvedPlaceAbsentCount": 0,
         "currentCommanderyIds": [
@@ -8127,11 +8158,11 @@
         "currentCommanderyDisplayName": "제남국",
         "currentCommanderyNameCh": "濟南國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 11,
+        "currentJurisdictionCount": 12,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 10,
-        "sourceResolvedCurrentJurisdictionCount": 8,
+        "sourceResolvedCurrentJurisdictionCount": 9,
         "sourceParentMismatchCount": 0
       },
       {
@@ -8139,7 +8170,7 @@
         "currentCommanderyDisplayName": "평원군",
         "currentCommanderyNameCh": "平原郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 12,
+        "currentJurisdictionCount": 11,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 112,
         "sourceEnumeratedUnitCount": 9,
@@ -9852,13 +9883,13 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "6e7507bc110e37738a77f49c598762a3691465574a839775b6e66d244a8ea9d7"
+      "sha256": "ab66e941d530ac5ccc43712a0e360352fbcd7e55f7580584e6b6a75053e6197f"
     },
     "administrativeUnits": {
       "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
     },
     "administrativePlaceBindings": {
-      "sha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1"
+      "sha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec"
     },
     "externalRegionHierarchyPolicy": {
       "sha256": "6e3188aa5b6cf8bad465ef54a61029412663d371ea08bb0c91b487cfd1a40693"

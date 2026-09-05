@@ -176,7 +176,6 @@ def _load_json(path: Path) -> Any:
 
 def audit_repository(root: Path) -> list[RuntimeProvinceFillAudit]:
     tiles = _load_json(root / "data/map/han-tiles.json")
-    map_resource = _load_json(root / "infra/src/main/resources/map/han.json")
     ownership_document = _load_json(
         root / "data/map/han-scenario-province-ownership-v1.json"
     )
@@ -191,9 +190,22 @@ def audit_repository(root: Path) -> list[RuntimeProvinceFillAudit]:
     }
 
     audits: list[RuntimeProvinceFillAudit] = []
+    map_resources: dict[str, Mapping[str, Any]] = {}
     for scenario_code in sorted(ownership_by_code):
         resource_path = root / f"infra/src/main/resources/scenario/scenario_{scenario_code}.json"
         normalized_code = normalize_scenario_code(resource_path.stem)
+        scenario = _load_json(resource_path)
+        map_name = scenario.get("map", {}).get("mapName")
+        if map_name not in {"han", "han-world-v2", "han-world-v3"}:
+            raise ValueError(
+                f"scenario {scenario_code} references unsupported map resource {map_name!r}"
+            )
+        if map_name not in map_resources:
+            resource_name = "han" if map_name == "han-world-v2" else map_name
+            map_resources[map_name] = _load_json(
+                root / f"infra/src/main/resources/map/{resource_name}.json"
+            )
+        map_resource = map_resources[map_name]
         claims = claims_by_code[normalized_code]
         nation_names = {
             str(row["nationKey"]): str(row["displayNationName"])
@@ -204,7 +216,7 @@ def audit_repository(root: Path) -> list[RuntimeProvinceFillAudit]:
                 scenario_code=normalized_code,
                 tiles=tiles,
                 map_resource=map_resource,
-                scenario=_load_json(resource_path),
+                scenario=scenario,
                 ownership=ownership_by_code[normalized_code],
                 nation_name_by_key=nation_names,
             )

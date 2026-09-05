@@ -4,6 +4,22 @@
   "referenceYear": 220,
   "adjudications": [
     {
+      "jurisdictionId": "45022",
+      "jurisdictionNameCh": "历城县",
+      "fromCommanderyId": "PARENT-0036",
+      "fromCommanderyNameCh": "平原郡",
+      "toCommanderyId": "PARENT-0035",
+      "toCommanderyNameCh": "濟南國",
+      "reviewState": "APPROVED_EXACT_PARENT",
+      "evidenceRefs": [
+        "data/curated/han/administrative-units.json#hhs:112:濟南國:010",
+        "data/curated/han/administrative-place-bindings-v1.json#physicalPlaceId=chgis:v6:cnty:45022",
+        "data/map/han-tiles.json#cities.id=45022",
+        "https://zh.wikisource.org/wiki/後漢書/卷112#濟南國",
+        "shiliao:後漢書/卷112 郡國志 靑州 濟南國 縣列「歷城，有鐵。有巨里聚」"
+      ]
+    },
+    {
       "jurisdictionId": "45107",
       "jurisdictionNameCh": "西平昌县",
       "fromCommanderyId": "PARENT-0038",

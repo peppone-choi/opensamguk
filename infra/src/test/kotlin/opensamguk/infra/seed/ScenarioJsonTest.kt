@@ -27,17 +27,21 @@ class ScenarioJsonTest {
     }
 
     @Test
-    fun `every committed runtime scenario uses the canonical Han world contract`() {
-        val codes = listOf(
+    fun `committed runtime scenarios preserve frozen V2 and opt into new-world-only V3 explicitly`() {
+        val frozenV2Codes = setOf(
             "0", "1", "2", "900", "901", "902", "903", "905", "906", "908",
-            "910", "911", "912", "913", "914", "9200",
+            "910", "911", "912", "913", "914",
+        )
+        val newWorldV3Codes = setOf(
             "1010", "1020", "1021", "1030", "1031", "1040", "1041", "1050",
             "1060", "1070", "1080", "1090", "1100", "1110", "1120",
+            "9200",
         )
 
-        for (code in codes) {
+        for (code in frozenV2Codes + newWorldV3Codes) {
             val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_$code.json"))
-            assertEquals("han-world-v2", scenario.map["mapName"], "scenario_$code mapName")
+            val expectedMap = if (code in newWorldV3Codes) "han-world-v3" else "han-world-v2"
+            assertEquals(expectedMap, scenario.map["mapName"], "scenario_$code mapName")
             assertEquals("han", scenario.map["unitSet"], "scenario_$code unitSet")
             ScenarioImporter(
                 scenario = scenario,
@@ -52,6 +56,17 @@ class ScenarioJsonTest {
                 extendedGeneral = true,
             ).validateSeedContract()
         }
+    }
+
+    @Test
+    fun `scenario 9200 pins Chang-an and Luoyang to stable V3 city ids`() {
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_9200.json"))
+
+        assertEquals("han-world-v3", scenario.map["mapName"])
+        assertEquals(listOf("46"), scenario.nations.single { it.name == "동탁" }.cities)
+        assertEquals(listOf("1"), scenario.nations.single { it.name == "원소" }.cities)
+        assertEquals("46", scenario.generals.single { it.name == "동탁" }.locatedCity)
+        assertEquals("1", scenario.generals.single { it.name == "원소" }.locatedCity)
     }
 
     @Test
@@ -116,7 +131,7 @@ class ScenarioJsonTest {
             {
               "title": "one row removed",
               "startYear": 181,
-              "map": {"mapName": "han-world-v2"},
+              "map": {"mapName": "han-world-v3"},
               "const": {},
               "seedContract": {"activeGenerals": {"base": 2, "extended": 2}},
               "nation": [],
@@ -139,26 +154,28 @@ class ScenarioJsonTest {
     }
 
     @Test
-    fun `Han world scenario cannot seed without an active roster contract`() {
-        val scenario = ScenarioJson.loadScenario(
-            """
-            {
-              "title": "uncontracted Han scenario",
-              "startYear": 181,
-              "map": {"mapName": "han-world-v2"},
-              "const": {},
-              "nation": [],
-              "general": [],
-              "general_ex": [],
-              "diplomacy": []
-            }
-            """.trimIndent(),
-        )
+    fun `frozen V2 and new V3 Han worlds cannot seed without an active roster contract`() {
+        for (mapName in listOf("han-world-v2", "han-world-v3")) {
+            val scenario = ScenarioJson.loadScenario(
+                """
+                {
+                  "title": "uncontracted Han scenario",
+                  "startYear": 181,
+                  "map": {"mapName": "$mapName"},
+                  "const": {},
+                  "nation": [],
+                  "general": [],
+                  "general_ex": [],
+                  "diplomacy": []
+                }
+                """.trimIndent(),
+            )
 
-        val error = assertFailsWith<IllegalArgumentException> {
-            ScenarioImporter(scenario, emptyList()).validateSeedContract()
+            val error = assertFailsWith<IllegalArgumentException> {
+                ScenarioImporter(scenario, emptyList()).validateSeedContract()
+            }
+            assertTrue(error.message.orEmpty().contains("requires seedContract.activeGenerals"))
         }
-        assertTrue(error.message.orEmpty().contains("requires seedContract.activeGenerals"))
     }
 
     @Test

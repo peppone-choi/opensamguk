@@ -5,7 +5,7 @@
   "reviewAuthority": "user-blanket-approval-2026-08-22",
   "reviewedBy": "codex-w0c-root",
   "reviewedAt": "2026-08-22",
-  "inputOverlaySha256": "7beb4192b8cf1408faad24486e1b8ca7babe43cb2642b052c933099ade9af5e1",
+  "inputOverlaySha256": "af712716cdce462aff717fff46b600b47c593135557ad654a64086e5cb4db6ec",
   "policy": {
     "automaticNearestSelection": false,
     "automaticFirstCandidateSelection": false,

@@ -20,6 +20,10 @@ object MapJson {
         val isCommanderySeat: Boolean = false,
         /** Canonical han-tiles provinceRecords array index. Null means not yet historically adjudicated. */
         val provinceId: Int? = null,
+        /** Stable physical identity used to bind version-scoped runtime policy. */
+        val physicalPlaceRef: String? = null,
+        /** Stable route-node identity; required by han-world-v3 policy rows. */
+        val routeNodeKey: String? = null,
     )
 
     data class MapCityDetail(
@@ -75,6 +79,10 @@ object MapJson {
                 commanderyName = (meta?.get("jun") as? String)?.takeIf { it.isNotBlank() },
                 isCommanderySeat = meta?.get("isSeat") == true,
                 provinceId = intOrNull(c["provinceId"]),
+                physicalPlaceRef = (c["physicalPlaceRef"] as? String)?.takeIf { it.isNotBlank() }
+                    ?: (c["physicalPlaceId"] as? String)?.takeIf { it.isNotBlank() }
+                        ?.let { "chgis:v6:cnty:$it" },
+                routeNodeKey = (c["routeNodeKey"] as? String)?.takeIf { it.isNotBlank() },
             )
         }
         return MapData(width = width, height = height, cities = cities)

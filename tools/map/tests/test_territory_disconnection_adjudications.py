@@ -952,6 +952,41 @@ class CliTest(unittest.TestCase):
 
 
 class CommittedDataTest(unittest.TestCase):
+    def test_zhu_a_historical_exclave_is_non_vacuously_adjudicated(self):
+        ledger = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))
+        rows = [
+            row for row in ledger["adjudications"]
+            if row["componentKey"] == "PARENT-0036@459:189"
+        ]
+        self.assertEqual(len(rows), 1, "祝阿 must have one explicit reviewed adjudication")
+        row = rows[0]
+        self.assertEqual(
+            {
+                "unitKind": row["unitKind"],
+                "unitId": row["unitId"],
+                "cellCount": row["cellCount"],
+                "memberIds": row["memberIds"],
+                "holdsSeat": row["holdsSeat"],
+                "verdict": row["verdict"],
+                "confidence": row["confidence"],
+                "ifRule": row["ifRule"],
+            },
+            {
+                "unitKind": "COMMANDERY",
+                "unitId": "PARENT-0036",
+                "cellCount": 39,
+                "memberIds": ["45121"],
+                "holdsSeat": False,
+                "verdict": "HISTORICAL_EXCLAVE",
+                "confidence": "MEDIUM",
+                "ifRule": "EXCLAVE_KEEP",
+            },
+        )
+        self.assertEqual(
+            [vote["lens"] for vote in row["review"]["votes"]],
+            ["source", "geography", "chronology"],
+        )
+
     def test_every_disconnected_component_in_the_committed_map_is_adjudicated(self):
         document = json.loads(audit.DEFAULT_TILES.read_text(encoding="utf-8"))
         self.assertTrue(audit.DEFAULT_LEDGER.exists(), audit.DEFAULT_LEDGER.relative_to(ROOT))

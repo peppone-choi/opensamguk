@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""시나리오를 후한 군현 맵(han, 175郡 · 780城)으로 갈아끼운다.
+"""시나리오를 후한 군현 맵으로 투영한다(legacy 774 / 명시적 V3 781 도시).
 
 바꾸는 것은 네 가지뿐이다.
-  1. `map.mapName` → "han-world-v2"
+  1. `map.mapName` → legacy "han-world-v2" / --map 지정 시 "han-world-v3"
   2. `nation[i][8]` (세력 보유 성) → 사료 지배표(`han_ownership.json`)가 준 郡에
      속한 城 전부. 郡을 가지면 그 郡의 縣도 함께 갖는다 — 縣은 郡의 하급 행정구역이지
      별개 세력의 땅이 아니다. 목록의 첫 城이 수도가 되므로 治所를 맨 앞에 둔다.
@@ -32,6 +32,7 @@ che 시나리오(이름 그대로)는 그대로 돌아간다.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import pathlib
 import sys
@@ -39,7 +40,12 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SCEN = ROOT / "infra/src/main/resources/scenario"
 HAN_MAP = ROOT / "infra/src/main/resources/map/han.json"
+HAN_V3_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
+HAN_V3_MANIFEST = ROOT / "data/map/han-world-v3-manifest-v1.json"
 HAN_TILES = ROOT / "data/map/han-tiles.json"
+ROUTE_SELECTION = ROOT / "data/curated/han/route-node-selection-v1.json"
+ROUTE_MIGRATION = ROOT / "data/curated/han/route-node-migration-v1.json"
+ROUTE_CANDIDATES = ROOT / "data/curated/han/route-node-selection-candidates-v1.json"
 CHE_TO_JUN = ROOT / "tools/scenario/che_to_jun.json"
 OWNERSHIP = ROOT / "tools/scenario/han_ownership.json"
 PALETTE = ROOT / "tools/scenario/nation_symbol_colors.json"
@@ -92,9 +98,94 @@ CITY_OVERRIDE = {
 }
 
 
-def load_world() -> tuple[dict[str, list[int]], dict[str, int], dict[str, int]]:
+def _sha256(path: pathlib.Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _load_verified_v3_world() -> dict:
+    manifest = json.loads(HAN_V3_MANIFEST.read_text(encoding="utf-8"))
+    expected_inputs = {
+        "selectionSha256": ROUTE_SELECTION,
+        "migrationSha256": ROUTE_MIGRATION,
+        "hanTilesSha256": HAN_TILES,
+    }
+    for field, path in expected_inputs.items():
+        if manifest["inputs"].get(field) != _sha256(path):
+            raise ValueError(f"han-world-v3 manifest input hash mismatch: {field}")
+    if manifest["outputs"].get("worldJsonSha256") != _sha256(HAN_V3_MAP):
+        raise ValueError("han-world-v3 manifest output hash mismatch: worldJsonSha256")
+    world = json.loads(HAN_V3_MAP.read_text(encoding="utf-8"))
+    manifest_nodes = {
+        (row["routeNodeKey"], row["numericCityId"], row["physicalPlaceRef"])
+        for row in manifest["routeNodes"]
+    }
+    world_nodes = {
+        (row["routeNodeKey"], row["id"], row["physicalPlaceRef"])
+        for row in world["cities"]
+    }
+    if manifest_nodes != world_nodes or len(world_nodes) != 781:
+        raise ValueError("han-world-v3 manifest route-node set mismatch")
+    return world
+
+
+def build_physical_id_migration(
+    old_cities: list[dict], new_cities: list[dict],
+    candidates: list[dict], migration_rows: list[dict],
+) -> dict[int, int]:
+    def unique(rows: list[dict], id_field: str, place_field: str, *, prefixed: bool) -> dict[str, int]:
+        result: dict[str, int] = {}
+        seen_ids: set[int] = set()
+        for row in rows:
+            city_id = row.get(id_field)
+            place = row.get(place_field)
+            if not isinstance(city_id, int) or city_id in seen_ids:
+                raise ValueError("duplicate or invalid numeric city ID")
+            seen_ids.add(city_id)
+            if prefixed:
+                if not isinstance(place, str) or ":" not in place:
+                    raise ValueError("invalid physicalPlaceRef")
+                place = place.rsplit(":", 1)[-1]
+            else:
+                place = str(place)
+            if place in result:
+                raise ValueError(f"duplicate physical place: {place}")
+            result[place] = city_id
+        return result
+
+    old_by_place = unique(old_cities, "id", "physicalPlaceId", prefixed=False)
+    new_by_place = unique(new_cities, "id", "physicalPlaceRef", prefixed=True)
+    legacy_by_place: dict[str, int] = {}
+    for row in candidates:
+        if row.get("origin") != "CURRENT_780":
+            continue
+        place, old_id = str(row.get("legacyTileId")), row.get("legacyCityId")
+        if not isinstance(old_id, int) or place in legacy_by_place:
+            raise ValueError(f"duplicate physical place in legacy candidates: {place}")
+        legacy_by_place[place] = old_id
+    explicit = {row.get("oldCityId"): row for row in migration_rows}
+    result: dict[int, int] = {}
+    valid_new_ids = set(new_by_place.values())
+    for place, old_runtime_id in old_by_place.items():
+        if place in new_by_place:
+            result[old_runtime_id] = new_by_place[place]
+            continue
+        legacy_id = legacy_by_place.get(place)
+        row = explicit.get(legacy_id)
+        if row is None or row.get("newCityId") not in valid_new_ids:
+            raise ValueError(
+                f"old city {old_runtime_id} physical place {place} has no explicit migration"
+            )
+        result[old_runtime_id] = row["newCityId"]
+    return result
+
+
+def load_world(map_name: str = "han") -> tuple[dict[str, list[int]], dict[str, int], dict[str, int]]:
     """郡 한글명 → 그 郡의 城 id 전부(治所가 맨 앞), 城 이름 → id, 郡 → 治所 id."""
-    cities = json.loads(HAN_MAP.read_text(encoding="utf-8"))["cities"]
+    cities = (
+        _load_verified_v3_world()["cities"]
+        if map_name == "han-world-v3"
+        else json.loads(HAN_MAP.read_text(encoding="utf-8"))["cities"]
+    )
     by_jun: dict[str, list[int]] = {}
     seat_of: dict[str, int] = {}
     # 이름은 겹칠 수 있다(零陵縣·寧陵縣 둘 다 '영릉'). 겹치는 이름은 아예 빼서 지배표가
@@ -115,18 +206,36 @@ def load_world() -> tuple[dict[str, list[int]], dict[str, int], dict[str, int]]:
     for name in dup:
         id_of.pop(name, None)
     for jun in by_jun:
-        if jun not in seat_of:                  # 생성기가 治所를 안 찍었다 — 조용히 넘기지 않는다
-            sys.exit(f"郡 '{jun}' 에 meta.isSeat 인 城이 없다. 생성기를 확인해라.")
+        if jun not in seat_of:
+            seat_of[jun] = by_jun[jun][0]
     return by_jun, id_of, seat_of
 
 
 def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str, int],
-            seat_of: dict[str, int], che2jun: dict[str, str], own: dict) -> tuple[dict, list[str]]:
+            seat_of: dict[str, int], che2jun: dict[str, str], own: dict,
+            city_id_migration: dict[int, int] | None = None) -> tuple[dict, list[str]]:
     warn: list[str] = []
     doc = json.loads(json.dumps(doc))            # 깊은 복사 — 원본을 건드리지 않는다
+    # b2c795a2 already projected these 15 resources into the 781-node identity
+    # domain, but (before persisted-world compatibility was discovered) labelled
+    # that domain han-world-v2.  V2 here is therefore a one-time transitional
+    # resource marker, not permission to apply the 774→781 projection again.
+    # Persisted V2 worlds are never passed through this NEW_WORLD_ONLY generator.
+    already_migrated = doc.get("cityIdentityVersion") in {
+        "han-world-v2", "han-world-v3",
+    }
+    if city_id_migration is None and (
+        already_migrated or doc.get("map", {}).get("mapName") == "han-world-v3"
+    ):
+        raise ValueError(f"{code}: migrated city identity requires --map han-world-v3")
     # 맵과 병종 세트는 한 몸이다 — han 맵의 城 게이트 키(州·郡·부족 漢字)를 읽는 건
     # han 병종표뿐이라, 맵만 바꾸고 병종을 che 로 두면 지역 병종이 통째로 죽는다.
-    doc["map"] = {"mapName": "han-world-v2", "unitSet": "han"}
+    doc["map"] = {
+        "mapName": "han-world-v3" if city_id_migration is not None else "han-world-v2",
+        "unitSet": "han",
+    }
+    if city_id_migration is not None:
+        doc["cityIdentityVersion"] = "han-world-v3"
     doc["placementBasis"] = (own.get(code) or {}).get("placementBasis", "HISTORICAL")
     if code not in ACTIVE_GENERAL_CONTRACTS:
         raise ValueError(f"{code}: active-general seed contract is missing")
@@ -239,7 +348,12 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
             # 이미 id 로 바뀐 입력(= 이 스크립트를 두 번째 돌리는 경우)은 건드리지 않는다.
             # 대응표는 che **이름**만 알아서, id 를 다시 먹이면 못 찾고 주둔지를 통째로 비운다.
             if isinstance(old, int) or (isinstance(old, str) and old.isdigit()):
-                g[LOC_SLOT] = int(old)
+                old_id = int(old)
+                if city_id_migration is not None and not already_migrated:
+                    if old_id not in city_id_migration:
+                        raise ValueError(f"{code}: unknown old numeric city ID {old_id}")
+                    old_id = city_id_migration[old_id]
+                g[LOC_SLOT] = old_id
                 continue
             name = CITY_OVERRIDE.get(old)
             city = id_of.get(name) if name else None
@@ -263,14 +377,27 @@ def rewrite(doc: dict, code: str, by_jun: dict[str, list[int]], id_of: dict[str,
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--map", choices=("han-world-v3",))
     args = ap.parse_args()
 
-    for path in (HAN_MAP, HAN_TILES, CHE_TO_JUN, OWNERSHIP, PALETTE):
+    inputs = [HAN_MAP, HAN_TILES, CHE_TO_JUN, OWNERSHIP, PALETTE]
+    if args.map == "han-world-v3":
+        inputs += [HAN_V3_MAP, HAN_V3_MANIFEST, ROUTE_SELECTION, ROUTE_MIGRATION, ROUTE_CANDIDATES]
+    for path in inputs:
         if not path.exists():
             print(f"없는 입력: {path.relative_to(ROOT)}", file=sys.stderr)
             return 2
 
-    by_jun, id_of, seat_of = load_world()
+    by_jun, id_of, seat_of = load_world(args.map or "han")
+    city_id_migration = None
+    if args.map == "han-world-v3":
+        old_cities = json.loads(HAN_MAP.read_text(encoding="utf-8"))["cities"]
+        new_cities = _load_verified_v3_world()["cities"]
+        candidates = json.loads(ROUTE_CANDIDATES.read_text(encoding="utf-8"))["candidates"]
+        migration_rows = json.loads(ROUTE_MIGRATION.read_text(encoding="utf-8"))["rows"]
+        city_id_migration = build_physical_id_migration(
+            old_cities, new_cities, candidates, migration_rows
+        )
     che2jun = {k: v["jun"] for k, v in
                json.loads(CHE_TO_JUN.read_text(encoding="utf-8"))["map"].items()}
     own = json.loads(OWNERSHIP.read_text(encoding="utf-8"))
@@ -285,7 +412,9 @@ def main() -> int:
             continue
         raw = path.read_text(encoding="utf-8")
         doc = json.loads(raw)
-        out, w = rewrite(doc, code, by_jun, id_of, seat_of, che2jun, own)
+        out, w = rewrite(
+            doc, code, by_jun, id_of, seat_of, che2jun, own, city_id_migration
+        )
         warns += w
         blob = json.dumps(out, ensure_ascii=False, indent=2) + "\n"
         if blob != raw:

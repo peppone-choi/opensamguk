@@ -119,6 +119,55 @@ class UpdateCitySupplyLossTest {
     }
 
     @Test
+    fun `unreviewed city-only spatial mismatch cannot decay or neutralize a live city`() {
+        val protectedGeneral = general(90, 1, cityId = 3, crew = 1000)
+        val result = applyCitySupply(
+            cities = listOf(city(1, 1), city(2, 1), city(3, 1, trust = 10.0)),
+            generals = listOf(protectedGeneral),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(), year = 200, month = 1,
+            spatialSupplyNetwork = SpatialSupplyNetwork(
+                provinceOwners = intArrayOf(1, 1, 1),
+                provinceAdjacency = listOf(intArrayOf(), intArrayOf(), intArrayOf()),
+                cityProvinceIndices = mapOf(1 to 0, 2 to 1, 3 to 2),
+            ),
+        )
+
+        val remote = result.cities.single { it.id == 3 }
+        assertEquals(1, remote.supplyState)
+        assertEquals(1000, remote.population)
+        assertEquals(10.0, remote.trust, 1e-9)
+        assertEquals(1000, result.generals.single().crew)
+        assertTrue(result.lostCityIds.isEmpty())
+        assertEquals(SupplyReachabilityVerdict.CITY_ONLY_PROTECTED, result.reachabilityRows.single { it.cityId == 3 }.verdict)
+    }
+
+    @Test
+    fun `reviewed upheld spatial cut retains destructive decay and neutralization`() {
+        val result = applyCitySupply(
+            cities = listOf(city(1, 1), city(2, 1), city(3, 1, trust = 30.0)),
+            generals = listOf(general(91, 1, cityId = 3, crew = 1000)),
+            capitals = listOf(SupplyCapital(1, 1)),
+            cityConst = lineConst(), year = 200, month = 1,
+            spatialSupplyNetwork = SpatialSupplyNetwork(
+                provinceOwners = intArrayOf(1, 1, 1),
+                provinceAdjacency = listOf(intArrayOf(), intArrayOf(), intArrayOf()),
+                cityProvinceIndices = mapOf(1 to 0, 2 to 1, 3 to 2),
+                fallbackPolicies = mapOf(
+                    3 to SupplyFallbackPolicy(
+                        SupplyDisconnectionDecision.UPHOLD_WATER_ROUTE_ONLY,
+                        "PARENT-0101@340:544",
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(listOf(3), result.lostCityIds)
+        assertEquals(950, result.generals.single().crew)
+        assertEquals(SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD, result.reachabilityRows.single { it.cityId == 3 }.verdict)
+    }
+
+    @Test
     fun `unsupplied general decays crew atmos train 5 percent (phpRound, int columns)`() {
         // nation 1: capital 1 supplied; city 3 isolated. general in city 3 decays.
         val gSupplied = general(10, 1, cityId = 1, crew = 1000, atmos = 100.0, train = 100.0)

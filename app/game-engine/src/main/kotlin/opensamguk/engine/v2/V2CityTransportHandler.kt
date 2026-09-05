@@ -6,6 +6,7 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.CommandInboxRepository
+import opensamguk.infra.seed.HanStrategicTopologyJson
 import opensamguk.logic.v2.command.V2CityTransportArgs
 import opensamguk.logic.v2.command.V2CityTransportContext
 import opensamguk.logic.v2.command.V2CityTransportDecision
@@ -14,6 +15,9 @@ import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.v2.command.V2CommandRegistry
 import opensamguk.logic.v2.command.decideCityTransport
+import opensamguk.logic.v2.command.resolveImmediateCityTransportRoute
+import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
+import opensamguk.logic.world.HanStrategicRouteProjection
 
 /**
  * OPENSAM-154 (v2 R5) — 도시 자원 수송(`v2CityTransport`) 핸들러.
@@ -22,9 +26,8 @@ import opensamguk.logic.v2.command.decideCityTransport
  * 원장 델타 적용만 한다. **로그를 남기지 않는다** — 이 v2 명령의 승인된 result-poll 계약이 별도
  * 사용자 로그를 정의하지 않았기 때문이다. v1 동결 회귀는 이 v2 설계를 제약하지 않는다(ADR-LITE-042).
  *
- * 인접 판정은 `logic`의 [CalcCityDistance]를 **호출만** 한다. `logic/`은 T1 동결이라 한 줄도 고치지
- * 않았고, `CityConst.path` 인접은 기존 동결 회귀로 보호된 현재 구현 값이다. 변경 시 현재 spec과
- * 회귀 테스트로 검토하며 PHP/golden 선행 조건을 두지 않는다.
+ * V3는 API와 같은 검증된 strategic snapshot으로 경로를 재계산하고 revision/path hash를 검사한다.
+ * 즉시 수송은 LAND 1구간뿐이다. 기존 han/V2/che 인접 판정은 [CalcCityDistance]를 유지한다.
  *
  * 결과 타입으로 `CommandLifecycleResult`(`executionApplied`/`executionRejected`)를 재사용하는 이유는
  * [V2GarrisonRecruitHandler]에 적은 것과 같다 — `TurnDaemonCommandResultSerializer`가 닫힌
@@ -37,40 +40,40 @@ class V2CityTransportHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val ledger: V2CityLedgerStore,
+    private val loadTopology: () -> HanStrategicRouteProjection = HanStrategicTopologyJson::loadDefault,
 ) {
     fun handle(command: CityTransport): TurnDaemonCommandResult {
         val general = world.getGeneralById(command.generalId)
         val from = world.getCityById(command.fromCityId)
         val to = world.getCityById(command.toCityId)
         val resources = from?.let { ledger.entry(world.worldId, it.id) } ?: V2CityLedgerEntry.EMPTY
+        val state = world.getState()
+        val mapName = runCatching { ActiveWorldMap.requireName(state.config, state.meta) }.getOrNull()
+        val strategic = mapName == HAN_WORLD_V3_MAP_NAME
+        val args = V2CityTransportArgs(
+            command.fromCityId, command.toCityId, command.gold, command.rice, command.garrison,
+            command.routeRevision, command.topologyRevision, command.routePathHash,
+        )
         val decision = decideCityTransport(
-            V2CityTransportArgs(
-                command.fromCityId,
-                command.toCityId,
-                command.gold,
-                command.rice,
-                command.garrison,
-                command.routeRevision,
-            ),
+            args,
             V2CityTransportContext(
                 generalCityId = general?.cityId,
                 generalNationId = general?.nationId,
                 escortCrew = general?.crew,
                 fromNationId = from?.nationId,
                 toNationId = to?.nationId,
-                hopDistance = if (from == null || to == null) {
+                hopDistance = if (strategic || from == null || to == null) {
                     null
                 } else {
-                    val state = world.getState()
-                    runCatching {
-                        CityConstRegistry.of(ActiveWorldMap.requireName(state.config, state.meta))
-                    }.getOrNull()?.let { map ->
+                    mapName?.let(CityConstRegistry::find)?.let { map ->
                         CalcCityDistance.calcCityDistance(from.id, to.id, cityConst = map)
                     }
                 },
                 fromGold = resources.gold,
                 fromRice = resources.rice,
                 fromGarrison = resources.garrison,
+                requiresStrategicRoute = strategic,
+                strategicRoute = if (strategic) resolveImmediateCityTransportRoute(args, loadTopology) else null,
             ),
         )
 

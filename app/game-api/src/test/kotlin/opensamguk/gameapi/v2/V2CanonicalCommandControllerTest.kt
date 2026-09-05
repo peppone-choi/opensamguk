@@ -113,8 +113,13 @@ class V2CanonicalCommandControllerTest {
         val args = "{\"fromCityId\":4,\"toCityId\":5,\"gold\":1}"
         `when`(reserve.reserveForOwner(7, "v2CityTransport", 0, args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-transport", 0))
+        val available = V2CommandAvailability.Available(
+            V2CommandRegistry.cityTransportSchema, V2CityTransportArgs(4, 5, 1, 0, 0, null),
+        )
+        `when`(contextual.precheck(7, available)).thenReturn(available)
 
-        val response = V2CityTransportController(reserve, resolver).transport(11, 7, args)
+        val response = V2CityTransportController(reserve, resolver, contextual,
+            opensamguk.gameapi.config.GameApiProcessWorld(1)).transport(11, 7, args)
         val body = response.body as IntakeAcceptedResponse
 
         assertEquals(HttpStatus.ACCEPTED, response.statusCode)

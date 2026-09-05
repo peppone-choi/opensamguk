@@ -40,7 +40,8 @@ PROVENANCE_DEPENDENCIES = {
 }
 VALIDATION_CONTRACT_PATH = ROOT / "data/curated/han/route-node-validation-contract-v1.json"
 VALIDATION_CONTRACT = json.loads(VALIDATION_CONTRACT_PATH.read_text(encoding="utf-8"))
-EXPECTED_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
+LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
+WORLD_SELECTION_COUNTS = {"han-780-v1": 780, "han-world-v3": 781}
 EXPECTED_SCENARIOS = VALIDATION_CONTRACT["expectedActiveScenarioResourceCount"]
 ALLOWED_NODE_CLASSES = frozenset(VALIDATION_CONTRACT["allowedNodeClasses"])
 NODE_CLASS_BY_UNIT_TYPE = {
@@ -96,11 +97,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
     "data/curated/han/route-node-external-place-authority-v1.json",
     "data/curated/han/route-node-source-witness-v1.json",
 )
-PINNED_ROUTE_KEY_REGISTRY_SHA256 = "7f462487d593940e2bbfe51edceea76c74a1dc589d8731e3ab0c7d6b9a267284"
+PINNED_ROUTE_KEY_REGISTRY_SHA256 = "2f4f4e7bec26ee6192029e90043c0beecd9c67b150acbfccf86e2f03757a32de"
 PINNED_SOURCE_WITNESS_SHA256 = "7fe27b667b4066200882f9e1815e07a6adb24d826f09e0605145041897f76ee4"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "e2b5467eb33838337c8273ef5ace6fe718c9512f5b7cd650921c685c4e23d799"
-PINNED_REVIEW_POLICY_SHA256 = "edc0e97cf3648a85deab59864a0e400694ae3b1c9ba2f25c88ed909e228f2646"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "c5baedc046a009791b47cba12499612ea257f5d53f6770e399f69f2135e9f670"
+PINNED_REVIEW_POLICY_SHA256 = "5f029472a237308bf419726d85753e0389ad8e5512be1e9235df94e4522dab83"
 PINNED_VALIDATION_CONTRACT_SHA256 = "32456d4c992d72a8fa94eceed6c03ae52a41ff56919be5ed672a529491262973"
 PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
 PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
@@ -231,7 +232,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
     if "policy" in documents.external_claims:
         _allowed_keys(_mapping(documents.external_claims.get("policy"), "external claims policy"), frozenset({"coordinateFieldsCopiedIntoThisArtifact", "externalHistoricalBindingCount", "legacyInfiniteLifecycleAccepted", "purpose", "selectionBasis"}), "external claims policy")
 
-    _allowed_keys(documents.selection, frozenset({"baselineYear", "provenance", "reviewPolicy", "reviewState", "routeNodes", "runtimeScenarioActivationEnforcement", "scenarioCatalog", "schemaVersion", "selectionId", "summary"}), "selection")
+    _allowed_keys(documents.selection, frozenset({"baselineYear", "provenance", "reviewPolicy", "reviewState", "routeNodes", "runtimeScenarioActivationEnforcement", "scenarioCatalog", "schemaVersion", "selectionId", "summary", "worldVersion"}), "selection")
     for raw in _rows(documents.selection, "routeNodes"):
         node = _mapping(raw, "route node")
         _allowed_keys(node, ROUTE_NODE_FIELDS, "route node")
@@ -267,10 +268,13 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
             _allowed_keys(_mapping(value, "review decision anchor"), frozenset({"anchor", "assignmentSha256", "reviewState", "rowCount"}), "review decision anchor")
     _allowed_keys(_mapping(review_policy.get("forbiddenSelections"), "selection forbiddenSelections"), frozenset({"canonicalNames", "nodeClasses", "physicalPlaceIds"}), "selection forbiddenSelections")
 
-    _allowed_keys(documents.migration, frozenset({"migrationId", "mode", "referenceInventory", "rewriteSurfaces", "rows", "schemaVersion", "sourceCandidateSha256", "sourceSelectionId", "sourceSelectionSha256", "summary"}), "migration")
-    _allowed_keys(_mapping(documents.migration.get("summary"), "migration summary"), frozenset({"displayNameChangeCount", "historicalBindingCorrectionCount", "numericCityIdChangeCount", "parentChangeCount", "physicalPlaceCorrectionCount", "routeNodeReplacementCount", "rowCount", "seatRoleChangeCount"}), "migration summary")
+    _allowed_keys(documents.migration, frozenset({"appendedRows", "migrationId", "mode", "referenceInventory", "rewriteSurfaces", "rows", "schemaVersion", "sourceCandidateSha256", "sourceSelectionId", "sourceSelectionSha256", "summary", "targetWorldVersion"}), "migration")
+    _allowed_keys(_mapping(documents.migration.get("summary"), "migration summary"), frozenset({"appendedIdentityCount", "displayNameChangeCount", "historicalBindingCorrectionCount", "numericCityIdChangeCount", "parentChangeCount", "physicalPlaceCorrectionCount", "routeNodeReplacementCount", "rowCount", "seatRoleChangeCount"}), "migration summary")
     for row in _rows(documents.migration, "rows"):
         _allowed_keys(_mapping(row, "migration row"), frozenset({"disposition", "newCityId", "oldCityId", "oldNodeFingerprint", "routeNodeKey"}), "migration row")
+    if "appendedRows" in documents.migration:
+        for row in _rows(documents.migration, "appendedRows"):
+            _allowed_keys(_mapping(row, "migration appended row"), frozenset({"administrativeUnitId", "disposition", "newCityId", "physicalPlaceRef", "routeNodeKey"}), "migration appended row")
     _allowed_keys(_mapping(documents.migration.get("referenceInventory"), "migration referenceInventory"), frozenset({"derivedReseed", "immutableAudit", "inPlaceRewrite", "mutable", "unknownPayloadPolicy"}), "migration referenceInventory")
     rewrite_surfaces = _mapping(documents.migration.get("rewriteSurfaces"), "migration rewriteSurfaces")
     _allowed_keys(rewrite_surfaces, frozenset({"derivedArtifacts", "immutableAudit", "scenarioResources"}), "migration rewriteSurfaces")
@@ -283,7 +287,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
     _allowed_keys(documents.route_key_registry, frozenset({"issuanceAuthority", "issuedAt", "issuedBy", "keyPolicy", "keys", "registryId", "schemaVersion", "status"}), "route-node key registry")
     _allowed_keys(_mapping(documents.route_key_registry.get("keyPolicy"), "route-node key policy"), frozenset({"derivedFromAdministrativeIdentity", "derivedFromNumericCityId", "derivedFromPhysicalPlace", "derivedFromSourceClaim", "format", "note", "rebindingChangesKey"}), "route-node key policy")
     for row in _rows(documents.route_key_registry, "keys"):
-        _allowed_keys(_mapping(row, "route-node key registry row"), frozenset({"initialAdministrativeUnitId", "issuanceReason", "routeNodeKey"}), "route-node key registry row")
+        _allowed_keys(_mapping(row, "route-node key registry row"), frozenset({"initialAdministrativeUnitId", "issuanceReason", "numericCityId", "routeNodeKey"}), "route-node key registry row")
 POINT_REFERENCE = re.compile(
     r"^(?:chgis:v6:cnty:[^:\s]+|external:v1:[^:\s]+|wikidata:Q[1-9][0-9]*|curated:[a-z0-9][a-z0-9:_-]*)$"
 )
@@ -575,20 +579,39 @@ def _validate_selection_rationale(document: JsonObject, expected_batch_id: str) 
         _fail("selectionRationale review batch does not match the validated binding route")
 
 
-def _route_key_registry_index(registry: JsonObject) -> dict[str, str]:
+def _selection_count(selection: JsonObject) -> int:
+    world_version = selection.get("worldVersion", "han-780-v1")
+    if world_version not in WORLD_SELECTION_COUNTS:
+        _fail("selection worldVersion is unsupported")
+    return WORLD_SELECTION_COUNTS[world_version]
+
+
+def _route_key_registry_index(
+    registry: JsonObject, expected_count: int = LEGACY_COUNT,
+) -> dict[str, tuple[str, int | None]]:
     _require_schema_version_one(registry, "route-node key registry")
     rows = [_mapping(value, "route-node key registry row") for value in _rows(registry, "keys")]
-    if len(rows) != EXPECTED_COUNT:
-        _fail("route-node key registry must contain exactly 780 rows")
-    indexed: dict[str, str] = {}
+    if len(rows) != expected_count:
+        _fail(f"route-node key registry must contain exactly {expected_count} rows")
+    indexed: dict[str, tuple[str, int | None]] = {}
     keys: set[str] = set()
     for row in rows:
         administrative_id = _text(row, "initialAdministrativeUnitId")
         route_key = _text(row, "routeNodeKey")
         if administrative_id in indexed or route_key in keys:
             _fail("route-node key registry identities and keys must be unique")
-        indexed[administrative_id] = route_key
+        numeric_id = row.get("numericCityId")
+        if numeric_id is not None and (
+            type(numeric_id) is not int or numeric_id <= LEGACY_COUNT
+        ):
+            _fail("route-node key registry append numericCityId is invalid")
+        indexed[administrative_id] = (route_key, numeric_id)
         keys.add(route_key)
+    appended = sorted(
+        numeric_id for _, numeric_id in indexed.values() if numeric_id is not None
+    )
+    if appended != list(range(LEGACY_COUNT + 1, expected_count + 1)):
+        _fail("route-node key registry append IDs must be the next never-issued sequence")
     return indexed
 
 
@@ -780,10 +803,10 @@ def _candidate_index(candidate: dict, catalog: dict[str, CatalogUnit]) -> dict[i
     replacement_rows = [row for row in rows if row.get("origin") == "HHS_REPLACEMENT_POOL"]
     if (
         len(rows) != 1960
-        or len(current_rows) != EXPECTED_COUNT
+        or len(current_rows) != LEGACY_COUNT
         or len(replacement_rows) != 1180
         or summary.get("candidateCount") != 1960
-        or summary.get("legacyNodeCount") != EXPECTED_COUNT
+        or summary.get("legacyNodeCount") != LEGACY_COUNT
         or summary.get("replacementPoolCount") != 1180
     ):
         _fail("candidate artifact must contain 780 current and 1,180 replacement rows")
@@ -800,7 +823,7 @@ def _candidate_index(candidate: dict, catalog: dict[str, CatalogUnit]) -> dict[i
         if not isinstance(refs, list) or any(not isinstance(ref, str) for ref in refs):
             _fail("replacement candidate physicalPlaceRefs must be an array of point references")
     ids = [_integer(row, "legacyCityId") for row in current_rows]
-    if sorted(ids) != list(range(1, EXPECTED_COUNT + 1)):
+    if sorted(ids) != list(range(1, LEGACY_COUNT + 1)):
         _fail("candidate legacyCityId values must be exact 1..780")
     fingerprints = [_text(row, "legacyNodeFingerprint") for row in current_rows]
     if len(fingerprints) != len(set(fingerprints)):
@@ -1418,6 +1441,10 @@ def _validate_migration(
     candidates = indexes.candidates
     nodes = indexes.nodes
     claims = indexes.claims
+    expected_count = _selection_count(selection)
+    world_version = selection.get("worldVersion", "han-780-v1")
+    if migration.get("targetWorldVersion", "han-780-v1") != world_version:
+        _fail("migration targetWorldVersion must match selection worldVersion")
     if migration.get("migrationId") != EXPECTED_MIGRATION_ID:
         _fail(f"migrationId must be canonical {EXPECTED_MIGRATION_ID}")
     if migration.get("mode") != "NEW_WORLD_ONLY":
@@ -1456,13 +1483,13 @@ def _validate_migration(
     if review_policy.get("numericCityIdChangeAllowed") is not False:
         _fail("reviewPolicy numericCityIdChangeAllowed must be false")
     rows = [_mapping(value, "migration row") for value in _rows(migration, "rows")]
-    if len(rows) != EXPECTED_COUNT:
+    if len(rows) != LEGACY_COUNT:
         _fail("migration must contain exactly 780 rows")
     old_ids = [_integer(row, "oldCityId") for row in rows]
     new_ids = [_integer(row, "newCityId") for row in rows]
-    if sorted(old_ids) != list(range(1, EXPECTED_COUNT + 1)):
+    if sorted(old_ids) != list(range(1, LEGACY_COUNT + 1)):
         _fail("migration oldCityId values must be exact 1..780")
-    if sorted(new_ids) != list(range(1, EXPECTED_COUNT + 1)):
+    if sorted(new_ids) != list(range(1, LEGACY_COUNT + 1)):
         _fail("migration newCityId values must be exact 1..780")
     by_key = {_text(node, "routeNodeKey"): node for node in nodes.values()}
     counters = {
@@ -1576,11 +1603,46 @@ def _validate_migration(
         counters["displayNameChangeCount"] += candidate.get("legacyNameCh") != node.get("displayName")
         counters["parentChangeCount"] += candidate.get("legacyOwnerGroup") != node.get("parentName")
         counters["seatRoleChangeCount"] += expected_seat != node.get("seatRole")
+    appended_rows = [
+        _mapping(value, "migration appended row")
+        for value in (
+            _rows(migration, "appendedRows") if "appendedRows" in migration else []
+        )
+    ]
+    if len(appended_rows) != expected_count - LEGACY_COUNT:
+        _fail("migration appendedRows count does not match the versioned selection")
+    appended_ids: list[int] = []
+    for row in appended_rows:
+        if row.get("disposition") != "APPENDED_NEW_WORLD_IDENTITY":
+            _fail("migration appended row disposition is invalid")
+        new_id = _integer(row, "newCityId")
+        if new_id <= LEGACY_COUNT:
+            _fail("migration appended numeric IDs must be the next never-issued sequence")
+        key = _text(row, "routeNodeKey")
+        node = by_key.get(key)
+        if (
+            node is None
+            or key in used_keys
+            or _integer(node, "numericCityId") != new_id
+            or node.get("administrativeUnitId") != row.get("administrativeUnitId")
+            or node.get("physicalPlaceRef") != row.get("physicalPlaceRef")
+            or any(
+                field in node
+                for field in ("legacyCityId", "legacyNodeFingerprint", "legacyDisposition")
+            )
+        ):
+            _fail("migration appended row must identify a new-world-only route node")
+        used_keys.add(key)
+        appended_ids.append(new_id)
+    if sorted(appended_ids) != list(range(LEGACY_COUNT + 1, expected_count + 1)):
+        _fail("migration appended numeric IDs must be the next never-issued sequence")
     if used_keys != set(by_key):
         _fail("migration does not cover every routeNodeKey exactly once")
     summary = _mapping(migration.get("summary"), "migration summary")
-    if summary.get("rowCount") != EXPECTED_COUNT:
+    if summary.get("rowCount") != LEGACY_COUNT:
         _fail("migration summary rowCount must be 780")
+    if summary.get("appendedIdentityCount", 0) != len(appended_rows):
+        _fail("migration summary appendedIdentityCount must equal appendedRows")
     for name, actual in counters.items():
         if summary.get(name) != actual:
             _fail(f"migration {name} must equal recomputed value {actual}")
@@ -1699,7 +1761,10 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
     _forbid_fields(documents.selection, "selection")
     _forbid_fields(documents.migration, "migration")
     catalog = _catalog_index(documents.catalog, documents.production_approval_mode)
-    route_key_registry = _route_key_registry_index(documents.route_key_registry)
+    expected_count = _selection_count(documents.selection)
+    route_key_registry = _route_key_registry_index(
+        documents.route_key_registry, expected_count
+    )
     if documents.overlay.get("catalogId") != documents.catalog.get("catalogId"):
         _fail("overlay catalogId must match the administrative catalog")
     overlay = _overlay_index(documents.overlay, catalog)
@@ -1720,16 +1785,18 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
         documents.production_approval_mode,
     )
     selection_summary = _mapping(documents.selection.get("summary"), "selection summary")
-    if len(raw_nodes) != EXPECTED_COUNT or selection_summary.get("approvedCount") != EXPECTED_COUNT:
-        _fail("approved route-node selection must contain exactly 780 rows")
+    if len(raw_nodes) != expected_count or selection_summary.get("approvedCount") != expected_count:
+        _fail(f"approved route-node selection must contain exactly {expected_count} rows")
     _validate_forbidden_policy(documents.selection, raw_nodes)
     ids = [_integer(node, "numericCityId") for node in raw_nodes]
-    legacy_ids = [_integer(node, "legacyCityId") for node in raw_nodes]
-    if sorted(ids) != list(range(1, EXPECTED_COUNT + 1)):
-        _fail("numericCityId values must be exact 1..780")
-    if sorted(legacy_ids) != list(range(1, EXPECTED_COUNT + 1)):
+    legacy_ids = [
+        _integer(node, "legacyCityId") for node in raw_nodes if "legacyCityId" in node
+    ]
+    if sorted(ids) != list(range(1, expected_count + 1)):
+        _fail(f"numericCityId values must be exact 1..{expected_count}")
+    if sorted(legacy_ids) != list(range(1, LEGACY_COUNT + 1)):
         _fail("selection legacyCityId values must be exact 1..780")
-    nodes = dict(zip(legacy_ids, raw_nodes, strict=True))
+    nodes = {_integer(node, "numericCityId"): node for node in raw_nodes}
     route_keys = [_text(node, "routeNodeKey") for node in raw_nodes]
     if len(route_keys) != len(set(route_keys)):
         _fail("routeNodeKey values must be unique")
@@ -1766,10 +1833,19 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
             _fail("every route node must be APPROVED")
         if node.get("nodeClass") not in ALLOWED_NODE_CLASSES:
             _fail("nodeClass must be COUNTY_NODE, DAO_NODE, MARQUISATE_NODE, or TOWN_NODE")
-        legacy_id = _integer(node, "legacyCityId")
-        candidate = candidates[legacy_id]
-        if node.get("legacyNodeFingerprint") != candidate.get("legacyNodeFingerprint"):
-            _fail(f"selection fingerprint does not match candidate: {legacy_id}")
+        legacy_id = node.get("legacyCityId")
+        candidate = None
+        if legacy_id is None:
+            if _integer(node, "numericCityId") <= LEGACY_COUNT or any(
+                field in node for field in ("legacyNodeFingerprint", "legacyDisposition")
+            ):
+                _fail("appended route node must not claim a legacy identity")
+        else:
+            if type(legacy_id) is not int or isinstance(legacy_id, bool):
+                _fail("legacyCityId must be an integer")
+            candidate = candidates[legacy_id]
+            if node.get("legacyNodeFingerprint") != candidate.get("legacyNodeFingerprint"):
+                _fail(f"selection fingerprint does not match candidate: {legacy_id}")
         _text(node, "displayName")
         _text(node, "parentName")
         if node.get("seatRole") not in {"COMMANDERY_SEAT", "NON_SEAT"}:
@@ -1787,8 +1863,14 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
             catalog_unit = catalog.get(unit_id)
             if catalog_unit is None:
                 _fail(f"unknown administrative binding: {unit_id}")
-            if route_key_registry.get(unit_id) != node.get("routeNodeKey"):
+            registry_key, registry_numeric_id = route_key_registry.get(unit_id, (None, None))
+            if registry_key != node.get("routeNodeKey"):
                 _fail(f"route-node key registry mismatch for {unit_id}")
+            expected_registry_numeric = (
+                _integer(node, "numericCityId") if legacy_id is None else None
+            )
+            if registry_numeric_id != expected_registry_numeric:
+                _fail(f"route-node numeric registry mismatch for {unit_id}")
             if catalog_unit.source_name_status == "SOURCE_PLACEHOLDER":
                 _fail(f"source placeholder cannot bind a route node: {unit_id}")
             expected_metadata = {
@@ -1865,7 +1947,7 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
             if "locationClaimId" in node:
                 _fail("external RouteNode binding cannot also carry locationClaimId")
         _validate_selection_rationale(rationale, expected_review_batch)
-        if candidate.get("classification") == "HHS_ATTRIBUTION_CONFLICT":
+        if candidate is not None and candidate.get("classification") == "HHS_ATTRIBUTION_CONFLICT":
             _validate_conflict(node, candidate, binding)
         elif "historicalConflictDisposition" in node:
             _fail("historicalConflictDisposition is only valid for attribution conflicts")
@@ -1890,7 +1972,7 @@ def validate_documents(documents: ValidationDocuments) -> ValidationReport:
         ):
             _fail("selection candidate connections hash reference does not match")
     return ValidationReport(
-        approved_count=EXPECTED_COUNT,
+        approved_count=expected_count,
         scenario_count=EXPECTED_SCENARIOS,
         ambiguous_adjudication_count=ambiguous_count,
         location_claim_count=location_count,
@@ -1907,7 +1989,7 @@ def _load_scenarios(directory: Path) -> tuple[ScenarioResource, ...]:
         document = _load(path)
         map_info = document.get("map")
         if (not isinstance(map_info, dict)
-                or map_info.get("mapName") not in {"han", "han-world-v2"}):
+                or map_info.get("mapName") not in {"han", "han-world-v2", "han-world-v3"}):
             continue
         match = re.fullmatch(r"scenario_(.+)\.json", path.name)
         if match is None:

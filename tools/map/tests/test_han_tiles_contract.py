@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import unittest
+from pathlib import Path
 
 from tools.map import han_tiles_contract as contract_validator
 
@@ -637,6 +638,98 @@ class StrictJsonApiTest(unittest.TestCase):
                     contract_validator.loads_json_strict(
                         '{"outer":{"summary":{"count":' + constant + "}}}"
                     )
+
+
+class WaterOverlayBaseContractTest(unittest.TestCase):
+    def setUp(self):
+        self.base = {
+            "_meta": {
+                "cols": 3,
+                "rows": 2,
+                "projection": {
+                    "cell": 1.0, "cols": 3, "k": 1.0, "lat0": 0.0,
+                    "pad": 0.0, "rows": 2, "x0": 0.0, "y1": 2.0,
+                },
+                "terrainLegend": {"0": "SEA", "1": "PLAIN", "4": "LAKE"},
+            },
+            "terrain": ["114", "000"],
+            "provinceRecords": [{"id": "P2"}, {"id": "P1"}],
+        }
+        self.base_bytes = json.dumps(
+            self.base, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+        self.binding = contract_validator.water_overlay_base_binding(
+            self.base, self.base_bytes
+        )
+
+    def test_overlay_pins_exact_base_bytes_dimensions_projection_terrain_and_land_ids(self):
+        self.assertEqual(
+            {
+                "path", "sha256", "bytes", "cols", "rows", "projection",
+                "terrainLegend", "landProvinceIds", "landProvinceIdsSha256",
+            },
+            set(self.binding),
+        )
+        self.assertTrue(contract_validator.validate_water_overlay_base(
+            self.base, self.base_bytes, self.binding
+        ))
+        self.assertEqual(["P1", "P2"], self.binding["landProvinceIds"])
+
+    def test_overlay_rejects_any_drift_in_its_base_binding(self):
+        mutations = [
+            lambda b: b.update(sha256=digest("wrong-base")),
+            lambda b: b.update(bytes=b["bytes"] + 1),
+            lambda b: b.update(cols=4),
+            lambda b: b.update(rows=3),
+            lambda b: b["projection"].update(cell=2.0),
+            lambda b: b["terrainLegend"].update({"4": "SEA"}),
+            lambda b: b["landProvinceIds"].append("P3"),
+            lambda b: b.update(landProvinceIdsSha256=digest("wrong-land-ids")),
+        ]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                binding = copy.deepcopy(self.binding)
+                mutate(binding)
+                with self.assertRaisesRegex(ValueError, "base binding"):
+                    contract_validator.validate_water_overlay_base(
+                        self.base, self.base_bytes, binding
+                    )
+
+    def test_overlay_cannot_redefine_land_ownership_or_place_coordinates(self):
+        forbidden = [
+            {"owner": [[0, 6]]},
+            {"landOwner": "P1"},
+            {"province": "P1"},
+            {"jurisdiction": "J1"},
+            {"commandery": "C1"},
+            {"provinceRecords": []},
+            {"jurisdictionRecords": []},
+            {"commanderyRecords": []},
+            {"cities": []},
+            {"placeCoordinates": [{"lon": 1.0, "lat": 2.0}]},
+        ]
+        for extra in forbidden:
+            with self.subTest(extra=extra):
+                overlay = {"base": copy.deepcopy(self.binding), "waterZones": [], **extra}
+                with self.assertRaisesRegex(ValueError, "redefine land|place coordinate"):
+                    contract_validator.validate_water_overlay_document(
+                        self.base, self.base_bytes, overlay
+                    )
+
+    def test_committed_han_tiles_binding_matches_the_expected_baseline(self):
+        root = Path(__file__).resolve().parents[3]
+        base_path = root / "data" / "map" / "han-tiles.json"
+        base_bytes = base_path.read_bytes()
+        base = contract_validator.loads_json_strict(base_bytes)
+
+        binding = contract_validator.water_overlay_base_binding(base, base_bytes)
+
+        self.assertEqual(
+            "ab66e941d530ac5ccc43712a0e360352fbcd7e55f7580584e6b6a75053e6197f",
+            binding["sha256"],
+        )
+        self.assertEqual((768, 669), (binding["cols"], binding["rows"]))
+        self.assertEqual(1_524, len(binding["landProvinceIds"]))
 
 
 if __name__ == "__main__":

@@ -38,6 +38,8 @@ data class V2CityTransportArgs(
     val rice: Long,
     val garrison: Int,
     val routeRevision: Long?,
+    val topologyRevision: String? = null,
+    val routePathHash: String? = null,
 ) : V2CommandArgs
 
 data class V2CommandSchema(

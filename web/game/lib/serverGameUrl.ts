@@ -148,7 +148,7 @@ export function resolveServerGamePath(
     return `${base.replace(/\/+$/, '')}/${cleanChildPath}${suffix}`;
 }
 
-function readServerCookie(): string | undefined {
+export function readServerCookie(): string | undefined {
   if (typeof document === 'undefined') return undefined;
   const match = document.cookie.split('; ').find((row) => row.startsWith(`${SERVER_COOKIE}=`));
   const serverId = match?.split('=')[1];

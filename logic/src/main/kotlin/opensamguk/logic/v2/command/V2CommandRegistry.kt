@@ -97,6 +97,11 @@ object V2CommandRegistry {
         val rice = args.optionalLong("rice") ?: return invalidArgs()
         val garrison = args.optionalInt("garrison") ?: return invalidArgs()
         val routeRevision = (args.optionalNullableLong("routeRevision") ?: return invalidArgs()).value
+        val topologyRevision = args["topologyRevision"] as? String
+        val routePathHash = args["routePathHash"] as? String
+        if (("topologyRevision" in args && topologyRevision.isNullOrBlank()) ||
+            ("routePathHash" in args && routePathHash.isNullOrBlank())
+        ) return invalidArgs()
         if (fromCityId <= 0 || toCityId <= 0) return V2CommandAvailability.Blocked("CITY_ID_INVALID", "도시를 찾을 수 없습니다.")
         if (gold < 0 || rice < 0 || garrison < 0) {
             return V2CommandAvailability.Blocked("TRANSPORT_AMOUNT_NEGATIVE", "수송량은 음수일 수 없습니다.")
@@ -107,7 +112,7 @@ object V2CommandRegistry {
         if (routeRevision != null && routeRevision < 0) return invalidArgs()
         return V2CommandAvailability.Available(
             cityTransportSchema,
-            V2CityTransportArgs(fromCityId, toCityId, gold, rice, garrison, routeRevision),
+            V2CityTransportArgs(fromCityId, toCityId, gold, rice, garrison, routeRevision, topologyRevision, routePathHash),
         )
     }
 
@@ -148,5 +153,7 @@ object V2CommandRegistry {
         V2CommandAvailability.Blocked("INVALID_ARGUMENTS", "명령 인자 형식이 올바르지 않습니다.")
 
     private val RECRUIT_ARGUMENTS = setOf("cityId", "amount")
-    private val TRANSPORT_ARGUMENTS = setOf("fromCityId", "toCityId", "gold", "rice", "garrison", "routeRevision")
+    private val TRANSPORT_ARGUMENTS = setOf(
+        "fromCityId", "toCityId", "gold", "rice", "garrison", "routeRevision", "topologyRevision", "routePathHash",
+    )
 }

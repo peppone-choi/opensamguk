@@ -657,6 +657,108 @@ def validate_attestation(contract_document: dict[str, Any], document: dict[str, 
     return True
 
 
+_WATER_OVERLAY_BASE_KEYS = {
+    "path", "sha256", "bytes", "cols", "rows", "projection",
+    "terrainLegend", "landProvinceIds", "landProvinceIdsSha256",
+}
+_LAND_REDEFINITION_FIELDS = {
+    "owner", "owners", "ownership", "landowner",
+    "province", "provinces", "provincerecords",
+    "jurisdiction", "jurisdictions", "jurisdictionrecords",
+    "commandery", "commanderies", "commanderyrecords", "cities", "places",
+}
+_PLACE_COORDINATE_FIELDS = {
+    "placecoordinate", "placecoordinates", "longitude", "latitude", "lon", "lat",
+}
+
+
+def _water_overlay_base_parts(
+    document: dict[str, Any], document_bytes: bytes
+) -> tuple[dict[str, Any], list[str]]:
+    if not isinstance(document_bytes, bytes):
+        raise ValueError("han-tiles base bytes must be bytes")
+    root = _require_object(document, "han-tiles base")
+    meta = _require_object(root.get("_meta"), "han-tiles base._meta")
+    cols = _require_int(meta.get("cols"), "han-tiles base._meta.cols", 1)
+    rows = _require_int(meta.get("rows"), "han-tiles base._meta.rows", 1)
+    projection = _require_object(meta.get("projection"), "han-tiles base._meta.projection")
+    if projection.get("cols") != cols or projection.get("rows") != rows:
+        raise ValueError("han-tiles base projection dimensions mismatch")
+    terrain_legend = _require_object(
+        meta.get("terrainLegend"), "han-tiles base._meta.terrainLegend"
+    )
+    terrain = _require_list(root.get("terrain"), "han-tiles base.terrain")
+    if len(terrain) != rows or any(not isinstance(row, str) or len(row) != cols for row in terrain):
+        raise ValueError("han-tiles base terrain dimensions mismatch")
+    province_records = _require_list(
+        root.get("provinceRecords"), "han-tiles base.provinceRecords"
+    )
+    land_ids: list[str] = []
+    for index, value in enumerate(province_records):
+        record = _require_object(value, f"han-tiles base.provinceRecords[{index}]")
+        land_ids.append(_require_string(record.get("id"), f"han-tiles base.provinceRecords[{index}].id"))
+    if len(land_ids) != len(set(land_ids)):
+        raise ValueError("han-tiles base provinceRecords contains duplicate IDs")
+    land_ids.sort()
+    return {
+        "path": "data/map/han-tiles.json",
+        "sha256": hashlib.sha256(document_bytes).hexdigest(),
+        "bytes": len(document_bytes),
+        "cols": cols,
+        "rows": rows,
+        "projection": json.loads(json.dumps(projection, ensure_ascii=False)),
+        "terrainLegend": json.loads(json.dumps(terrain_legend, ensure_ascii=False)),
+        "landProvinceIds": land_ids,
+        "landProvinceIdsSha256": hashlib.sha256(_canonical_bytes(land_ids)).hexdigest(),
+    }, land_ids
+
+
+def water_overlay_base_binding(
+    document: dict[str, Any], document_bytes: bytes
+) -> dict[str, Any]:
+    """Create the complete immutable binding required by any water overlay."""
+    binding, _ = _water_overlay_base_parts(document, document_bytes)
+    return binding
+
+
+def validate_water_overlay_base(
+    document: dict[str, Any], document_bytes: bytes, binding: dict[str, Any]
+) -> bool:
+    """Require an overlay to pin exact Han tile bytes and all spatial invariants."""
+    actual = _require_exact_keys(binding, _WATER_OVERLAY_BASE_KEYS, "water overlay base binding")
+    expected, _ = _water_overlay_base_parts(document, document_bytes)
+    if actual != expected:
+        raise ValueError("water overlay base binding does not match han-tiles")
+    return True
+
+
+def _reject_land_or_place_redefinition(value: Any, where: str) -> None:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            normalized = _normalized_field_name(key)
+            if normalized in _LAND_REDEFINITION_FIELDS:
+                raise ValueError(f"{where}: water overlay may not redefine land through {key!r}")
+            if normalized in _PLACE_COORDINATE_FIELDS:
+                raise ValueError(f"{where}: water overlay may not define a place coordinate through {key!r}")
+            _reject_land_or_place_redefinition(child, f"{where}.{key}")
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            _reject_land_or_place_redefinition(child, f"{where}[{index}]")
+
+
+def validate_water_overlay_document(
+    document: dict[str, Any], document_bytes: bytes, overlay: dict[str, Any]
+) -> bool:
+    """Validate the shared base binding and forbid a water overlay from owning land."""
+    root = _require_object(overlay, "water overlay")
+    validate_water_overlay_base(document, document_bytes, root.get("base"))
+    _reject_land_or_place_redefinition(
+        {key: value for key, value in root.items() if key != "base"},
+        "water overlay",
+    )
+    return True
+
+
 def validate_contract_json(document: str | bytes) -> bool:
     """Strictly parse and validate a serialized contract."""
     return validate_contract(loads_json_strict(document))
