@@ -9,6 +9,8 @@ failed before publishing JVM images: its Gradle filter referenced a removed test
 The Han map work renamed that test to distinguish frozen V2 scenarios from new-world V3.
 Update only the workflow selector to the existing test. Do not disable unmatched-test
 failure, skip seed validation, or run the whole fixture-sensitive class against enriched data.
+The coupled RTK14 workflow contract expectation must name the same existing test; its
+materialize-before-validate-before-image ordering assertions remain intact.
 
 ## Verification
 
@@ -21,6 +23,12 @@ failure, skip seed validation, or run the whole fixture-sensitive class against 
 - `git diff --check`: passed.
 - Independent reviewer checked workflow ordering, resource loading, scenario coverage and
   the importer's strict roster-count checks; no fix-required findings.
+- Follow-up RED: PR CI `33936273761` and local RTK14 discovery found the coupled contract
+  still expected the removed method name (49 local tests, one failure, one existing optional
+  source-data skip). After updating that expectation, the CI-selected RTK14 module ran 28
+  tests with zero failures and one existing optional source-data skip.
+- Scoped independent re-review of the coupled expectation: cleared; no old selector remains
+  and no ordering or literal-selector gate was removed.
 
 ## Release boundary
 

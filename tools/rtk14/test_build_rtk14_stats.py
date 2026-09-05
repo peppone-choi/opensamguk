@@ -256,7 +256,7 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         self.assertLess(materialize, validate)
         self.assertLess(validate, image_build)
         self.assertIn(
-            "opensamguk.infra.seed.ScenarioJsonTest.every committed runtime scenario uses the canonical Han world contract",
+            "opensamguk.infra.seed.ScenarioJsonTest.committed runtime scenarios preserve frozen V2 and opt into new-world-only V3 explicitly",
             workflow[validate:image_build],
         )
 
