@@ -73,7 +73,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
             {
                 "terrain": "89fb2257769e218a76a13e8a876a53242800e0ba76abee74fdc29973dd8c2a04",
                 "owner": "7d531ec7c0ce708ab1f7a5768e540b0c3fb8b0398217c50a10248a6f5f494109",
-                "cities": "6abb179dfcf50e57367501dea48549a6c6553b54cdd67b91aa4f3ba56b37411a",
+                "cities": "b330c2718f4f02b631709a6d14863bd8ad61b5f9ac476e4331f91d7f3a567ca7",
                 "countyAdjacency": "a6d4b32cdcdd68cfcb0c42bea8227666c9fc544b84692d801ec7b4fa0bfdea0d",
             },
             geometry_hashes,

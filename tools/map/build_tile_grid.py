@@ -132,6 +132,12 @@ CANONICAL_PLACE_NAME_NORMALIZATIONS = {
         "runtimeSourceOccurrences": 3,
         "runtimeCanonicalOccurrences": 3,
     },
+    "87055": {
+        "sourceName": "남?현",
+        "sourceNameCh": "南?县",
+        "displayName": "남련현",
+        "nameCh": "南䜌县",
+    },
 }
 SOURCE_ANNOTATION_PATTERN = re.compile(r"[\[\]（）()]")
 

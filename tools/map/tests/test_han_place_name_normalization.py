@@ -17,6 +17,95 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class HanPlaceNameNormalizationTest(unittest.TestCase):
+    def test_recovers_nanryeon_across_views_without_changing_metadata(self) -> None:
+        document = {
+            "cities": [{
+                "id": "87055",
+                "name": "남?현",
+                "nameCh": "南?县",
+                "parentId": "PARENT-0017",
+                "row": 179,
+                "col": 421,
+            }],
+            "provinceRecords": [{
+                "id": "87055",
+                "displayName": "남?현",
+                "nameCh": "南?县",
+                "parentRegionId": "PARENT-0017",
+                "cityIndex": 179,
+            }],
+            "jurisdictionRecords": [{
+                "id": "87055",
+                "displayName": "남?현",
+                "nameCh": "南?县",
+                "commanderyId": "PARENT-0017",
+                "provinceIds": ["87055"],
+            }],
+            "legacyGameplay": {
+                "cities": [{
+                    "id": "87055",
+                    "name": "남?현",
+                    "nameCh": "南?县",
+                    "row": 179,
+                    "col": 421,
+                }],
+            },
+        }
+        expected = {
+            "cities": [{
+                "id": "87055",
+                "name": "남련현",
+                "nameCh": "南䜌县",
+                "parentId": "PARENT-0017",
+                "row": 179,
+                "col": 421,
+            }],
+            "provinceRecords": [{
+                "id": "87055",
+                "displayName": "남련현",
+                "nameCh": "南䜌县",
+                "parentRegionId": "PARENT-0017",
+                "cityIndex": 179,
+            }],
+            "jurisdictionRecords": [{
+                "id": "87055",
+                "displayName": "남련현",
+                "nameCh": "南䜌县",
+                "commanderyId": "PARENT-0017",
+                "provinceIds": ["87055"],
+            }],
+            "legacyGameplay": {
+                "cities": [{
+                    "id": "87055",
+                    "name": "남련현",
+                    "nameCh": "南䜌县",
+                    "row": 179,
+                    "col": 421,
+                }],
+            },
+        }
+
+        normalized = normalize_han_place_names(document)
+
+        self.assertEqual(expected, normalized)
+        self.assertEqual(expected, normalize_han_place_names(normalized))
+        self.assertEqual("남?현", document["cities"][0]["name"])
+
+    def test_rejects_unknown_nanryeon_source_pair(self) -> None:
+        source_pairs = [
+            ("남련현", "南?县"),
+            ("남?현", "南䜌县"),
+            ("임의", "임의"),
+        ]
+
+        for name, name_ch in source_pairs:
+            with self.subTest(name=name, name_ch=name_ch):
+                document = {
+                    "cities": [{"id": "87055", "name": name, "nameCh": name_ch}],
+                }
+                with self.assertRaisesRegex(ValueError, "87055.*source name drift"):
+                    normalize_han_place_names(document)
+
     def test_normalizes_reviewed_stable_ids_across_all_materialized_views(self) -> None:
         document = {
             "cities": [

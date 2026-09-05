@@ -240,7 +240,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "ab66e941d530ac5ccc43712a0e360352fbcd7e55f7580584e6b6a75053e6197f"
+      "sha256": "8291649cf6636c289d60bb980ce7f50080965a9ca16ca01630604524be307520"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
