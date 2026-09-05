@@ -5,7 +5,7 @@
   "inputs": {
     "selectionSha256": "e029b935eb43489115d55ed100d6e85fb4a01bad7aef26b6c3fa98b0a41b6e05",
     "migrationSha256": "700da3d690966a4c3b29e6de905c733e6c976b2002d6f6c196acc94bfed9a5f0",
-    "hanTilesSha256": "8291649cf6636c289d60bb980ce7f50080965a9ca16ca01630604524be307520",
+    "hanTilesSha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
   },
   "outputs": {
