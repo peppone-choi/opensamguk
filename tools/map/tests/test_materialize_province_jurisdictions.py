@@ -99,6 +99,95 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
             {key: jurisdictions[key] for key in ("45107", "85385", "85505", "85706")},
         )
 
+    def test_committed_ningyang_parent_surfaces_follow_dongping_with_fixed_catalog_counts(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        document = json.loads(
+            (root / "data/map/han-tiles.json").read_text(encoding="utf-8")
+        )
+        jurisdictions = {row["id"]: row for row in document["jurisdictionRecords"]}
+        commanderies = {row["id"]: row for row in document["commanderyRecords"]}
+        ningyang_provinces = [
+            row for row in document["provinceRecords"] if row["jurisdictionId"] == "45277"
+        ]
+
+        self.assertEqual("宁阳县", jurisdictions["45277"]["nameCh"])
+        self.assertEqual("PARENT-0024", jurisdictions["45277"]["commanderyId"])
+        self.assertEqual({"PARENT-0024"}, {row["parentRegionId"] for row in ningyang_provinces})
+        self.assertIn("45277", commanderies["PARENT-0024"]["jurisdictionIds"])
+        self.assertNotIn("45277", commanderies["PARENT-0028"]["jurisdictionIds"])
+        self.assertNotEqual("45277", commanderies["PARENT-0024"]["seatJurisdictionId"])
+        self.assertEqual(1_524, len(document["provinceRecords"]))
+        self.assertEqual(1_020, len(document["jurisdictionRecords"]))
+        self.assertEqual(172, len(document["commanderyRecords"]))
+
+    def test_ningyang_row_reparents_a_pristine_in_memory_source_parent_fixture(self) -> None:
+        document = self.parent_adjudication_fixture()
+        commandery_ids = {"C-OLD": "PARENT-0028", "C-NEW": "PARENT-0024"}
+        commandery_names = {
+            "PARENT-0028": ("산양군", "山陽郡"),
+            "PARENT-0024": ("동평국", "東平國"),
+        }
+        for province in document["provinceRecords"]:
+            province["parentRegionId"] = commandery_ids.get(
+                province["parentRegionId"], province["parentRegionId"]
+            )
+            if province["jurisdictionId"] == "J-A":
+                province["jurisdictionId"] = "45277"
+        for jurisdiction in document["jurisdictionRecords"]:
+            jurisdiction["commanderyId"] = commandery_ids.get(
+                jurisdiction["commanderyId"], jurisdiction["commanderyId"]
+            )
+            if jurisdiction["id"] == "J-A":
+                jurisdiction.update(id="45277", displayName="영양현", nameCh="宁阳县")
+        for commandery in document["commanderyRecords"]:
+            commandery["id"] = commandery_ids.get(commandery["id"], commandery["id"])
+            commandery["jurisdictionIds"] = [
+                "45277" if value == "J-A" else value
+                for value in commandery["jurisdictionIds"]
+            ]
+            if commandery["id"] in commandery_names:
+                commandery["displayName"], commandery["nameCh"] = commandery_names[commandery["id"]]
+        for parent in document["parentRegions"]:
+            parent["id"] = commandery_ids.get(parent["id"], parent["id"])
+            if parent["id"] in commandery_names:
+                parent["displayName"], parent["nameCh"] = commandery_names[parent["id"]]
+
+        ledger = {
+            "schemaVersion": 1,
+            "ledgerId": "han-jurisdiction-commandery-adjudications-v1",
+            "referenceYear": 220,
+            "adjudications": [{
+                "jurisdictionId": "45277",
+                "jurisdictionNameCh": "宁阳县",
+                "fromCommanderyId": "PARENT-0028",
+                "fromCommanderyNameCh": "山陽郡",
+                "toCommanderyId": "PARENT-0024",
+                "toCommanderyNameCh": "東平國",
+                "reviewState": "APPROVED_EXACT_PARENT",
+                "evidenceRefs": ["shiliao:test"],
+            }],
+        }
+        before = copy.deepcopy(document)
+
+        result = self.materialize_with_ledger(document, ledger)
+
+        jurisdiction = next(row for row in result["jurisdictionRecords"] if row["id"] == "45277")
+        self.assertEqual("PARENT-0024", jurisdiction["commanderyId"])
+        self.assertEqual(
+            {"PARENT-0024"},
+            {
+                row["parentRegionId"]
+                for row in result["provinceRecords"]
+                if row["jurisdictionId"] == "45277"
+            },
+        )
+        commanderies = {row["id"]: row for row in result["commanderyRecords"]}
+        self.assertNotIn("45277", commanderies["PARENT-0028"]["jurisdictionIds"])
+        self.assertIn("45277", commanderies["PARENT-0024"]["jurisdictionIds"])
+        self.assertEqual(before["owner"], result["owner"])
+        self.assertEqual(before["adjacency"]["county"], result["adjacency"]["county"])
+        self.assertEqual(result, self.materialize_with_ledger(result, ledger))
+
     @staticmethod
     def parent_adjudication_fixture() -> dict:
         """3x2 grid, three commanderies; J-A (P-A, P-B) is a non-seat county of C-OLD."""
@@ -274,6 +363,30 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "seat"):
             self.materialize_with_ledger(document, ledger)
+
+    def test_parent_adjudication_refuses_an_unknown_jurisdiction_id(self) -> None:
+        ledger = self.parent_adjudication_ledger(
+            jurisdictionId="J-UNKNOWN", jurisdictionNameCh="未知縣",
+        )
+
+        with self.assertRaisesRegex(ValueError, "unknown jurisdiction: J-UNKNOWN"):
+            self.materialize_with_ledger(self.parent_adjudication_fixture(), ledger)
+
+    def test_parent_adjudication_refuses_an_unknown_source_commandery_id(self) -> None:
+        ledger = self.parent_adjudication_ledger(
+            fromCommanderyId="C-UNKNOWN", fromCommanderyNameCh="未知郡",
+        )
+
+        with self.assertRaisesRegex(ValueError, "unknown commandery: J-A"):
+            self.materialize_with_ledger(self.parent_adjudication_fixture(), ledger)
+
+    def test_parent_adjudication_refuses_an_unknown_target_commandery_id(self) -> None:
+        ledger = self.parent_adjudication_ledger(
+            toCommanderyId="C-UNKNOWN", toCommanderyNameCh="未知郡",
+        )
+
+        with self.assertRaisesRegex(ValueError, "unknown commandery: J-A"):
+            self.materialize_with_ledger(self.parent_adjudication_fixture(), ledger)
 
     def test_parent_adjudication_refuses_name_drift_and_unknown_current_parent(self) -> None:
         for overrides, pattern in (

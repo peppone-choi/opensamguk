@@ -1728,7 +1728,7 @@
     ]
   },
   "commanderyTopology": {
-    "disconnectedCount": 43,
+    "disconnectedCount": 42,
     "disconnected": [
       {
         "id": "PARENT-0000",
@@ -2023,36 +2023,6 @@
             "cellCount": 26,
             "memberIds": [
               "45332"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "PARENT-0028",
-        "displayName": "산양군",
-        "componentCellCounts": [
-          193,
-          33
-        ],
-        "components": [
-          {
-            "cellCount": 193,
-            "memberIds": [
-              "45188",
-              "45192",
-              "45198",
-              "45269",
-              "85024",
-              "85133",
-              "85146",
-              "85147",
-              "85158"
-            ]
-          },
-          {
-            "cellCount": 33,
-            "memberIds": [
-              "45277"
             ]
           }
         ]
@@ -8026,7 +7996,7 @@
         "currentCommanderyDisplayName": "동평국",
         "currentCommanderyNameCh": "東平國",
         "kind": "KINGDOM",
-        "currentJurisdictionCount": 6,
+        "currentJurisdictionCount": 7,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 111,
         "sourceEnumeratedUnitCount": 7,
@@ -8074,7 +8044,7 @@
         "currentCommanderyDisplayName": "산양군",
         "currentCommanderyNameCh": "山陽郡",
         "kind": "COMMANDERY",
-        "currentJurisdictionCount": 10,
+        "currentJurisdictionCount": 9,
         "classification": "SOURCE_GROUP_MATCH",
         "sourceVolume": 111,
         "sourceEnumeratedUnitCount": 10,
@@ -9883,7 +9853,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "8291649cf6636c289d60bb980ce7f50080965a9ca16ca01630604524be307520"
+      "sha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63"
     },
     "administrativeUnits": {
       "sha256": "7c559d19ff0b7fc8ff43433c5305d87902166e069855d71cd957de5a6c929f64"

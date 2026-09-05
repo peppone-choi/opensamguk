@@ -398,11 +398,10 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         self.assertEqual(0, snapshot["provinceTopology"]["belowMinimumCount"])
         self.assertEqual(29, snapshot["jurisdictionTopology"]["disconnectedCount"])
         self.assertEqual(10, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
-        # 43→42: 청주 4縣 재판정(data/curated/han/jurisdiction-commandery-adjudications-v1.json)으로 西平昌(45107)·安德(85706)이
-        # 平原郡(PARENT-0036)에 붙으면서 平原郡의 세 조각(399·127·36셀)이 한 면으로 이어졌다.
-        # 歷城의 39셀을 濟南國으로 재판정하면 셀을 옮기지 않고도
-        # 平原郡의 45121 footprint가 나머지 군에서 분리된 기존 격자 사실이 드러난다.
-        self.assertEqual(43, snapshot["commanderyTopology"]["disconnectedCount"])
+        # 寧陽(45277)의 부모를 山陽郡에서 東平國으로 재판정하면 33셀
+        # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
+        # commandery 단절 하나가 해소된다.
+        self.assertEqual(42, snapshot["commanderyTopology"]["disconnectedCount"])
         self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
         self.assertEqual(73, snapshot["singleJurisdictionCommanderyCount"])
         self.assertEqual(172, snapshot["historicalParentCensus"]["currentCommanderyCount"])

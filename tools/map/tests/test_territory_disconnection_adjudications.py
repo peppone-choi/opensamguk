@@ -952,6 +952,17 @@ class CliTest(unittest.TestCase):
 
 
 class CommittedDataTest(unittest.TestCase):
+    def test_resolved_ningyang_component_is_absent_without_a_replacement_component(self):
+        document = json.loads(audit.DEFAULT_TILES.read_text(encoding="utf-8"))
+        ledger = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))
+        inventory_keys = {row["componentKey"] for row in audit.inventory(document)}
+        ledger_keys = {row["componentKey"] for row in ledger["adjudications"]}
+
+        self.assertNotIn("PARENT-0028@452:210", inventory_keys)
+        self.assertNotIn("PARENT-0028@452:210", ledger_keys)
+        self.assertEqual(119, len(inventory_keys))
+        self.assertEqual(inventory_keys, ledger_keys)
+
     def test_zhu_a_historical_exclave_is_non_vacuously_adjudicated(self):
         ledger = json.loads(audit.DEFAULT_LEDGER.read_text(encoding="utf-8"))
         rows = [

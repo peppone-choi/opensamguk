@@ -202,7 +202,7 @@ class GeneratorParentAdjudicationTest(unittest.TestCase):
         rows = validate_jurisdiction_parent_adjudication_document(
             json.loads(LEDGER.read_text(encoding="utf-8"))
         )
-        self.assertEqual(5, len(rows))
+        self.assertEqual(6, len(rows))
         self.assertEqual(
             ("45022", "PARENT-0036", "PARENT-0035"),
             (
@@ -210,6 +210,29 @@ class GeneratorParentAdjudicationTest(unittest.TestCase):
                 rows[0]["fromCommanderyId"],
                 rows[0]["toCommanderyId"],
             ),
+        )
+
+    def test_committed_ledger_contains_the_exact_ningyang_parent_correction(self) -> None:
+        rows = validate_jurisdiction_parent_adjudication_document(
+            json.loads(LEDGER.read_text(encoding="utf-8"))
+        )
+        ningyang = [row for row in rows if row["jurisdictionId"] == "45277"]
+        self.assertEqual(1, len(ningyang))
+        self.assertEqual(
+            {
+                "jurisdictionId": "45277",
+                "jurisdictionNameCh": "宁阳县",
+                "fromCommanderyId": "PARENT-0028",
+                "fromCommanderyNameCh": "山陽郡",
+                "toCommanderyId": "PARENT-0024",
+                "toCommanderyNameCh": "東平國",
+                "reviewState": "APPROVED_EXACT_PARENT",
+                "evidenceRefs": [
+                    "shiliao:後漢書/卷111 郡國志 東平國 縣列「寧陽，故屬泰山」",
+                    "https://zh.wikisource.org/wiki/後漢書/卷111#東平國",
+                ],
+            },
+            ningyang[0],
         )
 
 

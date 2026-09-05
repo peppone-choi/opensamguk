@@ -240,7 +240,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "8291649cf6636c289d60bb980ce7f50080965a9ca16ca01630604524be307520"
+      "sha256": "237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -20118,12 +20118,12 @@
         "junDistribution": [
           {
             "cellCount": 33,
-            "junArrayIndex": 28,
-            "nameCh": "山陽郡"
+            "junArrayIndex": 24,
+            "nameCh": "東平國"
           }
         ],
         "majorityJunArrayIndices": [
-          28
+          24
         ]
       },
       "geometryDiagnostic": {
@@ -20132,23 +20132,22 @@
         "groupCardinality": "MULTI_GROUP_JUN",
         "nearestCandidates": [
           {
-            "anchorCityId": "45269",
-            "candidateAdministrativeGroupId": "hhs-group:111:山陽郡",
-            "candidateAdministrativeUnitId": "hhs:111:山陽郡:008",
-            "squaredGridDistance": 40
+            "anchorCityId": "85681",
+            "candidateAdministrativeGroupId": "hhs-group:111:東平國",
+            "candidateAdministrativeUnitId": "hhs:111:東平國:001",
+            "squaredGridDistance": 61
           }
         ]
       },
       "reviewState": "REVIEW_REQUIRED_DIAGNOSTIC_ONLY",
       "seatJunDiagnostic": {
         "approvedAdministrativeGroupIds": [
-          "hhs-group:111:山陽郡",
-          "hhs-group:111:濟陰郡",
-          "hhs-group:113:安定郡"
+          "hhs-group:111:東平國",
+          "hhs-group:111:東郡"
         ],
         "diagnosticOnly": true,
-        "junArrayIndex": 28,
-        "nameCh": "山陽郡"
+        "junArrayIndex": 24,
+        "nameCh": "東平國"
       }
     },
     {
