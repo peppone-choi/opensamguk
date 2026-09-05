@@ -218,8 +218,9 @@ python3 tools/ops/test_game_server_recovery.py
 RUN_RECOVERY_DOCKER_TESTS=1 python3 tools/ops/test_game_server_recovery_docker.py
 ```
 
-빠른 행동 테스트는 CI에서 실행합니다. 실제 Docker 테스트는 명시적 opt-in이며 미설정 시 `NOT RUN`과 실패 exit를
-내어 silent skip으로 통과하지 않습니다. 로컬 fixture 이미지만 사용하며 서비스 앱 대신 `/bin/true`를 실행합니다.
+빠른 행동 테스트는 CI에서 실행합니다. 실제 Docker 테스트는 명시적 opt-in이며 직접 실행할 때 미설정이면
+`NOT RUN`과 실패 exit를 냅니다. unittest 로더/discovery로 가져올 때도 `RUN_RECOVERY_DOCKER_TESTS=1`이
+아니면 사유가 표시된 skip으로 처리하여 Docker에 접근하지 않습니다. 로컬 fixture 이미지만 사용하며 서비스 앱 대신 `/bin/true`를 실행합니다.
 따라서 로컬 Docker 통과도 실제 PEP 데이터나 application boot를 검증했다는 뜻이 아닙니다.
 
 capture 실패는 `INCOMPLETE` bundle을 남깁니다. verify 실패는 성공 표시를 남기지 않으며 `cleanup.remaining_resources`의

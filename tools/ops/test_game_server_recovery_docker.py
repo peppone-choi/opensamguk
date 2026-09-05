@@ -17,6 +17,8 @@ import uuid
 import game_server_recovery as recovery
 
 
+@unittest.skipUnless(os.environ.get('RUN_RECOVERY_DOCKER_TESTS') == '1',
+                     'NOT RUN: set RUN_RECOVERY_DOCKER_TESTS=1 for the real Docker rehearsal')
 class DockerRoundtrip(unittest.TestCase):
     def test_real_cold_capture_and_isolated_storage_restore(self):
         docker = recovery.Docker()
