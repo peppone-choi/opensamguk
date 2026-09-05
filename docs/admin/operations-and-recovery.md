@@ -17,13 +17,14 @@
 
 ## 복구 준비 상태: `UNKNOWN / blocked`
 
-현재 이 저장소의 [reset workflow](../../.github/workflows/reset-game-server.yml)는 reset 전 PostgreSQL 백업을
-만드는 경로는 포함하지만, 그 백업을 새 격리 DB에 복원하고 검증하는 정본 restore runbook은 제공하지
-않습니다. 별도 운영 저장소의 승인된 runbook, 백업 보존 위치·기간, 암호화·접근 주체, RPO/RTO, restore
-명령과 성공 판정이 확인되기 전에는 production reset/delete를 실행하지 않습니다.
+[서버 냉간 백업·격리 복원 절차](./game-server-recovery.md)는 서버 env·정확한 이미지·PostgreSQL/Redis 전체
+볼륨의 capture/verify 명령과 보존·교체 절차를 제공합니다. 도구의 로컬 테스트는 운영 복구 증거가 아닙니다.
+각 작업의 실제 bundle에 대해 저장소 복원과 원본 fingerprint/count 대조, 이전 이미지의 실제 world rehydrate,
+인증 사용자 경로를 확인한 report가 있어야 합니다. 현재 이 관문은 `UNKNOWN / blocked`입니다.
 
-이 문서의 복구 체크리스트는 restore 명령을 대신하지 않습니다. 실행 가능한 정본 절차가 확인될 때까지
-reset/delete는 `blocked`이며, 관리자 화면이나 workflow의 존재를 실행 승인으로 해석하지 않습니다.
+reset/delete는 해당 작업의 관문과 명시적 승인, control-plane lifecycle 정합성이 확보될 때까지 실행하지
+않습니다. [reset workflow](../../.github/workflows/reset-game-server.yml)의 존재나 직접 deployer 호출을
+Gateway 상태 전이·복구 관문을 우회할 권한으로 해석하지 않습니다.
 
 ## 배포 전 체크리스트
 

@@ -36,9 +36,10 @@ Gateway `/admin`의 `서버 제어`에서 서버 ID, 이름, 시나리오와 화
 사용할 수 있습니다. 프로덕션은 기본 `SCENARIO_SEED_ENABLED=false`이며 운영자가 서버를 만들거나 reset하는
 경로가 정본입니다.
 
-> **현재 production reset은 blocked입니다.** reset 전 백업을 만드는 workflow는 있으나 검증된 restore
-> runbook, 보존 정책과 RPO/RTO가 이 저장소에 없습니다. [운영·복구 매뉴얼](./operations-and-recovery.md)의
-> `UNKNOWN / blocked` 조건이 해소되고 별도 명시 승인을 받기 전에는 실행하지 않습니다.
+> **현재 production reset은 blocked입니다.** [냉간 백업·복원 절차](./game-server-recovery.md)에 실행 도구와
+> 보존 정책·RPO/RTO를 정의했지만 로컬 테스트는 실제 운영 복구를 증명하지 않습니다. 각 작업의 실제 bundle
+> 저장소 복원·원본 비교·이전 앱 재적재·인증 smoke report, control-plane 정합성과 명시적 승인이 필요합니다.
+> [운영·복구 매뉴얼](./operations-and-recovery.md)의 `UNKNOWN / blocked` 관문을 먼저 충족합니다.
 
 reset 전 체크:
 
@@ -95,7 +96,7 @@ stateless 서비스의 승격 경계를 구분하므로 화면 설명과 운영 
 삭제는 최후 수단입니다. 현재 관리자 UI 설명 기준으로 해당 서버의 컨테이너, DB/Redis volume, env와 Gateway
 registry 항목을 제거합니다.
 
-검증된 restore runbook이 없는 현재 production delete도 `blocked`입니다. 아래는 차단 해제 뒤에도 필요한
+각 작업의 검증된 복구 report가 없는 현재 production delete도 `blocked`입니다. 아래는 차단 해제 뒤에도 필요한
 최소 조건이며, 그 자체로 실행을 허가하지 않습니다.
 
 실행 조건:
