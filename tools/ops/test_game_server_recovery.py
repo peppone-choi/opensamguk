@@ -9,6 +9,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 import tarfile
 import tempfile
@@ -641,6 +642,49 @@ class RecoveryTests(unittest.TestCase):
         self.assertFalse(report['success'])
         self.assertTrue(report['cleanup']['success'])
         self.assertEqual(set(self.docker.volumes), {'spep-game-pgdata', 'spep-game-redisdata'})
+
+
+class DockerOptInTests(unittest.TestCase):
+    def load_docker_module(self):
+        path = Path(__file__).with_name('test_game_server_recovery_docker.py')
+        spec = importlib.util.spec_from_file_location('_recovery_docker_optin_fixture', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_targeted_unittest_loader_without_optin_never_calls_docker(self):
+        for value in (None, '0', 'true'):
+            with self.subTest(value=value), patch.dict(os.environ):
+                os.environ.pop('RUN_RECOVERY_DOCKER_TESTS', None)
+                if value is not None:
+                    os.environ['RUN_RECOVERY_DOCKER_TESTS'] = value
+                module = self.load_docker_module()
+                with patch.object(module.recovery, 'Docker', side_effect=AssertionError('Docker must not be called')) as docker:
+                    result = unittest.TestResult()
+                    unittest.defaultTestLoader.loadTestsFromModule(module).run(result)
+                    docker.assert_not_called()
+                self.assertEqual(result.testsRun, 1)
+                self.assertEqual(len(result.skipped), 1)
+                self.assertTrue(result.wasSuccessful())
+
+    def test_targeted_unittest_loader_with_optin_selects_real_fixture(self):
+        with patch.dict(os.environ, {'RUN_RECOVERY_DOCKER_TESTS': '1'}):
+            module = self.load_docker_module()
+            with patch.object(module.DockerRoundtrip, 'test_real_cold_capture_and_isolated_storage_restore', autospec=True) as fixture:
+                result = unittest.TestResult()
+                unittest.defaultTestLoader.loadTestsFromModule(module).run(result)
+                fixture.assert_called_once()
+            self.assertEqual(result.testsRun, 1)
+            self.assertEqual(result.skipped, [])
+            self.assertTrue(result.wasSuccessful())
+
+    def test_direct_docker_script_without_optin_explicitly_fails_not_run(self):
+        env = dict(os.environ)
+        env.pop('RUN_RECOVERY_DOCKER_TESTS', None)
+        result = subprocess.run([sys.executable, str(Path(__file__).with_name('test_game_server_recovery_docker.py'))],
+                                env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('NOT RUN', result.stderr)
 
 
 class RollbackRunbookTests(unittest.TestCase):

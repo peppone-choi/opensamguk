@@ -63,6 +63,12 @@ The fresh reviewer verified the final correction: an explicit completed-storage 
 
 Final evidence: 45 behavioral tests, one real Docker roundtrip in 50.363 seconds, and two existing inventory tests passed. The parent independently reran 45 tests in 1.372 seconds, inventory tests and diff check. Both review stages approve storage tooling integration. Actual PEP cold capture, application/authenticated restoration, external scenario identity, control-plane reconciliation and the live operator harness remain blocked or unverified; this verdict does not authorize or claim them.
 
+### Post-merge test-discovery guard — approved
+
+PR #633's later external review identified that unittest import/discovery bypassed the real Docker fixture's `__main__` opt-in check. A class-level guard now explicitly skips that fixture unless `RUN_RECOVERY_DOCKER_TESTS=1`; direct script execution without opt-in still reports NOT RUN and exits nonzero. Three regression tests cover missing/non-1 values, explicit opt-in selection and direct invocation. The operations review date and opt-in documentation were updated.
+
+Scoped independent re-review approved the follow-up with no substantive new breakage: 48 fast tests passed, targeted discovery explicitly skipped without Docker, one opted-in real restoration passed in 51.177 seconds, and two inventory tests passed. The external suggestion to hardcode the generic helper to pep was declined as inconsistent with the approved canonical-ID interface; actual live authority remains PEP-only. All live-operation gates remain unchanged.
+
 ## Live operator boundary audit
 
 The same reviewer inspected the engine/control boundaries for a future PEP-only operator harness. Admin pause is process-local; durable `game_env.plock` is restored separately at engine materialization. Require initially unpaused/unlocked state for automatic same-container resumption, and compare the restored storage to the committed pre-stop fingerprint, not to a live world that has resumed ticking.
