@@ -27,7 +27,7 @@ class HanStrategicTopologyJsonTest {
         val presentation = json.path("presentation")
         assertEquals(768, presentation.path("cols").asInt())
         assertEquals(669, presentation.path("rows").asInt())
-        assertEquals("ab66e941d530ac5ccc43712a0e360352fbcd7e55f7580584e6b6a75053e6197f",
+        assertEquals("8291649cf6636c289d60bb980ce7f50080965a9ca16ca01630604524be307520",
             presentation.path("baseTilesSha256").asText())
         assertEquals(listOf(47, 83), presentation.path("geometries").map { it.path("cellCount").asInt() })
         assertEquals(listOf("ISOLATED_NO_REVIEWED_CONNECTION", "ISOLATED_NO_REVIEWED_CONNECTION"),
