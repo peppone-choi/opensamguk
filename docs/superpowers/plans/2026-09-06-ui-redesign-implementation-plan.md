@@ -347,7 +347,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-30-v2-realtime-battle-session-command-replay-design.md` + BATTLE-F 티켓(OPENSAM-156~174) 중 야전 절편. 공성·해전은 잔여로 남긴다.
 
-- [ ] 계약: `battle_plan`(battle_id·general_id·stance 돌격/전진/방어/우회·target·conditions[사기 임계→방어 / 합류 전 추격 금지 / 손실 임계→퇴각선]·sealed_at·version), `battle_replay`(battle_id·seed·input_hash·phases[]·settlement·created_at). 봉인 마감 = 해결 직전 순. `V54__battle_plan_replay.sql`.
+- [~] Spec v1 초안(`specs/2026-09-06-wego-field-seal-replay-vertical-slice.md`, 교차 비평 대기): `battle_plan`(장수×목표 도시, stance 돌격/탐색 2종 — 전진/방어/우회는 엔진 대응물 없음, 조건 2종 = 플레이어 입력 손실 %·사기 임계 — 추격 금지는 엔진에 추격 없음, sealed_at·version), `battle_replay`(seed·input_hash·replay_hash·battle_phases_json·정산, 계획 봉인된 전투만 기록). 봉인 마감 = 해결 직전 순. **`V57__battle_plan_replay.sql`**. 봉인 뒤 수정은 인테이크 거부 사유(409 아님).
 - [ ] 해결: 기존 `war/*` 엔진에 「봉인된 계획이 있으면」 훅을 단다 — 태세·조건이 기존 파라미터(공격 개시·퇴각 임계·추격 여부·지형 보정)에 매핑되는 규칙을 spec에 표로 고정. 계획이 없으면 훅은 no-op(골든 바이트 동일). 결과는 페이즈별 상태(병력·사기·보정·발동 조건)로 기록하고 같은 seed·입력이면 같은 리플레이(해시 게이트).
 - [ ] 정산: 캠페인 정산(사상·군량·경험)을 replay.settlement에 기록하고 `battle_plan.operation_id`·`battle_replay.operation_id` 에 작전 키(ADR-LITE-032 `operationId`)만 기록한다 — 작전 행은 쓰지 않는다(4X-B spec v2 §10: 진척은 이정표 재계산이 도시 소유로 본다).
 - [ ] read API `/api/battles/{id}/plan`(아군 것만), `/api/battles/{id}/replay`, 감찰부 목록 연결, 공유 링크(권한 내). 명령: `sealBattlePlan`(수정은 봉인 전까지, 봉인 뒤 409).
