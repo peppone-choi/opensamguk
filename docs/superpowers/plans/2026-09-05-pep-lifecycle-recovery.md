@@ -1,6 +1,6 @@
 # PEP lifecycle recovery implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development. Execute sequential tasks with TDD and independent review before integration.
+> **For the coordinator:** Use superpowers:subagent-driven-development to coordinate sequential tasks and independent review before integration; implementers follow their task briefs with TDD and must not dispatch subagents.
 
 **Goal:** Unblock the approved PEP promotion/reset through guarded management-state reconciliation and non-cancelling deployment admission, without changing game or account data during these prerequisites.
 

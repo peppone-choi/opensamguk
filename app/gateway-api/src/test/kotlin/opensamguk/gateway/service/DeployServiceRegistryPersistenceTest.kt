@@ -14,6 +14,7 @@ import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -688,6 +689,56 @@ class DeployServiceRegistryPersistenceTest {
     }
 
     @Test
+    fun `reconciliation releases its lease when a successful HTTP response body stalls`() {
+        assertStalledReconciliationUnavailable(200)
+    }
+
+    @Test
+    fun `reconciliation cannot delete a transition when an exact 404 response body stalls`() {
+        assertStalledReconciliationUnavailable(404)
+    }
+
+    private fun assertStalledReconciliationUnavailable(status: Int) {
+        val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
+        insertSatisfiedCreate(fixture.jdbc, requireNotNull(fixture.registry.find("live1")), RECONCILE_OPERATION_ID)
+        val beforeRegistry = fixture.registry.all()
+        StalledBodyDeployer(status).use { deployer ->
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val executor = Executors.newSingleThreadExecutor()
+            val result = executor.submit<EnvProxyResponse> {
+                service.reconcileSatisfiedCreate(
+                    "live1",
+                    RECONCILE_OPERATION_ID,
+                    """{"confirm":"RECONCILE CREATE live1"}""",
+                )
+            }
+            try {
+                assertTrue(deployer.bodyStarted.await(5, TimeUnit.SECONDS), "partial body was not sent")
+                val response = try {
+                    result.get(25, TimeUnit.SECONDS)
+                } catch (e: TimeoutException) {
+                    throw AssertionError("reconciliation did not return while the response body remained stalled", e)
+                }
+                assertEquals(503, response.status)
+                assertEquals(1, transitionCount(fixture.jdbc))
+                assertEquals(beforeRegistry, fixture.registry.all())
+                assertEquals(
+                    true,
+                    fixture.jdbc.queryForObject(
+                        "SELECT lease_until <= CURRENT_TIMESTAMP FROM game_server_registry_transition WHERE operation_id = ?",
+                        Boolean::class.java,
+                        RECONCILE_OPERATION_ID,
+                    ),
+                )
+            } finally {
+                deployer.releaseBody.countDown()
+                executor.shutdown()
+                assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS), "reconciliation worker did not terminate")
+            }
+        }
+    }
+
+    @Test
     fun `exact missing remote operation reconciles only old satisfied CREATE metadata`() {
         FakeDeployer().use { deployer ->
             val fixture = registryFixture(
@@ -1144,6 +1195,47 @@ class DeployServiceRegistryPersistenceTest {
     companion object {
         private const val RECONCILE_OPERATION_ID = "c123456789abcdef0123456789abcdef"
         private const val OTHER_OPERATION_ID = "d123456789abcdef0123456789abcdef"
+    }
+
+    private class StalledBodyDeployer(private val status: Int) : AutoCloseable {
+        val bodyStarted = CountDownLatch(1)
+        val releaseBody = CountDownLatch(1)
+        private val handlerFinished = CountDownLatch(1)
+        private val executor = Executors.newSingleThreadExecutor()
+        private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+
+        init {
+            server.executor = executor
+            server.createContext("/") { exchange ->
+                try {
+                    val partialBody = if (status == 404) {
+                        """{"ok":false,"operationId":"$RECONCILE_OPERATION_ID","status":"not_found"""
+                    } else {
+                        """{"operationId":"$RECONCILE_OPERATION_ID","kind":"create","status":"pending"""
+                    }.toByteArray(Charsets.UTF_8)
+                    exchange.responseHeaders.add("Content-Type", "application/json")
+                    exchange.sendResponseHeaders(status, partialBody.size.toLong() + 1)
+                    exchange.responseBody.write(partialBody)
+                    exchange.responseBody.flush()
+                    bodyStarted.countDown()
+                    releaseBody.await()
+                } finally {
+                    exchange.close()
+                    handlerFinished.countDown()
+                }
+            }
+            server.start()
+        }
+
+        fun url(): String = "http://127.0.0.1:${server.address.port}"
+
+        override fun close() {
+            releaseBody.countDown()
+            server.stop(0)
+            executor.shutdown()
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS), "deployer handler did not terminate")
+            assertEquals(0L, handlerFinished.count)
+        }
     }
 
     private class FakeDeployer : AutoCloseable {
