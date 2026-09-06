@@ -204,7 +204,7 @@
 
 ### Phase 1 게이트
 
-- [ ] Phase 0 게이트 + 감사 P0(장수 생성 직후 무한 스피너: `useFrontInfo` 타임아웃·재시도 상태) 해소 확인 + OPENSAM-115/#258 닫기 + OPENSAM-46/#188 체크리스트 갱신.
+- [~] Phase 0 게이트 + 감사 P0(장수 생성 직후 무한 스피너) 해소 확인 — 2026-09-06 로컬 스택(재빌드 이미지)에서 장수 생성 202→작전실 진입 확인, 작전실 실캡처 `docs/superpowers/reviews/2026-09-06-ui-phase-1-3-screens.md`. OPENSAM-115/#258 닫기·OPENSAM-46/#188 체크리스트는 PR 시점.
 
 ---
 
@@ -238,7 +238,7 @@
 
 ### Phase 2 게이트
 
-- [ ] 공통 게이트 + `lobby-possession` e2e + gateway-api·game-api 테스트 XML + 신규 티켓 ② 닫기.
+- [~] 공통 게이트(typecheck·lint·vitest gateway 240/240) + 로그인·로비 실캡처(`…-phase-1-3-screens.md`, 로컬 레지스트리가 비어 서버 카드는 vitest 로만) + gateway-api 공지 테스트 XML 녹색. 신규 티켓 ② 닫기는 PR 시점.
 
 ---
 
@@ -278,7 +278,7 @@
 
 ### Phase 3 게이트
 
-- [ ] 공통 게이트 + 실제 ADMIN 계정으로 로컬 도커 스택에서 섹션별 스크린샷 + 신규 티켓 ③ 닫기.
+- [~] 공통 게이트 + 로컬 DB 에서 ADMIN 으로 올린 계정으로 운영 콘솔(회원·공지)·게임 관리 허브(설정·장수·서버 상태) 실캡처(`…-phase-1-3-screens.md`). 신규 티켓 ③ 닫기는 PR 시점.
 
 ---
 
@@ -313,7 +313,7 @@
 
 ### Phase 4 게이트
 
-- [ ] 웨이브별 공통 게이트 + 백엔드 XML + 신규 티켓 ④⑤ 닫기, OPENSAM-71/#213 코멘트.
+- [~] 웨이브 A: typecheck·lint·vitest(shared 47 · game 659 · gateway 240) 녹색, 실캡처 `docs/superpowers/reviews/2026-09-06-ui-phase-4a-screens.md`. 두 앱 build·e2e 3건·티켓 ④⑤ 닫기·OPENSAM-71/#213 코멘트는 웨이브 B·C 뒤 PR 시점.
 
 ---
 
