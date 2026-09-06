@@ -417,7 +417,7 @@
 
 - [ ] main 머지 후 `deploy.yml` 성공 확인(web 반영). 게임 서버 승격은 `promote-game-server.yml`(엔진 포함, SHA는 `git rev-parse`로 풀어서 입력) — 상시 승인 범위.
 - [ ] 프로덕션 프로브: `https://sam.peppone.dev/api/server-basic-info/<id>` 200, 로그인·로비·작전실 렌더 확인.
-- [ ] 서버 초기화 전 **실측**: `GET /admin/env/servers/<id>`·`GET /api/admin/game-settings`로 현재 scenario code·generation·turn term을 읽는다. `reset-game-server.yml` 기본값(`scenario_2`·`current`)을 그대로 쓰지 않는다 — 시나리오를 바꾸면 초기화가 아니라 교체다.
+- [ ] 서버 초기화 전 **실측**: `GET /admin/env/servers/<id>`·`GET /api/admin/game-settings`로 현재 scenario code·generation·turn term을 읽는다. `reset-game-server.yml` 기본값(`scenario_2`·`current`)을 그대로 쓰지 않는다 — 시나리오를 바꾸면 초기화가 아니라 교체다. **실측 2026-09-06 19:45 KST(공개 API `GET /api/servers`·`/api/server-basic-info/pep`):** 서버 `pep`(빼섭) 1개 · generation 1 · scenario 「【역사모드2】 반동탁연합 결성」 · turnTerm 5분 · 201年 6月. 저장소 대조 결과 이 제목은 **`infra/src/main/resources/scenario/scenario_1020.json`**(startYear 187, `cityIdentityVersion: han-world-v3`, 도시 목록은 시나리오 밖 = 지도 정본)이다 — 워크플로 기본값 `scenario_2`·78성·낙양 단언은 이 서버에 맞지 않으므로 `scenario_code=scenario_1020`, `generation=current`, `turn_term=current`(5분) 로 넣고 `expected_city_count`/`expected_first_city` 는 han-world-v3 실측으로 바꾸거나 비운다.
 - [ ] `reset-game-server.yml` 실행: server_id 실측값, confirmation `RESET <id>`, backup=true, scenario=실측 코드, generation=`current` 또는 사용자 지정, turn term=`current`. `operationId`를 `succeeded`까지 폴링한다. `recovery_required`면 멈추고 보고한다.
 - [ ] 초기화 후 스모크: 기존 계정 로그인 → 장수 생성 → 작전실 → 명령 1건 예약 → 결과 폴링 `RESOLVED`. 결과를 사용자에게 보고한다.
 

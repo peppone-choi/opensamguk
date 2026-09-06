@@ -1,21 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-    formatCompactMapTooltipMeta,
-    HanMapCanvas,
-    isOwnedNationVisual,
-    type IsoActivation,
-    type IsoCityOverlay,
-    type IsoCountyHover,
-    type IsoHoverPoint,
-    type InitialFocusProfile,
-    sameStrategicBinding,
-    validStrategicBinding,
-    type StrategicMapSnapshot,
-    type StrategicMapRoute,
-    type StrategicTopologyBinding,
-} from '@opensamguk/ui';
+import { formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, validStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { readServerCookie, useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
@@ -363,7 +349,7 @@ export default function MapViewer({
     });
 
     if (failed || tileMissing || (data && data.cities.length === 0)) {
-        return <section className="map-viewer" aria-label="세계 지도"><div className="map-viewer-ph">지도 데이터 준비 중입니다.</div></section>;
+        return <section className="map-viewer" aria-label="세계 지도"><EmptyState illustration="map" title="지도 데이터 준비 중입니다." className="map-viewer-ph" /></section>;
     }
     if (!data) {
         return <section className="map-viewer" aria-label="세계 지도"><div className="map-viewer-ph"><div className="spinner" /></div></section>;

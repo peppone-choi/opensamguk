@@ -495,6 +495,7 @@
   border: 1px dashed var(--line-2);
 }
 .os-empty__title { color: var(--text-2); font-weight: 700; font-size: 13px; }
+.os-empty__art { width: 96px; height: 96px; opacity: 0.9; margin-bottom: 2px; }
 
 .os-reason { position: relative; display: inline-flex; }
 .os-reason__tip {

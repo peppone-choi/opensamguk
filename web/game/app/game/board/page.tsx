@@ -18,7 +18,7 @@
 // EMPTY-SAFE: articles [] → '게시물이 없습니다.'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Chip, Flag, Panel, PillTabs, Portrait, PortraitStack, SectionHeader, type ChipTone } from '@opensamguk/ui';
+import { Chip, Flag, Panel, PillTabs, Portrait, PortraitStack, SectionHeader, type ChipTone, EmptyState } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import { COMMUNITY_HREF } from '../../../components/DeptNav';
@@ -460,7 +460,7 @@ function BoardContent() {
                             </div>
                         ) : (
                             <Panel className="record-panel">
-                                <p className="record-empty">게시물이 없습니다.</p>
+                                <EmptyState illustration="posts" title="게시물이 없습니다." />
                             </Panel>
                         )
                     )}

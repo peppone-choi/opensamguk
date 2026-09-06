@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import React from 'react';
-import { Portrait } from '@opensamguk/ui';
+import { EmptyState, Portrait } from '@opensamguk/ui';
 import { boardCategoryLabel, boardDate, type BoardPost } from '@/lib/board';
 
 /** 작성자 표시 — 계정 아이콘 40 + 닉네임 + 대표 장수 배지(설정된 계정만). */
@@ -22,7 +22,7 @@ export function BoardAuthorBadge({ post }: { readonly post: BoardPost }) {
 
 export default function BoardList({ posts }: { readonly posts: readonly BoardPost[] }) {
   if (posts.length === 0) {
-    return <div className="board-empty">아직 게시글이 없습니다.</div>;
+    return <EmptyState illustration="posts" title="아직 게시글이 없습니다." className="board-empty" />;
   }
   return (
     <div className="board-list" aria-label="게시글 목록">

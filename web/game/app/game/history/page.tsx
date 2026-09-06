@@ -15,7 +15,7 @@
 // [first,last] range. Empty globalHistory/globalAction → empty section bodies. Never crashes.
 
 import { useEffect, useState, useCallback } from 'react';
-import { Button, Flag, LogText, Panel, SectionHeader } from '@opensamguk/ui';
+import { Button, Flag, LogText, Panel, SectionHeader, EmptyState } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import RecordsTabs from '../../../components/records/RecordsTabs';
@@ -260,7 +260,7 @@ export default function HistoryPage() {
             {error && <p role="alert" style={{ color: 'var(--rust)' }}>{error}</p>}
             {!loading && !error && record === null && (
                 <Panel className="record-panel">
-                    <p className="record-empty">기록이 없습니다.</p>
+                    <EmptyState illustration="records" title="기록이 없습니다." />
                 </Panel>
             )}
             {record !== null && (
@@ -288,7 +288,7 @@ export default function HistoryPage() {
                         <Panel className="record-panel">
                             <SectionHeader title="중원 정세" tone="rust" sub={`${record.globalHistory.length}`} />
                             {record.globalHistory.length === 0 ? (
-                                <p className="record-empty">기록이 없습니다.</p>
+                                <EmptyState illustration="records" title="기록이 없습니다." />
                             ) : (
                                 <div className="record-rows">
                                     {record.globalHistory.map((item, idx) => (
@@ -301,7 +301,7 @@ export default function HistoryPage() {
                         <Panel className="record-panel">
                             <SectionHeader title="장수 동향" tone="info" sub={`${record.globalAction.length}`} />
                             {record.globalAction.length === 0 ? (
-                                <p className="record-empty">기록이 없습니다.</p>
+                                <EmptyState illustration="records" title="기록이 없습니다." />
                             ) : (
                                 <div className="record-rows">
                                     {record.globalAction.map((item, idx) => (

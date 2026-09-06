@@ -7,7 +7,7 @@
 // EMPTY-SAFE: 신선 시드면 entries === [] → 빈-상태 안내. 절대 크래시하지 않는다.
 // (개인 전투 기록 / 장수 행동 로그(general_record)는 백엔드에 테이블이 없어 범위 밖 — 미구현 갭.)
 import { useCallback, useEffect, useState } from 'react';
-import { LogText, Panel, SectionHeader } from '@opensamguk/ui';
+import { LogText, Panel, SectionHeader, EmptyState } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import RecordsTabs from '../../../components/records/RecordsTabs';
@@ -86,7 +86,7 @@ export default function WorldLogPage() {
                 <Panel className="chron record-panel">
                     <SectionHeader title="중원 정세 · 편년체" sub={range} />
                     <div className="chron__body">
-                        {groups.length === 0 && <p className="record-empty">기록이 없습니다.</p>}
+                        {groups.length === 0 && <EmptyState illustration="records" title="기록이 없습니다." />}
                         {groups.map((g) => (
                             <section key={g.key} className="chron__group" aria-label={`${g.year}年 ${g.month}月${g.phaseText ? ` ${g.phaseText}` : ''}`}>
                                 <div className="chron__when">

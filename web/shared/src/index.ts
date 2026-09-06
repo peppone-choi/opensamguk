@@ -6,7 +6,7 @@ export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 export { Modal, type ModalProps } from './Modal';
 export { Table, type TableProps } from './Table';
 export { Chip, type ChipProps, type ChipTone } from './Chip';
-export { EmptyState, type EmptyStateProps } from './EmptyState';
+export { EMPTY_ILLUSTRATION_FILE, EMPTY_ILLUSTRATION_PATH, EmptyState, type EmptyIllustration, type EmptyStateProps } from './EmptyState';
 export { Feed, FeedItem, type FeedItemProps, type FeedProps } from './Feed';
 export { Flag, type FlagProps } from './Flag';
 export { Gauge, type GaugeProps, type GaugeTone } from './Gauge';
