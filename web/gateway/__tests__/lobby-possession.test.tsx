@@ -53,7 +53,13 @@ describe('lobby possession entry', () => {
     it('sends an alphanumeric public server ID to the explicit possession entry', async () => {
         render(<LobbyPage />);
 
-        expect(await screen.findByRole('link', { name: '장수빙의' })).toHaveAttribute(
+        // 이 파일은 테스트가 하나뿐이라 항상 콜드 스타트다: 첫 render + fetch 두 번(서버 목록 → basic-info)
+        // + 재렌더 두 번이 한 findBy 의 기본 1000ms 안에서 경쟁한다. 단독 실행에서 0.8~1.3s, 전체 스위트의
+        // 워커 부하에서는 1.5s 를 넘겨 실패했다(같은 파일 두 번째 테스트부터는 ~100ms). 체인을 두 단계로
+        // 나눠 각 단계가 자기 대기 창을 갖게 하고, 마지막 단계는 부하를 감안해 넉넉히 기다린다.
+        expect(await screen.findByText('페프', {}, { timeout: 3000 })).toBeInTheDocument();
+
+        expect(await screen.findByRole('link', { name: '장수빙의' }, { timeout: 3000 })).toHaveAttribute(
             'href',
             '/game/pep?entry=possession',
         );
