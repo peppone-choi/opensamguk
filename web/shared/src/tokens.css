@@ -24,6 +24,17 @@
   --info: #7aa7c7;          /* 정보 · 외교 */
   --info-dim: #4b6d87;
   --focus: #ffd36d;         /* 포커스 · 선택 */
+  /* 로그 토큰 색(devsam <R><B><G><M><C><L><S><O><D><Y><W>) — 야전 사령부 팔레트로 사상. 색상군(경고 적 · 인물 황 · 기술 자 · 정보 청)은 유지한다. */
+  --log-r: #e08a7c;
+  --log-b: #7aa7c7;
+  --log-g: #8fa77a;
+  --log-m: #c98ac1;
+  --log-c: #7fc4c9;
+  --log-l: #9fc27a;
+  --log-s: #8fbfe0;
+  --log-o: #e0a06a;
+  --log-y: #e6cf7a;
+  --log-w: #ece6d8;
   --text: #ece6d8;
   --text-2: #b9b2a3;
   --muted: #8a8477;         /* 4.6:1 */
@@ -498,3 +509,21 @@
   box-shadow: var(--shadow-md);
   white-space: normal;
 }
+
+/* ============================================================================
+   로그 한 줄(LogText) — 토큰 → 팔레트 색. innerHTML 없음.
+   ========================================================================== */
+.os-log { white-space: pre-wrap; overflow-wrap: anywhere; }
+.os-log__R { color: var(--log-r); }
+.os-log__B { color: var(--log-b); }
+.os-log__G { color: var(--log-g); }
+.os-log__M { color: var(--log-m); }
+.os-log__C { color: var(--log-c); }
+.os-log__L { color: var(--log-l); }
+.os-log__S { color: var(--log-s); }
+.os-log__O, .os-log__D { color: var(--log-o); }
+.os-log__Y { color: var(--log-y); }
+.os-log__W { color: var(--log-w); }
+.os-log__small { font-size: 0.9em; }
+.os-log__b { font-weight: 700; }
+.os-log__failed { color: var(--muted); text-decoration: line-through; }

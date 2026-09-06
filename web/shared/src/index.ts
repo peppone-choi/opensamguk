@@ -11,6 +11,8 @@ export { Feed, FeedItem, type FeedItemProps, type FeedProps } from './Feed';
 export { Flag, type FlagProps } from './Flag';
 export { Gauge, type GaugeProps, type GaugeTone } from './Gauge';
 export { KV, type KVItem, type KVProps } from './KV';
+export { LogText, type LogTextProps } from './LogText';
+export { logPlainText, parseLogTokens, type LogSegment, type LogTone } from './logTokens';
 export { NavItem, type NavItemProps } from './NavItem';
 export { Divider, Inset, Panel, type InsetProps, type PanelProps } from './Panel';
 export { PillTabs, type PillTab, type PillTabsProps } from './PillTabs';

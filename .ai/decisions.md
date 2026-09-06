@@ -817,3 +817,25 @@
   잔여로 남는다. 뒤집기 경로: 캔버스 재발행 + 이 ADR 개정(supersede 기록).
 - Approved by: 사용자 (2026-09-06, 명시적 지시). 구현 계획:
   `docs/superpowers/plans/2026-09-06-ui-redesign-implementation-plan.md`.
+
+## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
+- Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
+  `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
+  (`text`)에서 바꾸지 않는다. 대신 두 앱의 모든 로그 표시는 `@opensamguk/ui`의 `parseLogTokens`
+  (`web/shared/src/logTokens.ts`) → `LogText`(팔레트 span, innerHTML 없음)로만 그린다. 토큰 색은
+  `tokens.css`의 `--log-r … --log-w`(야전 사령부 팔레트로 사상, 색상군은 유지)로 중앙화한다.
+  `formatLog`(innerHTML 문자열 생성)는 레거시 호환 유틸로 남기되 제품 화면에서는 쓰지 않는다.
+- Context: 사용자가 「그 토큰 어떻게 할지 고민해봐. 수정할 수 있을거 같은데. 대체하거나.」(2026-09-06)
+  라고 지시했다. 조사 결과 (1) 토큰은 엔진·`logic` 골든 208개 파일이 바이트 비교하는 오라클의 일부
+  (`P2GoldenSupport`가 `<Y>…</>`를 추출)라 원천 교체는 frozen baseline을 깨고 DB 기존 행과도 갈라진다,
+  (2) 전황(`/game/world-log`)·지도 중원정세·게이트웨이 `ServerLog`는 토큰을 처리하지 않은 채(원문
+  innerHTML 또는 태그 제거) 그리고 있었고, 나머지는 `formatLog` + `dangerouslySetInnerHTML`로 그려
+  XSS 표면이 화면마다 있었다.
+- Alternatives: (1) 엔진에서 구조화 로그(JSON 세그먼트)로 교체 — 기각, 골든·DB·API 계약 동시 변경.
+  (2) game-api가 응답 시 HTML로 변환 — 기각, 계약 변경 + innerHTML 유지. (3) 화면마다 `formatLog`
+  유지 — 기각, 토큰 미처리 화면이 재발하고 innerHTML이 남는다.
+- Consequences: 로그 색이 CSS 원색(cyan/yellow/magenta…)에서 팔레트 값으로 바뀐다(의미 색상군은
+  유지). 토큰 문법이 늘면 `logTokens.ts`와 `formatLog.ts` 둘을 함께 고쳐야 한다(테스트
+  `web/shared/src/__tests__/logText.test.tsx`가 문법 사례를 고정). 게이트웨이 전황 보고도 같은
+  렌더러를 써 색이 붙는다.
+- Approved by: 사용자 지시(토큰 처리 결정 위임, 2026-09-06). 구현: Phase 4 웨이브 A PR.

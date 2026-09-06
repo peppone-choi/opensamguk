@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { LogText, Panel, SectionHeader, type SectionTone } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
-import GameCard from '../../../components/GameCard';
+import PageHead from '../../../components/PageHead';
 import GeneralBasicCard from '../../../components/game/GeneralBasicCard';
 import { api, type GeneralLogType, type NationGeneralListResponse } from '../../../lib/api';
-import { formatLog } from '../../../lib/utilGame';
 import type { FrontGeneralInfo, FrontNationInfo } from '../../../lib/types';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 
@@ -52,11 +52,12 @@ const SORTS: Record<SortKey, { label: string; asc: boolean; extra: (general: Bat
   },
 };
 
-const LOG_SECTIONS: { type: GeneralLogType; title: string; color: string }[] = [
-  { type: 'generalHistory', title: '장수 열전', color: 'skyblue' },
-  { type: 'battleDetail', title: '전투 기록', color: 'orange' },
-  { type: 'battleResult', title: '전투 결과', color: 'orange' },
-  { type: 'generalAction', title: '개인 기록', color: 'skyblue' },
+// 구획 4종(라벨 verbatim). 색은 팔레트 톤으로: 전투 = 적갈, 열전·개인 = 정보.
+const LOG_SECTIONS: { type: GeneralLogType; title: string; tone: SectionTone }[] = [
+  { type: 'generalHistory', title: '장수 열전', tone: 'info' },
+  { type: 'battleDetail', title: '전투 기록', tone: 'rust' },
+  { type: 'battleResult', title: '전투 결과', tone: 'rust' },
+  { type: 'generalAction', title: '개인 기록', tone: 'info' },
 ];
 
 function lastFive(value: string | null | undefined): string {
@@ -200,39 +201,33 @@ function emptyLogs(): LogState {
   };
 }
 
-function LogPanel({ title, color, logs, error }: { title: string; color: string; logs: LogEntry[]; error?: string }) {
+function LogPanel({
+  id,
+  title,
+  tone,
+  logs,
+  loading,
+  error,
+}: { id: string; title: string; tone: SectionTone; logs: LogEntry[]; loading: boolean; error?: string }) {
   return (
-    <GameCard style={{ marginBottom: 'var(--space-md)' }}>
-      <div
-        style={{
-          textAlign: 'center',
-          fontWeight: 700,
-          color,
-          padding: 'var(--space-xs) 0',
-          background: 'var(--bg-elevated)',
-          marginBottom: 'var(--space-sm)',
-        }}
-      >
-        {title}
-      </div>
+    <Panel className="record-panel" id={id} aria-label={title}>
+      <SectionHeader title={title} tone={tone} sub={loading || error ? undefined : `${logs.length}`} />
       {error ? (
-        <p role="alert" style={{ color: 'var(--crimson)', textAlign: 'center', margin: 0 }}>
+        <p role="alert" className="record-empty" style={{ color: 'var(--rust)' }}>
           {error}
         </p>
+      ) : loading ? (
+        <p className="record-empty">불러오는 중...</p>
       ) : logs.length === 0 ? (
-        <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>기록이 없습니다.</p>
+        <p className="record-empty">기록이 없습니다.</p>
       ) : (
-        <div style={{ fontSize: 'var(--text-sm)', lineHeight: 1.7 }}>
+        <div className="bc-log">
           {logs.map((entry) => (
-            <div
-              key={entry.id}
-              style={{ padding: 'var(--space-xs) 0', borderBottom: '1px solid var(--border-subtle)' }}
-              dangerouslySetInnerHTML={{ __html: formatLog(entry.text) }}
-            />
+            <div key={entry.id} className="bc-log__row"><LogText text={entry.text} /></div>
           ))}
         </div>
       )}
-    </GameCard>
+    </Panel>
   );
 }
 
@@ -345,100 +340,92 @@ export default function BattleCenterPage() {
 
   return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>감찰부</h1>
-
+      <PageHead title="감찰부" chip={nation?.name || undefined} />
       {loading ? (
-        <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+        <p className="text-muted">로딩 중...</p>
       ) : (
         <>
           {error && (
-            <div style={{ marginBottom: 'var(--space-md)' }}>
-              <p role="alert" style={{ color: 'var(--crimson)', margin: 0 }}>
+            <div className="record-bar">
+              <p role="alert" style={{ color: 'var(--rust)', margin: 0 }}>
                 {error}
               </p>
-              <button type="button" onClick={() => void loadGenerals()} style={{ marginTop: 'var(--space-sm)' }}>
+              <button type="button" className="os-button os-button--sm" onClick={() => void loadGenerals()}>
                 다시 시도
               </button>
             </div>
           )}
-
           {!error && orderedGenerals.length === 0 ? (
-            <div>
-              <p style={{ color: 'var(--text-muted)' }}>감찰할 장수가 없습니다.</p>
-              <button type="button" onClick={() => void loadGenerals()}>
+            <div className="record-bar">
+              <p className="text-muted" style={{ margin: 0 }}>감찰할 장수가 없습니다.</p>
+              <button type="button" className="os-button os-button--sm" onClick={() => void loadGenerals()}>
                 다시 시도
               </button>
             </div>
           ) : null}
-
           {orderedGenerals.length > 0 && (
-            <>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(70px, 1fr) minmax(120px, 4fr) minmax(180px, 6fr) minmax(70px, 1fr)',
-                  gap: 'var(--space-xs)',
-                  alignItems: 'stretch',
-                  marginBottom: 'var(--space-md)',
-                }}
-              >
-                <button type="button" onClick={() => changeTargetByOffset(-1)}>
-                  ◀ 이전
-                </button>
-                <label style={{ display: 'grid', gap: '2px', fontSize: 'var(--text-xs)' }}>
-                  정렬
-                  <select aria-label="정렬" value={sortKey} onChange={(e) => handleSortChange(e.target.value as SortKey)}>
-                    {Object.entries(SORTS).map(([key, config]) => (
-                      <option key={key} value={key}>
-                        {config.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label style={{ display: 'grid', gap: '2px', fontSize: 'var(--text-xs)' }}>
-                  대상 장수
-                  <select aria-label="대상 장수" value={targetId ?? ''} onChange={(e) => setTargetId(Number(e.target.value))}>
-                    {orderedGenerals.map((general) => (
-                      <option key={general.no} value={general.no}>
-                        {optionLabel(general, sortKey)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button type="button" onClick={() => changeTargetByOffset(1)}>
-                  다음 ▶
-                </button>
-              </div>
-
-              {targetGeneral && (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                    gap: 'var(--space-md)',
-                  }}
-                >
-                  <GameCard>
-                    <div
-                      style={{
-                        textAlign: 'center',
-                        color: 'skyblue',
-                        fontWeight: 700,
-                        padding: 'var(--space-xs) 0',
-                        background: 'var(--bg-elevated)',
-                        marginBottom: 'var(--space-sm)',
-                      }}
-                    >
-                      장수 정보
-                    </div>
+            <div className="bc-layout">
+              <div className="bc-main">
+                {targetGeneral && (
+                  <Panel className="record-panel">
+                    <SectionHeader title="장수 정보" tone="info" sub={targetGeneral.name ?? undefined} />
                     <GeneralBasicCard general={targetGeneral} nation={nation} />
-                  </GameCard>
-                  {LOG_SECTIONS.map(({ type, title, color }) => (
-                    <LogPanel key={type} title={title} color={color} logs={loadingLogs ? [] : logs[type]} error={logErrors[type]} />
-                  ))}
+                  </Panel>
+                )}
+                {targetGeneral && LOG_SECTIONS.map(({ type, title, tone }) => (
+                  <LogPanel
+                    key={type}
+                    id={`bc-${type}`}
+                    title={title}
+                    tone={tone}
+                    logs={loadingLogs ? [] : logs[type]}
+                    loading={loadingLogs}
+                    error={logErrors[type]}
+                  />
+                ))}
+              </div>
+              {/* 우측 레일 — 정렬 4종 · 대상 장수 · 이전/다음 · 기록 구획(앵커) */}
+              <aside className="bc-rail os-panel os-panel--static record-panel" aria-label="감찰 대상">
+                <SectionHeader title="감찰 대상" sub={`${orderedGenerals.length}명`} />
+                <div className="bc-rail__form">
+                  <label className="bc-rail__field">
+                    정렬
+                    <select aria-label="정렬" value={sortKey} onChange={(e) => handleSortChange(e.target.value as SortKey)}>
+                      {Object.entries(SORTS).map(([key, config]) => (
+                        <option key={key} value={key}>
+                          {config.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="bc-rail__field">
+                    대상 장수
+                    <select aria-label="대상 장수" value={targetId ?? ''} onChange={(e) => setTargetId(Number(e.target.value))}>
+                      {orderedGenerals.map((general) => (
+                        <option key={general.no} value={general.no}>
+                          {optionLabel(general, sortKey)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
-              )}
-            </>
+                <div className="bc-rail__nav">
+                  <button type="button" className="os-button os-button--sm os-button--ghost" onClick={() => changeTargetByOffset(-1)}>
+                    ◀ 이전
+                  </button>
+                  <button type="button" className="os-button os-button--sm os-button--ghost" onClick={() => changeTargetByOffset(1)}>
+                    다음 ▶
+                  </button>
+                </div>
+                <SectionHeader title="기록 구획" tone="rust" as="h4" />
+                {LOG_SECTIONS.map(({ type, title }) => (
+                  <a key={type} className="bc-rail__section" href={`#bc-${type}`}>
+                    <span>{title}</span>
+                    <span className="os-num">{loadingLogs ? '…' : logs[type].length}</span>
+                  </a>
+                ))}
+              </aside>
+            </div>
           )}
         </>
       )}

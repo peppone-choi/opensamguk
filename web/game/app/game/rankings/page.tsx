@@ -1,7 +1,8 @@
 'use client';
-
+// 기록 허브(12 아트보드) — 랭킹 하위 화면 7종으로 가는 타일. 라벨·상대 href 는 그대로(경로 서버 id 보존).
 import Shell from '../../../components/Shell';
-import GameCard from '../../../components/GameCard';
+import PageHead from '../../../components/PageHead';
+import RecordsTabs from '../../../components/records/RecordsTabs';
 
 const RANKING_PAGES = [
   { href: 'rankings/best-generals', label: '명장 순위', desc: '통솔·무력·지력 종합 평가', icon: '⚔️' },
@@ -16,48 +17,15 @@ const RANKING_PAGES = [
 export default function RankingsLobbyPage() {
   return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>
-        경기장 대갑실
-      </h1>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: 'var(--space-md)',
-        }}
-      >
+      <PageHead title="경기장 대갑실" tabs={<RecordsTabs />} />
+      <div className="records-hub">
         {RANKING_PAGES.map((p) => (
-          <a key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
-            <GameCard
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-md)',
-                cursor: 'pointer',
-              }}
-            >
-              <span style={{ fontSize: '2rem' }}>{p.icon}</span>
-              <div>
-                <div
-                  style={{
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {p.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--text-secondary)',
-                    marginTop: 'var(--space-xs)',
-                  }}
-                >
-                  {p.desc}
-                </div>
-              </div>
-            </GameCard>
+          <a key={p.href} href={p.href} className="os-panel os-panel--static records-hub__item">
+            <span className="records-hub__icon" aria-hidden="true">{p.icon}</span>
+            <span>
+              <span className="records-hub__label">{p.label}</span>
+              <span className="records-hub__desc" style={{ display: 'block' }}>{p.desc}</span>
+            </span>
           </a>
         ))}
       </div>

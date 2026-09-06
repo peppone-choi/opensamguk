@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../../components/Shell';
+import PageHead from '../../../../components/PageHead';
+import RecordsTabs from '../../../../components/records/RecordsTabs';
 import GameCard from '../../../../components/GameCard';
 import GeneralName from '../../../../components/game/GeneralName';
 import { api } from '../../../../lib/api';
@@ -88,7 +90,7 @@ export default function KingdomsPage() {
   if (loading)
     return (
       <Shell>
-        <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>세력 일람</h1>
+        <PageHead title="세력 일람" tabs={<RecordsTabs />} />
         <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
       </Shell>
     );
@@ -96,14 +98,14 @@ export default function KingdomsPage() {
   if (error || !data)
     return (
       <Shell>
-        <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>세력 일람</h1>
+        <PageHead title="세력 일람" tabs={<RecordsTabs />} />
         <p style={{ color: 'var(--crimson)' }}>{error || '데이터가 없습니다.'}</p>
       </Shell>
     );
 
   return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>세력 일람</h1>
+      <PageHead title="세력 일람" tabs={<RecordsTabs />} />
 
       {data.nations.map((n) => (
         <GameCard key={n.nationId}>

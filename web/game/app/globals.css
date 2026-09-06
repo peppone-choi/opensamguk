@@ -2261,3 +2261,129 @@ input:focus, select:focus, textarea:focus {
 .server-status__field { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; }
 .server-status__confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border: 1px dashed var(--rust); }
 .server-status__message { margin: 0; font-size: 12px; color: var(--info); }
+
+/* ===== Phase 4 웨이브 A — 정보·기록 화면 (05 천하 지도 · 06 도시 · 12 기록 · 감찰부 레일) ===== */
+.shell-main > .page-wide { max-width: none; }
+.page-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 44px; margin-bottom: 12px; }
+.page-head__title { font-family: var(--font-serif); font-size: 18px; font-weight: 900; margin: 0; color: var(--text); }
+.page-head__spacer { flex: 1; }
+.page-head__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+.records-tabs { flex-wrap: wrap; }
+.records-tabs > a { text-decoration: none; color: var(--text-2); }
+.records-tabs > a:hover { color: var(--text); text-decoration: none; }
+.records-tabs > a[aria-current='page'] { color: var(--bronze); background: rgba(211, 176, 100, 0.1); font-weight: 700; }
+.record-panel { display: flex; flex-direction: column; min-width: 0; }
+.record-panel > .os-section-header { padding: 0 12px; border-bottom: 1px solid var(--line); }
+.record-panel + .record-panel { margin-top: 14px; }
+.record-rows { display: flex; flex-direction: column; }
+.record-row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.record-row:last-child { border-bottom: 0; }
+.record-empty { padding: 16px 12px; font-size: 12px; color: var(--muted); text-align: center; margin: 0; }
+.record-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 14px; }
+.record-grid > .record-panel + .record-panel { margin-top: 0; }
+.record-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--line); background: var(--inset); font-size: 12px; margin-bottom: 14px; }
+.record-bar select { min-height: 30px; }
+.record-bar__label { color: var(--muted); }
+.record-bar__count { color: var(--muted); font-family: var(--font-mono); }
+
+/* 05 천하 지도 — 캔버스 1fr + 레일 360 */
+.map-page { display: grid; grid-template-columns: minmax(0, 1fr) 360px; border: 1px solid var(--line); background: var(--bg); }
+.map-page__stage { position: relative; min-width: 0; }
+.map-page__stage .map-viewer { border: 0; }
+.map-legend { position: absolute; right: 14px; bottom: 14px; z-index: 2; display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border: 1px solid var(--line); background: rgba(27, 32, 29, 0.9); font-size: 11px; color: var(--text-2); pointer-events: none; }
+.map-legend__row { display: flex; align-items: center; gap: 6px; }
+.map-legend__swatch { width: 14px; height: 8px; display: inline-block; flex: none; }
+.map-legend__glyph { width: 14px; text-align: center; flex: none; }
+.map-rail { border-left: 1px solid var(--line); background: var(--inset); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.map-rail__hint { margin: 0; padding: 8px 12px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.map-rail > .os-section-header { padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.map-rail__msg { margin: 0; padding: 10px 12px; font-size: 12px; color: var(--muted); }
+.map-rail__nations th, .map-rail__nations td { padding: 0 8px; }
+.map-rail__nations td { height: 36px; }
+.map-rail__nations .os-num-col { text-align: right; }
+.map-rail__nations tr.is-mine td { background: rgba(211, 176, 100, 0.06); }
+.map-rail__nation { display: inline-flex; align-items: center; gap: 6px; }
+.map-rail__city { border-bottom: 1px solid var(--line); }
+.map-rail__city .mcd { border: 0; margin: 0; }
+.map-rail__city-actions { display: flex; gap: 6px; padding: 8px 12px; }
+.map-troop { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.map-troop__meta { color: var(--muted); }
+.map-rail__feed { max-height: 360px; overflow-y: auto; }
+.map-rail__row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.45; color: var(--text-2); }
+@media (max-width: 900px) {
+  .map-page { grid-template-columns: 1fr; }
+  .map-rail { border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* 06 도시 — 히어로 + 좌 380 게이지 / 우 주둔 장수 표 */
+.city-hero { position: relative; display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 30%, var(--panel)); }
+.city-hero__name { font-family: var(--font-serif); font-size: 30px; font-weight: 900; line-height: 1.1; color: var(--text); }
+.city-hero__meta { font-family: var(--font-serif); font-size: 15px; color: var(--muted); margin-top: 4px; }
+.city-hero__chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.city-hero__stamp { margin-left: auto; font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.city-hero__facts { display: flex; gap: 16px; flex-wrap: wrap; width: 100%; font-size: 13px; color: var(--text-2); }
+.city-hero__facts b { color: var(--text); }
+.city-select { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.city-select select { min-height: 30px; min-width: 14rem; }
+.city-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 14px; align-items: start; }
+.city-grid__side { display: flex; flex-direction: column; min-width: 0; }
+.city-gauges { display: flex; flex-direction: column; gap: 11px; padding: 12px 14px; }
+.city-officers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 0 14px 12px; }
+.city-officers .os-inset { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.city-officers__k { font-size: 10px; color: var(--muted); }
+.city-officers__v { font-size: 13px; font-weight: 700; }
+.city-military { padding: 10px 14px 12px; margin: 0; }
+.city-military__names { font-family: inherit; white-space: normal; }
+.city-fog { padding: 24px 14px; text-align: center; color: var(--muted); font-size: 12px; }
+.city-generals .os-table { font-size: 11px; text-align: center; }
+.city-generals .os-table th, .city-generals .os-table td { padding: 0 6px; text-align: center; }
+.city-generals .os-table th:nth-child(2), .city-generals .os-table td:nth-child(2),
+.city-generals .os-table th:last-child, .city-generals .os-table td:last-child { text-align: left; }
+.city-generals .os-table td:first-child { width: 36px; }
+@media (max-width: 960px) { .city-grid { grid-template-columns: 1fr; } }
+
+/* 12 기록 — 편년체·허브·시상대 */
+.chron { background: linear-gradient(180deg, #1f2521, var(--panel)); }
+.chron__body { padding: 4px 20px 12px; }
+.chron__group { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.chron__group:last-child { border-bottom: 0; }
+.chron__when { display: flex; flex-direction: column; gap: 2px; }
+.chron__month { font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: var(--text-2); }
+.chron__group:first-child .chron__month { color: var(--bronze); }
+.chron__year { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+.chron__items { display: flex; flex-direction: column; gap: 8px; }
+.chron__item { font-size: 13px; line-height: 1.55; color: var(--text); text-wrap: pretty; }
+@media (max-width: 640px) { .chron__group { grid-template-columns: 1fr; gap: 6px; } }
+.records-hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.records-hub__item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-decoration: none; color: var(--text); }
+.records-hub__item:hover { border-color: var(--bronze-dim); text-decoration: none; color: var(--text); }
+.records-hub__icon { font-size: 22px; flex: none; }
+.records-hub__label { font-family: var(--font-serif); font-weight: 700; font-size: 15px; }
+.records-hub__desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 12px; }
+.podium__slot { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; border: 1px solid var(--line-2); }
+.podium__slot--first { border-color: var(--bronze-dim); background: linear-gradient(180deg, rgba(211, 176, 100, 0.14), transparent); }
+.podium__rank { font-family: var(--font-serif); font-size: 12px; font-weight: 700; color: var(--text-2); }
+.podium__slot--first .podium__rank, .podium__slot--first .podium__value { color: var(--bronze); }
+.podium__name { font-size: 13px; font-weight: 700; }
+.podium__value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; }
+.nation-list__cell { display: inline-flex; align-items: center; gap: 6px; }
+
+/* 감찰부 — 본문 1fr + 우측 레일 300(정렬 4종·대상 장수·기록 구획) */
+.bc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.bc-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; min-width: 0; }
+.bc-main > .record-panel + .record-panel { margin-top: 0; }
+.bc-rail { position: sticky; top: 0; display: flex; flex-direction: column; min-width: 0; }
+.bc-rail__form { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.bc-rail__field { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+.bc-rail__field select { min-height: 32px; }
+.bc-rail__nav { display: flex; gap: 6px; padding: 0 12px 10px; }
+.bc-rail__nav > button { flex: 1; }
+.bc-rail__section { display: flex; justify-content: space-between; align-items: center; min-height: 36px; padding: 0 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--text-2); text-decoration: none; }
+.bc-rail__section:hover { background: var(--raised); text-decoration: none; color: var(--text); }
+.bc-log { max-height: 420px; overflow-y: auto; }
+.bc-log__row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.6; color: var(--text-2); }
+@media (max-width: 900px) {
+  .bc-layout { grid-template-columns: 1fr; }
+  .bc-rail { order: -1; position: static; }
+}

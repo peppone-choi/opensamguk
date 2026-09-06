@@ -15,12 +15,12 @@
 // [first,last] range. Empty globalHistory/globalAction → empty section bodies. Never crashes.
 
 import { useEffect, useState, useCallback } from 'react';
+import { Button, Flag, LogText, Panel, SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
-import GameCard from '../../../components/GameCard';
+import PageHead from '../../../components/PageHead';
+import RecordsTabs from '../../../components/records/RecordsTabs';
 import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
-import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
-import { formatLog } from '../../../lib/utilGame';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { MapPreviewResponse } from '../../../lib/types';
 import type { HistoryRecord, HistoryResponse, SimpleNationObj } from '../../../types/game';
@@ -30,18 +30,6 @@ function parseYearMonth(yearMonth: number): [number, number] {
     return [(yearMonth / 12) | 0, (yearMonth % 12) + 1];
 }
 
-// legacy isBrightColor: perceived-luminance threshold (r*.299 + g*.587 + b*.114) > 140 → black text.
-// 출처: legacy/devsam-core/hwe/ts/util/isBrightColor.ts (canonical threshold > 140).
-function isBrightColor(hex?: string): boolean {
-    if (!hex) return false;
-    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-    if (!m) return false;
-    const v = parseInt(m[1], 16);
-    const r = (v >> 16) & 0xff;
-    const g = (v >> 8) & 0xff;
-    const b = v & 0xff;
-    return r * 0.299 + g * 0.587 + b * 0.114 > BRIGHT_COLOR_THRESHOLD;
-}
 
 // record.nations(jsonb 원형: 배열 또는 {key:obj} 맵) → SimpleNationObj 배열로 정규화(날조 없음, 통과만).
 function normalizeNations(
@@ -116,51 +104,36 @@ function archivedMapPreview(record: HistoryRecord, template: MapPreviewResponse 
     };
 }
 
-const sectionBarStyle: React.CSSProperties = {
-    textAlign: 'center',
-    border: '0.5px solid var(--border-medium)',
-    background: 'var(--bg-elevated)',
-    padding: 'var(--space-xs) var(--space-sm)',
-    fontWeight: 600,
-    fontSize: 'var(--text-sm)',
-    marginBottom: 'var(--space-sm)',
-    marginTop: 'var(--space-lg)',
-};
 
-const logRowStyle: React.CSSProperties = {
-    fontSize: 'var(--text-sm)',
-    lineHeight: 1.7,
-    padding: 'var(--space-xs) 0',
-    borderBottom: '1px solid var(--border-subtle)',
-};
 
 // ── SimpleNationList(legacy ts/components/SimpleNationList.vue) — 국가표(국명/국력/장수/속령) ────────
 function SimpleNationList({ nations }: { nations: SimpleNationObj[] }) {
     return (
-        <table className="simple-nation-list" style={{ width: '100%', fontSize: 'var(--text-sm)' }}>
-            <thead>
-                <tr style={{ background: 'var(--bg-elevated)' }}>
-                    <th style={{ width: '44%', textAlign: 'left' }}>국명</th>
-                    <th style={{ width: '23%', textAlign: 'right' }}>국력</th>
-                    <th style={{ width: '15%', textAlign: 'right' }}>장수</th>
-                    <th style={{ width: '15%', textAlign: 'right' }}>속령</th>
-                </tr>
-            </thead>
-            <tbody>
-                {nations.map((n) => (
-                    <tr key={n.nation}>
-                        <td style={{ textAlign: 'left' }}>
-                            <span style={{ color: isBrightColor(n.color) ? '#000' : '#fff', backgroundColor: n.color, padding: '0 4px' }}>
-                                {n.name}
-                            </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>{(n.power ?? 0).toLocaleString()}</td>
-                        <td style={{ textAlign: 'right' }}>{(n.gennum ?? 0).toLocaleString()}</td>
-                        <td style={{ textAlign: 'right' }} title={(n.cities ?? []).join(', ')}>{(n.cities ?? []).length}</td>
+        <div className="os-table-wrap">
+            <table className="simple-nation-list os-table os-table--nowrap">
+                <thead>
+                    <tr>
+                        <th scope="col" style={{ width: '44%' }}>국명</th>
+                        <th scope="col" style={{ width: '23%', textAlign: 'right' }}>국력</th>
+                        <th scope="col" style={{ width: '15%', textAlign: 'right' }}>장수</th>
+                        <th scope="col" style={{ width: '15%', textAlign: 'right' }}>속령</th>
                     </tr>
-                ))}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {nations.map((n) => (
+                        <tr key={n.nation}>
+                            <td>
+                                {/* 국가색은 깃발에만(ADR-LITE-049) — 밝기 판정 텍스트 배경은 깃발로 대체. */}
+                                <span className="nation-list__cell"><Flag color={n.color} />{n.name}</span>
+                            </td>
+                            <td className="os-num" style={{ textAlign: 'right' }}>{(n.power ?? 0).toLocaleString()}</td>
+                            <td className="os-num" style={{ textAlign: 'right' }}>{(n.gennum ?? 0).toLocaleString()}</td>
+                            <td className="os-num" style={{ textAlign: 'right' }} title={(n.cities ?? []).join(', ')}>{(n.cities ?? []).length}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
 }
 
@@ -250,25 +223,25 @@ export default function HistoryPage() {
     }
 
     const [selYear, selMonth] = parseYearMonth(selected);
+    const upper = current > last ? current : last;
+    const atFirst = selected <= first || first === 0;
+    const atLast = selected >= upper || last === 0;
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>연감</h1>
-
+            <PageHead title="연감" tabs={<RecordsTabs />} chip={`${selYear}年 ${selMonth}月`} />
             {/* ── 연월 선택 (year/month selector) ─────────────────────────────────── */}
-            <div
-                className="control-bar"
-                style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}
-            >
-                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>연월 선택:</span>
-                <button onClick={() => selectMonth(selected - 1)} disabled={selected <= first || first === 0}>
-                    ◀ 이전달
-                </button>
+            <div className="record-bar" role="group" aria-label="연월 선택">
+                <span className="record-bar__label">연월 선택:</span>
+                {atFirst
+                    ? <Button size="sm" variant="ghost" disabled reason="기록의 첫 달입니다">◀ 이전달</Button>
+                    : <Button size="sm" variant="ghost" onClick={() => selectMonth(selected - 1)}>◀ 이전달</Button>}
                 <select
                     value={selected}
                     onChange={(e) => selectMonth(Number(e.target.value))}
                     style={{ minWidth: '12rem' }}
                     disabled={options.length === 0}
+                    aria-label="연월"
                 >
                     {options.length === 0 ? (
                         <option value={selected}>{`${selYear}년 ${selMonth}월`}</option>
@@ -278,69 +251,66 @@ export default function HistoryPage() {
                         ))
                     )}
                 </select>
-                <button onClick={() => selectMonth(selected + 1)} disabled={selected >= (current > last ? current : last) || last === 0}>
-                    다음달 ▶
-                </button>
+                {atLast
+                    ? <Button size="sm" variant="ghost" disabled reason="가장 최근 달입니다">다음달 ▶</Button>
+                    : <Button size="sm" variant="ghost" onClick={() => selectMonth(selected + 1)}>다음달 ▶</Button>}
             </div>
 
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
-
+            {loading && <p className="text-muted">로딩 중...</p>}
+            {error && <p role="alert" style={{ color: 'var(--rust)' }}>{error}</p>}
             {!loading && !error && record === null && (
-                <GameCard>
-                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>기록이 없습니다.</p>
-                </GameCard>
+                <Panel className="record-panel">
+                    <p className="record-empty">기록이 없습니다.</p>
+                </Panel>
             )}
-
             {record !== null && (
                 <>
                     {/* ── 1) 지도 스냅샷(MapViewer) ─────────────────────────────────── */}
-                    <div style={sectionBarStyle}>세계 지도</div>
-                    <GameCard>
+                    <Panel className="record-panel">
+                        <SectionHeader title="세계 지도" sub={`${record.year}年 ${record.month}月`} />
                         {mapSnapshot == null ? (
-                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>지도 스냅샷을 렌더할 수 없습니다.</p>
+                            <p className="record-empty">지도 스냅샷을 렌더할 수 없습니다.</p>
                         ) : (
                             <MapViewer mapData={mapSnapshot} isDetailMap disallowClick />
                         )}
-                    </GameCard>
-
-                    {/* ── 2) 국가표(SimpleNationList) ───────────────────────────────── */}
-                    <div style={sectionBarStyle}>세력 일람</div>
-                    <GameCard>
-                        {nations.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>세력 정보가 없습니다.</p>
-                        ) : (
-                            <SimpleNationList nations={nations} />
-                        )}
-                    </GameCard>
-
-                    {/* ── 3) 중원 정세 (global_history) — formatLog 적용 ─────────────── */}
-                    <div style={sectionBarStyle}>중원 정세</div>
-                    <GameCard>
-                        {record.globalHistory.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>기록이 없습니다.</p>
-                        ) : (
-                            <div>
-                                {record.globalHistory.map((item, idx) => (
-                                    <div key={idx} style={logRowStyle} dangerouslySetInnerHTML={{ __html: formatLog(item) }} />
-                                ))}
-                            </div>
-                        )}
-                    </GameCard>
-
-                    {/* ── 4) 장수 동향 (global_action) — formatLog 적용 ──────────────── */}
-                    <div style={sectionBarStyle}>장수 동향</div>
-                    <GameCard>
-                        {record.globalAction.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>기록이 없습니다.</p>
-                        ) : (
-                            <div>
-                                {record.globalAction.map((item, idx) => (
-                                    <div key={idx} style={logRowStyle} dangerouslySetInnerHTML={{ __html: formatLog(item) }} />
-                                ))}
-                            </div>
-                        )}
-                    </GameCard>
+                    </Panel>
+                    <div className="record-grid">
+                        {/* ── 2) 국가표(SimpleNationList) ───────────────────────────────── */}
+                        <Panel className="record-panel">
+                            <SectionHeader title="세력 일람" sub={`${nations.length}국`} />
+                            {nations.length === 0 ? (
+                                <p className="record-empty">세력 정보가 없습니다.</p>
+                            ) : (
+                                <SimpleNationList nations={nations} />
+                            )}
+                        </Panel>
+                        {/* ── 3) 중원 정세 (global_history) — LogText(토큰→팔레트 span) ─────────────── */}
+                        <Panel className="record-panel">
+                            <SectionHeader title="중원 정세" tone="rust" sub={`${record.globalHistory.length}`} />
+                            {record.globalHistory.length === 0 ? (
+                                <p className="record-empty">기록이 없습니다.</p>
+                            ) : (
+                                <div className="record-rows">
+                                    {record.globalHistory.map((item, idx) => (
+                                        <div key={idx} className="record-row"><LogText text={item} /></div>
+                                    ))}
+                                </div>
+                            )}
+                        </Panel>
+                        {/* ── 4) 장수 동향 (global_action) — LogText(토큰→팔레트 span) ──────────────── */}
+                        <Panel className="record-panel">
+                            <SectionHeader title="장수 동향" tone="info" sub={`${record.globalAction.length}`} />
+                            {record.globalAction.length === 0 ? (
+                                <p className="record-empty">기록이 없습니다.</p>
+                            ) : (
+                                <div className="record-rows">
+                                    {record.globalAction.map((item, idx) => (
+                                        <div key={idx} className="record-row"><LogText text={item} /></div>
+                                    ))}
+                                </div>
+                            )}
+                        </Panel>
+                    </div>
                 </>
             )}
         </Shell>

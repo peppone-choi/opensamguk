@@ -115,6 +115,8 @@ export interface MapViewerProps {
     selectedServerRoute?: StrategicMapRoute | null;
     onStrategicBindingChange?: (binding: StrategicTopologyBinding | null) => void;
     onCitySelect?: (cityId: number) => void;
+    /** 선택 모드의 확장 콜백 — 클릭한 도시 오버레이(국가명·국가색 포함)를 통째로 받는다(05 천하 지도 레일). */
+    onCityPick?: (city: IsoCityOverlay) => void;
     onNavigate?: (href: string) => void;
 }
 
@@ -165,6 +167,7 @@ export default function MapViewer({
     selectedServerRoute,
     onStrategicBindingChange,
     onCitySelect,
+    onCityPick,
     onNavigate,
 }: MapViewerProps = {}) {
     const cityBaseHref = useServerGameUrl('city');
@@ -317,7 +320,7 @@ export default function MapViewer({
         })),
     }), [data?.commanderyControl, data?.jurisdictionOwnership, data?.provinceOccupancy, nationById]);
 
-    const selectionEnabled = onCitySelect != null;
+    const selectionEnabled = onCitySelect != null || onCityPick != null;
     const navigationEnabled = !selectionEnabled && !(disallowClick ?? mapData != null);
     // This cache key triggers a new fetch when the immutable base changes. The response's strong
     // ETag, never the requested hash, remains the byte identity checked by HanMapCanvas.
@@ -336,6 +339,7 @@ export default function MapViewer({
     const activateCity = useCallback((city: IsoCityOverlay, activation?: IsoActivation) => {
         if (selectionEnabled) {
             onCitySelect?.(city.id);
+            onCityPick?.(city);
             return;
         }
         if (!navigationEnabled) return;
@@ -347,7 +351,7 @@ export default function MapViewer({
         const href = `${cityBaseHref}?id=${encodeURIComponent(String(city.id))}`;
         if (onNavigate) onNavigate(href);
         else window.location.assign(href);
-    }, [cityBaseHref, navigationEnabled, onCitySelect, onNavigate, selectionEnabled, singleTap]);
+    }, [cityBaseHref, navigationEnabled, onCityPick, onCitySelect, onNavigate, selectionEnabled, singleTap]);
 
     const toggleCityNames = () => setHideCityNames((hidden) => {
         window.localStorage.setItem(LS_HIDE_CITYNAME, hidden ? 'no' : 'yes');
