@@ -55,6 +55,21 @@ class RetainerIntakeTest {
         recorder.generalPatches().first { it.id == generalId }.columns.keys
 
     @Test
+    fun `npc generals are denied at the pre-gate for every retinue command`() {
+        // PR 비평 S6 — F2 전환기의 `?generalId=` 신뢰 구멍으로 NPC crew/rice 가 부곡으로 새는 것을 엔진이 막는다.
+        val world = world(general().copy(npcState = 2)); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
+        val pledge = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "lieutenant", role = "GUARD")) as RetainerActionResult
+        assertEquals(RetainerRules.REASON_NPC, pledge.reason)
+        val form = h.handleBugokForm(TurnDaemonCommand.BugokForm(generalId = 10, troops = 100, rice = 0)) as RetainerActionResult
+        assertEquals(RetainerRules.REASON_NPC, form.reason)
+        assertEquals(1000, world.getGeneralById(10)!!.crew, "NPC 의 병력은 움직이지 않는다")
+        assertTrue(recorder.generalPatches().isEmpty())
+        // npcState 1(플레이어 NPC 빙의 등)은 막지 않는다 — 임계는 2.
+        val human = world(general().copy(npcState = 1)); val h2 = RetainerHandler(human, ChangeRecorder())
+        assertTrue((h2.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "홍길동", relation = "lieutenant", role = "GUARD")) as RetainerActionResult).ok)
+    }
+
+    @Test
     fun `pledge deducts gold through the recorder patch and creates a RECRUITED retainer with an allocated id`() {
         val world = world(); val recorder = ChangeRecorder(); val h = RetainerHandler(world, recorder)
         val res = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = " 홍길동 ", relation = "lieutenant", role = "GUARD")) as RetainerActionResult

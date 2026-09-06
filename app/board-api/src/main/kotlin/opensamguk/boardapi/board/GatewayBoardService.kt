@@ -103,7 +103,7 @@ class GatewayBoardService(
         val saved = reportRepository.save(
             GatewayBoardReportEntity(postId = postId, commentId = null, reporterAccountId = principal.id, reason = request.reason.trim()),
         )
-        return reportResponse(saved, mapOf(principal.id to AuthorView(principal.nickname, null, 0, null, null)))
+        return reportResponse(saved, mapOf(principal.id to AuthorView(principal.nickname, null, 0, null, null)), targetSummariesOf(listOf(saved)))
     }
 
     @Transactional
@@ -116,7 +116,7 @@ class GatewayBoardService(
         val saved = reportRepository.save(
             GatewayBoardReportEntity(postId = null, commentId = commentId, reporterAccountId = principal.id, reason = request.reason.trim()),
         )
-        return reportResponse(saved, mapOf(principal.id to AuthorView(principal.nickname, null, 0, null, null)))
+        return reportResponse(saved, mapOf(principal.id to AuthorView(principal.nickname, null, 0, null, null)), targetSummariesOf(listOf(saved)))
     }
 
     /** 신고 목록 — 관리자만. status 없으면 전부(최신순). */
@@ -129,7 +129,8 @@ class GatewayBoardService(
         val rows = status?.let { reportRepository.findByStatusOrderByCreatedAtDescIdDesc(it, pageable) }
             ?: reportRepository.findAllByOrderByCreatedAtDescIdDesc(pageable)
         val reporters = authorsOf(rows.content.map { it.reporterAccountId })
-        return rows.content.map { reportResponse(it, reporters) }
+        val summaries = targetSummariesOf(rows.content)
+        return rows.content.map { reportResponse(it, reporters, summaries) }
     }
 
     @Transactional
@@ -142,14 +143,26 @@ class GatewayBoardService(
         report.handledByAccountId = principal.id
         report.handledAt = Instant.now()
         val saved = reportRepository.save(report)
-        return reportResponse(saved, authorsOf(listOf(saved.reporterAccountId)))
+        return reportResponse(saved, authorsOf(listOf(saved.reporterAccountId)), targetSummariesOf(listOf(saved)))
     }
 
     fun openReportCount(): Long = reportRepository.countByStatus(GatewayBoardReportStatus.OPEN)
 
-    private fun reportResponse(report: GatewayBoardReportEntity, reporters: Map<Long, AuthorView>): GatewayBoardReportResponse {
-        val summary = report.postId?.let { id -> postRepository.findById(id).orElse(null)?.title }
-            ?: report.commentId?.let { id -> commentRepository.findById(id).orElse(null)?.contentText?.take(80) }
+    /** 신고 대상 요약(글 제목 / 댓글 80자) — 한 페이지를 글·댓글 각 한 번의 `findAllById` 로 끌어온다(PR 비평 S8, N+1 제거). 키 = 신고 id. */
+    private fun targetSummariesOf(reports: Collection<GatewayBoardReportEntity>): Map<Long, String?> {
+        if (reports.isEmpty()) return emptyMap()
+        val posts = postRepository.findAllById(reports.mapNotNull { it.postId }.distinct()).associateBy { requireNotNull(it.id) }
+        val comments = commentRepository.findAllById(reports.mapNotNull { it.commentId }.distinct()).associateBy { requireNotNull(it.id) }
+        return reports.associate { report ->
+            requireNotNull(report.id) to (
+                report.postId?.let { posts[it]?.title }
+                    ?: report.commentId?.let { comments[it]?.contentText?.take(80) }
+                )
+        }
+    }
+
+    private fun reportResponse(report: GatewayBoardReportEntity, reporters: Map<Long, AuthorView>, summaries: Map<Long, String?>): GatewayBoardReportResponse {
+        val summary = summaries[requireNotNull(report.id)]
         return GatewayBoardReportResponse(
             id = requireNotNull(report.id),
             postId = report.postId,

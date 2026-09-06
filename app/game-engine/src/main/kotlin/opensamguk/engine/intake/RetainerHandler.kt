@@ -35,6 +35,8 @@ class RetainerHandler(
         if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(generalId)) {
             return null to fail(type, generalId, "접속 제한입니다.")
         }
+        // ②′ NPC 가드(PR 비평 S6): F2 전환기의 `?generalId=` 신뢰 구멍으로 NPC 의 crew/rice 가 부곡으로 옮겨지는 것을 엔진에서 막는다.
+        if (me.npcState >= 2) return null to fail(type, generalId, RetainerRules.REASON_NPC)
         return me to null
     }
 

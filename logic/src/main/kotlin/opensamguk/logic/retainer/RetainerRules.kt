@@ -62,6 +62,8 @@ object RetainerRules {
     const val RELEASE_MASTER_ONLY = "MASTER_ONLY"
 
     const val REASON_INPUT = "올바르지 않은 입력입니다."
+    /** NPC(npcState >= 2)는 휘하를 두지 않는다 — 결정성(인테이크만, PR 비평 S6). */
+    const val REASON_NPC = "NPC 장수는 휘하를 둘 수 없습니다."
     const val REASON_RETAINERS_FULL = "가신이 가득 찼습니다."
     const val REASON_DUP_NAME = "같은 이름의 휘하가 있습니다."
     const val REASON_NO_GOLD = "자금이 부족합니다."
