@@ -36,7 +36,7 @@ describe('compact map tooltip metadata', () => {
     })).toBe('위');
   });
 
-  it('keeps all conflicting owners in one compact row', () => {
+  it('shows only the active layer owner when ownership levels conflict', () => {
     expect(formatCompactMapTooltipMeta({
       hierarchyPath: '낙양 → 낙양현 → 하남윤',
       displayedOwnerName: '한',
@@ -44,7 +44,7 @@ describe('compact map tooltip metadata', () => {
       provinceOccupantNationName: '위',
       jurisdictionOwnerNationName: '한',
       commanderyControllerNationName: '조',
-    })).toBe('공간: 위 / 현: 한 / 군국: 조');
+    })).toBe('한');
   });
 
   it('preserves an explicit unowned active layer', () => {

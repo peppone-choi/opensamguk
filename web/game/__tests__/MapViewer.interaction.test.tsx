@@ -100,7 +100,7 @@ describe('MapViewer shared canvas overlays', () => {
     expect(screen.getByRole('status')).toHaveTextContent('위');
   });
 
-  it('투영 소유권을 전달하고 툴팁은 소유자 정보만 한 줄로 표시한다', () => {
+  it('투영 소유권을 전달하고 툴팁은 활성 레이어 소유자만 표시한다', () => {
     render(<MapViewer mapData={{
       ...MAP,
       provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1 }],
@@ -116,12 +116,7 @@ describe('MapViewer shared canvas overlays', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
     expect(document.querySelectorAll('.map-tooltip-meta')).toHaveLength(1);
-    expect(document.querySelector('.map-tooltip-meta')).toHaveTextContent('공간: 위 / 현: 위 / 군국: 한');
-    expect(document.querySelector('.map-tooltip-meta')).not.toHaveTextContent('→');
-    expect(screen.getByRole('status')).not.toHaveTextContent('공간 점유:');
-    expect(screen.getByRole('status')).not.toHaveTextContent('현 소유:');
-    expect(screen.getByRole('status')).not.toHaveTextContent('군국 통제:');
-    expect(screen.getByRole('status')).not.toHaveTextContent('다릅니다.');
+    expect(document.querySelector('.map-tooltip-meta')).toHaveTextContent(/^위$/);
   });
 
   it.each([

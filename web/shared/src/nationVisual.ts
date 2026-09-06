@@ -28,18 +28,6 @@ export interface CompactMapTooltipMetaInput {
 
 export function formatCompactMapTooltipMeta({
   displayedOwnerName,
-  ownershipMismatch = false,
-  provinceOccupantNationName,
-  jurisdictionOwnerNationName,
-  commanderyControllerNationName,
 }: CompactMapTooltipMetaInput): string | undefined {
-  const conflictingOwners = [
-    provinceOccupantNationName && `공간: ${provinceOccupantNationName}`,
-    jurisdictionOwnerNationName && `현: ${jurisdictionOwnerNationName}`,
-    commanderyControllerNationName && `군국: ${commanderyControllerNationName}`,
-  ].filter((part): part is string => Boolean(part));
-  const ownerSummary = ownershipMismatch && conflictingOwners.length > 0
-    ? conflictingOwners.join(' / ')
-    : displayedOwnerName;
-  return ownerSummary?.trim() || undefined;
+  return displayedOwnerName?.trim() || undefined;
 }
