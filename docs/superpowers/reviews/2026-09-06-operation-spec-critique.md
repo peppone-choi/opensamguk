@@ -1,3 +1,93 @@
+# 작전(Operation) 수직 절편(Phase 4X-B) 스펙 교차 비평 — 통합본 (v3 판정)
+
+- Date: 2026-09-06 (v1 비평 → v2 재판정 → v3 통합 재판정, 같은 날)
+- Target: `docs/superpowers/specs/2026-09-06-operation-vertical-slice.md` (**v3**, REVISED)
+- Inherits: `docs/superpowers/specs/2026-09-06-retinue-buqu-vertical-slice.md` **v3.1** — 그 비평 파일(`2026-09-06-retinue-spec-critique.md:1-6`)은 이제 **v3 판정 `cleared`**(should-fix P1·P2 비차단)을 싣고 있고, 4X-A 는 이 워크트리에 **구현돼 있다**(uncommitted: `V55__general_retainers_and_bugok.sql`, `InMemoryTurnWorld` 가신·부곡 map + `pruneRetinueOf`, `RetainerHandler`, `RetainerMonthlyService`, `JdbcFlushExecutor` 8g, `DatabaseHooks`/`TurnRunService`/`WorldSnapshotLoader` meta 키). 아래 판정은 스펙 문장을 그 **실제 코드**에 대조한 것이다.
+- Plan: `docs/superpowers/plans/2026-09-06-ui-redesign-implementation-plan.md` §Phase 4X-B, 티켓 표 `:53`
+- Verdict: **fix-required 2건** — v2 의 fix-required N1·N2 는 코드 대조상 **cleared**(N1 은 옵션 2 = 4X-A 무수정 + `board_post.operation_id` DEFERRABLE; 8g 가 실제로 8f 뒤 `JdbcFlushExecutor.kt:264-273` 에 있고 그 뒤에 빈 자리(8h)가 있다). should-fix N3·N5·N6·N7·N8·N9 와 Q7 도 닫혔다. 남는 두 건은 v3 가 새로 쓴 문장 안에서 생겼다: **P1** — `deadlineFor` 의 산식(`GameDate(year, month, 1)` + N개월 = 이번 달 상순 기준 **내림**)과 같은 행·§0 F4·§5 의 말(「다음 상순으로 정규화」·「올림 = 최대 +2순」)이 서로 반대라 하순 선언 1개월 작전이 **다음 틱에 실패(사기 −5)** 하는 규칙과 4순짜리 규칙 중 어느 쪽인지 스펙이 정하지 못했다(N4 는 그래서 fix-required 로 승격). **P2** — 같은 틱 「선언 → 글 연결 → 그 국가 멸망·해산」 에서 `removeNation` 이 생성된 작전을 가지치기해 INSERT 되지 않는데 recorder 의 `boardPostInserts` 는 국가 단위 프룬이 없어(`ChangeRecorder.kt:1191-1232`, 같은 구멍의 선례 주석 `DatabaseHooks.kt:677-681`) 8d 가 `operation_id = X` 를 넣고 DEFERRABLE FK 가 **COMMIT 시점에** 터져 틱 flush 가 영구 재시도 실패한다(v2 N1 과 같은 부류; 세 경로 모두 도달 가능). 둘 다 스펙 문장 몇 줄로 닫힌다. 근거는 전부 이 워크트리에서 직접 연 파일:줄이다(gradle 실행·`.env*` 열람 없음).
+
+---
+
+## 0. v3 판정표 (v2 항목별)
+
+| 항목 | 판정 | 근거(코드) |
+|---|---|---|
+| **N1** 4X-A 8g 뒤(8h) + `board_post.operation_id` DEFERRABLE | **cleared** (잔여 → P2) | (a) 실행기 순서 실측: 3 createMany `:127-135` → 5 general DELETE `:149-152` → 6 nation cascade `:158-161` → 7 UPDATE `:163` → 8d board_post INSERT `:212-224` → 8e vote `:226-243` → 8c mailbox `:245-252` → 8f 서신 `:254-262` → **8g 가신·부곡 `:264-273`**(`retainerDeleteMany → Create → Update → bugokDeleteMany → Create → Update` `:268-273`) → event `:275-280` → 9 log `:282`. 8g 와 event 사이(`:273-275`)가 비어 있어 「8g 뒤」 = 8h 는 성립한다. (b) 같은 틱 `bugokForm → operationJoin(bugokId)`: `bugokForm` 은 `world.allocateBugokId()` `RetainerHandler.kt:111` → `createBugok` `InMemoryTurnWorld.kt:299-305` 로 id 를 즉시 갖고, 인테이크는 한 틱에 클레임한 봉투를 한 번에 디스패치(`TurnRunService.kt:300-301`)한 뒤 단일 flush(`:415`)한다. flush 에서 `general_bugok` INSERT(8g `:272`)가 8h 의 `operation_unit` INSERT 보다 앞 → `bugok_id` FK 만족. (c) 단일 트랜잭션: `flush()` 전체가 `transactionTemplate.execute { … }` `JdbcFlushExecutor.kt:59` 한 블록이고(빈 `DaemonLoopConfig.kt:127` `TransactionTemplate(transactionManager)`, 실행기 안에 `propagation`/`REQUIRES_NEW` 0건 — grep 실측; v2 원장도 「같은 transactionTemplate」 `:2764`), 커밋은 `execute` 반환 시점 → 지연 FK 검사는 그 커밋에서 돌고 실패는 `flushWithGeneration` 의 같은 catch(`TurnRunService.kt:453,463-467`) 로 간다 — 지연 검사가 **의미 있다**. (d) PG16 DDL: `REFERENCES … ON DELETE SET NULL (col)`(PG15+, 선례 `V55:54`)과 `DEFERRABLE INITIALLY DEFERRED`(선례 `V32:316-340`, 테스트 `V32WorldScopeCompletionMigrationTest.kt:505-512`)는 CREATE TABLE 문법상 같은 FK 절에 나란히 올 수 있는 독립 옵션이다(`… ON DELETE referential_action … [DEFERRABLE] [INITIALLY DEFERRED]`). 의미도 스펙이 원하는 그대로다: 지연되는 것은 **검사**뿐이고 참조 동작(SET NULL)은 즉시 실행된다 — 6단계 nation cascade 가 operation 을 지우면 `board_post.operation_id` 는 그 자리에서 NULL. 저장소에 **두 옵션의 결합 선례는 없다** → `OperationFlushIT` 의 V56 DDL 케이스가 핀한다(`assertForeignKey` 는 `pg_get_constraintdef` 정규화 문자열 비교 `:538-541,571-574`; 기대 문자열은 `FOREIGN KEY (world_id, operation_id) REFERENCES operation(world_id, id) ON DELETE SET NULL (operation_id) DEFERRABLE INITIALLY DEFERRED` 순서). (e) `operation_unit` 이 참조하는 다른 부모는 전부 8h 앞에서 끝난다: general(3 INSERT / 5 DELETE), operation(같은 8h 안 CREATE 먼저), bugok(8g). 잔여: 생성된 작전이 같은 틱에 가지치기되면 8d 의 `operation_id` 가 허공을 가리킨다 — **P2**. |
+| **N2** 공백지 강제 보급 → cut_supply 는 적국만 + `target_gone` | **cleared** (설계 메모 → Q8) | `isSupplied(c) = if (c.nationId == 0) true …` `UpdateCitySupply.kt:222`. §4 게이트 5 가 kind 별로 갈라졌고(`cut_supply` 는 `nationId ∉ {0, me}` 「적국 도시가 아닙니다.」), §2 `closed_reason` CHECK 에 `target_gone`, §5 「목표 소멸」 규칙(cut_supply 만 closed, capture_city 는 계속)이 적혔다. 메모: 같은 L5 안에서 고립 도시가 trust<30 이면 곧바로 공백화된다(`:266` lostCities → 4b `:287-298` `nationId = 0`) — 그 달 L10 은 `objective`(`nationId ∉ {0, me}`) 가 아니라 `target_gone` 을 본다. 규칙대로 동작하지만 「차단이 너무 잘 돼서 종료」 가 achieved 가 아닌 closed 로 남는다(Q8, 판단은 저자). |
+| **N3** `supplied` = 목표 인접 아군 보급 도시 | **cleared** (API 이름·입력 → P5) | `CalcCityDistance` 는 `path` 인접(도시 그래프, `CalcCityDistance.kt:8`)의 순수 BFS 이고 세 진입점이 있다: `calcCityDistance(from, to, blocked?, cityConst): Int?` `:31`, `searchDistance` `:87`, **`nearCity(from, radius, cityConst): Set<Int>`** `:174`(radius=1 = 직접 이웃, 선례 `CheIdong.kt:45`·`CrInguIdong.kt:117`). 「거리 1」 은 `nearCity(targetCityId, 1, variant)` 가 정확한 표현이며 variant 는 L10 훅이 이미 쓰는 `ActiveWorldMap.requireVariant(state.config, state.meta)`(`MonthlyPostUpdateHook.kt:202`; `CityConstRegistry.of` `:434-445`, han 등록 `:61`)로 푼다. L5 타이밍과의 정합: L5 `MonthlyPipeline.kt:109`(옛 날짜·**현재 세계 상태**) → L7 `:115` → L10 `:126` 이므로 이번 틱 드레인에서 옮긴 unit 의 이웃 도시 `supplyState` 는 L5 가 이미 이번 틱 소유 기준으로 갱신한 값이다(§5 「한 달 지연」 은 L10 안 소유 변화에만 해당 — 맞음). han 에서는 인접(`path`)과 보급 집합(`evaluateSupplyReachability` `UpdateCitySupply.kt:215-219`, 공간 그래프)의 원천이 다르다 → Q4 안에 남긴다. |
+| **N4** `deadlineFor`·`remainingMonths` 산식 | **fix-required → P1** (+ should-fix P3) | 산식 `GameDate(year, month, 1) + months`(§0 N4 `:37`, §5 `:141`)는 선언 달의 **상순으로 내린 뒤** N개월 — 하순 선언 + 1개월 = **다음 순**(N×3 − 2 순). 같은 행의 「중·하순이면 다음 상순 기준으로 **올림** = 최대 **+2순**」 과 §0 F4 `:17` 「다음 상순(phase 1) 으로 정규화」 는 반대 방향(v2 N4 가 권한 `advance(declaredAt, N×3)` 뒤 올림 = N×3 + 1~2 순)이다. `ServerClock.advance :82-88`·`dateFromAbsoluteTurn :126-132` 는 어느 쪽이든 계산해 주지만 스펙이 고르지 않았다. `remainingMonths = (abs(d) − abs(n) + 2) / 3` 은 d ≥ n 에서 올림으로 맞다(하순·중순·상순 1~3순 전 → 1). 단 `d == n`(→ 0) 은 진행 중 작전에서 관측될 수 없고 종료 작전은 음수가 된다 → P3. |
+| **N5** leave 국가 검사 없음 · join 게이트 4 같은 국가만 | **cleared** | §4 `:118-119`. `operationLeave` 게이트 1 「작전 없음(국가 검사 없음)」 + 게이트 2 「미참여」 = 내 unit 이면 타국 작전에서도 나온다; `operationJoin` 게이트 4 「**내 국가의** 다른 진행 작전」. S11 정산 프룬(§5 `:128`)이 남은 것을 지운다. `UNIQUE (world_id, operation_id, general_id)` 는 작전당 1회만 막으므로 옛 국가 unit 과 새 국가 unit 이 한 순 공존해도 DB 충돌 없음. |
+| **N6** `boardArticle.operationId` 접점 열거 | **cleared** | 열거한 9곳 전부 실재·자리 맞음: 와이어 `TurnDaemonCommand.kt:109-123`(`voteId :120` 옆) · 매퍼 `CommandWireMapper.kt:322-330`(`args.int("voteId") :329`; allowlist `:81-83`) · 순수 게이트 `BoardActions.addArticle :47-64`(`:64` 「`kind == vote` 아니면 voteId 버림」 선례 → operationId 대칭) · 핸들러 `BoardHandler.handleArticle :35-62`(권한 `:42`, `recordBoardPostInsert` 열 맵 `:47-57`, `"vote_id" :56`) — 「내 국가 작전 존재 검사」 를 여기 두는 것이 맞다(`BoardActions` 는 world 없음 `:3-7`) · 실행기 `boardPostInsertMany :1781-1806` **명시 열 목록**(`:1795`, `:1800-1803`) · 읽기 `BoardReadRepository.kt:44-50` · `F4Dto.BoardArticle :686` · FE `board/page.tsx:221`(`voteIdDraft`). 디스패처 불변. |
+| **N7** id 미러 5곳 · 값 > 0 일 때만 | **cleared** | 4X-A 구현이 정확히 그 5곳이다: ① `DatabaseHooks.toFlushPayload :654-656`(`?.let { put(…) }`) ② `TurnRunService.runTick :406-407` + `currentWorldStateUpdate :586-587`(둘 다 `?.let`) ③ 실행기 `extraMeta` `JdbcFlushExecutor.kt:527-537`(키 있을 때만 `|| jsonb_build_object(…)`)를 CAS `:559-563`·비CAS `:580-584` 양쪽 SQL 에 붙임 ④ 로더 `snapshotKeys` `WorldSnapshotLoader.kt:76-93`(`maxRetainerId/maxBugokId :89-90`) ⑤ 시드 `InMemoryTurnWorld.kt:166-167` + init 즉시 record `:185-186` + `recordMax*` 의 `> 0` 가드 `:337-343`. 스펙 「`maxOperationId`/`maxOperationUnitId` 도 같은 5곳」 이 그대로 복제 가능. |
+| **N8** 시뮬 = capture_city 만 | **cleared** | §8 `:160`·§10 `:171`. 메모: `UpdateCitySupply` leaf 는 `worldContextFactory` 가 있을 때만 이벤트로 돈다(`TurnRunService.kt:353-359`) — che 2도시 fixture 에서 leaf 미배선이면 `supplied` 이정표는 fixture 가 시드한 `supplyState` 값을 읽는다. 시뮬이 단언하는 것은 `achieved`/`failed` 라 결론엔 영향 없음(적어 두면 좋다). |
+| **N9** 소소 5건 | **cleared** (문구 → P4) | (a) UPDATE 채널이 이번 틱 생성 id 제외 — `DatabaseHooks.kt:689,696,700` 선례와 동일. (b) v2 가 물은 것은 **`removeGeneral` 가지치기**가 DELETE 를 내지 않는다는 명문화였는데 §0 N9 `:42` 는 「unit 정리는 DELETE 를 기록한다(정산 전 flush 된 행이므로)」 라 S11 정산 프룬을 답한 것처럼 읽힌다. §3 `:108` 「map·집합에서 제거」 는 4X-A `pruneRetinueOf`(`InMemoryTurnWorld.kt:328-335`: map + dirty/created/**deleted** 네 집합, DELETE 기록 없음, DB CASCADE)와 같은 뜻이므로 규칙 자체는 맞다 — 두 문장을 구분해 적어라(P4). (c) 재야 응답 `rules` `:145` ✓. (d) 「다음 자유 번호」 `:167` ✓. (e) `myPermission` ±1 주석 `:145` ✓ — reader `checkSecretLimit = true` `SecretPermissionReader.kt:41-48`, 엔진 기본 false `SecretPermission.kt:44`, belong 분기 `:89-94`. |
+| **Q7** 4X-A 판정 의존 | **해소** | 4X-A 비평 `retinue-spec-critique.md:6` 「Verdict: **cleared**」, 스펙 v3.1 `retinue-buqu-vertical-slice.md:4` 「v3 재판정 `cleared`(P1·P2 반영)」, 구현 존재(위 N1·N7 행). N1 은 옵션 2 로 닫혀 4X-A 변경 0. |
+| **Q4** han `cut_supply` | **UNKNOWN 유지(범위 명시)** | v2 대로 열 의미는 같다. v3 N3 로 새로 생긴 축: `supplied` 의 인접 판정은 도시 그래프 `path`(`CalcCityDistance`)이고 han 의 `supplyState` 는 공간 그래프(`spatialSupplyNetwork`)라 **두 그래프가 다르다** — han fixture 가 없어 「인접 아군 도시가 보급됨」 이 han 에서 어떤 도시 집합인지 실측하지 않았다. §10 문장에 이 한 줄을 더하라. |
+
+---
+
+## 1. 신규 fix-required (v3 에서 생긴 것만)
+
+### P1. `deadlineFor` 의 산식과 말이 반대다 — 하순 선언 1개월 작전이 「다음 틱 실패(사기 −5)」 인지 「4순 뒤」 인지 스펙이 정하지 못했다
+
+- 스펙: §0 F4 `:17` 「`deadline = 선언 순 + N개월` 을 **다음 상순(phase 1)** 으로 정규화」; §0 N4 `:37` 「`deadlineFor(declaredAt, months)` = `GameDate(year, month, 1)` 을 months 개월 더한 뒤 phase 1 로(… 중·하순이면 **다음 상순 기준으로 올림 = 최대 +2순**)」; §5 `:141` 「선언 (year, month, 1) 에 months 개월을 더하고 선언이 중·하순이면 다음 상순 기준(최대 +2순)」.
+- 산식대로면: (Y,3,하순) + 1개월 = `GameDate(Y,3,1)` + 3순 = (Y,4,상순) = **1순 뒤**. (Y,3,중순) → 2순 뒤. 즉 **내림**(N×3 − 0~2 순)이다. 말대로면(「다음 상순으로 올림」·「+2순」·v2 N4 의 `advance(declaredAt, N×3)` 뒤 올림): (Y,3,하순) + 1개월 = (Y,4,하순) → (Y,5,상순) = **4순 뒤**(N×3 + 1~2 순). 같은 입력에 3순 차이가 나고, 12月 하순이면 (Y+1,1,상순) 대 (Y+1,2,상순) — 연 경계 넘김은 `ServerClock.advance :82-88`/`dateFromAbsoluteTurn :126-132` 가 어느 쪽이든 처리하지만 스펙이 고르지 않았다.
+- 결과(산식 쪽을 따를 때): `MIN_DEADLINE_MONTHS = 1` 로 하순에 선언하면 다음 틱이 상순이라 L10 이 곧바로 `absoluteTurn(now) >= absoluteTurn(deadline)` → `failed` + 그 틱에 참여한 장수 전원 `atmos −5`. 같은 틱에 참여·이동·점령이 다 끝나지 않는 한 **달성 불가한 선언**이 게이트를 통과한다 — v2 N2 와 같은 부류(§1.2 위반). §8 `OperationRulesTest` 의 「`deadlineFor` 6행」 은 구현자가 고른 쪽을 그대로 핀해 버린다.
+- 고침: 한 줄로 고르고 F4·N4·§5 세 곳을 같은 문장으로 맞춰라. 권장(말 쪽): `deadlineFor(d, N) = dateFromAbsoluteTurn(absoluteTurn(GameDate(d.year, d.month, 1)) + (N + (if (d.phase > 1) 1 else 0)) × 3)` — 상순 선언은 정확히 N개월, 중·하순 선언은 다음 달 상순 기준 N개월(= 올림, +1~2순). 표 6행은 상·중·하순 × (3月, 12月) 로 두고 연 경계 행을 반드시 넣어라. 산식 쪽을 택한다면 「올림」·「+2순」·「다음 상순」 문구를 지우고 `MIN_DEADLINE_MONTHS` 가 하순 선언에서 1순이 됨을 §2 잠정 상수 표에 적어라.
+
+### P2. 같은 틱 「선언 → 글 연결 → 그 국가 소멸」 이 `board_post.operation_id` 를 허공에 남긴다 — DEFERRABLE 이라 COMMIT 에서 터지고 틱 flush 가 영구 재시도 실패한다
+
+- 스펙: §3 `:108` 「`removeNation` 이 그 국가의 작전(+ unit)을 map·집합에서 제거」(= 이번 틱 생성 작전은 INSERT 되지 않는다), §4 `:122` 「같은 틱에 선언한 작전도 [글에] 허용 — flush 순서가 보장」, §2 `:89` `board_post.operation_id … DEFERRABLE INITIALLY DEFERRED`.
+- 코드: 글은 recorder 의 `boardPostInserts`(`ChangeRecorder.kt:206`, `recordBoardPostInsert :817-818`, 페이로드 `DatabaseHooks.kt:732`)에 열 맵으로 쌓이고 **국가 단위 프룬이 없다** — `markNationDeleted :1191-1232` 는 도시 패치·`nationPatches`·툼스톤·`world.removeNation` 만 하고(`:1230-1232`), `InMemoryTurnWorld.removeNation :610-631` 은 diplomacy·`createdNationTurns` 만 지운다. 같은 구멍이 외교 채널에서 이미 한 번 터져 `DatabaseHooks.kt:677-681` 이 「recorder 채널에는 nation 단위 prune 이 없으므로 … 여기서 거른다」 고 적어 두었다. `board_post.nation_id` 에는 FK 가 없어(`V1__baseline.sql:352-363`; V32 는 `world_id` FK 만 `:296`) 오늘은 멸망한 국가의 글도 INSERT 가 통과한다 — 새 FK 가 이 경로를 처음으로 실패로 바꾼다.
+- 도달 경로(전부 인테이크 `TurnRunService.kt:300-301` 뒤·flush `:415` 앞, 한 트랜잭션): ① 드레인 `che_해산` → `markNationDeleted`(`ReservedTurnHandler.kt:452-459`) ② 드레인 마지막 도시 점령 → `conquer.deletedNationId`(`:732`) ③ L10 방랑군 자동 해산(`MonthlyPostUpdateHook.kt:272-275`) — 방랑군 군주도 `check == 4` 라 선언·글쓰기 게이트를 통과하므로(§4 게이트 1·2 는 `nation.level` 을 보지 않는다) 「초반 제한」 경계 틱에 결정적으로 난다.
+- 결과: 8d 가 `operation_id = X` 를 INSERT, 8h 에 X 는 없음, COMMIT 에서 FK 위반 → `flushWithGeneration` abort(`TurnRunService.kt:463-467`) → 같은 payload 영구 재시도. 덧붙여 COMMIT 시점 실패는 `lastOps` 에 실패 문장이 없어 진단이 문장 실패보다 어렵다(운영 메모).
+- 고침(하나 고르고 §3 에 적어라): (a) **`markNationDeleted` 가 recorder 의 `boardPostInserts` 중 그 국가 작전을 가리키는 `operation_id` 를 NULL 로 바꾼다**(외교 `:677-681` 과 같은 자리·같은 논리; 툼스톤 전파 표에 한 행) — F3 결정(같은 틱 연결 허용) 유지. (b) 또는 `BoardHandler` 가 이번 틱 생성 작전(`createdOperationIds` 에 있음)은 「아직 연결할 수 없는 작전입니다.」 로 거부 — F3 을 뒤집는다. (c) 또는 FK 를 두지 않고 열만(읽기 조인이 허공을 허용) — V32 규약(부모 복합 FK)에서 벗어나므로 비권장. 어느 쪽이든 `OperationIntakeTest` 에 「선언 → 글 연결 → `markNationDeleted` → payload 의 `boardPostInserts.operation_id == null`(또는 거부)」, `OperationFlushIT` 에 「생성되지 않은 작전을 가리키는 글 INSERT 가 COMMIT 에서 실패함」 을 적색 프로브로 넣어라.
+
+---
+
+## 2. 신규 should-fix
+
+- **P3. `remainingMonths` 의 0 분기는 진행 중 작전에서 죽은 분기이고 종료 작전에선 음수가 된다.** 정산은 새 날짜가 상순인 틱에 그 날짜로 돈다(`runMonthWhen` `TurnRunService.kt:363`; 훅은 `world.getState()` 의 새 날짜를 읽는다 `MonthlyPostUpdateHook.kt:197-207`; L7 `MonthlyPipeline.kt:115` → L10 `:126`). 따라서 game-api 가 `world_state.current_*` 로 읽는 `now` 가 `deadline` 과 같아지는 순간 그 작전은 이미 achieved/failed/closed 다 — 진행 중 작전의 `remainingMonths` 는 항상 ≥ 1 이고 §0 F4 「0 이면 『이번 상순 정산』」 은 화면에 안 나온다. 종료 작전은 `(d − n + 2) / 3` 이 Kotlin 절단 나눗셈으로 −4 → 0, −6 → −1 … 로 내려간다. 고침: `remainingMonths` 는 `status ∈ {declared, active}` 에서만 정의(그 외 null), UI 카드는 종료 상태에서 「남은 N개월」 을 그리지 않는다고 §6·§7 에 적고, `OperationRulesTest` 표에 「now == deadline → 0(종료 상태 전용)」·「now > deadline → null」 행을 넣어라.
+- **P4. §0 N9 의 「unit 정리는 DELETE 를 기록한다」 가 v2 N9(b) 의 질문(`removeGeneral` 가지치기)과 다른 것을 답한다.** 두 규칙을 §3 에 분리해 적어라: ① `removeGeneral`/`removeNation` 가지치기는 map + dirty/created/deleted **네 집합**에서 빼고 DELETE 를 기록하지 않는다(DB CASCADE; 4X-A `pruneRetinueOf` `InMemoryTurnWorld.kt:328-335` 와 동일 — dirty 를 안 빼면 8h UPDATE 가 0행을 때려 `requireExactlyOneAffected :2478-2482` 로 flush 가 막힌다). ② S11 정산 프룬과 `operationLeave` 만 `removeOperationUnit` 로 DELETE 를 기록한다(이번 틱 생성이면 `removeTroop :599-608` 규칙으로 0). 또 `deletedOperationIds` 채널은 생산자가 없다(close 는 UPDATE, 멸망은 CASCADE) — 대칭용이라고 한 줄 적어라.
+- **P5. v3 잔재·빈칸 셋.** (a) §8 `:161` `OperationFlushIT` 「채널 위치(**8d 앞**)」 는 v2 문구다 → 「8g 뒤(8h)」 로; §0 F3 행 `:16` 에도 「(N1 로 대체)」 표시. (b) §5 는 「목표 소멸」 `:138` 과 「전이」 `:139` 의 순서를 글머리 순서로만 암시한다 — 기한 달에 cut_supply 목표가 아군이 되면 순서에 따라 `closed(target_gone, 벌점 0)` 와 `failed(deadline, 사기 −5)` 가 갈리므로 「참여자 정리 → 이정표 → 목표 소멸 → 전이」 를 명시하고 `OperationRulesTest` 에 그 행을 넣어라. (c) `supplied` 의 인접 API 를 이름으로 적어라: `CalcCityDistance.nearCity(targetCityId, 1, variant)`(`CalcCityDistance.kt:174`), variant 는 `ActiveWorldMap.requireVariant(state.config, state.meta)`(`MonthlyPostUpdateHook.kt:202`) — 그리고 순수 함수 `milestones(kind, input)` 의 입력에 「목표 인접 도시 id 집합」 을 넣어 `OperationRules` 가 `CityConst` 를 직접 들지 않게 하라(logic 순수성·테스트 fixture 단순화).
+
+---
+
+## 3. 질문 / UNKNOWN (신규)
+
+- **Q8. 같은 L5 에서 고립 → 공백화된 cut_supply 목표.** `applyCitySupply` 는 보급 0 판정과 trust<30 공백화를 한 번에 한다(`UpdateCitySupply.kt:222, 266, 287-298`). 목표가 이미 trust<33 이었다면 첫 고립 달에 `nationId = 0` 이 되어 L10 은 `objective` 가 아니라 `target_gone` 을 본다(벌점 0, 달성 아님). 「차단 성공의 극단」 을 achieved 로 볼지(전월 소유가 적국이고 이번 달 `lostCityIds` 에 든 도시)는 저자 판단 — 규칙만 §5 에 한 줄 남기면 된다.
+- **Q4(유지, 범위 명시).** han 은 인접 그래프(`path`)와 보급 집합(공간 그래프)의 원천이 다르다(§0 표). fixture 없음.
+
+---
+
+## 4. v3 주장 중 코드로 확인한 것(맞음)
+
+| 스펙 주장 | 확인한 근거 |
+|---|---|
+| 4X-A 8g = 8f 뒤, DELETE → CREATE → UPDATE, `isNotEmpty()` 가드, 통일 flush 에서도 실행 | `JdbcFlushExecutor.kt:264-273`(주석 `:264-267`) |
+| `removeGeneral` 안 즉시 가지치기(4X-A N2) — 4X-B 가 같은 자리에 unit 프룬·선언자 NULL 을 둔다 | `InMemoryTurnWorld.kt:383-397`(`generalPosition :386`, `pruneRetinueOf :387`), 진입점 `ChangeRecorder.markGeneralDeleted :1158-1180` |
+| `removeBugok` 이 있고(4X-A 코드 변경 1곳 = 여기에 unit `bugokId = null` UPDATE 추가) `createBugok` 이 id 를 즉시 준다 | `InMemoryTurnWorld.kt:315-321`, `:299-305`, `allocateBugokId :265-269` |
+| 정산 배치 = `MonthlyPostUpdateHook.run` 마지막, `retainerMonthly?.settle` 뒤; 생성자 nullable 의존 | `MonthlyPostUpdateHook.kt:67`(ctor), `:220-230`(tail, checkWander 포함) → `:234`(retainer settle = `run()` 의 마지막 문장) |
+| 같은 `run()` 안에서 방랑군 해산이 정산보다 먼저 | `:237-` `checkWander` → `:275` `markNationDeleted` → 정산은 `:234` 뒤에 추가되는 자리 |
+| `RetainerActionResult(type, ok, generalId, reason?, id?)` 꼴 · 집합 분기 직렬화기 | `TurnDaemonCommandResult.kt:117-123`, `RETAINER_ACTION_TYPES :633`, 선택 `:677` |
+| 게이트 순서 ①②③④ 와 `AccessLogThrottle` 공통 적용, 「부곡이 없습니다.」 소유 검사 | `RetainerHandler.kt:18,35`, `bugokDisband :129`(`b.masterGeneralId == me.id`) |
+| V32 인벤토리·TruncateContract 등록 자리(4X-A 선례) | `V32WorldScopeCompletionMigrationTest.kt:654-657`(`postV32WorldTables`), `TruncateContract.kt:67-71` |
+| `DirtyState` 채널 이름 꼴(`retainers/createdRetainers/deletedRetainers`) | `DirtyState.kt:202-207` — 4X-B 의 `updatedOperations/createdOperations/deletedOperationIds` 는 이름만 다르고 구조 동일 |
+| `RetainerFlushIT` 가 「8g 순서 + SET NULL 열 + CASCADE + meta 고수위」 를 한 케이스로 핀 — `OperationFlushIT` 의 틀 | `RetainerFlushIT.kt:82` |
+| 계획 `:53`(56 코멘트만·228 밖)·`:352`(4X-C 기록만) | 직접 확인(v2 와 동일) |
+| L5 는 `worldContextFactory` 가 있을 때만 이벤트로 돈다(N8 의 근거) | `TurnRunService.kt:353-359` |
+
+---
+
+## 5. 읽은 파일(v3 판정 근거 경로)
+
+`CLAUDE.md` · `docs/superpowers/specs/2026-09-06-operation-vertical-slice.md`(v3 전문) · `docs/superpowers/specs/2026-09-06-retinue-buqu-vertical-slice.md`(v3.1 헤더·§3) · `docs/superpowers/reviews/2026-09-06-retinue-spec-critique.md`(v3 판정) · 이 파일의 v1·v2 본문 · `docs/superpowers/plans/2026-09-06-ui-redesign-implementation-plan.md`(:53, :329, :352) · `infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt` · `infra/src/main/resources/db/migration/{V1,V32,V53,V55}__*.sql` + 디렉터리 목록 · `infra/src/test/kotlin/opensamguk/infra/persistence/{V32WorldScopeCompletionMigrationTest,RetainerFlushIT}.kt` · `app/game-engine/src/main/kotlin/opensamguk/engine/turn/{InMemoryTurnWorld,ChangeRecorder,ReservedTurnHandler,DirtyState}.kt` · `engine/run/{TurnRunService,MonthlyPostUpdateHook}.kt` · `engine/flush/{DatabaseHooks,TruncateContract}.kt` · `engine/boot/WorldSnapshotLoader.kt` · `engine/intake/{RetainerHandler,BoardHandler}.kt` · `engine/retainer/RetainerMonthlyService.kt` · `engine/config/DaemonLoopConfig.kt`(:127) · `logic/src/main/kotlin/opensamguk/logic/{world/CalcCityDistance,world/UpdateCitySupply,world/CityConstRegistry,world/ActiveWorldMap,tick/ServerClock,tick/MonthlyPipeline,actions/intake/BoardActions,actions/intake/SecretPermission}.kt` · `common/src/main/kotlin/opensamguk/common/{wire/TurnDaemonCommand,wire/TurnDaemonCommandResult,constants/GameConst}.kt` · `app/game-api/src/main/kotlin/opensamguk/gameapi/{reserve/CommandWireMapper,read/SecretPermissionReader,read/BoardReadRepository,dto/F4Dto}.kt` · `web/game/app/game/board/page.tsx`. `git status`/`git log` 로 4X-A 미커밋 상태 확인. gradle 실행·`.env*` 열람 없음.
+
+---
+
+<details>
+<summary><b>부록 A — v2 재판정(2026-09-06, 역사 기록·원문 보존; N1·N2 는 v3 에서 cleared, N4 는 P1 로 승격, N3·N5~N9·Q7 은 v3 에서 닫힘)</b></summary>
+
 # 작전(Operation) 수직 절편(Phase 4X-B) 스펙 교차 비평 — 통합본 (v2 판정)
 
 - Date: 2026-09-06 (v1 비평 → 같은 날 v2 재판정)
@@ -102,10 +192,12 @@
 
 `CLAUDE.md` · `docs/superpowers/specs/2026-09-06-{operation,retinue-buqu}-vertical-slice.md`(v2·v3) · `docs/superpowers/reviews/2026-09-06-retinue-spec-critique.md`(v2 판정) · `docs/superpowers/plans/2026-09-06-ui-redesign-implementation-plan.md`(:43-56, :318-356) · `.ai/decisions.md`(ADR-LITE-049 `:786-815`) · `logic/src/main/kotlin/opensamguk/logic/{actions/intake/SecretPermission,actions/intake/BoardActions,actions/military/CheIdong,tick/MonthlyPipeline,tick/ServerClock,world/UpdateCitySupply,world/ProvinceControlState,world/WaterControlState,event/EventStore,war/ConquerCity}.kt` · `common/src/main/kotlin/opensamguk/common/{constants/GameConst,wire/TurnDaemonCommand,wire/TurnDaemonCommandResult}.kt` · `app/game-engine/src/main/kotlin/opensamguk/engine/{turn/InMemoryTurnWorld,turn/ChangeRecorder,turn/TurnWorldModel,run/MonthlyPostUpdateHook,run/TurnRunService,run/TurnDaemonCommandDispatcher,config/DaemonLoopConfig,boot/WorldSnapshotLoader,world/WorldActionContext,intake/BoardHandler,flush/DatabaseHooks,flush/TruncateContract}.kt` · `app/game-engine/src/test/kotlin/opensamguk/engine/{turn/ReservedTurnHandlerTest,turn/ReservedTurnWarDrainTest,flush/TruncateContractTest}.kt` · `infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt` · `infra/src/main/resources/db/migration/{V1,V53}__*.sql` + 디렉터리 목록(최신 V54) · `infra/src/test/kotlin/opensamguk/infra/persistence/V32WorldScopeCompletionMigrationTest.kt` · `app/game-api/src/main/kotlin/opensamguk/gameapi/{read/SecretPermissionReader,read/NationLogReadRepository,read/BoardReadRepository,security/GameApiSecurityConfig,owner/GeneralResolver,reserve/CommandWireMapper,dto/F4Dto}.kt` · `web/game/app/game/{my-nation,board}/page.tsx` · `web/shared/src/Portrait.tsx`. gradle 실행·`.env*` 열람 없음.
 
+</details>
+
 ---
 
 <details>
-<summary><b>부록 — v1 비평(2026-09-06, 역사 기록·원문 보존)</b></summary>
+<summary><b>부록 B — v1 비평(2026-09-06, 역사 기록·원문 보존)</b></summary>
 
 # 작전(Operation) 수직 절편(Phase 4X-B) 스펙 교차 비평
 

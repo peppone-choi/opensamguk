@@ -1,7 +1,7 @@
-# 작전(Operation) 수직 절편 (Phase 4X-B) 설계 — v3
+# 작전(Operation) 수직 절편 (Phase 4X-B) 설계 — v4
 
 - Date: 2026-09-06
-- Status: REVISED v3 — 1차(F1~F4·S1~S12·Q1~Q6)와 2차(v2 재판정: fix-required N1·N2 · should-fix N3~N9 · Q7, 같은 파일 `docs/superpowers/reviews/2026-09-06-operation-spec-critique.md`)를 전부 반영. 통합 재판정 대기(ADR-LITE-049 Phase 4X 규칙: spec → 비평 → 구현 → 게이트). 4X-A 스펙 **v3**(`2026-09-06-retinue-buqu-vertical-slice.md`)의 엔진 상태·flush 규약(메모리 세계 상태 + 행 단위 채널 + `removeGeneral` 즉시 가지치기 + 표마다 DELETE→CREATE→UPDATE)을 그대로 상속한다.
+- Status: REVISED v4 — 1차(F1~F4·S1~S12·Q1~Q6)·2차(N1~N9·Q7)·3차(v3 재판정: fix-required P1·P2 · should-fix P3~P5 · Q8, 같은 파일 `docs/superpowers/reviews/2026-09-06-operation-spec-critique.md`)를 전부 반영. 통합 재판정 대기(ADR-LITE-049 Phase 4X 규칙: spec → 비평 → 구현 → 게이트). 4X-A 스펙 **v3**(`2026-09-06-retinue-buqu-vertical-slice.md`)의 엔진 상태·flush 규약(메모리 세계 상태 + 행 단위 채널 + `removeGeneral` 즉시 가지치기 + 표마다 DELETE→CREATE→UPDATE)을 그대로 상속한다.
 - Scope: 로드맵 「작전 목표와 교전」의 첫 수직 절편 — 국가가 **작전 목표를 선언**하고, 장수가 **참여**하며, 달마다 **실제 점유·통제·보급 연결**에서 진척을 읽고, **기한**에 정산한다. 08 아트보드 「작전 진행」 패널, 14 회의실 「작전」 탭, 작전실 우측 상단 배지를 실제 원천에 연결한다.
 - 원칙(OPENSAM-56 코멘트 2026-08-27, 로드맵): 강제로 공격시키지 않는다. 처리 순서 「목표 선언 → WEGO 명령 봉인 → 이동·통제권·목표 진척 → 요격·조우 → 접촉했을 때만 전투 → 점령·보급·기한 정산」 중 이 절편은 **목표 선언 · 진척 · 기한 정산** 만 구현한다. 봉인은 4X-C, 요격·조우·전투 접촉은 기존 전투 경로 그대로(작전은 전투를 만들지 않는다).
 - Tickets: OPENSAM-56(#? 작전 계약·결정 규칙·adapter·검증) 체크리스트 중 **3-a operations · 3-b operation_participants(→ operation_unit) · 3-e 역할 정의 · 3-k fixture 일부** 만 이 절편이 기여한다 — 3-c routes · 3-d events · 3-f 도착 window · 3-g 경로 · 3-h 요격 · 3-i 원군 지연 · 3-j che_출병 adapter · 3-l event diff 0 gate 는 밖. 따라서 **OPENSAM-56 은 닫지 않고 코멘트만** 남긴다.
@@ -14,7 +14,7 @@
 | **F1 생산자 없는 3종** | 선언 가능 종류를 **`capture_city`·`relieve`·`cut_supply`** 로 한정한다(모든 지도 — 세 술어는 도시 필드만 읽는다). `secure_route`·`pass_through`·`blockade` 는 열·CHECK 만 두고 선언 게이트가 「아직 선언할 수 없는 작전 종류입니다.」 로 거부한다. 게이트의 축은 「스냅샷 != null」 이 아니라 **`OperationRules.DECLARABLE_KINDS`(생산자 존재)** 다. 강역·수역·장수 위치 상태의 유일한 쓰기 경로(`apply*Assessment`)는 main 호출자 0 — beyond-che W2/W3 생산자가 붙을 때 해제(§10). |
 | **F2 선언자 수명** | `declared_by_general_id INTEGER NULL` + `ON DELETE SET NULL (declared_by_general_id)`. 메모리: `InMemoryTurnWorld.removeGeneral` 이 그 장수가 선언자인 작전의 `declaredByGeneralId = null` 로 바꾸고 dirty 로 표시(4X-A v3 N2 와 같은 자리). 읽기 API `declaredBy` 는 null 허용. |
 | **F3 board FK vs flush 순서** | 작전 채널 위치를 **제약으로** 적는다: 「7단계 UPDATE 뒤 · **8d board INSERT 앞**」(부모 general/nation/bugok 은 그 앞에서 끝난다). 같은 틱 「선언 → 글 연결」 이 FK 를 만족. 단계 라벨은 executor 주석의 다음 자유 번호를 구현 시 따른다(글자 아님). |
-| **F4 순 단위 기한 vs 월 정산** | 기한을 **월 단위**로 둔다: `deadline = 선언 순 + N개월` 을 **다음 상순(phase 1)** 으로 정규화. 상수는 `MIN/MAX_DEADLINE_MONTHS`. 정산 위치(L10) 불변. `GameDate` 비교는 `OperationRules.absoluteTurn(date) = year × 36 + (month − 1) × 3 + (phase − 1)`(`GameConst` 의 1년 36순) 로 한다. 표시는 `remainingMonths`(정산 기준, 0 이면 「이번 상순 정산」). relieve 는 기한 월 정산에서 관측(항상 상순). |
+| **F4 순 단위 기한 vs 월 정산** | 기한을 **월 단위**로 둔다: `deadlineFor(d, months) = addMonths(firstPhaseOnOrAfter(d), months)`(P1 정의, phase 1 고정). 상수는 `MIN/MAX_DEADLINE_MONTHS`. 정산 위치(L10) 불변. `GameDate` 비교는 `OperationRules.absoluteTurn(date) = year × 36 + (month − 1) × 3 + (phase − 1)`(`GameConst` 의 1년 36순) 로 한다. 표시는 `remainingMonths`(진행 중에만, ≥ 1). relieve 는 기한 월 정산에서 관측(항상 상순). |
 | S1 필드명 | `city.nationId`, `city.supplyState != 0`(`MonthlyPostUpdateHook` 선례), `general.cityId`. 예약 3종 술어(부록 A)는 `ProvinceControlState.nationId`, `WaterControlState.controllingNationId: Long?`·`blockadeState`, `StrategicNodeRef.LandProvince(id)`, nullable `stateFor` 로 고쳐 둔다. |
 | S2 UpdateCitySupply | L5 **PRE_MONTH**(옛 날짜) — `supplyState` 는 L10 시점에 이미 갱신돼 있다(결론 유지). 규칙: `supplied` 는 **전월 기준 BFS** 이고 같은 달 L10 안의 소유 변화는 다음 달에 반영된다(한 달 지연을 명문화). 핀 테스트는 L5 → L10 순서. |
 | S3 권한 원천 | 엔진 `SecretPermission.check(me)`(−1..4) 한 곳. game-api 는 `SecretPermissionReader` 로 같은 값을 읽어 `myPermission` 으로 내보내고 UI disabled 판정은 그 값만 쓴다(officerLevel 파생 금지). 문자열은 board 와 동일: 재야 「국가에 소속되어있지 않습니다.」, 권한 「권한이 부족합니다. 수뇌부가 아닙니다.」. |
@@ -41,6 +41,12 @@
 | N8 시뮬 범위 | 관리자 개입 0 시뮬은 **capture_city 만**(che 2도시 fixture). `cut_supply` 는 L5 leaf 배선(`worldContextFactory`)이 필요해 fixture 가 무겁다 — 순수 함수 표 + 단위 테스트로 대신하고 시뮬은 UNKNOWN 으로 남긴다(§8·§10). |
 | N9 소소 | UPDATE 채널은 이번 틱 생성 행 제외(4X-A 와 동일) · unit 정리는 DELETE 를 기록한다(정산 전 flush 된 행이므로) · 재야 응답에도 `rules` 포함 · Q1 폴백 번호는 「4X-B 다음 자유 번호」 로 표기(V57 고정 아님) · `myPermission` 은 `checkSecretLimit=true` 읽기라 엔진(false)과 belong 분기에서 ±1 차이가 날 수 있음을 응답 필드 주석에 적는다. |
 | Q7 4X-A 판정 | 4X-A 는 v3 `cleared`(P1·P2 반영 v3.1), 구현 완료 — N1 은 옵션 2(4X-A 무수정)로 닫는다. |
+| **P1 기한 산술 모순** | 한 정의로 통일: `firstPhaseOnOrAfter(d)` = d.phase == 1 이면 d, 아니면 **다음 달 상순**; `deadlineFor(d, months)` = `addMonths(firstPhaseOnOrAfter(d), months)`(phase 1, 12月 넘기면 해 올림). 예: (200,3,하순)+1개월 → (200,5,상순) = 4순 뒤; (200,3,상순)+1개월 → (200,4,상순) = 3순 뒤; (200,12,하순)+1개월 → (201,2,상순). §0 F4·§2·§5 모두 이 문장으로 고치고 테스트 표에 12月 해 올림 행을 넣는다. |
+| **P2 같은 틱 「선언 → 글 연결 → 국가 소멸」** | `removeNation` 이 작전(+unit)을 가지치기해도 recorder 의 `boardPostInserts` 에 남은 `operation_id` 가 8d 에서 INSERT 되고 deferred FK 가 COMMIT 에서 터져 영구 재시도가 된다. 고침: **`ChangeRecorder.markNationDeleted`** 가 `world.removeNation` 이 돌려준 「가지치기된 작전 id 집합」으로 pending `boardPostInserts` 의 `operation_id` 를 **NULL 로 바꾼다**(같은 recorder 안, diplomacy 국가 프룬 공백과 같은 자리의 **작전 전용 프룬**). `removeNation` 은 pruned operation ids 를 반환하도록 시그니처를 넓힌다. 적색 프로브: 인테이크 테스트(선언 → 글 → `markNationDeleted` → payload 의 board `operation_id` 가 null) + `OperationFlushIT`(같은 payload 가 COMMIT 성공). 국가 소멸 경로 3종(드레인 `che_해산`·마지막 도시 점령·L10 방랑군 자동 해산) 모두 `markNationDeleted` 를 지나므로 한 자리로 충분하다. |
+| P3 remainingMonths 정의역 | `remainingMonths` 는 status ∈ {declared, active} 에서만 정의(≥ 1 — 정산이 `now == deadline` 인 틱에 돌므로 0 은 나오지 않는다); 종료 상태는 `null`. |
+| P4 가지치기 의미 | `removeGeneral`/`removeNation` 가지치기는 map 과 dirty/created/deleted **네 집합 모두**에서 빼고 DELETE 를 기록하지 않는다(`pruneRetinueOf` 선례 — DB 는 CASCADE). 이 절편에서 `deletedOperationIds` 의 생산자는 없다(종료 작전은 행을 남긴다); `deletedOperationUnitIds` 의 생산자는 `operationLeave`·S11 정리뿐. |
+| P5 잔재·순서·API 이름 | §8 「8d 앞」 잔재 삭제. §5 정산 순서를 **참여자 정리 → 이정표 재계산 → 목표 소멸 → 전이** 로 고정(기한 달에 목표가 아군이 되면 `closed`, `failed` 가 아님). 인접 집합은 `CalcCityDistance.nearCity(targetCityId, 1, variant)`(`variant = ActiveWorldMap.requireVariant(config, meta)`, `MonthlyPostUpdateHook` 선례)로 엔진이 구해 순수 함수 `milestones(kind, input, adjacentCityIds)` 에 넘긴다. |
+| Q8(비평자) 같은 L5 에서 고립+중립화 | 목표가 같은 달에 고립되며 공백지가 되면 `target_gone` 으로 읽힌다 — 의도로 채택(달성은 「타국 소유인 채 보급 끊김」 만). §10 에 적는다. |
 | Q6 적색 프로브 범위 | `consumeDirtyState()`·recorder 패치·로그·**worldState 행(meta 키 포함)** 까지 deep-equal. S10 「값 > 0 일 때만」 이 이를 보장한다. |
 
 ## 1. 원칙
@@ -66,7 +72,7 @@
 | `fallback_text VARCHAR(200) NULL` | 대체 목표(08 아트보드 「대체 목표 · 호뢰관 도로 확보 및 보급로 차단」) — 텍스트만, 규칙 없음 |
 | `declared_by_general_id INTEGER NULL` — `FOREIGN KEY (world_id, declared_by_general_id) REFERENCES general(world_id, id) ON DELETE SET NULL (declared_by_general_id)` | 선언자(장수 삭제 시 NULL — DB·메모리 양쪽, F2) |
 | `declared_year/month/phase SMALLINT NOT NULL` | 선언 순 |
-| `deadline_year/month/phase SMALLINT NOT NULL`, `CHECK (deadline_phase = 1)` | 기한 = 선언 순 + N개월을 **다음 상순으로 정규화**(F4; `OperationRules.deadlineFor(declaredAt, months)`) |
+| `deadline_year/month/phase SMALLINT NOT NULL`, `CHECK (deadline_phase = 1)` | 기한 = `deadlineFor(declaredAt, months)` = 선언 순이 상순이면 그 달, 아니면 **다음 달 상순**에서 N개월 뒤 상순(P1; 해 올림 포함) |
 | `status VARCHAR(16) NOT NULL CHECK (status IN ('declared','active','achieved','failed','closed'))` | §5 전이 |
 | `m_departed`, `m_arrived`, `m_supplied`, `m_objective BOOLEAN NOT NULL DEFAULT false` | 이정표 4개(§5). 한 번 true 가 되면 유지(단조) |
 | `closed_reason VARCHAR(16) NULL CHECK (closed_reason IN ('achieved','deadline','command','nation_gone','target_gone'))` | 종료 사유(`target_gone` = 목표가 공백지·아군이 됨, N2) |
@@ -105,7 +111,7 @@
 
 - `TurnWorldModel`: `data class Operation(id, nationId, kind, targetCityId?, targetProvinceId?, targetWaterZoneId?, title, fallbackText?, declaredByGeneralId?, declaredAt: GameDate, deadline: GameDate, status, milestones: OperationMilestones(departed, arrived, supplied, objective), closedReason?)`, `data class OperationUnit(id, operationId, generalId, bugokId?, role, joinedCityId, joinedAt: GameDate)`.
 - `WorldSnapshot.operations/operationUnits` + `WorldSnapshotLoader` 적재. `InMemoryTurnWorld` map + dirty/created/deleted + `allocateOperationId/allocateOperationUnitId`. id 고수위 영속은 4X-A v3 N3 의 네 지점(`TurnRunService` 키 공급 · `JdbcFlushExecutor` meta 병합 두 곳 · `WorldSnapshotLoader` 허용 키 · 시드)을 같이 넓히되 **값 > 0 일 때만 키를 쓴다**(행 0 세계 `world_state` 바이트 동일 — S10·Q6).
-- **툼스톤 전파(4X-A v3 규약 = 제거 시점에 즉시)**: `removeNation` 이 그 국가의 작전(+ unit)을, `removeGeneral` 이 그 장수의 unit 을 map·집합에서 제거하고 **그 장수가 선언자인 작전의 `declaredByGeneralId = null` 을 dirty 로 표시**한다(F2). `removeBugok`(4X-A) 은 그 부곡을 가리키는 unit 의 `bugokId = null` UPDATE 를 기록한다(DB `SET NULL (bugok_id)` 와 동일 결과) — 4X-A 코드 변경 1곳, 행 0 이면 영향 없음. 같은 틱 `operationJoin → operationLeave` 는 `removeTroop` 규칙(이번 틱 생성 행은 DELETE 기록 없음).
+- **툼스톤 전파(4X-A v3 규약 = 제거 시점에 즉시)**: `removeNation` 이 그 국가의 작전(+ unit)을, `removeGeneral` 이 그 장수의 unit 을 map 과 dirty/created/deleted **네 집합 모두**에서 제거하고(DELETE 기록 없음 — DB CASCADE; P4) **그 장수가 선언자인 작전의 `declaredByGeneralId = null` 을 dirty 로 표시**한다(F2). `removeNation` 은 가지치기한 **작전 id 집합을 반환**하고, `ChangeRecorder.markNationDeleted` 가 그 집합으로 pending `boardPostInserts` 의 `operation_id` 를 NULL 로 바꾼다(P2 — 국가 소멸 3경로 모두 이 함수를 지난다). 이 절편에서 `deletedOperationIds` 의 생산자는 없다. `removeBugok`(4X-A) 은 그 부곡을 가리키는 unit 의 `bugokId = null` UPDATE 를 기록한다(DB `SET NULL (bugok_id)` 와 동일 결과) — 4X-A 코드 변경 1곳, 행 0 이면 영향 없음. 같은 틱 `operationJoin → operationLeave` 는 `removeTroop` 규칙(이번 틱 생성 행은 DELETE 기록 없음).
 - `DirtyState`/`FlushPayload`: `createdOperations, updatedOperations, deletedOperationIds, createdOperationUnits, updatedOperationUnits, deletedOperationUnitIds`. `JdbcFlushExecutor` 위치는 **제약으로**: 「4X-A 8g(가신·부곡) **뒤**」(= 8h; N1 — 같은 틱 `bugokForm → operationJoin(bugokId)` 의 FK 대상이 먼저 존재). 같은 틱 「선언 → `boardArticle(operationId)`」 는 8d 가 먼저지만 `board_post.operation_id` FK 가 DEFERRABLE 이라 커밋 시점에 만족한다. 순서는 4X-A v3 와 같이 표마다 DELETE → CREATE → UPDATE: `unitDeleteMany → operationDeleteMany → operationCreateMany → unitCreateMany → operationUpdate → unitUpdate`(unit DELETE 를 operation DELETE 앞에 두어 CASCADE 와 겹쳐도 무해). 모든 채널 `isNotEmpty()` 가드. board_post 의 `operation_id` 는 8d 의 INSERT 열에 추가. `operation.id` = ADR-LITE-032 `operationId`(4X-C 가 같은 키를 쓴다); 이정표 4개는 ADR-037 `phases[]` 와 다른 축이다(S8).
 
 ## 4. 명령(인테이크, 즉시 실행) — `TurnDaemonCommand` 4종 + `CommandWireMapper` + 디스패처 → `OperationHandler`
@@ -125,20 +131,21 @@
 
 - **배치**: `MonthlyPostUpdateHook.run` 마지막 — 4X-A `retainerMonthly?.settle` **뒤**. 생성자 `operationMonthly: OperationMonthlyService? = null`(null = 미배선, 테스트 전용). `now` 는 L7 에서 올린 **새 날짜**(항상 상순).
 - **행 0 즉시 반환**. 주인 국가를 그 시점에 `getNationById` 로 읽고 없으면 건너뛴다(방어선; 정상은 `removeNation` 가지치기).
-- **참여자 정리(S11)**: 먼저 unit 마다 `general = getGeneralById(unit.generalId)`; 없거나 `general.nationId != operation.nationId` 이면 `removeOperationUnit`(DELETE 기록). 이후 술어·벌점은 남은 unit 만 본다.
+- **순서(P5)**: ① 참여자 정리 → ② 이정표 재계산 → ③ 목표 소멸 → ④ 전이. 이 순서로만 돈다(기한 달에 목표가 아군이 되면 ③ 에서 `closed`, ④ 의 `failed` 가 아니다).
+- **① 참여자 정리(S11)**: 먼저 unit 마다 `general = getGeneralById(unit.generalId)`; 없거나 `general.nationId != operation.nationId` 이면 `removeOperationUnit`(DELETE 기록). 이후 술어·벌점은 남은 unit 만 본다.
 - **`supplied` 의 원천**: `city.supplyState != 0` 은 L5 PRE_MONTH 의 `UpdateCitySupply`(전월 날짜 기준 도시 그래프 BFS)가 같은 틱 안에서 이미 갱신한 값이다(S2). 같은 달 L10 안의 소유 변화(해산·점령)는 다음 달 정산에서 보인다 — **한 달 지연이 규칙**이다.
 - status ∈ {declared, active} 인 작전마다(id 오름차순) 이정표를 다시 계산하고 true 는 유지(단조). `declared` + unit 0 이면 계산을 건너뛴다(기한이 오면 `failed`, 사기 효과 0 — 의도, S12-b).
 
 | kind | departed | arrived | supplied | objective |
 |---|---|---|---|---|
-| capture_city | unit 중 하나라도 `general.cityId != unit.joinedCityId` 또는 `== targetCityId` | unit 중 하나라도 `general.cityId == targetCityId` | unit 중 하나라도 **목표에 인접**(`CalcCityDistance` 1)한 아군 도시(`nationId == nationId && supplyState != 0`)에 있음(N3) | `city(target).nationId == nationId` |
+| capture_city | unit 중 하나라도 `general.cityId != unit.joinedCityId` 또는 `== targetCityId` | unit 중 하나라도 `general.cityId == targetCityId` | unit 중 하나라도 **목표에 인접**한 아군 도시(`nationId == nationId && supplyState != 0`)에 있음 — 인접 집합은 엔진이 `CalcCityDistance.nearCity(targetCityId, 1, ActiveWorldMap.requireVariant(config, meta))` 로 구해 넘긴다(N3·P5) | `city(target).nationId == nationId` |
 | relieve | 같음 | 같음 | 목표 도시 자체가 `supplyState != 0`(N3) | **기한 월 정산에서만** `city(target).nationId == nationId`(그 전엔 false) |
 | cut_supply | 같음 | 같음 | capture_city 와 같음 | `city(target).nationId ∉ {0, nationId} && city(target).supplyState == 0`(공백지는 강제 보급이라 제외, N2) |
 
 - **목표 소멸(N2)**: cut_supply 의 목표가 공백지·아군이 됐거나 capture_city 의 목표가 멸망으로 공백지가 된 채 아군이 아니면 — 그대로 두면 절대 달성·실패만 남는 종류(cut_supply) 는 `closed`(closedReason=target_gone, 벌점 없음, 국가 기록 「… 작전 목표가 사라져 종료했습니다.」). capture_city 는 공백지도 점령 대상이므로 계속.
 - **전이**(같은 정산 안, 계산 뒤): `objective` → `achieved`(closedReason=achieved, 국가 기록 `history` 「<Y>{title}</> 작전 목표를 달성했습니다.」). 아니면 `absoluteTurn(now) >= absoluteTurn(deadline)` → `failed`(closedReason=deadline, 남은 unit 의 장수 전원 `atmos = max(0, atmos − FAIL_ATMOS_LOSS)` F1 경로, 국가 기록 「… 작전이 기한을 넘겨 실패했습니다.」, 개인 기록 `scope="general", category="action"` 「작전 실패로 사기가 떨어졌습니다.」). 값이 하나도 안 바뀌면 dirty 아님.
 - 종료 상태(achieved/failed/closed)는 다시 보지 않는다. unit 행은 남긴다(기록).
-- 순수 함수(`OperationRules`): `absoluteTurn(date) = year × 36 + (month − 1) × 3 + (phase − 1)`; `deadlineFor(declaredAt, months)` = 선언 (year, month, 1) 에 months 개월을 더하고 선언이 중·하순이면 다음 상순 기준(최대 +2순); `remainingMonths(now, deadline) = (absoluteTurn(deadline) − absoluteTurn(now) + 2) / 3`(정수 나눗셈, 올림); `milestones(kind, input)`, `transition(op, now)`(N4 — 6행 표). 정산 서비스는 결과를 메모리에 적용만 한다.
+- 순수 함수(`OperationRules`): `absoluteTurn(date) = year × 36 + (month − 1) × 3 + (phase − 1)`; `firstPhaseOnOrAfter(d)` = d.phase == 1 ? d : (d 의 다음 달, phase 1); `deadlineFor(d, months) = addMonths(firstPhaseOnOrAfter(d), months)`(12月 넘기면 해 +1); `remainingMonths(now, deadline)` = 진행 중에만 `(absoluteTurn(deadline) − absoluteTurn(now) + 2) / 3`(≥ 1), 종료 상태는 null(P3); `milestones(kind, input, adjacentCityIds)`, `transition(op, now)`(P1·P3 — 표에 (200,3,하순)+1 → (200,5,상순), (200,3,상순)+1 → (200,4,상순), (200,12,하순)+1 → (201,2,상순) 행 포함). 정산 서비스는 결과를 메모리에 적용만 한다.
 
 ## 6. 읽기 API (game-api) — `GameApiSecurityConfig` `.authenticated()` 등록
 
@@ -155,10 +162,10 @@
 ## 8. 테스트·게이트
 
 - logic `OperationRulesTest`: 이정표·전이 순수 함수 표(3 kind × 도달/미도달 · 기한 도달 · relieve 기한 규칙 · S11 타국 참여자 제거 · declared+unit 0 기한 실패), 게이트 순서 표(두 조건 동시 위반; 예약 3종 거부), `absoluteTurn`/`deadlineFor`/`remainingMonths` 표. 상수 단언 없음.
-- engine `OperationIntakeTest`: 4 명령 채널 · 툼스톤(국가 멸망 → 작전+unit 제거 · 장수 삭제 → unit 제거 + 선언자 NULL dirty · 부곡 해산 → unit bugokId NULL) · 같은 틱 선언 → 참여 → 글 연결(id 즉시) · 같은 틱 join → leave 가 DB 작업 0.
+- engine `OperationIntakeTest`: 4 명령 채널 · 툼스톤(국가 멸망 → 작전+unit 제거 · 장수 삭제 → unit 제거 + 선언자 NULL dirty · 부곡 해산 → unit bugokId NULL) · 같은 틱 선언 → 참여 → 글 연결(id 즉시) · 같은 틱 join → leave 가 DB 작업 0 · **선언 → 글 연결 → `markNationDeleted` → payload 의 board `operation_id` 가 null**(P2).
 - engine `OperationMonthlyNoopGateTest`(**적색 프로브**, 4X-A v3 N4 구성): 두 벌 world+recorder, `ScriptedRng`/`auctionRepo()` fixture; 행 0 → `consumeDirtyState()`·recorder 패치·로그·worldState 행 deep-equal, 작전 1행 → 상이. 훅 순서(부곡 → 작전) 핀.
 - engine **관리자 개입 0 시뮬레이션**(capture_city 만, N8): che fixture(도시 2·국가 2·장수 3)에서 선언 → 참여 → `ReservedTurnHandler.handle("che_이동"/"che_출병")` 로 실제 이동·점령 → 다음 월 정산에서 achieved. 관리자 명령·SQL 0. 같은 fixture 로 기한 초과 → failed·atmos −5. cut_supply 는 L5 leaf 배선이 필요해 순수 함수 표로만(시뮬 UNKNOWN). han 지도 fixture 는 없다(Q4 UNKNOWN).
-- infra `OperationFlushIT`(PG16): V56 DDL · 채널 위치(8d 앞) · 같은 틱 「선언 + 연결 글」 성공(F3) · 선언자 DELETE 와 같은 틱 작전 UPDATE → `world_id` 보존·`declared_by_general_id` NULL·flush 성공(F2) · `SET NULL (bugok_id)`/`(operation_id)` · V32 인벤토리.
+- infra `OperationFlushIT`(PG16): V56 DDL(`ON DELETE SET NULL (operation_id) DEFERRABLE INITIALLY DEFERRED` 조합 핀 — 저장소 선례 없음) · 채널 위치(8g 뒤) · 같은 틱 「선언 + 연결 글」 성공(N1) · 「선언 + 연결 글 + 국가 소멸」 payload 가 `operation_id` NULL 로 COMMIT 성공(P2 적색 프로브) · 선언자 DELETE 와 같은 틱 작전 UPDATE → `world_id` 보존·`declared_by_general_id` NULL·flush 성공(F2) · `SET NULL (bugok_id)` · V32 인벤토리.
 - game-api `OperationReadControllerTest`: 401 / 재야 빈 목록 / 200 / 타국 403 / `rules.kinds` 의 declarable·reason / `myPermission` / `rules.provisional`.
 - vitest: my-nation 패널(k/4 1차·22% 행 없음·예약 종류 disabled 사유)·선언 폼·14 탭 칩·작전실 배지.
 
@@ -181,3 +188,4 @@ V56 = 이 절편, **V55(4X-A, 구현 완료) 뒤** 적용(`general_bugok` FK). �
 | pass_through | 위와 같음 | arrived 와 같음 |
 | blockade | `waterControlSnapshot()?.stateFor(targetWaterZoneId)` 의 `controllingNationId == nationId.toLong()` | 위 + `blockadeState == BLOCKED` |
 `departed` 는 목표 도시가 없으므로 「unit 중 하나라도 `general.cityId != unit.joinedCityId`」 만 쓴다.
+- 같은 L5 에서 목표가 고립되며 공백지가 되면(신뢰 저하 중립화) `target_gone` 으로 읽힌다 — 의도(달성은 「타국 소유인 채 보급 끊김」 만, Q8).
