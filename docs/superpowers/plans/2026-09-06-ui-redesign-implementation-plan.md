@@ -344,22 +344,15 @@
 - [x] UI: 08 `/game/my-nation#operations` `OperationPanel`(이정표 k/4 1차·% 보조·예약 종류 disabled+사유·「잠정」 칩), 14 회의실 연결 작전 select, 작전실 조작 대상 바 `OperationBadge`(수·임박 기한).
 - [~] 게이트: logic `OperationRulesTest` 4(산술·이정표·전이·게이트 순서) · engine `OperationIntakeTest` 5 + `OperationMonthlyNoopGateTest` 2(적색 프로브) · infra `OperationFlushIT` 1(PG16, DEFERRABLE 적색면·SET NULL(col)·CASCADE) + V32 10 · game-api `OperationReadControllerTest` 2 · vitest `operation-panel` 4 — 녹색. 관리자 개입 0 시뮬(che_이동/출병 실경로)은 `OperationIntakeTest` 의 정산 케이스가 이동을 `applyGeneralDirtyFree` 로 대신하므로 **미완**(예약 명령 실경로 fixture 는 후속). 실화면은 도커 재빌드 뒤.
 
-### 4X-C WEGO 야전 봉인 · 결정론 해결 · 리플레이 (PR `ui-p4xc-wego-field`) · 아트보드 09·10
+### 4X-C 출병 계획 봉인(공격자) · 결정론 해결 · 리플레이 (PR `ui-p4xc-battle-plan`) · 아트보드 09·10
 
-**Spec:** `docs/superpowers/specs/2026-07-30-v2-realtime-battle-session-command-replay-design.md` + BATTLE-F 티켓(OPENSAM-156~174) 중 야전 절편. 공성·해전은 잔여로 남긴다.
+**Spec:** `specs/2026-09-06-wego-field-seal-replay-vertical-slice.md`(v3 — 교차 비평 1차 F1~F7·S1~S16, 2차 N1~N4·R1~R14 반영, 통합 재판정 대기). 07-30 실시간 세션 설계·BATTLE-F0~F13 은 **범위 밖 참조**(battle-engine·WebSocket 없음). 양측 동시 해결(WEGO)은 미래 범위 — 이 절편은 **공격자 본인 부대 1개**의 계획뿐.
 
-- [~] Spec v1 초안(`specs/2026-09-06-wego-field-seal-replay-vertical-slice.md`, 교차 비평 대기): `battle_plan`(장수×목표 도시, stance 돌격/탐색 2종 — 전진/방어/우회는 엔진 대응물 없음, 조건 2종 = 플레이어 입력 손실 %·사기 임계 — 추격 금지는 엔진에 추격 없음, sealed_at·version), `battle_replay`(seed·input_hash·replay_hash·battle_phases_json·정산, 계획 봉인된 전투만 기록). 봉인 마감 = 해결 직전 순. **`V57__battle_plan_replay.sql`**. 봉인 뒤 수정은 인테이크 거부 사유(409 아님).
-- [ ] 해결: 기존 `war/*` 엔진에 「봉인된 계획이 있으면」 훅을 단다 — 태세·조건이 기존 파라미터(공격 개시·퇴각 임계·추격 여부·지형 보정)에 매핑되는 규칙을 spec에 표로 고정. 계획이 없으면 훅은 no-op(골든 바이트 동일). 결과는 페이즈별 상태(병력·사기·보정·발동 조건)로 기록하고 같은 seed·입력이면 같은 리플레이(해시 게이트).
-- [ ] 정산: 캠페인 정산(사상·군량·경험)을 replay.settlement에 기록하고 `battle_plan.operation_id`·`battle_replay.operation_id` 에 작전 키(ADR-LITE-032 `operationId`)만 기록한다 — 작전 행은 쓰지 않는다(4X-B spec v2 §10: 진척은 이정표 재계산이 도시 소유로 본다).
-- [ ] read API `/api/battles/{id}/plan`(아군 것만), `/api/battles/{id}/replay`, 감찰부 목록 연결, 공유 링크(권한 내). 명령: `sealBattlePlan`(수정은 봉인 전까지, 봉인 뒤 409).
-- [ ] UI: 09 명령 봉인 화면(아군 부대 카드 148×210·적 정찰 정보·페이즈 6·태세/목표/조건·예상 범위는 결정론 시뮬 `simulate-battle` 재사용), 10 리플레이 플레이어(對 화면·페이즈 스크럽·0.5/1/2×·로그·정산), 회의실·커뮤니티 리플레이 첨부 카드.
-- [ ] 게이트: 결정성(같은 seed 두 번 = 같은 해시), 봉인 후 수정 409, 계획 없는 전투 골든 불변, 리플레이 렌더 vitest, e2e 1건(봉인→해결→리플레이 열기). OPENSAM-57·59·173·170 닫기.
-
-
-
-## Phase 5 — 게임 이미지 제작 (PR `ui-p5-images` + `opensamguk-images` PR)
-
-원칙: 원본·생성 요청·빌더·큐레이션 미리보기의 정본은 `opensamguk-images`(`originals/`·`tools/`·`exports/`·`previews/`)에 두고, 이 저장소에는 `web/*/public/**` export만 둔다(#463 제작 경계). 제3자 게임 에셋을 파생하지 않는다. 국가색은 깃발 mask·영토 tint에만 쓰고 아이콘 본체는 재염색하지 않는다. 이미 정본화된 자산(중앙평원 1~11등급 도시 아이콘, 황제 배지, 한 지도 마커 3종, 계절 타일, 상태 아이콘 16종)은 다시 만들지 않고 리스타일 화면이 그대로 소비한다.
+- [~] Spec v1 → 비평 → v2 → 재판정 → **v3**. 계약: `battle_plan`(장수×목표 도시 키, stance 돌격/탐색 2종 — 전진/방어/우회는 엔진 대응물 없음, 조건 2종 = 플레이어 입력 손실 %·사기 임계, sealed_*·resolved_*(소비)·version, `CREATE UNIQUE INDEX … WHERE resolved_year IS NULL`), `battle_replay`(seed·input_hash·replay_hash·battle_phases_json TEXT·정산·계획 스냅샷·`operation_id` FK SET NULL(col), **계획 봉인된 전투만** 기록, 국가·도시 id 열은 FK 없는 스냅샷). 봉인 마감 = `sealedDate <= executingDate`(같은 순 봉인도 적용). **`V57__battle_plan_replay.sql`**, executor 8i.
+- [ ] 해결: `processWarNG` 의 `addPhase()` 뒤 seam — 자연 퇴각 우선 → 수비자가 서 있을 때만 계획 정지(공용 `retreatAttacker`) → 수비자 전멸/점령은 오늘 분기 유지(max-phase break 만 넓힘). 계획 없으면 훅을 감싸지 않아 바이트 동일(`ProcessWarNGOrderTest` 확장이 핀). 리플레이는 `ReplayRecordingHooks`(draw 0, id 만) → `lastReplayDraft` → 엔진 후처리가 이름·`operation_id` 를 채워 recorder INSERT(`markGeneralDeleted`/`markNationDeleted` 프룬). 같은 seed·입력 두 번 = 같은 `replay_hash`(게이트).
+- [ ] 명령 `battlePlanSave/Seal/Delete`(봉인 뒤 수정은 인테이크 거부 사유 「봉인된 계획입니다.」 — 409 아님). read API `/api/my-battle-plans`, `/api/battles/replays?scope=`, `/api/battles/replays/{id}`(공격국·수비국·본인만). 예상은 기존 `simulate-battle`(목록 첫 수비자 1인 기준 min/avg/max; 「우세 %」 는 그리지 않는다).
+- [ ] UI: 09 `/game/battle-plan?city=`(본인 부대 1개·태세 2종 활성·조건 2종·봉인 카운트다운 = 다음 내 턴), 작전실 `che_출병` 예약 슬롯 「봉인」 링크(autorun 이면 점선), 10 `/game/battle-replay/{id}`(페이즈 스크럽·로그·정산·해시), 감찰부 리플레이 열. 회의실 첨부 카드·2.5D 렌더는 밖.
+- [ ] 게이트: logic `ProcessWarPlanHookTest`(적색 프로브: NOOP 훅 vs 리팩터 deep-equal · 계획 있으면 상이 · 두 번 = 같은 해시) + 골든 274 회귀, engine `BattlePlanIntakeTest`(봉인·소비·툼스톤 F3/N4), infra `BattlePlanReplayFlushIT`(PG16, 부분 UNIQUE·SET NULL·같은 틱 사망/국가 소멸 COMMIT), game-api 읽기 테스트, vitest, e2e 1건(봉인→해결→리플레이; 로컬 턴 시각에 묶여 UNKNOWN 가능). OPENSAM-57·59·170·173 은 **부분 기여 코멘트**(닫지 않음), 58 은 구현분 체크, 24·25 에픽 코멘트.
 
 ### Task 5.1: 필요 이미지 목록과 스타일 가이드
 
