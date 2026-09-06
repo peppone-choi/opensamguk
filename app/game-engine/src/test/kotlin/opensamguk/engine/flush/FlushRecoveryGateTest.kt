@@ -19,6 +19,18 @@ import kotlin.test.assertTrue
 class FlushRecoveryGateTest {
 
     @Test
+    fun `spatial CAS wrapped as transient transaction failure requires reload`() {
+        for (stale in listOf(
+            opensamguk.infra.persistence.StaleProvinceControlException(1, "p1", 2L),
+            opensamguk.infra.persistence.StaleGeneralPositionException(1, 7, 2L),
+        )) {
+            assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, FlushRecoveryGate.classify(stale))
+            assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED,
+                FlushRecoveryGate.classify(TransactionSystemException("rollback", stale)))
+        }
+    }
+
+    @Test
     fun `water CAS inside transient transaction wrapper requires reload not blind retry`() {
         val stale = StaleWaterControlException(1, "lake", 2L)
         assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, FlushRecoveryGate.classify(stale))

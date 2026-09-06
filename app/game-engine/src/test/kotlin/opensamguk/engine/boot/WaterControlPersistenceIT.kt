@@ -45,6 +45,7 @@ class WaterControlPersistenceIT {
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM water_zone_control", Int::class.java))
         assertEquals(listOf("han-world-v2", "han-world-v3"), jdbc.query(
             "SELECT config ->> 'mapName' FROM world_state ORDER BY id", { rs, _ -> rs.getString(1) }))
+        migrate("50")
         executor = JdbcFlushExecutor(NamedParameterJdbcTemplate(dataSource), TransactionTemplate(DataSourceTransactionManager(dataSource)))
     }
 

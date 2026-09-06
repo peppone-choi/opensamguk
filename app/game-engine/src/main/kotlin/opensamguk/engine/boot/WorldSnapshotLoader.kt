@@ -17,10 +17,14 @@ import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.WaterControlRowCodec
+import opensamguk.infra.persistence.ProvinceControlRowCodec
+import opensamguk.infra.persistence.GeneralPositionRowCodec
 import opensamguk.infra.seed.HanStrategicTopologyJson
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.StrategicTopologySnapshot
 import opensamguk.logic.world.WaterControlSnapshot
+import opensamguk.logic.world.ProvinceControlSnapshot
+import opensamguk.logic.world.GeneralPositionSnapshot
 import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.ResultSet
@@ -146,6 +150,7 @@ class WorldSnapshotLoader(
             accessLogs.size,
             troops.size,
         )
+        val topology = spatialTopologyFor(state)
         val snapshot = WorldSnapshot(
             state = state,
             worldId = worldId,
@@ -157,17 +162,22 @@ class WorldSnapshotLoader(
             diplomacy = diplomacy,
             accessLogs = accessLogs,
             archivedNationIds = archivedNationIds,
-            waterControlSnapshot = loadWaterControlSnapshot(state),
+            waterControlSnapshot = topology?.let(::loadWaterControlSnapshot),
+            provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
+            generalPositionSnapshot = topology?.let(::loadGeneralPositionSnapshot),
         )
         snapshotValidator(snapshot)
         return snapshot
     }
 
-    private fun loadWaterControlSnapshot(state: TurnWorldState): WaterControlSnapshot? {
+    private fun spatialTopologyFor(state: TurnWorldState): StrategicTopologySnapshot? {
         // Small historical test snapshots may omit map identity; the production map validator still rejects them.
         val hasMap = listOf(state.config, state.meta).any { it.containsKey("mapName") || it.containsKey("map") }
         if (!hasMap || ActiveWorldMap.requireName(state.config, state.meta) != "han-world-v3") return null
-        val topology = waterTopologyLoader()
+        return waterTopologyLoader()
+    }
+
+    private fun loadWaterControlSnapshot(topology: StrategicTopologySnapshot): WaterControlSnapshot {
         val rows = jdbc.query(
             "SELECT water_zone_id, topology_revision, topology_hash, controlling_nation_id, " +
                 "contesting_nation_ids, blockade_state, revision FROM water_zone_control WHERE world_id = ? ORDER BY water_zone_id",
@@ -175,6 +185,25 @@ class WorldSnapshotLoader(
         )
         // Always validate, even when an injected map validator permits a reduced test fixture.
         return WaterControlSnapshot.fromTopology(topology, rows)
+    }
+
+    private fun loadProvinceControlSnapshot(topology: StrategicTopologySnapshot): ProvinceControlSnapshot {
+        val rows = jdbc.query(
+            "SELECT province_id, topology_revision, topology_hash, nation_id, revision " +
+                "FROM province_control WHERE world_id = ? ORDER BY province_id",
+            { rs, _ -> ProvinceControlRowCodec.decode(rs) }, worldId.value,
+        )
+        return ProvinceControlSnapshot.fromTopology(topology, rows)
+    }
+
+    private fun loadGeneralPositionSnapshot(topology: StrategicTopologySnapshot): GeneralPositionSnapshot {
+        val rows = jdbc.query(
+            "SELECT general_id, topology_revision, topology_hash, node_kind, node_id, revision " +
+                "FROM general_spatial_position WHERE world_id = ? ORDER BY general_id",
+            { rs, _ -> GeneralPositionRowCodec.decode(rs) }, worldId.value,
+        )
+        // WorldSnapshot checks these IDs against the same world's loaded core generals.
+        return GeneralPositionSnapshot.fromTopology(topology, rows)
     }
 
     private fun loadWorldState(): TurnWorldState {

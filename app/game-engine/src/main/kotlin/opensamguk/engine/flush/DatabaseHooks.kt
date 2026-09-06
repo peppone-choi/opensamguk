@@ -692,6 +692,8 @@ object DatabaseHooks {
             // OPENSAM-150 (R1) — v2 도시 원장 채널. v1 경로에서는 항상 빈 리스트라 flush step이 미진입한다.
             cityLedgerV2Upserts = recorder.cityLedgerV2Upserts().map { CityLedgerV2UpsertRow(it.columns) },
             waterControlWrites = recorder.waterControlWritesFor(world.worldId),
+            provinceControlWrites = recorder.provinceControlWritesFor(world.worldId),
+            generalPositionWrites = recorder.generalPositionWritesFor(world.worldId),
             // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE (recorder
             // 채널, betting과 동일; world-state 효과 아님 — 표시-컬럼은 generalUpdate SET 절에 없다).
             profileIconUpdates = recorder.profileIconUpdates().map { ProfileIconUpdateRow(it.columns) },

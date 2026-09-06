@@ -3,6 +3,8 @@ package opensamguk.engine.flush
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.StaleWorldWriterException
 import opensamguk.infra.persistence.StaleWaterControlException
+import opensamguk.infra.persistence.StaleProvinceControlException
+import opensamguk.infra.persistence.StaleGeneralPositionException
 import org.springframework.dao.DataAccessResourceFailureException
 import org.springframework.dao.TransientDataAccessException
 import org.springframework.transaction.TransactionSystemException
@@ -123,6 +125,7 @@ class FlushRecoveryGate {
             if (error is StaleWorldWriterException) return Mode.RELOAD_REQUIRED
             if (hasCause(error) { it is StaleWorldWriterException }) return Mode.RELOAD_REQUIRED
             if (hasCause(error) { it is StaleWaterControlException }) return Mode.RELOAD_REQUIRED
+            if (hasCause(error) { it is StaleProvinceControlException || it is StaleGeneralPositionException }) return Mode.RELOAD_REQUIRED
 
             // Known retryable: transient SQL / connection / timeout with no commit proof.
             if (error is TransientDataAccessException) return Mode.FLUSH_RETRY
