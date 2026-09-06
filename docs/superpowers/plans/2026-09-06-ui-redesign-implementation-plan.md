@@ -395,17 +395,19 @@
 
 현재 3D 표면: `web/game/components/v2/SpaceProof3D.tsx`(three 0.171, `v2-lab/space` 증명 화면, `v2-space-fps` e2e). 시안에는 3D 화면이 없다. 따라서 3D는 새 화면이 아니라 **작전실 지도의 3D 뷰 토글**과 **에셋**이다.
 
-### Task 7.1: 저폴리 에셋 (opensamguk-images)
+**판정(2026-09-06 23:50): 미착수 + 사유.** 진입 조건 두 가지가 모두 충족되지 않는다 — (1) Phase 0~6 이 아직 main 에 없다(PR #651 미머지, 4X-C 구현 직후). (2) 사용자 지시의 마지막 단계인 서버 초기화(Phase 8)가 3D 뒤에 있는데, 3D 토글은 `MapViewer` 에 두 번째 렌더러(three)를 붙이는 일이라 「HanMapCanvas 픽셀·좌표 불변」 제약과 `v2-space-fps` 성능 게이트(`V2_ENABLED=true` dev 서버 필요, 로컬 부하 상태에서 6/6 빨강 실측)를 다시 세워야 하고, 시안에 3D 화면이 없어 아트보드 대조 없이 저폴리 에셋 규약(정점 상한·팔레트 텍스처)을 지어내야 한다. 「지어낸 수치가 스펙이 된다」 를 피하려면 3D 는 별도 spec → 교차 비평 → 구현 트랙이어야 하며, 이 PR 에 얹으면 Phase 8 을 막는다. OPENSAM-46/#188 D3-13 「3D picking」 은 체크하지 않고 이 사유를 코멘트로 남긴다. 아래 Task 7.1·7.2 는 그대로 후속 트랙의 입력이다.
+
+### Task 7.1: 저폴리 에셋 (opensamguk-images) — 미착수
 
 - [ ] 도시 등급 3종(현·군국치·수도)·관문·나루·항구·깃발 폴 low-poly 모델(glb, 정점 수 상한을 manifest에 기록), Concept A 팔레트 텍스처, `originals/3d/` 정본 + `exports/3d/` + 프리뷰 렌더. 제작 도구가 없으면 SVG 실루엣 extrude 로 대체.
 
-### Task 7.2: 작전실 3D 뷰 토글 + picking
+### Task 7.2: 작전실 3D 뷰 토글 + picking — 미착수
 
 - [ ] `MapViewer`에 「3D」 토글(기본 2D, 설정 저장). `SpaceProof3D`의 씬 코드를 재사용해 프로빈스 면·도시 모델·깃발을 올린다. 클릭 = 같은 도시 id(D3-13 「3D picking」 — 2D와 동일 candidate id). 성능 게이트: `v2-space-fps` e2e 기준 유지, 저사양 폴백 2D.
 
 ### Phase 7 게이트
 
-- [ ] 공통 게이트 + fps e2e + OPENSAM-46/#188 D3-13 체크 또는 사유.
+- [x] 공통 게이트 + fps e2e + OPENSAM-46/#188 D3-13 체크 또는 **사유**(위 판정 — 미착수 사유를 티켓 코멘트로 남긴다; Phase 8 뒤 별도 트랙).
 
 ## Phase 8 — 배포 · 서버 초기화 (사용자 지시 2026-09-06)
 
