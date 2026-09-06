@@ -118,6 +118,8 @@ sealed class TurnDaemonCommand {
         val kind: String = "general",
         /** kind=vote 일 때 연결하는 vote_poll id. */
         val voteId: Int? = null,
+        /** kind=operation 일 때 연결하는 작전 id(Phase 4X-B, V56). 내 국가 작전이어야 한다 — BoardHandler 가 검사. */
+        val operationId: Int? = null,
     ) : TurnDaemonCommand() {
         override val type: String get() = "boardArticle"
     }
@@ -202,6 +204,53 @@ sealed class TurnDaemonCommand {
         val retainerId: Int? = null,
     ) : TurnDaemonCommand() {
         override val type: String get() = "bugokAssignCommander"
+    }
+
+    // ── Phase 4X-B 작전 (specs/2026-09-06-operation-vertical-slice v4.1) — 인자는 nullable, ③ 입력 게이트가 판정 ──
+    @Serializable
+    @SerialName("operationDeclare")
+    data class OperationDeclare(
+        val requestId: String? = null,
+        val generalId: Int,
+        val kind: String? = null,
+        val targetCityId: Int? = null,
+        val title: String? = null,
+        val fallbackText: String? = null,
+        val deadlineMonths: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "operationDeclare"
+    }
+
+    @Serializable
+    @SerialName("operationJoin")
+    data class OperationJoin(
+        val requestId: String? = null,
+        val generalId: Int,
+        val operationId: Int? = null,
+        val role: String? = null,
+        val bugokId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "operationJoin"
+    }
+
+    @Serializable
+    @SerialName("operationLeave")
+    data class OperationLeave(
+        val requestId: String? = null,
+        val generalId: Int,
+        val operationId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "operationLeave"
+    }
+
+    @Serializable
+    @SerialName("operationClose")
+    data class OperationClose(
+        val requestId: String? = null,
+        val generalId: Int,
+        val operationId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "operationClose"
     }
 
     @Serializable

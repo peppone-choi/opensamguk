@@ -1,5 +1,5 @@
 -- ADR-LITE-049 13 커뮤니티(서버 밖·계정 단위) 확장 — 계정 전역 테이블(세계 범위 아님).
--- 분류 6종(공지·자유·건의·전략·공략·서버 이야기·창작·일지), 조회수, 신고, 계정 대표 장수.
+-- 분류 6종(공지·자유·건의·전략/공략·서버 이야기·창작/일지), 조회수, 신고, 계정 대표 장수.
 ALTER TABLE gateway_board_post DROP CONSTRAINT IF EXISTS gateway_board_post_category_ck;
 ALTER TABLE gateway_board_post
     ADD CONSTRAINT gateway_board_post_category_ck

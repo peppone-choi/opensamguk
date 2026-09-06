@@ -696,6 +696,8 @@ data class BoardArticle(
     val kind: String = "general",
     val voteId: Int? = null,
     val vote: BoardVoteSummary? = null,
+    /** kind=operation 일 때 연결된 작전(V56, Phase 4X-B). */
+    val operationId: Int? = null,
     /** 기밀실 글에만. 회의실 글은 null. */
     val readers: BoardReaders? = null,
     // 작성자 초상 — board_post 에 author_icon 원천이 없어(C1-α) 현재 general 행에서 읽는다. 장수가 사라졌으면 null.

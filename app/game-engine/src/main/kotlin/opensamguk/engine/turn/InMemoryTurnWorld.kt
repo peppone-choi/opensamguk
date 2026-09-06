@@ -28,6 +28,9 @@ data class WorldSnapshot(
     /** Phase 4X-A — 가신·부곡(부팅·rehydrate 적재). 행 0 이면 기존 스냅샷과 동일. */
     val retainers: List<Retainer> = emptyList(),
     val bugoks: List<Bugok> = emptyList(),
+    /** Phase 4X-B — 작전·참여 부대(부팅·rehydrate 적재). */
+    val operations: List<Operation> = emptyList(),
+    val operationUnits: List<OperationUnit> = emptyList(),
     val archivedNationIds: List<Int> = emptyList(),
     val serverId: String? = state.serverId,
     val worldId: WorldId,
@@ -106,6 +109,17 @@ class InMemoryTurnWorld(
     private val deletedBugokIds = LinkedHashSet<Int>()
     private var maxRetainerId: Int = 0
     private var maxBugokId: Int = 0
+    // Phase 4X-B 작전 — 같은 규약.
+    private val operations = LinkedHashMap<Int, Operation>()
+    private val operationUnits = LinkedHashMap<Int, OperationUnit>()
+    private val dirtyOperationIds = LinkedHashSet<Int>()
+    private val createdOperationIds = LinkedHashSet<Int>()
+    private val deletedOperationIds = LinkedHashSet<Int>()
+    private val dirtyOperationUnitIds = LinkedHashSet<Int>()
+    private val createdOperationUnitIds = LinkedHashSet<Int>()
+    private val deletedOperationUnitIds = LinkedHashSet<Int>()
+    private var maxOperationId: Int = 0
+    private var maxOperationUnitId: Int = 0
 
     private val dirtyGeneralIds = LinkedHashSet<Int>()
     private val dirtyCityIds = LinkedHashSet<Int>()
@@ -165,6 +179,10 @@ class InMemoryTurnWorld(
         for (b in snapshot.bugoks) bugoks[b.id] = b
         maxRetainerId = maxOf(snapshot.retainers.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxRetainerId"] as? Number)?.toInt() ?: 0)
         maxBugokId = maxOf(snapshot.bugoks.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxBugokId"] as? Number)?.toInt() ?: 0)
+        for (o in snapshot.operations) operations[o.id] = o
+        for (u in snapshot.operationUnits) operationUnits[u.id] = u
+        maxOperationId = maxOf(snapshot.operations.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxOperationId"] as? Number)?.toInt() ?: 0)
+        maxOperationUnitId = maxOf(snapshot.operationUnits.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxOperationUnitId"] as? Number)?.toInt() ?: 0)
         maxNationId = maxOf(
             snapshot.nations.maxOfOrNull { it.id } ?: 0,
             snapshot.archivedNationIds.maxOrNull() ?: 0,
@@ -184,6 +202,8 @@ class InMemoryTurnWorld(
         // 4X-A 고수위는 값이 있을 때만 meta 에 쓴다 — 행 0 세계의 world_state 바이트 동일(spec P1·Q6).
         recordMaxRetainerId()
         recordMaxBugokId()
+        recordMaxOperationId()
+        recordMaxOperationUnitId()
     }
 
     fun getState(): TurnWorldState = state
@@ -318,6 +338,8 @@ class InMemoryTurnWorld(
         dirtyBugokIds.remove(id)
         val wasCreatedThisTick = createdBugokIds.remove(id)
         if (!wasCreatedThisTick) deletedBugokIds.add(id)
+        // Phase 4X-B: 그 부곡을 편성에 넣은 작전 부대는 bugokId 를 비운다(DB `SET NULL (bugok_id)` 와 같은 결과).
+        for (u in operationUnits.values.filter { it.bugokId == id }) updateOperationUnit(u.copy(bugokId = null))
         return true
     }
 
@@ -340,6 +362,97 @@ class InMemoryTurnWorld(
 
     private fun recordMaxBugokId() {
         if (maxBugokId > 0) state = state.copy(meta = state.meta + mapOf("maxBugokId" to maxBugokId))
+    }
+
+    // ── Phase 4X-B 작전 (spec v4.1 §3) ────────────────────────────────────────────────────────
+    fun listOperations(): List<Operation> = operations.values.toList()
+    fun listOperationUnits(): List<OperationUnit> = operationUnits.values.toList()
+    fun getOperationById(id: Int): Operation? = operations[id]
+    fun getOperationUnitById(id: Int): OperationUnit? = operationUnits[id]
+    fun operationsOf(nationId: Int): List<Operation> = operations.values.filter { it.nationId == nationId }.sortedBy { it.id }
+    fun unitsOf(operationId: Int): List<OperationUnit> = operationUnits.values.filter { it.operationId == operationId }.sortedBy { it.id }
+    fun operationUnitsOfGeneral(generalId: Int): List<OperationUnit> = operationUnits.values.filter { it.generalId == generalId }.sortedBy { it.id }
+
+    fun allocateOperationId(): Int {
+        maxOperationId = maxOf(maxOperationId, operations.keys.maxOrNull() ?: 0, deletedOperationIds.maxOrNull() ?: 0) + 1
+        recordMaxOperationId()
+        return maxOperationId
+    }
+
+    fun allocateOperationUnitId(): Int {
+        maxOperationUnitId = maxOf(maxOperationUnitId, operationUnits.keys.maxOrNull() ?: 0, deletedOperationUnitIds.maxOrNull() ?: 0) + 1
+        recordMaxOperationUnitId()
+        return maxOperationUnitId
+    }
+
+    fun createOperation(op: Operation): Operation {
+        require(!operations.containsKey(op.id)) { "duplicate operation id ${op.id}" }
+        operations[op.id] = op
+        dirtyOperationIds.add(op.id)
+        createdOperationIds.add(op.id)
+        if (op.id > maxOperationId) { maxOperationId = op.id; recordMaxOperationId() }
+        return op
+    }
+
+    fun updateOperation(next: Operation): Operation? {
+        if (!operations.containsKey(next.id)) return null
+        operations[next.id] = next
+        dirtyOperationIds.add(next.id)
+        return next
+    }
+
+    fun createOperationUnit(unit: OperationUnit): OperationUnit {
+        require(!operationUnits.containsKey(unit.id)) { "duplicate operation unit id ${unit.id}" }
+        operationUnits[unit.id] = unit
+        dirtyOperationUnitIds.add(unit.id)
+        createdOperationUnitIds.add(unit.id)
+        if (unit.id > maxOperationUnitId) { maxOperationUnitId = unit.id; recordMaxOperationUnitId() }
+        return unit
+    }
+
+    fun updateOperationUnit(next: OperationUnit): OperationUnit? {
+        if (!operationUnits.containsKey(next.id)) return null
+        operationUnits[next.id] = next
+        dirtyOperationUnitIds.add(next.id)
+        return next
+    }
+
+    /** [removeTroop] 규칙 — 같은 틱 생성 행은 deleted 에 넣지 않는다. */
+    fun removeOperationUnit(id: Int): Boolean {
+        if (!operationUnits.containsKey(id)) return false
+        operationUnits.remove(id)
+        dirtyOperationUnitIds.remove(id)
+        val wasCreatedThisTick = createdOperationUnitIds.remove(id)
+        if (!wasCreatedThisTick) deletedOperationUnitIds.add(id)
+        return true
+    }
+
+    /**
+     * 국가 소멸 가지치기(spec P2·R2): 그 국가의 작전(+unit)을 map 과 네 집합 모두에서 빼고(DELETE 기록 없음 — DB 부모 CASCADE)
+     * 빠진 작전 id 를 돌려준다. `ChangeRecorder.markNationDeleted` 가 `removeNation` 앞에 불러 pending board 글의
+     * `operation_id` 를 비우는 데 쓴다.
+     */
+    fun pruneOperationsOfNation(nationId: Int): Set<Int> {
+        val gone = operations.values.filter { it.nationId == nationId }.map { it.id }.toSet()
+        for (id in gone) { operations.remove(id); dirtyOperationIds.remove(id); createdOperationIds.remove(id); deletedOperationIds.remove(id) }
+        val goneUnits = operationUnits.values.filter { it.operationId in gone }.map { it.id }
+        for (id in goneUnits) { operationUnits.remove(id); dirtyOperationUnitIds.remove(id); createdOperationUnitIds.remove(id); deletedOperationUnitIds.remove(id) }
+        return gone
+    }
+
+    /** 장수 삭제: 그 장수의 unit 을 네 집합에서 빼고(CASCADE), 그 장수가 선언자인 작전은 `declaredByGeneralId = null` 을 dirty 로(F2). */
+    private fun pruneOperationUnitsOfGeneral(generalId: Int) {
+        val goneUnits = operationUnits.values.filter { it.generalId == generalId }.map { it.id }
+        for (id in goneUnits) { operationUnits.remove(id); dirtyOperationUnitIds.remove(id); createdOperationUnitIds.remove(id); deletedOperationUnitIds.remove(id) }
+        for (op in operations.values.filter { it.declaredByGeneralId == generalId }) updateOperation(op.copy(declaredByGeneralId = null))
+    }
+
+    private fun recordMaxOperationId() {
+        if (maxOperationId > 0) state = state.copy(meta = state.meta + mapOf("maxOperationId" to maxOperationId))
+    }
+
+    private fun recordMaxOperationUnitId() {
+        if (maxOperationUnitId > 0) state = state.copy(meta = state.meta + mapOf("maxOperationUnitId" to maxOperationUnitId))
     }
 
     fun applyAccessLogDirtyFree(next: GeneralAccessLog) {
@@ -385,6 +498,7 @@ class InMemoryTurnWorld(
         generals.remove(id)
         generalPosition = generalPosition?.withoutGeneral(id)
         pruneRetinueOf(id)
+        pruneOperationUnitsOfGeneral(id)
         generalIdentityTokens.remove(id)
         dirtyGeneralIds.remove(id)
         // create-then-delete in the same tick fully cancels: drop the pending create and
@@ -728,6 +842,12 @@ class InMemoryTurnWorld(
         val bugoksOut = dirtyBugokIds.mapNotNull { bugoks[it] }
         val createdBugoks = createdBugokIds.mapNotNull { bugoks[it] }
         val deletedBugoks = deletedBugokIds.toList()
+        val operationsOut = dirtyOperationIds.mapNotNull { operations[it] }
+        val createdOperations = createdOperationIds.mapNotNull { operations[it] }
+        val deletedOperations = deletedOperationIds.toList()
+        val operationUnitsOut = dirtyOperationUnitIds.mapNotNull { operationUnits[it] }
+        val createdOperationUnits = createdOperationUnitIds.mapNotNull { operationUnits[it] }
+        val deletedOperationUnits = deletedOperationUnitIds.toList()
 
         dirtyGeneralIds.clear()
         dirtyCityIds.clear()
@@ -750,6 +870,12 @@ class InMemoryTurnWorld(
         dirtyBugokIds.clear()
         createdBugokIds.clear()
         deletedBugokIds.clear()
+        dirtyOperationIds.clear()
+        createdOperationIds.clear()
+        deletedOperationIds.clear()
+        dirtyOperationUnitIds.clear()
+        createdOperationUnitIds.clear()
+        deletedOperationUnitIds.clear()
 
         return DirtyState(
             generals = generalsOut,
@@ -773,6 +899,12 @@ class InMemoryTurnWorld(
             bugoks = bugoksOut,
             createdBugoks = createdBugoks,
             deletedBugoks = deletedBugoks,
+            operations = operationsOut,
+            createdOperations = createdOperations,
+            deletedOperations = deletedOperations,
+            operationUnits = operationUnitsOut,
+            createdOperationUnits = createdOperationUnits,
+            deletedOperationUnits = deletedOperationUnits,
         )
     }
 }

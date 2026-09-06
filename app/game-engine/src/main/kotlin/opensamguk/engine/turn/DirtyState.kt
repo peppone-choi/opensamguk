@@ -205,6 +205,13 @@ data class DirtyState(
     val bugoks: List<Bugok> = emptyList(),
     val createdBugoks: List<Bugok> = emptyList(),
     val deletedBugoks: List<Int> = emptyList(),
+    /** Phase 4X-B 작전 — step-8h(8g 뒤), 표마다 DELETE → CREATE → UPDATE. */
+    val operations: List<Operation> = emptyList(),
+    val createdOperations: List<Operation> = emptyList(),
+    val deletedOperations: List<Int> = emptyList(),
+    val operationUnits: List<OperationUnit> = emptyList(),
+    val createdOperationUnits: List<OperationUnit> = emptyList(),
+    val deletedOperationUnits: List<Int> = emptyList(),
     val kvDirty: Map<KvKey, Any?> = emptyMap(),
     /**
      * [diplomacyUpdateDirty]: per-command diplomacy-row UPDATE patches keyed `(from, to)` (T0.4).

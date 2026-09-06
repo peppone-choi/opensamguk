@@ -89,8 +89,15 @@ describe('RetinueSlot (D3-17)', () => {
     it('shows a dashed reason when empty and a badge link when populated', async () => {
         mocks.myRetinue.mockResolvedValue(base({ retainers: [], bugoks: [] }));
         const { unmount } = render(<RetinueSlot generalId={10} href="/game/s1/my" />);
-        expect(await screen.findByRole('button', { name: '휘하 없음' })).toHaveAttribute('title', '서약하면 여기 나옵니다');
+        const empty = await screen.findByRole('link', { name: /휘하 없음/ });
+        expect(empty).toHaveAttribute('href', '/game/s1/my#retinue');
+        expect(empty).toHaveAttribute('title', '서약하면 여기 나옵니다');
         unmount();
+        // 실패는 빈 상태로 위장하지 않는다
+        mocks.myRetinue.mockRejectedValue(new Error('down'));
+        const failed = render(<RetinueSlot generalId={10} href="/game/s1/my" />);
+        expect(await screen.findByRole('button', { name: '휘하' })).toHaveAttribute('title', '휘하 정보를 불러오지 못했습니다');
+        failed.unmount();
         mocks.myRetinue.mockResolvedValue(base());
         render(<RetinueSlot generalId={10} href="/game/s1/my" />);
         const link = await screen.findByRole('link', { name: /휘하/ });

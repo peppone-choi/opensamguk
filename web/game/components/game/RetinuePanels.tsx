@@ -99,6 +99,7 @@ export default function RetinuePanels({ generalId, onChanged }: Props) {
                                             <select
                                                 value={r.task}
                                                 disabled={busy !== ''}
+                                                title={busy !== '' ? '처리 중' : undefined}
                                                 onChange={(e) => void run(`task-${r.id}`, 'retainerTask', { retainerId: r.id, task: e.target.value })}
                                             >
                                                 {rules.tasks.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -155,6 +156,7 @@ export default function RetinuePanels({ generalId, onChanged }: Props) {
                                                 aria-label={`${b.name} 지휘관`}
                                                 value={b.commanderRetainerId ?? ''}
                                                 disabled={busy !== ''}
+                                                title={busy !== '' ? '처리 중' : undefined}
                                                 onChange={(e) => void run(`cmd-${b.id}`, 'bugokAssignCommander', { bugokId: b.id, retainerId: e.target.value === '' ? null : Number(e.target.value) })}
                                             >
                                                 <option value="">없음</option>

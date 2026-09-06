@@ -272,6 +272,16 @@ open class JdbcFlushExecutor(
             if (payload.createdBugoks.isNotEmpty()) bugokCreateMany(payload.worldId, payload.createdBugoks)
             if (payload.updatedBugoks.isNotEmpty()) bugokUpdate(payload.worldId, payload.updatedBugoks)
 
+            // 8h. 작전 채널 (Phase 4X-B, spec v4.1 §3): 8g 뒤 — 같은 틱 bugokForm → operationJoin(bugokId) 의 FK 대상이 먼저 존재.
+            //     같은 틱 「선언 → boardArticle(operationId)」 는 8d 가 앞이지만 board_post.operation_id FK 가 DEFERRABLE 이라
+            //     이 트랜잭션의 COMMIT 시점에 만족한다. unit DELETE 를 operation DELETE 앞에 두어 CASCADE 와 겹쳐도 무해.
+            if (payload.deletedOperationUnitIds.isNotEmpty()) operationUnitDeleteMany(payload.worldId, payload.deletedOperationUnitIds)
+            if (payload.deletedOperationIds.isNotEmpty()) operationDeleteMany(payload.worldId, payload.deletedOperationIds)
+            if (payload.createdOperations.isNotEmpty()) operationCreateMany(payload.worldId, payload.createdOperations)
+            if (payload.createdOperationUnits.isNotEmpty()) operationUnitCreateMany(payload.worldId, payload.createdOperationUnits)
+            if (payload.updatedOperations.isNotEmpty()) operationUpdate(payload.worldId, payload.updatedOperations)
+            if (payload.updatedOperationUnits.isNotEmpty()) operationUnitUpdate(payload.worldId, payload.updatedOperationUnits)
+
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.worldId, payload.eventInserts)
             }
@@ -533,6 +543,14 @@ open class JdbcFlushExecutor(
             (worldState["max_bugok_id"] as? Number)?.let {
                 params.addValue("max_bugok_id", it.toInt())
                 append(" || jsonb_build_object('maxBugokId', CAST(:max_bugok_id AS INTEGER))")
+            }
+            (worldState["max_operation_id"] as? Number)?.let {
+                params.addValue("max_operation_id", it.toInt())
+                append(" || jsonb_build_object('maxOperationId', CAST(:max_operation_id AS INTEGER))")
+            }
+            (worldState["max_operation_unit_id"] as? Number)?.let {
+                params.addValue("max_operation_unit_id", it.toInt())
+                append(" || jsonb_build_object('maxOperationUnitId', CAST(:max_operation_unit_id AS INTEGER))")
             }
         }
         // OPENSAM-131: optional CAS fence. When expected_world_version is present, require
@@ -1732,13 +1750,14 @@ open class JdbcFlushExecutor(
                 .addValue("fatigue", b.fatigue)
                 .addValue("provisions", b.provisions)
                 .addValue("commander_retainer_id", b.commanderRetainerId)
+                .addValue("commander_bonus_applied", b.commanderBonusApplied)
         }.toTypedArray()
         jdbc.batchUpdate(
             """
             INSERT INTO general_bugok
-                (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id)
+                (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied)
             VALUES
-                (:world_id, :id, :master_general_id, :name, :troops, :crew_type_id, :training, :morale, :fatigue, :provisions, :commander_retainer_id)
+                (:world_id, :id, :master_general_id, :name, :troops, :crew_type_id, :training, :morale, :fatigue, :provisions, :commander_retainer_id, :commander_bonus_applied)
             """.trimIndent(),
             batch,
         )
@@ -1757,18 +1776,111 @@ open class JdbcFlushExecutor(
                 .addValue("fatigue", b.fatigue)
                 .addValue("provisions", b.provisions)
                 .addValue("commander_retainer_id", b.commanderRetainerId)
+                .addValue("commander_bonus_applied", b.commanderBonusApplied)
         }.toTypedArray()
         val affected = jdbc.batchUpdate(
             """
             UPDATE general_bugok
                SET name = :name, troops = :troops, training = :training, morale = :morale, fatigue = :fatigue,
-                   provisions = :provisions, commander_retainer_id = :commander_retainer_id, updated_at = now()
+                   provisions = :provisions, commander_retainer_id = :commander_retainer_id,
+                   commander_bonus_applied = :commander_bonus_applied, updated_at = now()
              WHERE world_id = :world_id AND id = :id
             """.trimIndent(),
             batch,
         )
         requireExactlyOneAffected("general_bugok UPDATE", affected)
         lastOps.add(FlushExecOp("general_bugok", FlushVerb.UPDATE, rows.size))
+    }
+
+    // --- step 8h: 작전 채널 (Phase 4X-B) ---------------------------------------------------------
+
+    private fun operationUnitDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM operation_unit WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("operation_unit", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun operationDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM operation WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("operation", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun operationParams(worldId: WorldId, o: OperationRow): MapSqlParameterSource = MapSqlParameterSource()
+        .addValue("world_id", worldId.value).addValue("id", o.id).addValue("nation_id", o.nationId).addValue("kind", o.kind)
+        .addValue("target_city_id", o.targetCityId).addValue("title", o.title).addValue("fallback_text", o.fallbackText)
+        .addValue("declared_by_general_id", o.declaredByGeneralId)
+        .addValue("declared_year", o.declaredYear).addValue("declared_month", o.declaredMonth).addValue("declared_phase", o.declaredPhase)
+        .addValue("deadline_year", o.deadlineYear).addValue("deadline_month", o.deadlineMonth).addValue("deadline_phase", o.deadlinePhase)
+        .addValue("status", o.status).addValue("m_departed", o.departed).addValue("m_arrived", o.arrived)
+        .addValue("m_supplied", o.supplied).addValue("m_objective", o.objective).addValue("closed_reason", o.closedReason)
+
+    private fun operationCreateMany(worldId: WorldId, rows: List<OperationRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { operationParams(worldId, it) }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO operation
+                (world_id, id, nation_id, kind, target_city_id, title, fallback_text, declared_by_general_id,
+                 declared_year, declared_month, declared_phase, deadline_year, deadline_month, deadline_phase,
+                 status, m_departed, m_arrived, m_supplied, m_objective, closed_reason)
+            VALUES
+                (:world_id, :id, :nation_id, :kind, :target_city_id, :title, :fallback_text, :declared_by_general_id,
+                 :declared_year, :declared_month, :declared_phase, :deadline_year, :deadline_month, :deadline_phase,
+                 :status, :m_departed, :m_arrived, :m_supplied, :m_objective, :closed_reason)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("operation", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun operationUpdate(worldId: WorldId, rows: List<OperationRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { operationParams(worldId, it) }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            """
+            UPDATE operation
+               SET title = :title, fallback_text = :fallback_text, declared_by_general_id = :declared_by_general_id,
+                   status = :status, m_departed = :m_departed, m_arrived = :m_arrived, m_supplied = :m_supplied,
+                   m_objective = :m_objective, closed_reason = :closed_reason, updated_at = now()
+             WHERE world_id = :world_id AND id = :id
+            """.trimIndent(),
+            batch,
+        )
+        requireExactlyOneAffected("operation UPDATE", affected)
+        lastOps.add(FlushExecOp("operation", FlushVerb.UPDATE, rows.size))
+    }
+
+    private fun operationUnitParams(worldId: WorldId, u: OperationUnitRow): MapSqlParameterSource = MapSqlParameterSource()
+        .addValue("world_id", worldId.value).addValue("id", u.id).addValue("operation_id", u.operationId)
+        .addValue("general_id", u.generalId).addValue("bugok_id", u.bugokId).addValue("role", u.role)
+        .addValue("joined_city_id", u.joinedCityId).addValue("joined_year", u.joinedYear)
+        .addValue("joined_month", u.joinedMonth).addValue("joined_phase", u.joinedPhase)
+
+    private fun operationUnitCreateMany(worldId: WorldId, rows: List<OperationUnitRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { operationUnitParams(worldId, it) }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO operation_unit
+                (world_id, id, operation_id, general_id, bugok_id, role, joined_city_id, joined_year, joined_month, joined_phase)
+            VALUES
+                (:world_id, :id, :operation_id, :general_id, :bugok_id, :role, :joined_city_id, :joined_year, :joined_month, :joined_phase)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("operation_unit", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun operationUnitUpdate(worldId: WorldId, rows: List<OperationUnitRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { operationUnitParams(worldId, it) }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            "UPDATE operation_unit SET bugok_id = :bugok_id, role = :role WHERE world_id = :world_id AND id = :id",
+            batch,
+        )
+        requireExactlyOneAffected("operation_unit UPDATE", affected)
+        lastOps.add(FlushExecOp("operation_unit", FlushVerb.UPDATE, rows.size))
     }
 
     // --- step 8d: 게시판 채널 (F4 C2 슬라이스 C, 회의실/기밀실) ----------------------------------
@@ -1793,14 +1905,16 @@ open class JdbcFlushExecutor(
                 // ADR-LITE-049 14 — 글 종류·표결 연결(V53). 키가 없으면 general / NULL.
                 .addValue("kind", c["kind"] ?: "general")
                 .addValue("vote_id", c["vote_id"])
+                // Phase 4X-B — 작전 연결(V56, DEFERRABLE FK). 키가 없으면 NULL.
+                .addValue("operation_id", c["operation_id"])
         }.toTypedArray()
         jdbc.batchUpdate(
             """
             INSERT INTO board_post
-                (world_id, nation_id, is_secret, author_general_id, author_name, author_icon, title, content_html, kind, vote_id)
+                (world_id, nation_id, is_secret, author_general_id, author_name, author_icon, title, content_html, kind, vote_id, operation_id)
             VALUES
                 (:world_id, :nation_id, :is_secret, :author_general_id, :author_name, :author_icon,
-                 :title, :content_html, :kind, :vote_id)
+                 :title, :content_html, :kind, :vote_id, :operation_id)
             """.trimIndent(),
             batch,
         )
@@ -2770,6 +2884,13 @@ data class FlushPayload(
     val createdBugoks: List<BugokRow> = emptyList(),
     val updatedBugoks: List<BugokRow> = emptyList(),
     val deletedBugokIds: List<Int> = emptyList(),
+    // --- Phase 4X-B 작전 (step-8h, 8g 뒤; 표마다 DELETE → CREATE → UPDATE; spec v4.1 §3) ---
+    val createdOperations: List<OperationRow> = emptyList(),
+    val updatedOperations: List<OperationRow> = emptyList(),
+    val deletedOperationIds: List<Int> = emptyList(),
+    val createdOperationUnits: List<OperationUnitRow> = emptyList(),
+    val updatedOperationUnits: List<OperationUnitRow> = emptyList(),
+    val deletedOperationUnitIds: List<Int> = emptyList(),
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),

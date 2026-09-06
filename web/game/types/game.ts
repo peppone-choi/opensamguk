@@ -1148,6 +1148,8 @@ export interface BoardArticle {
   authorPicture?: string | null;
   authorImageServer?: number;
   authorOfficerLevelText?: string | null;
+    /** kind=operation 일 때 연결된 작전(V56). */
+    operationId?: number | null;
 }
 
 /** 회의실 참여 스택 — 국가 플레이어 장수. active = 최근 한 순 안에 턴 시각 갱신, chief = 기밀실 열람 자격. */
@@ -1386,3 +1388,32 @@ export interface RetinueResponse {
     bugoks: RetinueBugok[];
     rules: RetinueRules;
 }
+
+// ── Phase 4X-B 작전 — /api/operations (spec v4.1 §6) ──
+export interface OperationDate { year: number; month: number; phase: number }
+export interface OperationUnit {
+    id: number; generalId: number; name: string; role: string; roleLabel: string; crew: number; crewTypeName: string;
+    bugokId: number | null; bugokTroops: number | null; cityId: number; cityName: string; picture: string | null; imageServer: number;
+}
+export interface OperationMilestones { departed: boolean; arrived: boolean; supplied: boolean; objective: boolean }
+export interface Operation {
+    id: number; kind: string; kindLabel: string; title: string; fallbackText: string | null;
+    target: { cityId: number; name: string };
+    status: 'declared' | 'active' | 'achieved' | 'failed' | 'closed'; statusLabel: string; closedReason: string | null;
+    declaredAt: OperationDate; deadline: OperationDate;
+    /** 진행 중에만, 종료 상태는 null. */
+    remainingMonths: number | null;
+    milestones: OperationMilestones;
+    /** 파생 표시값(이정표 수 × 25) — 1차 표기는 「이정표 k/4」. */
+    milestoneDisplayPct: number;
+    units: OperationUnit[];
+    declaredBy: { generalId: number; name: string } | null;
+    boardPostIds: number[];
+}
+export interface OperationKind { kind: string; label: string; declarable: boolean; reason: string | null }
+export interface OperationRules {
+    maxActivePerNation: number; minDeadlineMonths: number; maxDeadlineMonths: number; maxUnits: number; failAtmosLoss: number;
+    milestoneDisplayPct: number; kinds: OperationKind[]; roles: RetinueOption[]; provisional: boolean;
+}
+export interface OperationsResponse { nationId: number; myPermission: number; myGeneralId: number; operations: Operation[]; rules: OperationRules }
+export interface OperationDetailResponse { operation: Operation; boardPosts: { id: number; title: string; authorName: string; createdAt: string }[] }

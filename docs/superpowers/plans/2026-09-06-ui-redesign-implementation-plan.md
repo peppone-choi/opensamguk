@@ -337,12 +337,12 @@
 **Spec:** 로드맵 「작전 목표와 교전」, `docs/superpowers/plans/2026-08-22-beyond-che-world-map-and-game-loop-plan.md`, OPENSAM-56.
 
 - [x] Spec v1 → 비평(F1~F4) → v2(N1·N2) → v3(P1·P2) → **v4 `cleared`**(R1~R7 → v4.1). `specs/2026-09-06-operation-vertical-slice.md`, `reviews/2026-09-06-operation-spec-critique.md` 통합본.
-- [ ] 도메인: `operation`(nation_id·kind 6종 중 선언 가능 3종 capture_city/relieve/cut_supply·target_city_id·deadline 월 단위(상순)·status declared/active/achieved/failed/closed·이정표 4 불리언·closed_reason), `operation_unit`(operation_id·general_id·bugok_id?·role·joined_city). `board_post.operation_id`(DEFERRABLE). **`V56__operation.sql`**(V55 뒤).
-- [ ] 명령: 작전 선언(수뇌부 permission ≥ 2), 참여/이탈, 종료. 월간 틱: 진척 = 실제 점유·통제·보급 연결(기존 spatial 보급·도달성 계약 재사용)에서 계산. 기한 초과 → 실패 정산(군량·사기 비용은 spec).
-- [ ] read API `/api/operations`, `/api/operations/{id}`(진척·참여 부대·연결 전투·회의 thread).
-- [ ] 회의실: `board_post.kind=operation` + `operation_id`, 결정 기록(표결 결과 → operation 메모). 리플레이 첨부는 4X-C의 `battle_replay_id`.
-- [ ] UI: 08 국가 운영 「작전」 패널, 14 회의실 작전 탭, 작전실 우측 상단 진행 중 작전 배지.
-- [ ] 게이트: 작전 시작→진척→종료까지 관리자 개입 0 시뮬레이션 테스트 1건(로드맵 4단계 관문의 축소판) + 골든 불변.
+- [x] 도메인: `operation`(nation_id·kind 6종 중 선언 가능 3종 capture_city/relieve/cut_supply·target_city_id·deadline 월 단위(상순)·status declared/active/achieved/failed/closed·이정표 4 불리언·closed_reason), `operation_unit`(operation_id·general_id·bugok_id?·role·joined_city). `board_post.operation_id`(DEFERRABLE). **`V56__operation.sql`**(V55 뒤) + `general_bugok.commander_bonus_applied`(PR 비평 S3).
+- [x] 명령: `operationDeclare/Join/Leave/Close`(`OperationHandler`, 수뇌부 = `SecretPermission.check ≥ 2`), `boardArticle.operationId`. 월간 정산 `OperationMonthlyService`(MonthlyPostUpdateHook 마지막, 가신 정산 뒤): 참여자 정리 → 이정표 재계산(도시 소유·인접 보급 `CalcCityDistance.nearCity`) → 목표 소멸 → 전이(달성/기한 실패 atmos −5). 국가 소멸 시 `pruneOperationsOfNation` + board `operation_id` NULL.
+- [x] read API `/api/operations`, `/api/operations/{id}`(authenticated, 타국 403, 재야 빈 목록+rules, `remainingMonths` 진행 중만, `milestoneDisplayPct` 파생, 연결 회의실 글).
+- [~] 회의실: `board_post.kind=operation` + `operation_id`(글쓰기 「연결 작전」 select, 엔진이 내 국가 작전 검사). 표결 결과 → 메모는 밖(spec §10). 리플레이 첨부는 4X-C.
+- [x] UI: 08 `/game/my-nation#operations` `OperationPanel`(이정표 k/4 1차·% 보조·예약 종류 disabled+사유·「잠정」 칩), 14 회의실 연결 작전 select, 작전실 조작 대상 바 `OperationBadge`(수·임박 기한).
+- [~] 게이트: logic `OperationRulesTest` 4(산술·이정표·전이·게이트 순서) · engine `OperationIntakeTest` 5 + `OperationMonthlyNoopGateTest` 2(적색 프로브) · infra `OperationFlushIT` 1(PG16, DEFERRABLE 적색면·SET NULL(col)·CASCADE) + V32 10 · game-api `OperationReadControllerTest` 2 · vitest `operation-panel` 4 — 녹색. 관리자 개입 0 시뮬(che_이동/출병 실경로)은 `OperationIntakeTest` 의 정산 케이스가 이동을 `applyGeneralDirtyFree` 로 대신하므로 **미완**(예약 명령 실경로 fixture 는 후속). 실화면은 도커 재빌드 뒤.
 
 ### 4X-C WEGO 야전 봉인 · 결정론 해결 · 리플레이 (PR `ui-p4xc-wego-field`) · 아트보드 09·10
 

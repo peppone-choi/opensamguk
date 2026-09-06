@@ -32,6 +32,7 @@ import type {
 } from '../../../lib/types';
 import { isArticleBodyBlank } from './articleBody';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
+import type { OperationsResponse } from '../../../types/game';
 
 // 하나의 열린 board CommandModal spec. argType은 항상 null (args는 extraArgs에 실린다).
 type BoardModalSpec = { command: string; label: string; extraArgs?: Record<string, unknown> };
@@ -219,6 +220,9 @@ function BoardContent() {
     const [articleKind, setArticleKind] = useState<BoardKind>('general');
     const [voteOptions, setVoteOptions] = useState<VoteInfo[] | null>(null);
     const [voteIdDraft, setVoteIdDraft] = useState<number | ''>('');
+    // Phase 4X-B — 작전 글에 연결할 진행 중 작전(원천 /api/operations, kind=operation 일 때만 읽는다).
+    const [operationOptions, setOperationOptions] = useState<{ id: number; title: string; statusLabel: string }[] | null>(null);
+    const [operationIdDraft, setOperationIdDraft] = useState<number | ''>('');
     const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
     const [modal, setModal] = useState<BoardModalSpec | null>(null);
     const [toast, setToast] = useState<string | null>(null);
@@ -317,6 +321,13 @@ function BoardContent() {
     const chiefs = participants.filter((p) => p.chief);
     const nation = front?.nation ?? null;
     const myRank = front?.general?.officerLevelText ?? null;
+    useEffect(() => {
+        if (articleKind !== 'operation' || operationOptions !== null) return;
+        Promise.resolve()
+            .then(() => api.operations<OperationsResponse>())
+            .then((r) => setOperationOptions(r.operations.filter((o) => o.status === 'declared' || o.status === 'active').map((o) => ({ id: o.id, title: o.title, statusLabel: o.statusLabel }))))
+            .catch(() => setOperationOptions([]));
+    }, [articleKind, operationOptions]);
     const canSubmitArticle = !(articleTitle.length === 0 && isArticleBodyBlank(articleText)) && (articleKind !== 'vote' || voteIdDraft !== '');
 
     return (
@@ -373,6 +384,17 @@ function BoardContent() {
                                             <option value="notice" disabled={myPermission < 2}>공지{myPermission < 2 ? ' (수뇌부만)' : ''}</option>
                                         </select>
                                     </label>
+                                    {articleKind === 'operation' && (
+                                        <label className="council-write__field">
+                                            연결 작전
+                                            <select value={operationIdDraft} onChange={(e) => setOperationIdDraft(e.target.value === '' ? '' : Number(e.target.value))}>
+                                                <option value="">{operationOptions === null ? '불러오는 중...' : operationOptions.length === 0 ? '진행 중인 작전이 없습니다 (연결 없이 작성)' : '연결 없음'}</option>
+                                                {(operationOptions ?? []).map((o) => (
+                                                    <option key={o.id} value={o.id}>{o.title} · {o.statusLabel}</option>
+                                                ))}
+                                            </select>
+                                        </label>
+                                    )}
                                     {articleKind === 'vote' && (
                                         <label className="council-write__field">
                                             연결할 설문
@@ -414,6 +436,7 @@ function BoardContent() {
                                                     text: articleText,
                                                     kind: articleKind,
                                                     ...(articleKind === 'vote' && voteIdDraft !== '' ? { voteId: voteIdDraft } : {}),
+                                                    ...(articleKind === 'operation' && operationIdDraft !== '' ? { operationId: operationIdDraft } : {}),
                                                 },
                                             })
                                         }

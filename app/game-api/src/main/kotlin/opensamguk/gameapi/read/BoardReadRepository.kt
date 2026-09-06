@@ -48,6 +48,10 @@ class BoardPostReadEntity(
     /** kind=vote 일 때 연결된 vote_poll id(V53). */
     @Column(name = "vote_id")
     var voteId: Int? = null,
+
+    /** kind=operation 일 때 연결된 작전 id(V56, Phase 4X-B). */
+    @Column(name = "operation_id")
+    var operationId: Int? = null,
 )
 
 @Entity
@@ -88,6 +92,7 @@ interface BoardPostReadRawRepository : SpringDataRepository<BoardPostReadEntity,
     ): List<BoardPostReadEntity>
     fun findByWorldIdAndIsSecretOrderByCreatedAtDescIdDesc(worldId: Int, isSecret: Boolean): List<BoardPostReadEntity>
     fun findByWorldIdAndId(worldId: Int, id: Int): BoardPostReadEntity?
+    fun findByWorldIdAndOperationIdInOrderByIdDesc(worldId: Int, operationIds: Collection<Int>): List<BoardPostReadEntity>
 }
 
 @Repository
@@ -105,6 +110,10 @@ class BoardPostReadRepository(
 
     fun findById(id: Int): java.util.Optional<BoardPostReadEntity> =
         java.util.Optional.ofNullable(raw.findByWorldIdAndId(worldId.value, id))
+
+    /** Phase 4X-B — 작전에 연결된 회의실 글(id 내림차순). */
+    fun findByOperationIds(operationIds: Collection<Int>): List<BoardPostReadEntity> =
+        if (operationIds.isEmpty()) emptyList() else raw.findByWorldIdAndOperationIdInOrderByIdDesc(worldId.value, operationIds)
 }
 
 interface BoardCommentReadRawRepository : SpringDataRepository<BoardCommentReadEntity, Int> {

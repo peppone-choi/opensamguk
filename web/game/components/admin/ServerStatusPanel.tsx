@@ -52,7 +52,7 @@ export default function ServerStatusPanel() {
                 </p>
                 <label className="server-status__field">
                     바꿀 상태
-                    <select aria-label="바꿀 상태" value={choice} onChange={(e) => setChoice(e.target.value as ServerStatus)} disabled={busy}>
+                    <select aria-label="바꿀 상태" value={choice} onChange={(e) => setChoice(e.target.value as ServerStatus)} disabled={busy} title={busy ? '처리 중' : undefined}>
                         {SERVER_STATUSES.map((s) => (
                             <option key={s} value={s}>{s}</option>
                         ))}

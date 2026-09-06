@@ -65,6 +65,8 @@ class MonthlyPostUpdateHook(
     private val statisticSnapshotReader: StatisticSnapshotReader? = null,
     /** Phase 4X-A 가신·부곡 월 정산 — null 은 미배선(테스트 전용). 프로덕션은 DaemonLoopConfig 가 넘긴다. */
     private val retainerMonthly: opensamguk.engine.retainer.RetainerMonthlyService? = null,
+    /** Phase 4X-B 작전 월 정산 — 가신 정산 뒤. null 은 미배선(테스트 전용). */
+    private val operationMonthly: opensamguk.engine.operation.OperationMonthlyService? = null,
 ) : PostUpdateMonthly<RandUtil> {
 
     override fun run(monthlyRng: RandUtil) {
@@ -232,6 +234,8 @@ class MonthlyPostUpdateHook(
 
         // Phase 4X-A — 마지막 단계(spec v3 §5 F5): 행 0 이면 산출물 무접촉.
         retainerMonthly?.settle(world, recorder)
+        // Phase 4X-B — 가신 정산 뒤(spec §5). 행 0 이면 무접촉.
+        operationMonthly?.settle(world, recorder)
     }
 
     private fun checkWander(rng: RandUtil, year: Int, month: Int) {

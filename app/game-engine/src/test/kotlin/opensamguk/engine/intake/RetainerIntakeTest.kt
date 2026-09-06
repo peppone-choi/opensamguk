@@ -141,16 +141,24 @@ class RetainerIntakeTest {
         assertEquals(RetainerRules.REASON_NO_RETAINER, (h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = 999)) as RetainerActionResult).reason)
         assertTrue((h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = lieutenant.id)) as RetainerActionResult).ok)
         assertEquals(60 + RetainerRules.COMMANDER_MORALE_BONUS, world.getBugokById(bugok.id!!)!!.morale)
-        // 같은 배정을 반복해도 +6 이 또 붙지 않는다
+        // 같은 배정을 반복해도, 해제 → 재배정해도, A→B→A 로 바꿔도 +6 은 부곡 생애 한 번(S3)
         h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = lieutenant.id))
         assertEquals(66, world.getBugokById(bugok.id!!)!!.morale)
+        h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = null))
+        h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = lieutenant.id))
+        assertEquals(66, world.getBugokById(bugok.id!!)!!.morale)
+        val second = h.handlePledge(TurnDaemonCommand.RetainerPledge(generalId = 10, name = "부장병", relation = "lieutenant")) as RetainerActionResult
+        h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = second.id))
+        h.handleBugokAssignCommander(TurnDaemonCommand.BugokAssignCommander(generalId = 10, bugokId = bugok.id, retainerId = lieutenant.id))
+        assertEquals(66, world.getBugokById(bugok.id!!)!!.morale)
+        assertTrue(world.getBugokById(bugok.id!!)!!.commanderBonusApplied)
         // 부장 해제 → 부곡 commander NULL
         h.handleRelease(TurnDaemonCommand.RetainerRelease(generalId = 10, retainerId = lieutenant.id))
         assertNull(world.getBugokById(bugok.id!!)!!.commanderRetainerId)
         // 같은 틱 flush: 부곡은 created(이번 틱) 라 updated 에 없고, 가신은 created-then-removed 라 어디에도 없다
         val payload = flush(world, recorder)
         assertEquals(listOf(bugok.id), payload.createdBugoks.map { it.id }); assertTrue(payload.updatedBugoks.isEmpty())
-        assertEquals(listOf(staff.id), payload.createdRetainers.map { it.id }); assertTrue(payload.deletedRetainerIds.isEmpty())
+        assertEquals(listOf(staff.id, second.id), payload.createdRetainers.map { it.id }); assertTrue(payload.deletedRetainerIds.isEmpty())
     }
 
     @Test

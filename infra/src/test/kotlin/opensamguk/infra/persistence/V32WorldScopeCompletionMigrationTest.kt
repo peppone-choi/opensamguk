@@ -655,6 +655,8 @@ class V32WorldScopeCompletionMigrationTest {
             "board_post_read", // V53 — 기밀실 열람 기록(ADR-LITE-049 14)
             "general_retainers", // V55 — 가신(Phase 4X-A, ADR-LITE-017)
             "general_bugok", // V55 — 부곡(Phase 4X-A)
+            "operation", // V56 — 작전(Phase 4X-B)
+            "operation_unit", // V56 — 작전 참여 부대(Phase 4X-B)
             "command_inbox",
             "command_result",
             "command_outbox",

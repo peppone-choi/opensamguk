@@ -139,6 +139,7 @@ class BoardController(
                 kind = p.kind,
                 voteId = p.voteId,
                 vote = p.voteId?.let { voteSummary(it, myId, eligibleCount, ::personOf) },
+                operationId = p.operationId,
                 readers = if (secret) {
                     BoardReaders(
                         read = (readsByPost[p.id] ?: emptyList()).mapNotNull { personOf(it.generalId) },

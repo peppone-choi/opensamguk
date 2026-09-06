@@ -69,6 +69,8 @@ object TruncateContract {
         "board_post_read",
         "general_retainers",
         "general_bugok",
+        "operation",
+        "operation_unit",
         "vote_poll",
         "vote",
         "vote_comment",

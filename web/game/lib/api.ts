@@ -449,6 +449,11 @@ export const api = {
     myPage: <T>() => get<T>('/api/my-page'),
     // Phase 4X-A 가신·부곡(spec v3 §6) — 본인/같은 국가만.
     myRetinue: <T>() => get<T>('/api/my-retinue'),
+    // Phase 4X-B 작전(spec v4.1 §6) — 국가 내부 정보.
+    operations: <T>() => get<T>('/api/operations'),
+    // 도시 목록(`[city, nation, name, level]` 4-튜플, CityListController) — 작전 목표 select 원천.
+    cityList: <T>() => get<T>('/api/cities'),
+    operation: <T>(id: number) => get<T>(`/api/operations/${id}`),
     generalRetinue: <T>(generalId: number) => get<T>(`/api/generals/${generalId}/retinue`),
     myGenerals: <T>() => get<T>('/api/my-generals'),
     myCities: <T>() => get<T>('/api/my-cities'),

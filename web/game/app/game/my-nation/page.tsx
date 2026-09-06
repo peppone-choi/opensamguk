@@ -8,6 +8,7 @@ import PageHead from '../../../components/PageHead';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
+import OperationPanel from '../../../components/game/OperationPanel';
 import type { MyNationDetailResponse } from '../../../types/game';
 
 function signedNumber(value: number | null): string {
@@ -130,6 +131,8 @@ export default function MyNationPage() {
                         ))}
                     </dl>
                 </Panel>
+                {/* Phase 4X-B 08 「작전 진행」 — 원천 /api/operations, 명령은 인테이크. */}
+                <OperationPanel />
                 <Panel className="record-panel">
                     <SectionHeader title="속령일람" tone="info" sub={`${data.cities.length}`} />
                     {/* 수도는 [이름] + 정보색 강조(PHP cyan). */}

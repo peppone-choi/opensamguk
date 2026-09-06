@@ -1,4 +1,5 @@
 'use client';
+import { LogText } from '@opensamguk/ui';
 
 // ── 로그정보 (Admin7) — READ-ONLY 장수 상세 + 로그 패널 + 정렬/대상선택 ────────────────
 // Frozen historical UI reference (ADR-LITE-042; not current product authority): legacy hwe/_admin7.php. game-api `GET /api/admin/general-log?gen=&query_type=`
@@ -13,7 +14,7 @@
 // 패널(_admin7.php:122-171): 좌상 장수정보(generalInfo/2 → 본 read는 핵심 스칼라만 평면 노출 —
 // 전체 generalInfo HTML 패러티는 별도 상세 API 백로그, BE DTO 주석 참조), 그리고 4개 로그:
 //   개인 기록(actionLog) / 전투 기록(battleDetailLog) / 장수 열전(historyLog) / 전투 결과(battleResultLog).
-// 각 로그 text는 패러티 로그 원문(색/태그 마크업) → world-log/history와 동일 v-html(dangerouslySetInnerHTML).
+// 각 로그 text는 devsam 토큰 원문 — ADR-LITE-050: innerHTML 대신 공유 LogText 로 렌더한다.
 //
 // EMPTY-SAFE: generalList [] → 빈 select, detail null → 안내. 절대 크래시하지 않는다.
 
@@ -51,7 +52,7 @@ function LogPanel({ title, lines }: { title: string; lines: string[] }) {
                 ) : (
                     <div>
                         {lines.map((line, i) => (
-                            <div key={i} style={logRowStyle} dangerouslySetInnerHTML={{ __html: line }} />
+                            <div key={i} style={logRowStyle}><LogText text={line} /></div>
                         ))}
                     </div>
                 )}

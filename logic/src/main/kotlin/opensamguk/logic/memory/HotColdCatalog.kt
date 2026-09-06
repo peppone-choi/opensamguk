@@ -130,6 +130,22 @@ object HotColdCatalog {
             bound = AccessBound.HOT_ENTITY_SET,
         ),
         SnapshotAccess(
+            methodName = "loadOperations",
+            relation = "operation",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "id ASC",
+            bound = AccessBound.HOT_ENTITY_SET,
+        ),
+        SnapshotAccess(
+            methodName = "loadOperationUnits",
+            relation = "operation_unit",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "id ASC",
+            bound = AccessBound.HOT_ENTITY_SET,
+        ),
+        SnapshotAccess(
             methodName = "loadCities",
             relation = "city",
             temperature = DataTemperature.ALWAYS_HOT,

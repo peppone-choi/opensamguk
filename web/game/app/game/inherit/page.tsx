@@ -18,7 +18,7 @@
 //   즉시 전투 특기 초기화), 장수 소유자 확인, 능력치 초기화, 유산 포인트 변경 내역.
 
 import { useEffect, useRef, useState } from 'react';
-import { SectionHeader } from '@opensamguk/ui';
+import { SectionHeader, LogText } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
@@ -632,7 +632,7 @@ export default function InheritPage() {
                                 <span style={{ flexBasis: '14ch', flexShrink: 0, textAlign: 'right', color: 'var(--text-muted)', fontSize: 'var(--text-xs)', fontVariantNumeric: 'tabular-nums' }}>
                                     [{log.date}]
                                 </span>
-                                <span style={{ flex: 1 }} dangerouslySetInnerHTML={{ __html: log.text }} />
+                                <span style={{ flex: 1 }}><LogText text={log.text} /></span>
                             </div>
                         ))}
                     </div>

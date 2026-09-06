@@ -122,6 +122,16 @@ data class RetainerActionResult(
     val id: Int? = null,
 ) : TurnDaemonCommandResult()
 
+/** Phase 4X-B 작전 — 4 명령의 접힌 결과. 선언·참여 성공 시 엔진 선할당 `id`. */
+@Serializable
+data class OperationActionResult(
+    override val type: String,
+    override val ok: Boolean,
+    val generalId: Int,
+    val reason: String? = null,
+    val id: Int? = null,
+) : TurnDaemonCommandResult()
+
 /**
  * Collapsed boolean-ok group: dieOnPrestart / buildNationCandidate / instantRetreat /
  * vacation / setMySetting / dropItem / changePermission / kick / appoint.
@@ -633,6 +643,7 @@ private val TROOP_ACTION_TYPES = setOf("troopNew", "troopKick", "troopSetName")
 // 턴 루프 전체가 「unknown result type=boardRead」 로 멈춘다(2026-09-06 로컬 실측).
 private val BOARD_ACTION_TYPES = setOf("boardArticle", "boardComment", "boardRead")
 val RETAINER_ACTION_TYPES = setOf("retainerPledge", "retainerRelease", "retainerTask", "bugokForm", "bugokDisband", "bugokAssignCommander")
+val OPERATION_ACTION_TYPES = setOf("operationDeclare", "operationJoin", "operationLeave", "operationClose")
 
 // ── W6 REST mutation batch — collapsed intake type sets ──
 // sendMessage/deleteMessage 는 단일-타입 → 아래 `when`에서 직접 처리.
@@ -678,6 +689,9 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
         }
         if (type in RETAINER_ACTION_TYPES) {
             return RetainerActionResult.serializer()
+        }
+        if (type in OPERATION_ACTION_TYPES) {
+            return OperationActionResult.serializer()
         }
         // ── W6 REST mutation batch — collapsed intake selectors (keyed on `type` only) ──
         if (type in AUCTION_OPEN_TYPES) {

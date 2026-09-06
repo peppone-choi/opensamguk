@@ -1229,6 +1229,18 @@ class ChangeRecorder(
 
         nationPatches.remove(nationId)
         deletedNationIds.add(nationId)
+        // Phase 4X-B(spec P2·R2): 국가의 작전을 먼저 가지치기하고, 이번 틱에 그 작전을 단 회의실 글의 operation_id 를 비운다 —
+        // board 8d INSERT 가 작전 채널보다 앞이라 deferred FK 가 COMMIT 에서 터져 영구 재시도가 되는 경로를 막는다.
+        val prunedOperationIds = world.pruneOperationsOfNation(nationId)
+        if (prunedOperationIds.isNotEmpty()) {
+            for (i in boardPostInserts.indices) {
+                val cols = boardPostInserts[i].columns
+                val op = (cols["operation_id"] as? Number)?.toInt()
+                if (op != null && op in prunedOperationIds) {
+                    boardPostInserts[i] = BoardPostInsert(LinkedHashMap(cols).apply { put("operation_id", null) })
+                }
+            }
+        }
         return world.removeNation(nationId)
     }
 

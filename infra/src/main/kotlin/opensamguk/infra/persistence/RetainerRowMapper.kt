@@ -29,4 +29,5 @@ data class BugokRow(
     val fatigue: Int,
     val provisions: Int,
     val commanderRetainerId: Int?,
+    val commanderBonusApplied: Boolean = false,
 )

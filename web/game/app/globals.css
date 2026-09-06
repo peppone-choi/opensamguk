@@ -2391,3 +2391,34 @@ input:focus, select:focus, textarea:focus {
 .retinue__note { margin: 6px 12px 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
 .retinue__message { margin: 4px 0 0; font-size: 12px; color: var(--bronze); grid-column: 1 / -1; }
 .subject-target-retinue { text-decoration: none; }
+.subject-target-retinue--empty { border-style: dashed; color: var(--muted); }
+
+/* ── Phase 4X-B 작전 (08 국가 운영 「작전 진행」, /game/my-nation#operations) ─────────────────── */
+.ops { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; margin: 12px 0; }
+@media (max-width: 1231px) { .ops { grid-template-columns: 1fr; } }
+.ops__panel { padding: 0 0 10px; }
+.ops__list { list-style: none; margin: 0; padding: 0; }
+.ops__item { padding: 10px 12px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.ops__item[data-status="failed"] { border-left: 2px solid var(--rust); }
+.ops__item[data-status="achieved"] { border-left: 2px solid var(--bronze); }
+.ops__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; }
+.ops__title { font-size: 14px; color: var(--text); }
+.ops__kind, .ops__deadline { color: var(--muted); }
+.ops__fallback { margin: 0; font-size: 12px; color: var(--text-2); }
+.ops__progress { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; align-items: center; gap: 10px; }
+.ops__milestone-count { font-size: 13px; color: var(--bronze); }
+.ops__milestones { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; font-size: 11px; color: var(--muted); }
+.ops__milestones li[data-on="true"] { color: var(--moss-2); }
+.ops__units { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ops__unit { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.ops__unit-name { font-weight: 700; }
+.ops__unit-meta, .ops__unit-city { color: var(--muted); }
+.ops__actions { display: flex; align-items: center; gap: 8px; }
+.ops__role { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+.ops__role select, .ops__form select, .ops__form input { background: var(--inset); color: var(--text); border: 1px solid var(--line-2); border-radius: 0; padding: 3px 6px; font-size: 12px; }
+.ops__flow { margin: 8px 12px 0; font-size: 11px; color: var(--muted); }
+.ops__form { display: grid; gap: 8px; padding: 10px 12px; }
+.ops__form label { display: grid; gap: 2px; font-size: 11px; color: var(--muted); }
+.ops__message { margin: 4px 0 0; font-size: 12px; color: var(--bronze); grid-column: 1 / -1; }
+.subject-target-operation { text-decoration: none; }
+.subject-target-operation--empty { border-style: dashed; color: var(--muted); }

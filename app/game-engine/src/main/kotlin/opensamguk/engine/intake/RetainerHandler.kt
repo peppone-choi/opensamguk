@@ -147,10 +147,11 @@ class RetainerHandler(
         RetainerRules.assignCommanderDeny(bugokOwned, c.retainerId, retainerOwned, r?.relation)
             ?.let { return fail(type, c.generalId, it) }
         b!!
-        val newlyAssigned = c.retainerId != null && b.commanderRetainerId != c.retainerId
-        val morale = if (newlyAssigned) (b.morale + RetainerRules.COMMANDER_MORALE_BONUS).coerceAtMost(100) else b.morale
-        if (b.commanderRetainerId != c.retainerId || morale != b.morale) {
-            world.updateBugok(b.copy(commanderRetainerId = c.retainerId, morale = morale))
+        // 보너스는 부곡 생애에 한 번(S3): 첫 배정에만 +6, 해제→재배정·A→B→A 는 0.
+        val grantBonus = c.retainerId != null && b.commanderRetainerId != c.retainerId && !b.commanderBonusApplied
+        val morale = if (grantBonus) (b.morale + RetainerRules.COMMANDER_MORALE_BONUS).coerceAtMost(100) else b.morale
+        if (b.commanderRetainerId != c.retainerId || morale != b.morale || grantBonus) {
+            world.updateBugok(b.copy(commanderRetainerId = c.retainerId, morale = morale, commanderBonusApplied = b.commanderBonusApplied || grantBonus))
         }
         return RetainerActionResult(type, ok = true, generalId = c.generalId, id = bugokId)
     }

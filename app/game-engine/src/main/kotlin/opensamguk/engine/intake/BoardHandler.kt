@@ -40,10 +40,18 @@ class BoardHandler(
         }
 
         val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
-        return when (val out = BoardActions.addArticle(c.isSecret, c.title, c.text, permission, c.kind, c.voteId)) {
+        return when (val out = BoardActions.addArticle(c.isSecret, c.title, c.text, permission, c.kind, c.voteId, c.operationId)) {
             is BoardActions.ArticleOutcome.Denied ->
                 BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = out.reason)
             is BoardActions.ArticleOutcome.Insert -> {
+                // Phase 4X-B(N6): 연결 작전은 내 국가의 것이어야 한다(world 조회라 handler 소관). 같은 틱 선언도 허용(DEFERRABLE FK).
+                val linkedOperationId = out.operationId
+                if (linkedOperationId != null) {
+                    val op = world.getOperationById(linkedOperationId)
+                    if (op == null || op.nationId != me.nationId) {
+                        return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = "작전이 없습니다.")
+                    }
+                }
                 recorder.recordBoardPostInsert(
                     linkedMapOf(
                         "nation_id" to me.nationId,
@@ -54,6 +62,7 @@ class BoardHandler(
                         "content_html" to out.text,
                         "kind" to out.kind,
                         "vote_id" to out.voteId,
+                        "operation_id" to out.operationId,
                     ),
                 )
                 BoardActionResult("boardArticle", ok = true, generalId = c.generalId)

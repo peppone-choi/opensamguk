@@ -29,6 +29,7 @@ object BoardActions {
             val text: String,
             val kind: String = KIND_GENERAL,
             val voteId: Int? = null,
+            val operationId: Int? = null,
         ) : ArticleOutcome
     }
 
@@ -51,17 +52,20 @@ object BoardActions {
         permission: Int,
         kind: String = KIND_GENERAL,
         voteId: Int? = null,
+        operationId: Int? = null,
     ): ArticleOutcome {
         if (rawTitle == null || rawText == null) return ArticleOutcome.Denied("올바르지 않은 입력입니다.")   // :40-44
         if (kind !in KINDS) return ArticleOutcome.Denied("올바르지 않은 입력입니다.")
         if (kind == KIND_VOTE && voteId == null) return ArticleOutcome.Denied("올바르지 않은 입력입니다.")
+        // Phase 4X-B — 작전 연결은 kind=operation 에만(N6). 내 국가 작전인지는 BoardHandler(world 조회) 소관.
+        if (kind != KIND_OPERATION && operationId != null) return ArticleOutcome.Denied("올바르지 않은 입력입니다.")
         val title = rawTitle.trim()                                                                       // :46
         val text = rawText.trim()                                                                         // :47
         if (title.isEmpty() && text.isEmpty()) return ArticleOutcome.Denied("제목과 내용이 둘다 비어있습니다.")  // :49-53
         if (permission < 0) return ArticleOutcome.Denied("국가에 소속되어있지 않습니다.")                      // :56-60
         if (isSecret && permission < 2) return ArticleOutcome.Denied("권한이 부족합니다. 수뇌부가 아닙니다.")   // :61-66
         if (kind == KIND_NOTICE && permission < 2) return ArticleOutcome.Denied("권한이 부족합니다. 수뇌부가 아닙니다.")
-        return ArticleOutcome.Insert(isSecret, title, text, kind, if (kind == KIND_VOTE) voteId else null)
+        return ArticleOutcome.Insert(isSecret, title, text, kind, if (kind == KIND_VOTE) voteId else null, if (kind == KIND_OPERATION) operationId else null)
     }
 
     /** 기밀실 열람 기록 게이트 — 댓글 게이트와 같은 문자열(PHP checkSecretPermission). */

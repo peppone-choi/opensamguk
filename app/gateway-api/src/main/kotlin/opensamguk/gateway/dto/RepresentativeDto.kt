@@ -23,6 +23,6 @@ data class RepresentativeResponse(
 
 data class SetRepresentativeRequest(
     /** null 이면 대표 장수 해제. */
-    @field:NotNull
+    /** null = 대표 장수 해제(서비스가 처리). `@NotNull` 이면 해제 요청이 400 으로 막힌다(PR 비평 F1). */
     val generalId: Int?,
 )

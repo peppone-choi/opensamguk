@@ -157,6 +157,48 @@ data class Bugok(
     val fatigue: Int = 0,
     val provisions: Int = 0,
     val commanderRetainerId: Int? = null,
+    /** 부장 배정 사기 보너스는 생애 한 번(PR 비평 S3 — 해제→재배정 반복 방지). */
+    val commanderBonusApplied: Boolean = false,
+)
+
+/** Phase 4X-B 작전 이정표 4개(단조 — 한 번 true 면 유지). */
+data class OperationMilestones(
+    val departed: Boolean = false,
+    val arrived: Boolean = false,
+    val supplied: Boolean = false,
+    val objective: Boolean = false,
+)
+
+/** Phase 4X-B 작전 — 세계 상태(troop 미러). id 는 엔진 할당. spec v4.1 §3. */
+data class Operation(
+    val id: Int,
+    val nationId: Int,
+    val kind: String,
+    val targetCityId: Int,
+    val title: String,
+    val fallbackText: String? = null,
+    val declaredByGeneralId: Int? = null,
+    val declaredYear: Int,
+    val declaredMonth: Int,
+    val declaredPhase: Int,
+    val deadlineYear: Int,
+    val deadlineMonth: Int,
+    val deadlinePhase: Int = 1,
+    val status: String,
+    val milestones: OperationMilestones = OperationMilestones(),
+    val closedReason: String? = null,
+)
+
+data class OperationUnit(
+    val id: Int,
+    val operationId: Int,
+    val generalId: Int,
+    val bugokId: Int? = null,
+    val role: String,
+    val joinedCityId: Int,
+    val joinedYear: Int,
+    val joinedMonth: Int,
+    val joinedPhase: Int,
 )
 
 data class TurnDiplomacy(

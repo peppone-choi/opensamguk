@@ -19,6 +19,7 @@ import CityBasicCard from './CityBasicCard';
 import CharacterClaim from './CharacterClaim';
 import MessagePanel from './MessagePanel';
 import RetinueSlot from './RetinueSlot';
+import OperationBadge from './OperationBadge';
 import Toast from '../Toast';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
 import type { FrontInfoResponse } from '@/lib/types';
@@ -54,6 +55,10 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
   const myHref = useMemo(() => {
     const serverId = frontInfo?.global.serverId;
     return serverId ? resolveServerGamePath(undefined, serverId, '/game', 'my') : '/game/my';
+  }, [frontInfo?.global.serverId]);
+  const myNationHref = useMemo(() => {
+    const serverId = frontInfo?.global.serverId;
+    return serverId ? resolveServerGamePath(undefined, serverId, '/game', 'my-nation') : '/game/my-nation';
   }, [frontInfo?.global.serverId]);
   const onPossessionClaimed = useCallback(() => {
     setPossessionClaimed(true);
@@ -158,6 +163,8 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
             </div>
             {/* D3-17 휘하 슬롯(Phase 4X-A): 가신·부곡 수 배지 + 내 정보 #retinue 링크. 없으면 점선 + 사유 — 숨기지 않는다. */}
             <RetinueSlot generalId={generalId ?? null} href={myHref} />
+            {/* Phase 4X-B 작전 배지: 진행 중 작전 수·임박 기한 → 국가 운영 #operations. */}
+            <OperationBadge generalId={generalId ?? null} href={myNationHref} />
           </div>
           <div className="subject-secondary-grid">
             <CityBasicCard city={city} />

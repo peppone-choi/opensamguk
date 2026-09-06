@@ -19,8 +19,12 @@ import opensamguk.infra.persistence.BoardCommentInsertRow
 import opensamguk.infra.persistence.BoardPostInsertRow
 import opensamguk.infra.persistence.BoardReadInsertRow
 import opensamguk.infra.persistence.BugokRow
+import opensamguk.infra.persistence.OperationRow
+import opensamguk.infra.persistence.OperationUnitRow
 import opensamguk.infra.persistence.RetainerRow
 import opensamguk.engine.turn.Bugok
+import opensamguk.engine.turn.Operation
+import opensamguk.engine.turn.OperationUnit
 import opensamguk.engine.turn.Retainer
 import opensamguk.infra.persistence.CityLedgerV2UpsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
@@ -318,10 +322,23 @@ object DatabaseHooks {
         loyalty = r.loyalty, task = r.task,
     )
 
+    private fun toOperationRow(o: Operation) = OperationRow(
+        id = o.id, nationId = o.nationId, kind = o.kind, targetCityId = o.targetCityId, title = o.title, fallbackText = o.fallbackText,
+        declaredByGeneralId = o.declaredByGeneralId, declaredYear = o.declaredYear, declaredMonth = o.declaredMonth, declaredPhase = o.declaredPhase,
+        deadlineYear = o.deadlineYear, deadlineMonth = o.deadlineMonth, deadlinePhase = o.deadlinePhase, status = o.status,
+        departed = o.milestones.departed, arrived = o.milestones.arrived, supplied = o.milestones.supplied, objective = o.milestones.objective,
+        closedReason = o.closedReason,
+    )
+
+    private fun toOperationUnitRow(u: OperationUnit) = OperationUnitRow(
+        id = u.id, operationId = u.operationId, generalId = u.generalId, bugokId = u.bugokId, role = u.role,
+        joinedCityId = u.joinedCityId, joinedYear = u.joinedYear, joinedMonth = u.joinedMonth, joinedPhase = u.joinedPhase,
+    )
+
     private fun toBugokRow(b: Bugok) = BugokRow(
         id = b.id, masterGeneralId = b.masterGeneralId, name = b.name, troops = b.troops, crewTypeId = b.crewTypeId,
         training = b.training, morale = b.morale, fatigue = b.fatigue, provisions = b.provisions,
-        commanderRetainerId = b.commanderRetainerId,
+        commanderRetainerId = b.commanderRetainerId, commanderBonusApplied = b.commanderBonusApplied,
     )
 
     private fun toTroopRow(t: Troop): TroopRow = TroopRow(troopLeader = t.id, nation = t.nationId, name = t.name)
@@ -600,6 +617,8 @@ object DatabaseHooks {
         val createdTroopIds = dirty.createdTroops.map { it.id }.toSet()
         val createdRetainerIds = dirty.createdRetainers.map { it.id }.toSet()
         val createdBugokIds = dirty.createdBugoks.map { it.id }.toSet()
+        val createdOperationIds = dirty.createdOperations.map { it.id }.toSet()
+        val createdOperationUnitIds = dirty.createdOperationUnits.map { it.id }.toSet()
 
         // Dirty rows from the recorder (the lone dirty source), resolved to the world's post-state.
         val updatedGenerals = recorder.dirtyGeneralIds()
@@ -654,6 +673,8 @@ object DatabaseHooks {
                 // Phase 4X-A 고수위(spec v3 P1): 값이 있을 때만 싣는다 — 행 0 세계의 world_state.meta 바이트 동일.
                 (state.meta["maxRetainerId"] as? Number)?.let { put("max_retainer_id", it.toInt()) }
                 (state.meta["maxBugokId"] as? Number)?.let { put("max_bugok_id", it.toInt()) }
+                (state.meta["maxOperationId"] as? Number)?.let { put("max_operation_id", it.toInt()) }
+                (state.meta["maxOperationUnitId"] as? Number)?.let { put("max_operation_unit_id", it.toInt()) }
             },
             archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
@@ -698,6 +719,13 @@ object DatabaseHooks {
             createdBugoks = dirty.createdBugoks.map { toBugokRow(it) },
             updatedBugoks = dirty.bugoks.filter { it.id !in createdBugokIds }.map { toBugokRow(it) },
             deletedBugokIds = dirty.deletedBugoks,
+            // Phase 4X-B 작전 — world-lifecycle 채널(8h). 이번 틱 생성 행은 UPDATE 에서 제외.
+            createdOperations = dirty.createdOperations.map { toOperationRow(it) },
+            updatedOperations = dirty.operations.filter { it.id !in createdOperationIds }.map { toOperationRow(it) },
+            deletedOperationIds = dirty.deletedOperations,
+            createdOperationUnits = dirty.createdOperationUnits.map { toOperationUnitRow(it) },
+            updatedOperationUnits = dirty.operationUnits.filter { it.id !in createdOperationUnitIds }.map { toOperationUnitRow(it) },
+            deletedOperationUnitIds = dirty.deletedOperationUnits,
             logEntries = logEntries,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),
