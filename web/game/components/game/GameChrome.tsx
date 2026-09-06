@@ -60,6 +60,11 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
     const serverId = frontInfo?.global.serverId;
     return serverId ? resolveServerGamePath(undefined, serverId, '/game', 'my-nation') : '/game/my-nation';
   }, [frontInfo?.global.serverId]);
+  // Phase 4X-C: 09 「명령 봉인」 경로 — 명령 목록의 che_출병 예약 슬롯 「봉인」 링크.
+  const battlePlanHref = useMemo(() => {
+    const serverId = frontInfo?.global.serverId;
+    return serverId ? resolveServerGamePath(undefined, serverId, '/game', 'battle-plan') : '/game/battle-plan';
+  }, [frontInfo?.global.serverId]);
   const onPossessionClaimed = useCallback(() => {
     setPossessionClaimed(true);
     refresh();
@@ -147,6 +152,8 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
               onReserved={refresh}
               onToast={show}
               hero={{ picture: general.picture, imageServer: general.imageServer, name: general.name, nationColor: nation?.color ?? null }}
+              battlePlanHref={battlePlanHref}
+              autorunNotice={frontInfo.global.autorunUser != null}
             />
           )}
         </div>

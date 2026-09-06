@@ -1417,3 +1417,31 @@ export interface OperationRules {
 }
 export interface OperationsResponse { nationId: number; myPermission: number; myGeneralId: number; operations: Operation[]; rules: OperationRules }
 export interface OperationDetailResponse { operation: Operation; boardPosts: { id: number; title: string; authorName: string; createdAt: string }[] }
+
+// ── Phase 4X-C 출병 계획 봉인(공격자)·리플레이 — /api/my-battle-plans, /api/battles/replays (spec v4.1 §6) ──
+export interface BattleStance { value: string; label: string; description: string; enabled: boolean; reason: string | null }
+export interface BattlePlanRules {
+    stances: BattleStance[]; retreatLossPctMin: number; retreatLossPctMax: number; retreatMoraleMin: number; retreatMoraleMax: number; provisional: boolean;
+}
+export interface BattlePlan {
+    id: number; targetCityId: number; targetCityName: string; stance: string; stanceLabel: string;
+    retreatLossPct: number | null; retreatMoraleBelow: number | null;
+    sealed: boolean; sealedAt: string | null; sealedDate: OperationDate | null; resolved: boolean; version: number;
+}
+export interface MyBattlePlansResponse { generalId: number; plans: BattlePlan[]; rules: BattlePlanRules }
+export interface BattleReplaySummary {
+    id: number; year: number; month: number; phase: number;
+    attackerGeneralId: number | null; attackerName: string; attackerNationId: number;
+    defenderCityId: number; defenderCityName: string; defenderNationId: number;
+    result: 'retreat' | 'repelled' | 'defenders_down' | 'conquered' | string; resultLabel: string;
+    attackerDead: number; defenderDead: number; hasPlan: boolean; planStop: string | null; planStopLabel: string | null; operationId: number | null;
+}
+export interface BattleReplayPhase { i: number; defId: number; def: string; defKind: 'general' | 'city' | string; contact: boolean; deadA: number; deadD: number; crewA: number; hpD: number }
+export interface BattleReplayDetail {
+    summary: BattleReplaySummary;
+    battlePhases: BattleReplayPhase[];
+    settlement: { attackerCrewBefore: number; attackerCrewAfter: number; attackerDead: number; defenderDead: number; riceUsed: number; conquered: boolean };
+    plan: { stance: string | null; stanceLabel: string | null; retreatLossPct: number | null; retreatMoraleBelow: number | null; planStop: string | null; planStopLabel: string | null; stopAtPhase: number | null } | null;
+    seed: { warSeed: string; inputHash: string; replayHash: string; schemaVersion: number };
+    operationId: number | null;
+}

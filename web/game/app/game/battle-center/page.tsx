@@ -5,6 +5,7 @@ import { LogText, Panel, SectionHeader, type SectionTone } from '@opensamguk/ui'
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import GeneralBasicCard from '../../../components/game/GeneralBasicCard';
+import BattleReplayList from '../../../components/game/BattleReplayList';
 import { api, type GeneralLogType, type NationGeneralListResponse } from '../../../lib/api';
 import type { FrontGeneralInfo, FrontNationInfo } from '../../../lib/types';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
@@ -363,6 +364,8 @@ export default function BattleCenterPage() {
               </button>
             </div>
           ) : null}
+          {/* Phase 4X-C: 감찰부 리플레이 열 — 계획을 봉인한 출병만 기록된다(없으면 점선 「기록 없음(계획 미봉인)」). */}
+          {!error && <BattleReplayList hrefFor={(id) => `battle-replay/${id}`} />}
           {orderedGenerals.length > 0 && (
             <div className="bc-layout">
               <div className="bc-main">

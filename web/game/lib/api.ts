@@ -454,6 +454,10 @@ export const api = {
     // 도시 목록(`[city, nation, name, level]` 4-튜플, CityListController) — 작전 목표 select 원천.
     cityList: <T>() => get<T>('/api/cities'),
     operation: <T>(id: number) => get<T>(`/api/operations/${id}`),
+    // Phase 4X-C 출병 계획 봉인·리플레이(spec v4.1 §6) — 계획은 미소비만, 리플레이는 공격국·수비국·본인만.
+    myBattlePlans: <T>() => get<T>('/api/my-battle-plans'),
+    battleReplays: <T>(scope: 'nation' | 'mine' = 'nation') => get<T>(`/api/battles/replays?scope=${scope}`),
+    battleReplay: <T>(id: number) => get<T>(`/api/battles/replays/${id}`),
     generalRetinue: <T>(generalId: number) => get<T>(`/api/generals/${generalId}/retinue`),
     myGenerals: <T>() => get<T>('/api/my-generals'),
     myCities: <T>() => get<T>('/api/my-cities'),

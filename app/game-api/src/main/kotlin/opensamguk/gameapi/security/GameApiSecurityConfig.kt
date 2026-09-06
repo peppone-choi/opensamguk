@@ -44,6 +44,8 @@ class GameApiSecurityConfig {
                     .requestMatchers("/api/my-retinue", "/api/generals/*/retinue").authenticated()
                     // Phase 4X-B 작전 읽기 — 국가 내부 정보(타국 403).
                     .requestMatchers("/api/operations", "/api/operations/*").authenticated()
+                    // Phase 4X-C 출병 계획·리플레이 읽기 — 본인/공격국·수비국만(타국 403).
+                    .requestMatchers("/api/my-battle-plans", "/api/battles/replays", "/api/battles/replays/*").authenticated()
                     .requestMatchers("/api/general/claim").authenticated()
                     .requestMatchers("/api/generals/claimable").authenticated()
                     .requestMatchers("/api/select-pool", "/api/select-pool/**").authenticated()

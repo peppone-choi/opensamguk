@@ -33,6 +33,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS battle_plan_open_uk ON battle_plan (world_id, 
 CREATE INDEX IF NOT EXISTS battle_plan_general_idx ON battle_plan (world_id, general_id);
 
 -- 계획이 봉인된 전투만 기록한다(INSERT 전용). 국가·도시 id 열은 FK 없는 스냅샷(N4) — 같은 틱 국가 소멸에서 터지지 않는다.
+-- 해시 열은 VARCHAR(고정 길이 hex): game-api Hibernate `ddl-auto: validate` 가 CHAR(bpchar) 를 String 매핑과 다른 타입으로 거부한다.
 CREATE TABLE IF NOT EXISTS battle_replay (
     world_id                    INTEGER      NOT NULL,
     id                          INTEGER      NOT NULL,
@@ -47,9 +48,9 @@ CREATE TABLE IF NOT EXISTS battle_replay (
     year                        SMALLINT     NOT NULL,
     month                       SMALLINT     NOT NULL,
     phase                       SMALLINT     NOT NULL,
-    war_seed                    CHAR(32)     NOT NULL,
-    input_hash                  CHAR(64)     NOT NULL,
-    replay_hash                 CHAR(64)     NOT NULL,
+    war_seed                    VARCHAR(32)  NOT NULL,
+    input_hash                  VARCHAR(64)  NOT NULL,
+    replay_hash                 VARCHAR(64)  NOT NULL,
     schema_version              SMALLINT     NOT NULL DEFAULT 1,
     battle_phases_json          TEXT         NOT NULL,
     attacker_crew_before        INTEGER      NOT NULL,

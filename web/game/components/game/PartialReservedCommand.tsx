@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { formatYearMonthPhase, TURN_PHASE_LABELS } from '../../lib/format';
 import type { ReservedSlot } from '../../lib/types';
+import type { MyBattlePlansResponse } from '../../types/game';
 import CommandModal from '../CommandModal';
 
 const DEFAULT_VIEW_TURNS = 36;
@@ -36,6 +37,10 @@ export interface PartialReservedCommandProps {
     onToast: (msg: string, type: 'success' | 'error' | 'info') => void;
     /** 명령 모달 헤더 히어로(조작 대상 장수). */
     hero?: { picture?: string | null; imageServer?: number | null; name?: string | null; nationColor?: string | null } | null;
+    /** Phase 4X-C: 09 「명령 봉인」 화면 경로(서버 접두 포함) — 있으면 `che_출병` 예약 슬롯에 「봉인」 링크를 단다. */
+    battlePlanHref?: string;
+    /** 자율행동 창이 열려 있으면 「봉인됨」 칩을 점선으로 — AI 가 명령을 바꾼 턴에는 계획이 적용되지 않는다(spec R9·M5). */
+    autorunNotice?: boolean;
 }
 
 export default function PartialReservedCommand({
@@ -46,6 +51,8 @@ export default function PartialReservedCommand({
     onReserved,
     onToast,
     hero = null,
+    battlePlanHref,
+    autorunNotice = false,
 }: PartialReservedCommandProps) {
     const total = Math.max(DEFAULT_VIEW_TURNS, maxTurn && maxTurn > 0 ? maxTurn : DEFAULT_VIEW_TURNS);
     const [editTurnIdx, setEditTurnIdx] = useState<number | null>(null);
@@ -60,6 +67,17 @@ export default function PartialReservedCommand({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
+    // Phase 4X-C: 내 미소비 출병 계획(봉인 여부 칩). 실패는 조용히 빈 목록 — 링크 자체는 계획 없이도 뜬다.
+    const [sealedCities, setSealedCities] = useState<Set<number>>(() => new Set());
+    useEffect(() => {
+        if (!generalId || !battlePlanHref) return;
+        let alive = true;
+        Promise.resolve()
+            .then(() => api.myBattlePlans<MyBattlePlansResponse>())
+            .then((r) => { if (alive) setSealedCities(new Set(r.plans.filter((p) => p.sealed).map((p) => p.targetCityId))); })
+            .catch(() => { if (alive) setSealedCities(new Set()); });
+        return () => { alive = false; };
+    }, [generalId, battlePlanHref, refreshKey, externalRefreshKey]);
     // P0-02 — 개인 예약 링 당기기/미루기/반복 입력값.
     const [pushAmount, setPushAmount] = useState(1);
     const [repeatAmount, setRepeatAmount] = useState(1);
@@ -159,7 +177,23 @@ export default function PartialReservedCommand({
                                 <div className="rcp-ym">{slotYearMonthText(turnIdx)}</div>
                                 <div className="rcp-time os-num">{slotTimeFor(turnIdx)}</div>
                             </div>
-                            <div className="rcp-brief os-slot__cmd" title={slot?.brief ?? '휴식'}>{slot?.brief ?? '휴식'}</div>
+                            <div className="rcp-brief os-slot__cmd" title={slot?.brief ?? '휴식'}>
+                                {slot?.brief ?? '휴식'}
+                                {/* Phase 4X-C(S11·R14): che_출병 + 숫자 destCityID 인 예약에만 「봉인」 링크. 봉인된 미소비 계획이 있으면 「봉인됨」 칩. */}
+                                {battlePlanHref && slot?.action === 'che_출병' && typeof slot.arg.destCityID === 'number' && (
+                                    sealedCities.has(slot.arg.destCityID) ? (
+                                        <a
+                                            className={`os-chip os-chip--bronze rcp-seal rcp-seal--sealed${autorunNotice ? ' rcp-seal--autorun' : ''}`}
+                                            href={`${battlePlanHref}?city=${slot.arg.destCityID}`}
+                                            title={autorunNotice ? 'AI 가 명령을 바꾼 턴에는 적용되지 않습니다' : '봉인된 출병 계획 보기'}
+                                        >
+                                            봉인됨
+                                        </a>
+                                    ) : (
+                                        <a className="os-chip rcp-seal" href={`${battlePlanHref}?city=${slot.arg.destCityID}`} title="출병 계획 봉인(09)">봉인</a>
+                                    )
+                                )}
+                            </div>
                             <div className="rcp-edit">
                                 <button
                                     type="button"

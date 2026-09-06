@@ -93,6 +93,10 @@ object CommandWireMapper {
         "operationJoin",
         "operationLeave",
         "operationClose",
+        // Phase 4X-C 출병 계획 봉인 인테이크.
+        "battlePlanSave",
+        "battlePlanSeal",
+        "battlePlanDelete",
         // F4 Wave 투표 — 설문조사(개설/투표/댓글/마감) 인테이크.
         "newVote",
         "voteCast",
@@ -371,6 +375,13 @@ object CommandWireMapper {
             )
             "operationLeave" -> TurnDaemonCommand.OperationLeave(requestId = requestId, generalId = generalId, operationId = args.int("operationId"))
             "operationClose" -> TurnDaemonCommand.OperationClose(requestId = requestId, generalId = generalId, operationId = args.int("operationId"))
+            // Phase 4X-C 출병 계획 — 인자는 nullable, 엔진 ③ 입력 게이트가 판정.
+            "battlePlanSave" -> TurnDaemonCommand.BattlePlanSave(
+                requestId = requestId, generalId = generalId, targetCityId = args.int("targetCityId"), stance = args.str("stance"),
+                retreatLossPct = args.int("retreatLossPct"), retreatMoraleBelow = args.int("retreatMoraleBelow"),
+            )
+            "battlePlanSeal" -> TurnDaemonCommand.BattlePlanSeal(requestId = requestId, generalId = generalId, planId = args.int("planId"))
+            "battlePlanDelete" -> TurnDaemonCommand.BattlePlanDelete(requestId = requestId, generalId = generalId, planId = args.int("planId"))
             // ── F4 Wave 투표 — 설문조사(개설/투표/댓글/마감). multipleOptions/endDate/keepOldVote는
             //    nullable 유지(`?: …` 없음)로 PHP `?? 1`/`?? null`/`?? false` 기본값·부재를 엔진이
             //    적용하게 한다. title/text는 빈 문자열 fallback(`?: ""`)으로 PHP 필수 검증을 태운다. ──

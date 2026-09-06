@@ -73,9 +73,9 @@
 | `attacker_general_id INTEGER NULL` — `ON DELETE SET NULL (attacker_general_id)`, `attacker_name VARCHAR(50) NOT NULL`, `attacker_nation_id INTEGER NOT NULL`(FK 없음) | 스냅샷(장수가 사라져도 기록 유지). 같은 턴 사망은 `markGeneralDeleted` 가 pending INSERT 의 id 를 NULL 로(F3) |
 | `defender_city_id INTEGER NOT NULL`, `defender_city_name VARCHAR(50) NOT NULL`, `defender_nation_id INTEGER NOT NULL` | FK 없는 스냅샷(N4) — 도시가 사라지는 경로는 없지만 국가는 사라진다 |
 | `year`, `month`, `phase SMALLINT NOT NULL` | 전투 순 |
-| `war_seed CHAR(32) NOT NULL` | `WarSeed.build(...)` 의 hex — 재현 입력(전투 키 아님, S6) |
-| `input_hash CHAR(64) NOT NULL` | 정규화 입력(공격자 상태·병종·tech·수비자 후보·도시·계획·year/month)의 SHA-256 |
-| `replay_hash CHAR(64) NOT NULL` | `battle_phases_json` + 정산의 SHA-256 — 결정성 게이트의 대상 |
+| `war_seed VARCHAR(32) NOT NULL`(구현 정정: CHAR 는 game-api `validate` 가 bpchar 로 거부) | `WarSeed.build(...)` 의 hex — 재현 입력(전투 키 아님, S6) |
+| `input_hash VARCHAR(64) NOT NULL` | 정규화 입력(공격자 상태·병종·tech·수비자 후보·도시·계획·year/month)의 SHA-256 |
+| `replay_hash VARCHAR(64) NOT NULL` | `battle_phases_json` + 정산의 SHA-256 — 결정성 게이트의 대상 |
 | `schema_version SMALLINT NOT NULL DEFAULT 1` | 페이즈 JSON 스키마 |
 | `battle_phases_json TEXT NOT NULL` | 페이즈 배열(§5) — **저장 바이트 그대로 해시**하려고 TEXT(jsonb 는 정규화로 바이트가 바뀐다, S7). 조회 필터 없음 |
 | `attacker_crew_before/after`, `attacker_dead`, `defender_dead`, `rice_used INTEGER NOT NULL` | 정산 |
