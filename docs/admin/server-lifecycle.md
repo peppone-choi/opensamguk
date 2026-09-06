@@ -30,6 +30,13 @@ Gateway `/admin`의 `서버 제어`에서 서버 ID, 이름, 시나리오와 화
 
 생성 뒤에는 Gateway 로비 노출, game-api와 game-engine health, 시드 행 존재, turn clock 전진을 확인합니다.
 
+생성 성공 후 Gateway에만 오래된 CREATE transition이 남았다면 일반 생성 요청을 재전송하지
+않습니다. [냉간 복구 문서의 관리 메타데이터 조정 절](./game-server-recovery.md#이미-충족된-create-관리-메타데이터-조정)에
+따라 runtime/env/control registry를 먼저 대조하고, 24시간 이상·만료 lease·Gateway DB 전체 정의
+일치·deployer의 정확한 operation 404가 모두 증명된 경우에만 ADMIN 조정 endpoint를 사용합니다.
+이 조정은 transition 메타데이터 한 행만 삭제하며 생성, reset, 계정/게임 데이터 수정을 실행하지
+않습니다.
+
 ## 시나리오 시드와 reset
 
 로컬 fresh DB에서는 `ScenarioSeedRunner`가 외부 `SCENARIO_DIR`을 먼저 보고 없으면 classpath 시나리오를

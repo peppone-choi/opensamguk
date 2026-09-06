@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.DataAccessException
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.jdbc.core.ConnectionCallback
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.stereotype.Component
@@ -201,6 +202,39 @@ class ServerRegistry(
         }
     }
 
+    fun claimSatisfiedCreate(
+        operationId: String,
+        serverId: String,
+        ownerToken: String,
+    ): ServerRegistryTransition? {
+        require(operationIdRegex.matches(operationId)) { "Invalid server registry operation id" }
+        require(isPublicServerId(serverId)) { "Invalid canonical server id" }
+        return transactions.execute {
+            val existing = findTransitionByOperationId(operationId, forUpdate = true)
+                ?: return@execute null
+            val databaseNow = databaseNow()
+            val claimed = jdbc.update(
+                """
+                UPDATE game_server_registry_transition
+                   SET owner_token = ?, lease_until = ?
+                 WHERE operation_id = ? AND server_id = ? AND action = 'CREATE'
+                   AND dispatched = TRUE AND remote_applied = FALSE
+                   AND lease_until <= CURRENT_TIMESTAMP
+                   AND created_at <= ?
+                """.trimIndent(),
+                ownerToken,
+                Timestamp.from(databaseNow.toInstant().plusSeconds(TRANSITION_LEASE_SECONDS)),
+                operationId,
+                serverId,
+                Timestamp.from(databaseNow.toInstant().minusSeconds(SATISFIED_CREATE_MIN_AGE_SECONDS)),
+            )
+            if (claimed != 1) {
+                throw ServerRegistryTransitionConflict("Satisfied CREATE reconciliation is not eligible for $serverId")
+            }
+            existing.copy(ownerToken = ownerToken)
+        }
+    }
+
     fun markDispatched(serverId: String, action: ServerRegistryTransitionAction, ownerToken: String) {
         val updated = jdbc.update(
             """
@@ -267,6 +301,82 @@ class ServerRegistry(
                 }
             }
             jdbc.update("DELETE FROM game_server_registry_transition WHERE server_id = ?", serverId)
+        }
+    }
+
+    fun completeSatisfiedCreateReconciliation(transition: ServerRegistryTransition) {
+        transactions.executeWithoutResult {
+            val current = findTransitionByOperationId(transition.operationId, forUpdate = true)
+                ?: throw ServerRegistryTransitionConflict(
+                    "Satisfied CREATE reconciliation transition is missing for ${transition.server.id}",
+                )
+            val databaseNow = databaseNow()
+            val cutoff = Timestamp.from(databaseNow.toInstant().minusSeconds(SATISFIED_CREATE_MIN_AGE_SECONDS))
+            val eligible = jdbc.queryForObject(
+                """
+                SELECT COUNT(*)
+                  FROM game_server_registry_transition
+                 WHERE operation_id = ? AND server_id = ? AND action = 'CREATE'
+                   AND dispatched = TRUE AND remote_applied = FALSE
+                   AND owner_token = ?
+                   AND lease_until > CURRENT_TIMESTAMP
+                   AND created_at <= ?
+                """.trimIndent(),
+                Int::class.java,
+                transition.operationId,
+                transition.server.id,
+                transition.ownerToken,
+                cutoff,
+            ) == 1
+            if (!eligible || current.action != ServerRegistryTransitionAction.CREATE ||
+                !current.dispatched || current.remoteApplied ||
+                current.ownerToken != transition.ownerToken ||
+                current.operationId != transition.operationId ||
+                current.requestFingerprint != transition.requestFingerprint ||
+                current.server != transition.server
+            ) {
+                throw ServerRegistryTransitionConflict(
+                    "Satisfied CREATE reconciliation changed before completion for ${transition.server.id}",
+                )
+            }
+            val registered = findRegisteredServer(transition.server.id, forUpdate = true)
+            if (registered != transition.server) {
+                throw ServerRegistryTransitionConflict(
+                    "Registered server does not match satisfied CREATE metadata for ${transition.server.id}",
+                )
+            }
+            val wallClockExpression = databaseWallClockExpression()
+            val deleted = jdbc.update(
+                """
+                DELETE FROM game_server_registry_transition
+                 WHERE operation_id = ? AND server_id = ? AND action = 'CREATE'
+                   AND display_name = ? AND game_api_url = ? AND game_engine_url = ?
+                   AND deploy_project = ?
+                   AND generation IS NOT DISTINCT FROM ?
+                   AND scenario_code IS NOT DISTINCT FROM ?
+                   AND request_fingerprint = ?
+                   AND dispatched = TRUE AND remote_applied = FALSE
+                   AND owner_token = ?
+                   AND lease_until > $wallClockExpression
+                   AND created_at <= ?
+                """.trimIndent(),
+                transition.operationId,
+                transition.server.id,
+                transition.server.name,
+                transition.server.gameApiUrl,
+                transition.server.gameEngineUrl,
+                transition.server.deployProject,
+                transition.server.generation,
+                transition.server.scenarioCode,
+                transition.requestFingerprint,
+                transition.ownerToken,
+                cutoff,
+            )
+            if (deleted != 1) {
+                throw ServerRegistryTransitionConflict(
+                    "Satisfied CREATE reconciliation changed before deletion for ${transition.server.id}",
+                )
+            }
         }
     }
 
@@ -367,12 +477,46 @@ class ServerRegistry(
             value,
         ).firstOrNull()
 
+    private fun findRegisteredServer(serverId: String, forUpdate: Boolean = false): ServerDef? =
+        jdbc.query(
+            """
+            SELECT server_id, display_name, game_api_url, game_engine_url, deploy_project,
+                   generation, scenario_code
+              FROM game_server
+             WHERE server_id = ?${if (forUpdate) " FOR UPDATE" else ""}
+            """.trimIndent(),
+            { rs, _ ->
+                ServerDef(
+                    id = rs.getString("server_id"),
+                    name = rs.getString("display_name"),
+                    gameApiUrl = rs.getString("game_api_url"),
+                    gameEngineUrl = rs.getString("game_engine_url"),
+                    deployProject = rs.getString("deploy_project"),
+                    generation = rs.getObject("generation", Integer::class.java)?.toInt(),
+                    scenarioCode = rs.getString("scenario_code"),
+                )
+            },
+            serverId,
+        ).firstOrNull()
+
     private fun leaseUntil(): Timestamp {
-        val databaseNow = requireNotNull(
-            jdbc.queryForObject("SELECT CURRENT_TIMESTAMP", Timestamp::class.java),
-        ) { "Database did not return CURRENT_TIMESTAMP" }
-        return Timestamp.from(databaseNow.toInstant().plusSeconds(300))
+        return Timestamp.from(databaseNow().toInstant().plusSeconds(TRANSITION_LEASE_SECONDS))
     }
+
+    private fun databaseNow(): Timestamp = requireNotNull(
+        jdbc.queryForObject("SELECT CURRENT_TIMESTAMP", Timestamp::class.java),
+    ) { "Database did not return CURRENT_TIMESTAMP" }
+
+    private fun databaseWallClockExpression(): String = requireNotNull(
+        jdbc.execute(ConnectionCallback { connection ->
+            if (connection.metaData.databaseProductName == "PostgreSQL") {
+                // PostgreSQL CURRENT_TIMESTAMP is fixed at transaction start, including after a lock wait.
+                "clock_timestamp()"
+            } else {
+                "CURRENT_TIMESTAMP"
+            }
+        }),
+    ) { "Database did not provide metadata for its wall-clock expression" }
 
     private fun newOperationId(): String = UUID.randomUUID().toString().replace("-", "")
 
@@ -491,6 +635,8 @@ class ServerRegistry(
             .firstOrNull { it.isNotBlank() }
 
     private companion object {
+        const val TRANSITION_LEASE_SECONDS = 300L
+        const val SATISFIED_CREATE_MIN_AGE_SECONDS = 24L * 60 * 60
         val PUBLIC_SERVER_ID = Regex("^[a-z0-9]{1,48}$")
 
         val RESERVED_SERVER_IDS = setOf(

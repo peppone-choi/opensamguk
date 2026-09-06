@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
+import java.time.Instant
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -108,6 +110,67 @@ class ServerRegistryTest {
         assertTrue(parsed.all().isEmpty())
     }
 
+    @Test
+    fun `satisfied CREATE completion deletes only the exact transition and leaves registry metadata unchanged`() {
+        val fixture = fixture("")
+        val server = server("live1", generation = 2, scenarioCode = "scenario_1010")
+        val other = server("live2", generation = null, scenarioCode = null)
+        fixture.registry.register(server)
+        fixture.registry.register(other)
+        val before = fixture.registry.all()
+        insertTransition(fixture.jdbc, server, OPERATION_ID, createdAt = Instant.now().minusSeconds(25 * 60 * 60))
+        insertTransition(fixture.jdbc, other, OTHER_OPERATION_ID, createdAt = Instant.now().minusSeconds(25 * 60 * 60))
+
+        val claimed = requireNotNull(fixture.registry.claimSatisfiedCreate(OPERATION_ID, "live1", OWNER))
+        fixture.registry.completeSatisfiedCreateReconciliation(claimed)
+
+        assertEquals(before, fixture.registry.all())
+        assertEquals(
+            listOf(OTHER_OPERATION_ID),
+            fixture.jdbc.queryForList(
+                "SELECT operation_id FROM game_server_registry_transition ORDER BY operation_id",
+                String::class.java,
+            ).map(String::trim),
+        )
+    }
+
+    @Test
+    fun `satisfied CREATE completion rechecks owner lease and nullable definition equality`() {
+        data class Mutation(val sql: String)
+        val mutations = listOf(
+            Mutation("UPDATE game_server_registry_transition SET owner_token = 'other-owner' WHERE operation_id = '$OPERATION_ID'"),
+            Mutation("UPDATE game_server_registry_transition SET lease_until = CURRENT_TIMESTAMP WHERE operation_id = '$OPERATION_ID'"),
+            Mutation("UPDATE game_server_registry_transition SET request_fingerprint = '${"b".repeat(64)}' WHERE operation_id = '$OPERATION_ID'"),
+            Mutation("UPDATE game_server_registry_transition SET dispatched = FALSE WHERE operation_id = '$OPERATION_ID'"),
+            Mutation("UPDATE game_server_registry_transition SET remote_applied = TRUE WHERE operation_id = '$OPERATION_ID'"),
+            Mutation("UPDATE game_server_registry_transition SET action = 'RESET' WHERE operation_id = '$OPERATION_ID'"),
+            Mutation("UPDATE game_server SET generation = NULL WHERE server_id = 'live1'"),
+            Mutation("UPDATE game_server SET scenario_code = NULL WHERE server_id = 'live1'"),
+        )
+
+        mutations.forEach { mutation ->
+            val fixture = fixture("")
+            val server = server("live1", generation = 2, scenarioCode = "scenario_1010")
+            fixture.registry.register(server)
+            insertTransition(fixture.jdbc, server, OPERATION_ID, createdAt = Instant.now().minusSeconds(25 * 60 * 60))
+            val claimed = requireNotNull(fixture.registry.claimSatisfiedCreate(OPERATION_ID, "live1", OWNER))
+            fixture.jdbc.update(mutation.sql)
+
+            assertFailsWith<ServerRegistryTransitionConflict> {
+                fixture.registry.completeSatisfiedCreateReconciliation(claimed)
+            }
+            assertEquals(
+                1,
+                fixture.jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM game_server_registry_transition WHERE operation_id = ?",
+                    Int::class.java,
+                    OPERATION_ID,
+                ),
+                mutation.sql,
+            )
+        }
+    }
+
     private fun registry(json: String): ServerRegistry = fixture(json).registry
 
     private fun fixture(
@@ -134,6 +197,27 @@ class ServerRegistryTest {
             )
             """.trimIndent(),
         )
+        jdbc.execute(
+            """
+            CREATE TABLE game_server_registry_transition (
+                server_id VARCHAR(48) PRIMARY KEY,
+                action VARCHAR(8) NOT NULL,
+                display_name VARCHAR(100) NOT NULL,
+                game_api_url VARCHAR(255) NOT NULL,
+                game_engine_url VARCHAR(255) NOT NULL,
+                deploy_project VARCHAR(100) NOT NULL,
+                generation INTEGER,
+                scenario_code VARCHAR(100),
+                operation_id CHAR(32) NOT NULL UNIQUE,
+                request_fingerprint CHAR(64) NOT NULL,
+                dispatched BOOLEAN NOT NULL DEFAULT FALSE,
+                remote_applied BOOLEAN NOT NULL DEFAULT FALSE,
+                owner_token VARCHAR(36) NOT NULL,
+                lease_until TIMESTAMP WITH TIME ZONE NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """.trimIndent(),
+        )
         beforeRegistry(jdbc)
         val registry = ServerRegistry(json, mapper, jdbc)
         return RegistryFixture(registry, jdbc)
@@ -154,8 +238,52 @@ class ServerRegistryTest {
         )
     }
 
+    private fun server(id: String, generation: Int?, scenarioCode: String?) =
+        ServerDef(
+            id = id,
+            name = "Server $id",
+            gameApiUrl = "http://s$id-game-api:8081",
+            gameEngineUrl = "http://s$id-game-engine:8082",
+            deployProject = "opensamguk-s$id",
+            generation = generation,
+            scenarioCode = scenarioCode,
+        )
+
+    private fun insertTransition(
+        jdbc: JdbcTemplate,
+        server: ServerDef,
+        operationId: String,
+        createdAt: Instant,
+    ) {
+        jdbc.update(
+            """
+            INSERT INTO game_server_registry_transition (
+                server_id, action, display_name, game_api_url, game_engine_url, deploy_project,
+                generation, scenario_code, operation_id, request_fingerprint,
+                dispatched, remote_applied, owner_token, lease_until, created_at
+            ) VALUES (?, 'CREATE', ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE, 'old-owner', CURRENT_TIMESTAMP, ?)
+            """.trimIndent(),
+            server.id,
+            server.name,
+            server.gameApiUrl,
+            server.gameEngineUrl,
+            server.deployProject,
+            server.generation,
+            server.scenarioCode,
+            operationId,
+            "a".repeat(64),
+            java.sql.Timestamp.from(createdAt),
+        )
+    }
+
     private data class RegistryFixture(
         val registry: ServerRegistry,
         val jdbc: JdbcTemplate,
     )
+
+    companion object {
+        private const val OPERATION_ID = "0123456789abcdef0123456789abcdef"
+        private const val OTHER_OPERATION_ID = "1123456789abcdef0123456789abcdef"
+        private const val OWNER = "reconciliation-owner"
+    }
 }
