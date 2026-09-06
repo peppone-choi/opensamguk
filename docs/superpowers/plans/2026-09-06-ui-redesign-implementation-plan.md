@@ -325,11 +325,12 @@
 
 **Spec:** 로드맵 「휘하 인물과 부곡」 + `docs/superpowers/plans/2026-07-17-v2-ticket-backlog/`의 OPENSAM-48·61 항목.
 
-- [ ] 도메인: `retinue_person`(general_id·name·role 막료/부장/문객·loyalty·task·assigned_buqu_id), `buqu`(general_id·troops·formation·training·morale·fatigue·provisions·commander_retinue_id). Flyway `V52__retinue_and_buqu.sql`. 국가군과 분리(로드맵).
-- [ ] 명령(인테이크 → 엔진 핸들러 → flush): 휘하 등용/해임, 임무 부여(내정 보좌·정찰·훈련), 부곡 편성/해산(장수 병력 일부를 부곡으로, 총 병력 불변), 부장 배정. 월간 틱: 충성·피로·군량 정산(수치 규칙은 spec에 명시, 기존 골든 경로 비접촉).
-- [ ] read API `/api/my-retinue`, `/api/general/{id}/retinue`(권한 내). AI: NPC는 기본 정책(등용 없음)으로 결정성 유지 — AI 확장은 spec에서 UNKNOWN으로 남긴다.
-- [ ] UI: 07 아트보드 휘하 목록(카드 44×62)·부곡 표, 조작 대상 「휘하」 슬롯(D3-17) 실제 연결, 명령 모달 대상=휘하.
-- [ ] 게이트: logic/engine/infra 테스트 + 골든 불변 + game vitest.
+- [x] Spec v1 → 교차 비평(fix-required 6·should-fix 10, `reviews/2026-09-06-retinue-spec-critique.md`) → **Spec v2**(`specs/2026-09-06-retinue-buqu-vertical-slice.md`, ADR-LITE-017 정합·메모리 세계 상태·적색 프로브) — 통합 재판정 대기.
+- [ ] 도메인(ADR-LITE-017): `general_retainers`(master_general_id·origin EXISTING|RECRUITED·general_id·name·relation 막료/부장/문객·role·has_own_bugok·release_policy·loyalty·task), `general_bugok`(master_general_id·troops·crew_type_id·training·morale·fatigue·provisions·commander_retainer_id). Flyway **`V55__general_retainers_and_bugok.sql`**(V56 = 4X-B, V57 = 4X-C 예약). 국가군과 분리(로드맵). 이 절편은 RECRUITED 만.
+- [ ] 명령(인테이크 → 엔진 핸들러 → 메모리 세계 상태 → flush 8e): 가신서약/해제/임무(`retainerPledge/Release/Task`), 부곡 편성/해산(총 병력 불변), 부장 배정. 월간 정산은 `MonthlyPostUpdateHook` 마지막 단계(수치 규칙은 spec §5, 기존 골든 경로 비접촉).
+- [ ] read API `/api/my-retinue`, `/api/generals/{id}/retinue`(`GameApiSecurityConfig` authenticated, 401/200/403·재야 규칙). NPC 는 서약 없음(결정성).
+- [ ] UI: 07 아트보드 휘하 목록(card-44 기본 초상)·부곡 표, 조작 대상 「휘하」 슬롯(D3-17) 실제 연결, 명령 모달 대상=휘하, 「잠정」 칩.
+- [ ] 게이트: logic/engine/infra/game-api 테스트 + **적색 프로브**(행 0 산출물 동일 · 행 1 상이) + game vitest.
 
 ### 4X-B 작전 (PR `ui-p4xb-operation`) · 아트보드 08·14
 
