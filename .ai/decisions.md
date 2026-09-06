@@ -753,3 +753,32 @@
   자체를 잃을 위험이 있어 **본문은 건드리지 않고 상단 배너로 「그 경로는 역사 기록」임을
   명시**했다. 배너를 지우려면 문장 단위로 하나씩 옮겨 써야 하고, 그건 별도 작업이다.
 - Approved by: (pending — 사용자가 2026-08-24 에 복원 범위를 직접 지시했으나 PR 머지 승인 전)
+
+## ADR-LITE-048 RTK14 장수 초상을 소유자 책임으로 제품에 쓴다 (2026-09-06)
+
+- Date: 2026-09-06
+- Status: approved (사용자 명시 결정, 코드 반영 PR 대기)
+- Decision: `opensamguk-images` 의 RTK14 파생 초상(`portraits/rtk14/serving/original|portrait|icon`)을
+  오픈삼국 제품(웹 UI·CDN 서빙)에서 사용한다. 사용에 따르는 법적 책임은 저장소 소유자(peppone-choi)가
+  진다. 저장소 정책은 이렇게 바뀐다.
+  1. `opensamguk-images` 의 라이선스 경계 검사는 **유지**하되 `portraits` 항목을 `third-party` 에서
+     `owner-accepted`(notice + accepted_by + accepted_on 필수) 로 재분류한다. 검사를 없애지 않는 이유는
+     다른 제3자 자산이 섞여 들어오는 것을 계속 걸러야 하기 때문이다.
+  2. `CLAUDE.md` 의 「Koei 자산 미커밋」 규칙에 RTK14 초상 예외를 명시한다. 이 저장소에는 여전히
+     초상 파일을 커밋하지 않고 CDN 경로만 참조한다.
+  3. `web/gateway`·`web/game` 의 `portrait.ts` 에 3종 변형 헬퍼(`portraitVariantUrl`, `rtk14OfficerId`,
+     `RTK14_SERVING_CDN`)를 추가한다. 기존 `portraitUrl` 은 `portrait` 변형과 동일하게 유지한다.
+- Context: 2026-09-06 UI 리디자인 초안(디자인 캔버스 `35136bc0`)이 초상 3종 사용 규칙을 세웠다 —
+  원본은 히어로(장수 상세·리플레이 對)에 그라데이션 마스크로, 148×210 은 카드에, 96 아이콘은
+  피드·표·댓글·표결자 스택에. 사용자가 「원본은 라이선스 무시, 내가 책임진다」 → 「배포 쪽도
+  바꾼다」 → 경계 검사는 살리고 재분류하는 안에 「좋아」로 순서대로 승인했다. 프로덕션은 이미
+  `serving/portrait` 를 CDN 에서 불러오고 있었으므로, 이 결정으로 바뀌는 것은 그림이 아니라 정책
+  기록과 3종 파이프라인 노출이다.
+- Alternatives: (1) 경계 검사 자체를 삭제 — 기각, 이후 다른 제3자 자산 유입을 못 거른다.
+  (2) 초상을 이 저장소에 직접 커밋 — 기각, CDN 단일 출처 불변식과 이미지 정본(`opensamguk-images`)
+  규칙을 깬다. (3) 현행 148×210 한 종만 계속 사용 — 기각, 시안의 히어로·아이콘 용법을 못 만든다.
+- Consequences: 공개 여부(README 「Koei-IP 검토 전까지 비공개」)는 이 결정으로 바뀌지 않는다 — 별도
+  결정이다. 권리자 요청 시 제거 경로는 `opensamguk-images` 의 `portraits/LICENSE-NOTICE.md` 에
+  남긴다. `serving/original` 은 633×900 JPEG(장당 50~140KB)이라 히어로 한 자리에만 쓰고 목록·표에는
+  쓰지 않는다.
+- Approved by: 사용자(peppone-choi) 2026-09-06 대화 중 명시 승인. PR 머지 승인은 별도.

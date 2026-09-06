@@ -6,8 +6,11 @@ import {
     DEFAULT_PORTRAIT,
     PORTRAIT_CDN,
     RTK14_PORTRAIT_CDN,
+    RTK14_SERVING_CDN,
     onPortraitError,
     portraitUrl,
+    portraitVariantUrl,
+    rtk14OfficerId,
 } from '@/lib/portrait';
 
 describe('game portrait helper', () => {
@@ -81,5 +84,40 @@ describe('game portrait helper', () => {
         // 이미 기본 초상 — 두 번째 error는 src를 다시 바꾸지 않는다(무한 루프 방지).
         fireEvent.error(portrait);
         expect(portrait.src).toBe(DEFAULT_PORTRAIT);
+    });
+    // ADR-LITE-048: RTK14 초상 3종(original/portrait/icon)을 제품에서 쓴다.
+    it.each(['10001', '10001.png', '  11000  '])('resolves stable RTK14 officer id from %j', (picture) => {
+        expect(rtk14OfficerId(picture)).toBe(Number(picture.trim().replace(/\.png$/, '')));
+    });
+
+    it.each(['1001', '10000', '11001', 'a1b2c3d4.png', '', null, undefined])(
+        'returns null for a non-RTK14 picture %j',
+        (picture) => {
+            expect(rtk14OfficerId(picture)).toBeNull();
+        },
+    );
+
+    it('serves the three RTK14 variants from the serving directories', () => {
+        expect(portraitVariantUrl('10001', 0, 'original')).toBe(`${RTK14_SERVING_CDN}/original/10001.jpg`);
+        expect(portraitVariantUrl('10001', 0, 'portrait')).toBe(`${RTK14_SERVING_CDN}/portrait/10001.png`);
+        expect(portraitVariantUrl('10001', 0, 'icon')).toBe(`${RTK14_SERVING_CDN}/icon/10001.png`);
+    });
+
+    it('keeps the portrait variant identical to portraitUrl', () => {
+        expect(portraitVariantUrl('10001.png', 0, 'portrait')).toBe(portraitUrl('10001.png', 0));
+    });
+
+    it.each(['1001', 'portrait.webp', '../../secret.jpg', '', null])(
+        'falls back to the single-size portraitUrl for a non-RTK14 picture %j',
+        (picture) => {
+            for (const variant of ['original', 'portrait', 'icon'] as const) {
+                expect(portraitVariantUrl(picture, 0, variant)).toBe(portraitUrl(picture, 0));
+            }
+        },
+    );
+
+    it('ignores the variant for a server-local (imgsvr=1) picture', () => {
+        expect(portraitVariantUrl('a1b2c3d4.png', 1, 'icon')).toBe('/d_pic/a1b2c3d4.png');
+        expect(portraitVariantUrl('10001', 1, 'icon')).toBe(DEFAULT_PORTRAIT);
     });
 });

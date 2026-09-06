@@ -34,6 +34,43 @@ const RTK14_PORTRAIT = /^(\d{5})(?:\.png)?$/;
 /** gateway-api canonical managed 파일명(LocalProfileIconStorage MANAGED_FILE): 8자리 hex + 관리 확장자. */
 const MANAGED_ICON = /^[0-9a-f]{8}\.(avif|webp|jpg|png|gif)$/;
 
+/** RTK14 초상 3종 서빙 루트(opensamguk-images `portraits/rtk14/serving/*`). ADR-LITE-048. */
+export const RTK14_SERVING_CDN = `${IMAGE_CDN_BASE}/portraits/rtk14/serving`;
+
+/** 초상 변형: original=원본(633×900, 히어로) / portrait=148×210(카드) / icon=96×96(표·피드·댓글). */
+export type PortraitVariant = 'original' | 'portrait' | 'icon';
+
+const RTK14_VARIANT_FILE: Record<PortraitVariant, (officerId: number) => string> = {
+    original: (id) => `${RTK14_SERVING_CDN}/original/${id}.jpg`,
+    portrait: (id) => `${RTK14_SERVING_CDN}/portrait/${id}.png`,
+    icon: (id) => `${RTK14_SERVING_CDN}/icon/${id}.png`,
+};
+
+/** picture 값이 안정 RTK14 장수 ID(10001-11000)이면 그 ID, 아니면 null. trim 후 판정한다. */
+export function rtk14OfficerId(picture?: string | null): number | null {
+    const normalizedPicture = picture?.trim();
+    if (!normalizedPicture) return null;
+    const match = RTK14_PORTRAIT.exec(normalizedPicture);
+    if (!match) return null;
+    const officerId = Number(match[1]);
+    return officerId >= 10001 && officerId <= 11000 ? officerId : null;
+}
+
+/**
+ * 변형을 지정해 초상 URL을 만든다. RTK14 ID이면 세 변형 중 하나를, 그 외(공유 아이콘·서버 로컬·기본)는
+ * 한 크기만 있으므로 portraitUrl 과 같은 값을 돌려준다. 서버 로컬(imageServer) 분기는 변형과 무관하다.
+ */
+export function portraitVariantUrl(
+    picture: string | null | undefined,
+    imageServer: number | null | undefined,
+    variant: PortraitVariant,
+): string {
+    if (imageServer) return portraitUrl(picture, imageServer);
+    const officerId = rtk14OfficerId(picture);
+    if (officerId !== null) return RTK14_VARIANT_FILE[variant](officerId);
+    return portraitUrl(picture, imageServer);
+}
+
 /**
  * 초상 URL을 만든다. picture 없음 또는 서버-로컬(imageServer) → 기본 초상.
  * @param picture     DB picture 컬럼(숫자코드 "1001" 또는 파일명).

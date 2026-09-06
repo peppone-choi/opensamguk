@@ -19,7 +19,7 @@ v1 코어는 devsam/core 를 바이트 단위로 이식해 세웠지만, **2026-
 - **`legacy/devsam-core` (PHP) = 참고 자료.** ~~GRAND TRUTH~~ — **2026-08-20 (ADR-LITE-042) 부로 오라클 지위가 해제됐다.** 체섭은 체섭이고 오픈삼국은 오픈삼국이다. PHP 동작은 설계를 참고할 때 읽는 자료이지, 맞춰야 할 정답이 아니다.
 - **`legacy/devsam-core2026` (TypeScript)** = 또 하나의 참고 자료. 예전 PHP 우선 규칙도 ADR-LITE-042 로 해제됐다 — 두 레거시 모두 이제 우리 설계를 정할 때 읽는 자료다.
 - `legacy/` is **git-ignored**, never committed. Design + roadmap: `docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`.
-- Repo stays **PRIVATE** until a Koei-IP review clears it. No Koei-owned assets/IP, secrets, or credentials in commits.
+- Repo stays **PRIVATE** until a Koei-IP review clears it. No secrets or credentials in commits. **RTK14 장수 초상은 예외다 (ADR-LITE-048, 2026-09-06):** 소유자가 책임을 지고 제품에서 쓰기로 결정했다. `opensamguk-images` 의 `portraits/rtk14/serving/{original,portrait,icon}` 을 CDN 으로 참조하며, 이 저장소에는 여전히 초상 파일을 커밋하지 않는다. 그 외 Koei 소유 자산·IP 는 계속 커밋 금지.
 
 ## Architecture (memory-centric CQRS)
 
