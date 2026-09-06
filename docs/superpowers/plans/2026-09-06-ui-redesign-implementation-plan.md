@@ -51,7 +51,7 @@
 | Phase 5 이미지 | OPENSAM-238 (할 일) | #597 (open) | 도시 등급 실루엣·상태 배지 layer 분리 부분 기여 코멘트. `imperial-residence` 런타임은 범위 밖 |
 | Phase 4X-A | OPENSAM-20 (epic)·48·61 | #162·#190·#203 | 휘하 인물·부곡 수직 절편(계약·materialize·read model·UI). 48·61 닫기, 20 에픽은 잔여(제안 흐름 LLM 0) 코멘트 |
 | Phase 4X-B | OPENSAM-23 (epic)·56 | #165·#198 | 작전 계약 중 3-a operations·3-b participants(→ operation_unit)·3-e 역할·3-k fixture 일부만 기여 → **56 은 닫지 않고 코멘트**(3-c 경로·3-h 요격·3-i 원군·3-j adapter·3-l diff 게이트는 beyond-che W2/W3), 23 에픽 코멘트. OPENSAM-228/#494 회의 thread·표결 결정 기록은 밖(spec v2 §10) — 코멘트만 |
-| Phase 4X-C | OPENSAM-24·25 (epic)·57·58·59·173·170 | #166·#167·#199·#200·#201·#350·#347 | 야전 WEGO 봉인·결정론 해결·replay spine·리플레이 렌더러. 57·59·173·170 닫기, 58은 5종 명령 중 구현분 체크, 24·25 에픽 코멘트(공성·해전 잔여) |
+| Phase 4X-C | OPENSAM-24·25 (epic)·57·58·59·173·170 | #166·#167·#199·#200·#201·#350·#347 | 야전 출병 계획 봉인(공격자)·결정론 해결·리플레이(기존 phase 기계 위, battle-engine 없음). 57·59·173·170 은 **부분 기여 코멘트**(닫지 않음), 58은 5종 명령 중 구현분 체크, 24·25 에픽 코멘트(공성·해전·양측 동시 해결 잔여) |
 | Phase 7 3D | OPENSAM-46 (할 일) | #188 (open) | D3-13의 「3D picking 연결」을 3D 페이즈에서 수행하면 체크. 못 하면 사유를 남긴다 |
 
 ## 어드민을 만드는 방식 (아트보드 없음)
@@ -342,7 +342,7 @@
 - [x] read API `/api/operations`, `/api/operations/{id}`(authenticated, 타국 403, 재야 빈 목록+rules, `remainingMonths` 진행 중만, `milestoneDisplayPct` 파생, 연결 회의실 글).
 - [~] 회의실: `board_post.kind=operation` + `operation_id`(글쓰기 「연결 작전」 select, 엔진이 내 국가 작전 검사). 표결 결과 → 메모는 밖(spec §10). 리플레이 첨부는 4X-C.
 - [x] UI: 08 `/game/my-nation#operations` `OperationPanel`(이정표 k/4 1차·% 보조·예약 종류 disabled+사유·「잠정」 칩), 14 회의실 연결 작전 select, 작전실 조작 대상 바 `OperationBadge`(수·임박 기한).
-- [~] 게이트: logic `OperationRulesTest` 4(산술·이정표·전이·게이트 순서) · engine `OperationIntakeTest` 5 + `OperationMonthlyNoopGateTest` 2(적색 프로브) · infra `OperationFlushIT` 1(PG16, DEFERRABLE 적색면·SET NULL(col)·CASCADE) + V32 10 · game-api `OperationReadControllerTest` 2 · vitest `operation-panel` 4 — 녹색. 관리자 개입 0 시뮬(che_이동/출병 실경로)은 `OperationIntakeTest` 의 정산 케이스가 이동을 `applyGeneralDirtyFree` 로 대신하므로 **미완**(예약 명령 실경로 fixture 는 후속). 실화면은 도커 재빌드 뒤.
+- [x] 게이트: logic `OperationRulesTest` 4(산술·이정표·전이·게이트 순서) · engine `OperationIntakeTest` 5 + `OperationMonthlyNoopGateTest` 2(적색 프로브) · infra `OperationFlushIT` 1(PG16, DEFERRABLE 적색면·SET NULL(col)·CASCADE) + V32 10 · game-api `OperationReadControllerTest` 2 · vitest `operation-panel` 4 — 녹색. 관리자 개입 0 시뮬은 engine `OperationAdminZeroSimTest` 1(선언 → 참여 → `ReservedTurnHandler.handle(che_출병)` 실경로 점령·멸망 캐스케이드 → 월 정산 「달성」, 세계 상태 직접 쓰기 0; 적색 프로브 = 기대 상태를 FAILED 로 바꾸면 rc=1) — 녹색. 실화면은 도커 재빌드 뒤.
 
 ### 4X-C 출병 계획 봉인(공격자) · 결정론 해결 · 리플레이 (PR `ui-p4xc-battle-plan`) · 아트보드 09·10
 
