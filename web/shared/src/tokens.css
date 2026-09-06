@@ -48,6 +48,15 @@
   --border-subtle: var(--line);
   --border-medium: var(--line-2);
   --border-accent: var(--bronze);
+  /* 옛 game 페이지가 쓰던 --color-* 이름(정의된 적이 없어 투명으로 떨어지던 것). 같은 팔레트로 묶는다. */
+  --color-primary: var(--bronze);
+  --color-text: var(--text);
+  --color-text-muted: var(--muted);
+  --color-border: var(--line-2);
+  --color-surface: var(--panel);
+  --color-surface-2: var(--raised);
+  --color-danger: var(--rust);
+  --color-danger-bg: rgba(201, 107, 93, 0.12);
 
   /* ---- 간격 ---- */
   --space-xs: 0.25rem;

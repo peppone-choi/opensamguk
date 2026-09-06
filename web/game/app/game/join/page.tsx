@@ -733,33 +733,14 @@ export default function JoinPage() {
         <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
           <button
             type="submit"
+            className="os-button os-button--primary"
             disabled={loading || total > DEFAULT_STAT_TOTAL}
-            style={{
-              flex: 1,
-              padding: 'var(--space-md)',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--color-primary)',
-              color: '#fff',
-              fontWeight: 700,
-              opacity: loading || total > DEFAULT_STAT_TOTAL ? 0.6 : 1,
-              cursor: loading || total > DEFAULT_STAT_TOTAL ? 'not-allowed' : 'pointer',
-            }}
+            title={total > DEFAULT_STAT_TOTAL ? `능력치 합계가 ${DEFAULT_STAT_TOTAL}을 넘습니다` : undefined}
+            style={{ flex: 1, minHeight: 44 }}
           >
             {loading ? '생성 중...' : '장수 생성'}
           </button>
-          <button
-            type="button"
-            onClick={resetArgs}
-            disabled={loading}
-            style={{
-              padding: 'var(--space-md) var(--space-lg)',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--color-surface-2, #374151)',
-              color: 'var(--color-text)',
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-          >
+          <button type="button" className="os-button os-button--ghost" onClick={resetArgs} disabled={loading} style={{ minHeight: 44, padding: '0 var(--space-lg)' }}>
             다시 입력
           </button>
         </div>
