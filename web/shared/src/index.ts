@@ -1,10 +1,43 @@
 export { Brand, type BrandProps, type BrandSize } from './Brand';
 export * from './strategicMap';
-export { Button, type ButtonProps, type ButtonVariant } from './Button';
+export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 export { Modal, type ModalProps } from './Modal';
 export { Table, type TableProps } from './Table';
+export { Chip, type ChipProps, type ChipTone } from './Chip';
+export { EmptyState, type EmptyStateProps } from './EmptyState';
+export { Feed, FeedItem, type FeedItemProps, type FeedProps } from './Feed';
+export { Flag, type FlagProps } from './Flag';
+export { Gauge, type GaugeProps, type GaugeTone } from './Gauge';
+export { KV, type KVItem, type KVProps } from './KV';
+export { NavItem, type NavItemProps } from './NavItem';
+export { Divider, Inset, Panel, type InsetProps, type PanelProps } from './Panel';
+export { PillTabs, type PillTab, type PillTabsProps } from './PillTabs';
+export {
+  PORTRAIT_SIZES,
+  Portrait,
+  PortraitResolverProvider,
+  PortraitStack,
+  portraitVariantForSize,
+  usePortraitResolver,
+  type PortraitProps,
+  type PortraitRingReason,
+  type PortraitSize,
+} from './Portrait';
+export {
+  DEFAULT_IMAGE_CDN_BASE,
+  createPortraitResolver,
+  defaultPortraitResolver,
+  type PortraitResolver,
+  type PortraitVariant,
+} from './portraitResolver';
+export { ReasonTooltip, type ReasonTooltipProps } from './ReasonTooltip';
+export { SectionHeader, type SectionHeaderProps, type SectionTone } from './SectionHeader';
+export { Slot, type SlotProps, type SlotState } from './Slot';
+export { StatRow, type StatRowProps } from './StatRow';
+export { Tile, type TileProps, type TileState } from './Tile';
+
 export {
   CITY_MARKER_SPECS,
   HanMapCanvas,
