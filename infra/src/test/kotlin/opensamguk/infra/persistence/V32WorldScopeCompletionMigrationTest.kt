@@ -653,6 +653,8 @@ class V32WorldScopeCompletionMigrationTest {
         )
         private val postV32WorldTables = listOf(
             "board_post_read", // V53 — 기밀실 열람 기록(ADR-LITE-049 14)
+            "general_retainers", // V55 — 가신(Phase 4X-A, ADR-LITE-017)
+            "general_bugok", // V55 — 부곡(Phase 4X-A)
             "command_inbox",
             "command_result",
             "command_outbox",

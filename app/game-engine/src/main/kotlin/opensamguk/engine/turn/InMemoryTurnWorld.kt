@@ -25,6 +25,9 @@ data class WorldSnapshot(
     val troops: List<Troop> = emptyList(),
     val diplomacy: List<TurnDiplomacy> = emptyList(),
     val accessLogs: List<GeneralAccessLog> = emptyList(),
+    /** Phase 4X-A — 가신·부곡(부팅·rehydrate 적재). 행 0 이면 기존 스냅샷과 동일. */
+    val retainers: List<Retainer> = emptyList(),
+    val bugoks: List<Bugok> = emptyList(),
     val archivedNationIds: List<Int> = emptyList(),
     val serverId: String? = state.serverId,
     val worldId: WorldId,
@@ -92,6 +95,17 @@ class InMemoryTurnWorld(
     private val troops = LinkedHashMap<Int, Troop>()
     private val diplomacy = LinkedHashMap<String, TurnDiplomacy>()
     private val accessLogs = LinkedHashMap<Int, GeneralAccessLog>()
+    // Phase 4X-A 가신·부곡 — troops 와 같은 세계 상태 + dirty/created/deleted 집합(spec v3 §3).
+    private val retainers = LinkedHashMap<Int, Retainer>()
+    private val bugoks = LinkedHashMap<Int, Bugok>()
+    private val dirtyRetainerIds = LinkedHashSet<Int>()
+    private val createdRetainerIds = LinkedHashSet<Int>()
+    private val deletedRetainerIds = LinkedHashSet<Int>()
+    private val dirtyBugokIds = LinkedHashSet<Int>()
+    private val createdBugokIds = LinkedHashSet<Int>()
+    private val deletedBugokIds = LinkedHashSet<Int>()
+    private var maxRetainerId: Int = 0
+    private var maxBugokId: Int = 0
 
     private val dirtyGeneralIds = LinkedHashSet<Int>()
     private val dirtyCityIds = LinkedHashSet<Int>()
@@ -147,6 +161,10 @@ class InMemoryTurnWorld(
             diplomacy[buildDiplomacyKey(entry.fromNationId, entry.toNationId)] = entry
         }
         for (entry in snapshot.accessLogs) accessLogs[entry.generalId] = entry
+        for (r in snapshot.retainers) retainers[r.id] = r
+        for (b in snapshot.bugoks) bugoks[b.id] = b
+        maxRetainerId = maxOf(snapshot.retainers.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxRetainerId"] as? Number)?.toInt() ?: 0)
+        maxBugokId = maxOf(snapshot.bugoks.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxBugokId"] as? Number)?.toInt() ?: 0)
         maxNationId = maxOf(
             snapshot.nations.maxOfOrNull { it.id } ?: 0,
             snapshot.archivedNationIds.maxOrNull() ?: 0,
@@ -163,6 +181,9 @@ class InMemoryTurnWorld(
         // still flushes the previous maximum back into world_state.meta (restart parity).
         recordMaxNationId()
         recordMaxGeneralId()
+        // 4X-A 고수위는 값이 있을 때만 meta 에 쓴다 — 행 0 세계의 world_state 바이트 동일(spec P1·Q6).
+        recordMaxRetainerId()
+        recordMaxBugokId()
     }
 
     fun getState(): TurnWorldState = state
@@ -226,6 +247,101 @@ class InMemoryTurnWorld(
     fun getTroopById(id: Int): Troop? = troops[id]
     fun getAccessLog(generalId: Int): GeneralAccessLog? = accessLogs[generalId]
 
+    // ── Phase 4X-A 가신·부곡 (spec v3 §3) ──────────────────────────────────────────────────────
+    fun listRetainers(): List<Retainer> = retainers.values.toList()
+    fun listBugoks(): List<Bugok> = bugoks.values.toList()
+    fun getRetainerById(id: Int): Retainer? = retainers[id]
+    fun getBugokById(id: Int): Bugok? = bugoks[id]
+    fun retainersOf(masterGeneralId: Int): List<Retainer> = retainers.values.filter { it.masterGeneralId == masterGeneralId }.sortedBy { it.id }
+    fun bugoksOf(masterGeneralId: Int): List<Bugok> = bugoks.values.filter { it.masterGeneralId == masterGeneralId }.sortedBy { it.id }
+
+    /** 다음 가신 id(`maxRetainerId + 1`). general.id 와 같은 방식의 영속 고수위 — 삭제된 최대 id 재사용 없음. */
+    fun allocateRetainerId(): Int {
+        maxRetainerId = maxOf(maxRetainerId, retainers.keys.maxOrNull() ?: 0, deletedRetainerIds.maxOrNull() ?: 0) + 1
+        recordMaxRetainerId()
+        return maxRetainerId
+    }
+
+    fun allocateBugokId(): Int {
+        maxBugokId = maxOf(maxBugokId, bugoks.keys.maxOrNull() ?: 0, deletedBugokIds.maxOrNull() ?: 0) + 1
+        recordMaxBugokId()
+        return maxBugokId
+    }
+
+    fun createRetainer(retainer: Retainer): Retainer {
+        require(!retainers.containsKey(retainer.id)) { "duplicate retainer id ${retainer.id}" }
+        retainers[retainer.id] = retainer
+        dirtyRetainerIds.add(retainer.id)
+        createdRetainerIds.add(retainer.id)
+        if (retainer.id > maxRetainerId) { maxRetainerId = retainer.id; recordMaxRetainerId() }
+        return retainer
+    }
+
+    fun updateRetainer(next: Retainer): Retainer? {
+        if (!retainers.containsKey(next.id)) return null
+        retainers[next.id] = next
+        dirtyRetainerIds.add(next.id)
+        return next
+    }
+
+    /** [removeTroop] 규칙: 같은 틱에 만든 행을 지우면 deleted 에 넣지 않는다(DB 에 없는 행). */
+    fun removeRetainer(id: Int): Boolean {
+        if (!retainers.containsKey(id)) return false
+        retainers.remove(id)
+        dirtyRetainerIds.remove(id)
+        val wasCreatedThisTick = createdRetainerIds.remove(id)
+        if (!wasCreatedThisTick) deletedRetainerIds.add(id)
+        // 지휘 중이던 부곡의 commander 를 메모리에서도 NULL 로(DB 는 SET NULL (commander_retainer_id) 가 겹쳐 지킨다).
+        for (b in bugoks.values.filter { it.commanderRetainerId == id }) updateBugok(b.copy(commanderRetainerId = null))
+        return true
+    }
+
+    fun createBugok(bugok: Bugok): Bugok {
+        require(!bugoks.containsKey(bugok.id)) { "duplicate bugok id ${bugok.id}" }
+        bugoks[bugok.id] = bugok
+        dirtyBugokIds.add(bugok.id)
+        createdBugokIds.add(bugok.id)
+        if (bugok.id > maxBugokId) { maxBugokId = bugok.id; recordMaxBugokId() }
+        return bugok
+    }
+
+    fun updateBugok(next: Bugok): Bugok? {
+        if (!bugoks.containsKey(next.id)) return null
+        bugoks[next.id] = next
+        dirtyBugokIds.add(next.id)
+        return next
+    }
+
+    fun removeBugok(id: Int): Boolean {
+        if (!bugoks.containsKey(id)) return false
+        bugoks.remove(id)
+        dirtyBugokIds.remove(id)
+        val wasCreatedThisTick = createdBugokIds.remove(id)
+        if (!wasCreatedThisTick) deletedBugokIds.add(id)
+        return true
+    }
+
+    /**
+     * 주인 장수 툼스톤 전파(spec v3 N2): [removeGeneral] 안에서 즉시 그 장수의 가신·부곡을 map 과 모든 집합에서
+     * 지운다 — DB 는 부모 FK CASCADE 가 지우므로 deleted 에도 넣지 않는다(pending 작업 0).
+     */
+    private fun pruneRetinueOf(generalId: Int) {
+        val gone = retainers.values.filter { it.masterGeneralId == generalId || it.generalId == generalId }.map { it.id }
+        for (id in gone) { retainers.remove(id); dirtyRetainerIds.remove(id); createdRetainerIds.remove(id); deletedRetainerIds.remove(id) }
+        val goneBugok = bugoks.values.filter { it.masterGeneralId == generalId }.map { it.id }
+        for (id in goneBugok) { bugoks.remove(id); dirtyBugokIds.remove(id); createdBugokIds.remove(id); deletedBugokIds.remove(id) }
+        // 남의 부곡이 사라진 가신을 지휘하고 있었다면(다른 주인 — 이 절편엔 없지만 방어) commander 를 비운다.
+        for (b in bugoks.values.filter { it.commanderRetainerId != null && it.commanderRetainerId in gone }) updateBugok(b.copy(commanderRetainerId = null))
+    }
+
+    private fun recordMaxRetainerId() {
+        if (maxRetainerId > 0) state = state.copy(meta = state.meta + mapOf("maxRetainerId" to maxRetainerId))
+    }
+
+    private fun recordMaxBugokId() {
+        if (maxBugokId > 0) state = state.copy(meta = state.meta + mapOf("maxBugokId" to maxBugokId))
+    }
+
     fun applyAccessLogDirtyFree(next: GeneralAccessLog) {
         accessLogs[next.generalId] = next
     }
@@ -268,6 +384,7 @@ class InMemoryTurnWorld(
         if (!generals.containsKey(id)) return false
         generals.remove(id)
         generalPosition = generalPosition?.withoutGeneral(id)
+        pruneRetinueOf(id)
         generalIdentityTokens.remove(id)
         dirtyGeneralIds.remove(id)
         // create-then-delete in the same tick fully cancels: drop the pending create and
@@ -605,6 +722,12 @@ class InMemoryTurnWorld(
         val deletedNations = deletedNationIds.toList()
         val deletedSnapshots = deletedNationSnapshots.toList()
         val logsOut = logs.toList()
+        val retainersOut = dirtyRetainerIds.mapNotNull { retainers[it] }
+        val createdRetainers = createdRetainerIds.mapNotNull { retainers[it] }
+        val deletedRetainers = deletedRetainerIds.toList()
+        val bugoksOut = dirtyBugokIds.mapNotNull { bugoks[it] }
+        val createdBugoks = createdBugokIds.mapNotNull { bugoks[it] }
+        val deletedBugoks = deletedBugokIds.toList()
 
         dirtyGeneralIds.clear()
         dirtyCityIds.clear()
@@ -621,6 +744,12 @@ class InMemoryTurnWorld(
         deletedNationIds.clear()
         deletedNationSnapshots.clear()
         logs.clear()
+        dirtyRetainerIds.clear()
+        createdRetainerIds.clear()
+        deletedRetainerIds.clear()
+        dirtyBugokIds.clear()
+        createdBugokIds.clear()
+        deletedBugokIds.clear()
 
         return DirtyState(
             generals = generalsOut,
@@ -638,6 +767,12 @@ class InMemoryTurnWorld(
             createdTroops = createdTroops,
             createdDiplomacy = createdDiplomacy,
             nationTurnDirty = createdNationTurnsOut,
+            retainers = retainersOut,
+            createdRetainers = createdRetainers,
+            deletedRetainers = deletedRetainers,
+            bugoks = bugoksOut,
+            createdBugoks = createdBugoks,
+            deletedBugoks = deletedBugoks,
         )
     }
 }

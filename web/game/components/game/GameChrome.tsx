@@ -18,6 +18,7 @@ import NationBasicCard from './NationBasicCard';
 import CityBasicCard from './CityBasicCard';
 import CharacterClaim from './CharacterClaim';
 import MessagePanel from './MessagePanel';
+import RetinueSlot from './RetinueSlot';
 import Toast from '../Toast';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
 import type { FrontInfoResponse } from '@/lib/types';
@@ -49,6 +50,10 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
   const gameHref = useMemo(() => {
     const serverId = frontInfo?.global.serverId;
     return serverId ? resolveServerGamePath(undefined, serverId, '/game') : '/game';
+  }, [frontInfo?.global.serverId]);
+  const myHref = useMemo(() => {
+    const serverId = frontInfo?.global.serverId;
+    return serverId ? resolveServerGamePath(undefined, serverId, '/game', 'my') : '/game/my';
   }, [frontInfo?.global.serverId]);
   const onPossessionClaimed = useCallback(() => {
     setPossessionClaimed(true);
@@ -151,10 +156,8 @@ export default function GameChrome({ children, entryMode }: { children?: GameChr
               <span>{nation?.name ?? '재야'}</span>
               <span>{city?.name ?? '소재 없음'}</span>
             </div>
-            {/* D3-17 가신 슬롯 자리(휘하). 데이터가 생기기 전에는 점선 + 사유로 남긴다 — 숨기지 않는다. */}
-            <button type="button" className="os-button os-button--ghost os-button--sm subject-target-retinue" disabled aria-disabled="true" title="휘하 인물·부곡은 아직 없습니다">
-              휘하
-            </button>
+            {/* D3-17 휘하 슬롯(Phase 4X-A): 가신·부곡 수 배지 + 내 정보 #retinue 링크. 없으면 점선 + 사유 — 숨기지 않는다. */}
+            <RetinueSlot generalId={generalId ?? null} href={myHref} />
           </div>
           <div className="subject-secondary-grid">
             <CityBasicCard city={city} />

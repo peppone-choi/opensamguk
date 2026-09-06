@@ -7,6 +7,7 @@ import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import GeneralBasicCard from '../../../components/game/GeneralBasicCard';
 import MyInfoLogPanel from '../../../components/game/MyInfoLogPanel';
+import RetinuePanels from '../../../components/game/RetinuePanels';
 import { api } from '../../../lib/api';
 import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { formatNumber } from '../../../lib/format';
@@ -294,6 +295,8 @@ export default function MyPage() {
                         </GameCard>
                     ) : null}
                 </div>
+                {/* Phase 4X-A 휘하 인물 · 부곡 (07 아트보드). 원천 /api/my-retinue, 명령은 인테이크. */}
+                <RetinuePanels generalId={myPage.generalId} onChanged={fetchData} />
                 <MyInfoLogPanel generalId={myPage.generalId} />
             </div>
         </Shell>

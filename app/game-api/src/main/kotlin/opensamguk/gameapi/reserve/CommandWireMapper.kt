@@ -81,6 +81,13 @@ object CommandWireMapper {
         "boardArticle",
         "boardComment",
         "boardRead",
+        // Phase 4X-A 가신·부곡 인테이크(ADR-LITE-017).
+        "retainerPledge",
+        "retainerRelease",
+        "retainerTask",
+        "bugokForm",
+        "bugokDisband",
+        "bugokAssignCommander",
         // F4 Wave 투표 — 설문조사(개설/투표/댓글/마감) 인테이크.
         "newVote",
         "voteCast",
@@ -332,6 +339,20 @@ object CommandWireMapper {
             "boardRead" -> TurnDaemonCommand.BoardRead(
                 requestId = requestId, generalId = generalId,
                 articleNo = args.int("articleNo"),
+            )
+            // Phase 4X-A 가신·부곡 — 인자는 nullable 로 넘겨 엔진 ③ 입력 게이트가 판정한다(PHP getPost null 패러티).
+            "retainerPledge" -> TurnDaemonCommand.RetainerPledge(
+                requestId = requestId, generalId = generalId,
+                name = args.str("name"), relation = args.str("relation"), role = args.str("role"),
+            )
+            "retainerRelease" -> TurnDaemonCommand.RetainerRelease(requestId = requestId, generalId = generalId, retainerId = args.int("retainerId"))
+            "retainerTask" -> TurnDaemonCommand.RetainerTask(
+                requestId = requestId, generalId = generalId, retainerId = args.int("retainerId"), task = args.str("task"),
+            )
+            "bugokForm" -> TurnDaemonCommand.BugokForm(requestId = requestId, generalId = generalId, troops = args.int("troops"), rice = args.int("rice"))
+            "bugokDisband" -> TurnDaemonCommand.BugokDisband(requestId = requestId, generalId = generalId, bugokId = args.int("bugokId"))
+            "bugokAssignCommander" -> TurnDaemonCommand.BugokAssignCommander(
+                requestId = requestId, generalId = generalId, bugokId = args.int("bugokId"), retainerId = args.int("retainerId"),
             )
             // ── F4 Wave 투표 — 설문조사(개설/투표/댓글/마감). multipleOptions/endDate/keepOldVote는
             //    nullable 유지(`?: …` 없음)로 PHP `?? 1`/`?? null`/`?? false` 기본값·부재를 엔진이

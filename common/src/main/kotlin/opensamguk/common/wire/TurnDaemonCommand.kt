@@ -136,6 +136,74 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "boardRead"
     }
 
+    // ── Phase 4X-A 가신·부곡 (ADR-LITE-017 · specs/2026-09-06-retinue-buqu-vertical-slice v3) ──
+    // 인자는 모두 nullable — 부재/비정수는 엔진 ③ 입력 게이트 「올바르지 않은 입력입니다.」 가 판정한다.
+    @Serializable
+    @SerialName("retainerPledge")
+    data class RetainerPledge(
+        val requestId: String? = null,
+        val generalId: Int,
+        val name: String? = null,
+        val relation: String? = null,
+        val role: String? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "retainerPledge"
+    }
+
+    @Serializable
+    @SerialName("retainerRelease")
+    data class RetainerRelease(
+        val requestId: String? = null,
+        val generalId: Int,
+        val retainerId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "retainerRelease"
+    }
+
+    @Serializable
+    @SerialName("retainerTask")
+    data class RetainerTask(
+        val requestId: String? = null,
+        val generalId: Int,
+        val retainerId: Int? = null,
+        val task: String? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "retainerTask"
+    }
+
+    @Serializable
+    @SerialName("bugokForm")
+    data class BugokForm(
+        val requestId: String? = null,
+        val generalId: Int,
+        val troops: Int? = null,
+        val rice: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "bugokForm"
+    }
+
+    @Serializable
+    @SerialName("bugokDisband")
+    data class BugokDisband(
+        val requestId: String? = null,
+        val generalId: Int,
+        val bugokId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "bugokDisband"
+    }
+
+    /** retainerId 가 null 이면 지휘관 해제. */
+    @Serializable
+    @SerialName("bugokAssignCommander")
+    data class BugokAssignCommander(
+        val requestId: String? = null,
+        val generalId: Int,
+        val bugokId: Int? = null,
+        val retainerId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "bugokAssignCommander"
+    }
+
     @Serializable
     @SerialName("boardComment")
     data class BoardComment(

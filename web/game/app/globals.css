@@ -2369,3 +2369,25 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 900px) {
   .council-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Phase 4X-A 휘하 인물 · 부곡 (07 아트보드, /game/my#retinue) ─────────────────────────── */
+.retinue { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin: 12px 0; }
+@media (max-width: 1231px) { .retinue { grid-template-columns: 1fr; } }
+.retinue__panel { padding: 0 0 10px; }
+.retinue__list { list-style: none; margin: 0; padding: 0; }
+.retinue__person { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 8px 12px; border-top: 1px solid var(--line); }
+.retinue__portrait { flex: none; }
+.retinue__body { display: grid; gap: 4px; }
+.retinue__name { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.retinue__role { color: var(--muted); font-size: 11px; }
+.retinue__controls { display: flex; align-items: center; gap: 8px; }
+.retinue__task { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+.retinue__task select, .retinue__form select, .retinue__form input, .retinue__table select { background: var(--inset); color: var(--text); border: 1px solid var(--line-2); border-radius: 0; padding: 3px 6px; font-size: 12px; }
+.retinue__form { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.retinue__form label { display: grid; gap: 2px; font-size: 11px; color: var(--muted); }
+.retinue__form input { width: 110px; }
+.retinue__cost { flex-basis: 100%; font-size: 11px; color: var(--muted); }
+.retinue__table td, .retinue__table th { white-space: nowrap; }
+.retinue__note { margin: 6px 12px 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.retinue__message { margin: 4px 0 0; font-size: 12px; color: var(--bronze); grid-column: 1 / -1; }
+.subject-target-retinue { text-decoration: none; }

@@ -447,6 +447,9 @@ export const api = {
 
     // My pages
     myPage: <T>() => get<T>('/api/my-page'),
+    // Phase 4X-A 가신·부곡(spec v3 §6) — 본인/같은 국가만.
+    myRetinue: <T>() => get<T>('/api/my-retinue'),
+    generalRetinue: <T>(generalId: number) => get<T>(`/api/generals/${generalId}/retinue`),
     myGenerals: <T>() => get<T>('/api/my-generals'),
     myCities: <T>() => get<T>('/api/my-cities'),
     myBoss: <T>() => get<T>('/api/my-boss'),

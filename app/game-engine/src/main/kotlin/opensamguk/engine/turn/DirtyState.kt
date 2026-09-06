@@ -198,6 +198,13 @@ data class DirtyState(
      */
     val rankDirty: Map<Int, Map<RankColumn, RankDelta>> = emptyMap(),
     val nationTurnDirty: List<NationTurn> = emptyList(),
+    /** Phase 4X-A 가신·부곡 — troops 와 같은 world-lifecycle 채널(step-8g, 표마다 DELETE → CREATE → UPDATE). */
+    val retainers: List<Retainer> = emptyList(),
+    val createdRetainers: List<Retainer> = emptyList(),
+    val deletedRetainers: List<Int> = emptyList(),
+    val bugoks: List<Bugok> = emptyList(),
+    val createdBugoks: List<Bugok> = emptyList(),
+    val deletedBugoks: List<Int> = emptyList(),
     val kvDirty: Map<KvKey, Any?> = emptyMap(),
     /**
      * [diplomacyUpdateDirty]: per-command diplomacy-row UPDATE patches keyed `(from, to)` (T0.4).

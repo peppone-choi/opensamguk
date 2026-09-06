@@ -325,12 +325,12 @@
 
 **Spec:** 로드맵 「휘하 인물과 부곡」 + `docs/superpowers/plans/2026-07-17-v2-ticket-backlog/`의 OPENSAM-48·61 항목.
 
-- [x] Spec v1 → 교차 비평(fix-required 6·should-fix 10, `reviews/2026-09-06-retinue-spec-critique.md`) → **Spec v2**(`specs/2026-09-06-retinue-buqu-vertical-slice.md`, ADR-LITE-017 정합·메모리 세계 상태·적색 프로브) — 통합 재판정 대기.
-- [ ] 도메인(ADR-LITE-017): `general_retainers`(master_general_id·origin EXISTING|RECRUITED·general_id·name·relation 막료/부장/문객·role·has_own_bugok·release_policy·loyalty·task), `general_bugok`(master_general_id·troops·crew_type_id·training·morale·fatigue·provisions·commander_retainer_id). Flyway **`V55__general_retainers_and_bugok.sql`**(V56 = 4X-B, V57 = 4X-C 예약). 국가군과 분리(로드맵). 이 절편은 RECRUITED 만.
-- [ ] 명령(인테이크 → 엔진 핸들러 → 메모리 세계 상태 → flush 8e): 가신서약/해제/임무(`retainerPledge/Release/Task`), 부곡 편성/해산(총 병력 불변), 부장 배정. 월간 정산은 `MonthlyPostUpdateHook` 마지막 단계(수치 규칙은 spec §5, 기존 골든 경로 비접촉).
-- [ ] read API `/api/my-retinue`, `/api/generals/{id}/retinue`(`GameApiSecurityConfig` authenticated, 401/200/403·재야 규칙). NPC 는 서약 없음(결정성).
-- [ ] UI: 07 아트보드 휘하 목록(card-44 기본 초상)·부곡 표, 조작 대상 「휘하」 슬롯(D3-17) 실제 연결, 명령 모달 대상=휘하, 「잠정」 칩.
-- [ ] 게이트: logic/engine/infra/game-api 테스트 + **적색 프로브**(행 0 산출물 동일 · 행 1 상이) + game vitest.
+- [x] Spec v1 → 비평 1차(fix-required 6) → v2 → 재판정(fix-required 2: N1 flush 순서·N2 툼스톤 시점) → **v3 `cleared`**(P1·P2 → v3.1). `reviews/2026-09-06-retinue-spec-critique.md` 통합본.
+- [x] 도메인(ADR-LITE-017): `general_retainers`(master_general_id·origin EXISTING|RECRUITED·general_id·name·relation 막료/부장/문객·role·has_own_bugok·release_policy·loyalty·task), `general_bugok`(master_general_id·troops·crew_type_id·training·morale·fatigue·provisions·commander_retainer_id). Flyway **`V55__general_retainers_and_bugok.sql`**(V56 = 4X-B, V57 = 4X-C 예약). 국가군과 분리(로드맵). 이 절편은 RECRUITED 만.
+- [x] 명령(인테이크 → 엔진 핸들러 → 메모리 세계 상태 → flush 8g): 가신서약/해제/임무(`retainerPledge/Release/Task`), 부곡 편성/해산(총 병력 불변), 부장 배정. 월간 정산은 `MonthlyPostUpdateHook` 마지막 단계(수치 규칙은 spec §5, 기존 골든 경로 비접촉).
+- [x] read API `/api/my-retinue`, `/api/generals/{id}/retinue`(`GameApiSecurityConfig` authenticated, 401/200/403·재야 규칙). NPC 는 서약 없음(결정성).
+- [x] UI: 07 아트보드 휘하 목록(card-44 기본 초상)·부곡 표(`components/game/RetinuePanels.tsx`, `/game/my#retinue`), 조작 대상 「휘하」 슬롯(D3-17, `RetinueSlot.tsx`) 실제 연결, 「잠정」 칩. 명령은 인테이크 6종 직접(모달 대상 확장은 UNKNOWN 으로 남김).
+- [~] 게이트: logic `RetainerRulesTest` 4 · engine `RetainerIntakeTest` 8 + `RetainerMonthlyNoopGateTest` 3(**적색 프로브** 행 0 동일·행 1 상이) · infra `RetainerFlushIT` 1(PG16, 8g DELETE→CREATE→UPDATE·SET NULL(col)·CASCADE·meta 키) + V32 인벤토리 10 · game-api `RetinueReadControllerTest` 3 + `CommandWireMapperTest` 18 · common wire 2 · game vitest 667 — 전부 녹색. 남은 것: 로컬 스택 이미지 재빌드 후 실화면 캡처, 엔진 전체 회귀(골든).
 
 ### 4X-B 작전 (PR `ui-p4xb-operation`) · 아트보드 08·14
 

@@ -40,6 +40,8 @@ class GameApiSecurityConfig {
                 auth
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-boss", "/api/my-nation-detail").authenticated()
+                    // Phase 4X-A 가신·부곡 읽기 — 본인/같은 국가만(spec v3 F4). 등록하지 않으면 anyRequest permitAll 로 공개된다.
+                    .requestMatchers("/api/my-retinue", "/api/generals/*/retinue").authenticated()
                     .requestMatchers("/api/general/claim").authenticated()
                     .requestMatchers("/api/generals/claimable").authenticated()
                     .requestMatchers("/api/select-pool", "/api/select-pool/**").authenticated()

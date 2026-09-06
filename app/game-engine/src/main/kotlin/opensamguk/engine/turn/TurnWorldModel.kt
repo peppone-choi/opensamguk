@@ -130,6 +130,35 @@ data class Troop(
     val name: String,
 )
 
+/** Phase 4X-A 가신(휘하 인물) — 세계 상태(troop 미러). id 는 엔진 할당. spec v3 §3. */
+data class Retainer(
+    val id: Int,
+    val masterGeneralId: Int,
+    val origin: String,
+    val generalId: Int? = null,
+    val name: String,
+    val relation: String,
+    val role: String = "NONE",
+    val hasOwnBugok: Boolean = false,
+    val releasePolicy: String = "MASTER_ONLY",
+    val loyalty: Int = 50,
+    val task: String = "none",
+)
+
+/** Phase 4X-A 부곡(장수 개인 사병) — 세계 상태. 병력은 편성 시 general.crew 에서 옮겨 온다(합 보존). */
+data class Bugok(
+    val id: Int,
+    val masterGeneralId: Int,
+    val name: String,
+    val troops: Int,
+    val crewTypeId: Int,
+    val training: Int,
+    val morale: Int,
+    val fatigue: Int = 0,
+    val provisions: Int = 0,
+    val commanderRetainerId: Int? = null,
+)
+
 data class TurnDiplomacy(
     val fromNationId: Int,
     val toNationId: Int,

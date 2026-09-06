@@ -261,6 +261,17 @@ open class JdbcFlushExecutor(
                 diplomacyLetterUpdateMany(payload.worldId, payload.diplomacyLetterUpdates)
             }
 
+            // 8g. 가신·부곡 채널 (Phase 4X-A, spec v3 §3): 표마다 DELETE → CREATE → UPDATE. 가신 DELETE 가 앞서면
+            //     같은 틱 「해제 → 같은 이름 서약」 이 UNIQUE(world_id, master, name) 를 만족하고, 부곡의 commander 는
+            //     DB `ON DELETE SET NULL (commander_retainer_id)` 가 지킨다. 새 가신 INSERT 는 부곡 CREATE/UPDATE 보다
+            //     앞이라 commander FK 대상이 먼저 존재한다. 5단계 general DELETE(부모 CASCADE)보다 뒤. 통일 flush 에서도 돈다.
+            if (payload.deletedRetainerIds.isNotEmpty()) retainerDeleteMany(payload.worldId, payload.deletedRetainerIds)
+            if (payload.createdRetainers.isNotEmpty()) retainerCreateMany(payload.worldId, payload.createdRetainers)
+            if (payload.updatedRetainers.isNotEmpty()) retainerUpdate(payload.worldId, payload.updatedRetainers)
+            if (payload.deletedBugokIds.isNotEmpty()) bugokDeleteMany(payload.worldId, payload.deletedBugokIds)
+            if (payload.createdBugoks.isNotEmpty()) bugokCreateMany(payload.worldId, payload.createdBugoks)
+            if (payload.updatedBugoks.isNotEmpty()) bugokUpdate(payload.worldId, payload.updatedBugoks)
+
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.worldId, payload.eventInserts)
             }
@@ -513,6 +524,17 @@ open class JdbcFlushExecutor(
         // Persistent monotonic high-water marks for engine-assigned ids.
         params.addValue("max_nation_id", (worldState["max_nation_id"] as? Number)?.toInt() ?: 0)
         params.addValue("max_general_id", (worldState["max_general_id"] as? Number)?.toInt() ?: 0)
+        // Phase 4X-A 고수위 — 키가 있을 때만 meta 에 병합한다(행 0 세계의 meta 바이트 동일, spec v3 P1).
+        val extraMeta = buildString {
+            (worldState["max_retainer_id"] as? Number)?.let {
+                params.addValue("max_retainer_id", it.toInt())
+                append(" || jsonb_build_object('maxRetainerId', CAST(:max_retainer_id AS INTEGER))")
+            }
+            (worldState["max_bugok_id"] as? Number)?.let {
+                params.addValue("max_bugok_id", it.toInt())
+                append(" || jsonb_build_object('maxBugokId', CAST(:max_bugok_id AS INTEGER))")
+            }
+        }
         // OPENSAM-131: optional CAS fence. When expected_world_version is present, require
         // matching (world_version, writer_epoch) and bump world_version by 1 atomically.
         val expectedVersion = (worldState["expected_world_version"] as? Number)?.toLong()
@@ -538,7 +560,7 @@ open class JdbcFlushExecutor(
                        'lastTurnTime', CAST(:last_turn_time AS text),
                        'maxNationId', :max_nation_id,
                        'maxGeneralId', :max_general_id
-                   ),
+                   )$extraMeta,
                    updated_at = now()
              WHERE id = :id
                AND world_version = :expected_world_version
@@ -559,7 +581,7 @@ open class JdbcFlushExecutor(
                        'lastTurnTime', CAST(:last_turn_time AS text),
                        'maxNationId', :max_nation_id,
                        'maxGeneralId', :max_general_id
-                   ),
+                   )$extraMeta,
                    updated_at = now()
              WHERE id = :id
             """.trimIndent()
@@ -1624,6 +1646,131 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("general", FlushVerb.UPDATE, rows.size))
     }
 
+    // --- step 8g: 가신·부곡 채널 (Phase 4X-A) ---------------------------------------------------
+
+    private fun retainerDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM general_retainers WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("general_retainers", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun retainerCreateMany(worldId: WorldId, rows: List<RetainerRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", r.id)
+                .addValue("master_general_id", r.masterGeneralId)
+                .addValue("origin", r.origin)
+                .addValue("general_id", r.generalId)
+                .addValue("name", r.name)
+                .addValue("relation", r.relation)
+                .addValue("role", r.role)
+                .addValue("has_own_bugok", r.hasOwnBugok)
+                .addValue("release_policy", r.releasePolicy)
+                .addValue("loyalty", r.loyalty)
+                .addValue("task", r.task)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general_retainers
+                (world_id, id, master_general_id, origin, general_id, name, relation, role, has_own_bugok, release_policy, loyalty, task)
+            VALUES
+                (:world_id, :id, :master_general_id, :origin, :general_id, :name, :relation, :role, :has_own_bugok, :release_policy, :loyalty, :task)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("general_retainers", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun retainerUpdate(worldId: WorldId, rows: List<RetainerRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", r.id)
+                .addValue("name", r.name)
+                .addValue("relation", r.relation)
+                .addValue("role", r.role)
+                .addValue("has_own_bugok", r.hasOwnBugok)
+                .addValue("release_policy", r.releasePolicy)
+                .addValue("loyalty", r.loyalty)
+                .addValue("task", r.task)
+        }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            """
+            UPDATE general_retainers
+               SET name = :name, relation = :relation, role = :role, has_own_bugok = :has_own_bugok,
+                   release_policy = :release_policy, loyalty = :loyalty, task = :task, updated_at = now()
+             WHERE world_id = :world_id AND id = :id
+            """.trimIndent(),
+            batch,
+        )
+        requireExactlyOneAffected("general_retainers UPDATE", affected)
+        lastOps.add(FlushExecOp("general_retainers", FlushVerb.UPDATE, rows.size))
+    }
+
+    private fun bugokDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM general_bugok WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("general_bugok", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun bugokCreateMany(worldId: WorldId, rows: List<BugokRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { b ->
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", b.id)
+                .addValue("master_general_id", b.masterGeneralId)
+                .addValue("name", b.name)
+                .addValue("troops", b.troops)
+                .addValue("crew_type_id", b.crewTypeId)
+                .addValue("training", b.training)
+                .addValue("morale", b.morale)
+                .addValue("fatigue", b.fatigue)
+                .addValue("provisions", b.provisions)
+                .addValue("commander_retainer_id", b.commanderRetainerId)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general_bugok
+                (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id)
+            VALUES
+                (:world_id, :id, :master_general_id, :name, :troops, :crew_type_id, :training, :morale, :fatigue, :provisions, :commander_retainer_id)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("general_bugok", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun bugokUpdate(worldId: WorldId, rows: List<BugokRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { b ->
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", b.id)
+                .addValue("name", b.name)
+                .addValue("troops", b.troops)
+                .addValue("training", b.training)
+                .addValue("morale", b.morale)
+                .addValue("fatigue", b.fatigue)
+                .addValue("provisions", b.provisions)
+                .addValue("commander_retainer_id", b.commanderRetainerId)
+        }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            """
+            UPDATE general_bugok
+               SET name = :name, troops = :troops, training = :training, morale = :morale, fatigue = :fatigue,
+                   provisions = :provisions, commander_retainer_id = :commander_retainer_id, updated_at = now()
+             WHERE world_id = :world_id AND id = :id
+            """.trimIndent(),
+            batch,
+        )
+        requireExactlyOneAffected("general_bugok UPDATE", affected)
+        lastOps.add(FlushExecOp("general_bugok", FlushVerb.UPDATE, rows.size))
+    }
+
     // --- step 8d: 게시판 채널 (F4 C2 슬라이스 C, 회의실/기밀실) ----------------------------------
 
     /**
@@ -2616,6 +2763,13 @@ data class FlushPayload(
     // 후행 기본값 필드. v1 경로는 이 리스트를 채우지 않으므로 v2 step이 미진입한다 ⇒ v1 SQL 0.
     // v1 델타와 **같은** [transactionTemplate] 안에서 커밋된다 (두 번째 DataSource·풀 없음).
     val cityLedgerV2Upserts: List<CityLedgerV2UpsertRow> = emptyList(), // step-14 v2_city_ledger UPSERT
+    // --- Phase 4X-A 가신·부곡 (step-8g, 표마다 DELETE → CREATE → UPDATE; spec v3 §3) ---
+    val createdRetainers: List<RetainerRow> = emptyList(),
+    val updatedRetainers: List<RetainerRow> = emptyList(),
+    val deletedRetainerIds: List<Int> = emptyList(),
+    val createdBugoks: List<BugokRow> = emptyList(),
+    val updatedBugoks: List<BugokRow> = emptyList(),
+    val deletedBugokIds: List<Int> = emptyList(),
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),

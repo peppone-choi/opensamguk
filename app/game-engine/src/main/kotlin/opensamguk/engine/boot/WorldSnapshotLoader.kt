@@ -14,6 +14,8 @@ import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
+import opensamguk.engine.turn.Bugok
+import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.WaterControlRowCodec
@@ -84,6 +86,8 @@ class WorldSnapshotLoader(
                 "map",
                 "maxNationId",
                 "maxGeneralId",
+                "maxRetainerId",
+                "maxBugokId",
             )
             for (key in snapshotKeys) {
                 if (loaded.meta.containsKey(key)) merged[key] = loaded.meta[key]
@@ -140,6 +144,8 @@ class WorldSnapshotLoader(
         val accessLogs = loadAccessLogs()
         val archivedNationIds = loadArchivedNationIds(activeServerId)
         val troops = loadTroops()
+        val retainers = loadRetainers()
+        val bugoks = loadBugoks()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops={}",
             generals.size,
@@ -161,6 +167,8 @@ class WorldSnapshotLoader(
             troops = troops,
             diplomacy = diplomacy,
             accessLogs = accessLogs,
+            retainers = retainers,
+            bugoks = bugoks,
             archivedNationIds = archivedNationIds,
             waterControlSnapshot = topology?.let(::loadWaterControlSnapshot),
             provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
@@ -205,6 +213,35 @@ class WorldSnapshotLoader(
         // WorldSnapshot checks these IDs against the same world's loaded core generals.
         return GeneralPositionSnapshot.fromTopology(topology, rows)
     }
+
+    /** Phase 4X-A 가신 적재(부팅·rehydrate 동일 경로). 행 0 이면 빈 목록. */
+    private fun loadRetainers(): List<Retainer> = jdbc.query(
+        "SELECT id, master_general_id, origin, general_id, name, relation, role, has_own_bugok, release_policy, loyalty, task " +
+            "FROM general_retainers WHERE world_id = ? ORDER BY id",
+        { rs, _ ->
+            Retainer(
+                id = rs.getInt("id"), masterGeneralId = rs.getInt("master_general_id"), origin = rs.getString("origin"),
+                generalId = rs.getObject("general_id")?.let { (it as Number).toInt() }, name = rs.getString("name"),
+                relation = rs.getString("relation"), role = rs.getString("role"), hasOwnBugok = rs.getBoolean("has_own_bugok"),
+                releasePolicy = rs.getString("release_policy"), loyalty = rs.getInt("loyalty"), task = rs.getString("task"),
+            )
+        },
+        worldId.value,
+    )
+
+    private fun loadBugoks(): List<Bugok> = jdbc.query(
+        "SELECT id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id " +
+            "FROM general_bugok WHERE world_id = ? ORDER BY id",
+        { rs, _ ->
+            Bugok(
+                id = rs.getInt("id"), masterGeneralId = rs.getInt("master_general_id"), name = rs.getString("name"),
+                troops = rs.getInt("troops"), crewTypeId = rs.getInt("crew_type_id"), training = rs.getInt("training"),
+                morale = rs.getInt("morale"), fatigue = rs.getInt("fatigue"), provisions = rs.getInt("provisions"),
+                commanderRetainerId = rs.getObject("commander_retainer_id")?.let { (it as Number).toInt() },
+            )
+        },
+        worldId.value,
+    )
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(

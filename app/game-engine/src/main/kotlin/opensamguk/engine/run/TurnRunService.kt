@@ -403,6 +403,8 @@ open class TurnRunService(
         worldState["isunited"] = (preState.meta["isunited"] as? Number)?.toInt() ?: 0
         worldState["max_nation_id"] = (preState.meta["maxNationId"] as? Number)?.toInt() ?: 0
         worldState["max_general_id"] = (preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
+        (preState.meta["maxRetainerId"] as? Number)?.let { worldState["max_retainer_id"] = it.toInt() }
+        (preState.meta["maxBugokId"] as? Number)?.let { worldState["max_bugok_id"] = it.toInt() }
         applyWriterFence(worldState, preState)
         val committedWorldVersion = preState.worldVersion + 1
         val commandResults =
@@ -581,6 +583,8 @@ open class TurnRunService(
         this["last_turn_time"] = state.lastTurnTime.toString()
         this["max_nation_id"] = (state.meta["maxNationId"] as? Number)?.toInt() ?: 0
         this["max_general_id"] = (state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
+        (state.meta["maxRetainerId"] as? Number)?.let { this["max_retainer_id"] = it.toInt() }
+        (state.meta["maxBugokId"] as? Number)?.let { this["max_bugok_id"] = it.toInt() }
         applyWriterFence(this, state)
     }
 

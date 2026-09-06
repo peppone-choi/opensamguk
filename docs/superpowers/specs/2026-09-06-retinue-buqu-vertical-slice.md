@@ -1,7 +1,7 @@
-# 휘하 인물(가신) · 부곡 수직 절편 (Phase 4X-A) 설계 — v3
+# 휘하 인물(가신) · 부곡 수직 절편 (Phase 4X-A) 설계 — v3.1
 
 - Date: 2026-09-06 (v1 → v2 → v3 같은 날)
-- Status: REVISED v3 — 교차 비평 1차(fix-required 6 · should-fix 10 · 질문 7)와 2차(v2 재판정: fix-required N1·N2 · should-fix N3~N8, 같은 파일 `docs/superpowers/reviews/2026-09-06-retinue-spec-critique.md`)를 전부 반영. 통합 재판정 대기(ADR-LITE-049 Phase 4X 규칙: spec → 비평 → 구현 → 게이트).
+- Status: REVISED v3 — 교차 비평 1차(fix-required 6 · should-fix 10 · 질문 7)와 2차(v2 재판정: fix-required N1·N2 · should-fix N3~N8, 같은 파일 `docs/superpowers/reviews/2026-09-06-retinue-spec-critique.md`)를 전부 반영. **v3 재판정 `cleared`**(should-fix P1·P2 비차단, 아래 반영). 구현 진행(ADR-LITE-049 Phase 4X 규칙: spec → 비평 → 구현 → 게이트).
 - Scope: 로드맵 「휘하 인물과 부곡」의 첫 수직 절편 — 장수 개인의 휘하 인물(= ADR-LITE-017 의 **가신**, `origin=RECRUITED` 만)과 부곡(개인 사병)을 만들고·부리고·달마다 정산한다. 07 아트보드 「휘하 인물 · 부곡」 구획을 실제 원천에 연결한다.
 - 정합: **ADR-LITE-017(approved, 가신 1트랙)** 을 따른다. 표 이름 `general_retainers`, 속성 `origin/hasOwnBugok/role/releasePolicy/upkeep`, 명령 `가신서약/가신해제/가신임무`. 이 절편은 `origin=RECRUITED` 만 구현하고 `EXISTING`(기존 장수의 서약 — 07 아트보드의 荀彧·樂進·許褚·程昱 자(字) 행)은 **다음 절편**으로 명시한다. ADR 을 대체하지 않으므로 새 ADR 이 필요 없다.
 - Tickets: OPENSAM-48(#190) 부곡 foundation → 이 절편으로 닫는다. OPENSAM-61(#203) 가신 → RECRUITED 절편 코멘트만, EXISTING 절편 뒤 닫는다. OPENSAM-20(#162) 에픽 코멘트.
@@ -43,6 +43,9 @@
 | N7 단계 이름·가드 | 8e 는 이미 vote 채널이다 → 새 단계는 **8g**. 모든 채널에 `isNotEmpty()` 가드 → 행 0 세계는 `lastOps` 0건(rehydrate 게이트가 lastOps 를 센다). |
 | N8 결과 코드 핀 | `toCommandResultRows` 는 private → `TurnDaemonCommandResultSerializer` 왕복 테스트로 6 코드를 핀(실제 실패점은 `else -> throw`). |
 | Q5(해소) | `RehydrateLosslessGateIT` 는 경매 투영 전용(표 열거 아님) → 두 표를 넣지 않는다. `WorldSnapshotLoaderRetainerTest` 가 왕복을 맡는다. |
+| **P1(N3 잔존) meta 키 공급 지점** | `worldStateUpdate` 의 기본 원천은 `DatabaseHooks.toFlushPayload` 이고 `TurnRunService` 에는 그것을 덮어쓰는 빌더가 둘(`runTick`·`currentWorldStateUpdate` — 인테이크 전용 flush 도 프로덕션 경로) 있으며 executor 는 없는 키를 `?: 0` 으로 바인딩한다. 따라서 두 키는 **`DatabaseHooks.toFlushPayload` 에서** 공급하고, `TurnRunService` 의 두 빌더도 같은 값을 실으며, executor 의 CAS/비CAS SQL 두 분기 + 바인딩(`:515`)을 고치고, `InMemoryTurnWorld` init 에서 `recordMax*()` 를 부른다. 왕복 테스트는 **인테이크 전용 flush 경로**로 돈다. |
+| **P2(N5) 골든 수** | 「engine 4」 는 골든이 아니다(MockMaker·parity txt·시나리오·sandbox SQL). 골든은 logic 274 json 뿐이며 `LongSimReplayGateTest` 는 리소스 골든을 읽지 않는다 — 회귀 목록을 그렇게 적는다. |
+| UNKNOWN(비평자) 통일 flush | `isUnificationFlush` 에서 8g 를 건너뛸지 — **건너뛰지 않는다**(통일 뒤에도 가신·부곡 행은 세계 상태다; 8d board 와 같은 취급). 8g 에는 `isUnificationFlush` 가드를 두지 않는다(코드 검토로 확인; emperior 행 fixture 가 무거워 IT 케이스는 두지 않는다). |
 | ADR-LITE-018(비평자 의견) | v1↔v2 DB 분리 조항과의 관계는 이 사슬이 이미 `v2_city_ledger`·`/api/v2/**` 를 같은 DB 에 둔 선례를 따른다 — **사용자 확인 항목**으로 남긴다(차단 아님). |
 
 ## 1. 원칙
@@ -158,12 +161,12 @@
 
 - logic `RetainerRulesTest`: (a) 정산 순수 함수 입력→출력 표 — 정상, 군량 부족, 급여 부족, 둘 다(−5 한 번), 훈련 부장, 충성 0 이탈, 유지비 미지급; (b) 6 명령의 게이트 **순서** 표(두 조건을 동시에 위반시켜 먼저 나오는 문자열을 핀); (c) 이름 정규화(NFC·trim·내부 공백·길이·중복). 상수 값 단언 없음.
 - engine `RetainerIntakeTest`: 명령마다 `recorder.generalPatches()` 의 gold/crew/rice 열(메모리 값이 아니라 패치), `consumeDirtyState()` 의 created/updated/deleted; §3 같은 틱 시나리오 5종; 만들고 같은 틱에 지우면 DB 작업 0.
-- engine `RetainerMonthlyNoopGateTest` (**적색 프로브**, N4): 같은 fixture 로 **world+recorder 를 두 벌 새로** 만들어 각각 `MonthlyPostUpdateHook` 을 한 번씩 돌린다 — 한 벌은 `retainerMonthly = null`, 한 벌은 배선. Q15/Q16 이 벽시계·RNG 를 읽으므로 `MonthlyPostUpdateHookTailWiringTest` 의 `ScriptedRng`/`auctionRepo()` fixture 를 그대로 쓴다. 행 0: `consumeDirtyState()`·recorder 패치·로그가 deep-equal. 같은 테스트가 부곡 1행을 넣은 두 벌로 다시 돌려 **달라짐**을 단언한다(게이트가 경로를 보는 증거). 기존 골든(logic 274 json · engine 4, `LongSimReplayGateTest` 등)은 회귀로만 돌리고 증거로 세지 않는다.
+- engine `RetainerMonthlyNoopGateTest` (**적색 프로브**, N4): 같은 fixture 로 **world+recorder 를 두 벌 새로** 만들어 각각 `MonthlyPostUpdateHook` 을 한 번씩 돌린다 — 한 벌은 `retainerMonthly = null`, 한 벌은 배선. Q15/Q16 이 벽시계·RNG 를 읽으므로 `MonthlyPostUpdateHookTailWiringTest` 의 `ScriptedRng`/`auctionRepo()` fixture 를 그대로 쓴다. 행 0: `consumeDirtyState()`·recorder 패치·로그가 deep-equal. 같은 테스트가 부곡 1행을 넣은 두 벌로 다시 돌려 **달라짐**을 단언한다(게이트가 경로를 보는 증거). 기존 골든(logic 274 json; `LongSimReplayGateTest` 등 엔진 리플레이 게이트는 리소스 골든 없이 결정성만 본다)은 회귀로만 돌리고 증거로 세지 않는다.
 - engine `WorldSnapshotLoaderRetainerTest`: 두 표 적재 + id 시드 flush→reload 왕복(N3). `RehydrateLosslessGateIT` 는 경매 투영 전용이라 손대지 않는다(Q5 해소).
 - infra `RetainerFlushIT`(Testcontainers PG16): V55 DDL; 8g DELETE→CREATE→UPDATE 순서 + 「해제→같은 이름 서약」 한 payload 성공(N1); 지휘 부장 DELETE 뒤 `bugok.world_id` 보존·commander NULL(F3); 주인 general DELETE 의 CASCADE; V32 인벤토리 테스트 두 표 통과.
 - game-api `RetainerReadControllerTest`: 401 익명 / 200 본인 / 200 같은 국가 / 403 타국 / 403 재야-타인 / `rules.provisional`.
 - vitest: `/game/my` 두 패널(라벨·폼 → 모달 extraArgs·disabled 사유), 작전실 휘하 배지, 「잠정」 칩.
-- 경로 없는 세계 바이트 동일: 위 적색 프로브 + 기존 골든(logic 274 · engine 4) 회귀 + 행 0 세계 `lastOps` 0건(N7).
+- 경로 없는 세계 바이트 동일: 위 적색 프로브 + 기존 골든(logic 274) 회귀 + 행 0 세계 `lastOps` 0건(N7).
 
 ## 9. 마이그레이션 번호
 

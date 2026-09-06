@@ -1325,3 +1325,64 @@ export interface MailboxMessage {
   destTarget: MailMsgTarget | null; // 수신 타깃 블록(공개 메시지면 null)
   option: Record<string, unknown> | null; // body `option`(action/deletable/receiverMessageID 등)
 }
+
+// ── Phase 4X-A 가신(휘하 인물)·부곡 — /api/my-retinue (spec v3 §6) ──
+export interface RetinueRetainer {
+    id: number;
+    name: string;
+    origin: 'EXISTING' | 'RECRUITED';
+    relation: 'staff' | 'lieutenant' | 'guest';
+    relationLabel: string;
+    role: string;
+    roleLabel: string;
+    loyalty: number;
+    task: 'none' | 'domestic' | 'scout' | 'train';
+    taskLabel: string;
+    hasOwnBugok: boolean;
+}
+
+export interface RetinueBugok {
+    id: number;
+    name: string;
+    troops: number;
+    crewTypeId: number;
+    crewTypeName: string;
+    training: number;
+    morale: number;
+    fatigue: number;
+    provisions: number;
+    provisionMonths: number;
+    commanderRetainerId: number | null;
+}
+
+export interface RetinueOption { value: string; label: string }
+
+export interface RetinueRules {
+    maxRetainers: number;
+    maxBugok: number;
+    pledgeCostGold: number;
+    minBugokTroops: number;
+    retainerUpkeepGold: number;
+    retainerUpkeepRice: number;
+    payGoldPer100Troops: number;
+    provisionPerTroopMonth: number;
+    commanderMoraleBonus: number;
+    relations: RetinueOption[];
+    roles: RetinueOption[];
+    tasks: RetinueOption[];
+    /** 잠정 상수 — UI 는 「잠정」 칩을 붙인다. */
+    provisional: boolean;
+}
+
+export interface RetinueResponse {
+    generalId: number;
+    generalName: string;
+    crew: number;
+    rice: number;
+    gold: number;
+    crewTypeId: number;
+    crewTypeName: string;
+    retainers: RetinueRetainer[];
+    bugoks: RetinueBugok[];
+    rules: RetinueRules;
+}

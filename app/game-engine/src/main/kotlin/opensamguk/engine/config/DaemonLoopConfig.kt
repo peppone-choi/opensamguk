@@ -403,6 +403,7 @@ class DaemonLoopConfig {
                 eventDispatcher = eventDispatcher,
                 archiveHistoryReader = archiveHistoryReader,
                 statisticSnapshotReader = statisticSnapshotReader,
+                retainerMonthly = opensamguk.engine.retainer.RetainerMonthlyService(),
             ),
         )
 

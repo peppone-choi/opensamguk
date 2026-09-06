@@ -18,6 +18,10 @@ import opensamguk.infra.persistence.BettingInsertRow
 import opensamguk.infra.persistence.BoardCommentInsertRow
 import opensamguk.infra.persistence.BoardPostInsertRow
 import opensamguk.infra.persistence.BoardReadInsertRow
+import opensamguk.infra.persistence.BugokRow
+import opensamguk.infra.persistence.RetainerRow
+import opensamguk.engine.turn.Bugok
+import opensamguk.engine.turn.Retainer
 import opensamguk.infra.persistence.CityLedgerV2UpsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyLetterInsertRow
@@ -308,6 +312,18 @@ object DatabaseHooks {
         kvDirty.map { (k, v) -> KvWrite(table = k.table, namespace = k.namespace, key = k.key, value = v) }
 
     /** Engine [Troop] → infra [TroopRow]. The troop's id IS its `troop_leader` (PK). */
+    private fun toRetainerRow(r: Retainer) = RetainerRow(
+        id = r.id, masterGeneralId = r.masterGeneralId, origin = r.origin, generalId = r.generalId, name = r.name,
+        relation = r.relation, role = r.role, hasOwnBugok = r.hasOwnBugok, releasePolicy = r.releasePolicy,
+        loyalty = r.loyalty, task = r.task,
+    )
+
+    private fun toBugokRow(b: Bugok) = BugokRow(
+        id = b.id, masterGeneralId = b.masterGeneralId, name = b.name, troops = b.troops, crewTypeId = b.crewTypeId,
+        training = b.training, morale = b.morale, fatigue = b.fatigue, provisions = b.provisions,
+        commanderRetainerId = b.commanderRetainerId,
+    )
+
     private fun toTroopRow(t: Troop): TroopRow = TroopRow(troopLeader = t.id, nation = t.nationId, name = t.name)
 
     private fun toOldGeneralArchiveRow(
@@ -582,6 +598,8 @@ object DatabaseHooks {
         val createdGeneralIds = dirty.createdGenerals.map { it.id }.toSet()
         val createdNationIds = dirty.createdNations.map { it.id }.toSet()
         val createdTroopIds = dirty.createdTroops.map { it.id }.toSet()
+        val createdRetainerIds = dirty.createdRetainers.map { it.id }.toSet()
+        val createdBugokIds = dirty.createdBugoks.map { it.id }.toSet()
 
         // Dirty rows from the recorder (the lone dirty source), resolved to the world's post-state.
         val updatedGenerals = recorder.dirtyGeneralIds()
@@ -632,7 +650,11 @@ object DatabaseHooks {
                 // NOT serial). Prevents cross-tick id reuse after restart.
                 "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
                 "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
-            ),
+            ).apply {
+                // Phase 4X-A 고수위(spec v3 P1): 값이 있을 때만 싣는다 — 행 0 세계의 world_state.meta 바이트 동일.
+                (state.meta["maxRetainerId"] as? Number)?.let { put("max_retainer_id", it.toInt()) }
+                (state.meta["maxBugokId"] as? Number)?.let { put("max_bugok_id", it.toInt()) }
+            },
             archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
@@ -669,6 +691,13 @@ object DatabaseHooks {
             createdTroops = dirty.createdTroops.map { toTroopRow(it) },
             deletedTroops = dirty.deletedTroops,
             updatedTroops = dirty.troops.filter { it.id !in createdTroopIds }.map { toTroopRow(it) },
+            // Phase 4X-A 가신·부곡 — world-lifecycle 채널(troop 미러). step-8g 는 표마다 DELETE → CREATE → UPDATE.
+            createdRetainers = dirty.createdRetainers.map { toRetainerRow(it) },
+            updatedRetainers = dirty.retainers.filter { it.id !in createdRetainerIds }.map { toRetainerRow(it) },
+            deletedRetainerIds = dirty.deletedRetainers,
+            createdBugoks = dirty.createdBugoks.map { toBugokRow(it) },
+            updatedBugoks = dirty.bugoks.filter { it.id !in createdBugokIds }.map { toBugokRow(it) },
+            deletedBugokIds = dirty.deletedBugoks,
             logEntries = logEntries,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),
