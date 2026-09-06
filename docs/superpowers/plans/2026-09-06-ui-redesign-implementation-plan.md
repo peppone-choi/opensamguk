@@ -34,13 +34,13 @@
 
 | 시점 | Jira | GitHub | 처리 |
 |---|---|---|---|
-| Phase 0 시작 | OPENSAM-113 (진행 중) | #256 (closed 08-18) | Jira 완료 전환. 코멘트: 택일 완료 2026-09-06 Concept A, 캔버스 ID, ADR-LITE-049 |
-| Phase 0 시작 | OPENSAM-210 (할 일) | #470 (closed 08-21) | Jira 완료 전환(`web/shared` 워크스페이스 패키지 존재). 드리프트 정정 |
-| Phase 0 시작 | OPENSAM-211 (할 일) | #471 (closed) | Jira 완료 전환(`Brand` 공용 컴포넌트, 워드마크 규칙). 드리프트 정정 |
-| Phase 0 시작 | OPENSAM-212 (할 일) | #472 (closed) | Jira 완료 전환(감사 문서 `2026-08-20-design-quality-audit.md` 존재). 남은 P0/P1 항목은 Phase 1·2 작업에 흡수(아래) |
-| Phase 0 시작 | OPENSAM-115 (할 일) | #258 (open) | 본문 갱신: 「픽셀 UI」 전제를 Concept A(ADR-LITE-049)로 교체, 범위를 Phase 0+1로 고정. Phase 1 머지 시 둘 다 닫는다 |
-| Phase 0 시작 | OPENSAM-112 (진행 중) | #255 (open) | 에픽 본문 갱신(픽셀 UI → Concept A). 닫지 않는다(AI 에셋 파이프라인 잔여) |
-| Phase 0 시작 | 신규 5건 (OPENSAM-112 하위) | 신규 5건 미러 | ① 작전실 ② 로그인·로비·공지·세력현황 ③ 어드민 콘솔·게임 관리 허브 ④ 나머지 화면(웨이브 A·B) ⑤ 커뮤니티·회의실·기밀실 확장(백엔드 포함). 각 페이즈 PR이 닫는다 |
+| Phase 0 시작 (완료 2026-09-06) | OPENSAM-113 | #256 (closed 08-18) | Jira 완료 전환. 코멘트: 택일 완료 2026-09-06 Concept A, 캔버스 ID, ADR-LITE-049 |
+| Phase 0 시작 (완료 2026-09-06) | OPENSAM-210 | #470 (closed 08-21) | Jira 완료 전환(`web/shared` 워크스페이스 패키지 존재). 드리프트 정정 |
+| Phase 0 시작 (완료 2026-09-06) | OPENSAM-211 | #471 (closed) | Jira 완료 전환(`Brand` 공용 컴포넌트, 워드마크 규칙). 드리프트 정정 |
+| Phase 0 시작 (완료 2026-09-06) | OPENSAM-212 | #472 (closed) | Jira 완료 전환(감사 문서 `2026-08-20-design-quality-audit.md` 존재). 남은 P0/P1 항목은 Phase 1·2 작업에 흡수(아래) |
+| Phase 0 시작 (본문 갱신 완료 2026-09-06) | OPENSAM-115 (할 일) | #258 (open) | 본문 갱신: 「픽셀 UI」 전제를 Concept A(ADR-LITE-049)로 교체, 범위를 Phase 0+1로 고정. Phase 1 머지 시 둘 다 닫는다 |
+| Phase 0 시작 (갱신 완료 2026-09-06) | OPENSAM-112 (진행 중) | #255 (open) | 에픽 본문 갱신(픽셀 UI → Concept A). 닫지 않는다(AI 에셋 파이프라인 잔여) |
+| Phase 0 시작 (발행 완료 2026-09-06) | OPENSAM-243 (P1) · 239 (P2) · 240 (P3) · 241 (P4) · 242 (P4C) · 244 (P7) — OPENSAM-112 하위 | #645 · #646 · #647 · #648 · #649 · #650 | ① 작전실 ② 로그인·로비·공지·세력현황 ③ 어드민 콘솔·게임 관리 허브 ④ 나머지 화면(웨이브 A·B) ⑤ 커뮤니티·회의실·기밀실 확장(백엔드 포함) ⑥ 3D(가능하면). 각 페이즈 PR이 닫는다 |
 | Phase 0 머지 | OPENSAM-100 (할 일) | #243 (open) | 초상 3종 viewport 소비 + 1,000 ID × 3 variant CDN 검증 스크립트로 닫는다. 코멘트에 전제 변경(자체/AI 초상 → RTK14 소유자 인수, ADR-LITE-048) 명시. OPENSAM-96/#239 에픽에는 재범위 코멘트만 |
 | Phase 1 머지 | OPENSAM-46 (할 일) | #188 (open) | 체크리스트 1-h, D3-11·12·13·16·17 체크. D3-14(모달 내부 대상 모델)·D3-15(서버 후보 API)는 남긴다. 닫지 않는다 |
 | Phase 2 머지 | OPENSAM-212 잔여 | — | 감사 P1 「계정 폼 모바일 충돌」, P1 「하단 나브가 콘텐츠 가림」 해소를 코멘트로 기록 |
@@ -74,9 +74,9 @@
 
 **Files:** 없음(Jira·GitHub)
 
-- [ ] **Step 1:** 위 매핑표의 「Phase 0 시작」 행을 실행한다: OPENSAM-113·210·211·212 완료 전환 + 코멘트, OPENSAM-115/#258·OPENSAM-112/#255 본문 갱신(Concept A, ADR-LITE-049 링크).
-- [ ] **Step 2:** 신규 Jira 작업 5건을 OPENSAM-112 하위로 만들고 GitHub 미러 5건을 규약대로 만든다. 각 본문에 이 계획 문서 경로와 담당 페이즈, 완료 조건(게이트)을 적는다.
-- [ ] **Step 3:** 이 계획 문서의 매핑표에 발행된 키/번호를 채워 커밋한다.
+- [x] **Step 1:** 위 매핑표의 「Phase 0 시작」 행을 실행한다: OPENSAM-113·210·211·212 완료 전환 + 코멘트, OPENSAM-115/#258·OPENSAM-112/#255 본문 갱신(Concept A, ADR-LITE-049 링크).
+- [x] **Step 2:** 신규 Jira 작업 6건(OPENSAM-239~244)과 GitHub 미러(#645~#650)를 발행했다. 원문: 신규 Jira 작업 5건을 OPENSAM-112 하위로 만들고 GitHub 미러 5건을 규약대로 만든다. 각 본문에 이 계획 문서 경로와 담당 페이즈, 완료 조건(게이트)을 적는다.
+- [x] **Step 3:** 이 계획 문서의 매핑표에 발행된 키/번호를 채워 커밋한다.
 
 ### Task 0.1: ADR-LITE-049 + 시안 소스 편입
 
@@ -86,9 +86,9 @@
 - Already copied: `docs/design/ui-redesign-2026-09/{build.mjs,canvas.json,src/*}`
 - Modify: `CLAUDE.md` 「프론트엔드/배포」 절(디자인 정본 한 줄), `docs/design/README.md`
 
-- [ ] **Step 1:** ADR-LITE-049 「UI 리디자인 정본은 야전 사령부(Concept A) 캔버스다」를 쓴다. 결정 항목: 팔레트·타이포, 메인=작전실(지도·예턴 고정), 세 게시 공간 분리, 초상 3종 규칙, 예턴=한 순 한 턴, 라벨 보존, 워드마크 규칙, 제외 범위(WEGO·리플레이), OPENSAM-112/115의 「픽셀 UI」 전제 폐기. 뒤집기 경로: 캔버스 재발행 + ADR 개정.
-- [ ] **Step 2:** README에 소스 사용법(`node build.mjs`가 `@@PT/@@FLAG/@@ISO` 플레이스홀더를 치환한다는 것, 이미지 자산은 저장소 밖), 아트보드 19장 목록, S1/S2의 역할을 적는다. `build.mjs`의 초상 파일 참조는 플레이스홀더 규칙만 남기고 실제 파일명은 지운다.
-- [ ] **Step 3:** `CLAUDE.md`·`docs/design/README.md`에 한 줄씩 링크한다.
+- [x] **Step 1:** ADR-LITE-049 「UI 리디자인 정본은 야전 사령부(Concept A) 캔버스다」를 쓴다. 결정 항목: 팔레트·타이포, 메인=작전실(지도·예턴 고정), 세 게시 공간 분리, 초상 3종 규칙, 예턴=한 순 한 턴, 라벨 보존, 워드마크 규칙, 제외 범위(WEGO·리플레이), OPENSAM-112/115의 「픽셀 UI」 전제 폐기. 뒤집기 경로: 캔버스 재발행 + ADR 개정.
+- [x] **Step 2:** README에 소스 사용법(`node build.mjs`가 `@@PT/@@FLAG/@@ISO` 플레이스홀더를 치환한다는 것, 이미지 자산은 저장소 밖), 아트보드 19장 목록, S1/S2의 역할을 적는다. `build.mjs`의 초상 파일 참조는 플레이스홀더 규칙만 남기고 실제 파일명은 지운다.
+- [x] **Step 3:** `CLAUDE.md`·`docs/design/README.md`에 한 줄씩 링크한다.
 
 ### Task 0.2: 디자인 토큰 교체
 
