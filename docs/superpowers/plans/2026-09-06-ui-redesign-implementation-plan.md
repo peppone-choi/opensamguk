@@ -97,7 +97,7 @@
 - Modify: `web/game/app/globals.css`, `web/gateway/app/globals.css` (`:root` 오버라이드 제거만)
 - Test: `web/game/__tests__/shared-ui-foundation.test.tsx`
 
-- [x] **Step 1:** 실패 테스트: 토큰 파일에 `--bronze --bronze-dim --bronze-glow --moss --moss-2 --rust --info --focus --panel --inset --raised --line --line-2 --text --text-2 --muted --font-serif`가 있고, `--radius-*`가 0이며, 기존 별칭(`--gold --crimson --jade --bg-base --bg-card --border-subtle` 등)이 새 값으로 매핑돼 있다.
+- [x] **Step 1:** 테스트 `web/shared/src/__tests__/tokens.test.ts`: 토큰 파일에 `--bronze --bronze-dim --bronze-glow --moss --moss-2 --rust --info --focus --panel --inset --raised --line --line-2 --text --text-2 --muted --font-serif`가 있고, `--radius-*`가 0이며, 기존 별칭(`--gold --bg-card --border-subtle --color-primary`)이 새 값으로 매핑돼 있다(교차 비평 #3 뒤 추가).
 - [x] **Step 2:** `tokens.css`를 S1 팔레트로 바꾼다: `--bg-base:#0c0f0e --bg-elevated:#141816 --bg-card:#1b201d --bg-hover:#232a26 --gold:#d3b064 --gold-dim:#9c7f3f --crimson:#c96b5d --jade:#697e58 --text-primary:#ece6d8 --text-secondary:#b9b2a3 --text-muted:#8a8477 --border-subtle:#2c342f --border-medium:#3d4740`, 신규 변수 추가, `--radius-sm/md/lg: 0`, 포커스 링 `3px #ffd36d`, `--motion-turn: 300ms`. 기존 변수명은 전부 유지한다(두 앱 3,500줄 CSS가 즉시 새 팔레트로 넘어간다).
 - [x] **Step 3:** 두 앱 `globals.css`에서 `:root` 재정의·중복 토큰을 지우고 `@import '@opensamguk/ui/tokens.css'` 하나만 남긴다. 테스트 GREEN.
 
@@ -106,7 +106,7 @@
 **Files:**
 - Modify: `web/gateway/package.json`, `web/game/package.json` (`pretendard` 의존성)
 - Modify: `web/gateway/app/layout.tsx`, `web/game/app/layout.tsx`
-- Create: `web/shared/src/fonts.ts` (next/font 선언은 앱 레이아웃에서만 가능하므로 공용 CSS 변수명·폴백 스택만)
+- (변경) `web/shared/src/fonts.ts` 는 만들지 않았다 — 폴백 스택은 `tokens.css` 의 `--font-*` 에 두고 next/font 변수(`--font-serif-next`·`--font-mono-next`)를 `var()` 폴백으로 잇는다
 
 - [x] **Step 1:** Pretendard는 npm `pretendard`의 dynamic-subset CSS를 import한다(런타임 외부 요청 없음). Noto Serif KR(700·900)과 JetBrains Mono(500·700)는 `next/font/google`로 빌드 시 self-host한다(unicode-range 슬라이스 자동). CSS 변수 `--font-sans/--font-serif/--font-mono`로 노출하고 폴백 스택은 `_shared.css`와 같게 둔다.
 - [x] **Step 2:** 빌드 크기 실측(225 woff2 슬라이스 8.85 MB, game build) — 리포트 `docs/superpowers/reviews/2026-09-06-ui-phase-0-screens.md`. 원문: 빌드 크기 실측(`.next/static/media`)을 스크린샷 리포트에 적는다. Noto Serif KR 900이 과하면 700만 남긴다(수치를 미리 정하지 않는다).
@@ -114,7 +114,7 @@
 ### Task 0.4: 공용 프리미티브
 
 **Files:**
-- Create: `web/shared/src/{SectionHeader,Panel,Chip,KV,StatRow,Gauge,Feed,Slot,Tile,PillTabs,NavItem,Frame,ReasonTooltip}.tsx`
+- Create: `web/shared/src/{SectionHeader,Panel,Chip,KV,StatRow,Gauge,Feed,Slot,Tile,PillTabs,NavItem,EmptyState,ReasonTooltip}.tsx` (프레임은 `Panel frame="bronze|rust"` prop 으로 흡수, 별도 `Frame.tsx` 없음)
 - Modify: `web/shared/src/Button.tsx`(variant `primary|ghost|danger|disabled` + `reason`), `Card.tsx`, `Table.tsx`, `Modal.tsx`, `ConfirmDialog.tsx`, `index.ts`
 - Modify: `web/shared/src/tokens.css` (컴포넌트 클래스는 `_shared.css` 규칙을 `.os-*` 접두로 이식)
 - Test: `web/shared`에 vitest 설정 추가(`web/shared/vitest.config.ts`) + `web/shared/src/__tests__/*.test.tsx`
@@ -131,7 +131,7 @@
 - Create: `tools/assets/check_rtk14_cdn.py` (1,000 ID × original/portrait/icon HEAD 200 검증, 결과 리포트)
 - Test: `web/shared/src/__tests__/Portrait.test.tsx`, 기존 `portrait.test.tsx` 확장
 
-- [x] **Step 1:** 실패 테스트: 크기별로 올바른 variant URL을 고른다(≥148 → portrait, ≤96 → icon, hero → original), `nationRing`은 `self|ruler|context` 중 하나일 때만 outline, `inactive`는 grayscale, Retina `srcset`, 정사각 각진 모서리(원형 금지), `object-fit: contain`(잘림 0, OPENSAM-100 조건).
+- [x] **Step 1:** 실패 테스트: 크기별로 올바른 variant URL을 고른다(≥148 → portrait, ≤96 → icon, hero → original), `nationRing`은 `self|ruler|context` 중 하나일 때만 outline, `inactive`는 grayscale, 정사각 각진 모서리(원형 금지). `object-fit: contain`(잘림 0)은 CSS 텍스트 테스트(`shared/src/__tests__/tokens.test.ts`)로 검사한다. Retina `srcset` 은 **하지 않았다** — RTK14 서빙에 2x 파일이 없어 만들 근거가 없다(icon 96 을 48 이하로 그리면 그 자체가 2x).
 - [x] **Step 2:** 구현. 기본 이미지 실패 시 `onPortraitError` 폴백 유지.
 - [x] **Step 3:** `check_rtk14_cdn.py`를 실제 CDN에 돌렸다 — 3,000/3,000 200. 원문: 돌려 결과를 리포트에 첨부한다(실패 ID는 숨기지 않는다).
 
@@ -148,18 +148,17 @@
 ### Task 0.7: 쉘
 
 **Files:**
-- Create: `web/game/components/GameShell.tsx`(상태바 56 + 부서 나브 44 + 콘텐츠 + 모바일 5탭 작전실·지도·명령·국가·더보기), `web/game/components/DeptNav.tsx`
+- (변경) 별도 `GameShell.tsx` 없이 기존 `web/game/components/Shell.tsx` 를 상태바 56 + 부서 나브 44 + 콘텐츠 + 모바일 5탭으로 바꿨다. Create: `web/game/components/DeptNav.tsx`, `web/game/hooks/useShellFrontInfo.ts`
 - Modify: `web/game/components/Shell.tsx`(GameShell 위임), `Header.tsx`, `BottomNav.tsx`, `BackBar.tsx`
-- Create: `web/gateway/components/GatewayShell.tsx`(상단바: 워드마크 28~32 · 로비 · 게시판 · 계정 · 로그아웃 · 관리(ADMIN))
-- Modify: `web/gateway/components/Topbar.tsx`
-- Test: `Shell.main-route.test.tsx` 확장, 신규 `GatewayShell.test.tsx`
+- (변경) `GatewayShell.tsx` 없이 `web/gateway/components/Topbar.tsx` 를 상단바(워드마크 32 · 로비 · 게시판 · 계정 · 관리(ADMIN) · 로그아웃)로 바꿨다. 현재 구역은 페이지 prop `current`
+- Test: `Shell.main-route.test.tsx`(mock 갱신), `DeptNav.test.tsx`, `BottomNav.test.tsx`, gateway `nickname-session.integration.test.tsx`(상단바 워드마크)
 
-- [x] **Step 1:** 실패 테스트: 메인은 BackBar 없음, 서브는 있음(현행 유지), 모바일 5탭 href가 부서 그룹과 일치, 하단 나브가 콘텐츠를 가리지 않는다(`padding-bottom: var(--bottom-nav-inset)` 적용, 감사 P1).
+- [x] **Step 1:** 실패 테스트: 메인은 BackBar 없음, 서브는 있음(현행 유지), 모바일 5탭 href·게이팅(`BottomNav.test.tsx`·`dept-menu-config.test.ts`). 하단 나브가 콘텐츠를 가리지 않는 `padding-bottom: var(--bottom-nav-inset)` 은 기존 CSS(globals.css 390·404행)에 이미 있어 테스트를 새로 쓰지 않았다.
 - [x] **Step 2:** 구현. 1232px 미만은 부서 나브를 가로 스크롤, 768px 미만은 5탭.
 
 ### Phase 0 게이트
 
-- [~] typecheck·lint·vitest(shared 23 / game 642 / gateway 231)·두 앱 build 통과, 스크린샷 리포트 `docs/superpowers/reviews/2026-09-06-ui-phase-0-screens.md`(작전실 실캡처·e2e 3건은 백엔드 현재 이미지 재빌드 뒤 Phase 1 게이트로 이월). 교차 비평·OPENSAM-100/#243 닫기는 PR 에서.
+- [~] typecheck·lint·vitest·두 앱 build 통과, 스크린샷 리포트 `docs/superpowers/reviews/2026-09-06-ui-phase-0-screens.md`(작전실 실캡처·e2e 3건은 백엔드 현재 이미지 재빌드 뒤 Phase 1 게이트로 이월). 교차 비평 1회차 fix-required 3건·should-fix 12건 → `docs/superpowers/reviews/2026-09-06-ui-phase-0-critique.md` 에 처리표. OPENSAM-100/#243 닫기는 PR 에서.
 
 ---
 
@@ -169,39 +168,39 @@
 
 **Files:** Modify `web/game/components/game/GameInfo.tsx`, `GameChrome.tsx`; Test `GameInfo.test.tsx`
 
-- [ ] 13셀 라벨 verbatim 유지(서버명·기수·시나리오·NPC 요약·NPC선택·토너먼트·기타 설정·현재 年月순·전체 접속자 수·턴당 갱신횟수·등록 장수·토너먼트 상태·동작 시각·거래 진행 건수·설문 상태). 연호는 serif 16px+, 「다음 순」 카운트다운은 `turnTime`+`turnTerm`으로 계산하고 값이 없으면 셀을 뺀다. 「갱신」·「로비로」는 나브 우측.
+- [x] 13셀 라벨 verbatim 유지(GameInfo 를 상태바 아래 칩 스트립으로, 제목 행은 쉘 상태바가 맡고 sr-only 로 보존). 연호는 쉘 상태바(serif). 「다음 순」 카운트다운은 **넣지 않았다** — front-info 가 다음 실행 시각을 주지 않아 값이 없다(명령 목록의 슬롯 실행 시각은 reserved-commands 의 turnTime 으로 그린다). 「갱신」·「로비로」는 부서 나브 우측.
 
 ### Task 1.2: 3열 그리드 — 지난 순 · 지도 · 명령 목록
 
 **Files:** Modify `GameChrome.tsx`, `MainRecordZone.tsx`(3탭 장수 동향·개인 기록·중원 정세 ≤15건), `PartialReservedCommand.tsx`; Test `PartialReservedCommand.test.tsx`, `GameChrome.main-map.test.tsx`
 
-- [ ] 실패 테스트: 12슬롯 각각 `年月순`·`HH:MM`·명령·상태(현재 순 `now`, 휴식 `rest`), 편집·당기기/미루기(수량+적용)·조작 대상(본인/휘하) 컨트롤 존재, 한 순 아래 여러 슬롯을 묶는 표현이 없다.
-- [ ] 그리드: ≥1232px 좌 300 / 중앙 1fr / 우 360, 1000~1231px 2열(지도+명령) 아래 스택, <768 M3 탭. `MapViewer`는 props·픽셀 불변.
+- [x] 슬롯 = 한 순: `年月순`·`HH:MM`·명령·상태(`now`/`planned`/`rest`), 편집·당기기/미루기·반복·「명령 추가 · 편집」, 헤더 「조작 대상: 본인」. 기존 `PartialReservedCommand.test`(36행·접기 없음·순차 年月순/시각) 유지, S2 대조 테스트가 12개 이상 편집 버튼을 확인.
+- [x] 그리드: ≥1232px 좌 330 / 중앙 1fr / 우 360(지난 순·명령 목록은 2행 span), 1231px 이하 한 열(지도 → 명령 → 조작 대상 → 지난 순 → 메시지), <1024 모바일 5탭. `MapViewer`는 props·픽셀 불변(`initialFocus=current-city-close` 유지).
 
 ### Task 1.3: 하단 — 조작 대상 · 장수 · 국가 · 도시 · 서신
 
 **Files:** Modify `GeneralBasicCard.tsx`(20항목) `NationBasicCard.tsx`(16항목) `CityBasicCard.tsx` `MainStatusPanel.tsx`(접속중인 국가·【 접속자 】·【 국가방침 】) `MessagePanel.tsx`(3탭 + 「서신을 입력하세요」); Test 기존 4개 확장
 
-- [ ] 조작 대상 패널(OPENSAM-46 D3-11·12·13·16·17): 기본=본인, 도시/국가/장수 단일 상태 패널, 미지원 대상 비활성+사유, 가신 슬롯 placeholder(라벨 「휘하」, 데이터 없으면 「아직 없음」 한 줄).
-- [ ] 장수 카드 초상 `PortraitCard 126×178` + 국가색 링(self), 모바일은 통무지정매·병사·훈련·사기만.
+- [x] 조작 대상 패널(OPENSAM-46 D3-11·12·13·16·17): 기본=본인, 도시/국가(+접속중인 국가·접속자·국가방침)/장수 단일 패널, 「휘하」 슬롯은 점선 + 사유(「휘하 인물·부곡은 아직 없습니다」)로 남긴다.
+- [x] 장수 카드 초상 `Portrait size=card-126` + 국가색 링(self). 모바일 축약(통무지정매·병사·훈련·사기만)은 **하지 않았다** — 20항목 전부를 접이식 없이 두었고, 축약은 Phase 4 웨이브 B(장수 상세)에서 장수 상세 링크와 함께 정한다.
 
 ### Task 1.4: 명령 예약 모달(04)
 
 **Files:** Modify `web/game/components/CommandModal.tsx`; Test `CommandModal.form-spec.test.tsx`, `CommandModal.terminal-result.test.tsx`
 
-- [ ] 헤더 히어로 마스크(`PortraitHero`), 명령 상태 4종(사용 가능·대상 필요·사용 불가+이유·정보 부족)은 `/api/commands/available` 응답에서만 오고, 결과는 `pollCommandResult` 분기(성공 위조 금지). 기존 폼 스펙 테스트 전부 유지.
+- [x] 헤더 히어로 마스크(`Portrait size=hero`, 조작 대상 장수), 분류 탭은 pill-tabs, 명령 타일은 `Tile` 상태(possible→ok/need, !possible→no + 이유=`info`|`title`), 제출·뒤로는 공용 버튼. 결과는 기존 `submitCommandAndAwaitResult` 분기 그대로. 폼 스펙·terminal-result 테스트 10/10 유지. 「정보 부족/봉인」 상태는 카탈로그가 주지 않아 쓰지 않는다.
 
 ### Task 1.5: 순 전환 연출
 
 **Files:** Modify `web/game/hooks/useTurnRefresh.ts`, `GameChrome.tsx`; Test `turnRefresh.test.tsx`
 
-- [ ] `turnCompleted` 수신 → 연호 300ms 전환 + 피드 슬라이드. `prefers-reduced-motion`이면 즉시 교체. 리마운트 없음(OPENSAM-196 유지).
+- [x] refreshKey 변화(턴 완료) → `.is-turning` 300ms 로 활성 피드 슬라이드, 쉘 상태바 연호는 key 교체로 `os-turn-flip`. `--motion-turn` 은 reduced-motion 에서 0ms. 첫 마운트는 연출하지 않는다. 리마운트 없음.
 
 ### Task 1.6: S2 대조 테스트
 
 **Files:** Create `web/game/__tests__/parity/main-labels.test.tsx`, `web/game/__tests__/fixtures/front-info.full.json`
 
-- [ ] S2 표의 현행 라벨(GameInfo 13 · MainStatusPanel 3 · General 20 · Nation 16 · City 13 · 예턴 컨트롤 · 기록 3탭 · 메시지 3탭 · 부서 메뉴 20+8 · 갱신/로비로)이 전부 한 화면에 렌더된다. 하나라도 빠지면 빨갛다.
+- [x] `__tests__/parity/main-labels.test.tsx` + `fixtures/front-info.full.ts`: GameInfo 13 · 상태 3 · 장수 25 · 국가 16 · 도시 11 · 명령 목록 4 · 기록 3탭 · 메시지 3탭 · 조작 대상 이 한 화면에 렌더된다(빠지면 목록으로 빨갛다). 부서 메뉴 20+14·갱신/로비로는 `dept-menu-config.test.ts`·`DeptNav.test.tsx` 가 맡는다.
 
 ### Phase 1 게이트
 

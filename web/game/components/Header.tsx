@@ -25,14 +25,15 @@ export default function Header({ info, error = false }: HeaderProps) {
                 <Brand size="large" className="os-topbar__brand" />
                 <span className="os-topbar__sep" aria-hidden="true" />
                 <div className="os-topbar__server">
-                    <span className="os-topbar__server-name">{serverLine || (error ? '서버 정보 없음' : '서버 갱신 중')}</span>
+                    <span className="os-topbar__server-name">{serverLine || (info ? '' : error ? '서버 정보 없음' : '서버 갱신 중')}</span>
                     {global?.scenarioText && <span className="os-topbar__scenario">{global.scenarioText}</span>}
                 </div>
             </div>
             <div className="os-topbar__right">
                 {global && (
                     <div className="os-inset os-topbar__clock" aria-label="현재 순">
-                        <span className="os-serif">
+                        {/* 순 전환 연출: 연호가 바뀌면 key 가 바뀌어 다시 마운트되고 os-turn-flip 이 300ms 돈다(reduced-motion 0). */}
+                        <span className="os-serif os-turn-flip" key={`${global.year}-${global.month}-${phase}`}>
                             현재: {global.year}年 {global.month}月 {phase && <span className="os-topbar__phase">{phase}</span>}
                         </span>
                         <span className="os-topbar__dim">({global.turnterm}분 턴 서버)</span>

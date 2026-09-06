@@ -34,6 +34,8 @@ export interface PartialReservedCommandProps {
     /** Soft-refresh after a reserve. */
     onReserved?: () => void;
     onToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+    /** 명령 모달 헤더 히어로(조작 대상 장수). */
+    hero?: { picture?: string | null; imageServer?: number | null; name?: string | null; nationColor?: string | null } | null;
 }
 
 export default function PartialReservedCommand({
@@ -43,6 +45,7 @@ export default function PartialReservedCommand({
     refreshKey: externalRefreshKey = 0,
     onReserved,
     onToast,
+    hero = null,
 }: PartialReservedCommandProps) {
     const total = Math.max(DEFAULT_VIEW_TURNS, maxTurn && maxTurn > 0 ? maxTurn : DEFAULT_VIEW_TURNS);
     const [editTurnIdx, setEditTurnIdx] = useState<number | null>(null);
@@ -126,48 +129,64 @@ export default function PartialReservedCommand({
         return `${pad2(time.getHours())}:${pad2(time.getMinutes())}`;
     };
 
+    const reservedCount = slots.filter((s) => s.turnIdx < viewCount).length;
+    const nowIdx = 0;
     return (
-        <section className="reserved-command-panel" id="reservedCommandPanel" aria-label="명령 목록">
-            <div className="rcp-title">명령 목록</div>
+        <section className="reserved-command-panel os-panel os-panel--static" id="reservedCommandPanel" aria-label="명령 목록">
+            <div className="os-section-header rcp-title">
+                <span className="os-section-header__bar" aria-hidden="true" />
+                <h3 className="os-section-header__title">명령 목록</h3>
+                <span className="os-section-header__sub">{viewCount}순 · 예약 {reservedCount}</span>
+                <span className="os-section-header__spacer" />
+                <span className="os-chip os-chip--bronze">조작 대상: 본인</span>
+            </div>
             {loading && <div className="rcp-flag">불러오는 중…</div>}
-            {error && <div className="rcp-flag" style={{ color: 'var(--color-danger, #dc2626)' }}>{error}</div>}
-
+            {error && <div className="rcp-flag" role="alert" style={{ color: 'var(--rust-2)' }}>{error}</div>}
+            <div className="rcp-head" aria-hidden="true">
+                <span>#</span>
+                <span>순 · 실행</span>
+                <span>명령 · 대상</span>
+                <span />
+            </div>
             <div className="rcp-table">
                 {Array.from({ length: viewCount }, (_, i) => i).map((turnIdx) => {
                     const slot = slotMap.get(turnIdx);
+                    const state = slot ? (turnIdx === nowIdx ? 'now' : 'planned') : 'rest';
                     return (
-                        <div key={turnIdx} className="rcp-row">
-                            <div className="rcp-idx">{turnIdx + 1}</div>
-                            <div className="rcp-ym">{slotYearMonthText(turnIdx)}</div>
-                            <div className="rcp-time">{slotTimeFor(turnIdx)}</div>
-                            <div className="rcp-brief" title={slot?.brief ?? '휴식'}>{slot?.brief ?? '휴식'}</div>
+                        <div key={turnIdx} className={`rcp-row os-slot${state === 'now' ? ' os-slot--now' : state === 'rest' ? ' os-slot--rest' : ''}`} data-state={state}>
+                            <div className="rcp-idx os-slot__n">{turnIdx + 1}</div>
+                            <div className="rcp-when">
+                                <div className="rcp-ym">{slotYearMonthText(turnIdx)}</div>
+                                <div className="rcp-time os-num">{slotTimeFor(turnIdx)}</div>
+                            </div>
+                            <div className="rcp-brief os-slot__cmd" title={slot?.brief ?? '휴식'}>{slot?.brief ?? '휴식'}</div>
                             <div className="rcp-edit">
                                 <button
                                     type="button"
-                                    className="rcp-edit-btn"
+                                    className="rcp-edit-btn os-button os-button--ghost os-button--sm"
                                     aria-label={`${turnIdx + 1}턴 명령 편집`}
                                     onClick={() => setEditTurnIdx(turnIdx)}
                                 >
-                                    ✎
+                                    편집
                                 </button>
                             </div>
                         </div>
                     );
                 })}
             </div>
-
             <div className="rcp-actions">
-                <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 4, alignItems: 'center' }}>
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>당기기/미루기</span>
+                <span className="rcp-actions__group">
+                    <span className="rcp-actions__label">당기기/미루기</span>
                     <input
                         type="number"
+                        className="os-inset rcp-actions__num"
+                        aria-label="당기기/미루기 수량"
                         value={pushAmount}
                         onChange={(e) => setPushAmount(Number(e.target.value))}
-                        style={{ width: '4ch', fontSize: 'var(--text-xs)' }}
                     />
                     <button
                         type="button"
-                        style={{ fontSize: 'var(--text-xs)' }}
+                        className="os-button os-button--ghost os-button--sm"
                         onClick={async () => {
                             try {
                                 const out = await api.commandQueue.push(generalId, pushAmount);
@@ -185,16 +204,17 @@ export default function PartialReservedCommand({
                     >
                         적용
                     </button>
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginLeft: 4 }}>반복</span>
+                    <span className="rcp-actions__label">반복</span>
                     <input
                         type="number"
+                        className="os-inset rcp-actions__num"
+                        aria-label="반복 수량"
                         value={repeatAmount}
                         onChange={(e) => setRepeatAmount(Number(e.target.value))}
-                        style={{ width: '4ch', fontSize: 'var(--text-xs)' }}
                     />
                     <button
                         type="button"
-                        style={{ fontSize: 'var(--text-xs)' }}
+                        className="os-button os-button--ghost os-button--sm"
                         onClick={async () => {
                             try {
                                 const out = await api.commandQueue.repeat(generalId, repeatAmount);
@@ -213,8 +233,10 @@ export default function PartialReservedCommand({
                         적용
                     </button>
                 </span>
+                <button type="button" className="os-button os-button--primary rcp-add" onClick={() => setEditTurnIdx(nowIdx)}>
+                    명령 추가 · 편집
+                </button>
             </div>
-
             {editTurnIdx != null && (
                 <CommandModal
                     onClose={() => setEditTurnIdx(null)}
@@ -223,6 +245,7 @@ export default function PartialReservedCommand({
                     nationId={nationId}
                     turnIdx={editTurnIdx}
                     onReserved={handleReserved}
+                    hero={hero}
                 />
             )}
         </section>

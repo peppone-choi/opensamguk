@@ -38,7 +38,8 @@ describe('MessagePanel', () => {
         render(<MessagePanel generalId={10} nationId={1} onToast={vi.fn()} />);
 
         await waitFor(() => expect(mocks.mailbox).toHaveBeenCalledWith(9001));
-        expect(screen.getByRole('combobox')).toHaveValue('9001');
+        expect(screen.getByRole('tab', { name: '국가 메시지' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('tab', { name: '전체 메시지' })).toHaveAttribute('aria-selected', 'false');
     });
 
     it('clears and reloads a sent message only after an applied result', async () => {

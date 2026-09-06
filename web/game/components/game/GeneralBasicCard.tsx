@@ -15,7 +15,7 @@
 // 미렌더(API-BLOCKED, 날조 금지): turntime/실행 남은시간, dex1..5(숙련도 컬럼 부재),
 
 import { formatNumber } from '@/lib/format';
-import { onPortraitError, portraitUrl } from '@/lib/portrait';
+import { Portrait } from '@opensamguk/ui';
 import { formatInjury, nextExpLevelRemain } from '@/lib/utilGame';
 import type { FrontGeneralInfo, FrontNationInfo } from '@/lib/types';
 import { ICON_CDN, STAT_UP_THRESHOLD } from '@/lib/constants';
@@ -233,11 +233,13 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
     return (
         <section className="basic-card general-basic-card ib-general" aria-label="장수 정보">
             <div className="general-card-head" style={{ backgroundColor: nationColor, color: headerText }}>
-                <img
-                    className="general-card-portrait"
-                    src={portraitUrl(general.picture, general.imageServer)}
-                    alt=""
-                    onError={onPortraitError}
+                <Portrait
+                    picture={general.picture}
+                    imageServer={general.imageServer}
+                    size="card-126"
+                    alt={general.name ?? '장수'}
+                    ring={nation?.color ? { color: nation.color, reason: 'self' } : null}
+                    frameClassName="general-card-portrait"
                 />
                 <div className="basic-card-name">
                     {general.name ?? '-'}
