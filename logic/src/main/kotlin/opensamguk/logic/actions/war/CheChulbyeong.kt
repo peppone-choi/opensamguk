@@ -20,6 +20,10 @@ import opensamguk.logic.war.ProcessWarResult
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.war.ProductionWarBattleHooks
 import opensamguk.logic.war.WarSeed
+import opensamguk.logic.war.plan.BattleReplayCodec
+import opensamguk.logic.war.plan.BattleReplayDraft
+import opensamguk.logic.war.plan.PlannedWarBattleHooks
+import opensamguk.logic.war.plan.ReplayRecordingHooks
 import opensamguk.logic.war.candidateCities
 import opensamguk.logic.war.processWar
 import opensamguk.logic.war.searchDistanceListToDest
@@ -74,6 +78,9 @@ class CheChulbyeong(
     var lastBattleResult: ProcessWarResult? = null
         private set
     var lastLotteryFired: Boolean = false
+        private set
+    /** Phase 4X-C — 봉인된 계획이 있던 전투의 리플레이 초안(id 만). 계획이 없으면 null(훅을 감싸지 않는다 — 바이트 동일). */
+    var lastReplayDraft: BattleReplayDraft? = null
         private set
 
     /** che_출병.php:101 getCost — reqRice = `Util::round(crew / 100)` (half-away). reqGold = 0. */
@@ -163,6 +170,7 @@ class CheChulbyeong(
         lastConquerCity = false
         lastBattleResult = null
         lastLotteryFired = false
+        lastReplayDraft = null
 
         val bctx = context.battleContext
             ?: error("che_출병 requires a BattleCommandContext (BO2 builder)")
@@ -259,39 +267,94 @@ class CheChulbyeong(
             defenderNationRice = (defenderNation?.rice ?: 0).toDouble(),
             citySupply = destCity.supplyState != 0,
         )
-        return processWar(
+        val env = ProcessWarEnv(
+            defenderNationTech = defenderNation?.tech ?: 0.0,
+            defenderNationRice = defenderNation?.rice ?: 10000,
+            defenderNationCapitalCityId = defenderNation?.capitalCityId ?: 0,
+            attackerCityId = bctx.attackerCityId,
+            defenderCityId = chosenCityId,
+            attackerEffectiveGeneralCount = bctx.effectiveGeneralCountByNationId[attackerNation.id]
+                ?: attackerNation.gennum,
+            defenderEffectiveGeneralCount = bctx.effectiveGeneralCountByNationId[destCity.nationId]
+                ?: (defenderNation?.gennum ?: GameConst.initialNationGenLimit),
+            defenderNationId = destCity.nationId,
+            defenderNationTypeCode = defenderNation?.typeCode ?: "che_중립",
+            defenderNationGeneralCount = defenderNation?.gennum ?: GameConst.initialNationGenLimit,
+        )
+        val attackerTech = attackerNation.tech.toInt()
+        val defenderTech = (defenderNation?.tech ?: 0.0).toInt()
+        val attackerCityLevel = bctx.cityById[bctx.attackerCityId]?.level ?: 0
+        val attackerIsCapital = attackerNation.capitalCityId == bctx.attackerCityId
+
+        // Phase 4X-C(spec v4.1 §5): 봉인된 계획은 예약의 finalTargetCityId 로 찾는다(경유 전투에도 같은 계획, F6).
+        // 계획이 없으면 훅을 감싸지 않는다 — 계획 없는 경로의 바이트 동일에 대한 구조적 증거.
+        val plan = bctx.sealedPlans[bctx.finalTargetCityId]
+        val draft = plan?.let { p ->
+            val input = linkedMapOf<String, Any?>(
+                "schema" to 1,
+                "warSeed" to warSeed,
+                "attacker" to generalFingerprint(d.general, attackerTech),
+                "defenders" to defenders.map { generalFingerprint(it, defenderTech) },
+                "city" to mapOf(
+                    "id" to destCity.id, "level" to destCity.level, "def" to destCity.defense, "wall" to destCity.wall,
+                    "nationId" to destCity.nationId, "supply" to destCity.supplyState,
+                ),
+                "env" to mapOf(
+                    "defenderNationTech" to env.defenderNationTech, "defenderNationRice" to env.defenderNationRice,
+                    "defenderNationCapitalCityId" to env.defenderNationCapitalCityId, "attackerCityId" to env.attackerCityId,
+                    "defenderCityId" to env.defenderCityId, "attackerEffectiveGeneralCount" to env.attackerEffectiveGeneralCount,
+                    "defenderEffectiveGeneralCount" to env.defenderEffectiveGeneralCount, "defenderNationId" to env.defenderNationId,
+                    "defenderNationTypeCode" to env.defenderNationTypeCode, "defenderNationGeneralCount" to env.defenderNationGeneralCount,
+                    "attackerCityLevel" to attackerCityLevel, "attackerIsCapital" to attackerIsCapital,
+                ),
+                "plan" to mapOf("stance" to p.stance, "pct" to p.retreatLossPct, "morale" to p.retreatMoraleBelow),
+                "year" to context.env.year, "month" to bctx.loggerMonth, "startYear" to context.env.startYear,
+            )
+            BattleReplayDraft(
+                attackerId = d.general.id, attackerNationId = attackerNation.id, cityId = chosenCityId, defenderNationId = destCity.nationId,
+                warSeed = warSeed, plan = p, crewBefore = d.general.crew, riceBefore = d.general.rice,
+                inputHash = BattleReplayCodec.inputHash(input),
+            )
+        }
+        val effectiveHooks = if (draft != null) ReplayRecordingHooks(PlannedWarBattleHooks(hooks, draft.plan, draft.crewBefore), draft) else hooks
+
+        val result = processWar(
             warSeed = warSeed,
             attackerGeneral = d.general,
             attackerNation = attackerNation,
             defenderCity = destCity,
             defenderCandidates = defenders,
             attackerCrewType = attackerCrewType,
-            attackerTech = attackerNation.tech.toInt(),
+            attackerTech = attackerTech,
             defenderCrewType = defenderCrewType,
-            defenderTech = (defenderNation?.tech ?: 0.0).toInt(),
+            defenderTech = defenderTech,
             pipeline = pipeline,
             year = context.env.year,
             startYear = context.env.startYear,
-            env = ProcessWarEnv(
-                defenderNationTech = defenderNation?.tech ?: 0.0,
-                defenderNationRice = defenderNation?.rice ?: 10000,
-                defenderNationCapitalCityId = defenderNation?.capitalCityId ?: 0,
-                attackerCityId = bctx.attackerCityId,
-                defenderCityId = chosenCityId,
-                attackerEffectiveGeneralCount = bctx.effectiveGeneralCountByNationId[attackerNation.id]
-                    ?: attackerNation.gennum,
-                defenderEffectiveGeneralCount = bctx.effectiveGeneralCountByNationId[destCity.nationId]
-                    ?: (defenderNation?.gennum ?: GameConst.initialNationGenLimit),
-                defenderNationId = destCity.nationId,
-                defenderNationTypeCode = defenderNation?.typeCode ?: "che_중립",
-                defenderNationGeneralCount = defenderNation?.gennum ?: GameConst.initialNationGenLimit,
-            ),
-            hooks = hooks,
+            env = env,
+            hooks = effectiveHooks,
             pipelinesByGeneralId = bctx.pipelinesByGeneralId,
-            attackerCityLevel = bctx.cityById[bctx.attackerCityId]?.level ?: 0,
-            attackerIsCapital = attackerNation.capitalCityId == bctx.attackerCityId,
+            attackerCityLevel = attackerCityLevel,
+            attackerIsCapital = attackerIsCapital,
         )
+        if (draft != null) {
+            draft.crewAfter = result.attacker.getCrew()
+            draft.riceUsed = draft.riceBefore - result.attacker.state.snapshot().rice
+            draft.conquered = result.conquerCity
+            lastReplayDraft = draft
+        }
+        return result
     }
+
+    /** `input_hash` 의 장수 지문(S5·R3: 전력 입력 전부 — meta 는 통째로, 키 정렬은 codec 이 한다). 부분 지문이다. */
+    private fun generalFingerprint(g: General, tech: Int): Map<String, Any?> = mapOf(
+        "id" to g.id, "nationId" to g.nationId, "crew" to g.crew, "crewTypeId" to g.crewTypeId, "tech" to tech,
+        "train" to g.train, "atmos" to g.atmos, "rice" to g.rice, "gold" to g.gold, "injury" to g.injury,
+        "officerLevel" to g.officerLevel, "npcType" to g.npcType,
+        "stats" to mapOf("leadership" to g.leadership, "strength" to g.strength, "intel" to g.intel, "politics" to g.politics, "charm" to g.charm),
+        "items" to listOf(g.horse, g.weapon, g.book, g.item),
+        "meta" to g.meta,
+    )
 
     /** PHP `addDex($crewTypeObj, crew/100)` — fold the crew dex accumulator (CASTLE→SIEGE, no draw). */
     private fun addDexForChulbyeong(g: General, crewTypeId: Int, exp: Double): General {

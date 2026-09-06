@@ -107,9 +107,7 @@ input:focus, select:focus, textarea:focus {
   top: 0;
   z-index: 100;
 }
-.game-header-left, .game-header-right { display: flex; align-items: center; gap: var(--space-md); }
-.game-header-brand { font-size: var(--text-lg); font-weight: 700; color: var(--gold); }
-.game-header-turn { font-size: var(--text-sm); color: var(--text-secondary); }
+
 .game-header-res { font-size: var(--text-sm); color: var(--text-secondary); }
 
 .shell-body { display: flex; flex: 1; }
@@ -122,21 +120,12 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   flex-direction: column;
 }
-.game-sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  color: var(--text-secondary);
-  transition: var(--transition-fast);
-}
-.game-sidebar-item:hover, .game-sidebar-item.active {
+
+.game-sidebar-item.active {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
 .game-sidebar-item.active { border-left: 3px solid var(--gold); }
-.game-sidebar-icon { font-size: var(--text-lg); }
-.game-sidebar-label { font-size: var(--text-sm); }
 
 .shell-main { flex: 1; padding: var(--space-md); overflow-y: auto; }
 /* 메인 콘텐츠 폭 — Wanted Montage 그리드 정본(montage.wanted.co.kr/docs/foundations/base-material/grid):
@@ -397,7 +386,7 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 767px) {
   .game-header { padding: var(--space-sm); }
-  .game-header-brand { font-size: var(--text-base); }
+
   .game-header-res { display: none; }
   .shell-scroll-surface {
     padding: var(--space-sm);
@@ -475,17 +464,6 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-primary);
 }
 
-/* Resource bar */
-.resource-bar {
-  display: flex;
-  gap: var(--space-md);
-  margin-top: var(--space-md);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--border-subtle);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
 /* Error state */
 .error-state {
   display: flex;
@@ -502,49 +480,6 @@ input:focus, select:focus, textarea:focus {
   font-weight: 600;
 }
 .error-state button:hover { background: var(--gold-dim); }
-
-/* Notifications */
-.notifications {
-  margin-top: var(--space-lg);
-  padding: var(--space-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-.notifications h2 {
-  margin: 0 0 var(--space-md);
-  font-size: var(--text-lg);
-}
-.notification-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) 0;
-  font-size: var(--text-sm);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.notification-item:last-child { border-bottom: none; }
-.notification-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--gold);
-  flex-shrink: 0;
-}
-
-/* Search bar */
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  margin-bottom: var(--space-md);
-}
-.search-bar input { flex: 1; }
-.search-count {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  white-space: nowrap;
-}
 
 /* Tournament */
 .tournament-header .tournament-meta {
@@ -614,7 +549,7 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 767px) {
   .game-header { padding: var(--space-sm); }
-  .game-header-brand { font-size: var(--text-base); }
+
   .game-header-res { display: none; }
   .shell-main {
     padding: var(--space-sm);
@@ -622,8 +557,7 @@ input:focus, select:focus, textarea:focus {
   }
   .cmd-grid { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .resource-bar { flex-direction: column; gap: var(--space-sm); }
-  .search-bar { flex-direction: column; align-items: stretch; }
+
   .tournament-header .tournament-meta { flex-direction: column; gap: var(--space-sm); }
 }
 
@@ -732,8 +666,6 @@ input:focus, select:focus, textarea:focus {
   word-break: break-word;
 }
 
-/* GlobalMenu (server-driven menu spine) */
-.common-toolbar { width: 100%; }
 .global-menu {
   display: grid;
   gap: 0.1rem;
@@ -858,20 +790,6 @@ input:focus, select:focus, textarea:focus {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   padding: var(--space-xs) 0;
-}
-
-/* mobile 국가 메뉴 dropdown (GameBottomBar 국가 메뉴 dropup proxy) */
-.mobile-control-dropdown { display: none; }
-@media (max-width: 999px) {
-  .mobile-control-dropdown { display: block; }
-  .mobile-control-dropdown > summary {
-    cursor: pointer;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-  }
 }
 
 /* CharacterClaim (장수선택 / 빙의) */
@@ -1040,7 +958,6 @@ input:focus, select:focus, textarea:focus {
 .city-base:hover { text-decoration: none; }
 .city-base:focus { outline: none; }
 .city-base:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-radius: 4px; }
-/* 미보급(supply=false) 도시 — devsam-core2026 .supply-off{opacity:0.6} 그대로(opacity만). */
 .city-base.supply-off { opacity: 0.6; }
 .city-selectable { cursor: pointer; }
 .city-selected .city-cast {
@@ -1072,7 +989,7 @@ input:focus, select:focus, textarea:focus {
   pointer-events: none;
 }
 .city-flag { position: absolute; z-index: 3; width: 9px; height: 9px; pointer-events: none; }
-.city-flag-img { display: block; width: 9px; height: 9px; image-rendering: pixelated; -webkit-user-drag: none; }
+
 /* 4) 수도 별 event51.gif — 깃발 우상단(top:0,right:-1). */
 .city-capital { position: absolute; z-index: 4; top: 0; right: -1px; width: 7px; height: 7px; image-rendering: pixelated; -webkit-user-drag: none; }
 /* 5) 상태 아이콘 event<state>.gif — city_img 기준(top:5,left:0). */
@@ -1299,41 +1216,32 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── F2 Wave 5 — main-screen assembly (#ingameBoard legacy grid) ─────────────── */
+/* ===== 작전실 보드 (ADR-LITE-049 · 03) — 좌 지난 순 330 / 중앙 지도 1fr / 우 명령 목록 360 ===== */
 .ingame-board {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0;
+  gap: 12px;
   width: 100%;
-  max-width: min(100%, 1200px);
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
   align-items: start;
+  padding: 12px 0 0;
 }
-.ib-map,
-.ib-reserved,
-.ib-subject-panel,
-.ib-controlbar { min-width: 0; }
-.ib-map,
-.ib-reserved,
-.ib-subject-panel,
-.ib-controlbar { width: 100%; }
+.ib-records, .ib-map, .ib-reserved, .ib-subject-panel, .ib-messages { min-width: 0; width: 100%; }
 @media (max-width: 1231px) {
   .ingame-board > .ib-map { grid-row: 1; }
   .ingame-board > .ib-reserved { grid-row: 2; }
-  .ingame-board > .ib-controlbar { grid-row: 3; }
-  .ingame-board > .ib-subject-panel { grid-row: 4; }
+  .ingame-board > .ib-subject-panel { grid-row: 3; }
+  .ingame-board > .ib-records { grid-row: 4; }
+  .ingame-board > .ib-messages { grid-row: 5; }
 }
 @media (min-width: 1232px) {
-  .ingame-board {
-    grid-template-columns: 540px 360px 300px;
-    gap: 0;
-  }
-  .ingame-board > .ib-map { grid-column: 1 / 3; grid-row: 1; }
+  .ingame-board { grid-template-columns: 330px minmax(0, 1fr) 360px; gap: 14px; }
+  .ingame-board > .ib-records { grid-column: 1; grid-row: 1 / 3; }
+  .ingame-board > .ib-map { grid-column: 2; grid-row: 1; }
   .ingame-board > .ib-reserved { grid-column: 3; grid-row: 1 / 3; }
-  .ingame-board > .ib-subject-panel { grid-column: 1 / 3; grid-row: 2; }
-  .ingame-board > .ib-controlbar { grid-column: 1 / 4; grid-row: 3; }
+  .ingame-board > .ib-subject-panel { grid-column: 2; grid-row: 2; }
+  .ingame-board > .ib-messages { grid-column: 1 / 4; grid-row: 3; }
 }
-.ib-controlbar { width: 100%; }
 .ib-map .map-viewer { border-radius: 0; }
 .ib-subject-panel {
   display: grid;
@@ -1437,28 +1345,7 @@ input:focus, select:focus, textarea:focus {
     grid-template-columns: 1fr;
   }
 }
-.main-refresh-row {
-  width: 100%;
-  max-width: min(100%, 1200px);
-  margin: 0 auto;
-  display: flex;
-  justify-content: flex-end;
-  border-left: 1px solid var(--border-subtle);
-  border-right: 1px solid var(--border-subtle);
-  background: var(--bg-card);
-}
-.main-refresh-btn {
-  border: 0;
-  border-left: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
-  color: var(--gold);
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  cursor: pointer;
-}
+
 .main-page-content {
   width: 100%;
   max-width: min(100%, 1200px);
@@ -1992,7 +1879,7 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 767px) {
   .msg-input-form { grid-template-columns: 1fr; }
 }
-.msg-mailbox-select, .msg-input { padding: var(--space-xs) var(--space-sm); }
+.msg-input { padding: var(--space-xs) var(--space-sm); }
 .msg-send-btn { background: var(--gold); color: var(--text-inverse); font-weight: 600; }
 .msg-list { max-height: 480px; overflow-y: auto; }
 .msg-empty {
@@ -2016,3 +1903,577 @@ input:focus, select:focus, textarea:focus {
 .msg-deleted { color: var(--text-muted); }
 .msg-plate-actions { display: flex; gap: var(--space-xs); margin-top: var(--space-xs); }
 .msg-plate-actions button { padding: 2px var(--space-sm); font-size: var(--text-xs); }
+
+/* ===== ADR-LITE-049 쉘: 상태바 56 · 부서 나브 44 · 모바일 5탭 (Phase 0.7) ===== */
+.os-topbar {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line-2);
+  background: linear-gradient(180deg, var(--raised), var(--panel));
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.os-topbar__left, .os-topbar__right { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.os-topbar__brand { height: 30px; width: auto; }
+.os-topbar__sep { width: 1px; height: 22px; background: var(--line-2); flex: none; }
+.os-topbar__server { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.os-topbar__server-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.os-topbar__scenario { font-size: 11px; color: var(--info); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.os-topbar__clock { display: flex; align-items: center; gap: 12px; min-height: 38px; padding: 0 14px; font-size: 16px; font-weight: 700; white-space: nowrap; min-width: 0; flex-shrink: 1; }
+.os-topbar__phase { color: var(--bronze); }
+.os-topbar__dim { font-size: 11px; color: var(--muted); font-weight: 400; }
+.os-topbar__res { display: flex; align-items: center; gap: 10px; font-size: 13px; white-space: nowrap; }
+.os-topbar__res b { font-weight: 700; }
+.os-topbar__online { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; white-space: nowrap; }
+.os-topbar__nav { display: flex; align-items: stretch; gap: 2px; }
+
+.dept-nav {
+  min-height: 44px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--inset);
+  position: sticky;
+  top: 56px;
+  z-index: 99;
+}
+.dept-nav__groups { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.dept-nav__groups::-webkit-scrollbar { display: none; }
+.dept-nav__group { position: relative; display: flex; }
+.dept-nav__group > button { font: inherit; background: transparent; border: 0; border-bottom: 2px solid transparent; cursor: pointer; padding: 0 14px; border-radius: 0; }
+.dept-nav__group > button:hover { background: transparent; }
+.dept-nav__caret { font-size: 10px; color: var(--muted); margin-left: 2px; }
+.dept-nav__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 240px;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow-md);
+  z-index: 120;
+}
+.dept-nav__entry-wrap { display: flex; width: 100%; }
+.dept-nav__entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dept-nav__entry:hover { background: var(--raised); text-decoration: none; color: var(--text); }
+.dept-nav__entry--highlight { color: var(--bronze); font-weight: 700; }
+.dept-nav__entry--disabled { color: var(--muted); border: 1px dashed var(--line-2); margin: 2px 8px; width: calc(100% - 16px); cursor: not-allowed; }
+.dept-nav__entry:focus-visible, .dept-nav__entry--disabled:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.dept-nav__ext { font-size: 11px; color: var(--muted); }
+.dept-nav__actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.dept-nav__community { color: var(--muted); }
+
+/* 세로 모드(모바일 「더보기」 시트): 그룹을 모두 펼친다 */
+.dept-nav--vertical { position: static; flex-direction: column; align-items: stretch; padding: 8px 0; min-height: 0; border: 0; background: transparent; }
+.dept-nav--vertical .dept-nav__groups { flex-direction: column; overflow: visible; }
+.dept-nav--vertical .dept-nav__group { flex-direction: column; }
+.dept-nav--vertical .dept-nav__group > button { justify-content: flex-start; min-height: 40px; }
+.dept-nav--vertical .dept-nav__menu { position: static; border: 0; box-shadow: none; background: transparent; padding: 0 0 8px 12px; }
+.dept-nav--vertical .dept-nav__actions { padding: 8px 12px 0; border-top: 1px solid var(--line); }
+
+.dept-sheet { position: fixed; inset: 0; z-index: 200; }
+.dept-sheet__scrim { position: absolute; inset: 0; background: var(--overlay-scrim); border: 0; padding: 0; cursor: pointer; }
+.dept-sheet__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--bottom-nav-inset);
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border-top: 1px solid var(--line-2);
+}
+
+.game-bottom-item { min-height: 44px; justify-content: center; font: inherit; border: 0; border-radius: 0; cursor: pointer; }
+.game-bottom-item.active { color: var(--bronze); box-shadow: inset 0 2px 0 var(--bronze); }
+.game-bottom-label { font-size: var(--text-xs); font-weight: 700; }
+
+@media (max-width: 1023px) {
+  .dept-nav { display: none; } /* 모바일은 5탭 + 더보기 시트 */
+  .dept-sheet .dept-nav { display: flex; }
+}
+@media (max-width: 767px) {
+  .os-topbar { padding: 0 12px; gap: 8px; }
+  .os-topbar__left { flex: 1 1 0; min-width: 0; }
+  .os-topbar__right { flex: 0 1 auto; min-width: 0; }
+  .os-topbar__clock { min-height: 32px; padding: 0 8px; font-size: 13px; gap: 6px; }
+  .os-topbar__clock .os-topbar__dim, .os-topbar__online, .os-topbar__scenario, .os-topbar__res { display: none; }
+}
+
+/* ===== 작전실 세부 (Phase 1) ===== */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+.game-info-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+}
+.game-info-strip::-webkit-scrollbar { display: none; }
+.game-info-strip > .gi-cell {
+  grid-column: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--line-2);
+  border-top: 1px solid var(--line-2);
+  border-right: 1px solid var(--line-2);
+  background: var(--inset);
+  color: var(--text-2);
+  font-size: 11px;
+  white-space: nowrap;
+  text-align: left;
+}
+.game-info-strip .text-cyan { color: var(--info); }
+.game-info-strip .text-magenta { color: var(--rust-2); }
+.game-info-strip .text-orange { color: var(--bronze); }
+
+.ib-records { display: flex; flex-direction: column; min-height: 0; max-height: 720px; }
+.main-record-tabs { display: flex; border-bottom: 1px solid var(--line); font-size: 11px; }
+.main-record-tab {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 12px; min-height: 32px;
+  font: inherit; font-size: 11px; color: var(--muted);
+  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; cursor: pointer;
+}
+.main-record-tab:hover { background: transparent; color: var(--text); }
+.main-record-tab.is-on { color: var(--bronze); border-bottom-color: var(--bronze); font-weight: 700; }
+.main-record-tab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.main-record-count { color: var(--muted); font-size: 10px; }
+.main-record-zone { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.main-record-feed { display: none; border: 0; background: transparent; min-height: 0; overflow-y: auto; flex: 1; }
+.main-record-feed.is-active { display: block; }
+.main-record-feed:first-child { border-top: 0; }
+.main-record-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); padding: 0; margin: -1px; }
+.main-record-row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--text-2); line-height: 1.45; }
+.main-record-empty { padding: 16px 12px; font-size: 12px; color: var(--muted); }
+.war-room.is-turning .main-record-feed.is-active { animation: os-feed-in var(--motion-turn) ease-out; }
+@keyframes os-feed-in { from { transform: translateY(-8px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+
+.ib-map { padding: 0; }
+.ib-map .map-viewer { border: 0; }
+
+.ib-subject-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+}
+.subject-target-bar {
+  display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 12px;
+  border: 1px solid var(--line); background: var(--inset); font-size: 12px;
+}
+.subject-target-title { font-family: var(--font-serif); font-weight: 700; color: var(--text); }
+.subject-target-current { display: flex; gap: 8px; color: var(--text-2); }
+.subject-target-current span + span::before { content: '·'; margin-right: 8px; color: var(--muted); }
+.subject-secondary-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 900px) { .subject-secondary-grid { grid-template-columns: 1fr 1fr; } }
+.subject-nation { display: flex; flex-direction: column; gap: 0; }
+.subject-nation .main-status { border: 1px solid var(--line); border-top: 0; background: var(--panel); padding: 6px 12px; }
+.main-status-row { font-size: 12px; color: var(--text-2); padding: 3px 0; }
+.main-status-notice-head { color: var(--muted); }
+.ib-subject-panel > .basic-card, .subject-secondary-grid > .basic-card, .subject-nation > .basic-card { border: 1px solid var(--line); background: var(--panel); border-radius: 0; }
+
+.reserved-command-panel { border-radius: 0; display: flex; flex-direction: column; }
+.rcp-title { color: var(--text); text-align: left; padding: 0 12px; }
+.rcp-head { display: grid; grid-template-columns: 34px 1fr 1.2fr 56px; gap: 10px; padding: 4px 10px; font-size: 10px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.rcp-table { display: flex; flex-direction: column; max-height: calc(44px * 12); overflow-y: auto; }
+.rcp-row.os-slot { grid-template-columns: 34px 1fr 1.2fr 56px; min-height: 44px; border-top: 0; font-size: 12px; }
+.rcp-idx, .rcp-ym, .rcp-time, .rcp-brief, .rcp-edit { padding: 0; text-align: left; white-space: nowrap; background: transparent; }
+.rcp-when { display: flex; flex-direction: column; line-height: 1.15; }
+.rcp-ym { font-size: 11px; color: var(--text-2); white-space: nowrap; }
+.rcp-time { font-size: 11px; color: var(--muted); }
+.rcp-brief { overflow: hidden; text-overflow: ellipsis; }
+.rcp-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--line); }
+.rcp-actions__group { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+.rcp-actions__num { width: 4ch; height: 28px; text-align: center; padding: 0; font-size: 12px; border-radius: 0; }
+.rcp-add { margin-left: auto; }
+
+.ib-messages .message-panel { border: 1px solid var(--line); background: var(--panel); border-radius: 0; }
+
+.os-turn-flip { display: inline-block; animation: os-turn-flip var(--motion-turn) ease-out; }
+@keyframes os-turn-flip { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.msg-head { padding: 0 12px; }
+.msg-input-form { display: flex; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.msg-input { flex: 1; min-height: 32px; padding: 0 10px; border-radius: 0; font-size: 12px; }
+.msg-list { max-height: 260px; overflow-y: auto; }
+.cmd-header { display: flex; align-items: center; gap: 12px; position: relative; min-height: 56px; padding: 0 12px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, var(--raised), var(--panel)); overflow: hidden; }
+.cmd-header--hero { min-height: 96px; }
+.cmd-header__hero { position: absolute; inset: 0 auto 0 0; width: 140px; opacity: 0.55; pointer-events: none; }
+.cmd-header__hero .os-portrait { border: 0; }
+.cmd-header__text { position: relative; display: flex; flex-direction: column; margin-left: 96px; }
+.cmd-header--hero .cmd-header__text { margin-left: 130px; }
+.cmd-header:not(.cmd-header--hero) .cmd-header__text { margin-left: 0; }
+.cmd-header h2 { font-size: 18px; font-weight: 700; margin: 0; }
+.cmd-header__who { font-size: 12px; color: var(--muted); }
+.cmd-close { position: relative; margin-left: auto; }
+.cmd-cats.os-pill-tabs { margin: 10px 12px 0; }
+.cmd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; padding: 10px 12px; }
+.cmd-item.os-tile { min-height: 56px; }
+.cmd-impossible { color: var(--muted); text-decoration: line-through; }
+.cmd-form { display: flex; flex-direction: column; gap: 10px; padding: 0 12px 12px; }
+.cmd-back { margin: 10px 12px 0; align-self: flex-start; }
+.cmd-blocked { margin: 0 12px 12px; padding: 8px 10px; border: 1px solid var(--info-dim); color: var(--info); font-size: 12px; }
+.subject-target-retinue { margin-left: auto; }
+
+.game-bottom-item--disabled { color: var(--muted); border-top: 2px dashed var(--line-2); }
+.game-bottom-item--disabled .game-bottom-label { cursor: not-allowed; }
+
+/* ===== 게임 관리 허브 (Phase 3) ===== */
+.admin-hub { display: flex; flex-direction: column; gap: 12px; }
+.admin-hub__head { padding: 0 12px; }
+.admin-hub__tabs { flex-wrap: wrap; }
+.admin-hub__panel { min-width: 0; }
+.server-status__body { display: grid; gap: 10px; padding: 12px; font-size: 13px; }
+.server-status__field { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; }
+.server-status__confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border: 1px dashed var(--rust); }
+.server-status__message { margin: 0; font-size: 12px; color: var(--info); }
+
+/* ===== Phase 4 웨이브 A — 정보·기록 화면 (05 천하 지도 · 06 도시 · 12 기록 · 감찰부 레일) ===== */
+.shell-main > .page-wide { max-width: none; }
+.page-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 44px; margin-bottom: 12px; }
+.page-head__title { font-family: var(--font-serif); font-size: 18px; font-weight: 900; margin: 0; color: var(--text); }
+.page-head__spacer { flex: 1; }
+.page-head__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+.records-tabs { flex-wrap: wrap; }
+.records-tabs > a { text-decoration: none; color: var(--text-2); }
+.records-tabs > a:hover { color: var(--text); text-decoration: none; }
+.records-tabs > a[aria-current='page'] { color: var(--bronze); background: rgba(211, 176, 100, 0.1); font-weight: 700; }
+.record-panel { display: flex; flex-direction: column; min-width: 0; }
+.record-panel > .os-section-header { padding: 0 12px; border-bottom: 1px solid var(--line); }
+.record-panel + .record-panel { margin-top: 14px; }
+.record-rows { display: flex; flex-direction: column; }
+.record-row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.record-row:last-child { border-bottom: 0; }
+.record-empty { padding: 16px 12px; font-size: 12px; color: var(--muted); text-align: center; margin: 0; }
+.record-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 14px; }
+.record-grid > .record-panel + .record-panel { margin-top: 0; }
+.record-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--line); background: var(--inset); font-size: 12px; margin-bottom: 14px; }
+.record-bar select { min-height: 30px; }
+.record-bar__label { color: var(--muted); }
+.record-bar__count { color: var(--muted); font-family: var(--font-mono); }
+
+/* 05 천하 지도 — 캔버스 1fr + 레일 360 */
+.map-page { display: grid; grid-template-columns: minmax(0, 1fr) 360px; border: 1px solid var(--line); background: var(--bg); }
+.map-page__stage { position: relative; min-width: 0; }
+.map-page__stage .map-viewer { border: 0; }
+.map-legend { position: absolute; right: 14px; bottom: 14px; z-index: 2; display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border: 1px solid var(--line); background: rgba(27, 32, 29, 0.9); font-size: 11px; color: var(--text-2); pointer-events: none; }
+.map-legend__row { display: flex; align-items: center; gap: 6px; }
+.map-legend__swatch { width: 14px; height: 8px; display: inline-block; flex: none; }
+.map-legend__glyph { width: 14px; text-align: center; flex: none; }
+.map-rail { border-left: 1px solid var(--line); background: var(--inset); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.map-rail__hint { margin: 0; padding: 8px 12px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.map-rail > .os-section-header { padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.map-rail__msg { margin: 0; padding: 10px 12px; font-size: 12px; color: var(--muted); }
+.map-rail__nations th, .map-rail__nations td { padding: 0 8px; }
+.map-rail__nations td { height: 36px; }
+.map-rail__nations .os-num-col { text-align: right; }
+.map-rail__nations tr.is-mine td { background: rgba(211, 176, 100, 0.06); }
+.map-rail__nation { display: inline-flex; align-items: center; gap: 6px; }
+.map-rail__city { border-bottom: 1px solid var(--line); }
+.map-rail__city .mcd { border: 0; margin: 0; }
+.map-rail__city-actions { display: flex; gap: 6px; padding: 8px 12px; }
+.map-troop { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.map-troop__meta { color: var(--muted); }
+.map-rail__feed { max-height: 360px; overflow-y: auto; }
+.map-rail__row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.45; color: var(--text-2); }
+@media (max-width: 900px) {
+  .map-page { grid-template-columns: 1fr; }
+  .map-rail { border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* 06 도시 — 히어로 + 좌 380 게이지 / 우 주둔 장수 표 */
+.city-hero { position: relative; display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 30%, var(--panel)); }
+.city-hero__name { font-family: var(--font-serif); font-size: 30px; font-weight: 900; line-height: 1.1; color: var(--text); }
+.city-hero__meta { font-family: var(--font-serif); font-size: 15px; color: var(--muted); margin-top: 4px; }
+.city-hero__chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.city-hero__stamp { margin-left: auto; font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.city-hero__facts { display: flex; gap: 16px; flex-wrap: wrap; width: 100%; font-size: 13px; color: var(--text-2); }
+.city-hero__facts b { color: var(--text); }
+.city-select { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.city-select select { min-height: 30px; min-width: 14rem; }
+.city-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 14px; align-items: start; }
+.city-grid__side { display: flex; flex-direction: column; min-width: 0; }
+.city-gauges { display: flex; flex-direction: column; gap: 11px; padding: 12px 14px; }
+.city-officers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 0 14px 12px; }
+.city-officers .os-inset { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.city-officers__k { font-size: 10px; color: var(--muted); }
+.city-officers__v { font-size: 13px; font-weight: 700; }
+.city-military { padding: 10px 14px 12px; margin: 0; }
+.city-military__names { font-family: inherit; white-space: normal; }
+.city-fog { padding: 24px 14px; text-align: center; color: var(--muted); font-size: 12px; }
+.city-generals .os-table { font-size: 11px; text-align: center; }
+.city-generals .os-table th, .city-generals .os-table td { padding: 0 6px; text-align: center; }
+.city-generals .os-table th:nth-child(2), .city-generals .os-table td:nth-child(2),
+.city-generals .os-table th:last-child, .city-generals .os-table td:last-child { text-align: left; }
+.city-generals .os-table td:first-child { width: 36px; }
+@media (max-width: 960px) { .city-grid { grid-template-columns: 1fr; } }
+
+/* 12 기록 — 편년체·허브·시상대 */
+.chron { background: linear-gradient(180deg, #1f2521, var(--panel)); }
+.chron__body { padding: 4px 20px 12px; }
+.chron__group { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.chron__group:last-child { border-bottom: 0; }
+.chron__when { display: flex; flex-direction: column; gap: 2px; }
+.chron__month { font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: var(--text-2); }
+.chron__group:first-child .chron__month { color: var(--bronze); }
+.chron__year { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+.chron__items { display: flex; flex-direction: column; gap: 8px; }
+.chron__item { font-size: 13px; line-height: 1.55; color: var(--text); text-wrap: pretty; }
+@media (max-width: 640px) { .chron__group { grid-template-columns: 1fr; gap: 6px; } }
+.records-hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.records-hub__item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-decoration: none; color: var(--text); }
+.records-hub__item:hover { border-color: var(--bronze-dim); text-decoration: none; color: var(--text); }
+.records-hub__icon { flex: none; color: var(--bronze); display: inline-flex; }
+.records-hub__label { font-family: var(--font-serif); font-weight: 700; font-size: 15px; }
+.records-hub__desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 12px; }
+.podium__slot { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; border: 1px solid var(--line-2); }
+.podium__slot--first { border-color: var(--bronze-dim); background: linear-gradient(180deg, rgba(211, 176, 100, 0.14), transparent); }
+.podium__rank { font-family: var(--font-serif); font-size: 12px; font-weight: 700; color: var(--text-2); }
+.podium__slot--first .podium__rank, .podium__slot--first .podium__value { color: var(--bronze); }
+.podium__name { font-size: 13px; font-weight: 700; }
+.podium__value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; }
+.nation-list__cell { display: inline-flex; align-items: center; gap: 6px; }
+
+/* 감찰부 — 본문 1fr + 우측 레일 300(정렬 4종·대상 장수·기록 구획) */
+.bc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.bc-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; min-width: 0; }
+.bc-main > .record-panel + .record-panel { margin-top: 0; }
+.bc-rail { position: sticky; top: 0; display: flex; flex-direction: column; min-width: 0; }
+.bc-rail__form { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.bc-rail__field { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+.bc-rail__field select { min-height: 32px; }
+.bc-rail__nav { display: flex; gap: 6px; padding: 0 12px 10px; }
+.bc-rail__nav > button { flex: 1; }
+.bc-rail__section { display: flex; justify-content: space-between; align-items: center; min-height: 36px; padding: 0 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--text-2); text-decoration: none; }
+.bc-rail__section:hover { background: var(--raised); text-decoration: none; color: var(--text); }
+.bc-log { max-height: 420px; overflow-y: auto; }
+.bc-log__row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.6; color: var(--text-2); }
+@media (max-width: 900px) {
+  .bc-layout { grid-template-columns: 1fr; }
+  .bc-rail { order: -1; position: static; }
+}
+
+/* ===== Phase 4 웨이브 B — 국가 운영 · 장수 · 광장 ===== */
+.page-head h1.page-head__title { font-size: 18px; margin: 0; }
+.game-card > .os-section-header:first-child { margin: -4px 0 8px; }
+.nation-hero { display: flex; align-items: center; gap: 16px; padding: 14px 20px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 30%, var(--panel)); }
+.nation-hero__name { font-family: var(--font-serif); font-size: 26px; font-weight: 900; line-height: 1.1; color: var(--text); }
+.nation-hero__meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--text-2); }
+.nation-hero__meta b { color: var(--text); }
+.nation-grid { margin-top: 0; }
+.nation-kv { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); padding: 10px 14px 12px; margin: 0; }
+.nation-kv dt { text-align: left; }
+@media (max-width: 720px) { .nation-kv { grid-template-columns: auto minmax(0, 1fr); } }
+.nation-cities { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; }
+.chief-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.chief-grid > .record-panel + .record-panel { margin-top: 0; }
+.chief-post__time { font-size: 11px; color: var(--muted); }
+.chief-post__slots { display: flex; flex-direction: column; }
+.chief-post__slots .os-slot { min-height: 36px; }
+.chief-post .cmd-cats { margin: 8px 12px 0; }
+.chief-post .cmd-grid { padding: 8px 12px; }
+.me-hero { position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; align-items: end; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset), var(--panel) 70%); overflow: hidden; }
+.me-hero__portrait { width: 200px; height: 284px; border: 0; border-right: 1px solid var(--line); }
+.me-hero__text { padding: 16px 20px 18px 0; display: flex; flex-direction: column; gap: 8px; }
+.me-hero__name { font-family: var(--font-serif); font-size: 28px; font-weight: 900; line-height: 1.1; color: var(--text); }
+.me-hero__meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text-2); }
+.me-hero__meta span + span::before { content: '·'; margin-right: 8px; color: var(--muted); }
+.me-hero__stats { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+.me-hero__stat { display: inline-flex; flex-direction: column; gap: 2px; min-width: 44px; }
+.me-hero__stat-k { font-size: 10px; color: var(--muted); }
+.me-hero__stat b { font-size: 18px; color: var(--text); }
+@media (max-width: 640px) {
+  .me-hero { grid-template-columns: 1fr; }
+  .me-hero__portrait { width: 100%; height: 240px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .me-hero__text { padding: 0 16px 16px; }
+}
+
+/* ===== Phase 4 웨이브 C — 회의실 · 기밀실 (14) ===== */
+.council-head { display: flex; align-items: center; gap: 14px; padding: 12px 18px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 40%, var(--panel)); }
+.council-head--secret { border-color: var(--rust); }
+.council-head__text { min-width: 0; }
+.council-head__name { font-family: var(--font-serif); font-size: 18px; font-weight: 900; color: var(--text); }
+.council-head__meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; color: var(--text-2); }
+.council-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.council-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.council-main > .record-panel + .record-panel { margin-top: 0; }
+.council-rail { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.council-rail > .record-panel + .record-panel { margin-top: 0; }
+.council-rail__stack { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.council-rail__label { font-size: 11px; color: var(--muted); }
+.council-rail__notice { margin: 0; padding: 10px 12px 12px; font-size: 11px; line-height: 1.55; color: var(--text-2); border-top: 1px solid var(--line); }
+.council-kinds { align-self: flex-start; }
+.council-write__form { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; }
+.council-write__row { display: flex; gap: 12px; flex-wrap: wrap; }
+.council-write__field { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+.council-write__field select { min-height: 32px; min-width: 12rem; }
+.council-write__actions { display: flex; justify-content: flex-end; }
+.council-list { display: flex; flex-direction: column; gap: 14px; }
+.council-list > .record-panel + .record-panel { margin-top: 0; }
+.council-article__head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.council-article__who { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; min-width: 0; flex: 1; font-size: 13px; }
+.council-article__rank { font-size: 11px; color: var(--muted); }
+.council-article__when { font-size: 11px; color: var(--muted); }
+.council-article__title { padding: 10px 12px 0; font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--text); text-wrap: pretty; }
+.council-article__body { padding: 8px 12px 12px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.council-article__readers { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--text-2); }
+.council-article__comments { border-top: 1px solid var(--line); }
+.council-comment { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.council-comment__body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.council-comment__who { font-weight: 700; color: var(--text); }
+.council-comment__text { white-space: pre-wrap; word-break: break-word; color: var(--text-2); }
+.council-comment__when { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.council-article__reply { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }
+.council-article__reply-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.council-article__reply input { flex: 1; min-height: 32px; }
+.council-vote { margin: 0 12px 12px; border: 1px solid var(--info-dim); background: rgba(122, 167, 199, 0.06); }
+.council-vote__head { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.council-vote__title { font-weight: 700; font-size: 13px; }
+.council-vote__meta { font-size: 11px; color: var(--muted); }
+.council-vote__options { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; padding: 10px; }
+.council-vote__option { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--line); background: var(--inset); }
+.council-vote__option.is-mine { border-color: var(--bronze-dim); }
+.council-vote__option-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+.council-toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--raised); border: 1px solid var(--line-2); padding: 8px 16px; font-size: 12px; z-index: 300; }
+@media (max-width: 900px) {
+  .council-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Phase 4X-A 휘하 인물 · 부곡 (07 아트보드, /game/my#retinue) ─────────────────────────── */
+.retinue { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin: 12px 0; }
+@media (max-width: 1231px) { .retinue { grid-template-columns: 1fr; } }
+.retinue__panel { padding: 0 0 10px; }
+.retinue__list { list-style: none; margin: 0; padding: 0; }
+.retinue__person { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 8px 12px; border-top: 1px solid var(--line); }
+.retinue__portrait { flex: none; }
+.retinue__body { display: grid; gap: 4px; }
+.retinue__name { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.retinue__role { color: var(--muted); font-size: 11px; }
+.retinue__controls { display: flex; align-items: center; gap: 8px; }
+.retinue__task { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+.retinue__task select, .retinue__form select, .retinue__form input, .retinue__table select { background: var(--inset); color: var(--text); border: 1px solid var(--line-2); border-radius: 0; padding: 3px 6px; font-size: 12px; }
+.retinue__form { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.retinue__form label { display: grid; gap: 2px; font-size: 11px; color: var(--muted); }
+.retinue__form input { width: 110px; }
+.retinue__cost { flex-basis: 100%; font-size: 11px; color: var(--muted); }
+.retinue__table td, .retinue__table th { white-space: nowrap; }
+.retinue__note { margin: 6px 12px 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.retinue__message { margin: 4px 0 0; font-size: 12px; color: var(--bronze); grid-column: 1 / -1; }
+.subject-target-retinue { text-decoration: none; }
+.subject-target-retinue--empty { border-style: dashed; color: var(--muted); }
+
+/* ── Phase 4X-B 작전 (08 국가 운영 「작전 진행」, /game/my-nation#operations) ─────────────────── */
+.ops { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; margin: 12px 0; }
+@media (max-width: 1231px) { .ops { grid-template-columns: 1fr; } }
+.ops__panel { padding: 0 0 10px; }
+.ops__list { list-style: none; margin: 0; padding: 0; }
+.ops__item { padding: 10px 12px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.ops__item[data-status="failed"] { border-left: 2px solid var(--rust); }
+.ops__item[data-status="achieved"] { border-left: 2px solid var(--bronze); }
+.ops__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; }
+.ops__title { font-size: 14px; color: var(--text); }
+.ops__kind, .ops__deadline { color: var(--muted); }
+.ops__fallback { margin: 0; font-size: 12px; color: var(--text-2); }
+.ops__progress { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto; align-items: center; gap: 10px; }
+.ops__milestone-count { font-size: 13px; color: var(--bronze); }
+.ops__milestones { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; font-size: 11px; color: var(--muted); }
+.ops__milestones li[data-on="true"] { color: var(--moss-2); }
+.ops__units { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ops__unit { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.ops__unit-name { font-weight: 700; }
+.ops__unit-meta, .ops__unit-city { color: var(--muted); }
+.ops__actions { display: flex; align-items: center; gap: 8px; }
+.ops__role { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+.ops__role select, .ops__form select, .ops__form input { background: var(--inset); color: var(--text); border: 1px solid var(--line-2); border-radius: 0; padding: 3px 6px; font-size: 12px; }
+.ops__flow { margin: 8px 12px 0; font-size: 11px; color: var(--muted); }
+.ops__form { display: grid; gap: 8px; padding: 10px 12px; }
+.ops__form label { display: grid; gap: 2px; font-size: 11px; color: var(--muted); }
+.ops__message { margin: 4px 0 0; font-size: 12px; color: var(--bronze); grid-column: 1 / -1; }
+.subject-target-operation { text-decoration: none; }
+.subject-target-operation--empty { border-style: dashed; color: var(--muted); }
+
+/* ── Phase 4X-C 09 명령 봉인 / 10 리플레이 / 감찰부 리플레이 열 ── */
+.bp { display: grid; gap: 12px; margin: 12px 0; }
+.bp__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; }
+.bp__countdown { color: var(--bronze); font-weight: 700; }
+.bp__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: 12px; }
+@media (max-width: 1231px) { .bp__grid { grid-template-columns: 1fr; } }
+.bp__panel { padding: 0 0 10px; }
+.bp__unit { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12px; }
+.bp__unit-body { display: grid; gap: 2px; }
+.bp__unit--dashed { border: 1px dashed var(--line-2); margin: 8px 12px 0; color: var(--muted); justify-content: space-between; }
+.bp__defenders { list-style: none; margin: 0; padding: 0; }
+.bp__reason { color: var(--muted); font-size: 11px; }
+.bp__note { margin: 6px 12px 0; font-size: 11px; color: var(--muted); }
+.bp__field { border: 0; margin: 0; padding: 8px 12px 0; display: grid; gap: 6px; }
+.bp__field legend { font-size: 11px; color: var(--muted); padding: 0; }
+.bp__stances { display: flex; flex-wrap: wrap; gap: 8px; }
+.bp__stance { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border: 1px solid var(--line-2); }
+.bp__stance--off { border-style: dashed; color: var(--muted); }
+.bp__cond { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 12px; }
+.bp__cond--off { color: var(--muted); border: 1px dashed var(--line-2); padding: 2px 6px; }
+.bp__cond input[type="number"] { width: 64px; background: var(--inset); color: var(--text); border: 1px solid var(--line-2); border-radius: 0; padding: 2px 4px; font-size: 12px; }
+.bp__estimate { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px 0; font-size: 12px; }
+.bp__estimate-rows { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; width: 100%; font-size: 12px; }
+.bp__estimate-rows dt { color: var(--muted); }
+.bp__estimate-rows dd { margin: 0; }
+.bp__actions { display: flex; gap: 8px; padding: 10px 12px 0; }
+.bp__message { margin: 0; font-size: 12px; color: var(--bronze); }
+.replay { display: grid; gap: 12px; margin: 12px 0; }
+.replay__head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); background: var(--panel); }
+.replay__side { display: grid; gap: 2px; font-size: 12px; }
+.replay__side--right { text-align: right; }
+.replay__vs { display: grid; justify-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.replay__grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 1231px) { .replay__grid { grid-template-columns: 1fr; } }
+.replay__panel { padding: 0 0 10px; }
+.replay__scrub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; font-size: 12px; }
+.replay__scrub .is-active { border-color: var(--bronze); color: var(--bronze); }
+.replay__phases { list-style: none; margin: 0; padding: 0; }
+.replay__phase { display: grid; grid-template-columns: 40px 1fr; gap: 8px; padding: 6px 12px; border-top: 1px solid var(--line); font-size: 12px; cursor: pointer; }
+.replay__phase.is-current { background: var(--inset); border-left: 2px solid var(--bronze); }
+.replay__phase-n { color: var(--bronze); font-weight: 700; }
+.replay__phase-text { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.replay__current { margin: 8px 12px 0; font-size: 12px; color: var(--text-2); }
+.replay__rows { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 0; padding: 8px 12px 0; font-size: 12px; }
+.replay__rows dt { color: var(--muted); }
+.replay__rows dd { margin: 0; }
+.replay__hash { margin: 8px 12px 0; font-size: 11px; color: var(--muted); }
+.replay__links { display: flex; gap: 8px; padding: 8px 12px 0; }
+.replay-list__rows { list-style: none; margin: 0; padding: 0; }
+.replay-list__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 12px; border-top: 1px solid var(--line); font-size: 12px; }
+.replay-list__none { border: 1px dashed var(--line-2); margin: 8px 12px; padding: 6px 8px; color: var(--muted); }
+.rcp-seal { margin-left: 6px; font-size: 10px; text-decoration: none; }
+.rcp-seal--sealed { border-style: solid; }
+.rcp-seal--autorun { border-style: dashed; color: var(--muted); }

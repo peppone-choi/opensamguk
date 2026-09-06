@@ -1,0 +1,89 @@
+<div style="position:relative;width:1440px;height:900px;background:#0c0f0e;overflow:hidden">
+  <!-- dimmed 작전실 behind -->
+  <div style="position:absolute;inset:0;opacity:.35;filter:saturate(.6)">
+    <div style="height:56px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)"></div>
+    <div style="height:44px;border-bottom:1px solid #2c342f;background:#141816"></div>
+    <div style="display:grid;grid-template-columns:340px 1fr 340px;gap:14px;padding:14px 20px;height:640px">
+      <div class="panel"></div><div class="panel">@@ISO(720,470,bare)@@</div><div class="panel"></div>
+    </div>
+  </div>
+  <div style="position:absolute;inset:0;background:rgba(12,15,14,.55)"></div>
+
+  <!-- modal -->
+  <div class="frame-bronze" style="position:absolute;left:170px;top:70px;width:1100px;height:760px;background:#1b201d;display:grid;grid-template-rows:56px minmax(0,1fr) 64px">
+    <div style="display:flex;align-items:center;gap:16px;padding:0 20px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)">
+      <span class="serif" style="font-size:18px;font-weight:900">명령 예약</span>
+      <span class="chip bronze">3턴 · 3月 중순</span>
+      <span style="font-size:12px;color:#8a8477">하후돈 · 허창 · 기병 12,000</span>
+      <span style="flex:1"></span>
+      <div class="inset" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;width:260px;color:#8a8477;font-size:12px"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>명령 검색</div>
+      <svg class="ico-20" viewBox="0 0 20 20" fill="none" stroke="#b9b2a3" stroke-width="1.6"><path d="M5 5l10 10M15 5L5 15"/></svg>
+    </div>
+
+    <div style="display:grid;grid-template-columns:160px minmax(0,1fr) 340px;min-height:0">
+      <!-- categories -->
+      <div style="border-right:1px solid #2c342f;background:#141816;display:flex;flex-direction:column;padding:8px 0">
+        <span style="padding:10px 16px;font-size:13px;color:#d3b064;font-weight:700;box-shadow:inset 3px 0 0 #d3b064;background:rgba(211,176,100,.08)">내정 <span class="num" style="float:right;color:#8a8477;font-weight:400">9</span></span>
+        <span style="padding:10px 16px;font-size:13px;color:#b9b2a3">군사 <span class="num" style="float:right;color:#8a8477">7</span></span>
+        <span style="padding:10px 16px;font-size:13px;color:#b9b2a3">이동 <span class="num" style="float:right;color:#8a8477">5</span></span>
+        <span style="padding:10px 16px;font-size:13px;color:#b9b2a3">인사 <span class="num" style="float:right;color:#8a8477">6</span></span>
+        <span style="padding:10px 16px;font-size:13px;color:#b9b2a3">계략 <span class="num" style="float:right;color:#8a8477">8</span></span>
+        <span style="padding:10px 16px;font-size:13px;color:#b9b2a3">휘하 <span class="num" style="float:right;color:#8a8477">4</span></span>
+        <span style="padding:10px 16px;font-size:13px;color:#8a8477">특수 <span class="num" style="float:right">2</span></span>
+        <div style="margin-top:auto;padding:12px 16px;font-size:11px;color:#8a8477;line-height:1.5;border-top:1px solid #2c342f">상태는 실행 시 다시 검사됩니다. <span style="color:#d3b064">도움말</span></div>
+      </div>
+
+      <!-- command grid -->
+      <div style="padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden">
+        <div style="display:flex;gap:6px;font-size:11px;align-items:center">
+          <span class="chip moss">사용 가능 5</span><span class="chip info">대상 필요 2</span><span class="chip rust">사용 불가 1</span><span class="chip">정보 부족 1</span>
+          <span style="flex:1"></span><span style="color:#8a8477">허창에서 가능한 명령만</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:10px">
+          <div class="tile ok" style="border-color:#d3b064;box-shadow:0 0 0 1px rgba(211,176,100,.35),0 0 18px rgba(211,176,100,.15)"><div style="display:flex;justify-content:space-between"><span class="tn">농지 개간</span><span class="chip moss" style="height:16px;font-size:10px">가능</span></div><span class="tc">자금 1,200 · 농업 +300~420</span><span style="font-size:11px;color:#b9b2a3">허창 농업 6,412 / 8,000</span></div>
+          <div class="tile ok"><div style="display:flex;justify-content:space-between"><span class="tn">상업 투자</span><span class="chip moss" style="height:16px;font-size:10px">가능</span></div><span class="tc">자금 1,200 · 상업 +280~400</span></div>
+          <div class="tile ok"><div style="display:flex;justify-content:space-between"><span class="tn">치안 강화</span><span class="chip moss" style="height:16px;font-size:10px">가능</span></div><span class="tc">자금 900 · 치안 +200</span></div>
+          <div class="tile ok"><div style="display:flex;justify-content:space-between"><span class="tn">수비 강화</span><span class="chip moss" style="height:16px;font-size:10px">가능</span></div><span class="tc">자금 1,500 · 수비 +240</span></div>
+          <div class="tile need"><div style="display:flex;justify-content:space-between"><span class="tn">정착 장려</span><span class="chip info" style="height:16px;font-size:10px">대상 필요</span></div><span class="tc">자금 800 · 인구 이동 수량 선택</span></div>
+          <div class="tile ok"><div style="display:flex;justify-content:space-between"><span class="tn">성벽 보수</span><span class="chip moss" style="height:16px;font-size:10px">가능</span></div><span class="tc">자금 2,000 · 성벽 +180</span></div>
+          <div class="tile need"><div style="display:flex;justify-content:space-between"><span class="tn">헌납</span><span class="chip info" style="height:16px;font-size:10px">대상 필요</span></div><span class="tc">자금 또는 군량 수량 선택</span></div>
+          <div class="tile no"><div style="display:flex;justify-content:space-between"><span class="tn">기술 연구</span><span class="chip rust" style="height:16px;font-size:10px">불가</span></div><span class="tc">국가 Lv 4 필요 (현재 3)</span></div>
+          <div class="tile" style="border-color:#3d4740"><div style="display:flex;justify-content:space-between"><span class="tn">둔전</span><span class="chip" style="height:16px;font-size:10px">정보 부족</span></div><span class="tc">보급 상태를 확정할 수 없음</span></div>
+        </div>
+      </div>
+
+      <!-- detail / args -->
+      <div style="border-left:1px solid #2c342f;background:#141816;display:flex;flex-direction:column;min-height:0">
+        <div style="padding:14px 16px;border-bottom:1px solid #2c342f;display:flex;flex-direction:column;gap:6px">
+          <span class="serif" style="font-size:18px;font-weight:900">농지 개간</span>
+          <span style="font-size:12px;color:#b9b2a3;line-height:1.5;text-wrap:pretty">도시의 농업 수치를 올립니다. 정치·지력이 높을수록 효과가 크고, 최대치에 가까우면 효율이 떨어집니다.</span>
+        </div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px;flex:1">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <span style="font-size:11px;color:#8a8477">대상 도시</span>
+            <div class="panel" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-color:#d3b064"><img src="cast-capital.png" alt="" style="width:32px;height:32px"><div style="flex:1;display:flex;flex-direction:column"><b style="font-size:13px">허창</b><span style="font-size:11px;color:#8a8477">현재 위치 · 자동 선택</span></div><span class="chip bronze" style="height:16px;font-size:10px">고정</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <span style="font-size:11px;color:#8a8477">예상 결과</span>
+            <div class="gauge"><div class="g-top"><span>농업</span><span class="num">6,412 → <span style="color:#8fa77a">6,760</span> / 8,000</span></div><div class="g-bar"><i style="width:80%"></i><i style="left:80%;width:4.5%;background:#8fa77a"></i></div></div>
+          </div>
+          <dl class="kv" style="margin:0;grid-template-columns:auto 1fr">
+            <dt>비용</dt><dd>자금 1,200</dd>
+            <dt>경험</dt><dd>정치 +12 · Lv +18</dd>
+            <dt>실행 시점</dt><dd style="font-family:var(--sans)">3月 중순 · 3턴</dd>
+            <dt>재검사</dt><dd style="font-family:var(--sans);color:#b9b2a3">자금 · 도시 소유 · 최대치</dd>
+          </dl>
+          <div class="inset" style="padding:10px;font-size:11px;color:#b9b2a3;line-height:1.5;border-color:#697e58"><b style="color:#8fa77a">사용 가능</b> — 현재 조건은 만족합니다. 앞선 예턴 1번(출병)이 자금을 쓰면 실행 시 실패할 수 있습니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:0 20px;border-top:1px solid #3d4740;background:#141816">
+      <span style="font-size:12px;color:#8a8477">3턴에 예약 · 기존 <b style="color:#b9b2a3">훈련</b>을 대체합니다</span>
+      <span style="flex:1"></span>
+      <span class="btn ghost">취소</span>
+      <span class="btn">4~6턴에 반복</span>
+      <span class="btn primary" style="height:40px;padding:0 24px">예약</span>
+    </div>
+  </div>
+</div>

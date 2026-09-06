@@ -13,6 +13,8 @@ import {
   deleteBoardComment,
   deleteBoardPost,
   fetchBoardPost,
+  reportBoardComment,
+  reportBoardPost,
   setBoardPostPinned,
   type BoardComment,
   type BoardPostDetail,
@@ -28,6 +30,10 @@ export default function BoardPostDetail(): React.ReactElement {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  // 신고 — 대상(글 id 0 = 글, 그 외 = 댓글 id)과 사유 초안. 제출은 로그인 사용자만(서버가 다시 검증).
+  const [reportTarget, setReportTarget] = useState<{ kind: 'post' | 'comment'; id: number } | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportNote, setReportNote] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -82,6 +88,40 @@ export default function BoardPostDetail(): React.ReactElement {
     }
   }
 
+  async function submitReport(): Promise<void> {
+    if (!data || !reportTarget) return;
+    const reason = reportReason.trim();
+    if (reason.length === 0) return;
+    setActionError(null);
+    setBusyId(reportTarget.kind === 'post' ? data.post.id : reportTarget.id);
+    try {
+      if (reportTarget.kind === 'post') await reportBoardPost(data.post.id, reason);
+      else await reportBoardComment(data.post.id, reportTarget.id, reason);
+      setReportNote('신고를 접수했습니다. 운영자가 확인합니다.');
+      setReportTarget(null);
+      setReportReason('');
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : '신고를 접수하지 못했습니다.');
+    } finally {
+      setBusyId(null);
+    }
+  }
+  function reportForm(kind: 'post' | 'comment', id: number): React.ReactElement | null {
+    if (!reportTarget || reportTarget.kind !== kind || reportTarget.id !== id) return null;
+    return (
+      <form className="board-report-form" onSubmit={(event) => { event.preventDefault(); void submitReport(); }}>
+        <input
+          aria-label="신고 사유"
+          placeholder="신고 사유 (200자)"
+          maxLength={200}
+          value={reportReason}
+          onChange={(event) => setReportReason(event.target.value)}
+        />
+        <button className="os-button os-button--sm os-button--danger" disabled={reportReason.trim().length === 0 || busyId !== null} type="submit">신고 접수</button>
+        <button className="os-button os-button--sm os-button--ghost" type="button" onClick={() => setReportTarget(null)}>취소</button>
+      </form>
+    );
+  }
   async function togglePinned(): Promise<void> {
     if (!data) return;
     setActionError(null);
@@ -121,6 +161,9 @@ export default function BoardPostDetail(): React.ReactElement {
         <div className="board-post-content" dangerouslySetInnerHTML={{ __html: data.post.contentHtml }} />
         <div className="board-post-actions">
           {actionError ? <p className="field-error" role="alert">{actionError}</p> : null}
+          {reportNote ? <p role="status">{reportNote}</p> : null}
+          {user && !data.post.canDelete ? <button className="btn-ghost" disabled={busyId !== null} onClick={() => { setReportTarget({ kind: 'post', id: 0 }); setReportReason(''); setReportNote(null); }} type="button">신고</button> : null}
+          {reportForm('post', 0)}
           {data.post.canDelete ? <button className="btn-danger" disabled={busyId === data.post.id} onClick={() => void removePost()} type="button">게시글 삭제</button> : null}
           {user?.role === 'ADMIN' ? <button className="btn-ghost" disabled={busyId === data.post.id} onClick={() => void togglePinned()} type="button">{data.post.pinned ? '고정 해제' : '게시글 고정'}</button> : null}
         </div>
@@ -135,6 +178,8 @@ export default function BoardPostDetail(): React.ReactElement {
                 <time dateTime={comment.createdAt}>{boardDate(comment.createdAt)}</time>
               </div>
               <p>{comment.content}</p>
+              {user && !comment.canDelete ? <button className="board-text-button" disabled={busyId !== null} onClick={() => { setReportTarget({ kind: 'comment', id: comment.id }); setReportReason(''); setReportNote(null); }} type="button">신고</button> : null}
+              {reportForm('comment', comment.id)}
               {comment.canDelete ? <button className="board-text-button" disabled={busyId === comment.id} onClick={() => void removeComment(comment)} type="button">댓글 삭제</button> : null}
             </article>
           ))}

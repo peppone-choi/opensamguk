@@ -63,3 +63,8 @@ export function useAuth(): AuthCtx {
     if (!ctx) throw new Error('useAuth must be used within AuthProvider');
     return ctx;
 }
+
+/** Provider 밖에서도 죽지 않는 변형 — 로그인 사용자에 따라 항목을 더 보여 주기만 하는 곳(로비 계정 관리)에서 쓴다. */
+export function useAuthOptional(): AuthCtx | null {
+    return useContext(Ctx);
+}

@@ -109,6 +109,15 @@ data class BoardPostInsert(val columns: Map<String, Any?>)
  */
 data class BoardCommentInsert(val columns: Map<String, Any?>)
 
+/** `battle_replay` INSERT 의도(Phase 4X-C, 계획이 봉인된 전투만). INSERT 전용. `id` 는 recorder 선할당(DB-seed). */
+data class BattleReplayInsert(val columns: Map<String, Any?>)
+
+/**
+ * `board_post_read` INSERT 의도 (ADR-LITE-049 14 기밀실 열람 기록). INSERT 전용·멱등 — `columns`는
+ * post_id, general_id. 같은 (post_id, general_id) 는 DB UNIQUE 가 무시한다(ON CONFLICT DO NOTHING).
+ */
+data class BoardReadInsert(val columns: Map<String, Any?>)
+
 /**
  * `vote_poll` INSERT 의도 (F4 Wave 투표, 설문조사 개설 NewVote.php). INSERT 전용. `columns`는 vote_poll
  * 컬럼을 미러링: title, body, options(jsonb), multiple_options, reveal_mode, opener_general_id,
@@ -192,6 +201,24 @@ data class DirtyState(
      */
     val rankDirty: Map<Int, Map<RankColumn, RankDelta>> = emptyMap(),
     val nationTurnDirty: List<NationTurn> = emptyList(),
+    /** Phase 4X-A 가신·부곡 — troops 와 같은 world-lifecycle 채널(step-8g, 표마다 DELETE → CREATE → UPDATE). */
+    val retainers: List<Retainer> = emptyList(),
+    val createdRetainers: List<Retainer> = emptyList(),
+    val deletedRetainers: List<Int> = emptyList(),
+    val bugoks: List<Bugok> = emptyList(),
+    val createdBugoks: List<Bugok> = emptyList(),
+    val deletedBugoks: List<Int> = emptyList(),
+    /** Phase 4X-B 작전 — step-8h(8g 뒤), 표마다 DELETE → CREATE → UPDATE. */
+    val operations: List<Operation> = emptyList(),
+    val createdOperations: List<Operation> = emptyList(),
+    val deletedOperations: List<Int> = emptyList(),
+    val operationUnits: List<OperationUnit> = emptyList(),
+    val createdOperationUnits: List<OperationUnit> = emptyList(),
+    val deletedOperationUnits: List<Int> = emptyList(),
+    /** Phase 4X-C 출병 계획 — step-8i(8h 뒤), DELETE → CREATE → UPDATE. 리플레이는 recorder INSERT 채널. */
+    val battlePlans: List<BattlePlan> = emptyList(),
+    val createdBattlePlans: List<BattlePlan> = emptyList(),
+    val deletedBattlePlans: List<Int> = emptyList(),
     val kvDirty: Map<KvKey, Any?> = emptyMap(),
     /**
      * [diplomacyUpdateDirty]: per-command diplomacy-row UPDATE patches keyed `(from, to)` (T0.4).

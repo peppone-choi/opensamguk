@@ -652,6 +652,13 @@ class V32WorldScopeCompletionMigrationTest {
             "select_npc_token",
         )
         private val postV32WorldTables = listOf(
+            "board_post_read", // V53 — 기밀실 열람 기록(ADR-LITE-049 14)
+            "general_retainers", // V55 — 가신(Phase 4X-A, ADR-LITE-017)
+            "general_bugok", // V55 — 부곡(Phase 4X-A)
+            "operation", // V56 — 작전(Phase 4X-B)
+            "operation_unit", // V56 — 작전 참여 부대(Phase 4X-B)
+            "battle_plan", // V57 — 출병 계획(Phase 4X-C)
+            "battle_replay", // V57 — 리플레이(Phase 4X-C, INSERT 전용)
             "command_inbox",
             "command_result",
             "command_outbox",
@@ -671,6 +678,8 @@ class V32WorldScopeCompletionMigrationTest {
             "error_log",
         )
         private val postV32GlobalTables = setOf(
+            "gateway_notice", // V51 — 게이트웨이 공지(계정 전역, ADR-LITE-049 02)
+            "gateway_board_report", // V54 — 커뮤니티 신고(계정 전역, ADR-LITE-049 13)
             "gateway_board_post",
             "gateway_board_comment",
             "game_server",

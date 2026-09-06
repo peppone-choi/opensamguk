@@ -1,10 +1,48 @@
 export { Brand, type BrandProps, type BrandSize } from './Brand';
 export * from './strategicMap';
-export { Button, type ButtonProps, type ButtonVariant } from './Button';
+export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 export { Modal, type ModalProps } from './Modal';
 export { Table, type TableProps } from './Table';
+export { Chip, type ChipProps, type ChipTone } from './Chip';
+export { EMPTY_ILLUSTRATION_FILE, EMPTY_ILLUSTRATION_PATH, EmptyState, type EmptyIllustration, type EmptyStateProps } from './EmptyState';
+export { Feed, FeedItem, type FeedItemProps, type FeedProps } from './Feed';
+export { Flag, type FlagProps } from './Flag';
+export { Gauge, type GaugeProps, type GaugeTone } from './Gauge';
+export { Icon, type IconProps, type IconSize } from './Icon';
+export { ICON_NAMES, ICON_SPRITE_PATH, type IconName } from './icons';
+export { KV, type KVItem, type KVProps } from './KV';
+export { LogText, type LogTextProps } from './LogText';
+export { logPlainText, parseLogTokens, type LogSegment, type LogTone } from './logTokens';
+export { NavItem, type NavItemProps } from './NavItem';
+export { Divider, Inset, Panel, type InsetProps, type PanelProps } from './Panel';
+export { PillTabs, type PillTab, type PillTabsProps } from './PillTabs';
+export {
+  PORTRAIT_SIZES,
+  Portrait,
+  PortraitResolverProvider,
+  PortraitStack,
+  portraitVariantForSize,
+  usePortraitResolver,
+  type PortraitProps,
+  type PortraitRingReason,
+  type PortraitSize,
+} from './Portrait';
+export {
+  DEFAULT_IMAGE_CDN_BASE,
+  DEFAULT_PORTRAIT_PATH,
+  createPortraitResolver,
+  defaultPortraitResolver,
+  type PortraitResolver,
+  type PortraitVariant,
+} from './portraitResolver';
+export { ReasonTooltip, type ReasonTooltipProps } from './ReasonTooltip';
+export { SectionHeader, type SectionHeaderProps, type SectionTone } from './SectionHeader';
+export { Slot, type SlotProps, type SlotState } from './Slot';
+export { StatRow, type StatRowProps } from './StatRow';
+export { Tile, type TileProps, type TileState } from './Tile';
+
 export {
   CITY_MARKER_SPECS,
   HanMapCanvas,

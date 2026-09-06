@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../../components/Shell';
+import PageHead from '../../../../components/PageHead';
+import RecordsTabs from '../../../../components/records/RecordsTabs';
 import GameTable from '../../../../components/GameTable';
 import { api } from '../../../../lib/api';
 import { formatNumber } from '../../../../lib/format';
@@ -29,14 +31,14 @@ export default function TrafficPage() {
 
   if (loading) return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>접속 통계</h1>
+      <PageHead title="접속 통계" tabs={<RecordsTabs />} />
       <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
     </Shell>
   );
 
   if (error || !data) return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>접속 통계</h1>
+      <PageHead title="접속 통계" tabs={<RecordsTabs />} />
       <p style={{ color: 'var(--crimson)' }}>{error || '데이터를 찾을 수 없습니다.'}</p>
     </Shell>
   );
@@ -62,7 +64,7 @@ export default function TrafficPage() {
 
   return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>접속 통계</h1>
+      <PageHead title="접속 통계" tabs={<RecordsTabs />} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: 'var(--space-lg)' }}>
         <section>

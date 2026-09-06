@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ServerBoard from '@/components/ServerBoard';
-import { GAME_URL, LOBBY_LABELS, LOBBY_FOOTNOTES } from '@/lib/constants';
-import { onPortraitError, portraitUrl } from '@/lib/portrait';
+import NoticeBoard from '@/components/NoticeBoard';
+import { Chip, Portrait } from '@opensamguk/ui';
+import { useAuthOptional } from '@/lib/auth-context';
+import { ENTRY_FILTERS, entryStateOf, matchesFilter, type EntryFilter, type EntryState } from '@/lib/lobbyEntry';
+import { AUTH_LABELS, GAME_URL, LOBBY_LABELS, LOBBY_FOOTNOTES } from '@/lib/constants';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
 
 // servers.json 은 이제 **라우팅 정보만**(id/name/gameUrl) 쓴다. 상태/턴텀/유저수는 전부 라이브
@@ -65,7 +68,6 @@ function nCountryLabel(game: ServerGameInfo): string {
 }
 
 type RowState = { loading: boolean; info: ServerBasicInfo | null };
-
 function possessionEntryHref(href: string): string {
     const hashIndex = href.indexOf('#');
     const base = hashIndex === -1 ? href : href.slice(0, hashIndex);
@@ -85,8 +87,12 @@ function possessionEntryHref(href: string): string {
  *   userCnt >= maxUserCnt → 장수 등록 마감
  *   그 외               → 미등록 + 진입(장수 등록) 버튼
  */
-function ServerRow({ server }: { server: ServerEntry }) {
+function ServerRow({ server, filter, onState }: { server: ServerEntry; filter: EntryFilter; onState?: (id: string, state: EntryState) => void }) {
     const [state, setState] = useState<RowState>({ loading: true, info: null });
+    const entry = entryStateOf(state.loading, state.info);
+    useEffect(() => {
+        onState?.(server.id, entry);
+    }, [entry, onState, server.id]);
 
     useEffect(() => {
         let alive = true;
@@ -146,16 +152,8 @@ function ServerRow({ server }: { server: ServerEntry }) {
         selectCell = LOBBY_LABELS.closed;
     } else if (me && me.name) {
         characterCell = (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                    src={portraitUrl(me.picture, me.imageServer)}
-                    onError={onPortraitError}
-                    alt={me.name}
-                    width={64}
-                    height={64}
-                    style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: 4 }}
-                />
+            <span className="lobby-character">
+                <Portrait picture={me.picture} imageServer={me.imageServer} size="card-56" alt={me.name} />
                 <strong>{me.name}</strong>
             </span>
         );
@@ -206,21 +204,32 @@ function ServerRow({ server }: { server: ServerEntry }) {
         );
     }
 
+    if (!matchesFilter(entry, filter)) return null;
     return (
-        <tr>
-            <td>
-                {server.name}
-                {server.generation != null && <span className="status-badge status-gold">{server.generation}기</span>}
+        <tr data-entry-state={entry}>
+            <td data-label={LOBBY_LABELS.colServer}>
+                <span className="lobby-server-name">{server.name}</span>
+                {server.generation != null && <Chip tone="bronze">{server.generation}기</Chip>}
+                {entry === 'joined' && <Chip tone="moss">참가 중</Chip>}
+                {entry === 'ended' && <Chip>종료</Chip>}
             </td>
-            <td>{infoCell}</td>
-            <td>{characterCell}</td>
-            <td>{selectCell}</td>
+            <td data-label={LOBBY_LABELS.colInfo}>{infoCell}</td>
+            <td data-label={LOBBY_LABELS.colCharacter}>{characterCell}</td>
+            <td data-label={LOBBY_LABELS.colSelect}>{selectCell}</td>
         </tr>
     );
 }
 
 function LobbyView() {
+  const auth = useAuthOptional();
+  const user = auth?.user ?? null;
   const [servers, setServers] = useState<ServerEntry[] | null>(null);
+  const [filter, setFilter] = useState<EntryFilter>('all');
+  const [entryStates, setEntryStates] = useState<Record<string, EntryState>>({});
+  const onRowState = useCallback((id: string, state: EntryState) => {
+    setEntryStates((cur) => (cur[id] === state ? cur : { ...cur, [id]: state }));
+  }, []);
+  const visibleCount = servers ? servers.filter((s) => matchesFilter(entryStates[s.id] ?? 'loading', filter)).length : 0;
 
   useEffect(() => {
     let alive = true;
@@ -239,57 +248,86 @@ function LobbyView() {
 
   return (
     <div className="lobby-shell">
-      <Topbar />
-      <main className="lobby-main fade-in">
-        <h1 className="lobby-section-title">게임 로비</h1>
-        {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 전황 로그 (devsam '제 전황' 형태). */}
-        <ServerBoard />
-
-        <section>
-          <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
-          {servers === null || servers.length === 0 ? (
-            <p className="text-muted" role="status" aria-live="polite">
-              {servers === null
-                ? '서버 목록을 불러오는 중입니다.'
-                : '현재 이용할 수 있는 게임 서버가 없습니다.'}
-            </p>
-          ) : (
-            <div className="game-table-wrap">
-              <table className="game-table">
-                <caption>{LOBBY_LABELS.serverSelect}</caption>
-                <thead>
-                  <tr>
-                    <th>{LOBBY_LABELS.colServer}</th>
-                    <th>{LOBBY_LABELS.colInfo}</th>
-                    <th>{LOBBY_LABELS.colCharacter}</th>
-                    <th>{LOBBY_LABELS.colSelect}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {servers.map((server) => (
-                    <ServerRow key={server.id} server={server} />
-                  ))}
-                </tbody>
-              </table>
+      <Topbar current="lobby" />
+      <main className="lobby-main lobby-grid fade-in">
+        <div className="lobby-primary">
+          <h1 className="lobby-section-title os-serif">게임 로비</h1>
+          <section className="os-panel os-panel--static lobby-servers" aria-label={LOBBY_LABELS.serverSelect}>
+            <div className="os-section-header">
+              <span className="os-section-header__bar" aria-hidden="true" />
+              <h2 className="lobby-section-title os-section-header__title">{LOBBY_LABELS.serverSelect}</h2>
+              <span className="os-section-header__sub lobby-servers__hint">내 장수가 있는 서버는 바로 입장하고, 없는 서버는 장수를 만들어 시작합니다.</span>
+              <span className="os-section-header__spacer" />
+              <div className="os-pill-tabs" role="tablist" aria-label="서버 필터">
+                {ENTRY_FILTERS.map((f) => (
+                  <button key={f.key} type="button" role="tab" aria-selected={filter === f.key} className={filter === f.key ? 'os-pill-tabs__on' : undefined} onClick={() => setFilter(f.key)}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
-        </section>
-
-        <section>
-          <h2 className="lobby-section-title">{LOBBY_LABELS.accountSection}</h2>
-          <div className="lobby-account-actions">
-            <Link className="btn-ghost" href="/account">
-              {LOBBY_LABELS.accountManage}
-            </Link>
-            <Link className="btn-ghost" href="/board">커뮤니티 게시판</Link>
-          </div>
-        </section>
-
-        <ul className="footnotes">
-          {LOBBY_FOOTNOTES.map((note) => (
-            <li key={note}>{note}</li>
-          ))}
-        </ul>
+            {servers === null || servers.length === 0 ? (
+              <p className="text-muted lobby-servers__empty" role="status" aria-live="polite">
+                {servers === null
+                  ? '서버 목록을 불러오는 중입니다.'
+                  : '현재 이용할 수 있는 게임 서버가 없습니다.'}
+              </p>
+            ) : (
+              <div className="game-table-wrap">
+                <table className="game-table os-table lobby-table">
+                  <caption className="sr-only">{LOBBY_LABELS.serverSelect}</caption>
+                  <thead>
+                    <tr>
+                      <th>{LOBBY_LABELS.colServer}</th>
+                      <th>{LOBBY_LABELS.colInfo}</th>
+                      <th>{LOBBY_LABELS.colCharacter}</th>
+                      <th>{LOBBY_LABELS.colSelect}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {servers.map((server) => (
+                      <ServerRow key={server.id} server={server} filter={filter} onState={onRowState} />
+                    ))}
+                  </tbody>
+                </table>
+                {visibleCount === 0 && filter !== 'all' && (
+                  <p className="text-muted lobby-servers__empty" role="status">이 조건에 맞는 서버가 없습니다.</p>
+                )}
+              </div>
+            )}
+            <p className="lobby-servers__note">서버 설정에 따라 생성·빙의·선택 중 가능한 진입만 보입니다. 현황을 못 받은 서버는 「{LOBBY_LABELS.closed}」으로 남깁니다.</p>
+          </section>
+          {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 세력 현황 + 전황 로그 (devsam '제 전황' 형태). */}
+          <ServerBoard />
+          <section className="os-panel os-panel--static lobby-account" aria-label={LOBBY_LABELS.accountSection}>
+            <div className="os-section-header">
+              <span className="os-section-header__bar" aria-hidden="true" />
+              <h2 className="lobby-section-title os-section-header__title">{LOBBY_LABELS.accountSection}</h2>
+            </div>
+            <div className="lobby-account-actions">
+              <Link className="os-button os-button--ghost btn-ghost" href="/account">
+                {LOBBY_LABELS.accountManage}
+              </Link>
+              <Link className="os-button os-button--ghost btn-ghost" href="/board">커뮤니티 게시판</Link>
+              {user?.role === 'ADMIN' && (
+                <Link className="os-button os-button--ghost btn-ghost" href="/admin">{LOBBY_LABELS.admin} (ADMIN만)</Link>
+              )}
+              {auth && (
+                <button type="button" className="os-button os-button--ghost" onClick={() => void auth.logout()}>
+                  {AUTH_LABELS.logout}
+                </button>
+              )}
+            </div>
+          </section>
+          <ul className="footnotes">
+            {LOBBY_FOOTNOTES.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </div>
+        <aside className="lobby-side" aria-label="공지">
+          <NoticeBoard />
+        </aside>
       </main>
     </div>
   );

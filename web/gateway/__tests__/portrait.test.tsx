@@ -92,7 +92,7 @@ describe('gateway portrait helper', () => {
         const srcSetter = vi.spyOn(HTMLImageElement.prototype, 'src', 'set');
         try {
             fireEvent.error(portrait);
-            expect(portrait.src).toBe(DEFAULT_PORTRAIT);
+            expect(portrait.src).toBe(new URL(DEFAULT_PORTRAIT, document.baseURI).href);
             expect(srcSetter).toHaveBeenCalledTimes(1);
 
             fireEvent.error(portrait);
@@ -119,11 +119,12 @@ describe('gateway portrait helper', () => {
         }
     });
 
-    it('stops a canonical fallback self-error resolved from a relative CDN source', () => {
+    // 기본 초상은 앱 자체 출처(/portrait-default.svg)다. 문서 base 기준 상대 경로로 같은 파일을 가리켜도 자기 오류를 멈춘다.
+    it('stops a canonical fallback self-error resolved from a relative same-origin source', () => {
         render(
             <>
-                <base href={`${PORTRAIT_CDN}/`} />
-                <img src="default.jpg" onError={onPortraitError} alt="default portrait" />
+                <base href={`${window.location.origin}/`} />
+                <img src={DEFAULT_PORTRAIT.replace(/^\//, '')} onError={onPortraitError} alt="default portrait" />
             </>,
         );
         const portrait = screen.getByRole('img', { name: 'default portrait' }) as HTMLImageElement;
@@ -132,7 +133,7 @@ describe('gateway portrait helper', () => {
             fireEvent.error(portrait);
             fireEvent.error(portrait);
 
-            expect(portrait.src).toBe(DEFAULT_PORTRAIT);
+            expect(portrait.src).toBe(new URL(DEFAULT_PORTRAIT, document.baseURI).href);
             expect(srcSetter).not.toHaveBeenCalled();
         } finally {
             srcSetter.mockRestore();

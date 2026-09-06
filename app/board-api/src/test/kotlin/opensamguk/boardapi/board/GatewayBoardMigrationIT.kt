@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.PageRequest
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.io.ClassPathResource
 import org.springframework.jdbc.core.JdbcTemplate
@@ -21,6 +22,9 @@ import org.testcontainers.junit.jupiter.Testcontainers
 class GatewayBoardMigrationIT {
     @Autowired
     lateinit var jdbcTemplate: JdbcTemplate
+
+    @Autowired
+    lateinit var postRepository: GatewayBoardPostRepository
 
     @Test
     fun `V40 creates a gateway-only board schema exactly once`() {
@@ -76,5 +80,18 @@ class GatewayBoardMigrationIT {
             registry.add("spring.flyway.enabled") { "true" }
             registry.add("spring.flyway.postgresql.transactional-lock") { "false" }
         }
+    }
+    /**
+     * PR 비평 S1 적색 프로브 — `(:x IS NULL OR …)` 네이티브 쿼리에 null 세 개를 바인딩하는 기본 목록 경로는 H2 테스트만 타고
+     * 있었다. Hibernate 6.6 + PostgreSQL 의 null 바인딩(타입 추론 실패 → "could not determine data type of parameter")이
+     * 실제 PG 에서 나지 않는지 여기서 본다. 실패하면 커뮤니티 기본 목록이 프로덕션에서 500 이다.
+     */
+    @Test
+    fun `native feed queries bind null category author and q on real PostgreSQL`() {
+        val latest = postRepository.searchLatest(null, null, null, PageRequest.of(0, 10))
+        val mine = postRepository.searchLatest(null, 1L, null, PageRequest.of(0, 10))
+        val popular = postRepository.searchPopular(null, null, java.time.Instant.now().minusSeconds(7L * 24 * 3600), PageRequest.of(0, 10))
+        val filtered = postRepository.searchLatest("FREE", null, "검색", PageRequest.of(0, 10))
+        assertTrue(latest.content.isEmpty() && mine.content.isEmpty() && popular.content.isEmpty() && filtered.content.isEmpty())
     }
 }

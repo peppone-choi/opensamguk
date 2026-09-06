@@ -1,12 +1,16 @@
 'use client';
 
-import { formatLog } from '@/lib/utilGame';
+// 지난 순 3탭(장수 동향·개인 기록·중원 정세 ≤15건). 세 구역을 모두 렌더하고 탭은 보이는 것만 바꾼다
+// (라벨·region 계약 유지). 기본 탭은 중원 정세(03 아트보드).
+import { useState } from 'react';
+import { LogText } from '@opensamguk/ui';
 import type { FrontRecentRecordRow, FrontRecentRecord } from '@/lib/types';
 
 interface RecordFeedProps {
     title: string;
     rows: FrontRecentRecordRow[];
     className: string;
+    active: boolean;
 }
 
 const EMPTY_RECENT_RECORD: FrontRecentRecord = {
@@ -40,18 +44,15 @@ function normalizeRecentRecord(value: unknown): FrontRecentRecord {
     };
 }
 
-function RecordFeed({ title, rows, className }: RecordFeedProps) {
+function RecordFeed({ title, rows, className, active }: RecordFeedProps) {
     return (
-        <section className={`main-record-feed ${className}`} aria-label={title}>
+        <section className={`main-record-feed ${className}${active ? ' is-active' : ''}`} aria-label={title} data-active={active}>
             <div className="main-record-title">{title}</div>
-            <div className="main-record-body">
+            <div className="main-record-body os-feed" role="list">
+                {rows.length === 0 && <div className="main-record-empty">기록이 없습니다.</div>}
                 {rows.map((row) => (
-                    <div
-                        key={row[0]}
-                        className="main-record-row"
-                        data-record-id={row[0]}
-                    >
-                        <span className="main-record-text" dangerouslySetInnerHTML={{ __html: formatLog(row[1]) }} />
+                    <div key={row[0]} className="main-record-row" role="listitem" data-record-id={row[0]}>
+                        <LogText className="main-record-text" text={row[1]} />
                     </div>
                 ))}
             </div>
@@ -59,13 +60,36 @@ function RecordFeed({ title, rows, className }: RecordFeedProps) {
     );
 }
 
+type RecordTab = 'history' | 'global' | 'general';
+const TABS: { key: RecordTab; label: string }[] = [
+    { key: 'history', label: '중원 정세' },
+    { key: 'global', label: '장수 동향' },
+    { key: 'general', label: '개인 기록' },
+];
+
 export default function MainRecordZone({ recentRecord }: { recentRecord: unknown }) {
     const normalized = normalizeRecentRecord(recentRecord);
+    const [tab, setTab] = useState<RecordTab>('history');
     return (
         <div className="main-record-zone">
-            <RecordFeed title="장수 동향" rows={normalized.global} className="main-record-public" />
-            <RecordFeed title="개인 기록" rows={normalized.general} className="main-record-general" />
-            <RecordFeed title="중원 정세" rows={normalized.history} className="main-record-world" />
+            <div className="main-record-tabs" role="tablist" aria-label="지난 순 기록">
+                {TABS.map((t) => (
+                    <button
+                        key={t.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={tab === t.key}
+                        className={`main-record-tab${tab === t.key ? ' is-on' : ''}`}
+                        onClick={() => setTab(t.key)}
+                    >
+                        {t.label}
+                        <span className="os-num main-record-count">{normalized[t.key].length}</span>
+                    </button>
+                ))}
+            </div>
+            <RecordFeed title="장수 동향" rows={normalized.global} className="main-record-public" active={tab === 'global'} />
+            <RecordFeed title="개인 기록" rows={normalized.general} className="main-record-general" active={tab === 'general'} />
+            <RecordFeed title="중원 정세" rows={normalized.history} className="main-record-world" active={tab === 'history'} />
         </div>
     );
 }

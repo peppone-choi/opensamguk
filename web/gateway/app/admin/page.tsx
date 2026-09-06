@@ -5,7 +5,10 @@ import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ConfirmModal from '@/components/ConfirmModal';
 import BoardControl from '@/components/admin/BoardControl';
+import BoardReportControl from '@/components/admin/BoardReportControl';
 import MemberControl from '@/components/admin/MemberControl';
+import NoticeControl from '@/components/admin/NoticeControl';
+import AdminOverview from '@/components/admin/AdminOverview';
 import {
     runServerLifecycleOperation,
     type ServerLifecycleOperationStatus,
@@ -16,11 +19,15 @@ import {
 // "게임 환경"(B1e)은 락(걸기/풀기 + 동결중/가동중) 부분만 우선 배선. 시간조정/봉급/운영자메시지/
 // 시작시간/최대장수·국가/시작년도/턴시간 등 나머지는 후속 웨이브 — '준비 중' 플레이스홀더 유지.
 // 섹션명은 verbatim 동결 회귀 대상, 본문은 탭별로 분기.
+// 운영 콘솔 섹션(ADR-LITE-049 Phase 3). 기존 4 라벨은 verbatim 유지, 「개요」·「공지」 추가.
+// 위험 등급(docs/admin/README.md): 조회 / 가역 변경 / 배포 / 파괴적 변경.
 const ADMIN_SECTIONS = [
-    { id: 'members', label: '회원 관리' },
-    { id: 'board', label: '게시판 관리' },
-    { id: 'server', label: '서버 제어' },
-    { id: 'game', label: '게임 환경' },
+    { id: 'overview', label: '개요', risk: '조회' },
+    { id: 'members', label: '회원 관리', risk: '가역·파괴적' },
+    { id: 'board', label: '게시판 관리', risk: '가역' },
+    { id: 'server', label: '서버 제어', risk: '배포·파괴적' },
+    { id: 'game', label: '게임 환경', risk: '가역' },
+    { id: 'notice', label: '공지', risk: '가역' },
 ] as const;
 
 const PLACEHOLDER = '준비 중';
@@ -1709,35 +1716,51 @@ function GameEnvControl() {
 }
 
 function AdminView() {
-    const [active, setActive] = useState<string>(ADMIN_SECTIONS[0].id);
+    // 기본 섹션은 「회원 관리」 — 「개요」가 마운트에서 admin/version 을 한 번 더 부르면 서버 제어의 재조회 불변식
+    // (버전 재조회 정확히 1회, admin-server-id.test)이 흔들린다. 개요는 첫 항목이지만 눌렀을 때만 조회한다.
+    const [active, setActive] = useState<string>('members');
     const section = ADMIN_SECTIONS.find((s) => s.id === active) ?? ADMIN_SECTIONS[0];
 
     return (
         <div className="admin-shell">
-            <Topbar />
-            <main className="admin-main fade-in">
-                <div className="admin-tabs">
+            <Topbar current="admin" />
+            <main className="admin-main admin-console fade-in">
+                <nav className="admin-rail" aria-label="운영 콘솔">
+                    <div className="admin-rail__title os-serif">운영 콘솔</div>
                     {ADMIN_SECTIONS.map((s) => (
                         <button
                             key={s.id}
                             type="button"
                             className={`admin-tab${s.id === active ? ' active' : ''}`}
+                            aria-current={s.id === active ? 'page' : undefined}
                             onClick={() => setActive(s.id)}
                         >
-                            {s.label}
+                            <span>{s.label}</span>
+                            <span className="admin-tab__risk" aria-hidden="true">{s.risk}</span>
                         </button>
                     ))}
-                </div>
-                <section className="admin-panel">
-                    <h2 className="lobby-section-title">{section.label}</h2>
-                    {active === 'server' ? (
+                </nav>
+                <section className="admin-panel" aria-label={section.label}>
+                    <div className="os-section-header admin-panel__head">
+                        <span className="os-section-header__bar" aria-hidden="true" />
+                        <h2 className="lobby-section-title os-section-header__title">{section.label}</h2>
+                        <span className="os-section-header__sub">위험 등급: {section.risk}</span>
+                    </div>
+                    {active === 'overview' ? (
+                        <AdminOverview onNavigate={setActive} />
+                    ) : active === 'server' ? (
                         <ServerControl />
                     ) : active === 'members' ? (
                         <MemberControl />
                     ) : active === 'board' ? (
-                        <BoardControl />
+                        <>
+                            <BoardControl />
+                            <BoardReportControl />
+                        </>
                     ) : active === 'game' ? (
                         <GameEnvControl />
+                    ) : active === 'notice' ? (
+                        <NoticeControl />
                     ) : (
                         <p>{PLACEHOLDER}</p>
                     )}

@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import GameTable from '../../../components/GameTable';
 import StatusBadge from '../../../components/StatusBadge';
@@ -89,7 +91,7 @@ export default function TournamentPage() {
     if (loading) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>토너먼트</h1>
+                <PageHead title="토너먼트" />
                 <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
             </Shell>
         );
@@ -98,7 +100,7 @@ export default function TournamentPage() {
     if (error) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>토너먼트</h1>
+                <PageHead title="토너먼트" />
                 <p style={{ color: 'var(--crimson)' }}>{error}</p>
                 <button
                     onClick={() => fetchData()}
@@ -141,7 +143,7 @@ export default function TournamentPage() {
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>토너먼트</h1>
+            <PageHead title="토너먼트" />
 
             {/* 진행 상태 / 종목 / 운영자 메세지 */}
             <GameCard className="tournament-header" style={{ marginBottom: 'var(--space-lg)' }}>
@@ -155,7 +157,7 @@ export default function TournamentPage() {
                         marginBottom: 'var(--space-sm)',
                     }}
                 >
-                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>삼모전 토너먼트</h2>
+                    <SectionHeader as="h2" title="삼모전 토너먼트" />
                     <StatusBadge variant="jade">{tnmtType}</StatusBadge>
                     <StatusBadge variant={stateVariant(state)}>{stateText}</StatusBadge>
                     {data && data.turnTerm > 0 ? (

@@ -114,8 +114,178 @@ sealed class TurnDaemonCommand {
         val isSecret: Boolean = false,
         val title: String? = null,
         val text: String? = null,
+        /** 글 종류(ADR-LITE-049 14 회의실): general | vote | operation | notice. 부재는 general(레거시 호환). */
+        val kind: String = "general",
+        /** kind=vote 일 때 연결하는 vote_poll id. */
+        val voteId: Int? = null,
+        /** kind=operation 일 때 연결하는 작전 id(Phase 4X-B, V56). 내 국가 작전이어야 한다 — BoardHandler 가 검사. */
+        val operationId: Int? = null,
     ) : TurnDaemonCommand() {
         override val type: String get() = "boardArticle"
+    }
+
+    /**
+     * 기밀실 열람 기록(ADR-LITE-049 14): 수뇌부가 기밀 글을 열면 board_post_read 에 (post, general) 한 행을 남긴다.
+     * 멱등 — 같은 (post, general) 은 DB UNIQUE 로 무시된다. 회의실(비밀 아님) 글은 기록하지 않는다.
+     */
+    @Serializable
+    @SerialName("boardRead")
+    data class BoardRead(
+        val requestId: String? = null,
+        val generalId: Int,
+        val articleNo: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "boardRead"
+    }
+
+    // ── Phase 4X-A 가신·부곡 (ADR-LITE-017 · specs/2026-09-06-retinue-buqu-vertical-slice v3) ──
+    // 인자는 모두 nullable — 부재/비정수는 엔진 ③ 입력 게이트 「올바르지 않은 입력입니다.」 가 판정한다.
+    @Serializable
+    @SerialName("retainerPledge")
+    data class RetainerPledge(
+        val requestId: String? = null,
+        val generalId: Int,
+        val name: String? = null,
+        val relation: String? = null,
+        val role: String? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "retainerPledge"
+    }
+
+    @Serializable
+    @SerialName("retainerRelease")
+    data class RetainerRelease(
+        val requestId: String? = null,
+        val generalId: Int,
+        val retainerId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "retainerRelease"
+    }
+
+    @Serializable
+    @SerialName("retainerTask")
+    data class RetainerTask(
+        val requestId: String? = null,
+        val generalId: Int,
+        val retainerId: Int? = null,
+        val task: String? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "retainerTask"
+    }
+
+    @Serializable
+    @SerialName("bugokForm")
+    data class BugokForm(
+        val requestId: String? = null,
+        val generalId: Int,
+        val troops: Int? = null,
+        val rice: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "bugokForm"
+    }
+
+    @Serializable
+    @SerialName("bugokDisband")
+    data class BugokDisband(
+        val requestId: String? = null,
+        val generalId: Int,
+        val bugokId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "bugokDisband"
+    }
+
+    /** retainerId 가 null 이면 지휘관 해제. */
+    @Serializable
+    @SerialName("bugokAssignCommander")
+    data class BugokAssignCommander(
+        val requestId: String? = null,
+        val generalId: Int,
+        val bugokId: Int? = null,
+        val retainerId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "bugokAssignCommander"
+    }
+
+    // ── Phase 4X-B 작전 (specs/2026-09-06-operation-vertical-slice v4.1) — 인자는 nullable, ③ 입력 게이트가 판정 ──
+    @Serializable
+    @SerialName("operationDeclare")
+    data class OperationDeclare(
+        val requestId: String? = null,
+        val generalId: Int,
+        val kind: String? = null,
+        val targetCityId: Int? = null,
+        val title: String? = null,
+        val fallbackText: String? = null,
+        val deadlineMonths: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "operationDeclare"
+    }
+
+    @Serializable
+    @SerialName("operationJoin")
+    data class OperationJoin(
+        val requestId: String? = null,
+        val generalId: Int,
+        val operationId: Int? = null,
+        val role: String? = null,
+        val bugokId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "operationJoin"
+    }
+
+    @Serializable
+    @SerialName("operationLeave")
+    data class OperationLeave(
+        val requestId: String? = null,
+        val generalId: Int,
+        val operationId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "operationLeave"
+    }
+
+    @Serializable
+    @SerialName("operationClose")
+    data class OperationClose(
+        val requestId: String? = null,
+        val generalId: Int,
+        val operationId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "operationClose"
+    }
+
+    // ── Phase 4X-C 출병 계획 봉인(공격자) — specs/2026-09-06-wego-field-seal-replay-vertical-slice v4.1 §4 ──
+    // 인자는 nullable — 엔진 ③ 입력 게이트가 판정한다. 봉인 뒤 수정은 인테이크 거부 사유(409 아님).
+    @Serializable
+    @SerialName("battlePlanSave")
+    data class BattlePlanSave(
+        val requestId: String? = null,
+        val generalId: Int,
+        val targetCityId: Int? = null,
+        val stance: String? = null,
+        val retreatLossPct: Int? = null,
+        val retreatMoraleBelow: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "battlePlanSave"
+    }
+
+    @Serializable
+    @SerialName("battlePlanSeal")
+    data class BattlePlanSeal(
+        val requestId: String? = null,
+        val generalId: Int,
+        val planId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "battlePlanSeal"
+    }
+
+    @Serializable
+    @SerialName("battlePlanDelete")
+    data class BattlePlanDelete(
+        val requestId: String? = null,
+        val generalId: Int,
+        val planId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "battlePlanDelete"
     }
 
     @Serializable

@@ -75,7 +75,7 @@ describe('Board and auction deep links', () => {
 
         await screen.findByRole('heading', { name: '기밀실' });
         await waitFor(() => expect(apiMocks.board).toHaveBeenCalledWith(true));
-        expect(screen.getByRole('button', { name: '기밀실' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByRole('tab', { name: /^기밀실/ })).toHaveAttribute('aria-selected', 'true');
     });
 
     it('keeps the public board as the queryless default', async () => {
@@ -83,7 +83,7 @@ describe('Board and auction deep links', () => {
 
         await screen.findByRole('heading', { name: '회의실' });
         await waitFor(() => expect(apiMocks.board).toHaveBeenCalledWith(false));
-        expect(screen.getByRole('button', { name: '회의실' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByRole('tab', { name: /^회의실/ })).toHaveAttribute('aria-selected', 'true');
     });
 
     it('renders the unique auction on the first render for ?type=unique', async () => {

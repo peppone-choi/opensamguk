@@ -12,12 +12,14 @@
 //  - READ-ONLY. EMPTY-SAFE(빈 seed → 빈 표).
 
 import { useEffect, useMemo, useState } from 'react';
+import { Panel, Portrait, SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../../components/Shell';
+import PageHead from '../../../../components/PageHead';
+import RecordsTabs from '../../../../components/records/RecordsTabs';
 import GameTable from '../../../../components/GameTable';
 import GeneralName from '../../../../components/game/GeneralName';
 import { api } from '../../../../lib/api';
 import { formatRefreshScore } from '../../../../lib/utilGame';
-import { portraitUrl, onPortraitError } from '../../../../lib/portrait';
 import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { PublicGeneral } from '../../../../types/game';
 
@@ -65,6 +67,15 @@ function injuredStat(stat: number, injury: number): number {
     return Math.trunc((stat * (100 - injury)) / 100);
 }
 
+// 시상대 값 — 현재 정렬 키의 값을 그대로(텍스트 정렬은 텍스트, 벌점은 10단위 반올림, 국가는 국명).
+function podiumValue(g: PublicGeneral, sort: { value: SortKey; text?: boolean }): string {
+    if (sort.value === 'nationId') return g.nationId === NO_NATION ? '재야' : (g.nationName || '재야');
+    if (sort.value === 'refreshScoreTotal') return String(Math.round(g.refreshScoreTotal / 10) * 10);
+    const v = g[sort.value];
+    return v == null ? '-' : String(v);
+}
+const PODIUM_RANK = ['壹', '貳', '參'];
+
 export default function GeneralsListPage() {
     const [data, setData] = useState<PublicGeneral[]>([]);
     const [loading, setLoading] = useState(true);
@@ -108,7 +119,7 @@ export default function GeneralsListPage() {
     if (loading) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>장수 일람</h1>
+                <PageHead title="장수 일람" tabs={<RecordsTabs />} />
                 <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
             </Shell>
         );
@@ -117,7 +128,7 @@ export default function GeneralsListPage() {
     if (error) {
         return (
             <Shell>
-                <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>장수 일람</h1>
+                <PageHead title="장수 일람" tabs={<RecordsTabs />} />
                 <p style={{ color: 'var(--crimson)' }}>{error}</p>
             </Shell>
         );
@@ -133,18 +144,8 @@ export default function GeneralsListPage() {
         const roundedRefreshScoreTotal = Math.round(g.refreshScoreTotal / 10) * 10;
         const lbonusText = g.lbonus > 0 ? <span style={{ color: 'cyan' }}> +{g.lbonus}</span> : null;
         return [
-            // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default). PHP GetImageURL(imgsvr)/picture.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-                key={`pic-${g.generalId}`}
-                src={portraitUrl(g.picture, g.imageServer)}
-                onError={onPortraitError}
-                alt=""
-                width={32}
-                height={40}
-                style={{ objectFit: 'contain', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
-                draggable={false}
-            />,
+            // 얼굴 — 초상 아이콘 28(초상 3종 규칙: 표는 96 아이콘 변형). resolver 가 imgsvr/picture 계약을 지킨다.
+            <Portrait key={`pic-${g.generalId}`} picture={g.picture} imageServer={g.imageServer} size="icon-28" alt="" />,
             // 이름 — PHP formatName(name, npc): NPC 타입별 색(getNPCColor).
             <GeneralName key={`nm-${g.generalId}`} name={g.name} npcType={g.npc} />,
             `${g.age}세`,                       // 연령
@@ -172,21 +173,35 @@ export default function GeneralsListPage() {
         ];
     });
 
+    const podium = sorted.slice(0, 3);
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>장수 일람</h1>
-            <div style={{ marginBottom: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>정렬순서 :</span>
-                <select
-                    value={sortIdx}
-                    onChange={(e) => setSortIdx(Number(e.target.value))}
-                    style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', padding: 'var(--space-xs) var(--space-sm)' }}
-                >
+            <PageHead title="장수 일람" tabs={<RecordsTabs />} />
+            <div className="record-bar">
+                <span className="record-bar__label">정렬순서 :</span>
+                <select aria-label="정렬순서" value={sortIdx} onChange={(e) => setSortIdx(Number(e.target.value))}>
                     {SORTS.map((s, i) => (
                         <option key={`${s.value}-${i}`} value={i}>{s.label}</option>
                     ))}
                 </select>
+                <span className="record-bar__count">{sorted.length}명</span>
             </div>
+            {/* 상위 3 시상대(12 아트보드 壹貳參) — 초상 카드 56×80. 국가색 링은 내 장수·군주·문맥 국가에만이라 여기선 없음. */}
+            {podium.length > 0 && (
+                <Panel className="record-panel" aria-label="상위 3" style={{ marginBottom: 14 }}>
+                    <SectionHeader title="장수 일람" sub={`정렬 ${SORTS[sortIdx].label}`} />
+                    <div className="podium">
+                        {podium.map((g, i) => (
+                            <div key={g.generalId} className={`podium__slot${i === 0 ? ' podium__slot--first' : ''}`}>
+                                <span className="podium__rank">{PODIUM_RANK[i]}</span>
+                                <Portrait picture={g.picture} imageServer={g.imageServer} size="card-56" alt="" />
+                                <GeneralName name={g.name} npcType={g.npc} className="podium__name" />
+                                <span className="podium__value">{podiumValue(g, SORTS[sortIdx])}</span>
+                            </div>
+                        ))}
+                    </div>
+                </Panel>
+            )}
             <GameTable headers={headers} rows={rows} />
         </Shell>
     );

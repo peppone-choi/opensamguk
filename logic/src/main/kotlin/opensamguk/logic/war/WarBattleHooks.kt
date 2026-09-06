@@ -75,6 +75,14 @@ interface WarBattleHooks {
     /** The 분쟁 global history log on `newConflict` (`:493-497`). */
     fun onConflictLog(attacker: WarUnitGeneral, city: WarUnitCity) {}
 
+    // --- (3) Phase 4X-C 출병 계획 봉인 — 페이즈 사이의 계획 정지 판정(draw 0). 기본 null = 오늘 동작 ------------
+
+    /**
+     * spec v4.1 §5: `addPhase()` 뒤·두 `continueWar()` 뒤에서 한 번만 불린다. non-null 이면 수비자가 무너지지 않은 페이즈에
+     * 한해 자연 퇴각과 같은 함수를 타고, 무너진 페이즈면 다음 수비자로 넘어가지 않고 멈춘다. [NOOP]·프로덕션 훅은 null.
+     */
+    fun plannedStop(attacker: WarUnitGeneral, defender: WarUnit, phaseIndex: Int): opensamguk.logic.war.plan.PlanStop? = null
+
     companion object {
         /** A complete inert implementation — every method defaults to identity/no-op. */
         val NOOP: WarBattleHooks = object : WarBattleHooks {}

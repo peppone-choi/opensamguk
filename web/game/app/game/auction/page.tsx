@@ -7,6 +7,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import AuctionResource from '../../../components/auction/AuctionResource';
 import AuctionUniqueItem from '../../../components/auction/AuctionUniqueItem';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
@@ -28,9 +29,7 @@ function AuctionContent() {
     return (
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
-                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
-                    {isResAuction ? '경매장' : '유니크 경매장'}
-                </h1>
+                <PageHead title={isResAuction ? '경매장' : '유니크 경매장'} />
                 <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                     <button
                         aria-pressed={isResAuction}

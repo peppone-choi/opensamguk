@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import GameCard from '../GameCard';
-import { formatLog } from '@/lib/utilGame';
+import { LogText } from '@opensamguk/ui';
 import { api, type GeneralLogType } from '@/lib/api';
 
 type LogType = GeneralLogType;
@@ -64,8 +64,9 @@ function LogSection({ title, titleColor, logs, logType, onLoadMore, loadingMore,
                                 padding: 'var(--space-xs) 0',
                                 borderBottom: '1px solid var(--border-subtle)',
                             }}
-                            dangerouslySetInnerHTML={{ __html: formatLog(item.text) }}
-                        />
+                        >
+                            <LogText text={item.text} />
+                        </div>
                     ))
                 )}
             </div>

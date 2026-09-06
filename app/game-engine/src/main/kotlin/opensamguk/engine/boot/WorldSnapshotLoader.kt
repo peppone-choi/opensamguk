@@ -14,6 +14,12 @@ import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
+import opensamguk.engine.turn.Bugok
+import opensamguk.engine.turn.Operation
+import opensamguk.engine.turn.OperationMilestones
+import opensamguk.engine.turn.OperationUnit
+import opensamguk.engine.turn.BattlePlan
+import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.WaterControlRowCodec
@@ -84,6 +90,11 @@ class WorldSnapshotLoader(
                 "map",
                 "maxNationId",
                 "maxGeneralId",
+                "maxRetainerId",
+                "maxBugokId",
+                "maxOperationId",
+                "maxOperationUnitId",
+                "maxBattlePlanId",
             )
             for (key in snapshotKeys) {
                 if (loaded.meta.containsKey(key)) merged[key] = loaded.meta[key]
@@ -140,6 +151,11 @@ class WorldSnapshotLoader(
         val accessLogs = loadAccessLogs()
         val archivedNationIds = loadArchivedNationIds(activeServerId)
         val troops = loadTroops()
+        val retainers = loadRetainers()
+        val bugoks = loadBugoks()
+        val operations = loadOperations()
+        val operationUnits = loadOperationUnits()
+        val battlePlans = loadBattlePlans()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops={}",
             generals.size,
@@ -161,6 +177,11 @@ class WorldSnapshotLoader(
             troops = troops,
             diplomacy = diplomacy,
             accessLogs = accessLogs,
+            retainers = retainers,
+            bugoks = bugoks,
+            operations = operations,
+            operationUnits = operationUnits,
+            battlePlans = battlePlans,
             archivedNationIds = archivedNationIds,
             waterControlSnapshot = topology?.let(::loadWaterControlSnapshot),
             provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
@@ -205,6 +226,88 @@ class WorldSnapshotLoader(
         // WorldSnapshot checks these IDs against the same world's loaded core generals.
         return GeneralPositionSnapshot.fromTopology(topology, rows)
     }
+
+    /** Phase 4X-A 가신 적재(부팅·rehydrate 동일 경로). 행 0 이면 빈 목록. */
+    private fun loadRetainers(): List<Retainer> = jdbc.query(
+        "SELECT id, master_general_id, origin, general_id, name, relation, role, has_own_bugok, release_policy, loyalty, task " +
+            "FROM general_retainers WHERE world_id = ? ORDER BY id",
+        { rs, _ ->
+            Retainer(
+                id = rs.getInt("id"), masterGeneralId = rs.getInt("master_general_id"), origin = rs.getString("origin"),
+                generalId = rs.getObject("general_id")?.let { (it as Number).toInt() }, name = rs.getString("name"),
+                relation = rs.getString("relation"), role = rs.getString("role"), hasOwnBugok = rs.getBoolean("has_own_bugok"),
+                releasePolicy = rs.getString("release_policy"), loyalty = rs.getInt("loyalty"), task = rs.getString("task"),
+            )
+        },
+        worldId.value,
+    )
+
+    private fun loadBugoks(): List<Bugok> = jdbc.query(
+        "SELECT id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied " +
+            "FROM general_bugok WHERE world_id = ? ORDER BY id",
+        { rs, _ ->
+            Bugok(
+                id = rs.getInt("id"), masterGeneralId = rs.getInt("master_general_id"), name = rs.getString("name"),
+                troops = rs.getInt("troops"), crewTypeId = rs.getInt("crew_type_id"), training = rs.getInt("training"),
+                morale = rs.getInt("morale"), fatigue = rs.getInt("fatigue"), provisions = rs.getInt("provisions"),
+                commanderRetainerId = rs.getObject("commander_retainer_id")?.let { (it as Number).toInt() },
+                commanderBonusApplied = rs.getBoolean("commander_bonus_applied"),
+            )
+        },
+        worldId.value,
+    )
+
+    /** Phase 4X-B 작전 적재(부팅·rehydrate 동일 경로). 행 0 이면 빈 목록. */
+    private fun loadOperations(): List<Operation> = jdbc.query(
+        "SELECT id, nation_id, kind, target_city_id, title, fallback_text, declared_by_general_id, declared_year, declared_month, declared_phase, " +
+            "deadline_year, deadline_month, deadline_phase, status, m_departed, m_arrived, m_supplied, m_objective, closed_reason " +
+            "FROM operation WHERE world_id = ? ORDER BY id",
+        { rs, _ ->
+            Operation(
+                id = rs.getInt("id"), nationId = rs.getInt("nation_id"), kind = rs.getString("kind"), targetCityId = rs.getInt("target_city_id"),
+                title = rs.getString("title"), fallbackText = rs.getString("fallback_text"),
+                declaredByGeneralId = rs.getObject("declared_by_general_id")?.let { (it as Number).toInt() },
+                declaredYear = rs.getInt("declared_year"), declaredMonth = rs.getInt("declared_month"), declaredPhase = rs.getInt("declared_phase"),
+                deadlineYear = rs.getInt("deadline_year"), deadlineMonth = rs.getInt("deadline_month"), deadlinePhase = rs.getInt("deadline_phase"),
+                status = rs.getString("status"),
+                milestones = OperationMilestones(rs.getBoolean("m_departed"), rs.getBoolean("m_arrived"), rs.getBoolean("m_supplied"), rs.getBoolean("m_objective")),
+                closedReason = rs.getString("closed_reason"),
+            )
+        },
+        worldId.value,
+    )
+
+    /** Phase 4X-C — 미소비 계획만(`resolved_year IS NULL`); 소비된 행은 기록으로만 남는다(spec v4.1 §2). */
+    private fun loadBattlePlans(): List<BattlePlan> = jdbc.query(
+        "SELECT id, general_id, target_city_id, stance, retreat_loss_pct, retreat_morale_below, sealed_at, sealed_year, sealed_month, sealed_phase, version " +
+            "FROM battle_plan WHERE world_id = ? AND resolved_year IS NULL ORDER BY id",
+        { rs, _ ->
+            BattlePlan(
+                id = rs.getInt("id"), generalId = rs.getInt("general_id"), targetCityId = rs.getInt("target_city_id"), stance = rs.getString("stance"),
+                retreatLossPct = rs.getObject("retreat_loss_pct")?.let { (it as Number).toInt() },
+                retreatMoraleBelow = rs.getObject("retreat_morale_below")?.let { (it as Number).toInt() },
+                sealedAt = rs.getTimestamp("sealed_at")?.toInstant(),
+                sealedYear = rs.getObject("sealed_year")?.let { (it as Number).toInt() },
+                sealedMonth = rs.getObject("sealed_month")?.let { (it as Number).toInt() },
+                sealedPhase = rs.getObject("sealed_phase")?.let { (it as Number).toInt() },
+                version = rs.getInt("version"),
+            )
+        },
+        worldId.value,
+    )
+
+    private fun loadOperationUnits(): List<OperationUnit> = jdbc.query(
+        "SELECT id, operation_id, general_id, bugok_id, role, joined_city_id, joined_year, joined_month, joined_phase " +
+            "FROM operation_unit WHERE world_id = ? ORDER BY id",
+        { rs, _ ->
+            OperationUnit(
+                id = rs.getInt("id"), operationId = rs.getInt("operation_id"), generalId = rs.getInt("general_id"),
+                bugokId = rs.getObject("bugok_id")?.let { (it as Number).toInt() }, role = rs.getString("role"),
+                joinedCityId = rs.getInt("joined_city_id"), joinedYear = rs.getInt("joined_year"), joinedMonth = rs.getInt("joined_month"), joinedPhase = rs.getInt("joined_phase"),
+            )
+        },
+        worldId.value,
+    )
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(

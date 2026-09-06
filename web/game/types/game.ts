@@ -1088,12 +1088,48 @@ export interface InheritPointResponse {
 // '권한이 부족합니다. 수뇌부가 아닙니다.'. EMPTY articles[] when no rows.
 // 필드명은 game-api DTO를 그대로 미러링한다 (app/game-api .../dto/F4Dto.kt BoardResponse/
 // BoardArticle/BoardComment) — 프록시가 pass-through라 페이지가 이 이름을 그대로 소비한다.
+/** 글·댓글·표결·열람에 붙는 장수 표시(ADR-LITE-049 아이콘 96 규칙). picture 는 현재 general 행 — 없으면 기본 초상. */
+export interface BoardPerson {
+  generalId: number;
+  name: string;
+  picture: string | null;
+  imageServer: number;
+  officerLevelText: string | null;
+}
+
 export interface BoardComment {
   id: number;
   authorGeneralId: number;
   authorName: string;
   text: string;
   date: string; // ISO instant
+  authorPicture?: string | null;
+  authorImageServer?: number;
+}
+
+export type BoardKind = 'general' | 'vote' | 'operation' | 'notice';
+
+export interface BoardVoteOption {
+  index: number;
+  text: string;
+  count: number;
+  voters: BoardPerson[]; // 공개 표결일 때만; 비공개는 []
+}
+
+export interface BoardVoteSummary {
+  voteId: number;
+  title: string;
+  endDate: string | null;
+  closed: boolean;
+  options: BoardVoteOption[];
+  myVote: number[] | null;
+  voterCount: number;
+  eligibleCount: number;
+}
+
+export interface BoardReaders {
+  read: BoardPerson[];
+  total: number; // 수뇌부 정원
 }
 
 export interface BoardArticle {
@@ -1105,6 +1141,26 @@ export interface BoardArticle {
   contentHtml: string;
   date: string; // ISO instant
   comments: BoardComment[]; // 시간순 오름차순
+  kind?: BoardKind; // V53 — 부재(구 응답)는 general
+  voteId?: number | null;
+  vote?: BoardVoteSummary | null;
+  readers?: BoardReaders | null; // 기밀실 글에만
+  authorPicture?: string | null;
+  authorImageServer?: number;
+  authorOfficerLevelText?: string | null;
+    /** kind=operation 일 때 연결된 작전(V56). */
+    operationId?: number | null;
+}
+
+/** 회의실 참여 스택 — 국가 플레이어 장수. active = 최근 한 순 안에 턴 시각 갱신, chief = 기밀실 열람 자격. */
+export interface BoardParticipant {
+  generalId: number;
+  name: string;
+  picture: string | null;
+  imageServer: number;
+  officerLevelText: string | null;
+  active: boolean;
+  chief?: boolean;
 }
 
 export interface BoardResponse {
@@ -1113,6 +1169,10 @@ export interface BoardResponse {
   title: string; // 그대로 회의실 / 기밀실
   articles: BoardArticle[]; // 최신순; 없으면 []
   blockedReason: string | null; // 권한 게이트가 기밀 방을 차단했을 때 설정 (INFO)
+  participants?: BoardParticipant[];
+  chiefCount?: number;
+  myGeneralId?: number | null;
+  myPermission?: number;
 }
 
 // ── page 5 · 설문 조사 (GET /api/votes, GET /api/votes/{id}) ──────────────────
@@ -1266,4 +1326,122 @@ export interface MailboxMessage {
   srcTarget: MailMsgTarget | null; // 발신 타깃 블록 — 발신자명은 srcTarget.name
   destTarget: MailMsgTarget | null; // 수신 타깃 블록(공개 메시지면 null)
   option: Record<string, unknown> | null; // body `option`(action/deletable/receiverMessageID 등)
+}
+
+// ── Phase 4X-A 가신(휘하 인물)·부곡 — /api/my-retinue (spec v3 §6) ──
+export interface RetinueRetainer {
+    id: number;
+    name: string;
+    origin: 'EXISTING' | 'RECRUITED';
+    relation: 'staff' | 'lieutenant' | 'guest';
+    relationLabel: string;
+    role: string;
+    roleLabel: string;
+    loyalty: number;
+    task: 'none' | 'domestic' | 'scout' | 'train';
+    taskLabel: string;
+    hasOwnBugok: boolean;
+}
+
+export interface RetinueBugok {
+    id: number;
+    name: string;
+    troops: number;
+    crewTypeId: number;
+    crewTypeName: string;
+    training: number;
+    morale: number;
+    fatigue: number;
+    provisions: number;
+    provisionMonths: number;
+    commanderRetainerId: number | null;
+}
+
+export interface RetinueOption { value: string; label: string }
+
+export interface RetinueRules {
+    maxRetainers: number;
+    maxBugok: number;
+    pledgeCostGold: number;
+    minBugokTroops: number;
+    retainerUpkeepGold: number;
+    retainerUpkeepRice: number;
+    payGoldPer100Troops: number;
+    provisionPerTroopMonth: number;
+    commanderMoraleBonus: number;
+    relations: RetinueOption[];
+    roles: RetinueOption[];
+    tasks: RetinueOption[];
+    /** 잠정 상수 — UI 는 「잠정」 칩을 붙인다. */
+    provisional: boolean;
+}
+
+export interface RetinueResponse {
+    generalId: number;
+    generalName: string;
+    crew: number;
+    rice: number;
+    gold: number;
+    crewTypeId: number;
+    crewTypeName: string;
+    retainers: RetinueRetainer[];
+    bugoks: RetinueBugok[];
+    rules: RetinueRules;
+}
+
+// ── Phase 4X-B 작전 — /api/operations (spec v4.1 §6) ──
+export interface OperationDate { year: number; month: number; phase: number }
+export interface OperationUnit {
+    id: number; generalId: number; name: string; role: string; roleLabel: string; crew: number; crewTypeName: string;
+    bugokId: number | null; bugokTroops: number | null; cityId: number; cityName: string; picture: string | null; imageServer: number;
+}
+export interface OperationMilestones { departed: boolean; arrived: boolean; supplied: boolean; objective: boolean }
+export interface Operation {
+    id: number; kind: string; kindLabel: string; title: string; fallbackText: string | null;
+    target: { cityId: number; name: string };
+    status: 'declared' | 'active' | 'achieved' | 'failed' | 'closed'; statusLabel: string; closedReason: string | null;
+    declaredAt: OperationDate; deadline: OperationDate;
+    /** 진행 중에만, 종료 상태는 null. */
+    remainingMonths: number | null;
+    milestones: OperationMilestones;
+    /** 파생 표시값(이정표 수 × 25) — 1차 표기는 「이정표 k/4」. */
+    milestoneDisplayPct: number;
+    units: OperationUnit[];
+    declaredBy: { generalId: number; name: string } | null;
+    boardPostIds: number[];
+}
+export interface OperationKind { kind: string; label: string; declarable: boolean; reason: string | null }
+export interface OperationRules {
+    maxActivePerNation: number; minDeadlineMonths: number; maxDeadlineMonths: number; maxUnits: number; failAtmosLoss: number;
+    milestoneDisplayPct: number; kinds: OperationKind[]; roles: RetinueOption[]; provisional: boolean;
+}
+export interface OperationsResponse { nationId: number; myPermission: number; myGeneralId: number; operations: Operation[]; rules: OperationRules }
+export interface OperationDetailResponse { operation: Operation; boardPosts: { id: number; title: string; authorName: string; createdAt: string }[] }
+
+// ── Phase 4X-C 출병 계획 봉인(공격자)·리플레이 — /api/my-battle-plans, /api/battles/replays (spec v4.1 §6) ──
+export interface BattleStance { value: string; label: string; description: string; enabled: boolean; reason: string | null }
+export interface BattlePlanRules {
+    stances: BattleStance[]; retreatLossPctMin: number; retreatLossPctMax: number; retreatMoraleMin: number; retreatMoraleMax: number; provisional: boolean;
+}
+export interface BattlePlan {
+    id: number; targetCityId: number; targetCityName: string; stance: string; stanceLabel: string;
+    retreatLossPct: number | null; retreatMoraleBelow: number | null;
+    sealed: boolean; sealedAt: string | null; sealedDate: OperationDate | null; resolved: boolean; version: number;
+}
+export interface MyBattlePlansResponse { generalId: number; plans: BattlePlan[]; rules: BattlePlanRules }
+export interface BattleReplaySummary {
+    id: number; year: number; month: number; phase: number;
+    attackerGeneralId: number | null; attackerName: string; attackerNationId: number;
+    defenderCityId: number; defenderCityName: string; defenderNationId: number;
+    result: 'retreat' | 'repelled' | 'defenders_down' | 'conquered' | string; resultLabel: string;
+    attackerDead: number; defenderDead: number; hasPlan: boolean; planStop: string | null; planStopLabel: string | null; operationId: number | null;
+}
+export interface BattleReplayPhase { i: number; defId: number; def: string; defKind: 'general' | 'city' | string; contact: boolean; deadA: number; deadD: number; crewA: number; hpD: number }
+export interface BattleReplayDetail {
+    summary: BattleReplaySummary;
+    battlePhases: BattleReplayPhase[];
+    settlement: { attackerCrewBefore: number; attackerCrewAfter: number; attackerDead: number; defenderDead: number; riceUsed: number; conquered: boolean };
+    plan: { stance: string | null; stanceLabel: string | null; retreatLossPct: number | null; retreatMoraleBelow: number | null; planStop: string | null; planStopLabel: string | null; stopAtPhase: number | null } | null;
+    seed: { warSeed: string; inputHash: string; replayHash: string; schemaVersion: number };
+    operationId: number | null;
 }

@@ -7,32 +7,12 @@
 // in a new tab. #19 경매장 is a split with a 금/쌀 ↔ 유니크 sub-dropdown.
 
 import { useState } from 'react';
-import { CONTROL_BUTTONS, type ControlButton, type GateBucket } from '@/lib/control-bar-config';
+import { CONTROL_BUTTONS, type ControlButton } from '@/lib/control-bar-config';
+// 게이팅 판정은 dept-menu-config 가 단일 출처다(부서 나브와 같은 결과여야 한다).
+import { gateAllows, type ControlGating } from '@/lib/dept-menu-config';
 import { gameChildPath, resolveServerGamePath, useServerId } from '@/lib/serverGameUrl';
 
-export interface ControlGating {
-    showSecret: boolean;
-    permission: number;
-    myLevel: number; // officer_level proxy
-    nationLevel: number;
-    isTournamentApplicationOpen: boolean;
-    isBettingActive: boolean;
-}
-
-function gateAllows(bucket: GateBucket, g: ControlGating): boolean {
-    switch (bucket) {
-        case 'always':
-            return true;
-        case 'myLevel':
-            return g.myLevel >= 1;
-        case 'myLevelAndNation':
-            return g.myLevel >= 1 && g.nationLevel >= 1;
-        case 'permission2':
-            return g.permission >= 2;
-        case 'showSecret':
-            return g.showSecret === true;
-    }
-}
+export type { ControlGating } from '@/lib/dept-menu-config';
 
 function isHighlighted(btn: ControlButton, g: ControlGating): boolean {
     if (!btn.highlightVar) return false;

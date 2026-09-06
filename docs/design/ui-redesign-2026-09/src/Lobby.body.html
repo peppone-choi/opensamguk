@@ -1,0 +1,139 @@
+<div style="width:1440px;height:980px;background:#0c0f0e;display:flex;flex-direction:column">
+  <!-- top bar -->
+  <div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid #2c342f;background:linear-gradient(180deg,#1b201d,#141816)">
+    <div style="display:flex;align-items:center;gap:28px">
+      <img src="logo-wordmark-sm.png" alt="오픈삼국" style="display:block;height:32px;width:auto">
+      <div style="display:flex;gap:4px">
+        <span class="nav-item on">로비</span><span class="nav-item">게시판</span><span class="nav-item">계정</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <svg class="ico-20" viewBox="0 0 20 20" fill="none" stroke="#b9b2a3" stroke-width="1.5"><path d="M5 13V9a5 5 0 0 1 10 0v4l1.5 2h-13z"/><path d="M8 17a2 2 0 0 0 4 0"/></svg>
+      <div class="pt" style="width:32px;height:32px">@@PT(96,96,hahoudon)@@</div>
+      <span style="font-size:13px">tester</span>
+      <span class="btn sm ghost">로그아웃</span>
+    </div>
+  </div>
+
+  <div style="flex:1;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;padding:28px 40px">
+    <!-- server list -->
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span class="serif" style="font-size:26px;font-weight:900">서버 선택</span>
+          <span style="font-size:13px;color:#8a8477">내 장수가 있는 서버는 바로 입장하고, 없는 서버는 장수를 만들어 시작합니다.</span>
+        </div>
+        <div class="pill-tabs"><span class="on">전체</span><span>참가 중</span><span>참가 가능</span><span>종료</span></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:16px">
+        <!-- owned server -->
+        <div class="panel frame-bronze" style="display:flex;flex-direction:column">
+          <div class="sec-h" style="height:44px"><span class="bar"></span><span class="t" style="font-size:16px">빼섭 0기</span><span class="chip moss">진행중</span><span style="flex:1"></span><span class="sub">200年 3月 중순</span></div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px"><b style="color:#ece6d8">&lt;5국 경쟁중&gt;</b><span style="color:#8a8477">서기 200년 3월 중순</span><span style="color:#7aa7c7">【역사모드2-2】 반동탁연합 결성(정사)</span></div>
+            <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:8px">
+              <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">국가</span><span class="num" style="font-size:16px;font-weight:700">5</span></div>
+              <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">유저</span><span class="num" style="font-size:16px;font-weight:700">38<span style="font-size:11px;color:#8a8477">/120</span></span></div>
+              <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">NPC</span><span class="num" style="font-size:16px;font-weight:700">3</span></div>
+              <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">턴텀</span><span class="num" style="font-size:16px;font-weight:700">60<span style="font-size:11px;color:#8a8477">분</span></span></div>
+            </div>
+            <div style="font-size:11px;color:#8a8477">(상성: 사실), (기타: 유산 사용 · 토너먼트 3분)</div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#141816;border:1px solid #2c342f">
+              <div class="pt ring" style="width:44px;height:62px;--nation:#3f6fb5">@@PT(148,210,hahoudon)@@</div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:14px;font-weight:700">하후돈 <span style="font-size:11px;color:#8a8477;font-weight:400">원양</span></span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#b9b2a3">@@FLAG(#3f6fb5)@@조조 · 장군 · 허창</span>
+                <span class="mono" style="font-size:11px;color:#8a8477">다음 순 04:12 · 예약 6/12</span>
+              </div>
+              <span class="btn primary" style="height:40px;padding:0 20px">입장</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- unregistered server -->
+        <div class="panel" style="display:flex;flex-direction:column">
+          <div class="sec-h" style="height:44px"><span class="bar" style="background:#697e58"></span><span class="t" style="font-size:16px">빼섭 1기</span><span class="chip moss">진행중</span><span style="flex:1"></span><span class="sub">184年 2月 상순</span></div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px"><b style="color:#ece6d8">&lt;3국 경쟁중&gt;</b><span style="color:#8a8477">서기 184년 2월 상순</span><span style="color:#7aa7c7">【역사모드1-1】 황건적의 난(정사)</span></div>
+            <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:8px">
+              <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">국가</span><span class="num" style="font-size:16px;font-weight:700">3</span></div>
+              <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">유저</span><span class="num" style="font-size:16px;font-weight:700">12<span style="font-size:11px;color:#8a8477">/120</span></span></div>
+              <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">NPC</span><span class="num" style="font-size:16px;font-weight:700">160</span></div>
+              <div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;color:#8a8477">턴텀</span><span class="num" style="font-size:16px;font-weight:700">120<span style="font-size:11px;color:#8a8477">분</span></span></div>
+            </div>
+            <div style="font-size:11px;color:#8a8477">(상성: 사실), (기타: 초기 능력 합 275)</div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#141816;border:1px dashed #3d4740">
+              <div class="pt" style="width:44px;height:62px;border-style:dashed;background:transparent"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:14px;font-weight:700;color:#b9b2a3">- 미 등 록 -</span>
+                <span style="font-size:12px;color:#8a8477">서버 설정에 따라 생성·빙의·선택 중 가능한 진입만 보입니다.</span>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="btn" style="height:36px;padding:0 12px">장수생성</span><span class="btn" style="height:36px;padding:0 12px">장수빙의</span><span class="btn disabled" style="height:36px;padding:0 12px">장수선택</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- closed server -->
+        <div class="panel" style="display:flex;flex-direction:column;opacity:.75">
+          <div class="sec-h" style="height:44px"><span class="bar" style="background:#8a8477"></span><span class="t" style="font-size:16px;color:#b9b2a3">빼섭 -1기</span><span class="chip">천하통일</span><span style="flex:1"></span><span class="sub">231年 9月 하순</span></div>
+          <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:12px;color:#8a8477">【역사모드3-1】 삼국정립(정사)</div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#141816;border:1px solid #2c342f">
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+                <span style="display:flex;align-items:center;gap:6px;font-size:13px">@@FLAG(#4f9a5a)@@촉이 천하를 통일했습니다</span>
+                <span style="font-size:12px;color:#8a8477">최종 통계 · 연대기 · 명예의 전당 열람 가능</span>
+              </div>
+              <span class="btn sm ghost">기록 보기</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- closed / maintenance -->
+        <div class="panel" style="display:flex;flex-direction:column;opacity:.6">
+          <div class="sec-h" style="height:44px"><span class="bar" style="background:#c96b5d"></span><span class="t" style="font-size:16px;color:#b9b2a3">빼섭 2기</span><span class="chip rust">- 폐 쇄 중 -</span><span style="flex:1"></span><span class="chip" style="height:18px;font-size:10px">- 준 비 중 - 도 같은 자리</span></div>
+          <div style="padding:14px;font-size:12px;color:#8a8477">현황을 못 받으면 이 행만 폐쇄 중으로 남고, 현황은 떴지만 입장 라우팅이 안 되면 준비 중으로 표시합니다. 다른 행에는 영향 없음.</div>
+        </div>
+      </div>
+
+      <!-- 계정 관리 (LOBBY_LABELS.accountSection) -->
+      <div class="panel" style="display:flex;align-items:center;gap:10px;padding:10px 14px">
+        <span class="serif" style="font-size:14px;font-weight:700">계 정 관 리</span>
+        <span class="btn sm ghost">비밀번호 &amp; 전콘 &amp; 탈퇴</span>
+        <span class="btn sm ghost">커뮤니티 게시판</span>
+        <span class="btn sm ghost" style="border-style:dashed;color:#8a8477">관리 (ADMIN만)</span>
+        <span style="flex:1"></span>
+        <span class="btn sm ghost">로 그 아 웃</span>
+      </div>
+      <ul style="margin:0;padding-left:16px;font-size:11px;color:#8a8477;line-height:1.6">
+        <li>★ 1명이 2개 이상의 계정을 사용하거나 타 유저의 턴을 대신 입력하는 것이 적발될 경우 차단 될 수 있습니다.</li>
+        <li>계정은 한번 등록으로 계속 사용합니다. 각 서버 리셋시 캐릭터만 새로 생성하면 됩니다.</li>
+      </ul>
+    </div>
+
+    <!-- right: preview of selected server -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="panel" style="display:flex;flex-direction:column">
+        <div class="sec-h"><span class="bar"></span><span class="t">빼섭 0기 · 세력 현황</span></div>
+        <div style="height:250px;overflow:hidden;border-bottom:1px solid #2c342f">@@ISO(380,250,small)@@</div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#b58a3f)@@<span style="flex:1">원소</span><span class="num" style="color:#b9b2a3">12성</span><span class="num" style="color:#8a8477;width:40px;text-align:right">41명</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#7a4fa8)@@<span style="flex:1">동탁</span><span class="num" style="color:#b9b2a3">9성</span><span class="num" style="color:#8a8477;width:40px;text-align:right">28명</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#3f6fb5)@@<span style="flex:1;font-weight:700;color:#ece6d8">조조 <span class="chip bronze" style="height:16px;font-size:10px">내 소속</span></span><span class="num" style="color:#b9b2a3">7성</span><span class="num" style="color:#8a8477;width:40px;text-align:right">33명</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#4f9a5a)@@<span style="flex:1">유비</span><span class="num" style="color:#b9b2a3">5성</span><span class="num" style="color:#8a8477;width:40px;text-align:right">19명</span></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">@@FLAG(#c9573f)@@<span style="flex:1">손견</span><span class="num" style="color:#b9b2a3">4성</span><span class="num" style="color:#8a8477;width:40px;text-align:right">16명</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="sec-h"><span class="bar" style="background:#7aa7c7"></span><span class="t">공지</span></div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:8px;font-size:12px;color:#b9b2a3;line-height:1.5">
+          <div><span class="mono" style="color:#8a8477;margin-right:8px">09.05</span>공개 알파 중 치명적 밸런스 문제가 있으면 월드는 초기화될 수 있습니다. 계정은 보존됩니다.</div>
+          <div><span class="mono" style="color:#8a8477;margin-right:8px">09.02</span>빼섭 0기 턴텀이 60분으로 조정되었습니다.</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#8a8477;line-height:1.6">
+        서버 목록은 라이브 상태를 그대로 표시합니다. 불러오는 동안은 “불러오는 중…”, 실패한 행은 “- 폐 쇄 중 -”으로 남기고 숨기지 않습니다.
+      </div>
+    </div>
+  </div>
+</div>

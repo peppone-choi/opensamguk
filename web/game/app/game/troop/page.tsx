@@ -27,6 +27,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
 import GeneralName from '../../../components/game/GeneralName';
@@ -314,7 +315,7 @@ export default function TroopPage() {
                     flexWrap: 'wrap',
                 }}
             >
-                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>부대 편성</h1>
+                <PageHead title="부대 편성" />
                 {data && (
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>{troops.length}개 부대</span>
                 )}

@@ -218,6 +218,10 @@ open class JdbcFlushExecutor(
             if (payload.boardCommentInserts.isNotEmpty()) {
                 boardCommentInsertMany(payload.worldId, payload.boardCommentInserts)
             }
+            //     board_post_read INSERT (ADR-LITE-049 14 기밀실 열람 기록) — 글 뒤(post_id FK), 멱등(ON CONFLICT DO NOTHING).
+            if (payload.boardReadInserts.isNotEmpty()) {
+                boardReadInsertMany(payload.worldId, payload.boardReadInserts)
+            }
 
             // 8e. 투표 채널 (F4 Wave 투표): vote_poll INSERT 후 vote / vote_comment INSERT —
             //     부모-먼저-자식 순서라 vote/vote_comment의 vote_id FK 대상(vote_poll)이 먼저 존재한다
@@ -256,6 +260,35 @@ open class JdbcFlushExecutor(
             if (payload.diplomacyLetterUpdates.isNotEmpty()) {
                 diplomacyLetterUpdateMany(payload.worldId, payload.diplomacyLetterUpdates)
             }
+
+            // 8g. 가신·부곡 채널 (Phase 4X-A, spec v3 §3): 표마다 DELETE → CREATE → UPDATE. 가신 DELETE 가 앞서면
+            //     같은 틱 「해제 → 같은 이름 서약」 이 UNIQUE(world_id, master, name) 를 만족하고, 부곡의 commander 는
+            //     DB `ON DELETE SET NULL (commander_retainer_id)` 가 지킨다. 새 가신 INSERT 는 부곡 CREATE/UPDATE 보다
+            //     앞이라 commander FK 대상이 먼저 존재한다. 5단계 general DELETE(부모 CASCADE)보다 뒤. 통일 flush 에서도 돈다.
+            if (payload.deletedRetainerIds.isNotEmpty()) retainerDeleteMany(payload.worldId, payload.deletedRetainerIds)
+            if (payload.createdRetainers.isNotEmpty()) retainerCreateMany(payload.worldId, payload.createdRetainers)
+            if (payload.updatedRetainers.isNotEmpty()) retainerUpdate(payload.worldId, payload.updatedRetainers)
+            if (payload.deletedBugokIds.isNotEmpty()) bugokDeleteMany(payload.worldId, payload.deletedBugokIds)
+            if (payload.createdBugoks.isNotEmpty()) bugokCreateMany(payload.worldId, payload.createdBugoks)
+            if (payload.updatedBugoks.isNotEmpty()) bugokUpdate(payload.worldId, payload.updatedBugoks)
+
+            // 8h. 작전 채널 (Phase 4X-B, spec v4.1 §3): 8g 뒤 — 같은 틱 bugokForm → operationJoin(bugokId) 의 FK 대상이 먼저 존재.
+            //     같은 틱 「선언 → boardArticle(operationId)」 는 8d 가 앞이지만 board_post.operation_id FK 가 DEFERRABLE 이라
+            //     이 트랜잭션의 COMMIT 시점에 만족한다. unit DELETE 를 operation DELETE 앞에 두어 CASCADE 와 겹쳐도 무해.
+            if (payload.deletedOperationUnitIds.isNotEmpty()) operationUnitDeleteMany(payload.worldId, payload.deletedOperationUnitIds)
+            if (payload.deletedOperationIds.isNotEmpty()) operationDeleteMany(payload.worldId, payload.deletedOperationIds)
+            if (payload.createdOperations.isNotEmpty()) operationCreateMany(payload.worldId, payload.createdOperations)
+            if (payload.createdOperationUnits.isNotEmpty()) operationUnitCreateMany(payload.worldId, payload.createdOperationUnits)
+            if (payload.updatedOperations.isNotEmpty()) operationUpdate(payload.worldId, payload.updatedOperations)
+            if (payload.updatedOperationUnits.isNotEmpty()) operationUnitUpdate(payload.worldId, payload.updatedOperationUnits)
+
+            // 8i. 출병 계획·리플레이 채널 (Phase 4X-C, spec v4.1 §3): 8h 뒤 — battle_replay.operation_id FK 대상이 먼저 존재.
+            //     계획 DELETE → CREATE → UPDATE 뒤에 리플레이 INSERT(battle_plan_id FK). 5단계 general DELETE 가 계획을 CASCADE 로
+            //     지우는 같은 틱은 recorder 가 pending INSERT 의 id 를 NULL 로 바꿔 둔다(F3·N4).
+            if (payload.deletedBattlePlanIds.isNotEmpty()) battlePlanDeleteMany(payload.worldId, payload.deletedBattlePlanIds)
+            if (payload.createdBattlePlans.isNotEmpty()) battlePlanCreateMany(payload.worldId, payload.createdBattlePlans)
+            if (payload.updatedBattlePlans.isNotEmpty()) battlePlanUpdate(payload.worldId, payload.updatedBattlePlans)
+            if (payload.battleReplayInserts.isNotEmpty()) battleReplayInsertMany(payload.worldId, payload.battleReplayInserts)
 
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.worldId, payload.eventInserts)
@@ -509,6 +542,29 @@ open class JdbcFlushExecutor(
         // Persistent monotonic high-water marks for engine-assigned ids.
         params.addValue("max_nation_id", (worldState["max_nation_id"] as? Number)?.toInt() ?: 0)
         params.addValue("max_general_id", (worldState["max_general_id"] as? Number)?.toInt() ?: 0)
+        // Phase 4X-A 고수위 — 키가 있을 때만 meta 에 병합한다(행 0 세계의 meta 바이트 동일, spec v3 P1).
+        val extraMeta = buildString {
+            (worldState["max_retainer_id"] as? Number)?.let {
+                params.addValue("max_retainer_id", it.toInt())
+                append(" || jsonb_build_object('maxRetainerId', CAST(:max_retainer_id AS INTEGER))")
+            }
+            (worldState["max_bugok_id"] as? Number)?.let {
+                params.addValue("max_bugok_id", it.toInt())
+                append(" || jsonb_build_object('maxBugokId', CAST(:max_bugok_id AS INTEGER))")
+            }
+            (worldState["max_operation_id"] as? Number)?.let {
+                params.addValue("max_operation_id", it.toInt())
+                append(" || jsonb_build_object('maxOperationId', CAST(:max_operation_id AS INTEGER))")
+            }
+            (worldState["max_operation_unit_id"] as? Number)?.let {
+                params.addValue("max_operation_unit_id", it.toInt())
+                append(" || jsonb_build_object('maxOperationUnitId', CAST(:max_operation_unit_id AS INTEGER))")
+            }
+            (worldState["max_battle_plan_id"] as? Number)?.let {
+                params.addValue("max_battle_plan_id", it.toInt())
+                append(" || jsonb_build_object('maxBattlePlanId', CAST(:max_battle_plan_id AS INTEGER))")
+            }
+        }
         // OPENSAM-131: optional CAS fence. When expected_world_version is present, require
         // matching (world_version, writer_epoch) and bump world_version by 1 atomically.
         val expectedVersion = (worldState["expected_world_version"] as? Number)?.toLong()
@@ -534,7 +590,7 @@ open class JdbcFlushExecutor(
                        'lastTurnTime', CAST(:last_turn_time AS text),
                        'maxNationId', :max_nation_id,
                        'maxGeneralId', :max_general_id
-                   ),
+                   )$extraMeta,
                    updated_at = now()
              WHERE id = :id
                AND world_version = :expected_world_version
@@ -555,7 +611,7 @@ open class JdbcFlushExecutor(
                        'lastTurnTime', CAST(:last_turn_time AS text),
                        'maxNationId', :max_nation_id,
                        'maxGeneralId', :max_general_id
-                   ),
+                   )$extraMeta,
                    updated_at = now()
              WHERE id = :id
             """.trimIndent()
@@ -1620,6 +1676,295 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("general", FlushVerb.UPDATE, rows.size))
     }
 
+    // --- step 8g: 가신·부곡 채널 (Phase 4X-A) ---------------------------------------------------
+
+    private fun retainerDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM general_retainers WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("general_retainers", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun retainerCreateMany(worldId: WorldId, rows: List<RetainerRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", r.id)
+                .addValue("master_general_id", r.masterGeneralId)
+                .addValue("origin", r.origin)
+                .addValue("general_id", r.generalId)
+                .addValue("name", r.name)
+                .addValue("relation", r.relation)
+                .addValue("role", r.role)
+                .addValue("has_own_bugok", r.hasOwnBugok)
+                .addValue("release_policy", r.releasePolicy)
+                .addValue("loyalty", r.loyalty)
+                .addValue("task", r.task)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general_retainers
+                (world_id, id, master_general_id, origin, general_id, name, relation, role, has_own_bugok, release_policy, loyalty, task)
+            VALUES
+                (:world_id, :id, :master_general_id, :origin, :general_id, :name, :relation, :role, :has_own_bugok, :release_policy, :loyalty, :task)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("general_retainers", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun retainerUpdate(worldId: WorldId, rows: List<RetainerRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", r.id)
+                .addValue("name", r.name)
+                .addValue("relation", r.relation)
+                .addValue("role", r.role)
+                .addValue("has_own_bugok", r.hasOwnBugok)
+                .addValue("release_policy", r.releasePolicy)
+                .addValue("loyalty", r.loyalty)
+                .addValue("task", r.task)
+        }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            """
+            UPDATE general_retainers
+               SET name = :name, relation = :relation, role = :role, has_own_bugok = :has_own_bugok,
+                   release_policy = :release_policy, loyalty = :loyalty, task = :task, updated_at = now()
+             WHERE world_id = :world_id AND id = :id
+            """.trimIndent(),
+            batch,
+        )
+        requireExactlyOneAffected("general_retainers UPDATE", affected)
+        lastOps.add(FlushExecOp("general_retainers", FlushVerb.UPDATE, rows.size))
+    }
+
+    private fun bugokDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM general_bugok WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("general_bugok", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun bugokCreateMany(worldId: WorldId, rows: List<BugokRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { b ->
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", b.id)
+                .addValue("master_general_id", b.masterGeneralId)
+                .addValue("name", b.name)
+                .addValue("troops", b.troops)
+                .addValue("crew_type_id", b.crewTypeId)
+                .addValue("training", b.training)
+                .addValue("morale", b.morale)
+                .addValue("fatigue", b.fatigue)
+                .addValue("provisions", b.provisions)
+                .addValue("commander_retainer_id", b.commanderRetainerId)
+                .addValue("commander_bonus_applied", b.commanderBonusApplied)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general_bugok
+                (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied)
+            VALUES
+                (:world_id, :id, :master_general_id, :name, :troops, :crew_type_id, :training, :morale, :fatigue, :provisions, :commander_retainer_id, :commander_bonus_applied)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("general_bugok", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun bugokUpdate(worldId: WorldId, rows: List<BugokRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { b ->
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", b.id)
+                .addValue("name", b.name)
+                .addValue("troops", b.troops)
+                .addValue("training", b.training)
+                .addValue("morale", b.morale)
+                .addValue("fatigue", b.fatigue)
+                .addValue("provisions", b.provisions)
+                .addValue("commander_retainer_id", b.commanderRetainerId)
+                .addValue("commander_bonus_applied", b.commanderBonusApplied)
+        }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            """
+            UPDATE general_bugok
+               SET name = :name, troops = :troops, training = :training, morale = :morale, fatigue = :fatigue,
+                   provisions = :provisions, commander_retainer_id = :commander_retainer_id,
+                   commander_bonus_applied = :commander_bonus_applied, updated_at = now()
+             WHERE world_id = :world_id AND id = :id
+            """.trimIndent(),
+            batch,
+        )
+        requireExactlyOneAffected("general_bugok UPDATE", affected)
+        lastOps.add(FlushExecOp("general_bugok", FlushVerb.UPDATE, rows.size))
+    }
+
+    // --- step 8h: 작전 채널 (Phase 4X-B) ---------------------------------------------------------
+
+    private fun operationUnitDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM operation_unit WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("operation_unit", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun operationDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM operation WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("operation", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun operationParams(worldId: WorldId, o: OperationRow): MapSqlParameterSource = MapSqlParameterSource()
+        .addValue("world_id", worldId.value).addValue("id", o.id).addValue("nation_id", o.nationId).addValue("kind", o.kind)
+        .addValue("target_city_id", o.targetCityId).addValue("title", o.title).addValue("fallback_text", o.fallbackText)
+        .addValue("declared_by_general_id", o.declaredByGeneralId)
+        .addValue("declared_year", o.declaredYear).addValue("declared_month", o.declaredMonth).addValue("declared_phase", o.declaredPhase)
+        .addValue("deadline_year", o.deadlineYear).addValue("deadline_month", o.deadlineMonth).addValue("deadline_phase", o.deadlinePhase)
+        .addValue("status", o.status).addValue("m_departed", o.departed).addValue("m_arrived", o.arrived)
+        .addValue("m_supplied", o.supplied).addValue("m_objective", o.objective).addValue("closed_reason", o.closedReason)
+
+    private fun operationCreateMany(worldId: WorldId, rows: List<OperationRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { operationParams(worldId, it) }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO operation
+                (world_id, id, nation_id, kind, target_city_id, title, fallback_text, declared_by_general_id,
+                 declared_year, declared_month, declared_phase, deadline_year, deadline_month, deadline_phase,
+                 status, m_departed, m_arrived, m_supplied, m_objective, closed_reason)
+            VALUES
+                (:world_id, :id, :nation_id, :kind, :target_city_id, :title, :fallback_text, :declared_by_general_id,
+                 :declared_year, :declared_month, :declared_phase, :deadline_year, :deadline_month, :deadline_phase,
+                 :status, :m_departed, :m_arrived, :m_supplied, :m_objective, :closed_reason)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("operation", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun operationUpdate(worldId: WorldId, rows: List<OperationRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { operationParams(worldId, it) }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            """
+            UPDATE operation
+               SET title = :title, fallback_text = :fallback_text, declared_by_general_id = :declared_by_general_id,
+                   status = :status, m_departed = :m_departed, m_arrived = :m_arrived, m_supplied = :m_supplied,
+                   m_objective = :m_objective, closed_reason = :closed_reason, updated_at = now()
+             WHERE world_id = :world_id AND id = :id
+            """.trimIndent(),
+            batch,
+        )
+        requireExactlyOneAffected("operation UPDATE", affected)
+        lastOps.add(FlushExecOp("operation", FlushVerb.UPDATE, rows.size))
+    }
+
+    private fun operationUnitParams(worldId: WorldId, u: OperationUnitRow): MapSqlParameterSource = MapSqlParameterSource()
+        .addValue("world_id", worldId.value).addValue("id", u.id).addValue("operation_id", u.operationId)
+        .addValue("general_id", u.generalId).addValue("bugok_id", u.bugokId).addValue("role", u.role)
+        .addValue("joined_city_id", u.joinedCityId).addValue("joined_year", u.joinedYear)
+        .addValue("joined_month", u.joinedMonth).addValue("joined_phase", u.joinedPhase)
+
+    private fun operationUnitCreateMany(worldId: WorldId, rows: List<OperationUnitRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { operationUnitParams(worldId, it) }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO operation_unit
+                (world_id, id, operation_id, general_id, bugok_id, role, joined_city_id, joined_year, joined_month, joined_phase)
+            VALUES
+                (:world_id, :id, :operation_id, :general_id, :bugok_id, :role, :joined_city_id, :joined_year, :joined_month, :joined_phase)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("operation_unit", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun operationUnitUpdate(worldId: WorldId, rows: List<OperationUnitRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { operationUnitParams(worldId, it) }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            "UPDATE operation_unit SET bugok_id = :bugok_id, role = :role WHERE world_id = :world_id AND id = :id",
+            batch,
+        )
+        requireExactlyOneAffected("operation_unit UPDATE", affected)
+        lastOps.add(FlushExecOp("operation_unit", FlushVerb.UPDATE, rows.size))
+    }
+
+    // --- step 8i: 출병 계획·리플레이 채널 (Phase 4X-C) ---------------------------------------------
+
+    private fun battlePlanDeleteMany(worldId: WorldId, ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM battle_plan WHERE world_id = :world_id AND id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("battle_plan", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun battlePlanParams(worldId: WorldId, p: BattlePlanRow): MapSqlParameterSource = MapSqlParameterSource()
+        .addValue("world_id", worldId.value).addValue("id", p.id).addValue("general_id", p.generalId).addValue("target_city_id", p.targetCityId)
+        .addValue("stance", p.stance).addValue("retreat_loss_pct", p.retreatLossPct).addValue("retreat_morale_below", p.retreatMoraleBelow)
+        .addValue("sealed_at", p.sealedAt?.let { java.sql.Timestamp.from(it) })
+        .addValue("sealed_year", p.sealedYear).addValue("sealed_month", p.sealedMonth).addValue("sealed_phase", p.sealedPhase)
+        .addValue("resolved_year", p.resolvedYear).addValue("resolved_month", p.resolvedMonth).addValue("resolved_phase", p.resolvedPhase)
+        .addValue("version", p.version)
+
+    private fun battlePlanCreateMany(worldId: WorldId, rows: List<BattlePlanRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { battlePlanParams(worldId, it) }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO battle_plan
+                (world_id, id, general_id, target_city_id, stance, retreat_loss_pct, retreat_morale_below,
+                 sealed_at, sealed_year, sealed_month, sealed_phase, resolved_year, resolved_month, resolved_phase, version)
+            VALUES
+                (:world_id, :id, :general_id, :target_city_id, :stance, :retreat_loss_pct, :retreat_morale_below,
+                 :sealed_at, :sealed_year, :sealed_month, :sealed_phase, :resolved_year, :resolved_month, :resolved_phase, :version)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("battle_plan", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun battlePlanUpdate(worldId: WorldId, rows: List<BattlePlanRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { battlePlanParams(worldId, it) }.toTypedArray()
+        val affected = jdbc.batchUpdate(
+            """
+            UPDATE battle_plan
+               SET stance = :stance, retreat_loss_pct = :retreat_loss_pct, retreat_morale_below = :retreat_morale_below,
+                   sealed_at = :sealed_at, sealed_year = :sealed_year, sealed_month = :sealed_month, sealed_phase = :sealed_phase,
+                   resolved_year = :resolved_year, resolved_month = :resolved_month, resolved_phase = :resolved_phase,
+                   version = :version, updated_at = now()
+             WHERE world_id = :world_id AND id = :id
+            """.trimIndent(),
+            batch,
+        )
+        requireExactlyOneAffected("battle_plan UPDATE", affected)
+        lastOps.add(FlushExecOp("battle_plan", FlushVerb.UPDATE, rows.size))
+    }
+
+    /** `battle_replay` INSERT(INSERT 전용; id 는 recorder 선할당). 컬럼 키가 없으면 NULL 바인딩. */
+    private fun battleReplayInsertMany(worldId: WorldId, rows: List<BattleReplayInsertRow>) {
+        val cols = listOf(
+            "id", "battle_plan_id", "operation_id", "attacker_general_id", "attacker_name", "attacker_nation_id",
+            "defender_city_id", "defender_city_name", "defender_nation_id", "year", "month", "phase",
+            "war_seed", "input_hash", "replay_hash", "schema_version", "battle_phases_json",
+            "attacker_crew_before", "attacker_crew_after", "attacker_dead", "defender_dead", "rice_used",
+            "result", "plan_stop", "plan_stance", "plan_retreat_loss_pct", "plan_retreat_morale_below",
+        )
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource().addValue("world_id", worldId.value).apply { for (c in cols) addValue(c, r.columns[c]) }
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            "INSERT INTO battle_replay (world_id, ${cols.joinToString(", ")}) VALUES (:world_id, ${cols.joinToString(", ") { ":$it" }})",
+            batch,
+        )
+        lastOps.add(FlushExecOp("battle_replay", FlushVerb.CREATE_MANY, rows.size))
+    }
+
     // --- step 8d: 게시판 채널 (F4 C2 슬라이스 C, 회의실/기밀실) ----------------------------------
 
     /**
@@ -1639,14 +1984,19 @@ open class JdbcFlushExecutor(
                 .addValue("author_icon", c["author_icon"])
                 .addValue("title", c["title"])
                 .addValue("content_html", c["content_html"])
+                // ADR-LITE-049 14 — 글 종류·표결 연결(V53). 키가 없으면 general / NULL.
+                .addValue("kind", c["kind"] ?: "general")
+                .addValue("vote_id", c["vote_id"])
+                // Phase 4X-B — 작전 연결(V56, DEFERRABLE FK). 키가 없으면 NULL.
+                .addValue("operation_id", c["operation_id"])
         }.toTypedArray()
         jdbc.batchUpdate(
             """
             INSERT INTO board_post
-                (world_id, nation_id, is_secret, author_general_id, author_name, author_icon, title, content_html)
+                (world_id, nation_id, is_secret, author_general_id, author_name, author_icon, title, content_html, kind, vote_id, operation_id)
             VALUES
                 (:world_id, :nation_id, :is_secret, :author_general_id, :author_name, :author_icon,
-                 :title, :content_html)
+                 :title, :content_html, :kind, :vote_id, :operation_id)
             """.trimIndent(),
             batch,
         )
@@ -1676,6 +2026,29 @@ open class JdbcFlushExecutor(
             batch,
         )
         lastOps.add(FlushExecOp("board_comment", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /**
+     * `board_post_read` 행 INSERT (ADR-LITE-049 14 기밀실 열람 기록). 멱등 — (world_id, post_id, general_id)
+     * UNIQUE 충돌은 무시한다(같은 글을 다시 열어도 첫 열람 시각이 남는다).
+     */
+    private fun boardReadInsertMany(worldId: WorldId, rows: List<BoardReadInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("post_id", c["post_id"])
+                .addValue("general_id", c["general_id"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO board_post_read (world_id, post_id, general_id)
+            VALUES (:world_id, :post_id, :general_id)
+            ON CONFLICT (world_id, post_id, general_id) DO NOTHING
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("board_post_read", FlushVerb.CREATE_MANY, rows.size))
     }
 
     // --- step 8e: 투표 채널 (F4 Wave 투표, 설문조사) ---------------------------------------------
@@ -2557,6 +2930,7 @@ data class FlushPayload(
     // --- F4 Wave C2 슬라이스 C: 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT ---
     val boardPostInserts: List<BoardPostInsertRow> = emptyList(),     // step-8d board_post INSERT
     val boardCommentInserts: List<BoardCommentInsertRow> = emptyList(), // step-8d board_comment INSERT
+    val boardReadInserts: List<BoardReadInsertRow> = emptyList(),     // step-8d board_post_read INSERT (멱등)
     // --- F4 Wave 투표: 설문조사(vote_poll/vote/vote_comment) INSERT + vote_poll UPDATE ---
     val votePollInserts: List<VotePollInsertRow> = emptyList(),       // step-8e vote_poll INSERT
     val voteInserts: List<VoteInsertRow> = emptyList(),               // step-8e vote INSERT
@@ -2585,6 +2959,25 @@ data class FlushPayload(
     // 후행 기본값 필드. v1 경로는 이 리스트를 채우지 않으므로 v2 step이 미진입한다 ⇒ v1 SQL 0.
     // v1 델타와 **같은** [transactionTemplate] 안에서 커밋된다 (두 번째 DataSource·풀 없음).
     val cityLedgerV2Upserts: List<CityLedgerV2UpsertRow> = emptyList(), // step-14 v2_city_ledger UPSERT
+    // --- Phase 4X-A 가신·부곡 (step-8g, 표마다 DELETE → CREATE → UPDATE; spec v3 §3) ---
+    val createdRetainers: List<RetainerRow> = emptyList(),
+    val updatedRetainers: List<RetainerRow> = emptyList(),
+    val deletedRetainerIds: List<Int> = emptyList(),
+    val createdBugoks: List<BugokRow> = emptyList(),
+    val updatedBugoks: List<BugokRow> = emptyList(),
+    val deletedBugokIds: List<Int> = emptyList(),
+    // --- Phase 4X-B 작전 (step-8h, 8g 뒤; 표마다 DELETE → CREATE → UPDATE; spec v4.1 §3) ---
+    val createdOperations: List<OperationRow> = emptyList(),
+    val updatedOperations: List<OperationRow> = emptyList(),
+    val deletedOperationIds: List<Int> = emptyList(),
+    val createdOperationUnits: List<OperationUnitRow> = emptyList(),
+    val updatedOperationUnits: List<OperationUnitRow> = emptyList(),
+    val deletedOperationUnitIds: List<Int> = emptyList(),
+    // --- Phase 4X-C 출병 계획·리플레이 (step-8i, 8h 뒤; 계획 DELETE → CREATE → UPDATE → 리플레이 INSERT; spec v4.1 §3) ---
+    val createdBattlePlans: List<BattlePlanRow> = emptyList(),
+    val updatedBattlePlans: List<BattlePlanRow> = emptyList(),
+    val deletedBattlePlanIds: List<Int> = emptyList(),
+    val battleReplayInserts: List<BattleReplayInsertRow> = emptyList(),
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
@@ -2738,6 +3131,9 @@ data class BoardPostInsertRow(val columns: Map<String, Any?>)
 
 /** `board_comment` INSERT 한 건 (F4 Wave C2 슬라이스 C, 회의실/기밀실 댓글, INSERT 전용). */
 data class BoardCommentInsertRow(val columns: Map<String, Any?>)
+
+/** `board_post_read` INSERT 한 건 (ADR-LITE-049 14 기밀실 열람 기록, INSERT 전용·멱등). */
+data class BoardReadInsertRow(val columns: Map<String, Any?>)
 
 /** `vote_poll` INSERT 한 건 (F4 Wave 투표, 설문조사 개설, INSERT 전용). */
 data class VotePollInsertRow(val columns: Map<String, Any?>)

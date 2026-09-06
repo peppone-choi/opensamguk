@@ -80,6 +80,23 @@ object CommandWireMapper {
         // F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실) 인테이크.
         "boardArticle",
         "boardComment",
+        "boardRead",
+        // Phase 4X-A 가신·부곡 인테이크(ADR-LITE-017).
+        "retainerPledge",
+        "retainerRelease",
+        "retainerTask",
+        "bugokForm",
+        "bugokDisband",
+        "bugokAssignCommander",
+        // Phase 4X-B 작전 인테이크.
+        "operationDeclare",
+        "operationJoin",
+        "operationLeave",
+        "operationClose",
+        // Phase 4X-C 출병 계획 봉인 인테이크.
+        "battlePlanSave",
+        "battlePlanSeal",
+        "battlePlanDelete",
         // F4 Wave 투표 — 설문조사(개설/투표/댓글/마감) 인테이크.
         "newVote",
         "voteCast",
@@ -316,6 +333,11 @@ object CommandWireMapper {
                 isSecret = args.bool("isSecret") ?: false,
                 title = args.str("title"),
                 text = args.str("text"),
+                // ADR-LITE-049 14 — 글 종류·표결 연결. 부재는 general(레거시 클라이언트 호환).
+                kind = args.str("kind") ?: "general",
+                voteId = args.int("voteId"),
+                // Phase 4X-B — 작전 연결(kind=operation). 내 국가 작전인지는 엔진 BoardHandler 가 검사.
+                operationId = args.int("operationId"),
             )
             "boardComment" -> TurnDaemonCommand.BoardComment(
                 requestId = requestId, generalId = generalId,
@@ -324,6 +346,42 @@ object CommandWireMapper {
                 articleNo = args.int("articleNo"),
                 text = args.str("text"),
             )
+            // ADR-LITE-049 14 — 기밀실 열람 기록(멱등). articleNo 부재는 엔진 1차 게이트로.
+            "boardRead" -> TurnDaemonCommand.BoardRead(
+                requestId = requestId, generalId = generalId,
+                articleNo = args.int("articleNo"),
+            )
+            // Phase 4X-A 가신·부곡 — 인자는 nullable 로 넘겨 엔진 ③ 입력 게이트가 판정한다(PHP getPost null 패러티).
+            "retainerPledge" -> TurnDaemonCommand.RetainerPledge(
+                requestId = requestId, generalId = generalId,
+                name = args.str("name"), relation = args.str("relation"), role = args.str("role"),
+            )
+            "retainerRelease" -> TurnDaemonCommand.RetainerRelease(requestId = requestId, generalId = generalId, retainerId = args.int("retainerId"))
+            "retainerTask" -> TurnDaemonCommand.RetainerTask(
+                requestId = requestId, generalId = generalId, retainerId = args.int("retainerId"), task = args.str("task"),
+            )
+            "bugokForm" -> TurnDaemonCommand.BugokForm(requestId = requestId, generalId = generalId, troops = args.int("troops"), rice = args.int("rice"))
+            "bugokDisband" -> TurnDaemonCommand.BugokDisband(requestId = requestId, generalId = generalId, bugokId = args.int("bugokId"))
+            "bugokAssignCommander" -> TurnDaemonCommand.BugokAssignCommander(
+                requestId = requestId, generalId = generalId, bugokId = args.int("bugokId"), retainerId = args.int("retainerId"),
+            )
+            // Phase 4X-B 작전 — 인자는 nullable, 엔진 ③ 입력 게이트가 판정.
+            "operationDeclare" -> TurnDaemonCommand.OperationDeclare(
+                requestId = requestId, generalId = generalId, kind = args.str("kind"), targetCityId = args.int("targetCityId"),
+                title = args.str("title"), fallbackText = args.str("fallbackText"), deadlineMonths = args.int("deadlineMonths"),
+            )
+            "operationJoin" -> TurnDaemonCommand.OperationJoin(
+                requestId = requestId, generalId = generalId, operationId = args.int("operationId"), role = args.str("role"), bugokId = args.int("bugokId"),
+            )
+            "operationLeave" -> TurnDaemonCommand.OperationLeave(requestId = requestId, generalId = generalId, operationId = args.int("operationId"))
+            "operationClose" -> TurnDaemonCommand.OperationClose(requestId = requestId, generalId = generalId, operationId = args.int("operationId"))
+            // Phase 4X-C 출병 계획 — 인자는 nullable, 엔진 ③ 입력 게이트가 판정.
+            "battlePlanSave" -> TurnDaemonCommand.BattlePlanSave(
+                requestId = requestId, generalId = generalId, targetCityId = args.int("targetCityId"), stance = args.str("stance"),
+                retreatLossPct = args.int("retreatLossPct"), retreatMoraleBelow = args.int("retreatMoraleBelow"),
+            )
+            "battlePlanSeal" -> TurnDaemonCommand.BattlePlanSeal(requestId = requestId, generalId = generalId, planId = args.int("planId"))
+            "battlePlanDelete" -> TurnDaemonCommand.BattlePlanDelete(requestId = requestId, generalId = generalId, planId = args.int("planId"))
             // ── F4 Wave 투표 — 설문조사(개설/투표/댓글/마감). multipleOptions/endDate/keepOldVote는
             //    nullable 유지(`?: …` 없음)로 PHP `?? 1`/`?? null`/`?? false` 기본값·부재를 엔진이
             //    적용하게 한다. title/text는 빈 문자열 fallback(`?: ""`)으로 PHP 필수 검증을 태운다. ──

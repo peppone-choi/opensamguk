@@ -21,6 +21,7 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({ user: authUser, loading: false, refresh: vi.fn(), logout: vi.fn() }),
+  useAuthOptional: () => ({ user: authUser, loading: false, refresh: vi.fn(), logout: vi.fn() }),
 }));
 
 function response(body: unknown): Response {

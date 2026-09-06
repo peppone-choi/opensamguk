@@ -1,6 +1,8 @@
 package opensamguk.gateway.config
 
 import opensamguk.infra.read.EmailHasher
+import opensamguk.infra.read.OwnedGeneralReader
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -22,4 +24,8 @@ class InfraBeanConfig {
     @Bean
     fun emailHasher(@Value("\${GLOBAL_SALT:goldensalt}") globalSalt: String): EmailHasher =
         EmailHasher(globalSalt)
+
+    /** ADR-LITE-049 13 — 계정 대표 장수 후보(general.user_id) 읽기. */
+    @Bean
+    fun ownedGeneralReader(jdbc: NamedParameterJdbcTemplate): OwnedGeneralReader = OwnedGeneralReader(jdbc)
 }

@@ -15,7 +15,7 @@
 // No-arg commands reserve instantly on click; reqArg commands open the relevant field sub-form first.
 // If availableCommands() is absent/empty, surface the failure instead of fabricating a local command list.
 
-import { Modal } from '@opensamguk/ui';
+import { Modal, Portrait, Tile } from '@opensamguk/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import {
@@ -73,6 +73,8 @@ interface CommandModalProps {
     extraArgs?: Record<string, unknown>;
     /** When true, submits via `POST /api/command/nation/bulk` (nation_turn) instead of the personal `/api/command/{code}` (general_turn). */
     isNationCommand?: boolean;
+    /** 모달 헤더의 히어로 초상(04 아트보드) — 조작 대상 장수. 없으면 헤더는 제목만. */
+    hero?: { picture?: string | null; imageServer?: number | null; name?: string | null; nationColor?: string | null } | null;
 }
 
 type CommandArgBody = Record<string, unknown> | null;
@@ -380,6 +382,7 @@ export default function CommandModal({
     amountGuide,
     extraArgs,
     isNationCommand,
+    hero = null,
 }: CommandModalProps) {
     // Pinned command (F4 C1): synthesize a fallback one-item command so the modal opens straight on
     // an arg sub-form. Opt-in catalog resolution replaces it with the authoritative server row.
@@ -561,9 +564,17 @@ export default function CommandModal({
             overlayClassName="modal-overlay"
             onClose={onClose}
         >
-                <div className="modal-header">
-                    <h2>명령</h2>
-                    <button onClick={onClose} aria-label="닫기">×</button>
+                <div className={`modal-header cmd-header${hero ? ' cmd-header--hero' : ''}`}>
+                    {hero && (
+                        <div className="cmd-header__hero" aria-hidden="true">
+                            <Portrait picture={hero.picture} imageServer={hero.imageServer} size="hero" alt="" />
+                        </div>
+                    )}
+                    <div className="cmd-header__text">
+                        <h2 className="os-serif">명령</h2>
+                        {hero?.name && <span className="cmd-header__who">{hero.name}{turnIdx != null ? ` · ${turnIdx + 1}순` : ''}</span>}
+                    </div>
+                    <button type="button" className="os-button os-button--ghost os-button--sm cmd-close" onClick={onClose} aria-label="닫기">×</button>
                 </div>
 
                 {loadError && <p className="cmd-flag">{loadError}</p>}
@@ -571,9 +582,9 @@ export default function CommandModal({
                 {!selected ? (
                     <>
                         {categories.length > 0 && (
-                            <div className="cmd-cats">
+                            <div className="cmd-cats os-pill-tabs" role="tablist" aria-label="명령 분류">
                                 {categories.map((c) => (
-                                    <button key={c} className={cat === c ? 'active' : ''} onClick={() => setCat(c)}>
+                                    <button key={c} type="button" role="tab" aria-selected={cat === c} className={cat === c ? 'active os-pill-tabs__on' : ''} onClick={() => setCat(c)}>
                                         {c}
                                     </button>
                                 ))}
@@ -581,26 +592,34 @@ export default function CommandModal({
                         )}
                         {filtered.length > 0 ? (
                             <div className="cmd-grid">
-                                {filtered.map((cmd) => (
-                                    <button
-                                        key={cmd.value}
-                                        className="cmd-item"
-                                        title={cmd.title}
-                                        onClick={() => pick(cmd)}
-                                        disabled={loading}
-                                    >
+                                {filtered.map((cmd) => {
+                                    const sub = cmd.title && cmd.title !== cmd.simpleName
+                                        ? (cmd.title.startsWith(cmd.simpleName) ? cmd.title.substring(cmd.simpleName.length) : cmd.title)
+                                        : null;
+                                    const name = (
                                         <span className={cmd.possible ? '' : 'cmd-impossible'}>
                                             {cmd.simpleName} {compensationTag(cmd.compensation)}
                                         </span>
-                                        {cmd.title && cmd.title !== cmd.simpleName && (
-                                            <small className="cmd-item-sub">
-                                                {cmd.title.startsWith(cmd.simpleName)
-                                                    ? cmd.title.substring(cmd.simpleName.length)
-                                                    : cmd.title}
-                                            </small>
-                                        )}
-                                    </button>
-                                ))}
+                                    );
+                                    // 명령 상태 4종(S1): 사용 가능 / 대상 필요 / 사용 불가 + 이유. 사용 불가는 점선으로 남기고 이유를 붙인다.
+                                    if (!cmd.possible) {
+                                        return (
+                                            <Tile key={cmd.value} className="cmd-item" name={name} cost={sub} state="no" reason={cmd.info?.trim() || cmd.title || '지금은 사용할 수 없습니다'} />
+                                        );
+                                    }
+                                    return (
+                                        <Tile
+                                            key={cmd.value}
+                                            className="cmd-item"
+                                            name={name}
+                                            cost={sub}
+                                            state={cmd.reqArg ? 'need' : 'ok'}
+                                            title={cmd.title}
+                                            onClick={() => pick(cmd)}
+                                            {...(loading ? { disabled: true } : {})}
+                                        />
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="cmd-empty">표시할 명령이 없습니다.</div>
@@ -609,7 +628,8 @@ export default function CommandModal({
                 ) : (
                     <>
                         <button
-                            className="cmd-back"
+                            type="button"
+                            className="cmd-back os-button os-button--ghost os-button--sm"
                             onClick={() => {
                                 setBlockedReason(null);
                                 // Pinned mode has no catalog to return to → close the modal.
@@ -684,9 +704,11 @@ export default function CommandModal({
                                 </label>
                             )}
                             <button
-                                className="cmd-submit"
+                                type="button"
+                                className="cmd-submit os-button os-button--primary"
                                 onClick={() => (selected.reqArg ? submitWithArg() : void submit(selected, {}))}
                                 disabled={loading}
+                                title={loading ? '처리 중입니다' : undefined}
                             >
                                 {loading ? '처리 중...' : '예약'}
                             </button>

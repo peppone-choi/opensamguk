@@ -130,6 +130,101 @@ data class Troop(
     val name: String,
 )
 
+/** Phase 4X-A 가신(휘하 인물) — 세계 상태(troop 미러). id 는 엔진 할당. spec v3 §3. */
+data class Retainer(
+    val id: Int,
+    val masterGeneralId: Int,
+    val origin: String,
+    val generalId: Int? = null,
+    val name: String,
+    val relation: String,
+    val role: String = "NONE",
+    val hasOwnBugok: Boolean = false,
+    val releasePolicy: String = "MASTER_ONLY",
+    val loyalty: Int = 50,
+    val task: String = "none",
+)
+
+/** Phase 4X-A 부곡(장수 개인 사병) — 세계 상태. 병력은 편성 시 general.crew 에서 옮겨 온다(합 보존). */
+data class Bugok(
+    val id: Int,
+    val masterGeneralId: Int,
+    val name: String,
+    val troops: Int,
+    val crewTypeId: Int,
+    val training: Int,
+    val morale: Int,
+    val fatigue: Int = 0,
+    val provisions: Int = 0,
+    val commanderRetainerId: Int? = null,
+    /** 부장 배정 사기 보너스는 생애 한 번(PR 비평 S3 — 해제→재배정 반복 방지). */
+    val commanderBonusApplied: Boolean = false,
+)
+
+/** Phase 4X-B 작전 이정표 4개(단조 — 한 번 true 면 유지). */
+data class OperationMilestones(
+    val departed: Boolean = false,
+    val arrived: Boolean = false,
+    val supplied: Boolean = false,
+    val objective: Boolean = false,
+)
+
+/** Phase 4X-B 작전 — 세계 상태(troop 미러). id 는 엔진 할당. spec v4.1 §3. */
+data class Operation(
+    val id: Int,
+    val nationId: Int,
+    val kind: String,
+    val targetCityId: Int,
+    val title: String,
+    val fallbackText: String? = null,
+    val declaredByGeneralId: Int? = null,
+    val declaredYear: Int,
+    val declaredMonth: Int,
+    val declaredPhase: Int,
+    val deadlineYear: Int,
+    val deadlineMonth: Int,
+    val deadlinePhase: Int = 1,
+    val status: String,
+    val milestones: OperationMilestones = OperationMilestones(),
+    val closedReason: String? = null,
+)
+
+data class OperationUnit(
+    val id: Int,
+    val operationId: Int,
+    val generalId: Int,
+    val bugokId: Int? = null,
+    val role: String,
+    val joinedCityId: Int,
+    val joinedYear: Int,
+    val joinedMonth: Int,
+    val joinedPhase: Int,
+)
+
+/**
+ * Phase 4X-C 출병 계획(공격자) — 세계 상태(troop 미러). id 엔진 할당. 봉인(`sealedAt`) 뒤 수정 불가, 출병 해결로 **소비**(`resolved*`)되며
+ * 소비된 행은 부팅 시 적재하지 않는다(spec v4.1 §2·§3).
+ */
+data class BattlePlan(
+    val id: Int,
+    val generalId: Int,
+    val targetCityId: Int,
+    val stance: String,
+    val retreatLossPct: Int? = null,
+    val retreatMoraleBelow: Int? = null,
+    val sealedAt: Instant? = null,
+    val sealedYear: Int? = null,
+    val sealedMonth: Int? = null,
+    val sealedPhase: Int? = null,
+    val resolvedYear: Int? = null,
+    val resolvedMonth: Int? = null,
+    val resolvedPhase: Int? = null,
+    val version: Int = 1,
+) {
+    val sealed: Boolean get() = sealedAt != null
+    val resolved: Boolean get() = resolvedYear != null
+}
+
 data class TurnDiplomacy(
     val fromNationId: Int,
     val toNationId: Int,

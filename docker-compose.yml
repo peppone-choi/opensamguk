@@ -95,6 +95,8 @@ services:
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?JWT_PUBLIC_KEY required — see .env.example}
       JWT_SIGNING_MODE: ${JWT_SIGNING_MODE:-RS256}
       JWT_LEGACY_SECRET: ${JWT_LEGACY_SECRET:-}
+      # game-api ↔ gateway-api 내부 프로필 호출(/internal/users/{id}/profile) 공유 토큰 — 비면 장수 생성이 503(MemberProfileUnavailable)
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
       JWT_LEGACY_ACCESS_ACCEPT_UNTIL: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:-}
       JWT_LEGACY_REFRESH_ACCEPT_UNTIL: ${JWT_LEGACY_REFRESH_ACCEPT_UNTIL:-}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900000}
@@ -197,6 +199,10 @@ services:
       # JWT — game-api receives no signing key.
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?JWT_PUBLIC_KEY required — see .env.example}
       JWT_LEGACY_SECRET: ${JWT_LEGACY_SECRET:-}
+      # game-api ↔ gateway-api 내부 프로필 호출(/internal/users/{id}/profile) 공유 토큰 — 비면 장수 생성이 503(MemberProfileUnavailable)
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
+      # 내부 프로필 호출 대상(member-profile.gateway-origin). 컨테이너 안에서는 compose 서비스명으로 — 기본값 localhost:8080 은 컨테이너 안에 없다
+      GATEWAY_API_URL: http://gateway-api:8080
       JWT_LEGACY_ACCESS_ACCEPT_UNTIL: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:-}
       # Sentry — 빈 값이면 SDK no-op (서비스별 DSN, .env.example 참조).
       SENTRY_DSN: ${SENTRY_DSN_GAME_API:-}

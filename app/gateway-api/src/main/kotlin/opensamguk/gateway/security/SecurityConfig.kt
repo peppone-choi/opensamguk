@@ -44,6 +44,8 @@ class SecurityConfig(
                     .requestMatchers("/internal/**").permitAll()
                     .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
                     .requestMatchers("/health").permitAll()
+                    // 공지 공개 읽기(로그인 전 화면). 관리 경로는 /admin/notices/** 로 ADMIN 게이트.
+                    .requestMatchers(HttpMethod.GET, "/notices").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     // 어드민 "서버 제어"(버전 표시·업데이트 트리거)는 ADMIN 전용.

@@ -34,12 +34,13 @@ export default function GameInfo({
     const currentText = `${global.year}年 ${global.month}月${global.turnPhaseText ? ` ${global.turnPhaseText}` : ''}`;
 
     return (
-        <header className="game-info">
-            <h3 className="scenario-name">
+        <header className="game-info" aria-label="서버 정보">
+            {/* 서버명·기수·시나리오는 쉘 상태바가 보여 준다 — 여기서는 보조 기술(스크린리더)로만 남긴다. */}
+            <h3 className="scenario-name sr-only">
                 {titleText} <span className="avoid-wrap text-cyan">{global.scenarioText}</span>
             </h3>
 
-            <div className="game-info-grid">
+            <div className="game-info-grid game-info-strip">
                 {/* 1 subScenarioName */}
                 <div className="gi-cell gi-wide text-cyan">{global.scenarioText}</div>
 

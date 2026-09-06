@@ -22,6 +22,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => navigation }));
 vi.mock('@/lib/auth-context', () => ({
     AuthProvider: ({ children }: { children: React.ReactNode }) => children,
     useAuth: () => auth.state,
+    useAuthOptional: () => auth.state,
 }));
 vi.mock('@/components/Topbar', () => ({ default: () => <div>topbar</div> }));
 vi.mock('@/components/admin/MemberControl', () => ({ default: () => <div>members</div> }));

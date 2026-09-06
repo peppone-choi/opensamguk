@@ -8,16 +8,20 @@ const logout = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 vi.mock('@/components/AuthGate', () => ({ default: ({ children }: { children: React.ReactNode }) => children }));
-vi.mock('@/lib/auth-context', () => ({
-    useAuth: () => ({
+// 대표 장수 구획은 자기 fetch(/api/account/representative)를 갖는다 — 이 테스트의 fetch 스파이 계약(닉네임·전콘)과 분리한다.
+vi.mock('@/components/account/RepresentativeSection', () => ({ default: () => null }));
+vi.mock('@/lib/auth-context', () => {
+    const session = () => ({
         user: { id: 1, username: 'tester', email: null, nickname: null, role: 'USER', picture: 'old.png', imageServer: 1 },
         refresh,
         logout,
-    }),
-}));
+    });
+    return { useAuth: session, useAuthOptional: session };
+});
 
 import AccountPage from '@/app/account/page';
 import { IMAGE_CDN_BASE } from '@/lib/constants';
+import { DEFAULT_PORTRAIT } from '@/lib/portrait';
 
 function response(status = 200, body = '{}'): Response {
     return new Response(body, { status, headers: { 'Content-Type': 'application/json' } });
@@ -231,7 +235,7 @@ describe('account settings interactions', () => {
             method: 'DELETE',
         })));
         expect(await within(panel('전콘')).findByRole('status')).toHaveTextContent('전콘을 삭제했습니다.');
-        expect(screen.getByRole('img', { name: '현재 전콘' })).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/default.jpg`);
+        expect(screen.getByRole('img', { name: '현재 전콘' })).toHaveAttribute('src', DEFAULT_PORTRAIT);
     });
 
     it('reports a shared-icon save next to that form, not next to the upload button', async () => {
@@ -251,7 +255,7 @@ describe('account settings interactions', () => {
         render(<AccountPage />);
 
         const portrait = screen.getByRole('img', { name: '현재 전콘' });
-        expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/default.jpg`);
+        expect(portrait).toHaveAttribute('src', DEFAULT_PORTRAIT);
 
         fireEvent.change(screen.getByLabelText('이미지 서버'), { target: { value: '0' } });
         fireEvent.change(screen.getByLabelText('전콘 파일명'), { target: { value: '1001' } });
@@ -261,7 +265,7 @@ describe('account settings interactions', () => {
         expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/portrait.WEBP`);
 
         fireEvent.change(screen.getByLabelText('전콘 파일명'), { target: { value: '' } });
-        expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/default.jpg`);
+        expect(portrait).toHaveAttribute('src', DEFAULT_PORTRAIT);
     });
 
     it('falls back once when the account portrait fails to load', () => {
@@ -273,7 +277,7 @@ describe('account settings interactions', () => {
         const srcSetter = vi.spyOn(HTMLImageElement.prototype, 'src', 'set');
         try {
             fireEvent.error(portrait);
-            expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/default.jpg`);
+            expect(portrait).toHaveAttribute('src', DEFAULT_PORTRAIT);
             expect(srcSetter).toHaveBeenCalledTimes(1);
 
             fireEvent.error(portrait);
@@ -290,7 +294,7 @@ describe('account settings interactions', () => {
 
         expect(screen.getByRole('img', { name: '현재 전콘' })).toHaveAttribute(
             'src',
-            `${IMAGE_CDN_BASE}/icons/default.jpg`,
+            DEFAULT_PORTRAIT,
         );
     });
 

@@ -8,6 +8,7 @@ vi.mock('@/components/ServerBoard', () => ({ default: () => <div>server board</d
 
 import LobbyPage from '@/app/lobby/page';
 import { IMAGE_CDN_BASE } from '@/lib/constants';
+import { DEFAULT_PORTRAIT } from '@/lib/portrait';
 
 const GAME = {
     isUnited: 0,
@@ -73,12 +74,12 @@ describe('lobby portrait contract', () => {
 
     it('renders the default when picture is missing', async () => {
         const portrait = await renderLobby({ name: '테스터', picture: null, imageServer: 0 });
-        expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/default.jpg`);
+        expect(portrait).toHaveAttribute('src', DEFAULT_PORTRAIT);
     });
 
     it('renders the default when picture is whitespace only', async () => {
         const portrait = await renderLobby({ name: '테스터', picture: '   ', imageServer: 0 });
-        expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/default.jpg`);
+        expect(portrait).toHaveAttribute('src', DEFAULT_PORTRAIT);
     });
 
     it('resolves an imageServer 1 canonical managed name to same-origin /d_pic/', async () => {
@@ -88,7 +89,7 @@ describe('lobby portrait contract', () => {
 
     it('renders the default for a non-canonical imageServer 1 name', async () => {
         const portrait = await renderLobby({ name: '테스터', picture: 'uploaded.png', imageServer: 1 });
-        expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/default.jpg`);
+        expect(portrait).toHaveAttribute('src', DEFAULT_PORTRAIT);
     });
 
     it('falls back to the default when the lobby portrait fails to load', async () => {
@@ -96,6 +97,6 @@ describe('lobby portrait contract', () => {
         expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/missing.png`);
 
         fireEvent.error(portrait);
-        expect(portrait).toHaveAttribute('src', `${IMAGE_CDN_BASE}/icons/default.jpg`);
+        expect(portrait).toHaveAttribute('src', DEFAULT_PORTRAIT);
     });
 });

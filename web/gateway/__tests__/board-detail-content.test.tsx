@@ -30,6 +30,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({ user: authUser, loading: false, refresh: vi.fn(), logout: vi.fn() }),
+  useAuthOptional: () => ({ user: authUser, loading: false, refresh: vi.fn(), logout: vi.fn() }),
 }));
 
 type FetchResponse = { readonly status?: number; readonly body?: unknown };
