@@ -301,15 +301,15 @@
 ### 웨이브 C (PR `ui-p4c-boards`) · 13·14 + 백엔드
 
 **커뮤니티(gateway 스택)**
-- [ ] `V50__gateway_board_extend.sql`: category CHECK에 `STRATEGY`·`SERVER`·`CREATIVE` 추가, `view_count`, `gateway_board_report`(post_id/comment_id·reporter_account_id·reason·status·handled_by·created_at), `users.representative_server_id`·`representative_general_id`.
-- [ ] board-api: 조회수 증가(상세 GET), 정렬 `latest|popular`(popular = 최근 7일 조회+댓글 가중, 기준을 코드 상수로 문서화)·`mine`, 검색(`q` → title/content ILIKE, 인덱스), 신고 생성·관리자 목록·처리. gateway-api: 대표 장수 설정(`PATCH /account/representative`, 소유 검증은 game-api `server-basic-info/me`로). IT: 권한(신고 처리 비ADMIN 403), 검색 결과 경계.
-- [ ] web/gateway `/board`: 카테고리 6 + 카운트, 최신/인기/내 글, 검색, 글쓰기, 목록 행(아이콘 40 + 서버 배지), 상세(아이콘 48, 수정·신고, 댓글 28), 우측 내 계정(대표 장수 변경)·인기 글·「세 공간의 경계」 안내. 계정 페이지에 대표 장수 변경.
+- [x] `V54__gateway_board_extend.sql`(V51 공지·V53 회의실 뒤 번호): category CHECK에 `STRATEGY`·`SERVER`·`CREATIVE` 추가, `view_count`, `gateway_board_report`(post_id/comment_id·reporter_account_id·reason·status·handled_by·handled_at·created_at), `users.representative_world_id`·`representative_general_id`·`representative_general_name`(서버 id 가 아니라 세계 id — game_server 표에 세계 결합이 없어 서버 표시명 사상은 후속).
+- [x] board-api: 상세 GET 조회수 원자 증가, `sort=latest|popular|mine`(popular = 최근 7일 안 글을 조회수 + 댓글×5, 코드 상수 `POPULAR_WINDOW`), `q` 검색(title/content ILIKE, native 쿼리 — H2/Postgres 공통), `/board/categories` 카운트, 신고 생성(중복 OPEN 409)·관리자 목록/처리(비관리자 403). gateway-api: `GET/POST /auth/account/representative` — 소유 검증은 `general.user_id` 직접 조회(JDBC `OwnedGeneralReader`, game-api 왕복 없음). 테스트: `GatewayBoardFeedAndReportTest`(4)·`RepresentativeServiceTest`(2)·board-api 전체 57 녹색.
+- [x] web/gateway `/board`: 분류 6 + 카운트(+전체), 최신/인기/내 글, 검색, 글쓰기, 목록 행(아이콘 40 + 대표 장수 배지 + 조회·댓글), 상세 글/댓글 신고(인라인 사유 폼), 우측 내 계정(대표 장수 변경 링크)·인기 글(최근 7일)·「세 공간의 경계」. 계정 페이지 대표 장수 구획. 운영 콘솔 게시판 관리에 신고 처리 패널. 게시판 껍데기는 공통 Topbar(비평 should-fix). **하지 않은 것**: 상세 「수정」(기존 PATCH API 는 있으나 화면 없음 — 후속), 댓글 아이콘은 기존 `BoardAuthor`(28).
 
 **회의실·기밀실(게임 스택, 인테이크 경유)**
-- [ ] `V51__board_post_kind.sql`: `board_post.kind`(general|vote|operation|notice) · `board_post.vote_id`(→ vote_poll) · `board_post_read`(post_id·general_id·read_at, UNIQUE).
-- [ ] 엔진: `BoardHandler`에 `boardArticle` 인자 `kind`·`voteId` 수용, 신규 명령 `boardRead`(기밀글 열람 기록, 멱등) — `ChangeRecorder` 채널 + `JdbcFlushExecutor` flush step. game-api 읽기 DTO에 `kind`·`vote`(찬/반/미표 집계 + 표결자 아이콘)·`readers`(n/m + 아이콘)·참여 스택(국가 장수 최근 순 활동/침묵) 추가. 가드 재검증(permission ≥ 2).
-- [ ] web/game `/game/board`: 헤더(깃발·국가·회의실, 내 직책, 年月순), 탭 전체/표결/작전/공지(작전은 kind=operation 글일 뿐, 첨부 없음), 표결 카드(찬·반 스택 + 마감), 기밀실 적갈 프레임 + 열람 기록 + 「직책이 바뀌면 즉시 접근이 끊기고…」 안내, 「커뮤니티는 서버 밖 ↗」 링크. 라벨 회의실/기밀실 그대로.
-- [ ] Test: `logic`/`engine` 핸들러 단위(kind·voteId·boardRead 가드), game-api 읽기 DTO, vitest 화면.
+- [x] `V53__board_post_kind.sql`: `board_post.kind`(general|vote|operation|notice) · `vote_id` · `board_post_read`(V32 세계 범위 규약: (world_id,id) PK · world_state FK · (world_id,post_id)→board_post 복합 FK · UNIQUE(world_id,post_id,general_id)).
+- [x] 엔진: `BoardArticle.kind/voteId`, 신규 인테이크 `boardRead`(기밀 글만 기록, 회의실 글은 ok 무기록, 멱등 ON CONFLICT) — `ChangeRecorder.boardReadInserts` → `JdbcFlushExecutor` step 8d, `TruncateContract` 등록. logic: kind 검증(공지 = permission ≥ 2, 표결 = voteId 필수). game-api DTO: `kind`·`vote`(vote_poll 선택지별 표 수 + 공개 표결자 아이콘 + myVote)·`readers`(read/total=수뇌부 정원)·`participants`(국가 플레이어 장수, active = 최근 한 순 tick 안 턴 시각)·작성자/댓글 초상(현재 general 행)·`chiefCount`·`myPermission`. 테스트: logic 10 · engine 16 · game-api 37+18 · infra BoardFlushIT(멱등).
+- [x] web/game `/game/board`: 방 머리(깃발·국가·회의실/기밀실·구성원·내 직책) · 회의실/기밀실 PillTabs · 글 종류 탭(전체/표결/작전/공지 + 카운트) · 글쓰기(종류·설문 연결) · 글 카드(아이콘 40·종류 칩·표결 카드(선택지별 표·표결자 스택·voteCast)·열람 n/m·댓글 아이콘 28) · 기밀실 적갈 프레임 + 우측 열람 기록·안내문 · 참여 스택(활동/침묵) · 「커뮤니티는 서버 밖 ↗」. 기밀 글 첫 열람 시 `boardRead` 인테이크(세션당 1회, 결과 뒤 재조회). 테스트 `board-council`(3) + 기존 board 테스트 갱신.
+- [x] Test: logic `BoardActionsTest` +4, engine `BoardIntakeSliceCTest` +4, game-api `CommandWireMapperTest`/`F4ReadControllersTest` +2, infra `BoardFlushIT` +1(멱등·kind/vote_id 영속), vitest `board-council`·`board-community`·`account-representative`.
 
 ### Phase 4 게이트
 
