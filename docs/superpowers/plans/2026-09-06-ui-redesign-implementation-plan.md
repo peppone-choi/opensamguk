@@ -50,7 +50,7 @@
 | Phase 5 이미지 | OPENSAM-203 (할 일) | #463 (open) | 깃발 sprite(문양·테두리·축·바람)·도시/지형 아이콘 부분 기여 코멘트. 지형·경계 타일 세트는 닫지 않는다 |
 | Phase 5 이미지 | OPENSAM-238 (할 일) | #597 (open) | 도시 등급 실루엣·상태 배지 layer 분리 부분 기여 코멘트. `imperial-residence` 런타임은 범위 밖 |
 | Phase 4X-A | OPENSAM-20 (epic)·48·61 | #162·#190·#203 | 휘하 인물·부곡 수직 절편(계약·materialize·read model·UI). 48·61 닫기, 20 에픽은 잔여(제안 흐름 LLM 0) 코멘트 |
-| Phase 4X-B | OPENSAM-23 (epic)·56 | #165·#198 | 작전 계약·결정 규칙·adapter·검증 → 56 닫기, 23 에픽 코멘트. OPENSAM-228/#494 회의 thread·결정 기록도 여기서 닫는다 |
+| Phase 4X-B | OPENSAM-23 (epic)·56 | #165·#198 | 작전 계약 중 3-a operations·3-b participants(→ operation_unit)·3-e 역할·3-k fixture 일부만 기여 → **56 은 닫지 않고 코멘트**(3-c 경로·3-h 요격·3-i 원군·3-j adapter·3-l diff 게이트는 beyond-che W2/W3), 23 에픽 코멘트. OPENSAM-228/#494 회의 thread·표결 결정 기록은 밖(spec v2 §10) — 코멘트만 |
 | Phase 4X-C | OPENSAM-24·25 (epic)·57·58·59·173·170 | #166·#167·#199·#200·#201·#350·#347 | 야전 WEGO 봉인·결정론 해결·replay spine·리플레이 렌더러. 57·59·173·170 닫기, 58은 5종 명령 중 구현분 체크, 24·25 에픽 코멘트(공성·해전 잔여) |
 | Phase 7 3D | OPENSAM-46 (할 일) | #188 (open) | D3-13의 「3D picking 연결」을 3D 페이즈에서 수행하면 체크. 못 하면 사유를 남긴다 |
 
@@ -349,7 +349,7 @@
 
 - [ ] 계약: `battle_plan`(battle_id·general_id·stance 돌격/전진/방어/우회·target·conditions[사기 임계→방어 / 합류 전 추격 금지 / 손실 임계→퇴각선]·sealed_at·version), `battle_replay`(battle_id·seed·input_hash·phases[]·settlement·created_at). 봉인 마감 = 해결 직전 순. `V54__battle_plan_replay.sql`.
 - [ ] 해결: 기존 `war/*` 엔진에 「봉인된 계획이 있으면」 훅을 단다 — 태세·조건이 기존 파라미터(공격 개시·퇴각 임계·추격 여부·지형 보정)에 매핑되는 규칙을 spec에 표로 고정. 계획이 없으면 훅은 no-op(골든 바이트 동일). 결과는 페이즈별 상태(병력·사기·보정·발동 조건)로 기록하고 같은 seed·입력이면 같은 리플레이(해시 게이트).
-- [ ] 정산: 캠페인 정산(사상·군량·작전 진척·경험)을 replay.settlement에 기록, 4X-B 작전 진척에 반영.
+- [ ] 정산: 캠페인 정산(사상·군량·경험)을 replay.settlement에 기록하고 `battle_plan.operation_id`·`battle_replay.operation_id` 에 작전 키(ADR-LITE-032 `operationId`)만 기록한다 — 작전 행은 쓰지 않는다(4X-B spec v2 §10: 진척은 이정표 재계산이 도시 소유로 본다).
 - [ ] read API `/api/battles/{id}/plan`(아군 것만), `/api/battles/{id}/replay`, 감찰부 목록 연결, 공유 링크(권한 내). 명령: `sealBattlePlan`(수정은 봉인 전까지, 봉인 뒤 409).
 - [ ] UI: 09 명령 봉인 화면(아군 부대 카드 148×210·적 정찰 정보·페이즈 6·태세/목표/조건·예상 범위는 결정론 시뮬 `simulate-battle` 재사용), 10 리플레이 플레이어(對 화면·페이즈 스크럽·0.5/1/2×·로그·정산), 회의실·커뮤니티 리플레이 첨부 카드.
 - [ ] 게이트: 결정성(같은 seed 두 번 = 같은 해시), 봉인 후 수정 409, 계획 없는 전투 골든 불변, 리플레이 렌더 vitest, e2e 1건(봉인→해결→리플레이 열기). OPENSAM-57·59·173·170 닫기.
