@@ -4,8 +4,11 @@ import { GLOBAL_MENU_V2 } from '@/lib/global-menu-fixture';
 import {
     DEPT_GROUPS,
     GATE_REASON,
+    GATING_UNKNOWN_REASON,
     MOBILE_TABS,
+    buildDeptGroups,
     evaluateEntry,
+    evaluateMobileTab,
     flattenMenuItems,
     gateAllows,
     groupHighlight,
@@ -73,7 +76,32 @@ describe('dept-menu-config (S1 매핑)', () => {
         expect(groupHighlight(DEPT_GROUPS.find((g) => g.key === 'records')!, CHIEF, {})).toBe(false);
     });
 
-    it('defines the five mobile tabs of S1', () => {
+    it('defines the five mobile tabs of S1 with real targets and gates 국가 like 세력 정보', () => {
         expect(MOBILE_TABS.map((t) => t.label)).toEqual(['작전실', '지도', '명령', '국가', '더보기']);
+        expect(MOBILE_TABS.map((t) => t.href)).toEqual(['/game', '/game/map', '/game#reservedCommandPanel', '/game/my-nation', '#dept-more']);
+        const nationTab = MOBILE_TABS.find((t) => t.key === 'nation')!;
+        expect(evaluateMobileTab(nationTab, NONE, {}, 'ready')).toMatchObject({ enabled: false, reason: '장수 직위 이상 필요', label: '국가' });
+        expect(evaluateMobileTab(nationTab, CHIEF, {}, 'ready')).toMatchObject({ enabled: true, reason: null });
+    });
+
+    it('never fabricates a permission reason while gating is unknown', () => {
+        const secret = entries.find((e) => e.kind === 'control' && e.button.id === 2)!;
+        expect(evaluateEntry(secret, null, {}, 'loading')).toMatchObject({ enabled: true, reason: null });
+        expect(evaluateEntry(secret, null, {}, 'error')).toMatchObject({ enabled: false, reason: GATING_UNKNOWN_REASON });
+    });
+
+    it('prefers the server global menu (url/newTab) over the fixture, falling back by label', () => {
+        const serverMenu = [
+            { type: 'item' as const, name: '연감', url: '/game/history', newTab: false },
+            { type: 'multi' as const, name: '게임정보', subMenu: [{ type: 'item' as const, name: '세력일람', url: '/game/rankings/kingdoms', newTab: true }] },
+        ];
+        const groups = buildDeptGroups(serverMenu);
+        const records = groups.find((g) => g.key === 'records')!;
+        const yearbook = records.entries.find((e) => e.kind === 'menu' && e.item.name === '연감')!;
+        expect(yearbook.kind === 'menu' && yearbook.item.url).toBe('/game/history');
+        const kingdoms = records.entries.find((e) => e.kind === 'menu' && e.item.name === '세력일람')!;
+        expect(kingdoms.kind === 'menu' && kingdoms.item.newTab).toBe(true);
+        // 서버 메뉴에 없는 잎(명장일람 등)은 픽스처로 폴백해 라벨이 사라지지 않는다.
+        expect(records.entries.some((e) => e.kind === 'menu' && e.item.name === '명장일람')).toBe(true);
     });
 });

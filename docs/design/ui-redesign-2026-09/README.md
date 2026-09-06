@@ -47,4 +47,4 @@
 
 ## 정정
 
-S2 대조표의 「GlobalMenu 8라벨은 API 주도라 소스에 없음(UNKNOWN)」은 틀렸다. 라벨과 URL은 `app/game-api/src/main/kotlin/opensamguk/gameapi/controller/GlobalMenuController.kt`에 있고 `web/game/lib/global-menu-fixture.ts`가 같은 값을 든다.
+S2 대조표의 「GlobalMenu 8라벨은 API 주도라 소스에 없음(UNKNOWN)」은 틀렸다. 라벨과 URL은 `app/game-api/src/main/kotlin/opensamguk/gameapi/controller/GlobalMenuController.kt`에 있다. `web/game/lib/global-menu-fixture.ts`는 라벨은 같지만 url/newTab 이 몇 항목 다르므로 서버 메뉴가 정본이고 픽스처는 폴백이다(부서 나브는 `buildDeptGroups(서버 메뉴)`).

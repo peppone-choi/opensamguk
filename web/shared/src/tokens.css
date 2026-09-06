@@ -393,7 +393,7 @@
 .os-portrait > img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: top center; }
 .os-portrait--ring { outline: 2px solid var(--nation, var(--bronze)); outline-offset: -2px; }
 .os-portrait--inactive > img { filter: grayscale(1); opacity: 0.6; }
-.os-portrait--hero > img { object-fit: cover; }
+.os-portrait--hero > img { object-fit: contain; object-position: top center; }
 .os-portrait--hero::after {
   content: '';
   position: absolute;
@@ -429,8 +429,8 @@
   padding: 0 10px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
-  white-space: nowrap;
 }
+.os-table--nowrap td { white-space: nowrap; }
 .os-table tbody tr:hover td { background: var(--raised); }
 
 /* ============================================================================

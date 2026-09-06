@@ -79,11 +79,11 @@ describe('game portrait helper', () => {
         const portrait = screen.getByRole('img', { name: 'portrait' }) as HTMLImageElement;
 
         fireEvent.error(portrait);
-        expect(portrait.src).toBe(DEFAULT_PORTRAIT);
+        expect(portrait.src).toBe(new URL(DEFAULT_PORTRAIT, document.baseURI).href);
 
         // 이미 기본 초상 — 두 번째 error는 src를 다시 바꾸지 않는다(무한 루프 방지).
         fireEvent.error(portrait);
-        expect(portrait.src).toBe(DEFAULT_PORTRAIT);
+        expect(portrait.src).toBe(new URL(DEFAULT_PORTRAIT, document.baseURI).href);
     });
     // ADR-LITE-048: RTK14 초상 3종(original/portrait/icon)을 제품에서 쓴다.
     it.each(['10001', '10001.png', '  11000  '])('resolves stable RTK14 officer id from %j', (picture) => {

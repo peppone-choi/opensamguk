@@ -138,7 +138,7 @@ describe('MapPreview shared isometric renderer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'hover first county' }));
     expect(document.querySelectorAll('.map-preview-tooltip-meta')).toHaveLength(1);
     // #638(050058c7) 이후 기본 툴팁은 현재 레이어(현) 소유자 이름만 보여 준다 — 계층 경로/다른 레이어 소유자는 없다.
-    expect(document.querySelector('.map-preview-tooltip-meta')).toHaveTextContent('한');
+    expect(document.querySelector('.map-preview-tooltip-meta')).toHaveTextContent(/^한$/);
     expect(document.querySelector('.map-preview-tooltip-meta')).not.toHaveTextContent('공간:');
     expect(document.querySelector('.map-preview-tooltip-meta')).not.toHaveTextContent('군국:');
     expect(document.querySelector('.map-preview-tooltip-meta')).not.toHaveTextContent('→');

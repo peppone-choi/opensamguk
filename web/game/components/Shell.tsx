@@ -24,7 +24,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     }, []);
     const normalizedPathname = normalizeGamePathname(pathname ?? '', serverId);
     const isMainPage = normalizedPathname === '/game';
-    const { info, error } = useShellFrontInfo();
+    const { info, error, state, menu } = useShellFrontInfo();
 
     useSSE(refresh);
 
@@ -45,7 +45,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     return (
         <div className="shell">
             <Header info={info} error={error} />
-            <DeptNav gating={gating} global={global} />
+            <DeptNav gating={gating} gatingState={state} global={global} menu={menu} />
             <div className="shell-body">
                 <main className="shell-main shell-scroll-surface" aria-label="게임 콘텐츠">
                     {/* 서브 페이지 공통 돌아가기/갱신 바(레거시 TopBackBar). 메인은 GameChrome이라 미적용. */}
@@ -53,7 +53,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     {children}
                 </main>
             </div>
-            <BottomNav gating={gating} global={global} />
+            <BottomNav gating={gating} gatingState={state} global={global} menu={menu} />
         </div>
     );
 }

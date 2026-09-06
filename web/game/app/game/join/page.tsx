@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import { api } from '../../../lib/api';
 import type { JoinFormResponse } from '../../../lib/api';
@@ -731,18 +732,20 @@ export default function JoinPage() {
         </section>
 
         <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
-          <button
-            type="submit"
-            className="os-button os-button--primary"
-            disabled={loading || total > DEFAULT_STAT_TOTAL}
-            title={total > DEFAULT_STAT_TOTAL ? `능력치 합계가 ${DEFAULT_STAT_TOTAL}을 넘습니다` : undefined}
-            style={{ flex: 1, minHeight: 44 }}
-          >
-            {loading ? '생성 중...' : '장수 생성'}
-          </button>
-          <button type="button" className="os-button os-button--ghost" onClick={resetArgs} disabled={loading} style={{ minHeight: 44, padding: '0 var(--space-lg)' }}>
-            다시 입력
-          </button>
+          {(() => {
+            const block = loading ? '생성 중입니다' : total > DEFAULT_STAT_TOTAL ? `능력치 합계가 ${DEFAULT_STAT_TOTAL}을 넘습니다` : null;
+            const label = loading ? '생성 중...' : '장수 생성';
+            return block ? (
+              <Button type="submit" variant="primary" style={{ flex: 1, minHeight: 44 }} disabled reason={block}>{label}</Button>
+            ) : (
+              <Button type="submit" variant="primary" style={{ flex: 1, minHeight: 44 }}>{label}</Button>
+            );
+          })()}
+          {loading ? (
+            <Button type="button" variant="ghost" style={{ minHeight: 44, padding: '0 var(--space-lg)' }} disabled reason="생성 중입니다">다시 입력</Button>
+          ) : (
+            <Button type="button" variant="ghost" onClick={resetArgs} style={{ minHeight: 44, padding: '0 var(--space-lg)' }}>다시 입력</Button>
+          )}
         </div>
       </form>
     </Shell>

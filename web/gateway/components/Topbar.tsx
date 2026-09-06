@@ -21,13 +21,13 @@ export default function Topbar({ current }: { readonly current?: TopbarSection }
                 </Link>
                 <nav className="os-topbar__nav" aria-label="게이트웨이">
                     <Link href="/lobby" className={`os-nav-item${on('/lobby') ? ' os-nav-item--on' : ''}`} aria-current={on('/lobby') ? 'page' : undefined}>
-                        로비
+                        {LOBBY_LABELS.navLobby}
                     </Link>
                     <Link href="/board" className={`os-nav-item${on('/board') ? ' os-nav-item--on' : ''}`} aria-current={on('/board') ? 'page' : undefined}>
-                        게시판
+                        {LOBBY_LABELS.navBoard}
                     </Link>
                     <Link href="/account" className={`os-nav-item${on('/account') ? ' os-nav-item--on' : ''}`} aria-current={on('/account') ? 'page' : undefined}>
-                        계정
+                        {LOBBY_LABELS.navAccount}
                     </Link>
                     {user?.role === 'ADMIN' && (
                         <Link href="/admin" className={`os-nav-item${on('/admin') ? ' os-nav-item--on' : ''}`} aria-current={on('/admin') ? 'page' : undefined}>

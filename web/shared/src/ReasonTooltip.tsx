@@ -7,7 +7,7 @@ export type ReasonTooltipProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children
   readonly children: ReactNode;
 };
 
-/** 비활성 항목의 「왜 못 쓰는지」 — 호버·포커스에 사유를 보여준다. 키보드로도 닿는다. */
+/** 비활성 항목의 「왜 못 쓰는지」 — 호버·포커스에 사유를 보여준다. 키보드로도 닿고 Escape 로 닫힌다. */
 export function ReasonTooltip({ reason, children, className = '', ...props }: ReasonTooltipProps) {
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -18,7 +18,8 @@ export function ReasonTooltip({ reason, children, className = '', ...props }: Re
       onMouseLeave={() => setOpen(false)}
       onFocus={() => setOpen(true)}
       onBlur={() => setOpen(false)}
-      aria-describedby={id}
+      onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}
+      aria-describedby={open ? id : undefined}
       {...props}
     >
       {children}

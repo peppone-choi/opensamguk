@@ -19,6 +19,8 @@ describe('DeptNav (부서 나브)', () => {
         render(<DeptNav gating={NONE} global={{ npcMode: 0 }} />);
 
         expect(screen.getByRole('link', { name: '작전실' })).toHaveAttribute('aria-current', 'page');
+        expect(screen.getByRole('link', { name: '로비로' })).toHaveAttribute('href', expect.stringMatching(/\/lobby$/));
+        expect(screen.getByRole('button', { name: '갱신' })).toBeInTheDocument();
         for (const label of ['국가 운영', '군사', '정보', '광장', '기록']) {
             expect(screen.getByRole('button', { name: new RegExp(label) })).toBeInTheDocument();
         }
@@ -27,7 +29,7 @@ describe('DeptNav (부서 나브)', () => {
         const secret = within(menu).getByText('기 밀 실');
         expect(secret).toHaveAttribute('aria-disabled', 'true');
         expect(secret).toHaveClass('dept-nav__entry--disabled');
-        const tipId = secret.parentElement?.getAttribute('aria-describedby');
+        const tipId = secret.parentElement?.querySelector('[role="tooltip"]')?.id;
         expect(document.getElementById(tipId ?? '')).toHaveTextContent('수뇌부 권한 필요');
     });
 
@@ -44,6 +46,40 @@ describe('DeptNav (부서 나브)', () => {
         const records = screen.getByRole('menu', { name: '기록' });
         expect(within(records).queryByText('빙의일람')).not.toBeInTheDocument();
         expect(within(records).getByText('접속량정보')).toBeInTheDocument();
+    });
+
+    it('opens a group with ArrowDown, moves focus with arrows and closes with Escape back to the button', () => {
+        mocks.pathname.mockReturnValue('/game/s1');
+        mocks.serverId.mockReturnValue('s1');
+        render(<DeptNav gating={{ ...NONE, myLevel: 5, nationLevel: 2, showSecret: true, permission: 4 }} global={{}} />);
+        const button = screen.getByRole('button', { name: /국가 운영/ });
+        button.focus();
+        fireEvent.keyDown(button, { key: 'ArrowDown' });
+        const menu = screen.getByRole('menu', { name: '국가 운영' });
+        const items = within(menu).getAllByRole('menuitem');
+        expect(items[0]).toHaveFocus();
+        fireEvent.keyDown(items[0], { key: 'ArrowDown' });
+        expect(items[1]).toHaveFocus();
+        fireEvent.keyDown(items[1], { key: 'End' });
+        expect(items[items.length - 1]).toHaveFocus();
+        fireEvent.keyDown(items[items.length - 1], { key: 'Escape' });
+        expect(screen.queryByRole('menu', { name: '국가 운영' })).not.toBeInTheDocument();
+        expect(button).toHaveFocus();
+    });
+
+    it('stays neutral while gating is loading and shows 서버 정보 없음 on error', () => {
+        mocks.pathname.mockReturnValue('/game/s1');
+        mocks.serverId.mockReturnValue('s1');
+        const { unmount } = render(<DeptNav gating={null} gatingState="loading" global={{}} />);
+        fireEvent.click(screen.getByRole('button', { name: /국가 운영/ }));
+        expect(within(screen.getByRole('menu', { name: '국가 운영' })).getByRole('menuitem', { name: '기 밀 실' })).not.toHaveAttribute('aria-disabled');
+        unmount();
+        render(<DeptNav gating={null} gatingState="error" global={{}} />);
+        fireEvent.click(screen.getByRole('button', { name: /국가 운영/ }));
+        const secret = within(screen.getByRole('menu', { name: '국가 운영' })).getByText('기 밀 실');
+        expect(secret).toHaveAttribute('aria-disabled', 'true');
+        const tipId = secret.parentElement?.querySelector('[role="tooltip"]')?.id;
+        expect(document.getElementById(tipId ?? '')).toHaveTextContent('서버 정보 없음');
     });
 
     it('resolveDeptHref keeps external links and hashes, maps legacy php and server paths', () => {

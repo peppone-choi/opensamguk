@@ -15,7 +15,7 @@ export function Gauge({ label, value, max, display, tone = 'moss', className = '
   const ratio = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   const classes = ['os-gauge', tone === 'moss' ? '' : `os-gauge--${tone}`, className].filter(Boolean).join(' ');
   return (
-    <div className={classes} role="meter" aria-valuenow={value} aria-valuemin={0} aria-valuemax={max} {...props}>
+    <div className={classes} role="meter" aria-label={typeof label === 'string' ? label : undefined} aria-valuenow={value} aria-valuemin={0} aria-valuemax={max} {...props}>
       <div className="os-gauge__top">
         <span>{label}</span>
         <span className="os-num">{display ?? `${value} / ${max}`}</span>

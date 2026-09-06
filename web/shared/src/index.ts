@@ -27,6 +27,7 @@ export {
 } from './Portrait';
 export {
   DEFAULT_IMAGE_CDN_BASE,
+  DEFAULT_PORTRAIT_PATH,
   createPortraitResolver,
   defaultPortraitResolver,
   type PortraitResolver,

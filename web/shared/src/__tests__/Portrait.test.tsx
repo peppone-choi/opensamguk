@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { PORTRAIT_SIZES, Portrait, PortraitResolverProvider, PortraitStack, portraitVariantForSize, type PortraitSize } from '../Portrait';
-import { createPortraitResolver, DEFAULT_IMAGE_CDN_BASE } from '../portraitResolver';
+import { createPortraitResolver, DEFAULT_IMAGE_CDN_BASE, DEFAULT_PORTRAIT_PATH } from '../portraitResolver';
 
 const SERVING = `${DEFAULT_IMAGE_CDN_BASE}/portraits/rtk14/serving`;
 
@@ -45,7 +45,7 @@ describe('Portrait 3종 규칙', () => {
     expect(container.querySelector('.os-portrait')).toHaveClass('os-portrait--inactive');
     const img = screen.getByRole('img', { name: 'a' }) as HTMLImageElement;
     fireEvent.error(img);
-    expect(img.src).toBe(`${DEFAULT_IMAGE_CDN_BASE}/icons/default.jpg`);
+    expect(img.src).toBe(new URL(DEFAULT_PORTRAIT_PATH, document.baseURI).href);
   });
 
   it('uses the resolver from context (per-app CDN base)', () => {

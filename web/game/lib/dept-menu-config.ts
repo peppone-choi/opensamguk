@@ -85,19 +85,28 @@ export function flattenMenuItems(menu: readonly MenuNode[], parent?: string): De
     return out;
 }
 
-const MENU_LEAVES = flattenMenuItems(GLOBAL_MENU_V2);
-
-function menu(name: string): DeptMenuEntry {
-    const entry = MENU_LEAVES.find((e) => e.item.name === name);
-    if (!entry) throw new Error(`global menu item ${name} missing`);
-    return entry;
+/**
+ * 전역 메뉴 잎을 이름으로 찾는다. 서버(GetGlobalMenu)가 준 메뉴를 우선 쓰고, 이름이 없으면 v2 픽스처로
+ * 폴백한다 — 라벨은 두 원천이 같고 url/newTab 은 서버가 정본이다(교차 비평 #4).
+ */
+function menuFinder(source: readonly MenuNode[]) {
+    const leaves = flattenMenuItems(source);
+    const fallback = flattenMenuItems(GLOBAL_MENU_V2);
+    return (name: string): DeptMenuEntry => {
+        const entry = leaves.find((e) => e.item.name === name) ?? fallback.find((e) => e.item.name === name);
+        if (!entry) throw new Error(`global menu item ${name} missing`);
+        return entry;
+    };
 }
 
 /** 작전실 메인은 라우트 하나. 천하 지도는 기존 /game/map 라우트(20버튼·8메뉴 밖의 화면). */
 export const OPS_ROUTE: DeptRouteEntry = { kind: 'route', label: '작전실', href: '/game' };
 export const MAP_ROUTE: DeptRouteEntry = { kind: 'route', label: '천하 지도', href: '/game/map' };
 
-export const DEPT_GROUPS: readonly DeptGroup[] = [
+/** 부서 그룹을 만든다. `menuSource` 는 서버 전역 메뉴(없으면 픽스처). */
+export function buildDeptGroups(menuSource: readonly MenuNode[] = GLOBAL_MENU_V2): readonly DeptGroup[] {
+    const menu = menuFinder(menuSource);
+    return [
     { key: 'ops', label: '작전실', entries: [OPS_ROUTE] },
     {
         key: 'nation',
@@ -148,16 +157,26 @@ export const DEPT_GROUPS: readonly DeptGroup[] = [
             menu('빙의일람'),
         ],
     },
-];
+    ];
+}
+
+/** 픽스처 기준 기본 그룹(서버 메뉴가 아직 없을 때). */
+export const DEPT_GROUPS: readonly DeptGroup[] = buildDeptGroups();
 
 /** 모바일 5탭(S1): 작전실 · 지도 · 명령 · 국가 · 더보기. 「명령」은 작전실의 명령 목록 앵커, 「더보기」는 부서 시트. */
 export const MOBILE_TABS = [
-    { key: 'ops', label: '작전실', href: '/game' },
-    { key: 'map', label: '지도', href: '/game/map' },
-    { key: 'commands', label: '명령', href: '/game#commands' },
-    { key: 'nation', label: '국가', href: '/game/my-nation' },
-    { key: 'more', label: '더보기', href: '#dept-more' },
+    { key: 'ops', label: '작전실', href: '/game', controlId: null },
+    { key: 'map', label: '지도', href: '/game/map', controlId: null },
+    // 「명령」은 작전실 우측 명령 목록(PartialReservedCommand, id=reservedCommandPanel) 앵커.
+    { key: 'commands', label: '명령', href: '/game#reservedCommandPanel', controlId: null },
+    // 「국가」는 세력 정보(#11, myLevel 게이팅)와 같은 규칙을 탄다.
+    { key: 'nation', label: '국가', href: '/game/my-nation', controlId: 11 },
+    { key: 'more', label: '더보기', href: '#dept-more', controlId: null },
 ] as const;
+
+/** 게이팅 상태: 아직 모름(loading) / 서버 정보 없음(error) / 계산됨(ready). 모르는 동안 권한 사유를 지어내지 않는다. */
+export type GatingState = 'loading' | 'error' | 'ready';
+export const GATING_UNKNOWN_REASON = '서버 정보 없음';
 
 export interface DeptEntryView {
     readonly entry: DeptEntry;
@@ -180,20 +199,25 @@ function menuVisible(item: MenuItem, global: MenuFlagSource): boolean {
     return negate ? !global[key] : Boolean(global[key]);
 }
 
-/** 그룹 항목을 현재 주체 기준으로 평가한다. href 는 상대 경로 그대로 — 서버 경로 해석은 호출자가 한다. */
-export function evaluateEntry(entry: DeptEntry, gating: ControlGating | null, global: MenuFlagSource): DeptEntryView {
+/**
+ * 그룹 항목을 현재 주체 기준으로 평가한다. href 는 상대 경로 그대로 — 서버 경로 해석은 호출자가 한다.
+ * gating 이 null 이면 state 로 구분한다: loading = 중립(비활성 아님, 사유 없음), error = 「서버 정보 없음」.
+ */
+export function evaluateEntry(entry: DeptEntry, gating: ControlGating | null, global: MenuFlagSource, state: GatingState = gating ? 'ready' : 'loading'): DeptEntryView {
     if (entry.kind === 'route') {
         return { entry, label: entry.label, href: entry.href, enabled: true, reason: null, highlight: false, newTab: false, hidden: false };
     }
     if (entry.kind === 'control') {
         const b = entry.button;
-        const enabled = gating ? gateAllows(b.bucket, gating) : b.bucket === 'always';
+        const gated = b.bucket !== 'always';
+        const enabled = !gated || (gating ? gateAllows(b.bucket, gating) : state === 'loading');
+        const reason = enabled ? null : gating ? GATE_REASON[b.bucket] : GATING_UNKNOWN_REASON;
         return {
             entry,
             label: b.label,
             href: b.href,
             enabled,
-            reason: enabled ? null : GATE_REASON[b.bucket],
+            reason,
             highlight: Boolean(b.highlightVar && gating && gating[b.highlightVar]),
             newTab: Boolean(b.newTab),
             hidden: false,
@@ -215,4 +239,13 @@ export function evaluateEntry(entry: DeptEntry, gating: ControlGating | null, gl
 /** 그룹에 하이라이트 항목이 있으면 그룹 칩(광장 「베팅 진행」 등)을 켠다. */
 export function groupHighlight(group: DeptGroup, gating: ControlGating | null, global: MenuFlagSource): boolean {
     return group.entries.some((e) => evaluateEntry(e, gating, global).highlight);
+}
+
+/** 모바일 탭 하나를 평가한다(국가 탭은 세력 정보 #11 게이팅). */
+export function evaluateMobileTab(tab: (typeof MOBILE_TABS)[number], gating: ControlGating | null, global: MenuFlagSource, state: GatingState): DeptEntryView {
+    if (tab.controlId == null) {
+        return evaluateEntry({ kind: 'route', label: tab.label, href: tab.href }, gating, global, state);
+    }
+    const view = evaluateEntry(control(tab.controlId), gating, global, state);
+    return { ...view, label: tab.label, href: tab.href };
 }

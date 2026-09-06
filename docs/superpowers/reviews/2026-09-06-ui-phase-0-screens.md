@@ -32,10 +32,15 @@
 | 12 기록(랭킹) | `12-rankings-desktop.png` | `12-rankings-mobile.png` | 쉘(상태바·부서 나브) 위에 옛 카드 레이아웃 |
 | 06 도시 | `06-city-desktop.png` | `06-city-mobile.png` | 장수 없음 → 로딩 상태 |
 | 14 회의실 | `14-council-desktop.png` | `14-council-mobile.png` | |
-| 장수 일람 | `07-generals-desktop.png` | `07-generals-mobile.png` | 부서 나브 「국가 운영」 활성 표시. 표 초상은 옛 picture 코드라 CDN 에 없음(기본 초상 폴백은 Phase 4 표 리스타일에서) |
+| 장수 일람 | `07-generals-desktop.png` | `07-generals-mobile.png` | 부서 나브 「국가 운영」 활성 표시. 표 초상이 깨진 진짜 원인(교차 비평 #1): 옛 picture 코드가 CDN `icons/` 에 없고 **기본 초상 `icons/default.jpg` 자체가 404** 라 폴백이 죽은 URL 로 갔다. 기본 초상을 앱 자체 출처 `public/portrait-default.svg` 로 바꿔 해소(`DEFAULT_PORTRAIT_PATH`) |
+
+## docs-impact
+
+`docs-impact: CLAUDE.md(UI 정본 절)·docs/design/README.md·docs/design/ui-redesign-2026-09/README.md`. `docs/user/**` 에는 메뉴·하단 탭 서술이 없어 변경 없음(grep 0).
 
 ## 남긴 것
 
 - 작전실 실캡처(장수 보유 계정)와 e2e 3건은 백엔드 현재 이미지로 재기동한 뒤 Phase 1 게이트에서 찍는다.
 - 로비 서버 목록을 dev 에서 보이게 하려면 `SERVER_REGISTRY_JSON` 항목의 `gameApiUrl` 이 `http://s<id>-game-api:8081` 고정이라 로컬 game-api 로 프록시할 수 없다(레지스트리가 비어 있을 때만 `GAME_API_ORIGIN` 폴백). Phase 2 로비 작업에서 dev 전용 폴백을 검토한다.
+- 쉘의 `useShellFrontInfo` 가 front-info 를 페이지당 1회(+턴마다) 더 부른다(GameChrome 의 useFrontInfo 와 중복). Phase 0/1 에서 감수하고 Phase 4 웨이브 A 에서 컨텍스트 하나로 합친다(교차 비평 #11).
 - 게이트웨이 `Topbar` 는 `usePathname` 대신 페이지 prop(`current`)으로 현재 구역을 받는다 — 기존 7개 테스트가 `next/navigation` 을 `useRouter` 만으로 mock 하기 때문.

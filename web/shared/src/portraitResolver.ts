@@ -9,6 +9,12 @@ import type { SyntheticEvent } from 'react';
 /** opensamguk-images jsDelivr 미러. 앱은 NEXT_PUBLIC_IMAGE_CDN 으로 덮어쓴 값을 resolver 에 넣는다. */
 export const DEFAULT_IMAGE_CDN_BASE = 'https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images';
 
+/**
+ * 기본 초상(폴백). CDN 의 `icons/default.jpg` 는 2026-09-06 실측 404 라(교차 비평 #1) 앱 자체 출처의
+ * 자작 실루엣 SVG 를 쓴다 — 두 앱 `public/portrait-default.svg`. 항상 200 이고 외부 의존이 없다.
+ */
+export const DEFAULT_PORTRAIT_PATH = '/portrait-default.svg';
+
 /** 초상 변형: original=원본(633×900, 히어로) / portrait=148×210(카드) / icon=96×96(표·피드·댓글). */
 export type PortraitVariant = 'original' | 'portrait' | 'icon';
 
@@ -30,11 +36,11 @@ export interface PortraitResolver {
   onPortraitError(event: SyntheticEvent<HTMLImageElement>): void;
 }
 
-export function createPortraitResolver(cdnBase: string): PortraitResolver {
+export function createPortraitResolver(cdnBase: string, options: { readonly defaultPortrait?: string } = {}): PortraitResolver {
   const PORTRAIT_CDN = `${cdnBase}/icons`;
   const RTK14_SERVING_CDN = `${cdnBase}/portraits/rtk14/serving`;
   const RTK14_PORTRAIT_CDN = `${RTK14_SERVING_CDN}/portrait`;
-  const DEFAULT_PORTRAIT = `${PORTRAIT_CDN}/default.jpg`;
+  const DEFAULT_PORTRAIT = options.defaultPortrait ?? DEFAULT_PORTRAIT_PATH;
   const variantFile: Record<PortraitVariant, (officerId: number) => string> = {
     original: (id) => `${RTK14_SERVING_CDN}/original/${id}.jpg`,
     portrait: (id) => `${RTK14_SERVING_CDN}/portrait/${id}.png`,
@@ -83,7 +89,7 @@ export function createPortraitResolver(cdnBase: string): PortraitResolver {
     const fallbackUrl = new URL(DEFAULT_PORTRAIT, baseUri).href;
     const currentUrl = new URL(image.currentSrc || image.src, baseUri).href;
     if (currentUrl === fallbackUrl) return;
-    image.src = fallbackUrl;
+    image.src = DEFAULT_PORTRAIT; // 속성은 상대 경로 그대로(같은 출처), 비교만 절대 URL 로
   }
 
   return { PORTRAIT_CDN, RTK14_PORTRAIT_CDN, RTK14_SERVING_CDN, DEFAULT_PORTRAIT, rtk14OfficerId, portraitUrl, portraitVariantUrl, onPortraitError };
