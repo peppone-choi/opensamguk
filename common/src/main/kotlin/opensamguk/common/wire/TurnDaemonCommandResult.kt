@@ -629,7 +629,9 @@ private val COMMAND_LIFECYCLE_TYPES = setOf(
 private val TROOP_ACTION_TYPES = setOf("troopNew", "troopKick", "troopSetName")
 
 /** The board-intake ops sharing the collapsed [BoardActionResult] shape (slice C). */
-private val BOARD_ACTION_TYPES = setOf("boardArticle", "boardComment")
+// boardRead(ADR-LITE-049 14 기밀실 열람 기록)도 BoardActionResult 로 접힌다 — 빠지면 직렬화기가 `else -> throw` 로 떨어져
+// 턴 루프 전체가 「unknown result type=boardRead」 로 멈춘다(2026-09-06 로컬 실측).
+private val BOARD_ACTION_TYPES = setOf("boardArticle", "boardComment", "boardRead")
 val RETAINER_ACTION_TYPES = setOf("retainerPledge", "retainerRelease", "retainerTask", "bugokForm", "bugokDisband", "bugokAssignCommander")
 
 // ── W6 REST mutation batch — collapsed intake type sets ──

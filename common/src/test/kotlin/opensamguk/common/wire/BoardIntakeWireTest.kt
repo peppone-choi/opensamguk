@@ -44,4 +44,12 @@ class BoardIntakeWireTest {
         assertIs<BoardActionResult>(rfail)
         assertEquals(fail, rfail)
     }
+    @Test
+    fun `boardRead result routes to BoardActionResult on ok and fail`() {
+        // 회귀: boardRead 가 BOARD_ACTION_TYPES 에 없으면 직렬화기가 throw 해 턴 루프가 멈춘다(2026-09-06 실측).
+        val ok = BoardActionResult(type = "boardRead", ok = true, generalId = 10)
+        assertEquals(ok, resRoundTrip(ok))
+        val fail = BoardActionResult(type = "boardRead", ok = false, generalId = 10, reason = "게시물이 없습니다.")
+        assertEquals(fail, resRoundTrip(fail))
+    }
 }
