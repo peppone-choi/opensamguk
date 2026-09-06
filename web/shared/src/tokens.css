@@ -247,6 +247,9 @@
 /* ============================================================================
    칩 · 상태
    ========================================================================== */
+/* Icon — sprite <use>, currentColor. 글줄 안에서는 기준선 살짝 아래로 내려 글자와 맞춘다. */
+.os-icon { display: inline-block; flex: none; vertical-align: -0.15em; }
+
 .os-chip {
   display: inline-flex;
   align-items: center;

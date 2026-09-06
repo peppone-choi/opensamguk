@@ -370,15 +370,15 @@
 
 **Files:** Create `opensamguk-images/tools/ui-icons/{build.py,manifest.json}`, `opensamguk-images/tools/flags/build_flag_sprites.py`; Modify `opensamguk-images/ASSET-EXPORTS.md`
 
-- [ ] SVG 아이콘은 손으로 그린 원본 SVG(정본) → `svgo` 최적화 → sprite sheet + 개별 export. 래스터(깃발·일러스트)는 `sprite-gen` 파이프라인(생성 요청 SSoT → 행 스트립 → 크로마키 → 컴포넌트 추출 → atlas·manifest)으로 만들고 큐레이션 웹뷰로 후보를 고른다. 생성 도구가 세션에서 못 쓰이면 손 제작 SVG/픽셀로 대체하고 그 사실을 기록한다(UNKNOWN 은폐 금지).
-- [ ] 같은 입력에서 같은 atlas·manifest가 재생성되는지 `--check`로 검증. 시드·프롬프트·후처리 파라미터를 manifest에 남긴다.
-- [ ] export를 `web/{game,gateway}/public/{icons,flags,illustrations}/`로 복사하는 스크립트 + jsDelivr 태그 + CDN 200 스모크.
+- [~] SVG 아이콘은 손으로 그린 원본 SVG(정본) → 표준 라이브러리 최소화(`svgo` 미사용, 의존 0) → sprite sheet + 개별 export — **I-1 36종 완료(opensamguk-images #7, 태그 v2026.09.06)**. 래스터(깃발·일러스트)는 미착수. 래스터(깃발·일러스트)는 `sprite-gen` 파이프라인(생성 요청 SSoT → 행 스트립 → 크로마키 → 컴포넌트 추출 → atlas·manifest)으로 만들고 큐레이션 웹뷰로 후보를 고른다. 생성 도구가 세션에서 못 쓰이면 손 제작 SVG/픽셀로 대체하고 그 사실을 기록한다(UNKNOWN 은폐 금지).
+- [~] 같은 입력에서 같은 atlas·manifest가 재생성되는지 `--check`로 검증(I-1: `build_ui_icons.py --check` CI 배선 완료). 시드·프롬프트·후처리 파라미터를 manifest에 남긴다.
+- [~] export를 `web/{game,gateway}/public/{icons,flags,illustrations}/`로 복사하는 스크립트 + jsDelivr 태그 + CDN 200 스모크(icons 복사·태그 완료, CDN 스모크는 초상 3000건 보고서 `reports/ui-redesign/2026-09-06-rtk14-cdn-check.md`).
 
 ### Task 5.3: 화면 연결
 
 **Files:** Modify `web/shared/src/{Icon,Flag}.tsx`, 소비 화면
 
-- [ ] `Icon` 컴포넌트가 sprite 를 참조(name → symbol). `Flag`는 새 sprite + 국가색 mask. 빈 상태 일러스트는 `EmptyState` 프리미티브로. DPR 1/2 스냅샷 테스트.
+- [~] `Icon` 컴포넌트가 sprite 를 참조(name → symbol) — 완료(`web/shared/src/Icon.tsx`, `icons.ts`, `__tests__/icon.test.tsx` 가 두 앱 sprite 와 `ICON_NAMES` 일치를 검사·적색 프로브 확인). `Flag`는 새 sprite + 국가색 mask. 빈 상태 일러스트는 `EmptyState` 프리미티브로. DPR 1/2 스냅샷 테스트.
 
 ### Phase 5 게이트
 

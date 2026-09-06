@@ -2357,7 +2357,7 @@ input:focus, select:focus, textarea:focus {
 .records-hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .records-hub__item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-decoration: none; color: var(--text); }
 .records-hub__item:hover { border-color: var(--bronze-dim); text-decoration: none; color: var(--text); }
-.records-hub__icon { font-size: 22px; flex: none; }
+.records-hub__icon { flex: none; color: var(--bronze); display: inline-flex; }
 .records-hub__label { font-family: var(--font-serif); font-weight: 700; font-size: 15px; }
 .records-hub__desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 12px; }

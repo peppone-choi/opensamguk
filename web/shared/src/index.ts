@@ -10,6 +10,8 @@ export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Feed, FeedItem, type FeedItemProps, type FeedProps } from './Feed';
 export { Flag, type FlagProps } from './Flag';
 export { Gauge, type GaugeProps, type GaugeTone } from './Gauge';
+export { Icon, type IconProps, type IconSize } from './Icon';
+export { ICON_NAMES, ICON_SPRITE_PATH, type IconName } from './icons';
 export { KV, type KVItem, type KVProps } from './KV';
 export { LogText, type LogTextProps } from './LogText';
 export { logPlainText, parseLogTokens, type LogSegment, type LogTone } from './logTokens';
