@@ -231,6 +231,63 @@ class AdminVersionDeployTest {
     }
 
     @Test
+    fun `server env scenario lookup accepts exact empty and external modes`() {
+        listOf("", "/data/scenarios").forEach { value ->
+            FakeDeployer().use { deployer ->
+                val svc = DeployService(
+                    deployer.url(),
+                    "tok",
+                    registry(json = "[${canonicalServerJson("pep")}]"),
+                    mapper,
+                )
+                val body = mapper.writeValueAsString(
+                    mapOf("values" to mapOf("SCENARIO_LOOKUP_DIR" to value)),
+                )
+
+                val result = svc.patchServerEnv("pep", body)
+
+                assertEquals(200, result.status, "value=${mapper.writeValueAsString(value)}")
+                val request = deployer.requests.single()
+                assertEquals("PATCH", request.method)
+                assertEquals("/env/server?id=pep", request.path)
+                assertEquals(body, request.body)
+            }
+        }
+    }
+
+    @Test
+    fun `server env scenario lookup rejects every noncanonical value`() {
+        val invalidValues = listOf(
+            " ",
+            "/tmp/scenarios",
+            "/data/scenarios/",
+            "\${SCENARIO_DIR}",
+            "\r",
+            "\n",
+        )
+
+        FakeDeployer().use { deployer ->
+            val svc = DeployService(
+                deployer.url(),
+                "tok",
+                registry(json = "[${canonicalServerJson("pep")}]"),
+                mapper,
+            )
+
+            invalidValues.forEach { value ->
+                val body = mapper.writeValueAsString(
+                    mapOf("values" to mapOf("SCENARIO_LOOKUP_DIR" to value)),
+                )
+
+                val result = svc.patchServerEnv("pep", body)
+
+                assertEquals(400, result.status, "value=${mapper.writeValueAsString(value)}")
+            }
+            assertEquals(0, deployer.requests.size)
+        }
+    }
+
+    @Test
     fun `잘못된 env key는 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->

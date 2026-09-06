@@ -57,6 +57,7 @@ class DeployService(
         "TURN_PROFILE_NAME",
         "SCENARIO_SEED_ENABLED",
         "SCENARIO_CODE",
+        "SCENARIO_LOOKUP_DIR",
         "SERVER_NAME",
         "SERVER_GENERATION",
         "GAME_API_URL",
@@ -596,6 +597,7 @@ class DeployService(
                     !envKeyRegex.matches(key) ||
                         key !in allowedKeys ||
                         !value.isTextual ||
+                        key == "SCENARIO_LOOKUP_DIR" && !isExactScenarioLookupDir(value.asText()) ||
                         value.asText().contains('\n') ||
                         value.asText().contains('\r')
                 }
@@ -608,6 +610,9 @@ class DeployService(
         } catch (e: Exception) {
             json(400, """{"ok":false,"message":"환경변수 변경 요청 JSON이 올바르지 않습니다."}""")
         }
+
+    private fun isExactScenarioLookupDir(value: String): Boolean =
+        value == "" || value == "/data/scenarios"
 
     private fun validateLegacyEnvPair(values: com.fasterxml.jackson.databind.JsonNode): EnvProxyResponse? {
         val secretKey = "JWT_LEGACY_SECRET"
