@@ -9,6 +9,10 @@ vi.mock('@/lib/serverGameUrl', async () => {
     const actual = await vi.importActual<typeof import('@/lib/serverGameUrl')>('@/lib/serverGameUrl');
     return { ...actual, useServerId: mocks.serverId };
 });
+const authMock = vi.hoisted(() => ({ role: 'USER' as string | null }));
+vi.mock('@/lib/auth-context', () => ({
+    useAuthOptional: () => (authMock.role ? { user: { id: 1, username: 'u', nickname: null, email: null, role: authMock.role }, loading: false, refresh: vi.fn() } : null),
+}));
 
 const NONE: ControlGating = { showSecret: false, permission: 0, myLevel: 0, nationLevel: 0, isTournamentApplicationOpen: false, isBettingActive: false };
 
@@ -80,6 +84,19 @@ describe('DeptNav (부서 나브)', () => {
         expect(secret).toHaveAttribute('aria-disabled', 'true');
         const tipId = secret.parentElement?.querySelector('[role="tooltip"]')?.id;
         expect(document.getElementById(tipId ?? '')).toHaveTextContent('서버 정보 없음');
+    });
+
+    it('shows the 관리 entry only for ADMIN accounts', () => {
+        mocks.pathname.mockReturnValue('/game/s1');
+        mocks.serverId.mockReturnValue('s1');
+        authMock.role = 'USER';
+        const { unmount } = render(<DeptNav gating={NONE} global={{}} />);
+        expect(screen.queryByRole('link', { name: '관리' })).not.toBeInTheDocument();
+        unmount();
+        authMock.role = 'ADMIN';
+        render(<DeptNav gating={NONE} global={{}} />);
+        expect(screen.getByRole('link', { name: '관리' })).toHaveAttribute('href', '/game/s1/admin');
+        authMock.role = 'USER';
     });
 
     it('resolveDeptHref keeps external links and hashes, maps legacy php and server paths', () => {

@@ -123,3 +123,7 @@ export const TOURNAMENT_STATUS_LABEL: Record<string, string> = {
     FINISHED: '종료',
     CANCELLED: '취소',
 };
+
+// game-api AdminWriteController.SERVER_STATUSES 와 같은 집합(서버 상태 변경 허용값).
+export const SERVER_STATUSES = ['OPEN', 'PRE_OPEN', 'CLOSED'] as const;
+export type ServerStatus = (typeof SERVER_STATUSES)[number];

@@ -2251,3 +2251,13 @@ input:focus, select:focus, textarea:focus {
 
 .game-bottom-item--disabled { color: var(--muted); border-top: 2px dashed var(--line-2); }
 .game-bottom-item--disabled .game-bottom-label { cursor: not-allowed; }
+
+/* ===== 게임 관리 허브 (Phase 3) ===== */
+.admin-hub { display: flex; flex-direction: column; gap: 12px; }
+.admin-hub__head { padding: 0 12px; }
+.admin-hub__tabs { flex-wrap: wrap; }
+.admin-hub__panel { min-width: 0; }
+.server-status__body { display: grid; gap: 10px; padding: 12px; font-size: 13px; }
+.server-status__field { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; }
+.server-status__confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border: 1px dashed var(--rust); }
+.server-status__message { margin: 0; font-size: 12px; color: var(--info); }

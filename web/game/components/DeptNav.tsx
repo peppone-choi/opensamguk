@@ -7,6 +7,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { Chip, ReasonTooltip } from '@opensamguk/ui';
+import { useAuthOptional } from '@/lib/auth-context';
 import {
     buildDeptGroups,
     evaluateEntry,
@@ -195,6 +196,8 @@ export default function DeptNav({ gating, gatingState = gating ? 'ready' : 'load
     const [openKey, setOpenKey] = useState<string | null>(null);
     const rootRef = useRef<HTMLElement>(null);
     const groups = useMemo(() => buildDeptGroups(menu), [menu]);
+    const auth = useAuthOptional();
+    const isAdmin = auth?.user?.role === 'ADMIN';
 
     useEffect(() => {
         if (!openKey) return;
@@ -238,6 +241,11 @@ export default function DeptNav({ gating, gatingState = gating ? 'ready' : 'load
                 ))}
             </div>
             <div className="dept-nav__actions">
+                {isAdmin && (
+                    <a className="os-chip os-chip--rust dept-nav__admin" href={resolveDeptHref('/game/admin', serverId)} title="게임 관리(ADMIN)">
+                        관리
+                    </a>
+                )}
                 <button type="button" className="os-button os-button--ghost os-button--sm" onClick={onReload ?? (() => window.location.reload())}>
                     갱신
                 </button>

@@ -213,28 +213,28 @@
 ### Task 2.1: 백엔드 — 세력 현황 · 공지
 
 **Files:**
-- game-api: Create `controller/PublicNationSummaryController.kt` (`GET /api/public/nation-summary` → nation id·name·color·cityCount·generalCount·isMine, permitAll, 60s 캐시). 기존 `/api/rankings/kingdoms`가 같은 값을 공개로 주면 재사용하고 새 컨트롤러는 만들지 않는다(구현 전 확인).
-- gateway-api: Create `infra/src/main/resources/db/migration/V49__gateway_notice.sql`(id·title·body_html·pinned·published_at·created_by·deleted_at), `controller/NoticeController.kt`(`GET /notices` 공개, `/admin/notices` CRUD·pin), 서비스·리포지토리·IT.
-- web/gateway: `app/api/notices/route.ts`, `app/api/game/[...path]` 경유 세력 현황 프록시, `lib/notices.ts`.
+- [x] game-api: 새 컨트롤러 **없음** — 공개 `GET /api/rankings/kingdoms`(nationId·name·color·cityCount·genNum)가 이미 있어 재사용. 게이트웨이 `app/api/server-nations/[id]/route.ts` 가 프록시
+- [x] gateway-api: `V51__gateway_notice.sql`(V49·V50 은 이미 쓰여 51), `infra` `GatewayNoticeEntity`·`GatewayNoticeRepository`, `NoticeService`·`NoticeController`(`GET /notices` permitAll, `/admin/notices` CRUD·pin·soft-delete), `NoticeServiceTest` 4·`NoticeControllerTest` 2·`NoticePostgresIT` 1 통과. 본문은 평문(HTML 없음)
+- [x] web/gateway: `app/api/notices/route.ts`, `app/api/server-nations/[id]/route.ts`, `lib/notices.ts`(공지·세력 현황 계약), `components/NoticeBoard.tsx`·`NationSummary.tsx`(ServerBoard 안)
 - Test: gateway-api IT(공개 읽기 200 · 비ADMIN 쓰기 403), vitest 라우트 테스트.
 
 ### Task 2.2: 로그인(01) · M1
 
 **Files:** Modify `web/gateway/app/login/page.tsx`, `components/ServerBoard.tsx`, `ServerLog.tsx`, `MapPreview.tsx`(패널만), `globals.css` auth 절; Test 신규 `login-page.test.tsx`
 
-- [ ] 히어로 워드마크 280~340, 문구 2줄, 로그인 폼(계정명·비밀번호·표시·로그인 유지·「계정이 없으신가요? 회원가입」·오류 문자열 3종 verbatim), ServerBoard(서버 탭·세력/로그·프로빈스/현/군) 유지, 세력 현황(2.1) + 최근 사건(server-log), 개인정보처리방침·이용약관. 「비밀번호를 잊으셨나요?」는 복구 API가 없으므로 넣지 않는다.
+- [x] 히어로 워드마크 280~340, 「공개 알파」 칩, 문구, 로그인 카드(라벨·오류 3종 verbatim, 비밀번호 표시 토글), ServerBoard 유지 + 세력 현황 + 전황 로그, 공지, 푸터. 「비밀번호를 잊으셨나요?」·「로그인 유지」는 백엔드가 없어 넣지 않았다. 테스트 `login-page.test.tsx` 4건
 
 ### Task 2.3: 로비(02) · M2
 
 **Files:** Modify `web/gateway/app/lobby/page.tsx`, `lib/constants.ts`(라벨 불변), `globals.css` lobby 절; Test `lobby-*.test.tsx`
 
-- [ ] 서버 카드: 서 버(기수 배지) · 정 보(`nCountryLabel` 등 verbatim) · 캐 릭 터(`PortraitCard 148×210` + 링 / - 미 등 록 - / - 장수 등록 마감 -) · 선 택(입장 / 장수생성·장수빙의·장수선택 / - 폐 쇄 중 - / - 준 비 중 -). 필터 전체·참가 중·참가 가능·종료. 계 정 관 리(비밀번호 & 전콘 & 탈퇴 · 커뮤니티 게시판 · 관리(ADMIN) · 로그아웃), 각주 2건. 우측 세력 현황 + 공지. 로딩 「불러오는 중…」, 실패 행은 「- 폐 쇄 중 -」으로 남기고 숨기지 않는다.
+- [x] 서버 표(라벨 verbatim, 모바일 카드형): 서 버(기수·참가 중·종료 칩) · 정 보 · 캐 릭 터(초상 카드 56×80 — 148×210 은 표 행에 과해 축소 프리셋 사용) · 선 택. 필터 전체·참가 중·참가 가능·종료(`lib/lobbyEntry.ts`). 계 정 관 리 4항목, 각주 2건, 우측 공지, 세력 현황은 ServerBoard 안. 실패 행은 「- 폐 쇄 중 -」. 테스트 `lobby-filter.test.tsx` 2건 + 기존 로비 테스트 유지
 
 ### Task 2.4: 회원가입 · 계정
 
 **Files:** Modify `web/gateway/app/join/page.tsx`, `app/account/page.tsx`
 
-- [ ] 같은 프리미티브로 리스타일. 계정 폼은 390px에서 라벨 블록 + 컨트롤 전폭(감사 P1). 대표 장수 변경 UI는 Phase 4 웨이브 C에서 붙인다.
+- [x] 회원가입은 새 auth-card 스타일, 계정 페이지는 `.game-panel` 토큰 리스타일(390px 라벨 블록·전폭은 main 의 `.account-field` grid 가 이미 처리). 대표 장수 변경 UI는 Phase 4 웨이브 C
 
 ### Phase 2 게이트
 
@@ -248,7 +248,7 @@
 
 **Files:** Create `docs/admin/admin-surface-map.md`
 
-- [ ] gateway-api 22 엔드포인트 · board-api 관리 3 · game-api 8 · 토너먼트 관리 ↔ 화면 섹션/탭 표. 미배선 1건(`POST /api/admin/server-status`)을 표에 명시하고 3.2에서 연결한다.
+- [x] `docs/admin/admin-surface-map.md` — 섹션/탭 ↔ API ↔ 위험 등급. 미배선 `POST /api/admin/server-status` 는 「서버 상태」 탭으로 연결
 
 ### Task 3.1: 게이트웨이 운영 콘솔
 
@@ -256,11 +256,11 @@
 - Split: `web/gateway/app/admin/page.tsx`(1,756줄) → `components/admin/{AdminConsole,Overview,Members,BoardAndReports,Servers,Deploy,Environment,Notices}.tsx`, 기존 `MemberControl`·`BoardControl*`·`admin-server-lifecycle.ts` 재사용
 - Test: `web/gateway/__tests__/admin-*.test.tsx`(섹션별 렌더 + 401/403 graceful + 파괴적 작업 확인 흐름)
 
-- [ ] 개요: version(서비스별 태그) · deploy/status · turn-daemon/status(pause/resume) · 서버 목록.
-- [ ] 회원: users 목록(초상 아이콘 40·등급·상태) · users/{id}/{action} 전부 · scrub deleted/old · ban-email · system allow_login/allow_join 토글(현재값 먼저 표시, 변경 전 값 기록).
-- [ ] 게시판·신고: pin·soft-delete·(웨이브 C 이후) 신고 처리.
-- [ ] 서버: 생성·리셋·삭제 + `operationId` 폴링, 상태 5종(`pending/running/recovery_required/succeeded/failed·cancelled`) 표시 규칙을 `docs/admin/README.md` 그대로. 확인은 대상 서버 ID 재입력.
-- [ ] 배포: 태그 선택·재배포(immutable tag 안내). 환경: shared/server env 편집(현행 `EnvConfigEditor`). 공지: 2.1 CRUD.
+- [x] 개요(`AdminOverview`): version(서비스별 태그·불일치) · 서버별 배포 태그 · 데몬 상태. 기본 섹션은 「회원 관리」 — 개요가 마운트에서 version 을 한 번 더 부르면 서버 제어의 재조회 불변식 테스트가 깨져서, 개요는 눌렀을 때만 조회한다
+- [~] 회원: 기존 `MemberControl`(목록·조치·scrub·ban-email·allow_login/allow_join) 그대로 좌측 레일 섹션으로. 초상 아이콘 40·행 리스타일은 Phase 4 웨이브 A 표 리스타일과 함께
+- [~] 게시판: 기존 `BoardControl`(pin·soft-delete). 신고 처리는 웨이브 C 에서
+- [x] 서버: 기존 `ServerControl`(생성·버전 표·서버별 리셋/삭제/재배포, operationId 폴링·상태 5종·ID 재입력 확인)을 레일 섹션으로 유지(테스트 8건 불변)
+- [x] 배포는 서버 제어 안(서버별 `DeployControl`), 환경은 「게임 환경」(`GameEnvControl`), 공지는 신규 `NoticeControl`(목록·작성·수정·고정·soft-delete + ConfirmModal), 테스트 `admin-notice-control.test.tsx` 3건
 
 ### Task 3.2: 게임 관리 허브
 
@@ -270,11 +270,11 @@
 - Modify: `web/game/lib/api.ts`(`adminServerStatus` POST)
 - Test: 기존 `admin1-route`·`admin2-route` 유지 + 신규 `admin-hub-route.test.tsx`
 
-- [ ] 라벨·정렬 옵션은 BE `sortOptions` verbatim. BLOCKED 항목(historyStats·sabotageLog)은 「원천 부재」 안내 그대로. 서버 상태 탭은 `SERVER_STATUSES` 중 선택 + 확인.
+- [x] `app/game/admin/page.tsx` 허브(7탭, `?tab=`), 옛 6페이지 본문을 `components/admin/*Panel.tsx` 로 옮기고 옛 경로는 같은 패널을 그린다(admin1/admin2 라우트 테스트 불변). 서버 상태 탭 `ServerStatusPanel`: `SERVER_STATUSES` 선택 + 인라인 확인 + 「접수 ≠ 반영」 표기, `api.admin.serverStatus` 추가
 
 ### Task 3.3: 진입점 · 문서
 
-- [ ] 로비 「관리」(ADMIN) → 콘솔, 게임 상태바 ADMIN chip → `/game/admin`, 콘솔 서버 행 → 해당 서버 `/game/admin`(serverId 경로). `docs/admin/*.md`의 화면 경로 갱신.
+- [x] 로비 「관리 (ADMIN만)」 → `/admin`, 부서 나브 우측 「관리」 칩(ADMIN) → `/game/<id>/admin`, 상단바 「관리」. `docs/admin/README.md` 경로·대조표 링크 갱신. 콘솔 서버 행 → 게임 허브 링크는 서버 URL 이 레지스트리에 있을 때만 가능해 Phase 6 마감에서 검토
 
 ### Phase 3 게이트
 
