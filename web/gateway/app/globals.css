@@ -90,11 +90,12 @@ textarea:focus {
 }
 .btn-danger {
     background: var(--crimson);
-    color: var(--text-primary);
+    color: var(--ink); /* 밝은 글자는 적갈 위에서 2.9:1 — 먹색 글자 5.0:1 (axe 2026-09-06) */
     font-weight: 600;
 }
 .btn-danger:hover {
     background: var(--crimson-dim);
+    color: var(--text);
 }
 .btn-block {
     width: 100%;
@@ -1517,6 +1518,7 @@ textarea:focus {
 .admin-rail .admin-tab { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 14px; min-height: 40px; border: 0; border-left: 3px solid transparent; text-align: left; font-size: 13px; }
 .admin-rail .admin-tab.active { color: var(--bronze); border-left-color: var(--bronze); background: rgba(211, 176, 100, 0.08); }
 .admin-tab__risk { font-size: 10px; color: var(--muted); }
+.admin-rail .admin-tab.active .admin-tab__risk { color: var(--text-2); } /* 활성 탭 배경 위 10px 글자 — axe 대비 */
 .admin-panel { border-radius: 0; padding: 0; background: var(--panel); }
 .admin-panel__head { padding: 0 14px; }
 .admin-panel > :not(.admin-panel__head) { padding: 14px; }
