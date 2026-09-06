@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import java.net.InetSocketAddress
+import java.sql.Timestamp
+import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -686,6 +688,315 @@ class DeployServiceRegistryPersistenceTest {
     }
 
     @Test
+    fun `exact missing remote operation reconciles only old satisfied CREATE metadata`() {
+        FakeDeployer().use { deployer ->
+            val fixture = registryFixture(
+                """[
+                    {"id":"live1","name":"Live One","generation":2,"scenarioCode":"scenario_1010"},
+                    {"id":"live2","name":"Live Two","generation":3,"scenarioCode":"scenario_1020"}
+                ]""".trimIndent(),
+            )
+            fixture.jdbc.execute("CREATE TABLE account_fixture (id BIGINT PRIMARY KEY, username VARCHAR(50) NOT NULL)")
+            fixture.jdbc.update("INSERT INTO account_fixture (id, username) VALUES (1, 'unchanged-user')")
+            val server = requireNotNull(fixture.registry.find("live1"))
+            val other = requireNotNull(fixture.registry.find("live2"))
+            insertSatisfiedCreate(fixture.jdbc, server, RECONCILE_OPERATION_ID)
+            insertSatisfiedCreate(fixture.jdbc, other, OTHER_OPERATION_ID)
+            val beforeRegistry = fixture.registry.all()
+            deployer.enqueueMissingOperation()
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+
+            val result = service.reconcileSatisfiedCreate(
+                "live1",
+                RECONCILE_OPERATION_ID,
+                """{"confirm":"RECONCILE CREATE live1"}""",
+            )
+
+            assertEquals(200, result.status)
+            val body = mapper.readTree(result.body)
+            assertTrue(body.path("ok").asBoolean())
+            assertTrue(body.path("reconciled").asBoolean())
+            assertTrue(body.path("completed").asBoolean())
+            assertEquals("live1", body.path("id").asText())
+            assertEquals(RECONCILE_OPERATION_ID, body.path("operationId").asText())
+            assertFalse(body.has("operationStatus"))
+            assertEquals(beforeRegistry, fixture.registry.all())
+            assertEquals(
+                listOf(OTHER_OPERATION_ID),
+                fixture.jdbc.queryForList(
+                    "SELECT operation_id FROM game_server_registry_transition ORDER BY operation_id",
+                    String::class.java,
+                ).map(String::trim),
+            )
+            assertEquals(
+                mapOf("ID" to 1L, "USERNAME" to "unchanged-user"),
+                fixture.jdbc.queryForMap("SELECT id, username FROM account_fixture"),
+            )
+            assertEquals(listOf("/operations/$RECONCILE_OPERATION_ID"), deployer.requests)
+
+            val repeated = service.reconcileSatisfiedCreate(
+                "live1",
+                RECONCILE_OPERATION_ID,
+                """{"confirm":"RECONCILE CREATE live1"}""",
+            )
+            assertEquals(404, repeated.status)
+            assertEquals(listOf("/operations/$RECONCILE_OPERATION_ID"), deployer.requests)
+        }
+    }
+
+    @Test
+    fun `reconciliation validates canonical path operation and exact confirmation before claiming`() {
+        val invalidRequests = listOf(
+            Triple("Live1", RECONCILE_OPERATION_ID, """{"confirm":"RECONCILE CREATE live1"}"""),
+            Triple("live-1", RECONCILE_OPERATION_ID, """{"confirm":"RECONCILE CREATE live-1"}"""),
+            Triple("main", RECONCILE_OPERATION_ID, """{"confirm":"RECONCILE CREATE main"}"""),
+            Triple("live1", "bad-operation", """{"confirm":"RECONCILE CREATE live1"}"""),
+            Triple("live1", RECONCILE_OPERATION_ID, """{"confirm":"RECONCILE CREATE other"}"""),
+            Triple("live1", RECONCILE_OPERATION_ID, """{"confirm":"RECONCILE CREATE live1","extra":true}"""),
+            Triple("live1", RECONCILE_OPERATION_ID, "not-json"),
+        )
+
+        invalidRequests.forEach { (serverId, operationId, body) ->
+            FakeDeployer().use { deployer ->
+                val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
+                insertSatisfiedCreate(fixture.jdbc, requireNotNull(fixture.registry.find("live1")), RECONCILE_OPERATION_ID)
+                val ownerBefore = fixture.jdbc.queryForObject(
+                    "SELECT owner_token FROM game_server_registry_transition WHERE operation_id = ?",
+                    String::class.java,
+                    RECONCILE_OPERATION_ID,
+                )
+                val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+
+                val result = service.reconcileSatisfiedCreate(serverId, operationId, body)
+
+                assertEquals(400, result.status, "server=$serverId operation=$operationId body=$body")
+                assertEquals(
+                    ownerBefore,
+                    fixture.jdbc.queryForObject(
+                        "SELECT owner_token FROM game_server_registry_transition WHERE operation_id = ?",
+                        String::class.java,
+                        RECONCILE_OPERATION_ID,
+                    ),
+                )
+                assertTrue(deployer.requests.isEmpty())
+            }
+        }
+    }
+
+    @Test
+    fun `reconciliation distinguishes missing transition conflict and unavailable registry`() {
+        FakeDeployer().use { deployer ->
+            val fixture = registryFixture()
+            val configured = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val missing = configured.reconcileSatisfiedCreate(
+                "live1",
+                RECONCILE_OPERATION_ID,
+                """{"confirm":"RECONCILE CREATE live1"}""",
+            )
+            val unavailable = DeployService("", "", fixture.registry, mapper).reconcileSatisfiedCreate(
+                "live1",
+                RECONCILE_OPERATION_ID,
+                """{"confirm":"RECONCILE CREATE live1"}""",
+            )
+
+            assertEquals(404, missing.status)
+            assertEquals(503, unavailable.status)
+            assertTrue(deployer.requests.isEmpty())
+        }
+    }
+
+    @Test
+    fun `reconciliation claim rejects every ineligible transition before remote query`() {
+        data class GuardCase(
+            val label: String,
+            val action: ServerRegistryTransitionAction = ServerRegistryTransitionAction.CREATE,
+            val dispatched: Boolean = true,
+            val remoteApplied: Boolean = false,
+            val leaseUntil: Instant = Instant.now().minusSeconds(60),
+            val createdAt: Instant = Instant.now().minusSeconds(25 * 60 * 60),
+        )
+        val cases = listOf(
+            GuardCase("too young", createdAt = Instant.now().minusSeconds(23 * 60 * 60)),
+            GuardCase("not CREATE", action = ServerRegistryTransitionAction.RESET),
+            GuardCase("not dispatched", dispatched = false),
+            GuardCase("remote already applied", remoteApplied = true),
+            GuardCase("active lease", leaseUntil = Instant.now().plusSeconds(60)),
+        )
+
+        cases.forEach { case ->
+            FakeDeployer().use { deployer ->
+                val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
+                insertSatisfiedCreate(
+                    fixture.jdbc,
+                    requireNotNull(fixture.registry.find("live1")),
+                    RECONCILE_OPERATION_ID,
+                    action = case.action,
+                    dispatched = case.dispatched,
+                    remoteApplied = case.remoteApplied,
+                    leaseUntil = case.leaseUntil,
+                    createdAt = case.createdAt,
+                )
+                val result = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                    .reconcileSatisfiedCreate(
+                        "live1",
+                        RECONCILE_OPERATION_ID,
+                        """{"confirm":"RECONCILE CREATE live1"}""",
+                    )
+
+                assertEquals(409, result.status, case.label)
+                assertEquals(1, transitionCount(fixture.jdbc), case.label)
+                assertTrue(deployer.requests.isEmpty(), case.label)
+            }
+        }
+    }
+
+    @Test
+    fun `reconciliation refuses every changed registered server definition including null mismatches`() {
+        data class DefinitionCase(
+            val label: String,
+            val transitionServer: ServerDef,
+            val mutation: String,
+        )
+        val full = serverDef("live1").copy(generation = 2, scenarioCode = "scenario_1010")
+        val cases = listOf(
+            DefinitionCase("name", full, "UPDATE game_server SET display_name = 'Changed' WHERE server_id = 'live1'"),
+            DefinitionCase("game api", full, "UPDATE game_server SET game_api_url = 'http://changed' WHERE server_id = 'live1'"),
+            DefinitionCase("game engine", full, "UPDATE game_server SET game_engine_url = 'http://changed' WHERE server_id = 'live1'"),
+            DefinitionCase("deploy project", full, "UPDATE game_server SET deploy_project = 'changed' WHERE server_id = 'live1'"),
+            DefinitionCase("generation value", full, "UPDATE game_server SET generation = 3 WHERE server_id = 'live1'"),
+            DefinitionCase("scenario value", full, "UPDATE game_server SET scenario_code = 'scenario_1020' WHERE server_id = 'live1'"),
+            DefinitionCase("generation becomes null", full, "UPDATE game_server SET generation = NULL WHERE server_id = 'live1'"),
+            DefinitionCase("scenario becomes null", full, "UPDATE game_server SET scenario_code = NULL WHERE server_id = 'live1'"),
+            DefinitionCase("null generation becomes value", full.copy(generation = null), "UPDATE game_server SET generation = 2 WHERE server_id = 'live1'"),
+            DefinitionCase("null scenario becomes value", full.copy(scenarioCode = null), "UPDATE game_server SET scenario_code = 'scenario_1010' WHERE server_id = 'live1'"),
+        )
+
+        cases.forEach { case ->
+            FakeDeployer().use { deployer ->
+                val fixture = registryFixture()
+                fixture.registry.register(case.transitionServer)
+                insertSatisfiedCreate(fixture.jdbc, case.transitionServer, RECONCILE_OPERATION_ID)
+                fixture.jdbc.update(case.mutation)
+                deployer.enqueueMissingOperation()
+
+                val result = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                    .reconcileSatisfiedCreate(
+                        "live1",
+                        RECONCILE_OPERATION_ID,
+                        """{"confirm":"RECONCILE CREATE live1"}""",
+                    )
+
+                assertEquals(409, result.status, case.label)
+                assertEquals(1, transitionCount(fixture.jdbc), case.label)
+                assertEquals(listOf("/operations/$RECONCILE_OPERATION_ID"), deployer.requests, case.label)
+            }
+        }
+    }
+
+    @Test
+    fun `reconciliation refuses missing current registry membership after exact remote 404`() {
+        FakeDeployer().use { deployer ->
+            val fixture = registryFixture()
+            insertSatisfiedCreate(fixture.jdbc, serverDef("live1"), RECONCILE_OPERATION_ID)
+            deployer.enqueueMissingOperation()
+
+            val result = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                .reconcileSatisfiedCreate(
+                    "live1",
+                    RECONCILE_OPERATION_ID,
+                    """{"confirm":"RECONCILE CREATE live1"}""",
+                )
+
+            assertEquals(409, result.status)
+            assertEquals(1, transitionCount(fixture.jdbc))
+            assertEquals(listOf("/operations/$RECONCILE_OPERATION_ID"), deployer.requests)
+        }
+    }
+
+    @Test
+    fun `only exact remote 404 permits reconciliation and every other remote outcome releases its lease`() {
+        data class RemoteCase(val label: String, val status: Int, val body: String, val expectedStatus: Int)
+        val cases = listOf(
+            RemoteCase(
+                "pending",
+                200,
+                """{"operationId":"__OPERATION_ID__","kind":"create","subjectId":"live1","status":"pending","httpStatus":0,"publicMessage":"pending"}""",
+                409,
+            ),
+            RemoteCase(
+                "succeeded",
+                200,
+                """{"operationId":"__OPERATION_ID__","kind":"create","subjectId":"live1","status":"succeeded","httpStatus":200,"publicMessage":"done"}""",
+                409,
+            ),
+            RemoteCase(
+                "failed",
+                200,
+                """{"operationId":"__OPERATION_ID__","kind":"create","subjectId":"live1","status":"failed","httpStatus":409,"publicMessage":"failed"}""",
+                409,
+            ),
+            RemoteCase("timeout", 408, "{}", 503),
+            RemoteCase("server error", 500, "{}", 503),
+            RemoteCase("malformed 404", 404, """{"ok":false,"message":"not found"}""", 503),
+            RemoteCase(
+                "404 with extra field",
+                404,
+                """{"ok":false,"operationId":"__OPERATION_ID__","status":"not_found","message":"extra"}""",
+                503,
+            ),
+            RemoteCase(
+                "other operation 404",
+                404,
+                """{"ok":false,"operationId":"ffffffffffffffffffffffffffffffff","status":"not_found"}""",
+                503,
+            ),
+            RemoteCase(
+                "wrong kind",
+                200,
+                """{"operationId":"__OPERATION_ID__","kind":"reset","subjectId":"live1","status":"pending","httpStatus":0,"publicMessage":"pending"}""",
+                503,
+            ),
+            RemoteCase(
+                "wrong subject",
+                200,
+                """{"operationId":"__OPERATION_ID__","kind":"create","subjectId":"live2","status":"pending","httpStatus":0,"publicMessage":"pending"}""",
+                503,
+            ),
+            RemoteCase(
+                "missing public message",
+                200,
+                """{"operationId":"__OPERATION_ID__","kind":"create","subjectId":"live1","status":"pending","httpStatus":0}""",
+                503,
+            ),
+        )
+
+        cases.forEach { case ->
+            FakeDeployer().use { deployer ->
+                val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
+                insertSatisfiedCreate(fixture.jdbc, requireNotNull(fixture.registry.find("live1")), RECONCILE_OPERATION_ID)
+                deployer.enqueue(case.status, case.body)
+
+                val result = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                    .reconcileSatisfiedCreate(
+                        "live1",
+                        RECONCILE_OPERATION_ID,
+                        """{"confirm":"RECONCILE CREATE live1"}""",
+                    )
+
+                assertEquals(case.expectedStatus, result.status, case.label)
+                assertEquals(1, transitionCount(fixture.jdbc), case.label)
+                assertEquals(listOf("/operations/$RECONCILE_OPERATION_ID"), deployer.requests, case.label)
+                val leaseExpired = fixture.jdbc.queryForObject(
+                    "SELECT lease_until <= CURRENT_TIMESTAMP FROM game_server_registry_transition WHERE operation_id = ?",
+                    Boolean::class.java,
+                    RECONCILE_OPERATION_ID,
+                )
+                assertEquals(true, leaseExpired, case.label)
+            }
+        }
+    }
+
+    @Test
     fun `lease reclaim observes dispatched state written before row lock release`() {
         val fixture = registryFixture()
         val firstOwner = UUID.randomUUID().toString()
@@ -766,7 +1077,8 @@ class DeployServiceRegistryPersistenceTest {
                 dispatched BOOLEAN NOT NULL DEFAULT FALSE,
                 remote_applied BOOLEAN NOT NULL DEFAULT FALSE,
                 owner_token VARCHAR(36) NOT NULL,
-                lease_until TIMESTAMP WITH TIME ZONE NOT NULL
+                lease_until TIMESTAMP WITH TIME ZONE NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
             """.trimIndent(),
         )
@@ -774,6 +1086,51 @@ class DeployServiceRegistryPersistenceTest {
     }
 
     private data class RegistryFixture(val registry: ServerRegistry, val jdbc: JdbcTemplate)
+
+    private fun insertSatisfiedCreate(
+        jdbc: JdbcTemplate,
+        server: ServerDef,
+        operationId: String,
+        action: ServerRegistryTransitionAction = ServerRegistryTransitionAction.CREATE,
+        dispatched: Boolean = true,
+        remoteApplied: Boolean = false,
+        leaseUntil: Instant = Instant.now().minusSeconds(60),
+        createdAt: Instant = Instant.now().minusSeconds(25 * 60 * 60),
+    ) {
+        jdbc.update(
+            """
+            INSERT INTO game_server_registry_transition (
+                server_id, action, display_name, game_api_url, game_engine_url, deploy_project,
+                generation, scenario_code, operation_id, request_fingerprint,
+                dispatched, remote_applied, owner_token, lease_until, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """.trimIndent(),
+            server.id,
+            action.name,
+            server.name,
+            server.gameApiUrl,
+            server.gameEngineUrl,
+            server.deployProject,
+            server.generation,
+            server.scenarioCode,
+            operationId,
+            "a".repeat(64),
+            dispatched,
+            remoteApplied,
+            "old-owner",
+            Timestamp.from(leaseUntil),
+            Timestamp.from(createdAt),
+        )
+    }
+
+    private fun transitionCount(jdbc: JdbcTemplate): Int =
+        requireNotNull(
+            jdbc.queryForObject(
+                "SELECT COUNT(*) FROM game_server_registry_transition WHERE operation_id = ?",
+                Int::class.java,
+                RECONCILE_OPERATION_ID,
+            ),
+        )
 
     private fun serverDef(id: String): ServerDef =
         ServerDef(
@@ -783,6 +1140,11 @@ class DeployServiceRegistryPersistenceTest {
             gameEngineUrl = "http://s$id-game-engine:8082",
             deployProject = "opensamguk-s$id",
         )
+
+    companion object {
+        private const val RECONCILE_OPERATION_ID = "c123456789abcdef0123456789abcdef"
+        private const val OTHER_OPERATION_ID = "d123456789abcdef0123456789abcdef"
+    }
 
     private class FakeDeployer : AutoCloseable {
         private data class Response(

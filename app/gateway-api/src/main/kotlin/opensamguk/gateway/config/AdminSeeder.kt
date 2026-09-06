@@ -81,6 +81,11 @@ class AdminSeeder(
     }
 
     private fun ensureAdmin(user: UserEntity) {
+        if (user.role == "ADMIN" && user.grade == 6 &&
+            passwordEncoder.matches(adminPassword, user.password)
+        ) {
+            return
+        }
         user.password = passwordEncoder.encode(adminPassword)
         user.role = "ADMIN"
         user.grade = 6

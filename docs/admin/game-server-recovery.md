@@ -56,6 +56,42 @@ harness로 잠글 때까지 실제 운영 실행은 BLOCKED입니다.** 그 harn
 원자적으로 새 작업을 막되 기존 비대상 작업을 취소하지 않는 admission 경로 또는 별도의 명시적 권한 조정이
 필요합니다. source promotion workflow가 maintenance를 우회할 수 있으므로 전체 host lock 소비자도 확인해야 합니다.
 
+## 이미 충족된 CREATE 관리 메타데이터 조정
+
+원격 생성이 이미 완료되어 현재 Gateway `game_server`의 전체 정의가 생성 transition과 같지만,
+deployer가 해당 정확한 operation ID를 엄격한 `not_found` 404로 응답하는 오래된 잔존
+CREATE transition이 있을 수 있습니다. 이 경우에만 ADMIN이 다음 Gateway 경로로 조정을 요청할 수
+있습니다.
+
+```http
+POST /admin/servers/{canonicalServerId}/operations/{operationId}/reconcile-satisfied-create
+Content-Type: application/json
+
+{"confirm":"RECONCILE CREATE {canonicalServerId}"}
+```
+
+이 endpoint는 모두 일치할 때만 transition 한 행을 삭제합니다.
+
+- operation ID와 canonical server ID가 정확하고 확인 문구 외 다른 JSON 필드가 없음
+- CREATE가 24시간 이상 되었고 `dispatched=true`, `remote_applied=false`, 이전 lease가 만료됨
+- transition과 현재 `game_server`의 ID, 이름, game-api/game-engine URL, deploy project, generation,
+  scenario code가 transaction lock 안에서 null까지 포함해 전부 같음
+- deployer의 정확한 operation 조회가 다른 operation이나 일반 404가 아닌 엄격한 `not_found`임
+- 완료 직전에도 owner, lease, age, flags, fingerprint와 모든 서버 정의가 그대로임
+
+성공 응답은 `ok=true`, `reconciled=true`, `completed=true`이지만, 없는 원격 작업을
+`succeeded`로 만들어 내지 않습니다. 성공 후 반복 요청은 404입니다. 조건 불일치·활성 lease·원격
+pending/succeeded/failed와 같은 상태는 409, deployer/DB 조회 불가·5xx·timeout·잘못된 404는
+503으로 종료되며 transition을 삭제하지 않습니다. 이 경로는 remote POST, CREATE 재전송,
+`game_server` 등록/수정, 계정 수정, reset을 하지 않습니다.
+
+endpoint 호출 **전**에 운영자가 실제 runtime identity, 서버 env, control repository registry가
+Gateway의 현재 정의와 같은지 별도로 확인해야 합니다. management/lifecycle admission fence는
+이 비교를 시작하기 전부터 remote operation 조회와 reconciliation이 끝날 때까지 계속 유지해야
+합니다. 이 endpoint는 그 fence를 설정하지도, 유지 여부를 검증하지도 않습니다. 이 API가 증명하는 것은
+잠긴 Gateway DB 내의 정의 일치와 정확한 remote 404뿐입니다. 조정 성공은 냉간 복원,
+application drill, promotion, reset의 완료나 실행 승인이 아닙니다.
+
 외부 `data/scenarios` bind의 실제 파일은 이 bundle에 포함되지 않습니다. 앱 drill과 live 복구 전에는 당시의
 effective scenario 입력과 현재 입력이 동일함을 별도로 검증해야 합니다. 이미지와 DB 복원만으로 외부 scenario
 입력의 보존을 증명하지 않습니다. 다른 서버와 공유하는 scenario 디렉터리를 이 절차에서 바꾸지 않습니다.

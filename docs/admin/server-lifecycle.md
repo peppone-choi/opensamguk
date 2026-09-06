@@ -30,11 +30,32 @@ Gateway `/admin`의 `서버 제어`에서 서버 ID, 이름, 시나리오와 화
 
 생성 뒤에는 Gateway 로비 노출, game-api와 game-engine health, 시드 행 존재, turn clock 전진을 확인합니다.
 
+생성 성공 후 Gateway에만 오래된 CREATE transition이 남았다면 일반 생성 요청을 재전송하지
+않습니다. [냉간 복구 문서의 관리 메타데이터 조정 절](./game-server-recovery.md#이미-충족된-create-관리-메타데이터-조정)에
+따라 runtime/env/control registry를 먼저 대조하고, 24시간 이상·만료 lease·Gateway DB 전체 정의
+일치·deployer의 정확한 operation 404가 모두 증명된 경우에만 ADMIN 조정 endpoint를 사용합니다.
+이 조정은 transition 메타데이터 한 행만 삭제하며 생성, reset, 계정/게임 데이터 수정을 실행하지
+않습니다.
+
 ## 시나리오 시드와 reset
 
 로컬 fresh DB에서는 `ScenarioSeedRunner`가 외부 `SCENARIO_DIR`을 먼저 보고 없으면 classpath 시나리오를
 사용할 수 있습니다. 프로덕션은 기본 `SCENARIO_SEED_ENABLED=false`이며 운영자가 서버를 만들거나 reset하는
 경로가 정본입니다.
+
+서버별 시나리오 조회 소스 전환에는 Gateway env PATCH의 `SCENARIO_LOOKUP_DIR`을 사용합니다. 현재 운영
+사용 범위는 승인된 PEP 서버 전환뿐이며 다른 서버에는 이 키를 설정하지 않습니다. 값은 정규화하지 않고 아래
+세 모드로 구분합니다.
+
+- 키 미설정: 기존 동작을 유지하며 control Compose가 기존 `SCENARIO_DIR` 값 또는 기본
+  `/data/scenarios`를 사용합니다.
+- `SCENARIO_LOOKUP_DIR=`: engine/API에 빈 `SCENARIO_DIR`을 그대로 전달해 이미지에 포함된 classpath
+  시나리오를 조회합니다.
+- `SCENARIO_LOOKUP_DIR=/data/scenarios`: 읽기 전용으로 마운트된 외부 시나리오를 조회합니다.
+
+빈 문자열과 정확한 `/data/scenarios` 외의 값은 Gateway와 deployer가 모두 거부합니다. 공백, 다른 경로,
+후행 슬래시와 보간 표현은 classpath 또는 외부 모드로 해석하지 않습니다. 이 선택은 기존 scenario bind
+mount나 reset body를 변경하지 않습니다.
 
 > **현재 production reset은 blocked입니다.** [냉간 백업·복원 절차](./game-server-recovery.md)에 실행 도구와
 > 보존 정책·RPO/RTO를 정의했지만 로컬 테스트는 실제 운영 복구를 증명하지 않습니다. 각 작업의 실제 bundle

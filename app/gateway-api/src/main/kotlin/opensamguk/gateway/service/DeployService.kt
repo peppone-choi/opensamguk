@@ -57,6 +57,7 @@ class DeployService(
         "TURN_PROFILE_NAME",
         "SCENARIO_SEED_ENABLED",
         "SCENARIO_CODE",
+        "SCENARIO_LOOKUP_DIR",
         "SERVER_NAME",
         "SERVER_GENERATION",
         "GAME_API_URL",
@@ -320,6 +321,50 @@ class DeployService(
         return resumeRegistryTransition(transition, requestPayload)
     }
 
+    fun reconcileSatisfiedCreate(
+        serverId: String,
+        operationId: String,
+        body: String,
+    ): EnvProxyResponse {
+        val canonicalId = canonicalServerId(serverId)
+        if (canonicalId == null || canonicalId != serverId ||
+            canonicalId in reservedPublicServerIds || canonicalId in reservedGameRouteIds
+        ) {
+            return json(400, """{"ok":false,"message":"서버 id가 올바르지 않습니다."}""")
+        }
+        if (!operationIdRegex.matches(operationId)) {
+            return json(400, """{"ok":false,"message":"작업 id가 올바르지 않습니다."}""")
+        }
+        validateSatisfiedCreateReconciliation(body, canonicalId)?.let { return it }
+        if (!configured()) {
+            return reconciliationUnavailable(canonicalId, operationId)
+        }
+
+        val transition = try {
+            registry.claimSatisfiedCreate(operationId, canonicalId, UUID.randomUUID().toString())
+        } catch (e: ServerRegistryTransitionConflict) {
+            return reconciliationConflict(canonicalId, operationId)
+        } catch (e: Exception) {
+            log.error("satisfied CREATE reconciliation claim failed server={} operation={}", canonicalId, operationId, e)
+            return reconciliationUnavailable(canonicalId, operationId)
+        } ?: return reconciliationMissing(canonicalId, operationId)
+
+        return when (queryRemoteLifecycleOperation(transition)) {
+            RemoteLifecycleOperation.Missing -> completeSatisfiedCreateReconciliation(transition)
+            RemoteLifecycleOperation.Unavailable -> {
+                releaseRegistryTransition(transition)
+                reconciliationUnavailable(canonicalId, operationId)
+            }
+            is RemoteLifecycleOperation.Pending,
+            is RemoteLifecycleOperation.Succeeded,
+            is RemoteLifecycleOperation.Failed,
+            -> {
+                releaseRegistryTransition(transition)
+                reconciliationConflict(canonicalId, operationId)
+            }
+        }
+    }
+
     @Synchronized
     fun operationStatus(operationId: String): EnvProxyResponse {
         if (!operationIdRegex.matches(operationId)) {
@@ -552,6 +597,7 @@ class DeployService(
                     !envKeyRegex.matches(key) ||
                         key !in allowedKeys ||
                         !value.isTextual ||
+                        key == "SCENARIO_LOOKUP_DIR" && !isExactScenarioLookupDir(value.asText()) ||
                         value.asText().contains('\n') ||
                         value.asText().contains('\r')
                 }
@@ -564,6 +610,9 @@ class DeployService(
         } catch (e: Exception) {
             json(400, """{"ok":false,"message":"환경변수 변경 요청 JSON이 올바르지 않습니다."}""")
         }
+
+    private fun isExactScenarioLookupDir(value: String): Boolean =
+        value == "" || value == "/data/scenarios"
 
     private fun validateLegacyEnvPair(values: com.fasterxml.jackson.databind.JsonNode): EnvProxyResponse? {
         val secretKey = "JWT_LEGACY_SECRET"
@@ -748,6 +797,20 @@ class DeployService(
             }
         } catch (e: Exception) {
             json(400, """{"ok":false,"message":"서버 종료 요청 JSON이 올바르지 않습니다."}""")
+        }
+
+    private fun validateSatisfiedCreateReconciliation(body: String, serverId: String): EnvProxyResponse? =
+        try {
+            val node = objectMapper.readTree(body)
+            if (!node.isObject || node.size() != 1 || !node.path("confirm").isTextual ||
+                node.path("confirm").asText() != "RECONCILE CREATE $serverId"
+            ) {
+                json(400, """{"ok":false,"message":"CREATE 조정 확인 문구가 일치하지 않습니다."}""")
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            json(400, """{"ok":false,"message":"CREATE 조정 요청 JSON이 올바르지 않습니다."}""")
         }
 
     private fun canonicalServerDefs(servers: List<ServerDef>): List<ServerDef>? {
@@ -1133,6 +1196,35 @@ class DeployService(
             registryRepairPending(transition, remoteApplied = true)
         }
 
+    private fun completeSatisfiedCreateReconciliation(transition: ServerRegistryTransition): EnvProxyResponse =
+        try {
+            registry.completeSatisfiedCreateReconciliation(transition)
+            json(
+                200,
+                objectMapper.writeValueAsString(
+                    linkedMapOf(
+                        "ok" to true,
+                        "reconciled" to true,
+                        "completed" to true,
+                        "id" to transition.server.id,
+                        "operationId" to transition.operationId,
+                    ),
+                ),
+            )
+        } catch (e: ServerRegistryTransitionConflict) {
+            releaseRegistryTransition(transition)
+            reconciliationConflict(transition.server.id, transition.operationId)
+        } catch (e: Exception) {
+            log.error(
+                "satisfied CREATE reconciliation completion failed server={} operation={}",
+                transition.server.id,
+                transition.operationId,
+                e,
+            )
+            releaseRegistryTransition(transition)
+            reconciliationUnavailable(transition.server.id, transition.operationId)
+        }
+
     private fun releaseRegistryTransition(transition: ServerRegistryTransition) {
         try {
             registry.releaseTransition(transition.server.id, transition.action, transition.ownerToken)
@@ -1157,6 +1249,45 @@ class DeployService(
             503,
             objectMapper.writeValueAsString(
                 mapOf("ok" to false, "id" to serverId, "message" to "서버 레지스트리를 준비하지 못해 deployer를 호출하지 않았습니다."),
+            ),
+        )
+
+    private fun reconciliationMissing(serverId: String, operationId: String): EnvProxyResponse =
+        json(
+            404,
+            objectMapper.writeValueAsString(
+                mapOf(
+                    "ok" to false,
+                    "id" to serverId,
+                    "operationId" to operationId,
+                    "message" to "조정할 서버 레지스트리 CREATE 작업을 찾지 못했습니다.",
+                ),
+            ),
+        )
+
+    private fun reconciliationConflict(serverId: String, operationId: String): EnvProxyResponse =
+        json(
+            409,
+            objectMapper.writeValueAsString(
+                mapOf(
+                    "ok" to false,
+                    "id" to serverId,
+                    "operationId" to operationId,
+                    "message" to "CREATE 조정 선행 조건이 더 이상 일치하지 않습니다.",
+                ),
+            ),
+        )
+
+    private fun reconciliationUnavailable(serverId: String, operationId: String): EnvProxyResponse =
+        json(
+            503,
+            objectMapper.writeValueAsString(
+                mapOf(
+                    "ok" to false,
+                    "id" to serverId,
+                    "operationId" to operationId,
+                    "message" to "CREATE 조정을 안전하게 확인하지 못했습니다.",
+                ),
             ),
         )
 

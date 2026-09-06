@@ -122,6 +122,17 @@ class AdminController(
     ): ResponseEntity<String> =
         deployService.resetServer(serverId, body ?: "{}").toResponse()
 
+    @PostMapping(
+        "/servers/{serverId}/operations/{operationId}/reconcile-satisfied-create",
+        produces = [MediaType.APPLICATION_JSON_VALUE],
+    )
+    fun reconcileSatisfiedCreate(
+        @PathVariable serverId: String,
+        @PathVariable operationId: String,
+        @RequestBody body: String,
+    ): ResponseEntity<String> =
+        deployService.reconcileSatisfiedCreate(serverId, operationId, body).toResponse()
+
     @GetMapping("/servers/operations/{operationId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun serverOperationStatus(@PathVariable operationId: String): ResponseEntity<String> =
         deployService.operationStatus(operationId).toResponse()

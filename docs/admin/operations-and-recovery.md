@@ -39,6 +39,32 @@ Gateway 상태 전이·복구 관문을 우회할 권한으로 해석하지 않�
 
 ## 배포 후 체크리스트
 
+### shared source 배포의 idle maintenance admission
+
+`main` source 배포 workflow는 먼저 `/tmp/opensamguk-production.lock`을 잡고, 이미 실행
+중인 deployer의 loopback control plane을 조회합니다. 초기 상태가
+`maintenance-v1/open`이고 `POST /maintenance/enter-if-idle`가 새 `drained` window를 원자적으로
+내준 경우에만 Git 동기화, socket-proxy/deployer 교체, shared env/image/container 변경을
+시작합니다. 활성 lifecycle 작업, 기존의 닫힌 maintenance, 구형 controller, 잘못된
+응답, transport 장애는 모두 변경 전에 fail-closed로 중단합니다. 자동 workflow는
+기존 작업을 취소하는 `/maintenance/enter`로 fallback하지 않습니다.
+
+첫 업그레이드에서 controller가 `enter-if-idle`을 지원하지 않으면 source workflow가
+자체로 controller를 교체하지 않습니다. 인증 HTTP를 위해 구형 deployer CLI를 실행하면
+request dispatch 전에 durable recovery가 시작될 수 있으므로, 별도로 검토·승인된
+control-plane 초기 업그레이드 절차를 사용합니다. 수동 marker 생성, 취소형 maintenance
+entry, 자동 repair로 이 관문을 우회하지 않습니다.
+
+admission 이후에 rollout이나 leave 이전 검증이 하나라도 실패하면 maintenance를 닫힌
+채 남겨 운영자가 원인을 조사하게 합니다. 교체된 controller가 여전히 `drained`인지,
+deployer→Docker 도달성과 registry, shared/public health, 모든 실행 중 registered game server의
+API·engine·web route·daemon recovery/clock 검증이 모두 성공한 뒤에만 workflow
+자신이 소유한 window를 leave합니다. leave request의 transport가 실패하거나 응답이
+잘못되면 서버에서 leave가 commit되었는지 알 수 없으므로 상태는 `UNKNOWN`입니다. 자동
+재시도·repair·open 단정 없이 운영자가 control plane을 조회합니다. 이 배포는 서버별
+`IMAGE_TAG`/`WEB_GAME_TAG`를 변경하거나 game service를 시작·중지하거나 rollback image를
+광범위하게 prune하지 않습니다.
+
 - nginx `/health`
 - gateway-api, game-api, game-engine health
 - 로그인 → 로비 → 대상 서버 입장

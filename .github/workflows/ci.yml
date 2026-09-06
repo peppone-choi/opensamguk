@@ -127,6 +127,9 @@ jobs:
       - name: Verify deploy service inventory contract
         if: '!cancelled()'
         run: python3 tools/ops/test_deploy_service_inventory_contract.py
+      - name: Verify source deploy maintenance admission
+        if: '!cancelled()'
+        run: python3 tools/ops/test_source_deploy_maintenance.py
       - name: Verify game server recovery behavioral guards
         if: '!cancelled()'
         run: python3 tools/ops/test_game_server_recovery.py

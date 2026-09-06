@@ -259,6 +259,113 @@ jobs:
           STACK="$HOME/opensamguk-docker"
           cd "$STACK"
 
+          maintenance_response_state() {
+            local response="$1"
+            local expected_state="$2"
+            local lease_contract="$3"
+            printf '%s' "$response" | python3 -c '
+          import json
+          import re
+          import sys
+
+          expected_state, lease_contract = sys.argv[1:]
+          payload = json.load(sys.stdin)
+          expected_keys = {"capability", "state", "lease"} if lease_contract == "required" else {"capability", "state"}
+          valid = (
+              isinstance(payload, dict)
+              and set(payload) == expected_keys
+              and payload.get("capability") == "maintenance-v1"
+              and payload.get("state") == expected_state
+          )
+          if lease_contract == "required":
+              valid = valid and isinstance(payload.get("lease"), str) and re.fullmatch(r"[a-f0-9]{32}", payload["lease"]) is not None
+          valid or sys.exit(1)
+          print(payload["state"])
+          ' "$expected_state" "$lease_contract"
+          }
+          maintenance_http() {
+            local method="$1"
+            local path="$2"
+            local timeout_seconds="$3"
+            docker exec opensamguk-deployer python3 -c '
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+
+          method, path, timeout_text = sys.argv[1:]
+          allowed = {
+              ("GET", "/maintenance"),
+              ("POST", "/maintenance/enter-if-idle"),
+              ("POST", "/maintenance/leave"),
+          }
+          if (method, path) not in allowed:
+              raise SystemExit(2)
+          try:
+              timeout_seconds = int(timeout_text)
+          except ValueError:
+              raise SystemExit(2)
+          if not 1 <= timeout_seconds <= 30:
+              raise SystemExit(2)
+          token = os.environ.get("DEPLOYER_TOKEN", "")
+          if not token:
+              raise SystemExit(2)
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          request = urllib.request.Request(
+              "http://localhost:9000" + path,
+              data=b"" if method == "POST" else None,
+              headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+              method=method,
+          )
+          try:
+              response = urllib.request.build_opener(NoRedirect).open(request, timeout=timeout_seconds)
+          except urllib.error.HTTPError as error:
+              response = error
+          except (OSError, TimeoutError, urllib.error.URLError):
+              raise SystemExit(1)
+          try:
+              body = response.read(4097)
+              status = response.status
+          finally:
+              response.close()
+          if len(body) > 4096:
+              raise SystemExit(1)
+          sys.stdout.buffer.write(body)
+          raise SystemExit(0 if 200 <= status < 300 else 8)
+          ' "$method" "$path" "$timeout_seconds"
+          }
+
+          MAINTENANCE_OWNED=false
+          if ! DEPLOYER_RUNNING="$(docker ps --format '{{.Names}}')"; then
+            echo "ERROR: cannot inspect the running deployer before source deployment; leaving maintenance unchanged" >&2
+            exit 1
+          fi
+          if ! grep -Fxq opensamguk-deployer <<<"$DEPLOYER_RUNNING"; then
+            echo "ERROR: a running deployer with atomic idle admission is required before source deployment" >&2
+            exit 1
+          fi
+          if ! MAINTENANCE_RESPONSE="$(maintenance_http GET /maintenance 10 2>/dev/null)"; then
+            echo "ERROR: running deployer lacks a reachable maintenance-v1 control plane; source deployment did not mutate the stack" >&2
+            exit 1
+          fi
+          if ! MAINTENANCE_STATE="$(maintenance_response_state "$MAINTENANCE_RESPONSE" open absent 2>/dev/null)"; then
+            echo "ERROR: source deployment requires an initially open maintenance-v1 controller" >&2
+            exit 1
+          fi
+          if ! MAINTENANCE_RESPONSE="$(maintenance_http POST /maintenance/enter-if-idle 10 2>/dev/null)"; then
+            echo "ERROR: deployer is busy or does not support atomic idle admission; source deployment did not mutate the stack" >&2
+            exit 1
+          fi
+          if ! MAINTENANCE_STATE="$(maintenance_response_state "$MAINTENANCE_RESPONSE" drained required 2>/dev/null)"; then
+            echo "ERROR: deployer returned an invalid atomic idle-admission response; source deployment did not mutate the stack" >&2
+            exit 1
+          fi
+          MAINTENANCE_OWNED=true
+
           echo "=== Syncing opensamguk-docker main ==="
           if [ -n "$(git status --porcelain --untracked-files=normal)" ]; then
             echo "ERROR: refusing to sync a dirty tracked or non-ignored untracked opensamguk-docker tree; ignored runtime env files are untouched" >&2
@@ -428,23 +535,19 @@ jobs:
           # nginx LAST + force-recreate(업스트림 IP 재해석 — Rule A: stale-DNS 502 방지)
           $COMPOSE up -d --force-recreate --no-deps nginx
 
-          docker image prune -af --filter "until=168h"
-          echo "=== Shared deploy complete; game server pins are unchanged ==="
+          if ! MAINTENANCE_RESPONSE="$(maintenance_http GET /maintenance 10 2>/dev/null)"; then
+            echo "ERROR: recreated deployer maintenance state is unavailable; leaving the owned window closed" >&2
+            exit 1
+          fi
+          if ! MAINTENANCE_STATE="$(maintenance_response_state "$MAINTENANCE_RESPONSE" drained absent 2>/dev/null)"; then
+            echo "ERROR: recreated deployer did not preserve the drained maintenance barrier; leaving it closed" >&2
+            exit 1
+          fi
 
-      - name: Preserve game server version pins
-        run: |
-          set -euo pipefail
-          STACK="$HOME/opensamguk-docker"
-          cd "$STACK"
-          shopt -s nullglob
-          readonly PUBLIC_SERVER_ID_PATTERN='^[a-z0-9]{1,48}$'
-          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+          docker exec opensamguk-deployer \
+            /usr/local/bin/deployer --check-running-registry-targets
 
-          is_reserved_public_server_id() {
-            local server_id="$1"
-            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
-          }
-
+          echo "=== Verifying game server version pins ==="
           found=0
           for envf in servers/s*.env; do
             case "$envf" in *.bak*|*.example) continue;; esac
@@ -469,9 +572,6 @@ jobs:
             echo "game server pins preserved; promote explicitly outside this workflow"
           fi
 
-      - name: Verify (health + registered game servers)
-        run: |
-          set -euo pipefail
           dump_shared_diagnostics() {
             status=$?
             echo "=== Shared diagnostics (status=$status) ==="
@@ -496,10 +596,12 @@ jobs:
             sleep 5
           done
           for i in $(seq 1 30); do
-            RESP=$(curl -sf "http://localhost/api/gateway/actuator/health" 2>/dev/null || echo DOWN)
-            if echo "$RESP" | grep -q '"status":"UP"'; then
-              echo "gateway-api health: OK"
-              break
+            RESP=""
+            if RESP=$(curl -sf "http://localhost/api/gateway/actuator/health" 2>/dev/null); then
+              if echo "$RESP" | grep -q '"status":"UP"'; then
+                echo "gateway-api health: OK"
+                break
+              fi
             fi
             if [ "$i" -eq 30 ]; then
               echo "gateway-api health: FAILED — $RESP"
@@ -508,10 +610,12 @@ jobs:
             sleep 5
           done
           for i in $(seq 1 30); do
-            RESP=$(docker exec opensamguk-board-api curl -sf http://localhost:8083/actuator/health 2>/dev/null || echo DOWN)
-            if echo "$RESP" | grep -q '"status":"UP"'; then
-              echo "board-api health: OK"
-              break
+            RESP=""
+            if RESP=$(docker exec opensamguk-board-api curl -sf http://localhost:8083/actuator/health 2>/dev/null); then
+              if echo "$RESP" | grep -q '"status":"UP"'; then
+                echo "board-api health: OK"
+                break
+              fi
             fi
             if [ "$i" -eq 30 ]; then
               echo "board-api health: FAILED — $RESP"
@@ -520,10 +624,12 @@ jobs:
             sleep 5
           done
           for i in $(seq 1 30); do
-            RESP=$(curl -sf "http://localhost/api/health" 2>/dev/null || echo DOWN)
-            if echo "$RESP" | grep -q '"status":"UP"'; then
-              echo "web-gateway health: OK"
-              break
+            RESP=""
+            if RESP=$(curl -sf "http://localhost/api/health" 2>/dev/null); then
+              if echo "$RESP" | grep -q '"status":"UP"'; then
+                echo "web-gateway health: OK"
+                break
+              fi
             fi
             if [ "$i" -eq 30 ]; then
               echo "web-gateway health: FAILED — $RESP"
@@ -531,17 +637,6 @@ jobs:
             fi
             sleep 5
           done
-          STACK="$HOME/opensamguk-docker"
-          cd "$STACK"
-          shopt -s nullglob
-          readonly PUBLIC_SERVER_ID_PATTERN='^[a-z0-9]{1,48}$'
-          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
-
-          is_reserved_public_server_id() {
-            local server_id="$1"
-            [[ " $RESERVED_PUBLIC_SERVER_IDS " == *" $server_id "* ]]
-          }
-
           read_world_clock() {
             local postgres_container="$1"
             docker exec "$postgres_container" sh -c \
@@ -743,3 +838,19 @@ jobs:
             done
           fi
           echo "=== Verify done ==="
+
+          if [ "$MAINTENANCE_OWNED" != true ]; then
+            echo "ERROR: refusing to leave a maintenance window this workflow does not own" >&2
+            exit 1
+          fi
+          if ! MAINTENANCE_RESPONSE="$(maintenance_http POST /maintenance/leave 10 2>/dev/null)"; then
+            echo "ERROR: maintenance leave result is unknown after successful source deployment; operator inspection is required without blind retry" >&2
+            exit 1
+          fi
+          if ! MAINTENANCE_STATE="$(maintenance_response_state "$MAINTENANCE_RESPONSE" open absent 2>/dev/null)"; then
+            echo "ERROR: maintenance leave state is unknown after an invalid response; operator inspection is required without blind retry" >&2
+            exit 1
+          fi
+          MAINTENANCE_OWNED=false
+          trap - ERR
+          echo "=== Shared deploy complete; game server pins are unchanged ==="
