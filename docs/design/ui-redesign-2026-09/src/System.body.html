@@ -1,0 +1,106 @@
+<div style="width:1440px;height:1040px;background:#0c0f0e;padding:32px 40px;display:flex;flex-direction:column;gap:24px;overflow:hidden">
+  <div style="display:flex;align-items:baseline;gap:14px"><span class="serif" style="font-size:26px;font-weight:900">디자인 시스템 초안</span><span style="font-size:13px;color:#8a8477">야전 사령부 (Concept A) 기준 · 실제 라벨·게이팅·API 상태 보존</span></div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr);gap:20px;flex:1;min-height:0">
+    <!-- col 1: palette + type + states -->
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;color:#8a8477;letter-spacing:.08em">팔레트</span>
+        <div style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:6px">
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:40px;background:#0c0f0e;border:1px solid #3d4740"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#0c0f0e</span><span style="font-size:11px">야전 흑 · 바탕</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:40px;background:#1b201d;border:1px solid #3d4740"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#1b201d</span><span style="font-size:11px">철판 · 패널</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:40px;background:#d3b064"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#d3b064</span><span style="font-size:11px">청동 · 활성·CTA</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:40px;background:#697e58"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#697e58</span><span style="font-size:11px">이끼 · 보조·가능</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:40px;background:#c96b5d"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#c96b5d</span><span style="font-size:11px">적갈 · 위험·전투</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:28px;background:#7aa7c7"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#7aa7c7</span><span style="font-size:11px">정보·외교</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:28px;background:#ffd36d"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#ffd36d</span><span style="font-size:11px">포커스·선택</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:28px;background:#ece6d8"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#ece6d8</span><span style="font-size:11px">본문</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:28px;background:#8a8477"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#8a8477</span><span style="font-size:11px">보조 (4.6:1)</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:28px;background:#3d4740"></div><span class="mono" style="font-size:10px;color:#b9b2a3">#3d4740</span><span style="font-size:11px">경계 강</span></div>
+        </div>
+        <div style="font-size:11px;color:#8a8477;line-height:1.5">국가색은 깃발·초상 링·영토 tint에만. 도시·지형 아이콘 본체에는 쓰지 않는다 (로드맵 규칙). 위/촉/오 고정색 없음, 유저 선택.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;color:#8a8477;letter-spacing:.08em">타이포</span>
+        <div class="panel" style="padding:12px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px"><img src="logo-wordmark-sm.png" alt="오픈삼국" style="display:block;height:34px;width:auto"><span style="font-size:11px;color:#8a8477">브랜드는 기존 워드마크(`logo-wordmark.png`, 마스터 `assets/brand/logo-master.png`)만 쓴다. 헤더 28~32px, 로그인 히어로 280~340px. 텍스트로 대체하지 않는다.</span></div>
+          <div style="display:flex;align-items:baseline;gap:12px"><span class="serif" style="font-size:22px;font-weight:900">천하 지도 · 편년체</span><span style="font-size:11px;color:#8a8477">Noto Serif KR 700/900 · 제목·연호·인물명·연대기 (16px 이상만)</span></div>
+          <div style="display:flex;align-items:baseline;gap:12px"><span style="font-size:14px">명령의 조건·비용·결과·실패 이유</span><span style="font-size:11px;color:#8a8477">Noto Sans KR (배포 시 Pretendard) 400/500/700 · 본문 13~15px</span></div>
+          <div style="display:flex;align-items:baseline;gap:12px"><span class="mono" style="font-size:14px">200年 3月 · 04:12 · 12,480</span><span style="font-size:11px;color:#8a8477">JetBrains Mono · tabular · 수치·시각·좌표 10~14px</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;color:#8a8477;letter-spacing:.08em">명령 상태 4종 · 버튼</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip moss">사용 가능</span><span class="chip info">대상 필요</span><span class="chip rust">사용 불가 + 이유</span><span class="chip">정보 부족</span><span class="chip bronze">봉인됨</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="btn primary">주 행동</span><span class="btn">보조</span><span class="btn ghost">고스트</span><span class="btn danger">위험</span><span class="btn disabled">권한 없음 (점선)</span></div>
+        <div style="font-size:11px;color:#8a8477;line-height:1.5">비활성은 흐리기 대신 점선 테두리 + 6.5:1 텍스트. 터치 목표 44px. 포커스 링 3px #ffd36d. 키보드 단축키 없음.</div>
+      </div>
+    </div>
+
+    <!-- col 2: portraits -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span style="font-size:12px;color:#8a8477;letter-spacing:.08em">초상 3종 사용 규칙</span>
+      <div class="panel" style="display:grid;grid-template-columns:110px 1fr;gap:14px;padding:12px">
+        <div style="position:relative;width:110px;height:156px;overflow:hidden;border:1px solid #3d4740">@@PT(110,156,hahoudon)@@<div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,#1b201d 100%)"></div><div style="position:absolute;left:8px;bottom:8px;font-size:11px;font-weight:700">하후돈</div></div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+          <b>원본 633×900 · 히어로</b>
+          <span style="color:#b9b2a3;line-height:1.5">장수 상세 좌측 전면, 전투 리플레이 對 대치, 로비 “내 장수” 강조, 명령 모달 헤더 배경. 항상 하단 그라데이션 마스크로 패널에 녹인다. 잘라 쓰지 않고 위치만 잡는다 (object-position top).</span>
+          <span style="color:#8a8477">최대 1화면 1장. 모바일은 높이 200px 이하 배너로만.</span>
+        </div>
+      </div>
+      <div class="panel" style="display:grid;grid-template-columns:110px 1fr;gap:14px;padding:12px">
+        <div style="display:flex;gap:8px;align-items:flex-end"><div class="pt ring" style="width:56px;height:80px;--nation:#3f6fb5">@@PT(148,210,hahoudon)@@</div><div class="pt" style="width:44px;height:62px">@@PT(148,210,sunuk)@@</div></div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+          <b>초상 148×210 · 카드</b>
+          <span style="color:#b9b2a3;line-height:1.5">장수 기본 카드(126×178), 휘하 인물 목록(44×62), 조정·관직 격자(48×68), 랭킹 상위 3(56×80), 전투 부대 목록(36×50), 연대기 주인공(36×50). Retina 2x srcset.</span>
+          <span style="color:#8a8477">국가색 링 2px은 “내 장수·군주·현재 문맥의 국가”에만. 비활성·사망은 grayscale + 60%.</span>
+        </div>
+      </div>
+      <div class="panel" style="display:grid;grid-template-columns:110px 1fr;gap:14px;padding:12px">
+        <div style="display:flex;gap:6px;align-items:flex-end"><div class="pt ring" style="width:48px;height:48px;--nation:#3f6fb5">@@PT(96,96,hahoudon)@@</div><div class="pt" style="width:40px;height:40px">@@PT(96,96,sunuk)@@</div><div class="pt" style="width:32px;height:32px">@@PT(96,96,dongtak)@@</div><div class="pt" style="width:24px;height:24px">@@PT(96,96,yubi)@@</div></div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+          <b>아이콘 96×96 · 밀도 높은 곳</b>
+          <span style="color:#b9b2a3;line-height:1.5">48 게시글 상세 작성자 · 40 게시글 목록·회의실 글 · 32 사건 피드·헤더 아바타·표 행 · 28 댓글·지도 부대 목록 · 24 서신·경매 입찰자·랭킹 하위 · 20~22 표결자·열람자 스택.</span>
+          <span style="color:#8a8477">정사각 4px 모서리 없이 각진 채로(Concept A). 원형 안 씀. 커뮤니티는 계정 대표 장수 + 서버 배지.</span>
+        </div>
+      </div>
+      <div class="inset" style="padding:10px 12px;font-size:11px;color:#8a8477;line-height:1.5">시안에는 실제 RTK14 파생 초상 3종(original/portrait/icon)을 넣었습니다. 저장소 정책상 라이선스는 미해결이며, 시안 사용은 소유자 책임으로 결정했습니다(2026-09-06). 배포는 기존 CDN 경로를 그대로 씁니다.</div>
+    </div>
+
+    <!-- col 3: navigation mapping + spaces -->
+    <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+      <span style="font-size:12px;color:#8a8477;letter-spacing:.08em">20개 기능 → 부서 메뉴 매핑 (라벨·게이팅 그대로)</span>
+      <table class="table" style="font-size:11px">
+        <thead><tr><th>그룹</th><th>기능</th><th>게이팅</th></tr></thead>
+        <tbody>
+          <tr><td style="height:34px"><b>작전실</b></td><td>메인 (지도 · 예턴 · 지난 순 · 현재 도시)</td><td class="mono">always</td></tr>
+          <tr><td style="height:34px" rowspan="3"><b>국가 운영</b></td><td>세력 정보 · 인사부 · 세력 장수 · 회의실</td><td class="mono">myLevel ≥ 1</td></tr>
+          <tr><td style="height:34px">외교부 · 내무부 · 사령부 · NPC 정책 · 암행부 · 감찰부</td><td class="mono">showSecret</td></tr>
+          <tr><td style="height:34px">기밀실</td><td class="mono">permission ≥ 2</td></tr>
+          <tr><td style="height:34px"><b>군사</b></td><td>부대 편성 · 세력 도시</td><td class="mono">myLevel ≥ 1 &amp;&amp; nationLevel ≥ 1</td></tr>
+          <tr><td style="height:34px"><b>정보</b></td><td>중원 정보 · 현재 도시 · 천하 지도</td><td class="mono">always</td></tr>
+          <tr><td style="height:34px"><b>광장</b></td><td>토너먼트 · 경매장(금/쌀 · 유니크) · 베팅장 · 유산 관리 · 내 정보&amp;설정</td><td class="mono">always (+highlight)</td></tr>
+          <tr><td style="height:34px"><b>기록</b></td><td>연대기 · 내 기록 · 국가사 · 전투 기록 · 랭킹 · 명예의 전당</td><td class="mono">always</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:#8a8477;line-height:1.5">비활성 항목은 숨기지 않고 점선으로 남겨 “왜 못 쓰는지”를 툴팁으로 보여준다. 모바일은 5탭(작전실·지도·명령·국가·더보기)에 같은 그룹을 접어 넣는다.</div>
+
+      <span style="font-size:12px;color:#8a8477;letter-spacing:.08em;margin-top:6px">세 공간의 경계</span>
+      <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px">
+        <div class="panel" style="padding:10px;display:flex;flex-direction:column;gap:4px;font-size:11px"><b style="font-size:12px">커뮤니티</b><span style="color:#8a8477">서버 밖 · 게이트웨이</span><span style="color:#b9b2a3">모든 계정 · 대표 장수 얼굴 + 서버 배지</span></div>
+        <div class="panel" style="padding:10px;display:flex;flex-direction:column;gap:4px;font-size:11px;border-color:#9c7f3f"><b style="font-size:12px;color:#d3b064">회의실</b><span style="color:#8a8477">게임 안 · 국가</span><span style="color:#b9b2a3">소속 장수 전원 · 표결 · 작전 · 리플레이 첨부</span></div>
+        <div class="panel" style="padding:10px;display:flex;flex-direction:column;gap:4px;font-size:11px;border-color:#c96b5d;background:#221b1a"><b style="font-size:12px;color:#e08a7c">기밀실</b><span style="color:#8a8477">게임 안 · 수뇌부</span><span style="color:#b9b2a3">권한 ≥ 2 · 열람 기록 · 적갈 프레임으로 항상 구분</span></div>
+      </div>
+
+      <span style="font-size:12px;color:#8a8477;letter-spacing:.08em;margin-top:6px">“화려함”의 출처 (크롬이 아니라 게임 자산)</span>
+      <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#b9b2a3;line-height:1.5">
+        <span>· 순 전환: 연호가 서체로 크게 넘어가고 사건 피드가 위에서 밀려 들어온다 (300ms, reduced-motion 존중)</span>
+        <span>· 지도: 선택 프로빈스 맥동, 이동 중 부대 화살표, 교전 지점 적갈 파동</span>
+        <span>· 봉인·리플레이: 봉인 순간 청동 글로우, 대치 화면 對, 페이즈 타임라인 스크럽</span>
+        <span>· 초상: 히어로 마스크, 국가색 링, 열람자·표결자 스택</span>
+      </div>
+    </div>
+  </div>
+</div>
