@@ -1,3 +1,90 @@
+# 야전 출병 계획 봉인·결정론 해결·리플레이 수직 절편(Phase 4X-C) 스펙 교차 비평 — v3 통합 재판정
+
+- Date: 2026-09-06 (3차)
+- Target: `docs/superpowers/specs/2026-09-06-wego-field-seal-replay-vertical-slice.md` (**v3**, REVISED — 커밋 `462f1383`) + 같은 커밋의 계획 문서 `docs/superpowers/plans/2026-09-06-ui-redesign-implementation-plan.md` §4X-C(`:347-355`).
+- Context: HEAD = `462f1383`, `git status` clean. v2→v3 diff 는 `git diff 5cdb3301..462f1383 -- <spec> <plan>` 으로 봤고(스펙 48줄·계획 21줄 변경), 스펙이 새로 가리키는 자리는 전부 오늘 코드에 대조했다(gradle·docker·`.env*`·골든 실행 없음, 파일 읽기와 git 만). 아래 §V3-0 이 N1~N4 의 코드 대조, §V3-1 이 R1~R14 한 줄 판정, §V3-2 가 v3 가 **새로 만든** 결함(P1~P2), §V3-3 이 잔여 should-fix(M1~M7). 이전 V2·v1 절은 아래 「역사 기록」 에 그대로 남긴다 — **판정은 이 V3 절이 정본**이다.
+- Verdict: **fix-required 2건** — (P1) `result` 규칙이 둘이다: §0 N1 행 `:21` 「conquered > defenders_down > retreat > repelled」 와 §5 R5 `:127` 「conquerCity → retreat → 마지막 상대가 성이면 repelled, 아니면 defenders_down」 은 「A 격파 뒤 B 와 싸우다 퇴각」 에서 서로 다른 값을 내고, §5 규칙 자체가 가장 흔한 결말(양쪽 생존·페이즈 소진, `ProcessWarNG.kt:55` 의 while 탈출)을 `defenders_down`(「수비 전멸」) 로 잘못 붙인다 — 영속 CHECK 열이자 감찰부·리플레이 `resultLabel` 이다. (P2) 계획 문서 4X-C 블록은 실제로 고쳐졌지만 블록 **밖** `:54` 티켓 표 행은 여전히 「57·59·173·170 **닫기**」 이고 `:343`·`:322` 는 「회의실 작전 글이 리플레이를 첨부한다/첨부는 4X-C」 라 — 같은 문서 `:355`·스펙 `:7`(닫지 않음)·§10 `:165`(첨부 카드는 밖) 와 정면으로 모순된다. N1~N4 는 넷 다 **닫혔다**(코드 대조 아래). 둘 다 문장 몇 줄로 닫힌다.
+
+---
+
+## V3-0. N1~N4 코드 대조
+
+| 항목 | v3 판정 | 근거(파일:줄) |
+|---|---|---|
+| **N1** 정지 순서 | **closed** (잔여 M1) | v3 §0 `:21`·§5 `:122` 의 (1)(2)(3) 을 오늘 루프 위에 놓으면: `:147-148` `addPhase()` → (1) `:151` `attacker.continueWar()` → `:152-166` 자연 퇴각 블록(`onBattleResultLog`×2·`addLose/addWin`·`tryWound`×2·`onRetreatLog`·`break :165`) — 이것이 추출할 `retreatAttacker` 이고 `attackerCont.noRice` 만 인자로 받으면 된다 ✓ → (2) 오늘 `:168` `def.continueWar()` 를 앞으로 옮겨 `defCont` 로 재사용: **draw 0·부수효과 0** 이 셋 다 성립한다 — `WarUnitGeneral.kt:322-326`(`getHP()`·`state.rice` 읽기만), `WarUnitCity.kt:109-113`(`onSiege`·`getHP()` 읽기만), `WarUnit.kt:214`(상수), 반환은 `data class WarContinuation`(`:265`) 이라 두 번 읽든 한 번 읽든 같다 ✓. `defCont.canContinue && stop != null` 일 때만 `retreatAttacker` → 수비자가 서 있을 때만 퇴각 ✓. (3) `!defCont.canContinue` 면 오늘 `:169-208` 분기 그대로: `:184-188` `def === city` 점령 break 가 먼저라 **`conquerCity` 유지** ✓; 장수가 쓰러진 경우 `:195` `onDefenderDownLog` → `:198` `phase >= maxPhase` 를 `|| stop != null` 로 넓히면 건너뛰는 것은 `:202` `finishDefenderBattle(def)`(사후 `:223` 이 같은 `defender` 에 한 번 부른다)와 `:203` `getNextDefender`(`ProcessWar.kt:151-160` 클로저에 rng 없음, `extractBattleOrder` 순수) 뿐 — **추가 draw 0** ✓, `logWritten=true`(`:171`) 라 `:214-220` 사후 `tryWound` 쌍도 안 돈다 ✓. 계획 없는 경로: 훅 기본 메서드가 null 이면 (2)(3) 의 새 조건이 모두 거짓이라 호출·draw 순서가 오늘과 같다(`WarBattleHooks.kt:22` 인터페이스 기본 메서드·`:80` `NOOP = object : WarBattleHooks {}` 라 컴파일 불변) ✓. V2 N1 의 두 사고(공백지 probe 미점령·죽은 수비자 addWin) 는 (3) 이 막는다 ✓. **잔여**: `orderDefenders`(`ExtractBattleOrder.kt:58-78`) 가 장수 목록이 비어 있지 않고 order>0 이면 **비공성 성을 수비자 목록에 넣고(`:71`) order DESC 로 정렬(`:77-78`)** → 성이 목록 중간에도 올 수 있다. 그 성이 `def` 인 페이즈는 `WarUnitCity.continueWar()` 가 `!onSiege` 로 false 를 주지만 「무너진」 게 아니라 `:191-193` 「한 대 맞고 재정비」 다 — v3 (3) 의 「수비자가 무너졌으면(`!defCont.canContinue`)」 은 이 경우를 무너짐으로 오판해 (2) 의 퇴각 함수를 건너뛰고 넓힌 break 로 멈춘다 → 계획 정지에 `addLose`·`tryWound` 비용이 없고(S4 「퇴각은 부상 판정을 받는다」 와 모순) 결과는 `repelled` 다. M1. |
+| **N2** 이름 | **closed** (잔여 M6) | 전제 확인: `LogicEntities.kt` 에서 `name` 은 `:64` 주석과 `:103` `Nation.name` 뿐 — `General`(`:19-58`)·`City` 에 없다 ✓. v3 「id 만 싣고 엔진 후처리가 채운다」: `InMemoryTurnWorld.kt:263` `getGeneralById(id): TurnGeneral?` → `TurnWorldModel.kt:52-55` `TurnGeneral.name: String` ✓, `:265` `getCityById(id): City?` 의 `City` 는 같은 패키지의 엔진 `City`(`TurnWorldModel.kt:79-81` `val name`; `InMemoryTurnWorld.kt` 에 logic `City` import 없음) ✓. 같은 후처리 자리의 선례가 이미 그 꼴이다: `ReservedTurnHandler.kt:396` `world.getGeneralById(it)?.name`, `:400` `generalName = general.name`, `:726` `defenderCity.name` ✓. 초안이 id 를 뽑을 자리도 있다: `WarUnitGeneral.kt:39` `val state` public·`:64` `getGeneral(): General`(`.id`), `WarUnitCity.kt:36` `val state` public(`state.city.id`, `:58` `getName()` 이 쓰는 값) ✓. 후처리 시점(`:437` `drainWarBattleResult` 옆)은 같은 핸들러 호출 안이라 그 뒤 `kill`(`:1047`, V2 F3) 보다 앞 — 공격자 이름도 조회 가능 ✓. 잔여: 폴백(`?: "G$id"`)과 `BattleReplayCodec` 의 이름 입력 시그니처가 없다(M6). |
+| **N3** 계획 문서 | **closed**(블록) → 블록 밖 잔재는 **P2** | `git diff 5cdb3301..462f1383` 계획 `:347-355`: 제목 「출병 계획 봉인(공격자)」·PR `ui-p4xc-battle-plan`·Spec 링크 = 이 스펙 v3·07-30 은 「범위 밖 참조」·`sealedDate <= executingDate`·`battle_plan.operation_id` 없음(리플레이 쪽 FK SET NULL)·명령 `battlePlanSave/Seal/Delete`·「인테이크 거부 사유 — 409 아님」·라우트 `/api/my-battle-plans`·`/api/battles/replays[/{id}]`·stance 2종·조건 2종·소비된 계획·`:355` 「OPENSAM-57·59·170·173 은 부분 기여 코멘트(닫지 않음)」 — V2 N3 고침 목록 전부 ✓. §9 `:159` 「v3 커밋에서 실제로 고쳤다」 는 이제 참 ✓. **그러나** 같은 문서 `:54`(Phase 4X-C 티켓 표 행) 「야전 WEGO 봉인 … **57·59·173·170 닫기**」, `:343`(4X-B 회의실 항목) 「리플레이 첨부는 4X-C」, `:322`(Phase 4X 서문) 「WEGO 가 작전 안에서 벌어지며, 회의실 작전 글이 리플레이를 첨부한다」, `:320` 제목 「WEGO 봉인·리플레이」 는 v1 문장 그대로다. `:14`·`:22` 는 사용자 지시 인용(「09 전투·WEGO 봉인」)이라 잔재가 아니다. |
+| **N4** `operation_id` 프룬 | **closed** (잔여 M4) | 스펙 §2 `:72` 「같은 틱 국가 소멸은 `markNationDeleted` 가 pending INSERT 의 값을 NULL 로」·§3 `:101` 「`markNationDeleted` 는 `operation_id` 를 NULL 로」·§0 `:24` 「`boardPostInserts` 프룬과 같은 자리」 ↔ 선례 `ChangeRecorder.kt:1191` `markNationDeleted` → `:1234` `world.pruneOperationsOfNation(nationId)`(`InMemoryTurnWorld.kt:435`, 반환 = 빠진 작전 id 집합) → `:1236-1241` pending `boardPostInserts[*].operation_id ∈ 집합 → null` — 정확히 미러된다 ✓. FK 사슬: `V56:30` `operation_nation_fkey … ON DELETE CASCADE`, flush 6단계 `JdbcFlushExecutor.kt:158-160` `nationCascadeDelete` → 8h `:275-284`(`operationDeleteMany` 포함) → 8i(예정) — 프룬 없이는 INSERT 가 터지는 순서가 맞고 프룬이 그것을 막는다 ✓. 국가 소멸 4경로가 전부 `markNationDeleted` 를 탄다: `ReservedTurnHandler.kt:458`(해산)·`:732`(점령)·`RulerSuccessionHandler.kt:138`·`MonthlyPostUpdateHook.kt:279` ✓. 작전 **단건** 삭제 경로는 없다 — `deletedOperationIds.add`/`removeOperation(` 은 `app/game-engine/src/main` 에 0건(양성 대조: `deletedOperationIds` 심볼은 `InMemoryTurnWorld.kt:117,377,437,847,875` 에 있다 — 조회는 살아 있다) → `operation_id` 가 8h 삭제에 선행당할 다른 길은 없다 ✓. 스냅샷 열 FK 부재 명시: `:73` `attacker_nation_id … (FK 없음)`, `:74` `defender_city_id/defender_city_name/defender_nation_id … FK 없는 스냅샷(N4)` ✓ — V2 ④(수비국 소멸 같은 flush)에 충분하다. 잔여: §8 `:151-152` 에 N4 적색 행이 없다(계획 `:355` 에는 「툼스톤 F3/N4 … 같은 틱 사망/국가 소멸 COMMIT」 이 있다) — M4. |
+
+---
+
+## V3-1. R1~R14 한 줄 판정
+
+| 항목 | 판정 | 근거 |
+|---|---|---|
+| R1 진격 로그 에코 | **cleared** | `:76` 「재현 입력(전투 키 아님, S6)」; 「진격 로그」 잔재는 §0 삭제 기록 `:25-26` 뿐. |
+| R2 `maxPlansPerGeneral` | **cleared** | `:134` `rules:{stances, retreatLossPctMin, retreatLossPctMax, provisional:true}`. |
+| R3 input_hash 부분 지문 | **cleared** | `:126` injury·explevel·dex·items·`env:{ProcessWarEnv 전부}` 추가 + 「부분 지문이다 — 게이트는 `replay_hash` 동일성」. `attackerCityLevel/isCapital`·공격국 typeCode 는 여전히 없지만 선언이 그것을 덮는다. |
+| R4 `def.getHP()` | **cleared** | `:124` `hpD: def.getHP()`, 스키마 `:130` `hpD`. |
+| R5 `result` 우선순위 | **잔여 → P1** | `:127` 에 규칙이 생겼으나 §0 `:21` 과 다르고, 규칙 자체가 「양쪽 생존·페이즈 소진」 을 `defenders_down` 으로 붙인다(판정자 정정: V2 R5 의 예시 문장을 그대로 받아 적은 결과다 — 예시가 틀렸다). |
+| R6 `GameDate` 비교 | **cleared** | `:101` `OperationRules.absoluteTurn` 재사용 — `OperationRules.kt:77` `fun absoluteTurn(d: GameDate): Int` 존재. |
+| R7 삭제 게이트·로더 술어·DDL | **cleared** | `:113` 게이트 1 「내 미소비 계획 아님」 → 소비된 행은 세계 상태에 없어 삭제 대상이 아니다(V2 제안과 다르지만 일관), `:65` `CREATE UNIQUE INDEX battle_plan_open_uk … WHERE resolved_year IS NULL` + 「로더는 `resolved_year IS NULL` 행만」, `:134` 「소비된 계획은 목록에 없다」. |
+| R8 첫 수비자 | **cleared**(본문) / §0 잔여 M2 | `:137` 「목표 도시 상세 API 가 주는 목록의 첫 항목(클라이언트가 `extractBattleOrder` 를 재현하지 않는다)」 ✓. §0 S10 행 `:35` 는 아직 「첫 수비자(`extractBattleOrder` 순)」 — 같은 §0 의 R 행 `:25` 와 모순. |
+| R9 AI 요격·autorun | **문장은 있음 / 배선 없음 → M5** | `:121`·`:142` 에 「AI 요격으로 상대가 바뀐 경우 미적용·autorun 턴 미적용」 이 들어갔으나 그것을 만드는 장치가 없다 — `BattleCommandContextBuilder.build(world, attackerGeneralId, finalTargetCityId, hiddenSeed, loggerYear, loggerMonth, pipelineFor)`(`BattleCommandContextBuilder.kt:28-36`) 에 autorun 인자가 없고, `ReservedTurnHandler.kt:249-256` 은 `chosen.actionCode != reserved.actionCode` 일 때만 `:253` `autorunMode=true`·AI 인자, 같은 `che_출병` 이면 **인간 인자 유지** → 「상대가 바뀐다」 는 서술이 코드와 다르다. |
+| R10 `operation_id` 채움 규칙 | **cleared** | `:72` 규칙; `TurnWorldModel.kt:173-190` `Operation.targetCityId/status`, `OperationUnit.generalId`(`:192-195`), `V56:34` status ∈ {declared, active, …}·`:59` UNIQUE(world_id, operation_id, general_id). |
+| R11 낡은 문장 | **cleared** | `:4` 「4X-B(spec v3)」 없음, `:33` 「8i(R11)」, `:72` FK 확정, `:159` 「8h 가 커밋됨」. |
+| R12 훅 조립 자리 | **cleared** | `:121` `CheChulbyeong.defaultProcessWar`(코드 `CheChulbyeong.kt:247` 진입·`:258-261` 이 `ProductionWarBattleHooks` 를 만든다)·`processWarFn` 우회(`:57`·`:234`)·`lastReplayDraft` 초기화 목록(`:160-165`). |
+| R13 world-scoped `findMaxId` | **cleared** | `:103` `findMaxId(worldId)`. |
+| R14 `typeof === 'number'` | **cleared** | `:142`. §0 S11 행 `:36` 은 옛 문구지만 모순은 아니다(M2 에 묶음). |
+
+---
+
+## V3-2. 새 결함 (fix-required)
+
+### P1. `result` 규칙이 둘이고, 채택된 §5 규칙은 가장 흔한 결말을 잘못 붙인다
+
+- 스펙: §0 N1 행 `:21` 「결과 라벨 우선순위: `conquered` > `defenders_down` > `retreat` > `repelled`」(발동 조건 없이 우선순위만). §5 `:127` 「`conquerCity` → `conquered`; `onRetreatLog` → `retreat`; 둘 다 없으면 마지막 상대가 성(`WarUnitCity`)이면 `repelled`, 아니면 `defenders_down`. `BattlePlanRulesTest` 표에 4행」. §2 `:82` 라벨 뜻: `repelled` = 「수비 성공(페이즈 소진)」, `defenders_down` = 「수비 전멸(점령 아님)」.
+- 코드: (a) 수비자 A 가 페이즈 2 에 쓰러지면 `ProcessWarNG.kt:195` `onDefenderDownLog`, 다음 수비자 B 를 끌어와(`:203`) 페이즈 3 에 공격자가 군량/병력으로 퇴각하면 `:164` `onRetreatLog` — §0 규칙은 `defenders_down`, §5 규칙은 `retreat`. 같은 전투에 두 답. (b) 양쪽이 살아남고 페이즈가 소진되면 루프는 `:55` `while (phase < maxPhase)` 조건으로 빠져나온다 — `onRetreatLog` 도 `onDefenderDownLog` 도 없고 마지막 상대는 **살아 있는 장수** → §5 규칙은 `defenders_down`(「수비 전멸」). 틀린 값이 영속 CHECK 열(`:82`)에 들어가고 감찰부 목록·리플레이 `resultLabel`(§6 `:135-136`)로 보인다. (c) 오늘 `:198` max-phase break·v3 (3) 의 넓힌 break 로 A 를 잡고 멈춘 경우 남은 수비자(B, 아직 안 끌어옴)가 있어도 「수비 전멸」 이 붙는다 — 라벨 뜻이 과장이다.
+- 왜 v3 에서 생겼나: V2 R5 가 「…처럼 처리 순서로 정의하라」 며 든 예시가 (b) 를 못 본 틀린 예시였고(판정자 정정), v3 가 그것을 §5 에 그대로 적으면서 §0 N1 행에는 별개의 우선순위를 또 적었다.
+- 고침(§5 한 문단·§0 한 줄·테스트 표): ① §0 `:21` 의 우선순위 문장을 지우고 「라벨은 §5 규칙」 으로. ② §5 규칙을 **훅 이벤트 기준**으로 하나만: `conquered` ← `conquerCity`(`onSupplyRout` 포함); 아니면 `retreat` ← `onRetreatLog`; 아니면 `defenders_down` ← 마지막 `def` 에 대해 `onDefenderDownLog` 가 불렸고 그 뒤 `onContactLog` 가 없음(즉 마지막 교전 상대가 쓰러진 채 끝남 — `:191-193` 비공성 성 한 대는 `onDefenderDownLog` 를 부르지 않으므로 자동으로 제외); 그 외 `repelled`. ③ §2 `:82` 라벨을 「`defenders_down` = 마지막 교전 상대 격파(남은 수비자 있을 수 있음, 점령 아님)」 로 정직하게. ④ `BattlePlanRulesTest` 표에 (a) `retreat`, (b) `repelled`, (c) `defenders_down`+`plan_stop`, 「비공성 성 한 대 뒤 페이즈 소진 → `repelled`」 4행 — §5 v3 문장대로 두면 (b) 가 빨개져야 한다.
+
+### P2. 계획 문서의 4X-C 블록 밖 잔재 3곳이 스펙·블록과 정면 모순 — 특히 티켓 표 `:54` 「57·59·173·170 닫기」
+
+- 스펙: `:7` 「OPENSAM-57·59·173·170 — **모두 닫지 않고 부분 기여 코멘트**」, §10 `:165` 「회의실·커뮤니티 리플레이 첨부 카드: `board_post.replay_id` 열이 없어 **밖**」. 계획 블록 `:355` 「OPENSAM-57·59·170·173 은 **부분 기여 코멘트**(닫지 않음)」, `:354` 「회의실 첨부 카드·2.5D 렌더는 밖」.
+- 문서: 같은 계획 `:54`(Phase 4X-C 티켓 표 행 — 「지라·GH 동시 종결」 의 실행 목록) 「야전 **WEGO** 봉인·결정론 해결·replay spine·리플레이 렌더러. **57·59·173·170 닫기**, 58은 5종 명령 중 구현분 체크」; `:343`(4X-B 회의실 항목) 「**리플레이 첨부는 4X-C**」; `:322`(Phase 4X 서문) 「**WEGO** 가 작전 안에서 벌어지며, **회의실 작전 글이 리플레이를 첨부한다**」; `:320` 제목 「휘하·부곡 / 작전 / **WEGO 봉인**·리플레이」. N3 의 부류(계획된 것을 이미 한/할 것으로 적음)가 블록 밖에 남았다: `:54` 대로 하면 부분 기여에 티켓 4건이 닫히고, `:343`/`:322` 대로 하면 4X-C 가 §10 이 뺀 첨부 카드를 약속한다.
+- 고침(계획 4줄): `:54` → 「야전 출병 계획 봉인(공격자)·결정론 해결·replay spine. 57·59·173·170 은 부분 기여 코멘트(닫지 않음), 58 은 구현분 체크, 24·25 에픽 코멘트」; `:343` → 「리플레이 첨부는 밖(4X-C spec §10, `board_post.replay_id` 없음)」; `:322` → 「출병 계획이 작전 안에서 벌어지며, 회의실 리플레이 첨부는 후속」; `:320` 제목의 「WEGO 봉인」 → 「출병 계획 봉인」. `:14`·`:22` 는 사용자 지시 인용이라 두되 괄호 주석 한 개면 족하다.
+
+---
+
+## V3-3. should-fix (잔여·신규)
+
+- **M1 (N1 잔여).** (3) 의 술어를 「무너짐」 으로 좁혀라: `orderDefenders`(`ExtractBattleOrder.kt:71`·`:77-78`) 가 비공성 성을 수비자 목록에 넣고 order DESC 로 섞으므로 성이 중간 `def` 가 될 수 있고, 그 페이즈의 `!defCont.canContinue` 는 `:191-193` 「한 대 맞고 재정비」 다. 계획 정지가 그 페이즈에 참이면 v3 문장대로는 (2) 를 건너뛰어 `addLose`·`tryWound` 없이 멈추고(S4 와 모순) `repelled` 가 된다. 규칙: `fell = !defCont.canContinue && (def !is WarUnitCity || def.isSiege())`(= `:176` `siegeWin` 술어); (2) 는 `!fell && stop != null` → `retreatAttacker`, (3) 은 오늘 분기 + `:198` `|| stop != null`. 그리고 `hooks.plannedStop(...)` 은 **한 번** 평가해 지역변수 `stop` 으로 (2)(3) 에 재사용한다고 적어라 — 두 번 부르면 S14 의 훅 호출 순서 기록이 흔들린다. §0 F1 행 `:14` 「`continueWar()` 앞」 도 「두 `continueWar()` 뒤」 로.
+- **M2 (§0 표 낡은 행).** `:35` S10 「첫 수비자(`extractBattleOrder` 순)」 → 「목록 첫 항목」(같은 표 `:25` 와 모순), `:40` S15 「`getGeneral().name`·`state.city.name`」 은 N2 가 부정한 문장 — 취소선 + 「N2 로 대체」, `:36` S11 → `typeof === 'number'`, `:14` F1 은 M1.
+- **M3 (§2 표 깨짐).** `:95` 「상한 상수는 없다(S13)…」 문단이 `:93` 과 `:96` 사이에 끼어 있어 `STANCES` 행(`:96`)이 표 밖 본문으로 렌더된다 — 문단을 `:96` 뒤로.
+- **M4 (N4 잔여 — 게이트 행).** §8 `:151` `BattlePlanIntakeTest` 에 「봉인 출병(작전 연결) → 같은 틱 `markNationDeleted`(공격국) → payload `operation_id` null」, `:152` `BattlePlanReplayFlushIT` 에 「작전 연결 리플레이 + 같은 flush 의 nation cascade DELETE → COMMIT 성공(`operation_id` NULL)」 적색 행. 계획 `:355` 에는 있고 스펙 §8 에만 없다 — 스펙 §8 이 테스트 파일로 옮겨지는 목록이다(「exit 0 은 게이트의 증거가 아니다」).
+- **M5 (R9 배선).** 「autorun 턴 미적용」 을 지키려면 `BattleCommandContextBuilder.build` 에 `autorunMode: Boolean = false` 를 더해 참이면 `sealedPlans = emptyMap()` 으로 싣고, `ReservedTurnHandler.kt:381-392` 호출부가 `:253` 의 `autorunMode` 를 넘긴다 — 지금 문장대로면 인간이 다른 명령을 예약했는데 AI 가 `che_출병(X)` 를 고른 턴에 `sealedPlans[X]` 가 그대로 적용되어 UI 「위임 턴에는 적용되지 않습니다」(`:142`) 가 거짓이 된다. 서술도 「상대가 바뀐다」 가 아니라 「AI 가 명령을 바꾼 턴(`actionCode` 상이)」 으로. 반대로 「적용된다」 로 정하면 §5·§7 두 문장을 지우면 된다 — 둘 중 하나.
+- **M6 (N2 잔여).** 이름 폴백 `?: "G$id"`/`"C$id"`(`attacker_name`·`defender_city_name` 은 NOT NULL, JSON `def` 도 문자열) 한 줄과, `BattleReplayCodec.encode(draft, names: (kind, id) -> String)` 처럼 이름 입력이 시그니처에 있음을 적어라 — logic `ProcessWarPlanHookTest` 의 「두 번 = 같은 `replay_hash`」 는 고정 이름 맵을 주입한다.
+- **M7 (P2 곁).** 계획 `:320` 제목·`:14`/`:22` 인용 처리(P2 고침에 포함) — 별도 항목으로는 두지 않는다.
+
+---
+
+## V3-4. 질문 · UNKNOWN
+
+- **Q1.** V57 DDL·gradle·골든은 이번에도 실행하지 않았다(UNKNOWN). N1 의 「바이트 동일」 은 draw 사이트·훅 기본 메서드·클로저의 rng 부재를 **읽어서** 판단한 것이지 `BattleReplayGateTest` 를 돌린 것이 아니다.
+- **Q2.** `input_hash` 의 「dex(병종별 숙련)」 출처는 `WarUnitGeneral.kt:199` `state.getDex(crewType)` 까지만 봤다 — 열인지 meta 키인지 UNKNOWN(부분 지문 선언이라 판정 무관).
+- **Q3.** M1 의 「성이 목록 중간」 은 코드상 성립(`ExtractBattleOrder.kt:77-78` DESC 정렬)이나 실제 빈도는 측정하지 않았다.
+- **Q4.** e2e(봉인→해결→리플레이)는 §10 대로 UNKNOWN 유지.
+- **Q5.** V2 Q2(리플레이의 시즌 리셋 생존 여부, `TruncateContract`)는 v3 도 재론하지 않았다 — 제품 결정, 판정 밖.
+
+## V3-5. 읽은 파일(근거 경로, 3차)
+
+`git log/status/show --stat/diff 5cdb3301..462f1383` · 스펙 v3 전문 · 계획 `docs/superpowers/plans/2026-09-06-ui-redesign-implementation-plan.md`(`:14-30`, `:50-60`, `:320-355`, 잔재 grep) · 이 판정 파일 V2·v1 전문 · `logic/src/main/kotlin/opensamguk/logic/war/{ProcessWarNG,ProcessWar,WarUnit,WarUnitGeneral,WarUnitCity,WarBattleHooks,BattleCommandContext,ExtractBattleOrder}.kt` · `logic/.../actions/war/CheChulbyeong.kt` · `logic/.../domain/LogicEntities.kt` · `logic/.../operation/OperationRules.kt` · `app/game-engine/.../war/BattleCommandContextBuilder.kt` · `app/game-engine/.../turn/{ReservedTurnHandler,ChangeRecorder,InMemoryTurnWorld,TurnWorldModel}.kt` · `app/game-engine/.../turn/RulerSuccessionHandler.kt`·`run/MonthlyPostUpdateHook.kt`·`config/DaemonLoopConfig.kt`(호출부 grep) · `infra/.../persistence/JdbcFlushExecutor.kt` · `infra/src/main/resources/db/migration/V56__operation.sql`. gradle·docker·`.env*`·골든 실행 미접촉.
+
+---
+---
+
+# V2 (2026-09-06 2차 — 역사 기록; 판정은 위 V3 절이 정본)
+
 # 야전 출병 계획 봉인·결정론 해결·리플레이 수직 절편(Phase 4X-C) 스펙 교차 비평 — v2 재판정
 
 - Date: 2026-09-06 (2차)

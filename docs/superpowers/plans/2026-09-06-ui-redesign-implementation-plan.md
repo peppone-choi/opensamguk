@@ -317,9 +317,9 @@
 
 ---
 
-## Phase 4X — 확장 범위: 휘하·부곡 / 작전 / WEGO 봉인·리플레이 (트랙별 PR)
+## Phase 4X — 확장 범위: 휘하·부곡 / 작전 / 출병 계획 봉인·리플레이 (트랙별 PR)
 
-사용자 지시(2026-09-06)로 제외 범위를 같은 계획에서 실행한다. 세 트랙은 서로 의존한다(작전이 부곡을 부대로 쓰고, WEGO가 작전 안에서 벌어지며, 회의실 작전 글이 리플레이를 첨부한다). 트랙마다 **spec 먼저**(`docs/superpowers/specs/2026-09-*-*.md`), 교차 비평 cleared 뒤 구현한다. 모든 엔진 쓰기는 `ChangeRecorder` 경유, 새 경로는 봉인·작전·휘하가 존재할 때만 타고, 없으면 현행과 바이트 동일(골든 불변 증거를 게이트에 포함).
+사용자 지시(2026-09-06)로 제외 범위를 같은 계획에서 실행한다. 세 트랙은 서로 의존한다(작전이 부곡을 부대로 쓰고, 출병 계획의 리플레이가 `operation_id` 로 작전에 연결된다 — 회의실 글의 리플레이 첨부 카드는 4X-C 범위 밖, spec §10). 트랙마다 **spec 먼저**(`docs/superpowers/specs/2026-09-*-*.md`), 교차 비평 cleared 뒤 구현한다. 모든 엔진 쓰기는 `ChangeRecorder` 경유, 새 경로는 봉인·작전·휘하가 존재할 때만 타고, 없으면 현행과 바이트 동일(골든 불변 증거를 게이트에 포함).
 
 ### 4X-A 휘하 인물 · 부곡 (PR `ui-p4xa-retinue`) · 아트보드 07
 
@@ -340,15 +340,15 @@
 - [x] 도메인: `operation`(nation_id·kind 6종 중 선언 가능 3종 capture_city/relieve/cut_supply·target_city_id·deadline 월 단위(상순)·status declared/active/achieved/failed/closed·이정표 4 불리언·closed_reason), `operation_unit`(operation_id·general_id·bugok_id?·role·joined_city). `board_post.operation_id`(DEFERRABLE). **`V56__operation.sql`**(V55 뒤) + `general_bugok.commander_bonus_applied`(PR 비평 S3).
 - [x] 명령: `operationDeclare/Join/Leave/Close`(`OperationHandler`, 수뇌부 = `SecretPermission.check ≥ 2`), `boardArticle.operationId`. 월간 정산 `OperationMonthlyService`(MonthlyPostUpdateHook 마지막, 가신 정산 뒤): 참여자 정리 → 이정표 재계산(도시 소유·인접 보급 `CalcCityDistance.nearCity`) → 목표 소멸 → 전이(달성/기한 실패 atmos −5). 국가 소멸 시 `pruneOperationsOfNation` + board `operation_id` NULL.
 - [x] read API `/api/operations`, `/api/operations/{id}`(authenticated, 타국 403, 재야 빈 목록+rules, `remainingMonths` 진행 중만, `milestoneDisplayPct` 파생, 연결 회의실 글).
-- [~] 회의실: `board_post.kind=operation` + `operation_id`(글쓰기 「연결 작전」 select, 엔진이 내 국가 작전 검사). 표결 결과 → 메모는 밖(spec §10). 리플레이 첨부는 4X-C.
+- [~] 회의실: `board_post.kind=operation` + `operation_id`(글쓰기 「연결 작전」 select, 엔진이 내 국가 작전 검사). 표결 결과 → 메모는 밖(spec §10). 리플레이 첨부 카드는 4X-C 에서도 밖(`board_post.replay_id` 없음, 4X-C spec §10).
 - [x] UI: 08 `/game/my-nation#operations` `OperationPanel`(이정표 k/4 1차·% 보조·예약 종류 disabled+사유·「잠정」 칩), 14 회의실 연결 작전 select, 작전실 조작 대상 바 `OperationBadge`(수·임박 기한).
 - [x] 게이트: logic `OperationRulesTest` 4(산술·이정표·전이·게이트 순서) · engine `OperationIntakeTest` 5 + `OperationMonthlyNoopGateTest` 2(적색 프로브) · infra `OperationFlushIT` 1(PG16, DEFERRABLE 적색면·SET NULL(col)·CASCADE) + V32 10 · game-api `OperationReadControllerTest` 2 · vitest `operation-panel` 4 — 녹색. 관리자 개입 0 시뮬은 engine `OperationAdminZeroSimTest` 1(선언 → 참여 → `ReservedTurnHandler.handle(che_출병)` 실경로 점령·멸망 캐스케이드 → 월 정산 「달성」, 세계 상태 직접 쓰기 0; 적색 프로브 = 기대 상태를 FAILED 로 바꾸면 rc=1) — 녹색. 실화면은 도커 재빌드 뒤.
 
 ### 4X-C 출병 계획 봉인(공격자) · 결정론 해결 · 리플레이 (PR `ui-p4xc-battle-plan`) · 아트보드 09·10
 
-**Spec:** `specs/2026-09-06-wego-field-seal-replay-vertical-slice.md`(v3 — 교차 비평 1차 F1~F7·S1~S16, 2차 N1~N4·R1~R14 반영, 통합 재판정 대기). 07-30 실시간 세션 설계·BATTLE-F0~F13 은 **범위 밖 참조**(battle-engine·WebSocket 없음). 양측 동시 해결(WEGO)은 미래 범위 — 이 절편은 **공격자 본인 부대 1개**의 계획뿐.
+**Spec:** `specs/2026-09-06-wego-field-seal-replay-vertical-slice.md`(v4 — 교차 비평 1차 F1~F7·S1~S16, 2차 N1~N4·R1~R14, 3차 P1~P2·M1~M7 반영, 통합 재판정 대기). 07-30 실시간 세션 설계·BATTLE-F0~F13 은 **범위 밖 참조**(battle-engine·WebSocket 없음). 양측 동시 해결(WEGO)은 미래 범위 — 이 절편은 **공격자 본인 부대 1개**의 계획뿐.
 
-- [~] Spec v1 → 비평 → v2 → 재판정 → **v3**. 계약: `battle_plan`(장수×목표 도시 키, stance 돌격/탐색 2종 — 전진/방어/우회는 엔진 대응물 없음, 조건 2종 = 플레이어 입력 손실 %·사기 임계, sealed_*·resolved_*(소비)·version, `CREATE UNIQUE INDEX … WHERE resolved_year IS NULL`), `battle_replay`(seed·input_hash·replay_hash·battle_phases_json TEXT·정산·계획 스냅샷·`operation_id` FK SET NULL(col), **계획 봉인된 전투만** 기록, 국가·도시 id 열은 FK 없는 스냅샷). 봉인 마감 = `sealedDate <= executingDate`(같은 순 봉인도 적용). **`V57__battle_plan_replay.sql`**, executor 8i.
+- [~] Spec v1 → 비평 → v2 → 재판정 → v3 → 재판정 → **v4**. 계약: `battle_plan`(장수×목표 도시 키, stance 돌격/탐색 2종 — 전진/방어/우회는 엔진 대응물 없음, 조건 2종 = 플레이어 입력 손실 %·사기 임계, sealed_*·resolved_*(소비)·version, `CREATE UNIQUE INDEX … WHERE resolved_year IS NULL`), `battle_replay`(seed·input_hash·replay_hash·battle_phases_json TEXT·정산·계획 스냅샷·`operation_id` FK SET NULL(col), **계획 봉인된 전투만** 기록, 국가·도시 id 열은 FK 없는 스냅샷). 봉인 마감 = `sealedDate <= executingDate`(같은 순 봉인도 적용). **`V57__battle_plan_replay.sql`**, executor 8i.
 - [ ] 해결: `processWarNG` 의 `addPhase()` 뒤 seam — 자연 퇴각 우선 → 수비자가 서 있을 때만 계획 정지(공용 `retreatAttacker`) → 수비자 전멸/점령은 오늘 분기 유지(max-phase break 만 넓힘). 계획 없으면 훅을 감싸지 않아 바이트 동일(`ProcessWarNGOrderTest` 확장이 핀). 리플레이는 `ReplayRecordingHooks`(draw 0, id 만) → `lastReplayDraft` → 엔진 후처리가 이름·`operation_id` 를 채워 recorder INSERT(`markGeneralDeleted`/`markNationDeleted` 프룬). 같은 seed·입력 두 번 = 같은 `replay_hash`(게이트).
 - [ ] 명령 `battlePlanSave/Seal/Delete`(봉인 뒤 수정은 인테이크 거부 사유 「봉인된 계획입니다.」 — 409 아님). read API `/api/my-battle-plans`, `/api/battles/replays?scope=`, `/api/battles/replays/{id}`(공격국·수비국·본인만). 예상은 기존 `simulate-battle`(목록 첫 수비자 1인 기준 min/avg/max; 「우세 %」 는 그리지 않는다).
 - [ ] UI: 09 `/game/battle-plan?city=`(본인 부대 1개·태세 2종 활성·조건 2종·봉인 카운트다운 = 다음 내 턴), 작전실 `che_출병` 예약 슬롯 「봉인」 링크(autorun 이면 점선), 10 `/game/battle-replay/{id}`(페이즈 스크럽·로그·정산·해시), 감찰부 리플레이 열. 회의실 첨부 카드·2.5D 렌더는 밖.

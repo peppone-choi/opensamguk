@@ -138,7 +138,7 @@ export default function OperationPanel() {
                         })}
                     </ul>
                 )}
-                <p className="ops__flow">작전 흐름 · 목표 선언 → WEGO 봉인(4X-C) → 이동·통제 → 접촉 시 전투(4X-C) → 정산</p>
+                <p className="ops__flow">작전 흐름 · 목표 선언 → 출병 계획 봉인(4X-C) → 이동·통제 → 접촉 시 전투 → 정산</p>
             </Panel>
 
             {data.nationId !== 0 && (
