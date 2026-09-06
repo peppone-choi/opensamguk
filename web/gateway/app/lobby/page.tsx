@@ -239,7 +239,7 @@ function LobbyView() {
 
   return (
     <div className="lobby-shell">
-      <Topbar />
+      <Topbar current="lobby" />
       <main className="lobby-main fade-in">
         <h1 className="lobby-section-title">게임 로비</h1>
         {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 전황 로그 (devsam '제 전황' 형태). */}

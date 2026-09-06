@@ -171,7 +171,7 @@ export default function AccountPage() {
     return (
         <AuthGate>
             <div className="lobby-shell">
-                <Topbar />
+                <Topbar current="account" />
                 <AccountSettings />
             </div>
         </AuthGate>

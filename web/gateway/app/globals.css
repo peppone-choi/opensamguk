@@ -1518,3 +1518,28 @@ textarea:focus {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ===== ADR-LITE-049 게이트웨이 상단바 (Phase 0.7) ===== */
+.os-topbar {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line-2);
+    background: linear-gradient(180deg, var(--raised), var(--panel));
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.os-topbar__left, .os-topbar__right { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.os-topbar__brand { height: 30px; width: auto; }
+.os-topbar__nav { display: flex; align-items: stretch; gap: 2px; }
+.os-topbar__user { font-size: 13px; color: var(--text-2); }
+.lobby-topbar.os-topbar { padding: 0 20px; }
+.lobby-brand { display: inline-flex; align-items: center; }
+@media (max-width: 767px) {
+    .os-topbar { padding: 0 12px; gap: 8px; }
+    .os-topbar__nav .os-nav-item { padding: 0 8px; font-size: 12px; }
+}

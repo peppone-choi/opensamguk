@@ -1714,7 +1714,7 @@ function AdminView() {
 
     return (
         <div className="admin-shell">
-            <Topbar />
+            <Topbar current="admin" />
             <main className="admin-main fade-in">
                 <div className="admin-tabs">
                     {ADMIN_SECTIONS.map((s) => (
