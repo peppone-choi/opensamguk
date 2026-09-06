@@ -336,7 +336,8 @@
 
 **Spec:** 로드맵 「작전 목표와 교전」, `docs/superpowers/plans/2026-08-22-beyond-che-world-map-and-game-loop-plan.md`, OPENSAM-56.
 
-- [ ] 도메인: `operation`(nation_id·kind 도시 점령/도로 확보/보급 차단/통과/봉쇄/구원·target(city/province/route)·deadline(年月순)·status 선언/진행/달성/실패/종료·progress·created_by), `operation_unit`(operation_id·general_id·buqu_id?·role). `V53__operation.sql`.
+- [x] Spec v1 → 비평(F1~F4) → v2(N1·N2) → v3(P1·P2) → **v4 `cleared`**(R1~R7 → v4.1). `specs/2026-09-06-operation-vertical-slice.md`, `reviews/2026-09-06-operation-spec-critique.md` 통합본.
+- [ ] 도메인: `operation`(nation_id·kind 6종 중 선언 가능 3종 capture_city/relieve/cut_supply·target_city_id·deadline 월 단위(상순)·status declared/active/achieved/failed/closed·이정표 4 불리언·closed_reason), `operation_unit`(operation_id·general_id·bugok_id?·role·joined_city). `board_post.operation_id`(DEFERRABLE). **`V56__operation.sql`**(V55 뒤).
 - [ ] 명령: 작전 선언(수뇌부 permission ≥ 2), 참여/이탈, 종료. 월간 틱: 진척 = 실제 점유·통제·보급 연결(기존 spatial 보급·도달성 계약 재사용)에서 계산. 기한 초과 → 실패 정산(군량·사기 비용은 spec).
 - [ ] read API `/api/operations`, `/api/operations/{id}`(진척·참여 부대·연결 전투·회의 thread).
 - [ ] 회의실: `board_post.kind=operation` + `operation_id`, 결정 기록(표결 결과 → operation 메모). 리플레이 첨부는 4X-C의 `battle_replay_id`.
