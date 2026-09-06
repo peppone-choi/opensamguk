@@ -85,6 +85,11 @@ pending/succeeded/failed와 같은 상태는 409, deployer/DB 조회 불가·5xx
 503으로 종료되며 transition을 삭제하지 않습니다. 이 경로는 remote POST, CREATE 재전송,
 `game_server` 등록/수정, 계정 수정, reset을 하지 않습니다.
 
+원격 lifecycle operation GET은 연결 제한 5초와 본문 읽기 무응답 제한 10초를 사용합니다.
+헤더 이후 성공 또는 404 응답 본문이 멈춰도 조회 불가로 처리하며, 조정은 503을 반환하고
+transition을 보존한 채 자신이 확보한 lease를 해제합니다. 이 제한은 읽기 전용 operation 조회에만
+적용되며 다른 동기식 변경 요청의 제한을 바꾸지 않습니다.
+
 endpoint 호출 **전**에 운영자가 실제 runtime identity, 서버 env, control repository registry가
 Gateway의 현재 정의와 같은지 별도로 확인해야 합니다. management/lifecycle admission fence는
 이 비교를 시작하기 전부터 remote operation 조회와 reconciliation이 끝날 때까지 계속 유지해야

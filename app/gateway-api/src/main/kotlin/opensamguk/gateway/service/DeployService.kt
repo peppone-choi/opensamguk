@@ -8,9 +8,12 @@ import opensamguk.gateway.dto.EnvProxyResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
+import java.net.HttpURLConnection
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
@@ -35,6 +38,20 @@ class DeployService(
 ) {
     private val log = LoggerFactory.getLogger(DeployService::class.java)
     private val rest = RestClient.create()
+    // URLConnection read timeouts cover body reads, including non-2xx bodies after headers arrive.
+    private val lifecycleQueryRest = RestClient.builder()
+        .requestFactory(object : SimpleClientHttpRequestFactory() {
+            init {
+                setConnectTimeout(Duration.ofSeconds(5))
+                setReadTimeout(Duration.ofSeconds(10))
+            }
+
+            override fun prepareConnection(connection: HttpURLConnection, httpMethod: String) {
+                super.prepareConnection(connection, httpMethod)
+                connection.instanceFollowRedirects = false
+            }
+        })
+        .build()
     private val envKeyRegex = Regex("^[A-Z0-9_]+$")
     private val sharedEnvKeys = setOf(
         "IMAGE_TAG",
@@ -1008,7 +1025,7 @@ class DeployService(
         transition: ServerRegistryTransition?,
     ): RemoteLifecycleOperation =
         try {
-            val raw = rest.get()
+            val raw = lifecycleQueryRest.get()
                 .uri("${deployerBase()}/operations/{operationId}", operationId)
                 .header("Authorization", "Bearer $deployerToken")
                 .retrieve()
