@@ -8,13 +8,16 @@ const logout = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 vi.mock('@/components/AuthGate', () => ({ default: ({ children }: { children: React.ReactNode }) => children }));
-vi.mock('@/lib/auth-context', () => ({
-    useAuth: () => ({
+// 대표 장수 구획은 자기 fetch(/api/account/representative)를 갖는다 — 이 테스트의 fetch 스파이 계약(닉네임·전콘)과 분리한다.
+vi.mock('@/components/account/RepresentativeSection', () => ({ default: () => null }));
+vi.mock('@/lib/auth-context', () => {
+    const session = () => ({
         user: { id: 1, username: 'tester', email: null, nickname: null, role: 'USER', picture: 'old.png', imageServer: 1 },
         refresh,
         logout,
-    }),
-}));
+    });
+    return { useAuth: session, useAuthOptional: session };
+});
 
 import AccountPage from '@/app/account/page';
 import { IMAGE_CDN_BASE } from '@/lib/constants';

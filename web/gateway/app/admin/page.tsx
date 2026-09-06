@@ -5,6 +5,7 @@ import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ConfirmModal from '@/components/ConfirmModal';
 import BoardControl from '@/components/admin/BoardControl';
+import BoardReportControl from '@/components/admin/BoardReportControl';
 import MemberControl from '@/components/admin/MemberControl';
 import NoticeControl from '@/components/admin/NoticeControl';
 import AdminOverview from '@/components/admin/AdminOverview';
@@ -1752,7 +1753,10 @@ function AdminView() {
                     ) : active === 'members' ? (
                         <MemberControl />
                     ) : active === 'board' ? (
-                        <BoardControl />
+                        <>
+                            <BoardControl />
+                            <BoardReportControl />
+                        </>
                     ) : active === 'game' ? (
                         <GameEnvControl />
                     ) : active === 'notice' ? (

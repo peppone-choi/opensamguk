@@ -673,6 +673,7 @@ class V32WorldScopeCompletionMigrationTest {
         )
         private val postV32GlobalTables = setOf(
             "gateway_notice", // V51 — 게이트웨이 공지(계정 전역, ADR-LITE-049 02)
+            "gateway_board_report", // V54 — 커뮤니티 신고(계정 전역, ADR-LITE-049 13)
             "gateway_board_post",
             "gateway_board_comment",
             "game_server",

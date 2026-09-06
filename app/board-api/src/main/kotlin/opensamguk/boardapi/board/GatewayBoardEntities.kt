@@ -47,6 +47,10 @@ open class GatewayBoardPostEntity(
     @Column(name = "updated_at", nullable = false)
     open var updatedAt: Instant = Instant.now(),
 
+    /** ADR-LITE-049 13 — 조회수(V54). 상세 조회마다 1 증가(UPDATE … view_count + 1). */
+    @Column(name = "view_count", nullable = false)
+    open var viewCount: Int = 0,
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     open var id: Long? = null,
@@ -95,3 +99,37 @@ open class GatewayBoardCommentEntity(
         contentText = "",
     )
 }
+
+/** ADR-LITE-049 13 — 글/댓글 신고(V54). post_id 와 comment_id 중 정확히 하나. */
+@Entity
+@Table(name = "gateway_board_report")
+open class GatewayBoardReportEntity(
+    @Column(name = "post_id")
+    open var postId: Long?,
+
+    @Column(name = "comment_id")
+    open var commentId: Long?,
+
+    @Column(name = "reporter_account_id", nullable = false)
+    open var reporterAccountId: Long,
+
+    @Column(nullable = false, length = 200)
+    open var reason: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    open var status: GatewayBoardReportStatus = GatewayBoardReportStatus.OPEN,
+
+    @Column(name = "handled_by_account_id")
+    open var handledByAccountId: Long? = null,
+
+    @Column(name = "handled_at")
+    open var handledAt: Instant? = null,
+
+    @Column(name = "created_at", nullable = false)
+    open var createdAt: Instant = Instant.now(),
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    open var id: Long? = null,
+)

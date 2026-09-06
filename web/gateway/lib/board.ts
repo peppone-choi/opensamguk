@@ -1,8 +1,18 @@
+// ADR-LITE-049 13 — 6 분류. 기존 라벨(공지·자유·건의)은 그대로, 셋을 더한다(board-api GatewayBoardCategory 와 1:1).
 export const BOARD_CATEGORIES = [
   { value: 'NOTICE', label: '공지' },
   { value: 'FREE', label: '자유' },
   { value: 'SUGGESTION', label: '건의' },
+  { value: 'STRATEGY', label: '전략·공략' },
+  { value: 'SERVER', label: '서버 이야기' },
+  { value: 'CREATIVE', label: '창작·일지' },
 ] as const;
+export const BOARD_SORTS = [
+  { value: 'latest', label: '최신' },
+  { value: 'popular', label: '인기' },
+  { value: 'mine', label: '내 글' },
+] as const;
+export type BoardSort = (typeof BOARD_SORTS)[number]['value'];
 
 export type BoardCategory = (typeof BOARD_CATEGORIES)[number]['value'];
 
@@ -19,6 +29,25 @@ export type BoardPost = {
   readonly deleted: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
+  // ADR-LITE-049 13 — 조회수·댓글 수·작성자 대표 장수(서버 배지). 구 응답엔 없다.
+  readonly viewCount?: number;
+  readonly commentCount?: number;
+  readonly authorGeneralName?: string | null;
+  readonly authorWorldId?: number | null;
+};
+
+export type BoardCategoryCount = { readonly category: BoardCategory; readonly count: number };
+export type BoardReportStatus = 'OPEN' | 'HANDLED' | 'DISMISSED';
+export type BoardReport = {
+  readonly id: number;
+  readonly postId: number | null;
+  readonly commentId: number | null;
+  readonly targetSummary: string | null;
+  readonly reporterName: string;
+  readonly reason: string;
+  readonly status: BoardReportStatus;
+  readonly createdAt: string;
+  readonly handledAt: string | null;
 };
 
 export type BoardComment = {
@@ -153,9 +182,88 @@ async function request(path: string, init?: RequestInit): Promise<unknown> {
   return body;
 }
 
-export async function fetchBoardPosts(category: BoardCategory, page: number, size = 20): Promise<BoardPostPage> {
-  const params = new URLSearchParams({ category, page: String(page), size: String(size) });
+export type BoardListOptions = { readonly sort?: BoardSort; readonly q?: string };
+
+/**
+ * 목록 조회. 쿼리 계약: `category=&page=&size=` 순서 고정(기존 계약), 분류 전체는 category 생략,
+ * 정렬은 latest 가 기본이라 생략, 검색어는 q(공백 제거, 빈 값 생략).
+ */
+export async function fetchBoardPosts(
+  category: BoardCategory | null,
+  page: number,
+  size = 20,
+  options: BoardListOptions = {},
+): Promise<BoardPostPage> {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  params.set('page', String(page));
+  params.set('size', String(size));
+  if (options.sort && options.sort !== 'latest') params.set('sort', options.sort);
+  const q = options.q?.trim();
+  if (q) params.set('q', q);
   return parsePage(await request(`/api/board/posts?${params.toString()}`, { cache: 'no-store' }));
+}
+
+function isCategoryCount(value: unknown): value is BoardCategoryCount {
+  return isRecord(value) && isBoardCategory(value.category) && typeof value.count === 'number';
+}
+
+/** 분류별 공개 글 수(6 분류). */
+export async function fetchBoardCategoryCounts(): Promise<readonly BoardCategoryCount[]> {
+  const body = await request('/api/board/categories', { cache: 'no-store' });
+  if (!Array.isArray(body) || !body.every(isCategoryCount)) throw new BoardRequestError(502, '분류 응답이 올바르지 않습니다.');
+  return body;
+}
+
+function isBoardReport(value: unknown): value is BoardReport {
+  return isRecord(value) &&
+    typeof value.id === 'number' &&
+    typeof value.reporterName === 'string' &&
+    typeof value.reason === 'string' &&
+    (value.status === 'OPEN' || value.status === 'HANDLED' || value.status === 'DISMISSED') &&
+    typeof value.createdAt === 'string';
+}
+function parseReport(value: unknown): BoardReport {
+  if (!isBoardReport(value)) throw new BoardRequestError(502, '신고 응답이 올바르지 않습니다.');
+  return value;
+}
+
+/** 글 신고 — 로그인 필요, 같은 글에 열린 신고가 있으면 409. */
+export async function reportBoardPost(postId: number, reason: string): Promise<BoardReport> {
+  return parseReport(await request(`/api/board/posts/${postId}/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  }));
+}
+
+export async function reportBoardComment(postId: number, commentId: number, reason: string): Promise<BoardReport> {
+  return parseReport(await request(`/api/board/posts/${postId}/comments/${commentId}/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  }));
+}
+
+/** 관리자 — 신고 목록(status 없으면 전부). */
+export async function fetchBoardReports(status?: BoardReportStatus): Promise<readonly BoardReport[]> {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  const body = await request(`/api/board/admin/reports${params.size ? `?${params}` : ''}`, { cache: 'no-store' });
+  if (!Array.isArray(body) || !body.every(isBoardReport)) throw new BoardRequestError(502, '신고 목록 응답이 올바르지 않습니다.');
+  return body;
+}
+
+export async function handleBoardReport(reportId: number, status: 'HANDLED' | 'DISMISSED'): Promise<BoardReport> {
+  return parseReport(await request(`/api/board/admin/reports/${reportId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  }));
+}
+
+export function boardSortLabel(sort: BoardSort): string {
+  return BOARD_SORTS.find((item) => item.value === sort)?.label ?? sort;
 }
 
 export async function fetchBoardPost(postId: string): Promise<BoardPostDetail> {

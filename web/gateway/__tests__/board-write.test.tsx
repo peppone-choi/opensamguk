@@ -28,6 +28,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({ user: authUser, loading: false, refresh: vi.fn(), logout: vi.fn() }),
+  useAuthOptional: () => ({ user: authUser, loading: false, refresh: vi.fn(), logout: vi.fn() }),
 }));
 
 vi.mock('@/components/board/BoardRichTextEditor', () => ({

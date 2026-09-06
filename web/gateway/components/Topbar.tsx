@@ -2,16 +2,19 @@
 
 import { Brand } from '@opensamguk/ui';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
+import { useAuthOptional } from '@/lib/auth-context';
 import { AUTH_LABELS, LOBBY_LABELS } from '@/lib/constants';
 
 export type TopbarSection = 'lobby' | 'board' | 'account' | 'admin';
 
 // 게이트웨이 상단바(56px) — ADR-LITE-049. 워드마크 28~32px · 로비 · 게시판 · 계정 · 관리(ADMIN) · 로그아웃.
-// AuthProvider 하위에서 사용(useAuth 필요). 라벨은 기존 상수 그대로. 현재 구역은 페이지가 prop 으로 준다
+// AuthProvider 안팎 모두 사용(useAuthOptional). 라벨은 기존 상수 그대로. 현재 구역은 페이지가 prop 으로 준다
 // (next/navigation 훅에 기대지 않아 서버 렌더와 테스트에서 결정적이다).
 export default function Topbar({ current }: { readonly current?: TopbarSection } = {}) {
-    const { user, logout } = useAuth();
+    // AuthProvider 밖(공개 게시판 껍데기 테스트 등)에서도 그려진다 — 세션이 없으면 로그인 링크만.
+    const auth = useAuthOptional();
+    const user = auth?.user ?? null;
+    const logout = auth?.logout ?? (() => Promise.resolve());
     const on = (href: string) => current === href.slice(1);
     return (
         <header className="os-topbar lobby-topbar" aria-label="상단바">

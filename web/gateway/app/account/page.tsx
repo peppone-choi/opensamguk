@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { changeNickname, changePassword, deleteAccount, deleteProfileIcon, updateProfileIcon, uploadProfileIcon } from '@/lib/client';
 import { onPortraitError, portraitUrl } from '@/lib/portrait';
 import { normalizeProfileIcon } from '@/lib/profileIcon';
+import RepresentativeSection from '@/components/account/RepresentativeSection';
 
 // 규격 밖 이미지는 브라우저에서 128x128로 크롭·축소해 보낸다(lib/profileIcon). 그건 편의일 뿐
 // 최종 보안 경계는 서버다 — 우회해도 서버 거부를 성공으로 위장하지 않는다.
@@ -157,6 +158,7 @@ function AccountSettings() {
                     {message('shared')}
                 </form>
             </section>
+            <RepresentativeSection />
             <section className="game-panel">
                 <h2>계정 탈퇴</h2>
                 <p>탈퇴하려면 현재 비밀번호를 입력하세요.</p>

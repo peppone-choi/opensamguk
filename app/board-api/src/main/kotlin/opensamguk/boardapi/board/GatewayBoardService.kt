@@ -20,6 +20,7 @@ class GatewayBoardService(
     private val commentRepository: GatewayBoardCommentRepository,
     private val contentSanitizer: GatewayBoardContentSanitizer,
     private val userRepository: UserRepository,
+    private val reportRepository: GatewayBoardReportRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -29,6 +30,8 @@ class GatewayBoardService(
         size: Int,
         principal: BoardUserDetails?,
         includeDeleted: Boolean = false,
+        sort: GatewayBoardSort = GatewayBoardSort.LATEST,
+        query: String? = null,
     ): GatewayBoardPageResponse {
         require(page >= 0) { "page는 0 이상이어야 합니다." }
         require(size in 1..50) { "size는 1부터 50 사이여야 합니다." }
@@ -36,16 +39,26 @@ class GatewayBoardService(
         if (includeDeleted && principal?.isAdmin() != true) {
             throw GatewayBoardForbiddenException("삭제된 게시글은 관리자만 조회할 수 있습니다.")
         }
-        val pageable = PageRequest.of(page, size, FEED_SORT)
+        val q = query?.trim()?.takeIf { it.isNotEmpty() }?.take(100)
         val result = if (includeDeleted) {
+            val pageable = PageRequest.of(page, size, FEED_SORT)
             category?.let { postRepository.findByCategory(it, pageable) } ?: postRepository.findAll(pageable)
         } else {
-            category?.let { postRepository.findByCategoryAndDeletedAtIsNull(it, pageable) }
-                ?: postRepository.findByDeletedAtIsNull(pageable)
+            // ADR-LITE-049 13 — 최신 / 인기(최근 7일 조회+댓글×5) / 내 글. 정렬은 native 쿼리가 소유한다.
+            val pageable = PageRequest.of(page, size)
+            when (sort) {
+                GatewayBoardSort.LATEST -> postRepository.searchLatest(category?.name, null, q, pageable)
+                GatewayBoardSort.POPULAR -> postRepository.searchPopular(category?.name, q, Instant.now().minus(POPULAR_WINDOW), pageable)
+                GatewayBoardSort.MINE -> {
+                    val me = principal ?: throw GatewayBoardForbiddenException("내 글은 로그인 뒤 볼 수 있습니다.")
+                    postRepository.searchLatest(category?.name, me.id, q, pageable)
+                }
+            }
         }
         val authors = authorsOf(result.content.map { it.authorAccountId })
+        val commentCounts = commentCountsOf(result.content.mapNotNull { it.id })
         return GatewayBoardPageResponse(
-            content = result.content.map { postResponse(it, principal, authors) },
+            content = result.content.map { postResponse(it, principal, authors, commentCounts[it.id] ?: 0) },
             page = result.number,
             size = result.size,
             totalElements = result.totalElements,
@@ -53,17 +66,107 @@ class GatewayBoardService(
         )
     }
 
+    /** 분류별 공개 글 수(6 분류 전부, 없으면 0) — 커뮤니티 분류 칩의 카운트. */
     @Transactional(readOnly = true)
+    fun categoryCounts(): List<GatewayBoardCategoryCount> {
+        val counted = postRepository.countByCategoryGrouped().associate { row ->
+            (row[0] as GatewayBoardCategory) to (row[1] as Number).toLong()
+        }
+        return GatewayBoardCategory.entries.map { GatewayBoardCategoryCount(it, counted[it] ?: 0L) }
+    }
+
+    @Transactional
     fun detail(postId: Long, principal: BoardUserDetails?): GatewayBoardPostDetailResponse {
         val post = getPost(postId)
         // 삭제된 글은 없는 글로 취급한다. 묘비를 돌려주면 목록에서 감춘 글이 URL 로는 살아 있게 된다.
         if (post.deletedAt != null) {
             throw GatewayBoardNotFoundException()
         }
+        // ADR-LITE-049 13 — 조회수. 원자적 UPDATE(동시 조회에 안전) 뒤 갱신된 값을 응답에 싣는다.
+        postRepository.incrementViewCount(postId)
+        post.viewCount += 1
         val commentRows = commentRepository.findByPostIdAndDeletedAtIsNullOrderByCreatedAtAscIdAsc(postId)
         val authors = authorsOf(commentRows.map { it.authorAccountId } + post.authorAccountId)
         val comments = commentRows.map { commentResponse(it, principal, authors) }
-        return GatewayBoardPostDetailResponse(postResponse(post, principal, authors), comments)
+        return GatewayBoardPostDetailResponse(postResponse(post, principal, authors, commentRows.size.toLong()), comments)
+    }
+
+    // ── ADR-LITE-049 13 — 신고 ──────────────────────────────────────────────
+
+    @Transactional
+    fun reportPost(postId: Long, request: CreateGatewayBoardReportRequest, principal: BoardUserDetails): GatewayBoardReportResponse {
+        val post = getPost(postId)
+        if (post.deletedAt != null) throw GatewayBoardNotFoundException()
+        if (reportRepository.existsByPostIdAndReporterAccountIdAndStatus(postId, principal.id, GatewayBoardReportStatus.OPEN)) {
+            throw GatewayBoardConflictException("이미 신고한 게시글입니다.")
+        }
+        val saved = reportRepository.save(
+            GatewayBoardReportEntity(postId = postId, commentId = null, reporterAccountId = principal.id, reason = request.reason.trim()),
+        )
+        return reportResponse(saved, mapOf(principal.id to AuthorView(principal.nickname, null, 0, null, null)))
+    }
+
+    @Transactional
+    fun reportComment(postId: Long, commentId: Long, request: CreateGatewayBoardReportRequest, principal: BoardUserDetails): GatewayBoardReportResponse {
+        val comment = commentRepository.findById(commentId).orElseThrow { GatewayBoardNotFoundException() }
+        if (comment.postId != postId || comment.deletedAt != null) throw GatewayBoardNotFoundException()
+        if (reportRepository.existsByCommentIdAndReporterAccountIdAndStatus(commentId, principal.id, GatewayBoardReportStatus.OPEN)) {
+            throw GatewayBoardConflictException("이미 신고한 댓글입니다.")
+        }
+        val saved = reportRepository.save(
+            GatewayBoardReportEntity(postId = null, commentId = commentId, reporterAccountId = principal.id, reason = request.reason.trim()),
+        )
+        return reportResponse(saved, mapOf(principal.id to AuthorView(principal.nickname, null, 0, null, null)))
+    }
+
+    /** 신고 목록 — 관리자만. status 없으면 전부(최신순). */
+    @Transactional(readOnly = true)
+    fun listReports(status: GatewayBoardReportStatus?, page: Int, size: Int, principal: BoardUserDetails?): List<GatewayBoardReportResponse> {
+        if (principal?.isAdmin() != true) throw GatewayBoardForbiddenException("신고 목록은 관리자만 볼 수 있습니다.")
+        require(page >= 0) { "page는 0 이상이어야 합니다." }
+        require(size in 1..100) { "size는 1부터 100 사이여야 합니다." }
+        val pageable = PageRequest.of(page, size)
+        val rows = status?.let { reportRepository.findByStatusOrderByCreatedAtDescIdDesc(it, pageable) }
+            ?: reportRepository.findAllByOrderByCreatedAtDescIdDesc(pageable)
+        val reporters = authorsOf(rows.content.map { it.reporterAccountId })
+        return rows.content.map { reportResponse(it, reporters) }
+    }
+
+    @Transactional
+    fun handleReport(reportId: Long, request: UpdateGatewayBoardReportRequest, principal: BoardUserDetails): GatewayBoardReportResponse {
+        if (!principal.isAdmin()) throw GatewayBoardForbiddenException("신고 처리는 관리자만 할 수 있습니다.")
+        val next = requireNotNull(request.status)
+        require(next != GatewayBoardReportStatus.OPEN) { "처리 상태는 HANDLED 또는 DISMISSED 여야 합니다." }
+        val report = reportRepository.findById(reportId).orElseThrow { GatewayBoardNotFoundException() }
+        report.status = next
+        report.handledByAccountId = principal.id
+        report.handledAt = Instant.now()
+        val saved = reportRepository.save(report)
+        return reportResponse(saved, authorsOf(listOf(saved.reporterAccountId)))
+    }
+
+    fun openReportCount(): Long = reportRepository.countByStatus(GatewayBoardReportStatus.OPEN)
+
+    private fun reportResponse(report: GatewayBoardReportEntity, reporters: Map<Long, AuthorView>): GatewayBoardReportResponse {
+        val summary = report.postId?.let { id -> postRepository.findById(id).orElse(null)?.title }
+            ?: report.commentId?.let { id -> commentRepository.findById(id).orElse(null)?.contentText?.take(80) }
+        return GatewayBoardReportResponse(
+            id = requireNotNull(report.id),
+            postId = report.postId,
+            commentId = report.commentId,
+            targetSummary = summary,
+            reporterName = reporters[report.reporterAccountId]?.name ?: "(탈퇴)",
+            reason = report.reason,
+            status = report.status,
+            createdAt = report.createdAt,
+            handledAt = report.handledAt,
+        )
+    }
+
+    /** 한 페이지의 댓글 수(GROUP BY 한 번). */
+    private fun commentCountsOf(postIds: Collection<Long>): Map<Long, Long> {
+        if (postIds.isEmpty()) return emptyMap()
+        return commentRepository.countByPostIds(postIds).associate { row -> (row[0] as Number).toLong() to (row[1] as Number).toLong() }
     }
 
     @Transactional
@@ -202,7 +305,14 @@ class GatewayBoardService(
      * 바꾸면 아이콘만 최신이고 이름은 옛것인 어긋남이 생긴다 — 둘 다 읽는 시점에 해석한다.
      * 계정이 사라졌으면 스냅샷 이름으로 떨어진다.
      */
-    private data class AuthorView(val name: String?, val picture: String?, val imageServer: Int)
+    private data class AuthorView(
+        val name: String?,
+        val picture: String?,
+        val imageServer: Int,
+        /** ADR-LITE-049 13 — 계정 대표 장수(서버 배지). 설정 전이면 null. */
+        val generalName: String?,
+        val worldId: Int?,
+    )
 
     /** 한 페이지의 작성자를 한 번의 쿼리로 끌어온다(행마다 조회하면 N+1). */
     private fun authorsOf(accountIds: Collection<Long?>): Map<Long, AuthorView> {
@@ -213,6 +323,8 @@ class GatewayBoardService(
                 name = user.nickname?.takeIf { it.isNotBlank() },
                 picture = user.picture,
                 imageServer = if (user.imgsvr) 1 else 0,
+                generalName = user.representativeGeneralName,
+                worldId = user.representativeWorldId,
             )
         }
     }
@@ -221,6 +333,7 @@ class GatewayBoardService(
         post: GatewayBoardPostEntity,
         principal: BoardUserDetails?,
         authors: Map<Long, AuthorView>,
+        commentCount: Long = 0,
     ): GatewayBoardPostResponse {
         // 삭제된 글은 공개 읽기 경로에 오지 않는다(피드는 쿼리에서 걸러지고 상세는 404).
         // 여기 오는 삭제분은 어드민 감사 목록뿐이라 제목·작성자를 가리지 않는다 — 가리면
@@ -239,6 +352,10 @@ class GatewayBoardService(
             deleted = post.deletedAt != null,
             createdAt = post.createdAt,
             updatedAt = post.updatedAt,
+            viewCount = post.viewCount,
+            commentCount = commentCount,
+            authorGeneralName = author?.generalName,
+            authorWorldId = author?.worldId,
         )
     }
 
@@ -262,6 +379,8 @@ class GatewayBoardService(
     }
 
     private companion object {
+        /** 「인기」 창 — 최근 7일(아트보드 13 정의, 코드 상수). */
+        val POPULAR_WINDOW: java.time.Duration = java.time.Duration.ofDays(7)
         val FEED_SORT: Sort = Sort.by(
             Sort.Order.desc("pinned"),
             Sort.Order.desc("pinnedAt"),
