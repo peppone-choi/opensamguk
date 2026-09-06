@@ -107,9 +107,7 @@ input:focus, select:focus, textarea:focus {
   top: 0;
   z-index: 100;
 }
-.game-header-left, .game-header-right { display: flex; align-items: center; gap: var(--space-md); }
-.game-header-brand { font-size: var(--text-lg); font-weight: 700; color: var(--gold); }
-.game-header-turn { font-size: var(--text-sm); color: var(--text-secondary); }
+
 .game-header-res { font-size: var(--text-sm); color: var(--text-secondary); }
 
 .shell-body { display: flex; flex: 1; }
@@ -122,21 +120,12 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   flex-direction: column;
 }
-.game-sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  color: var(--text-secondary);
-  transition: var(--transition-fast);
-}
-.game-sidebar-item:hover, .game-sidebar-item.active {
+
+.game-sidebar-item.active {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
 .game-sidebar-item.active { border-left: 3px solid var(--gold); }
-.game-sidebar-icon { font-size: var(--text-lg); }
-.game-sidebar-label { font-size: var(--text-sm); }
 
 .shell-main { flex: 1; padding: var(--space-md); overflow-y: auto; }
 /* 메인 콘텐츠 폭 — Wanted Montage 그리드 정본(montage.wanted.co.kr/docs/foundations/base-material/grid):
@@ -397,7 +386,7 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 767px) {
   .game-header { padding: var(--space-sm); }
-  .game-header-brand { font-size: var(--text-base); }
+
   .game-header-res { display: none; }
   .shell-scroll-surface {
     padding: var(--space-sm);
@@ -475,17 +464,6 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-primary);
 }
 
-/* Resource bar */
-.resource-bar {
-  display: flex;
-  gap: var(--space-md);
-  margin-top: var(--space-md);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--border-subtle);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
 /* Error state */
 .error-state {
   display: flex;
@@ -502,49 +480,6 @@ input:focus, select:focus, textarea:focus {
   font-weight: 600;
 }
 .error-state button:hover { background: var(--gold-dim); }
-
-/* Notifications */
-.notifications {
-  margin-top: var(--space-lg);
-  padding: var(--space-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-.notifications h2 {
-  margin: 0 0 var(--space-md);
-  font-size: var(--text-lg);
-}
-.notification-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) 0;
-  font-size: var(--text-sm);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.notification-item:last-child { border-bottom: none; }
-.notification-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--gold);
-  flex-shrink: 0;
-}
-
-/* Search bar */
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  margin-bottom: var(--space-md);
-}
-.search-bar input { flex: 1; }
-.search-count {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  white-space: nowrap;
-}
 
 /* Tournament */
 .tournament-header .tournament-meta {
@@ -614,7 +549,7 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 767px) {
   .game-header { padding: var(--space-sm); }
-  .game-header-brand { font-size: var(--text-base); }
+
   .game-header-res { display: none; }
   .shell-main {
     padding: var(--space-sm);
@@ -622,8 +557,7 @@ input:focus, select:focus, textarea:focus {
   }
   .cmd-grid { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .resource-bar { flex-direction: column; gap: var(--space-sm); }
-  .search-bar { flex-direction: column; align-items: stretch; }
+
   .tournament-header .tournament-meta { flex-direction: column; gap: var(--space-sm); }
 }
 
@@ -732,8 +666,6 @@ input:focus, select:focus, textarea:focus {
   word-break: break-word;
 }
 
-/* GlobalMenu (server-driven menu spine) */
-.common-toolbar { width: 100%; }
 .global-menu {
   display: grid;
   gap: 0.1rem;
@@ -858,20 +790,6 @@ input:focus, select:focus, textarea:focus {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   padding: var(--space-xs) 0;
-}
-
-/* mobile 국가 메뉴 dropdown (GameBottomBar 국가 메뉴 dropup proxy) */
-.mobile-control-dropdown { display: none; }
-@media (max-width: 999px) {
-  .mobile-control-dropdown { display: block; }
-  .mobile-control-dropdown > summary {
-    cursor: pointer;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-sm);
-  }
 }
 
 /* CharacterClaim (장수선택 / 빙의) */
@@ -1040,7 +958,6 @@ input:focus, select:focus, textarea:focus {
 .city-base:hover { text-decoration: none; }
 .city-base:focus { outline: none; }
 .city-base:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-radius: 4px; }
-/* 미보급(supply=false) 도시 — devsam-core2026 .supply-off{opacity:0.6} 그대로(opacity만). */
 .city-base.supply-off { opacity: 0.6; }
 .city-selectable { cursor: pointer; }
 .city-selected .city-cast {
@@ -1072,7 +989,7 @@ input:focus, select:focus, textarea:focus {
   pointer-events: none;
 }
 .city-flag { position: absolute; z-index: 3; width: 9px; height: 9px; pointer-events: none; }
-.city-flag-img { display: block; width: 9px; height: 9px; image-rendering: pixelated; -webkit-user-drag: none; }
+
 /* 4) 수도 별 event51.gif — 깃발 우상단(top:0,right:-1). */
 .city-capital { position: absolute; z-index: 4; top: 0; right: -1px; width: 7px; height: 7px; image-rendering: pixelated; -webkit-user-drag: none; }
 /* 5) 상태 아이콘 event<state>.gif — city_img 기준(top:5,left:0). */
@@ -1428,28 +1345,7 @@ input:focus, select:focus, textarea:focus {
     grid-template-columns: 1fr;
   }
 }
-.main-refresh-row {
-  width: 100%;
-  max-width: min(100%, 1200px);
-  margin: 0 auto;
-  display: flex;
-  justify-content: flex-end;
-  border-left: 1px solid var(--border-subtle);
-  border-right: 1px solid var(--border-subtle);
-  background: var(--bg-card);
-}
-.main-refresh-btn {
-  border: 0;
-  border-left: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
-  color: var(--gold);
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-sm);
-  text-decoration: none;
-  cursor: pointer;
-}
+
 .main-page-content {
   width: 100%;
   max-width: min(100%, 1200px);
@@ -1983,7 +1879,7 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 767px) {
   .msg-input-form { grid-template-columns: 1fr; }
 }
-.msg-mailbox-select, .msg-input { padding: var(--space-xs) var(--space-sm); }
+.msg-input { padding: var(--space-xs) var(--space-sm); }
 .msg-send-btn { background: var(--gold); color: var(--text-inverse); font-weight: 600; }
 .msg-list { max-height: 480px; overflow-y: auto; }
 .msg-empty {

@@ -35,4 +35,18 @@ describe('BottomNav (모바일 5탭)', () => {
         expect(screen.queryByRole('dialog', { name: '부서 메뉴' })).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: '더보기' })).toHaveFocus();
     });
+    it('traps Tab inside the department sheet in both directions', () => {
+        mocks.pathname.mockReturnValue('/game/s1');
+        mocks.serverId.mockReturnValue('s1');
+        render(<BottomNav gating={NONE} gatingState="ready" global={{}} />);
+        fireEvent.click(screen.getByRole('button', { name: '더보기' }));
+        const sheet = screen.getByRole('dialog', { name: '부서 메뉴' });
+        const items = Array.from(sheet.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]'));
+        expect(items.length).toBeGreaterThan(1);
+        expect(items[0]).toHaveFocus();
+        fireEvent.keyDown(window, { key: 'Tab', shiftKey: true });
+        expect(items[items.length - 1]).toHaveFocus();
+        fireEvent.keyDown(window, { key: 'Tab' });
+        expect(items[0]).toHaveFocus();
+    });
 });

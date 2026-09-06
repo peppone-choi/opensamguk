@@ -25,15 +25,35 @@ export default function BottomNav({ gating = null, gatingState = gating ? 'ready
     const moreButtonRef = useRef<HTMLButtonElement>(null);
     const sheetRef = useRef<HTMLDivElement>(null);
 
-    // 시트: 열리면 첫 포커스 가능 요소로, Escape 로 닫고 더보기 버튼으로 복귀.
+    // 시트: 열리면 첫 포커스 가능 요소로, Tab 은 시트 안에서 순환(공유 Modal 과 같은 규칙), Escape 로 닫고 더보기 버튼으로 복귀.
     useEffect(() => {
         if (!moreOpen) return;
-        const first = sheetRef.current?.querySelector<HTMLElement>('button, a[href]');
-        first?.focus();
+        const focusables = () =>
+            Array.from(sheetRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])') ?? []);
+        focusables()[0]?.focus();
         const onKey = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 setMoreOpen(false);
                 moreButtonRef.current?.focus();
+                return;
+            }
+            if (e.key !== 'Tab') return;
+            const items = focusables();
+            if (items.length === 0) {
+                e.preventDefault();
+                sheetRef.current?.focus();
+                return;
+            }
+            const first = items[0];
+            const last = items[items.length - 1];
+            const active = document.activeElement;
+            const inside = sheetRef.current?.contains(active) ?? false;
+            if (e.shiftKey && (active === first || !inside)) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && (active === last || !inside)) {
+                e.preventDefault();
+                first.focus();
             }
         };
         window.addEventListener('keydown', onKey);
@@ -83,7 +103,7 @@ export default function BottomNav({ gating = null, gatingState = gating ? 'ready
                 })}
             </nav>
             {moreOpen && (
-                <div className="dept-sheet" role="dialog" aria-modal="true" aria-label="부서 메뉴" id="dept-more" ref={sheetRef}>
+                <div className="dept-sheet" role="dialog" aria-modal="true" aria-label="부서 메뉴" id="dept-more" ref={sheetRef} tabIndex={-1}>
                     <button type="button" className="dept-sheet__scrim" aria-label="닫기" onClick={() => setMoreOpen(false)} />
                     <div className="dept-sheet__panel">
                         <DeptNav gating={gating} gatingState={gatingState} global={global} menu={menu} vertical onNavigate={() => setMoreOpen(false)} />
