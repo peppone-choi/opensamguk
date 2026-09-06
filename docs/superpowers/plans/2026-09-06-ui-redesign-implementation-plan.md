@@ -97,9 +97,9 @@
 - Modify: `web/game/app/globals.css`, `web/gateway/app/globals.css` (`:root` 오버라이드 제거만)
 - Test: `web/game/__tests__/shared-ui-foundation.test.tsx`
 
-- [ ] **Step 1:** 실패 테스트: 토큰 파일에 `--bronze --bronze-dim --bronze-glow --moss --moss-2 --rust --info --focus --panel --inset --raised --line --line-2 --text --text-2 --muted --font-serif`가 있고, `--radius-*`가 0이며, 기존 별칭(`--gold --crimson --jade --bg-base --bg-card --border-subtle` 등)이 새 값으로 매핑돼 있다.
-- [ ] **Step 2:** `tokens.css`를 S1 팔레트로 바꾼다: `--bg-base:#0c0f0e --bg-elevated:#141816 --bg-card:#1b201d --bg-hover:#232a26 --gold:#d3b064 --gold-dim:#9c7f3f --crimson:#c96b5d --jade:#697e58 --text-primary:#ece6d8 --text-secondary:#b9b2a3 --text-muted:#8a8477 --border-subtle:#2c342f --border-medium:#3d4740`, 신규 변수 추가, `--radius-sm/md/lg: 0`, 포커스 링 `3px #ffd36d`, `--motion-turn: 300ms`. 기존 변수명은 전부 유지한다(두 앱 3,500줄 CSS가 즉시 새 팔레트로 넘어간다).
-- [ ] **Step 3:** 두 앱 `globals.css`에서 `:root` 재정의·중복 토큰을 지우고 `@import '@opensamguk/ui/tokens.css'` 하나만 남긴다. 테스트 GREEN.
+- [x] **Step 1:** 실패 테스트: 토큰 파일에 `--bronze --bronze-dim --bronze-glow --moss --moss-2 --rust --info --focus --panel --inset --raised --line --line-2 --text --text-2 --muted --font-serif`가 있고, `--radius-*`가 0이며, 기존 별칭(`--gold --crimson --jade --bg-base --bg-card --border-subtle` 등)이 새 값으로 매핑돼 있다.
+- [x] **Step 2:** `tokens.css`를 S1 팔레트로 바꾼다: `--bg-base:#0c0f0e --bg-elevated:#141816 --bg-card:#1b201d --bg-hover:#232a26 --gold:#d3b064 --gold-dim:#9c7f3f --crimson:#c96b5d --jade:#697e58 --text-primary:#ece6d8 --text-secondary:#b9b2a3 --text-muted:#8a8477 --border-subtle:#2c342f --border-medium:#3d4740`, 신규 변수 추가, `--radius-sm/md/lg: 0`, 포커스 링 `3px #ffd36d`, `--motion-turn: 300ms`. 기존 변수명은 전부 유지한다(두 앱 3,500줄 CSS가 즉시 새 팔레트로 넘어간다).
+- [x] **Step 3:** 두 앱 `globals.css`에서 `:root` 재정의·중복 토큰을 지우고 `@import '@opensamguk/ui/tokens.css'` 하나만 남긴다. 테스트 GREEN.
 
 ### Task 0.3: 폰트
 
@@ -108,8 +108,8 @@
 - Modify: `web/gateway/app/layout.tsx`, `web/game/app/layout.tsx`
 - Create: `web/shared/src/fonts.ts` (next/font 선언은 앱 레이아웃에서만 가능하므로 공용 CSS 변수명·폴백 스택만)
 
-- [ ] **Step 1:** Pretendard는 npm `pretendard`의 dynamic-subset CSS를 import한다(런타임 외부 요청 없음). Noto Serif KR(700·900)과 JetBrains Mono(500·700)는 `next/font/google`로 빌드 시 self-host한다(unicode-range 슬라이스 자동). CSS 변수 `--font-sans/--font-serif/--font-mono`로 노출하고 폴백 스택은 `_shared.css`와 같게 둔다.
-- [ ] **Step 2:** 빌드 크기 실측(`.next/static/media`)을 스크린샷 리포트에 적는다. Noto Serif KR 900이 과하면 700만 남긴다(수치를 미리 정하지 않는다).
+- [x] **Step 1:** Pretendard는 npm `pretendard`의 dynamic-subset CSS를 import한다(런타임 외부 요청 없음). Noto Serif KR(700·900)과 JetBrains Mono(500·700)는 `next/font/google`로 빌드 시 self-host한다(unicode-range 슬라이스 자동). CSS 변수 `--font-sans/--font-serif/--font-mono`로 노출하고 폴백 스택은 `_shared.css`와 같게 둔다.
+- [x] **Step 2:** 빌드 크기 실측(225 woff2 슬라이스 8.85 MB, game build) — 리포트 `docs/superpowers/reviews/2026-09-06-ui-phase-0-screens.md`. 원문: 빌드 크기 실측(`.next/static/media`)을 스크린샷 리포트에 적는다. Noto Serif KR 900이 과하면 700만 남긴다(수치를 미리 정하지 않는다).
 
 ### Task 0.4: 공용 프리미티브
 
@@ -119,9 +119,9 @@
 - Modify: `web/shared/src/tokens.css` (컴포넌트 클래스는 `_shared.css` 규칙을 `.os-*` 접두로 이식)
 - Test: `web/shared`에 vitest 설정 추가(`web/shared/vitest.config.ts`) + `web/shared/src/__tests__/*.test.tsx`
 
-- [ ] **Step 1:** 실패 테스트: 각 컴포넌트가 role/aria를 갖고 렌더되며, `Button disabled`는 `aria-disabled` + `title`(사유)를 반드시 가진다(사유 없는 비활성 버튼은 타입 오류).
-- [ ] **Step 2:** `_shared.css`의 `.sec-h .chip .btn .kv .stat-row .gauge .feed .slot .tile .pill-tabs .nav-item .frame-bronze`를 `.os-*`로 이식해 구현한다. 터치 목표 44px, `prefers-reduced-motion` 존중.
-- [ ] **Step 3:** `docker/web-*.Dockerfile`이 `web/shared`를 COPY하는지 확인한다(OPENSAM-210 제약). GREEN.
+- [x] **Step 1:** 실패 테스트: 각 컴포넌트가 role/aria를 갖고 렌더되며, `Button disabled`는 `aria-disabled` + `title`(사유)를 반드시 가진다(사유 없는 비활성 버튼은 타입 오류).
+- [x] **Step 2:** `_shared.css`의 `.sec-h .chip .btn .kv .stat-row .gauge .feed .slot .tile .pill-tabs .nav-item .frame-bronze`를 `.os-*`로 이식해 구현한다. 터치 목표 44px, `prefers-reduced-motion` 존중.
+- [x] **Step 3:** `docker/web-*.Dockerfile`이 `web/shared`를 COPY하는지 확인한다(OPENSAM-210 제약). GREEN.
 
 ### Task 0.5: 초상 3종 + 깃발
 
@@ -131,9 +131,9 @@
 - Create: `tools/assets/check_rtk14_cdn.py` (1,000 ID × original/portrait/icon HEAD 200 검증, 결과 리포트)
 - Test: `web/shared/src/__tests__/Portrait.test.tsx`, 기존 `portrait.test.tsx` 확장
 
-- [ ] **Step 1:** 실패 테스트: 크기별로 올바른 variant URL을 고른다(≥148 → portrait, ≤96 → icon, hero → original), `nationRing`은 `self|ruler|context` 중 하나일 때만 outline, `inactive`는 grayscale, Retina `srcset`, 정사각 각진 모서리(원형 금지), `object-fit: contain`(잘림 0, OPENSAM-100 조건).
-- [ ] **Step 2:** 구현. 기본 이미지 실패 시 `onPortraitError` 폴백 유지.
-- [ ] **Step 3:** `check_rtk14_cdn.py`를 실제 CDN에 돌려 결과를 리포트에 첨부한다(실패 ID는 숨기지 않는다).
+- [x] **Step 1:** 실패 테스트: 크기별로 올바른 variant URL을 고른다(≥148 → portrait, ≤96 → icon, hero → original), `nationRing`은 `self|ruler|context` 중 하나일 때만 outline, `inactive`는 grayscale, Retina `srcset`, 정사각 각진 모서리(원형 금지), `object-fit: contain`(잘림 0, OPENSAM-100 조건).
+- [x] **Step 2:** 구현. 기본 이미지 실패 시 `onPortraitError` 폴백 유지.
+- [x] **Step 3:** `check_rtk14_cdn.py`를 실제 CDN에 돌렸다 — 3,000/3,000 200. 원문: 돌려 결과를 리포트에 첨부한다(실패 ID는 숨기지 않는다).
 
 ### Task 0.6: 부서 메뉴 모델
 
@@ -142,8 +142,8 @@
 - Modify: `web/game/lib/control-bar-config.ts`(변경 없음, import만), `web/game/lib/menu-filter.ts`
 - Test: `web/game/__tests__/dept-menu-config.test.ts`
 
-- [ ] **Step 1:** 실패 테스트: (a) `CONTROL_BUTTONS` 20개 id가 부서 그룹에 정확히 한 번씩 들어간다 (b) `GlobalMenuController`와 동일한 8항목(`global-menu-fixture.ts`)이 한 번씩 흡수된다 (c) 그룹별 게이팅은 `MainControlBar`가 계산하는 것과 같은 결과다 (d) 비활성 사유 문자열이 bucket별로 존재한다(`myLevel`→「장수 직위 이상 필요」, `permission2`→「수뇌부 권한 필요」, `showSecret`→「기밀 열람 권한 필요」, `myLevelAndNation`→「국가 소속 + 직위 필요」).
-- [ ] **Step 2:** S1 매핑표대로 구현: 작전실 / 국가 운영(세력 정보·인사부·세력 장수·회의실·외교부·내무부·사령부·NPC 정책·암행부·감찰부·기밀실) / 군사(부대 편성·세력 도시) / 정보(중원 정보·현재 도시·천하 지도·전투 시뮬레이터) / 광장(토너먼트·경매장 2·베팅장·천통국 베팅·유산 관리·내 정보&설정·오픈 톡 2) / 기록(연감·세력일람·장수일람·명장일람·명예의전당·왕조일람·접속량정보·빙의일람). 하이라이트(`isTournamentApplicationOpen`·`isBettingActive`·`nationBetting`)와 `condShowVar`(npcMode) 유지.
+- [x] **Step 1:** 실패 테스트: (a) `CONTROL_BUTTONS` 20개 id가 부서 그룹에 정확히 한 번씩 들어간다 (b) `GlobalMenuController`와 동일한 8항목(`global-menu-fixture.ts`)이 한 번씩 흡수된다 (c) 그룹별 게이팅은 `MainControlBar`가 계산하는 것과 같은 결과다 (d) 비활성 사유 문자열이 bucket별로 존재한다(`myLevel`→「장수 직위 이상 필요」, `permission2`→「수뇌부 권한 필요」, `showSecret`→「기밀 열람 권한 필요」, `myLevelAndNation`→「국가 소속 + 직위 필요」).
+- [x] **Step 2:** S1 매핑표대로 구현: 작전실 / 국가 운영(세력 정보·인사부·세력 장수·회의실·외교부·내무부·사령부·NPC 정책·암행부·감찰부·기밀실) / 군사(부대 편성·세력 도시) / 정보(중원 정보·현재 도시·천하 지도·전투 시뮬레이터) / 광장(토너먼트·경매장 2·베팅장·천통국 베팅·유산 관리·내 정보&설정·오픈 톡 2) / 기록(연감·세력일람·장수일람·명장일람·명예의전당·왕조일람·접속량정보·빙의일람). 하이라이트(`isTournamentApplicationOpen`·`isBettingActive`·`nationBetting`)와 `condShowVar`(npcMode) 유지.
 
 ### Task 0.7: 쉘
 
@@ -154,12 +154,12 @@
 - Modify: `web/gateway/components/Topbar.tsx`
 - Test: `Shell.main-route.test.tsx` 확장, 신규 `GatewayShell.test.tsx`
 
-- [ ] **Step 1:** 실패 테스트: 메인은 BackBar 없음, 서브는 있음(현행 유지), 모바일 5탭 href가 부서 그룹과 일치, 하단 나브가 콘텐츠를 가리지 않는다(`padding-bottom: var(--bottom-nav-inset)` 적용, 감사 P1).
-- [ ] **Step 2:** 구현. 1232px 미만은 부서 나브를 가로 스크롤, 768px 미만은 5탭.
+- [x] **Step 1:** 실패 테스트: 메인은 BackBar 없음, 서브는 있음(현행 유지), 모바일 5탭 href가 부서 그룹과 일치, 하단 나브가 콘텐츠를 가리지 않는다(`padding-bottom: var(--bottom-nav-inset)` 적용, 감사 P1).
+- [x] **Step 2:** 구현. 1232px 미만은 부서 나브를 가로 스크롤, 768px 미만은 5탭.
 
 ### Phase 0 게이트
 
-- [ ] `corepack pnpm -r typecheck lint test`, `pnpm build` 두 앱, e2e 3건, 스크린샷 리포트(로그인·로비·작전실·랭킹 4장 × 2 뷰포트, 토큰만 바뀐 상태), 교차 비평 cleared, OPENSAM-100/#243 닫기.
+- [~] typecheck·lint·vitest(shared 23 / game 642 / gateway 231)·두 앱 build 통과, 스크린샷 리포트 `docs/superpowers/reviews/2026-09-06-ui-phase-0-screens.md`(작전실 실캡처·e2e 3건은 백엔드 현재 이미지 재빌드 뒤 Phase 1 게이트로 이월). 교차 비평·OPENSAM-100/#243 닫기는 PR 에서.
 
 ---
 
