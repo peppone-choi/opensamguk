@@ -71,6 +71,8 @@ object TruncateContract {
         "general_bugok",
         "operation",
         "operation_unit",
+        "battle_plan",
+        "battle_replay",
         "vote_poll",
         "vote",
         "vote_comment",

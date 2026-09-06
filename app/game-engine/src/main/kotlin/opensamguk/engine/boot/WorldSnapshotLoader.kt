@@ -18,6 +18,7 @@ import opensamguk.engine.turn.Bugok
 import opensamguk.engine.turn.Operation
 import opensamguk.engine.turn.OperationMilestones
 import opensamguk.engine.turn.OperationUnit
+import opensamguk.engine.turn.BattlePlan
 import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.persistence.MetaJson
@@ -93,6 +94,7 @@ class WorldSnapshotLoader(
                 "maxBugokId",
                 "maxOperationId",
                 "maxOperationUnitId",
+                "maxBattlePlanId",
             )
             for (key in snapshotKeys) {
                 if (loaded.meta.containsKey(key)) merged[key] = loaded.meta[key]
@@ -153,6 +155,7 @@ class WorldSnapshotLoader(
         val bugoks = loadBugoks()
         val operations = loadOperations()
         val operationUnits = loadOperationUnits()
+        val battlePlans = loadBattlePlans()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops={}",
             generals.size,
@@ -178,6 +181,7 @@ class WorldSnapshotLoader(
             bugoks = bugoks,
             operations = operations,
             operationUnits = operationUnits,
+            battlePlans = battlePlans,
             archivedNationIds = archivedNationIds,
             waterControlSnapshot = topology?.let(::loadWaterControlSnapshot),
             provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
@@ -268,6 +272,25 @@ class WorldSnapshotLoader(
                 status = rs.getString("status"),
                 milestones = OperationMilestones(rs.getBoolean("m_departed"), rs.getBoolean("m_arrived"), rs.getBoolean("m_supplied"), rs.getBoolean("m_objective")),
                 closedReason = rs.getString("closed_reason"),
+            )
+        },
+        worldId.value,
+    )
+
+    /** Phase 4X-C — 미소비 계획만(`resolved_year IS NULL`); 소비된 행은 기록으로만 남는다(spec v4.1 §2). */
+    private fun loadBattlePlans(): List<BattlePlan> = jdbc.query(
+        "SELECT id, general_id, target_city_id, stance, retreat_loss_pct, retreat_morale_below, sealed_at, sealed_year, sealed_month, sealed_phase, version " +
+            "FROM battle_plan WHERE world_id = ? AND resolved_year IS NULL ORDER BY id",
+        { rs, _ ->
+            BattlePlan(
+                id = rs.getInt("id"), generalId = rs.getInt("general_id"), targetCityId = rs.getInt("target_city_id"), stance = rs.getString("stance"),
+                retreatLossPct = rs.getObject("retreat_loss_pct")?.let { (it as Number).toInt() },
+                retreatMoraleBelow = rs.getObject("retreat_morale_below")?.let { (it as Number).toInt() },
+                sealedAt = rs.getTimestamp("sealed_at")?.toInstant(),
+                sealedYear = rs.getObject("sealed_year")?.let { (it as Number).toInt() },
+                sealedMonth = rs.getObject("sealed_month")?.let { (it as Number).toInt() },
+                sealedPhase = rs.getObject("sealed_phase")?.let { (it as Number).toInt() },
+                version = rs.getInt("version"),
             )
         },
         worldId.value,

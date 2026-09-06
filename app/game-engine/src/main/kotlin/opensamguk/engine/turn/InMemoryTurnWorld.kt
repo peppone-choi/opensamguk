@@ -31,6 +31,8 @@ data class WorldSnapshot(
     /** Phase 4X-B — 작전·참여 부대(부팅·rehydrate 적재). */
     val operations: List<Operation> = emptyList(),
     val operationUnits: List<OperationUnit> = emptyList(),
+    /** Phase 4X-C — 미소비 출병 계획(부팅·rehydrate 적재, `resolved_year IS NULL` 만). */
+    val battlePlans: List<BattlePlan> = emptyList(),
     val archivedNationIds: List<Int> = emptyList(),
     val serverId: String? = state.serverId,
     val worldId: WorldId,
@@ -120,6 +122,12 @@ class InMemoryTurnWorld(
     private val deletedOperationUnitIds = LinkedHashSet<Int>()
     private var maxOperationId: Int = 0
     private var maxOperationUnitId: Int = 0
+    // Phase 4X-C 출병 계획 — 같은 규약.
+    private val battlePlans = LinkedHashMap<Int, BattlePlan>()
+    private val dirtyBattlePlanIds = LinkedHashSet<Int>()
+    private val createdBattlePlanIds = LinkedHashSet<Int>()
+    private val deletedBattlePlanIds = LinkedHashSet<Int>()
+    private var maxBattlePlanId: Int = 0
 
     private val dirtyGeneralIds = LinkedHashSet<Int>()
     private val dirtyCityIds = LinkedHashSet<Int>()
@@ -183,6 +191,8 @@ class InMemoryTurnWorld(
         for (u in snapshot.operationUnits) operationUnits[u.id] = u
         maxOperationId = maxOf(snapshot.operations.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxOperationId"] as? Number)?.toInt() ?: 0)
         maxOperationUnitId = maxOf(snapshot.operationUnits.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxOperationUnitId"] as? Number)?.toInt() ?: 0)
+        for (p in snapshot.battlePlans) battlePlans[p.id] = p
+        maxBattlePlanId = maxOf(snapshot.battlePlans.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxBattlePlanId"] as? Number)?.toInt() ?: 0)
         maxNationId = maxOf(
             snapshot.nations.maxOfOrNull { it.id } ?: 0,
             snapshot.archivedNationIds.maxOrNull() ?: 0,
@@ -204,6 +214,7 @@ class InMemoryTurnWorld(
         recordMaxBugokId()
         recordMaxOperationId()
         recordMaxOperationUnitId()
+        recordMaxBattlePlanId()
     }
 
     fun getState(): TurnWorldState = state
@@ -447,6 +458,53 @@ class InMemoryTurnWorld(
         for (op in operations.values.filter { it.declaredByGeneralId == generalId }) updateOperation(op.copy(declaredByGeneralId = null))
     }
 
+    // ── Phase 4X-C 출병 계획 ────────────────────────────────────────────────────────────────────
+    fun listBattlePlans(): List<BattlePlan> = battlePlans.values.toList()
+    fun getBattlePlanById(id: Int): BattlePlan? = battlePlans[id]
+    fun battlePlansOf(generalId: Int): List<BattlePlan> = battlePlans.values.filter { it.generalId == generalId }.sortedBy { it.id }
+
+    fun allocateBattlePlanId(): Int {
+        maxBattlePlanId = maxOf(maxBattlePlanId, battlePlans.keys.maxOrNull() ?: 0, deletedBattlePlanIds.maxOrNull() ?: 0) + 1
+        recordMaxBattlePlanId()
+        return maxBattlePlanId
+    }
+
+    fun createBattlePlan(p: BattlePlan): BattlePlan {
+        require(!battlePlans.containsKey(p.id)) { "duplicate battle plan id ${p.id}" }
+        battlePlans[p.id] = p
+        dirtyBattlePlanIds.add(p.id)
+        createdBattlePlanIds.add(p.id)
+        if (p.id > maxBattlePlanId) { maxBattlePlanId = p.id; recordMaxBattlePlanId() }
+        return p
+    }
+
+    fun updateBattlePlan(next: BattlePlan): BattlePlan? {
+        if (!battlePlans.containsKey(next.id)) return null
+        battlePlans[next.id] = next
+        dirtyBattlePlanIds.add(next.id)
+        return next
+    }
+
+    /** [removeTroop] 규칙 — 같은 틱 생성 행은 deleted 에 넣지 않는다. */
+    fun removeBattlePlan(id: Int): Boolean {
+        if (!battlePlans.containsKey(id)) return false
+        battlePlans.remove(id)
+        dirtyBattlePlanIds.remove(id)
+        val wasCreatedThisTick = createdBattlePlanIds.remove(id)
+        if (!wasCreatedThisTick) deletedBattlePlanIds.add(id)
+        return true
+    }
+
+    /** 장수 삭제: 그 장수의 계획을 네 집합에서 뺀다(DELETE 기록 없음 — DB 부모 CASCADE). pending 리플레이 프룬은 recorder 소관(F3). */
+    private fun pruneBattlePlansOf(generalId: Int) {
+        val gone = battlePlans.values.filter { it.generalId == generalId }.map { it.id }
+        for (id in gone) { battlePlans.remove(id); dirtyBattlePlanIds.remove(id); createdBattlePlanIds.remove(id); deletedBattlePlanIds.remove(id) }
+    }
+
+    private fun recordMaxBattlePlanId() {
+        if (maxBattlePlanId > 0) state = state.copy(meta = state.meta + mapOf("maxBattlePlanId" to maxBattlePlanId))
+    }
+
     private fun recordMaxOperationId() {
         if (maxOperationId > 0) state = state.copy(meta = state.meta + mapOf("maxOperationId" to maxOperationId))
     }
@@ -499,6 +557,7 @@ class InMemoryTurnWorld(
         generalPosition = generalPosition?.withoutGeneral(id)
         pruneRetinueOf(id)
         pruneOperationUnitsOfGeneral(id)
+        pruneBattlePlansOf(id)
         generalIdentityTokens.remove(id)
         dirtyGeneralIds.remove(id)
         // create-then-delete in the same tick fully cancels: drop the pending create and
@@ -848,6 +907,9 @@ class InMemoryTurnWorld(
         val operationUnitsOut = dirtyOperationUnitIds.mapNotNull { operationUnits[it] }
         val createdOperationUnits = createdOperationUnitIds.mapNotNull { operationUnits[it] }
         val deletedOperationUnits = deletedOperationUnitIds.toList()
+        val battlePlansOut = dirtyBattlePlanIds.mapNotNull { battlePlans[it] }
+        val createdBattlePlans = createdBattlePlanIds.mapNotNull { battlePlans[it] }
+        val deletedBattlePlans = deletedBattlePlanIds.toList()
 
         dirtyGeneralIds.clear()
         dirtyCityIds.clear()
@@ -876,6 +938,9 @@ class InMemoryTurnWorld(
         dirtyOperationUnitIds.clear()
         createdOperationUnitIds.clear()
         deletedOperationUnitIds.clear()
+        dirtyBattlePlanIds.clear()
+        createdBattlePlanIds.clear()
+        deletedBattlePlanIds.clear()
 
         return DirtyState(
             generals = generalsOut,
@@ -905,6 +970,9 @@ class InMemoryTurnWorld(
             operationUnits = operationUnitsOut,
             createdOperationUnits = createdOperationUnits,
             deletedOperationUnits = deletedOperationUnits,
+            battlePlans = battlePlansOut,
+            createdBattlePlans = createdBattlePlans,
+            deletedBattlePlans = deletedBattlePlans,
         )
     }
 }

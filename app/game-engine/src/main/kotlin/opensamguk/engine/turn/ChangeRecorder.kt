@@ -86,6 +86,8 @@ class ChangeRecorder(
      * 테스트/fresh world용 1-based 카운터.
      */
     private val diplomacyLetterIdAllocator: () -> Int = AtomicCounter()::next,
+    /** Phase 4X-C `battle_replay.id` 선할당 — DB-seed(`findMaxId()+1`, F4). 결과 로그에 「리플레이 #id」 를 박기 위해. */
+    private val battleReplayIdAllocator: () -> Int = AtomicCounter()::next,
     private val kvWriteObserver: (KvKey, Any?) -> Unit = { _, _ -> },
     initialInheritancePoints: Map<*, *> = emptyMap<Any?, Any?>(),
     /** OPENSAM-130 generation gate; null = unguarded (unit tests). */
@@ -211,6 +213,9 @@ class ChangeRecorder(
     /** 게시판 채널 (ADR-LITE-049 14) — board_post_read INSERT (기밀실 열람 기록, INSERT 전용·멱등). */
     private val boardReadInserts = mutableListOf<BoardReadInsert>()
 
+    /** Phase 4X-C — battle_replay INSERT(계획이 봉인된 전투만, INSERT 전용). */
+    private val battleReplayInserts = mutableListOf<BattleReplayInsert>()
+
     /** 투표 채널 (F4 Wave 투표) — vote_poll INSERT (설문조사 개설, INSERT 전용). */
     private val votePollInserts = mutableListOf<VotePollInsert>()
 
@@ -273,6 +278,7 @@ class ChangeRecorder(
             provinceControlWrites.isNotEmpty() || generalPositionWrites.isNotEmpty() ||
             profileIconUpdates.isNotEmpty() ||
             boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() || boardReadInserts.isNotEmpty() ||
+            battleReplayInserts.isNotEmpty() ||
             votePollInserts.isNotEmpty() || voteInserts.isNotEmpty() ||
             voteCommentInserts.isNotEmpty() ||
             inheritanceKvWrites.isNotEmpty() || inheritanceLogInserts.isNotEmpty() ||
@@ -828,6 +834,13 @@ class ChangeRecorder(
         boardReadInserts.add(BoardReadInsert(columns))
     }
 
+    /** `battle_replay` INSERT 기록(Phase 4X-C) — id 를 선할당해 돌려준다(개인 기록 「리플레이 #id」). */
+    fun recordBattleReplayInsert(columns: Map<String, Any?>): Int {
+        val id = battleReplayIdAllocator()
+        battleReplayInserts.add(BattleReplayInsert(LinkedHashMap(columns).apply { put("id", id) }))
+        return id
+    }
+
     /** `vote_poll` INSERT 기록 (F4 Wave 투표, 설문조사 개설). INSERT 전용. */
     fun recordVotePollInsert(columns: Map<String, Any?>) {
         votePollInserts.add(VotePollInsert(columns))
@@ -890,6 +903,9 @@ class ChangeRecorder(
 
     /** 기록된 board_post_read INSERT (기밀실 열람 기록 flush 소스), emit 순서대로. */
     fun boardReadInserts(): List<BoardReadInsert> = boardReadInserts.toList()
+
+    /** 기록된 battle_replay INSERT(Phase 4X-C flush 소스), emit 순서대로. */
+    fun battleReplayInserts(): List<BattleReplayInsert> = battleReplayInserts.toList()
 
     /** 기록된 vote_poll INSERT (F4 Wave 투표 flush 소스), emit 순서대로. */
     fun votePollInserts(): List<VotePollInsert> = votePollInserts.toList()
@@ -1002,6 +1018,7 @@ class ChangeRecorder(
         boardPostInserts.clear()
         boardCommentInserts.clear()
         boardReadInserts.clear()
+        battleReplayInserts.clear()
         votePollInserts.clear()
         voteInserts.clear()
         pendingVoteKeys.clear()
@@ -1176,6 +1193,21 @@ class ChangeRecorder(
             recordGeneralOwnerDelete(generalId)
             recordAccessLogDelete(world, generalId)
         }
+        // Phase 4X-C(F3): 같은 틱 「봉인 출병 → 사망」 — 5단계 general DELETE 가 battle_plan 을 CASCADE 로 지우고 8i INSERT 가 뒤에
+        // 오므로 pending 리플레이의 attacker_general_id·battle_plan_id 를 NULL 로(이름 스냅샷 열이 기록을 지킨다).
+        val gonePlanIds = world.battlePlansOf(generalId).map { it.id }.toSet()
+        for (i in battleReplayInserts.indices) {
+            val cols = battleReplayInserts[i].columns
+            val attacker = (cols["attacker_general_id"] as? Number)?.toInt()
+            val planId = (cols["battle_plan_id"] as? Number)?.toInt()
+            val hitAttacker = attacker == generalId
+            val hitPlan = planId != null && planId in gonePlanIds
+            if (hitAttacker || hitPlan) {
+                battleReplayInserts[i] = BattleReplayInsert(
+                    LinkedHashMap(cols).apply { if (hitAttacker) put("attacker_general_id", null); if (hitPlan) put("battle_plan_id", null) },
+                )
+            }
+        }
         return world.removeGeneral(generalId)
     }
 
@@ -1238,6 +1270,14 @@ class ChangeRecorder(
                 val op = (cols["operation_id"] as? Number)?.toInt()
                 if (op != null && op in prunedOperationIds) {
                     boardPostInserts[i] = BoardPostInsert(LinkedHashMap(cols).apply { put("operation_id", null) })
+                }
+            }
+            // Phase 4X-C(N4): 같은 틱 「봉인 출병(작전 연결) → 공격국 소멸」 — battle_replay.operation_id FK(작전은 국가 CASCADE).
+            for (i in battleReplayInserts.indices) {
+                val cols = battleReplayInserts[i].columns
+                val op = (cols["operation_id"] as? Number)?.toInt()
+                if (op != null && op in prunedOperationIds) {
+                    battleReplayInserts[i] = BattleReplayInsert(LinkedHashMap(cols).apply { put("operation_id", null) })
                 }
             }
         }

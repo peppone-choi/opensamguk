@@ -109,6 +109,9 @@ data class BoardPostInsert(val columns: Map<String, Any?>)
  */
 data class BoardCommentInsert(val columns: Map<String, Any?>)
 
+/** `battle_replay` INSERT 의도(Phase 4X-C, 계획이 봉인된 전투만). INSERT 전용. `id` 는 recorder 선할당(DB-seed). */
+data class BattleReplayInsert(val columns: Map<String, Any?>)
+
 /**
  * `board_post_read` INSERT 의도 (ADR-LITE-049 14 기밀실 열람 기록). INSERT 전용·멱등 — `columns`는
  * post_id, general_id. 같은 (post_id, general_id) 는 DB UNIQUE 가 무시한다(ON CONFLICT DO NOTHING).
@@ -212,6 +215,10 @@ data class DirtyState(
     val operationUnits: List<OperationUnit> = emptyList(),
     val createdOperationUnits: List<OperationUnit> = emptyList(),
     val deletedOperationUnits: List<Int> = emptyList(),
+    /** Phase 4X-C 출병 계획 — step-8i(8h 뒤), DELETE → CREATE → UPDATE. 리플레이는 recorder INSERT 채널. */
+    val battlePlans: List<BattlePlan> = emptyList(),
+    val createdBattlePlans: List<BattlePlan> = emptyList(),
+    val deletedBattlePlans: List<Int> = emptyList(),
     val kvDirty: Map<KvKey, Any?> = emptyMap(),
     /**
      * [diplomacyUpdateDirty]: per-command diplomacy-row UPDATE patches keyed `(from, to)` (T0.4).

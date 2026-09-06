@@ -253,6 +253,41 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "operationClose"
     }
 
+    // ── Phase 4X-C 출병 계획 봉인(공격자) — specs/2026-09-06-wego-field-seal-replay-vertical-slice v4.1 §4 ──
+    // 인자는 nullable — 엔진 ③ 입력 게이트가 판정한다. 봉인 뒤 수정은 인테이크 거부 사유(409 아님).
+    @Serializable
+    @SerialName("battlePlanSave")
+    data class BattlePlanSave(
+        val requestId: String? = null,
+        val generalId: Int,
+        val targetCityId: Int? = null,
+        val stance: String? = null,
+        val retreatLossPct: Int? = null,
+        val retreatMoraleBelow: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "battlePlanSave"
+    }
+
+    @Serializable
+    @SerialName("battlePlanSeal")
+    data class BattlePlanSeal(
+        val requestId: String? = null,
+        val generalId: Int,
+        val planId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "battlePlanSeal"
+    }
+
+    @Serializable
+    @SerialName("battlePlanDelete")
+    data class BattlePlanDelete(
+        val requestId: String? = null,
+        val generalId: Int,
+        val planId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "battlePlanDelete"
+    }
+
     @Serializable
     @SerialName("boardComment")
     data class BoardComment(

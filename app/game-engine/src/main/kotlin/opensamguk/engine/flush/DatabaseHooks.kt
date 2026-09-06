@@ -20,6 +20,9 @@ import opensamguk.infra.persistence.BoardPostInsertRow
 import opensamguk.infra.persistence.BoardReadInsertRow
 import opensamguk.infra.persistence.BugokRow
 import opensamguk.infra.persistence.OperationRow
+import opensamguk.infra.persistence.BattlePlanRow
+import opensamguk.infra.persistence.BattleReplayInsertRow
+import opensamguk.engine.turn.BattlePlan
 import opensamguk.infra.persistence.OperationUnitRow
 import opensamguk.infra.persistence.RetainerRow
 import opensamguk.engine.turn.Bugok
@@ -330,6 +333,13 @@ object DatabaseHooks {
         closedReason = o.closedReason,
     )
 
+    private fun toBattlePlanRow(p: BattlePlan) = BattlePlanRow(
+        id = p.id, generalId = p.generalId, targetCityId = p.targetCityId, stance = p.stance,
+        retreatLossPct = p.retreatLossPct, retreatMoraleBelow = p.retreatMoraleBelow,
+        sealedAt = p.sealedAt, sealedYear = p.sealedYear, sealedMonth = p.sealedMonth, sealedPhase = p.sealedPhase,
+        resolvedYear = p.resolvedYear, resolvedMonth = p.resolvedMonth, resolvedPhase = p.resolvedPhase, version = p.version,
+    )
+
     private fun toOperationUnitRow(u: OperationUnit) = OperationUnitRow(
         id = u.id, operationId = u.operationId, generalId = u.generalId, bugokId = u.bugokId, role = u.role,
         joinedCityId = u.joinedCityId, joinedYear = u.joinedYear, joinedMonth = u.joinedMonth, joinedPhase = u.joinedPhase,
@@ -619,6 +629,7 @@ object DatabaseHooks {
         val createdBugokIds = dirty.createdBugoks.map { it.id }.toSet()
         val createdOperationIds = dirty.createdOperations.map { it.id }.toSet()
         val createdOperationUnitIds = dirty.createdOperationUnits.map { it.id }.toSet()
+        val createdBattlePlanIds = dirty.createdBattlePlans.map { it.id }.toSet()
 
         // Dirty rows from the recorder (the lone dirty source), resolved to the world's post-state.
         val updatedGenerals = recorder.dirtyGeneralIds()
@@ -675,6 +686,7 @@ object DatabaseHooks {
                 (state.meta["maxBugokId"] as? Number)?.let { put("max_bugok_id", it.toInt()) }
                 (state.meta["maxOperationId"] as? Number)?.let { put("max_operation_id", it.toInt()) }
                 (state.meta["maxOperationUnitId"] as? Number)?.let { put("max_operation_unit_id", it.toInt()) }
+                (state.meta["maxBattlePlanId"] as? Number)?.let { put("max_battle_plan_id", it.toInt()) }
             },
             archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
@@ -726,6 +738,11 @@ object DatabaseHooks {
             createdOperationUnits = dirty.createdOperationUnits.map { toOperationUnitRow(it) },
             updatedOperationUnits = dirty.operationUnits.filter { it.id !in createdOperationUnitIds }.map { toOperationUnitRow(it) },
             deletedOperationUnitIds = dirty.deletedOperationUnits,
+            // Phase 4X-C 출병 계획(8i) + 리플레이 INSERT(recorder 채널).
+            createdBattlePlans = dirty.createdBattlePlans.map { toBattlePlanRow(it) },
+            updatedBattlePlans = dirty.battlePlans.filter { it.id !in createdBattlePlanIds }.map { toBattlePlanRow(it) },
+            deletedBattlePlanIds = dirty.deletedBattlePlans,
+            battleReplayInserts = recorder.battleReplayInserts().map { BattleReplayInsertRow(it.columns) },
             logEntries = logEntries,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),

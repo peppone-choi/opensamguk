@@ -201,6 +201,30 @@ data class OperationUnit(
     val joinedPhase: Int,
 )
 
+/**
+ * Phase 4X-C 출병 계획(공격자) — 세계 상태(troop 미러). id 엔진 할당. 봉인(`sealedAt`) 뒤 수정 불가, 출병 해결로 **소비**(`resolved*`)되며
+ * 소비된 행은 부팅 시 적재하지 않는다(spec v4.1 §2·§3).
+ */
+data class BattlePlan(
+    val id: Int,
+    val generalId: Int,
+    val targetCityId: Int,
+    val stance: String,
+    val retreatLossPct: Int? = null,
+    val retreatMoraleBelow: Int? = null,
+    val sealedAt: Instant? = null,
+    val sealedYear: Int? = null,
+    val sealedMonth: Int? = null,
+    val sealedPhase: Int? = null,
+    val resolvedYear: Int? = null,
+    val resolvedMonth: Int? = null,
+    val resolvedPhase: Int? = null,
+    val version: Int = 1,
+) {
+    val sealed: Boolean get() = sealedAt != null
+    val resolved: Boolean get() = resolvedYear != null
+}
+
 data class TurnDiplomacy(
     val fromNationId: Int,
     val toNationId: Int,

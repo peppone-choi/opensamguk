@@ -262,6 +262,8 @@ class TurnDaemonCommandDispatcher(
     private val retainer = opensamguk.engine.intake.RetainerHandler(world, recorder)
     // Phase 4X-B 작전 — 세계 상태 채널.
     private val operation = opensamguk.engine.intake.OperationHandler(world, recorder)
+    // Phase 4X-C 출병 계획 봉인 — 세계 상태 채널.
+    private val battlePlan = opensamguk.engine.intake.BattlePlanHandler(world, recorder)
 
     // ── F4 Wave 투표 — 설문조사(개설/투표/댓글/마감) 인테이크 핸들러 ──
     // VotePollRepository(infra read seam)를 주입 가능하면 reader 어댑터로 소비한다(BoardHandler가 board
@@ -429,6 +431,9 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.OperationJoin -> operation.handleJoin(command)
         is TurnDaemonCommand.OperationLeave -> operation.handleLeave(command)
         is TurnDaemonCommand.OperationClose -> operation.handleClose(command)
+        is TurnDaemonCommand.BattlePlanSave -> battlePlan.handleSave(command)
+        is TurnDaemonCommand.BattlePlanSeal -> battlePlan.handleSeal(command)
+        is TurnDaemonCommand.BattlePlanDelete -> battlePlan.handleDelete(command)
         // ── F4 Wave 투표 인테이크 바인딩 ──
         is TurnDaemonCommand.NewVote -> vote.handleNewVote(command)
         is TurnDaemonCommand.VoteCast -> vote.handleVoteCast(command)
