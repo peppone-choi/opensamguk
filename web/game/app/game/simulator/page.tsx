@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import { api } from '../../../lib/api';
@@ -85,7 +87,7 @@ export default function SimulatorPage() {
 
   return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>전투 시뮬레이터</h1>
+      <PageHead title="전투 시뮬레이터" />
 
       <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
         <button onClick={fetchGenerals}>장수 목록 불러오기</button>
@@ -102,7 +104,7 @@ export default function SimulatorPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
         {/* Attacker selector */}
         <GameCard>
-          <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)', color: 'var(--crimson)' }}>공격자</h2>
+          <SectionHeader as="h2" title="공격자" tone="rust" />
           <label
             style={{
               display: 'flex',
@@ -147,7 +149,7 @@ export default function SimulatorPage() {
 
         {/* Defender selector */}
         <GameCard>
-          <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)', color: 'var(--jade)' }}>방어자</h2>
+          <SectionHeader as="h2" title="방어자" tone="info" />
           <label
             style={{
               display: 'flex',
@@ -208,7 +210,7 @@ export default function SimulatorPage() {
 
       {result && (
         <GameCard>
-          <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>시뮬레이션 결과</h2>
+          <SectionHeader as="h2" title="시뮬레이션 결과" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
             <StatusBadge variant={result.conquerCity ? 'gold' : 'muted'}>{result.conquerCity ? '공성 성공' : '교전 종료'}</StatusBadge>
             <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>{result.reason}</span>

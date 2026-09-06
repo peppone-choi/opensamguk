@@ -13,13 +13,14 @@
 //  - READ-ONLY. EMPTY-SAFE(소속 없음 → 안내 / 빈 표).
 
 import { useEffect, useMemo, useState } from 'react';
+import { Portrait } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameTable from '../../../components/GameTable';
 import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import { formatRefreshScore } from '../../../lib/utilGame';
-import { portraitUrl, onPortraitError } from '../../../lib/portrait';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { MyGeneralSummary, MyGeneralsResponse } from '../../../types/game';
 
@@ -111,7 +112,7 @@ export default function MyGeneralsPage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>세력 장수</h1>
+                    <PageHead title="세력 장수" />
                     <p className="text-muted">로딩 중...</p>
                 </div>
             </Shell>
@@ -122,7 +123,7 @@ export default function MyGeneralsPage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>세력 장수</h1>
+                    <PageHead title="세력 장수" />
                     <div className="error-state">
                         <p>{error}</p>
                         <button onClick={() => fetchData()}>다시 시도</button>
@@ -142,17 +143,7 @@ export default function MyGeneralsPage() {
         const lbonusText = g.lbonus > 0 ? <span style={{ color: 'cyan' }}> +{g.lbonus}</span> : null;
         return [
             // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default).
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-                key={`pic-${g.generalId}`}
-                src={portraitUrl(g.picture, g.imageServer)}
-                onError={onPortraitError}
-                alt=""
-                width={32}
-                height={40}
-                style={{ objectFit: 'contain', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
-                draggable={false}
-            />,
+            <Portrait key={`pic-${g.generalId}`} picture={g.picture} imageServer={g.imageServer} size="icon-28" alt="" />,
             <GeneralName key={`nm-${g.generalId}`} name={g.name} npcType={g.npcState} />,
             g.officerLevelText,                 // 관직
             g.dedLevelText,                     // 계급
@@ -177,7 +168,7 @@ export default function MyGeneralsPage() {
     return (
         <Shell>
             <div className="page-content">
-                <h1>세력 장수</h1>
+                <PageHead title="세력 장수" />
                 <p className="page-subtitle">총 {generals.length}명</p>
                 <div style={{ marginBottom: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span className="text-muted">정렬순서 :</span>

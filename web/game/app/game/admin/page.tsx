@@ -13,7 +13,8 @@ import DiplomacyAllPanel from '@/components/admin/DiplomacyAllPanel';
 import TournamentAdminPanel from '@/components/admin/TournamentAdminPanel';
 import ServerStatusPanel from '@/components/admin/ServerStatusPanel';
 
-export const ADMIN_TABS = [
+// page 모듈은 default 외 export 를 가질 수 없다(Next 타입 검사) — 탭 정의는 모듈 내부 상수.
+const ADMIN_TABS = [
     { key: 'settings', label: '게임 설정', legacy: 'admin1' },
     { key: 'generals', label: '장수 조치', legacy: 'admin2' },
     { key: 'stats', label: '일제정보', legacy: 'admin5' },

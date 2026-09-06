@@ -18,7 +18,9 @@
 //   즉시 전투 특기 초기화), 장수 소유자 확인, 능력치 초기화, 유산 포인트 변경 내역.
 
 import { useEffect, useRef, useState } from 'react';
+import { SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
@@ -70,17 +72,6 @@ const INHERIT_BUFF_HELP: InheritBuffDef[] = [
     { key: 'domesticFailProb', title: '내정 실패 확률 감소', info: '민심, 인구, 농업, 상업, 치안, 수비, 성벽, 기술 내정의 실패 확률이 1%p ~ 5%p 감소합니다.' },
 ];
 
-// Section header bar — same look as the npc-control / war-room section bars.
-const sectionBarStyle: React.CSSProperties = {
-    textAlign: 'center',
-    border: '0.5px solid var(--border-medium)',
-    background: 'var(--bg-elevated)',
-    padding: 'var(--space-xs) var(--space-sm)',
-    fontWeight: 600,
-    fontSize: 'var(--text-sm)',
-    marginBottom: 'var(--space-sm)',
-    marginTop: 'var(--space-lg)',
-};
 
 const labelStyle: React.CSSProperties = {
     fontSize: 'var(--text-sm)',
@@ -313,7 +304,7 @@ export default function InheritPage() {
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>유산 관리</h1>
+            <PageHead title="유산 관리" />
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
             {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
@@ -340,7 +331,7 @@ export default function InheritPage() {
             </GameCard>
 
             {/* ── 유산 포인트 상점 (read-only display; purchase deferred) ──────────── */}
-            <div style={sectionBarStyle}>유산 포인트 상점</div>
+            <SectionHeader title="유산 포인트 상점" />
             <GameCard>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-lg)' }}>
                     <div>
@@ -630,7 +621,7 @@ export default function InheritPage() {
             </div>
 
             {/* ── 유산 포인트 변경 내역 (logs) ────────────────────────────────────── */}
-            <div style={sectionBarStyle}>유산 포인트 변경 내역</div>
+            <SectionHeader title="유산 포인트 변경 내역" />
             <GameCard>
                 {logs.length === 0 && !loading ? (
                     <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>변경 내역이 없습니다.</p>

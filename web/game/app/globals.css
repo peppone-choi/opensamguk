@@ -2387,3 +2387,38 @@ input:focus, select:focus, textarea:focus {
   .bc-layout { grid-template-columns: 1fr; }
   .bc-rail { order: -1; position: static; }
 }
+
+/* ===== Phase 4 웨이브 B — 국가 운영 · 장수 · 광장 ===== */
+.page-head h1.page-head__title { font-size: 18px; margin: 0; }
+.game-card > .os-section-header:first-child { margin: -4px 0 8px; }
+.nation-hero { display: flex; align-items: center; gap: 16px; padding: 14px 20px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 30%, var(--panel)); }
+.nation-hero__name { font-family: var(--font-serif); font-size: 26px; font-weight: 900; line-height: 1.1; color: var(--text); }
+.nation-hero__meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--text-2); }
+.nation-hero__meta b { color: var(--text); }
+.nation-grid { margin-top: 0; }
+.nation-kv { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); padding: 10px 14px 12px; margin: 0; }
+.nation-kv dt { text-align: left; }
+@media (max-width: 720px) { .nation-kv { grid-template-columns: auto minmax(0, 1fr); } }
+.nation-cities { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; }
+.chief-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.chief-grid > .record-panel + .record-panel { margin-top: 0; }
+.chief-post__time { font-size: 11px; color: var(--muted); }
+.chief-post__slots { display: flex; flex-direction: column; }
+.chief-post__slots .os-slot { min-height: 36px; }
+.chief-post .cmd-cats { margin: 8px 12px 0; }
+.chief-post .cmd-grid { padding: 8px 12px; }
+.me-hero { position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; align-items: end; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset), var(--panel) 70%); overflow: hidden; }
+.me-hero__portrait { width: 200px; height: 284px; border: 0; border-right: 1px solid var(--line); }
+.me-hero__text { padding: 16px 20px 18px 0; display: flex; flex-direction: column; gap: 8px; }
+.me-hero__name { font-family: var(--font-serif); font-size: 28px; font-weight: 900; line-height: 1.1; color: var(--text); }
+.me-hero__meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text-2); }
+.me-hero__meta span + span::before { content: '·'; margin-right: 8px; color: var(--muted); }
+.me-hero__stats { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+.me-hero__stat { display: inline-flex; flex-direction: column; gap: 2px; min-width: 44px; }
+.me-hero__stat-k { font-size: 10px; color: var(--muted); }
+.me-hero__stat b { font-size: 18px; color: var(--text); }
+@media (max-width: 640px) {
+  .me-hero { grid-template-columns: 1fr; }
+  .me-hero__portrait { width: 100%; height: 240px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .me-hero__text { padding: 0 16px 16px; }
+}

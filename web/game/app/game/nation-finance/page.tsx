@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { SectionHeader } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import GameTable from '../../../components/GameTable';
 import StatusBadge from '../../../components/StatusBadge';
@@ -210,7 +212,7 @@ export default function NationFinancePage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>내무부</h1>
+                    <PageHead title="내무부" />
                     <p className="text-muted">로딩 중...</p>
                 </div>
             </Shell>
@@ -221,7 +223,7 @@ export default function NationFinancePage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>내무부</h1>
+                    <PageHead title="내무부" />
                     <div className="error-state">
                         <p>{error}</p>
                         <button onClick={() => void fetchData()}>다시 시도</button>
@@ -235,7 +237,7 @@ export default function NationFinancePage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>내무부</h1>
+                    <PageHead title="내무부" />
                     <GameCard>
                         <p className="text-muted">국가에 소속되어있지 않습니다.</p>
                     </GameCard>
@@ -252,7 +254,7 @@ export default function NationFinancePage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>내무부</h1>
+                    <PageHead title="내무부" />
                     <GameCard>
                         <p className="text-muted">권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.</p>
                     </GameCard>
@@ -325,13 +327,13 @@ export default function NationFinancePage() {
     return (
         <Shell>
             <div className="page-content">
-                <h1>내무부</h1>
+                <PageHead title="내무부" />
 
                 {/* 외교관계 — legacy PageNationStratFinan.vue:4-46. nationsList(getAllNationStaticInfo +
                     cityCnt + diplomacy)를 표로. game-api 가 미배출(구 이미지)이면 미렌더(날조 금지). */}
                 {data.nationsList && data.nationsList.length > 0 && (
                     <>
-                        <h2>외교관계</h2>
+                        <SectionHeader as="h2" title="외교관계" />
                         <GameCard>
                             <div style={{ overflowX: 'auto' }}>
                                 <table className="game-table" style={{ width: '100%' }}>
@@ -380,12 +382,10 @@ export default function NationFinancePage() {
                     </>
                 )}
 
-                <h2>국가 방침 &amp; 임관 권유 메시지</h2>
+                <SectionHeader as="h2" title="국가 방침 &amp; 임관 권유 메시지" />
 
                 <GameCard>
-                    <div className="card-header">
-                        <h2>국가 방침</h2>
-                    </div>
+                    <SectionHeader as="h2" title="국가 방침" />
                     {editingNotice ? (
                         <RichTextEditor
                             ariaLabel="국가 방침"
@@ -410,9 +410,7 @@ export default function NationFinancePage() {
                 </GameCard>
 
                 <GameCard>
-                    <div className="card-header">
-                        <h2>임관 권유</h2>
-                    </div>
+                    <SectionHeader as="h2" title="임관 권유" />
                     <p className="text-muted" style={{ marginTop: 0 }}>870px x 200px를 넘어서는 내용은 표시되지 않습니다.</p>
                     {editingScout ? (
                         <RichTextEditor
@@ -438,7 +436,7 @@ export default function NationFinancePage() {
                 </GameCard>
 
                 {/* 예산&정책 */}
-                <h2>예산&amp;정책</h2>
+                <SectionHeader as="h2" title="예산&amp;정책" />
 
                 <div
                     style={{
@@ -448,22 +446,18 @@ export default function NationFinancePage() {
                     }}
                 >
                     <GameCard>
-                        <div className="card-header">
-                            <h2>자금 예산</h2>
-                        </div>
+                        <SectionHeader as="h2" title="자금 예산" />
                         <GameTable headers={['항목', '금']} rows={goldRows} />
                     </GameCard>
 
                     <GameCard>
-                        <div className="card-header">
-                            <h2>군량 예산</h2>
-                        </div>
+                        <SectionHeader as="h2" title="군량 예산" />
                         <GameTable headers={['항목', '쌀']} rows={riceRows} />
                     </GameCard>
                 </div>
 
                 {/* 정책 (F4 C2: 설정 버튼 → CommandModal). The setter buttons launch the intake commands. */}
-                <h2>정책</h2>
+                <SectionHeader as="h2" title="정책" />
                 <GameCard>
                     <div className="stat-grid">
                         <div className="stat-item">

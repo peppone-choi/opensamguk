@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Portrait } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
+import PageHead from '../../../components/PageHead';
 import GameCard from '../../../components/GameCard';
 import GeneralBasicCard from '../../../components/game/GeneralBasicCard';
 import MyInfoLogPanel from '../../../components/game/MyInfoLogPanel';
@@ -84,7 +86,7 @@ export default function MyPage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>내 정보&설정</h1>
+                    <PageHead title="내 정보&설정" />
                     <p className="text-muted">로딩 중...</p>
                 </div>
             </Shell>
@@ -95,7 +97,7 @@ export default function MyPage() {
         return (
             <Shell>
                 <div className="page-content">
-                    <h1>내 정보&설정</h1>
+                    <PageHead title="내 정보&설정" />
                     <div className="error-state">
                         <p>{error || '장수 정보가 없습니다.'}</p>
                         <button onClick={() => fetchData()}>다시 시도</button>
@@ -187,7 +189,31 @@ export default function MyPage() {
     return (
         <Shell>
             <div className="page-content">
-                <h1>내 정보&설정</h1>
+                <PageHead title="내 정보&설정" chip={myPage.nationName ?? '재야'} />
+                {/* 07 장수 히어로 — 원본 초상(하단 그라데이션 마스크) + 이름·소속·도시. 국가색 링은 내 장수(self)에만. */}
+                <section className="me-hero" aria-label={`${myPage.name} 개요`}>
+                    <Portrait
+                        picture={frontInfo.general.picture}
+                        imageServer={frontInfo.general.imageServer}
+                        size="hero"
+                        alt=""
+                        frameClassName="me-hero__portrait"
+                        ring={frontInfo.nation?.color ? { color: frontInfo.nation.color, reason: 'self' } : null}
+                    />
+                    <div className="me-hero__text">
+                        <div className="me-hero__name">{myPage.name}</div>
+                        <div className="me-hero__meta">
+                            <span>{myPage.nationName ?? '재야'}</span>
+                            <span>{myPage.cityName ?? '-'}</span>
+                            {frontInfo.general.officerLevelText && <span>{frontInfo.general.officerLevelText}</span>}
+                        </div>
+                        <div className="me-hero__stats">
+                            {([['통솔', myPage.leadership], ['무력', myPage.strength], ['지력', myPage.intel], ['정치', myPage.politics ?? '-'], ['매력', myPage.charm ?? '-']] as const).map(([k, v]) => (
+                                <span key={k} className="me-hero__stat"><span className="me-hero__stat-k">{k}</span><b className="os-num">{v}</b></span>
+                            ))}
+                        </div>
+                    </div>
+                </section>
                 <div
                     style={{
                         display: 'grid',
