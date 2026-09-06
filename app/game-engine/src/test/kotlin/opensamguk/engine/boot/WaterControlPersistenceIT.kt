@@ -46,10 +46,18 @@ class WaterControlPersistenceIT {
         assertEquals(listOf("han-world-v2", "han-world-v3"), jdbc.query(
             "SELECT config ->> 'mapName' FROM world_state ORDER BY id", { rs, _ -> rs.getString(1) }))
         migrate("50")
+        // V50 뒤 스키마(예: V55 general_retainers/general_bugok)를 WorldSnapshotLoader 가 읽으므로 cold boot 전에 최신까지 올린다.
+        migrateLatest()
         executor = JdbcFlushExecutor(NamedParameterJdbcTemplate(dataSource), TransactionTemplate(DataSourceTransactionManager(dataSource)))
     }
 
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
+
+    private fun migrateLatest() {
+        Flyway.configure().dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
+            .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
+    }
 
     private fun migrate(target: String) {
         Flyway.configure().dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
