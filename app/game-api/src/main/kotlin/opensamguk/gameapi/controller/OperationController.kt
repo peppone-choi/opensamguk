@@ -89,7 +89,7 @@ class OperationController(
     private fun toDto(o: OperationReadEntity, units: List<opensamguk.gameapi.read.OperationUnitReadEntity>, boardPostIds: List<Int>, now: GameDate): OperationDto {
         val target = cities.findById(o.targetCityId).orElse(null)
         val declaredBy = o.declaredByGeneralId?.let { generals.findById(it).orElse(null) }
-        val deadline = GameDate(o.deadlineYear, o.deadlineMonth, o.deadlinePhase)
+        val deadline = GameDate(o.deadlineYear.toInt(), o.deadlineMonth.toInt(), o.deadlinePhase.toInt())
         val open = o.status in OperationRules.OPEN_STATUSES
         val milestones = OperationMilestonesDto(o.departed, o.arrived, o.supplied, o.objective)
         val count = listOf(o.departed, o.arrived, o.supplied, o.objective).count { it }
@@ -97,8 +97,8 @@ class OperationController(
             id = o.id, kind = o.kind, kindLabel = OperationRules.KIND_LABELS[o.kind] ?: o.kind, title = o.title, fallbackText = o.fallbackText,
             target = OperationTargetDto(o.targetCityId, target?.name ?: "-"),
             status = o.status, statusLabel = OperationRules.STATUS_LABELS[o.status] ?: o.status, closedReason = o.closedReason,
-            declaredAt = OperationDateDto(o.declaredYear, o.declaredMonth, o.declaredPhase),
-            deadline = OperationDateDto(o.deadlineYear, o.deadlineMonth, o.deadlinePhase),
+            declaredAt = OperationDateDto(o.declaredYear.toInt(), o.declaredMonth.toInt(), o.declaredPhase.toInt()),
+            deadline = OperationDateDto(o.deadlineYear.toInt(), o.deadlineMonth.toInt(), o.deadlinePhase.toInt()),
             remainingMonths = if (open) OperationRules.remainingMonths(now, deadline).coerceAtLeast(1) else null,
             milestones = milestones, milestoneDisplayPct = count * OperationRules.MILESTONE_DISPLAY_PCT,
             units = units.map { u ->

@@ -65,7 +65,7 @@ class OperationReadControllerTest {
     private fun mvc(vararg controllers: Any): MockMvc = MockMvcBuilders.standaloneSetup(*controllers).setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver()).build()
 
     private fun op(id: Int, nationId: Int, status: String = "active") = OperationReadEntity(worldId = 1, id = id, nationId = nationId, kind = "capture_city", targetCityId = 2, title = "허창 공략",
-        declaredYear = 200, declaredMonth = 2, declaredPhase = 1, deadlineYear = 200, deadlineMonth = 5, deadlinePhase = 1, status = status, departed = true)
+        declaredYear = 200.toShort(), declaredMonth = 2.toShort(), declaredPhase = 1.toShort(), deadlineYear = 200.toShort(), deadlineMonth = 5.toShort(), deadlinePhase = 1.toShort(), status = status, departed = true)
 
     @Test
     fun `list is 401 anonymous, empty with rules for 재야, and full for a nation member`() {

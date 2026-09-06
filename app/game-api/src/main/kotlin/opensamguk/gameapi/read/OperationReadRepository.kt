@@ -14,6 +14,7 @@ import org.springframework.data.repository.Repository as SpringDataRepository
 @Entity
 @Table(name = "operation")
 @IdClass(WorldRowId::class)
+/** 年·月·순 열은 DDL 이 SMALLINT 라 `Short` 로 매핑한다 — `Int` 면 Hibernate 스키마 검증(validate)이 부팅을 막는다. */
 class OperationReadEntity(
     @Id @Column(name = "world_id") var worldId: Int = 0,
     @Id @Column(name = "id") var id: Int = 0,
@@ -23,12 +24,12 @@ class OperationReadEntity(
     @Column(name = "title") var title: String = "",
     @Column(name = "fallback_text") var fallbackText: String? = null,
     @Column(name = "declared_by_general_id") var declaredByGeneralId: Int? = null,
-    @Column(name = "declared_year") var declaredYear: Int = 0,
-    @Column(name = "declared_month") var declaredMonth: Int = 0,
-    @Column(name = "declared_phase") var declaredPhase: Int = 1,
-    @Column(name = "deadline_year") var deadlineYear: Int = 0,
-    @Column(name = "deadline_month") var deadlineMonth: Int = 0,
-    @Column(name = "deadline_phase") var deadlinePhase: Int = 1,
+    @Column(name = "declared_year") var declaredYear: Short = 0,
+    @Column(name = "declared_month") var declaredMonth: Short = 0,
+    @Column(name = "declared_phase") var declaredPhase: Short = 1,
+    @Column(name = "deadline_year") var deadlineYear: Short = 0,
+    @Column(name = "deadline_month") var deadlineMonth: Short = 0,
+    @Column(name = "deadline_phase") var deadlinePhase: Short = 1,
     @Column(name = "status") var status: String = "declared",
     @Column(name = "m_departed") var departed: Boolean = false,
     @Column(name = "m_arrived") var arrived: Boolean = false,
