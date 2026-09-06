@@ -208,6 +208,9 @@ class ChangeRecorder(
     /** 게시판 채널 (F4 C2 슬라이스 C) — board_comment INSERT (회의실/기밀실 댓글, INSERT 전용). */
     private val boardCommentInserts = mutableListOf<BoardCommentInsert>()
 
+    /** 게시판 채널 (ADR-LITE-049 14) — board_post_read INSERT (기밀실 열람 기록, INSERT 전용·멱등). */
+    private val boardReadInserts = mutableListOf<BoardReadInsert>()
+
     /** 투표 채널 (F4 Wave 투표) — vote_poll INSERT (설문조사 개설, INSERT 전용). */
     private val votePollInserts = mutableListOf<VotePollInsert>()
 
@@ -269,7 +272,7 @@ class ChangeRecorder(
             waterControlWrites.isNotEmpty() ||
             provinceControlWrites.isNotEmpty() || generalPositionWrites.isNotEmpty() ||
             profileIconUpdates.isNotEmpty() ||
-            boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() ||
+            boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() || boardReadInserts.isNotEmpty() ||
             votePollInserts.isNotEmpty() || voteInserts.isNotEmpty() ||
             voteCommentInserts.isNotEmpty() ||
             inheritanceKvWrites.isNotEmpty() || inheritanceLogInserts.isNotEmpty() ||
@@ -820,6 +823,11 @@ class ChangeRecorder(
         boardCommentInserts.add(BoardCommentInsert(columns))
     }
 
+    /** `board_post_read` INSERT 기록 (ADR-LITE-049 14, 기밀실 열람 기록). INSERT 전용·멱등. */
+    fun recordBoardReadInsert(columns: Map<String, Any?>) {
+        boardReadInserts.add(BoardReadInsert(columns))
+    }
+
     /** `vote_poll` INSERT 기록 (F4 Wave 투표, 설문조사 개설). INSERT 전용. */
     fun recordVotePollInsert(columns: Map<String, Any?>) {
         votePollInserts.add(VotePollInsert(columns))
@@ -879,6 +887,9 @@ class ChangeRecorder(
 
     /** 기록된 board_comment INSERT (F4 C2 슬라이스 C flush 소스), emit 순서대로. */
     fun boardCommentInserts(): List<BoardCommentInsert> = boardCommentInserts.toList()
+
+    /** 기록된 board_post_read INSERT (기밀실 열람 기록 flush 소스), emit 순서대로. */
+    fun boardReadInserts(): List<BoardReadInsert> = boardReadInserts.toList()
 
     /** 기록된 vote_poll INSERT (F4 Wave 투표 flush 소스), emit 순서대로. */
     fun votePollInserts(): List<VotePollInsert> = votePollInserts.toList()
@@ -990,6 +1001,7 @@ class ChangeRecorder(
         profileIconUpdates.clear()
         boardPostInserts.clear()
         boardCommentInserts.clear()
+        boardReadInserts.clear()
         votePollInserts.clear()
         voteInserts.clear()
         pendingVoteKeys.clear()

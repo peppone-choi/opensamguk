@@ -636,13 +636,51 @@ data class InheritPointResponse(
     val currentStat: InheritStat,
 )
 
-// ── GET /api/board?secret= — page 4 ────────────────────────────────────────────────────────────────
+// ── GET /api/board?secret= — page 4 · ADR-LITE-049 14 회의실·기밀실 확장 ────────────────
+/** 글·댓글·표결·열람에 붙는 장수 표시(아이콘 96 규칙). picture 는 현재 general 행에서 읽는다(원천 없으면 null → 기본 초상). */
+data class BoardPerson(
+    val generalId: Int,
+    val name: String,
+    val picture: String?,
+    val imageServer: Int,
+    val officerLevelText: String?,
+)
+
 data class BoardComment(
     val id: Int,
     val authorGeneralId: Int,
     val authorName: String,
     val text: String,
     val date: Instant,
+    val authorPicture: String? = null,
+    val authorImageServer: Int = 0,
+)
+
+/** 표결 글에 붙는 vote_poll 요약 — 선택지별 표 수와 표결자(공개 표결일 때만 표결자 노출). */
+data class BoardVoteOption(
+    val index: Int,
+    val text: String,
+    val count: Int,
+    val voters: List<BoardPerson>,
+)
+
+data class BoardVoteSummary(
+    val voteId: Int,
+    val title: String,
+    val endDate: Instant?,
+    val closed: Boolean,
+    val options: List<BoardVoteOption>,
+    /** 호출 장수의 선택 인덱스. 미표결/미인증이면 null. */
+    val myVote: List<Int>?,
+    val voterCount: Int,
+    /** 표결 자격 = 같은 국가의 플레이어 장수 수(npc < 2). */
+    val eligibleCount: Int,
+)
+
+/** 기밀실 열람 기록 — 읽은 사람과 수뇌부 정원(officer_level >= 5). */
+data class BoardReaders(
+    val read: List<BoardPerson>,
+    val total: Int,
 )
 
 data class BoardArticle(
@@ -654,12 +692,28 @@ data class BoardArticle(
     val contentHtml: String,
     val date: Instant,
     val comments: List<BoardComment>,
-    // [C1-α BLOCKED — author_icon 원천 부재] legacy `j_board_article_add.php`는 작성 시점 작성자
-    // 초상(imgsvr/picture → GetImageURL)을 INSERT하고 BoardArticle.vue가 64px로 렌더하지만,
-    // opensamguk `board_post` 스키마(V1__baseline.sql:352)에 author_icon/imgsvr/picture 컬럼이 없어
-    // (P8 미이식) read 원천이 없다 → 필드 자체를 노출하지 않는다(값 날조 금지, parityViolation MEDIUM 백로그).
-    // 복원 시 = 마이그레이션(author_icon 컬럼) + intake INSERT + DTO + FE 일괄. 댓글(BoardComment)은
-    // legacy에도 초상이 없으므로 author_icon 부재가 정상이다.
+    /** general | vote | operation | notice (V53). */
+    val kind: String = "general",
+    val voteId: Int? = null,
+    val vote: BoardVoteSummary? = null,
+    /** 기밀실 글에만. 회의실 글은 null. */
+    val readers: BoardReaders? = null,
+    // 작성자 초상 — board_post 에 author_icon 원천이 없어(C1-α) 현재 general 행에서 읽는다. 장수가 사라졌으면 null.
+    val authorPicture: String? = null,
+    val authorImageServer: Int = 0,
+    val authorOfficerLevelText: String? = null,
+)
+
+/** 회의실 참여 스택 — 국가 플레이어 장수(npc < 2). active = 최근 한 순(tick_seconds) 안에 턴 시각이 갱신됨. */
+data class BoardParticipant(
+    val generalId: Int,
+    val name: String,
+    val picture: String?,
+    val imageServer: Int,
+    val officerLevelText: String?,
+    val active: Boolean,
+    /** 기밀실 열람 자격(수뇌부, checkSecretPermission >= 2). 기밀실 우측 레일 「열람 가능」 스택. */
+    val chief: Boolean = false,
 )
 
 data class BoardResponse(
@@ -671,6 +725,12 @@ data class BoardResponse(
     val articles: List<BoardArticle>,
     /** Set when a permission gate blocked the secret board (renders as INFO, not error). */
     val blockedReason: String?,
+    val participants: List<BoardParticipant> = emptyList(),
+    /** 수뇌부 정원(officer_level >= 5, 국가 소속). 기밀실 헤더 「수뇌부 n명」. */
+    val chiefCount: Int = 0,
+    val myGeneralId: Int? = null,
+    /** 호출 장수의 checkSecretPermission 값(-1 재야). 기밀실 글쓰기·공지 게이트 표시용. */
+    val myPermission: Int = -1,
 )
 
 // ── GET /api/troops — page 6 ───────────────────────────────────────────────────────────────────────

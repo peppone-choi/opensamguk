@@ -1088,12 +1088,48 @@ export interface InheritPointResponse {
 // '권한이 부족합니다. 수뇌부가 아닙니다.'. EMPTY articles[] when no rows.
 // 필드명은 game-api DTO를 그대로 미러링한다 (app/game-api .../dto/F4Dto.kt BoardResponse/
 // BoardArticle/BoardComment) — 프록시가 pass-through라 페이지가 이 이름을 그대로 소비한다.
+/** 글·댓글·표결·열람에 붙는 장수 표시(ADR-LITE-049 아이콘 96 규칙). picture 는 현재 general 행 — 없으면 기본 초상. */
+export interface BoardPerson {
+  generalId: number;
+  name: string;
+  picture: string | null;
+  imageServer: number;
+  officerLevelText: string | null;
+}
+
 export interface BoardComment {
   id: number;
   authorGeneralId: number;
   authorName: string;
   text: string;
   date: string; // ISO instant
+  authorPicture?: string | null;
+  authorImageServer?: number;
+}
+
+export type BoardKind = 'general' | 'vote' | 'operation' | 'notice';
+
+export interface BoardVoteOption {
+  index: number;
+  text: string;
+  count: number;
+  voters: BoardPerson[]; // 공개 표결일 때만; 비공개는 []
+}
+
+export interface BoardVoteSummary {
+  voteId: number;
+  title: string;
+  endDate: string | null;
+  closed: boolean;
+  options: BoardVoteOption[];
+  myVote: number[] | null;
+  voterCount: number;
+  eligibleCount: number;
+}
+
+export interface BoardReaders {
+  read: BoardPerson[];
+  total: number; // 수뇌부 정원
 }
 
 export interface BoardArticle {
@@ -1105,6 +1141,24 @@ export interface BoardArticle {
   contentHtml: string;
   date: string; // ISO instant
   comments: BoardComment[]; // 시간순 오름차순
+  kind?: BoardKind; // V53 — 부재(구 응답)는 general
+  voteId?: number | null;
+  vote?: BoardVoteSummary | null;
+  readers?: BoardReaders | null; // 기밀실 글에만
+  authorPicture?: string | null;
+  authorImageServer?: number;
+  authorOfficerLevelText?: string | null;
+}
+
+/** 회의실 참여 스택 — 국가 플레이어 장수. active = 최근 한 순 안에 턴 시각 갱신, chief = 기밀실 열람 자격. */
+export interface BoardParticipant {
+  generalId: number;
+  name: string;
+  picture: string | null;
+  imageServer: number;
+  officerLevelText: string | null;
+  active: boolean;
+  chief?: boolean;
 }
 
 export interface BoardResponse {
@@ -1113,6 +1167,10 @@ export interface BoardResponse {
   title: string; // 그대로 회의실 / 기밀실
   articles: BoardArticle[]; // 최신순; 없으면 []
   blockedReason: string | null; // 권한 게이트가 기밀 방을 차단했을 때 설정 (INFO)
+  participants?: BoardParticipant[];
+  chiefCount?: number;
+  myGeneralId?: number | null;
+  myPermission?: number;
 }
 
 // ── page 5 · 설문 조사 (GET /api/votes, GET /api/votes/{id}) ──────────────────

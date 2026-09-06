@@ -114,8 +114,26 @@ sealed class TurnDaemonCommand {
         val isSecret: Boolean = false,
         val title: String? = null,
         val text: String? = null,
+        /** 글 종류(ADR-LITE-049 14 회의실): general | vote | operation | notice. 부재는 general(레거시 호환). */
+        val kind: String = "general",
+        /** kind=vote 일 때 연결하는 vote_poll id. */
+        val voteId: Int? = null,
     ) : TurnDaemonCommand() {
         override val type: String get() = "boardArticle"
+    }
+
+    /**
+     * 기밀실 열람 기록(ADR-LITE-049 14): 수뇌부가 기밀 글을 열면 board_post_read 에 (post, general) 한 행을 남긴다.
+     * 멱등 — 같은 (post, general) 은 DB UNIQUE 로 무시된다. 회의실(비밀 아님) 글은 기록하지 않는다.
+     */
+    @Serializable
+    @SerialName("boardRead")
+    data class BoardRead(
+        val requestId: String? = null,
+        val generalId: Int,
+        val articleNo: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "boardRead"
     }
 
     @Serializable

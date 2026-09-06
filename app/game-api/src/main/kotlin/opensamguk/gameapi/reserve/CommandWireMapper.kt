@@ -80,6 +80,7 @@ object CommandWireMapper {
         // F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실) 인테이크.
         "boardArticle",
         "boardComment",
+        "boardRead",
         // F4 Wave 투표 — 설문조사(개설/투표/댓글/마감) 인테이크.
         "newVote",
         "voteCast",
@@ -316,6 +317,9 @@ object CommandWireMapper {
                 isSecret = args.bool("isSecret") ?: false,
                 title = args.str("title"),
                 text = args.str("text"),
+                // ADR-LITE-049 14 — 글 종류·표결 연결. 부재는 general(레거시 클라이언트 호환).
+                kind = args.str("kind") ?: "general",
+                voteId = args.int("voteId"),
             )
             "boardComment" -> TurnDaemonCommand.BoardComment(
                 requestId = requestId, generalId = generalId,
@@ -323,6 +327,11 @@ object CommandWireMapper {
                 // `$articleNo === null` 1차 게이트 '올바르지 않은 입력입니다.'를 발동하게 한다.
                 articleNo = args.int("articleNo"),
                 text = args.str("text"),
+            )
+            // ADR-LITE-049 14 — 기밀실 열람 기록(멱등). articleNo 부재는 엔진 1차 게이트로.
+            "boardRead" -> TurnDaemonCommand.BoardRead(
+                requestId = requestId, generalId = generalId,
+                articleNo = args.int("articleNo"),
             )
             // ── F4 Wave 투표 — 설문조사(개설/투표/댓글/마감). multipleOptions/endDate/keepOldVote는
             //    nullable 유지(`?: …` 없음)로 PHP `?? 1`/`?? null`/`?? false` 기본값·부재를 엔진이

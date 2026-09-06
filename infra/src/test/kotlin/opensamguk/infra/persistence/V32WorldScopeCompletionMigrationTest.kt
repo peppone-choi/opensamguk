@@ -652,6 +652,7 @@ class V32WorldScopeCompletionMigrationTest {
             "select_npc_token",
         )
         private val postV32WorldTables = listOf(
+            "board_post_read", // V53 — 기밀실 열람 기록(ADR-LITE-049 14)
             "command_inbox",
             "command_result",
             "command_outbox",
@@ -671,6 +672,7 @@ class V32WorldScopeCompletionMigrationTest {
             "error_log",
         )
         private val postV32GlobalTables = setOf(
+            "gateway_notice", // V51 — 게이트웨이 공지(계정 전역, ADR-LITE-049 02)
             "gateway_board_post",
             "gateway_board_comment",
             "game_server",

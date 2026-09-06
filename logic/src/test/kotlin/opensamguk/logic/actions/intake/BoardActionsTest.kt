@@ -82,4 +82,48 @@ class BoardActionsTest {
         assertNull(BoardActions.commentPermissionDeny(isSecret = true, permission = 2))
         assertNull(BoardActions.commentPermissionDeny(isSecret = false, permission = 0))
     }
+
+    // ── ADR-LITE-049 14 — 글 종류(kind)·표결 연결·열람 게이트 ─────────────────────
+    @Test
+    fun `addArticle carries kind and voteId for vote posts and defaults to general`() {
+        assertEquals(
+            BoardActions.ArticleOutcome.Insert(isSecret = false, title = "표결", text = "본문", kind = "vote", voteId = 3),
+            BoardActions.addArticle(isSecret = false, rawTitle = "표결", rawText = "본문", permission = 0, kind = "vote", voteId = 3),
+        )
+        assertEquals("general", (BoardActions.addArticle(false, "제목", "내용", 0) as BoardActions.ArticleOutcome.Insert).kind)
+        // 표결이 아닌 글의 voteId 는 버린다(연결 없음).
+        assertNull((BoardActions.addArticle(false, "제목", "내용", 0, kind = "operation", voteId = 9) as BoardActions.ArticleOutcome.Insert).voteId)
+    }
+
+    @Test
+    fun `addArticle denies an unknown kind and a vote post without voteId`() {
+        assertEquals(
+            BoardActions.ArticleOutcome.Denied("올바르지 않은 입력입니다."),
+            BoardActions.addArticle(false, "제목", "내용", 4, kind = "secret"),
+        )
+        assertEquals(
+            BoardActions.ArticleOutcome.Denied("올바르지 않은 입력입니다."),
+            BoardActions.addArticle(false, "표결", "내용", 4, kind = "vote", voteId = null),
+        )
+    }
+
+    @Test
+    fun `notice posts need 수뇌부 permission`() {
+        assertEquals(
+            BoardActions.ArticleOutcome.Denied("권한이 부족합니다. 수뇌부가 아닙니다."),
+            BoardActions.addArticle(false, "공지", "내용", 1, kind = "notice"),
+        )
+        assertEquals(
+            BoardActions.ArticleOutcome.Insert(false, "공지", "내용", kind = "notice"),
+            BoardActions.addArticle(false, "공지", "내용", 2, kind = "notice"),
+        )
+    }
+
+    @Test
+    fun `readPermissionDeny mirrors the comment gate`() {
+        assertEquals("국가에 소속되어있지 않습니다.", BoardActions.readPermissionDeny(isSecret = true, permission = -1))
+        assertEquals("권한이 부족합니다. 수뇌부가 아닙니다.", BoardActions.readPermissionDeny(isSecret = true, permission = 1))
+        assertNull(BoardActions.readPermissionDeny(isSecret = true, permission = 2))
+        assertNull(BoardActions.readPermissionDeny(isSecret = false, permission = 0))
+    }
 }

@@ -2422,3 +2422,54 @@ input:focus, select:focus, textarea:focus {
   .me-hero__portrait { width: 100%; height: 240px; border-right: 0; border-bottom: 1px solid var(--line); }
   .me-hero__text { padding: 0 16px 16px; }
 }
+
+/* ===== Phase 4 웨이브 C — 회의실 · 기밀실 (14) ===== */
+.council-head { display: flex; align-items: center; gap: 14px; padding: 12px 18px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 40%, var(--panel)); }
+.council-head--secret { border-color: var(--rust); }
+.council-head__text { min-width: 0; }
+.council-head__name { font-family: var(--font-serif); font-size: 18px; font-weight: 900; color: var(--text); }
+.council-head__meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; color: var(--text-2); }
+.council-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.council-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.council-main > .record-panel + .record-panel { margin-top: 0; }
+.council-rail { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.council-rail > .record-panel + .record-panel { margin-top: 0; }
+.council-rail__stack { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.council-rail__label { font-size: 11px; color: var(--muted); }
+.council-rail__notice { margin: 0; padding: 10px 12px 12px; font-size: 11px; line-height: 1.55; color: var(--text-2); border-top: 1px solid var(--line); }
+.council-kinds { align-self: flex-start; }
+.council-write__form { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; }
+.council-write__row { display: flex; gap: 12px; flex-wrap: wrap; }
+.council-write__field { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+.council-write__field select { min-height: 32px; min-width: 12rem; }
+.council-write__actions { display: flex; justify-content: flex-end; }
+.council-list { display: flex; flex-direction: column; gap: 14px; }
+.council-list > .record-panel + .record-panel { margin-top: 0; }
+.council-article__head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.council-article__who { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; min-width: 0; flex: 1; font-size: 13px; }
+.council-article__rank { font-size: 11px; color: var(--muted); }
+.council-article__when { font-size: 11px; color: var(--muted); }
+.council-article__title { padding: 10px 12px 0; font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--text); text-wrap: pretty; }
+.council-article__body { padding: 8px 12px 12px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.council-article__readers { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--text-2); }
+.council-article__comments { border-top: 1px solid var(--line); }
+.council-comment { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.council-comment__body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.council-comment__who { font-weight: 700; color: var(--text); }
+.council-comment__text { white-space: pre-wrap; word-break: break-word; color: var(--text-2); }
+.council-comment__when { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.council-article__reply { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }
+.council-article__reply-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.council-article__reply input { flex: 1; min-height: 32px; }
+.council-vote { margin: 0 12px 12px; border: 1px solid var(--info-dim); background: rgba(122, 167, 199, 0.06); }
+.council-vote__head { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.council-vote__title { font-weight: 700; font-size: 13px; }
+.council-vote__meta { font-size: 11px; color: var(--muted); }
+.council-vote__options { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; padding: 10px; }
+.council-vote__option { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--line); background: var(--inset); }
+.council-vote__option.is-mine { border-color: var(--bronze-dim); }
+.council-vote__option-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+.council-toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--raised); border: 1px solid var(--line-2); padding: 8px 16px; font-size: 12px; z-index: 300; }
+@media (max-width: 900px) {
+  .council-grid { grid-template-columns: 1fr; }
+}

@@ -17,6 +17,7 @@ import opensamguk.infra.persistence.AuctionUpsertRow
 import opensamguk.infra.persistence.BettingInsertRow
 import opensamguk.infra.persistence.BoardCommentInsertRow
 import opensamguk.infra.persistence.BoardPostInsertRow
+import opensamguk.infra.persistence.BoardReadInsertRow
 import opensamguk.infra.persistence.CityLedgerV2UpsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyLetterInsertRow
@@ -701,6 +702,7 @@ object DatabaseHooks {
             // 동일; world-state 효과 아님). 글-먼저-댓글 순서는 step-8d에서 보존된다.
             boardPostInserts = recorder.boardPostInserts().map { BoardPostInsertRow(it.columns) },
             boardCommentInserts = recorder.boardCommentInserts().map { BoardCommentInsertRow(it.columns) },
+            boardReadInserts = recorder.boardReadInserts().map { BoardReadInsertRow(it.columns) },
             // F4 Wave 투표 — 설문조사(vote_poll/vote/vote_comment) INSERT (recorder 채널, board와 동일;
             // world-state 효과 아님). vote_poll-먼저-vote/vote_comment 순서는 step-8e에서 보존된다.
             votePollInserts = recorder.votePollInserts().map { VotePollInsertRow(it.columns) },

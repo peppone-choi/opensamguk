@@ -110,6 +110,12 @@ data class BoardPostInsert(val columns: Map<String, Any?>)
 data class BoardCommentInsert(val columns: Map<String, Any?>)
 
 /**
+ * `board_post_read` INSERT 의도 (ADR-LITE-049 14 기밀실 열람 기록). INSERT 전용·멱등 — `columns`는
+ * post_id, general_id. 같은 (post_id, general_id) 는 DB UNIQUE 가 무시한다(ON CONFLICT DO NOTHING).
+ */
+data class BoardReadInsert(val columns: Map<String, Any?>)
+
+/**
  * `vote_poll` INSERT 의도 (F4 Wave 투표, 설문조사 개설 NewVote.php). INSERT 전용. `columns`는 vote_poll
  * 컬럼을 미러링: title, body, options(jsonb), multiple_options, reveal_mode, opener_general_id,
  * opener_name, start_at, end_at.

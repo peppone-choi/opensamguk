@@ -66,6 +66,7 @@ object TruncateContract {
         "ng_auction_bid",
         "board_post",
         "board_comment",
+        "board_post_read",
         "vote_poll",
         "vote",
         "vote_comment",

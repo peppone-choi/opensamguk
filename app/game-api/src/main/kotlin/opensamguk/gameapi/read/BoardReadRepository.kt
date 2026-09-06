@@ -40,6 +40,14 @@ class BoardPostReadEntity(
 
     @Column(name = "created_at")
     var createdAt: Instant = Instant.EPOCH,
+
+    /** ADR-LITE-049 14 — 글 종류(general|vote|operation|notice, V53). */
+    @Column(name = "kind")
+    var kind: String = "general",
+
+    /** kind=vote 일 때 연결된 vote_poll id(V53). */
+    @Column(name = "vote_id")
+    var voteId: Int? = null,
 )
 
 @Entity
@@ -112,4 +120,40 @@ class BoardCommentReadRepository(
 
     fun findByPostIdOrderByCreatedAtAscIdAsc(postId: Int): List<BoardCommentReadEntity> =
         raw.findByWorldIdAndPostIdOrderByCreatedAtAscIdAsc(worldId.value, postId)
+}
+
+/** ADR-LITE-049 14 — 기밀실 열람 기록 한 행(V53 board_post_read). 같은 (post, general) 은 첫 열람만 남는다. */
+@Entity
+@Table(name = "board_post_read")
+class BoardPostReadLogEntity(
+    @Id
+    @Column(name = "id")
+    var id: Long = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
+
+    @Column(name = "post_id")
+    var postId: Int = 0,
+
+    @Column(name = "general_id")
+    var generalId: Int = 0,
+
+    @Column(name = "read_at")
+    var readAt: Instant = Instant.EPOCH,
+)
+
+interface BoardPostReadLogRawRepository : SpringDataRepository<BoardPostReadLogEntity, Long> {
+    fun findByWorldIdAndPostIdInOrderByReadAtAscIdAsc(worldId: Int, postIds: Collection<Int>): List<BoardPostReadLogEntity>
+}
+
+@Repository
+class BoardPostReadLogRepository(
+    private val raw: BoardPostReadLogRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findByPostIds(postIds: Collection<Int>): List<BoardPostReadLogEntity> =
+        if (postIds.isEmpty()) emptyList() else raw.findByWorldIdAndPostIdInOrderByReadAtAscIdAsc(worldId.value, postIds)
 }

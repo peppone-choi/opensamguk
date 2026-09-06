@@ -218,6 +218,10 @@ open class JdbcFlushExecutor(
             if (payload.boardCommentInserts.isNotEmpty()) {
                 boardCommentInsertMany(payload.worldId, payload.boardCommentInserts)
             }
+            //     board_post_read INSERT (ADR-LITE-049 14 기밀실 열람 기록) — 글 뒤(post_id FK), 멱등(ON CONFLICT DO NOTHING).
+            if (payload.boardReadInserts.isNotEmpty()) {
+                boardReadInsertMany(payload.worldId, payload.boardReadInserts)
+            }
 
             // 8e. 투표 채널 (F4 Wave 투표): vote_poll INSERT 후 vote / vote_comment INSERT —
             //     부모-먼저-자식 순서라 vote/vote_comment의 vote_id FK 대상(vote_poll)이 먼저 존재한다
@@ -1639,14 +1643,17 @@ open class JdbcFlushExecutor(
                 .addValue("author_icon", c["author_icon"])
                 .addValue("title", c["title"])
                 .addValue("content_html", c["content_html"])
+                // ADR-LITE-049 14 — 글 종류·표결 연결(V53). 키가 없으면 general / NULL.
+                .addValue("kind", c["kind"] ?: "general")
+                .addValue("vote_id", c["vote_id"])
         }.toTypedArray()
         jdbc.batchUpdate(
             """
             INSERT INTO board_post
-                (world_id, nation_id, is_secret, author_general_id, author_name, author_icon, title, content_html)
+                (world_id, nation_id, is_secret, author_general_id, author_name, author_icon, title, content_html, kind, vote_id)
             VALUES
                 (:world_id, :nation_id, :is_secret, :author_general_id, :author_name, :author_icon,
-                 :title, :content_html)
+                 :title, :content_html, :kind, :vote_id)
             """.trimIndent(),
             batch,
         )
@@ -1676,6 +1683,29 @@ open class JdbcFlushExecutor(
             batch,
         )
         lastOps.add(FlushExecOp("board_comment", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /**
+     * `board_post_read` 행 INSERT (ADR-LITE-049 14 기밀실 열람 기록). 멱등 — (world_id, post_id, general_id)
+     * UNIQUE 충돌은 무시한다(같은 글을 다시 열어도 첫 열람 시각이 남는다).
+     */
+    private fun boardReadInsertMany(worldId: WorldId, rows: List<BoardReadInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("post_id", c["post_id"])
+                .addValue("general_id", c["general_id"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO board_post_read (world_id, post_id, general_id)
+            VALUES (:world_id, :post_id, :general_id)
+            ON CONFLICT (world_id, post_id, general_id) DO NOTHING
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("board_post_read", FlushVerb.CREATE_MANY, rows.size))
     }
 
     // --- step 8e: 투표 채널 (F4 Wave 투표, 설문조사) ---------------------------------------------
@@ -2557,6 +2587,7 @@ data class FlushPayload(
     // --- F4 Wave C2 슬라이스 C: 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT ---
     val boardPostInserts: List<BoardPostInsertRow> = emptyList(),     // step-8d board_post INSERT
     val boardCommentInserts: List<BoardCommentInsertRow> = emptyList(), // step-8d board_comment INSERT
+    val boardReadInserts: List<BoardReadInsertRow> = emptyList(),     // step-8d board_post_read INSERT (멱등)
     // --- F4 Wave 투표: 설문조사(vote_poll/vote/vote_comment) INSERT + vote_poll UPDATE ---
     val votePollInserts: List<VotePollInsertRow> = emptyList(),       // step-8e vote_poll INSERT
     val voteInserts: List<VoteInsertRow> = emptyList(),               // step-8e vote INSERT
@@ -2738,6 +2769,9 @@ data class BoardPostInsertRow(val columns: Map<String, Any?>)
 
 /** `board_comment` INSERT 한 건 (F4 Wave C2 슬라이스 C, 회의실/기밀실 댓글, INSERT 전용). */
 data class BoardCommentInsertRow(val columns: Map<String, Any?>)
+
+/** `board_post_read` INSERT 한 건 (ADR-LITE-049 14 기밀실 열람 기록, INSERT 전용·멱등). */
+data class BoardReadInsertRow(val columns: Map<String, Any?>)
 
 /** `vote_poll` INSERT 한 건 (F4 Wave 투표, 설문조사 개설, INSERT 전용). */
 data class VotePollInsertRow(val columns: Map<String, Any?>)

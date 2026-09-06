@@ -414,6 +414,7 @@ class TurnDaemonCommandDispatcher(
         // ── F4 Wave C2 (슬라이스 C) 게시판 인테이크 바인딩 ──
         is TurnDaemonCommand.BoardArticle -> board.handleArticle(command)
         is TurnDaemonCommand.BoardComment -> board.handleComment(command)
+        is TurnDaemonCommand.BoardRead -> board.handleRead(command)
         // ── F4 Wave 투표 인테이크 바인딩 ──
         is TurnDaemonCommand.NewVote -> vote.handleNewVote(command)
         is TurnDaemonCommand.VoteCast -> vote.handleVoteCast(command)

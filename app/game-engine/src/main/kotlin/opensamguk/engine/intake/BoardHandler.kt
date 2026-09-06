@@ -40,7 +40,7 @@ class BoardHandler(
         }
 
         val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
-        return when (val out = BoardActions.addArticle(c.isSecret, c.title, c.text, permission)) {
+        return when (val out = BoardActions.addArticle(c.isSecret, c.title, c.text, permission, c.kind, c.voteId)) {
             is BoardActions.ArticleOutcome.Denied ->
                 BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = out.reason)
             is BoardActions.ArticleOutcome.Insert -> {
@@ -52,6 +52,8 @@ class BoardHandler(
                         "author_name" to me.name,
                         "title" to out.title,
                         "content_html" to out.text,
+                        "kind" to out.kind,
+                        "vote_id" to out.voteId,
                     ),
                 )
                 BoardActionResult("boardArticle", ok = true, generalId = c.generalId)
@@ -100,5 +102,26 @@ class BoardHandler(
             ),
         )
         return BoardActionResult("boardComment", ok = true, generalId = c.generalId)
+    }
+
+    /**
+     * 기밀실 열람 기록(ADR-LITE-049 14). 글이 내 국가의 것이고 권한 게이트를 통과하면 board_post_read 에
+     * (post_id, general_id) 를 남긴다. 회의실(비밀 아님) 글은 기록하지 않고 ok 만 돌려준다.
+     */
+    fun handleRead(c: TurnDaemonCommand.BoardRead): TurnDaemonCommandResult {
+        val me = world.getGeneralById(c.generalId)
+            ?: return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
+        val articleNo = c.articleNo
+            ?: return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "올바르지 않은 입력입니다.")
+        val article = boardPostRepository.findByIdAndNationId(articleNo, me.nationId)
+            ?: return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
+        val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
+        BoardActions.readPermissionDeny(article.isSecret, permission)?.let { reason ->
+            return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = reason)
+        }
+        if (article.isSecret) {
+            recorder.recordBoardReadInsert(linkedMapOf("post_id" to articleNo, "general_id" to me.id))
+        }
+        return BoardActionResult("boardRead", ok = true, generalId = c.generalId)
     }
 }
