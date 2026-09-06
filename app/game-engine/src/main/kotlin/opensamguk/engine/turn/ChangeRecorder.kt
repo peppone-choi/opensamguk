@@ -8,6 +8,18 @@ import opensamguk.logic.world.WaterControlAssessment
 import opensamguk.logic.world.WaterControlChangeResult
 import opensamguk.logic.world.WaterControlDenialCode
 import opensamguk.logic.world.projectWaterControl
+import opensamguk.infra.persistence.ProvinceControlWriteBatch
+import opensamguk.infra.persistence.ProvinceControlWriteRow
+import opensamguk.infra.persistence.GeneralPositionWriteBatch
+import opensamguk.infra.persistence.GeneralPositionWriteRow
+import opensamguk.logic.world.ProvinceControlAssessment
+import opensamguk.logic.world.ProvinceControlChangeResult
+import opensamguk.logic.world.ProvinceControlDenialCode
+import opensamguk.logic.world.GeneralPositionAssessment
+import opensamguk.logic.world.GeneralPositionChangeResult
+import opensamguk.logic.world.GeneralPositionDenialCode
+import opensamguk.logic.world.projectProvinceControl
+import opensamguk.logic.world.projectGeneralPosition
 
 import java.time.Instant
 import opensamguk.infra.persistence.EventInsertRow
@@ -183,7 +195,9 @@ class ChangeRecorder(
      */
     private val cityLedgerV2Upserts = linkedMapOf<Int, CityLedgerV2Upsert>()
     private val waterControlWrites = linkedMapOf<String, WaterControlWriteRow>()
-    private var waterControlWorldId: WorldId? = null
+    private var spatialWorldId: WorldId? = null
+    private val provinceControlWrites = linkedMapOf<String, ProvinceControlWriteRow>()
+    private val generalPositionWrites = linkedMapOf<Int, GeneralPositionWriteRow>()
 
     /** 프로필 아이콘 채널 (OPENSAM-94) — general.picture/image_server 전용 컬럼 UPDATE 의도. */
     private val profileIconUpdates = mutableListOf<ProfileIconUpdate>()
@@ -253,6 +267,7 @@ class ChangeRecorder(
             bettingInserts.isNotEmpty() ||
             cityLedgerV2Upserts.isNotEmpty() ||
             waterControlWrites.isNotEmpty() ||
+            provinceControlWrites.isNotEmpty() || generalPositionWrites.isNotEmpty() ||
             profileIconUpdates.isNotEmpty() ||
             boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() ||
             votePollInserts.isNotEmpty() || voteInserts.isNotEmpty() ||
@@ -721,7 +736,7 @@ class ChangeRecorder(
         gateMutation("applyWaterControlAssessment")
         val before = world.waterControlSnapshot()
             ?: return WaterControlChangeResult.Denied(WaterControlDenialCode.UNSUPPORTED_WORLD)
-        check(waterControlWorldId == null || waterControlWorldId == world.worldId) { "Recorder cannot mix water writes from different worlds" }
+        requireSpatialWorld(world.worldId)
         val result = projectWaterControl(before, expectedRevision, assessment)
         if (result is WaterControlChangeResult.Changed) {
             val existing = waterControlWrites[assessment.waterZoneId]
@@ -730,10 +745,61 @@ class ChangeRecorder(
             val write = WaterControlWriteRow(persistedExpected, result.state)
             val after = before.withState(result.state)
             world.applyWaterControlDirtyFree(after)
-            waterControlWorldId = world.worldId
+            spatialWorldId = world.worldId
             waterControlWrites[assessment.waterZoneId] = write
         }
         return result
+    }
+
+    fun applyProvinceControlAssessment(
+        world: InMemoryTurnWorld,
+        expectedRevision: Long?,
+        assessment: ProvinceControlAssessment,
+    ): ProvinceControlChangeResult {
+        gateMutation("applyProvinceControlAssessment")
+        requireSpatialWorld(world.worldId)
+        val before = world.provinceControlSnapshot()
+            ?: return ProvinceControlChangeResult.Denied(ProvinceControlDenialCode.UNSUPPORTED_WORLD)
+        val result = projectProvinceControl(before, expectedRevision, assessment)
+        if (result is ProvinceControlChangeResult.Changed) {
+            val existing = provinceControlWrites[assessment.provinceId]
+            val persistedExpected = if (existing != null) existing.expectedRevision else result.expectedRevision
+            val write = ProvinceControlWriteRow(persistedExpected, result.state)
+            world.applyProvinceControlDirtyFree(before.withState(result.state))
+            spatialWorldId = world.worldId
+            provinceControlWrites[assessment.provinceId] = write
+        }
+        return result
+    }
+
+    fun applyGeneralPositionAssessment(
+        world: InMemoryTurnWorld,
+        expectedRevision: Long?,
+        assessment: GeneralPositionAssessment,
+    ): GeneralPositionChangeResult {
+        gateMutation("applyGeneralPositionAssessment")
+        requireSpatialWorld(world.worldId)
+        val before = world.generalPositionSnapshot()
+            ?: return GeneralPositionChangeResult.Denied(GeneralPositionDenialCode.UNSUPPORTED_WORLD)
+        if (world.getGeneralById(assessment.generalId) == null || assessment.generalId in deletedGeneralIds) {
+            return GeneralPositionChangeResult.Denied(GeneralPositionDenialCode.UNKNOWN_GENERAL)
+        }
+        val result = projectGeneralPosition(before, expectedRevision, assessment)
+        if (result is GeneralPositionChangeResult.Changed) {
+            val existing = generalPositionWrites[assessment.generalId]
+            val persistedExpected = if (existing != null) existing.expectedRevision else result.expectedRevision
+            val write = GeneralPositionWriteRow(persistedExpected, result.state)
+            world.applyGeneralPositionDirtyFree(before.withState(result.state))
+            spatialWorldId = world.worldId
+            generalPositionWrites[assessment.generalId] = write
+        }
+        return result
+    }
+
+    private fun requireSpatialWorld(worldId: WorldId) {
+        check(spatialWorldId == null || spatialWorldId == worldId) {
+            "Recorder cannot use spatial state for worldId=$spatialWorldId as worldId=$worldId"
+        }
     }
 
     /**
@@ -787,10 +853,22 @@ class ChangeRecorder(
     fun waterControlWrites(): WaterControlWriteBatch = WaterControlWriteBatch(waterControlWrites.values.toList())
 
     fun waterControlWritesFor(worldId: WorldId): WaterControlWriteBatch {
-        check(waterControlWorldId == null || waterControlWorldId == worldId) {
-            "Cannot flush water control recorded for worldId=$waterControlWorldId as worldId=$worldId"
-        }
+        requireSpatialWorld(worldId)
         return waterControlWrites()
+    }
+
+    fun provinceControlWrites(): ProvinceControlWriteBatch = ProvinceControlWriteBatch(provinceControlWrites.values.toList())
+
+    fun generalPositionWrites(): GeneralPositionWriteBatch = GeneralPositionWriteBatch(generalPositionWrites.values.toList())
+
+    fun provinceControlWritesFor(worldId: WorldId): ProvinceControlWriteBatch {
+        requireSpatialWorld(worldId)
+        return provinceControlWrites()
+    }
+
+    fun generalPositionWritesFor(worldId: WorldId): GeneralPositionWriteBatch {
+        requireSpatialWorld(worldId)
+        return generalPositionWrites()
     }
 
     /** 기록된 프로필 아이콘 UPDATE (OPENSAM-94 flush 소스), emit 순서대로. */
@@ -906,7 +984,9 @@ class ChangeRecorder(
         bettingInserts.clear()
         cityLedgerV2Upserts.clear()
         waterControlWrites.clear()
-        waterControlWorldId = null
+        provinceControlWrites.clear()
+        generalPositionWrites.clear()
+        spatialWorldId = null
         profileIconUpdates.clear()
         boardPostInserts.clear()
         boardCommentInserts.clear()
@@ -1039,9 +1119,12 @@ class ChangeRecorder(
         general: TurnGeneral,
         initialTurns: List<GeneralTurnSeed> = emptyList(),
     ): TurnGeneral {
+        gateMutation("recordGeneralCreate")
+        requireSpatialWorld(world.worldId)
         require(initialTurns.isEmpty() || initialTurns.size == 30) {
             "created general initial turn ring must be empty (canonical rest) or exactly 30 slots"
         }
+        spatialWorldId = world.worldId
         return world.createGeneral(general.copy(initialTurns = initialTurns.toList()))
     }
 
@@ -1057,17 +1140,30 @@ class ChangeRecorder(
      *     `DirtyState.deletedGenerals`).
      *
      * A general created *and* killed within the same tick fully cancels in [InMemoryTurnWorld.removeGeneral]
-     * (no archive write for a row that never persisted) — so the snapshot is only kept when the world
-     * actually held the row.
+     * (no archive write for a row that never persisted). Consult the world's existing created registry
+     * before removal, and cancel pending access/owner deltas instead of emitting durable tombstones.
      */
     fun markGeneralDeleted(world: InMemoryTurnWorld, generalId: Int): Boolean {
+        gateMutation("markGeneralDeleted")
+        requireSpatialWorld(world.worldId)
         val existing = world.getGeneralById(generalId) ?: return false
-        oldGeneralSnapshots.add(existing)
+        val createdThisTick = world.isGeneralCreatedThisTick(generalId)
+        spatialWorldId = world.worldId
+        generalPositionWrites.remove(generalId)
         generalPatches.remove(generalId)
         rankPatches.remove(generalId)
+        // Keep the in-generation denial marker, including for a cancelled creation.
         deletedGeneralIds.add(generalId)
-        recordGeneralOwnerDelete(generalId)
-        recordAccessLogDelete(world, generalId)
+        if (createdThisTick) {
+            generalOwnerDeletes.remove(generalId)
+            accessLogUpserts.remove(generalId)
+            accessLogDeletes.remove(generalId)
+            world.removeAccessLogDirtyFree(generalId)
+        } else {
+            oldGeneralSnapshots.add(existing)
+            recordGeneralOwnerDelete(generalId)
+            recordAccessLogDelete(world, generalId)
+        }
         return world.removeGeneral(generalId)
     }
 

@@ -5,6 +5,7 @@ import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
+import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.common.world.WorldId
@@ -54,6 +55,7 @@ open class JdbcFlushExecutor(
     fun lastOps(): List<FlushExecOp> = lastOps.toList()
 
     open fun flush(payload: FlushPayload) {
+        validateSpatialPayload(payload)
         transactionTemplate.execute {
             lastOps.clear()
             check(payload.worldStateUpdate["id"] == payload.worldId.value) {
@@ -349,11 +351,103 @@ open class JdbcFlushExecutor(
             if (payload.cityLedgerV2Upserts.isNotEmpty()) {
                 cityLedgerV2UpsertMany(payload.worldId, payload.cityLedgerV2Upserts)
             }
+            if (payload.provinceControlWrites.isNotEmpty()) {
+                provinceControlWriteMany(payload.worldId, payload.provinceControlWrites)
+            }
+            if (payload.generalPositionWrites.isNotEmpty()) {
+                generalPositionWriteMany(payload.worldId, payload.generalPositionWrites)
+            }
             if (payload.waterControlWrites.isNotEmpty()) {
                 waterControlWriteMany(payload.worldId, payload.waterControlWrites)
             }
             null
         }
+    }
+
+    private fun validateSpatialPayload(payload: FlushPayload) {
+        require(payload.generalPositionWrites.none { it.state.generalId in payload.deletedGenerals }) {
+            "A deleted general cannot also have a queued spatial position write"
+        }
+        if (payload.provinceControlWrites.isEmpty() && payload.generalPositionWrites.isEmpty()) return
+        val pins = buildList {
+            payload.provinceControlWrites.forEach { add(it.state.topologyRevision to it.state.topologyHash) }
+            payload.generalPositionWrites.forEach { add(it.state.topologyRevision to it.state.topologyHash) }
+            payload.waterControlWrites.forEach { add(it.state.topologyRevision to it.state.topologyHash) }
+        }
+        require(pins.distinct().size <= 1) {
+            "Spatial state payload cannot mix topology pins across channels"
+        }
+    }
+
+    private fun provinceControlWriteMany(worldId: WorldId, rows: ProvinceControlWriteBatch) {
+        rows.forEach { row ->
+            val state = row.state
+            val params = MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("province_id", state.provinceId)
+                .addValue("topology_revision", state.topologyRevision)
+                .addValue("topology_hash", state.topologyHash)
+                .addValue("nation_id", state.nationId)
+                .addValue("revision", state.revision)
+                .addValue("expected_revision", row.expectedRevision)
+            val sql = if (row.expectedRevision == null) {
+                """
+                INSERT INTO province_control
+                    (world_id, province_id, topology_revision, topology_hash, nation_id, revision)
+                VALUES (:world_id, :province_id, :topology_revision, :topology_hash, :nation_id, :revision)
+                ON CONFLICT (world_id, province_id) DO NOTHING
+                """.trimIndent()
+            } else {
+                """
+                UPDATE province_control SET nation_id = :nation_id, revision = :revision
+                WHERE world_id = :world_id AND province_id = :province_id
+                    AND topology_revision = :topology_revision AND topology_hash = :topology_hash
+                    AND revision = :expected_revision
+                """.trimIndent()
+            }
+            if (jdbc.update(sql, params) != 1) {
+                throw StaleProvinceControlException(worldId.value, state.provinceId, row.expectedRevision)
+            }
+        }
+        lastOps.add(FlushExecOp("province_control", FlushVerb.UPDATE, rows.size))
+    }
+
+    private fun generalPositionWriteMany(worldId: WorldId, rows: GeneralPositionWriteBatch) {
+        rows.forEach { row ->
+            val state = row.state
+            val (nodeKind, nodeId) = when (val node = state.node) {
+                is StrategicNodeRef.LandProvince -> "LAND_PROVINCE" to node.id
+                is StrategicNodeRef.WaterZone -> "WATER_ZONE" to node.id
+            }
+            val params = MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("general_id", state.generalId)
+                .addValue("topology_revision", state.topologyRevision)
+                .addValue("topology_hash", state.topologyHash)
+                .addValue("node_kind", nodeKind)
+                .addValue("node_id", nodeId)
+                .addValue("revision", state.revision)
+                .addValue("expected_revision", row.expectedRevision)
+            val sql = if (row.expectedRevision == null) {
+                """
+                INSERT INTO general_spatial_position
+                    (world_id, general_id, topology_revision, topology_hash, node_kind, node_id, revision)
+                VALUES (:world_id, :general_id, :topology_revision, :topology_hash, :node_kind, :node_id, :revision)
+                ON CONFLICT (world_id, general_id) DO NOTHING
+                """.trimIndent()
+            } else {
+                """
+                UPDATE general_spatial_position SET node_kind = :node_kind, node_id = :node_id, revision = :revision
+                WHERE world_id = :world_id AND general_id = :general_id
+                    AND topology_revision = :topology_revision AND topology_hash = :topology_hash
+                    AND revision = :expected_revision
+                """.trimIndent()
+            }
+            if (jdbc.update(sql, params) != 1) {
+                throw StaleGeneralPositionException(worldId.value, state.generalId, row.expectedRevision)
+            }
+        }
+        lastOps.add(FlushExecOp("general_spatial_position", FlushVerb.UPDATE, rows.size))
     }
 
     /** Typed campaign-only writes share the world fence and all resource deltas' transaction. */
@@ -2492,6 +2586,8 @@ data class FlushPayload(
     // v1 델타와 **같은** [transactionTemplate] 안에서 커밋된다 (두 번째 DataSource·풀 없음).
     val cityLedgerV2Upserts: List<CityLedgerV2UpsertRow> = emptyList(), // step-14 v2_city_ledger UPSERT
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
+    val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
+    val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
 )
 
 data class GeneralTurnPullRow(

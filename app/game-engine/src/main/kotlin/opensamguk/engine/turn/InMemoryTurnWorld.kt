@@ -4,6 +4,8 @@ import opensamguk.common.world.WorldId
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.WaterControlSnapshot
+import opensamguk.logic.world.ProvinceControlSnapshot
+import opensamguk.logic.world.GeneralPositionSnapshot
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -27,15 +29,33 @@ data class WorldSnapshot(
     val serverId: String? = state.serverId,
     val worldId: WorldId,
     val waterControlSnapshot: WaterControlSnapshot? = null,
+    val provinceControlSnapshot: ProvinceControlSnapshot? = null,
+    val generalPositionSnapshot: GeneralPositionSnapshot? = null,
 ) {
     init {
         require(state.id == worldId.value) {
             "WorldSnapshot state.id=${state.id} must equal worldId=${worldId.value}"
         }
-        if (waterControlSnapshot != null) {
+        if (waterControlSnapshot != null || provinceControlSnapshot != null || generalPositionSnapshot != null) {
             require(ActiveWorldMap.requireName(state.config, state.meta) == "han-world-v3") {
-                "Water control is only supported by the explicit Han V3 map"
+                "Spatial state is only supported by the explicit Han V3 map"
             }
+        }
+        val pins = listOfNotNull(
+            waterControlSnapshot?.let { it.topologyRevision to it.topologyHash },
+            provinceControlSnapshot?.let { it.topologyRevision to it.topologyHash },
+            generalPositionSnapshot?.let { it.topologyRevision to it.topologyHash },
+        )
+        require(pins.distinct().size <= 1) { "World spatial snapshots must share topology pins" }
+        generalPositionSnapshot?.let { positions ->
+            require(provinceControlSnapshot == null || positions.knownLandProvinceIds == provinceControlSnapshot.knownProvinceIds) {
+                "World spatial snapshots must share the land catalogue"
+            }
+            require(waterControlSnapshot == null || positions.knownWaterZoneIds == waterControlSnapshot.knownWaterZoneIds) {
+                "World spatial snapshots must share the water catalogue"
+            }
+            val generalIds = generals.mapTo(hashSetOf()) { it.id }
+            require(positions.statesByGeneralId.keys.all { it in generalIds }) { "Orphan general position" }
         }
     }
 }
@@ -99,6 +119,8 @@ class InMemoryTurnWorld(
     // [TurnWorldState]는 불변 data class라 torn object는 없지만, @Volatile 없이는 가시성 보장이 없다.
     @Volatile private var state: TurnWorldState
     @Volatile private var waterControl: WaterControlSnapshot? = snapshot.waterControlSnapshot
+    @Volatile private var provinceControl: ProvinceControlSnapshot? = snapshot.provinceControlSnapshot
+    @Volatile private var generalPosition: GeneralPositionSnapshot? = snapshot.generalPositionSnapshot
     private val serverId: String?
 
     /**
@@ -147,6 +169,27 @@ class InMemoryTurnWorld(
 
     /** Immutable read projection; legacy worlds have no water state, absent V3 rows stay unknown. */
     fun waterControlSnapshot(): WaterControlSnapshot? = waterControl
+
+    fun provinceControlSnapshot(): ProvinceControlSnapshot? = provinceControl
+
+    fun generalPositionSnapshot(): GeneralPositionSnapshot? = generalPosition
+
+    /** The recorder owns dirtiness; these setters preserve the immutable topology boundary. */
+    internal fun applyProvinceControlDirtyFree(snapshot: ProvinceControlSnapshot) {
+        val current = requireNotNull(provinceControl) { "World has no province topology" }
+        require(snapshot.topologyRevision == current.topologyRevision && snapshot.topologyHash == current.topologyHash &&
+            snapshot.knownProvinceIds == current.knownProvinceIds) { "Cannot replace a world's immutable province topology" }
+        provinceControl = snapshot
+    }
+
+    internal fun applyGeneralPositionDirtyFree(snapshot: GeneralPositionSnapshot) {
+        val current = requireNotNull(generalPosition) { "World has no position topology" }
+        require(snapshot.topologyRevision == current.topologyRevision && snapshot.topologyHash == current.topologyHash &&
+            snapshot.knownLandProvinceIds == current.knownLandProvinceIds &&
+            snapshot.knownWaterZoneIds == current.knownWaterZoneIds) { "Cannot replace a world's immutable position topology" }
+        require(snapshot.statesByGeneralId.keys.all(generals::containsKey)) { "Orphan general position" }
+        generalPosition = snapshot
+    }
 
     /** Only ChangeRecorder calls this; it remains the sole dirty source. */
     internal fun applyWaterControlDirtyFree(snapshot: WaterControlSnapshot) {
@@ -218,9 +261,13 @@ class InMemoryTurnWorld(
         return general
     }
 
+    /** Read the existing lifecycle registry without introducing another creation source. */
+    internal fun isGeneralCreatedThisTick(id: Int): Boolean = id in createdGeneralIds
+
     fun removeGeneral(id: Int): Boolean {
         if (!generals.containsKey(id)) return false
         generals.remove(id)
+        generalPosition = generalPosition?.withoutGeneral(id)
         generalIdentityTokens.remove(id)
         dirtyGeneralIds.remove(id)
         // create-then-delete in the same tick fully cancels: drop the pending create and

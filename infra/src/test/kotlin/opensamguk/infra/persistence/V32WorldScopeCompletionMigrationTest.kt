@@ -473,6 +473,8 @@ class V32WorldScopeCompletionMigrationTest {
             "ng_auction_bid" to "PRIMARY KEY (world_id, no)",
             "general_owner" to "PRIMARY KEY (world_id, general_id)",
             "water_zone_control" to "PRIMARY KEY (world_id, water_zone_id)",
+            "province_control" to "PRIMARY KEY (world_id, province_id)",
+            "general_spatial_position" to "PRIMARY KEY (world_id, general_id)",
         )
         specialPrimaryKeys.forEach { (table, expected) -> assertConstraint(table, "p", expected) }
 
@@ -501,6 +503,7 @@ class V32WorldScopeCompletionMigrationTest {
         }
 
         assertForeignKey("general_turn", "FOREIGN KEY (world_id, general_id) REFERENCES general(world_id, id) DEFERRABLE INITIALLY DEFERRED")
+        assertForeignKey("general_spatial_position", "FOREIGN KEY (world_id, general_id) REFERENCES general(world_id, id) ON DELETE CASCADE")
         assertForeignKey("nation_turn", "FOREIGN KEY (world_id, nation_id) REFERENCES nation(world_id, id) DEFERRABLE INITIALLY DEFERRED")
         assertForeignKey("troop", "FOREIGN KEY (world_id, troop_leader) REFERENCES general(world_id, id) DEFERRABLE INITIALLY DEFERRED")
         assertForeignKey("troop", "FOREIGN KEY (world_id, nation) REFERENCES nation(world_id, id) DEFERRABLE INITIALLY DEFERRED")
@@ -528,7 +531,7 @@ class V32WorldScopeCompletionMigrationTest {
     }
 
     private fun assertWorldForeignKey(table: String) {
-        val deleteAction = if (table == "water_zone_control") " ON DELETE CASCADE" else ""
+        val deleteAction = if (table in setOf("water_zone_control", "province_control", "general_spatial_position")) " ON DELETE CASCADE" else ""
         assertForeignKey(table, "FOREIGN KEY (world_id) REFERENCES world_state(id)$deleteAction")
     }
 
@@ -653,6 +656,8 @@ class V32WorldScopeCompletionMigrationTest {
             "command_result",
             "command_outbox",
             "water_zone_control",
+            "province_control",
+            "general_spatial_position",
         )
         private val v32WorldOwnedTables = firstCohort + remainingWorldTables
         private val worldOwnedTables = v32WorldOwnedTables + postV32WorldTables
