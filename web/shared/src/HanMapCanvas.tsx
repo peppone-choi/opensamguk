@@ -1367,6 +1367,17 @@ function resolveTerrainUrl(
   return `/api/game/api/map/terrain?mapCode=${encodeURIComponent(mapCode)}`;
 }
 
+/**
+ * 지형 응답의 ETag 에서 sha256 지문을 뽑는다.
+ *
+ * 약한 ETag(`W/"sha256-…"`)도 강한 ETag 와 같이 받는다 — 프록시가 gzip 하면서 강한 태그를 약하게
+ * 바꾸고, 브라우저는 항상 gzip 을 요청한다. 강한 태그만 받으면 프로덕션에서는 지문이 늘 null 이라
+ * 수역이 영영 안 뜬다(2026-09-07 실측: sam.peppone.dev 가 `W/"sha256-…"` 를 준다). 해시 값은 같다.
+ */
+export function parseTerrainEtagHash(etag: string | null): string | null {
+  return /^(?:W\/)?"sha256-([a-f0-9]{64})"$/.exec(etag ?? '')?.[1] ?? null;
+}
+
 function resolveProvinceUrl(
   provinceUrl: HanMapCanvasProps['provinceUrl'],
   mapCode: string,
@@ -1444,7 +1455,7 @@ export function HanMapCanvas({
     fetch(resolveTerrainUrl(terrainUrl, mapCode))
       .then((response) => {
         if (!response.ok) throw new Error(`terrain fetch failed: ${response.status}`);
-        const hash = /^"sha256-([a-f0-9]{64})"$/.exec(response.headers?.get('etag') ?? '')?.[1] ?? null;
+        const hash = parseTerrainEtagHash(response.headers?.get('etag') ?? null);
         return (response.json() as Promise<HanTiles>).then(tiles => ({ tiles, hash }));
       })
       .then(({ tiles, hash }) => {
