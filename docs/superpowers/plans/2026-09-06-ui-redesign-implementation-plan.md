@@ -417,6 +417,16 @@
 - [ ] `reset-game-server.yml` 실행: server_id 실측값, confirmation `RESET <id>`, backup=true, scenario=실측 코드, generation=`current` 또는 사용자 지정, turn term=`current`. `operationId`를 `succeeded`까지 폴링한다. `recovery_required`면 멈추고 보고한다.
 - [ ] 초기화 후 스모크: 기존 계정 로그인 → 장수 생성 → 작전실 → 명령 1건 예약 → 결과 폴링 `RESOLVED`. 결과를 사용자에게 보고한다.
 
+## e2e 3건 — 실측 (2026-09-07, 로컬 스택)
+
+| 스펙 | 결과 |
+|---|---|
+| `v2-space-fps.spec.ts` | **6/6 통과**(dev 서버에 `V2_ENABLED=true` 필요 — 없으면 미들웨어가 `/game/v2-lab/**` 를 404. 첫 실행은 콜드 스타트 컴파일로 캔버스 15초 대기 초과 2건, 데운 뒤 재실행 6/6). |
+| `v1-core-live.spec.ts` | **통과**(5.0분). 두 가지 실측 조건: ① 닉네임은 gateway-api 규칙 2~20자 — e2e 생성값이 21자라 잘려 실패하던 것을 캡(`a3545fad`); ② 예약 명령(turnIdx 0)이 RESOLVED 될 때까지 기다리므로 로컬 60분 턴에서는 PENDING 으로 끝난다 — `world_state.tick_seconds = 60`(설계상 「1분 로컬 QA 케이던스」)으로 잠시 낮추고 실행한 뒤 3600 으로 되돌렸다. |
+| `mailbox-delete-live.spec.ts` | **채점대기 — 이 PR 범위 밖의 기존 불일치.** 픽스처가 자기 자신에게 개인 서신을 보내는데(`createDisposableSelfMessage`), 엔진이 「자기 자신에게는 개인 서신을 보낼 수 없습니다.」 로 거부한다. 규칙은 main 의 `f65b4ccf`(2026-09-03 「require an explicit private recipient」)가 넣었고 스펙은 2026-08-18 이후 손대지 않았다 — 두 파일 모두 이 PR diff 에 없다(`git diff origin/main --stat` 0줄). 로그인·인테이크 202·결과 폴링까지는 통과하므로 F4 result-poll 규약은 살아 있다. 픽스처를 두 번째 장수(다른 계정) 수신자로 바꾸는 것은 별도 이슈. |
+
+인증 폼 결함 2건도 이 실측에서 잡아 고쳤다(`a3545fad`·`932ac1c3`): 하이드레이션 전 클릭이 네이티브 GET 제출로 새고(자격이 URL 에 노출), 하이드레이션 전에 채운 값이 controlled 상태로 덮여 빈 폼이 제출되던 경합.
+
 ## 리스크 · UNKNOWN
 
 - 해소: 「GlobalMenu 8라벨 소스 없음(UNKNOWN)」은 틀렸다 — `app/game-api/.../GlobalMenuController.kt`에 있다. S2 대조표를 갱신한다.
