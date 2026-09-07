@@ -86,6 +86,10 @@ data/map/*
 # Wikidata(CC0) 전용 산출물, CHGIS 입력 없음 — CHGIS 파생물이 아니므로 위 미커밋 규칙 대상이 아니다.
 # tools/map/build_external_places.py docstring 참조. han-places.json/terrain-grid.json 은 계속 미커밋.
 !data/map/external-places.json
+# ADR-LITE-051 郡 내부 보급선. 런타임이 부팅에 읽으므로 커밋해야 한다(없으면 보급이 조용히
+# 예전으로 돌아간다 — 실측: CI 에서 게이트 24건이 빨개졌다). 담고 있는 것은 프로빈스 인덱스·
+# 城 이름·郡 이름과 간선 길이(km) 하나뿐이라 좌표를 복원할 수 없다. 원본·좌표는 계속 미커밋.
+!data/map/han-commandery-supply-links-v1.json
 **/v6_*_pts*
 **/v6_*_pgn*
 **/v6_*_lin*

@@ -231,11 +231,6 @@ def audit_documents(
     commandery_links = (
         _load_json(commandery_links_path)["links"] if commandery_links_path.is_file() else []
     )
-    commandery_link_neighbours = {
-        index
-        for link in commandery_links
-        for index in (link["fromProvinceIndex"], link["toProvinceIndex"])
-    }
     ownership_by_scenario = {
         row.get("scenarioCode"): row for row in ownership.get("scenarios", [])
     }
@@ -373,11 +368,7 @@ def audit_documents(
             city_id in owned_scenarios_by_city
             and isinstance(province_index, int)
             and province_index in province_adjacency
-            # ADR-LITE-051 — 郡 내부 보급선을 포함한 **보급망** 기준으로 본다. 이 검사의 목적은
-            # 「이 城은 영영 보급될 수 없다」를 잡는 것이므로, 보급선으로 닿을 수 있으면 보호 행이
-            # 필요 없다. 물리적 고립 자체는 territory-disconnection 장부가 따로 추적한다.
             and not province_adjacency[province_index]
-            and province_index not in commandery_link_neighbours
         ):
             for scenario_code in sorted(owned_scenarios_by_city[city_id]):
                 active_protection = [

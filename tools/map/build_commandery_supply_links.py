@@ -37,6 +37,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TILES_PATH = ROOT / "data/map/han-tiles.json"
 RUNTIME_MAP_PATH = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 MISBINDING_PATH = ROOT / "data/curated/han/county-misbinding-adjudications-v1.json"
+SUPPLY_ADJUDICATIONS_PATH = ROOT / "data/curated/han/supply-disconnection-adjudications-v3.json"
 OUTPUT_PATH = ROOT / "data/map/han-commandery-supply-links-v1.json"
 
 
@@ -85,6 +86,15 @@ def build() -> dict[str, Any]:
         for row in _load(MISBINDING_PATH)["adjudications"]
     }
 
+    # 이미 심사를 거쳐 **보호**된 기하 결함은 건드리지 않는다. 그 城들은 「두 보급 모델이 함께
+    # 끊겼다고 본다」는 상태로 판정돼 있고, 이 규칙이 그걸 조용히 덮으면 심사 결과를 무효화한다.
+    # (실측: 덮었더니 305·548 의 보호 행이 낡아졌고, 그 두 행에 묶인 계약·엔진 테스트가 깨졌다.)
+    protected_cities = {
+        row["runtimeCityId"]
+        for row in _load(SUPPLY_ADJUDICATIONS_PATH).get("decisions", [])
+        if row.get("decision", "").startswith("PROTECT_")
+    }
+
     tile_by_id = {str(city["id"]): city for city in tiles["cities"]}
     coordinate: dict[int, tuple[float, float]] = {}
     members: dict[str, list[int]] = defaultdict(list)
@@ -97,7 +107,7 @@ def build() -> dict[str, Any]:
         jun = city["meta"].get("junCh")
         coordinate[province] = (tile["lon"], tile["lat"])
         label[province] = city["name"]
-        if (jun, city["name"]) not in excluded_names:
+        if (jun, city["name"]) not in excluded_names and city["id"] not in protected_cities:
             members[jun].append(province)
 
     adjacency = _grid_adjacency(tiles)
@@ -154,6 +164,7 @@ def build() -> dict[str, Any]:
         ),
         "generator": "tools/map/build_commandery_supply_links.py",
         "excludedByMisbinding": sorted(f"{group}:{name}" for group, name in excluded_names),
+        "excludedByReviewedProtection": sorted(protected_cities),
         "stats": {
             "linkCount": len(links),
             "medianKm": distances[len(distances) // 2] if distances else 0,
