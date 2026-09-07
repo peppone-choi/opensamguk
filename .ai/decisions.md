@@ -839,3 +839,36 @@
   `web/shared/src/__tests__/logText.test.tsx`가 문법 사례를 고정). 게이트웨이 전황 보고도 같은
   렌더러를 써 색이 붙는다.
 - Approved by: 사용자 지시(토큰 처리 결정 위임, 2026-09-06). 구현: Phase 4 웨이브 A PR.
+
+## ADR-LITE-051 — 보급은 행정선(郡)을 따라서도 흐른다 (2026-09-08)
+
+- Context: `han-world-v3` 런타임 보급은 프로빈스 소유 격자에서 **물리적으로 맞닿은** 프로빈스끼리만
+  흐른다(`SpatialSupplyNetwork.provinceAdjacency` ← 전략 위상 LAND 간선). 그런데 그 격자에서 같은
+  郡의 프로빈스들이 조각으로 끊겨 있다. 프로덕션 `pep`(scenario_1020)에서 공융의 北海國 16城 중
+  **14城**이 개시 시점부터 수도에 닿지 않았고, 절단된 城은 매턴 10% 쇠퇴 → 민심 30 미만 →
+  중립화로 잃도록 예정돼 있었다. 사용자가 「공융이 보급이 끊겨서 증발한다」고 제보한 그 경로다.
+- Decision: **보급**은 물리적 인접뿐 아니라 **행정선(郡)을 따라서도** 흐른다. 같은 郡의 프로빈스가
+  소유 격자에서 조각으로 끊긴 곳을 최소 간선으로 잇고, 그 간선을
+  `data/map/han-commandery-supply-links-v1.json`(생성기 `tools/map/build_commandery_supply_links.py`,
+  `--check` 게이트)에 굽는다. 郡은 후한의 행정·병참 단위였다는 것이 근거다.
+- Decision: **이동(traversal)은 바뀌지 않는다.** 전략 위상의 LAND 간선은 그대로이고
+  `_land_owners_are_adjacent` 도 그대로다 — 부대는 여전히 래스터에서 맞닿은 프로빈스로만 움직인다.
+  이 간선은 `provinceAdjacency`(보급 전용)에만 더해진다.
+- Decision: 좌표가 틀린 동명이지 縣은 이 규칙에서 **제외한다**
+  (`data/curated/han/county-misbinding-adjudications-v1.json`, 5건). 제외하지 않으면 郡을 가로지르는
+  가짜 보급선이 생긴다 — 제외 전 최대 간선 1,190km, 제외 뒤 중앙값 47km · 90% 161km.
+- Alternative considered and measured: **소유 격자를 실제로 고치는 것**(프로빈스 이설). 작동은
+  하지만 금방 멎는다 — 가장 어긋난 프로빈스 31개를 옳은 자리로 옮겨도 scenario_1020 절단이
+  102 → 90 이고 공융은 4城이 남는다. 남은 절단은 개별 프로빈스가 밀려서가 아니라 래스터 분할
+  자체가 성겨서 생긴다. 대가는 크다 — 수역·전략 위상·경로 노드·15개 시나리오 소유권이 따라
+  바뀌고 `han-tiles.json` 통파일 해시를 핀한 8개 파일과 런타임 검증을 재핀해야 한다.
+  **둘 다 하기로 했고**(사용자 결정), 이 ADR 은 먼저 가는 보급선 쪽이다. 프로빈스 이설은
+  지도 정확도를 올리는 후속 작업으로 남는다.
+- Rejected: CityConst 그래프에만 郡 연결을 더하는 것. 구현해 보니 개시 절단이 416 → 207 로
+  줄지만 **런타임은 CityConst 를 쓰지 않는다** — 40城이 `BOTH_UNSUPPLIED` → `CITY_ONLY` 로
+  분류만 옮겨갔을 뿐 게임은 그대로 끊겼고, 두 모델 사이에 224건의 미판정 불일치를 만들어
+  게이트를 깨뜨렸다. 되돌렸다.
+- Evidence: 같은 spatial 모델 위 실측 — 현행 102/438 절단(공융 14/16) → 보급선 적용 후
+  **40/438**(공융 **0/16**). 보급선 72개, 길이 중앙값 47km.
+- Reversal: `data/map/han-commandery-supply-links-v1.json` 을 지우면 보급이 오늘과 같아진다
+  (`CommanderySupplyLinkLoader` 가 파일 부재를 빈 목록으로 읽는다).

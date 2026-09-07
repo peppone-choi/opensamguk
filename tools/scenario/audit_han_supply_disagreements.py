@@ -227,6 +227,10 @@ def audit_documents(
             if len(active) > 1:
                 errors.append(f"city {city_id} scenario {scenario_code} has overlapping active decision rows")
 
+    commandery_links_path = ROOT / "data/map/han-commandery-supply-links-v1.json"
+    commandery_links = (
+        _load_json(commandery_links_path)["links"] if commandery_links_path.is_file() else []
+    )
     ownership_by_scenario = {
         row.get("scenarioCode"): row for row in ownership.get("scenarios", [])
     }
@@ -266,7 +270,17 @@ def audit_documents(
             and owner_by_city.get(city_id) == nation_id
             and province_owners.get(runtime_by_id[city_id].get("provinceId")) == nation_id
         ]
-        spatial_reached = _bfs(spatial_seeds, province_adjacency, province_owners)
+        # ADR-LITE-051 — 郡 내부 보급선은 런타임 보급망(provinceAdjacency)에 더해진다.
+        # 감사도 같은 망을 봐야 한다 — 안 그러면 도구와 게임이 다른 것을 재고 두 모델이
+        # 영원히 불일치로 남는다.
+        spatial_adjacency = {
+            index: list(neighbours) for index, neighbours in province_adjacency.items()
+        }
+        for link in commandery_links:
+            a, b = link["fromProvinceIndex"], link["toProvinceIndex"]
+            spatial_adjacency.setdefault(a, []).append(b)
+            spatial_adjacency.setdefault(b, []).append(a)
+        spatial_reached = _bfs(spatial_seeds, spatial_adjacency, province_owners)
         spatial_supplied = {
             city_id for city_id in owned_city_ids
             if province_owners.get(runtime_by_id[city_id].get("provinceId")) == owner_by_city[city_id]

@@ -40,6 +40,10 @@ jobs:
       - name: Verify scenario seed supply reachability (baseline pinned)
         if: '!cancelled()'
         run: python3 tools/scenario/audit_scenario_seed_supply.py --check
+      # ADR-LITE-051 — 郡 내부 보급선. 이 산출물이 낡거나 비면 공융의 北海國 이 다시 끊긴다.
+      - name: Verify commandery supply links
+        if: '!cancelled()'
+        run: python3 tools/map/build_commandery_supply_links.py --check
       - name: Verify reviewed Han route candidate regeneration
         if: '!cancelled()'
         run: python3 tools/scenario/build_han_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check
