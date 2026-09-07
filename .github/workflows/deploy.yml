@@ -477,6 +477,15 @@ jobs:
             done
           }
 
+          # board-api 는 flyway.enabled=false + ddl-auto=validate 다 — 스키마를 만드는 쪽은 gateway-api 의 Flyway 다.
+          # 그래서 게시판 스키마를 바꾸는 마이그레이션이 들어온 배포에서는 board-api 를 먼저 올리면
+          # 「Schema-validation: missing column …」 로 죽는다(2026-09-07 실측: V54 의 gateway_board_post.view_count).
+          # JWT 전환 계약(board-api → verifier 게이트 → gateway-api 재시작)은 그대로 두고, 그 앞에 마이그레이션만
+          # 먼저 적용한다. 아래 「Restarting gateway migrations」 가 최종 이미지로 한 번 더 확정한다.
+          echo "=== Applying gateway schema migrations first ==="
+          $COMPOSE up -d --force-recreate --no-deps gateway-api
+          wait_container_health opensamguk-gateway-api 8080 gateway-api
+
           echo "=== Restarting board API ==="
           $COMPOSE up -d --force-recreate --no-deps board-api
           wait_container_health opensamguk-board-api 8083 board-api
