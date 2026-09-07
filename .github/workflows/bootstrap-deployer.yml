@@ -19,8 +19,9 @@ on:
         options:
           - bootstrap
           - release
+          - diagnose
       confirm:
-        description: 'Type BOOTSTRAP DEPLOYER (bootstrap) or RELEASE MAINTENANCE (release)'
+        description: 'Type BOOTSTRAP DEPLOYER (bootstrap), RELEASE MAINTENANCE (release) or DIAGNOSE (diagnose)'
         required: true
         type: string
 
@@ -44,6 +45,7 @@ jobs:
           case "$INPUT_ACTION" in
             bootstrap) EXPECTED_CONFIRM="BOOTSTRAP DEPLOYER" ;;
             release)   EXPECTED_CONFIRM="RELEASE MAINTENANCE" ;;
+            diagnose)  EXPECTED_CONFIRM="DIAGNOSE" ;;
             *) echo "ERROR: unknown action: $INPUT_ACTION" >&2; exit 2 ;;
           esac
           if [ "$INPUT_CONFIRM" != "$EXPECTED_CONFIRM" ]; then
@@ -60,6 +62,27 @@ jobs:
 
           STACK="$HOME/opensamguk-docker"
           cd "$STACK"
+
+          if [ "$INPUT_ACTION" = "diagnose" ]; then
+            # 읽기 전용. 배포가 남긴 「<컨테이너> readiness: FAILED」 의 실제 원인은 컨테이너 로그에만 있는데
+            # deploy.yml 은 그 지점에서 로그를 찍지 않고 끝난다. 자격이 섞일 수 있는 문자열은 가린다.
+            echo "=== docker ps (shared stack) ==="
+            docker ps --format '{{.Names}}\t{{.Status}}' | sort
+            for c in opensamguk-board-api opensamguk-gateway-api opensamguk-web-gateway opensamguk-nginx; do
+              if docker inspect "$c" >/dev/null 2>&1; then
+                echo "=== $c state ==="
+                docker inspect --format '{{.State.Status}} restarts={{.RestartCount}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$c"
+                echo "=== $c logs (tail 120, masked) ==="
+                docker logs --tail 120 "$c" 2>&1 \
+                  | sed -E 's#(password=|PASSWORD=|token=|TOKEN=)[^[:space:]&"]+#\1***#g' \
+                  | sed -E 's#(://[^:/[:space:]]+:)[^@[:space:]]+@#\1***@#g'
+              else
+                echo "=== $c is not present ==="
+              fi
+            done
+            echo "=== Diagnose complete; nothing was changed ==="
+            exit 0
+          fi
 
           # deploy.yml 의 maintenance_http 와 같은 경로·같은 토큰 취급(토큰은 컨테이너 env 에서만 읽고 절대 찍지 않는다).
           maintenance_http() {
