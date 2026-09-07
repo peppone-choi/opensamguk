@@ -935,6 +935,924 @@
    "lon": 97.80505,
    "modernLocation": "간쑤성 주취안시 위먼시",
    "sourceUrl": "https://namu.wiki/w/삼국지/지명/양주(감숙)"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "襄平",
+   "nameKo": "양평",
+   "lat": 41.26785,
+   "lon": 123.19407,
+   "modernLocation": "랴오닝성 랴오양시 바이타구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "新昌",
+   "nameKo": "신창",
+   "lat": 41.07035,
+   "lon": 122.95277,
+   "modernLocation": "랴오닝성 안산시 첸산구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "望平",
+   "nameKo": "망평",
+   "lat": 42.1162,
+   "lon": 123.60954,
+   "modernLocation": "랴오닝성 톄링시 톄링현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "候城",
+   "nameKo": "후성",
+   "lat": 41.82015,
+   "lon": 123.66851,
+   "modernLocation": "랴오닝성 선양시 훈난구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "安市",
+   "nameKo": "안시",
+   "lat": 40.80142,
+   "lon": 122.6179,
+   "modernLocation": "랴오닝성 안산시 하이청시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "平郭",
+   "nameKo": "평곽",
+   "lat": 40.40111,
+   "lon": 122.36578,
+   "modernLocation": "랴오닝성 잉커우시 가이저우시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "西安平",
+   "nameKo": "서안평",
+   "lat": 40.19671,
+   "lon": 124.47495,
+   "modernLocation": "랴오닝성 단둥시 전안구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "汶",
+   "nameKo": "문",
+   "lat": 40.54297,
+   "lon": 122.65474,
+   "modernLocation": "랴오닝성 잉커우시 다스차오시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "遼東郡",
+   "sourceName": "沓氏",
+   "nameKo": "답씨",
+   "lat": 41.25893,
+   "lon": 122.78741,
+   "modernLocation": "랴오닝성 랴오양시 랴오양현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "漁陽",
+   "nameKo": "어양",
+   "lat": 40.37148,
+   "lon": 116.84046,
+   "modernLocation": "베이징시 미윈구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "狐奴",
+   "nameKo": "호노",
+   "lat": 40.1946,
+   "lon": 116.754,
+   "modernLocation": "베이징시 순이구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "潞",
+   "nameKo": "노",
+   "lat": 40.01222,
+   "lon": 116.98839,
+   "modernLocation": "허베이성 랑팡시 싼허시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "雍奴",
+   "nameKo": "옹노",
+   "lat": 39.5932,
+   "lon": 117.0303,
+   "modernLocation": "톈진시 우칭구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "泉州",
+   "nameKo": "천주",
+   "lat": 39.31765,
+   "lon": 117.01611,
+   "modernLocation": "톈진시 우칭구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "平谷",
+   "nameKo": "평곡",
+   "lat": 40.1764,
+   "lon": 117.1617,
+   "modernLocation": "베이징시 핑구구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "安樂",
+   "nameKo": "안락",
+   "lat": 40.17,
+   "lon": 116.6065,
+   "modernLocation": "베이징시 순이구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "厗奚",
+   "nameKo": "치해",
+   "lat": 40.65585,
+   "lon": 117.07275,
+   "modernLocation": "베이징시 미윈구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "漁陽郡",
+   "sourceName": "獷平",
+   "nameKo": "광평",
+   "lat": 40.5648,
+   "lon": 117.0627,
+   "modernLocation": "베이징시 미윈구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "雒陽",
+   "nameKo": "낙양",
+   "lat": 34.72867,
+   "lon": 112.62253,
+   "modernLocation": "허난성 뤄양시 멍진현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "河南",
+   "nameKo": "하남",
+   "lat": 34.67085,
+   "lon": 112.41653,
+   "modernLocation": "허난성 뤄양시 젠시구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "梁",
+   "nameKo": "양",
+   "lat": 34.16553,
+   "lon": 112.74347,
+   "modernLocation": "허난성 핑딩산시 루저우시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "滎陽",
+   "nameKo": "형양",
+   "lat": 34.858,
+   "lon": 113.4512,
+   "modernLocation": "허난성 정저우시 싱양시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "卷",
+   "nameKo": "권",
+   "lat": 35.03897,
+   "lon": 113.78767,
+   "modernLocation": "허난성 신샹시 위안우진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "原武",
+   "nameKo": "원무",
+   "lat": 35.05195,
+   "lon": 113.96297,
+   "modernLocation": "허난성 신샹시 위안양현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "陽武",
+   "nameKo": "양무",
+   "lat": 34.98309,
+   "lon": 114.0983,
+   "modernLocation": "허난성 신샹시 궈좡향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "中牟",
+   "nameKo": "중모",
+   "lat": 34.73158,
+   "lon": 114.05869,
+   "modernLocation": "허난성 정저우시 중무현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "開封",
+   "nameKo": "개봉",
+   "lat": 34.59517,
+   "lon": 114.29403,
+   "modernLocation": "허난성 카이펑시 샹푸구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "菀陵",
+   "nameKo": "원릉",
+   "lat": 34.47675,
+   "lon": 113.84572,
+   "modernLocation": "허난성 정저우시 신정시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "穀城",
+   "nameKo": "곡성",
+   "lat": 34.70346,
+   "lon": 112.33608,
+   "modernLocation": "허난성 뤄양시 시궁구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "緱氏",
+   "nameKo": "구지",
+   "lat": 34.58003,
+   "lon": 112.84392,
+   "modernLocation": "허난성 뤄양시 옌스시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "鞏",
+   "nameKo": "공",
+   "lat": 34.76676,
+   "lon": 112.92985,
+   "modernLocation": "허난성 정저우시 궁이시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "成睾",
+   "nameKo": "성고",
+   "lat": 34.84736,
+   "lon": 113.19887,
+   "modernLocation": "허난성 정저우시 싱양시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "京",
+   "nameKo": "경",
+   "lat": 34.71545,
+   "lon": 113.43846,
+   "modernLocation": "허난성 정저우시 싱양시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "密",
+   "nameKo": "밀",
+   "lat": 34.44397,
+   "lon": 113.49292,
+   "modernLocation": "허난성 정저우시 신미시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "新城",
+   "nameKo": "신성",
+   "lat": 34.39771,
+   "lon": 112.39502,
+   "modernLocation": "허난성 뤄양시 이촨현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "偃師",
+   "nameKo": "언사",
+   "lat": 34.72062,
+   "lon": 112.805,
+   "modernLocation": "허난성 뤄양시 옌스시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "新鄭",
+   "nameKo": "신정",
+   "lat": 34.39732,
+   "lon": 113.71909,
+   "modernLocation": "허난성 정저우시 신정시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "河南尹",
+   "sourceName": "平",
+   "nameKo": "평",
+   "lat": 34.81825,
+   "lon": 112.94897,
+   "modernLocation": "허난성 정저우시 궁이시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/사례교위부"
+  },
+  {
+   "canonicalGroup": "北海國",
+   "sourceName": "平壽",
+   "nameKo": "평수",
+   "lat": 36.58534,
+   "lon": 119.01411,
+   "modernLocation": "산둥성 웨이팡시 창러현 허터우진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "北海國",
+   "sourceName": "劇",
+   "nameKo": "극",
+   "lat": 36.65675,
+   "lon": 118.77496,
+   "modernLocation": "산둥성 웨이팡시 창러현 우투가도",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "北海國",
+   "sourceName": "營陵",
+   "nameKo": "영릉",
+   "lat": 36.54834,
+   "lon": 119.04401,
+   "modernLocation": "산둥성 웨이팡시 창러현 잉추진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "北海國",
+   "sourceName": "都昌",
+   "nameKo": "도창",
+   "lat": 36.86346,
+   "lon": 119.37875,
+   "modernLocation": "산둥성 웨이팡시 창이시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "北海國",
+   "sourceName": "朱虛",
+   "nameKo": "주허",
+   "lat": 36.40594,
+   "lon": 118.78342,
+   "modernLocation": "산둥성 웨이팡시 린추현 리우산진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "北海國",
+   "sourceName": "膠東",
+   "nameKo": "교동",
+   "lat": 36.78823,
+   "lon": 119.94828,
+   "modernLocation": "산둥성 칭다오시 핑두시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "北海國",
+   "sourceName": "即墨",
+   "nameKo": "즉묵",
+   "lat": 36.71144,
+   "lon": 120.26362,
+   "modernLocation": "산둥성 칭다오시 핑두시 구셴진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "北海國",
+   "sourceName": "下密",
+   "nameKo": "하밀",
+   "lat": 36.85455,
+   "lon": 119.5145,
+   "modernLocation": "산둥성 웨이팡시 창이시 웨이쯔가도",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "東萊郡",
+   "sourceName": "黃",
+   "nameKo": "황",
+   "lat": 37.62737,
+   "lon": 120.67194,
+   "modernLocation": "산둥성 옌타이시 룽커우시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "東萊郡",
+   "sourceName": "㡉",
+   "nameKo": "현",
+   "lat": 37.56724,
+   "lon": 120.43762,
+   "modernLocation": "산둥성 옌타이시 룽커우시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "東萊郡",
+   "sourceName": "曲成",
+   "nameKo": "곡성",
+   "lat": 37.38621,
+   "lon": 120.11688,
+   "modernLocation": "산둥성 옌타이시 라이저우시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "東萊郡",
+   "sourceName": "掖",
+   "nameKo": "액",
+   "lat": 37.17543,
+   "lon": 119.938,
+   "modernLocation": "산둥성 옌타이시 라이저우시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "東萊郡",
+   "sourceName": "當利",
+   "nameKo": "당리",
+   "lat": 37.0419,
+   "lon": 119.8119,
+   "modernLocation": "산둥성 옌타이시 라이저우시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "東萊郡",
+   "sourceName": "盧鄉",
+   "nameKo": "노향",
+   "lat": 36.98516,
+   "lon": 119.85121,
+   "modernLocation": "산둥성 칭다오시 핑두시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/청주"
+  },
+  {
+   "canonicalGroup": "漢陽郡",
+   "sourceName": "冀",
+   "nameKo": "기",
+   "lat": 34.73837,
+   "lon": 105.38878,
+   "modernLocation": "간쑤성 톈수이시 간구현 리우펑진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/옹주"
+  },
+  {
+   "canonicalGroup": "漢陽郡",
+   "sourceName": "成紀",
+   "nameKo": "성기",
+   "lat": 35.2415,
+   "lon": 105.68042,
+   "modernLocation": "간쑤성 핑량시 징닝현 즈핑향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/옹주"
+  },
+  {
+   "canonicalGroup": "漢陽郡",
+   "sourceName": "顯親",
+   "nameKo": "현친",
+   "lat": 34.98159,
+   "lon": 105.58992,
+   "modernLocation": "간쑤성 톈수이시 친안현 궈지아진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/옹주"
+  },
+  {
+   "canonicalGroup": "漢陽郡",
+   "sourceName": "上邽",
+   "nameKo": "상규",
+   "lat": 34.5853,
+   "lon": 105.7258,
+   "modernLocation": "간쑤성 톈수이시 시내",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/옹주"
+  },
+  {
+   "canonicalGroup": "漢陽郡",
+   "sourceName": "西",
+   "nameKo": "서",
+   "lat": 34.40626,
+   "lon": 105.39648,
+   "modernLocation": "간쑤성 룽난시 리현 훙허진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/옹주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "邛都",
+   "nameKo": "공도",
+   "lat": 27.89501,
+   "lon": 102.27332,
+   "modernLocation": "쓰촨성 시창시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "台登",
+   "nameKo": "대등",
+   "lat": 28.34742,
+   "lon": 102.2659,
+   "modernLocation": "쓰촨성 몐닝현 루구진 궈성촌",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "卑水",
+   "nameKo": "비수",
+   "lat": 28.29495,
+   "lon": 102.86078,
+   "modernLocation": "쓰촨성 자오줴현 쩌푸향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "三縫",
+   "nameKo": "삼봉",
+   "lat": 26.06855,
+   "lon": 101.90954,
+   "modernLocation": "윈난성 위안머우현 장이향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "會無",
+   "nameKo": "회무",
+   "lat": 26.65907,
+   "lon": 102.24429,
+   "modernLocation": "쓰촨성 후이리현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "定莋",
+   "nameKo": "정작",
+   "lat": 27.42264,
+   "lon": 101.50918,
+   "modernLocation": "쓰촨성 옌위안현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "闡",
+   "nameKo": "천",
+   "lat": 28.67197,
+   "lon": 102.60386,
+   "modernLocation": "쓰촨성 웨시현 톄시향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "蘇示",
+   "nameKo": "소시",
+   "lat": 28.13366,
+   "lon": 102.18701,
+   "modernLocation": "쓰촨성 시창시 웨화향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "靈關道",
+   "nameKo": "영관도",
+   "lat": 29.23042,
+   "lon": 103.26204,
+   "modernLocation": "쓰촨성 어볜자치현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "大莋",
+   "nameKo": "대작",
+   "lat": 26.93708,
+   "lon": 101.67507,
+   "modernLocation": "쓰촨성 옌볜현 간위향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "越巂郡",
+   "sourceName": "莋秦",
+   "nameKo": "작진",
+   "lat": 28.54088,
+   "lon": 101.97435,
+   "modernLocation": "쓰촨성 몐닝현 마터우향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/익주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "龍編",
+   "nameKo": "용편",
+   "lat": 21.1234,
+   "lon": 106.1025,
+   "modernLocation": "하노이직할시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "苟漏",
+   "nameKo": "구루",
+   "lat": 21.05049,
+   "lon": 105.57406,
+   "modernLocation": "하노이직할시 탁텟현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "望海",
+   "nameKo": "망해",
+   "lat": 21.24807,
+   "lon": 105.94722,
+   "modernLocation": "박장성 박장시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "羸𨻻",
+   "nameKo": "이루",
+   "lat": 21.08389,
+   "lon": 105.80848,
+   "modernLocation": "하노이직할시 떠이호군 푸트엉방",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "西于",
+   "nameKo": "서어",
+   "lat": 21.11594,
+   "lon": 105.75689,
+   "modernLocation": "하노이직할시 동아인현 다이막사",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "曲陽",
+   "nameKo": "곡양",
+   "lat": 20.93734,
+   "lon": 106.31455,
+   "modernLocation": "하이즈엉성 하이즈엉시(추정)",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "北帶",
+   "nameKo": "북대",
+   "lat": 20.98546,
+   "lon": 106.04637,
+   "modernLocation": "흥옌성 반럼현(추정)",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "稽徐",
+   "nameKo": "계서",
+   "lat": 20.88306,
+   "lon": 106.14412,
+   "modernLocation": "흥옌성 언티현(추정)",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "交趾郡",
+   "sourceName": "安定",
+   "nameKo": "안정",
+   "lat": 20.65468,
+   "lon": 106.05784,
+   "modernLocation": "흥옌성 흥옌시(추정)",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/교주"
+  },
+  {
+   "canonicalGroup": "玄菟郡",
+   "sourceName": "高句驪",
+   "nameKo": "고구려",
+   "lat": 41.86526,
+   "lon": 123.92086,
+   "modernLocation": "랴오닝성 푸순시 신푸구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "玄菟郡",
+   "sourceName": "望平",
+   "nameKo": "망평",
+   "lat": 42.1162,
+   "lon": 123.60954,
+   "modernLocation": "랴오닝성 톄링시 톄링현",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "玄菟郡",
+   "sourceName": "高顯",
+   "nameKo": "고현",
+   "lat": 41.60318,
+   "lon": 123.43453,
+   "modernLocation": "랴오닝성 선양시 쑤자툰구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "玄菟郡",
+   "sourceName": "候城",
+   "nameKo": "후성",
+   "lat": 41.82015,
+   "lon": 123.66851,
+   "modernLocation": "랴오닝성 선양시 훈난구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "玄菟郡",
+   "sourceName": "遼陽",
+   "nameKo": "요양",
+   "lat": 41.53592,
+   "lon": 122.92814,
+   "modernLocation": "랴오닝성 선양시 랴오중구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/유주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "雲中",
+   "nameKo": "운중",
+   "lat": 40.53145,
+   "lon": 111.35024,
+   "modernLocation": "내몽골 후허하오터시 퉈커퉈현 구청진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "咸陽",
+   "nameKo": "함양",
+   "lat": 40.557,
+   "lon": 110.6926,
+   "modernLocation": "내몽골 바오터우시 투모터우기 쑤보가이향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "箕陵",
+   "nameKo": "기릉",
+   "lat": 40.07505,
+   "lon": 111.38993,
+   "modernLocation": "내몽골 후허하오터시 칭수이허현 라마완진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "沙陵",
+   "nameKo": "사릉",
+   "lat": 40.31531,
+   "lon": 111.15907,
+   "modernLocation": "내몽골 후허하오터시 퉈커퉈현 서북측",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "沙南",
+   "nameKo": "사남",
+   "lat": 40.02817,
+   "lon": 111.38746,
+   "modernLocation": "내몽골 어얼둬쓰시 준거얼기 다루진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "北輿",
+   "nameKo": "북여",
+   "lat": 40.84298,
+   "lon": 111.70275,
+   "modernLocation": "내몽골 후허하오터시 신청구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "武泉",
+   "nameKo": "무천",
+   "lat": 40.8879,
+   "lon": 111.7979,
+   "modernLocation": "내몽골 후허하오터시 신청구 하오친잉진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "原陽",
+   "nameKo": "원양",
+   "lat": 40.73565,
+   "lon": 111.79197,
+   "modernLocation": "내몽골 후허하오터시 싸이한구 진허진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "定襄",
+   "nameKo": "정양",
+   "lat": 40.6788,
+   "lon": 112.0435,
+   "modernLocation": "내몽골 후허하오터시 싸이한구 황허사오진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "成樂",
+   "nameKo": "성락",
+   "lat": 40.4752,
+   "lon": 111.7773,
+   "modernLocation": "내몽골 후허하오터시 허린거얼현 성러진",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "雲中郡",
+   "sourceName": "武進",
+   "nameKo": "무진",
+   "lat": 40.44132,
+   "lon": 112.10589,
+   "modernLocation": "내몽골 후허하오터시 허린거얼현 헤이라오야오향",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "九原",
+   "nameKo": "구원",
+   "lat": 40.6337,
+   "lon": 109.7665,
+   "modernLocation": "내몽골 바오터우시",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "五原",
+   "nameKo": "오원",
+   "lat": 40.70569,
+   "lon": 109.65046,
+   "modernLocation": "내몽골 바오터우시 쿤두룬구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "臨沃",
+   "nameKo": "임옥",
+   "lat": 40.58829,
+   "lon": 109.83536,
+   "modernLocation": "내몽골 바오터우시 주위안구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "河陰",
+   "nameKo": "하음",
+   "lat": 40.47495,
+   "lon": 109.67278,
+   "modernLocation": "내몽골 어얼둬쓰시 다라터기",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "武都",
+   "nameKo": "무도",
+   "lat": 40.17246,
+   "lon": 110.71698,
+   "modernLocation": "내몽골 어얼둬쓰시 준거얼기",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "宜梁",
+   "nameKo": "의량",
+   "lat": 40.6084,
+   "lon": 109.4825,
+   "modernLocation": "내몽골 바오터우시 주위안구",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "曼柏",
+   "nameKo": "만백",
+   "lat": 40.023,
+   "lon": 110.5498,
+   "modernLocation": "내몽골 어얼둬쓰시 다라터기",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "成宜",
+   "nameKo": "성의",
+   "lat": 40.6553,
+   "lon": 109.2684,
+   "modernLocation": "내몽골 바옌나오얼시 우라터전기",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
+  },
+  {
+   "canonicalGroup": "五原郡",
+   "sourceName": "西安陽",
+   "nameKo": "서안양",
+   "lat": 40.6567,
+   "lon": 109.0372,
+   "modernLocation": "내몽골 바옌나오얼시 우라터전기",
+   "sourceUrl": "https://namu.wiki/w/삼국지/지명/병주"
   }
  ]
 }
