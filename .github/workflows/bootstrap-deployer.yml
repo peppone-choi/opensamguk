@@ -11,8 +11,16 @@ name: Bootstrap deployer (one-shot recovery)
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: 'bootstrap = replace the deployer; release = return a window left drained by a failed run'
+        required: true
+        default: bootstrap
+        type: choice
+        options:
+          - bootstrap
+          - release
       confirm:
-        description: 'Type BOOTSTRAP DEPLOYER to proceed'
+        description: 'Type BOOTSTRAP DEPLOYER (bootstrap) or RELEASE MAINTENANCE (release)'
         required: true
         type: string
 
@@ -30,9 +38,15 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
           INPUT_CONFIRM: ${{ inputs.confirm }}
+          INPUT_ACTION: ${{ inputs.action }}
         run: |
           set -euo pipefail
-          if [ "$INPUT_CONFIRM" != "BOOTSTRAP DEPLOYER" ]; then
+          case "$INPUT_ACTION" in
+            bootstrap) EXPECTED_CONFIRM="BOOTSTRAP DEPLOYER" ;;
+            release)   EXPECTED_CONFIRM="RELEASE MAINTENANCE" ;;
+            *) echo "ERROR: unknown action: $INPUT_ACTION" >&2; exit 2 ;;
+          esac
+          if [ "$INPUT_CONFIRM" != "$EXPECTED_CONFIRM" ]; then
             echo "ERROR: confirmation phrase mismatch; nothing was touched" >&2
             exit 2
           fi
@@ -95,6 +109,35 @@ jobs:
           STATE_RC=0
           STATE_BODY="$(maintenance_http GET /maintenance 2>/dev/null)" || STATE_RC=$?
           echo "GET /maintenance rc=$STATE_RC body=${STATE_BODY:-<none>}"
+
+          if [ "$INPUT_ACTION" = "release" ]; then
+            # 실패한 배포가 창을 drained 로 남겨 두면(그건 의도다 — 운영자 점검을 요구한다) 이후 모든 배포가
+            # 「initially open maintenance-v1 controller」 에서 멈춘다. 이 경로는 그 고아 창만 돌려준다.
+            # 락을 잡고 있으므로 진행 중인 배포·승격·리셋과 겹치지 않는다. 컨테이너는 건드리지 않는다.
+            if printf '%s' "${STATE_BODY:-}" | grep -Fq '"state":"open"'; then
+              echo "=== Window is already open; nothing to release ==="
+              exit 0
+            fi
+            if ! printf '%s' "${STATE_BODY:-}" | grep -Fq '"state":"drained"'; then
+              echo "ERROR: refusing to release a window in an unexpected state: ${STATE_BODY:-<none>}" >&2
+              exit 1
+            fi
+            LEAVE_RC=0
+            LEAVE_BODY="$(maintenance_http POST /maintenance/leave 2>/dev/null)" || LEAVE_RC=$?
+            echo "leave rc=$LEAVE_RC body=${LEAVE_BODY:-<none>}"
+            if [ "$LEAVE_RC" -ne 0 ]; then
+              echo "ERROR: leave failed; the window is still held" >&2
+              exit 1
+            fi
+            AFTER_STATE="$(maintenance_http GET /maintenance 2>/dev/null || true)"
+            echo "state after leave: ${AFTER_STATE:-<none>}"
+            if ! printf '%s' "${AFTER_STATE:-}" | grep -Fq '"state":"open"'; then
+              echo "ERROR: leave returned success but the window is still not open" >&2
+              exit 1
+            fi
+            echo "=== Window released; deploy.yml can enter again ==="
+            exit 0
+          fi
 
           echo "=== Before: does this deployer know atomic idle admission? ==="
           BEFORE_RC=0
