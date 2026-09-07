@@ -145,6 +145,73 @@ class ReservedTurnWarDrainTest {
         )
     }
 
+    /**
+     * OPENSAM PR #660 regression — 군주(officer_level 12)가 없는 국가의 마지막 성이 함락되는 엔진 seam.
+     *
+     * 프로덕션 turn daemon 이 매 틱 `IllegalStateException: ConquerCity collapse: no lord (officer_level 12)
+     * in the defender nation` 으로 죽어 게임 시계가 하루 넘게 멈췄다. :logic 단위 테스트는 순수 resolver 만
+     * 덮으므로, 실제로 터진 층(ReservedTurnHandler.drainConquerCity → ChangeRecorder.markNationDeleted)을
+     * 여기서 덮는다. markNationDeleted 의 `nation.chiefGeneralId ?: ownedGenerals.firstOrNull { officerLevel == 12 }`
+     * 는 군주가 없으면 null 로 떨어져야 하고(ChangeRecorder.kt:1226), 그래도 ng_old_nations 스냅샷은 남아야 한다.
+     */
+    @Test
+    fun `reserved sortie conquers a lordless nation without stalling the tick`() {
+        val world = warWorld(
+            // .copy(officerLevel = 12) 없음 — 이게 이 테스트의 전부다. general() 기본값은 officerLevel = 1.
+            defenders = listOf(
+                defender(id = 201, crew = 1, crewTypeId = 1100),
+                defender(id = 202, crew = 1, crewTypeId = 1100),
+            ),
+            defenderCity = city(id = 31, nationId = 2, level = 1, defence = 1, wall = 1, defenceMax = 10, wallMax = 10),
+            defenderNation = nation(id = 2, capital = 31, rice = 10_000),
+        )
+        // 픽스처 가드: 방어국에 군주가 정말 없어야 이 테스트가 그 분기를 탄다.
+        assertTrue(world.listGenerals().none { it.nationId == 2 && it.officerLevel == 12 })
+        assertEquals(null, world.getNationById(2)!!.chiefGeneralId)
+
+        val handler = ReservedTurnHandler(world, registry, hiddenSeed, startYear = 184)
+
+        // 옛 코드에서는 여기서 IllegalStateException 이 터지며 턴 루프가 통째로 멈췄다.
+        val handled = handler.handle(
+            100,
+            ReservedTurn("che_출병", """{"destCityID":31}"""),
+            year = 200,
+            month = 1,
+            date = "12:00",
+        )
+
+        assertFalse(handled.fellBack)
+        assertEquals(1, world.getCityById(31)!!.nationId)
+        assertEquals(31, world.getGeneralById(100)!!.cityId)
+
+        // 국가는 멸망(tombstone)했고, ng_old_nations 스냅샷도 군주 없이 기록됐다.
+        assertTrue(2 in handler.recorder.deletedNationIds())
+        assertEquals(null, world.getNationById(2))
+        val snapshot = handler.recorder.nationSnapshots().single { it.nation.id == 2 }
+        assertEquals(null, snapshot.nation.chiefGeneralId)
+        assertEquals(listOf(201, 202), snapshot.generalIds)
+
+        // 장수는 삭제가 아니라 재야(nationId 0)로 중립화된다 — markGeneralDeleted 는 이 경로에서 안 쓰인다.
+        for (id in listOf(201, 202)) {
+            val survivor = assertNotNull(world.getGeneralById(id))
+            assertEquals(0, survivor.nationId)
+            assertEquals(0, survivor.officerLevel)
+            assertFalse(id in handler.recorder.deletedGeneralIds())
+            assertTrue(handler.recorder.dirtyGeneralIds().contains(id))
+        }
+
+        // 드레인까지 실제로 흘렀는지 — dirty state 에 국가 tombstone·스냅샷·멸망 로그가 실려 나온다.
+        val drained = world.consumeDirtyState()
+        assertTrue(2 in drained.deletedNations)
+        assertTrue(drained.deletedNationSnapshots.any { it.nation.id == 2 })
+        assertTrue(
+            drained.logs.any {
+                it.scope == "global" && it.category == "history" &&
+                    it.text == "<C>●</>200년 1월:<R><b>【멸망】</b></><D><b>n2</b></>${JosaUtil.pick("n2", "은")} <R>멸망</>했습니다."
+            },
+        )
+    }
+
     private fun warWorld(
         defenders: List<TurnGeneral>,
         defenderCity: City = city(
